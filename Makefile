@@ -17,20 +17,27 @@
 ###############################################################################################################################################################
 
  MACROS=macros
-
+ CC=intel # if want to use gfortran; make CC=gfortran xfocus; otherwise using Intel
  FC=mpif90
 
-#lff95
-#FLAGS=--ap --dbl -O --chk a,e,s,u --trace --trap -D DEBUG
-#DFLAGS=--chk a,e,s,u --trace --trap -D DEBUG
-#NAG=-L$(NAG_ROOT) -lnag
+ # Intel Defaults
+ RFLAGS=-r8 -mcmodel=large -O3 -m64 -unroll0 -fno-alias -ip -traceback 
+ DFLAGS=-check bounds -check format -check output_conversion -check pointers -check uninit -debug full -D DEBUG
+ NAG=-L$(NAG_ROOT)/lib -lnag_nag 
 
-#intel
- FLAGS=-r8 -mcmodel=large -O3 -m64 -unroll0 -fno-alias -ip -traceback
-#DFLAGS=-check bounds -check format -check output_conversion -check pointers -check uninit -debug full -D DEBUG # man ifort for information;
- NAG=-L$(NAG_ROOT)/lib -lnag_nag
+ifeq ($(CC),gfortran)
+ # Not checked
+ RFLAGS=-O2 -fdefault-real-8 -ffixed-line-length-none -ffree-line-length-none -fexternal-blas
+ DFLAGS=-g3 -Wextra -Wtarget-lifetime -fbacktrace -fbounds-check -ffpe-trap=zero -fcheck=all -DDEBUG
+endif
 
+ifeq ($(CC),lff95)
+ # LF95 SAL
+ FLAGS=--ap --dbl -O
  DFLAGS=
+ NAG=-L$(NAG_ROOT) -lnag
+endif
+
 
  NETCDF=-L$(NETCDFHOME)/lib -lnetcdf
 
