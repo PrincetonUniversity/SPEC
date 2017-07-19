@@ -1,0 +1,8 @@
+
+*.o
+*.mod
+*.F90
+*~
+xspec
+dspec
+
