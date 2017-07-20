@@ -36,7 +36,7 @@ ifeq ($(CC),lff95)
  # LF95 SAL
  FLAGS=--ap --dbl -O
  DFLAGS=
- NAG=-L$(NAG_ROOT) -lnag
+ NAG=-L$(NAG_ROOT) -lnag -L$(LAPACKHOME) -llapack -L$(BLASHOME) -lblas
 endif
 
 
