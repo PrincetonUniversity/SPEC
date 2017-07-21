@@ -2,18 +2,25 @@
 
 ###############################################################################################################################################################
 
- afiles=manual global xspech        preset rzaxis packxi volume coords
+ xfiles=global hdfint xspech
+ afiles=manual        preset rzaxis packxi volume coords
  bfiles=metrix ma00aa        matrix        mp00ac ma02aa packab tr00ab curent df00ab lforce
 #cfiles=bc00aa fc02aa jk03aa pc00aa pc00ab
  cfiles=brcast dforce newton 
  dfiles=casing bnorml 
  efiles=jo00aa pp00aa pp00ab bfield stzxyz sc00aa
- ffiles=hesian hdfint ra00aa numrec
+ ffiles=hesian ra00aa numrec
  sfiles=dcuhre minpack
 
 ###############################################################################################################################################################
 
- allfiles=$(afiles) $(bfiles) $(cfiles) $(dfiles) $(efiles) $(ffiles) $(sfiles)
+ SPECFILES=$(afiles) $(bfiles) $(cfiles) $(dfiles) $(efiles) $(ffiles)
+ ALLFILES=$(SPECFILES) $(sfiles) $(xfiles)
+ F77FILES=$(sfiles:=.f)
+ F90FILES= $(SPECFILES:=.F90)
+ HFILES = $(SPECFILES:=.h)
+ ROBJS=$(SPECFILES:=_r.o)
+ DOBJS=$(SPECFILES:=_d.o)
 
 ###############################################################################################################################################################
 
@@ -34,7 +41,7 @@ endif
 
 ifeq ($(CC),lff95)
  # LF95 SAL
- FLAGS=--ap --dbl -O
+ RFLAGS=--ap --dbl -O -I. 
  DFLAGS=
  NAG=-L$(NAG_ROOT) -lnag -L$(LAPACKHOME) -llapack -L$(BLASHOME) -lblas
 endif
@@ -56,19 +63,19 @@ endif
 
 ###############################################################################################################################################################
 
-xspec: $(addsuffix .o,$(allfiles)) $(MACROS) Makefile
-	$(FC) $(FLAGS) $(DFLAGS) -o xspec $(addsuffix .o,$(allfiles)) $(NAG) $(HDF5compile) $(HDF5link) $(NETCDF)
+xspec: $(ROBJS) $(MACROS) Makefile
+	$(FC) $(FLAGS) $(RFLAGS) -o xspec $(ROBJS) $(NAG) $(HDF5compile) $(HDF5link) $(NETCDF)
 	date
 	/bin/echo -e "\a"
 
-dspec: $(addsuffix .o,$(allfiles)) $(MACROS) Makefile
-	$(FC) $(FLAGS) $(DFLAGS) -o dspec $(addsuffix .o,$(allfiles)) $(NAG) $(HDF5compile) $(HDF5link) $(NETCDF)
+dspec: $(DOBJS) $(MACROS) Makefile
+	$(FC) $(FLAGS) $(DFLAGS) -o dspec $(DOBJS) $(NAG) $(HDF5compile) $(HDF5link) $(NETCDF)
 	date
 	/bin/echo -e "\a"
 
 ###############################################################################################################################################################
 
-global.o: global.h $(MACROS) Makefile
+global_r.o: global.h $(MACROS) Makefile
 	@awk -v allfiles='$(allfiles)' 'BEGIN{nfiles=split(allfiles,files," ")} \
 	{if($$2=="CPUVARIABLE") {for (i=1;i<=nfiles;i++) print "  REAL    :: T"files[i]" = 0.0, "files[i]"T = 0.0"}}\
 	{if($$2=="DSCREENLIST") {for (i=1;i<=nfiles;i++) print "  LOGICAL :: W"files[i]" = .false. "}}\
@@ -78,15 +85,35 @@ global.o: global.h $(MACROS) Makefile
 	{print}' global.h > mlobal.h
 	m4 -P $(MACROS) mlobal.h > global.F90
 	@rm -f mlobal.h
-	$(FC) $(FLAGS) $(DFLAGS) -o global.o -c global.F90
+	$(FC) $(FLAGS) $(RFLAGS) -o global_r.o -c global.F90
+	@wc -l -L -w global.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
+	@echo ''
+
+global_d.o: global.h $(MACROS) Makefile
+	@awk -v allfiles='$(allfiles)' 'BEGIN{nfiles=split(allfiles,files," ")} \
+	{if($$2=="CPUVARIABLE") {for (i=1;i<=nfiles;i++) print "  REAL    :: T"files[i]" = 0.0, "files[i]"T = 0.0"}}\
+	{if($$2=="DSCREENLIST") {for (i=1;i<=nfiles;i++) print "  LOGICAL :: W"files[i]" = .false. "}}\
+	{if($$2=="NSCREENLIST") {for (i=1;i<=nfiles;i++) print "  W"files[i]" , &"}}\
+	{if($$2=="BSCREENLIST") {for (i=1;i<=nfiles;i++) print "  LlBCAST(W"files[i]",1,0)"}}\
+	{if($$2=="WSCREENLIST") {s="'"'"'" ; d="'"\\\""'" ; for (i=1;i<=nfiles;i++) print "  if( W"files[i]" ) write(iunit,"s"("d" W"files[i]" = "d"L1)"s")W"files[i]}}\
+	{print}' global.h > mlobal.h
+	m4 -P $(MACROS) mlobal.h > global.F90
+	@rm -f mlobal.h
+	$(FC) $(FLAGS) $(DFLAGS) -o global_d.o -c global.F90
 	@wc -l -L -w global.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
 ###############################################################################################################################################################
 
-hdfint.o: hdfint.h global.o $(MACROS) Makefile
+hdfint_r.o: hdfint.h global_r.o $(MACROS) Makefile
 	m4 -P $(MACROS) hdfint.h > $*.F90
-	$(FC) $(FLAGS) $(DFLAGS) -o hdfint.o -c $*.F90 $(HDF5compile)
+	$(FC) $(FLAGS) $(RFLAGS) -o hdfint_r.o -c $*.F90 $(HDF5compile)
+	@wc -l -L -w hdfint.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
+	@echo ''
+
+hdfint_d.o: hdfint.h global_r.o $(MACROS) Makefile
+	m4 -P $(MACROS) hdfint.h > $*.F90
+	$(FC) $(FLAGS) $(DFLAGS) -o hdfint_d.o -c $*.F90 $(HDF5compile)
 	@wc -l -L -w hdfint.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
@@ -97,21 +124,52 @@ minpack.o: minpack.f
 
 ###############################################################################################################################################################
 
-%.o: %.h global.o $(MACROS) Makefile
-	m4 -P $(MACROS) $*.h > $*.F90
-	$(FC) $(FLAGS) $(DFLAGS) -o $*.o -c $*.F90
+#%.o: %.f Makefile
+#	$(FC) $(FLAGS) $(DFLAGS) -o $*.o -c $*.f
+#	@echo ''
+
+
+$(ROBJS): %_r.o: %.F90 global_r.o $(MACROS) Makefile
+	$(FC) -c $(RFLAGS) -o $@ $<  $(HDF5)
+#	@wc -l -L -w $*.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
+	@echo ''
+
+$(DOBJS): %_d.o: %.F90 $(MACROS) Makefile
+	$(FC) -c $(DFLAGS) -o $@ $<  $(HDF5)
 	@wc -l -L -w $*.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
+$(F90FILES): %.F90: %.h $(MACROS) Makefile
+	m4 -P $(MACROS) $< > $@
+
+#%.o: %.h global.o $(MACROS) Makefile
+#	m4 -P $(MACROS) $*.h > $*.F90
+#	$(FC) $(FLAGS) $(DFLAGS) -o $*.o -c $*.F90
+#	@wc -l -L -w $*.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
+#	@echo ''
 ###############################################################################################################################################################
 
-%.o: %.f Makefile
-	$(FC) $(FLAGS) $(DFLAGS) -o $*.o -c $*.f
+
+###############################################################################################################################################################
+
+xspech_r.o: xspech.h global_r.o $(addsuffix .o,$(files)) $(MACROS) Makefile
+	@awk -v date='$(date)' -v pwd='$(PWD)' -v macros='$(MACROS)' -v f90='$(F90)' -v flags='$(FLAGS) $(RFLAGS)' -v allfiles='$(allfiles)' \
+	'BEGIN{nfiles=split(allfiles,files," ")} \
+	{if($$2=="COMPILATION") {print "    write(ounit,*)\"      :  compiled  : date    = "date" ; \"" ; \
+	                         print "    write(ounit,*)\"      :            : dir     = "pwd" ; \"" ; \
+	                         print "    write(ounit,*)\"      :            : macros  = "macros" ; \"" ; \
+	                         print "    write(ounit,*)\"      :            : f90     = "f90" ; \"" ; \
+	                         print "    write(ounit,*)\"      :            : flags   = "flags" ; \"" }} \
+	 {if($$2=="SUMTIME") {for (i=1;i<=nfiles;i++) print "   SUMTIME("files[i]")"}}\
+	 {if($$2=="PRTTIME") {for (i=1;i<=nfiles;i++) print "   PRTTIME("files[i]")"}}\
+	 {print}' xspech.h > mspech.h
+	m4 -P $(MACROS) mspech.h > xspech.F90
+	@rm -f mspech.h
+	$(FC) $(FLAGS) $(RFLAGS) -o xspech_r.o -c xspech.F90
+	@wc -l -L -w xspech.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
-###############################################################################################################################################################
-
-xspech.o: xspech.h global.o $(addsuffix .o,$(files)) $(MACROS) Makefile
+xspech_d.o: xspech.h global_r.o $(addsuffix .o,$(files)) $(MACROS) Makefile
 	@awk -v date='$(date)' -v pwd='$(PWD)' -v macros='$(MACROS)' -v f90='$(F90)' -v flags='$(FLAGS) $(DFLAGS)' -v allfiles='$(allfiles)' \
 	'BEGIN{nfiles=split(allfiles,files," ")} \
 	{if($$2=="COMPILATION") {print "    write(ounit,*)\"      :  compiled  : date    = "date" ; \"" ; \
@@ -124,7 +182,7 @@ xspech.o: xspech.h global.o $(addsuffix .o,$(files)) $(MACROS) Makefile
 	 {print}' xspech.h > mspech.h
 	m4 -P $(MACROS) mspech.h > xspech.F90
 	@rm -f mspech.h
-	$(FC) $(FLAGS) $(DFLAGS) -o xspech.o -c xspech.F90
+	$(FC) $(FLAGS) $(DFLAGS) -o xspech_d.o -c xspech.F90
 	@wc -l -L -w xspech.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
