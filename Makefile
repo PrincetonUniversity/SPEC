@@ -9,7 +9,7 @@
  dfiles=casing bnorml 
  efiles=jo00aa pp00aa pp00ab bfield stzxyz sc00aa
  ffiles=hesian hdfint ra00aa numrec
- sfiles=dcuhre
+ sfiles=dcuhre minpack
 
 ###############################################################################################################################################################
 
@@ -89,6 +89,11 @@ hdfint.o: hdfint.h global.o $(MACROS) Makefile
 	$(FC) $(FLAGS) $(DFLAGS) -o hdfint.o -c $*.F90 $(HDF5compile)
 	@wc -l -L -w hdfint.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
+
+###############################################################################################################################################################
+
+minpack.o: minpack.f
+	$(FC) -c $(FLAGS) $(DFLAGS) -o $@ $<
 
 ###############################################################################################################################################################
 
