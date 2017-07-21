@@ -56,7 +56,7 @@ endif
 ###############################################################################################################################################################
 
 xspec: $(addsuffix .o,$(allfiles)) $(MACROS) Makefile
-	$(FC) $(FLAGS) $(DFLAGS) -o xspec $(addsuffix .o,$(allfiles)) $(NAG) $(HDF5compile) $(HDF5link) $(NETCDF)
+	$(FC) $(FLAGS) $(RFLAGS) -o xspec $(addsuffix .o,$(allfiles)) $(NAG) $(HDF5compile) $(HDF5link) $(NETCDF)
 	date
 	/bin/echo -e "\a"
 
