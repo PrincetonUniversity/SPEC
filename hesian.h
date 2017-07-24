@@ -69,7 +69,8 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
   
   INTEGER             :: Lwork, LDA, Ldvi, Ldvr, if02ebf
   REAL                :: evalr(1:NGdof), evali(1:NGdof)
-  REAL                :: evecr(1:NGdof,1:NGdof), eveci(1:NGdof,1:NGdof)
+!  REAL                :: evecr(1:NGdof,1:NGdof), eveci(1:NGdof,1:NGdof)
+  REAL                :: evecr(1:NGdof,1:NGdof), eveci(1:NGdof,1:NGdof),revecr(1:NGdof,1:2*NGdof), evecl(1:NGdof,1:NGdof)
   REAL                :: work(1:4*NGdof) ! for construction of evalues/evectors;
   CHARACTER           :: JOB
   
@@ -410,21 +411,26 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
    
    hessian(1:NGdof,1:NGdof) = ohessian(1:NGdof,1:NGdof)
    
-#ifdef NAG18
-   call F02EBF( JOB, NGdof, hessian(1:LDA,1:NGdof), LDA, evalr(1:NGdof), evali(1:NGdof), &
-                evecr(1:Ldvr,1:NGdof), Ldvr, eveci(1:Ldvi,1:NGdof), Ldvi, work(1:Lwork), Lwork, if02ebf )
-#else
-   FATAL( global, .true., eigenvalue solver needs updating to F08NAF )
-#endif
-   
+!#ifdef NAG18
+!   call F02EBF( JOB, NGdof, hessian(1:LDA,1:NGdof), LDA, evalr(1:NGdof), evali(1:NGdof), &
+!                evecr(1:Ldvr,1:NGdof), Ldvr, eveci(1:Ldvi,1:NGdof), Ldvi, work(1:Lwork), Lwork, if02ebf )
+!#else
+!   FATAL( global, .true., eigenvalue solver needs updating to F08NAF )
+!#endif
+   call dgeev('N', JOB, NGdof, hessian(1:LDA,1:NGdof), LDA, evalr(1:NGdof), evali(1:NGdof), &
+                evecl(1:Ldvr,1:NGdof), Ldvr, revecr(1:Ldvr,1:2*NGdof), Ldvr, work(1:Lwork), Lwork, if02ebf )
+    evecr(1:Ldvr,1:NGdof) = revecr(1:Ldvr,1:NGdof)
+    eveci(1:Ldvr,1:NGdof) = revecr(1:Ldvr,NGdof+1:2*NGdof)
+ 
    if( myid.eq.0 ) then 
    cput = GETTIME
-   select case( if02ebf )
-   case( 0 )    ; write(ounit,'("hesian : ",f10.2," : computed evalues ; if02ebf="i2" ; success ;       time="f10.2"s ;")') cput-cpus, if02ebf, cput-cpul
-   case( 1 )    ; write(ounit,'("hesian : ",f10.2," : computed evalues ; if02ebf="i2" ; input error ;   time="f10.2"s ;")') cput-cpus, if02ebf, cput-cpul
-   case( 2 )    ; write(ounit,'("hesian : ",f10.2," : computed evalues ; if02ebf="i2" ; QR failed ;     time="f10.2"s ;")') cput-cpus, if02ebf, cput-cpul
-   case default ; write(ounit,'("hesian : ",f10.2," : computed evalues ; if02ebf="i2" ; illegal ifail ; time="f10.2"s ;")') cput-cpus, if02ebf, cput-cpul
-   end select
+     if (if02ebf < 0) then
+        write(ounit,'("hesian : ",f10.2," : DGEEV error the "i2" th argument had illegal value  ;   time="f10.2"s ;")') cput-cpus, -if02ebf, cput-cpul
+     else if (if02ebf > 0) then
+        write(ounit,'("hesian : ",f10.2," : DGEEV error, factorization failed  ;   time="f10.2"s ;")') cput-cpus, cput-cpul
+     else
+        write(ounit,'("hesian : ",f10.2," : computed evalues ; if02ebf="i2" ; success ;       time="f10.2"s ;")') cput-cpus, if02ebf, cput-cpul
+     endif
   endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
