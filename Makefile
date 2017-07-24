@@ -52,6 +52,7 @@ ifeq ($(CC),intel_ipp)
  RFLAGS=-r8 -O2 -ip -no-prec-div -xHost -fPIC
  DFLAGS=-traceback -D DEBUG
  NAG=-L$(NAGFLIB_HOME)/lib -lnag_nag 
+ NETCDF=-L$(NETCDF_HOME)/lib -lnetcdf
 endif
 
 ifeq ($(CC),gfortran_ipp)
