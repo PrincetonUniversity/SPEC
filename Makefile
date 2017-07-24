@@ -2,7 +2,7 @@
 
 ###############################################################################################################################################################
 
- afiles=manual preset rzaxis packxi volume coords
+ afiles=manual rzaxis packxi volume coords
  bfiles=metrix ma00aa        matrix        mp00ac ma02aa packab tr00ab curent df00ab lforce
 #cfiles=bc00aa fc02aa jk03aa pc00aa pc00ab
  cfiles=brcast dforce newton 
@@ -14,7 +14,7 @@
 ###############################################################################################################################################################
 
  SPECFILES=$(afiles) $(bfiles) $(cfiles) $(dfiles) $(efiles) $(ffiles)
- ALLFILES=global $(SPECFILES) $(sfiles) xspech hdfint
+ ALLFILES=global $(SPECFILES) $(sfiles) xspech hdfint preset
  F77FILES=$(sfiles:=.f)
  F90FILES= $(SPECFILES:=.F90)
  HFILES = $(SPECFILES:=.h)
@@ -34,6 +34,8 @@
  NETCDF=-L$(NETCDFHOME)/lib -lnetcdf
  HDF5compile=-I$(HDF5_HOME)/include
  HDF5link=-L$(HDF5_HOME)/lib -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lpthread -lz -lm
+ FFTWcompile=-I$(FFTWHOME)/include
+ FFTWlink=-L$(FFTWHOME)/lib -lfftw3 
 
 ifeq ($(CC),gfortran)
  # Not checked
@@ -46,6 +48,8 @@ ifeq ($(CC),lff95)
  RFLAGS=--ap --dbl -O -I.
  DFLAGS=-Cpp -DDEBUG
  NAG=-L$(NAG_ROOT) -lnag -L$(LAPACKHOME) -llapack -L$(BLASHOME) -lblas
+ FFTWcompile=-I$(FFTWHOME)/include
+ FFTWlink=-L$(FFTWHOME)/lib -lfftw3 
 endif
 
 ifeq ($(CC),intel_ipp)
@@ -73,7 +77,7 @@ endif
 ###############################################################################################################################################################
 
 xspec: $(addsuffix _r.o,$(ALLFILES)) $(MACROS) Makefile
-	$(FC) $(FLAGS) $(RFLAGS) -o xspec $(addsuffix _r.o,$(ALLFILES)) $(NAG) $(HDF5compile) $(HDF5link) $(NETCDF)
+	$(FC) $(FLAGS) $(RFLAGS) -o xspec $(addsuffix _r.o,$(ALLFILES)) $(NAG) $(HDF5compile) $(HDF5link) $(NETCDF) $(FFTWcompile) $(FFTWlink)
 	date
 	/bin/echo -e "\a"
 
@@ -123,6 +127,20 @@ hdfint_r.o: hdfint.h global_r.o $(MACROS) Makefile
 hdfint_d.o: hdfint.h global_d.o $(MACROS) Makefile
 	m4 -P $(MACROS) hdfint.h > $*.F90
 	$(FC) $(FLAGS) $(DFLAGS) -o hdfint_d.o -c $*.F90 $(HDF5compile)
+	@wc -l -L -w hdfint_d.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
+	@echo ''
+
+###############################################################################################################################################################
+
+preset_r.o: preset.h global_r.o $(MACROS) Makefile
+	m4 -P $(MACROS) preset.h > $*.F90
+	$(FC) $(FLAGS) $(RFLAGS) -o preset_r.o -c $*.F90 $(FFTWcompile)
+	@wc -l -L -w hdfint_r.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
+	@echo ''
+
+preset_d.o: preset.h global_d.o $(MACROS) Makefile
+	m4 -P $(MACROS) preset.h > $*.F90
+	$(FC) $(FLAGS) $(DFLAGS) -o preset_d.o -c $*.F90 $(FFTWcompile)
 	@wc -l -L -w hdfint_d.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
