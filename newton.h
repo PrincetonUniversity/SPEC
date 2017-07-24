@@ -89,8 +89,6 @@ subroutine newton( NGdof, position, ic05pxf )
   LOGICAL                :: Lexit = .true. ! perhaps this could be made user input;
 
   INTEGER                :: nprint = 1 ! integer input variable that enables controlled output;
-  INTEGER                :: nfev ! integer output variable set to the number of calls to fcn ;
-  INTEGER                :: njev ! integer output variable set to the number of calls to fcn2; 
 
   INTEGER, parameter     :: maxfev = 500 ! maximum calls per iteration;
 
@@ -160,7 +158,7 @@ subroutine newton( NGdof, position, ic05pxf )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 1000 format("newton : ",f10.2," : "i9,i3," ; ":"|f|="es12.5" ; ":"time=",f10.2,"s ;":" log"a5"="28f6.2" ...")
-1001 format("newton : ", 10x ," : "9x,3x" ; ":"    "  12x "   ":"     ", 10x ,"  ;":" log"a5"="28f6.2" ...")
+1001 format("newton : ", 10x ," : "9x,3x," ; ":"    "  12x "   ":"     ", 10x ,"  ;":" log"a5"="28f6.2" ...")
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
@@ -187,13 +185,13 @@ subroutine newton( NGdof, position, ic05pxf )
    case( 1 ) ! use function values                               to find x st f(x)=0, where x is the geometry of the interfaces, and f is the force;
 
     call hybrd( fcn1, NGdof, position(1:NGdof), force(1:NGdof), &
-                xtol, maxfev, ML, MU, epsfcn, diag(1:NGdof), mode, factor, nprint, ic05pxf, nfev, fjac(1:Ldfjac,1:NGdof), Ldfjac, &
+                xtol, maxfev, ML, MU, epsfcn, diag(1:NGdof), mode, factor, nprint, ic05pxf, nDcalls, fjac(1:Ldfjac,1:NGdof), Ldfjac, &
                 RR(1:LR), LR, QTF(1:NGdof), workspace(1:NGdof,1), workspace(1:NGdof,2), workspace(1:NGdof,3), workspace(1:NGdof,4) )
 
    case( 2 ) ! use function values and user-supplied derivatives to find x st f(x)=0, where x is the geometry of the interfaces, and f is the force;
 
     call hybrj( fcn2, NGdof, position(1:NGdof), force(1:NGdof),fjac(1:Ldfjac,1:NGdof), Ldfjac, &
-                xtol, maxfev, diag(1:NGdof), mode, factor, nprint, ic05pxf, nfev, njev, &
+                xtol, maxfev, diag(1:NGdof), mode, factor, nprint, ic05pxf, nFcalls, nDcalls, &
                 RR(1:LR), LR, QTF(1:NGdof), workspace(1:NGdof,1), workspace(1:NGdof,2), workspace(1:NGdof,3), workspace(1:NGdof,4) )
 
    case default
@@ -208,9 +206,9 @@ subroutine newton( NGdof, position, ic05pxf )
      cput = GETTIME
      ;              write(ounit,'("newton : ", 10x ," :")')
      select case( ic05pxf )
-     case( 0   )  ; write(ounit,'("newton : ",f10.2," : finished ; success        ; ic05p*f="i2" ; its="i7" ,"i4" ;")') cput-cpus, ic05pxf, nFcalls, nDcalls
-     case( 1   )  ; write(ounit,'("newton : ",f10.2," : finished ; input error    ; ic05p*f="i2" ; its="i7" ,"i4" ;")') cput-cpus, ic05pxf, nFcalls, nDcalls
-     case( 2   )  ; write(ounit,'("newton : ",f10.2," : finished ; irevcm error   ; ic05p*f="i2" ; its="i7" ,"i4" ;")') cput-cpus, ic05pxf, nFcalls, nDcalls
+     case( 0   )  ; write(ounit,'("newton : ",f10.2," : finished ; input error    ; ic05p*f="i2" ; its="i7" ,"i4" ;")') cput-cpus, ic05pxf, nFcalls, nDcalls
+     case( 1   )  ; write(ounit,'("newton : ",f10.2," : finished ; xtol reached   ; ic05p*f="i2" ; its="i7" ,"i4" ;")') cput-cpus, ic05pxf, nFcalls, nDcalls
+     case( 2   )  ; write(ounit,'("newton : ",f10.2," : finished ; max. iterations; ic05p*f="i2" ; its="i7" ,"i4" ;")') cput-cpus, ic05pxf, nFcalls, nDcalls
      case( 3   )  ; write(ounit,'("newton : ",f10.2," : finished ; xtol too small ; ic05p*f="i2" ; its="i7" ,"i4" ;")') cput-cpus, ic05pxf, nFcalls, nDcalls
      case( 4:5 )  ; write(ounit,'("newton : ",f10.2," : finished ; bad progress   ; ic05p*f="i2" ; its="i7" ,"i4" ;")') cput-cpus, ic05pxf, nFcalls, nDcalls
      case default ; write(ounit,'("newton : ",f10.2," : finished ; illegal ifail  ; ic05p*f="i2" ; its="i7" ,"i4" ;")') cput-cpus, ic05pxf, nFcalls, nDcalls
@@ -483,7 +481,7 @@ subroutine fcn1(NGdof, x, fvec, irevcm)  ! fcn for hybrd; 07/20/2017; czhu;
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 1000 format("newton : ",f10.2," : "i9,i3," ; ":"|f|="es12.5" ; ":"time=",f10.2,"s ;":" log"a5"="28f6.2" ...")
-1001 format("newton : ", 10x ," : "9x,3x" ; ":"    "  12x "   ":"     ", 10x ,"  ;":" log"a5"="28f6.2" ...")
+1001 format("newton : ", 10x ," : "9x,3x," ; ":"    "  12x "   ":"     ", 10x ,"  ;":" log"a5"="28f6.2" ...")
  
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -659,7 +657,7 @@ subroutine fcn2(NGdof, x, fvec, fjac, Ldfjac, irevcm)  ! fcn for hybrj; 07/20/20
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 1000 format("newton : ",f10.2," : "i9,i3," ; ":"|f|="es12.5" ; ":"time=",f10.2,"s ;":" log"a5"="28f6.2" ...")
-1001 format("newton : ", 10x ," : "9x,3x" ; ":"    "  12x "   ":"     ", 10x ,"  ;":" log"a5"="28f6.2" ...")
+1001 format("newton : ", 10x ," : "9x,3x," ; ":"    "  12x "   ":"     ", 10x ,"  ;":" log"a5"="28f6.2" ...")
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
