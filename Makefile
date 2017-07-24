@@ -9,7 +9,7 @@
  dfiles=casing bnorml 
  efiles=jo00aa pp00aa pp00ab bfield stzxyz sc00aa
  ffiles=hesian ra00aa numrec
- sfiles=dcuhre minpack
+ sfiles=dcuhre minpack iqpack
 
 ###############################################################################################################################################################
 

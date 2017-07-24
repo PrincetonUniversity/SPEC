@@ -92,7 +92,7 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
   REAL                :: Atemn(1:mn,0:2), Azemn(1:mn,0:2), Atomn(1:mn,0:2), Azomn(1:mn,0:2), sbar, sbarhim(0:2)
   
   INTEGER             :: itype, id01bcf
-  REAL                :: aa, bb, cc, dd, weight(1:lquad), abscis(1:lquad)
+  REAL                :: aa, bb, cc, dd, weight(1:lquad), abscis(1:lquad), workfield(1:2*lquad)
   
   BEGIN(jo00aa)
   
@@ -116,8 +116,16 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
 
   itype = 0 ; aa = -one ; bb = +one ; cc = zero ; dd = zero ! prepare Gaussian quadrature;  6 Feb 13;
   
-  id01bcf = 1
-  call D01BCF( itype, aa, bb, cc, dd, lquad, weight(1:lquad), abscis(1:lquad), id01bcf ) ! sets gaussian weights & abscissae;
+!  id01bcf = 1
+!  call D01BCF( itype, aa, bb, cc, dd, lquad, weight(1:lquad), abscis(1:lquad), id01bcf ) ! sets gaussian weights & abscissae;
+!  do ii = 1, lquad
+!     print *, ii, weight(ii),abscis(ii)
+!  end do
+!      SUBROUTINE CDGQF(NT,T,WTS,KIND,ALPHA,BETA,NWF,WF,IER)
+  call CDGQF(lquad, abscis(1:lquad), weight(1:lquad), itype+1, aa, bb, 2*lquad, workfield, id01bcf)
+!  do ii = 1, lquad
+!     print *, ii, weight(ii),abscis(ii)
+!  end do
   
   cput= GETTIME
   select case( id01bcf ) !                                                         123456789012345
