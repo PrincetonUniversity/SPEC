@@ -57,7 +57,7 @@ subroutine newton( NGdof, position, ic05pxf )
 
   use cputiming, only : Tnewton
 
-  use allglobal, only : wrtend, myid, ncpu, cpus, &
+  use allglobal, only : wrtend, myid, ncpu, cpus, cpum, &
                         NOTstellsym, &
                         ForceErr, Energy, &
                         mn, im, in, iRbc, iZbs, iRbs, iZbc, Mvol, &
@@ -75,7 +75,7 @@ subroutine newton( NGdof, position, ic05pxf )
   
   LOGICAL                :: LComputeDerivatives
   INTEGER                :: nFcalls, nDcalls, wflag, iflag, idof, jdof, ijdof, ireadhessian, igdof, lvol, ii, imn
-  REAL                   :: rflag, lastcpu
+  REAL                   :: rflag
   CHARACTER              :: pack
 
   INTEGER                :: irevcm, mode, Ldfjac, LR
@@ -129,7 +129,7 @@ subroutine newton( NGdof, position, ic05pxf )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  lastcpu = GETTIME
+  cpum = GETTIME
   
   if( Lexit ) then ! will call initial force, and if ForceErr.lt.forcetol will immediately exit; 04 Dec 14;
 
@@ -138,7 +138,7 @@ subroutine newton( NGdof, position, ic05pxf )
    
    if( myid.eq.0 ) then ! screen output; 20 Jun 14;
     cput = GETTIME
-    ; write(ounit,1000) cput-cpus, nFcalls, nDcalls, ForceErr,  cput-lastcpu, "|BB|e", alog10(BBe(1:min(Mvol-1,28)))
+    ; write(ounit,1000) cput-cpus, nFcalls, nDcalls, ForceErr,  cput-cpum, "|BB|e", alog10(BBe(1:min(Mvol-1,28)))
     if( Igeometry.ge.3 ) then ! include spectral constraints; 04 Dec 14;
      ;write(ounit,1001)                                                                       "|II|o", alog10(IIo(1:min(Mvol-1,28)))
     endif
@@ -397,7 +397,7 @@ subroutine fcn1(NGdof, x, fvec, irevcm)  ! fcn for hybrd; 07/20/2017; czhu;
 
   use cputiming, only : Tnewton
 
-  use allglobal, only : wrtend, myid, ncpu, cpus, &
+  use allglobal, only : wrtend, myid, ncpu, cpus, cpum, &
                         NOTstellsym, &
                         ForceErr, Energy, &
                         mn, im, in, iRbc, iZbs, iRbs, iZbc, Mvol, &
@@ -417,7 +417,7 @@ subroutine fcn1(NGdof, x, fvec, irevcm)  ! fcn for hybrd; 07/20/2017; czhu;
 
   LOGICAL                :: LComputeDerivatives  
   INTEGER                :: nFcalls, nDcalls, wflag, iflag, idof, jdof, ijdof, ireadhessian, igdof, lvol, ii, imn
-  REAL                   :: rflag, lastcpu
+  REAL                   :: rflag
   CHARACTER              :: pack
 
     
@@ -440,7 +440,7 @@ subroutine fcn1(NGdof, x, fvec, irevcm)  ! fcn for hybrd; 07/20/2017; czhu;
      
      cput = GETTIME
      
-     ; write(ounit,1000) cput-cpus, nFcalls, nDcalls, ForceErr, cput-lastcpu, "|BB|e", alog10(BBe(1:min(Mvol-1,28)))
+     ; write(ounit,1000) cput-cpus, nFcalls, nDcalls, ForceErr, cput-cpum, "|BB|e", alog10(BBe(1:min(Mvol-1,28)))
      if( Igeometry.ge.3 ) then ! include spectral constraints; 04 Dec 14;
       ;write(ounit,1001)                                                                      "|II|o", alog10(IIo(1:min(Mvol-1,28)))
      endif
@@ -450,7 +450,7 @@ subroutine fcn1(NGdof, x, fvec, irevcm)  ! fcn for hybrd; 07/20/2017; czhu;
        write(ounit,1001)                                                                      "|II|e", alog10(IIe(1:min(Mvol-1,28)))
       endif
      endif
-     lastcpu = GETTIME
+     cpum = GETTIME
      
      wflag = -1 ; iflag = nDcalls ; rflag = ForceErr
      WCALL( newton, wrtend, ( wflag, iflag, rflag ) ) ! write restart file; save geometry to ext.end; iRbc, iZbs consistent with position;
@@ -514,7 +514,7 @@ subroutine fcn2(NGdof, x, fvec, fjac, Ldfjac, irevcm)  ! fcn for hybrj; 07/20/20
 
   use cputiming, only : Tnewton
 
-  use allglobal, only : wrtend, myid, ncpu, cpus, &
+  use allglobal, only : wrtend, myid, ncpu, cpus, cpum, &
                         NOTstellsym, &
                         ForceErr, Energy, &
                         mn, im, in, iRbc, iZbs, iRbs, iZbc, Mvol, &
@@ -534,7 +534,7 @@ subroutine fcn2(NGdof, x, fvec, fjac, Ldfjac, irevcm)  ! fcn for hybrj; 07/20/20
 
   LOGICAL                :: LComputeDerivatives  
   INTEGER                :: nFcalls, nDcalls, wflag, iflag, idof, jdof, ijdof, ireadhessian, igdof, lvol, ii, imn
-  REAL                   :: rflag, lastcpu
+  REAL                   :: rflag
   CHARACTER              :: pack
 
     
@@ -557,7 +557,7 @@ subroutine fcn2(NGdof, x, fvec, fjac, Ldfjac, irevcm)  ! fcn for hybrj; 07/20/20
      
      cput = GETTIME
      
-     ; write(ounit,1000) cput-cpus, nFcalls, nDcalls, ForceErr, cput-lastcpu, "|BB|e", alog10(BBe(1:min(Mvol-1,28)))
+     ; write(ounit,1000) cput-cpus, nFcalls, nDcalls, ForceErr, cput-cpum, "|BB|e", alog10(BBe(1:min(Mvol-1,28)))
      if( Igeometry.ge.3 ) then ! include spectral constraints; 04 Dec 14;
       ;write(ounit,1001)                                                                      "|II|o", alog10(IIo(1:min(Mvol-1,28)))
      endif
@@ -567,7 +567,7 @@ subroutine fcn2(NGdof, x, fvec, fjac, Ldfjac, irevcm)  ! fcn for hybrj; 07/20/20
        write(ounit,1001)                                                                      "|II|e", alog10(IIe(1:min(Mvol-1,28)))
       endif
      endif
-     lastcpu = GETTIME
+     cpum = GETTIME
      
      wflag = -1 ; iflag = nDcalls ; rflag = ForceErr
      WCALL( newton, wrtend, ( wflag, iflag, rflag ) ) ! write restart file; save geometry to ext.end; iRbc, iZbs consistent with position;
