@@ -27,6 +27,8 @@ subroutine preset
   
   use allglobal! only :
   
+  use fftw_interface
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   LOCALS
@@ -230,7 +232,7 @@ subroutine preset
 !latex \subsubsection{\type{ki(1:mn,0:1)} : Fourier identification;}
 
 !latex \begin{enumerate}
-!latex \item Consider the `abbreviated' representation for a double Fourier series,
+!latex \item Consider the ``abbreviated'' representation for a double Fourier series,
 !latex       \be \sum_i f_i \cos(m_i \t - n_i \z) \equiv                         \sum_{n=      0  }^{     N_0} f_{0,n} \cos(    -n\z)
 !latex                                                   + \sum_{m=1}^{     M_0} \sum_{n=-     N_0}^{     N_0} f_{m,n} \cos( m\t-n\z),
 !latex       \ee
@@ -837,6 +839,12 @@ subroutine preset
   SALLOCATE( kjreal, (1:Ntz), zero )
   SALLOCATE( kjimag, (1:Ntz), zero )
 
+  SALLOCATE( cplxin,  (1:Nt,1:Nz), zero )
+  SALLOCATE( cplxout, (1:Nt,1:Nz), zero )
+
+  planf = fftw_plan_dft_2d(Nt, Nz, cplxin, cplxout, FFTW_FORWARD, FFTW_MEASURE + FFTW_DESTROY_INPUT)
+  planb = fftw_plan_dft_2d(Nt, Nz, cplxin, cplxout, FFTW_BACKWARD, FFTW_MEASURE + FFTW_DESTROY_INPUT)
+
   isr = 'I' ; ifail = 0
 
   WCALL( preset, C06FUF, ( Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz), ifail ) )
@@ -1080,7 +1088,7 @@ subroutine preset
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-! Construction of `force';
+! Construction of ``force'';
 
   SALLOCATE( Bemn, (1:mn,1:Mvol,0:1), zero )
   SALLOCATE( Bomn, (1:mn,1:Mvol,0:1), zero )

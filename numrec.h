@@ -71,8 +71,10 @@ subroutine tfft( Nt, Nz, ijreal, ijimag, isr, trigm, trign, trigwk, mn, im, in, 
   use constants
   use inputlist, only : Nfp
   use allglobal, only : pi2nfp
+  use fftw_interface
 
   implicit none
+  intrinsic aimag
   
   INTEGER   :: Nt, Nz, mn, im(mn), in(mn), Ntz, imn, ifail, mm, nn
   REAL      :: ijreal(1:Nt*Nz), ijimag(1:Nt*Nz), trigm(2*Nt), trign(2*Nz), trigwk(2*Nt*Nz), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn)
@@ -87,9 +89,18 @@ subroutine tfft( Nt, Nz, ijreal, ijimag, isr, trigm, trign, trigwk, mn, im, in, 
 
   Ntz=Nt*Nz
 
-  call C06FUF( Nt , Nz , ijreal(1:Ntz) , ijimag(1:Ntz) , isr , trigm , trign , trigwk , ifail )
-  
-  ijreal(:) = ijreal(:)/sqrt(one*Ntz) ; ijimag(:) = ijimag(:)/sqrt(one*Ntz)
+  !Copy real arrays to complex
+  do jj=1,Nz
+    cplxin(:,jj) = CMPLX(ijreal((jj-1)*Nt+1:jj*Nt), ijimag((jj-1)*Nt+1:jj*Nt),KIND=C_DOUBLE_COMPLEX)
+  enddo
+
+  call fftw_execute_dft(planf, cplxin, cplxout) !Forward transform
+
+  !Copy complex result back to real arrays, normalize
+  do jj=1,Nz
+    ijreal((jj-1)*Nt+1:jj*Nt) = real(cplxout(:,jj),KIND=C_DOUBLE_COMPLEX)/Ntz
+    ijimag((jj-1)*Nt+1:jj*Nt) = aimag(cplxout(:,jj))/Ntz
+  enddo
   
   cfmn=zero ; sfmn=zero ; efmn=zero ; ofmn=zero
   
@@ -163,8 +174,9 @@ subroutine invfft( mn , im , in , efmn , ofmn , cfmn , sfmn , Nt , Nz , ijreal ,
 
   use constants, only : zero, half, one
   use inputlist, only : Nfp
-
+  use fftw_interface
   implicit none
+  
   INTEGER  , intent(in)    :: mn, im(mn), in(mn)
   REAL     , intent(in)    :: efmn(mn), ofmn(mn), cfmn(mn), sfmn(mn)
   INTEGER  , intent(in)    :: Nt, Nz
@@ -219,13 +231,19 @@ subroutine invfft( mn , im , in , efmn , ofmn , cfmn , sfmn , Nt , Nz , ijreal ,
    
   enddo
 
-  ijreal(1:Ntz) = ijreal(1:Ntz) * sqrt(one*Ntz)
-  ijimag(1:Ntz) = ijimag(1:Ntz) * sqrt(one*Ntz)
-  
-  c06gcffail=0 ; call C06GCF( ijimag, Ntz , c06gcffail )
-  c06fuffail=0 ; call C06FUF( Nt , Nz , ijreal , ijimag , isr , trigm , trign , trigwk , c06fuffail )
-  c06gcffail=0 ; call C06GCF( ijimag , Ntz , c06gcffail )
-  
+  !Copy real arrays to complex
+  do jj=1,Nz
+    cplxin(:,jj) = CMPLX(ijreal((jj-1)*Nt+1:jj*Nt), ijimag((jj-1)*Nt+1:jj*Nt),KIND=C_DOUBLE_COMPLEX)
+  enddo
+
+  call fftw_execute_dft(planb, cplxin, cplxout) !Inverse transform
+
+  !Copy complex result back to real arrays
+  do jj=1,Nz
+    ijreal((jj-1)*Nt+1:jj*Nt) = real(cplxout(:,jj),KIND=C_DOUBLE_COMPLEX)
+    ijimag((jj-1)*Nt+1:jj*Nt) = aimag(cplxout(:,jj))
+  enddo
+
   return
 
 end subroutine invfft

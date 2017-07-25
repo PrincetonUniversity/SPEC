@@ -98,7 +98,7 @@ global_r.o: %_r.o: global.h $(MACROS) Makefile
 	{print}' global.h > mlobal.h
 	m4 -P $(MACROS) mlobal.h > global.F90
 	@rm -f mlobal.h
-	$(FC) $(FLAGS) $(RFLAGS) -o global_r.o -c global.F90
+	$(FC) $(FLAGS) $(RFLAGS) -o global_r.o -c global.F90 $(FFTWcompile)
 	@wc -l -L -w global.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
@@ -112,7 +112,7 @@ global_d.o: global.h $(MACROS) Makefile
 	{print}' global.h > mlobal.h
 	m4 -P $(MACROS) mlobal.h > global.F90
 	@rm -f mlobal.h
-	$(FC) $(FLAGS) $(DFLAGS) -o global_d.o -c global.F90
+	$(FC) $(FLAGS) $(DFLAGS) -o global_d.o -c global.F90 $(FFTWcompile)
 	@wc -l -L -w global.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
@@ -159,12 +159,12 @@ preset_d.o: preset.h global_d.o $(MACROS) Makefile
 ###############################################################################################################################################################
 
 $(ROBJS): %_r.o: %.F90 global_r.o $(MACROS) Makefile
-	$(FC) $(FLAGS) $(RFLAGS) -o $*_r.o -c $*.F90
+	$(FC) $(FLAGS) $(RFLAGS) -o $*_r.o -c $*.F90 $(FFTWcompile)
 	@wc -l -L -w $*.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
 $(DOBJS): %_d.o: %.F90 $(MACROS) Makefile
-	$(FC) $(FLAGS) $(DFLAGS) -o $*_d.o -c $*.F90
+	$(FC) $(FLAGS) $(DFLAGS) -o $*_d.o -c $*.F90 $(FFTWcompile)
 	@wc -l -L -w $*.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 

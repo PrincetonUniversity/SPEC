@@ -961,7 +961,7 @@ module allglobal
 
 !latex \item The coordinate geometry and fields are mapped to/from Fourier space and real space using \nag{}{C06FUF}.
 !latex \item The resolution of the real space grid is given by \type{Nt=Ndiscrete*4*Mpol} and \type{Nz=Ndiscrete*4*Ntor}.
-!latex \item Trigonometric information required for the fast Fourier transform's is saved in \type{trigm(1:2*Nt)}, \type{trign(1:2*Nz)},
+!latex \item Trigonometric information required for the fast Fourier transforms is saved in \type{trigm(1:2*Nt)}, \type{trign(1:2*Nz)},
 !latex       and \type{trigwk(1:2*Ntz)}, where \type{Ntz=Nt*Nz}.
 
   INTEGER              :: Nt, Nz, Ntz, hNt, hNz ! discrete resolution; Ntz=Nt*Nz shorthand;
@@ -1105,7 +1105,7 @@ module allglobal
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{construction of `force'}
+!latex \subsubsection{construction of ``force''}
 !latex \begin{enumerate}
 !latex \item The force vector is comprised of \type{Bomn} and \type{Iomn}.
 !latex \end{enumerate}
@@ -2581,3 +2581,12 @@ end subroutine wrtend
 end module allglobal
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+module fftw_interface
+  use, intrinsic :: iso_c_binding
+  implicit none
+  include 'fftw3.f03'
+
+  TYPE(C_PTR) :: planf, planb
+  COMPLEX(C_DOUBLE_COMPLEX), ALLOCATABLE :: cplxin(:,:), cplxout(:,:)
+end module fftw_interface
