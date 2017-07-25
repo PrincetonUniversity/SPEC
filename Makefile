@@ -33,7 +33,7 @@ endif
 
 ifeq ($(CC),lff95)
  # LF95 SAL
- FLAGS=--ap --dbl -O
+ RFLAGS=--ap --dbl -O
  DFLAGS=
  NAG=-L$(NAG_ROOT) -lnag
 endif
