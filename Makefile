@@ -28,8 +28,8 @@
  FC=mpif90
 
  # Intel Defaults
- RFLAGS=-r8 -mcmodel=large -O3 -m64 -unroll0 -fno-alias -ip -traceback 
- DFLAGS=-check bounds -check format -check output_conversion -check pointers -check uninit -debug full -D DEBUG
+ RFLAGS=-r8 -mcmodel=large -O2 -m64 -unroll0 -fno-alias -ip -traceback 
+ DFLAGS=-r8 -check bounds -check format -check output_conversion -check pointers -check uninit -debug full -D DEBUG
  NAG=-L$(NAG_ROOT)/lib -lnag_nag 
  NETCDF=-L$(NETCDFHOME)/lib -lnetcdf
  HDF5compile=-I$(HDF5_HOME)/include
@@ -44,33 +44,40 @@ endif
 ifeq ($(CC),lff95)
  # LF95 SAL
  RFLAGS=--ap --dbl -O -I.
- DFLAGS=-Cpp -DDEBUG
+ DFLAGS=--dbl --ap -g -Cpp -DDEBUG
  NAG=-L$(NAG_ROOT) -lnag -L$(LAPACKHOME) -llapack -L$(BLASHOME) -lblas
+endif
+
+ifeq ($(CC),intel_prof)
+ # LF95 SAL
+ RFLAGS=-r8 -O2 -ip -p
+ DFLAGS=-r8 -g -traceback -check bounds -check format -check output_conversion -check pointers -check uninit -debug full -D DEBUG
+ NAG=-L$(NAG_ROOT)/lib -lnag_nag 
 endif
 
 ifeq ($(CC),intel_ipp)
  RFLAGS=-r8 -O2 -ip -no-prec-div -xHost -fPIC
- DFLAGS=-traceback -D DEBUG
+ DFLAGS=-r8 -g -traceback -D DEBUG
  NAG=-L$(NAGFLIB_HOME)/lib -lnag_nag 
  NETCDF=-L$(NETCDF_HOME)/lib -lnetcdf
 endif
 
 ifeq ($(CC),intel_ipp_prof)
  RFLAGS=-r8 -O2 -ip -no-prec-div -xHost -fPIC -p
- DFLAGS=-traceback -D DEBUG
+ DFLAGS=-r8 -g -traceback -D DEBUG -p
  NAG=-L$(NAGFLIB_HOME)/lib -lnag_nag 
  NETCDF=-L$(NETCDF_HOME)/lib -lnetcdf
 endif
 
 ifeq ($(CC),gfortran_ipp)
  RFLAGS=-fdefault-real-8 -O2 -fPIC -ffree-line-length-none
- DFLAGS=-g -fbacktrace -fbounds-check -DDEBUG -ffree-line-length-none
+ DFLAGS=-fdefault-real-8 -g -fbacktrace -fbounds-check -DDEBUG -ffree-line-length-none
  NAG=-L$(NAGFLIB_HOME)/lib -lnag_nag 
 endif
 
 ifeq ($(CC),gfortran_ipp_prof)
  RFLAGS=-fdefault-real-8 -O2 -fPIC -ffree-line-length-none -p
- DFLAGS=-g -fbacktrace -fbounds-check -DDEBUG -ffree-line-length-none
+ DFLAGS=-fdefault-real-8 -g -fbacktrace -fbounds-check -DDEBUG -ffree-line-length-none -p
  NAG=-L$(NAGFLIB_HOME)/lib -lnag_nag 
 endif
 
