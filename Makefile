@@ -73,12 +73,12 @@ endif
 ###############################################################################################################################################################
 
 xspec: $(addsuffix _r.o,$(ALLFILES)) $(MACROS) Makefile
-	$(FC) $(FLAGS) $(RFLAGS) -o xspec $(addsuffix _r.o,$(ALLFILES)) $(NAG) $(HDF5compile) $(HDF5link) $(NETCDF)
+	$(FC) $(RFLAGS)           -o xspec $(addsuffix _r.o,$(ALLFILES)) $(NAG) $(HDF5compile) $(HDF5link) $(NETCDF)
 	date
 	/bin/echo -e "\a"
 
 dspec: $(addsuffix _d.o,$(ALLFILES)) $(MACROS) Makefile
-	$(FC) $(FLAGS) $(DFLAGS) -o dspec $(addsuffix _d.o,$(ALLFILES)) $(NAG) $(HDF5compile) $(HDF5link) $(NETCDF)
+	$(FC) $(RFLAGS) $(DFLAGS) -o dspec $(addsuffix _d.o,$(ALLFILES)) $(NAG) $(HDF5compile) $(HDF5link) $(NETCDF)
 	date
 	/bin/echo -e "\a"
 
@@ -94,7 +94,7 @@ global_r.o: %_r.o: global.h $(MACROS) Makefile
 	{print}' global.h > mlobal.h
 	m4 -P $(MACROS) mlobal.h > global.F90
 	@rm -f mlobal.h
-	$(FC) $(FLAGS) $(RFLAGS) -o global_r.o -c global.F90
+	$(FC) $(RFLAGS)           -o global_r.o -c global.F90
 	@wc -l -L -w global.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
@@ -108,7 +108,7 @@ global_d.o: global.h $(MACROS) Makefile
 	{print}' global.h > mlobal.h
 	m4 -P $(MACROS) mlobal.h > global.F90
 	@rm -f mlobal.h
-	$(FC) $(FLAGS) $(DFLAGS) -o global_d.o -c global.F90
+	$(FC) $(RFLAGS) $(DFLAGS) -o global_d.o -c global.F90
 	@wc -l -L -w global.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
@@ -116,37 +116,37 @@ global_d.o: global.h $(MACROS) Makefile
 
 hdfint_r.o: hdfint.h global_r.o $(MACROS) Makefile
 	m4 -P $(MACROS) hdfint.h > $*.F90
-	$(FC) $(FLAGS) $(RFLAGS) -o hdfint_r.o -c $*.F90 $(HDF5compile)
+	$(FC) $(RFLAGS)           -o hdfint_r.o -c $*.F90 $(HDF5compile)
 	@wc -l -L -w hdfint_r.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
 hdfint_d.o: hdfint.h global_d.o $(MACROS) Makefile
 	m4 -P $(MACROS) hdfint.h > $*.F90
-	$(FC) $(FLAGS) $(DFLAGS) -o hdfint_d.o -c $*.F90 $(HDF5compile)
+	$(FC) $(RFLAGS) $(DFLAGS) -o hdfint_d.o -c $*.F90 $(HDF5compile)
 	@wc -l -L -w hdfint_d.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
 ###############################################################################################################################################################
 
 %_r.o: %.f Makefile
-	$(FC) $(FLAGS) $(RFLAGS) -o $*_r.o -c $*.f
+	$(FC) $(RFLAGS)           -o $*_r.o -c $*.f
 	@wc -l -L -w $*.f | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
 %_d.o: %.f Makefile
-	$(FC) $(FLAGS) $(DFLAGS) -o $*_d.o -c $*.f
+	$(FC) $(RFLAGS) $(DFLAGS) -o $*_d.o -c $*.f
 	@wc -l -L -w $*.f | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
 ###############################################################################################################################################################
 
 $(ROBJS): %_r.o: %.F90 global_r.o $(MACROS) Makefile
-	$(FC) $(FLAGS) $(RFLAGS) -o $*_r.o -c $*.F90
+	$(FC) $(RFLAGS)           -o $*_r.o -c $*.F90
 	@wc -l -L -w $*.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
 $(DOBJS): %_d.o: %.F90 $(MACROS) Makefile
-	$(FC) $(FLAGS) $(DFLAGS) -o $*_d.o -c $*.F90
+	$(FC) $(RFLAGS) $(DFLAGS) -o $*_d.o -c $*.F90
 	@wc -l -L -w $*.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
@@ -159,7 +159,7 @@ $(F90FILES): %.F90: %.h
 ###############################################################################################################################################################
 
 xspech_r.o: xspech.h global_r.o $(addsuffix .o,$(files)) $(MACROS) Makefile
-	@awk -v date='$(date)' -v pwd='$(PWD)' -v macros='$(MACROS)' -v f90='$(F90)' -v flags='$(FLAGS) $(RFLAGS)' -v allfiles='$(ALLFILES)' \
+	@awk -v date='$(date)' -v pwd='$(PWD)' -v macros='$(MACROS)' -v f90='$(F90)' -v flags='$(RFLAGS)'           -v allfiles='$(ALLFILES)' \
 	'BEGIN{nfiles=split(allfiles,files," ")} \
 	{if($$2=="COMPILATION") {print "    write(ounit,*)\"      :  compiled  : date    = "date" ; \"" ; \
 	                         print "    write(ounit,*)\"      :            : dir     = "pwd" ; \"" ; \
@@ -171,12 +171,12 @@ xspech_r.o: xspech.h global_r.o $(addsuffix .o,$(files)) $(MACROS) Makefile
 	 {print}' xspech.h > mspech.h
 	m4 -P $(MACROS) mspech.h > xspech.F90
 	@rm -f mspech.h
-	$(FC) $(FLAGS) $(RFLAGS) -o xspech_r.o -c xspech.F90
+	$(FC) $(RFLAGS)           -o xspech_r.o -c xspech.F90
 	@wc -l -L -w xspech.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
 xspech_d.o: xspech.h global_d.o $(addsuffix .o,$(files)) $(MACROS) Makefile
-	@awk -v date='$(date)' -v pwd='$(PWD)' -v macros='$(MACROS)' -v f90='$(F90)' -v flags='$(FLAGS) $(DFLAGS)' -v allfiles='$(ALLFILES)' \
+	@awk -v date='$(date)' -v pwd='$(PWD)' -v macros='$(MACROS)' -v f90='$(F90)' -v flags='$(RFLAGS) $(DFLAGS)' -v allfiles='$(ALLFILES)' \
 	'BEGIN{nfiles=split(allfiles,files," ")} \
 	{if($$2=="COMPILATION") {print "    write(ounit,*)\"      :  compiled  : date    = "date" ; \"" ; \
 	                         print "    write(ounit,*)\"      :            : dir     = "pwd" ; \"" ; \
@@ -188,7 +188,7 @@ xspech_d.o: xspech.h global_d.o $(addsuffix .o,$(files)) $(MACROS) Makefile
 	 {print}' xspech.h > mspech.h
 	m4 -P $(MACROS) mspech.h > xspech.F90
 	@rm -f mspech.h
-	$(FC) $(FLAGS) $(DFLAGS) -o xspech_d.o -c xspech.F90
+	$(FC) $(RFLAGS) $(DFLAGS) -o xspech_d.o -c xspech.F90
 	@wc -l -L -w xspech.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
@@ -254,7 +254,7 @@ help:
 	# defaults
 	# --------
 	# FC			= $(FC)
-	# FLAGS			= $(FLAGS) $(DFLAGS)
+	# FLAGS			= $(RFLAGS) $(DFLAGS)
 	# NAG			= $(NAG_ROOT)
 	# MACROS		= $(MACROS)
 	#
