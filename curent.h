@@ -72,7 +72,7 @@ subroutine curent( lvol, mn, Nt, Nz, iflag, ldItGp )
                         Mvol, im, in, mne, ime, ine, &
                         YESstellsym, NOTstellsym, &
                         sg, guvij, &
-                        Ntz, isr, trigm, trign, trigwk, ijreal, ijimag, jireal, jiimag, &
+                        Ntz, ijreal, ijimag, jireal, jiimag, &
                         efmn, ofmn, cfmn, sfmn, evmn, odmn, comn, simn, &
                         Ate, Aze, Ato, Azo, TT
   
@@ -153,7 +153,7 @@ subroutine curent( lvol, mn, Nt, Nz, iflag, ldItGp )
    endif ! end of if( YESstellsym ) ; 15 Sep 16;
    
    call invfft( mn, im(1:mn), in(1:mn), lAte(1:mn,ideriv), lAto(1:mn,ideriv), lAze(1:mn,ideriv), lAzo(1:mn,ideriv), &
-                Nt, Nz, Bsupz(1:Ntz,ideriv), Bsupt(1:Ntz,ideriv), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz) ) ! map to real space;
+                Nt, Nz, Bsupz(1:Ntz,ideriv), Bsupt(1:Ntz,ideriv) ) ! map to real space;
 
   enddo ! end of do ideriv; 31 Jan 13;
   
@@ -183,7 +183,7 @@ subroutine curent( lvol, mn, Nt, Nz, iflag, ldItGp )
    endif
 
    ifail = 0
-   call tfft( Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz), &
+   call tfft( Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz), &
               mne, ime(1:mne), ine(1:mne), efmn(1:mne), ofmn(1:mne), cfmn(1:mne), sfmn(1:mne), ifail )
    
    ldItGp(0,ideriv) = efmn(1) * pi2 ! "toroidal", plasma  current; 12 Sep 16;

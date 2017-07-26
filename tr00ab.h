@@ -86,7 +86,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
                         Mvol, im, in, mns, ims, ins, &
                         YESstellsym, NOTstellsym, &
                         glambda, & ! global lambda: initial guesses will be saved; 21 Apr 13;
-                        Ntz, hNt, hNz, isr, trigm, trign, trigwk, &
+                        Ntz, hNt, hNz, &
                         iotakkii, iotaksub, iotakadd, iotaksgn, &
                         Ate, Aze, Ato, Azo, TT, &
                         Lcoordinatesingularity, Lvacuumregion, regumm
@@ -193,7 +193,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
     
     if( Lsparse.gt.0 ) then ! will construct transformation to straight-field line angle in real space; 24 Apr 13;
      call invfft( mn, im(1:mn), in(1:mn), lAte(1:mn,id), lAto(1:mn,id), lAze(1:mn,id), lAzo(1:mn,id), &
-                  Nt, Nz, Bsupz(1:Ntz,id), Bsupt(1:Ntz,id), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz) ) ! map to real space;
+                  Nt, Nz, Bsupz(1:Ntz,id), Bsupt(1:Ntz,id) ) ! map to real space;
     endif
 
    enddo ! end of do ideriv; 31 Jan 13;

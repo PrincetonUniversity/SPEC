@@ -46,7 +46,7 @@
 
 !latex \end{enumerate} \subsection{interpolation between interfaces} \begin{enumerate}
 
-!latex \item The ``coordinate" functions, $R(\s,\t,\z)$ and $Z(\s,\t,\z)$, are constructed by radially interpolating the Fourier representations of the 
+!latex \item The ``coordinate'' functions, $R(\s,\t,\z)$ and $Z(\s,\t,\z)$, are constructed by radially interpolating the Fourier representations of the 
 !latex       ideal-interfaces.
 
 !latex \item The $v$-th volume is bounded by ${\bf x}_{v-1}$ and ${\bf x}_{v}$.
@@ -152,7 +152,7 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
                         Mvol, im, in, halfmm, &
                         iRbc, iZbs, iRbs, iZbc, &
                         NOTstellsym, Lcoordinatesingularity, &
-                        Nt, Nz, isr, trigm, trign, trigwk, &
+                        Nt, Nz, &
                         Rij, Zij, &
                         cosi, sini, &
                         sg, guvij, &
@@ -239,7 +239,7 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
 
 
   call invfft( mn, im(1:mn), in(1:mn), Remn(1:mn,0), Romn(1:mn,0), Zemn(1:mn,0), Zomn(1:mn,0), &
-               Nt, Nz, Rij(1:Ntz,0,0), Zij(1:Ntz,0,0), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz) ) ! maps to real space;
+               Nt, Nz, Rij(1:Ntz,0,0), Zij(1:Ntz,0,0) ) ! maps to real space;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -288,13 +288,13 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
 
   
   call invfft( mn, im(1:mn), in(1:mn),           Remn(1:mn,1),           Romn(1:mn,1),           Zemn(1:mn,1),           Zomn(1:mn,1), &
-               Nt, Nz, Rij(1:Ntz,1,0), Zij(1:Ntz,1,0), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz) ) ! maps to real space;
+               Nt, Nz, Rij(1:Ntz,1,0), Zij(1:Ntz,1,0) ) ! maps to real space;
 
   call invfft( mn, im(1:mn), in(1:mn),  im(1:mn)*Romn(1:mn,0), -im(1:mn)*Remn(1:mn,0),  im(1:mn)*Zomn(1:mn,0), -im(1:mn)*Zemn(1:mn,0), &
-               Nt, Nz, Rij(1:Ntz,2,0), Zij(1:Ntz,2,0), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz) ) ! maps to real space;
+               Nt, Nz, Rij(1:Ntz,2,0), Zij(1:Ntz,2,0) ) ! maps to real space;
 
   call invfft( mn, im(1:mn), in(1:mn), -in(1:mn)*Romn(1:mn,0),  in(1:mn)*Remn(1:mn,0), -in(1:mn)*Zomn(1:mn,0),  in(1:mn)*Zemn(1:mn,0), &
-               Nt, Nz, Rij(1:Ntz,3,0), Zij(1:Ntz,3,0), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz) ) ! maps to real space;
+               Nt, Nz, Rij(1:Ntz,3,0), Zij(1:Ntz,3,0) ) ! maps to real space;
 
 
   do ii = 1, 3 ; Rij(1:Ntz,0,ii) = Rij(1:Ntz,ii,0) ! just to complete workspace arrays; 22 Apr 13;
@@ -423,27 +423,27 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
 
    call invfft( mn, im(1:mn), in(1:mn),&
                    Remn(1:mn,2),                   Romn(1:mn,2),                   Zemn(1:mn,2),                   Zomn(1:mn,2), &
-                Nt, Nz, Rij(1:Ntz,1,1), Zij(1:Ntz,1,1), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz) ) ! maps to real space;
+                Nt, Nz, Rij(1:Ntz,1,1), Zij(1:Ntz,1,1) ) ! maps to real space;
 
    call invfft( mn, im(1:mn), in(1:mn),&
 +         im(1:mn)*Romn(1:mn,1),         -im(1:mn)*Remn(1:mn,1),          im(1:mn)*Zomn(1:mn,1),         -im(1:mn)*Zemn(1:mn,1), &
-Nt, Nz, Rij(1:Ntz,1,2), Zij(1:Ntz,1,2), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz) ) ! maps to real space;
+Nt, Nz, Rij(1:Ntz,1,2), Zij(1:Ntz,1,2) ) ! maps to real space;
 
    call invfft( mn, im(1:mn), in(1:mn),&
 -         in(1:mn)*Romn(1:mn,1),          in(1:mn)*Remn(1:mn,1),         -in(1:mn)*Zomn(1:mn,1),          in(1:mn)*Zemn(1:mn,1), &
-Nt, Nz, Rij(1:Ntz,1,3), Zij(1:Ntz,1,3), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz) ) ! maps to real space;
+Nt, Nz, Rij(1:Ntz,1,3), Zij(1:Ntz,1,3) ) ! maps to real space;
   
    call invfft( mn, im(1:mn), in(1:mn),&
 -im(1:mn)*im(1:mn)*Remn(1:mn,0),-im(1:mn)*im(1:mn)*Romn(1:mn,0),-im(1:mn)*im(1:mn)*Zemn(1:mn,0),-im(1:mn)*im(1:mn)*Zomn(1:mn,0), &
-Nt, Nz, Rij(1:Ntz,2,2), Zij(1:Ntz,2,2), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz) ) ! maps to real space;
+Nt, Nz, Rij(1:Ntz,2,2), Zij(1:Ntz,2,2) ) ! maps to real space;
 
    call invfft( mn, im(1:mn), in(1:mn),&
 +im(1:mn)*in(1:mn)*Remn(1:mn,0), im(1:mn)*in(1:mn)*Romn(1:mn,0), im(1:mn)*in(1:mn)*Zemn(1:mn,0), im(1:mn)*in(1:mn)*Zomn(1:mn,0), &
-Nt, Nz, Rij(1:Ntz,2,3), Zij(1:Ntz,2,3), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz) ) ! maps to real space;
+Nt, Nz, Rij(1:Ntz,2,3), Zij(1:Ntz,2,3) ) ! maps to real space;
 
    call invfft( mn, im(1:mn), in(1:mn),&
 -in(1:mn)*in(1:mn)*Remn(1:mn,0),-in(1:mn)*in(1:mn)*Romn(1:mn,0),-in(1:mn)*in(1:mn)*Zemn(1:mn,0),-in(1:mn)*in(1:mn)*Zomn(1:mn,0), &
-Nt, Nz, Rij(1:Ntz,3,3), Zij(1:Ntz,3,3), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz) ) ! maps to real space;
+Nt, Nz, Rij(1:Ntz,3,3), Zij(1:Ntz,3,3) ) ! maps to real space;
 
    
    do ii = 2, 3

@@ -63,7 +63,7 @@ subroutine sc00aa( lvol, Ntz )
                         Btemn, Bzemn, Btomn, Bzomn, &
                         mn, im, in, regumm, &
                         efmn, ofmn, cfmn, sfmn, evmn, odmn, comn, simn, &
-                        trigm, trign, trigwk, isr, Nt, Nz, &
+                        Nt, Nz, &
                         Ate, Aze, Ato, Azo, &
                         TT, &
                         sg, guvij, Rij, Zij
@@ -137,7 +137,7 @@ subroutine sc00aa( lvol, Ntz )
     
    enddo ! end of do ii; 20 Feb 13;
    
-   call invfft( mn, im, in, efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt(1:Ntz), dAz(1:Ntz), isr, trigm, trign, trigwk )
+   call invfft( mn, im, in, efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt(1:Ntz), dAz(1:Ntz) )
    
    Bt(1:Ntz) = ( - dAz(1:Ntz) * guvij(1:Ntz,2,2,0) + dAt(1:Ntz) * guvij(1:Ntz,2,3,0) ) / sg(1:Ntz,0)
    Bz(1:Ntz) = ( - dAz(1:Ntz) * guvij(1:Ntz,2,3,0) + dAt(1:Ntz) * guvij(1:Ntz,3,3,0) ) / sg(1:Ntz,0)
@@ -146,7 +146,7 @@ subroutine sc00aa( lvol, Ntz )
     
    ifail = 0
    
-   call tfft( Nt, Nz, Bt(1:Ntz), Bz(1:Ntz), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz), &
+   call tfft( Nt, Nz, Bt(1:Ntz), Bz(1:Ntz), &
               mn, im(1:mn), in(1:mn), Btemn(1:mn,innout,lvol), Btomn(1:mn,innout,lvol), Bzemn(1:mn,innout,lvol), Bzomn(1:mn,innout,lvol), ifail )
    
    if( Wsc00aa                    ) then

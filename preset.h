@@ -339,8 +339,8 @@ subroutine preset
 
   if( Igeometry.eq.2 ) then ! standard cylindrical; 04 Dec 14;
    
-   SALLOCATE( djkp, (1:mn,1:mn), 0 ) ! only used in volume; trignometric identities; 04 Dec 14;
-   SALLOCATE( djkm, (1:mn,1:mn), 0 ) ! only used in volume; trignometric identities; 04 Dec 14;
+   SALLOCATE( djkp, (1:mn,1:mn), 0 ) ! only used in volume; trigonometric identities; 04 Dec 14;
+   SALLOCATE( djkm, (1:mn,1:mn), 0 ) ! only used in volume; trigonometric identities; 04 Dec 14;
    
    do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
     do jj = 1, mn ; mj = im(jj) ; nj = in(jj)
@@ -825,10 +825,6 @@ subroutine preset
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  SALLOCATE( trigm , (1:2*Nt) , zero ) ! trignometric factors required for fast Fourier transform;
-  SALLOCATE( trign , (1:2*Nz) , zero )
-  SALLOCATE( trigwk, (1:2*Ntz), zero )
-
   SALLOCATE( ijreal, (1:Ntz), zero ) ! real space grid;
   SALLOCATE( ijimag, (1:Ntz), zero )
   SALLOCATE( jireal, (1:Ntz), zero )
@@ -842,16 +838,9 @@ subroutine preset
   SALLOCATE( cplxin,  (1:Nt,1:Nz), zero )
   SALLOCATE( cplxout, (1:Nt,1:Nz), zero )
 
+  ! Create and save optimal plans for forward and inverse 2D fast Fourier transforms with FFTW.
   planf = fftw_plan_dft_2d(Nt, Nz, cplxin, cplxout, FFTW_FORWARD, FFTW_MEASURE + FFTW_DESTROY_INPUT)
   planb = fftw_plan_dft_2d(Nt, Nz, cplxin, cplxout, FFTW_BACKWARD, FFTW_MEASURE + FFTW_DESTROY_INPUT)
-
-  isr = 'I' ; ifail = 0
-
-  WCALL( preset, C06FUF, ( Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz), ifail ) )
-
-  isr = 'S' ! prepare FFTs; 23 Jan 13;
-
-  FATAL( preset, ifail.ne.0, error constructing Fourier transform )
 
   SALLOCATE( efmn, (1:mne), zero ) ! Fourier harmonics workspace; 24 Apr 13;
   SALLOCATE( ofmn, (1:mne), zero )

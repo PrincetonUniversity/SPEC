@@ -66,7 +66,7 @@ end subroutine gi00ab
 
 !latex \item \verb+tfft+
 
-subroutine tfft( Nt, Nz, ijreal, ijimag, isr, trigm, trign, trigwk, mn, im, in, efmn, ofmn, cfmn, sfmn, ifail )
+subroutine tfft( Nt, Nz, ijreal, ijimag, mn, im, in, efmn, ofmn, cfmn, sfmn, ifail )
 
   use constants
   use inputlist, only : Nfp
@@ -77,8 +77,7 @@ subroutine tfft( Nt, Nz, ijreal, ijimag, isr, trigm, trign, trigwk, mn, im, in, 
   intrinsic aimag
   
   INTEGER   :: Nt, Nz, mn, im(mn), in(mn), Ntz, imn, ifail, mm, nn
-  REAL      :: ijreal(1:Nt*Nz), ijimag(1:Nt*Nz), trigm(2*Nt), trign(2*Nz), trigwk(2*Nt*Nz), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn)
-  CHARACTER :: isr
+  REAL      :: ijreal(1:Nt*Nz), ijimag(1:Nt*Nz), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn)
   
   LOGICAL   :: check=.false.
   INTEGER   :: jj, kk
@@ -170,7 +169,7 @@ end subroutine tfft
 
 !latex \item \verb+invfft+
 
-subroutine invfft( mn , im , in , efmn , ofmn , cfmn , sfmn , Nt , Nz , ijreal , ijimag , isr , trigm , trign , trigwk )
+subroutine invfft( mn , im , in , efmn , ofmn , cfmn , sfmn , Nt , Nz , ijreal , ijimag )
 
   use constants, only : zero, half, one
   use inputlist, only : Nfp
@@ -181,10 +180,8 @@ subroutine invfft( mn , im , in , efmn , ofmn , cfmn , sfmn , Nt , Nz , ijreal ,
   REAL     , intent(in)    :: efmn(mn), ofmn(mn), cfmn(mn), sfmn(mn)
   INTEGER  , intent(in)    :: Nt, Nz
   REAL     , intent(out)   :: ijreal(Nt*Nz), ijimag(Nt*Nz) ! output real space;
-  CHARACTER, intent(inout) :: isr
-  REAL     , intent(inout) :: trigm(2*Nt), trign(2*Nz), trigwk(2*Nt*Nz)
   
-  INTEGER                   :: Ntz, imn, jj, kk, c06fuffail, c06gcffail, mm, nn
+  INTEGER                   :: Ntz, imn, jj, kk, mm, nn
   
   Ntz = Nt*Nz ; ijreal(1:Ntz) = zero ; ijimag(1:Ntz) = zero
 

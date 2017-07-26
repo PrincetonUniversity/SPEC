@@ -77,7 +77,7 @@ subroutine bnorml( mn, Ntz, efmn, ofmn )
                         Rij, Zij, guvij, sg, TT, &
                         NOTstellsym, Lcoordinatesingularity, &
                         im, in, Ate, Aze, Ato, Azo, &
-                        trigwk, trigm, trign, isr, Nt, Nz, cfmn, sfmn, &
+                        Nt, Nz, cfmn, sfmn, &
                         ijreal, ijimag, jireal, jiimag, &
                         globaljk, tetazeta, virtualcasingfactor, gteta, gzeta, Dxyz, Nxyz
   
@@ -128,7 +128,7 @@ subroutine bnorml( mn, Ntz, efmn, ofmn )
    
   enddo ! end of do ii; 20 Feb 13;
   
-  call invfft( mn, im, in, efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt(1:Ntz), dAz(1:Ntz), isr, trigm, trign, trigwk ) ! map to real space;
+  call invfft( mn, im, in, efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt(1:Ntz), dAz(1:Ntz) ) ! map to real space;
 
   ijreal(1:Ntz) = ( dAt(1:Ntz) * guvij(1:Ntz,2,3,0) + dAz(1:Ntz) * guvij(1:Ntz,3,3,0) ) / sg(1:Ntz,0) ! \alpha; 14 Apr 17;
   ijimag(1:Ntz) = ( dAt(1:Ntz) * guvij(1:Ntz,2,2,0) + dAz(1:Ntz) * guvij(1:Ntz,2,3,0) ) / sg(1:Ntz,0) ! \beta ; 14 Apr 17;
@@ -306,7 +306,7 @@ subroutine bnorml( mn, Ntz, efmn, ofmn )
   ijreal(1:Ntz) = ijreal(1:Ntz) * virtualcasingfactor
   ijimag(1:Ntz) = zero
 
-  call tfft( Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz), &
+  call tfft( Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz), &
              mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), ifail ) ! Fourier decompose normal field;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

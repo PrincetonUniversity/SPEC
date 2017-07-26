@@ -36,7 +36,7 @@
 
 !latex \begin{enumerate}
 !latex \item After constructing the required quantities in real space, FFTs provided the required Fourier harmonics, which are returned through global.
-!latex       (The `extended' Fourier resolution is used.)
+!latex       (The ``extended'' Fourier resolution is used.)
 !latex \end{enumerate}
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -60,10 +60,10 @@ subroutine metrix( lvol, lss )
   use allglobal, only : myid, ncpu, cpus, &
                         dBdX, &
                         mn, im, in, mne, ime, ine, &
-                        isr, Nt, Nz, Ntz, trigm, trign, trigwk, efmn, ofmn, cfmn, sfmn, & ! 10 Dec 15;
-                        ijreal, &                                                         ! workspace;
-                        sg, guvij, &                                                      ! calculated in coords;
-                        gvuij, &                                                          ! this is workspace: nowhere used outside of this routine;
+                        Nt, Nz, Ntz, efmn, ofmn, cfmn, sfmn, &   ! 10 Dec 15;
+                        ijreal, &                                ! workspace;
+                        sg, guvij, &                             ! calculated in coords;
+                        gvuij, &                                 ! this is workspace: nowhere used outside of this routine;
                         goomne, goomno, &
                         gssmne, gssmno, &
                         gstmne, gstmno, &
@@ -115,24 +115,24 @@ subroutine metrix( lvol, lss )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   ifail = 0
-  call tfft( Nt, Nz, gvuij(1:Ntz,0,0), ijreal(1:Ntz)   , isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz), &
+  call tfft( Nt, Nz, gvuij(1:Ntz,0,0), ijreal(1:Ntz) , &
              mne, ime(1:mne), ine(1:mne), goomne(1:mne), goomno(1:mne), cfmn(1:mne)    , sfmn(1:mne)    , ifail )
   goomne(0) = zero ; goomno(0) = zero
 
   ifail = 0
-  call tfft( Nt, Nz, gvuij(1:Ntz,1,1), gvuij(1:Ntz,1,2), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz), &
+  call tfft( Nt, Nz, gvuij(1:Ntz,1,1), gvuij(1:Ntz,1,2), &
              mne, ime(1:mne), ine(1:mne), gssmne(1:mne), gssmno(1:mne), gstmne(1:mne), gstmno(1:mne), ifail )
   gssmne(0) = zero ; gssmno(0) = zero
   gstmne(0) = zero ; gstmno(0) = zero
 
   ifail = 0
-  call tfft( Nt, Nz, gvuij(1:Ntz,1,3), gvuij(1:Ntz,2,2), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz), &
+  call tfft( Nt, Nz, gvuij(1:Ntz,1,3), gvuij(1:Ntz,2,2), &
              mne, ime(1:mne), ine(1:mne), gszmne(1:mne), gszmno(1:mne), gttmne(1:mne), gttmno(1:mne), ifail )
   gszmne(0) = zero ; gszmno(0) = zero
   gttmne(0) = zero ; gttmno(0) = zero
 
   ifail = 0
-  call tfft( Nt, Nz, gvuij(1:Ntz,2,3), gvuij(1:Ntz,3,3), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz), &
+  call tfft( Nt, Nz, gvuij(1:Ntz,2,3), gvuij(1:Ntz,3,3), &
              mne, ime(1:mne), ine(1:mne), gtzmne(1:mne), gtzmno(1:mne), gzzmne(1:mne), gzzmno(1:mne), ifail )
   gtzmne(0) = zero ; gtzmno(0) = zero
   gzzmne(0) = zero ; gzzmno(0) = zero

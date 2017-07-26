@@ -959,16 +959,12 @@ module allglobal
 !latex \subsubsection{Fourier Transforms}
 !latex \begin{enumerate}
 
-!latex \item The coordinate geometry and fields are mapped to/from Fourier space and real space using \nag{}{C06FUF}.
+!latex \item The coordinate geometry and fields are mapped to/from Fourier space and real space using FFTW3.
 !latex \item The resolution of the real space grid is given by \type{Nt=Ndiscrete*4*Mpol} and \type{Nz=Ndiscrete*4*Ntor}.
-!latex \item Trigonometric information required for the fast Fourier transforms is saved in \type{trigm(1:2*Nt)}, \type{trign(1:2*Nz)},
-!latex       and \type{trigwk(1:2*Ntz)}, where \type{Ntz=Nt*Nz}.
 
   INTEGER              :: Nt, Nz, Ntz, hNt, hNz ! discrete resolution; Ntz=Nt*Nz shorthand;
   REAL                 :: soNtz ! one / sqrt (one*Ntz); shorthand;
 
-  CHARACTER            :: isr ! required for C06FUF;
-  REAL   , allocatable :: trigm(:), trign(:), trigwk(:) ! these are set in readin and contain trigonometric factors; cannot be changed;
 
 !latex \item Various workspace arrays are allocated. 
 !l tex These include \type{Rij(1:Ntz,0:3,0:3)} and \type{Zij(1:Ntz,0:3,0:3)}, which contain the coordinates in real space and their derivatives;

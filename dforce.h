@@ -136,7 +136,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
                         ijreal, ijimag, jireal, jiimag, &
                         efmn, ofmn, cfmn, sfmn, &
                         evmn, odmn, comn, simn, &
-                        trigm, trign, trigwk, isr, Nt, Nz, &
+                        Nt, Nz, &
                         cosi, sini, & ! FFT workspace;
                         dBdX, &
                         dMA, dMB, dMC, dMD, dME, dMF, dMG, solution, &
@@ -270,7 +270,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 
    SALLOCATE( dMG, (0:NN     ), zero )  
    
-   SALLOCATE( solution, (1:NN,-1:2), zero ) ! this will contain the vector potential from the linear solver and it's derivatives; 01 May 13;
+   SALLOCATE( solution, (1:NN,-1:2), zero ) ! this will contain the vector potential from the linear solver and its derivatives; 01 May 13;
    
    SALLOCATE( MBpsi, (1:NN), zero )
    SALLOCATE( MEpsi, (1:NN), zero )
@@ -481,7 +481,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
       
       enddo ! end of do ideriv = 0, 2; 20 Jun 14;
 
-      call tfft( Nt, Nz, dBB(1:Ntz,1), dBB(1:Ntz,2), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz), & ! derivatives of B^2 wrt mu and dpflux; 02 Sep 14;
+      call tfft( Nt, Nz, dBB(1:Ntz,1), dBB(1:Ntz,2), & ! derivatives of B^2 wrt mu and dpflux; 02 Sep 14;
                  mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), ifail )
          
       ; idoc = 0
@@ -971,7 +971,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 
          endif ! end of if( Igeometry.ge.3 ) ; 08 Nov 13;
 
-         call tfft( Nt, Nz, ijreal(1:Ntz), dII(1:Ntz), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz), & ! recall that ijreal contains pressure term;
+         call tfft( Nt, Nz, ijreal(1:Ntz), dII(1:Ntz), & ! recall that ijreal contains pressure term;
                     mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), ifail )
          
 !        if( Igeometry.eq.3 .and. vvol.eq.1 ) then
@@ -979,7 +979,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 !                                           ii      , irz      , issym      , innout      , iocons      , dLL(1:12)
 !        endif
 
-         call tfft( Nt, Nz, dPP(1:Ntz)   , dLL(1:Ntz), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz), & ! recall that ijreal is probably just a dummy;
+         call tfft( Nt, Nz, dPP(1:Ntz)   , dLL(1:Ntz), & ! recall that ijreal is probably just a dummy;
                     mn, im(1:mn), in(1:mn), evmn(1:mn), odmn(1:mn), comn(1:mn), simn(1:mn), ifail )          ! evmn and odmn are available as workspace;
 
 
