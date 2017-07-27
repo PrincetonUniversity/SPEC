@@ -898,7 +898,7 @@ module allglobal
 
 !latex \begin{enumerate} 
 
-  INTEGER              :: mn  ! total number of Fourier harmonics for coordinates/fields; calculated from Mpol,Ntor in readin;
+  INTEGER              :: mn, mnsqd  ! total number of Fourier harmonics for coordinates/fields; calculated from Mpol,Ntor in readin;
   INTEGER, allocatable :: im(:), in(:) ! Fourier modes; set in readin;
 
   REAL,    allocatable :: halfmm(:), regumm(:)
@@ -1001,6 +1001,8 @@ module allglobal
   REAL   , allocatable :: gttmne(:), gttmno(:) ! described in preset;
   REAL   , allocatable :: gtzmne(:), gtzmno(:) ! described in preset;
   REAL   , allocatable :: gzzmne(:), gzzmno(:) ! described in preset;
+
+  INTEGER, allocatable :: ilabel(:), jlabel(:), llabel(:,:), plabel(:,:) ! allocated/calculated in preset; used in ma00aa; 27 Jul 17;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1866,7 +1868,7 @@ subroutine readin
 !latex \item The integer arrays \type{im(1:mn)} and \type{in(1:mn)} contain the $m_j$ and $n_j$.
 !latex \end{enumerate}
   
-  mn = 1 + Ntor +  Mpol * ( 2 *  Ntor + 1 ) ! Fourier resolution of interface geometry & vector potential;
+  mn = 1 + Ntor +  Mpol * ( 2 *  Ntor + 1 ) ; mnsqd = mn * mn ! Fourier resolution of interface geometry & vector potential;
   
   SALLOCATE( im, (1:mn), 0 )
   SALLOCATE( in, (1:mn), 0 )

@@ -31,7 +31,7 @@ subroutine preset
 
   LOCALS
   
-  INTEGER   :: innout, idof, jk, ll, ii, ifail, ideriv, vvol, mi, ni, mj, nj, mk, nk, mimj, ninj, mkmj, nknj, jj, kk, lvol
+  INTEGER   :: innout, idof, jk, ll, pp, ii, jj, ij, ifail, ideriv, vvol, mi, ni, mj, nj, mk, nk, mimj, ninj, mkmj, nknj, kk, lvol
   INTEGER   :: itype, lquad, id01bcf, maxIquad, Mrad, jquad, Lcurvature
   REAL      :: teta, zeta, arg, lss, aa, bb, cc, dd, cszeta(0:1)
   
@@ -501,8 +501,34 @@ subroutine preset
     enddo
     
    enddo ! end of do jquad = 1, lquad;
+
+  enddo ! end of do vvol;  7 Mar 13; 
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+  SALLOCATE( llabel, (1:(Mrad+1)*(Mrad+1),1:Mvol), 0 ) ! 27 Jul 17;
+  SALLOCATE( plabel, (1:(Mrad+1)*(Mrad+1),1:Mvol), 0 ) ! 27 Jul 17;
+  
+  do vvol = 1, Mvol 
+   
+   lp = 0
+   do ll = 0, Lrad(vvol)
+    do pp = 0, Lrad(vvol) ; lp = lp + 1 ; llabel(lp,vvol) = ll ; plabel(lp,vvol) = pp ! used in ma00aa; 27 Jul 17;
+    enddo
+   enddo
    
   enddo ! end of do vvol;  7 Mar 13; 
+  
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+  SALLOCATE( ilabel, (1:mnsqd), 0 )
+  SALLOCATE( jlabel, (1:mnsqd), 0 )
+
+  ij = 0
+  do ii = 1, mn
+   do jj = 1, mn ; ij = ij + 1 ; ilabel(ij) = ii ; jlabel(ij) = jj ! used in ma00aa; 27 Jul 17;
+   enddo
+  enddo
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
  
