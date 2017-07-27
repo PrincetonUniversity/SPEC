@@ -66,6 +66,12 @@ module numerical
   REAL            :: machprec, vsmall, small, sqrtmachprec ! these are assigned below in readin via a call to NAG routine;
   REAL, parameter :: logtolerance = 1.0e-32 ! this is used to avoid taking alog10(zero); see e.g. dforce; 19 Jul 16;
 
+contains
+  REAL FUNCTION myprec !Duplicates NAG routine X02AJF (machine precision)
+    implicit none
+    intrinsic EPSILON
+    myprec = 0.5*EPSILON(1.0d0)
+  END FUNCTION myprec
 end module numerical
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -1361,12 +1367,10 @@ subroutine readin
 
   LOGICAL              :: Lspexist, Lchangeangle
   INTEGER              :: vvol, mm, nn, nb, imn, ix, ii, jj, ij, kk, mj, nj, mk, nk, ip, lMpol, lNtor, X02BBF, iargc, iarg, numargs, mi, ni, lvol
-  REAL                 :: X02AJF, X01AAF, xx, G05CAF, toroidalflux
+  REAL                 :: xx, toroidalflux
   REAL,    allocatable :: RZRZ(:,:) ! local array used for reading interface Fourier harmonics from file;
   
   CHARACTER            :: ldate*8, ltime*10, arg*100
-  
-  external             :: X02BBF
   
   BEGIN(readin)
   
@@ -1375,12 +1379,12 @@ subroutine readin
 !latex \subsubsection{\type{machprec}, \type{vsmall}, \type{small}, \type{sqrtmachprec} : machine precision}
 
 !latex \begin{enumerate}
-!latex \item The machine precision is determined using \nag{www.nag.co.uk/numeric/FL/manual19/html/X02_fl19.html}{X02AJF}.
+!latex \item The machine precision is determined using the Fortran 90 intrinsic function EPSILON.
 !latex \end{enumerate}
 
   cput = GETTIME
   
-  machprec = X02AJF() ; vsmall = 100*machprec ; small = 100*vsmall ; sqrtmachprec = sqrt(machprec) ! returns machine precision;
+  machprec = myprec() ; vsmall = 100*machprec ; small = 100*vsmall ; sqrtmachprec = sqrt(machprec) ! returns machine precision;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
