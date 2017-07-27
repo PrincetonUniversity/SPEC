@@ -28,8 +28,8 @@
  FC=mpif90
 
  # Intel Defaults
- RFLAGS=-r8 -mcmodel=large -O2 -m64 -unroll0 -fno-alias -ip -traceback 
- DFLAGS=-r8 -check bounds -check format -check output_conversion -check pointers -check uninit -debug full -D DEBUG
+ RFLAGS=-O3 -r8 -vec-report0 -fp-model strict -ip
+ DFLAGS=-g  -r8 -traceback   -fp-model strict -check bounds -check format -check output_conversion -check pointers -check uninit -debug full -D DEBUG
  NAG=-L$(NAG_ROOT)/lib -lnag_nag 
  NETCDF=-L$(NETCDFHOME)/lib -lnetcdf
  HDF5compile=-I$(HDF5_HOME)/include
@@ -43,15 +43,15 @@ endif
 
 ifeq ($(CC),lff95)
  # LF95 SAL
- RFLAGS=--ap --dbl -O -I.
- DFLAGS=--dbl --ap -g -Cpp -DDEBUG
+ RFLAGS=-O2 --ap --dbl
+ DFLAGS=-g  --ap --dbl -Cpp -DDEBUG
  NAG=-L$(NAG_ROOT) -lnag -L$(LAPACKHOME) -llapack -L$(BLASHOME) -lblas
 endif
 
 ifeq ($(CC),intel_prof)
  # LF95 SAL
- RFLAGS=-r8 -O2 -ip -p
- DFLAGS=-r8 -g -traceback -check bounds -check format -check output_conversion -check pointers -check uninit -debug full -D DEBUG
+ RFLAGS=-O2 -r8 -vec-report0 -fp-model strict -ip -p 
+ DFLAGS=-g -r8 -traceback -fp-model strict -check bounds -check format -check output_conversion -check pointers -check uninit -debug full -D DEBUG
  NAG=-L$(NAG_ROOT)/lib -lnag_nag 
 endif
 
