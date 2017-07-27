@@ -883,7 +883,8 @@ module allglobal
 
   LOGICAL              :: YESstellsym, NOTstellsym ! internal shorthand copies of Istellsym, which is an integer input; 16 Jan 13;
 
-  REAL   , allocatable :: cheby(:,:) ! local workspace;
+  REAL   , allocatable :: cheby(:,:) ! (local) workspace; used in bfield, jo00aa, . . .
+  REAL   , allocatable :: TD(:,:,:,:) ! (global) evaluation of the Chebyshev polynomials on Gaussian abscissae; computed in preset; used in ma00aa;
   
   REAL   , allocatable :: TT(:,:,:) ! derivatives of Chebyshev polynomials at the inner and outer interfaces;
 
