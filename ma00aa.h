@@ -115,7 +115,8 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   
   INTEGER             :: jquad, ll, pp, lp, uv, ii, jj, ij
   
-  INTEGER             :: kk, kd, kka, kks, kda, kds
+  INTEGER             :: kk, kd, kka, kks ! 27 Jul 17;
+  REAL                :: kda, kds ! 27 Jul 17;
   
   REAL                :: lss, jthweight, fee, feo, foe, foo, Tl, Dl, Tp, Dp, TlTp, TlDp, DlTp, DlDp
 
@@ -195,51 +196,46 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
     
     do ij = 1, mnsqd ; ii = ilabel(ij) ; jj = jlabel(ij) ! 27 Jul 17;
      
-     kks = kijs(ii,jj,0) ; kds = kijs(ii,jj,1) 
-     kka = kija(ii,jj,0) ; kda = kija(ii,jj,1) 
+     kks = kijs(ii,jj,0) ; kds = jthweight / kijs(ii,jj,1) ! 27 Jul 17;
+     kka = kija(ii,jj,0) ; kda = jthweight / kija(ii,jj,1) ! 27 Jul 17;
      
-     foocc = jthweight * ( + goomne(kks) / abs(kds) + goomne(kka) / abs(kda) )
-     foocs = jthweight * ( - goomno(kks) /     kds  + goomno(kka) /     kda  )
-     foosc = jthweight * ( + goomno(kks) /     kds  + goomno(kka) /     kda  )
-     fooss = jthweight * ( + goomne(kks) / abs(kds) - goomne(kka) / abs(kda) )
+     foocc = + goomne(kks) * abs(kds) + goomne(kka) * abs(kda)
+     foocs = - goomno(kks) *     kds  + goomno(kka) *     kda 
+     foosc = + goomno(kks) *     kds  + goomno(kka) *     kda 
+     fooss = + goomne(kks) * abs(kds) - goomne(kka) * abs(kda)
      
-     fsscc = jthweight * ( + gssmne(kks) / abs(kds) + gssmne(kka) / abs(kda) )
-     fsscs = jthweight * ( - gssmno(kks) /     kds  + gssmno(kka) /     kda  )
-     fsssc = jthweight * ( + gssmno(kks) /     kds  + gssmno(kka) /     kda  )
-     fssss = jthweight * ( + gssmne(kks) / abs(kds) - gssmne(kka) / abs(kda) )
+     fsscc = + gssmne(kks) * abs(kds) + gssmne(kka) * abs(kda)
+     fsscs = - gssmno(kks) *     kds  + gssmno(kka) *     kda 
+     fsssc = + gssmno(kks) *     kds  + gssmno(kka) *     kda 
+     fssss = + gssmne(kks) * abs(kds) - gssmne(kka) * abs(kda)
      
-     fstcc = jthweight * ( + gstmne(kks) / abs(kds) + gstmne(kka) / abs(kda) )
-     fstcs = jthweight * ( - gstmno(kks) /     kds  + gstmno(kka) /     kda  )
-     fstsc = jthweight * ( + gstmno(kks) /     kds  + gstmno(kka) /     kda  )
-     fstss = jthweight * ( + gstmne(kks) / abs(kds) - gstmne(kka) / abs(kda) )
+     fstcc = + gstmne(kks) * abs(kds) + gstmne(kka) * abs(kda)
+     fstcs = - gstmno(kks) *     kds  + gstmno(kka) *     kda 
+     fstsc = + gstmno(kks) *     kds  + gstmno(kka) *     kda 
+     fstss = + gstmne(kks) * abs(kds) - gstmne(kka) * abs(kda)
      
-     fszcc = jthweight * ( + gszmne(kks) / abs(kds) + gszmne(kka) / abs(kda) )
-     fszcs = jthweight * ( - gszmno(kks) /     kds  + gszmno(kka) /     kda  )
-     fszsc = jthweight * ( + gszmno(kks) /     kds  + gszmno(kka) /     kda  )
-     fszss = jthweight * ( + gszmne(kks) / abs(kds) - gszmne(kka) / abs(kda) )
+     fszcc = + gszmne(kks) * abs(kds) + gszmne(kka) * abs(kda)
+     fszcs = - gszmno(kks) *     kds  + gszmno(kka) *     kda 
+     fszsc = + gszmno(kks) *     kds  + gszmno(kka) *     kda 
+     fszss = + gszmne(kks) * abs(kds) - gszmne(kka) * abs(kda)
      
-     fttcc = jthweight * ( + gttmne(kks) / abs(kds) + gttmne(kka) / abs(kda) )
-     fttcs = jthweight * ( - gttmno(kks) /     kds  + gttmno(kka) /     kda  )
-     fttsc = jthweight * ( + gttmno(kks) /     kds  + gttmno(kka) /     kda  )
-     fttss = jthweight * ( + gttmne(kks) / abs(kds) - gttmne(kka) / abs(kda) )
+     fttcc = + gttmne(kks) * abs(kds) + gttmne(kka) * abs(kda)
+     fttcs = - gttmno(kks) *     kds  + gttmno(kka) *     kda 
+     fttsc = + gttmno(kks) *     kds  + gttmno(kka) *     kda 
+     fttss = + gttmne(kks) * abs(kds) - gttmne(kka) * abs(kda)
      
-     ftzcc = jthweight * ( + gtzmne(kks) / abs(kds) + gtzmne(kka) / abs(kda) )
-     ftzcs = jthweight * ( - gtzmno(kks) /     kds  + gtzmno(kka) /     kda  )
-     ftzsc = jthweight * ( + gtzmno(kks) /     kds  + gtzmno(kka) /     kda  )
-     ftzss = jthweight * ( + gtzmne(kks) / abs(kds) - gtzmne(kka) / abs(kda) )
+     ftzcc = + gtzmne(kks) * abs(kds) + gtzmne(kka) * abs(kda)
+     ftzcs = - gtzmno(kks) *     kds  + gtzmno(kka) *     kda 
+     ftzsc = + gtzmno(kks) *     kds  + gtzmno(kka) *     kda 
+     ftzss = + gtzmne(kks) * abs(kds) - gtzmne(kka) * abs(kda)
      
-     fzzcc = jthweight * ( + gzzmne(kks) / abs(kds) + gzzmne(kka) / abs(kda) )
-     fzzcs = jthweight * ( - gzzmno(kks) /     kds  + gzzmno(kka) /     kda  )
-     fzzsc = jthweight * ( + gzzmno(kks) /     kds  + gzzmno(kka) /     kda  )
-     fzzss = jthweight * ( + gzzmne(kks) / abs(kds) - gzzmne(kka) / abs(kda) )
+     fzzcc = + gzzmne(kks) * abs(kds) + gzzmne(kka) * abs(kda)
+     fzzcs = - gzzmno(kks) *     kds  + gzzmno(kka) *     kda 
+     fzzsc = + gzzmno(kks) *     kds  + gzzmno(kka) *     kda 
+     fzzss = + gzzmne(kks) * abs(kds) - gzzmne(kka) * abs(kda)
      
-#ifdef LOOP
      do lp = 1, (1+lrad)*(1+lrad) ; ll = llabel(lp,lvol) ; pp = plabel(lp,lvol) ! 27 Jul 17;
-#else
-      do ll = 0, lrad
-       do pp = 0, lrad
-#endif
-
+      
       Tl = sbarhim(jquad,ii) *                                      TD(ll,0,jquad,lvol)
       Dl = sbarhim(jquad,ii) * ( regumm(ii) * halfoversbar(jquad) * TD(ll,0,jquad,lvol) + TD(ll,1,jquad,lvol) )
       
@@ -286,12 +282,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
       DDzzsc( ll, pp, ii, jj ) = DDzzsc( ll, pp, ii, jj ) + DlDp * fzzsc
       DDzzss( ll, pp, ii, jj ) = DDzzss( ll, pp, ii, jj ) + DlDp * fzzss
      
-#ifdef LOOP 
      enddo ! end of do lp ; 08 Feb 16;
-#else
-     enddo ! end of do lp ; 08 Feb 16;
-     enddo ! end of do lp ; 08 Feb 16;
-#endif
 
     enddo ! end of do ij ; 08 Feb 16;
 
@@ -309,55 +300,47 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
     
     WCALL( ma00aa, metrix,( lvol, lss ) ) ! compute metric elements; 16 Jan 13;
    
-    do ij = 1, mnsqd ! 27 Jul 17;
+    do ij = 1, mnsqd ; ii = ilabel(ij) ; jj = jlabel(ij) ! 27 Jul 17;
      
-     ii = ilabel(ij) ; jj = jlabel(ij) ! 27 Jul 17;
+     kks = kijs(ii,jj,0) ; kds = jthweight / kijs(ii,jj,1) ! SRH; 27 Jul 17;
+     kka = kija(ii,jj,0) ; kda = jthweight / kija(ii,jj,1) ! SRH; 27 Jul 17;
      
-     kks = kijs(ii,jj,0) ; kds = kijs(ii,jj,1) 
-     kka = kija(ii,jj,0) ; kda = kija(ii,jj,1) 
+     foocc = + goomne(kks) * abs(kds) + goomne(kka) * abs(kda)
+     foocs = - goomno(kks) *     kds  + goomno(kka) *     kda 
+     foosc = + goomno(kks) *     kds  + goomno(kka) *     kda 
+     fooss = + goomne(kks) * abs(kds) - goomne(kka) * abs(kda)
      
-     foocc = jthweight * ( + goomne(kks) / abs(kds) + goomne(kka) / abs(kda) )
-     foocs = jthweight * ( - goomno(kks) /     kds  + goomno(kka) /     kda  )
-     foosc = jthweight * ( + goomno(kks) /     kds  + goomno(kka) /     kda  )
-     fooss = jthweight * ( + goomne(kks) / abs(kds) - goomne(kka) / abs(kda) )
+     fsscc = + gssmne(kks) * abs(kds) + gssmne(kka) * abs(kda)
+     fsscs = - gssmno(kks) *     kds  + gssmno(kka) *     kda 
+     fsssc = + gssmno(kks) *     kds  + gssmno(kka) *     kda 
+     fssss = + gssmne(kks) * abs(kds) - gssmne(kka) * abs(kda)
      
-     fsscc = jthweight * ( + gssmne(kks) / abs(kds) + gssmne(kka) / abs(kda) )
-     fsscs = jthweight * ( - gssmno(kks) /     kds  + gssmno(kka) /     kda  )
-     fsssc = jthweight * ( + gssmno(kks) /     kds  + gssmno(kka) /     kda  )
-     fssss = jthweight * ( + gssmne(kks) / abs(kds) - gssmne(kka) / abs(kda) )
+     fstcc = + gstmne(kks) * abs(kds) + gstmne(kka) * abs(kda)
+     fstcs = - gstmno(kks) *     kds  + gstmno(kka) *     kda 
+     fstsc = + gstmno(kks) *     kds  + gstmno(kka) *     kda 
+     fstss = + gstmne(kks) * abs(kds) - gstmne(kka) * abs(kda)
      
-     fstcc = jthweight * ( + gstmne(kks) / abs(kds) + gstmne(kka) / abs(kda) )
-     fstcs = jthweight * ( - gstmno(kks) /     kds  + gstmno(kka) /     kda  )
-     fstsc = jthweight * ( + gstmno(kks) /     kds  + gstmno(kka) /     kda  )
-     fstss = jthweight * ( + gstmne(kks) / abs(kds) - gstmne(kka) / abs(kda) )
+     fszcc = + gszmne(kks) * abs(kds) + gszmne(kka) * abs(kda)
+     fszcs = - gszmno(kks) *     kds  + gszmno(kka) *     kda 
+     fszsc = + gszmno(kks) *     kds  + gszmno(kka) *     kda 
+     fszss = + gszmne(kks) * abs(kds) - gszmne(kka) * abs(kda)
      
-     fszcc = jthweight * ( + gszmne(kks) / abs(kds) + gszmne(kka) / abs(kda) )
-     fszcs = jthweight * ( - gszmno(kks) /     kds  + gszmno(kka) /     kda  )
-     fszsc = jthweight * ( + gszmno(kks) /     kds  + gszmno(kka) /     kda  )
-     fszss = jthweight * ( + gszmne(kks) / abs(kds) - gszmne(kka) / abs(kda) )
+     fttcc = + gttmne(kks) * abs(kds) + gttmne(kka) * abs(kda)
+     fttcs = - gttmno(kks) *     kds  + gttmno(kka) *     kda 
+     fttsc = + gttmno(kks) *     kds  + gttmno(kka) *     kda 
+     fttss = + gttmne(kks) * abs(kds) - gttmne(kka) * abs(kda)
      
-     fttcc = jthweight * ( + gttmne(kks) / abs(kds) + gttmne(kka) / abs(kda) )
-     fttcs = jthweight * ( - gttmno(kks) /     kds  + gttmno(kka) /     kda  )
-     fttsc = jthweight * ( + gttmno(kks) /     kds  + gttmno(kka) /     kda  )
-     fttss = jthweight * ( + gttmne(kks) / abs(kds) - gttmne(kka) / abs(kda) )
+     ftzcc = + gtzmne(kks) * abs(kds) + gtzmne(kka) * abs(kda)
+     ftzcs = - gtzmno(kks) *     kds  + gtzmno(kka) *     kda 
+     ftzsc = + gtzmno(kks) *     kds  + gtzmno(kka) *     kda 
+     ftzss = + gtzmne(kks) * abs(kds) - gtzmne(kka) * abs(kda)
      
-     ftzcc = jthweight * ( + gtzmne(kks) / abs(kds) + gtzmne(kka) / abs(kda) )
-     ftzcs = jthweight * ( - gtzmno(kks) /     kds  + gtzmno(kka) /     kda  )
-     ftzsc = jthweight * ( + gtzmno(kks) /     kds  + gtzmno(kka) /     kda  )
-     ftzss = jthweight * ( + gtzmne(kks) / abs(kds) - gtzmne(kka) / abs(kda) )
+     fzzcc = + gzzmne(kks) * abs(kds) + gzzmne(kka) * abs(kda)
+     fzzcs = - gzzmno(kks) *     kds  + gzzmno(kka) *     kda 
+     fzzsc = + gzzmno(kks) *     kds  + gzzmno(kka) *     kda 
+     fzzss = + gzzmne(kks) * abs(kds) - gzzmne(kka) * abs(kda)
      
-     fzzcc = jthweight * ( + gzzmne(kks) / abs(kds) + gzzmne(kka) / abs(kda) )
-     fzzcs = jthweight * ( - gzzmno(kks) /     kds  + gzzmno(kka) /     kda  )
-     fzzsc = jthweight * ( + gzzmno(kks) /     kds  + gzzmno(kka) /     kda  )
-     fzzss = jthweight * ( + gzzmne(kks) / abs(kds) - gzzmne(kka) / abs(kda) )
-     
-#ifdef LOOP
      do lp = 1, (1+lrad)*(1+lrad) ; ll = llabel(lp,lvol) ; pp = plabel(lp,lvol) ! 27 Jul 17;
-     !write(ounit,'("ma00aa : " 10x " : lp ="i6" ; ll ="i3" ; pp ="i3" ;")') lp, ll, pp ; pause
-#else
-      do ll = 0, lrad
-       do pp = 0, lrad
-#endif
       
       Tl = TD(ll,0,jquad,lvol)
       Dl = TD(ll,1,jquad,lvol)
@@ -405,12 +388,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
       DDzzsc( ll, pp, ii, jj ) = DDzzsc( ll, pp, ii, jj ) + DlDp * fzzsc
       DDzzss( ll, pp, ii, jj ) = DDzzss( ll, pp, ii, jj ) + DlDp * fzzss
 
-#ifdef LOOP      
      enddo ! end of do lp; 27 Jul 17;
-#else
-     enddo ! end of do lp; 27 Jul 17;
-     enddo ! end of do lp; 27 Jul 17;
-#endif
 
     enddo ! end of do ij; 27 Jul 17;
 

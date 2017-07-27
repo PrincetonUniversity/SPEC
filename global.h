@@ -1002,7 +1002,9 @@ module allglobal
   REAL   , allocatable :: gtzmne(:), gtzmno(:) ! described in preset;
   REAL   , allocatable :: gzzmne(:), gzzmno(:) ! described in preset;
 
-  INTEGER, allocatable :: ilabel(:), jlabel(:), llabel(:,:), plabel(:,:) ! allocated/calculated in preset; used in ma00aa; 27 Jul 17;
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  INTEGER, allocatable :: ilabel(:), jlabel(:), llabel(:,:), plabel(:,:) ! allocated/calculated in preset; used in ma00aa; SRH; 27 Jul 17;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
