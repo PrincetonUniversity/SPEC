@@ -417,7 +417,7 @@ subroutine preset
 !latex \item (Note that the quantities required for \link{ma00aa} are for fixed $s$, and so these quantities should be precomputed.)
 !latex \end{enumerate}
 
-  SALLOCATE( cheby, (0:Mrad,0:2), zero )
+  SALLOCATE( cheby    , (0:Mrad,0:2         ), zero ) ! 27 Jul 17;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -460,6 +460,8 @@ subroutine preset
   SALLOCATE( gaussianweight   , (1:maxIquad,1:Mvol), zero ) ! perhaps it would be neater to make this a structure; 26 Jan 16;
   SALLOCATE( gaussianabscissae, (1:maxIquad,1:Mvol), zero )
 
+  SALLOCATE( TD, (0:Mrad,0:1,1:maxIquad,1:Mvol), zero ) ! only used in ma00aa; 27 Jul 17;
+
   do vvol = 1, Mvol
    
    itype = 0 ; aa = -one ; bb = +one ; cc = zero ; dd = zero
@@ -488,18 +490,17 @@ subroutine preset
 1000 format("preset : ",f10.2," : myid=",i3," ; lvol=",i3," ; id01bcf=",i5," ; "a15" ; abscissae ="99f09.05)
 1001 format("preset : ", 10x ," :      "3x"        "3x"           "3x"   "15x" ; weights   ="99f09.05)
       
-!  do jquad = 1, lquad ! loop over radial sub-sub-grid (numerical quadrature);!
-!
-!   lss = gaussianabscissae(jquad,vvol)!!
-!
-!   gchebyshev(0,0:1,jquad,vvol) = (/ one, zero /) ! Chebyshev initialization; 16 Jan 13;
-!   gchebyshev(1,0:1,jquad,vvol) = (/ lss,  one /) ! Chebyshev initialization; 16 Jan 13;   
-!   do ll = 2, Lrad(vvol)
-!    gchebyshev(ll,0:1,jquad,vvol) = &
-! (/ two * lss * gchebyshev(ll-1,0,jquad,vvol)                                             - gchebyshev(ll-2,0,jquad,vvol) , &
-!    two       * gchebyshev(ll-1,0,jquad,vvol) + two * lss * gchebyshev(ll-1,1,jquad,vvol) - gchebyshev(ll-2,1,jquad,vvol) /)
-!   enddo
-!  enddo
+   do jquad = 1, lquad ! loop over radial sub-sub-grid (numerical quadrature); ! 27 Jul 17;
+    
+    lss = gaussianabscissae(jquad,vvol) ! 27 Jul 17;
+    
+    ;                     ; TD( 0,0:1,jquad,vvol) = (/ one, zero /) ! Chebyshev initialization; 16 Jan 13;   
+    ;                     ; TD( 1,0:1,jquad,vvol) = (/ lss,  one /) ! 
+    do ll = 2, Lrad(vvol) ; TD(ll,0:1,jquad,vvol) = (/ two * lss * TD(ll-1,0,jquad,vvol)                                     - TD(ll-2,0,jquad,vvol) , &
+                                                       two       * TD(ll-1,0,jquad,vvol) + two * lss * TD(ll-1,1,jquad,vvol) - TD(ll-2,1,jquad,vvol) /)
+    enddo
+    
+   enddo ! end of do jquad = 1, lquad;
    
   enddo ! end of do vvol;  7 Mar 13; 
   

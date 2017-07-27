@@ -103,7 +103,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
                         gttmne, gttmno, &
                         gtzmne, gtzmno, &
                         gzzmne, gzzmno, &
-                        cheby, &
+                        TD, cheby, &
                         Lcoordinatesingularity, regumm, &
                         pi2pi2nfp, pi2pi2nfphalf
   
@@ -113,7 +113,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   
   INTEGER, intent(in) :: lquad, mn, lvol, lrad
   
-  INTEGER             :: jquad, ll, pp, uv, ii, jj, io
+  INTEGER             :: jquad, ll, pp, uv, ii, jj, ij
   
   INTEGER             :: kk, kd, kka, kks, kda, kds
   
@@ -191,10 +191,15 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
     
     lss = gaussianabscissae(jquad,lvol) ; jthweight = gaussianweight(jquad,lvol)
     
-    ;                 cheby( 0,0:1) = (/ one                                       , zero                                                            /)
-    ;                 cheby( 1,0:1) = (/ lss                                       , one                                                             /)
-    do ll = 2, lrad ; cheby(ll,0:1) = (/ two * lss * cheby(ll-1,0) - cheby(ll-2,0) , two * cheby(ll-1,0) + two * lss * cheby(ll-1,1) - cheby(ll-2,1) /)
-    enddo
+!    ;                 cheby( 0,0:1) = (/ one                                       , zero                                                            /)
+!    ;                 cheby( 1,0:1) = (/ lss                                       , one                                                             /)
+!    do ll = 2, lrad ; cheby(ll,0:1) = (/ two * lss * cheby(ll-1,0) - cheby(ll-2,0) , two * cheby(ll-1,0) + two * lss * cheby(ll-1,1) - cheby(ll-2,1) /)
+!    enddo
+
+!    do ll = 0, lrad ! 27 Jul 17;
+!     FATAL( ma00aa, abs(cheby(ll,0)-TD(ll,0,jquad,lvol)).gt.vsmall, error ) ! 27 Jul 17;
+!     FATAL( ma00aa, abs(cheby(ll,1)-TD(ll,1,jquad,lvol)).gt.vsmall, error ) ! 27 Jul 17;
+!    enddo ! 27 Jul 17;
     
     WCALL( ma00aa, metrix,( lvol, lss ) ) ! compute metric elements; 16 Jan 13;
     
@@ -242,13 +247,13 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
       
       do ll = 0, lrad
        
-       Tl = sbarhim(jquad,ii) *                                      cheby(ll,0)                 ! this is the only difference for Lcoordinatesingularity;
-       Dl = sbarhim(jquad,ii) * ( regumm(ii) * halfoversbar(jquad) * cheby(ll,0) + cheby(ll,1) ) ! this is the only difference for Lcoordinatesingularity;
+       Tl = sbarhim(jquad,ii) *                                      TD(ll,0,jquad,lvol)
+       Dl = sbarhim(jquad,ii) * ( regumm(ii) * halfoversbar(jquad) * TD(ll,0,jquad,lvol) + TD(ll,1,jquad,lvol) )
        
        do pp = 0, lrad
           
-        Tp = sbarhim(jquad,jj) *                                      cheby(pp,0)                 ! this is the only difference for Lcoordinatesingularity;
-        Dp = sbarhim(jquad,jj) * ( regumm(jj) * halfoversbar(jquad) * cheby(pp,0) + cheby(pp,1) ) ! this is the only difference for Lcoordinatesingularity;
+        Tp = sbarhim(jquad,jj) *                                      TD(pp,0,jquad,lvol)
+        Dp = sbarhim(jquad,jj) * ( regumm(jj) * halfoversbar(jquad) * TD(pp,0,jquad,lvol) + TD(pp,1,jquad,lvol) )
         
         TlTp = Tl * Tp
         TlDp = Tl * Dp
@@ -310,17 +315,31 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
     
     lss = gaussianabscissae(jquad,lvol) ; jthweight = gaussianweight(jquad,lvol)
     
-    ;                 cheby( 0,0:1) = (/ one                                       , zero                                                            /)
-    ;                 cheby( 1,0:1) = (/ lss                                       , one                                                             /)
-    do ll = 2, lrad ; cheby(ll,0:1) = (/ two * lss * cheby(ll-1,0) - cheby(ll-2,0) , two * cheby(ll-1,0) + two * lss * cheby(ll-1,1) - cheby(ll-2,1) /)
-    enddo
+!    ;                 cheby( 0,0:1) = (/ one                                       , zero                                                            /)
+!    ;                 cheby( 1,0:1) = (/ lss                                       , one                                                             /)
+!    do ll = 2, lrad ; cheby(ll,0:1) = (/ two * lss * cheby(ll-1,0) - cheby(ll-2,0) , two * cheby(ll-1,0) + two * lss * cheby(ll-1,1) - cheby(ll-2,1) /)
+!    enddo
+    
+!    do ll = 0, lrad ! 27 Jul 17;
+!     FATAL( ma00aa, abs(cheby(ll,0)-TD(ll,0,jquad,lvol)).gt.vsmall, error ) ! 27 Jul 17;
+!     FATAL( ma00aa, abs(cheby(ll,1)-TD(ll,1,jquad,lvol)).gt.vsmall, error ) ! 27 Jul 17;
+!    enddo ! 27 Jul 17;
     
     WCALL( ma00aa, metrix,( lvol, lss ) ) ! compute metric elements; 16 Jan 13;
    
-    do ii = 1, mn
+   !do ii = 1, mn
 
-     do jj = 1, mn
+    !do jj = 1, mn
       
+      do ij = 1, mn * mn
+
+       ii = ( ij / mn ) + 1
+
+       jj = ij - (ii-1) * mn
+
+       write(ounit,'("ma00aa : " 10x " : ij ="i6" ; mn ="i6" ; ii ="i3" ; jj ="i3" ;")') ij, mn, ii, jj
+       pause
+
       kks = kijs(ii,jj,0) ; kds = kijs(ii,jj,1) 
       kka = kija(ii,jj,0) ; kda = kija(ii,jj,1) 
       
@@ -361,13 +380,13 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
       
       do ll = 0, lrad
        
-       Tl = cheby(ll,0)
-       Dl = cheby(ll,1)
+       Tl = TD(ll,0,jquad,lvol)
+       Dl = TD(ll,1,jquad,lvol)
        
        do pp = 0, lrad
         
-        Tp = cheby(pp,0)
-        Dp = cheby(pp,1)
+        Tp = TD(pp,0,jquad,lvol)
+        Dp = TD(pp,1,jquad,lvol)
         
         TlTp = Tl * Tp
         TlDp = Tl * Dp
@@ -413,8 +432,10 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
        
       enddo ! end of do ll;  1 Feb 13;
       
-     enddo ! end of do jj;  1 Feb 13;
-    enddo ! end of do ii;  1 Feb 13;
+    enddo ! end of do ij;  1 Feb 13;
+
+    !enddo ! end of do jj;  1 Feb 13;
+   !enddo ! end of do ii;  1 Feb 13;
     
    enddo ! end of do jquad; ! 16 Jan 13;
     
