@@ -15,6 +15,7 @@
 
  SPECFILES=$(afiles) $(bfiles) $(cfiles) $(dfiles) $(efiles) $(ffiles)
  ALLFILES=global $(SPECFILES) $(sfiles) xspech hdfint
+ PDFFILES=global $(SPECFILES) xspech hdfint
  F77FILES=$(sfiles:=.f)
  F90FILES= $(SPECFILES:=.F90)
  HFILES = $(SPECFILES:=.h)
@@ -240,18 +241,23 @@ tar:
 
 ###############################################################################################################################################################
 
-pdfs: $(addsuffix .pdf,$(allfiles)) head.html
+pdfs: $(addsuffix .pdf,$(PDFFILES)) head.html
 ifeq ($(USER),shudson)
 
 	cat head.html > $(WEBDIR)/Spec/subroutines.html
 
-	for file in $(allfiles) ; do cp $${file}.pdf $(WEBDIR)/Spec/. ; grep "!title" $${file}.h | cut -c 7- | \
+	for file in $(PDFFILES) ; do cp $${file}.pdf $(WEBDIR)/Spec/. ; grep "!title" $${file}.h | cut -c 7- | \
 	                           awk -v file=$${file} -F!\
 	                            '{print "<tr><td><a href="file".pdf\">"file"</a></td><td>"$$1"</td><td>"$$2"</td></tr>"}' \
 	                            >> $(WEBDIR)/Spec/subroutines.html ; \
 	                          done
 
 	echo "</table></body></html>" >> $(WEBDIR)/Spec/subroutines.html
+else
+	@echo "-------------------------------------------------------------------------------------------------------------------------------"
+	@echo "Please read pdfs at www.ppl.gov/~shudson/Spec/subroutines.html or on GitHub pages."
+	@echo "-------------------------------------------------------------------------------------------------------------------------------"
+
 endif
 
 ###############################################################################################################################################################
