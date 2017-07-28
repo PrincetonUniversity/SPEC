@@ -34,8 +34,8 @@ subroutine preset
   LOCALS
   
   INTEGER   :: innout, idof, jk, ll, ii, ifail, ideriv, vvol, mi, ni, mj, nj, mk, nk, mimj, ninj, mkmj, nknj, jj, kk, lvol
-  INTEGER   :: itype, lquad, id01bcf, maxIquad, Mrad, jquad, Lcurvature
-  REAL      :: teta, zeta, arg, lss, aa, bb, cc, dd, cszeta(0:1)
+  INTEGER   :: lquad, igauleg, maxIquad, Mrad, jquad, Lcurvature
+  REAL      :: teta, zeta, arg, lss, cszeta(0:1)
   
   BEGIN(preset)
   
@@ -438,7 +438,7 @@ subroutine preset
 !latex \item if \inputvar{Nquad.le.0 and      Lcoordinatesingularity}, then \internal{Iquad(vvol) = 2*Lrad(vvol)-Nquad+Mpol};
 !latex \ei
 !latex \item The Gaussian weights and abscissae are given by \internal{gaussianweight(1:maxIquad,1:Mvol)} and \internal{gaussianabscissae(1:maxIquad,1:Mvol)},
-!latex       which are computed using \nag{www.nag.co.uk/numeric/FL/manual19/pdf/D01/d01bcf_fl19.pdf}{D01BCF}.
+!latex       which are computed using modified Numerical Recipes routine gauleg.
 !latex \item \internal{Iquad$_v$} is passed through to \link{ma00aa} to compute the volume integrals of the metric elements;
 !latex       also see \link{jo00aa}, where \internal{Iquad$_v$} is used to compute the volume integrals of $||\nabla\times{\bf B} - \mu {\bf B}||$;
 !latex \end{enumerate}
@@ -464,30 +464,24 @@ subroutine preset
 
   do vvol = 1, Mvol
    
-   itype = 0 ; aa = -one ; bb = +one ; cc = zero ; dd = zero
-
    lquad = Iquad(vvol)
-   
-   id01bcf = 1
-   call D01BCF( itype, aa, bb, cc, dd, lquad, gaussianweight(1:lquad,vvol), gaussianabscissae(1:lquad,vvol), id01bcf ) ! sets gaussian weights & abscissae;
-   
+
+   !Set gaussian weights & abscissae
+   call gauleg(lquad, gaussianweight(1:lquad,vvol), gaussianabscissae(1:lquad,vvol), igauleg) ! JAB; 28 Jul 17
+
    if( myid.eq.0 ) then
    cput= GETTIME
-   select case( id01bcf ) !                                                        123456789012345
-   case( 0 )    ; if( Wpreset ) write(ounit,1000) cput-cpus, myid, vvol, id01bcf, "success        ", gaussianabscissae(1:lquad,vvol)
-   case( 1 )    ;               write(ounit,1000) cput-cpus, myid, vvol, id01bcf, "failed         ", gaussianabscissae(1:lquad,vvol)
-   case( 2 )    ;               write(ounit,1000) cput-cpus, myid, vvol, id01bcf, "input error    ", gaussianabscissae(1:lquad,vvol)
-   case( 3 )    ;               write(ounit,1000) cput-cpus, myid, vvol, id01bcf, "input error    ", gaussianabscissae(1:lquad,vvol)
-   case( 4 )    ;               write(ounit,1000) cput-cpus, myid, vvol, id01bcf, "weight overflow", gaussianabscissae(1:lquad,vvol)
-   case( 5 )    ;               write(ounit,1000) cput-cpus, myid, vvol, id01bcf, "weight zero    ", gaussianabscissae(1:lquad,vvol)
-   case( 6 )    ;               write(ounit,1000) cput-cpus, myid, vvol, id01bcf, "failed         ", gaussianabscissae(1:lquad,vvol)
-   case default ;               write(ounit,1000) cput-cpus, myid, vvol, id01bcf, "weird          ", gaussianabscissae(1:lquad,vvol)
-    FATAL( preset, .true., weird ifail returned by D01BCF )
+   select case( igauleg ) !                                                        123456789012345
+   case( 0 )    ; if( Wpreset ) write(ounit,1000) cput-cpus, myid, vvol, igauleg, "success        ", gaussianabscissae(1:lquad,vvol)
+   case( 1 )    ;               write(ounit,1000) cput-cpus, myid, vvol, igauleg, "failed         ", gaussianabscissae(1:lquad,vvol)
+   case( 2 )    ;               write(ounit,1000) cput-cpus, myid, vvol, igauleg, "input error    ", gaussianabscissae(1:lquad,vvol)
+   case default ;               write(ounit,1000) cput-cpus, myid, vvol, igauleg, "weird          ", gaussianabscissae(1:lquad,vvol)
+    FATAL( preset, .true., weird ifail returned by gauleg )
    end select
    ;              if( Wpreset ) write(ounit,1001)                                                    gaussianweight(1:lquad,vvol)
    endif
    
-1000 format("preset : ",f10.2," : myid=",i3," ; lvol=",i3," ; id01bcf=",i5," ; "a15" ; abscissae ="99f09.05)
+1000 format("preset : ",f10.2," : myid=",i3," ; lvol=",i3," ; igauleg=",i5," ; "a15" ; abscissae ="99f09.05)
 1001 format("preset : ", 10x ," :      "3x"        "3x"           "3x"   "15x" ; weights   ="99f09.05)
       
 !  do jquad = 1, lquad ! loop over radial sub-sub-grid (numerical quadrature);!
@@ -838,8 +832,8 @@ subroutine preset
   SALLOCATE( cplxin,  (1:Nt,1:Nz), zero )
   SALLOCATE( cplxout, (1:Nt,1:Nz), zero )
 
-  ! Create and save optimal plans for forward and inverse 2D fast Fourier transforms with FFTW.
-  planf = fftw_plan_dft_2d(Nt, Nz, cplxin, cplxout, FFTW_FORWARD, FFTW_MEASURE + FFTW_DESTROY_INPUT)
+  ! Create and save optimal plans for forward and inverse 2D fast Fourier transforms with FFTW. -JAB; 25 Jul 2017
+  planf = fftw_plan_dft_2d(Nt, Nz, cplxin, cplxout, FFTW_FORWARD,  FFTW_MEASURE + FFTW_DESTROY_INPUT)
   planb = fftw_plan_dft_2d(Nt, Nz, cplxin, cplxout, FFTW_BACKWARD, FFTW_MEASURE + FFTW_DESTROY_INPUT)
 
   SALLOCATE( efmn, (1:mne), zero ) ! Fourier harmonics workspace; 24 Apr 13;
@@ -1165,3 +1159,52 @@ subroutine preset
 end subroutine preset
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+! Gauss-Legendre quadrature weights and abscissas over (-1,1), from Numerical Recipes. Added by JAB 28 Jul 17.
+subroutine gauleg(n, weight, abscis, ifail)
+  use constants, only : zero, one, two, pi
+  implicit none
+  intrinsic abs, cos, epsilon
+
+  integer,            intent(in)  :: n
+  real, dimension(n), intent(out) :: weight, abscis
+  integer,            intent(out) :: ifail
+
+  integer, parameter :: maxiter=16
+  integer m, j, i, iter
+  real z1,z,pp,p3,p2,p1
+  real, parameter    :: eps = 0.5*epsilon(1.0d0)
+
+  !Error checking
+  if (n < 1) then
+     ifail = 2;  return
+  endif
+
+  m = (n + 1)/2  !Roots are symmetric in interval, so we only need half
+  do i=1,m       !Loop over desired roots
+     z = cos(pi*(i - 0.25)/(n + 0.5))  ! Approximate ith root
+
+     !Refine by Newton method
+     do iter=1,maxiter
+        p1 = one;  p2 = zero           ! Initialize recurrence relation
+
+        do j=1,n  !Recurrence relation to get P(x)
+           p3 = p2;  p2 = p1
+           p1 = ((two*j - one)*z*p2 - (j - one)*p3)/j
+        enddo !j
+
+        pp = n*(z*p1 - p2)/(z*z - one) !Derivative of P(x)
+	z1 = z;  z = z1 - p1/pp        !Newton iteration
+        if (abs(z - z1) .le. eps) exit !Convergence test
+     enddo !iter
+     if (iter > maxiter) then
+        ifail = 1;  return
+     endif
+
+     abscis(i) = -z;  abscis(n+1-i) = z
+     weight(i) = two/((one - z*z)*pp*pp)
+     weight(n+1-i) = weight(i)
+  enddo !i
+
+  ifail = 0
+end subroutine gauleg

@@ -67,7 +67,7 @@ module numerical
   REAL, parameter :: logtolerance = 1.0e-32 ! this is used to avoid taking alog10(zero); see e.g. dforce; 19 Jul 16;
 
 contains
-  REAL FUNCTION myprec !Duplicates NAG routine X02AJF (machine precision)
+  REAL FUNCTION myprec !Duplicates NAG routine X02AJF (machine precision) ! JAB; 27 Jul 17
     implicit none
     intrinsic EPSILON
     myprec = 0.5*EPSILON(1.0d0)
@@ -2582,7 +2582,7 @@ end module allglobal
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-module fftw_interface
+module fftw_interface ! JAB; 25 Jul 17
   use, intrinsic :: iso_c_binding
   implicit none
   include 'fftw3.f03'
