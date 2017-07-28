@@ -75,9 +75,9 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  use constants, only : zero, half, one, two, pi, pi2
+  use constants, only : zero, half, one, pi
   
-  use numerical, only : vsmall, small, sqrtmachprec
+  use numerical, only : 
   
   use fileunits, only : ounit
   
@@ -86,7 +86,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   use cputiming, only : Tma00aa
   
   use allglobal, only : myid, ncpu, cpus, &
-                        Mvol, im, in, mne, mnsqd, ilabel, jlabel, llabel, plabel, &
+                        Mvol, mnsqd, ilabel, jlabel, llabel, plabel, &
                         gaussianweight, gaussianabscissae, &
                         DToocc, DToocs, DToosc, DTooss, &
                         TTsscc, TTsscs, TTsssc, TTssss, &
@@ -95,7 +95,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
                         DDttcc, DDttcs, DDttsc, DDttss, &
                         DDtzcc, DDtzcs, DDtzsc, DDtzss, &
                         DDzzcc, DDzzcs, DDzzsc, DDzzss, &
-                        ki, kija, kijs, &
+                        kija, kijs, &
                         goomne, goomno, &
                         gssmne, gssmno, &
                         gstmne, gstmno, &
@@ -103,9 +103,10 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
                         gttmne, gttmno, &
                         gtzmne, gtzmno, &
                         gzzmne, gzzmno, &
-                        TD, cheby, &
+                        TD, &
                         Lcoordinatesingularity, regumm, &
-                        pi2pi2nfp, pi2pi2nfphalf
+                       !pi2pi2nfphalf, & ! SRH; 27 Jul 17;
+                        YESstellsym
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -113,12 +114,8 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   
   INTEGER, intent(in) :: lquad, mn, lvol, lrad
   
-  INTEGER             :: jquad, ll, pp, lp, uv, ii, jj, ij
-  
-  INTEGER             :: kk, kd, kka, kks ! 27 Jul 17;
-  REAL                :: kda, kds ! 27 Jul 17;
-  
-  REAL                :: lss, jthweight, fee, feo, foe, foo, Tl, Dl, Tp, Dp, TlTp, TlDp, DlTp, DlDp
+  INTEGER             :: jquad, ii, jj, ij, ll, pp, lp, kka, kks ! SRH; 27 Jul 17;
+  REAL                :: lss, jthweight, fee, feo, foe, foo, Tl, Dl, Tp, Dp, TlTp, TlDp, DlTp, DlDp, kda, kds ! SRH; 27 Jul 17;
 
   REAL                :: foocc, foocs, foosc, fooss
   REAL                :: fsscc, fsscs, fsssc, fssss
@@ -128,56 +125,97 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   REAL                :: ftzcc, ftzcs, ftzsc, ftzss
   REAL                :: fzzcc, fzzcs, fzzsc, fzzss
   
-  REAL                :: sbar(1:lquad), halfoversbar(1:lquad), sbarhim(1:lquad,1:mn) ! regularization factors; 10 Dec 15;
+  REAL                :: sbar(1:lquad), halfoversbar(1:lquad), sbarhim(1:lquad,1:mn) ! regularization factors required for coordinate singularity; 10 Dec 15;
   
   BEGIN( ma00aa )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 #ifdef DEBUG
-  FATAL( ma00aa, lvol.lt.1 .or. lvol.gt.Mvol, illegal volume label )
+  FATAL( ma00aa, lvol.lt.1 .or. lvol.gt.Mvol, illegal volume label ) ! its good to keep internal checks like this in the DEBUG version; SRH; 27 Jul 17;
 #endif
     
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  DToocc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero ! initialize Gaussian quadrature; summation over jquad; SRH; 27 Jul 17;
-  DToocs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  DToosc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  DTooss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-
-  TTsscc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  TTsscs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  TTsssc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  TTssss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-
-  TDstcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  TDstcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  TDstsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  TDstss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-
-  TDszcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  TDszcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  TDszsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  TDszss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-
-  DDttcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  DDttcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  DDttsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  DDttss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-
-  DDtzcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  DDtzcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  DDtzsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  DDtzss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-
-  DDzzcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  DDzzcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  DDzzsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  DDzzss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-
+  if( YESstellsym) then
+   
+   DToocc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero ! initialize summation of Gaussian quadrature (loop over jquad); SRH; 27 Jul 17;
+  !DToocs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero ! non-stellarator-symmetric terms are commented; SRH; 27 Jul 17;
+  !DToosc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero ! I am happy to delete this commented-out source eventually; "a short code is a good code"; SRH; 27 Jul 17;
+  !DTooss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+   
+  !TTsscc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+  !TTsscs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+  !TTsssc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+   TTssss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+   
+  !TDstcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+  !TDstcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+   TDstsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+  !TDstss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+   
+  !TDszcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+  !TDszcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+   TDszsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+  !TDszss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+   
+   DDttcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+  !DDttcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+  !DDttsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+  !DDttss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+   
+   DDtzcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+  !DDtzcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+  !DDtzsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+  !DDtzss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+   
+   DDzzcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+  !DDzzcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+  !DDzzsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+  !DDzzss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+   
+  else ! NOTstellsym ; SRH; 27 Jul 17;
+   
+   DToocc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero ! initialize summation of Gaussian quadrature (loop over jquad); SRH; 27 Jul 17;
+   DToocs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+   DToosc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+   DTooss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+   
+   TTsscc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+   TTsscs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+   TTsssc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+   TTssss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+   
+   TDstcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+   TDstcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+   TDstsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+   TDstss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+   
+   TDszcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+   TDszcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+   TDszsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+   TDszss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+   
+   DDttcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+   DDttcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+   DDttsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+   DDttss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+   
+   DDtzcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+   DDtzcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+   DDtzsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+   DDtzss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+   
+   DDzzcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+   DDzzcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+   DDzzsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+   DDzzss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+   
+  endif ! end of if( YESstellsym ) ; SRH; 27 Jul 17;
+  
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  if( Lcoordinatesingularity ) then
+  if( Lcoordinatesingularity ) then ! additional radial factors, such as r^m, are included to "regularize" the magnetic field near the origin; SRH; 27 Jul 17;
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
@@ -188,104 +226,209 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
    do jquad = 1, lquad ; sbarhim(jquad,1:mn) = sbar(jquad)**regumm(1:mn) ! pre-calculation of regularization factor; 12 Sep 13;
    enddo
    
-   do jquad = 1, lquad ! Gaussian quadrature loop;
+   if( YESstellsym ) then
     
-    lss = gaussianabscissae(jquad,lvol) ; jthweight = gaussianweight(jquad,lvol)
+    do jquad = 1, lquad ! Gaussian quadrature loop;
+     
+     lss = gaussianabscissae(jquad,lvol) ; jthweight = gaussianweight(jquad,lvol)
+     
+     WCALL( ma00aa, metrix,( lvol, lss ) ) ! compute metric elements; 16 Jan 13;
+     
+     do ij = 1, mnsqd ; ii = ilabel(ij) ; jj = jlabel(ij) ! SRH; 27 Jul 17;
+      
+      kks = kijs(ii,jj,0) ; kds = jthweight / kijs(ii,jj,1) ! SRH; 27 Jul 17;
+      kka = kija(ii,jj,0) ; kda = jthweight / kija(ii,jj,1) ! SRH; 27 Jul 17;
+      
+      foocc = + goomne(kks) * abs(kds) + goomne(kka) * abs(kda) ! stell-sym; SRH; 27 Jul 17;
+     !foocs = - goomno(kks) *     kds  + goomno(kka) *     kda 
+     !foosc = + goomno(kks) *     kds  + goomno(kka) *     kda 
+     !fooss = + goomne(kks) * abs(kds) - goomne(kka) * abs(kda)
+      
+     !fsscc = + gssmne(kks) * abs(kds) + gssmne(kka) * abs(kda)
+     !fsscs = - gssmno(kks) *     kds  + gssmno(kka) *     kda 
+     !fsssc = + gssmno(kks) *     kds  + gssmno(kka) *     kda 
+      fssss = + gssmne(kks) * abs(kds) - gssmne(kka) * abs(kda) ! stell-sym; 
+      
+     !fstcc = + gstmne(kks) * abs(kds) + gstmne(kka) * abs(kda)
+     !fstcs = - gstmno(kks) *     kds  + gstmno(kka) *     kda 
+      fstsc = + gstmno(kks) *     kds  + gstmno(kka) *     kda  ! stell-sym; 
+     !fstss = + gstmne(kks) * abs(kds) - gstmne(kka) * abs(kda)
+      
+     !fszcc = + gszmne(kks) * abs(kds) + gszmne(kka) * abs(kda)
+     !fszcs = - gszmno(kks) *     kds  + gszmno(kka) *     kda 
+      fszsc = + gszmno(kks) *     kds  + gszmno(kka) *     kda  ! stell-sym; 
+     !fszss = + gszmne(kks) * abs(kds) - gszmne(kka) * abs(kda)
+      
+      fttcc = + gttmne(kks) * abs(kds) + gttmne(kka) * abs(kda) ! stell-sym; 
+     !fttcs = - gttmno(kks) *     kds  + gttmno(kka) *     kda 
+     !fttsc = + gttmno(kks) *     kds  + gttmno(kka) *     kda 
+     !fttss = + gttmne(kks) * abs(kds) - gttmne(kka) * abs(kda)
+      
+      ftzcc = + gtzmne(kks) * abs(kds) + gtzmne(kka) * abs(kda) ! stell-sym; 
+     !ftzcs = - gtzmno(kks) *     kds  + gtzmno(kka) *     kda 
+     !ftzsc = + gtzmno(kks) *     kds  + gtzmno(kka) *     kda 
+     !ftzss = + gtzmne(kks) * abs(kds) - gtzmne(kka) * abs(kda)
+      
+      fzzcc = + gzzmne(kks) * abs(kds) + gzzmne(kka) * abs(kda) ! stell-sym; 
+     !fzzcs = - gzzmno(kks) *     kds  + gzzmno(kka) *     kda 
+     !fzzsc = + gzzmno(kks) *     kds  + gzzmno(kka) *     kda 
+     !fzzss = + gzzmne(kks) * abs(kds) - gzzmne(kka) * abs(kda)
+      
+      do lp = 1, (1+lrad)*(1+lrad) ; ll = llabel(lp,lvol) ; pp = plabel(lp,lvol) ! SRH; 27 Jul 17;
+       
+       Tl = sbarhim(jquad,ii) *                                      TD(ll,0,jquad,lvol)
+       Dl = sbarhim(jquad,ii) * ( regumm(ii) * halfoversbar(jquad) * TD(ll,0,jquad,lvol) + TD(ll,1,jquad,lvol) )
+       Tp = sbarhim(jquad,jj) *                                      TD(pp,0,jquad,lvol)
+       Dp = sbarhim(jquad,jj) * ( regumm(jj) * halfoversbar(jquad) * TD(pp,0,jquad,lvol) + TD(pp,1,jquad,lvol) )
+       
+       TlTp = Tl * Tp
+       TlDp = Tl * Dp
+       DlTp = Dl * Tp
+       DlDp = Dl * Dp
+       
+       DToocc( ll, pp, ii, jj ) = DToocc( ll, pp, ii, jj ) + DlTp * foocc ! stell-sym; SRH; 27 Jul 17;
+      !DToocs( ll, pp, ii, jj ) = DToocs( ll, pp, ii, jj ) + DlTp * foocs
+      !DToosc( ll, pp, ii, jj ) = DToosc( ll, pp, ii, jj ) + DlTp * foosc
+      !DTooss( ll, pp, ii, jj ) = DTooss( ll, pp, ii, jj ) + DlTp * fooss
+       
+      !TTsscc( ll, pp, ii, jj ) = TTsscc( ll, pp, ii, jj ) + TlTp * fsscc
+      !TTsscs( ll, pp, ii, jj ) = TTsscs( ll, pp, ii, jj ) + TlTp * fsscs
+      !TTsssc( ll, pp, ii, jj ) = TTsssc( ll, pp, ii, jj ) + TlTp * fsssc
+       TTssss( ll, pp, ii, jj ) = TTssss( ll, pp, ii, jj ) + TlTp * fssss ! stell-sym; SRH; 27 Jul 17;
+       
+      !TDstcc( ll, pp, ii, jj ) = TDstcc( ll, pp, ii, jj ) + TlDp * fstcc
+      !TDstcs( ll, pp, ii, jj ) = TDstcs( ll, pp, ii, jj ) + TlDp * fstcs
+       TDstsc( ll, pp, ii, jj ) = TDstsc( ll, pp, ii, jj ) + TlDp * fstsc ! stell-sym; SRH; 27 Jul 17;
+      !TDstss( ll, pp, ii, jj ) = TDstss( ll, pp, ii, jj ) + TlDp * fstss
+       
+      !TDszcc( ll, pp, ii, jj ) = TDszcc( ll, pp, ii, jj ) + TlDp * fszcc
+      !TDszcs( ll, pp, ii, jj ) = TDszcs( ll, pp, ii, jj ) + TlDp * fszcs
+       TDszsc( ll, pp, ii, jj ) = TDszsc( ll, pp, ii, jj ) + TlDp * fszsc ! stell-sym; SRH; 27 Jul 17;
+      !TDszss( ll, pp, ii, jj ) = TDszss( ll, pp, ii, jj ) + TlDp * fszss
+       
+       DDttcc( ll, pp, ii, jj ) = DDttcc( ll, pp, ii, jj ) + DlDp * fttcc ! stell-sym; SRH; 27 Jul 17;
+      !DDttcs( ll, pp, ii, jj ) = DDttcs( ll, pp, ii, jj ) + DlDp * fttcs
+      !DDttsc( ll, pp, ii, jj ) = DDttsc( ll, pp, ii, jj ) + DlDp * fttsc
+      !DDttss( ll, pp, ii, jj ) = DDttss( ll, pp, ii, jj ) + DlDp * fttss
+       
+       DDtzcc( ll, pp, ii, jj ) = DDtzcc( ll, pp, ii, jj ) + DlDp * ftzcc ! stell-sym; SRH; 27 Jul 17;
+      !DDtzcs( ll, pp, ii, jj ) = DDtzcs( ll, pp, ii, jj ) + DlDp * ftzcs
+      !DDtzsc( ll, pp, ii, jj ) = DDtzsc( ll, pp, ii, jj ) + DlDp * ftzsc
+      !DDtzss( ll, pp, ii, jj ) = DDtzss( ll, pp, ii, jj ) + DlDp * ftzss
+       
+       DDzzcc( ll, pp, ii, jj ) = DDzzcc( ll, pp, ii, jj ) + DlDp * fzzcc ! stell-sym; SRH; 27 Jul 17;
+      !DDzzcs( ll, pp, ii, jj ) = DDzzcs( ll, pp, ii, jj ) + DlDp * fzzcs
+      !DDzzsc( ll, pp, ii, jj ) = DDzzsc( ll, pp, ii, jj ) + DlDp * fzzsc
+      !DDzzss( ll, pp, ii, jj ) = DDzzss( ll, pp, ii, jj ) + DlDp * fzzss
+       
+      enddo ! end of do lp ; 08 Feb 16;
+      
+     enddo ! end of do ij ; 08 Feb 16;
+     
+    enddo ! end of do jquad; ! 16 Jan 13;
     
-    WCALL( ma00aa, metrix,( lvol, lss ) ) ! compute metric elements; 16 Jan 13;
+   else ! NOTstellsym ; SRH; 27 Jul 17;
     
-    do ij = 1, mnsqd ; ii = ilabel(ij) ; jj = jlabel(ij) ! SRH; 27 Jul 17;
+    do jquad = 1, lquad ! Gaussian quadrature loop;
      
-     kks = kijs(ii,jj,0) ; kds = jthweight / kijs(ii,jj,1) ! SRH; 27 Jul 17;
-     kka = kija(ii,jj,0) ; kda = jthweight / kija(ii,jj,1) ! SRH; 27 Jul 17;
+     lss = gaussianabscissae(jquad,lvol) ; jthweight = gaussianweight(jquad,lvol)
      
-     foocc = + goomne(kks) * abs(kds) + goomne(kka) * abs(kda) ! SRH; 27 Jul 17;
-     foocs = - goomno(kks) *     kds  + goomno(kka) *     kda 
-     foosc = + goomno(kks) *     kds  + goomno(kka) *     kda 
-     fooss = + goomne(kks) * abs(kds) - goomne(kka) * abs(kda)
+     WCALL( ma00aa, metrix,( lvol, lss ) ) ! compute metric elements; 16 Jan 13;
      
-     fsscc = + gssmne(kks) * abs(kds) + gssmne(kka) * abs(kda)
-     fsscs = - gssmno(kks) *     kds  + gssmno(kka) *     kda 
-     fsssc = + gssmno(kks) *     kds  + gssmno(kka) *     kda 
-     fssss = + gssmne(kks) * abs(kds) - gssmne(kka) * abs(kda)
-     
-     fstcc = + gstmne(kks) * abs(kds) + gstmne(kka) * abs(kda)
-     fstcs = - gstmno(kks) *     kds  + gstmno(kka) *     kda 
-     fstsc = + gstmno(kks) *     kds  + gstmno(kka) *     kda 
-     fstss = + gstmne(kks) * abs(kds) - gstmne(kka) * abs(kda)
-     
-     fszcc = + gszmne(kks) * abs(kds) + gszmne(kka) * abs(kda)
-     fszcs = - gszmno(kks) *     kds  + gszmno(kka) *     kda 
-     fszsc = + gszmno(kks) *     kds  + gszmno(kka) *     kda 
-     fszss = + gszmne(kks) * abs(kds) - gszmne(kka) * abs(kda)
-     
-     fttcc = + gttmne(kks) * abs(kds) + gttmne(kka) * abs(kda)
-     fttcs = - gttmno(kks) *     kds  + gttmno(kka) *     kda 
-     fttsc = + gttmno(kks) *     kds  + gttmno(kka) *     kda 
-     fttss = + gttmne(kks) * abs(kds) - gttmne(kka) * abs(kda)
-     
-     ftzcc = + gtzmne(kks) * abs(kds) + gtzmne(kka) * abs(kda)
-     ftzcs = - gtzmno(kks) *     kds  + gtzmno(kka) *     kda 
-     ftzsc = + gtzmno(kks) *     kds  + gtzmno(kka) *     kda 
-     ftzss = + gtzmne(kks) * abs(kds) - gtzmne(kka) * abs(kda)
-     
-     fzzcc = + gzzmne(kks) * abs(kds) + gzzmne(kka) * abs(kda)
-     fzzcs = - gzzmno(kks) *     kds  + gzzmno(kka) *     kda 
-     fzzsc = + gzzmno(kks) *     kds  + gzzmno(kka) *     kda 
-     fzzss = + gzzmne(kks) * abs(kds) - gzzmne(kka) * abs(kda)
-     
-     do lp = 1, (1+lrad)*(1+lrad) ; ll = llabel(lp,lvol) ; pp = plabel(lp,lvol) ! SRH; 27 Jul 17;
+     do ij = 1, mnsqd ; ii = ilabel(ij) ; jj = jlabel(ij) ! SRH; 27 Jul 17;
       
-      Tl = sbarhim(jquad,ii) *                                      TD(ll,0,jquad,lvol)
-      Dl = sbarhim(jquad,ii) * ( regumm(ii) * halfoversbar(jquad) * TD(ll,0,jquad,lvol) + TD(ll,1,jquad,lvol) )
-      Tp = sbarhim(jquad,jj) *                                      TD(pp,0,jquad,lvol)
-      Dp = sbarhim(jquad,jj) * ( regumm(jj) * halfoversbar(jquad) * TD(pp,0,jquad,lvol) + TD(pp,1,jquad,lvol) )
+      kks = kijs(ii,jj,0) ; kds = jthweight / kijs(ii,jj,1) ! SRH; 27 Jul 17;
+      kka = kija(ii,jj,0) ; kda = jthweight / kija(ii,jj,1) ! SRH; 27 Jul 17;
       
-      TlTp = Tl * Tp
-      TlDp = Tl * Dp
-      DlTp = Dl * Tp
-      DlDp = Dl * Dp
+      foocc = + goomne(kks) * abs(kds) + goomne(kka) * abs(kda) ! SRH; 27 Jul 17;
+      foocs = - goomno(kks) *     kds  + goomno(kka) *     kda 
+      foosc = + goomno(kks) *     kds  + goomno(kka) *     kda 
+      fooss = + goomne(kks) * abs(kds) - goomne(kka) * abs(kda)
       
-      DToocc( ll, pp, ii, jj ) = DToocc( ll, pp, ii, jj ) + DlTp * foocc
-      DToocs( ll, pp, ii, jj ) = DToocs( ll, pp, ii, jj ) + DlTp * foocs
-      DToosc( ll, pp, ii, jj ) = DToosc( ll, pp, ii, jj ) + DlTp * foosc
-      DTooss( ll, pp, ii, jj ) = DTooss( ll, pp, ii, jj ) + DlTp * fooss
+      fsscc = + gssmne(kks) * abs(kds) + gssmne(kka) * abs(kda)
+      fsscs = - gssmno(kks) *     kds  + gssmno(kka) *     kda 
+      fsssc = + gssmno(kks) *     kds  + gssmno(kka) *     kda 
+      fssss = + gssmne(kks) * abs(kds) - gssmne(kka) * abs(kda)
       
-      TTsscc( ll, pp, ii, jj ) = TTsscc( ll, pp, ii, jj ) + TlTp * fsscc
-      TTsscs( ll, pp, ii, jj ) = TTsscs( ll, pp, ii, jj ) + TlTp * fsscs
-      TTsssc( ll, pp, ii, jj ) = TTsssc( ll, pp, ii, jj ) + TlTp * fsssc
-      TTssss( ll, pp, ii, jj ) = TTssss( ll, pp, ii, jj ) + TlTp * fssss
+      fstcc = + gstmne(kks) * abs(kds) + gstmne(kka) * abs(kda)
+      fstcs = - gstmno(kks) *     kds  + gstmno(kka) *     kda 
+      fstsc = + gstmno(kks) *     kds  + gstmno(kka) *     kda 
+      fstss = + gstmne(kks) * abs(kds) - gstmne(kka) * abs(kda)
       
-      TDstcc( ll, pp, ii, jj ) = TDstcc( ll, pp, ii, jj ) + TlDp * fstcc
-      TDstcs( ll, pp, ii, jj ) = TDstcs( ll, pp, ii, jj ) + TlDp * fstcs
-      TDstsc( ll, pp, ii, jj ) = TDstsc( ll, pp, ii, jj ) + TlDp * fstsc
-      TDstss( ll, pp, ii, jj ) = TDstss( ll, pp, ii, jj ) + TlDp * fstss
+      fszcc = + gszmne(kks) * abs(kds) + gszmne(kka) * abs(kda)
+      fszcs = - gszmno(kks) *     kds  + gszmno(kka) *     kda 
+      fszsc = + gszmno(kks) *     kds  + gszmno(kka) *     kda 
+      fszss = + gszmne(kks) * abs(kds) - gszmne(kka) * abs(kda)
       
-      TDszcc( ll, pp, ii, jj ) = TDszcc( ll, pp, ii, jj ) + TlDp * fszcc
-      TDszcs( ll, pp, ii, jj ) = TDszcs( ll, pp, ii, jj ) + TlDp * fszcs
-      TDszsc( ll, pp, ii, jj ) = TDszsc( ll, pp, ii, jj ) + TlDp * fszsc
-      TDszss( ll, pp, ii, jj ) = TDszss( ll, pp, ii, jj ) + TlDp * fszss
+      fttcc = + gttmne(kks) * abs(kds) + gttmne(kka) * abs(kda)
+      fttcs = - gttmno(kks) *     kds  + gttmno(kka) *     kda 
+      fttsc = + gttmno(kks) *     kds  + gttmno(kka) *     kda 
+      fttss = + gttmne(kks) * abs(kds) - gttmne(kka) * abs(kda)
       
-      DDttcc( ll, pp, ii, jj ) = DDttcc( ll, pp, ii, jj ) + DlDp * fttcc
-      DDttcs( ll, pp, ii, jj ) = DDttcs( ll, pp, ii, jj ) + DlDp * fttcs
-      DDttsc( ll, pp, ii, jj ) = DDttsc( ll, pp, ii, jj ) + DlDp * fttsc
-      DDttss( ll, pp, ii, jj ) = DDttss( ll, pp, ii, jj ) + DlDp * fttss
+      ftzcc = + gtzmne(kks) * abs(kds) + gtzmne(kka) * abs(kda)
+      ftzcs = - gtzmno(kks) *     kds  + gtzmno(kka) *     kda 
+      ftzsc = + gtzmno(kks) *     kds  + gtzmno(kka) *     kda 
+      ftzss = + gtzmne(kks) * abs(kds) - gtzmne(kka) * abs(kda)
       
-      DDtzcc( ll, pp, ii, jj ) = DDtzcc( ll, pp, ii, jj ) + DlDp * ftzcc
-      DDtzcs( ll, pp, ii, jj ) = DDtzcs( ll, pp, ii, jj ) + DlDp * ftzcs
-      DDtzsc( ll, pp, ii, jj ) = DDtzsc( ll, pp, ii, jj ) + DlDp * ftzsc
-      DDtzss( ll, pp, ii, jj ) = DDtzss( ll, pp, ii, jj ) + DlDp * ftzss
+      fzzcc = + gzzmne(kks) * abs(kds) + gzzmne(kka) * abs(kda)
+      fzzcs = - gzzmno(kks) *     kds  + gzzmno(kka) *     kda 
+      fzzsc = + gzzmno(kks) *     kds  + gzzmno(kka) *     kda 
+      fzzss = + gzzmne(kks) * abs(kds) - gzzmne(kka) * abs(kda)
       
-      DDzzcc( ll, pp, ii, jj ) = DDzzcc( ll, pp, ii, jj ) + DlDp * fzzcc
-      DDzzcs( ll, pp, ii, jj ) = DDzzcs( ll, pp, ii, jj ) + DlDp * fzzcs
-      DDzzsc( ll, pp, ii, jj ) = DDzzsc( ll, pp, ii, jj ) + DlDp * fzzsc
-      DDzzss( ll, pp, ii, jj ) = DDzzss( ll, pp, ii, jj ) + DlDp * fzzss
+      do lp = 1, (1+lrad)*(1+lrad) ; ll = llabel(lp,lvol) ; pp = plabel(lp,lvol) ! SRH; 27 Jul 17;
+       
+       Tl = sbarhim(jquad,ii) *                                      TD(ll,0,jquad,lvol)
+       Dl = sbarhim(jquad,ii) * ( regumm(ii) * halfoversbar(jquad) * TD(ll,0,jquad,lvol) + TD(ll,1,jquad,lvol) )
+       Tp = sbarhim(jquad,jj) *                                      TD(pp,0,jquad,lvol)
+       Dp = sbarhim(jquad,jj) * ( regumm(jj) * halfoversbar(jquad) * TD(pp,0,jquad,lvol) + TD(pp,1,jquad,lvol) )
+       
+       TlTp = Tl * Tp
+       TlDp = Tl * Dp
+       DlTp = Dl * Tp
+       DlDp = Dl * Dp
+       
+       DToocc( ll, pp, ii, jj ) = DToocc( ll, pp, ii, jj ) + DlTp * foocc ! stell-sym; SRH; 27 Jul 17;
+       DToocs( ll, pp, ii, jj ) = DToocs( ll, pp, ii, jj ) + DlTp * foocs
+       DToosc( ll, pp, ii, jj ) = DToosc( ll, pp, ii, jj ) + DlTp * foosc
+       DTooss( ll, pp, ii, jj ) = DTooss( ll, pp, ii, jj ) + DlTp * fooss
+       
+       TTsscc( ll, pp, ii, jj ) = TTsscc( ll, pp, ii, jj ) + TlTp * fsscc
+       TTsscs( ll, pp, ii, jj ) = TTsscs( ll, pp, ii, jj ) + TlTp * fsscs
+       TTsssc( ll, pp, ii, jj ) = TTsssc( ll, pp, ii, jj ) + TlTp * fsssc
+       TTssss( ll, pp, ii, jj ) = TTssss( ll, pp, ii, jj ) + TlTp * fssss ! stell-sym; SRH; 27 Jul 17;
+       
+       TDstcc( ll, pp, ii, jj ) = TDstcc( ll, pp, ii, jj ) + TlDp * fstcc
+       TDstcs( ll, pp, ii, jj ) = TDstcs( ll, pp, ii, jj ) + TlDp * fstcs
+       TDstsc( ll, pp, ii, jj ) = TDstsc( ll, pp, ii, jj ) + TlDp * fstsc ! stell-sym; SRH; 27 Jul 17;
+       TDstss( ll, pp, ii, jj ) = TDstss( ll, pp, ii, jj ) + TlDp * fstss
+       
+       TDszcc( ll, pp, ii, jj ) = TDszcc( ll, pp, ii, jj ) + TlDp * fszcc
+       TDszcs( ll, pp, ii, jj ) = TDszcs( ll, pp, ii, jj ) + TlDp * fszcs
+       TDszsc( ll, pp, ii, jj ) = TDszsc( ll, pp, ii, jj ) + TlDp * fszsc ! stell-sym; SRH; 27 Jul 17;
+       TDszss( ll, pp, ii, jj ) = TDszss( ll, pp, ii, jj ) + TlDp * fszss
+       
+       DDttcc( ll, pp, ii, jj ) = DDttcc( ll, pp, ii, jj ) + DlDp * fttcc ! stell-sym; SRH; 27 Jul 17;
+       DDttcs( ll, pp, ii, jj ) = DDttcs( ll, pp, ii, jj ) + DlDp * fttcs
+       DDttsc( ll, pp, ii, jj ) = DDttsc( ll, pp, ii, jj ) + DlDp * fttsc
+       DDttss( ll, pp, ii, jj ) = DDttss( ll, pp, ii, jj ) + DlDp * fttss
+       
+       DDtzcc( ll, pp, ii, jj ) = DDtzcc( ll, pp, ii, jj ) + DlDp * ftzcc ! stell-sym; SRH; 27 Jul 17;
+       DDtzcs( ll, pp, ii, jj ) = DDtzcs( ll, pp, ii, jj ) + DlDp * ftzcs
+       DDtzsc( ll, pp, ii, jj ) = DDtzsc( ll, pp, ii, jj ) + DlDp * ftzsc
+       DDtzss( ll, pp, ii, jj ) = DDtzss( ll, pp, ii, jj ) + DlDp * ftzss
+       
+       DDzzcc( ll, pp, ii, jj ) = DDzzcc( ll, pp, ii, jj ) + DlDp * fzzcc ! stell-sym; SRH; 27 Jul 17;
+       DDzzcs( ll, pp, ii, jj ) = DDzzcs( ll, pp, ii, jj ) + DlDp * fzzcs
+       DDzzsc( ll, pp, ii, jj ) = DDzzsc( ll, pp, ii, jj ) + DlDp * fzzsc
+       DDzzss( ll, pp, ii, jj ) = DDzzss( ll, pp, ii, jj ) + DlDp * fzzss
+       
+      enddo ! end of do lp ; 08 Feb 16;
+      
+     enddo ! end of do ij ; 08 Feb 16;
      
-     enddo ! end of do lp ; 08 Feb 16;
-
-    enddo ! end of do ij ; 08 Feb 16;
-
-   enddo ! end of do jquad; ! 16 Jan 13;
+    enddo ! end of do jquad; ! 16 Jan 13;
+    
+   endif ! end of if( YESstellsym) ; 
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
@@ -293,112 +436,217 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
-   do jquad = 1, lquad ! Gaussian quadrature loop;
+   if( YESstellsym ) then
     
-    lss = gaussianabscissae(jquad,lvol) ; jthweight = gaussianweight(jquad,lvol)
+    do jquad = 1, lquad ! Gaussian quadrature loop;
+     
+     lss = gaussianabscissae(jquad,lvol) ; jthweight = gaussianweight(jquad,lvol)
+     
+     WCALL( ma00aa, metrix,( lvol, lss ) ) ! compute metric elements; 16 Jan 13;
+     
+     do ij = 1, mnsqd ; ii = ilabel(ij) ; jj = jlabel(ij) ! SRH; 27 Jul 17;
+      
+      kks = kijs(ii,jj,0) ; kds = jthweight / kijs(ii,jj,1) ! SRH; 27 Jul 17;
+      kka = kija(ii,jj,0) ; kda = jthweight / kija(ii,jj,1) ! SRH; 27 Jul 17;
+      
+      foocc = + goomne(kks) * abs(kds) + goomne(kka) * abs(kda) ! stell-sym; SRH; 27 Jul 17;
+     !foocs = - goomno(kks) *     kds  + goomno(kka) *     kda 
+     !foosc = + goomno(kks) *     kds  + goomno(kka) *     kda 
+     !fooss = + goomne(kks) * abs(kds) - goomne(kka) * abs(kda)
+      
+     !fsscc = + gssmne(kks) * abs(kds) + gssmne(kka) * abs(kda)
+     !fsscs = - gssmno(kks) *     kds  + gssmno(kka) *     kda 
+     !fsssc = + gssmno(kks) *     kds  + gssmno(kka) *     kda 
+      fssss = + gssmne(kks) * abs(kds) - gssmne(kka) * abs(kda) ! stell-sym; 
+      
+     !fstcc = + gstmne(kks) * abs(kds) + gstmne(kka) * abs(kda)
+     !fstcs = - gstmno(kks) *     kds  + gstmno(kka) *     kda 
+      fstsc = + gstmno(kks) *     kds  + gstmno(kka) *     kda  ! stell-sym; 
+     !fstss = + gstmne(kks) * abs(kds) - gstmne(kka) * abs(kda)
+      
+     !fszcc = + gszmne(kks) * abs(kds) + gszmne(kka) * abs(kda)
+     !fszcs = - gszmno(kks) *     kds  + gszmno(kka) *     kda 
+      fszsc = + gszmno(kks) *     kds  + gszmno(kka) *     kda  ! stell-sym; 
+     !fszss = + gszmne(kks) * abs(kds) - gszmne(kka) * abs(kda)
+      
+      fttcc = + gttmne(kks) * abs(kds) + gttmne(kka) * abs(kda) ! stell-sym; 
+     !fttcs = - gttmno(kks) *     kds  + gttmno(kka) *     kda 
+     !fttsc = + gttmno(kks) *     kds  + gttmno(kka) *     kda 
+     !fttss = + gttmne(kks) * abs(kds) - gttmne(kka) * abs(kda)
+      
+      ftzcc = + gtzmne(kks) * abs(kds) + gtzmne(kka) * abs(kda) ! stell-sym; 
+     !ftzcs = - gtzmno(kks) *     kds  + gtzmno(kka) *     kda 
+     !ftzsc = + gtzmno(kks) *     kds  + gtzmno(kka) *     kda 
+     !ftzss = + gtzmne(kks) * abs(kds) - gtzmne(kka) * abs(kda)
+      
+      fzzcc = + gzzmne(kks) * abs(kds) + gzzmne(kka) * abs(kda) ! stell-sym; 
+     !fzzcs = - gzzmno(kks) *     kds  + gzzmno(kka) *     kda 
+     !fzzsc = + gzzmno(kks) *     kds  + gzzmno(kka) *     kda 
+     !fzzss = + gzzmne(kks) * abs(kds) - gzzmne(kka) * abs(kda)
+      
+      do lp = 1, (1+lrad)*(1+lrad) ; ll = llabel(lp,lvol) ; pp = plabel(lp,lvol) ! SRH; 27 Jul 17;
+       
+       Tl = TD(ll,0,jquad,lvol)
+       Dl = TD(ll,1,jquad,lvol)
+       Tp = TD(pp,0,jquad,lvol)
+       Dp = TD(pp,1,jquad,lvol)
+       
+       TlTp = Tl * Tp
+       TlDp = Tl * Dp
+       DlTp = Dl * Tp
+       DlDp = Dl * Dp
+       
+       DToocc( ll, pp, ii, jj ) = DToocc( ll, pp, ii, jj ) + DlTp * foocc ! stell-sym; SRH; 27 Jul 17;
+      !DToocs( ll, pp, ii, jj ) = DToocs( ll, pp, ii, jj ) + DlTp * foocs
+      !DToosc( ll, pp, ii, jj ) = DToosc( ll, pp, ii, jj ) + DlTp * foosc
+      !DTooss( ll, pp, ii, jj ) = DTooss( ll, pp, ii, jj ) + DlTp * fooss
+       
+      !TTsscc( ll, pp, ii, jj ) = TTsscc( ll, pp, ii, jj ) + TlTp * fsscc
+      !TTsscs( ll, pp, ii, jj ) = TTsscs( ll, pp, ii, jj ) + TlTp * fsscs
+      !TTsssc( ll, pp, ii, jj ) = TTsssc( ll, pp, ii, jj ) + TlTp * fsssc
+       TTssss( ll, pp, ii, jj ) = TTssss( ll, pp, ii, jj ) + TlTp * fssss ! stell-sym; SRH; 27 Jul 17;
+       
+      !TDstcc( ll, pp, ii, jj ) = TDstcc( ll, pp, ii, jj ) + TlDp * fstcc
+      !TDstcs( ll, pp, ii, jj ) = TDstcs( ll, pp, ii, jj ) + TlDp * fstcs
+       TDstsc( ll, pp, ii, jj ) = TDstsc( ll, pp, ii, jj ) + TlDp * fstsc ! stell-sym; SRH; 27 Jul 17;
+      !TDstss( ll, pp, ii, jj ) = TDstss( ll, pp, ii, jj ) + TlDp * fstss
+       
+      !TDszcc( ll, pp, ii, jj ) = TDszcc( ll, pp, ii, jj ) + TlDp * fszcc
+      !TDszcs( ll, pp, ii, jj ) = TDszcs( ll, pp, ii, jj ) + TlDp * fszcs
+       TDszsc( ll, pp, ii, jj ) = TDszsc( ll, pp, ii, jj ) + TlDp * fszsc ! stell-sym; SRH; 27 Jul 17;
+      !TDszss( ll, pp, ii, jj ) = TDszss( ll, pp, ii, jj ) + TlDp * fszss
+       
+       DDttcc( ll, pp, ii, jj ) = DDttcc( ll, pp, ii, jj ) + DlDp * fttcc ! stell-sym; SRH; 27 Jul 17;
+      !DDttcs( ll, pp, ii, jj ) = DDttcs( ll, pp, ii, jj ) + DlDp * fttcs
+      !DDttsc( ll, pp, ii, jj ) = DDttsc( ll, pp, ii, jj ) + DlDp * fttsc
+      !DDttss( ll, pp, ii, jj ) = DDttss( ll, pp, ii, jj ) + DlDp * fttss
+       
+       DDtzcc( ll, pp, ii, jj ) = DDtzcc( ll, pp, ii, jj ) + DlDp * ftzcc ! stell-sym; SRH; 27 Jul 17;
+      !DDtzcs( ll, pp, ii, jj ) = DDtzcs( ll, pp, ii, jj ) + DlDp * ftzcs
+      !DDtzsc( ll, pp, ii, jj ) = DDtzsc( ll, pp, ii, jj ) + DlDp * ftzsc
+      !DDtzss( ll, pp, ii, jj ) = DDtzss( ll, pp, ii, jj ) + DlDp * ftzss
+       
+       DDzzcc( ll, pp, ii, jj ) = DDzzcc( ll, pp, ii, jj ) + DlDp * fzzcc ! stell-sym; SRH; 27 Jul 17;
+      !DDzzcs( ll, pp, ii, jj ) = DDzzcs( ll, pp, ii, jj ) + DlDp * fzzcs
+      !DDzzsc( ll, pp, ii, jj ) = DDzzsc( ll, pp, ii, jj ) + DlDp * fzzsc
+      !DDzzss( ll, pp, ii, jj ) = DDzzss( ll, pp, ii, jj ) + DlDp * fzzss
+       
+      enddo ! end of do lp; 27 Jul 17;
+      
+     enddo ! end of do ij; 27 Jul 17;
+     
+    enddo ! end of do jquad; ! 16 Jan 13;
     
-    WCALL( ma00aa, metrix,( lvol, lss ) ) ! compute metric elements; 16 Jan 13;
+   else ! NOTstellsym
+    
+    do jquad = 1, lquad ! Gaussian quadrature loop;
+     
+     lss = gaussianabscissae(jquad,lvol) ; jthweight = gaussianweight(jquad,lvol)
+     
+     WCALL( ma00aa, metrix,( lvol, lss ) ) ! compute metric elements; 16 Jan 13;
+     
+     do ij = 1, mnsqd ; ii = ilabel(ij) ; jj = jlabel(ij) ! SRH; 27 Jul 17;
+      
+      kks = kijs(ii,jj,0) ; kds = jthweight / kijs(ii,jj,1) ! SRH; 27 Jul 17;
+      kka = kija(ii,jj,0) ; kda = jthweight / kija(ii,jj,1) ! SRH; 27 Jul 17;
+      
+      foocc = + goomne(kks) * abs(kds) + goomne(kka) * abs(kda) ! SRH; 27 Jul 17;
+      foocs = - goomno(kks) *     kds  + goomno(kka) *     kda 
+      foosc = + goomno(kks) *     kds  + goomno(kka) *     kda 
+      fooss = + goomne(kks) * abs(kds) - goomne(kka) * abs(kda)
+      
+      fsscc = + gssmne(kks) * abs(kds) + gssmne(kka) * abs(kda)
+      fsscs = - gssmno(kks) *     kds  + gssmno(kka) *     kda 
+      fsssc = + gssmno(kks) *     kds  + gssmno(kka) *     kda 
+      fssss = + gssmne(kks) * abs(kds) - gssmne(kka) * abs(kda)
+      
+      fstcc = + gstmne(kks) * abs(kds) + gstmne(kka) * abs(kda)
+      fstcs = - gstmno(kks) *     kds  + gstmno(kka) *     kda 
+      fstsc = + gstmno(kks) *     kds  + gstmno(kka) *     kda 
+      fstss = + gstmne(kks) * abs(kds) - gstmne(kka) * abs(kda)
+      
+      fszcc = + gszmne(kks) * abs(kds) + gszmne(kka) * abs(kda)
+      fszcs = - gszmno(kks) *     kds  + gszmno(kka) *     kda 
+      fszsc = + gszmno(kks) *     kds  + gszmno(kka) *     kda 
+      fszss = + gszmne(kks) * abs(kds) - gszmne(kka) * abs(kda)
+      
+      fttcc = + gttmne(kks) * abs(kds) + gttmne(kka) * abs(kda)
+      fttcs = - gttmno(kks) *     kds  + gttmno(kka) *     kda 
+      fttsc = + gttmno(kks) *     kds  + gttmno(kka) *     kda 
+      fttss = + gttmne(kks) * abs(kds) - gttmne(kka) * abs(kda)
+      
+      ftzcc = + gtzmne(kks) * abs(kds) + gtzmne(kka) * abs(kda)
+      ftzcs = - gtzmno(kks) *     kds  + gtzmno(kka) *     kda 
+      ftzsc = + gtzmno(kks) *     kds  + gtzmno(kka) *     kda 
+      ftzss = + gtzmne(kks) * abs(kds) - gtzmne(kka) * abs(kda)
+      
+      fzzcc = + gzzmne(kks) * abs(kds) + gzzmne(kka) * abs(kda)
+      fzzcs = - gzzmno(kks) *     kds  + gzzmno(kka) *     kda 
+      fzzsc = + gzzmno(kks) *     kds  + gzzmno(kka) *     kda 
+      fzzss = + gzzmne(kks) * abs(kds) - gzzmne(kka) * abs(kda)
+      
+      do lp = 1, (1+lrad)*(1+lrad) ; ll = llabel(lp,lvol) ; pp = plabel(lp,lvol) ! SRH; 27 Jul 17;
+       
+       Tl = TD(ll,0,jquad,lvol)
+       Dl = TD(ll,1,jquad,lvol)
+       Tp = TD(pp,0,jquad,lvol)
+       Dp = TD(pp,1,jquad,lvol)
+       
+       TlTp = Tl * Tp
+       TlDp = Tl * Dp
+       DlTp = Dl * Tp
+       DlDp = Dl * Dp
+       
+       DToocc( ll, pp, ii, jj ) = DToocc( ll, pp, ii, jj ) + DlTp * foocc ! stell-sym; SRH; 27 Jul 17;
+       DToocs( ll, pp, ii, jj ) = DToocs( ll, pp, ii, jj ) + DlTp * foocs
+       DToosc( ll, pp, ii, jj ) = DToosc( ll, pp, ii, jj ) + DlTp * foosc
+       DTooss( ll, pp, ii, jj ) = DTooss( ll, pp, ii, jj ) + DlTp * fooss
+       
+       TTsscc( ll, pp, ii, jj ) = TTsscc( ll, pp, ii, jj ) + TlTp * fsscc
+       TTsscs( ll, pp, ii, jj ) = TTsscs( ll, pp, ii, jj ) + TlTp * fsscs
+       TTsssc( ll, pp, ii, jj ) = TTsssc( ll, pp, ii, jj ) + TlTp * fsssc
+       TTssss( ll, pp, ii, jj ) = TTssss( ll, pp, ii, jj ) + TlTp * fssss ! stell-sym; SRH; 27 Jul 17;
+       
+       TDstcc( ll, pp, ii, jj ) = TDstcc( ll, pp, ii, jj ) + TlDp * fstcc
+       TDstcs( ll, pp, ii, jj ) = TDstcs( ll, pp, ii, jj ) + TlDp * fstcs
+       TDstsc( ll, pp, ii, jj ) = TDstsc( ll, pp, ii, jj ) + TlDp * fstsc ! stell-sym; SRH; 27 Jul 17;
+       TDstss( ll, pp, ii, jj ) = TDstss( ll, pp, ii, jj ) + TlDp * fstss
+       
+       TDszcc( ll, pp, ii, jj ) = TDszcc( ll, pp, ii, jj ) + TlDp * fszcc
+       TDszcs( ll, pp, ii, jj ) = TDszcs( ll, pp, ii, jj ) + TlDp * fszcs
+       TDszsc( ll, pp, ii, jj ) = TDszsc( ll, pp, ii, jj ) + TlDp * fszsc ! stell-sym; SRH; 27 Jul 17;
+       TDszss( ll, pp, ii, jj ) = TDszss( ll, pp, ii, jj ) + TlDp * fszss
+       
+       DDttcc( ll, pp, ii, jj ) = DDttcc( ll, pp, ii, jj ) + DlDp * fttcc ! stell-sym; SRH; 27 Jul 17;
+       DDttcs( ll, pp, ii, jj ) = DDttcs( ll, pp, ii, jj ) + DlDp * fttcs
+       DDttsc( ll, pp, ii, jj ) = DDttsc( ll, pp, ii, jj ) + DlDp * fttsc
+       DDttss( ll, pp, ii, jj ) = DDttss( ll, pp, ii, jj ) + DlDp * fttss
+       
+       DDtzcc( ll, pp, ii, jj ) = DDtzcc( ll, pp, ii, jj ) + DlDp * ftzcc ! stell-sym; SRH; 27 Jul 17;
+       DDtzcs( ll, pp, ii, jj ) = DDtzcs( ll, pp, ii, jj ) + DlDp * ftzcs
+       DDtzsc( ll, pp, ii, jj ) = DDtzsc( ll, pp, ii, jj ) + DlDp * ftzsc
+       DDtzss( ll, pp, ii, jj ) = DDtzss( ll, pp, ii, jj ) + DlDp * ftzss
+       
+       DDzzcc( ll, pp, ii, jj ) = DDzzcc( ll, pp, ii, jj ) + DlDp * fzzcc ! stell-sym; SRH; 27 Jul 17;
+       DDzzcs( ll, pp, ii, jj ) = DDzzcs( ll, pp, ii, jj ) + DlDp * fzzcs
+       DDzzsc( ll, pp, ii, jj ) = DDzzsc( ll, pp, ii, jj ) + DlDp * fzzsc
+       DDzzss( ll, pp, ii, jj ) = DDzzss( ll, pp, ii, jj ) + DlDp * fzzss
+       
+      enddo ! end of do lp; 27 Jul 17;
+      
+     enddo ! end of do ij; 27 Jul 17;
+     
+    enddo ! end of do jquad; ! 16 Jan 13;
+    
+   endif ! end of if( YESstellsym ) ; 
    
-    do ij = 1, mnsqd ; ii = ilabel(ij) ; jj = jlabel(ij) ! SRH; 27 Jul 17;
-     
-     kks = kijs(ii,jj,0) ; kds = jthweight / kijs(ii,jj,1) ! SRH; 27 Jul 17;
-     kka = kija(ii,jj,0) ; kda = jthweight / kija(ii,jj,1) ! SRH; 27 Jul 17;
-     
-     foocc = + goomne(kks) * abs(kds) + goomne(kka) * abs(kda) ! SRH; 27 Jul 17;
-     foocs = - goomno(kks) *     kds  + goomno(kka) *     kda 
-     foosc = + goomno(kks) *     kds  + goomno(kka) *     kda 
-     fooss = + goomne(kks) * abs(kds) - goomne(kka) * abs(kda)
-     
-     fsscc = + gssmne(kks) * abs(kds) + gssmne(kka) * abs(kda)
-     fsscs = - gssmno(kks) *     kds  + gssmno(kka) *     kda 
-     fsssc = + gssmno(kks) *     kds  + gssmno(kka) *     kda 
-     fssss = + gssmne(kks) * abs(kds) - gssmne(kka) * abs(kda)
-     
-     fstcc = + gstmne(kks) * abs(kds) + gstmne(kka) * abs(kda)
-     fstcs = - gstmno(kks) *     kds  + gstmno(kka) *     kda 
-     fstsc = + gstmno(kks) *     kds  + gstmno(kka) *     kda 
-     fstss = + gstmne(kks) * abs(kds) - gstmne(kka) * abs(kda)
-     
-     fszcc = + gszmne(kks) * abs(kds) + gszmne(kka) * abs(kda)
-     fszcs = - gszmno(kks) *     kds  + gszmno(kka) *     kda 
-     fszsc = + gszmno(kks) *     kds  + gszmno(kka) *     kda 
-     fszss = + gszmne(kks) * abs(kds) - gszmne(kka) * abs(kda)
-     
-     fttcc = + gttmne(kks) * abs(kds) + gttmne(kka) * abs(kda)
-     fttcs = - gttmno(kks) *     kds  + gttmno(kka) *     kda 
-     fttsc = + gttmno(kks) *     kds  + gttmno(kka) *     kda 
-     fttss = + gttmne(kks) * abs(kds) - gttmne(kka) * abs(kda)
-     
-     ftzcc = + gtzmne(kks) * abs(kds) + gtzmne(kka) * abs(kda)
-     ftzcs = - gtzmno(kks) *     kds  + gtzmno(kka) *     kda 
-     ftzsc = + gtzmno(kks) *     kds  + gtzmno(kka) *     kda 
-     ftzss = + gtzmne(kks) * abs(kds) - gtzmne(kka) * abs(kda)
-     
-     fzzcc = + gzzmne(kks) * abs(kds) + gzzmne(kka) * abs(kda)
-     fzzcs = - gzzmno(kks) *     kds  + gzzmno(kka) *     kda 
-     fzzsc = + gzzmno(kks) *     kds  + gzzmno(kka) *     kda 
-     fzzss = + gzzmne(kks) * abs(kds) - gzzmne(kka) * abs(kda)
-     
-     do lp = 1, (1+lrad)*(1+lrad) ; ll = llabel(lp,lvol) ; pp = plabel(lp,lvol) ! SRH; 27 Jul 17;
-      
-      Tl = TD(ll,0,jquad,lvol)
-      Dl = TD(ll,1,jquad,lvol)
-      Tp = TD(pp,0,jquad,lvol)
-      Dp = TD(pp,1,jquad,lvol)
-      
-      TlTp = Tl * Tp
-      TlDp = Tl * Dp
-      DlTp = Dl * Tp
-      DlDp = Dl * Dp
-      
-      DToocc( ll, pp, ii, jj ) = DToocc( ll, pp, ii, jj ) + DlTp * foocc
-      DToocs( ll, pp, ii, jj ) = DToocs( ll, pp, ii, jj ) + DlTp * foocs
-      DToosc( ll, pp, ii, jj ) = DToosc( ll, pp, ii, jj ) + DlTp * foosc
-      DTooss( ll, pp, ii, jj ) = DTooss( ll, pp, ii, jj ) + DlTp * fooss
-      
-      TTsscc( ll, pp, ii, jj ) = TTsscc( ll, pp, ii, jj ) + TlTp * fsscc
-      TTsscs( ll, pp, ii, jj ) = TTsscs( ll, pp, ii, jj ) + TlTp * fsscs
-      TTsssc( ll, pp, ii, jj ) = TTsssc( ll, pp, ii, jj ) + TlTp * fsssc
-      TTssss( ll, pp, ii, jj ) = TTssss( ll, pp, ii, jj ) + TlTp * fssss
-      
-      TDstcc( ll, pp, ii, jj ) = TDstcc( ll, pp, ii, jj ) + TlDp * fstcc
-      TDstcs( ll, pp, ii, jj ) = TDstcs( ll, pp, ii, jj ) + TlDp * fstcs
-      TDstsc( ll, pp, ii, jj ) = TDstsc( ll, pp, ii, jj ) + TlDp * fstsc
-      TDstss( ll, pp, ii, jj ) = TDstss( ll, pp, ii, jj ) + TlDp * fstss
-      
-      TDszcc( ll, pp, ii, jj ) = TDszcc( ll, pp, ii, jj ) + TlDp * fszcc
-      TDszcs( ll, pp, ii, jj ) = TDszcs( ll, pp, ii, jj ) + TlDp * fszcs
-      TDszsc( ll, pp, ii, jj ) = TDszsc( ll, pp, ii, jj ) + TlDp * fszsc
-      TDszss( ll, pp, ii, jj ) = TDszss( ll, pp, ii, jj ) + TlDp * fszss
-      
-      DDttcc( ll, pp, ii, jj ) = DDttcc( ll, pp, ii, jj ) + DlDp * fttcc
-      DDttcs( ll, pp, ii, jj ) = DDttcs( ll, pp, ii, jj ) + DlDp * fttcs
-      DDttsc( ll, pp, ii, jj ) = DDttsc( ll, pp, ii, jj ) + DlDp * fttsc
-      DDttss( ll, pp, ii, jj ) = DDttss( ll, pp, ii, jj ) + DlDp * fttss
-      
-      DDtzcc( ll, pp, ii, jj ) = DDtzcc( ll, pp, ii, jj ) + DlDp * ftzcc
-      DDtzcs( ll, pp, ii, jj ) = DDtzcs( ll, pp, ii, jj ) + DlDp * ftzcs
-      DDtzsc( ll, pp, ii, jj ) = DDtzsc( ll, pp, ii, jj ) + DlDp * ftzsc
-      DDtzss( ll, pp, ii, jj ) = DDtzss( ll, pp, ii, jj ) + DlDp * ftzss
-      
-      DDzzcc( ll, pp, ii, jj ) = DDzzcc( ll, pp, ii, jj ) + DlDp * fzzcc
-      DDzzcs( ll, pp, ii, jj ) = DDzzcs( ll, pp, ii, jj ) + DlDp * fzzcs
-      DDzzsc( ll, pp, ii, jj ) = DDzzsc( ll, pp, ii, jj ) + DlDp * fzzsc
-      DDzzss( ll, pp, ii, jj ) = DDzzss( ll, pp, ii, jj ) + DlDp * fzzss
-
-     enddo ! end of do lp; 27 Jul 17;
-
-    enddo ! end of do ij; 27 Jul 17;
-
-   enddo ! end of do jquad; ! 16 Jan 13;
-    
   endif ! end of if( Lcoordinatesingularity ) ; 17 Dec 15;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !  DToocc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DToocc( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf ! this factor is now included in matrix; SRH; 27 Jul 17;
-!  DToocs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DToocs( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-!  DToosc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DToosc( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
+!  DToocs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DToocs( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf ! I guessed that this would be faster; SRH; 27 Jul 17;
+!  DToosc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DToosc( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf ! but I did not confirm; SRH; 27 Jul 17;
 !  DTooss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DTooss( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
 !
 !  TTsscc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = TTsscc( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
@@ -433,22 +681,19 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-#ifdef DEBUG
-  
+#ifdef DEBUG ! the following seems quite useless and can easily be deleted; "a short code is a good code"; SRH; 27 Jul 17;
   if( Wma00aa ) then
    do ll = 0, lrad
     do pp = 0, lrad
      do ii = 1, mn
       do jj = 1, mn
-       write(ounit,1000) ll, pp, ii, jj, (/ DToocc( ll, pp, ii, jj ), DToocs( ll, pp, ii, jj ), DToosc( ll, pp, ii, jj ), DTooss( ll, pp, ii, jj ) /) / pi/pi
+       write(ounit,1000) ll, pp, ii, jj, (/ DToocc(ll,pp,ii,jj), DToocs(ll,pp,ii,jj), DToosc(ll,pp,ii,jj), DTooss(ll,pp,ii,jj) /) / pi/pi
       enddo
      enddo
     enddo
    enddo
   endif
-  
 1000 format("ma00aa : ll="i3" ; pp="i3" ; ii="i3" ; jj="i3" ; DToocc="f15.10" ; DToocs="f15.10" ; DToosc="f15.10" ; DTooss="f15.10" ;")
-  
 #endif
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
