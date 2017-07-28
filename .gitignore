@@ -6,3 +6,9 @@
 xspec
 dspec
 
+#pdfs related
+*.dvi
+*.toc
+*.out
+.*.date
+subroutines.html
