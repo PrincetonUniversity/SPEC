@@ -4,11 +4,21 @@
 <head> 
 <script type="text/x-mathjax-config">
   MathJax.Hub.Config({
-  tex2jax: {inlineMath: [["$","$"],["\\(","\\)"]]}
+    TeX: {
+      equationNumbers: {
+        autoNumber: "AMS"
+      }
+    },
+    tex2jax: {
+      inlineMath: [ ['$','$'], ['\(', '\)'] ],
+      displayMath: [ ['$$','$$'] ],
+      processEscapes: true,
+    }
   });
 </script>
-<script type="text/javascript" async
-	src="http://theory.pppl.gov/includes/MathJax/MathJax.js?config=TeX-AMS_HTML-full"></script>
+<script type="text/javascript"
+        src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
 <title>SPEC</title> 
 <style>
 table, th, td {
@@ -68,7 +78,8 @@ th, td {
 <tr><td><a href=sc00aa.pdf>sc00aa</a></td><td> (diagnostic) </td><td> Returns &ldquo;covariant&rdquo; magnetic field, ${\bf B} = B_s \nabla s + B_\theta \nabla \theta + B_\zeta \nabla \zeta$, on ${\cal I}$.</td></tr>
 <tr><td><a href=hesian.pdf>hesian</a></td><td> (diagnostic) </td><td> Computes eigenvalues and eigenvectors of derivative matrix, $\nabla_{\bf \xi}{\bf F}$.</td></tr>
 <tr><td><a href=ra00aa.pdf>ra00aa</a></td><td> (output) </td><td> Writes vector potential to .ext.sp.A .</td></tr>
-<tr><td><a href=numrec.pdf>numrec</a></td><td> (numerics) </td><td> Some miscellaneous numerical routines.</td></tr>
+<tr><td><a href=numrec.pdf>numrec</a></td><td> (numerics) </td><td> Some miscellaneous numerical routines.
+</td></tr>
 <tr><td><a href=xspech.pdf>xspech</a></td><td> (main) </td><td> Main program.</td></tr>
 <tr><td><a href=hdfint.pdf>hdfint</a></td><td> (output) </td><td> Writes all the output information to ext.sp.h5.</td></tr>
 </table></body></html>
