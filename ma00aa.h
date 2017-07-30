@@ -701,7 +701,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
     
     do ll = 0, lrad
      do pp = 0, lrad
-      Lpause = .false.
+     !Lpause = .false.
       do ii = 1, mn
        do jj = 1, mn
         if( abs(TTssss(ll,pp,ii,jj)) .gt. vsmall ) then
