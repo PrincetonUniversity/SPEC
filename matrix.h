@@ -397,7 +397,7 @@ subroutine matrix( lvol, mn, lrad )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  LOGICAL              :: Lpause
+  LOGICAL              :: Lpause ! debugging; can probably be deleted; SRH; 30 Jul 17;
 
   INTEGER              :: NN, ii, jj, ll, kk, pp, mi, ni, mj, nj, mimj, minj, nimj, ninj, mjmi, mjni, njmi, njni, id, jd
 
@@ -426,52 +426,54 @@ subroutine matrix( lvol, mn, lrad )
   
   NN = NAdof(lvol) ! shorthand;
   
-  dMA(0:NN,0:NN) = zero ! initialize summation; 24 Jan 13;
+  dMA(0:NN,0:NN) = zero ! initialize summation; 24 Jan 13; ! THERE IS NO SUMMATION; SRH; 30 Jul 17;
   dMD(0:NN,0:NN) = zero
   dMB(0:NN,1: 2) = zero
   dMG(0:NN     ) = zero
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+!  Wtete(1:mn,0:lrad,1:mn,0:lrad) = zero ! SRH; 30 Jul 17;
+!  Wtote(1:mn,0:lrad,1:mn,0:lrad) = zero
+!  Wzete(1:mn,0:lrad,1:mn,0:lrad) = zero
+!  Wzote(1:mn,0:lrad,1:mn,0:lrad) = zero
+   
+!  Wteto(1:mn,0:lrad,1:mn,0:lrad) = zero ! SRH; 30 Jul 17;
+!  Wtoto(1:mn,0:lrad,1:mn,0:lrad) = zero
+!  Wzeto(1:mn,0:lrad,1:mn,0:lrad) = zero
+!  Wzoto(1:mn,0:lrad,1:mn,0:lrad) = zero
+   
+!  Wteze(1:mn,0:lrad,1:mn,0:lrad) = zero ! SRH; 30 Jul 17;
+!  Wtoze(1:mn,0:lrad,1:mn,0:lrad) = zero
+!  Wzeze(1:mn,0:lrad,1:mn,0:lrad) = zero
+!  Wzoze(1:mn,0:lrad,1:mn,0:lrad) = zero
+   
+!  Wtezo(1:mn,0:lrad,1:mn,0:lrad) = zero ! SRH; 30 Jul 17;
+!  Wtozo(1:mn,0:lrad,1:mn,0:lrad) = zero
+!  Wzezo(1:mn,0:lrad,1:mn,0:lrad) = zero
+!  Wzozo(1:mn,0:lrad,1:mn,0:lrad) = zero
+   
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  Wtete(1:mn,0:lrad,1:mn,0:lrad) = zero ! these "zeros" are probably not required; 10 Mar 13;
-  Wtote(1:mn,0:lrad,1:mn,0:lrad) = zero 
-  Wzete(1:mn,0:lrad,1:mn,0:lrad) = zero 
-  Wzote(1:mn,0:lrad,1:mn,0:lrad) = zero
-  
-  Wteto(1:mn,0:lrad,1:mn,0:lrad) = zero 
-  Wtoto(1:mn,0:lrad,1:mn,0:lrad) = zero 
-  Wzeto(1:mn,0:lrad,1:mn,0:lrad) = zero 
-  Wzoto(1:mn,0:lrad,1:mn,0:lrad) = zero
-  
-  Wteze(1:mn,0:lrad,1:mn,0:lrad) = zero 
-  Wtoze(1:mn,0:lrad,1:mn,0:lrad) = zero 
-  Wzeze(1:mn,0:lrad,1:mn,0:lrad) = zero 
-  Wzoze(1:mn,0:lrad,1:mn,0:lrad) = zero
-  
-  Wtezo(1:mn,0:lrad,1:mn,0:lrad) = zero 
-  Wtozo(1:mn,0:lrad,1:mn,0:lrad) = zero 
-  Wzezo(1:mn,0:lrad,1:mn,0:lrad) = zero 
-  Wzozo(1:mn,0:lrad,1:mn,0:lrad) = zero
-  
-  Htete(1:mn,0:lrad,1:mn,0:lrad) = zero 
-  Htote(1:mn,0:lrad,1:mn,0:lrad) = zero 
-  Hzete(1:mn,0:lrad,1:mn,0:lrad) = zero 
-  Hzote(1:mn,0:lrad,1:mn,0:lrad) = zero
-  
-  Hteto(1:mn,0:lrad,1:mn,0:lrad) = zero 
-  Htoto(1:mn,0:lrad,1:mn,0:lrad) = zero 
-  Hzeto(1:mn,0:lrad,1:mn,0:lrad) = zero 
-  Hzoto(1:mn,0:lrad,1:mn,0:lrad) = zero
-  
-  Hteze(1:mn,0:lrad,1:mn,0:lrad) = zero 
-  Htoze(1:mn,0:lrad,1:mn,0:lrad) = zero 
-  Hzeze(1:mn,0:lrad,1:mn,0:lrad) = zero 
-  Hzoze(1:mn,0:lrad,1:mn,0:lrad) = zero
-  
-  Htezo(1:mn,0:lrad,1:mn,0:lrad) = zero 
-  Htozo(1:mn,0:lrad,1:mn,0:lrad) = zero 
-  Hzezo(1:mn,0:lrad,1:mn,0:lrad) = zero 
-  Hzozo(1:mn,0:lrad,1:mn,0:lrad) = zero
+   Htete(1:mn,0:lrad,1:mn,0:lrad) = zero ! SRH; 30 Jul 17;
+   Htote(1:mn,0:lrad,1:mn,0:lrad) = zero ! SRH; 30 Jul 17;
+!  Hzete(1:mn,0:lrad,1:mn,0:lrad) = zero
+!  Hzote(1:mn,0:lrad,1:mn,0:lrad) = zero
+   
+   Hteto(1:mn,0:lrad,1:mn,0:lrad) = zero ! SRH; 30 Jul 17;
+   Htoto(1:mn,0:lrad,1:mn,0:lrad) = zero ! SRH; 30 Jul 17;
+!  Hzeto(1:mn,0:lrad,1:mn,0:lrad) = zero 
+!  Hzoto(1:mn,0:lrad,1:mn,0:lrad) = zero
+   
+!  Hteze(1:mn,0:lrad,1:mn,0:lrad) = zero
+!  Htoze(1:mn,0:lrad,1:mn,0:lrad) = zero
+   Hzeze(1:mn,0:lrad,1:mn,0:lrad) = zero ! SRH; 30 Jul 17;
+   Hzoze(1:mn,0:lrad,1:mn,0:lrad) = zero ! SRH; 30 Jul 17;
+   
+!  Htezo(1:mn,0:lrad,1:mn,0:lrad) = zero 
+!  Htozo(1:mn,0:lrad,1:mn,0:lrad) = zero 
+   Hzezo(1:mn,0:lrad,1:mn,0:lrad) = zero ! SRH; 30 Jul 17;
+   Hzozo(1:mn,0:lrad,1:mn,0:lrad) = zero ! SRH; 30 Jul 17;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -494,10 +496,10 @@ subroutine matrix( lvol, mn, lrad )
        Wteze(jj,pp,ii,ll) = + 2 * minj * TTssss(ll,pp,ii,jj) + 2      * nj * TDstsc(pp,ll,jj,ii) - 2 * mi      * TDszsc(ll,pp,ii,jj) - 2 * DDtzcc(ll,pp,ii,jj)
        Wzeze(jj,pp,ii,ll) = + 2 * mimj * TTssss(ll,pp,ii,jj) + 2 * mi      * TDstsc(ll,pp,ii,jj) + 2      * mj * TDstsc(pp,ll,jj,ii) + 2 * DDttcc(ll,pp,ii,jj)
        
-!     !Htete(jj,pp,ii,ll) =   zero
+!     !Htete(jj,pp,ii,ll) =   zero ! this is set to zero above; SRH; 30 Jul 17;
        Hzete(jj,pp,ii,ll) = - DToocc(pp,ll,jj,ii) + DToocc(ll,pp,ii,jj)
        Hteze(jj,pp,ii,ll) = + DToocc(pp,ll,jj,ii) - DToocc(ll,pp,ii,jj)
-!     !Hzeze(jj,pp,ii,ll) =   zero  
+!     !Hzeze(jj,pp,ii,ll) =   zero ! this is set to zero above; SRH; 30 Jul 17;
       
       enddo ! end of do pp; 08 Feb 16;
 
@@ -524,8 +526,7 @@ subroutine matrix( lvol, mn, lrad )
      
       Wteto(jj,pp,ii,ll) = 2 * ( - njni * TTsssc(pp,ll,jj,ii) - nj * TDszss(pp,ll,jj,ii) + ni * TDszcc(ll,pp,ii,jj) + DDzzcs(pp,ll,jj,ii) )
       Wtoto(jj,pp,ii,ll) = 2 * ( + njni * TTsscc(pp,ll,jj,ii) + nj * TDszcs(pp,ll,jj,ii) + ni * TDszcs(ll,pp,ii,jj) + DDzzss(pp,ll,jj,ii) )
-!     Wzeto(jj,pp,ii,ll) = 2 * ( - mjni * TTsssc(pp,ll,jj,ii) - mj * TDszcc(pp,ll,jj,ii) - ni * TDstcc(ll,pp,ii,jj) - DDtzcs(pp,ll,jj,ii) ) ! 19 Jul 16;
-      Wzeto(jj,pp,ii,ll) = 2 * ( - mjni * TTsssc(pp,ll,jj,ii) - mj * TDszss(pp,ll,jj,ii) - ni * TDstcc(ll,pp,ii,jj) - DDtzcs(pp,ll,jj,ii) ) ! 19 Jul 16;
+      Wzeto(jj,pp,ii,ll) = 2 * ( - mjni * TTsssc(pp,ll,jj,ii) - mj * TDszss(pp,ll,jj,ii) - ni * TDstcc(ll,pp,ii,jj) - DDtzcs(pp,ll,jj,ii) )
       Wzoto(jj,pp,ii,ll) = 2 * ( + mjni * TTsscc(pp,ll,jj,ii) + mj * TDszcs(pp,ll,jj,ii) - ni * TDstcs(ll,pp,ii,jj) - DDtzss(pp,ll,jj,ii) )
 
       Wteze(jj,pp,ii,ll) = 2 * ( + njmi * TTssss(pp,ll,jj,ii) + nj * TDstsc(pp,ll,jj,ii) - mi * TDszsc(ll,pp,ii,jj) - DDtzcc(pp,ll,jj,ii) )
@@ -538,25 +539,25 @@ subroutine matrix( lvol, mn, lrad )
       Wzezo(jj,pp,ii,ll) = 2 * ( - mjmi * TTsssc(pp,ll,jj,ii) + mj * TDstss(pp,ll,jj,ii) - mi * TDstcc(ll,pp,ii,jj) + DDttcs(pp,ll,jj,ii) )
       Wzozo(jj,pp,ii,ll) = 2 * ( + mjmi * TTsscc(pp,ll,jj,ii) - mj * TDstcs(pp,ll,jj,ii) - mi * TDstcs(ll,pp,ii,jj) + DDttss(pp,ll,jj,ii) )
 
-      Htete(jj,pp,ii,ll) =   zero
-      Htote(jj,pp,ii,ll) =   zero
+     !Htete(jj,pp,ii,ll) =   zero ! this is set to zero above; SRH; 30 Jul 17;
+     !Htote(jj,pp,ii,ll) =   zero ! this is set to zero above; SRH; 30 Jul 17;
       Hzete(jj,pp,ii,ll) = - DToocc(pp,ll,jj,ii) + DToocc(ll,pp,ii,jj)
       Hzote(jj,pp,ii,ll) = - DToosc(pp,ll,jj,ii) + DToocs(ll,pp,ii,jj)
 
-      Hteto(jj,pp,ii,ll) =   zero
-      Htoto(jj,pp,ii,ll) =   zero
+     !Hteto(jj,pp,ii,ll) =   zero ! this is set to zero above; SRH; 30 Jul 17;
+     !Htoto(jj,pp,ii,ll) =   zero ! this is set to zero above; SRH; 30 Jul 17;
       Hzeto(jj,pp,ii,ll) = - DToocs(pp,ll,jj,ii) + DToosc(ll,pp,ii,jj)
       Hzoto(jj,pp,ii,ll) = - DTooss(pp,ll,jj,ii) + DTooss(ll,pp,ii,jj)  
 
       Hteze(jj,pp,ii,ll) = + DToocc(pp,ll,jj,ii) - DToocc(ll,pp,ii,jj)
       Htoze(jj,pp,ii,ll) = + DToosc(pp,ll,jj,ii) - DToocs(ll,pp,ii,jj)
-      Hzeze(jj,pp,ii,ll) =   zero  
-      Hzoze(jj,pp,ii,ll) =   zero
+     !Hzeze(jj,pp,ii,ll) =   zero ! this is set to zero above; SRH; 30 Jul 17;
+     !Hzoze(jj,pp,ii,ll) =   zero ! this is set to zero above; SRH; 30 Jul 17;
 
       Htezo(jj,pp,ii,ll) = + DToocs(pp,ll,jj,ii) - DToosc(ll,pp,ii,jj)
       Htozo(jj,pp,ii,ll) = + DTooss(pp,ll,jj,ii) - DTooss(ll,pp,ii,jj)
-      Hzezo(jj,pp,ii,ll) =   zero
-      Hzozo(jj,pp,ii,ll) =   zero
+     !Hzezo(jj,pp,ii,ll) =   zero ! this is set to zero above; SRH; 30 Jul 17;
+     !Hzozo(jj,pp,ii,ll) =   zero ! this is set to zero above; SRH; 30 Jul 17;
       
       enddo ! end of do pp;
       
@@ -586,13 +587,13 @@ subroutine matrix( lvol, mn, lrad )
      
      do jj = 1, mn
       do pp = 0, lrad   ; id = Ate(lvol,0,ii)%i(ll) ; jd = Ate(lvol,0,jj)%i(pp) ; dMA(id,jd) = + Wtete(jj,pp,ii,ll)
-       ;                ;                           ;                           ; dMD(id,jd) = - Htete(jj,pp,ii,ll)
+       ;                ;                           ;                           ! dMD(id,jd) = - Htete(jj,pp,ii,ll) ! zero; SRH; 30 Jul 17;
        ;                ; id = Ate(lvol,0,ii)%i(ll) ; jd = Aze(lvol,0,jj)%i(pp) ; dMA(id,jd) = + Wzete(jj,pp,ii,ll)
        ;                ;                                                       ; dMD(id,jd) = - Hzete(jj,pp,ii,ll)
        ;                ; id = Aze(lvol,0,ii)%i(ll) ; jd = Ate(lvol,0,jj)%i(pp) ; dMA(id,jd) = + Wteze(jj,pp,ii,ll)
        ;                ;                                                       ; dMD(id,jd) = - Hteze(jj,pp,ii,ll)
        ;                ; id = Aze(lvol,0,ii)%i(ll) ; jd = Aze(lvol,0,jj)%i(pp) ; dMA(id,jd) = + Wzeze(jj,pp,ii,ll)
-       ;                ;                                                       ; dMD(id,jd) = - Hzeze(jj,pp,ii,ll)
+       ;                ;                                                       ! dMD(id,jd) = - Hzeze(jj,pp,ii,ll) ! zero; SRH; 30 Jul 17;
       enddo ! end of do pp; 08 Feb 16;
      enddo ! end of do jj; 08 Feb 16;
      
@@ -615,7 +616,7 @@ subroutine matrix( lvol, mn, lrad )
      endif
     enddo ! end of do pp; 08 Feb 16;
     
-!   ;if( ii.gt.1 ) then ; id = Lme(lvol,  ii)       ;                           ; dMG(id   ) = - ( iVns(ii) + iBns(ii) )
+!   ;if( ii.gt.1 ) then ; id = Lme(lvol,  ii)       ;                           ; dMG(id   ) = - ( iVns(ii) + iBns(ii) ) / pi2pi2nfphalf
     ;if( ii.gt.1 ) then ; id = Lme(lvol,  ii)       ;                           ; dMG(id   ) = - ( iVns(ii) - iBns(ii) ) / pi2pi2nfphalf
     ;else               ; id = Lmg(lvol,  ii)       ;                           ; dMB(id, 1) = -       one               / pi2pi2nfphalf
     ;                   ; id = Lmh(lvol,  ii)       ;                           ; dMB(id, 2) = -       one               / pi2pi2nfphalf
@@ -635,18 +636,18 @@ subroutine matrix( lvol, mn, lrad )
      
      do jj = 1, mn
       do pp = 0, lrad   ; id = Ate(lvol,0,ii)%i(ll) ; jd = Ate(lvol,0,jj)%i(pp) ; dMA(id,jd) = + Wtete(jj,pp,ii,ll)
-       ;                ;                           ;                           ; dMD(id,jd) = - Htete(jj,pp,ii,ll)
+       ;                ;                           ;                           ! dMD(id,jd) = - Htete(jj,pp,ii,ll) ! zero; SRH; 30 Jul 17;
        ;                ; id = Ate(lvol,0,ii)%i(ll) ; jd = Ato(lvol,0,jj)%i(pp) ; dMA(id,jd) = + Wtote(jj,pp,ii,ll)
-       ;                ;                           ;                           ; dMD(id,jd) = - Htote(jj,pp,ii,ll)
+       ;                ;                           ;                           ! dMD(id,jd) = - Htote(jj,pp,ii,ll) ! zero; SRH; 30 Jul 17;
        ;                ; id = Ate(lvol,0,ii)%i(ll) ; jd = Aze(lvol,0,jj)%i(pp) ; dMA(id,jd) = + Wzete(jj,pp,ii,ll)
        ;                ;                           ;                           ; dMD(id,jd) = - Hzete(jj,pp,ii,ll)
        ;                ; id = Ate(lvol,0,ii)%i(ll) ; jd = Azo(lvol,0,jj)%i(pp) ; dMA(id,jd) = + Wzote(jj,pp,ii,ll)
        ;                ;                           ;                           ; dMD(id,jd) = - Hzote(jj,pp,ii,ll)
 
        ;                ; id = Ato(lvol,0,ii)%i(ll) ; jd = Ate(lvol,0,jj)%i(pp) ; dMA(id,jd) = + Wteto(jj,pp,ii,ll)
-       ;                ;                           ;                           ; dMD(id,jd) = - Hteto(jj,pp,ii,ll)
+       ;                ;                           ;                           ! dMD(id,jd) = - Hteto(jj,pp,ii,ll) ! zero; SRH; 30 Jul 17;
        ;                ; id = Ato(lvol,0,ii)%i(ll) ; jd = Ato(lvol,0,jj)%i(pp) ; dMA(id,jd) = + Wtoto(jj,pp,ii,ll)
-       ;                ;                           ;                           ; dMD(id,jd) = - Htoto(jj,pp,ii,ll)
+       ;                ;                           ;                           ! dMD(id,jd) = - Htoto(jj,pp,ii,ll) ! zero; SRH; 30 Jul 17;
        ;                ; id = Ato(lvol,0,ii)%i(ll) ; jd = Aze(lvol,0,jj)%i(pp) ; dMA(id,jd) = + Wzeto(jj,pp,ii,ll)
        ;                ;                           ;                           ; dMD(id,jd) = - Hzeto(jj,pp,ii,ll)
        ;                ; id = Ato(lvol,0,ii)%i(ll) ; jd = Azo(lvol,0,jj)%i(pp) ; dMA(id,jd) = + Wzoto(jj,pp,ii,ll)
@@ -657,18 +658,18 @@ subroutine matrix( lvol, mn, lrad )
        ;                ; id = Aze(lvol,0,ii)%i(ll) ; jd = Ato(lvol,0,jj)%i(pp) ; dMA(id,jd) = + Wtoze(jj,pp,ii,ll)
        ;                ;                           ;                           ; dMD(id,jd) = - Htoze(jj,pp,ii,ll)
        ;                ; id = Aze(lvol,0,ii)%i(ll) ; jd = Aze(lvol,0,jj)%i(pp) ; dMA(id,jd) = + Wzeze(jj,pp,ii,ll)
-       ;                ;                           ;                           ; dMD(id,jd) = - Hzeze(jj,pp,ii,ll)
+       ;                ;                           ;                           ! dMD(id,jd) = - Hzeze(jj,pp,ii,ll) ! zero; SRH; 30 Jul 17;
        ;                ; id = Aze(lvol,0,ii)%i(ll) ; jd = Azo(lvol,0,jj)%i(pp) ; dMA(id,jd) = + Wzoze(jj,pp,ii,ll)
-       ;                ;                           ;                           ; dMD(id,jd) = - Hzoze(jj,pp,ii,ll)
+       ;                ;                           ;                           ! dMD(id,jd) = - Hzoze(jj,pp,ii,ll) ! zero; SRH; 30 Jul 17;
 
        ;                ; id = Azo(lvol,0,ii)%i(ll) ; jd = Ate(lvol,0,jj)%i(pp) ; dMA(id,jd) = + Wtezo(jj,pp,ii,ll)
        ;                ;                           ;                           ; dMD(id,jd) = - Htezo(jj,pp,ii,ll)
        ;                ; id = Azo(lvol,0,ii)%i(ll) ; jd = Ato(lvol,0,jj)%i(pp) ; dMA(id,jd) = + Wtozo(jj,pp,ii,ll)
        ;                ;                           ;                           ; dMD(id,jd) = - Htozo(jj,pp,ii,ll)
        ;                ; id = Azo(lvol,0,ii)%i(ll) ; jd = Aze(lvol,0,jj)%i(pp) ; dMA(id,jd) = + Wzezo(jj,pp,ii,ll)
-       ;                ;                           ;                           ; dMD(id,jd) = - Hzezo(jj,pp,ii,ll)
+       ;                ;                           ;                           ! dMD(id,jd) = - Hzezo(jj,pp,ii,ll) ! zero; SRH; 30 Jul 17;
        ;                ; id = Azo(lvol,0,ii)%i(ll) ; jd = Azo(lvol,0,jj)%i(pp) ; dMA(id,jd) = + Wzozo(jj,pp,ii,ll)
-       ;                ;                           ;                           ; dMD(id,jd) = - Hzozo(jj,pp,ii,ll)
+       ;                ;                           ;                           ! dMD(id,jd) = - Hzozo(jj,pp,ii,ll) ! zero; SRH; 30 Jul 17;
       enddo ! end of do pp; 08 Feb 16;
      enddo ! end of do jj; 08 Feb 16;
      
@@ -700,8 +701,8 @@ subroutine matrix( lvol, mn, lrad )
      endif
     enddo ! end of do pp; 08 Feb 16;
     
-!   ;if( ii.gt.1 ) then ; id = Lme(lvol,ii)         ;                           ; dMG(id   ) = - ( iVns(ii) + iBns(ii) )
-!   ;                   ; id = Lmf(lvol,ii)         ;                           ; dMG(id   ) = - ( iVnc(ii) + iBnc(ii) )
+!   ;if( ii.gt.1 ) then ; id = Lme(lvol,ii)         ;                           ; dMG(id   ) = - ( iVns(ii) + iBns(ii) ) / pi2pi2nfphalf
+!   ;                   ; id = Lmf(lvol,ii)         ;                           ; dMG(id   ) = - ( iVnc(ii) + iBnc(ii) ) / pi2pi2nfphalf
     ;if( ii.gt.1 ) then ; id = Lme(lvol,ii)         ;                           ; dMG(id   ) = - ( iVns(ii) - iBns(ii) ) / pi2pi2nfphalf ! 14 Apr 17;
     ;                   ; id = Lmf(lvol,ii)         ;                           ; dMG(id   ) = - ( iVnc(ii) - iBnc(ii) ) / pi2pi2nfphalf ! 14 Apr 17;
     ;else               ; id = Lmg(lvol,ii)         ;                           ; dMB(id, 1) = -       one               / pi2pi2nfphalf

@@ -69,6 +69,16 @@
 
 !latex \end{enumerate}
 
+!latex \subsection{chebyshev-metric information}
+
+!latex \begin{enumerate}
+
+!latex \item There are various symmetries that can be exploited.
+
+!latex \item Most simply, \verb+DToocc+, \verb+DToocs+, \verb+DToosc+ and \verb+DTooss+ do not depend on geometry and need only be computed once.
+
+!latex \end{enumerate}
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 subroutine ma00aa( lquad, mn, lvol, lrad )
@@ -77,7 +87,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   
   use constants, only : zero, half, one, pi
   
-  use numerical, only : 
+  use numerical, only : vsmall
   
   use fileunits, only : ounit
   
@@ -113,6 +123,8 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   LOCALS
   
   INTEGER, intent(in) :: lquad, mn, lvol, lrad
+
+  LOGICAL             :: Lpause ! for debugging only; SRH; 30 Jul 17;
   
   INTEGER             :: jquad, ii, jj, ij, ll, pp, lp, kka, kks ! SRH; 27 Jul 17;
   REAL                :: lss, jthweight, fee, feo, foe, foo, Tl, Dl, Tp, Dp, TlTp, TlDp, DlTp, DlDp, kda, kds ! SRH; 27 Jul 17;
@@ -137,7 +149,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
     
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  if( YESstellsym) then
+  if( YESstellsym ) then
    
    DToocc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero ! initialize summation of Gaussian quadrature (loop over jquad); SRH; 27 Jul 17;
   !DToocs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero ! non-stellarator-symmetric terms are commented; SRH; 27 Jul 17;
@@ -681,19 +693,46 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-#ifdef DEBUG ! the following seems quite useless and can easily be deleted; "a short code is a good code"; SRH; 27 Jul 17;
-  if( Wma00aa ) then
-   do ll = 0, lrad
-    do pp = 0, lrad
-     do ii = 1, mn
-      do jj = 1, mn
-       write(ounit,1000) ll, pp, ii, jj, (/ DToocc(ll,pp,ii,jj), DToocs(ll,pp,ii,jj), DToosc(ll,pp,ii,jj), DTooss(ll,pp,ii,jj) /) / pi/pi
+#ifdef DEBUG
+  
+  if( Wma00aa ) then ! check symmetries; SRH; 30 Jul 17;
+   
+   if( YESstellsym ) then
+    
+    do ll = 0, lrad
+     do pp = 0, lrad
+      Lpause = .false.
+      do ii = 1, mn
+       do jj = 1, mn
+        if( abs(TTssss(ll,pp,ii,jj)) .gt. vsmall ) then
+         write(ounit,1000) myid, lvol, ll, pp, ii, jj, TTssss(ll,pp,ii,jj), TTssss(pp,ll,jj,ii), TTssss(ll,pp,ii,jj)-TTssss(pp,ll,jj,ii)
+         FATAL( ma00aa, abs(TTssss(ll,pp,ii,jj)-TTssss(pp,ll,jj,ii)).gt.vsmall ), symmetry error )
+        !Lpause = .true.
+        endif
+       enddo
+      enddo
+     !if( Lpause ) pause
+     enddo
+    enddo
+    
+   else ! NOTstellsym; SRH; 30 Jul 17;
+    
+    do ll = 0, lrad
+     do pp = 0, lrad
+      do ii = 1, mn
+       do jj = 1, mn
+       !write(ounit,1000) myid, lvol, ll, pp, ii, jj, DToocc(ll,pp,ii,jj), DToocc(pp,ll,jj,ii), DTooss(ll,pp,ii,jj), DTooss(pp,ll,jj,ii)
+       enddo
       enddo
      enddo
     enddo
-   enddo
-  endif
-1000 format("ma00aa : ll="i3" ; pp="i3" ; ii="i3" ; jj="i3" ; DToocc="f15.10" ; DToocs="f15.10" ; DToosc="f15.10" ; DTooss="f15.10" ;")
+    
+   endif ! end of if( YESstelsym ) ; SRH; 30 Jul 17;
+
+  endif ! end of if( Wma00aa ) ; SRH; 30 Jul 17;
+
+1000 format("ma00aa : " 10x " : myid ="i3" ; lvol ="i3" ; ll ="i3" ; pp ="i3" ; ii ="i3" ; jj ="i3" ; TTssss ="2es23.15" ; error ="es10.2" ;")
+
 #endif
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
