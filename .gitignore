@@ -3,6 +3,7 @@
 *.mod
 *.F90
 *~
+*.pdf
 xspec
 dspec
 
