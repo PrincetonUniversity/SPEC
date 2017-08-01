@@ -529,7 +529,7 @@ subroutine preset
    do jj = 1, mn ; ij = ij + 1 ; ilabel(ij) = ii ; jlabel(ij) = jj ! used in ma00aa; SRH; 27 Jul 17;
    enddo
   enddo
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
  
 !latex \subsubsection{\type{LBsequad}, \type{LBnewton} and \type{LBlinear}}
@@ -724,25 +724,6 @@ subroutine preset
       ;                                    ; idof = idof + 1 ; Lmh(vvol,  ii)       = idof
      endif
     enddo ! end of do ii; 25 Jan 13;
-    
-   !if( Wpreset ) then
-   ! do ii = 1, mn
-   !  do ll = 0, Lrad(vvol)
-   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ; ll="i4" : Ate = "i7" ;")') myid, ii, ll, Ate(vvol,0,ii)%i(ll)
-   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ; ll="i4" : Aze = "i7" ;")') myid, ii, ll, Aze(vvol,0,ii)%i(ll)
-   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ; ll="i4" : Ato = "i7" ;")') myid, ii, ll, Ato(vvol,0,ii)%i(ll)
-   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ; ll="i4" : Azo = "i7" ;")') myid, ii, ll, Azo(vvol,0,ii)%i(ll)
-   !  enddo
-   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ;    "4x" : Lma = "i7" ;")') myid, ii,     Lma(vvol,  ii)
-   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ;    "4x" : Lmb = "i7" ;")') myid, ii,     Lmb(vvol,  ii)
-   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ;    "4x" : Lmc = "i7" ;")') myid, ii,     Lmc(vvol,  ii)
-   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ;    "4x" : Lmd = "i7" ;")') myid, ii,     Lmd(vvol,  ii)
-   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ;    "4x" : Lme = "i7" ;")') myid, ii,     Lme(vvol,  ii)
-   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ;    "4x" : Lmf = "i7" ;")') myid, ii,     Lmf(vvol,  ii)
-   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ;    "4x" : Lmg = "i7" ;")') myid, ii,     Lmg(vvol,  ii)
-   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ;    "4x" : Lmh = "i7" ;")') myid, ii,     Lmh(vvol,  ii)
-   ! enddo
-   !endif
     
     FATAL( preset, idof.ne.NAdof(vvol), need to count degrees-of-freedom more carefully for new matrix )
     
@@ -1185,6 +1166,134 @@ subroutine preset
    enddo ! end of do jj; 14 Apr 17;
    
   enddo ! end of do kk; 14 Apr 17;
+  
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+#ifdef PRECALCULATE
+
+  SALLOCATE( DToocc, (0:Mrad,0:Mrad,1:mn,1:mn,1:Mvol), zero )
+  SALLOCATE( DToocs, (0:Mrad,0:Mrad,1:mn,1:mn,1:Mvol), zero )
+  SALLOCATE( DToosc, (0:Mrad,0:Mrad,1:mn,1:mn,1:Mvol), zero )
+  SALLOCATE( DTooss, (0:Mrad,0:Mrad,1:mn,1:mn,1:Mvol), zero )
+  
+  do vvol = 1, Mvol ; lquad = Iquad(vvol)
+   
+   LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ; 03 Nov 16;
+   
+   if( Lcoordinatesingularity ) then ! additional radial factors, such as r^m, are included to "regularize" the magnetic field near the origin; SRH; 27 Jul 17;
+    
+    sbar(1:lquad) = ( gaussianabscissae(1:lquad,vvol) + one ) * half
+    
+    halfoversbar(1:lquad) = half / sbar(1:lquad)
+    
+    do jquad = 1, lquad ; sbarhim(jquad,1:mn) = sbar(jquad)**regumm(1:mn) ! pre-calculation of regularization factor; 12 Sep 13;
+    enddo
+    
+    do jquad = 1, lquad ! Gaussian quadrature loop;
+     
+     lss = gaussianabscissae(jquad,vvol) ; jthweight = gaussianweight(jquad,vvol)
+     
+     FATAL( preset, .true., only goomne and goomno are required from metrix )
+
+     WCALL( ma00aa, metrix,( vvol, lss ) ) ! compute metric elements; 16 Jan 13; ! THIS NEEDS TO BE REPLACED; SRH; 01 Aug 17;
+     
+     do ii = 1, mn
+      
+      do jj = 1, mn
+       
+       kks = kijs(ii,jj,0) ; kds = jthweight / kijs(ii,jj,1) ! SRH; 27 Jul 17;
+       kka = kija(ii,jj,0) ; kda = jthweight / kija(ii,jj,1) ! SRH; 27 Jul 17;
+       
+       foocc = + goomne(kks) * abs(kds) + goomne(kka) * abs(kda) ! stell-sym; SRH; 27 Jul 17;
+       foocs = - goomno(kks) *     kds  + goomno(kka) *     kda 
+       foosc = + goomno(kks) *     kds  + goomno(kka) *     kda 
+       fooss = + goomne(kks) * abs(kds) - goomne(kka) * abs(kda)
+       
+       do ll = 0, Lrad(vvol)
+        
+        do pp = 0, Lrad(vvol)
+         
+         Tl = sbarhim(jquad,ii) *                                      TD(ll,0,jquad,vvol)
+         Dl = sbarhim(jquad,ii) * ( regumm(ii) * halfoversbar(jquad) * TD(ll,0,jquad,vvol) + TD(ll,1,jquad,vvol) )
+         Tp = sbarhim(jquad,jj) *                                      TD(pp,0,jquad,vvol)
+         Dp = sbarhim(jquad,jj) * ( regumm(jj) * halfoversbar(jquad) * TD(pp,0,jquad,vvol) + TD(pp,1,jquad,vvol) )
+         
+         TlTp = Tl * Tp
+         TlDp = Tl * Dp
+         DlTp = Dl * Tp
+         DlDp = Dl * Dp
+         
+         DToocc( ll, pp, ii, jj, vvol ) = DToocc( ll, pp, ii, jj, vvol ) + DlTp * foocc ! stell-sym; SRH; 27 Jul 17;
+         DToocs( ll, pp, ii, jj, vvol ) = DToocs( ll, pp, ii, jj, vvol ) + DlTp * foocs
+         DToosc( ll, pp, ii, jj, vvol ) = DToosc( ll, pp, ii, jj, vvol ) + DlTp * foosc
+         DTooss( ll, pp, ii, jj, vvol ) = DTooss( ll, pp, ii, jj, vvol ) + DlTp * fooss
+         
+        enddo ! end of do pp; SRH; 01 Aug 17;
+        
+       enddo ! end of do ll; SRH; 01 Aug 17;
+
+      enddo ! end of do jj; SRH; 01 Aug 17;
+
+     enddo ! end of do ii; SRH; 01 Aug 17;
+     
+    enddo ! end of do jquad; ! 16 Jan 13;
+    
+   else ! .not.Lcoordinatesingularity;
+    
+    do jquad = 1, lquad ! Gaussian quadrature loop;
+     
+     lss = gaussianabscissae(jquad,vvol) ; jthweight = gaussianweight(jquad,vvol)
+     
+     FATAL( preset, .true., only goomne and goomno are required from metrix )
+     
+     WCALL( ma00aa, metrix,( vvol, lss ) ) ! compute metric elements; 16 Jan 13; ! THIS NEEDS TO BE REPLACED; SRH; 01 Aug 17;
+     
+     do ii = 1, mn
+      
+      do jj = 1, mn
+       
+       kks = kijs(ii,jj,0) ; kds = jthweight / kijs(ii,jj,1) ! SRH; 27 Jul 17;
+       kka = kija(ii,jj,0) ; kda = jthweight / kija(ii,jj,1) ! SRH; 27 Jul 17;
+       
+       foocc = + goomne(kks) * abs(kds) + goomne(kka) * abs(kda) ! stell-sym; SRH; 27 Jul 17;
+       foocs = - goomno(kks) *     kds  + goomno(kka) *     kda 
+       foosc = + goomno(kks) *     kds  + goomno(kka) *     kda 
+       fooss = + goomne(kks) * abs(kds) - goomne(kka) * abs(kda)
+       
+       do ll = 0, Lrad(vvol)
+        
+        do pp = 0, Lrad(vvol)
+         
+         Tl = TD(ll,0,jquad,vvol)
+         Dl = TD(ll,1,jquad,vvol)
+         Tp = TD(pp,0,jquad,vvol)
+         Dp = TD(pp,1,jquad,vvol)
+         
+         TlTp = Tl * Tp
+         TlDp = Tl * Dp
+         DlTp = Dl * Tp
+         DlDp = Dl * Dp
+         
+         DToocc( ll, pp, ii, jj, vvol ) = DToocc( ll, pp, ii, jj, vvol ) + DlTp * foocc ! stell-sym; SRH; 27 Jul 17;
+         DToocs( ll, pp, ii, jj, vvol ) = DToocs( ll, pp, ii, jj, vvol ) + DlTp * foocs
+         DToosc( ll, pp, ii, jj, vvol ) = DToosc( ll, pp, ii, jj, vvol ) + DlTp * foosc
+         DTooss( ll, pp, ii, jj, vvol ) = DTooss( ll, pp, ii, jj, vvol ) + DlTp * fooss
+         
+        enddo ! end of do pp; SRH; 01 Aug 17;
+        
+       enddo ! end of do ll; SRH; 01 Aug 17;
+       
+      enddo ! end of do jj; SRH; 01 Aug 17;
+      
+     enddo ! end of do ii; SRH; 01 Aug 17;
+     
+    enddo ! end of do jquad; SRH; 01 Aug 17;
+    
+   endif ! end of if( Lcoordinatesingularity ) ; SRH; 01 Aug 17;
+
+  enddo ! end of do vvol; SRH; 01 Aug 17;
+
+#endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
