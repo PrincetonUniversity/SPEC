@@ -46,8 +46,7 @@
 
 !latex \begin{enumerate}
 !latex \item If \inputvar{Lposdef=0}, then it is {\em not} assumed that the linear system is positive definite and
-!latex       \nag{www.nag.co.uk/numeric/FL/manual19/pdf/F04/f04aef_fl19.pdf}{F04AEF}
-!latex       is used to solve the linear system.
+!latex       LAPACK routine DSYSVX is used to solve the linear system.
 !latex \item If \inputvar{Lposdef=1}, then it {\em is}     assumed that the linear system is positive definite and
 !latex       \nag{www.nag.co.uk/numeric/FL/manual19/pdf/F04/f04abf_fl19.pdf}{F04ABF}
 !latex       is used to solve the linear system.
@@ -87,7 +86,7 @@
 !l tex       and the NAG routine \nag{www.nag.co.uk/numeric/FL/manual19/pdf/F04/f04abf_fl19.pdf}{F04ABF} is used to solve the linear system,
 !l tex       i.e. to solve for the vector-potential in ``packxi'' format.
 !l tex \item If the user has selected \inputvar{Lposdef=0}, then the user has assumed that the Beltrami matrix is {\em not} positive-definite, 
-!l tex       and so the NAG routine \nag{www.nag.co.uk/numeric/FL/manual19/pdf/F04/f04aef_fl19.pdf}{F04AEF} is used.
+!l tex       and so the LAPACK routine DSYSVX is used.
 !l tex \item If it is known that the Beltrami matrix is positive definite, then it is usually more computationally efficient to exploit this,
 !l tex       so the {\em fastest} option is to choose \inputvar{Lposdef=1}; 
 !l tex       however, there is no a-priori reason why the Beltrami matrix is positive definite, so the {\em safest} option is to choose \inputvar{Lposdef=0}.
@@ -109,7 +108,7 @@
 !l tex \item The \nag{www.nag.co.uk/numeric/FL/manual19/pdf/F04/f04abf_fl19.pdf}{F04ABF}
 !l tex       routine may fail if the provided matrix is not positive definite or ill-conditioned, 
 !l tex       and such error messages are given as screen output.
-!l tex \item The \nag{www.nag.co.uk/numeric/FL/manual19/pdf/F04/f04aef_fl19.pdf}{F04AEF}
+!l tex \item The LAPACK DSYSVX
 !l tex       routine may fail if the provided matrix is singular              or ill-conditioned. 
 !l tex \end{enumerate}
 
@@ -245,12 +244,18 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   INTEGER              :: iflag ! indicates whether (i) iflag=1: ``function'' values are required; or (ii) iflag=2: ``derivative'' values are required;
 
 
-  INTEGER              :: lvol, NN, MM, ideriv, IA, IB, IC, IBB, IAA, lmns, if04abf(0:1), if04aef(0:1), ii, jj, nnz
+  INTEGER, PARAMETER   :: NB = 3  !Optimal workspace block size for LAPACK expert driver routine DSYSVX
+
+  INTEGER              :: lvol, NN, MM, ideriv, IA, IB, IC, IBB, IAA, lmns, if04abf(0:1), idsysvx(0:1), ii, jj, nnz, LWORK
   
   REAL                 :: lmu, dpf, dtf, dpsi(1:2), tpsi(1:2), ppsi(1:2), lcpu !, icurrent(0:2), gcurrent(0:2) ! 12 Sep 16;
   
+  REAL                 :: rcond, ferr(2), berr(2)
+
   CHARACTER            :: packorunpack
   
+  INTEGER, allocatable :: IPIV(:), IWORK(:)
+
   REAL   , allocatable :: matrix(:,:), rhs(:,:)
 
   REAL   , allocatable :: RW(:), RD(:,:), LU(:,:)
@@ -310,16 +315,19 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 
   solution(1:NN,-1:2) = zero ! this is a global array allocated in dforce; 20 Jun 14;
   
-  SALLOCATE( RW, (1:NN    ), zero )
+  LWORK = NB*NN
+  SALLOCATE( RW, (1:LWORK ), zero )
   SALLOCATE( RD, (1:NN,0:2), zero )
 
   if( Lposdef.eq.0 ) then
-  SALLOCATE( LU, (1:NN,1:NN), zero )
+    SALLOCATE( LU, (1:NN,1:NN), zero )
+    SALLOCATE( IPIV, (1:NN), 0 )
+    SALLOCATE( IWORK, (1:NN), 0 )
   endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  if04abf(0:1) = 0 ; if04aef(0:1) = 0 ! error flags;  4 Feb 13;
+  if04abf(0:1) = 0 ; idsysvx(0:1) = 0 ! error flags;  4 Feb 13;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -380,30 +388,36 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
    select case( Lposdef )
     
    case( 0 ) ! Lposdef=0;
-    
+
+    idsysvx(ideriv) = 1
+
     select case( ideriv )
      
     case( 0 ) ! Lposdef=0; ideriv=0;
 
-     if04aef(ideriv) = 1 ; MM = 1
-     call F04AEF( matrix(1:NN,1:NN), IA, rhs(1:NN,  0), IB, NN, MM, solution(1:NN,  0), IC, RW(1:NN), LU(1:NN,1:NN), IAA, RD(1:NN,  0), IBB, if04aef(ideriv) )
+     MM = 1
+     call DSYSVX('N', 'U', NN, MM, matrix, NN, LU, NN, IPIV, rhs(:,0), NN, solution(1:NN,0), NN, RCOND, FERR, BERR, RW, LWORK, IWORK, idsysvx(ideriv))
 
     case( 1 ) ! Lposdef=0; ideriv=1;
 
-     if04aef(ideriv) = 1 ; MM = 2
-     call F04AEF( matrix(1:NN,1:NN), IA, rhs(1:NN,1:2), IB, NN, MM, solution(1:NN,1:2), IC, RW(1:NN), LU(1:NN,1:NN), IAA, RD(1:NN,1:2), IBB, if04aef(ideriv) )
+     MM = 2
+     call DSYSVX('N', 'U', NN, MM, matrix, NN, LU, NN, IPIV, rhs(:,1:2), NN, solution(1:NN,1:2), NN, RCOND, FERR, BERR, RW, LWORK, IWORK, idsysvx(ideriv))
 
     end select ! ideriv;
     
     cput = GETTIME
 
-    select case( if04aef(ideriv) )                                                                            !123456789012345678
-    case(  0  )  ; if( Wmp00ac ) write(ounit,1010) cput-cpus, myid, lvol, ideriv, "if04aef", if04aef(ideriv), "success ;         ", cput-lcpu
-    case(  1  )  ;               write(ounit,1010) cput-cpus, myid, lvol, ideriv, "if04aef", if04aef(ideriv), "singular ;        "
-    case(  2  )  ;               write(ounit,1010) cput-cpus, myid, lvol, ideriv, "if04aef", if04aef(ideriv), "ill conditioned ; "
-    case(  3  )  ;               write(ounit,1010) cput-cpus, myid, lvol, ideriv, "if04aef", if04aef(ideriv), "input error ;     "
-    case default ;               write(ounit,1010) cput-cpus, myid, lvol, ideriv, "if04aef", if04aef(ideriv), "invalid if04aef ; "
-    end select
+    if ( idsysvx(ideriv) .eq. 0) then
+      if( Wmp00ac ) write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idsysvx", idsysvx(ideriv), "success ;         ", cput-lcpu	   
+    else if ( idsysvx(ideriv) .lt. 0) then
+      write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idsysvx", idsysvx(ideriv), "input error ;     "
+    else if ( idsysvx(ideriv) .le. NN) then
+      write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idsysvx", idsysvx(ideriv), "singular ;        "
+    else if ( idsysvx(ideriv) .eq. NN+1) then
+      write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idsysvx", idsysvx(ideriv), "ill conditioned ; "
+    else
+      write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idsysvx", idsysvx(ideriv), "invalid idsysvx ; "
+    endif
     
    case( 1 ) ! Lposdef=1;
     
@@ -469,12 +483,14 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   DALLOCATE( RD )
 
   if( Lposdef.eq.0 ) then
-  DALLOCATE( LU )
+    DALLOCATE( LU )
+    DALLOCATE( IPIV )
+    DALLOCATE( IWORK )
   endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  if( if04abf(0).ne.0 .or. if04aef(0).ne.0 .or. if04abf(1).ne.0 .or. if04aef(1).ne.0 ) then ! failed to construct Beltrami/vacuum field and/or derivatives;
+  if( if04abf(0).ne.0 .or. idsysvx(0).ne.0 .or. if04abf(1).ne.0 .or. idsysvx(1).ne.0 ) then ! failed to construct Beltrami/vacuum field and/or derivatives;
    
    ImagneticOK(lvol) = .false. ! set error flag;
    
