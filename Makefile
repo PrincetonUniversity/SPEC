@@ -253,9 +253,15 @@ ifeq ($(USER),shudson)
 	                          done
 
 	echo "</table></body></html>" >> $(WEBDIR)/Spec/subroutines.html
+	#rm -f *.pdf
+	#git checkout gh-pages
+	#git pull origin gh-pages
+	#cp $(WEBDIR)/Spec/*.pdf .
+	#git commit -am "update GitHub pages"
+	#git push origin gh-pages
 else
 	@echo "-------------------------------------------------------------------------------------------------------------------------------"
-	@echo "Please read pdfs at www.ppl.gov/~shudson/Spec/subroutines.html or on GitHub pages."
+	@echo "Please read pdfs at w3.pppl.gov/~shudson/Spec/subroutines.html or on GitHub pages (https://princetonuniversity.github.io/SPEC/)."
 	@echo "-------------------------------------------------------------------------------------------------------------------------------"
 
 endif
