@@ -872,7 +872,7 @@ module allglobal
 
   REAL                 :: pi2nfp           !       pi2/nfp     ; assigned in readin;
   REAL                 :: pi2pi2nfp
-  REAL                 :: pi2pi2nfphalf
+  REAL                 :: pi2pi2nfphalf, opi2pi2nfphalf ! defined in preset; used in matrix; SRH; 01 Aug 17;
   REAL                 :: pi2pi2nfpquart
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -979,7 +979,7 @@ module allglobal
 !latex \end{enumerate}
 
   REAL   , allocatable :: Rij(:,:,:), Zij(:,:,:), Xij(:,:,:), Yij(:,:,:), sg(:,:), guvij(:,:,:,:), gvuij(:,:,:) ! real-space; 10 Dec 15;
-  
+
   INTEGER, allocatable :: ki(:,:), kijs(:,:,:), kija(:,:,:) ! identification of Fourier modes; 16 Jan 13;
 
   INTEGER, allocatable :: iotakkii(:), iotaksub(:,:), iotakadd(:,:), iotaksgn(:,:) ! identification of Fourier modes; 29 Jan 13;

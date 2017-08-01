@@ -209,7 +209,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   
   use constants, only : zero, half, one, two, goldenmean
   
-  use numerical, only : machprec, sqrtmachprec, small
+  use numerical, only : machprec, sqrtmachprec, vsmall, small
   
   use fileunits, only : ounit
   
@@ -376,6 +376,17 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
       
    lcpu = GETTIME
    
+#ifdef DEBUG
+   if( Wmp00ac ) then ! check symmetry; SRH; 01 Aug 17;
+    do ii = 1, NN
+     do jj = 1, NN
+      if( abs(matrix(ii,jj)-matrix(jj,ii)).gt.vsmall ) then
+       write(ounit,'("mp00ac : ", 10x ," : matrix = ",2es23.15," ; err =",es13.5," ;")') matrix(ii,jj), matrix(jj,ii), matrix(ii,jj)-matrix(jj,ii)
+      endif
+     enddo
+    enddo
+   endif
+#endif
    
    select case( Lposdef )
     
@@ -387,7 +398,6 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 
      if04aef(ideriv) = 1 ; MM = 1
      call F04AEF( matrix(1:NN,1:NN), IA, rhs(1:NN,  0), IB, NN, MM, solution(1:NN,  0), IC, RW(1:NN), LU(1:NN,1:NN), IAA, RD(1:NN,  0), IBB, if04aef(ideriv) )
-
     case( 1 ) ! Lposdef=0; ideriv=1;
 
      if04aef(ideriv) = 1 ; MM = 2
@@ -412,12 +422,12 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
     case( 0 ) ! Lposdef=1; ideriv=0;
      
      if04abf(ideriv) = 1 ; MM = 1
-     call F04ABF( matrix(1:IA,1:NN), IA, rhs(1:IB,0:0), IB, NN, MM, solution(1:IC,0:0), IC, RW(1:NN), RD(1:IBB,0:0), IBB, if04abf(ideriv) )
+     call F04ABF( matrix(1:IA,1:NN), IA, rhs(1:IB,0:0), IB, NN, MM, solution(1:IC,0:0), IC, RW(1:NN)                    , RD(1:NN,0:0), IBB, if04abf(ideriv) )
      
     case( 1 ) ! Lposdef=1; ideriv=1;
      
      if04abf(ideriv) = 1 ; MM = 2
-     call F04ABF( matrix(1:IA,1:NN), IA, rhs(1:NN,1:2), IB, NN, MM, solution(1:NN,1:2), IC, RW(1:NN), RD(1:IBB,1:2), IBB, if04abf(ideriv) )
+     call F04ABF( matrix(1:IA,1:NN), IA, rhs(1:NN,1:2), IB, NN, MM, solution(1:NN,1:2), IC, RW(1:NN)                    , RD(1:NN,1:2), IBB, if04abf(ideriv) )
      
     end select ! ideriv;
     

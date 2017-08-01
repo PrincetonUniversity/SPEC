@@ -44,7 +44,7 @@ subroutine preset
   pi2nfp         = pi2 / Nfp
   
   pi2pi2nfp      = pi2 * pi2nfp
-  pi2pi2nfphalf  = pi2 * pi2nfp * half
+  pi2pi2nfphalf  = pi2 * pi2nfp * half  ; opi2pi2nfphalf = one / pi2pi2nfphalf ! SRH; 01 Aug 17;
   pi2pi2nfpquart = pi2 * pi2nfp * quart
 
   Mrad  = maxval( Lrad(1:Mvol) )

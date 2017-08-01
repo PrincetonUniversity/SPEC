@@ -98,15 +98,16 @@ subroutine metrix( lvol, lss )
   WCALL( metrix, coords, ( lvol, lss, Lcurvature, Ntz, mn ) ) ! this returns guvij \equiv g_{\mu\nu}; 17 Apr 13;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  ijreal(1:Ntz) = one / sg(1:Ntz,0) ! SRH; 01 Aug 17;
   
-  gvuij(1:Ntz,0,0) =   guvij(1:Ntz,0,0,ideriv) ! required for helicity calculation; 17 Dec 15;
-  
-  gvuij(1:Ntz,1,1) =   guvij(1:Ntz,1,1,ideriv) / sg(1:Ntz,0) ! 10 Dec 15;
-  gvuij(1:Ntz,1,2) =   guvij(1:Ntz,1,2,ideriv) / sg(1:Ntz,0)
-  gvuij(1:Ntz,1,3) =   guvij(1:Ntz,1,3,ideriv) / sg(1:Ntz,0)
-  gvuij(1:Ntz,2,2) =   guvij(1:Ntz,2,2,ideriv) / sg(1:Ntz,0)
-  gvuij(1:Ntz,2,3) =   guvij(1:Ntz,2,3,ideriv) / sg(1:Ntz,0)
-  gvuij(1:Ntz,3,3) =   guvij(1:Ntz,3,3,ideriv) / sg(1:Ntz,0)
+  gvuij(1:Ntz,0,0) =   guvij(1:Ntz,0,0,ideriv)                 ! required for helicity calculation; 17 Dec 15;
+  gvuij(1:Ntz,1,1) =   guvij(1:Ntz,1,1,ideriv) * ijreal(1:Ntz) ! 10 Dec 15;
+  gvuij(1:Ntz,1,2) =   guvij(1:Ntz,1,2,ideriv) * ijreal(1:Ntz)
+  gvuij(1:Ntz,1,3) =   guvij(1:Ntz,1,3,ideriv) * ijreal(1:Ntz)
+  gvuij(1:Ntz,2,2) =   guvij(1:Ntz,2,2,ideriv) * ijreal(1:Ntz)
+  gvuij(1:Ntz,2,3) =   guvij(1:Ntz,2,3,ideriv) * ijreal(1:Ntz)
+  gvuij(1:Ntz,3,3) =   guvij(1:Ntz,3,3,ideriv) * ijreal(1:Ntz)
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
