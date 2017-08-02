@@ -197,15 +197,15 @@ subroutine newton( NGdof, position, ic05pxf )
  
    case( 1 ) ! use function values                               to find x st f(x)=0, where x is the geometry of the interfaces, and f is the force;
 
-    call hybrd( fcn1, NGdof, position(1:NGdof), force(1:NGdof), &
+    WCALL( newton, hybrd, ( fcn1, NGdof, position(1:NGdof), force(1:NGdof), &
                 xtol, maxfev, ML, MU, epsfcn, diag(1:NGdof), mode, factor, nprint, ic05pxf, nfev, fjac(1:Ldfjac,1:NGdof), Ldfjac, &
-                RR(1:LR), LR, QTF(1:NGdof), workspace(1:NGdof,1), workspace(1:NGdof,2), workspace(1:NGdof,3), workspace(1:NGdof,4) )
+                RR(1:LR), LR, QTF(1:NGdof), workspace(1:NGdof,1), workspace(1:NGdof,2), workspace(1:NGdof,3), workspace(1:NGdof,4) ) )
 
    case( 2 ) ! use function values and user-supplied derivatives to find x st f(x)=0, where x is the geometry of the interfaces, and f is the force;
 
-    call hybrj( fcn2, NGdof, position(1:NGdof), force(1:NGdof),fjac(1:Ldfjac,1:NGdof), Ldfjac, &
+    WCALL( newton, hybrj, ( fcn2, NGdof, position(1:NGdof), force(1:NGdof),fjac(1:Ldfjac,1:NGdof), Ldfjac, &
                 xtol, maxfev, diag(1:NGdof), mode, factor, nprint, ic05pxf, nfev, njev, &
-                RR(1:LR), LR, QTF(1:NGdof), workspace(1:NGdof,1), workspace(1:NGdof,2), workspace(1:NGdof,3), workspace(1:NGdof,4) )
+                RR(1:LR), LR, QTF(1:NGdof), workspace(1:NGdof,1), workspace(1:NGdof,2), workspace(1:NGdof,3), workspace(1:NGdof,4) ) )
 
    case default
     
