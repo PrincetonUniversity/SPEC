@@ -246,7 +246,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 
   INTEGER, PARAMETER   :: NB = 3  !Optimal workspace block size for LAPACK expert driver routine DSYSVX
 
-  INTEGER              :: lvol, NN, MM, ideriv, IA, IB, IC, IBB, IAA, lmns, if04abf(0:1), idsysvx(0:1), ii, jj, nnz, LWORK
+  INTEGER              :: lvol, NN, MM, ideriv, IA, IB, IC, IBB, lmns, if04abf(0:1), idsysvx(0:1), ii, jj, nnz, LWORK
   
   REAL                 :: lmu, dpf, dtf, dpsi(1:2), tpsi(1:2), ppsi(1:2), lcpu !, icurrent(0:2), gcurrent(0:2) ! 12 Sep 16;
   
@@ -380,7 +380,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
    endif ! end of if( Lcoordinatesingularity ) ; 08 Feb 16;
    
 
-   IA = NN ; IB = NN ; IC = NN ; IBB = NN ; IAA = NN
+   IA = NN ; IB = NN ; IC = NN ; IBB = NN
       
    lcpu = GETTIME
    
@@ -396,12 +396,14 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
     case( 0 ) ! Lposdef=0; ideriv=0;
 
      MM = 1
-     call DSYSVX('N', 'U', NN, MM, matrix, NN, LU, NN, IPIV, rhs(:,0), NN, solution(1:NN,0), NN, RCOND, FERR, BERR, RW, LWORK, IWORK, idsysvx(ideriv))
+     call DSYSVX('N', 'U', NN, MM, matrix, NN, LU, NN, IPIV, rhs(:,MM-1), NN, solution(1:NN,0:MM-1), NN, &
+          RCOND, FERR, BERR, RW, LWORK, IWORK, idsysvx(ideriv))
 
     case( 1 ) ! Lposdef=0; ideriv=1;
 
      MM = 2
-     call DSYSVX('N', 'U', NN, MM, matrix, NN, LU, NN, IPIV, rhs(:,1:2), NN, solution(1:NN,1:2), NN, RCOND, FERR, BERR, RW, LWORK, IWORK, idsysvx(ideriv))
+     call DSYSVX('F', 'U', NN, MM, matrix, NN, LU, NN, IPIV, rhs(:,1:MM), NN, solution(1:NN,1:MM), NN, &
+          RCOND, FERR, BERR, RW, LWORK, IWORK, idsysvx(ideriv))
 
     end select ! ideriv;
     
