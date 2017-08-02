@@ -183,7 +183,7 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dAt, dAz, XX, YY, length, DDl, MMl
   REAL                 :: dBB(1:Ntz), lss, mfactor
   
   REAL                 :: dAs(1:Ntz)!, dRdt(-1:1,0:1), dZdt(-1:1,0:1)
-  REAL                 :: lgvuij(1:Ntz,1:3,1:3) ! local workspace; 13 Sep 13;
+ !REAL                 :: lgvuij(1:Ntz,1:3,1:3) ! local workspace; 13 Sep 13; SRH; 02 Aug 17;
   
   BEGIN(lforce)
   

@@ -64,7 +64,7 @@ subroutine metrix( lvol, lss )
                         ijreal, &                                                         ! workspace;
                         sg, guvij, &                                                      ! calculated in coords;
                         gvuij, &                                                          ! this is workspace: nowhere used outside of this routine;
-                        goomne, goomno, &
+                       !goomne, goomno, & ! SRH; 02 Aug 17;
                         gssmne, gssmno, &
                         gstmne, gstmno, &
                         gszmne, gszmno, &
@@ -101,7 +101,7 @@ subroutine metrix( lvol, lss )
 
   ijreal(1:Ntz) = one / sg(1:Ntz,0) ! SRH; 01 Aug 17;
   
-  gvuij(1:Ntz,0,0) =   guvij(1:Ntz,0,0,ideriv)                 ! required for helicity calculation; 17 Dec 15; REDUNDANT; SRH; 01 Aug 17;
+ !gvuij(1:Ntz,0,0) =   guvij(1:Ntz,0,0,ideriv)                 ! required for helicity calculation; 17 Dec 15; REDUNDANT; SRH; 01 Aug 17;
   gvuij(1:Ntz,1,1) =   guvij(1:Ntz,1,1,ideriv) * ijreal(1:Ntz) ! 10 Dec 15;
   gvuij(1:Ntz,1,2) =   guvij(1:Ntz,1,2,ideriv) * ijreal(1:Ntz)
   gvuij(1:Ntz,1,3) =   guvij(1:Ntz,1,3,ideriv) * ijreal(1:Ntz)
@@ -111,24 +111,24 @@ subroutine metrix( lvol, lss )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  if( ideriv.eq.0 ) then ; gvuij(1:Ntz,0,0) =  one ! SRH; 01 Aug 17;
-  else                   ; gvuij(1:Ntz,0,0) = zero ! SRH; 01 Aug 17;
-  endif
+ !if( ideriv.eq.0 ) then ; gvuij(1:Ntz,0,0) =  one ! REDUNDANT; SRH; 01 Aug 17;
+ !else                   ; gvuij(1:Ntz,0,0) = zero !          ; SRH; 01 Aug 17;
+ !endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  ijreal(1:Ntz) = zero
+ !ijreal(1:Ntz) = zero
 
-  ifail = 0
-  call tfft( Nt, Nz, gvuij(1:Ntz,0,0), ijreal(1:Ntz)   , isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz), &    ! REDUNDANT; SRH; 01 Aug 17;
-             mne, ime(1:mne), ine(1:mne), goomne(1:mne), goomno(1:mne), cfmn(1:mne)    , sfmn(1:mne)    , ifail ) ! REDUNDANT; SRH; 01 Aug 17;
-  goomne(0) = zero ; goomno(0) = zero ! can you remind me what these are for; SRH; 01 Aug 17;
+ !ifail = 0
+ !call tfft( Nt, Nz, gvuij(1:Ntz,0,0), ijreal(1:Ntz)   , isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz), &    ! REDUNDANT; SRH; 01 Aug 17;
+ !           mne, ime(1:mne), ine(1:mne), goomne(1:mne), goomno(1:mne), cfmn(1:mne)    , sfmn(1:mne)    , ifail ) ! REDUNDANT; SRH; 01 Aug 17;
+ !goomne(0) = zero ; goomno(0) = zero ! can you remind me what these are for; SRH; 01 Aug 17;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  if( ideriv.eq.0 ) then ; goomne(1) = one ; goomne(2:mne) = zero ; goomno(1:mne) = zero ! SRH; 01 Aug 17;
-  else                   ;                 ; goomne(1:mne) = zero ; goomno(1:mne) = zero ! SRH; 01 Aug 17;
-  endif
+ !if( ideriv.eq.0 ) then ; goomne(1) = one ; goomne(2:mne) = zero ; goomno(1:mne) = zero ! SRH; 01 Aug 17; REDUNDANT; SRH; 02 Aug 17;
+ !else                   ;                 ; goomne(1:mne) = zero ; goomno(1:mne) = zero ! SRH; 01 Aug 17;
+ !endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

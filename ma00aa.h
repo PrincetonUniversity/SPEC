@@ -98,8 +98,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   use allglobal, only : myid, ncpu, cpus, &
                         Mvol, mnsqd, ilabel, jlabel, llabel, plabel, &
                         gaussianweight, gaussianabscissae, &
-                        DSoocc, DSoocs, DSoosc, DSooss, &
-                        DToocc, DToocs, DToosc, DTooss, &
+                       !DToocc, DToocs, DToosc, DTooss, & ! SRH; 02 Aug 17;
                         TTsscc, TTsscs, TTsssc, TTssss, &
                         TDstcc, TDstcs, TDstsc, TDstss, &
                         TDszcc, TDszcs, TDszsc, TDszss, &
@@ -107,7 +106,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
                         DDtzcc, DDtzcs, DDtzsc, DDtzss, &
                         DDzzcc, DDzzcs, DDzzsc, DDzzss, &
                         kija, kijs, &
-                        goomne, goomno, &
+                       !goomne, goomno, & ! SRH; 02 Aug 17;
                         gssmne, gssmno, &
                         gstmne, gstmno, &
                         gszmne, gszmno, &
@@ -125,12 +124,10 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   
   INTEGER, intent(in) :: lquad, mn, lvol, lrad
 
-  LOGICAL             :: Lpause ! for debugging only; SRH; 30 Jul 17;
-  
-  INTEGER             :: jquad, ii, jj, ij, ll, pp, lp, kka, kks ! SRH; 27 Jul 17;
-  REAL                :: lss, jthweight, fee, feo, foe, foo, Tl, Dl, Tp, Dp, TlTp, TlDp, DlTp, DlDp, kda, kds ! SRH; 27 Jul 17;
+  INTEGER             :: jquad, ii, jj, ij, ll, pp, lp, kka, kks, prad ! SRH; 27 Jul 17;
+  REAL                :: lss, jthweight, Tl, Dl, Tp, Dp, TlTp, TlDp, DlTp, DlDp, kda, kds ! SRH; 27 Jul 17;
 
-  REAL                :: foocc, foocs, foosc, fooss
+ !REAL                :: foocc, foocs, foosc, fooss
   REAL                :: fsscc, fsscs, fsssc, fssss
   REAL                :: fstcc, fstcs, fstsc, fstss
   REAL                :: fszcc, fszcs, fszsc, fszss
@@ -149,15 +146,14 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
 #endif
     
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  prad = (1+lrad)*(1+lrad) ! SRH; 02 Aug 17;
   
   if( YESstellsym ) then
    
-#ifdef PRECALCULATE
-#else
-   DToocc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero ! initialize summation of Gaussian quadrature (loop over jquad); SRH; 27 Jul 17;
-#endif
-  !DToocs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero ! non-stellarator-symmetric terms are commented; SRH; 27 Jul 17;
-  !DToosc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero ! I am happy to delete this commented-out source eventually; "a short code is a good code"; SRH; 27 Jul 17;
+  !DToocc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero ! DToocc is now assigned in dforce; SRH; 02 Aug 17;
+  !DToocs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+  !DToosc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
   !DTooss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
    
   !TTsscc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
@@ -192,13 +188,10 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
    
   else ! NOTstellsym ; SRH; 27 Jul 17;
    
-#ifdef PRECALCULATE
-#else
-   DToocc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero ! initialize summation of Gaussian quadrature (loop over jquad); SRH; 27 Jul 17;
-   DToocs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-   DToosc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-   DTooss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-#endif
+  !DToocc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero ! DToocc is now assigned in dforce; SRH; 02 Aug 17;
+  !DToocs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+  !DToosc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+  !DTooss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
  
    TTsscc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
    TTsscs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
@@ -258,7 +251,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
       kks = kijs(ii,jj,0) ; kds = jthweight / kijs(ii,jj,1) ! SRH; 27 Jul 17;
       kka = kija(ii,jj,0) ; kda = jthweight / kija(ii,jj,1) ! SRH; 27 Jul 17;
       
-      foocc = + goomne(kks) * abs(kds) + goomne(kka) * abs(kda) ! stell-sym; SRH; 27 Jul 17;
+     !foocc = + goomne(kks) * abs(kds) + goomne(kka) * abs(kda) ! stell-sym; SRH; 27 Jul 17; SRH; 02 Aug 17;
      !foocs = - goomno(kks) *     kds  + goomno(kka) *     kda 
      !foosc = + goomno(kks) *     kds  + goomno(kka) *     kda 
      !fooss = + goomne(kks) * abs(kds) - goomne(kka) * abs(kda)
@@ -293,7 +286,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
      !fzzsc = + gzzmno(kks) *     kds  + gzzmno(kka) *     kda 
      !fzzss = + gzzmne(kks) * abs(kds) - gzzmne(kka) * abs(kda)
       
-      do lp = 1, (1+lrad)*(1+lrad) ; ll = llabel(lp,lvol) ; pp = plabel(lp,lvol) ! SRH; 27 Jul 17;
+      do lp = 1, prad ; ll = llabel(lp,lvol) ; pp = plabel(lp,lvol) ! SRH; 27 Jul 17;
        
        Tl = sbarhim(jquad,ii) *                                      TD(ll,0,jquad,lvol)
        Dl = sbarhim(jquad,ii) * ( regumm(ii) * halfoversbar(jquad) * TD(ll,0,jquad,lvol) + TD(ll,1,jquad,lvol) )
@@ -305,13 +298,11 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
        DlTp = Dl * Tp
        DlDp = Dl * Dp
        
-#ifdef PRECALCULATE
-#else
-       DToocc( ll, pp, ii, jj ) = DToocc( ll, pp, ii, jj ) + DlTp * foocc ! stell-sym; SRH; 27 Jul 17;
+      !DToocc( ll, pp, ii, jj ) = DToocc( ll, pp, ii, jj ) + DlTp * foocc ! DToocc is now assigned in dforce; SRH; 02 Aug 17;
       !DToocs( ll, pp, ii, jj ) = DToocs( ll, pp, ii, jj ) + DlTp * foocs
       !DToosc( ll, pp, ii, jj ) = DToosc( ll, pp, ii, jj ) + DlTp * foosc
       !DTooss( ll, pp, ii, jj ) = DTooss( ll, pp, ii, jj ) + DlTp * fooss
-#endif  
+
       !TTsscc( ll, pp, ii, jj ) = TTsscc( ll, pp, ii, jj ) + TlTp * fsscc
       !TTsscs( ll, pp, ii, jj ) = TTsscs( ll, pp, ii, jj ) + TlTp * fsscs
       !TTsssc( ll, pp, ii, jj ) = TTsssc( ll, pp, ii, jj ) + TlTp * fsssc
@@ -361,10 +352,10 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
       kks = kijs(ii,jj,0) ; kds = jthweight / kijs(ii,jj,1) ! SRH; 27 Jul 17;
       kka = kija(ii,jj,0) ; kda = jthweight / kija(ii,jj,1) ! SRH; 27 Jul 17;
       
-      foocc = + goomne(kks) * abs(kds) + goomne(kka) * abs(kda) ! SRH; 27 Jul 17;
-      foocs = - goomno(kks) *     kds  + goomno(kka) *     kda 
-      foosc = + goomno(kks) *     kds  + goomno(kka) *     kda 
-      fooss = + goomne(kks) * abs(kds) - goomne(kka) * abs(kda)
+     !foocc = + goomne(kks) * abs(kds) + goomne(kka) * abs(kda) ! SRH; 27 Jul 17; SRH; 02 Aug 17;
+     !foocs = - goomno(kks) *     kds  + goomno(kka) *     kda 
+     !foosc = + goomno(kks) *     kds  + goomno(kka) *     kda 
+     !fooss = + goomne(kks) * abs(kds) - goomne(kka) * abs(kda)
       
       fsscc = + gssmne(kks) * abs(kds) + gssmne(kka) * abs(kda)
       fsscs = - gssmno(kks) *     kds  + gssmno(kka) *     kda 
@@ -396,7 +387,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
       fzzsc = + gzzmno(kks) *     kds  + gzzmno(kka) *     kda 
       fzzss = + gzzmne(kks) * abs(kds) - gzzmne(kka) * abs(kda)
       
-      do lp = 1, (1+lrad)*(1+lrad) ; ll = llabel(lp,lvol) ; pp = plabel(lp,lvol) ! SRH; 27 Jul 17;
+      do lp = 1, prad ; ll = llabel(lp,lvol) ; pp = plabel(lp,lvol) ! SRH; 27 Jul 17;
        
        Tl = sbarhim(jquad,ii) *                                      TD(ll,0,jquad,lvol)
        Dl = sbarhim(jquad,ii) * ( regumm(ii) * halfoversbar(jquad) * TD(ll,0,jquad,lvol) + TD(ll,1,jquad,lvol) )
@@ -408,13 +399,11 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
        DlTp = Dl * Tp
        DlDp = Dl * Dp
        
-#ifdef PRECALCULATE
-#else
-       DToocc( ll, pp, ii, jj ) = DToocc( ll, pp, ii, jj ) + DlTp * foocc ! stell-sym; SRH; 27 Jul 17;
-       DToocs( ll, pp, ii, jj ) = DToocs( ll, pp, ii, jj ) + DlTp * foocs
-       DToosc( ll, pp, ii, jj ) = DToosc( ll, pp, ii, jj ) + DlTp * foosc
-       DTooss( ll, pp, ii, jj ) = DTooss( ll, pp, ii, jj ) + DlTp * fooss
-#endif  
+      !DToocc( ll, pp, ii, jj ) = DToocc( ll, pp, ii, jj ) + DlTp * foocc ! DToocc is now assigned in dforce; SRH; 02 Aug 17;
+      !DToocs( ll, pp, ii, jj ) = DToocs( ll, pp, ii, jj ) + DlTp * foocs
+      !DToosc( ll, pp, ii, jj ) = DToosc( ll, pp, ii, jj ) + DlTp * foosc
+      !DTooss( ll, pp, ii, jj ) = DTooss( ll, pp, ii, jj ) + DlTp * fooss
+
        TTsscc( ll, pp, ii, jj ) = TTsscc( ll, pp, ii, jj ) + TlTp * fsscc
        TTsscs( ll, pp, ii, jj ) = TTsscs( ll, pp, ii, jj ) + TlTp * fsscs
        TTsssc( ll, pp, ii, jj ) = TTsssc( ll, pp, ii, jj ) + TlTp * fsssc
@@ -472,7 +461,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
       kks = kijs(ii,jj,0) ; kds = jthweight / kijs(ii,jj,1) ! SRH; 27 Jul 17;
       kka = kija(ii,jj,0) ; kda = jthweight / kija(ii,jj,1) ! SRH; 27 Jul 17;
       
-      foocc = + goomne(kks) * abs(kds) + goomne(kka) * abs(kda) ! stell-sym; SRH; 27 Jul 17;
+     !foocc = + goomne(kks) * abs(kds) + goomne(kka) * abs(kda) ! stell-sym; SRH; 27 Jul 17; SRH; 02 Aug 17;
      !foocs = - goomno(kks) *     kds  + goomno(kka) *     kda 
      !foosc = + goomno(kks) *     kds  + goomno(kka) *     kda 
      !fooss = + goomne(kks) * abs(kds) - goomne(kka) * abs(kda)
@@ -507,7 +496,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
      !fzzsc = + gzzmno(kks) *     kds  + gzzmno(kka) *     kda 
      !fzzss = + gzzmne(kks) * abs(kds) - gzzmne(kka) * abs(kda)
       
-      do lp = 1, (1+lrad)*(1+lrad) ; ll = llabel(lp,lvol) ; pp = plabel(lp,lvol) ! SRH; 27 Jul 17;
+      do lp = 1, prad ; ll = llabel(lp,lvol) ; pp = plabel(lp,lvol) ! SRH; 27 Jul 17;
        
        Tl = TD(ll,0,jquad,lvol)
        Dl = TD(ll,1,jquad,lvol)
@@ -519,13 +508,11 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
        DlTp = Dl * Tp
        DlDp = Dl * Dp
        
-#ifdef PRECALCULATE
-#else
-       DToocc( ll, pp, ii, jj ) = DToocc( ll, pp, ii, jj ) + DlTp * foocc ! stell-sym; SRH; 27 Jul 17;
+      !DToocc( ll, pp, ii, jj ) = DToocc( ll, pp, ii, jj ) + DlTp * foocc ! DToocc is now assigned in dforce; SRH; 02 Aug 17;
       !DToocs( ll, pp, ii, jj ) = DToocs( ll, pp, ii, jj ) + DlTp * foocs
       !DToosc( ll, pp, ii, jj ) = DToosc( ll, pp, ii, jj ) + DlTp * foosc
       !DTooss( ll, pp, ii, jj ) = DTooss( ll, pp, ii, jj ) + DlTp * fooss
-#endif
+
       !TTsscc( ll, pp, ii, jj ) = TTsscc( ll, pp, ii, jj ) + TlTp * fsscc
       !TTsscs( ll, pp, ii, jj ) = TTsscs( ll, pp, ii, jj ) + TlTp * fsscs
       !TTsssc( ll, pp, ii, jj ) = TTsssc( ll, pp, ii, jj ) + TlTp * fsssc
@@ -575,10 +562,10 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
       kks = kijs(ii,jj,0) ; kds = jthweight / kijs(ii,jj,1) ! SRH; 27 Jul 17;
       kka = kija(ii,jj,0) ; kda = jthweight / kija(ii,jj,1) ! SRH; 27 Jul 17;
       
-      foocc = + goomne(kks) * abs(kds) + goomne(kka) * abs(kda) ! SRH; 27 Jul 17;
-      foocs = - goomno(kks) *     kds  + goomno(kka) *     kda 
-      foosc = + goomno(kks) *     kds  + goomno(kka) *     kda 
-      fooss = + goomne(kks) * abs(kds) - goomne(kka) * abs(kda)
+     !foocc = + goomne(kks) * abs(kds) + goomne(kka) * abs(kda) ! SRH; 27 Jul 17; SRH; 02 Aug 17;
+     !foocs = - goomno(kks) *     kds  + goomno(kka) *     kda 
+     !foosc = + goomno(kks) *     kds  + goomno(kka) *     kda 
+     !fooss = + goomne(kks) * abs(kds) - goomne(kka) * abs(kda)
       
       fsscc = + gssmne(kks) * abs(kds) + gssmne(kka) * abs(kda)
       fsscs = - gssmno(kks) *     kds  + gssmno(kka) *     kda 
@@ -610,7 +597,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
       fzzsc = + gzzmno(kks) *     kds  + gzzmno(kka) *     kda 
       fzzss = + gzzmne(kks) * abs(kds) - gzzmne(kka) * abs(kda)
       
-      do lp = 1, (1+lrad)*(1+lrad) ; ll = llabel(lp,lvol) ; pp = plabel(lp,lvol) ! SRH; 27 Jul 17;
+      do lp = 1, prad ; ll = llabel(lp,lvol) ; pp = plabel(lp,lvol) ! SRH; 27 Jul 17;
        
        Tl = TD(ll,0,jquad,lvol)
        Dl = TD(ll,1,jquad,lvol)
@@ -622,13 +609,11 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
        DlTp = Dl * Tp
        DlDp = Dl * Dp
        
-#ifdef PRECALCULATE
-#else
-       DToocc( ll, pp, ii, jj ) = DToocc( ll, pp, ii, jj ) + DlTp * foocc ! stell-sym; SRH; 27 Jul 17;
-       DToocs( ll, pp, ii, jj ) = DToocs( ll, pp, ii, jj ) + DlTp * foocs
-       DToosc( ll, pp, ii, jj ) = DToosc( ll, pp, ii, jj ) + DlTp * foosc
-       DTooss( ll, pp, ii, jj ) = DTooss( ll, pp, ii, jj ) + DlTp * fooss
-#endif  
+      !DToocc( ll, pp, ii, jj ) = DToocc( ll, pp, ii, jj ) + DlTp * foocc ! DToocc is now assigned in dforce; SRH; 02 Aug 17;
+      !DToocs( ll, pp, ii, jj ) = DToocs( ll, pp, ii, jj ) + DlTp * foocs
+      !DToosc( ll, pp, ii, jj ) = DToosc( ll, pp, ii, jj ) + DlTp * foosc
+      !DTooss( ll, pp, ii, jj ) = DTooss( ll, pp, ii, jj ) + DlTp * fooss
+
        TTsscc( ll, pp, ii, jj ) = TTsscc( ll, pp, ii, jj ) + TlTp * fsscc
        TTsscs( ll, pp, ii, jj ) = TTsscs( ll, pp, ii, jj ) + TlTp * fsscs
        TTsssc( ll, pp, ii, jj ) = TTsssc( ll, pp, ii, jj ) + TlTp * fsssc
@@ -671,12 +656,12 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!  DToocc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DToocc( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf ! this factor is now included in matrix; SRH; 27 Jul 17;
-!  DToocs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DToocs( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf ! I guessed that this would be faster; SRH; 27 Jul 17;
-!  DToosc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DToosc( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf ! but I did not confirm; SRH; 27 Jul 17;
+!  DToocc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DToocc( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf ! DToocc is now assigned in dforce; SRH; 02 Aug 17;
+!  DToocs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DToocs( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
+!  DToosc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DToosc( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
 !  DTooss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DTooss( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
 !
-!  TTsscc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = TTsscc( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
+!  TTsscc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = TTsscc( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf ! this factor is now included in matrix; SRH; 27 Jul 17;
 !  TTsscs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = TTsscs( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
 !  TTsssc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = TTsssc( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
 !  TTssss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = TTssss( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
@@ -716,17 +701,14 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
     
     do ll = 0, lrad
      do pp = 0, lrad
-     !Lpause = .false.
       do ii = 1, mn
        do jj = 1, mn
         if( abs(TTssss(ll,pp,ii,jj)) .gt. vsmall ) then
          write(ounit,1000) myid, lvol, ll, pp, ii, jj, TTssss(ll,pp,ii,jj), TTssss(pp,ll,jj,ii), TTssss(ll,pp,ii,jj)-TTssss(pp,ll,jj,ii)
          FATAL( ma00aa, abs(TTssss(ll,pp,ii,jj)-TTssss(pp,ll,jj,ii)).gt.vsmall ), symmetry error )
-        !Lpause = .true.
         endif
        enddo
       enddo
-     !if( Lpause ) pause
      enddo
     enddo
     

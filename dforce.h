@@ -156,6 +156,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
                         lmns, &
                         mn, mne, &
                         DSoocc, DSoocs, DSoosc, DSooss, &
+                        DOoocc, DOoocs, DOoosc, DOooss, &
                         DToocc, DToocs, DToosc, DTooss, &
                         TTsscc, TTsscs, TTsssc, TTssss, &
                         TDstcc, TDstcs, TDstsc, TDstss, &
@@ -163,7 +164,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
                         DDttcc, DDttcs, DDttsc, DDttss, &
                         DDtzcc, DDtzcs, DDtzsc, DDtzss, &
                         DDzzcc, DDzzcs, DDzzsc, DDzzss, &
-                        dRodR, dRodZ, dZodR, dZodZ
+                        dRodR, dRodZ, dZodR, dZodZ, &
+                        Mrad
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -260,6 +262,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
    
    if( myid.ne.modulo(vvol-1,ncpu) ) cycle ! construct Beltrami fields in parallel; 16 Jan 13;
    
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
    NN = NAdof(vvol) ! shorthand;
    
    SALLOCATE( dMA, (0:NN,0:NN), zero ) ! required for both plasma region and vacuum region; 18 Apr 13;
@@ -291,17 +295,27 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-   ll = Lrad(vvol)
+   ll = Lrad(vvol) ! shorthand; SRH; 02 Aug 17;
    
    if( YESstellsym ) then ! SRH; 30 Jul 17;
     
-#ifdef PRECALCULATE
-#else
-    SALLOCATE( DToocc, (0:ll,0:ll,1:mn,1:mn), zero )
+   !SALLOCATE( DToocc, (0:ll,0:ll,1:mn,1:mn), zero ) ! this is now allocated and pre-calculated in preset; SRH; 02 Aug 17;
    !SALLOCATE( DToocs, (0:ll,0:ll,1:mn,1:mn), zero )
    !SALLOCATE( DToosc, (0:ll,0:ll,1:mn,1:mn), zero )
    !SALLOCATE( DTooss, (0:ll,0:ll,1:mn,1:mn), zero )
-#endif
+
+    if( Lcoordinatesingularity ) then
+     DToocc(0:Mrad,0:Mrad,1:mn,1:mn) = DSoocc(0:Mrad,0:Mrad,1:mn,1:mn)
+    !DToocs(0:Mrad,0:Mrad,1:mn,1:mn) = DSoocs(0:Mrad,0:Mrad,1:mn,1:mn)
+    !DToosc(0:Mrad,0:Mrad,1:mn,1:mn) = DSoosc(0:Mrad,0:Mrad,1:mn,1:mn)
+    !DTooss(0:Mrad,0:Mrad,1:mn,1:mn) = DSooss(0:Mrad,0:Mrad,1:mn,1:mn)
+    else ! Lcoordinatesingularity = .false. ; SRH; 02 Aug 17;
+     DToocc(0:Mrad,0:Mrad,1:mn,1:mn) = DOoocc(0:Mrad,0:Mrad,1:mn,1:mn)
+    !DToocs(0:Mrad,0:Mrad,1:mn,1:mn) = DOoocs(0:Mrad,0:Mrad,1:mn,1:mn)
+    !DToosc(0:Mrad,0:Mrad,1:mn,1:mn) = DOoosc(0:Mrad,0:Mrad,1:mn,1:mn)
+    !DTooss(0:Mrad,0:Mrad,1:mn,1:mn) = DOooss(0:Mrad,0:Mrad,1:mn,1:mn)
+    endif ! matches if( Lcoordinatesingularity ) ; SRH; 02 Aug 17;
+
    !SALLOCATE( TTsscc, (0:ll,0:ll,1:mn,1:mn), zero )
    !SALLOCATE( TTsscs, (0:ll,0:ll,1:mn,1:mn), zero )
    !SALLOCATE( TTsssc, (0:ll,0:ll,1:mn,1:mn), zero )
@@ -334,13 +348,23 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 
    else ! NOTstellsym; SRH; 30 Jul 17;
     
-#ifdef PRECALCULATE
-#else
-    SALLOCATE( DToocc, (0:ll,0:ll,1:mn,1:mn), zero )
-    SALLOCATE( DToocs, (0:ll,0:ll,1:mn,1:mn), zero )
-    SALLOCATE( DToosc, (0:ll,0:ll,1:mn,1:mn), zero )
-    SALLOCATE( DTooss, (0:ll,0:ll,1:mn,1:mn), zero )
-#endif
+   !SALLOCATE( DToocc, (0:ll,0:ll,1:mn,1:mn), zero ) ! this is now allocated and pre-calculated in preset; SRH; 02 Aug 17;
+   !SALLOCATE( DToocs, (0:ll,0:ll,1:mn,1:mn), zero )
+   !SALLOCATE( DToosc, (0:ll,0:ll,1:mn,1:mn), zero )
+   !SALLOCATE( DTooss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+    if( Lcoordinatesingularity ) then
+     DToocc(0:Mrad,0:Mrad,1:mn,1:mn) = DSoocc(0:Mrad,0:Mrad,1:mn,1:mn)
+     DToocs(0:Mrad,0:Mrad,1:mn,1:mn) = DSoocs(0:Mrad,0:Mrad,1:mn,1:mn)
+     DToosc(0:Mrad,0:Mrad,1:mn,1:mn) = DSoosc(0:Mrad,0:Mrad,1:mn,1:mn)
+     DTooss(0:Mrad,0:Mrad,1:mn,1:mn) = DSooss(0:Mrad,0:Mrad,1:mn,1:mn)
+    else ! Lcoordinatesingularity = .false. ; SRH; 02 Aug 17;
+     DToocc(0:Mrad,0:Mrad,1:mn,1:mn) = DOoocc(0:Mrad,0:Mrad,1:mn,1:mn)
+     DToocs(0:Mrad,0:Mrad,1:mn,1:mn) = DOoocs(0:Mrad,0:Mrad,1:mn,1:mn)
+     DToosc(0:Mrad,0:Mrad,1:mn,1:mn) = DOoosc(0:Mrad,0:Mrad,1:mn,1:mn)
+     DTooss(0:Mrad,0:Mrad,1:mn,1:mn) = DOooss(0:Mrad,0:Mrad,1:mn,1:mn)
+    endif ! matches if( Lcoordinatesingularity ) ; SRH; 02 Aug 17;
+
     SALLOCATE( TTsscc, (0:ll,0:ll,1:mn,1:mn), zero )
     SALLOCATE( TTsscs, (0:ll,0:ll,1:mn,1:mn), zero )
     SALLOCATE( TTsssc, (0:ll,0:ll,1:mn,1:mn), zero )
@@ -379,30 +403,11 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
-!  if( vvol.eq.Mvol ) then
-!   ideriv = 0 ; ii = 1
-!   write(ounit,'("dforce : ", 10x ," : sum(Ate(",i3,",",i2,",",i2,")%s) =",99es23.15)') vvol, ideriv, ii, sum(Ate(vvol,ideriv,ii)%s(0:Lrad(vvol)))
-!  endif
-
    WCALL( dforce, ma00aa, ( Iquad(vvol), mn, vvol, ll ) ) ! compute volume integrals of metric elements;
    
    WCALL( dforce, matrix, ( vvol, mn, ll ) )
 
-!  if( vvol.eq.Mvol ) then
-!   ideriv = 0 ; ii = 1
-!   write(ounit,'("dforce : ", 10x ," : sum(Ate(",i3,",",i2,",",i2,")%s) =",99es23.15)') vvol, ideriv, ii, sum(Ate(vvol,ideriv,ii)%s(0:Lrad(vvol)))
-!  endif
-
    WCALL( dforce, ma02aa, ( vvol, NN ) )
-   
-!  if( vvol.eq.Mvol ) then
-!   write(ounit,'("dforce : ", 10x ," : dtflux(",i3," ) =",es23.15," ; dpflux(",i3," ) =",es23.15," ;")') Mvol, dtflux(Mvol), Mvol, dpflux(Mvol)
-!  endif
-
-!  if( vvol.eq.Mvol ) then
-!   ideriv = 0 ; ii = 1
-!   write(ounit,'("dforce : ", 10x ," : sum(Ate(",i3,",",i2,",",i2,")%s) =",99es23.15)') vvol, ideriv, ii, sum(Ate(vvol,ideriv,ii)%s(0:Lrad(vvol)))
-!  endif
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -415,7 +420,12 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
    if( LcomputeDerivatives ) then ! compute inverse of matrix; 13 Sep 13; ! compute inverse of Beltrami matrices; 29 Apr 14;
-    
+
+    DToocc(0:Mrad,0:Mrad,1:mn,1:mn) = zero ! SRH; 02 Aug 17;
+    DToocs(0:Mrad,0:Mrad,1:mn,1:mn) = zero
+    DToosc(0:Mrad,0:Mrad,1:mn,1:mn) = zero
+    DTooss(0:Mrad,0:Mrad,1:mn,1:mn) = zero
+
     lastcpu = GETTIME ! 30 Jan 13;
     
     dMA(0:NN-1,1:NN) = dMA(1:NN,1:NN) - mu(vvol) * dMD(1:NN,1:NN) ! this corrupts dMA, but dMA is no longer used;  7 Mar 13; 
@@ -1075,13 +1085,11 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 
    if( YESstellsym ) then ! SRH; 30 Jul 17;
     
-#ifdef PRECALCULATE
-#else
-    DALLOCATE( DToocc )
+   !DALLOCATE( DToocc ) ! this is now global; SRH; 02 Aug 17;
    !DALLOCATE( DToocs )
    !DALLOCATE( DToosc )
    !DALLOCATE( DTooss )
-#endif
+
    !DALLOCATE( TTsscc )
    !DALLOCATE( TTsscs )
    !DALLOCATE( TTsssc )
@@ -1114,13 +1122,11 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 
    else ! NOTstellsym; SRH; 30 Jul 17;
     
-#ifdef PRECALCULATE
-#else
-    DALLOCATE( DToocc )
-    DALLOCATE( DToocs )
-    DALLOCATE( DToosc )
-    DALLOCATE( DTooss )
-#endif
+   !DALLOCATE( DToocc ) ! this is now global; SRH; 02 Aug 17;
+   !DALLOCATE( DToocs )
+   !DALLOCATE( DToosc )
+   !DALLOCATE( DTooss )
+
     DALLOCATE( TTsscc )
     DALLOCATE( TTsscs )
     DALLOCATE( TTsssc )

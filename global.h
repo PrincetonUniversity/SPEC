@@ -994,7 +994,7 @@ module allglobal
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  REAL   , allocatable :: goomne(:), goomno(:) ! described in preset;
+  REAL   , allocatable :: goomne(:), goomno(:) ! described in preset; only used in preset; SRH; 02 Aug 17;
   REAL   , allocatable :: gssmne(:), gssmno(:) ! described in preset;
   REAL   , allocatable :: gstmne(:), gstmno(:) ! described in preset;
   REAL   , allocatable :: gszmne(:), gszmno(:) ! described in preset;
@@ -1020,10 +1020,12 @@ module allglobal
 !latex \item These are allocated in \link{dforce}, defined in \link{ma00aa}, and are used in \link{matrix} to construct the matrices.
 !latex \end{enumerate}
   
-  REAL,    allocatable :: DSoocc(:,:,:,:), DSoocs(:,:,:,:), DSoosc(:,:,:,:), DSooss(:,:,:,:)
-  REAL,    allocatable :: DToocc(:,:,:,:), DToocs(:,:,:,:), DToosc(:,:,:,:), DTooss(:,:,:,:)
+  REAL,    allocatable :: DSoocc(:,:,:,:), DSoocs(:,:,:,:), DSoosc(:,:,:,:), DSooss(:,:,:,:) ! computed in preset; SRH; 02 Aug 17;
+  REAL,    allocatable :: DOoocc(:,:,:,:), DOoocs(:,:,:,:), DOoosc(:,:,:,:), DOooss(:,:,:,:) ! computed in preset; SRH; 02 Aug 17;
 
-  REAL,    allocatable :: TTsscc(:,:,:,:), TTsscs(:,:,:,:), TTsssc(:,:,:,:), TTssss(:,:,:,:)
+  REAL,    allocatable :: DToocc(:,:,:,:), DToocs(:,:,:,:), DToosc(:,:,:,:), DTooss(:,:,:,:) ! assigned in dforce; SRH; 02 Aug 17;
+
+  REAL,    allocatable :: TTsscc(:,:,:,:), TTsscs(:,:,:,:), TTsssc(:,:,:,:), TTssss(:,:,:,:) ! computed in ma00aa; SRH; 02 Aug 17;
   REAL,    allocatable :: TDstcc(:,:,:,:), TDstcs(:,:,:,:), TDstsc(:,:,:,:), TDstss(:,:,:,:)
   REAL,    allocatable :: TDszcc(:,:,:,:), TDszcs(:,:,:,:), TDszsc(:,:,:,:), TDszss(:,:,:,:)
   REAL,    allocatable :: DDttcc(:,:,:,:), DDttcs(:,:,:,:), DDttsc(:,:,:,:), DDttss(:,:,:,:)
@@ -1342,6 +1344,8 @@ module allglobal
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   INTEGER, parameter   :: Node = 2 ! best to make this global for consistency between calling and called routines; 26 Jan 16;
+
+  INTEGER              :: Mrad ! maximum Chebyshev resolution in any volume; defined in preset; used in dforce, hdfint; SRH; 02 Aug 17;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

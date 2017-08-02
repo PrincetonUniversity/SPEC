@@ -379,7 +379,6 @@ subroutine matrix( lvol, mn, lrad )
                         iVns, iBns, iVnc, iBnc, &
                         Lma, Lmb, Lmc, Lmd, Lme, Lmf, Lmg, Lmh, &
                         Lcoordinatesingularity, TT, &
-                        DSoocc, DSoocs, DSoosc, DSooss, &
                         DToocc, DToocs, DToosc, DTooss, &
                         TTsscc, TTsscs, TTsssc, TTssss, &
                         TDstcc, TDstcs, TDstsc, TDstss, &
