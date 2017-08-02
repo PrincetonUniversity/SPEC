@@ -98,6 +98,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   use allglobal, only : myid, ncpu, cpus, &
                         Mvol, mnsqd, ilabel, jlabel, llabel, plabel, &
                         gaussianweight, gaussianabscissae, &
+                        DSoocc, DSoocs, DSoosc, DSooss, &
                         DToocc, DToocs, DToosc, DTooss, &
                         TTsscc, TTsscs, TTsssc, TTssss, &
                         TDstcc, TDstcs, TDstsc, TDstss, &
@@ -151,7 +152,10 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   
   if( YESstellsym ) then
    
+#ifdef PRECALCULATE
+#else
    DToocc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero ! initialize summation of Gaussian quadrature (loop over jquad); SRH; 27 Jul 17;
+#endif
   !DToocs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero ! non-stellarator-symmetric terms are commented; SRH; 27 Jul 17;
   !DToosc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero ! I am happy to delete this commented-out source eventually; "a short code is a good code"; SRH; 27 Jul 17;
   !DTooss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
@@ -188,11 +192,14 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
    
   else ! NOTstellsym ; SRH; 27 Jul 17;
    
+#ifdef PRECALCULATE
+#else
    DToocc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero ! initialize summation of Gaussian quadrature (loop over jquad); SRH; 27 Jul 17;
    DToocs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
    DToosc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
    DTooss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-   
+#endif
+ 
    TTsscc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
    TTsscs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
    TTsssc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
@@ -298,11 +305,13 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
        DlTp = Dl * Tp
        DlDp = Dl * Dp
        
+#ifdef PRECALCULATE
+#else
        DToocc( ll, pp, ii, jj ) = DToocc( ll, pp, ii, jj ) + DlTp * foocc ! stell-sym; SRH; 27 Jul 17;
       !DToocs( ll, pp, ii, jj ) = DToocs( ll, pp, ii, jj ) + DlTp * foocs
       !DToosc( ll, pp, ii, jj ) = DToosc( ll, pp, ii, jj ) + DlTp * foosc
       !DTooss( ll, pp, ii, jj ) = DTooss( ll, pp, ii, jj ) + DlTp * fooss
-       
+#endif  
       !TTsscc( ll, pp, ii, jj ) = TTsscc( ll, pp, ii, jj ) + TlTp * fsscc
       !TTsscs( ll, pp, ii, jj ) = TTsscs( ll, pp, ii, jj ) + TlTp * fsscs
       !TTsssc( ll, pp, ii, jj ) = TTsssc( ll, pp, ii, jj ) + TlTp * fsssc
@@ -399,11 +408,13 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
        DlTp = Dl * Tp
        DlDp = Dl * Dp
        
+#ifdef PRECALCULATE
+#else
        DToocc( ll, pp, ii, jj ) = DToocc( ll, pp, ii, jj ) + DlTp * foocc ! stell-sym; SRH; 27 Jul 17;
        DToocs( ll, pp, ii, jj ) = DToocs( ll, pp, ii, jj ) + DlTp * foocs
        DToosc( ll, pp, ii, jj ) = DToosc( ll, pp, ii, jj ) + DlTp * foosc
        DTooss( ll, pp, ii, jj ) = DTooss( ll, pp, ii, jj ) + DlTp * fooss
-       
+#endif  
        TTsscc( ll, pp, ii, jj ) = TTsscc( ll, pp, ii, jj ) + TlTp * fsscc
        TTsscs( ll, pp, ii, jj ) = TTsscs( ll, pp, ii, jj ) + TlTp * fsscs
        TTsssc( ll, pp, ii, jj ) = TTsssc( ll, pp, ii, jj ) + TlTp * fsssc
@@ -508,11 +519,13 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
        DlTp = Dl * Tp
        DlDp = Dl * Dp
        
+#ifdef PRECALCULATE
+#else
        DToocc( ll, pp, ii, jj ) = DToocc( ll, pp, ii, jj ) + DlTp * foocc ! stell-sym; SRH; 27 Jul 17;
       !DToocs( ll, pp, ii, jj ) = DToocs( ll, pp, ii, jj ) + DlTp * foocs
       !DToosc( ll, pp, ii, jj ) = DToosc( ll, pp, ii, jj ) + DlTp * foosc
       !DTooss( ll, pp, ii, jj ) = DTooss( ll, pp, ii, jj ) + DlTp * fooss
-       
+#endif
       !TTsscc( ll, pp, ii, jj ) = TTsscc( ll, pp, ii, jj ) + TlTp * fsscc
       !TTsscs( ll, pp, ii, jj ) = TTsscs( ll, pp, ii, jj ) + TlTp * fsscs
       !TTsssc( ll, pp, ii, jj ) = TTsssc( ll, pp, ii, jj ) + TlTp * fsssc
@@ -609,11 +622,13 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
        DlTp = Dl * Tp
        DlDp = Dl * Dp
        
+#ifdef PRECALCULATE
+#else
        DToocc( ll, pp, ii, jj ) = DToocc( ll, pp, ii, jj ) + DlTp * foocc ! stell-sym; SRH; 27 Jul 17;
        DToocs( ll, pp, ii, jj ) = DToocs( ll, pp, ii, jj ) + DlTp * foocs
        DToosc( ll, pp, ii, jj ) = DToosc( ll, pp, ii, jj ) + DlTp * foosc
        DTooss( ll, pp, ii, jj ) = DTooss( ll, pp, ii, jj ) + DlTp * fooss
-       
+#endif  
        TTsscc( ll, pp, ii, jj ) = TTsscc( ll, pp, ii, jj ) + TlTp * fsscc
        TTsscs( ll, pp, ii, jj ) = TTsscs( ll, pp, ii, jj ) + TlTp * fsscs
        TTsssc( ll, pp, ii, jj ) = TTsssc( ll, pp, ii, jj ) + TlTp * fsssc

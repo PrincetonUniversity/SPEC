@@ -1020,11 +1020,8 @@ module allglobal
 !latex \item These are allocated in \link{dforce}, defined in \link{ma00aa}, and are used in \link{matrix} to construct the matrices.
 !latex \end{enumerate}
   
-#ifdef PRECALCULATE
-  REAL,    allocatable :: DToocc(:,:,:,:,:), DToocs(:,:,:,:,:), DToosc(:,:,:,:,:), DTooss(:,:,:,:,:)
-#else
+  REAL,    allocatable :: DSoocc(:,:,:,:), DSoocs(:,:,:,:), DSoosc(:,:,:,:), DSooss(:,:,:,:)
   REAL,    allocatable :: DToocc(:,:,:,:), DToocs(:,:,:,:), DToosc(:,:,:,:), DTooss(:,:,:,:)
-#endif
 
   REAL,    allocatable :: TTsscc(:,:,:,:), TTsscs(:,:,:,:), TTsssc(:,:,:,:), TTssss(:,:,:,:)
   REAL,    allocatable :: TDstcc(:,:,:,:), TDstcs(:,:,:,:), TDstsc(:,:,:,:), TDstss(:,:,:,:)

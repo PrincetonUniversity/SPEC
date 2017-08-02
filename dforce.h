@@ -155,6 +155,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
                         psifactor, Rscale, &
                         lmns, &
                         mn, mne, &
+                        DSoocc, DSoocs, DSoosc, DSooss, &
                         DToocc, DToocs, DToosc, DTooss, &
                         TTsscc, TTsscs, TTsssc, TTssss, &
                         TDstcc, TDstcs, TDstsc, TDstss, &
@@ -294,11 +295,13 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
    
    if( YESstellsym ) then ! SRH; 30 Jul 17;
     
+#ifdef PRECALCULATE
+#else
     SALLOCATE( DToocc, (0:ll,0:ll,1:mn,1:mn), zero )
    !SALLOCATE( DToocs, (0:ll,0:ll,1:mn,1:mn), zero )
    !SALLOCATE( DToosc, (0:ll,0:ll,1:mn,1:mn), zero )
    !SALLOCATE( DTooss, (0:ll,0:ll,1:mn,1:mn), zero )
-
+#endif
    !SALLOCATE( TTsscc, (0:ll,0:ll,1:mn,1:mn), zero )
    !SALLOCATE( TTsscs, (0:ll,0:ll,1:mn,1:mn), zero )
    !SALLOCATE( TTsssc, (0:ll,0:ll,1:mn,1:mn), zero )
@@ -331,11 +334,13 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 
    else ! NOTstellsym; SRH; 30 Jul 17;
     
+#ifdef PRECALCULATE
+#else
     SALLOCATE( DToocc, (0:ll,0:ll,1:mn,1:mn), zero )
     SALLOCATE( DToocs, (0:ll,0:ll,1:mn,1:mn), zero )
     SALLOCATE( DToosc, (0:ll,0:ll,1:mn,1:mn), zero )
     SALLOCATE( DTooss, (0:ll,0:ll,1:mn,1:mn), zero )
-    
+#endif
     SALLOCATE( TTsscc, (0:ll,0:ll,1:mn,1:mn), zero )
     SALLOCATE( TTsscs, (0:ll,0:ll,1:mn,1:mn), zero )
     SALLOCATE( TTsssc, (0:ll,0:ll,1:mn,1:mn), zero )
@@ -1070,11 +1075,13 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 
    if( YESstellsym ) then ! SRH; 30 Jul 17;
     
+#ifdef PRECALCULATE
+#else
     DALLOCATE( DToocc )
    !DALLOCATE( DToocs )
    !DALLOCATE( DToosc )
    !DALLOCATE( DTooss )
-
+#endif
    !DALLOCATE( TTsscc )
    !DALLOCATE( TTsscs )
    !DALLOCATE( TTsssc )
@@ -1107,11 +1114,13 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 
    else ! NOTstellsym; SRH; 30 Jul 17;
     
+#ifdef PRECALCULATE
+#else
     DALLOCATE( DToocc )
     DALLOCATE( DToocs )
     DALLOCATE( DToosc )
     DALLOCATE( DTooss )
-    
+#endif
     DALLOCATE( TTsscc )
     DALLOCATE( TTsscs )
     DALLOCATE( TTsssc )
@@ -1143,41 +1152,6 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
     DALLOCATE( DDzzss )
     
    endif ! end of if( YESstellsym ) ; SRH; 30 Jul 17;
-   
-!   DALLOCATE(DToocc)
-!   DALLOCATE(DToocs)
-!   DALLOCATE(DToosc)
-!   DALLOCATE(DTooss)
-!
-!   DALLOCATE(TTsscc)
-!   DALLOCATE(TTsscs)
-!   DALLOCATE(TTsssc)
-!   DALLOCATE(TTssss)
-!
-!   DALLOCATE(TDstcc)
-!   DALLOCATE(TDstcs)
-!   DALLOCATE(TDstsc)
-!   DALLOCATE(TDstss)
-!
-!   DALLOCATE(TDszcc)
-!   DALLOCATE(TDszcs)
-!   DALLOCATE(TDszsc)
-!   DALLOCATE(TDszss)
-!
-!   DALLOCATE(DDttcc)
-!   DALLOCATE(DDttcs)
-!   DALLOCATE(DDttsc)
-!   DALLOCATE(DDttss)
-!
-!   DALLOCATE(DDtzcc)
-!   DALLOCATE(DDtzcs)
-!   DALLOCATE(DDtzsc)
-!   DALLOCATE(DDtzss)
-!
-!   DALLOCATE(DDzzcc)
-!   DALLOCATE(DDzzcs)
-!   DALLOCATE(DDzzsc)
-!   DALLOCATE(DDzzss)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

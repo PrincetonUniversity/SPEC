@@ -1171,10 +1171,15 @@ subroutine preset
   
 #ifdef PRECALCULATE
 
-  SALLOCATE( DToocc, (0:Mrad,0:Mrad,1:mn,1:mn,1:Mvol), zero )
-  SALLOCATE( DToocs, (0:Mrad,0:Mrad,1:mn,1:mn,1:Mvol), zero )
-  SALLOCATE( DToosc, (0:Mrad,0:Mrad,1:mn,1:mn,1:Mvol), zero )
-  SALLOCATE( DTooss, (0:Mrad,0:Mrad,1:mn,1:mn,1:Mvol), zero )
+  SALLOCATE( DSoocc, (0:Mrad,0:Mrad,1:mn,1:mn), zero )
+  SALLOCATE( DSoocs, (0:Mrad,0:Mrad,1:mn,1:mn), zero )
+  SALLOCATE( DSoosc, (0:Mrad,0:Mrad,1:mn,1:mn), zero )
+  SALLOCATE( DSooss, (0:Mrad,0:Mrad,1:mn,1:mn), zero )
+
+  SALLOCATE( DToocc, (0:Mrad,0:Mrad,1:mn,1:mn), zero )
+  SALLOCATE( DToocs, (0:Mrad,0:Mrad,1:mn,1:mn), zero )
+  SALLOCATE( DToosc, (0:Mrad,0:Mrad,1:mn,1:mn), zero )
+  SALLOCATE( DTooss, (0:Mrad,0:Mrad,1:mn,1:mn), zero )
   
   do vvol = 1, Mvol ; lquad = Iquad(vvol)
    
@@ -1223,10 +1228,10 @@ subroutine preset
          DlTp = Dl * Tp
          DlDp = Dl * Dp
          
-         DToocc( ll, pp, ii, jj, vvol ) = DToocc( ll, pp, ii, jj, vvol ) + DlTp * foocc ! stell-sym; SRH; 27 Jul 17;
-         DToocs( ll, pp, ii, jj, vvol ) = DToocs( ll, pp, ii, jj, vvol ) + DlTp * foocs
-         DToosc( ll, pp, ii, jj, vvol ) = DToosc( ll, pp, ii, jj, vvol ) + DlTp * foosc
-         DTooss( ll, pp, ii, jj, vvol ) = DTooss( ll, pp, ii, jj, vvol ) + DlTp * fooss
+         DSoocc( ll, pp, ii, jj ) = DSoocc( ll, pp, ii, jj ) + DlTp * foocc ! stell-sym; SRH; 27 Jul 17;
+         DSoocs( ll, pp, ii, jj ) = DSoocs( ll, pp, ii, jj ) + DlTp * foocs
+         DSoosc( ll, pp, ii, jj ) = DSoosc( ll, pp, ii, jj ) + DlTp * foosc
+         DSooss( ll, pp, ii, jj ) = DSooss( ll, pp, ii, jj ) + DlTp * fooss
          
         enddo ! end of do pp; SRH; 01 Aug 17;
         
@@ -1240,6 +1245,8 @@ subroutine preset
     
    else ! .not.Lcoordinatesingularity;
     
+    if( Lrad(vvol).lt.Mrad ) cycle ! compute the integrals at the highest resolution; SRH; 01 Aug 17;
+
     do jquad = 1, lquad ! Gaussian quadrature loop;
      
      lss = gaussianabscissae(jquad,vvol) ; jthweight = gaussianweight(jquad,vvol)
@@ -1274,10 +1281,10 @@ subroutine preset
          DlTp = Dl * Tp
          DlDp = Dl * Dp
          
-         DToocc( ll, pp, ii, jj, vvol ) = DToocc( ll, pp, ii, jj, vvol ) + DlTp * foocc ! stell-sym; SRH; 27 Jul 17;
-         DToocs( ll, pp, ii, jj, vvol ) = DToocs( ll, pp, ii, jj, vvol ) + DlTp * foocs
-         DToosc( ll, pp, ii, jj, vvol ) = DToosc( ll, pp, ii, jj, vvol ) + DlTp * foosc
-         DTooss( ll, pp, ii, jj, vvol ) = DTooss( ll, pp, ii, jj, vvol ) + DlTp * fooss
+         DToocc( ll, pp, ii, jj ) = DToocc( ll, pp, ii, jj ) + DlTp * foocc ! stell-sym; SRH; 27 Jul 17;
+         DToocs( ll, pp, ii, jj ) = DToocs( ll, pp, ii, jj ) + DlTp * foocs
+         DToosc( ll, pp, ii, jj ) = DToosc( ll, pp, ii, jj ) + DlTp * foosc
+         DTooss( ll, pp, ii, jj ) = DTooss( ll, pp, ii, jj ) + DlTp * fooss
          
         enddo ! end of do pp; SRH; 01 Aug 17;
         
