@@ -238,7 +238,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
    do jquad = 1, lquad ; sbarhim(jquad,1:mn) = sbar(jquad)**regumm(1:mn) ! pre-calculation of regularization factor; 12 Sep 13;
    enddo
    
-   if( YESstellsym ) then
+   if( YESstellsym ) then ! inside Lcoordinatesingularity = T; SRH; 02 Aug 17;
     
     do jquad = 1, lquad ! Gaussian quadrature loop;
      
@@ -339,7 +339,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
      
     enddo ! end of do jquad; ! 16 Jan 13;
     
-   else ! NOTstellsym ; SRH; 27 Jul 17;
+   else ! NOTstellsym ; inside Lcoordinatesingularity = T; SRH; 27 Jul 17;
     
     do jquad = 1, lquad ! Gaussian quadrature loop;
      
@@ -448,7 +448,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
-   if( YESstellsym ) then
+   if( YESstellsym ) then ! inside Lcoordinatesingularity = F; SRH; 02 Aug 17;
     
     do jquad = 1, lquad ! Gaussian quadrature loop;
      
@@ -549,7 +549,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
      
     enddo ! end of do jquad; ! 16 Jan 13;
     
-   else ! NOTstellsym
+   else ! NOTstellsym; inside Lcoordinatesingularity = F; SRH; 02 Aug 17;
     
     do jquad = 1, lquad ! Gaussian quadrature loop;
      
