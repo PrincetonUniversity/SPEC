@@ -37,6 +37,13 @@
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+module newtontime ! SRH; 02 Aug 17;
+  
+  INTEGER :: nFcalls, nDcalls
+  REAL    :: lastcpu
+  
+end module newtontime
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 subroutine newton( NGdof, position, ic05pxf )
@@ -65,6 +72,8 @@ subroutine newton( NGdof, position, ic05pxf )
                         LGdof, dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated , &
                         nfreeboundaryiterations
   
+  use newtontime
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   LOCALS
@@ -74,8 +83,10 @@ subroutine newton( NGdof, position, ic05pxf )
   INTEGER, intent(out)   :: ic05pxf
   
   LOGICAL                :: LComputeDerivatives
-  INTEGER                :: nFcalls, nDcalls, wflag, iflag, idof, jdof, ijdof, ireadhessian, igdof, lvol, ii, imn
-  REAL                   :: rflag, lastcpu
+ !INTEGER                :: nFcalls, nDcalls, wflag, iflag, idof, jdof, ijdof, ireadhessian, igdof, lvol, ii, imn ! SRH; 02 Aug 17;
+  INTEGER                ::                   wflag, iflag, idof, jdof, ijdof, ireadhessian, igdof, lvol, ii, imn ! see above module newtontime; SRH; 02 Aug 17;
+ !REAL                   :: rflag, lastcpu ! SRH; 02 Aug 17;
+  REAL                   :: rflag          ! see above module newtontime; SRH; 02 Aug 17;
   CHARACTER              :: pack
 
   INTEGER                :: irevcm, mode, Ldfjac, LR
@@ -407,6 +418,8 @@ subroutine fcn1(NGdof, x, fvec, irevcm)  ! fcn for hybrd; 07/20/2017; czhu;
                         LGdof, dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated , &
                         nfreeboundaryiterations
   
+  use newtontime
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   LOCALS
@@ -418,11 +431,14 @@ subroutine fcn1(NGdof, x, fvec, irevcm)  ! fcn for hybrd; 07/20/2017; czhu;
   REAL                   :: position(0:NGdof), force(0:NGdof)
 
   LOGICAL                :: LComputeDerivatives  
-  INTEGER                :: nFcalls, nDcalls, wflag, iflag, idof, jdof, ijdof, ireadhessian, igdof, lvol, ii, imn
-  REAL                   :: rflag, lastcpu
+ !INTEGER                :: nFcalls, nDcalls, wflag, iflag, idof, jdof, ijdof, ireadhessian, igdof, lvol, ii, imn ! SRH; 02 Aug 17;
+  INTEGER                ::                   wflag, iflag, idof, jdof, ijdof, ireadhessian, igdof, lvol, ii, imn ! SRH; 02 Aug 17;
+ !REAL                   :: rflag, lastcpu ! SRH; 02 Aug 17;
+  REAL                   :: rflag          ! SRH; 02 Aug 17;
   CHARACTER              :: pack
-
     
+  BEGIN(newton)
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   position = zero ; force = zero ; position(1:NGdof) = x(1:NGdof)  ! assign x to position;
@@ -437,7 +453,7 @@ subroutine fcn1(NGdof, x, fvec, irevcm)  ! fcn for hybrd; 07/20/2017; czhu;
     
     pack = 'U' !! unpack geometrical degrees of freedom; 13 Sep 13; I guess this is just for wrtend; 11 Aug 14;
     WCALL( newton, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack ) )
-    
+
     if( myid.eq.0 ) then
      
      cput = GETTIME
@@ -482,12 +498,12 @@ subroutine fcn1(NGdof, x, fvec, irevcm)  ! fcn for hybrd; 07/20/2017; czhu;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-1000 format("newton : ",f10.2," : "i9,i3," ; ":"|f|="es12.5" ; ":"time=",f10.2,"s ;":" log"a5"="28f6.2" ...")
-1001 format("newton : ", 10x ," : "9x,3x" ; ":"    "  12x "   ":"     ", 10x ,"  ;":" log"a5"="28f6.2" ...")
+1000 format("fcn1   : ",f10.2," : "i9,i3," ; ":"|f|="es12.5" ; ":"time=",f10.2,"s ;":" log"a5"="28f6.2" ...")
+1001 format("fcn1   : ", 10x ," : "9x,3x" ; ":"    "  12x "   ":"     ", 10x ,"  ;":" log"a5"="28f6.2" ...")
  
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-   return
+   RETURN(newton)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -524,6 +540,8 @@ subroutine fcn2(NGdof, x, fvec, fjac, Ldfjac, irevcm)  ! fcn for hybrj; 07/20/20
                         LGdof, dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated , &
                         nfreeboundaryiterations
   
+  use newtontime
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   LOCALS
@@ -535,11 +553,14 @@ subroutine fcn2(NGdof, x, fvec, fjac, Ldfjac, irevcm)  ! fcn for hybrj; 07/20/20
   REAL                   :: position(0:NGdof), force(0:NGdof)
 
   LOGICAL                :: LComputeDerivatives  
-  INTEGER                :: nFcalls, nDcalls, wflag, iflag, idof, jdof, ijdof, ireadhessian, igdof, lvol, ii, imn
-  REAL                   :: rflag, lastcpu
+ !INTEGER                :: nFcalls, nDcalls, wflag, iflag, idof, jdof, ijdof, ireadhessian, igdof, lvol, ii, imn ! SRH; 02 Aug 17;
+  INTEGER                ::                   wflag, iflag, idof, jdof, ijdof, ireadhessian, igdof, lvol, ii, imn ! SRH; 02 Aug 17;
+ !REAL                   :: rflag, lastcpu ! SRH; 02 Aug 17;
+  REAL                   :: rflag          ! SRH; 02 Aug 17;
   CHARACTER              :: pack
-
     
+  BEGIN(newton)
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   position = zero ; force = zero ; position(1:NGdof) = x(1:NGdof)  ! assign x to position;
@@ -594,7 +615,7 @@ subroutine fcn2(NGdof, x, fvec, fjac, Ldfjac, irevcm)  ! fcn for hybrj; 07/20/20
 #ifdef DEBUG
     FATAL( newton, .not.Lhessianallocated, need to allocate hessian )
 #endif
-    
+
     nDcalls = nDcalls + 1
     
     if( LreadGF .and. nDcalls.eq.1 ) then ! this is the first iteration; will check to see if derivative matrix already exists in file .DF;
@@ -658,12 +679,12 @@ subroutine fcn2(NGdof, x, fvec, fjac, Ldfjac, irevcm)  ! fcn for hybrj; 07/20/20
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-1000 format("newton : ",f10.2," : "i9,i3," ; ":"|f|="es12.5" ; ":"time=",f10.2,"s ;":" log"a5"="28f6.2" ...")
-1001 format("newton : ", 10x ," : "9x,3x" ; ":"    "  12x "   ":"     ", 10x ,"  ;":" log"a5"="28f6.2" ...")
+1000 format("fcn2   : ",f10.2," : "i9,i3," ; ":"|f|="es12.5" ; ":"time=",f10.2,"s ;":" log"a5"="28f6.2" ...")
+1001 format("fcn2   : ", 10x ," : "9x,3x" ; ":"    "  12x "   ":"     ", 10x ,"  ;":" log"a5"="28f6.2" ...")
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
-   return
+   RETURN(newton)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
