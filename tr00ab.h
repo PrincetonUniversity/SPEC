@@ -201,6 +201,8 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
 ! construct real-space, real-space transformation matrix; 20 Apr 13;
+
+#ifdef LSPARSE
    
    if( Lsparse.gt.0 ) then
     
@@ -244,9 +246,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
      
     endif
     
-#ifdef DEBUG
     FATAL( tr00ab, ii.ne.Ndof, counting error )
-#endif
     
     Ndof = Ndof + 1 ! include rotational-transform as a degree-of-freedom; 23 Apr 13;
     
@@ -558,6 +558,8 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
     
    endif ! end of if( Lsparse.gt.0 );
    
+#endif
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
    if( Lsparse.eq.0 .or. Lsparse.eq.3 ) then ! Fourier transformation; 24 Apr 13;
@@ -597,7 +599,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
        
        if( ii.lt.1 ) cycle
        
-       FATAL( tr00ab,ii.gt.NN .or. jj.gt.NN, illegal subscript ) ! THIS CAN BE DELETED EVENTUALLY; 02 Sep 14;
+!      FATAL( tr00ab,ii.gt.NN .or. jj.gt.NN, illegal subscript ) ! THIS CAN BE DELETED EVENTUALLY; 02 Sep 14;
        
        ;dmatrix(ii      ,jj      ,ideriv) = dmatrix(ii      ,jj      ,ideriv) + ( - mj * lAze(kk,ideriv) + nj * lAte(kk,ideriv) ) * half
        if( NOTstellsym) then
@@ -782,6 +784,8 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+#ifdef LSPARSE
+
    if( Lsparse.eq.3                        ) then ! compare estimates for rotational-transform provided by Fourier method and real-space method;
 
     cput = GETTIME
@@ -827,6 +831,8 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
     DALLOCATE(istr)
     DALLOCATE(iwork)
    endif
+
+#endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
