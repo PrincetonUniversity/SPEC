@@ -44,13 +44,8 @@
 
 !latex \subsection{solving linear system}
 
-!latex \begin{enumerate}
-!latex \item If \inputvar{Lposdef=0}, then it is {\em not} assumed that the linear system is positive definite and
-!latex       LAPACK routine DSYSVX is used to solve the linear system.
-!latex \item If \inputvar{Lposdef=1}, then it {\em is}     assumed that the linear system is positive definite and
-!latex       \nag{www.nag.co.uk/numeric/FL/manual19/pdf/F04/f04abf_fl19.pdf}{F04ABF}
-!latex       is used to solve the linear system.
-!latex \end{enumerate}
+!latex It is {\em not} assumed that the linear system is positive definite.
+!latex LAPACK routine DSYSVX is used to solve the linear system.
 
 !latex \subsection{unpacking, . . .}
 
@@ -109,7 +104,7 @@
 !l tex       routine may fail if the provided matrix is not positive definite or ill-conditioned, 
 !l tex       and such error messages are given as screen output.
 !l tex \item The LAPACK DSYSVX
-!l tex       routine may fail if the provided matrix is singular              or ill-conditioned. 
+!l tex       routine may fail if the provided matrix is singular or ill-conditioned. 
 !l tex \end{enumerate}
 
 !l tex \subsection{energy and helicity integrals}
@@ -246,7 +241,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 
   INTEGER, PARAMETER   :: NB = 3  !Optimal workspace block size for LAPACK expert driver routine DSYSVX
 
-  INTEGER              :: lvol, NN, MM, ideriv, IA, IB, IC, IBB, lmns, if04abf(0:1), idsysvx(0:1), ii, jj, nnz, LWORK
+  INTEGER              :: lvol, NN, MM, ideriv, lmns, idsysvx(0:1), ii, jj, nnz, LWORK
   
   REAL                 :: lmu, dpf, dtf, dpsi(1:2), tpsi(1:2), ppsi(1:2), lcpu !, icurrent(0:2), gcurrent(0:2) ! 12 Sep 16;
   
@@ -271,7 +266,8 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 #ifdef DEBUG
   FATAL( mp00ac, iflag.ne.1 .and. iflag.ne.2, invalid iflag ) ! see nprint=0 in ma02aa and C05PCF; 12 Sep 16;
 #endif
-  
+  FATAL( mp00ac, Lposdef.ne.0, positive definite matrix not supported )
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   if( Lplasmaregion ) then
@@ -316,18 +312,15 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   solution(1:NN,-1:2) = zero ! this is a global array allocated in dforce; 20 Jun 14;
   
   LWORK = NB*NN
-  SALLOCATE( RW, (1:LWORK ), zero )
-  SALLOCATE( RD, (1:NN,0:2), zero )
-
-  if( Lposdef.eq.0 ) then
-    SALLOCATE( LU, (1:NN,1:NN), zero )
-    SALLOCATE( IPIV, (1:NN), 0 )
-    SALLOCATE( IWORK, (1:NN), 0 )
-  endif
+  SALLOCATE( RW,    (1:LWORK ),  zero )
+  SALLOCATE( RD,    (1:NN,0:2),  zero )
+  SALLOCATE( LU,    (1:NN,1:NN), zero )
+  SALLOCATE( IPIV,  (1:NN),         0 )
+  SALLOCATE( IWORK, (1:NN),         0 )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  if04abf(0:1) = 0 ; idsysvx(0:1) = 0 ! error flags;  4 Feb 13;
+  idsysvx(0:1) = 0 ! error flags;  4 Feb 13;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -380,75 +373,42 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
    endif ! end of if( Lcoordinatesingularity ) ; 08 Feb 16;
    
 
-   IA = NN ; IB = NN ; IC = NN ; IBB = NN
-      
    lcpu = GETTIME
    
-   
-   select case( Lposdef )
-    
-   case( 0 ) ! Lposdef=0;
+   ! Assume Lposdef=0; matrix is real, symmetric, not positive definite
 
-    idsysvx(ideriv) = 1
+   idsysvx(ideriv) = 1
 
-    select case( ideriv )
+   select case( ideriv )
      
-    case( 0 ) ! Lposdef=0; ideriv=0;
+   case( 0 ) ! ideriv=0;
 
-     MM = 1
-     call DSYSVX('N', 'U', NN, MM, matrix, NN, LU, NN, IPIV, rhs(:,MM-1), NN, solution(1:NN,0:MM-1), NN, &
-          RCOND, FERR, BERR, RW, LWORK, IWORK, idsysvx(ideriv))
+      MM = 1
+      call DSYSVX('N', 'U', NN, MM, matrix, NN, LU, NN, IPIV, rhs(:,MM-1), NN, solution(1:NN,0:MM-1), NN, &
+           RCOND, FERR, BERR, RW, LWORK, IWORK, idsysvx(ideriv))
 
-    case( 1 ) ! Lposdef=0; ideriv=1;
+   case( 1 ) ! ideriv=1;
 
-     MM = 2
-     call DSYSVX('F', 'U', NN, MM, matrix, NN, LU, NN, IPIV, rhs(:,1:MM), NN, solution(1:NN,1:MM), NN, &
-          RCOND, FERR, BERR, RW, LWORK, IWORK, idsysvx(ideriv))
+      MM = 2
+      call DSYSVX('F', 'U', NN, MM, matrix, NN, LU, NN, IPIV, rhs(:,1:MM), NN, solution(1:NN,1:MM), NN, &
+           RCOND, FERR, BERR, RW, LWORK, IWORK, idsysvx(ideriv))
 
-    end select ! ideriv;
+   end select ! ideriv;
     
-    cput = GETTIME
+   cput = GETTIME
 
-    if ( idsysvx(ideriv) .eq. 0) then
+   if ( idsysvx(ideriv) .eq. 0) then
       if( Wmp00ac ) write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idsysvx", idsysvx(ideriv), "success ;         ", cput-lcpu	   
-    else if ( idsysvx(ideriv) .lt. 0) then
+   else if ( idsysvx(ideriv) .lt. 0) then
       write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idsysvx", idsysvx(ideriv), "input error ;     "
-    else if ( idsysvx(ideriv) .le. NN) then
+   else if ( idsysvx(ideriv) .le. NN) then
       write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idsysvx", idsysvx(ideriv), "singular ;        "
-    else if ( idsysvx(ideriv) .eq. NN+1) then
+   else if ( idsysvx(ideriv) .eq. NN+1) then
       write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idsysvx", idsysvx(ideriv), "ill conditioned ; "
-    else
+   else
       write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idsysvx", idsysvx(ideriv), "invalid idsysvx ; "
-    endif
-    
-   case( 1 ) ! Lposdef=1;
-    
-    select case( ideriv )
-     
-    case( 0 ) ! Lposdef=1; ideriv=0;
-     
-     if04abf(ideriv) = 1 ; MM = 1
-     call F04ABF( matrix(1:IA,1:NN), IA, rhs(1:IB,0:0), IB, NN, MM, solution(1:IC,0:0), IC, RW(1:NN), RD(1:IBB,0:0), IBB, if04abf(ideriv) )
-     
-    case( 1 ) ! Lposdef=1; ideriv=1;
-     
-     if04abf(ideriv) = 1 ; MM = 2
-     call F04ABF( matrix(1:IA,1:NN), IA, rhs(1:NN,1:2), IB, NN, MM, solution(1:NN,1:2), IC, RW(1:NN), RD(1:IBB,1:2), IBB, if04abf(ideriv) )
-     
-    end select ! ideriv;
-    
-    cput = GETTIME
-    
-    select case( if04abf(ideriv) ) !                                                                           1234567890123456789012345678901234
-    case(  0  )  ; if( Wmp00ac ) write(ounit,1010) cput-cpus, myid, lvol, ideriv, "if04abf", if04abf(ideriv), "success ;                         ", cput-lcpu
-    case(  1  )  ;               write(ounit,1010) cput-cpus, myid, lvol, ideriv, "if04abf", if04abf(ideriv), "not +ve definite ; try Lposdef=0 ;"
-    case(  2  )  ;               write(ounit,1010) cput-cpus, myid, lvol, ideriv, "if04abf", if04abf(ideriv), "ill conditioned ;                 "
-    case(  3  )  ;               write(ounit,1010) cput-cpus, myid, lvol, ideriv, "if04abf", if04abf(ideriv), "input error ;                     "
-    case default ;               write(ounit,1010) cput-cpus, myid, lvol, ideriv, "if04abf", if04abf(ideriv), "invalid if04abf ;                 "
-    end select
+   endif
 
-   end select ! Lposdef; 17 Dec 15;
-   
 1010 format("mp00ac : ",f10.2," : myid=",i3," ; lvol=",i3," ; ideriv="i2" ; "a7"=",i3," ; "a34,:" time=",f10.2," ;")
    
   enddo ! end of do ideriv; 25 Jan 13;
@@ -479,20 +439,16 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   DALLOCATE( matrix )
-  DALLOCATE( rhs    )
-  
+  DALLOCATE( rhs    )  
   DALLOCATE( RW )
   DALLOCATE( RD )
-
-  if( Lposdef.eq.0 ) then
-    DALLOCATE( LU )
-    DALLOCATE( IPIV )
-    DALLOCATE( IWORK )
-  endif
+  DALLOCATE( LU )
+  DALLOCATE( IPIV )
+  DALLOCATE( IWORK )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  if( if04abf(0).ne.0 .or. idsysvx(0).ne.0 .or. if04abf(1).ne.0 .or. idsysvx(1).ne.0 ) then ! failed to construct Beltrami/vacuum field and/or derivatives;
+  if( idsysvx(0).ne.0 .or. idsysvx(1).ne.0 ) then ! failed to construct Beltrami/vacuum field and/or derivatives;
    
    ImagneticOK(lvol) = .false. ! set error flag;
    
