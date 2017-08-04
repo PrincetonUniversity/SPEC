@@ -29,7 +29,7 @@
 
  # Intel Defaults
  RFLAGS=-r8 -mcmodel=large -O3 -m64 -unroll0 -fno-alias -ip -traceback 
- DFLAGS=-check bounds -check format -check output_conversion -check pointers -check uninit -debug full -D DEBUG
+ DFLAGS=-r8 -check bounds -check format -check output_conversion -check pointers -check uninit -debug full -D DEBUG
  NAG=-L$(NAG_ROOT)/lib -lnag_nag 
  NETCDF=-L$(NETCDFHOME)/lib -lnetcdf
  HDF5compile=-I$(HDF5_HOME)/include
