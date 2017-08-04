@@ -1171,9 +1171,9 @@ subroutine gauleg(n, weight, abscis, ifail)
   integer,            intent(out) :: ifail
 
   integer, parameter :: maxiter=16
-  integer m, j, i, iter
+  integer m, j, i, irefl, iter
   real z1,z,pp,p3,p2,p1
-  real, parameter    :: eps = 0.5*epsilon(1.0d0)
+  real, parameter    :: eps = epsilon(z)
 
   !Error checking
   if (n < 1) then
@@ -1182,7 +1182,12 @@ subroutine gauleg(n, weight, abscis, ifail)
 
   m = (n + 1)/2  !Roots are symmetric in interval, so we only need half
   do i=1,m       !Loop over desired roots
-     z = cos(pi*(i - 0.25)/(n + 0.5))  ! Approximate ith root
+     irefl = n + 1 - i
+     if (i .ne. irefl) then
+        z = cos(pi*(i - 0.25)/(n + 0.5))  ! Approximate ith root
+     else        !For an odd number of abscissae, the center must be at zero by symmetry.
+        z = 0.0
+     endif
 
      !Refine by Newton method
      do iter=1,maxiter
@@ -1201,9 +1206,9 @@ subroutine gauleg(n, weight, abscis, ifail)
         ifail = 1;  return
      endif
 
-     abscis(i) = -z;  abscis(n+1-i) = z
+     abscis(i) = -z;  abscis(irefl) = z
      weight(i) = two/((one - z*z)*pp*pp)
-     weight(n+1-i) = weight(i)
+     weight(irefl) = weight(i)
   enddo !i
 
   ifail = 0
