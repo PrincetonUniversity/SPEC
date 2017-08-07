@@ -28,7 +28,7 @@ subroutine hdfint
                         Btemn, Bzemn, Btomn, Bzomn, &
                         iVns, iBns, iVnc, iBnc, &
                         lmns, &
-                        TT
+                        TT, Mrad
   
 #ifdef NOHDF5
 #else
@@ -39,7 +39,6 @@ subroutine hdfint
   
   LOCALS
   
-  INTEGER                        :: Mrad
   REAL                           :: tvolume
   
 #ifdef NOHDF5

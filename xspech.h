@@ -722,7 +722,7 @@ subroutine ending
 
    ecpu = Ttotal-dcpu ! error in actual cpu time and calculated cpu time;  7 Mar 13; 
 
-   write(ounit,'("ending : ",f10.2," : Ttotal =",f10.2," s = "f8.2" m = "f6.2" h ; Timing Error = ",f10.2,"s = ",f10.2,"%")') &
+   write(ounit,'("ending : ",f10.2," : Ttotal =",f10.2," s = "f8.2" m = "f6.2" h ; timing error = ",f10.2,"s = ",f10.2,"%")') &
 dcpu, Ttotal / (/ 1, 60, 3600 /), ecpu, 100*ecpu/dcpu
 
   endif ! end of if( Ltiming .and. myid.eq.0 ) then; 01 Jul 14;

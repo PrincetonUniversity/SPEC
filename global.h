@@ -872,7 +872,7 @@ module allglobal
 
   REAL                 :: pi2nfp           !       pi2/nfp     ; assigned in readin;
   REAL                 :: pi2pi2nfp
-  REAL                 :: pi2pi2nfphalf
+  REAL                 :: pi2pi2nfphalf, opi2pi2nfphalf ! defined in preset; used in matrix; SRH; 01 Aug 17;
   REAL                 :: pi2pi2nfpquart
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -883,7 +883,8 @@ module allglobal
 
   LOGICAL              :: YESstellsym, NOTstellsym ! internal shorthand copies of Istellsym, which is an integer input; 16 Jan 13;
 
-  REAL   , allocatable :: cheby(:,:) ! local workspace;
+  REAL   , allocatable :: cheby(:,:) ! (local) workspace; used in bfield, jo00aa, . . .
+  REAL   , allocatable :: TD(:,:,:,:) ! (global) evaluation of the Chebyshev polynomials on Gaussian abscissae; computed in preset; used in ma00aa;
   
   REAL   , allocatable :: TT(:,:,:) ! derivatives of Chebyshev polynomials at the inner and outer interfaces;
 
@@ -897,7 +898,7 @@ module allglobal
 
 !latex \begin{enumerate} 
 
-  INTEGER              :: mn  ! total number of Fourier harmonics for coordinates/fields; calculated from Mpol,Ntor in readin;
+  INTEGER              :: mn, mnsqd  ! total number of Fourier harmonics for coordinates/fields; calculated from Mpol,Ntor in readin;
   INTEGER, allocatable :: im(:), in(:) ! Fourier modes; set in readin;
 
   REAL,    allocatable :: halfmm(:), regumm(:)
@@ -978,7 +979,7 @@ module allglobal
 !latex \end{enumerate}
 
   REAL   , allocatable :: Rij(:,:,:), Zij(:,:,:), Xij(:,:,:), Yij(:,:,:), sg(:,:), guvij(:,:,:,:), gvuij(:,:,:) ! real-space; 10 Dec 15;
-  
+
   INTEGER, allocatable :: ki(:,:), kijs(:,:,:), kija(:,:,:) ! identification of Fourier modes; 16 Jan 13;
 
   INTEGER, allocatable :: iotakkii(:), iotaksub(:,:), iotakadd(:,:), iotaksgn(:,:) ! identification of Fourier modes; 29 Jan 13;
@@ -993,13 +994,17 @@ module allglobal
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  REAL   , allocatable :: goomne(:), goomno(:) ! described in preset;
+  REAL   , allocatable :: goomne(:), goomno(:) ! described in preset; only used in preset; SRH; 02 Aug 17;
   REAL   , allocatable :: gssmne(:), gssmno(:) ! described in preset;
   REAL   , allocatable :: gstmne(:), gstmno(:) ! described in preset;
   REAL   , allocatable :: gszmne(:), gszmno(:) ! described in preset;
   REAL   , allocatable :: gttmne(:), gttmno(:) ! described in preset;
   REAL   , allocatable :: gtzmne(:), gtzmno(:) ! described in preset;
   REAL   , allocatable :: gzzmne(:), gzzmno(:) ! described in preset;
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  INTEGER, allocatable :: ilabel(:), jlabel(:), llabel(:,:), plabel(:,:) ! allocated/calculated in preset; used in ma00aa; SRH; 27 Jul 17;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1015,8 +1020,12 @@ module allglobal
 !latex \item These are allocated in \link{dforce}, defined in \link{ma00aa}, and are used in \link{matrix} to construct the matrices.
 !latex \end{enumerate}
   
-  REAL,    allocatable :: DToocc(:,:,:,:), DToocs(:,:,:,:), DToosc(:,:,:,:), DTooss(:,:,:,:)
-  REAL,    allocatable :: TTsscc(:,:,:,:), TTsscs(:,:,:,:), TTsssc(:,:,:,:), TTssss(:,:,:,:)
+  REAL,    allocatable :: DSoocc(:,:,:,:), DSoocs(:,:,:,:), DSoosc(:,:,:,:), DSooss(:,:,:,:) ! computed in preset; SRH; 02 Aug 17;
+  REAL,    allocatable :: DOoocc(:,:,:,:), DOoocs(:,:,:,:), DOoosc(:,:,:,:), DOooss(:,:,:,:) ! computed in preset; SRH; 02 Aug 17;
+
+  REAL,    allocatable :: DToocc(:,:,:,:), DToocs(:,:,:,:), DToosc(:,:,:,:), DTooss(:,:,:,:) ! assigned in dforce; SRH; 02 Aug 17;
+
+  REAL,    allocatable :: TTsscc(:,:,:,:), TTsscs(:,:,:,:), TTsssc(:,:,:,:), TTssss(:,:,:,:) ! computed in ma00aa; SRH; 02 Aug 17;
   REAL,    allocatable :: TDstcc(:,:,:,:), TDstcs(:,:,:,:), TDstsc(:,:,:,:), TDstss(:,:,:,:)
   REAL,    allocatable :: TDszcc(:,:,:,:), TDszcs(:,:,:,:), TDszsc(:,:,:,:), TDszss(:,:,:,:)
   REAL,    allocatable :: DDttcc(:,:,:,:), DDttcs(:,:,:,:), DDttsc(:,:,:,:), DDttss(:,:,:,:)
@@ -1335,6 +1344,8 @@ module allglobal
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   INTEGER, parameter   :: Node = 2 ! best to make this global for consistency between calling and called routines; 26 Jan 16;
+
+  INTEGER              :: Mrad ! maximum Chebyshev resolution in any volume; defined in preset; used in dforce, hdfint; SRH; 02 Aug 17;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1865,7 +1876,7 @@ subroutine readin
 !latex \item The integer arrays \type{im(1:mn)} and \type{in(1:mn)} contain the $m_j$ and $n_j$.
 !latex \end{enumerate}
   
-  mn = 1 + Ntor +  Mpol * ( 2 *  Ntor + 1 ) ! Fourier resolution of interface geometry & vector potential;
+  mn = 1 + Ntor +  Mpol * ( 2 *  Ntor + 1 ) ; mnsqd = mn * mn ! Fourier resolution of interface geometry & vector potential;
   
   SALLOCATE( im, (1:mn), 0 )
   SALLOCATE( in, (1:mn), 0 )
