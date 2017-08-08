@@ -31,7 +31,7 @@ subroutine preset
 
   LOCALS
   
-  INTEGER   :: innout, idof, jk, ll, pp, ii, jj, ij, ifail, ideriv, vvol, mi, ni, mj, nj, mk, nk, mimj, ninj, mkmj, nknj, kk, lvol, prad
+  INTEGER   :: innout, idof, jk, ll, pp, ii, jj, ij, ifail, ideriv, vvol, mi, ni, mj, nj, mk, nk, mimj, ninj, mkmj, nknj, kk, lvol, prad, lll, llp
   INTEGER   :: itype, lquad, id01bcf, maxIquad, jquad, Lcurvature, kka, kks
   REAL      :: teta, zeta, arg, lss, aa, bb, cc, dd, cszeta(0:1), jthweight, Tl, Dl, Tp, Dp, TlTp, TlDp, DlTp, DlDp, kda, kds, foocc, foocs, foosc, fooss
   REAL      :: sbar, halfoversbar, sbarhim
@@ -513,9 +513,9 @@ subroutine preset
   
   do vvol = 1, Mvol 
    
-   lp = 0
-   do ll = 0, Lrad(vvol)
-    do pp = 0, Lrad(vvol) ; lp = lp + 1 ; llabel(lp,vvol) = ll ; plabel(lp,vvol) = pp ! used in ma00aa; SRH; 27 Jul 17;
+   llp = 0
+   do lll = 0, Lrad(vvol)
+    do pp = 0, Lrad(vvol) ; llp = llp + 1 ; llabel(llp,vvol) = lll ; plabel(llp,vvol) = pp ! used in ma00aa; SRH; 27 Jul 17;
     enddo
    enddo
    
@@ -943,6 +943,12 @@ subroutine preset
   case( 1 )
    
    psifactor(1:mn,1:Nvol) = one
+
+  !do vvol = 1, Nvol ! SRH; 08 Aug 17;
+  ! do ii = 1, mn ! SRH; 08 Aug 17;
+  !  if( im(ii).gt.0 ) psifactor(ii,vvol) = one / im(ii) ! SRH; 08 Aug 17;
+  ! enddo ! SRH; 08 Aug 17;
+  !enddo ! SRH; 08 Aug 17;
    
   case( 2 )
    
