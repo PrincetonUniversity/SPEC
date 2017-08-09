@@ -158,6 +158,7 @@ Rwc(4,4)    =  0.000000000000000E+00 Zws(4,4)    =  0.000000000000000E+00 Rws(4,
  nPtrj       =     10    30
  LHevalues   =         F
  LHevectors  =         F
+ Lcheck      =   0
 /
 &screenlist
  Wpp00aa = T

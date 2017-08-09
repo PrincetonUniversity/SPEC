@@ -2,7 +2,7 @@
 
 !title (diagnostic) ! Follows magnetic fieldline using NAG ode-integration routine, D02BJF.
 
-!latex \briefly{Constructs \Poincare plot and `approximate' rotational-transform (for single field line).}
+!latex \briefly{Constructs \Poincare plot and ``approximate'' rotational-transform (for single field line).}
 
 !latex \calledby{\link{}}
 !latex \calls{\link{}}
