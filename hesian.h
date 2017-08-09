@@ -410,12 +410,12 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
    
    hessian(1:NGdof,1:NGdof) = ohessian(1:NGdof,1:NGdof)
    
-!#ifdef NAG18
+#ifdef NAG18
    call F02EBF( JOB, NGdof, hessian(1:LDA,1:NGdof), LDA, evalr(1:NGdof), evali(1:NGdof), &
                 evecr(1:Ldvr,1:NGdof), Ldvr, eveci(1:Ldvi,1:NGdof), Ldvi, work(1:Lwork), Lwork, if02ebf )
-!#else
-!   FATAL( global, .true., eigenvalue solver needs updating to F08NAF )
-!#endif
+#else
+   FATAL( global, .true., eigenvalue solver needs updating to F08NAF )
+#endif
    
    if( myid.eq.0 ) then 
    cput = GETTIME
@@ -481,16 +481,13 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
     
     if( LHevectors ) then
      
-     write(ounit,'("hesian : ", 10x ," : evalr = [",99(es13.5,","))') evalr(1:NGdof)
-     write(ounit,'("hesian : ", 10x ," : evali = [",99(es13.5,","))') evali(1:NGdof)
-
      do iev = 1, NGdof ! loop over all eigenvalues; 04 Dec 14;
-     !if( evalr(iev).lt.zero ) then ! only show unstable eigenvalues; 04 Dec 14;
-      !write(ounit,'("hesian : ",f10.2," : eval =(",es13.5,",",es13.5," ) ; ")') cput-cpus, evalr(iev), evali(iev)
-      !write(ounit,'("hesian : ",f10.5," : "999(" ("i3","i3")":))') evalr(iev), (/ ( im(ii), in(ii), ii = 1, mn ) /)
-       do lvol = 1, Mvol-1 ; write(ounit,'("hesian : ",i10   " : "999f10.06)') lvol, evecr(1+mn*(lvol-1):mn+mn*(lvol-1),iev)
+      if( evalr(iev).lt.zero ) then ! only show unstable eigenvalues; 04 Dec 14;
+       write(ounit,'("hesian : ",f10.2," : evalr="es13.5" ; ")') cput-cpus, evalr(iev)
+       write(ounit,'("hesian : ",es10.3," : "999(" ("i3","i3")":))') evalr(iev), (/ ( im(ii), in(ii), ii = 1, mn ) /)
+       do lvol = 1, Mvol-1 ; write(ounit,'("hesian : ",i10   " : "999es10.2)') lvol, evecr(1+mn*(lvol-1):mn+mn*(lvol-1),iev)
        enddo
-     !endif
+      endif
      enddo
      
     else ! matches if( LHvectors) ; 04 Dec 14;
