@@ -65,7 +65,7 @@ endif
 
 ifeq ($(CC),gfortran_ipp)
  RFLAGS=-fdefault-real-8 -O2 -fPIC -ffree-line-length-none
- DFLAGS=-g -fbacktrace -fbounds-check -fcheck=all -DDEBUG
+ DFLAGS=-fdefault-real-8 -g -fbacktrace -fbounds-check -DDEBUG -ffree-line-length-none
  NAG=-L$(NAGFLIB_HOME)/lib -lnag_nag 
  FFTWcompile=-I$(FFTW_DIR)/include
  FFTWlink=-L$(FFTW_DIR)/lib -lfftw3
