@@ -42,7 +42,7 @@
 ifeq ($(CC),gfortran)
  # Not checked
  RFLAGS=-O2 -fdefault-real-8 -ffixed-line-length-none -ffree-line-length-none -fexternal-blas
- DFLAGS=-g3 -Wextra -Wtarget-lifetime -fbacktrace -fbounds-check -ffpe-trap=zero -fcheck=all -DDEBUG
+ DFLAGS=-g3 -fdefault-real-8 -Wextra -Wtarget-lifetime -fbacktrace -fbounds-check -ffpe-trap=zero -fcheck=all -DDEBUG
 endif
 
 ifeq ($(CC),lff95)
@@ -56,14 +56,14 @@ endif
 
 ifeq ($(CC),intel_ipp)
  RFLAGS=-r8 -O2 -ip -no-prec-div -xHost -fPIC
- DFLAGS=-traceback -D DEBUG
+ DFLAGS=-r8 -traceback -D DEBUG
  NAG=-L$(NAGFLIB_HOME)/lib -lnag_nag 
  NETCDF=-L$(NETCDF_HOME)/lib -lnetcdf
 endif
 
 ifeq ($(CC),gfortran_ipp)
  RFLAGS=-fdefault-real-8 -O2 -fPIC -ffree-line-length-none
- DFLAGS=-g -fbacktrace -fbounds-check -fcheck=all -DDEBUG
+ DFLAGS=-fdefault-real-8 -g -fbacktrace -fbounds-check -fcheck=all -DDEBUG
  NAG=-L$(NAGFLIB_HOME)/lib -lnag_nag 
 endif
 
