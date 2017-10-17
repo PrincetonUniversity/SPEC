@@ -1,0 +1,250 @@
+#!/bin/sh
+
+###############################################################################################################################################################
+
+ afiles=gf00aa ex00aa ih00aa co01aa co00aa co02aa vo00aa
+ afiles=gf00aa               co01aa co00aa        vo00aa
+
+ bfiles=fe00aa fe00ab
+ bfiles=
+
+ cfiles=up00aa ma00ab me00ab ma00aa ma01ag        mp00ac df00aa sa00aa
+ cfiles=up00aa ma00ab me00ab ma00aa ma01ag va00aa mp00ac df00aa
+
+ dfiles=fb00aa mg00aa vc00aa bn00aa
+ dfiles=              vc00aa bn00aa
+
+ efiles=tr00ab ma02aa
+ efiles=tr00ab ma02aa
+
+ ffiles=sw02aa fc02aa fv00aa jk03aa fu00aa pc00aa pc01aa pc02aa pc00ab
+ ffiles=       fc02aa        jk03aa        pc00aa               pc00ab bb00aa sf00aa sc00aa
+
+ gfiles=bf00aa pp00aa pp00ab pq00aa pq01aa pq02aa pj00aa ph01aa ph00aa hr00aa ir00aa jo00aa he01aa li00aa 
+ gfiles=bf00aa pp00aa pp00ab pq00aa pq01aa                                           jo00aa he01aa        cu00aa     
+
+ hfiles=ra00aa sw00ac sw00ad sw03aa bc00aa numrec hdfint st00aa wa00aa
+ hfiles=ra00aa sw00ac               bc00aa numrec hdfint        wa00aa
+
+ xfiles=manual verify global xspech al00aa
+
+###############################################################################################################################################################
+
+ allfiles=$(afiles) $(bfiles) $(cfiles) $(dfiles) $(efiles) $(ffiles) $(gfiles) $(hfiles) $(xfiles)
+
+###############################################################################################################################################################
+
+ MACROS=macros
+
+ FC=mpif90
+
+#FLAGS=--ap --dbl -O#                       # --chk a,e,s,u --trace --trap -D DEBUG# lff95
+ FLAGS=-r8 -O2 -ip -no-prec-div -xHost -fPIC# -check all -debug full -D DEBUG#     # intel 
+
+ DFLAGS=
+
+#nagflags=-L$(NAG_ROOT)         -lnag 
+ nagflags=-L$(NAG_ROOT)/lib     -lnag_nag
+#nagflags=-L$(NAGFLIB_HOME)/lib -lnag_nag
+
+ HDF5COMPILE=-I$(HDF5_HOME)/include
+ HDF5LINK=-L$(HDF5_HOME)/lib -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lpthread -lz -lm
+
+ netcdfflags=-L$(NETCDFHOME)/lib -lnetcdf
+
+ EZSPLINECOMPILE=#-I$(NTCCHOME)/mod
+ EZSPLINELINK=#-L$(NTCCHOME)/lib -lpspline -lezcdf -lpthread -lz -lm
+
+###############################################################################################################################################################
+
+ WEBDIR=$(HOME)/w3_html
+
+###############################################################################################################################################################
+
+ date:=$(shell date)
+ text:=$(shell date +%F)
+
+###############################################################################################################################################################
+
+xspec: $(addsuffix .o,$(allfiles)) $(MACROS) Makefile
+	$(FC) $(FLAGS) $(DFLAGS) -o xspec $(addsuffix .o,$(allfiles)) $(nagflags) $(EZSPLINELINK) $(HDF5COMPILE) $(HDF5LINK) $(netcdfflags) $(EZSPLINECOMPILE)
+	date
+	/bin/echo -e "\a"
+
+dspec: $(addsuffix .o,$(allfiles)) $(MACROS) Makefile
+	$(FC) $(FLAGS) $(DFLAGS) -o dspec $(addsuffix .o,$(allfiles)) $(nagflags) $(EZSPLINELINK) $(HDF5COMPILE) $(HDF5LINK) $(netcdfflags) $(EZSPLINECOMPILE)
+	date
+	/bin/echo -e "\a"
+
+###############################################################################################################################################################
+
+global.o: global.h $(MACROS) Makefile
+	@awk -v allfiles='$(allfiles)' 'BEGIN{nfiles=split(allfiles,files," ")} \
+	{if($$2=="CPUVARIABLE") {for (i=1;i<=nfiles;i++) print "  REAL    :: T"files[i]" = 0.0, "files[i]"T = 0.0"}}\
+	{if($$2=="DSCREENLIST") {for (i=1;i<=nfiles;i++) print "  LOGICAL :: W"files[i]" = .false. "}}\
+	{if($$2=="NSCREENLIST") {for (i=1;i<=nfiles;i++) print "  W"files[i]" , &"}}\
+	{if($$2=="BSCREENLIST") {for (i=1;i<=nfiles;i++) print "  LlBCAST(W"files[i]",1,0)"}}\
+	{if($$2=="WSCREENLIST") {s="'"'"'" ; d="'"\\\""'" ; for (i=1;i<=nfiles;i++) print "  if( W"files[i]" ) write(iunit,"s"("d" W"files[i]" = "d"L1)"s")W"files[i]}}\
+	{print}' global.h > mlobal.h
+	m4 -P $(MACROS) mlobal.h > global.F90
+	@rm -f mlobal.h
+	$(FC) $(FLAGS) $(DFLAGS) -o global.o -c global.F90 $(EZSPLINECOMPILE)
+	@wc -l -L -w global.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
+	@echo ''
+
+###############################################################################################################################################################
+
+hdfint.o: hdfint.h global.o $(MACROS) Makefile
+	m4 -P $(MACROS) hdfint.h > $*.F90
+	$(FC) $(FLAGS) $(DFLAGS) -o hdfint.o -c $*.F90 $(HDF5COMPILE) 
+	@echo ''
+
+###############################################################################################################################################################
+
+mg00aa.o: mg00aa.h global.o $(MACROS) Makefile
+	m4 -P $(MACROS) mg00aa.h > $*.F90
+	$(FC) $(FLAGS) $(DFLAGS) -o mg00aa.o -c $*.F90 $(EZSPLINECOMPILE)
+	@echo ''
+
+###############################################################################################################################################################
+
+%.o: %.h global.o $(MACROS) Makefile
+	m4 -P $(MACROS) $*.h > $*.F90
+	$(FC) $(FLAGS) $(DFLAGS) -o $*.o -c $*.F90
+	@echo ''
+
+###############################################################################################################################################################
+
+xspech.o: xspech.h global.o $(addsuffix .o,$(files)) $(MACROS) Makefile
+	@awk -v date='$(date)' -v pwd='$(PWD)' -v macros='$(MACROS)' -v f90='$(F90)' -v flags='$(FLAGS) $(DFLAGS)' -v allfiles='$(allfiles)' \
+	'BEGIN{nfiles=split(allfiles,files," ")} \
+	{if($$2=="COMPILATION") {print "    write(ounit,*)\"      :  compiled  : date    = "date" ; \"" ; \
+	                         print "    write(ounit,*)\"      :            : dir     = "pwd" ; \"" ; \
+	                         print "    write(ounit,*)\"      :            : macros  = "macros" ; \"" ; \
+	                         print "    write(ounit,*)\"      :            : f90     = "f90" ; \"" ; \
+	                         print "    write(ounit,*)\"      :            : flags   = "flags" ; \"" }} \
+	 {if($$2=="SUMTIME") {for (i=1;i<=nfiles;i++) print "   SUMTIME("files[i]")"}}\
+	 {if($$2=="PRTTIME") {for (i=1;i<=nfiles;i++) print "   PRTTIME("files[i]")"}}\
+	 {print}' xspech.h > mspech.h
+	m4 -P $(MACROS) mspech.h > xspech.F90
+	@rm -f mspech.h
+	$(FC) $(FLAGS) $(DFLAGS) -o xspech.o -c xspech.F90
+	@echo ''
+
+###############################################################################################################################################################
+
+clean:
+	rm -f *.o ; rm -f *.mod ; rm -f *.F90 ; rm -f .*.h ; rm -f *.pdf ; rm -f *.dvi ; rm -f *.bbl ; rm -f *.toc ; rm -f .*.date
+
+###############################################################################################################################################################
+
+tar:
+	tar -cf spec.$(text).tar *.h macros Makefile
+	gzip --best spec.$(text).tar ; mv spec.$(text).tar.gz Tarfiles/.
+ifeq ($(USER),shudson)
+	cp Tarfiles/spec.$(text).tar.gz $(WEBDIR)/Spec/Tarfiles/.
+endif
+
+###############################################################################################################################################################
+
+%.pdf: %.h head.tex end.tex spec.bib Makefile
+	@ls --full-time $*.h | awk '{print $$6}' > .$*.date
+	awk -v file=$* -v date=.$*.date 'BEGIN{getline cdate < date ; FS="!latex" ; print "\\input{head} \\code{"file"}"} \
+	{if(NF>1) print $$2} \
+	END{print "\\end{enumerate}\\footnotesize $*.h last modified on "cdate ; print "\\input{end}"}' $*.h > $*.tex
+	@echo "-------------------------------------------------------------------------------------------------------------------------------"
+	@echo $*
+	@echo "-------------------------------------------------------------------------------------------------------------------------------"
+	latex $* ; bibtex $* ; latex $* ; bibtex $* ; latex $*
+	dvips -P pdf -o $*.ps $*.dvi ; ps2pdf $*.ps
+	rm -f $*.tex $*.aux $*.blg $*.log $*.ps
+
+###############################################################################################################################################################
+
+pdfs: $(addsuffix .pdf,$(allfiles)) head.html
+ifeq ($(USER),shudson)
+
+	cat head.html > $(WEBDIR)/Spec/subroutines.html
+
+	echo "<tr><td><b>Main program routines                      </b>&nbsp;</td><td></td></tr><ol>" >> $(WEBDIR)/Spec/subroutines.html
+
+	for file in $(xfiles) ; do cp $${file}.pdf $(WEBDIR)/Spec/. ; grep "\item" $${file}.h | head -1 | cut -c 14- | \
+	                           awk -v file=$${file} '{print "<tr><td><a href="file".pdf\">"file"</a></td><td>"$$0"</td></tr>"}' >> $(WEBDIR)/Spec/subroutines.html ; \
+	                        done
+
+	echo "<tr><td><b>Coordinate routines                        </b>&nbsp;</td><td></td></tr><ol>" >> $(WEBDIR)/Spec/subroutines.html
+
+	for file in $(afiles) ; do cp $${file}.pdf $(WEBDIR)/Spec/. ; grep "\item" $${file}.h | head -1 | cut -c 14- | \
+	                           awk -v file=$${file} '{print "<tr><td><a href="file".pdf\">"file"</a></td><td>"$$0"</td></tr>"}' >> $(WEBDIR)/Spec/subroutines.html ; \
+	                        done
+
+	echo "<tr><td><b>Radial finite element routines             </b>&nbsp;</td><td></td></tr><ol>" >> $(WEBDIR)/Spec/subroutines.html
+
+	for file in $(bfiles) ; do cp $${file}.pdf $(WEBDIR)/Spec/. ; grep "\item" $${file}.h | head -1 | cut -c 14- | \
+	                           awk -v file=$${file} '{print "<tr><td><a href="file".pdf\">"file"</a></td><td>"$$0"</td></tr>"}' >> $(WEBDIR)/Spec/subroutines.html ; \
+	                        done
+
+	echo "<tr><td><b>Beltrami linear solution routines          </b>&nbsp;</td><td></td></tr><ol>" >> $(WEBDIR)/Spec/subroutines.html
+
+	for file in $(cfiles) ; do cp $${file}.pdf $(WEBDIR)/Spec/. ; grep "\item" $${file}.h | head -1 | cut -c 14- | \
+	                           awk -v file=$${file} '{print "<tr><td><a href="file".pdf\">"file"</a></td><td>"$$0"</td></tr>"}' >> $(WEBDIR)/Spec/subroutines.html ; \
+	                        done
+
+	echo "<tr><td><b>Free boundary routines                     </b>&nbsp;</td><td></td></tr><ol>" >> $(WEBDIR)/Spec/subroutines.html
+
+	for file in $(dfiles) ; do cp $${file}.pdf $(WEBDIR)/Spec/. ; grep "\item" $${file}.h | head -1 | cut -c 14- | \
+	                           awk -v file=$${file} '{print "<tr><td><a href="file".pdf\">"file"</a></td><td>"$$0"</td></tr>"}' >> $(WEBDIR)/Spec/subroutines.html ; \
+	                        done
+
+	echo "<tr><td><b>Rotational transform routines              </b>&nbsp;</td><td></td></tr><ol>" >> $(WEBDIR)/Spec/subroutines.html
+
+	for file in $(efiles) ; do cp $${file}.pdf $(WEBDIR)/Spec/. ; grep "\item" $${file}.h | head -1 | cut -c 14- | \
+	                           awk -v file=$${file} '{print "<tr><td><a href="file".pdf\">"file"</a></td><td>"$$0"</td></tr>"}' >> $(WEBDIR)/Spec/subroutines.html ; \
+	                        done
+
+	echo "<tr><td><b>Force balance routines                     </b>&nbsp;</td><td></td></tr><ol>" >> $(WEBDIR)/Spec/subroutines.html
+
+	for file in $(ffiles) ; do cp $${file}.pdf $(WEBDIR)/Spec/. ; grep "\item" $${file}.h | head -1 | cut -c 14- | \
+	                           awk -v file=$${file} '{print "<tr><td><a href="file".pdf\">"file"</a></td><td>"$$0"</td></tr>"}' >> $(WEBDIR)/Spec/subroutines.html ; \
+	                        done
+
+	echo "<tr><td><b>Diagnostic routines                        </b>&nbsp;</td><td></td></tr><ol>" >> $(WEBDIR)/Spec/subroutines.html
+
+	for file in $(gfiles) ; do cp $${file}.pdf $(WEBDIR)/Spec/. ; grep "\item" $${file}.h | head -1 | cut -c 14- | \
+	                           awk -v file=$${file} '{print "<tr><td><a href="file".pdf\">"file"</a></td><td>"$$0"</td></tr>"}' >> $(WEBDIR)/Spec/subroutines.html ; \
+	                        done
+
+	echo "<tr><td><b>Miscellaneous                              </b>&nbsp;</td><td></td></tr><ol>" >> $(WEBDIR)/Spec/subroutines.html
+
+	for file in $(hfiles) ; do cp $${file}.pdf $(WEBDIR)/Spec/. ; grep "\item" $${file}.h | head -1 | cut -c 14- | \
+	                           awk -v file=$${file} '{print "<tr><td><a href="file".pdf\">"file"</a></td><td>"$$0"</td></tr>"}' >> $(WEBDIR)/Spec/subroutines.html ; \
+	                        done
+
+	echo "</table></body></html>" >> $(WEBDIR)/Spec/subroutines.html
+	cp Miscellaneous/Algorithm.pdf $(WEBDIR)/Spec/.
+endif
+
+###############################################################################################################################################################
+
+help:
+	#
+	# make 			: identical to make xspec ;
+	# make xspec 		: expands macros (*.h --> *.F90) ; compiles xspec executable ;
+	# make dspec 		: expands macros (*.h --> *.F90) ; compiles dspec executable ;
+	# make clean 		: clean up compilation directory : rm -f *.o ; rm -f *.mod ; rm -f *.F90 ; rm -f *.pdf ; rm -f *.dvi
+	# make tar		: create archive (tar) of essential files ; save in Tarfiles/ ;
+	# make pdfs		: create source documentation dvi, pdf files ; user should have directory $(HOME)/w3_html/Spec ;
+	#
+	# macro expansion 	: m4 -P MACROS files.h > files.F90
+	# ---------------
+	# compilation		: FC FLAGS -o files.o -c files.F90 ; FC FLAGS -o xspec *files.o -LNAG -lnag -Lhdf5
+	# -----------
+	# defaults
+	# --------
+	# FC			= $(FC)
+	# FLAGS			= $(FLAGS) $(DFLAGS)
+	# NAG			= $(NAG_ROOT)
+	# MACROS		= $(MACROS)
+	#
+
+###############################################################################################################################################################
