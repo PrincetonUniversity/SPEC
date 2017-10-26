@@ -31,11 +31,10 @@ subroutine preset
 
   LOCALS
   
-  INTEGER   :: innout, idof, jk, ll, pp, ii, jj, ij, ifail, ideriv, vvol, mi, ni, mj, nj, mk, nk, mimj, ninj, mkmj, nknj, kk, lvol, prad, lll, llp
-  INTEGER   :: itype, lquad, id01bcf, maxIquad, jquad, Lcurvature, kka, kks
-  REAL      :: teta, zeta, arg, lss, aa, bb, cc, dd, cszeta(0:1), jthweight, Tl, Dl, Tp, Dp, TlTp, TlDp, DlTp, DlDp, kda, kds, foocc, foocs, foosc, fooss
-  REAL      :: sbar, halfoversbar, sbarhim
-
+  INTEGER   :: innout, idof, jk, ll, ii, ifail, ideriv, vvol, mi, ni, mj, nj, mk, nk, mimj, ninj, mkmj, nknj, jj, kk, lvol
+  INTEGER   :: itype, lquad, id01bcf, maxIquad, Mrad, jquad, Lcurvature
+  REAL      :: teta, zeta, arg, lss, aa, bb, cc, dd, cszeta(0:1)
+  
   BEGIN(preset)
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -45,7 +44,7 @@ subroutine preset
   pi2nfp         = pi2 / Nfp
   
   pi2pi2nfp      = pi2 * pi2nfp
-  pi2pi2nfphalf  = pi2 * pi2nfp * half  ; opi2pi2nfphalf = one / pi2pi2nfphalf ! SRH; 01 Aug 17;
+  pi2pi2nfphalf  = pi2 * pi2nfp * half
   pi2pi2nfpquart = pi2 * pi2nfp * quart
 
   Mrad  = maxval( Lrad(1:Mvol) )
@@ -418,7 +417,7 @@ subroutine preset
 !latex \item (Note that the quantities required for \link{ma00aa} are for fixed $s$, and so these quantities should be precomputed.)
 !latex \end{enumerate}
 
-  SALLOCATE( cheby    , (0:Mrad,0:2         ), zero ) ! 27 Jul 17;
+  SALLOCATE( cheby, (0:Mrad,0:2), zero )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -461,8 +460,6 @@ subroutine preset
   SALLOCATE( gaussianweight   , (1:maxIquad,1:Mvol), zero ) ! perhaps it would be neater to make this a structure; 26 Jan 16;
   SALLOCATE( gaussianabscissae, (1:maxIquad,1:Mvol), zero )
 
-  SALLOCATE( TD, (0:Mrad,0:1,1:maxIquad,1:Mvol), zero ) ! only used in ma00aa; 27 Jul 17;
-
   do vvol = 1, Mvol
    
    itype = 0 ; aa = -one ; bb = +one ; cc = zero ; dd = zero
@@ -491,47 +488,21 @@ subroutine preset
 1000 format("preset : ",f10.2," : myid=",i3," ; lvol=",i3," ; id01bcf=",i5," ; "a15" ; abscissae ="99f09.05)
 1001 format("preset : ", 10x ," :      "3x"        "3x"           "3x"   "15x" ; weights   ="99f09.05)
       
-   do jquad = 1, lquad ! loop over radial sub-sub-grid (numerical quadrature); ! 27 Jul 17;
-    
-    lss = gaussianabscissae(jquad,vvol) ! 27 Jul 17;
-    
-    ;                     ; TD( 0,0:1,jquad,vvol) = (/ one, zero /) ! Chebyshev initialization; 16 Jan 13;   
-    ;                     ; TD( 1,0:1,jquad,vvol) = (/ lss,  one /) ! 
-    do ll = 2, Lrad(vvol) ; TD(ll,0:1,jquad,vvol) = (/ two * lss * TD(ll-1,0,jquad,vvol)                                     - TD(ll-2,0,jquad,vvol) , &
-                                                       two       * TD(ll-1,0,jquad,vvol) + two * lss * TD(ll-1,1,jquad,vvol) - TD(ll-2,1,jquad,vvol) /)
-    enddo
-    
-   enddo ! end of do jquad = 1, lquad;
-
-  enddo ! end of do vvol;  7 Mar 13; 
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-  Prad = (Mrad+1)*(Mrad+1)
-  SALLOCATE( llabel, (1:Prad,1:Mvol), 0 ) ! SRH; 27 Jul 17;
-  SALLOCATE( plabel, (1:Prad,1:Mvol), 0 ) ! SRH; 27 Jul 17;
-  
-  do vvol = 1, Mvol 
-   
-   llp = 0
-   do lll = 0, Lrad(vvol)
-    do pp = 0, Lrad(vvol) ; llp = llp + 1 ; llabel(llp,vvol) = lll ; plabel(llp,vvol) = pp ! used in ma00aa; SRH; 27 Jul 17;
-    enddo
-   enddo
+!  do jquad = 1, lquad ! loop over radial sub-sub-grid (numerical quadrature);!
+!
+!   lss = gaussianabscissae(jquad,vvol)!!
+!
+!   gchebyshev(0,0:1,jquad,vvol) = (/ one, zero /) ! Chebyshev initialization; 16 Jan 13;
+!   gchebyshev(1,0:1,jquad,vvol) = (/ lss,  one /) ! Chebyshev initialization; 16 Jan 13;   
+!   do ll = 2, Lrad(vvol)
+!    gchebyshev(ll,0:1,jquad,vvol) = &
+! (/ two * lss * gchebyshev(ll-1,0,jquad,vvol)                                             - gchebyshev(ll-2,0,jquad,vvol) , &
+!    two       * gchebyshev(ll-1,0,jquad,vvol) + two * lss * gchebyshev(ll-1,1,jquad,vvol) - gchebyshev(ll-2,1,jquad,vvol) /)
+!   enddo
+!  enddo
    
   enddo ! end of do vvol;  7 Mar 13; 
   
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-  SALLOCATE( ilabel, (1:mnsqd), 0 ) ! SRH; 27 Jul 17;
-  SALLOCATE( jlabel, (1:mnsqd), 0 ) ! SRH; 27 Jul 17;
-
-  ij = 0
-  do ii = 1, mn
-   do jj = 1, mn ; ij = ij + 1 ; ilabel(ij) = ii ; jlabel(ij) = jj ! used in ma00aa; SRH; 27 Jul 17;
-   enddo
-  enddo
-
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
  
 !latex \subsubsection{\type{LBsequad}, \type{LBnewton} and \type{LBlinear}}
@@ -702,7 +673,7 @@ subroutine preset
 
     enddo ! end of do ii; 25 Jan 13;
     
-    FATAL( preset, idof.ne.NAdof(vvol), need to count Beltrami degrees-of-freedom more carefully for coordinate singularity )
+    FATAL( preset, idof.ne.NAdof(vvol), need to count Beltrami degrees-of-freedom more carefully  for coordinate singularity )
     
    else ! .not.Lcoordinatesingularity;
         
@@ -727,7 +698,26 @@ subroutine preset
      endif
     enddo ! end of do ii; 25 Jan 13;
     
-    FATAL( preset, idof.ne.NAdof(vvol), need to count degrees-of-freedom more carefully for matrix )
+   !if( Wpreset ) then
+   ! do ii = 1, mn
+   !  do ll = 0, Lrad(vvol)
+   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ; ll="i4" : Ate = "i7" ;")') myid, ii, ll, Ate(vvol,0,ii)%i(ll)
+   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ; ll="i4" : Aze = "i7" ;")') myid, ii, ll, Aze(vvol,0,ii)%i(ll)
+   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ; ll="i4" : Ato = "i7" ;")') myid, ii, ll, Ato(vvol,0,ii)%i(ll)
+   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ; ll="i4" : Azo = "i7" ;")') myid, ii, ll, Azo(vvol,0,ii)%i(ll)
+   !  enddo
+   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ;    "4x" : Lma = "i7" ;")') myid, ii,     Lma(vvol,  ii)
+   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ;    "4x" : Lmb = "i7" ;")') myid, ii,     Lmb(vvol,  ii)
+   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ;    "4x" : Lmc = "i7" ;")') myid, ii,     Lmc(vvol,  ii)
+   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ;    "4x" : Lmd = "i7" ;")') myid, ii,     Lmd(vvol,  ii)
+   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ;    "4x" : Lme = "i7" ;")') myid, ii,     Lme(vvol,  ii)
+   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ;    "4x" : Lmf = "i7" ;")') myid, ii,     Lmf(vvol,  ii)
+   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ;    "4x" : Lmg = "i7" ;")') myid, ii,     Lmg(vvol,  ii)
+   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ;    "4x" : Lmh = "i7" ;")') myid, ii,     Lmh(vvol,  ii)
+   ! enddo
+   !endif
+    
+    FATAL( preset, idof.ne.NAdof(vvol), need to count degrees-of-freedom more carefully for new matrix )
     
    endif ! end of if( Lcoordinatesingularity ) ; 
    
@@ -739,7 +729,7 @@ subroutine preset
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  if( Linitgues.eq.2 ) then ; WCALL( preset, ra00aa, ('R') ) ! read initial guess for Beltrami field from file; 02 Jan 15;
+  if( Linitgues.eq.2 ) then ; WCALL( preset, ra00aa, ('R') )  ! read initial guess for Beltrami field from file; 02 Jan 15;
   endif
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -779,8 +769,8 @@ subroutine preset
   SALLOCATE(   Rij, (1:Ntz,0:3,0:3    ), zero ) ! these are used for inverse fft to reconstruct real space geometry from interpolated Fourier harmonics;
   SALLOCATE(   Zij, (1:Ntz,0:3,0:3    ), zero )
   SALLOCATE(   sg , (1:Ntz,0:3        ), zero )
-  SALLOCATE( guvij, (1:Ntz,1:3,1:3,0:3), zero ) ! need this on higher resolution grid for accurate Fourier decomposition; SRH; 02 Aug 17;
-  SALLOCATE( gvuij, (1:Ntz,1:3,1:3    ), zero ) ! this is only used in metrix; very wasteful on memory; SRH; 02 Aug 17;
+  SALLOCATE( guvij, (1:Ntz,0:3,0:3,0:3), zero ) ! need this on higher resolution grid for accurate Fourier decomposition;
+  SALLOCATE( gvuij, (1:Ntz,0:3,0:3    ), zero ) ! need this on higher resolution grid for accurate Fourier decomposition; 10 Dec 15;
   
   SALLOCATE( dRadR, (1:mn,0:1,0:1,1:mn), zero ) ! calculated in rzaxis; 19 Sep 16;
   SALLOCATE( dRadZ, (1:mn,0:1,0:1,1:mn), zero )
@@ -943,12 +933,6 @@ subroutine preset
   case( 1 )
    
    psifactor(1:mn,1:Nvol) = one
-
-  !do vvol = 1, Nvol ! SRH; 08 Aug 17;
-  ! do ii = 1, mn ! SRH; 08 Aug 17;
-  !  if( im(ii).gt.0 ) psifactor(ii,vvol) = one / im(ii) ! SRH; 08 Aug 17;
-  ! enddo ! SRH; 08 Aug 17;
-  !enddo ! SRH; 08 Aug 17;
    
   case( 2 )
    
@@ -1174,155 +1158,6 @@ subroutine preset
    enddo ! end of do jj; 14 Apr 17;
    
   enddo ! end of do kk; 14 Apr 17;
-  
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-  SALLOCATE( DSoocc, (0:Mrad,0:Mrad,1:mn,1:mn), zero ) ! these include the regularization factors on the vector potential; SRH; 02 Aug 17;
-  SALLOCATE( DSoocs, (0:Mrad,0:Mrad,1:mn,1:mn), zero )
-  SALLOCATE( DSoosc, (0:Mrad,0:Mrad,1:mn,1:mn), zero )
-  SALLOCATE( DSooss, (0:Mrad,0:Mrad,1:mn,1:mn), zero )
-  
-  SALLOCATE( DOoocc, (0:Mrad,0:Mrad,1:mn,1:mn), zero )
-  SALLOCATE( DOoocs, (0:Mrad,0:Mrad,1:mn,1:mn), zero )
-  SALLOCATE( DOoosc, (0:Mrad,0:Mrad,1:mn,1:mn), zero )
-  SALLOCATE( DOooss, (0:Mrad,0:Mrad,1:mn,1:mn), zero )
-  
-  SALLOCATE( DToocc, (0:Mrad,0:Mrad,1:mn,1:mn), zero ) ! this will be assigned to DSoocc or DOoocc as required in dforce; SRH; 02 Aug 17;
-  SALLOCATE( DToocs, (0:Mrad,0:Mrad,1:mn,1:mn), zero )
-  SALLOCATE( DToosc, (0:Mrad,0:Mrad,1:mn,1:mn), zero )
-  SALLOCATE( DTooss, (0:Mrad,0:Mrad,1:mn,1:mn), zero )
-  
-  do vvol = 1, Mvol ; lquad = Iquad(vvol)
-   
-   LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ; 03 Nov 16;
-   
-   if( Lcoordinatesingularity ) then ! additional radial factors, such as r^m, are included to "regularize" the magnetic field near the origin; SRH; 27 Jul 17;
-    
-   !sbar(1:lquad) = ( gaussianabscissae(1:lquad,vvol) + one ) * half
-    
-   !halfoversbar(1:lquad) = half / sbar(1:lquad)
-    
-   !do jquad = 1, lquad ; sbarhim(jquad,1:mn) = sbar(jquad)**regumm(1:mn) ! pre-calculation of regularization factor; 12 Sep 13;
-   !enddo
-    
-    do jquad = 1, lquad ! Gaussian quadrature loop;
-     
-     lss = gaussianabscissae(jquad,vvol) ; jthweight = gaussianweight(jquad,vvol)
-
-     sbar = ( lss + one ) * half ; halfoversbar  = half / sbar ! SRH; 02 Aug 17;
-     
-    !FATAL( preset, .true., only goomne and goomno are required from metrix )
-
-    !WCALL( preset, metrix,( vvol, lss ) ) ! compute metric elements; 16 Jan 13; ! THIS NEEDS TO BE REPLACED; SRH; 01 Aug 17;
-     
-     goomne(1) = one ; goomne(2:mne) = zero ; goomno(1:mne) = zero
-
-     do ii = 1, mn
-      
-      do jj = 1, mn
-       
-       kks = kijs(ii,jj,0) ; kds = jthweight / kijs(ii,jj,1) ! SRH; 27 Jul 17;
-       kka = kija(ii,jj,0) ; kda = jthweight / kija(ii,jj,1) ! SRH; 27 Jul 17;
-       
-       foocc = + goomne(kks) * abs(kds) + goomne(kka) * abs(kda) ! stell-sym; SRH; 27 Jul 17;
-       foocs = - goomno(kks) *     kds  + goomno(kka) *     kda 
-       foosc = + goomno(kks) *     kds  + goomno(kka) *     kda 
-       fooss = + goomne(kks) * abs(kds) - goomne(kka) * abs(kda)
-       
-       do ll = 0, Lrad(vvol)
-        
-        do pp = 0, Lrad(vvol)
-         
-        !FATAL( preset, .true., need to assign Tl etc. to sbarhim etc. )
-
-        !Tl = sbarhim(jquad,ii) *                                      TD(ll,0,jquad,vvol)
-        !Dl = sbarhim(jquad,ii) * ( regumm(ii) * halfoversbar(jquad) * TD(ll,0,jquad,vvol) + TD(ll,1,jquad,vvol) )
-        !Tp = sbarhim(jquad,jj) *                                      TD(pp,0,jquad,vvol)
-        !Dp = sbarhim(jquad,jj) * ( regumm(jj) * halfoversbar(jquad) * TD(pp,0,jquad,vvol) + TD(pp,1,jquad,vvol) )
-         
-         Tl = sbar**regumm(ii)  *                                      TD(ll,0,jquad,vvol)
-         Dl = sbar**regumm(ii)  * ( regumm(ii) * halfoversbar        * TD(ll,0,jquad,vvol) + TD(ll,1,jquad,vvol) )
-         Tp = sbar**regumm(jj)  *                                      TD(pp,0,jquad,vvol)
-         Dp = sbar**regumm(jj)  * ( regumm(jj) * halfoversbar        * TD(pp,0,jquad,vvol) + TD(pp,1,jquad,vvol) )
-
-         TlTp = Tl * Tp
-         TlDp = Tl * Dp
-         DlTp = Dl * Tp
-         DlDp = Dl * Dp
-         
-         DSoocc( ll, pp, ii, jj ) = DSoocc( ll, pp, ii, jj ) + DlTp * foocc ! stell-sym; SRH; 27 Jul 17;
-         DSoocs( ll, pp, ii, jj ) = DSoocs( ll, pp, ii, jj ) + DlTp * foocs
-         DSoosc( ll, pp, ii, jj ) = DSoosc( ll, pp, ii, jj ) + DlTp * foosc
-         DSooss( ll, pp, ii, jj ) = DSooss( ll, pp, ii, jj ) + DlTp * fooss
-         
-        enddo ! end of do pp; SRH; 01 Aug 17;
-        
-       enddo ! end of do ll; SRH; 01 Aug 17;
-
-      enddo ! end of do jj; SRH; 01 Aug 17;
-
-     enddo ! end of do ii; SRH; 01 Aug 17;
-     
-    enddo ! end of do jquad; ! 16 Jan 13;
-    
-   else ! .not.Lcoordinatesingularity;
-    
-    if( Lrad(vvol).lt.Mrad ) cycle ! compute the integrals at the highest resolution; SRH; 01 Aug 17;
-
-    do jquad = 1, lquad ! Gaussian quadrature loop;
-     
-     lss = gaussianabscissae(jquad,vvol) ; jthweight = gaussianweight(jquad,vvol)
-     
-    !FATAL( preset, .true., only goomne and goomno are required from metrix )
-     
-    !WCALL( preset, metrix,( vvol, lss ) ) ! compute metric elements; 16 Jan 13; ! THIS NEEDS TO BE REPLACED; SRH; 01 Aug 17;
-     
-     goomne(1) = one ; goomne(2:mne) = zero ; goomno(1:mne) = zero
-
-     do ii = 1, mn
-      
-      do jj = 1, mn
-       
-       kks = kijs(ii,jj,0) ; kds = jthweight / kijs(ii,jj,1) ! SRH; 27 Jul 17;
-       kka = kija(ii,jj,0) ; kda = jthweight / kija(ii,jj,1) ! SRH; 27 Jul 17;
-       
-       foocc = + goomne(kks) * abs(kds) + goomne(kka) * abs(kda) ! stell-sym; SRH; 27 Jul 17;
-       foocs = - goomno(kks) *     kds  + goomno(kka) *     kda 
-       foosc = + goomno(kks) *     kds  + goomno(kka) *     kda 
-       fooss = + goomne(kks) * abs(kds) - goomne(kka) * abs(kda)
-       
-       do ll = 0, Lrad(vvol)
-        
-        do pp = 0, Lrad(vvol)
-         
-         Tl = TD(ll,0,jquad,vvol)
-         Dl = TD(ll,1,jquad,vvol)
-         Tp = TD(pp,0,jquad,vvol)
-         Dp = TD(pp,1,jquad,vvol)
-         
-         TlTp = Tl * Tp
-         TlDp = Tl * Dp
-         DlTp = Dl * Tp
-         DlDp = Dl * Dp
-         
-         DOoocc( ll, pp, ii, jj ) = DOoocc( ll, pp, ii, jj ) + DlTp * foocc ! stell-sym; SRH; 27 Jul 17;
-         DOoocs( ll, pp, ii, jj ) = DOoocs( ll, pp, ii, jj ) + DlTp * foocs
-         DOoosc( ll, pp, ii, jj ) = DOoosc( ll, pp, ii, jj ) + DlTp * foosc
-         DOooss( ll, pp, ii, jj ) = DOooss( ll, pp, ii, jj ) + DlTp * fooss
-         
-        enddo ! end of do pp; SRH; 01 Aug 17;
-        
-       enddo ! end of do ll; SRH; 01 Aug 17;
-       
-      enddo ! end of do jj; SRH; 01 Aug 17;
-      
-     enddo ! end of do ii; SRH; 01 Aug 17;
-     
-    enddo ! end of do jquad; SRH; 01 Aug 17;
-    
-   endif ! end of if( Lcoordinatesingularity ) ; SRH; 01 Aug 17;
-
-  enddo ! end of do vvol; SRH; 01 Aug 17;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

@@ -482,12 +482,12 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
     if( LHevectors ) then
      
      do iev = 1, NGdof ! loop over all eigenvalues; 04 Dec 14;
-     !if( evalr(iev).lt.zero ) then ! only show unstable eigenvalues; 04 Dec 14;
+      if( evalr(iev).lt.zero ) then ! only show unstable eigenvalues; 04 Dec 14;
        write(ounit,'("hesian : ",f10.2," : evalr="es13.5" ; ")') cput-cpus, evalr(iev)
        write(ounit,'("hesian : ",es10.3," : "999(" ("i3","i3")":))') evalr(iev), (/ ( im(ii), in(ii), ii = 1, mn ) /)
        do lvol = 1, Mvol-1 ; write(ounit,'("hesian : ",i10   " : "999es10.2)') lvol, evecr(1+mn*(lvol-1):mn+mn*(lvol-1),iev)
        enddo
-     !endif
+      endif
      enddo
      
     else ! matches if( LHvectors) ; 04 Dec 14;

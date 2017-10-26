@@ -155,8 +155,6 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
                         psifactor, Rscale, &
                         lmns, &
                         mn, mne, &
-                        DSoocc, DSoocs, DSoosc, DSooss, &
-                        DOoocc, DOoocs, DOoosc, DOooss, &
                         DToocc, DToocs, DToosc, DTooss, &
                         TTsscc, TTsscs, TTsssc, TTssss, &
                         TDstcc, TDstcs, TDstsc, TDstss, &
@@ -164,8 +162,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
                         DDttcc, DDttcs, DDttsc, DDttss, &
                         DDtzcc, DDtzcs, DDtzsc, DDtzss, &
                         DDzzcc, DDzzcs, DDzzsc, DDzzss, &
-                        dRodR, dRodZ, dZodR, dZodZ, &
-                        Mrad
+                        dRodR, dRodZ, dZodR, dZodZ
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -262,8 +259,6 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
    
    if( myid.ne.modulo(vvol-1,ncpu) ) cycle ! construct Beltrami fields in parallel; 16 Jan 13;
    
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
    NN = NAdof(vvol) ! shorthand;
    
    SALLOCATE( dMA, (0:NN,0:NN), zero ) ! required for both plasma region and vacuum region; 18 Apr 13;
@@ -295,107 +290,42 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-   ll = Lrad(vvol) ! shorthand; SRH; 02 Aug 17;
-   
-   if( YESstellsym ) then ! SRH; 30 Jul 17;
-    
-   !SALLOCATE( DToocc, (0:ll,0:ll,1:mn,1:mn), zero ) ! this is now allocated and pre-calculated in preset; SRH; 02 Aug 17;
-   !SALLOCATE( DToocs, (0:ll,0:ll,1:mn,1:mn), zero )
-   !SALLOCATE( DToosc, (0:ll,0:ll,1:mn,1:mn), zero )
-   !SALLOCATE( DTooss, (0:ll,0:ll,1:mn,1:mn), zero )
+   ll = Lrad(vvol)
 
-    if( Lcoordinatesingularity ) then
-     DToocc(0:Mrad,0:Mrad,1:mn,1:mn) = DSoocc(0:Mrad,0:Mrad,1:mn,1:mn)
-    !DToocs(0:Mrad,0:Mrad,1:mn,1:mn) = DSoocs(0:Mrad,0:Mrad,1:mn,1:mn)
-    !DToosc(0:Mrad,0:Mrad,1:mn,1:mn) = DSoosc(0:Mrad,0:Mrad,1:mn,1:mn)
-    !DTooss(0:Mrad,0:Mrad,1:mn,1:mn) = DSooss(0:Mrad,0:Mrad,1:mn,1:mn)
-    else ! Lcoordinatesingularity = .false. ; SRH; 02 Aug 17;
-     DToocc(0:Mrad,0:Mrad,1:mn,1:mn) = DOoocc(0:Mrad,0:Mrad,1:mn,1:mn)
-    !DToocs(0:Mrad,0:Mrad,1:mn,1:mn) = DOoocs(0:Mrad,0:Mrad,1:mn,1:mn)
-    !DToosc(0:Mrad,0:Mrad,1:mn,1:mn) = DOoosc(0:Mrad,0:Mrad,1:mn,1:mn)
-    !DTooss(0:Mrad,0:Mrad,1:mn,1:mn) = DOooss(0:Mrad,0:Mrad,1:mn,1:mn)
-    endif ! matches if( Lcoordinatesingularity ) ; SRH; 02 Aug 17;
+   SALLOCATE( DToocc, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( DToocs, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( DToosc, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( DTooss, (0:ll,0:ll,1:mn,1:mn), zero )
 
-   !SALLOCATE( TTsscc, (0:ll,0:ll,1:mn,1:mn), zero )
-   !SALLOCATE( TTsscs, (0:ll,0:ll,1:mn,1:mn), zero )
-   !SALLOCATE( TTsssc, (0:ll,0:ll,1:mn,1:mn), zero )
-    SALLOCATE( TTssss, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( TTsscc, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( TTsscs, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( TTsssc, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( TTssss, (0:ll,0:ll,1:mn,1:mn), zero )
 
-   !SALLOCATE( TDstcc, (0:ll,0:ll,1:mn,1:mn), zero )
-   !SALLOCATE( TDstcs, (0:ll,0:ll,1:mn,1:mn), zero )
-    SALLOCATE( TDstsc, (0:ll,0:ll,1:mn,1:mn), zero )
-   !SALLOCATE( TDstss, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( TDstcc, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( TDstcs, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( TDstsc, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( TDstss, (0:ll,0:ll,1:mn,1:mn), zero )
 
-   !SALLOCATE( TDszcc, (0:ll,0:ll,1:mn,1:mn), zero )
-   !SALLOCATE( TDszcs, (0:ll,0:ll,1:mn,1:mn), zero )
-    SALLOCATE( TDszsc, (0:ll,0:ll,1:mn,1:mn), zero )
-   !SALLOCATE( TDszss, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( TDszcc, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( TDszcs, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( TDszsc, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( TDszss, (0:ll,0:ll,1:mn,1:mn), zero )
 
-    SALLOCATE( DDttcc, (0:ll,0:ll,1:mn,1:mn), zero )
-   !SALLOCATE( DDttcs, (0:ll,0:ll,1:mn,1:mn), zero )
-   !SALLOCATE( DDttsc, (0:ll,0:ll,1:mn,1:mn), zero )
-   !SALLOCATE( DDttss, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( DDttcc, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( DDttcs, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( DDttsc, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( DDttss, (0:ll,0:ll,1:mn,1:mn), zero )
 
-    SALLOCATE( DDtzcc, (0:ll,0:ll,1:mn,1:mn), zero )
-   !SALLOCATE( DDtzcs, (0:ll,0:ll,1:mn,1:mn), zero )
-   !SALLOCATE( DDtzsc, (0:ll,0:ll,1:mn,1:mn), zero )
-   !SALLOCATE( DDtzss, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( DDtzcc, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( DDtzcs, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( DDtzsc, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( DDtzss, (0:ll,0:ll,1:mn,1:mn), zero )
 
-    SALLOCATE( DDzzcc, (0:ll,0:ll,1:mn,1:mn), zero )
-   !SALLOCATE( DDzzcs, (0:ll,0:ll,1:mn,1:mn), zero )
-   !SALLOCATE( DDzzsc, (0:ll,0:ll,1:mn,1:mn), zero )
-   !SALLOCATE( DDzzss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-   else ! NOTstellsym; SRH; 30 Jul 17;
-    
-   !SALLOCATE( DToocc, (0:ll,0:ll,1:mn,1:mn), zero ) ! this is now allocated and pre-calculated in preset; SRH; 02 Aug 17;
-   !SALLOCATE( DToocs, (0:ll,0:ll,1:mn,1:mn), zero )
-   !SALLOCATE( DToosc, (0:ll,0:ll,1:mn,1:mn), zero )
-   !SALLOCATE( DTooss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-    if( Lcoordinatesingularity ) then
-     DToocc(0:Mrad,0:Mrad,1:mn,1:mn) = DSoocc(0:Mrad,0:Mrad,1:mn,1:mn)
-     DToocs(0:Mrad,0:Mrad,1:mn,1:mn) = DSoocs(0:Mrad,0:Mrad,1:mn,1:mn)
-     DToosc(0:Mrad,0:Mrad,1:mn,1:mn) = DSoosc(0:Mrad,0:Mrad,1:mn,1:mn)
-     DTooss(0:Mrad,0:Mrad,1:mn,1:mn) = DSooss(0:Mrad,0:Mrad,1:mn,1:mn)
-    else ! Lcoordinatesingularity = .false. ; SRH; 02 Aug 17;
-     DToocc(0:Mrad,0:Mrad,1:mn,1:mn) = DOoocc(0:Mrad,0:Mrad,1:mn,1:mn)
-     DToocs(0:Mrad,0:Mrad,1:mn,1:mn) = DOoocs(0:Mrad,0:Mrad,1:mn,1:mn)
-     DToosc(0:Mrad,0:Mrad,1:mn,1:mn) = DOoosc(0:Mrad,0:Mrad,1:mn,1:mn)
-     DTooss(0:Mrad,0:Mrad,1:mn,1:mn) = DOooss(0:Mrad,0:Mrad,1:mn,1:mn)
-    endif ! matches if( Lcoordinatesingularity ) ; SRH; 02 Aug 17;
-
-    SALLOCATE( TTsscc, (0:ll,0:ll,1:mn,1:mn), zero )
-    SALLOCATE( TTsscs, (0:ll,0:ll,1:mn,1:mn), zero )
-    SALLOCATE( TTsssc, (0:ll,0:ll,1:mn,1:mn), zero )
-    SALLOCATE( TTssss, (0:ll,0:ll,1:mn,1:mn), zero )
-    
-    SALLOCATE( TDstcc, (0:ll,0:ll,1:mn,1:mn), zero )
-    SALLOCATE( TDstcs, (0:ll,0:ll,1:mn,1:mn), zero )
-    SALLOCATE( TDstsc, (0:ll,0:ll,1:mn,1:mn), zero )
-    SALLOCATE( TDstss, (0:ll,0:ll,1:mn,1:mn), zero )
-    
-    SALLOCATE( TDszcc, (0:ll,0:ll,1:mn,1:mn), zero )
-    SALLOCATE( TDszcs, (0:ll,0:ll,1:mn,1:mn), zero )
-    SALLOCATE( TDszsc, (0:ll,0:ll,1:mn,1:mn), zero )
-    SALLOCATE( TDszss, (0:ll,0:ll,1:mn,1:mn), zero )
-    
-    SALLOCATE( DDttcc, (0:ll,0:ll,1:mn,1:mn), zero )
-    SALLOCATE( DDttcs, (0:ll,0:ll,1:mn,1:mn), zero )
-    SALLOCATE( DDttsc, (0:ll,0:ll,1:mn,1:mn), zero )
-    SALLOCATE( DDttss, (0:ll,0:ll,1:mn,1:mn), zero )
-    
-    SALLOCATE( DDtzcc, (0:ll,0:ll,1:mn,1:mn), zero )
-    SALLOCATE( DDtzcs, (0:ll,0:ll,1:mn,1:mn), zero )
-    SALLOCATE( DDtzsc, (0:ll,0:ll,1:mn,1:mn), zero )
-    SALLOCATE( DDtzss, (0:ll,0:ll,1:mn,1:mn), zero )
-    
-    SALLOCATE( DDzzcc, (0:ll,0:ll,1:mn,1:mn), zero )
-    SALLOCATE( DDzzcs, (0:ll,0:ll,1:mn,1:mn), zero )
-    SALLOCATE( DDzzsc, (0:ll,0:ll,1:mn,1:mn), zero )
-    SALLOCATE( DDzzss, (0:ll,0:ll,1:mn,1:mn), zero )
-    
-   endif ! end of if( YESstellsym ) ; SRH; 30 Jul 17;
+   SALLOCATE( DDzzcc, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( DDzzcs, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( DDzzsc, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( DDzzss, (0:ll,0:ll,1:mn,1:mn), zero )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
@@ -403,11 +333,30 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
+!  if( vvol.eq.Mvol ) then
+!   ideriv = 0 ; ii = 1
+!   write(ounit,'("dforce : ", 10x ," : sum(Ate(",i3,",",i2,",",i2,")%s) =",99es23.15)') vvol, ideriv, ii, sum(Ate(vvol,ideriv,ii)%s(0:Lrad(vvol)))
+!  endif
+
    WCALL( dforce, ma00aa, ( Iquad(vvol), mn, vvol, ll ) ) ! compute volume integrals of metric elements;
    
    WCALL( dforce, matrix, ( vvol, mn, ll ) )
 
+!  if( vvol.eq.Mvol ) then
+!   ideriv = 0 ; ii = 1
+!   write(ounit,'("dforce : ", 10x ," : sum(Ate(",i3,",",i2,",",i2,")%s) =",99es23.15)') vvol, ideriv, ii, sum(Ate(vvol,ideriv,ii)%s(0:Lrad(vvol)))
+!  endif
+
    WCALL( dforce, ma02aa, ( vvol, NN ) )
+   
+!  if( vvol.eq.Mvol ) then
+!   write(ounit,'("dforce : ", 10x ," : dtflux(",i3," ) =",es23.15," ; dpflux(",i3," ) =",es23.15," ;")') Mvol, dtflux(Mvol), Mvol, dpflux(Mvol)
+!  endif
+
+!  if( vvol.eq.Mvol ) then
+!   ideriv = 0 ; ii = 1
+!   write(ounit,'("dforce : ", 10x ," : sum(Ate(",i3,",",i2,",",i2,")%s) =",99es23.15)') vvol, ideriv, ii, sum(Ate(vvol,ideriv,ii)%s(0:Lrad(vvol)))
+!  endif
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -420,12 +369,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
    if( LcomputeDerivatives ) then ! compute inverse of matrix; 13 Sep 13; ! compute inverse of Beltrami matrices; 29 Apr 14;
-
-    DToocc(0:Mrad,0:Mrad,1:mn,1:mn) = zero ! SRH; 02 Aug 17;
-    DToocs(0:Mrad,0:Mrad,1:mn,1:mn) = zero
-    DToosc(0:Mrad,0:Mrad,1:mn,1:mn) = zero
-    DTooss(0:Mrad,0:Mrad,1:mn,1:mn) = zero
-
+    
     lastcpu = GETTIME ! 30 Jan 13;
     
     dMA(0:NN-1,1:NN) = dMA(1:NN,1:NN) - mu(vvol) * dMD(1:NN,1:NN) ! this corrupts dMA, but dMA is no longer used;  7 Mar 13; 
@@ -1083,81 +1027,40 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-   if( YESstellsym ) then ! SRH; 30 Jul 17;
-    
-   !DALLOCATE( DToocc ) ! this is now global; SRH; 02 Aug 17;
-   !DALLOCATE( DToocs )
-   !DALLOCATE( DToosc )
-   !DALLOCATE( DTooss )
+   DALLOCATE(DToocc)
+   DALLOCATE(DToocs)
+   DALLOCATE(DToosc)
+   DALLOCATE(DTooss)
 
-   !DALLOCATE( TTsscc )
-   !DALLOCATE( TTsscs )
-   !DALLOCATE( TTsssc )
-    DALLOCATE( TTssss )
+   DALLOCATE(TTsscc)
+   DALLOCATE(TTsscs)
+   DALLOCATE(TTsssc)
+   DALLOCATE(TTssss)
 
-   !DALLOCATE( TDstcc )
-   !DALLOCATE( TDstcs )
-    DALLOCATE( TDstsc )
-   !DALLOCATE( TDstss )
+   DALLOCATE(TDstcc)
+   DALLOCATE(TDstcs)
+   DALLOCATE(TDstsc)
+   DALLOCATE(TDstss)
 
-   !DALLOCATE( TDszcc )
-   !DALLOCATE( TDszcs )
-    DALLOCATE( TDszsc )
-   !DALLOCATE( TDszss )
+   DALLOCATE(TDszcc)
+   DALLOCATE(TDszcs)
+   DALLOCATE(TDszsc)
+   DALLOCATE(TDszss)
 
-    DALLOCATE( DDttcc )
-   !DALLOCATE( DDttcs )
-   !DALLOCATE( DDttsc )
-   !DALLOCATE( DDttss )
+   DALLOCATE(DDttcc)
+   DALLOCATE(DDttcs)
+   DALLOCATE(DDttsc)
+   DALLOCATE(DDttss)
 
-    DALLOCATE( DDtzcc )
-   !DALLOCATE( DDtzcs )
-   !DALLOCATE( DDtzsc )
-   !DALLOCATE( DDtzss )
+   DALLOCATE(DDtzcc)
+   DALLOCATE(DDtzcs)
+   DALLOCATE(DDtzsc)
+   DALLOCATE(DDtzss)
 
-    DALLOCATE( DDzzcc )
-   !DALLOCATE( DDzzcs )
-   !DALLOCATE( DDzzsc )
-   !DALLOCATE( DDzzss )
-
-   else ! NOTstellsym; SRH; 30 Jul 17;
-    
-   !DALLOCATE( DToocc ) ! this is now global; SRH; 02 Aug 17;
-   !DALLOCATE( DToocs )
-   !DALLOCATE( DToosc )
-   !DALLOCATE( DTooss )
-
-    DALLOCATE( TTsscc )
-    DALLOCATE( TTsscs )
-    DALLOCATE( TTsssc )
-    DALLOCATE( TTssss )
-    
-    DALLOCATE( TDstcc )
-    DALLOCATE( TDstcs )
-    DALLOCATE( TDstsc )
-    DALLOCATE( TDstss )
-    
-    DALLOCATE( TDszcc )
-    DALLOCATE( TDszcs )
-    DALLOCATE( TDszsc )
-    DALLOCATE( TDszss )
-    
-    DALLOCATE( DDttcc )
-    DALLOCATE( DDttcs )
-    DALLOCATE( DDttsc )
-    DALLOCATE( DDttss )
-    
-    DALLOCATE( DDtzcc )
-    DALLOCATE( DDtzcs )
-    DALLOCATE( DDtzsc )
-    DALLOCATE( DDtzss )
-    
-    DALLOCATE( DDzzcc )
-    DALLOCATE( DDzzcs )
-    DALLOCATE( DDzzsc )
-    DALLOCATE( DDzzss )
-    
-   endif ! end of if( YESstellsym ) ; SRH; 30 Jul 17;
+   DALLOCATE(DDzzcc)
+   DALLOCATE(DDzzcs)
+   DALLOCATE(DDzzsc)
+   DALLOCATE(DDzzss)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
