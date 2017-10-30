@@ -98,14 +98,6 @@ subroutine newton( NGdof, position, ic05pxf )
   INTEGER                :: ML, MU ! required for only Lc05ndf;
   
   LOGICAL                :: Lexit = .true. ! perhaps this could be made user input;
-
-  INTEGER                :: nprint = 1 ! integer input variable that enables controlled output;
-  INTEGER                :: nfev ! integer output variable set to the number of calls to fcn ;
-  INTEGER                :: njev ! integer output variable set to the number of calls to fcn2; 
-
-  INTEGER, parameter     :: maxfev = 500 ! maximum calls per iteration;
-
-  EXTERNAL                  fcn1, fcn2
   
   BEGIN(newton)
   
@@ -191,6 +183,10 @@ subroutine newton( NGdof, position, ic05pxf )
   endif
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+  do ! reverse communication loop; controlled by irevcm;
+   
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
    select case( Lfindzero )
    
@@ -214,7 +210,13 @@ subroutine newton( NGdof, position, ic05pxf )
    end select
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+   
+   select case( irevcm )
+    
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+    
+   case( 0 ) ! final exit;
+    
     if( myid.eq.0 ) then
      cput = GETTIME
      ;              write(ounit,'("newton : ", 10x ," :")')
@@ -227,6 +229,118 @@ subroutine newton( NGdof, position, ic05pxf )
      case default ; write(ounit,'("newton : ",f10.2," : finished ; illegal ifail  ; ic05p*f="i2" ; its="i7" ,"i4" ;")') cput-cpus, ic05pxf, nFcalls, nDcalls
      end select
     endif ! end of if( myid.eq.0 ) then;
+    
+    exit ! escape from infinite do loop;
+    
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+    
+   case( 1 ) ! indicates start of new iteration; no action is required; position and force available for printing; force must not be changed;
+    
+    pack = 'U' !! unpack geometrical degrees of freedom; 13 Sep 13; I guess this is just for wrtend; 11 Aug 14;
+    WCALL( newton, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack ) )
+    
+    if( myid.eq.0 ) then
+     
+     cput = GETTIME
+     
+     ; write(ounit,1000) cput-cpus, nFcalls, nDcalls, ForceErr, cput-lastcpu, "|BB|e", alog10(BBe(1:min(Mvol-1,28)))
+     if( Igeometry.ge.3 ) then ! include spectral constraints; 04 Dec 14;
+      ;write(ounit,1001)                                                                      "|II|o", alog10(IIo(1:min(Mvol-1,28)))
+     endif
+     if( NOTstellsym ) then
+      ;write(ounit,1001)                                                                      "|BB|o", alog10(BBo(1:min(Mvol-1,28)))
+      if( Igeometry.ge.3 ) then ! include spectral constraints; 04 Dec 14;
+       write(ounit,1001)                                                                      "|II|e", alog10(IIe(1:min(Mvol-1,28)))
+      endif
+     endif
+     lastcpu = GETTIME
+     
+     wflag = -1 ; iflag = nDcalls ; rflag = ForceErr
+     WCALL( newton, wrtend, ( wflag, iflag, rflag ) ) ! write restart file; save geometry to ext.end; iRbc, iZbs consistent with position;
+     
+    endif ! end of if( myid.eq.0 );
+    
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+    
+   case( 2 ) ! before re-entry to C05NDF / C05PDF, force must contain the function values;
+    
+    nFcalls = nFcalls + 1
+    
+    LComputeDerivatives = .false.
+    WCALL( newton, dforce, ( NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives ) ) ! calculate the force-imbalance;
+    
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+    
+   case( 3 ) ! before re-entry to          C05PDF, fjac must contain the derivatives;
+    
+#ifdef DEBUG
+    FATAL( newton, .not.Lhessianallocated, need to allocate hessian )
+#endif
+    
+    nDcalls = nDcalls + 1
+    
+    if( LreadGF .and. nDcalls.eq.1 ) then ! this is the first iteration; will check to see if derivative matrix already exists in file .DF;
+
+     if( myid.eq.0 ) call writereadgf( 'R', NGdof, ireadhessian ) ! reads derivatives matrix from file;
+     
+     IlBCAST( ireadhessian, 1, 0 )
+     
+     if( ireadhessian.eq.1 ) then ! derivative matrix has been read from file;
+      RlBCAST( hessian(1:NGdof,1:NGdof), NGdof*NGdof, 0 )
+     endif
+     
+    else ! matches if( LreadGF .and. nDcalls.eq.1 ) then;
+     
+     ireadhessian = 0 ! derivative matrix has not been read from file;
+     
+    endif ! end of if( LreadGF .and. nDcalls.eq.1 ) then;
+    
+    if( ireadhessian.eq.0 ) then
+     
+     LComputeDerivatives = .true.
+     WCALL( newton, dforce, ( NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives ) ) ! calculate the force-imbalance;
+
+#ifdef DEBUG
+     FATAL( newton, Lcheck.eq.4, derivatives of Beltrami field have been computed )
+#endif
+     
+    endif
+    
+    fjac(1:NGdof,1:NGdof) = hessian(1:NGdof,1:NGdof) ! derivative matrix is passed through global; CAN SAVE MEMORY;
+    
+    if( myid.eq.0 ) call writereadgf( 'W', NGdof, ireadhessian ) ! will always save derivative matrix;
+    
+#ifdef DEBUG
+
+    if( Lcheck.eq.3 ) then
+     write(ounit,'("newton : ", 10x ," : myid=",i3," ; volume derivatives have been compared ;")') myid
+     stop "newton :            : myid=    ; volume derivatives have been compared ;"
+    endif
+
+    FATAL( newton, Lcheck.eq.3, volume derivatives have been compared ) ! the first process will terminate all processes; 02 Sep 14;
+
+    if( Lcheck.eq.4 ) then
+     write(ounit,'("newton : ", 10x ," : myid=",i3," ; field derivatives have been compared ;")') myid
+     stop "newton :            : myid=    ; field derivatives have been compared ;"
+    endif
+
+    FATAL( newton, Lcheck.eq.4, field derivatives have been compared ) ! the first process will terminate all processes; 02 Sep 14;
+
+#endif
+    
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+    
+   case default
+    
+    FATAL( newton, .true., illegal irevcm : C05P*F error )
+    
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+    
+   end select ! end of select case(irevcm);
+   
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+   
+  enddo ! end of infinite reverse-communication do loop;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   

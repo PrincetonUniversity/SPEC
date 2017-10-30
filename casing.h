@@ -107,7 +107,7 @@ subroutine casing( teta, zeta, gBn, icasing )
   
   INTEGER, parameter :: Ndim = 2, Nfun = 1
 
-  INTEGER            :: ldim, lfun, mincalls, maxcalls, Lrwk, rr, id01eaf, jk, restar, funcls
+  INTEGER            :: ldim, lfun, mincalls, maxcalls, Lrwk, rr, id01eaf, jk
   REAL               :: integrals(1:Nfun), low(1:Ndim), upp(1:Ndim), labs, lrel, absest(1:Nfun)
   REAL, allocatable  :: rwk(:)
   
@@ -142,26 +142,17 @@ subroutine casing( teta, zeta, gBn, icasing )
   
   labs = vcasingtol ; lrel = vcasingtol ! absolute and relative accuracy requested; vcasingtol is an input parameter;
   
-!  Lrwk = 2 * ( 6 * Ndim + 9 * Nfun + ( Ndim + Nfun + 2 ) * ( 1 + maxcalls / rr ) )
-!  
-!  Lrwk = max( Lrwk, 8 * Ndim + 11 * Nfun + 3 )
-
-  Lrwk = ((maxcalls-ldim)/(2*ldim) + 1)*(2*ldim+2*lfun+2) + 17*lfun + 256
+  Lrwk = 2 * ( 6 * Ndim + 9 * Nfun + ( Ndim + Nfun + 2 ) * ( 1 + maxcalls / rr ) )
+  
+  Lrwk = max( Lrwk, 8 * Ndim + 11 * Nfun + 3 )
   
   SALLOCATE( rwk, (1:Lrwk), zero )
   
-  restar = 0; funcls = 0
   do ! will continually call until satisfactory accuracy has been achieved;
    
    id01eaf = 1
 !               int , real       , real       , integer , integer , int , subrout , real, real, int , real       , real             , real          , int
-!   Replacing D01EAF with DCUHRE
-!   call D01EAF( ldim, low(1:Ndim), upp(1:Ndim), mincalls, maxcalls, lfun, dvcfield, labs, lrel, Lrwk, rwk(1:Lrwk), integrals(1:Nfun), absest(1:Nfun), id01eaf )
-!    CALL D01EAF(ndim_nag,a_nag,b_nag,mincls_nag,maxcls_nag,nfun_nag,funsub_nag_b,absreq_nag,&
-!                   relreq_nag,lenwrk_nag,wrkstr_nag,finest_nag,absest_nag,istat)
-!    CALL dcuhre(ndim_nag,nfun_nag,a_nag,b_nag,mincls_nag,maxcls_nag,funsub_nag_b,absreq_nag,&
-!                     relreq_nag,0,wrklen,restar,finest_nag,absest_nag,funcls,istat,vrtwrk)
-    call DCUHRE( ldim, lfun, low(1:Ndim), upp(1:Ndim), mincalls, maxcalls, dvcfield, labs, lrel, 0, Lrwk, restar, integrals(1:Nfun), absest(1:Nfun), funcls, id01eaf, rwk)
+   call D01EAF( ldim, low(1:Ndim), upp(1:Ndim), mincalls, maxcalls, lfun, dvcfield, labs, lrel, Lrwk, rwk(1:Lrwk), integrals(1:Nfun), absest(1:Nfun), id01eaf )
    
    gBn = integrals(1)
   !dBxyzdxyz(1,1:3) = integrals( 4: 6)
@@ -174,36 +165,17 @@ subroutine casing( teta, zeta, gBn, icasing )
     ;           ;               exit
    case(1)      ;!if( Wcasing ) write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), Bxyz(0:3), absest(1:Nfun), id01eaf, mincalls, maxcalls, "maxcalls too small ;"
     ;           ;              !exit
-   case(2)      ;!              write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), Bxyz(0:3), absest(1:Nfun), id01eaf, mincalls, maxcalls, "Key incorrect ;"
+   case(2)      ;!              write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), Bxyz(0:3), absest(1:Nfun), id01eaf, mincalls, maxcalls, "lenwrk too small ;"
     ;           ;               exit
-   case(3)      ;!if( Wcasing ) write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), Bxyz(0:3), absest(1:Nfun), id01eaf, mincalls, maxcalls, "ndim < 2 or ndim > 15 ;"
-    ;           ;              exit
-   case(4)      ;               write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn      , absest(1:Nfun), id01eaf, mincalls, maxcalls, "KEY = 1 and NDIM not equal to 2"
+   case(3)      ;!if( Wcasing ) write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), Bxyz(0:3), absest(1:Nfun), id01eaf, mincalls, maxcalls, "maxcalls too small ;"
+    ;           ;              !exit
+   case(4)      ;               write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn      , absest(1:Nfun), id01eaf, mincalls, maxcalls, "input error ;     "
     ;           ;               exit
-   case(5)      ;               write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn      , absest(1:Nfun), id01eaf, mincalls, maxcalls, "KEY = 2 and NDIM not equal to 3"
-    ;           ;               exit
-   case(6)      ;               write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn      , absest(1:Nfun), id01eaf, mincalls, maxcalls, "NUMFUN is less than 1."
-    ;           ;               exit
-   case(7)      ;               write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn      , absest(1:Nfun), id01eaf, mincalls, maxcalls, "volume of region of integration is zero"
-    ;           ;               exit
-   case(8)      ;               write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn      , absest(1:Nfun), id01eaf, mincalls, maxcalls, "MAXPTS is less than 3*NUM"
-    ;           ;               exit
-   case(9)      ;               write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn      , absest(1:Nfun), id01eaf, mincalls, maxcalls, "MAXPTS is less than MINPTS"
-    ;           ;               exit
-   case(10)      ;               write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn      , absest(1:Nfun), id01eaf, mincalls, maxcalls, "EPSABS < 0 and EPSREL < 0"
-    ;           ;               exit
-   case(11)      ;               write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn      , absest(1:Nfun), id01eaf, mincalls, maxcalls, "NW is too small"
-    ;           ;               exit
-   case(12)      ;               write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn      , absest(1:Nfun), id01eaf, mincalls, maxcalls, "unlegal RESTAR"
-    ;           ;               exit
-   case default ;               write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn      , absest(1:Nfun), id01eaf, mincalls, maxcalls, "DCUHRE Says: What you tryin' to do?  Kill me? "
+   case default ;               write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn      , absest(1:Nfun), id01eaf, mincalls, maxcalls, "illegal ifail ;   "
     ;           ;               exit
    end select
    
-!   maxcalls = 2 * maxcalls ; mincalls = -1
-   maxcalls = 2 * maxcalls ; mincalls = funcls
-            restar = 1
-            id01eaf = 0
+   maxcalls = 2 * maxcalls ; mincalls = -1
    
   enddo ! end of virtual casing accuracy infinite-do-loop; 10 Apr 13;
 

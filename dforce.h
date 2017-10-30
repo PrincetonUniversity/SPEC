@@ -388,10 +388,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
      SALLOCATE( ipivot, (1:NN), 0 )
      
      if07adf = 1
-     ! Note that this is actually just DGETRF from Lapack
-     ! http://www.nag.com/numeric/FL/manual/pdf/F07/f07adf.pdf
-     ! call F07ADF( MM, NN, dMA(0:LDA-1,1:NN), LDA, ipivot(1:NN), if07adf ) ! Beware: dMA is corrupted; 08 Feb 16;
-     call DGETRF( MM, NN, dMA(0:LDA-1,1:NN), LDA, ipivot(1:NN), if07adf )
+     call F07ADF( MM, NN, dMA(0:LDA-1,1:NN), LDA, ipivot(1:NN), if07adf ) ! Beware: dMA is corrupted; 08 Feb 16;
      
      cput = GETTIME
      select case( if07adf ) !                                                                     0123456789012345678
@@ -406,10 +403,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
      SALLOCATE( work, (1:Lwork), zero )
 
      if07ajf = 1
-     ! Note that this is actually just DGETRI from Lapack
-     ! http://www.nag.com/numeric/FL/manual/pdf/F07/f07ajf.pdf
-     !call F07AJF( NN, dMA(0:LDA-1,1:NN), LDA, ipivot(1:NN), work(1:Lwork), Lwork, if07ajf )
-     call DGETRI( NN, dMA(0:LDA-1,1:NN), LDA, ipivot(1:NN), work(1:Lwork), Lwork, if07ajf )
+     call F07AJF( NN, dMA(0:LDA-1,1:NN), LDA, ipivot(1:NN), work(1:Lwork), Lwork, if07ajf )
 
      DALLOCATE(work)
 
@@ -430,11 +424,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
     case( 1 ) ! Lposdef = 1 ; 08 Feb 16;
 
      if01adf = 1
-     ! This is just the Lapack routine dpotri with  first variable assumed to be 'L'
-     ! https://www.nag.co.uk/numeric/fl/nagdoc_fl25/pdf/f01/f01adf.pdf
-     ! call F01ADF( NN, dMA(0:NN,1:NN), IA, if01adf ) ! assumes symmetric, positive definite matrix; 29 Jan 13; dMA is corrupted;  7 Mar 13; 
-     call DPOTRI( 'L', NN, dMA(0:NN,1:NN), IA, if01adf )    
-
+     call F01ADF( NN, dMA(0:NN,1:NN), IA, if01adf ) ! assumes symmetric, positive definite matrix; 29 Jan 13; dMA is corrupted;  7 Mar 13; 
+    
      cput = GETTIME
      
      select case( if01adf ) !                                                                    0123456789012345678

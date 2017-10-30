@@ -874,6 +874,7 @@ module allglobal
 
   INTEGER              :: myid, ncpu       ! mpi variables;
   REAL                 :: cpus             ! initial time;
+  REAL                 :: cpum             ! intermediate time;
 
   REAL                 :: pi2nfp           !       pi2/nfp     ; assigned in readin;
   REAL                 :: pi2pi2nfp
