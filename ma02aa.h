@@ -49,7 +49,7 @@ subroutine ma02aa( lvol, NN )
   REAL                 :: tol, dpsi(1:2), lastcpu
   CHARACTER            :: packorunpack
   
-  INTEGER              :: Nxdof, Ndof, Ldfjac, iflag, maxfev, mode, LRR, nfev, njev, nprint, ic05pcf, ihybrj
+  INTEGER              :: Nxdof, Ndof, Ldfjac, iflag, maxfev, mode, LRR, nfev, njev, nprint, ihybrj
   REAL                 :: Xdof(1:2), Fdof(1:2), Ddof(1:2,1:2), oDdof(1:2,1:2)
   REAL                 :: factor, diag(1:2), RR(1:2*(2+1)/2), QTF(1:2), wk(1:2,1:4)
   
@@ -456,33 +456,10 @@ subroutine ma02aa( lvol, NN )
 
     tol = mupftol ; LRR = Ndof * ( Ndof+1 ) / 2 ; mode = 0 ; diag(1:2) = zero ; factor = one ; maxfev = mupfits ; nprint = 0
     
-!    WCALL( ma02aa, C05PCF, ( mp00ac, Ndof, Xdof(1:Ndof), Fdof(1:Ndof), Ddof(1:Ldfjac,1:Ndof), Ldfjac, tol, &
-!                             maxfev, diag(1:Ndof), mode, factor, nprint, nfev, njev, RR(1:LRR), LRR, QTF(1:Ndof), WK(1:Ndof,1:4), ic05pcf ) )
     WCALL( ma02aa, hybrj, ( mp00ac, Ndof, Xdof(1:Ndof), Fdof(1:Ndof), Ddof(1:Ldfjac,1:Ndof), Ldfjac, tol, &
                              maxfev, diag(1:Ndof), mode, factor, nprint, ihybrj, nfev, njev, RR(1:LRR), LRR, QTF(1:Ndof), &
 			     WK(1:Ndof,1), WK(1:Ndof,2), WK(1:Ndof,3), WK(1:Ndof,4) ) )
 
-!    if( Lplasmaregion ) then
-!     
-!     select case( ic05pcf )
-!     case( 0: ) ;     mu(lvol) = Xdof(1)      - xoffset
-!      ;         ; dpflux(lvol) = Xdof(2)      - xoffset
-!     case( -2 ) ;      Xdof(1) = mu(lvol)     + xoffset ! mu    and dpflux have been updated in mp00ac; early termination; 18 Apr 13; 09 Mar 17;
-!      ;         ;      Xdof(2) = dpflux(lvol) + xoffset ! mu    and dpflux have been updated in mp00ac; early termination; 18 Apr 13; 09 Mar 17;
-!     end select
-!     
-!    else ! Lvacuumregion; 26 Jan 16;
-!     
-!     select case( ic05pcf )
-!     case( 0: ) ; dtflux(lvol) = Xdof(1)      - xoffset
-!      ;         ; dpflux(lvol) = Xdof(2)      - xoffset
-!     case( -2 ) ; Xdof(1)      = dtflux(lvol) + xoffset ! dtflux and dpflux have been updated in mp00ac; early termination; 18 Apr 13; 09 Mar 17;
-!      ;         ; Xdof(2)      = dpflux(lvol) + xoffset ! dtflux and dpflux have been updated in mp00ac; early termination; 18 Apr 13; 09 Mar 17;
-!     end select
-     
-!!   write(ounit,'("ma02aa : ", 10x ," : dtflux(",i3," ) =",es23.15," ; dpflux(",i3," ) =",es23.15," ;")') lvol, dtflux(lvol), lvol, dpflux(lvol)
-!
-!    endif ! end of if( Lplasmaregion ) ; 08 Feb 16;
     if( Lplasmaregion ) then
      
      select case( ihybrj )
@@ -521,25 +498,7 @@ subroutine ma02aa( lvol, NN )
    
 
    cput = GETTIME
-!   select case(ic05pcf) ! this screen output may not be correct for Lvacuumregion; 08 Feb 16;
-!   case(    0   )  
-!    if( Wma02aa ) write(ounit,1040) cput-cpus, myid, lvol, ic05pcf, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "success         ", Fdof(1:Ndof)
-!   case(   -2   )  
-!    if( Wma02aa ) write(ounit,1040) cput-cpus, myid, lvol, ic05pcf, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "|F| < mupftol   ", Fdof(1:Ndof)
-!   case(   -1   )  
-!    ;             write(ounit,1040) cput-cpus, myid, lvol, ic05pcf, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "Beltrami fail   ", Fdof(1:Ndof)
-!   case(    1   )  
-!    ;             write(ounit,1040) cput-cpus, myid, lvol, ic05pcf, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "input error     ", Fdof(1:Ndof)
-!   case(    2   )  
-!    ;             write(ounit,1040) cput-cpus, myid, lvol, ic05pcf, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "consider restart", Fdof(1:Ndof)
-!   case(    3   )  
-!    ;             write(ounit,1040) cput-cpus, myid, lvol, ic05pcf, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "xtol too small  ", Fdof(1:Ndof)
-!   case(    4:5 )  
-!   ;             write(ounit,1040) cput-cpus, myid, lvol, ic05pcf, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "bad progress    ", Fdof(1:Ndof)
-!   case default    
-!    ;             write(ounit,1040) cput-cpus, myid, lvol, ic05pcf, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "illegal ifail   ", Fdof(1:Ndof)
-!    FATAL( ma02aa, .true., illegal ifail returned by C05PCF )
-!   end select
+
    select case(ihybrj) ! this screen output may not be correct for Lvacuumregion; 08 Feb 16;
    case(    1   )  
     if( Wma02aa ) write(ounit,1040) cput-cpus, myid, lvol, ihybrj, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "success         ", Fdof(1:Ndof)
@@ -671,10 +630,6 @@ subroutine ma02aa( lvol, NN )
 1010 format("ma02aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; SQP    : ie04uff=",i3," hel="es12.4" mu="es12.4" dpflux="es12.4" time="f9.1" ":,a36)
 1020 format("ma02aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; Newton : ihybrj1=",i3," hel="es12.4" mu="es12.4" dpflux="es12.4" time="f9.1" ; "&
   "error="es7.0" ; ":,a18)
-!1040 format("ma02aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; Linear : ic05pcf=",i3," hel="es12.4" mu="es12.4" dpflux="es12.4" time="f9.1" ; "&
-!  :,a16" ; F="2es08.0)
-!1050 format("ma02aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; Linear : ic05pcf=",i3,"     "  12x " I ="es12.4"        "  12x " time="f9.1" ; "&
-!  :,a16" ; F="2es08.0)
 1040 format("ma02aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; Linear : ihybrj=",i3," hel="es12.4" mu="es12.4" dpflux="es12.4" time="f9.1" ; "&
   :,a16" ; F="2es08.0)
 1050 format("ma02aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; Linear : ihybrj=",i3,"     "  12x " I ="es12.4"        "  12x " time="f9.1" ; "&
