@@ -68,7 +68,12 @@ subroutine ma02aa( lvol, NN )
 #endif
   
 !required for C05PBF;
-  INTEGER              :: ic05pbf, Ldfmuaa, lengthwork
+!  INTEGER              :: ic05pbf, Ldfmuaa, lengthwork
+!  REAL                 :: DFxi(0:NN,0:NN), work(1:(1+NN)*(1+NN+13)/2), NewtonError
+!  external             :: df00ab
+
+!required for hybrj1;
+  INTEGER              :: ihybrj1, Ldfmuaa, lengthwork
   REAL                 :: DFxi(0:NN,0:NN), work(1:(1+NN)*(1+NN+13)/2), NewtonError
   external             :: df00ab
   
@@ -296,9 +301,10 @@ subroutine ma02aa( lvol, NN )
    psiMCpsi    = half * sum( dpsi(1:2) * matmul( dMC(1: 2,1: 2), dpsi(1:2) ) )
    psiMFpsi    = half * sum( dpsi(1:2) * matmul( dMF(1: 2,1: 2), dpsi(1:2) ) )
    
-   ic05pbf = 1
-   call C05PBF( df00ab, pNN, xi(0:NN), Fxi(0:NN), DFxi(0:NN,0:NN), Ldfmuaa, tol, work(1:lengthwork), lengthwork, ic05pbf )
-   
+!   ic05pbf = 1
+!   call C05PBF( df00ab, pNN, xi(0:NN), Fxi(0:NN), DFxi(0:NN,0:NN), Ldfmuaa, tol, work(1:lengthwork), lengthwork, ic05pbf )
+   call hybrj1( df00ab, pNN, xi(0:NN), Fxi(0:NN), DFxi(0:NN,0:NN), Ldfmuaa, tol, ihybrj1, work(1:lengthwork), lengthwork )
+
    NewtonError = maxval( abs( Fxi(0:NN) ) )
    
    mu(lvol) = xi(0)
@@ -307,21 +313,37 @@ subroutine ma02aa( lvol, NN )
    CALL( ma02aa, packab( packorunpack, lvol, NN, xi(1:NN), ideriv ) )
    
    cput = GETTIME
-   select case( ic05pbf )
-   case(-1 )    
-    ;             write(ounit,1020) cput-cpus, myid, lvol, ic05pbf, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, NewtonError, "user termination ;"
-   case( 0 )    
-    if( Wma02aa ) write(ounit,1020) cput-cpus, myid, lvol, ic05pbf, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, NewtonError, "success ;         "
+!   select case( ic05pbf )
+!   case(-1 )    
+!    ;             write(ounit,1020) cput-cpus, myid, lvol, ic05pbf, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, NewtonError, "user termination ;"
+!   case( 0 )    
+!    if( Wma02aa ) write(ounit,1020) cput-cpus, myid, lvol, ic05pbf, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, NewtonError, "success ;         "
+!   case( 1 )    
+!    ;             write(ounit,1020) cput-cpus, myid, lvol, ic05pbf, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, NewtonError, "input error ;     "
+!   case( 2 )    
+!    ;             write(ounit,1020) cput-cpus, myid, lvol, ic05pbf, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, NewtonError, "max. evaluations ;"
+!   case( 3 )    
+!    ;             write(ounit,1020) cput-cpus, myid, lvol, ic05pbf, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, NewtonError, "xtol too small ;  "
+!   case( 4 )    
+!    ;             write(ounit,1020) cput-cpus, myid, lvol, ic05pbf, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, NewtonError, "bad progress ;    "
+!   case default 
+!    FATAL( ma02aa, .true., illegal ifail returned by C05PBF )
+!   end select
+   select case( ihybrj1 )
+   case( :-1 )    
+    ;             write(ounit,1020) cput-cpus, myid, lvol, ihybrj1, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, NewtonError, "user termination ;"
    case( 1 )    
-    ;             write(ounit,1020) cput-cpus, myid, lvol, ic05pbf, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, NewtonError, "input error ;     "
+    if( Wma02aa ) write(ounit,1020) cput-cpus, myid, lvol, ihybrj1, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, NewtonError, "success ;         "
+   case( 0 )    
+    ;             write(ounit,1020) cput-cpus, myid, lvol, ihybrj1, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, NewtonError, "input error ;     "
    case( 2 )    
-    ;             write(ounit,1020) cput-cpus, myid, lvol, ic05pbf, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, NewtonError, "max. evaluations ;"
+    ;             write(ounit,1020) cput-cpus, myid, lvol, ihybrj1, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, NewtonError, "max. evaluations ;"
    case( 3 )    
-    ;             write(ounit,1020) cput-cpus, myid, lvol, ic05pbf, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, NewtonError, "xtol too small ;  "
+    ;             write(ounit,1020) cput-cpus, myid, lvol, ihybrj1, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, NewtonError, "xtol too small ;  "
    case( 4 )    
-    ;             write(ounit,1020) cput-cpus, myid, lvol, ic05pbf, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, NewtonError, "bad progress ;    "
+    ;             write(ounit,1020) cput-cpus, myid, lvol, ihybrj1, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, NewtonError, "bad progress ;    "
    case default 
-    FATAL( ma02aa, .true., illegal ifail returned by C05PBF )
+    FATAL( ma02aa, .true., illegal ifail returned by hybrj1 )
    end select
    
 #ifdef DEBUG
@@ -627,7 +649,9 @@ subroutine ma02aa( lvol, NN )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
     
 1010 format("ma02aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; SQP    : ie04uff=",i3," hel="es12.4" mu="es12.4" dpflux="es12.4" time="f9.1" ":,a36)
-1020 format("ma02aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; Newton : ic05pbf=",i3," hel="es12.4" mu="es12.4" dpflux="es12.4" time="f9.1" ; "&
+!1020 format("ma02aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; Newton : ic05pbf=",i3," hel="es12.4" mu="es12.4" dpflux="es12.4" time="f9.1" ; "&
+!  "error="es7.0" ; ":,a18)
+1020 format("ma02aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; Newton : ihybrj1=",i3," hel="es12.4" mu="es12.4" dpflux="es12.4" time="f9.1" ; "&
   "error="es7.0" ; ":,a18)
 1040 format("ma02aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; Linear : ic05pcf=",i3," hel="es12.4" mu="es12.4" dpflux="es12.4" time="f9.1" ; "&
   :,a16" ; F="2es08.0)
