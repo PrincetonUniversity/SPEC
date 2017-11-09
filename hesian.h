@@ -81,10 +81,14 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
 
   REAL                :: lmu(1:Mvol), lpflux(1:Mvol), lhelicity(1:Mvol) ! original profiles; 20 Jun 14;
 
-  INTEGER             :: IA, IAA, if04atf
+!  INTEGER             :: IA, IAA, if04atf
+  INTEGER             :: IA
+  INTEGER             :: idgesvx, ipiv(1:Ngdof), iwork4(1:NGdof)
+  CHARACTER           :: equed      
   REAL                :: perturbation(1:LGdof)
   REAL                :: rhs(1:NGdof), solution(0:NGdof)
   REAL                :: rworka(1:NGdof), rworkb(1:NGdof), AA(1:NGdof,1:NGdof)
+  REAL                :: Rdgesvx(1:NGdof), Cdgesvx(1:NGdof), AF(1:NGdof,1:NGdof), work4(1:4*NGdof), rcond, ferr, berr
   
   BEGIN(hesian)
 
@@ -573,20 +577,30 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
     
     rhs(1:NGdof) = - matmul( dessian(1:NGdof,1:LGdof), perturbation(1:LGdof) )
     
-    IA = NGdof ; IAA = NGdof
+!    IA = NGdof ; IAA = NGdof
     
     hessian(1:NGdof,1:NGdof) = ohessian(1:NGdof,1:NGdof)
 
-    if04atf = 1
-    call F04ATF( hessian(1:IA,1:NGdof), IA, rhs(1:NGdof), NGdof, solution(1:NGdof), & ! Linear solver; 02 Jan 15;
-                 AA(1:IAA,1:NGdof), IAA, rworka(1:NGdof), rworkb(1:NGdof), if04atf)
-    
-    select case( if04atf )
-    case( 0 )    ; write(ounit,'("hesian : " 10x " : myid="i3" ; linear perturbation ; if04atf="i3" ;")') myid, if04atf
-    case( 1 )    ; write(ounit,'("hesian : " 10x " : myid="i3" ; singular matrix     ; if04atf="i3" ;")') myid, if04atf
-    case( 2 )    ; write(ounit,'("hesian : " 10x " : myid="i3" ; ill-conditioned     ; if04atf="i3" ;")') myid, if04atf
-    case( 3 )    ; write(ounit,'("hesian : " 10x " : myid="i3" ; input error         ; if04atf="i3" ;")') myid, if04atf
-    case default ; FATAL( hesian, .true., illegal ifail returned from F04ATF )
+!    if04atf = 1
+!    call F04ATF( hessian(1:IA,1:NGdof), IA, rhs(1:NGdof), NGdof, solution(1:NGdof), & ! Linear solver; 02 Jan 15;
+!                 AA(1:IAA,1:NGdof), IAA, rworka(1:NGdof), rworkb(1:NGdof), if04atf)
+    call dgesvx( 'N', 'N', NGdof, 1, hessian(1:NGdof,1:NGdof), NGdof, AF(1:NGdof,1:NGdof),   & ! Linear solver; 09 Nov 17;
+                 NGdof, ipiv(1:NGdof), equed, Rdgesvx(1:NGdof), Cdgesvx(1:NGdof),            & 
+		 rhs(1:NGdof), NGdof, solution(1:NGdof), NGdof, rcond, ferr, berr,           &
+		 work4(1:4*NGdof), iwork4(1:NGdof), idgesvx )
+
+!    select case( if04atf )
+!    case( 0 )    ; write(ounit,'("hesian : " 10x " : myid="i3" ; linear perturbation ; if04atf="i3" ;")') myid, if04atf
+!    case( 1 )    ; write(ounit,'("hesian : " 10x " : myid="i3" ; singular matrix     ; if04atf="i3" ;")') myid, if04atf
+!    case( 2 )    ; write(ounit,'("hesian : " 10x " : myid="i3" ; ill-conditioned     ; if04atf="i3" ;")') myid, if04atf
+!    case( 3 )    ; write(ounit,'("hesian : " 10x " : myid="i3" ; input error         ; if04atf="i3" ;")') myid, if04atf
+!    case default ; FATAL( hesian, .true., illegal ifail returned from F04ATF )
+!    end select
+    select case( idgesvx )
+    case( 0   )    ; write(ounit,'("hesian : " 10x " : myid="i3" ; linear perturbation ; idgesvx="i3" ;")') myid, idgesvx
+    case( 1:  )    ; write(ounit,'("hesian : " 10x " : myid="i3" ; singular matrix     ; idgesvx="i3" ;")') myid, idgesvx
+    case( :-1 )    ; write(ounit,'("hesian : " 10x " : myid="i3" ; input error         ; idgesvx="i3" ;")') myid, idgesvx
+    case default ; FATAL( hesian, .true., illegal ifail returned from dgesvx )
     end select
     
     pack = 'U' ! unpack geometrical degrees-of-freedom; 13 Sep 13;
