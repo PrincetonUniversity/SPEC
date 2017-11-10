@@ -111,9 +111,14 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
   REAL                 :: gvu(1:Nt*Nz,1:3,1:3) ! local workspace; 13 Sep 13;
 
 ! required for Fourier routines;
-  INTEGER              :: IA, IB, IC, if04aaf, if04aef, FIAA, FIBB
-  REAL                 :: dmatrix(1:NN,1:NN,-1:2), drhs(1:NN,-1:2), fourierwork(1:NN), dlambda(1:NN,-1:2), FAA(1:NN,1:NN), FBB(1:NN,1:NN)
+!  INTEGER              :: IA, IB, IC, if04aaf, if04aef, FIAA, FIBB
+!  REAL                 :: dmatrix(1:NN,1:NN,-1:2), drhs(1:NN,-1:2), fourierwork(1:NN), dlambda(1:NN,-1:2), FAA(1:NN,1:NN), FBB(1:NN,1:NN)
+!  REAL                 :: omatrix(1:NN,1:NN)
+  INTEGER              :: IA, if04aaf, idgesvx, ipiv(1:NN), iwork4(1:NN)
+  REAL                 :: dmatrix(1:NN,1:NN,-1:2), drhs(1:NN,-1:2), dlambda(1:NN,-1:2), FAA(1:NN,1:NN)
   REAL                 :: omatrix(1:NN,1:NN)
+  REAL                 :: Rdgesvx(1:NN), Cdgesvx(1:NN), work4(1:4*NN), rcond, ferr, berr, ferr2(1:2), berr2(1:2)
+  CHARACTER            :: equed 
 
 ! required for real-space routines;
   INTEGER              :: maxitn, reqdits, extralength, lrwork, integerwork(1:2*Nt*Nz+2+1), if11def, if11zaf, if11xaf
@@ -655,25 +660,31 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
       FATAL( tr00ab, .true., invalid jderiv )
      end select
      
-     lcpu = GETTIME ! record time taken in F04AEF; 20 Apr 13;
+!     lcpu = GETTIME ! record time taken in F04AEF; 20 Apr 13;
+     lcpu = GETTIME ! record time taken in dgesvx; 09 Nov 17;
      
      select case( Lsvdiota )
       
      case( 0 ) ! Lsvdiota = 0; use linear solver to invert linear equations that define the straight fieldline angle; 01 Jul 14;
       
-      IA = NN ; IB = NN ; IC = NN ; FIAA = NN ; FIBB = NN
+!      IA = NN ; IB = NN ; IC = NN ; FIAA = NN ; FIBB = NN
       
       if04aaf = 1
-      if04aef = 1
+!      if04aef = 1
       
       select case( jderiv )
        
       case( 0 ) ! Lsvdiota = 0; jderiv = 0; 02 Sep 14;
        
        MM = 1
-      !call F04AAF( dmatrix(1:NN,1:NN,0), IA, drhs(1:NN,0:0), IB, NN, MM, dlambda(1:NN,0:0), IC, fourierwork(1:NN), if04aaf ) ! BEWARE: matrix is corrupted;
-       call F04AEF( dmatrix(1:NN,1:NN,0), IA, drhs(1:NN,0:0), IB, NN, MM, dlambda(1:NN,0:0), IC, &
-    fourierwork(1:NN), FAA(1:FIAA,1:NN), FIAA, FBB(1:FIBB,1:NN), FIBB, if04aef )
+!       call F04AAF( dmatrix(1:NN,1:NN,0), IA, drhs(1:NN,0:0), IB, NN, MM, dlambda(1:NN,0:0), IC, fourierwork(1:NN), if04aaf ) ! BEWARE: matrix is corrupted;    
+!       call F04AEF( dmatrix(1:NN,1:NN,0), IA, drhs(1:NN,0:0), IB, NN, MM, dlambda(1:NN,0:0), IC, &
+!    fourierwork(1:NN), FAA(1:FIAA,1:NN), FIAA, FBB(1:FIBB,1:NN), FIBB, if04aef )
+    
+       call dgesvx( 'N', 'N', NN, MM, dmatrix(1:NN,1:NN,0), NN, FAA(1:NN,1:NN), NN, ipiv(1:NN),  &
+                 equed, Rdgesvx(1:NN), Cdgesvx(1:NN), drhs(1:NN,0:0), NN, dlambda(1:NN,0:0),    & 
+		 NN, rcond, ferr, berr, work4(1:4*NN), iwork4(1:NN), idgesvx )        
+   
        ;                 ldiota(innout,    0) = dlambda(1,  0) ! return intent out; 21 Apr 13;
        
       case( 1 ) ! Lsvdiota = 0; jderiv = 1; 02 Sep 14;
@@ -685,9 +696,14 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
        
        dmatrix(1:NN,1:NN,0) = omatrix(1:NN,1:NN) ! original "unperturbed" matrix; 30 Jan 13;
        
-      !call F04AAF( dmatrix(1:NN,1:NN,0), IA, drhs(1:NN,1:MM), IB, NN, MM, dlambda(1:NN,1:MM), IC, fourierwork(1:NN), if04aaf )
-       call F04AEF( dmatrix(1:NN,1:NN,0), IA, drhs(1:NN,1:MM), IB, NN, MM, dlambda(1:NN,1:MM), IC, &
-    fourierwork(1:NN), FAA(1:FIAA,1:NN), FIAA, FBB(1:FIBB,1:NN), FIBB, if04aef )
+!       call F04AAF( dmatrix(1:NN,1:NN,0), IA, drhs(1:NN,1:MM), IB, NN, MM, dlambda(1:NN,1:MM), IC, fourierwork(1:NN), if04aaf )
+!       call F04AEF( dmatrix(1:NN,1:NN,0), IA, drhs(1:NN,1:MM), IB, NN, MM, dlambda(1:NN,1:MM), IC, &
+!    fourierwork(1:NN), FAA(1:FIAA,1:NN), FIAA, FBB(1:FIBB,1:NN), FIBB, if04aef )
+    
+       call dgesvx( 'N', 'N', NN, MM, dmatrix(1:NN,1:NN,0), NN, FAA(1:NN,1:NN), NN, ipiv(1:NN),    &
+                   equed, Rdgesvx(1:NN), Cdgesvx(1:NN), drhs(1:NN,1:MM), NN, dlambda(1:NN,1:MM),    & 
+	           NN, rcond, ferr2(1:MM), berr2(1:MM), work4(1:4*NN), iwork4(1:NN), idgesvx )
+    
        if( iflag.eq. 2 ) ldiota(innout, 1:2) = dlambda(1,1:2) ! return intent out; 21 Apr 13;
        if( iflag.eq.-1 ) ldiota(innout,-1  ) = dlambda(1,  1) ! return intent out; 21 Apr 13;
        
@@ -699,14 +715,23 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
       
       cput = GETTIME
       
-      select case( if04aef )                                                                                           !12345678901234567
-      case( 0 )    ; if( Wtr00ab ) write(ounit,1030) cput-cpus, myid, lvol, innout, id, "if04aef", if04aef, cput-lcpu, "solved Fourier ; ", dlambda(1,0)
-      case( 1 )    ;               write(ounit,1030) cput-cpus, myid, lvol, innout, id, "if04aef", if04aef, cput-lcpu, "singular ;       "
-      case( 2 )    ;               write(ounit,1030) cput-cpus, myid, lvol, innout, id, "if04aef", if04aef, cput-lcpu, "input error ;    "
-      case default ;               FATAL( tr00ab, .true., illegal ifail returned by f04arf )
+!      select case( if04aef )                                                                                           !12345678901234567
+!      case( 0 )    ; if( Wtr00ab ) write(ounit,1030) cput-cpus, myid, lvol, innout, id, "if04aef", if04aef, cput-lcpu, "solved Fourier ; ", dlambda(1,0)
+!      case( 1 )    ;               write(ounit,1030) cput-cpus, myid, lvol, innout, id, "if04aef", if04aef, cput-lcpu, "singular ;       "
+!      case( 2 )    ;               write(ounit,1030) cput-cpus, myid, lvol, innout, id, "if04aef", if04aef, cput-lcpu, "input error ;    "
+!      case default ;               FATAL( tr00ab, .true., illegal ifail returned by f04arf )
+!      end select
+!      
+!      FATAL( tr00ab, if04aef.ne.0, failed to construct straight-fieldline angle using F04AEF )
+      
+      select case( idgesvx )                                                                                           !12345678901234567
+      case( 0   )    ; if( Wtr00ab ) write(ounit,1030) cput-cpus, myid, lvol, innout, id, "idgesvx", idgesvx, cput-lcpu, "solved Fourier ; ", dlambda(1,0)
+      case( 1:  )    ;               write(ounit,1030) cput-cpus, myid, lvol, innout, id, "idgesvx", idgesvx, cput-lcpu, "singular ;       "
+      case( :-1 )    ;               write(ounit,1030) cput-cpus, myid, lvol, innout, id, "idgesvx", idgesvx, cput-lcpu, "input error ;    "
+      case default ;               FATAL( tr00ab, .true., illegal ifail returned by dgesvx )
       end select
       
-      FATAL( tr00ab, if04aef.ne.0, failed to construct straight-fieldline angle using F04AEF )
+      FATAL( tr00ab, idgesvx.ne.0, failed to construct straight-fieldline angle using dgesvx )
       
      case( 1 ) ! Lsvdiota = 1; use least-squares to invert linear equations that define the straight fieldline angle; 01 Jul 14;
       
