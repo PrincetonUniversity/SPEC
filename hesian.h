@@ -51,7 +51,6 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
 
   REAL                :: xx(0:NGdof,-2:2), ff(0:NGdof,-2:2), df(1:NGdof)!, deriv
 
-!  INTEGER             :: vvol, idof, ii, mi, ni, irz, issym, isymdiff, lvol, ieval(1:1), igdof, ifd, if03aaf
   INTEGER             :: vvol, idof, ii, mi, ni, irz, issym, isymdiff, lvol, ieval(1:1), igdof, ifd
   REAL                :: oldEnergy(-2:2), error, cpul
 
@@ -621,8 +620,6 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
    
    hessian(1:NGdof,1:NGdof) = ohessian(1:NGdof,1:NGdof)
    
-!  if03aaf = 1 ; IA = NGdof
-!   call F03AAF( hessian(1:IA,1:NGdof), IA, NGdof, determinant, evalr(1:NGdof), if03aaf) ! evalr is used as workspace; 22 Apr 15;
    call dgetrf( NGdof, NGdof, hessian(1:NGdof,1:NGdof), NGdof, ipiv(1:NGdof), idgetrf )
      
    determinant = one
@@ -641,14 +638,6 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
    
    determinant = sgn*determinant                 !correct for the sign of the determinant; 09 Nov 17
    
-!   select case( if03aaf )
-!   case( 0 )    ; write(ounit,'("hesian : " 10x " : myid="i3" ; if03aaf="i3" ;             ; determinant="es13.5" ;")') myid, if03aaf, determinant
-!   case( 1 )    ; write(ounit,'("hesian : " 10x " : myid="i3" ; if03aaf="i3" ; singular    ; determinant="es13.5" ;")') myid, if03aaf, determinant
-!   case( 2 )    ; write(ounit,'("hesian : " 10x " : myid="i3" ; if03aaf="i3" ; overflow    ; determinant="es13.5" ;")') myid, if03aaf, determinant
-!   case( 3 )    ; write(ounit,'("hesian : " 10x " : myid="i3" ; if03aaf="i3" ; underflow   ; determinant="es13.5" ;")') myid, if03aaf, determinant
-!   case( 4 )    ; write(ounit,'("hesian : " 10x " : myid="i3" ; if03aaf="i3" ; input error ; determinant="es13.5" ;")') myid, if03aaf, determinant
-!   case default ; FATAL( hesian, .true., illegal ifail returned from F03AAF )
-!   end select
    select case( idgetrf )
    case( 0   )    ; write(ounit,'("hesian : " 10x " : myid="i3" ; idgetrf="i3" ;             ; determinant="es13.5" ;")') myid, idgetrf, determinant
    case( 1:  )    ; write(ounit,'("hesian : " 10x " : myid="i3" ; idgetrf="i3" ; singular    ; determinant="es13.5" ;")') myid, idgetrf, determinant
