@@ -123,13 +123,8 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
   INTEGER              :: Ndof, label(-3:Nt+2,-3:Nz+2), isym
 
 !required for SVD routines;
-!  LOGICAl              :: lsvd
-!  INTEGER              :: if04jgf, NRA, Lwork, Irank
-!  REAL                 :: sigma
-!  REAL   , allocatable :: work(:)
-  LOGICAl              :: lsvd
-  INTEGER              :: if04jgf, idgelsd, NRA, Lwork, Liwork, Irank, nlvl
-  REAL                 :: sigma, sval(1:NN)
+  INTEGER              :: idgelsd, Lwork, Liwork, Irank, nlvl
+  REAL                 :: sval(1:NN)
   REAL   , allocatable :: work(:)
 
   REAL                 ::                      Bsupt(1:Nt*Nz,-1:2), Bsupz(1:Nt*Nz,-1:2), tdot(1:Nt*Nz)
@@ -716,14 +711,10 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
       
      case( 1 ) ! Lsvdiota = 1; use least-squares to invert linear equations that define the straight fieldline angle; 01 Jul 14;
       
-!      if04jgf = 1 ! check the SVD method that should work when the straight field line angle is not unique; 20 Jun 14;
-      
-!      MM = NN ; NRA = MM ; tol = small ; Lwork = 4 * NN
-      
+
 !     Here Lwork = 12*N + 2*N*SMLSIZ + 8*N*NLVL + N*NRHS + (SMLSIZ+1)**2  and Liwork = (11+3*NLVL)*NN
 !     where SMLSIZ=25 and NLVL = MAX( 0, INT( LOG_2( MIN( M,N )/(SMLSIZ+1) ) ) + 1 )
 !     Warning: this could become insufficient in some cases and produce input error message; 12 Nov 17
-
       nlvl   = max(0, int(log( real(NN)/26 )/log(2.0D0))+1)
       Lwork  = (63+8*nlvl)*NN+676
       Liwork = max(1,11*NN+3*nlvl*NN)
@@ -738,13 +729,9 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
        
        dlambda(1:NN,0) = drhs(1:NN,0) ! on entry, rhs; on exit, solution; 20 Jun 14;
        
-!       call F04JAF( MM, NN, dmatrix(1:NRA,1:NN,0), NRA, dlambda(1:NN,  0), tol,       sigma, Irank, work(1:Lwork), Lwork, if04jaf ) ! reduces to SVD ?;
-!       call F04JGF( MM, NN, dmatrix(1:NRA,1:NN,0), NRA, dlambda(1:NN,  0), tol, lsvd, sigma, Irank, work(1:Lwork), Lwork, if04jgf ) ! reduces to SVD ?;
-
        call dgelsd( NN, NN, 1, dmatrix(1:NN,1:NN,0), NN, dlambda(1:NN,0), NN, sval(1:NN), rcond, Irank, & 
                     work(1:Lwork), Lwork, iwork(1:Liwork), idgelsd ) 
 
-       
        ldiota(innout,0) = dlambda(1,0)
        
       case( 1 ) ! Lsvdiota = 1; jderiv = 1; 02 Sep 14;
@@ -752,8 +739,6 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
        if(     iflag.eq. 2 ) then
         do imupf = 1, 2
          dmatrix(1:NN,1:NN,0) = omatrix(1:NN,1:NN) ; dlambda(1:NN,imupf) = drhs(1:NN,imupf)
-!         call F04JAF( MM, NN, dmatrix(1:NRA,1:NN,0), NRA, dlambda(1:NN,imupf), tol,       sigma, Irank, work(1:Lwork), Lwork, if04jaf )
-!         call F04JGF( MM, NN, dmatrix(1:NRA,1:NN,0), NRA, dlambda(1:NN,imupf), tol, lsvd, sigma, Irank, work(1:Lwork), Lwork, if04jgf )
 
          call dgelsd( NN, NN, 1, dmatrix(1:NN,1:NN,0), NN, dlambda(1:NN,imupf), NN, sval(1:NN), rcond, Irank, & 
                       work(1:Lwork), Lwork, iwork(1:Liwork), idgelsd ) 
@@ -763,8 +748,6 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
        elseif( iflag.eq.-1 ) then
         do imupf = -1, -1
          dmatrix(1:NN,1:NN,0) = omatrix(1:NN,1:NN) ; dlambda(1:NN,imupf) = drhs(1:NN,imupf)
-!         call F04JAF( MM, NN, dmatrix(1:NRA,1:NN,0), NRA, dlambda(1:NN,imupf), tol,       sigma, Irank, work(1:Lwork), Lwork, if04jaf )
-!         call F04JGF( MM, NN, dmatrix(1:NRA,1:NN,0), NRA, dlambda(1:NN,imupf), tol, lsvd, sigma, Irank, work(1:Lwork), Lwork, if04jgf )
 
          call dgelsd( NN, NN, 1, dmatrix(1:NN,1:NN,0), NN, dlambda(1:NN,imupf), NN, sval(1:NN), rcond, Irank, & 
                       work(1:Lwork), Lwork, iwork(1:Liwork), idgelsd ) 
@@ -784,15 +767,6 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
       DALLOCATE(work)
       
       cput = GETTIME
-      
-!      select case( if04jgf )                                                                                           !12345678901234567
-!      case( 0 )    ; if( Wtr00ab)  write(ounit,1030) cput-cpus, myid, lvol, innout, id, "if04jgf", if04jgf, cput-lcpu, "solved Fourier ; ", dlambda(1,0)
-!      case( 1 )    ;               write(ounit,1030) cput-cpus, myid, lvol, innout, id, "if04jgf", if04jgf, cput-lcpu, "input error ;    "
-!      case( 2 )    ;               write(ounit,1030) cput-cpus, myid, lvol, innout, id, "if04jgf", if04jgf, cput-lcpu, "QR failed ;      "
-!      case default ;               FATAL( tr00ab, .true., illegal ifail returned by f04arf )
-!      end select
-      
-!      FATAL( tr00ab, if04jgf.ne.0, failed to construct straight-fieldline angle using F04JGF )
       
       select case( idgelsd )                                                                                           !12345678901234567
       case( 0   )    ; if( Wtr00ab)  write(ounit,1030) cput-cpus, myid, lvol, innout, id, "idgelsd", idgelsd, cput-lcpu, "solved Fourier ; ", dlambda(1,0)
