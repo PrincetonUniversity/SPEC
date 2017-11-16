@@ -37,7 +37,8 @@
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-subroutine pp00ab( lvol, sti, Nz, nPpts, poincaredata, fittedtransform, id02bjf ) 
+!subroutine pp00ab( lvol, sti, Nz, nPpts, poincaredata, fittedtransform, id02bjf ) 
+subroutine pp00ab( lvol, sti, Nz, nPpts, poincaredata, fittedtransform, utflag ) 
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -58,7 +59,8 @@ subroutine pp00ab( lvol, sti, Nz, nPpts, poincaredata, fittedtransform, id02bjf 
   LOCALS
   
   INTEGER, intent(in)  :: lvol, Nz, nPpts
-  INTEGER, intent(out) :: id02bjf
+!  INTEGER, intent(out) :: id02bjf
+  INTEGER, intent(out) :: utflag
   REAL                 :: sti(1:2), poincaredata(1:4,0:Nz-1,1:nPpts), fittedtransform(1:2), dzeta
   
   INTEGER              :: jj, kk
@@ -68,8 +70,16 @@ subroutine pp00ab( lvol, sti, Nz, nPpts, poincaredata, fittedtransform, id02bjf 
   REAL                 :: zst, zend, st(1:Node), rwork(1:Lrwork), tol, stz(1:3), RpZ(1:3), leastfit(1:5)
   CHARACTER            :: RA
   
+  INTEGER, parameter   :: Lenwrk = 32*Node
+  INTEGER              :: rkmethod, outch
+  REAL                 :: hstart, thres(1:Node), rkwork(1:Lenwrk), mchpes, dwarf
+  REAL                 :: zgot, ygot(1:Node), ypgot(1:Node), ymax(1:Node)
+  CHARACTER            :: rktask
+  LOGICAL              :: errass, mesage
+ 
   external             :: bfield
   external             :: D02BJX, D02BJW
+  external             :: SETUP, UT, ENVIRN
   
   BEGIN(pp00ab)
   
@@ -96,7 +106,8 @@ subroutine pp00ab( lvol, sti, Nz, nPpts, poincaredata, fittedtransform, id02bjf 
   
   leastfit(1:5) = (/ zero, zero, zero, ppt(1), one /) ! initialize summation for least squares fit;
   
-  id02bjf = 1 ; poincaredata(1:4,0:Nz-1,1:nPpts) = zero ; fittedtransform(1:2) = - two ! provide dummy defaults;
+!  id02bjf = 1 ; poincaredata(1:4,0:Nz-1,1:nPpts) = zero ; fittedtransform(1:2) = - two ! provide dummy defaults;
+  utflag = 0 ; poincaredata(1:4,0:Nz-1,1:nPpts) = zero ; fittedtransform(1:2) = - two ! provide dummy defaults;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -106,6 +117,9 @@ subroutine pp00ab( lvol, sti, Nz, nPpts, poincaredata, fittedtransform, id02bjf 
    
    zst = zero ! starting Poincare plane;
    
+   call ENVIRN(outch,mchpes,dwarf) ! only dwarf is used to set thres=sqrt(dwarf); thres could be set larger but not smaller
+   thres(1:Node) = sqrt(dwarf); rkmethod = 3; rktask = 'U'; errass = .FALSE. ; hstart = 0.0D0; mesage = .TRUE.
+   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
    do kk = 0, Nz-1 ! loop over toroidal Poincare cross sections;
@@ -114,8 +128,10 @@ subroutine pp00ab( lvol, sti, Nz, nPpts, poincaredata, fittedtransform, id02bjf 
     
     stz(1:3) = (/ ppt(2), mod(ppt(1),pi2), zst /) ! toroidal coordinates;
     
-   !if( abs(stz(1)).gt.one ) then ; write(ounit,1002) myid, lvol, stz(1:2) ; id02bjf = 1 ; exit ! exit do kk loop; 22 Apr 13;
-    if( abs(stz(1)).gt.one ) then ;                                        ; id02bjf = 1 ; exit ! exit do kk loop; 22 Apr 13; ! 28 Feb 17;
+!    if( abs(stz(1)).gt.one ) then ; write(ounit,1002) myid, lvol, stz(1:2) ; id02bjf = 1 ; exit ! exit do kk loop; 22 Apr 13;
+!    if( abs(stz(1)).gt.one ) then ;                                        ; id02bjf = 1 ; exit ! exit do kk loop; 22 Apr 13; ! 28 Feb 17;
+    if( abs(stz(1)).gt.one ) then ;                                        ; utflag = 0 ; exit ! exit do kk loop; 22 Apr 13; ! 28 Feb 17;
+
     endif
 
 1002 format("pp00ab : ", 10x ," : myid=",i3," ; lvol=",i3," ; "3x" : (s,t)=("f21.17" ,"f21.17" ) ;         "3x" ; outside domain ;")
@@ -128,27 +144,54 @@ subroutine pp00ab( lvol, sti, Nz, nPpts, poincaredata, fittedtransform, id02bjf 
     
     zend = zst + (pi2nfp/Nz)
     
-    id02bjf = 1
-    CALL( pp00ab, D02BJF, ( zst, zend, Node, st(1:Node), bfield, tol, RA, D02BJX, D02BJW, rwork(1:Lrwork), id02bjf ) ) ! integrate to next plane;
+!    id02bjf = 1
+!    CALL( pp00ab, D02BJF, ( zst, zend, Node, st(1:Node), bfield, tol, RA, D02BJX, D02BJW, rwork(1:Lrwork), id02bjf ) ) ! integrate to next plane;
+    
+    utflag = 0
+    
+    call SETUP(Node, zst, st(1:Node), pi2, tol, thres(1:Node), rkmethod, rktask, errass, hstart, rkwork(1:Lenwrk), Lenwrk, mesage) 
+    
+    CALL( pp00ab, UT, (bfield, zend, zgot, ygot(1:Node), ypgot(1:Node), ymax(1:Node), rkwork(1:Lenwrk), utflag) )
+    
+    zst = zend
+    
+    st(1:Node) = ygot(1:Node)
+    
+!    cput = GETTIME
+!    select case( id02bjf )                                                !         1         2         3         4         5         6
+!    case( 0 ) ; ! give screen output if error is encountered;             !123456789012345678901234567890123456789012345678901234567890123
+!    case( 1 ) ; write(ounit,2001) cput-cpus, myid, lvol, jj, kk, id02bjf, "input error                                                    "
+!    case( 2 ) ; write(ounit,2001) cput-cpus, myid, lvol, jj, kk, id02bjf, "error integrating field                                        "
+!    case( 3 ) ; write(ounit,2001) cput-cpus, myid, lvol, jj, kk, id02bjf, "tol is too small to take initial step                          "
+!    case( 4 ) ; write(ounit,2001) cput-cpus, myid, lvol, jj, kk, id02bjf, "xsol not reset or xsol is behind x after initial call to output"
+!    case( 5 ) ; write(ounit,2001) cput-cpus, myid, lvol, jj, kk, id02bjf, "xsol not reset or xsol is behind last xsol                     "
+!    case( 6 ) ; write(ounit,2001) cput-cpus, myid, lvol, jj, kk, id02bjf, "termination function did not change sign                       "
+!    case( 7 ) ; write(ounit,2001) cput-cpus, myid, lvol, jj, kk, id02bjf, "serious error                                                  "
+!    case default
+!     FATAL(pp00ab,.true.,illegal value of ifail returned from D02BJF)
+!    end select
     
     cput = GETTIME
-    select case( id02bjf )                                                !         1         2         3         4         5         6
-    case( 0 ) ; ! give screen output if error is encountered;             !123456789012345678901234567890123456789012345678901234567890123
-    case( 1 ) ; write(ounit,2001) cput-cpus, myid, lvol, jj, kk, id02bjf, "input error                                                    "
-    case( 2 ) ; write(ounit,2001) cput-cpus, myid, lvol, jj, kk, id02bjf, "error integrating field                                        "
-    case( 3 ) ; write(ounit,2001) cput-cpus, myid, lvol, jj, kk, id02bjf, "tol is too small to take initial step                          "
-    case( 4 ) ; write(ounit,2001) cput-cpus, myid, lvol, jj, kk, id02bjf, "xsol not reset or xsol is behind x after initial call to output"
-    case( 5 ) ; write(ounit,2001) cput-cpus, myid, lvol, jj, kk, id02bjf, "xsol not reset or xsol is behind last xsol                     "
-    case( 6 ) ; write(ounit,2001) cput-cpus, myid, lvol, jj, kk, id02bjf, "termination function did not change sign                       "
-    case( 7 ) ; write(ounit,2001) cput-cpus, myid, lvol, jj, kk, id02bjf, "serious error                                                  "
+    select case( utflag )                                                !         1         2         3         4         5         6
+    case( 1 ) ; ! give screen output if error is encountered;             !123456789012345678901234567890123456789012345678901234567890123
+    case( 2 ) ; write(ounit,2001) cput-cpus, myid, lvol, jj, kk, utflag, "step size too small (try RK method 2)                          "
+    case( 3 ) ; write(ounit,2001) cput-cpus, myid, lvol, jj, kk, utflag, "integration interrupted (more than 5000 calls)                 "
+    case( 4 ) ; write(ounit,2001) cput-cpus, myid, lvol, jj, kk, utflag, "problem is stiff (UT is not efficient)                         "
+    case( 5 ) ; write(ounit,2001) cput-cpus, myid, lvol, jj, kk, utflag, "odetol/thres too small or RK method too low                    "
+    case( 6 ) ; write(ounit,2001) cput-cpus, myid, lvol, jj, kk, utflag, "integration interrupted (error assessment not possible         "
     case default
-     FATAL(pp00ab,.true.,illegal value of ifail returned from D02BJF)
+     FATAL(pp00ab,.true.,illegal value of ifail returned from UT)
     end select
+    
+!    if(utflag .eq. 1) then
+!     id02bjf = 0
+!    endif
     
 2001 format("pp00ab : ",f10.2," : myid=",i3," ; lvol=",i3," ; (jj,kk)=("i4" ,"i4" ); ifail="i2" ; "a63)
     
-    if( id02bjf.ne.0 ) exit ! an integration error was encountered; exit do kk loop;
-    
+!    if( id02bjf.ne.0 ) exit ! an integration error was encountered; exit do kk loop;
+    if( utflag.ne.1 ) exit ! an integration error was encountered; exit do kk loop;
+   
     ppt(1:2) = (/ st(2), st(1) /) ! again, seems redundant; I think this is only required for packing into poincaredata;
     
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -157,7 +200,8 @@ subroutine pp00ab( lvol, sti, Nz, nPpts, poincaredata, fittedtransform, id02bjf 
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
-   if( id02bjf.ne.0 ) exit ! an integration error was encountered; exit do jj loop;
+!   if( id02bjf.ne.0 ) exit ! an integration error was encountered; exit do jj loop;
+   if( utflag.ne.1 ) exit ! an integration error was encountered; exit do jj loop;
    
    leastfit(1:5) = leastfit(1:5) + (/ (jj*dzeta)**2, (jj*dzeta), (jj*dzeta)*ppt(1), ppt(1), one /) ! least squares fit summation;
    
@@ -167,7 +211,8 @@ subroutine pp00ab( lvol, sti, Nz, nPpts, poincaredata, fittedtransform, id02bjf 
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  if( id02bjf.eq.0 ) then
+!  if( id02bjf.eq.0 ) then
+  if( utflag.eq.1 ) then
    fittedtransform(1:2) = (/ sti(1), ( leastfit(5)*leastfit(3)-leastfit(2)*leastfit(4) ) / ( leastfit(5)*leastfit(1)-leastfit(2)*leastfit(2) ) /)
   endif
   
