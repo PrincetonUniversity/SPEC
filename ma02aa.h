@@ -157,14 +157,14 @@ subroutine ma02aa( lvol, NN )
    
    irevcm = 0 ; ie04uff = 1 ! reverse communication loop control; ifail error flag;
    
-! supply optional parameters to E04UFF;
+! supply optional parameters to E04UFF; NAG calls commented out (this part of the code so far not used); 17 Nov 17
    
-   call E04UEF('Nolist')               ! turn of screen output;
-   call E04UEF('Print Level = 0')      ! turn of screen output;
-   call E04UEF('Derivative Level = 3') ! assume all derivatives are provided by user;
-   call E04UEF('Verify Level = -1')    ! do not verify derivatives using finite-differences; default is Verify Level = 0, which does verify gradients;
-   write(optionalparameter,'("Major Iteration Limit = "i9)') 2**2 * max( 50, 3 * ( NN + NLinearConstraints ) + 10 * NNonLinearConstraints )
-   call E04UEF(optionalparameter)
+!   call E04UEF('Nolist')               ! turn of screen output;
+!   call E04UEF('Print Level = 0')      ! turn of screen output;
+!   call E04UEF('Derivative Level = 3') ! assume all derivatives are provided by user;
+!   call E04UEF('Verify Level = -1')    ! do not verify derivatives using finite-differences; default is Verify Level = 0, which does verify gradients;
+!   write(optionalparameter,'("Major Iteration Limit = "i9)') 2**2 * max( 50, 3 * ( NN + NLinearConstraints ) + 10 * NNonLinearConstraints )
+!   call E04UEF(optionalparameter)
    
 ! pre-calculate some matrix vector products;
    
@@ -175,71 +175,71 @@ subroutine ma02aa( lvol, NN )
    psiMFpsi    = half * sum( dpsi(1:2) * matmul( dMF(1: 2,1: 2), dpsi(1:2) ) )
    
    
-   do ! reverse communication loop;
-    
-    
-    call E04UFF( irevcm, &
-                 NN, NLinearConstraints, NNonLinearConstraints, LDA, LDCJ, LDR, &
-                 LinearConstraintMatrix(1:LDA,1:1), &
-                 LowerBound(1:NN+NLinearConstraints+NNonLinearConstraints), UpperBound(1:NN+NLinearConstraints+NNonLinearConstraints), &
-                 iterations, Istate(1:NN+NLinearConstraints+NNonLinearConstraints), &
-                 constraintfunction(1:NNonLinearConstraints), constraintgradient(1:LDCJ,1:NN), &
-                 multipliers(1:NN+NLinearConstraints+NNonLinearConstraints), &
-                 objectivefunction, objectivegradient(1:NN), &
-                 RS(1:LDR,1:NN), &
-                 xi(1:NN), &
-                 NEEDC(1:NNonLinearConstraints), IWk(1:LIWk), LIWk, RWk(1:LRWk), LRWk, ie04uff )
-
-    if( irevcm.eq.1 .or. irevcm.eq.2 .or. irevcm.eq.3 ) Mxi(1:NN) = matmul( dMA(1:NN,1:NN), xi(1:NN) ) ! calculate objective  functional and/or gradient;
-    if( irevcm.eq.4 .or. irevcm.eq.5 .or. irevcm.eq.6 ) Mxi(1:NN) = matmul( dMD(1:NN,1:NN), xi(1:NN) ) ! calculate constraint functional and/or gradient;
-    
-    if( irevcm.eq.1 .or. irevcm.eq.3 ) objectivefunction       = half * sum( xi(1:NN) * Mxi(1:NN) ) + sum( xi(1:NN) * MBpsi(1:NN) ) + psiMCpsi
-    if( irevcm.eq.2 .or. irevcm.eq.3 ) objectivegradient(1:NN) =                        Mxi(1:NN)   +                 MBpsi(1:NN)
-    
-    if( irevcm.eq.4 .or. irevcm.eq.6 .and. NEEDC(1).gt.0 ) then
-     constraintfunction(1     ) = half * sum( xi(1:NN) * Mxi(1:NN) ) + sum( xi(1:NN) * MEpsi(1:NN) ) + psiMFpsi
-    endif
-    
-    if( irevcm.eq.5 .or. irevcm.eq.6 .and. NEEDC(1).gt.0 ) then
-     constraintgradient(1,1:NN) =                        Mxi(1:NN)   +                 MEpsi(1:NN) 
-    endif
-    
-    if( irevcm.eq.0 ) then ! final exit;
+!   do ! reverse communication loop; NAG calls commented out (this part of the code so far not used); 17 Nov 17
+!    
+!    
+!    call E04UFF( irevcm, &
+!                 NN, NLinearConstraints, NNonLinearConstraints, LDA, LDCJ, LDR, &
+!                 LinearConstraintMatrix(1:LDA,1:1), &
+!                 LowerBound(1:NN+NLinearConstraints+NNonLinearConstraints), UpperBound(1:NN+NLinearConstraints+NNonLinearConstraints), &
+!                 iterations, Istate(1:NN+NLinearConstraints+NNonLinearConstraints), &
+!                constraintfunction(1:NNonLinearConstraints), constraintgradient(1:LDCJ,1:NN), &
+!                 multipliers(1:NN+NLinearConstraints+NNonLinearConstraints), &
+!                 objectivefunction, objectivegradient(1:NN), &
+!                 RS(1:LDR,1:NN), &
+!                 xi(1:NN), &
+!                 NEEDC(1:NNonLinearConstraints), IWk(1:LIWk), LIWk, RWk(1:LRWk), LRWk, ie04uff )
+!
+!    if( irevcm.eq.1 .or. irevcm.eq.2 .or. irevcm.eq.3 ) Mxi(1:NN) = matmul( dMA(1:NN,1:NN), xi(1:NN) ) ! calculate objective  functional and/or gradient;
+!    if( irevcm.eq.4 .or. irevcm.eq.5 .or. irevcm.eq.6 ) Mxi(1:NN) = matmul( dMD(1:NN,1:NN), xi(1:NN) ) ! calculate constraint functional and/or gradient;
+!    
+!    if( irevcm.eq.1 .or. irevcm.eq.3 ) objectivefunction       = half * sum( xi(1:NN) * Mxi(1:NN) ) + sum( xi(1:NN) * MBpsi(1:NN) ) + psiMCpsi
+!    if( irevcm.eq.2 .or. irevcm.eq.3 ) objectivegradient(1:NN) =                        Mxi(1:NN)   +                 MBpsi(1:NN)
+!    
+!   if( irevcm.eq.4 .or. irevcm.eq.6 .and. NEEDC(1).gt.0 ) then
+!    constraintfunction(1     ) = half * sum( xi(1:NN) * Mxi(1:NN) ) + sum( xi(1:NN) * MEpsi(1:NN) ) + psiMFpsi
+!   endif
+!    
+!    if( irevcm.eq.5 .or. irevcm.eq.6 .and. NEEDC(1).gt.0 ) then
+!     constraintgradient(1,1:NN) =                        Mxi(1:NN)   +                 MEpsi(1:NN) 
+!    endif
+!    
+!    if( irevcm.eq.0 ) then ! final exit;
+!     
+!     cput = GETTIME
+!     
+!     select case(ie04uff)
+!     case( :-1 )  
+!      write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "user enforced termination ;     "
+!     case(   0 )  
+!     if( Wma02aa ) write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "success ;                       "
+!     case(   1 )  
+!      if( Wma02aa ) write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "not converged;                  "
+!     case(   2 )  
+!      write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "infeasible (linear) ;           "
+!     case(   3 ) 
+!      write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "infeasible (nonlinear) ;        "
+!     case(   4 )   
+!      write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "major iteration limit reached ; "
+!     case(   6 )  
+!     if( Wma02aa ) write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "could not be improved ;         "
+!     case(   7 )  
+!     write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "derivatives appear incorrect ;  "
+!    case(   9 )  
+!     write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "input error ;                   "
+!     case default
+!     FATAL( ma02aa, .true., illegal ifail returned by E04UFF )
+!    end select
      
-     cput = GETTIME
-     
-     select case(ie04uff)
-     case( :-1 )  
-      write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "user enforced termination ;     "
-     case(   0 )  
-      if( Wma02aa ) write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "success ;                       "
-     case(   1 )  
-      if( Wma02aa ) write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "not converged;                  "
-     case(   2 )  
-      write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "infeasible (linear) ;           "
-     case(   3 ) 
-      write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "infeasible (nonlinear) ;        "
-     case(   4 )   
-      write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "major iteration limit reached ; "
-     case(   6 )  
-      if( Wma02aa ) write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "could not be improved ;         "
-     case(   7 )  
-      write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "derivatives appear incorrect ;  "
-     case(   9 )  
-      write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "input error ;                   "
-     case default
-      FATAL( ma02aa, .true., illegal ifail returned by E04UFF )
-     end select
-     
-     if( irevcm.eq.0 .or. irevcm.eq.1 .or. irevcm.eq.6 ) ImagneticOK(lvol) = .true. ! set error flag; used elsewhere; 26 Feb 13;
-     
-     mu(lvol) = multipliers( NN + NLinearConstraints + NNonLinearConstraints ) ! helicity multiplier, or so it seems: NAG document is not completely clear;
-     
-     exit ! sequential quadratic programming method of constructing Beltrami field is finished;
-     
-    endif ! end of if( irevcm.eq.0 ) then;
-    
-   enddo ! end of do ! reverse communication loop;
+!    if( irevcm.eq.0 .or. irevcm.eq.1 .or. irevcm.eq.6 ) ImagneticOK(lvol) = .true. ! set error flag; used elsewhere; 26 Feb 13;
+!    
+!     mu(lvol) = multipliers( NN + NLinearConstraints + NNonLinearConstraints ) ! helicity multiplier, or so it seems: NAG document is not completely clear;
+!     
+!     exit ! sequential quadratic programming method of constructing Beltrami field is finished;
+!     
+!    endif ! end of if( irevcm.eq.0 ) then;
+!    
+!   enddo ! end of do ! reverse communication loop;
    
    
    DALLOCATE(RWk)
