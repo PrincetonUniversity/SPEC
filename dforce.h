@@ -700,8 +700,11 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
           solution(1:NN,-1) = abs(  solution(1:NN,-1) ) ! 01 Jul 14;
          isolution(1:NN, 0) = abs( isolution(1:NN, 0) )
         
-         ifail = 0 ; call M01CAF(  solution(1:NN,-1), 1, NN, 'D', ifail ) ! sorting screen output; this corrupts; 01 Jul 14;
-         ifail = 0 ; call M01CAF( isolution(1:NN, 0), 1, NN, 'D', ifail ) ! sorting screen output; this corrupts;
+!         ifail = 0 ; call M01CAF(  solution(1:NN,-1), 1, NN, 'D', ifail ) ! sorting screen output; this corrupts; 01 Jul 14;
+!         ifail = 0 ; call M01CAF( isolution(1:NN, 0), 1, NN, 'D', ifail ) ! sorting screen output; this corrupts;
+        
+         ifail = 0 ; call dlasrt( 'D', NN,  solution(1:NN,-1), ifail ) ! sorting screen output; this corrupts; 27 Nov 17;
+         ifail = 0 ; call dlasrt( 'D', NN, isolution(1:NN, 0), ifail ) ! sorting screen output; this corrupts;        
          
          cput = GETTIME
 
