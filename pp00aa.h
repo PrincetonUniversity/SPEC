@@ -100,7 +100,7 @@ subroutine pp00aa( lvol )
   
   INTEGER, intent(in)  :: lvol
   INTEGER              :: lnPtrj, ioff, itrj
-  INTEGER, allocatable :: id02bjf(:)
+  INTEGER, allocatable :: utflag(:)
   REAL                 :: sti(1:2), ltransform(1:2)
   REAL, allocatable    :: data(:,:,:), fiota(:,:)
   CHARACTER            :: svol*4 ! perhaps this should be global; 11 Aug 13;
@@ -128,9 +128,9 @@ subroutine pp00aa( lvol )
   SALLOCATE( data, (1:4,0:Nz-1,1:nPpts), zero ) ! for block writing to file (allows faster reading of output data files for post-processing plotting routines);
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-1002 format("pp00aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; ",i3," : (s,t)=(",f21.17," ,",f21.17," ) ;":" id02bjf=",i3," ; transform=",es23.15,&
-  " ;":" error=",es13.5," ;")
+   
+1002 format("pp00aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; ",i3," : (s,t)=(",f21.17," ,",f21.17," ) ;":" utflag=",i3," ; transform=",es23.15,&
+  " ;":" error=",es13.5," ;")  
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -138,7 +138,7 @@ subroutine pp00aa( lvol )
   else                              ; ioff = 0
   endif
   
-  SALLOCATE( id02bjf, (ioff:lnPtrj), 0 ) ! error flag that indicates if fieldlines successfully followed; 22 Apr 13;
+  SALLOCATE( utflag, (ioff:lnPtrj), 0 ) ! error flag that indicates if fieldlines successfully followed; 22 Apr 13;
   
   SALLOCATE( fiota, (ioff:lnPtrj,1:2), zero ) ! will always need fiota(0,1:2);
   
@@ -151,22 +151,22 @@ subroutine pp00aa( lvol )
    if( itrj.eq.     0 ) sti(1) = - one ! avoid machine precision errors; 08 Feb 16;
    if( itrj.eq.lnPtrj ) sti(1) =   one ! avoid machine precision errors; 08 Feb 16;
    
-   CALL( pp00aa, pp00ab, ( lvol, sti(1:2), Nz, nPpts, data(1:4,0:Nz-1,1:nPpts), fiota(itrj,1:2), id02bjf(itrj) ) )
+   CALL( pp00aa, pp00ab, ( lvol, sti(1:2), Nz, nPpts, data(1:4,0:Nz-1,1:nPpts), fiota(itrj,1:2), utflag(itrj) ) )      
    
    if( Wpp00aa ) then
     cput = GETTIME
     if( Lconstraint.eq.1 ) then
-     if( itrj.eq.0                      ) write(ounit,1002) cput-cpus, myid, lvol, itrj, sti(1:2), id02bjf(itrj), fiota(itrj,2), fiota(itrj,2)-oita(lvol-1)
-     if( itrj.gt.0 .and. itrj.lt.lnPtrj ) write(ounit,1002) cput-cpus, myid, lvol, itrj, sti(1:2), id02bjf(itrj), fiota(itrj,2)
-     if(                 itrj.eq.lnPtrj ) write(ounit,1002) cput-cpus, myid, lvol, itrj, sti(1:2), id02bjf(itrj), fiota(itrj,2), fiota(itrj,2)-iota(lvol  )
-    else                                ; write(ounit,1002) cput-cpus, myid, lvol, itrj, sti(1:2), id02bjf(itrj), fiota(itrj,2)
+     if( itrj.eq.0                      ) write(ounit,1002) cput-cpus, myid, lvol, itrj, sti(1:2), utflag(itrj), fiota(itrj,2), fiota(itrj,2)-oita(lvol-1)
+     if( itrj.gt.0 .and. itrj.lt.lnPtrj ) write(ounit,1002) cput-cpus, myid, lvol, itrj, sti(1:2), utflag(itrj), fiota(itrj,2)
+     if(                 itrj.eq.lnPtrj ) write(ounit,1002) cput-cpus, myid, lvol, itrj, sti(1:2), utflag(itrj), fiota(itrj,2), fiota(itrj,2)-iota(lvol  )
+    else                                ; write(ounit,1002) cput-cpus, myid, lvol, itrj, sti(1:2), utflag(itrj), fiota(itrj,2)
     endif
    endif
    
-   if( id02bjf(itrj).eq.0 ) then ! will only write successfully followed trajectories to file; 28 Jan 13;
+   if( utflag(itrj).eq.1 ) then ! will only write successfully followed trajectories to file; 28 Jan 13;
     write(lunit+myid) Nz, nPpts
     write(lunit+myid) data(1:4,0:Nz-1,1:nPpts)
-   endif
+   endif   
    
   enddo ! end of do itrj; 25 Jan 13;
 
@@ -188,8 +188,8 @@ subroutine pp00aa( lvol )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  DALLOCATE(id02bjf)
-  
+  DALLOCATE(utflag)
+
   DALLOCATE(fiota)
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

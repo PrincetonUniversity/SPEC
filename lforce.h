@@ -161,7 +161,7 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dAt, dAz, XX, YY, length, DDl, MMl
                         mn, im, in, regumm, &
                         ijreal, ijimag, jireal, jiimag, &
                         efmn, ofmn, cfmn, sfmn, evmn, odmn, comn, simn, &
-                        trigm, trign, trigwk, isr, Nt, Nz, &
+                        Nt, Nz, &
                         Ate, Aze, Ato, Azo, &
                         TT, &
                         sg, guvij, iRij, iZij, dRij, dZij, tRij, tZij, &
@@ -240,7 +240,7 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dAt, dAz, XX, YY, length, DDl, MMl
     
   enddo ! end of do ii; 20 Feb 13;
 
-  call invfft( mn, im, in, efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt(1:Ntz), dAz(1:Ntz), isr, trigm, trign, trigwk ) ! map to real space;
+  call invfft( mn, im, in, efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt(1:Ntz), dAz(1:Ntz) ) ! map to real space;
    
   dBB(1:Ntz) = half * (         dAz(1:Ntz   )*dAz(1:Ntz   )*guvij(1:Ntz,2,2,0) &
                         - two * dAz(1:Ntz   )*dAt(1:Ntz   )*guvij(1:Ntz,2,3,0) &
@@ -266,11 +266,11 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dAt, dAz, XX, YY, length, DDl, MMl
     
     call invfft( mn, im(1:mn), in(1:mn),            iRbc(1:mn,lvol-1+ivol),              iRbs(1:mn,lvol-1+ivol), &
                                                     iZbc(1:mn,lvol-1+ivol),              iZbs(1:mn,lvol-1+ivol), & 
-                                         Nt, Nz, iRij(1:Ntz,lvol-1+ivol), iZij(1:Ntz,lvol-1+ivol), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz) )
+                                         Nt, Nz, iRij(1:Ntz,lvol-1+ivol), iZij(1:Ntz,lvol-1+ivol) )
 
     call invfft( mn, im(1:mn), in(1:mn), im(1:mn) * iRbs(1:mn,lvol-1+ivol), - im(1:mn) * iRbc(1:mn,lvol-1+ivol), &
                                          im(1:mn) * iZbs(1:mn,lvol-1+ivol), - im(1:mn) * iZbc(1:mn,lvol-1+ivol), &
-                                         Nt, Nz, tRij(1:Ntz,lvol-1+ivol), tZij(1:Ntz,lvol-1+ivol), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz) )
+                                         Nt, Nz, tRij(1:Ntz,lvol-1+ivol), tZij(1:Ntz,lvol-1+ivol) )
    enddo ! end of do ivol = 0, 1 ; 18 Jul 14;
    
    dRij(1:Ntz,lvol) = iRij(1:Ntz,lvol) - iRij(1:Ntz,lvol-1)
@@ -290,7 +290,7 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dAt, dAz, XX, YY, length, DDl, MMl
     endif ! end of if( NOTstellsym ) ; 20 Feb 13;
     
     call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), &
-                 Nt, Nz, XX(1:Ntz), YY(1:Ntz), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz) )
+                 Nt, Nz, XX(1:Ntz), YY(1:Ntz) )
     
     if( YESstellsym ) then ; DDl = sum(              ( iRbc(1:mn,lvol)**2 + iZbs(1:mn,lvol)**2                                           ) )
      ;                     ; MMl = sum( mmpp(1:mn) * ( iRbc(1:mn,lvol)**2 + iZbs(1:mn,lvol)**2                                           ) ) / DDl
@@ -320,14 +320,14 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dAt, dAz, XX, YY, length, DDl, MMl
 #endif
   
   ;ifail = 0
-  ;call tfft( Nt, Nz, ijreal(1:Ntz), IIl(1:Ntz  ), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz), & ! compute force-imbalance and spectral constraints;
+  ;call tfft( Nt, Nz, ijreal(1:Ntz), IIl(1:Ntz  ), & ! compute force-imbalance and spectral constraints;
               mn, im(1:mn), in(1:mn), Bemn(1:mn,lvol,iocons), Bomn(1:mn,lvol,iocons), Iemn(1:mn,lvol       ), Iomn(1:mn,lvol       ), ifail )
   
   if( Igeometry.ge.3 ) then ! add minimal length constraint; 18 Jul 14;
    
    ifail = 0 ; ijimag(1:Ntz) = zero
 
-   call tfft( Nt, Nz, dLL(1:Ntz), ijimag(1:Ntz), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz), &
+   call tfft( Nt, Nz, dLL(1:Ntz), ijimag(1:Ntz), &
               mn, im(1:mn), in(1:mn), Semn(1:mn,lvol,iocons), Somn(1:mn,lvol,iocons), Pemn(1:mn,lvol,iocons), Pomn(1:mn,lvol,iocons), ifail )
 
 #ifdef DEBUG

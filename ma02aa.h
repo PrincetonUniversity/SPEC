@@ -49,7 +49,7 @@ subroutine ma02aa( lvol, NN )
   REAL                 :: tol, dpsi(1:2), lastcpu
   CHARACTER            :: packorunpack
   
-  INTEGER              :: Nxdof, Ndof, Ldfjac, iflag, maxfev, mode, LRR, nfev, njev, nprint, ic05pcf
+  INTEGER              :: Nxdof, Ndof, Ldfjac, iflag, maxfev, mode, LRR, nfev, njev, nprint, ihybrj
   REAL                 :: Xdof(1:2), Fdof(1:2), Ddof(1:2,1:2), oDdof(1:2,1:2)
   REAL                 :: factor, diag(1:2), RR(1:2*(2+1)/2), QTF(1:2), wk(1:2,1:4)
   
@@ -67,8 +67,8 @@ subroutine ma02aa( lvol, NN )
   REAL, allocatable    :: dsolution(:,:,:,:)
 #endif
   
-!required for C05PBF;
-  INTEGER              :: ic05pbf, Ldfmuaa, lengthwork
+!required for hybrj1;
+  INTEGER              :: ihybrj1, Ldfmuaa, lengthwork
   REAL                 :: DFxi(0:NN,0:NN), work(1:(1+NN)*(1+NN+13)/2), NewtonError
   external             :: df00ab
   
@@ -157,14 +157,14 @@ subroutine ma02aa( lvol, NN )
    
    irevcm = 0 ; ie04uff = 1 ! reverse communication loop control; ifail error flag;
    
-! supply optional parameters to E04UFF;
+! supply optional parameters to E04UFF; NAG calls commented out (this part of the code so far not used); 17 Nov 17
    
-   call E04UEF('Nolist')               ! turn of screen output;
-   call E04UEF('Print Level = 0')      ! turn of screen output;
-   call E04UEF('Derivative Level = 3') ! assume all derivatives are provided by user;
-   call E04UEF('Verify Level = -1')    ! do not verify derivatives using finite-differences; default is Verify Level = 0, which does verify gradients;
-   write(optionalparameter,'("Major Iteration Limit = "i9)') 2**2 * max( 50, 3 * ( NN + NLinearConstraints ) + 10 * NNonLinearConstraints )
-   call E04UEF(optionalparameter)
+!   call E04UEF('Nolist')               ! turn of screen output;
+!   call E04UEF('Print Level = 0')      ! turn of screen output;
+!   call E04UEF('Derivative Level = 3') ! assume all derivatives are provided by user;
+!   call E04UEF('Verify Level = -1')    ! do not verify derivatives using finite-differences; default is Verify Level = 0, which does verify gradients;
+!   write(optionalparameter,'("Major Iteration Limit = "i9)') 2**2 * max( 50, 3 * ( NN + NLinearConstraints ) + 10 * NNonLinearConstraints )
+!   call E04UEF(optionalparameter)
    
 ! pre-calculate some matrix vector products;
    
@@ -175,71 +175,71 @@ subroutine ma02aa( lvol, NN )
    psiMFpsi    = half * sum( dpsi(1:2) * matmul( dMF(1: 2,1: 2), dpsi(1:2) ) )
    
    
-   do ! reverse communication loop;
-    
-    
-    call E04UFF( irevcm, &
-                 NN, NLinearConstraints, NNonLinearConstraints, LDA, LDCJ, LDR, &
-                 LinearConstraintMatrix(1:LDA,1:1), &
-                 LowerBound(1:NN+NLinearConstraints+NNonLinearConstraints), UpperBound(1:NN+NLinearConstraints+NNonLinearConstraints), &
-                 iterations, Istate(1:NN+NLinearConstraints+NNonLinearConstraints), &
-                 constraintfunction(1:NNonLinearConstraints), constraintgradient(1:LDCJ,1:NN), &
-                 multipliers(1:NN+NLinearConstraints+NNonLinearConstraints), &
-                 objectivefunction, objectivegradient(1:NN), &
-                 RS(1:LDR,1:NN), &
-                 xi(1:NN), &
-                 NEEDC(1:NNonLinearConstraints), IWk(1:LIWk), LIWk, RWk(1:LRWk), LRWk, ie04uff )
-
-    if( irevcm.eq.1 .or. irevcm.eq.2 .or. irevcm.eq.3 ) Mxi(1:NN) = matmul( dMA(1:NN,1:NN), xi(1:NN) ) ! calculate objective  functional and/or gradient;
-    if( irevcm.eq.4 .or. irevcm.eq.5 .or. irevcm.eq.6 ) Mxi(1:NN) = matmul( dMD(1:NN,1:NN), xi(1:NN) ) ! calculate constraint functional and/or gradient;
-    
-    if( irevcm.eq.1 .or. irevcm.eq.3 ) objectivefunction       = half * sum( xi(1:NN) * Mxi(1:NN) ) + sum( xi(1:NN) * MBpsi(1:NN) ) + psiMCpsi
-    if( irevcm.eq.2 .or. irevcm.eq.3 ) objectivegradient(1:NN) =                        Mxi(1:NN)   +                 MBpsi(1:NN)
-    
-    if( irevcm.eq.4 .or. irevcm.eq.6 .and. NEEDC(1).gt.0 ) then
-     constraintfunction(1     ) = half * sum( xi(1:NN) * Mxi(1:NN) ) + sum( xi(1:NN) * MEpsi(1:NN) ) + psiMFpsi
-    endif
-    
-    if( irevcm.eq.5 .or. irevcm.eq.6 .and. NEEDC(1).gt.0 ) then
-     constraintgradient(1,1:NN) =                        Mxi(1:NN)   +                 MEpsi(1:NN) 
-    endif
-    
-    if( irevcm.eq.0 ) then ! final exit;
+!   do ! reverse communication loop; NAG calls commented out (this part of the code so far not used); 17 Nov 17
+!    
+!    
+!    call E04UFF( irevcm, &
+!                 NN, NLinearConstraints, NNonLinearConstraints, LDA, LDCJ, LDR, &
+!                 LinearConstraintMatrix(1:LDA,1:1), &
+!                 LowerBound(1:NN+NLinearConstraints+NNonLinearConstraints), UpperBound(1:NN+NLinearConstraints+NNonLinearConstraints), &
+!                 iterations, Istate(1:NN+NLinearConstraints+NNonLinearConstraints), &
+!                constraintfunction(1:NNonLinearConstraints), constraintgradient(1:LDCJ,1:NN), &
+!                 multipliers(1:NN+NLinearConstraints+NNonLinearConstraints), &
+!                 objectivefunction, objectivegradient(1:NN), &
+!                 RS(1:LDR,1:NN), &
+!                 xi(1:NN), &
+!                 NEEDC(1:NNonLinearConstraints), IWk(1:LIWk), LIWk, RWk(1:LRWk), LRWk, ie04uff )
+!
+!    if( irevcm.eq.1 .or. irevcm.eq.2 .or. irevcm.eq.3 ) Mxi(1:NN) = matmul( dMA(1:NN,1:NN), xi(1:NN) ) ! calculate objective  functional and/or gradient;
+!    if( irevcm.eq.4 .or. irevcm.eq.5 .or. irevcm.eq.6 ) Mxi(1:NN) = matmul( dMD(1:NN,1:NN), xi(1:NN) ) ! calculate constraint functional and/or gradient;
+!    
+!    if( irevcm.eq.1 .or. irevcm.eq.3 ) objectivefunction       = half * sum( xi(1:NN) * Mxi(1:NN) ) + sum( xi(1:NN) * MBpsi(1:NN) ) + psiMCpsi
+!    if( irevcm.eq.2 .or. irevcm.eq.3 ) objectivegradient(1:NN) =                        Mxi(1:NN)   +                 MBpsi(1:NN)
+!    
+!   if( irevcm.eq.4 .or. irevcm.eq.6 .and. NEEDC(1).gt.0 ) then
+!    constraintfunction(1     ) = half * sum( xi(1:NN) * Mxi(1:NN) ) + sum( xi(1:NN) * MEpsi(1:NN) ) + psiMFpsi
+!   endif
+!    
+!    if( irevcm.eq.5 .or. irevcm.eq.6 .and. NEEDC(1).gt.0 ) then
+!     constraintgradient(1,1:NN) =                        Mxi(1:NN)   +                 MEpsi(1:NN) 
+!    endif
+!    
+!    if( irevcm.eq.0 ) then ! final exit;
+!     
+!     cput = GETTIME
+!     
+!     select case(ie04uff)
+!     case( :-1 )  
+!      write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "user enforced termination ;     "
+!     case(   0 )  
+!     if( Wma02aa ) write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "success ;                       "
+!     case(   1 )  
+!      if( Wma02aa ) write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "not converged;                  "
+!     case(   2 )  
+!      write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "infeasible (linear) ;           "
+!     case(   3 ) 
+!      write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "infeasible (nonlinear) ;        "
+!     case(   4 )   
+!      write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "major iteration limit reached ; "
+!     case(   6 )  
+!     if( Wma02aa ) write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "could not be improved ;         "
+!     case(   7 )  
+!     write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "derivatives appear incorrect ;  "
+!    case(   9 )  
+!     write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "input error ;                   "
+!     case default
+!     FATAL( ma02aa, .true., illegal ifail returned by E04UFF )
+!    end select
      
-     cput = GETTIME
-     
-     select case(ie04uff)
-     case( :-1 )  
-      write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "user enforced termination ;     "
-     case(   0 )  
-      if( Wma02aa ) write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "success ;                       "
-     case(   1 )  
-      if( Wma02aa ) write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "not converged;                  "
-     case(   2 )  
-      write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "infeasible (linear) ;           "
-     case(   3 ) 
-      write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "infeasible (nonlinear) ;        "
-     case(   4 )   
-      write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "major iteration limit reached ; "
-     case(   6 )  
-      if( Wma02aa ) write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "could not be improved ;         "
-     case(   7 )  
-      write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "derivatives appear incorrect ;  "
-     case(   9 )  
-      write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "input error ;                   "
-     case default
-      FATAL( ma02aa, .true., illegal ifail returned by E04UFF )
-     end select
-     
-     if( irevcm.eq.0 .or. irevcm.eq.1 .or. irevcm.eq.6 ) ImagneticOK(lvol) = .true. ! set error flag; used elsewhere; 26 Feb 13;
-     
-     mu(lvol) = multipliers( NN + NLinearConstraints + NNonLinearConstraints ) ! helicity multiplier, or so it seems: NAG document is not completely clear;
-     
-     exit ! sequential quadratic programming method of constructing Beltrami field is finished;
-     
-    endif ! end of if( irevcm.eq.0 ) then;
-    
-   enddo ! end of do ! reverse communication loop;
+!    if( irevcm.eq.0 .or. irevcm.eq.1 .or. irevcm.eq.6 ) ImagneticOK(lvol) = .true. ! set error flag; used elsewhere; 26 Feb 13;
+!    
+!     mu(lvol) = multipliers( NN + NLinearConstraints + NNonLinearConstraints ) ! helicity multiplier, or so it seems: NAG document is not completely clear;
+!     
+!     exit ! sequential quadratic programming method of constructing Beltrami field is finished;
+!     
+!    endif ! end of if( irevcm.eq.0 ) then;
+!    
+!   enddo ! end of do ! reverse communication loop;
    
    
    DALLOCATE(RWk)
@@ -296,9 +296,8 @@ subroutine ma02aa( lvol, NN )
    psiMCpsi    = half * sum( dpsi(1:2) * matmul( dMC(1: 2,1: 2), dpsi(1:2) ) )
    psiMFpsi    = half * sum( dpsi(1:2) * matmul( dMF(1: 2,1: 2), dpsi(1:2) ) )
    
-   ic05pbf = 1
-   call C05PBF( df00ab, pNN, xi(0:NN), Fxi(0:NN), DFxi(0:NN,0:NN), Ldfmuaa, tol, work(1:lengthwork), lengthwork, ic05pbf )
-   
+   call hybrj1( df00ab, pNN, xi(0:NN), Fxi(0:NN), DFxi(0:NN,0:NN), Ldfmuaa, tol, ihybrj1, work(1:lengthwork), lengthwork )
+
    NewtonError = maxval( abs( Fxi(0:NN) ) )
    
    mu(lvol) = xi(0)
@@ -307,21 +306,22 @@ subroutine ma02aa( lvol, NN )
    CALL( ma02aa, packab( packorunpack, lvol, NN, xi(1:NN), ideriv ) )
    
    cput = GETTIME
-   select case( ic05pbf )
-   case(-1 )    
-    ;             write(ounit,1020) cput-cpus, myid, lvol, ic05pbf, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, NewtonError, "user termination ;"
-   case( 0 )    
-    if( Wma02aa ) write(ounit,1020) cput-cpus, myid, lvol, ic05pbf, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, NewtonError, "success ;         "
+
+   select case( ihybrj1 )
+   case( :-1 )    
+    ;             write(ounit,1020) cput-cpus, myid, lvol, ihybrj1, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, NewtonError, "user termination ;"
    case( 1 )    
-    ;             write(ounit,1020) cput-cpus, myid, lvol, ic05pbf, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, NewtonError, "input error ;     "
+    if( Wma02aa ) write(ounit,1020) cput-cpus, myid, lvol, ihybrj1, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, NewtonError, "success ;         "
+   case( 0 )    
+    ;             write(ounit,1020) cput-cpus, myid, lvol, ihybrj1, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, NewtonError, "input error ;     "
    case( 2 )    
-    ;             write(ounit,1020) cput-cpus, myid, lvol, ic05pbf, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, NewtonError, "max. evaluations ;"
+    ;             write(ounit,1020) cput-cpus, myid, lvol, ihybrj1, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, NewtonError, "max. evaluations ;"
    case( 3 )    
-    ;             write(ounit,1020) cput-cpus, myid, lvol, ic05pbf, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, NewtonError, "xtol too small ;  "
+    ;             write(ounit,1020) cput-cpus, myid, lvol, ihybrj1, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, NewtonError, "xtol too small ;  "
    case( 4 )    
-    ;             write(ounit,1020) cput-cpus, myid, lvol, ic05pbf, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, NewtonError, "bad progress ;    "
+    ;             write(ounit,1020) cput-cpus, myid, lvol, ihybrj1, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, NewtonError, "bad progress ;    "
    case default 
-    FATAL( ma02aa, .true., illegal ifail returned by C05PBF )
+    FATAL( ma02aa, .true., illegal ifail returned by hybrj1 )
    end select
    
 #ifdef DEBUG
@@ -444,7 +444,7 @@ subroutine ma02aa( lvol, NN )
     
    case( 0   ) ! need only call mp00ac once, to calculate Beltrami field for given helicity multiplier and enclosed fluxes; 28 Jan 13;
     
-    iflag = 1 ; Ndof = 1     ; Ldfjac = Ndof ; nfev = 1 ; njev = 0 ; ic05pcf = 0 ! provide dummy values for consistency; 08 Jun 16;
+    iflag = 1 ; Ndof = 1     ; Ldfjac = Ndof ; nfev = 1 ; njev = 0 ; ihybrj = 1;  ! provide dummy values for consistency; 08 Jun 16;
     
     WCALL( ma02aa, mp00ac, ( Ndof, Xdof(1:Ndof), Fdof(1:Ndof), Ddof(1:Ldfjac,1:Ndof), Ldfjac, iflag ) )
     
@@ -452,35 +452,36 @@ subroutine ma02aa( lvol, NN )
     
    case( 1:2 ) ! will iteratively call mp00ac, to calculate Beltrami field that satisfies constraints;
     
-    ;         ; Ndof = Nxdof ; Ldfjac = Ndof ; nfev = 0 ; njev = 0 ; ic05pcf = 1
+    ;         ; Ndof = Nxdof ; Ldfjac = Ndof ; nfev = 0 ; njev = 0 ; ihybrj = 0;
 
     tol = mupftol ; LRR = Ndof * ( Ndof+1 ) / 2 ; mode = 0 ; diag(1:2) = zero ; factor = one ; maxfev = mupfits ; nprint = 0
     
-    WCALL( ma02aa, C05PCF, ( mp00ac, Ndof, Xdof(1:Ndof), Fdof(1:Ndof), Ddof(1:Ldfjac,1:Ndof), Ldfjac, tol, &
-                             maxfev, diag(1:Ndof), mode, factor, nprint, nfev, njev, RR(1:LRR), LRR, QTF(1:Ndof), WK(1:Ndof,1:4), ic05pcf ) )
+    WCALL( ma02aa, hybrj, ( mp00ac, Ndof, Xdof(1:Ndof), Fdof(1:Ndof), Ddof(1:Ldfjac,1:Ndof), Ldfjac, tol, &
+                             maxfev, diag(1:Ndof), mode, factor, nprint, ihybrj, nfev, njev, RR(1:LRR), LRR, QTF(1:Ndof), &
+			     WK(1:Ndof,1), WK(1:Ndof,2), WK(1:Ndof,3), WK(1:Ndof,4) ) )
 
     if( Lplasmaregion ) then
      
-     select case( ic05pcf )
+     select case( ihybrj )
      case( 0: ) ;     mu(lvol) = Xdof(1)      - xoffset
       ;         ; dpflux(lvol) = Xdof(2)      - xoffset
-     case( -2 ) ;      Xdof(1) = mu(lvol)     + xoffset ! mu    and dpflux have been updated in mp00ac; early termination; 18 Apr 13; 09 Mar 17;
+     case( :-1) ;      Xdof(1) = mu(lvol)     + xoffset ! mu    and dpflux have been updated in mp00ac; early termination; 18 Apr 13; 09 Mar 17;
       ;         ;      Xdof(2) = dpflux(lvol) + xoffset ! mu    and dpflux have been updated in mp00ac; early termination; 18 Apr 13; 09 Mar 17;
      end select
      
     else ! Lvacuumregion; 26 Jan 16;
      
-     select case( ic05pcf )
+     select case( ihybrj )
      case( 0: ) ; dtflux(lvol) = Xdof(1)      - xoffset
       ;         ; dpflux(lvol) = Xdof(2)      - xoffset
-     case( -2 ) ; Xdof(1)      = dtflux(lvol) + xoffset ! dtflux and dpflux have been updated in mp00ac; early termination; 18 Apr 13; 09 Mar 17;
+     case( :-1) ; Xdof(1)      = dtflux(lvol) + xoffset ! dtflux and dpflux have been updated in mp00ac; early termination; 18 Apr 13; 09 Mar 17;
       ;         ; Xdof(2)      = dpflux(lvol) + xoffset ! dtflux and dpflux have been updated in mp00ac; early termination; 18 Apr 13; 09 Mar 17;
      end select
      
 !   write(ounit,'("ma02aa : ", 10x ," : dtflux(",i3," ) =",es23.15," ; dpflux(",i3," ) =",es23.15," ;")') lvol, dtflux(lvol), lvol, dpflux(lvol)
 
     endif ! end of if( Lplasmaregion ) ; 08 Feb 16;
-    
+        
     helicity(lvol) = lABintegral(lvol) ! this was computed in mp00ac; 26 Feb 13;
     
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -497,26 +498,26 @@ subroutine ma02aa( lvol, NN )
    
 
    cput = GETTIME
-   select case(ic05pcf) ! this screen output may not be correct for Lvacuumregion; 08 Feb 16;
-   case(    0   )  
-    if( Wma02aa ) write(ounit,1040) cput-cpus, myid, lvol, ic05pcf, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "success         ", Fdof(1:Ndof)
-   case(   -2   )  
-    if( Wma02aa ) write(ounit,1040) cput-cpus, myid, lvol, ic05pcf, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "|F| < mupftol   ", Fdof(1:Ndof)
-   case(   -1   )  
-    ;             write(ounit,1040) cput-cpus, myid, lvol, ic05pcf, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "Beltrami fail   ", Fdof(1:Ndof)
+
+   select case(ihybrj) ! this screen output may not be correct for Lvacuumregion; 08 Feb 16;
    case(    1   )  
-    ;             write(ounit,1040) cput-cpus, myid, lvol, ic05pcf, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "input error     ", Fdof(1:Ndof)
+    if( Wma02aa ) write(ounit,1040) cput-cpus, myid, lvol, ihybrj, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "success         ", Fdof(1:Ndof)
+   case(   -2   )  
+    if( Wma02aa ) write(ounit,1040) cput-cpus, myid, lvol, ihybrj, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "|F| < mupftol   ", Fdof(1:Ndof)
+   case(   -1   )  
+    ;             write(ounit,1040) cput-cpus, myid, lvol, ihybrj, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "Beltrami fail   ", Fdof(1:Ndof)
+   case(    0   )  
+    ;             write(ounit,1040) cput-cpus, myid, lvol, ihybrj, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "input error     ", Fdof(1:Ndof)
    case(    2   )  
-    ;             write(ounit,1040) cput-cpus, myid, lvol, ic05pcf, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "consider restart", Fdof(1:Ndof)
+    ;             write(ounit,1040) cput-cpus, myid, lvol, ihybrj, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "consider restart", Fdof(1:Ndof)
    case(    3   )  
-    ;             write(ounit,1040) cput-cpus, myid, lvol, ic05pcf, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "xtol too small  ", Fdof(1:Ndof)
+    ;             write(ounit,1040) cput-cpus, myid, lvol, ihybrj, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "xtol too small  ", Fdof(1:Ndof)
    case(    4:5 )  
-    ;             write(ounit,1040) cput-cpus, myid, lvol, ic05pcf, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "bad progress    ", Fdof(1:Ndof)
+    ;             write(ounit,1040) cput-cpus, myid, lvol, ihybrj, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "bad progress    ", Fdof(1:Ndof)
    case default    
-    ;             write(ounit,1040) cput-cpus, myid, lvol, ic05pcf, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "illegal ifail   ", Fdof(1:Ndof)
-    FATAL( ma02aa, .true., illegal ifail returned by C05PCF )
-   end select
-   
+    ;             write(ounit,1040) cput-cpus, myid, lvol, ihybrj, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "illegal ifail   ", Fdof(1:Ndof)
+    FATAL( ma02aa, .true., illegal ifail returned by hybrj )
+   end select   
 
   endif ! end of if( LBlinear ) then;
   
@@ -627,11 +628,11 @@ subroutine ma02aa( lvol, NN )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
     
 1010 format("ma02aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; SQP    : ie04uff=",i3," hel="es12.4" mu="es12.4" dpflux="es12.4" time="f9.1" ":,a36)
-1020 format("ma02aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; Newton : ic05pbf=",i3," hel="es12.4" mu="es12.4" dpflux="es12.4" time="f9.1" ; "&
+1020 format("ma02aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; Newton : ihybrj1=",i3," hel="es12.4" mu="es12.4" dpflux="es12.4" time="f9.1" ; "&
   "error="es7.0" ; ":,a18)
-1040 format("ma02aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; Linear : ic05pcf=",i3," hel="es12.4" mu="es12.4" dpflux="es12.4" time="f9.1" ; "&
+1040 format("ma02aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; Linear : ihybrj=",i3," hel="es12.4" mu="es12.4" dpflux="es12.4" time="f9.1" ; "&
   :,a16" ; F="2es08.0)
-1050 format("ma02aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; Linear : ic05pcf=",i3,"     "  12x " I ="es12.4"        "  12x " time="f9.1" ; "&
+1050 format("ma02aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; Linear : ihybrj=",i3,"     "  12x " I ="es12.4"        "  12x " time="f9.1" ; "&
   :,a16" ; F="2es08.0)
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

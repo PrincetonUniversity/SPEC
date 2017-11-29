@@ -136,7 +136,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
                         ijreal, ijimag, jireal, jiimag, &
                         efmn, ofmn, cfmn, sfmn, &
                         evmn, odmn, comn, simn, &
-                        trigm, trign, trigwk, isr, Nt, Nz, &
+                        Nt, Nz, &
                         cosi, sini, & ! FFT workspace;
                         dBdX, &
                         dMA, dMB, dMC, dMD, dME, dMF, dMG, solution, &
@@ -270,7 +270,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 
    SALLOCATE( dMG, (0:NN     ), zero )  
    
-   SALLOCATE( solution, (1:NN,-1:2), zero ) ! this will contain the vector potential from the linear solver and it's derivatives; 01 May 13;
+   SALLOCATE( solution, (1:NN,-1:2), zero ) ! this will contain the vector potential from the linear solver and its derivatives; 01 May 13;
    
    SALLOCATE( MBpsi, (1:NN), zero )
    SALLOCATE( MEpsi, (1:NN), zero )
@@ -388,7 +388,10 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
      SALLOCATE( ipivot, (1:NN), 0 )
      
      if07adf = 1
-     call F07ADF( MM, NN, dMA(0:LDA-1,1:NN), LDA, ipivot(1:NN), if07adf ) ! Beware: dMA is corrupted; 08 Feb 16;
+     ! Note that this is actually just DGETRF from Lapack
+     ! http://www.nag.com/numeric/FL/manual/pdf/F07/f07adf.pdf
+     ! call F07ADF( MM, NN, dMA(0:LDA-1,1:NN), LDA, ipivot(1:NN), if07adf ) ! Beware: dMA is corrupted; 08 Feb 16;
+     call DGETRF( MM, NN, dMA(0:LDA-1,1:NN), LDA, ipivot(1:NN), if07adf )
      
      cput = GETTIME
      select case( if07adf ) !                                                                     0123456789012345678
@@ -403,7 +406,10 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
      SALLOCATE( work, (1:Lwork), zero )
 
      if07ajf = 1
-     call F07AJF( NN, dMA(0:LDA-1,1:NN), LDA, ipivot(1:NN), work(1:Lwork), Lwork, if07ajf )
+     ! Note that this is actually just DGETRI from Lapack
+     ! http://www.nag.com/numeric/FL/manual/pdf/F07/f07ajf.pdf
+     !call F07AJF( NN, dMA(0:LDA-1,1:NN), LDA, ipivot(1:NN), work(1:Lwork), Lwork, if07ajf )
+     call DGETRI( NN, dMA(0:LDA-1,1:NN), LDA, ipivot(1:NN), work(1:Lwork), Lwork, if07ajf )
 
      DALLOCATE(work)
 
@@ -424,8 +430,11 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
     case( 1 ) ! Lposdef = 1 ; 08 Feb 16;
 
      if01adf = 1
-     call F01ADF( NN, dMA(0:NN,1:NN), IA, if01adf ) ! assumes symmetric, positive definite matrix; 29 Jan 13; dMA is corrupted;  7 Mar 13; 
-    
+     ! This is just the Lapack routine dpotri with  first variable assumed to be 'L'
+     ! https://www.nag.co.uk/numeric/fl/nagdoc_fl25/pdf/f01/f01adf.pdf
+     ! call F01ADF( NN, dMA(0:NN,1:NN), IA, if01adf ) ! assumes symmetric, positive definite matrix; 29 Jan 13; dMA is corrupted;  7 Mar 13; 
+     call DPOTRI( 'L', NN, dMA(0:NN,1:NN), IA, if01adf )    
+
      cput = GETTIME
      
      select case( if01adf ) !                                                                    0123456789012345678
@@ -472,7 +481,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
       
       enddo ! end of do ideriv = 0, 2; 20 Jun 14;
 
-      call tfft( Nt, Nz, dBB(1:Ntz,1), dBB(1:Ntz,2), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz), & ! derivatives of B^2 wrt mu and dpflux; 02 Sep 14;
+      call tfft( Nt, Nz, dBB(1:Ntz,1), dBB(1:Ntz,2), & ! derivatives of B^2 wrt mu and dpflux; 02 Sep 14;
                  mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), ifail )
          
       ; idoc = 0
@@ -691,8 +700,11 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
           solution(1:NN,-1) = abs(  solution(1:NN,-1) ) ! 01 Jul 14;
          isolution(1:NN, 0) = abs( isolution(1:NN, 0) )
         
-         ifail = 0 ; call M01CAF(  solution(1:NN,-1), 1, NN, 'D', ifail ) ! sorting screen output; this corrupts; 01 Jul 14;
-         ifail = 0 ; call M01CAF( isolution(1:NN, 0), 1, NN, 'D', ifail ) ! sorting screen output; this corrupts;
+!         ifail = 0 ; call M01CAF(  solution(1:NN,-1), 1, NN, 'D', ifail ) ! sorting screen output; this corrupts; 01 Jul 14;
+!         ifail = 0 ; call M01CAF( isolution(1:NN, 0), 1, NN, 'D', ifail ) ! sorting screen output; this corrupts;
+        
+         ifail = 0 ; call dlasrt( 'D', NN,  solution(1:NN,-1), ifail ) ! sorting screen output; this corrupts; 27 Nov 17;
+         ifail = 0 ; call dlasrt( 'D', NN, isolution(1:NN, 0), ifail ) ! sorting screen output; this corrupts;        
          
          cput = GETTIME
 
@@ -962,7 +974,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 
          endif ! end of if( Igeometry.ge.3 ) ; 08 Nov 13;
 
-         call tfft( Nt, Nz, ijreal(1:Ntz), dII(1:Ntz), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz), & ! recall that ijreal contains pressure term;
+         call tfft( Nt, Nz, ijreal(1:Ntz), dII(1:Ntz), & ! recall that ijreal contains pressure term;
                     mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), ifail )
          
 !        if( Igeometry.eq.3 .and. vvol.eq.1 ) then
@@ -970,7 +982,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 !                                           ii      , irz      , issym      , innout      , iocons      , dLL(1:12)
 !        endif
 
-         call tfft( Nt, Nz, dPP(1:Ntz)   , dLL(1:Ntz), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz), & ! recall that ijreal is probably just a dummy;
+         call tfft( Nt, Nz, dPP(1:Ntz)   , dLL(1:Ntz), & ! recall that ijreal is probably just a dummy;
                     mn, im(1:mn), in(1:mn), evmn(1:mn), odmn(1:mn), comn(1:mn), simn(1:mn), ifail )          ! evmn and odmn are available as workspace;
 
 

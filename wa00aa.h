@@ -62,7 +62,7 @@ subroutine wa00aa( iwa00aa )
   use allglobal, only : ncpu, myid, cpus, &
                         Mvol, &
                         mn, im, in, iRbc, iZbs, iRbs, iZbc, &
-                        Nt, Nz, Ntz, Rij, Zij, trigwk, trigm, trign, isr, &
+                        Nt, Nz, Ntz, Rij, Zij, &
                         Lcoordinatesingularity, &
                         YESstellsym
   
@@ -273,7 +273,7 @@ subroutine wa00aa( iwa00aa )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  call tfft( Nt, Nz, Rij(1:Ntz,0,0), Zij(1:Ntz,0,0), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz), &
+  call tfft( Nt, Nz, Rij(1:Ntz,0,0), Zij(1:Ntz,0,0), &
              mn, im(1:mn), in(1:mn), iRbc(1:mn,Mvol), iRbs(1:mn,Mvol), iZbc(1:mn,Mvol), iZbs(1:mn,Mvol), ifail )
 
   if( YESstellsym ) then ; iRbs(1:mn,Mvol)= zero ; iZbc(1:mn,Mvol) = zero

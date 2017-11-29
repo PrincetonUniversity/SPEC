@@ -51,7 +51,7 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
 
   REAL                :: xx(0:NGdof,-2:2), ff(0:NGdof,-2:2), df(1:NGdof)!, deriv
 
-  INTEGER             :: vvol, idof, ii, mi, ni, irz, issym, isymdiff, lvol, ieval(1:1), igdof, ifd, if03aaf
+  INTEGER             :: vvol, idof, ii, mi, ni, irz, issym, isymdiff, lvol, ieval(1:1), igdof, ifd
   REAL                :: oldEnergy(-2:2), error, cpul
 
   REAL                :: oldBB(1:Mvol,-2:2), oBBdRZ(1:Mvol,0:1,1:LGdof), ohessian(1:NGdof,1:NGdof)
@@ -69,7 +69,8 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
   
   INTEGER             :: Lwork, LDA, Ldvi, Ldvr, if02ebf
   REAL                :: evalr(1:NGdof), evali(1:NGdof)
-  REAL                :: evecr(1:NGdof,1:NGdof), eveci(1:NGdof,1:NGdof)
+!  REAL                :: evecr(1:NGdof,1:NGdof), eveci(1:NGdof,1:NGdof)
+  REAL                :: evecr(1:NGdof,1:NGdof), eveci(1:NGdof,1:NGdof),revecr(1:NGdof,1:2*NGdof), evecl(1:NGdof,1:NGdof)
   REAL                :: work(1:4*NGdof) ! for construction of evalues/evectors;
   CHARACTER           :: JOB
   
@@ -80,10 +81,13 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
 
   REAL                :: lmu(1:Mvol), lpflux(1:Mvol), lhelicity(1:Mvol) ! original profiles; 20 Jun 14;
 
-  INTEGER             :: IA, IAA, if04atf
+  INTEGER             :: IA
+  INTEGER             :: idgesvx, idgetrf, ipiv(1:Ngdof), iwork4(1:NGdof)
+  CHARACTER           :: equed      
   REAL                :: perturbation(1:LGdof)
   REAL                :: rhs(1:NGdof), solution(0:NGdof)
   REAL                :: rworka(1:NGdof), rworkb(1:NGdof), AA(1:NGdof,1:NGdof)
+  REAL                :: Rdgesvx(1:NGdof), Cdgesvx(1:NGdof), AF(1:NGdof,1:NGdof), work4(1:4*NGdof), rcond, ferr, berr, sgn
   
   BEGIN(hesian)
 
@@ -410,21 +414,26 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
    
    hessian(1:NGdof,1:NGdof) = ohessian(1:NGdof,1:NGdof)
    
-#ifdef NAG18
-   call F02EBF( JOB, NGdof, hessian(1:LDA,1:NGdof), LDA, evalr(1:NGdof), evali(1:NGdof), &
-                evecr(1:Ldvr,1:NGdof), Ldvr, eveci(1:Ldvi,1:NGdof), Ldvi, work(1:Lwork), Lwork, if02ebf )
-#else
-   FATAL( global, .true., eigenvalue solver needs updating to F08NAF )
-#endif
-   
+!#ifdef NAG18
+!   call F02EBF( JOB, NGdof, hessian(1:LDA,1:NGdof), LDA, evalr(1:NGdof), evali(1:NGdof), &
+!                evecr(1:Ldvr,1:NGdof), Ldvr, eveci(1:Ldvi,1:NGdof), Ldvi, work(1:Lwork), Lwork, if02ebf )
+!#else
+!   FATAL( global, .true., eigenvalue solver needs updating to F08NAF )
+!#endif
+   call dgeev('N', JOB, NGdof, hessian(1:LDA,1:NGdof), LDA, evalr(1:NGdof), evali(1:NGdof), &
+                evecl(1:Ldvr,1:NGdof), Ldvr, revecr(1:Ldvr,1:2*NGdof), Ldvr, work(1:Lwork), Lwork, if02ebf )
+    evecr(1:Ldvr,1:NGdof) = revecr(1:Ldvr,1:NGdof)
+    eveci(1:Ldvr,1:NGdof) = revecr(1:Ldvr,NGdof+1:2*NGdof)
+ 
    if( myid.eq.0 ) then 
    cput = GETTIME
-   select case( if02ebf )
-   case( 0 )    ; write(ounit,'("hesian : ",f10.2," : computed evalues ; if02ebf="i2" ; success ;       time="f10.2"s ;")') cput-cpus, if02ebf, cput-cpul
-   case( 1 )    ; write(ounit,'("hesian : ",f10.2," : computed evalues ; if02ebf="i2" ; input error ;   time="f10.2"s ;")') cput-cpus, if02ebf, cput-cpul
-   case( 2 )    ; write(ounit,'("hesian : ",f10.2," : computed evalues ; if02ebf="i2" ; QR failed ;     time="f10.2"s ;")') cput-cpus, if02ebf, cput-cpul
-   case default ; write(ounit,'("hesian : ",f10.2," : computed evalues ; if02ebf="i2" ; illegal ifail ; time="f10.2"s ;")') cput-cpus, if02ebf, cput-cpul
-   end select
+     if (if02ebf < 0) then
+        write(ounit,'("hesian : ",f10.2," : DGEEV error the "i2" th argument had illegal value  ;   time="f10.2"s ;")') cput-cpus, -if02ebf, cput-cpul
+     else if (if02ebf > 0) then
+        write(ounit,'("hesian : ",f10.2," : DGEEV error, factorization failed  ;   time="f10.2"s ;")') cput-cpus, cput-cpul
+     else
+        write(ounit,'("hesian : ",f10.2," : computed evalues ; if02ebf="i2" ; success ;       time="f10.2"s ;")') cput-cpus, if02ebf, cput-cpul
+     endif
   endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -566,21 +575,19 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
    else
     
     rhs(1:NGdof) = - matmul( dessian(1:NGdof,1:LGdof), perturbation(1:LGdof) )
-    
-    IA = NGdof ; IAA = NGdof
-    
+        
     hessian(1:NGdof,1:NGdof) = ohessian(1:NGdof,1:NGdof)
 
-    if04atf = 1
-    call F04ATF( hessian(1:IA,1:NGdof), IA, rhs(1:NGdof), NGdof, solution(1:NGdof), & ! Linear solver; 02 Jan 15;
-                 AA(1:IAA,1:NGdof), IAA, rworka(1:NGdof), rworkb(1:NGdof), if04atf)
-    
-    select case( if04atf )
-    case( 0 )    ; write(ounit,'("hesian : " 10x " : myid="i3" ; linear perturbation ; if04atf="i3" ;")') myid, if04atf
-    case( 1 )    ; write(ounit,'("hesian : " 10x " : myid="i3" ; singular matrix     ; if04atf="i3" ;")') myid, if04atf
-    case( 2 )    ; write(ounit,'("hesian : " 10x " : myid="i3" ; ill-conditioned     ; if04atf="i3" ;")') myid, if04atf
-    case( 3 )    ; write(ounit,'("hesian : " 10x " : myid="i3" ; input error         ; if04atf="i3" ;")') myid, if04atf
-    case default ; FATAL( hesian, .true., illegal ifail returned from F04ATF )
+    call dgesvx( 'N', 'N', NGdof, 1, hessian(1:NGdof,1:NGdof), NGdof, AF(1:NGdof,1:NGdof),   & ! Linear solver; 09 Nov 17;
+                 NGdof, ipiv(1:NGdof), equed, Rdgesvx(1:NGdof), Cdgesvx(1:NGdof),            & 
+		 rhs(1:NGdof), NGdof, solution(1:NGdof), NGdof, rcond, ferr, berr,           &
+		 work4(1:4*NGdof), iwork4(1:NGdof), idgesvx )
+
+    select case( idgesvx )
+    case( 0   )    ; write(ounit,'("hesian : " 10x " : myid="i3" ; linear perturbation ; idgesvx="i3" ;")') myid, idgesvx
+    case( 1:  )    ; write(ounit,'("hesian : " 10x " : myid="i3" ; singular matrix     ; idgesvx="i3" ;")') myid, idgesvx
+    case( :-1 )    ; write(ounit,'("hesian : " 10x " : myid="i3" ; input error         ; idgesvx="i3" ;")') myid, idgesvx
+    case default ; FATAL( hesian, .true., illegal ifail returned from dgesvx )
     end select
     
     pack = 'U' ! unpack geometrical degrees-of-freedom; 13 Sep 13;
@@ -613,16 +620,29 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
    
    hessian(1:NGdof,1:NGdof) = ohessian(1:NGdof,1:NGdof)
    
-   if03aaf = 1 ; IA = NGdof
-   call F03AAF( hessian(1:IA,1:NGdof), IA, NGdof, determinant, evalr(1:NGdof), if03aaf) ! evalr is used as workspace; 22 Apr 15;
+   call dgetrf( NGdof, NGdof, hessian(1:NGdof,1:NGdof), NGdof, ipiv(1:NGdof), idgetrf )
+     
+   determinant = one
    
-   select case( if03aaf )
-   case( 0 )    ; write(ounit,'("hesian : " 10x " : myid="i3" ; if03aaf="i3" ;             ; determinant="es13.5" ;")') myid, if03aaf, determinant
-   case( 1 )    ; write(ounit,'("hesian : " 10x " : myid="i3" ; if03aaf="i3" ; singular    ; determinant="es13.5" ;")') myid, if03aaf, determinant
-   case( 2 )    ; write(ounit,'("hesian : " 10x " : myid="i3" ; if03aaf="i3" ; overflow    ; determinant="es13.5" ;")') myid, if03aaf, determinant
-   case( 3 )    ; write(ounit,'("hesian : " 10x " : myid="i3" ; if03aaf="i3" ; underflow   ; determinant="es13.5" ;")') myid, if03aaf, determinant
-   case( 4 )    ; write(ounit,'("hesian : " 10x " : myid="i3" ; if03aaf="i3" ; input error ; determinant="es13.5" ;")') myid, if03aaf, determinant
-   case default ; FATAL( hesian, .true., illegal ifail returned from F03AAF )
+   do iev = 1,NGdof
+    determinant = determinant*hessian(iev,iev)   !calculate determinant from factorized form of hessian; 09 Nov 17
+   enddo
+   
+   sgn = one
+   
+   do iev = 1,NGdof
+    if(ipiv(iev).ne. iev) then
+    sgn = -sgn   
+    endif
+   enddo  
+   
+   determinant = sgn*determinant                 !correct for the sign of the determinant; 09 Nov 17
+   
+   select case( idgetrf )
+   case( 0   )    ; write(ounit,'("hesian : " 10x " : myid="i3" ; idgetrf="i3" ;             ; determinant="es13.5" ;")') myid, idgetrf, determinant
+   case( 1:  )    ; write(ounit,'("hesian : " 10x " : myid="i3" ; idgetrf="i3" ; singular    ; determinant="es13.5" ;")') myid, idgetrf, determinant
+   case( :-1 )    ; write(ounit,'("hesian : " 10x " : myid="i3" ; idgetrf="i3" ; input error ; determinant="es13.5" ;")') myid, idgetrf, determinant
+   case default ; FATAL( hesian, .true., illegal ifail returned from dgetrf )
    end select
    
   endif

@@ -66,6 +66,12 @@ module numerical
   REAL            :: machprec, vsmall, small, sqrtmachprec ! these are assigned below in readin via a call to NAG routine;
   REAL, parameter :: logtolerance = 1.0e-32 ! this is used to avoid taking alog10(zero); see e.g. dforce; 19 Jul 16;
 
+contains
+  REAL FUNCTION myprec() !Duplicates NAG routine X02AJF (machine precision) ! JAB; 27 Jul 17
+    implicit none
+    intrinsic EPSILON
+    myprec = 0.5*EPSILON(1.0d0)
+  END FUNCTION myprec
 end module numerical
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -868,7 +874,6 @@ module allglobal
 
   INTEGER              :: myid, ncpu       ! mpi variables;
   REAL                 :: cpus             ! initial time;
-  REAL                 :: cpum             ! intermediate time;
 
   REAL                 :: pi2nfp           !       pi2/nfp     ; assigned in readin;
   REAL                 :: pi2pi2nfp
@@ -960,16 +965,12 @@ module allglobal
 !latex \subsubsection{Fourier Transforms}
 !latex \begin{enumerate}
 
-!latex \item The coordinate geometry and fields are mapped to/from Fourier space and real space using \nag{}{C06FUF}.
+!latex \item The coordinate geometry and fields are mapped to/from Fourier space and real space using FFTW3.
 !latex \item The resolution of the real space grid is given by \type{Nt=Ndiscrete*4*Mpol} and \type{Nz=Ndiscrete*4*Ntor}.
-!latex \item Trigonometric information required for the fast Fourier transform's is saved in \type{trigm(1:2*Nt)}, \type{trign(1:2*Nz)},
-!latex       and \type{trigwk(1:2*Ntz)}, where \type{Ntz=Nt*Nz}.
 
   INTEGER              :: Nt, Nz, Ntz, hNt, hNz ! discrete resolution; Ntz=Nt*Nz shorthand;
   REAL                 :: soNtz ! one / sqrt (one*Ntz); shorthand;
 
-  CHARACTER            :: isr ! required for C06FUF;
-  REAL   , allocatable :: trigm(:), trign(:), trigwk(:) ! these are set in readin and contain trigonometric factors; cannot be changed;
 
 !latex \item Various workspace arrays are allocated. 
 !l tex These include \type{Rij(1:Ntz,0:3,0:3)} and \type{Zij(1:Ntz,0:3,0:3)}, which contain the coordinates in real space and their derivatives;
@@ -1106,7 +1107,7 @@ module allglobal
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{construction of `force'}
+!latex \subsubsection{construction of ``force''}
 !latex \begin{enumerate}
 !latex \item The force vector is comprised of \type{Bomn} and \type{Iomn}.
 !latex \end{enumerate}
@@ -1366,12 +1367,10 @@ subroutine readin
 
   LOGICAL              :: Lspexist, Lchangeangle
   INTEGER              :: vvol, mm, nn, nb, imn, ix, ii, jj, ij, kk, mj, nj, mk, nk, ip, lMpol, lNtor, X02BBF, iargc, iarg, numargs, mi, ni, lvol
-  REAL                 :: X02AJF, X01AAF, xx, G05CAF, toroidalflux
+  REAL                 :: xx, toroidalflux
   REAL,    allocatable :: RZRZ(:,:) ! local array used for reading interface Fourier harmonics from file;
   
   CHARACTER            :: ldate*8, ltime*10, arg*100
-  
-  external             :: X02BBF
   
   BEGIN(readin)
   
@@ -1380,12 +1379,12 @@ subroutine readin
 !latex \subsubsection{\type{machprec}, \type{vsmall}, \type{small}, \type{sqrtmachprec} : machine precision}
 
 !latex \begin{enumerate}
-!latex \item The machine precision is determined using \nag{www.nag.co.uk/numeric/FL/manual19/html/X02_fl19.html}{X02AJF}.
+!latex \item The machine precision is determined using the Fortran 90 intrinsic function EPSILON.
 !latex \end{enumerate}
 
   cput = GETTIME
   
-  machprec = X02AJF() ; vsmall = 100*machprec ; small = 100*vsmall ; sqrtmachprec = sqrt(machprec) ! returns machine precision;
+  machprec = myprec() ; vsmall = 100*machprec ; small = 100*vsmall ; sqrtmachprec = sqrt(machprec) ! returns machine precision;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -2582,3 +2581,12 @@ end subroutine wrtend
 end module allglobal
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+module fftw_interface ! JAB; 25 Jul 17
+  use, intrinsic :: iso_c_binding
+  implicit none
+  include 'fftw3.f03'
+
+  TYPE(C_PTR) :: planf, planb
+  COMPLEX(C_DOUBLE_COMPLEX), ALLOCATABLE :: cplxin(:,:), cplxout(:,:)
+end module fftw_interface

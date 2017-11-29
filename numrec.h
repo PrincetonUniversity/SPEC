@@ -66,17 +66,18 @@ end subroutine gi00ab
 
 !latex \item \verb+tfft+
 
-subroutine tfft( Nt, Nz, ijreal, ijimag, isr, trigm, trign, trigwk, mn, im, in, efmn, ofmn, cfmn, sfmn, ifail )
+subroutine tfft( Nt, Nz, ijreal, ijimag, mn, im, in, efmn, ofmn, cfmn, sfmn, ifail )
 
   use constants
   use inputlist, only : Nfp
   use allglobal, only : pi2nfp
+  use fftw_interface
 
   implicit none
+  intrinsic aimag
   
   INTEGER   :: Nt, Nz, mn, im(mn), in(mn), Ntz, imn, ifail, mm, nn
-  REAL      :: ijreal(1:Nt*Nz), ijimag(1:Nt*Nz), trigm(2*Nt), trign(2*Nz), trigwk(2*Nt*Nz), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn)
-  CHARACTER :: isr
+  REAL      :: ijreal(1:Nt*Nz), ijimag(1:Nt*Nz), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn)
   
   LOGICAL   :: check=.false.
   INTEGER   :: jj, kk
@@ -87,9 +88,18 @@ subroutine tfft( Nt, Nz, ijreal, ijimag, isr, trigm, trign, trigwk, mn, im, in, 
 
   Ntz=Nt*Nz
 
-  call C06FUF( Nt , Nz , ijreal(1:Ntz) , ijimag(1:Ntz) , isr , trigm , trign , trigwk , ifail )
-  
-  ijreal(:) = ijreal(:)/sqrt(one*Ntz) ; ijimag(:) = ijimag(:)/sqrt(one*Ntz)
+  !Copy real arrays to complex
+  do jj=1,Nz
+    cplxin(:,jj) = CMPLX(ijreal((jj-1)*Nt+1:jj*Nt), ijimag((jj-1)*Nt+1:jj*Nt),KIND=C_DOUBLE_COMPLEX)
+  enddo
+
+  call fftw_execute_dft(planf, cplxin, cplxout) !Forward transform
+
+  !Copy complex result back to real arrays, normalize
+  do jj=1,Nz
+    ijreal((jj-1)*Nt+1:jj*Nt) = real(cplxout(:,jj),KIND=C_DOUBLE_COMPLEX)/Ntz
+    ijimag((jj-1)*Nt+1:jj*Nt) = aimag(cplxout(:,jj))/Ntz
+  enddo
   
   cfmn=zero ; sfmn=zero ; efmn=zero ; ofmn=zero
   
@@ -159,20 +169,19 @@ end subroutine tfft
 
 !latex \item \verb+invfft+
 
-subroutine invfft( mn , im , in , efmn , ofmn , cfmn , sfmn , Nt , Nz , ijreal , ijimag , isr , trigm , trign , trigwk )
+subroutine invfft( mn , im , in , efmn , ofmn , cfmn , sfmn , Nt , Nz , ijreal , ijimag )
 
   use constants, only : zero, half, one
   use inputlist, only : Nfp
-
+  use fftw_interface
   implicit none
+  
   INTEGER  , intent(in)    :: mn, im(mn), in(mn)
   REAL     , intent(in)    :: efmn(mn), ofmn(mn), cfmn(mn), sfmn(mn)
   INTEGER  , intent(in)    :: Nt, Nz
   REAL     , intent(out)   :: ijreal(Nt*Nz), ijimag(Nt*Nz) ! output real space;
-  CHARACTER, intent(inout) :: isr
-  REAL     , intent(inout) :: trigm(2*Nt), trign(2*Nz), trigwk(2*Nt*Nz)
   
-  INTEGER                   :: Ntz, imn, jj, kk, c06fuffail, c06gcffail, mm, nn
+  INTEGER                   :: Ntz, imn, jj, kk, mm, nn
   
   Ntz = Nt*Nz ; ijreal(1:Ntz) = zero ; ijimag(1:Ntz) = zero
 
@@ -219,128 +228,22 @@ subroutine invfft( mn , im , in , efmn , ofmn , cfmn , sfmn , Nt , Nz , ijreal ,
    
   enddo
 
-  ijreal(1:Ntz) = ijreal(1:Ntz) * sqrt(one*Ntz)
-  ijimag(1:Ntz) = ijimag(1:Ntz) * sqrt(one*Ntz)
-  
-  c06gcffail=0 ; call C06GCF( ijimag, Ntz , c06gcffail )
-  c06fuffail=0 ; call C06FUF( Nt , Nz , ijreal , ijimag , isr , trigm , trign , trigwk , c06fuffail )
-  c06gcffail=0 ; call C06GCF( ijimag , Ntz , c06gcffail )
-  
+  !Copy real arrays to complex
+  do jj=1,Nz
+    cplxin(:,jj) = CMPLX(ijreal((jj-1)*Nt+1:jj*Nt), ijimag((jj-1)*Nt+1:jj*Nt),KIND=C_DOUBLE_COMPLEX)
+  enddo
+
+  call fftw_execute_dft(planb, cplxin, cplxout) !Inverse transform
+
+  !Copy complex result back to real arrays
+  do jj=1,Nz
+    ijreal((jj-1)*Nt+1:jj*Nt) = real(cplxout(:,jj),KIND=C_DOUBLE_COMPLEX)
+    ijimag((jj-1)*Nt+1:jj*Nt) = aimag(cplxout(:,jj))
+  enddo
+
   return
 
 end subroutine invfft
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \item \verb+slowft+
-
-subroutine slowft( X , NN , ifail )
-  use constants
-  implicit none
-  INTEGER, intent(in)    :: NN
-  REAL   , intent(inout) :: X(0:NN-1)
-  INTEGER, intent(inout) :: ifail
-
-  LOGICAL :: Ldebug = .false. ! can remove the debugging after validity is confirmed;
-  INTEGER :: mm, ii, hNN
-  REAL    :: osqrtN, err, T(0:NN-1), rwork(0:NN-1)
-  
-  T(0:NN-1) = X(0:NN-1) ! save data in case NAG routines fail (because of problem with primes . . .)
-
- !call C06EAF( X(0:NN-1) , NN , ifail )
-  call C06FAF( X(0:NN-1) , NN , rwork(0:NN-1) , ifail ) ! extra workspace for greater speed?
-
-  if( Ldebug ) write(*,'("slowft : C06FAF : even ="    7f20.16)')X(0:6)
-  if( Ldebug ) write(*,'("slowft : C06FAF :  odd ="20x,6f20.16" ; ifail="i2" ;")')X(NN-1:NN-6:-1),ifail
-
-  if( .not.Ldebug .and. ifail.eq.0 ) return ! NAG routine worked;
-
-  if( Ldebug ) rwork(0:NN-1) = X(0:NN-1) ! for comparing error;
-
-  hNN = NN / 2 ; osqrtN = one / sqrt( NN * one )
-
-  if( hNN*2 .ne. NN ) stop "error : slowft : N is not even"
-
-  X(0:NN-1) = zero
-
-  X(0) = sum( T(0:NN-1) )
-  do mm = 1, hNN-1
-   X(   mm) =   sum( T(0:NN-1) * cos( mm * (/ ( ii, ii = 0, NN-1 ) /) * pi2 / NN ) )
-   X(NN-mm) = - sum( T(0:NN-1) * sin( mm * (/ ( ii, ii = 0, NN-1 ) /) * pi2 / NN ) )
-  enddo
-
-  X(0:NN-1) = X(0:NN-1) * osqrtN
-
-  ifail = 0 ! routine cant fail?
-
-  if( .not.Ldebug ) return
-
-  err = sqrt( ( sum( (rwork(    0:hNN-1)-X(    0:hNN-1))*(rwork(    0:hNN-1)-X(    0:hNN-1)) ) &
-              + sum( (rwork(hNN+1: NN-1)-X(hNN+1: NN-1))*(rwork(hNN+1: NN-1)-X(hNN+1: NN-1)) ) ) / NN )
-
-  if( Ldebug ) write(*,'("slowft : slowft : even ="7f20.16)')                       X(   0:   6   )
-  if( Ldebug ) write(*,'("slowft : slowft :  odd ="20x,6f20.16" ; err="es10.2" ;")')X(NN-1:NN-6:-1), err
-
-  if( err.gt.1.0e-13 ) stop "error : slowft : reconstruction error is too large ;"
-
-  return
-
-end subroutine slowft
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \item \verb+invft+
- 
-subroutine invft( X , NN , ifail )
-  
-  use constants
-  
-  implicit none
-
-  INTEGER, intent(in)    :: NN
-  REAL   , intent(inout) :: X(0:NN-1)
-  INTEGER                :: ifail
-
- !INTEGER :: mm, ii
- !REAL    :: T(0:NN-1), tarr(0:NN-1)
-
- !LOGICAL :: Ldebug=.false.
-
- !T = X
-
- !if( Ldebug ) then
- !write(*,'("invft : invft  : Xc="99f9.5)')X(   1:NN/2   )
- !write(*,'("invft : invft  : Xs="99f9.5)')X(NN-1:NN/2:-1)
- !endif
-
-  X(   0     ) =  X(   0     ) * sqrt(NN*one)
-  X(   1:NN-1) =  X(   1:NN-1) * sqrt(NN*one) * half
-
- !X(   1:NN/2) =  X(   1:NN/2) * sqrt(NN*one) * half
- !X(NN/2:NN-1) = -X(NN/2:NN-1) * sqrt(NN*one) * half
-
-  call C06GBF( X(0:NN-1) , NN , ifail )
-  call C06EBF( X(0:NN-1) , NN , ifail )
-
- !if(.not.Ldebug) return
-
- !write(*,'("invft : invft  : Xi="99f9.5)')X(1:NN/2)
-
- !tarr(0:NN-1)=(/(ii,ii=0,NN-1)/)*pi2/NN
-
- !X(0:NN-1)=T(0) ! constant part;
-
- !do mm=1,NN/2-1
- ! X(0:NN-1) = X(0:NN-1) + T(mm) * cos( mm * tarr(0:NN-1) ) + T(NN-mm) * sin( mm * tarr(0:NN-1) ) 
- !enddo
-
- !ifail=0 ! routine cant fail?
-
- !write(*,'("invft : invft  : Xi="99f9.5)')X(1:NN/2)
-
-  return
-
-end subroutine invft
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

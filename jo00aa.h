@@ -74,7 +74,7 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
                         cheby, &
                         Ate, Aze, Ato, Azo, &
                         sg, guvij, Rij, Zij, &
-                        trigwk, trigm, trign, isr, Nt, Nz, efmn, ofmn, cfmn, sfmn, &
+                        Nt, Nz, efmn, ofmn, cfmn, sfmn, &
                         NOTstellsym, &
                         Lcoordinatesingularity, &
                         IBerror
@@ -92,7 +92,7 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
   REAL                :: Atemn(1:mn,0:2), Azemn(1:mn,0:2), Atomn(1:mn,0:2), Azomn(1:mn,0:2), sbar, sbarhim(0:2)
   
   INTEGER             :: itype, id01bcf
-  REAL                :: aa, bb, cc, dd, weight(1:lquad), abscis(1:lquad)
+  REAL                :: aa, bb, cc, dd, weight(1:lquad), abscis(1:lquad), workfield(1:2*lquad)
   
   BEGIN(jo00aa)
   
@@ -116,8 +116,16 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
 
   itype = 0 ; aa = -one ; bb = +one ; cc = zero ; dd = zero ! prepare Gaussian quadrature;  6 Feb 13;
   
-  id01bcf = 1
-  call D01BCF( itype, aa, bb, cc, dd, lquad, weight(1:lquad), abscis(1:lquad), id01bcf ) ! sets gaussian weights & abscissae;
+!  id01bcf = 1
+!  call D01BCF( itype, aa, bb, cc, dd, lquad, weight(1:lquad), abscis(1:lquad), id01bcf ) ! sets gaussian weights & abscissae;
+!  do ii = 1, lquad
+!     print *, ii, weight(ii),abscis(ii)
+!  end do
+!      SUBROUTINE CDGQF(NT,T,WTS,KIND,ALPHA,BETA,NWF,WF,IER)
+  call CDGQF(lquad, abscis(1:lquad), weight(1:lquad), itype+1, aa, bb, 2*lquad, workfield, id01bcf)
+!  do ii = 1, lquad
+!     print *, ii, weight(ii),abscis(ii)
+!  end do
   
   cput= GETTIME
   select case( id01bcf ) !                                                         123456789012345
@@ -218,7 +226,7 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
    cfmn(1:mn) = +          im(1:mn)*Azomn(1:mn,1) +          in(1:mn)*Atomn(1:mn,1)
    
    call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), &
-                Nt, Nz, gBu(1:Ntz,1,0), gBu(1:Ntz,1,1), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz) ) !  (gB^s)   , d(gB^s)/ds; 11 Mar 16;
+                Nt, Nz, gBu(1:Ntz,1,0), gBu(1:Ntz,1,1) ) !  (gB^s)   , d(gB^s)/ds; 11 Mar 16;
    
    efmn(1:mn) = - im(1:mn)*im(1:mn)*Azemn(1:mn,0) - im(1:mn)*in(1:mn)*Atemn(1:mn,0)
    ofmn(1:mn) = - im(1:mn)*im(1:mn)*Azomn(1:mn,0) - im(1:mn)*in(1:mn)*Atomn(1:mn,0)
@@ -226,7 +234,7 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
    sfmn(1:mn) = + in(1:mn)*im(1:mn)*Azomn(1:mn,0) + in(1:mn)*in(1:mn)*Atomn(1:mn,0)
    
    call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), &
-                Nt, Nz, gBu(1:Ntz,1,2), gBu(1:Ntz,1,3), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz) ) ! d(gB^s)/dt, d(gB^s)/dz; 11 Mar 16;
+                Nt, Nz, gBu(1:Ntz,1,2), gBu(1:Ntz,1,3) ) ! d(gB^s)/dt, d(gB^s)/dz; 11 Mar 16;
    
    efmn(1:mn) =                                   -                   Azemn(1:mn,1)
    ofmn(1:mn) =                                   -                   Azomn(1:mn,1)
@@ -234,7 +242,7 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
    sfmn(1:mn) =                                   -                   Azomn(1:mn,2)
    
    call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), &
-                Nt, Nz, gBu(1:Ntz,2,0), gBu(1:Ntz,2,1), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz) ) !  (gB^t)   , d(gB^t)/ds; 11 Mar 16;
+                Nt, Nz, gBu(1:Ntz,2,0), gBu(1:Ntz,2,1) ) !  (gB^t)   , d(gB^t)/ds; 11 Mar 16;
 
    ofmn(1:mn) =                                   +          im(1:mn)*Azemn(1:mn,1)
    efmn(1:mn) =                                   -          im(1:mn)*Azomn(1:mn,1)
@@ -242,7 +250,7 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
    cfmn(1:mn) =                                   +          in(1:mn)*Azomn(1:mn,1)
    
    call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), &
-                Nt, Nz, gBu(1:Ntz,2,2), gBu(1:Ntz,2,3), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz) ) ! d(gB^t)/dt, d(gB^t)/dz; 11 Mar 16;
+                Nt, Nz, gBu(1:Ntz,2,2), gBu(1:Ntz,2,3) ) ! d(gB^t)/dt, d(gB^t)/dz; 11 Mar 16;
    
    efmn(1:mn) = +                   Atemn(1:mn,1)
    ofmn(1:mn) = +                   Atomn(1:mn,1)
@@ -250,7 +258,7 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
    sfmn(1:mn) = +                   Atomn(1:mn,2)
    
    call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), &
-                Nt, Nz, gBu(1:Ntz,3,0), gBu(1:Ntz,3,1), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz) ) !  (gB^z)   , d(gB^z)/ds; 11 Mar 16;
+                Nt, Nz, gBu(1:Ntz,3,0), gBu(1:Ntz,3,1) ) !  (gB^z)   , d(gB^z)/ds; 11 Mar 16;
 
    ofmn(1:mn) = -          im(1:mn)*Atemn(1:mn,1)
    efmn(1:mn) = +          im(1:mn)*Atomn(1:mn,1)
@@ -258,7 +266,7 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
    cfmn(1:mn) = -          in(1:mn)*Atomn(1:mn,1)
    
    call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), &
-                Nt, Nz, gBu(1:Ntz,3,2), gBu(1:Ntz,3,3), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz) ) ! d(gB^z)/dt, d(gB^z)/dz; 11 Mar 16;
+                Nt, Nz, gBu(1:Ntz,3,2), gBu(1:Ntz,3,3) ) ! d(gB^z)/dt, d(gB^z)/dz; 11 Mar 16;
      
 !latex \item The following quantities are then computed on the regular angular grid
 !latex       \be \sqrt g j^\s & = & \sum_u \left[

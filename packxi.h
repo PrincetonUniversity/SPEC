@@ -84,8 +84,7 @@ subroutine packxi( NGdof, position, Mvol, mn, iRbc, iZbs, iRbs, iZbc, packorunpa
   
   use allglobal, only : ncpu, myid, cpus, im, in, &
                         YESstellsym, NOTstellsym, &
-                        ajk, &
-                        trigm, trign, trigwk, isr, Nt, Nz, Ntz, iRij, iZij, tRij, tZij, &
+                        ajk, Nt, Nz, Ntz, iRij, iZij, tRij, tZij, &
                         ijreal, ijimag, jireal, jiimag, efmn, ofmn, cfmn, sfmn, evmn, odmn, comn, simn, &
                         psifactor, Rscale
   

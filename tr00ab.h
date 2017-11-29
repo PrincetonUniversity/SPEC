@@ -86,7 +86,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
                         Mvol, im, in, mns, ims, ins, &
                         YESstellsym, NOTstellsym, &
                         glambda, & ! global lambda: initial guesses will be saved; 21 Apr 13;
-                        Ntz, hNt, hNz, isr, trigm, trign, trigwk, &
+                        Ntz, hNt, hNz, &
                         iotakkii, iotaksub, iotakadd, iotaksgn, &
                         Ate, Aze, Ato, Azo, TT, &
                         Lcoordinatesingularity, Lvacuumregion, regumm
@@ -111,9 +111,11 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
   REAL                 :: gvu(1:Nt*Nz,1:3,1:3) ! local workspace; 13 Sep 13;
 
 ! required for Fourier routines;
-  INTEGER              :: IA, IB, IC, if04aaf, if04aef, FIAA, FIBB
-  REAL                 :: dmatrix(1:NN,1:NN,-1:2), drhs(1:NN,-1:2), fourierwork(1:NN), dlambda(1:NN,-1:2), FAA(1:NN,1:NN), FBB(1:NN,1:NN)
+  INTEGER              :: IA, if04aaf, idgesvx, ipiv(1:NN), iwork4(1:NN)
+  REAL                 :: dmatrix(1:NN,1:NN,-1:2), drhs(1:NN,-1:2), dlambda(1:NN,-1:2), FAA(1:NN,1:NN)
   REAL                 :: omatrix(1:NN,1:NN)
+  REAL                 :: Rdgesvx(1:NN), Cdgesvx(1:NN), work4(1:4*NN), rcond, ferr, berr, ferr2(1:2), berr2(1:2)
+  CHARACTER            :: equed 
 
 ! required for real-space routines;
   INTEGER              :: maxitn, reqdits, extralength, lrwork, integerwork(1:2*Nt*Nz+2+1), if11def, if11zaf, if11xaf
@@ -121,9 +123,8 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
   INTEGER              :: Ndof, label(-3:Nt+2,-3:Nz+2), isym
 
 !required for SVD routines;
-  LOGICAl              :: lsvd
-  INTEGER              :: if04jgf, NRA, Lwork, Irank
-  REAL                 :: sigma
+  INTEGER              :: idgelsd, Lwork, Liwork, Irank, nlvl
+  REAL                 :: sval(1:NN)
   REAL   , allocatable :: work(:)
 
   REAL                 ::                      Bsupt(1:Nt*Nz,-1:2), Bsupz(1:Nt*Nz,-1:2), tdot(1:Nt*Nz)
@@ -193,7 +194,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
     
     if( Lsparse.gt.0 ) then ! will construct transformation to straight-field line angle in real space; 24 Apr 13;
      call invfft( mn, im(1:mn), in(1:mn), lAte(1:mn,id), lAto(1:mn,id), lAze(1:mn,id), lAzo(1:mn,id), &
-                  Nt, Nz, Bsupz(1:Ntz,id), Bsupt(1:Ntz,id), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz) ) ! map to real space;
+                  Nt, Nz, Bsupz(1:Ntz,id), Bsupt(1:Ntz,id) ) ! map to real space;
     endif
 
    enddo ! end of do ideriv; 31 Jan 13;
@@ -201,6 +202,8 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
 ! construct real-space, real-space transformation matrix; 20 Apr 13;
+
+#ifdef LSPARSE
    
    if( Lsparse.gt.0 ) then
     
@@ -244,9 +247,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
      
     endif
     
-#ifdef DEBUG
     FATAL( tr00ab, ii.ne.Ndof, counting error )
-#endif
     
     Ndof = Ndof + 1 ! include rotational-transform as a degree-of-freedom; 23 Apr 13;
     
@@ -558,6 +559,8 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
     
    endif ! end of if( Lsparse.gt.0 );
    
+#endif
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
    if( Lsparse.eq.0 .or. Lsparse.eq.3 ) then ! Fourier transformation; 24 Apr 13;
@@ -597,7 +600,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
        
        if( ii.lt.1 ) cycle
        
-       FATAL( tr00ab,ii.gt.NN .or. jj.gt.NN, illegal subscript ) ! THIS CAN BE DELETED EVENTUALLY; 02 Sep 14;
+!      FATAL( tr00ab,ii.gt.NN .or. jj.gt.NN, illegal subscript ) ! THIS CAN BE DELETED EVENTUALLY; 02 Sep 14;
        
        ;dmatrix(ii      ,jj      ,ideriv) = dmatrix(ii      ,jj      ,ideriv) + ( - mj * lAze(kk,ideriv) + nj * lAte(kk,ideriv) ) * half
        if( NOTstellsym) then
@@ -653,25 +656,24 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
       FATAL( tr00ab, .true., invalid jderiv )
      end select
      
-     lcpu = GETTIME ! record time taken in F04AEF; 20 Apr 13;
+     lcpu = GETTIME ! record time taken in dgesvx; 09 Nov 17;
      
      select case( Lsvdiota )
       
      case( 0 ) ! Lsvdiota = 0; use linear solver to invert linear equations that define the straight fieldline angle; 01 Jul 14;
-      
-      IA = NN ; IB = NN ; IC = NN ; FIAA = NN ; FIBB = NN
-      
-      if04aaf = 1
-      if04aef = 1
+           
+      if04aaf = 1 
       
       select case( jderiv )
        
       case( 0 ) ! Lsvdiota = 0; jderiv = 0; 02 Sep 14;
        
        MM = 1
-      !call F04AAF( dmatrix(1:NN,1:NN,0), IA, drhs(1:NN,0:0), IB, NN, MM, dlambda(1:NN,0:0), IC, fourierwork(1:NN), if04aaf ) ! BEWARE: matrix is corrupted;
-       call F04AEF( dmatrix(1:NN,1:NN,0), IA, drhs(1:NN,0:0), IB, NN, MM, dlambda(1:NN,0:0), IC, &
-    fourierwork(1:NN), FAA(1:FIAA,1:NN), FIAA, FBB(1:FIBB,1:NN), FIBB, if04aef )
+    
+       call dgesvx( 'N', 'N', NN, MM, dmatrix(1:NN,1:NN,0), NN, FAA(1:NN,1:NN), NN, ipiv(1:NN),  &
+                 equed, Rdgesvx(1:NN), Cdgesvx(1:NN), drhs(1:NN,0:0), NN, dlambda(1:NN,0:0),    & 
+		 NN, rcond, ferr, berr, work4(1:4*NN), iwork4(1:NN), idgesvx )        
+   
        ;                 ldiota(innout,    0) = dlambda(1,  0) ! return intent out; 21 Apr 13;
        
       case( 1 ) ! Lsvdiota = 0; jderiv = 1; 02 Sep 14;
@@ -681,11 +683,12 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
         ;                     ; drhs(1:NN, 2) = zero         
        endif
        
-       dmatrix(1:NN,1:NN,0) = omatrix(1:NN,1:NN) ! original "unperturbed" matrix; 30 Jan 13;
-       
-      !call F04AAF( dmatrix(1:NN,1:NN,0), IA, drhs(1:NN,1:MM), IB, NN, MM, dlambda(1:NN,1:MM), IC, fourierwork(1:NN), if04aaf )
-       call F04AEF( dmatrix(1:NN,1:NN,0), IA, drhs(1:NN,1:MM), IB, NN, MM, dlambda(1:NN,1:MM), IC, &
-    fourierwork(1:NN), FAA(1:FIAA,1:NN), FIAA, FBB(1:FIBB,1:NN), FIBB, if04aef )
+       dmatrix(1:NN,1:NN,0) = omatrix(1:NN,1:NN) ! original "unperturbed" matrix; 30 Jan 13;       
+    
+       call dgesvx( 'N', 'N', NN, MM, dmatrix(1:NN,1:NN,0), NN, FAA(1:NN,1:NN), NN, ipiv(1:NN),    &
+                   equed, Rdgesvx(1:NN), Cdgesvx(1:NN), drhs(1:NN,1:MM), NN, dlambda(1:NN,1:MM),    & 
+	           NN, rcond, ferr2(1:MM), berr2(1:MM), work4(1:4*NN), iwork4(1:NN), idgesvx )
+    
        if( iflag.eq. 2 ) ldiota(innout, 1:2) = dlambda(1,1:2) ! return intent out; 21 Apr 13;
        if( iflag.eq.-1 ) ldiota(innout,-1  ) = dlambda(1,  1) ! return intent out; 21 Apr 13;
        
@@ -697,22 +700,28 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
       
       cput = GETTIME
       
-      select case( if04aef )                                                                                           !12345678901234567
-      case( 0 )    ; if( Wtr00ab ) write(ounit,1030) cput-cpus, myid, lvol, innout, id, "if04aef", if04aef, cput-lcpu, "solved Fourier ; ", dlambda(1,0)
-      case( 1 )    ;               write(ounit,1030) cput-cpus, myid, lvol, innout, id, "if04aef", if04aef, cput-lcpu, "singular ;       "
-      case( 2 )    ;               write(ounit,1030) cput-cpus, myid, lvol, innout, id, "if04aef", if04aef, cput-lcpu, "input error ;    "
-      case default ;               FATAL( tr00ab, .true., illegal ifail returned by f04arf )
+      select case( idgesvx )                                                                                           !12345678901234567
+      case( 0   )    ; if( Wtr00ab ) write(ounit,1030) cput-cpus, myid, lvol, innout, id, "idgesvx", idgesvx, cput-lcpu, "solved Fourier ; ", dlambda(1,0)
+      case( 1:  )    ;               write(ounit,1030) cput-cpus, myid, lvol, innout, id, "idgesvx", idgesvx, cput-lcpu, "singular ;       "
+      case( :-1 )    ;               write(ounit,1030) cput-cpus, myid, lvol, innout, id, "idgesvx", idgesvx, cput-lcpu, "input error ;    "
+      case default ;               FATAL( tr00ab, .true., illegal ifail returned by dgesvx )
       end select
       
-      FATAL( tr00ab, if04aef.ne.0, failed to construct straight-fieldline angle using F04AEF )
+      FATAL( tr00ab, idgesvx.ne.0, failed to construct straight-fieldline angle using dgesvx )
       
      case( 1 ) ! Lsvdiota = 1; use least-squares to invert linear equations that define the straight fieldline angle; 01 Jul 14;
       
-      if04jgf = 1 ! check the SVD method that should work when the straight field line angle is not unique; 20 Jun 14;
-      
-      MM = NN ; NRA = MM ; tol = small ; Lwork = 4 * NN
+
+!     Here Lwork = 12*N + 2*N*SMLSIZ + 8*N*NLVL + N*NRHS + (SMLSIZ+1)**2  and Liwork = (11+3*NLVL)*NN
+!     where SMLSIZ=25 and NLVL = MAX( 0, INT( LOG_2( MIN( M,N )/(SMLSIZ+1) ) ) + 1 )
+!     Warning: this could become insufficient in some cases and produce input error message; 12 Nov 17
+      nlvl   = max(0, int(log( real(NN)/26 )/log(2.0D0))+1)
+      Lwork  = (63+8*nlvl)*NN+676
+      Liwork = max(1,11*NN+3*nlvl*NN)
       
       SALLOCATE( work, (1:Lwork), zero )
+      DALLOCATE(iwork)
+      SALLOCATE( iwork, (1:Liwork), zero )
       
       select case( jderiv ) 
        
@@ -720,9 +729,9 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
        
        dlambda(1:NN,0) = drhs(1:NN,0) ! on entry, rhs; on exit, solution; 20 Jun 14;
        
-      !call F04JAF( MM, NN, dmatrix(1:NRA,1:NN,0), NRA, dlambda(1:NN,  0), tol,       sigma, Irank, work(1:Lwork), Lwork, if04jaf ) ! reduces to SVD ?;
-       call F04JGF( MM, NN, dmatrix(1:NRA,1:NN,0), NRA, dlambda(1:NN,  0), tol, lsvd, sigma, Irank, work(1:Lwork), Lwork, if04jgf ) ! reduces to SVD ?;
-       
+       call dgelsd( NN, NN, 1, dmatrix(1:NN,1:NN,0), NN, dlambda(1:NN,0), NN, sval(1:NN), rcond, Irank, & 
+                    work(1:Lwork), Lwork, iwork(1:Liwork), idgelsd ) 
+
        ldiota(innout,0) = dlambda(1,0)
        
       case( 1 ) ! Lsvdiota = 1; jderiv = 1; 02 Sep 14;
@@ -730,15 +739,19 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
        if(     iflag.eq. 2 ) then
         do imupf = 1, 2
          dmatrix(1:NN,1:NN,0) = omatrix(1:NN,1:NN) ; dlambda(1:NN,imupf) = drhs(1:NN,imupf)
-        !call F04JAF( MM, NN, dmatrix(1:NRA,1:NN,0), NRA, dlambda(1:NN,imupf), tol,       sigma, Irank, work(1:Lwork), Lwork, if04jaf )
-         call F04JGF( MM, NN, dmatrix(1:NRA,1:NN,0), NRA, dlambda(1:NN,imupf), tol, lsvd, sigma, Irank, work(1:Lwork), Lwork, if04jgf )
+
+         call dgelsd( NN, NN, 1, dmatrix(1:NN,1:NN,0), NN, dlambda(1:NN,imupf), NN, sval(1:NN), rcond, Irank, & 
+                      work(1:Lwork), Lwork, iwork(1:Liwork), idgelsd ) 
+		      
          ldiota(innout,imupf) = dlambda(1,imupf)
         enddo
        elseif( iflag.eq.-1 ) then
         do imupf = -1, -1
          dmatrix(1:NN,1:NN,0) = omatrix(1:NN,1:NN) ; dlambda(1:NN,imupf) = drhs(1:NN,imupf)
-        !call F04JAF( MM, NN, dmatrix(1:NRA,1:NN,0), NRA, dlambda(1:NN,imupf), tol,       sigma, Irank, work(1:Lwork), Lwork, if04jaf )
-         call F04JGF( MM, NN, dmatrix(1:NRA,1:NN,0), NRA, dlambda(1:NN,imupf), tol, lsvd, sigma, Irank, work(1:Lwork), Lwork, if04jgf )
+
+         call dgelsd( NN, NN, 1, dmatrix(1:NN,1:NN,0), NN, dlambda(1:NN,imupf), NN, sval(1:NN), rcond, Irank, & 
+                      work(1:Lwork), Lwork, iwork(1:Liwork), idgelsd ) 
+
          ldiota(innout,imupf) = dlambda(1,imupf)
         enddo
        else
@@ -755,14 +768,14 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
       
       cput = GETTIME
       
-      select case( if04jgf )                                                                                           !12345678901234567
-      case( 0 )    ; if( Wtr00ab)  write(ounit,1030) cput-cpus, myid, lvol, innout, id, "if04jgf", if04jgf, cput-lcpu, "solved Fourier ; ", dlambda(1,0)
-      case( 1 )    ;               write(ounit,1030) cput-cpus, myid, lvol, innout, id, "if04jgf", if04jgf, cput-lcpu, "input error ;    "
-      case( 2 )    ;               write(ounit,1030) cput-cpus, myid, lvol, innout, id, "if04jgf", if04jgf, cput-lcpu, "QR failed ;      "
+      select case( idgelsd )                                                                                           !12345678901234567
+      case( 0   )    ; if( Wtr00ab)  write(ounit,1030) cput-cpus, myid, lvol, innout, id, "idgelsd", idgelsd, cput-lcpu, "solved Fourier ; ", dlambda(1,0)
+      case( :-1 )    ;               write(ounit,1030) cput-cpus, myid, lvol, innout, id, "idgelsd", idgelsd, cput-lcpu, "input error ;    "
+      case( 1:  )    ;               write(ounit,1030) cput-cpus, myid, lvol, innout, id, "idgelsd", idgelsd, cput-lcpu, "QR failed ;      "
       case default ;               FATAL( tr00ab, .true., illegal ifail returned by f04arf )
       end select
       
-      FATAL( tr00ab, if04jgf.ne.0, failed to construct straight-fieldline angle using F04JGF )
+      FATAL( tr00ab, idgelsd.ne.0, failed to construct straight-fieldline angle using dgelsd )      
       
       dmatrix(1:NN,1:NN, 0) = omatrix(1:NN,1:NN) ! original "unperturbed" matrix; 30 Jan 13;
       
@@ -781,6 +794,8 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
    endif ! end of if( Lsparse.eq.0 .or. Lsparse.eq.3 ); 
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+#ifdef LSPARSE
 
    if( Lsparse.eq.3                        ) then ! compare estimates for rotational-transform provided by Fourier method and real-space method;
 
@@ -827,6 +842,8 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
     DALLOCATE(istr)
     DALLOCATE(iwork)
    endif
+
+#endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

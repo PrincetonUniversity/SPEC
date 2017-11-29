@@ -85,8 +85,7 @@ subroutine rzaxis( Mvol, mn, iRbc, iZbs, iRbs, iZbc, ivol )
   use cputiming, only : Trzaxis
   
   use allglobal, only : ncpu, myid, cpus, im, in, &
-                        ajk, &
-                        trigm, trign, trigwk, isr, Nt, Nz, Ntz, &
+                        ajk, Nt, Nz, Ntz, &
                         ijreal, ijimag, jireal, jiimag, jkreal, jkimag, kjreal, kjimag, &
                         efmn, ofmn, cfmn, sfmn, evmn, odmn, comn, simn, cosi, sini, &
                         NOTstellsym, &
@@ -127,7 +126,7 @@ subroutine rzaxis( Mvol, mn, iRbc, iZbs, iRbs, iZbc, ivol )
    
    call invfft( mn, im(1:mn), in(1:mn), im(1:mn) * iRbs(1:mn,ivol), - im(1:mn) * iRbc(1:mn,ivol), &
                                         im(1:mn) * iZbs(1:mn,ivol), - im(1:mn) * iZbc(1:mn,ivol), &
-                Nt, Nz, jkreal(1:Ntz), jkimag(1:Ntz), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz) ) ! R_\t, Z_\t; 03 Nov 16;
+                Nt, Nz, jkreal(1:Ntz), jkimag(1:Ntz) ) ! R_\t, Z_\t; 03 Nov 16;
  
    ijreal(1:Ntz) = sqrt( jkreal(1:Ntz)**2 + jkimag(1:Ntz)**2 ) ! dl ; 11 Aug 14;
    ijimag(1:Ntz) = zero
@@ -135,7 +134,7 @@ subroutine rzaxis( Mvol, mn, iRbc, iZbs, iRbs, iZbc, ivol )
    jireal(1:Ntz) = ijreal(1:Ntz) ! dl ; 19 Sep 16;
    
    ifail = 0
-   call tfft( Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz), &
+   call tfft( Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz), &
               mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), ifail ) ! Fourier harmonics of differential poloidal length; 11 Mar 16;
 
    efmn(1:mn) = efmn(1:mn) * ajk(1:mn) ! poloidal integration of length; only take m=0 harmonics; 11 Aug 14;
@@ -144,20 +143,20 @@ subroutine rzaxis( Mvol, mn, iRbc, iZbs, iRbs, iZbc, ivol )
    sfmn(1:mn) = zero
       
    call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), & ! map length = "integrated dl" back to real space; 19 Sep 16;
-                Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz) )
+                Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz) )
     
    jiimag(1:Ntz) = ijreal(1:Ntz) !  L ; 19 Sep 16;
 
 
    call invfft( mn, im(1:mn), in(1:mn),            iRbc(1:mn,ivol),              iRbs(1:mn,ivol), &
                                                    iZbc(1:mn,ivol),              iZbs(1:mn,ivol), &
-                Nt, Nz, kjreal(1:Ntz), kjimag(1:Ntz), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz) ) ! R, Z; 03 Nov 16;
+                Nt, Nz, kjreal(1:Ntz), kjimag(1:Ntz) ) ! R, Z; 03 Nov 16;
    
    ijreal(1:Ntz) = kjreal(1:Ntz) * jireal(1:Ntz) ! R dl;
    ijimag(1:Ntz) = kjimag(1:Ntz) * jireal(1:Ntz) ! Z dl;
    
    ifail = 0
-   call tfft( Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz), &
+   call tfft( Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz), &
               mn, im(1:mn), in(1:mn), evmn(1:mn), odmn(1:mn), comn(1:mn), simn(1:mn), ifail ) ! Fourier harmonics of weighted R & Z; 11 Mar 16;
 
    evmn(1:mn) = evmn(1:mn) * ajk(1:mn) ! poloidal integration of R dl; 19 Sep 16;
@@ -166,7 +165,7 @@ subroutine rzaxis( Mvol, mn, iRbc, iZbs, iRbs, iZbc, ivol )
    simn(1:mn) = simn(1:mn) * ajk(1:mn)
    
    call invfft( mn, im(1:mn), in(1:mn), evmn(1:mn), odmn(1:mn), comn(1:mn), simn(1:mn), &
-                Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz) )
+                Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz) )
  
    ijreal(1:Ntz) = ijreal(1:Ntz) / jiimag(1:Ntz) ! Ro; 19 Sep 16;
    ijimag(1:Ntz) = ijimag(1:Ntz) / jiimag(1:Ntz) ! Zo; 19 Sep 16;
@@ -175,7 +174,7 @@ subroutine rzaxis( Mvol, mn, iRbc, iZbs, iRbs, iZbc, ivol )
    kjimag(1:Ntz) = kjimag(1:Ntz) - ijimag(1:Ntz) ! \Delta R = Z_1 - Z_0 ; 03 Nov 16;
 
    ifail = 0
-   call tfft( Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz), &
+   call tfft( Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz), &
               mn, im(1:mn), in(1:mn), iRbc(1:mn,jvol), iRbs(1:mn,jvol), iZbc(1:mn,jvol), iZbs(1:mn,jvol), ifail )
    
 #ifdef DEBUG
@@ -217,7 +216,7 @@ subroutine rzaxis( Mvol, mn, iRbc, iZbs, iRbs, iZbc, ivol )
     dRodR(1:Ntz,1,ii) = sini(1:Ntz,ii) * jireal(1:Ntz) + kjreal(1:Ntz) * jkreal(1:Ntz) * im(ii) * cosi(1:Ntz,ii) / jireal(1:Ntz) ! dRodRjs;
     
     ifail = 0
-    call tfft( Nt, Nz, dRodR(1:Ntz,0,ii), dRodR(1:Ntz,1,ii), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz), &
+    call tfft( Nt, Nz, dRodR(1:Ntz,0,ii), dRodR(1:Ntz,1,ii), &
               mn, im(1:mn), in(1:mn), dRadR(1:mn,0,0,ii), dRadR(1:mn,1,0,ii), dRadR(1:mn,0,1,ii), dRadR(1:mn,1,1,ii), ifail )
 
     dRadR(1:mn,0,0,ii) = dRadR(1:mn,0,0,ii) * ajk(1:mn) ! poloidal integration; 03 Nov 16;
@@ -226,7 +225,7 @@ subroutine rzaxis( Mvol, mn, iRbc, iZbs, iRbs, iZbc, ivol )
     dRadR(1:mn,1,1,ii) = dRadR(1:mn,1,1,ii) * ajk(1:mn)
 
     call invfft( mn, im(1:mn), in(1:mn), dRadR(1:mn,0,0,ii), dRadR(1:mn,1,0,ii), dRadR(1:mn,0,1,ii), dRadR(1:mn,1,1,ii), &
-                 Nt, Nz, dRodR(1:Ntz,0,ii), dRodR(1:Ntz,1,ii), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz) ) ! R, Z; 03 Nov 16;
+                 Nt, Nz, dRodR(1:Ntz,0,ii), dRodR(1:Ntz,1,ii) ) ! R, Z; 03 Nov 16;
 
     dRodR(1:Ntz,0,ii) = dRodR(1:Ntz,0,ii) / jiimag(1:Ntz) ! divide by length; 03 Nov 16;
     dRodR(1:Ntz,1,ii) = dRodR(1:Ntz,1,ii) / jiimag(1:Ntz)
@@ -236,7 +235,7 @@ subroutine rzaxis( Mvol, mn, iRbc, iZbs, iRbs, iZbc, ivol )
     dRodZ(1:Ntz,1,ii) =                                + kjreal(1:Ntz) * jkimag(1:Ntz) * im(ii) * cosi(1:Ntz,ii) / jireal(1:Ntz) ! dRodZjs;
 
     ifail = 0
-    call tfft( Nt, Nz, dRodZ(1:Ntz,0,ii), dRodZ(1:Ntz,1,ii), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz), &
+    call tfft( Nt, Nz, dRodZ(1:Ntz,0,ii), dRodZ(1:Ntz,1,ii), &
               mn, im(1:mn), in(1:mn), dRadZ(1:mn,0,0,ii), dRadZ(1:mn,1,0,ii), dRadZ(1:mn,0,1,ii), dRadZ(1:mn,1,1,ii), ifail )
 
     dRadZ(1:mn,0,0,ii) = dRadZ(1:mn,0,0,ii) * ajk(1:mn) ! poloidal integration; 03 Nov 16;
@@ -245,7 +244,7 @@ subroutine rzaxis( Mvol, mn, iRbc, iZbs, iRbs, iZbc, ivol )
     dRadZ(1:mn,1,1,ii) = dRadZ(1:mn,1,1,ii) * ajk(1:mn)
 
     call invfft( mn, im(1:mn), in(1:mn), dRadZ(1:mn,0,0,ii), dRadZ(1:mn,1,0,ii), dRadZ(1:mn,0,1,ii), dRadZ(1:mn,1,1,ii), &
-                 Nt, Nz, dRodZ(1:Ntz,0,ii), dRodZ(1:Ntz,1,ii), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz) ) ! R, Z; 03 Nov 16;
+                 Nt, Nz, dRodZ(1:Ntz,0,ii), dRodZ(1:Ntz,1,ii) ) ! R, Z; 03 Nov 16;
 
     dRodZ(1:Ntz,0,ii) = dRodZ(1:Ntz,0,ii) / jiimag(1:Ntz) ! divide by length; 03 Nov 16;
     dRodZ(1:Ntz,1,ii) = dRodZ(1:Ntz,1,ii) / jiimag(1:Ntz)
@@ -256,7 +255,7 @@ subroutine rzaxis( Mvol, mn, iRbc, iZbs, iRbs, iZbc, ivol )
     dZodR(1:Ntz,1,ii) =                                + kjimag(1:Ntz) * jkreal(1:Ntz) * im(ii) * cosi(1:Ntz,ii) / jireal(1:Ntz) ! dZodRjs;
 
     ifail = 0
-    call tfft( Nt, Nz, dZodR(1:Ntz,0,ii), dZodR(1:Ntz,1,ii), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz), &
+    call tfft( Nt, Nz, dZodR(1:Ntz,0,ii), dZodR(1:Ntz,1,ii), &
               mn, im(1:mn), in(1:mn), dZadR(1:mn,0,0,ii), dZadR(1:mn,1,0,ii), dZadR(1:mn,0,1,ii), dZadR(1:mn,1,1,ii), ifail )
 
     dZadR(1:mn,0,0,ii) = dZadR(1:mn,0,0,ii) * ajk(1:mn) ! poloidal integration; 03 Nov 16;
@@ -265,7 +264,7 @@ subroutine rzaxis( Mvol, mn, iRbc, iZbs, iRbs, iZbc, ivol )
     dZadR(1:mn,1,1,ii) = dZadR(1:mn,1,1,ii) * ajk(1:mn)
 
     call invfft( mn, im(1:mn), in(1:mn), dZadR(1:mn,0,0,ii), dZadR(1:mn,1,0,ii), dZadR(1:mn,0,1,ii), dZadR(1:mn,1,1,ii), &
-                 Nt, Nz, dZodR(1:Ntz,0,ii), dZodR(1:Ntz,1,ii), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz) ) ! R, Z; 03 Nov 16;
+                 Nt, Nz, dZodR(1:Ntz,0,ii), dZodR(1:Ntz,1,ii) ) ! R, Z; 03 Nov 16;
 
     dZodR(1:Ntz,0,ii) = dZodR(1:Ntz,0,ii) / jiimag(1:Ntz) ! divide by length; 03 Nov 16;
     dZodR(1:Ntz,1,ii) = dZodR(1:Ntz,1,ii) / jiimag(1:Ntz)
@@ -275,7 +274,7 @@ subroutine rzaxis( Mvol, mn, iRbc, iZbs, iRbs, iZbc, ivol )
     dZodZ(1:Ntz,1,ii) = sini(1:Ntz,ii) * jireal(1:Ntz) + kjimag(1:Ntz) * jkimag(1:Ntz) * im(ii) * cosi(1:Ntz,ii) / jireal(1:Ntz) ! dZodZjs;
 
     ifail = 0
-    call tfft( Nt, Nz, dZodZ(1:Ntz,0,ii), dZodZ(1:Ntz,1,ii), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz), &
+    call tfft( Nt, Nz, dZodZ(1:Ntz,0,ii), dZodZ(1:Ntz,1,ii), &
               mn, im(1:mn), in(1:mn), dZadZ(1:mn,0,0,ii), dZadZ(1:mn,1,0,ii), dZadZ(1:mn,0,1,ii), dZadZ(1:mn,1,1,ii), ifail )
 
     dZadZ(1:mn,0,0,ii) = dZadZ(1:mn,0,0,ii) * ajk(1:mn) ! poloidal integration; 03 Nov 16;
@@ -284,7 +283,7 @@ subroutine rzaxis( Mvol, mn, iRbc, iZbs, iRbs, iZbc, ivol )
     dZadZ(1:mn,1,1,ii) = dZadZ(1:mn,1,1,ii) * ajk(1:mn)
 
     call invfft( mn, im(1:mn), in(1:mn), dZadZ(1:mn,0,0,ii), dZadZ(1:mn,1,0,ii), dZadZ(1:mn,0,1,ii), dZadZ(1:mn,1,1,ii), &
-                 Nt, Nz, dZodZ(1:Ntz,0,ii), dZodZ(1:Ntz,1,ii), isr, trigm(1:2*Nt), trign(1:2*Nz), trigwk(1:2*Ntz) ) ! R, Z; 03 Nov 16;
+                 Nt, Nz, dZodZ(1:Ntz,0,ii), dZodZ(1:Ntz,1,ii) ) ! R, Z; 03 Nov 16;
 
     dZodZ(1:Ntz,0,ii) = dZodZ(1:Ntz,0,ii) / jiimag(1:Ntz) ! divide by length; 03 Nov 16;
     dZodZ(1:Ntz,1,ii) = dZodZ(1:Ntz,1,ii) / jiimag(1:Ntz)

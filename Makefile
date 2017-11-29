@@ -9,7 +9,7 @@
  dfiles=casing bnorml 
  efiles=jo00aa pp00aa pp00ab bfield stzxyz sc00aa
  ffiles=hesian ra00aa numrec
- sfiles=dcuhre minpack iqpack # the following assumes that .f files are written in double precision; the CFLAGS = -r8 option is not required;
+ sfiles=dcuhre minpack iqpack rksuite i1mach d1mach # the following assumes that .f files are written in double precision; the CFLAGS = -r8 option is not required;
 
 ###############################################################################################################################################################
 
@@ -33,9 +33,8 @@
  CFLAGS=-r8
  RFLAGS=-mcmodel=large -O3 -m64 -unroll0 -fno-alias -ip -traceback
  DFLAGS=-check bounds -check format -check output_conversion -check pointers -check uninit -debug full -D DEBUG
- NAG=-L$(NAG_ROOT)/lib -lnag_nag
  #Note: on the PPPL clusters, use module lapack/3.5.0rhel6 only
- LAPACKlink=-L$(LAPACKHOME) -llapack -L$(BLASHOME) -lblas -lgfortran
+ NAG=-L$(LAPACKHOME) -llapack -L$(BLASHOME) -lblas -lgfortran
  NETCDF=-L$(NETCDFHOME)/lib -lnetcdf
  HDF5compile=-I$(HDF5_HOME)/include
  HDF5link=-L$(HDF5_HOME)/lib -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lpthread -lz -lm
@@ -64,7 +63,8 @@ ifeq ($(CC),intel_ipp)
  CFLAGS=-r8
  RFLAGS=-O2 -ip -no-prec-div -xHost -fPIC
  DFLAGS=-traceback -D DEBUG
- NAG=-L$(NAGFLIB_HOME)/lib -lnag_nag 
+# NAG=-L$(NAGFLIB_HOME)/lib -lnag_nag 
+ NAG=-L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl 
  NETCDF=-L$(NETCDF_HOME)/lib -lnetcdf
  FFTWcompile=-I$(FFTW_DIR)/include
  FFTWlink=-L$(FFTW_DIR)/lib -lfftw3
@@ -74,7 +74,8 @@ ifeq ($(CC),gfortran_ipp)
  CFLAGS=-fdefault-real-8
  RFLAGS=-O2 -fPIC -ffree-line-length-none
  DFLAGS=-g -fbacktrace -fbounds-check -DDEBUG -ffree-line-length-none
- NAG=-L$(NAGFLIB_HOME)/lib -lnag_nag 
+# NAG=-L$(NAGFLIB_HOME)/lib -lnag_nag 
+ NAG=-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl 
  FFTWcompile=-I$(FFTW_DIR)/include
  FFTWlink=-L$(FFTW_DIR)/lib -lfftw3
 endif
