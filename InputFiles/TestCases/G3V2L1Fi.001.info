@@ -1,0 +1,2 @@
+Test case to check that the code finds an equilibrium in stellarator geometry at finite beta.
+Can be used to compare results from different versions of the code.
