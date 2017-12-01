@@ -1,10 +1,12 @@
 function plot_spec_poincare_slab(data,nz0,newfig)
 
-
 % Produces Poincare plots of the field lines on different sections (within one field period)
+%
+% INPUT
 %   -data     : must be produced by calling read_spec_poincare(filename)
 %   -nz0      : the toroidal plane to be shown
 %   -newfig   : opens(=1) or not(=0) a new figure
+%
 %   written by J.Loizu (2015)
 
 

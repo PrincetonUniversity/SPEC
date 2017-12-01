@@ -1,7 +1,8 @@
 function plot_spec_poincare(data,nz0,nfp,trjstep,newfig)
 
-
 % Produces Poincare plots of the field lines on different sections (within one field period)
+%
+% INPUT    
 %   -data     : must be produced by calling read_spec_poincare(filename)
 %   -nz0=-1   : shows a number of equidistant toroidal planes
 %   -nz0=-2   : shows selected toroidal planes
@@ -9,6 +10,7 @@ function plot_spec_poincare(data,nz0,nfp,trjstep,newfig)
 %   -nfp      : is the number of field periods
 %   -trjstep  : step to skip field-line trajectories when ploting (trjstep=0 means all trajectories are ploted)
 %   -newfig   : opens(=1) or not(=0) a new figure
+%
 %   written by J.Loizu (2015)
 %   upgraded by J.Loizu (02.2017)
 %   upgraded by J.Loizu (05.2017)
