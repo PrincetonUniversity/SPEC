@@ -1,0 +1,52 @@
+%%%%%%%%%%%% Plotting Poincare sections and ideal interfaces %%%%%%%%%%%%
+
+
+%%% Initial setup %%%
+
+1. Copy the SPEC executable and the input file G3V02L1Fi.001.sp in a directory.
+2. Open the input file and change the parameter nPpts=0 to e.g. nPpts=1000 (field-line-tracing toroidal transits).
+3. Run ./xspec G3V02L1Fi.001 (should take ~10sec for force-balance and ~5min for field-line-tracing).
+4. Open matlab (e.g., from terminal: matlab -nodesktop)
+5. Add path to the Utilities/matlabtools directory: addpath /somepath/Utilities/matlabtools
+
+
+%%% Matlab analysis %%%
+
+1. Define name of file to analyse:
+   
+   fname = 'G3V02L1Fi.001.sp.h5';
+
+2. Load output data from field-line-tracing:
+   
+   pdata = read_spec_poincare(fname);
+   
+3. Call ploting routine for Poincare section:
+   
+   plot_spec_poincare(pdata,1,5,0,1); 
+   
+3. Call ploting routine for ideal-interfaces on Poincare section:
+
+   plot_spec_kam(fname,0,0);
+
+
+%%% More details %%% 
+
+In order to see how to change cross-section, or other ploting options, use the help tool to see the meaning of each input.
+
+Example: help plot_spec_poincare
+
+For runs in slab geometry (e.g. G1V02L0Fi.001.sp), replace calls
+
+plot_spec_poincare(pdata,1,5,0,1);
+plot_spec_kam(fname,0,0);
+
+with
+
+plot_spec_poincare_slab(pdata,1,1);
+plot_spec_kam_slab(fname,0,0);
+
+
+%%%%%%%%%%%% written by J.Loizu (2017) %%%%%%%%%%%%
+
+
+
