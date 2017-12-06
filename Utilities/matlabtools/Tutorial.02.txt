@@ -1,0 +1,43 @@
+%%%%%%%%%%%% Plotting |B| on the boundary surface and on a cross-section %%%%%%%%%%%%
+
+
+%%% Initial setup %%%
+
+1. Copy the SPEC executable and the input file G3V02L1Fi.001.sp in a directory.
+3. Run ./xspec G3V02L1Fi.001 (should take ~10sec for force-balance).
+4. Open matlab (e.g., from terminal: matlab -nodesktop)
+5. Add path to the Utilities/matlabtools directory: addpath /somepath/Utilities/matlabtools
+
+
+%%% Matlab analysis %%%
+
+1. Define name of file to analyse:
+   
+   fname = 'G3V02L1Fi.001.sp.h5';
+
+2. Call ploting routine for |B| on the boundary surface:
+   
+   plot_spec_modB_boundary(fname,2,64,64); 
+
+3. Call ploting routine for |B| on a cross-section for volumes lvol=2 and lvol=1:
+
+   plot_spec_modB(fname,2,'d','d','d',1);
+   plot_spec_modB(fname,1,'d','d','d',0);
+
+
+%%% More details %%% 
+
+In order to see how to change cross-section, or other ploting options, use the help tool to see the meaning of each input.
+
+Example: help plot_spec_modB
+
+In order to obtain the magnetic field components in order to use them for other purposes, see routines
+
+ - get_spec_magfield 
+ - get_spec_modB
+ 
+
+%%%%%%%%%%%% written by J.Loizu (2017) %%%%%%%%%%%%
+
+
+
