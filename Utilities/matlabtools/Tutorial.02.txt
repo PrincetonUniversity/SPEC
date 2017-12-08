@@ -4,9 +4,9 @@
 %%% Initial setup %%%
 
 1. Copy the SPEC executable and the input file G3V02L1Fi.001.sp in a directory.
-3. Run ./xspec G3V02L1Fi.001 (should take ~10sec for force-balance).
-4. Open matlab (e.g., from terminal: matlab -nodesktop)
-5. Add path to the Utilities/matlabtools directory: addpath /somepath/Utilities/matlabtools
+2. Run ./xspec G3V02L1Fi.001 (should take ~10sec for force-balance).
+3. Open matlab (e.g., from terminal: matlab -nodesktop)
+4. Add path to the Utilities/matlabtools directory: addpath /somepath/Utilities/matlabtools
 
 
 %%% Matlab analysis %%%

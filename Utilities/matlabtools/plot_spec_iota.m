@@ -22,8 +22,8 @@ end
 hold on
 
 if(iorq=='i')
-F = abs(idata.iota(1:end));
-%F = idata.iota(1:end);
+%F = abs(idata.iota(1:end));
+F = idata.iota(1:end);
 Flabel='\iota';
 elseif(iorq=='q')
 %F = 1./abs(idata.iota(1:end));
@@ -67,13 +67,27 @@ switch xaxis
   kstart   = 1;
   psitor   = zeros(1,length(sval));
 
-  for lvol=1:nvol
-   for k=kstart:kstart-1+nptrj(lvol)
-   psitor(k) = cumflux + get_spec_torflux(fdata,lvol,0,-1,sval(k),ns,nt);
+  if(idata.Igeometry==1)
+  
+   for lvol=1:nvol
+    for k=kstart:kstart-1+nptrj(lvol)
+    psitor(k) = cumflux + get_spec_torflux_slab(fdata,lvol,0,-1,sval(k),ns,nt);
+    end
+    cumflux = cumflux + psitor(nptrj(lvol));
+    kstart  = kstart+nptrj(lvol);
+   end  
+  
+  else
+
+   for lvol=1:nvol
+    for k=kstart:kstart-1+nptrj(lvol)
+    psitor(k) = cumflux + get_spec_torflux(fdata,lvol,0,-1,sval(k),ns,nt);
+    end
+    cumflux = cumflux + psitor(nptrj(lvol));
+    kstart  = kstart+nptrj(lvol);
    end
-   cumflux = cumflux + psitor(nptrj(lvol));
-   kstart  = kstart+nptrj(lvol);
-  end
+  
+  end 
     
   plot(psitor/psitor(end),F,'*k','MarkerSize',8,'LineWidth',2)
   ylabel(Flabel)
@@ -106,13 +120,27 @@ case 'r'
   cumflux  = 0;
   kstart   = 1;
   psitor   = zeros(1,length(sval));
+  
+  if(idata.Igeometry==1)
 
-  for lvol=1:nvol
-   for k=kstart:kstart-1+nptrj(lvol)
-   psitor(k) = cumflux + get_spec_torflux(fdata,lvol,0,-1,sval(k),ns,nt);
+   for lvol=1:nvol
+    for k=kstart:kstart-1+nptrj(lvol)
+    psitor(k) = cumflux + get_spec_torflux_slab(fdata,lvol,0,-1,sval(k),ns,nt);
+    end
+    cumflux = cumflux + psitor(nptrj(lvol));
+    kstart  = kstart+nptrj(lvol);
    end
-   cumflux = cumflux + psitor(nptrj(lvol));
-   kstart  = kstart+nptrj(lvol);
+   
+  else
+
+   for lvol=1:nvol
+    for k=kstart:kstart-1+nptrj(lvol)
+    psitor(k) = cumflux + get_spec_torflux(fdata,lvol,0,-1,sval(k),ns,nt);
+    end
+    cumflux = cumflux + psitor(nptrj(lvol));
+    kstart  = kstart+nptrj(lvol);
+   end
+  
   end
     
   plot(sqrt(psitor/psitor(end)),F,'*k','MarkerSize',8,'LineWidth',2)
