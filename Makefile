@@ -44,8 +44,14 @@
 ifeq ($(CC),gfortran)
  # Not checked
  CFLAGS=-fdefault-real-8
+ NAG=-L$(ACML_HOME)/lib -lacml
+ NETCDF=-L$(NETCDFHOME)/lib -lnetcdf
+ HDF5compile=-I$(HDF5_HOME)/include
+ HDF5link=-L$(HDF5_HOME)/lib -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lpthread -lz -lm
+ FFTWcompile=-I$(FFTWHOME)/include
+ FFTWlink=-L$(FFTWHOME)/lib -lfftw3
  RFLAGS=-O2 -ffixed-line-length-none -ffree-line-length-none -fexternal-blas
- DFLAGS=-g3 -Wextra -Wtarget-lifetime -fbacktrace -fbounds-check -ffpe-trap=zero -fcheck=all -DDEBUG
+ DFLAGS=-g -fbacktrace -fbounds-check -ffree-line-length-none -fexternal-blas -DDEBUG
 endif
 
 ifeq ($(CC),lff95)
