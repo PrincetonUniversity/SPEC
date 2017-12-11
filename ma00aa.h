@@ -205,7 +205,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
 
     do mn2 = 1, mn2_max
       ii = mod(mn2-1,mn)+1
-      jj = ceiling(real(mn2) * imn2)
+      jj = floor(real(mn2-1) * imn2)+1
       
       kks = kijs(ii,jj,0) !; kds = kijs(ii,jj,1) 
       kka = kija(ii,jj,0) !; kda = kija(ii,jj,1) 
@@ -324,7 +324,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
 
       ii = mod(mn2-1,mn)+1
 
-      jj = ceiling(real(mn2) * imn2)
+      jj = floor(real(mn2-1) * imn2)+1
       
       kks = kijs(ii,jj,0) ! ; kds = kijs(ii,jj,1) 
       kka = kija(ii,jj,0) !; kda = kija(ii,jj,1) 
