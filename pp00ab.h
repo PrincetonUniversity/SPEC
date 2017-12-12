@@ -140,7 +140,7 @@ subroutine pp00ab( lvol, sti, Nz, nPpts, poincaredata, fittedtransform, utflag )
         
     utflag = 0
     
-    call SETUP(Node, zst, st(1:Node), pi2, tol, thres(1:Node), rkmethod, rktask, errass, hstart, rkwork(1:Lenwrk), Lenwrk, mesage) 
+    call SETUP(Node, zst, st(1:Node), zend, tol, thres(1:Node), rkmethod, rktask, errass, hstart, rkwork(1:Lenwrk), Lenwrk, mesage) 
     
     CALL( pp00ab, UT, (bfield, zend, zgot, ygot(1:Node), ypgot(1:Node), ymax(1:Node), rkwork(1:Lenwrk), utflag) ) ! integrate to next plane;
     
