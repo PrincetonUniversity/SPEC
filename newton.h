@@ -37,7 +37,7 @@
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-module newtontime ! SRH; 02 Aug 17;
+module newtontime 
   
   INTEGER :: nFcalls, nDcalls
   REAL    :: lastcpu
@@ -46,7 +46,7 @@ end module newtontime
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-subroutine newton( NGdof, position, ic05pxf )
+subroutine newton( NGdof, position, ihybrd )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -57,7 +57,7 @@ subroutine newton( NGdof, position, ic05pxf )
   use fileunits, only : ounit
 
   use inputlist, only : Wmacros, Wnewton, ext, &
-                        Igeometry, & ! only for screen output; 04 Dec 14;
+                        Igeometry, & ! only for screen output; 
                         Nvol,                    &
                         Lfindzero, forcetol, c05xmax, c05xtol, c05factor, LreadGF, &
                         Lcheck
@@ -80,13 +80,11 @@ subroutine newton( NGdof, position, ic05pxf )
   
   INTEGER, intent(in)    :: NGdof
   REAL   , intent(inout) :: position(0:NGdof)
-  INTEGER, intent(out)   :: ic05pxf
+  INTEGER, intent(out)   :: ihybrd
   
   LOGICAL                :: LComputeDerivatives
- !INTEGER                :: nFcalls, nDcalls, wflag, iflag, idof, jdof, ijdof, ireadhessian, igdof, lvol, ii, imn ! SRH; 02 Aug 17;
-  INTEGER                ::                   wflag, iflag, idof, jdof, ijdof, ireadhessian, igdof, lvol, ii, imn ! see above module newtontime; SRH; 02 Aug 17;
- !REAL                   :: rflag, lastcpu ! SRH; 02 Aug 17;
-  REAL                   :: rflag          ! see above module newtontime; SRH; 02 Aug 17;
+  INTEGER                :: wflag, iflag, idof, jdof, ijdof, ireadhessian, igdof, lvol, ii, imn
+  REAL                   :: rflag
   CHARACTER              :: pack
 
   INTEGER                :: irevcm, mode, Ldfjac, LR
@@ -99,19 +97,17 @@ subroutine newton( NGdof, position, ic05pxf )
   
   LOGICAL                :: Lexit = .true. ! perhaps this could be made user input;
 
-  INTEGER                :: nprint = 1 ! integer input variable that enables controlled output;
-  INTEGER                :: nfev ! integer output variable set to the number of calls to fcn ;
-  INTEGER                :: njev ! integer output variable set to the number of calls to fcn2; 
+  INTEGER                :: nprint = 1, nfev, njev
 
   INTEGER, parameter     :: maxfev = 500 ! maximum calls per iteration;
 
-  EXTERNAL                  fcn1, fcn2
+  external               :: fcn1, fcn2
   
   BEGIN(newton)
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  if( Wnewton .and. myid.eq.0 ) then ! screen output; 08 Feb 16;
+  if( Wnewton .and. myid.eq.0 ) then ! screen output; 
    cput = GETTIME
    write(ounit,'("newton : ", 10x ," : ")')
    write(ounit,'("newton : ",f10.2," : Lfindzero="i2" ; forcetol="es13.5" ; c05xtol="es13.5" ; c05factor="es13.5" ; LreadGF="L2" ; NGdof="i6" ;")')&
@@ -121,8 +117,8 @@ subroutine newton( NGdof, position, ic05pxf )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  if( c05xtol.gt.zero ) then ; xtol =          c05xtol                                          ! tolerance in position; 06 Mar 17;
-  else                       ; xtol = max( abs(c05xtol), c05xmax/two**nfreeboundaryiterations ) ! tolerance in position; 06 Mar 17;
+  if( c05xtol.gt.zero ) then ; xtol =          c05xtol                                          ! tolerance in position; 
+  else                       ; xtol = max( abs(c05xtol), c05xmax/two**nfreeboundaryiterations ) ! tolerance in position; 
   endif
   
   Ldfjac = NGdof ; LR = NGdof * (NGdof+1) / 2 ! supplied to NAG;
@@ -144,29 +140,29 @@ subroutine newton( NGdof, position, ic05pxf )
   
   lastcpu = GETTIME
   
-  if( Lexit ) then ! will call initial force, and if ForceErr.lt.forcetol will immediately exit; 04 Dec 14;
+  if( Lexit ) then ! will call initial force, and if ForceErr.lt.forcetol will immediately exit; 
 
    LComputeDerivatives= .false.
    WCALL( newton, dforce, ( NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives ) ) ! calculate the force-imbalance;
    
-   if( myid.eq.0 ) then ! screen output; 20 Jun 14;
+   if( myid.eq.0 ) then ! screen output; 
     cput = GETTIME
     ; write(ounit,1000) cput-cpus, nFcalls, nDcalls, ForceErr,  cput-lastcpu, "|BB|e", alog10(BBe(1:min(Mvol-1,28)))
-    if( Igeometry.ge.3 ) then ! include spectral constraints; 04 Dec 14;
+    if( Igeometry.ge.3 ) then ! include spectral constraints; 
      ;write(ounit,1001)                                                                       "|II|o", alog10(IIo(1:min(Mvol-1,28)))
     endif
     if( NOTstellsym ) then
      ;write(ounit,1001)                                                                       "|BB|o", alog10(BBo(1:min(Mvol-1,28)))
-     if( Igeometry.ge.3 ) then ! include spectral constraints; 04 Dec 14;
+     if( Igeometry.ge.3 ) then ! include spectral constraints; 
       write(ounit,1001)                                                                       "|II|e", alog10(IIe(1:min(Mvol-1,28)))
      endif
     endif
    endif
 
-   if( ForceErr.lt.forcetol ) then ; ic05pxf = 0 ; goto 9999 ! force-balance is satisfied;  
+   if( ForceErr.lt.forcetol ) then ; ihybrd = 0 ; goto 9999 ! force-balance is satisfied;  
    endif
    
-  endif ! end of if( Lexit ) ; 08 Feb 16;
+  endif ! end of if( Lexit ) ; 
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -175,7 +171,7 @@ subroutine newton( NGdof, position, ic05pxf )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
-  irevcm = 0 ; ic05pxf = 1 ! required for initial entry; herefater unchanged by user;
+  irevcm = 0 ; ihybrd = 1 ! required for initial entry; herefater unchanged by user;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -191,40 +187,39 @@ subroutine newton( NGdof, position, ic05pxf )
   endif
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+  select case( Lfindzero )
    
-   select case( Lfindzero )
+  case( 1 ) ! use function values                               to find x st f(x)=0, where x is the geometry of the interfaces, and f is the force;
    
- 
-   case( 1 ) ! use function values                               to find x st f(x)=0, where x is the geometry of the interfaces, and f is the force;
+   WCALL( newton, hybrd, ( fcn1, NGdof, position(1:NGdof), force(1:NGdof), &
+          xtol, maxfev, ML, MU, epsfcn, diag(1:NGdof), mode, factor, nprint, ihybrd, nfev,       fjac(1:Ldfjac,1:NGdof), Ldfjac, &
+          RR(1:LR), LR, QTF(1:NGdof), workspace(1:NGdof,1), workspace(1:NGdof,2), workspace(1:NGdof,3), workspace(1:NGdof,4) ) )
 
-    WCALL( newton, hybrd, ( fcn1, NGdof, position(1:NGdof), force(1:NGdof), &
-                xtol, maxfev, ML, MU, epsfcn, diag(1:NGdof), mode, factor, nprint, ic05pxf, nfev, fjac(1:Ldfjac,1:NGdof), Ldfjac, &
-                RR(1:LR), LR, QTF(1:NGdof), workspace(1:NGdof,1), workspace(1:NGdof,2), workspace(1:NGdof,3), workspace(1:NGdof,4) ) )
-
-   case( 2 ) ! use function values and user-supplied derivatives to find x st f(x)=0, where x is the geometry of the interfaces, and f is the force;
-
-    WCALL( newton, hybrj, ( fcn2, NGdof, position(1:NGdof), force(1:NGdof),fjac(1:Ldfjac,1:NGdof), Ldfjac, &
-                xtol, maxfev, diag(1:NGdof), mode, factor, nprint, ic05pxf, nfev, njev, &
-                RR(1:LR), LR, QTF(1:NGdof), workspace(1:NGdof,1), workspace(1:NGdof,2), workspace(1:NGdof,3), workspace(1:NGdof,4) ) )
-
-   case default
-    
-    FATAL( newton, .true., value of Lfindzero not supported )
-    
-   end select
+  case( 2 ) ! use function values and user-supplied derivatives to find x st f(x)=0, where x is the geometry of the interfaces, and f is the force;
    
+   WCALL( newton, hybrj, ( fcn2, NGdof, position(1:NGdof), force(1:NGdof), fjac(1:Ldfjac,1:NGdof), Ldfjac, &
+          xtol, maxfev,                 diag(1:NGdof), mode, factor, nprint, ihybrd, nfev, njev, &
+          RR(1:LR), LR, QTF(1:NGdof), workspace(1:NGdof,1), workspace(1:NGdof,2), workspace(1:NGdof,3), workspace(1:NGdof,4) ) )
+   
+  case default
+   
+   FATAL( newton, .true., value of Lfindzero not supported )
+   
+  end select
+  
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
     if( myid.eq.0 ) then
      cput = GETTIME
      ;              write(ounit,'("newton : ", 10x ," :")')
-     select case( ic05pxf )
-     case( 1   )  ; write(ounit,'("newton : ",f10.2," : finished ; success        ; ic05p*f="i2" ; its="i7" ,"i4" ;")') cput-cpus, ic05pxf, nFcalls, nDcalls
-     case( 0   )  ; write(ounit,'("newton : ",f10.2," : finished ; input error    ; ic05p*f="i2" ; its="i7" ,"i4" ;")') cput-cpus, ic05pxf, nFcalls, nDcalls
-     case( 2   )  ; write(ounit,'("newton : ",f10.2," : finished ; max. iter      ; ic05p*f="i2" ; its="i7" ,"i4" ;")') cput-cpus, ic05pxf, nFcalls, nDcalls
-     case( 3   )  ; write(ounit,'("newton : ",f10.2," : finished ; xtol too small ; ic05p*f="i2" ; its="i7" ,"i4" ;")') cput-cpus, ic05pxf, nFcalls, nDcalls
-     case( 4:5 )  ; write(ounit,'("newton : ",f10.2," : finished ; bad progress   ; ic05p*f="i2" ; its="i7" ,"i4" ;")') cput-cpus, ic05pxf, nFcalls, nDcalls
-     case default ; write(ounit,'("newton : ",f10.2," : finished ; illegal ifail  ; ic05p*f="i2" ; its="i7" ,"i4" ;")') cput-cpus, ic05pxf, nFcalls, nDcalls
+     select case( ihybrd )
+     case( 1   )  ; write(ounit,'("newton : ",f10.2," : finished ; success        ; ic05p*f="i2" ; its="i7" ,"i4" ;")') cput-cpus, ihybrd, nFcalls, nDcalls
+     case( 0   )  ; write(ounit,'("newton : ",f10.2," : finished ; input error    ; ic05p*f="i2" ; its="i7" ,"i4" ;")') cput-cpus, ihybrd, nFcalls, nDcalls
+     case( 2   )  ; write(ounit,'("newton : ",f10.2," : finished ; max. iter      ; ic05p*f="i2" ; its="i7" ,"i4" ;")') cput-cpus, ihybrd, nFcalls, nDcalls
+     case( 3   )  ; write(ounit,'("newton : ",f10.2," : finished ; xtol too small ; ic05p*f="i2" ; its="i7" ,"i4" ;")') cput-cpus, ihybrd, nFcalls, nDcalls
+     case( 4:5 )  ; write(ounit,'("newton : ",f10.2," : finished ; bad progress   ; ic05p*f="i2" ; its="i7" ,"i4" ;")') cput-cpus, ihybrd, nFcalls, nDcalls
+     case default ; write(ounit,'("newton : ",f10.2," : finished ; illegal ifail  ; ic05p*f="i2" ; its="i7" ,"i4" ;")') cput-cpus, ihybrd, nFcalls, nDcalls
      end select
     endif ! end of if( myid.eq.0 ) then;
   
@@ -325,21 +320,21 @@ subroutine writereadgf( readorwrite, NGdof , ireadhessian )
    
    cput = GETTIME
    
-   inquire( file="."//trim(ext)//".sp.DF", exist=exist ) ! the derivative matrix; 19 Jul 16;
+   inquire( file="."//trim(ext)//".sp.DF", exist=exist ) ! the derivative matrix; 
    
    if( exist ) then !                  01234567890123456789012345678901
     write(ounit,2000) cput-cpus, myid, "reading .ext.sp.DF ;           " 
     open( dunit, file="."//trim(ext)//".sp.DF", status="old", form="unformatted", iostat=ios ) 
    else !                              01234567890123456789012345678901
     write(ounit,2000) cput-cpus, myid, ".ext.sp.DF does not exist ;    " 
-    inquire( file=".sp.DF", exist=exist ) ! the derivative matrix; 19 Jul 16;
+    inquire( file=".sp.DF", exist=exist ) ! the derivative matrix; 
     if( exist ) then !                  01234567890123456789012345678901
      write(ounit,2000) cput-cpus, myid, "reading .sp.DF ;               "
      open( dunit, file=".sp.DF", status="old", form="unformatted", iostat=ios )
     else !                              01234567890123456789012345678901
      write(ounit,2000) cput-cpus, myid, ".sp.DF does not exist ;        " ; goto 9999
-    endif ! matches if( .sp.DF exist ) ; 19 Jul 16;
-   endif ! matches if( .ext.sp.DF exist ) ; 19 Jul 16;
+    endif ! matches if( .sp.DF exist ) ; 
+   endif ! matches if( .ext.sp.DF exist ) ; 
 !                                                             01234567890123456789012345678901
    if( ios .ne. 0 ) then ; write(ounit,2000) cput-cpus, myid, "error opening .ext.sp.DF/.sp.DF" ; goto 9999
    endif
@@ -392,7 +387,7 @@ end subroutine writereadgf
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-subroutine fcn1(NGdof, x, fvec, irevcm)  ! fcn for hybrd; 07/20/2017; czhu;
+subroutine fcn1( NGdof, xx, fvec, irevcm )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -403,7 +398,7 @@ subroutine fcn1(NGdof, x, fvec, irevcm)  ! fcn for hybrd; 07/20/2017; czhu;
   use fileunits, only : ounit
 
   use inputlist, only : Wmacros, Wnewton, ext, &
-                        Igeometry, & ! only for screen output; 04 Dec 14;
+                        Igeometry, & ! only for screen output; 
                         Nvol,                    &
                         Lfindzero, forcetol, c05xmax, c05xtol, c05factor, LreadGF, &
                         Lcheck
@@ -415,7 +410,7 @@ subroutine fcn1(NGdof, x, fvec, irevcm)  ! fcn for hybrd; 07/20/2017; czhu;
                         ForceErr, Energy, &
                         mn, im, in, iRbc, iZbs, iRbs, iZbc, Mvol, &
                         BBe, IIo, BBo, IIe, &
-                        LGdof, dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated , &
+                        LGdof, dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated, &
                         nfreeboundaryiterations
   
   use newtontime
@@ -425,23 +420,21 @@ subroutine fcn1(NGdof, x, fvec, irevcm)  ! fcn for hybrd; 07/20/2017; czhu;
   LOCALS
   
   INTEGER, intent(in)    :: NGdof, irevcm
-  REAL   , intent(in)    :: x(1:NGdof)
+  REAL   , intent(in)    :: xx(1:NGdof)
   REAL   , intent(out)   :: fvec(1:NGdof)
 
   REAL                   :: position(0:NGdof), force(0:NGdof)
 
   LOGICAL                :: LComputeDerivatives  
- !INTEGER                :: nFcalls, nDcalls, wflag, iflag, idof, jdof, ijdof, ireadhessian, igdof, lvol, ii, imn ! SRH; 02 Aug 17;
-  INTEGER                ::                   wflag, iflag, idof, jdof, ijdof, ireadhessian, igdof, lvol, ii, imn ! SRH; 02 Aug 17;
- !REAL                   :: rflag, lastcpu ! SRH; 02 Aug 17;
-  REAL                   :: rflag          ! SRH; 02 Aug 17;
+  INTEGER                :: wflag, iflag, idof, jdof, ijdof, ireadhessian, igdof, lvol, ii, imn 
+  REAL                   :: rflag          
   CHARACTER              :: pack
     
   BEGIN(newton)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  position = zero ; force = zero ; position(1:NGdof) = x(1:NGdof)  ! assign x to position;
+  position = zero ; force = zero ; position(1:NGdof) = xx(1:NGdof)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -451,7 +444,7 @@ subroutine fcn1(NGdof, x, fvec, irevcm)  ! fcn for hybrd; 07/20/2017; czhu;
    
    case( 0 ) ! indicates start of new iteration; no action is required; position and force available for printing; force must not be changed;
     
-    pack = 'U' !! unpack geometrical degrees of freedom; 13 Sep 13; I guess this is just for wrtend; 11 Aug 14;
+    pack = 'U' ! unpack geometrical degrees of freedom;
     WCALL( newton, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack ) )
 
     if( myid.eq.0 ) then
@@ -459,12 +452,12 @@ subroutine fcn1(NGdof, x, fvec, irevcm)  ! fcn for hybrd; 07/20/2017; czhu;
      cput = GETTIME
      
      ; write(ounit,1000) cput-cpus, nFcalls, nDcalls, ForceErr, cput-lastcpu, "|BB|e", alog10(BBe(1:min(Mvol-1,28)))
-     if( Igeometry.ge.3 ) then ! include spectral constraints; 04 Dec 14;
+     if( Igeometry.ge.3 ) then ! include spectral constraints; 
       ;write(ounit,1001)                                                                      "|II|o", alog10(IIo(1:min(Mvol-1,28)))
      endif
      if( NOTstellsym ) then
       ;write(ounit,1001)                                                                      "|BB|o", alog10(BBo(1:min(Mvol-1,28)))
-      if( Igeometry.ge.3 ) then ! include spectral constraints; 04 Dec 14;
+      if( Igeometry.ge.3 ) then ! include spectral constraints; 
        write(ounit,1001)                                                                      "|II|e", alog10(IIe(1:min(Mvol-1,28)))
       endif
      endif
@@ -514,7 +507,7 @@ subroutine fcn1(NGdof, x, fvec, irevcm)  ! fcn for hybrd; 07/20/2017; czhu;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-subroutine fcn2(NGdof, x, fvec, fjac, Ldfjac, irevcm)  ! fcn for hybrj; 07/20/2017; czhu;
+subroutine fcn2( NGdof, xx, fvec, fjac, Ldfjac, irevcm )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -525,7 +518,7 @@ subroutine fcn2(NGdof, x, fvec, fjac, Ldfjac, irevcm)  ! fcn for hybrj; 07/20/20
   use fileunits, only : ounit
 
   use inputlist, only : Wmacros, Wnewton, ext, &
-                        Igeometry, & ! only for screen output; 04 Dec 14;
+                        Igeometry, & ! only for screen output; 
                         Nvol,                    &
                         Lfindzero, forcetol, c05xmax, c05xtol, c05factor, LreadGF, &
                         Lcheck
@@ -537,7 +530,7 @@ subroutine fcn2(NGdof, x, fvec, fjac, Ldfjac, irevcm)  ! fcn for hybrj; 07/20/20
                         ForceErr, Energy, &
                         mn, im, in, iRbc, iZbs, iRbs, iZbc, Mvol, &
                         BBe, IIo, BBo, IIe, &
-                        LGdof, dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated , &
+                        LGdof, dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated, &
                         nfreeboundaryiterations
   
   use newtontime
@@ -547,23 +540,21 @@ subroutine fcn2(NGdof, x, fvec, fjac, Ldfjac, irevcm)  ! fcn for hybrj; 07/20/20
   LOCALS
   
   INTEGER, intent(in)    :: NGdof, Ldfjac, irevcm
-  REAL   , intent(in)    :: x(1:NGdof)
-  REAL   , intent(out)   :: fvec(1:NGdof), fjac(1:Ldfjac, 1:NGdof)
+  REAL   , intent(in)    :: xx(1:NGdof)
+  REAL   , intent(out)   :: fvec(1:NGdof), fjac(1:Ldfjac,1:NGdof)
 
   REAL                   :: position(0:NGdof), force(0:NGdof)
 
   LOGICAL                :: LComputeDerivatives  
- !INTEGER                :: nFcalls, nDcalls, wflag, iflag, idof, jdof, ijdof, ireadhessian, igdof, lvol, ii, imn ! SRH; 02 Aug 17;
-  INTEGER                ::                   wflag, iflag, idof, jdof, ijdof, ireadhessian, igdof, lvol, ii, imn ! SRH; 02 Aug 17;
- !REAL                   :: rflag, lastcpu ! SRH; 02 Aug 17;
-  REAL                   :: rflag          ! SRH; 02 Aug 17;
+  INTEGER                :: wflag, iflag, idof, jdof, ijdof, ireadhessian, igdof, lvol, ii, imn 
+  REAL                   :: rflag          
   CHARACTER              :: pack
     
   BEGIN(newton)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  position = zero ; force = zero ; position(1:NGdof) = x(1:NGdof)  ! assign x to position;
+  position = zero ; force = zero ; position(1:NGdof) = xx(1:NGdof)  ! assign position to xx;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -573,7 +564,7 @@ subroutine fcn2(NGdof, x, fvec, fjac, Ldfjac, irevcm)  ! fcn for hybrj; 07/20/20
    
    case( 0 ) ! indicates start of new iteration; no action is required; position and force available for printing; force must not be changed;
     
-    pack = 'U' !! unpack geometrical degrees of freedom; 13 Sep 13; I guess this is just for wrtend; 11 Aug 14;
+    pack = 'U' ! unpack geometrical degrees of freedom;
     WCALL( newton, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack ) )
     
     if( myid.eq.0 ) then
@@ -581,12 +572,12 @@ subroutine fcn2(NGdof, x, fvec, fjac, Ldfjac, irevcm)  ! fcn for hybrj; 07/20/20
      cput = GETTIME
      
      ; write(ounit,1000) cput-cpus, nFcalls, nDcalls, ForceErr, cput-lastcpu, "|BB|e", alog10(BBe(1:min(Mvol-1,28)))
-     if( Igeometry.ge.3 ) then ! include spectral constraints; 04 Dec 14;
+     if( Igeometry.ge.3 ) then ! include spectral constraints; 
       ;write(ounit,1001)                                                                      "|II|o", alog10(IIo(1:min(Mvol-1,28)))
      endif
      if( NOTstellsym ) then
       ;write(ounit,1001)                                                                      "|BB|o", alog10(BBo(1:min(Mvol-1,28)))
-      if( Igeometry.ge.3 ) then ! include spectral constraints; 04 Dec 14;
+      if( Igeometry.ge.3 ) then ! include spectral constraints; 
        write(ounit,1001)                                                                      "|II|e", alog10(IIe(1:min(Mvol-1,28)))
       endif
      endif
@@ -656,14 +647,14 @@ subroutine fcn2(NGdof, x, fvec, fjac, Ldfjac, irevcm)  ! fcn for hybrj; 07/20/20
      stop "newton :            : myid=    ; volume derivatives have been compared ;"
     endif
 
-    FATAL( newton, Lcheck.eq.3, volume derivatives have been compared ) ! the first process will terminate all processes; 02 Sep 14;
+    FATAL( newton, Lcheck.eq.3, volume derivatives have been compared ) ! the first process will terminate all processes; 
 
     if( Lcheck.eq.4 ) then
      write(ounit,'("newton : ", 10x ," : myid=",i3," ; field derivatives have been compared ;")') myid
      stop "newton :            : myid=    ; field derivatives have been compared ;"
     endif
 
-    FATAL( newton, Lcheck.eq.4, field derivatives have been compared ) ! the first process will terminate all processes; 02 Sep 14;
+    FATAL( newton, Lcheck.eq.4, field derivatives have been compared ) ! the first process will terminate all processes; 
 
 #endif
 
@@ -671,7 +662,7 @@ subroutine fcn2(NGdof, x, fvec, fjac, Ldfjac, irevcm)  ! fcn for hybrj; 07/20/20
     
    case default
     
-    FATAL( fcn2 , .true., illegal irevcm : C05P*F error )
+    FATAL( fcn2 , .true., illegal irevcm : hybrj error )
     
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
     

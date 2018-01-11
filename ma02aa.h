@@ -29,8 +29,10 @@ subroutine ma02aa( lvol, NN )
   
   use allglobal, only : ncpu, myid, cpus, Mvol, mn, im, in, &
                         LBlinear, LBnewton, LBsequad, &
-                        dMA, dMB, dMC, dMD, dME, dMF, solution, &
-                        MBpsi, MEpsi, psiMCpsi, psiMFpsi, &
+!                       dMA, dMB, dMC, dMD, dME, dMF, solution, &
+                        dMA, dMB,      dMD,           solution, &
+!                       MBpsi, MEpsi, psiMCpsi, psiMFpsi, &
+                        MBpsi,                            &
                         ImagneticOK, &
                         lBBintegral, lABintegral, &
                         ivol, &
@@ -169,10 +171,10 @@ subroutine ma02aa( lvol, NN )
 ! pre-calculate some matrix vector products;
    
    MBpsi(1:NN) =                         matmul( dMB(1:NN,1: 2), dpsi(1:2) )
-   MEpsi(1:NN) =                         matmul( dME(1:NN,1: 2), dpsi(1:2) )
+!  MEpsi(1:NN) = zero !                  matmul( dME(1:NN,1: 2), dpsi(1:2) )
    
-   psiMCpsi    = half * sum( dpsi(1:2) * matmul( dMC(1: 2,1: 2), dpsi(1:2) ) )
-   psiMFpsi    = half * sum( dpsi(1:2) * matmul( dMF(1: 2,1: 2), dpsi(1:2) ) )
+!  psiMCpsi    = zero ! half * sum( dpsi(1:2) * matmul( dMC(1: 2,1: 2), dpsi(1:2) ) )
+!  psiMFpsi    = zero ! half * sum( dpsi(1:2) * matmul( dMF(1: 2,1: 2), dpsi(1:2) ) )
    
    
 !   do ! reverse communication loop; NAG calls commented out (this part of the code so far not used); 17 Nov 17
@@ -259,8 +261,8 @@ subroutine ma02aa( lvol, NN )
    packorunpack = 'U'
    CALL( ma02aa, packab ( packorunpack, lvol, NN, xi(1:NN), ideriv ) )
    
-   lBBintegral(lvol) = half * sum( xi(1:NN) * matmul( dMA(1:NN,1:NN), xi(1:NN) ) ) + sum( xi(1:NN) * MBpsi(1:NN) ) + psiMCpsi
-   lABintegral(lvol) = half * sum( xi(1:NN) * matmul( dMD(1:NN,1:NN), xi(1:NN) ) ) + sum( xi(1:NN) * MEpsi(1:NN) ) + psiMFpsi
+   lBBintegral(lvol) = half * sum( xi(1:NN) * matmul( dMA(1:NN,1:NN), xi(1:NN) ) ) + sum( xi(1:NN) * MBpsi(1:NN) ) ! + psiMCpsi
+   lABintegral(lvol) = half * sum( xi(1:NN) * matmul( dMD(1:NN,1:NN), xi(1:NN) ) ) ! + sum( xi(1:NN) * MEpsi(1:NN) ) ! + psiMFpsi
    
    
    solution(1:NN,0) = xi(1:NN)
@@ -291,9 +293,9 @@ subroutine ma02aa( lvol, NN )
 ! pre-calculate some matrix vector products; these are used in df00ab;
    
    MBpsi(1:NN) =                         matmul( dMB(1:NN,1: 2), dpsi(1:2) )
-   MEpsi(1:NN) =                         matmul( dME(1:NN,1: 2), dpsi(1:2) )
-   psiMCpsi    = half * sum( dpsi(1:2) * matmul( dMC(1: 2,1: 2), dpsi(1:2) ) )
-   psiMFpsi    = half * sum( dpsi(1:2) * matmul( dMF(1: 2,1: 2), dpsi(1:2) ) )
+!  MEpsi(1:NN) = zero !                  matmul( dME(1:NN,1: 2), dpsi(1:2) )
+!  psiMCpsi    = zero ! half * sum( dpsi(1:2) * matmul( dMC(1: 2,1: 2), dpsi(1:2) ) )
+!  psiMFpsi    = zero ! half * sum( dpsi(1:2) * matmul( dMF(1: 2,1: 2), dpsi(1:2) ) )
    
    call hybrj1( df00ab, pNN, xi(0:NN), Fxi(0:NN), DFxi(0:NN,0:NN), Ldfmuaa, tol, ihybrj1, work(1:lengthwork), lengthwork )
 
@@ -335,8 +337,8 @@ subroutine ma02aa( lvol, NN )
    ImagneticOK(lvol) = .true. 
 !endif
    
-   lBBintegral(lvol) = half * sum( xi(1:NN) * matmul( dMA(1:NN,1:NN), xi(1:NN) ) ) + sum( xi(1:NN) * MBpsi(1:NN) ) + psiMCpsi
-   lABintegral(lvol) = half * sum( xi(1:NN) * matmul( dMD(1:NN,1:NN), xi(1:NN) ) ) + sum( xi(1:NN) * MEpsi(1:NN) ) + psiMFpsi
+   lBBintegral(lvol) = half * sum( xi(1:NN) * matmul( dMA(1:NN,1:NN), xi(1:NN) ) ) + sum( xi(1:NN) * MBpsi(1:NN) ) ! + psiMCpsi
+   lABintegral(lvol) = half * sum( xi(1:NN) * matmul( dMD(1:NN,1:NN), xi(1:NN) ) ) ! + sum( xi(1:NN) * MEpsi(1:NN) ) ! + psiMFpsi
    
    solution(1:NN,0) = xi(1:NN)
    
@@ -454,6 +456,8 @@ subroutine ma02aa( lvol, NN )
 
     tol = mupftol ; LRR = Ndof * ( Ndof+1 ) / 2 ; mode = 0 ; diag(1:2) = zero ; factor = one ; maxfev = mupfits ; nprint = 0
     
+    FATAL( ma02aa, Ndof.gt.2, illegal )
+
     WCALL( ma02aa, hybrj, ( mp00ac, Ndof, Xdof(1:Ndof), Fdof(1:Ndof), Ddof(1:Ldfjac,1:Ndof), Ldfjac, tol, &
                              maxfev, diag(1:Ndof), mode, factor, nprint, ihybrj, nfev, njev, RR(1:LRR), LRR, QTF(1:Ndof), &
 			     WK(1:Ndof,1), WK(1:Ndof,2), WK(1:Ndof,3), WK(1:Ndof,4) ) )
@@ -628,9 +632,9 @@ subroutine ma02aa( lvol, NN )
 1010 format("ma02aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; SQP    : ie04uff=",i3," hel="es12.4" mu="es12.4" dpflux="es12.4" time="f9.1" ":,a36)
 1020 format("ma02aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; Newton : ihybrj1=",i3," hel="es12.4" mu="es12.4" dpflux="es12.4" time="f9.1" ; "&
   "error="es7.0" ; ":,a18)
-1040 format("ma02aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; Linear : ihybrj=",i3," hel="es12.4" mu="es12.4" dpflux="es12.4" time="f9.1" ; "&
+1040 format("ma02aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; Linear : ihybrj =",i3," hel="es12.4" mu="es12.4" dpflux="es12.4" time="f9.1" ; "&
   :,a16" ; F="2es08.0)
-!050 format("ma02aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; Linear : ihybrj=",i3,"     "  12x " I ="es12.4"        "  12x " time="f9.1" ; "&
+!050 format("ma02aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; Linear : ihybrj =",i3,"     "  12x " I ="es12.4"        "  12x " time="f9.1" ; "&
 ! :,a16" ; F="2es08.0)
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

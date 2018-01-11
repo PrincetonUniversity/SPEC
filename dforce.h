@@ -131,8 +131,9 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
                         Nt, Nz, &
                         cosi, sini, & ! FFT workspace;
                         dBdX, &
-                        dMA, dMB, dMC, dMD, dME, dMF, dMG, solution, &
-                        MBpsi, MEpsi, &
+                       !dMA, dMB, dMC, dMD, dME, dMF, dMG, solution, &
+                        dMA, dMB,      dMD,           dMG, solution, &
+                        MBpsi,        &
                         dtflux, dpflux, sweight, &
                         mmpp, &
                         Bemn, Bomn, Iomn, Iemn, Somn, Semn, &
@@ -255,17 +256,17 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
    
    SALLOCATE( dMA, (0:NN,0:NN), zero ) ! required for both plasma region and vacuum region;
    SALLOCATE( dMB, (0:NN,0: 2), zero )
-   SALLOCATE( dMC, (1: 2,1: 2), zero )
+! !SALLOCATE( dMC, (1: 2,1: 2), zero )
    SALLOCATE( dMD, (0:NN,0:NN), zero )
-   SALLOCATE( dME, (0:NN,1: 2), zero )
-   SALLOCATE( dMF, (1: 2,1: 2), zero )  
+!  SALLOCATE( dME, (0:NN,1: 2), zero )
+! !SALLOCATE( dMF, (1: 2,1: 2), zero )  
 
    SALLOCATE( dMG, (0:NN     ), zero )  
    
    SALLOCATE( solution, (1:NN,-1:2), zero ) ! this will contain the vector potential from the linear solver and its derivatives;
    
    SALLOCATE( MBpsi, (1:NN), zero )
-   SALLOCATE( MEpsi, (1:NN), zero )
+!  SALLOCATE( MEpsi, (1:NN), zero )
    
    if( LcomputeDerivatives ) then ! allocate some additional memory;
     
@@ -520,7 +521,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
         
         dpsi(1:2) = (/ dtflux(vvol), dpflux(vvol) /) ! local enclosed toroidal and poloidal fluxes;
         
-        rhs(1:NN) = - matmul( dMB(1:NN,1:2 ) - mu(vvol) * dME(1:NN,1:2 ), dpsi(1:2)        ) &
+!       rhs(1:NN) = - matmul( dMB(1:NN,1:2 ) - mu(vvol) * dME(1:NN,1:2 ), dpsi(1:2)        ) &
+        rhs(1:NN) = - matmul( dMB(1:NN,1:2 )                            , dpsi(1:2)        ) &
                     - matmul( dMA(1:NN,1:NN) - mu(vvol) * dMD(1:NN,1:NN), solution(1:NN,0) )
         
         solution(1:NN,-1) = matmul( oBI(1:NN,1:NN), rhs(1:NN) ) ! this is the perturbed, packxi solution;
@@ -1014,17 +1016,17 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 
    DALLOCATE(dMA)
    DALLOCATE(dMB)
-   DALLOCATE(dMC)
+! !DALLOCATE(dMC)
    DALLOCATE(dMD)
-   DALLOCATE(dME)
-   DALLOCATE(dMF)
+! !DALLOCATE(dME)
+! !DALLOCATE(dMF)
 
    DALLOCATE(dMG)
    
    DALLOCATE(solution)
    
    DALLOCATE(MBpsi)
-   DALLOCATE(MEpsi)
+!  DALLOCATE(MEpsi)
    
    if( LcomputeDerivatives) then
     

@@ -9,13 +9,13 @@
  dfiles=casing bnorml 
  efiles=jo00aa pp00aa pp00ab bfield stzxyz sc00aa
  ffiles=hesian ra00aa numrec
- sfiles=dcuhre minpack iqpack rksuite i1mach d1mach # the following assumes that .f files are written in double precision; the CFLAGS = -r8 option is not required;
+ sfiles=dcuhre minpack iqpack rksuite i1mach d1mach # below assumes the .f files are double precision; the CFLAGS = -r8 option is not required;
 
 ###############################################################################################################################################################
 
  SPECFILES=$(afiles) $(bfiles) $(cfiles) $(dfiles) $(efiles) $(ffiles)
  ALLFILES=global $(SPECFILES) $(sfiles) xspech hdfint preset
- F77FILES=$(sfiles:=.f)
+#F77FILES=$(sfiles:=.f)
  F90FILES=$(SPECFILES:=.F90)
  HFILES=global preset $(SPECFILES) hdfint xspech
 

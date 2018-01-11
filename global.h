@@ -64,7 +64,7 @@ module numerical
   implicit none
 
   REAL            :: machprec, vsmall, small, sqrtmachprec ! these are assigned below in readin via a call to NAG routine;
-  REAL, parameter :: logtolerance = 1.0e-32 ! this is used to avoid taking alog10(zero); see e.g. dforce; 19 Jul 16;
+  REAL, parameter :: logtolerance = 1.0e-32 ! this is used to avoid taking alog10(zero); see e.g. dforce; 
 
 contains
   REAL FUNCTION myprec() !Duplicates NAG routine X02AJF (machine precision) ! JAB; 27 Jul 17
@@ -80,15 +80,15 @@ module fileunits
 
   implicit none
 
-  INTEGER :: aunit = 11 ! vector potential; used in ra00aa:.ext.AtAzmn; 11 Aug 14;
-  INTEGER :: dunit = 12 ! derivative matrix; used in newton:.ext.GF; 11 Aug 14;
+  INTEGER :: aunit = 11 ! vector potential; used in ra00aa:.ext.AtAzmn; 
+  INTEGER :: dunit = 12 ! derivative matrix; used in newton:.ext.GF; 
   INTEGER :: gunit = 13 !                         
-  INTEGER :: hunit = 14 ! eigenvalues of Hessian; under re-construction; 11 Aug 14;
-  INTEGER :: iunit = 10 ! input; used in global/readin:ext.sp, global/wrtend:ext.sp.end, global/wrtend:.ext.grid; 11 Aug 14;
-  INTEGER :: lunit = 20 ! local unit; used in lunit+myid: pp00aa:.ext.poincare,.ext.transform; 11 Aug 14;
+  INTEGER :: hunit = 14 ! eigenvalues of Hessian; under re-construction; 
+  INTEGER :: iunit = 10 ! input; used in global/readin:ext.sp, global/wrtend:ext.sp.end, global/wrtend:.ext.grid; 
+  INTEGER :: lunit = 20 ! local unit; used in lunit+myid: pp00aa:.ext.poincare,.ext.transform; 
   INTEGER :: ounit =  0 ! screen output;
-  INTEGER :: vunit = 15 ! for examination of adaptive quadrature; used in casing:.ext.vcint; 11 Aug 14;
-  INTEGER :: zunit = 17 ! for convergence; this file is opened in xspech:.ext.iterations, and written to in globals/wrtend; 11 Aug 14;
+  INTEGER :: vunit = 15 ! for examination of adaptive quadrature; used in casing:.ext.vcint; 
+  INTEGER :: zunit = 17 ! for convergence; this file is opened in xspech:.ext.iterations, and written to in globals/wrtend; 
  !INTEGER :: funit = 16 ! force iterations;
 
 end module fileunits
@@ -98,7 +98,7 @@ module cputiming
 ! CPUVARIABLE ! this is expanded by Makefile; do not remove;
 
   REAL :: Treadin = 0.0
-  REAL :: Twritin = 0.0 ! redundant; 07 Dec 16;
+  REAL :: Twritin = 0.0 ! redundant; 
   REAL :: Twrtend = 0.0
 
 end module cputiming
@@ -172,9 +172,9 @@ module inputlist
   INTEGER      ::        rq(0:MNvol)         =  0
   REAL         ::      oita(0:MNvol)         =  0.0
 
-  REAL         :: Rac(     0:MNtor        )  =  0.0 !     stellarator symmetric coordinate axis; 13 Sep 13;
+  REAL         :: Rac(     0:MNtor        )  =  0.0 !     stellarator symmetric coordinate axis; 
   REAL         :: Zas(     0:MNtor        )  =  0.0
-  REAL         :: Ras(     0:MNtor        )  =  0.0 ! non-stellarator symmetric coordinate axis; 13 Sep 13;
+  REAL         :: Ras(     0:MNtor        )  =  0.0 ! non-stellarator symmetric coordinate axis; 
   REAL         :: Zac(     0:MNtor        )  =  0.0
 
   REAL         :: Rbc(-MNtor:MNtor,-MMpol:MMpol)  =  0.0 !     stellarator symmetric boundary components;
@@ -239,25 +239,25 @@ module inputlist
   REAL         :: c05factor  =   1.0e-02
   LOGICAL      :: LreadGF    =  .true.
   INTEGER      :: mfreeits   =   0
-  REAL         :: bnstol     =   1.0e-06 ! redundant; 07 Dec 16;
-  REAL         :: bnsblend   =   0.666   ! redundant; 07 Dec 16;
+  REAL         :: bnstol     =   1.0e-06 ! redundant; 
+  REAL         :: bnsblend   =   0.666   ! redundant; 
   REAL         :: gBntol     =   1.0e-06
   REAL         :: gBnbld     =   0.666
   REAL         :: vcasingeps =   1.e-12
   REAL         :: vcasingtol =   1.e-08
   INTEGER      :: vcasingits =   8
   INTEGER      :: vcasingper =   1
-  INTEGER      :: mcasingcal =   8 ! redundant; 07 Dec 16;
+  INTEGER      :: mcasingcal =   8 ! redundant; 
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 ! the following variables constitute the namelist/diagnosticslist/; note that all variables in namelist need to be broadcasted in readin;
 
   REAL         :: odetol           =     1.0e-07
-  REAL         :: absreq           =     1.0e-08 ! redundant; 07 Dec 16;
-  REAL         :: relreq           =     1.0e-08 ! redundant; 07 Dec 16;
-  REAL         :: absacc           =     1.0e-04 ! redundant; 24 Nov 16;
-  REAL         :: epsr             =     1.0e-08 ! redundant; 04 Jan 17;
+  REAL         :: absreq           =     1.0e-08 ! redundant; 
+  REAL         :: relreq           =     1.0e-08 ! redundant; 
+  REAL         :: absacc           =     1.0e-04 ! redundant; 
+  REAL         :: epsr             =     1.0e-08 ! redundant; 
   INTEGER      :: nPpts            =     0
   INTEGER      :: nPtrj(1:MNvol+1) =    -1
   LOGICAL      :: LHevalues        =  .false.
@@ -267,8 +267,8 @@ module inputlist
   INTEGER      :: dqq              =    -1
   INTEGER      :: Lcheck           =     0
   LOGICAL      :: Ltiming          =  .false.
-  REAL         :: fudge            =     1.0e-00 ! redundant; 04 Jan 17;
-  REAL         :: scaling          =     1.0e-00 ! redundant; 04 Jan 17;
+  REAL         :: fudge            =     1.0e-00 ! redundant; 
+  REAL         :: scaling          =     1.0e-00 ! redundant; 
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -276,7 +276,7 @@ module inputlist
   
 ! DSCREENLIST ! define screenlist; this is expanded by Makefile; DO NOT REMOVE; each file compiled by Makefile has its own write flag;
   LOGICAL      :: Wreadin = .false.
-  LOGICAL      :: Wwritin = .false. ! redundant; 07 Dec 16;
+  LOGICAL      :: Wwritin = .false. ! redundant; 
   LOGICAL      :: Wwrtend = .false.
   LOGICAL      :: Wmacros = .false.
 
@@ -817,7 +817,7 @@ module inputlist
   namelist/screenlist/&
 ! NSCREENLIST ! namelist screenlist; this is expanded by Makefile; DO NOT REMOVE;
  Wreadin , &  !latex \item Every subroutine, e.g. \type{xy00aa.h}, has its own write flag, \type{Wxy00aa}.
- Wwritin , & ! redundant; 07 Dec 16;
+ Wwritin , & ! redundant; 
  Wwrtend , &
  Wmacros
 
@@ -879,7 +879,7 @@ module allglobal
 
   INTEGER              :: Mvol
 
-  LOGICAL              :: YESstellsym, NOTstellsym ! internal shorthand copies of Istellsym, which is an integer input; 16 Jan 13;
+  LOGICAL              :: YESstellsym, NOTstellsym ! internal shorthand copies of Istellsym, which is an integer input; 
 
   REAL   , allocatable :: cheby(:,:) ! local workspace;
   
@@ -903,9 +903,9 @@ module allglobal
   REAL                 :: Rscale
   REAL,    allocatable :: psifactor(:,:)
 
-  REAL,    allocatable :: BBweight(:) ! weight on force-imbalance harmonics; used in dforce; 04 Dec 14;
+  REAL,    allocatable :: BBweight(:) ! weight on force-imbalance harmonics; used in dforce; 
   
-  REAL,    allocatable :: mmpp(:) ! spectral condensation factors; 18 Jul 14;
+  REAL,    allocatable :: mmpp(:) ! spectral condensation factors; 
  
 ! INTEGER, allocatable :: dnjn(:,:)
 
@@ -973,9 +973,9 @@ module allglobal
 
   REAL   , allocatable :: Rij(:,:,:), Zij(:,:,:), Xij(:,:,:), Yij(:,:,:), sg(:,:), guvij(:,:,:,:), gvuij(:,:,:) ! real-space; 10 Dec 15;
   
-  INTEGER, allocatable :: ki(:,:), kijs(:,:,:), kija(:,:,:) ! identification of Fourier modes; 16 Jan 13;
+  INTEGER, allocatable :: ki(:,:), kijs(:,:,:), kija(:,:,:) ! identification of Fourier modes; 
 
-  INTEGER, allocatable :: iotakkii(:), iotaksub(:,:), iotakadd(:,:), iotaksgn(:,:) ! identification of Fourier modes; 29 Jan 13;
+  INTEGER, allocatable :: iotakkii(:), iotaksub(:,:), iotakadd(:,:), iotaksgn(:,:) ! identification of Fourier modes; 
 
   REAL   , allocatable :: efmn(:), ofmn(:), cfmn(:), sfmn(:) ! Fourier harmonics; dummy workspace;
   REAL   , allocatable :: evmn(:), odmn(:), comn(:), simn(:) ! Fourier harmonics; dummy workspace;
@@ -1023,7 +1023,7 @@ module allglobal
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  REAL,    allocatable :: sweight(:) ! minimum poloidal length constraint weight; 04 Dec 14;
+  REAL,    allocatable :: sweight(:) ! minimum poloidal length constraint weight; 
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1077,15 +1077,17 @@ module allglobal
 !latex \item These are allocated and deallocated in \link{dforce}, assigned in \link{matrix}, and used in \link{mp00ac} and ? \link{df00aa}.
 !latex \end{enumerate}
 
-   REAL,   allocatable :: dMA(:,:), dMB(:,:), dMC(:,:) ! energy and helicity matrices; quadratic forms; 17 Jan 13;
-   REAL,   allocatable :: dMD(:,:), dME(:,:), dMF(:,:) ! energy and helicity matrices; quadratic forms; 17 Jan 13;
+   REAL,   allocatable :: dMA(:,:), dMB(:,:)! dMC(:,:) ! energy and helicity matrices; quadratic forms; 
+   REAL,   allocatable :: dMD(:,:)! dME(:,:)! dMF(:,:) ! energy and helicity matrices; quadratic forms; 
 
    REAL,   allocatable :: dMG(:  )
 
-   REAL,   allocatable :: solution(:,:) ! this is allocated in dforce; used in mp00ac and ma02aa; and is passed to packab; 08 Feb 16;
+   REAL,   allocatable :: solution(:,:) ! this is allocated in dforce; used in mp00ac and ma02aa; and is passed to packab; 
 
-   REAL,   allocatable :: MBpsi(:), MEpsi(:) ! matrix vector products; 26 Feb 13;
-   REAL                :: psiMCpsi, psiMFpsi
+!  REAL,   allocatable :: MBpsi(:), MEpsi(:) ! matrix vector products; 
+   REAL,   allocatable :: MBpsi(:)           ! matrix vector products; 
+!  REAL                :: psiMCpsi, psiMFpsi
+!  REAL                ::           psiMFpsi
 
    REAL,   allocatable :: BeltramiInverse(:,:)
 
@@ -1094,7 +1096,7 @@ module allglobal
   REAL   , allocatable :: diotadxup(:,:,:) ! measured rotational transform on inner/outer interfaces for each volume;
   REAL   , allocatable :: dItGpdxtp(:,:,:) ! measured rotational transform on inner/outer interfaces for each volume;
 
-  REAL   , allocatable :: glambda(:,:,:,:) ! save initial guesses for iterative calculation of rotational-transform; 21 Apr 13;
+  REAL   , allocatable :: glambda(:,:,:,:) ! save initial guesses for iterative calculation of rotational-transform; 
 
   INTEGER              :: lmns
 
@@ -1125,8 +1127,8 @@ module allglobal
 !latex \item The geometrical degrees-of-freedom: 
 !latex \end{enumerate}
 
-  INTEGER              :: LGdof !       geometrical degrees of freedom associated with each interface;                   ; 19 Apr 13;
-  INTEGER              :: NGdof ! total geometrical degrees of freedom                               ;                   ; 19 Apr 13;
+  INTEGER              :: LGdof !       geometrical degrees of freedom associated with each interface;                   ; 
+  INTEGER              :: NGdof ! total geometrical degrees of freedom                               ;                   ; 
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1141,8 +1143,8 @@ module allglobal
   REAL,    allocatable :: dBBdRZ(:,:,:)
   REAL,    allocatable :: dIIdRZ(:  ,:)
 
-  REAL,    allocatable :: dFFdRZ(:,:,:,:,:) ! derivatives of B^2 at the interfaces wrt geometry     ; 20 Jun 14;
-  REAL,    allocatable :: dBBdmp(:,:,:,:  ) ! derivatives of B^2 at the interfaces wrt mu and dpflux; 20 Jun 14;
+  REAL,    allocatable :: dFFdRZ(:,:,:,:,:) ! derivatives of B^2 at the interfaces wrt geometry     ; 
+  REAL,    allocatable :: dBBdmp(:,:,:,:  ) ! derivatives of B^2 at the interfaces wrt mu and dpflux; 
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1190,7 +1192,7 @@ module allglobal
 !latex \item A finite-difference estimate is computed if \inputvar{Lcheck.eq.4}.
 !latex \end{enumerate}
 
-  REAL,    allocatable :: dmupfdx(:,:,:,:)  ! derivatives of mu and dpflux wrt geometry at constant interface transform; 20 Jun 14;
+  REAL,    allocatable :: dmupfdx(:,:,:,:)  ! derivatives of mu and dpflux wrt geometry at constant interface transform; 
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1217,12 +1219,12 @@ module allglobal
 
   REAL   , allocatable :: cosi(:,:), sini(:,:), gteta(:), gzeta(:)
 
-  REAL   , allocatable :: ajk(:)   ! definition of coordinate axis; 11 Aug 14;
+  REAL   , allocatable :: ajk(:)   ! definition of coordinate axis; 
 
-  REAL   , allocatable :: dRadR(:,:,:,:), dRadZ(:,:,:,:), dZadR(:,:,:,:), dZadZ(:,:,:,:) ! derivatives of coordinate axis; 03 Nov 16;
-  REAL   , allocatable :: dRodR(:,  :,:), dRodZ(:,  :,:), dZodR(:,  :,:), dZodZ(:,  :,:) ! derivatives of coordinate axis; 03 Nov 16;
+  REAL   , allocatable :: dRadR(:,:,:,:), dRadZ(:,:,:,:), dZadR(:,:,:,:), dZadZ(:,:,:,:) ! derivatives of coordinate axis; 
+  REAL   , allocatable :: dRodR(:,  :,:), dRodZ(:,  :,:), dZodR(:,  :,:), dZodZ(:,  :,:) ! derivatives of coordinate axis; 
 
-  INTEGER, allocatable :: djkp(:,:), djkm(:,:) ! for calculating cylindrical volume; 02 Sep 14;
+  INTEGER, allocatable :: djkp(:,:), djkm(:,:) ! for calculating cylindrical volume; 
 
 !latex \item The following are used for volume integrals (see \link{volume})
 !latex \be a_{i,j,k} &=& 4 \; m_k \ooint \cos(\alpha_i)\cos(\alpha_j)\cos(\alpha_k) /(2\pi)^2 , \\
@@ -1282,7 +1284,7 @@ module allglobal
   
   REAL                 :: gBzeta ! toroidal (contravariant) field; calculated in bfield; required to convert \dot \t to B^\t, \dot s to B^s;
   
-  INTEGER, allocatable :: Iquad(:) ! internal copy of Nquad; 16 Jan 13;
+  INTEGER, allocatable :: Iquad(:) ! internal copy of Nquad; 
   
   REAL   , allocatable :: gaussianweight(:,:), gaussianabscissae(:,:)
   
@@ -1312,23 +1314,23 @@ module allglobal
   
 ! REAL                 :: gxyz(1:3) ! point at which external field is required; NAG routines employed are fixed argument list, but require position;
   
-  INTEGER              :: globaljk  ! labels position       ;                ; 14 Apr 17;
-  REAL, allocatable    :: Dxyz(:,:) ! computational boundary; position       ; 14 Apr 17;
-  REAL, allocatable    :: Nxyz(:,:) ! computational boundary; normal         ; 14 Apr 17;
-  REAL, allocatable    :: Jxyz(:,:) ! plasma        boundary; surface current; 14 Apr 17;
+  INTEGER              :: globaljk  ! labels position       ;                ; 
+  REAL, allocatable    :: Dxyz(:,:) ! computational boundary; position       ; 
+  REAL, allocatable    :: Nxyz(:,:) ! computational boundary; normal         ; 
+  REAL, allocatable    :: Jxyz(:,:) ! plasma        boundary; surface current; 
 
   REAL                 :: tetazeta(1:2)
 
-! REAL                 :: virtualcasingfactor = one / ( four*pi * pi2 ) ! this is old factor (before toroidal flux was corrected?) ; 06 Dec 16;
-  REAL                 :: virtualcasingfactor = one / ( four*pi       ) ! this agrees with diagno; 06 Dec 16;
+! REAL                 :: virtualcasingfactor = one / ( four*pi * pi2 ) ! this is old factor (before toroidal flux was corrected?) ; 
+  REAL                 :: virtualcasingfactor = one / ( four*pi       ) ! this agrees with diagno; 
   
-  INTEGER              :: IBerror ! for computing error in magnetic field; 29 Apr 13;
+  INTEGER              :: IBerror ! for computing error in magnetic field; 
 
   INTEGER              :: nfreeboundaryiterations
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  INTEGER, parameter   :: Node = 2 ! best to make this global for consistency between calling and called routines; 26 Jan 16;
+  INTEGER, parameter   :: Node = 2 ! best to make this global for consistency between calling and called routines; 
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1482,7 +1484,7 @@ subroutine readin
    if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : read    physicslist     from ext.sp ;")') cput-cpus
    endif
 
-   Mvol = Nvol + Lfreebound ! this is just for screen output and initial check; true assignment of Mvol appears outside if( myid.eq.0 ) then ; 19 Jul 16;
+   Mvol = Nvol + Lfreebound ! this is just for screen output and initial check; true assignment of Mvol appears outside if( myid.eq.0 ) then ; 
    
    write(ounit,'("readin : ", 10x ," : ")')
    
@@ -1533,10 +1535,10 @@ subroutine readin
    
    FATAL( readin, abs(tflux(Nvol)).lt. vsmall, enclosed toroidal flux cannot be zero )
 
-   toroidalflux = tflux(Nvol) ! 19 Jul 16;
+   toroidalflux = tflux(Nvol) ! 
 
-   tflux(1:Mvol) = tflux(1:Mvol) / toroidalflux ! normalize toroidal flux;  4 Feb 13;
-   pflux(1:Mvol) = pflux(1:Mvol) / toroidalflux ! normalize poloidal flux;  4 Feb 13;
+   tflux(1:Mvol) = tflux(1:Mvol) / toroidalflux ! normalize toroidal flux; 
+   pflux(1:Mvol) = pflux(1:Mvol) / toroidalflux ! normalize poloidal flux; 
    
    FATAL( readin, tflux(1).lt.zero, enclosed toroidal flux cannot be zero )
    do vvol = 2, Mvol
@@ -1545,9 +1547,9 @@ subroutine readin
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
-   do vvol = 1, Mvol ! 08 Jun 16;
-   FATAL( readin, Lrad(vvol ).lt.2, require Chebyshev resolution > 2 so that Lagrange constraints can be satisfied ) ! 08 Jun 16;
-   enddo ! 08 Jun 16;
+   do vvol = 1, Mvol ! 
+   FATAL( readin, Lrad(vvol ).lt.2, require Chebyshev resolution > 2 so that Lagrange constraints can be satisfied ) ! 
+   enddo ! 
    
    FATAL( readin, mupfits.le.0, must give C05PCF a postive integer value for the maximum iterations = mupfits given on input )
    
@@ -1759,7 +1761,7 @@ subroutine readin
   RlBCAST( escale    , 1 , 0 )
   RlBCAST( opsilon   , 1 , 0 )
   RlBCAST( pcondense , 1 , 0 )
-  RlBCAST( epsilon   , 1 , 0 ) ! 04 Dec 14;
+  RlBCAST( epsilon   , 1 , 0 ) ! 
   RlBCAST( wpoloidal , 1 , 0 )
   RlBCAST( upsilon   , 1 , 0 )
   RlBCAST( forcetol  , 1 , 0 )
@@ -1817,7 +1819,7 @@ subroutine readin
   
 ! BSCREENLIST ! broadcast screenlist; this is expanded by Makefile; do not remove;
   LlBCAST( Wreadin, 1, 0 )
-  LlBCAST( Wwritin, 1, 0 ) ! redundant; 07 Dec 16;
+  LlBCAST( Wwritin, 1, 0 ) ! redundant; 
   LlBCAST( Wwrtend, 1, 0 )
   LlBCAST( Wmacros, 1, 0 )
   
@@ -1889,9 +1891,9 @@ subroutine readin
 !latex \item The ``extended'' Fourier resolution is defined by \internal{lMpol} $ = 4 $ \inputvar{Mpol}, \internal{lNtor} $ = 4 $\inputvar{Ntor}.
 !latex \end{enumerate}
 
-! lMpol =   Mpol ; lNtor =   Ntor ! no    enhanced resolution for metrics; 14 Apr 13;
+! lMpol =   Mpol ; lNtor =   Ntor ! no    enhanced resolution for metrics; 
 ! lMpol = 2*Mpol ; lNtor = 2*Ntor !       enhanced resolution for metrics;
-  lMpol = 4*Mpol ; lNtor = 4*Ntor ! extra-enhanced resolution for metrics; 14 Apr 13;
+  lMpol = 4*Mpol ; lNtor = 4*Ntor ! extra-enhanced resolution for metrics; 
   
   mne = 1 + lNtor + lMpol * ( 2 * lNtor + 1 ) ! resolution of metrics; enhanced resolution; see metrix;
 
@@ -1910,7 +1912,7 @@ subroutine readin
   if( iNtor.le.0 ) lNtor = Ntor - iNtor
   if(  Ntor.eq.0 ) lNtor = 0
   
-  mns = 1 + lNtor + lMpol * ( 2 * lNtor + 1 ) ! resolution of straight-field line transformation on interfaces; see tr00ab; soon to be redundant; 21 Apr 13;
+  mns = 1 + lNtor + lMpol * ( 2 * lNtor + 1 ) ! resolution of straight-field line transformation on interfaces; see tr00ab; soon to be redundant; 
 
   SALLOCATE( ims, (1:mns), 0 )
   SALLOCATE( ins, (1:mns), 0 )
@@ -1933,7 +1935,7 @@ subroutine readin
   
 ! set internal parameters that depend on diagnosticslist;
   
-  if( Lcheck.eq.5 ) then ; forcetol = 1.0e+12 ; nPpts = 0 ! will check Hessian using finite-differences; 18 Jul 14;
+  if( Lcheck.eq.5 ) then ; forcetol = 1.0e+12 ; nPpts = 0 ! will check Hessian using finite-differences; 
   endif
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -1985,7 +1987,7 @@ subroutine readin
    
    if( mk.eq.0 ) ajk(kk) = pi2
 
-  enddo ! end of do kk; 11 Aug 14;
+  enddo ! end of do kk; 
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -1999,7 +2001,7 @@ subroutine readin
 
    do ii = 1, mn ; mm = im(ii) ; nn = in(ii) / Nfp ! set plasma boundary, computational boundary; 29 Apr 15;
     
-    if( Lchangeangle ) then ; jj = -1 ; kk = -nn ! change sign of poloidal angle; 11 Aug 14;
+    if( Lchangeangle ) then ; jj = -1 ; kk = -nn ! change sign of poloidal angle; 
     else                    ; jj = +1 ; kk = +nn
     endif
     
@@ -2030,16 +2032,16 @@ subroutine readin
       iVns(ii     ) = zero
       iBns(ii     ) = zero
       if( NOTstellsym ) then
-      iVnc(ii     ) = Vnc( nn, mm)                         ! I guess that this must be zero, because \div B = 0 ; 17 Dec 15;
-      iBnc(ii     ) = Bnc( nn, mm)                         ! I guess that this must be zero, because \div B = 0 ; 17 Dec 15;
+      iVnc(ii     ) = Vnc( nn, mm)                         ! I guess that this must be zero, because \div B = 0 ; 
+      iBnc(ii     ) = Bnc( nn, mm)                         ! I guess that this must be zero, because \div B = 0 ; 
       else
       iVnc(ii     ) = zero
       iBnc(ii     ) = zero
       endif
 
-     endif ! end of if( Lfreebound.eq.1 ) ; 08 Jun 16;
+     endif ! end of if( Lfreebound.eq.1 ) ; 
      
-    else ! if( mm.eq.0 .and. nn.eq.0 ) then ; matches 08 Jun 16;
+    else ! if( mm.eq.0 .and. nn.eq.0 ) then ; matches 
      
      ;iRbc(ii,Nvol) =   Rbc( kk, mm) + Rbc(-kk,-mm)        ! plasma        boundary is ALWAYS given by namelist Rbc & Zbs;
      ;iZbs(ii,Nvol) = ( Zbs( kk, mm) - Zbs(-kk,-mm) ) * jj 
@@ -2073,9 +2075,9 @@ subroutine readin
       iBnc(ii     ) =   zero
       endif
 
-     endif ! matches if( Lfreebound.eq.1 ) ; 08 Jun 16;
+     endif ! matches if( Lfreebound.eq.1 ) ; 
      
-    endif ! end of if( mm.eq.0 .and. nn.eq.0 ) ; 08 Jun 16;
+    endif ! end of if( mm.eq.0 .and. nn.eq.0 ) ; 
  
    enddo ! end of do ii = 1, mn;
 
@@ -2115,7 +2117,7 @@ subroutine readin
     
     DALLOCATE(RZRZ)
     
-   end select ! end select case( Linitialize ); 19 Jul 16;
+   end select ! end select case( Linitialize ); 
    
    if( Igeometry.eq.3 ) then
     if( Rac(0).gt.zero ) then ! user has supplied logically possible coordinate axis;
@@ -2123,8 +2125,8 @@ subroutine readin
      iZbs(1:Ntor+1,0) = Zas(0:Ntor)
      iRbs(1:Ntor+1,0) = Ras(0:Ntor)
      iZbc(1:Ntor+1,0) = Zac(0:Ntor)
-    else ! see preset for poloidal-average specification of coordinate axis and geometrical initialization; 19 Jul 16;
-    endif ! end of if( Igeometry.eq.3 ) then ; 19 Jul 16;
+    else ! see preset for poloidal-average specification of coordinate axis and geometrical initialization; 
+    endif ! end of if( Igeometry.eq.3 ) then ; 
    endif
 
   endif ! end of if myid.eq.0 loop; only the master will read the input file; all variables need to be broadcast;
@@ -2152,9 +2154,9 @@ subroutine readin
   endif
   
   if( Igeometry.eq.1 .or. Igeometry.eq.2 ) then
-   ;iRbc(1:mn,0) = zero ! innermost volume must be trivial; this is used in volume; 26 Feb 13; innermost interface is coordinate axis; 13 Sep 13;
+   ;iRbc(1:mn,0) = zero ! innermost volume must be trivial; this is used in volume; innermost interface is coordinate axis; 
    if( NOTstellsym ) then
-    iRbs(1:mn,0) = zero ! innermost volume must be trivial; this is used in volume; 26 Feb 13;
+    iRbs(1:mn,0) = zero ! innermost volume must be trivial; this is used in volume; 
    endif
   endif
   
@@ -2167,7 +2169,7 @@ subroutine readin
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  Rscale = iRbc(1,Mvol) ! this will be used to normalize the geometrical degrees-of-freedom; 03 Nov 16;
+  Rscale = iRbc(1,Mvol) ! this will be used to normalize the geometrical degrees-of-freedom; 
 
   if( myid.eq.0 ) write(ounit,'("readin : ", 10x ," : myid=",i3," ; Rscale=",es22.15," ;")') myid, Rscale
 
@@ -2271,7 +2273,7 @@ subroutine wrtend( wflag, iflag, rflag )
    do ii = 1, mn ; mm = im(ii) ; nn = in(ii) / Nfp ; Rbc(nn,mm) = iRbc(ii,Nvol) ; Zbs(nn,mm) = iZbs(ii,Nvol) ; Vns(nn,mm) = iVns(ii) ; Bns(nn,mm) = iBns(ii)
                                                    ; Rbs(nn,mm) = iRbs(ii,Nvol) ; Zbc(nn,mm) = iZbc(ii,Nvol) ; Vnc(nn,mm) = iVnc(ii) ; Bnc(nn,mm) = iBnc(ii)
    enddo ! end of do ii = 1, mn;
-  endif ! end of if( Lfreebound.eq.1 .or. . . . ) ; 15 May 13;
+  endif ! end of if( Lfreebound.eq.1 .or. . . . ) ; 
 
   write(iunit,'(" Rac         = ",99es23.15)') Rac(0:Ntor)
   write(iunit,'(" Zas         = ",99es23.15)') Zas(0:Ntor)
@@ -2283,7 +2285,7 @@ subroutine wrtend( wflag, iflag, rflag )
  !write(iunit,'(" Ras         = ",99es23.15)') iRbs(1:Ntor+1,0) 
  !write(iunit,'(" Zac         = ",99es23.15)') iZbc(1:Ntor+1,0) 
 
-  do mm = 0, Mpol ! will write out the plasma boundary harmonics; 01 May 13;
+  do mm = 0, Mpol ! will write out the plasma boundary harmonics; 
    do nn = -Ntor, Ntor
     
     if( mm.eq.0 .and. nn.lt.0 ) cycle ! these modes are always excluded; 13 Oct 12;
@@ -2304,7 +2306,7 @@ subroutine wrtend( wflag, iflag, rflag )
    enddo ! end of do nn;
   enddo ! end of do mm;
   
-  do mm = 0, Mpol ! will write out the computation domain harmonics; (only relevant in free-boundary case); 01 May 13;
+  do mm = 0, Mpol ! will write out the computation domain harmonics; (only relevant in free-boundary case); 
    do nn = -Ntor, Ntor
     
     if( mm.eq.0 .and. nn.lt.0 ) cycle ! these modes are always excluded; 13 Oct 12;
@@ -2325,7 +2327,7 @@ subroutine wrtend( wflag, iflag, rflag )
    enddo ! end of do nn;
   enddo ! end of do mm;
   
-  do mm = 0, Mpol ! will write out the computation domain harmonics; (only relevant in free-boundary case); 01 May 13;
+  do mm = 0, Mpol ! will write out the computation domain harmonics; (only relevant in free-boundary case); 
    do nn = -Ntor, Ntor
     
     if( mm.eq.0 .and. nn.lt.0 ) cycle ! these modes are always excluded; 13 Oct 12;
@@ -2480,20 +2482,20 @@ subroutine wrtend( wflag, iflag, rflag )
    endif
 #endif
 
-   write(zunit) wflag, iflag, Energy, rflag ! this file is opened in xspech; 11 Aug 14;
+   write(zunit) wflag, iflag, Energy, rflag ! this file is opened in xspech; 
    
    write(zunit) iRbc(1:mn,0:Mvol)
    write(zunit) iZbs(1:mn,0:Mvol)
    write(zunit) iRbs(1:mn,0:Mvol)
    write(zunit) iZbc(1:mn,0:Mvol)
    
-   call flush(zunit) ! this file is opened in xspech; 11 Aug 14;
+   call flush(zunit) ! this file is opened in xspech; 
    
-  endif ! end of if( wflag.gt.0 ) ; 03 Nov 16;
+  endif ! end of if( wflag.gt.0 ) ; 
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  if( wflag.eq.1 ) then ! write .ext.sp.grid; 07 Dec 16;
+  if( wflag.eq.1 ) then ! write .ext.sp.grid; 
    
 #ifdef DEBUG  
    if( Wwrtend ) then ; cput = GETTIME ; write(ounit,'("wrtend : ",f10.2," : myid=",i3," ; writing .ext.sp.grid ;")') cput-cpus, myid
@@ -2508,23 +2510,23 @@ subroutine wrtend( wflag, iflag, rflag )
    
    do vvol = 1, Mvol ; ivol = vvol
     
-    LREGION(vvol) ! sets Lcoordinatesingularity and Lplasmaregion ; 07 Dec 16;
+    LREGION(vvol) ! sets Lcoordinatesingularity and Lplasmaregion ; 
     
-    write(iunit) Lrad(vvol) ! sub-grid radial resolution; not really sub-grid resolution, but really the Chebyshev resolution; 29 Jan 13; 18 Dec 14;
+    write(iunit) Lrad(vvol) ! sub-grid radial resolution; not really sub-grid resolution, but really the Chebyshev resolution; 
     
     do ii = 0, Lrad(vvol) ! sub-grid;
      
      lss = ii * two / Lrad(vvol) - one
      
-     if( Lcoordinatesingularity .and. ii.eq.0 ) then ; Lcurvature = 0 ! Jacobian is not defined; 07 Dec 16;
-     else                                            ; Lcurvature = 1 ! compute Jacobian       ; 07 Dec 16;
+     if( Lcoordinatesingularity .and. ii.eq.0 ) then ; Lcurvature = 0 ! Jacobian is not defined; 
+     else                                            ; Lcurvature = 1 ! compute Jacobian       ; 
      endif
 
      WCALL( wrtend, coords, ( vvol, lss, Lcurvature, Ntz, mn ) ) ! only Rij(0,:) and Zij(0,:) are required; Rmn & Zmn are available;
      
      write(iunit) Rij(1:Ntz,0,0)
      write(iunit) Zij(1:Ntz,0,0)
-     write(iunit)  sg(1:Ntz,0) ! defaults to zero if not computed; 07 Dec 16;
+     write(iunit)  sg(1:Ntz,0) ! defaults to zero if not computed; 
 
      if( Lcurvature.eq.1 ) then 
 
@@ -2533,22 +2535,22 @@ subroutine wrtend( wflag, iflag, rflag )
         
         WCALL( wrtend, bfield, ( zeta, st(1:Node), Bst(1:Node) ) )
         
-        ijreal(jk) = ( Rij(jk,1,0) * Bst(1) + Rij(jk,2,0) * Bst(2) + Rij(jk,3,0) * one ) * gBzeta / sg(jk,0) ! BR; 07 Dec 16;
-        ijimag(jk) = (                                                             one ) * gBzeta / sg(jk,0) ! Bp; 07 Dec 16;
-        jireal(jk) = ( Zij(jk,1,0) * Bst(1) + Zij(jk,2,0) * Bst(2) + Zij(jk,3,0) * one ) * gBzeta / sg(jk,0) ! BZ; 07 Dec 16;
+        ijreal(jk) = ( Rij(jk,1,0) * Bst(1) + Rij(jk,2,0) * Bst(2) + Rij(jk,3,0) * one ) * gBzeta / sg(jk,0) ! BR; 
+        ijimag(jk) = (                                                             one ) * gBzeta / sg(jk,0) ! Bp; 
+        jireal(jk) = ( Zij(jk,1,0) * Bst(1) + Zij(jk,2,0) * Bst(2) + Zij(jk,3,0) * one ) * gBzeta / sg(jk,0) ! BZ; 
         
        enddo
       enddo
      
-     endif ! end of if( Lcurvature.eq.1 ) ; 07 Dec 16;
+     endif ! end of if( Lcurvature.eq.1 ) ; 
 
      write(iunit) ijreal(1:Ntz)
      write(iunit) ijimag(1:Ntz)
      write(iunit) jireal(1:Ntz)
      
-    enddo ! end of do ii; 29 Jan 13;
+    enddo ! end of do ii; 
     
-   enddo ! end of do vvol; 29 Jan 13;
+   enddo ! end of do vvol; 
    
    close(iunit)
    
@@ -2557,7 +2559,7 @@ subroutine wrtend( wflag, iflag, rflag )
    endif
 #endif
    
-  endif ! end of if( wflag.eq.1 ) ; 07 Dec 16;
+  endif ! end of if( wflag.eq.1 ) ; 
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
