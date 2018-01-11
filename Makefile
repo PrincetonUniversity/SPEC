@@ -17,18 +17,18 @@
  ALLFILES=global $(SPECFILES) $(sfiles) xspech hdfint preset
  F77FILES=$(sfiles:=.f)
  F90FILES=$(SPECFILES:=.F90)
- HFILES=$(SPECFILES:=.h)
+ HFILES=global preset $(SPECFILES) hdfint xspech
 
  ROBJS=$(SPECFILES:=_r.o)
  DOBJS=$(SPECFILES:=_d.o)
-
+ 
 ###############################################################################################################################################################
-
+ 
  MACROS=macros
-
+ 
  CC=intel # if want to use gfortran; make CC=gfortran xfocus; otherwise using Intel
  FC=mpif90
-
+ 
  # Intel Defaults
  CFLAGS=-r8
  RFLAGS=-mcmodel=large -O3 -m64 -unroll0 -fno-alias -ip -traceback
@@ -99,13 +99,9 @@ endif
 
 xspec: $(addsuffix _r.o,$(ALLFILES)) $(MACROS) Makefile
 	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o xspec $(addsuffix _r.o,$(ALLFILES)) $(NAG) $(HDF5compile) $(HDF5link) $(NETCDF) $(FFTWlink)
-	date
-	/bin/echo -e "\a"
 
 dspec: $(addsuffix _d.o,$(ALLFILES)) $(MACROS) Makefile
 	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o dspec $(addsuffix _d.o,$(ALLFILES)) $(NAG) $(HDF5compile) $(HDF5link) $(NETCDF) $(FFTWlink)
-	date
-	/bin/echo -e "\a"
 
 ###############################################################################################################################################################
 
@@ -238,38 +234,25 @@ clean:
 
 ###############################################################################################################################################################
 
-tar:
-	tar -cf spec.$(text).tar *.h macros Makefile
-	gzip --best spec.$(text).tar ; mv spec.$(text).tar.gz Tarfiles/.
-
-###############################################################################################################################################################
-
 %.pdf: %.h head.tex end.tex Makefile
 	#emacs -r -fn 7x14 -g 160x80+280 $*.h
 	@ls --full-time $*.h | cut -c 35-53 > .$*.date
 	awk -v file=$* -v date=.$*.date 'BEGIN{getline cdate < date ; FS="!latex" ; print "\\input{head} \\code{"file"}"} \
 	{if(NF>1) print $$2} \
 	END{print "\\hrule \\vspace{1mm} \\footnotesize $*.h last modified on "cdate";" ; print "\\input{end}"}' $*.h > $*.tex
-	@echo "-------------------------------------------------------------------------------------------------------------------------------"
-	@echo $*
-	@echo "-------------------------------------------------------------------------------------------------------------------------------"
-	latex $* ; latex $* ; latex $*
-	dvips -P pdf -o $*.ps $*.dvi ; ps2pdf $*.ps
+	latex $* ; latex $* ; latex $* ; dvips -P pdf -o $*.ps $*.dvi ; ps2pdf $*.ps
 	rm -f $*.tex $*.aux $*.blg $*.log $*.ps
 
 ###############################################################################################################################################################
 
-pdfs: $(addsuffix .pdf,$(allfiles)) head.html
+pdfs: $(addsuffix .pdf,$(HFILES)) head.html
 ifeq ($(USER),shudson)
-
 	cat head.html > $(WEBDIR)/Spec/subroutines.html
-
-	for file in $(allfiles) ; do cp $${file}.pdf $(WEBDIR)/Spec/. ; grep "!title" $${file}.h | cut -c 7- | \
+	for file in $(HFILES) ; do cp $${file}.pdf $(WEBDIR)/Spec/. ; grep "!title" $${file}.h | cut -c 7- | \
 	                           awk -v file=$${file} -F!\
 	                            '{print "<tr><td><a href="file".pdf\">"file"</a></td><td>"$$1"</td><td>"$$2"</td></tr>"}' \
 	                            >> $(WEBDIR)/Spec/subroutines.html ; \
 	                          done
-
 	echo "</table></body></html>" >> $(WEBDIR)/Spec/subroutines.html
 endif
 
@@ -281,7 +264,6 @@ help:
 	# make xspec 		: expands macros (*.h --> *.F90) ; compiles xspec executable ;
 	# make dspec 		: expands macros (*.h --> *.F90) ; compiles dspec executable ;
 	# make clean 		: clean up compilation directory : rm -f *.o ; rm -f *.mod ; rm -f *.F90 ; rm -f *.pdf ; rm -f *.dvi
-	# make tar		: create archive (tar) of essential files ; save in Tarfiles/ ;
 	# make pdfs		: create source documentation dvi, pdf files ; user should have directory $(HOME)/w3_html/Spec ;
 	#
 	# Compiler Control 	: CC=lff95; CC=intel_ipp; CC=gfortran_ipp

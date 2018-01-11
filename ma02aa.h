@@ -42,7 +42,7 @@ subroutine ma02aa( lvol, NN )
   
   LOCALS
   
-  INTEGER, intent(in)  :: lvol, NN ! NN is the number of degrees of freedom in the (packxi format) vector potential;
+  INTEGER, intent(in)  :: lvol, NN ! NN is the number of degrees of freedom in the (packed format) vector potential;
   
   
   INTEGER              :: ideriv
@@ -62,7 +62,7 @@ subroutine ma02aa( lvol, NN )
   external             :: mp00ac
   
 #ifdef DEBUG
-  INTEGER              :: ixx, jxx, jfinite ! computing finite-difference derivatives of \iota wrt \mu and \Delta \psi_p; 04 Dec 14;
+  INTEGER              :: ixx, jxx, jfinite ! computing finite-difference derivatives of \iota wrt \mu and \Delta \psi_p;
   REAL                 :: lfdiff, dFdof(-1:1,-1:1,1:2)
   REAL, allocatable    :: dsolution(:,:,:,:)
 #endif
@@ -142,7 +142,7 @@ subroutine ma02aa( lvol, NN )
    
    SALLOCATE( RS, (1:LDR,1:NN), zero )
    
-   ideriv = 0 ; dpsi(1:2) = (/ dtflux(lvol), dpflux(lvol) /) ! these are also used below; 26 Feb 13;
+   ideriv = 0 ; dpsi(1:2) = (/ dtflux(lvol), dpflux(lvol) /) ! these are also used below;
    
    packorunpack = 'P'
    CALL( ma02aa, packab, ( packorunpack, lvol, NN, xi(1:NN), ideriv ) )
@@ -231,7 +231,7 @@ subroutine ma02aa( lvol, NN )
 !     FATAL( ma02aa, .true., illegal ifail returned by E04UFF )
 !    end select
      
-!    if( irevcm.eq.0 .or. irevcm.eq.1 .or. irevcm.eq.6 ) ImagneticOK(lvol) = .true. ! set error flag; used elsewhere; 26 Feb 13;
+!    if( irevcm.eq.0 .or. irevcm.eq.1 .or. irevcm.eq.6 ) ImagneticOK(lvol) = .true. ! set error flag; used elsewhere;
 !    
 !     mu(lvol) = multipliers( NN + NLinearConstraints + NNonLinearConstraints ) ! helicity multiplier, or so it seems: NAG document is not completely clear;
 !     
@@ -273,7 +273,6 @@ subroutine ma02aa( lvol, NN )
 !latex \subsection{Newton method}
 !latex \begin{enumerate}
 !latex \item Only relevant if \internal{LBnewton=T}. See \inputvar{LBeltrami} for details.
-!latex \item Documentation on the implementation of \nag{www.nag.co.uk/numeric/FL/manual19/pdf/C05/c05pbf_fl19.pdf}{C05PBF} is under construction.
 !latex \end{enumerate}
 
   if( LBnewton ) then
@@ -282,7 +281,7 @@ subroutine ma02aa( lvol, NN )
    
    xi(0) = mu(lvol) ! initialize; helicity multiplier is treated as an independent degree-of-freedom;
    
-   ideriv = 0 ; dpsi(1:2) = (/ dtflux(lvol), dpflux(lvol) /) ! these are also used below; 26 Feb 13;
+   ideriv = 0 ; dpsi(1:2) = (/ dtflux(lvol), dpflux(lvol) /) ! these are also used below;
    
    packorunpack = 'P'
    CALL( ma02aa, packab ( packorunpack, lvol, NN, xi(1:NN), dpsi(1:2), ideriv ) )
@@ -303,6 +302,7 @@ subroutine ma02aa( lvol, NN )
    mu(lvol) = xi(0)
    
    packorunpack = 'U' ; ideriv = 0
+
    CALL( ma02aa, packab( packorunpack, lvol, NN, xi(1:NN), ideriv ) )
    
    cput = GETTIME
@@ -325,7 +325,7 @@ subroutine ma02aa( lvol, NN )
    end select
    
 #ifdef DEBUG
-   xo(1:NN) = xi(1:NN) ! save original for comparison; 26 Feb 13;
+   xo(1:NN) = xi(1:NN) ! save original for comparison;
    packorunpack = 'P' ; ideriv = 0
    CALL( ma02aa, packab( packorunpack, lvol, NN, xi(1:NN), ideriv ) )
    FATAL( ma02aa, sum(abs(xi(1:NN)-xo(1:NN)))/NN.gt.vsmall, un/packing routine is incorrect )
@@ -361,7 +361,7 @@ subroutine ma02aa( lvol, NN )
 !latex \item In addition to the enclosed toroidal flux, $\Delta \psi_t$, which is held constant in the plasma volumes,
 !latex       the Beltrami field in a given volume is assumed to be parameterized by $\mu$ and $\Delta \psi_p$.
 !latex       (Note that $\Delta \psi_p$ is not defined in a torus.)
-!latex \item These are ``packxi'' into an array, e.g. $\boldmu \equiv (\mu, \Delta\psi_p)^T$, so that standard library routines ,
+!latex \item These are ``packed'' into an array, e.g. $\boldmu \equiv (\mu, \Delta\psi_p)^T$, so that standard library routines ,
 !latex       e.g. \nag{www.nag.co.uk/numeric/FL/manual19/pdf/C05/c05pcf_fl19.pdf}{C05PCF},
 !latex       can be used to (iteratively) find the appropriately-constrained Beltrami solution, i.e. ${\bf f}(\boldmu)=0$.
 !latex \item The function ${\bf f}(\boldmu)$, which is computed by \link{mp00ac}, is defined by the input parameter \inputvar{Lconstraint}:
@@ -384,7 +384,7 @@ subroutine ma02aa( lvol, NN )
 
 !latex \item In the vacuum, $\mu=0$, and the enclosed fluxes, $\Delta \psi_t$ and $\Delta \psi_p$, are considered to parameterize the family of solutions.
 !latex       (These quantities may not be well-defined if ${\bf B}\cdot{\bf n}\ne 0$ on the computational boundary.)
-!latex \item These are ``packxi'' into an array, $\boldmu \equiv (\Delta\psi_t,\Delta\psi_p)^T$, so that, as above, standard routines can be used
+!latex \item These are ``packed'' into an array, $\boldmu \equiv (\Delta\psi_t,\Delta\psi_p)^T$, so that, as above, standard routines can be used
 !latex       to iteratively find the appropriately constrained solution, i.e. ${\bf f}(\boldmu)=0$.
 !latex \item The function ${\bf f}(\boldmu)$, which is computed by \link{mp00ac}, is defined by the input parameter \inputvar{Lconstraint}:
 !latex \bi
@@ -409,7 +409,7 @@ subroutine ma02aa( lvol, NN )
   if( LBlinear ) then ! assume Beltrami field is parameterized by helicity multiplier (and poloidal flux);
    
    lastcpu = GETTIME
-
+   
    
    if( Lplasmaregion ) then
     
@@ -424,9 +424,7 @@ subroutine ma02aa( lvol, NN )
     case(  2 )    ;                                     Nxdof = 1 ! multiplier                 IS  varied to match             helicity ;
     end select
     
-   else ! Lvacuumregion ; 26 Jan 16;
-
-!   write(ounit,'("ma02aa : ", 10x ," : dtflux(",i3," ) =",es23.15," ; dpflux(",i3," ) =",es23.15," ;")') lvol, dtflux(lvol), lvol, dpflux(lvol)
+   else ! Lvacuumregion ;
 
     Xdof(1:2) = xoffset + (/ dtflux(lvol), dpflux(lvol) /) ! initial guess for degrees of freedom; offset from zero so that relative error is small;
     
@@ -437,18 +435,18 @@ subroutine ma02aa( lvol, NN )
     case(  2 )    ;                                   ; Nxdof = 2 ! poloidal   & toroidal flux ARE varied to match linking current and plasma current;
     end select
 
-   endif ! end of if( Lplasmaregion) ; 26 Jan 16;
+   endif ! end of if( Lplasmaregion) ;
    
 
    select case( Nxdof )
     
-   case( 0   ) ! need only call mp00ac once, to calculate Beltrami field for given helicity multiplier and enclosed fluxes; 28 Jan 13;
+   case( 0   ) ! need only call mp00ac once, to calculate Beltrami field for given helicity multiplier and enclosed fluxes;
     
-    iflag = 1 ; Ndof = 1     ; Ldfjac = Ndof ; nfev = 1 ; njev = 0 ; ihybrj = 1;  ! provide dummy values for consistency; 08 Jun 16;
+    iflag = 1 ; Ndof = 1     ; Ldfjac = Ndof ; nfev = 1 ; njev = 0 ; ihybrj = 1;  ! provide dummy values for consistency;
     
     WCALL( ma02aa, mp00ac, ( Ndof, Xdof(1:Ndof), Fdof(1:Ndof), Ddof(1:Ldfjac,1:Ndof), Ldfjac, iflag ) )
     
-    helicity(lvol) = lABintegral(lvol) ! this was computed in mp00ac; 26 Feb 13;
+    helicity(lvol) = lABintegral(lvol) ! this was computed in mp00ac;
     
    case( 1:2 ) ! will iteratively call mp00ac, to calculate Beltrami field that satisfies constraints;
     
@@ -465,41 +463,41 @@ subroutine ma02aa( lvol, NN )
      select case( ihybrj )
      case( 0: ) ;     mu(lvol) = Xdof(1)      - xoffset
       ;         ; dpflux(lvol) = Xdof(2)      - xoffset
-     case( :-1) ;      Xdof(1) = mu(lvol)     + xoffset ! mu    and dpflux have been updated in mp00ac; early termination; 18 Apr 13; 09 Mar 17;
-      ;         ;      Xdof(2) = dpflux(lvol) + xoffset ! mu    and dpflux have been updated in mp00ac; early termination; 18 Apr 13; 09 Mar 17;
+     case( :-1) ;      Xdof(1) = mu(lvol)     + xoffset ! mu    and dpflux have been updated in mp00ac; early termination;
+      ;         ;      Xdof(2) = dpflux(lvol) + xoffset ! mu    and dpflux have been updated in mp00ac; early termination;
      end select
      
-    else ! Lvacuumregion; 26 Jan 16;
+    else ! Lvacuumregion;
      
      select case( ihybrj )
      case( 0: ) ; dtflux(lvol) = Xdof(1)      - xoffset
       ;         ; dpflux(lvol) = Xdof(2)      - xoffset
-     case( :-1) ; Xdof(1)      = dtflux(lvol) + xoffset ! dtflux and dpflux have been updated in mp00ac; early termination; 18 Apr 13; 09 Mar 17;
-      ;         ; Xdof(2)      = dpflux(lvol) + xoffset ! dtflux and dpflux have been updated in mp00ac; early termination; 18 Apr 13; 09 Mar 17;
+     case( :-1) ; Xdof(1)      = dtflux(lvol) + xoffset ! dtflux and dpflux have been updated in mp00ac; early termination;
+      ;         ; Xdof(2)      = dpflux(lvol) + xoffset ! dtflux and dpflux have been updated in mp00ac; early termination;
      end select
      
-!   write(ounit,'("ma02aa : ", 10x ," : dtflux(",i3," ) =",es23.15," ; dpflux(",i3," ) =",es23.15," ;")') lvol, dtflux(lvol), lvol, dpflux(lvol)
-
-    endif ! end of if( Lplasmaregion ) ; 08 Feb 16;
+    endif ! end of if( Lplasmaregion ) ;
         
-    helicity(lvol) = lABintegral(lvol) ! this was computed in mp00ac; 26 Feb 13;
+    helicity(lvol) = lABintegral(lvol) ! this was computed in mp00ac;
     
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
     if( Lconstraint.eq.1 .or. ( Lvacuumregion .and. Lconstraint.eq.0 ) ) then
+     
      iflag = 2 ; Ldfjac = Ndof ! call mp00ac: tr00ab/curent to ensure the derivatives of B, transform, currents, wrt mu/dtflux & dpflux are calculated;
+
      WCALL( ma02aa, mp00ac, ( Ndof, Xdof(1:Ndof), Fdof(1:Ndof), Ddof(1:Ldfjac,1:Ndof), Ldfjac, iflag ) )
-    !write(ounit,'("ma02aa : ", 10x ," : dtflux(",i3," ) =",es23.15," ; dpflux(",i3," ) =",es23.15," ;")') lvol, dtflux(lvol), lvol, dpflux(lvol)
-    endif ! end of if( Lconstraint.eq.1 .or. ( Lvacuumregion .and. Lconstraint.eq.0 ) ) ; 12 Sep 16;
+
+    endif ! end of if( Lconstraint.eq.1 .or. ( Lvacuumregion .and. Lconstraint.eq.0 ) ) ;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
     
-   end select ! end of select case( Nxdof ) ; 08 Jun 16;
+   end select ! end of select case( Nxdof ) ;
    
 
    cput = GETTIME
 
-   select case(ihybrj) ! this screen output may not be correct for Lvacuumregion; 08 Feb 16;
+   select case(ihybrj) ! this screen output may not be correct for Lvacuumregion;
    case(    1   )  
     if( Wma02aa ) write(ounit,1040) cput-cpus, myid, lvol, ihybrj, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "success         ", Fdof(1:Ndof)
    case(   -2   )  
@@ -548,28 +546,28 @@ subroutine ma02aa( lvol, NN )
    
    if( Lconstraint.eq.1 .or. Lvacuumregion ) then ! only in this case are the derivatives calculated;
     
-    SALLOCATE( dsolution, (1:NN,0:2,-1:1,-1:1), zero ) ! packxi vector potential; 01 Jul 14;
+    SALLOCATE( dsolution, (1:NN,0:2,-1:1,-1:1), zero ) ! packed vector potential;
     
     if( Lplasmaregion ) then
      Xdof(1:2) = xoffset + (/     mu(lvol), dpflux(lvol) /) ! initial guess for degrees of freedom; offset from zero so that relative error is small;      
      if( Lcoordinatesingularity ) then ; Ndof = 1 ! multiplier                  IS  varied to match       transform      ;
      else                              ; Ndof = 2 ! multiplier &  poloidal flux ARE varied to match inner/outer transform;
      endif
-    else ! Lvacuumregion; 08 Feb 16;
+    else ! Lvacuumregion;
      Xdof(1:2) = xoffset + (/ dtflux(lvol), dpflux(lvol) /) ! initial guess for degrees of freedom; offset from zero so that relative error is small;
      ;                                 ; Ndof = 2
-    endif ! end of if( Lplasmaregion) : 08 Feb 16;
+    endif ! end of if( Lplasmaregion) ;
     
     Ldfjac = Ndof ; dFdof(-1:1,-1:1,1:2) = zero
     
     ixx = 0 ; jxx = 0
     
-    iflag = 2 ! iflag controls derivative calculation in mp00ac; analytic derivatives of rotational-transform are required; 01 Jul 14;
+    iflag = 2 ! iflag controls derivative calculation in mp00ac; analytic derivatives of rotational-transform are required;
     
     CALL( ma02aa, mp00ac( Ndof, Xdof(1:Ndof), dFdof(ixx,jxx,1:Ndof), oDdof(1:Ldfjac,1:Ndof), Ldfjac, iflag ) ) ! compute "exact" derivatives;
     
-    dsolution(1:NN,1,0,0) = solution(1:NN,1) ! packxi vector potential; derivative wrt mu    ; 20 Jun 14;
-    dsolution(1:NN,2,0,0) = solution(1:NN,2) ! packxi vector potential; derivative wrt dpflux; 20 Jun 14;
+    dsolution(1:NN,1,0,0) = solution(1:NN,1) ! packed vector potential; derivative wrt mu    ;
+    dsolution(1:NN,2,0,0) = solution(1:NN,2) ! packed vector potential; derivative wrt dpflux;
     
     jfinite = 0
     cput = GETTIME 
@@ -586,9 +584,9 @@ subroutine ma02aa( lvol, NN )
        
        if( Lplasmaregion ) then
         Xdof(1:2) = xoffset + (/     mu(lvol), dpflux(lvol) /) + (/ ixx, jxx /) * lfdiff * half
-       else ! Lvacuumregion; 08 Feb 16;
+       else ! Lvacuumregion;
         Xdof(1:2) = xoffset + (/ dtflux(lvol), dpflux(lvol) /) + (/ ixx, jxx /) * lfdiff * half
-       endif ! end of if( Lplasmaregion) : 08 Feb 16;
+       endif ! end of if( Lplasmaregion) ;
 
        iflag = 1 ! analytic derivatives of rotational-transform are not required;
        
@@ -604,7 +602,7 @@ subroutine ma02aa( lvol, NN )
      
      cput = GETTIME 
     !write(ounit,2000) cput-cpus, myid, lvol, jfinite, " error    ", Ddof(1:Ldfjac,1:Ndof) - oDdof(1:Ldfjac,1:Ndof)
-     write(ounit,2000) cput-cpus, myid, lvol, jfinite, " estimate ", Ddof(1:Ldfjac,1:Ndof) ! 04 Dec 14;
+     write(ounit,2000) cput-cpus, myid, lvol, jfinite, " estimate ", Ddof(1:Ldfjac,1:Ndof)
      
     enddo ! end of do jfinite;
     
@@ -613,11 +611,11 @@ subroutine ma02aa( lvol, NN )
     
     DALLOCATE(dsolution)
     
-2000 format("ma02aa : ":,f10.2," :":" myid=",i3," : lvol=",i3," ; jj=",i3," ; "a10" : DF=["es23.15" ,"es23.15" ,"es23.15" ,"es23.15" ] ;") ! 20 Jun 14;
+2000 format("ma02aa : ":,f10.2," :":" myid=",i3," : lvol=",i3," ; jj=",i3," ; "a10" : DF=["es23.15" ,"es23.15" ,"es23.15" ,"es23.15" ] ;")
     
-   endif ! end of if( Lconstraint.eq.1 .or. Lvacuumregion ) ; 08 Feb 16;
+   endif ! end of if( Lconstraint.eq.1 .or. Lvacuumregion ) ;
    
-  endif ! end of if( Lcheck.eq.2 ) ; 08 Feb 16;
+  endif ! end of if( Lcheck.eq.2 ) ;
 
 #endif
   
@@ -632,8 +630,8 @@ subroutine ma02aa( lvol, NN )
   "error="es7.0" ; ":,a18)
 1040 format("ma02aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; Linear : ihybrj=",i3," hel="es12.4" mu="es12.4" dpflux="es12.4" time="f9.1" ; "&
   :,a16" ; F="2es08.0)
-1050 format("ma02aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; Linear : ihybrj=",i3,"     "  12x " I ="es12.4"        "  12x " time="f9.1" ; "&
-  :,a16" ; F="2es08.0)
+!050 format("ma02aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; Linear : ihybrj=",i3,"     "  12x " I ="es12.4"        "  12x " time="f9.1" ; "&
+! :,a16" ; F="2es08.0)
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   

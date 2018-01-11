@@ -14,7 +14,7 @@
 !latex \subsection{unpacking fluxes, helicity multiplier}
 
 !latex \begin{enumerate}
-!latex \item The vector of ``parameters'', $\boldmu$, is unpackxi. (Recall that $\boldmu$ was ``packxi'' in \link{ma02aa}.)
+!latex \item The vector of ``parameters'', $\boldmu$, is unpacked. (Recall that $\boldmu$ was ``packed'' in \link{ma02aa}.)
 !latex       In the following, $\boldpsi \equiv (\Delta \psi_t, \Delta \psi_p)^T$.
 !latex \end{enumerate}
 
@@ -45,94 +45,15 @@
 !latex \subsection{solving linear system}
 
 !latex It is {\em not} assumed that the linear system is positive definite.
-!latex LAPACK routine DSYSVX is used to solve the linear system.
+!latex The \verb+LAPACK+ routine \verb+DSYSVX+ is used to solve the linear system.
 
 !latex \subsection{unpacking, . . .}
 
 !latex \begin{enumerate}
-!latex \item The magnetic degrees-of-freedom are ``unpackxi'' by \link{packab}.
+!latex \item The magnetic degrees-of-freedom are unpacked by \link{packab}.
 !latex \item The error flag, \internal{ImagneticOK}, is set that indicates if the Beltrami fields were successfully constructed.
 !latex \end{enumerate}
 
-!l tex \subsection{linear system}
-
-!l tex \begin{enumerate}
-!l tex \item The energy, $W \equiv \int \! dv {\; \bf B}\cdot{\bf B}$, and helicity, $K\equiv \int \! dv \; {\bf A}\cdot{\bf B}$, functionals may be written
-!l tex \be W & = & \frac{1}{2} \; a_i \; {\cal A}_{i,j} \; a_j + a_i \; {\cal B}_{i,j} \; \psi_j + \frac{1}{2} \; \psi_i \; {\cal C}_{i,j} \; \psi_j \\
-!l tex     K & = & \frac{1}{2} \; a_i \; {\cal D}_{i,j} \; a_j + a_i \; {\cal E}_{i,j} \; \psi_j + \frac{1}{2} \; \psi_i \; {\cal F}_{i,j} \; \psi_j 
-!l tex \ee
-!l tex       where ${\bf a} \equiv \{ \Ate{i,l}, \Aze{i,l}, \Ato{i,l}, \Azo{i,l}, f_{e,i}, f_{o,i} \}$ contains the independent degrees of freedom
-!l tex       and $\boldpsi \equiv \{\Delta \psi_t,\Delta \psi_p\}$.
-!l tex \item The matrices ${\cal A}_{i,j}$, etc. are constructed in 
-!l tex \item The linear system that defines the magnetic field is
-!l tex       \be ( {\cal A}_{i,j} - \mu {\cal D}_{i,j} ) \; a_j = - ( {\cal B}_{i,j} - \mu {\cal E}_{i,j} ) \; \psi_j
-!l tex       \ee
-!l tex \item This routine is written as a function of \mbox{${\bf x}\equiv(\mu,\Delta \psi_p)^T$} for the plasma regions,
-!l tex       where $\Delta\psi_t$ is assumed to be given,\\
-!l tex       or \mbox{${\bf x}\equiv(\Delta \psi_t,\Delta\psi_p)^T$} for the vacuum regions,
-!l tex       where $\mu=0$ is assumed.
-!l tex \end{enumerate}
-
-!l tex \subsection{plasma region}
-
-!l tex \begin{enumerate}
-!l tex \item If \verb+Lvectorpotential+, then the ``Beltrami'' matrix (see 1.18 of manual.pdf) is constructed from \verb+dMA+ and \verb+dMD+.
-!l tex \item If the user has selected \inputvar{Lposdef=1}, then the user has assumed that the Beltrami matrix is positive-definite, 
-!l tex       and the NAG routine \nag{www.nag.co.uk/numeric/FL/manual19/pdf/F04/f04abf_fl19.pdf}{F04ABF} is used to solve the linear system,
-!l tex       i.e. to solve for the vector-potential in ``packxi'' format.
-!l tex \item If the user has selected \inputvar{Lposdef=0}, then the user has assumed that the Beltrami matrix is {\em not} positive-definite, 
-!l tex       and so the LAPACK routine DSYSVX is used.
-!l tex \item If it is known that the Beltrami matrix is positive definite, then it is usually more computationally efficient to exploit this,
-!l tex       so the {\em fastest} option is to choose \inputvar{Lposdef=1}; 
-!l tex       however, there is no a-priori reason why the Beltrami matrix is positive definite, so the {\em safest} option is to choose \inputvar{Lposdef=0}.
-!l tex \end{enumerate}
-
-!l tex \subsection{vacuum region}
-
-!l tex \begin{enumerate}
-!l tex \item If \verb+Lvectorpotential+, then the ``Beltrami'' matrix is constructed from \verb+dMA+.
-!l tex \item The Beltrami matrix for the vacuum region is identically the Laplacian, and is always positive-definite, 
-!l tex       and the NAG routine \nag{www.nag.co.uk/numeric/FL/manual19/pdf/F04/f04abf_fl19.pdf}{F04ABF}
-!l tex       is always used to solve the linear system, i.e. to solve for the scalar-potential in ``packxi-format''.
-!l tex \item The positive-definitess is guaranteed because the functional $\int B^2 dv$ is guaranteed to have a minimum. [Is this correct?]
-!l tex \end{enumerate}
-
-!l tex \subsection{error messages}
-
-!l tex \begin{enumerate}
-!l tex \item The \nag{www.nag.co.uk/numeric/FL/manual19/pdf/F04/f04abf_fl19.pdf}{F04ABF}
-!l tex       routine may fail if the provided matrix is not positive definite or ill-conditioned, 
-!l tex       and such error messages are given as screen output.
-!l tex \item The LAPACK DSYSVX
-!l tex       routine may fail if the provided matrix is singular or ill-conditioned. 
-!l tex \end{enumerate}
-
-!l tex \subsection{energy and helicity integrals}
-
-!l tex \begin{enumerate}
-!l tex \item It is most convenient to calculate the energy and helicity integrals with the vector potential in the packxi format, 
-!l tex       as these integrals reduce to vector-matrix-vector products.
-!l tex \end{enumerate}
-
-!l tex \subsection{``unpacking''}
-
-!l tex \begin{enumerate}
-!l tex \item The routine \link{packab} is then called to ``unpack'' the linear solution into the more easily identifiable arrays.
-!l tex \end{enumerate}
-
-!l tex \subsection{returned values}
-
-!l tex \begin{enumerate}
-!l tex \item This routine may be called iteratively to find the particular $\boldmu$ that satisfies the required constraints, 
-!l tex       e.g. for \inputvar{Lconstraint=1}, the user wishes to enforce the rotational-transform constraint on the adjacent interfaces, 
-!l tex       which is calculated by calling \link{tr00ab}.
-!l tex \item Because this routine is called by NAG the input/ouput arguments are constrained, and \link{mp00ac} returns either a function,
-!l tex       which is equal to zero when the appropriate constraints are satisfied, or the derivative of the same function 
-!l tex       with respect to $\Delta \psi_p$ and/or $\mu$, as the case may be.
-!l tex \item Note that the derivatives of the function are determined by matrix perturbation methods.
-!l tex       If the derivatives are required, then the derivatives of the Beltrami matrix must be provided in the \verb+dMA+ and \verb+dMD+ arrays.
-!l tex \end{enumerate}
- 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !latex \subsection{construction of ``constraint'' function}
@@ -187,7 +108,7 @@
 !latex \subsection{early termination}
 
 !latex \begin{enumerate}
-!latex \item If $|{\bf f}| < $ \inputvar{mupftol}, then early termination is enforced (i.e. \internal{iflag} is set to negative integer).
+!latex \item If $|{\bf f}| < $ \inputvar{mupftol}, then early termination is enforced (i.e., \internal{iflag} is set to negative integer).
 !latex       (See \link{ma02aa} for details of how \link{mp00ac} is called iteratively.)
 !latex \end{enumerate}
 
@@ -195,9 +116,9 @@
 
 subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fixed by NAG; ma02aa calls mp00ac through C05PCF;
 
-! if iflag.eq.0 : Xdof and Fdof are available for PRINTING ; 28 Jan 13; Fdof MUST NOT BE CHANGED; Ddof MUST NOT BE CHANGED;
-! if iflag.eq.1 :          Fdof is to be          UPDATED  ; 28 Jan 13;                         ; Ddof MUST NOT BE CHANGED;
-! if iflag.eq.2 :          Ddof is to be          UPDATED  ; 28 Jan 13; Fdof MUST NOT BE CHANGED;
+! if iflag.eq.0 : Xdof and Fdof are available for PRINTING ; Fdof MUST NOT BE CHANGED; Ddof MUST NOT BE CHANGED;
+! if iflag.eq.1 :          Fdof is to be          UPDATED  ;                         ; Ddof MUST NOT BE CHANGED;
+! if iflag.eq.2 :          Ddof is to be          UPDATED  ; Fdof MUST NOT BE CHANGED;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -209,7 +130,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   
   use inputlist, only : Wmacros, Wmp00ac, Wtr00ab, Wcurent, Wma02aa, &
                         mu, helicity, iota, oita, curtor, curpol, Lrad, &
-                        Lposdef, &
+                       !Lposdef, &
                         Lconstraint, mupftol
   
   use cputiming, only : Tmp00ac
@@ -218,7 +139,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
                         YESstellsym, NOTstellsym, &
                         Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
                         mn, im, in, mns, &
-                        Nt, Nz, & ! only required to pass through as arguments to tr00ab; 23 Apr 13;
+                        Nt, Nz, & ! only required to pass through as arguments to tr00ab;
                         NAdof, &
                         dMA, dMB, dMC, dMD, dME, dMF, dMG, &
                         solution, &
@@ -237,19 +158,19 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   REAL   , intent(in)  :: Xdof(1:Ndof)
   REAL                 :: Fdof(1:Ndof), Ddof(1:Ldfjac,1:Ndof)
   INTEGER              :: iflag ! indicates whether (i) iflag=1: ``function'' values are required; or (ii) iflag=2: ``derivative'' values are required;
-
-
-  INTEGER, PARAMETER   :: NB = 3  !Optimal workspace block size for LAPACK expert driver routine DSYSVX
-
-  INTEGER              :: lvol, NN, MM, ideriv, lmns, idsysvx(0:1), ii, jj, nnz, LWORK
   
-  REAL                 :: lmu, dpf, dtf, dpsi(1:2), tpsi(1:2), ppsi(1:2), lcpu !, icurrent(0:2), gcurrent(0:2) ! 12 Sep 16;
+  
+  INTEGER, parameter   :: NB = 3 ! optimal workspace block size for LAPACK:DSYSVX;
+  
+  INTEGER              :: lvol, NN, MM, ideriv, lmns, idsysvx(0:1), ii, jj, nnz, Lwork
+  
+  REAL                 :: lmu, dpf, dtf, dpsi(1:2), tpsi(1:2), ppsi(1:2), lcpu
   
   REAL                 :: rcond, ferr(2), berr(2)
 
   CHARACTER            :: packorunpack
   
-  INTEGER, allocatable :: IPIV(:), IWORK(:)
+  INTEGER, allocatable :: ipiv(:), Iwork(:)
 
   REAL   , allocatable :: matrix(:,:), rhs(:,:)
 
@@ -259,15 +180,14 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  lvol = ivol ! recall that ivol is global; 24 Jan 13;
+  lvol = ivol ! recall that ivol is global;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 #ifdef DEBUG
-  FATAL( mp00ac, iflag.ne.1 .and. iflag.ne.2, invalid iflag ) ! see nprint=0 in ma02aa and C05PCF; 12 Sep 16;
+  FATAL( mp00ac, iflag.ne.1 .and. iflag.ne.2, invalid iflag ) ! see nprint=0 in ma02aa and C05PCF; perhaps NAG:C05PCF is no longer used;
 #endif
-  FATAL( mp00ac, Lposdef.ne.0, positive definite matrix not supported )
-
+  
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   if( Lplasmaregion ) then
@@ -278,27 +198,27 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
    else                 ; dpf  = dpflux(lvol)
    endif
    
-  else ! Lvacuumregion; 26 Jan 16;
+  else ! Lvacuumregion;
    
 #ifdef FORCEFREEVACUUM
-   ;                    ; lmu  = mu(lvol)           ! generalize for arbitrary force-free field; 04 May 17;
+   ;                    ; lmu  = mu(lvol)           ! generalize for arbitrary force-free field;
 #else
-   ;                    ; lmu  = zero               ! restrict attention to strict vacuum field; 04 May 17;
+   ;                    ; lmu  = zero               ! restrict attention to strict vacuum field;
 #endif
-
+   
    ;                    ; dtf  = Xdof(1) - xoffset
    if( Ndof.eq.2 ) then ; dpf  = Xdof(2) - xoffset
    else                 ; dpf  = dpflux(lvol)
    endif
-      
-  endif ! end of if( Lplasmaregion ) ; 11 Mar 16;
-
+   
+  endif ! end of if( Lplasmaregion ) ;
+  
   dpsi(1:2) = (/  dtf,  dpf /) ! enclosed toroidal fluxes and their derivatives;
   tpsi(1:2) = (/  one, zero /) ! enclosed toroidal fluxes and their derivatives;
   ppsi(1:2) = (/ zero,  one /) ! enclosed toroidal fluxes and their derivatives;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+  
   diotadxup(0:1,-1:2,lvol) = zero ! rotational-transform, and its derivatives with respect to lmu and dpf, or toroidal current, on the inner/outer interface;
   dItGpdxtp(0:1,-1:2,lvol) = zero ! plasma and linking currents;
   
@@ -309,18 +229,19 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   SALLOCATE( matrix, (1:NN,1:NN), zero )
   SALLOCATE( rhs   , (1:NN,0:2 ), zero )
 
-  solution(1:NN,-1:2) = zero ! this is a global array allocated in dforce; 20 Jun 14;
+  solution(1:NN,-1:2) = zero ! this is a global array allocated in dforce;
   
-  LWORK = NB*NN
-  SALLOCATE( RW,    (1:LWORK ),  zero )
+  Lwork = NB*NN
+
+  SALLOCATE( RW,    (1:Lwork ),  zero )
   SALLOCATE( RD,    (1:NN,0:2),  zero )
   SALLOCATE( LU,    (1:NN,1:NN), zero )
-  SALLOCATE( IPIV,  (1:NN),         0 )
-  SALLOCATE( IWORK, (1:NN),         0 )
+  SALLOCATE( ipiv,  (1:NN),         0 )
+  SALLOCATE( Iwork, (1:NN),         0 )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  idsysvx(0:1) = 0 ! error flags;  4 Feb 13;
+  idsysvx(0:1) = 0 ! error flags;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -334,13 +255,13 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
    
    if( Lcoordinatesingularity ) then
     
-    matrix(1:NN,1:NN) = dMA(1:NN,1:NN) - lmu * dMD(1:NN,1:NN)
+    ;matrix(1:NN,1:NN) = dMA(1:NN,1:NN) - lmu * dMD(1:NN,1:NN)
     
-    select case( ideriv )
-    case( 0 )    ; rhs(1:NN,0) = - matmul(  dMB(1:NN,1:2) - lmu  * dME(1:NN,1:2), dpsi(1:2) )
-    case( 1 )    ; rhs(1:NN,1) = - matmul(                - one  * dME(1:NN,1:2), dpsi(1:2) ) - matmul( - one  * dMD(1:NN,1:NN), solution(1:NN,0) )
-     ;           ; rhs(1:NN,2) = - matmul(  dMB(1:NN,1:2) - lmu  * dME(1:NN,1:2), ppsi(1:2) )
-    end select
+    ;select case( ideriv )
+    ;case( 0 )    ; rhs(1:NN,0) = - matmul(  dMB(1:NN,1:2) - lmu  * dME(1:NN,1:2), dpsi(1:2) )
+    ;case( 1 )    ; rhs(1:NN,1) = - matmul(                - one  * dME(1:NN,1:2), dpsi(1:2) ) - matmul( - one  * dMD(1:NN,1:NN), solution(1:NN,0) )
+    ; ;           ; rhs(1:NN,2) = - matmul(  dMB(1:NN,1:2) - lmu  * dME(1:NN,1:2), ppsi(1:2) )
+    ;end select
     
    else ! .not.Lcoordinatesingularity; 
     
@@ -350,72 +271,71 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
      
      select case( ideriv )
      case( 0 )    ; rhs(1:NN,0) = - matmul( dMB(1:NN,1:2 ), dpsi(1:2) )
-     case( 1 )    ; rhs(1:NN,1) =                                       - matmul( - one * dMD(1:NN,1:NN), solution(1:NN,0) )
+     case( 1 )    ; rhs(1:NN,1) =                                                              - matmul( - one * dMD(1:NN,1:NN), solution(1:NN,0) )
       ;           ; rhs(1:NN,2) = - matmul( dMB(1:NN,1:2 ), ppsi(1:2) )
      end select
      
-    else ! Lvacuumregion ; 08 Feb 16;
+    else ! Lvacuumregion ;
      
 #ifdef FORCEFREEVACUUM
      FATAL( mp00ac, .true., need to revise Beltrami matrices in vacuum region for arbitrary force-free field )
 #else
-     matrix(1:NN,1:NN) = dMA(1:NN,1:NN) ! - lmu * dMD(1:NN,1:NN) ; 04 May 17;
+     matrix(1:NN,1:NN) = dMA(1:NN,1:NN) ! - lmu * dMD(1:NN,1:NN) ;
 
      select case( ideriv )
-     case( 0 )    ; rhs(1:NN,0) = - dMG(1:NN) - matmul( dMB(1:NN,1:2), dpsi(1:2) ) ! perhaps there is an lmu term missing here; 04 May 17;
-     case( 1 )    ; rhs(1:NN,1) =             - matmul( dMB(1:NN,1:2), tpsi(1:2) ) ! perhaps there is an lmu term missing here; 04 May 17;
-      ;           ; rhs(1:NN,2) =             - matmul( dMB(1:NN,1:2), ppsi(1:2) ) ! perhaps there is an lmu term missing here; 04 May 17;
+     case( 0 )    ; rhs(1:NN,0) = - dMG(1:NN) - matmul( dMB(1:NN,1:2), dpsi(1:2) ) ! perhaps there is an lmu term missing here;
+     case( 1 )    ; rhs(1:NN,1) =             - matmul( dMB(1:NN,1:2), tpsi(1:2) ) ! perhaps there is an lmu term missing here;
+      ;           ; rhs(1:NN,2) =             - matmul( dMB(1:NN,1:2), ppsi(1:2) ) ! perhaps there is an lmu term missing here;
      end select
 #endif
 
-    endif ! end of if( Lplasmaregion ) ; 08 Feb 16;
+    endif ! end of if( Lplasmaregion ) ;
 
-   endif ! end of if( Lcoordinatesingularity ) ; 08 Feb 16;
+   endif ! end of if( Lcoordinatesingularity ) ;
    
-
+   
    lcpu = GETTIME
    
-   ! Assume Lposdef=0; matrix is real, symmetric, not positive definite
-
    idsysvx(ideriv) = 1
-
+   
    select case( ideriv )
-     
+    
    case( 0 ) ! ideriv=0;
-
-      MM = 1
-      call DSYSVX('N', 'U', NN, MM, matrix, NN, LU, NN, IPIV, rhs(:,MM-1), NN, solution(1:NN,0:MM-1), NN, &
-           RCOND, FERR, BERR, RW, LWORK, IWORK, idsysvx(ideriv))
-
+    
+    MM = 1
+    
+    call DSYSVX( 'N', 'U', NN, MM, matrix, NN, LU, NN, ipiv, rhs(:,0   ), NN, solution(1:NN,0   ), NN, RCOND, FERR, BERR, RW, Lwork, Iwork, idsysvx(ideriv) )
+    
    case( 1 ) ! ideriv=1;
+    
+    MM = 2
 
-      MM = 2
-      call DSYSVX('F', 'U', NN, MM, matrix, NN, LU, NN, IPIV, rhs(:,1:MM), NN, solution(1:NN,1:MM), NN, &
-           RCOND, FERR, BERR, RW, LWORK, IWORK, idsysvx(ideriv))
+    call DSYSVX( 'F', 'U', NN, MM, matrix, NN, LU, NN, ipiv, rhs(:,1:MM), NN, solution(1:NN,1:MM), NN, RCOND, FERR, BERR, RW, Lwork, Iwork, idsysvx(ideriv) )
 
    end select ! ideriv;
-    
+   
    cput = GETTIME
-
-   if ( idsysvx(ideriv) .eq. 0) then
-      if( Wmp00ac ) write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idsysvx", idsysvx(ideriv), "success ;         ", cput-lcpu	   
-   else if ( idsysvx(ideriv) .lt. 0) then
-      write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idsysvx", idsysvx(ideriv), "input error ;     "
-   else if ( idsysvx(ideriv) .le. NN) then
-      write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idsysvx", idsysvx(ideriv), "singular ;        "
-   else if ( idsysvx(ideriv) .eq. NN+1) then
-      write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idsysvx", idsysvx(ideriv), "ill conditioned ; "
+   
+   if(     idsysvx(ideriv) .eq. 0   ) then
+    if( Wmp00ac ) write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idsysvx", idsysvx(ideriv), "success ;         ", cput-lcpu	   
+   elseif( idsysvx(ideriv) .lt. 0   ) then
+    ;             write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idsysvx", idsysvx(ideriv), "input error ;     "
+   elseif( idsysvx(ideriv) .le. NN  ) then
+    ;             write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idsysvx", idsysvx(ideriv), "singular ;        "
+   elseif( idsysvx(ideriv) .eq. NN+1) then
+    ;             write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idsysvx", idsysvx(ideriv), "ill conditioned ; "
    else
-      write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idsysvx", idsysvx(ideriv), "invalid idsysvx ; "
+    ;             write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idsysvx", idsysvx(ideriv), "invalid idsysvx ; "
    endif
-
+   
 1010 format("mp00ac : ",f10.2," : myid=",i3," ; lvol=",i3," ; ideriv="i2" ; "a7"=",i3," ; "a34,:" time=",f10.2," ;")
    
-  enddo ! end of do ideriv; 25 Jan 13;
+   
+  enddo ! end of do ideriv;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-! can compute the energy and helicity integrals; easiest to do this with solution in packxi format; 20 Feb 13;
+! can compute the energy and helicity integrals; easiest to do this with solution in packed format;
   
    lBBintegral(lvol) = half * sum( solution(1:NN,0) * matmul( dMA(1:NN,1:NN), solution(1:NN,0) ) ) & 
                      +        sum( solution(1:NN,0) * matmul( dMB(1:NN,1: 2),     dpsi(1: 2  ) ) ) &
@@ -434,7 +354,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
    packorunpack = 'U'
    WCALL( mp00ac, packab, ( packorunpack, lvol, NN, solution(1:NN,ideriv), ideriv ) ) ! unpacking; this assigns oAt, oAz through common;
    
-  enddo ! do ideriv = 0, 2; 12 Sep 16;
+  enddo ! do ideriv = 0, 2;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -443,8 +363,8 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   DALLOCATE( RW )
   DALLOCATE( RD )
   DALLOCATE( LU )
-  DALLOCATE( IPIV )
-  DALLOCATE( IWORK )
+  DALLOCATE( ipiv )
+  DALLOCATE( Iwork )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -467,28 +387,28 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  if( YESstellsym ) then ; lmns = 1 + (mns-1)           ! number of independent degrees of freedom in angle transformation; 30 Jan 13; 
-  else                   ; lmns = 1 + (mns-1) + (mns-1) ! only required for dense, Fourier angle transformation; 21 Apr 13;
+  if( YESstellsym ) then ; lmns = 1 + (mns-1)           ! number of independent degrees of freedom in angle transformation;
+  else                   ; lmns = 1 + (mns-1) + (mns-1) ! only required for dense, Fourier angle transformation;
   endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!#ifdef NEWIOTA ! 19 Sep 16;
-!! perhaps a rigid shift in the angle does not change the rotational-transform; 02 Sep 14; ! 19 Sep 16;
-!  if( NOTstellsym ) lmns = 1 + (mns-1) + (mns  ) ! included non-stellarator symmetric angle transformation; 02 Sep 14; ! 19 Sep 16;
-!#else ! 19 Sep 16;
-!  if( NOTstellsym ) lmns = 1 + (mns-1) + (mns-1) ! only required for dense, Fourier angle transformation; 21 Apr 13;
-!#endif ! 19 Sep 16;
+!#ifdef NEWIOTA
+!! perhaps a rigid shift in the angle does not change the rotational-transform;
+!  if( NOTstellsym ) lmns = 1 + (mns-1) + (mns  ) ! included non-stellarator symmetric angle transformation;
+!#else
+!  if( NOTstellsym ) lmns = 1 + (mns-1) + (mns-1) ! only required for dense, Fourier angle transformation;
+!#endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   select case( Lconstraint ) 
    
-  case( -1 ) ! Lconstraint=-1; 30 Jan 13;
+  case( -1 ) ! Lconstraint=-1;
    
    if( Lplasmaregion ) then
     
-    if( Wtr00ab ) then ! compute rotational transform only for diagnostic purposes; 21 Apr 13;
+    if( Wtr00ab ) then ! compute rotational transform only for diagnostic purposes;
      WCALL( mp00ac, tr00ab, ( lvol, mn, lmns, Nt, Nz, iflag, diotadxup(0:1,-1:2,lvol) ) )
     endif
     
@@ -497,26 +417,26 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
     
    else ! Lvacuumregion
     
-    if( Wtr00ab ) then ! compute rotational transform only for diagnostic purposes; 21 Apr 13;
+    if( Wtr00ab ) then ! compute rotational transform only for diagnostic purposes;
      WCALL( mp00ac, tr00ab, ( lvol, mn, lmns, Nt, Nz, iflag, diotadxup(0:1,-1:2,lvol) ) )
     endif
     
-    if( Wcurent ) then ! compute enclosed currents    only for diagnostic purposes; 21 Apr 13;
-     WCALL( mp00ac, curent,( lvol, mn, Nt, Nz, iflag, dItGpdxtp(0:1,-1:2,lvol) ) )     ! 12 Sep 16;
-     curtor = dItGpdxtp(0,0,lvol) ! icurrent(0) ! update input variables; 08 Jun 16;  ! 12 Sep 16;
+    if( Wcurent ) then ! compute enclosed currents    only for diagnostic purposes;
+     WCALL( mp00ac, curent,( lvol, mn, Nt, Nz, iflag, dItGpdxtp(0:1,-1:2,lvol) ) )
+     curtor = dItGpdxtp(0,0,lvol) ! icurrent(0) ! update input variables;
      curpol = dItGpdxtp(1,0,lvol) ! gcurrent(0)
     endif
     
     Fdof(1:Ndof       ) = zero ! provide dummy intent out;Lconstraint=-1 indicates no iterations over dtflux, dpflux are required;
     Ddof(1:Ndof,1:Ndof) = zero ! provide dummy intent out;   
     
-   endif ! end of if( Lplasmaregion) ; 26 Jan 16;
+   endif ! end of if( Lplasmaregion) ;
    
-  case(  0 ) ! Lconstraint= 0; 30 Jan 13;
+  case(  0 ) ! Lconstraint= 0;
    
    if( Lplasmaregion ) then
     
-    if( Wtr00ab ) then ! compute rotational transform only for diagnostic purposes; 21 Apr 13;
+    if( Wtr00ab ) then ! compute rotational transform only for diagnostic purposes;
      WCALL( mp00ac, tr00ab, ( lvol, mn, lmns, Nt, Nz, iflag, diotadxup(0:1,-1:2,lvol) ) )
     endif
     
@@ -525,18 +445,18 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
     
    else ! Lvacuumregion
     
-    WCALL( mp00ac, curent,( lvol, mn, Nt, Nz, iflag, dItGpdxtp(0:1,-1:2,lvol) ) ) ! 12 Sep 16;
+    WCALL( mp00ac, curent,( lvol, mn, Nt, Nz, iflag, dItGpdxtp(0:1,-1:2,lvol) ) )
     
     if( iflag.eq.1 ) Fdof(1:2  ) = (/ dItGpdxtp(0,0,lvol) - curtor, dItGpdxtp(1,0,lvol) - curpol /)
     if( iflag.eq.2 ) Ddof(1:2,1) = (/ dItGpdxtp(0,1,lvol)         , dItGpdxtp(1,1,lvol)          /)
-   !if( iflag.eq.2 ) Ddof(1:2,2) = (/ dItGpdxtp(0,0,lvol)         , dItGpdxtp(1,2,lvol)          /) ! 19 Sep 16;
-    if( iflag.eq.2 ) Ddof(1:2,2) = (/ dItGpdxtp(0,2,lvol)         , dItGpdxtp(1,2,lvol)          /) ! 19 Sep 16;
+   !if( iflag.eq.2 ) Ddof(1:2,2) = (/ dItGpdxtp(0,0,lvol)         , dItGpdxtp(1,2,lvol)          /)
+    if( iflag.eq.2 ) Ddof(1:2,2) = (/ dItGpdxtp(0,2,lvol)         , dItGpdxtp(1,2,lvol)          /)
     
-   endif ! end of if( Lplasmaregion) ; 26 Jan 16;
+   endif ! end of if( Lplasmaregion) ;
    
-  case(  1 ) ! Lconstraint= 1; 30 Jan 13;
+  case(  1 ) ! Lconstraint= 1;
    
-   WCALL( mp00ac, tr00ab,( lvol, mn, lmns, Nt, Nz, iflag, diotadxup(0:1,-1:2,lvol) ) ) ! required for both plasma and vacuum region; 12 Sep 16;
+   WCALL( mp00ac, tr00ab,( lvol, mn, lmns, Nt, Nz, iflag, diotadxup(0:1,-1:2,lvol) ) ) ! required for both plasma and vacuum region;
    
    if( Lplasmaregion ) then
     
@@ -553,7 +473,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
     
    else ! Lvacuumregion
 
-    WCALL( mp00ac, curent, ( lvol, mn,     Nt, Nz, iflag, dItGpdxtp(0:1,-1:2,lvol) ) ) ! 12 Sep 16;
+    WCALL( mp00ac, curent, ( lvol, mn,     Nt, Nz, iflag, dItGpdxtp(0:1,-1:2,lvol) ) )
 
     curtor = dItGpdxtp(0,0,lvol) ! update input variables; 08 Jun 16; 
    !curpol = dItGpdxtp(1,0,lvol)
@@ -562,17 +482,17 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
     if( iflag.eq.2 ) Ddof(1:2,1) = (/ diotadxup(0,1,lvol)               , dItGpdxtp(1,1,lvol)          /)
     if( iflag.eq.2 ) Ddof(1:2,2) = (/ diotadxup(0,2,lvol)               , dItGpdxtp(1,2,lvol)          /)
 
-   endif ! end of if( Lplasmaregion) ; 26 Jan 16;
+   endif ! end of if( Lplasmaregion) ;
 
   case(  2 )
 
    FATAL( mp00ac, .true., where is helicity calculated )
 
-  end select ! end of select case( Lconstraint ) ; 08 Feb 16;
+  end select ! end of select case( Lconstraint ) ;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  if( Wmp00ac .or. Wma02aa ) then ! the following is screen output; 03 Apr 13; ! 04 Dec 14;
+  if( Wmp00ac .or. Wma02aa ) then ! the following is screen output;
    
    cput = GETTIME
    
@@ -597,27 +517,27 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 3001 format("mp00ac : ",f10.2," : myid=",i3," ; lvol=",i3," ; (dt,dp)=("es23.15" ,"es23.15" ) ; iflag="i2" ;":" F="2es13.05" ;")
 3011 format("mp00ac : ",f10.2," : myid=",i3," ; lvol=",i3," ; (dt,dp)=("es23.15" ,"es23.15" ) ; iflag="i2" ;":" D="4es13.05" ;")
   
-  endif ! end of if( Wmp00ac .or. Wma02aa ) ; 21 Apr 13;
+  endif ! end of if( Wmp00ac .or. Wma02aa ) ;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  if( iflag.eq.1 ) then ! only in this case is Fdof defined; 17 Apr 13;
+  if( iflag.eq.1 ) then ! only in this case is Fdof defined;
    
-   if( sum( abs( Fdof(1:Ndof) ) ) / Ndof .lt. mupftol ) then ! satisfactory;  1 Feb 13;
+   if( sum( abs( Fdof(1:Ndof) ) ) / Ndof .lt. mupftol ) then ! satisfactory;
     
     if ( Lplasmaregion ) then ; mu(lvol) = lmu  ;                    ; dpflux(lvol) = dpf
 #ifdef FORCEFREEVACUUM
-    else                      ; mu(lvol) = lmu  ; dtflux(lvol) = dtf ; dpflux(lvol) = dpf ! 04 May 17;
+    else                      ; mu(lvol) = lmu  ; dtflux(lvol) = dtf ; dpflux(lvol) = dpf
 #else
     else                      ; mu(lvol) = zero ; dtflux(lvol) = dtf ; dpflux(lvol) = dpf
 #endif
     endif
     
-    iflag = -2 ! return "acceptance" flag through to ma02aa via ifail;  1 Feb 13; early termination; 
+    iflag = -2 ! return "acceptance" flag through to ma02aa via ifail; early termination;
     
-   endif ! end of if( sum(Fdof) ) ; 17 Apr 13;
+   endif ! end of if( sum(Fdof) ) ;
    
-  endif ! end of if( iflag.eq.1 ) ; 17 Apr 13;
+  endif ! end of if( iflag.eq.1 ) ;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
