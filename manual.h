@@ -11,6 +11,30 @@
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+!latex \subsection{poloidal flux and rotational transform}
+
+!latex Given the canonical integrable form, 
+!latex ${\bf A} = \psi \nabla \t - \chi(\psi) \nabla \z$, 
+!latex we can derive 
+!latex ${\bf B} = \nabla \psi \times \nabla \t +\nabla \zeta \times \nabla \psi \;\chi^\prime$.
+!latex The poloidal flux is given by 
+!latex \begin{eqnarray} \Psi_p = \int \!\! \int {\bf B} \cdot {\bf e}_\zeta \times{\bf e}_\psi \; d\zeta d\psi = 2 \pi \int \chi^\prime d\psi.
+!latex \end{eqnarray}
+!latex The rotational-transform is 
+!latex \begin{eqnarray} \iotabar = \frac{ {\bf B} \cdot \nabla \t}{ {\bf B} \cdot \nabla \zeta} = \chi^\prime.
+!latex \end{eqnarray}
+!latex The rotational-transform is the same sign as the poloidal flux.
+!latex 
+!latex The SPEC representation for the magnetic vector potential is
+!latex \begin{eqnarray} {\bf A} = A_\t \nabla \t + A_\z \nabla \z,
+!latex \end{eqnarray}
+!latex where we can see that $A_\z = - \chi$.
+!latex The poloidal flux is 
+!latex \begin{eqnarray} \int {\bf B}\cdot d{\bf s} = \oint A_\z d\z.
+!latex \end{eqnarray}
+!latex It would seem that the rotational-transform has opposite sign to $A_\z$.
+!latex To be honest, I am a little confused regarding the sign.
+
 !latex \subsection{Outline}
 
 !latex This document is intended to organise the different potentially valuable improvements to the SPEC code, which could make it more robust, faster, and increase its capabilities. 

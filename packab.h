@@ -2,10 +2,9 @@
 
 !title (&ldquo;packing&rdquo;) ! Packs, and unpacks, Beltrami field solution vector; ${\bf a}\equiv\{A_{\theta,e,i,l}, A_{\zeta,e,i,l}, etc.\}$.
 
-!latex \briefly{Packs, and unpacks, Beltrami field solution vector.}
+!latex \briefly{Packs and unpacks Beltrami field solution vector.}
 
 !latex \calledby{\link{dforce}, \link{ma02aa} and \link{mp00ac}}
-!l tex \calls{\link{}}
 
 !latex \tableofcontents
 
@@ -13,7 +12,7 @@
 
 !latex \begin{enumerate}
 !latex \item Numerical routines for solving linear equations typically require the unknown, independent degrees of freedom
-!latex       to be ``packxi'' into a vector, ${\bf x}$.
+!latex       to be ``packed'' into a vector, ${\bf x}$.
 !latex \item The magnetic field is defined by the independent degrees of freedom in
 !latex       the Chebyshev-Fourier representation of the vector potential, $\Ate{i,l}$ and $\Aze{i,l}$;
 !latex       and the non-stellarator-symmetric terms if relevant, $\Ato{i,l}$ and $\Azo{i,l}$;
@@ -58,7 +57,7 @@ subroutine packab( packorunpack, lvol, NN, solution, ideriv )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  llrad = Lrad(lvol) ! shorthand; 17 Dec 15;
+  llrad = Lrad(lvol) ! shorthand;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -82,7 +81,7 @@ subroutine packab( packorunpack, lvol, NN, solution, ideriv )
       enddo ! end of do ll;
      enddo ! end of do ii;
       
-    else ! NOTstellsym; 08 Feb 16;
+    else ! NOTstellsym;
       
      ;  ii = 1
       do ll = 0, llrad ; id = Ate(lvol,0,ii)%i(ll) ; FATAL( packab, id.lt.1 .or. id.gt.NN, unpacking illegal subscript )
@@ -96,7 +95,7 @@ subroutine packab( packorunpack, lvol, NN, solution, ideriv )
       enddo ! end of do ll;
      enddo ! end of do ii;
      
-    endif ! end ofif( YESstellsym ) ; 08 Feb 16;
+    endif ! end ofif( YESstellsym );
      
    endif
 
@@ -112,7 +111,7 @@ subroutine packab( packorunpack, lvol, NN, solution, ideriv )
      enddo ! end of do ll;
     enddo ! end of do ii;
     
-   else ! NOTstellsym; 08 Feb 16;
+   else ! NOTstellsym;
     
     ;  ii = 1
      do ll = 0, llrad ; id = Ate(lvol,0,ii)%i(ll) ; Ate(lvol,ideriv,ii)%s(ll) = solution(id)
@@ -128,7 +127,7 @@ subroutine packab( packorunpack, lvol, NN, solution, ideriv )
      enddo ! end of do ll;
     enddo ! end of do ii;
 
-   endif ! end of if( YESstellsym ) ; 08 Feb 16;
+   endif ! end of if( YESstellsym );
    
   case( 'P' )
    
@@ -141,10 +140,10 @@ subroutine packab( packorunpack, lvol, NN, solution, ideriv )
      if( ii.gt.1 .and. NOTstellsym ) then ; id = Ato(lvol,0,ii)%i(ll) ; solution(id) = Ato(lvol,ideriv,ii)%s(ll)
       ;                                   ; id = Azo(lvol,0,ii)%i(ll) ; solution(id) = Azo(lvol,ideriv,ii)%s(ll)
      endif
-    enddo ! end of do ll; 25 Jan 13;
-   enddo ! end of do ii; 28 Jan 13;
+    enddo ! end of do ll;
+   enddo ! end of do ii;
    
-  end select ! end of select case( packorunpack ) ; 08 Feb 16;
+  end select ! end of select case( packorunpack );
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -159,16 +158,16 @@ subroutine packab( packorunpack, lvol, NN, solution, ideriv )
      write(ounit,1000) myid, lvol, im(ii), in(ii), "Aze", Aze(lvol,0,ii)%s(0:llrad)
      write(ounit,1000) myid, lvol, im(ii), in(ii), "Ato", Ato(lvol,0,ii)%s(0:llrad)
      write(ounit,1000) myid, lvol, im(ii), in(ii), "Azo", Azo(lvol,0,ii)%s(0:llrad)
-    enddo ! end of do ii; 18 May 16;
+    enddo ! end of do ii; 
     
     do ii = 1, mn
      write(ounit,1000) myid, lvol, im(ii), in(ii), "Ste", sum(Ate(lvol,0,ii)%s(0:llrad)*TT(0:llrad,0,0)), sum(Ate(lvol,0,ii)%s(0:llrad)*TT(0:llrad,1,0))
      write(ounit,1000) myid, lvol, im(ii), in(ii), "Sze", sum(Aze(lvol,0,ii)%s(0:llrad)*TT(0:llrad,0,0)), sum(Aze(lvol,0,ii)%s(0:llrad)*TT(0:llrad,1,0))
-    enddo ! end of do ii; 18 May 16;
+    enddo ! end of do ii;
         
-   endif ! end of if( ideriv.eq.0) ; 18 May 16;
+   endif ! end of if( ideriv.eq.0);
 
-  endif ! end of if( Wpackab ) ; 18 May 16;
+  endif ! end of if( Wpackab );
 
 1000 format("packab : " 10x " : myid="i3" ; lvol="i3" ; ("i3" ,"i3" ) : "a3"=["999(es23.15","))
 

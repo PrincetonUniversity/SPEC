@@ -167,7 +167,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   
   REAL                 :: lmu, dpf, dtf, dpsi(1:2), tpsi(1:2), ppsi(1:2), lcpu
   
-  REAL                 :: rcond, ferr(2), berr(2)
+  REAL                 :: rcond, ferr(2), berr(2), signfactor
 
   CHARACTER            :: packorunpack
   
@@ -299,7 +299,6 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
     endif ! end of if( Lplasmaregion ) ;
 
    endif ! end of if( Lcoordinatesingularity ) ;
-   
    
    lcpu = GETTIME
    
