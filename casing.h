@@ -208,7 +208,7 @@ subroutine casing( teta, zeta, gBn, icasing )
   enddo ! end of virtual casing accuracy infinite-do-loop; 10 Apr 13;
 
 #ifdef DEBUG
-  ;             ; if( Wcasing ) write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:4), id01eaf, mincalls, maxcalls
+  ;             ; if( Wcasing ) write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), id01eaf, mincalls, maxcalls
 #endif
   
 1001 format("casing : ",f10.2," : myid=",i3," ; [x,y,z]=["es10.2" ,"es10.2" ,"es10.2" ]; gBn="es12.4" , ",&
