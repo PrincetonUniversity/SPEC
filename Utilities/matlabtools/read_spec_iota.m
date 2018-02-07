@@ -9,7 +9,7 @@ function idata = read_spec_iota(filename)
 % - idata    : contains all the transform data, which can be fed into several routines for analyzing and ploting
 %
 % written by J.Loizu (2017)
-
+% modified by J.Loizu  (02.2018)
 
 global machform;
 
@@ -17,7 +17,7 @@ machform = 's';
 
 data     = read_hdf5(filename);
 
-nvol     = double(data.Nvol);
+nvol     = double(data.Mvol);
 
 
 % Read the transform files

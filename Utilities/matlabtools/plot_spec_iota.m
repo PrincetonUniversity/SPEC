@@ -15,6 +15,7 @@ function out = plot_spec_iota(idata,pdata,fdata,iorq,xaxis,newfig)
 %
 % written by J.Loizu (2015)
 % modified by J.Loizu (06.2017)
+% debugged by J.Loizu (02.2018)
 
 if(newfig==1)
 figure
@@ -45,7 +46,7 @@ switch xaxis
   
  case 'f'
   sval    = idata.sarr(1:end);
-  nvol    = idata.Nvol;
+  nvol    = idata.Mvol;
   nptrj   = zeros(1,nvol);
   count   = 1;
   
@@ -83,7 +84,7 @@ switch xaxis
     for k=kstart:kstart-1+nptrj(lvol)
     psitor(k) = cumflux + get_spec_torflux(fdata,lvol,0,-1,sval(k),ns,nt);
     end
-    cumflux = cumflux + psitor(nptrj(lvol));
+    cumflux = psitor(k);
     kstart  = kstart+nptrj(lvol);
    end
   

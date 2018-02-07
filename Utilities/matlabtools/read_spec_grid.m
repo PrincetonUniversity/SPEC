@@ -19,7 +19,7 @@ machform = 's';
 
 data = read_hdf5(filename);
 
-nvol = double(data.Nvol);
+nvol = double(data.Mvol);
 
 
 % Read the grid files

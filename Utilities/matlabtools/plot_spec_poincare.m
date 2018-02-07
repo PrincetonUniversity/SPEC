@@ -14,7 +14,8 @@ function plot_spec_poincare(data,nz0,nfp,trjstep,newfig)
 %   written by J.Loizu (2015)
 %   upgraded by J.Loizu (02.2017)
 %   upgraded by J.Loizu (05.2017)
-%   upgraded by J.Loizu (07.2017)  % need to add the non-stellarator-symmetric terms everywhere
+%   upgraded by J.Loizu (07.2017)  % 
+%   upgraded by J.Loizu (02.2018)  % still need to add the non-stellarator-symmetric terms everywhere
 
 
 nptraj   = size(data.R_lines,1);  % # of poincare trajectories (field lines)
@@ -40,6 +41,12 @@ zmin   = min(min(min(data.Z_lines)));
 nth    = 5096;  %ploting options for the boundary
 bcol   = 'r';
 bthick = 3;
+if(data.Lfreebound==1)
+bcol   = 'k';
+bthick = 1;
+end
+
+
 
 if(flag2col=='T')
  pcol   = ['k' 'b'];

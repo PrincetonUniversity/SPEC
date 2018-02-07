@@ -12,7 +12,7 @@ function fdata = read_spec_field(filename)
 %
 % written by J.Loizu (2017)
 % modified by J.Loizu (10.2017)
-
+% modified by J.Loizu (02.2018)
 
 global machform;
 
@@ -20,7 +20,7 @@ machform  = 's';
 
 data      = read_hdf5(filename);
 
-nvol      = data.Nvol;
+nvol      = data.Mvol;
 
 mn        = data.mn;
 
