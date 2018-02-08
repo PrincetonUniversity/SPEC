@@ -66,17 +66,17 @@
 !latex       uses an adaptive subdivision strategy and also computes absolute error estimates.
 !latex       The absolute and relative accuracy required are provided by the input \inputvar{vcasingtol}.
 !latex       The minimum number of function evaluations is provided by the input \inputvar{vcasingits}.
-!latex \item It may be convenient to have the derivatives:
-!latex       \be \frac{\partial B^x}{\partial x} & = & \ooint \left[ -3 (j_y r_z - j_z r_y) (X-x) / r^5 \;\;\;\;\;\;\;\;\;\;\;\;     \right], \\
-!latex           \frac{\partial B^x}{\partial y} & = & \ooint \left[ -3 (j_y r_z - j_z r_y) (Y-y) / r^5 - j_z/r^3                    \right], \\
-!latex           \frac{\partial B^x}{\partial z} & = & \ooint \left[ -3 (j_y r_z - j_z r_y) (Z-z) / r^5 + j_y/r^3                    \right], \\
-!latex           \frac{\partial B^y}{\partial x} & = & \ooint \left[ -3 (j_z r_x - j_x r_z) (X-x) / r^5 + j_z/r^3                    \right], \\
-!latex           \frac{\partial B^y}{\partial y} & = & \ooint \left[ -3 (j_z r_x - j_x r_z) (Y-y) / r^5 \;\;\;\;\;\;\;\;\;\;\;\;\;   \right], \\
-!latex           \frac{\partial B^y}{\partial z} & = & \ooint \left[ -3 (j_z r_x - j_x r_z) (Z-z) / r^5 - j_x/r^3                    \right], \\
-!latex           \frac{\partial B^z}{\partial x} & = & \ooint \left[ -3 (j_x r_y - j_y r_x) (X-x) / r^5 - j_y/r^3                    \right], \\
-!latex           \frac{\partial B^z}{\partial y} & = & \ooint \left[ -3 (j_x r_y - j_y r_x) (Y-y) / r^5 + j_x/r^3                    \right], \\
-!latex           \frac{\partial B^z}{\partial z} & = & \ooint \left[ -3 (j_x r_y - j_y r_x) (Z-z) / r^5 \;\;\;\;\;\;\;\;\;\;\;\;\;   \right].
-!latex       \ee
+!l tex \item It may be convenient to have the derivatives:
+!l tex       \be \frac{\partial B^x}{\partial x} & = & \ooint \left[ -3 (j_y r_z - j_z r_y) (X-x) / r^5 \;\;\;\;\;\;\;\;\;\;\;\;     \right], \\
+!l tex           \frac{\partial B^x}{\partial y} & = & \ooint \left[ -3 (j_y r_z - j_z r_y) (Y-y) / r^5 - j_z/r^3                    \right], \\
+!l tex           \frac{\partial B^x}{\partial z} & = & \ooint \left[ -3 (j_y r_z - j_z r_y) (Z-z) / r^5 + j_y/r^3                    \right], \\
+!l tex           \frac{\partial B^y}{\partial x} & = & \ooint \left[ -3 (j_z r_x - j_x r_z) (X-x) / r^5 + j_z/r^3                    \right], \\
+!l tex           \frac{\partial B^y}{\partial y} & = & \ooint \left[ -3 (j_z r_x - j_x r_z) (Y-y) / r^5 \;\;\;\;\;\;\;\;\;\;\;\;\;   \right], \\
+!l tex           \frac{\partial B^y}{\partial z} & = & \ooint \left[ -3 (j_z r_x - j_x r_z) (Z-z) / r^5 - j_x/r^3                    \right], \\
+!l tex           \frac{\partial B^z}{\partial x} & = & \ooint \left[ -3 (j_x r_y - j_y r_x) (X-x) / r^5 - j_y/r^3                    \right], \\
+!l tex           \frac{\partial B^z}{\partial y} & = & \ooint \left[ -3 (j_x r_y - j_y r_x) (Y-y) / r^5 + j_x/r^3                    \right], \\
+!l tex           \frac{\partial B^z}{\partial z} & = & \ooint \left[ -3 (j_x r_y - j_y r_x) (Z-z) / r^5 \;\;\;\;\;\;\;\;\;\;\;\;\;   \right].
+!l tex       \ee
 !latex \end{enumerate}
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -161,7 +161,8 @@ subroutine casing( teta, zeta, gBn, icasing )
 !                   relreq_nag,lenwrk_nag,wrkstr_nag,finest_nag,absest_nag,istat)
 !    CALL dcuhre(ndim_nag,nfun_nag,a_nag,b_nag,mincls_nag,maxcls_nag,funsub_nag_b,absreq_nag,&
 !                     relreq_nag,0,wrklen,restar,finest_nag,absest_nag,funcls,istat,vrtwrk)
-    call DCUHRE( ldim, lfun, low(1:Ndim), upp(1:Ndim), mincalls, maxcalls, dvcfield, labs, lrel, 0, Lrwk, restar, integrals(1:Nfun), absest(1:Nfun), funcls, id01eaf, rwk)
+    call DCUHRE( ldim, lfun, low(1:Ndim), upp(1:Ndim), mincalls, maxcalls, dvcfield, labs, lrel, 0, &
+                 Lrwk, restar, integrals(1:Nfun), absest(1:Nfun), funcls, id01eaf, rwk)
    
    gBn = integrals(1)
   !dBxyzdxyz(1,1:3) = integrals( 4: 6)
@@ -169,38 +170,38 @@ subroutine casing( teta, zeta, gBn, icasing )
   !dBxyzdxyz(3,1:3) = integrals(10:12)
    
    cput = GETTIME
-   select case( id01eaf ) !                                                                                                       012345678901234567890
-   case(0)      ;!if( Wcasing ) write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), Bxyz(0:3), absest(1:Nfun), id01eaf, mincalls, maxcalls
-    ;           ;               exit
-   case(1)      ;!if( Wcasing ) write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), Bxyz(0:3), absest(1:Nfun), id01eaf, mincalls, maxcalls, "maxcalls too small ;"
-    ;           ;              !exit
-   case(2)      ;!              write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), Bxyz(0:3), absest(1:Nfun), id01eaf, mincalls, maxcalls, "Key incorrect ;"
-    ;           ;               exit
-   case(3)      ;!if( Wcasing ) write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), Bxyz(0:3), absest(1:Nfun), id01eaf, mincalls, maxcalls, "ndim < 2 or ndim > 15 ;"
-    ;           ;              exit
-   case(4)      ;               write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn      , absest(1:Nfun), id01eaf, mincalls, maxcalls, "KEY = 1 and NDIM not equal to 2"
-    ;           ;               exit
-   case(5)      ;               write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn      , absest(1:Nfun), id01eaf, mincalls, maxcalls, "KEY = 2 and NDIM not equal to 3"
-    ;           ;               exit
-   case(6)      ;               write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn      , absest(1:Nfun), id01eaf, mincalls, maxcalls, "NUMFUN is less than 1."
-    ;           ;               exit
-   case(7)      ;               write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn      , absest(1:Nfun), id01eaf, mincalls, maxcalls, "volume of region of integration is zero"
-    ;           ;               exit
-   case(8)      ;               write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn      , absest(1:Nfun), id01eaf, mincalls, maxcalls, "MAXPTS is less than 3*NUM"
-    ;           ;               exit
-   case(9)      ;               write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn      , absest(1:Nfun), id01eaf, mincalls, maxcalls, "MAXPTS is less than MINPTS"
-    ;           ;               exit
-   case(10)      ;               write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn      , absest(1:Nfun), id01eaf, mincalls, maxcalls, "EPSABS < 0 and EPSREL < 0"
-    ;           ;               exit
-   case(11)      ;               write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn      , absest(1:Nfun), id01eaf, mincalls, maxcalls, "NW is too small"
-    ;           ;               exit
-   case(12)      ;               write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn      , absest(1:Nfun), id01eaf, mincalls, maxcalls, "unlegal RESTAR"
-    ;           ;               exit
-   case default ;               write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn      , absest(1:Nfun), id01eaf, mincalls, maxcalls, "DCUHRE Says: What you tryin' to do?  Kill me? "
-    ;           ;               exit
+   select case( id01eaf ) !                                                                                          "1234567890123456789012345678901"
+   case(0)      ;
+    ;           ; exit
+   case(1)      ;
+    ;           ; exit ! ?
+   case(2)      ;
+    ;           ; exit
+   case(3)      ;
+    ;           ; exit
+   case(4)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), id01eaf, mincalls, maxcalls, "KEY = 1 and NDIM not equal to 2"
+    ;           ; exit
+   case(5)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), id01eaf, mincalls, maxcalls, "KEY = 2 and NDIM not equal to 3"
+    ;           ; exit
+   case(6)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), id01eaf, mincalls, maxcalls, "NUMFUN is less than 1.         "
+    ;           ; exit
+   case(7)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), id01eaf, mincalls, maxcalls, "volume is zero                 "
+    ;           ; exit
+   case(8)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), id01eaf, mincalls, maxcalls, "MAXPTS is less than 3*NUM      "
+    ;           ; exit
+   case(9)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), id01eaf, mincalls, maxcalls, "MAXPTS is less than MINPTS     "
+    ;           ; exit
+   case(10)     ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), id01eaf, mincalls, maxcalls, "EPSABS < 0 and EPSREL < 0      "
+    ;           ; exit
+   case(11)     ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), id01eaf, mincalls, maxcalls, "NW is too small                "
+    ;           ; exit
+   case(12)     ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), id01eaf, mincalls, maxcalls, "unlegal RESTAR                 "
+    ;           ; exit
+   case default ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), id01eaf, mincalls, maxcalls, "tryin' to kill me?             "
+    ;           ; exit
    end select
    
-!   maxcalls = 2 * maxcalls ; mincalls = -1
+!  maxcalls = 2 * maxcalls ; mincalls = -1
    maxcalls = 2 * maxcalls ; mincalls = funcls
             restar = 1
             id01eaf = 0
@@ -212,7 +213,7 @@ subroutine casing( teta, zeta, gBn, icasing )
 #endif
   
 1001 format("casing : ",f10.2," : myid=",i3," ; [x,y,z]=["es10.2" ,"es10.2" ,"es10.2" ]; gBn="es12.4" , ",&
-            "err="es8.0" ; ifail="i2" ; min/max calls="2i12" ; "a20)
+            "err="es8.0" ; ifail="i2" ; min/max calls="2i12" ; "a31)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -232,6 +233,30 @@ end subroutine casing
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+!latex \subsection{calculation of integrand}
+
+!latex \begin{enumerate}
+!latex \item An adaptive integration is used to compute the integrals.
+!latex       Consequently, the magnetic field tangential to the plasma boundary is required at an arbitrary point.
+!latex       This is computed, as always, from ${\bf B} = \nabla \times {\bf A}$, and this provides ${\bf B} = B^\t {\bf e}_\t + B^\z {\bf e}_\z$.
+!latex       (Recall that $B^s=0$ by construction on the plasma boundary.)
+!latex       (It would be MUCH faster to only require the tangential field on a regular grid!!!)
+!latex \item Then, the metric elements $g_{\t\t}$, $g_{\t\z}$ and $g_{\z\z}$ are computed.
+!latex       These are used to ``lower'' the components of the magnetic field, ${\bf B} = B_\t \nabla \t + B_\z \nabla \z$.
+!latex       (Please check why $B_s$ is not computed. Is it because $B_s \nabla s \times {\bf n} = 0$ ?)
+!latex \item The distance between the ``evaluate'' point, $(X,Y,Z)$, and the given point on the surface, $(x,y,z)$ is computed.
+!latex \item If the computational boundary becomes too close to the plasma boundary, the distance is small and this causes problems for the numerics.
+!latex       I have tried to regularize this problem by introducing $\epsilon \equiv $\inputvar{vcasingeps}.
+!latex       Let the ``distance'' be
+!latex       \be D \equiv \sqrt{(X-x)^2 + (Y-y)^2 + (Z-Z)^2} + \epsilon^2.
+!latex       \ee
+!latex \item On taking the limit that $\epsilon \rightarrow 0$, the virtual casing integrand is 
+!latex        \be \verb+vcintegrand+ \equiv ( B_x n_x + B_y n_y + B_z n_z ) ( 1 + 3 \epsilon^2 / D^2 ) / D^3,
+!latex        \ee
+!latex       where the normal vector is ${\bf n} \equiv n_x {\bf i} + n_y {\bf j} + n_z {\bf k}$.
+!latex       The normal vector, \internal{Nxyz}, to the computational boundary (which does not change) is computed in \link{preset}.
+!latex       This needs to be revised.
+!latex \end{enumerate}
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

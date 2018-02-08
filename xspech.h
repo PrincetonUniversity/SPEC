@@ -352,18 +352,46 @@ program xspech
 !latex \subsection{free-boundary: re-computing normal field} 
 
 !latex \begin{enumerate}
-!latex \item If \inputvar{Lfindzero.gt.0} and \inputvar{Lfreebound.eq.1} and \inputvar{mfreeits.ne.0},
+!latex \item If \inputvar{Lfreebound.eq.1} and \inputvar{Lfindzero.gt.0} and\inputvar{mfreeits.ne.0},
 !latex       then the magnetic field at the computational boundary produced by the plasma currents is computed using \link{bnorml}.
 !latex \item The ``new'' magnetic field at the computational boundary produced by the plasma currents is updated using a Picard scheme:
-!latex       \be ({\bf B}\cdot{\bf n})_{m,n}^{i+1} = \lambda ({\bf B}\cdot{\bf n})_{m,n}^{i} + (1-\lambda) ({\bf B}\cdot{\bf n})_{m,n},
+!latex       \be \verb+Bns+_i^{j} = \lambda \, \verb+Bns+_i^{j-1} + (1-\lambda) \verb+Bns+_i, \label{eq:blending}
 !latex       \ee
-!latex       where $i$ labels free-boundary iterations, and $\lambda\equiv $ \inputvar{gBnbld}.  
+!latex       where $j$ labels free-boundary iterations, the ``blending parameter'' is $\lambda\equiv $ \inputvar{gBnbld}, 
+!latex       and \verb+Bns+$_i$ is computed by virtual casing.
+!latex       The subscript ``$i$'' labels Fourier harmonics. 
 !latex \item If the new (unblended) normal field is {\em not} sufficiently close to the old normal field, as quantified by \inputvar{gBntol}, 
 !latex       then the free-boundary iterations continue.
+!latex       This is quantified by
+!latex       \be \sum_i | \verb+Bns+_i^{j-1} - \verb+Bns+_i | / N, \label{eq:gBntol}
+!latex       \ee
+!latex       where $N$ is the total number of Fourier harmonics.
+!latex \item There are several choices that are available:
+!latex       \begin{enumerate}
+!latex       \item if \inputvar{mfreeits} $= -2$ : the vacuum magnetic field 
+!latex             (really, the normal component of the field produced by the external currents at the computational boundary)
+!latex             required to hold the given equlibrium is written to file.
+!latex             This information is required as input by 
+!latex             \paper{FOCUS}{Caoxiang Zhu, Stuart Hudson et al.}{10.1088/1741-4326/aa8e0a}{Nucl. Fusion}{58}{016008}{2017}
+!latex             for example. (This option probably needs to revised.)
+!latex       \item if \inputvar{mfreeits} $= -1$ : after the plasma field is computed by virtual casing, 
+!latex             the vacuum magnetic field is set to exactly balance the plasma field 
+!latex             (again, we are really talking about the normal component at the computational boundary.)
+!latex             This will ensure that the computational boundary itself if a flux surface of the total magnetic field.
+!latex       \item if \inputvar{mfreeits} $= 0$ : the plasma field at the computational boundary is not updated; no ``free-boundary'' iterations take place.
+!latex       \item if \inputvar{mfreeits} $> 0$ : the plasma field at the computational boundary is updated according to the above blending \Eqn{blending},
+!latex             and the free-boundary iterations will continue until either the tolerance condition is met (see \inputvar{gBntol} and \Eqn{gBntol})
+!latex             or the maximum number of free-boundary iterations, namely \inputvar{mfreeits}, is reached.
+!latex             For this case, \inputvar{Lzerovac} is relevant: 
+!latex             if \inputvar{Lzerovac} $= 1$, then the vacuum field is set equal to the normal field at every iteration, 
+!latex             which results in the computational boundary being a flux surface. 
+!latex             (I am not sure if this is identical to setting \inputvar{mfreeits}$= -1$; the logic etc. needs to be revised.)
+!latex       \end{enumerate}
 !latex \end{enumerate}
 
-  LContinueFreeboundaryIterations = .false. ; LupdateBn = .false. ! defaults; 09 Mar 17;
-  
+  LContinueFreeboundaryIterations = .false.
+
+  ;                                                              LupdateBn = .false. ! default;
   if( Lfreebound.eq.1 .and. Lfindzero.gt.0 ) then
    if( mfreeits.gt.0 .and. nfreeboundaryiterations.lt.mfreeits ) LupdateBn = .true.
    if( mfreeits.lt.0                                           ) LupdateBn = .true.

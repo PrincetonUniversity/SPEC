@@ -701,7 +701,7 @@ module inputlist
  gBntol      ,& !latex \item \inputvar{gBntol = 1.0e-06} : real : required tolerance in free-boundary iterations;
                 !latex \bi
                 !latex \item[i.] only used if \inputvar{Lfreebound = 1}; 
-                !latex \item[ii.] only used in \link{xspech};
+                !latex \item[ii.] only used in \link{xspech}; see \link{xspech} for more documentation;
                 !latex \ei
  gBnbld      ,& !latex \item \inputvar{gBnbld = 0.666} : real : normal blend;
                 !latex \bi
