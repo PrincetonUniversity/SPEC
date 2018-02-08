@@ -200,8 +200,6 @@ subroutine casing( teta, zeta, gBn, icasing )
 
   enddo ! end of virtual casing accuracy infinite-do-loop; 10 Apr 13;
 
-  pause
-
 #ifdef DEBUG
   ;             ; if( Wcasing ) write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts
 #endif
