@@ -62,6 +62,10 @@
 !latex           B^y &=&  \ooint (j_z r_x - j_x r_z)/r^3,\\
 !latex           B^z &=&  \ooint (j_x r_y - j_y r_x)/r^3
 !latex       \ee
+!latex \item When all is said and done, this routine calculates
+!latex       \be \int_0^{2\pi} \int_0^{2\pi} \verb+vcintegrand+ \;\; d\t d\z
+!latex       \ee
+!latex       for a given $(X,Y,Z)$, where \verb+vcintegrand+ is given in \Eqn{integrand}.
 !latex \item The surface integral is performed using \nag{www.nag.co.uk/numeric/FL/manual19/pdf/D01/d01eaf_fl19.pdf}{D01EAF}, which 
 !latex       uses an adaptive subdivision strategy and also computes absolute error estimates.
 !latex       The absolute and relative accuracy required are provided by the input \inputvar{vcasingtol}.
@@ -107,7 +111,7 @@ subroutine casing( teta, zeta, gBn, icasing )
   
   INTEGER, parameter :: Ndim = 2, Nfun = 1
 
-  INTEGER            :: ldim, lfun, mincalls, maxcalls, Lrwk, rr, id01eaf, jk, restar, funcls
+  INTEGER            :: ldim, lfun, minpts, maxpts, Lrwk, idcuhre, jk, irestart, funcls, key, num, maxsub
   REAL               :: integrals(1:Nfun), low(1:Ndim), upp(1:Ndim), labs, lrel, absest(1:Nfun)
   REAL, allocatable  :: rwk(:)
   
@@ -118,11 +122,11 @@ subroutine casing( teta, zeta, gBn, icasing )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  jk = globaljk ! lxyz(1:3) = Dxyz(1:3,jk) ! this is a "global" variable which must be passed through to subroutine dvcfield; 03 Apr 13;
+  jk = globaljk ! shorthand; globaljk is a "global" variable which must be passed through to subroutine dvcfield;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  gBn = zero ! dBxyzdxyz(1:3,1:3) = zero ! initialize intent(out);
+  gBn = zero ! initialize intent(out);
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -131,93 +135,83 @@ subroutine casing( teta, zeta, gBn, icasing )
   low(1) = teta - vcasingper * pi ; upp(1) = teta + vcasingper * pi
   low(2) = zeta - vcasingper * pi ; upp(2) = zeta + vcasingper * pi
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-  mincalls = vcasingits ! minimum number of function evaluations; provided on input;
+  key = 0
 
-  rr = 2**Ndim + 2 * Ndim**2 + 2 * Ndim + 1
-  maxcalls = max( mincalls, rr )
+  minpts = vcasingits ! minimum number of function evaluations; provided on input;
+
+  num = 65 ! see documentation for dcuhre;
+
+  maxpts = max( minpts, 3 * num )
   
   lfun = Nfun ! number of functions to be integrated; require three components of magnetic field, Bx, By and Bz; and their derivatives wrt x,y,z;
   
   labs = vcasingtol ; lrel = vcasingtol ! absolute and relative accuracy requested; vcasingtol is an input parameter;
   
-!  Lrwk = 2 * ( 6 * Ndim + 9 * Nfun + ( Ndim + Nfun + 2 ) * ( 1 + maxcalls / rr ) )
-!  
-!  Lrwk = max( Lrwk, 8 * Ndim + 11 * Nfun + 3 )
+  maxsub = ( maxpts - num ) / ( 2 * num ) + 1
 
-  Lrwk = ((maxcalls-ldim)/(2*ldim) + 1)*(2*ldim+2*lfun+2) + 17*lfun + 256
-  
+  Lrwk = maxsub * ( 2 * Ndim + 2 * Nfun + 2 ) + 17 * Nfun + 1
+
   SALLOCATE( rwk, (1:Lrwk), zero )
   
-  restar = 0; funcls = 0
+  irestart = 0 ; funcls = 0
+
   do ! will continually call until satisfactory accuracy has been achieved;
    
-   id01eaf = 1
-!               int , real       , real       , integer , integer , int , subrout , real, real, int , real       , real             , real          , int
-!   Replacing D01EAF with DCUHRE
-!   call D01EAF( ldim, low(1:Ndim), upp(1:Ndim), mincalls, maxcalls, lfun, dvcfield, labs, lrel, Lrwk, rwk(1:Lrwk), integrals(1:Nfun), absest(1:Nfun), id01eaf )
-!    CALL D01EAF(ndim_nag,a_nag,b_nag,mincls_nag,maxcls_nag,nfun_nag,funsub_nag_b,absreq_nag,&
-!                   relreq_nag,lenwrk_nag,wrkstr_nag,finest_nag,absest_nag,istat)
-!    CALL dcuhre(ndim_nag,nfun_nag,a_nag,b_nag,mincls_nag,maxcls_nag,funsub_nag_b,absreq_nag,&
-!                     relreq_nag,0,wrklen,restar,finest_nag,absest_nag,funcls,istat,vrtwrk)
-    call DCUHRE( ldim, lfun, low(1:Ndim), upp(1:Ndim), mincalls, maxcalls, dvcfield, labs, lrel, 0, &
-                 Lrwk, restar, integrals(1:Nfun), absest(1:Nfun), funcls, id01eaf, rwk)
+   idcuhre = 1
+   
+   call DCUHRE( ldim, lfun, low(1:Ndim), upp(1:Ndim), minpts, maxpts, dvcfield, labs, lrel, key, &
+                Lrwk, irestart, integrals(1:lfun), absest(1:lfun), funcls, idcuhre, rwk(1:Lrwk) )
    
    gBn = integrals(1)
-  !dBxyzdxyz(1,1:3) = integrals( 4: 6)
-  !dBxyzdxyz(2,1:3) = integrals( 7: 9)
-  !dBxyzdxyz(3,1:3) = integrals(10:12)
    
    cput = GETTIME
-   select case( id01eaf ) !                                                                                          "1234567890123456789012345678901"
+   select case( idcuhre ) !                                                                                          "123456789012345678901234"
    case(0)      ;
     ;           ; exit
-   case(1)      ;
-    ;           ; exit ! ?
-   case(2)      ;
+   case(1)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "maxpts too smal;        "
+    ;           ;!exit
+   case(2)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "illegal key;            "
     ;           ; exit
-   case(3)      ;
+   case(3)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "illegal Ndim;           "
     ;           ; exit
-   case(4)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), id01eaf, mincalls, maxcalls, "KEY = 1 and NDIM not equal to 2"
+   case(4)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "key.eq.1 & Ndim.ne.2;   "
     ;           ; exit
-   case(5)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), id01eaf, mincalls, maxcalls, "KEY = 2 and NDIM not equal to 3"
+   case(5)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "key.eq.2 & Ndim.ne.3;   "
     ;           ; exit
-   case(6)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), id01eaf, mincalls, maxcalls, "NUMFUN is less than 1.         "
+   case(6)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "numfun < 1;             "
     ;           ; exit
-   case(7)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), id01eaf, mincalls, maxcalls, "volume is zero                 "
+   case(7)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "volume is zero;         "
     ;           ; exit
-   case(8)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), id01eaf, mincalls, maxcalls, "MAXPTS is less than 3*NUM      "
+   case(8)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "maxpts < 3*NUM;         "
     ;           ; exit
-   case(9)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), id01eaf, mincalls, maxcalls, "MAXPTS is less than MINPTS     "
+   case(9)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "maxpts < minpts;        "
     ;           ; exit
-   case(10)     ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), id01eaf, mincalls, maxcalls, "EPSABS < 0 and EPSREL < 0      "
+   case(10)     ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "epsabs < 0 & epsrel < 0;"
     ;           ; exit
-   case(11)     ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), id01eaf, mincalls, maxcalls, "NW is too small                "
+   case(11)     ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "NW is too small;        "
     ;           ; exit
-   case(12)     ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), id01eaf, mincalls, maxcalls, "unlegal RESTAR                 "
+   case(12)     ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "illegal irestart;       "
     ;           ; exit
-   case default ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), id01eaf, mincalls, maxcalls, "tryin' to kill me?             "
+   case default ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "tryin' to kill me?      "
     ;           ; exit
    end select
    
-!  maxcalls = 2 * maxcalls ; mincalls = -1
-   maxcalls = 2 * maxcalls ; mincalls = funcls
-            restar = 1
-            id01eaf = 0
-   
+   maxpts = 2 * maxpts ; minpts = funcls ; irestart = 1
+
   enddo ! end of virtual casing accuracy infinite-do-loop; 10 Apr 13;
 
+  pause
+
 #ifdef DEBUG
-  ;             ; if( Wcasing ) write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), id01eaf, mincalls, maxcalls
+  ;             ; if( Wcasing ) write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts
 #endif
   
 1001 format("casing : ",f10.2," : myid=",i3," ; [x,y,z]=["es10.2" ,"es10.2" ,"es10.2" ]; gBn="es12.4" , ",&
-            "err="es8.0" ; ifail="i2" ; min/max calls="2i12" ; "a31)
+            "err="es8.0" ; ifail="i3" ; min/max calls="2i12" ; "a24)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  icasing = id01eaf ! this is an error flag returned by casing;
+  icasing = idcuhre ! this is an error flag returned by casing;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -251,7 +245,7 @@ end subroutine casing
 !latex       \be D \equiv \sqrt{(X-x)^2 + (Y-y)^2 + (Z-Z)^2} + \epsilon^2.
 !latex       \ee
 !latex \item On taking the limit that $\epsilon \rightarrow 0$, the virtual casing integrand is 
-!latex        \be \verb+vcintegrand+ \equiv ( B_x n_x + B_y n_y + B_z n_z ) ( 1 + 3 \epsilon^2 / D^2 ) / D^3,
+!latex        \be \verb+vcintegrand+ \equiv ( B_x n_x + B_y n_y + B_z n_z ) ( 1 + 3 \epsilon^2 / D^2 ) / D^3, \label{eq:integrand}
 !latex        \ee
 !latex       where the normal vector is ${\bf n} \equiv n_x {\bf i} + n_y {\bf j} + n_z {\bf k}$.
 !latex       The normal vector, \internal{Nxyz}, to the computational boundary (which does not change) is computed in \link{preset}.
