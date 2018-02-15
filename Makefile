@@ -26,7 +26,8 @@
  
  MACROS=macros
  
- CC=intel # if want to use gfortran; make CC=gfortran xfocus; otherwise using Intel
+ CC=intel
+ # if want to use gfortran; make CC=gfortran xfocus; otherwise using Intel
  FC=mpif90
  
  # Intel Defaults
@@ -53,6 +54,26 @@ ifeq ($(CC),gfortran)
  RFLAGS=-O2 -ffixed-line-length-none -ffree-line-length-none -fexternal-blas
  DFLAGS=-g -fbacktrace -fbounds-check -ffree-line-length-none -fexternal-blas -DDEBUG
 endif
+
+ifeq ($(CC),gfortran_ubuntu)
+ # You should install the following packages
+ # sudo apt install gfortran
+ # sudo apt install libopenmpi-dev
+ # sudo apt install liblapack-dev
+ # sudo apt install m4
+ # sudo apt install libnetcdf-dev
+ # sudo apt install libfftw3-dev
+ # sudo apt install libhdf5-openmpi-dev
+ CFLAGS=-fdefault-real-8
+ NAG=-llapack -lblas
+ NETCDF=-lnetcdf
+ HDF5compile=-I/usr/include/hdf5/openmpi
+ HDF5link=-L/usr/lib/x86_64-linux-gnu/hdf5/openmpi -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lpthread -lz -lm
+ FFTWcompile=-I/usr/include
+ FFTWlink=-lfftw3
+ RFLAGS=-O2 -ffixed-line-length-none -ffree-line-length-none -fexternal-blas
+ DFLAGS=-g -fbacktrace -fbounds-check -ffree-line-length-none -fexternal-blas -DDEBUG
+endif 
 
 ifeq ($(CC),lff95)
  # LF95 SAL
