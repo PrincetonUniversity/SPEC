@@ -107,6 +107,26 @@ ifeq ($(CC),gfortran_ipp)
  FFTWlink=-L$(FFTW_DIR)/lib -lfftw3
 endif
 
+ifeq ($(CC),intel_raijin)
+ # One needs to load the following modules
+ # module load intel-fc/2018.1.163
+ # module load intel-cc/2018.1.163
+ # module load intel-mkl/2018.1.163
+ # module load openmpi
+ # module load fftw3-mkl/2018.1.163
+ # module load netcdf
+ # module load hdf5
+ CFLAGS=-r8
+ NAG=-L${MKLROOT}/lib/intel64 -mkl 
+ NETCDF=-lnetcdf
+ HDF5compile=-I$(HDF5_BASE)/include
+ HDF5link=-L$(HDF5_BASE)/lib -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lpthread -lz -lm
+ FFTWcompile=
+ FFTWlink=
+ RFLAGS=-mcmodel=large -O3 -m64 -unroll0 -fno-alias -ip -traceback -fPIC
+ DFLAGS=-check bounds -check format -check output_conversion -check pointers -check uninit -debug full -D DEBUG
+endif
+
 ###############################################################################################################################################################
 
  WEBDIR=$(HOME)/w3_html
