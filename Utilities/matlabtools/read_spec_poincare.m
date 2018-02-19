@@ -67,11 +67,16 @@ for i=1:nvol
                 end
             end
             fclose(fid);
+            fid = -1;
 	    success=1;
         else
 	 disp(' - File does not exist'); break;
 	end
     catch
+        if (fid ~= -1)
+            fclose(fid);
+            fid = -1;
+        end
         if(triedallform==1)      
          disp(' - Could not read poincare file'); break;
 	end
