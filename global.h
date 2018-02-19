@@ -84,6 +84,7 @@ module fileunits
   INTEGER :: dunit = 12 ! derivative matrix; used in newton:.ext.GF; 
   INTEGER :: gunit = 13 !                         
   INTEGER :: hunit = 14 ! eigenvalues of Hessian; under re-construction; 
+  INTEGER :: munit = 14 ! matrix elements of Hessian; 
   INTEGER :: iunit = 10 ! input; used in global/readin:ext.sp, global/wrtend:ext.sp.end, global/wrtend:.ext.grid; 
   INTEGER :: lunit = 20 ! local unit; used in lunit+myid: pp00aa:.ext.poincare,.ext.transform; 
   INTEGER :: ounit =  0 ! screen output;
@@ -262,6 +263,7 @@ module inputlist
   INTEGER      :: nPtrj(1:MNvol+1) =    -1
   LOGICAL      :: LHevalues        =  .false.
   LOGICAL      :: LHevectors       =  .false.
+  LOGICAL      :: LHmatrix         =  .false.
   INTEGER      :: Lperturbed       =     0   
   INTEGER      :: dpp              =    -1
   INTEGER      :: dqq              =    -1
@@ -759,6 +761,7 @@ module inputlist
                 !latex \ei
  LHevalues  ,&  !latex \item \inputvar{LHevalues = F} : logical : to compute eigenvalues of $\nabla {\bf F}$;
  LHevectors ,&  !latex \item \inputvar{LHevectors = F} : logical : to compute eigenvectors (and also eigenvalues) of $\nabla {\bf F}$;
+ LHmatrix   ,&  !latex \item \inputvar{LHmatrix = F} : logical : to compute and write to file the elements of $\nabla {\bf F}$;
  Lperturbed ,&  !latex \item \inputvar{Lperturbed = 0} : integer : to compute linear, perturbed equilibrium;
  dpp        ,&  !latex \item \inputvar{dpp = 1} : integer : perturbed harmonic;
  dqq        ,&  !latex \item \inputvar{dqq = 1} : integer : perturbed harmonic;
@@ -1652,10 +1655,10 @@ subroutine readin
    write(ounit,'("readin : ", 10x ," : ")')
    
    write(ounit,1050) cput-cpus, odetol, nPpts
-   write(ounit,1051)            LHevalues, LHevectors, Lperturbed, dpp, dqq, Lcheck, Ltiming
+   write(ounit,1051)            LHevalues, LHevectors, LHmatrix, Lperturbed, dpp, dqq, Lcheck, Ltiming
    
 1050 format("readin : ",f10.2," : odetol="es10.2" ; nPpts="i6" ;")
-1051 format("readin : ", 10x ," : LHevalues="L2" ; LHevectors="L2" ; Lperturbed="i2" ; dpp="i3" ; dqq="i3" ; Lcheck="i3" ; Ltiming="L2" ;")
+1051 format("readin : ", 10x ," : LHevalues="L2" ; LHevectors="L2" ; LHmatrix="L2" ; Lperturbed="i2" ; dpp="i3" ; dqq="i3" ; Lcheck="i3" ; Ltiming="L2" ;")
    
    FATAL( readin, odetol.le.zero, input error )
   !FATAL( readin, absreq.le.zero, input error )
@@ -1804,6 +1807,7 @@ subroutine readin
   IlBCAST( nPtrj     , MNvol+1, 0 )
   LlBCAST( LHevalues , 1      , 0 )
   LlBCAST( LHevectors, 1      , 0 )
+  LlBCAST( LHmatrix  , 1      , 0 )
   IlBCAST( Lperturbed, 1      , 0 )
   IlBCAST( dpp       , 1      , 0 )
   IlBCAST( dqq       , 1      , 0 )
@@ -2439,6 +2443,7 @@ subroutine wrtend( wflag, iflag, rflag )
   write(iunit,'(" nPtrj       = ",256i6         )') nPtrj(1:Mvol)
   write(iunit,'(" LHevalues   = ",L9            )') LHevalues
   write(iunit,'(" LHevectors  = ",L9            )') LHevectors
+  write(iunit,'(" LHmatrix    = ",L9            )') LHmatrix
   write(iunit,'(" Lperturbed  = ",i9            )') Lperturbed
   write(iunit,'(" dpp         = ",i9            )') dpp
   write(iunit,'(" dqq         = ",i9            )') dqq

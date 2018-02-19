@@ -47,7 +47,7 @@ program xspech
                         Lfreebound, mfreeits, gBntol, gBnbld, &
                         Lfindzero, &
                         odetol, nPpts, nPtrj, &
-                        LHevalues, LHevectors, Lperturbed, Lcheck, &
+                        LHevalues, LHevectors, LHmatrix, Lperturbed, Lcheck, &
                         Lzerovac
 
   use cputiming, only : Txspech
@@ -321,7 +321,7 @@ program xspech
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  if( Lcheck.eq.5 .or. LHevalues .or. LHevectors .or. Lperturbed.eq.1 ) then ! check construction of Hessian; 01 Jul 14;
+  if( Lcheck.eq.5 .or. LHevalues .or. LHevectors .or. LHmatrix .or. Lperturbed.eq.1 ) then ! check construction of Hessian; 01 Jul 14;
    
    if( myid.eq.0 ) then
     cput = GETTIME
