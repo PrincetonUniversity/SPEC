@@ -60,6 +60,7 @@ for i=1:nvol
 	    j=j+nptraj;
             success = 1;
 	    fclose(fid);
+        fid = -1;
         else
         disp(' - File does not exist'); break
         end        
@@ -73,7 +74,11 @@ for i=1:nvol
 	else
 	 machform     ='a';
 	 triedallform = 1;
-	end
+    end
+    if (fid ~= -1)
+     fclose(fid);
+     fid = -1;
+    end
     end
     end
 end

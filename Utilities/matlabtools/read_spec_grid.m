@@ -107,13 +107,17 @@ catch
    machform     ='a';
    triedallform = 1;
   end
-  
+  if (fid ~= -1)
+   fclose(fid);
+   fid = -1;
+  end
 end
 
 end
 
-fclose(fid);
-
+if (fid ~= -1) 
+    fclose(fid);
+end
 %return output
 gdata = data;
 
