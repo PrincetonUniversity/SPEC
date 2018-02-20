@@ -88,6 +88,7 @@ Vns(0,0)    =  0.000000000000000E+00 Bns(0,0)    =  0.000000000000000E+00 Vnc(0,
  nPtrj       =     -1    -1    -1    -1    -1
  LHevalues   =         F
  LHevectors  =         F
+ LHmatrix    =         T
  Lperturbed  =         0
  dpp         =        -1
  dqq         =        -1
