@@ -41,7 +41,7 @@ subroutine preset
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  FATAL( preset, Nfp.eq.0, illegal division )
+ !FATAL( preset, Nfp.eq.0, illegal division ) ! this was checked in global: readin; SRH: 27 Feb 18;
 
   pi2nfp         = pi2 / Nfp
   
@@ -51,7 +51,7 @@ subroutine preset
 
   Mrad  = maxval( Lrad(1:Mvol) )
 
-  if( myid.eq.0 ) write(ounit,'("preset : " 10x " : myid="i3" ; Mrad="i3" : Lrad="257i3)') myid, Mrad, Lrad(1:Mvol)
+  if( myid.eq.0 ) write(ounit,'("preset : ",10x," : myid=",i3," ; Mrad=",i3," : Lrad=",257(i3,",",:))') myid, Mrad, Lrad(1:Mvol)
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -74,7 +74,7 @@ subroutine preset
   
   NGdof = ( Mvol-1 ) * LGdof
   
-  if( Wpreset ) then ; cput = GETTIME ; write(ounit,'("preset : ",f10.2," : myid=",i3," ; NGdof="i9" ;")') cput-cpus, myid, NGdof
+  if( Wpreset ) then ; cput = GETTIME ; write(ounit,'("preset : ",f10.2," : myid=",i3," ; NGdof=",i9," ;")') cput-cpus, myid, NGdof
   endif
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -104,7 +104,8 @@ subroutine preset
    
    if( Wpreset .and. myid.eq.0 ) write(ounit,1002) vvol, pl(vvol), ql(vvol), pr(vvol), qr(vvol), iota(vvol), lp(vvol), lq(vvol), rp(vvol), rq(vvol), oita(vvol)
    
-1002 format("preset : " 10x " :      "3x" ; transform : "i3" : ("i3" /"i3" ) * ("i3" /"i3" ) = "f18.15" ; ("i3" /"i3" ) * ("i3" /"i3" ) = "f18.15" ;")
+1002 format("preset : ",10x," :      ",3x," ; transform : ",i3," : (",i3," /",i3," ) * (",i3," /",i3," ) = ",f18.15," ; ",&
+                                                                  "(",i3," /",i3," ) * (",i3," /",i3," ) = ",f18.15," ; ")
    
   enddo
   
@@ -148,11 +149,11 @@ subroutine preset
 !latex \end{enumerate}
   
   SALLOCATE( sweight, (1:Mvol), zero )
-  sweight(1:Mvol) = upsilon * tflux(1:Mvol)**wpoloidal ! found an error (2:Mvol) --> (1:Mvol) ; 19 Jul 16;
-
-!#ifdef DEBUG
-!  write(ounit,'("preset : " 10x " : sweight="99(es13.5,","))') sweight(1:Mvol)
-!#endif
+  sweight(1:Mvol) = upsilon * tflux(1:Mvol)**wpoloidal
+  
+#ifdef DEBUG
+  write(ounit,'("preset : ",10x," : sweight=",99(es12.5,",",:))') sweight(1:Mvol)
+#endif
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -195,13 +196,8 @@ subroutine preset
     ;              ; TT(ll,innout,1) = lss**(ll+1) * ll**2 ! derivative; 26 Jan 16;
    enddo
    
-  enddo ! end of do innout = 0, 1 ; 20 Jun 14;
+  enddo ! end of do innout = 0, 1 ;
   
- !write(ounit,'("preset : " 10x " : myid="i3" : TT(0:M,0,0)="999f7.2)') myid, TT(0:Mrad,0,0)
- !write(ounit,'("preset : " 10x " : myid="i3" : TT(0:M,1,0)="999f7.2)') myid, TT(0:Mrad,1,0)
- !write(ounit,'("preset : " 10x " : myid="i3" : TT(0:M,0,1)="999f7.2)') myid, TT(0:Mrad,0,1)
- !write(ounit,'("preset : " 10x " : myid="i3" : TT(0:M,1,1)="999f7.2)') myid, TT(0:Mrad,1,1)
-
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 !latex \subsubsection{\type{ImagneticOK(1:Mvol)} : Beltrami/vacuum error flag;}
@@ -257,9 +253,9 @@ subroutine preset
      endif
     endif
     
-   enddo ! end of do kk = 1, mne; 03 Apr 13;
+   enddo ! end of do kk = 1, mne ;
    
-  enddo ! end of do ii; 17 Dec 15;
+  enddo ! end of do ii ;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -465,37 +461,23 @@ subroutine preset
   do vvol = 1, Mvol
    
    lquad = Iquad(vvol)
-
-   !Set gaussian weights & abscissae
-   call gauleg(lquad, gaussianweight(1:lquad,vvol), gaussianabscissae(1:lquad,vvol), igauleg) ! JAB; 28 Jul 17
-
+   
+   call gauleg( lquad, gaussianweight(1:lquad,vvol), gaussianabscissae(1:lquad,vvol), igauleg ) ! JAB; 28 Jul 17
+   
    if( myid.eq.0 ) then
-   cput= GETTIME
-   select case( igauleg ) !                                                        123456789012345
-   case( 0 )    ; if( Wpreset ) write(ounit,1000) cput-cpus, myid, vvol, igauleg, "success        ", gaussianabscissae(1:lquad,vvol)
-   case( 1 )    ;               write(ounit,1000) cput-cpus, myid, vvol, igauleg, "failed         ", gaussianabscissae(1:lquad,vvol)
-   case( 2 )    ;               write(ounit,1000) cput-cpus, myid, vvol, igauleg, "input error    ", gaussianabscissae(1:lquad,vvol)
-   case default ;               write(ounit,1000) cput-cpus, myid, vvol, igauleg, "weird          ", gaussianabscissae(1:lquad,vvol)
-    FATAL( preset, .true., weird ifail returned by gauleg )
-   end select
-   ;              if( Wpreset ) write(ounit,1001)                                                    gaussianweight(1:lquad,vvol)
+    cput= GETTIME
+    select case( igauleg ) !                                                  123456789012345
+    case( 0 )    ; if( Wpreset ) write(ounit,1000) cput-cpus, vvol, igauleg, "success        ", gaussianabscissae(1:lquad,vvol)
+    case( 1 )    ;               write(ounit,1000) cput-cpus, vvol, igauleg, "failed         ", gaussianabscissae(1:lquad,vvol)
+    case( 2 )    ;               write(ounit,1000) cput-cpus, vvol, igauleg, "input error    ", gaussianabscissae(1:lquad,vvol)
+    case default ;               write(ounit,1000) cput-cpus, vvol, igauleg, "weird          ", gaussianabscissae(1:lquad,vvol)
+     FATAL( preset, .true., weird ifail returned by gauleg )
+    end select
+    ;            ; if( Wpreset ) write(ounit,1001)                                              gaussianweight(1:lquad,vvol)
    endif
    
-1000 format("preset : ",f10.2," : myid=",i3," ; lvol=",i3," ; igauleg=",i5," ; "a15" ; abscissae ="99f09.05)
-1001 format("preset : ", 10x ," :      "3x"        "3x"           "3x"   "15x" ; weights   ="99f09.05)
-      
-!  do jquad = 1, lquad ! loop over radial sub-sub-grid (numerical quadrature);!
-!
-!   lss = gaussianabscissae(jquad,vvol)!!
-!
-!   gchebyshev(0,0:1,jquad,vvol) = (/ one, zero /) ! Chebyshev initialization; 16 Jan 13;
-!   gchebyshev(1,0:1,jquad,vvol) = (/ lss,  one /) ! Chebyshev initialization; 16 Jan 13;   
-!   do ll = 2, Lrad(vvol)
-!    gchebyshev(ll,0:1,jquad,vvol) = &
-! (/ two * lss * gchebyshev(ll-1,0,jquad,vvol)                                             - gchebyshev(ll-2,0,jquad,vvol) , &
-!    two       * gchebyshev(ll-1,0,jquad,vvol) + two * lss * gchebyshev(ll-1,1,jquad,vvol) - gchebyshev(ll-2,1,jquad,vvol) /)
-!   enddo
-!  enddo
+1000 format("preset : ",f10.2," : lvol=",i3," ; igauleg=",i5," ; ",a15," ; abscissae ="99f09.05)
+1001 format("preset : ", 10x ," :      ",3x,"           ",5x,"   ",15x," ; weights   ="99f09.05)
    
   enddo ! end of do vvol;  7 Mar 13; 
   
@@ -1160,24 +1142,29 @@ end subroutine preset
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+! I would rather see this as a separate routine; SRH: 27 Feb 18;
+
 ! Gauss-Legendre quadrature weights and abscissas over (-1,1), from Numerical Recipes. Added by JAB 28 Jul 17.
-subroutine gauleg(n, weight, abscis, ifail)
+
+subroutine gauleg( n, weight, abscis, ifail )
+  
   use constants, only : zero, one, two, pi
+  
   implicit none
+  
   intrinsic abs, cos, epsilon
+  
+  INTEGER,            intent(in)  :: n
+  REAL, dimension(n), intent(out) :: weight, abscis
+  INTEGER,            intent(out) :: ifail
 
-  integer,            intent(in)  :: n
-  real, dimension(n), intent(out) :: weight, abscis
-  integer,            intent(out) :: ifail
-
-  integer, parameter :: maxiter=16
-  integer m, j, i, irefl, iter
-  real z1,z,pp,p3,p2,p1
-  real, parameter    :: eps = epsilon(z)
+  INTEGER, parameter :: maxiter=16
+  INTEGER            :: m, j, i, irefl, iter
+  REAL               :: z1,z,pp,p3,p2,p1
+  REAL, parameter    :: eps = epsilon(z)
 
   !Error checking
-  if (n < 1) then
-     ifail = 2;  return
+  if( n < 1 ) then ; ifail = 2 ;  return
   endif
 
   m = (n + 1)/2  !Roots are symmetric in interval, so we only need half

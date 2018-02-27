@@ -4,8 +4,7 @@
 
 !latex \briefly{The coordinate axis is assigned via a poloidal average over an arbitrary surface.}
 
-!latex \calledby{\link{packxi}}
-!l tex \calls{\link{}}
+!latex \calledby{\link{preset}, \link{packxi}}
 
 !latex \tableofcontents
 
@@ -14,17 +13,18 @@
 !latex \subsection{coordinate axis}
 
 !latex \begin{enumerate}
-!latex \item The coordinate axis is not an independent degree-of-freedom of the geometry.
-!latex       It is constructed by extrapolating the geometry of a given interface down to a line.
-!latex \item Note that, if the coordinate axis depends only on the {\em geometry} of the interface and not the angle parameterization,
+!latex \item The coordinate axis is {\em not} an independent degree-of-freedom of the geometry.
+!latex       It is constructed by extrapolating the geometry of a given interface, as determined by $i \equiv $ \internal{ivol} which is given on input,
+!latex       down to a line.
+!latex \item If the coordinate axis depends only on the {\em geometry} of the interface and not the angle parameterization,
 !latex       then the block tri-diagonal structure of the the force-derivative matrix is preserved.
 !latex \item Define the arc-length-weighted averages,
-!latex       \be R_0(\z) \equiv \frac{\ds \int_{0}^{2\pi} R_1(\t,\z) \, dl}{\ds \int_{0}^{2\pi} \!\!\!\! dl}, \qquad
-!latex           Z_0(\z) \equiv \frac{\ds \int_{0}^{2\pi} Z_1(\t,\z) \, dl}{\ds \int_{0}^{2\pi} \!\!\!\! dl},
+!latex       \be R_0(\z) \equiv \frac{\ds \int_{0}^{2\pi} R_i(\t,\z) \, dl}{\ds \int_{0}^{2\pi} \!\!\!\! dl}, \qquad
+!latex           Z_0(\z) \equiv \frac{\ds \int_{0}^{2\pi} Z_i(\t,\z) \, dl}{\ds \int_{0}^{2\pi} \!\!\!\! dl},
 !latex       \ee
-!latex       where $dl \equiv \dot l \, d\t = \sqrt{ \partial_\t R_1(\t,\z)^2 + \partial_\t Z_1(\t,\z)^2 } \, d\t$.
+!latex       where $dl \equiv \dot l \, d\t = \sqrt{ \partial_\t R_i(\t,\z)^2 + \partial_\t Z_i(\t,\z)^2 } \, d\t$.
 !latex \item (Note that if $\dot l$ does not depend on $\t$, i.e. if $\t$ is the equal arc-length angle, then the expressions simplify.
-!latex        This constraint is {\em not} enforced.)
+!latex        This constraint is not enforced.)
 !latex \item The geometry of the coordinate axis thus constructed only depends on the geometry of the interface, i.e. 
 !latex       the angular parameterization of the interface is irrelevant.
 !latex \end{enumerate}
@@ -36,22 +36,22 @@
 !latex \begin{enumerate}
 !latex \item The derivatives of the coordinate axis with respect to the Fourier harmonics of the given interface are given by
 !latex       \be
-!latex           \ds \frac{\partial R_0}{\partial R_{1,j}^c} & = & \ds \int \left( \cos\a_j \; \dot l
-!latex                                                         -       \Delta R_1 R_{1,\t} \, m_j \sin\a_j / \; \dot l \right) d\t / L \\
-!latex           \ds \frac{\partial R_0}{\partial R_{1,j}^s} & = & \ds \int \left( \sin\a_j \; \dot l
-!latex                                                         +       \Delta R_1 R_{1,\t} \, m_j \cos\a_j / \; \dot l \right) d\t / L \\
-!latex           \ds \frac{\partial R_0}{\partial Z_{1,j}^c} & = & \ds \int \left( \;\;\;\;\;\;\;\;\;\;\;\;\,
-!latex                                                         -       \Delta R_1 Z_{1,\t} \, m_j \sin\a_j / \; \dot l \right) d\t / L \\
-!latex           \ds \frac{\partial R_0}{\partial Z_{1,j}^s} & = & \ds \int \left( \;\;\;\;\;\;\;\;\;\;\;\;\,                             
-!latex                                                         +       \Delta R_1 Z_{1,\t} \, m_j \cos\a_j / \; \dot l \right) d\t / L \\ \nonumber \\
-!latex           \ds \frac{\partial Z_0}{\partial R_{1,j}^c} & = & \ds \int \left( \;\;\;\;\;\;\;\;\;\;\;\;\,                             
-!latex                                                         -       \Delta Z_1 R_{1,\t} \, m_j \sin\a_j / \; \dot l \right) d\t / L \\
-!latex           \ds \frac{\partial Z_0}{\partial R_{1,j}^s} & = & \ds \int \left( \;\;\;\;\;\;\;\;\;\;\;\;                            
-!latex                                                         +       \Delta Z_1 R_{1,\t} \, m_j \cos\a_j / \; \dot l \right) d\t / L \\
-!latex           \ds \frac{\partial Z_0}{\partial Z_{1,j}^c} & = & \ds \int \left( \cos\a_j \; \dot l
-!latex                                                         -       \Delta Z_1 Z_{1,\t} \, m_j \sin\a_j / \; \dot l \right) d\t / L \\
-!latex           \ds \frac{\partial Z_0}{\partial Z_{1,j}^s} & = & \ds \int \left( \sin\a_j \; \dot l
-!latex                                                         +       \Delta Z_1 Z_{1,\t} \, m_j \cos\a_j / \; \dot l \right) d\t / L
+!latex       \ds \frac{\partial R_0}{\partial R_{i,j}^c} & = & \ds \int \left( \cos\a_j \; \dot l
+!latex                                                     -       \Delta R_i R_{i,\t} \, m_j \sin\a_j / \; \dot l \right) d\t / L \\
+!latex       \ds \frac{\partial R_0}{\partial R_{i,j}^s} & = & \ds \int \left( \sin\a_j \; \dot l
+!latex                                                     +       \Delta R_i R_{i,\t} \, m_j \cos\a_j / \; \dot l \right) d\t / L \\
+!latex       \ds \frac{\partial R_0}{\partial Z_{i,j}^c} & = & \ds \int \left( \;\;\;\;\;\;\;\;\;\;\;\;\,
+!latex                                                     -       \Delta R_i Z_{i,\t} \, m_j \sin\a_j / \; \dot l \right) d\t / L \\
+!latex       \ds \frac{\partial R_0}{\partial Z_{i,j}^s} & = & \ds \int \left( \;\;\;\;\;\;\;\;\;\;\;\;\,                             
+!latex                                                     +       \Delta R_i Z_{i,\t} \, m_j \cos\a_j / \; \dot l \right) d\t / L \\ \nonumber \\
+!latex       \ds \frac{\partial Z_0}{\partial R_{i,j}^c} & = & \ds \int \left( \;\;\;\;\;\;\;\;\;\;\;\;\,                             
+!latex                                                     -       \Delta Z_i R_{i,\t} \, m_j \sin\a_j / \; \dot l \right) d\t / L \\
+!latex       \ds \frac{\partial Z_0}{\partial R_{i,j}^s} & = & \ds \int \left( \;\;\;\;\;\;\;\;\;\;\;\;                            
+!latex                                                     +       \Delta Z_i R_{i,\t} \, m_j \cos\a_j / \; \dot l \right) d\t / L \\
+!latex       \ds \frac{\partial Z_0}{\partial Z_{i,j}^c} & = & \ds \int \left( \cos\a_j \; \dot l
+!latex                                                     -       \Delta Z_i Z_{i,\t} \, m_j \sin\a_j / \; \dot l \right) d\t / L \\
+!latex       \ds \frac{\partial Z_0}{\partial Z_{i,j}^s} & = & \ds \int \left( \sin\a_j \; \dot l
+!latex                                                     +       \Delta Z_i Z_{i,\t} \, m_j \cos\a_j / \; \dot l \right) d\t / L
 !latex       \ee
 !latex       where $\ds L(\z) \equiv \int_{0}^{2\pi} \!\!\!\! dl$.
 !latex \end{enumerate}
@@ -65,7 +65,7 @@
 !latex       The integration over $\t$ to construct $L\equiv \int dl$ is now trivial: just multiply the $m=0$ harmonics of $dl$ by $2\pi$.
 !latex       The \internal{ajk(1:mn)} variable is used, and this is assigned in \link{global}.
 !latex \item Next, the weighted $R \, dl$ and $Z \, dl$ are computed in real space, and the poloidal integral is similarly taken.
-!latex \item Lastly, the Fourier harmonics are constructed using an FFT after dividing in real space.
+!latex \item Last, the Fourier harmonics are constructed using an FFT after dividing in real space.
 !latex \end{enumerate}
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -184,13 +184,13 @@ subroutine rzaxis( Mvol, mn, iRbc, iZbs, iRbs, iZbc, ivol )
     write(ounit,'("rzaxis : ",f10.2," : myid=",i3," ; inner : Rbc=[",    999(es23.15," ,"))') cput-cpus, myid, iRbc(1:Ntor+1,ivol)
     write(ounit,'("rzaxis : ",f10.2," : myid=",i3," ; axis  : Rbc=[",    999(es23.15," ,"))') cput-cpus, myid, iRbc(1:Ntor+1,jvol)
     if( Ntor.gt.0 ) then
-    write(ounit,'("rzaxis : ",f10.2," : myid=",i3," ; inner : Zbs=[",23x,998(es23.15," ,"))') cput-cpus, myid, iZbs(2:Ntor+1,ivol)
-    write(ounit,'("rzaxis : ",f10.2," : myid=",i3," ; axis  : Zbs=[",23x,998(es23.15," ,"))') cput-cpus, myid, iZbs(2:Ntor+1,jvol)
+    write(ounit,'("rzaxis : ",f10.2," : myid=",i3," ; inner : Zbs=[",25x,998(es23.15," ,"))') cput-cpus, myid, iZbs(2:Ntor+1,ivol)
+    write(ounit,'("rzaxis : ",f10.2," : myid=",i3," ; axis  : Zbs=[",25x,998(es23.15," ,"))') cput-cpus, myid, iZbs(2:Ntor+1,jvol)
     endif
     if( NOTstellsym ) then
     if( Ntor.gt.0 ) then
-    write(ounit,'("rzaxis : ",f10.2," : myid=",i3," ; inner : Rbs=[",23x,998(es23.15," ,"))') cput-cpus, myid, iRbs(2:Ntor+1,ivol)
-    write(ounit,'("rzaxis : ",f10.2," : myid=",i3," ; axis  : Rbs=[",23x,998(es23.15," ,"))') cput-cpus, myid, iRbs(2:Ntor+1,jvol)
+    write(ounit,'("rzaxis : ",f10.2," : myid=",i3," ; inner : Rbs=[",25x,998(es23.15," ,"))') cput-cpus, myid, iRbs(2:Ntor+1,ivol)
+    write(ounit,'("rzaxis : ",f10.2," : myid=",i3," ; axis  : Rbs=[",25x,998(es23.15," ,"))') cput-cpus, myid, iRbs(2:Ntor+1,jvol)
     endif
     write(ounit,'("rzaxis : ",f10.2," : myid=",i3," ; inner : Zbc=[",    999(es23.15," ,"))') cput-cpus, myid, iZbc(1:Ntor+1,ivol)
     write(ounit,'("rzaxis : ",f10.2," : myid=",i3," ; axis  : Zbc=[",    999(es23.15," ,"))') cput-cpus, myid, iZbc(1:Ntor+1,jvol)

@@ -67,7 +67,7 @@ module numerical
   REAL, parameter :: logtolerance = 1.0e-32 ! this is used to avoid taking alog10(zero); see e.g. dforce; 
 
 contains
-  REAL FUNCTION myprec() !Duplicates NAG routine X02AJF (machine precision) ! JAB; 27 Jul 17
+  REAL FUNCTION myprec() !Duplicates NAG routine X02AJF (machine precision) ! JAB; 27 Jul 17 ! I suggest that this be removed; SRH: 27 Feb 18;
     implicit none
     intrinsic EPSILON
     myprec = 0.5*EPSILON(1.0d0)
@@ -1379,7 +1379,9 @@ subroutine readin
 
   cput = GETTIME
   
-  machprec = myprec() ; vsmall = 100*machprec ; small = 100*vsmall ; sqrtmachprec = sqrt(machprec) ! returns machine precision;
+  machprec = myprec() ! is this required? Why not just set real, parameter :: machprec = 1.0E-16 ? ; let's simplify the source; SRH: 27 Feb 18;
+
+  vsmall = 100*machprec ; small = 100*vsmall ; sqrtmachprec = sqrt(machprec) ! returns machine precision;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -1500,7 +1502,7 @@ subroutine readin
 1012 format("readin : ", 10x ," : gamma="es23.15" ;")
 1013 format("readin : ", 10x ," : Nfp=",i3," ; Nvol=",i3," ; Mvol=",i3," ; Mpol=",i3," ; Ntor=",i3," ;")
 1014 format("readin : ", 10x ," : pscale="es13.5" ; Ladiabatic="i2" ; Lconstraint="i3" ; mupf: tol,its="es10.2" ,"i4" ;")
-1015 format("readin : ", 10x ," : Lrad = "32(i3,",")," ...")
+1015 format("readin : ", 10x ," : Lrad = "257(i2,",",:))
    
 #ifdef DEBUG
    if( Wreadin ) then
@@ -1518,8 +1520,8 @@ subroutine readin
    FATAL( readin, Ntor.lt.0 .or. Ntor.gt.MNtor, invalid toroidal resolution: may need to recompile with higher MNtor )
    FATAL( readin, Nvol.lt.1 .or. Nvol.gt.MNvol, invalid Nvol: may need to recompile with higher MNvol )
    FATAL( readin, mupftol.le.zero, mupftol is too small )
-   FATAL( readin, abs(one+gamma).lt.vsmall, 1+gamma appears in denominator in dforce )
-   FATAL( readin, abs(one-gamma).lt.vsmall, 1-gamma appears in denominator in fu00aa )
+   FATAL( readin, abs(one+gamma).lt.vsmall, 1+gamma appears in denominator in dforce ) ! Please check this; SRH: 27 Feb 18;
+   FATAL( readin, abs(one-gamma).lt.vsmall, 1-gamma appears in denominator in fu00aa ) ! Please check this; SRH: 27 Feb 18;
    FATAL( readin, Lconstraint.lt.-1 .or. Lconstraint.gt.2, illegal Lconstraint )
    
    if( Istellsym.eq.1 ) then
@@ -1535,7 +1537,7 @@ subroutine readin
    
    FATAL( readin, abs(tflux(Nvol)).lt. vsmall, enclosed toroidal flux cannot be zero )
 
-   toroidalflux = tflux(Nvol) ! 
+   toroidalflux = tflux(Nvol) ! toroidal flux is a local variable; SRH: 27 Feb 18;
 
    tflux(1:Mvol) = tflux(1:Mvol) / toroidalflux ! normalize toroidal flux; 
    pflux(1:Mvol) = pflux(1:Mvol) / toroidalflux ! normalize poloidal flux; 
@@ -1547,11 +1549,11 @@ subroutine readin
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
-   do vvol = 1, Mvol ! 
-   FATAL( readin, Lrad(vvol ).lt.2, require Chebyshev resolution > 2 so that Lagrange constraints can be satisfied ) ! 
-   enddo ! 
+   do vvol = 1, Mvol
+    FATAL( readin, Lrad(vvol ).lt.2, require Chebyshev resolution Lrad > 2 so that Lagrange constraints can be satisfied )
+   enddo
    
-   FATAL( readin, mupfits.le.0, must give C05PCF a postive integer value for the maximum iterations = mupfits given on input )
+   FATAL( readin, mupfits.le.0, must give ma01aa:hybrj a postive integer value for the maximum iterations = mupfits given on input )
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
@@ -1581,7 +1583,7 @@ subroutine readin
    
   !FATAL(readin, Lfreebound.eq.1 .and. Lconstraint.gt.0 .and. Lsparse.eq.0, have not implemented dense Fourier angle transformation in vacuum region )
    
-   FATAL( readin, iotatol.gt.one, illegal value for sparse tolerance )
+   FATAL( readin, iotatol.gt.one, illegal value for sparse tolerance ) ! I think that the sparse iota solver is no longer implemented; SRH: 27 Feb 18;
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
@@ -1661,7 +1663,7 @@ subroutine readin
   !FATAL( readin, absreq.le.zero, input error )
   !FATAL( readin, relreq.le.zero, input error )
   !FATAL( readin, absacc.le.zero, input error )
-   FATAL( readin, nPpts .lt.0   , input error )
+  !FATAL( readin, nPpts .lt.0   , input error )
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
@@ -1761,7 +1763,7 @@ subroutine readin
   RlBCAST( escale    , 1 , 0 )
   RlBCAST( opsilon   , 1 , 0 )
   RlBCAST( pcondense , 1 , 0 )
-  RlBCAST( epsilon   , 1 , 0 ) ! 
+  RlBCAST( epsilon   , 1 , 0 )
   RlBCAST( wpoloidal , 1 , 0 )
   RlBCAST( upsilon   , 1 , 0 )
   RlBCAST( forcetol  , 1 , 0 )
@@ -1830,8 +1832,10 @@ subroutine readin
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   select case( Istellsym )
-  case( 0 ) ; YESstellsym = .false. ; NOTstellsym = .true.
-  case( 1 ) ; YESstellsym = .true.  ; NOTstellsym = .false.
+  case( 0 )    ; YESstellsym = .false. ; NOTstellsym = .true.
+  case( 1 )    ; YESstellsym = .true.  ; NOTstellsym = .false.
+  case default ;
+   FATAL( readin, .true., illegal Istellsym )
   end select
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -1840,6 +1844,8 @@ subroutine readin
 !latex \begin{enumerate}
 !latex \item The number of plasma volumes is \internal{Mvol}=\inputvar{Nvol}+\inputvar{Lfreebound};
 !latex \end{enumerate}
+
+  FATAL( readin, Lfreebound.lt.0 .or. Lfreebound.gt.1, illegal Lfreebound )
 
   Mvol = Nvol + Lfreebound
 
@@ -1877,13 +1883,13 @@ subroutine readin
   
   SALLOCATE( halfmm, (1:mn), im(1:mn) * half )
   SALLOCATE( regumm, (1:mn), im(1:mn) * half )
-
+  
   if( Mregular.ge.2 ) then
    where( im.gt.Mregular ) regumm = Mregular * half
   endif
-
+  
 ! if( myid.eq.0 ) write(ounit,'("global : " 10x " : "i3") im ="i3" , halfmm ="f5.1" , regum ="f5.1" ;")') ( ii, im(ii), halfmm(ii), regumm(ii), ii = 1, mn )
-
+  
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 !latex \subsubsection{\type{ime} and \type{ine} : extended resolution Fourier mode identification}
@@ -1966,10 +1972,10 @@ subroutine readin
   SALLOCATE( iVnc, (1:mn), zero )
   SALLOCATE( iBnc, (1:mn), zero )
   
-  SALLOCATE( lRbc, (1:mn), zero )
-  SALLOCATE( lZbs, (1:mn), zero )
-  SALLOCATE( lRbs, (1:mn), zero )
-  SALLOCATE( lZbc, (1:mn), zero )
+ !SALLOCATE( lRbc, (1:mn), zero ) ! not used; SRH: 27 Feb 18;
+ !SALLOCATE( lZbs, (1:mn), zero )
+ !SALLOCATE( lRbs, (1:mn), zero )
+ !SALLOCATE( lZbc, (1:mn), zero )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -2578,10 +2584,16 @@ end module allglobal
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 module fftw_interface ! JAB; 25 Jul 17
+
   use, intrinsic :: iso_c_binding
+
   implicit none
+
   include 'fftw3.f03'
 
-  TYPE(C_PTR) :: planf, planb
-  COMPLEX(C_DOUBLE_COMPLEX), ALLOCATABLE :: cplxin(:,:), cplxout(:,:)
+  TYPE(C_PTR)                            :: planf, planb
+  COMPLEX(C_DOUBLE_COMPLEX), allocatable :: cplxin(:,:), cplxout(:,:)
+
 end module fftw_interface
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

@@ -2,38 +2,59 @@
 
 !title (numerics) ! Some miscellaneous numerical routines.
 
-!latex \briefly{briefly}
-!latex \calledby{\link{}}
-!latex \calls{\link{}}
+!latex \briefly{miscellaneous ``numerical'' routines}
+
+!l tex \calledby{\link{}}
+!l tex \calls{\link{}}
+
 !latex \tableofcontents
 
-!latex \begin{itemize}
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+!latex \subsection{Outline}
+
+!latex This file contains various miscellaneous ``numerical'' routines as described below.
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \item \verb+gi00aa+
-
-subroutine gi00aa( ii, jj, ig )
-  
-  implicit none
-  
-  INTEGER, intent(in)  :: ii,jj
-  INTEGER, intent(out) :: ig
-  
-  if( ( ii.eq.1 .and. jj.eq.1 )                                ) ig = 1
-  if( ( ii.eq.1 .and. jj.eq.2 ) .or. ( ii.eq.2 .and. jj.eq.1 ) ) ig = 2
-  if( ( ii.eq.1 .and. jj.eq.3 ) .or. ( ii.eq.3 .and. jj.eq.1 ) ) ig = 3
-  if( ( ii.eq.2 .and. jj.eq.2 )                                ) ig = 4
-  if( ( ii.eq.2 .and. jj.eq.3 ) .or. ( ii.eq.3 .and. jj.eq.2 ) ) ig = 5
-  if( ( ii.eq.3 .and. jj.eq.3 )                                ) ig = 6
-  
-  return
-  
-end subroutine gi00aa
+!l tex \begin{itemize}
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \item \verb+gi00ab+
+!l tex \item \type{gi00aa}
+
+!subroutine gi00aa( ii, jj, ig ) ! not used; SRH: 27 Feb 18;
+!  
+!  implicit none
+!  
+!  INTEGER, intent(in)  :: ii,jj
+!  INTEGER, intent(out) :: ig
+!  
+!  if( ( ii.eq.1 .and. jj.eq.1 )                                ) ig = 1
+!  if( ( ii.eq.1 .and. jj.eq.2 ) .or. ( ii.eq.2 .and. jj.eq.1 ) ) ig = 2
+!  if( ( ii.eq.1 .and. jj.eq.3 ) .or. ( ii.eq.3 .and. jj.eq.1 ) ) ig = 3
+!  if( ( ii.eq.2 .and. jj.eq.2 )                                ) ig = 4
+!  if( ( ii.eq.2 .and. jj.eq.3 ) .or. ( ii.eq.3 .and. jj.eq.2 ) ) ig = 5
+!  if( ( ii.eq.3 .and. jj.eq.3 )                                ) ig = 6
+!  
+!  return
+!  
+!end subroutine gi00aa
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+!latex \subsection{\type{gi00ab}}
+
+!latex \begin{enumerate}
+
+!latex \item This routine assigns the Fourier mode labels that converts a double-sum into a single sum; i.e., the $m_j$ and $n_j$ are assigned where
+!latex \be f(\t,\z) & = & \sum_{n=0}^{N} f_{0,n}\cos(-n \, N_P \, \z) 
+!latex + \sum_{m=1}^{M} \sum_{n=-N}^{N} f_{m,n}\cos(m\t-n \, N_P \, \z) \\
+!latex              & = & \sum_j f_j \cos(m_j\t-n_j\z),
+!latex \ee
+!latex where $N\equiv $ \type{Ntor} and $M\equiv $ \type{Mpol} are given on input, and $N_P \equiv $ \type{Nfp} is the field periodicity.
+
+!latex \end{enumerate}
 
 subroutine gi00ab( Mpol, Ntor, Nfp, mn, im, in )
   
@@ -64,29 +85,39 @@ end subroutine gi00ab
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \item \verb+tfft+
+!latex \subsection{\type{tfft}}
+
+!latex \begin{enumerate}
+
+!latex \item This constructs the ``forward'' Fourier transform. Given a set of data $(f_{i,j},g_{i,j})$ on a regular grid angle grid, 
+!latex the Fourier harmonics are constructed.
+
+!latex \end{enumerate}
 
 subroutine tfft( Nt, Nz, ijreal, ijimag, mn, im, in, efmn, ofmn, cfmn, sfmn, ifail )
 
   use constants
+
   use inputlist, only : Nfp
   use allglobal, only : pi2nfp
+
   use fftw_interface
 
   implicit none
+
   intrinsic aimag
   
-  INTEGER   :: Nt, Nz, mn, im(mn), in(mn), Ntz, imn, ifail, mm, nn
-  REAL      :: ijreal(1:Nt*Nz), ijimag(1:Nt*Nz), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn)
+  INTEGER :: Nt, Nz, mn, im(mn), in(mn), Ntz, imn, ifail, mm, nn
+  REAL    :: ijreal(1:Nt*Nz), ijimag(1:Nt*Nz), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn)
   
-  LOGICAL   :: check=.false.
-  INTEGER   :: jj, kk
-  REAL      :: jireal(1:Nt*Nz), jiimag(1:Nt*Nz), arg, ca, sa
+  LOGICAL :: check=.false.
+  INTEGER :: jj, kk
+  REAL    :: jireal(1:Nt*Nz), jiimag(1:Nt*Nz), arg, ca, sa
 
   if( check ) then ; jireal=ijreal ; jiimag=ijimag
   endif
 
-  Ntz=Nt*Nz
+  Ntz = Nt * Nz
 
   !Copy real arrays to complex
   do jj=1,Nz
@@ -167,21 +198,29 @@ end subroutine tfft
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \item \verb+invfft+
+!latex \subsection{\type{invfft}}
 
-subroutine invfft( mn , im , in , efmn , ofmn , cfmn , sfmn , Nt , Nz , ijreal , ijimag )
+!latex \begin{enumerate}
+
+!latex \item Given the Fourier harmonics, the data on a regular angular grid are constructed.
+
+!latex \item This is the inverse routine to \type{tfft}.
+
+!latex \end{enumerate}
+
+subroutine invfft( mn, im, in, efmn, ofmn, cfmn, sfmn, Nt, Nz, ijreal, ijimag )
 
   use constants, only : zero, half, one
   use inputlist, only : Nfp
   use fftw_interface
   implicit none
   
-  INTEGER  , intent(in)    :: mn, im(mn), in(mn)
-  REAL     , intent(in)    :: efmn(mn), ofmn(mn), cfmn(mn), sfmn(mn)
-  INTEGER  , intent(in)    :: Nt, Nz
-  REAL     , intent(out)   :: ijreal(Nt*Nz), ijimag(Nt*Nz) ! output real space;
+  INTEGER, intent(in)  :: mn, im(mn), in(mn)
+  REAL   , intent(in)  :: efmn(mn), ofmn(mn), cfmn(mn), sfmn(mn)
+  INTEGER, intent(in)  :: Nt, Nz
+  REAL   , intent(out) :: ijreal(Nt*Nz), ijimag(Nt*Nz) ! output real space;
   
-  INTEGER                   :: Ntz, imn, jj, kk, mm, nn
+  INTEGER              :: Ntz, imn, jj, kk, mm, nn
   
   Ntz = Nt*Nz ; ijreal(1:Ntz) = zero ; ijimag(1:Ntz) = zero
 
@@ -247,7 +286,9 @@ end subroutine invfft
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \item \verb+svdcmp+
+#ifdef DELETETHIS
+
+!l tex \subsection{\type{svdcmp}} ! not used; SRH: 27 Feb 18;
 
 subroutine svdcmp(a,m,n,mp,np,w,v)
   use constants,only:zero,one
@@ -479,9 +520,13 @@ subroutine svdcmp(a,m,n,mp,np,w,v)
       return
       end
 
+#endif
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-      
-!latex \item \verb!pythag!.
+   
+#ifdef DELETETHIS
+   
+!l tex \subsection{\type{pythag}} ! not used; SRH: 27 Feb 18;
 
 REAL function pythag(a,b)  
   implicit none
@@ -504,9 +549,13 @@ REAL function pythag(a,b)
   return
 end function pythag
 
+#endif
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
-!latex \item \verb!svbksb!.   
+#ifdef DELETETHIS
+
+!l tex \subsection{\type{svbksb}} ! not used; SRH: 27 Feb 18;
 
 subroutine svbksb(u,w,v,M,n,MP,nP,b,X)
   
@@ -539,9 +588,13 @@ subroutine svbksb(u,w,v,M,n,MP,nP,b,X)
       return
       end
 
+#endif
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
       
-!latex \item \verb!sort!.
+#ifdef DELETETHIS
+
+!l tex \subsection{\type{sort}} ! not used; SRH: 27 Feb 18;
 
       subroutine sort(n,ra)
 
@@ -586,9 +639,14 @@ subroutine svbksb(u,w,v,M,n,MP,nP,b,X)
       goto 10
       end
 
+#endif
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+#ifdef DELETETHIS
      
-!latex \item \verb!singvalues!
+!l tex \subsection{\type{singvalues}} ! not used; SRH: 27 Feb 18;
+
       subroutine singvalues(nrow,ncol,Mat,b,sx,cutoff,wsvd) ! nrow = nconstraints ; ncol = nfreedom
       implicit none
       INTEGER, intent(in) :: nrow,ncol
@@ -618,8 +676,10 @@ subroutine svbksb(u,w,v,M,n,MP,nP,b,X)
       return
       end subroutine singvalues
 
+#endif
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \end{itemize}
+!l tex \end{itemize}
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
