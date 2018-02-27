@@ -32,20 +32,21 @@ F = 1./idata.iota(1:end);
 Flabel='q';
 end
 
+nsucctrj = length(pdata.R_lines(:,1,1)); % number of successfully followed trajectories
 
 switch xaxis
  case 's'
-  plot(idata.sarr(1:end),F,'*k','MarkerSize',8,'LineWidth',2)
+  plot(idata.sarr(1:nsucctrj),F(1:nsucctrj),'*k','MarkerSize',8,'LineWidth',2)
   ylabel(Flabel)
   out = 0;
   
  case 'R'
-  plot(transpose(pdata.R_lines(:,1,1)),F,'k*','MarkerSize',8,'LineWidth',2)
+  plot(transpose(pdata.R_lines(:,1,1)),F(1:nsucctrj),'k*','MarkerSize',8,'LineWidth',2)
   ylabel(Flabel)
   out = 0;
   
  case 'f'
-  sval    = idata.sarr(1:end);
+  sval    = idata.sarr(1:nsucctrj);
   nvol    = idata.Mvol;
   nptrj   = zeros(1,nvol);
   count   = 1;
@@ -61,7 +62,7 @@ switch xaxis
    end
   end
   nptrj(nvol)    = length(sval)-sum(nptrj);
-
+  
   ns       = 32;
   nt       = 32;
   cumflux  = 0;
@@ -90,7 +91,7 @@ switch xaxis
   
   end 
     
-  plot(psitor/psitor(end),F,'*k','MarkerSize',8,'LineWidth',2)
+  plot(psitor/psitor(end),F(1:nsucctrj),'*k','MarkerSize',8,'LineWidth',2)
   ylabel(Flabel)
   xlabel('\Psi / \Psi_{edge}')
   
@@ -99,8 +100,8 @@ switch xaxis
   out{2} = F;
   
 case 'r'
-  sval    = idata.sarr(1:end);
-  nvol    = idata.Nvol;
+  sval    = idata.sarr(1:nsucctrj);
+  nvol    = idata.Mvol;
   nptrj   = zeros(1,nvol);
   count   = 1;
   
@@ -144,7 +145,7 @@ case 'r'
   
   end
     
-  plot(sqrt(psitor/psitor(end)),F,'*k','MarkerSize',8,'LineWidth',2)
+  plot(sqrt(psitor/psitor(end)),F(1:nsucctrj),'*k','MarkerSize',8,'LineWidth',2)
   ylabel(Flabel)
   xlabel('(\Psi / \Psi_{edge})^{1/2}')
   

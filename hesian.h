@@ -21,10 +21,10 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
 
   use numerical, only : sqrtmachprec, small, vsmall
 
-  use fileunits, only : ounit, lunit, hunit
+  use fileunits, only : ounit, lunit, hunit, munit
 
   use inputlist, only : Wmacros, Whesian, ext, Igeometry, Nvol, pflux, helicity, mu, Lfreebound, &
-                        LHevalues, LHevectors, &
+                        LHevalues, LHevectors, LHmatrix, &
                         Lperturbed, dpp, dqq, &
                         Lcheck
 
@@ -394,6 +394,18 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
 !latex \end{enumerate}
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  if( LHmatrix ) then
+  
+   if( myid.eq.0 ) then ; cput = GETTIME ; write(ounit,'("hesian : ",f10.2," : LHmatrix="L2" ;")')cput-cpus, LHmatrix ;
+    open(munit, file="."//trim(ext)//".GF.ma", status="unknown", form="unformatted")
+    write(munit) NGdof
+    write(munit) ohessian(1:NGdof,1:NGdof)
+    close(munit)
+   endif
+
+  endif
+
   
 ! if( myid.eq.0 .and. ( LHevalues .or. LHevectors ) ) then ! the call to dforce below requires all cpus; 04 Dec 14;
   if(                 ( LHevalues .or. LHevectors ) ) then
