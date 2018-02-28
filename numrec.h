@@ -130,17 +130,13 @@ subroutine tfft( Nt, Nz, ijreal, ijimag, mn, im, in, efmn, ofmn, cfmn, sfmn, ifa
 
   Ntz = Nt * Nz
 
-  !Copy real arrays to complex
-  do jj = 1, Nz
-    cplxin(:,jj) = CMPLX( ijreal((jj-1)*Nt+1:jj*Nt), ijimag((jj-1)*Nt+1:jj*Nt), KIND=C_DOUBLE_COMPLEX )
+  do jj = 1, Nz ; cplxin(:,jj) = CMPLX( ijreal((jj-1)*Nt+1:jj*Nt), ijimag((jj-1)*Nt+1:jj*Nt), KIND=C_DOUBLE_COMPLEX )
   enddo
-
+   
   call fftw_execute_dft( planf, cplxin, cplxout ) !Forward transform
 
-  !Copy complex result back to real arrays, normalize
-  do jj = 1, Nz
-    ijreal((jj-1)*Nt+1:jj*Nt) =  real(cplxout(:,jj),KIND=C_DOUBLE_COMPLEX)/Ntz
-    ijimag((jj-1)*Nt+1:jj*Nt) = aimag(cplxout(:,jj))/Ntz
+  do jj = 1, Nz ; ijreal((jj-1)*Nt+1:jj*Nt) =  real(cplxout(:,jj),KIND=C_DOUBLE_COMPLEX)/Ntz
+   ;            ; ijimag((jj-1)*Nt+1:jj*Nt) = aimag(cplxout(:,jj))/Ntz
   enddo
   
   cfmn = zero ; sfmn = zero ; efmn = zero ; ofmn = zero
