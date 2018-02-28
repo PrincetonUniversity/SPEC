@@ -50,7 +50,7 @@
 !latex \item This routine assigns the Fourier mode labels that converts a double-sum into a single sum; i.e., the $m_j$ and $n_j$ are assigned where
 !latex \be f(\t,\z) & = & \sum_{n=0}^{N} f_{0,n}\cos(-n \, N_P \, \z) 
 !latex + \sum_{m=1}^{M} \sum_{n=-N}^{N} f_{m,n}\cos(m\t-n \, N_P \, \z) \\
-!latex              & = & \sum_j f_j \cos(m_j\t-n_j\z),
+!latex              & = & \sum_j f_j \cos(m_j\t-n_j\z), \label{eq:condensedFourierrepresentation}
 !latex \ee
 !latex where $N\equiv $ \type{Ntor} and $M\equiv $ \type{Mpol} are given on input, and $N_P \equiv $ \type{Nfp} is the field periodicity.
 
@@ -89,14 +89,25 @@ end subroutine gi00ab
 
 !latex \begin{enumerate}
 
-!latex \item This constructs the ``forward'' Fourier transform. Given a set of data $(f_{i,j},g_{i,j})$ on a regular grid angle grid, 
-!latex the Fourier harmonics are constructed.
+!latex \item This constructs the ``forward'' Fourier transform.
+
+!latex \item Given a set of data, $(f_{i},g_{i})$ for $i = 1, \dots N_\theta N_\zeta$, on a regular two-dimensional angle grid, 
+!latex       where $\theta_j = 2 \pi j / N_\theta$ for $j = 0, N_\theta-1$, and
+!latex             $\zeta_k  = 2 \pi k / N_\zeta $ for $k = 0, N_\zeta -1$.
+!latex       The ``packing'' is governed by $i = 1 + j + k N_\theta$.
+!latex       The ``discrete'' resolution is $N_\theta \equiv $ \type{Nt}, $N_\zeta \equiv $ \type{Nz} and \type{Ntz} $=$ \type{Nt} $\times$ \type{Nz}, 
+!latex       which are set in \link{preset}.
+!latex \item The Fourier harmonics consistent with \Eqn{condensedFourierrepresentation} are constructed.
+!latex       The mode identification labels appearing in \Eqn{condensedFourierrepresentation} are $m_j \equiv $ \type{im(j)} and $n_j \equiv $ \type{in(j)},
+!latex       which are set in \link{global} via a call to \type{gi00ab}.
 
 !latex \end{enumerate}
 
 subroutine tfft( Nt, Nz, ijreal, ijimag, mn, im, in, efmn, ofmn, cfmn, sfmn, ifail )
 
-  use constants
+  use constants, only : zero, pi2
+  
+  use fileunits, only : ounit
 
   use inputlist, only : Nfp
   use allglobal, only : pi2nfp
@@ -132,7 +143,7 @@ subroutine tfft( Nt, Nz, ijreal, ijimag, mn, im, in, efmn, ofmn, cfmn, sfmn, ifa
     ijimag((jj-1)*Nt+1:jj*Nt) = aimag(cplxout(:,jj))/Ntz
   enddo
   
-  cfmn=zero ; sfmn=zero ; efmn=zero ; ofmn=zero
+  cfmn = zero ; sfmn = zero ; efmn = zero ; ofmn = zero
   
   do imn = 1, mn ; mm = im(imn) ; nn = in(imn) / Nfp
    
@@ -180,8 +191,10 @@ subroutine tfft( Nt, Nz, ijreal, ijimag, mn, im, in, efmn, ofmn, cfmn, sfmn, ifa
   ijreal(1:Ntz) = zero ; ijimag(1:Ntz) = zero
   
   do jj = 0, Nt-1
+
    do kk = 0, Nz-1
-    do imn =1, mn ; arg = im(imn) * jj *pi2 / Nt - in(imn) * kk * pi2nfp / Nz ; ca = cos(arg) ; sa = sin(arg)
+
+    do imn = 1, mn ; arg = im(imn) * jj * pi2 / Nt - in(imn) * kk * pi2nfp / Nz ; ca = cos(arg) ; sa = sin(arg)
      
      ijreal(1+jj+kk*Nt) = ijreal(1+jj+kk*Nt) + efmn(imn) * ca + ofmn(imn) * sa
      ijimag(1+jj+kk*Nt) = ijimag(1+jj+kk*Nt) + cfmn(imn) * ca + sfmn(imn) * sa
@@ -190,7 +203,7 @@ subroutine tfft( Nt, Nz, ijreal, ijimag, mn, im, in, efmn, ofmn, cfmn, sfmn, ifa
    enddo
   enddo
   
-  write(*,'("tfft : Fourier reconstruction error = "2es15.5)') sqrt(sum((ijreal-jireal)**2)/Ntz), sqrt(sum((ijimag-jiimag)**2)/Ntz)
+  write(ounit,'("tfft   : ",10x," : Fourier reconstruction error =",2es15.5," ;")') sqrt(sum((ijreal-jireal)**2)/Ntz), sqrt(sum((ijimag-jiimag)**2)/Ntz)
 
   return
 
