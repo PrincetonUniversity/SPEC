@@ -35,7 +35,7 @@ subroutine preset
   
   INTEGER   :: innout, idof, jk, ll, ii, ifail, ideriv, vvol, mi, ni, mj, nj, mk, nk, mimj, ninj, mkmj, nknj, jj, kk, lvol, mm, nn, imn
   INTEGER   :: lquad, igauleg, maxIquad, Mrad, jquad, Lcurvature
-  REAL      :: teta, zeta, arg, lss, cszeta(0:1)
+  REAL      :: teta, zeta, arg, lss, cszeta(0:1), error
   
   BEGIN(preset)
   
@@ -882,6 +882,8 @@ subroutine preset
      
     enddo ! end of do kk; SRH: 27 Feb 18;
     
+    jkreal = ijreal ; jkimag = ijimag
+
     ifail = 0 !                                                              even        odd         cos         sin
     call tfft( Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz), mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), ifail )
     
@@ -892,7 +894,13 @@ subroutine preset
 2000 format("preset : ",10x," : (",i3,",",i3," ) = (",i3,",",i3," ) : "2f15.5" ; "2f15.5" ;")
      
     enddo ! end of do ii; SRH: 27 Feb 18;
-   
+    
+    call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, jireal(1:Ntz), jiimag(1:Ntz) )
+    
+    error = ( sum((jkreal(1:Ntz)-jireal(1:Ntz))**2) + sum((jkimag(1:Ntz)-jiimag(1:Ntz))**2) ) / Ntz
+
+    write(ounit,'("preset : ",10x," : (",i3,",",i3," ) : error = ",es13.5," ;")') mm, nn, error
+
    enddo ! end of do imn; SRH: 27 Feb 18;
 
   endif ! end of if( myid.eq.0 ) ; SRH: 27 Feb 18;
