@@ -1874,7 +1874,7 @@ subroutine readin
   SALLOCATE( im, (1:mn), 0 )
   SALLOCATE( in, (1:mn), 0 )
   
-  call gi00ab(  Mpol,  Ntor, Nfp, mn, im, in ) ! this sets the im and in mode identification arrays;
+  call gi00ab(  Mpol,  Ntor, Nfp, mn, im(1:mn), in(1:mn) ) ! this sets the im and in mode identification arrays;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -1910,7 +1910,7 @@ subroutine readin
   SALLOCATE( ime, (1:mne), 0 )
   SALLOCATE( ine, (1:mne), 0 )
 
-  call gi00ab( lMpol, lNtor, Nfp, mne, ime, ine )
+  call gi00ab( lMpol, lNtor, Nfp, mne, ime(1:mne), ine(1:mne) )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -1927,7 +1927,7 @@ subroutine readin
   SALLOCATE( ims, (1:mns), 0 )
   SALLOCATE( ins, (1:mns), 0 )
 
-  call gi00ab( lMpol, lNtor, Nfp, mns, ims, ins ) ! note that the field periodicity factor is included in ins;
+  call gi00ab( lMpol, lNtor, Nfp, mns, ims(1:mns), ins(1:mns) ) ! note that the field periodicity factor is included in ins;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

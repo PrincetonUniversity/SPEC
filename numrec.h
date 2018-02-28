@@ -107,34 +107,34 @@ subroutine tfft( Nt, Nz, ijreal, ijimag, mn, im, in, efmn, ofmn, cfmn, sfmn, ifa
 
   intrinsic aimag
   
-  INTEGER :: Nt, Nz, mn, im(mn), in(mn), Ntz, imn, ifail, mm, nn
+  INTEGER :: Nt, Nz, mn, im(1:mn), in(1:mn), Ntz, imn, ifail, mm, nn
   REAL    :: ijreal(1:Nt*Nz), ijimag(1:Nt*Nz), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn)
   
-  LOGICAL :: check=.false.
+  LOGICAL :: Lcheck = .false.
   INTEGER :: jj, kk
   REAL    :: jireal(1:Nt*Nz), jiimag(1:Nt*Nz), arg, ca, sa
 
-  if( check ) then ; jireal=ijreal ; jiimag=ijimag
+  if( Lcheck ) then ; jireal = ijreal ; jiimag = ijimag
   endif
 
   Ntz = Nt * Nz
 
   !Copy real arrays to complex
-  do jj=1,Nz
-    cplxin(:,jj) = CMPLX(ijreal((jj-1)*Nt+1:jj*Nt), ijimag((jj-1)*Nt+1:jj*Nt),KIND=C_DOUBLE_COMPLEX)
+  do jj = 1, Nz
+    cplxin(:,jj) = CMPLX( ijreal((jj-1)*Nt+1:jj*Nt), ijimag((jj-1)*Nt+1:jj*Nt), KIND=C_DOUBLE_COMPLEX )
   enddo
 
-  call fftw_execute_dft(planf, cplxin, cplxout) !Forward transform
+  call fftw_execute_dft( planf, cplxin, cplxout ) !Forward transform
 
   !Copy complex result back to real arrays, normalize
-  do jj=1,Nz
-    ijreal((jj-1)*Nt+1:jj*Nt) = real(cplxout(:,jj),KIND=C_DOUBLE_COMPLEX)/Ntz
+  do jj = 1, Nz
+    ijreal((jj-1)*Nt+1:jj*Nt) =  real(cplxout(:,jj),KIND=C_DOUBLE_COMPLEX)/Ntz
     ijimag((jj-1)*Nt+1:jj*Nt) = aimag(cplxout(:,jj))/Ntz
   enddo
   
   cfmn=zero ; sfmn=zero ; efmn=zero ; ofmn=zero
   
-  do imn = 1,mn ; mm = im(imn) ; nn = in(imn) / Nfp
+  do imn = 1, mn ; mm = im(imn) ; nn = in(imn) / Nfp
    
    if    ( mm.gt.0 .and. nn.gt.0 ) then
     
@@ -175,22 +175,22 @@ subroutine tfft( Nt, Nz, ijreal, ijimag, mn, im, in, efmn, ofmn, cfmn, sfmn, ifa
    
   enddo
 
-  if( .not.check ) return
+  if( .not.Lcheck ) return
   
-  ijreal(1:Ntz)=zero ; ijimag(1:Ntz)=zero
+  ijreal(1:Ntz) = zero ; ijimag(1:Ntz) = zero
   
-  do jj=0,Nt-1
-   do kk=0,Nz-1
-    do imn=1,mn ; arg=im(imn)*jj*pi2/Nt-in(imn)*kk*pi2nfp/Nz ; ca=cos(arg) ; sa=sin(arg)
+  do jj = 0, Nt-1
+   do kk = 0, Nz-1
+    do imn =1, mn ; arg = im(imn) * jj *pi2 / Nt - in(imn) * kk * pi2nfp / Nz ; ca = cos(arg) ; sa = sin(arg)
      
-     ijreal(1+jj+kk*Nt) = ijreal(1+jj+kk*Nt) + efmn(imn)*ca + ofmn(imn)*sa
-     ijimag(1+jj+kk*Nt) = ijimag(1+jj+kk*Nt) + cfmn(imn)*ca + sfmn(imn)*sa
+     ijreal(1+jj+kk*Nt) = ijreal(1+jj+kk*Nt) + efmn(imn) * ca + ofmn(imn) * sa
+     ijimag(1+jj+kk*Nt) = ijimag(1+jj+kk*Nt) + cfmn(imn) * ca + sfmn(imn) * sa
      
     enddo
    enddo
   enddo
   
-  write(*,'("tfft : Fourier reconstruction error = "2es15.5)')sqrt(sum((ijreal-jireal)**2)/Ntz),sqrt(sum((ijimag-jiimag)**2)/Ntz)
+  write(*,'("tfft : Fourier reconstruction error = "2es15.5)') sqrt(sum((ijreal-jireal)**2)/Ntz), sqrt(sum((ijimag-jiimag)**2)/Ntz)
 
   return
 
@@ -283,6 +283,75 @@ subroutine invfft( mn, im, in, efmn, ofmn, cfmn, sfmn, Nt, Nz, ijreal, ijimag )
   return
 
 end subroutine invfft
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+!latex \subsection{\type{gauleg}}
+
+!latex \begin{enumerate}
+
+!latex \item Compute Gaussian integration weights and abscissae.
+
+!latex \item From Numerical Recipes.
+
+!latex \end{enumerate}
+
+subroutine gauleg( n, weight, abscis, ifail )
+  
+  use constants, only : zero, one, two, pi
+  
+  implicit none
+  
+  intrinsic abs, cos, epsilon
+  
+  INTEGER,            intent(in)  :: n
+  REAL, dimension(n), intent(out) :: weight, abscis
+  INTEGER,            intent(out) :: ifail
+
+  INTEGER, parameter :: maxiter=16
+  INTEGER            :: m, j, i, irefl, iter
+  REAL               :: z1,z,pp,p3,p2,p1
+  REAL, parameter    :: eps = epsilon(z)
+
+  !Error checking
+  if( n < 1 ) then ; ifail = 2 ;  return
+  endif
+
+  m = (n + 1)/2  !Roots are symmetric in interval, so we only need half
+  do i=1,m       !Loop over desired roots
+     irefl = n + 1 - i
+     if (i .ne. irefl) then
+        z = cos(pi*(i - 0.25)/(n + 0.5))  ! Approximate ith root
+     else        !For an odd number of abscissae, the center must be at zero by symmetry.
+        z = 0.0
+     endif
+
+     !Refine by Newton method
+     do iter=1,maxiter
+        p1 = one;  p2 = zero           ! Initialize recurrence relation
+
+        do j=1,n  !Recurrence relation to get P(x)
+           p3 = p2;  p2 = p1
+           p1 = ((two*j - one)*z*p2 - (j - one)*p3)/j
+        enddo !j
+
+        pp = n*(z*p1 - p2)/(z*z - one) !Derivative of P(x)
+	z1 = z;  z = z1 - p1/pp        !Newton iteration
+        if (abs(z - z1) .le. eps) exit !Convergence test
+     enddo !iter
+     if (iter > maxiter) then
+        ifail = 1;  return
+     endif
+
+     abscis(i) = -z;  abscis(irefl) = z
+     weight(i) = two/((one - z*z)*pp*pp)
+     weight(irefl) = weight(i)
+  enddo !i
+
+  ifail = 0
+end subroutine gauleg
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

@@ -33,7 +33,7 @@ subroutine preset
 
   LOCALS
   
-  INTEGER   :: innout, idof, jk, ll, ii, ifail, ideriv, vvol, mi, ni, mj, nj, mk, nk, mimj, ninj, mkmj, nknj, jj, kk, lvol
+  INTEGER   :: innout, idof, jk, ll, ii, ifail, ideriv, vvol, mi, ni, mj, nj, mk, nk, mimj, ninj, mkmj, nknj, jj, kk, lvol, mm, nn, imn
   INTEGER   :: lquad, igauleg, maxIquad, Mrad, jquad, Lcurvature
   REAL      :: teta, zeta, arg, lss, cszeta(0:1)
   
@@ -815,8 +815,8 @@ subroutine preset
   SALLOCATE( cplxout, (1:Nt,1:Nz), zero )
 
   ! Create and save optimal plans for forward and inverse 2D fast Fourier transforms with FFTW. -JAB; 25 Jul 2017
-  planf = fftw_plan_dft_2d(Nt, Nz, cplxin, cplxout, FFTW_FORWARD,  FFTW_MEASURE + FFTW_DESTROY_INPUT)
-  planb = fftw_plan_dft_2d(Nt, Nz, cplxin, cplxout, FFTW_BACKWARD, FFTW_MEASURE + FFTW_DESTROY_INPUT)
+  planf = fftw_plan_dft_2d( Nt, Nz, cplxin, cplxout, FFTW_FORWARD,  FFTW_MEASURE + FFTW_DESTROY_INPUT )
+  planb = fftw_plan_dft_2d( Nt, Nz, cplxin, cplxout, FFTW_BACKWARD, FFTW_MEASURE + FFTW_DESTROY_INPUT )
 
   SALLOCATE( efmn, (1:mne), zero ) ! Fourier harmonics workspace; 24 Apr 13;
   SALLOCATE( ofmn, (1:mne), zero )
@@ -859,9 +859,48 @@ subroutine preset
    enddo
    
   enddo ! end of do ii; 13 May 13;
-
+  
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
+#ifdef DEBUG
+  
+  if( myid.eq.0 ) then
+   
+   write(ounit,'("preset : ",10x," : checking FFT and inverse FFT ;")') 
+   
+   do imn = 1, mn ; mm = im(imn) ; nn = in(imn) ! in should include the Nfp factor; SRH: 27 Feb 18;
+    
+    ijreal(1:Ntz) = zero ; ijimag(1:Ntz) = zero
+    
+    do kk = 0, Nz-1 ; zeta = kk * pi2nfp / Nz
+     
+     do jj = 0, Nt-1 ; teta = jj * pi2    / Nt ; jk = 1 + jj + kk*Nt
+      
+      ijreal(jk) = cos( mm * teta - nn * zeta ) ; ijimag(jk) = sin( mm * teta - nn * zeta )
+      
+     enddo ! end of do jj; SRH: 27 Feb 18;
+     
+    enddo ! end of do kk; SRH: 27 Feb 18;
+    
+    ifail = 0 !                                                              even        odd         cos         sin
+    call tfft( Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz), mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), ifail )
+    
+    do ii = 1, mn
+     
+     if( abs(efmn(ii))+abs(ofmn(ii))+abs(cfmn(ii))+abs(sfmn(ii)).gt.small ) write(ounit,2000) mm, nn, im(ii), in(ii), efmn(ii), ofmn(ii), cfmn(ii), sfmn(ii)
+     
+2000 format("preset : ",10x," : (",i3,",",i3," ) = (",i3,",",i3," ) : "2f15.5" ; "2f15.5" ;")
+     
+    enddo ! end of do ii; SRH: 27 Feb 18;
+   
+   enddo ! end of do imn; SRH: 27 Feb 18;
+
+  endif ! end of if( myid.eq.0 ) ; SRH: 27 Feb 18;
+
+#endif
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
   if( Igeometry.eq.3 .and. iRbc(1,0).lt.small ) then ! have not yet assigned coordinate axis; see global;readin for user-supplied Rac, Zas, etc. ; 19 Jul 16;
    
    select case( Linitialize )
@@ -1141,62 +1180,3 @@ subroutine preset
 end subroutine preset
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-! I would rather see this as a separate routine; SRH: 27 Feb 18;
-
-! Gauss-Legendre quadrature weights and abscissas over (-1,1), from Numerical Recipes. Added by JAB 28 Jul 17.
-
-subroutine gauleg( n, weight, abscis, ifail )
-  
-  use constants, only : zero, one, two, pi
-  
-  implicit none
-  
-  intrinsic abs, cos, epsilon
-  
-  INTEGER,            intent(in)  :: n
-  REAL, dimension(n), intent(out) :: weight, abscis
-  INTEGER,            intent(out) :: ifail
-
-  INTEGER, parameter :: maxiter=16
-  INTEGER            :: m, j, i, irefl, iter
-  REAL               :: z1,z,pp,p3,p2,p1
-  REAL, parameter    :: eps = epsilon(z)
-
-  !Error checking
-  if( n < 1 ) then ; ifail = 2 ;  return
-  endif
-
-  m = (n + 1)/2  !Roots are symmetric in interval, so we only need half
-  do i=1,m       !Loop over desired roots
-     irefl = n + 1 - i
-     if (i .ne. irefl) then
-        z = cos(pi*(i - 0.25)/(n + 0.5))  ! Approximate ith root
-     else        !For an odd number of abscissae, the center must be at zero by symmetry.
-        z = 0.0
-     endif
-
-     !Refine by Newton method
-     do iter=1,maxiter
-        p1 = one;  p2 = zero           ! Initialize recurrence relation
-
-        do j=1,n  !Recurrence relation to get P(x)
-           p3 = p2;  p2 = p1
-           p1 = ((two*j - one)*z*p2 - (j - one)*p3)/j
-        enddo !j
-
-        pp = n*(z*p1 - p2)/(z*z - one) !Derivative of P(x)
-	z1 = z;  z = z1 - p1/pp        !Newton iteration
-        if (abs(z - z1) .le. eps) exit !Convergence test
-     enddo !iter
-     if (iter > maxiter) then
-        ifail = 1;  return
-     endif
-
-     abscis(i) = -z;  abscis(irefl) = z
-     weight(i) = two/((one - z*z)*pp*pp)
-     weight(irefl) = weight(i)
-  enddo !i
-
-  ifail = 0
-end subroutine gauleg
