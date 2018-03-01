@@ -815,8 +815,8 @@ subroutine preset
   SALLOCATE( cplxout, (1:Nt,1:Nz), zero )
 
   ! Create and save optimal plans for forward and inverse 2D fast Fourier transforms with FFTW. -JAB; 25 Jul 2017
-  planf = fftw_plan_dft_2d( Nt, Nz, cplxin, cplxout, FFTW_FORWARD,  FFTW_MEASURE + FFTW_DESTROY_INPUT )
-  planb = fftw_plan_dft_2d( Nt, Nz, cplxin, cplxout, FFTW_BACKWARD, FFTW_MEASURE + FFTW_DESTROY_INPUT )
+  planf = fftw_plan_dft_2d( Nz, Nt, cplxin, cplxout, FFTW_FORWARD,  FFTW_MEASURE + FFTW_DESTROY_INPUT )
+  planb = fftw_plan_dft_2d( Nz, Nt, cplxin, cplxout, FFTW_BACKWARD, FFTW_MEASURE + FFTW_DESTROY_INPUT )
 
   SALLOCATE( efmn, (1:mne), zero ) ! Fourier harmonics workspace; 24 Apr 13;
   SALLOCATE( ofmn, (1:mne), zero )
