@@ -124,66 +124,34 @@ subroutine tfft( Nt, Nz, ijreal, ijimag, mn, im, in, efmn, ofmn, cfmn, sfmn, ifa
   LOGICAL :: Lcheck = .false.
   INTEGER :: jj, kk
   REAL    :: jireal(1:Nt*Nz), jiimag(1:Nt*Nz), arg, ca, sa
+  COMPLEX(C_DOUBLE_COMPLEX) :: z1, z2, z3
 
   if( Lcheck ) then ; jireal = ijreal ; jiimag = ijimag
   endif
-
-  Ntz = Nt * Nz
 
   do jj = 1, Nz ; cplxin(:,jj) = CMPLX( ijreal((jj-1)*Nt+1:jj*Nt), ijimag((jj-1)*Nt+1:jj*Nt), KIND=C_DOUBLE_COMPLEX )
   enddo
    
   call fftw_execute_dft( planf, cplxin, cplxout ) !Forward transform
+  Ntz = Nt * Nz
+  cplxout = cplxout / Ntz
+  cplxout(1,1) = 0.5*cplxout(1,1)
 
-  do jj = 1, Nz ; ijreal((jj-1)*Nt+1:jj*Nt) =  real(cplxout(:,jj),KIND=C_DOUBLE_COMPLEX)/Ntz
-   ;            ; ijimag((jj-1)*Nt+1:jj*Nt) = aimag(cplxout(:,jj))/Ntz
-  enddo
-  
-  cfmn = zero ; sfmn = zero ; efmn = zero ; ofmn = zero
-  
-  do imn = 1, mn ; mm = im(imn) ; nn = in(imn) / Nfp
-   
-   if    ( mm.gt.0 .and. nn.gt.0 ) then
-    
-    efmn(imn) =   ijreal(1+(Nt-mm)+(   nn)*Nt) + ijreal(1+(   mm)+(Nz-nn)*Nt)
-    ofmn(imn) =   ijimag(1+(Nt-mm)+(   nn)*Nt) - ijimag(1+(   mm)+(Nz-nn)*Nt)
-    cfmn(imn) =   ijimag(1+(Nt-mm)+(   nn)*Nt) + ijimag(1+(   mm)+(Nz-nn)*Nt)
-    sfmn(imn) = - ijreal(1+(Nt-mm)+(   nn)*Nt) + ijreal(1+(   mm)+(Nz-nn)*Nt) 
-    
-   elseif( mm.gt.0 .and. nn.eq.0 ) then
-    
-    efmn(imn) =   ijreal(1+(Nt-mm)           ) + ijreal(1+(   mm)           )
-    ofmn(imn) =   ijimag(1+(Nt-mm)           ) - ijimag(1+(   mm)           )
-    cfmn(imn) =   ijimag(1+(Nt-mm)           ) + ijimag(1+(   mm)           )
-    sfmn(imn) = - ijreal(1+(Nt-mm)           ) + ijreal(1+(   mm)           )
-    
-   elseif( mm.gt.0 .and. nn.lt.0 ) then
-    
-    efmn(imn) =   ijreal(1+(Nt-mm)+(Nz+nn)*Nt) + ijreal(1+(   mm)+(  -nn)*Nt)
-    ofmn(imn) =   ijimag(1+(Nt-mm)+(Nz+nn)*Nt) - ijimag(1+(   mm)+(  -nn)*Nt)
-    cfmn(imn) =   ijimag(1+(Nt-mm)+(Nz+nn)*Nt) + ijimag(1+(   mm)+(  -nn)*Nt)
-    sfmn(imn) = - ijreal(1+(Nt-mm)+(Nz+nn)*Nt) + ijreal(1+(   mm)+(  -nn)*Nt) 
-    
-   elseif( mm.eq.0 .and. nn.gt.0 ) then
-    
-    efmn(imn) =   ijreal(1+        (Nz-nn)*Nt) + ijreal(1+        (   nn)*Nt)
-    ofmn(imn) = - ijimag(1+        (Nz-nn)*Nt) + ijimag(1+        (   nn)*Nt)
-    cfmn(imn) =   ijimag(1+        (Nz-nn)*Nt) + ijimag(1+        (   nn)*Nt)
-    sfmn(imn) =   ijreal(1+        (Nz-nn)*Nt) - ijreal(1+        (   nn)*Nt)
-    
-   elseif( mm.eq.0 .and. nn.eq.0 ) then
-    
-    efmn(imn) =   ijreal(1)
-    ofmn(imn) =     zero
-    cfmn(imn) =   ijimag(1)
-    sfmn(imn) =     zero
-    
-   endif
-   
+  do imn = 1, mn
+   mm = im(imn);  nn = in(imn) / Nfp
+
+   z1 = cplxout(1 + MOD(Nt - mm, Nt), 1 + MOD(Nz + nn, Nz))
+   z2 = cplxout(1 +          mm,      1 + MOD(Nz - nn, Nz))
+
+   z3 = z1 + z2
+   efmn(imn) =  real(z3);  cfmn(imn) = aimag(z3)
+
+   z3 = z1 - z2
+   ofmn(imn) = aimag(z3);  sfmn(imn) = -real(z3)
   enddo
 
   if( .not.Lcheck ) return
-  
+
   ijreal(1:Ntz) = zero ; ijimag(1:Ntz) = zero
   
   do jj = 0, Nt-1

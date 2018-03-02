@@ -35,7 +35,7 @@
  RFLAGS=-mcmodel=large -O3 -m64 -unroll0 -fno-alias -ip -traceback
  DFLAGS=-check bounds -check format -check output_conversion -check pointers -check uninit -debug full -D DEBUG
  #Note: on the PPPL clusters, use module lapack/3.5.0rhel6 only
- NAG=-L$(LAPACKHOME) -llapack -L$(BLASHOME) -lrefblas -lgfortran
+ NAG=-L$(LAPACKHOME) -llapack -lblas -L$(BLASHOME) -lrefblas -lgfortran
  NETCDF=-L$(NETCDFHOME)/lib -lnetcdf
  HDF5compile=-I$(HDF5_HOME)/include
  HDF5link=-L$(HDF5_HOME)/lib -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lpthread -lz -lm
