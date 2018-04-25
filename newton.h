@@ -470,7 +470,7 @@ subroutine fcn1( NGdof, xx, fvec, irevcm )
     
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
     
-   case( 1 ) ! before re-entry to C05NDF / C05PDF, force must contain the function values;
+   case( 1:2 ) ! before re-entry to C05NDF / C05PDF, force must contain the function values;
     
     nFcalls = nFcalls + 1
     
