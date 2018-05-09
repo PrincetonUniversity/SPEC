@@ -1881,15 +1881,16 @@ subroutine readin
 !latex \subsubsection{\type{halfmm(1:mn}, regumm(1:mn) : regularization factor}
 !latex \begin{enumerate}
 !latex \item The ``regularization'' factor, \type{halfmm(1:mn)} = \type{im(1:mn)} * \type{half}, is real.
-!latex \item This is used in \link{lforce}, \link{bfield}, \link{stzxyz}, \link{coords}, 
-!latex                       \link{jo00aa}, \link{ma00aa}, \link{sc00aa} and \link{tr00ab}.
+!latex \item This is used in \link{lforce}, \link{bfield}, \link{stzxyz}, \link{coords}, \link{jo00aa}, \link{ma00aa}, \link{sc00aa} and \link{tr00ab}.
 !latex \end{enumerate}
   
   SALLOCATE( halfmm, (1:mn), im(1:mn) * half )
   SALLOCATE( regumm, (1:mn), im(1:mn) * half )
   
   if( Mregular.ge.2 ) then
+
    where( im.gt.Mregular ) regumm = Mregular * half
+
   endif
   
 ! if( myid.eq.0 ) write(ounit,'("global : " 10x " : "i3") im ="i3" , halfmm ="f5.1" , regum ="f5.1" ;")') ( ii, im(ii), halfmm(ii), regumm(ii), ii = 1, mn )

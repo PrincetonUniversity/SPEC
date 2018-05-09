@@ -864,7 +864,7 @@ subroutine preset
   
 #ifdef DEBUG
   
-  if( myid.eq.0 ) then
+  if( Wpreset .and. myid.eq.0 ) then
    
    write(ounit,'("preset : ",10x," : checking FFT and inverse FFT ;")') 
    
@@ -922,10 +922,6 @@ subroutine preset
 
   endif ! end of if( Igeometry.eq.3 ) then ; 19 Jul 16;
   
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-! Rscale = one ! debugging; 03 Nov 16;
-
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !latex \subsubsection{\type{psifactor(1:mn,1:Mvol)} : coordinate ``pre-conditioning'' factor}
