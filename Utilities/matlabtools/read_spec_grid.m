@@ -1,6 +1,6 @@
 function gdata = read_spec_grid(filename)
 
-% Reads coordinate grid harmonics using output from SPEC 
+% Reads coordinate grid data (grid points, jacobian, cartesian components of B, etc.) 
 %
 % INPUT
 % - filename : path to the hdf5 output file (e.g. 'testcase.sp.h5')
@@ -63,12 +63,16 @@ try
    fread(fid,1,spacer_format);
    data.Lrad(i) = Lrad;
    if(i==1)
-    % Allocate data set for grid harmonics
+    % Allocate data sets
     data.Rij = zeros(nvol,Ntz,Lrad+1);
     data.Zij = zeros(nvol,Ntz,Lrad+1);
+    data.sg  = zeros(nvol,Ntz,Lrad+1);
+    data.BR  = zeros(nvol,Ntz,Lrad+1);
+    data.Bp  = zeros(nvol,Ntz,Lrad+1);
+    data.BZ  = zeros(nvol,Ntz,Lrad+1);
    end
    for l=1:Lrad+1    
-    % Get grid harmonics
+    % Get grid points
     fread(fid,1,spacer_format);
     Rout = fread(fid,Ntz,float_format);
     fread(fid,1,spacer_format);
@@ -90,6 +94,10 @@ try
     fread(fid,1,spacer_format);
     jireal = fread(fid,Ntz,float_format);
     fread(fid,1,spacer_format);
+    data.sg(i,:,l) = sg;
+    data.BR(i,:,l) = ijreal;
+    data.Bp(i,:,l) = ijimag;
+    data.BZ(i,:,l) = jireal;
    end
   end
   
