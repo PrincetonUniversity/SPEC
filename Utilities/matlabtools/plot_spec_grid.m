@@ -14,7 +14,7 @@ if(newfig==1)
 figure
 end
 
-nvol   = data.Nvol;
+nvol   = data.Mvol;
 
 Lrad   = data.Lrad;
 Nt     = data.Nt;
