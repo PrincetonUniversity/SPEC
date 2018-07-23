@@ -149,7 +149,9 @@ subroutine preset
 !latex \end{enumerate}
   
   SALLOCATE( sweight, (1:Mvol), zero )
-  sweight(1:Mvol) = upsilon * tflux(1:Mvol)**wpoloidal
+ !sweight(1:Mvol) = upsilon * tflux(1:Mvol)**wpoloidal ! toroidal flux in vacuum region is not constant; 11 July 18;
+  do vvol = 1, Mvol ; sweight(vvol) = upsilon * (vvol*one/Nvol)**wpoloidal ! 11 July 18;
+  enddo
   
 #ifdef DEBUG
   write(ounit,'("preset : ",10x," : sweight=",99(es12.5,",",:))') sweight(1:Mvol)
