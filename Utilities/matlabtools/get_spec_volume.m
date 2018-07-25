@@ -5,6 +5,7 @@ function volume = get_spec_volume(data,lvol,ns,nt,nz)
 %
 % INPUT
 %   -data    : must be produced by calling e.g. read_spec_grid(filename)
+%   -lvol    : volume number
 %   -ns      : is the resolution in the s-coordinate     (e.g. 64)
 %   -nt      : is the resolution in the theta-coordinate (e.g. 64)
 %   -nz      : is the resolution in the zeta-coordinate  (e.g. 64)
