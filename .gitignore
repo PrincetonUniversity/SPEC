@@ -3,6 +3,10 @@
 *.mod
 *.F90
 *~
+*.date
+*.dvi
+*.out
+*.toc
 xspec
 dspec
 
