@@ -142,14 +142,16 @@ subroutine preset
 
 !latex \begin{enumerate}
 !latex \item the ``star-like'' poloidal angle constraint weights (only required for toroidal geometry, i.e. \type{Igeometry=3}) are given by
-!latex       \be \type{sweight}_v \equiv \inputvar{upsilon} \times \psi_{v}^w,
+!latex       \be \type{sweight}_v \equiv \inputvar{upsilon} \times (l_v / N_{vol})^w,
 !latex       \ee
-!latex       where $\psi_v \equiv $ \type{tflux(v)} is the normalized toroidal flux enclosed by the $v$-th interface,
+!latex       where $l_v$ is the volume number,
 !latex       and $w \equiv $ \inputvar{wpoloidal}.
 !latex \end{enumerate}
   
   SALLOCATE( sweight, (1:Mvol), zero )
-  sweight(1:Mvol) = upsilon * tflux(1:Mvol)**wpoloidal
+ !sweight(1:Mvol) = upsilon * tflux(1:Mvol)**wpoloidal ! toroidal flux in vacuum region is not constant; 11 July 18;
+  do vvol = 1, Mvol ; sweight(vvol) = upsilon * (vvol*one/Nvol)**wpoloidal ! 11 July 18;
+  enddo
   
 #ifdef DEBUG
   write(ounit,'("preset : ",10x," : sweight=",99(es12.5,",",:))') sweight(1:Mvol)
