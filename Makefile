@@ -35,7 +35,7 @@
  RFLAGS=-mcmodel=large -O3 -m64 -unroll0 -fno-alias -ip -traceback
  DFLAGS=-check bounds -check format -check output_conversion -check pointers -check uninit -debug full -D DEBUG
  #Note: on the PPPL clusters, use module lapack/3.5.0rhel6 only
- NAG=-L$(LAPACKHOME) -llapack -lblas -L$(BLASHOME) -lrefblas -lgfortran
+ NAG=-L$(LAPACKHOME) -llapack -lblas -L$(BLASHOME) -lgfortran #-lrefblas -lgfortran
  NETCDF=-L$(NETCDFHOME)/lib -lnetcdf
  HDF5compile=-I$(HDF5_HOME)/include
  HDF5link=-L$(HDF5_HOME)/lib -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lpthread -lz -lm
@@ -307,6 +307,26 @@ ifeq ($(USER),shudson)
 	                            >> $(WEBDIR)/Spec/subroutines.html ; \
 	                          done
 	echo "</table></body></html>" >> $(WEBDIR)/Spec/subroutines.html
+else
+	mkdir -p ../tmp/
+	cat head.html > ../tmp/subroutines.html
+	for file in $(HFILES) ; do cp $${file}.pdf ../tmp/. ; grep "!title" $${file}.h | cut -c 7- | \
+	                           awk -v file=$${file} -F!\
+	                            '{print "<tr><td><a href="file".pdf\>"file"</a></td><td>"$$1"</td><td>"$$2"</td></tr>"}' \
+	                            >> ../tmp/subroutines.html ; \
+	                          done
+	echo "</table></body></html>" >> ../tmp/subroutines.html
+	git stash
+	git checkout gh-pages
+	git pull origin gh-pages
+	mv ../tmp/*.pdf .
+	mv ../tmp/subroutines.html .
+	git add *.pdf
+	git add subroutines.html
+	git commit -am "update documentations"
+	git push origin gh-pages
+	git checkout master
+	git stash pop
 endif
 
 ###############################################################################################################################################################
