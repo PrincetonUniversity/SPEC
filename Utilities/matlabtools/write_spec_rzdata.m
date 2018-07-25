@@ -1,4 +1,4 @@
-function write_rzdata(R,Z,outfname)
+function write_spec_rzdata(R,Z,outfname)
 
 % Writes text file with R,Z data as two columns 
 %
