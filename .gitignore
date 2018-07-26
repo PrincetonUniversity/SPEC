@@ -3,13 +3,13 @@
 *.mod
 *.F90
 *~
-*.pdf
 xspec
 dspec
 
 #pdfs related
+/docs/
+*.pdf
 *.dvi
 *.toc
 *.out
 .*.date
-subroutines.html
