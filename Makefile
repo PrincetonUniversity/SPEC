@@ -31,6 +31,12 @@
  FC=mpif90
  
  # Intel Defaults
+ # At PPPL
+ # module load intel/2017
+ # module load hdf5
+ # module load openmpi
+ # module load fftw
+ # module load lapack/3.5.0rhel6
  CFLAGS=-r8
  RFLAGS=-mcmodel=large -O3 -m64 -unroll0 -fno-alias -ip -traceback
  DFLAGS=-check bounds -check format -check output_conversion -check pointers -check uninit -debug full -D DEBUG
@@ -283,51 +289,53 @@ xspech_d.o: xspech.h global_d.o $(addsuffix _d.o,$(files)) $(MACROS) Makefile
 ###############################################################################################################################################################
 
 clean:
-	rm -f *.o ; rm -f *.mod ; rm -f *.F90 ; rm -f .*.h ; rm -f *.pdf ; rm -f *.dvi ; rm -f *.out ; rm -f *.bbl ; rm -f *.toc ; rm -f .*.date
+	rm -f *.o ; rm -f *.mod ; rm -f *.F90 ; rm -f .*.h ; rm -f *.pdf ; rm -f *.dvi ; rm -f *.out ; rm -f *.bbl ; rm -f *.toc ; rm -f .*.date ; rm -rf ./docs/
 
 ###############################################################################################################################################################
 
-%.pdf: %.h head.tex end.tex Makefile
+./docs/%.pdf: %.h head.tex end.tex
 	#emacs -r -fn 7x14 -g 160x80+280 $*.h
-	@ls --full-time $*.h | cut -c 35-53 > .$*.date
-	awk -v file=$* -v date=.$*.date 'BEGIN{getline cdate < date ; FS="!latex" ; print "\\input{head} \\code{"file"}"} \
+	mkdir -p ./docs/
+	cd ./docs/ ; \
+	pwd ; \
+	@ls --full-time ../$*.h | cut -c 35-53 > .$*.date ; \
+	awk -v file=$* -v date=.$*.date 'BEGIN{getline cdate < date ; FS="!latex" ; print "\\input{../head} \\code{"file"}"} \
 	{if(NF>1) print $$2} \
-	END{print "\\hrule \\vspace{1mm} \\footnotesize $*.h last modified on "cdate";" ; print "\\input{end}"}' $*.h > $*.tex
-	latex $* ; latex $* ; latex $* ; dvips -P pdf -o $*.ps $*.dvi ; ps2pdf $*.ps
-	rm -f $*.tex $*.aux $*.blg $*.log $*.ps
+	END{print "\\hrule \\vspace{1mm} \\footnotesize $*.h last modified on "cdate";" ; print "\\input{../end}"}' ../$*.h > $*.tex ; \
+	latex $* ; latex $* ; latex $* ; dvips -P pdf -o $*.ps $*.dvi ; ps2pdf $*.ps ; \
+	rm -f $*.tex $*.aux $*.blg $*.log $*.ps 
 
 ###############################################################################################################################################################
 
-pdfs: $(addsuffix .pdf,$(HFILES)) head.html
-ifeq ($(USER),shudson)
-	cat head.html > $(WEBDIR)/Spec/subroutines.html
-	for file in $(HFILES) ; do cp $${file}.pdf $(WEBDIR)/Spec/. ; grep "!title" $${file}.h | cut -c 7- | \
-	                           awk -v file=$${file} -F!\
-	                            '{print "<tr><td><a href="file".pdf\">"file"</a></td><td>"$$1"</td><td>"$$2"</td></tr>"}' \
-	                            >> $(WEBDIR)/Spec/subroutines.html ; \
-	                          done
-	echo "</table></body></html>" >> $(WEBDIR)/Spec/subroutines.html
-else
-	mkdir -p ../tmp/
-	cat head.html > ../tmp/subroutines.html
-	for file in $(HFILES) ; do cp $${file}.pdf ../tmp/. ; grep "!title" $${file}.h | cut -c 7- | \
+pdfs: $(addprefix ./docs/, $(addsuffix .pdf,$(HFILES))) head.html
+	mkdir -p ./docs/
+	cat head.html > ./docs/subroutines.html
+	for file in $(HFILES) ; do grep "!title" $${file}.h | cut -c 7- | \
 	                           awk -v file=$${file} -F!\
 	                            '{print "<tr><td><a href="file".pdf\>"file"</a></td><td>"$$1"</td><td>"$$2"</td></tr>"}' \
-	                            >> ../tmp/subroutines.html ; \
+	                            >> ./docs/subroutines.html ; \
 	                          done
-	echo "</table></body></html>" >> ../tmp/subroutines.html
+	echo "</table></body></html>" >> ./docs/subroutines.html
+	@echo "Please view the pdfs in ./docs/ directory."
+
+publish: $(addprefix ./docs/, $(addsuffix .pdf,$(HFILES))) ./docs/subroutines.html
+# push local documentations online
 	git stash
 	git checkout gh-pages
 	git pull origin gh-pages
-	mv ../tmp/*.pdf .
-	mv ../tmp/subroutines.html .
+	cp ./docs/* .
 	git add *.pdf
 	git add subroutines.html
 	git commit -am "update documentations"
 	git push origin gh-pages
-	git checkout master
-	git stash pop
-endif
+	@echo "--------------------------------------------------------------------"
+	@echo "Published the updated documentations."
+	@echo "You are now in gh-pages branch."
+	@echo "Please checkout back to your working branch by"
+	@echo "$  git checkout <master>"
+	@echo "If you have stashed local changes, you can recover them by "
+	@echo "$ git stash pop "
+	@echo "--------------------------------------------------------------------"
 
 ###############################################################################################################################################################
 
