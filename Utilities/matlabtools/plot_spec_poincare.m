@@ -11,11 +11,7 @@ function plot_spec_poincare(data,nz0,nfp,trjstep,newfig)
 %   -trjstep  : step to skip field-line trajectories when ploting (trjstep=0 means all trajectories are ploted)
 %   -newfig   : opens(=1) or not(=0) a new figure
 %
-%   written by J.Loizu (2015)
-%   upgraded by J.Loizu (02.2017)
-%   upgraded by J.Loizu (05.2017)
-%   upgraded by J.Loizu (07.2017)  % 
-%   upgraded by J.Loizu (02.2018)  % still need to add the non-stellarator-symmetric terms everywhere
+%   originally written by J.Loizu (2015)
 
 
 nptraj   = size(data.R_lines,1);  % # of poincare trajectories (field lines)
@@ -92,8 +88,9 @@ switch nz0
    zeta  = (j-1)*(2*pi/nz)/nfp;
 
    for imn=1:data.mn  % get and plot the boundary  % the data.in values go in steps of nfp
-    Rb = Rb + data.Rbc(imn,end)*cos(double(data.im(imn))*theta-double(data.in(imn))*zeta);
-    Zb = Zb + data.Zbs(imn,end)*sin(double(data.im(imn))*theta-double(data.in(imn))*zeta);
+    alpha = double(data.im(imn))*theta-double(data.in(imn))*zeta;
+    Rb    = Rb + data.Rbc(imn,end)*cos(alpha) + data.Rbs(imn,end)*sin(alpha);
+    Zb    = Zb + data.Zbs(imn,end)*sin(alpha) + data.Zbc(imn,end)*cos(alpha); 
    end
 
    scatter(Rb,Zb,bthick,'*',bcol)
@@ -137,8 +134,9 @@ switch nz0
    zeta  = (ipl(j)-1)*(2*pi/nz)/nfp;
 
    for imn=1:data.mn  % get and plot the boundary
-    Rb = Rb + data.Rbc(imn,end)*cos(double(data.im(imn))*theta-double(data.in(imn))*zeta);
-    Zb = Zb + data.Zbs(imn,end)*sin(double(data.im(imn))*theta-double(data.in(imn))*zeta);
+    alpha = double(data.im(imn))*theta-double(data.in(imn))*zeta;
+    Rb    = Rb + data.Rbc(imn,end)*cos(alpha) + data.Rbs(imn,end)*sin(alpha);
+    Zb    = Zb + data.Zbs(imn,end)*sin(alpha) + data.Zbc(imn,end)*cos(alpha); 
    end
 
    scatter(Rb,Zb,bthick,'*',bcol)
