@@ -70,7 +70,8 @@ program xspech
                         efmn, ofmn, &
                         iBns, iBnc, iVns, iVnc, &
                         Ate, Aze, Ato, Azo, & ! only required for debugging; 09 Mar 17;
-                        nfreeboundaryiterations
+                        nfreeboundaryiterations, &
+                        beltramierror
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -653,6 +654,8 @@ program xspech
    RlBCAST( Bzemn(1:mn,0:1,vvol), mn*2, llmodnp )
    RlBCAST( Btomn(1:mn,0:1,vvol), mn*2, llmodnp )
    RlBCAST( Bzomn(1:mn,0:1,vvol), mn*2, llmodnp )
+
+   RlBCAST( beltramierror(vvol,1:3), 3, llmodnp ) ! this is computed in jo00aa; 21 Aug 18;
    
   enddo ! end of do vvol = 1, Mvol; 01 Jul 14;
 
