@@ -76,7 +76,8 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
                         sg, guvij, Rij, Zij, &
                         Nt, Nz, efmn, ofmn, cfmn, sfmn, &
                         NOTstellsym, &
-                        Lcoordinatesingularity
+                        Lcoordinatesingularity, &
+                        beltramierror  
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -323,6 +324,10 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
   jerror(1:3) = jerror(1:3) / Ntz
    
   cput = GETTIME ; write(ounit,1002) cput-cpus, myid, lvol, Lrad(lvol), jerror(1:3), cput-cpui ! write error to screen;
+
+!latex \item The error is stored into an array called \type{beltramierror} which is then written to the HDF5 file in \link{hdfint}.
+
+  beltramierror(lvol,1:3) = jerror(1:3)   
    
 1002 format("jo00aa : ",f10.2," : myid=",i3," ; lvol =",i3," ; lrad =",i3," ; E^\s="es23.15" , E^\t="es23.15" , E^\z="es23.15" ; time="f8.2"s ;")
   
