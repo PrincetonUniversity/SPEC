@@ -293,6 +293,13 @@ m4_define(HWRITEIV,{! macro expansion of hwriteiv;
     stop "hdfint : error calling h5dwrite_f ;"
    endif
 
+   call h5dclose_f(dset_id, hdfier)    ! terminate dataset;
+   if( hdfier.ne.0 ) then
+    write(0,'("hdfint : "10x" : error calling h5dclose_f ;")')
+    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    stop "hdfint : error calling h5dclose_f ;"
+   endif
+
   endif
 
   ! macro expansion of hwriteiv; end;})m4_dnl ; can put comments here;
@@ -329,6 +336,13 @@ m4_define(HWRITERV,{! macro expansion of hwriterv;
     write(0,'("hdfint : "10x" : error calling h5dwrite_f ;")')
     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
     stop "hdfint : error calling h5dwrite_f ;"
+   endif
+
+   call h5dclose_f(dset_id, hdfier)    ! terminate dataset;
+   if( hdfier.ne.0 ) then
+    write(0,'("hdfint : "10x" : error calling h5dclose_f ;")')
+    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    stop "hdfint : error calling h5dclose_f ;"
    endif
 
   endif
@@ -369,6 +383,13 @@ m4_define(HWRITERA,{! macro expansion of hwritea;
     stop "hdfint : error calling h5dwrite_f ;"
    endif
 
+   call h5dclose_f(dset_id, hdfier)    ! terminate dataset;
+   if( hdfier.ne.0 ) then
+    write(0,'("hdfint : "10x" : error calling h5dclose_f ;")')
+    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    stop "hdfint : error calling h5dclose_f ;"
+   endif
+
   endif
 
   ! macro expansion of hwritea; end;})m4_dnl ; can put comments here;
@@ -405,6 +426,13 @@ m4_define(HWRITERC,{! macro expansion of hwriterc;
     write(0,'("hdfint : "10x" : error calling h5dwrite_f ;")')
     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
     stop "hdfint : error calling h5dwrite_f ;"
+   endif
+
+   call h5dclose_f(dset_id, hdfier)    ! terminate dataset;
+   if( hdfier.ne.0 ) then
+    write(0,'("hdfint : "10x" : error calling h5dclose_f ;")')
+    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    stop "hdfint : error calling h5dclose_f ;"
    endif
 
   endif
