@@ -6,4 +6,5 @@ The .sp file is the input for SPEC and contains the Rwc and Vns coefficients, wh
 
 The solution obtained from SPEC shall be compared to the vacuum field solution obtained from Biot-Savart. One can compare the three components of B at different locations, mod(B) at different locations, Poincare plots, iota profiles, etc.
 
+The two figures show a comparison between SPEC and Biot-Savart soltuions for the iota-profile and Poincare plot of the field lines. SPEc data plotted in black and Biot-Savart data in magenta or green. For the Poincare plot, the two data sets overlap almost perfectly so that to the eye the agreement is exact.
 
