@@ -28,7 +28,8 @@ subroutine hdfint
                         Btemn, Bzemn, Btomn, Bzomn, &
                         iVns, iBns, iVnc, iBnc, &
                         lmns, &
-                        TT
+                        TT, &
+                        beltramierror
   
 #ifdef NOHDF5
 #else
@@ -156,6 +157,11 @@ subroutine hdfint
   HWRITERV( 1, forcetol, forcetol )               
 !latex \type{ForceErr}               & real    & \pb{force-balance error across interfaces} \\
   HWRITERV( 1, ForceErr, ForceErr )              
+
+  if( Lcheck.eq.1 ) then
+!latex \type{beltramierror}          & real    & \pb{error in beltrami field (volume integral)} \\ 
+   HWRITERA( Mvol, 3, beltramierror, beltramierror(1:Mvol,1:3) )  
+  endif
   
   if( allocated(vvolume) ) then ! why is it required to confirm that vvolume has been allocated ; 24 Nov 16;
    

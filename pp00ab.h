@@ -114,7 +114,12 @@ subroutine pp00ab( lvol, sti, Nz, nPpts, poincaredata, fittedtransform, utflag )
    zst = zero ! starting Poincare plane;
    
    call ENVIRN(outch,mchpes,dwarf) ! only dwarf is used to set thres=sqrt(dwarf); thres could be set larger but not smaller
-   thres(1:Node) = sqrt(dwarf); rkmethod = 3; rktask = 'U'; errass = .FALSE. ; hstart = 0.0D0; mesage = .TRUE.
+   thres(1:Node) = sqrt(dwarf); rkmethod = 3; rktask = 'U'; errass = .FALSE. ; hstart = 0.0D0
+#ifdef DEBUG
+   mesage = .TRUE.
+#else
+   mesage = .FALSE.
+#endif
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
