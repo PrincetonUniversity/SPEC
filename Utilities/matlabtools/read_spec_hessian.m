@@ -34,12 +34,11 @@ try
   if(machine_format ~= machform)
    machine_format =  machform;  % update value
   end
-  hessian_file = ['.' filename(1:length(filename)-3) '.GF'];
+  hessian_file = ['.' filename(1:length(filename)-6) '.GF.ma'];
   fid        = fopen(hessian_file,'r',machine_format);
   if (fid > 0)
-    % Read through Nvol, Mpol, Ntor, NGdof
+    % Read through NGdof
     fread(fid,1,spacer_format);
-    fread(fid,3,int_format);         % Nvol, Mpol, Ntor
     ngdof = fread(fid,1,int_format); % NGdof 
     fread(fid,1,spacer_format);  
   else
@@ -66,13 +65,17 @@ catch
    machform     ='a';
    triedallform = 1;
   end
-  
+  if (fid ~= -1)
+   fclose(fid);
+   fid = -1;
+  end  
 end
 
 end
 
-
-fclose(fid);
+if (fid ~= -1) 
+    fclose(fid);
+end
 
 
 %return output
