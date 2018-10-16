@@ -1,0 +1,5 @@
+Free-boundary SPEC can be verified in vacuum against analytical solutions such as the Dommaschk potentials [W. Dommaschk, Computer Physics Communications, Vol 40, 1986]. Here is a SPEC input file that reproduces a 5-field-period stellarator field as produced by Dommaschk potentials. The harmonics of B.n on the computational boundary were calculated from the Dommaschk solution and provided to SPEC. Similarly, the linking currents required to run SPEC free-boundary were provided to SPEC. 
+
+The Poincare and iota comparison plots show excellent agreement between the two solutions (SPEC versus Dommaschk). The files .dat contain the Poincare and iota data from field-line-tracing on the Dommaschk analytical field.
+
+Quantification of the disagreement between the two solutions can be done by comparing mod(B) and defining a metric \chi = (mod(Bspec)-mod(Bdomm))/mod(Bdomm). A scan in SPEC resolution was performed (with Mpol=Ntor=4,6,8,10,12 and Lrad=8) and a plot of \chi versus Mpol=Ntor shows convergence towards machine precision.
