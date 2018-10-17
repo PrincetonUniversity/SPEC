@@ -37,7 +37,7 @@ for i=1:nptraj       %for each field line trajectory
  xlabel('\theta','FontSize',12)
  ylabel('R','FontSize',12)
  xlim([0 2*pi])
- ylim([-0.1 1.1])
+ ylim([-0.1 data.Rbc(1,end)+0.1])
 end
 
 Rb_u  = 0;
