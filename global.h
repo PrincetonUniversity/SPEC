@@ -2127,11 +2127,24 @@ subroutine readin
          iZbc(ii,1:Nvol-1) = zero             ! select relevant harmonics;
         endif
        endif
+        if( Igeometry.eq.3 .and. mm.eq.1 .and. nn.eq.0 .and. iRbc(ii,1).gt.zero .and. iZbs(ii,1).gt.zero ) then 
+        Lchangeangle = .true. ; jj = -1 ;
+        else
+        Lchangeangle = .false. 
+        endif
       endif
      enddo ! end of do ii;
      
     enddo ! end of do;
-    
+
+    do ii = 1, mn  
+     iZbs(ii,1:Nvol-1) = iZbs(ii,1:Nvol-1)*jj
+     if( NOTstellsym ) then
+     iRbs(ii,1:Nvol-1) = iRbs(ii,1:Nvol-1)*jj
+     endif
+    enddo
+
+
     DALLOCATE(RZRZ)
     
    end select ! end select case( Linitialize ); 
