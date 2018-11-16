@@ -2104,28 +2104,36 @@ subroutine readin
    case( :0 ) ! Linitialize=0 ; initial guess for geometry of the interior surfaces is given in the input file;
     
     SALLOCATE( RZRZ, (1:4,1:Nvol), zero ) ! temp array for reading input;
+
+    if( Lchangeangle ) then ; jj = -1  ! change sign of poloidal angle; Loizu Nov 18;
+    else                    ; jj = +1
+    endif
     
     do ! will read in Fourier harmonics until the end of file is reached;
      
-     read(iunit,*,iostat=ios) mm, nn, RZRZ(1:4,1:Nvol)
+     read(iunit,*,iostat=ios) mm, nn, RZRZ(1:4,1:Nvol)   !if change of angle applies, transformation assumes m>=0 and for m=0 only n>=0;
      if( ios.ne.0 ) exit
      
      do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over harmonics within range;
-      if( mm.eq.mi .and. nn*Nfp.eq.ni ) then
-       ; iRbc(ii,1:Nvol-1) = RZRZ(1,1:Nvol-1) ! select relevant harmonics;
-       if( Igeometry.eq.3 ) then
-        ;iZbs(ii,1:Nvol-1) = RZRZ(2,1:Nvol-1) ! select relevant harmonics;
-       endif
+      if( mm.eq.0 .and. mi.eq.0 .and. nn*Nfp.eq.ni ) then
+       iRbc(ii,1:Nvol-1) = RZRZ(1,1:Nvol-1) ! select relevant harmonics;
+       iZbs(ii,1:Nvol-1) = RZRZ(2,1:Nvol-1) ! select relevant harmonics;
        if( NOTstellsym ) then
-        ;iRbs(ii,1:Nvol-1) = RZRZ(3,1:Nvol-1) ! select relevant harmonics;
-        if( Igeometry.eq.3 ) then
-         iZbc(ii,1:Nvol-1) = RZRZ(4,1:Nvol-1) ! select relevant harmonics;
-        endif
+        iRbs(ii,1:Nvol-1) = RZRZ(3,1:Nvol-1) ! select relevant harmonics;
+        iZbc(ii,1:Nvol-1) = RZRZ(4,1:Nvol-1) ! select relevant harmonics;
        else
-        ;iRbs(ii,1:Nvol-1) = zero             ! select relevant harmonics;
-        if( Igeometry.eq.3 ) then
-         iZbc(ii,1:Nvol-1) = zero             ! select relevant harmonics;
-        endif
+        iRbs(ii,1:Nvol-1) = zero             ! select relevant harmonics;
+        iZbc(ii,1:Nvol-1) = zero             ! select relevant harmonics;
+       endif
+      elseif( mm.eq.mi .and. nn*Nfp.eq.jj*ni ) then
+       iRbc(ii,1:Nvol-1) = RZRZ(1,1:Nvol-1) ! select relevant harmonics;
+       iZbs(ii,1:Nvol-1) = jj*RZRZ(2,1:Nvol-1) ! select relevant harmonics;
+       if( NOTstellsym ) then
+        iRbs(ii,1:Nvol-1) = jj*RZRZ(3,1:Nvol-1) ! select relevant harmonics;
+        iZbc(ii,1:Nvol-1) = RZRZ(4,1:Nvol-1) ! select relevant harmonics;
+       else
+        iRbs(ii,1:Nvol-1) = zero             ! select relevant harmonics;
+        iZbc(ii,1:Nvol-1) = zero             ! select relevant harmonics;
        endif
       endif
      enddo ! end of do ii;
