@@ -2116,24 +2116,24 @@ subroutine readin
      
      do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over harmonics within range;
       if( mm.eq.0 .and. mi.eq.0 .and. nn*Nfp.eq.ni ) then
-       ;iRbc(ii,1:Nvol-1) = RZRZ(1,1:Nvol-1) ! select relevant harmonics;
-       ;iZbs(ii,1:Nvol-1) = RZRZ(2,1:Nvol-1) ! select relevant harmonics;
+       iRbc(ii,1:Nvol-1) = RZRZ(1,1:Nvol-1) ! select relevant harmonics;
+       iZbs(ii,1:Nvol-1) = RZRZ(2,1:Nvol-1) ! select relevant harmonics;
        if( NOTstellsym ) then
-        ;iRbs(ii,1:Nvol-1) = RZRZ(3,1:Nvol-1) ! select relevant harmonics;
-        ;iZbc(ii,1:Nvol-1) = RZRZ(4,1:Nvol-1) ! select relevant harmonics;
+        iRbs(ii,1:Nvol-1) = RZRZ(3,1:Nvol-1) ! select relevant harmonics;
+        iZbc(ii,1:Nvol-1) = RZRZ(4,1:Nvol-1) ! select relevant harmonics;
        else
-        ;iRbs(ii,1:Nvol-1) = zero             ! select relevant harmonics;
-        ;iZbc(ii,1:Nvol-1) = zero             ! select relevant harmonics;
+        iRbs(ii,1:Nvol-1) = zero             ! select relevant harmonics;
+        iZbc(ii,1:Nvol-1) = zero             ! select relevant harmonics;
        endif
       elseif( mm.eq.mi .and. nn*Nfp.eq.jj*ni ) then
-       ;iRbc(ii,1:Nvol-1) = RZRZ(1,1:Nvol-1) ! select relevant harmonics;
-       ;iZbs(ii,1:Nvol-1) = jj*RZRZ(2,1:Nvol-1) ! select relevant harmonics;
+       iRbc(ii,1:Nvol-1) = RZRZ(1,1:Nvol-1) ! select relevant harmonics;
+       iZbs(ii,1:Nvol-1) = jj*RZRZ(2,1:Nvol-1) ! select relevant harmonics;
        if( NOTstellsym ) then
-        ;iRbs(ii,1:Nvol-1) = jj*RZRZ(3,1:Nvol-1) ! select relevant harmonics;
-        ;iZbc(ii,1:Nvol-1) = RZRZ(4,1:Nvol-1) ! select relevant harmonics;
+        iRbs(ii,1:Nvol-1) = jj*RZRZ(3,1:Nvol-1) ! select relevant harmonics;
+        iZbc(ii,1:Nvol-1) = RZRZ(4,1:Nvol-1) ! select relevant harmonics;
        else
-        ;iRbs(ii,1:Nvol-1) = zero             ! select relevant harmonics;
-        ;iZbc(ii,1:Nvol-1) = zero             ! select relevant harmonics;
+        iRbs(ii,1:Nvol-1) = zero             ! select relevant harmonics;
+        iZbc(ii,1:Nvol-1) = zero             ! select relevant harmonics;
        endif
       endif
      enddo ! end of do ii;
