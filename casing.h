@@ -381,9 +381,14 @@ subroutine dvcfield( Ndim, tz, Nfun, vcintegrand ) ! differential virtual-casing
      dZ(2) = dZ(2) + mi * (                                                (                 iZbs(ii,Nvol) ) * carg )
      dZ(3) = dZ(3) - ni * (                                                (                 iZbs(ii,Nvol) ) * carg )
      
-     do ll = 0, Lrad(Mvol)
-      gBut = gBut - ( Aze(Mvol,ideriv,ii)%s(ll) * carg                                    ) * TT(ll,0,1) ! contravariant; Jacobian comes later; 
-      gBuz = gBuz + ( Ate(Mvol,ideriv,ii)%s(ll) * carg                                    ) * TT(ll,0,1)
+!     do ll = 0, Lrad(Mvol)
+!      gBut = gBut - ( Aze(Mvol,ideriv,ii)%s(ll) * carg                                    ) * TT(ll,0,1) ! contravariant; Jacobian comes later; 
+!      gBuz = gBuz + ( Ate(Mvol,ideriv,ii)%s(ll) * carg                                    ) * TT(ll,0,1)
+!     enddo
+
+     do ll = 0, Lrad(Nvol)  ! omit the possible current sheet due to a jump in tangential field at the plasma boundary; Loizu Dec 18;
+      gBut = gBut - ( Aze(Nvol,ideriv,ii)%s(ll) * carg                                    ) * TT(ll,1,1) ! contravariant; Jacobian comes later;
+      gBuz = gBuz + ( Ate(Nvol,ideriv,ii)%s(ll) * carg                                    ) * TT(ll,1,1)
      enddo
      
     enddo ! end of do ii = 1, mn ;
