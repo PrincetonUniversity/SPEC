@@ -198,13 +198,13 @@ subroutine casing( teta, zeta, gBn, icasing )
    
    maxpts = 2 * maxpts ; minpts = funcls ; irestart = 1
 
-!   maxsub = ( maxpts - num ) / ( 2 * num ) + 1
+   maxsub = ( maxpts - num ) / ( 2 * num ) + 1
 
-!   Lrwk = maxsub * ( 2 * Ndim + 2 * Nfun + 2 ) + 17 * Nfun + 1
+   Lrwk = maxsub * ( 2 * Ndim + 2 * Nfun + 2 ) + 17 * Nfun + 1
 
-!   DALLOCATE(rwk)
+   DALLOCATE(rwk)
 
-!   SALLOCATE(rwk, (1:Lrwk), zero)
+   SALLOCATE(rwk, (1:Lrwk), zero)
 
 
   enddo ! end of virtual casing accuracy infinite-do-loop; 10 Apr 13;
