@@ -196,7 +196,7 @@ subroutine casing( teta, zeta, gBn, icasing )
     ;           ; exit
    end select
    
-   maxpts = 2 * maxpts ; minpts = funcls ; irestart = 1
+   maxpts = 2 * maxpts ; minpts = funcls ; irestart = 0
 
    maxsub = ( maxpts - num ) / ( 2 * num ) + 1
 
