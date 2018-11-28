@@ -1,8 +1,7 @@
-function [Br, Bz] = field( R0, I, mu0, R, Z )
+function [Br, Bz] = field( R0, mu0I, R, Z )
 %Calculate the field by a current carrying wire
 % R0    - major radius of the wire
-% I     - current of the wire
-% mu0   - mu0
+% mu0I  - mu0 * current of the wire
 % R     - R of the measurement point
 % Z     - Z of the measurement point
 
@@ -16,8 +15,8 @@ ind2 = 1 ./((R-R0*cos(t)).^2 + (R0 * sin(t)).^2 + Z^2).^(3/2);
 int1 = trapz(t, ind1);
 int2 = trapz(t, ind2);
 
-Br = R0 * Z * int1 * I * mu0 / 4 / pi;
-Bz = R0 * (R0 * int2 - R * int1) * I * mu0 / 4 / pi;
+Br = R0 * Z * int1 * mu0I / 4 / pi;
+Bz = R0 * (R0 * int2 - R * int1) * mu0I / 4 / pi;
 
 end
 

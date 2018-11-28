@@ -1,11 +1,10 @@
-function [ theta, bn_raw ] = bn( Rbc, Zbs, n, R0, I, mu0 )
+function [ theta, bn_raw ] = bn( Rbc, Zbs, n, R0, mu0I )
 % calculate the Fouier transform of Bn at given boundary
 % Rbc  - R harmonics of theta
 % Zbs  - Z harmonics of theta
-% n - number of points
+% n    - number of points
 % R0   - major radius of the wire
-% I    - current
-% mu0  - mu0
+% mu0I - mu0*current
 
 nfft = n;
 
@@ -26,14 +25,14 @@ for i = 1: numel(Rbc)
 end
 
 for i = 1: nfft
-    [Br, Bz] = field( R0, I, mu0, Rij(i), Zij(i) );
+    [Br, Bz] = field( R0, mu0I, Rij(i), Zij(i) );
     %dr = Rij(i+1) - Rij(i);
     %dz = Zij(i+1) - Zij(i);
     dr = dRij(i);
     dz = dZij(i);
-    dd = sqrt(dr^2 + dz^2);
-    nr = dz / dd;
-    nz = -dr / dd;
+    %dd = sqrt(dr^2 + dz^2);
+    nr = dz*Rij(i); %/ dd;
+    nz = -dr*Rij(i); %/ dd;
     bn_raw(i) = Br*nr + Bz * nz;
 end
 
