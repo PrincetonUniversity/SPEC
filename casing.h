@@ -265,9 +265,9 @@ subroutine dvcfield( Ndim, tz, Nfun, vcintegrand ) ! differential virtual-casing
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  use constants, only : zero, half, one, three
+  use constants, only : zero, half, one, three, four
   
-  use numerical, only :
+  use numerical, only : small
   
   use fileunits, only : ounit, vunit
   
@@ -381,12 +381,23 @@ subroutine dvcfield( Ndim, tz, Nfun, vcintegrand ) ! differential virtual-casing
      arg = mi * teta - ni * zeta ; carg = cos(arg) ; sarg = sin(arg)
      
      dR(0) = dR(0) +          (                   iRbc(ii,Nvol) ) * carg                                            
-     dR(1) = dR(1) +      (   (   iRbc(ii,Mvol) - iRbc(ii,Nvol) ) * carg                                            ) * half
+     if (abs(mi) < small) then
+       dR(1) = dR(1) + half * (iRbc(ii,Nvol) - iRbc(ii,Nvol-1)) * carg
+     else
+       dR(1) = dR(1) + mi / four * (iRbc(ii,Nvol) - iRbc(ii,Nvol-1)) * carg
+     end if
+
+     !dR(1) = dR(1) +      (   (   iRbc(ii,Nvol) - iRbc(ii,Nvol-1) ) * carg                                            ) * half
      dR(2) = dR(2) + mi * ( - (                   iRbc(ii,Nvol) ) * sarg                                            )
      dR(3) = dR(3) - ni * ( - (                   iRbc(ii,Nvol) ) * sarg                                            )
      
      dZ(0) = dZ(0) +                                                       (                 iZbs(ii,Nvol) ) * sarg 
-     dZ(1) = dZ(1) +      (                                                ( iZbs(ii,Mvol) - iZbs(ii,Nvol) ) * sarg ) * half
+     if (abs(mi) < small) then
+       dZ(1) = dZ(1) + half * (iZbs(ii,Nvol) - iZbs(ii,Nvol-1)) * sarg
+     else
+       dZ(1) = dZ(1) + mi / four * (iZbs(ii,Nvol) - iZbs(ii,Nvol-1)) * sarg
+     end if
+     !dZ(1) = dZ(1) +      (                                                ( iZbs(ii,Nvol) - iZbs(ii,Nvol-1) ) * sarg ) * half
      dZ(2) = dZ(2) + mi * (                                                (                 iZbs(ii,Nvol) ) * carg )
      dZ(3) = dZ(3) - ni * (                                                (                 iZbs(ii,Nvol) ) * carg )
      
