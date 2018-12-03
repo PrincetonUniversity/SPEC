@@ -4,9 +4,9 @@ The results from SPEC should be compared to the semi-analytical evaluation perfo
 
 First, one needs to run
 
-[ theta, bn_raw ] = bn( Rbc, Zbs, n, R0, I, mu0 )
+[ theta, bn_raw ] = bn( Rbc, Zbs, n, R0, mu0I )
  
-which computes the normal field. One needs to provide Rbc and Zbs, number of points you want to compute in poloidal direction (typically 1024 or something), the major radius of the wire R0, the total current (the unit your choice), and mu0 (the unit your choice).
+which computes the normal field. One needs to provide Rbc and Zbs, number of points you want to compute in poloidal direction (typically 1024 or something), the major radius of the wire R0, the total current mu0*I (the unit your choice).
  
 Then, one needs to run
  

@@ -141,7 +141,9 @@ subroutine casing( teta, zeta, gBn, icasing )
 
   num = 65 ! see documentation for dcuhre;
 
-  maxpts = max( minpts, 3 * num )
+  ! maxpts = max( minpts, 3 * num )
+
+  maxpts = 16777216 
   
   lfun = Nfun ! number of functions to be integrated; require three components of magnetic field, Bx, By and Bz; and their derivatives wrt x,y,z;
   
