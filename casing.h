@@ -141,9 +141,9 @@ subroutine casing( teta, zeta, gBn, icasing )
 
   num = 65 ! see documentation for dcuhre;
 
-  ! maxpts = max( minpts, 3 * num )
+!  maxpts = max( minpts, 3 * num )
 
-  maxpts = 16777216 
+  maxpts = 16777216
   
   lfun = Nfun ! number of functions to be integrated; require three components of magnetic field, Bx, By and Bz; and their derivatives wrt x,y,z;
   
@@ -267,9 +267,9 @@ subroutine dvcfield( Ndim, tz, Nfun, vcintegrand ) ! differential virtual-casing
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  use constants, only : zero, half, one, three, four
+  use constants, only : zero, half, one, three
   
-  use numerical, only : small
+  use numerical, only :
   
   use fileunits, only : ounit, vunit
   
@@ -383,35 +383,24 @@ subroutine dvcfield( Ndim, tz, Nfun, vcintegrand ) ! differential virtual-casing
      arg = mi * teta - ni * zeta ; carg = cos(arg) ; sarg = sin(arg)
      
      dR(0) = dR(0) +          (                   iRbc(ii,Nvol) ) * carg                                            
-     if (abs(mi) < small) then
-       dR(1) = dR(1) + half * (iRbc(ii,Nvol) - iRbc(ii,Nvol-1)) * carg
-     else
-       dR(1) = dR(1) + mi / four * (iRbc(ii,Nvol) - iRbc(ii,Nvol-1)) * carg
-     end if
-
-     !dR(1) = dR(1) +      (   (   iRbc(ii,Nvol) - iRbc(ii,Nvol-1) ) * carg                                            ) * half
+     dR(1) = dR(1) +      (   (   iRbc(ii,Mvol) - iRbc(ii,Nvol) ) * carg                                            ) * half
      dR(2) = dR(2) + mi * ( - (                   iRbc(ii,Nvol) ) * sarg                                            )
      dR(3) = dR(3) - ni * ( - (                   iRbc(ii,Nvol) ) * sarg                                            )
      
      dZ(0) = dZ(0) +                                                       (                 iZbs(ii,Nvol) ) * sarg 
-     if (abs(mi) < small) then
-       dZ(1) = dZ(1) + half * (iZbs(ii,Nvol) - iZbs(ii,Nvol-1)) * sarg
-     else
-       dZ(1) = dZ(1) + mi / four * (iZbs(ii,Nvol) - iZbs(ii,Nvol-1)) * sarg
-     end if
-     !dZ(1) = dZ(1) +      (                                                ( iZbs(ii,Nvol) - iZbs(ii,Nvol-1) ) * sarg ) * half
+     dZ(1) = dZ(1) +      (                                                ( iZbs(ii,Mvol) - iZbs(ii,Nvol) ) * sarg ) * half
      dZ(2) = dZ(2) + mi * (                                                (                 iZbs(ii,Nvol) ) * carg )
      dZ(3) = dZ(3) - ni * (                                                (                 iZbs(ii,Nvol) ) * carg )
      
-!     do ll = 0, Lrad(Mvol)
-!      gBut = gBut - ( Aze(Mvol,ideriv,ii)%s(ll) * carg                                    ) * TT(ll,0,1) ! contravariant; Jacobian comes later; 
-!      gBuz = gBuz + ( Ate(Mvol,ideriv,ii)%s(ll) * carg                                    ) * TT(ll,0,1)
-!     enddo
-
-     do ll = 0, Lrad(Nvol)  ! omit the possible current sheet due to a jump in tangential field at the plasma boundary; Loizu Dec 18;
-      gBut = gBut - ( Aze(Nvol,ideriv,ii)%s(ll) * carg                                    ) * TT(ll,1,1) ! contravariant; Jacobian comes later;
-      gBuz = gBuz + ( Ate(Nvol,ideriv,ii)%s(ll) * carg                                    ) * TT(ll,1,1)
+     do ll = 0, Lrad(Mvol)
+      gBut = gBut - ( Aze(Mvol,ideriv,ii)%s(ll) * carg                                    ) * TT(ll,0,1) ! contravariant; Jacobian comes later; 
+      gBuz = gBuz + ( Ate(Mvol,ideriv,ii)%s(ll) * carg                                    ) * TT(ll,0,1)
      enddo
+
+!     do ll = 0, Lrad(Nvol)  ! omit the possible current sheet due to a jump in tangential field at the plasma boundary; Loizu Dec 18;
+!      gBut = gBut - ( Aze(Nvol,ideriv,ii)%s(ll) * carg                                    ) * TT(ll,1,1) ! contravariant; Jacobian comes later;
+!      gBuz = gBuz + ( Ate(Nvol,ideriv,ii)%s(ll) * carg                                    ) * TT(ll,1,1)
+!     enddo
      
     enddo ! end of do ii = 1, mn ;
     
