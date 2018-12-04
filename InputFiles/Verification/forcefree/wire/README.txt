@@ -1,6 +1,6 @@
 This is a test case designed to test and verify that the virtual casing routine in SPEC calculates correctly the normal component of the plasma-induced magnetic field on the computational boundary. The plasma volume is small compared to that enclosed by the computational boundary, thereby approximating a current toroidal wire (axisymmetry is imposed).
 
-The results from SPEC should be compared to the semi-analytical evaluation performed with the attached matlab routines, which were written by Zhisong Qu and explained below. Attached is a plot showing how the difference in Bns harmonics between SPEC and the wire-model decreases with some power law as the size of the plasma is decreased.
+The results from SPEC should be compared to the semi-analytical evaluation performed with the attached matlab routines, which were written by Zhisong Qu and explained below. Attached is a plot showing how the difference in Bns harmonics between SPEC and the wire-model decreases with some power law as the size of the plasma is decreased. The error E is the relative error (absolute error is ~1e-5 times smaller).
 
 Using the matlab routines:
 
