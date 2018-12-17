@@ -940,11 +940,21 @@ subroutine preset
 
 !latex \item \type{psifactor} is used in \link{packxi}, \link{dforce} and \link{hesian}.
 
+!latex \item \type{inifactor} is similarly constructed, with
+!latex       \be f_{j,v} \equiv \left\{
+!latex       \begin{array}{lcccccc}\psi_{t,v}^{ 1 /2}&,&\mbox{for $m_j=0$}, \\
+!latex                             \psi_{t,v}^{m_j/2}&,&\mbox{otherwise}.
+!latex       \end{array}\right.
+!latex       \ee
+!latex       and used only for the initialization of the surfaces taking into account axis information if provided.
+
 !latex \end{enumerate}
 
   SALLOCATE( psifactor, (1:mn,1:Mvol), zero )
+  SALLOCATE( inifactor, (1:mn,1:Mvol), zero )
 
   psifactor(1:mn,1:Mvol) = one
+  inifactor(1:mn,1:Mvol) = one
   
   select case( Igeometry )
    
@@ -966,9 +976,10 @@ subroutine preset
    
    do vvol = 1, Nvol
     do ii = 1, mn
-    !if( im(ii).eq.0 ) then ; psifactor(ii,vvol) = Rscale * tflux(vvol)**half       ! 29 Apr 15;
      if( im(ii).eq.0 ) then ; psifactor(ii,vvol) = Rscale * tflux(vvol)**zero       ! 08 Feb 16;
+                            ; inifactor(ii,vvol) = Rscale * tflux(vvol)**half       ! 17 Dec 18;
      else                   ; psifactor(ii,vvol) = Rscale * tflux(vvol)**halfmm(ii) ! 29 Apr 15;
+                            ; inifactor(ii,vvol) = Rscale * tflux(vvol)**halfmm(ii) ! 17 Dec 18
      endif
     enddo
    enddo
@@ -1025,11 +1036,11 @@ subroutine preset
 !    enddo
 !    
     do vvol = 1, lvol-1
-     ;iRbc(1:mn,vvol) = iRbc(1:mn,0) + ( iRbc(1:mn,lvol) - iRbc(1:mn,0) ) * ( psifactor(1:mn,vvol) / Rscale ) / tflux(lvol)**halfmm(1:mn)
-     ;iZbs(2:mn,vvol) = iZbs(2:mn,0) + ( iZbs(2:mn,lvol) - iZbs(2:mn,0) ) * ( psifactor(2:mn,vvol) / Rscale ) / tflux(lvol)**halfmm(2:mn)
+     ;iRbc(1:mn,vvol) = iRbc(1:mn,0) + ( iRbc(1:mn,lvol) - iRbc(1:mn,0) ) * ( inifactor(1:mn,vvol) / Rscale ) / tflux(lvol)**halfmm(1:mn)
+     ;iZbs(2:mn,vvol) = iZbs(2:mn,0) + ( iZbs(2:mn,lvol) - iZbs(2:mn,0) ) * ( inifactor(2:mn,vvol) / Rscale ) / tflux(lvol)**halfmm(2:mn)
      if( NOTstellsym ) then
-      iRbs(2:mn,vvol) = iRbs(2:mn,0) + ( iRbs(2:mn,lvol) - iRbs(2:mn,0) ) * ( psifactor(2:mn,vvol) / Rscale ) / tflux(lvol)**halfmm(2:mn)
-      iZbc(1:mn,vvol) = iZbc(1:mn,0) + ( iZbc(1:mn,lvol) - iZbc(1:mn,0) ) * ( psifactor(1:mn,vvol) / Rscale ) / tflux(lvol)**halfmm(1:mn)
+      iRbs(2:mn,vvol) = iRbs(2:mn,0) + ( iRbs(2:mn,lvol) - iRbs(2:mn,0) ) * ( inifactor(2:mn,vvol) / Rscale ) / tflux(lvol)**halfmm(2:mn)
+      iZbc(1:mn,vvol) = iZbc(1:mn,0) + ( iZbc(1:mn,lvol) - iZbc(1:mn,0) ) * ( inifactor(1:mn,vvol) / Rscale ) / tflux(lvol)**halfmm(1:mn)
      endif
     enddo
     
