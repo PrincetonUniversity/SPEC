@@ -906,7 +906,7 @@ module allglobal
   REAL,    allocatable :: halfmm(:), regumm(:)
 
   REAL                 :: Rscale
-  REAL,    allocatable :: psifactor(:,:)
+  REAL,    allocatable :: psifactor(:,:), inifactor(:,:)
 
   REAL,    allocatable :: BBweight(:) ! weight on force-imbalance harmonics; used in dforce; 
   

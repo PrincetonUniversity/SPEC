@@ -78,7 +78,7 @@ subroutine packxi( NGdof, position, Mvol, mn, iRbc, iZbs, iRbs, iZbc, packorunpa
   
   use fileunits, only : ounit
   
-  use inputlist, only : Wpackxi, Igeometry, Ntor
+  use inputlist, only : Wpackxi, Igeometry, Ntor, Nvol, Lfindzero
   
   use cputiming, only : Tpackxi
   
@@ -86,7 +86,7 @@ subroutine packxi( NGdof, position, Mvol, mn, iRbc, iZbs, iRbs, iZbc, packorunpa
                         YESstellsym, NOTstellsym, &
                         ajk, Nt, Nz, Ntz, iRij, iZij, tRij, tZij, &
                         ijreal, ijimag, jireal, jiimag, efmn, ofmn, cfmn, sfmn, evmn, odmn, comn, simn, &
-                        psifactor, Rscale
+                        psifactor, Rscale 
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -172,7 +172,6 @@ subroutine packxi( NGdof, position, Mvol, mn, iRbc, iZbs, iRbs, iZbc, packorunpa
   endif
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
   select case( packorunpack )
 
   case( 'P' )
@@ -180,11 +179,12 @@ subroutine packxi( NGdof, position, Mvol, mn, iRbc, iZbs, iRbs, iZbc, packorunpa
   case( 'U' )
 
    ivol = 1 ! take care with ivol: this variable name might be a global variable, but here it is local; 19 Jul 16; 
-
-   WCALL( packxi, rzaxis, ( Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), ivol ) ) ! set coordinate axis; 19 Jul 16; 
+ 
+   if( (Nvol .ne. 1) .and. (Lfindzero .ne. 0) ) then  
+    WCALL( packxi, rzaxis, ( Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), ivol ) ) ! set coordinate axis; 19 Jul 16; 
+   endif
 
   end select
-
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   RETURN(packxi)
