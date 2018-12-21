@@ -2,30 +2,30 @@
  Igeometry   =         3
  Istellsym   =         1
  Lfreebound  =         0
- phiedge     =   1.0
+ phiedge     =   1.000000000000000E+00
  curtor      =   0.000000000000000E+00
  curpol      =   0.000000000000000E+00
  gamma       =   0.000000000000000E+00
  Nfp         =         1
  Nvol        =         1
  Mpol        =         6
- Ntor        =         2
- Lrad        =	      10
+ Ntor        =         6
+ Lrad        =                       6
  tflux       =   1.000000000000000E+00
- pflux       =   0.000000000000000E+00  
- helicity    =   8.000000000000000E+02
+ pflux       =   0.000000000000000E+00
+ helicity    =   5.814095240443346E+01
  pscale      =   0.000000000000000E+00
  Ladiabatic  =         0
  pressure    =   1.000000000000000E+00
- adiabatic   =   1.000000000000000E+00 
- mu          =   3.112
+ adiabatic   =   1.000000000000000E+00
+ mu          =   6.365524156607903E+00
  Lconstraint =         0
  mupftol     =   1.000000000000000E-10
  mupfits     =         4
- Rac         =   10.0000000000000000
- Zas         =   0.000000000000000E+00
- Rbc(0,0)    =  10.0000000000000 Zbs(0,0)    =  0.000000000000000
- Rbc(0,1)    =  1.00000000000000 Zbs(0,1)    = -1.000000000000000 
+ Rac         =   1.500000000000000E+00 
+ Zas         =   0.000000000000000E+00 
+Rbc(0,0)    =  1.500000000000000E+00 Zbs(0,0)    =  0.000000000000000E+00 Rbs(0,0)    =  0.000000000000000E+00 Zbc(0,0)    =  0.000000000000000E+00
+Rbc(0,1)    =  5.000000000000000E-01 Zbs(0,1)    = -5.000000000000000E-01 Rbs(0,1)    =  0.000000000000000E+00 Zbc(0,1)    =  0.000000000000000E+00
 /
 &numericlist
  Linitialize =         0
@@ -48,7 +48,7 @@
  Linitgues   =         1
 /
 &globallist
- Lfindzero   =         0
+ Lfindzero   =         1
  escale      =   0.000000000000000E+00
  opsilon     =   1.000000000000000E+00
  pcondense   =   2.000000000000000E+00
@@ -70,8 +70,8 @@
 /
 &diagnosticslist
  odetol      =   1.000000000000000E-07
- nPpts       =      0
- nPtrj       =     -1    -1
+ nPpts       =      100
+ nPtrj       =     -1
  LHevalues   =         F
  LHevectors  =         F
  LHmatrix    =         F
