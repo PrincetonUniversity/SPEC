@@ -39,6 +39,7 @@ subroutine preset
   
   BEGIN(preset)
   
+  call random_seed()
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
  !FATAL( preset, Nfp.eq.0, illegal division ) ! this was checked in global: readin; SRH: 27 Feb 18;
@@ -603,6 +604,13 @@ subroutine preset
      SALLOCATE( Aze(vvol,ideriv,ii)%s, (0:Lrad(vvol)), zero )
      SALLOCATE( Ato(vvol,ideriv,ii)%s, (0:Lrad(vvol)), zero )
      SALLOCATE( Azo(vvol,ideriv,ii)%s, (0:Lrad(vvol)), zero )
+
+     call random_number(Ate(vvol,ideriv,ii)%s)
+     call random_number(Aze(vvol,ideriv,ii)%s)
+     if (.not. YESstellsym) then
+      call random_number(Ato(vvol,ideriv,ii)%s)
+      call random_number(Azo(vvol,ideriv,ii)%s)
+     endif
      
     enddo ! end of do ideriv;
     
@@ -614,7 +622,8 @@ subroutine preset
      SALLOCATE( Azo(vvol,ideriv,ii)%i, (0:Lrad(vvol)), 0 )
     
    enddo ! end of do ii;
-   
+
+
    select case( Linitgues ) ! for iterative solver of the Beltrami fields, an initial guess is required; 11 Mar 16;
    case( 0 )    ; 
    case( 1 )    ; Ate(vvol,0,1)%s(0:1) = dtflux(vvol) * half ! this is an integrable approximation; NEEDS CHECKING; 26 Feb 13;
