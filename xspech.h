@@ -393,7 +393,8 @@ program xspech
   LContinueFreeboundaryIterations = .false.
 
   ;                                                              LupdateBn = .false. ! default;
-  if( Lfreebound.eq.1 .and. Lfindzero.gt.0 ) then
+!  if( Lfreebound.eq.1 .and. Lfindzero.gt.0 ) then 
+  if( Lfreebound.eq.1) then   ! removed Lfindzero check; Loizu Dec 18;
    if( mfreeits.gt.0 .and. nfreeboundaryiterations.lt.mfreeits ) LupdateBn = .true.
    if( mfreeits.lt.0                                           ) LupdateBn = .true.
   endif
@@ -534,7 +535,9 @@ program xspech
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  if( LContinueFreeboundaryIterations .and. Lfindzero.gt.0 .and. nfreeboundaryiterations.lt.mfreeits ) goto 9000 
+!  if( LContinueFreeboundaryIterations .and. Lfindzero.gt.0 .and. nfreeboundaryiterations.lt.mfreeits ) goto 9000 
+  if( LContinueFreeboundaryIterations .and. nfreeboundaryiterations.lt.mfreeits ) goto 9000  ! removed Lfindzero check; Loizu Dec 18;
+
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   

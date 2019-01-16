@@ -141,7 +141,9 @@ subroutine casing( teta, zeta, gBn, icasing )
 
   num = 65 ! see documentation for dcuhre;
 
-  maxpts = max( minpts, 3 * num )
+!  maxpts = max( minpts, 3 * num )
+
+  maxpts = 16777216
   
   lfun = Nfun ! number of functions to be integrated; require three components of magnetic field, Bx, By and Bz; and their derivatives wrt x,y,z;
   
@@ -196,7 +198,16 @@ subroutine casing( teta, zeta, gBn, icasing )
     ;           ; exit
    end select
    
-   maxpts = 2 * maxpts ; minpts = funcls ; irestart = 1
+   maxpts = 2 * maxpts ; minpts = funcls ; irestart = 0
+
+   maxsub = ( maxpts - num ) / ( 2 * num ) + 1
+
+   Lrwk = maxsub * ( 2 * Ndim + 2 * Nfun + 2 ) + 17 * Nfun + 1
+
+   DALLOCATE(rwk)
+
+   SALLOCATE(rwk, (1:Lrwk), zero)
+
 
   enddo ! end of virtual casing accuracy infinite-do-loop; 10 Apr 13;
 
@@ -385,6 +396,11 @@ subroutine dvcfield( Ndim, tz, Nfun, vcintegrand ) ! differential virtual-casing
       gBut = gBut - ( Aze(Mvol,ideriv,ii)%s(ll) * carg                                    ) * TT(ll,0,1) ! contravariant; Jacobian comes later; 
       gBuz = gBuz + ( Ate(Mvol,ideriv,ii)%s(ll) * carg                                    ) * TT(ll,0,1)
      enddo
+
+!     do ll = 0, Lrad(Nvol)  ! omit the possible current sheet due to a jump in tangential field at the plasma boundary; Loizu Dec 18;
+!      gBut = gBut - ( Aze(Nvol,ideriv,ii)%s(ll) * carg                                    ) * TT(ll,1,1) ! contravariant; Jacobian comes later;
+!      gBuz = gBuz + ( Ate(Nvol,ideriv,ii)%s(ll) * carg                                    ) * TT(ll,1,1)
+!     enddo
      
     enddo ! end of do ii = 1, mn ;
     
