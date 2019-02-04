@@ -1,11 +1,10 @@
-function [Br, Bz] = field( R0, mu0I, R, Z )
+function [Br, Bz] = field( R0, mu0I, R, Z, nint )
 %Calculate the field by a current carrying wire
 % R0    - major radius of the wire
 % mu0I  - mu0 * current of the wire
 % R     - R of the measurement point
 % Z     - Z of the measurement point
-
-nint = 10000; % number of integration points
+% nint  - number of integration points
 
 t = linspace(0, 2*pi, nint+1);
 
