@@ -13,3 +13,6 @@ dspec
 *.toc
 *.out
 .*.date
+
+InputFiles/Verification/ideal/screwpinch/.*
+

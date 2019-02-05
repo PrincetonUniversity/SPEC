@@ -1,0 +1,1 @@
+test case in cylindrical geometry in the MHD limit (large number of volumes). Pressure profile defined by p(r) = 5E-2 * (1 + tanh(8 * (0.5 - r))) and rotational transform by iota(r) = (1 + r)^{-1}. The expected MHD limit is obtained by solving the general Screw Pinch equilibrium. 

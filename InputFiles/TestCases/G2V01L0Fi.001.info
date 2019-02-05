@@ -1,0 +1,1 @@
+test case to verify SPEC solution in cylindrical geometry in the fully relaxed limit (only one volume). The expected solution is besselj(1, mu*r) and besselj(0, mu*r) for B_theta and B_z respectively. 
