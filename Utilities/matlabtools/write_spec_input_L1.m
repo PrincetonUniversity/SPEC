@@ -19,7 +19,7 @@ function write_spec_input_L1(template, inputname, Nvol, tfl, pfl, iota, oita, ph
 %
 %   written by A.Baillod (2019)
 
-nlmod    = 12;
+nlmod    = 10;
 
 sref{1}  = ' pressure    =';
 sref{2}  = ' tflux       =';
@@ -29,10 +29,8 @@ sref{5}  = ' Lrad        =';
 sref{6}  = ' nPtrj       =';
 sref{7}  = ' Nvol        =';
 sref{8}  = ' pflux       =';
-sref{9}  = ' helicity    =';
-sref{10} = ' adiabatic   =';
-sref{11} = ' mu          =';
-sref{12} = ' phiedge     =';
+sref{9}  = ' mu          =';
+sref{10} = ' phiedge     =';
 
 snew1    = sref{1};
 snew2    = sref{2};
@@ -43,21 +41,17 @@ snew6    = sref{6};
 snew7    = strcat(sref{7},{'   '},num2str(Nvol), {'   '});
 snew8    = sref{8};
 snew9    = sref{9};
-snew10   = sref{10};
-snew11   = sref{11};
-snew12   = strcat(sref{12}, {'    '}, num2str(phit_edge), {'    '});
+snew10   = strcat(sref{10}, {'    '}, num2str(phit_edge), {'    '});
 
 for i=1:Nvol
-  snew1  = strcat(snew1, {'   '},num2str(pre(i),16), {'   '});
-  snew2  = strcat(snew2, {'   '},num2str(tfl(i),16), {'   '});
+  snew1  = strcat(snew1, {'   '},num2str(pre(i) ,16), {'   '});
+  snew2  = strcat(snew2, {'   '},num2str(tfl(i) ,16), {'   '});
   snew3  = strcat(snew3, {'   '},num2str(iota(i),16), {'   '});
-  snew4  = strcat(snew4, {'   '},num2str(oita(i),16),  {'   '});
+  snew4  = strcat(snew4, {'   '},num2str(oita(i),16), {'   '});
   snew5  = strcat(snew5, {'   '},num2str(lrad(i),16), {'   '});
   snew6  = strcat(snew6, {'   '},num2str(nptr(i),16), {'   '});
-  snew8  = strcat(snew8, {'   '},num2str(pfl(i),16), {'   '});
-  snew9  = strcat(snew9, {'   '},num2str(-0.18,16), {'   '});
-  snew10 = strcat(snew10,{'   '},num2str(0,16), {'   '});
-  snew11 = strcat(snew11,{'   '},num2str(mu(i) ,16), {'   '});  
+  snew8  = strcat(snew8, {'   '},num2str(pfl(i) ,16), {'   '});
+  snew9  = strcat(snew9, {'   '},num2str(mu(i)  ,16), {'   '});  
 end
 
 snew{1}    = snew1{1};
@@ -70,8 +64,6 @@ snew{7}    = snew7{1};
 snew{8}    = snew8{1};
 snew{9}    = snew9{1};
 snew{10}   = snew10{1};
-snew{11}   = snew11{1};
-snew{12}   = snew12{1};
 
 
 
