@@ -16,12 +16,15 @@ im     = h5read(filename,'/im');
 in     = h5read(filename,'/in');
 Rmn    = h5read(filename,'/Rbc');
 
-rmax   = Rmn(1,end);
+data = read_spec_poincare(filename);
+nz     = size(data.R_lines,2);
+
+rmax   = max(max(max(data.R_lines)));
 
 
 % Compute (x,y) coordinates of each KAM surface
 
-zeta   = 0*pi;
+zeta   = (nz0-1)*(2*pi/nz);
 
 nth    = 2048;
 dth    = 2*pi/nth;

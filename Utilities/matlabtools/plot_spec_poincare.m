@@ -9,7 +9,8 @@ function plot_spec_poincare(data,nz0,nfp,trjstep,newfig)
 %   -nz0>0    : shows the nz0 toroidal plane
 %   -nfp      : is the number of field periods
 %   -trjstep  : step to skip field-line trajectories when ploting (trjstep=0 means all trajectories are ploted)
-%   -newfig   : opens(=1) or not(=0) a new figure
+%   -newfig   : opens(=1) or not(=0) a new figure. =2 to overwrite last
+%   plot
 %
 %   originally written by J.Loizu (2015)
 
@@ -51,9 +52,15 @@ else
 end
 
 if(newfig==1)
-figure
+    figure
+    hold on;
+else
+    if newfig~=2
+        hold on;
+    else
+        hold off;
+    end
 end
-hold on
 
 switch nz0
 
@@ -74,11 +81,6 @@ switch nz0
 
    for i=1:nptraj     %for each field line trajectory
     scatter(R(i,:),Z(i,:),10,'.k')
-    axis equal
-    hold on
-    set(gca,'FontSize',12)
-    xlim([0.9*rmin 1.1*rmax])
-    ylim([1.1*zmin 1.1*zmax])
    end
 
    Rb    = 0;    
@@ -94,7 +96,11 @@ switch nz0
    end
 
    scatter(Rb,Zb,bthick,'*',bcol)
-
+   hold on;
+    axis equal
+    set(gca,'FontSize',12)
+    xlim([0.9*rmin 1.1*rmax])
+    ylim([1.1*zmin 1.1*zmax])
   end
 
  case -2            
@@ -120,11 +126,6 @@ switch nz0
 
    for i=1:nptraj     %for each field line trajectory
     scatter(R(i,:),Z(i,:),10,'.k')
-    axis equal
-    hold on
-    set(gca,'FontSize',12)
-    xlim([0.9*rmin 1.1*rmax])
-    ylim([1.1*zmin 1.1*zmax])
    end
 
    Rb    = 0;    
@@ -140,7 +141,11 @@ switch nz0
    end
 
    scatter(Rb,Zb,bthick,'*',bcol)
-
+   hold on;
+    axis equal
+    set(gca,'FontSize',12)
+    xlim([0.9*rmin 1.1*rmax])
+    ylim([1.1*zmin 1.1*zmax])
   end
 
 
@@ -152,21 +157,15 @@ switch nz0
 
   for i=1:1+trjstep:nptraj       %for each field line trajectory 
    scatter(R(i,:),Z(i,:),10,'.',pcol(1+mod(i,2)))
-   axis equal
    hold on
-   set(gca,'FontSize',12)
-   xlabel('R','FontSize',12)
-   ylabel('Z','FontSize',12)
-   xlim([0.9*rmin 1.1*rmax])
-   ylim([1.1*zmin 1.1*zmax])
   end
 
   Rb    = 0;
   Zb    = 0;
   dth   = 2*pi/nth;
   theta = dth:dth:2*pi; 
-  zeta  = (nz0-1)*(2*pi/nz)/nfp;
-
+  zeta  = (nz0-1.0)*(2.0*pi/nz)/double(nfp);
+  
   for imn=1:data.mn     % get and plot the boundary
    alpha = double(data.im(imn))*theta-double(data.in(imn))*zeta;
    Rb    = Rb + data.Rbc(imn,end)*cos(alpha) + data.Rbs(imn,end)*sin(alpha);
@@ -174,7 +173,14 @@ switch nz0
   end
 
   scatter(Rb,Zb,bthick,'*',bcol)
-
+  
+  axis equal
+  hold on;
+  set(gca,'FontSize',12)
+  xlabel('R','FontSize',12)
+  ylabel('Z','FontSize',12)
+  xlim([0.9*rmin 1.1*rmax])
+  ylim([1.1*zmin 1.1*zmax])
 end
 
 

@@ -5,7 +5,7 @@ function plot_spec_kam_slab(filename,zetaov2pi,newfig)
 % INPUT
 %   -filename  : path to the hdf5 output file (e.g. 'testcase.sp.h5')
 %   -nz0       : the toroidal plane to be shown
-%   -newfig    : opens(=1) or not(=0) a new figure
+%   -newfig    : opens(=1) or not(=0) a new figure.
 %
 %   written by J.Loizu (2017)
 
