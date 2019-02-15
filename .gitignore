@@ -1,0 +1,15 @@
+
+*.o
+*.mod
+*.F90
+*~
+xspec
+dspec
+
+#pdfs related
+/docs/
+*.pdf
+*.dvi
+*.toc
+*.out
+.*.date
