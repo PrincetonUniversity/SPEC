@@ -15,7 +15,7 @@ subroutine preset
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  use constants, only : zero
+  use constants, only : zero, mu0
   
   use numerical, only : sqrtmachprec, vsmall, small
   
@@ -135,6 +135,28 @@ subroutine preset
   
   dtflux(1:Mvol) = dtflux(1:Mvol) * phiedge / pi2
   dpflux(1:Mvol) = dpflux(1:Mvol) * phiedge / pi2
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+!latex \subsubsection{\type{mu(1:Mvol)} from Ivolume}
+!latex Only used when $Lconstraint = 3$
+
+if (Lconstraint.EQ.3) then
+
+  mu(1) = mu0 * Ivolume(1) / (tflux(1) * phiedge)
+  
+  do vvol = 2, Mvol
+    mu(vvol) = mu0 * (Ivolume(vvol) - Ivolume(vvol-1)) / ((tflux(vvol) - tflux(vvol-1)) * phiedge)
+  end do
+
+#ifdef DEBUG
+  write(*,*) " "
+  write(ounit,'("preset : ", 10x ," : Ivolume = "257(es11.3",",:))') (Ivolume(vvol), vvol=1, Mvol)
+  write(ounit,'("preset : ", 10x ," : tflux   = "257(es11.3",",:))') (  tflux(vvol), vvol=1, Mvol)
+  write(ounit,'("preset : ", 10x ," : phiedge = "257(es11.3",",:))') phiedge
+  write(ounit,'("preset : ", 10x ," : mu      = "257(es11.3",",:))') (     mu(vvol), vvol=1, Mvol)
+#endif
+end if
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   

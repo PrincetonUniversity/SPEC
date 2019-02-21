@@ -26,7 +26,7 @@
  
  MACROS=macros
  
- CC=intel
+ CC=intel_spc
  # if want to use gfortran; make CC=gfortran xfocus; otherwise using Intel
  FC=mpif90
  
@@ -359,6 +359,5 @@ help:
 	# FLAGS			= $(FLAGS) $(CFLAGS) $(DFLAGS)
 	# NAG			= $(NAG_ROOT)
 	# MACROS		= $(MACROS)
-	#
 
 ###############################################################################################################################################################

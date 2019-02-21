@@ -424,6 +424,9 @@ subroutine ma02aa( lvol, NN )
      ;              else                              ; Nxdof = 2 ! multiplier & poloidal flux ARE varied to match inner/outer transform;
      ;              endif                                         
     case(  2 )    ;                                     Nxdof = 1 ! multiplier                 IS  varied to match             helicity ;
+    case(  3 )    ; if( Lcoordinatesingularity ) then ; Nxdof = 0 ! multiplier & poloidal flux NOT varied                               ;
+     ;              else                              ; Nxdof = 0 !              poloidal flux IS  varied to match       surface current NOT YET IMPLEMENTED;
+     ;              endif
     end select
     
    else ! Lvacuumregion ;
@@ -435,6 +438,7 @@ subroutine ma02aa( lvol, NN )
     case(  0 )    ;                                   ; Nxdof = 2 ! poloidal   & toroidal flux ARE varied to match linking current and plasma current;
     case(  1 )    ;                                   ; Nxdof = 2 ! poloidal   & toroidal flux ARE varied to match linking current and transform-constraint;
     case(  2 )    ;                                   ; Nxdof = 2 ! poloidal   & toroidal flux ARE varied to match linking current and plasma current;
+    case(  3 )    ;                                   ; FATAL(ma02aa, .true., Lconstraint equal three not implemented in free boundary)
     end select
 
    endif ! end of if( Lplasmaregion) ;

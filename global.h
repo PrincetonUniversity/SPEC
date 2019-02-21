@@ -162,6 +162,7 @@ module inputlist
   INTEGER      :: Ladiabatic                 =  0
   REAL         :: adiabatic(1:MNvol+1)       =  0.0
   REAL         ::        mu(1:MNvol+1)       =  0.0
+  REAL         :: Ivolume(1:MNvol+1)         =  0.0
   INTEGER      ::        pl(0:MNvol)         =  0
   INTEGER      ::        ql(0:MNvol)         =  0
   INTEGER      ::        pr(0:MNvol)         =  0
@@ -384,6 +385,7 @@ module inputlist
                 !latex \item[i.] \inputvar{pressure} is only used in calculation of interface force-balance;
                 !latex \ei
  mu          ,& !latex \item \inputvar{mu} : \verb!real(1:MNvol+1)! : helicity-multiplier, $\mu$, in each volume;
+ Ivolume     ,& !latex \item \inputvar{Ivolume} : \verb!real(1:MNvol+1)! : Toroidal current, in each volume (cumulative)
  pl          ,& !latex \item \inputvar{pl = 0} : \verb!integer(0:MNvol)! :
  ql          ,& !latex \item \inputvar{ql = 0} : \verb!integer(0:MNvol)! :
  pr          ,& !latex \item \inputvar{pr = 0} : \verb!integer(0:MNvol)! :
@@ -1296,7 +1298,6 @@ module allglobal
   LOGICAL              :: LBlinear, LBnewton, LBsequad ! controls selection of Beltrami field solver; depends on LBeltrami;
   
   REAL                 :: oRZp(1:3) ! used in mg00aa to determine (\s,\t,\z) given (R,Z,p);
-  
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   type derivative
@@ -1508,7 +1509,7 @@ subroutine readin
 1013 format("readin : ", 10x ," : Nfp=",i3," ; Nvol=",i3," ; Mvol=",i3," ; Mpol=",i3," ; Ntor=",i3," ;")
 1014 format("readin : ", 10x ," : pscale="es13.5" ; Ladiabatic="i2" ; Lconstraint="i3" ; mupf: tol,its="es10.2" ,"i4" ;")
 1015 format("readin : ", 10x ," : Lrad = "257(i2,",",:))
-   
+
 #ifdef DEBUG
    if( Wreadin ) then
     write(ounit,'("readin : ",f10.2," : tflux    ="257(es11.3" ,":))') cput-cpus, (    tflux(vvol), vvol = 1, Mvol )
@@ -1516,6 +1517,7 @@ subroutine readin
     write(ounit,'("readin : ",f10.2," : helicity ="256(es11.3" ,":))') cput-cpus, ( helicity(vvol), vvol = 1, Nvol )
     write(ounit,'("readin : ",f10.2," : pressure ="257(es11.3" ,":))') cput-cpus, ( pressure(vvol), vvol = 1, Mvol )
     write(ounit,'("readin : ",f10.2," : mu       ="257(es11.3" ,":))') cput-cpus, (       mu(vvol), vvol = 1, Mvol )
+    write(ounit,'("readin : ",f10.2," : Ivolume  ="257(es11.3" ,",:))') cput-cpus, (  Ivolume(vvol), vvol = 1, Mvol )
    endif
 #endif
    
@@ -1527,7 +1529,7 @@ subroutine readin
    FATAL( readin, mupftol.le.zero, mupftol is too small )
    FATAL( readin, abs(one+gamma).lt.vsmall, 1+gamma appears in denominator in dforce ) ! Please check this; SRH: 27 Feb 18;
    FATAL( readin, abs(one-gamma).lt.vsmall, 1-gamma appears in denominator in fu00aa ) ! Please check this; SRH: 27 Feb 18;
-   FATAL( readin, Lconstraint.lt.-1 .or. Lconstraint.gt.2, illegal Lconstraint )
+   FATAL( readin, Lconstraint.lt.-1 .or. Lconstraint.gt.3, illegal Lconstraint )
    
    if( Istellsym.eq.1 ) then
     Rbs(-MNtor:MNtor,-MMpol:MMpol) = zero
@@ -1721,6 +1723,7 @@ subroutine readin
   IlBCAST( Ladiabatic ,       1, 0 )
   RlBCAST( adiabatic  , MNvol+1, 0 )
   RlBCAST( mu         , MNvol+1, 0 )
+  RlBCAST( Ivolume    , MNvol+1, 0 )
   IlBCAST( Lconstraint,       1, 0 )
   IlBCAST( pl         , MNvol  , 0 )
   IlBCAST( ql         , MNvol  , 0 )
@@ -2280,6 +2283,7 @@ subroutine wrtend( wflag, iflag, rflag )
   write(iunit,'(" pressure    = ",257es23.15)') pressure(1:Mvol)
   write(iunit,'(" adiabatic   = ",257es23.15)') adiabatic(1:Mvol)
   write(iunit,'(" mu          = ",257es23.15)') mu(1:Mvol)
+  write(iunit,'(" Ivolume     = ",257es23.15)') Ivolume(1:Mvol)
   write(iunit,'(" Lconstraint = ",i9        )') Lconstraint
   write(iunit,'(" pl          = ",257i23    )') pl(0:Mvol)
   write(iunit,'(" ql          = ",257i23    )') ql(0:Mvol)

@@ -494,6 +494,23 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 
    FATAL( mp00ac, .true., where is helicity calculated )
 
+  case(  3 )
+
+   if( Lplasmaregion ) then
+    
+    if( Wtr00ab ) then ! compute rotational transform only for diagnostic purposes;
+     WCALL( mp00ac, tr00ab, ( lvol, mn, lmns, Nt, Nz, iflag, diotadxup(0:1,-1:2,lvol) ) )
+    endif
+    
+    Fdof(1:Ndof       ) = zero ! provide dummy intent out; Lconstraint= 0 indicates no iterations over mu, dpflux are required;
+    Ddof(1:Ndof,1:Ndof) = zero ! provide dummy intent out;   
+    
+   else ! Lvacuumregion
+    
+     FATAL( mp00ac, .true., Lconstraint equal three not implemented in free boundary)
+    
+   endif ! end of if( Lplasmaregion) ;
+
   end select ! end of select case( Lconstraint ) ;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
