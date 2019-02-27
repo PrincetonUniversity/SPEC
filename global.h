@@ -163,6 +163,7 @@ module inputlist
   REAL         :: adiabatic(1:MNvol+1)       =  0.0
   REAL         ::        mu(1:MNvol+1)       =  0.0
   REAL         :: Ivolume(1:MNvol+1)         =  0.0
+  REAL         :: Isurf(1:MNvol)             =  0.0   
   INTEGER      ::        pl(0:MNvol)         =  0
   INTEGER      ::        ql(0:MNvol)         =  0
   INTEGER      ::        pr(0:MNvol)         =  0
@@ -385,7 +386,12 @@ module inputlist
                 !latex \item[i.] \inputvar{pressure} is only used in calculation of interface force-balance;
                 !latex \ei
  mu          ,& !latex \item \inputvar{mu} : \verb!real(1:MNvol+1)! : helicity-multiplier, $\mu$, in each volume;
- Ivolume     ,& !latex \item \inputvar{Ivolume} : \verb!real(1:MNvol+1)! : Toroidal current, in each volume (cumulative)
+ Ivolume     ,& !latex \item \inputvar{Ivolume} : \verb!real(1:MNvol+1)! : Toroidal current, in each volume (cumulative). This is the sum of all non-pressure driven currents;
+                !latex \bi
+                !latex \item Only relevant if \inputvar{Lconstraint=3}. The multipliers are then computed by the relation
+                !latex       $\mu_1 = \mu_0 \frac{I_{volume}(1)}{\psi_{t,1}}$ and $\mu_n = \mu_0 \frac{I_{volume}(n) - I_{volume}(n-1)}{\psi_{t,n}-\psi_{t,n-1}}$;
+                !latex \ei
+ Isurf       ,& !latex \item \inputvar{Isurf} : \verb!real(1:MNvol)! : Toroidal current at each interface (cumulative). This is the sum of all pressure driven currents.;
  pl          ,& !latex \item \inputvar{pl = 0} : \verb!integer(0:MNvol)! :
  ql          ,& !latex \item \inputvar{ql = 0} : \verb!integer(0:MNvol)! :
  pr          ,& !latex \item \inputvar{pr = 0} : \verb!integer(0:MNvol)! :
@@ -881,6 +887,8 @@ module allglobal
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   REAL                 :: ForceErr, Energy
+
+  REAL   , allocatable :: IPDt(:)                    ! Toroidal pressure-driven current
 
   INTEGER              :: Mvol
 
@@ -1517,7 +1525,8 @@ subroutine readin
     write(ounit,'("readin : ",f10.2," : helicity ="256(es11.3" ,":))') cput-cpus, ( helicity(vvol), vvol = 1, Nvol )
     write(ounit,'("readin : ",f10.2," : pressure ="257(es11.3" ,":))') cput-cpus, ( pressure(vvol), vvol = 1, Mvol )
     write(ounit,'("readin : ",f10.2," : mu       ="257(es11.3" ,":))') cput-cpus, (       mu(vvol), vvol = 1, Mvol )
-    write(ounit,'("readin : ",f10.2," : Ivolume  ="257(es11.3" ,",:))') cput-cpus, (  Ivolume(vvol), vvol = 1, Mvol )
+    write(ounit,'("readin : ",f10.2," : Ivolume  ="257(es11.3" ,":))') cput-cpus, (  Ivolume(vvol), vvol = 1, Mvol )
+    write(ounit,'("readin : ",f10.2," : Isurf    ="257(es11.3" ,":))') cput-cpus, (    Isurf(vvol), vvol = 1, Mvol )
    endif
 #endif
    
@@ -1724,6 +1733,7 @@ subroutine readin
   RlBCAST( adiabatic  , MNvol+1, 0 )
   RlBCAST( mu         , MNvol+1, 0 )
   RlBCAST( Ivolume    , MNvol+1, 0 )
+  RlBCAST( Isurf      , MNvol  , 0 )
   IlBCAST( Lconstraint,       1, 0 )
   IlBCAST( pl         , MNvol  , 0 )
   IlBCAST( ql         , MNvol  , 0 )
@@ -2284,6 +2294,7 @@ subroutine wrtend( wflag, iflag, rflag )
   write(iunit,'(" adiabatic   = ",257es23.15)') adiabatic(1:Mvol)
   write(iunit,'(" mu          = ",257es23.15)') mu(1:Mvol)
   write(iunit,'(" Ivolume     = ",257es23.15)') Ivolume(1:Mvol)
+  write(iunit,'(" Isurf       = ",257es23.15)') Isurf(1:Mvol)
   write(iunit,'(" Lconstraint = ",i9        )') Lconstraint
   write(iunit,'(" pl          = ",257i23    )') pl(0:Mvol)
   write(iunit,'(" ql          = ",257i23    )') ql(0:Mvol)

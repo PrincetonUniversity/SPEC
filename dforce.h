@@ -19,7 +19,8 @@
 !latex        \link{volume}, 
 !latex        \link{packab}, 
 !latex        \link{tr00ab}, 
-!latex        \link{coords} and 
+!latex        \link{coords},
+!latex        \link{curent} and 
 !latex        \link{brcast}}
 
 !latex \tableofcontents

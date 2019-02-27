@@ -139,7 +139,7 @@ subroutine preset
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !latex \subsubsection{\type{mu(1:Mvol)} from Ivolume}
-!latex Only used when $Lconstraint = 3$
+!latex Only used when $Lconstraint = 3$. See \link{preset} documentation for more details.
 
 if (Lconstraint.EQ.3) then
 
@@ -428,6 +428,12 @@ end if
    
   enddo ! end of do kk; 29 Jan 13;
   
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+! Allocate space for the toroidal current array in each interface
+
+  SALLOCATE( IPDt, (1:Mvol-1), zero)
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !latex \subsubsection{\type{cheby(0:Lrad,0:2)} : Chebyshev polynomial workspace;}

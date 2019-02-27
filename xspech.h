@@ -519,6 +519,14 @@ program xspech
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+! Computes the surface current at each interface
+
+  do vvol = 1, Mvol
+    WCALL(xspech, surfcurent, (vvol, mn) )
+  enddo
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
 !latex \subsection{output files: vector potential} 
 !latex \begin{enumerate}
 !latex \item The vector potential is written to file using \link{ra00aa}.
