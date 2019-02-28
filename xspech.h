@@ -521,7 +521,7 @@ program xspech
 
 ! Computes the surface current at each interface
 
-  do vvol = 1, Mvol
+  do vvol = 1, Mvol-1
     WCALL(xspech, surfcurent, (vvol, mn) )
   enddo
 

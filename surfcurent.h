@@ -9,7 +9,13 @@
 
 !latex \tableofcontents
 
-!latex TO COMPLETE 
+!latex Computes the pressure driven current integral at the interface labelled by \inputvar{lint},
+!latex
+!latex \be
+!latex I^\mathcal{S}_\phi = \int_0^{2\pi} [[B_\theta]] d\theta.
+!latex \ee
+!latex
+!latex The magnetic field is computed as in \link{sc00aa}. This is used only when Lconstraint=3, \textit{i.e.} when the toroidal current profile is constraint.
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -29,7 +35,7 @@ subroutine surfcurent(lint, mn)
                         IPDt, &
                         cpus, myid
 
-  use inputlist, only : Lrad, Wsurfcurent
+  use inputlist, only : Lrad, Wsurfcurent, Igeometry
 
   use fileunits, only : ounit
 
@@ -81,10 +87,15 @@ subroutine surfcurent(lint, mn)
 
   lss = two * innout - one
 
-  if (innout.EQ.0) then; lvol = lint+1
+  if (innout==0) then; lvol = lint+1
   else;                  lvol = lint
   endif
-    
+  
+  ! Quick dirty fix to test this routine. ATTENTION NEED TO BE REMOVED 
+  if((lvol==1) .and. (Igeometry/=1)) then ; Lcoordinatesingularity = .true.;
+  else; Lcoordinatesingularity = .false.;
+  endif
+
   WCALL( surfcurent, coords, (lvol, lss, Lcurvature, Ntz, mn ) ) ! get guvij and sg
   
 
@@ -93,15 +104,16 @@ subroutine surfcurent(lint, mn)
 ! Then compute the vector potential and its derivatives. Copied from sc00aa.h
 
   ideriv = 0; 
-
+   efmn(1:mn) = zero ; ofmn(1:mn) = zero ; cfmn(1:mn) = zero ; sfmn(1:mn) = zero
    do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over Fourier harmonics;
     
+
    if( Lcoordinatesingularity ) then ; mfactor = regumm(ii) * half ! regularity factor;
    else                              ; mfactor = zero
    endif
    
    do ll = 0, Lrad(lvol) ! loop over Chebyshev polynomials; Lrad is the radial resolution;
-   ! Note that the minus sine is included at line 110
+   ! Note that the minus sine is included at line 122-123
       ;                      ; efmn(ii) = efmn(ii) + Ate(lvol,ideriv,ii)%s(ll) * ( TT(ll,innout,1) + mfactor ) ! B^\t;
       ;                      ; cfmn(ii) = cfmn(ii) + Aze(lvol,ideriv,ii)%s(ll) * ( TT(ll,innout,1) + mfactor ) ! B^\z;
       if( NOTstellsym ) then ; ofmn(ii) = ofmn(ii) + Ato(lvol,ideriv,ii)%s(ll) * ( TT(ll,innout,1) + mfactor )
@@ -111,28 +123,32 @@ subroutine surfcurent(lint, mn)
     
   enddo ! end of do ii; 20 Feb 13;
 
+! Inverse Fourier transform to map to real space
   call invfft( mn, im, in, efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt(1:Ntz), dAz(1:Ntz) ) ! get covariant component of dA / contravariant of B
 
   Bt(1:Ntz) = ( - dAz(1:Ntz) * guvij(1:Ntz,2,2,0) + dAt(1:Ntz) * guvij(1:Ntz,2,3,0) ) / sg(1:Ntz,0) ! Get covariant components
+  Bz(1:Ntz) = ( - dAz(1:Ntz) * guvij(1:Ntz,2,3,0) + dAt(1:Ntz) * guvij(1:Ntz,3,3,0) ) / sg(1:Ntz,0)
 
+! Fourier transform, map to Fourier space
   ifail = 0
   call tfft( Nt, Nz, Bt(1:Ntz), Bz(1:Ntz), &
               mn, im(1:mn), in(1:mn), Btemn(1:mn,innout,lvol), Btomn(1:mn,innout,lvol), Bzemn(1:mn,innout,lvol), Bzomn(1:mn,innout,lvol), ifail )
 
-!#ifdef DEBUG
-!  write(ounit, '("surfcurent : ", f10.2)') cput-cpus
-!#endif
+#ifdef DEBUG
+  write(ounit, '("surfcurent : ", f10.2, ", lint=",i3, ", lss=", f10.1, ", lvol=",i3,", Bt(1)=",ES23.15, ", Lcoordsing=", i3)') cput-cpus, lint, lss, lvol, Bt(1), Lcoordinatesingularity
+#endif
 
   enddo ! end of do innout;
 
+! Get the jump in B_theta in Fourier space for the first even mode.
   dBtzero = Btemn(1, 0, lint+1) - Btemn(1, 1, lint)
 
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-! Then compute the line integral
+! Then compute the line integral. Only the first even mode integral is non-zero (periodic integral)
 
-  IPDt(lint) = pi2 * dBtzero / mu0
+  IPDt(lint) = -pi2 * dBtzero / mu0
 
 
   RETURN(surfcurent)
@@ -141,9 +157,6 @@ subroutine surfcurent(lint, mn)
 
 end subroutine surfcurent
 
-
-
-! Attention: Lcoordinatesingularity has to have the correct value once called...
 
 
 
