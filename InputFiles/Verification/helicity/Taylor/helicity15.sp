@@ -45,7 +45,8 @@
 /
 &locallist
  LBeltrami   =         2
- Linitgues   =         1
+ Linitgues   =         3
+ maxrndgues  =   1.000000000000000E+00
 /
 &globallist
  Lfindzero   =         0

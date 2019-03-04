@@ -604,13 +604,6 @@ subroutine preset
      SALLOCATE( Aze(vvol,ideriv,ii)%s, (0:Lrad(vvol)), zero )
      SALLOCATE( Ato(vvol,ideriv,ii)%s, (0:Lrad(vvol)), zero )
      SALLOCATE( Azo(vvol,ideriv,ii)%s, (0:Lrad(vvol)), zero )
-
-     call random_number(Ate(vvol,ideriv,ii)%s)
-     call random_number(Aze(vvol,ideriv,ii)%s)
-     if (.not. YESstellsym) then
-      call random_number(Ato(vvol,ideriv,ii)%s)
-      call random_number(Azo(vvol,ideriv,ii)%s)
-     endif
      
     enddo ! end of do ideriv;
     
@@ -629,6 +622,26 @@ subroutine preset
    case( 1 )    ; Ate(vvol,0,1)%s(0:1) = dtflux(vvol) * half ! this is an integrable approximation; NEEDS CHECKING; 26 Feb 13;
     ;           ; Aze(vvol,0,1)%s(0:1) = dpflux(vvol) * half ! this is an integrable approximation; NEEDS CHECKING; 26 Feb 13;
    case( 2 )    ;                                            ! will call ra00aa below to read initial vector potential from file;
+   case( 3 )    ;                                            ! the initial guess will be randomized, maximum is maxrndgues; 5 Mar 19;
+    do ii = 1, mn ! loop over Fourier harmonics;
+    
+     do ideriv = -1, 2 ! loop over derivatives; 14 Jan 13;
+
+      call random_number(Ate(vvol,ideriv,ii)%s)
+      call random_number(Aze(vvol,ideriv,ii)%s)
+      Ate(vvol,ideriv,ii)%s = Ate(vvol,ideriv,ii)%s * maxrndgues
+      Aze(vvol,ideriv,ii)%s = Aze(vvol,ideriv,ii)%s * maxrndgues
+      if (.not. YESstellsym) then
+       call random_number(Ato(vvol,ideriv,ii)%s)
+       call random_number(Azo(vvol,ideriv,ii)%s)
+       Ato(vvol,ideriv,ii)%s = Ato(vvol,ideriv,ii)%s * maxrndgues
+       Azo(vvol,ideriv,ii)%s = Azo(vvol,ideriv,ii)%s * maxrndgues
+      endif
+     
+     enddo ! end of do ideriv;
+    
+    enddo ! end of do ii;
+
    end select
    
    idof = 0 ! degree of freedom index; reset to 0 in each volume;

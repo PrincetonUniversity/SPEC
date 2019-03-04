@@ -222,6 +222,7 @@ module inputlist
   INTEGER      :: LBeltrami  =  4
   INTEGER      :: Linitgues  =  1
   INTEGER      :: Lposdef    =  0 ! redundant;
+  REAL         :: maxrndgues =  1.0
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -601,7 +602,9 @@ module inputlist
                 !latex \item if \inputvar{Linitgues = 0}, the initial guess for the Beltrami field is trivial;
                 !latex \item if \inputvar{Linitgues = 1}, the initial guess for the Beltrami field is an integrable approximation;
                 !latex \item if \inputvar{Linitgues = 2}, the initial guess for the Beltrami field is read from file; 
+                !latex \item if \inputvar{Linitgues = 3}, the initial guess for the Beltrami field will be randomized with the maximum \inputvar{maxrndgues};
                 !latex \ei
+ maxrndgues,&   !latex \item \inputvar{maxrndgues = 1.0} : real : the maximum random number of the Beltrami field if \inputvar{Linitgues = 3};
  Lposdef        !latex \item\inputvar{Lposdef = 0 : integer} : redundant;
 !Nmaxexp        !l tex \item \inputvar{Nmaxexp = 32 : integer} : indicates maximum exponent used to precondition Beltrami linear system near singularity;
                 !l tex \bi
@@ -1793,6 +1796,7 @@ subroutine readin
   
   IlBCAST( LBeltrami, 1, 0 )
   IlBCAST( Linitgues, 1, 0 )
+  RlBCAST( maxrndgues, 1, 1.0)
 ! IlBCAST( Lposdef  , 1, 0 ) ! redundant;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
