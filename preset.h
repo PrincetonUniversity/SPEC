@@ -635,6 +635,11 @@ subroutine preset
        ;                                    ; idof = idof + 1 ; Azo(vvol,0,ii)%i(ll) = idof
       endif
      enddo ! end of do ll; 17 Jan 13;
+
+    enddo ! end of do ii; 25 Jan 13; 
+    
+    ! Change the order of ids to enable easy decomposition of dMA; Mar 3 19;
+    do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
      ;                                     ; idof = idof + 1 ; Lma(vvol,  ii)       = idof
      if(  mi.eq.0                   ) then ; idof = idof + 1 ; Lmb(vvol,  ii)       = idof ! 18 May 16;
      endif
@@ -664,8 +669,14 @@ subroutine preset
        ;                                   ; idof = idof + 1 ; Azo(vvol,0,ii)%i(ll) = idof
       endif
      enddo ! end of do ll; 08 Feb 16;
+    enddo ! end of do ii; 25 Jan 13;
+    
+    ! Change the order of ids to enable easy decomposition of dMA; Mar 3 19;
+    do ii = 1, mn
      ;                                     ; idof = idof + 1 ; Lma(vvol,  ii)       = idof
      ;                                     ; idof = idof + 1 ; Lmb(vvol,  ii)       = idof
+    enddo 
+    do ii = 1, mn 
      if(  ii.gt.1 .and. NOTstellsym ) then ; idof = idof + 1 ; Lmc(vvol,  ii)       = idof
       ;                                    ; idof = idof + 1 ; Lmd(vvol,  ii)       = idof
      endif

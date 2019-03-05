@@ -8,9 +8,9 @@
  gamma       =   0.000000000000000E+00
  Nfp         =         1
  Nvol        =         1
- Mpol        =         1
- Ntor        =         0
- Lrad        =                       4
+ Mpol        =         4
+ Ntor        =         2
+ Lrad        =                       8
  tflux       =   1.000000000000000E+00
  pflux       =   0.000000000000000E+00  
  helicity    =   20.000000000000000E+00

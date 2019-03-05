@@ -38,7 +38,8 @@ subroutine ma02aa( lvol, NN )
                         ivol, &
                         dtflux, dpflux, &
                         xoffset, &
-                        Lcoordinatesingularity, Lplasmaregion, Lvacuumregion
+                        Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
+                        YESstellsym, NOTstellsym
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -72,20 +73,22 @@ subroutine ma02aa( lvol, NN )
 !required for hybrj1;
   INTEGER              :: ihybrj1, Ldfmuaa, lengthwork
   REAL                 :: DFxi(0:NN,0:NN), work(1:(1+NN)*(1+NN+13)/2), NewtonError
-  external             :: df00ab, objdf
+  external             :: df00ab
   
 ! required for E04UFF;
   INTEGER              :: NLinearConstraints, NNonLinearConstraints, LDA, LDCJ, LDR, iterations, LIWk, LRWk, ie04uff
   INTEGER, allocatable :: Istate(:), NEEDC(:), IWk(:)
   REAL                 :: objectivefunction
-  REAL   , allocatable :: LinearConstraintMatrix(:,:), LowerBound(:), UpperBound(:)
+  
   REAL   , allocatable :: constraintfunction(:), constraintgradient(:,:), multipliers(:), objectivegradient(:), RS(:,:), RWk(:)
   CHARACTER            :: optionalparameter*33
   
 #ifdef NLOPT
   INTEGER*8            :: opt
-  INTEGER              :: ires
+  INTEGER              :: ires, cNN, ii, jj
   REAL                 :: minf
+  REAL   , allocatable :: LowerBound(:), UpperBound(:)
+  external             :: helicitydf, objdf, bounddf
   include 'nlopt.f'
 #endif
 
@@ -114,17 +117,21 @@ subroutine ma02aa( lvol, NN )
 #ifdef NLOPT
 
    lastcpu = GETTIME
+   ! deciding the degree of freedom for field
    
-   call nlo_create(opt, NLOPT_LD_SLSQP, NN+1) ! we include mu as a variable, rather than setting helicity as a constraint
+   if( YESstellsym ) pNN = 2 * ( mn        ) * ( Lrad(lvol)+1 )
+   if( NOTstellsym ) pNN = 2 * ( mn + mn-1 ) * ( Lrad(lvol)+1 )
+
+   cNN = NN - pNN  ! number of linear constraints (Lagrangian multipliers in dMA)
    
+   call nlo_create(opt, NLOPT_LD_SLSQP, pNN) ! we include mu as a variable, rather than setting helicity as a constraint
+
    ! set lower and upper bound
-   SALLOCATE( LowerBound, (0:NN), zero ) ! lower bounds on variables, linear constraints and non-linear constraints;
-   SALLOCATE( UpperBound, (0:NN), zero ) ! upper bounds on variables, linear constraints and non-linear constraints;
+   SALLOCATE( LowerBound, (1:pNN), zero ) ! lower bounds on variables, linear constraints and non-linear constraints;
+   SALLOCATE( UpperBound, (1:pNN), zero ) ! upper bounds on variables, linear constraints and non-linear constraints;
    
-   LowerBound(                       1 : NN                                          ) = -1.0E+21       !   variable constraints; no constraint;
-   UpperBound(                       1 : NN                                          ) = +1.0E+21       !
-   LowerBound(0) = -100
-   UpperBound(0) = 100
+   LowerBound(                       1 : pNN                                          ) = -1.0E+21       !   variable constraints; no constraint;
+   UpperBound(                       1 : pNN                                          ) = +1.0E+21       !
 
    call nlo_set_lower_bounds(ires, opt, LowerBound)
    call nlo_set_upper_bounds(ires, opt, UpperBound)
@@ -132,8 +139,6 @@ subroutine ma02aa( lvol, NN )
    ! set precision
    tol = mupftol
    call nlo_set_ftol_rel(ires, opt, tol)
-
-   iterations = 0 ! iteration counter;
    
    ideriv = 0 ; dpsi(1:2) = (/ dtflux(lvol), dpflux(lvol) /) ! these are also used below;
 
@@ -141,12 +146,16 @@ subroutine ma02aa( lvol, NN )
    MBpsi(1:NN) =                         matmul( dMB(1:NN,1: 2), dpsi(1:2) )
    
    packorunpack = 'P'
-   CALL( ma02aa, packab, ( packorunpack, lvol, NN, xi(1:NN), ideriv ) )
+   CALL( ma02aa, packab, ( packorunpack, lvol, NN, xi(1:pNN), ideriv ) )
    
-   xi(0) = mu(lvol)
+   if (Lplasmaregion) then ! add helicity constraint for plasma region only (no vacuum region)
+     call nlo_add_equality_constraint(ires, opt, helicitydf, zero, tol)
+   end if
+
+   call nlo_add_equality_mconstraint(ires, opt, cNN, bounddf, zero, tol) ! add boundary conditions
 
    call nlo_set_min_objective(ires, opt, objdf, zero)
-   call nlo_optimize(ires, opt, xi(0:NN), minf)
+   call nlo_optimize(ires, opt, xi(1:pNN), minf)
 
    cput = GETTIME
      
@@ -177,8 +186,8 @@ subroutine ma02aa( lvol, NN )
    lBBintegral(lvol) = half * sum( xi(1:NN) * matmul( dMA(1:NN,1:NN), xi(1:NN) ) ) + sum( xi(1:NN) * MBpsi(1:NN) ) ! + psiMCpsi
    lABintegral(lvol) = half * sum( xi(1:NN) * matmul( dMD(1:NN,1:NN), xi(1:NN) ) ) ! + sum( xi(1:NN) * MEpsi(1:NN) ) ! + psiMFpsi
    
-   solution(1:NN,0) = xi(1:NN)
-   mu(lvol) = xi(0)
+   !write(ounit, *) lBBintegral, lABintegral
+   solution(1:pNN,0) = xi(1:pNN)
 
    call nlo_destroy(opt)
 
@@ -204,7 +213,7 @@ subroutine ma02aa( lvol, NN )
    ideriv = 0 ; dpsi(1:2) = (/ dtflux(lvol), dpflux(lvol) /) ! these are also used below;
    
    packorunpack = 'P'
-   CALL( ma02aa, packab ( packorunpack, lvol, NN, xi(1:NN), dpsi(1:2), ideriv ) )
+   CALL( ma02aa, packab ( packorunpack, lvol, NN, xi(1:NN), ideriv ) )
    
    pNN = NN + 1 ; Ldfmuaa = pNN ; tol = mupftol ; lengthwork = pNN * ( pNN+13 ) / 2
    
@@ -259,6 +268,8 @@ subroutine ma02aa( lvol, NN )
    lABintegral(lvol) = half * sum( xi(1:NN) * matmul( dMD(1:NN,1:NN), xi(1:NN) ) ) ! + sum( xi(1:NN) * MEpsi(1:NN) ) ! + psiMFpsi
    
    solution(1:NN,0) = xi(1:NN)
+
+   !write(ounit, *) lBBintegral, lABintegral
    
   endif ! end of if( LBnewton ) then
   
