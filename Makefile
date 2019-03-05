@@ -55,8 +55,8 @@ endif
  HDF5link=-L$(HDF5_HOME)/lib -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lpthread -lz -lm
  FFTWcompile=-I$(FFTWHOME)/include
  FFTWlink=-L$(FFTWHOME)/lib -lfftw3
- NLOPTcomplie=-I(NLOPT_HOME)/include
- NLOPTlink+= -L(NLOPT_HOME)/lib
+ NLOPTcomplie=-I$(NLOPT_HOME)/include
+ NLOPTlink+= -L$(NLOPT_HOME)/lib
 
 ifeq ($(CC),intel_ubuntu)
  CFLAGS=-r8
