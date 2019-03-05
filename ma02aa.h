@@ -72,7 +72,7 @@ subroutine ma02aa( lvol, NN )
 !required for hybrj1;
   INTEGER              :: ihybrj1, Ldfmuaa, lengthwork
   REAL                 :: DFxi(0:NN,0:NN), work(1:(1+NN)*(1+NN+13)/2), NewtonError
-  external             :: df00ab
+  external             :: df00ab, objdf
   
 ! required for E04UFF;
   INTEGER              :: NLinearConstraints, NNonLinearConstraints, LDA, LDCJ, LDR, iterations, LIWk, LRWk, ie04uff
@@ -82,6 +82,13 @@ subroutine ma02aa( lvol, NN )
   REAL   , allocatable :: constraintfunction(:), constraintgradient(:,:), multipliers(:), objectivegradient(:), RS(:,:), RWk(:)
   CHARACTER            :: optionalparameter*33
   
+#ifdef NLOPT
+  INTEGER*8            :: opt
+  INTEGER              :: ires
+  REAL                 :: minf
+  include 'nlopt.f'
+#endif
+
   BEGIN(ma02aa)
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -104,159 +111,65 @@ subroutine ma02aa( lvol, NN )
 
   if( LBsequad ) then ! sequential quadratic programming (SQP); construct minimum energy with constrained helicity;
    
+#ifdef NLOPT
+
    lastcpu = GETTIME
    
-   NLinearConstraints = 0 ! no linear constraints;
+   call nlo_create(opt, NLOPT_LD_SLSQP, NN+1) ! we include mu as a variable, rather than setting helicity as a constraint
    
-   NNonLinearConstraints = 1 ! single non-linear constraint = conserved helicity;
-   
-   LDA = max(1,NLinearConstraints)
-   
-   LDCJ = max(1,NNonLinearConstraints)
-   
-   LDR = NN
-   
-   SALLOCATE( LinearConstraintMatrix, (1:LDA,1:1), zero ) ! linear constraint matrix;
-   
-   SALLOCATE( LowerBound, (1:NN+NLinearConstraints+NNonLinearConstraints), zero ) ! lower bounds on variables, linear constraints and non-linear constraints;
-   SALLOCATE( UpperBound, (1:NN+NLinearConstraints+NNonLinearConstraints), zero ) ! upper bounds on variables, linear constraints and non-linear constraints;
+   ! set lower and upper bound
+   SALLOCATE( LowerBound, (0:NN), zero ) ! lower bounds on variables, linear constraints and non-linear constraints;
+   SALLOCATE( UpperBound, (0:NN), zero ) ! upper bounds on variables, linear constraints and non-linear constraints;
    
    LowerBound(                       1 : NN                                          ) = -1.0E+21       !   variable constraints; no constraint;
    UpperBound(                       1 : NN                                          ) = +1.0E+21       !
-   LowerBound( NN+                   1 : NN+NLinearConstraints                       ) = -1.0E+21       !     linear constraints; no constraint;
-   UpperBound( NN+                   1 : NN+NLinearConstraints                       ) = +1.0E+21       !
-   LowerBound( NN+NLinearConstraints+1 : NN+NLinearConstraints+NNonLinearConstraints ) = helicity(lvol) ! non-linear constraints; enforce helicity constraint;
-   UpperBound( NN+NLinearConstraints+1 : NN+NLinearConstraints+NNonLinearConstraints ) = helicity(lvol) !
+   LowerBound(0) = -100
+   UpperBound(0) = 100
+
+   call nlo_set_lower_bounds(ires, opt, LowerBound)
+   call nlo_set_upper_bounds(ires, opt, UpperBound)
    
+   ! set precision
+   tol = mupftol
+   call nlo_set_ftol_rel(ires, opt, tol)
+
    iterations = 0 ! iteration counter;
    
-   SALLOCATE( Istate, (1:NN+NLinearConstraints+NNonLinearConstraints), 0 )
-   
-   SALLOCATE( constraintfunction, (1:NNonLinearConstraints), zero ) ! constraint functions;
-   
-   SALLOCATE( constraintgradient, (1:LDCJ,1:NN), zero ) ! derivatives of constraint functions;
-   
-   SALLOCATE( multipliers, (1:NN+NLinearConstraints+NNonLinearConstraints), zero ) ! Lagrange multipliers ?;
-   
-   objectivefunction = zero ! objective function;
-   
-   SALLOCATE( objectivegradient, (1:NN), zero ) ! derivatives of objective function;
-   
-   SALLOCATE( RS, (1:LDR,1:NN), zero )
-   
    ideriv = 0 ; dpsi(1:2) = (/ dtflux(lvol), dpflux(lvol) /) ! these are also used below;
+
+   ! pre-calculate some matrix vector products; these are used in df00ab;
+   MBpsi(1:NN) =                         matmul( dMB(1:NN,1: 2), dpsi(1:2) )
    
    packorunpack = 'P'
    CALL( ma02aa, packab, ( packorunpack, lvol, NN, xi(1:NN), ideriv ) )
    
-   SALLOCATE( NEEDC, (1:NNonLinearConstraints), 0 )
-   
-   LIWk = 3*NN + NLinearConstraints + 2*NNonLinearConstraints ! workspace;
-   SALLOCATE( IWk, (1:LIWk), 0 )       ! workspace;
-   
-   LRWk = 2*NN**2 + NN * NLinearConstraints + 2 * NN * NNonLinearConstraints + 21 * NN + 11 * NLinearConstraints + 22 * NNonLinearConstraints + 1 ! workspace;
-   SALLOCATE( RWk, (1:LRWk), zero )                                                              ! workspace;
-   
-   irevcm = 0 ; ie04uff = 1 ! reverse communication loop control; ifail error flag;
-   
-! supply optional parameters to E04UFF; NAG calls commented out (this part of the code so far not used); 17 Nov 17
-   
-!   call E04UEF('Nolist')               ! turn of screen output;
-!   call E04UEF('Print Level = 0')      ! turn of screen output;
-!   call E04UEF('Derivative Level = 3') ! assume all derivatives are provided by user;
-!   call E04UEF('Verify Level = -1')    ! do not verify derivatives using finite-differences; default is Verify Level = 0, which does verify gradients;
-!   write(optionalparameter,'("Major Iteration Limit = "i9)') 2**2 * max( 50, 3 * ( NN + NLinearConstraints ) + 10 * NNonLinearConstraints )
-!   call E04UEF(optionalparameter)
-   
-! pre-calculate some matrix vector products;
-   
-   MBpsi(1:NN) =                         matmul( dMB(1:NN,1: 2), dpsi(1:2) )
-!  MEpsi(1:NN) = zero !                  matmul( dME(1:NN,1: 2), dpsi(1:2) )
-   
-!  psiMCpsi    = zero ! half * sum( dpsi(1:2) * matmul( dMC(1: 2,1: 2), dpsi(1:2) ) )
-!  psiMFpsi    = zero ! half * sum( dpsi(1:2) * matmul( dMF(1: 2,1: 2), dpsi(1:2) ) )
-   
-   
-!   do ! reverse communication loop; NAG calls commented out (this part of the code so far not used); 17 Nov 17
-!    
-!    
-!    call E04UFF( irevcm, &
-!                 NN, NLinearConstraints, NNonLinearConstraints, LDA, LDCJ, LDR, &
-!                 LinearConstraintMatrix(1:LDA,1:1), &
-!                 LowerBound(1:NN+NLinearConstraints+NNonLinearConstraints), UpperBound(1:NN+NLinearConstraints+NNonLinearConstraints), &
-!                 iterations, Istate(1:NN+NLinearConstraints+NNonLinearConstraints), &
-!                constraintfunction(1:NNonLinearConstraints), constraintgradient(1:LDCJ,1:NN), &
-!                 multipliers(1:NN+NLinearConstraints+NNonLinearConstraints), &
-!                 objectivefunction, objectivegradient(1:NN), &
-!                 RS(1:LDR,1:NN), &
-!                 xi(1:NN), &
-!                 NEEDC(1:NNonLinearConstraints), IWk(1:LIWk), LIWk, RWk(1:LRWk), LRWk, ie04uff )
-!
-!    if( irevcm.eq.1 .or. irevcm.eq.2 .or. irevcm.eq.3 ) Mxi(1:NN) = matmul( dMA(1:NN,1:NN), xi(1:NN) ) ! calculate objective  functional and/or gradient;
-!    if( irevcm.eq.4 .or. irevcm.eq.5 .or. irevcm.eq.6 ) Mxi(1:NN) = matmul( dMD(1:NN,1:NN), xi(1:NN) ) ! calculate constraint functional and/or gradient;
-!    
-!    if( irevcm.eq.1 .or. irevcm.eq.3 ) objectivefunction       = half * sum( xi(1:NN) * Mxi(1:NN) ) + sum( xi(1:NN) * MBpsi(1:NN) ) + psiMCpsi
-!    if( irevcm.eq.2 .or. irevcm.eq.3 ) objectivegradient(1:NN) =                        Mxi(1:NN)   +                 MBpsi(1:NN)
-!    
-!   if( irevcm.eq.4 .or. irevcm.eq.6 .and. NEEDC(1).gt.0 ) then
-!    constraintfunction(1     ) = half * sum( xi(1:NN) * Mxi(1:NN) ) + sum( xi(1:NN) * MEpsi(1:NN) ) + psiMFpsi
-!   endif
-!    
-!    if( irevcm.eq.5 .or. irevcm.eq.6 .and. NEEDC(1).gt.0 ) then
-!     constraintgradient(1,1:NN) =                        Mxi(1:NN)   +                 MEpsi(1:NN) 
-!    endif
-!    
-!    if( irevcm.eq.0 ) then ! final exit;
-!     
-!     cput = GETTIME
-!     
-!     select case(ie04uff)
-!     case( :-1 )  
-!      write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "user enforced termination ;     "
-!     case(   0 )  
-!     if( Wma02aa ) write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "success ;                       "
-!     case(   1 )  
-!      if( Wma02aa ) write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "not converged;                  "
-!     case(   2 )  
-!      write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "infeasible (linear) ;           "
-!     case(   3 ) 
-!      write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "infeasible (nonlinear) ;        "
-!     case(   4 )   
-!      write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "major iteration limit reached ; "
-!     case(   6 )  
-!     if( Wma02aa ) write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "could not be improved ;         "
-!     case(   7 )  
-!     write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "derivatives appear incorrect ;  "
-!    case(   9 )  
-!     write(ounit,1010) cput-cpus, myid, lvol, ie04uff, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "input error ;                   "
-!     case default
-!     FATAL( ma02aa, .true., illegal ifail returned by E04UFF )
-!    end select
+   xi(0) = mu(lvol)
+
+   call nlo_set_min_objective(ires, opt, objdf, zero)
+   call nlo_optimize(ires, opt, xi(0:NN), minf)
+
+   cput = GETTIME
      
-!    if( irevcm.eq.0 .or. irevcm.eq.1 .or. irevcm.eq.6 ) ImagneticOK(lvol) = .true. ! set error flag; used elsewhere;
-!    
-!     mu(lvol) = multipliers( NN + NLinearConstraints + NNonLinearConstraints ) ! helicity multiplier, or so it seems: NAG document is not completely clear;
-!     
-!     exit ! sequential quadratic programming method of constructing Beltrami field is finished;
-!     
-!    endif ! end of if( irevcm.eq.0 ) then;
-!    
-!   enddo ! end of do ! reverse communication loop;
-   
-   
-   DALLOCATE(RWk)
-   DALLOCATE(IWk)
-   DALLOCATE(NEEDC)
-   DALLOCATE(RS)
-   DALLOCATE(objectivegradient)
-   DALLOCATE(multipliers)
-   DALLOCATE(constraintgradient)
-   DALLOCATE(constraintfunction)
-   DALLOCATE(Istate)
+   select case(ires)
+     case(   1:6 )  
+      if( Wma02aa ) write(ounit,1010) cput-cpus, myid, lvol, ires, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "success ;                       "
+     case(   -1 )  
+      write(ounit,1010) cput-cpus, myid, lvol, ires, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "not converged;                  "
+     case(   -2 )  
+      write(ounit,1010) cput-cpus, myid, lvol, ires, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "Invalid arguments           "
+     case(   -3 ) 
+      write(ounit,1010) cput-cpus, myid, lvol, ires, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "Out of memory        "
+     case(   -4 )   
+      write(ounit,1010) cput-cpus, myid, lvol, ires, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "Round off limit "
+     case(   -5 )  
+      write(ounit,1010) cput-cpus, myid, lvol, ires, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "Forced stop         "
+     case default
+      FATAL( ma02aa, .true., illegal ifail returned by NLOPT )
+    end select
+     
+
    DALLOCATE(LowerBound)
    DALLOCATE(UpperBound)
-   DALLOCATE(LinearConstraintMatrix)
-   
    
    packorunpack = 'U'
    CALL( ma02aa, packab ( packorunpack, lvol, NN, xi(1:NN), ideriv ) )
@@ -264,10 +177,15 @@ subroutine ma02aa( lvol, NN )
    lBBintegral(lvol) = half * sum( xi(1:NN) * matmul( dMA(1:NN,1:NN), xi(1:NN) ) ) + sum( xi(1:NN) * MBpsi(1:NN) ) ! + psiMCpsi
    lABintegral(lvol) = half * sum( xi(1:NN) * matmul( dMD(1:NN,1:NN), xi(1:NN) ) ) ! + sum( xi(1:NN) * MEpsi(1:NN) ) ! + psiMFpsi
    
-   
    solution(1:NN,0) = xi(1:NN)
-   
-   
+   mu(lvol) = xi(0)
+
+   call nlo_destroy(opt)
+
+#else
+   FATAL( ma02aa, .true., SQP algorithm needs the library NLOPT. Enabled in Makefile to proceed. )
+#endif
+
   endif ! end of if( LBsequad ) then;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

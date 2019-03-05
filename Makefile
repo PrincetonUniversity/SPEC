@@ -2,8 +2,8 @@
 
 ###############################################################################################################################################################
 
- afiles=manual rzaxis packxi volume coords
- bfiles=metrix ma00aa        matrix        mp00ac ma02aa packab tr00ab curent df00ab lforce
+ afiles=manual rzaxis  packxi volume  coords 
+ bfiles=metrix  ma00aa matrix        mp00ac packab tr00ab curent df00ab lforce
 #cfiles=bc00aa fc02aa jk03aa pc00aa pc00ab
  cfiles=brcast dforce newton 
  dfiles=casing bnorml 
@@ -14,7 +14,7 @@
 ###############################################################################################################################################################
 
  SPECFILES=$(afiles) $(bfiles) $(cfiles) $(dfiles) $(efiles) $(ffiles)
- ALLFILES=global $(SPECFILES) $(sfiles) xspech hdfint preset
+ ALLFILES=global $(SPECFILES) $(sfiles) xspech hdfint preset ma02aa
 #F77FILES=$(sfiles:=.f)
  F90FILES=$(SPECFILES:=.F90)
  HFILES=global preset $(SPECFILES) hdfint xspech
@@ -29,6 +29,14 @@
  CC=intel
  # if want to use gfortran; make CC=gfortran xfocus; otherwise using Intel
  FC=mpif90
+
+ # do we need the NLOPT library? yes or no
+ NLOPT=yes
+
+ifeq ($(NLOPT),yes)
+ NLOPTmacro=-DNLOPT
+ NLOPTlink=-lnlopt -lm
+endif 
  
  # Intel Defaults
  # At PPPL
@@ -47,6 +55,20 @@
  HDF5link=-L$(HDF5_HOME)/lib -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lpthread -lz -lm
  FFTWcompile=-I$(FFTWHOME)/include
  FFTWlink=-L$(FFTWHOME)/lib -lfftw3
+ NLOPTcomplie=-I(NLOPT_HOME)/include
+ NLOPTlink+= -L(NLOPT_HOME)/lib
+
+ifeq ($(CC),intel_ubuntu)
+ CFLAGS=-r8
+ NAG=-mkl
+ NETCDF=-lnetcdf
+ HDF5compile=-I/usr/include/hdf5/serial
+ HDF5link=-L/usr/lib/x86_64-linux-gnu/hdf5/serial -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lpthread -lz -lm
+ FFTWcomplie=-I/usr/include
+ FFTWlink=-lfftw3
+ RFLAGS=-O2 -ip -no-prec-div -xHost -fPIC
+ DFLAGS=-traceback -D DEBUG
+endif
 
 ifeq ($(CC),gfortran)
  # Not checked
@@ -70,13 +92,15 @@ ifeq ($(CC),gfortran_ubuntu)
  # sudo apt install libnetcdf-dev
  # sudo apt install libfftw3-dev
  # sudo apt install libhdf5-openmpi-dev
+ # sudo apt install libnlopt-dev
  CFLAGS=-fdefault-real-8
  NAG=-llapack -lblas
  NETCDF=-lnetcdf
- HDF5compile=-I/usr/include/hdf5/openmpi
- HDF5link=-L/usr/lib/x86_64-linux-gnu/hdf5/openmpi -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lpthread -lz -lm
+ HDF5compile=-I/usr/include/hdf5/serial
+ HDF5link=-L/usr/lib/x86_64-linux-gnu/hdf5/serial -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lpthread -lz -lm
  FFTWcompile=-I/usr/include
  FFTWlink=-lfftw3
+ NLOPTcompile=-I/usr/local/include/
  RFLAGS=-O2 -ffixed-line-length-none -ffree-line-length-none -fexternal-blas
  DFLAGS=-g -fbacktrace -fbounds-check -ffree-line-length-none -fexternal-blas -DDEBUG
 endif 
@@ -134,6 +158,7 @@ ifeq ($(CC),intel_raijin)
  # module load fftw3-mkl/2018.1.163
  # module load netcdf
  # module load hdf5
+ # module load nlopt
  CFLAGS=-r8
  NAG=-L${MKLROOT}/lib/intel64 -mkl 
  NETCDF=-lnetcdf
@@ -157,10 +182,10 @@ endif
 ###############################################################################################################################################################
 
 xspec: $(addsuffix _r.o,$(ALLFILES)) $(MACROS) Makefile
-	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o xspec $(addsuffix _r.o,$(ALLFILES)) $(NAG) $(HDF5compile) $(HDF5link) $(NETCDF) $(FFTWlink)
+	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o xspec $(addsuffix _r.o,$(ALLFILES)) $(NAG) $(HDF5compile) $(HDF5link) $(NETCDF) $(FFTWlink) $(NLOPTlink) $(NLOPTmacro)
 
 dspec: $(addsuffix _d.o,$(ALLFILES)) $(MACROS) Makefile
-	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o dspec $(addsuffix _d.o,$(ALLFILES)) $(NAG) $(HDF5compile) $(HDF5link) $(NETCDF) $(FFTWlink)
+	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o dspec $(addsuffix _d.o,$(ALLFILES)) $(NAG) $(HDF5compile) $(HDF5link) $(NETCDF) $(FFTWlink) $(NLOPTlink) $(NLOPTmacro)
 
 ###############################################################################################################################################################
 
@@ -218,6 +243,20 @@ preset_d.o: preset.h global_d.o $(MACROS) Makefile
 	m4 -P $(MACROS) preset.h > $*.F90
 	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o preset_d.o -c $*.F90 $(FFTWcompile)
 	@wc -l -L -w hdfint_d.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
+	@echo ''
+
+###############################################################################################################################################################
+
+ma02aa_r.o: ma02aa.h global_r.o $(MACROS) Makefile
+	m4 -P $(MACROS) ma02aa.h > $*.F90
+	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o ma02aa_r.o -c $*.F90 $(NLOPTcompile) $(NLOPTmacro)
+	@wc -l -L -w ma02aa_r.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
+	@echo ''
+
+ma02aa_d.o: ma02aa.h global_d.o $(MACROS) Makefile
+	m4 -P $(MACROS) ma02aa.h > $*.F90
+	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o ma02aa_d.o -c $*.F90 $(NLOPTcompile) $(NLOPTmacro)
+	@wc -l -L -w ma02aa_d.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
 ###############################################################################################################################################################
