@@ -129,7 +129,7 @@ subroutine objdf(val,  pNN , xi , Fxi , need_gradient, f_data)
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  val = half * sum( xi(1:NN) * (matmul( dMA(1:NN,1:NN), xi(1:NN)  ) + MBpsi(1:NN) - lmu * ( matmul( dMD(1:NN,1:NN), xi(1:NN) ) ))) + lmu * helicity(ivol)
+  val = half * sum( xi(1:NN) * (matmul( dMA(1:NN,1:NN), xi(1:NN)  ) + two * MBpsi(1:NN) - lmu * ( matmul( dMD(1:NN,1:NN), xi(1:NN) ) ))) + lmu * helicity(ivol)
   if (need_gradient .ge. 1) then
 
 ! !Fxi(   0) = - half * sum( xi(1:NN) * matmul( dMD(1:NN,1:NN), xi(1:NN) ) ) - sum( xi(1:NN) * MEpsi(1:NN) ) - psiMFpsi + helicity(ivol)
