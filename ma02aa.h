@@ -160,8 +160,12 @@ subroutine ma02aa( lvol, NN )
    cput = GETTIME
      
    select case(ires)
-     case(   1:6 )  
-      if( Wma02aa ) write(ounit,1010) cput-cpus, myid, lvol, ires, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "success ;                       "
+     case(   1:4 )  
+      if( Wma02aa ) write(ounit,1010) cput-cpus, myid, lvol, ires, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "success ;   "
+     case(   5 )  
+      write(ounit,1010) cput-cpus, myid, lvol, ires, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "max iter reached ;   "
+     case(   6 )  
+      write(ounit,1010) cput-cpus, myid, lvol, ires, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "max time reached ;   "
      case(   -1 )  
       write(ounit,1010) cput-cpus, myid, lvol, ires, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "not converged;                  "
      case(   -2 )  
@@ -186,7 +190,7 @@ subroutine ma02aa( lvol, NN )
    lBBintegral(lvol) = half * sum( xi(1:NN) * matmul( dMA(1:NN,1:NN), xi(1:NN) ) ) + sum( xi(1:NN) * MBpsi(1:NN) ) ! + psiMCpsi
    lABintegral(lvol) = half * sum( xi(1:NN) * matmul( dMD(1:NN,1:NN), xi(1:NN) ) ) ! + sum( xi(1:NN) * MEpsi(1:NN) ) ! + psiMFpsi
    
-   !write(ounit, *) lBBintegral, lABintegral
+   write(ounit, *) lBBintegral, lABintegral
    solution(1:pNN,0) = xi(1:pNN)
 
    call nlo_destroy(opt)
@@ -269,7 +273,7 @@ subroutine ma02aa( lvol, NN )
    
    solution(1:NN,0) = xi(1:NN)
 
-   !write(ounit, *) lBBintegral, lABintegral
+   write(ounit, *) lBBintegral, lABintegral
    
   endif ! end of if( LBnewton ) then
   

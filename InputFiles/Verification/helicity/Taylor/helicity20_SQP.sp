@@ -9,7 +9,7 @@
  Nfp         =         1
  Nvol        =         1
  Mpol        =         4
- Ntor        =         2
+ Ntor        =         1
  Lrad        =                       8
  tflux       =   1.000000000000000E+00
  pflux       =   0.000000000000000E+00  
@@ -44,7 +44,7 @@
  Mregular    =        -1
 /
 &locallist
- LBeltrami   =         1
+ LBeltrami   =         3
  Linitgues   =         1
 /
 &globallist
