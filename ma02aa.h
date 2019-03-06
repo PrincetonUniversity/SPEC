@@ -102,8 +102,9 @@ subroutine ma02aa( lvol, NN )
 !latex \item Documentation on the implementation of \nag{www.nag.co.uk/numeric/FL/manual19/pdf/E04/e04uff_fl19.pdf}{E04UFF} is under construction.
 !latex \end{enumerate}
 
+
+   write(ounit, '("hello?, LBsequad = ", L1)') LBsequad
   if( LBsequad ) then ! sequential quadratic programming (SQP); construct minimum energy with constrained helicity;
-   
    lastcpu = GETTIME
    
    NLinearConstraints = 0 ! no linear constraints;
@@ -120,7 +121,7 @@ subroutine ma02aa( lvol, NN )
    
    SALLOCATE( LowerBound, (1:NN+NLinearConstraints+NNonLinearConstraints), zero ) ! lower bounds on variables, linear constraints and non-linear constraints;
    SALLOCATE( UpperBound, (1:NN+NLinearConstraints+NNonLinearConstraints), zero ) ! upper bounds on variables, linear constraints and non-linear constraints;
-   
+
    LowerBound(                       1 : NN                                          ) = -1.0E+21       !   variable constraints; no constraint;
    UpperBound(                       1 : NN                                          ) = +1.0E+21       !
    LowerBound( NN+                   1 : NN+NLinearConstraints                       ) = -1.0E+21       !     linear constraints; no constraint;
@@ -143,10 +144,10 @@ subroutine ma02aa( lvol, NN )
    SALLOCATE( objectivegradient, (1:NN), zero ) ! derivatives of objective function;
    
    SALLOCATE( RS, (1:LDR,1:NN), zero )
-   
    ideriv = 0 ; dpsi(1:2) = (/ dtflux(lvol), dpflux(lvol) /) ! these are also used below;
    
    packorunpack = 'P'
+
    CALL( ma02aa, packab, ( packorunpack, lvol, NN, xi(1:NN), ideriv ) )
    
    SALLOCATE( NEEDC, (1:NNonLinearConstraints), 0 )
@@ -264,8 +265,7 @@ subroutine ma02aa( lvol, NN )
    lBBintegral(lvol) = half * sum( xi(1:NN) * matmul( dMA(1:NN,1:NN), xi(1:NN) ) ) + sum( xi(1:NN) * MBpsi(1:NN) ) ! + psiMCpsi
    lABintegral(lvol) = half * sum( xi(1:NN) * matmul( dMD(1:NN,1:NN), xi(1:NN) ) ) ! + sum( xi(1:NN) * MEpsi(1:NN) ) ! + psiMFpsi
    
-   
-   solution(1:NN,0) = xi(1:NN)
+   solution(lvol, 1:NN,0) = xi(1:NN)
    
    
   endif ! end of if( LBsequad ) then;
@@ -277,6 +277,7 @@ subroutine ma02aa( lvol, NN )
 !latex \item Only relevant if \internal{LBnewton=T}. See \inputvar{LBeltrami} for details.
 !latex \end{enumerate}
 
+write(ounit, '("Hi! LBnewton = ", L1)') LBnewton
   if( LBnewton ) then
    
    lastcpu = GETTIME
@@ -340,7 +341,8 @@ subroutine ma02aa( lvol, NN )
    lBBintegral(lvol) = half * sum( xi(1:NN) * matmul( dMA(1:NN,1:NN), xi(1:NN) ) ) + sum( xi(1:NN) * MBpsi(1:NN) ) ! + psiMCpsi
    lABintegral(lvol) = half * sum( xi(1:NN) * matmul( dMD(1:NN,1:NN), xi(1:NN) ) ) ! + sum( xi(1:NN) * MEpsi(1:NN) ) ! + psiMFpsi
    
-   solution(1:NN,0) = xi(1:NN)
+   write(ounit, '("test 2")')
+   solution(lvol, 1:NN,0) = xi(1:NN)
    
   endif ! end of if( LBnewton ) then
   
@@ -408,11 +410,13 @@ subroutine ma02aa( lvol, NN )
 
 !latex \end{enumerate}
   
+
+write(ounit, '("LBlinear = ", L1)') LBlinear
   if( LBlinear ) then ! assume Beltrami field is parameterized by helicity multiplier (and poloidal flux);
    
    lastcpu = GETTIME
    
-   
+   write(ounit, '("test 1")')
    if( Lplasmaregion ) then
     
     Xdof(1:2) = xoffset + (/     mu(lvol), dpflux(lvol) /) ! initial guess for degrees of freedom; offset from zero so that relative error is small;
@@ -444,6 +448,7 @@ subroutine ma02aa( lvol, NN )
    endif ! end of if( Lplasmaregion) ;
    
 
+   write(ounit, '("test 2. Nxdof = ", i3)') Nxdof
    select case( Nxdof )
     
    case( 0   ) ! need only call mp00ac once, to calculate Beltrami field for given helicity multiplier and enclosed fluxes;
@@ -505,6 +510,7 @@ subroutine ma02aa( lvol, NN )
 
    cput = GETTIME
 
+   write(ounit, '("test 3.")')
    select case(ihybrj) ! this screen output may not be correct for Lvacuumregion;
    case(    1   )  
     if( Wma02aa ) write(ounit,1040) cput-cpus, myid, lvol, ihybrj, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "success         ", Fdof(1:Ndof)
@@ -554,6 +560,7 @@ subroutine ma02aa( lvol, NN )
    
    if( Lconstraint.eq.1 .or. Lvacuumregion ) then ! only in this case are the derivatives calculated;
     
+   write(ounit, '("test 3")')
     SALLOCATE( dsolution, (1:NN,0:2,-1:1,-1:1), zero ) ! packed vector potential;
     
     if( Lplasmaregion ) then
@@ -574,8 +581,8 @@ subroutine ma02aa( lvol, NN )
     
     CALL( ma02aa, mp00ac( Ndof, Xdof(1:Ndof), dFdof(ixx,jxx,1:Ndof), oDdof(1:Ldfjac,1:Ndof), Ldfjac, iflag ) ) ! compute "exact" derivatives;
     
-    dsolution(1:NN,1,0,0) = solution(1:NN,1) ! packed vector potential; derivative wrt mu    ;
-    dsolution(1:NN,2,0,0) = solution(1:NN,2) ! packed vector potential; derivative wrt dpflux;
+    dsolution(1:NN,1,0,0) = solution(lvol, 1:NN,1) ! packed vector potential; derivative wrt mu    ;
+    dsolution(1:NN,2,0,0) = solution(lvol, 1:NN,2) ! packed vector potential; derivative wrt dpflux;
     
     jfinite = 0
     cput = GETTIME 
@@ -600,7 +607,7 @@ subroutine ma02aa( lvol, NN )
        
        CALL( ma02aa, mp00ac( Ndof, Xdof(1:Ndof), dFdof(ixx,jxx,1:Ndof), Ddof(1:Ldfjac,1:Ndof), Ldfjac, iflag ) ) ! compute function values only;
        
-       dsolution(1:NN,0,ixx,jxx) = solution(1:NN,0)
+       dsolution(1:NN,0,ixx,jxx) = solution(lvol, 1:NN,0)
        
       enddo ! end of do jxx;
      enddo ! end of do ixx;

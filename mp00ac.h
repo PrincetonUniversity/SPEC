@@ -230,8 +230,10 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   SALLOCATE( matrix, (1:NN,1:NN), zero )
   SALLOCATE( rhs   , (1:NN,0:2 ), zero )
 
-  solution(1:NN,-1:2) = zero ! this is a global array allocated in dforce;
-  
+  write(ounit, '("mp00ac: test1. lvol = ", i3)') lvol
+  solution(lvol, 1:NN, -1:2) = zero ! this is a global array allocated in dforce;
+  write(ounit, '("mp00ac: test1.1")')  
+
   Lwork = NB*NN
 
   SALLOCATE( RW,    (1:Lwork ),  zero )
@@ -249,7 +251,8 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 ! ideriv labels derivative as follows:
 ! ideriv = 0 : compute Beltrami field; ideriv = 1 : compute d Beltrami field / d \mu           ; ideriv = 2 : compute d Beltrami field / d \Delta \psi_p ;
 ! ideriv = 0 : compute Vacuum   field; ideriv = 1 : compute d Vacuum   field / d \Delta \psi_t ; ideriv = 2 : compute d Vacuum   field / d \Delta \psi_p ;
-  
+    
+  write(ounit, '("mp00ac: test2")')
   do ideriv = 0, 1 ! loop over derivatives;
    
    if( iflag.eq.1 .and. ideriv.eq.1 ) cycle ! only need to return function; recall the derivative estimate requires function evaluation;
@@ -260,13 +263,13 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
     
 !  !;select case( ideriv )
 !  !;case( 0 )    ; rhs(1:NN,0) = - matmul(  dMB(1:NN,1:2) - lmu  * dME(1:NN,1:2), dpsi(1:2) )
-!  !;case( 1 )    ; rhs(1:NN,1) = - matmul(                - one  * dME(1:NN,1:2), dpsi(1:2) ) - matmul( - one  * dMD(1:NN,1:NN), solution(1:NN,0) )
+!  !;case( 1 )    ; rhs(1:NN,1) = - matmul(                - one  * dME(1:NN,1:2), dpsi(1:2) ) - matmul( - one  * dMD(1:NN,1:NN), solution(lvol, 1:NN,0) )
 !  !; ;           ; rhs(1:NN,2) = - matmul(  dMB(1:NN,1:2) - lmu  * dME(1:NN,1:2), ppsi(1:2) )
 !  !;end select
     
     ;select case( ideriv )
     ;case( 0 )    ; rhs(1:NN,0) = - matmul(  dMB(1:NN,1:2)                       , dpsi(1:2) )
-    ;case( 1 )    ; rhs(1:NN,1) =                                                              - matmul( - one  * dMD(1:NN,1:NN), solution(1:NN,0) )
+    ;case( 1 )    ; rhs(1:NN,1) =                                                              - matmul( - one  * dMD(1:NN,1:NN), solution(lvol, 1:NN,0) )
     ; ;           ; rhs(1:NN,2) = - matmul(  dMB(1:NN,1:2)                       , ppsi(1:2) )
     ;end select
     
@@ -278,7 +281,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
      
      select case( ideriv )
      case( 0 )    ; rhs(1:NN,0) = - matmul( dMB(1:NN,1:2 ), dpsi(1:2) )
-     case( 1 )    ; rhs(1:NN,1) =                                                              - matmul( - one * dMD(1:NN,1:NN), solution(1:NN,0) )
+     case( 1 )    ; rhs(1:NN,1) =                                                              - matmul( - one * dMD(1:NN,1:NN), solution(lvol, 1:NN,0) )
       ;           ; rhs(1:NN,2) = - matmul( dMB(1:NN,1:2 ), ppsi(1:2) )
      end select
      
@@ -304,19 +307,20 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
    
    idsysvx(ideriv) = 1
    
+   write(ounit, '("mp00ac: test3")')
    select case( ideriv )
     
    case( 0 ) ! ideriv=0;
     
     MM = 1
     
-    call DSYSVX( 'N', 'U', NN, MM, matrix, NN, LU, NN, ipiv, rhs(:,0   ), NN, solution(1:NN,0   ), NN, RCOND, FERR, BERR, RW, Lwork, Iwork, idsysvx(ideriv) )
+    call DSYSVX( 'N', 'U', NN, MM, matrix, NN, LU, NN, ipiv, rhs(:,0   ), NN, solution(lvol, 1:NN,0   ), NN, RCOND, FERR, BERR, RW, Lwork, Iwork, idsysvx(ideriv) )
     
    case( 1 ) ! ideriv=1;
     
     MM = 2
 
-    call DSYSVX( 'F', 'U', NN, MM, matrix, NN, LU, NN, ipiv, rhs(:,1:MM), NN, solution(1:NN,1:MM), NN, RCOND, FERR, BERR, RW, Lwork, Iwork, idsysvx(ideriv) )
+    call DSYSVX( 'F', 'U', NN, MM, matrix, NN, LU, NN, ipiv, rhs(:,1:MM), NN, solution(lvol, 1:NN,1:MM), NN, RCOND, FERR, BERR, RW, Lwork, Iwork, idsysvx(ideriv) )
 
    end select ! ideriv;
    
@@ -342,23 +346,24 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 ! can compute the energy and helicity integrals; easiest to do this with solution in packed format;
-  
-   lBBintegral(lvol) = half * sum( solution(1:NN,0) * matmul( dMA(1:NN,1:NN), solution(1:NN,0) ) ) & 
-                     +        sum( solution(1:NN,0) * matmul( dMB(1:NN,1: 2),     dpsi(1: 2  ) ) ) !
+    write(ounit, '("mp00ac: test4")')
+   lBBintegral(lvol) = half * sum( solution(lvol, 1:NN,0) * matmul( dMA(1:NN,1:NN), solution(lvol, 1:NN,0) ) ) & 
+                     +        sum( solution(lvol, 1:NN,0) * matmul( dMB(1:NN,1: 2),     dpsi(1: 2  ) ) ) !
 !                    + half * sum(     dpsi(1: 2  ) * matmul( dMC(1: 2,1: 2),     dpsi(1: 2  ) ) )
   
-   lABintegral(lvol) = half * sum( solution(1:NN,0) * matmul( dMD(1:NN,1:NN), solution(1:NN,0) ) ) ! 
-!                    +        sum( solution(1:NN,0) * matmul( dME(1:NN,1: 2),     dpsi(1: 2  ) ) ) !
+   lABintegral(lvol) = half * sum( solution(lvol, 1:NN,0) * matmul( dMD(1:NN,1:NN), solution(lvol, 1:NN,0) ) ) ! 
+!                    +        sum( solution(lvol, 1:NN,0) * matmul( dME(1:NN,1: 2),     dpsi(1: 2  ) ) ) !
 !                    + half * sum(     dpsi(1: 2  ) * matmul( dMF(1: 2,1: 2),     dpsi(1: 2  ) ) )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+  write(ounit, '("mp00ac: test5")')
   do ideriv = 0, 2
    
    if( iflag.eq.1 .and. ideriv.gt.0 ) cycle
    
    packorunpack = 'U'
-   WCALL( mp00ac, packab, ( packorunpack, lvol, NN, solution(1:NN,ideriv), ideriv ) ) ! unpacking; this assigns oAt, oAz through common;
+   WCALL( mp00ac, packab, ( packorunpack, lvol, NN, solution(lvol, 1:NN,ideriv), ideriv ) ) ! unpacking; this assigns oAt, oAz through common;
    
   enddo ! do ideriv = 0, 2;
 

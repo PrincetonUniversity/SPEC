@@ -1097,7 +1097,7 @@ module allglobal
 
    REAL,   allocatable :: dMG(:  )
 
-   REAL,   allocatable :: solution(:,:) ! this is allocated in dforce; used in mp00ac and ma02aa; and is passed to packab; 
+   REAL,   allocatable :: solution(:,:,:) ! this is allocated in dforce; used in mp00ac and ma02aa; and is passed to packab; 
 
 !  REAL,   allocatable :: MBpsi(:), MEpsi(:) ! matrix vector products; 
    REAL,   allocatable :: MBpsi(:)           ! matrix vector products; 

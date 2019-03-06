@@ -191,7 +191,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
   INTEGER              :: isymdiff
   REAL                 :: dRZ = 1.0e-05, dvol(-1:+1), evolume, imupf(1:2,-2:2)
   REAL,    allocatable :: oRbc(:,:), oZbs(:,:), oRbs(:,:), oZbc(:,:) ! original geometry;
-  REAL,    allocatable :: isolution(:,:)
+  REAL,    allocatable :: isolution(:,:,:)
 #endif
 
   BEGIN(dforce)
@@ -243,6 +243,14 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
+  write(ounit, '("dforce: Mvol = ", i3)') Mvol
+SALLOCATE( solution, (1:Mvol, 1:NN,-1:2), zero ) ! this will contain the vector potential from the linear solver and its derivatives; 
+#ifdef DEBUG
+    if( Lcheck.eq.4 ) then
+     SALLOCATE( isolution, (1:Mvol, 1:NN,-2:2), zero )
+    endif
+#endif
+
   do vvol = 1, Mvol
 
    LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
@@ -264,8 +272,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 
    SALLOCATE( dMG, (0:NN     ), zero )  
    
-   SALLOCATE( solution, (1:NN,-1:2), zero ) ! this will contain the vector potential from the linear solver and its derivatives;
-   
+
    SALLOCATE( MBpsi, (1:NN), zero )
 !  SALLOCATE( MEpsi, (1:NN), zero )
    
@@ -273,12 +280,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
     
     SALLOCATE( oBI, (1:NN,1:NN), zero ) ! inverse of ``original'', i.e. unperturbed, Beltrami matrix;
     SALLOCATE( rhs, (1:NN     ), zero )
-    
-#ifdef DEBUG
-    if( Lcheck.eq.4 ) then
-     SALLOCATE( isolution, (1:NN,-2:2), zero )
-    endif
-#endif
+   
 
    endif ! end of if( LcomputeDerivatives ) ;
    
@@ -326,12 +328,14 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
    dBdX%L = .false. ! first, compute Beltrami fields;
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-   
-   WCALL( dforce, ma00aa, ( Iquad(vvol), mn, vvol, ll ) ) ! compute volume integrals of metric elements;
-   
-   WCALL( dforce, matrix, ( vvol, mn, ll ) )
 
+   write( ounit, '("dforce, vvol = ", i3, ". starting ma00aa ...")') vvol
+   WCALL( dforce, ma00aa, ( Iquad(vvol), mn, vvol, ll ) ) ! compute volume integrals of metric elements;
+   write( ounit, '("dforce, ma00aa done. starting matrix ... ")')
+   WCALL( dforce, matrix, ( vvol, mn, ll ) )
+   write( ounit, '("dforce, matrix done. starting ma02aa ... ")')
    WCALL( dforce, ma02aa, ( vvol, NN ) )
+   write( ounit, '("dforce, ma02aa done.")')
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -372,11 +376,58 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-enddo ! End of do vvol
+   DALLOCATE(dMA)
+   DALLOCATE(dMB)
+! !DALLOCATE(dMC)
+   DALLOCATE(dMD)
+! !DALLOCATE(dME)
+! !DALLOCATE(dMF)
 
-do vvol =1, Mvol
+   DALLOCATE(dMG)
    
+   DALLOCATE(MBpsi)
+!  DALLOCATE(MEpsi)
+   
+   if( LcomputeDerivatives) then
+    
+    DALLOCATE(oBI)
+    DALLOCATE(rhs)
+   
+   endif
+
+enddo ! end of do vvol;
+
+
+
+do vvol = 1, Mvol
+
    LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+   
+   if( myid.ne.modulo(vvol-1,ncpu) ) cycle ! construct Beltrami fields in parallel;
+   
+   NN = NAdof(vvol) ! shorthand;
+   
+   SALLOCATE( dMA, (0:NN,0:NN), zero ) ! required for both plasma region and vacuum region;
+   SALLOCATE( dMB, (0:NN,0: 2), zero )
+! !SALLOCATE( dMC, (1: 2,1: 2), zero )
+   SALLOCATE( dMD, (0:NN,0:NN), zero )
+!  SALLOCATE( dME, (0:NN,1: 2), zero )
+! !SALLOCATE( dMF, (1: 2,1: 2), zero )  
+
+   SALLOCATE( dMG, (0:NN     ), zero )  
+   
+   
+   SALLOCATE( MBpsi, (1:NN), zero )
+!  SALLOCATE( MEpsi, (1:NN), zero )
+   
+   if( LcomputeDerivatives ) then ! allocate some additional memory;
+    
+    SALLOCATE( oBI, (1:NN,1:NN), zero ) ! inverse of ``original'', i.e. unperturbed, Beltrami matrix;
+    SALLOCATE( rhs, (1:NN     ), zero )
+
+   endif ! end of if( LcomputeDerivatives ) ;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -418,10 +469,6 @@ do vvol =1, Mvol
    SALLOCATE( DDzzss, (0:ll,0:ll,1:mn,1:mn), zero )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-   WCALL( dforce, ma00aa, ( Iquad(vvol), mn, vvol, ll ) ) ! compute volume integrals of metric elements;
-   
-   WCALL( dforce, matrix, ( vvol, mn, ll ) )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -614,15 +661,15 @@ do vvol =1, Mvol
         
 !       rhs(1:NN) = - matmul( dMB(1:NN,1:2 ) - mu(vvol) * dME(1:NN,1:2 ), dpsi(1:2)        ) &
         rhs(1:NN) = - matmul( dMB(1:NN,1:2 )                            , dpsi(1:2)        ) &
-                    - matmul( dMA(1:NN,1:NN) - mu(vvol) * dMD(1:NN,1:NN), solution(1:NN,0) )
+                    - matmul( dMA(1:NN,1:NN) - mu(vvol) * dMD(1:NN,1:NN), solution(vvol, 1:NN,0) )
         
-        solution(1:NN,-1) = matmul( oBI(1:NN,1:NN), rhs(1:NN) ) ! this is the perturbed, packxi solution;
+        solution(vvol, 1:NN,-1) = matmul( oBI(1:NN,1:NN), rhs(1:NN) ) ! this is the perturbed, packxi solution;
 
         ideriv = -1 ; dpsi(1:2) = (/ dtflux(vvol), dpflux(vvol) /) ! these are also used below;
         
         packorunpack = 'U'
         
-        WCALL( dforce, packab,( packorunpack, vvol, NN,  solution(1:NN,-1), ideriv ) ) ! derivatives placed in Ate(vvol,ideriv,1:mn)%s(0:Lrad),
+        WCALL( dforce, packab,( packorunpack, vvol, NN,  solution(vvol, 1:NN,-1), ideriv ) ) ! derivatives placed in Ate(vvol,ideriv,1:mn)%s(0:Lrad),
 
 #ifdef DEBUG
         FATAL( dforce, vvol-1+innout.gt.Mvol, psifactor needs attention )
@@ -723,28 +770,28 @@ do vvol =1, Mvol
           imupf(1:2,isymdiff) = (/ dtflux(vvol), dpflux(vvol) /) ! dtflux and dpflux are computed for the perturbed geometry by ma02aa/mp00ac if Lconstraint=1;
           endif
           
-          isolution(1:NN,isymdiff) = solution(1:NN,0) ! solution is computed in mp00ac, which is called by ma02aa;
+          isolution(vvol, 1:NN,isymdiff) = solution(vvol, 1:NN,0) ! solution is computed in mp00ac, which is called by ma02aa;
           
          enddo ! end of do isymdiff;
          
-         isolution(1:NN,0) = ( - 1 * isolution(1:NN, 2) + 8 * isolution(1:NN, 1) - 8 * isolution(1:NN,-1) + 1 * isolution(1:NN,-2) ) / ( 12 * dRZ )
+         isolution(vvol, 1:NN,0) = ( - 1 * isolution(vvol, 1:NN, 2) + 8 * isolution(vvol, 1:NN, 1) - 8 * isolution(vvol, 1:NN,-1) + 1 * isolution(vvol, 1:NN,-2) ) / ( 12 * dRZ )
          imupf(1:2,0)      = ( - 1 * imupf(1:2, 2)      + 8 * imupf(1:2, 1)      - 8 * imupf(1:2,-1)      + 1 * imupf(1:2,-2)      ) / ( 12 * dRZ )
          
-          solution(1:NN,-1) = abs(  solution(1:NN,-1) )
-         isolution(1:NN, 0) = abs( isolution(1:NN, 0) )
+          solution(vvol, 1:NN,-1) = abs(  solution(vvol, 1:NN,-1) )
+         isolution(vvol, 1:NN, 0) = abs( isolution(vvol, 1:NN, 0) )
         
-!        ifail = 0 ; call M01CAF(  solution(1:NN,-1), 1, NN, 'D', ifail ) ! sorting screen output; this corrupts;
-!        ifail = 0 ; call M01CAF( isolution(1:NN, 0), 1, NN, 'D', ifail ) ! sorting screen output; this corrupts;
+!        ifail = 0 ; call M01CAF(  solution(vvol, 1:NN,-1), 1, NN, 'D', ifail ) ! sorting screen output; this corrupts;
+!        ifail = 0 ; call M01CAF( isolution(vvol, 1:NN, 0), 1, NN, 'D', ifail ) ! sorting screen output; this corrupts;
          
-         ifail = 0 ; call dlasrt( 'D', NN,  solution(1:NN,-1), ifail ) ! sorting screen output; this corrupts;
-         ifail = 0 ; call dlasrt( 'D', NN, isolution(1:NN, 0), ifail ) ! sorting screen output; this corrupts;        
+         ifail = 0 ; call dlasrt( 'D', NN,  solution(vvol, 1:NN,-1), ifail ) ! sorting screen output; this corrupts;
+         ifail = 0 ; call dlasrt( 'D', NN, isolution(vvol, 1:NN, 0), ifail ) ! sorting screen output; this corrupts;        
          
          cput = GETTIME
 
         !select case( Lconstraint )
         !case( 0 )
-        ! write(ounit,3002) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, innout,  solution(1:min(NN,16),-1)
-        ! write(ounit,3002) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, innout, isolution(1:min(NN,16), 0)
+        ! write(ounit,3002) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, innout,  solution(vvol, 1:min(NN,16),-1)
+        ! write(ounit,3002) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, innout, isolution(vvol, 1:min(NN,16), 0)
         !case( 1 )
           write(ounit,3003)
           write(ounit,3003) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, innout, "finite-diff", imupf(1:2,0)
@@ -1114,8 +1161,6 @@ do vvol =1, Mvol
 
    DALLOCATE(dMG)
    
-   DALLOCATE(solution)
-   
    DALLOCATE(MBpsi)
 !  DALLOCATE(MEpsi)
    
@@ -1135,6 +1180,8 @@ do vvol =1, Mvol
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   enddo ! end of do vvol = 1, Mvol (this is the parallelization loop);
+  
+  DALLOCATE(solution)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
