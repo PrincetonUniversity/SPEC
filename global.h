@@ -70,7 +70,7 @@ contains
   REAL FUNCTION myprec() !Duplicates NAG routine X02AJF (machine precision) ! JAB; 27 Jul 17 ! I suggest that this be removed; SRH: 27 Feb 18;
     implicit none
     intrinsic EPSILON
-    myprec = 0.5*EPSILON(1.0d0)
+    myprec = 0.5*EPSILON(small)
   END FUNCTION myprec
 end module numerical
 
