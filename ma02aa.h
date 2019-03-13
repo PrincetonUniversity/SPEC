@@ -30,7 +30,7 @@ subroutine ma02aa( lvol, NN )
   use allglobal, only : ncpu, myid, cpus, Mvol, mn, im, in, &
                         LBlinear, LBnewton, LBsequad, &
 !                       dMA, dMB, dMC, dMD, dME, dMF, solution, &
-                        dMA, dMB,      dMD,           solution, &
+                        dMA, dMB,      dMD,           solution, solution_index, &
 !                       MBpsi, MEpsi, psiMCpsi, psiMFpsi, &
                         MBpsi,                            &
                         ImagneticOK, &
@@ -51,7 +51,7 @@ subroutine ma02aa( lvol, NN )
   REAL                 :: tol, dpsi(1:2), lastcpu
   CHARACTER            :: packorunpack
   
-  INTEGER              :: Nxdof, Ndof, Ldfjac, iflag, maxfev, mode, LRR, nfev, njev, nprint, ihybrj
+  INTEGER              :: Nxdof, Ndof, Ldfjac, iflag, maxfev, mode, LRR, nfev, njev, nprint, ihybrj, isol
   REAL                 :: Xdof(1:2), Fdof(1:2), Ddof(1:2,1:2), oDdof(1:2,1:2)
   REAL                 :: factor, diag(1:2), RR(1:2*(2+1)/2), QTF(1:2), wk(1:2,1:4)
   
@@ -93,7 +93,8 @@ subroutine ma02aa( lvol, NN )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   ivol = lvol ! various subroutines (e.g. mp00ac, df00ab) that may be called below require volume identification, but the argument list is fixed by NAG;
-  
+  isol = solution_index(lvol)  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 !latex \subsection{seqeuntial quadratic programming}
@@ -265,7 +266,7 @@ subroutine ma02aa( lvol, NN )
    lBBintegral(lvol) = half * sum( xi(1:NN) * matmul( dMA(1:NN,1:NN), xi(1:NN) ) ) + sum( xi(1:NN) * MBpsi(1:NN) ) ! + psiMCpsi
    lABintegral(lvol) = half * sum( xi(1:NN) * matmul( dMD(1:NN,1:NN), xi(1:NN) ) ) ! + sum( xi(1:NN) * MEpsi(1:NN) ) ! + psiMFpsi
    
-   solution(lvol, 1:NN,0) = xi(1:NN)
+   solution(isol:isol+NN,0) = xi(1:NN)
    
    
   endif ! end of if( LBsequad ) then;
@@ -342,7 +343,7 @@ write(ounit, '("Hi! LBnewton = ", L1)') LBnewton
    lABintegral(lvol) = half * sum( xi(1:NN) * matmul( dMD(1:NN,1:NN), xi(1:NN) ) ) ! + sum( xi(1:NN) * MEpsi(1:NN) ) ! + psiMFpsi
    
    write(ounit, '("test 2")')
-   solution(lvol, 1:NN,0) = xi(1:NN)
+   solution(isol:isol+NN,0) = xi(1:NN)
    
   endif ! end of if( LBnewton ) then
   
@@ -581,8 +582,8 @@ write(ounit, '("LBlinear = ", L1)') LBlinear
     
     CALL( ma02aa, mp00ac( Ndof, Xdof(1:Ndof), dFdof(ixx,jxx,1:Ndof), oDdof(1:Ldfjac,1:Ndof), Ldfjac, iflag ) ) ! compute "exact" derivatives;
     
-    dsolution(1:NN,1,0,0) = solution(lvol, 1:NN,1) ! packed vector potential; derivative wrt mu    ;
-    dsolution(1:NN,2,0,0) = solution(lvol, 1:NN,2) ! packed vector potential; derivative wrt dpflux;
+    dsolution(1:NN,1,0,0) = solution(isol:isol+NN,1) ! packed vector potential; derivative wrt mu    ;
+    dsolution(1:NN,2,0,0) = solution(isol:isol+NN,2) ! packed vector potential; derivative wrt dpflux;
     
     jfinite = 0
     cput = GETTIME 
@@ -607,7 +608,7 @@ write(ounit, '("LBlinear = ", L1)') LBlinear
        
        CALL( ma02aa, mp00ac( Ndof, Xdof(1:Ndof), dFdof(ixx,jxx,1:Ndof), Ddof(1:Ldfjac,1:Ndof), Ldfjac, iflag ) ) ! compute function values only;
        
-       dsolution(1:NN,0,ixx,jxx) = solution(lvol, 1:NN,0)
+       dsolution(1:NN,0,ixx,jxx) = solution(isol:isol+NN,0)
        
       enddo ! end of do jxx;
      enddo ! end of do ixx;
