@@ -103,8 +103,6 @@ subroutine ma02aa( lvol, NN )
 !latex \item Documentation on the implementation of \nag{www.nag.co.uk/numeric/FL/manual19/pdf/E04/e04uff_fl19.pdf}{E04UFF} is under construction.
 !latex \end{enumerate}
 
-
-   write(ounit, '("hello?, LBsequad = ", L1)') LBsequad
   if( LBsequad ) then ! sequential quadratic programming (SQP); construct minimum energy with constrained helicity;
    lastcpu = GETTIME
    
@@ -278,7 +276,6 @@ subroutine ma02aa( lvol, NN )
 !latex \item Only relevant if \internal{LBnewton=T}. See \inputvar{LBeltrami} for details.
 !latex \end{enumerate}
 
-write(ounit, '("Hi! LBnewton = ", L1)') LBnewton
   if( LBnewton ) then
    
    lastcpu = GETTIME
@@ -342,7 +339,6 @@ write(ounit, '("Hi! LBnewton = ", L1)') LBnewton
    lBBintegral(lvol) = half * sum( xi(1:NN) * matmul( dMA(1:NN,1:NN), xi(1:NN) ) ) + sum( xi(1:NN) * MBpsi(1:NN) ) ! + psiMCpsi
    lABintegral(lvol) = half * sum( xi(1:NN) * matmul( dMD(1:NN,1:NN), xi(1:NN) ) ) ! + sum( xi(1:NN) * MEpsi(1:NN) ) ! + psiMFpsi
    
-   write(ounit, '("test 2")')
    solution(isol:isol+NN,0) = xi(1:NN)
    
   endif ! end of if( LBnewton ) then
@@ -412,12 +408,10 @@ write(ounit, '("Hi! LBnewton = ", L1)') LBnewton
 !latex \end{enumerate}
   
 
-write(ounit, '("LBlinear = ", L1)') LBlinear
   if( LBlinear ) then ! assume Beltrami field is parameterized by helicity multiplier (and poloidal flux);
    
    lastcpu = GETTIME
    
-   write(ounit, '("test 1")')
    if( Lplasmaregion ) then
     
     Xdof(1:2) = xoffset + (/     mu(lvol), dpflux(lvol) /) ! initial guess for degrees of freedom; offset from zero so that relative error is small;
@@ -448,8 +442,6 @@ write(ounit, '("LBlinear = ", L1)') LBlinear
 
    endif ! end of if( Lplasmaregion) ;
    
-
-   write(ounit, '("test 2. Nxdof = ", i3)') Nxdof
    select case( Nxdof )
     
    case( 0   ) ! need only call mp00ac once, to calculate Beltrami field for given helicity multiplier and enclosed fluxes;
@@ -511,7 +503,6 @@ write(ounit, '("LBlinear = ", L1)') LBlinear
 
    cput = GETTIME
 
-   write(ounit, '("test 3.")')
    select case(ihybrj) ! this screen output may not be correct for Lvacuumregion;
    case(    1   )  
     if( Wma02aa ) write(ounit,1040) cput-cpus, myid, lvol, ihybrj, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, "success         ", Fdof(1:Ndof)

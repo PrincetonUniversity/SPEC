@@ -198,6 +198,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
+! Unpack position to generate arrays iRbc, iZbs, IRbs, iZbc.
+
   packorunpack = 'U' ! unpack geometrical degrees-of-freedom;
   
   WCALL( dforce, packxi,( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), packorunpack ) )
@@ -205,7 +207,9 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 #ifdef DEBUG
-  
+
+! Store initial arrays for debug purposes.  
+
   if( Lcheck.eq.3 .or. Lcheck.eq.4 ) then ! will check volume derivatives;
    
    SALLOCATE( oRbc, (1:mn,0:Mvol), iRbc(1:mn,0:Mvol) )
@@ -263,6 +267,10 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 #endif
   jj = 0
 
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!                                              FIRST LOOP
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
   do vvol = 1, Mvol
 
    LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
@@ -290,9 +298,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
    
    if( LcomputeDerivatives ) then ! allocate some additional memory;
     
-    SALLOCATE( oBI, (1:NN,1:NN), zero ) ! inverse of ``original'', i.e. unperturbed, Beltrami matrix;
     SALLOCATE( rhs, (1:NN     ), zero )
-   
 
    endif ! end of if( LcomputeDerivatives ) ;
    
@@ -342,7 +348,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
    write( ounit, '("dforce, vvol = ", i3, ". starting ma00aa ...")') vvol
-   WCALL( dforce, ma00aa, ( Iquad(vvol), mn, vvol, ll ) ) ! compute volume integrals of metric elements;
+   WCALL( dforce, ma00aa, ( Iquad(vvol), mn, vvol, ll ) ) ! compute volume integrals of metric elements - evaluate TD, DT, DD, ...;
    write( ounit, '("dforce, ma00aa done. starting matrix ... ")')
    WCALL( dforce, matrix, ( vvol, mn, ll ) )
    write( ounit, '("dforce, matrix done. starting ma02aa ... ")')
@@ -402,13 +408,16 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
    
    if( LcomputeDerivatives) then
     
-    DALLOCATE(oBI)
     DALLOCATE(rhs)
    
    endif
 
 enddo ! end of do vvol;
 
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!                                              SECOND LOOP
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 
 do vvol = 1, Mvol
@@ -485,6 +494,13 @@ do vvol = 1, Mvol
    SALLOCATE( DDzzss, (0:ll,0:ll,1:mn,1:mn), zero )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+   ! Recompute the matrices for each volume...
+   write( ounit, '("dforce, vvol = ", i3, ". starting ma00aa ...")') vvol
+   WCALL( dforce, ma00aa, ( Iquad(vvol), mn, vvol, ll ) ) ! compute volume integrals of metric elements;
+   write( ounit, '("dforce, ma00aa done. starting matrix ... ")')
+   WCALL( dforce, matrix, ( vvol, mn, ll ) )
+   write( ounit, '("dforce, matrix done. ")')
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
