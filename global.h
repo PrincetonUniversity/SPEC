@@ -1327,7 +1327,7 @@ module allglobal
   REAL                 :: tetazeta(1:2)
 
 ! REAL                 :: virtualcasingfactor = one / ( four*pi * pi2 ) ! this is old factor (before toroidal flux was corrected?) ; 
-  REAL                 :: virtualcasingfactor = one / ( four*pi       ) ! this agrees with diagno; 
+  REAL                 :: virtualcasingfactor = -one / ( four*pi       ) ! this agrees with diagno; 
   
   INTEGER              :: IBerror ! for computing error in magnetic field; 
 
