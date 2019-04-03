@@ -31,8 +31,8 @@ for i = 1: nfft
     dr = dRij(i);
     dz = dZij(i);
     %dd = sqrt(dr^2 + dz^2);
-    nr = dz*Rij(i); %/ dd;
-    nz = -dr*Rij(i); %/ dd;
+    nr = -dz*Rij(i); %/ dd;
+    nz = dr*Rij(i); %/ dd;
     bn_raw(i) = Br*nr + Bz * nz;
 end
 
