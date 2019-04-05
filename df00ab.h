@@ -57,20 +57,20 @@ subroutine df00ab( pNN , xi , Fxi , DFxi , Ldfjac , iflag )
    
   case( 1 ) ! return d F; 
 
-! !Fxi(   0) = - half * sum( xi(1:NN) * matmul( dMD(1:NN,1:NN), xi(1:NN) ) ) - sum( xi(1:NN) * MEpsi(1:NN) ) - psiMFpsi + helicity(ivol)
-   Fxi(   0) = - half * sum( xi(1:NN) * matmul( dMD(1:NN,1:NN), xi(1:NN) ) )                                            + helicity(ivol)
+! !Fxi(   0) = - half * sum( xi(1:NN) * matmul( dMD(ivol).mat(1:NN,1:NN), xi(1:NN) ) ) - sum( xi(1:NN) * MEpsi(1:NN) ) - psiMFpsi + helicity(ivol)
+   Fxi(   0) = - half * sum( xi(1:NN) * matmul( dMD(ivol).mat(1:NN,1:NN), xi(1:NN) ) )                                            + helicity(ivol)
 
-! !Fxi(1:NN) = matmul( dMA(1:NN,1:NN), xi(1:NN)  ) + MBpsi(1:NN) - lmu * ( matmul( dMD(1:NN,1:NN), xi(1:NN)  ) + MEpsi(1:NN) )
-   Fxi(1:NN) = matmul( dMA(1:NN,1:NN), xi(1:NN)  ) + MBpsi(1:NN) - lmu * ( matmul( dMD(1:NN,1:NN), xi(1:NN)  )               )
+! !Fxi(1:NN) = matmul( dMA(ivol).mat(1:NN,1:NN), xi(1:NN)  ) + MBpsi(ivol).arr(1:NN) - lmu * ( matmul( dMD(ivol).mat(1:NN,1:NN), xi(1:NN)  ) + MEpsi(1:NN) )
+   Fxi(1:NN) = matmul( dMA(ivol).mat(1:NN,1:NN), xi(1:NN)  ) + MBpsi(ivol).arr(1:NN) - lmu * ( matmul( dMD(ivol).mat(1:NN,1:NN), xi(1:NN)  )               )
 
   case( 2 ) ! return ddF;
 
    DFxi(   0,   0) = zero
 
-   DFxi(   0,1:NN) = - matmul( dMD(1:NN,1:NN), xi(1:NN)  ) ! - MEpsi(1:NN)
-   DFxi(1:NN,   0) = - matmul( dMD(1:NN,1:NN), xi(1:NN)  ) ! - MEpsi(1:NN)
+   DFxi(   0,1:NN) = - matmul( dMD(ivol).mat(1:NN,1:NN), xi(1:NN)  ) ! - MEpsi(1:NN)
+   DFxi(1:NN,   0) = - matmul( dMD(ivol).mat(1:NN,1:NN), xi(1:NN)  ) ! - MEpsi(1:NN)
 
-   DFxi(1:NN,1:NN) = dMA(1:NN,1:NN) - lmu * dMD(1:NN,1:NN)
+   DFxi(1:NN,1:NN) = dMA(ivol).mat(1:NN,1:NN) - lmu * dMD(ivol).mat(1:NN,1:NN)
 
   case default
 

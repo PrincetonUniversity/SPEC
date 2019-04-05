@@ -133,7 +133,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
                         cosi, sini, & ! FFT workspace;
                         dBdX, &
                        !dMA, dMB, dMC, dMD, dME, dMF, dMG, solution, &
-                        dMA, dMB,      dMD,           dMG, solution, solution_index, &
+                        dMA, dMB,      dMD,           dMG, solution,  &
                         MBpsi,        &
                         dtflux, dpflux, sweight, &
                         mmpp, &
@@ -171,7 +171,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
   INTEGER, allocatable :: ipivot(:)
   REAL   , allocatable :: work(:)
   
-  INTEGER              :: vvol, innout, ii, jj, irz, issym, iocons, tdoc, idoc, idof, tdof, jdof, ivol, imn, ll, isol
+  INTEGER              :: vvol, innout, ii, jj, irz, issym, iocons, tdoc, idoc, idof, tdof, jdof, ivol, imn, ll
 
   INTEGER              :: Lcurvature, ideriv, id
   
@@ -246,28 +246,6 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
   endif
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-  SALLOCATE( solution_index, (1:Mvol), zero)
-
-  ! Get the total number of degree of freedom to allocate solution and isolution
-  jj=0
-  do ii=1,Mvol
-     solution_index(ii) = jj+1
-     jj = jj + NAdof(ii)
-     write(ounit, '("dforce: jj = ", i3, ", NAdof(vvol) = ", i3)') jj, NAdof(ii)
-  enddo
-
-  SALLOCATE( solution, (1:jj,-1:2), zero ) ! this will contain the vector potential from the linear solver and its derivatives; 
-
- 
-#ifdef DEBUG
-    if( Lcheck.eq.4 ) then
-     SALLOCATE( isolution, (1:jj,-2:2), zero )
-    endif
-#endif
-  jj = 0
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 !                                              FIRST LOOP
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -283,24 +261,19 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
    
    NN = NAdof(vvol) ! shorthand;
    
-   SALLOCATE( dMA, (0:NN,0:NN), zero ) ! required for both plasma region and vacuum region;
-   SALLOCATE( dMB, (0:NN,0: 2), zero )
+!   SALLOCATE( dMA(vvol), (0:NN,0:NN), zero ) ! required for both plasma region and vacuum region;
+!   SALLOCATE( dMB, (0:NN,0: 2), zero )
 ! !SALLOCATE( dMC, (1: 2,1: 2), zero )
-   SALLOCATE( dMD, (0:NN,0:NN), zero )
+!   SALLOCATE( dMD, (0:NN,0:NN), zero )
 !  SALLOCATE( dME, (0:NN,1: 2), zero )
 ! !SALLOCATE( dMF, (1: 2,1: 2), zero )  
 
-   SALLOCATE( dMG, (0:NN     ), zero )  
+!   SALLOCATE( dMG, (0:NN     ), zero )  
    
 
-   SALLOCATE( MBpsi, (1:NN), zero )
+!   SALLOCATE( MBpsi, (1:NN), zero )
 !  SALLOCATE( MEpsi, (1:NN), zero )
    
-   if( LcomputeDerivatives ) then ! allocate some additional memory;
-    
-    SALLOCATE( rhs, (1:NN     ), zero )
-
-   endif ! end of if( LcomputeDerivatives ) ;
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -392,26 +365,6 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
    DALLOCATE(DDzzsc)
    DALLOCATE(DDzzss)
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-   DALLOCATE(dMA)
-   DALLOCATE(dMB)
-! !DALLOCATE(dMC)
-   DALLOCATE(dMD)
-! !DALLOCATE(dME)
-! !DALLOCATE(dMF)
-
-   DALLOCATE(dMG)
-   
-   DALLOCATE(MBpsi)
-!  DALLOCATE(MEpsi)
-   
-   if( LcomputeDerivatives) then
-    
-    DALLOCATE(rhs)
-   
-   endif
-
 enddo ! end of do vvol;
 
 
@@ -423,28 +376,25 @@ enddo ! end of do vvol;
 do vvol = 1, Mvol
 
    LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
-  
-   ! Get solution index
-   isol = solution_index(vvol)
-
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
    if( myid.ne.modulo(vvol-1,ncpu) ) cycle ! construct Beltrami fields in parallel;
    
    NN = NAdof(vvol) ! shorthand;
+ 
    
-   SALLOCATE( dMA, (0:NN,0:NN), zero ) ! required for both plasma region and vacuum region;
-   SALLOCATE( dMB, (0:NN,0: 2), zero )
+!   SALLOCATE( dMA, (0:NN,0:NN), zero ) ! required for both plasma region and vacuum region;
+!   SALLOCATE( dMB, (0:NN,0: 2), zero )
 ! !SALLOCATE( dMC, (1: 2,1: 2), zero )
-   SALLOCATE( dMD, (0:NN,0:NN), zero )
+!   SALLOCATE( dMD, (0:NN,0:NN), zero )
 !  SALLOCATE( dME, (0:NN,1: 2), zero )
 ! !SALLOCATE( dMF, (1: 2,1: 2), zero )  
 
-   SALLOCATE( dMG, (0:NN     ), zero )  
+!   SALLOCATE( dMG, (0:NN     ), zero )  
    
    
-   SALLOCATE( MBpsi, (1:NN), zero )
+!   SALLOCATE( MBpsi, (1:NN), zero )
 !  SALLOCATE( MEpsi, (1:NN), zero )
    
    if( LcomputeDerivatives ) then ! allocate some additional memory;
@@ -496,11 +446,11 @@ do vvol = 1, Mvol
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
    ! Recompute the matrices for each volume...
-   write( ounit, '("dforce, vvol = ", i3, ". starting ma00aa ...")') vvol
-   WCALL( dforce, ma00aa, ( Iquad(vvol), mn, vvol, ll ) ) ! compute volume integrals of metric elements;
-   write( ounit, '("dforce, ma00aa done. starting matrix ... ")')
-   WCALL( dforce, matrix, ( vvol, mn, ll ) )
-   write( ounit, '("dforce, matrix done. ")')
+!   write( ounit, '("dforce, vvol = ", i3, ". starting ma00aa ...")') vvol
+!   WCALL( dforce, ma00aa, ( Iquad(vvol), mn, vvol, ll ) ) ! compute volume integrals of metric elements;
+!   write( ounit, '("dforce, ma00aa done. starting matrix ... ")')
+!   WCALL( dforce, matrix, ( vvol, mn, ll ) )
+!   write( ounit, '("dforce, matrix done. ")')
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -516,10 +466,10 @@ do vvol = 1, Mvol
     
     lastcpu = GETTIME
     
-    dMA(0:NN-1,1:NN) = dMA(1:NN,1:NN) - mu(vvol) * dMD(1:NN,1:NN) ! this corrupts dMA, but dMA is no longer used;
-    dMA(  NN  ,1:NN) = zero
+    dMA(vvol)%mat(0:NN-1,1:NN) = dMA(vvol)%mat(1:NN,1:NN) - mu(vvol) * dMD(vvol)%mat(1:NN,1:NN) ! this corrupts dMA, but dMA is no longer used;
+    dMA(vvol)%mat(  NN  ,1:NN) = zero
     
-    dMD(1:NN  ,1:NN) = dMA(0:NN-1,1:NN) ! copy of original matrix; this is used below;
+    dMD(vvol)%mat(1:NN  ,1:NN) = dMA(vvol)%mat(0:NN-1,1:NN) ! copy of original matrix; this is used below;
     
     IA = NN + 1
     
@@ -527,7 +477,7 @@ do vvol = 1, Mvol
     
     SALLOCATE( ipivot, (1:NN), 0 )
     
-    idgetrf = 1 ; call DGETRF( MM, NN, dMA(0:LDA-1,1:NN), LDA, ipivot(1:NN), idgetrf )
+    idgetrf = 1 ; call DGETRF( MM, NN, dMA(vvol)%mat(0:LDA-1,1:NN), LDA, ipivot(1:NN), idgetrf )
     
     cput = GETTIME
     select case( idgetrf ) !                                                                     0123456789012345678
@@ -541,7 +491,7 @@ do vvol = 1, Mvol
     
     SALLOCATE( work, (1:Lwork), zero )
     
-    idgetri = 1 ; call DGETRI( NN, dMA(0:LDA-1,1:NN), LDA, ipivot(1:NN), work(1:Lwork), Lwork, idgetri )
+    idgetri = 1 ; call DGETRI( NN, dMA(vvol)%mat(0:LDA-1,1:NN), LDA, ipivot(1:NN), work(1:Lwork), Lwork, idgetri )
     
     DALLOCATE(work)
     
@@ -557,7 +507,7 @@ do vvol = 1, Mvol
     
 1011 format("dforce : ",f10.2," : myid=",i3," ; vvol=",i3," ; called DGETRI ; time=",f10.2,"s ; inverse of Beltrami matrix; idgetrf=",i2," ; ",a18)
     
-    oBI(1:NN,1:NN) = dMA(0:LDA-1,1:NN)
+    oBI(1:NN,1:NN) = dMA(vvol)%mat(0:LDA-1,1:NN)
     
 !    do ii = 1, NN
 !     do jj = 1, ii
@@ -691,17 +641,17 @@ do vvol = 1, Mvol
         
         dpsi(1:2) = (/ dtflux(vvol), dpflux(vvol) /) ! local enclosed toroidal and poloidal fluxes;
         
-!       rhs(1:NN) = - matmul( dMB(1:NN,1:2 ) - mu(vvol) * dME(1:NN,1:2 ), dpsi(1:2)        ) &
-        rhs(1:NN) = - matmul( dMB(1:NN,1:2 )                            , dpsi(1:2)        ) &
-                    - matmul( dMA(1:NN,1:NN) - mu(vvol) * dMD(1:NN,1:NN), solution(isol:isol+NN,0) )
+!       rhs(1:NN) = - matmul( dMB(vvol)%mat(1:NN,1:2 ) - mu(vvol) * dME(1:NN,1:2 ), dpsi(1:2)        ) &
+        rhs(1:NN) = - matmul( dMB(vvol)%mat(1:NN,1:2 )                            , dpsi(1:2)        ) &
+                    - matmul( dMA(vvol)%mat(1:NN,1:NN) - mu(vvol) * dMD(vvol)%mat(1:NN,1:NN), solution(vvol)%mat(1:NN,0) )
         
-        solution(isol:isol+NN,-1) = matmul( oBI(1:NN,1:NN), rhs(1:NN) ) ! this is the perturbed, packxi solution;
+        solution(vvol)%mat(1:NN,-1) = matmul( oBI(1:NN,1:NN), rhs(1:NN) ) ! this is the perturbed, packxi solution;
 
         ideriv = -1 ; dpsi(1:2) = (/ dtflux(vvol), dpflux(vvol) /) ! these are also used below;
         
         packorunpack = 'U'
         
-        WCALL( dforce, packab,( packorunpack, vvol, NN,  solution(isol:isol+NN,-1), ideriv ) ) ! derivatives placed in Ate(vvol,ideriv,1:mn)%s(0:Lrad),
+        WCALL( dforce, packab,( packorunpack, vvol, NN,  solution(vvol)%mat(1:NN,-1), ideriv ) ) ! derivatives placed in Ate(vvol,ideriv,1:mn)%s(0:Lrad),
 
 #ifdef DEBUG
         FATAL( dforce, vvol-1+innout.gt.Mvol, psifactor needs attention )
@@ -802,27 +752,27 @@ do vvol = 1, Mvol
           imupf(1:2,isymdiff) = (/ dtflux(vvol), dpflux(vvol) /) ! dtflux and dpflux are computed for the perturbed geometry by ma02aa/mp00ac if Lconstraint=1;
           endif
           
-          isolution(isol:isol+NN,isymdiff) = solution(isol:isol+NN,0) ! solution is computed in mp00ac, which is called by ma02aa;
+          isolution(1:NN,isymdiff) = solution(vvol)%mat(1:NN,0) ! solution is computed in mp00ac, which is called by ma02aa;
           
          enddo ! end of do isymdiff;
          
-         isolution(isol:isol+NN,0) = ( - 1 * isolution(isol:isol+NN, 2) + 8 * isolution(isol:isol+NN, 1) - 8 * isolution(isol:isol+NN,-1) + 1 * isolution(isol:isol+NN,-2) ) / ( 12 * dRZ )
+         isolution(1:NN,0) = ( - 1 * isolution(1:NN, 2) + 8 * isolution(1:NN, 1) - 8 * isolution(1:NN,-1) + 1 * isolution(1:NN,-2) ) / ( 12 * dRZ )
          imupf(1:2,0)      = ( - 1 * imupf(1:2, 2)      + 8 * imupf(1:2, 1)      - 8 * imupf(1:2,-1)      + 1 * imupf(1:2,-2)      ) / ( 12 * dRZ )
          
-          solution(isol:isol+NN,-1) = abs(  solution(isol:isol+NN,-1) )
-         isolution(isol:isol+NN, 0) = abs( isolution(isol:isol+NN, 0) )
+          solution(vvol)%mat(1:NN,-1) = abs(  solution(vvol)%mat(1:NN,-1) )
+         isolution(1:NN, 0) = abs( isolution(1:NN, 0) )
         
-!        ifail = 0 ; call M01CAF(  solution(isol:isol+NN,-1), 1, NN, 'D', ifail ) ! sorting screen output; this corrupts;
-!        ifail = 0 ; call M01CAF( isolution(isol:isol+NN, 0), 1, NN, 'D', ifail ) ! sorting screen output; this corrupts;
+!        ifail = 0 ; call M01CAF(  solution(vvol)%mat(1:NN,-1), 1, NN, 'D', ifail ) ! sorting screen output; this corrupts;
+!        ifail = 0 ; call M01CAF( isolution(1:NN, 0), 1, NN, 'D', ifail ) ! sorting screen output; this corrupts;
          
-         ifail = 0 ; call dlasrt( 'D', NN,  solution(isol:isol+NN,-1), ifail ) ! sorting screen output; this corrupts;
-         ifail = 0 ; call dlasrt( 'D', NN, isolution(isol:isol+NN, 0), ifail ) ! sorting screen output; this corrupts;        
+         ifail = 0 ; call dlasrt( 'D', NN,  solution(vvol)%mat(1:NN,-1), ifail ) ! sorting screen output; this corrupts;
+         ifail = 0 ; call dlasrt( 'D', NN, isolution(1:NN, 0), ifail ) ! sorting screen output; this corrupts;        
          
          cput = GETTIME
 
         !select case( Lconstraint )
         !case( 0 )
-        ! write(ounit,3002) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, innout,  solution(isol:isol+min(NN,16),-1)
+        ! write(ounit,3002) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, innout,  solution(vvol)%mat(1:min(NN,16),-1)
         ! write(ounit,3002) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, innout, isolution(isol:isol+min(NN,16), 0)
         !case( 1 )
           write(ounit,3003)
@@ -1184,16 +1134,16 @@ do vvol = 1, Mvol
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-   DALLOCATE(dMA)
-   DALLOCATE(dMB)
+!   DALLOCATE(dMA)
+!   DALLOCATE(dMB)
 ! !DALLOCATE(dMC)
-   DALLOCATE(dMD)
+!   DALLOCATE(dMD)
 ! !DALLOCATE(dME)
 ! !DALLOCATE(dMF)
 
-   DALLOCATE(dMG)
+!   DALLOCATE(dMG)
    
-   DALLOCATE(MBpsi)
+!<   DALLOCATE(MBpsi)
 !  DALLOCATE(MEpsi)
    
    if( LcomputeDerivatives) then
@@ -1212,9 +1162,6 @@ do vvol = 1, Mvol
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   enddo ! end of do vvol = 1, Mvol (this is the parallelization loop);
-  
-  DALLOCATE(solution)
-  DALLOCATE(solution_index)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   

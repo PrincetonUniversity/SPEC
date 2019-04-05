@@ -112,6 +112,15 @@ module typedefns
      REAL,    allocatable :: s(:)
      INTEGER, allocatable :: i(:)
   end type subgrid
+  
+  
+  type VarSizeMatrix
+		REAL, allocatable :: mat(:,:)
+  end type VarSizeMatrix
+  
+  type VarSizeArray
+		REAL, allocatable :: arr(:)
+  end type VarSizeArray
 
 end module typedefns
 
@@ -1092,16 +1101,13 @@ module allglobal
 !latex \item These are allocated and deallocated in \link{dforce}, assigned in \link{matrix}, and used in \link{mp00ac} and ? \link{df00aa}.
 !latex \end{enumerate}
 
-   REAL,   allocatable :: dMA(:,:), dMB(:,:)! dMC(:,:) ! energy and helicity matrices; quadratic forms; 
-   REAL,   allocatable :: dMD(:,:)! dME(:,:)! dMF(:,:) ! energy and helicity matrices; quadratic forms; 
-
-   REAL,   allocatable :: dMG(:  )
-
-   REAL,   allocatable :: solution(:,:) ! this is allocated in dforce; used in mp00ac and ma02aa; and is passed to packab; 
-   INTEGER,allocatable :: solution_index(:)
+   type(VarSizeMatrix),   allocatable :: dMA(:), dMB(:)! dMC(:,:) ! energy and helicity matrices; quadratic forms; 
+   type(VarSizeMatrix),   allocatable :: dMD(:)! dME(:,:)! dMF(:,:) ! energy and helicity matrices; quadratic forms; 
+   type(VarSizeArray) ,   allocatable :: dMG(:  )
+   type(VarSizeMatrix),   allocatable :: solution(:) ! this is allocated in dforce; used in mp00ac and ma02aa; and is passed to packab; 
 
 !  REAL,   allocatable :: MBpsi(:), MEpsi(:) ! matrix vector products; 
-   REAL,   allocatable :: MBpsi(:)           ! matrix vector products; 
+   type(VarSizeArray),   allocatable :: MBpsi(:)           ! matrix vector products; 
 !  REAL                :: psiMCpsi, psiMFpsi
 !  REAL                ::           psiMFpsi
 

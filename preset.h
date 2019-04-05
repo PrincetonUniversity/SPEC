@@ -747,7 +747,37 @@ end if
    write(ounit,'("preset : ", 10x ," : ")')         
    write(ounit,'("preset : ",f10.2," : Nquad="i4" ; mn="i5" ; NGdof="i6" ; NAdof="16(i6",")" ...")') cput-cpus, Nquad, mn, NGdof, NAdof(1:min(Mvol,16))
   endif
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+! HERE DEFINE THE NEW MATRICES ARRAY
+
+allocate(dMA(1:Mvol))
+allocate(dMB(1:Mvol))
+allocate(dMD(1:Mvol))
+allocate(dMG(1:Mvol))
+allocate(MBpsi(1:Mvol))
+allocate(solution(1:Mvol))
+do vvol = 1, Mvol
+  NN = NAdof(vvol)
+  allocate( dMA(vvol)%mat(0:NN, 0:NN) )
+  dMA(vvol)%mat(0:NN, 0:NN)  = 0
   
+  allocate( dMB(vvol)%mat(0:NN, 0:2) )
+  dMB(vvol)%mat(0:NN, 0:2) = 0
+  
+  allocate( dMD(vvol)%mat(0:NN, 0:NN) )
+  dMD(vvol)%mat(0:NN, 0:NN) = 0
+  
+  allocate( dMG(vvol)%arr(0:NN) )
+  dMG(vvol)%arr(0:NN) = 0
+  
+  allocate( MBpsi(vvol)%arr(1:NN) )
+  MBpsi(vvol)%arr(1:NN) = 0
+  
+  allocate( solution(vvol)%mat(1:NN, -1:2))
+  solution(vvol)%mat(1:NN, -1:2) = 0
+enddo
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 !latex \subsubsection{\type{workspace}}

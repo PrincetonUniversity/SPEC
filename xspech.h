@@ -71,7 +71,9 @@ program xspech
                         iBns, iBnc, iVns, iVnc, &
                         Ate, Aze, Ato, Azo, & ! only required for debugging; 09 Mar 17;
                         nfreeboundaryiterations, &
-                        beltramierror
+                        beltramierror, &
+                        dMA, dMB, dMD, dMG, MBpsi, solution
+						
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -79,7 +81,7 @@ program xspech
 
   LOGICAL              :: LComputeDerivatives, LContinueFreeboundaryIterations, exist, LupdateBn
 
-! INTEGER              :: nfreeboundaryiterations, imn, lmn, lNfp, lim, lin, ii ! 09 Mar 17;
+! INTEGER              :: nfreeboundaryiterations, imn, lmn, lNfp, lim, lin, ii, lvol ! 09 Mar 17;
   INTEGER              :: imn, lmn, lNfp, lim, lin, ii, ideriv
   INTEGER              :: vvol, llmodnp, ifail, wflag, iflag, vflag
   REAL                 :: rflag, lastcpu, bnserr, lRwc, lRws, lZwc, lZws, lItor, lGpol, lgBc, lgBs
@@ -696,6 +698,22 @@ program xspech
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 9999 continue
+
+  do vvol = 1, Mvol
+    deallocate(dMA(vvol)%mat)
+    deallocate(dMB(vvol)%mat)
+    deallocate(dMD(vvol)%mat)
+    deallocate(dMG(vvol)%arr)
+    deallocate(MBpsi(vvol)%arr)
+    deallocate(solution(vvol)%mat)
+  enddo
+  deallocate(dMA)
+  deallocate(dMB)
+  deallocate(dMD)
+  deallocate(dMG)
+  deallocate(MBpsi)
+  deallocate(solution)
+
 
   WCALL( xspech, ending )
 
