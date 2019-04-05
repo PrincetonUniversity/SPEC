@@ -423,7 +423,7 @@ subroutine ma02aa( lvol, NN )
      ;              endif                                         
     case(  2 )    ;                                     Nxdof = 1 ! multiplier                 IS  varied to match             helicity ;
     case(  3 )    ; if( Lcoordinatesingularity ) then ; Nxdof = 0 ! multiplier & poloidal flux NOT varied                               ;
-     ;              else                              ; Nxdof = 0 !              poloidal flux IS  varied to match       surface current NOT YET IMPLEMENTED;
+     ;              else                              ; Nxdof = 0 ! Global constraint, no dof locally
      ;              endif
     end select
     
@@ -436,7 +436,7 @@ subroutine ma02aa( lvol, NN )
     case(  0 )    ;                                   ; Nxdof = 2 ! poloidal   & toroidal flux ARE varied to match linking current and plasma current;
     case(  1 )    ;                                   ; Nxdof = 2 ! poloidal   & toroidal flux ARE varied to match linking current and transform-constraint;
     case(  2 )    ;                                   ; Nxdof = 2 ! poloidal   & toroidal flux ARE varied to match linking current and plasma current;
-    case(  3 )    ;                                   ; FATAL(ma02aa, .true., Lconstraint equal three not implemented in free boundary)
+    case(  3 )    ;                                   ; Nxdof = 0 ! Global constraint
     end select
 
    endif ! end of if( Lplasmaregion) ;
@@ -487,7 +487,7 @@ subroutine ma02aa( lvol, NN )
     
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-    if( Lconstraint.eq.1 .or. ( Lvacuumregion .and. Lconstraint.eq.0 ) ) then
+    if( Lconstraint.eq.1 .or. Lconstraint.eq.3 .or. ( Lvacuumregion .and. Lconstraint.eq.0 ) ) then
      
      iflag = 2 ; Ldfjac = Ndof ! call mp00ac: tr00ab/curent to ensure the derivatives of B, transform, currents, wrt mu/dtflux & dpflux are calculated;
 

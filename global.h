@@ -1086,6 +1086,8 @@ module allglobal
   INTEGER      , allocatable :: Fso(:,:), Fse(:,:)
 
   LOGICAL                    :: Lcoordinatesingularity, Lplasmaregion, Lvacuumregion
+  
+  LOGICAL					 :: Localconstraint
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
