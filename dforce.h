@@ -111,7 +111,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
                         epsilon, &
                         Lfindzero, &
                         Lconstraint, Lcheck, &
-                        Lextrap
+                        Lextrap, &
+			mupftol
   
   use cputiming, only : Tdforce
   
@@ -157,7 +158,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
                         DDtzcc, DDtzcs, DDtzsc, DDtzss, &
                         DDzzcc, DDzzcs, DDzzsc, DDzzss, &
                         dRodR, dRodZ, dZodR, dZodZ, &
-                        LocalConstraint
+                        LocalConstraint, xoffset
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -172,7 +173,12 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
   INTEGER, allocatable :: ipivot(:)
   REAL   , allocatable :: work(:)
   
-  INTEGER              :: vvol, innout, ii, jj, irz, issym, iocons, tdoc, idoc, idof, tdof, jdof, ivol, imn, ll
+  INTEGER              :: vvol, innout, ii, jj, irz, issym, iocons, tdoc, idoc, idof, tdof, jdof, ivol, imn, ll, ihybrd1, lwa, Ndofgl
+  INTEGER              :: maxfev, ml, muhybr, mode, nprint, nfev, ldfjac, lr
+  DOUBLE PRECISION     :: epsfcn, factor
+  DOUBLE PRECISION     :: Fdof(1:Mvol-1), Xdof(1:Mvol-1), Fvec(1:Mvol-1)
+  DOUBLE PRECISION     :: diag(1:Mvol-1), qtf(1:Mvol-1), wa1(1:Mvol-1), wa2(1:Mvol-1), wa3(1:Mvol-1), wa4(1:mvol-1)
+  DOUBLE PRECISION, allocatable :: fjac(:, :), r(:) 
 
   INTEGER              :: Lcurvature, ideriv, id
   
@@ -187,6 +193,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
   REAL   , allocatable :: dAt(:,:), dAz(:,:), XX(:), YY(:), dBB(:,:), dII(:), dLL(:), dPP(:), length(:), dRR(:,:), dZZ(:,:), constraint(:)
 
   CHARACTER            :: packorunpack 
+
+  EXTERNAL 	       :: dfp100
 
 #ifdef DEBUG
   INTEGER              :: isymdiff
@@ -234,34 +242,136 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+  do vvol = 1, Mvol
+
+   LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
+
+   NN = NAdof(vvol) ! shorthand;
+
+   ll = Lrad(vvol)
+
+   SALLOCATE( DToocc, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( DToocs, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( DToosc, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( DTooss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+   SALLOCATE( TTsscc, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( TTsscs, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( TTsssc, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( TTssss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+   SALLOCATE( TDstcc, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( TDstcs, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( TDstsc, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( TDstss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+   SALLOCATE( TDszcc, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( TDszcs, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( TDszsc, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( TDszss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+   SALLOCATE( DDttcc, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( DDttcs, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( DDttsc, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( DDttss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+   SALLOCATE( DDtzcc, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( DDtzcs, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( DDtzsc, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( DDtzss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+   SALLOCATE( DDzzcc, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( DDzzcs, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( DDzzsc, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( DDzzss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+   WCALL( dforce, ma00aa, ( Iquad(vvol), mn, vvol, ll ) ) ! compute volume integrals of metric elements - evaluate TD, DT, DD, ...;
+   WCALL( dforce, matrix, ( vvol, mn, ll ) )
+
+   DALLOCATE(DToocc)
+   DALLOCATE(DToocs)
+   DALLOCATE(DToosc)
+   DALLOCATE(DTooss)
+
+   DALLOCATE(TTsscc)
+   DALLOCATE(TTsscs)
+   DALLOCATE(TTsssc)
+   DALLOCATE(TTssss)
+
+   DALLOCATE(TDstcc)
+   DALLOCATE(TDstcs)
+   DALLOCATE(TDstsc)
+   DALLOCATE(TDstss)
+
+   DALLOCATE(TDszcc)
+   DALLOCATE(TDszcs)
+   DALLOCATE(TDszsc)
+   DALLOCATE(TDszss)
+
+   DALLOCATE(DDttcc)
+   DALLOCATE(DDttcs)
+   DALLOCATE(DDttsc)
+   DALLOCATE(DDttss)
+
+   DALLOCATE(DDtzcc)
+   DALLOCATE(DDtzcs)
+   DALLOCATE(DDtzsc)
+   DALLOCATE(DDtzss)
+
+   DALLOCATE(DDzzcc)
+   DALLOCATE(DDzzcs)
+   DALLOCATE(DDzzsc)
+   DALLOCATE(DDzzss)
+
+
+  enddo
 
   if( LocalConstraint ) then
 
+	Ndofgl = 0; Fvec(1:Mvol-1) = 0; iflag = 0;
+	Xdof(1:Mvol-1) = dpflux(2:Mvol) + xoffset
+
+	WCALL(dforce, dfp100, (Ndofgl, Xdof, Fvec, iflag) )
+
 	do vvol = 1, Mvol
 
-		WCALL(dforce, dfp100, (vvol) )
 		WCALL(dforce, dfp200, ( NGdof, position, LcomputeDerivatives, vvol) )
    
 	enddo ! end of do vvol = 1, Mvol (this is the parallelization loop);
 
   else
 	
-	do vvol = 1, Mvol
-	
-		WCALL(dforce, dfp100, (vvol) )
-	
-	enddo
-  
-	! EVALUATE THE GLOBAL CONSTRAINT HERE...
-  
+!   If global constraint, start the minimization of the constraint using hybrd1
+    Ndofgl = Mvol-1; lwa = 8 * Ndofgl * Ndofgl; maxfev = 1000; nfev=0; lr=Mvol*(Mvol-1); ldfjac=Mvol-1
+    ml = Mvol-2; muhybr = Mvol-2; epsfcn=1E-16; diag=0.0; mode=1; factor=0.01; nprint=-1;
+
+    Xdof(1:Mvol-1)   = dpflux(2:Mvol) + xoffset
+
+    SALLOCATE(fjac, (1:ldfjac,1:Mvol-1), 0)
+    SALLOCATE(r, (1:lr), 0)
+
+    WCALL( dforce,  hybrd, (dfp100, Ndofgl, Xdof(1:Ndofgl), Fvec(1:Ndofgl), mupftol, maxfev, ml, muhybr, epsfcn, diag(1:Ndofgl), mode, &
+			    factor, nprint, ihybrd1, nfev, fjac(1:Ndofgl,1:Ndofgl), ldfjac, r(1:lr), lr, qtf(1:Ndofgl), wa1(1:Ndofgl), &
+			    wa2(1:Ndofgl), wa3(1:Ndofgl), wa4(1:Ndofgl)) ) 
+ 
+    dpflux(2:Mvol) = Xdof(1:Ndofgl) - xoffset
+ 
     do vvol = 1, Mvol
-		
-		WCALL(dforce, dfp200, ( NGdof, position, LcomputeDerivatives, vvol) )
-    
+	WCALL(dforce, dfp200, ( NGdof, position, LcomputeDerivatives, vvol) )
     enddo
   
   endif
 
+#ifdef DEBUG
+  select case( ihybrd1 )
+    case( 1   )  ; write(ounit,'("dforce : ",f10.2," : finished ; success        ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
+    case( 0   )  ; write(ounit,'("dforce : ",f10.2," : finished ; input error    ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
+    case( 2   )  ; write(ounit,'("dforce : ",f10.2," : finished ; max. iter      ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
+    case( 3   )  ; write(ounit,'("dforce : ",f10.2," : finished ; xtol too small ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
+    case( 4:5 )  ; write(ounit,'("dforce : ",f10.2," : finished ; bad progress   ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
+    case default ; write(ounit,'("dforce : ",f10.2," : finished ; illegal ifail  ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
+  end select
+#endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   

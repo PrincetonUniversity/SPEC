@@ -487,7 +487,7 @@ subroutine ma02aa( lvol, NN )
     
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-    if( Lconstraint.eq.1 .or. Lconstraint.eq.3 .or. ( Lvacuumregion .and. Lconstraint.eq.0 ) ) then
+    if( Lconstraint.eq.1 .or. ( Lvacuumregion .and. Lconstraint.eq.0 ) ) then
      
      iflag = 2 ; Ldfjac = Ndof ! call mp00ac: tr00ab/curent to ensure the derivatives of B, transform, currents, wrt mu/dtflux & dpflux are calculated;
 

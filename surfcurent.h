@@ -91,7 +91,6 @@ subroutine surfcurent(lint, mn)
   else;                  lvol = lint
   endif
   
-  ! Quick dirty fix to test this routine. ATTENTION NEED TO BE REMOVED 
   if((lvol==1) .and. (Igeometry/=1)) then ; Lcoordinatesingularity = .true.;
   else; Lcoordinatesingularity = .false.;
   endif
@@ -134,9 +133,6 @@ subroutine surfcurent(lint, mn)
   call tfft( Nt, Nz, Bt(1:Ntz), Bz(1:Ntz), &
               mn, im(1:mn), in(1:mn), Btemn(1:mn,innout,lvol), Btomn(1:mn,innout,lvol), Bzemn(1:mn,innout,lvol), Bzomn(1:mn,innout,lvol), ifail )
 
-#ifdef DEBUG
-  write(ounit, '("surfcurent : ", f10.2, ", lint=",i3, ", lss=", f10.1, ", lvol=",i3,", Bt(1)=",ES23.15, ", Lcoordsing=", i3)') cput-cpus, lint, lss, lvol, Bt(1), Lcoordinatesingularity
-#endif
 
   enddo ! end of do innout;
 

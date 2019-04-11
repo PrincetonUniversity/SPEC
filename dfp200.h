@@ -124,19 +124,6 @@ LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
    
    NN = NAdof(vvol) ! shorthand;
    
-!   SALLOCATE( dMA, (0:NN,0:NN), zero ) ! required for both plasma region and vacuum region;
-!   SALLOCATE( dMB, (0:NN,0: 2), zero )
-! !SALLOCATE( dMC, (1: 2,1: 2), zero )
-!   SALLOCATE( dMD, (0:NN,0:NN), zero )
-!  SALLOCATE( dME, (0:NN,1: 2), zero )
-! !SALLOCATE( dMF, (1: 2,1: 2), zero )  
-
-!   SALLOCATE( dMG, (0:NN     ), zero )  
-   
-   
-!   SALLOCATE( MBpsi, (1:NN), zero )
-!  SALLOCATE( MEpsi, (1:NN), zero )
-   
    if( LcomputeDerivatives ) then ! allocate some additional memory;
     
     SALLOCATE( oBI, (1:NN,1:NN), zero ) ! inverse of ``original'', i.e. unperturbed, Beltrami matrix;
