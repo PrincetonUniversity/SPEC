@@ -34,7 +34,7 @@ subroutine brcast( lvol )
   use fileunits, only : ounit
 
   use inputlist, only : Wmacros, Wbrcast, Wcurent, MNvol, Nvol, mu, Lrad, &
-                        curtor, curpol, Lconstraint, Lfindzero
+                        curtor, curpol, Lconstraint, Lfindzero, helicity
 
   use cputiming, only : Tbrcast
 
@@ -76,6 +76,7 @@ subroutine brcast( lvol )
   RlBCAST(     mu(lvol), 1, llmodnp )
   RlBCAST( dtflux(lvol), 1, llmodnp )
   RlBCAST( dpflux(lvol), 1, llmodnp )
+  RlBCAST( helicity(lvol), 1, llmodnp)
   
   RlBCAST(     vvolume(lvol), 1, llmodnp )
   RlBCAST( lBBintegral(lvol), 1, llmodnp )
