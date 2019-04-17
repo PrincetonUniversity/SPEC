@@ -502,6 +502,14 @@ subroutine preset
   
   if (LBnewton .or. LBsequad) Lconstraint = 2
 
+  if (Lconstraint .eq. 2) then
+    FATAL( preset, Lfreebound.eq.1, The combination of helicity constraint and free boundary is under construction )
+    if (Igeometry .eq. 3) then
+      write(ounit, *) 'WARNING: The Hessian matrix needs further review for Igeometry = 3'
+      write(ounit, *) '         However, it can still serve the purpose of Lfindzero = 2'
+    endif
+  endif
+
   if( myid.eq.0 ) then
    cput = GETTIME
    write(ounit,'("preset : ",f10.2," : LBsequad="L2" , LBnewton="L2" , LBlinear="L2" ;")')cput-cpus, LBsequad, LBnewton, LBlinear
