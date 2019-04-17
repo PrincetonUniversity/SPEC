@@ -95,7 +95,7 @@
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-subroutine dforce( NGdof, position, force, LComputeDerivatives )
+subroutine dforce( NGdof, position, force, LComputeDerivatives)
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -270,8 +270,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
    
    if( LcomputeDerivatives ) then ! allocate some additional memory;
     
-    SALLOCATE( oBI, (1:NN,1:NN), zero ) ! inverse of ``original'', i.e. unperturbed, Beltrami matrix;
-    SALLOCATE( rhs, (1:NN     ), zero )
+    SALLOCATE( oBI, (0:NN,0:NN), zero ) ! inverse of ``original'', i.e. unperturbed, Beltrami matrix;
+    SALLOCATE( rhs, (0:NN     ), zero )
     
 #ifdef DEBUG
     if( Lcheck.eq.4 ) then
@@ -323,7 +323,6 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
    dBdX%L = .false. ! first, compute Beltrami fields;
-   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
    WCALL( dforce, ma00aa, ( Iquad(vvol), mn, vvol, ll ) ) ! compute volume integrals of metric elements;
@@ -346,55 +345,84 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
     
     lastcpu = GETTIME
     
-    dMA(0:NN-1,1:NN) = dMA(1:NN,1:NN) - mu(vvol) * dMD(1:NN,1:NN) ! this corrupts dMA, but dMA is no longer used;
-    dMA(  NN  ,1:NN) = zero
+    if(Lconstraint .eq. 2) then
+      dMA(1:NN,1:NN) = dMA(1:NN,1:NN) - mu(vvol) * dMD(1:NN,1:NN) ! this corrupts dMA, but dMA is no longer used;
+      dMA(0,0)       = zero
+      dMA(1:NN,0)    = -matmul(dMD(1:NN,1:NN),solution(1:NN,0))
+      dMA(0,1:NN)    = dMA(1:NN,0) !-matmul(solution(1:NN,0),dMD(1:NN,1:NN))
+      IA = NN + 1 + 1
+      MM = NN ; LDA = NN+1 ; Lwork = NN+1
+      SALLOCATE( ipivot, (0:NN), 0 )
+      idgetrf = 1 ; call DGETRF( MM+1, NN+1, dMA(0:LDA-1,0:NN), LDA, ipivot(0:NN), idgetrf )
+
+      cput = GETTIME
+      select case( idgetrf ) !                                                                     0123456789012345678
+      case(  :-1 ) ;               write(ounit,1010) cput-cpus, myid, vvol, cput-lastcpu, idgetrf, "input error;      "
+      case(  0   ) ; if( Wdforce ) write(ounit,1010) cput-cpus, myid, vvol, cput-lastcpu, idgetrf, "success;          "
+      case( 1:   ) ;               write(ounit,1010) cput-cpus, myid, vvol, cput-lastcpu, idgetrf, "singular;         "
+      case default ;               FATAL( dforce, .true., illegal ifail returned from F07ADF )
+      end select    
+      
+      SALLOCATE( work, (1:Lwork), zero )
+      idgetri = 1 ; call DGETRI( NN+1, dMA(0:LDA-1,0:NN), LDA, ipivot(0:NN), work(1:Lwork), Lwork, idgetri )
+      DALLOCATE(work)
+      DALLOCATE(ipivot)
+
+      cput = GETTIME
+      select case( idgetri ) !                                                                     0123456789012345678
+      case(  :-1 ) ;               write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "input error;      "
+      case(  0   ) ; if( Wdforce ) write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "success;          "
+      case( 1:   ) ;               write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "singular;         "
+      case default ;               FATAL( dforce, .true., illegal ifail returned from F07AJF )
+      end select
+
+      oBI(0:NN,0:NN) = dMA(0:NN,0:NN)
+
+    else ! for LBlinear = T (Linear-solver)
+
+      dMA(0:NN-1,1:NN) = dMA(1:NN,1:NN) - mu(vvol) * dMD(1:NN,1:NN) ! this corrupts dMA, but dMA is no longer used;
+      dMA(  NN  ,1:NN) = zero
+
+      dMD(1:NN  ,1:NN) = dMA(0:NN-1,1:NN) ! copy of original matrix; this is used below;
     
-    dMD(1:NN  ,1:NN) = dMA(0:NN-1,1:NN) ! copy of original matrix; this is used below;
+      IA = NN + 1
     
-    IA = NN + 1
+      MM = NN ; LDA = NN ; Lwork = NN
     
-    MM = NN ; LDA = NN ; Lwork = NN
+      SALLOCATE( ipivot, (1:NN), 0 )
     
-    SALLOCATE( ipivot, (1:NN), 0 )
+      idgetrf = 1 ; call DGETRF( MM, NN, dMA(0:LDA-1,1:NN), LDA, ipivot(1:NN), idgetrf )
     
-    idgetrf = 1 ; call DGETRF( MM, NN, dMA(0:LDA-1,1:NN), LDA, ipivot(1:NN), idgetrf )
+      cput = GETTIME
+      select case( idgetrf ) !                                                                     0123456789012345678
+      case(  :-1 ) ;               write(ounit,1010) cput-cpus, myid, vvol, cput-lastcpu, idgetrf, "input error;      "
+      case(  0   ) ; if( Wdforce ) write(ounit,1010) cput-cpus, myid, vvol, cput-lastcpu, idgetrf, "success;          "
+      case( 1:   ) ;               write(ounit,1010) cput-cpus, myid, vvol, cput-lastcpu, idgetrf, "singular;         "
+      case default ;               FATAL( dforce, .true., illegal ifail returned from F07ADF )
+      end select
     
-    cput = GETTIME
-    select case( idgetrf ) !                                                                     0123456789012345678
-    case(  :-1 ) ;               write(ounit,1010) cput-cpus, myid, vvol, cput-lastcpu, idgetrf, "input error;      "
-    case(  0   ) ; if( Wdforce ) write(ounit,1010) cput-cpus, myid, vvol, cput-lastcpu, idgetrf, "success;          "
-    case( 1:   ) ;               write(ounit,1010) cput-cpus, myid, vvol, cput-lastcpu, idgetrf, "singular;         "
-    case default ;               FATAL( dforce, .true., illegal ifail returned from F07ADF )
-    end select
+      SALLOCATE( work, (1:Lwork), zero )
     
-1010 format("dforce : ",f10.2," : myid=",i3," ; vvol=",i3," ; called DGETRF ; time=",f10.2,"s ; LU factorization of matrix; idgetrf=",i2," ; ",a18)
+      idgetri = 1 ; call DGETRI( NN, dMA(0:LDA-1,1:NN), LDA, ipivot(1:NN), work(1:Lwork), Lwork, idgetri )
     
-    SALLOCATE( work, (1:Lwork), zero )
+      DALLOCATE(work)
+      
+      DALLOCATE(ipivot)
+      
+      cput = GETTIME
+      select case( idgetri ) !                                                                     0123456789012345678
+      case(  :-1 ) ;               write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "input error;      "
+      case(  0   ) ; if( Wdforce ) write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "success;          "
+      case( 1:   ) ;               write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "singular;         "
+      case default ;               FATAL( dforce, .true., illegal ifail returned from F07AJF )
+      end select
     
-    idgetri = 1 ; call DGETRI( NN, dMA(0:LDA-1,1:NN), LDA, ipivot(1:NN), work(1:Lwork), Lwork, idgetri )
+      oBI(1:NN,1:NN) = dMA(0:LDA-1,1:NN)
     
-    DALLOCATE(work)
-    
-    DALLOCATE(ipivot)
-    
-    cput = GETTIME
-    select case( idgetri ) !                                                                     0123456789012345678
-    case(  :-1 ) ;               write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "input error;      "
-    case(  0   ) ; if( Wdforce ) write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "success;          "
-    case( 1:   ) ;               write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "singular;         "
-    case default ;               FATAL( dforce, .true., illegal ifail returned from F07AJF )
-    end select
-    
+    endif
+
 1011 format("dforce : ",f10.2," : myid=",i3," ; vvol=",i3," ; called DGETRI ; time=",f10.2,"s ; inverse of Beltrami matrix; idgetrf=",i2," ; ",a18)
-    
-    oBI(1:NN,1:NN) = dMA(0:LDA-1,1:NN)
-    
-!    do ii = 1, NN
-!     do jj = 1, ii
-!      oBI(ii,jj) = dMA(ii,jj) ! inverse matrix is returned in lower triangle; see NAG documentation for details;
-!      oBI(jj,ii) = dMA(ii,jj) ! I assume the inverse is symmetric;
-!     enddo
-!    enddo
+1010 format("dforce : ",f10.2," : myid=",i3," ; vvol=",i3," ; called DGETRF ; time=",f10.2,"s ; LU factorization of matrix; idgetrf=",i2," ; ",a18)
 
     if( Lconstraint.eq.1 ) then ! first, determine how B^2 varies with mu and dpflux;
      
@@ -521,11 +549,20 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
         
         dpsi(1:2) = (/ dtflux(vvol), dpflux(vvol) /) ! local enclosed toroidal and poloidal fluxes;
         
-!       rhs(1:NN) = - matmul( dMB(1:NN,1:2 ) - mu(vvol) * dME(1:NN,1:2 ), dpsi(1:2)        ) &
+        rhs(0)    =   half*sum(solution(1:NN,0)*matmul(dMD(1:NN,1:NN),solution(1:NN,0)))
         rhs(1:NN) = - matmul( dMB(1:NN,1:2 )                            , dpsi(1:2)        ) &
                     - matmul( dMA(1:NN,1:NN) - mu(vvol) * dMD(1:NN,1:NN), solution(1:NN,0) )
-        
-        solution(1:NN,-1) = matmul( oBI(1:NN,1:NN), rhs(1:NN) ) ! this is the perturbed, packxi solution;
+
+        if (Lconstraint .eq. 2) then
+          SALLOCATE( work, (1:NN+1), zero )
+
+          work(1:NN+1)  =  matmul( oBI(0:NN,0:NN), rhs(0:NN))
+          !write(ounit, *) 'dmu', work(1)
+          solution(1:NN,-1) = work(2:NN+1)
+          DALLOCATE(work)
+        else
+          solution(1:NN,-1) = matmul( oBI(1:NN,1:NN), rhs(1:NN) )
+        endif
 
         ideriv = -1 ; dpsi(1:2) = (/ dtflux(vvol), dpflux(vvol) /) ! these are also used below;
         
