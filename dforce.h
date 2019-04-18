@@ -359,7 +359,6 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
     do vvol = 1, Mvol
 	WCALL(dforce, dfp200, ( NGdof, position, LcomputeDerivatives, vvol) )
     enddo
-  
   endif
 
 #ifdef DEBUG
