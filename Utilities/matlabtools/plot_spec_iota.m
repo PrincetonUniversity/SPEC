@@ -82,7 +82,7 @@ switch xaxis
               for k=kstart:kstart-1+nptrj(lvol)
                   psitor(k) = cumflux + get_spec_torflux_slab(fdata,lvol,0,-1,sval(k),ns,nt);
               end
-              cumflux = cumflux + psitor(nptrj(lvol));
+              cumflux = psitor(k);
               kstart  = kstart+nptrj(lvol);
           end  
   
@@ -91,7 +91,7 @@ switch xaxis
               for k=kstart:kstart-1+nptrj(lvol)
                   psitor(k) = cumflux + get_spec_torflux_cyl(fdata,lvol,0,-1,sval(k),ns,nt);
               end
-              cumflux = cumflux + psitor(nptrj(lvol));
+              cumflux = psitor(k);
               kstart  = kstart+nptrj(lvol);
           end
 
