@@ -1330,7 +1330,7 @@ module allglobal
   REAL                 :: tetazeta(1:2)
 
 ! REAL                 :: virtualcasingfactor = one / ( four*pi * pi2 ) ! this is old factor (before toroidal flux was corrected?) ; 
-  REAL                 :: virtualcasingfactor = one / ( four*pi       ) ! this agrees with diagno; 
+  REAL                 :: virtualcasingfactor = -one / ( four*pi       ) ! this agrees with diagno; 
   
   INTEGER              :: IBerror ! for computing error in magnetic field; 
 
@@ -2301,6 +2301,8 @@ subroutine wrtend( wflag, iflag, rflag )
   if( Lfreebound.eq.1 .or. Zbs(0,1).gt.zero ) then
    do ii = 1, mn ; mm = im(ii) ; nn = in(ii) / Nfp ; Rbc(nn,mm) = iRbc(ii,Nvol) ; Zbs(nn,mm) = iZbs(ii,Nvol) ; Vns(nn,mm) = iVns(ii) ; Bns(nn,mm) = iBns(ii)
                                                    ; Rbs(nn,mm) = iRbs(ii,Nvol) ; Zbc(nn,mm) = iZbc(ii,Nvol) ; Vnc(nn,mm) = iVnc(ii) ; Bnc(nn,mm) = iBnc(ii)
+                                                   ; Rwc(nn,mm) = iRbc(ii,Mvol) ; Zws(nn,mm) = iZbs(ii,Mvol)
+                                                   ; Rws(nn,mm) = iRbs(ii,Mvol) ; Zwc(nn,mm) = iZbc(ii,Mvol)
    enddo ! end of do ii = 1, mn;
   endif ! end of if( Lfreebound.eq.1 .or. . . . ) ; 
 

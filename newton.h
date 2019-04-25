@@ -99,7 +99,7 @@ subroutine newton( NGdof, position, ihybrd )
 
   INTEGER                :: nprint = 1, nfev, njev
 
-  INTEGER, parameter     :: maxfev = 500 ! maximum calls per iteration;
+  INTEGER, parameter     :: maxfev = 5000 ! maximum calls per iteration;
 
   external               :: fcn1, fcn2
   
