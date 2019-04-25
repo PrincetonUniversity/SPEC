@@ -33,7 +33,7 @@
 !latex       \ee
 !latex       where ${\bf n}$ is normal to the surface.
 !latex \item The field at some arbitrary point, $\bar {\bf x}$, created by this surface current is given by
-!latex       \be {\bf B}({\bf \bar x}) = \int_{\cal S} \frac{\left( {\bf B}_s \times d{\bf s} \right) \times {\bf \hat r}}{r^2},
+!latex       \be {\bf B}({\bf \bar x}) = -\frac{1}{4\pi} \int_{\cal S} \frac{\left( {\bf B}_s \times d{\bf s} \right) \times {\bf \hat r}}{r^2},
 !latex       \ee
 !latex       where $d{\bf s} \equiv {\bf e}_\t \times {\bf e}_\z \; d\t d\z$.
 !latex \item For ease of notation introduce
@@ -62,6 +62,7 @@
 !latex           B^y &=&  \ooint (j_z r_x - j_x r_z)/r^3,\\
 !latex           B^z &=&  \ooint (j_x r_y - j_y r_x)/r^3
 !latex       \ee
+!latex       up to a scaling factor \verb+virtualcasingfactor+ $=-1/4\pi$ that is taken into account at the end.
 !latex \item When all is said and done, this routine calculates
 !latex       \be \int_0^{2\pi} \int_0^{2\pi} \verb+vcintegrand+ \;\; d\t d\z
 !latex       \ee
