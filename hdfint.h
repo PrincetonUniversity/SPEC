@@ -101,6 +101,7 @@ subroutine hdfint
    HWRITERV(      1+Nvol, oita              ,      oita(0:Nvol)   )
    HWRITERV(           1, mupftol           , mupftol             )
    HWRITEIV(           1, mupfits           , mupfits             )
+   HWRITERV(           1, rpol              , rpol                )
 !  HWRITERV(     MNtor+1, Rac               , Rac(0:MNtor)        )
 !  HWRITERV(     MNtor+1, Zas               , Zas(0:MNtor)        )
 !  HWRITERV(     MNtor+1, Ras               , Ras(0:MNtor)        )
