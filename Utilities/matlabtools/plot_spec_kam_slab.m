@@ -17,7 +17,7 @@ im     = h5read(filename,'/im');
 in     = h5read(filename,'/in');
 Rbcmn  = h5read(filename,'/Rbc');
 Rbsmn  = h5read(filename,'/Rbs');
-
+rpol   = h5read(filename,'/rpol');
 
 % Compute (x,y) coordinates of each interface
 
@@ -30,7 +30,7 @@ X      = zeros(Nvol,nth);
 Y      = zeros(Nvol,nth);
 
 for i=1:Nvol
- X(i,:) = theta;
+ X(i,:) = theta*rpol;
  for k=1:mn
  alpha  = double(im(k))*theta-double(in(k))*zeta;
  Y(i,:) = Y(i,:) + Rbcmn(k,i+1)*cos(alpha) + Rbsmn(k,i+1)*sin(alpha);

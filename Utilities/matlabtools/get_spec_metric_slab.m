@@ -21,6 +21,9 @@ function gmat = get_spec_metric_slab(data,lvol,sarr,tarr,zarr)
 Rac     = data.Rbc(:,lvol);   % inner volume boundary harmonics
 Rbc     = data.Rbc(:,lvol+1); % outer volume boundary harmonics
 
+rpol    = data.rpol; % poloidal extent of the slab is 2*pi*rpol
+rtor    = data.rtor; % toroidal extent of the slab is 2*pi*rtor
+
 sarr    = transpose(sarr);
 ns      = length(sarr);
 nt      = length(tarr);
@@ -48,7 +51,7 @@ for k=1:3
 end
 
 
-% Construct regularization (for lvol=1) factors and their derivatives
+% Construct radial factors and their derivatives
 
 for j=1:mn
  fac{j}{1}  = sbar;
@@ -80,8 +83,8 @@ end
 % Construct metric elements
 
 gmat{1}{1} = Rarr{2}.^2;                    %gss
-gmat{2}{2} = 1 + Rarr{3}.^2;                %gtt
-gmat{3}{3} = 1 + Rarr{4}.^2;                %gzz
+gmat{2}{2} = rpol^2 + Rarr{3}.^2;           %gtt
+gmat{3}{3} = rtor^2 + Rarr{4}.^2;           %gzz
 gmat{1}{2} = Rarr{2}.*Rarr{3};              %gst
 gmat{1}{3} = Rarr{2}.*Rarr{4};              %gsz
 gmat{2}{3} = Rarr{3}.*Rarr{4};              %gtz
