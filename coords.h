@@ -26,8 +26,9 @@
 !latex \item The geometry of the ``ideal''-interfaces, ${\bf x}_v(\t,\z)$, is given by $R(\t,\z)$ and $Z(\t,\z)$ as follows:
 !latex       \begin{itemize}
 !latex       \item \verb+Igeometry=1+ : Cartesian
-!latex       \be {\bf x} & \equiv & \t \; {\bf \hat i} + \z \; {\bf \hat j}+ R \; {\bf \hat k}
+!latex       \be {\bf x} & \equiv & r_{pol}\t \; {\bf \hat i} + r_{tor}\z \; {\bf \hat j}+ R \; {\bf \hat k}
 !latex       \ee
+!latex       where $r_{pol}$ and $r_{tor}$ are inputs and $r_{pol}=r_{tor}=1$ by default.
 !latex       \item \verb+Igeometry=2+ : Cylindrical
 !latex       \be {\bf x} & = & R \; \cos\t \; {\bf \hat i} + R \; \sin\t \; {\bf \hat j} + \z \; {\bf \hat k}
 !latex       \ee
