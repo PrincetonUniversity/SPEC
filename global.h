@@ -173,6 +173,7 @@ module inputlist
   INTEGER      ::        rq(0:MNvol)         =  0
   REAL         ::      oita(0:MNvol)         =  0.0
   REAL         :: rpol                       =  1.0
+  REAL         :: rtor                       =  1.0
 
   REAL         :: Rac(     0:MNtor        )  =  0.0 !     stellarator symmetric coordinate axis; 
   REAL         :: Zas(     0:MNtor        )  =  0.0
@@ -425,6 +426,11 @@ module inputlist
                 !latex \bi
                 !latex \item[i.] only relevant if \inputvar{Igeometry} $=1$;
                 !latex \item[i.] poloidal size is $L = 2\pi*$\inputvar{rpol};
+                !latex \ei
+ rtor        ,& !latex \item \inputvar{rtor = 1.0} : \verb!real! : toroidal extent of slab (effective radius);
+                !latex \bi
+                !latex \item[i.] only relevant if \inputvar{Igeometry} $=1$;
+                !latex \item[i.] toroidal size is $L = 2\pi*$\inputvar{rtor};
                 !latex \ei
  Rac         ,& !latex \item \inputvar{Rac} : \verb!real(     0:MNtor             )! : Fourier harmonics of axis    ;     stellarator symmetric;
  Zas         ,& !latex \item \inputvar{Zas} : \verb!real(     0:MNtor             )! : Fourier harmonics of axis    ;     stellarator symmetric;
@@ -1538,6 +1544,7 @@ subroutine readin
    FATAL( readin, abs(one-gamma).lt.vsmall, 1-gamma appears in denominator in fu00aa ) ! Please check this; SRH: 27 Feb 18;
    FATAL( readin, Lconstraint.lt.-1 .or. Lconstraint.gt.2, illegal Lconstraint )
    FATAL( readin, Igeometry.eq.1 .and. rpol.lt.vsmall, poloidal extent of slab too small or negative )   
+   FATAL( readin, Igeometry.eq.1 .and. rtor.lt.vsmall, toroidal extent of slab too small or negative )
 
    if( Istellsym.eq.1 ) then
     Rbs(-MNtor:MNtor,-MMpol:MMpol) = zero
@@ -1745,6 +1752,7 @@ subroutine readin
   RlBCAST( mupftol    ,       1, 0 )
   IlBCAST( mupfits    ,       1, 0 ) 
   RlBCAST( rpol       ,       1, 0 )
+  RlBCAST( rtor       ,       1, 0 )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -2306,6 +2314,7 @@ subroutine wrtend( wflag, iflag, rflag )
   write(iunit,'(" mupftol     = ",es23.15   )') mupftol
   write(iunit,'(" mupfits     = ",i9        )') mupfits
   write(iunit,'(" rpol        = ",es23.15   )') rpol
+  write(iunit,'(" rtor        = ",es23.15   )') rtor
 
   if( Lfreebound.eq.1 .or. Zbs(0,1).gt.zero ) then
    do ii = 1, mn ; mm = im(ii) ; nn = in(ii) / Nfp ; Rbc(nn,mm) = iRbc(ii,Nvol) ; Zbs(nn,mm) = iZbs(ii,Nvol) ; Vns(nn,mm) = iVns(ii) ; Bns(nn,mm) = iBns(ii)
