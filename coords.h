@@ -144,7 +144,7 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
   
   use fileunits, only : ounit
   
-  use inputlist, only : Wcoords, Igeometry, Ntor
+  use inputlist, only : Wcoords, Igeometry, Ntor, rpol
   
   use cputiming, only : Tcoords
   
@@ -312,14 +312,14 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
 
   case( 1 ) ! Igeometry=1; Cartesian;
    
-   sg(1:Ntz,0) = Rij(1:Ntz,1,0)
+   sg(1:Ntz,0) = Rij(1:Ntz,1,0)*rpol
    
    do ii = 1, 3
     do jj = ii, 3 ; guvij(1:Ntz,ii,jj,0) = Rij(1:Ntz,ii,0) * Rij(1:Ntz,jj,0)
     enddo
    enddo
 
-   guvij(1:Ntz, 2, 2,0) = guvij(1:Ntz, 2, 2,0) + one
+   guvij(1:Ntz, 2, 2,0) = guvij(1:Ntz, 2, 2,0) + rpol*rpol
    guvij(1:Ntz, 3, 3,0) = guvij(1:Ntz, 3, 3,0) + one
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -458,8 +458,8 @@ Nt, Nz, Rij(1:Ntz,3,3), Zij(1:Ntz,3,3) ) ! maps to real space;
     
     do kk = 1, 3 ! kk labels derivative; 13 Sep 13;
      
-!    sg(1:Ntz, 0) = Rij(1:Ntz,1, 0)
-     sg(1:Ntz,kk) = Rij(1:Ntz,1,kk)
+!    sg(1:Ntz, 0) = Rij(1:Ntz,1, 0)*rpol
+     sg(1:Ntz,kk) = Rij(1:Ntz,1,kk)*rpol
      
      do ii = 1, 3
       do jj = ii, 3 ; guvij(1:Ntz,ii,jj,kk) = Rij(1:Ntz,ii,kk) * Rij(1:Ntz,jj, 0) + Rij(1:Ntz,ii, 0) * Rij(1:Ntz,jj,kk)
@@ -581,8 +581,8 @@ Nt, Nz, Rij(1:Ntz,3,3), Zij(1:Ntz,3,3) ) ! maps to real space;
     FATAL( coords, irz.eq.1, there is no dependence on Zbs or Zbc )
 #endif
    
-!                  sg(1:Ntz,0) = Rij(1:Ntz,1,0)
-                   sg(1:Ntz,1) = Dij(1:Ntz,1  ) ! 20 Jun 14;
+!                  sg(1:Ntz,0) = Rij(1:Ntz,1,0)*rpol
+                   sg(1:Ntz,1) = Dij(1:Ntz,1  )*rpol ! 20 Jun 14; 29 Apr 19;
 !   if( irz.eq.1 ) sg(1:Ntz,1) = 
     
     do ii = 1, 3 ! careful: ii was used with a different definition above; 13 Sep 13;
