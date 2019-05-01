@@ -1368,7 +1368,7 @@ subroutine readin
 
   LOCALS
 
-  LOGICAL              :: Lspexist, Lchangeangle, LendsWithSp
+  LOGICAL              :: Lspexist, Lchangeangle
   INTEGER              :: vvol, mm, nn, nb, imn, ix, ii, jj, ij, kk, mj, nj, mk, nk, ip, lMpol, lNtor, X02BBF, iargc, iarg, numargs, mi, ni, lvol, extlen, sppos
   REAL                 :: xx, toroidalflux
   REAL,    allocatable :: RZRZ(:,:) ! local array used for reading interface Fourier harmonics from file;
