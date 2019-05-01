@@ -1368,8 +1368,8 @@ subroutine readin
 
   LOCALS
 
-  LOGICAL              :: Lspexist, Lchangeangle
-  INTEGER              :: vvol, mm, nn, nb, imn, ix, ii, jj, ij, kk, mj, nj, mk, nk, ip, lMpol, lNtor, X02BBF, iargc, iarg, numargs, mi, ni, lvol
+  LOGICAL              :: Lspexist, Lchangeangle, LendsWithSp
+  INTEGER              :: vvol, mm, nn, nb, imn, ix, ii, jj, ij, kk, mj, nj, mk, nk, ip, lMpol, lNtor, X02BBF, iargc, iarg, numargs, mi, ni, lvol, extlen, sppos
   REAL                 :: xx, toroidalflux
   REAL,    allocatable :: RZRZ(:,:) ! local array used for reading interface Fourier harmonics from file;
   
@@ -1427,7 +1427,13 @@ subroutine readin
 
 !latex \end{enumerate}
 
-   call getarg( 1, ext ) 
+   call getarg( 1, ext )
+   extlen = len_trim(ext)
+   sppos = index(ext, ".sp", .true.) ! search for ".sp" from the back of ext
+   if (sppos.eq.extlen-2) then       ! check if ext ends with ".sp";
+     ext = ext(1:extlen-3)           ! if this is the case, remove ".sp" from end of ext
+   endif
+
    
    if( ext .eq. "" .or. ext.eq. " " .or. ext .eq. "-h" .or. ext .eq. "-help" ) then
     ;write(ounit,'("readin : ", 10x ," : ")')
