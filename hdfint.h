@@ -159,7 +159,7 @@ subroutine hdfint
   HWRITERV( 1, ForceErr, ForceErr )              
 
   if( Lcheck.eq.1 ) then
-!latex \type{beltramierror}          & real    & \pb{error in beltrami field (volume integral)} \\ 
+!latex \type{beltramierror}          & real    & \pb{error in beltrami field (volume integral)} \\
    HWRITERA( Mvol, 3, beltramierror, beltramierror(1:Mvol,1:3) )  
   endif
   
