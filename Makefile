@@ -313,7 +313,7 @@ clean:
 	mkdir -p ./docs/
 	cd ./docs/ ; \
 	pwd ; \
-	@ls --full-time ../$*.f90 | cut -c 35-53 > .$*.date ; \
+	ls --full-time ../$*.f90 | awk 'IFS=" " {print $$6 " " substr($$7,0,8);}' > .$*.date ; \
 	awk -v file=$* -v date=.$*.date 'BEGIN{getline cdate < date ; FS="!latex" ; print "\\input{../head} \\code{"file"}"} \
 	{if(NF>1) print $$2} \
 	END{print "\\hrule \\vspace{1mm} \\footnotesize $*.f90 last modified on "cdate";" ; print "\\input{../end}"}' ../$*.f90 > $*.tex ; \
@@ -327,7 +327,7 @@ pdfs: $(addprefix ./docs/, $(addsuffix .pdf,$(RAWSOURCE))) head.html
 	cat head.html > ./docs/subroutines.html
 	for file in $(RAWSOURCE) ; do grep "!title" $${file}.f90 | cut -c 7- | \
 	                           awk -v file=$${file} -F!\
-	                            '{print "<tr><td><a href="file".pdf\>"file"</a></td><td>"$$1"</td><td>"$$2"</td></tr>"}' \
+	                            '{print "<tr><td><a href="file".pdf>"file"</a></td><td>"$$1"</td><td>"$$2"</td></tr>"}' \
 	                            >> ./docs/subroutines.html ; \
 	                          done
 	echo "</table></body></html>" >> ./docs/subroutines.html
