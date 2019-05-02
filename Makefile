@@ -14,10 +14,10 @@
 ###############################################################################################################################################################
 
  SPECFILES=$(afiles) $(bfiles) $(cfiles) $(dfiles) $(efiles) $(ffiles)
- ALLFILES=global $(SPECFILES) $(sfiles) xspech hdfint preset
+ ALLFILES=global $(SPECFILES) $(sfiles) xspech hdfint sphdf5 preset
 #F77FILES=$(sfiles:=.f)
  PREPROC=$(SPECFILES:=_m.F90) # preprocessed by m4
- RAWSOURCE=global preset $(SPECFILES) hdfint xspech # "raw" code, with macros not expanded yet
+ RAWSOURCE=global preset $(SPECFILES) hdfint sphdf5 xspech # "raw" code, with macros not expanded yet
 
  ROBJS=$(SPECFILES:=_r.o)
  DOBJS=$(SPECFILES:=_d.o)
@@ -223,16 +223,29 @@ hdfint_d.o: hdfint.f90 global_d.o $(MACROS) Makefile
 
 ###############################################################################################################################################################
 
+sphdf5_r.o: sphdf5.f90 global_r.o $(MACROS) Makefile
+	m4 -P $(MACROS) sphdf5.f90 > $*_m.F90
+	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o sphdf5_r.o -c $*_m.F90 $(HDF5compile)
+	@wc -l -L -w sphdf5_r_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
+	@echo ''
+
+sphdf5_d.o: sphdf5.f90 global_d.o $(MACROS) Makefile
+	m4 -P $(MACROS) sphdf5.f90 > $*_m.F90
+	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o sphdf5_d.o -c $*_m.F90 $(HDF5compile)
+	@wc -l -L -w sphdf5_d_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
+	@echo ''
+###############################################################################################################################################################
+
 preset_r.o: preset.f90 global_r.o $(MACROS) Makefile
 	m4 -P $(MACROS) preset.f90 > $*_m.F90
 	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o preset_r.o -c $*_m.F90 $(FFTWcompile)
-	@wc -l -L -w hdfint_r_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
+	@wc -l -L -w preset_r_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
 preset_d.o: preset.f90 global_d.o $(MACROS) Makefile
 	m4 -P $(MACROS) preset.f90 > $*_m.F90
 	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o preset_d.o -c $*_m.F90 $(FFTWcompile)
-	@wc -l -L -w hdfint_d_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
+	@wc -l -L -w preset_d_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
 ###############################################################################################################################################################
