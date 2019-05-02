@@ -14,7 +14,7 @@
 ###############################################################################################################################################################
 
  SPECFILES=$(afiles) $(bfiles) $(cfiles) $(dfiles) $(efiles) $(ffiles)
- ALLFILES=global $(SPECFILES) $(sfiles) xspech hdfint sphdf5 preset
+ ALLFILES=global $(SPECFILES) $(sfiles) sphdf5 hdfint preset xspech
 #F77FILES=$(sfiles:=.f)
  PREPROC=$(SPECFILES:=_m.F90) # preprocessed by m4
  RAWSOURCE=global preset $(SPECFILES) hdfint sphdf5 xspech # "raw" code, with macros not expanded yet
