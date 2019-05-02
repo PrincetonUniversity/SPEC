@@ -32,134 +32,134 @@ contains
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 
-
-subroutine HWRITEIV (dim1, varname, value )
-
-  LOCALS
-
-  integer, intent(in)      :: dim1
-  character(len=*), intent(in) :: varname
-  integer, intent(in)   :: value(:)
-
-#ifdef DEBUG
-  if( Wsphdf5 ) write(ounit,'("sphdf5 : ", 10x ," : myid=",i3," ; writing ",a20," ;")') myid, varname
-#endif
-
-  rank = 1 ; onedims(1) = dim1
-
-  if( dim1.le.0 ) then
-   write(ounit,'("sphdf5 : "10x" : error calling hwriteiv ; ",a20," : ",i3,".le.0 ;")') varname, dim1
-  else
-   call h5screate_simple_f( rank, onedims, space_id, hdfier )
-   FATAL( sphdf5, hdfier.ne.0, error calling h5screate_simple_f )
-
-   call h5dcreate_f( file_id, varname, H5T_NATIVE_INTEGER, space_id, dset_id, hdfier )
-   FATAL( sphdf5, hdfier.ne.0, error calling h5dcreate_f )
-
-   call h5dwrite_f( dset_id, H5T_NATIVE_INTEGER, value, onedims, hdfier )
-   FATAL( sphdf5, hdfier.ne.0, error calling h5dwrite_f )
-
-   call h5dclose_f(dset_id, hdfier)    ! terminate dataset;
-   FATAL( sphdf5, hdfier.ne.0, error calling h5dclose_f )
-  endif
-
-end subroutine HWRITEIV
-
-subroutine HWRITERV (dim1, varname, value )
-
-  LOCALS
-
-  integer, intent(in)      :: dim1
-  character(len=*), intent(in) :: varname
-  real, intent(in)      :: value(:)
-
-#ifdef DEBUG
-  if( Wsphdf5 ) write(ounit,'("sphdf5 : ", 10x ," : myid=",i3," ; writing ",a20," ;")') myid, varname
-#endif
-
-  rank = 1 ; onedims(1) = dim1
-
-  if( dim1.le.0 ) then
-   write(ounit,'("sphdf5 : "10x" : error calling hwriterv ; ",a20," : ",i3,".le.0 ;")') varname, dim1
-  else
-   call h5screate_simple_f( rank, onedims, space_id, hdfier )
-   FATAL( sphdf5, hdfier.ne.0, error calling h5screate_simple_f )
-
-   call h5dcreate_f( file_id, varname, H5T_NATIVE_DOUBLE, space_id, dset_id, hdfier )
-   FATAL( sphdf5, hdfier.ne.0, error calling h5dcreate_f )
-
-   call h5dwrite_f( dset_id, H5T_NATIVE_DOUBLE, value, onedims, hdfier )
-   FATAL( sphdf5, hdfier.ne.0, error calling h5dwrite_f )
-
-   call h5dclose_f(dset_id, hdfier)    ! terminate dataset;
-   FATAL( sphdf5, hdfier.ne.0, error calling h5dclose_f )
-  endif
-
-end subroutine HWRITERV
-
-subroutine HWRITERA (dim1, dim2, varname, value)
-
-  LOCALS
-
-  integer, intent(in)      :: dim1, dim2
-  character(len=*), intent(in) :: varname
-  real, intent(in)    :: value(:,:)
-
-#ifdef DEBUG
-  if( Wsphdf5 ) write(ounit,'("sphdf5 : ", 10x ," : myid=",i3," ; writing ",a20," ;")') myid, varname
-#endif
-
-  rank = 2 ; twodims(1:2) = (/ dim1, dim2 /)
-
-  if( dim1.le.0 .or. dim2.le.0 ) then
-   write(ounit,'("sphdf5 : "10x" : error calling hwritera ; ",a20," : ",i3,".le.0 .or. ",i3,".le.0 ;")') varname, dim1, dim2
-  else
-   call h5screate_simple_f( rank, twodims, space_id, hdfier )
-   FATAL( sphdf5, hdfier.ne.0, error calling h5screate_simple_f )
-
-   call h5dcreate_f( file_id, varname, H5T_NATIVE_DOUBLE, space_id, dset_id, hdfier )
-   FATAL( sphdf5, hdfier.ne.0, error calling h5dcreate_f )
-
-   call h5dwrite_f( dset_id, H5T_NATIVE_DOUBLE, value, twodims, hdfier )
-   FATAL( sphdf5, hdfier.ne.0, error calling h5dwrite_f )
-
-   call h5dclose_f(dset_id, hdfier)    ! terminate dataset;
-   FATAL( sphdf5, hdfier.ne.0, error calling h5dclose_f )
-  endif
-
-end subroutine HWRITERA
-
-subroutine HWRITERC (dim1, dim2, dim3, varname, value)
-
-  LOCALS
-
-  integer, intent(in)      :: dim1, dim2, dim3
-  character(len=*), intent(in) :: varname
-  real, intent(in)  :: value(:,:,:)
-
-#ifdef DEBUG
-  if( Wsphdf5 ) write(ounit,'("sphdf5 : ", 10x ," : myid=",i3," ; writing ",a20," ;")') myid, varname
-#endif
-
-  rank = 3 ; threedims(1:3) = (/ dim1, dim2, dim3 /)
-
-  if( dim1.le.0 .or. dim2.le.0 .or. dim3.le.0 ) then
-   write(ounit,'("sphdf5 : "10x" : error calling hwriterc ; ",a20," : ",i3,".le.0 .or. ",i3,".le.0 .or. ",i3,".le.0 ;")') varname, dim1, dim2, dim3
-  else
-   call h5screate_simple_f( rank, threedims, space_id, hdfier )
-   FATAL( sphdf5, hdfier.ne.0, error calling h5screate_simple_f )
-
-   call h5dcreate_f( file_id, varname, H5T_NATIVE_DOUBLE, space_id, dset_id, hdfier )
-   FATAL( sphdf5, hdfier.ne.0, error calling h5dcreate_f )
-
-   call h5dwrite_f( dset_id, H5T_NATIVE_DOUBLE, value, threedims, hdfier )
-   FATAL( sphdf5, hdfier.ne.0, error calling h5dwrite_f )
-
-   call h5dclose_f(dset_id, hdfier)    ! terminate dataset;
-   FATAL( sphdf5, hdfier.ne.0, error calling h5dclose_f )
-  endif
-
-end subroutine HWRITERC
+!
+!subroutine HWRITEIV (dim1, varname, value )
+!
+!  LOCALS
+!
+!  integer, intent(in)      :: dim1
+!  character(len=*), intent(in) :: varname
+!  integer, intent(in)   :: value(:)
+!
+!#ifdef DEBUG
+!  if( Wsphdf5 ) write(ounit,'("sphdf5 : ", 10x ," : myid=",i3," ; writing ",a20," ;")') myid, varname
+!#endif
+!
+!  rank = 1 ; onedims(1) = dim1
+!
+!  if( dim1.le.0 ) then
+!   write(ounit,'("sphdf5 : "10x" : error calling hwriteiv ; ",a20," : ",i3,".le.0 ;")') varname, dim1
+!  else
+!   call h5screate_simple_f( rank, onedims, space_id, hdfier )
+!   FATAL( sphdf5, hdfier.ne.0, error calling h5screate_simple_f )
+!
+!   call h5dcreate_f( file_id, varname, H5T_NATIVE_INTEGER, space_id, dset_id, hdfier )
+!   FATAL( sphdf5, hdfier.ne.0, error calling h5dcreate_f )
+!
+!   call h5dwrite_f( dset_id, H5T_NATIVE_INTEGER, value, onedims, hdfier )
+!   FATAL( sphdf5, hdfier.ne.0, error calling h5dwrite_f )
+!
+!   call h5dclose_f(dset_id, hdfier)    ! terminate dataset;
+!   FATAL( sphdf5, hdfier.ne.0, error calling h5dclose_f )
+!  endif
+!
+!end subroutine HWRITEIV
+!
+!subroutine HWRITERV (dim1, varname, value )
+!
+!  LOCALS
+!
+!  integer, intent(in)      :: dim1
+!  character(len=*), intent(in) :: varname
+!  real, intent(in)      :: value(:)
+!
+!#ifdef DEBUG
+!  if( Wsphdf5 ) write(ounit,'("sphdf5 : ", 10x ," : myid=",i3," ; writing ",a20," ;")') myid, varname
+!#endif
+!
+!  rank = 1 ; onedims(1) = dim1
+!
+!  if( dim1.le.0 ) then
+!   write(ounit,'("sphdf5 : "10x" : error calling hwriterv ; ",a20," : ",i3,".le.0 ;")') varname, dim1
+!  else
+!   call h5screate_simple_f( rank, onedims, space_id, hdfier )
+!   FATAL( sphdf5, hdfier.ne.0, error calling h5screate_simple_f )
+!
+!   call h5dcreate_f( file_id, varname, H5T_NATIVE_DOUBLE, space_id, dset_id, hdfier )
+!   FATAL( sphdf5, hdfier.ne.0, error calling h5dcreate_f )
+!
+!   call h5dwrite_f( dset_id, H5T_NATIVE_DOUBLE, value, onedims, hdfier )
+!   FATAL( sphdf5, hdfier.ne.0, error calling h5dwrite_f )
+!
+!   call h5dclose_f(dset_id, hdfier)    ! terminate dataset;
+!   FATAL( sphdf5, hdfier.ne.0, error calling h5dclose_f )
+!  endif
+!
+!end subroutine HWRITERV
+!
+!subroutine HWRITERA (dim1, dim2, varname, value)
+!
+!  LOCALS
+!
+!  integer, intent(in)      :: dim1, dim2
+!  character(len=*), intent(in) :: varname
+!  real, intent(in)    :: value(:,:)
+!
+!#ifdef DEBUG
+!  if( Wsphdf5 ) write(ounit,'("sphdf5 : ", 10x ," : myid=",i3," ; writing ",a20," ;")') myid, varname
+!#endif
+!
+!  rank = 2 ; twodims(1:2) = (/ dim1, dim2 /)
+!
+!  if( dim1.le.0 .or. dim2.le.0 ) then
+!   write(ounit,'("sphdf5 : "10x" : error calling hwritera ; ",a20," : ",i3,".le.0 .or. ",i3,".le.0 ;")') varname, dim1, dim2
+!  else
+!   call h5screate_simple_f( rank, twodims, space_id, hdfier )
+!   FATAL( sphdf5, hdfier.ne.0, error calling h5screate_simple_f )
+!
+!   call h5dcreate_f( file_id, varname, H5T_NATIVE_DOUBLE, space_id, dset_id, hdfier )
+!   FATAL( sphdf5, hdfier.ne.0, error calling h5dcreate_f )
+!
+!   call h5dwrite_f( dset_id, H5T_NATIVE_DOUBLE, value, twodims, hdfier )
+!   FATAL( sphdf5, hdfier.ne.0, error calling h5dwrite_f )
+!
+!   call h5dclose_f(dset_id, hdfier)    ! terminate dataset;
+!   FATAL( sphdf5, hdfier.ne.0, error calling h5dclose_f )
+!  endif
+!
+!end subroutine HWRITERA
+!
+!subroutine HWRITERC (dim1, dim2, dim3, varname, value)
+!
+!  LOCALS
+!
+!  integer, intent(in)      :: dim1, dim2, dim3
+!  character(len=*), intent(in) :: varname
+!  real, intent(in)  :: value(:,:,:)
+!
+!#ifdef DEBUG
+!  if( Wsphdf5 ) write(ounit,'("sphdf5 : ", 10x ," : myid=",i3," ; writing ",a20," ;")') myid, varname
+!#endif
+!
+!  rank = 3 ; threedims(1:3) = (/ dim1, dim2, dim3 /)
+!
+!  if( dim1.le.0 .or. dim2.le.0 .or. dim3.le.0 ) then
+!   write(ounit,'("sphdf5 : "10x" : error calling hwriterc ; ",a20," : ",i3,".le.0 .or. ",i3,".le.0 .or. ",i3,".le.0 ;")') varname, dim1, dim2, dim3
+!  else
+!   call h5screate_simple_f( rank, threedims, space_id, hdfier )
+!   FATAL( sphdf5, hdfier.ne.0, error calling h5screate_simple_f )
+!
+!   call h5dcreate_f( file_id, varname, H5T_NATIVE_DOUBLE, space_id, dset_id, hdfier )
+!   FATAL( sphdf5, hdfier.ne.0, error calling h5dcreate_f )
+!
+!   call h5dwrite_f( dset_id, H5T_NATIVE_DOUBLE, value, threedims, hdfier )
+!   FATAL( sphdf5, hdfier.ne.0, error calling h5dwrite_f )
+!
+!   call h5dclose_f(dset_id, hdfier)    ! terminate dataset;
+!   FATAL( sphdf5, hdfier.ne.0, error calling h5dclose_f )
+!  endif
+!
+!end subroutine HWRITERC
 
 
 
