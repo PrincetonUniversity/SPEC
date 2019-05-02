@@ -317,7 +317,7 @@ xspech_d.o: xspech.f90 global_d.o $(addsuffix _d.o,$(files)) $(MACROS) Makefile
 ###############################################################################################################################################################
 
 clean:
-	rm -f *.o ; rm -f *.mod ; rm -f *_m.F90 ; rm -f .*.h ; rm -f *.pdf ; rm -f *.dvi ; rm -f *.out ; rm -f *.bbl ; rm -f *.toc ; rm -f .*.date ; rm -rf ./docs/
+	rm -f *.o *.mod *_m.F90 .*.h *.pdf *.dvi *.out *.bbl *.toc .*.date ; rm -rf ./docs/
 
 ###############################################################################################################################################################
 
@@ -372,7 +372,7 @@ help:
 	# make 			: identical to make xspec ;
 	# make xspec 		: expands macros (*.f90 --> *_m.F90) ; compiles xspec executable ;
 	# make dspec 		: expands macros (*.f90 --> *_m.F90) ; compiles dspec executable ;
-	# make clean 		: clean up compilation directory : rm -f *.o ; rm -f *.mod ; rm -f *_m.F90 ; rm -f *.pdf ; rm -f *.dvi
+	# make clean 		: clean up compilation directory : rm -f *.o *.mod *_m.F90 .*.h *.pdf *.dvi *.out *.bbl *.toc .*.date ; rm -rf ./docs/
 	# make pdfs		: create source documentation dvi, pdf files ; user should have directory $(HOME)/w3_html/Spec ;
 	#
 	# Compiler Control 	: CC=lff95; CC=intel_ipp; CC=gfortran_ipp
