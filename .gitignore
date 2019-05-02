@@ -6,10 +6,16 @@
 xspec
 dspec
 
-#pdfs related
+# pdfs related
 /docs/
 *.pdf
 *.dvi
 *.toc
 *.out
 .*.date
+
+# Eclipse IDE
+.settings
+.project
+.cproject
+
