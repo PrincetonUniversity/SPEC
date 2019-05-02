@@ -58,9 +58,9 @@ subroutine hdfint
 
 #else
 
-  call h5open_f( hdfier ) ! initialize Fortran interface;
-
-  FATAL( hdfint, hdfier.ne.0, error calling h5open_f )
+!  call h5open_f( hdfier ) ! initialize Fortran interface;
+!
+!  FATAL( hdfint, hdfier.ne.0, error calling h5open_f )
 
   call h5fcreate_f( trim(ext)//".sp.h5", H5F_ACC_TRUNC_F, file_id, hdfier ) ! create new file;
 
@@ -223,9 +223,9 @@ subroutine hdfint
 
   FATAL( hdfint, hdfier.ne.0, error calling h5fclose_f )
 
-  call h5close_f( hdfier ) ! close Fortran interface;
-
-  FATAL( hdfint, hdfier.ne.0, error calling h5close_f )
+!  call h5close_f( hdfier ) ! close Fortran interface;
+!
+!  FATAL( hdfint, hdfier.ne.0, error calling h5close_f )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

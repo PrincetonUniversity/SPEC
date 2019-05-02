@@ -73,6 +73,8 @@ program xspech
                         nfreeboundaryiterations, &
                         beltramierror
 
+   use sphdf5
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   LOCALS
@@ -123,6 +125,9 @@ program xspech
   WCALL( xspech, readin ) ! sets Rscale; 03 Nov 16;
   WCALL( xspech, preset )
   
+  WCALL( xspech, init_outfile )
+
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !latex \subsection{preparing output file \type{.ext.sp.its}} 
@@ -690,6 +695,8 @@ program xspech
 9999 continue
 
   WCALL( xspech, ending )
+
+  WCALL( xspech, finish_outfile )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   

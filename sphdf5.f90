@@ -13,17 +13,37 @@
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 module sphdf5
-  implicit none
 
 contains
 
 subroutine init_outfile
-#ifdef NOHDF5
-#else
+#ifndef NOHDF5
   use hdf5
+  use allglobal , only : myid
+
+  LOCALS
+  INTEGER :: hdfier
+
+  call h5open_f( hdfier ) ! initialize Fortran interface;
+  FATAL( hdfint, hdfier.ne.0, error calling h5open_f )
 
 
 #endif
 end subroutine init_outfile
+
+
+
+subroutine finish_outfile
+#ifndef NOHDF5
+  use hdf5
+  use allglobal , only : myid
+
+  LOCALS
+  INTEGER :: hdfier
+
+  call h5close_f( hdfier ) ! close Fortran interface;
+  FATAL( hdfint, hdfier.ne.0, error calling h5close_f )
+#endif
+end subroutine finish_outfile
 
 end module sphdf5
