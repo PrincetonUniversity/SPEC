@@ -125,7 +125,7 @@ program xspech
   WCALL( xspech, readin ) ! sets Rscale; 03 Nov 16;
   WCALL( xspech, preset )
   
-  WCALL( xspech, init_outfile )
+  WCALL( xspech, init_outfile ) ! initialize HDF5 library and open output file ext.h5 for writing during execution
 
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -162,6 +162,17 @@ program xspech
    
   endif
   
+
+
+
+
+
+
+
+
+
+
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   FATAL( xspech, NGdof.lt.0, counting error )
@@ -774,12 +785,9 @@ dcpu, Ttotal / (/ 1, 60, 3600 /), ecpu, 100*ecpu/dcpu
    write(ounit,'("ending : ", 10x ," : ")')
    write(ounit,1000) dcpu, myid, dcpu / (/ 1, 60, 60*60, 24*60*60 /), date(1:4), date(5:6), date(7:8), time(1:2), time(3:4), time(5:6), ext
    write(ounit,'("ending : ", 10x ," : ")')
-
-   if( myid.eq.0 ) then
-   call hdfint ! 18 Jul 14;
-   endif
-
   endif ! end of if( myid.eq.0 ) ; 14 Jan 15;
+
+  call hdfint ! 18 Jul 14;
 
   MPIFINALIZE
   
