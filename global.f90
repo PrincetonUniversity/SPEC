@@ -127,7 +127,7 @@ module inputlist
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \item The input file, \verb+ext.sp+, where \verb+ext*100+ is given as command line input, contains the following namelists and interface geometry.
+!latex \item The input file, \verb+ext.sp+, where \verb+ext*100+ or \verb+ext.sp*100+ is given as command line input, contains the following namelists and interface geometry.
 
 !SET MAXIMUM RESOLUTION;
 
