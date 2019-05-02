@@ -18,8 +18,9 @@
 !latex        \link{ra00aa}, 
 !latex        \link{bnorml}, 
 !latex        \link{sc00aa}, 
-!latex        \link{jo00aa} and 
-!latex        \link{pp00aa}}
+!latex        \link{jo00aa},
+!latex        \link{pp00aa} and
+!latex        \link{sphdf5}}
 
 !latex \tableofcontents
 
@@ -122,11 +123,11 @@ program xspech
 !latex \item Most internal variables, global memory etc., are allocated in \link{preset}.
 !latex \end{enumerate} 
 
-  WCALL( xspech, readin ) ! sets Rscale; 03 Nov 16;
+  WCALL( xspech, readin ) ! sets Rscale, Mvol; 03 Nov 16;
   WCALL( xspech, preset )
   
   WCALL( xspech, init_outfile ) ! initialize HDF5 library and open output file ext.h5 for writing during execution
-
+  WCALL( xspech, mirror_input_to_outfile ) ! mirror input file contents to output file
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

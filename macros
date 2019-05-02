@@ -259,46 +259,111 @@ m4_define(WCALL,{! macro expansion of wcall;
    cpuo = MPI_WTIME()
 
   ! macro expansion of wcall; end;})m4_dnl ; can put comments here;
-m4_define(HWRITEIV,{! macro expansion of hwriteiv;
+m4_define(HDEFGRP,{! macro expansion of hdefgrp;
+
+  call h5gcreate_f($1, "$2", $3, hdfier)
+  if( hdfier.ne.0 ) then
+    write(0,'("sphdf5 : "10x" : error calling h5gcreate_f ;")')
+    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    stop "sphdf5 : error calling h5gcreate_f ;"
+  endif
+
+  ! macro expansion of hdefgrp; end;})m4_dnl ; can put comments here;
+m4_define(HCLOSEGRP,{! macro expansion of hclosegrp;
+
+  call h5gclose_f($1, hdfier)
+  if( hdfier.ne.0 ) then
+    write(0,'("sphdf5 : "10x" : error calling h5gclose_f ;")')
+    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    stop "sphdf5 : error calling h5gclose_f ;"
+  endif
+
+  ! macro expansion of hclosegrp; end;})m4_dnl ; can put comments here;
+m4_define(HWRITELV,{! macro expansion of hwritelv;
 
 #ifdef DEBUG
-  if( Wmacros ) write(ounit,'("macros : ", 10x ," : myid=",i3," ; writing $2 ;")') myid
+  if( Wmacros ) write(ounit,'("macros : ", 10x ," : myid=",i3," ; writing $3 ;")') myid
 #endif
 
-  rank = 1 ; onedims(1) = $1
+  rank = 1 ; onedims(1) = $2
 
-  if( $1.le.0 ) then
+  if( $2.le.0 ) then
 
-   write(0,'("hdfint : "10x" : error calling hwriteiv ; $2 : $1.le.0 ;")')
+   write(0,'("sphdf5 : "10x" : error calling hwriteiv ; $3 : $2.le.0 ;")')
 
   else
 
    call h5screate_simple_f( rank, onedims, space_id, hdfier )
    if( hdfier.ne.0 ) then
-    write(0,'("hdfint : "10x" : error calling h5screate_simple_f ;")')
+    write(0,'("sphdf5 : "10x" : error calling h5screate_simple_f ;")')
     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
-    stop "hdfint : error calling h5screate_simple_f ;"
+    stop "sphdf5 : error calling h5screate_simple_f ;"
    endif
 
-   call h5dcreate_f( file_id, "$2", H5T_NATIVE_INTEGER, space_id, dset_id, hdfier )
+   call h5dcreate_f( $1, "$3", H5T_NATIVE_INTEGER, space_id, dset_id, hdfier )
    if( hdfier.ne.0 ) then
-    write(0,'("hdfint : "10x" : error calling h5dcreate_f ;")')
+    write(0,'("sphdf5 : "10x" : error calling h5dcreate_f ;")')
     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
-    stop "hdfint : error calling h5dcreate_f ;"
+    stop "sphdf5 : error calling h5dcreate_f ;"
    endif
 
-   call h5dwrite_f( dset_id, H5T_NATIVE_INTEGER, $3, onedims, hdfier )
+   call h5dwrite_f( dset_id, H5T_NATIVE_INTEGER, merge(1,0,$4) , onedims, hdfier )
    if( hdfier.ne.0 ) then
-    write(0,'("hdfint : "10x" : error calling h5dwrite_f ;")')
+    write(0,'("sphdf5 : "10x" : error calling h5dwrite_f ;")')
     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
-    stop "hdfint : error calling h5dwrite_f ;"
+    stop "sphdf5 : error calling h5dwrite_f ;"
    endif
 
    call h5dclose_f(dset_id, hdfier)    ! terminate dataset;
    if( hdfier.ne.0 ) then
-    write(0,'("hdfint : "10x" : error calling h5dclose_f ;")')
+    write(0,'("sphdf5 : "10x" : error calling h5dclose_f ;")')
     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
-    stop "hdfint : error calling h5dclose_f ;"
+    stop "sphdf5 : error calling h5dclose_f ;"
+   endif
+
+  endif
+
+  ! macro expansion of hwritelv; end;})m4_dnl ; can put comments here;
+m4_define(HWRITEIV,{! macro expansion of hwriteiv;
+
+#ifdef DEBUG
+  if( Wmacros ) write(ounit,'("macros : ", 10x ," : myid=",i3," ; writing $3 ;")') myid
+#endif
+
+  rank = 1 ; onedims(1) = $2
+
+  if( $2.le.0 ) then
+
+   write(0,'("sphdf5 : "10x" : error calling hwriteiv ; $3 : $2.le.0 ;")')
+
+  else
+
+   call h5screate_simple_f( rank, onedims, space_id, hdfier )
+   if( hdfier.ne.0 ) then
+    write(0,'("sphdf5 : "10x" : error calling h5screate_simple_f ;")')
+    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    stop "sphdf5 : error calling h5screate_simple_f ;"
+   endif
+
+   call h5dcreate_f( $1, "$3", H5T_NATIVE_INTEGER, space_id, dset_id, hdfier )
+   if( hdfier.ne.0 ) then
+    write(0,'("sphdf5 : "10x" : error calling h5dcreate_f ;")')
+    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    stop "sphdf5 : error calling h5dcreate_f ;"
+   endif
+
+   call h5dwrite_f( dset_id, H5T_NATIVE_INTEGER, $4, onedims, hdfier )
+   if( hdfier.ne.0 ) then
+    write(0,'("sphdf5 : "10x" : error calling h5dwrite_f ;")')
+    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    stop "sphdf5 : error calling h5dwrite_f ;"
+   endif
+
+   call h5dclose_f(dset_id, hdfier)    ! terminate dataset;
+   if( hdfier.ne.0 ) then
+    write(0,'("sphdf5 : "10x" : error calling h5dclose_f ;")')
+    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    stop "sphdf5 : error calling h5dclose_f ;"
    endif
 
   endif
@@ -307,43 +372,43 @@ m4_define(HWRITEIV,{! macro expansion of hwriteiv;
 m4_define(HWRITERV,{! macro expansion of hwriterv;
 
 #ifdef DEBUG
-  if( Wmacros ) write(ounit,'("macros : ", 10x ," : myid=",i3," ; writing $2 ;")') myid
+  if( Wmacros ) write(ounit,'("macros : ", 10x ," : myid=",i3," ; writing $3 ;")') myid
 #endif
 
-  rank = 1 ; onedims(1) = $1
+  rank = 1 ; onedims(1) = $2
 
-  if( $1.le.0 ) then
+  if( $2.le.0 ) then
 
-   write(0,'("hdfint : "10x" : error calling hwriterv ; $2 : $1.le.0 ;")')
+   write(0,'("sphdf5 : "10x" : error calling hwriterv ; $3 : $2.le.0 ;")')
 
   else
 
    call h5screate_simple_f( rank, onedims, space_id, hdfier )
    if( hdfier.ne.0 ) then
-    write(0,'("hdfint : "10x" : error calling h5screate_simple_f ;")')
+    write(0,'("sphdf5 : "10x" : error calling h5screate_simple_f ;")')
     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
-    stop "hdfint : error calling h5screate_simple_f ;"
+    stop "sphdf5 : error calling h5screate_simple_f ;"
    endif
 
-   call h5dcreate_f( file_id, "$2", H5T_NATIVE_DOUBLE, space_id, dset_id, hdfier )
+   call h5dcreate_f( $1, "$3", H5T_NATIVE_DOUBLE, space_id, dset_id, hdfier )
    if( hdfier.ne.0 ) then
-    write(0,'("hdfint : "10x" : error calling h5dcreate_f ;")')
+    write(0,'("sphdf5 : "10x" : error calling h5dcreate_f ;")')
     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
-    stop "hdfint : error calling h5dcreate_f ;"
+    stop "sphdf5 : error calling h5dcreate_f ;"
    endif
 
-   call h5dwrite_f( dset_id, H5T_NATIVE_DOUBLE, $3, onedims, hdfier )
+   call h5dwrite_f( dset_id, H5T_NATIVE_DOUBLE, $4, onedims, hdfier )
    if( hdfier.ne.0 ) then
-    write(0,'("hdfint : "10x" : error calling h5dwrite_f ;")')
+    write(0,'("sphdf5 : "10x" : error calling h5dwrite_f ;")')
     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
-    stop "hdfint : error calling h5dwrite_f ;"
+    stop "sphdf5 : error calling h5dwrite_f ;"
    endif
 
    call h5dclose_f(dset_id, hdfier)    ! terminate dataset;
    if( hdfier.ne.0 ) then
-    write(0,'("hdfint : "10x" : error calling h5dclose_f ;")')
+    write(0,'("sphdf5 : "10x" : error calling h5dclose_f ;")')
     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
-    stop "hdfint : error calling h5dclose_f ;"
+    stop "sphdf5 : error calling h5dclose_f ;"
    endif
 
   endif
@@ -352,43 +417,43 @@ m4_define(HWRITERV,{! macro expansion of hwriterv;
 m4_define(HWRITERA,{! macro expansion of hwritea;
 
 #ifdef DEBUG
-  if( Wmacros ) write(ounit,'("macros : ", 10x ," : myid=",i3," ; writing $3 ;")') myid
+  if( Wmacros ) write(ounit,'("macros : ", 10x ," : myid=",i3," ; writing $4 ;")') myid
 #endif
 
-  rank = 2 ; twodims(1:2) = (/ $1, $2 /)
+  rank = 2 ; twodims(1:2) = (/ $2, $3 /)
 
-  if( $1.le.0 .or. $2.le.0 ) then
+  if( $2.le.0 .or. $3.le.0 ) then
 
-   write(0,'("hdfint : "10x" : error calling hwritera ; $3 : $1.le.0 .or. $2.le.0 ;")')
+   write(0,'("sphdf5 : "10x" : error calling hwritera ; $4 : $2.le.0 .or. $3.le.0 ;")')
 
   else
 
    call h5screate_simple_f( rank, twodims, space_id, hdfier )
    if( hdfier.ne.0 ) then
-    write(0,'("hdfint : "10x" : error calling h5screate_simple_f ;")')
+    write(0,'("sphdf5 : "10x" : error calling h5screate_simple_f ;")')
     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
-    stop "hdfint : error calling h5screate_simple_f ;"
+    stop "sphdf5 : error calling h5screate_simple_f ;"
    endif
 
-   call h5dcreate_f( file_id, "$3", H5T_NATIVE_DOUBLE, space_id, dset_id, hdfier )
+   call h5dcreate_f( $1, "$4", H5T_NATIVE_DOUBLE, space_id, dset_id, hdfier )
    if( hdfier.ne.0 ) then
-    write(0,'("hdfint : "10x" : error calling h5dcreate_f ;")')
+    write(0,'("sphdf5 : "10x" : error calling h5dcreate_f ;")')
     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
-    stop "hdfint : error calling h5dcreate_f ;"
+    stop "sphdf5 : error calling h5dcreate_f ;"
    endif
 
-   call h5dwrite_f( dset_id, H5T_NATIVE_DOUBLE, $4, twodims, hdfier )
+   call h5dwrite_f( dset_id, H5T_NATIVE_DOUBLE, $5, twodims, hdfier )
    if( hdfier.ne.0 ) then
-    write(0,'("hdfint : "10x" : error calling h5dwrite_f ;")')
+    write(0,'("sphdf5 : "10x" : error calling h5dwrite_f ;")')
     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
-    stop "hdfint : error calling h5dwrite_f ;"
+    stop "sphdf5 : error calling h5dwrite_f ;"
    endif
 
    call h5dclose_f(dset_id, hdfier)    ! terminate dataset;
    if( hdfier.ne.0 ) then
-    write(0,'("hdfint : "10x" : error calling h5dclose_f ;")')
+    write(0,'("sphdf5 : "10x" : error calling h5dclose_f ;")')
     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
-    stop "hdfint : error calling h5dclose_f ;"
+    stop "sphdf5 : error calling h5dclose_f ;"
    endif
 
   endif
@@ -397,43 +462,43 @@ m4_define(HWRITERA,{! macro expansion of hwritea;
 m4_define(HWRITERC,{! macro expansion of hwriterc;
 
 #ifdef DEBUG
-  if( Wmacros ) write(ounit,'("macros : ", 10x ," : myid=",i3," ; writing $4 ;")') myid
+  if( Wmacros ) write(ounit,'("macros : ", 10x ," : myid=",i3," ; writing $5 ;")') myid
 #endif
 
-  rank = 3 ; threedims(1:3) = (/ $1, $2, $3 /)
+  rank = 3 ; threedims(1:3) = (/ $2, $3, $4 /)
 
-  if( $1.le.0 .or. $2.le.0 .or. $3.le.0 ) then
+  if( $2.le.0 .or. $3.le.0 .or. $4.le.0 ) then
 
-   write(0,'("hdfint : "10x" : error calling hwriterc ; $4 : $1.le.0 .or. $2.le.0 .or. $3.le.0 ;")')
+   write(0,'("sphdf5 : "10x" : error calling hwriterc ; $5 : $2.le.0 .or. $3.le.0 .or. $4.le.0 ;")')
 
   else
 
    call h5screate_simple_f( rank, threedims, space_id, hdfier )
    if( hdfier.ne.0 ) then
-    write(0,'("hdfint : "10x" : error calling h5screate_simple_f ;")')
+    write(0,'("sphdf5 : "10x" : error calling h5screate_simple_f ;")')
     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
-    stop "hdfint : error calling h5screate_simple_f ;"
+    stop "sphdf5 : error calling h5screate_simple_f ;"
    endif
 
-   call h5dcreate_f( file_id, "$4", H5T_NATIVE_DOUBLE, space_id, dset_id, hdfier )
+   call h5dcreate_f( $1, "$5", H5T_NATIVE_DOUBLE, space_id, dset_id, hdfier )
    if( hdfier.ne.0 ) then
-    write(0,'("hdfint : "10x" : error calling h5dcreate_f ;")')
+    write(0,'("sphdf5 : "10x" : error calling h5dcreate_f ;")')
     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
-    stop "hdfint : error calling h5dcreate_f ;"
+    stop "sphdf5 : error calling h5dcreate_f ;"
    endif
 
-   call h5dwrite_f( dset_id, H5T_NATIVE_DOUBLE, $5, threedims, hdfier )
+   call h5dwrite_f( dset_id, H5T_NATIVE_DOUBLE, $6, threedims, hdfier )
    if( hdfier.ne.0 ) then
-    write(0,'("hdfint : "10x" : error calling h5dwrite_f ;")')
+    write(0,'("sphdf5 : "10x" : error calling h5dwrite_f ;")')
     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
-    stop "hdfint : error calling h5dwrite_f ;"
+    stop "sphdf5 : error calling h5dwrite_f ;"
    endif
 
    call h5dclose_f(dset_id, hdfier)    ! terminate dataset;
    if( hdfier.ne.0 ) then
-    write(0,'("hdfint : "10x" : error calling h5dclose_f ;")')
+    write(0,'("sphdf5 : "10x" : error calling h5dclose_f ;")')
     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
-    stop "hdfint : error calling h5dclose_f ;"
+    stop "sphdf5 : error calling h5dclose_f ;"
    endif
 
   endif
