@@ -14,10 +14,10 @@
 ###############################################################################################################################################################
 
  SPECFILES=$(afiles) $(bfiles) $(cfiles) $(dfiles) $(efiles) $(ffiles)
- ALLFILES=global $(SPECFILES) $(sfiles) sphdf5 hdfint preset xspech
+ ALLFILES=global $(SPECFILES) $(sfiles) sphdf5 preset xspech
 #F77FILES=$(sfiles:=.f)
  PREPROC=$(SPECFILES:=_m.F90) # preprocessed by m4
- RAWSOURCE=global preset $(SPECFILES) hdfint sphdf5 xspech # "raw" code, with macros not expanded yet
+ RAWSOURCE=global preset $(SPECFILES) sphdf5 xspech # "raw" code, with macros not expanded yet
 
  ROBJS=$(SPECFILES:=_r.o)
  DOBJS=$(SPECFILES:=_d.o)
@@ -207,19 +207,6 @@ global_d.o: %_d.o: global.f90 $(MACROS) Makefile
 	@wc -l -L -w global_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
-###############################################################################################################################################################
-
-hdfint_r.o: hdfint.f90 global_r.o $(MACROS) Makefile
-	m4 -P $(MACROS) hdfint.f90 > $*_m.F90
-	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o hdfint_r.o -c $*_m.F90 $(HDF5compile)
-	@wc -l -L -w hdfint_r_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
-	@echo ''
-
-hdfint_d.o: hdfint.f90 global_d.o $(MACROS) Makefile
-	m4 -P $(MACROS) hdfint.f90 > $*_m.F90
-	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o hdfint_d.o -c $*_m.F90 $(HDF5compile)
-	@wc -l -L -w hdfint_d_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
-	@echo ''
 
 ###############################################################################################################################################################
 
