@@ -24,9 +24,10 @@ m4_define(MPIFINALIZE,{! macro expansion of mpifinalize;
 
   ! macro expansion of mpifinalize; end;})m4_dnl can put comments here
 m4_define(LOCALS,{! macro expansion of locals;
-
+  
+  use mpi
   implicit none
-  include "mpif.h"
+  
   INTEGER   :: ierr, astat, ios
   REAL      :: cput, cpui, cpuo ! cpu time; cpu initial; cpu old; 31 Jan 13;
 

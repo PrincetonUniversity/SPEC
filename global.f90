@@ -1802,7 +1802,7 @@ subroutine readin
   
   IlBCAST( LBeltrami, 1, 0 )
   IlBCAST( Linitgues, 1, 0 )
-  RlBCAST( maxrndgues, 1, 1.0)
+  RlBCAST( maxrndgues, 1, 0)
 ! IlBCAST( Lposdef  , 1, 0 ) ! redundant;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
