@@ -21,8 +21,13 @@ function gmat = get_spec_metric_slab(data,lvol,sarr,tarr,zarr)
 Rac     = data.Rbc(:,lvol);   % inner volume boundary harmonics
 Rbc     = data.Rbc(:,lvol+1); % outer volume boundary harmonics
 
-rpol    = data.rpol; % poloidal extent of the slab is 2*pi*rpol
-rtor    = data.rtor; % toroidal extent of the slab is 2*pi*rtor
+try
+ rpol   = data.rpol;          % poloidal extent of the slab is 2*pi*rpol
+ rtor   = data.rtor;          % toroidal extent of the slab is 2*pi*rtor
+catch
+ rpol   = 1;                  % in case rpol did not exist due to old version of SPEC
+ rtor   = 1;                  % in case rtor did not exist due to old version of SPEC
+end
 
 sarr    = transpose(sarr);
 ns      = length(sarr);

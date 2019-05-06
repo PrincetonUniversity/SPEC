@@ -16,7 +16,11 @@ nz     = size(data.R_lines,2);  % # of toroidal planes
 
 nppts  = size(data.R_lines,3);  % # of toroidal transits per trajectory
 
-rpol   = data.rpol;             % poloidal extent of the slab is 2*pi*rpol
+try
+ rpol   = data.rpol;            % poloidal extent of the slab is 2*pi*rpol
+catch
+ rpol   = 1;                    % in case rpol did not exist due to old version of SPEC
+end
 
 nth    = 1024;  %ploting options for the boundary
 bcol   = 'r';

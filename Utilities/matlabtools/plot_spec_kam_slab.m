@@ -17,7 +17,11 @@ im     = h5read(filename,'/im');
 in     = h5read(filename,'/in');
 Rbcmn  = h5read(filename,'/Rbc');
 Rbsmn  = h5read(filename,'/Rbs');
-rpol   = h5read(filename,'/rpol');
+try
+ rpol   = h5read(filename,'/rpol');
+catch
+ rpol   = 1;
+end
 
 % Compute (x,y) coordinates of each interface
 
