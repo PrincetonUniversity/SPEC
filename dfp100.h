@@ -9,7 +9,9 @@ use inputlist, only : Wmacros, Wdfp100, Igeometry, Nvol, Lrad, Isurf, &
 
 use cputiming, only : Tdfp100
 
-use allglobal, only : ncpu, myid, cpus, &
+use allglobal, only : Ate, Aze, Ato, Azo, &
+                      NOTstellsym, &
+		      ncpu, myid, cpus, &
                       ImagneticOK, NAdof, mn, &
                       Mvol, &
                       dBdX, Iquad, &
@@ -55,11 +57,25 @@ BEGIN(dfp100)
 		WCALL( dfp100, ma02aa, ( vvol, NN ) )
 
 	!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+		
 
+		! Broadcast relevant information to everyone
+		!do ii = 1, mn  
+   		!	RlBCAST( Ate(vvol, 0, ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, myid )
+  	!		RlBCAST( Aze(vvol, 0, ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, myid )
+		!enddo
+  	!	
+	!	if( NOTstellsym ) then
+  	!		do ii = 1, mn    
+	!			RlBCAST( Ato(vvol, 0, ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, myid )
+   	!			RlBCAST( Azo(vvol, 0, ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, myid )
+	!		enddo
+	!	endif
 
 		5000 continue
 	enddo
 
+	! call MPI_Barrier(MPI_COMM_WORLD, ierr)
 
 	if( .not.LocalConstraint ) then
 
