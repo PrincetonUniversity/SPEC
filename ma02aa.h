@@ -15,9 +15,9 @@ subroutine ma02aa( lvol, NN )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  use constants, only : zero, half, one, two, ten, goldenmean
+  use constants, only : zero, half, one, ten
   
-  use numerical, only : sqrtmachprec, vsmall, small
+  use numerical, only : vsmall, small
 
   use fileunits, only : ounit
 
@@ -29,10 +29,8 @@ subroutine ma02aa( lvol, NN )
   
   use allglobal, only : ncpu, myid, cpus, Mvol, mn, im, in, &
                         LBlinear, LBnewton, LBsequad, &
-!                       dMA, dMB, dMC, dMD, dME, dMF, solution, &
-                        dMA, dMB,      dMD,           solution, &
-!                       MBpsi, MEpsi, psiMCpsi, psiMFpsi, &
-                        MBpsi,                            &
+                        dMA, dMB, dMD, solution, &
+                        MBpsi, &
                         ImagneticOK, &
                         lBBintegral, lABintegral, &
                         ivol, &

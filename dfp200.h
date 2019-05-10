@@ -1,8 +1,8 @@
-subroutine dfp200( NGdof, position, LcomputeDerivatives, vvol)
+subroutine dfp200( LcomputeDerivatives, vvol)
 
-  use constants, only : zero, half, one, two, pi2, pi
+  use constants, only : zero, half, one, two
   
-  use numerical, only : vsmall, small, logtolerance
+  use numerical, only : small
   
   use fileunits, only : ounit
   
@@ -15,38 +15,32 @@ subroutine dfp200( NGdof, position, LcomputeDerivatives, vvol)
   
   use cputiming, only : Tdfp200
   
-  use allglobal, only : ncpu, myid, cpus, pi2nfp, &
+  use allglobal, only : ncpu, myid, cpus, &
                         Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
                         Mvol, &
                         Iquad, &                  ! convenience; provided to ma00aa as argument to avoid allocations;
                         iRbc, iZbs, iRbs, iZbc, & ! Fourier harmonics of geometry; vector of independent variables, position, is "unpacked" into iRbc,iZbs;
                         NAdof, &
-                        ImagneticOK, &
-                        Energy, ForceErr, &
                         YESstellsym, NOTstellsym, &
                         mn, im, in, mns, Ntz, &
                         Ate, Aze, Ato, Azo, & ! only required for debugging;
-                        ijreal, ijimag, jireal, jiimag, &
+                        ijreal, &
                         efmn, ofmn, cfmn, sfmn, &
                         evmn, odmn, comn, simn, &
                         Nt, Nz, &
                         cosi, sini, & ! FFT workspace;
                         dBdX, &
-                       !dMA, dMB, dMC, dMD, dME, dMF, dMG, solution, &
-                        dMA, dMB,      dMD,           dMG, solution,  &
-                        MBpsi,        &
+                        dMA, dMB, dMD, dMG, solution, &
                         dtflux, dpflux, sweight, &
                         mmpp, &
                         Bemn, Bomn, Iomn, Iemn, Somn, Semn, &
-                        BBe, IIo, BBo, IIe, & ! these are just used for screen diagnostics;
                         LGdof, &
-                        dBBdRZ, dIIdRZ, &
-                        vvolume, dvolume, lBBintegral, lABintegral, &
+                        vvolume, dvolume, &
                         Rij, Zij, sg, guvij, iRij, iZij, dRij, dZij, tRij, tZij, & ! Jacobian and metrics; computed in coords;
                         diotadxup, dItGpdxtp, &
                         dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated, &
                         BBweight, & ! exponential weight on force-imbalance harmonics;
-                        psifactor, Rscale, &
+                        psifactor, &
                         lmns, &
                         mn, mne, &
                         DToocc, DToocs, DToosc, DTooss, &
@@ -57,33 +51,27 @@ subroutine dfp200( NGdof, position, LcomputeDerivatives, vvol)
                         DDtzcc, DDtzcs, DDtzsc, DDtzss, &
                         DDzzcc, DDzzcs, DDzzsc, DDzzss, &
                         dRodR, dRodZ, dZodR, dZodZ, &
-                        LocalConstraint
+                        LocalConstraint, &
+			IsMyVolume, IsMyVolumeValue
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   LOCALS
   
-  INTEGER, intent(in)  :: NGdof               ! dimensions;
-  REAL,    intent(in)  :: position(0:NGdof)   ! degrees-of-freedom = internal geometry;
   LOGICAL, intent(in)  :: LComputeDerivatives ! indicates whether derivatives are to be calculated;
   
   INTEGER              :: NN, IA, ifail, if01adf, vflag, MM, LDA, idgetrf, idgetri, Lwork
-  INTEGER, allocatable :: ipivot(:)
-  REAL   , allocatable :: work(:)
-  
-  INTEGER              :: vvol, innout, ii, jj, irz, issym, iocons, tdoc, idoc, idof, tdof, jdof, ivol, imn, ll
-
+  INTEGER              :: vvol, innout, ii, jj, irz, issym, iocons, idoc, idof, imn, ll
   INTEGER              :: Lcurvature, ideriv, id
-  
-  REAL                 :: lastcpu, lss, lfactor, DDl, MMl
-
   INTEGER              :: iflag
+  INTEGER, allocatable :: ipivot(:)
+
+  REAL                 :: lastcpu, lss, lfactor, DDl, MMl
   REAL                 :: det
-  
   REAL                 :: dpsi(1:2)
   REAL   , allocatable :: oBI(:,:), rhs(:) ! original Beltrami-matrix inverse; used to compute derivatives of matrix equation;
-
   REAL   , allocatable :: dAt(:,:), dAz(:,:), XX(:), YY(:), dBB(:,:), dII(:), dLL(:), dPP(:), length(:), dRR(:,:), dZZ(:,:), constraint(:)
+  REAL   , allocatable :: work(:)
 
   CHARACTER            :: packorunpack 
 
@@ -101,6 +89,21 @@ subroutine dfp200( NGdof, position, LcomputeDerivatives, vvol)
 BEGIN(dfp200)
 
 LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
+
+#ifdef DEBUG
+
+! Store initial arrays for debug purposes.  
+
+  if( Lcheck.eq.3 .or. Lcheck.eq.4 ) then ! will check volume derivatives;
+   
+   SALLOCATE( oRbc, (1:mn,0:Mvol), iRbc(1:mn,0:Mvol) )
+   SALLOCATE( oZbs, (1:mn,0:Mvol), iZbs(1:mn,0:Mvol) )
+   SALLOCATE( oRbs, (1:mn,0:Mvol), iRbs(1:mn,0:Mvol) )
+   SALLOCATE( oZbc, (1:mn,0:Mvol), iZbc(1:mn,0:Mvol) )  
+   
+  endif ! end of if( Lcheck.eq.3 .or. Lcheck.eq.4 ) ;
+  
+#endif
 
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -120,7 +123,15 @@ LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
-   if( myid.ne.modulo(vvol-1,ncpu) ) goto 5555 ! construct Beltrami fields in parallel;
+   WCALL(dfp200, IsMyVolume, (vvol))
+
+   if( IsMyVolumeValue .EQ. 0 ) then
+      goto 5555
+   else if( IsMyVolumeValue .EQ. -1) then
+      FATAL(dfp100, .true., Unassociated volume)
+   endif
+   
+   !if( myid.ne.modulo(vvol-1,ncpu) ) goto 5555 ! construct Beltrami fields in parallel;
    
    NN = NAdof(vvol) ! shorthand;
    
@@ -172,15 +183,6 @@ LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-   ! Recompute the matrices for each volume...
-!   write( ounit, '("dfp200, vvol = ", i3, ". starting ma00aa ...")') vvol
-!   WCALL( dfp200, ma00aa, ( Iquad(vvol), mn, vvol, ll ) ) ! compute volume integrals of metric elements;
-!   write( ounit, '("dfp200, ma00aa done. starting matrix ... ")')
-!   WCALL( dfp200, matrix, ( vvol, mn, ll ) )
-!   write( ounit, '("dfp200, matrix done. ")')
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
 #ifdef DEBUG
    if( Lcheck.eq.2 ) then
     goto 2000 ! will take no other action except a finite-difference comparison on the derivatives of the rotational-transform wrt mu and dpflux;
@@ -204,7 +206,7 @@ LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
     
     SALLOCATE( ipivot, (1:NN), 0 )
     
-    idgetrf = 1 ; call DGETRF( MM, NN, dMA(vvol)%mat(0:LDA-1,1:NN), LDA, ipivot(1:NN), idgetrf )
+    idgetrf = 1 ; call DGETRF( MM, NN, dMA(vvol)%mat(0:LDA-1,1:NN), LDA, ipivot(1:NN), idgetrf ) !LU decomposition
     
     cput = GETTIME
     select case( idgetrf ) !                                                                     0123456789012345678
@@ -217,8 +219,9 @@ LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
 1010 format("dfp200 : ",f10.2," : myid=",i3," ; vvol=",i3," ; called DGETRF ; time=",f10.2,"s ; LU factorization of matrix; idgetrf=",i2," ; ",a18)
     
     SALLOCATE( work, (1:Lwork), zero )
-    
-    idgetri = 1 ; call DGETRI( NN, dMA(vvol)%mat(0:LDA-1,1:NN), LDA, ipivot(1:NN), work(1:Lwork), Lwork, idgetri )
+
+    ! inverse of MA using the LU decomposition of DGETRF
+    idgetri = 1 ; call DGETRI( NN, dMA(vvol)%mat(0:LDA-1,1:NN), LDA, ipivot(1:NN), work(1:Lwork), Lwork, idgetri ) 
     
     DALLOCATE(work)
     
@@ -637,8 +640,8 @@ LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
              dII(1:Ntz) = - im(ii) * sini(1:Ntz,ii) * ( YY(1:Ntz) - MMl * iZij(1:Ntz,vvol) ) &
                           - two * ( mmpp(ii) - MMl ) * iZbc(ii,vvol) * ( Rij(1:Ntz,2,0) * iRij(1:Ntz,vvol) + Zij(1:Ntz,2,0) * iZij(1:Ntz,vvol) ) / DDl &
                           + Zij(1:Ntz,2,0) * ( mmpp(ii) - MMl ) * cosi(1:Ntz,ii)
-            endif
-           endif
+            endif !matches ( irz.eq.0 )
+           endif! matches ( issym.eq.0 )
 
           else
 
@@ -879,6 +882,16 @@ LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
 
 5555 continue
 
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+#ifdef DEBUG
+  if( Lcheck.eq.3 .or. Lcheck.eq.4 ) then
+   DALLOCATE(oRbc)
+   DALLOCATE(oZbs)
+   DALLOCATE(oRbs)
+   DALLOCATE(oZbc)
+  endif
+#endif
 
 
   DALLOCATE(dAt)

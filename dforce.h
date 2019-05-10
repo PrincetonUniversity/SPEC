@@ -100,56 +100,39 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  use constants, only : zero, half, one, two, pi2, pi
+  use constants, only : zero, half, one, pi
   
-  use numerical, only : vsmall, small, logtolerance
+  use numerical, only : logtolerance
   
   use fileunits, only : ounit
   
-  use inputlist, only : Wmacros, Wdforce, ext, Nvol, Mpol, Ntor, Lrad, tflux, Igeometry, &
-                        gamma, adiabatic, pscale, mu, &
+  use inputlist, only : Wmacros, Wdforce, ext, Nvol, Ntor, Lrad, Igeometry, &
                         epsilon, &
-                        Lfindzero, &
                         Lconstraint, Lcheck, &
                         Lextrap, &
 			mupftol
   
   use cputiming, only : Tdforce
   
-  use allglobal, only : ncpu, myid, cpus, pi2nfp, &
-                        Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
-                        Mvol, &
+  use allglobal, only : ncpu, myid, cpus, &
+                        Mvol, NAdof, &
                         Iquad, &                  ! convenience; provided to ma00aa as argument to avoid allocations;
                         iRbc, iZbs, iRbs, iZbc, & ! Fourier harmonics of geometry; vector of independent variables, position, is "unpacked" into iRbc,iZbs;
-                        NAdof, &
                         ImagneticOK, &
                         Energy, ForceErr, &
                         YESstellsym, NOTstellsym, &
-                        mn, im, in, mns, Ntz, &
-                        Ate, Aze, Ato, Azo, & ! only required for debugging;
-                        ijreal, ijimag, jireal, jiimag, &
-                        efmn, ofmn, cfmn, sfmn, &
-                        evmn, odmn, comn, simn, &
-                        Nt, Nz, &
-                        cosi, sini, & ! FFT workspace;
-                        dBdX, &
-                       !dMA, dMB, dMC, dMD, dME, dMF, dMG, solution, &
-                        dMA, dMB,      dMD,           dMG, solution,  &
-                        MBpsi,        &
-                        dtflux, dpflux, sweight, &
-                        mmpp, &
+			Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
+                        mn, im, in, &
+                        dpflux, sweight, &
                         Bemn, Bomn, Iomn, Iemn, Somn, Semn, &
                         BBe, IIo, BBo, IIe, & ! these are just used for screen diagnostics;
-                        LGdof, &
-                        dBBdRZ, dIIdRZ, &
-                        vvolume, dvolume, lBBintegral, lABintegral, &
-                        Rij, Zij, sg, guvij, iRij, iZij, dRij, dZij, tRij, tZij, & ! Jacobian and metrics; computed in coords;
-                        diotadxup, dItGpdxtp, &
+                        LGdof, dBdX, &
+                        Ate, Aze, Ato, Azo, & ! only required for broadcasting
+                        diotadxup, dItGpdxtp, & ! only required for broadcasting
+                        lBBintegral, &
                         dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated, &
                         BBweight, & ! exponential weight on force-imbalance harmonics;
-                        psifactor, Rscale, &
-                        lmns, &
-                        mn, mne, &
+                        psifactor, &
                         DToocc, DToocs, DToosc, DTooss, &
                         TTsscc, TTsscs, TTsssc, TTssss, &
                         TDstcc, TDstcs, TDstsc, TDstss, &
@@ -157,8 +140,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
                         DDttcc, DDttcs, DDttsc, DDttss, &
                         DDtzcc, DDtzcs, DDtzsc, DDtzss, &
                         DDzzcc, DDzzcs, DDzzsc, DDzzss, &
-                        dRodR, dRodZ, dZodR, dZodZ, &
-                        LocalConstraint, xoffset
+                        LocalConstraint, xoffset, &
+			solution
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -169,37 +152,23 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
   REAL,    intent(out) :: force(0:NGdof)      ! force;
   LOGICAL, intent(in)  :: LComputeDerivatives ! indicates whether derivatives are to be calculated;
   
-  INTEGER              :: NN, IA, ifail, if01adf, vflag, MM, LDA, idgetrf, idgetri, Lwork
-  INTEGER, allocatable :: ipivot(:)
-  REAL   , allocatable :: work(:)
-  
-  INTEGER              :: vvol, innout, ii, jj, irz, issym, iocons, tdoc, idoc, idof, tdof, jdof, ivol, imn, ll, ihybrd1, lwa, Ndofgl
-  INTEGER              :: maxfev, ml, muhybr, mode, nprint, nfev, ldfjac, lr
+  INTEGER              :: vvol, innout, ii, jj, irz, issym, iocons, tdoc, idoc, idof, tdof, jdof, ivol, imn, ll, ihybrd1, lwa, Ndofgl, llmodnp
+  INTEGER              :: maxfev, ml, muhybr, mode, nprint, nfev, ldfjac, lr, Nbc, NN
   DOUBLE PRECISION     :: epsfcn, factor
   DOUBLE PRECISION     :: Fdof(1:Mvol-1), Xdof(1:Mvol-1), Fvec(1:Mvol-1)
   DOUBLE PRECISION     :: diag(1:Mvol-1), qtf(1:Mvol-1), wa1(1:Mvol-1), wa2(1:Mvol-1), wa3(1:Mvol-1), wa4(1:mvol-1)
   DOUBLE PRECISION, allocatable :: fjac(:, :), r(:) 
 
-  INTEGER              :: Lcurvature, ideriv, id
-  
-  REAL                 :: lastcpu, lss, lfactor, DDl, MMl
-
+  INTEGER	       :: status(MPI_STATUS_SIZE)
+  INTEGER              :: id
   INTEGER              :: iflag
-  REAL                 :: det
-  
-  REAL                 :: dpsi(1:2)
-  REAL   , allocatable :: oBI(:,:), rhs(:) ! original Beltrami-matrix inverse; used to compute derivatives of matrix equation;
-
-  REAL   , allocatable :: dAt(:,:), dAz(:,:), XX(:), YY(:), dBB(:,:), dII(:), dLL(:), dPP(:), length(:), dRR(:,:), dZZ(:,:), constraint(:)
 
   CHARACTER            :: packorunpack 
-
-  EXTERNAL 	       :: dfp100
+  EXTERNAL 	       :: dfp100, dfp200
 
 #ifdef DEBUG
   INTEGER              :: isymdiff
   REAL                 :: dRZ = 1.0e-05, dvol(-1:+1), evolume, imupf(1:2,-2:2)
-  REAL,    allocatable :: oRbc(:,:), oZbs(:,:), oRbs(:,:), oZbc(:,:) ! original geometry;
   REAL,    allocatable :: isolution(:,:)
 #endif
 
@@ -210,26 +179,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 ! Unpack position to generate arrays iRbc, iZbs, IRbs, iZbc.
 
   packorunpack = 'U' ! unpack geometrical degrees-of-freedom;
-  
+
   WCALL( dforce, packxi,( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), packorunpack ) )
-  
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-#ifdef DEBUG
-
-! Store initial arrays for debug purposes.  
-
-  if( Lcheck.eq.3 .or. Lcheck.eq.4 ) then ! will check volume derivatives;
-   
-   SALLOCATE( oRbc, (1:mn,0:Mvol), iRbc(1:mn,0:Mvol) )
-   SALLOCATE( oZbs, (1:mn,0:Mvol), iZbs(1:mn,0:Mvol) )
-   SALLOCATE( oRbs, (1:mn,0:Mvol), iRbs(1:mn,0:Mvol) )
-   SALLOCATE( oZbc, (1:mn,0:Mvol), iZbc(1:mn,0:Mvol) )  
-   
-  endif ! end of if( Lcheck.eq.3 .or. Lcheck.eq.4 ) ;
-  
-#endif
-  
  
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -242,11 +193,12 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+! COMPUTE MATRICES
+! ----------------
+
   do vvol = 1, Mvol
 
    LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
-
-   NN = NAdof(vvol) ! shorthand;
 
    ll = Lrad(vvol)
 
@@ -323,29 +275,37 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
    DALLOCATE(DDzzsc)
    DALLOCATE(DDzzss)
 
-
   enddo
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+! SOLVE FIELD IN AGREEMENT WITH CONSTRAINTS AND GEOMETRY
+! ------------------------------------------------------
 
   if( LocalConstraint ) then
 
 	Ndofgl = 0; Fvec(1:Mvol-1) = 0; iflag = 0;
 	Xdof(1:Mvol-1) = dpflux(2:Mvol) + xoffset
-
+	
+	! Solve for field
 	WCALL(dforce, dfp100, (Ndofgl, Xdof, Fvec, iflag) )
-
+ 
+	! Get force imbalance and jacobian
 	do vvol = 1, Mvol
-
-		WCALL(dforce, dfp200, ( NGdof, position, LcomputeDerivatives, vvol) )
-   
+		WCALL(dforce, dfp200, ( LcomputeDerivatives, vvol) )
 	enddo ! end of do vvol = 1, Mvol (this is the parallelization loop);
 
-  else
-	
-!   If global constraint, start the minimization of the constraint using hybrd1
+
+
+
+  else  !   If global constraint, start the minimization of the constraint using hybrd1
+
+    if( myid.eq. 0) then
+    	
     Ndofgl = Mvol-1; lwa = 8 * Ndofgl * Ndofgl; maxfev = 1000; nfev=0; lr=Mvol*(Mvol-1); ldfjac=Mvol-1
     ml = Mvol-2; muhybr = Mvol-2; epsfcn=1E-16; diag=0.0; mode=1; factor=0.01; nprint=-1;
 
-    Xdof(1:Mvol-1)   = dpflux(2:Mvol) + xoffset
+    Xdof(1:Mvol-1)   = dpflux(2:Mvol) + xoffset  ! xoffset reduces the number of iterations needed by hybrd for an obscure reason...
 
     SALLOCATE(fjac, (1:ldfjac,1:Mvol-1), 0)
     SALLOCATE(r, (1:lr), 0)
@@ -353,11 +313,45 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
     WCALL( dforce,  hybrd, (dfp100, Ndofgl, Xdof(1:Ndofgl), Fvec(1:Ndofgl), mupftol, maxfev, ml, muhybr, epsfcn, diag(1:Ndofgl), mode, &
 			    factor, nprint, ihybrd1, nfev, fjac(1:Ndofgl,1:Ndofgl), ldfjac, r(1:lr), lr, qtf(1:Ndofgl), wa1(1:Ndofgl), &
 			    wa2(1:Ndofgl), wa3(1:Ndofgl), wa4(1:Ndofgl)) ) 
+
+    DALLOCATE(fjac)
+    DALLOCATE(r)
  
     dpflux(2:Mvol) = Xdof(1:Ndofgl) - xoffset
- 
+
+    endif
+
+    call MPI_Bcast( dpflux, Mvol, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
+    call MPI_Bcast( ImagneticOK, Mvol, MPI_LOGICAL, 0, MPI_COMM_WORLD, ierr)
+    
     do vvol = 1, Mvol
-	WCALL(dforce, dfp200, ( NGdof, position, LcomputeDerivatives, vvol) )
+        NN = NAdof(vvol)
+        Nbc = NN * 4
+        call MPI_Bcast( solution(vvol)%mat(1:NN, -1:2), Nbc, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
+	
+	RlBCAST( diotadxup(0:1, -1:2, vvol), 8, 0)
+        RlBCAST( dItGpdxtp(0:1, -1:2, vvol), 8, 0)
+  	
+	do ii = 1, mn  
+   	  RlBCAST( Ate(vvol,0,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, 0 )
+   	  RlBCAST( Aze(vvol,0,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, 0 )
+  	enddo
+
+        if( NOTstellsym ) then
+   
+          do ii = 1, mn    
+   	    RlBCAST( Ato(vvol,0,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, 0 )
+   	    RlBCAST( Azo(vvol,0,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, 0 )
+  	  enddo
+	endif
+
+    enddo
+
+
+    do vvol = 1, Mvol
+!	llmodnp = modulo(vvol-1,ncpu)
+!	LlBCAST( ImagneticOK(vvol), 1, llmodnp )
+	WCALL(dforce, dfp200, ( LcomputeDerivatives, vvol) )
     enddo
 
 #ifdef DEBUG
@@ -370,19 +364,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
         case default ; write(ounit,'("dforce : ",f10.2," : finished ; illegal ifail  ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
       end select
 #endif
-  endif
-
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-#ifdef DEBUG
-  if( Lcheck.eq.3 .or. Lcheck.eq.4 ) then
-   DALLOCATE(oRbc)
-   DALLOCATE(oZbs)
-   DALLOCATE(oRbs)
-   DALLOCATE(oZbc)
-  endif
-#endif
+  endif !matches if( LocalConstraint ) 
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -391,21 +373,18 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
    write(ounit,'("dforce : ", 10x ," : myid=",i3," ; finished computing derivatives of rotational-transform wrt mu and dpflux ;")') myid
    stop "dforce :            : myid=    ; finished computing derivatives of rotational-transform wrt mu and dpflux ;" ! this will allow other cpus to finish;
   endif
-  FATAL( dforce, Lcheck.eq.2, finished computing derivatives of rotational-transform wrt mu and dpflux )
-#endif
-  
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-#ifdef DEBUG
+  FATAL( dforce, Lcheck.eq.2, finished computing derivatives of rotational-transform wrt mu and dpflux )
+
   if( Wdforce ) write(ounit,'("dforce : " 10x " : myid="i3" ; LComputeDerivatives="L2" ; ImagneticOK="999L2)') myid, LComputeDerivatives, ImagneticOK(1:Mvol)
 #endif
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
+! Broadcast information to all CPUs
   do vvol = 1, Mvol
 
    LREGION( vvol )
-
    WCALL( dforce, brcast, ( vvol ) )
 
   enddo
@@ -424,9 +403,9 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-! construct force;
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+! CONSTRUCT FORCE
+! ---------------
   
   ;   force(0:NGdof) = zero
   
@@ -540,6 +519,9 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
+! CONSTRUCT HESSIAN
+! -----------------
+
   if( LcomputeDerivatives ) then ! construct Hessian;
    
 #ifdef DEBUG

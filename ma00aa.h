@@ -77,8 +77,6 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   
   use constants, only : zero, half, one, two, pi, pi2
   
-  use numerical, only : vsmall, small, sqrtmachprec
-  
   use fileunits, only : ounit
   
   use inputlist, only : Wma00aa
@@ -86,7 +84,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   use cputiming, only : Tma00aa
   
   use allglobal, only : myid, ncpu, cpus, &
-                        Mvol, im, in, mne, &
+                        Mvol, &
                         gaussianweight, gaussianabscissae, &
                         DToocc, DToocs, DToosc, DTooss, &
                         TTsscc, TTsscs, TTsssc, TTssss, &
@@ -117,7 +115,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   
   INTEGER             :: kk, kd, kka, kks, kda, kds
   
-  REAL                :: lss, jthweight, fee, feo, foe, foo, Tl, Dl, Tp, Dp, TlTp, TlDp, DlTp, DlDp, ikda, ikds, imn2, ilrad
+  REAL                :: lss, jthweight, foo, Tl, Dl, Tp, Dp, TlTp, TlDp, DlTp, DlDp, ikda, ikds, imn2, ilrad
 
   REAL                :: foocc, foocs, foosc, fooss
   REAL                :: fsscc, fsscs, fsssc, fssss

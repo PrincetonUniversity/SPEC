@@ -883,9 +883,11 @@ module allglobal
 
   implicit none
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!``-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   INTEGER              :: myid, ncpu       ! mpi variables;
+  INTEGER	       :: IsMyVolumeValue
+  INTEGER	       :: NvolPerCPU, NvolToDist ! Used to distribute volumes between CPUs
   REAL                 :: cpus             ! initial time;
 
   REAL                 :: pi2nfp           !       pi2/nfp     ; assigned in readin;
@@ -2620,6 +2622,56 @@ subroutine wrtend( wflag, iflag, rflag )
 end subroutine wrtend
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+subroutine IsMyVolume(vvol)
+
+!latex \subsection{subroutine IsMyVolume}
+!latex Check if volume vvol is associated to the corresponding CPU.
+
+LOCALS
+
+INTEGER :: vvol
+INTEGER :: lwbnd, upbnd
+
+!======================================================================================
+
+IsMyVolumeValue = -1 ! Error value - Problem with vvol / id
+if( myid.ne.modulo(vvol-1,ncpu) ) then
+  IsMyVolumeValue = 0
+else
+  IsMyVolumeValue = 1
+endif
+
+
+!if( NvolToDist .EQ. 0 ) then
+!  lwbnd = NvolPerCPU * myid + 1
+!  upbnd = NvolPerCPU * (myid+1)
+!  if ((vvol .LT. lwbnd) .OR. (vvol .GT. upbnd)) then
+ !   IsMyVolumeValue = 0 ! Not your volume
+ ! else
+ !   IsMyVolumeValue = 1 ! Yes your volume
+ ! endif
+!else
+!  if (myid .LT. NvolToDist) then
+!    lwbnd = (NvolPerCPU+1)*myid+1
+!    upbnd = (NvolPerCPU+1)*(myid+1)
+!    if ((vvol .LT. lwbnd) .OR. (vvol .GT. upbnd)) then
+!	IsMyVolumeValue = 0 ! Not your volume
+!    else
+!	IsMyVolumeValue = 1 ! Yes your volume
+!    endif
+!  else
+!    lwbnd = (NvolPerCPU+1)*NvolToDist + (myid-NvolToDist)*NvolPerCPU+1
+!    upbnd = (NvolPerCPU+1)*NvolToDist + (myid-NvolToDist+1)*NvolPerCPU
+!    if ((vvol .LT. lwbnd) .OR. (vvol .GT. upbnd)) then
+!	IsMyVolumeValue = 0 ! Not your volume
+!    else
+!	IsMyVolumeValue = 1 ! Yes your volume
+!    endif
+!  endif
+!endif
+
+end subroutine IsMyVolume
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

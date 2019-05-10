@@ -38,6 +38,31 @@ subroutine preset
   REAL      :: teta, zeta, arg, lss, cszeta(0:1), error
   
   BEGIN(preset)
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+!latex \subsubsection{\type{NvolPerCPU} and \type{NvolToDist}}
+
+!latex Volumes are separated between CPUs by chunks - this allows fewer communications in the evaluation of constraints at the volume interface. More specifically, we define
+!latex the variables $k$ and $d$ as
+
+!latex \be
+!latex k = \frac{Mvol - Mvol \% N_{CPU}}{N_{CPU}}\\
+!latex d = Mvol - k \cdot N_{CPU}
+!latex \ee
+
+!latex The CPU $i$ ($i\in [0,N_{CPU}-1]$) is then associated with the volumes
+
+!latex \be
+!latex [(k+1)i + 1, (k+1)(i+1)] \qquad \text{if} \quad i<d\\
+!latex (k+1)d + [(i-d)k + 1, (i-d+k)i)] \qquad \text{if} \quad i\geqd
+!latex \ee
+
+!latex In SPEC, $k$ is named \type{NvolPerCPU} and $d$ is named \type{NvolToDist}. They are computed only once in the subroutine preset.h
+
+  NvolPerCPU = aint(real(Mvol) / real(ncpu))	! truncates Mvol / ncpu to a whole number
+  NvolToDist = Mvol - NvolPerCPU * ncpu
+
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   

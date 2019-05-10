@@ -122,15 +122,12 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  use constants, only : zero, half, one, two, goldenmean
-  
-  use numerical, only : machprec, sqrtmachprec, small
+  use constants, only : zero, half, one
   
   use fileunits, only : ounit
   
   use inputlist, only : Wmacros, Wmp00ac, Wtr00ab, Wcurent, Wma02aa, &
-                        mu, helicity, iota, oita, curtor, curpol, Lrad, &
-                       !Lposdef, &
+                        mu, helicity, iota, oita, curtor, curpol, &
                         Lconstraint, mupftol
   
   use cputiming, only : Tmp00ac
@@ -141,15 +138,13 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
                         mn, im, in, mns, &
                         Nt, Nz, & ! only required to pass through as arguments to tr00ab;
                         NAdof, &
-!                       dMA, dMB, dMC, dMD, dME, dMF, dMG, &
-                        dMA, dMB,      dMD,           dMG, &
+                        dMA, dMB, dMD, dMG, &
                         solution, &
                         dtflux, dpflux, &
                         diotadxup, dItGpdxtp, &
                         lBBintegral, lABintegral, &
                         xoffset, &
-                        ImagneticOK, &
-                        Ate, Aze, Ato, Azo, Mvol
+                        ImagneticOK
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -214,7 +209,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
    
   endif ! end of if( Lplasmaregion ) ;
   
-  dpsi(1:2) = (/  dtf,  dpf /) ! enclosed toroidal fluxes and their derivatives;
+  dpsi(1:2) = (/  dtf,  dpf /) ! enclosed poloidal fluxes and their derivatives;
   tpsi(1:2) = (/  one, zero /) ! enclosed toroidal fluxes and their derivatives;
   ppsi(1:2) = (/ zero,  one /) ! enclosed toroidal fluxes and their derivatives;
   
@@ -497,6 +492,10 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 
    if( Lplasmaregion ) then
         
+    if( Wtr00ab ) then ! compute rotational transform only for diagnostic purposes;
+     WCALL( mp00ac, tr00ab, ( lvol, mn, lmns, Nt, Nz, iflag, diotadxup(0:1,-1:2,lvol) ) )
+    endif
+    
     Fdof(1:Ndof       ) = zero ! provide dummy intent out; no iteration other mu and psip locally
     Ddof(1:Ndof,1:Ndof) = zero ! provide dummy intent out;   
     

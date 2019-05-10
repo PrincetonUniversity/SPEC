@@ -9,15 +9,13 @@ use inputlist, only : Wmacros, Wdfp100, Igeometry, Nvol, Lrad, Isurf, &
 
 use cputiming, only : Tdfp100
 
-use allglobal, only : Ate, Aze, Ato, Azo, &
-                      NOTstellsym, &
-		      ncpu, myid, cpus, &
+use allglobal, only : ncpu, myid, cpus, &
                       ImagneticOK, NAdof, mn, &
                       Mvol, &
-                      dBdX, Iquad, &
+                      dBdX, &
                       Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, Localconstraint, &
-                      IPDt, xoffset, dpflux
-
+                      IPDt, xoffset, dpflux, &
+		      IsMyVolume, IsMyVolumeValue
 
  LOCALS
 !------
@@ -42,7 +40,21 @@ BEGIN(dfp100)
 
 	!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-		if( myid.ne.modulo(vvol-1,ncpu) ) goto 5000 ! construct Beltrami fields in parallel;
+		!if( myid.ne.modulo(vvol-1,ncpu) ) goto 5000 ! construct Beltrami fields in parallel;
+
+		
+		if(( myid .EQ. 0 ) .and. (.not.LocalConstraint)) then
+	 	  IsMyVolumeValue = 1 ! for now, execution only by master CPU in case of global constraints
+                else
+		  call IsMyVolume(vvol)
+		endif
+
+		if( IsMyVolumeValue .EQ. 0 ) then
+			goto 5000
+		else if( IsMyVolumeValue .EQ. -1) then
+			FATAL(dfp100, .true., Unassociated volume)
+		endif
+			
 
 		NN = NAdof(vvol) ! shorthand;
 
@@ -71,6 +83,8 @@ BEGIN(dfp100)
    	!			RlBCAST( Azo(vvol, 0, ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, myid )
 	!		enddo
 	!	endif
+
+	!	WCALL( dfp100, brcast, ( vvol ) )
 
 		5000 continue
 	enddo
