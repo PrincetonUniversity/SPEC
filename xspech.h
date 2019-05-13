@@ -33,7 +33,7 @@ program xspech
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  use constants, only : zero, one, pi2
+  use constants, only : zero, one, pi2, mu0
 
   use numerical, only : vsmall, logtolerance
 
@@ -72,7 +72,8 @@ program xspech
                         Ate, Aze, Ato, Azo, & ! only required for debugging; 09 Mar 17;
                         nfreeboundaryiterations, &
                         beltramierror, &
-                        dMA, dMB, dMD, dMG, MBpsi, solution
+                        dMA, dMB, dMD, dMG, MBpsi, solution, &
+												IPDt
 						
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -537,9 +538,12 @@ program xspech
 ! Computes the surface current at each interface
 
   do vvol = 1, Mvol-1
-    WCALL(xspech, surfcurent, (vvol, mn) )
+    WCALL(xspech, lbpol, (vvol, mn) )
   enddo
 
+  do vvol = 1, Mvol-1
+    IPDt(vvol) = -pi2 * (Btemn(1, 0, vvol+1) - Btemn(1, 1, vvol)) / mu0
+  enddo
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !latex \subsection{output files: vector potential} 

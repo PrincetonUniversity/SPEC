@@ -1,6 +1,6 @@
 subroutine dfp100(Ndofgl, x, Fvec, iflag)
 
-use constants, only : zero, half, one, two, pi2, pi
+use constants, only : zero, half, one, two, pi2, pi, mu0
 
 use fileunits, only : ounit
 
@@ -15,7 +15,8 @@ use allglobal, only : ncpu, myid, cpus, &
                       dBdX, &
                       Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, Localconstraint, &
                       IPDt, xoffset, dpflux, &
-		      IsMyVolume, IsMyVolumeValue
+											Btemn, &
+								      IsMyVolume, IsMyVolumeValue
 
  LOCALS
 !------
@@ -70,26 +71,11 @@ BEGIN(dfp100)
 
 	!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 		
-
-		! Broadcast relevant information to everyone
-		!do ii = 1, mn  
-   		!	RlBCAST( Ate(vvol, 0, ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, myid )
-  	!		RlBCAST( Aze(vvol, 0, ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, myid )
-		!enddo
-  	!	
-	!	if( NOTstellsym ) then
-  	!		do ii = 1, mn    
-	!			RlBCAST( Ato(vvol, 0, ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, myid )
-   	!			RlBCAST( Azo(vvol, 0, ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, myid )
-	!		enddo
-	!	endif
-
-	!	WCALL( dfp100, brcast, ( vvol ) )
+    WCALL( dfp100, lbpol, (vvol) )
 
 		5000 continue
 	enddo
 
-	! call MPI_Barrier(MPI_COMM_WORLD, ierr)
 
 	if( .not.LocalConstraint ) then
 
@@ -99,7 +85,8 @@ BEGIN(dfp100)
 				! Compute IPDt on each interface. Eventually need to put the do
 				! loop inside the surfcurent subroutine... TODO
 				do ii = 1, Mvol-1
-					WCALL(dfp100, surfcurent, (ii, mn))
+          IPDt(ii) = -pi2 * (Btemn(1, 0, ii+1) - Btemn(1, 1, ii)) / mu0
+					!WCALL(dfp100, surfcurent, (ii, mn))
 				enddo
 
 				Fvec = IPDt - Isurf(1:Mvol-1)

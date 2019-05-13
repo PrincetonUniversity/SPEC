@@ -1,67 +1,36 @@
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!title (surfcurent) ! Computes pressure driven currents on each interface
-
-!latex \briefly{briefly}
-
-!latex \calledby{?????}
-!latex \calls{?????}
-
-!latex \tableofcontents
-
-!latex Computes the pressure driven current integral at the interface labelled by \inputvar{lint},
-!latex
-!latex \be
-!latex I^\mathcal{S}_\phi = \int_0^{2\pi} [[B_\theta]] d\theta.
-!latex \ee
-!latex
-!latex The magnetic field is computed as in \link{sc00aa}. This is used only when Lconstraint=3, \textit{i.e.} when the toroidal current profile is constraint.
+!title (lbpol) ! Computes Btheta at the interface
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-subroutine surfcurent(lint, mn)
+subroutine lbpol(lvol)
 
   use constants, only : mu0, pi, pi2, two, one, half, zero
 
   use allglobal, only : Ate, Aze, Ato, Azo, TT, &
                         YESstellsym, NOTstellsym, &
-                        im, in, mne, ime, ine, Mvol, &
+                        im, in, mne, ime, ine, Mvol, mn, &
                         sg, guvij, &
                         Ntz, Lcoordinatesingularity, &
                         efmn, ofmn, cfmn, sfmn, evmn, odmn, comn, simn, &
                         Btemn, Bzemn, Btomn, Bzomn, &
                         Nt, Nz, &
                         regumm, &
-                        IPDt, &
                         cpus, myid
 
-  use inputlist, only : Lrad, Wsurfcurent, Igeometry
+  use inputlist, only : Lrad, Wlbpol, Igeometry
 
   use fileunits, only : ounit
 
-  use cputiming, only : Tsurfcurent
-
-! Some useful notes:
-! TT:                  Derivatives of Chebyshev polynomials at the inner and outer interfaces
-! Ate, Aze, Ato, Azo:  Fourier coefficients of the vector potential. 't' and 'z' stands for
-!                      poloidal and toroidal component, and 'e', 'o' stands for even / odd.
-!                      Ate = Ate(1:Mvol,-1:2,1:mn)%s(0:Lrad(vvol), 0)
-! im, in:              Fourier modes, set in readin;               
-! mne, ime, ine:       Enhanced resolution for metric element.
-! Mvol:                Equal to the number of volumes (+1 if free boundary)
-! Ntz:                 Discrete resolution, Ntz = Nt*Nz
-! sg(0:3,Ntz) contains the jacobian and its derivatives
-! guvij(0:6,0:3,1:Ntz) contains the metric elements and their derivatives
-! Lrad:                Radial resolution (max order of Chebyshev polynomials)
-! ounit:               Used to write some stuff in terminal
+  use cputiming, only : Tlbpol
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   LOCALS
 ! ------
   
-  INTEGER, intent(in)    :: mn                ! Total number of Fourier harmonics;
-  INTEGER                :: Lcurvature, lint, vvol, ideriv, ii, ll, ifail, lvol, mi, ni
+  INTEGER                :: Lcurvature, ideriv, ii, ll, ifail, lvol, mi, ni
   REAL                   :: lss, innout
   REAL                   :: lAte(1:mn), lAze(1:mn), lAto(1:mn), lAzo(1:mn)
   REAL                   :: dAt(1:Ntz), dAz(1:Ntz), Bt(1:Ntz), Bz(1:Ntz)
@@ -75,7 +44,7 @@ subroutine surfcurent(lint, mn)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  BEGIN(surfcurent)
+  BEGIN(lbpol)
 
 ! First get the metric component and jacobian
 
@@ -86,16 +55,12 @@ subroutine surfcurent(lint, mn)
   do innout=0,1
 
   lss = two * innout - one
-
-  if (innout==0) then; lvol = lint+1
-  else;                  lvol = lint
-  endif
   
   if((lvol==1) .and. (Igeometry/=1)) then ; Lcoordinatesingularity = .true.;
   else; Lcoordinatesingularity = .false.;
   endif
 
-  WCALL( surfcurent, coords, (lvol, lss, Lcurvature, Ntz, mn ) ) ! get guvij and sg
+  WCALL( lbpol, coords, (lvol, lss, Lcurvature, Ntz, mn ) ) ! get guvij and sg
   
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -136,22 +101,15 @@ subroutine surfcurent(lint, mn)
 
   enddo ! end of do innout;
 
-! Get the jump in B_theta in Fourier space for the first even mode.
-  dBtzero = Btemn(1, 0, lint+1) - Btemn(1, 1, lint)
+
+! Now Btemn(1, 0, vvol) and Btemn(1, 1, vvol) contain Bet00(s=-1) and Bet00(s=1) for each volume vvol.
 
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-! Then compute the line integral. Only the first even mode integral is non-zero (periodic integral)
-
-  IPDt(lint) = -pi2 * dBtzero / mu0
-
-
-  RETURN(surfcurent)
+  RETURN(lbpol)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-end subroutine surfcurent
+end subroutine lbpol
 
 
 
