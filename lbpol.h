@@ -60,6 +60,10 @@ subroutine lbpol(lvol)
   else; Lcoordinatesingularity = .false.;
   endif
 
+	if( Lcoordinatesingularity .and. innout.EQ.0) then
+	  goto 5555; ! No need to compute at the singularity (and crash with debug...)
+	endif
+
   WCALL( lbpol, coords, (lvol, lss, Lcurvature, Ntz, mn ) ) ! get guvij and sg
   
 
@@ -98,7 +102,7 @@ subroutine lbpol(lvol)
   call tfft( Nt, Nz, Bt(1:Ntz), Bz(1:Ntz), &
               mn, im(1:mn), in(1:mn), Btemn(1:mn,innout,lvol), Btomn(1:mn,innout,lvol), Bzemn(1:mn,innout,lvol), Bzomn(1:mn,innout,lvol), ifail )
 
-
+5555 continue
   enddo ! end of do innout;
 
 

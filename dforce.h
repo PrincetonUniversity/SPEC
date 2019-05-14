@@ -141,7 +141,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
                         DDtzcc, DDtzcs, DDtzsc, DDtzss, &
                         DDzzcc, DDzzcs, DDzzsc, DDzzss, &
                         LocalConstraint, xoffset, &
-			solution
+												solution, &
+												WhichCpuID
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -153,7 +154,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
   LOGICAL, intent(in)  :: LComputeDerivatives ! indicates whether derivatives are to be calculated;
   
   INTEGER              :: vvol, innout, ii, jj, irz, issym, iocons, tdoc, idoc, idof, tdof, jdof, ivol, imn, ll, ihybrd1, lwa, Ndofgl, llmodnp
-  INTEGER              :: maxfev, ml, muhybr, mode, nprint, nfev, ldfjac, lr, Nbc, NN
+  INTEGER              :: maxfev, ml, muhybr, mode, nprint, nfev, ldfjac, lr, Nbc, NN, cpu_id
   DOUBLE PRECISION     :: epsfcn, factor
   DOUBLE PRECISION     :: Fdof(1:Mvol-1), Xdof(1:Mvol-1), Fvec(1:Mvol-1)
   DOUBLE PRECISION     :: diag(1:Mvol-1), qtf(1:Mvol-1), wa1(1:Mvol-1), wa2(1:Mvol-1), wa3(1:Mvol-1), wa4(1:mvol-1)
@@ -164,7 +165,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
   INTEGER              :: iflag
 
   CHARACTER            :: packorunpack 
-  EXTERNAL 	       :: dfp100, dfp200
+  EXTERNAL 	       		 :: dfp100, dfp200, loop_dfp100
 
 #ifdef DEBUG
   INTEGER              :: isymdiff
@@ -300,24 +301,28 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 
   else  !   If global constraint, start the minimization of the constraint using hybrd1
 
+		Ndofgl = Mvol-1; 
     if( myid.eq. 0) then
-    	
-    Ndofgl = Mvol-1; lwa = 8 * Ndofgl * Ndofgl; maxfev = 1000; nfev=0; lr=Mvol*(Mvol-1); ldfjac=Mvol-1
-    ml = Mvol-2; muhybr = Mvol-2; epsfcn=1E-16; diag=0.0; mode=1; factor=0.01; nprint=-1;
+    	lwa = 8 * Ndofgl * Ndofgl; maxfev = 1000; nfev=0; lr=Mvol*(Mvol-1); ldfjac=Mvol-1
+		  ml = Mvol-2; muhybr = Mvol-2; epsfcn=1E-16; diag=0.0; mode=1; factor=0.01; nprint=1e5;							!nprint=1e5 to force last call - used for MPI communications
 
-    Xdof(1:Mvol-1)   = dpflux(2:Mvol) + xoffset  ! xoffset reduces the number of iterations needed by hybrd for an obscure reason...
+		  Xdof(1:Mvol-1)   = dpflux(2:Mvol) + xoffset  ! xoffset reduces the number of iterations needed by hybrd for an obscure reason...
 
-    SALLOCATE(fjac, (1:ldfjac,1:Mvol-1), 0)
-    SALLOCATE(r, (1:lr), 0)
+		  SALLOCATE(fjac, (1:ldfjac,1:Mvol-1), 0)
+		  SALLOCATE(r, (1:lr), 0)
 
-    WCALL( dforce,  hybrd, (dfp100, Ndofgl, Xdof(1:Ndofgl), Fvec(1:Ndofgl), mupftol, maxfev, ml, muhybr, epsfcn, diag(1:Ndofgl), mode, &
-			    factor, nprint, ihybrd1, nfev, fjac(1:Ndofgl,1:Ndofgl), ldfjac, r(1:lr), lr, qtf(1:Ndofgl), wa1(1:Ndofgl), &
-			    wa2(1:Ndofgl), wa3(1:Ndofgl), wa4(1:Ndofgl)) ) 
+		  WCALL( dforce,  hybrd1, (dfp100, Ndofgl, Xdof(1:Ndofgl), Fvec(1:Ndofgl), mupftol, maxfev, ml, muhybr, epsfcn, diag(1:Ndofgl), mode, &
+					  factor, nprint, ihybrd1, nfev, fjac(1:Ndofgl,1:Ndofgl), ldfjac, r(1:lr), lr, qtf(1:Ndofgl), wa1(1:Ndofgl), &
+					  wa2(1:Ndofgl), wa3(1:Ndofgl), wa4(1:Ndofgl)) ) 
 
-    DALLOCATE(fjac)
-    DALLOCATE(r)
- 
-    dpflux(2:Mvol) = Xdof(1:Ndofgl) - xoffset
+		  DALLOCATE(fjac)
+		  DALLOCATE(r)
+	 
+		  dpflux(2:Mvol) = Xdof(1:Ndofgl) - xoffset
+
+		else
+
+			call loop_dfp100(Ndofgl, Fvec, iflag)
 
     endif
 
@@ -325,26 +330,26 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
     call MPI_Bcast( ImagneticOK, Mvol, MPI_LOGICAL, 0, MPI_COMM_WORLD, ierr)
     
     do vvol = 1, Mvol
+				call WhichCpuID(vvol, cpu_id)
+
         NN = NAdof(vvol)
         Nbc = NN * 4
-        call MPI_Bcast( solution(vvol)%mat(1:NN, -1:2), Nbc, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
+        call MPI_Bcast( solution(vvol)%mat(1:NN, -1:2), Nbc, MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_WORLD, ierr)
 	
-	RlBCAST( diotadxup(0:1, -1:2, vvol), 8, 0)
-        RlBCAST( dItGpdxtp(0:1, -1:2, vvol), 8, 0)
+				RlBCAST( diotadxup(0:1, -1:2, vvol), 8, cpu_id)
+        RlBCAST( dItGpdxtp(0:1, -1:2, vvol), 8, cpu_id)
   	
-	do ii = 1, mn  
-   	  RlBCAST( Ate(vvol,0,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, 0 )
-   	  RlBCAST( Aze(vvol,0,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, 0 )
-  	enddo
+				do ii = 1, mn  
+   	  		RlBCAST( Ate(vvol,0,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
+   	  		RlBCAST( Aze(vvol,0,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
+  			enddo
 
         if( NOTstellsym ) then
-   
           do ii = 1, mn    
-   	    RlBCAST( Ato(vvol,0,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, 0 )
-   	    RlBCAST( Azo(vvol,0,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, 0 )
-  	  enddo
-	endif
-
+		   	    RlBCAST( Ato(vvol,0,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
+   			    RlBCAST( Azo(vvol,0,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
+  			  enddo
+				endif
     enddo
 
 
@@ -665,3 +670,40 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 end subroutine dforce
  
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+
+subroutine loop_dfp100(Ndofgl, Fvec, iflag)
+  
+  use fileunits, only : ounit
+  
+  use inputlist, only : Wmacros, Wdforce
+
+	use cputiming, only 	:  Tdforce
+	use allglobal, only 	:  Mvol, &
+											 		 ncpu, myid, cpus, IconstraintOK
+
+ LOCALS
+!------
+
+	INTEGER              								:: Ndofgl, iflag
+	INTEGER, dimension(MPI_STATUS_SIZE) :: status
+
+	DOUBLE PRECISION     								:: Fvec(1:Mvol-1), x(1:Mvol-1)
+
+	LOGICAL															:: icontinue
+
+	EXTERNAL														:: dfp100
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+	! Initialize
+	IconstraintOK = .false.
+
+	do while (.not.IconstraintOK)
+
+    ! Compute solution in every associated volumes
+		WCALL(dforce, dfp100, (Ndofgl, x, Fvec, iflag) )
+
+	end do !matches do while IconstraintOK
+
+end subroutine loop_dfp100
