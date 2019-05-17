@@ -353,14 +353,14 @@ end subroutine init_convergence_output
 ! was in global.f90/wrtend for wflag.eq.-1 previously
 subroutine write_convergence_output( nDcalls, ForceErr )
 
-  use allglobal, only : mn, Mvol, Energy, iRbc, iZbs, iRbs, iZbc
+  use allglobal, only : myid, mn, Mvol, Energy, iRbc, iZbs, iRbs, iZbc
 
   LOCALS
   INTEGER, intent(in)  :: nDcalls
   REAL   , intent(in)  :: ForceErr
 
 #ifdef DEBUG
-  if( Wsphdf5 ) then ; cput = GETTIME ; write(ounit,'("sphdf5 : ",f10.2," : myid=",i3," ; writing convergence ;")') cput-cpus, myid
+  if( myid.eq.0 .and. Wsphdf5 ) then ; cput = GETTIME ; write(ounit,'("sphdf5 : ",f10.2," : myid=",i3," ; writing convergence ;")') cput-cpus, myid
   endif
 #endif
 
@@ -378,14 +378,14 @@ subroutine write_convergence_output( nDcalls, ForceErr )
 
   ! get dataspace slab corresponding to region which the iterations dataset was extended by
   call h5dget_space_f(iteration_dset_id, dataspace, hdfier) ! re-select dataspace to update size info in HDF5 lib
-  call h5sselect_hyperslab_f(dataspace, H5S_SELECT_SET_F, old_data_dims, (/ INT(1, HSIZE_T) /), hdfier)
+  call h5sselect_hyperslab_f(dataspace, H5S_SELECT_SET_F, old_data_dims, (/ INT(1, HSIZE_T) /), hdfier) ! newly appended slab is at old size and 1 long
 
   ! write next iteration object
-  call h5dwrite_f(iteration_dset_id, dt_nDcalls_id, nDcalls, (/ INT(1, HSIZE_T)/), hdfier, &
+  call h5dwrite_f(iteration_dset_id, dt_nDcalls_id, nDcalls, INT((/1/), HSIZE_T), hdfier, &
     & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id)
-  call h5dwrite_f(iteration_dset_id, dt_Energy_id, Energy, (/ INT(1, HSIZE_T)/), hdfier, &
+  call h5dwrite_f(iteration_dset_id, dt_Energy_id, Energy, INT((/1/), HSIZE_T), hdfier, &
     & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id)
-  call h5dwrite_f(iteration_dset_id, dt_ForceErr_id, ForceErr, (/ INT(1, HSIZE_T)/), hdfier, &
+  call h5dwrite_f(iteration_dset_id, dt_ForceErr_id, ForceErr, INT((/1/), HSIZE_T), hdfier, &
     & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id)
   call h5dwrite_f(iteration_dset_id, dt_iRbc_id, iRbc, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
     & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id)
@@ -402,6 +402,83 @@ subroutine write_convergence_output( nDcalls, ForceErr )
 
 end subroutine write_convergence_output
 
+! previously wflag.eq.1 part of globals.f90/wrtend to write .ext.sp.grid;
+subroutine write_grid
+
+  use constants, only : zero
+  use allglobal, only : myid, ijreal, ijimag, jireal, &
+  &                     Nt, Nz, Ntz, Mvol, pi2nfp
+
+  LOCALS
+  integer(hid_t) :: grpGrid
+
+#ifdef DEBUG
+  if( myid.eq.0 and Wsphdf5 ) then ; cput = GETTIME ; write(ounit,'("sphdf5 : ",f10.2," : myid=",i3," ; writing grid ;")') cput-cpus, myid
+  endif
+#endif
+
+  ijreal(1:Ntz) = zero ; ijimag(1:Ntz) = zero ; jireal(1:Ntz) = zero
+
+  ! open(iunit, file="."//trim(ext)//".sp.grid", status="unknown", form="unformatted" ) ! coordinate grid;
+  HDEFGRP( file_id, grid, grpGrid )
+
+  ! write(iunit) Nt, Nz, Ntz, Mvol, Igeometry, pi2nfp
+  HWRITEIV( grpGrid,           1, Nt               , (/ Nt            /))
+  HWRITEIV( grpGrid,           1, Nz               , (/ Nz            /))
+  HWRITEIV( grpGrid,           1, Ntz              , (/ Ntz           /))
+  HWRITEIV( grpGrid,           1, Mvol             , (/ Mvol          /))
+  HWRITERV( grpGrid,           1, pi2nfp           , (/ pi2nfp        /))
+
+!  do vvol = 1, Mvol ; ivol = vvol
+!
+!   LREGION(vvol) ! sets Lcoordinatesingularity and Lplasmaregion ;
+!
+!   write(iunit) Lrad(vvol) ! sub-grid radial resolution; not really sub-grid resolution, but really the Chebyshev resolution;
+!
+!   do ii = 0, Lrad(vvol) ! sub-grid;
+!
+!    lss = ii * two / Lrad(vvol) - one
+!
+!    if( Lcoordinatesingularity .and. ii.eq.0 ) then ; Lcurvature = 0 ! Jacobian is not defined;
+!    else                                            ; Lcurvature = 1 ! compute Jacobian       ;
+!    endif
+!
+!    WCALL( sphdf5, coords, ( vvol, lss, Lcurvature, Ntz, mn ) ) ! only Rij(0,:) and Zij(0,:) are required; Rmn & Zmn are available;
+!
+!    write(iunit) Rij(1:Ntz,0,0)
+!    write(iunit) Zij(1:Ntz,0,0)
+!    write(iunit)  sg(1:Ntz,0) ! defaults to zero if not computed;
+!
+!    if( Lcurvature.eq.1 ) then
+!
+!     do kk = 0, Nz-1 ; zeta = kk * pi2nfp / Nz
+!      do jj = 0, Nt-1 ; teta = jj * pi2    / Nt ; jk = 1 + jj + kk*Nt ; st(1:2) = (/ lss, teta /)
+!
+!       WCALL( sphdf5, bfield, ( zeta, st(1:Node), Bst(1:Node) ) )
+!       ijreal(jk) = ( Rij(jk,1,0) * Bst(1) + Rij(jk,2,0) * Bst(2) + Rij(jk,3,0) * one ) * gBzeta / sg(jk,0) ! BR;
+!       ijimag(jk) = (                                                             one ) * gBzeta / sg(jk,0) ! Bp;
+!       jireal(jk) = ( Zij(jk,1,0) * Bst(1) + Zij(jk,2,0) * Bst(2) + Zij(jk,3,0) * one ) * gBzeta / sg(jk,0) ! BZ;
+!      enddo
+!     enddo
+!
+!    endif ! end of if( Lcurvature.eq.1 ) ;
+!
+!    write(iunit) ijreal(1:Ntz)
+!    write(iunit) ijimag(1:Ntz)
+!    write(iunit) jireal(1:Ntz)
+!
+!   enddo ! end of do ii;
+!
+!  enddo ! end of do vvol;
+
+  HCLOSEGRP( grpGrid )
+
+#ifdef DEBUG
+  if ( myid.eq.0 and Wsphdf5 ) then ; cput = GETTIME ; write(ounit,'("sphdf5 : ",f10.2," : myid=",i3," ; wrote   grid ;")') cput-cpus, myid
+  endif
+#endif
+
+end subroutine write_grid
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 ! final output

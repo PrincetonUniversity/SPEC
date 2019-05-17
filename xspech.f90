@@ -527,11 +527,7 @@ program xspech
   WCALL( xspech, ra00aa, ('W') ) ! this writes vector potential to file;
 
   if( myid.eq.0 ) then ! write restart file; note that this is inside free-boundary iteration loop; 11 Aug 14;
-
-   wflag = 0 ; iflag = 0 ; rflag = zero
-   !WCALL( xspech, wrtend, ( wflag, iflag, rflag ) ) ! write restart file; save initial input;
    WCALL( xspech, wrtend ) ! write restart file; save initial input;
-
   endif
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -673,13 +669,9 @@ program xspech
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+  WCALL( xspech, write_grid ) ! write grid
   if( myid.eq.0 ) then
-
-   wflag = 1 ; iflag = 0 ; rflag = zero ! write grid
-   !WCALL( xspech, wrtend, ( wflag, iflag, rflag ) ) ! write restart file; save initial input;
    WCALL( xspech, wrtend ) ! write restart file; save initial input;
-   
-!   close(zunit) ! this file is written to in globals/wrtend; 11 Aug 14;
    
    cput = GETTIME
    write(ounit,'("xspech : ", 10x ," :")')
@@ -766,15 +758,13 @@ dcpu, Ttotal / (/ 1, 60, 3600 /), ecpu, 100*ecpu/dcpu
   endif ! end of if( Ltiming .and. myid.eq.0 ) then; 01 Jul 14;
   
   if( myid.eq.0 ) then
-   
    call date_and_time(date,time)
    write(ounit,'("ending : ", 10x ," : ")')
    write(ounit,1000) dcpu, myid, dcpu / (/ 1, 60, 60*60, 24*60*60 /), date(1:4), date(5:6), date(7:8), time(1:2), time(3:4), time(5:6), ext
    write(ounit,'("ending : ", 10x ," : ")')
   endif ! end of if( myid.eq.0 ) ; 14 Jan 15;
 
-  call hdfint ! 18 Jul 14;
-
+  WCALL( xspech, hdfint ) ! write final outputs to HDF5 file ! 18 Jul 14;
   WCALL( xspech, finish_outfile ) ! close HDF5 output file
 
   MPIFINALIZE
