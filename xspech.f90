@@ -38,7 +38,7 @@ program xspech
 
   use numerical, only : vsmall, logtolerance
 
-  use fileunits, only : ounit, zunit, lunit
+  use fileunits, only : ounit, lunit
 
   use inputlist, only : Wmacros, Wxspech, ext, &
                         Nfp, Igeometry, Nvol, Lrad, &
@@ -74,7 +74,7 @@ program xspech
                         nfreeboundaryiterations, &
                         beltramierror
 
-   use sphdf5
+   use sphdf5 ! write _all_ output quantities into a _single_ HDF5 file
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -151,28 +151,11 @@ program xspech
 !latex !  end  do loop over iterations; \end{verbatim}
 !latex \end{enumerate} 
 
-  if( myid.eq.0 ) then ! prepare ``convergence evolution'' output; save restart file;
-   
-   open(zunit, file = "."//trim(ext)//".sp.its", status = "unknown", form = "unformatted" ) ! this file is written to in globals/wrtend; 11 Aug 14;
-   write(zunit) mn, Mvol, Nfp
-   write(zunit) im(1:mn)
-   write(zunit) in(1:mn)
-   
-   wflag = 0 ; iflag = 0 ; rflag = zero
-   WCALL( xspech, wrtend, ( wflag, iflag, rflag ) ) ! write restart file etc. ! 14 Jan 13;
-   
+  if ( myid .eq. 0 ) then ! save restart file;
+    WCALL( xspech, wrtend ) ! write restart file ! 17 May 19
   endif
-  
 
-
-
-
-
-
-
-
-
-
+  WCALL( xspech, init_convergence_output ) ! initialize convergence output arrays ! 17 May 19
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -516,7 +499,7 @@ program xspech
      
     end select ! end select case( mfreeits ) ; 27 Feb 17;
     
-   else          
+   else ! else of if( bnserr.gt.gBntol ) ; 03 Apr 19;
     
     LContinueFreeboundaryIterations = .false.
     
@@ -546,7 +529,8 @@ program xspech
   if( myid.eq.0 ) then ! write restart file; note that this is inside free-boundary iteration loop; 11 Aug 14;
 
    wflag = 0 ; iflag = 0 ; rflag = zero
-   WCALL( xspech, wrtend, ( wflag, iflag, rflag ) ) ! write restart file; save initial input;
+   !WCALL( xspech, wrtend, ( wflag, iflag, rflag ) ) ! write restart file; save initial input;
+   WCALL( xspech, wrtend ) ! write restart file; save initial input;
 
   endif
   
@@ -691,10 +675,11 @@ program xspech
 
   if( myid.eq.0 ) then
 
-   wflag = 1 ; iflag = 0 ; rflag = zero
-   WCALL( xspech, wrtend, ( wflag, iflag, rflag ) ) ! write restart file; save initial input;
+   wflag = 1 ; iflag = 0 ; rflag = zero ! write grid
+   !WCALL( xspech, wrtend, ( wflag, iflag, rflag ) ) ! write restart file; save initial input;
+   WCALL( xspech, wrtend ) ! write restart file; save initial input;
    
-   close(zunit) ! this file is written to in globals/wrtend; 11 Aug 14;
+!   close(zunit) ! this file is written to in globals/wrtend; 11 Aug 14;
    
    cput = GETTIME
    write(ounit,'("xspech : ", 10x ," :")')

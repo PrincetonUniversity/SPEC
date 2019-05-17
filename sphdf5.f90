@@ -21,9 +21,23 @@ module sphdf5
 
   implicit none
 
-  INTEGER                        :: hdfier, rank  ! error flag for HDF5 library
-  integer(hid_t)                 :: file_id, space_id, dset_id
-  integer(hsize_t)               :: onedims(1:1), twodims(1:2), threedims(1:3)
+  integer                        :: hdfier, rank                               ! error flag for HDF5 library
+  integer(hid_t)                 :: file_id, space_id, dset_id                 ! default IDs used in macros
+  integer(hsize_t)               :: onedims(1:1), twodims(1:2), threedims(1:3) ! dimension specifiers used in macros
+  integer(size_t)                :: obj_count                                  ! number of open HDF5 objects
+
+  integer(hid_t)                 :: iteration_dset_id                          ! Dataset identifier for "iteration"
+  integer(hid_t)                 :: dataspace                                  ! dataspace for extension by 1 iteration object
+  integer(hid_t)                 :: memspace                                   ! memspace for extension by 1 iteration object
+  integer(hsize_t), dimension(1) :: old_data_dims, data_dims
+  integer(hid_t)                 :: plist_id                                   ! Property list identifier used to activate dataset transfer property
+  integer(hid_t)                 :: dt_nDcalls_id                              ! Memory datatype identifier (for "nDcalls" field)
+  integer(hid_t)                 :: dt_Energy_id                               ! Memory datatype identifier (for "Energy" field)
+  integer(hid_t)                 :: dt_ForceErr_id                             ! Memory datatype identifier (for "ForceErr" field)
+  integer(hid_t)                 :: dt_iRbc_id                                 ! Memory datatype identifier (for "iRbc" field)
+  integer(hid_t)                 :: dt_iZbs_id                                 ! Memory datatype identifier (for "iZbs" field)
+  integer(hid_t)                 :: dt_iRbs_id                                 ! Memory datatype identifier (for "iRbs" field)
+  integer(hid_t)                 :: dt_iZbc_id                                 ! Memory datatype identifier (for "iZbc" field)
 
 contains
 
@@ -33,7 +47,7 @@ contains
 subroutine init_outfile
 
   LOCALS
-  integer(HID_T) :: plist_id      ! Property list identifier
+  integer(hid_t) :: plist_id      ! Property list identifier used to activate MPI I/O parallel access to HDF5 library
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -235,10 +249,162 @@ subroutine mirror_input_to_outfile
 
 end subroutine mirror_input_to_outfile
 
+! prepare ``convergence evolution'' output
+subroutine init_convergence_output
+
+  use allglobal, only : mn, Mvol
+
+  LOCALS
+  integer(hid_t)                    :: iteration_dspace_id                           ! dataspace for "iteration"
+  integer(hid_t)                    :: iteration_dtype_id                            ! Compound datatype for "iteration"
+  integer(hid_t)                    :: iRZbscArray_id                                ! Memory datatype identifier
+  integer(size_t)                   :: iteration_dtype_size                          ! Size of the "iteration" datatype
+  integer(size_t)                   :: type_size_i                                   ! Size of the integer datatype
+  integer(size_t)                   :: type_size_d                                   ! Size of the double precision datatype
+  integer(size_t)                   :: offset                                        ! Member's offset
+  integer(hid_t)                    :: crp_list                                      ! Dataset creation property identifier
+  integer, parameter                :: rank = 1                                      ! logging rank: convergence logging is one-dimensional
+  integer(hsize_t), dimension(rank) :: maxdims                                       ! convergence logging maximum dimensions => will be unlimited
+  integer(hsize_t), dimension(rank) :: dims = (/ 0 /)                                ! current convergence logging dimensions
+  integer(hsize_t), dimension(rank) :: dimsc = (/ 1 /)                               ! chunking length ???
+  integer(size_t)                   :: irbc_size_template                            ! size ofiRbc array in iterations logging
+  integer(size_t)                   :: irbc_size                                     ! size ofiRbc array in iterations logging
+
+  ! Set dataset transfer property to preserve partially initialized fields
+  ! during write/read to/from dataset with compound datatype.
+  call h5pcreate_f(H5P_DATASET_XFER_F, plist_id, hdfier)
+  FATAL( sphdf5, hdfier.ne.0, error calling h5pcreate_f )
+
+  call h5pset_preserve_f(plist_id, .TRUE., hdfier)
+  FATAL( sphdf5, hdfier.ne.0, error calling h5pset_preserve_f )
+
+  maxdims = (/ H5S_UNLIMITED_F /)                                                       ! unlimited array size: "converge" until you get bored
+  call h5screate_simple_f(rank, dims, iteration_dspace_id, hdfier, maxdims)              ! Create the dataspace with zero initial size and allow it to grow
+  FATAL( sphdf5, hdfier.ne.0, error calling h5screate_simple_f )
+
+  call h5pcreate_f(H5P_DATASET_CREATE_F, crp_list, hdfier) ! dataset creation property list with chunking
+  FATAL( sphdf5, hdfier.ne.0, error calling h5pcreate_f )
+
+  call h5pset_chunk_f(crp_list, rank, dimsc, hdfier)
+  FATAL( sphdf5, hdfier.ne.0, error calling h5pset_chunk_f )
+
+  ! declare "iteration" compound datatype
+  ! declare array parts
+  call h5tarray_create_f(H5T_NATIVE_DOUBLE, 2, int((/mn, Mvol+1/),hsize_t), iRZbscArray_id, hdfier) ! create array datatypes for i{R,Z}b{c,s}
+  call h5tget_size_f(iRZbscArray_id, irbc_size, hdfier)
+  call h5tget_size_f(H5T_NATIVE_INTEGER, type_size_i, hdfier)                            ! size of "iteration" field
+  call h5tget_size_f(H5T_NATIVE_DOUBLE,  type_size_d, hdfier)                            ! size of "errorValue" field
+  iteration_dtype_size = 2*type_size_i + 2*type_size_d + 4*irbc_size                     ! wflag, nDcalls, Energy, ForceErr, i{R,Z}b{c,s}
+
+  call h5tcreate_f(H5T_COMPOUND_F, iteration_dtype_size, iteration_dtype_id, hdfier)     ! create compound datatype
+
+  offset = 0                                                                             ! offset for first field starts at 0
+  call h5tinsert_f(iteration_dtype_id, "nDcalls", offset, H5T_NATIVE_INTEGER, hdfier)      ! insert "nDcalls" field in datatype
+  offset = offset + type_size_i                                                          ! increment offset by size of field
+  call h5tinsert_f(iteration_dtype_id, "Energy", offset, H5T_NATIVE_DOUBLE, hdfier)      ! insert "Energy" field in datatype
+  offset = offset + type_size_d                                                          ! increment offset by size of field
+  call h5tinsert_f(iteration_dtype_id, "ForceErr", offset, H5T_NATIVE_DOUBLE, hdfier)       ! insert "ForceErr" field in datatype
+  offset = offset + type_size_d                                                          ! increment offset by size of field
+  call h5tinsert_f(iteration_dtype_id, "iRbc", offset, iRZbscArray_id, hdfier)           ! insert "iRbc" field in datatype
+  offset = offset + irbc_size                                                            ! increment offset by size of field
+  call h5tinsert_f(iteration_dtype_id, "iZbs", offset, iRZbscArray_id, hdfier)           ! insert "iZbs" field in datatype
+  offset = offset + irbc_size                                                            ! increment offset by size of field
+  call h5tinsert_f(iteration_dtype_id, "iRbs", offset, iRZbscArray_id, hdfier)           ! insert "iRbs" field in datatype
+  offset = offset + irbc_size                                                            ! increment offset by size of field
+  call h5tinsert_f(iteration_dtype_id, "iZbc", offset, iRZbscArray_id, hdfier)           ! insert "iZbc" field in datatype
+  offset = offset + irbc_size                                                            ! increment offset by size of field
+
+  call h5dcreate_f(file_id, "iterations", iteration_dtype_id, iteration_dspace_id, &     ! create dataset with compound type
+                   iteration_dset_id, hdfier, crp_list)
+
+  call h5sclose_f(iteration_dspace_id, hdfier)                                           ! Terminate access to the data space (does not show up in obj_count below)
+                                                                                         ! --> only needed for creation of dataset
+
+  ! Create memory types. We have to create a compound datatype
+  ! for each member we want to write.
+  offset = 0
+  call h5tcreate_f(H5T_COMPOUND_F, type_size_i, dt_nDcalls_id,  hdfier)
+  call h5tcreate_f(H5T_COMPOUND_F, type_size_d, dt_Energy_id, hdfier)
+  call h5tcreate_f(H5T_COMPOUND_F, type_size_d, dt_ForceErr_id,  hdfier)
+  call h5tcreate_f(H5T_COMPOUND_F, irbc_size,   dt_iRbc_id,   hdfier)
+  call h5tcreate_f(H5T_COMPOUND_F, irbc_size,   dt_iZbs_id,   hdfier)
+  call h5tcreate_f(H5T_COMPOUND_F, irbc_size,   dt_iRbs_id,   hdfier)
+  call h5tcreate_f(H5T_COMPOUND_F, irbc_size,   dt_iZbc_id,   hdfier)
+
+  call h5tinsert_f(dt_nDcalls_id,   "nDcalls", offset, H5T_NATIVE_INTEGER, hdfier)
+  call h5tinsert_f(dt_Energy_id,     "Energy", offset, H5T_NATIVE_DOUBLE,  hdfier)
+  call h5tinsert_f(dt_ForceErr_id, "ForceErr", offset, H5T_NATIVE_DOUBLE,  hdfier)
+  call h5tinsert_f(dt_iRbc_id,         "iRbc", offset, iRZbscArray_id,     hdfier)
+  call h5tinsert_f(dt_iZbs_id,         "iZbs", offset, iRZbscArray_id,     hdfier)
+  call h5tinsert_f(dt_iRbs_id,         "iRbs", offset, iRZbscArray_id,     hdfier)
+  call h5tinsert_f(dt_iZbc_id,         "iZbc", offset, iRZbscArray_id,     hdfier)
+
+  ! create memspace with size of compound object to append
+  dims(1) = 1 ! only append one iteration at a time
+  call h5screate_simple_f (rank, dims, memspace, hdfier)
+
+  call h5pclose_f(crp_list, hdfier)
+  call h5tclose_f(iteration_dtype_id, hdfier)                                            ! Terminate access to the datatype
+  call h5tclose_f(iRZbscArray_id, hdfier)                                            ! Terminate access to the datatype
+
+end subroutine init_convergence_output
+
+
+! was in global.f90/wrtend for wflag.eq.-1 previously
+subroutine write_convergence_output( nDcalls, ForceErr )
+
+  use allglobal, only : mn, Mvol, Energy, iRbc, iZbs, iRbs, iZbc
+
+  LOCALS
+  INTEGER, intent(in)  :: nDcalls
+  REAL   , intent(in)  :: ForceErr
+
+#ifdef DEBUG
+  if( Wsphdf5 ) then ; cput = GETTIME ; write(ounit,'("sphdf5 : ",f10.2," : myid=",i3," ; writing convergence ;")') cput-cpus, myid
+  endif
+#endif
+
+  ! append updated values to "iterations" dataset
+
+  ! open dataspace to current state of dataset
+  call h5dget_space_f(iteration_dset_id, dataspace, hdfier)
+
+  ! get current size of dataset
+  call h5sget_simple_extent_npoints_f(dataspace, old_data_dims(1), hdfier)
+
+  ! blow up dataset to new size
+  data_dims = old_data_dims+1
+  call h5dset_extent_f(iteration_dset_id, data_dims, hdfier)
+
+  ! get dataspace slab corresponding to region which the iterations dataset was extended by
+  call h5dget_space_f(iteration_dset_id, dataspace, hdfier) ! re-select dataspace to update size info in HDF5 lib
+  call h5sselect_hyperslab_f(dataspace, H5S_SELECT_SET_F, old_data_dims, (/ INT(1, HSIZE_T) /), hdfier)
+
+  ! write next iteration object
+  call h5dwrite_f(iteration_dset_id, dt_nDcalls_id, nDcalls, (/ INT(1, HSIZE_T)/), hdfier, &
+    & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id)
+  call h5dwrite_f(iteration_dset_id, dt_Energy_id, Energy, (/ INT(1, HSIZE_T)/), hdfier, &
+    & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id)
+  call h5dwrite_f(iteration_dset_id, dt_ForceErr_id, ForceErr, (/ INT(1, HSIZE_T)/), hdfier, &
+    & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id)
+  call h5dwrite_f(iteration_dset_id, dt_iRbc_id, iRbc, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
+    & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id)
+  call h5dwrite_f(iteration_dset_id, dt_iZbs_id, iZbs, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
+    & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id)
+  call h5dwrite_f(iteration_dset_id, dt_iRbs_id, iRbs, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
+    & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id)
+  call h5dwrite_f(iteration_dset_id, dt_iZbc_id, iZbc, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
+    & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id)
+
+  ! dataspace to appended object should be closed now
+  ! MAYBE we otherwise keep all the iterations in memory?
+  call h5sclose_f(dataspace, hdfier)
+
+end subroutine write_convergence_output
 
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-!
+! final output
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 subroutine hdfint
 
@@ -380,8 +546,24 @@ subroutine finish_outfile
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+  call h5tclose_f(dt_nDcalls_id, hdfier)
+  call h5tclose_f(dt_Energy_id, hdfier)
+  call h5tclose_f(dt_ForceErr_id, hdfier)
+  call h5tclose_f(dt_iRbc_id, hdfier)
+  call h5tclose_f(dt_iZbs_id, hdfier)
+  call h5tclose_f(dt_iRbs_id, hdfier)
+  call h5tclose_f(dt_iZbc_id, hdfier)
+
+  call h5dclose_f(iteration_dset_id, hdfier)                                             ! End access to the dataset and release resources used by it.
+  call h5pclose_f(plist_id, hdfier)                                                      ! close plist used for 'preserve' flag (does not show up in obj_count below)
+
   call h5fclose_f( file_id, hdfier ) ! terminate access on output file;
   FATAL( sphdf5, hdfier.ne.0, error calling h5fclose_f )
+
+  call h5fget_obj_count_f(INT(H5F_OBJ_ALL_F,HID_T), H5F_OBJ_ALL_F, obj_count, hdfier)    ! check whether we forgot to close some resources
+  if (obj_count.gt.0 .and. myid.eq.0) then
+    write(*,'("There are still ",i3," HDF5 objects open!")') obj_count
+  endif ! (obj_count.gt.0)
 
   call h5close_f( hdfier ) ! close Fortran interface to the HDF5 library;
   FATAL( sphdf5, hdfier.ne.0, error calling h5close_f )

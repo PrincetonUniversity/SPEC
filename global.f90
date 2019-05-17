@@ -89,7 +89,6 @@ module fileunits
   INTEGER :: lunit = 20 ! local unit; used in lunit+myid: pp00aa:.ext.poincare,.ext.transform; 
   INTEGER :: ounit =  0 ! screen output;
   INTEGER :: vunit = 15 ! for examination of adaptive quadrature; used in casing:.ext.vcint; 
-  INTEGER :: zunit = 17 ! for convergence; this file is opened in xspech:.ext.iterations, and written to in globals/wrtend; 
  !INTEGER :: funit = 16 ! force iterations;
 
 end module fileunits
@@ -2220,7 +2219,7 @@ end subroutine readin
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-subroutine wrtend( wflag, iflag, rflag )
+subroutine wrtend
 
 !latex \subsection{subroutine wrtend}
 !latex \begin{enumerate}
@@ -2233,7 +2232,7 @@ subroutine wrtend( wflag, iflag, rflag )
 
   use numerical, only : machprec
 
-  use fileunits, only : ounit, iunit, zunit
+  use fileunits, only : ounit, iunit
 
   use cputiming, only : Twrtend
 
@@ -2242,9 +2241,6 @@ subroutine wrtend( wflag, iflag, rflag )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   LOCALS
-
-  INTEGER, intent(in)  :: wflag, iflag
-  REAL   , intent(in)  :: rflag
   
   INTEGER              :: vvol, imn, ii, jj, kk, jk, Lcurvature, mm, nn
   REAL                 :: lss, teta, zeta, st(1:Node), Bst(1:Node)
@@ -2510,94 +2506,74 @@ subroutine wrtend( wflag, iflag, rflag )
   if( Wwrtend ) then ; cput = GETTIME ; write(ounit,'("wrtend : ",f10.2," : myid=",i3," ; wrote ext.sp.end ;")') cput-cpus, myid
   endif
 #endif
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  if( wflag.eq.-1 ) then ! this writes to convergence file;
-
-#ifdef DEBUG
-   if( Wwrtend ) then ; cput = GETTIME ; write(ounit,'("wrtend : ",f10.2," : myid=",i3," ; writing to zunit ;")') cput-cpus, myid
-   endif
-#endif
-
-   write(zunit) wflag, iflag, Energy, rflag ! this file is opened in xspech; 
-   
-   write(zunit) iRbc(1:mn,0:Mvol)
-   write(zunit) iZbs(1:mn,0:Mvol)
-   write(zunit) iRbs(1:mn,0:Mvol)
-   write(zunit) iZbc(1:mn,0:Mvol)
-   
-   call flush(zunit) ! this file is opened in xspech; 
-   
-  endif ! end of if( wflag.gt.0 ) ; 
-  
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-  if( wflag.eq.1 ) then ! write .ext.sp.grid; 
-   
-#ifdef DEBUG  
-   if( Wwrtend ) then ; cput = GETTIME ; write(ounit,'("wrtend : ",f10.2," : myid=",i3," ; writing .ext.sp.grid ;")') cput-cpus, myid
-   endif
-#endif
-   
-   ijreal(1:Ntz) = zero ; ijimag(1:Ntz) = zero ; jireal(1:Ntz) = zero
-
-   open(iunit, file="."//trim(ext)//".sp.grid", status="unknown", form="unformatted" ) ! coordinate grid;
-   
-   write(iunit) Nt, Nz, Ntz, Mvol, Igeometry, pi2nfp
-   
-   do vvol = 1, Mvol ; ivol = vvol
-    
-    LREGION(vvol) ! sets Lcoordinatesingularity and Lplasmaregion ; 
-    
-    write(iunit) Lrad(vvol) ! sub-grid radial resolution; not really sub-grid resolution, but really the Chebyshev resolution; 
-    
-    do ii = 0, Lrad(vvol) ! sub-grid;
-     
-     lss = ii * two / Lrad(vvol) - one
-     
-     if( Lcoordinatesingularity .and. ii.eq.0 ) then ; Lcurvature = 0 ! Jacobian is not defined; 
-     else                                            ; Lcurvature = 1 ! compute Jacobian       ; 
-     endif
-
-     WCALL( wrtend, coords, ( vvol, lss, Lcurvature, Ntz, mn ) ) ! only Rij(0,:) and Zij(0,:) are required; Rmn & Zmn are available;
-     
-     write(iunit) Rij(1:Ntz,0,0)
-     write(iunit) Zij(1:Ntz,0,0)
-     write(iunit)  sg(1:Ntz,0) ! defaults to zero if not computed; 
-
-     if( Lcurvature.eq.1 ) then 
-
-      do kk = 0, Nz-1 ; zeta = kk * pi2nfp / Nz
-       do jj = 0, Nt-1 ; teta = jj * pi2    / Nt ; jk = 1 + jj + kk*Nt ; st(1:2) = (/ lss, teta /)
-        
-        WCALL( wrtend, bfield, ( zeta, st(1:Node), Bst(1:Node) ) )
-        
-        ijreal(jk) = ( Rij(jk,1,0) * Bst(1) + Rij(jk,2,0) * Bst(2) + Rij(jk,3,0) * one ) * gBzeta / sg(jk,0) ! BR; 
-        ijimag(jk) = (                                                             one ) * gBzeta / sg(jk,0) ! Bp; 
-        jireal(jk) = ( Zij(jk,1,0) * Bst(1) + Zij(jk,2,0) * Bst(2) + Zij(jk,3,0) * one ) * gBzeta / sg(jk,0) ! BZ; 
-        
-       enddo
-      enddo
-     
-     endif ! end of if( Lcurvature.eq.1 ) ; 
-
-     write(iunit) ijreal(1:Ntz)
-     write(iunit) ijimag(1:Ntz)
-     write(iunit) jireal(1:Ntz)
-     
-    enddo ! end of do ii; 
-    
-   enddo ! end of do vvol; 
-   
-   close(iunit)
-   
-#ifdef DEBUG
-   if( Wwrtend ) then ; cput = GETTIME ; write(ounit,'("wrtend : ",f10.2," : myid=",i3," ; opened /wrote   .ext.sp.grid ;")') cput-cpus, myid
-   endif
-#endif
-   
-  endif ! end of if( wflag.eq.1 ) ; 
+!
+!  if( wflag.eq.1 ) then ! write .ext.sp.grid;
+!
+!#ifdef DEBUG
+!   if( Wwrtend ) then ; cput = GETTIME ; write(ounit,'("wrtend : ",f10.2," : myid=",i3," ; writing .ext.sp.grid ;")') cput-cpus, myid
+!   endif
+!#endif
+!
+!   ijreal(1:Ntz) = zero ; ijimag(1:Ntz) = zero ; jireal(1:Ntz) = zero
+!
+!   open(iunit, file="."//trim(ext)//".sp.grid", status="unknown", form="unformatted" ) ! coordinate grid;
+!
+!   write(iunit) Nt, Nz, Ntz, Mvol, Igeometry, pi2nfp
+!
+!   do vvol = 1, Mvol ; ivol = vvol
+!
+!    LREGION(vvol) ! sets Lcoordinatesingularity and Lplasmaregion ;
+!
+!    write(iunit) Lrad(vvol) ! sub-grid radial resolution; not really sub-grid resolution, but really the Chebyshev resolution;
+!
+!    do ii = 0, Lrad(vvol) ! sub-grid;
+!
+!     lss = ii * two / Lrad(vvol) - one
+!
+!     if( Lcoordinatesingularity .and. ii.eq.0 ) then ; Lcurvature = 0 ! Jacobian is not defined;
+!     else                                            ; Lcurvature = 1 ! compute Jacobian       ;
+!     endif
+!
+!     WCALL( wrtend, coords, ( vvol, lss, Lcurvature, Ntz, mn ) ) ! only Rij(0,:) and Zij(0,:) are required; Rmn & Zmn are available;
+!
+!     write(iunit) Rij(1:Ntz,0,0)
+!     write(iunit) Zij(1:Ntz,0,0)
+!     write(iunit)  sg(1:Ntz,0) ! defaults to zero if not computed;
+!
+!     if( Lcurvature.eq.1 ) then
+!
+!      do kk = 0, Nz-1 ; zeta = kk * pi2nfp / Nz
+!       do jj = 0, Nt-1 ; teta = jj * pi2    / Nt ; jk = 1 + jj + kk*Nt ; st(1:2) = (/ lss, teta /)
+!
+!        WCALL( wrtend, bfield, ( zeta, st(1:Node), Bst(1:Node) ) )
+!
+!        ijreal(jk) = ( Rij(jk,1,0) * Bst(1) + Rij(jk,2,0) * Bst(2) + Rij(jk,3,0) * one ) * gBzeta / sg(jk,0) ! BR;
+!        ijimag(jk) = (                                                             one ) * gBzeta / sg(jk,0) ! Bp;
+!        jireal(jk) = ( Zij(jk,1,0) * Bst(1) + Zij(jk,2,0) * Bst(2) + Zij(jk,3,0) * one ) * gBzeta / sg(jk,0) ! BZ;
+!
+!       enddo
+!      enddo
+!
+!     endif ! end of if( Lcurvature.eq.1 ) ;
+!
+!     write(iunit) ijreal(1:Ntz)
+!     write(iunit) ijimag(1:Ntz)
+!     write(iunit) jireal(1:Ntz)
+!
+!    enddo ! end of do ii;
+!
+!   enddo ! end of do vvol;
+!
+!   close(iunit)
+!
+!#ifdef DEBUG
+!   if( Wwrtend ) then ; cput = GETTIME ; write(ounit,'("wrtend : ",f10.2," : myid=",i3," ; opened /wrote   .ext.sp.grid ;")') cput-cpus, myid
+!   endif
+!#endif
+!
+!  endif ! end of if( wflag.eq.1 ) ;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   

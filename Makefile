@@ -14,10 +14,10 @@
 ###############################################################################################################################################################
 
  SPECFILES=$(afiles) $(bfiles) $(cfiles) $(dfiles) $(efiles) $(ffiles)
- ALLFILES=global $(SPECFILES) $(sfiles) sphdf5 preset xspech
+ ALLFILES=global sphdf5 $(SPECFILES) $(sfiles) preset xspech
 #F77FILES=$(sfiles:=.f)
  PREPROC=$(SPECFILES:=_m.F90) # preprocessed by m4
- RAWSOURCE=global preset $(SPECFILES) sphdf5 xspech # "raw" code, with macros not expanded yet
+ RAWSOURCE=global preset sphdf5 $(SPECFILES) xspech # "raw" code, with macros not expanded yet
 
  ROBJS=$(SPECFILES:=_r.o)
  DOBJS=$(SPECFILES:=_d.o)
