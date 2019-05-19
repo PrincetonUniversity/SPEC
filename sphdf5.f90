@@ -526,7 +526,7 @@ subroutine hdfint
   INTEGER                        :: Mrad
   REAL                           :: tvolume
 
-  integer(hid_t) :: grpOutput
+  integer(hid_t)                 :: grpOutput
 
   HDEFGRP( file_id, output, grpOutput )
 
@@ -643,6 +643,7 @@ subroutine finish_outfile
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+  ! close objects related to convergence output
   call h5tclose_f(dt_nDcalls_id, hdfier)
   call h5tclose_f(dt_Energy_id, hdfier)
   call h5tclose_f(dt_ForceErr_id, hdfier)
@@ -650,7 +651,6 @@ subroutine finish_outfile
   call h5tclose_f(dt_iZbs_id, hdfier)
   call h5tclose_f(dt_iRbs_id, hdfier)
   call h5tclose_f(dt_iZbc_id, hdfier)
-
   call h5dclose_f(iteration_dset_id, hdfier)                                             ! End access to the dataset and release resources used by it.
   call h5pclose_f(plist_id, hdfier)                                                      ! close plist used for 'preserve' flag (does not show up in obj_count below)
 
