@@ -31,13 +31,13 @@ module sphdf5
   integer(hid_t)                 :: memspace                                   ! memspace for extension by 1 iteration object
   integer(hsize_t), dimension(1) :: old_data_dims, data_dims
   integer(hid_t)                 :: plist_id                                   ! Property list identifier used to activate dataset transfer property
-  integer(hid_t)                 :: dt_nDcalls_id                              ! Memory datatype identifier (for "nDcalls" field)
-  integer(hid_t)                 :: dt_Energy_id                               ! Memory datatype identifier (for "Energy" field)
-  integer(hid_t)                 :: dt_ForceErr_id                             ! Memory datatype identifier (for "ForceErr" field)
-  integer(hid_t)                 :: dt_iRbc_id                                 ! Memory datatype identifier (for "iRbc" field)
-  integer(hid_t)                 :: dt_iZbs_id                                 ! Memory datatype identifier (for "iZbs" field)
-  integer(hid_t)                 :: dt_iRbs_id                                 ! Memory datatype identifier (for "iRbs" field)
-  integer(hid_t)                 :: dt_iZbc_id                                 ! Memory datatype identifier (for "iZbc" field)
+  integer(hid_t)                 :: dt_nDcalls_id                              ! Memory datatype identifier (for "nDcalls"  dataset in "/grid")
+  integer(hid_t)                 :: dt_Energy_id                               ! Memory datatype identifier (for "Energy"   dataset in "/grid")
+  integer(hid_t)                 :: dt_ForceErr_id                             ! Memory datatype identifier (for "ForceErr" dataset in "/grid")
+  integer(hid_t)                 :: dt_iRbc_id                                 ! Memory datatype identifier (for "iRbc"     dataset in "/grid")
+  integer(hid_t)                 :: dt_iZbs_id                                 ! Memory datatype identifier (for "iZbs"     dataset in "/grid")
+  integer(hid_t)                 :: dt_iRbs_id                                 ! Memory datatype identifier (for "iRbs"     dataset in "/grid")
+  integer(hid_t)                 :: dt_iZbc_id                                 ! Memory datatype identifier (for "iZbc"     dataset in "/grid")
 
 contains
 
@@ -366,7 +366,7 @@ subroutine write_convergence_output( nDcalls, ForceErr )
 
   ! append updated values to "iterations" dataset
 
-  ! open dataspace to current state of dataset
+  ! open dataspace to get current state of dataset
   call h5dget_space_f(iteration_dset_id, dataspace, hdfier)
 
   ! get current size of dataset
@@ -454,9 +454,7 @@ subroutine write_grid
     WCALL( sphdf5, coords, ( vvol, lss, Lcurvature, Ntz, mn ) ) ! only Rij(0,:) and Zij(0,:) are required; Rmn & Zmn are available;
 
     alongLrad = sum(Lrad(1:vvol-1)+1)+ii+1
-    if (myid.eq.0) then
-      write(*,*) "along Lrad: ",alongLrad
-    endif
+
     Rij_grid(alongLrad,1:Ntz) = Rij(1:Ntz,0,0)
     Zij_grid(alongLrad,1:Ntz) = Zij(1:Ntz,0,0)
     sg_grid (alongLrad,1:Ntz) =  sg(1:Ntz,0)

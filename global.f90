@@ -80,14 +80,15 @@ module fileunits
 
   implicit none
 
+  INTEGER :: iunit = 10 ! input; used in global/readin:ext.sp, global/wrtend:ext.sp.end
+  INTEGER :: ounit =  0 ! screen output;
+  INTEGER :: gunit = 13 ! wall geometry; used in wa00aa
+
   INTEGER :: aunit = 11 ! vector potential; used in ra00aa:.ext.AtAzmn; 
   INTEGER :: dunit = 12 ! derivative matrix; used in newton:.ext.GF; 
-  INTEGER :: gunit = 13 !                         
   INTEGER :: hunit = 14 ! eigenvalues of Hessian; under re-construction; 
   INTEGER :: munit = 14 ! matrix elements of Hessian; 
-  INTEGER :: iunit = 10 ! input; used in global/readin:ext.sp, global/wrtend:ext.sp.end, global/wrtend:.ext.grid; 
   INTEGER :: lunit = 20 ! local unit; used in lunit+myid: pp00aa:.ext.poincare,.ext.transform; 
-  INTEGER :: ounit =  0 ! screen output;
   INTEGER :: vunit = 15 ! for examination of adaptive quadrature; used in casing:.ext.vcint; 
  !INTEGER :: funit = 16 ! force iterations;
 
@@ -1434,7 +1435,6 @@ subroutine readin
      ext = ext(1:extlen-3)           ! if this is the case, remove ".sp" from end of ext
    endif
 
-   
    if( ext .eq. "" .or. ext.eq. " " .or. ext .eq. "-h" .or. ext .eq. "-help" ) then
     ;write(ounit,'("readin : ", 10x ," : ")')
     ;write(ounit,'("readin : ", 10x ," : file extension must be given as first command line argument ; extra command line options = -help -readin ;")')
