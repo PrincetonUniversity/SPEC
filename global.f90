@@ -100,6 +100,7 @@ module cputiming
   REAL :: Treadin = 0.0
   REAL :: Twritin = 0.0 ! redundant; 
   REAL :: Twrtend = 0.0
+  !REAL :: Tsphdf5 = 0.0
 
 end module cputiming
 
@@ -2242,8 +2243,9 @@ subroutine wrtend
 
   LOCALS
   
-  INTEGER              :: vvol, imn, ii, jj, kk, jk, Lcurvature, mm, nn
-  REAL                 :: lss, teta, zeta, st(1:Node), Bst(1:Node)
+  !INTEGER              :: vvol, imn, ii, jj, kk, jk, Lcurvature, mm, nn
+  INTEGER              :: vvol, imn, ii, mm, nn
+  !REAL                 :: lss, teta, zeta, st(1:Node), Bst(1:Node)
   
   BEGIN(wrtend)
 

@@ -402,16 +402,23 @@ subroutine write_convergence_output( nDcalls, ForceErr )
 
 end subroutine write_convergence_output
 
-! previously wflag.eq.1 part of globals.f90/wrtend to write .ext.sp.grid;
+! previously the (wflag.eq.1) part of globals.f90/wrtend to write .ext.sp.grid;
 subroutine write_grid
 
-  use constants, only : zero
+  use constants
   use allglobal, only : myid, ijreal, ijimag, jireal, &
-  &                     Nt, Nz, Ntz, Mvol, pi2nfp
+  &                     Nt, Nz, Ntz, Mvol, pi2nfp, ivol, mn, Node, gBzeta, &
+  &                     Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
+  &                     Rij, Zij, sg
+  use inputlist, only : Lrad, Igeometry, Nvol
+  use cputiming, only : Tsphdf5
 
   LOCALS
   integer(hid_t) :: grpGrid
-
+  integer :: sumLrad, alongLrad
+  INTEGER              :: vvol, ii, jj, kk, jk, Lcurvature
+  REAL                 :: lss, teta, zeta, st(1:Node), Bst(1:Node)
+  REAL   , allocatable :: Rij_grid(:,:), Zij_grid(:,:), sg_grid(:,:), ijreal_grid(:,:), ijimag_grid(:,:), jireal_grid(:,:)
 #ifdef DEBUG
   if( myid.eq.0 and Wsphdf5 ) then ; cput = GETTIME ; write(ounit,'("sphdf5 : ",f10.2," : myid=",i3," ; writing grid ;")') cput-cpus, myid
   endif
@@ -419,57 +426,72 @@ subroutine write_grid
 
   ijreal(1:Ntz) = zero ; ijimag(1:Ntz) = zero ; jireal(1:Ntz) = zero
 
-  ! open(iunit, file="."//trim(ext)//".sp.grid", status="unknown", form="unformatted" ) ! coordinate grid;
   HDEFGRP( file_id, grid, grpGrid )
 
-  ! write(iunit) Nt, Nz, Ntz, Mvol, Igeometry, pi2nfp
+  ! Igeometry already is in input, Mvol already is in output
   HWRITEIV( grpGrid,           1, Nt               , (/ Nt            /))
   HWRITEIV( grpGrid,           1, Nz               , (/ Nz            /))
   HWRITEIV( grpGrid,           1, Ntz              , (/ Ntz           /))
-  HWRITEIV( grpGrid,           1, Mvol             , (/ Mvol          /))
   HWRITERV( grpGrid,           1, pi2nfp           , (/ pi2nfp        /))
 
-!  do vvol = 1, Mvol ; ivol = vvol
-!
-!   LREGION(vvol) ! sets Lcoordinatesingularity and Lplasmaregion ;
-!
-!   write(iunit) Lrad(vvol) ! sub-grid radial resolution; not really sub-grid resolution, but really the Chebyshev resolution;
-!
-!   do ii = 0, Lrad(vvol) ! sub-grid;
-!
-!    lss = ii * two / Lrad(vvol) - one
-!
-!    if( Lcoordinatesingularity .and. ii.eq.0 ) then ; Lcurvature = 0 ! Jacobian is not defined;
-!    else                                            ; Lcurvature = 1 ! compute Jacobian       ;
-!    endif
-!
-!    WCALL( sphdf5, coords, ( vvol, lss, Lcurvature, Ntz, mn ) ) ! only Rij(0,:) and Zij(0,:) are required; Rmn & Zmn are available;
-!
-!    write(iunit) Rij(1:Ntz,0,0)
-!    write(iunit) Zij(1:Ntz,0,0)
-!    write(iunit)  sg(1:Ntz,0) ! defaults to zero if not computed;
-!
-!    if( Lcurvature.eq.1 ) then
-!
-!     do kk = 0, Nz-1 ; zeta = kk * pi2nfp / Nz
-!      do jj = 0, Nt-1 ; teta = jj * pi2    / Nt ; jk = 1 + jj + kk*Nt ; st(1:2) = (/ lss, teta /)
-!
-!       WCALL( sphdf5, bfield, ( zeta, st(1:Node), Bst(1:Node) ) )
-!       ijreal(jk) = ( Rij(jk,1,0) * Bst(1) + Rij(jk,2,0) * Bst(2) + Rij(jk,3,0) * one ) * gBzeta / sg(jk,0) ! BR;
-!       ijimag(jk) = (                                                             one ) * gBzeta / sg(jk,0) ! Bp;
-!       jireal(jk) = ( Zij(jk,1,0) * Bst(1) + Zij(jk,2,0) * Bst(2) + Zij(jk,3,0) * one ) * gBzeta / sg(jk,0) ! BZ;
-!      enddo
-!     enddo
-!
-!    endif ! end of if( Lcurvature.eq.1 ) ;
-!
-!    write(iunit) ijreal(1:Ntz)
-!    write(iunit) ijimag(1:Ntz)
-!    write(iunit) jireal(1:Ntz)
-!
-!   enddo ! end of do ii;
-!
-!  enddo ! end of do vvol;
+  ! combine all radial parts into one dimension as Lrad values can be different for different volumes
+  sumLrad = sum(Lrad(1:Mvol)+1)
+
+  SALLOCATE(    Rij_grid, (1:sumLrad, 1:Ntz), zero )
+  SALLOCATE(    Zij_grid, (1:sumLrad, 1:Ntz), zero )
+  SALLOCATE(     sg_grid, (1:sumLrad, 1:Ntz), zero )
+  SALLOCATE( ijreal_grid, (1:sumLrad, 1:Ntz), zero )
+  SALLOCATE( ijimag_grid, (1:sumLrad, 1:Ntz), zero )
+  SALLOCATE( jireal_grid, (1:sumLrad, 1:Ntz), zero )
+
+  do vvol = 1, Mvol ; ivol = vvol
+   LREGION(vvol) ! sets Lcoordinatesingularity and Lplasmaregion ;
+   do ii = 0, Lrad(vvol) ! sub-grid;
+    lss = ii * two / Lrad(vvol) - one
+    if( Lcoordinatesingularity .and. ii.eq.0 ) then ; Lcurvature = 0 ! Jacobian is not defined;
+    else                                            ; Lcurvature = 1 ! compute Jacobian       ;
+    endif
+    WCALL( sphdf5, coords, ( vvol, lss, Lcurvature, Ntz, mn ) ) ! only Rij(0,:) and Zij(0,:) are required; Rmn & Zmn are available;
+
+    alongLrad = sum(Lrad(1:vvol-1)+1)+ii+1
+    if (myid.eq.0) then
+      write(*,*) "along Lrad: ",alongLrad
+    endif
+    Rij_grid(alongLrad,1:Ntz) = Rij(1:Ntz,0,0)
+    Zij_grid(alongLrad,1:Ntz) = Zij(1:Ntz,0,0)
+    sg_grid (alongLrad,1:Ntz) =  sg(1:Ntz,0)
+
+    if( Lcurvature.eq.1 ) then
+     do kk = 0, Nz-1 ; zeta = kk * pi2nfp / Nz
+      do jj = 0, Nt-1 ; teta = jj * pi2    / Nt ; jk = 1 + jj + kk*Nt ; st(1:2) = (/ lss, teta /)
+       WCALL( sphdf5, bfield, ( zeta, st(1:Node), Bst(1:Node) ) )
+       ijreal(jk) = ( Rij(jk,1,0) * Bst(1) + Rij(jk,2,0) * Bst(2) + Rij(jk,3,0) * one ) * gBzeta / sg(jk,0) ! BR;
+       ijimag(jk) = (                                                             one ) * gBzeta / sg(jk,0) ! Bp;
+       jireal(jk) = ( Zij(jk,1,0) * Bst(1) + Zij(jk,2,0) * Bst(2) + Zij(jk,3,0) * one ) * gBzeta / sg(jk,0) ! BZ;
+      enddo
+     enddo
+    endif ! end of if( Lcurvature.eq.1 ) ;
+
+    ijreal_grid(alongLrad,1:Ntz) = ijreal(1:Ntz)
+    ijimag_grid(alongLrad,1:Ntz) = ijimag(1:Ntz)
+    jireal_grid(alongLrad,1:Ntz) = jireal(1:Ntz)
+
+   enddo ! end of do ii;
+  enddo ! end of do vvol;
+
+  HWRITERA( grpGrid, sumLrad, Ntz,    Rij,    Rij_grid )
+  HWRITERA( grpGrid, sumLrad, Ntz,    Zij,    Zij_grid )
+  HWRITERA( grpGrid, sumLrad, Ntz,     sg,     sg_grid )
+  HWRITERA( grpGrid, sumLrad, Ntz, ijreal, ijreal_grid )
+  HWRITERA( grpGrid, sumLrad, Ntz, ijimag, ijimag_grid )
+  HWRITERA( grpGrid, sumLrad, Ntz, jireal, jireal_grid )
+
+  DEALLOCATE(    Rij_grid )
+  DEALLOCATE(    Zij_grid )
+  DEALLOCATE(     sg_grid )
+  DEALLOCATE( ijreal_grid )
+  DEALLOCATE( ijimag_grid )
+  DEALLOCATE( jireal_grid )
 
   HCLOSEGRP( grpGrid )
 
