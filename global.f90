@@ -2243,9 +2243,7 @@ subroutine wrtend
 
   LOCALS
   
-  !INTEGER              :: vvol, imn, ii, jj, kk, jk, Lcurvature, mm, nn
   INTEGER              :: vvol, imn, ii, mm, nn
-  !REAL                 :: lss, teta, zeta, st(1:Node), Bst(1:Node)
   
   BEGIN(wrtend)
 
