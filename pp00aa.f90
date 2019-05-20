@@ -120,9 +120,7 @@ subroutine pp00aa( lvol, numTrajTotal )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   ivol = lvol ; write(svol,'(i4.4)') lvol
-  
-  !open( lunit+myid, file="."//trim(ext)//".sp.P."//svol//".dat", status="unknown", form="unformatted" )
-  
+
 1001 format("pp00aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; odetol=",es8.1," ; nPpts=",i8," ; lnPtrj=",i3," ;")
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -165,25 +163,17 @@ subroutine pp00aa( lvol, numTrajTotal )
     endif
    endif
    
-!   if( utflag(itrj).eq.1 ) then ! will only write successfully followed trajectories to file; 28 Jan 13;
-!    write(lunit+myid) Nz, nPpts
-!    write(lunit+myid) data(1:4,0:Nz-1,1:nPpts)
-!   endif
-!   if( utflag(itrj).eq.1 ) then
-!    successfulTrajectories(numTrajTotal+itrj-ioff) = .true.
-!   endif
-   WCALL( pp00aa, write_poincare, (data, numTrajTotal+itrj-ioff) )
+   ! write all trajectories, but only mark successfully followed trajectories with success.eq.1; 28 Jan 13;
+   WCALL( pp00aa, write_poincare, (data, numTrajTotal+itrj-ioff, utflag(itrj)) )
 
   enddo ! end of do itrj; 25 Jan 13;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   DALLOCATE(data)
-  
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-  !close( lunit+myid ) ! Poincare plot is finished; will re-use lunit to write rotational transform data;
-  
+
+  DALLOCATE(utflag)
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   open( lunit+myid, file="."//trim(ext)//".sp.t."//svol//".dat", status="unknown", form="unformatted" ) ! rotational transform data;
@@ -195,8 +185,6 @@ subroutine pp00aa( lvol, numTrajTotal )
 
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  DALLOCATE(utflag)
 
   DALLOCATE(fiota)
   

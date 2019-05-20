@@ -636,11 +636,6 @@ program xspech
    numTrajTotal = numTrajTotal + lnPtrj
   enddo
 
-  if( nPpts .gt.0 ) then
-   ! Parallel HDF5 needs to have the file structure determined before starting to write anything from different threads.
-   ! To "exclude" failed trajectories, flag them as not successful in the array successfulTrajectories.
-   SALLOCATE( successfulTrajectories, (numTrajTotal), .false. )
-  endif
   WCALL( xspech, init_poincare_output, (numTrajTotal) )
 
   numTrajTotal = 0
@@ -673,14 +668,11 @@ program xspech
    if( .not.Lcoordinatesingularity ) then ; lnPtrj = lnPtrj + 1
    endif
 
+   ! keep track of where we are along all trajectories
    numTrajTotal = numTrajTotal + lnPtrj
 
   enddo ! end of do vvol = 1, Mvol; ! end of parallel diagnostics loop; 03 Apr 13;
   
-  if( nPpts .gt.0 ) then
-   HWRITELV( grpPoincare, numTrajTotal , successfulTrajectories, successfulTrajectories )
-   deallocate( successfulTrajectories )
-  endif
   WCALL( xspech, finalize_poincare )
 
 1002 format("xspech : ",f10.2," :":" myid=",i3," ; vvol=",i3," ; IBeltrami="L2" ; construction of Beltrami field failed ;")
