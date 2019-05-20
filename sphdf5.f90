@@ -40,6 +40,8 @@ module sphdf5
   integer(hid_t)                 :: dt_iRbs_id                                 ! Memory datatype identifier (for "iRbs"     dataset in "/grid")
   integer(hid_t)                 :: dt_iZbc_id                                 ! Memory datatype identifier (for "iZbc"     dataset in "/grid")
 
+  integer, parameter             :: rankP=3, rankT=2                           ! rank of Poincare and transform data
+
   integer(hid_t)                 :: grpPoincare                                ! group for Poincare data
   integer(HID_T)                 :: dset_id_t                                  ! Dataset identifier for \t coordinate of field line following
   integer(HID_T)                 :: dset_id_s                                  ! Dataset identifier for  s coordinate of field line following
@@ -56,6 +58,14 @@ module sphdf5
   integer(HID_T)                 :: memspace_R                                 ! Dataspace identifier in memory
   integer(HID_T)                 :: memspace_Z                                 ! Dataspace identifier in memory
   integer(HID_T)                 :: memspace_success                           ! Dataspace identifier in memory
+
+  integer(hid_t)                 :: grpTransform                               ! group for rotational transform data
+  integer(HID_T)                 :: dset_id_diotadxup                          ! Dataset identifier for ... (derivative of rotational transform ?)
+  integer(HID_T)                 :: dset_id_fiota                              ! Dataset identifier for ... (              rotational transform ?)
+  integer(HID_T)                 :: filespace_diotadxup                        ! Dataspace identifier in file
+  integer(HID_T)                 :: filespace_fiota                            ! Dataspace identifier in file
+  integer(HID_T)                 :: memspace_diotadxup                         ! Dataspace identifier in memory
+  integer(HID_T)                 :: memspace_fiota                             ! Dataspace identifier in memory
 
 contains
 
@@ -518,17 +528,16 @@ subroutine write_grid
 
 end subroutine write_grid
 
-! init poincare output group and create array datasets
-subroutine init_poincare_output( numTrajTotal )
+! init field line tracing output group and create array datasets
+subroutine init_flt_output( numTrajTotal )
 
-  use allglobal, only : Nz
+  use allglobal, only : Nz, Mvol
   use inputlist, only : nPpts
 
   LOCALS
   integer, intent(in)               :: numTrajTotal                                  ! total number of trajectories
-  integer, parameter                :: rank = 3                                      ! rank of Poincare data
-  integer(HSIZE_T), dimension(rank) :: dims_traj ! Dataset dimensions.
-  integer(HSIZE_T), dimension(rank) :: length ! Dataset dimensions.
+  integer(HSIZE_T), dimension(rankP) :: dims_traj ! Dataset dimensions.
+  integer(HSIZE_T), dimension(rankP) :: length ! Dataset dimensions.
 
   ! create Poincare group in HDF5 file
   HDEFGRP( file_id, poincare, grpPoincare )
@@ -537,10 +546,10 @@ subroutine init_poincare_output( numTrajTotal )
   length    = (/ Nz, nPpts,            1 /) ! which is written in these slice lengths
 
   ! Create the data space for the  dataset.
-  call h5screate_simple_f(rank, dims_traj, filespace_t, hdfier)
-  call h5screate_simple_f(rank, dims_traj, filespace_s, hdfier)
-  call h5screate_simple_f(rank, dims_traj, filespace_R, hdfier)
-  call h5screate_simple_f(rank, dims_traj, filespace_Z, hdfier)
+  call h5screate_simple_f(rankP, dims_traj, filespace_t, hdfier)
+  call h5screate_simple_f(rankP, dims_traj, filespace_s, hdfier)
+  call h5screate_simple_f(rankP, dims_traj, filespace_R, hdfier)
+  call h5screate_simple_f(rankP, dims_traj, filespace_Z, hdfier)
   call h5screate_simple_f(1, int((/ numTrajTotal /),HSIZE_T), filespace_success, hdfier)
 
   ! Create the dataset with default properties.
@@ -565,13 +574,35 @@ subroutine init_poincare_output( numTrajTotal )
   call h5dget_space_f(dset_id_success, filespace_success, hdfier)
 
   ! Each process defines dataset in memory and writes it to the hyperslab in the file.
-  call h5screate_simple_f(rank, length, memspace_t, hdfier)
-  call h5screate_simple_f(rank, length, memspace_s, hdfier)
-  call h5screate_simple_f(rank, length, memspace_R, hdfier)
-  call h5screate_simple_f(rank, length, memspace_Z, hdfier)
+  call h5screate_simple_f(rankP, length, memspace_t, hdfier)
+  call h5screate_simple_f(rankP, length, memspace_s, hdfier)
+  call h5screate_simple_f(rankP, length, memspace_R, hdfier)
+  call h5screate_simple_f(rankP, length, memspace_Z, hdfier)
   call h5screate_simple_f(1, int((/ 1 /),HSIZE_T), memspace_success, hdfier)
 
-end subroutine init_poincare_output
+  ! create rotational transform group in HDF5 file
+  HDEFGRP( file_id, transform, grpTransform )
+
+  ! Create the data space for the  dataset.
+  call h5screate_simple_f(rankT, int((/           2,Mvol/),HSIZE_T), filespace_diotadxup, hdfier)
+  call h5screate_simple_f(rankT, int((/numTrajTotal,   2/),HSIZE_T), filespace_fiota    , hdfier)
+
+  ! Create the dataset with default properties.
+  call h5dcreate_f(grpTransform, "diotadxup", H5T_NATIVE_DOUBLE, filespace_diotadxup, dset_id_diotadxup, hdfier)
+  call h5dcreate_f(grpTransform,     "fiota", H5T_NATIVE_DOUBLE, filespace_fiota    , dset_id_fiota    , hdfier)
+
+  ! filespaces can be closed as soon as datasets are created
+  call h5sclose_f(filespace_diotadxup, hdfier)
+  call h5sclose_f(filespace_fiota    , hdfier)
+
+  ! Select hyperslab in the file.
+  call h5dget_space_f(dset_id_diotadxup, filespace_diotadxup, hdfier)
+  call h5dget_space_f(dset_id_fiota    , filespace_fiota    , hdfier)
+
+  ! Each process defines dataset in memory and writes it to the hyperslab in the file.
+  call h5screate_simple_f(rankT, int((/2,1/),HSIZE_T), memspace_diotadxup, hdfier)
+
+end subroutine init_flt_output
 
 ! write a hyperslab of Poincare data
 subroutine write_poincare( data, offset, success )
@@ -611,8 +642,30 @@ subroutine write_poincare( data, offset, success )
 
 end subroutine write_poincare
 
+! write rotational transform output from field line following
+subroutine write_transform( offset, length, lvol, diotadxup, fiota )
+
+  LOCALS
+  INTEGER, intent(in) :: offset, length, lvol
+  REAL, intent(in)    :: diotadxup(:), fiota(:,:)
+
+  call h5sselect_hyperslab_f (filespace_diotadxup, H5S_SELECT_SET_F, int((/0,lvol-1/),HSSIZE_T), int((/2,1/),HSSIZE_T), hdfier)
+  call h5dwrite_f(dset_id_diotadxup, H5T_NATIVE_DOUBLE, diotadxup, int((/2,1/),HSSIZE_T), hdfier, &
+  &               file_space_id=filespace_diotadxup, mem_space_id=memspace_diotadxup )
+
+  call h5screate_simple_f(rankT, int((/length,2/),HSIZE_T), memspace_fiota    , hdfier)
+
+  call h5sselect_hyperslab_f (filespace_fiota, H5S_SELECT_SET_F, int((/offset,0/),HSSIZE_T), int((/length,2/),HSSIZE_T), hdfier)
+  call h5dwrite_f(dset_id_fiota, H5T_NATIVE_DOUBLE, fiota, int((/length,2/),HSSIZE_T), hdfier, &
+  &               file_space_id=filespace_fiota, mem_space_id=memspace_fiota )
+
+  call h5sclose_f(memspace_fiota, hdfier)
+  FATAL( pp00aa, hdfier.lt.0, h5sclose_f returned an error while closing memspace )
+
+end subroutine write_transform
+
 ! finalize Poincare output
-subroutine finalize_poincare
+subroutine finalize_flt_output
 
   LOCALS
 
@@ -693,7 +746,36 @@ subroutine finalize_poincare
 
   HCLOSEGRP( grpPoincare )
 
-end subroutine finalize_poincare
+  ! -----
+  ! diotadxup
+  ! -----
+
+  ! Close dataspaces.
+  call h5sclose_f(filespace_diotadxup, hdfier)
+  FATAL( pp00aa, hdfier.lt.0, h5sclose_f returned an error while closing filespace )
+
+  call h5sclose_f(memspace_diotadxup, hdfier)
+  FATAL( pp00aa, hdfier.lt.0, h5sclose_f returned an error while closing memspace )
+
+  ! Close the dataset
+  call h5dclose_f(dset_id_diotadxup, hdfier)
+  FATAL( pp00aa, hdfier.lt.0, h5dclose_f returned an error )
+
+  ! -----
+  ! fiota
+  ! -----
+
+  ! Close dataspaces.
+  call h5sclose_f(filespace_fiota, hdfier)
+  FATAL( pp00aa, hdfier.lt.0, h5sclose_f returned an error while closing filespace )
+
+  ! Close the dataset
+  call h5dclose_f(dset_id_fiota, hdfier)
+  FATAL( pp00aa, hdfier.lt.0, h5dclose_f returned an error )
+
+  HCLOSEGRP( grpTransform )
+
+end subroutine finalize_flt_output
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 ! final output
@@ -754,8 +836,8 @@ subroutine hdfint
   HWRITERA( grpOutput, mn, (Mvol+1), Rbs, iRbs(1:mn,0:Mvol) )
 !latex \type{iZbc(1:mn,0:Mvol)}      & real    & \pb{Fourier harmonics, $Z_{m,n}$, of interfaces} \\
   HWRITERA( grpOutput, mn, (Mvol+1), Zbc, iZbc(1:mn,0:Mvol) )
-!latex \type{forcetol}               & real    & \pb{force-balance error across interfaces} \\
-  HWRITERV( grpOutput, 1, forcetol, (/ forcetol /))
+!l tex \type{forcetol}               & real    & \pb{force-balance error across interfaces} \\
+!  HWRITERV( grpOutput, 1, forcetol, (/ forcetol /)) ! already in /input/global
 !latex \type{ForceErr}               & real    & \pb{force-balance error across interfaces} \\
   HWRITERV( grpOutput, 1, ForceErr, (/ ForceErr /))
 

@@ -271,7 +271,7 @@ xspech_r.o: xspech.f90 global_r.o $(addsuffix _r.o,$(files)) $(MACROS) Makefile
 	@awk -v date='$(date)' -v pwd='$(PWD)' -v macros='$(MACROS)' -v fc='$(FC)' -v flags='$(FLAGS) $(CFLAGS) $(RFLAGS)' -v allfiles='$(ALLFILES)' \
 	'BEGIN{nfiles=split(allfiles,files," ")} \
 	{if($$2=="COMPILATION") {print "    write(ounit,*)\"      :  compiled  : date    = "date" ; \"" ; \
-	                         print "    write(ounit,*)\"      :            : dir     = "pwd" ; \"" ; \
+	                         print "    write(ounit,*)\"      :            : srcdir  = "pwd" ; \"" ; \
 	                         print "    write(ounit,*)\"      :            : macros  = "macros" ; \"" ; \
 	                         print "    write(ounit,*)\"      :            : fc      = "fc" ; \"" ; \
 	                         print "    write(ounit,*)\"      :            : flags   = "flags" ; \"" }} \
@@ -288,7 +288,7 @@ xspech_d.o: xspech.f90 global_d.o $(addsuffix _d.o,$(files)) $(MACROS) Makefile
 	@awk -v date='$(date)' -v pwd='$(PWD)' -v macros='$(MACROS)' -v fc='$(FC)' -v flags='$(FLAGS) $(CFLAGS) $(DFLAGS)' -v allfiles='$(ALLFILES)' \
 	'BEGIN{nfiles=split(allfiles,files," ")} \
 	{if($$2=="COMPILATION") {print "    write(ounit,*)\"      :  compiled  : date    = "date" ; \"" ; \
-	                         print "    write(ounit,*)\"      :            : dir     = "pwd" ; \"" ; \
+	                         print "    write(ounit,*)\"      :            : srcdir  = "pwd" ; \"" ; \
 	                         print "    write(ounit,*)\"      :            : macros  = "macros" ; \"" ; \
 	                         print "    write(ounit,*)\"      :            : fc      = "fc" ; \"" ; \
 	                         print "    write(ounit,*)\"      :            : flags   = "flags" ; \"" }} \

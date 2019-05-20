@@ -92,9 +92,9 @@ subroutine pp00aa( lvol, numTrajTotal )
                         Nz, pi2nfp, &
                         ivol, Mvol, &
                         Lcoordinatesingularity, &
-                        diotadxup, successfulTrajectories
+                        diotadxup
   
-  use sphdf5, only    : write_poincare
+  use sphdf5, only    : write_poincare, write_transform
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -151,7 +151,7 @@ subroutine pp00aa( lvol, numTrajTotal )
    if( itrj.eq.     0 ) sti(1) = - one ! avoid machine precision errors; 08 Feb 16;
    if( itrj.eq.lnPtrj ) sti(1) =   one ! avoid machine precision errors; 08 Feb 16;
    
-   CALL( pp00aa, pp00ab, ( lvol, sti(1:2), Nz, nPpts, data(1:4,0:Nz-1,1:nPpts), fiota(itrj,1:2), utflag(itrj) ) )      
+   CALL( pp00aa, pp00ab, ( lvol, sti(1:2), Nz, nPpts, data(1:4,0:Nz-1,1:nPpts), fiota(itrj,1:2), utflag(itrj) ) )
    
    if( Wpp00aa ) then
     cput = GETTIME
@@ -176,13 +176,7 @@ subroutine pp00aa( lvol, numTrajTotal )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  open( lunit+myid, file="."//trim(ext)//".sp.t."//svol//".dat", status="unknown", form="unformatted" ) ! rotational transform data;
-  write( lunit+myid ) lnPtrj-ioff+1
-  write( lunit+myid ) diotadxup(0:1,0,lvol)
-  write( lunit+myid ) ( fiota(itrj,1:2), itrj = ioff, lnPtrj )
-  close( lunit+myid )
-  
-
+  WCALL( pp00aa, write_transform, (numTrajTotal, lnPtrj-ioff+1, lvol, diotadxup(0:1,0,lvol), fiota(ioff:lnPtrj,1:2)) )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

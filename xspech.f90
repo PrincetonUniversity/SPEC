@@ -72,8 +72,7 @@ program xspech
                         iBns, iBnc, iVns, iVnc, &
                         Ate, Aze, Ato, Azo, & ! only required for debugging; 09 Mar 17;
                         nfreeboundaryiterations, &
-                        beltramierror, &
-                        successfulTrajectories ! for Poincare tracing: allow to exclude failed trajectories
+                        beltramierror
 
    use sphdf5 ! write _all_ output quantities into a _single_ HDF5 file
 
@@ -621,24 +620,19 @@ program xspech
   ! determine total number of (possibly successful) Poincare trajectories
   numTrajTotal = 0
   do vvol = 1, Mvol
-
    LREGION(vvol) ! sets Lcoordinatesingularity and Lplasmaregion ;
-
-   ! number of trajectories
+   ! number of trajectories in current volume vvol
    if( nPtrj(vvol).ge.0 ) then ; lnPtrj =    nPtrj(vvol) ! selected Poincare resolution;
    else                        ; lnPtrj = 2 * Lrad(vvol) ! adapted  Poincare resolution;
    endif
-
-   ! all but innermost volume have one trajectory more than specified by nPtrj
-   if( .not.Lcoordinatesingularity ) then ; lnPtrj = lnPtrj + 1
+   if( .not.Lcoordinatesingularity ) then ; lnPtrj = lnPtrj + 1 ! all but innermost volume have one trajectory more than specified by nPtrj
    endif
-
    numTrajTotal = numTrajTotal + lnPtrj
   enddo
 
-  WCALL( xspech, init_poincare_output, (numTrajTotal) )
+  WCALL( xspech, init_flt_output, (numTrajTotal) )
 
-  numTrajTotal = 0
+  numTrajTotal = 0 ! re-used as counter along all trajectories from here on
   do vvol = 1, Mvol
 
    LREGION(vvol)
@@ -673,7 +667,7 @@ program xspech
 
   enddo ! end of do vvol = 1, Mvol; ! end of parallel diagnostics loop; 03 Apr 13;
   
-  WCALL( xspech, finalize_poincare )
+  WCALL( xspech, finalize_flt_output )
 
 1002 format("xspech : ",f10.2," :":" myid=",i3," ; vvol=",i3," ; IBeltrami="L2" ; construction of Beltrami field failed ;")
 
