@@ -74,7 +74,7 @@
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-subroutine pp00aa( lvol ) 
+subroutine pp00aa( lvol, numTrajTotal )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -92,13 +92,15 @@ subroutine pp00aa( lvol )
                         Nz, pi2nfp, &
                         ivol, Mvol, &
                         Lcoordinatesingularity, &
-                        diotadxup
+                        diotadxup, successfulTrajectories
   
+  use sphdf5, only    : write_poincare
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   LOCALS
   
-  INTEGER, intent(in)  :: lvol
+  INTEGER, intent(in)  :: lvol, numTrajTotal
   INTEGER              :: lnPtrj, ioff, itrj
   INTEGER, allocatable :: utflag(:)
   REAL                 :: sti(1:2), ltransform(1:2)
@@ -119,7 +121,7 @@ subroutine pp00aa( lvol )
 
   ivol = lvol ; write(svol,'(i4.4)') lvol
   
-  open( lunit+myid, file="."//trim(ext)//".sp.P."//svol//".dat", status="unknown", form="unformatted" )
+  !open( lunit+myid, file="."//trim(ext)//".sp.P."//svol//".dat", status="unknown", form="unformatted" )
   
 1001 format("pp00aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; odetol=",es8.1," ; nPpts=",i8," ; lnPtrj=",i3," ;")
   
@@ -163,11 +165,15 @@ subroutine pp00aa( lvol )
     endif
    endif
    
-   if( utflag(itrj).eq.1 ) then ! will only write successfully followed trajectories to file; 28 Jan 13;
-    write(lunit+myid) Nz, nPpts
-    write(lunit+myid) data(1:4,0:Nz-1,1:nPpts)
-   endif   
-   
+!   if( utflag(itrj).eq.1 ) then ! will only write successfully followed trajectories to file; 28 Jan 13;
+!    write(lunit+myid) Nz, nPpts
+!    write(lunit+myid) data(1:4,0:Nz-1,1:nPpts)
+!   endif
+!   if( utflag(itrj).eq.1 ) then
+!    successfulTrajectories(numTrajTotal+itrj-ioff) = .true.
+!   endif
+   WCALL( pp00aa, write_poincare, (data, numTrajTotal+itrj-ioff) )
+
   enddo ! end of do itrj; 25 Jan 13;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -176,7 +182,7 @@ subroutine pp00aa( lvol )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  close( lunit+myid ) ! Poincare plot is finished; will re-use lunit to write rotational transform data;
+  !close( lunit+myid ) ! Poincare plot is finished; will re-use lunit to write rotational transform data;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -186,6 +192,8 @@ subroutine pp00aa( lvol )
   write( lunit+myid ) ( fiota(itrj,1:2), itrj = ioff, lnPtrj )
   close( lunit+myid )
   
+
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   DALLOCATE(utflag)

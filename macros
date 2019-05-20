@@ -280,7 +280,7 @@ m4_define(HCLOSEGRP,{! macro expansion of hclosegrp;
 
   ! macro expansion of hclosegrp; end;})m4_dnl ; can put comments here;
 m4_define(HWRITELV,{! macro expansion of hwritelv;
-
+! arguments: group, length, name, data
 #ifdef DEBUG
   if( Wmacros ) write(ounit,'("macros : ", 10x ," : myid=",i3," ; writing $3 ;")') myid
 #endif

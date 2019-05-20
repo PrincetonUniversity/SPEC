@@ -21,7 +21,8 @@ module sphdf5
 
   implicit none
 
-  integer                        :: hdfier, rank                               ! error flag for HDF5 library
+  integer                        :: hdfier                                     ! error flag for HDF5 library
+  integer                        :: rank                                       ! rank of data to write using macros
   integer(hid_t)                 :: file_id, space_id, dset_id                 ! default IDs used in macros
   integer(hsize_t)               :: onedims(1:1), twodims(1:2), threedims(1:3) ! dimension specifiers used in macros
   integer(size_t)                :: obj_count                                  ! number of open HDF5 objects
@@ -38,6 +39,20 @@ module sphdf5
   integer(hid_t)                 :: dt_iZbs_id                                 ! Memory datatype identifier (for "iZbs"     dataset in "/grid")
   integer(hid_t)                 :: dt_iRbs_id                                 ! Memory datatype identifier (for "iRbs"     dataset in "/grid")
   integer(hid_t)                 :: dt_iZbc_id                                 ! Memory datatype identifier (for "iZbc"     dataset in "/grid")
+
+  integer(hid_t)                 :: grpPoincare                                ! group for Poincare data
+  integer(HID_T)                 :: dset_id_t                                  ! Dataset identifier
+  integer(HID_T)                 :: dset_id_s                                  ! Dataset identifier
+  integer(HID_T)                 :: dset_id_R                                  ! Dataset identifier
+  integer(HID_T)                 :: dset_id_Z                                  ! Dataset identifier
+  integer(HID_T)                 :: filespace_t                                ! Dataspace identifier in file
+  integer(HID_T)                 :: filespace_s                                ! Dataspace identifier in file
+  integer(HID_T)                 :: filespace_R                                ! Dataspace identifier in file
+  integer(HID_T)                 :: filespace_Z                                ! Dataspace identifier in file
+  integer(HID_T)                 :: memspace_t                                 ! Dataspace identifier in memory
+  integer(HID_T)                 :: memspace_s                                 ! Dataspace identifier in memory
+  integer(HID_T)                 :: memspace_R                                 ! Dataspace identifier in memory
+  integer(HID_T)                 :: memspace_Z                                 ! Dataspace identifier in memory
 
 contains
 
@@ -499,6 +514,159 @@ subroutine write_grid
 #endif
 
 end subroutine write_grid
+
+! init poincare output group and create array datasets
+subroutine init_poincare_output( numTrajTotal )
+
+  use allglobal, only : Nz
+  use inputlist, only : nPpts
+
+  LOCALS
+  integer, intent(in)               :: numTrajTotal                                  ! total number of trajectories
+  integer, parameter                :: rank = 3                                      ! rank of Poincare data
+  integer(HSIZE_T), dimension(rank) :: dims_traj ! Dataset dimensions.
+  integer(HSIZE_T), dimension(rank) :: length ! Dataset dimensions.
+
+  ! create Poincare group in HDF5 file
+  HDEFGRP( file_id, poincare, grpPoincare )
+
+  dims_traj = (/ Nz, nPpts, numTrajTotal /) ! dimensions for whole Poincare dataset
+  length    = (/ Nz, nPpts,            1 /) ! which is written in these slice lengths
+
+  ! Create the data space for the  dataset.
+  call h5screate_simple_f(rank, dims_traj, filespace_t, hdfier)
+  call h5screate_simple_f(rank, dims_traj, filespace_s, hdfier)
+  call h5screate_simple_f(rank, dims_traj, filespace_R, hdfier)
+  call h5screate_simple_f(rank, dims_traj, filespace_Z, hdfier)
+
+  ! Create the dataset with default properties.
+  call h5dcreate_f(grpPoincare, "t", H5T_NATIVE_DOUBLE, filespace_t, dset_id_t, hdfier)
+  call h5dcreate_f(grpPoincare, "s", H5T_NATIVE_DOUBLE, filespace_s, dset_id_s, hdfier)
+  call h5dcreate_f(grpPoincare, "R", H5T_NATIVE_DOUBLE, filespace_R, dset_id_R, hdfier)
+  call h5dcreate_f(grpPoincare, "Z", H5T_NATIVE_DOUBLE, filespace_Z, dset_id_Z, hdfier)
+
+  ! filespaces can be closed as soon as datasets are created
+  call h5sclose_f(filespace_t, hdfier)
+  call h5sclose_f(filespace_s, hdfier)
+  call h5sclose_f(filespace_R, hdfier)
+  call h5sclose_f(filespace_Z, hdfier)
+
+  ! Select hyperslab in the file.
+  call h5dget_space_f(dset_id_t, filespace_t, hdfier)
+  call h5dget_space_f(dset_id_s, filespace_s, hdfier)
+  call h5dget_space_f(dset_id_R, filespace_R, hdfier)
+  call h5dget_space_f(dset_id_Z, filespace_Z, hdfier)
+
+  ! Each process defines dataset in memory and writes it to the hyperslab in the file.
+  call h5screate_simple_f(rank, length, memspace_t, hdfier)
+  call h5screate_simple_f(rank, length, memspace_s, hdfier)
+  call h5screate_simple_f(rank, length, memspace_R, hdfier)
+  call h5screate_simple_f(rank, length, memspace_Z, hdfier)
+
+end subroutine init_poincare_output
+
+! write a hyperslab of Poincare data
+subroutine write_poincare( data, offset )
+
+  use allglobal, only : Nz
+  use inputlist, only : nPpts
+
+  LOCALS
+
+  integer, intent(in) :: offset
+  real, intent(in) :: data(:,:,:)
+  integer(hsize_t), dimension(3) :: length
+  integer(HSIZE_T), dimension(2) :: dims_singleTraj ! dimensions of single trajectory data
+
+  dims_singleTraj = (/ Nz, nPpts /)
+  length          = (/ Nz, nPpts, 1 /)
+
+  call h5sselect_hyperslab_f (filespace_t, H5S_SELECT_SET_F, int((/0,0,offset/),HSSIZE_T), length, hdfier)
+  call h5dwrite_f(dset_id_t, H5T_IEEE_F64LE, data(1,0:Nz-1,1:nPpts), dims_singleTraj, hdfier, &
+  &               file_space_id=filespace_t, mem_space_id=memspace_t )
+
+  call h5sselect_hyperslab_f (filespace_s, H5S_SELECT_SET_F, int((/0,0,offset/),HSSIZE_T), length, hdfier)
+  call h5dwrite_f(dset_id_s, H5T_IEEE_F64LE, data(2,0:Nz-1,1:nPpts), dims_singleTraj, hdfier, &
+  &               file_space_id=filespace_s, mem_space_id=memspace_s )
+
+  call h5sselect_hyperslab_f (filespace_R, H5S_SELECT_SET_F, int((/0,0,offset/),HSSIZE_T), length, hdfier)
+  call h5dwrite_f(dset_id_R, H5T_IEEE_F64LE, data(3,0:Nz-1,1:nPpts), dims_singleTraj, hdfier, &
+  &               file_space_id=filespace_R, mem_space_id=memspace_R )
+
+  call h5sselect_hyperslab_f (filespace_Z, H5S_SELECT_SET_F, int((/0,0,offset/),HSSIZE_T), length, hdfier)
+  call h5dwrite_f(dset_id_Z, H5T_IEEE_F64LE, data(4,0:Nz-1,1:nPpts), dims_singleTraj, hdfier, &
+  &               file_space_id=filespace_Z, mem_space_id=memspace_Z )
+
+end subroutine write_poincare
+
+! finalize Poincare output
+subroutine finalize_poincare
+
+  LOCALS
+
+  ! -----
+  ! \t
+  ! -----
+
+  ! Close dataspaces.
+  call h5sclose_f(filespace_t, hdfier)
+  FATAL( pp00aa, hdfier.lt.0, h5sclose_f returned an error while closing filespace )
+
+  call h5sclose_f(memspace_t, hdfier)
+  FATAL( pp00aa, hdfier.lt.0, h5sclose_f returned an error while closing memspace )
+
+  ! Close the dataset
+  call h5dclose_f(dset_id_t, hdfier)
+  FATAL( pp00aa, hdfier.lt.0, h5dclose_f returned an error )
+
+  ! -----
+  ! s
+  ! -----
+
+  ! Close dataspaces.
+  call h5sclose_f(filespace_s, hdfier)
+  FATAL( pp00aa, hdfier.lt.0, h5sclose_f returned an error while closing filespace )
+
+  call h5sclose_f(memspace_s, hdfier)
+  FATAL( pp00aa, hdfier.lt.0, h5sclose_f returned an error while closing memspace )
+
+  ! Close the dataset
+  call h5dclose_f(dset_id_s, hdfier)
+  FATAL( pp00aa, hdfier.lt.0, h5dclose_f returned an error )
+
+  ! -----
+  ! R
+  ! -----
+
+  ! Close dataspaces.
+  call h5sclose_f(filespace_R, hdfier)
+  FATAL( pp00aa, hdfier.lt.0, h5sclose_f returned an error while closing filespace )
+
+  call h5sclose_f(memspace_R, hdfier)
+  FATAL( pp00aa, hdfier.lt.0, h5sclose_f returned an error while closing memspace )
+
+  ! Close the dataset
+  call h5dclose_f(dset_id_R, hdfier)
+  FATAL( pp00aa, hdfier.lt.0, h5dclose_f returned an error )
+
+  ! -----
+  ! Z
+  ! -----
+
+  ! Close dataspaces.
+  call h5sclose_f(filespace_Z, hdfier)
+  FATAL( pp00aa, hdfier.lt.0, h5sclose_f returned an error while closing filespace )
+
+  call h5sclose_f(memspace_Z, hdfier)
+  FATAL( pp00aa, hdfier.lt.0, h5sclose_f returned an error while closing memspace )
+
+  ! Close the dataset
+  call h5dclose_f(dset_id_Z, hdfier)
+  FATAL( pp00aa, hdfier.lt.0, h5dclose_f returned an error )
+
+  HCLOSEGRP( grpPoincare )
+
+end subroutine finalize_poincare
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 ! final output

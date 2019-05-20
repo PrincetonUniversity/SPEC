@@ -72,7 +72,8 @@ program xspech
                         iBns, iBnc, iVns, iVnc, &
                         Ate, Aze, Ato, Azo, & ! only required for debugging; 09 Mar 17;
                         nfreeboundaryiterations, &
-                        beltramierror
+                        beltramierror, &
+                        successfulTrajectories ! for Poincare tracing: allow to exclude failed trajectories
 
    use sphdf5 ! write _all_ output quantities into a _single_ HDF5 file
 
@@ -88,6 +89,7 @@ program xspech
   REAL                 :: rflag, lastcpu, bnserr, lRwc, lRws, lZwc, lZws, lItor, lGpol, lgBc, lgBs
   REAL,    allocatable :: position(:), gradient(:)
   CHARACTER            :: pack
+  INTEGER              :: lnPtrj, numTrajTotal
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -616,27 +618,71 @@ program xspech
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
+  ! determine total number of (possibly successful) Poincare trajectories
+  numTrajTotal = 0
+  do vvol = 1, Mvol
+
+   LREGION(vvol) ! sets Lcoordinatesingularity and Lplasmaregion ;
+
+   ! number of trajectories
+   if( nPtrj(vvol).ge.0 ) then ; lnPtrj =    nPtrj(vvol) ! selected Poincare resolution;
+   else                        ; lnPtrj = 2 * Lrad(vvol) ! adapted  Poincare resolution;
+   endif
+
+   ! all but innermost volume have one trajectory more than specified by nPtrj
+   if( .not.Lcoordinatesingularity ) then ; lnPtrj = lnPtrj + 1
+   endif
+
+   numTrajTotal = numTrajTotal + lnPtrj
+  enddo
+
+  if( nPpts .gt.0 ) then
+   ! Parallel HDF5 needs to have the file structure determined before starting to write anything from different threads.
+   ! To "exclude" failed trajectories, flag them as not successful in the array successfulTrajectories.
+   SALLOCATE( successfulTrajectories, (numTrajTotal), .false. )
+  endif
+  WCALL( xspech, init_poincare_output, (numTrajTotal) )
+
+  numTrajTotal = 0
   do vvol = 1, Mvol
 
    LREGION(vvol)
    
-   if( myid.ne.modulo(vvol-1,ncpu) ) cycle ! the following is in parallel; 20 Jun 14;
+   if( myid.eq.modulo(vvol-1,ncpu) ) then ! the following is in parallel; 20 Jun 14;
    
-   if( .not.ImagneticOK(vvol) ) then ; cput = GETTIME ; write(ounit,1002) cput-cpus ; write(ounit,1002) cput-cpus, myid, vvol, ImagneticOK(vvol) ; cycle
-   endif
-   
-   WCALL( xspech, sc00aa, ( vvol, Ntz                  ) ) ! compute covariant field (singular currents);
+    if( .not.ImagneticOK(vvol) ) then ; cput = GETTIME ; write(ounit,1002) cput-cpus ; write(ounit,1002) cput-cpus, myid, vvol, ImagneticOK(vvol) ; cycle
+    endif
 
-   if( Lcheck.eq.1 ) then
-    WCALL( xspech, jo00aa, ( vvol, Ntz, Iquad(vvol), mn ) )
+    WCALL( xspech, sc00aa, ( vvol, Ntz                  ) ) ! compute covariant field (singular currents);
+
+    if( Lcheck.eq.1 ) then
+     WCALL( xspech, jo00aa, ( vvol, Ntz, Iquad(vvol), mn ) )
+    endif
+
+    if( nPpts .gt.0 ) then
+     WCALL( xspech, pp00aa, ( vvol, numTrajTotal         ) ) ! Poincare plots in each volume
+    endif
+   endif ! myid.eq.modulo(vvol-1,ncpu)
+
+   ! number of trajectories
+   if( nPtrj(vvol).ge.0 ) then ; lnPtrj =    nPtrj(vvol) ! selected Poincare resolution;
+   else                        ; lnPtrj = 2 * Lrad(vvol) ! adapted  Poincare resolution;
    endif
 
-   if( nPpts .gt.0 ) then
-    WCALL( xspech, pp00aa, ( vvol                       ) ) ! Poincare plots in each volume
+   ! all but innermost volume have one trajectory more than specified by nPtrj
+   if( .not.Lcoordinatesingularity ) then ; lnPtrj = lnPtrj + 1
    endif
+
+   numTrajTotal = numTrajTotal + lnPtrj
 
   enddo ! end of do vvol = 1, Mvol; ! end of parallel diagnostics loop; 03 Apr 13;
   
+  if( nPpts .gt.0 ) then
+   HWRITELV( grpPoincare, numTrajTotal , successfulTrajectories, successfulTrajectories )
+   deallocate( successfulTrajectories )
+  endif
+  WCALL( xspech, finalize_poincare )
+
 1002 format("xspech : ",f10.2," :":" myid=",i3," ; vvol=",i3," ; IBeltrami="L2" ; construction of Beltrami field failed ;")
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
