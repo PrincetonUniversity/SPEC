@@ -65,11 +65,8 @@ BEGIN(dfp100)
 	!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 	if( .not.LocalConstraint ) then
-		if( myid .EQ. 0 ) then
-	 	  IsMyVolumeValue = 1 ! for now, execution only by master CPU in case of global constraints
-    else
-		  call IsMyVolume(vvol)
-		endif
+		 
+		call IsMyVolume(vvol)
 
 		if( IsMyVolumeValue .EQ. 0 ) then
 			goto 5000

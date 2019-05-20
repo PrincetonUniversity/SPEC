@@ -124,7 +124,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 			Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
                         mn, im, in, &
                         dpflux, sweight, &
-                        Bemn, Bomn, Iomn, Iemn, Somn, Semn, &
+                        Bemn, Bomn, Iomn, Iemn, Somn, Semn, Pomn, Pemn, &
                         BBe, IIo, BBo, IIe, & ! these are just used for screen diagnostics;
                         LGdof, dBdX, &
                         Ate, Aze, Ato, Azo, & ! only required for broadcasting
@@ -160,7 +160,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
   DOUBLE PRECISION     :: diag(1:Mvol-1), qtf(1:Mvol-1), wa1(1:Mvol-1), wa2(1:Mvol-1), wa3(1:Mvol-1), wa4(1:mvol-1)
   DOUBLE PRECISION, allocatable :: fjac(:, :), r(:) 
 
-  INTEGER	       :: status(MPI_STATUS_SIZE)
+  INTEGER	       :: status(MPI_STATUS_SIZE), request_recv, request_send, cpu_send
   INTEGER              :: id
   INTEGER              :: iflag
 
@@ -326,6 +326,23 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 
     endif
 
+! Gather all ImagneticOK
+		do vvol=1, Mvol 
+! Determine which thread has info on which volume
+			call WhichCpuID(vvol, cpu_send) 
+			
+! For now, use MPI_RECV and MPI_SEND. TODO: change implementationo of ImagneticOK to allow the use 
+! of MPI_GATHER
+			if( cpu_send.NE.0	) then
+				if( myid.EQ.0 ) then
+					call MPI_RECV(ImagneticOK(vvol), 1, MPI_LOGICAL, cpu_send, vvol, MPI_COMM_WORLD, status, ierr)
+				else if( myid.EQ.cpu_send ) then
+					call MPI_SEND(ImagneticOK(vvol), 1, MPI_LOGICAL, 				0, vvol, MPI_COMM_WORLD, ierr)
+				endif
+			endif
+
+		enddo
+
     call MPI_Bcast( dpflux, Mvol, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
     call MPI_Bcast( ImagneticOK, Mvol, MPI_LOGICAL, 0, MPI_COMM_WORLD, ierr)
     
@@ -335,13 +352,14 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
         NN = NAdof(vvol)
         Nbc = NN * 4
         call MPI_Bcast( solution(vvol)%mat(1:NN, -1:2), Nbc, MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_WORLD, ierr)
+
 	
 				RlBCAST( diotadxup(0:1, -1:2, vvol), 8, cpu_id)
         RlBCAST( dItGpdxtp(0:1, -1:2, vvol), 8, cpu_id)
   	
 				do ii = 1, mn  
    	  		RlBCAST( Ate(vvol,0,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
-   	  		RlBCAST( Aze(vvol,0,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
+   	  		RlBCAST( Aze(vvol,0,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)  
   			enddo
 
         if( NOTstellsym ) then
@@ -354,9 +372,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 
 
     do vvol = 1, Mvol
-!	llmodnp = modulo(vvol-1,ncpu)
-!	LlBCAST( ImagneticOK(vvol), 1, llmodnp )
-	WCALL(dforce, dfp200, ( LcomputeDerivatives, vvol) )
+			WCALL(dforce, dfp200, ( LcomputeDerivatives, vvol) )
     enddo
 
 #ifdef DEBUG
