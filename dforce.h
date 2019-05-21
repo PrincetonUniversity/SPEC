@@ -142,7 +142,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
                         DDzzcc, DDzzcs, DDzzsc, DDzzss, &
                         LocalConstraint, xoffset, &
 												solution, &
-												WhichCpuID
+												WhichCpuID, IPDt
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -345,6 +345,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 
     call MPI_Bcast( dpflux, Mvol, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
     call MPI_Bcast( ImagneticOK, Mvol, MPI_LOGICAL, 0, MPI_COMM_WORLD, ierr)
+    call MPI_Bcast( IPDt(1:Mvol-1), Mvol-1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
     
     do vvol = 1, Mvol
 				call WhichCpuID(vvol, cpu_id)

@@ -101,8 +101,6 @@ BEGIN(dfp100)
 		select case (Lconstraint)
 
 			case( 3 )
-				! Compute IPDt on each interface. Eventually need to put the do
-				! loop inside the surfcurent subroutine... TODO
 				do ii = 1, Mvol-1
 				
 					call WhichCpuID(ii  , cpu_send_one)
@@ -127,7 +125,6 @@ BEGIN(dfp100)
 					if( myid.EQ.cpu_send_one ) then
 						call MPI_WAIT(request1, status, ierr)
 					endif
-
 					if( myid.EQ.cpu_send_two ) then
 						call MPI_WAIT(request2, status, ierr)
 					endif
