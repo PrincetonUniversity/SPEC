@@ -110,7 +110,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
                         epsilon, &
                         Lconstraint, Lcheck, &
                         Lextrap, &
-			mupftol
+												mupftol
   
   use cputiming, only : Tdforce
   
@@ -121,10 +121,10 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
                         ImagneticOK, &
                         Energy, ForceErr, &
                         YESstellsym, NOTstellsym, &
-			Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
+												Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
                         mn, im, in, &
                         dpflux, sweight, &
-                        Bemn, Bomn, Iomn, Iemn, Somn, Semn, Pomn, Pemn, &
+                        Bemn, Bomn, Iomn, Iemn, Somn, Semn, &
                         BBe, IIo, BBo, IIe, & ! these are just used for screen diagnostics;
                         LGdof, dBdX, &
                         Ate, Aze, Ato, Azo, & ! only required for broadcasting
@@ -142,7 +142,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
                         DDzzcc, DDzzcs, DDzzsc, DDzzss, &
                         LocalConstraint, xoffset, &
 												solution, &
-												WhichCpuID, IPDt
+								      	IsMyVolume, IsMyVolumeValue, WhichCpuID
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -160,7 +160,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
   DOUBLE PRECISION     :: diag(1:Mvol-1), qtf(1:Mvol-1), wa1(1:Mvol-1), wa2(1:Mvol-1), wa3(1:Mvol-1), wa4(1:mvol-1)
   DOUBLE PRECISION, allocatable :: fjac(:, :), r(:) 
 
-  INTEGER	       :: status(MPI_STATUS_SIZE), request_recv, request_send, cpu_send
+  INTEGER	       			 :: status(MPI_STATUS_SIZE), request_recv, request_send, cpu_send
   INTEGER              :: id
   INTEGER              :: iflag
 
@@ -282,7 +282,16 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 
 ! SOLVE FIELD IN AGREEMENT WITH CONSTRAINTS AND GEOMETRY
 ! ------------------------------------------------------
+! Two different cases, both with their own parallelization. 
+! If local constraint, each process iterates on the local poloidal flux and Lagrange multiplier
+! to match the lcoal constraint. Then all information is broadcasted by the master thread
+! If global constraint, only the master thread iterates on all Lagrange multipliers and poloidal
+! fluxes. Over threads are stuck in an infinite loop where they help the master thread compute
+! each iteration. At the last iteration, master thread send IconstraintOK=.TRUE. to all threads, and
+! they exit their loops.
 
+
+! Local constraint case - simply call dfp100 and then dfp200
   if( LocalConstraint ) then
 
 	Ndofgl = 0; Fvec(1:Mvol-1) = 0; iflag = 0;
@@ -294,12 +303,11 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 	! Get force imbalance and jacobian
 	do vvol = 1, Mvol
 		WCALL(dforce, dfp200, ( LcomputeDerivatives, vvol) )
-	enddo ! end of do vvol = 1, Mvol (this is the parallelization loop);
+	enddo ! end of do vvol = 1, Mvol
 
-
-
-
-  else  !   If global constraint, start the minimization of the constraint using hybrd1
+! --------------------------------------------------------------------------------------------------
+! Global constraint - call the master thread calls hybrd1 on dfp100, others call dfp100_loop.
+  else
 
 		Ndofgl = Mvol-1; 
     if( myid.eq. 0) then
@@ -311,6 +319,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 		  SALLOCATE(fjac, (1:ldfjac,1:Mvol-1), 0)
 		  SALLOCATE(r, (1:lr), 0)
 
+! Hybrid-Powell method, iterates on all poloidal fluxes to match the global constraint
 		  WCALL( dforce,  hybrd1, (dfp100, Ndofgl, Xdof(1:Ndofgl), Fvec(1:Ndofgl), mupftol, maxfev, ml, muhybr, epsfcn, diag(1:Ndofgl), mode, &
 					  factor, nprint, ihybrd1, nfev, fjac(1:Ndofgl,1:Ndofgl), ldfjac, r(1:lr), lr, qtf(1:Ndofgl), wa1(1:Ndofgl), &
 					  wa2(1:Ndofgl), wa3(1:Ndofgl), wa4(1:Ndofgl)) ) 
@@ -322,9 +331,13 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 
 		else
 
+! Slave threads call loop_dfp100 and help the master thread computation at each iteration.
 			call loop_dfp100(Ndofgl, Fvec, iflag)
 
     endif
+
+! --------------------------------------------------------------------------------------------------
+!																				MPI COMMUNICATIONS
 
 ! Gather all ImagneticOK
 		do vvol=1, Mvol 
@@ -343,24 +356,28 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 
 		enddo
 
+! Now master thread broadcast the poloidal flux matching the constraint. It was obtain by iteration
+! via hybrd1
     call MPI_Bcast( dpflux, Mvol, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
+
+! And broadcast as well the ImagneticOK flag - this determines if the computation was succesful in
+! each volume. If not, this geometry iteration goes to the trash...
     call MPI_Bcast( ImagneticOK, Mvol, MPI_LOGICAL, 0, MPI_COMM_WORLD, ierr)
-    call MPI_Bcast( IPDt(1:Mvol-1), Mvol-1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
     
+! And finally broadcast the field information to all threads from the thread which did the computation
     do vvol = 1, Mvol
 				call WhichCpuID(vvol, cpu_id)
 
         NN = NAdof(vvol)
         Nbc = NN * 4
         call MPI_Bcast( solution(vvol)%mat(1:NN, -1:2), Nbc, MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_WORLD, ierr)
-
 	
 				RlBCAST( diotadxup(0:1, -1:2, vvol), 8, cpu_id)
         RlBCAST( dItGpdxtp(0:1, -1:2, vvol), 8, cpu_id)
   	
 				do ii = 1, mn  
    	  		RlBCAST( Ate(vvol,0,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
-   	  		RlBCAST( Aze(vvol,0,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)  
+   	  		RlBCAST( Aze(vvol,0,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
   			enddo
 
         if( NOTstellsym ) then
@@ -371,7 +388,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 				endif
     enddo
 
-
+! --------------------------------------------------------------------------------------------------
+! Now that all the communication is over, compute the local force and its derivatives
     do vvol = 1, Mvol
 			WCALL(dforce, dfp200, ( LcomputeDerivatives, vvol) )
     enddo
@@ -690,35 +708,35 @@ end subroutine dforce
 
 
 subroutine loop_dfp100(Ndofgl, Fvec, iflag)
-  
-  use fileunits, only : ounit
-  
-  use inputlist, only : Wmacros, Wdforce
 
-	use cputiming, only 	:  Tdforce
-	use allglobal, only 	:  Mvol, &
-											 		 ncpu, myid, cpus, IconstraintOK
+! LOOP_DFP100 - infinite loop for slaves helping the master thread iterating to match global 
+! constraint
+  
+  use fileunits, only : ounit																! Unit identifier for write
+  
+  use inputlist, only : Wmacros, Wdforce										! Flags for debugging
+
+	use cputiming, only 	:  Tdforce													! Timer
+	use allglobal, only 	:  Mvol, &													! Total number of volume + vacuum
+											 		 IconstraintOK										! Flag to exit loop
 
  LOCALS
 !------
 
-	INTEGER              								:: Ndofgl, iflag
-	INTEGER, dimension(MPI_STATUS_SIZE) :: status
-
-	DOUBLE PRECISION     								:: Fvec(1:Mvol-1), x(1:Mvol-1)
-
-	LOGICAL															:: icontinue
-
-	EXTERNAL														:: dfp100
+	INTEGER              								:: Ndofgl, iflag			! Input parameters to dfp100
+	DOUBLE PRECISION     								:: Fvec(1:Mvol-1), x(1:Mvol-1) ! Input parameters to dfp100
+	EXTERNAL														:: dfp100							! Field solver
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-	! Initialize
+! Initialize - for now the constraint is not matched
 	IconstraintOK = .false.
 
+! Enter the infinit loop. Master thread broadcasts IconstraintOK at each iteration - the value is
+! .TRUE. when the constraint is matched
 	do while (.not.IconstraintOK)
 
-    ! Compute solution in every associated volumes
+! Compute solution in every associated volumes
 		WCALL(dforce, dfp100, (Ndofgl, x, Fvec, iflag) )
 
 	end do !matches do while IconstraintOK
