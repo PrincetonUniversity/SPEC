@@ -143,7 +143,7 @@ program xspech
 
 !latex \item The group \verb+iterations+ is created in the output file.
 !latex       This group contains the interface geometry at each iteration, which is useful for constructing movies illustrating the convergence.
-!latex       The data structure of the compond datatype used in this group is:
+!latex       The data structure in use is an unlimited array of the following compound datatype:
 !latex \begin{verbatim} DATATYPE  H5T_COMPOUND {
 !latex       H5T_NATIVE_INTEGER "nDcalls";
 !latex       H5T_NATIVE_DOUBLE "Energy";

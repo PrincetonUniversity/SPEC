@@ -54,6 +54,8 @@ subroutine ra00aa( writeorread )
   
   use allglobal, only : myid, ncpu, cpus, Mvol, mn, im, in, Ate, Aze, Ato, Azo
   
+  use sphdf5,    only : write_vector_potential
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   LOCALS
@@ -62,15 +64,17 @@ subroutine ra00aa( writeorread )
   
   LOGICAL               :: exist                                
   
-  INTEGER               :: vvol, oldMvol, oldMpol, oldNtor, oldmn, oldNfp, oldLrad, ii, jj, minLrad, llmodnp, ideriv
+  INTEGER               :: vvol, oldMvol, oldMpol, oldNtor, oldmn, oldNfp, oldLrad, ii, jj, minLrad, llmodnp, ideriv, sumLrad
   INTEGER, allocatable  :: oldim(:), oldin(:)
   REAL   , allocatable  :: oldAte(:), oldAze(:), oldAto(:), oldAzo(:)
+  REAL   , allocatable  :: allAte(:,:), allAze(:,:), allAto(:,:), allAzo(:,:)
+
   
   BEGIN(ra00aa)
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  ideriv = 0
+  ideriv = 0 ! write vector potential and not derivative (?)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -80,40 +84,52 @@ subroutine ra00aa( writeorread )
    
   case( 'W' ) ! write vector potential harmonics to file;
    
-   if( myid.eq.0 ) then
-    
-    open(aunit, file="."//trim(ext)//".sp.A", status="replace", form="unformatted" )
-    
-    write(aunit) Mvol, Mpol, Ntor, mn, Nfp
-    write(aunit) im(1:mn)
-    write(aunit) in(1:mn)
-    
-    do vvol = 1, Mvol
-     
-     write(aunit) Lrad(vvol) ! radial resolution depends on volume; 26 Feb 13;
-     
-     do ii = 1, mn ! loop over Fourier harmonics;
-      
 #ifdef DEBUG
+   ! check if all data to be written is allocated properly
+   if( myid.eq.0 ) then
+    do vvol = 1, Mvol
+     do ii = 1, mn ! loop over Fourier harmonics;
       FATAL( ra00aa, .not.allocated(Ate(vvol,ideriv,ii)%s), error )
       FATAL( ra00aa, .not.allocated(Aze(vvol,ideriv,ii)%s), error )
       FATAL( ra00aa, .not.allocated(Ato(vvol,ideriv,ii)%s), error )
       FATAL( ra00aa, .not.allocated(Azo(vvol,ideriv,ii)%s), error )
       FATAL( ra00aa, Lrad(vvol).le.0, error )
+     enddo ! end of do ii;  6 Feb 13;
+    enddo ! end of do vvol;  6 Feb 13;
+   endif ! end of if( myid.eq.0 ) ;  6 Feb 13;
 #endif
 
-      write(aunit) Ate(vvol,ideriv,ii)%s(0:Lrad(vvol))
-      write(aunit) Aze(vvol,ideriv,ii)%s(0:Lrad(vvol))
-      write(aunit) Ato(vvol,ideriv,ii)%s(0:Lrad(vvol))
-      write(aunit) Azo(vvol,ideriv,ii)%s(0:Lrad(vvol))
-      
-     enddo ! end of do ii;  6 Feb 13;
-     
-    enddo ! end of do vvol;  6 Feb 13;
-    
-    close(aunit)
-    
-   endif ! end of if( myid.eq.0 ) ;  6 Feb 13;
+   ! determine total radial dimension: sum(Lrad(1:Mvol)+1)
+   sumLrad = sum(Lrad(1:Mvol)+1)
+
+   allocate(allAte(1:sumLrad,1:mn))
+   allocate(allAze(1:sumLrad,1:mn))
+   allocate(allAto(1:sumLrad,1:mn))
+   allocate(allAzo(1:sumLrad,1:mn))
+
+   ! collect data in 2D arrays which can be written more conveniently
+   sumLrad = 1
+   do vvol = 1, Mvol
+    do ii = 1, mn ! loop over Fourier harmonics;
+     allAte(sumLrad:sumLrad+Lrad(vvol),ii) = Ate(vvol,ideriv,ii)%s(0:Lrad(vvol))
+     allAze(sumLrad:sumLrad+Lrad(vvol),ii) = Aze(vvol,ideriv,ii)%s(0:Lrad(vvol))
+     allAto(sumLrad:sumLrad+Lrad(vvol),ii) = Ato(vvol,ideriv,ii)%s(0:Lrad(vvol))
+     allAzo(sumLrad:sumLrad+Lrad(vvol),ii) = Azo(vvol,ideriv,ii)%s(0:Lrad(vvol))
+    enddo ! end of do ii;  6 Feb 13;
+    sumLrad = sumLrad+Lrad(vvol)+1
+   enddo ! end of do vvol;  6 Feb 13;
+
+   ! determine total radial dimension: sum(Lrad(1:Mvol)+1)
+   sumLrad = sum(Lrad(1:Mvol)+1)
+
+   ! HDF5 calls have to be done from all CPUs when using the collective API
+   WCALL( ra00aa, write_vector_potential, (sumLrad, allAte, allAze, allAto, allAzo) )
+
+   ! clean up after yourself
+   deallocate(allAte)
+   deallocate(allAze)
+   deallocate(allAto)
+   deallocate(allAzo)
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    

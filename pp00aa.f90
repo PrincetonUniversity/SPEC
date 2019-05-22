@@ -105,7 +105,6 @@ subroutine pp00aa( lvol, numTrajTotal )
   INTEGER, allocatable :: utflag(:)
   REAL                 :: sti(1:2), ltransform(1:2)
   REAL, allocatable    :: data(:,:,:), fiota(:,:)
-  CHARACTER            :: svol*4 ! perhaps this should be global; 11 Aug 13;
   
   BEGIN(pp00aa)
   
@@ -119,7 +118,7 @@ subroutine pp00aa( lvol, numTrajTotal )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  ivol = lvol ; write(svol,'(i4.4)') lvol
+  ivol = lvol
 
 1001 format("pp00aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; odetol=",es8.1," ; nPpts=",i8," ; lnPtrj=",i3," ;")
   
@@ -163,7 +162,7 @@ subroutine pp00aa( lvol, numTrajTotal )
     endif
    endif
    
-   ! write all trajectories, but only mark successfully followed trajectories with success.eq.1; 28 Jan 13;
+   ! write all trajectories, but only mark successfully followed trajectories with success.eq.1; 21 May 19;
    WCALL( pp00aa, write_poincare, (data, numTrajTotal+itrj-ioff, utflag(itrj)) )
 
   enddo ! end of do itrj; 25 Jan 13;
@@ -176,7 +175,8 @@ subroutine pp00aa( lvol, numTrajTotal )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  WCALL( pp00aa, write_transform, (numTrajTotal, lnPtrj-ioff+1, lvol, diotadxup(0:1,0,lvol), fiota(ioff:lnPtrj,1:2)) )
+  ! write rotational transform data to output file
+  WCALL( pp00aa, write_transform, (numTrajTotal, lnPtrj-ioff+1, lvol, diotadxup(0:1,0,lvol), fiota(ioff:lnPtrj,1:2)) ) ! 21 May 19;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

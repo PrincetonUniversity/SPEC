@@ -665,6 +665,26 @@ subroutine write_transform( offset, length, lvol, diotadxup, fiota )
 
 end subroutine write_transform
 
+subroutine write_vector_potential(sumLrad, allAte, allAze, allAto, allAzo)
+
+  use allglobal, only : mn
+
+  LOCALS
+  integer, intent(in) :: sumLrad
+  REAL, intent(in)    :: allAte(:,:), allAze(:,:), allAto(:,:), allAzo(:,:)
+  integer(hid_t)      :: grpVectorPotential
+
+  HDEFGRP( file_id, vector_potential, grpVectorPotential )
+
+  HWRITERA( grpVectorPotential, sumLrad, mn, Ate, allAte(1:sumLrad,1:mn) )
+  HWRITERA( grpVectorPotential, sumLrad, mn, Aze, allAze(1:sumLrad,1:mn) )
+  HWRITERA( grpVectorPotential, sumLrad, mn, Ato, allAto(1:sumLrad,1:mn) )
+  HWRITERA( grpVectorPotential, sumLrad, mn, Azo, allAzo(1:sumLrad,1:mn) )
+
+  HCLOSEGRP( grpVectorPotential )
+
+end subroutine write_vector_potential
+
 ! finalize Poincare output
 subroutine finalize_flt_output
 
