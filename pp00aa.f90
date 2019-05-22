@@ -82,7 +82,7 @@ subroutine pp00aa( lvol, numTrajTotal )
   
   use numerical, only :
   
-  use fileunits, only : ounit, lunit
+  use fileunits, only : ounit
   
   use inputlist, only : Wmacros, Wpp00aa, Nvol, Lrad, ext, odetol, nPpts, nPtrj, Lconstraint, iota, oita
   

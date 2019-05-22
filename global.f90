@@ -88,7 +88,7 @@ module fileunits
   INTEGER :: dunit = 12 ! derivative matrix; used in newton:.ext.GF; 
   INTEGER :: hunit = 14 ! eigenvalues of Hessian; under re-construction; 
   INTEGER :: munit = 14 ! matrix elements of Hessian; 
-  INTEGER :: lunit = 20 ! local unit; used in lunit+myid: pp00aa:.ext.poincare,.ext.transform; 
+  INTEGER :: lunit = 20 ! local unit; used in lunit+myid: pp00aa:.ext.poincare,.ext.transform;
   INTEGER :: vunit = 15 ! for examination of adaptive quadrature; used in casing:.ext.vcint; 
  !INTEGER :: funit = 16 ! force iterations;
 

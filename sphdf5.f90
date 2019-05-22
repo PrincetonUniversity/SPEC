@@ -653,6 +653,7 @@ subroutine write_transform( offset, length, lvol, diotadxup, fiota )
   call h5dwrite_f(dset_id_diotadxup, H5T_NATIVE_DOUBLE, diotadxup, int((/2,1/),HSSIZE_T), hdfier, &
   &               file_space_id=filespace_diotadxup, mem_space_id=memspace_diotadxup )
 
+  ! length of fiota piece to write here may change, so open and close memspace each time a new slab is written
   call h5screate_simple_f(rankT, int((/length,2/),HSIZE_T), memspace_fiota    , hdfier)
 
   call h5sselect_hyperslab_f (filespace_fiota, H5S_SELECT_SET_F, int((/offset,0/),HSSIZE_T), int((/length,2/),HSSIZE_T), hdfier)
