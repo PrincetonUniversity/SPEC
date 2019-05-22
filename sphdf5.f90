@@ -320,8 +320,8 @@ subroutine init_convergence_output
   ! declare array parts
   call h5tarray_create_f(H5T_NATIVE_DOUBLE, 2, int((/mn, Mvol+1/),hsize_t), iRZbscArray_id, hdfier) ! create array datatypes for i{R,Z}b{c,s}
   call h5tget_size_f(iRZbscArray_id, irbc_size, hdfier)
-  call h5tget_size_f(H5T_NATIVE_INTEGER, type_size_i, hdfier)                            ! size of "iteration" field
-  call h5tget_size_f(H5T_NATIVE_DOUBLE,  type_size_d, hdfier)                            ! size of "errorValue" field
+  call h5tget_size_f(H5T_NATIVE_INTEGER, type_size_i, hdfier)                            ! size of an integer field
+  call h5tget_size_f(H5T_NATIVE_DOUBLE,  type_size_d, hdfier)                            ! size of a   double field
   iteration_dtype_size = 2*type_size_i + 2*type_size_d + 4*irbc_size                     ! wflag, nDcalls, Energy, ForceErr, i{R,Z}b{c,s}
 
   call h5tcreate_f(H5T_COMPOUND_F, iteration_dtype_size, iteration_dtype_id, hdfier)     ! create compound datatype

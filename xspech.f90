@@ -122,6 +122,7 @@ program xspech
 !latex \item The input namelists and geometry are read in via a call to \link{global}\verb+:readin+.
 !latex       A full description of the required input is given in \link{global}.
 !latex \item Most internal variables, global memory etc., are allocated in \link{preset}.
+!latex \item All quantities in the input file are mirrored into the output file's group \type{input}.
 !latex \end{enumerate} 
 
   WCALL( xspech, readin ) ! sets Rscale, Mvol; 03 Nov 16;
@@ -132,29 +133,27 @@ program xspech
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsection{preparing output file \type{.ext.sp.its}} 
-
-!latex \begin{enumerate}
-
-!latex \item The file \verb+.ext.sp.its+ is created.
-!latex       This file contains the interface geometry at each iteration, which is useful for constructing movies illustrating the convergence.
-!latex       The format of this file is:
-!latex \begin{verbatim} open(zunit,file="."//trim(ext)//".sp.its",status="unknown",form="unformatted")
-!latex write(zunit) mn, Mvol, Nfp ! integer; 
-!latex write(zunit) im(1:mn) ! integer;
-!latex write(zunit) in(1:mn) ! integer;
-!latex ! begin do loop over iterations;
-!latex write(zunit) wflag, iflag, Energy, rflag ! written in global.h:wrtend; perhaps redundant;
-!latex write(zunit) iRbc(1:mn,0:Mvol) ! real;
-!latex write(zunit) iZbs(1:mn,0:Mvol) ! real;
-!latex write(zunit) iRbs(1:mn,0:Mvol) ! real;
-!latex write(zunit) iZbc(1:mn,0:Mvol) ! real;
-!latex !  end  do loop over iterations; \end{verbatim}
-!latex \end{enumerate} 
-
   if ( myid .eq. 0 ) then ! save restart file;
     WCALL( xspech, wrtend ) ! write restart file ! 17 May 19
   endif
+
+!latex \subsection{preparing output file group \type{iterations}}
+
+!latex \begin{enumerate}
+
+!latex \item The group \verb+iterations+ is created in the output file.
+!latex       This group contains the interface geometry at each iteration, which is useful for constructing movies illustrating the convergence.
+!latex       The data structure of the compond datatype used in this group is:
+!latex \begin{verbatim} DATATYPE  H5T_COMPOUND {
+!latex       H5T_NATIVE_INTEGER "nDcalls";
+!latex       H5T_NATIVE_DOUBLE "Energy";
+!latex       H5T_NATIVE_DOUBLE "ForceErr";
+!latex       H5T_ARRAY { [Mvol+1][mn] H5T_NATIVE_DOUBLE } "iRbc";
+!latex       H5T_ARRAY { [Mvol+1][mn] H5T_NATIVE_DOUBLE } "iZbs";
+!latex       H5T_ARRAY { [Mvol+1][mn] H5T_NATIVE_DOUBLE } "iRbs";
+!latex       H5T_ARRAY { [Mvol+1][mn] H5T_NATIVE_DOUBLE } "iZbc";
+!latex } \end{verbatim}
+!latex \end{enumerate} 
 
   WCALL( xspech, init_convergence_output ) ! initialize convergence output arrays ! 17 May 19
 
