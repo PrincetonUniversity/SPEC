@@ -261,11 +261,51 @@ m4_define(WCALL,{! macro expansion of wcall;
   ! macro expansion of wcall; end;})m4_dnl ; can put comments here;
 m4_define(HDEFGRP,{! macro expansion of hdefgrp;
 
-  call h5gcreate_f($1, "$2", $3, hdfier)
+  ! temporarily disable error printing to not confuse users
+  call h5eset_auto_f(0, hdfier)
   if( hdfier.ne.0 ) then
+    write(0,'("sphdf5 : "10x" : error calling h5eset_auto_f ;")')
+    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    stop "sphdf5 : error calling h5eset_auto_f ;"
+  endif
+
+  ! check if group exists
+  call h5lget_info_f($1, "$2", dummy_cset, dummy_corder, dummy_f_corder_valid, dummy_link_type, &
+  &                            dummy_address, dummy_val_size, hdfier)
+  if (hdfier.lt.0) then
+   grp_exists = .false.
+   if (hdfDebug .and. myid.eq.0) then ; write(*,*) "group $2 does not exist yet, creating it"
+   endif
+  else
+   grp_exists = .true.
+   if (hdfDebug .and. myid.eq.0) then ; write(*,*) "group $2 exists already, opening it"
+   endif
+  endif
+  
+  ! re-enable error printing to be sensitive to "real" errors
+  call h5eset_auto_f(1, hdfier)
+  if( hdfier.ne.0 ) then
+    write(0,'("sphdf5 : "10x" : error calling h5eset_auto_f ;")')
+    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    stop "sphdf5 : error calling h5eset_auto_f ;"
+  endif
+  
+  if (.not.grp_exists) then
+   ! if group does not exist, create it
+   call h5gcreate_f($1, "$2", $3, hdfier)
+   if( hdfier.ne.0 ) then
     write(0,'("sphdf5 : "10x" : error calling h5gcreate_f ;")')
     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
     stop "sphdf5 : error calling h5gcreate_f ;"
+   endif
+  else
+   ! if the group already exists, open it
+   call h5gopen_f($1, "$2", $3, hdfier)
+   if( hdfier.ne.0 ) then
+    write(0,'("sphdf5 : "10x" : error calling h5gopen_f ;")')
+    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    stop "sphdf5 : error calling h5gopen_f ;"
+   endif
   endif
 
   ! macro expansion of hdefgrp; end;})m4_dnl ; can put comments here;
@@ -300,11 +340,42 @@ m4_define(HWRITELV,{! macro expansion of hwritelv;
     stop "sphdf5 : error calling h5screate_simple_f ;"
    endif
 
-   call h5dcreate_f( $1, "$3", H5T_NATIVE_INTEGER, space_id, dset_id, hdfier )
+   ! temporarily disable error printing to not confuse users
+   call h5eset_auto_f(0, hdfier)
    if( hdfier.ne.0 ) then
-    write(0,'("sphdf5 : "10x" : error calling h5dcreate_f ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
-    stop "sphdf5 : error calling h5dcreate_f ;"
+     write(0,'("sphdf5 : "10x" : error calling h5eset_auto_f ;")')
+     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     stop "sphdf5 : error calling h5eset_auto_f ;"
+   endif
+   
+   ! check if dataset can be opened
+   call h5dopen_f($1, "$3", dset_id, hdfier)
+   if (hdfier.lt.0) then
+    var_exists = .false.
+    if (hdfDebug .and. myid.eq.0) then ; write(*,*) "dataset $3 does not exist yet, creating it"
+    endif
+   else
+    var_exists = .true.
+    if (hdfDebug .and. myid.eq.0) then ; write(*,*) "dataset $3 exists already, opening it"
+    endif
+   endif
+   
+   ! re-enable error printing to be sensitive to "real" errors
+   call h5eset_auto_f(1, hdfier)
+   if( hdfier.ne.0 ) then
+     write(0,'("sphdf5 : "10x" : error calling h5eset_auto_f ;")')
+     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     stop "sphdf5 : error calling h5eset_auto_f ;"
+   endif
+   
+   ! if the dataset does not exist already, create it. Otherwise, it should be open already
+   if (.not.var_exists) then
+    call h5dcreate_f( $1, "$3", H5T_NATIVE_INTEGER, space_id, dset_id, hdfier )
+    if( hdfier.ne.0 ) then
+     write(0,'("sphdf5 : "10x" : error calling h5dcreate_f ;")')
+     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     stop "sphdf5 : error calling h5dcreate_f ;"
+    endif
    endif
 
    call h5dwrite_f( dset_id, H5T_NATIVE_INTEGER, merge(1,0,$4) , onedims, hdfier )
@@ -345,11 +416,42 @@ m4_define(HWRITEIV,{! macro expansion of hwriteiv;
     stop "sphdf5 : error calling h5screate_simple_f ;"
    endif
 
-   call h5dcreate_f( $1, "$3", H5T_NATIVE_INTEGER, space_id, dset_id, hdfier )
+   ! temporarily disable error printing to not confuse users
+   call h5eset_auto_f(0, hdfier)
    if( hdfier.ne.0 ) then
-    write(0,'("sphdf5 : "10x" : error calling h5dcreate_f ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
-    stop "sphdf5 : error calling h5dcreate_f ;"
+     write(0,'("sphdf5 : "10x" : error calling h5eset_auto_f ;")')
+     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     stop "sphdf5 : error calling h5eset_auto_f ;"
+   endif
+   
+   ! check if dataset can be opened
+   call h5dopen_f($1, "$3", dset_id, hdfier)
+   if (hdfier.lt.0) then
+    var_exists = .false.
+    if (hdfDebug .and. myid.eq.0) then ; write(*,*) "dataset $3 does not exist yet, creating it"
+    endif
+   else
+    var_exists = .true.
+    if (hdfDebug .and. myid.eq.0) then ; write(*,*) "dataset $3 exists already, opening it"
+    endif
+   endif
+   
+   ! re-enable error printing to be sensitive to "real" errors
+   call h5eset_auto_f(1, hdfier)
+   if( hdfier.ne.0 ) then
+     write(0,'("sphdf5 : "10x" : error calling h5eset_auto_f ;")')
+     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     stop "sphdf5 : error calling h5eset_auto_f ;"
+   endif
+   
+   ! if the dataset does not exist already, create it. Otherwise, it should be open already
+   if (.not.var_exists) then
+    call h5dcreate_f( $1, "$3", H5T_NATIVE_INTEGER, space_id, dset_id, hdfier )
+    if( hdfier.ne.0 ) then
+     write(0,'("sphdf5 : "10x" : error calling h5dcreate_f ;")')
+     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     stop "sphdf5 : error calling h5dcreate_f ;"
+    endif
    endif
 
    call h5dwrite_f( dset_id, H5T_NATIVE_INTEGER, $4, onedims, hdfier )
@@ -390,11 +492,42 @@ m4_define(HWRITERV,{! macro expansion of hwriterv;
     stop "sphdf5 : error calling h5screate_simple_f ;"
    endif
 
-   call h5dcreate_f( $1, "$3", H5T_NATIVE_DOUBLE, space_id, dset_id, hdfier )
+   ! temporarily disable error printing to not confuse users
+   call h5eset_auto_f(0, hdfier)
    if( hdfier.ne.0 ) then
-    write(0,'("sphdf5 : "10x" : error calling h5dcreate_f ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
-    stop "sphdf5 : error calling h5dcreate_f ;"
+     write(0,'("sphdf5 : "10x" : error calling h5eset_auto_f ;")')
+     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     stop "sphdf5 : error calling h5eset_auto_f ;"
+   endif
+   
+   ! check if dataset can be opened
+   call h5dopen_f($1, "$3", dset_id, hdfier)
+   if (hdfier.lt.0) then
+    var_exists = .false.
+    if (hdfDebug .and. myid.eq.0) then ; write(*,*) "dataset $3 does not exist yet, creating it"
+    endif
+   else
+    var_exists = .true.
+    if (hdfDebug .and. myid.eq.0) then ; write(*,*) "dataset $3 exists already, opening it"
+    endif
+   endif
+   
+   ! re-enable error printing to be sensitive to "real" errors
+   call h5eset_auto_f(1, hdfier)
+   if( hdfier.ne.0 ) then
+     write(0,'("sphdf5 : "10x" : error calling h5eset_auto_f ;")')
+     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     stop "sphdf5 : error calling h5eset_auto_f ;"
+   endif
+   
+   ! if the dataset does not exist already, create it. Otherwise, it should be open already
+   if (.not.var_exists) then
+    call h5dcreate_f( $1, "$3", H5T_NATIVE_DOUBLE, space_id, dset_id, hdfier )
+    if( hdfier.ne.0 ) then
+     write(0,'("sphdf5 : "10x" : error calling h5dcreate_f ;")')
+     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     stop "sphdf5 : error calling h5dcreate_f ;"
+    endif
    endif
 
    call h5dwrite_f( dset_id, H5T_NATIVE_DOUBLE, $4, onedims, hdfier )
@@ -435,11 +568,42 @@ m4_define(HWRITERA,{! macro expansion of hwritea;
     stop "sphdf5 : error calling h5screate_simple_f ;"
    endif
 
-   call h5dcreate_f( $1, "$4", H5T_NATIVE_DOUBLE, space_id, dset_id, hdfier )
+   ! temporarily disable error printing to not confuse users
+   call h5eset_auto_f(0, hdfier)
    if( hdfier.ne.0 ) then
-    write(0,'("sphdf5 : "10x" : error calling h5dcreate_f ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
-    stop "sphdf5 : error calling h5dcreate_f ;"
+     write(0,'("sphdf5 : "10x" : error calling h5eset_auto_f ;")')
+     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     stop "sphdf5 : error calling h5eset_auto_f ;"
+   endif
+   
+   ! check if dataset can be opened
+   call h5dopen_f($1, "$4", dset_id, hdfier)
+   if (hdfier.lt.0) then
+    var_exists = .false.
+    if (hdfDebug .and. myid.eq.0) then ; write(*,*) "dataset $4 does not exist yet, creating it"
+    endif
+   else
+    var_exists = .true.
+    if (hdfDebug .and. myid.eq.0) then ; write(*,*) "dataset $4 exists already, opening it"
+    endif
+   endif
+   
+   ! re-enable error printing to be sensitive to "real" errors
+   call h5eset_auto_f(1, hdfier)
+   if( hdfier.ne.0 ) then
+     write(0,'("sphdf5 : "10x" : error calling h5eset_auto_f ;")')
+     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     stop "sphdf5 : error calling h5eset_auto_f ;"
+   endif
+   
+   ! if the dataset does not exist already, create it. Otherwise, it should be open already
+   if (.not.var_exists) then
+    call h5dcreate_f( $1, "$4", H5T_NATIVE_DOUBLE, space_id, dset_id, hdfier )
+    if( hdfier.ne.0 ) then
+     write(0,'("sphdf5 : "10x" : error calling h5dcreate_f ;")')
+     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     stop "sphdf5 : error calling h5dcreate_f ;"
+    endif
    endif
 
    call h5dwrite_f( dset_id, H5T_NATIVE_DOUBLE, $5, twodims, hdfier )
@@ -479,12 +643,43 @@ m4_define(HWRITERC,{! macro expansion of hwriterc;
     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
     stop "sphdf5 : error calling h5screate_simple_f ;"
    endif
-
-   call h5dcreate_f( $1, "$5", H5T_NATIVE_DOUBLE, space_id, dset_id, hdfier )
+  
+   ! temporarily disable error printing to not confuse users
+   call h5eset_auto_f(0, hdfier)
    if( hdfier.ne.0 ) then
-    write(0,'("sphdf5 : "10x" : error calling h5dcreate_f ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
-    stop "sphdf5 : error calling h5dcreate_f ;"
+     write(0,'("sphdf5 : "10x" : error calling h5eset_auto_f ;")')
+     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     stop "sphdf5 : error calling h5eset_auto_f ;"
+   endif
+   
+   ! check if dataset can be opened
+   call h5dopen_f($1, "$5", dset_id, hdfier)
+   if (hdfier.lt.0) then
+    var_exists = .false.
+    if (hdfDebug .and. myid.eq.0) then ; write(*,*) "dataset $5 does not exist yet, creating it"
+    endif
+   else
+    var_exists = .true.
+    if (hdfDebug .and. myid.eq.0) then ; write(*,*) "dataset $5 exists already, opening it"
+    endif
+   endif
+   
+   ! re-enable error printing to be sensitive to "real" errors
+   call h5eset_auto_f(1, hdfier)
+   if( hdfier.ne.0 ) then
+     write(0,'("sphdf5 : "10x" : error calling h5eset_auto_f ;")')
+     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     stop "sphdf5 : error calling h5eset_auto_f ;"
+   endif
+   
+   ! if the dataset does not exist already, create it. Otherwise, it should be open already
+   if (.not.var_exists) then
+    call h5dcreate_f( $1, "$5", H5T_NATIVE_DOUBLE, space_id, dset_id, hdfier )
+    if( hdfier.ne.0 ) then
+     write(0,'("sphdf5 : "10x" : error calling h5dcreate_f ;")')
+     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     stop "sphdf5 : error calling h5dcreate_f ;"
+    endif
    endif
 
    call h5dwrite_f( dset_id, H5T_NATIVE_DOUBLE, $6, threedims, hdfier )

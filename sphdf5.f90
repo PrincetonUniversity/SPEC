@@ -21,11 +21,19 @@ module sphdf5
 
   implicit none
 
+  logical, parameter             :: hdfDebug = .false.                          ! global flag to enable verbal diarrhea commenting HDF5 operations
+
   integer                        :: hdfier                                     ! error flag for HDF5 library
   integer                        :: rank                                       ! rank of data to write using macros
   integer(hid_t)                 :: file_id, space_id, dset_id                 ! default IDs used in macros
   integer(hsize_t)               :: onedims(1:1), twodims(1:2), threedims(1:3) ! dimension specifiers used in macros
   integer(size_t)                :: obj_count                                  ! number of open HDF5 objects
+  logical                        :: grp_exists, var_exists                     ! flags used to signal if a group or variable already exists
+  logical                        :: dummy_f_corder_valid                       ! dummy argument for outputs of h5lget_info_f
+  integer                        :: dummy_cset, dummy_corder, dummy_link_type  ! dummy argument for outputs of h5lget_info_f
+  integer(haddr_t)               :: dummy_address                              ! dummy argument for outputs of h5lget_info_f
+  integer(size_t)                :: dummy_val_size                             ! dummy argument for outputs of h5lget_info_f
+
 
   integer(hid_t)                 :: iteration_dset_id                          ! Dataset identifier for "iteration"
   integer(hid_t)                 :: dataspace                                  ! dataspace for extension by 1 iteration object
@@ -60,8 +68,8 @@ module sphdf5
   integer(HID_T)                 :: memspace_success                           ! Dataspace identifier in memory
 
   integer(hid_t)                 :: grpTransform                               ! group for rotational transform data
-  integer(HID_T)                 :: dset_id_diotadxup                          ! Dataset identifier for ... (derivative of rotational transform ?)
-  integer(HID_T)                 :: dset_id_fiota                              ! Dataset identifier for ... (              rotational transform ?)
+  integer(HID_T)                 :: dset_id_diotadxup                          ! Dataset identifier for diotadxup (derivative of rotational transform ?)
+  integer(HID_T)                 :: dset_id_fiota                              ! Dataset identifier for fiota     (              rotational transform ?)
   integer(HID_T)                 :: filespace_diotadxup                        ! Dataspace identifier in file
   integer(HID_T)                 :: filespace_fiota                            ! Dataspace identifier in file
   integer(HID_T)                 :: memspace_diotadxup                         ! Dataspace identifier in memory
@@ -75,7 +83,7 @@ contains
 subroutine init_outfile
 
   LOCALS
-  integer(hid_t) :: plist_id      ! Property list identifier used to activate MPI I/O parallel access to HDF5 library
+  integer(hid_t) :: plist_id      ! Property list identifier used to activate MPI I/O parallel access in HDF5 library
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
