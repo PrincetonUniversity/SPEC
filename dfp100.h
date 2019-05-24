@@ -89,7 +89,7 @@ BEGIN(dfp100)
 		call IsMyVolume(vvol)
 
 		if( IsMyVolumeValue .EQ. 0 ) then
-			goto 5000
+			cycle
 		else if( IsMyVolumeValue .EQ. -1) then
 			FATAL(dfp100, .true., Unassociated volume)
 		endif
@@ -112,7 +112,6 @@ BEGIN(dfp100)
 		  WCALL( dfp100, lbpol, (vvol) )				!Compute field at interface for global constraint
 		endif
 
-		5000 continue
 	enddo
 
 

@@ -123,16 +123,6 @@ LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
-   WCALL(dfp200, IsMyVolume, (vvol))
-
-   if( IsMyVolumeValue .EQ. 0 ) then
-      goto 5555
-   else if( IsMyVolumeValue .EQ. -1) then
-      FATAL(dfp100, .true., Unassociated volume)
-   endif
-   
-   !if( myid.ne.modulo(vvol-1,ncpu) ) goto 5555 ! construct Beltrami fields in parallel;
-   
    NN = NAdof(vvol) ! shorthand;
    
    if( LcomputeDerivatives ) then ! allocate some additional memory;
@@ -880,7 +870,6 @@ LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
 
 
 
-5555 continue
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   

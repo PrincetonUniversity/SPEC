@@ -189,7 +189,8 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
    
    do jquad = 1, lquad ; sbarhim(jquad,1:mn) = sbar(jquad)**regumm(1:mn) ! pre-calculation of regularization factor; 12 Sep 13;
    enddo
-   
+
+! Parallelization along OpenMP threads
    do jquad = 1, lquad ! Gaussian quadrature loop;
     
     lss = gaussianabscissae(jquad,lvol) ; jthweight = gaussianweight(jquad,lvol)
@@ -199,7 +200,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
     do ll = 2, lrad ; cheby(ll,0:1) = (/ two * lss * cheby(ll-1,0) - cheby(ll-2,0) , two * cheby(ll-1,0) + two * lss * cheby(ll-1,1) - cheby(ll-2,1) /)
     enddo
     
-    WCALL( ma00aa, metrix,( lvol, lss ) ) ! compute metric elements; 16 Jan 13;
+    WCALL( ma00aa, metrix,( lvol, lss ) ) ! compute metric elements; 16 Jan 13; 
 
     do mn2 = 1, mn2_max
       ii = mod(mn2-1,mn)+1

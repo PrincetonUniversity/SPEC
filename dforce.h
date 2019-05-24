@@ -202,6 +202,15 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 
    LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
 
+! Determines if this volume vvol should be computed by this thread.
+		call IsMyVolume(vvol)
+
+		if( IsMyVolumeValue .EQ. 0 ) then
+			cycle
+		else if( IsMyVolumeValue .EQ. -1) then
+			FATAL(dfp100, .true., Unassociated volume)
+		endif
+
    ll = Lrad(vvol)
 
    SALLOCATE( DToocc, (0:ll,0:ll,1:mn,1:mn), zero )
@@ -303,6 +312,15 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
  
 	! Get force imbalance and jacobian
 	do vvol = 1, Mvol
+   
+		WCALL(dforce, IsMyVolume, (vvol))
+
+		if( IsMyVolumeValue .EQ. 0 ) then
+			cycle
+		else if( IsMyVolumeValue .EQ. -1) then
+			FATAL(dforce, .true., Unassociated volume)
+		endif
+
 		WCALL(dforce, dfp200, ( LcomputeDerivatives, vvol) )
 	enddo ! end of do vvol = 1, Mvol
 
@@ -392,7 +410,17 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 ! --------------------------------------------------------------------------------------------------
 ! Now that all the communication is over, compute the local force and its derivatives
     do vvol = 1, Mvol
+
+			WCALL(dforce, IsMyVolume, (vvol))
+
+			if( IsMyVolumeValue .EQ. 0 ) then
+				cycle
+			else if( IsMyVolumeValue .EQ. -1) then
+				FATAL(dforce, .true., Unassociated volume)
+			endif
+				
 			WCALL(dforce, dfp200, ( LcomputeDerivatives, vvol) )
+
     enddo
 
 #ifdef DEBUG
