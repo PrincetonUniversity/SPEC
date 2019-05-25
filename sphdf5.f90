@@ -16,6 +16,7 @@ module sphdf5
 
   use inputlist , only : ext
   use fileunits , only : ounit
+  use cputiming , only : Tsphdf5
   use allglobal , only : myid
   use hdf5
 
@@ -88,24 +89,19 @@ subroutine init_outfile
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   ! initialize Fortran interface to the HDF5 library;
-  call h5open_f( hdfier )
-  FATAL( sphdf5, hdfier.ne.0, error calling h5open_f )
+  H5CALL( sphdf5, h5open_f, (hdfier) )
 
   ! Create file access property list to be able to tell HDF5 about MPI I/O
-  call h5pcreate_f(H5P_FILE_ACCESS_F, plist_id, hdfier)
-  FATAL( sphdf5, hdfier.ne.0, h5pcreate_f returned an error )
+  H5CALL( sphdf5, h5pcreate_f, (H5P_FILE_ACCESS_F, plist_id, hdfier) )
 
   ! enable MPI I/O for parallel I/O access in file access property list
-  call h5pset_fapl_mpio_f(plist_id, MPI_COMM_WORLD, MPI_INFO_NULL, hdfier)
-  FATAL( sphdf5, hdfier.ne.0, h5pset_fapl_mpio_f returned an error )
+  H5CALL( sphdf5, h5pset_fapl_mpio_f, (plist_id, MPI_COMM_WORLD, MPI_INFO_NULL, hdfier) )
 
   ! Create the file (collectively, since called by all processes)
-  call h5fcreate_f(trim(ext)//".h5", H5F_ACC_TRUNC_F, file_id, hdfier, access_prp = plist_id)
-  FATAL( sphdf5, hdfier.ne.0, h5fcreate_f returned an error )
+  H5CALL( sphdf5, h5fcreate_f, (trim(ext)//".h5", H5F_ACC_TRUNC_F, file_id, hdfier, access_prp = plist_id) )
 
   ! file access property list is not needed after been used to specify MPI I/O during opening of file
-  call h5pclose_f(plist_id, hdfier)
-  FATAL( sphdf5, hdfier.ne.0, h5pclose_f returned an error )
+  H5CALL( sphdf5, h5pclose_f, (plist_id, hdfier) )
 
 end subroutine init_outfile
 
@@ -308,80 +304,75 @@ subroutine init_convergence_output
 
   ! Set dataset transfer property to preserve partially initialized fields
   ! during write/read to/from dataset with compound datatype.
-  call h5pcreate_f(H5P_DATASET_XFER_F, plist_id, hdfier)
-  FATAL( sphdf5, hdfier.ne.0, error calling h5pcreate_f )
+  H5CALL( sphdf5, h5pcreate_f, (H5P_DATASET_XFER_F, plist_id, hdfier))
 
-  call h5pset_preserve_f(plist_id, .TRUE., hdfier)
-  FATAL( sphdf5, hdfier.ne.0, error calling h5pset_preserve_f )
+  H5CALL( sphdf5, h5pset_preserve_f, (plist_id, .TRUE., hdfier) )
 
   maxdims = (/ H5S_UNLIMITED_F /)                                                       ! unlimited array size: "converge" until you get bored
-  call h5screate_simple_f(rank, dims, iteration_dspace_id, hdfier, maxdims)              ! Create the dataspace with zero initial size and allow it to grow
-  FATAL( sphdf5, hdfier.ne.0, error calling h5screate_simple_f )
+  H5CALL( sphdf5, h5screate_simple_f, (rank, dims, iteration_dspace_id, hdfier, maxdims) )             ! Create the dataspace with zero initial size and allow it to grow
 
-  call h5pcreate_f(H5P_DATASET_CREATE_F, crp_list, hdfier) ! dataset creation property list with chunking
-  FATAL( sphdf5, hdfier.ne.0, error calling h5pcreate_f )
+  H5CALL( sphdf5, h5pcreate_f, (H5P_DATASET_CREATE_F, crp_list, hdfier) ) ! dataset creation property list with chunking
 
-  call h5pset_chunk_f(crp_list, rank, dimsc, hdfier)
-  FATAL( sphdf5, hdfier.ne.0, error calling h5pset_chunk_f )
+  H5CALL( sphdf5, h5pset_chunk_f, (crp_list, rank, dimsc, hdfier) )
 
   ! declare "iteration" compound datatype
   ! declare array parts
-  call h5tarray_create_f(H5T_NATIVE_DOUBLE, 2, int((/mn, Mvol+1/),hsize_t), iRZbscArray_id, hdfier) ! create array datatypes for i{R,Z}b{c,s}
-  call h5tget_size_f(iRZbscArray_id, irbc_size, hdfier)
-  call h5tget_size_f(H5T_NATIVE_INTEGER, type_size_i, hdfier)                            ! size of an integer field
-  call h5tget_size_f(H5T_NATIVE_DOUBLE,  type_size_d, hdfier)                            ! size of a   double field
+  H5CALL( sphdf5, h5tarray_create_f, (H5T_NATIVE_DOUBLE, 2, int((/mn, Mvol+1/),hsize_t), iRZbscArray_id, hdfier) ) ! create array datatypes for i{R,Z}b{c,s}
+  H5CALL( sphdf5, h5tget_size_f, (iRZbscArray_id, irbc_size, hdfier) )
+  H5CALL( sphdf5, h5tget_size_f, (H5T_NATIVE_INTEGER, type_size_i, hdfier) )                           ! size of an integer field
+  H5CALL( sphdf5, h5tget_size_f, (H5T_NATIVE_DOUBLE,  type_size_d, hdfier) )                           ! size of a   double field
   iteration_dtype_size = 2*type_size_i + 2*type_size_d + 4*irbc_size                     ! wflag, nDcalls, Energy, ForceErr, i{R,Z}b{c,s}
 
-  call h5tcreate_f(H5T_COMPOUND_F, iteration_dtype_size, iteration_dtype_id, hdfier)     ! create compound datatype
+  H5CALL( sphdf5, h5tcreate_f, (H5T_COMPOUND_F, iteration_dtype_size, iteration_dtype_id, hdfier) )    ! create compound datatype
 
   offset = 0                                                                             ! offset for first field starts at 0
-  call h5tinsert_f(iteration_dtype_id, "nDcalls", offset, H5T_NATIVE_INTEGER, hdfier)      ! insert "nDcalls" field in datatype
+  H5CALL( sphdf5, h5tinsert_f, (iteration_dtype_id, "nDcalls", offset, H5T_NATIVE_INTEGER, hdfier) )     ! insert "nDcalls" field in datatype
   offset = offset + type_size_i                                                          ! increment offset by size of field
-  call h5tinsert_f(iteration_dtype_id, "Energy", offset, H5T_NATIVE_DOUBLE, hdfier)      ! insert "Energy" field in datatype
+  H5CALL( sphdf5, h5tinsert_f, (iteration_dtype_id, "Energy", offset, H5T_NATIVE_DOUBLE, hdfier) )     ! insert "Energy" field in datatype
   offset = offset + type_size_d                                                          ! increment offset by size of field
-  call h5tinsert_f(iteration_dtype_id, "ForceErr", offset, H5T_NATIVE_DOUBLE, hdfier)       ! insert "ForceErr" field in datatype
+  H5CALL( sphdf5, h5tinsert_f, (iteration_dtype_id, "ForceErr", offset, H5T_NATIVE_DOUBLE, hdfier) )      ! insert "ForceErr" field in datatype
   offset = offset + type_size_d                                                          ! increment offset by size of field
-  call h5tinsert_f(iteration_dtype_id, "iRbc", offset, iRZbscArray_id, hdfier)           ! insert "iRbc" field in datatype
+  H5CALL( sphdf5, h5tinsert_f, (iteration_dtype_id, "iRbc", offset, iRZbscArray_id, hdfier) )          ! insert "iRbc" field in datatype
   offset = offset + irbc_size                                                            ! increment offset by size of field
-  call h5tinsert_f(iteration_dtype_id, "iZbs", offset, iRZbscArray_id, hdfier)           ! insert "iZbs" field in datatype
+  H5CALL( sphdf5, h5tinsert_f, (iteration_dtype_id, "iZbs", offset, iRZbscArray_id, hdfier) )          ! insert "iZbs" field in datatype
   offset = offset + irbc_size                                                            ! increment offset by size of field
-  call h5tinsert_f(iteration_dtype_id, "iRbs", offset, iRZbscArray_id, hdfier)           ! insert "iRbs" field in datatype
+  H5CALL( sphdf5, h5tinsert_f, (iteration_dtype_id, "iRbs", offset, iRZbscArray_id, hdfier) )          ! insert "iRbs" field in datatype
   offset = offset + irbc_size                                                            ! increment offset by size of field
-  call h5tinsert_f(iteration_dtype_id, "iZbc", offset, iRZbscArray_id, hdfier)           ! insert "iZbc" field in datatype
+  H5CALL( sphdf5, h5tinsert_f, (iteration_dtype_id, "iZbc", offset, iRZbscArray_id, hdfier) )          ! insert "iZbc" field in datatype
   offset = offset + irbc_size                                                            ! increment offset by size of field
 
-  call h5dcreate_f(file_id, "iterations", iteration_dtype_id, iteration_dspace_id, &     ! create dataset with compound type
-                   iteration_dset_id, hdfier, crp_list)
+  H5CALL( sphdf5, h5dcreate_f, (file_id, "iterations", iteration_dtype_id, iteration_dspace_id, &     ! create dataset with compound type
+                  & iteration_dset_id, hdfier, crp_list) )
 
-  call h5sclose_f(iteration_dspace_id, hdfier)                                           ! Terminate access to the data space (does not show up in obj_count below)
+  H5CALL( sphdf5, h5sclose_f, (iteration_dspace_id, hdfier) )                                          ! Terminate access to the data space (does not show up in obj_count below)
                                                                                          ! --> only needed for creation of dataset
 
   ! Create memory types. We have to create a compound datatype
   ! for each member we want to write.
   offset = 0
-  call h5tcreate_f(H5T_COMPOUND_F, type_size_i, dt_nDcalls_id,  hdfier)
-  call h5tcreate_f(H5T_COMPOUND_F, type_size_d, dt_Energy_id, hdfier)
-  call h5tcreate_f(H5T_COMPOUND_F, type_size_d, dt_ForceErr_id,  hdfier)
-  call h5tcreate_f(H5T_COMPOUND_F, irbc_size,   dt_iRbc_id,   hdfier)
-  call h5tcreate_f(H5T_COMPOUND_F, irbc_size,   dt_iZbs_id,   hdfier)
-  call h5tcreate_f(H5T_COMPOUND_F, irbc_size,   dt_iRbs_id,   hdfier)
-  call h5tcreate_f(H5T_COMPOUND_F, irbc_size,   dt_iZbc_id,   hdfier)
+  H5CALL( sphdf5, h5tcreate_f, (H5T_COMPOUND_F, type_size_i, dt_nDcalls_id,  hdfier) )
+  H5CALL( sphdf5, h5tcreate_f, (H5T_COMPOUND_F, type_size_d, dt_Energy_id,   hdfier) )
+  H5CALL( sphdf5, h5tcreate_f, (H5T_COMPOUND_F, type_size_d, dt_ForceErr_id, hdfier) )
+  H5CALL( sphdf5, h5tcreate_f, (H5T_COMPOUND_F, irbc_size,   dt_iRbc_id,     hdfier) )
+  H5CALL( sphdf5, h5tcreate_f, (H5T_COMPOUND_F, irbc_size,   dt_iZbs_id,     hdfier) )
+  H5CALL( sphdf5, h5tcreate_f, (H5T_COMPOUND_F, irbc_size,   dt_iRbs_id,     hdfier) )
+  H5CALL( sphdf5, h5tcreate_f, (H5T_COMPOUND_F, irbc_size,   dt_iZbc_id,     hdfier) )
 
-  call h5tinsert_f(dt_nDcalls_id,   "nDcalls", offset, H5T_NATIVE_INTEGER, hdfier)
-  call h5tinsert_f(dt_Energy_id,     "Energy", offset, H5T_NATIVE_DOUBLE,  hdfier)
-  call h5tinsert_f(dt_ForceErr_id, "ForceErr", offset, H5T_NATIVE_DOUBLE,  hdfier)
-  call h5tinsert_f(dt_iRbc_id,         "iRbc", offset, iRZbscArray_id,     hdfier)
-  call h5tinsert_f(dt_iZbs_id,         "iZbs", offset, iRZbscArray_id,     hdfier)
-  call h5tinsert_f(dt_iRbs_id,         "iRbs", offset, iRZbscArray_id,     hdfier)
-  call h5tinsert_f(dt_iZbc_id,         "iZbc", offset, iRZbscArray_id,     hdfier)
+  H5CALL( sphdf5, h5tinsert_f, (dt_nDcalls_id,   "nDcalls", offset, H5T_NATIVE_INTEGER, hdfier) )
+  H5CALL( sphdf5, h5tinsert_f, (dt_Energy_id,     "Energy", offset, H5T_NATIVE_DOUBLE,  hdfier) )
+  H5CALL( sphdf5, h5tinsert_f, (dt_ForceErr_id, "ForceErr", offset, H5T_NATIVE_DOUBLE,  hdfier) )
+  H5CALL( sphdf5, h5tinsert_f, (dt_iRbc_id,         "iRbc", offset, iRZbscArray_id,     hdfier) )
+  H5CALL( sphdf5, h5tinsert_f, (dt_iZbs_id,         "iZbs", offset, iRZbscArray_id,     hdfier) )
+  H5CALL( sphdf5, h5tinsert_f, (dt_iRbs_id,         "iRbs", offset, iRZbscArray_id,     hdfier) )
+  H5CALL( sphdf5, h5tinsert_f, (dt_iZbc_id,         "iZbc", offset, iRZbscArray_id,     hdfier) )
 
   ! create memspace with size of compound object to append
   dims(1) = 1 ! only append one iteration at a time
-  call h5screate_simple_f (rank, dims, memspace, hdfier)
+  H5CALL( sphdf5, h5screate_simple_f, (rank, dims, memspace, hdfier) )
 
-  call h5pclose_f(crp_list, hdfier)
-  call h5tclose_f(iteration_dtype_id, hdfier)                                            ! Terminate access to the datatype
-  call h5tclose_f(iRZbscArray_id, hdfier)                                            ! Terminate access to the datatype
+  H5CALL( sphdf5, h5pclose_f, (crp_list, hdfier) )
+  H5CALL( sphdf5, h5tclose_f, (iteration_dtype_id, hdfier) )                                           ! Terminate access to the datatype
+  H5CALL( sphdf5, h5tclose_f, (iRZbscArray_id, hdfier) )                                           ! Terminate access to the datatype
 
 end subroutine init_convergence_output
 
@@ -403,38 +394,38 @@ subroutine write_convergence_output( nDcalls, ForceErr )
   ! append updated values to "iterations" dataset
 
   ! open dataspace to get current state of dataset
-  call h5dget_space_f(iteration_dset_id, dataspace, hdfier)
+  H5CALL( sphdf5, h5dget_space_f, (iteration_dset_id, dataspace, hdfier) )
 
   ! get current size of dataset
-  call h5sget_simple_extent_npoints_f(dataspace, old_data_dims(1), hdfier)
+  H5CALL( sphdf5, h5sget_simple_extent_npoints_f, (dataspace, old_data_dims(1), hdfier) )
 
   ! blow up dataset to new size
   data_dims = old_data_dims+1
-  call h5dset_extent_f(iteration_dset_id, data_dims, hdfier)
+  H5CALL( sphdf5, h5dset_extent_f, (iteration_dset_id, data_dims, hdfier) )
 
   ! get dataspace slab corresponding to region which the iterations dataset was extended by
-  call h5dget_space_f(iteration_dset_id, dataspace, hdfier) ! re-select dataspace to update size info in HDF5 lib
-  call h5sselect_hyperslab_f(dataspace, H5S_SELECT_SET_F, old_data_dims, (/ INT(1, HSIZE_T) /), hdfier) ! newly appended slab is at old size and 1 long
+  H5CALL( sphdf5, h5dget_space_f, (iteration_dset_id, dataspace, hdfier) ) ! re-select dataspace to update size info in HDF5 lib
+  H5CALL( sphdf5, h5sselect_hyperslab_f, (dataspace, H5S_SELECT_SET_F, old_data_dims, (/ INT(1, HSIZE_T) /), hdfier) ) ! newly appended slab is at old size and 1 long
 
   ! write next iteration object
-  call h5dwrite_f(iteration_dset_id, dt_nDcalls_id, nDcalls, INT((/1/), HSIZE_T), hdfier, &
-    & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id)
-  call h5dwrite_f(iteration_dset_id, dt_Energy_id, Energy, INT((/1/), HSIZE_T), hdfier, &
-    & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id)
-  call h5dwrite_f(iteration_dset_id, dt_ForceErr_id, ForceErr, INT((/1/), HSIZE_T), hdfier, &
-    & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id)
-  call h5dwrite_f(iteration_dset_id, dt_iRbc_id, iRbc, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
-    & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id)
-  call h5dwrite_f(iteration_dset_id, dt_iZbs_id, iZbs, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
-    & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id)
-  call h5dwrite_f(iteration_dset_id, dt_iRbs_id, iRbs, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
-    & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id)
-  call h5dwrite_f(iteration_dset_id, dt_iZbc_id, iZbc, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
-    & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id)
+  H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_nDcalls_id, nDcalls, INT((/1/), HSIZE_T), hdfier, &
+    & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id) )
+  H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_Energy_id, Energy, INT((/1/), HSIZE_T), hdfier, &
+    & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id) )
+  H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_ForceErr_id, ForceErr, INT((/1/), HSIZE_T), hdfier, &
+    & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id) )
+  H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_iRbc_id, iRbc, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
+    & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id) )
+  H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_iZbs_id, iZbs, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
+    & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id) )
+  H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_iRbs_id, iRbs, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
+    & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id) )
+  H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_iZbc_id, iZbc, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
+    & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id) )
 
   ! dataspace to appended object should be closed now
   ! MAYBE we otherwise keep all the iterations in memory?
-  call h5sclose_f(dataspace, hdfier)
+  H5CALL( sphdf5, h5sclose_f, (dataspace, hdfier) )
 
 end subroutine write_convergence_output
 
@@ -520,12 +511,12 @@ subroutine write_grid
   HWRITERA( grpGrid, sumLrad, Ntz, ijimag, ijimag_grid )
   HWRITERA( grpGrid, sumLrad, Ntz, jireal, jireal_grid )
 
-  DEALLOCATE(    Rij_grid )
-  DEALLOCATE(    Zij_grid )
-  DEALLOCATE(     sg_grid )
-  DEALLOCATE( ijreal_grid )
-  DEALLOCATE( ijimag_grid )
-  DEALLOCATE( jireal_grid )
+  DALLOCATE(    Rij_grid )
+  DALLOCATE(    Zij_grid )
+  DALLOCATE(     sg_grid )
+  DALLOCATE( ijreal_grid )
+  DALLOCATE( ijimag_grid )
+  DALLOCATE( jireal_grid )
 
   HCLOSEGRP( grpGrid )
 
@@ -554,61 +545,61 @@ subroutine init_flt_output( numTrajTotal )
   length    = (/ Nz, nPpts,            1 /) ! which is written in these slice lengths
 
   ! Create the data space for the  dataset.
-  call h5screate_simple_f(rankP, dims_traj, filespace_t, hdfier)
-  call h5screate_simple_f(rankP, dims_traj, filespace_s, hdfier)
-  call h5screate_simple_f(rankP, dims_traj, filespace_R, hdfier)
-  call h5screate_simple_f(rankP, dims_traj, filespace_Z, hdfier)
-  call h5screate_simple_f(1, int((/ numTrajTotal /),HSIZE_T), filespace_success, hdfier)
+  H5CALL( sphdf5, h5screate_simple_f, (rankP, dims_traj, filespace_t, hdfier) )
+  H5CALL( sphdf5, h5screate_simple_f, (rankP, dims_traj, filespace_s, hdfier) )
+  H5CALL( sphdf5, h5screate_simple_f, (rankP, dims_traj, filespace_R, hdfier) )
+  H5CALL( sphdf5, h5screate_simple_f, (rankP, dims_traj, filespace_Z, hdfier) )
+  H5CALL( sphdf5, h5screate_simple_f, (1, int((/ numTrajTotal /),HSIZE_T), filespace_success, hdfier) )
 
   ! Create the dataset with default properties.
-  call h5dcreate_f(grpPoincare, "t", H5T_NATIVE_DOUBLE, filespace_t, dset_id_t, hdfier)
-  call h5dcreate_f(grpPoincare, "s", H5T_NATIVE_DOUBLE, filespace_s, dset_id_s, hdfier)
-  call h5dcreate_f(grpPoincare, "R", H5T_NATIVE_DOUBLE, filespace_R, dset_id_R, hdfier)
-  call h5dcreate_f(grpPoincare, "Z", H5T_NATIVE_DOUBLE, filespace_Z, dset_id_Z, hdfier)
-  call h5dcreate_f(grpPoincare, "success", H5T_NATIVE_INTEGER, filespace_success, dset_id_success, hdfier)
+  H5CALL( sphdf5, h5dcreate_f, (grpPoincare, "t", H5T_NATIVE_DOUBLE, filespace_t, dset_id_t, hdfier) )
+  H5CALL( sphdf5, h5dcreate_f, (grpPoincare, "s", H5T_NATIVE_DOUBLE, filespace_s, dset_id_s, hdfier) )
+  H5CALL( sphdf5, h5dcreate_f, (grpPoincare, "R", H5T_NATIVE_DOUBLE, filespace_R, dset_id_R, hdfier) )
+  H5CALL( sphdf5, h5dcreate_f, (grpPoincare, "Z", H5T_NATIVE_DOUBLE, filespace_Z, dset_id_Z, hdfier) )
+  H5CALL( sphdf5, h5dcreate_f, (grpPoincare, "success", H5T_NATIVE_INTEGER, filespace_success, dset_id_success, hdfier) )
 
   ! filespaces can be closed as soon as datasets are created
-  call h5sclose_f(filespace_t, hdfier)
-  call h5sclose_f(filespace_s, hdfier)
-  call h5sclose_f(filespace_R, hdfier)
-  call h5sclose_f(filespace_Z, hdfier)
-  call h5sclose_f(filespace_success, hdfier)
+  H5CALL( sphdf5, h5sclose_f, (filespace_t, hdfier) )
+  H5CALL( sphdf5, h5sclose_f, (filespace_s, hdfier) )
+  H5CALL( sphdf5, h5sclose_f, (filespace_R, hdfier) )
+  H5CALL( sphdf5, h5sclose_f, (filespace_Z, hdfier) )
+  H5CALL( sphdf5, h5sclose_f, (filespace_success, hdfier) )
 
   ! Select hyperslab in the file.
-  call h5dget_space_f(dset_id_t, filespace_t, hdfier)
-  call h5dget_space_f(dset_id_s, filespace_s, hdfier)
-  call h5dget_space_f(dset_id_R, filespace_R, hdfier)
-  call h5dget_space_f(dset_id_Z, filespace_Z, hdfier)
-  call h5dget_space_f(dset_id_success, filespace_success, hdfier)
+  H5CALL( sphdf5, h5dget_space_f, (dset_id_t, filespace_t, hdfier) )
+  H5CALL( sphdf5, h5dget_space_f, (dset_id_s, filespace_s, hdfier) )
+  H5CALL( sphdf5, h5dget_space_f, (dset_id_R, filespace_R, hdfier) )
+  H5CALL( sphdf5, h5dget_space_f, (dset_id_Z, filespace_Z, hdfier) )
+  H5CALL( sphdf5, h5dget_space_f, (dset_id_success, filespace_success, hdfier) )
 
   ! Each process defines dataset in memory and writes it to the hyperslab in the file.
-  call h5screate_simple_f(rankP, length, memspace_t, hdfier)
-  call h5screate_simple_f(rankP, length, memspace_s, hdfier)
-  call h5screate_simple_f(rankP, length, memspace_R, hdfier)
-  call h5screate_simple_f(rankP, length, memspace_Z, hdfier)
-  call h5screate_simple_f(1, int((/ 1 /),HSIZE_T), memspace_success, hdfier)
+  H5CALL( sphdf5, h5screate_simple_f, (rankP, length, memspace_t, hdfier) )
+  H5CALL( sphdf5, h5screate_simple_f, (rankP, length, memspace_s, hdfier) )
+  H5CALL( sphdf5, h5screate_simple_f, (rankP, length, memspace_R, hdfier) )
+  H5CALL( sphdf5, h5screate_simple_f, (rankP, length, memspace_Z, hdfier) )
+  H5CALL( sphdf5, h5screate_simple_f, (1, int((/ 1 /),HSIZE_T), memspace_success, hdfier) )
 
   ! create rotational transform group in HDF5 file
   HDEFGRP( file_id, transform, grpTransform )
 
   ! Create the data space for the  dataset.
-  call h5screate_simple_f(rankT, int((/           2,Mvol/),HSIZE_T), filespace_diotadxup, hdfier)
-  call h5screate_simple_f(rankT, int((/numTrajTotal,   2/),HSIZE_T), filespace_fiota    , hdfier)
+  H5CALL( sphdf5, h5screate_simple_f, (rankT, int((/           2,Mvol/),HSIZE_T), filespace_diotadxup, hdfier) )
+  H5CALL( sphdf5, h5screate_simple_f, (rankT, int((/numTrajTotal,   2/),HSIZE_T), filespace_fiota    , hdfier) )
 
   ! Create the dataset with default properties.
-  call h5dcreate_f(grpTransform, "diotadxup", H5T_NATIVE_DOUBLE, filespace_diotadxup, dset_id_diotadxup, hdfier)
-  call h5dcreate_f(grpTransform,     "fiota", H5T_NATIVE_DOUBLE, filespace_fiota    , dset_id_fiota    , hdfier)
+  H5CALL( sphdf5, h5dcreate_f, (grpTransform, "diotadxup", H5T_NATIVE_DOUBLE, filespace_diotadxup, dset_id_diotadxup, hdfier) )
+  H5CALL( sphdf5, h5dcreate_f, (grpTransform,     "fiota", H5T_NATIVE_DOUBLE, filespace_fiota    , dset_id_fiota    , hdfier) )
 
   ! filespaces can be closed as soon as datasets are created
-  call h5sclose_f(filespace_diotadxup, hdfier)
-  call h5sclose_f(filespace_fiota    , hdfier)
+  H5CALL( sphdf5, h5sclose_f, (filespace_diotadxup, hdfier) )
+  H5CALL( sphdf5, h5sclose_f, (filespace_fiota    , hdfier) )
 
   ! Select hyperslab in the file.
-  call h5dget_space_f(dset_id_diotadxup, filespace_diotadxup, hdfier)
-  call h5dget_space_f(dset_id_fiota    , filespace_fiota    , hdfier)
+  H5CALL( sphdf5, h5dget_space_f, (dset_id_diotadxup, filespace_diotadxup, hdfier) )
+  H5CALL( sphdf5, h5dget_space_f, (dset_id_fiota    , filespace_fiota    , hdfier) )
 
   ! Each process defines dataset in memory and writes it to the hyperslab in the file.
-  call h5screate_simple_f(rankT, int((/2,1/),HSIZE_T), memspace_diotadxup, hdfier)
+  H5CALL( sphdf5, h5screate_simple_f, (rankT, int((/2,1/),HSIZE_T), memspace_diotadxup, hdfier) )
 
 end subroutine init_flt_output
 
@@ -628,25 +619,25 @@ subroutine write_poincare( data, offset, success )
   dims_singleTraj = (/ Nz, nPpts /)
   length          = (/ Nz, nPpts, 1 /)
 
-  call h5sselect_hyperslab_f (filespace_t, H5S_SELECT_SET_F, int((/0,0,offset/),HSSIZE_T), length, hdfier)
-  call h5dwrite_f(dset_id_t, H5T_NATIVE_DOUBLE, data(1,0:Nz-1,1:nPpts), dims_singleTraj, hdfier, &
-  &               file_space_id=filespace_t, mem_space_id=memspace_t )
+  H5CALL( sphdf5, h5sselect_hyperslab_f, (filespace_t, H5S_SELECT_SET_F, int((/0,0,offset/),HSSIZE_T), length, hdfier) )
+  H5CALL( sphdf5, h5dwrite_f, (dset_id_t, H5T_NATIVE_DOUBLE, data(1,0:Nz-1,1:nPpts), dims_singleTraj, hdfier, &
+  &               file_space_id=filespace_t, mem_space_id=memspace_t ) )
 
-  call h5sselect_hyperslab_f (filespace_s, H5S_SELECT_SET_F, int((/0,0,offset/),HSSIZE_T), length, hdfier)
-  call h5dwrite_f(dset_id_s, H5T_NATIVE_DOUBLE, data(2,0:Nz-1,1:nPpts), dims_singleTraj, hdfier, &
-  &               file_space_id=filespace_s, mem_space_id=memspace_s )
+  H5CALL( sphdf5, h5sselect_hyperslab_f, (filespace_s, H5S_SELECT_SET_F, int((/0,0,offset/),HSSIZE_T), length, hdfier) )
+  H5CALL( sphdf5, h5dwrite_f, (dset_id_s, H5T_NATIVE_DOUBLE, data(2,0:Nz-1,1:nPpts), dims_singleTraj, hdfier, &
+  &               file_space_id=filespace_s, mem_space_id=memspace_s ) )
 
-  call h5sselect_hyperslab_f (filespace_R, H5S_SELECT_SET_F, int((/0,0,offset/),HSSIZE_T), length, hdfier)
-  call h5dwrite_f(dset_id_R, H5T_NATIVE_DOUBLE, data(3,0:Nz-1,1:nPpts), dims_singleTraj, hdfier, &
-  &               file_space_id=filespace_R, mem_space_id=memspace_R )
+  H5CALL( sphdf5, h5sselect_hyperslab_f, (filespace_R, H5S_SELECT_SET_F, int((/0,0,offset/),HSSIZE_T), length, hdfier) )
+  H5CALL( sphdf5, h5dwrite_f, (dset_id_R, H5T_NATIVE_DOUBLE, data(3,0:Nz-1,1:nPpts), dims_singleTraj, hdfier, &
+  &               file_space_id=filespace_R, mem_space_id=memspace_R ) )
 
-  call h5sselect_hyperslab_f (filespace_Z, H5S_SELECT_SET_F, int((/0,0,offset/),HSSIZE_T), length, hdfier)
-  call h5dwrite_f(dset_id_Z, H5T_NATIVE_DOUBLE, data(4,0:Nz-1,1:nPpts), dims_singleTraj, hdfier, &
-  &               file_space_id=filespace_Z, mem_space_id=memspace_Z )
+  H5CALL( sphdf5, h5sselect_hyperslab_f, (filespace_Z, H5S_SELECT_SET_F, int((/0,0,offset/),HSSIZE_T), length, hdfier) )
+  H5CALL( sphdf5, h5dwrite_f, (dset_id_Z, H5T_NATIVE_DOUBLE, data(4,0:Nz-1,1:nPpts), dims_singleTraj, hdfier, &
+  &               file_space_id=filespace_Z, mem_space_id=memspace_Z ) )
 
-  call h5sselect_hyperslab_f (filespace_success, H5S_SELECT_SET_F, int((/offset/),HSSIZE_T), int((/1/), HSIZE_T), hdfier)
-  call h5dwrite_f(dset_id_success, H5T_NATIVE_INTEGER, success, int((/1/), HSIZE_T), hdfier, &
-  &               file_space_id=filespace_success, mem_space_id=memspace_success )
+  H5CALL( sphdf5, h5sselect_hyperslab_f, (filespace_success, H5S_SELECT_SET_F, int((/offset/),HSSIZE_T), int((/1/), HSIZE_T), hdfier) )
+  H5CALL( sphdf5, h5dwrite_f, (dset_id_success, H5T_NATIVE_INTEGER, success, int((/1/), HSIZE_T), hdfier, &
+  &               file_space_id=filespace_success, mem_space_id=memspace_success ) )
 
 end subroutine write_poincare
 
@@ -657,19 +648,18 @@ subroutine write_transform( offset, length, lvol, diotadxup, fiota )
   INTEGER, intent(in) :: offset, length, lvol
   REAL, intent(in)    :: diotadxup(:), fiota(:,:)
 
-  call h5sselect_hyperslab_f (filespace_diotadxup, H5S_SELECT_SET_F, int((/0,lvol-1/),HSSIZE_T), int((/2,1/),HSSIZE_T), hdfier)
-  call h5dwrite_f(dset_id_diotadxup, H5T_NATIVE_DOUBLE, diotadxup, int((/2,1/),HSSIZE_T), hdfier, &
-  &               file_space_id=filespace_diotadxup, mem_space_id=memspace_diotadxup )
+  H5CALL( sphdf5, h5sselect_hyperslab_f, (filespace_diotadxup, H5S_SELECT_SET_F, int((/0,lvol-1/),HSSIZE_T), int((/2,1/),HSSIZE_T), hdfier) )
+  H5CALL( sphdf5, h5dwrite_f, (dset_id_diotadxup, H5T_NATIVE_DOUBLE, diotadxup, int((/2,1/),HSSIZE_T), hdfier, &
+  &               file_space_id=filespace_diotadxup, mem_space_id=memspace_diotadxup ) )
 
   ! length of fiota piece to write here may change, so open and close memspace each time a new slab is written
-  call h5screate_simple_f(rankT, int((/length,2/),HSIZE_T), memspace_fiota    , hdfier)
+  H5CALL( sphdf5, h5screate_simple_f, (rankT, int((/length,2/),HSIZE_T), memspace_fiota    , hdfier) )
 
-  call h5sselect_hyperslab_f (filespace_fiota, H5S_SELECT_SET_F, int((/offset,0/),HSSIZE_T), int((/length,2/),HSSIZE_T), hdfier)
-  call h5dwrite_f(dset_id_fiota, H5T_NATIVE_DOUBLE, fiota, int((/length,2/),HSSIZE_T), hdfier, &
-  &               file_space_id=filespace_fiota, mem_space_id=memspace_fiota )
+  H5CALL( sphdf5, h5sselect_hyperslab_f, (filespace_fiota, H5S_SELECT_SET_F, int((/offset,0/),HSSIZE_T), int((/length,2/),HSSIZE_T), hdfier) )
+  H5CALL( sphdf5, h5dwrite_f, (dset_id_fiota, H5T_NATIVE_DOUBLE, fiota, int((/length,2/),HSSIZE_T), hdfier, &
+  &               file_space_id=filespace_fiota, mem_space_id=memspace_fiota ) )
 
-  call h5sclose_f(memspace_fiota, hdfier)
-  FATAL( pp00aa, hdfier.lt.0, h5sclose_f returned an error while closing memspace )
+  H5CALL( sphdf5, h5sclose_f, (memspace_fiota, hdfier) )
 
 end subroutine write_transform
 
@@ -702,76 +692,52 @@ subroutine finalize_flt_output
   ! \t
   ! -----
 
-  ! Close dataspaces.
-  call h5sclose_f(filespace_t, hdfier)
-  FATAL( pp00aa, hdfier.lt.0, h5sclose_f returned an error while closing filespace )
+  ! Close dataspaces
 
-  call h5sclose_f(memspace_t, hdfier)
-  FATAL( pp00aa, hdfier.lt.0, h5sclose_f returned an error while closing memspace )
-
+  H5CALL( sphdf5, h5sclose_f, (filespace_t, hdfier))
+  H5CALL( sphdf5, h5sclose_f, (memspace_t, hdfier) )
   ! Close the dataset
-  call h5dclose_f(dset_id_t, hdfier)
-  FATAL( pp00aa, hdfier.lt.0, h5dclose_f returned an error )
+  H5CALL( sphdf5, h5dclose_f, (dset_id_t, hdfier) )
 
   ! -----
   ! s
   ! -----
 
   ! Close dataspaces.
-  call h5sclose_f(filespace_s, hdfier)
-  FATAL( pp00aa, hdfier.lt.0, h5sclose_f returned an error while closing filespace )
-
-  call h5sclose_f(memspace_s, hdfier)
-  FATAL( pp00aa, hdfier.lt.0, h5sclose_f returned an error while closing memspace )
-
+  H5CALL( sphdf5, h5sclose_f, (filespace_s, hdfier) )
+  H5CALL( sphdf5, h5sclose_f, (memspace_s, hdfier) )
   ! Close the dataset
-  call h5dclose_f(dset_id_s, hdfier)
-  FATAL( pp00aa, hdfier.lt.0, h5dclose_f returned an error )
+  H5CALL( sphdf5, h5dclose_f, (dset_id_s, hdfier) )
 
   ! -----
   ! R
   ! -----
 
   ! Close dataspaces.
-  call h5sclose_f(filespace_R, hdfier)
-  FATAL( pp00aa, hdfier.lt.0, h5sclose_f returned an error while closing filespace )
-
-  call h5sclose_f(memspace_R, hdfier)
-  FATAL( pp00aa, hdfier.lt.0, h5sclose_f returned an error while closing memspace )
-
+  H5CALL( sphdf5, h5sclose_f, (filespace_R, hdfier) )
+  H5CALL( sphdf5, h5sclose_f, (memspace_R, hdfier) )
   ! Close the dataset
-  call h5dclose_f(dset_id_R, hdfier)
-  FATAL( pp00aa, hdfier.lt.0, h5dclose_f returned an error )
+  H5CALL( sphdf5, h5dclose_f, (dset_id_R, hdfier) )
 
   ! -----
   ! Z
   ! -----
 
   ! Close dataspaces.
-  call h5sclose_f(filespace_Z, hdfier)
-  FATAL( pp00aa, hdfier.lt.0, h5sclose_f returned an error while closing filespace )
-
-  call h5sclose_f(memspace_Z, hdfier)
-  FATAL( pp00aa, hdfier.lt.0, h5sclose_f returned an error while closing memspace )
-
+  H5CALL( sphdf5, h5sclose_f, (filespace_Z, hdfier) )
+  H5CALL( sphdf5, h5sclose_f, (memspace_Z, hdfier) )
   ! Close the dataset
-  call h5dclose_f(dset_id_Z, hdfier)
-  FATAL( pp00aa, hdfier.lt.0, h5dclose_f returned an error )
+  H5CALL( sphdf5, h5dclose_f, (dset_id_Z, hdfier) )
 
   ! -----
   ! success
   ! -----
 
   ! Close dataspaces.
-  call h5sclose_f(filespace_success, hdfier)
-  FATAL( pp00aa, hdfier.lt.0, h5sclose_f returned an error while closing filespace )
-
-  call h5sclose_f(memspace_success, hdfier)
-  FATAL( pp00aa, hdfier.lt.0, h5sclose_f returned an error while closing memspace )
-
+  H5CALL( sphdf5, h5sclose_f, (filespace_success, hdfier) )
+  H5CALL( sphdf5, h5sclose_f, (memspace_success, hdfier) )
   ! Close the dataset
-  call h5dclose_f(dset_id_success, hdfier)
-  FATAL( pp00aa, hdfier.lt.0, h5dclose_f returned an error )
+  H5CALL( sphdf5, h5dclose_f, (dset_id_success, hdfier) )
 
   HCLOSEGRP( grpPoincare )
 
@@ -780,27 +746,19 @@ subroutine finalize_flt_output
   ! -----
 
   ! Close dataspaces.
-  call h5sclose_f(filespace_diotadxup, hdfier)
-  FATAL( pp00aa, hdfier.lt.0, h5sclose_f returned an error while closing filespace )
-
-  call h5sclose_f(memspace_diotadxup, hdfier)
-  FATAL( pp00aa, hdfier.lt.0, h5sclose_f returned an error while closing memspace )
-
+  H5CALL( sphdf5, h5sclose_f, (filespace_diotadxup, hdfier) )
+  H5CALL( sphdf5, h5sclose_f, (memspace_diotadxup, hdfier) )
   ! Close the dataset
-  call h5dclose_f(dset_id_diotadxup, hdfier)
-  FATAL( pp00aa, hdfier.lt.0, h5dclose_f returned an error )
+  H5CALL( sphdf5, h5dclose_f, (dset_id_diotadxup, hdfier) )
 
   ! -----
   ! fiota
   ! -----
 
   ! Close dataspaces.
-  call h5sclose_f(filespace_fiota, hdfier)
-  FATAL( pp00aa, hdfier.lt.0, h5sclose_f returned an error while closing filespace )
-
+  H5CALL( sphdf5, h5sclose_f, (filespace_fiota, hdfier) )
   ! Close the dataset
-  call h5dclose_f(dset_id_fiota, hdfier)
-  FATAL( pp00aa, hdfier.lt.0, h5dclose_f returned an error )
+  H5CALL( sphdf5, h5dclose_f, (dset_id_fiota, hdfier) )
 
   HCLOSEGRP( grpTransform )
 
@@ -950,26 +908,24 @@ subroutine finish_outfile
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   ! close objects related to convergence output
-  call h5tclose_f(dt_nDcalls_id, hdfier)
-  call h5tclose_f(dt_Energy_id, hdfier)
-  call h5tclose_f(dt_ForceErr_id, hdfier)
-  call h5tclose_f(dt_iRbc_id, hdfier)
-  call h5tclose_f(dt_iZbs_id, hdfier)
-  call h5tclose_f(dt_iRbs_id, hdfier)
-  call h5tclose_f(dt_iZbc_id, hdfier)
-  call h5dclose_f(iteration_dset_id, hdfier)                                             ! End access to the dataset and release resources used by it.
-  call h5pclose_f(plist_id, hdfier)                                                      ! close plist used for 'preserve' flag (does not show up in obj_count below)
+  H5CALL( sphdf5, h5tclose_f, (dt_nDcalls_id, hdfier)     )
+  H5CALL( sphdf5, h5tclose_f, (dt_Energy_id, hdfier)      )
+  H5CALL( sphdf5, h5tclose_f, (dt_ForceErr_id, hdfier)    )
+  H5CALL( sphdf5, h5tclose_f, (dt_iRbc_id, hdfier)        )
+  H5CALL( sphdf5, h5tclose_f, (dt_iZbs_id, hdfier)        )
+  H5CALL( sphdf5, h5tclose_f, (dt_iRbs_id, hdfier)        )
+  H5CALL( sphdf5, h5tclose_f, (dt_iZbc_id, hdfier)        )
+  H5CALL( sphdf5, h5dclose_f, (iteration_dset_id, hdfier) )                                             ! End access to the dataset and release resources used by it.
+  H5CALL( sphdf5, h5pclose_f, (plist_id, hdfier)          )                                             ! close plist used for 'preserve' flag (does not show up in obj_count below)
 
-  call h5fclose_f( file_id, hdfier ) ! terminate access on output file;
-  FATAL( sphdf5, hdfier.ne.0, error calling h5fclose_f )
+  H5CALL( sphdf5, h5fclose_f, ( file_id, hdfier ) ) ! terminate access on output file;
 
-  call h5fget_obj_count_f(INT(H5F_OBJ_ALL_F,HID_T), H5F_OBJ_ALL_F, obj_count, hdfier)    ! check whether we forgot to close some resources
+  H5CALL( sphdf5, h5fget_obj_count_f, (INT(H5F_OBJ_ALL_F,HID_T), H5F_OBJ_ALL_F, obj_count, hdfier) )   ! check whether we forgot to close some resources
   if (obj_count.gt.0 .and. myid.eq.0) then
     write(*,'("There are still ",i3," HDF5 objects open!")') obj_count
   endif ! (obj_count.gt.0)
 
-  call h5close_f( hdfier ) ! close Fortran interface to the HDF5 library;
-  FATAL( sphdf5, hdfier.ne.0, error calling h5close_f )
+  H5CALL( sphdf5, h5close_f( hdfier ) ) ! close Fortran interface to the HDF5 library;
 end subroutine finish_outfile
 
 end module sphdf5

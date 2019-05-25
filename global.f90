@@ -101,7 +101,6 @@ module cputiming
   REAL :: Treadin = 0.0
   REAL :: Twritin = 0.0 ! redundant; 
   REAL :: Twrtend = 0.0
-  !REAL :: Tsphdf5 = 0.0
 
 end module cputiming
 
