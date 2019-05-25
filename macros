@@ -33,6 +33,7 @@ m4_define(LOCALS,{! macro expansion of locals;
 
   ! macro expansion of locals; end;})m4_dnl ; can put comments here;
 m4_define(SALLOCATE,{ ! macro expansion of sallocate = set allocate;
+! allocate a variable of name _1 in the range _2 and set the value to _3
 
 #ifdef DEBUG
    if( allocated( $1 ) ) then
@@ -60,6 +61,7 @@ m4_define(SALLOCATE,{ ! macro expansion of sallocate = set allocate;
 
   ! macro expansion of sallocate; end;})m4_dnl ; can put comments here;
 m4_define(NALLOCATE,{! macro expansion of nallocate;
+! allocate a variable of name _1 in the range _2
 
 #ifdef DEBUG
 
@@ -91,7 +93,7 @@ m4_define(NALLOCATE,{! macro expansion of nallocate;
 
   ! macro expansion of nallocate; end;})m4_dnl ; can put comments here;
 m4_define(DALLOCATE,{! macro expansion of dallocate;
-
+! deallocate _1
 #ifdef DEBUG
 
    if( .not.allocated($1) ) then
@@ -123,7 +125,7 @@ m4_define(DALLOCATE,{! macro expansion of dallocate;
 
   ! macro expansion of dallocate; end;})m4_dnl ; can put comments here;
 m4_define(FATAL,{! macro expansion of fatal;
-
+! called from within _1; check logical expression in _2 and exit with reason _3 if the expression _2 is true
    if( $2 ) then
      write(0,'("$1 :      fatal : myid=",i3," ; $2 ; $3;")') myid
      call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
@@ -132,7 +134,8 @@ m4_define(FATAL,{! macro expansion of fatal;
 
   ! macro expansion of fatal; end;})m4_dnl ; can put comments here;
 m4_define(LlBCAST,{! macro expansion of llbcast;
- 
+! logical MPI broadcast of _1; length is _2; what is _3 ?
+
 #ifdef DEBUG 
 
    if( $2.lt.0 ) then
@@ -155,6 +158,7 @@ m4_define(LlBCAST,{! macro expansion of llbcast;
 
   ! macro expansion of llbcast; end;})m4_dnl can put comments here
 m4_define(IlBCAST,{! macro expansion of ilbcast;
+! integer MPI broadcast of _1; length is _2; what is _3 ?
 
 #ifdef DEBUG   
 
@@ -178,7 +182,8 @@ m4_define(IlBCAST,{! macro expansion of ilbcast;
 
   ! macro expansion of ilbcast; end;})m4_dnl can put comments here
 m4_define(RlBCAST,{! macro expansion of rlbcast;
-  
+! real MPI broadcast of _1; length is _2; what is _3 ?
+
 #ifdef DEBUG
 
    if( $2.lt.0 ) then
@@ -201,6 +206,7 @@ m4_define(RlBCAST,{! macro expansion of rlbcast;
 
   ! macro expansion of rlbcast; end;})m4_dnl can put comments here
 m4_define(ClBCAST,{! macro expansion of clbcast;
+! character MPI broadcast of _1; length is _2; what is _3 ?
   
 #ifdef DEBUG
 
@@ -224,6 +230,7 @@ m4_define(ClBCAST,{! macro expansion of clbcast;
 
   ! macro expansion of clbcast; end;})m4_dnl can put comments here
 m4_define(CALL,{! macro expansion of call;
+! call _2 with arguments _3 from within _1
 
    cput = MPI_WTIME()
    T$1 = T$1 + ( cput-cpuo ) 
@@ -235,6 +242,7 @@ m4_define(CALL,{! macro expansion of call;
 
   ! macro expansion of call; end;})m4_dnl ; can put comments here;
 m4_define(WCALL,{! macro expansion of wcall;
+! call _2 with arguments _3 from within _1 and write wall time needed for call to screen
 
    cput = MPI_WTIME()
    T$1 = T$1 + ( cput-cpuo ) 
@@ -260,6 +268,7 @@ m4_define(WCALL,{! macro expansion of wcall;
 
   ! macro expansion of wcall; end;})m4_dnl ; can put comments here;
 m4_define(HDEFGRP,{! macro expansion of hdefgrp;
+! define a HDF5 group in _1 with name _2 and save reference into hid_t _3
 
   ! temporarily disable error printing to not confuse users
   call h5eset_auto_f(0, hdfier)
@@ -310,6 +319,7 @@ m4_define(HDEFGRP,{! macro expansion of hdefgrp;
 
   ! macro expansion of hdefgrp; end;})m4_dnl ; can put comments here;
 m4_define(HCLOSEGRP,{! macro expansion of hclosegrp;
+! close a HDF5 group given in _1
 
   call h5gclose_f($1, hdfier)
   if( hdfier.ne.0 ) then
@@ -320,7 +330,10 @@ m4_define(HCLOSEGRP,{! macro expansion of hclosegrp;
 
   ! macro expansion of hclosegrp; end;})m4_dnl ; can put comments here;
 m4_define(HWRITELV,{! macro expansion of hwritelv;
-! arguments: group, length, name, data
+! write logical variable _4 (scalar (_2=1) or rank-1 (_2=length)) into a dataset named _3 into group _1
+! example: hwritelv( grpInputGlobal, 1, LreadGF, (/ LreadGF /) ) ! scalar
+! example: hwritelv( grpInput, 5, success, success(1:5) ) ! rank-1
+
 #ifdef DEBUG
   if( Wmacros ) write(ounit,'("macros : ", 10x ," : myid=",i3," ; writing $3 ;")') myid
 #endif
@@ -396,6 +409,9 @@ m4_define(HWRITELV,{! macro expansion of hwritelv;
 
   ! macro expansion of hwritelv; end;})m4_dnl ; can put comments here;
 m4_define(HWRITEIV,{! macro expansion of hwriteiv;
+! write integer variable _4 (scalar (_2=1) or rank-1 (_2=length)) into a dataset named _3 into group _1
+! example: hwriteiv( grpInputPhysics,    1, Igeometry, (/ Igeometry /) ) ! scalar
+! example: hwriteiv( grpInputPhysics, Mvol,      Lrad,  Lrad(1:Mvol)   ) ! rank-1
 
 #ifdef DEBUG
   if( Wmacros ) write(ounit,'("macros : ", 10x ," : myid=",i3," ; writing $3 ;")') myid
@@ -472,6 +488,9 @@ m4_define(HWRITEIV,{! macro expansion of hwriteiv;
 
   ! macro expansion of hwriteiv; end;})m4_dnl ; can put comments here;
 m4_define(HWRITERV,{! macro expansion of hwriterv;
+! write real variable _4 (scalar (_2=1) or rank-1 (_2=length)) into a dataset named _3 into group _1
+! example: hwriterv( grpInputPhysics,    1, phiedge, (/ phiedge /) ) ! scalar
+! example: hwriterv( grpInputPhysics, Mvol,   tflux, tflux(1:Mvol) ) ! rank-1
 
 #ifdef DEBUG
   if( Wmacros ) write(ounit,'("macros : ", 10x ," : myid=",i3," ; writing $3 ;")') myid
@@ -548,6 +567,8 @@ m4_define(HWRITERV,{! macro expansion of hwriterv;
 
   ! macro expansion of hwriterv; end;})m4_dnl ; can put comments here;
 m4_define(HWRITERA,{! macro expansion of hwritea;
+! write real array _5 (_2 rows, _3 columns) into a dataset named _4 into group _1
+! example: hwritera( grpInputPhysics, (2*Ntor+1), (2*Mpol+1), Rbc, Rbc(-Ntor:Ntor,-Mpol:Mpol) )
 
 #ifdef DEBUG
   if( Wmacros ) write(ounit,'("macros : ", 10x ," : myid=",i3," ; writing $4 ;")') myid
@@ -624,6 +645,8 @@ m4_define(HWRITERA,{! macro expansion of hwritea;
 
   ! macro expansion of hwritea; end;})m4_dnl ; can put comments here;
 m4_define(HWRITERC,{! macro expansion of hwriterc;
+! write real cube _6 (_2 rows, _3 columns, _4 pages) into a dataset named _5 into group _1
+! example: hwriterc( grpOutput, (Mrad+1), 2, 2, TT, TT(0:Mrad,0:1,0:1) )
 
 #ifdef DEBUG
   if( Wmacros ) write(ounit,'("macros : ", 10x ," : myid=",i3," ; writing $5 ;")') myid
@@ -700,6 +723,7 @@ m4_define(HWRITERC,{! macro expansion of hwriterc;
 
   ! macro expansion of hwriterc; end;})m4_dnl ; can put comments here;
 m4_define(BEGIN,{! macro expansion of begin;
+! comment the start of a subroutine to screen output
 
  !cpui = zero
   cpui = MPI_WTIME()
@@ -713,6 +737,7 @@ m4_define(BEGIN,{! macro expansion of begin;
 
   ! macro expansion of begin; end;})m4_dnl ; can put comments here;
 m4_define(LREGION,{! macro expansion of lregion;
+! given annulus number _1, set Lcoordinatesingularity, Lplasmaregion and Lvacuumregion accordingly
 
    if( Igeometry.eq.1 .or. $1.gt.1 ) then ; Lcoordinatesingularity = .false.
    else                                     ; Lcoordinatesingularity = .true.
@@ -726,6 +751,7 @@ m4_define(LREGION,{! macro expansion of lregion;
 
   ! macro expansion of lregion; end;})m4_dnl ; can put comments here;
 m4_define(RETURN,{! macro expansion of return;
+! comment the end of a subroutine to screen output
 
 9999 continue
 

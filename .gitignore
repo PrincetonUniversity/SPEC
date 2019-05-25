@@ -19,3 +19,6 @@ dspec
 .project
 .cproject
 
+# output files from example runs
+InputFiles/**/*.h5
+InputFiles/**/*.sp.end
