@@ -28,7 +28,7 @@
  
  CC=intel
  # if want to use gfortran; make CC=gfortran xfocus; otherwise using Intel
- FC=mpif90
+ FC?=mpif90
  
  # Intel Defaults
  # At PPPL
