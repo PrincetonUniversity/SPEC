@@ -238,7 +238,7 @@ $(DOBJS): %_d.o: %_m.F90 global_d.o $(MACROS) Makefile
 	@wc -l -L -w $*_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
-$(PREPROC): %_m.F90: %.f90
+$(PREPROC): %_m.F90: %.f90 $(MACROS)
 	awk -v file=$*.f90 '{ gsub("__LINE__", NR); gsub("__FILE__",file); print }' $*.f90 > $*_p.f90
 	m4 -P $(MACROS) $*_p.f90 > $*_m.F90
 
