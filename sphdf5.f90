@@ -10,6 +10,8 @@
 
 !latex \newcommand{\pb}[1]{\parbox[t]{13cm}{#1}}
 
+!latex \begin{enumerate}
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 module sphdf5
@@ -39,7 +41,7 @@ module sphdf5
   integer(hid_t)                 :: iteration_dset_id                          ! Dataset identifier for "iteration"
   integer(hid_t)                 :: dataspace                                  ! dataspace for extension by 1 iteration object
   integer(hid_t)                 :: memspace                                   ! memspace for extension by 1 iteration object
-  integer(hsize_t), dimension(1) :: old_data_dims, data_dims
+  integer(hsize_t), dimension(1) :: old_data_dims, data_dims, max_dims
   integer(hid_t)                 :: plist_id                                   ! Property list identifier used to activate dataset transfer property
   integer(hid_t)                 :: dt_nDcalls_id                              ! Memory datatype identifier (for "nDcalls"  dataset in "/grid")
   integer(hid_t)                 :: dt_Energy_id                               ! Memory datatype identifier (for "Energy"   dataset in "/grid")
@@ -75,6 +77,19 @@ module sphdf5
   integer(HID_T)                 :: filespace_fiota                            ! Dataspace identifier in file
   integer(HID_T)                 :: memspace_diotadxup                         ! Dataspace identifier in memory
   integer(HID_T)                 :: memspace_fiota                             ! Dataspace identifier in memory
+
+
+  character(LEN=15), parameter :: aname = "description"   ! Attribute name
+
+  integer(HID_T) :: attr_id       ! Attribute identifier
+  integer(HID_T) :: aspace_id     ! Attribute Dataspace identifier
+  integer(HID_T) :: atype_id      ! Attribute Dataspace identifier
+
+  integer, parameter     ::   arank = 1               ! Attribure rank
+  integer(HSIZE_T), dimension(arank) :: adims = (/1/) ! Attribute dimension
+
+  integer(SIZE_T) :: attrlen    ! Length of the attribute string
+  character(len=:), allocatable ::  attr_data  ! Attribute data
 
 contains
 
@@ -117,6 +132,7 @@ subroutine mirror_input_to_outfile
   integer(hid_t) :: grpInputPhysics, grpInputNumerics, grpInputLocal, grpInputGlobal, grpInputDiagnostics
 
   HDEFGRP( file_id, input, grpInput )
+  H5DESCR( grpInput, /input, group for mirrored input data )
 
 ! the following variables constitute the namelist/physicslist/; note that all variables in namelist need to be broadcasted in readin;
 ! they go into ext.h5/input/physics
@@ -397,7 +413,8 @@ subroutine write_convergence_output( nDcalls, ForceErr )
   H5CALL( sphdf5, h5dget_space_f, (iteration_dset_id, dataspace, hdfier) )
 
   ! get current size of dataset
-  H5CALL( sphdf5, h5sget_simple_extent_npoints_f, (dataspace, old_data_dims(1), hdfier) )
+  call h5sget_simple_extent_dims_f(dataspace, old_data_dims, max_dims, hdfier)
+  FATAL( sphdf5, hdfier.ne.1, rank of convergence dataspace is not 1 )
 
   ! blow up dataset to new size
   data_dims = old_data_dims+1
@@ -799,7 +816,6 @@ subroutine hdfint
   HWRITERV( grpOutput,           mn,               Vnc,       iVnc(1:mn)   ) ! non-stellarator symmetric normal field at boundary; vacuum component;
   HWRITERV( grpOutput,           mn,               Bnc,       iBnc(1:mn)   ) ! non-stellarator symmetric normal field at boundary; plasma component;
 
-!latex \begin{enumerate}
 
 !latex \item In addition to the input variables, which are described in \link{global}, the following quantities are written to \type{ext.h5} :
 !latex

@@ -329,6 +329,42 @@ m4_define(HCLOSEGRP,{! macro expansion of hclosegrp;
   endif
 
   ! macro expansion of hclosegrp; end;})m4_dnl ; can put comments here;
+m4_define(H5DESCR,{! macro expansion of h5descr;
+! describe an already-open HDF5 object given in _1 at location _2 with text given in _3 and leave it open
+! also write a LaTeX comment on that output object
+!latex \item{\verb+$2+} $3
+  attr_data = "$3"
+  attrlen=len(attr_data)
+
+  ! Create scalar data space for the attribute.
+  call h5screate_simple_f(arank, adims, aspace_id, hdfier)
+
+  ! Create datatype for the attribute.
+  call h5tcopy_f(H5T_NATIVE_CHARACTER, atype_id, hdfier)
+  call h5tset_size_f(atype_id, attrlen, hdfier)
+
+  ! create descriptive attribute
+  call h5acreate_f(grpInput, aname, atype_id, aspace_id, attr_id, hdfier)
+
+  ! Write the attribute data.
+  call h5awrite_f(attr_id, atype_id, attr_data, adims, hdfier)
+
+  ! Close the attribute.
+  call h5aclose_f(attr_id, hdfier)
+
+  ! Close the attribute datatype.
+  call h5tclose_f(atype_id, hdfier)
+
+  ! Terminate access to the data space.
+  call h5sclose_f(aspace_id, hdfier)
+  
+  if( hdfier.ne.0 ) then
+    write(0,'("sphdf5 : "10x" : error calling h5sclose_f ;")')
+    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    stop "sphdf5 : error calling h5sclose_f ;"
+  endif
+
+  ! macro expansion of h5descr; end;})m4_dnl ; can put comments here;
 m4_define(HWRITELV,{! macro expansion of hwritelv;
 ! write logical variable _4 (scalar (_2=1) or rank-1 (_2=length)) into a dataset named _3 into group _1
 ! example: hwritelv( grpInputGlobal, 1, LreadGF, (/ LreadGF /) ) ! scalar

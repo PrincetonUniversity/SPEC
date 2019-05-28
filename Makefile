@@ -13,11 +13,11 @@
 
 ###############################################################################################################################################################
 
- SPECFILES=sphdf5 $(afiles) $(bfiles) $(cfiles) $(dfiles) $(efiles) $(ffiles)
- ALLFILES=global $(SPECFILES) $(sfiles) preset xspech
+ SPECFILES=sphdf5 preset $(afiles) $(bfiles) $(cfiles) $(dfiles) $(efiles) $(ffiles)
+ ALLFILES=global $(SPECFILES) $(sfiles) xspech
 #F77FILES=$(sfiles:=.f)
  PREPROC=$(SPECFILES:=_m.F90) # preprocessed by m4
- RAWSOURCE=global preset $(SPECFILES) xspech # "raw" code, with macros not expanded yet
+ RAWSOURCE=global $(SPECFILES) xspech # "raw" code, with macros not expanded yet
 
  ROBJS=$(SPECFILES:=_r.o)
  DOBJS=$(SPECFILES:=_d.o)
@@ -26,7 +26,7 @@
  
  MACROS=macros
  
- CC=intel
+ CC?=intel
  # if want to use gfortran; make CC=gfortran xfocus; otherwise using Intel
  FC?=mpif90
  
@@ -202,17 +202,17 @@ global_d.o: %_d.o: global.f90 $(MACROS) Makefile
 
 ###############################################################################################################################################################
 
-preset_r.o: preset.f90 global_r.o $(MACROS) Makefile
-	m4 -P $(MACROS) preset.f90 > $*_m.F90
-	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o preset_r.o -c $*_m.F90 $(FFTWcompile)
-	@wc -l -L -w preset_r_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
-	@echo ''
-
-preset_d.o: preset.f90 global_d.o $(MACROS) Makefile
-	m4 -P $(MACROS) preset.f90 > $*_m.F90
-	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o preset_d.o -c $*_m.F90 $(FFTWcompile)
-	@wc -l -L -w preset_d_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
-	@echo ''
+#preset_r.o: preset.f90 global_r.o $(MACROS) Makefile
+#	m4 -P $(MACROS) preset.f90 > $*_m.F90
+#	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o preset_r.o -c $*_m.F90 $(FFTWcompile)
+#	@wc -l -L -w preset_r_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
+#	@echo ''
+#
+#preset_d.o: preset.f90 global_d.o $(MACROS) Makefile
+#	m4 -P $(MACROS) preset.f90 > $*_m.F90
+#	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o preset_d.o -c $*_m.F90 $(FFTWcompile)
+#	@wc -l -L -w preset_d_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
+#	@echo ''
 
 ###############################################################################################################################################################
 
@@ -295,7 +295,7 @@ clean:
 	ls --full-time ../$*.f90 | awk 'IFS=" " {print $$6 " " substr($$7,0,8);}' > .$*.date ; \
 	awk -v file=$* -v date=.$*.date 'BEGIN{getline cdate < date ; FS="!latex" ; print "\\input{../head} \\code{"file"}"} \
 	{if(NF>1) print $$2} \
-	END{print "\\hrule \\vspace{1mm} \\footnotesize $*.f90 last modified on "cdate";" ; print "\\input{../end}"}' ../$*.f90 > $*.tex ; \
+	END{print "\\hrule \\vspace{1mm} \\footnotesize $*.f90 last modified on "cdate";" ; print "\\input{../end}"}' ../$*_m.F90 > $*.tex ; \
 	latex $* ; latex $* ; latex $* ; dvips -P pdf -o $*.ps $*.dvi ; ps2pdf $*.ps ; \
 	rm -f $*.tex $*.aux $*.blg $*.log $*.ps 
 
