@@ -8,7 +8,7 @@ Created on Sat May 25 18:01:55 2019
 
 import h5py
 
-# reader class for Stepped Pressure Equilibrium Code
+# reader class for Stepped Pressure Equilibrium Code output file
 # Hudson et al., Physics of Plasmas 19, 112502 (2012); doi: 10.1063/1.4765691
 class SPEC:
     
@@ -75,5 +75,9 @@ class SPEC:
         self.mupfits    =self._file['/input/physics/mupfits'][0]
         
         
+        
 if __name__=="__main__":
-    s=SPEC("/home/jonathan/Uni/04_PhD/00_programs/SPEC/SPEC/InputFiles/Verification/forcefree/solovev/solovev_fb_vmec7vol_final.h5")
+    s=SPEC("../../InputFiles/Verification/forcefree/solovev/solovev_fb_vmec7vol_final.h5")
+    
+    print(s.helicity)
+
