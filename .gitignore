@@ -18,6 +18,7 @@ dspec
 .settings
 .project
 .cproject
+.pydevproject
 
 # output files from example runs
 InputFiles/**/*.h5
