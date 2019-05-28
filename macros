@@ -335,33 +335,139 @@ m4_define(H5DESCR,{! macro expansion of h5descr;
 !latex \item{\verb+$2+} $3
   attr_data = "$3"
   attrlen=len(attr_data)
-
-  ! Create scalar data space for the attribute.
-  call h5screate_simple_f(arank, adims, aspace_id, hdfier)
-
-  ! Create datatype for the attribute.
-  call h5tcopy_f(H5T_NATIVE_CHARACTER, atype_id, hdfier)
-  call h5tset_size_f(atype_id, attrlen, hdfier)
-
-  ! create descriptive attribute
-  call h5acreate_f(grpInput, aname, atype_id, aspace_id, attr_id, hdfier)
-
-  ! Write the attribute data.
-  call h5awrite_f(attr_id, atype_id, attr_data, adims, hdfier)
-
-  ! Close the attribute.
-  call h5aclose_f(attr_id, hdfier)
-
-  ! Close the attribute datatype.
-  call h5tclose_f(atype_id, hdfier)
-
-  ! Terminate access to the data space.
-  call h5sclose_f(aspace_id, hdfier)
   
+  call h5screate_simple_f(arank, adims, aspace_id, hdfier) ! Create scalar data space for the attribute.
+  if( hdfier.ne.0 ) then
+    write(0,'("sphdf5 : "10x" : error calling h5screate_simple_f ;")')
+    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    stop "sphdf5 : error calling h5screate_simple_f ;"
+  endif
+  
+  call h5tcopy_f(H5T_NATIVE_CHARACTER, atype_id, hdfier)   ! Create datatype for the attribute.
+  if( hdfier.ne.0 ) then
+    write(0,'("sphdf5 : "10x" : error calling h5tcopy_f ;")')
+    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    stop "sphdf5 : error calling h5tcopy_f ;"
+  endif
+  
+  call h5tset_size_f(atype_id, attrlen, hdfier)            ! Create datatype for the attribute.
+  if( hdfier.ne.0 ) then
+    write(0,'("sphdf5 : "10x" : error calling h5tset_size_f ;")')
+    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    stop "sphdf5 : error calling h5tset_size_f ;"
+  endif
+  
+  call h5acreate_f($1, aname, atype_id, aspace_id, attr_id, hdfier) ! create descriptive attribute
+  if( hdfier.ne.0 ) then
+    write(0,'("sphdf5 : "10x" : error calling h5acreate_f ;")')
+    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    stop "sphdf5 : error calling h5acreate_f ;"
+  endif
+  
+  call h5awrite_f(attr_id, atype_id, attr_data, adims, hdfier) ! Write the attribute data.
+  if( hdfier.ne.0 ) then
+    write(0,'("sphdf5 : "10x" : error calling h5awrite_f ;")')
+    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    stop "sphdf5 : error calling h5awrite_f ;"
+  endif
+  
+  call h5aclose_f(attr_id, hdfier) ! Close the attribute.
+  if( hdfier.ne.0 ) then
+    write(0,'("sphdf5 : "10x" : error calling h5aclose_f ;")')
+    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    stop "sphdf5 : error calling h5aclose_f ;"
+  endif
+  
+  call h5tclose_f(atype_id, hdfier) ! Close the attribute datatype.
+  if( hdfier.ne.0 ) then
+    write(0,'("sphdf5 : "10x" : error calling h5tclose_f ;")')
+    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    stop "sphdf5 : error calling h5tclose_f ;"
+  endif
+  
+  call h5sclose_f(aspace_id, hdfier) ! Terminate access to the data space.
   if( hdfier.ne.0 ) then
     write(0,'("sphdf5 : "10x" : error calling h5sclose_f ;")')
     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
     stop "sphdf5 : error calling h5sclose_f ;"
+  endif
+  
+  ! macro expansion of h5descr; end;})m4_dnl ; can put comments here;
+  m4_define(H5DESCR_CD,{! macro expansion of h5descr_cd;
+! describe an already-open HDF5 dataset identified by dset_id at location _1 with text given in _2 and close it at the end
+! also write a LaTeX comment on that output object
+!latex \item{\verb+$1+} $2
+  attr_data = "$2"
+  attrlen=len(attr_data)
+
+  ! Create scalar data space for the attribute.
+  call h5screate_simple_f(arank, adims, aspace_id, hdfier)
+  if( hdfier.ne.0 ) then
+    write(0,'("sphdf5 : "10x" : error calling h5screate_simple_f ;")')
+    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    stop "sphdf5 : error calling h5screate_simple_f ;"
+  endif
+  
+  ! Create datatype for the attribute.
+  call h5tcopy_f(H5T_NATIVE_CHARACTER, atype_id, hdfier)
+  if( hdfier.ne.0 ) then
+    write(0,'("sphdf5 : "10x" : error calling h5tcopy_f ;")')
+    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    stop "sphdf5 : error calling h5tcopy_f ;"
+  endif
+  
+  call h5tset_size_f(atype_id, attrlen, hdfier)
+  if( hdfier.ne.0 ) then
+    write(0,'("sphdf5 : "10x" : error calling h5tset_size_f ;")')
+    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    stop "sphdf5 : error calling h5tset_size_f ;"
+  endif
+  
+  ! create descriptive attribute
+  call h5acreate_f(dset_id, aname, atype_id, aspace_id, attr_id, hdfier)
+  if( hdfier.ne.0 ) then
+    write(0,'("sphdf5 : "10x" : error calling h5acreate_f ;")')
+    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    stop "sphdf5 : error calling h5acreate_f ;"
+  endif
+  
+  ! Write the attribute data.
+  call h5awrite_f(attr_id, atype_id, attr_data, adims, hdfier)
+  if( hdfier.ne.0 ) then
+    write(0,'("sphdf5 : "10x" : error calling h5awrite_f ;")')
+    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    stop "sphdf5 : error calling h5awrite_f ;"
+  endif
+  
+  ! Close the attribute.
+  call h5aclose_f(attr_id, hdfier)
+  if( hdfier.ne.0 ) then
+    write(0,'("sphdf5 : "10x" : error calling h5aclose_f ;")')
+    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    stop "sphdf5 : error calling h5aclose_f ;"
+  endif
+  
+  ! Close the attribute datatype.
+  call h5tclose_f(atype_id, hdfier)
+  if( hdfier.ne.0 ) then
+    write(0,'("sphdf5 : "10x" : error calling h5tclose_f ;")')
+    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    stop "sphdf5 : error calling h5tclose_f ;"
+  endif
+  
+  ! Terminate access to the data space.
+  call h5sclose_f(aspace_id, hdfier)
+  if( hdfier.ne.0 ) then
+    write(0,'("sphdf5 : "10x" : error calling h5sclose_f ;")')
+    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    stop "sphdf5 : error calling h5sclose_f ;"
+  endif
+  
+  call h5dclose_f(dset_id, hdfier)    ! terminate dataset;
+  if( hdfier.ne.0 ) then
+    write(0,'("sphdf5 : "10x" : error calling h5dclose_f ;")')
+    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    stop "sphdf5 : error calling h5dclose_f ;"
   endif
 
   ! macro expansion of h5descr; end;})m4_dnl ; can put comments here;
@@ -444,6 +550,79 @@ m4_define(HWRITELV,{! macro expansion of hwritelv;
   endif
 
   ! macro expansion of hwritelv; end;})m4_dnl ; can put comments here;
+m4_define(HWRITELV_LO,{! macro expansion of hwritelv_lo;
+! write logical variable _4 (scalar (_2=1) or rank-1 (_2=length)) into a dataset named _3 into group _1 and leave dataset open for e.g. adding an attribute
+! example: hwritelv_lo( grpInputGlobal, 1, LreadGF, (/ LreadGF /) ) ! scalar
+! example: hwritelv_lo( grpInput, 5, success, success(1:5) ) ! rank-1
+! and close it using h5descr_cd( /input/global/LreadGF, reading flag for GF )
+
+#ifdef DEBUG
+  if( Wmacros ) write(ounit,'("macros : ", 10x ," : myid=",i3," ; writing $3 ;")') myid
+#endif
+
+  rank = 1 ; onedims(1) = $2
+
+  if( $2.le.0 ) then
+
+   write(0,'("sphdf5 : "10x" : error calling hwriteiv ; $3 : $2.le.0 ;")')
+
+  else
+
+   call h5screate_simple_f( rank, onedims, space_id, hdfier )
+   if( hdfier.ne.0 ) then
+    write(0,'("sphdf5 : "10x" : error calling h5screate_simple_f ;")')
+    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    stop "sphdf5 : error calling h5screate_simple_f ;"
+   endif
+
+   ! temporarily disable error printing to not confuse users
+   call h5eset_auto_f(0, hdfier)
+   if( hdfier.ne.0 ) then
+     write(0,'("sphdf5 : "10x" : error calling h5eset_auto_f ;")')
+     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     stop "sphdf5 : error calling h5eset_auto_f ;"
+   endif
+   
+   ! check if dataset can be opened
+   call h5dopen_f($1, "$3", dset_id, hdfier)
+   if (hdfier.lt.0) then
+    var_exists = .false.
+    if (hdfDebug .and. myid.eq.0) then ; write(*,*) "dataset $3 does not exist yet, creating it"
+    endif
+   else
+    var_exists = .true.
+    if (hdfDebug .and. myid.eq.0) then ; write(*,*) "dataset $3 exists already, opening it"
+    endif
+   endif
+   
+   ! re-enable error printing to be sensitive to "real" errors
+   call h5eset_auto_f(1, hdfier)
+   if( hdfier.ne.0 ) then
+     write(0,'("sphdf5 : "10x" : error calling h5eset_auto_f ;")')
+     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     stop "sphdf5 : error calling h5eset_auto_f ;"
+   endif
+   
+   ! if the dataset does not exist already, create it. Otherwise, it should be open already
+   if (.not.var_exists) then
+    call h5dcreate_f( $1, "$3", H5T_NATIVE_INTEGER, space_id, dset_id, hdfier )
+    if( hdfier.ne.0 ) then
+     write(0,'("sphdf5 : "10x" : error calling h5dcreate_f ;")')
+     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     stop "sphdf5 : error calling h5dcreate_f ;"
+    endif
+   endif
+
+   call h5dwrite_f( dset_id, H5T_NATIVE_INTEGER, merge(1,0,$4) , onedims, hdfier )
+   if( hdfier.ne.0 ) then
+    write(0,'("sphdf5 : "10x" : error calling h5dwrite_f ;")')
+    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    stop "sphdf5 : error calling h5dwrite_f ;"
+   endif
+
+  endif
+
+  ! macro expansion of hwritelv_lo; end;})m4_dnl ; can put comments here;
 m4_define(HWRITEIV,{! macro expansion of hwriteiv;
 ! write integer variable _4 (scalar (_2=1) or rank-1 (_2=length)) into a dataset named _3 into group _1
 ! example: hwriteiv( grpInputPhysics,    1, Igeometry, (/ Igeometry /) ) ! scalar
@@ -523,6 +702,79 @@ m4_define(HWRITEIV,{! macro expansion of hwriteiv;
   endif
 
   ! macro expansion of hwriteiv; end;})m4_dnl ; can put comments here;
+m4_define(HWRITEIV_LO,{! macro expansion of hwriteiv_lo;
+! write integer variable _4 (scalar (_2=1) or rank-1 (_2=length)) into a dataset named _3 into group _1 and leave the dataset open for e.g. adding and attribute
+! example: hwriteiv( grpInputPhysics,    1, Igeometry, (/ Igeometry /) ) ! scalar
+! example: hwriteiv( grpInputPhysics, Mvol,      Lrad,  Lrad(1:Mvol)   ) ! rank-1
+! and close it using h5descr_cd( /input/physics/Igeometry, geometry identifier )
+
+#ifdef DEBUG
+  if( Wmacros ) write(ounit,'("macros : ", 10x ," : myid=",i3," ; writing $3 ;")') myid
+#endif
+
+  rank = 1 ; onedims(1) = $2
+
+  if( $2.le.0 ) then
+
+   write(0,'("sphdf5 : "10x" : error calling hwriteiv ; $3 : $2.le.0 ;")')
+
+  else
+
+   call h5screate_simple_f( rank, onedims, space_id, hdfier )
+   if( hdfier.ne.0 ) then
+    write(0,'("sphdf5 : "10x" : error calling h5screate_simple_f ;")')
+    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    stop "sphdf5 : error calling h5screate_simple_f ;"
+   endif
+
+   ! temporarily disable error printing to not confuse users
+   call h5eset_auto_f(0, hdfier)
+   if( hdfier.ne.0 ) then
+     write(0,'("sphdf5 : "10x" : error calling h5eset_auto_f ;")')
+     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     stop "sphdf5 : error calling h5eset_auto_f ;"
+   endif
+   
+   ! check if dataset can be opened
+   call h5dopen_f($1, "$3", dset_id, hdfier)
+   if (hdfier.lt.0) then
+    var_exists = .false.
+    if (hdfDebug .and. myid.eq.0) then ; write(*,*) "dataset $3 does not exist yet, creating it"
+    endif
+   else
+    var_exists = .true.
+    if (hdfDebug .and. myid.eq.0) then ; write(*,*) "dataset $3 exists already, opening it"
+    endif
+   endif
+   
+   ! re-enable error printing to be sensitive to "real" errors
+   call h5eset_auto_f(1, hdfier)
+   if( hdfier.ne.0 ) then
+     write(0,'("sphdf5 : "10x" : error calling h5eset_auto_f ;")')
+     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     stop "sphdf5 : error calling h5eset_auto_f ;"
+   endif
+   
+   ! if the dataset does not exist already, create it. Otherwise, it should be open already
+   if (.not.var_exists) then
+    call h5dcreate_f( $1, "$3", H5T_NATIVE_INTEGER, space_id, dset_id, hdfier )
+    if( hdfier.ne.0 ) then
+     write(0,'("sphdf5 : "10x" : error calling h5dcreate_f ;")')
+     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     stop "sphdf5 : error calling h5dcreate_f ;"
+    endif
+   endif
+
+   call h5dwrite_f( dset_id, H5T_NATIVE_INTEGER, $4, onedims, hdfier )
+   if( hdfier.ne.0 ) then
+    write(0,'("sphdf5 : "10x" : error calling h5dwrite_f ;")')
+    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    stop "sphdf5 : error calling h5dwrite_f ;"
+   endif
+   
+  endif
+
+  ! macro expansion of hwriteiv_lo; end;})m4_dnl ; can put comments here;
 m4_define(HWRITERV,{! macro expansion of hwriterv;
 ! write real variable _4 (scalar (_2=1) or rank-1 (_2=length)) into a dataset named _3 into group _1
 ! example: hwriterv( grpInputPhysics,    1, phiedge, (/ phiedge /) ) ! scalar

@@ -138,8 +138,10 @@ subroutine mirror_input_to_outfile
 ! they go into ext.h5/input/physics
 
   HDEFGRP( grpInput, physics, grpInputPhysics )
+  H5DESCR( grpInputPhysics, /input/physics, physics inputs )
 
-  HWRITEIV( grpInputPhysics,           1, Igeometry         , (/ Igeometry      /))
+  HWRITEIV_LO( grpInputPhysics,           1, Igeometry         , (/ Igeometry      /))
+  H5DESCR_CD( /input/physics/Igeometry, geometry identifier )
   HWRITEIV( grpInputPhysics,           1, Istellsym         , (/ Istellsym      /))
   HWRITEIV( grpInputPhysics,           1, Lfreebound        , (/ Lfreebound     /))
   HWRITERV( grpInputPhysics,           1, phiedge           , (/ phiedge        /))
@@ -705,78 +707,31 @@ subroutine finalize_flt_output
 
   LOCALS
 
-  ! -----
-  ! \t
-  ! -----
-
-  ! Close dataspaces
-
-  H5CALL( sphdf5, h5sclose_f, (filespace_t, hdfier))
-  H5CALL( sphdf5, h5sclose_f, (memspace_t, hdfier) )
-  ! Close the dataset
-  H5CALL( sphdf5, h5dclose_f, (dset_id_t, hdfier) )
-
-  ! -----
-  ! s
-  ! -----
-
-  ! Close dataspaces.
-  H5CALL( sphdf5, h5sclose_f, (filespace_s, hdfier) )
-  H5CALL( sphdf5, h5sclose_f, (memspace_s, hdfier) )
-  ! Close the dataset
-  H5CALL( sphdf5, h5dclose_f, (dset_id_s, hdfier) )
-
-  ! -----
-  ! R
-  ! -----
-
-  ! Close dataspaces.
-  H5CALL( sphdf5, h5sclose_f, (filespace_R, hdfier) )
-  H5CALL( sphdf5, h5sclose_f, (memspace_R, hdfier) )
-  ! Close the dataset
-  H5CALL( sphdf5, h5dclose_f, (dset_id_R, hdfier) )
-
-  ! -----
-  ! Z
-  ! -----
-
-  ! Close dataspaces.
-  H5CALL( sphdf5, h5sclose_f, (filespace_Z, hdfier) )
-  H5CALL( sphdf5, h5sclose_f, (memspace_Z, hdfier) )
-  ! Close the dataset
-  H5CALL( sphdf5, h5dclose_f, (dset_id_Z, hdfier) )
-
-  ! -----
-  ! success
-  ! -----
-
-  ! Close dataspaces.
-  H5CALL( sphdf5, h5sclose_f, (filespace_success, hdfier) )
-  H5CALL( sphdf5, h5sclose_f, (memspace_success, hdfier) )
-  ! Close the dataset
-  H5CALL( sphdf5, h5dclose_f, (dset_id_success, hdfier) )
-
-  HCLOSEGRP( grpPoincare )
-
-  ! -----
-  ! diotadxup
-  ! -----
-
-  ! Close dataspaces.
+  H5CALL( sphdf5, h5sclose_f, (filespace_t,         hdfier) ) ! close filespaces
+  H5CALL( sphdf5, h5sclose_f, (filespace_s,         hdfier) )
+  H5CALL( sphdf5, h5sclose_f, (filespace_R,         hdfier) )
+  H5CALL( sphdf5, h5sclose_f, (filespace_Z,         hdfier) )
+  H5CALL( sphdf5, h5sclose_f, (filespace_success,   hdfier) )
   H5CALL( sphdf5, h5sclose_f, (filespace_diotadxup, hdfier) )
-  H5CALL( sphdf5, h5sclose_f, (memspace_diotadxup, hdfier) )
-  ! Close the dataset
-  H5CALL( sphdf5, h5dclose_f, (dset_id_diotadxup, hdfier) )
+  H5CALL( sphdf5, h5sclose_f, (filespace_fiota,     hdfier) )
 
-  ! -----
-  ! fiota
-  ! -----
+  H5CALL( sphdf5, h5sclose_f, (memspace_t,          hdfier) ) ! close dataspaces
+  H5CALL( sphdf5, h5sclose_f, (memspace_s,          hdfier) )
+  H5CALL( sphdf5, h5sclose_f, (memspace_R,          hdfier) )
+  H5CALL( sphdf5, h5sclose_f, (memspace_Z,          hdfier) )
+  H5CALL( sphdf5, h5sclose_f, (memspace_success,    hdfier) )
+  H5CALL( sphdf5, h5sclose_f, (memspace_diotadxup,  hdfier) )
+  H5CALL( sphdf5, h5sclose_f, (memspace_fiota,      hdfier) )
 
-  ! Close dataspaces.
-  H5CALL( sphdf5, h5sclose_f, (filespace_fiota, hdfier) )
-  ! Close the dataset
-  H5CALL( sphdf5, h5dclose_f, (dset_id_fiota, hdfier) )
+  H5CALL( sphdf5, h5dclose_f, (dset_id_t,           hdfier) ) ! close datasets
+  H5CALL( sphdf5, h5dclose_f, (dset_id_s,           hdfier) )
+  H5CALL( sphdf5, h5dclose_f, (dset_id_R,           hdfier) )
+  H5CALL( sphdf5, h5dclose_f, (dset_id_Z,           hdfier) )
+  H5CALL( sphdf5, h5dclose_f, (dset_id_success,     hdfier) )
+  H5CALL( sphdf5, h5dclose_f, (dset_id_diotadxup,   hdfier) )
+  H5CALL( sphdf5, h5dclose_f, (dset_id_fiota,       hdfier) )
 
+  HCLOSEGRP( grpPoincare  ) ! close groups
   HCLOSEGRP( grpTransform )
 
 end subroutine finalize_flt_output

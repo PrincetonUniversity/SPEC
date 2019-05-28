@@ -9,7 +9,7 @@
 
 !latex \tableofcontents
 
-!latex \subsubsection{constructing straight field line angle on interfaces} 
+!latex \subsection{constructing straight field line angle on interfaces}
 
 !latex \begin{enumerate}
 !latex \item The algorithm stems from introducing a straight field line angle $\theta_s=\theta+\lambda(\theta,\zeta)$, where 
@@ -51,7 +51,7 @@
 !latex       \ee
 !latex \end{enumerate} 
 
-!latex \subsubsection{alternative iterative method} 
+!latex \subsection{alternative iterative method}
 
 !latex \begin{enumerate}
 !latex \item Consider the equation $\dot \t ( 1 + \lambda_\t ) + \lambda_\z = \iotabar$, where $\lambda = \sum_j \lambda_j \sin\a_j$, given on a grid
