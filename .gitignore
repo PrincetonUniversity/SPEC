@@ -1,7 +1,8 @@
 
 *.o
 *.mod
-*.F90
+*_p.f90
+*_m.F90
 *~
 xspec
 dspec

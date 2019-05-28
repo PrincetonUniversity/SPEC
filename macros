@@ -1232,32 +1232,12 @@ m4_define(H5CALL,{! macro expansion of h5call;
 ! and interrupts execution of the program right away if anything goes wrong
 ! call _2 with arguments _3 from within _1 and write wall time needed for call to screen
 
-   cput = MPI_WTIME()
-   T$1 = T$1 + ( cput-cpuo ) 
-
-#ifdef DEBUG
-   if( W$1 ) then
-    cput = MPI_WTIME()
-    write(ounit,'("$1 : ",f10.2," : myid=",i3," ; calling $2 ;")') cput-cpus, myid
-   endif
-#endif
-
    call $2$3
    if( hdfier.ne.0 ) then
     write(0,'("sphdf5 : "10x" : error calling $2;")')
     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
     stop "sphdf5 : error calling $2 ;"
    endif
-
-#ifdef DEBUG
-   if( W$1 ) then
-    cput = MPI_WTIME()
-    write(ounit,'("$1 : ",f10.2," : myid=",i3," ; called  $2 ;")') cput-cpus, myid
-   endif
-#endif
-
-  !cpuo = zero
-   cpuo = MPI_WTIME()
 
   ! macro expansion of h5call; end;})m4_dnl ; can put comments here;
 m4_define(BEGIN,{! macro expansion of begin;

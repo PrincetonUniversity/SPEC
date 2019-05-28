@@ -103,6 +103,10 @@ subroutine init_outfile
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+  if (myid.eq.0) then
+    write(*,*) "init output file in __FILE__ at line ",__LINE__
+  endif
+
   ! initialize Fortran interface to the HDF5 library;
   H5CALL( sphdf5, h5open_f, (hdfier) )
 
