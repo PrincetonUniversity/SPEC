@@ -1234,7 +1234,7 @@ m4_define(H5CALL,{! macro expansion of h5call;
 
    call $2$3
    if( hdfier.ne.0 ) then
-    write(0,'("sphdf5 : "10x" : error calling $2 from h5call at $4:$5;")')
+    write(0,'("sphdf5 : "10x" : error calling $2 in process ",i3," from h5call at $4:$5;")') myid
     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
     stop "sphdf5 : error calling $2 from h5call at $4:$5 ;"
    endif
