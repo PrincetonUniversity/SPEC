@@ -24,3 +24,5 @@ dspec
 # output files from example runs
 InputFiles/**/*.h5
 InputFiles/**/*.sp.end
+InputFiles/**/*.sp.DF
+
