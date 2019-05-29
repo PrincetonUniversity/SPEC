@@ -937,24 +937,22 @@ subroutine finish_outfile
   integer(size_t),parameter :: dummySize=1
   character(len=dummySize+1) :: dummyName
   integer :: typeClass
-!
-!!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-!
-!  ! close objects related to convergence output
-!  H5CALL( sphdf5, h5tclose_f, (dt_nDcalls_id, hdfier)    , __FILE__, __LINE__)
-!  H5CALL( sphdf5, h5tclose_f, (dt_Energy_id, hdfier)     , __FILE__, __LINE__)
-!  H5CALL( sphdf5, h5tclose_f, (dt_ForceErr_id, hdfier)   , __FILE__, __LINE__)
-!  H5CALL( sphdf5, h5tclose_f, (dt_iRbc_id, hdfier)       , __FILE__, __LINE__)
-!  H5CALL( sphdf5, h5tclose_f, (dt_iZbs_id, hdfier)       , __FILE__, __LINE__)
-!  H5CALL( sphdf5, h5tclose_f, (dt_iRbs_id, hdfier)       , __FILE__, __LINE__)
-!  H5CALL( sphdf5, h5tclose_f, (dt_iZbc_id, hdfier)       , __FILE__, __LINE__)
-!  H5CALL( sphdf5, h5dclose_f, (iteration_dset_id, hdfier), __FILE__, __LINE__)                                             ! End access to the dataset and release resources used by it.
-!  H5CALL( sphdf5, h5pclose_f, (plist_id, hdfier)         , __FILE__, __LINE__)                                             ! close plist used for 'preserve' flag (does not show up in obj_count below)
 
-  WCALL( sphdf5, MPI_Barrier, (MPI_COMM_WORLD, ierr) ) ! block to wait for screen output before closing file
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  ! close objects related to convergence output
+  H5CALL( sphdf5, h5tclose_f, (dt_nDcalls_id, hdfier)    , __FILE__, __LINE__)
+  H5CALL( sphdf5, h5tclose_f, (dt_Energy_id, hdfier)     , __FILE__, __LINE__)
+  H5CALL( sphdf5, h5tclose_f, (dt_ForceErr_id, hdfier)   , __FILE__, __LINE__)
+  H5CALL( sphdf5, h5tclose_f, (dt_iRbc_id, hdfier)       , __FILE__, __LINE__)
+  H5CALL( sphdf5, h5tclose_f, (dt_iZbs_id, hdfier)       , __FILE__, __LINE__)
+  H5CALL( sphdf5, h5tclose_f, (dt_iRbs_id, hdfier)       , __FILE__, __LINE__)
+  H5CALL( sphdf5, h5tclose_f, (dt_iZbc_id, hdfier)       , __FILE__, __LINE__)
+  H5CALL( sphdf5, h5dclose_f, (iteration_dset_id, hdfier), __FILE__, __LINE__)                                             ! End access to the dataset and release resources used by it.
+  H5CALL( sphdf5, h5pclose_f, (plist_id, hdfier)         , __FILE__, __LINE__)                                             ! close plist used for 'preserve' flag (does not show up in obj_count below)
 
   ! check whether we forgot to close some resources
-  H5CALL( sphdf5, h5fget_obj_count_f, (file_id, ior(H5F_OBJ_GROUP_F, ior(H5F_OBJ_DATASET_F, H5F_OBJ_DATATYPE_F)), obj_count, hdfier), __FILE__, __LINE__ )
+  H5CALL( sphdf5, h5fget_obj_count_f, (file_id, ior(H5F_OBJ_GROUP_F, H5F_OBJ_ALL_F, __FILE__, __LINE__ )
   if ((obj_count.gt.0).and.(myid.eq.0)) then
     write(*,'("There are still ",i3," hdf5 objects open for myid=",i3)') obj_count,myid
     allocate(obj_ids(1:obj_count))
@@ -983,7 +981,7 @@ subroutine finish_outfile
       H5CALL( sphdf5, h5iget_name_f, (obj_ids(iObj), dummyName, dummySize, openLength, hdfier), __FILE__, __LINE__)
       allocate(character(len=openLength+1) :: openName)
       H5CALL( sphdf5, h5iget_name_f, (obj_ids(iObj), openName, openLength, openLength, hdfier), __FILE__, __LINE__)
-      if (myid.eq.0) then ; write(*,*) openName
+      if (myid.eq.0) then ; write(*,*) openName(1:openLength)
       endif
       deallocate(openName)
     enddo
