@@ -126,10 +126,10 @@ end subroutine init_outfile
 ! mirror input variables into output file
 subroutine mirror_input_to_outfile
 
-!  use inputlist
-!  use allglobal , only : Mvol
-!
-!  LOCALS
+  use inputlist
+  use allglobal , only : Mvol
+
+  LOCALS
 !
 !  integer(hid_t) :: grpInput
 !  integer(hid_t) :: grpInputPhysics, grpInputNumerics, grpInputLocal, grpInputGlobal, grpInputDiagnostics
@@ -353,23 +353,23 @@ end subroutine mirror_input_to_outfile
 ! prepare ``convergence evolution'' output
 subroutine init_convergence_output
 
-!  use allglobal, only : mn, Mvol
-!
-!  LOCALS
-!  integer(hid_t)                    :: iteration_dspace_id                           ! dataspace for "iteration"
-!  integer(hid_t)                    :: iteration_dtype_id                            ! Compound datatype for "iteration"
-!  integer(hid_t)                    :: iRZbscArray_id                                ! Memory datatype identifier
-!  integer(size_t)                   :: iteration_dtype_size                          ! Size of the "iteration" datatype
-!  integer(size_t)                   :: type_size_i                                   ! Size of the integer datatype
-!  integer(size_t)                   :: type_size_d                                   ! Size of the double precision datatype
-!  integer(size_t)                   :: offset                                        ! Member's offset
-!  integer(hid_t)                    :: crp_list                                      ! Dataset creation property identifier
-!  integer, parameter                :: rank = 1                                      ! logging rank: convergence logging is one-dimensional
-!  integer(hsize_t), dimension(rank) :: maxdims                                       ! convergence logging maximum dimensions => will be unlimited
-!  integer(hsize_t), dimension(rank) :: dims = (/ 0 /)                                ! current convergence logging dimensions
-!  integer(hsize_t), dimension(rank) :: dimsc = (/ 1 /)                               ! chunking length ???
-!  integer(size_t)                   :: irbc_size_template                            ! size ofiRbc array in iterations logging
-!  integer(size_t)                   :: irbc_size                                     ! size ofiRbc array in iterations logging
+  use allglobal, only : mn, Mvol
+
+  LOCALS
+  integer(hid_t)                    :: iteration_dspace_id                           ! dataspace for "iteration"
+  integer(hid_t)                    :: iteration_dtype_id                            ! Compound datatype for "iteration"
+  integer(hid_t)                    :: iRZbscArray_id                                ! Memory datatype identifier
+  integer(size_t)                   :: iteration_dtype_size                          ! Size of the "iteration" datatype
+  integer(size_t)                   :: type_size_i                                   ! Size of the integer datatype
+  integer(size_t)                   :: type_size_d                                   ! Size of the double precision datatype
+  integer(size_t)                   :: offset                                        ! Member's offset
+  integer(hid_t)                    :: crp_list                                      ! Dataset creation property identifier
+  integer, parameter                :: rank = 1                                      ! logging rank: convergence logging is one-dimensional
+  integer(hsize_t), dimension(rank) :: maxdims                                       ! convergence logging maximum dimensions => will be unlimited
+  integer(hsize_t), dimension(rank) :: dims = (/ 0 /)                                ! current convergence logging dimensions
+  integer(hsize_t), dimension(rank) :: dimsc = (/ 1 /)                               ! chunking length ???
+  integer(size_t)                   :: irbc_size_template                            ! size ofiRbc array in iterations logging
+  integer(size_t)                   :: irbc_size                                     ! size ofiRbc array in iterations logging
 !
 !  ! Set dataset transfer property to preserve partially initialized fields
 !  ! during write/read to/from dataset with compound datatype.
@@ -449,11 +449,11 @@ end subroutine init_convergence_output
 ! was in global.f90/wrtend for wflag.eq.-1 previously
 subroutine write_convergence_output( nDcalls, ForceErr )
 
-!  use allglobal, only : myid, mn, Mvol, Energy, iRbc, iZbs, iRbs, iZbc
-!
-!  LOCALS
-!  INTEGER, intent(in)  :: nDcalls
-!  REAL   , intent(in)  :: ForceErr
+  use allglobal, only : myid, mn, Mvol, Energy, iRbc, iZbs, iRbs, iZbc
+
+  LOCALS
+  INTEGER, intent(in)  :: nDcalls
+  REAL   , intent(in)  :: ForceErr
 !
 !#ifdef DEBUG
 !  if( myid.eq.0 .and. Wsphdf5 ) then ; cput = GETTIME ; write(ounit,'("sphdf5 : ",f10.2," : myid=",i3," ; writing convergence ;")') cput-cpus, myid
@@ -502,20 +502,20 @@ end subroutine write_convergence_output
 ! previously the (wflag.eq.1) part of globals.f90/wrtend to write .ext.sp.grid;
 subroutine write_grid
 
-!  use constants
-!  use allglobal, only : myid, ijreal, ijimag, jireal, &
-!  &                     Nt, Nz, Ntz, Mvol, pi2nfp, ivol, mn, Node, gBzeta, &
-!  &                     Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
-!  &                     Rij, Zij, sg
-!  use inputlist, only : Lrad, Igeometry, Nvol
-!  use cputiming, only : Tsphdf5
-!
-!  LOCALS
-!  integer(hid_t) :: grpGrid
-!  integer :: sumLrad, alongLrad
-!  INTEGER              :: vvol, ii, jj, kk, jk, Lcurvature
-!  REAL                 :: lss, teta, zeta, st(1:Node), Bst(1:Node)
-!  REAL   , allocatable :: Rij_grid(:,:), Zij_grid(:,:), sg_grid(:,:), ijreal_grid(:,:), ijimag_grid(:,:), jireal_grid(:,:)
+  use constants
+  use allglobal, only : myid, ijreal, ijimag, jireal, &
+  &                     Nt, Nz, Ntz, Mvol, pi2nfp, ivol, mn, Node, gBzeta, &
+  &                     Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
+  &                     Rij, Zij, sg
+  use inputlist, only : Lrad, Igeometry, Nvol
+  use cputiming, only : Tsphdf5
+
+  LOCALS
+  integer(hid_t) :: grpGrid
+  integer :: sumLrad, alongLrad
+  INTEGER              :: vvol, ii, jj, kk, jk, Lcurvature
+  REAL                 :: lss, teta, zeta, st(1:Node), Bst(1:Node)
+  REAL   , allocatable :: Rij_grid(:,:), Zij_grid(:,:), sg_grid(:,:), ijreal_grid(:,:), ijimag_grid(:,:), jireal_grid(:,:)
 !#ifdef DEBUG
 !  if( myid.eq.0 and Wsphdf5 ) then ; cput = GETTIME ; write(ounit,'("sphdf5 : ",f10.2," : myid=",i3," ; writing grid ;")') cput-cpus, myid
 !  endif
@@ -600,13 +600,13 @@ end subroutine write_grid
 ! init field line tracing output group and create array datasets
 subroutine init_flt_output( numTrajTotal )
 
-!  use allglobal, only : Nz, Mvol
-!  use inputlist, only : nPpts
-!
-!  LOCALS
-!  integer, intent(in)               :: numTrajTotal                                  ! total number of trajectories
-!  integer(HSIZE_T), dimension(rankP) :: dims_traj ! Dataset dimensions.
-!  integer(HSIZE_T), dimension(rankP) :: length ! Dataset dimensions.
+  use allglobal, only : Nz, Mvol
+  use inputlist, only : nPpts
+
+  LOCALS
+  integer, intent(in)               :: numTrajTotal                                  ! total number of trajectories
+  integer(HSIZE_T), dimension(rankP) :: dims_traj ! Dataset dimensions.
+  integer(HSIZE_T), dimension(rankP) :: length ! Dataset dimensions.
 !
 !  ! create Poincare group in HDF5 file
 !  HDEFGRP( file_id, poincare, grpPoincare )
@@ -676,15 +676,15 @@ end subroutine init_flt_output
 ! write a hyperslab of Poincare data
 subroutine write_poincare( data, offset, success )
 
-!  use allglobal, only : Nz
-!  use inputlist, only : nPpts
-!
-!  LOCALS
-!
-!  integer, intent(in) :: offset, success
-!  REAL, intent(in)    :: data(:,:,:)
-!  integer(hsize_t), dimension(3) :: length
-!  integer(HSIZE_T), dimension(2) :: dims_singleTraj ! dimensions of single trajectory data
+  use allglobal, only : Nz
+  use inputlist, only : nPpts
+
+  LOCALS
+
+  integer, intent(in) :: offset, success
+  REAL, intent(in)    :: data(:,:,:)
+  integer(hsize_t), dimension(3) :: length
+  integer(HSIZE_T), dimension(2) :: dims_singleTraj ! dimensions of single trajectory data
 !
 !  dims_singleTraj = (/ Nz, nPpts /)
 !  length          = (/ Nz, nPpts, 1 /)
@@ -714,9 +714,9 @@ end subroutine write_poincare
 ! write rotational transform output from field line following
 subroutine write_transform( offset, length, lvol, diotadxup, fiota )
 
-!  LOCALS
-!  INTEGER, intent(in) :: offset, length, lvol
-!  REAL, intent(in)    :: diotadxup(:), fiota(:,:)
+  LOCALS
+  INTEGER, intent(in) :: offset, length, lvol
+  REAL, intent(in)    :: diotadxup(:), fiota(:,:)
 !
 !  H5CALL( sphdf5, h5sselect_hyperslab_f, (filespace_diotadxup, H5S_SELECT_SET_F, int((/0,lvol-1/),HSSIZE_T), int((/2,1/),HSSIZE_T), hdfier) )
 !  H5CALL( sphdf5, h5dwrite_f, (dset_id_diotadxup, H5T_NATIVE_DOUBLE, diotadxup, int((/2,1/),HSSIZE_T), hdfier, &
@@ -735,12 +735,12 @@ end subroutine write_transform
 
 subroutine write_vector_potential(sumLrad, allAte, allAze, allAto, allAzo)
 
-!  use allglobal, only : mn
-!
-!  LOCALS
-!  integer, intent(in) :: sumLrad
-!  REAL, intent(in)    :: allAte(:,:), allAze(:,:), allAto(:,:), allAzo(:,:)
-!  integer(hid_t)      :: grpVectorPotential
+  use allglobal, only : mn
+
+  LOCALS
+  integer, intent(in) :: sumLrad
+  REAL, intent(in)    :: allAte(:,:), allAze(:,:), allAto(:,:), allAzo(:,:)
+  integer(hid_t)      :: grpVectorPotential
 !
 !  HDEFGRP( file_id, vector_potential, grpVectorPotential )
 !
@@ -756,7 +756,7 @@ end subroutine write_vector_potential
 ! finalize Poincare output
 subroutine finalize_flt_output
 
-!  LOCALS
+  LOCALS
 !
 !  H5CALL( sphdf5, h5sclose_f, (filespace_t,         hdfier) ) ! close filespaces
 !  H5CALL( sphdf5, h5sclose_f, (filespace_s,         hdfier) )
@@ -792,28 +792,28 @@ end subroutine finalize_flt_output
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 subroutine hdfint
 
-!  use fileunits, only : ounit
-!  use inputlist
-!  use allglobal, only : ncpu, cpus, &
-!                        Mvol, ForceErr, &
-!                        mn, im, in, iRbc, iZbs, iRbs, iZbc, &
-!                        dRbc, dZbs, dRbs, dZbc, &
-!                        vvolume, dvolume, &
-!                        Bsupumn, Bsupvmn, &
-!                        Btemn, Bzemn, Btomn, Bzomn, &
-!                        iVns, iBns, iVnc, iBnc, &
-!                        lmns, &
-!                        TT, &
-!                        beltramierror
-!
-!!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-!
-!  LOCALS
-!
-!  INTEGER                        :: Mrad
-!  REAL                           :: tvolume
-!
-!  integer(hid_t)                 :: grpOutput
+  use fileunits, only : ounit
+  use inputlist
+  use allglobal, only : ncpu, cpus, &
+                        Mvol, ForceErr, &
+                        mn, im, in, iRbc, iZbs, iRbs, iZbc, &
+                        dRbc, dZbs, dRbs, dZbc, &
+                        vvolume, dvolume, &
+                        Bsupumn, Bsupvmn, &
+                        Btemn, Bzemn, Btomn, Bzomn, &
+                        iVns, iBns, iVnc, iBnc, &
+                        lmns, &
+                        TT, &
+                        beltramierror
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  LOCALS
+
+  INTEGER                        :: Mrad
+  REAL                           :: tvolume
+
+  integer(hid_t)                 :: grpOutput
 !
 !  HDEFGRP( file_id, output, grpOutput )
 !
@@ -927,16 +927,16 @@ subroutine finish_outfile
 ! Close all open HDF5 objects (we know of) and list any remaining still-open objects
 ! The goal should be to close all objects specifically!
 
-!  LOCALS
-!  integer(size_t)                :: obj_count                                  ! number of open HDF5 objects
-!  integer(size_t)              :: num_objs   ! number of still-open objects
-!  integer(hid_t),dimension(:),allocatable  :: obj_ids    ! still-open objects
-!  integer                      :: iObj
-!  integer(size_t) :: openLength
-!  character(len=:),allocatable :: openName
-!  integer(size_t),parameter :: dummySize=1
-!  character(len=dummySize+1) :: dummyName
-!  integer :: typeClass
+  LOCALS
+  integer(size_t)                :: obj_count                                  ! number of open HDF5 objects
+  integer(size_t)              :: num_objs   ! number of still-open objects
+  integer(hid_t),dimension(:),allocatable  :: obj_ids    ! still-open objects
+  integer                      :: iObj
+  integer(size_t) :: openLength
+  character(len=:),allocatable :: openName
+  integer(size_t),parameter :: dummySize=1
+  character(len=dummySize+1) :: dummyName
+  integer :: typeClass
 !
 !!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 !
@@ -950,86 +950,86 @@ subroutine finish_outfile
 !  H5CALL( sphdf5, h5tclose_f, (dt_iZbc_id, hdfier)       , __FILE__, __LINE__)
 !  H5CALL( sphdf5, h5dclose_f, (iteration_dset_id, hdfier), __FILE__, __LINE__)                                             ! End access to the dataset and release resources used by it.
 !  H5CALL( sphdf5, h5pclose_f, (plist_id, hdfier)         , __FILE__, __LINE__)                                             ! close plist used for 'preserve' flag (does not show up in obj_count below)
-!
-!  WCALL( sphdf5, MPI_Barrier, (MPI_COMM_WORLD, ierr) ) ! block to wait for screen output before closing file
-!
-!  ! check whether we forgot to close some resources
-!  H5CALL( sphdf5, h5fget_obj_count_f, (int(H5F_OBJ_ALL_F,hid_t), ior(H5F_OBJ_GROUP_F, ior(H5F_OBJ_DATASET_F, H5F_OBJ_DATATYPE_F)), obj_count, hdfier), __FILE__, __LINE__ )
-!  if ((obj_count.gt.0).and.(myid.eq.0)) then
-!    write(*,'("There are still ",i3," hdf5 objects open for myid=",i3)') obj_count,myid
-!    allocate(obj_ids(1:obj_count))
-!
-!    ! groups
-!    H5CALL( sphdf5, h5fget_obj_ids_f, (int(H5F_OBJ_ALL_F,hid_t), H5F_OBJ_GROUP_F, obj_count, obj_ids, hdfier, num_objs), __FILE__, __LINE__) ! get for open objects
-!    if (myid.eq.0) then
-!      write(*,'("There are still ",i3," HDF5 groups open:")') num_objs
-!    endif
-!    do iObj=1,num_objs
+
+  WCALL( sphdf5, MPI_Barrier, (MPI_COMM_WORLD, ierr) ) ! block to wait for screen output before closing file
+
+  ! check whether we forgot to close some resources
+  H5CALL( sphdf5, h5fget_obj_count_f, (int(H5F_OBJ_ALL_F,hid_t), ior(H5F_OBJ_GROUP_F, ior(H5F_OBJ_DATASET_F, H5F_OBJ_DATATYPE_F)), obj_count, hdfier), __FILE__, __LINE__ )
+  if ((obj_count.gt.0).and.(myid.eq.0)) then
+    write(*,'("There are still ",i3," hdf5 objects open for myid=",i3)') obj_count,myid
+    allocate(obj_ids(1:obj_count))
+
+    ! groups
+    H5CALL( sphdf5, h5fget_obj_ids_f, (int(H5F_OBJ_ALL_F,hid_t), H5F_OBJ_GROUP_F, obj_count, obj_ids, hdfier, num_objs), __FILE__, __LINE__) ! get for open objects
+    if (myid.eq.0) then
+      write(*,'("There are still ",i3," HDF5 groups open:")') num_objs
+    endif
+    do iObj=1,num_objs
+      openLength=0
+      H5CALL( sphdf5, h5iget_name_f, (obj_ids(iObj), dummyName, dummySize, openLength, hdfier), __FILE__, __LINE__)
+      allocate(character(len=openLength+1) :: openName)
+      H5CALL( sphdf5, h5iget_name_f, (obj_ids(iObj), openName, openLength, openLength, hdfier), __FILE__, __LINE__)
+      if (myid.eq.0) then ; write(*,*) openName
+      endif
+      deallocate(openName)
+
+      !call h5gclose_f(obj_ids(iObj), hdfier)
+    enddo
+
+    ! datasets
+    H5CALL( sphdf5, h5fget_obj_ids_f, (int(H5F_OBJ_ALL_F,hid_t), H5F_OBJ_DATASET_F, obj_count, obj_ids, hdfier, num_objs), __FILE__, __LINE__) ! get for open objects
+    if (myid.eq.0) then ; write(*,'("There are still ",i3," HDF5 datasets open:")') num_objs
+    endif
+    do iObj=1,num_objs
+      openLength=0
+      H5CALL( sphdf5, h5iget_name_f, (obj_ids(iObj), dummyName, dummySize, openLength, hdfier), __FILE__, __LINE__)
+      allocate(character(len=openLength+1) :: openName)
+      H5CALL( sphdf5, h5iget_name_f, (obj_ids(iObj), openName, openLength, openLength, hdfier), __FILE__, __LINE__)
+      if (myid.eq.0) then ; write(*,*) openName
+      endif
+      deallocate(openName)
+
+      !call h5dclose_f(obj_ids(iObj), hdfier)
+    enddo
+
+    ! datatypes
+    H5CALL( sphdf5, h5fget_obj_ids_f, (int(H5F_OBJ_ALL_F,hid_t), H5F_OBJ_DATATYPE_F, obj_count, obj_ids, hdfier, num_objs), __FILE__, __LINE__) ! get for open objects
+    if (myid.eq.0) then ; write(*,'("There are still ",i3," HDF5 datatypes open:")') num_objs
+    endif
+    do iObj=1,num_objs
+      H5CALL( sphdf5, h5tget_class_f, (obj_ids(iObj), typeClass, hdfier), __LINE__, __FILE__) ! determine class of open datatype
+      if      (typeClass.eq.H5T_NO_CLASS_F ) then ; write(*,*) "H5T_NO_CLASS_F"
+      else if (typeClass.eq.H5T_INTEGER_F  ) then ; write(*,*) "H5T_INTEGER_F"
+      else if (typeClass.eq.H5T_FLOAT_F    ) then ; write(*,*) "H5T_FLOAT_F"
+      else if (typeClass.eq.H5T_STRING_F   ) then ; write(*,*) "H5T_STRING_F"
+      else if (typeClass.eq.H5T_BITFIELD_F ) then ; write(*,*) "H5T_BITFIELD_F"
+      else if (typeClass.eq.H5T_OPAQUE_F   ) then ; write(*,*) "H5T_OPAQUE_F"
+      else if (typeClass.eq.H5T_COMPOUND_F ) then ; write(*,*) "H5T_COMPOUND_F"
+      else if (typeClass.eq.H5T_REFERENCE_F) then ; write(*,*) "H5T_REFERENCE_F"
+      else if (typeClass.eq.H5T_ENUM_F     ) then ; write(*,*) "H5T_ENUM_F"
+      else if (typeClass.eq.H5T_VLEN_F     ) then ; write(*,*) "H5T_VLEN_F"
+      else if (typeClass.eq.H5T_ARRAY_F    ) then ; write(*,*) "H5T_ARRAY_F"
+      else ; write(*,*) "UNKNOWN TYPE!"
+      endif
+
 !      openLength=0
-!      H5CALL( sphdf5, h5iget_name_f, (obj_ids(iObj), dummyName, dummySize, openLength, hdfier), __FILE__, __LINE__)
+!      !H5CALL( sphdf5, h5iget_name_f, (obj_ids(iObj), dummyName, dummySize, openLength, hdfier), __FILE__, __LINE__)
+!      call h5iget_name_f(obj_ids(iObj), dummyName, dummySize, openLength, hdfier)
+!      if (myid.eq.0) then ; write(*,*) "length from h5iget_name_f",openLength," hdfier=",hdfier
+!      endif
 !      allocate(character(len=openLength+1) :: openName)
 !      H5CALL( sphdf5, h5iget_name_f, (obj_ids(iObj), openName, openLength, openLength, hdfier), __FILE__, __LINE__)
 !      if (myid.eq.0) then ; write(*,*) openName
 !      endif
 !      deallocate(openName)
-!
-!      !call h5gclose_f(obj_ids(iObj), hdfier)
-!    enddo
-!
-!    ! datasets
-!    H5CALL( sphdf5, h5fget_obj_ids_f, (int(H5F_OBJ_ALL_F,hid_t), H5F_OBJ_DATASET_F, obj_count, obj_ids, hdfier, num_objs), __FILE__, __LINE__) ! get for open objects
-!    if (myid.eq.0) then ; write(*,'("There are still ",i3," HDF5 datasets open:")') num_objs
-!    endif
-!    do iObj=1,num_objs
-!      openLength=0
-!      H5CALL( sphdf5, h5iget_name_f, (obj_ids(iObj), dummyName, dummySize, openLength, hdfier), __FILE__, __LINE__)
-!      allocate(character(len=openLength+1) :: openName)
-!      H5CALL( sphdf5, h5iget_name_f, (obj_ids(iObj), openName, openLength, openLength, hdfier), __FILE__, __LINE__)
-!      if (myid.eq.0) then ; write(*,*) openName
-!      endif
-!      deallocate(openName)
-!
-!      !call h5dclose_f(obj_ids(iObj), hdfier)
-!    enddo
-!
-!    ! datatypes
-!    H5CALL( sphdf5, h5fget_obj_ids_f, (int(H5F_OBJ_ALL_F,hid_t), H5F_OBJ_DATATYPE_F, obj_count, obj_ids, hdfier, num_objs), __FILE__, __LINE__) ! get for open objects
-!    if (myid.eq.0) then ; write(*,'("There are still ",i3," HDF5 datatypes open:")') num_objs
-!    endif
-!    do iObj=1,num_objs
-!      H5CALL( sphdf5, h5tget_class_f, (obj_ids(iObj), typeClass, hdfier), __LINE__, __FILE__) ! determine class of open datatype
-!      if      (typeClass.eq.H5T_NO_CLASS_F ) then ; write(*,*) "H5T_NO_CLASS_F"
-!      else if (typeClass.eq.H5T_INTEGER_F  ) then ; write(*,*) "H5T_INTEGER_F"
-!      else if (typeClass.eq.H5T_FLOAT_F    ) then ; write(*,*) "H5T_FLOAT_F"
-!      else if (typeClass.eq.H5T_STRING_F   ) then ; write(*,*) "H5T_STRING_F"
-!      else if (typeClass.eq.H5T_BITFIELD_F ) then ; write(*,*) "H5T_BITFIELD_F"
-!      else if (typeClass.eq.H5T_OPAQUE_F   ) then ; write(*,*) "H5T_OPAQUE_F"
-!      else if (typeClass.eq.H5T_COMPOUND_F ) then ; write(*,*) "H5T_COMPOUND_F"
-!      else if (typeClass.eq.H5T_REFERENCE_F) then ; write(*,*) "H5T_REFERENCE_F"
-!      else if (typeClass.eq.H5T_ENUM_F     ) then ; write(*,*) "H5T_ENUM_F"
-!      else if (typeClass.eq.H5T_VLEN_F     ) then ; write(*,*) "H5T_VLEN_F"
-!      else if (typeClass.eq.H5T_ARRAY_F    ) then ; write(*,*) "H5T_ARRAY_F"
-!      else ; write(*,*) "UNKNOWN TYPE!"
-!      endif
-!
-!!      openLength=0
-!!      !H5CALL( sphdf5, h5iget_name_f, (obj_ids(iObj), dummyName, dummySize, openLength, hdfier), __FILE__, __LINE__)
-!!      call h5iget_name_f(obj_ids(iObj), dummyName, dummySize, openLength, hdfier)
-!!      if (myid.eq.0) then ; write(*,*) "length from h5iget_name_f",openLength," hdfier=",hdfier
-!!      endif
-!!      allocate(character(len=openLength+1) :: openName)
-!!      H5CALL( sphdf5, h5iget_name_f, (obj_ids(iObj), openName, openLength, openLength, hdfier), __FILE__, __LINE__)
-!!      if (myid.eq.0) then ; write(*,*) openName
-!!      endif
-!!      deallocate(openName)
-!
-!       ! call h5tclose_f(obj_ids(iObj), hdfier)
-!    enddo
-!
-!    deallocate(obj_ids)
-!  endif ! (obj_count.gt.0)
-!
-!  WCALL( sphdf5, MPI_Barrier, (MPI_COMM_WORLD, ierr) ) ! block to wait for screen output before closing file
+
+       ! call h5tclose_f(obj_ids(iObj), hdfier)
+    enddo
+
+    deallocate(obj_ids)
+  endif ! (obj_count.gt.0)
+
+  WCALL( sphdf5, MPI_Barrier, (MPI_COMM_WORLD, ierr) ) ! block to wait for screen output before closing file
 
   H5CALL( sphdf5, h5fclose_f, ( file_id, hdfier ), __FILE__, __LINE__ ) ! terminate access on output file;
   H5CALL( sphdf5, h5close_f,  ( hdfier ),          __FILE__, __LINE__ ) ! close Fortran interface to the HDF5 library;
