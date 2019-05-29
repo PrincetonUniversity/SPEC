@@ -936,6 +936,7 @@ subroutine finish_outfile
   character(len=:),allocatable :: openName
   integer(size_t),parameter :: dummySize=1
   character(len=dummySize+1) :: dummyName
+  integer :: typeClass
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -993,20 +994,50 @@ subroutine finish_outfile
     H5CALL( sphdf5, h5fget_obj_ids_f, (int(H5F_OBJ_ALL_F,hid_t), H5F_OBJ_DATATYPE_F, obj_count, obj_ids, hdfier, num_objs), __FILE__, __LINE__) ! get for open objects
     if (myid.eq.0) then ; write(*,'("There are still ",i3," HDF5 datatypes open:")') num_objs
     endif
-!    do iObj=1,num_objs
-!!      openLength=0
-!!      !H5CALL( sphdf5, h5iget_name_f, (obj_ids(iObj), dummyName, dummySize, openLength, hdfier), __FILE__, __LINE__)
-!!      call h5iget_name_f(obj_ids(iObj), dummyName, dummySize, openLength, hdfier)
-!!      if (myid.eq.0) then ; write(*,*) "length from h5iget_name_f",openLength," hdfier=",hdfier
-!!      endif
-!!      allocate(character(len=openLength+1) :: openName)
-!!      H5CALL( sphdf5, h5iget_name_f, (obj_ids(iObj), openName, openLength, openLength, hdfier), __FILE__, __LINE__)
-!!      if (myid.eq.0) then ; write(*,*) openName
-!!      endif
-!!      deallocate(openName)
-!
-!        call h5tclose_f(obj_ids(iObj), hdfier)
-!    enddo
+    do iObj=1,num_objs
+      H5CALL( sphdf5, h5tget_class_f, (obj_ids(iObj), typeClass, hdfier), __LINE__, __FILE__) ! determine class of open datatype
+      write(*,*) "class is ",typeClass
+!      SELECT CASE (typeClass)
+!       CASE (H5T_NO_CLASS_F)
+!         write(*,*) "H5T_NO_CLASS_F"
+!       CASE (H5T_INTEGER_F)
+!         write(*,*) "H5T_INTEGER_F"
+!       CASE (H5T_FLOAT_F)
+!         write(*,*) "H5T_FLOAT_F"
+!       CASE (H5T_STRING_F)
+!         write(*,*) "H5T_STRING_F"
+!       CASE (H5T_BITFIELD_F)
+!         write(*,*) "H5T_BITFIELD_F"
+!       CASE (H5T_OPAQUE_F)
+!         write(*,*) "H5T_OPAQUE_F"
+!       CASE (H5T_COMPOUND_F)
+!         write(*,*) "H5T_COMPOUND_F"
+!       CASE (H5T_REFERENCE_F)
+!         write(*,*) "H5T_REFERENCE_F"
+!       CASE (H5T_ENUM_F)
+!         write(*,*) "H5T_ENUM_F"
+!       CASE (H5T_VLEN_F)
+!         write(*,*) "H5T_VLEN_F"
+!       CASE (H5T_ARRAY_F)
+!         write(*,*) "H5T_ARRAY_F"
+!       CASE DEFAULT
+!         write(*,*) "UNKNOWN DATAYPE"
+!      END SELECT
+
+
+!      openLength=0
+!      !H5CALL( sphdf5, h5iget_name_f, (obj_ids(iObj), dummyName, dummySize, openLength, hdfier), __FILE__, __LINE__)
+!      call h5iget_name_f(obj_ids(iObj), dummyName, dummySize, openLength, hdfier)
+!      if (myid.eq.0) then ; write(*,*) "length from h5iget_name_f",openLength," hdfier=",hdfier
+!      endif
+!      allocate(character(len=openLength+1) :: openName)
+!      H5CALL( sphdf5, h5iget_name_f, (obj_ids(iObj), openName, openLength, openLength, hdfier), __FILE__, __LINE__)
+!      if (myid.eq.0) then ; write(*,*) openName
+!      endif
+!      deallocate(openName)
+
+       ! call h5tclose_f(obj_ids(iObj), hdfier)
+    enddo
 
     deallocate(obj_ids)
   endif ! (obj_count.gt.0)
