@@ -144,7 +144,7 @@ subroutine mirror_input_to_outfile
    H5DESCR( grpInputPhysics, /input/physics, physics inputs, __FILE__, __LINE__ )
 
   HWRITEIV_LO( grpInputPhysics,         1, Igeometry  , (/ Igeometry      /), __FILE__, __LINE__)
-  H5DESCR_CDSET( /input/physics/Igeometry, geometry identifier,                                    __FILE__, __LINE__)
+   H5DESCR_CDSET( /input/physics/Igeometry, geometry identifier,                                    __FILE__, __LINE__)
   HWRITEIV_LO( grpInputPhysics,         1, Istellsym  , (/ Istellsym      /), __FILE__, __LINE__)
    H5DESCR_CDSET( /input/physics/Istellsym, stellarator symmetry flag,                              __FILE__, __LINE__)
   HWRITEIV_LO( grpInputPhysics,         1, Lfreebound , (/ Lfreebound     /), __FILE__, __LINE__)
@@ -950,6 +950,8 @@ subroutine finish_outfile
   H5CALL( sphdf5, h5tclose_f, (dt_iZbc_id, hdfier)       , __FILE__, __LINE__)
   H5CALL( sphdf5, h5dclose_f, (iteration_dset_id, hdfier), __FILE__, __LINE__)                                             ! End access to the dataset and release resources used by it.
   H5CALL( sphdf5, h5pclose_f, (plist_id, hdfier)         , __FILE__, __LINE__)                                             ! close plist used for 'preserve' flag (does not show up in obj_count below)
+
+  WCALL( sphdf5, MPI_Barrier, (MPI_COMM_WORLD, ierr) ) ! block to wait for screen output before closing file
 
   ! check whether we forgot to close some resources
   H5CALL( sphdf5, h5fget_obj_count_f, (int(H5F_OBJ_ALL_F,hid_t), ior(H5F_OBJ_GROUP_F, ior(H5F_OBJ_DATASET_F, H5F_OBJ_DATATYPE_F)), obj_count, hdfier), __FILE__, __LINE__ )
