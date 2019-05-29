@@ -969,7 +969,7 @@ subroutine finish_outfile
         write(*,*) openName
         deallocate(openName)
 
-        H5CALL( sphdf5, h5gclose_f(obj_ids(iObj), hdfier), __FILE__, __LINE__)
+        H5CALL( sphdf5, h5gclose_f, (obj_ids(iObj), hdfier), __FILE__, __LINE__)
       enddo
     endif
 
@@ -985,7 +985,7 @@ subroutine finish_outfile
         write(*,*) openName(1:openLength)
         deallocate(openName)
 
-        H5CALL( sphdf5, h5dclose_f(obj_ids(iObj), hdfier), __FILE__, __LINE__)
+        H5CALL( sphdf5, h5dclose_f, (obj_ids(iObj), hdfier), __FILE__, __LINE__)
       enddo
     endif
 
@@ -1009,7 +1009,7 @@ subroutine finish_outfile
         else ; write(*,*) "UNKNOWN TYPE!"
         endif
 
-        H5CALL( sphdf5, h5tclose_f(obj_ids(iObj), hdfier), __FILE__, __LINE__)
+        H5CALL( sphdf5, h5tclose_f, (obj_ids(iObj), hdfier), __FILE__, __LINE__)
       enddo
     endif
 
