@@ -951,8 +951,8 @@ subroutine finish_outfile
   H5CALL( sphdf5, h5dclose_f, (iteration_dset_id, hdfier), __FILE__, __LINE__)                                             ! End access to the dataset and release resources used by it.
   H5CALL( sphdf5, h5pclose_f, (plist_id, hdfier)         , __FILE__, __LINE__)                                             ! close plist used for 'preserve' flag (does not show up in obj_count below)
 
-  ! check whether we forgot to close some resources
-  H5CALL( sphdf5, h5fget_obj_count_f, (file_id, H5F_OBJ_ALL_F, obj_count, hdfier), __FILE__, __LINE__ )
+  ! check whether we forgot to close some resources; only check for group, dataset and datatype (there is only one file and that should be still open...)
+  H5CALL( sphdf5, h5fget_obj_count_f, (file_id, ior(H5F_OBJ_GROUP_F, ior(H5F_OBJ_DATASET_F, H5F_OBJ_DATATYPE_F)), obj_count, hdfier), __FILE__, __LINE__ )
   if ((obj_count.gt.0).and.(myid.eq.0)) then
     write(*,'("There are still ",i3," hdf5 objects open for myid=",i3)') obj_count,myid
     allocate(obj_ids(1:obj_count))
