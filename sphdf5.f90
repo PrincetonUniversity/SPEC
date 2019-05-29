@@ -997,33 +997,19 @@ subroutine finish_outfile
     do iObj=1,num_objs
       H5CALL( sphdf5, h5tget_class_f, (obj_ids(iObj), typeClass, hdfier), __LINE__, __FILE__) ! determine class of open datatype
       write(*,*) "class is ",typeClass
-!      SELECT CASE (typeClass)
-!       CASE (H5T_NO_CLASS_F)
-!         write(*,*) "H5T_NO_CLASS_F"
-!       CASE (H5T_INTEGER_F)
-!         write(*,*) "H5T_INTEGER_F"
-!       CASE (H5T_FLOAT_F)
-!         write(*,*) "H5T_FLOAT_F"
-!       CASE (H5T_STRING_F)
-!         write(*,*) "H5T_STRING_F"
-!       CASE (H5T_BITFIELD_F)
-!         write(*,*) "H5T_BITFIELD_F"
-!       CASE (H5T_OPAQUE_F)
-!         write(*,*) "H5T_OPAQUE_F"
-!       CASE (H5T_COMPOUND_F)
-!         write(*,*) "H5T_COMPOUND_F"
-!       CASE (H5T_REFERENCE_F)
-!         write(*,*) "H5T_REFERENCE_F"
-!       CASE (H5T_ENUM_F)
-!         write(*,*) "H5T_ENUM_F"
-!       CASE (H5T_VLEN_F)
-!         write(*,*) "H5T_VLEN_F"
-!       CASE (H5T_ARRAY_F)
-!         write(*,*) "H5T_ARRAY_F"
-!       CASE DEFAULT
-!         write(*,*) "UNKNOWN DATAYPE"
-!      END SELECT
-
+      if      (typeClass.eq.H5T_NO_CLASS_F ) then ; write(*,*) "H5T_NO_CLASS_F"
+      else if (typeClass.eq.H5T_INTEGER_F  ) then ; write(*,*) "H5T_INTEGER_F"
+      else if (typeClass.eq.H5T_FLOAT_F    ) then ; write(*,*) "H5T_FLOAT_F"
+      else if (typeClass.eq.H5T_STRING_F   ) then ; write(*,*) "H5T_STRING_F"
+      else if (typeClass.eq.H5T_BITFIELD_F ) then ; write(*,*) "H5T_BITFIELD_F"
+      else if (typeClass.eq.H5T_OPAQUE_F   ) then ; write(*,*) "H5T_OPAQUE_F"
+      else if (typeClass.eq.H5T_COMPOUND_F ) then ; write(*,*) "H5T_COMPOUND_F"
+      else if (typeClass.eq.H5T_REFERENCE_F) then ; write(*,*) "H5T_REFERENCE_F"
+      else if (typeClass.eq.H5T_ENUM_F     ) then ; write(*,*) "H5T_ENUM_F"
+      else if (typeClass.eq.H5T_VLEN_F     ) then ; write(*,*) "H5T_VLEN_F"
+      else if (typeClass.eq.H5T_ARRAY_F    ) then ; write(*,*) "H5T_ARRAY_F"
+      else ; write(*,*) "UNKNOWN TYPE!"
+      endif
 
 !      openLength=0
 !      !H5CALL( sphdf5, h5iget_name_f, (obj_ids(iObj), dummyName, dummySize, openLength, hdfier), __FILE__, __LINE__)
