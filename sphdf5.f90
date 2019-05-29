@@ -959,53 +959,59 @@ subroutine finish_outfile
 
     ! groups
     H5CALL( sphdf5, h5fget_obj_ids_f, (file_id, H5F_OBJ_GROUP_F, obj_count, obj_ids, hdfier, num_objs), __FILE__, __LINE__) ! get for open objects
-    if (myid.eq.0) then
+    if (num_objs.gt.0) then
       write(*,'("There are still ",i3," HDF5 groups open:")') num_objs
+      do iObj=1,num_objs
+        openLength=0
+        H5CALL( sphdf5, h5iget_name_f, (obj_ids(iObj), dummyName, dummySize, openLength, hdfier), __FILE__, __LINE__)
+        allocate(character(len=openLength+1) :: openName)
+        H5CALL( sphdf5, h5iget_name_f, (obj_ids(iObj), openName, openLength, openLength, hdfier), __FILE__, __LINE__)
+        write(*,*) openName
+        deallocate(openName)
+
+        H5CALL( sphdf5, h5gclose_f(obj_ids(iObj), hdfier), __FILE__, __LINE__)
+      enddo
     endif
-    do iObj=1,num_objs
-      openLength=0
-      H5CALL( sphdf5, h5iget_name_f, (obj_ids(iObj), dummyName, dummySize, openLength, hdfier), __FILE__, __LINE__)
-      allocate(character(len=openLength+1) :: openName)
-      H5CALL( sphdf5, h5iget_name_f, (obj_ids(iObj), openName, openLength, openLength, hdfier), __FILE__, __LINE__)
-      if (myid.eq.0) then ; write(*,*) openName
-      endif
-      deallocate(openName)
-    enddo
 
     ! datasets
     H5CALL( sphdf5, h5fget_obj_ids_f, (file_id, H5F_OBJ_DATASET_F, obj_count, obj_ids, hdfier, num_objs), __FILE__, __LINE__) ! get for open objects
-    if (myid.eq.0) then ; write(*,'("There are still ",i3," HDF5 datasets open:")') num_objs
+    if (num_objs.gt.0) then
+      write(*,'("There are still ",i3," HDF5 datasets open:")') num_objs
+      do iObj=1,num_objs
+        openLength=0
+        H5CALL( sphdf5, h5iget_name_f, (obj_ids(iObj), dummyName, dummySize, openLength, hdfier), __FILE__, __LINE__)
+        allocate(character(len=openLength+1) :: openName)
+        H5CALL( sphdf5, h5iget_name_f, (obj_ids(iObj), openName, openLength, openLength, hdfier), __FILE__, __LINE__)
+        write(*,*) openName(1:openLength)
+        deallocate(openName)
+
+        H5CALL( sphdf5, h5dclose_f(obj_ids(iObj), hdfier), __FILE__, __LINE__)
+      enddo
     endif
-    do iObj=1,num_objs
-      openLength=0
-      H5CALL( sphdf5, h5iget_name_f, (obj_ids(iObj), dummyName, dummySize, openLength, hdfier), __FILE__, __LINE__)
-      allocate(character(len=openLength+1) :: openName)
-      H5CALL( sphdf5, h5iget_name_f, (obj_ids(iObj), openName, openLength, openLength, hdfier), __FILE__, __LINE__)
-      if (myid.eq.0) then ; write(*,*) openName(1:openLength)
-      endif
-      deallocate(openName)
-    enddo
 
     ! datatypes
     H5CALL( sphdf5, h5fget_obj_ids_f, (file_id, H5F_OBJ_DATATYPE_F, obj_count, obj_ids, hdfier, num_objs), __FILE__, __LINE__) ! get for open objects
-    if (myid.eq.0) then ; write(*,'("There are still ",i3," HDF5 datatypes open:")') num_objs
+    if (num_objs.gt.0) then
+      write(*,'("There are still ",i3," HDF5 datatypes open:")') num_objs
+      do iObj=1,num_objs
+        H5CALL( sphdf5, h5tget_class_f, (obj_ids(iObj), typeClass, hdfier), __LINE__, __FILE__) ! determine class of open datatype
+        if      (typeClass.eq.H5T_NO_CLASS_F ) then ; write(*,*) "H5T_NO_CLASS_F"
+        else if (typeClass.eq.H5T_INTEGER_F  ) then ; write(*,*) "H5T_INTEGER_F"
+        else if (typeClass.eq.H5T_FLOAT_F    ) then ; write(*,*) "H5T_FLOAT_F"
+        else if (typeClass.eq.H5T_STRING_F   ) then ; write(*,*) "H5T_STRING_F"
+        else if (typeClass.eq.H5T_BITFIELD_F ) then ; write(*,*) "H5T_BITFIELD_F"
+        else if (typeClass.eq.H5T_OPAQUE_F   ) then ; write(*,*) "H5T_OPAQUE_F"
+        else if (typeClass.eq.H5T_COMPOUND_F ) then ; write(*,*) "H5T_COMPOUND_F"
+        else if (typeClass.eq.H5T_REFERENCE_F) then ; write(*,*) "H5T_REFERENCE_F"
+        else if (typeClass.eq.H5T_ENUM_F     ) then ; write(*,*) "H5T_ENUM_F"
+        else if (typeClass.eq.H5T_VLEN_F     ) then ; write(*,*) "H5T_VLEN_F"
+        else if (typeClass.eq.H5T_ARRAY_F    ) then ; write(*,*) "H5T_ARRAY_F"
+        else ; write(*,*) "UNKNOWN TYPE!"
+        endif
+
+        H5CALL( sphdf5, h5tclose_f(obj_ids(iObj), hdfier), __FILE__, __LINE__)
+      enddo
     endif
-    do iObj=1,num_objs
-      H5CALL( sphdf5, h5tget_class_f, (obj_ids(iObj), typeClass, hdfier), __LINE__, __FILE__) ! determine class of open datatype
-      if      (typeClass.eq.H5T_NO_CLASS_F ) then ; write(*,*) "H5T_NO_CLASS_F"
-      else if (typeClass.eq.H5T_INTEGER_F  ) then ; write(*,*) "H5T_INTEGER_F"
-      else if (typeClass.eq.H5T_FLOAT_F    ) then ; write(*,*) "H5T_FLOAT_F"
-      else if (typeClass.eq.H5T_STRING_F   ) then ; write(*,*) "H5T_STRING_F"
-      else if (typeClass.eq.H5T_BITFIELD_F ) then ; write(*,*) "H5T_BITFIELD_F"
-      else if (typeClass.eq.H5T_OPAQUE_F   ) then ; write(*,*) "H5T_OPAQUE_F"
-      else if (typeClass.eq.H5T_COMPOUND_F ) then ; write(*,*) "H5T_COMPOUND_F"
-      else if (typeClass.eq.H5T_REFERENCE_F) then ; write(*,*) "H5T_REFERENCE_F"
-      else if (typeClass.eq.H5T_ENUM_F     ) then ; write(*,*) "H5T_ENUM_F"
-      else if (typeClass.eq.H5T_VLEN_F     ) then ; write(*,*) "H5T_VLEN_F"
-      else if (typeClass.eq.H5T_ARRAY_F    ) then ; write(*,*) "H5T_ARRAY_F"
-      else ; write(*,*) "UNKNOWN TYPE!"
-      endif
-    enddo
 
     deallocate(obj_ids)
   endif ! (obj_count.gt.0)
