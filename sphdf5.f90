@@ -957,7 +957,7 @@ subroutine finish_outfile
     allocate(obj_ids(1:obj_count))
 
     ! groups
-    H5CALL( sphdf5, h5fget_obj_ids_f, (file_id, H5F_OBJ_GROUP_F, obj_count, obj_ids, hdfier, num_objs), __FILE__, __LINE__) ! get for open objects
+    H5CALL( sphdf5, h5fget_obj_ids_f, (int(H5F_OBJ_ALL_F,hid_t), H5F_OBJ_GROUP_F, obj_count, obj_ids, hdfier, num_objs), __FILE__, __LINE__) ! get for open objects
     if (myid.eq.0) then
       write(*,'("There are still ",i3," HDF5 groups open:")') num_objs
     endif
@@ -974,7 +974,7 @@ subroutine finish_outfile
     enddo
 
     ! datasets
-    H5CALL( sphdf5, h5fget_obj_ids_f, (file_id, H5F_OBJ_DATASET_F, obj_count, obj_ids, hdfier, num_objs), __FILE__, __LINE__) ! get for open objects
+    H5CALL( sphdf5, h5fget_obj_ids_f, (int(H5F_OBJ_ALL_F,hid_t), H5F_OBJ_DATASET_F, obj_count, obj_ids, hdfier, num_objs), __FILE__, __LINE__) ! get for open objects
     if (myid.eq.0) then ; write(*,'("There are still ",i3," HDF5 datasets open:")') num_objs
     endif
     do iObj=1,num_objs
@@ -990,7 +990,7 @@ subroutine finish_outfile
     enddo
 
     ! datatypes
-    H5CALL( sphdf5, h5fget_obj_ids_f, (file_id, H5F_OBJ_DATATYPE_F, obj_count, obj_ids, hdfier, num_objs), __FILE__, __LINE__) ! get for open objects
+    H5CALL( sphdf5, h5fget_obj_ids_f, (int(H5F_OBJ_ALL_F,hid_t), H5F_OBJ_DATATYPE_F, obj_count, obj_ids, hdfier, num_objs), __FILE__, __LINE__) ! get for open objects
     if (myid.eq.0) then ; write(*,'("There are still ",i3," HDF5 datatypes open:")') num_objs
     endif
 !    do iObj=1,num_objs
