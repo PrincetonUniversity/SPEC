@@ -44,7 +44,7 @@ program xspech
                         tflux, pflux, phiedge, pressure, pscale, helicity, Ladiabatic, adiabatic, gamma, &
                         Rbc, Zbs, Rbs, Zbc, &
                         Lconstraint, &
-                        Lfreebound, mfreeits, gBntol, gBnbld, &
+                        Lfreebound, mfreeits, gBntol, gBnbld, vcasingtol, &
                         Lfindzero, &
                         odetol, nPpts, nPtrj, &
                         LHevalues, LHevectors, LHmatrix, Lperturbed, Lcheck, &
@@ -71,7 +71,8 @@ program xspech
                         iBns, iBnc, iVns, iVnc, &
                         Ate, Aze, Ato, Azo, & ! only required for debugging; 09 Mar 17;
                         nfreeboundaryiterations, &
-                        beltramierror
+                        beltramierror, &
+                        first_free_bound
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -168,11 +169,19 @@ program xspech
   nfreeboundaryiterations = -1
   
 9000 nfreeboundaryiterations = nfreeboundaryiterations + 1 ! this is the free-boundary iteration loop; 08 Jun 16;
+  
+  if(myid==0) print *,"nfreeboundaryiterations=", nfreeboundaryiterations
 
   if (nfreeboundaryiterations .eq. 0) then  ! first iteration only run fixed-boundary
+     first_free_bound = .true.
      Mvol = Nvol
+     gBnbld = zero
+     vcasingtol = 1E-2
   else
+     first_free_bound = .false.
      Mvol = Nvol + Lfreebound
+     gBnbld = 0.5
+     vcasingtol = 1E-4 ! this needs revisions; Zhu 20190603;
   endif
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -347,7 +356,7 @@ program xspech
   case( 2:3 ) ; tflux(1) = dtflux(1) ; pflux(1) =   zero    ! 08 Feb 16;
   end select                                                ! 08 Feb 16;
   
-  do vvol = 2, Mvol ; tflux(vvol) = tflux(vvol-1) + dtflux(vvol) ! 01 Jul 14;
+  do vvol = 2, Mvol; tflux(vvol) = tflux(vvol-1) + dtflux(vvol) ! 01 Jul 14;
    ;                  pflux(vvol) = pflux(vvol-1) + dpflux(vvol) ! 01 Jul 14;
   enddo
   
@@ -408,6 +417,7 @@ program xspech
   if( LupdateBn ) then
 
    Mvol = Nvol + Lfreebound
+
    lastcpu = GETTIME
    
    WCALL( xspech, bnorml, ( mn, Ntz, efmn(1:mn), ofmn(1:mn) ) ) ! compute normal field etc. on computational boundary;
@@ -418,7 +428,11 @@ program xspech
    if( NOTstellsym ) bnserr = sum( abs( iBns(2:mn) - ofmn(2:mn) ) ) / (mn-1) &
                             + sum( abs( iBnc(1:mn) - efmn(1:mn) ) ) / (mn  )
    
-   if( bnserr.gt.gBntol ) then
+   if( bnserr.lt.gBntol ) then
+    
+    LContinueFreeboundaryIterations = .false.
+
+   else
     
     LContinueFreeboundaryIterations = .true.
     
@@ -505,10 +519,6 @@ program xspech
      end select ! end select case( Lzerovac ) ; 27 Feb 17;
      
     end select ! end select case( mfreeits ) ; 27 Feb 17;
-    
-   else          
-    
-    LContinueFreeboundaryIterations = .false.
     
    endif ! end of if( bnserr.gt.gBntol ) ; 24 Nov 16;
    
