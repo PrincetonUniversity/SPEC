@@ -168,6 +168,12 @@ program xspech
   nfreeboundaryiterations = -1
   
 9000 nfreeboundaryiterations = nfreeboundaryiterations + 1 ! this is the free-boundary iteration loop; 08 Jun 16;
+
+  if (nfreeboundaryiterations .eq. 0) then  ! first iteration only run fixed-boundary
+     Mvol = Nvol
+  else
+     Mvol = Nvol + Lfreebound
+  endif
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -400,7 +406,8 @@ program xspech
   endif
   
   if( LupdateBn ) then
-   
+
+   Mvol = Nvol + Lfreebound
    lastcpu = GETTIME
    
    WCALL( xspech, bnorml, ( mn, Ntz, efmn(1:mn), ofmn(1:mn) ) ) ! compute normal field etc. on computational boundary;
