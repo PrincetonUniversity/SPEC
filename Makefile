@@ -103,7 +103,7 @@ ifeq ($(CC),intel_spc)
  NAG=-L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl
  NETCDF=-L$(NETCDF_HOME)/lib -lnetcdf
  FFTWcompile=-I$(FFTW_DIR)/include
- FFTWlink=-L$(FFTW_DIR)/lib -lfftw3
+ FFTWlink=-L$(FFTW_DIR)/lib -lfftw3 -lfftw3_omp -lm
 endif
 
 

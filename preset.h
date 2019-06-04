@@ -34,10 +34,21 @@ subroutine preset
   LOCALS
   
   INTEGER   :: innout, idof, jk, ll, ii, ifail, ideriv, vvol, mi, ni, mj, nj, mk, nk, mimj, ninj, mkmj, nknj, jj, kk, lvol, mm, nn, imn
-  INTEGER   :: lquad, igauleg, maxIquad, Mrad, jquad, Lcurvature
+  INTEGER   :: lquad, igauleg, maxIquad, Mrad, jquad, Lcurvature, iret
   REAL      :: teta, zeta, arg, lss, cszeta(0:1), error
+  INTEGER	  :: N_THREADS
+  INTEGER, EXTERNAL    :: OMP_GET_MAX_THREADS
   
   BEGIN(preset)
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+! Initialize FFTW library if using openmp
+
+
+N_THREADS = OMP_GET_MAX_THREADS()
+
+call dfftw_init_threads(iret)
+call dfftw_plan_with_nthreads(N_THREADS)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
