@@ -79,9 +79,11 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   
   use fileunits, only : ounit
   
-  use inputlist, only : Wma00aa
+  use inputlist, only : Wma00aa, &
+!$OMP			Wmetrix, Wcoords, Igeometry, Ntor
   
-  use cputiming, only : Tma00aa
+  use cputiming, only : Tma00aa, &
+!$OMP			Tmetrix, Tcoords
   
   use allglobal, only : myid, ncpu, cpus, &
                         Mvol, &
@@ -103,7 +105,13 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
                         gzzmne, gzzmno, &
                         cheby, &
                         Lcoordinatesingularity, regumm, &
-                        pi2pi2nfp, pi2pi2nfphalf
+                        pi2pi2nfp, pi2pi2nfphalf, &
+!$OMP			efmn, ofmn, cfmn, sfmn, sg, ijreal, guvij, gvuij, Rij, Zij, dBdX, mne, ime, ine, &
+!$OMP			Nt, Nz, Ntz, pi2nfp, im, in, halfmm, iRbc, iZbs, iRbs, iZbc, NOTstellsym, &
+!$OMP			cosi, sini
+
+use numerical, only :   &
+!$OMP			vsmall, small
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -111,11 +119,11 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   
   INTEGER, intent(in) :: lquad, mn, lvol, lrad
   
-  INTEGER             :: jquad, ll, pp, uv, ii, jj, io, mn2, lp2, mn2_max, lp2_max
+  INTEGER             :: jquad, ll, pp, ii, jj, mn2, lp2, mn2_max, lp2_max
   
-  INTEGER             :: kk, kd, kka, kks, kda, kds
+  INTEGER             :: kka, kks, kda, kds
   
-  REAL                :: lss, jthweight, foo, Tl, Dl, Tp, Dp, TlTp, TlDp, DlTp, DlDp, ikda, ikds, imn2, ilrad
+  REAL                :: lss, jthweight, Tl, Dl, Tp, Dp, TlTp, TlDp, DlTp, DlDp, ikda, ikds, imn2, ilrad
 
   REAL                :: foocc, foocs, foosc, fooss
   REAL                :: fsscc, fsscs, fsssc, fssss
@@ -124,6 +132,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   REAL                :: fttcc, fttcs, fttsc, fttss
   REAL                :: ftzcc, ftzcs, ftzsc, ftzss
   REAL                :: fzzcc, fzzcs, fzzsc, fzzss
+
   
   REAL                :: sbar(1:lquad), halfoversbar(1:lquad), sbarhim(1:lquad,1:mn) ! regularization factors; 10 Dec 15;
   
@@ -191,6 +200,33 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
    enddo
 
 ! Parallelization along OpenMP threads
+
+
+!$OMP parallel do default(none), &
+!$OMP private(	cheby, ll, pp, ii, jj, mn2, kks, kka, kds, kda, lss, jthweight, lp2, &
+!$OMP 		Tl, Dl, Tp, Dp, TlTp, TlDp, DlTp, DlDp, ikda, ikds, &
+!$OMP 		foocc, foocs, foosc, fooss, &
+!$OMP 		fsscc, fsscs, fsssc, fssss, &
+!$OMP 		fstcc, fstcs, fstsc, fstss, &
+!$OMP 		fszcc, fszcs, fszsc, fszss, &
+!$OMP 		fttcc, fttcs, fttsc, fttss, &
+!$OMP 		ftzcc, ftzcs, ftzsc, ftzss, &
+!$OMP 		fzzcc, fzzcs, fzzsc, fzzss &
+!$OMP		), &
+!$OMP firstprivate(Tma00aa ), &
+!$OMP lastprivate( Tma00aa ), &
+!$OMP shared(	lquad, ounit, Wma00aa, myid, ncpu, cpus, Mvol, &
+!$OMP 		gaussianweight, gaussianabscissae, kija, kijs, &
+!$OMP 		regumm, pi2pi2nfp, pi2pi2nfphalf, &
+!$OMP 		mn, lvol, lrad, mn2_max, lp2_max, imn2, ilrad, sbar, halfoversbar, sbarhim, & 
+!$OMP 		small, vsmall, Wmetrix, Tmetrix, dBdX, mne, ime, ine, Nt, Nz, Ntz, &
+!$OMP 		Wcoords, Igeometry, Ntor, Tcoords, pi2nfp,im, in, halfmm, cput, cpuo, &
+!$OMP 		iRbc, iZbs, iRbs, iZbc, NOTstellsym, Lcoordinatesingularity, cosi, sini &
+!$OMP		), &
+!$OMP reduction(+: DToocc, DToosc, DToocs, DTooss, TTsscc, TTsssc, TTsscs, TTssss, &
+!$OMP 		   TDstcc, TDstcs, TDstsc, TDstss, TDszcc, TDszsc, TDszcs, TDszss, &
+!$OMP		   DDttcc, DDttcs, DDttsc, DDttss, DDtzcc, DDtzsc, DDtzcs, DDtzss, &
+!$OMP 		   DDzzcc, DDzzsc, DDzzcs, DDzzss)
    do jquad = 1, lquad ! Gaussian quadrature loop;
     
     lss = gaussianabscissae(jquad,lvol) ; jthweight = gaussianweight(jquad,lvol)

@@ -829,11 +829,13 @@ enddo
   SALLOCATE( tRij, (1:Ntz,0:Mvol), zero ) ! interface geometry in real space; poloidal derivative; ! 18 Jul 14;
   SALLOCATE( tZij, (1:Ntz,0:Mvol), zero )
 
+!$OMP PARALLEL
   SALLOCATE(   Rij, (1:Ntz,0:3,0:3    ), zero ) ! these are used for inverse fft to reconstruct real space geometry from interpolated Fourier harmonics;
   SALLOCATE(   Zij, (1:Ntz,0:3,0:3    ), zero )
   SALLOCATE(   sg , (1:Ntz,0:3        ), zero )
   SALLOCATE( guvij, (1:Ntz,0:3,0:3,0:3), zero ) ! need this on higher resolution grid for accurate Fourier decomposition;
   SALLOCATE( gvuij, (1:Ntz,0:3,0:3    ), zero ) ! need this on higher resolution grid for accurate Fourier decomposition; 10 Dec 15;
+!$OMP END PARALLEL
   
   SALLOCATE( dRadR, (1:mn,0:1,0:1,1:mn), zero ) ! calculated in rzaxis; 19 Sep 16;
   SALLOCATE( dRadZ, (1:mn,0:1,0:1,1:mn), zero )
@@ -869,6 +871,7 @@ enddo
 !latex \item These are defined in \link{metrix}, and used in \link{ma00aa}.
 !latex \end{enumerate}
   
+!$OMP PARALLEL
   SALLOCATE( goomne, (0:mne), zero ) ! workspace for Fourier decomposition of metric terms;
   SALLOCATE( goomno, (0:mne), zero )
   SALLOCATE( gssmne, (0:mne), zero ) ! workspace for Fourier decomposition of metric terms;
@@ -883,10 +886,13 @@ enddo
   SALLOCATE( gtzmno, (0:mne), zero )
   SALLOCATE( gzzmne, (0:mne), zero ) ! workspace for Fourier decomposition of metric terms;
   SALLOCATE( gzzmno, (0:mne), zero )
+!$OMP END PARALLEL
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+!$OMP PARALLEL
   SALLOCATE( ijreal, (1:Ntz), zero ) ! real space grid;
+!$OMP END PARALLEL
   SALLOCATE( ijimag, (1:Ntz), zero )
   SALLOCATE( jireal, (1:Ntz), zero )
   SALLOCATE( jiimag, (1:Ntz), zero )
@@ -903,10 +909,12 @@ enddo
   planf = fftw_plan_dft_2d( Nz, Nt, cplxin, cplxout, FFTW_FORWARD,  FFTW_MEASURE + FFTW_DESTROY_INPUT )
   planb = fftw_plan_dft_2d( Nz, Nt, cplxin, cplxout, FFTW_BACKWARD, FFTW_MEASURE + FFTW_DESTROY_INPUT )
 
+!$OMP parallel
   SALLOCATE( efmn, (1:mne), zero ) ! Fourier harmonics workspace; 24 Apr 13;
   SALLOCATE( ofmn, (1:mne), zero )
   SALLOCATE( cfmn, (1:mne), zero )
   SALLOCATE( sfmn, (1:mne), zero )
+!$OMP end parallel
   SALLOCATE( evmn, (1:mne), zero )
   SALLOCATE( odmn, (1:mne), zero )
   SALLOCATE( comn, (1:mne), zero )

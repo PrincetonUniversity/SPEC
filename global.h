@@ -1361,6 +1361,17 @@ module allglobal
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+
+!$OMP THREADPRIVATE(	efmn, ofmn, cfmn, sfmn, sg, &
+!$OMP 			ijreal, guvij, gvuij, &
+!$OMP 			Rij, Zij, &
+!$OMP 			goomne,goomno,gssmne,gssmno,&
+!$OMP 			gstmne,gstmno,gszmne,gszmno,&
+!$OMP 			gttmne,gttmno,gtzmne,gtzmno,&
+!$OMP 			gzzmne,gzzmno &
+!$OMP 			)
+
+
 contains
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

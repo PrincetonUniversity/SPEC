@@ -93,6 +93,9 @@ program xspech
   CHARACTER*8	       :: hostname
   INTEGER*4            :: getpid, hostnm
 
+  INTEGER	       :: N_THREADS
+  INTEGER, EXTERNAL    :: OMP_GET_MAX_THREADS
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   MPISTART ! It might be easy to read the source if this macro was removed; SRH: 27 Feb 18;
@@ -124,6 +127,9 @@ program xspech
   if( myid.eq.0 ) then
    write(ounit,'("xspech : ", 10x ," : ")')
    write(ounit,'("xspech : ",f10.2," : begin execution ; ncpu=",i3," ; calling global:readin ;")') cpus-cpus, ncpu
+   
+   N_THREADS = OMP_GET_MAX_THREADS()
+   print *, "Number of threads = ", N_THREADS
   endif
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

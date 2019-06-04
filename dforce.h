@@ -747,7 +747,8 @@ subroutine loop_dfp100(Ndofgl, Fvec, iflag)
 
 	use cputiming, only 	:  Tdforce													! Timer
 	use allglobal, only 	:  Mvol, &													! Total number of volume + vacuum
-											 		 IconstraintOK										! Flag to exit loop
+											 		 IconstraintOK, &									! Flag to exit loop
+                           cpus, myid
 
  LOCALS
 !------
