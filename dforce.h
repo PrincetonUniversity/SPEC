@@ -198,6 +198,9 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 ! COMPUTE MATRICES
 ! ----------------
 
+! Here we call ma00aa to compute the geometry dependent matrices
+! This is very computationaly intensive - an attempt to parallelize ma00aa with OpenMP has been implemented
+
   do vvol = 1, Mvol
 
    LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;

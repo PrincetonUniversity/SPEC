@@ -188,6 +188,34 @@ use numerical, only :   &
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
+! Parallelization along OpenMP threads
+
+! We use the default(none) close to list all variables - this makes the code more readable
+! Note that all variables goomne, goomno, ... are threadprivate. Using private variables was 
+! leading to a bug where each variable wasn't updated at the exit of the metrix routine.
+!$OMP PARALLEL default(none), &
+!$OMP private(	cheby, ll, pp, ii, jj, mn2, kks, kka, kds, kda, lss, jthweight, lp2, &
+!$OMP       		Tl, Dl, Tp, Dp, TlTp, TlDp, DlTp, DlDp, ikda, ikds, sbar, halfoversbar, Tma00aa, &
+!$OMP 		      foocc, foocs, foosc, fooss, &
+!$OMP 		      fsscc, fsscs, fsssc, fssss, &
+!$OMP 		      fstcc, fstcs, fstsc, fstss, &
+!$OMP       		fszcc, fszcs, fszsc, fszss, &
+!$OMP 		      fttcc, fttcs, fttsc, fttss, &
+!$OMP 		      ftzcc, ftzcs, ftzsc, ftzss, &
+!$OMP 		      fzzcc, fzzcs, fzzsc, fzzss &
+!$OMP ), &
+!$OMP shared(	lquad, ounit, Wma00aa, myid, ncpu, cpus, Mvol, &
+!$OMP 		    gaussianweight, gaussianabscissae, kija, kijs, &
+!$OMP 		    regumm, pi2pi2nfp, pi2pi2nfphalf, &
+!$OMP 		    mn, lvol, lrad, mn2_max, lp2_max, imn2, ilrad, sbarhim, & 
+!$OMP 		    small, vsmall, Wmetrix, Tmetrix, dBdX, mne, ime, ine, Nt, Nz, Ntz, &
+!$OMP 		    Wcoords, Igeometry, Ntor, Tcoords, pi2nfp,im, in, halfmm, cput, cpuo, &
+!$OMP 		    iRbc, iZbs, iRbs, iZbc, NOTstellsym, Lcoordinatesingularity, cosi, sini &
+!$OMP	), &
+!$OMP reduction(+: DToocc, DToosc, DToocs, DTooss, TTsscc, TTsssc, TTsscs, TTssss, &
+!$OMP 		         TDstcc, TDstcs, TDstsc, TDstss, TDszcc, TDszsc, TDszcs, TDszss, &
+!$OMP		           DDttcc, DDttcs, DDttsc, DDttss, DDtzcc, DDtzsc, DDtzcs, DDtzss, &
+!$OMP 		         DDzzcc, DDzzsc, DDzzcs, DDzzss)
   if( Lcoordinatesingularity ) then
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -199,34 +227,8 @@ use numerical, only :   &
    do jquad = 1, lquad ; sbarhim(jquad,1:mn) = sbar(jquad)**regumm(1:mn) ! pre-calculation of regularization factor; 12 Sep 13;
    enddo
 
-! Parallelization along OpenMP threads
-
-
-!$OMP parallel do default(none), &
-!$OMP private(	cheby, ll, pp, ii, jj, mn2, kks, kka, kds, kda, lss, jthweight, lp2, &
-!$OMP 		Tl, Dl, Tp, Dp, TlTp, TlDp, DlTp, DlDp, ikda, ikds, &
-!$OMP 		foocc, foocs, foosc, fooss, &
-!$OMP 		fsscc, fsscs, fsssc, fssss, &
-!$OMP 		fstcc, fstcs, fstsc, fstss, &
-!$OMP 		fszcc, fszcs, fszsc, fszss, &
-!$OMP 		fttcc, fttcs, fttsc, fttss, &
-!$OMP 		ftzcc, ftzcs, ftzsc, ftzss, &
-!$OMP 		fzzcc, fzzcs, fzzsc, fzzss &
-!$OMP		), &
-!$OMP firstprivate(Tma00aa ), &
-!$OMP lastprivate( Tma00aa ), &
-!$OMP shared(	lquad, ounit, Wma00aa, myid, ncpu, cpus, Mvol, &
-!$OMP 		gaussianweight, gaussianabscissae, kija, kijs, &
-!$OMP 		regumm, pi2pi2nfp, pi2pi2nfphalf, &
-!$OMP 		mn, lvol, lrad, mn2_max, lp2_max, imn2, ilrad, sbar, halfoversbar, sbarhim, & 
-!$OMP 		small, vsmall, Wmetrix, Tmetrix, dBdX, mne, ime, ine, Nt, Nz, Ntz, &
-!$OMP 		Wcoords, Igeometry, Ntor, Tcoords, pi2nfp,im, in, halfmm, cput, cpuo, &
-!$OMP 		iRbc, iZbs, iRbs, iZbc, NOTstellsym, Lcoordinatesingularity, cosi, sini &
-!$OMP		), &
-!$OMP reduction(+: DToocc, DToosc, DToocs, DTooss, TTsscc, TTsssc, TTsscs, TTssss, &
-!$OMP 		   TDstcc, TDstcs, TDstsc, TDstss, TDszcc, TDszsc, TDszcs, TDszss, &
-!$OMP		   DDttcc, DDttcs, DDttsc, DDttss, DDtzcc, DDtzsc, DDtzcs, DDtzss, &
-!$OMP 		   DDzzcc, DDzzsc, DDzzcs, DDzzss)
+! Parallelize on the outermost loop
+!$OMP DO
    do jquad = 1, lquad ! Gaussian quadrature loop;
     
     lss = gaussianabscissae(jquad,lvol) ; jthweight = gaussianweight(jquad,lvol)
@@ -337,13 +339,16 @@ use numerical, only :   &
     enddo ! end of do mn2; 08 Feb 16;
     
    enddo ! end of do jquad; ! 16 Jan 13;
-   
+!$OMP END DO   
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
   else ! .not.Lcoordinatesingularity; 17 Dec 15;
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-   
+
+! Parallelize on the outermost loop
+!$OMP DO
    do jquad = 1, lquad ! Gaussian quadrature loop;
     
     lss = gaussianabscissae(jquad,lvol) ; jthweight = gaussianweight(jquad,lvol)
@@ -455,9 +460,11 @@ use numerical, only :   &
     enddo ! end of do mn2;  1 Feb 13;
     
    enddo ! end of do jquad; ! 16 Jan 13;
-    
+!$OMP END DO    
+
   endif ! end of if( Lcoordinatesingularity ) ; 17 Dec 15;
-  
+!$OMP END PARALLEL  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   DToocc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DToocc( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
