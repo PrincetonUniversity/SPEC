@@ -79,11 +79,13 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   
   use fileunits, only : ounit
   
-  use inputlist, only : Wma00aa, &
-!$OMP			Wmetrix, Wcoords, Igeometry, Ntor
+  use inputlist, only : &
+!$OMP			Wmetrix, Wcoords, Igeometry, Ntor, &
+											Wma00aa
   
-  use cputiming, only : Tma00aa, &
-!$OMP			Tmetrix, Tcoords
+  use cputiming, only : &
+!$OMP			Tmetrix, Tcoords, &
+                        Tma00aa
   
   use allglobal, only : myid, ncpu, cpus, &
                         Mvol, &
@@ -105,13 +107,12 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
                         gzzmne, gzzmno, &
                         cheby, &
                         Lcoordinatesingularity, regumm, &
-                        pi2pi2nfp, pi2pi2nfphalf, &
 !$OMP			efmn, ofmn, cfmn, sfmn, sg, ijreal, guvij, gvuij, Rij, Zij, dBdX, mne, ime, ine, &
 !$OMP			Nt, Nz, Ntz, pi2nfp, im, in, halfmm, iRbc, iZbs, iRbs, iZbc, NOTstellsym, &
-!$OMP			cosi, sini
+!$OMP			cosi, sini, &
+                        pi2pi2nfp, pi2pi2nfphalf
 
-use numerical, only :   &
-!$OMP			vsmall, small
+use numerical, only :  vsmall, small
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
