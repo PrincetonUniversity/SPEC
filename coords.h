@@ -237,13 +237,8 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
     
   endif ! end of if( Lcoordinatesingularity ); 01 Feb 13;
 
-
-! The library fftw is not thread safe (at least how we use it here)
-! This would require additional attention...
-!$OMP CRITICAL
   call invfft( mn, im(1:mn), in(1:mn), Remn(1:mn,0), Romn(1:mn,0), Zemn(1:mn,0), Zomn(1:mn,0), &
                Nt, Nz, Rij(1:Ntz,0,0), Zij(1:Ntz,0,0) ) ! maps to real space;
-!$OMP END CRITICAL
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -290,10 +285,6 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
     
   endif ! end of if( Lcoordinatesingularity ); 01 Feb 13;
 
-  
-! The library fftw is not thread safe (at least how we use it here)
-! This would require additional attention...
-!$OMP CRITICAL
   call invfft( mn, im(1:mn), in(1:mn),           Remn(1:mn,1),           Romn(1:mn,1),           Zemn(1:mn,1),           Zomn(1:mn,1), &
                Nt, Nz, Rij(1:Ntz,1,0), Zij(1:Ntz,1,0) ) ! maps to real space;
 
@@ -302,7 +293,6 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
 
   call invfft( mn, im(1:mn), in(1:mn), -in(1:mn)*Romn(1:mn,0),  in(1:mn)*Remn(1:mn,0), -in(1:mn)*Zomn(1:mn,0),  in(1:mn)*Zemn(1:mn,0), &
                Nt, Nz, Rij(1:Ntz,3,0), Zij(1:Ntz,3,0) ) ! maps to real space;
-!$OMP END CRITICAL
 
 
   do ii = 1, 3 ; Rij(1:Ntz,0,ii) = Rij(1:Ntz,ii,0) ! just to complete workspace arrays; 22 Apr 13;
@@ -428,9 +418,6 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
     
    endif ! end of if( Lcoordinatesingularity ); 01 Feb 13;
    
-! The library fftw is not thread safe (at least how we use it here)
-! This would require additional attention...
-!$OMP CRITICAL
    call invfft( mn, im(1:mn), in(1:mn),&
                    Remn(1:mn,2),                   Romn(1:mn,2),                   Zemn(1:mn,2),                   Zomn(1:mn,2), &
                 Nt, Nz, Rij(1:Ntz,1,1), Zij(1:Ntz,1,1) ) ! maps to real space;
@@ -454,7 +441,6 @@ Nt, Nz, Rij(1:Ntz,2,3), Zij(1:Ntz,2,3) ) ! maps to real space;
    call invfft( mn, im(1:mn), in(1:mn),&
 -in(1:mn)*in(1:mn)*Remn(1:mn,0),-in(1:mn)*in(1:mn)*Romn(1:mn,0),-in(1:mn)*in(1:mn)*Zemn(1:mn,0),-in(1:mn)*in(1:mn)*Zomn(1:mn,0), &
 Nt, Nz, Rij(1:Ntz,3,3), Zij(1:Ntz,3,3) ) ! maps to real space;
-!$OMP END CRITICAL
 
    
    do ii = 2, 3

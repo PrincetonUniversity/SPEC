@@ -271,6 +271,7 @@ module inputlist
   REAL         :: absacc           =     1.0e-04 ! redundant; 
   REAL         :: epsr             =     1.0e-08 ! redundant; 
   INTEGER      :: nPpts            =     0
+  INTEGER			 :: Ppts						 =     0
   INTEGER      :: nPtrj(1:MNvol+1) =    -1
   LOGICAL      :: LHevalues        =  .false.
   LOGICAL      :: LHevectors       =  .false.
@@ -771,6 +772,8 @@ module inputlist
  nPpts      ,&  !latex \item \inputvar{nPpts = 0} : integer : number of toroidal transits used (per trajectory) in following field lines
                 !latex for constructing \Poincare plots;
                 !latex if \inputvar{nPpts<1}, no \Poincare plot is constructed;
+ Ppts       ,&  !latex \item \inputvar{Ppts = 0} : stands for Poincare plot theta start. Chose at which angle (normalized over pi) the Poincare field-line 
+                !latex tracing start.
  nPtrj      ,&  !latex \item \inputvar{nPtrj = -1 : integer(1:MNvol+1)} : number of trajectories in each annulus to be followed in constructing \Poincare plot;
                 !latex \bi
                 !latex \item if \inputvar{nPtrj(l)<0}, then \inputvar{nPtrj(l) = Ni(l)},
@@ -1845,6 +1848,7 @@ subroutine readin
  !RlBCAST( absacc    , 1      , 0 )
  !RlBCAST( epsr      , 1      , 0 )
   IlBCAST( nPpts     , 1      , 0 )
+  IlBCAST( Ppts      , 1      , 0 )
   IlBCAST( nPtrj     , MNvol+1, 0 )
   LlBCAST( LHevalues , 1      , 0 )
   LlBCAST( LHevectors, 1      , 0 )
@@ -2500,6 +2504,7 @@ subroutine wrtend( wflag, iflag, rflag )
  !write(iunit,'(" absacc      = ",es23.15       )') absacc
  !write(iunit,'(" epsr        = ",es23.15       )') epsr
   write(iunit,'(" nPpts       = ",i9            )') nPpts
+  write(iunit,'(" Ppts        = ",i9            )') Ppts
   write(iunit,'(" nPtrj       = ",256i6         )') nPtrj(1:Mvol)
   write(iunit,'(" LHevalues   = ",L9            )') LHevalues
   write(iunit,'(" LHevectors  = ",L9            )') LHevectors

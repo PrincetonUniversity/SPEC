@@ -115,9 +115,6 @@ subroutine metrix( lvol, lss )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   ifail = 0
-! The library fftw is not thread safe (at least how we use it here)
-! This would require additional attention...
-!$OMP CRITICAL
   call tfft( Nt, Nz, gvuij(1:Ntz,0,0), ijreal(1:Ntz) , &
              mne, ime(1:mne), ine(1:mne), goomne(1:mne), goomno(1:mne), cfmn(1:mne)    , sfmn(1:mne)    , ifail )
 
@@ -132,8 +129,6 @@ subroutine metrix( lvol, lss )
   ifail = 0
   call tfft( Nt, Nz, gvuij(1:Ntz,2,3), gvuij(1:Ntz,3,3), &
              mne, ime(1:mne), ine(1:mne), gtzmne(1:mne), gtzmno(1:mne), gzzmne(1:mne), gzzmno(1:mne), ifail )
-!$OMP END CRITICAL
-
 
   goomne(0) = zero ; goomno(0) = zero
   gssmne(0) = zero ; gssmno(0) = zero
