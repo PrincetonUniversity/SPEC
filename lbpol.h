@@ -2,6 +2,27 @@
 
 !title (lbpol) ! Computes Btheta at the interface
 
+!latex \briefly{Computes Btheta at the interface - used to compute the toroidal surface current}
+
+!latex \calledby{\link{xspech} and
+!latex   		 \link{dfp100}}
+!latex \calls{\link{coords} and 
+!latex 		  \link{numrec}}
+
+
+!latex \begin{enumerate}
+!latex \item Call \link{coords} to compute the metric coefficients and the jacobian.
+!latex \item Build coefficients \inputvar{efmn}, \inputvar{ofmn}, \inputvar{cfmn}, \inputvar{sfmn} from the field vector potential \inputvar{Ate}, \inputvar{Ato}, 
+!latex 		 \inputvar{Aze} and \inputvar{Azo}, and radial derivatives of the Chebyshev polynomials \inputvar{TT(ll,innout,1)}. These variables
+!latex		 are the radial derivative of the Fourier coefficients of the magnetic field vector potential. 
+!latex \item Take the inverse Fourier transform of \inputvar{efmn}, \inputvar{ofmn}, \inputvar{cfmn}, \inputvar{sfmn}. These are the covariant components of $dA$, 
+!latex 		 \textit{i.e.} the contravariant components of $\mathbf{B}$.
+!latex \item Build covariant components of the field using the metric coefficients \inputvar{guvij} and the jacobian \inputvar{sg}.
+!latex \item Fourier transform the covariant components of the field and store them in the variables \inputvar{Btemn}, \inputvar{Btomn}, \inputvar{Bzemn} and 
+!latex  	 \inputvar{Bzomn}.
+!latex \end{enumerate}
+
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 subroutine lbpol(lvol)

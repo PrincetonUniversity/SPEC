@@ -24,7 +24,7 @@ if(newfig==1)
     hold on
 elseif newfig==0
     hold on;
-elseif newfig==2
+elseif newfig==2			% A.Baillod (06.2019)
     hold off;
 end
 
@@ -75,7 +75,7 @@ switch xaxis
   kstart   = 1;
   psitor   = zeros(1,length(sval));
 
-  switch idata.Igeometry
+  switch idata.Igeometry			% A.Baillod (06.2019)
       
       case 1
           for lvol=1:nvol
@@ -83,7 +83,7 @@ switch xaxis
                   psitor(k) = cumflux + get_spec_torflux_slab(fdata,lvol,0,-1,sval(k),ns,nt);
               end
               cumflux = psitor(k);
-              kstart  = kstart+nptrj(lvol);
+              kstart  = kstart+nptrj(lvol);			% A.Baillod (06.2019)
           end  
   
       case 2
@@ -92,7 +92,7 @@ switch xaxis
                   psitor(k) = cumflux + get_spec_torflux_cyl(fdata,lvol,0,-1,sval(k),ns,nt);
               end
               cumflux = psitor(k);
-              kstart  = kstart+nptrj(lvol);
+              kstart  = kstart+nptrj(lvol);			% A.Baillod (06.2019)
           end
 
       case 3
@@ -137,7 +137,7 @@ case 'r'
   kstart   = 1;
   psitor   = zeros(1,length(sval));
  
-  switch idata.Igeometry
+  switch idata.Igeometry			% A.Baillod (06.2019)
       
       case 1
           for lvol=1:nvol
@@ -145,7 +145,7 @@ case 'r'
                   psitor(k) = cumflux + get_spec_torflux_slab(fdata,lvol,0,-1,sval(k),ns,nt);
               end
               cumflux = psitor(k);
-              kstart  = kstart+nptrj(lvol);
+              kstart  = kstart+nptrj(lvol);			% A.Baillod (06.2019)
           end  
   
       case 2
@@ -154,7 +154,7 @@ case 'r'
                   psitor(k) = cumflux + get_spec_torflux_cyl(fdata,lvol,0,-1,sval(k),ns,nt);
               end
               cumflux = psitor(k);
-              kstart  = kstart+nptrj(lvol);
+              kstart  = kstart+nptrj(lvol);			% A.Baillod (06.2019)
           end
 
       case 3

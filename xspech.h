@@ -89,12 +89,9 @@ program xspech
   REAL,    allocatable :: position(:), gradient(:)
   CHARACTER            :: pack
 
-  INTEGER	       :: iwait, status, pid
+  INTEGER	      	   :: iwait, status, pid
   CHARACTER*8	       :: hostname
   INTEGER*4            :: getpid, hostnm
-
-  INTEGER	       :: N_THREADS
-  INTEGER, EXTERNAL    :: OMP_GET_MAX_THREADS
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -545,7 +542,7 @@ program xspech
   enddo
 
   do vvol = 1, Mvol-1
-    IPDt(vvol) = -pi2 * (Btemn(1, 0, vvol+1) - Btemn(1, 1, vvol)) / mu0
+    IPDt(vvol) = -pi2 * (Btemn(1, 0, vvol+1) - Btemn(1, 1, vvol))
   enddo
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

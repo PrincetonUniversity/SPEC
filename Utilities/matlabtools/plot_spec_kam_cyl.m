@@ -19,12 +19,12 @@ Rmn    = h5read(filename,'/Rbc');
 data = read_spec_poincare(filename);
 nz     = size(data.R_lines,2);
 
-rmax   = max(max(max(data.R_lines)));
+rmax   = max(max(max(data.R_lines)));			% A.Baillod (06.2019)
 
 
 % Compute (x,y) coordinates of each KAM surface
 
-zeta   = (nz0-1)*(2*pi/nz);
+zeta   = (nz0-1)*(2*pi/nz);			% A.Baillod (06.2019)
 
 nth    = 2048;
 dth    = 2*pi/nth;

@@ -36,48 +36,8 @@ subroutine preset
   INTEGER   :: innout, idof, jk, ll, ii, ifail, ideriv, vvol, mi, ni, mj, nj, mk, nk, mimj, ninj, mkmj, nknj, jj, kk, lvol, mm, nn, imn
   INTEGER   :: lquad, igauleg, maxIquad, Mrad, jquad, Lcurvature, iret
   REAL      :: teta, zeta, arg, lss, cszeta(0:1), error
-  INTEGER	  :: N_THREADS
-#ifdef _OPENMP
-  INTEGER, EXTERNAL    :: OMP_GET_MAX_THREADS
-#endif
 
   BEGIN(preset)
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-! Initialize FFTW library if using openmp
-
-
-#ifdef _OPENMP
-N_THREADS = OMP_GET_MAX_THREADS()
-
-call dfftw_init_threads(iret)
-call dfftw_plan_with_nthreads(N_THREADS)
-#endif
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \subsubsection{\type{NvolPerCPU} and \type{NvolToDist}}
-
-!latex Volumes are separated between CPUs by chunks - this allows fewer communications in the evaluation of constraints at the volume interface. More specifically, we define
-!latex the variables $k$ and $d$ as
-
-!latex \be
-!latex k = \frac{Mvol - Mvol \% N_{CPU}}{N_{CPU}}\\
-!latex d = Mvol - k \cdot N_{CPU}
-!latex \ee
-
-!latex The CPU $i$ ($i\in [0,N_{CPU}-1]$) is then associated with the volumes
-
-!latex \be
-!latex [(k+1)i + 1, (k+1)(i+1)] \qquad \text{if} \quad i<d\\
-!latex (k+1)d + [(i-d)k + 1, (i-d+k)i)] \qquad \text{if} \quad i\geqd
-!latex \ee
-
-!latex In SPEC, $k$ is named \type{NvolPerCPU} and $d$ is named \type{NvolToDist}. They are computed only once in the subroutine preset.h
-
-  NvolPerCPU = aint(real(Mvol) / real(ncpu))	! truncates Mvol / ncpu to a whole number
-  NvolToDist = Mvol - NvolPerCPU * ncpu
-
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -178,15 +138,21 @@ call dfftw_plan_with_nthreads(N_THREADS)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\type{mu(1:Mvol)} from Ivolume}
-!latex Only used when $Lconstraint = 3$. See \link{preset} documentation for more details.
+!latex \subsubsection{\type{mu(1:Mvol)} evaluation of \inputvar{mu} from \inputvar{Ivolume};}
+!latex Only used when $Lconstraint = 3$. The coefficients \inputvar{mu} are evaluated as
+!latex \begin{equation}
+!latex \mu_1 = \mu_0 \frac{I_{volume}(1)}{\psi_{t,1}}
+!latex \end{equation}
+!latex \begin{equation}
+!latex \mu_n = \mu_0 \frac{I_{volume}(n) - I_{volume}(n-1)}{\psi_{t,n}-\psi_{t,n-1}},\qquad \forall\ n>1;
+!latex \end{equation}
 
 if (Lconstraint.EQ.3) then
 
-  mu(1) = mu0 * Ivolume(1) / (tflux(1) * phiedge)
+  mu(1) = Ivolume(1) / (tflux(1) * phiedge)
   
   do vvol = 2, Mvol
-    mu(vvol) = mu0 * (Ivolume(vvol) - Ivolume(vvol-1)) / ((tflux(vvol) - tflux(vvol-1)) * phiedge)
+    mu(vvol) = (Ivolume(vvol) - Ivolume(vvol-1)) / ((tflux(vvol) - tflux(vvol-1)) * phiedge)
   end do
 
 #ifdef DEBUG
@@ -196,7 +162,7 @@ if (Lconstraint.EQ.3) then
   write(ounit,'("preset : ", 10x ," : phiedge = "257(es11.3",",:))') phiedge
   write(ounit,'("preset : ", 10x ," : mu      = "257(es11.3",",:))') (     mu(vvol), vvol=1, Mvol)
 #endif
-end if
+endif
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -277,8 +243,19 @@ end if
   SALLOCATE( ImagneticOK, (1:Mvol), .false. )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+!latex \subsubsection{\type{IconstraintOK} : Global constraint flag;}
+  
+!latex \begin{enumerate}
+!latex \item error flags that indicate if solution found is consistent with the global constraint
+!latex \item \type{ImagneticOK} is initialized to \type{.false.}
+!latex       If the construction the difference between the evaluated global constraint and in the input is small enough, 
+!latex       then \type{ImagneticOK} is set to \type{.true.}.
+!latex \end{enumerate}
 
-!latex \subsubsection{\type{Lhessianallocated}}
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+!latex \subsubsection{\type{Lhessianallocated};}
 
 !latex \begin{enumerate}
 !latex \item The internal logical variable, \type{Lhessianallocated}, indicates whether the ``Hessian'' matrix of second-partial derivatives
@@ -395,7 +372,7 @@ end if
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\type{djkp}}
+!latex \subsubsection{\type{djkp};}
 
   if( Igeometry.eq.2 ) then ! standard cylindrical; 04 Dec 14;
    
@@ -413,7 +390,7 @@ end if
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-!latex \subsubsection{\type{iotakki}}
+!latex \subsubsection{\type{iotakki};}
 
   SALLOCATE( iotakkii, (1:mn      ), 0 ) ! used to identify matrix elements in straight-field-line angle transformation;
   
@@ -553,7 +530,7 @@ end if
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
  
-!latex \subsubsection{\type{LBsequad}, \type{LBnewton} and \type{LBlinear}}
+!latex \subsubsection{\type{LBsequad}, \type{LBnewton} and \type{LBlinear};}
   
 !latex \begin{enumerate}
 !latex \item \type{LBsequad}, \type{LBnewton} and \type{LBlinear} depend simply on \type{LBeltrami}, which is described in \link{global}.
@@ -574,7 +551,7 @@ end if
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-!latex \subsubsection{\type{BBweight(1:mn)} : weighting of force-imbalance harmonics}
+!latex \subsubsection{\type{BBweight(1:mn)} : weighting of force-imbalance harmonics;}
 
 !latex \begin{enumerate}
 !latex \item weight on force-imbalance harmonics;
@@ -592,7 +569,7 @@ end if
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\type{mmpp(1:mn)} : spectral condensation weight factors}
+!latex \subsubsection{\type{mmpp(1:mn)} : spectral condensation weight factors;}
 
 !latex \begin{enumerate}
 !latex \item spectral condensation weight factors;
@@ -613,7 +590,7 @@ end if
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-!latex \subsubsection{\type{NAdof}, \type{Ate}, \type{Aze}, \type{Ato} and \type{Azo} : degrees-of-freedom in magnetic vector potential}
+!latex \subsubsection{\type{NAdof}, \type{Ate}, \type{Aze}, \type{Ato} and \type{Azo} : degrees-of-freedom in magnetic vector potential;}
   
 !latex \begin{enumerate}
 !latex \item \type{NAdof(1:Mvol)} $\equiv$ total number of degrees-of-freedom in magnetic vector potential, including Lagrange multipliers, in each volume.
@@ -790,6 +767,24 @@ end if
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+!latex \subsection{Definition and allocation of Chebyshev-metric matrices;}
+!latex
+!latex Variables \internal{dMA}, \internal{dMB}, \internal{dMD} and \internal{solution} are arrays of size (1:Mvol). Then each array element has a 
+!latex data field called \emph{mat}, with size
+!latex \begin{itemize}
+!latex 		\item  \internal{dMA(vvol)\% mat(0:NN, 0:NN)}
+!latex 		\item  \internal{dMB(vvol)\% mat(0:NN, 0:2)}
+!latex 		\item  \internal{dMD(vvol)\% mat(0:NN, 0:NN)}
+!latex 		\item  \internal{solution(vvol)\% mat(0:NN, -1:2)}. 
+!latex \end{itemize}
+!latex
+!latex Arrays \internal{dMG(1:Mvol)} and \internal{MBpsi(1:Mvol)} has a field called \emph{arr} with size
+!latex \begin{itemize}
+!latex 		\item \internal{dMG(vvol)\% arr(0:NN)}
+!latex 		\item \internal{MBpsi(vvol)\% arr(1:NN)}
+!latex \end{itemize}
+
+
 ! HERE DEFINE THE NEW MATRICES ARRAY
 
 allocate(dMA(1:Mvol))
@@ -820,7 +815,7 @@ do vvol = 1, Mvol
 enddo
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-!latex \subsubsection{\type{workspace}}
+!latex \subsubsection{\type{workspace};}
 
 ! Fourier transforms;
 
@@ -844,13 +839,11 @@ enddo
   SALLOCATE( tRij, (1:Ntz,0:Mvol), zero ) ! interface geometry in real space; poloidal derivative; ! 18 Jul 14;
   SALLOCATE( tZij, (1:Ntz,0:Mvol), zero )
 
-!$OMP PARALLEL
   SALLOCATE(   Rij, (1:Ntz,0:3,0:3    ), zero ) ! these are used for inverse fft to reconstruct real space geometry from interpolated Fourier harmonics;
   SALLOCATE(   Zij, (1:Ntz,0:3,0:3    ), zero )
   SALLOCATE(   sg , (1:Ntz,0:3        ), zero )
   SALLOCATE( guvij, (1:Ntz,0:3,0:3,0:3), zero ) ! need this on higher resolution grid for accurate Fourier decomposition;
   SALLOCATE( gvuij, (1:Ntz,0:3,0:3    ), zero ) ! need this on higher resolution grid for accurate Fourier decomposition; 10 Dec 15;
-!$OMP END PARALLEL
   
   SALLOCATE( dRadR, (1:mn,0:1,0:1,1:mn), zero ) ! calculated in rzaxis; 19 Sep 16;
   SALLOCATE( dRadZ, (1:mn,0:1,0:1,1:mn), zero )
@@ -886,7 +879,6 @@ enddo
 !latex \item These are defined in \link{metrix}, and used in \link{ma00aa}.
 !latex \end{enumerate}
   
-!$OMP PARALLEL
   SALLOCATE( goomne, (0:mne), zero ) ! workspace for Fourier decomposition of metric terms;
   SALLOCATE( goomno, (0:mne), zero )
   SALLOCATE( gssmne, (0:mne), zero ) ! workspace for Fourier decomposition of metric terms;
@@ -901,13 +893,10 @@ enddo
   SALLOCATE( gtzmno, (0:mne), zero )
   SALLOCATE( gzzmne, (0:mne), zero ) ! workspace for Fourier decomposition of metric terms;
   SALLOCATE( gzzmno, (0:mne), zero )
-!$OMP END PARALLEL
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!$OMP PARALLEL
   SALLOCATE( ijreal, (1:Ntz), zero ) ! real space grid;
-!$OMP END PARALLEL
   SALLOCATE( ijimag, (1:Ntz), zero )
   SALLOCATE( jireal, (1:Ntz), zero )
   SALLOCATE( jiimag, (1:Ntz), zero )
@@ -924,12 +913,10 @@ enddo
   planf = fftw_plan_dft_2d( Nz, Nt, cplxin, cplxout, FFTW_FORWARD,  FFTW_MEASURE + FFTW_DESTROY_INPUT )
   planb = fftw_plan_dft_2d( Nz, Nt, cplxin, cplxout, FFTW_BACKWARD, FFTW_MEASURE + FFTW_DESTROY_INPUT )
 
-!$OMP parallel
   SALLOCATE( efmn, (1:mne), zero ) ! Fourier harmonics workspace; 24 Apr 13;
   SALLOCATE( ofmn, (1:mne), zero )
   SALLOCATE( cfmn, (1:mne), zero )
   SALLOCATE( sfmn, (1:mne), zero )
-!$OMP end parallel
   SALLOCATE( evmn, (1:mne), zero )
   SALLOCATE( odmn, (1:mne), zero )
   SALLOCATE( comn, (1:mne), zero )
@@ -937,7 +924,7 @@ enddo
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\type{cosi(1:Ntz,1:mn)} and \type{sini(1:Ntz,1:mn)}}
+!latex \subsubsection{\type{cosi(1:Ntz,1:mn)} and \type{sini(1:Ntz,1:mn)};}
 
 !latex \begin{enumerate}
 !latex \item Trigonometric factors used in various Fast Fourier transforms, where
@@ -1032,7 +1019,7 @@ enddo
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\type{psifactor(1:mn,1:Mvol)} : coordinate ``pre-conditioning'' factor}
+!latex \subsubsection{\type{psifactor(1:mn,1:Mvol)} : coordinate ``pre-conditioning'' factor;}
   
 !latex \begin{enumerate}
 
@@ -1172,7 +1159,7 @@ enddo
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\type{diotadxup} and \type{glambda} : transformation to straight fieldline angle}
+!latex \subsubsection{\type{diotadxup} and \type{glambda} : transformation to straight fieldline angle;}
 
 !latex \begin{enumerate}
 !latex \item Given the Beltrami fields in any volume, the rotational-transform on the adjacent interfaces 
@@ -1240,7 +1227,7 @@ enddo
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\type{vvolume}, \type{lBBintegral} and \type{lABintegral}}
+!latex \subsubsection{\type{vvolume}, \type{lBBintegral} and \type{lABintegral};}
 
 !latex \begin{enumerate}
 !latex \item volume integrals

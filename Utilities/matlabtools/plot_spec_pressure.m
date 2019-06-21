@@ -5,6 +5,7 @@ function plot_spec_pressure(fname, new_figure)
 %   -new_figure:    1 (0) to (not) open a new figure. =2 to erase existing
 %                   figure
 %   written by J.Loizu (2018)
+%		modified by A. Baillod (2019)
 
 
 

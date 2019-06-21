@@ -549,7 +549,6 @@ subroutine ma02aa( lvol, NN )
    
    if( Lconstraint.eq.1 .or. Lvacuumregion ) then ! only in this case are the derivatives calculated;
     
-   write(ounit, '("test 3")')
     SALLOCATE( dsolution, (1:NN,0:2,-1:1,-1:1), zero ) ! packed vector potential;
     
     if( Lplasmaregion ) then

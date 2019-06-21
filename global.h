@@ -358,6 +358,9 @@ module inputlist
                 !latex             and in the vacuum region $\Delta\psi_t$ and $\Delta \psi_p$ are varied to match the transform constraint on the boundary
                 !latex             and to obtain the prescribed linking current, \inputvar{curpol}, and $\mu = 0$.
                 !latex \item[iv.]  if \inputvar{Lconstraint}.eq.2, under reconstruction.
+				!latex \item[v.]	if \inputvar{Lconstraint} eq.3, then the $\mu$ and $\psi_p$ variables are adjusted in order to satisfy the volume and surface toroidal current
+				!latex				computed with \link{lbpol} (excepted in the inner most volume, where the volume current is irrelevant). Not implemented yet in free
+				!latex				boundary. 	
                 !latex \ei
  tflux       ,& !latex \item \inputvar{tflux} : \verb!real(1:MNvol+1)! : toroidal flux, $\psi_t$, enclosed by each interface;
                 !latex \bi
@@ -396,12 +399,9 @@ module inputlist
                 !latex \item[i.] \inputvar{pressure} is only used in calculation of interface force-balance;
                 !latex \ei
  mu          ,& !latex \item \inputvar{mu} : \verb!real(1:MNvol+1)! : helicity-multiplier, $\mu$, in each volume;
- Ivolume     ,& !latex \item \inputvar{Ivolume} : \verb!real(1:MNvol+1)! : Toroidal current, in each volume (cumulative). This is the sum of all non-pressure driven currents;
-                !latex \bi
-                !latex \item Only relevant if \inputvar{Lconstraint=3}. The multipliers are then computed by the relation
-                !latex       $\mu_1 = \mu_0 \frac{I_{volume}(1)}{\psi_{t,1}}$ and $\mu_n = \mu_0 \frac{I_{volume}(n) - I_{volume}(n-1)}{\psi_{t,n}-\psi_{t,n-1}}$;
-                !latex \ei
- Isurf       ,& !latex \item \inputvar{Isurf} : \verb!real(1:MNvol)! : Toroidal current at each interface (cumulative). This is the sum of all pressure driven currents.;
+ Ivolume     ,& !latex \item \inputvar{Ivolume} : \verb!real(1:MNvol+1)! : Toroidal current constraint normalized by $\mu_0$ ($I_{volume} = \mu_0\cdot [A]$), in each volume (cumulative). 
+				!latex 		 This is the sum of all non-pressure driven currents;
+ Isurf       ,& !latex \item \inputvar{Isurf} : \verb!real(1:MNvol)! : Toroidal current normalized by $\mu_0$ at each interface (cumulative). This is the sum of all pressure driven currents.;
  pl          ,& !latex \item \inputvar{pl = 0} : \verb!integer(0:MNvol)! :
  ql          ,& !latex \item \inputvar{ql = 0} : \verb!integer(0:MNvol)! :
  pr          ,& !latex \item \inputvar{pr = 0} : \verb!integer(0:MNvol)! :
@@ -772,7 +772,7 @@ module inputlist
  nPpts      ,&  !latex \item \inputvar{nPpts = 0} : integer : number of toroidal transits used (per trajectory) in following field lines
                 !latex for constructing \Poincare plots;
                 !latex if \inputvar{nPpts<1}, no \Poincare plot is constructed;
- Ppts       ,&  !latex \item \inputvar{Ppts = 0} : stands for Poincare plot theta start. Chose at which angle (normalized over pi) the Poincare field-line 
+ Ppts       ,&  !latex \item \inputvar{Ppts = 0} : stands for Poincare plot theta start. Chose at which angle (normalized over $\pi$) the Poincare field-line 
                 !latex tracing start.
  nPtrj      ,&  !latex \item \inputvar{nPtrj = -1 : integer(1:MNvol+1)} : number of trajectories in each annulus to be followed in constructing \Poincare plot;
                 !latex \bi
@@ -889,8 +889,7 @@ module allglobal
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!``-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   INTEGER              :: myid, ncpu       ! mpi variables;
-  INTEGER	       :: IsMyVolumeValue
-  INTEGER	       :: NvolPerCPU, NvolToDist ! Used to distribute volumes between CPUs
+  INTEGER			   :: IsMyVolumeValue
   REAL                 :: cpus             ! initial time;
 
   REAL                 :: pi2nfp           !       pi2/nfp     ; assigned in readin;
@@ -914,7 +913,7 @@ module allglobal
 
   LOGICAL, allocatable :: ImagneticOK(:)   ! used to indicate if Beltrami fields have been correctly constructed;
 
-	LOGICAL							 :: IconstraintOK		 ! Used to break iteration loops of slaves in the global constraint minimization.
+  LOGICAL			   :: IconstraintOK		 ! Used to break iteration loops of slaves in the global constraint minimization.
 
   REAL   , allocatable :: beltramierror(:,:)  ! to store the integral of |curlB-mu*B| computed by jo00aa;
     
@@ -1363,17 +1362,6 @@ module allglobal
   INTEGER, parameter   :: Node = 2 ! best to make this global for consistency between calling and called routines; 
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-
-!$OMP THREADPRIVATE(	efmn, ofmn, cfmn, sfmn, sg, &
-!$OMP 			ijreal, guvij, gvuij, &
-!$OMP 			Rij, Zij, &
-!$OMP 			goomne,goomno,gssmne,gssmno,&
-!$OMP 			gstmne,gstmno,gszmne,gszmno,&
-!$OMP 			gttmne,gttmno,gtzmne,gtzmno,&
-!$OMP 			gzzmne,gzzmno &
-!$OMP 			)
-
 
 contains
 
@@ -2644,14 +2632,14 @@ end subroutine wrtend
 subroutine IsMyVolume(vvol)
 
 !latex \subsection{subroutine IsMyVolume}
-!latex Check if volume vvol is associated to the corresponding CPU.
+!latex Check if volume vvol is associated to the corresponding MPI node.
 
 LOCALS
 
 INTEGER :: vvol
 INTEGER :: lwbnd, upbnd
 
-!======================================================================================
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 IsMyVolumeValue = -1 ! Error value - Problem with vvol / id
 if( myid.ne.modulo(vvol-1,ncpu) ) then
@@ -2660,45 +2648,21 @@ else
   IsMyVolumeValue = 1
 endif
 
-
-!if( NvolToDist .EQ. 0 ) then
-!  lwbnd = NvolPerCPU * myid + 1
-!  upbnd = NvolPerCPU * (myid+1)
-!  if ((vvol .LT. lwbnd) .OR. (vvol .GT. upbnd)) then
- !   IsMyVolumeValue = 0 ! Not your volume
- ! else
- !   IsMyVolumeValue = 1 ! Yes your volume
- ! endif
-!else
-!  if (myid .LT. NvolToDist) then
-!    lwbnd = (NvolPerCPU+1)*myid+1
-!    upbnd = (NvolPerCPU+1)*(myid+1)
-!    if ((vvol .LT. lwbnd) .OR. (vvol .GT. upbnd)) then
-!	IsMyVolumeValue = 0 ! Not your volume
-!    else
-!	IsMyVolumeValue = 1 ! Yes your volume
-!    endif
-!  else
-!    lwbnd = (NvolPerCPU+1)*NvolToDist + (myid-NvolToDist)*NvolPerCPU+1
-!    upbnd = (NvolPerCPU+1)*NvolToDist + (myid-NvolToDist+1)*NvolPerCPU
-!    if ((vvol .LT. lwbnd) .OR. (vvol .GT. upbnd)) then
-!	IsMyVolumeValue = 0 ! Not your volume
-!    else
-!	IsMyVolumeValue = 1 ! Yes your volume
-!    endif
-!  endif
-!endif
-
 end subroutine IsMyVolume
 
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 subroutine WhichCpuID(vvol, cpu_id)
+!latex \subsection{subroutine WhichCpuID}
+!latex Returns which MPI node is associated to a given volume.
 
-	INTEGER			:: vvol, cpu_id
+LOCALS
 
-	!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+INTEGER			:: vvol, cpu_id
 
-	cpu_id = modulo(vvol-1,ncpu)
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+cpu_id = modulo(vvol-1,ncpu)
 
 end subroutine WhichCpuID
 

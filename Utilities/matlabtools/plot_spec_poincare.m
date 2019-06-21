@@ -51,15 +51,14 @@ else
  pcol   = ['k' 'k'];
 end
 
-if(newfig==1)
+switch newfig			
+	case 1			
     figure
     hold on;
-else
-    if newfig~=2
-        hold on;
-    else
-        hold off;
-    end
+	case 0
+    hold on;
+  case 2				% A.Baillod (06.2019)
+    hold off;
 end
 
 switch nz0
@@ -164,7 +163,7 @@ switch nz0
   Zb    = 0;
   dth   = 2*pi/nth;
   theta = dth:dth:2*pi; 
-  zeta  = (nz0-1.0)*(2.0*pi/nz)/double(nfp);
+  zeta  = (nz0-1.0)*(2.0*pi/nz)/double(nfp);			% modified by A.Baillod (06.2019)
   
   for imn=1:data.mn     % get and plot the boundary
    alpha = double(data.im(imn))*theta-double(data.in(imn))*zeta;

@@ -1,3 +1,37 @@
+!title (&ldquo;global&rdquo; dfp100) ! Computes global constraint and take care of MPI communications
+
+!latex \briefly{Split the work between MPI nodes and evaluate the global constraint}
+
+!latex \calledby{\link{dforce}} \\
+
+!latex \calls{\link{ma02aa} and
+!latex        \link{lbpol}}
+
+
+!latex \tableofcontents
+
+!latex \subsection{Local constraint}
+!latex In the case of a local constraint, each MPI node calls \link{ma02aa} to obtain the field consistent with the local constraint
+
+!latex \subsection{Global constraint}
+!latex In the case of a global constraint, 
+
+!latex \begin{enumerate}
+!latex \item The MPI node $0$ broadcast the value of \internal{iflag}. \internal{iflag} is equal to $5$ if the constraint has been
+!latex 		 matched, and all nodes exit the iteration process. Otherwise, an additional iteration occurs (point 2 and below).
+!latex \item The MPI node $0$ boradcast the new values of $\psi_p$.
+!latex \item Each node calls \link{ma02aa} to obtain the field for the given value of $\mu$ and $\psi_p$
+!latex \item Each node calls \link{lbpol} to evalue the poloidal magnetic field Fourier coefficients $B_{\theta,e,0,0}$ at the inner and outer interface
+!latex 		 (this is only for a toroidal current constraint. Other global constraints would require different parameters)
+!latex \item Each node communicate to the MPI node $0$ the parameters necessary for the evaluation of the constraint
+!latex \item The node $0$ evaluate the global constraint and sets the flag \internal{IconstraintOK}
+!latex \end{enumerate}
+
+!latex \subsection{Evaluation of constraint derivatives}
+!latex Not implemented for now.
+
+
+
 subroutine dfp100(Ndofgl, x, Fvec, iflag)
 
 use constants, only : zero, half, one, two, pi2, pi, mu0
@@ -147,7 +181,7 @@ BEGIN(dfp100)
 					if( myid.EQ.0 ) then
 						call MPI_RECV(Btemn(1, 0, vvol+1), 1, MPI_DOUBLE_PRECISION, cpu_send_two, tag2, MPI_COMM_WORLD, status, ierr)
 						call MPI_RECV(Btemn(1, 1, vvol  ), 1, MPI_DOUBLE_PRECISION, cpu_send_one, tag1, MPI_COMM_WORLD, status, ierr)
-          	IPDt(vvol) = -pi2 * (Btemn(1, 0, vvol+1) - Btemn(1, 1, vvol)) / mu0
+          				IPDt(vvol) = -pi2 * (Btemn(1, 0, vvol+1) - Btemn(1, 1, vvol))
 					endif
 
 					if( myid.EQ.cpu_send_one ) then
@@ -167,6 +201,10 @@ BEGIN(dfp100)
 					!Ddof = ??? TODO: SEE IF AN ANALYTICAL FORMULATION EXISTS...
 				endif
 
+#ifdef DEBUG 
+        write(ounit, '("dfp100: ", 10x ," : max(IPDt) = "es12.5)') MAXVAL(IPDt)
+#endif
+! write(ounit,'("xspech : ", 10x ," : sum(Ate(",i3,",",i2,",",i2,")%s) =",99es23.15)') vvol, ideriv, ii, sum(Ate(vvol,ideriv,ii)%s(0:Lrad(vvol)))
 			case default
 				FATAL(dfp100, .true., Unaccepted value for Lconstraint)
 

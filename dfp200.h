@@ -1,3 +1,42 @@
+!title (&ldquo;global&rdquo; dfp200) ! Given the field consistent with the constraints and the geometry, computes local quantites related to the force evaluation.
+
+!latex \briefly{Calculates ${ F_i}({\bf x})$, where ${\bf x} \equiv \{\mbox{\rm geometry}\} \equiv \{ R_{i,v}, Z_{i,v}\}$ 
+!latex          and ${ F_i}\equiv p_i+B_i^2/2 + \{\mbox{\rm spectral constraints}\} $, and $\nabla {\bf F_i}$.}
+
+!latex \calledby{\link{dforce}} \\
+
+!latex \calls{\link{ma00aa}, 
+!latex        \link{ma02aa}, 
+!latex        \link{coords}, 
+!latex        \link{dlasrt}, 
+!latex        \link{lforce}, 
+!latex        \link{volume}, 
+!latex        \link{packab}, 
+!latex        \link{tr00ab}, 
+!latex        \link{curent}, 
+!latex        \link{matrix},}
+
+
+!latex \tableofcontents
+
+
+!latex \subsection{Construction of local force}
+!latex See \link{dforce} documentation for more details
+
+!latex \subsection{Construction of matrix equation derivatives}
+!latex \begin{enumerate}
+!latex \item Matrix perturbation theory is used to compute the derivatives of the solution, i.e. the Beltrami fields, as the geometry of the 
+!latex       interfaces changes:
+!latex \end{enumerate}
+
+!latex \subsection{Extrapolation: planned redundant}
+!latex \begin{enumerate}
+!latex \item The extrapolation constraint is $R_{j,1} = R_{j,2} \, \psi_1^{m/2} / \psi_2^{m/2}$.
+!latex       Combining this with the regularization factor for the geometry, i.e. $R_{j,i}=\psi_{i}^{m/2} \xi_{j,i}$, we obtain
+!latex       \be \xi_{j,1} = R_{j,2} / \psi_2^{m/2}.
+!latex       \ee
+!latex \end{enumerate}
+
 subroutine dfp200( LcomputeDerivatives, vvol)
 
   use constants, only : zero, half, one, two

@@ -14,13 +14,8 @@
 !latex \calls{\link{packxi}, 
 !latex        \link{ma00aa}, 
 !latex        \link{matrix}, 
-!latex        \link{ma02aa}, 
-!latex        \link{lforce}, 
-!latex        \link{volume}, 
-!latex        \link{packab}, 
-!latex        \link{tr00ab}, 
-!latex        \link{coords},
-!latex        \link{curent} and 
+!latex        \link{dfp100}, 
+!latex        \link{dfp200} and
 !latex        \link{brcast}}
 
 
@@ -37,22 +32,37 @@
 
 !latex \end{enumerate}
 
-!latex \subsection{parallelization over volumes}
+!latex \subsection{Matrices computation}
 
 !latex \begin{enumerate}
-!latex \item In each volume, \internal{vvol = 1, Mvol}, 
+!latex       \item 	the volume-integrated metric arrays, \internal{DToocc}, etc. are evaluated in each volume by calling \link{ma00aa};
+!latex       \item 	the energy and helicity matrices, \internal{dMA(0:NN,0:NN)}, \internal{dMB(0:NN,0:2)}, etc. are evaluated in each 
+!latex 				volume by calling \link{matrix};
+!latex \end{enumerate}
+
+!latex \subsection{parallelization over volumes}
+
+!latex Two different cases emerge: either a local constraint or a global constraint is considered. This condition is determined by the 
+!latex flag \inputvar{LocalConstraint}.
+
+!latex \subsubsection{Local constraint}
+!latex In each volume, \internal{vvol = 1, Mvol}, 
 !latex       \begin{enumerate}
-!latex       \item the logical array \internal{ImagneticOK(vvol)} is set to \internal{.false.}
-!latex       \item the energy and helicity matrices, \internal{dMA(0:NN,0:NN)}, \internal{dMB(0:NN,0:2)}, etc. are allocated;
-!latex       \item the volume-integrated metric arrays, \internal{DToocc}, etc. are allocated;
-!latex       \item calls \link{ma00aa} to compute the volume-integrated metric arrays;
-!latex       \item calls \link{matrix} to construct the energy and helicity matrices;
-!latex       \item calls \link{ma02aa} to solve for the magnetic fields consistent with the appropriate constraints, perhaps by iterating on \link{mp00ac};
-!latex       \item calls \link{volume} to compute the volume of the $v$-th region;
-!latex       \item calls \link{lforce} to compute $p+B^2/2$ (and the spectral constraints if required) on the inner and outer interfaces;
-!latex       \item the derivatives of the force-balance will also be computed if \internal{LComputeDerivatives = 1};
+!latex       \item The logical array \internal{ImagneticOK(vvol)} is set to \internal{.false.}
+!latex 		 \item The MPI node associated to the volume calls \link{dfp100}. This routine calls \link{ma02aa} (and might iterate on \link{mp00ac}) and computes the
+!latex 			   field solution in each volume consistent with the constraint.
+!latex		 \item The MPI node associated to the volume calls \link{dfp200}. This computes $p+B^2/2$ (and the spectral constraints if required) at the interfaces in 
+!latex 			   each volumes, as well as the derivatives of the force-balance if \internal{LComputeDerivatives = 1};
 !latex       \end{enumerate}
-!latex \item After the parallelization loop over the volumes, \link{brcast} is called to broadcast the required information.
+
+!latex \subsubsection{Global constraint}
+!latex The MPI node $0$ minimizes the constraint with HYBRID1 by iterating on \link{dfp100} until the field matches the constraint. Other MPI nodes enter
+!latex the subroutine loop\_dfp100. In loop\_dfp100, each MPI node
+!latex \begin{enumerate}
+!latex \item calls \link{dfp100}
+!latex \item solves the field in its associated volumes
+!latex \item communicates the field to the node $0$
+!latex \item repeats this loop until the node $0$ sends a flag \internal{iflag=5}.
 !latex \end{enumerate}
 
 !latex \subsection{broadcasting}
@@ -68,30 +78,16 @@
 !latex       where $i$ labels Fourier harmonic and $v$ is the interface label:
 !latex       \be F_{i,v} \equiv \left[ ( p_{v+1}+B^2_{i,v+1}/2 ) - ( p_v + B^2_{i,v}/2 ) \right] \times \internal{BBweight}_i,
 !latex       \ee
-!latex       where \internal{BBweight(i)} is defined in \link{preset};
+!latex       where \internal{BBweight\_i} is defined in \link{preset};
 !latex       and the spectral condensation constraints, 
 !latex       \be F_{i,v} \equiv I_{i,v} \times \inputvar{epsilon} + S_{i,v,1} \times \internal{sweight}_v - S_{i,v+1,0} \times \internal{sweight}_{v+1},
 !latex       \ee
 !latex       where the spectral condensation constraints, $I_{i,v}$, and the ``star-like'' poloidal angle constraints, $S_{i,v,\pm 1}$,
 !latex       are calculated and defined in \link{lforce};
-!latex       and the \internal{sweight}$_v$ are defined in \link{preset}.
+!latex       and the \internal{sweight}$_v$ are defined in \link{preset}. All quantities local to a volume are computed in \link{dfp200},
+!latex 		 information is then broadcasted to the MPI node $0$ in \link{dforce} and the global force is evaluated.
 !latex \end{enumerate}
 
-!latex \subsection{construct derivatives of matrix equation}
-
-!latex \begin{enumerate}
-!latex \item Matrix perturbation theory is used to compute the derivatives of the solution, i.e. the Beltrami fields, as the geometry of the 
-!latex       interfaces changes:
-!latex \end{enumerate}
-
-!latex \subsection{extrapolation: planned redundant}
-
-!latex \begin{enumerate}
-!latex \item The extrapolation constraint is $R_{j,1} = R_{j,2} \, \psi_1^{m/2} / \psi_2^{m/2}$.
-!latex       Combining this with the regularization factor for the geometry, i.e. $R_{j,i}=\psi_{i}^{m/2} \xi_{j,i}$, we obtain
-!latex       \be \xi_{j,1} = R_{j,2} / \psi_2^{m/2}.
-!latex       \ee
-!latex \end{enumerate}
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
