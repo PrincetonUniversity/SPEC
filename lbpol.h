@@ -96,8 +96,9 @@ subroutine lbpol(lvol)
    efmn(1:mn) = zero ; ofmn(1:mn) = zero ; cfmn(1:mn) = zero ; sfmn(1:mn) = zero
    do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over Fourier harmonics;
     
-
-   if( Lcoordinatesingularity ) then ; mfactor = regumm(ii) * half ! regularity factor;
+! In case of singularity, point at sbar=0 not computed - no problem here!
+! For definition of the regularisation factor, see jo00aa documentation.
+   if( Lcoordinatesingularity ) then ; mfactor = regumm(ii) * half ! derivative of regularisation factor;
    else                              ; mfactor = zero
    endif
    
