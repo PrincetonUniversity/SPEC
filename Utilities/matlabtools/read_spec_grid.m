@@ -37,8 +37,8 @@ try
   if(machine_format ~= machform)
    machine_format =  machform;  % update value
   end
-  
-  grid_file  = ['.' filename(1:length(filename)-3) '.grid'];
+  [filepath,name,ext]=fileparts(filename);
+  grid_file = [filepath filesep '.' name '.grid'];
   fid        = fopen(grid_file,'r',machine_format);
   if (fid > 0)
     % Get Nt, Nz, Ntz, Mvol, Igeometry, pi2nfp
@@ -53,7 +53,7 @@ try
     data.Nz  = Nz;
     data.Ntz = Ntz; 
   else
-   disp(' - File does not exist');
+   disp([' - File "' grid_file '" does not exist']);
   end
 
   for i=1:nvol

@@ -50,7 +50,8 @@ try
   if(machine_format ~= machform)
    machine_format =  machform;  % update value
   end
-  field_file = ['.' filename(1:length(filename)-3) '.A'];
+  [filepath,name,ext]=fileparts(filename);
+  field_file = [filepath filesep '.' name '.A'];
   fid        = fopen(field_file,'r',machine_format);
   if (fid > 0)
     % Read through Mvol, Mpol, Ntor, mn, Nfp, im(1:mn), in(1:mn)
@@ -62,7 +63,7 @@ try
     fread(fid,mn,int_format); % in
     fread(fid,1,spacer_format);
   else
-   disp(' - File does not exist'); break;
+   disp([' - File "' field_file '" does not exist']); break;
   end  
 
   for v=1:nvol

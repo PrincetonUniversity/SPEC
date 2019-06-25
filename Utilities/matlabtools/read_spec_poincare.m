@@ -31,6 +31,7 @@ spacer_format  = 'int32';
 
 j=1;
 
+[filepath,name,ext]=fileparts(filename);
 for i=1:nvol
     offset       = real(i-1)./real(nvol);
     success      = 0;
@@ -39,8 +40,8 @@ for i=1:nvol
     try
         if(machine_format ~= machform)
          machine_format =  machform;  % update value
-	end
-        poincare_file=['.' filename(1:length(filename)-3) '.P.' num2str(i,'%4.4i') '.dat'];
+        end
+        poincare_file = [filepath filesep '.' name '.P.' num2str(i,'%4.4i') '.dat'];
         fid = fopen(poincare_file,'r',machine_format);
         if (fid > 0)
             while ~feof(fid)
@@ -68,25 +69,25 @@ for i=1:nvol
             end
             fclose(fid);
             fid = -1;
-	    success=1;
+            success=1;
         else
-	 disp(' - File does not exist'); break;
-	end
+            disp([' - File "' poincare_file '" does not exist']); break;
+        end
     catch
         if (fid ~= -1)
             fclose(fid);
             fid = -1;
         end
         if(triedallform==1)      
-         disp(' - Could not read poincare file'); break;
-	end
+          disp(' - Could not read poincare file'); break;
+        end
         if(machform~='s')
-	 machform     ='s'; 
-	 triedallform = 1;
-	else
-	 machform     ='a';
-	 triedallform = 1;
-	end
+          machform     ='s'; 
+          triedallform = 1;
+        else
+          machform     ='a';
+          triedallform = 1;
+        end
     end
     end
 end

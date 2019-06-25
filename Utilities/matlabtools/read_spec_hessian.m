@@ -34,7 +34,8 @@ try
   if(machine_format ~= machform)
    machine_format =  machform;  % update value
   end
-  hessian_file = ['.' filename(1:length(filename)-6) '.GF.ma'];
+  [filepath,name,ext]=fileparts(filename);
+  hessian_file = [filepath filesep '.' name(1:length(name)-3) '.GF.ma'];
   fid        = fopen(hessian_file,'r',machine_format);
   if (fid > 0)
     % Read through NGdof
@@ -42,7 +43,7 @@ try
     ngdof = fread(fid,1,int_format); % NGdof 
     fread(fid,1,spacer_format);  
   else
-   disp(' - File does not exist'); break;
+   disp([' - File "' hessian_file '" does not exist']); break;
   end  
 
   fread(fid,1,spacer_format);  
