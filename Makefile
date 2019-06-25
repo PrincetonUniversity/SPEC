@@ -69,7 +69,7 @@ ifeq ($(CC),gfortran_ubuntu)
  # sudo apt install libfftw3-dev
  # sudo apt install libhdf5-openmpi-dev
  CFLAGS=-fdefault-real-8
- NAG=-llapack -lblas
+ NAG=-Wl,-rpath -Wl,/usr/lib/lapack -llapack -lblas
  HDF5compile=-I/usr/include/hdf5/openmpi
  HDF5link=-L/usr/lib/x86_64-linux-gnu/hdf5/openmpi -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lpthread -lz -lm
  FFTWcompile=-I/usr/include
