@@ -48,7 +48,8 @@ program xspech
                         Lfindzero, &
                         odetol, nPpts, nPtrj, &
                         LHevalues, LHevectors, LHmatrix, Lperturbed, Lcheck, &
-                        Lzerovac
+                        Lzerovac, &
+						mu, Isurf, Ivolume
 
   use cputiming, only : Txspech
 
@@ -73,7 +74,7 @@ program xspech
                         nfreeboundaryiterations, &
                         beltramierror, &
                         dMA, dMB, dMD, dMG, MBpsi, solution, &
-												IPDt
+						dtflux
 						
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -85,7 +86,7 @@ program xspech
 ! INTEGER              :: nfreeboundaryiterations, imn, lmn, lNfp, lim, lin, ii, lvol ! 09 Mar 17;
   INTEGER              :: imn, lmn, lNfp, lim, lin, ii, ideriv
   INTEGER              :: vvol, llmodnp, ifail, wflag, iflag, vflag
-  REAL                 :: rflag, lastcpu, bnserr, lRwc, lRws, lZwc, lZws, lItor, lGpol, lgBc, lgBs
+  REAL                 :: rflag, lastcpu, bnserr, lRwc, lRws, lZwc, lZws, lItor, lGpol, lgBc, lgBs, sumI
   REAL,    allocatable :: position(:), gradient(:)
   CHARACTER            :: pack
 
@@ -535,15 +536,23 @@ program xspech
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-! Computes the surface current at each interface
+! Computes the surface current at each interface for output
 
   do vvol = 1, Mvol
     WCALL(xspech, lbpol, (vvol, mn) )
   enddo
 
   do vvol = 1, Mvol-1
-    IPDt(vvol) = -pi2 * (Btemn(1, 0, vvol+1) - Btemn(1, 1, vvol))
+    Isurf(vvol) = -pi2 * (Btemn(1, 0, vvol+1) - Btemn(1, 1, vvol))
   enddo
+
+! and the volume current
+  sumI = 0
+  do vvol = 1, Mvol-1
+    Ivolume(vvol) = mu(vvol) * dtflux(vvol) * pi2 + sumI    ! factor pi2 due to normalization in preset
+    sumI = Ivolume(vvol)									! Sum over all volumes since this is how Ivolume is defined
+  enddo
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !latex \subsection{output files: vector potential} 
