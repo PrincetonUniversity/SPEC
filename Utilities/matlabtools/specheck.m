@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-
-=======
 function matching = specheck(fdata, gdata, idata, pdata, data)
 
 % Compares the outputs of the current SPEC version and the newly-developed single HDF5 output.
