@@ -117,13 +117,9 @@ lrwxrwxrwx 1 jons ipg   24 24. Jun 17:15 xspec -> ../../SPEC_issue68/xspec
 >> idata = read_spec_iota('G3V01L0Fi.002_master/G3V01L0Fi.002.sp.h5');
 >> pdata = read_spec_poincare('G3V01L0Fi.002_master/G3V01L0Fi.002.sp.h5');
 >> data = read_spec('G3V01L0Fi.002_issue68/G3V01L0Fi.002.h5');
->> 
->> 
->> 
->> 
->> 
->> 
-
+>> specheck(fdata, gdata, idata, pdata, data);
+... all output quantities
+Maching :(
 
 10. finally
 > popd
