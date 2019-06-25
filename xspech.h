@@ -548,7 +548,7 @@ program xspech
 
 ! and the volume current
   sumI = 0
-  do vvol = 1, Mvol-1
+  do vvol = 1, Mvol
     Ivolume(vvol) = mu(vvol) * dtflux(vvol) * pi2 + sumI    ! factor pi2 due to normalization in preset
     sumI = Ivolume(vvol)									! Sum over all volumes since this is how Ivolume is defined
   enddo
