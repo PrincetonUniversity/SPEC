@@ -2,10 +2,10 @@ Verification of the HDF5 output module in SPEC as developed on the branch "issue
 
 J. Schilling (jonathan.schilling@ipp.mpg.de), 2019-06-24
 
-Objective: verify that the newly-developed HDF5 output module actually saves identical information
+Objective: Verify that the newly-developed HDF5 output module actually saves identical information
            as the previous implementation does
 
-Approach:  run SPEC with both the previous output module and the HDF5 output module on a number of test cases
+Approach:  Run SPEC with both the previous output module and the HDF5 output module on a (number of) test case(s)
            and check whether the outputs are identical
 
 Detailed list of steps:
@@ -121,5 +121,7 @@ lrwxrwxrwx 1 jons ipg   24 24. Jun 17:15 xspec -> ../../SPEC_issue68/xspec
 ... all output quantities
 Maching :(
 
-10. finally
+11. Repeat steps 5 to 7 for any other input files you wish to test the new output writing routine on
+
+12. finally leave working directory
 > popd

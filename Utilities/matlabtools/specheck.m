@@ -16,6 +16,7 @@ function matching = specheck(fdata, gdata, idata, pdata, data)
 
 matching = 1;
 
+% check equivalence of fdata: from "testcase.sp.h5" file
 % quantities from old .sp.h5 file, sorted by equivalent quantity in the new output file
 if isequal(fdata.forcetol   , data.input.global.forcetol       ) ; disp('ok: fdata.forcetol   ') ; else disp('ERROR: fdata.forcetol   '); matching=0; end
 
@@ -83,6 +84,77 @@ if isequal(fdata.Ate{1}     , data.vector_potential.Ate        ) ; disp('ok: fda
 if isequal(fdata.Aze{1}     , data.vector_potential.Aze        ) ; disp('ok: fdata.Aze        ') ; else disp('ERROR: fdata.Aze        '); matching=0; end
 if isequal(fdata.Ato{1}     , data.vector_potential.Ato        ) ; disp('ok: fdata.Ato        ') ; else disp('ERROR: fdata.Ato        '); matching=0; end
 if isequal(fdata.Azo{1}     , data.vector_potential.Azo        ) ; disp('ok: fdata.Azo        ') ; else disp('ERROR: fdata.Azo        '); matching=0; end
+
+% check equivalence of gdata: from ".testcase.sp.grid" file
+if isequal(gdata.Bnc        , data.output.Bnc                  ) ; disp('ok: gdata.Bnc        ') ; else disp('ERROR: gdata.Bnc        '); matching=0; end
+if isequal(gdata.Bns        , data.output.Bns                  ) ; disp('ok: gdata.Bns        ') ; else disp('ERROR: gdata.Bns        '); matching=0; end
+if isequal(gdata.Btemn      , data.output.Btemn                ) ; disp('ok: gdata.Btemn      ') ; else disp('ERROR: gdata.Btemn      '); matching=0; end
+if isequal(gdata.Btomn      , data.output.Btomn                ) ; disp('ok: gdata.Btomn      ') ; else disp('ERROR: gdata.Btomn      '); matching=0; end
+if isequal(gdata.Bzemn      , data.output.Bzemn                ) ; disp('ok: gdata.Bzemn      ') ; else disp('ERROR: gdata.Bzemn      '); matching=0; end
+if isequal(gdata.Bzomn      , data.output.Bzomn                ) ; disp('ok: gdata.Bzomn      ') ; else disp('ERROR: gdata.Bzomn      '); matching=0; end
+if isequal(gdata.ForceErr   , data.output.ForceErr             ) ; disp('ok: gdata.ForceErr   ') ; else disp('ERROR: gdata.ForceErr   '); matching=0; end
+if isequal(gdata.Igeometry  , data.input.physics.Igeometry     ) ; disp('ok: gdata.Igeometry  ') ; else disp('ERROR: gdata.Igeometry  '); matching=0; end
+if isequal(gdata.Istellsym  , data.input.physics.Istellsym     ) ; disp('ok: gdata.Istellsym  ') ; else disp('ERROR: gdata.Istellsym  '); matching=0; end
+if isequal(gdata.Ladiabatic , data.input.physics.Ladiabatic    ) ; disp('ok: gdata.Ladiabatic ') ; else disp('ERROR: gdata.Ladiabatic '); matching=0; end
+if isequal(gdata.Lconstraint, data.input.physics.Lconstraint   ) ; disp('ok: gdata.Lconstraint') ; else disp('ERROR: gdata.Lconstraint'); matching=0; end
+if isequal(gdata.Lfreebound , data.input.physics.Lfreebound    ) ; disp('ok: gdata.Lfreebound ') ; else disp('ERROR: gdata.Lfreebound '); matching=0; end
+if isequal(gdata.Lperturbed , data.input.diagnostics.Lperturbed) ; disp('ok: gdata.Lperturbed ') ; else disp('ERROR: gdata.Lperturbed '); matching=0; end
+if isequal(gdata.Lrad       , data.input.physics.Lrad          ) ; disp('ok: gdata.Lrad       ') ; else disp('ERROR: gdata.Lrad       '); matching=0; end
+if isequal(gdata.Mpol       , data.input.physics.Mpol          ) ; disp('ok: gdata.Mpol       ') ; else disp('ERROR: gdata.Mpol       '); matching=0; end
+if isequal(gdata.Mrad       , data.output.Mrad                 ) ; disp('ok: gdata.Mrad       ') ; else disp('ERROR: gdata.Mrad       '); matching=0; end
+if isequal(gdata.Mvol       , data.output.Mvol                 ) ; disp('ok: gdata.Mvol       ') ; else disp('ERROR: gdata.Mvol       '); matching=0; end
+if isequal(gdata.Nfp        , data.input.physics.Nfp           ) ; disp('ok: gdata.Nfp        ') ; else disp('ERROR: gdata.Nfp        '); matching=0; end
+if isequal(gdata.Ntor       , data.input.physics.Ntor          ) ; disp('ok: gdata.Ntor       ') ; else disp('ERROR: gdata.Ntor       '); matching=0; end
+if isequal(gdata.Nvol       , data.input.physics.Nvol          ) ; disp('ok: gdata.Nvol       ') ; else disp('ERROR: gdata.Nvol       '); matching=0; end
+if isequal(gdata.Rbc        , data.output.Rbc                  ) ; disp('ok: gdata.Rbc        ') ; else disp('ERROR: gdata.Rbc        '); matching=0; end
+if isequal(gdata.Rbs        , data.output.Rbs                  ) ; disp('ok: gdata.Rbs        ') ; else disp('ERROR: gdata.Rbs        '); matching=0; end
+if isequal(gdata.TT         , data.output.TT                   ) ; disp('ok: gdata.TT         ') ; else disp('ERROR: gdata.TT         '); matching=0; end
+if isequal(gdata.Vnc        , data.output.Vnc                  ) ; disp('ok: gdata.Vnc        ') ; else disp('ERROR: gdata.Vnc        '); matching=0; end
+if isequal(gdata.Vns        , data.output.Vns                  ) ; disp('ok: gdata.Vns        ') ; else disp('ERROR: gdata.Vns        '); matching=0; end
+if isequal(gdata.Zbc        , data.output.Zbc                  ) ; disp('ok: gdata.Zbc        ') ; else disp('ERROR: gdata.Zbc        '); matching=0; end
+if isequal(gdata.Zbs        , data.output.Zbs                  ) ; disp('ok: gdata.Zbs        ') ; else disp('ERROR: gdata.Zbs        '); matching=0; end
+if isequal(gdata.adiabatic  , data.output.adiabatic            ) ; disp('ok: gdata.adiabatic  ') ; else disp('ERROR: gdata.adiabatic  '); matching=0; end
+if isequal(gdata.curpol     , data.input.physics.curpol        ) ; disp('ok: gdata.curpol     ') ; else disp('ERROR: gdata.curpol     '); matching=0; end
+if isequal(gdata.curtor     , data.input.physics.curtor        ) ; disp('ok: gdata.curtor     ') ; else disp('ERROR: gdata.curtor     '); matching=0; end
+if isequal(gdata.dpp        , data.input.diagnostics.dpp       ) ; disp('ok: gdata.dpp        ') ; else disp('ERROR: gdata.dpp        '); matching=0; end
+if isequal(gdata.dqq        , data.input.diagnostics.dqq       ) ; disp('ok: gdata.dqq        ') ; else disp('ERROR: gdata.dqq        '); matching=0; end
+if isequal(gdata.forcetol   , data.input.global.forcetol       ) ; disp('ok: gdata.forcetol   ') ; else disp('ERROR: gdata.forcetol   '); matching=0; end
+if isequal(gdata.gamma      , data.input.physics.gamma         ) ; disp('ok: gdata.gamma      ') ; else disp('ERROR: gdata.gamma      '); matching=0; end
+if isequal(gdata.helicity   , data.output.helicity             ) ; disp('ok: gdata.helicity   ') ; else disp('ERROR: gdata.helicity   '); matching=0; end
+if isequal(gdata.im         , data.output.im                   ) ; disp('ok: gdata.im         ') ; else disp('ERROR: gdata.im         '); matching=0; end
+if isequal(gdata.in         , data.output.in                   ) ; disp('ok: gdata.in         ') ; else disp('ERROR: gdata.in         '); matching=0; end
+if isequal(gdata.iota       , data.input.physics.iota          ) ; disp('ok: gdata.iota       ') ; else disp('ERROR: gdata.iota       '); matching=0; end
+if isequal(gdata.lmns       , data.output.lmns                 ) ; disp('ok: gdata.lmns       ') ; else disp('ERROR: gdata.lmns       '); matching=0; end
+if isequal(gdata.lp         , data.input.physics.lp            ) ; disp('ok: gdata.lp         ') ; else disp('ERROR: gdata.lp         '); matching=0; end
+if isequal(gdata.lq         , data.input.physics.lq            ) ; disp('ok: gdata.lq         ') ; else disp('ERROR: gdata.lq         '); matching=0; end
+if isequal(gdata.mn         , data.output.mn                   ) ; disp('ok: gdata.mn         ') ; else disp('ERROR: gdata.mn         '); matching=0; end
+if isequal(gdata.mu         , data.input.physics.mu            ) ; disp('ok: gdata.mu         ') ; else disp('ERROR: gdata.mu         '); matching=0; end
+if isequal(gdata.mupfits    , data.input.physics.mupfits       ) ; disp('ok: gdata.mupfits    ') ; else disp('ERROR: gdata.mupfits    '); matching=0; end
+if isequal(gdata.mupftol    , data.input.physics.mupftol       ) ; disp('ok: gdata.mupftol    ') ; else disp('ERROR: gdata.mupftol    '); matching=0; end
+if isequal(gdata.oita       , data.input.physics.oita          ) ; disp('ok: gdata.oita       ') ; else disp('ERROR: gdata.oita       '); matching=0; end
+if isequal(gdata.pflux      , data.input.physics.pflux         ) ; disp('ok: gdata.pflux      ') ; else disp('ERROR: gdata.pflux      '); matching=0; end
+if isequal(gdata.phiedge    , data.input.physics.phiedge       ) ; disp('ok: gdata.phiedge    ') ; else disp('ERROR: gdata.phiedge    '); matching=0; end
+if isequal(gdata.pl         , data.input.physics.pl            ) ; disp('ok: gdata.pl         ') ; else disp('ERROR: gdata.pl         '); matching=0; end
+if isequal(gdata.pr         , data.input.physics.pr            ) ; disp('ok: gdata.pr         ') ; else disp('ERROR: gdata.pr         '); matching=0; end
+if isequal(gdata.pressure   , data.input.physics.pressure      ) ; disp('ok: gdata.pressure   ') ; else disp('ERROR: gdata.pressure   '); matching=0; end
+if isequal(gdata.pscale     , data.input.physics.pscale        ) ; disp('ok: gdata.pscale     ') ; else disp('ERROR: gdata.pscale     '); matching=0; end
+if isequal(gdata.ql         , data.input.physics.ql            ) ; disp('ok: gdata.ql         ') ; else disp('ERROR: gdata.ql         '); matching=0; end
+if isequal(gdata.qr         , data.input.physics.qr            ) ; disp('ok: gdata.qr         ') ; else disp('ERROR: gdata.qr         '); matching=0; end
+if isequal(gdata.rp         , data.input.physics.rp            ) ; disp('ok: gdata.rp         ') ; else disp('ERROR: gdata.rp         '); matching=0; end
+if isequal(gdata.rq         , data.input.physics.rq            ) ; disp('ok: gdata.rq         ') ; else disp('ERROR: gdata.rq         '); matching=0; end
+if isequal(gdata.tflux      , data.input.physics.tflux         ) ; disp('ok: gdata.tflux      ') ; else disp('ERROR: gdata.tflux      '); matching=0; end
+if isequal(gdata.volume     , data.output.volume               ) ; disp('ok: gdata.volume     ') ; else disp('ERROR: gdata.volume     '); matching=0; end
+
+if isequal(gdata.Nt         , data.grid.Nt                     ) ; disp('ok: gdata.Nt         ') ; else disp('ERROR: gdata.Nt         '); matching=0; end
+if isequal(gdata.Nz         , data.grid.Nz                     ) ; disp('ok: gdata.Nz         ') ; else disp('ERROR: gdata.Nz         '); matching=0; end
+if isequal(gdata.Ntz        , data.grid.Ntz                    ) ; disp('ok: gdata.Ntz        ') ; else disp('ERROR: gdata.Ntz        '); matching=0; end
+if isequal(gdata.Rij(1)     , data.grid.Rij'                   ) ; disp('ok: gdata.Rij        ') ; else disp('ERROR: gdata.Rij        '); matching=0; end
+if isequal(gdata.Zij(1)     , data.grid.Zij'                   ) ; disp('ok: gdata.Zij        ') ; else disp('ERROR: gdata.Zij        '); matching=0; end
+if isequal(gdata.sg(1)      , data.grid.sg'                    ) ; disp('ok: gdata.sg         ') ; else disp('ERROR: gdata.sg         '); matching=0; end
+if isequal(gdata.BR(1)      , data.grid.BR'                    ) ; disp('ok: gdata.BR         ') ; else disp('ERROR: gdata.BR         '); matching=0; end
+if isequal(gdata.Bp(1)      , data.grid.Bp'                    ) ; disp('ok: gdata.Bp         ') ; else disp('ERROR: gdata.Bp         '); matching=0; end
+if isequal(gdata.BZ(1)      , data.grid.BZ'                    ) ; disp('ok: gdata.BZ         ') ; else disp('ERROR: gdata.BZ         '); matching=0; end
+
 
 if (matching == 0)
   disp('Not maching :(')
