@@ -26,3 +26,6 @@ InputFiles/**/*.h5
 InputFiles/**/*.sp.end
 InputFiles/**/*.sp.DF
 
+# vim temprary files
+*.swo
+*.swp
