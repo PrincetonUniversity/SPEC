@@ -151,9 +151,9 @@ if isequal(gdata.Ntz         , data.grid.Ntz                    ) ; disp('ok: gd
 if isequal(squeeze(gdata.Rij), data.grid.Rij'                   ) ; disp('ok: gdata.Rij        ') ; else disp('ERROR: gdata.Rij        '); matching=0; end
 if isequal(squeeze(gdata.Zij), data.grid.Zij'                   ) ; disp('ok: gdata.Zij        ') ; else disp('ERROR: gdata.Zij        '); matching=0; end
 if isequal(squeeze(gdata.sg) , data.grid.sg'                    ) ; disp('ok: gdata.sg         ') ; else disp('ERROR: gdata.sg         '); matching=0; end
-if isequal(squeeze(gdata.BR) , data.grid.ijreal'                ) ; disp('ok: gdata.BR         ') ; else disp('ERROR: gdata.BR         '); matching=0; end
-if isequal(squeeze(gdata.Bp) , data.grid.ijimag'                ) ; disp('ok: gdata.Bp         ') ; else disp('ERROR: gdata.Bp         '); matching=0; end
-if isequal(squeeze(gdata.BZ) , data.grid.jireal'                ) ; disp('ok: gdata.BZ         ') ; else disp('ERROR: gdata.BZ         '); matching=0; end
+if isequal(squeeze(gdata.BR) , data.grid.BR'                    ) ; disp('ok: gdata.BR         ') ; else disp('ERROR: gdata.BR         '); matching=0; end
+if isequal(squeeze(gdata.Bp) , data.grid.Bp'                    ) ; disp('ok: gdata.Bp         ') ; else disp('ERROR: gdata.Bp         '); matching=0; end
+if isequal(squeeze(gdata.BZ) , data.grid.BZ'                    ) ; disp('ok: gdata.BZ         ') ; else disp('ERROR: gdata.BZ         '); matching=0; end
 
 
 if (matching == 0)
