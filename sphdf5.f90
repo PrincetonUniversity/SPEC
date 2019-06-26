@@ -511,7 +511,8 @@ subroutine write_grid
   use cputiming, only : Tsphdf5
 
   LOCALS
-  integer(hid_t) :: grpGrid
+  integer(hid_t) :: grpGrid,Rij_id, Zij_id,sg_id,ijreal_id,ijimag_id,jireal_id,
+  integer(hid_t) :: spaceRij_id,spaceZij_id,spacesg_id,spaceijreal_id,spaceijimag_id,spacejireal_id
   integer :: sumLrad, alongLrad
   INTEGER              :: vvol, ii, jj, kk, jk, Lcurvature
   REAL                 :: lss, teta, zeta, st(1:Node), Bst(1:Node)
@@ -534,59 +535,93 @@ subroutine write_grid
   ! combine all radial parts into one dimension as Lrad values can be different for different volumes
   sumLrad = sum(Lrad(1:Mvol)+1)
 
-  SALLOCATE(    Rij_grid, (1:sumLrad, 1:Ntz), zero )
-  SALLOCATE(    Zij_grid, (1:sumLrad, 1:Ntz), zero )
-  SALLOCATE(     sg_grid, (1:sumLrad, 1:Ntz), zero )
-  SALLOCATE( ijreal_grid, (1:sumLrad, 1:Ntz), zero )
-  SALLOCATE( ijimag_grid, (1:sumLrad, 1:Ntz), zero )
-  SALLOCATE( jireal_grid, (1:sumLrad, 1:Ntz), zero )
+  ! all CPUs define the grid dataspaces and datasets collectively
+  call h5screate_simple_f( 2, int((/sumLrad,Ntz/),hsize_t), spaceRij_id,    hdfier )
+  call h5screate_simple_f( 2, int((/sumLrad,Ntz/),hsize_t), spaceZij_id,    hdfier )
+  call h5screate_simple_f( 2, int((/sumLrad,Ntz/),hsize_t), spacesg_id,     hdfier )
+  call h5screate_simple_f( 2, int((/sumLrad,Ntz/),hsize_t), spaceijreal_id, hdfier )
+  call h5screate_simple_f( 2, int((/sumLrad,Ntz/),hsize_t), spaceijimag_id, hdfier )
+  call h5screate_simple_f( 2, int((/sumLrad,Ntz/),hsize_t), spacejireal_id, hdfier )
 
-  do vvol = 1, Mvol ; ivol = vvol
-   LREGION(vvol) ! sets Lcoordinatesingularity and Lplasmaregion ;
-   do ii = 0, Lrad(vvol) ! sub-grid;
-    lss = ii * two / Lrad(vvol) - one
-    if( Lcoordinatesingularity .and. ii.eq.0 ) then ; Lcurvature = 0 ! Jacobian is not defined;
-    else                                            ; Lcurvature = 1 ! compute Jacobian       ;
-    endif
-    WCALL( sphdf5, coords, ( vvol, lss, Lcurvature, Ntz, mn ) ) ! only Rij(0,:) and Zij(0,:) are required; Rmn & Zmn are available;
+  call h5dcreate_f( grpGrid,    "Rij", H5T_NATIVE_DOUBLE, spaceRij_id,       Rij_id, hdfier )
+  call h5dcreate_f( grpGrid,    "Zij", H5T_NATIVE_DOUBLE, spaceZij_id,       Zij_id, hdfier )
+  call h5dcreate_f( grpGrid,     "sg", H5T_NATIVE_DOUBLE, spacesg_id,         sg_id, hdfier )
+  call h5dcreate_f( grpGrid, "ijreal", H5T_NATIVE_DOUBLE, spaceijreal_id, ijreal_id, hdfier )
+  call h5dcreate_f( grpGrid, "ijimag", H5T_NATIVE_DOUBLE, spaceijimag_id, ijimag_id, hdfier )
+  call h5dcreate_f( grpGrid, "jireal", H5T_NATIVE_DOUBLE, spacejireal_id, jireal_id, hdfier )
 
-    alongLrad = sum(Lrad(1:vvol-1)+1)+ii+1
+  if (myid.eq.0) then ! only master computes magnetic field
 
-    Rij_grid(alongLrad,1:Ntz) = Rij(1:Ntz,0,0)
-    Zij_grid(alongLrad,1:Ntz) = Zij(1:Ntz,0,0)
-    sg_grid (alongLrad,1:Ntz) =  sg(1:Ntz,0)
+   SALLOCATE(    Rij_grid, (1:sumLrad, 1:Ntz), zero )
+   SALLOCATE(    Zij_grid, (1:sumLrad, 1:Ntz), zero )
+   SALLOCATE(     sg_grid, (1:sumLrad, 1:Ntz), zero )
+   SALLOCATE( ijreal_grid, (1:sumLrad, 1:Ntz), zero )
+   SALLOCATE( ijimag_grid, (1:sumLrad, 1:Ntz), zero )
+   SALLOCATE( jireal_grid, (1:sumLrad, 1:Ntz), zero )
 
-    if( Lcurvature.eq.1 ) then
-     do kk = 0, Nz-1 ; zeta = kk * pi2nfp / Nz
-      do jj = 0, Nt-1 ; teta = jj * pi2    / Nt ; jk = 1 + jj + kk*Nt ; st(1:2) = (/ lss, teta /)
-       WCALL( sphdf5, bfield, ( zeta, st(1:Node), Bst(1:Node) ) )
-       ijreal(jk) = ( Rij(jk,1,0) * Bst(1) + Rij(jk,2,0) * Bst(2) + Rij(jk,3,0) * one ) * gBzeta / sg(jk,0) ! BR;
-       ijimag(jk) = (                                                             one ) * gBzeta / sg(jk,0) ! Bp;
-       jireal(jk) = ( Zij(jk,1,0) * Bst(1) + Zij(jk,2,0) * Bst(2) + Zij(jk,3,0) * one ) * gBzeta / sg(jk,0) ! BZ;
+   do vvol = 1, Mvol ; ivol = vvol
+    LREGION(vvol) ! sets Lcoordinatesingularity and Lplasmaregion ;
+    do ii = 0, Lrad(vvol) ! sub-grid;
+     lss = ii * two / Lrad(vvol) - one
+     if( Lcoordinatesingularity .and. ii.eq.0 ) then ; Lcurvature = 0 ! Jacobian is not defined;
+     else                                            ; Lcurvature = 1 ! compute Jacobian       ;
+     endif
+     WCALL( sphdf5, coords, ( vvol, lss, Lcurvature, Ntz, mn ) ) ! only Rij(0,:) and Zij(0,:) are required; Rmn & Zmn are available;
+
+     alongLrad = sum(Lrad(1:vvol-1)+1)+ii+1
+
+     Rij_grid(alongLrad,1:Ntz) = Rij(1:Ntz,0,0)
+     Zij_grid(alongLrad,1:Ntz) = Zij(1:Ntz,0,0)
+     sg_grid (alongLrad,1:Ntz) =  sg(1:Ntz,0)
+
+     if( Lcurvature.eq.1 ) then
+      do kk = 0, Nz-1 ; zeta = kk * pi2nfp / Nz
+       do jj = 0, Nt-1 ; teta = jj * pi2    / Nt ; jk = 1 + jj + kk*Nt ; st(1:2) = (/ lss, teta /)
+        WCALL( sphdf5, bfield, ( zeta, st(1:Node), Bst(1:Node) ) )
+        ijreal(jk) = ( Rij(jk,1,0) * Bst(1) + Rij(jk,2,0) * Bst(2) + Rij(jk,3,0) * one ) * gBzeta / sg(jk,0) ! BR;
+        ijimag(jk) = (                                                             one ) * gBzeta / sg(jk,0) ! Bp;
+        jireal(jk) = ( Zij(jk,1,0) * Bst(1) + Zij(jk,2,0) * Bst(2) + Zij(jk,3,0) * one ) * gBzeta / sg(jk,0) ! BZ;
+       enddo
       enddo
-     enddo
-    endif ! end of if( Lcurvature.eq.1 ) ;
+     endif ! end of if( Lcurvature.eq.1 ) ;
 
-    ijreal_grid(alongLrad,1:Ntz) = ijreal(1:Ntz)
-    ijimag_grid(alongLrad,1:Ntz) = ijimag(1:Ntz)
-    jireal_grid(alongLrad,1:Ntz) = jireal(1:Ntz)
+     ijreal_grid(alongLrad,1:Ntz) = ijreal(1:Ntz)
+     ijimag_grid(alongLrad,1:Ntz) = ijimag(1:Ntz)
+     jireal_grid(alongLrad,1:Ntz) = jireal(1:Ntz)
 
-   enddo ! end of do ii;
-  enddo ! end of do vvol;
+    enddo ! end of do ii;
+   enddo ! end of do vvol;
 
-  HWRITERA( grpGrid, sumLrad, Ntz,    Rij,    Rij_grid )
-  HWRITERA( grpGrid, sumLrad, Ntz,    Zij,    Zij_grid )
-  HWRITERA( grpGrid, sumLrad, Ntz,     sg,     sg_grid )
-  HWRITERA( grpGrid, sumLrad, Ntz, ijreal, ijreal_grid )
-  HWRITERA( grpGrid, sumLrad, Ntz, ijimag, ijimag_grid )
-  HWRITERA( grpGrid, sumLrad, Ntz, jireal, jireal_grid )
+   ! actually write data (only from master)
+   call h5dwrite_f(    Rij_id, H5T_NATIVE_DOUBLE,    Rij_grid, int((/sumLrad, Ntz/),hsize_t), hdfier )
+   call h5dwrite_f(    Zij_id, H5T_NATIVE_DOUBLE,    Zij_grid, int((/sumLrad, Ntz/),hsize_t), hdfier )
+   call h5dwrite_f(     sg_id, H5T_NATIVE_DOUBLE,     sg_grid, int((/sumLrad, Ntz/),hsize_t), hdfier )
+   call h5dwrite_f( ijreal_id, H5T_NATIVE_DOUBLE, ijreal_grid, int((/sumLrad, Ntz/),hsize_t), hdfier )
+   call h5dwrite_f( ijimag_id, H5T_NATIVE_DOUBLE, ijimag_grid, int((/sumLrad, Ntz/),hsize_t), hdfier )
+   call h5dwrite_f( jireal_id, H5T_NATIVE_DOUBLE, jireal_grid, int((/sumLrad, Ntz/),hsize_t), hdfier )
 
-  DALLOCATE(    Rij_grid )
-  DALLOCATE(    Zij_grid )
-  DALLOCATE(     sg_grid )
-  DALLOCATE( ijreal_grid )
-  DALLOCATE( ijimag_grid )
-  DALLOCATE( jireal_grid )
+   DALLOCATE(    Rij_grid )
+   DALLOCATE(    Zij_grid )
+   DALLOCATE(     sg_grid )
+   DALLOCATE( ijreal_grid )
+   DALLOCATE( ijimag_grid )
+   DALLOCATE( jireal_grid )
+
+  endif ! end of myid.eq.0
+
+  call h5dclose_f(   Rij_id, hdfier)      ! terminate dataset;
+  call h5dclose_f(   Zij_id, hdfier)      ! terminate dataset;
+  call h5dclose_f(    sg_id, hdfier)      ! terminate dataset;
+  call h5dclose_f(ijreal_id, hdfier)      ! terminate dataset;
+  call h5dclose_f(ijimag_id, hdfier)      ! terminate dataset;
+  call h5dclose_f(jireal_id, hdfier)      ! terminate dataset;
+
+  call h5sclose_f(spaceRij_id,    hdfier) ! terminate dataspace;
+  call h5sclose_f(spaceZij_id,    hdfier) ! terminate dataspace;
+  call h5sclose_f(spacesg_id,     hdfier) ! terminate dataspace;
+  call h5sclose_f(spaceijreal_id, hdfier) ! terminate dataspace;
+  call h5sclose_f(spaceijimag_id, hdfier) ! terminate dataspace;
+  call h5sclose_f(spacejireal_id, hdfier) ! terminate dataspace;
 
   HCLOSEGRP( grpGrid )
 
