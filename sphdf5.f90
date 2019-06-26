@@ -511,7 +511,7 @@ subroutine write_grid
   use cputiming, only : Tsphdf5
 
   LOCALS
-  integer(hid_t) :: grpGrid,Rij_id, Zij_id,sg_id,ijreal_id,ijimag_id,jireal_id,
+  integer(hid_t) :: grpGrid,Rij_id, Zij_id,sg_id,ijreal_id,ijimag_id,jireal_id
   integer(hid_t) :: spaceRij_id,spaceZij_id,spacesg_id,spaceijreal_id,spaceijimag_id,spacejireal_id
   integer :: sumLrad, alongLrad
   INTEGER              :: vvol, ii, jj, kk, jk, Lcurvature
