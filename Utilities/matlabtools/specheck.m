@@ -155,6 +155,71 @@ if isequal(squeeze(gdata.BR) , data.grid.BR'                    ) ; disp('ok: gd
 if isequal(squeeze(gdata.Bp) , data.grid.Bp'                    ) ; disp('ok: gdata.Bp         ') ; else disp('ERROR: gdata.Bp         '); matching=0; end
 if isequal(squeeze(gdata.BZ) , data.grid.BZ'                    ) ; disp('ok: gdata.BZ         ') ; else disp('ERROR: gdata.BZ         '); matching=0; end
 
+% data on rotational transform from .ext.sp.t.0001.dat and so on
+if isequal(idata.Bnc         , data.output.Bnc                  ) ; disp('ok: idata.Bnc        ') ; else disp('ERROR: idata.Bnc        '); matching=0; end
+if isequal(idata.Bns         , data.output.Bns                  ) ; disp('ok: idata.Bns        ') ; else disp('ERROR: idata.Bns        '); matching=0; end
+if isequal(idata.Btemn       , data.output.Btemn                ) ; disp('ok: idata.Btemn      ') ; else disp('ERROR: idata.Btemn      '); matching=0; end
+if isequal(idata.Btomn       , data.output.Btomn                ) ; disp('ok: idata.Btomn      ') ; else disp('ERROR: idata.Btomn      '); matching=0; end
+if isequal(idata.Bzemn       , data.output.Bzemn                ) ; disp('ok: idata.Bzemn      ') ; else disp('ERROR: idata.Bzemn      '); matching=0; end
+if isequal(idata.Bzomn       , data.output.Bzomn                ) ; disp('ok: idata.Bzomn      ') ; else disp('ERROR: idata.Bzomn      '); matching=0; end
+if isequal(idata.ForceErr    , data.output.ForceErr             ) ; disp('ok: idata.ForceErr   ') ; else disp('ERROR: idata.ForceErr   '); matching=0; end
+if isequal(idata.Igeometry   , data.input.physics.Igeometry     ) ; disp('ok: idata.Igeometry  ') ; else disp('ERROR: idata.Igeometry  '); matching=0; end
+if isequal(idata.Istellsym   , data.input.physics.Istellsym     ) ; disp('ok: idata.Istellsym  ') ; else disp('ERROR: idata.Istellsym  '); matching=0; end
+if isequal(idata.Ladiabatic  , data.input.physics.Ladiabatic    ) ; disp('ok: idata.Ladiabatic ') ; else disp('ERROR: idata.Ladiabatic '); matching=0; end
+if isequal(idata.Lconstraint , data.input.physics.Lconstraint   ) ; disp('ok: idata.Lconstraint') ; else disp('ERROR: idata.Lconstraint'); matching=0; end
+if isequal(idata.Lfreebound  , data.input.physics.Lfreebound    ) ; disp('ok: idata.Lfreebound ') ; else disp('ERROR: idata.Lfreebound '); matching=0; end
+if isequal(idata.Lperturbed  , data.input.diagnostics.Lperturbed) ; disp('ok: idata.Lperturbed ') ; else disp('ERROR: idata.Lperturbed '); matching=0; end
+if isequal(idata.Lrad        , data.input.physics.Lrad          ) ; disp('ok: idata.Lrad       ') ; else disp('ERROR: idata.Lrad       '); matching=0; end
+if isequal(idata.Mpol        , data.input.physics.Mpol          ) ; disp('ok: idata.Mpol       ') ; else disp('ERROR: idata.Mpol       '); matching=0; end
+if isequal(idata.Mrad        , data.output.Mrad                 ) ; disp('ok: idata.Mrad       ') ; else disp('ERROR: idata.Mrad       '); matching=0; end
+if isequal(idata.Mvol        , data.output.Mvol                 ) ; disp('ok: idata.Mvol       ') ; else disp('ERROR: idata.Mvol       '); matching=0; end
+if isequal(idata.Nfp         , data.input.physics.Nfp           ) ; disp('ok: idata.Nfp        ') ; else disp('ERROR: idata.Nfp        '); matching=0; end
+if isequal(idata.Ntor        , data.input.physics.Ntor          ) ; disp('ok: idata.Ntor       ') ; else disp('ERROR: idata.Ntor       '); matching=0; end
+if isequal(idata.Nvol        , data.input.physics.Nvol          ) ; disp('ok: idata.Nvol       ') ; else disp('ERROR: idata.Nvol       '); matching=0; end
+if isequal(idata.Rbc         , data.output.Rbc                  ) ; disp('ok: idata.Rbc        ') ; else disp('ERROR: idata.Rbc        '); matching=0; end
+if isequal(idata.Rbs         , data.output.Rbs                  ) ; disp('ok: idata.Rbs        ') ; else disp('ERROR: idata.Rbs        '); matching=0; end
+if isequal(idata.TT          , data.output.TT                   ) ; disp('ok: idata.TT         ') ; else disp('ERROR: idata.TT         '); matching=0; end
+if isequal(idata.Vnc         , data.output.Vnc                  ) ; disp('ok: idata.Vnc        ') ; else disp('ERROR: idata.Vnc        '); matching=0; end
+if isequal(idata.Vns         , data.output.Vns                  ) ; disp('ok: idata.Vns        ') ; else disp('ERROR: idata.Vns        '); matching=0; end
+if isequal(idata.Zbc         , data.output.Zbc                  ) ; disp('ok: idata.Zbc        ') ; else disp('ERROR: idata.Zbc        '); matching=0; end
+if isequal(idata.Zbs         , data.output.Zbs                  ) ; disp('ok: idata.Zbs        ') ; else disp('ERROR: idata.Zbs        '); matching=0; end
+if isequal(idata.adiabatic   , data.output.adiabatic            ) ; disp('ok: idata.adiabatic  ') ; else disp('ERROR: idata.adiabatic  '); matching=0; end
+if isequal(idata.curpol      , data.input.physics.curpol        ) ; disp('ok: idata.curpol     ') ; else disp('ERROR: idata.curpol     '); matching=0; end
+if isequal(idata.curtor      , data.input.physics.curtor        ) ; disp('ok: idata.curtor     ') ; else disp('ERROR: idata.curtor     '); matching=0; end
+if isequal(idata.dpp         , data.input.diagnostics.dpp       ) ; disp('ok: idata.dpp        ') ; else disp('ERROR: idata.dpp        '); matching=0; end
+if isequal(idata.dqq         , data.input.diagnostics.dqq       ) ; disp('ok: idata.dqq        ') ; else disp('ERROR: idata.dqq        '); matching=0; end
+if isequal(idata.forcetol    , data.input.global.forcetol       ) ; disp('ok: idata.forcetol   ') ; else disp('ERROR: idata.forcetol   '); matching=0; end
+if isequal(idata.gamma       , data.input.physics.gamma         ) ; disp('ok: idata.gamma      ') ; else disp('ERROR: idata.gamma      '); matching=0; end
+if isequal(idata.helicity    , data.output.helicity             ) ; disp('ok: idata.helicity   ') ; else disp('ERROR: idata.helicity   '); matching=0; end
+if isequal(idata.im          , data.output.im                   ) ; disp('ok: idata.im         ') ; else disp('ERROR: idata.im         '); matching=0; end
+if isequal(idata.in          , data.output.in                   ) ; disp('ok: idata.in         ') ; else disp('ERROR: idata.in         '); matching=0; end
+if isequal(idata.iota        , data.input.physics.iota          ) ; disp('ok: idata.iota       ') ; else disp('ERROR: idata.iota       '); matching=0; end
+if isequal(idata.lmns        , data.output.lmns                 ) ; disp('ok: idata.lmns       ') ; else disp('ERROR: idata.lmns       '); matching=0; end
+if isequal(idata.lp          , data.input.physics.lp            ) ; disp('ok: idata.lp         ') ; else disp('ERROR: idata.lp         '); matching=0; end
+if isequal(idata.lq          , data.input.physics.lq            ) ; disp('ok: idata.lq         ') ; else disp('ERROR: idata.lq         '); matching=0; end
+if isequal(idata.mn          , data.output.mn                   ) ; disp('ok: idata.mn         ') ; else disp('ERROR: idata.mn         '); matching=0; end
+if isequal(idata.mu          , data.input.physics.mu            ) ; disp('ok: idata.mu         ') ; else disp('ERROR: idata.mu         '); matching=0; end
+if isequal(idata.mupfits     , data.input.physics.mupfits       ) ; disp('ok: idata.mupfits    ') ; else disp('ERROR: idata.mupfits    '); matching=0; end
+if isequal(idata.mupftol     , data.input.physics.mupftol       ) ; disp('ok: idata.mupftol    ') ; else disp('ERROR: idata.mupftol    '); matching=0; end
+if isequal(idata.oita        , data.input.physics.oita          ) ; disp('ok: idata.oita       ') ; else disp('ERROR: idata.oita       '); matching=0; end
+if isequal(idata.pflux       , data.input.physics.pflux         ) ; disp('ok: idata.pflux      ') ; else disp('ERROR: idata.pflux      '); matching=0; end
+if isequal(idata.phiedge     , data.input.physics.phiedge       ) ; disp('ok: idata.phiedge    ') ; else disp('ERROR: idata.phiedge    '); matching=0; end
+if isequal(idata.pl          , data.input.physics.pl            ) ; disp('ok: idata.pl         ') ; else disp('ERROR: idata.pl         '); matching=0; end
+if isequal(idata.pr          , data.input.physics.pr            ) ; disp('ok: idata.pr         ') ; else disp('ERROR: idata.pr         '); matching=0; end
+if isequal(idata.pressure    , data.input.physics.pressure      ) ; disp('ok: idata.pressure   ') ; else disp('ERROR: idata.pressure   '); matching=0; end
+if isequal(idata.pscale      , data.input.physics.pscale        ) ; disp('ok: idata.pscale     ') ; else disp('ERROR: idata.pscale     '); matching=0; end
+if isequal(idata.ql          , data.input.physics.ql            ) ; disp('ok: idata.ql         ') ; else disp('ERROR: idata.ql         '); matching=0; end
+if isequal(idata.qr          , data.input.physics.qr            ) ; disp('ok: idata.qr         ') ; else disp('ERROR: idata.qr         '); matching=0; end
+if isequal(idata.rp          , data.input.physics.rp            ) ; disp('ok: idata.rp         ') ; else disp('ERROR: idata.rp         '); matching=0; end
+if isequal(idata.rq          , data.input.physics.rq            ) ; disp('ok: idata.rq         ') ; else disp('ERROR: idata.rq         '); matching=0; end
+if isequal(idata.tflux       , data.input.physics.tflux         ) ; disp('ok: idata.tflux      ') ; else disp('ERROR: idata.tflux      '); matching=0; end
+if isequal(idata.volume      , data.output.volume               ) ; disp('ok: idata.volume     ') ; else disp('ERROR: idata.volume     '); matching=0; end
+
+if isequal(idata.sarr        , data.transform.fiota(:,1)'       ) ; disp('ok: idata.sarr       ') ; else disp('ERROR: idata.sarr       '); matching=0; end
+
+
+
+
 
 if (matching == 0)
   disp('Not maching :(')
