@@ -193,7 +193,6 @@ if isequal(idata.gamma       , data.input.physics.gamma         ) ; disp('ok: id
 if isequal(idata.helicity    , data.output.helicity             ) ; disp('ok: idata.helicity   ') ; else disp('ERROR: idata.helicity   '); matching=0; end
 if isequal(idata.im          , data.output.im                   ) ; disp('ok: idata.im         ') ; else disp('ERROR: idata.im         '); matching=0; end
 if isequal(idata.in          , data.output.in                   ) ; disp('ok: idata.in         ') ; else disp('ERROR: idata.in         '); matching=0; end
-if isequal(idata.iota        , data.input.physics.iota          ) ; disp('ok: idata.iota       ') ; else disp('ERROR: idata.iota       '); matching=0; end
 if isequal(idata.lmns        , data.output.lmns                 ) ; disp('ok: idata.lmns       ') ; else disp('ERROR: idata.lmns       '); matching=0; end
 if isequal(idata.lp          , data.input.physics.lp            ) ; disp('ok: idata.lp         ') ; else disp('ERROR: idata.lp         '); matching=0; end
 if isequal(idata.lq          , data.input.physics.lq            ) ; disp('ok: idata.lq         ') ; else disp('ERROR: idata.lq         '); matching=0; end
@@ -215,6 +214,7 @@ if isequal(idata.rq          , data.input.physics.rq            ) ; disp('ok: id
 if isequal(idata.tflux       , data.input.physics.tflux         ) ; disp('ok: idata.tflux      ') ; else disp('ERROR: idata.tflux      '); matching=0; end
 if isequal(idata.volume      , data.output.volume               ) ; disp('ok: idata.volume     ') ; else disp('ERROR: idata.volume     '); matching=0; end
 
+if isequal(idata.iota        , data.transform.fiota(:,2)        ) ; disp('ok: idata.iota       ') ; else disp('ERROR: idata.iota       '); matching=0; end
 if isequal(idata.sarr        , data.transform.fiota(:,1)'       ) ; disp('ok: idata.sarr       ') ; else disp('ERROR: idata.sarr       '); matching=0; end
 
 
