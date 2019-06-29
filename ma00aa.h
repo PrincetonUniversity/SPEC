@@ -81,7 +81,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   
   use fileunits, only : ounit
   
-  use inputlist, only : Wma00aa
+  use inputlist, only : mpol, Wma00aa
   
   use cputiming, only : Tma00aa
   
@@ -103,9 +103,11 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
                         gttmne, gttmno, &
                         gtzmne, gtzmno, &
                         gzzmne, gzzmno, &
-                        cheby, &
+                        cheby, zernike, &
                         Lcoordinatesingularity, regumm, &
                         pi2pi2nfp, pi2pi2nfphalf
+                        
+  use zernik, only : get_zernike
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -117,7 +119,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   
   INTEGER             :: kk, kd, kka, kks, kda, kds
   
-  REAL                :: lss, jthweight, fee, feo, foe, foo, Tl, Dl, Tp, Dp, TlTp, TlDp, DlTp, DlDp, ikda, ikds, imn2, ilrad
+  REAL                :: lss, jthweight, fee, feo, foe, foo, Tl, Dl, Tp, Dp, TlTp, TlDp, DlTp, DlDp, ikda, ikds, imn2, ilrad, lssm
 
   REAL                :: foocc, foocs, foosc, fooss
   REAL                :: fsscc, fsscs, fsssc, fssss
@@ -182,7 +184,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   if( Lcoordinatesingularity ) then
-   
+   ! switch to sbar=r; 29 Jun 19
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
    sbar(1:lquad) = ( gaussianabscissae(1:lquad,lvol) + one ) * half
@@ -195,11 +197,8 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
    do jquad = 1, lquad ! Gaussian quadrature loop;
     
     lss = gaussianabscissae(jquad,lvol) ; jthweight = gaussianweight(jquad,lvol)
-    
-    ;                 cheby( 0,0:1) = (/ one                                       , zero                                                            /)
-    ;                 cheby( 1,0:1) = (/ lss                                       , one                                                             /)
-    do ll = 2, lrad ; cheby(ll,0:1) = (/ two * lss * cheby(ll-1,0) - cheby(ll-2,0) , two * cheby(ll-1,0) + two * lss * cheby(ll-1,1) - cheby(ll-2,1) /)
-    enddo
+
+    call get_zernike(lss, lrad, mpol, zernike)
     
     WCALL( ma00aa, metrix,( lvol, lss ) ) ! compute metric elements; 16 Jan 13;
 

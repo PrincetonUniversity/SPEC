@@ -887,9 +887,9 @@ module allglobal
 
   LOGICAL              :: YESstellsym, NOTstellsym ! internal shorthand copies of Istellsym, which is an integer input; 
 
-  REAL   , allocatable :: cheby(:,:) ! local workspace;
+  REAL   , allocatable :: cheby(:,:), zernike(:,:,:) ! local workspace;
   
-  REAL   , allocatable :: TT(:,:,:) ! derivatives of Chebyshev polynomials at the inner and outer interfaces;
+  REAL   , allocatable :: TT(:,:,:), RTT(:,:,:,:) ! derivatives of Chebyshev and Zernike polynomials at the inner and outer interfaces;
 
   LOGICAL, allocatable :: ImagneticOK(:)   ! used to indicate if Beltrami fields have been correctly constructed;
 

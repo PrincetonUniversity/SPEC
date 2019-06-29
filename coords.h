@@ -69,8 +69,8 @@
 !latex       where, in toroidal geometry, 
 !latex       \be
 !latex       f_j \equiv \left\{ 
-!latex       \begin{array}{llcccccccccccccc} \bar s        & , & \mbox{\rm for } m_j=0, \\
-!latex                                       \bar s^{m_j/2}& , & \mbox{\rm otherwise.} 
+!latex       \begin{array}{llcccccccccccccc} \bar s^2      & , & \mbox{\rm for } m_j=0, \\
+!latex                                       \bar s^{m_j}& , & \mbox{\rm otherwise.} 
 !latex       \end{array}\right. 
 !latex       \ee
 
