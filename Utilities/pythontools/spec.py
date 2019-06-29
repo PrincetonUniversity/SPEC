@@ -11,73 +11,42 @@ import h5py
 # reader class for Stepped Pressure Equilibrium Code output file
 # Hudson et al., Physics of Plasmas 19, 112502 (2012); doi: 10.1063/1.4765691
 class SPEC:
-    
-    _file=None
-    Igeometry=0
-    
-    def __init__(self, filename):
-        self._file=h5py.File(filename, "r")
-        
-        # input/physics: /physicslist/ from input file
-        self.Igeometry  =self._file['/input/physics/Igeometry'][0]
-        self.Istellsym  =self._file['/input/physics/Istellsym'][0]
-        self.Lfreebound =self._file['/input/physics/Lfreebound'][0]
-        self.phiedge    =self._file['/input/physics/phiedge'][0]
-        self.curtor     =self._file['/input/physics/curtor'][0]
-        self.curpol     =self._file['/input/physics/curpol'][0]
-        self.gamma      =self._file['/input/physics/gamma'][0]
-        self.Nfp        =self._file['/input/physics/Nfp'][0]
-        self.Nvol       =self._file['/input/physics/Nvol'][0]
-        self.Mpol       =self._file['/input/physics/Mpol'][0]
-        self.Ntor       =self._file['/input/physics/Ntor'][0]
-        self.Lrad       =self._file['/input/physics/Lrad'][:]
-        self.Lconstraint=self._file['/input/physics/Lconstraint'][0]
-        self.tflux      =self._file['/input/physics/tflux'][:]
-        self.pflux      =self._file['/input/physics/pflux'][:]
-        self.helicity   =self._file['/input/physics/helicity'][:]
-        self.pscale     =self._file['/input/physics/pscale'][0]
-        self.pressure   =self._file['/input/physics/pressure'][:]
-        self.Ladiabatic =self._file['/input/physics/Ladiabatic'][0]
-        self.adiabatic  =self._file['/input/physics/adiabatic'][:]
-        self.mu         =self._file['/input/physics/mu'][:]
-        self.pl         =self._file['/input/physics/pl'][:]
-        self.ql         =self._file['/input/physics/ql'][:]
-        self.pr         =self._file['/input/physics/pr'][:]
-        self.qr         =self._file['/input/physics/qr'][:]
-        self.iota       =self._file['/input/physics/iota'][:]
-        self.lp         =self._file['/input/physics/lp'][:]
-        self.lq         =self._file['/input/physics/lq'][:]
-        self.rp         =self._file['/input/physics/rp'][:]
-        self.rq         =self._file['/input/physics/rq'][:]
-        self.oita       =self._file['/input/physics/oita'][:]
 
-        self.Rac        =self._file['/input/physics/Rac'][:] 
-        self.Zas        =self._file['/input/physics/Zas'][:]
-        self.Ras        =self._file['/input/physics/Ras'][:] 
-        self.Zac        =self._file['/input/physics/Zac'][:]
+    def __init__(self, *args, **kwargs):
+        # args[0] should always be the name of a file or an item inside the root object
+        # if args[0] is not a filename, kwagrs['content'] should be the content to be added
+        #  as self.`args[0]`
         
-        self.Rbc        =self._file['/input/physics/Rbc'][:,:]
-        self.Zbs        =self._file['/input/physics/Zbs'][:,:]
-        self.Rbs        =self._file['/input/physics/Rbs'][:,:]
-        self.Zbc        =self._file['/input/physics/Zbc'][:,:]
+        _content = None
+        if kwargs.get('content') == None:
+            # assume arg[0] is a filename
+            _content = h5py.File(args[0], "r")
+        elif isinstance(kwargs['content'], h5py.Group):
+            _content = kwargs['content']
         
-        self.Rwc        =self._file['/input/physics/Rwc'][:,:]
-        self.Zws        =self._file['/input/physics/Zws'][:,:]
-        self.Rws        =self._file['/input/physics/Rws'][:,:]
-        self.Zwc        =self._file['/input/physics/Zwc'][:,:]
-        
-        self.Vns        =self._file['/input/physics/Vns'][:,:]
-        self.Bns        =self._file['/input/physics/Bns'][:,:]
-        self.Vnc        =self._file['/input/physics/Vnc'][:,:]
-        self.Bnc        =self._file['/input/physics/Bnc'][:,:]
-        
-        self.mupftol    =self._file['/input/physics/mupftol'][0]
-        self.mupfits    =self._file['/input/physics/mupfits'][0]
-        
-        
+        if (_content != None):
+            for key in _content:
+                if isinstance(_content[key], h5py.Group):
+#                    print("group '"+key+"'")
+                    setattr(self, key, SPEC(content=_content[key]))
+                elif isinstance(_content[key], h5py.Dataset):
+#                    print("dataset '"+key+"' is '"+str(_content[key])+"'")
+                    shape = _content[key].shape
+                    nDim = len(shape)
+                    if nDim==1:
+                        if shape[0]==1:
+                            setattr(self, key, _content[key][0])
+                        else:
+                            setattr(self, key, _content[key][:])
+                    elif nDim==2:
+                        setattr(self, key, _content[key][:,:])
+                    else:
+                        print("3 dim not supported: '"+key+"'")
+
         
 if __name__=="__main__":
-    s=SPEC("../../InputFiles/Verification/forcefree/solovev/solovev_fb_vmec7vol_final.h5")
     
-    print(s.helicity)
+    filename = "/home/IPP-HGW/jons/04_PhD/00_programs/SPEC/InputFiles/TestCases/G3V02L1Fi.001.h5"
 
+    s=SPEC(filename)
+    print(s)

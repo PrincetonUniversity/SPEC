@@ -13,12 +13,7 @@ Detailed list of steps:
 0. These operations are listed for execution on the DRACO cluster at IPP: https://www.mpcdf.mpg.de/services/computing/draco
 > ssh -Y draco-i.mpcdf.mpg.de
 > module purge
-> module load git
-> module load intel
-> module load impi
-> module load mkl
-> module load hdf5-mpi/1.10.4
-> module load fftw-mpi
+> module load git intel impi mkl hdf5-mpi/1.10.4 fftw-mpi
 > module list
 Currently Loaded Modulefiles:
  1) intel/18.0.3      2) impi/2018.3       3) mkl/2018.3        4) fftw-mpi/3.3.8    5) git/2.16          6) hdf5-mpi/1.10.4
@@ -32,12 +27,14 @@ Currently Loaded Modulefiles:
 > pushd SPEC_master
 > git checkout 32e19c3
 > patch Makefile < ../adjust_spec_makefile_for_draco.diff
+WEIRD BUG: > change -O3 into -O0 in Makefile !!!!!
 > make CC="$CC" FC="$FC" NAG="$NAG" xspec
 > popd
 
 2. build the current state of SPEC on the "issue68" branch:
 > git clone git@github.com:PrincetonUniversity/SPEC.git SPEC_issue68 -b issue68
 > pushd SPEC_issue68
+WEIRD BUG: > change -O3 into -O0 in Makefile; otherwise, slight differences will occur depending on the surrounding code and the results will look slightly different  !!!!!
 > make CC="$CC" FC="$FC" NAG="$NAG" xspec
 > popd
 
@@ -119,7 +116,7 @@ lrwxrwxrwx 1 jons ipg   24 24. Jun 17:15 xspec -> ../../SPEC_issue68/xspec
 >> data = read_spec('G3V01L0Fi.002_issue68/G3V01L0Fi.002.h5');
 >> specheck(fdata, gdata, idata, pdata, data);
 ... all output quantities
-Maching :(
+Matching :)
 
 11. Repeat steps 5 to 7 for any other input files you wish to test the new output writing routine on
 

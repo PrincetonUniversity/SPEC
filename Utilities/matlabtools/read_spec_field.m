@@ -72,20 +72,22 @@ try
    Lrad = fread(fid,1,int_format);
    fread(fid,1,spacer_format);
    data.Lrad(v,1) = Lrad;
-   % Allocate data for the fields
-   data.Ate{v} = zeros(Lrad+1,mn);
-   data.Aze{v} = zeros(Lrad+1,mn);
-   data.Ato{v} = zeros(Lrad+1,mn);
-   data.Azo{v} = zeros(Lrad+1,mn);
+   if(i==1)
+    % Allocate data sets
+    data.Ate = zeros(nvol,Lrad+1,mn);
+    data.Aze = zeros(nvol,Lrad+1,mn);
+    data.Ato = zeros(nvol,Lrad+1,mn);
+    data.Azo = zeros(nvol,Lrad+1,mn);
+   end
    for i=1:mn
     fread(fid,1,spacer_format);
-    data.Ate{v}(:,i) = fread(fid,Lrad+1,float_format); % Ate
+    data.Ate(v,:,i) = fread(fid,Lrad+1,float_format); % Ate
     fread(fid,2,spacer_format);
-    data.Aze{v}(:,i) = fread(fid,Lrad+1,float_format); % Aze
+    data.Aze(v,:,i) = fread(fid,Lrad+1,float_format); % Aze
     fread(fid,2,spacer_format);
-    data.Ato{v}(:,i) = fread(fid,Lrad+1,float_format); % Ato
+    data.Ato(v,:,i) = fread(fid,Lrad+1,float_format); % Ato
     fread(fid,2,spacer_format);
-    data.Azo{v}(:,i) = fread(fid,Lrad+1,float_format); % Azo
+    data.Azo(v,:,i) = fread(fid,Lrad+1,float_format); % Azo
     fread(fid,1,spacer_format);
    end
   end
