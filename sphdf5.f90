@@ -567,20 +567,20 @@ subroutine write_grid
      enddo
     endif ! end of if( Lcurvature.eq.1 ) ;
 
-    ijreal_grid(alongLrad,1:Ntz) = ijreal(1:Ntz)
-    ijimag_grid(alongLrad,1:Ntz) = ijimag(1:Ntz)
-    jireal_grid(alongLrad,1:Ntz) = jireal(1:Ntz)
+   ijreal_grid(alongLrad,1:Ntz) = ijreal(1:Ntz)
+   ijimag_grid(alongLrad,1:Ntz) = ijimag(1:Ntz)
+   jireal_grid(alongLrad,1:Ntz) = jireal(1:Ntz)
 
    enddo ! end of do ii;
   enddo ! end of do vvol;
 
-  HWRITERA( grpGrid, sumLrad, Ntz,    Rij,    Rij_grid )
-  HWRITERA( grpGrid, sumLrad, Ntz,    Zij,    Zij_grid )
-  HWRITERA( grpGrid, sumLrad, Ntz,     sg,     sg_grid )
-  HWRITERA( grpGrid, sumLrad, Ntz, ijreal, ijreal_grid )
-  HWRITERA( grpGrid, sumLrad, Ntz, ijimag, ijimag_grid )
-  HWRITERA( grpGrid, sumLrad, Ntz, jireal, jireal_grid )
-
+  HWRITERA( grpGrid, sumLrad, Ntz, Rij,    Rij_grid )
+  HWRITERA( grpGrid, sumLrad, Ntz, Zij,    Zij_grid )
+  HWRITERA( grpGrid, sumLrad, Ntz,  sg,     sg_grid )
+  HWRITERA( grpGrid, sumLrad, Ntz,  BR, ijreal_grid )
+  HWRITERA( grpGrid, sumLrad, Ntz,  Bp, ijimag_grid )
+  HWRITERA( grpGrid, sumLrad, Ntz,  BZ, jireal_grid )  
+ 
   DALLOCATE(    Rij_grid )
   DALLOCATE(    Zij_grid )
   DALLOCATE(     sg_grid )
@@ -689,20 +689,22 @@ subroutine write_poincare( data, offset, success )
   dims_singleTraj = (/ Nz, nPpts /)
   length          = (/ Nz, nPpts, 1 /)
 
+  ! On entry, Fortran does not know that indexing in data is from 0 to Nz-1.
+  ! Hence, use regular indices 1:Nz in this routine
   H5CALL( sphdf5, h5sselect_hyperslab_f, (filespace_t, H5S_SELECT_SET_F, int((/0,0,offset/),HSSIZE_T), length, hdfier) )
-  H5CALL( sphdf5, h5dwrite_f, (dset_id_t, H5T_NATIVE_DOUBLE, data(1,0:Nz-1,1:nPpts), dims_singleTraj, hdfier, &
+  H5CALL( sphdf5, h5dwrite_f, (dset_id_t, H5T_NATIVE_DOUBLE, data(1,1:Nz,1:nPpts), dims_singleTraj, hdfier, &
   &               file_space_id=filespace_t, mem_space_id=memspace_t ) )
 
   H5CALL( sphdf5, h5sselect_hyperslab_f, (filespace_s, H5S_SELECT_SET_F, int((/0,0,offset/),HSSIZE_T), length, hdfier) )
-  H5CALL( sphdf5, h5dwrite_f, (dset_id_s, H5T_NATIVE_DOUBLE, data(2,0:Nz-1,1:nPpts), dims_singleTraj, hdfier, &
+  H5CALL( sphdf5, h5dwrite_f, (dset_id_s, H5T_NATIVE_DOUBLE, data(2,1:Nz,1:nPpts), dims_singleTraj, hdfier, &
   &               file_space_id=filespace_s, mem_space_id=memspace_s ) )
 
   H5CALL( sphdf5, h5sselect_hyperslab_f, (filespace_R, H5S_SELECT_SET_F, int((/0,0,offset/),HSSIZE_T), length, hdfier) )
-  H5CALL( sphdf5, h5dwrite_f, (dset_id_R, H5T_NATIVE_DOUBLE, data(3,0:Nz-1,1:nPpts), dims_singleTraj, hdfier, &
+  H5CALL( sphdf5, h5dwrite_f, (dset_id_R, H5T_NATIVE_DOUBLE, data(3,1:Nz,1:nPpts), dims_singleTraj, hdfier, &
   &               file_space_id=filespace_R, mem_space_id=memspace_R ) )
 
   H5CALL( sphdf5, h5sselect_hyperslab_f, (filespace_Z, H5S_SELECT_SET_F, int((/0,0,offset/),HSSIZE_T), length, hdfier) )
-  H5CALL( sphdf5, h5dwrite_f, (dset_id_Z, H5T_NATIVE_DOUBLE, data(4,0:Nz-1,1:nPpts), dims_singleTraj, hdfier, &
+  H5CALL( sphdf5, h5dwrite_f, (dset_id_Z, H5T_NATIVE_DOUBLE, data(4,1:Nz,1:nPpts), dims_singleTraj, hdfier, &
   &               file_space_id=filespace_Z, mem_space_id=memspace_Z ) )
 
   H5CALL( sphdf5, h5sselect_hyperslab_f, (filespace_success, H5S_SELECT_SET_F, int((/offset/),HSSIZE_T), int((/1/), HSIZE_T), hdfier) )
