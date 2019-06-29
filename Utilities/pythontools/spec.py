@@ -9,9 +9,10 @@ Created on Sat May 25 18:01:55 2019
 import h5py
 
 # reader class for Stepped Pressure Equilibrium Code output file
-# Hudson et al., Physics of Plasmas 19, 112502 (2012); doi: 10.1063/1.4765691
+# S. Hudson et al., Physics of Plasmas 19, 112502 (2012); doi: 10.1063/1.4765691
 class SPEC:
-
+    
+    # use as s = SPEC(filename), e.g. s=SPEC("ext.h5")
     def __init__(self, *args, **kwargs):
         # args[0] should always be the name of a file or an item inside the root object
         # if args[0] is not a filename, kwagrs['content'] should be the content to be added
@@ -27,10 +28,8 @@ class SPEC:
         if (_content != None):
             for key in _content:
                 if isinstance(_content[key], h5py.Group):
-#                    print("group '"+key+"'")
                     setattr(self, key, SPEC(content=_content[key]))
                 elif isinstance(_content[key], h5py.Dataset):
-#                    print("dataset '"+key+"' is '"+str(_content[key])+"'")
                     shape = _content[key].shape
                     nDim = len(shape)
                     if nDim==1:
@@ -40,13 +39,38 @@ class SPEC:
                             setattr(self, key, _content[key][:])
                     elif nDim==2:
                         setattr(self, key, _content[key][:,:])
+                    elif nDim==3:
+                        setattr(self, key, _content[key][:,:,:])
                     else:
-                        print("3 dim not supported: '"+key+"'")
-
+                        print(str(nDim)+"-dim objects not supported yet: '"+key+"'")
         
+        if isinstance(_content, h5py.File):
+            _content.close()
+            
+    def __iter__(self):
+        return iter(self.__dict__)
+    def __next__(self):
+        return next(self.__dict__)
+    
+    def inventory(self, prefix=""):
+        _prefix = ""
+        if prefix != "":
+            _prefix = prefix+"."
+        
+        for a in self:
+            try:
+                # recurse into member
+                getattr(self, a).inventory(prefix=_prefix+a)
+            except:
+                # print item name
+                print(_prefix+a)
+                
 if __name__=="__main__":
     
-    filename = "/home/IPP-HGW/jons/04_PhD/00_programs/SPEC/InputFiles/TestCases/G3V02L1Fi.001.h5"
+    #filename = "/home/IPP-HGW/jons/04_PhD/00_programs/SPEC/InputFiles/TestCases/G3V02L1Fi.001.h5"
+    filename = "/home/jonathan/Uni/04_PhD/00_programs/SPEC/SPEC/InputFiles/TestCases/G3V01L0Fi.002.h5"
 
     s=SPEC(filename)
-    print(s)
+    
+    # Show me what you got!
+    s.inventory()

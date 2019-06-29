@@ -114,7 +114,7 @@ subroutine pp00aa( lvol, numTrajTotal )
   else                        ; lnPtrj = 2 * Lrad(lvol) ! adapted  Poincare resolution;
   endif
 
-  if( lnPtrj.le.0 ) goto 9999
+  if( lnPtrj.le.0 ) goto 9999 ! this also skips writing the grid and restart file; since 9999 is at the end of xspech?
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

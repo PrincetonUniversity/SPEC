@@ -652,7 +652,7 @@ program xspech
     endif
    endif ! myid.eq.modulo(vvol-1,ncpu)
 
-   ! number of trajectories
+   ! number of trajectories needs to be computed here as well to correctly increate numTrajTotal if needed
    if( nPtrj(vvol).ge.0 ) then ; lnPtrj =    nPtrj(vvol) ! selected Poincare resolution;
    else                        ; lnPtrj = 2 * Lrad(vvol) ! adapted  Poincare resolution;
    endif

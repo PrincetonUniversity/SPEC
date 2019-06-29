@@ -25,6 +25,7 @@ dspec
 InputFiles/**/*.h5
 InputFiles/**/*.sp.end
 InputFiles/**/*.sp.DF
+**/__pycache__
 
 # vim temprary files
 *.swo
