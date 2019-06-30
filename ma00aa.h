@@ -191,15 +191,12 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
    
    halfoversbar(1:lquad) = half / sbar(1:lquad)
    
-   do jquad = 1, lquad ; sbarhim(jquad,1:mn) = sbar(jquad)**regumm(1:mn) ! pre-calculation of regularization factor; 12 Sep 13;
-   enddo
-   
    do jquad = 1, lquad ! Gaussian quadrature loop;
     
     lss = gaussianabscissae(jquad,lvol) ; jthweight = gaussianweight(jquad,lvol)
 
-    call get_zernike(lss, lrad, mpol, zernike)
-    
+    call get_zernike(sbar(jquad), lrad, mpol, zernike(:,:,0:1)) ! use Zernike polynomials 29 Jun 19;
+
     WCALL( ma00aa, metrix,( lvol, lss ) ) ! compute metric elements; 16 Jan 13;
 
     do mn2 = 1, mn2_max
@@ -208,8 +205,8 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
       
       kks = kijs(ii,jj,0) !; kds = kijs(ii,jj,1) 
       kka = kija(ii,jj,0) !; kda = kija(ii,jj,1) 
-      ikds = jthweight * sbarhim(jquad,ii)* sbarhim(jquad,jj) / kijs(ii,jj,1)
-      ikda = jthweight * sbarhim(jquad,ii)* sbarhim(jquad,jj) / kija(ii,jj,1)
+      ikds = jthweight / kijs(ii,jj,1)
+      ikda = jthweight / kija(ii,jj,1)
 
       foocc = ( + goomne(kks) * abs(ikds) + goomne(kka) * abs(ikda) )
       foocs = ( - goomno(kks) *     ikds  + goomno(kka) *     ikda  )
@@ -248,14 +245,19 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
 
       do lp2 = 1, lp2_max 
         ll = mod(lp2-1,lrad+1)
-        pp = floor(real(lp2-1) * ilrad) 
-       
-        Tl =                                      cheby(ll,0)                 ! this is the only difference for Lcoordinatesingularity;
-        Dl = ( regumm(ii) * halfoversbar(jquad) * cheby(ll,0) + cheby(ll,1) ) ! this is the only difference for Lcoordinatesingularity;
+        pp = floor(real(lp2-1) * ilrad)
+
+        if (ll < im(ii)) cycle ! zernike only non-zero for ll>=ii
+        if (pp < im(jj)) cycle ! zernike only non-zero for pp>=jj
+        if (mod(ll+im(ii),2)/=0) cycle ! zernike only non-zero if ll and ii have the same parity
+        if (mod(pp+im(jj),2)/=0) cycle ! zernike only non-zero if pp and jj have the same parity
+
+        Tl = zernike(ll, im(ii), 0)         ! use Zernike polynomials 29 Jun 19;
+        Dl = zernike(ll, im(ii), 1) * half  ! use Zernike polynomials 29 Jun 19;
           
-        Tp =                                       cheby(pp,0)                 ! this is the only difference for Lcoordinatesingularity;
-        Dp =  ( regumm(jj) * halfoversbar(jquad) * cheby(pp,0) + cheby(pp,1) ) ! this is the only difference for Lcoordinatesingularity;
-        
+        Tp = zernike(pp, im(jj), 0)         ! use Zernike polynomials 29 Jun 19;
+        Dp = zernike(pp, im(jj), 1) * half  ! use Zernike polynomials 29 Jun 19;
+
         TlTp = Tl * Tp
         TlDp = Tl * Dp
         DlTp = Dl * Tp

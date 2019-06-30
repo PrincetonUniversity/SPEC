@@ -15,7 +15,7 @@ subroutine preset
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  use constants, only : zero
+  use constants, only : zero, one
   
   use numerical, only : sqrtmachprec, vsmall, small
   
@@ -29,12 +29,14 @@ subroutine preset
   
   use fftw_interface
 
+  use zernik
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   LOCALS
   
   INTEGER   :: innout, idof, jk, ll, ii, ifail, ideriv, vvol, mi, ni, mj, nj, mk, nk, mimj, ninj, mkmj, nknj, jj, kk, lvol, mm, nn, imn
-  INTEGER   :: lquad, igauleg, maxIquad, Mrad, jquad, Lcurvature
+  INTEGER   :: lquad, igauleg, maxIquad, Mrad, jquad, Lcurvature, zerdof
   REAL      :: teta, zeta, arg, lss, cszeta(0:1), error
   
   BEGIN(preset)
@@ -192,6 +194,7 @@ subroutine preset
 !latex \end{enumerate}
 
   SALLOCATE( TT, (0:Mrad,0:1,0:1), zero )
+  SALLOCATE(RTT, (0:Lrad(1),0:Mpol,0:1,0:1), zero )
   
   do innout = 0, 1 ; lss = two * innout - one
    
@@ -200,7 +203,10 @@ subroutine preset
    enddo
    
   enddo ! end of do innout = 0, 1 ;
-  
+
+  call get_zernike( zero, Lrad(1), Mpol, RTT(:,:,0,:))
+  call get_zernike( one, Lrad(1), Mpol, RTT(:,:,1,:))
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 !latex \subsubsection{\type{ImagneticOK(1:Mvol)} : Beltrami/vacuum error flag;}
@@ -419,7 +425,7 @@ subroutine preset
 !latex \end{enumerate}
 
   SALLOCATE( cheby, (0:Mrad,0:2), zero )
-  SALLOCATE( zernike, (0:Mrad, 0:Mpol, 0:2), zero )
+  SALLOCATE( zernike, (0:Lrad(1), 0:Mpol, 0:2), zero )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -599,9 +605,20 @@ subroutine preset
    
    LREGION(vvol)
    
-   if( Lcoordinatesingularity ) then !                                     a    c      b        d      e      f      g   h
-    if( YESstellsym ) NAdof(vvol) = 2 * ( mn        ) * ( Lrad(vvol)+1 ) + mn        + Ntor+1        + mn-1        + 1 + 0
-    if( NOTstellsym ) NAdof(vvol) = 2 * ( mn + mn-1 ) * ( Lrad(vvol)+1 ) + mn + mn-1 + Ntor+1 + Ntor + mn-1 + mn-1 + 1 + 0
+   if( Lcoordinatesingularity ) then 
+    zerdof = 0                                       ! count Zernike degree of freedom 30 Jun 19
+    do ii = 1, Mpol                                  ! for m>0
+     do jj = ii, Lrad(vvol), 2
+      zerdof = zerdof + 2 * ntor + 1                 ! plus and minus sign for n>1, unique for n==0
+      if( NOTstellsym ) zerdof = zerdof + 2*ntor + 1 ! plus and minus sign for n
+     enddo
+    enddo
+    do jj = 0, Lrad(vvol), 2                         ! for m==0
+     zerdof = zerdof + ntor + 1                      ! minus sign for n
+    enddo
+                                     !                                     a    c      b        d      e      f      g   h
+    if( YESstellsym ) NAdof(vvol) = 2 * zerdof                           + mn        + Ntor+1        + mn-1        + 1 + 0
+    if( NOTstellsym ) NAdof(vvol) = 2 * zerdof                           + mn + mn-1 + Ntor+1 + Ntor + mn-1 + mn-1 + 1 + 0
    else ! .not.Lcoordinatesingularity;                                     a    c      b        d      e      f      g   h
     if( YESstellsym ) NAdof(vvol) = 2 * ( mn        ) * ( Lrad(vvol)+1 ) + mn        + mn            + mn-1        + 1 + 1  
     if( NOTstellsym ) NAdof(vvol) = 2 * ( mn + mn-1 ) * ( Lrad(vvol)+1 ) + mn + mn-1 + mn     + mn-1 + mn-1 + mn-1 + 1 + 1
@@ -662,11 +679,12 @@ subroutine preset
     do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
      
      do ll = 0, Lrad(vvol)
-      ;                                     ; idof = idof + 1 ; Ate(vvol,0,ii)%i(ll) = idof
+      if (ll>=mi .and. mod(mi+ll,2)==0)then ; idof = idof + 1 ; Ate(vvol,0,ii)%i(ll) = idof ! Zernike 30 Jun 19
       ;                                     ; idof = idof + 1 ; Aze(vvol,0,ii)%i(ll) = idof
       if( NOTstellsym .and. ii.gt.1 ) then  ; idof = idof + 1 ; Ato(vvol,0,ii)%i(ll) = idof
        ;                                    ; idof = idof + 1 ; Azo(vvol,0,ii)%i(ll) = idof
-      endif
+      endif ! NOTstellsym
+      endif ! Zernike 
      enddo ! end of do ll; 17 Jan 13;
      ;                                     ; idof = idof + 1 ; Lma(vvol,  ii)       = idof
      if(  mi.eq.0                   ) then ; idof = idof + 1 ; Lmb(vvol,  ii)       = idof ! 18 May 16;
