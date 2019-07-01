@@ -65,7 +65,7 @@ subroutine sc00aa( lvol, Ntz )
                         efmn, ofmn, cfmn, sfmn, evmn, odmn, comn, simn, &
                         Nt, Nz, &
                         Ate, Aze, Ato, Azo, &
-                        TT, &
+                        TT, RTT,&
                         sg, guvij, Rij, Zij
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -116,25 +116,37 @@ subroutine sc00aa( lvol, Ntz )
    
    do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over Fourier harmonics; 13 Sep 13;
     
-    if( Lcoordinatesingularity ) then ; mfactor = regumm(ii) * half ! regularity factor; 01 Jul 14;
-    else                              ; mfactor = zero
-    endif
-    
-    do ll = 0, Lrad(lvol) ! loop over Chebyshev polynomials; Lrad is the radial resolution;
-     ;                      ; efmn(ii) = efmn(ii) + Ate(lvol,ideriv,ii)%s(ll) * ( TT(ll,innout,1) + mfactor ) ! B^\t; 01 Jul 14;
-     ;                      ; cfmn(ii) = cfmn(ii) + Aze(lvol,ideriv,ii)%s(ll) * ( TT(ll,innout,1) + mfactor ) ! B^\z; 01 Jul 14;
-     ;                      ; odmn(ii) = odmn(ii) + Ate(lvol,ideriv,ii)%s(ll) * ( TT(ll,innout,1) + mfactor ) * ni & 
-                                                  + Aze(lvol,ideriv,ii)%s(ll) * ( TT(ll,innout,1) + mfactor ) * mi
-     if( NOTstellsym ) then ; ofmn(ii) = ofmn(ii) + Ato(lvol,ideriv,ii)%s(ll) * ( TT(ll,innout,1) + mfactor )
-      ;                     ; sfmn(ii) = sfmn(ii) + Azo(lvol,ideriv,ii)%s(ll) * ( TT(ll,innout,1) + mfactor )
-      ;                     ; evmn(ii) = evmn(ii) - Ato(lvol,ideriv,ii)%s(ll) * ( TT(ll,innout,1) + mfactor ) * ni & 
-                                                  - Azo(lvol,ideriv,ii)%s(ll) * ( TT(ll,innout,1) + mfactor ) * mi
-    !else                   ; ofmn(ii) = zero ! defaulted to zero above; 11 Mar 16;
-    ! ;                     ; sfmn(ii) = zero
-    ! ;                     ; evmn(ii) = zero
-     endif
-    enddo ! end of do ll; 20 Feb 13;
-    
+    if (Lcoordinatesingularity) then
+      do ll = mi, Lrad(lvol), 2 ! loop over Zernike polynomials; Lrad is the radial resolution; 01 Jul 19
+      ;                      ; efmn(ii) = efmn(ii) + Ate(lvol,ideriv,ii)%s(ll) * ( RTT(ll,mi,innout,1)*half) ! B^\t; 01 Jul 19;
+      ;                      ; cfmn(ii) = cfmn(ii) + Aze(lvol,ideriv,ii)%s(ll) * ( RTT(ll,mi,innout,1)*half) ! B^\z; 01 Jul 19;
+      ;                      ; odmn(ii) = odmn(ii) + Ate(lvol,ideriv,ii)%s(ll) * ( RTT(ll,mi,innout,1)*half) * ni & 
+                                                    + Aze(lvol,ideriv,ii)%s(ll) * ( RTT(ll,mi,innout,1)*half) * mi
+      if( NOTstellsym ) then ; ofmn(ii) = ofmn(ii) + Ato(lvol,ideriv,ii)%s(ll) * ( RTT(ll,mi,innout,1)*half)
+        ;                     ; sfmn(ii) = sfmn(ii) + Azo(lvol,ideriv,ii)%s(ll) * ( RTT(ll,mi,innout,1)*half)
+        ;                     ; evmn(ii) = evmn(ii) - Ato(lvol,ideriv,ii)%s(ll) * ( RTT(ll,mi,innout,1)*half) * ni & 
+                                                    - Azo(lvol,ideriv,ii)%s(ll) * ( RTT(ll,mi,innout,1)*half) * mi
+      !else                   ; ofmn(ii) = zero ! defaulted to zero above; 11 Mar 16;
+      ! ;                     ; sfmn(ii) = zero
+      ! ;                     ; evmn(ii) = zero
+      endif
+      enddo ! end of do ll; 20 Feb 13;
+    else
+      do ll = 0, Lrad(lvol) ! loop over Chebyshev polynomials; Lrad is the radial resolution;
+      ;                      ; efmn(ii) = efmn(ii) + Ate(lvol,ideriv,ii)%s(ll) * ( TT(ll,innout,1)) ! B^\t; 01 Jul 14;
+      ;                      ; cfmn(ii) = cfmn(ii) + Aze(lvol,ideriv,ii)%s(ll) * ( TT(ll,innout,1)) ! B^\z; 01 Jul 14;
+      ;                      ; odmn(ii) = odmn(ii) + Ate(lvol,ideriv,ii)%s(ll) * ( TT(ll,innout,1)) * ni & 
+                                                    + Aze(lvol,ideriv,ii)%s(ll) * ( TT(ll,innout,1)) * mi
+      if( NOTstellsym ) then ; ofmn(ii) = ofmn(ii) + Ato(lvol,ideriv,ii)%s(ll) * ( TT(ll,innout,1))
+        ;                     ; sfmn(ii) = sfmn(ii) + Azo(lvol,ideriv,ii)%s(ll) * ( TT(ll,innout,1))
+        ;                     ; evmn(ii) = evmn(ii) - Ato(lvol,ideriv,ii)%s(ll) * ( TT(ll,innout,1)) * ni & 
+                                                    - Azo(lvol,ideriv,ii)%s(ll) * ( TT(ll,innout,1)) * mi
+      !else                   ; ofmn(ii) = zero ! defaulted to zero above; 11 Mar 16;
+      ! ;                     ; sfmn(ii) = zero
+      ! ;                     ; evmn(ii) = zero
+      endif
+      enddo ! end of do ll; 20 Feb 13;
+    end if ! Lcoordinatesingularity; 01 Jul 19
    enddo ! end of do ii; 20 Feb 13;
    
    call invfft( mn, im, in, efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt(1:Ntz), dAz(1:Ntz) )

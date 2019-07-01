@@ -88,7 +88,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
                         glambda, & ! global lambda: initial guesses will be saved; 21 Apr 13;
                         Ntz, hNt, hNz, &
                         iotakkii, iotaksub, iotakadd, iotaksgn, &
-                        Ate, Aze, Ato, Azo, TT, &
+                        Ate, Aze, Ato, Azo, TT, RTT, &
                         Lcoordinatesingularity, Lvacuumregion, regumm
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -175,21 +175,31 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
     
     do ii = 1, mn ! loop over Fourier harmonics; 20 Apr 13;
      
-     if( Lcoordinatesingularity ) then ; mfactor = regumm(ii) * half ! include radial regularization factor near coordinate origin; 21 Apr 13;
-     else                              ; mfactor = zero
-     endif
-     
-     do ll = 0, Lrad(lvol) ! loop over Chebyshev polynomials; 20 Apr 13;
-      
-      ;lAte(ii,id) = lAte(ii,id) + Ate(lvol,id,ii)%s(ll) * ( TT(ll,innout,1) + mfactor ) ! compute radial derivative of vector potential; 20 Apr 13;
-      ;lAze(ii,id) = lAze(ii,id) - Aze(lvol,id,ii)%s(ll) * ( TT(ll,innout,1) + mfactor )
-      if( NOTstellsym ) then
-       lAto(ii,id) = lAto(ii,id) + Ato(lvol,id,ii)%s(ll) * ( TT(ll,innout,1) + mfactor )
-       lAzo(ii,id) = lAzo(ii,id) - Azo(lvol,id,ii)%s(ll) * ( TT(ll,innout,1) + mfactor )
-      endif
-      
-     enddo ! end of do ll; 30 Jan 13;
-     
+     mi = im(ii)
+
+     if (Lcoordinatesingularity) then
+      do ll = mi, Lrad(lvol), 2 ! loop over Zernike polynomials; 01 Jul 19;
+        
+        ;lAte(ii,id) = lAte(ii,id) + Ate(lvol,id,ii)%s(ll) * RTT(ll,mi,innout,1) * half
+        ;lAze(ii,id) = lAze(ii,id) - Aze(lvol,id,ii)%s(ll) * RTT(ll,mi,innout,1) * half
+        if( NOTstellsym ) then
+        lAto(ii,id) = lAto(ii,id) + Ato(lvol,id,ii)%s(ll) * RTT(ll,mi,innout,1) * half
+        lAzo(ii,id) = lAzo(ii,id) - Azo(lvol,id,ii)%s(ll) * RTT(ll,mi,innout,1) * half
+        endif
+        
+      enddo ! end of do ll; 30 Jan 13;
+     else
+      do ll = 0, Lrad(lvol) ! loop over Chebyshev polynomials; 20 Apr 13;
+        
+        ;lAte(ii,id) = lAte(ii,id) + Ate(lvol,id,ii)%s(ll) * TT(ll,innout,1) ! compute radial derivative of vector potential; 20 Apr 13;
+        ;lAze(ii,id) = lAze(ii,id) - Aze(lvol,id,ii)%s(ll) * TT(ll,innout,1)
+        if( NOTstellsym ) then
+        lAto(ii,id) = lAto(ii,id) + Ato(lvol,id,ii)%s(ll) * TT(ll,innout,1)
+        lAzo(ii,id) = lAzo(ii,id) - Azo(lvol,id,ii)%s(ll) * TT(ll,innout,1)
+        endif
+        
+      enddo ! end of do ll; 30 Jan 13;
+     end if ! Lcoordinatesingularity; 01 Jul 19;
     enddo ! end of do ii; 30 Jan 13; ! Fourier harmonics, and their derivatives, have been constructed; 20 Apr 13;
     
     if( Lsparse.gt.0 ) then ! will construct transformation to straight-field line angle in real space; 24 Apr 13;

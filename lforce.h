@@ -163,7 +163,7 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dAt, dAz, XX, YY, length, DDl, MMl
                         efmn, ofmn, cfmn, sfmn, evmn, odmn, comn, simn, &
                         Nt, Nz, &
                         Ate, Aze, Ato, Azo, &
-                        TT, &
+                        TT, RTT, &
                         sg, guvij, iRij, iZij, dRij, dZij, tRij, tZij, &
                         mmpp, &
                         Bemn, Bomn, Iomn, Iemn, Somn, Semn, &
@@ -179,7 +179,7 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dAt, dAz, XX, YY, length, DDl, MMl
 
   REAL                 :: IIl(1:Ntz), length(1:Ntz), dLL(1:Ntz)
   
-  INTEGER              :: Lcurvature, ii, jj, kk, ll, ifail, ivol, lnn!, oicons
+  INTEGER              :: Lcurvature, ii, jj, kk, ll, ifail, ivol, lnn, mi!, oicons
   REAL                 :: dBB(1:Ntz), lss, mfactor
   
   REAL                 :: dAs(1:Ntz)!, dRdt(-1:1,0:1), dZdt(-1:1,0:1)
@@ -226,18 +226,24 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dAt, dAz, XX, YY, length, DDl, MMl
   
   do ii = 1, mn ! loop over Fourier harmonics; 13 Sep 13;
    
-   if( Lcoordinatesingularity ) then ; mfactor = regumm(ii) * half ! only required at outer interface, where \bar s = 1; 15 Jan 15;
-   else                              ; mfactor = zero
-   endif
-   
-   do ll = 0, Lrad(lvol) ! loop over Chebyshev polynomials; Lrad is the radial resolution;
-    ;                      ; efmn(ii) = efmn(ii) +          Ate(lvol,ideriv,ii)%s(ll) * ( TT(ll,iocons,1) + mfactor ) ! ideriv labels deriv. wrt mu, pflux; 
-    ;                      ; cfmn(ii) = cfmn(ii) +          Aze(lvol,ideriv,ii)%s(ll) * ( TT(ll,iocons,1) + mfactor )
-    if( NOTstellsym ) then ; ofmn(ii) = ofmn(ii) +          Ato(lvol,ideriv,ii)%s(ll) * ( TT(ll,iocons,1) + mfactor )
-     ;                     ; sfmn(ii) = sfmn(ii) +          Azo(lvol,ideriv,ii)%s(ll) * ( TT(ll,iocons,1) + mfactor )
-    endif
-   enddo ! end of do ll; 20 Feb 13;
-    
+   if( Lcoordinatesingularity ) then
+    mi = im(ii)
+    do ll = mi, Lrad(lvol),2 ! loop over Zernike polynomials; Lrad is the radial resolution; 01 Jul 19;
+      ;                      ; efmn(ii) = efmn(ii) +          Ate(lvol,ideriv,ii)%s(ll) * RTT(ll,mi,iocons,1) * half
+      ;                      ; cfmn(ii) = cfmn(ii) +          Aze(lvol,ideriv,ii)%s(ll) * RTT(ll,mi,iocons,1) * half
+      if( NOTstellsym ) then ; ofmn(ii) = ofmn(ii) +          Ato(lvol,ideriv,ii)%s(ll) * RTT(ll,mi,iocons,1) * half
+      ;                      ; sfmn(ii) = sfmn(ii) +          Azo(lvol,ideriv,ii)%s(ll) * RTT(ll,mi,iocons,1) * half
+      endif
+    enddo ! end of do ll; 20 Feb 13;
+   else
+    do ll = 0, Lrad(lvol) ! loop over Chebyshev polynomials; Lrad is the radial resolution;
+      ;                      ; efmn(ii) = efmn(ii) +          Ate(lvol,ideriv,ii)%s(ll) * TT(ll,iocons,1) ! ideriv labels deriv. wrt mu, pflux; 
+      ;                      ; cfmn(ii) = cfmn(ii) +          Aze(lvol,ideriv,ii)%s(ll) * TT(ll,iocons,1)
+      if( NOTstellsym ) then ; ofmn(ii) = ofmn(ii) +          Ato(lvol,ideriv,ii)%s(ll) * TT(ll,iocons,1)
+      ;                     ; sfmn(ii) = sfmn(ii) +          Azo(lvol,ideriv,ii)%s(ll) * TT(ll,iocons,1)
+      endif
+    enddo ! end of do ll; 20 Feb 13;
+   end if ! Lcoordinatesingularity; 01 Jul 19;
   enddo ! end of do ii; 20 Feb 13;
 
   call invfft( mn, im, in, efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt(1:Ntz), dAz(1:Ntz) ) ! map to real space;
