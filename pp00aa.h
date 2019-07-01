@@ -144,9 +144,7 @@ subroutine pp00aa( lvol )
   
   do itrj = ioff, lnPtrj ! initialize Poincare plot with trajectories regularly spaced between interfaces along \t=0;
    
-   if( Lcoordinatesingularity ) then ; sti(1:2) = (/ - one + itrj**2 * two / lnPtrj**2, zero /) ! equal increments in rr = \sqrt(ss) ; 08 Feb 16;
-   else                              ; sti(1:2) = (/ - one + itrj    * two / lnPtrj   , zero /)
-   endif
+   sti(1:2) = (/ - one + itrj    * two / lnPtrj   , zero /)
    
    if( itrj.eq.     0 ) sti(1) = - one ! avoid machine precision errors; 08 Feb 16;
    if( itrj.eq.lnPtrj ) sti(1) =   one ! avoid machine precision errors; 08 Feb 16;

@@ -43,16 +43,17 @@ subroutine bfield( zeta, st, Bst ) ! the format of this subroutine is constraine
   
   use fileunits, only : ounit
   
-  use inputlist, only : Wmacros, Wbfield, Lrad
+  use inputlist, only : Wmacros, Wbfield, Lrad, Mpol
   
   use cputiming, only : Tbfield
   
   use allglobal, only : myid, ncpu, cpus, mn, im, in, halfmm, regumm, &
                         ivol, gBzeta, Ate, Aze, Ato, Azo, &
-                        NOTstellsym, cheby, &
+                        NOTstellsym, cheby, zernike, &
                         Lcoordinatesingularity, Mvol, &
                         Node ! 17 Dec 15;
   
+  use zernik
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   LOCALS
@@ -89,12 +90,16 @@ subroutine bfield( zeta, st, Bst ) ! the format of this subroutine is constraine
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  cheby(0,0:1) = (/ one, zero /) ! Chebyshev initialization; 16 Jan 13;
-  cheby(1,0:1) = (/ lss,  one /)
-  do ll = 2, Lrad(lvol) ; cheby(ll,0:1) = (/ two * lss * cheby(ll-1,0)                             - cheby(ll-2,0) , & ! Chebyshev recurrence; 17 Dec 15;
-                                             two       * cheby(ll-1,0) + two * lss * cheby(ll-1,1) - cheby(ll-2,1)   /)
-  enddo
-  
+  if (Lcoordinatesingularity) then
+    call get_zernike(sbar, Lrad(lvol), Mpol, zernike(:,:,0:1))
+  else
+    cheby(0,0:1) = (/ one, zero /) ! Chebyshev initialization; 16 Jan 13;
+    cheby(1,0:1) = (/ lss,  one /)
+    do ll = 2, Lrad(lvol) ; cheby(ll,0:1) = (/ two * lss * cheby(ll-1,0)                             - cheby(ll-2,0) , & ! Chebyshev recurrence; 17 Dec 15;
+                                              two       * cheby(ll-1,0) + two * lss * cheby(ll-1,1) - cheby(ll-2,1)   /)
+    enddo
+  end if
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   SALLOCATE( TT, (0:Lrad(lvol),0:1), zero ) ! unless a regularization factor is required, TT = chebyshev polynomial; 17 Dec 15;
@@ -113,11 +118,7 @@ subroutine bfield( zeta, st, Bst ) ! the format of this subroutine is constraine
 
     FATAL( bfield, abs(sbar).lt.vsmall, need to avoid divide-by-zero )
 
-    if( mi.eq.0 ) then ; sbarhm(0) = one              ; sbarhm(1) = zero
-    else               ; sbarhm(0) = sbar**regumm(ii) ; sbarhm(1) = half * regumm(ii) * sbarhm(0) / sbar 
-    endif   
-
-    do ll = 0, Lrad(lvol) ; TT(ll,0:1) = (/ sbarhm(0) * cheby(ll,0), sbarhm(0) * cheby(ll,1) + sbarhm(1) * cheby(ll,0) /)
+    do ll = 0, Lrad(lvol) ; TT(ll,0:1) = (/        zernike(ll,mi,0),        zernike(ll,mi,1)                          /)
     enddo
 
    else
