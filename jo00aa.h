@@ -64,20 +64,22 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
 
   use fileunits, only : ounit, lunit
 
-  use inputlist, only : Wmacros, Wjo00aa, ext, Nvol, Lrad, mu
+  use inputlist, only : Wmacros, Wjo00aa, ext, Nvol, Lrad, mu, mpol
 
   use cputiming, only : Tjo00aa
 
   use allglobal, only : myid, cpus, ivol, &
                         im, in, regumm, &
                         Mvol, &
-                        cheby, &
+                        cheby, zernike, &
                         Ate, Aze, Ato, Azo, &
                         sg, guvij, Rij, Zij, &
                         Nt, Nz, efmn, ofmn, cfmn, sfmn, &
                         NOTstellsym, &
                         Lcoordinatesingularity, &
                         beltramierror  
+  
+  use zernik
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -85,7 +87,7 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
   
   INTEGER, intent(in) :: lvol, Ntz, lquad, mn ! these are really global, but are included in argument list to remove allocations;
   
-  INTEGER             :: jquad, Lcurvature, ll, ii, jj, kk, uu, ideriv, twolquad
+  INTEGER             :: jquad, Lcurvature, ll, ii, jj, kk, uu, ideriv, twolquad, mm
   
   REAL                :: lss, sbar, sbarhim(0:2), gBu(1:Ntz,1:3,0:3), gJu(1:Ntz,1:3), jerror(1:3)
   
@@ -160,14 +162,18 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
    
    WCALL( jo00aa, coords, ( lvol, lss, Lcurvature, Ntz, mn ) ) ! returns coordinates, metrics, . . .
    
-   ;                     ; cheby( 0,0:2) = (/ one, zero, zero /) ! T_0: Chebyshev initialization; function, 1st-derivative, 2nd-derivative;
-   ;                     ; cheby( 1,0:2) = (/ lss,  one, zero /) ! T_1: Chebyshev initialization; function, 1st-derivative, 2nd-derivative;
-   do ll = 2, Lrad(lvol) ; cheby(ll,0:2) = (/ two * lss * cheby(ll-1,0)                                                         - cheby(ll-2,0) , &
-                                              two       * cheby(ll-1,0) + two * lss * cheby(ll-1,1)                             - cheby(ll-2,1) , &
-                                              two       * cheby(ll-1,1) + two       * cheby(ll-1,1) + two * lss * cheby(ll-1,2) - cheby(ll-2,2) /)
-   enddo ! end of do ll; 20 Jun 14;
-    
-   Atemn(1:mn,0:2) = zero ! initialize summation over Chebyshev polynomials;
+   if (Lcoordinatesingularity) then ! Zernike 1 Jul 2019
+     call get_zernike_d2(sbar, lvol, mpol, zernike)
+   else
+     ;                     ; cheby( 0,0:2) = (/ one, zero, zero /) ! T_0: Chebyshev initialization; function, 1st-derivative, 2nd-derivative;
+     ;                     ; cheby( 1,0:2) = (/ lss,  one, zero /) ! T_1: Chebyshev initialization; function, 1st-derivative, 2nd-derivative;
+     do ll = 2, Lrad(lvol) ; cheby(ll,0:2) = (/ two * lss * cheby(ll-1,0)                                                         - cheby(ll-2,0) , &
+                                                two       * cheby(ll-1,0) + two * lss * cheby(ll-1,1)                             - cheby(ll-2,1) , &
+                                                two       * cheby(ll-1,1) + two       * cheby(ll-1,1) + two * lss * cheby(ll-1,2) - cheby(ll-2,2) /)
+     enddo ! end of do ll; 20 Jun 14;
+   endif
+
+   Atemn(1:mn,0:2) = zero ! initialize summation over Chebyshev/Zernike polynomials;
    Azemn(1:mn,0:2) = zero
    if( NOTstellsym ) then
    Atomn(1:mn,0:2) = zero
@@ -177,42 +183,70 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
    Azomn(1:mn,0:2) = zero
    endif
    
-   do ll = 0, Lrad(lvol) ! radial (Chebyshev) resolution of magnetic vector potential;
-   
-    do ii = 1, mn  ! Fourier resolution of magnetic vector potential;
-     
-!latex \item The Fourier components of the vector potential given in \Eqn{At} and \Eqn{Az}, and their first and second radial derivatives, are summed.
+  !latex \item The Fourier components of the vector potential given in \Eqn{At} and \Eqn{Az}, and their first and second radial derivatives, are summed.
 
-     if( Lcoordinatesingularity ) then ! compute regularization factor; 10 Jan 2018;
-      sbarhim(0) = sbar**regumm(ii) ; sbarhim(1) = half * regumm(ii) * sbarhim(0) / sbar ; sbarhim(2) = half * ( regumm(ii)-one ) * sbarhim(1) / sbar
-     else                              
-      sbarhim(0) = one              ; sbarhim(1) = zero                                  ; sbarhim(2) = zero
-     endif
-     
-     ;Atemn(ii,0) = Atemn(ii,0) + Ate(lvol,ideriv,ii)%s(ll) * ( cheby(ll,0) * sbarhim(0)                                                             )
-     ;Atemn(ii,1) = Atemn(ii,1) + Ate(lvol,ideriv,ii)%s(ll) * ( cheby(ll,1) * sbarhim(0)                                  + cheby(ll,0) * sbarhim(1) )
-     ;Atemn(ii,2) = Atemn(ii,2) + Ate(lvol,ideriv,ii)%s(ll) * ( cheby(ll,2) * sbarhim(0) + two * cheby(ll,1) * sbarhim(1) + cheby(ll,0) * sbarhim(2) )
-
-     ;Azemn(ii,0) = Azemn(ii,0) + Aze(lvol,ideriv,ii)%s(ll) * ( cheby(ll,0) * sbarhim(0)                                                             )
-     ;Azemn(ii,1) = Azemn(ii,1) + Aze(lvol,ideriv,ii)%s(ll) * ( cheby(ll,1) * sbarhim(0)                                  + cheby(ll,0) * sbarhim(1) )
-     ;Azemn(ii,2) = Azemn(ii,2) + Aze(lvol,ideriv,ii)%s(ll) * ( cheby(ll,2) * sbarhim(0) + two * cheby(ll,1) * sbarhim(1) + cheby(ll,0) * sbarhim(2) )
-
-     if( NOTstellsym ) then
-
-      Atomn(ii,0) = Atomn(ii,0) + Ato(lvol,ideriv,ii)%s(ll) * ( cheby(ll,0) * sbarhim(0)                                                             )
-      Atomn(ii,1) = Atomn(ii,1) + Ato(lvol,ideriv,ii)%s(ll) * ( cheby(ll,1) * sbarhim(0)                                  + cheby(ll,0) * sbarhim(1) )
-      Atomn(ii,2) = Atomn(ii,2) + Ato(lvol,ideriv,ii)%s(ll) * ( cheby(ll,2) * sbarhim(0) + two * cheby(ll,1) * sbarhim(1) + cheby(ll,0) * sbarhim(2) )
-
-      Azomn(ii,0) = Azomn(ii,0) + Azo(lvol,ideriv,ii)%s(ll) * ( cheby(ll,0) * sbarhim(0)                                                             )
-      Azomn(ii,1) = Azomn(ii,1) + Azo(lvol,ideriv,ii)%s(ll) * ( cheby(ll,1) * sbarhim(0)                                  + cheby(ll,0) * sbarhim(1) )
-      Azomn(ii,2) = Azomn(ii,2) + Azo(lvol,ideriv,ii)%s(ll) * ( cheby(ll,2) * sbarhim(0) + two * cheby(ll,1) * sbarhim(1) + cheby(ll,0) * sbarhim(2) )
-
-     endif ! end of if( NOTstellsym) ; 20 Jun 14;
+   if (Lcoordinatesingularity) then
+    do ll = 0, Lrad(lvol) ! radial (Chebyshev) resolution of magnetic vector potential;
+    
+      do ii = 1, mn  ! Fourier resolution of magnetic vector potential;
+      mm = im(ii)
+      if (ll < mm) cycle
+      if (mod(ll+mm, 2) > 0) cycle
       
-    enddo ! end of do ii;
+      ;Atemn(ii,0) = Atemn(ii,0) + Ate(lvol,ideriv,ii)%s(ll) * zernike(ll,mm,0)
+      ;Atemn(ii,1) = Atemn(ii,1) + Ate(lvol,ideriv,ii)%s(ll) * zernike(ll,mm,1) * half
+      ;Atemn(ii,2) = Atemn(ii,2) + Ate(lvol,ideriv,ii)%s(ll) * zernike(ll,mm,2) * half * half
+
+      ;Azemn(ii,0) = Azemn(ii,0) + Aze(lvol,ideriv,ii)%s(ll) * zernike(ll,mm,0)
+      ;Azemn(ii,1) = Azemn(ii,1) + Aze(lvol,ideriv,ii)%s(ll) * zernike(ll,mm,1) * half
+      ;Azemn(ii,2) = Azemn(ii,2) + Aze(lvol,ideriv,ii)%s(ll) * zernike(ll,mm,2) * half * half
+
+      if( NOTstellsym ) then
+
+        Atomn(ii,0) = Atomn(ii,0) + Ato(lvol,ideriv,ii)%s(ll) * zernike(ll,mm,0)
+        Atomn(ii,1) = Atomn(ii,1) + Ato(lvol,ideriv,ii)%s(ll) * zernike(ll,mm,1) * half
+        Atomn(ii,2) = Atomn(ii,2) + Ato(lvol,ideriv,ii)%s(ll) * zernike(ll,mm,2) * half * half
+
+        Azomn(ii,0) = Azomn(ii,0) + Azo(lvol,ideriv,ii)%s(ll) * zernike(ll,mm,0)
+        Azomn(ii,1) = Azomn(ii,1) + Azo(lvol,ideriv,ii)%s(ll) * zernike(ll,mm,1) * half
+        Azomn(ii,2) = Azomn(ii,2) + Azo(lvol,ideriv,ii)%s(ll) * zernike(ll,mm,2) * half * half
+
+      endif ! end of if( NOTstellsym) ; 20 Jun 14;
+        
+      enddo ! end of do ii;
+      
+    enddo ! end of do ll;
+
+   else
+
+    do ll = 0, Lrad(lvol) ! radial (Chebyshev) resolution of magnetic vector potential;
     
-   enddo ! end of do ll;
-    
+      do ii = 1, mn  ! Fourier resolution of magnetic vector potential;
+      
+      ;Atemn(ii,0) = Atemn(ii,0) + Ate(lvol,ideriv,ii)%s(ll) * cheby(ll,0)
+      ;Atemn(ii,1) = Atemn(ii,1) + Ate(lvol,ideriv,ii)%s(ll) * cheby(ll,1)
+      ;Atemn(ii,2) = Atemn(ii,2) + Ate(lvol,ideriv,ii)%s(ll) * cheby(ll,2)
+
+      ;Azemn(ii,0) = Azemn(ii,0) + Aze(lvol,ideriv,ii)%s(ll) * cheby(ll,0)
+      ;Azemn(ii,1) = Azemn(ii,1) + Aze(lvol,ideriv,ii)%s(ll) * cheby(ll,1)
+      ;Azemn(ii,2) = Azemn(ii,2) + Aze(lvol,ideriv,ii)%s(ll) * cheby(ll,2)
+
+      if( NOTstellsym ) then
+
+        Atomn(ii,0) = Atomn(ii,0) + Ato(lvol,ideriv,ii)%s(ll) * cheby(ll,0)
+        Atomn(ii,1) = Atomn(ii,1) + Ato(lvol,ideriv,ii)%s(ll) * cheby(ll,1)
+        Atomn(ii,2) = Atomn(ii,2) + Ato(lvol,ideriv,ii)%s(ll) * cheby(ll,2)
+
+        Azomn(ii,0) = Azomn(ii,0) + Azo(lvol,ideriv,ii)%s(ll) * cheby(ll,0)
+        Azomn(ii,1) = Azomn(ii,1) + Azo(lvol,ideriv,ii)%s(ll) * cheby(ll,1)
+        Azomn(ii,2) = Azomn(ii,2) + Azo(lvol,ideriv,ii)%s(ll) * cheby(ll,2)
+
+      endif ! end of if( NOTstellsym) ; 20 Jun 14;
+        
+      enddo ! end of do ii;
+      
+    enddo ! end of do ll;
+   end if 
 !latex \item The quantities $\sqrt g B^\s$, $\sqrt g B^\t$ and $\sqrt g B^\z$, and their first and second derivatives with respect to $(\s,\t,\z)$, 
 !latex       are computed on the regular angular grid (using FFTs).
 

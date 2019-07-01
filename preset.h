@@ -195,6 +195,7 @@ subroutine preset
 
   SALLOCATE( TT, (0:Mrad,0:1,0:1), zero )
   SALLOCATE(RTT, (0:Lrad(1),0:Mpol,0:1,0:1), zero )
+  SALLOCATE(RTM, (0:Lrad(1),0:Mpol), zero )
   
   do innout = 0, 1 ; lss = two * innout - one
    
@@ -206,6 +207,7 @@ subroutine preset
 
   call get_zernike( zero, Lrad(1), Mpol, RTT(:,:,0,:))
   call get_zernike( one, Lrad(1), Mpol, RTT(:,:,1,:))
+  call get_zernike_rm(zero, Lrad(1), Mpol, RTM(:,:))
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   

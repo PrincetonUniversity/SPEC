@@ -890,6 +890,7 @@ module allglobal
   REAL   , allocatable :: cheby(:,:), zernike(:,:,:) ! local workspace;
   
   REAL   , allocatable :: TT(:,:,:), RTT(:,:,:,:) ! derivatives of Chebyshev and Zernike polynomials at the inner and outer interfaces;
+  REAL   , allocatable :: RTM(:,:) ! r^m term of Zernike polynomials at the origin
 
   LOGICAL, allocatable :: ImagneticOK(:)   ! used to indicate if Beltrami fields have been correctly constructed;
 

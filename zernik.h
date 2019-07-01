@@ -51,7 +51,7 @@ contains
       rm = rm * r
 
     enddo
-  end subroutine
+  end subroutine get_zernike
 
   subroutine get_zernike_d2(r, lrad, mpol, zernike)
     ! Get the Zernike polynomials with zeroth, first, second derivatives
@@ -108,6 +108,53 @@ contains
 
     enddo
 
-  end subroutine
+  end subroutine get_zernike_d2
+
+  subroutine get_zernike_rm(r, lrad, mpol, zernike)
+    ! Get the Zernike polynomials Z(n,m,r)/r^m
+    ! Inputs:
+    ! r - REAL, coordinate input r
+    ! lrad - INTEGER, radial resolution
+    ! mpol - INTEGER, poloidal resolution
+    !
+    ! Returns:
+    ! zernike - REAL(0:lrad,0:mpol), the value
+
+    use constants, only : zero, one, two
+
+    implicit none
+
+    REAL,intent(in) :: r
+    INTEGER, intent(in) :: lrad, mpol
+    REAL, intent(inout) :: zernike(0:lrad,0:mpol)
+
+    REAL ::    rm, rm1  ! r to the power of m'th and m-1'th
+    REAL ::    factor1, factor2, factor3, factor4
+    INTEGER :: m, n  ! Zernike R^m_n
+    
+    rm = one  ! r to the power of m'th / r^m
+
+    zernike(:,:) = zero
+    do m = 0, mpol
+      if (lrad >= m) then
+        zernike(m,m) = one
+      endif
+
+      if (lrad >= m+2) then
+        zernike(m+2,m) = real(m+2)*r**2 - real(m+1)
+      endif
+
+      do n = m+4, lrad, 2
+        factor1 = real(n)/real(n**2 - m**2)
+        factor2 = real(4 * (n-1))
+        factor3 = real((n-2+m)**2)/real(n-2) + real((n-m)**2)/real(n)
+        factor4 = real((n-2)**2-m**2) / real(n-2)
+
+        zernike(n, m) = factor1 * ((factor2*r**2 - factor3)*zernike(n-2,m) - factor4*zernike(n-4,m))
+      enddo
+
+      rm = rm * r
+    enddo
+  end subroutine get_zernike_rm
 
 end module zernik
