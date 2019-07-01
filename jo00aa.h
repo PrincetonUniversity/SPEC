@@ -163,7 +163,7 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
    WCALL( jo00aa, coords, ( lvol, lss, Lcurvature, Ntz, mn ) ) ! returns coordinates, metrics, . . .
    
    if (Lcoordinatesingularity) then ! Zernike 1 Jul 2019
-     call get_zernike_d2(sbar, lvol, mpol, zernike)
+     call get_zernike_d2(sbar, Lrad(lvol), mpol, zernike)
    else
      ;                     ; cheby( 0,0:2) = (/ one, zero, zero /) ! T_0: Chebyshev initialization; function, 1st-derivative, 2nd-derivative;
      ;                     ; cheby( 1,0:2) = (/ lss,  one, zero /) ! T_1: Chebyshev initialization; function, 1st-derivative, 2nd-derivative;

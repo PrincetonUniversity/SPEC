@@ -82,12 +82,14 @@ contains
     do m = 0, mpol
       if (lrad >= m) then
         zernike(m,m,0:2) = (/ rm, real(m)*rm1, real(m*(m-1))*rm2 /)
+        !write(0, *) m, m, r, zernike(m,m,:)
       endif
 
       if (lrad >= m+2) then
         zernike(m+2,m,0) = real(m+2)*rm*r**2 - real(m+1)*rm
         zernike(m+2,m,1) = real((m+2)**2)*rm*r - real((m+1)*m)*rm1 
         zernike(m+2,m,2) = real((m+2)**2*(m+1))*rm - real((m+1)*m*(m-1))*rm2 
+        !write(0, *) m+2, m, r, zernike(m+2,m,:)
       endif
 
       do n = m+4, lrad, 2
@@ -100,6 +102,7 @@ contains
         zernike(n, m, 1) = factor1 * (two*factor2*r*zernike(n-2,m,0) + (factor2*r**2 - factor3)*zernike(n-2,m,1) - factor4*zernike(n-4,m,1))
         zernike(n, m, 2) = factor1 * (two*factor2*(two*r*zernike(n-2,m,1) + zernike(n-2,m,0)) &
                           +(factor2*r**2 - factor3)*zernike(n-2,m,2) - factor4*zernike(n-4,m,2))
+        !write(0, *) n, m, r, zernike(n,m,:)
       enddo
 
       rm2 = rm1
