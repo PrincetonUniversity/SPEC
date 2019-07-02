@@ -335,7 +335,7 @@ subroutine matrix( lvol, mn, lrad )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  use constants, only : zero, one
+  use constants, only : zero, one, two
   
   use numerical, only : small
   
@@ -372,7 +372,7 @@ subroutine matrix( lvol, mn, lrad )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  INTEGER              :: NN, ii, jj, ll, kk, pp, mi, ni, mj, nj, mimj, minj, nimj, ninj, mjmi, mjni, njmi, njni, id, jd
+  INTEGER              :: NN, ii, jj, ll, kk, pp, ll1, pp1, mi, ni, mj, nj, mimj, minj, nimj, ninj, mjmi, mjni, njmi, njni, id, jd
   
   REAL                 :: Wtete, Wteto, Wtote, Wtoto
   REAL                 :: Wteze, Wtezo, Wtoze, Wtozo
@@ -416,14 +416,25 @@ subroutine matrix( lvol, mn, lrad )
       
       do pp = 0, lrad
        
-       Wtete = + 2 * ninj * TTssss(ll,pp,ii,jj) - 2 * ni      * TDszsc(ll,pp,ii,jj) - 2      * nj * TDszsc(pp,ll,jj,ii) + 2 * DDzzcc(ll,pp,ii,jj)
-       Wzete = + 2 * nimj * TTssss(ll,pp,ii,jj) + 2 * ni      * TDstsc(ll,pp,ii,jj) - 2      * mj * TDszsc(pp,ll,jj,ii) - 2 * DDtzcc(pp,ll,jj,ii)
-       Wteze = + 2 * minj * TTssss(ll,pp,ii,jj) + 2      * nj * TDstsc(pp,ll,jj,ii) - 2 * mi      * TDszsc(ll,pp,ii,jj) - 2 * DDtzcc(ll,pp,ii,jj)
-       Wzeze = + 2 * mimj * TTssss(ll,pp,ii,jj) + 2 * mi      * TDstsc(ll,pp,ii,jj) + 2      * mj * TDstsc(pp,ll,jj,ii) + 2 * DDttcc(ll,pp,ii,jj)
+       if (Lcoordinatesingularity) then
+        if (ll < mi .or. pp < mj) cycle ! rule out zero components of Zernike; 02 Jul 19
+        if (mod(ll+mi,2)+mod(pp+mj,2)>0) cycle ! rule out zero components of Zernike; 02 Jul 19
+        ll1 = floor(real(ll) / two) ! shrinked dof for Zernike; 02 Jul 19
+        pp1 = floor(real(pp) / two) ! shrinked dof for Zernike; 02 Jul 19
+        write(ounit, *) mi, mj, ll, pp, ll1, pp1
+       else
+        ll1 = ll
+        pp1 = pp
+       end if
+
+       Wtete = + 2 * ninj * TTssss(ll1,pp1,ii,jj) - 2 * ni      * TDszsc(ll1,pp1,ii,jj) - 2      * nj * TDszsc(pp1,ll1,jj,ii) + 2 * DDzzcc(ll1,pp1,ii,jj)
+       Wzete = + 2 * nimj * TTssss(ll1,pp1,ii,jj) + 2 * ni      * TDstsc(ll1,pp1,ii,jj) - 2      * mj * TDszsc(pp1,ll1,jj,ii) - 2 * DDtzcc(pp1,ll1,jj,ii)
+       Wteze = + 2 * minj * TTssss(ll1,pp1,ii,jj) + 2      * nj * TDstsc(pp1,ll1,jj,ii) - 2 * mi      * TDszsc(ll1,pp1,ii,jj) - 2 * DDtzcc(ll1,pp1,ii,jj)
+       Wzeze = + 2 * mimj * TTssss(ll1,pp1,ii,jj) + 2 * mi      * TDstsc(ll1,pp1,ii,jj) + 2      * mj * TDstsc(pp1,ll1,jj,ii) + 2 * DDttcc(ll1,pp1,ii,jj)
        
        Htete =   zero
-       Hzete = - DToocc(pp,ll,jj,ii) + DToocc(ll,pp,ii,jj)
-       Hteze = + DToocc(pp,ll,jj,ii) - DToocc(ll,pp,ii,jj)
+       Hzete = - DToocc(pp1,ll1,jj,ii) + DToocc(ll1,pp1,ii,jj)
+       Hteze = + DToocc(pp1,ll1,jj,ii) - DToocc(ll1,pp1,ii,jj)
        Hzeze =   zero 
        
        id = Ate(lvol,0,ii)%i(ll) ; jd = Ate(lvol,0,jj)%i(pp) ; dMA(id,jd) = Wtete ; dMD(id,jd) = Htete

@@ -115,7 +115,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   
   INTEGER, intent(in) :: lquad, mn, lvol, lrad
   
-  INTEGER             :: jquad, ll, pp, uv, ii, jj, io, mn2, lp2, mn2_max, lp2_max
+  INTEGER             :: jquad, ll, pp, ll1, pp1, uv, ii, jj, io, mn2, lp2, mn2_max, lp2_max
   
   INTEGER             :: kk, kd, kka, kks, kda, kds
   
@@ -146,40 +146,40 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   imn2    =  one/real(mn)
   ilrad = one/real(lrad+1)
 
-  DToocc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  DToocs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  DToosc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  DTooss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+  DToocc(:,:,:,:) = zero
+  DToocs(:,:,:,:) = zero
+  DToosc(:,:,:,:) = zero
+  DTooss(:,:,:,:) = zero
 
-  TTsscc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  TTsscs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  TTsssc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  TTssss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+  TTsscc(:,:,:,:) = zero
+  TTsscs(:,:,:,:) = zero
+  TTsssc(:,:,:,:) = zero
+  TTssss(:,:,:,:) = zero
 
-  TDstcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  TDstcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  TDstsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  TDstss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+  TDstcc(:,:,:,:) = zero
+  TDstcs(:,:,:,:) = zero
+  TDstsc(:,:,:,:) = zero
+  TDstss(:,:,:,:) = zero
 
-  TDszcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  TDszcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  TDszsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  TDszss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+  TDszcc(:,:,:,:) = zero
+  TDszcs(:,:,:,:) = zero
+  TDszsc(:,:,:,:) = zero
+  TDszss(:,:,:,:) = zero
 
-  DDttcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  DDttcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  DDttsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  DDttss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+  DDttcc(:,:,:,:) = zero
+  DDttcs(:,:,:,:) = zero
+  DDttsc(:,:,:,:) = zero
+  DDttss(:,:,:,:) = zero
 
-  DDtzcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  DDtzcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  DDtzsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  DDtzss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+  DDtzcc(:,:,:,:) = zero
+  DDtzcs(:,:,:,:) = zero
+  DDtzsc(:,:,:,:) = zero
+  DDtzss(:,:,:,:) = zero
 
-  DDzzcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  DDzzcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  DDzzsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  DDzzss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+  DDzzcc(:,:,:,:) = zero
+  DDzzcs(:,:,:,:) = zero
+  DDzzsc(:,:,:,:) = zero
+  DDzzss(:,:,:,:) = zero
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -247,6 +247,9 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
         ll = mod(lp2-1,lrad+1)
         pp = floor(real(lp2-1) * ilrad)
 
+        ll1 = floor(real(ll) / two) ! shrinked dof for Zernike; 02 Jul 19
+        pp1 = floor(real(pp) / two) ! shrinked dof for Zernike; 02 Jul 19
+
         if (ll < im(ii)) cycle ! zernike only non-zero for ll>=ii
         if (pp < im(jj)) cycle ! zernike only non-zero for pp>=jj
         if (mod(ll+im(ii),2)/=0) cycle ! zernike only non-zero if ll and ii have the same parity
@@ -263,40 +266,40 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
         DlTp = Dl * Tp
         DlDp = Dl * Dp 
 
-        DToocc( ll, pp, ii, jj ) = DToocc( ll, pp, ii, jj ) + DlTp * foocc
-        DToocs( ll, pp, ii, jj ) = DToocs( ll, pp, ii, jj ) + DlTp * foocs
-        DToosc( ll, pp, ii, jj ) = DToosc( ll, pp, ii, jj ) + DlTp * foosc
-        DTooss( ll, pp, ii, jj ) = DTooss( ll, pp, ii, jj ) + DlTp * fooss
+        DToocc( ll1, pp1, ii, jj ) = DToocc( ll1, pp1, ii, jj ) + DlTp * foocc
+        DToocs( ll1, pp1, ii, jj ) = DToocs( ll1, pp1, ii, jj ) + DlTp * foocs
+        DToosc( ll1, pp1, ii, jj ) = DToosc( ll1, pp1, ii, jj ) + DlTp * foosc
+        DTooss( ll1, pp1, ii, jj ) = DTooss( ll1, pp1, ii, jj ) + DlTp * fooss
         
-        TTsscc( ll, pp, ii, jj ) = TTsscc( ll, pp, ii, jj ) + TlTp * fsscc
-        TTsscs( ll, pp, ii, jj ) = TTsscs( ll, pp, ii, jj ) + TlTp * fsscs
-        TTsssc( ll, pp, ii, jj ) = TTsssc( ll, pp, ii, jj ) + TlTp * fsssc
-        TTssss( ll, pp, ii, jj ) = TTssss( ll, pp, ii, jj ) + TlTp * fssss
+        TTsscc( ll1, pp1, ii, jj ) = TTsscc( ll1, pp1, ii, jj ) + TlTp * fsscc
+        TTsscs( ll1, pp1, ii, jj ) = TTsscs( ll1, pp1, ii, jj ) + TlTp * fsscs
+        TTsssc( ll1, pp1, ii, jj ) = TTsssc( ll1, pp1, ii, jj ) + TlTp * fsssc
+        TTssss( ll1, pp1, ii, jj ) = TTssss( ll1, pp1, ii, jj ) + TlTp * fssss
         
-        TDstcc( ll, pp, ii, jj ) = TDstcc( ll, pp, ii, jj ) + TlDp * fstcc
-        TDstcs( ll, pp, ii, jj ) = TDstcs( ll, pp, ii, jj ) + TlDp * fstcs
-        TDstsc( ll, pp, ii, jj ) = TDstsc( ll, pp, ii, jj ) + TlDp * fstsc
-        TDstss( ll, pp, ii, jj ) = TDstss( ll, pp, ii, jj ) + TlDp * fstss
+        TDstcc( ll1, pp1, ii, jj ) = TDstcc( ll1, pp1, ii, jj ) + TlDp * fstcc
+        TDstcs( ll1, pp1, ii, jj ) = TDstcs( ll1, pp1, ii, jj ) + TlDp * fstcs
+        TDstsc( ll1, pp1, ii, jj ) = TDstsc( ll1, pp1, ii, jj ) + TlDp * fstsc
+        TDstss( ll1, pp1, ii, jj ) = TDstss( ll1, pp1, ii, jj ) + TlDp * fstss
         
-        TDszcc( ll, pp, ii, jj ) = TDszcc( ll, pp, ii, jj ) + TlDp * fszcc
-        TDszcs( ll, pp, ii, jj ) = TDszcs( ll, pp, ii, jj ) + TlDp * fszcs
-        TDszsc( ll, pp, ii, jj ) = TDszsc( ll, pp, ii, jj ) + TlDp * fszsc
-        TDszss( ll, pp, ii, jj ) = TDszss( ll, pp, ii, jj ) + TlDp * fszss
+        TDszcc( ll1, pp1, ii, jj ) = TDszcc( ll1, pp1, ii, jj ) + TlDp * fszcc
+        TDszcs( ll1, pp1, ii, jj ) = TDszcs( ll1, pp1, ii, jj ) + TlDp * fszcs
+        TDszsc( ll1, pp1, ii, jj ) = TDszsc( ll1, pp1, ii, jj ) + TlDp * fszsc
+        TDszss( ll1, pp1, ii, jj ) = TDszss( ll1, pp1, ii, jj ) + TlDp * fszss
         
-        DDttcc( ll, pp, ii, jj ) = DDttcc( ll, pp, ii, jj ) + DlDp * fttcc
-        DDttcs( ll, pp, ii, jj ) = DDttcs( ll, pp, ii, jj ) + DlDp * fttcs
-        DDttsc( ll, pp, ii, jj ) = DDttsc( ll, pp, ii, jj ) + DlDp * fttsc
-        DDttss( ll, pp, ii, jj ) = DDttss( ll, pp, ii, jj ) + DlDp * fttss
+        DDttcc( ll1, pp1, ii, jj ) = DDttcc( ll1, pp1, ii, jj ) + DlDp * fttcc
+        DDttcs( ll1, pp1, ii, jj ) = DDttcs( ll1, pp1, ii, jj ) + DlDp * fttcs
+        DDttsc( ll1, pp1, ii, jj ) = DDttsc( ll1, pp1, ii, jj ) + DlDp * fttsc
+        DDttss( ll1, pp1, ii, jj ) = DDttss( ll1, pp1, ii, jj ) + DlDp * fttss
         
-        DDtzcc( ll, pp, ii, jj ) = DDtzcc( ll, pp, ii, jj ) + DlDp * ftzcc
-        DDtzcs( ll, pp, ii, jj ) = DDtzcs( ll, pp, ii, jj ) + DlDp * ftzcs
-        DDtzsc( ll, pp, ii, jj ) = DDtzsc( ll, pp, ii, jj ) + DlDp * ftzsc
-        DDtzss( ll, pp, ii, jj ) = DDtzss( ll, pp, ii, jj ) + DlDp * ftzss
+        DDtzcc( ll1, pp1, ii, jj ) = DDtzcc( ll1, pp1, ii, jj ) + DlDp * ftzcc
+        DDtzcs( ll1, pp1, ii, jj ) = DDtzcs( ll1, pp1, ii, jj ) + DlDp * ftzcs
+        DDtzsc( ll1, pp1, ii, jj ) = DDtzsc( ll1, pp1, ii, jj ) + DlDp * ftzsc
+        DDtzss( ll1, pp1, ii, jj ) = DDtzss( ll1, pp1, ii, jj ) + DlDp * ftzss
         
-        DDzzcc( ll, pp, ii, jj ) = DDzzcc( ll, pp, ii, jj ) + DlDp * fzzcc
-        DDzzcs( ll, pp, ii, jj ) = DDzzcs( ll, pp, ii, jj ) + DlDp * fzzcs
-        DDzzsc( ll, pp, ii, jj ) = DDzzsc( ll, pp, ii, jj ) + DlDp * fzzsc
-        DDzzss( ll, pp, ii, jj ) = DDzzss( ll, pp, ii, jj ) + DlDp * fzzss
+        DDzzcc( ll1, pp1, ii, jj ) = DDzzcc( ll1, pp1, ii, jj ) + DlDp * fzzcc
+        DDzzcs( ll1, pp1, ii, jj ) = DDzzcs( ll1, pp1, ii, jj ) + DlDp * fzzcs
+        DDzzsc( ll1, pp1, ii, jj ) = DDzzsc( ll1, pp1, ii, jj ) + DlDp * fzzsc
+        DDzzss( ll1, pp1, ii, jj ) = DDzzss( ll1, pp1, ii, jj ) + DlDp * fzzss
        
       enddo ! end of do lp2; 08 Feb 16;
      
@@ -426,40 +429,40 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  DToocc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DToocc( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-  DToocs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DToocs( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-  DToosc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DToosc( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-  DTooss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DTooss( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
+  DToocc = DToocc * pi2pi2nfphalf
+  DToocs = DToocs * pi2pi2nfphalf
+  DToosc = DToosc * pi2pi2nfphalf
+  DTooss = DTooss * pi2pi2nfphalf
 
-  TTsscc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = TTsscc( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-  TTsscs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = TTsscs( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-  TTsssc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = TTsssc( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-  TTssss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = TTssss( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
+  TTsscc = TTsscc * pi2pi2nfphalf
+  TTsscs = TTsscs * pi2pi2nfphalf
+  TTsssc = TTsssc * pi2pi2nfphalf
+  TTssss = TTssss * pi2pi2nfphalf
 
-  TDstcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = TDstcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-  TDstcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = TDstcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-  TDstsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = TDstsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-  TDstss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = TDstss( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
+  TDstcc = TDstcc * pi2pi2nfphalf
+  TDstcs = TDstcs * pi2pi2nfphalf
+  TDstsc = TDstsc * pi2pi2nfphalf
+  TDstss = TDstss * pi2pi2nfphalf
 
-  TDszcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = TDszcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-  TDszcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = TDszcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-  TDszsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = TDszsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-  TDszss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = TDszss( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
+  TDszcc = TDszcc * pi2pi2nfphalf
+  TDszcs = TDszcs * pi2pi2nfphalf
+  TDszsc = TDszsc * pi2pi2nfphalf
+  TDszss = TDszss * pi2pi2nfphalf
 
-  DDttcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DDttcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-  DDttcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DDttcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-  DDttsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DDttsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-  DDttss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DDttss( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
+  DDttcc = DDttcc * pi2pi2nfphalf
+  DDttcs = DDttcs * pi2pi2nfphalf
+  DDttsc = DDttsc * pi2pi2nfphalf
+  DDttss = DDttss * pi2pi2nfphalf
 
-  DDtzcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DDtzcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-  DDtzcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DDtzcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-  DDtzsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DDtzsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-  DDtzss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DDtzss( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
+  DDtzcc = DDtzcc * pi2pi2nfphalf
+  DDtzcs = DDtzcs * pi2pi2nfphalf
+  DDtzsc = DDtzsc * pi2pi2nfphalf
+  DDtzss = DDtzss * pi2pi2nfphalf
 
-  DDzzcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DDzzcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-  DDzzcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DDzzcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-  DDzzsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DDzzsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-  DDzzss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DDzzss( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
+  DDzzcc = DDzzcc * pi2pi2nfphalf
+  DDzzcs = DDzzcs * pi2pi2nfphalf
+  DDzzsc = DDzzsc * pi2pi2nfphalf
+  DDzzss = DDzzss * pi2pi2nfphalf
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   

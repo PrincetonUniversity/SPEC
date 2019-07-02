@@ -170,7 +170,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
   INTEGER, allocatable :: ipivot(:)
   REAL   , allocatable :: work(:)
   
-  INTEGER              :: vvol, innout, ii, jj, irz, issym, iocons, tdoc, idoc, idof, tdof, jdof, ivol, imn, ll
+  INTEGER              :: vvol, innout, ii, jj, irz, issym, iocons, tdoc, idoc, idof, tdof, jdof, ivol, imn, ll, lldof
 
   INTEGER              :: Lcurvature, ideriv, id
   
@@ -285,40 +285,46 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
 
    ll = Lrad(vvol)
 
-   SALLOCATE( DToocc, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( DToocs, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( DToosc, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( DTooss, (0:ll,0:ll,1:mn,1:mn), zero )
+   if (Lcoordinatesingularity) then ! different radial dof for Zernike; 02 Jul 19
+     lldof = floor(real(Lrad(vvol)) / two)
+   else
+     lldof = Lrad(vvol)
+   end if
 
-   SALLOCATE( TTsscc, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( TTsscs, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( TTsssc, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( TTssss, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( DToocc, (0:lldof,0:lldof,1:mn,1:mn), zero )
+   SALLOCATE( DToocs, (0:lldof,0:lldof,1:mn,1:mn), zero )
+   SALLOCATE( DToosc, (0:lldof,0:lldof,1:mn,1:mn), zero )
+   SALLOCATE( DTooss, (0:lldof,0:lldof,1:mn,1:mn), zero )
 
-   SALLOCATE( TDstcc, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( TDstcs, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( TDstsc, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( TDstss, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( TTsscc, (0:lldof,0:lldof,1:mn,1:mn), zero )
+   SALLOCATE( TTsscs, (0:lldof,0:lldof,1:mn,1:mn), zero )
+   SALLOCATE( TTsssc, (0:lldof,0:lldof,1:mn,1:mn), zero )
+   SALLOCATE( TTssss, (0:lldof,0:lldof,1:mn,1:mn), zero )
 
-   SALLOCATE( TDszcc, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( TDszcs, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( TDszsc, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( TDszss, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( TDstcc, (0:lldof,0:lldof,1:mn,1:mn), zero )
+   SALLOCATE( TDstcs, (0:lldof,0:lldof,1:mn,1:mn), zero )
+   SALLOCATE( TDstsc, (0:lldof,0:lldof,1:mn,1:mn), zero )
+   SALLOCATE( TDstss, (0:lldof,0:lldof,1:mn,1:mn), zero )
 
-   SALLOCATE( DDttcc, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( DDttcs, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( DDttsc, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( DDttss, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( TDszcc, (0:lldof,0:lldof,1:mn,1:mn), zero )
+   SALLOCATE( TDszcs, (0:lldof,0:lldof,1:mn,1:mn), zero )
+   SALLOCATE( TDszsc, (0:lldof,0:lldof,1:mn,1:mn), zero )
+   SALLOCATE( TDszss, (0:lldof,0:lldof,1:mn,1:mn), zero )
 
-   SALLOCATE( DDtzcc, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( DDtzcs, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( DDtzsc, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( DDtzss, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( DDttcc, (0:lldof,0:lldof,1:mn,1:mn), zero )
+   SALLOCATE( DDttcs, (0:lldof,0:lldof,1:mn,1:mn), zero )
+   SALLOCATE( DDttsc, (0:lldof,0:lldof,1:mn,1:mn), zero )
+   SALLOCATE( DDttss, (0:lldof,0:lldof,1:mn,1:mn), zero )
 
-   SALLOCATE( DDzzcc, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( DDzzcs, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( DDzzsc, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( DDzzss, (0:ll,0:ll,1:mn,1:mn), zero )
+   SALLOCATE( DDtzcc, (0:lldof,0:lldof,1:mn,1:mn), zero )
+   SALLOCATE( DDtzcs, (0:lldof,0:lldof,1:mn,1:mn), zero )
+   SALLOCATE( DDtzsc, (0:lldof,0:lldof,1:mn,1:mn), zero )
+   SALLOCATE( DDtzss, (0:lldof,0:lldof,1:mn,1:mn), zero )
+
+   SALLOCATE( DDzzcc, (0:lldof,0:lldof,1:mn,1:mn), zero )
+   SALLOCATE( DDzzcs, (0:lldof,0:lldof,1:mn,1:mn), zero )
+   SALLOCATE( DDzzsc, (0:lldof,0:lldof,1:mn,1:mn), zero )
+   SALLOCATE( DDzzss, (0:lldof,0:lldof,1:mn,1:mn), zero )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
