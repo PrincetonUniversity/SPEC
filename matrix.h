@@ -421,7 +421,6 @@ subroutine matrix( lvol, mn, lrad )
         if (mod(ll+mi,2)+mod(pp+mj,2)>0) cycle ! rule out zero components of Zernike; 02 Jul 19
         ll1 = floor(real(ll) / two) ! shrinked dof for Zernike; 02 Jul 19
         pp1 = floor(real(pp) / two) ! shrinked dof for Zernike; 02 Jul 19
-        write(ounit, *) mi, mj, ll, pp, ll1, pp1
        else
         ll1 = ll
         pp1 = pp
@@ -520,44 +519,54 @@ subroutine matrix( lvol, mn, lrad )
      do ll = 0, lrad
       
       do pp = 0, lrad
+
+       if (Lcoordinatesingularity) then
+        if (ll < mi .or. pp < mj) cycle ! rule out zero components of Zernike; 02 Jul 19
+        if (mod(ll+mi,2)+mod(pp+mj,2)>0) cycle ! rule out zero components of Zernike; 02 Jul 19
+        ll1 = floor(real(ll) / two) ! shrinked dof for Zernike; 02 Jul 19
+        pp1 = floor(real(pp) / two) ! shrinked dof for Zernike; 02 Jul 19
+       else
+        ll1 = ll
+        pp1 = pp
+       end if
        
-       Wtete = 2 * ( + njni * TTssss(pp,ll,jj,ii) - nj * TDszsc(pp,ll,jj,ii) - ni * TDszsc(ll,pp,ii,jj) + DDzzcc(pp,ll,jj,ii) )
-       Wtote = 2 * ( - njni * TTsscs(pp,ll,jj,ii) + nj * TDszcc(pp,ll,jj,ii) - ni * TDszss(ll,pp,ii,jj) + DDzzsc(pp,ll,jj,ii) )
-       Wzete = 2 * ( + mjni * TTssss(pp,ll,jj,ii) - mj * TDszsc(pp,ll,jj,ii) + ni * TDstsc(ll,pp,ii,jj) - DDtzcc(pp,ll,jj,ii) )
-       Wzote = 2 * ( - mjni * TTsscs(pp,ll,jj,ii) + mj * TDszcc(pp,ll,jj,ii) + ni * TDstss(ll,pp,ii,jj) - DDtzsc(pp,ll,jj,ii) )
+       Wtete = 2 * ( + njni * TTssss(pp1,ll1,jj,ii) - nj * TDszsc(pp1,ll1,jj,ii) - ni * TDszsc(ll1,pp1,ii,jj) + DDzzcc(pp1,ll1,jj,ii) )
+       Wtote = 2 * ( - njni * TTsscs(pp1,ll1,jj,ii) + nj * TDszcc(pp1,ll1,jj,ii) - ni * TDszss(ll1,pp1,ii,jj) + DDzzsc(pp1,ll1,jj,ii) )
+       Wzete = 2 * ( + mjni * TTssss(pp1,ll1,jj,ii) - mj * TDszsc(pp1,ll1,jj,ii) + ni * TDstsc(ll1,pp1,ii,jj) - DDtzcc(pp1,ll1,jj,ii) )
+       Wzote = 2 * ( - mjni * TTsscs(pp1,ll1,jj,ii) + mj * TDszcc(pp1,ll1,jj,ii) + ni * TDstss(ll1,pp1,ii,jj) - DDtzsc(pp1,ll1,jj,ii) )
        
-       Wteto = 2 * ( - njni * TTsssc(pp,ll,jj,ii) - nj * TDszss(pp,ll,jj,ii) + ni * TDszcc(ll,pp,ii,jj) + DDzzcs(pp,ll,jj,ii) )
-       Wtoto = 2 * ( + njni * TTsscc(pp,ll,jj,ii) + nj * TDszcs(pp,ll,jj,ii) + ni * TDszcs(ll,pp,ii,jj) + DDzzss(pp,ll,jj,ii) )
-       Wzeto = 2 * ( - mjni * TTsssc(pp,ll,jj,ii) - mj * TDszss(pp,ll,jj,ii) - ni * TDstcc(ll,pp,ii,jj) - DDtzcs(pp,ll,jj,ii) )
-       Wzoto = 2 * ( + mjni * TTsscc(pp,ll,jj,ii) + mj * TDszcs(pp,ll,jj,ii) - ni * TDstcs(ll,pp,ii,jj) - DDtzss(pp,ll,jj,ii) )
+       Wteto = 2 * ( - njni * TTsssc(pp1,ll1,jj,ii) - nj * TDszss(pp1,ll1,jj,ii) + ni * TDszcc(ll1,pp1,ii,jj) + DDzzcs(pp1,ll1,jj,ii) )
+       Wtoto = 2 * ( + njni * TTsscc(pp1,ll1,jj,ii) + nj * TDszcs(pp1,ll1,jj,ii) + ni * TDszcs(ll1,pp1,ii,jj) + DDzzss(pp1,ll1,jj,ii) )
+       Wzeto = 2 * ( - mjni * TTsssc(pp1,ll1,jj,ii) - mj * TDszss(pp1,ll1,jj,ii) - ni * TDstcc(ll1,pp1,ii,jj) - DDtzcs(pp1,ll1,jj,ii) )
+       Wzoto = 2 * ( + mjni * TTsscc(pp1,ll1,jj,ii) + mj * TDszcs(pp1,ll1,jj,ii) - ni * TDstcs(ll1,pp1,ii,jj) - DDtzss(pp1,ll1,jj,ii) )
        
-       Wteze = 2 * ( + njmi * TTssss(pp,ll,jj,ii) + nj * TDstsc(pp,ll,jj,ii) - mi * TDszsc(ll,pp,ii,jj) - DDtzcc(pp,ll,jj,ii) )
-       Wtoze = 2 * ( - njmi * TTsscs(pp,ll,jj,ii) - nj * TDstcc(pp,ll,jj,ii) - mi * TDszss(ll,pp,ii,jj) - DDtzsc(pp,ll,jj,ii) )
-       Wzeze = 2 * ( + mjmi * TTssss(pp,ll,jj,ii) + mj * TDstsc(pp,ll,jj,ii) + mi * TDstsc(ll,pp,ii,jj) + DDttcc(pp,ll,jj,ii) )
-       Wzoze = 2 * ( - mjmi * TTsscs(pp,ll,jj,ii) - mj * TDstcc(pp,ll,jj,ii) + mi * TDstss(ll,pp,ii,jj) + DDttsc(pp,ll,jj,ii) )
+       Wteze = 2 * ( + njmi * TTssss(pp1,ll1,jj,ii) + nj * TDstsc(pp1,ll1,jj,ii) - mi * TDszsc(ll1,pp1,ii,jj) - DDtzcc(pp1,ll1,jj,ii) )
+       Wtoze = 2 * ( - njmi * TTsscs(pp1,ll1,jj,ii) - nj * TDstcc(pp1,ll1,jj,ii) - mi * TDszss(ll1,pp1,ii,jj) - DDtzsc(pp1,ll1,jj,ii) )
+       Wzeze = 2 * ( + mjmi * TTssss(pp1,ll1,jj,ii) + mj * TDstsc(pp1,ll1,jj,ii) + mi * TDstsc(ll1,pp1,ii,jj) + DDttcc(pp1,ll1,jj,ii) )
+       Wzoze = 2 * ( - mjmi * TTsscs(pp1,ll1,jj,ii) - mj * TDstcc(pp1,ll1,jj,ii) + mi * TDstss(ll1,pp1,ii,jj) + DDttsc(pp1,ll1,jj,ii) )
        
-       Wtezo = 2 * ( - njmi * TTsssc(pp,ll,jj,ii) + nj * TDstss(pp,ll,jj,ii) + mi * TDszcc(ll,pp,ii,jj) - DDtzcs(pp,ll,jj,ii) )
-       Wtozo = 2 * ( + njmi * TTsscc(pp,ll,jj,ii) - nj * TDstcs(pp,ll,jj,ii) + mi * TDszcs(ll,pp,ii,jj) - DDtzss(pp,ll,jj,ii) )
-       Wzezo = 2 * ( - mjmi * TTsssc(pp,ll,jj,ii) + mj * TDstss(pp,ll,jj,ii) - mi * TDstcc(ll,pp,ii,jj) + DDttcs(pp,ll,jj,ii) )
-       Wzozo = 2 * ( + mjmi * TTsscc(pp,ll,jj,ii) - mj * TDstcs(pp,ll,jj,ii) - mi * TDstcs(ll,pp,ii,jj) + DDttss(pp,ll,jj,ii) )
+       Wtezo = 2 * ( - njmi * TTsssc(pp1,ll1,jj,ii) + nj * TDstss(pp1,ll1,jj,ii) + mi * TDszcc(ll1,pp1,ii,jj) - DDtzcs(pp1,ll1,jj,ii) )
+       Wtozo = 2 * ( + njmi * TTsscc(pp1,ll1,jj,ii) - nj * TDstcs(pp1,ll1,jj,ii) + mi * TDszcs(ll1,pp1,ii,jj) - DDtzss(pp1,ll1,jj,ii) )
+       Wzezo = 2 * ( - mjmi * TTsssc(pp1,ll1,jj,ii) + mj * TDstss(pp1,ll1,jj,ii) - mi * TDstcc(ll1,pp1,ii,jj) + DDttcs(pp1,ll1,jj,ii) )
+       Wzozo = 2 * ( + mjmi * TTsscc(pp1,ll1,jj,ii) - mj * TDstcs(pp1,ll1,jj,ii) - mi * TDstcs(ll1,pp1,ii,jj) + DDttss(pp1,ll1,jj,ii) )
        
        Htete =   zero
        Htote =   zero
-       Hzete = - DToocc(pp,ll,jj,ii) + DToocc(ll,pp,ii,jj)
-       Hzote = - DToosc(pp,ll,jj,ii) + DToocs(ll,pp,ii,jj)
+       Hzete = - DToocc(pp1,ll1,jj,ii) + DToocc(ll1,pp1,ii,jj)
+       Hzote = - DToosc(pp1,ll1,jj,ii) + DToocs(ll1,pp1,ii,jj)
        
        Hteto =   zero
        Htoto =   zero
-       Hzeto = - DToocs(pp,ll,jj,ii) + DToosc(ll,pp,ii,jj)
-       Hzoto = - DTooss(pp,ll,jj,ii) + DTooss(ll,pp,ii,jj)  
+       Hzeto = - DToocs(pp1,ll1,jj,ii) + DToosc(ll1,pp1,ii,jj)
+       Hzoto = - DTooss(pp1,ll1,jj,ii) + DTooss(ll1,pp1,ii,jj)  
        
-       Hteze = + DToocc(pp,ll,jj,ii) - DToocc(ll,pp,ii,jj)
-       Htoze = + DToosc(pp,ll,jj,ii) - DToocs(ll,pp,ii,jj)
+       Hteze = + DToocc(pp1,ll1,jj,ii) - DToocc(ll1,pp1,ii,jj)
+       Htoze = + DToosc(pp1,ll1,jj,ii) - DToocs(ll1,pp1,ii,jj)
        Hzeze =   zero 
        Hzoze =   zero
        
-       Htezo = + DToocs(pp,ll,jj,ii) - DToosc(ll,pp,ii,jj)
-       Htozo = + DTooss(pp,ll,jj,ii) - DTooss(ll,pp,ii,jj)
+       Htezo = + DToocs(pp1,ll1,jj,ii) - DToosc(ll1,pp1,ii,jj)
+       Htozo = + DTooss(pp1,ll1,jj,ii) - DTooss(ll1,pp1,ii,jj)
        Hzezo =   zero
        Hzozo =   zero
      
