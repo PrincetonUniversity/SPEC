@@ -247,8 +247,8 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
         ll = mod(lp2-1,lrad+1)
         pp = floor(real(lp2-1) * ilrad)
 
-        ll1 = floor(real(ll) / two) ! shrinked dof for Zernike; 02 Jul 19
-        pp1 = floor(real(pp) / two) ! shrinked dof for Zernike; 02 Jul 19
+        ll1 = (ll - mod(ll,2))/2 ! shrinked dof for Zernike; 02 Jul 19
+        pp1 = (pp - mod(pp,2))/2 ! shrinked dof for Zernike; 02 Jul 19
 
         if (ll < im(ii)) cycle ! zernike only non-zero for ll>=ii
         if (pp < im(jj)) cycle ! zernike only non-zero for pp>=jj

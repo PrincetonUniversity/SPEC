@@ -286,7 +286,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
    ll = Lrad(vvol)
 
    if (Lcoordinatesingularity) then ! different radial dof for Zernike; 02 Jul 19
-     lldof = floor(real(Lrad(vvol)) / two)
+     lldof = (Lrad(vvol) - mod(Lrad(vvol),2)) / 2
    else
      lldof = Lrad(vvol)
    end if
