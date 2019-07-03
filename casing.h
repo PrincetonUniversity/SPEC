@@ -394,7 +394,7 @@ subroutine dvcfield( Ndim, tz, Nfun, vcintegrand ) ! differential virtual-casing
      dZ(3) = dZ(3) - ni * (                                                (                 iZbs(ii,Nvol) ) * carg )
     
      if (first_free_bound) then
-        do ll = 0, Lrad(Nvol)  ! omit the possible current sheet due to a jump in tangential field at the plasma boundary; Zhu 20190603;
+        do ll = 0, Lrad(Nvol)  ! 1 is for outside thr volume
            gBut = gBut - ( Aze(Nvol,ideriv,ii)%s(ll) * carg                                    ) * TT(ll,1,1) ! contravariant; Jacobian comes later;
            gBuz = gBuz + ( Ate(Nvol,ideriv,ii)%s(ll) * carg                                    ) * TT(ll,1,1)
         enddo

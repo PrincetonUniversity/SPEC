@@ -86,6 +86,8 @@ program xspech
   REAL                 :: rflag, lastcpu, bnserr, lRwc, lRws, lZwc, lZws, lItor, lGpol, lgBc, lgBs
   REAL,    allocatable :: position(:), gradient(:)
   CHARACTER            :: pack
+  INTEGER              :: Lfindzero_old, mfreeits_old
+  REAL                 :: gBnbld_old  
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -169,19 +171,25 @@ program xspech
   nfreeboundaryiterations = -1
   
 9000 nfreeboundaryiterations = nfreeboundaryiterations + 1 ! this is the free-boundary iteration loop; 08 Jun 16;
-  
-  if(myid==0) print *,"nfreeboundaryiterations=", nfreeboundaryiterations
 
+  !first_free_bound = .true.
+  
   if (nfreeboundaryiterations .eq. 0) then  ! first iteration only run fixed-boundary
      first_free_bound = .true.
-     Mvol = Nvol
+     !Mvol = Nvol
+     gBnbld_old = gBnbld
      gBnbld = zero
-     vcasingtol = 1E-2
+     Lfindzero_old = Lfindzero
+     Lfindzero = 0 
+     mfreeits_old = mfreeits
+     mfreeits = 1
+     if (myid .eq. 0 ) write(ounit,'("xspech : ",10X," : First iteration of free boundary calculation : update Bns from plasma.")')
   else
      first_free_bound = .false.
      Mvol = Nvol + Lfreebound
-     gBnbld = 0.5
-     vcasingtol = 1E-4 ! this needs revisions; Zhu 20190603;
+     Lfindzero = Lfindzero_old
+     gBnbld = gBnbld_old
+     mfreeits = mfreeits_old
   endif
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -554,6 +562,7 @@ program xspech
   
 !  if( LContinueFreeboundaryIterations .and. Lfindzero.gt.0 .and. nfreeboundaryiterations.lt.mfreeits ) goto 9000 
   if( LContinueFreeboundaryIterations .and. nfreeboundaryiterations.lt.mfreeits ) goto 9000  ! removed Lfindzero check; Loizu Dec 18;
+  if( Lfreebound.eq.1 .and. First_free_bound ) goto 9000  ! going back to normal free_boundary calculation; Zhu 20190701;
 
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

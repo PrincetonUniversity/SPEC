@@ -87,7 +87,7 @@ module fileunits
   INTEGER :: munit = 14 ! matrix elements of Hessian; 
   INTEGER :: iunit = 10 ! input; used in global/readin:ext.sp, global/wrtend:ext.sp.end, global/wrtend:.ext.grid; 
   INTEGER :: lunit = 20 ! local unit; used in lunit+myid: pp00aa:.ext.poincare,.ext.transform; 
-  INTEGER :: ounit =  0 ! screen output;
+  INTEGER :: ounit =  6 ! screen output;
   INTEGER :: vunit = 15 ! for examination of adaptive quadrature; used in casing:.ext.vcint; 
   INTEGER :: zunit = 17 ! for convergence; this file is opened in xspech:.ext.iterations, and written to in globals/wrtend; 
  !INTEGER :: funit = 16 ! force iterations;
