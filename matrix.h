@@ -420,7 +420,7 @@ subroutine matrix( lvol, mn, lrad )
         if (ll < mi .or. pp < mj) cycle ! rule out zero components of Zernike; 02 Jul 19
         if (mod(ll+mi,2)+mod(pp+mj,2)>0) cycle ! rule out zero components of Zernike; 02 Jul 19
         ll1 = (ll - mod(ll, 2)) / 2 ! shrinked dof for Zernike; 02 Jul 19
-        pp1 = (pp - mod(ll, 2)) / 2 ! shrinked dof for Zernike; 02 Jul 19
+        pp1 = (pp - mod(pp, 2)) / 2 ! shrinked dof for Zernike; 02 Jul 19
        else
         ll1 = ll
         pp1 = pp
@@ -523,8 +523,8 @@ subroutine matrix( lvol, mn, lrad )
        if (Lcoordinatesingularity) then
         if (ll < mi .or. pp < mj) cycle ! rule out zero components of Zernike; 02 Jul 19
         if (mod(ll+mi,2)+mod(pp+mj,2)>0) cycle ! rule out zero components of Zernike; 02 Jul 19
-        ll1 = floor(real(ll) / two) ! shrinked dof for Zernike; 02 Jul 19
-        pp1 = floor(real(pp) / two) ! shrinked dof for Zernike; 02 Jul 19
+        ll1 = (ll - mod(ll, 2)) / 2! shrinked dof for Zernike; 02 Jul 19
+        pp1 = (pp - mod(pp, 2)) / 2 ! shrinked dof for Zernike; 02 Jul 19
        else
         ll1 = ll
         pp1 = pp

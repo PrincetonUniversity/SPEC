@@ -134,8 +134,8 @@ module inputlist
   CHARACTER          :: ext*100
 
   INTEGER, parameter :: MNvol     = 256 !latex \item The maximum value of \inputvar{Nvol} is \verb+MNvol=256+.
-  INTEGER, parameter :: MMpol     =  64 !latex \item The maximum value of \inputvar{Mpol} is \verb+MNpol= 32+.
-  INTEGER, parameter :: MNtor     =  64 !latex \item The maximum value of \inputvar{Ntor} is \verb+MNtor= 16+.
+  INTEGER, parameter :: MMpol     =  32 !latex \item The maximum value of \inputvar{Mpol} is \verb+MNpol= 32+.
+  INTEGER, parameter :: MNtor     =  32 !latex \item The maximum value of \inputvar{Ntor} is \verb+MNtor= 16+.
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
