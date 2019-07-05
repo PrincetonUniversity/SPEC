@@ -1,4 +1,4 @@
-function produce_spec_movie(inpiutroot,seqstart,seqstep,seqend,framerate,nfp,nz0,zetaov2pi,xrange,yrange,labtext)
+function produce_spec_movie(inputroot,seqstart,seqstep,seqend,framerate,nfp,nz0,zetaov2pi,xrange,yrange,labtext)
 
 % Produces Poincare movie from SPEC sequence of result files (Poincare data must exist)
 %   -inputroot : spec input file name of the form 'somename_seq', and the '.end/.h5' files must already exist.
