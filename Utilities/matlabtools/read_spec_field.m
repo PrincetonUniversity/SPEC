@@ -27,13 +27,9 @@ mn        = data.mn;
 data.Lrad = zeros(nvol,1);  % allocate data set for Lrad(1:nvol)
 
 data.Ate = cell(nvol,1);    % create cells for each volume's field 
-
 data.Aze = cell(nvol,1);
-
 data.Ato = cell(nvol,1);
-
 data.Azo = cell(nvol,1);
-
 
 % Read the field files
 
@@ -72,22 +68,19 @@ try
    Lrad = fread(fid,1,int_format);
    fread(fid,1,spacer_format);
    data.Lrad(v,1) = Lrad;
-   if(i==1)
-    % Allocate data sets
-    data.Ate = zeros(nvol,Lrad+1,mn);
-    data.Aze = zeros(nvol,Lrad+1,mn);
-    data.Ato = zeros(nvol,Lrad+1,mn);
-    data.Azo = zeros(nvol,Lrad+1,mn);
-   end
+   data.Ate{v} = zeros(Lrad+1,mn);
+   data.Aze{v} = zeros(Lrad+1,mn);
+   data.Ato{v} = zeros(Lrad+1,mn);
+   data.Azo{v} = zeros(Lrad+1,mn);
    for i=1:mn
     fread(fid,1,spacer_format);
-    data.Ate(v,:,i) = fread(fid,Lrad+1,float_format); % Ate
+    data.Ate{v}(:,i) = fread(fid,Lrad+1,float_format); % Ate
     fread(fid,2,spacer_format);
-    data.Aze(v,:,i) = fread(fid,Lrad+1,float_format); % Aze
+    data.Aze{v}(:,i) = fread(fid,Lrad+1,float_format); % Aze
     fread(fid,2,spacer_format);
-    data.Ato(v,:,i) = fread(fid,Lrad+1,float_format); % Ato
+    data.Ato{v}(:,i) = fread(fid,Lrad+1,float_format); % Ato
     fread(fid,2,spacer_format);
-    data.Azo(v,:,i) = fread(fid,Lrad+1,float_format); % Azo
+    data.Azo{v}(:,i) = fread(fid,Lrad+1,float_format); % Azo
     fread(fid,1,spacer_format);
    end
   end
