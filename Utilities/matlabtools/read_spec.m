@@ -48,4 +48,13 @@ end
 % start recursion at root node
 data = getGroup(filename, '/');
 
+% make adjustments for compatibility with previous reading routines
+% vector potential
+cAte=cell(data.input.physics.Nvol,1);
+cAto=cell(data.input.physics.Nvol,1);
+cAze=cell(data.input.physics.Nvol,1);
+cAzo=cell(data.input.physics.Nvol,1);
+
+
+
 end
