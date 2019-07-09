@@ -832,13 +832,13 @@ subroutine hdfint
 !latex \type{variable}               & type    & \pb{description} \\ \hline
 
 !latex \type{mn}                     & integer & \pb{number of Fourier modes} \\
-  HWRITEIV( grpOutput, 1, mn, (/ mn /)  )
+  HWRITEIV( grpOutput,  1, mn, (/ mn /)  )
 !latex \type{im(1:mn)}               & integer & \pb{poloidal mode numbers} \\
   HWRITEIV( grpOutput, mn, im, im(1:mn) )
 !latex \type{in(1:mn)}               & integer & \pb{toroidal mode numbers} \\
   HWRITEIV( grpOutput, mn, in, in(1:mn) )
 !latex \type{Mvol}                   & integer & \pb{number of interfaces = number of volumes} \\
-  HWRITEIV( grpOutput, 1, Mvol, (/ Mvol /))
+  HWRITEIV( grpOutput,  1, Mvol, (/ Mvol /))
 !latex \type{iRbc(1:mn,0:Mvol)}      & real    & \pb{Fourier harmonics, $R_{m,n}$, of interfaces} \\
   HWRITERA( grpOutput, mn, (Mvol+1), Rbc, iRbc(1:mn,0:Mvol) )
 !latex \type{iZbs(1:mn,0:Mvol)}      & real    & \pb{Fourier harmonics, $Z_{m,n}$, of interfaces} \\
@@ -850,12 +850,15 @@ subroutine hdfint
 !l tex \type{forcetol}               & real    & \pb{force-balance error across interfaces} \\
 !  HWRITERV( grpOutput, 1, forcetol, (/ forcetol /)) ! already in /input/global
 !latex \type{ForceErr}               & real    & \pb{force-balance error across interfaces} \\
-  HWRITERV( grpOutput, 1, ForceErr, (/ ForceErr /))
+  HWRITERV( grpOutput,  1, ForceErr, (/ ForceErr /))
 
-  HWRITERV( grpOutput,   Mvol, adiabatic         , adiabatic(1:Nvol)   ) ! adiabatic can be different from input value
-  HWRITERV( grpOutput,   Nvol, helicity          ,  helicity(1:Nvol)   ) ! helicity  can be different from input value
-  HWRITERV( grpOutput, 1+Nvol, mu                ,        mu(1:Mvol)   ) ! mu        can be different from input value
- 
+  ! the following quantites can be different from input value
+  HWRITERV( grpOutput,   Mvol, adiabatic         , adiabatic(1:Nvol)   )
+  HWRITERV( grpOutput,   Nvol, helicity          ,  helicity(1:Nvol)   )
+  HWRITERV( grpOutput, 1+Nvol, mu                ,        mu(1:Mvol)   )
+  HWRITERV( grpOutput,   Mvol, tflux             ,     tflux(1:Mvol)   )
+  HWRITERV( grpOutput,   Mvol, pflux             ,     pflux(1:Mvol)   )
+
   if( Lcheck.eq.1 ) then
 !latex \type{beltramierror}          & real    & \pb{error in beltrami field (volume integral)} \\
    HWRITERA( grpOutput, Mvol, 3, beltramierror, beltramierror(1:Mvol,1:3) )
