@@ -852,8 +852,9 @@ subroutine hdfint
 !latex \type{ForceErr}               & real    & \pb{force-balance error across interfaces} \\
   HWRITERV( grpOutput, 1, ForceErr, (/ ForceErr /))
 
-  HWRITERV( grpOutput, Mvol, adiabatic         , adiabatic(1:Nvol)   ) ! adiabatic can be different from input value
-  HWRITERV( grpOutput, Nvol, helicity          ,  helicity(1:Nvol)   ) ! helicity  can be different from input value
+  HWRITERV( grpOutput,   Mvol, adiabatic         , adiabatic(1:Nvol)   ) ! adiabatic can be different from input value
+  HWRITERV( grpOutput,   Nvol, helicity          ,  helicity(1:Nvol)   ) ! helicity  can be different from input value
+  HWRITERV( grpOutput, 1+Nvol, mu                ,        mu(1:Mvol)   ) ! mu        can be different from input value
  
   if( Lcheck.eq.1 ) then
 !latex \type{beltramierror}          & real    & \pb{error in beltrami field (volume integral)} \\
