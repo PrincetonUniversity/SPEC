@@ -67,7 +67,13 @@ try
    Lrad         = fread(fid,1,int_format);
    fread(fid,1,spacer_format);
    data.Lrad(i) = Lrad;
-   for l=1:Lrad+1    
+   data.Rij{i} = zeros(Ntz,Lrad+1);
+   data.Zij{i} = zeros(Ntz,Lrad+1);
+   data.sg{i} = zeros(Ntz,Lrad+1);
+   data.BR{i} = zeros(Ntz,Lrad+1);
+   data.Bp{i} = zeros(Ntz,Lrad+1);
+   data.BZ{i} = zeros(Ntz,Lrad+1);
+   for l=1:Lrad+1
     % Get grid points
     fread(fid,1,spacer_format);
     Rout = fread(fid,Ntz,float_format);
