@@ -387,7 +387,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
     
       IA = NN + 1
     
-      MM = NN ; LDA = NN ; Lwork = NN
+      MM = NN ; LDA = NN + 1 ; Lwork = NN
     
       SALLOCATE( ipivot, (1:NN), 0 )
     
