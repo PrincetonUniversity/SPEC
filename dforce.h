@@ -417,7 +417,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
       case default ;               FATAL( dforce, .true., illegal ifail returned from F07AJF )
       end select
     
-      oBI(1:NN,1:NN) = dMA(0:LDA-1,1:NN)
+      oBI(1:NN,1:NN) = dMA(0:NN-1,1:NN)
     
     endif
 
