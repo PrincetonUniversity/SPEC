@@ -40,7 +40,16 @@ subroutine preset
   BEGIN(preset)
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+
+	if( (Lconstraint.EQ.3) .and. (Lfindzero.EQ.2)) then
+		write(ounit, '(/, "!!! WARNING: Using Lfindzero=2 with Lconstraint=3 might not converge. The hessian at fixed toroidal current has not yet been implemented. !!!", /)') 
+	endif
   
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+
+
  !FATAL( preset, Nfp.eq.0, illegal division ) ! this was checked in global: readin; SRH: 27 Feb 18;
 
   pi2nfp         = pi2 / Nfp
