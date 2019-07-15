@@ -96,7 +96,7 @@ endif
 ifeq ($(CC),intel_spc)
  CFLAGS=-r8
  RFLAGS=-O2 -ip -no-prec-div -xHost -fPIC
- DFLAGS=-traceback -D DEBUG
+ DFLAGS=-traceback -D DEBUG -g
  NAG=-L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl
  NETCDF=-L$(NETCDF_HOME)/lib -lnetcdf
  FFTWcompile=-I$(FFTW_DIR)/include

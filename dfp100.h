@@ -116,9 +116,6 @@ BEGIN(dfp100)
 
 	!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-! If the constraint is global, parallelization occurs here. Otherwise, it occurs in dforce.h
-	if( .not.LocalConstraint ) then
-
 ! Determines if this volume vvol should be computed by this thread.
 		call IsMyVolume(vvol)
 
@@ -127,8 +124,6 @@ BEGIN(dfp100)
 		else if( IsMyVolumeValue .EQ. -1) then
 			FATAL(dfp100, .true., Unassociated volume)
 		endif
-
-	endif
 
 	!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

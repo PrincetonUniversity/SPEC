@@ -329,8 +329,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 
 		Ndofgl = Mvol-1; 
     if( myid.eq. 0) then
-    	lwa = 8 * Ndofgl * Ndofgl; maxfev = 1000; nfev=0; lr=Mvol*(Mvol-1); ldfjac=Mvol-1
-		  ml = Mvol-2; muhybr = Mvol-2; epsfcn=1E-16; diag=0.0; mode=1; factor=0.01; nprint=1e5;							!nprint=1e5 to force last call - used for MPI communications
+          lwa = 8 * Ndofgl * Ndofgl; maxfev = 1000; nfev=0; lr=Mvol*(Mvol-1); ldfjac=Mvol-1
+		  ml = Mvol-2; muhybr = Mvol-2; epsfcn=1E-16; diag=0.0; mode=1; factor=0.01; nprint=1e5;	!nprint=1e5 to force last call - used for MPI communications
 
 		  Xdof(1:Mvol-1)   = dpflux(2:Mvol) + xoffset  ! xoffset reduces the number of iterations needed by hybrd for an obscure reason...
 
