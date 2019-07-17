@@ -324,7 +324,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
    
    cput = GETTIME
 
-   write(ounit,*) 'DSYSVX', cput-cpus, cput-lcpu, myid, lvol, ideriv
+   !write(ounit,*) 'DSYSVX', cput-cpus, cput-lcpu, myid, lvol, ideriv
 
    if(     idsysvx(ideriv) .eq. 0   ) then
     if( Wmp00ac ) write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idsysvx", idsysvx(ideriv), "success ;         ", cput-lcpu	   

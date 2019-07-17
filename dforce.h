@@ -284,41 +284,43 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
    ll = Lrad(vvol)
-
    SALLOCATE( DToocc, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( DToocs, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( DToosc, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( DTooss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-   SALLOCATE( TTsscc, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( TTsscs, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( TTsssc, (0:ll,0:ll,1:mn,1:mn), zero )
    SALLOCATE( TTssss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-   SALLOCATE( TDstcc, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( TDstcs, (0:ll,0:ll,1:mn,1:mn), zero )
    SALLOCATE( TDstsc, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( TDstss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-   SALLOCATE( TDszcc, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( TDszcs, (0:ll,0:ll,1:mn,1:mn), zero )
    SALLOCATE( TDszsc, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( TDszss, (0:ll,0:ll,1:mn,1:mn), zero )
-
    SALLOCATE( DDttcc, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( DDttcs, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( DDttsc, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( DDttss, (0:ll,0:ll,1:mn,1:mn), zero )
-
    SALLOCATE( DDtzcc, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( DDtzcs, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( DDtzsc, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( DDtzss, (0:ll,0:ll,1:mn,1:mn), zero )
-
    SALLOCATE( DDzzcc, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( DDzzcs, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( DDzzsc, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( DDzzss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+   if (NOTstellsym) then
+    SALLOCATE( DToocs, (0:ll,0:ll,1:mn,1:mn), zero )
+    SALLOCATE( DToosc, (0:ll,0:ll,1:mn,1:mn), zero )
+    SALLOCATE( DTooss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+    SALLOCATE( TTsscc, (0:ll,0:ll,1:mn,1:mn), zero )
+    SALLOCATE( TTsscs, (0:ll,0:ll,1:mn,1:mn), zero )
+    SALLOCATE( TTsssc, (0:ll,0:ll,1:mn,1:mn), zero )
+
+    SALLOCATE( TDstcc, (0:ll,0:ll,1:mn,1:mn), zero )
+    SALLOCATE( TDstcs, (0:ll,0:ll,1:mn,1:mn), zero )
+    SALLOCATE( TDstss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+    SALLOCATE( TDszcc, (0:ll,0:ll,1:mn,1:mn), zero )
+    SALLOCATE( TDszcs, (0:ll,0:ll,1:mn,1:mn), zero )
+    SALLOCATE( TDszss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+    SALLOCATE( DDttcs, (0:ll,0:ll,1:mn,1:mn), zero )
+    SALLOCATE( DDttsc, (0:ll,0:ll,1:mn,1:mn), zero )
+    SALLOCATE( DDttss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+    SALLOCATE( DDtzcs, (0:ll,0:ll,1:mn,1:mn), zero )
+    SALLOCATE( DDtzsc, (0:ll,0:ll,1:mn,1:mn), zero )
+    SALLOCATE( DDtzss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+    SALLOCATE( DDzzcs, (0:ll,0:ll,1:mn,1:mn), zero )
+    SALLOCATE( DDzzsc, (0:ll,0:ll,1:mn,1:mn), zero )
+    SALLOCATE( DDzzss, (0:ll,0:ll,1:mn,1:mn), zero )
+   end if !NOTstellsym
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
@@ -1013,42 +1015,44 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
 2000 continue
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
    DALLOCATE(DToocc)
-   DALLOCATE(DToocs)
-   DALLOCATE(DToosc)
-   DALLOCATE(DTooss)
-
-   DALLOCATE(TTsscc)
-   DALLOCATE(TTsscs)
-   DALLOCATE(TTsssc)
    DALLOCATE(TTssss)
-
-   DALLOCATE(TDstcc)
-   DALLOCATE(TDstcs)
    DALLOCATE(TDstsc)
-   DALLOCATE(TDstss)
-
-   DALLOCATE(TDszcc)
-   DALLOCATE(TDszcs)
    DALLOCATE(TDszsc)
-   DALLOCATE(TDszss)
-
    DALLOCATE(DDttcc)
-   DALLOCATE(DDttcs)
-   DALLOCATE(DDttsc)
-   DALLOCATE(DDttss)
-
    DALLOCATE(DDtzcc)
-   DALLOCATE(DDtzcs)
-   DALLOCATE(DDtzsc)
-   DALLOCATE(DDtzss)
-
    DALLOCATE(DDzzcc)
-   DALLOCATE(DDzzcs)
-   DALLOCATE(DDzzsc)
-   DALLOCATE(DDzzss)
 
+   if (NOTstellsym) then
+    DALLOCATE(DToocs)
+    DALLOCATE(DToosc)
+    DALLOCATE(DTooss)
+
+    DALLOCATE(TTsscc)
+    DALLOCATE(TTsscs)
+    DALLOCATE(TTsssc)
+
+    DALLOCATE(TDstcc)
+    DALLOCATE(TDstcs)
+    DALLOCATE(TDstss)
+
+    DALLOCATE(TDszcc)
+    DALLOCATE(TDszcs)
+    DALLOCATE(TDszss)
+
+    DALLOCATE(DDttcs)
+    DALLOCATE(DDttsc)
+    DALLOCATE(DDttss)
+
+    DALLOCATE(DDtzcs)
+    DALLOCATE(DDtzsc)
+    DALLOCATE(DDtzss)
+
+    DALLOCATE(DDzzcs)
+    DALLOCATE(DDzzsc)
+    DALLOCATE(DDzzss)
+   end if !NOTstellsym
+   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
    DALLOCATE(dMA)
