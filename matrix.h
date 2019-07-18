@@ -407,7 +407,8 @@ subroutine matrix( lvol, mn, lrad )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   if( YESstellsym ) then
-   
+!$OMP PARALLEL DEFAULT(PRIVATE) SHARED(lvol,mn,lrad,Lcoordinatesingularity,im,in,TTssss,TDszsc,TDstsc,DDzzcc,DDtzcc,DDttcc,DToocc,Ate,Aze,dMA,dMD,dMG,dMB,Lma,Lmb,Lme,Lmg,Lmh,TT,iVns,iBns)   
+!$OMP DO PRIVATE(ii,jj,ll,pp)   
    do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
     
     do jj = 1, mn ; mj = im(jj) ; nj = in(jj) ; mimj = mi * mj ; minj = mi * nj ; nimj = ni * mj ; ninj = ni * nj
@@ -469,6 +470,8 @@ subroutine matrix( lvol, mn, lrad )
     ;endif
     
    enddo ! end of do ii ;
+!$OMP END DO
+!$OMP END PARALLEL
    
   else ! NOTstellsym ;
    
