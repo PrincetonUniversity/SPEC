@@ -105,15 +105,15 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
 
   REAL                 :: lAte(0:mn,-1:2), lAze(0:mn,-1:2), lAto(0:mn,-1:2), lAzo(0:mn,-1:2)
 
-  REAL                 :: lBso(1:mn,-1:2), lBte(1:mn,-1:2), lBze(1:mn,-1:2)
-  REAL                 :: lBse(1:mn,-1:2), lBto(1:mn,-1:2), lBzo(1:mn,-1:2)
+!  REAL                 :: lBso(1:mn,-1:2), lBte(1:mn,-1:2), lBze(1:mn,-1:2)
+!  REAL                 :: lBse(1:mn,-1:2), lBto(1:mn,-1:2), lBzo(1:mn,-1:2)
 
-  REAL                 :: gvu(1:Nt*Nz,1:3,1:3) ! local workspace; 13 Sep 13;
+!  REAL                 :: gvu(1:Nt*Nz,1:3,1:3) ! local workspace; 13 Sep 13;
 
 ! required for Fourier routines;
   INTEGER              :: IA, if04aaf, idgesvx, ipiv(1:NN), iwork4(1:NN)
-  REAL                 :: dmatrix(1:NN,1:NN,-1:2), drhs(1:NN,-1:2), dlambda(1:NN,-1:2), FAA(1:NN,1:NN)
-  REAL                 :: omatrix(1:NN,1:NN)
+  REAL  , allocatable  :: dmatrix(:,:,:), omatrix(:,:), FAA(:,:)
+  REAL                 :: drhs(1:NN,-1:2), dlambda(1:NN,-1:2)
   REAL                 :: Rdgesvx(1:NN), Cdgesvx(1:NN), work4(1:4*NN), rcond, ferr, berr, ferr2(1:2), berr2(1:2)
   CHARACTER            :: equed 
 
@@ -203,6 +203,13 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
    
 ! construct real-space, real-space transformation matrix; 20 Apr 13;
 
+   if( Lsparse.eq.0 .or. Lsparse.eq.3 ) then
+    SALLOCATE( dmatrix, (1:NN,1:NN,-1:2), zero )
+    SALLOCATE( omatrix, (1:NN,1:NN), zero )
+    SALLOCATE( FAA, (1:NN,1:NN), zero )
+   endif
+
+
 #ifdef LSPARSE
    
    if( Lsparse.gt.0 ) then
@@ -250,7 +257,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
     FATAL( tr00ab, ii.ne.Ndof, counting error )
     
     Ndof = Ndof + 1 ! include rotational-transform as a degree-of-freedom; 23 Apr 13;
-    
+
 ! dense arrays; 24 Apr 13; ! these will eventually be redundant; 24 Apr 13;
     if( Lsparse.eq.1 ) then ! dense transformation; 24 Apr 13;
      SALLOCATE( rmatrix, (1:Ndof,1:Ndof,-1:2), zero ) ! real-space angle transformation matrix; dense; 23 Apr 13;
@@ -823,7 +830,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
   es18.10" ,"es18.10" ] ; err="es10.02" ;")
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-   
+
    if( Lsparse.eq.1 ) then
     DALLOCATE(rmatrix)
     DALLOCATE(rrhs)
@@ -844,6 +851,13 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
    endif
 
 #endif
+
+   if( Lsparse.eq.0 .or. Lsparse.eq.3 ) then
+     DALLOCATE( dmatrix )
+     DALLOCATE( omatrix )
+     DALLOCATE( FAA )
+   endif
+
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
