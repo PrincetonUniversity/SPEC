@@ -543,7 +543,7 @@ program xspech
   enddo
 
   do vvol = 1, Mvol-1
-    Isurf(vvol) = -pi2 * (Btemn(1, 0, vvol+1) - Btemn(1, 1, vvol))
+    Isurf(vvol) = pi2 * (Btemn(1, 0, vvol+1) - Btemn(1, 1, vvol))
   enddo
 
 ! and the volume current

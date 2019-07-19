@@ -176,7 +176,7 @@ BEGIN(dfp100)
 					if( myid.EQ.0 ) then
 						call MPI_RECV(Btemn(1, 0, vvol+1), 1, MPI_DOUBLE_PRECISION, cpu_send_two, tag2, MPI_COMM_WORLD, status, ierr)
 						call MPI_RECV(Btemn(1, 1, vvol  ), 1, MPI_DOUBLE_PRECISION, cpu_send_one, tag1, MPI_COMM_WORLD, status, ierr)
-          				IPDt(vvol) = -pi2 * (Btemn(1, 0, vvol+1) - Btemn(1, 1, vvol))
+          				IPDt(vvol) = pi2 * (Btemn(1, 0, vvol+1) - Btemn(1, 1, vvol))
 					endif
 
 					if( myid.EQ.cpu_send_one ) then
