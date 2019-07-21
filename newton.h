@@ -89,9 +89,10 @@ subroutine newton( NGdof, position, ihybrd )
 
   INTEGER                :: irevcm, mode, Ldfjac, LR
   REAL                   :: xtol, epsfcn, factor
-  REAL                   :: diag(1:NGdof), RR(1:NGdof*(NGdof+1)/2), QTF(1:NGdof), workspace(1:NGdof,1:4)
+  REAL                   :: diag(1:NGdof), QTF(1:NGdof), workspace(1:NGdof,1:4)
 
-  REAL                   :: force(0:NGdof), fjac(1:NGdof,1:NGdof)
+  REAL                   :: force(0:NGdof)
+  REAL, allocatable      :: fjac(:,:), RR(:)
   
   INTEGER                :: ML, MU ! required for only Lc05ndf;
   
@@ -175,8 +176,11 @@ subroutine newton( NGdof, position, ihybrd )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+  SALLOCATE( fjac, (1:NGdof, 1:NGdof), zero)
+  SALLOCATE( RR, (1:NGdof*(NGdof+1)/2), zero)
+
   if( Lfindzero.eq.2 ) then
-   SALLOCATE( dFFdRZ, (1:LGdof,1:Mvol,0:1,1:LGdof,0:1), zero )
+   SALLOCATE( dFFdRZ, (1:LGdof,0:1,1:LGdof,0:1,1:Mvol), zero )
    SALLOCATE( dBBdmp, (1:LGdof,1:Mvol,0:1,1:2), zero )
    SALLOCATE( dmupfdx, (1:Mvol,1:2,1:LGdof,0:1), zero )
    SALLOCATE( hessian, (1:NGdof,1:NGdof), zero )
@@ -259,7 +263,10 @@ subroutine newton( NGdof, position, ihybrd )
    DALLOCATE( dessian )
    Lhessianallocated = .false.
   endif
-  
+
+  DALLOCATE( fjac )
+  DALLOCATE( RR )
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   RETURN(newton)

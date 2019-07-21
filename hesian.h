@@ -204,7 +204,7 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  SALLOCATE( dFFdRZ , (1:LGdof,1:Mvol,0:1,1:LGdof,0:1), zero )
+  SALLOCATE( dFFdRZ , (1:LGdof,0:1,1:LGdof,0:1,1:Mvol), zero )
   SALLOCATE( dBBdmp , (1:LGdof,1:Mvol,0:1,        1:2), zero )
 
   SALLOCATE( dmupfdx, (1:Mvol,1:2,1:LGdof,0:1), zero )

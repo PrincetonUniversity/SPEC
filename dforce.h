@@ -551,9 +551,16 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
         
         dpsi(1:2) = (/ dtflux(vvol), dpflux(vvol) /) ! local enclosed toroidal and poloidal fluxes;
         
-        rhs(0)    =   half*sum(solution(1:NN,0)*matmul(dMD(1:NN,1:NN),solution(1:NN,0)))
-        rhs(1:NN) = - matmul( dMB(1:NN,1:2 )                            , dpsi(1:2)        ) &
-                    - matmul( dMA(1:NN,1:NN) - mu(vvol) * dMD(1:NN,1:NN), solution(1:NN,0) )
+        ! this is the original without BLAS
+        !rhs(0)    =   half*sum(solution(1:NN,0)*matmul(dMD(1:NN,1:NN),solution(1:NN,0)))
+        !rhs(1:NN) = - matmul( dMB(1:NN,1:2 )                            , dpsi(1:2)        ) &
+        !            - matmul( dMA(1:NN,1:NN) - mu(vvol) * dMD(1:NN,1:NN), solution(1:NN,0) )
+
+        ! BLAS version 17 Jul 2019
+        call DGEMV('N',NN,NN, one,dMD(1,1),NN+1,solution(1,0),1,zero,rhs(1),1)
+        rhs(0) = half * sum(solution(1:NN,0) * rhs(1:NN))
+        call DGEMV('N',NN,NN,-one,dMA(1,1),NN+1,solution(1,0),1,mu(vvol),rhs(1),1)
+        rhs(1:NN) = rhs(1:NN) - matmul( dMB(1:NN,1:2 ), dpsi(1:2) )
 
         if (Lconstraint .eq. 2) then
           SALLOCATE( work, (1:NN+1), zero )
@@ -563,7 +570,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
           solution(1:NN,-1) = work(2:NN+1)
           DALLOCATE(work)
         else
-          solution(1:NN,-1) = matmul( oBI(1:NN,1:NN), rhs(1:NN) )
+          !solution(1:NN,-1) = matmul( oBI(1:NN,1:NN), rhs(1:NN) ) ! original version
+          call DGEMV('N',NN,NN,one,oBI(1,1),NN+1,rhs(1),1,zero,solution(1,-1),1) ! BLAS version 17 Jul 2019
         endif
 
         ideriv = -1 ; dpsi(1:2) = (/ dtflux(vvol), dpflux(vvol) /) ! these are also used below;
@@ -967,24 +975,24 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
 
          ; idoc = 0
          
-         ;  dFFdRZ(idoc+1:idoc+mn    ,vvol,iocons,idof,innout) = + efmn(1:mn    ) * psifactor(ii,vvol-1+innout) * BBweight(1:mn) ! pressure;
+         ;  dFFdRZ(idoc+1:idoc+mn    ,iocons,idof,innout,vvol) = + efmn(1:mn    ) * psifactor(ii,vvol-1+innout) * BBweight(1:mn) ! pressure;
          ; idoc = idoc + mn   ! even;
          ;if( Igeometry.ge.3 ) then ! add spectral constraints;
-         ;  dFFdRZ(idoc+1:idoc+mn-1  ,vvol,iocons,idof,innout) = - sfmn(2:mn    ) * psifactor(ii,vvol-1+innout) * epsilon       & ! spectral condensation;
+         ;  dFFdRZ(idoc+1:idoc+mn-1  ,iocons,idof,innout,vvol) = - sfmn(2:mn    ) * psifactor(ii,vvol-1+innout) * epsilon       & ! spectral condensation;
                                                                  - simn(2:mn    ) * psifactor(ii,vvol-1+innout) * sweight(vvol)   ! poloidal length constraint;
          ! if( Ntor.gt.0 ) then
-         !  dFFdRZ(idoc+1:idoc+Ntor  ,vvol,iocons,idof,innout) = + odmn(2:Ntor+1) * psifactor(ii,vvol-1+innout) * apsilon
+         !  dFFdRZ(idoc+1:idoc+Ntor  ,iocons,idof,innout,vvol) = + odmn(2:Ntor+1) * psifactor(ii,vvol-1+innout) * apsilon
          ! endif
          ; ;idoc = idoc + mn-1 ! oddd;
          ;endif ! end of if( Igeometry.ge.3) ;
          if( NOTstellsym ) then
-          ; dFFdRZ(idoc+1:idoc+mn-1  ,vvol,iocons,idof,innout) = + ofmn(2:mn    ) * psifactor(ii,vvol-1+innout) * BBweight(2:mn) ! pressure;
+          ; dFFdRZ(idoc+1:idoc+mn-1  ,iocons,idof,innout,vvol) = + ofmn(2:mn    ) * psifactor(ii,vvol-1+innout) * BBweight(2:mn) ! pressure;
           ;idoc = idoc + mn-1 ! oddd;
           if( Igeometry.ge.3 ) then ! add spectral constraints;
-           ;dFFdRZ(idoc+1:idoc+mn    ,vvol,iocons,idof,innout) = - cfmn(1:mn    ) * psifactor(ii,vvol-1+innout) * epsilon       & ! spectral condensation;
+           ;dFFdRZ(idoc+1:idoc+mn    ,iocons,idof,innout,vvol) = - cfmn(1:mn    ) * psifactor(ii,vvol-1+innout) * epsilon       & ! spectral condensation;
                                                                  - comn(1:mn    ) * psifactor(ii,vvol-1+innout) * sweight(vvol)   ! poloidal length constraint;
           !if( Ntor.ge.0 ) then
-          ! dFFdRZ(idoc+1:idoc+Ntor+1,vvol,iocons,idof,innout) = + evmn(1:Ntor+1) * psifactor(ii,vvol-1+innout) * apsilon ! poloidal origin      ;
+          ! dFFdRZ(idoc+1:idoc+Ntor+1,iocons,idof,innout,vvol) = + evmn(1:Ntor+1) * psifactor(ii,vvol-1+innout) * apsilon ! poloidal origin      ;
           !endif
            idoc = idoc + mn   ! even;
           endif ! end of if( Igeometry.ge.3) ;
@@ -1330,7 +1338,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
          tdof = (vvol-2) * LGdof + idof ! labels degree-of-freedom in internal interface geometry   ;
          tdoc = (vvol-1) * LGdof        ! labels force-balance constraint across internal interfaces;
          idoc = 0                       ! local  force-balance constraint across internal interface ;
-         hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof) =                                           - dFFdRZ(idoc+1:idoc+LGdof,vvol+0,1,idof,0)
+         hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof) =                                           - dFFdRZ(idoc+1:idoc+LGdof,1,idof,0,vvol+0)
          if( Lconstraint.eq.1 ) then ! this is a little clumsy; could include Lfreebound or something . . . ;
          hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof) = hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof)                     &
                                                    - dBBdmp(idoc+1:idoc+LGdof,vvol+0,1,1) * dmupfdx(vvol,1,idof,0) &
@@ -1346,7 +1354,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
         if( Lextrap.eq.1 .and. vvol.eq.1 ) then
         ;hessian(tdoc+idof                  ,tdof) = one ! diagonal elements;
         else
-        ;hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof) = dFFdRZ(idoc+1:idoc+LGdof,vvol+1,0,idof,0) - dFFdRZ(idoc+1:idoc+LGdof,vvol+0,1,idof,1)
+        ;hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof) = dFFdRZ(idoc+1:idoc+LGdof,0,idof,0,vvol+1) - dFFdRZ(idoc+1:idoc+LGdof,1,idof,1,vvol+0)
          if( Lconstraint.eq.1 ) then ! this is a little clumsy;
          hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof) = hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof)                       &
                                                    + dBBdmp(idoc+1:idoc+LGdof,vvol+1,0,1) * dmupfdx(vvol+1,1,idof,0) &
@@ -1366,7 +1374,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
          else                                             ; hessian(tdoc+idof,tdof) = - one
          endif
          else
-         hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof) = dFFdRZ(idoc+1:idoc+LGdof,vvol+1,0,idof,1)
+         hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof) = dFFdRZ(idoc+1:idoc+LGdof,0,idof,1,vvol+1)
          if( Lconstraint.eq.1 ) then ! this is a little clumsy;
          hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof) = hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof)                       &
                                                    + dBBdmp(idoc+1:idoc+LGdof,vvol+1,0,1) * dmupfdx(vvol+1,1,idof,1) &
@@ -1380,7 +1388,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
         !tdof = (vvol+0) * LGdof + idof
          tdoc = (vvol-1) * LGdof ! shorthand ;
          idoc = 0
-         dessian(tdoc+idoc+1:tdoc+idoc+LGdof,idof) = dFFdRZ(idoc+1:idoc+LGdof,vvol+1,0,idof,1)
+         dessian(tdoc+idoc+1:tdoc+idoc+LGdof,idof) = dFFdRZ(idoc+1:idoc+LGdof,0,idof,1,vvol+1)
          if( Lconstraint.eq.1 ) then ! this is a little clumsy;
          dessian(tdoc+idoc+1:tdoc+idoc+LGdof,idof) = dessian(tdoc+idoc+1:tdoc+idoc+LGdof,idof)                       &
                                                    + dBBdmp(idoc+1:idoc+LGdof,vvol+1,0,1) * dmupfdx(vvol+1,1,idof,1) &
