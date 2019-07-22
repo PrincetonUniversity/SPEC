@@ -39,7 +39,7 @@ for i=1:nptraj       %for each field line trajectory
  scatter(rpol*T(i,:),R(i,:),10,'.k')
  hold on
  set(gca,'FontSize',12)
- xlabel('y','FontSize',12)
+ xlabel('\theta r_{pol}','FontSize',12)
  ylabel('R','FontSize',12)
  xlim([0 2*pi*rpol])
  ylim([-0.1 data.Rbc(1,end)+0.1])

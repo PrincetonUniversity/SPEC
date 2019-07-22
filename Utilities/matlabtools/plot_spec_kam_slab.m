@@ -3,9 +3,9 @@ function plot_spec_kam_slab(filename,zetaov2pi,newfig)
 % Produces a "Poincare plot" of the ideal-interfaces in slab geometry
 %
 % INPUT
-%   -filename  : path to the hdf5 output file (e.g. 'testcase.sp.h5')
-%   -nz0       : the toroidal plane to be shown
-%   -newfig    : opens(=1) or not(=0) a new figure
+%   -filename   : path to the hdf5 output file (e.g. 'testcase.sp.h5')
+%   -zetaov2pi  : shows the toroidal plane at zeta=2*pi*(zetaov2pi) 
+%   -newfig     : opens(=1) or not(=0) a new figure
 %
 %   written by J.Loizu (2017)
 
@@ -53,4 +53,9 @@ for i=1:Nvol
  scatter(X(i,:),Y(i,:),3,'filled','r')
 end
 
+set(gca,'FontSize',12)
+xlabel('\theta r_{pol}','FontSize',12)
+ylabel('R','FontSize',12)
+xlim([min(min(X)) max(max(X))])
+ylim([min(min(Y)) max(max(Y))])
 
