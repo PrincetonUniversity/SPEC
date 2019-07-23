@@ -5,14 +5,14 @@
 """
 
 import h5py
-import numpy as np
-import os # .path.abspath
+import numpy as np # for isscalar
+import os          # for path.abspath
 
 # reader class for Stepped Pressure Equilibrium Code output file
 # S. Hudson et al., Physics of Plasmas 19, 112502 (2012); doi: 10.1063/1.4765691
 class SPEC:
     
-    # use as s = SPEC(filename), e.g. s=SPEC("ext.h5")
+    # use as s = SPEC(filename), e.g. s=SPEC("ext.h5") or s=SPEC("/path/to/ext.h5")
     def __init__(self, *args, **kwargs):
         # args[0] should always be the name of a file or an item inside the root object
         # if args[0] is not a filename, kwargs['content'] should be the content to be added
@@ -57,6 +57,8 @@ class SPEC:
                 self.input.physics.Lrad = np.array([self.input.physics.Lrad])
             
             # adjust some matrix dimensions
+            
+            # these define the target dimensions in the radial direction
             Nvol = self.input.physics.Nvol
             Lrad = self.input.physics.Lrad
             
@@ -91,7 +93,7 @@ class SPEC:
               cBp.append(self.grid.Bp[:,start:start+Lrad[i]+1])
               cBZ.append(self.grid.BZ[:,start:start+Lrad[i]+1])
             
-              # move along combined array dimension
+              # move along the merged array dimension
               start = start + Lrad[i]+1;
             
             # replace original content in data structure
