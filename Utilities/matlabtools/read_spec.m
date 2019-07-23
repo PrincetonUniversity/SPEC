@@ -101,8 +101,10 @@ data.grid.Bp = cBp;
 data.grid.BZ = cBZ;
 
 % remove unsuccessful Poincare trajectories
-
-
+data.poincare.R = data.poincare.R(:,:,data.poincare.success==1)
+data.poincare.Z = data.poincare.Z(:,:,data.poincare.success==1)
+data.poincare.t = data.poincare.t(:,:,data.poincare.success==1)
+data.poincare.s = data.poincare.s(:,:,data.poincare.success==1)
 
 end
 
