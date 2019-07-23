@@ -43,8 +43,17 @@ try
    machine_format =  machform;  % update value
   end
   [filepath,name,ext]=fileparts(filename);
-  grid_file = [filepath filesep '.' name '.grid'];
-  fid        = fopen(grid_file,'r',machine_format);
+  fid=0;
+  if (isempty(filepath))
+    % file is in the current working directory, so there is no need to prepend the path to it
+    grid_file = ['.' name '.grid'];
+    fid        = fopen(grid_file,'r',machine_format);
+  else
+    % file is outside the current working directory, so include the path to it
+    grid_file = [filepath filesep '.' name '.grid'];
+    fid        = fopen(grid_file,'r',machine_format);
+  end
+
   if (fid > 0)
     % Get Nt, Nz, Ntz, Mvol, Igeometry, pi2nfp
     fread(fid,1,spacer_format);

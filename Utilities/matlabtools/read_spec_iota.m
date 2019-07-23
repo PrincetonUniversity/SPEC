@@ -40,8 +40,18 @@ for i=1:nvol
         if(machine_format ~= machform)
          machine_format =  machform;  % update value
         end
-        transform_file = [filepath filesep '.' name '.t.' num2str(i,'%4.4i') '.dat'];
-        fid = fopen(transform_file,'r',machine_format);
+        
+        fid=0;
+	    if (isempty(filepath))
+	      % file is in the current working directory, so there is no need to prepend the path to it
+	      transform_file = ['.' name '.t.' num2str(i,'%4.4i') '.dat'];
+	      fid        = fopen(transform_file,'r',machine_format);
+	    else
+	      % file is outside the current working directory, so include the path to it
+	      transform_file = [filepath filesep '.' name '.t.' num2str(i,'%4.4i') '.dat'];
+	      fid        = fopen(transform_file,'r',machine_format);
+	    end
+       
         if (fid > 0)
             % Get subgrid
             fread(fid,1,spacer_format);
