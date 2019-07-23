@@ -47,8 +47,17 @@ try
    machine_format =  machform;  % update value
   end
   [filepath,name,ext]=fileparts(filename);
-  field_file = [filepath filesep '.' name '.A'];
-  fid        = fopen(field_file,'r',machine_format);
+  fid=0;
+  if (isempty(filepath))
+    % file is in the current working directory, so there is no need to prepend the path to it
+    field_file = ['.' name '.A'];
+    fid        = fopen(field_file,'r',machine_format);
+  else
+    % file is outside the current working directory, so include the path to it
+    field_file = [filepath filesep '.' name '.A'];
+    fid        = fopen(field_file,'r',machine_format);
+  end
+
   if (fid > 0)
     % Read through Mvol, Mpol, Ntor, mn, Nfp, im(1:mn), in(1:mn)
     fread(fid,1,spacer_format);
