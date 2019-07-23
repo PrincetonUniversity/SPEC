@@ -27,13 +27,9 @@ mn        = data.mn;
 data.Lrad = zeros(nvol,1);  % allocate data set for Lrad(1:nvol)
 
 data.Ate = cell(nvol,1);    % create cells for each volume's field 
-
 data.Aze = cell(nvol,1);
-
 data.Ato = cell(nvol,1);
-
 data.Azo = cell(nvol,1);
-
 
 % Read the field files
 
@@ -51,8 +47,17 @@ try
    machine_format =  machform;  % update value
   end
   [filepath,name,ext]=fileparts(filename);
-  field_file = [filepath filesep '.' name '.A'];
-  fid        = fopen(field_file,'r',machine_format);
+  fid=0;
+  if (isempty(filepath))
+    % file is in the current working directory, so there is no need to prepend the path to it
+    field_file = ['.' name '.A'];
+    fid        = fopen(field_file,'r',machine_format);
+  else
+    % file is outside the current working directory, so include the path to it
+    field_file = [filepath filesep '.' name '.A'];
+    fid        = fopen(field_file,'r',machine_format);
+  end
+
   if (fid > 0)
     % Read through Mvol, Mpol, Ntor, mn, Nfp, im(1:mn), in(1:mn)
     fread(fid,1,spacer_format);
@@ -72,22 +77,19 @@ try
    Lrad = fread(fid,1,int_format);
    fread(fid,1,spacer_format);
    data.Lrad(v,1) = Lrad;
-   if(i==1)
-    % Allocate data sets
-    data.Ate = zeros(nvol,Lrad+1,mn);
-    data.Aze = zeros(nvol,Lrad+1,mn);
-    data.Ato = zeros(nvol,Lrad+1,mn);
-    data.Azo = zeros(nvol,Lrad+1,mn);
-   end
+   data.Ate{v} = zeros(Lrad+1,mn);
+   data.Aze{v} = zeros(Lrad+1,mn);
+   data.Ato{v} = zeros(Lrad+1,mn);
+   data.Azo{v} = zeros(Lrad+1,mn);
    for i=1:mn
     fread(fid,1,spacer_format);
-    data.Ate(v,:,i) = fread(fid,Lrad+1,float_format); % Ate
+    data.Ate{v}(:,i) = fread(fid,Lrad+1,float_format); % Ate
     fread(fid,2,spacer_format);
-    data.Aze(v,:,i) = fread(fid,Lrad+1,float_format); % Aze
+    data.Aze{v}(:,i) = fread(fid,Lrad+1,float_format); % Aze
     fread(fid,2,spacer_format);
-    data.Ato(v,:,i) = fread(fid,Lrad+1,float_format); % Ato
+    data.Ato{v}(:,i) = fread(fid,Lrad+1,float_format); % Ato
     fread(fid,2,spacer_format);
-    data.Azo(v,:,i) = fread(fid,Lrad+1,float_format); % Azo
+    data.Azo{v}(:,i) = fread(fid,Lrad+1,float_format); % Azo
     fread(fid,1,spacer_format);
    end
   end

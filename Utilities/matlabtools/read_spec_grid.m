@@ -20,7 +20,12 @@ machform = 's';
 data = read_hdf5(filename);
 
 nvol = double(data.Mvol);
-
+data.Rij = cell(nvol,1);
+data.Zij = cell(nvol,1);
+data.sg  = cell(nvol,1);
+data.BR  = cell(nvol,1);
+data.Bp  = cell(nvol,1);
+data.BZ  = cell(nvol,1);
 
 % Read the grid files
 
@@ -38,8 +43,17 @@ try
    machine_format =  machform;  % update value
   end
   [filepath,name,ext]=fileparts(filename);
-  grid_file = [filepath filesep '.' name '.grid'];
-  fid        = fopen(grid_file,'r',machine_format);
+  fid=0;
+  if (isempty(filepath))
+    % file is in the current working directory, so there is no need to prepend the path to it
+    grid_file = ['.' name '.grid'];
+    fid        = fopen(grid_file,'r',machine_format);
+  else
+    % file is outside the current working directory, so include the path to it
+    grid_file = [filepath filesep '.' name '.grid'];
+    fid        = fopen(grid_file,'r',machine_format);
+  end
+
   if (fid > 0)
     % Get Nt, Nz, Ntz, Mvol, Igeometry, pi2nfp
     fread(fid,1,spacer_format);
@@ -62,16 +76,13 @@ try
    Lrad         = fread(fid,1,int_format);
    fread(fid,1,spacer_format);
    data.Lrad(i) = Lrad;
-   if(i==1)
-    % Allocate data sets
-    data.Rij = zeros(nvol,Ntz,Lrad+1);
-    data.Zij = zeros(nvol,Ntz,Lrad+1);
-    data.sg  = zeros(nvol,Ntz,Lrad+1);
-    data.BR  = zeros(nvol,Ntz,Lrad+1);
-    data.Bp  = zeros(nvol,Ntz,Lrad+1);
-    data.BZ  = zeros(nvol,Ntz,Lrad+1);
-   end
-   for l=1:Lrad+1    
+   data.Rij{i} = zeros(Ntz,Lrad+1);
+   data.Zij{i} = zeros(Ntz,Lrad+1);
+   data.sg{i} = zeros(Ntz,Lrad+1);
+   data.BR{i} = zeros(Ntz,Lrad+1);
+   data.Bp{i} = zeros(Ntz,Lrad+1);
+   data.BZ{i} = zeros(Ntz,Lrad+1);
+   for l=1:Lrad+1
     % Get grid points
     fread(fid,1,spacer_format);
     Rout = fread(fid,Ntz,float_format);
@@ -79,8 +90,8 @@ try
     fread(fid,1,spacer_format);
     Zout = fread(fid,Ntz,float_format);
     fread(fid,1,spacer_format);   
-    data.Rij(i,:,l) = Rout;
-    data.Zij(i,:,l) = Zout;
+    data.Rij{i}(:,l) = Rout;
+    data.Zij{i}(:,l) = Zout;
     
     fread(fid,1,spacer_format);
     sg = fread(fid,Ntz,float_format);
@@ -94,10 +105,10 @@ try
     fread(fid,1,spacer_format);
     jireal = fread(fid,Ntz,float_format);
     fread(fid,1,spacer_format);
-    data.sg(i,:,l) = sg;
-    data.BR(i,:,l) = ijreal;
-    data.Bp(i,:,l) = ijimag;
-    data.BZ(i,:,l) = jireal;
+    data.sg{i}(:,l) = sg;
+    data.BR{i}(:,l) = ijreal;
+    data.Bp{i}(:,l) = ijimag;
+    data.BZ{i}(:,l) = jireal;
    end
   end
   

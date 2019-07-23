@@ -41,8 +41,17 @@ for i=1:nvol
         if(machine_format ~= machform)
          machine_format =  machform;  % update value
         end
-        poincare_file = [filepath filesep '.' name '.P.' num2str(i,'%4.4i') '.dat'];
-        fid = fopen(poincare_file,'r',machine_format);
+        
+        fid=0;
+	    if (isempty(filepath))
+	      % file is in the current working directory, so there is no need to prepend the path to it
+	      poincare_file = ['.' name '.P.' num2str(i,'%4.4i') '.dat'];
+	      fid        = fopen(poincare_file,'r',machine_format);
+	    else
+	      % file is outside the current working directory, so include the path to it
+	      poincare_file = [filepath filesep '.' name '.P.' num2str(i,'%4.4i') '.dat'];
+	      fid        = fopen(poincare_file,'r',machine_format);
+	    end
         if (fid > 0)
             while ~feof(fid)
                 % interface labels

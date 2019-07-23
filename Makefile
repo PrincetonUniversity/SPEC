@@ -38,7 +38,7 @@
  # module load fftw
  # module load lapack/3.5.0rhel6
  CFLAGS=-r8
- RFLAGS=-mcmodel=large -O3 -m64 -unroll0 -fno-alias -ip -traceback
+ RFLAGS=-mcmodel=large -O0 -m64 -unroll0 -fno-alias -ip -traceback
  DFLAGS=-check bounds -check format -check output_conversion -check pointers -check uninit -debug full -D DEBUG
  #Note: on the PPPL clusters, use module lapack/3.5.0rhel6 only
  NAG?=-L$(LAPACKHOME) -llapack -lblas -L$(BLASHOME) -lgfortran #-lrefblas -lgfortran
