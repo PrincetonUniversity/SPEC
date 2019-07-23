@@ -1,11 +1,12 @@
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !title (transform) ! Calculates transform, \( \iota \hspace{-0.35em}\)-\( = \dot \theta ( 1 + \lambda_\theta) + \lambda_\zeta \), given ${\bf B}|_{\cal I}$.
 
 !latex \briefly{Calculates rotational transform given an arbitrary tangential field.}
 
 !latex \calledby{\link{dforce} and \link{mp00ac}}
-!l tex \calls{}
+!latex \calls{}
 
 !latex \tableofcontents
 
@@ -582,8 +583,6 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
      if( iflag.eq. 2 .and. ideriv.lt.0 ) cycle ! derivatives wrt helicity multiplier and differential poloidal flux are required; 20 Jun 14;
      if( iflag.eq.-1 .and. ideriv.gt.0 ) cycle ! derivative  wrt geometry                                               required; 20 Jun 14;
 
-!$OMP PARALLEL DEFAULT(PRIVATE) SHARED(ideriv,NN,drhs,dmatrix,lAze,lAzo,lAte,lAto,NOTstellsym,mn,mns,ims,ins,iotakadd,iotaksub,iotakkii,iotaksgn)  
-!$OMP DO     
      do kk = 1, mn
       
       ii = iotakkii(kk)
@@ -641,8 +640,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
       enddo ! end of do jj; 30 Jan 13;
 
      enddo ! end of do kk; 30 Jan 13;
-!$OMP END DO
-!$OMP END PARALLEL
+
     enddo ! end of ideriv; 30 Jan 13;
 
 
