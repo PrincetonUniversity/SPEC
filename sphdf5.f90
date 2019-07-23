@@ -473,25 +473,28 @@ subroutine write_convergence_output( nDcalls, ForceErr )
   data_dims = old_data_dims+1
   H5CALL( sphdf5, h5dset_extent_f, (iteration_dset_id, data_dims, hdfier) )
 
-  ! get dataspace slab corresponding to region which the iterations dataset was extended by
-  H5CALL( sphdf5, h5dget_space_f, (iteration_dset_id, dataspace, hdfier) ) ! re-select dataspace to update size info in HDF5 lib
-  H5CALL( sphdf5, h5sselect_hyperslab_f, (dataspace, H5S_SELECT_SET_F, old_data_dims, (/ INT(1, HSIZE_T) /), hdfier) ) ! newly appended slab is at old size and 1 long
+  if (myid.eq.0) then ! only one processor should actually write the data
 
-  ! write next iteration object
-  H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_nDcalls_id, nDcalls, INT((/1/), HSIZE_T), hdfier, &
-    & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id) )
-  H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_Energy_id, Energy, INT((/1/), HSIZE_T), hdfier, &
-    & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id) )
-  H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_ForceErr_id, ForceErr, INT((/1/), HSIZE_T), hdfier, &
-    & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id) )
-  H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_iRbc_id, iRbc, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
-    & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id) )
-  H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_iZbs_id, iZbs, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
-    & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id) )
-  H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_iRbs_id, iRbs, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
-    & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id) )
-  H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_iZbc_id, iZbc, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
-    & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id) )
+    ! get dataspace slab corresponding to region which the iterations dataset was extended by
+    H5CALL( sphdf5, h5dget_space_f, (iteration_dset_id, dataspace, hdfier) ) ! re-select dataspace to update size info in HDF5 lib
+    H5CALL( sphdf5, h5sselect_hyperslab_f, (dataspace, H5S_SELECT_SET_F, old_data_dims, (/ INT(1, HSIZE_T) /), hdfier) ) ! newly appended slab is at old size and 1 long
+
+    ! write next iteration object
+    H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_nDcalls_id, nDcalls, INT((/1/), HSIZE_T), hdfier, &
+      & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id) )
+    H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_Energy_id, Energy, INT((/1/), HSIZE_T), hdfier, &
+      & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id) )
+    H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_ForceErr_id, ForceErr, INT((/1/), HSIZE_T), hdfier, &
+      & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id) )
+    H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_iRbc_id, iRbc, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
+      & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id) )
+    H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_iZbs_id, iZbs, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
+      & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id) )
+    H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_iRbs_id, iRbs, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
+      & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id) )
+    H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_iZbc_id, iZbc, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
+      & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id) )
+  endif
 
   ! dataspace to appended object should be closed now
   ! MAYBE we otherwise keep all the iterations in memory?
