@@ -636,7 +636,7 @@ program xspech
 
    LREGION(vvol)
    
-   if( myid.eq.modulo(vvol-1,ncpu) ) then ! the following is in parallel; 20 Jun 14;
+   if( myid.eq.modulo(vvol-1,ncpu) .and. myid.lt.Mvol) then ! the following is in parallel; 20 Jun 14;
    
     if( .not.ImagneticOK(vvol) ) then ; cput = GETTIME ; write(ounit,1002) cput-cpus ; write(ounit,1002) cput-cpus, myid, vvol, ImagneticOK(vvol) ; cycle
     endif
