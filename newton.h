@@ -92,7 +92,7 @@ subroutine newton( NGdof, position, ihybrd )
   REAL                   :: diag(1:NGdof), QTF(1:NGdof), workspace(1:NGdof,1:4)
 
   REAL                   :: force(0:NGdof)
-  REAL, allocatable      :: fjac(:,:), RR(:)
+  REAL, allocatable      :: fjac(:,:), RR(:), work(:,:)
   
   INTEGER                :: ML, MU ! required for only Lc05ndf;
   
@@ -237,15 +237,20 @@ subroutine newton( NGdof, position, ihybrd )
    FATAL( newton, .not.Lhessianallocated, error )
 #endif
 
-   hessian(1:NGdof,1:NGdof) = zero
+   !hessian(1:NGdof,1:NGdof) = zero
+   SALLOCATE(work, (1:NGdof,1:NGdof), zero)! BLAS version; 19 Jul 2019
    ijdof = 0
    do idof = 1, NGdof
-    do jdof = idof, NGdof ; ijdof = ijdof + 1 ; hessian(idof,jdof) = RR(ijdof) ! un-pack R matrix;
+    !do jdof = idof, NGdof ; ijdof = ijdof + 1 ; hessian(idof,jdof) = RR(ijdof) ! un-pack R matrix; old version
+    do jdof = idof, NGdof ; ijdof = ijdof + 1 ; work(idof,jdof) = RR(ijdof) ! un-pack R matrix; BLAS version; 19 Jul 2019
     enddo
    enddo
 
 !  derivative matrix = Q R;
-   hessian(1:NGdof,1:NGdof) = matmul( fjac(1:NGdof,1:NGdof), hessian(1:NGdof,1:NGdof) ) 
+   !hessian(1:NGdof,1:NGdof) = matmul( fjac(1:NGdof,1:NGdof), hessian(1:NGdof,1:NGdof) )
+   call DGEMM('N','N',NGdof,NGdof,NGdof,one,fjac,NGdof,work,NGdof,zero,hessian,NGdof)     ! BLAS version; 19 Jul 2019
+
+   DALLOCATE(work)! BLAS version; 19 Jul 2019
    
    call writereadgf( 'W', NGdof, ireadhessian ) ! write derivative matrix to file;
 

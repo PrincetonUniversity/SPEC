@@ -364,19 +364,20 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
       case( 1:   ) ;               write(ounit,1010) cput-cpus, myid, vvol, cput-lastcpu, idgetrf, "singular;         "
       case default ;               FATAL( dforce, .true., illegal ifail returned from F07ADF )
       end select    
-      
-      SALLOCATE( work, (1:Lwork), zero )
-      idgetri = 1 ; call DGETRI( NN+1, dMA(0:LDA-1,0:NN), LDA, ipivot(0:NN), work(1:Lwork), Lwork, idgetri )
-      DALLOCATE(work)
-      DALLOCATE(ipivot)
 
-      cput = GETTIME
-      select case( idgetri ) !                                                                     0123456789012345678
-      case(  :-1 ) ;               write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "input error;      "
-      case(  0   ) ; if( Wdforce ) write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "success;          "
-      case( 1:   ) ;               write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "singular;         "
-      case default ;               FATAL( dforce, .true., illegal ifail returned from F07AJF )
-      end select
+      ! Using DGETRS instead of inverting matrix ; 22 Jul 09
+      !SALLOCATE( work, (1:Lwork), zero )
+      !idgetri = 1 ; call DGETRI( NN+1, dMA(0:LDA-1,0:NN), LDA, ipivot(0:NN), work(1:Lwork), Lwork, idgetri )
+      !DALLOCATE(work)
+      !DALLOCATE(ipivot)
+
+      !cput = GETTIME
+      !select case( idgetri ) !                                                                     0123456789012345678
+      !case(  :-1 ) ;               write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "input error;      "
+      !case(  0   ) ; if( Wdforce ) write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "success;          "
+      !case( 1:   ) ;               write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "singular;         "
+      !case default ;               FATAL( dforce, .true., illegal ifail returned from F07AJF )
+      !end select
 
       oBI(0:NN,0:NN) = dMA(0:NN,0:NN)
 
@@ -403,21 +404,20 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
       case default ;               FATAL( dforce, .true., illegal ifail returned from F07ADF )
       end select
     
-      SALLOCATE( work, (1:Lwork), zero )
+      ! Using DGETRS instead of inverting matrix ; 22 Jul 09
+      !SALLOCATE( work, (1:Lwork), zero )
     
-      idgetri = 1 ; call DGETRI( NN, dMA(0:LDA-1,1:NN), LDA, ipivot(1:NN), work(1:Lwork), Lwork, idgetri )
-    
-      DALLOCATE(work)
+      !idgetri = 1 ; call DGETRI( NN, dMA(0:LDA-1,1:NN), LDA, ipivot(1:NN), work(1:Lwork), Lwork, idgetri )
+      !DALLOCATE(work)
+      !DALLOCATE(ipivot)
       
-      DALLOCATE(ipivot)
-      
-      cput = GETTIME
-      select case( idgetri ) !                                                                     0123456789012345678
-      case(  :-1 ) ;               write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "input error;      "
-      case(  0   ) ; if( Wdforce ) write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "success;          "
-      case( 1:   ) ;               write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "singular;         "
-      case default ;               FATAL( dforce, .true., illegal ifail returned from F07AJF )
-      end select
+      !cput = GETTIME
+      !select case( idgetri ) !                                                                     0123456789012345678
+      !case(  :-1 ) ;               write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "input error;      "
+      !case(  0   ) ; if( Wdforce ) write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "success;          "
+      !case( 1:   ) ;               write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "singular;         "
+      !case default ;               FATAL( dforce, .true., illegal ifail returned from F07AJF )
+      !end select
     
       oBI(1:NN,1:NN) = dMA(0:NN-1,1:NN)
     
@@ -564,14 +564,15 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
 
         if (Lconstraint .eq. 2) then
           SALLOCATE( work, (1:NN+1), zero )
-
-          work(1:NN+1)  =  matmul( oBI(0:NN,0:NN), rhs(0:NN))
-          !write(ounit, *) 'dmu', work(1)
+          work(1:NN+1) = rhs(0:NN)
+          !work(1:NN+1)  =  matmul( oBI(0:NN,0:NN), rhs(0:NN)) ! original version
+          call DGETRS('N',NN+1,1,oBI(0,0),NN+1,ipivot(0:NN),work(1),NN+1,idgetri) ! Change to DGETRS; 22 Jul 19
           solution(1:NN,-1) = work(2:NN+1)
           DALLOCATE(work)
         else
           !solution(1:NN,-1) = matmul( oBI(1:NN,1:NN), rhs(1:NN) ) ! original version
-          call DGEMV('N',NN,NN,one,oBI(1,1),NN+1,rhs(1),1,zero,solution(1,-1),1) ! BLAS version 17 Jul 2019
+          solution(1:NN,-1) = rhs(1:NN)
+          call DGETRS('N',NN,1,oBI(1,1),NN+1,ipivot(1:NN),solution(1,-1),NN,idgetri) ! Change to DGETRS; 22 Jul 19
         endif
 
         ideriv = -1 ; dpsi(1:2) = (/ dtflux(vvol), dpflux(vvol) /) ! these are also used below;
@@ -1015,6 +1016,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
     enddo ! matches do ii;
     
     dBdX%L = .false. ! probably not needed, but included anyway;
+    DALLOCATE( ipivot )
     
    endif ! end of if( LComputeDerivatives ) ;
    
