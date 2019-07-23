@@ -100,6 +100,9 @@ data.grid.BR = cBR;
 data.grid.Bp = cBp;
 data.grid.BZ = cBZ;
 
+% remove unsuccessful Poincare trajectories
+
+
 
 end
 
