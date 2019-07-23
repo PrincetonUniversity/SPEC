@@ -71,7 +71,8 @@ subroutine ma02aa( lvol, NN )
   
 !required for hybrj1;
   INTEGER              :: ihybrj1, Ldfmuaa, lengthwork
-  REAL                 :: DFxi(0:NN,0:NN), work(1:(1+NN)*(1+NN+13)/2), NewtonError
+  REAL                 :: NewtonError
+  REAL   , allocatable :: DFxi(:,:), work(:)
   external             :: df00ab
   
 ! required for E04UFF;
@@ -281,6 +282,9 @@ subroutine ma02aa( lvol, NN )
    
    lastcpu = GETTIME
    
+   SALLOCATE(DFxi, (0:NN,0:NN), zero)
+   SALLOCATE(work, (1:(1+NN)*(1+NN+13)/2), zero)
+
    xi(0) = mu(lvol) ! initialize; helicity multiplier is treated as an independent degree-of-freedom;
    
    ideriv = 0 ; dpsi(1:2) = (/ dtflux(lvol), dpflux(lvol) /) ! these are also used below;
@@ -346,6 +350,9 @@ subroutine ma02aa( lvol, NN )
    lABintegral(lvol) = half * sum( xi(1:NN) * matmul( dMD(1:NN,1:NN), xi(1:NN) ) ) ! + sum( xi(1:NN) * MEpsi(1:NN) ) ! + psiMFpsi
    
    solution(1:NN,0) = xi(1:NN)
+
+   DALLOCATE( DFxi )
+   DALLOCATE( work )
    
   endif ! end of if( LBnewton ) then
   
