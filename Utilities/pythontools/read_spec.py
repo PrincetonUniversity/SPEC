@@ -15,8 +15,8 @@ class SPEC:
     # use as s = SPEC(filename), e.g. s=SPEC("ext.h5")
     def __init__(self, *args, **kwargs):
         # args[0] should always be the name of a file or an item inside the root object
-        # if args[0] is not a filename, kwagrs['content'] should be the content to be added
-        #  as self.`args[0]`
+        # if args[0] is not a filename, kwargs['content'] should be the content to be added
+        # as self.`args[0]`
         
         _content = None
         if kwargs.get('content') == None:
@@ -28,8 +28,10 @@ class SPEC:
         if (_content != None):
             for key in _content:
                 if isinstance(_content[key], h5py.Group):
+                    # recurse into group
                     setattr(self, key, SPEC(content=_content[key]))
                 elif isinstance(_content[key], h5py.Dataset):
+                    # read dataset
                     shape = _content[key].shape
                     nDim = len(shape)
                     if nDim==1:
@@ -47,7 +49,7 @@ class SPEC:
         if isinstance(_content, h5py.File):
             _content.close()
             
-        # adjust some matrix dimensions
+        # adjust some matrix dimensions, remove unsuccessful Poincare trajectories
         
             
     def __iter__(self):
@@ -58,7 +60,7 @@ class SPEC:
     def inventory(self, prefix=""):
         _prefix = ""
         if prefix != "":
-            _prefix = prefix+"."
+            _prefix = prefix+"/"
         
         for a in self:
             try:
@@ -68,10 +70,13 @@ class SPEC:
                 # print item name
                 print(_prefix+a)
                 
+                
+                
 if __name__=="__main__":
     
 #    filename = "/home/IPP-HGW/jons/04_PhD/00_programs/SPEC/InputFiles/TestCases/G3V02L1Fi.001.h5"
-    filename = "/home/jonathan/Uni/04_PhD/00_programs/SPEC/SPEC/InputFiles/TestCases/G3V01L0Fi.002.h5"
+    #filename = "/home/jonathan/Uni/04_PhD/00_programs/SPEC/SPEC/InputFiles/TestCases/G3V01L0Fi.002.h5"
+    filename="/home/jonathan/Uni/04_PhD/01_analysis/SPEC_output_comparison/G3V02L1Fi.001_issue68/G3V02L1Fi.001.h5"
 
     s=SPEC(filename)
     
