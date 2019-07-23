@@ -49,14 +49,71 @@ class SPEC:
         if isinstance(_content, h5py.File):
             _content.close()
             
-        # adjust some matrix dimensions, remove unsuccessful Poincare trajectories
-        
+            # adjust some matrix dimensions
+            Nvol = self.input.physics.Nvol
+            Lrad = self.input.physics.Lrad
             
+            # vector potential
+            cAte = []
+            cAto = []
+            cAze = []
+            cAzo = []
+            
+            # grid
+            cRij = []
+            cZij = []
+            csg  = []
+            cBR  = []
+            cBp  = []
+            cBZ  = []
+            
+            # split into separate cells for nested volumes
+            start=0
+            for i in range(Nvol):
+              # vector potential
+              cAte.append(self.vector_potential.Ate[:,start:start+Lrad[i]+1])
+              cAto.append(self.vector_potential.Ato[:,start:start+Lrad[i]+1])
+              cAze.append(self.vector_potential.Aze[:,start:start+Lrad[i]+1])
+              cAzo.append(self.vector_potential.Azo[:,start:start+Lrad[i]+1])
+            
+              # grid
+              cRij.append(self.grid.Rij[:,start:start+Lrad[i]+1])
+              cZij.append(self.grid.Zij[:,start:start+Lrad[i]+1])
+              csg.append(self.grid.sg[:,start:start+Lrad[i]+1])
+              cBR.append(self.grid.BR[:,start:start+Lrad[i]+1])
+              cBp.append(self.grid.Bp[:,start:start+Lrad[i]+1])
+              cBZ.append(self.grid.BZ[:,start:start+Lrad[i]+1])
+            
+              # move along combined array dimension
+              start = start + Lrad[i]+1;
+            
+            # replace original content in data structure
+            self.vector_potential.Ate = cAte
+            self.vector_potential.Ato = cAto
+            self.vector_potential.Aze = cAze
+            self.vector_potential.Azo = cAzo
+            
+            self.grid.Rij = cRij
+            self.grid.Zij = cZij
+            self.grid.sg = csg
+            self.grid.BR = cBR
+            self.grid.Bp = cBp
+            self.grid.BZ = cBZ
+            
+            # remove unsuccessful Poincare trajectories
+            s.poincare.R = s.poincare.R[s.poincare.success==1,:,:]
+            s.poincare.Z = s.poincare.Z[s.poincare.success==1,:,:]
+            s.poincare.t = s.poincare.z[s.poincare.success==1,:,:]
+            s.poincare.s = s.poincare.s[s.poincare.success==1,:,:]
+            
+        
+    # needed for iterating over the contents of the file
     def __iter__(self):
         return iter(self.__dict__)
     def __next__(self):
         return next(self.__dict__)
     
+    # print a list of items contained in this object
     def inventory(self, prefix=""):
         _prefix = ""
         if prefix != "":
@@ -71,7 +128,7 @@ class SPEC:
                 print(_prefix+a)
                 
                 
-                
+# some default demos
 if __name__=="__main__":
     
 #    filename = "/home/IPP-HGW/jons/04_PhD/00_programs/SPEC/InputFiles/TestCases/G3V02L1Fi.001.h5"
