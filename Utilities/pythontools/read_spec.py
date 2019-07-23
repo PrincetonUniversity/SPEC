@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Sat May 25 18:01:55 2019
-
 @author: Jonathan Schilling (jonathan.schilling@ipp.mpg.de)
 """
 
 import h5py
 import numpy as np
+import os # .path.abspath
 
 # reader class for Stepped Pressure Equilibrium Code output file
 # S. Hudson et al., Physics of Plasmas 19, 112502 (2012); doi: 10.1063/1.4765691
@@ -23,6 +22,9 @@ class SPEC:
         if kwargs.get('content') == None:
             # assume arg[0] is a filename
             _content = h5py.File(args[0], "r")
+            
+            # keep track of which file this object corresponds to
+            self.filename = os.path.abspath(args[0])
         elif isinstance(kwargs['content'], h5py.Group):
             _content = kwargs['content']
         
@@ -45,7 +47,7 @@ class SPEC:
                     elif nDim==3:
                         setattr(self, key, _content[key][:,:,:])
                     else:
-                        print(str(nDim)+"-dim objects not supported yet: '"+key+"'")
+                        print(str(nDim)+"-dimensional objects are not supported yet: '"+key+"'")
         
         if isinstance(_content, h5py.File):
             _content.close()
@@ -130,20 +132,4 @@ class SPEC:
             except:
                 # print item name
                 print(_prefix+a)
-                
-                
-# some default demos
-if __name__=="__main__":
-    
-    # classical stellarator, 2 volumes
-#    filename = "/home/IPP-HGW/jons/04_PhD/00_programs/SPEC/InputFiles/TestCases/G3V02L1Fi.001.h5"
-#    filename = "/home/jonathan/Uni/04_PhD/01_analysis/SPEC_output_comparison/G3V02L1Fi.001_issue68/G3V02L1Fi.001.h5"
-    
-    # W7-X OP1.1 limiter configuration, 1 volume
-    filename = "/home/jonathan/Uni/04_PhD/00_programs/SPEC/SPEC/InputFiles/TestCases/G3V01L0Fi.002.h5"
-    
 
-    s=SPEC(filename)
-    
-    # Show me what you got!
-    s.inventory()
