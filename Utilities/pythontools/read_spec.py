@@ -7,6 +7,7 @@ Created on Sat May 25 18:01:55 2019
 """
 
 import h5py
+import numpy as np
 
 # reader class for Stepped Pressure Equilibrium Code output file
 # S. Hudson et al., Physics of Plasmas 19, 112502 (2012); doi: 10.1063/1.4765691
@@ -48,6 +49,10 @@ class SPEC:
         
         if isinstance(_content, h5py.File):
             _content.close()
+            
+            # make sure that Lrad is always an array
+            if np.isscalar(self.input.physics.Lrad):
+                self.input.physics.Lrad = np.array([self.input.physics.Lrad])
             
             # adjust some matrix dimensions
             Nvol = self.input.physics.Nvol
@@ -101,12 +106,11 @@ class SPEC:
             self.grid.BZ = cBZ
             
             # remove unsuccessful Poincare trajectories
-            s.poincare.R = s.poincare.R[s.poincare.success==1,:,:]
-            s.poincare.Z = s.poincare.Z[s.poincare.success==1,:,:]
-            s.poincare.t = s.poincare.z[s.poincare.success==1,:,:]
-            s.poincare.s = s.poincare.s[s.poincare.success==1,:,:]
-            
-        
+            self.poincare.R = self.poincare.R[self.poincare.success==1,:,:]
+            self.poincare.Z = self.poincare.Z[self.poincare.success==1,:,:]
+            self.poincare.t = self.poincare.t[self.poincare.success==1,:,:]
+            self.poincare.s = self.poincare.s[self.poincare.success==1,:,:]
+    
     # needed for iterating over the contents of the file
     def __iter__(self):
         return iter(self.__dict__)
@@ -131,9 +135,13 @@ class SPEC:
 # some default demos
 if __name__=="__main__":
     
+    # classical stellarator, 2 volumes
 #    filename = "/home/IPP-HGW/jons/04_PhD/00_programs/SPEC/InputFiles/TestCases/G3V02L1Fi.001.h5"
-    #filename = "/home/jonathan/Uni/04_PhD/00_programs/SPEC/SPEC/InputFiles/TestCases/G3V01L0Fi.002.h5"
-    filename="/home/jonathan/Uni/04_PhD/01_analysis/SPEC_output_comparison/G3V02L1Fi.001_issue68/G3V02L1Fi.001.h5"
+#    filename = "/home/jonathan/Uni/04_PhD/01_analysis/SPEC_output_comparison/G3V02L1Fi.001_issue68/G3V02L1Fi.001.h5"
+    
+    # W7-X OP1.1 limiter configuration, 1 volume
+    filename = "/home/jonathan/Uni/04_PhD/00_programs/SPEC/SPEC/InputFiles/TestCases/G3V01L0Fi.002.h5"
+    
 
     s=SPEC(filename)
     
