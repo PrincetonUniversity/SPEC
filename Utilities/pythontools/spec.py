@@ -28,6 +28,7 @@ class SPEC:
         if (_content != None):
             for key in _content:
                 if isinstance(_content[key], h5py.Group):
+                    # recurse into nested groups
                     setattr(self, key, SPEC(content=_content[key]))
                 elif isinstance(_content[key], h5py.Dataset):
                     shape = _content[key].shape
