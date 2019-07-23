@@ -47,6 +47,9 @@ class SPEC:
         if isinstance(_content, h5py.File):
             _content.close()
             
+        # adjust some matrix dimensions
+        
+            
     def __iter__(self):
         return iter(self.__dict__)
     def __next__(self):
@@ -67,7 +70,7 @@ class SPEC:
                 
 if __name__=="__main__":
     
-    #filename = "/home/IPP-HGW/jons/04_PhD/00_programs/SPEC/InputFiles/TestCases/G3V02L1Fi.001.h5"
+#    filename = "/home/IPP-HGW/jons/04_PhD/00_programs/SPEC/InputFiles/TestCases/G3V02L1Fi.001.h5"
     filename = "/home/jonathan/Uni/04_PhD/00_programs/SPEC/SPEC/InputFiles/TestCases/G3V01L0Fi.002.h5"
 
     s=SPEC(filename)
