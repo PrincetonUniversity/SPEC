@@ -313,12 +313,14 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
     solution(1:NN,0   ) = rhs(:,0   )
     call DGETRF(NN, NN, LU, NN, ipiv, RW, Lwork, idsysvx(ideriv) )
     call DGETRS('N', NN, MM, LU, NN, ipiv, solution(1:NN,0   ), NN, idsysvx(ideriv) )
-    
+    call DGERFS('N', NN, MM, matrix, NN, LU, NN, ipiv, rhs(1,0), NN, solution(1,0), NN, FERR, BERR, RW, Iwork, idsysvx(ideriv))
+
    case( 1 ) ! ideriv=1;
     
     MM = 2
     solution(1:NN,1:MM) = rhs(:,1:MM)
     call DGETRS( 'N', NN, MM, LU, NN, ipiv, solution(1:NN,1:MM), NN, idsysvx(ideriv) )
+    call DGERFS('N', NN, MM, matrix, NN, LU, NN, ipiv, rhs(1,1), NN, solution(1,1), NN, FERR, BERR, RW, Iwork, idsysvx(ideriv))
 
    end select ! ideriv;
    
