@@ -348,7 +348,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
     lastcpu = GETTIME
     
     if(Lconstraint .eq. 2) then
-      dMA(1:NN,1:NN) = dMA(1:NN,1:NN) - mu(vvol) * dMD(1:NN,1:NN) ! this corrupts dMA, but dMA is no longer used;
+      !dMA(1:NN,1:NN) = dMA(1:NN,1:NN) - mu(vvol) * dMD(1:NN,1:NN) ! this corrupts dMA, but dMA is no longer used;
+      call DAXPY((NN+1)*(NN+1), -mu(vvol), dMD, 1, dMA, 1) ! BLAS version; 24 Jul 2019
       dMA(0,0)       = zero
       dMA(1:NN,0)    = -matmul(dMD(1:NN,1:NN),solution(1:NN,0))
       dMA(0,1:NN)    = dMA(1:NN,0) !-matmul(solution(1:NN,0),dMD(1:NN,1:NN))
@@ -379,22 +380,25 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
       !case default ;               FATAL( dforce, .true., illegal ifail returned from F07AJF )
       !end select
 
-      oBI(0:NN,0:NN) = dMA(0:NN,0:NN)
+      !oBI(0:NN,0:NN) = dMA(0:NN,0:NN)
+      call DCOPY((1+NN)*(1+NN), dMA, 1, oBI, 1)            ! BLAS version; 24 Jul 2019
 
     else ! for LBlinear = T (Linear-solver)
 
-      dMA(0:NN-1,1:NN) = dMA(1:NN,1:NN) - mu(vvol) * dMD(1:NN,1:NN) ! this corrupts dMA, but dMA is no longer used;
-      dMA(  NN  ,1:NN) = zero
+      !dMA(0:NN-1,1:NN) = dMA(1:NN,1:NN) - mu(vvol) * dMD(1:NN,1:NN) ! this corrupts dMA, but dMA is no longer used;
+      !dMA(  NN  ,1:NN) = zero
+      call DAXPY((NN+1)*(NN+1), -mu(vvol), dMD, 1, dMA, 1) ! BLAS version; 24 Jul 2019
 
-      dMD(1:NN  ,1:NN) = dMA(0:NN-1,1:NN) ! copy of original matrix; this is used below;
-    
+      !dMD(1:NN  ,1:NN) = dMA(0:NN-1,1:NN) ! copy of original matrix; this is used below;
+      call DCOPY((NN+1)*(NN+1), dMA, 1, dMD, 1)            ! BLAS version; 24 Jul 2019
+
       IA = NN + 1
     
       MM = NN ; LDA = NN + 1 ; Lwork = NN
     
       SALLOCATE( ipivot, (1:NN), 0 )
     
-      idgetrf = 1 ; call DGETRF( MM, NN, dMA(0:LDA-1,1:NN), LDA, ipivot(1:NN), idgetrf )
+      idgetrf = 1 ; call DGETRF( MM, NN, dMA(1,1), LDA, ipivot(1), idgetrf )
     
       cput = GETTIME
       select case( idgetrf ) !                                                                     0123456789012345678
@@ -419,7 +423,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
       !case default ;               FATAL( dforce, .true., illegal ifail returned from F07AJF )
       !end select
     
-      oBI(1:NN,1:NN) = dMA(0:NN-1,1:NN)
+      oBI(1:NN,1:NN) = dMA(1:NN,1:NN)
     
     endif
 
