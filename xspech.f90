@@ -128,8 +128,12 @@ program xspech
   WCALL( xspech, readin ) ! sets Rscale, Mvol; 03 Nov 16;
   WCALL( xspech, preset )
   
+  if( myid.eq.0 ) write(ounit, '("after preset")')
+  
   WCALL( xspech, init_outfile ) ! initialize HDF5 library and open output file ext.h5 for writing during execution
+  if( myid.eq.0 ) write(ounit, '("after init_outfile")')
   WCALL( xspech, mirror_input_to_outfile ) ! mirror input file contents to output file
+  if( myid.eq.0 ) write(ounit, '("after mirror_input")')
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
