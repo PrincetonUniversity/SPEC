@@ -26,8 +26,9 @@
 !latex \item The geometry of the ``ideal''-interfaces, ${\bf x}_v(\t,\z)$, is given by $R(\t,\z)$ and $Z(\t,\z)$ as follows:
 !latex       \begin{itemize}
 !latex       \item \verb+Igeometry=1+ : Cartesian
-!latex       \be {\bf x} & \equiv & \t \; {\bf \hat i} + \z \; {\bf \hat j}+ R \; {\bf \hat k}
+!latex       \be {\bf x} & \equiv & r_{pol}\t \; {\bf \hat i} + r_{tor}\z \; {\bf \hat j}+ R \; {\bf \hat k}
 !latex       \ee
+!latex       where $r_{pol}$ and $r_{tor}$ are inputs and $r_{pol}=r_{tor}=1$ by default.
 !latex       \item \verb+Igeometry=2+ : Cylindrical
 !latex       \be {\bf x} & = & R \; \cos\t \; {\bf \hat i} + R \; \sin\t \; {\bf \hat j} + \z \; {\bf \hat k}
 !latex       \ee
@@ -82,28 +83,39 @@
 !latex \item The coordinate Jacobian (and some other metric information) is given by
 !latex       \begin{itemize}
 !latex       \item \verb+Igeometry=1+ : Cartesian
-!latex       \be {\bf e}_\theta \times {\bf e}_\zeta & = & -R_\t \; \hat {\bf i} -  R_\z \; \hat {\bf j} + \hat {\bf k} \\
-!latex           \boldxi \cdot {\bf e}_\theta \times {\bf e}_\zeta & =&  \delta R \\
-!latex           \sqrt g                                           & =&         R_s
+!latex       \be {\bf e}_\theta \times {\bf e}_\zeta & = & -r_{tor}R_\t \; \hat {\bf i} -  r_{pol}R_\z \; \hat {\bf j} + r_{pol}r_{tor}\hat {\bf k} \\
+! latex           \boldxi \cdot {\bf e}_\theta \times {\bf e}_\zeta & =&  \delta R \\
+!latex           \sqrt g                                           & =&         R_s \ r_{pol} \ r_{tor}
 !latex       \ee
 !latex       \item \verb+Igeometry=2+ : Cylindrical
 !latex       \be {\bf e}_\theta \times {\bf e}_\zeta & = & 
 !latex       (R_\t \sin \t + R \cos\t ) \; {\bf \hat i} + (R    \sin \t - R_\t \cos\t ) \; {\bf \hat j} - R R_\z \; {\bf \hat k} \\
-!latex           \boldxi\cdot {\bf e}_\theta \times {\bf e}_\zeta & = & \delta R \; R \\
+! latex           \boldxi\cdot {\bf e}_\theta \times {\bf e}_\zeta & = & \delta R \; R \\
 !latex           \sqrt g                                          & = & R_s \; R
 !latex       \ee
 !latex       \item \verb+Igeometry=3+ : Toroidal
 !latex       \be {\bf e}_\theta \times {\bf e}_\zeta & = & 
 !latex       - R \, Z_\theta \, \hat r + (Z_\theta \,R_\zeta - R_\theta \,Z_\zeta) \hat \phi + R \,R_\theta \,\hat z\\
-!latex           \boldxi\cdot {\bf e}_\theta \times {\bf e}_\zeta & = & R ( \delta Z \; R_\t - \delta R \; Z_\t ) \\
+! latex           \boldxi\cdot {\bf e}_\theta \times {\bf e}_\zeta & = & R ( \delta Z \; R_\t - \delta R \; Z_\t ) \\
 !latex           \sqrt g                                         & = & R ( Z_s      \; R_\t - R_s      \; Z_\t )
 !latex       \ee
 !latex       \end{itemize}
 
-!latex \end{enumerate} \subsubsection{cylindrical metrics} \begin{enumerate}
-!latex \item The cylindrical metrics and Jacobian are
+!latex \end{enumerate} \subsubsection{cartesian metrics} \begin{enumerate}
+!latex \item The cartesian metrics are
 !latex       \be \begin{array}{cccccccccccccccccccccccccccccccccccccccccccccccc}
-!latex           \sqrt g   =  R_\s R          ,&
+!latex           g_{\s\s}  =  R_\s R_\s       ,&
+!latex           g_{\s\t}  =  R_\s R_\t       ,&
+!latex           g_{\s\z}  =  R_\s R_\z       ,&
+!latex           g_{\t\t}  =  R_\t R_\t + r_{pol}^2 ,&
+!latex           g_{\t\z}  =  R_\t R_\z       ,&
+!latex           g_{\z\z}  =  R_\z R_\z + r_{tor}^2
+!latex           \end{array}
+!latex       \ee
+
+!latex \end{enumerate} \subsubsection{cylindrical metrics} \begin{enumerate}
+!latex \item The cylindrical metrics are
+!latex       \be \begin{array}{cccccccccccccccccccccccccccccccccccccccccccccccc}
 !latex           g_{\s\s}  =  R_\s R_\s       ,&
 !latex           g_{\s\t}  =  R_\s R_\t       ,&
 !latex           g_{\s\z}  =  R_\s R_\z       ,&
@@ -144,7 +156,7 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
   
   use fileunits, only : ounit
   
-  use inputlist, only : Wcoords, Igeometry, Ntor
+  use inputlist, only : Wcoords, Igeometry, Ntor, rpol, rtor
   
   use cputiming, only : Tcoords
   
@@ -312,15 +324,15 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
 
   case( 1 ) ! Igeometry=1; Cartesian;
    
-   sg(1:Ntz,0) = Rij(1:Ntz,1,0)
+   sg(1:Ntz,0) = Rij(1:Ntz,1,0)*rpol*rtor
    
    do ii = 1, 3
     do jj = ii, 3 ; guvij(1:Ntz,ii,jj,0) = Rij(1:Ntz,ii,0) * Rij(1:Ntz,jj,0)
     enddo
    enddo
 
-   guvij(1:Ntz, 2, 2,0) = guvij(1:Ntz, 2, 2,0) + one
-   guvij(1:Ntz, 3, 3,0) = guvij(1:Ntz, 3, 3,0) + one
+   guvij(1:Ntz, 2, 2,0) = guvij(1:Ntz, 2, 2,0) + rpol*rpol
+   guvij(1:Ntz, 3, 3,0) = guvij(1:Ntz, 3, 3,0) + rtor*rtor
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -458,8 +470,8 @@ Nt, Nz, Rij(1:Ntz,3,3), Zij(1:Ntz,3,3) ) ! maps to real space;
     
     do kk = 1, 3 ! kk labels derivative; 13 Sep 13;
      
-!    sg(1:Ntz, 0) = Rij(1:Ntz,1, 0)
-     sg(1:Ntz,kk) = Rij(1:Ntz,1,kk)
+!    sg(1:Ntz, 0) = Rij(1:Ntz,1, 0)*rpol*rtor
+     sg(1:Ntz,kk) = Rij(1:Ntz,1,kk)*rpol*rtor
      
      do ii = 1, 3
       do jj = ii, 3 ; guvij(1:Ntz,ii,jj,kk) = Rij(1:Ntz,ii,kk) * Rij(1:Ntz,jj, 0) + Rij(1:Ntz,ii, 0) * Rij(1:Ntz,jj,kk)
@@ -581,8 +593,8 @@ Nt, Nz, Rij(1:Ntz,3,3), Zij(1:Ntz,3,3) ) ! maps to real space;
     FATAL( coords, irz.eq.1, there is no dependence on Zbs or Zbc )
 #endif
    
-!                  sg(1:Ntz,0) = Rij(1:Ntz,1,0)
-                   sg(1:Ntz,1) = Dij(1:Ntz,1  ) ! 20 Jun 14;
+!                  sg(1:Ntz,0) = Rij(1:Ntz,1,0)*rpol*rtor
+                   sg(1:Ntz,1) = Dij(1:Ntz,1  )*rpol*rtor ! 20 Jun 14; 29 Apr 19;
 !   if( irz.eq.1 ) sg(1:Ntz,1) = 
     
     do ii = 1, 3 ! careful: ii was used with a different definition above; 13 Sep 13;
