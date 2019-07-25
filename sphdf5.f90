@@ -16,10 +16,10 @@
 
 module sphdf5
 
-  use inputlist , only : ext
+  use inputlist , only : ext, Wsphdf5, Wmacros
   use fileunits , only : ounit
   use cputiming , only : Tsphdf5
-  use allglobal , only : myid
+  use allglobal , only : myid, cpus
   use hdf5
 
   implicit none
@@ -520,7 +520,7 @@ subroutine write_grid
   REAL                 :: lss, teta, zeta, st(1:Node), Bst(1:Node)
   REAL   , allocatable :: Rij_grid(:,:), Zij_grid(:,:), sg_grid(:,:), ijreal_grid(:,:), ijimag_grid(:,:), jireal_grid(:,:)
 #ifdef DEBUG
-  if( myid.eq.0 and Wsphdf5 ) then ; cput = GETTIME ; write(ounit,'("sphdf5 : ",f10.2," : myid=",i3," ; writing grid ;")') cput-cpus, myid
+  if( myid.eq.0 .and. Wsphdf5 ) then ; cput = GETTIME ; write(ounit,'("sphdf5 : ",f10.2," : myid=",i3," ; writing grid ;")') cput-cpus, myid
   endif
 #endif
 
@@ -594,7 +594,7 @@ subroutine write_grid
   HCLOSEGRP( grpGrid )
 
 #ifdef DEBUG
-  if ( myid.eq.0 and Wsphdf5 ) then ; cput = GETTIME ; write(ounit,'("sphdf5 : ",f10.2," : myid=",i3," ; wrote   grid ;")') cput-cpus, myid
+  if ( myid.eq.0 .and. Wsphdf5 ) then ; cput = GETTIME ; write(ounit,'("sphdf5 : ",f10.2," : myid=",i3," ; wrote   grid ;")') cput-cpus, myid
   endif
 #endif
 
