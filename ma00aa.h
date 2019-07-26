@@ -114,7 +114,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   
   INTEGER, intent(in) :: lquad, mn, lvol, lrad
   
-  INTEGER             :: jquad, ll, pp, uv, ii, jj, io, mn2, lp2, mn2_max, lp2_max
+  INTEGER             :: jquad, ll, pp, uv, ii, jj, io, mn2, lp2, mn2_max, lp2_max, nele
   
   INTEGER             :: kk, kd, kka, kks, kda, kds
   
@@ -145,42 +145,42 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   imn2    =  one/real(mn)
   ilrad = one/real(lrad+1)
 
-  DToocc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  TTssss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  TDstsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  TDszsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  DDttcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  DDtzcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-  DDzzcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+  DToocc = zero
+  TTssss = zero
+  TDstsc = zero
+  TDszsc = zero
+  DDttcc = zero
+  DDtzcc = zero
+  DDzzcc = zero
 
   if (NOTstellsym) then
-    DToocs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-    DToosc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-    DTooss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+    DToocs = zero
+    DToosc = zero
+    DTooss = zero
 
-    TTsscc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-    TTsscs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-    TTsssc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+    TTsscc = zero
+    TTsscs = zero
+    TTsssc = zero
 
-    TDstcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-    TDstcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-    TDstss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+    TDstcc = zero
+    TDstcs = zero
+    TDstss = zero
 
-    TDszcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-    TDszcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-    TDszss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+    TDszcc = zero
+    TDszcs = zero
+    TDszss = zero
 
-    DDttcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-    DDttsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-    DDttss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+    DDttcs = zero
+    DDttsc = zero
+    DDttss = zero
 
-    DDtzcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-    DDtzsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-    DDtzss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+    DDtzcs = zero
+    DDtzsc = zero
+    DDtzss = zero
 
-    DDzzcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-    DDzzsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
-    DDzzss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
+    DDzzcs = zero
+    DDzzsc = zero
+    DDzzss = zero
   endif !NOTstellsym
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -442,43 +442,47 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   endif ! end of if( Lcoordinatesingularity ) ; 17 Dec 15;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  DToocc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DToocc( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-  TTssss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = TTssss( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-  TDstsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = TDstsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-  TDszsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = TDszsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-  DDttcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DDttcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-  DDtzcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DDtzcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-  DDzzcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DDzzcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
+  
+  nele = mn2_max * lp2_max
+ 
+  call DSCAL(nele, pi2pi2nfphalf, DToocc, 1)
+  call DSCAL(nele, pi2pi2nfphalf, TTssss, 1)
+  call DSCAL(nele, pi2pi2nfphalf, TDstsc, 1)
+  call DSCAL(nele, pi2pi2nfphalf, TDszsc, 1)
+  call DSCAL(nele, pi2pi2nfphalf, DDttcc, 1)
+  call DSCAL(nele, pi2pi2nfphalf, DDtzcc, 1)
+  call DSCAL(nele, pi2pi2nfphalf, DDzzcc, 1)
 
   if (NOTstellsym) then
-    DToocs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DToocs( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-    DToosc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DToosc( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-    DTooss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DTooss( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
 
-    TTsscc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = TTsscc( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-    TTsscs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = TTsscs( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-    TTsssc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = TTsssc( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
+    call DSCAL(nele, pi2pi2nfphalf, DToocs, 1)
+    call DSCAL(nele, pi2pi2nfphalf, DToosc, 1)
+    call DSCAL(nele, pi2pi2nfphalf, DTooss, 1)
 
-    TDstcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = TDstcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-    TDstcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = TDstcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-    TDstss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = TDstss( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
+    call DSCAL(nele, pi2pi2nfphalf, TTsscc, 1)
+    call DSCAL(nele, pi2pi2nfphalf, TTsscs, 1)
+    call DSCAL(nele, pi2pi2nfphalf, TTsssc, 1)
 
-    TDszcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = TDszcc( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-    TDszcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = TDszcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-    TDszss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = TDszss( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
+    call DSCAL(nele, pi2pi2nfphalf, TDstcc, 1)
+    call DSCAL(nele, pi2pi2nfphalf, TDstcs, 1)
+    call DSCAL(nele, pi2pi2nfphalf, TDstss, 1)
 
-    DDttcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DDttcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-    DDttsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DDttsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-    DDttss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DDttss( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
+    call DSCAL(nele, pi2pi2nfphalf, TDszcc, 1)
+    call DSCAL(nele, pi2pi2nfphalf, TDszcs, 1)
+    call DSCAL(nele, pi2pi2nfphalf, TDszss, 1)
 
-    DDtzcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DDtzcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-    DDtzsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DDtzsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-    DDtzss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DDtzss( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
+    call DSCAL(nele, pi2pi2nfphalf, DDttsc, 1)
+    call DSCAL(nele, pi2pi2nfphalf, DDttcs, 1)
+    call DSCAL(nele, pi2pi2nfphalf, DDttss, 1)
 
-    DDzzcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DDzzcs( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-    DDzzsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DDzzsc( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
-    DDzzss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DDzzss( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf
+    call DSCAL(nele, pi2pi2nfphalf, DDtzsc, 1)
+    call DSCAL(nele, pi2pi2nfphalf, DDtzcs, 1)
+    call DSCAL(nele, pi2pi2nfphalf, DDtzss, 1)
+
+    call DSCAL(nele, pi2pi2nfphalf, DDzzsc, 1)
+    call DSCAL(nele, pi2pi2nfphalf, DDzzcs, 1)
+    call DSCAL(nele, pi2pi2nfphalf, DDzzss, 1)
+
   end if !NOTstellsym
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
