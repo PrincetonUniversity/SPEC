@@ -7,6 +7,7 @@
 import h5py
 import numpy as np # for isscalar
 import os          # for path.abspath
+import keyword     # for getting python keywords
 
 # reader class for Stepped Pressure Equilibrium Code output file
 # S. Hudson et al., Physics of Plasmas 19, 112502 (2012); doi: 10.1063/1.4765691
@@ -33,21 +34,14 @@ class SPEC:
                 if isinstance(_content[key], h5py.Group):
                     # recurse into group
                     setattr(self, key, SPEC(content=_content[key]))
-                elif isinstance(_content[key], h5py.Dataset):
-                    # read dataset
-                    shape = _content[key].shape
-                    nDim = len(shape)
-                    if nDim==1:
-                        if shape[0]==1:
-                            setattr(self, key, _content[key][0])
-                        else:
-                            setattr(self, key, _content[key][:])
-                    elif nDim==2:
-                        setattr(self, key, _content[key][:,:])
-                    elif nDim==3:
-                        setattr(self, key, _content[key][:,:,:])
+                elif isinstance(_content[key], h5py.Dataset): # read dataset
+                    if key in keyword.kwlist: # avoid assign python keywords
+                        setattr(self, key+'1', _content[key][()])
                     else:
-                        print(str(nDim)+"-dimensional objects are not supported yet: '"+key+"'")
+                        if len(_content[key][()]) == 1: # if just one element, use the value directly
+                            setattr(self, key, _content[key][0])
+                        else: 
+                            setattr(self, key, _content[key][()])
         
         if isinstance(_content, h5py.File):
             _content.close()
