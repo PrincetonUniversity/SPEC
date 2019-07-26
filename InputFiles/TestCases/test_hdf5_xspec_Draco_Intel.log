@@ -1,0 +1,87 @@
+xspech :            : 
+       :  compiled  : date    = Fr 26. Jul 13:08:20 CEST 2019 ; 
+       :            : srcdir  = /u/jons/src/SPEC ; 
+       :            : macros  = macros ; 
+       :            : fc      = mpiifort ; 
+       :            : flags   =  -r8 -mcmodel=large -O0 -m64 -unroll0 -fno-alias
+  -ip -traceback ; 
+xspech :            : 
+xspech :       0.00 : begin execution ; ncpu=  8 ; calling global:readin ;
+readin :            : 
+readin :       0.00 : date=2019/07/26 , 13:12:25 ; machine precision= 1.11E-16 ; vsmall= 1.11E-14 ; small= 1.11E-12 ;
+readin :            : 
+readin :       0.00 : ext = test_hdf5                                                                                           
+readin :            : 
+readin :            : 
+readin :       0.00 : Igeometry=  3 ; Istellsym=  1 ;
+readin :            : Lfreebound=  1 ; phiedge=  1.000000000000000E+00 ; curtor= -1.190644396046887E-01 ; curpol=  4.881440045660601E+00 ;
+readin :            : gamma=  0.000000000000000E+00 ;
+readin :            : Nfp=  1 ; Nvol=  7 ; Mvol=  8 ; Mpol= 16 ; Ntor=  0 ;
+readin :            : pscale=  1.55477E-07 ; Ladiabatic= 0 ; Lconstraint=  1 ; mupf: tol,its=  1.00E-12 , 128 ;
+readin :            : Lrad =  8, 8, 8, 8, 8, 8, 8,10,
+readin :            : 
+readin :       0.00 : Linitialize=  1 ; Lzerovac= 0 ; Ndiscrete= 2 ;
+readin :            : Nquad=  -1 ; iMpol=  -4 ; iNtor=  -4 ;
+readin :            : Lsparse= 0 ; Lsvdiota= 1 ; imethod= 3 ; iorder= 2 ; iprecon= 1 ; iotatol= -1.00000E+00 ;
+readin :            : Lextrap= 0 ; Mregular= -1 ;
+readin :            : 
+readin :       0.00 : LBeltrami= 4 ; Linitgues= 1 ;
+readin :            : 
+readin :       0.00 : Lfindzero= 2 ;
+readin :            : escale=  0.00000E+00 ; opsilon=  1.00000E+00 ; pcondense=  4.000 ; epsilon=  1.00000E-01 ; wpoloidal= 1.0000 ; upsilon=  1.00000E-01 ;
+readin :            : forcetol=  1.00000E-12 ; c05xmax=  1.00000E-06 ; c05xtol=  1.00000E-12 ; c05factor=  1.00000E-04 ; LreadGF= F ; 
+readin :            : mfreeits=   5 ; gBntol=  1.00000E-10 ; gBnbld=  0.00000E+00 ;
+readin :            : vcasingeps=  1.00000E-12 ; vcasingtol=  1.00000E-10 ; vcasingits=  8 ; vcasingper=  1 ;
+readin :            : 
+readin :       0.00 : odetol=  1.00E-07 ; nPpts=   500 ;
+readin :            : LHevalues= F ; LHevectors= F ; LHmatrix= F ; Lperturbed= 0 ; dpp= -1 ; dqq= -1 ; Lcheck=  1 ; Ltiming= F ;
+readin :            : 
+readin :            : myid=  0 ; Rscale= 3.999000000000000E+00 ;
+preset :            : myid=  0 ; Mrad= 10 : Lrad=  8,  8,  8,  8,  8,  8,  8, 10,
+preset :       0.02 : LBsequad= F , LBnewton= F , LBlinear= T ;
+preset :            : 
+preset :       0.02 : Nquad=  -1 ; mn=   17 ; NGdof=   231 ; NAdof=   341,   358,   358,   358,   358,   358,   358,   426,
+preset :            : 
+preset :       0.02 : Nt=   128 ; Nz=     1 ; Ntz=      128 ;
+after preset
+after init_outfile
+after mirror_input
+ma02aa :       1.74 : myid=  7 ; lvol=  8 ; Linear : ihybrj =  5 hel=  1.0095E+05 mu=  0.0000E+00 dpflux= -2.8167E-02 time=      0.2 ; bad progress     ; F=  2.E-01 -9.E-14
+newton :       1.75 :         0  0 ; |f|= 3.84584E-03 ; time=      0.62s ; log|BB|e= -5.11 -4.96 -4.83 -4.68 -4.52 -4.38 -4.18
+newton :            :              ;                                     ; log|II|o= -4.27 -3.45 -3.03 -2.81 -2.50 -2.27 -2.88
+ma02aa :       2.48 : myid=  7 ; lvol=  8 ; Linear : ihybrj =  5 hel=  1.0095E+05 mu=  0.0000E+00 dpflux= -2.8167E-02 time=      0.2 ; bad progress     ; F=  2.E-01 -9.E-14
+ma02aa :       3.23 : myid=  7 ; lvol=  8 ; Linear : ihybrj =  5 hel=  1.0095E+05 mu=  0.0000E+00 dpflux= -2.8167E-02 time=      0.2 ; bad progress     ; F=  2.E-01 -9.E-14
+fcn2   :      23.49 :         1  1 ; |f|= 3.84584E-03 ; time=     22.36s ; log|BB|e= -5.11 -4.96 -4.83 -4.68 -4.52 -4.38 -4.18
+fcn2   :            :              ;                                     ; log|II|o= -4.27 -3.45 -3.03 -2.81 -2.50 -2.27 -2.88
+ma02aa :      24.29 : myid=  7 ; lvol=  8 ; Linear : ihybrj =  5 hel= -8.0909E+05 mu=  0.0000E+00 dpflux=  8.0305E+05 time=      0.3 ; bad progress     ; F=  2.E-01 -3.E-11
+fcn2   :      24.29 :         2  1 ; |f|= 2.27033E+10 ; time=      0.80s ; log|BB|e= -5.68 -4.92 -4.68 -4.63 -5.26 -4.10 10.68
+fcn2   :            :              ;                                     ; log|II|o= -4.46 -3.71 -3.37 -3.22 -2.64 -2.78 -2.65
+ma02aa :      25.04 : myid=  7 ; lvol=  8 ; Linear : ihybrj =  5 hel= -1.9373E+16 mu=  0.0000E+00 dpflux=  8.0305E+05 time=      0.2 ; bad progress     ; F=  2.E-01  2.E-04
+ma02aa :      25.78 : myid=  7 ; lvol=  8 ; Linear : ihybrj =  5 hel=  1.7642E+16 mu=  0.0000E+00 dpflux=  8.0305E+05 time=      0.2 ; bad progress     ; F=  2.E-01  1.E-04
+dforce :      fatal : myid=  7 ; abs(det).lt.small ; error computing derivatives of dtflux & dpflux wrt geometry at fixed Itor and Gpol ;
+                                  
+================================= 
+Global information about the job: 
+================================= 
+  
+Job owner: jons(30270)
+Job name:  SPEC
+Node list: dra0513
+Job start: Fri Jul 26 13:12:20 CEST 2019
+Job end:   Fri Jul 26 13:12:52 CEST 2019
+Work dir:  /u/jons/src/SPEC_output_comparison/test_hdf5_xspec/./
+Command:   /draco/u/jons/src/SPEC_output_comparison/test_hdf5_xspec/slurm_spec
+  
+  
+  
+================================================================================ 
+Information on jobsteps (Note: MaxRSS is per task, cf. "man sacct"): 
+================================================================================ 
+  
+       JobID    JobName NNodes NTasks  NCPUS     MaxRSS    Elapsed ExitCode 
+------------ ---------- ------ ------ ------ ---------- ---------- -------- 
+9171863.0         xspec      1      8      8       275K   00:00:28      0:9 
+  
+Maximum memory per node: 0.0022 GB
+CPU utilization: 68.8 %
+     
