@@ -1303,3 +1303,12 @@ m4_define(PRTTIME,{! macro expansion of prttime;
    write(ounit,'("finish : ",f10.2," : time spent in $1 =",f10.2," ;")') cput-cpus, $1T ; Ttotal = Ttotal + $1T
 
   ! macro expansion of prttime; end;})m4_dnl ; can put comments here;
+
+m4_define(TMPOUT,{ !Temperarily output a message to help debugging
+  if( myid .eq. 0) write(ounit,*) "### DEBUG : $1 = ", $1
+})m4_dnl
+
+
+m4_define(MPIOUT,{ !Temperarily output a message to help debugging
+  write(ounit,*) "*** DEBUG : myid = ", myid, " ; $1 = ", $1
+})m4_dnl
