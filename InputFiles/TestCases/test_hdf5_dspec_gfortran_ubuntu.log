@@ -7,7 +7,7 @@ xspech :            :
 xspech :            : 
 xspech :       0.00 : begin execution ; ncpu=  8 ; calling global:readin ;
 readin :            : 
-readin :       0.00 : date=2019/07/26 , 12:26:52 ; machine precision= 1.11E-16 ; vsmall= 1.11E-14 ; small= 1.11E-12 ;
+readin :       0.00 : date=2019/07/26 , 12:42:38 ; machine precision= 1.11E-16 ; vsmall= 1.11E-14 ; small= 1.11E-12 ;
 readin :            : 
 readin :       0.00 : ext = test_hdf5                                                                                           
 readin :            : 
@@ -38,9 +38,10 @@ readin :            :
 readin :            : myid=  0 ; Rscale= 3.999000000000000E+00 ;
 preset :            : myid=  0 ; Mrad= 10 : Lrad=  8,  8,  8,  8,  8,  8,  8, 10,
 preset :            : sweight= 1.42857E-02, 2.85714E-02, 4.28571E-02, 5.71429E-02, 7.14286E-02, 8.57143E-02, 1.00000E-01, 1.14286E-01,
+preset :            : sweight= 1.42857E-02, 2.85714E-02, 4.28571E-02, 5.71429E-02, 7.14286E-02, 8.57143E-02, 1.00000E-01, 1.14286E-01,
+preset :            : sweight= 1.42857E-02, 2.85714E-02, 4.28571E-02, 5.71429E-02, 7.14286E-02, 8.57143E-02, 1.00000E-01, 1.14286E-01,
+preset :            : sweight= 1.42857E-02, 2.85714E-02, 4.28571E-02, 5.71429E-02, 7.14286E-02, 8.57143E-02, 1.00000E-01, 1.14286E-01,
 preset :       0.00 : LBsequad= F , LBnewton= F , LBlinear= T ;
-preset :            : sweight= 1.42857E-02, 2.85714E-02, 4.28571E-02, 5.71429E-02, 7.14286E-02, 8.57143E-02, 1.00000E-01, 1.14286E-01,
-preset :            : sweight= 1.42857E-02, 2.85714E-02, 4.28571E-02, 5.71429E-02, 7.14286E-02, 8.57143E-02, 1.00000E-01, 1.14286E-01,
 preset :            : sweight= 1.42857E-02, 2.85714E-02, 4.28571E-02, 5.71429E-02, 7.14286E-02, 8.57143E-02, 1.00000E-01, 1.14286E-01,
 preset :            : sweight= 1.42857E-02, 2.85714E-02, 4.28571E-02, 5.71429E-02, 7.14286E-02, 8.57143E-02, 1.00000E-01, 1.14286E-01,
 preset :            : sweight= 1.42857E-02, 2.85714E-02, 4.28571E-02, 5.71429E-02, 7.14286E-02, 8.57143E-02, 1.00000E-01, 1.14286E-01,
@@ -49,13 +50,12 @@ preset :            :
 preset :       0.00 : Nquad=  -1 ; mn=   17 ; NGdof=   231 ; NAdof=   341,   358,   358,   358,   358,   358,   358,   426,
 preset :            : 
 preset :       0.00 : Nt=   128 ; Nz=     1 ; Ntz=      128 ;
-preset :            : sweight= 1.42857E-02, 2.85714E-02, 4.28571E-02, 5.71429E-02, 7.14286E-02, 8.57143E-02, 1.00000E-01, 1.14286E-01,
 after preset
 after init_outfile
 after mirror_input
-macros :       1.18 : myid=  6 ; iwork not allocated ;
+macros :       1.13 : myid=  2 ; iwork not allocated ;
 --------------------------------------------------------------------------
-MPI_ABORT was invoked on rank 6 in communicator MPI_COMM_WORLD
+MPI_ABORT was invoked on rank 2 in communicator MPI_COMM_WORLD
 with errorcode 1.
 
 NOTE: invoking MPI_ABORT causes Open MPI to kill all MPI processes.
