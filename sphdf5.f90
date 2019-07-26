@@ -102,7 +102,7 @@ subroutine init_outfile
   integer(hid_t) :: plist_id      ! Property list identifier used to activate MPI I/O parallel access in HDF5 library
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+  BEGIN( sphdf5 )
   ! initialize Fortran interface to the HDF5 library;
   H5CALL( sphdf5, h5open_f, (hdfier), __FILE__, __LINE__)
 
@@ -133,6 +133,8 @@ subroutine mirror_input_to_outfile
 
   integer(hid_t) :: grpInput
   integer(hid_t) :: grpInputPhysics, grpInputNumerics, grpInputLocal, grpInputGlobal, grpInputDiagnostics
+
+  BEGIN( sphdf5 )
 
   HDEFGRP( file_id, input, grpInput,                        __FILE__, __LINE__ )
   H5DESCR( grpInput, /input, group for mirrored input data, __FILE__, __LINE__ )
@@ -371,6 +373,8 @@ subroutine init_convergence_output
   integer(size_t)                   :: irbc_size_template                            ! size ofiRbc array in iterations logging
   integer(size_t)                   :: irbc_size                                     ! size ofiRbc array in iterations logging
 
+  BEGIN( sphdf5 )
+
   ! Set dataset transfer property to preserve partially initialized fields
   ! during write/read to/from dataset with compound datatype.
   H5CALL( sphdf5, h5pcreate_f, (H5P_DATASET_XFER_F, plist_id, hdfier))
@@ -455,10 +459,7 @@ subroutine write_convergence_output( nDcalls, ForceErr )
   INTEGER, intent(in)  :: nDcalls
   REAL   , intent(in)  :: ForceErr
 
-#ifdef DEBUG
-  if( myid.eq.0 .and. Wsphdf5 ) then ; cput = GETTIME ; write(ounit,'("sphdf5 : ",f10.2," : myid=",i3," ; writing convergence ;")') cput-cpus, myid
-  endif
-#endif
+  BEGIN(sphdf5)
 
   ! append updated values to "iterations" dataset
 
@@ -519,10 +520,8 @@ subroutine write_grid
   INTEGER              :: vvol, ii, jj, kk, jk, Lcurvature
   REAL                 :: lss, teta, zeta, st(1:Node), Bst(1:Node)
   REAL   , allocatable :: Rij_grid(:,:), Zij_grid(:,:), sg_grid(:,:), ijreal_grid(:,:), ijimag_grid(:,:), jireal_grid(:,:)
-#ifdef DEBUG
-  if( myid.eq.0 .and. Wsphdf5 ) then ; cput = GETTIME ; write(ounit,'("sphdf5 : ",f10.2," : myid=",i3," ; writing grid ;")') cput-cpus, myid
-  endif
-#endif
+
+  BEGIN(sphdf5)
 
   ijreal(1:Ntz) = zero ; ijimag(1:Ntz) = zero ; jireal(1:Ntz) = zero
 
@@ -593,10 +592,7 @@ subroutine write_grid
 
   HCLOSEGRP( grpGrid )
 
-#ifdef DEBUG
-  if ( myid.eq.0 .and. Wsphdf5 ) then ; cput = GETTIME ; write(ounit,'("sphdf5 : ",f10.2," : myid=",i3," ; wrote   grid ;")') cput-cpus, myid
-  endif
-#endif
+  RETURN(sphdf5)
 
 end subroutine write_grid
 
@@ -610,6 +606,8 @@ subroutine init_flt_output( numTrajTotal )
   integer, intent(in)               :: numTrajTotal                                  ! total number of trajectories
   integer(HSIZE_T), dimension(rankP) :: dims_traj ! Dataset dimensions.
   integer(HSIZE_T), dimension(rankP) :: length ! Dataset dimensions.
+
+  BEGIN( sphdf5 )
 
   ! create Poincare group in HDF5 file
   HDEFGRP( file_id, poincare, grpPoincare )
@@ -689,6 +687,8 @@ subroutine write_poincare( data, offset, success )
   integer(hsize_t), dimension(3) :: length
   integer(HSIZE_T), dimension(2) :: dims_singleTraj ! dimensions of single trajectory data
 
+  BEGIN( sphdf5 )
+
   dims_singleTraj = (/ Nz, nPpts /)
   length          = (/ Nz, nPpts, 1 /)
 
@@ -723,6 +723,8 @@ subroutine write_transform( offset, length, lvol, diotadxup, fiota )
   INTEGER, intent(in) :: offset, length, lvol
   REAL, intent(in)    :: diotadxup(:), fiota(:,:)
 
+  BEGIN( sphdf5 )
+
   H5CALL( sphdf5, h5sselect_hyperslab_f, (filespace_diotadxup, H5S_SELECT_SET_F, int((/0,lvol-1/),HSSIZE_T), int((/2,1/),HSSIZE_T), hdfier) )
   H5CALL( sphdf5, h5dwrite_f, (dset_id_diotadxup, H5T_NATIVE_DOUBLE, diotadxup, int((/2,1/),HSSIZE_T), hdfier, &
   &               file_space_id=filespace_diotadxup, mem_space_id=memspace_diotadxup ) )
@@ -747,6 +749,8 @@ subroutine write_vector_potential(sumLrad, allAte, allAze, allAto, allAzo)
   REAL, intent(in)    :: allAte(:,:), allAze(:,:), allAto(:,:), allAzo(:,:)
   integer(hid_t)      :: grpVectorPotential
 
+  BEGIN( sphdf5 )
+
   HDEFGRP( file_id, vector_potential, grpVectorPotential )
 
   HWRITERA( grpVectorPotential, sumLrad, mn, Ate, allAte(1:sumLrad,1:mn) )
@@ -762,6 +766,8 @@ end subroutine write_vector_potential
 subroutine finalize_flt_output
 
   LOCALS
+
+  BEGIN( sphdf5 )
 
   H5CALL( sphdf5, h5sclose_f, (filespace_t,         hdfier) ) ! close filespaces
   H5CALL( sphdf5, h5sclose_f, (filespace_s,         hdfier) )
@@ -819,6 +825,8 @@ subroutine hdfint
   REAL                           :: tvolume
 
   integer(hid_t)                 :: grpOutput
+
+  BEGIN( sphdf5 )
 
   HDEFGRP( file_id, output, grpOutput )
 
@@ -951,7 +959,7 @@ subroutine finish_outfile
   integer :: typeClass
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+  BEGIN( sphdf5 )
   ! close objects related to convergence output
   H5CALL( sphdf5, h5tclose_f, (dt_nDcalls_id, hdfier)    , __FILE__, __LINE__)
   H5CALL( sphdf5, h5tclose_f, (dt_Energy_id, hdfier)     , __FILE__, __LINE__)

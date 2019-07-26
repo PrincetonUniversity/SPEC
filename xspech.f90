@@ -126,9 +126,11 @@ program xspech
 !latex \end{enumerate} 
 
   WCALL( xspech, readin ) ! sets Rscale, Mvol; 03 Nov 16;
+
   WCALL( xspech, preset )
   
   WCALL( xspech, init_outfile ) ! initialize HDF5 library and open output file ext.h5 for writing during execution
+
   WCALL( xspech, mirror_input_to_outfile ) ! mirror input file contents to output file
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
