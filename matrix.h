@@ -399,10 +399,10 @@ subroutine matrix( lvol, mn, lrad )
   
   NN = NAdof(lvol) ! shorthand;
   
-!  dMA(0:NN,0:NN) = zero
-!  dMD(0:NN,0:NN) = zero
-!  dMB(0:NN,1: 2) = zero
-!  dMG(0:NN     ) = zero
+  dMA(0:NN,0:NN) = zero
+  dMD(0:NN,0:NN) = zero
+  dMB(0:NN,1: 2) = zero
+  dMG(0:NN     ) = zero
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
