@@ -202,11 +202,11 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
 
     WCALL( ma00aa, metrix,( lvol, lss ) ) ! compute metric elements; 16 Jan 13;
 
-!$OMP PARALLEL DEFAULT(PRIVATE) SHARED(NOTstellsym,lvol,mn2_max,mn,imn2,im,jthweight,lrad,lp2_max,ilrad,kijs,kija,goomne,goomno,gssmne,gssmno,gstmne,gstmno,gttmne,gttmno,gszmne,gszmno,gtzmne,gtzmno,gzzmne,gzzmno,zernike,DToocc,DToocs,DToosc,DTooss,TTsscc,TTsscs,TTsssc,TTssss,TDstcc,TDstcs,TDstsc,TDstss,TDszcc,TDszcs,TDszsc,TDszss,DDttcc,DDttcs,DDttsc,DDttss,DDtzcc,DDtzcs,DDtzsc,DDtzss,DDzzcc,DDzzcs,DDzzsc,DDzzss)
+!$OMP PARALLEL DEFAULT(PRIVATE) SHARED(NOTstellsym,lvol,mn2_max,mn,im,jthweight,lrad,lp2_max,kijs,kija,goomne,goomno,gssmne,gssmno,gstmne,gstmno,gttmne,gttmno,gszmne,gszmno,gtzmne,gtzmno,gzzmne,gzzmno,zernike,DToocc,DToocs,DToosc,DTooss,TTsscc,TTsscs,TTsssc,TTssss,TDstcc,TDstcs,TDstsc,TDstss,TDszcc,TDszcs,TDszsc,TDszss,DDttcc,DDttcs,DDttsc,DDttss,DDtzcc,DDtzcs,DDtzsc,DDtzss,DDzzcc,DDzzcs,DDzzsc,DDzzss)
 !$OMP DO PRIVATE(MN2,LP2)  
     do mn2 = 1, mn2_max
       ii = mod(mn2-1,mn)+1
-      jj = floor(real(mn2-1) * imn2)+1
+      jj = (mn2-ii) / mn + 1
       
       kks = kijs(ii,jj,0) !; kds = kijs(ii,jj,1) 
       kka = kija(ii,jj,0) !; kda = kija(ii,jj,1) 
@@ -214,43 +214,46 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
       ikda = jthweight / kija(ii,jj,1)
 
       foocc = ( + goomne(kks) * abs(ikds) + goomne(kka) * abs(ikda) )
-      foocs = ( - goomno(kks) *     ikds  + goomno(kka) *     ikda  )
-      foosc = ( + goomno(kks) *     ikds  + goomno(kka) *     ikda  )
-      fooss = ( + goomne(kks) * abs(ikds) - goomne(kka) * abs(ikda) )
-      
-      fsscc = ( + gssmne(kks) * abs(ikds) + gssmne(kka) * abs(ikda) )
-      fsscs = ( - gssmno(kks) *     ikds  + gssmno(kka) *     ikda  )
-      fsssc = ( + gssmno(kks) *     ikds  + gssmno(kka) *     ikda  )
       fssss = ( + gssmne(kks) * abs(ikds) - gssmne(kka) * abs(ikda) )
-      
-      fstcc = ( + gstmne(kks) * abs(ikds) + gstmne(kka) * abs(ikda) )
-      fstcs = ( - gstmno(kks) *     ikds  + gstmno(kka) *     ikda  )
       fstsc = ( + gstmno(kks) *     ikds  + gstmno(kka) *     ikda  )
-      fstss = ( + gstmne(kks) * abs(ikds) - gstmne(kka) * abs(ikda) )
-      
-      fszcc = ( + gszmne(kks) * abs(ikds) + gszmne(kka) * abs(ikda) )
-      fszcs = ( - gszmno(kks) *     ikds  + gszmno(kka) *     ikda  )
       fszsc = ( + gszmno(kks) *     ikds  + gszmno(kka) *     ikda  )
-      fszss = ( + gszmne(kks) * abs(ikds) - gszmne(kka) * abs(ikda) )
-      
       fttcc = ( + gttmne(kks) * abs(ikds) + gttmne(kka) * abs(ikda) )
-      fttcs = ( - gttmno(kks) *     ikds  + gttmno(kka) *     ikda  )
-      fttsc = ( + gttmno(kks) *     ikds  + gttmno(kka) *     ikda  )
-      fttss = ( + gttmne(kks) * abs(ikds) - gttmne(kka) * abs(ikda) )
-      
       ftzcc = ( + gtzmne(kks) * abs(ikds) + gtzmne(kka) * abs(ikda) )
-      ftzcs = ( - gtzmno(kks) *     ikds  + gtzmno(kka) *     ikda  )
-      ftzsc = ( + gtzmno(kks) *     ikds  + gtzmno(kka) *     ikda  )
-      ftzss = ( + gtzmne(kks) * abs(ikds) - gtzmne(kka) * abs(ikda) )
-      
       fzzcc = ( + gzzmne(kks) * abs(ikds) + gzzmne(kka) * abs(ikda) )
-      fzzcs = ( - gzzmno(kks) *     ikds  + gzzmno(kka) *     ikda  )
-      fzzsc = ( + gzzmno(kks) *     ikds  + gzzmno(kka) *     ikda  )
-      fzzss = ( + gzzmne(kks) * abs(ikds) - gzzmne(kka) * abs(ikda) )
+
+      if (NOTstellsym) then
+        foocs = ( - goomno(kks) *     ikds  + goomno(kka) *     ikda  )
+        foosc = ( + goomno(kks) *     ikds  + goomno(kka) *     ikda  )
+        fooss = ( + goomne(kks) * abs(ikds) - goomne(kka) * abs(ikda) )
+
+        fsscc = ( + gssmne(kks) * abs(ikds) + gssmne(kka) * abs(ikda) )
+        fsscs = ( - gssmno(kks) *     ikds  + gssmno(kka) *     ikda  )
+        fsssc = ( + gssmno(kks) *     ikds  + gssmno(kka) *     ikda  )
+
+        fstcc = ( + gstmne(kks) * abs(ikds) + gstmne(kka) * abs(ikda) )
+        fstcs = ( - gstmno(kks) *     ikds  + gstmno(kka) *     ikda  )
+        fstss = ( + gstmne(kks) * abs(ikds) - gstmne(kka) * abs(ikda) )
+
+        fszcc = ( + gszmne(kks) * abs(ikds) + gszmne(kka) * abs(ikda) )
+        fszcs = ( - gszmno(kks) *     ikds  + gszmno(kka) *     ikda  )
+        fszss = ( + gszmne(kks) * abs(ikds) - gszmne(kka) * abs(ikda) )
+
+        fttcs = ( - gttmno(kks) *     ikds  + gttmno(kka) *     ikda  )
+        fttsc = ( + gttmno(kks) *     ikds  + gttmno(kka) *     ikda  )
+        fttss = ( + gttmne(kks) * abs(ikds) - gttmne(kka) * abs(ikda) )
+
+        ftzcs = ( - gtzmno(kks) *     ikds  + gtzmno(kka) *     ikda  )
+        ftzsc = ( + gtzmno(kks) *     ikds  + gtzmno(kka) *     ikda  )
+        ftzss = ( + gtzmne(kks) * abs(ikds) - gtzmne(kka) * abs(ikda) )
+
+        fzzcs = ( - gzzmno(kks) *     ikds  + gzzmno(kka) *     ikda  )
+        fzzsc = ( + gzzmno(kks) *     ikds  + gzzmno(kka) *     ikda  )
+        fzzss = ( + gzzmne(kks) * abs(ikds) - gzzmne(kka) * abs(ikda) )
+      end if !NOTstellsym
 
       do lp2 = 1, lp2_max 
         ll = mod(lp2-1,lrad+1)
-        pp = floor(real(lp2-1) * ilrad)
+        pp = (lp2-ll-1)/(lrad+1)
 
         ll1 = (ll - mod(ll,2))/2 ! shrinked dof for Zernike; 02 Jul 19
         pp1 = (pp - mod(pp,2))/2 ! shrinked dof for Zernike; 02 Jul 19

@@ -333,11 +333,11 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
    
    dBdX%L = .false. ! first, compute Beltrami fields;
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-   write(ounit,*) 'ma00aa'
+   
    WCALL( dforce, ma00aa, ( Iquad(vvol), mn, vvol, ll ) ) ! compute volume integrals of metric elements;
-   write(ounit,*) 'matrix'
+   
    WCALL( dforce, matrix, ( vvol, mn, ll ) )
-   write(ounit,*) 'ma02aa'
+
    WCALL( dforce, ma02aa, ( vvol, NN ) )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
