@@ -53,7 +53,6 @@ subroutine bfield( zeta, st, Bst ) ! the format of this subroutine is constraine
                         Lcoordinatesingularity, Mvol, &
                         Node ! 17 Dec 15;
   
-  use zernik
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   LOCALS

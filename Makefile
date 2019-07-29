@@ -27,8 +27,10 @@
  MACROS=macros
  
  CC=intel
- # if want to use gfortran; make CC=gfortran xfocus; otherwise using Intel
+ # if want to use gfortran; make CC=gfortran; otherwise using Intel
  FC=mpif90
+ OMP=yes
+ # to enable OpenMP acceleration within volume, set OMP=yes, otherwise set OMP=no
  
  # Intel Defaults
  # At PPPL
@@ -73,8 +75,8 @@ ifeq ($(CC),gfortran_ubuntu)
  CFLAGS=-fdefault-real-8
  NAG=-llapack -lblas
  NETCDF=-lnetcdf
- HDF5compile=-I/usr/include/hdf5/openmpi
- HDF5link=-L/usr/lib/x86_64-linux-gnu/hdf5/openmpi -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lpthread -lz -lm
+ HDF5compile=-I/usr/include/hdf5/serial
+ HDF5link=-L/usr/lib/x86_64-linux-gnu/hdf5/serial -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lpthread -lz -lm
  FFTWcompile=-I/usr/include
  FFTWlink=-lfftw3
  RFLAGS=-O2 -ffixed-line-length-none -ffree-line-length-none -fexternal-blas
@@ -143,6 +145,10 @@ ifeq ($(CC),intel_raijin)
  FFTWlink=
  RFLAGS=-mcmodel=large -O3 -m64 -unroll0 -fno-alias -ip -traceback -fPIC
  DFLAGS=-check bounds -check format -check output_conversion -check pointers -check uninit -debug full -D DEBUG
+endif
+
+ifeq ($(OMP),yes)
+ CFLAGS+=-fopenmp
 endif
 
 ###############################################################################################################################################################

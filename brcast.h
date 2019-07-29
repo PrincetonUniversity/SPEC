@@ -90,7 +90,7 @@ subroutine brcast( lvol )
   if( Lhessianallocated ) then
    
    Nbc =             LGdof*       2*  LGdof*  2
-   RlBCAST( dFFdRZ(1:LGdof,lvol,0:1,1:LGdof,0:1), Nbc, llmodnp )
+   RlBCAST( dFFdRZ(1:LGdof,0:1,1:LGdof,0:1,lvol), Nbc, llmodnp )
    
    Nbc =             LGdof*       2*  2                
    RlBCAST( dBBdmp(1:LGdof,lvol,0:1,1:2), Nbc, llmodnp )

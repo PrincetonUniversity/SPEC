@@ -78,8 +78,6 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
                         NOTstellsym, &
                         Lcoordinatesingularity, &
                         beltramierror  
-  
-  use zernik
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

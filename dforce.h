@@ -292,51 +292,54 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
    end if
 
    SALLOCATE( DToocc, (0:lldof,0:lldof,1:mn,1:mn), zero )
-   SALLOCATE( DToocs, (0:lldof,0:lldof,1:mn,1:mn), zero )
-   SALLOCATE( DToosc, (0:lldof,0:lldof,1:mn,1:mn), zero )
-   SALLOCATE( DTooss, (0:lldof,0:lldof,1:mn,1:mn), zero )
-
-   SALLOCATE( TTsscc, (0:lldof,0:lldof,1:mn,1:mn), zero )
-   SALLOCATE( TTsscs, (0:lldof,0:lldof,1:mn,1:mn), zero )
-   SALLOCATE( TTsssc, (0:lldof,0:lldof,1:mn,1:mn), zero )
    SALLOCATE( TTssss, (0:lldof,0:lldof,1:mn,1:mn), zero )
-
-   SALLOCATE( TDstcc, (0:lldof,0:lldof,1:mn,1:mn), zero )
-   SALLOCATE( TDstcs, (0:lldof,0:lldof,1:mn,1:mn), zero )
    SALLOCATE( TDstsc, (0:lldof,0:lldof,1:mn,1:mn), zero )
-   SALLOCATE( TDstss, (0:lldof,0:lldof,1:mn,1:mn), zero )
-
-   SALLOCATE( TDszcc, (0:lldof,0:lldof,1:mn,1:mn), zero )
-   SALLOCATE( TDszcs, (0:lldof,0:lldof,1:mn,1:mn), zero )
    SALLOCATE( TDszsc, (0:lldof,0:lldof,1:mn,1:mn), zero )
-   SALLOCATE( TDszss, (0:lldof,0:lldof,1:mn,1:mn), zero )
-
    SALLOCATE( DDttcc, (0:lldof,0:lldof,1:mn,1:mn), zero )
-   SALLOCATE( DDttcs, (0:lldof,0:lldof,1:mn,1:mn), zero )
-   SALLOCATE( DDttsc, (0:lldof,0:lldof,1:mn,1:mn), zero )
-   SALLOCATE( DDttss, (0:lldof,0:lldof,1:mn,1:mn), zero )
-
    SALLOCATE( DDtzcc, (0:lldof,0:lldof,1:mn,1:mn), zero )
-   SALLOCATE( DDtzcs, (0:lldof,0:lldof,1:mn,1:mn), zero )
-   SALLOCATE( DDtzsc, (0:lldof,0:lldof,1:mn,1:mn), zero )
-   SALLOCATE( DDtzss, (0:lldof,0:lldof,1:mn,1:mn), zero )
-
    SALLOCATE( DDzzcc, (0:lldof,0:lldof,1:mn,1:mn), zero )
-   SALLOCATE( DDzzcs, (0:lldof,0:lldof,1:mn,1:mn), zero )
-   SALLOCATE( DDzzsc, (0:lldof,0:lldof,1:mn,1:mn), zero )
-   SALLOCATE( DDzzss, (0:lldof,0:lldof,1:mn,1:mn), zero )
+
+   if (NOTstellsym) then
+    SALLOCATE( DToocs, (0:lldof,0:lldof,1:mn,1:mn), zero )
+    SALLOCATE( DToosc, (0:lldof,0:lldof,1:mn,1:mn), zero )
+    SALLOCATE( DTooss, (0:lldof,0:lldof,1:mn,1:mn), zero )
+
+    SALLOCATE( TTsscc, (0:lldof,0:lldof,1:mn,1:mn), zero )
+    SALLOCATE( TTsscs, (0:lldof,0:lldof,1:mn,1:mn), zero )
+    SALLOCATE( TTsssc, (0:lldof,0:lldof,1:mn,1:mn), zero )
+
+    SALLOCATE( TDstcc, (0:lldof,0:lldof,1:mn,1:mn), zero )
+    SALLOCATE( TDstcs, (0:lldof,0:lldof,1:mn,1:mn), zero )
+    SALLOCATE( TDstss, (0:lldof,0:lldof,1:mn,1:mn), zero )
+
+    SALLOCATE( TDszcc, (0:lldof,0:lldof,1:mn,1:mn), zero )
+    SALLOCATE( TDszcs, (0:lldof,0:lldof,1:mn,1:mn), zero )
+    SALLOCATE( TDszss, (0:lldof,0:lldof,1:mn,1:mn), zero )
+
+    SALLOCATE( DDttcs, (0:lldof,0:lldof,1:mn,1:mn), zero )
+    SALLOCATE( DDttsc, (0:lldof,0:lldof,1:mn,1:mn), zero )
+    SALLOCATE( DDttss, (0:lldof,0:lldof,1:mn,1:mn), zero )
+
+    SALLOCATE( DDtzcs, (0:lldof,0:lldof,1:mn,1:mn), zero )
+    SALLOCATE( DDtzsc, (0:lldof,0:lldof,1:mn,1:mn), zero )
+    SALLOCATE( DDtzss, (0:lldof,0:lldof,1:mn,1:mn), zero )
+
+    SALLOCATE( DDzzcs, (0:lldof,0:lldof,1:mn,1:mn), zero )
+    SALLOCATE( DDzzsc, (0:lldof,0:lldof,1:mn,1:mn), zero )
+    SALLOCATE( DDzzss, (0:lldof,0:lldof,1:mn,1:mn), zero )
+   end if !NOTstellsym
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
    dBdX%L = .false. ! first, compute Beltrami fields;
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-   
+   write(ounit,*) 'ma00aa'
    WCALL( dforce, ma00aa, ( Iquad(vvol), mn, vvol, ll ) ) ! compute volume integrals of metric elements;
-   
+   write(ounit,*) 'matrix'
    WCALL( dforce, matrix, ( vvol, mn, ll ) )
-
+   write(ounit,*) 'ma02aa'
    WCALL( dforce, ma02aa, ( vvol, NN ) )
-   
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 #ifdef DEBUG
@@ -352,9 +355,12 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
     lastcpu = GETTIME
     
     if(Lconstraint .eq. 2) then
-      dMA(1:NN,1:NN) = dMA(1:NN,1:NN) - mu(vvol) * dMD(1:NN,1:NN) ! this corrupts dMA, but dMA is no longer used;
+      !dMA(1:NN,1:NN) = dMA(1:NN,1:NN) - mu(vvol) * dMD(1:NN,1:NN) ! this corrupts dMA, but dMA is no longer used;
+      call DAXPY((NN+1)*(NN+1), -mu(vvol), dMD, 1, dMA, 1) ! BLAS version; 24 Jul 2019
       dMA(0,0)       = zero
-      dMA(1:NN,0)    = -matmul(dMD(1:NN,1:NN),solution(1:NN,0))
+      dMA(1:NN,0)    = zero
+      !dMA(1:NN,0)    = -matmul(dMD(1:NN,1:NN),solution(1:NN,0))
+      call DGEMV('N', NN, NN, -one, dMD(1,1), NN+1, solution(1,0), 1, zero, dMA(1,0), 1) ! BLAS version; 24 Jul 2019
       dMA(0,1:NN)    = dMA(1:NN,0) !-matmul(solution(1:NN,0),dMD(1:NN,1:NN))
       IA = NN + 1 + 1
       MM = NN ; LDA = NN+1 ; Lwork = NN+1
@@ -368,36 +374,40 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
       case( 1:   ) ;               write(ounit,1010) cput-cpus, myid, vvol, cput-lastcpu, idgetrf, "singular;         "
       case default ;               FATAL( dforce, .true., illegal ifail returned from F07ADF )
       end select    
-      
-      SALLOCATE( work, (1:Lwork), zero )
-      idgetri = 1 ; call DGETRI( NN+1, dMA(0:LDA-1,0:NN), LDA, ipivot(0:NN), work(1:Lwork), Lwork, idgetri )
-      DALLOCATE(work)
-      DALLOCATE(ipivot)
 
-      cput = GETTIME
-      select case( idgetri ) !                                                                     0123456789012345678
-      case(  :-1 ) ;               write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "input error;      "
-      case(  0   ) ; if( Wdforce ) write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "success;          "
-      case( 1:   ) ;               write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "singular;         "
-      case default ;               FATAL( dforce, .true., illegal ifail returned from F07AJF )
-      end select
+      ! Using DGETRS instead of inverting matrix ; 22 Jul 09
+      !SALLOCATE( work, (1:Lwork), zero )
+      !idgetri = 1 ; call DGETRI( NN+1, dMA(0:LDA-1,0:NN), LDA, ipivot(0:NN), work(1:Lwork), Lwork, idgetri )
+      !DALLOCATE(work)
+      !DALLOCATE(ipivot)
 
-      oBI(0:NN,0:NN) = dMA(0:NN,0:NN)
+      !cput = GETTIME
+      !select case( idgetri ) !                                                                     0123456789012345678
+      !case(  :-1 ) ;               write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "input error;      "
+      !case(  0   ) ; if( Wdforce ) write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "success;          "
+      !case( 1:   ) ;               write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "singular;         "
+      !case default ;               FATAL( dforce, .true., illegal ifail returned from F07AJF )
+      !end select
+
+      !oBI(0:NN,0:NN) = dMA(0:NN,0:NN)
+      call DCOPY((1+NN)*(1+NN), dMA, 1, oBI, 1)            ! BLAS version; 24 Jul 2019
 
     else ! for LBlinear = T (Linear-solver)
 
-      dMA(0:NN-1,1:NN) = dMA(1:NN,1:NN) - mu(vvol) * dMD(1:NN,1:NN) ! this corrupts dMA, but dMA is no longer used;
-      dMA(  NN  ,1:NN) = zero
+      !dMA(0:NN-1,1:NN) = dMA(1:NN,1:NN) - mu(vvol) * dMD(1:NN,1:NN) ! this corrupts dMA, but dMA is no longer used;
+      !dMA(  NN  ,1:NN) = zero
+      call DAXPY((NN+1)*(NN+1), -mu(vvol), dMD, 1, dMA, 1) ! BLAS version; 24 Jul 2019
 
-      dMD(1:NN  ,1:NN) = dMA(0:NN-1,1:NN) ! copy of original matrix; this is used below;
-    
+      !dMD(1:NN  ,1:NN) = dMA(0:NN-1,1:NN) ! copy of original matrix; this is used below;
+      call DCOPY((NN+1)*(NN+1), dMA, 1, dMD, 1)            ! BLAS version; 24 Jul 2019
+
       IA = NN + 1
     
-      MM = NN ; LDA = NN ; Lwork = NN
+      MM = NN ; LDA = NN + 1 ; Lwork = NN
     
       SALLOCATE( ipivot, (1:NN), 0 )
     
-      idgetrf = 1 ; call DGETRF( MM, NN, dMA(0:LDA-1,1:NN), LDA, ipivot(1:NN), idgetrf )
+      idgetrf = 1 ; call DGETRF( MM, NN, dMA(1,1), LDA, ipivot(1), idgetrf )
     
       cput = GETTIME
       select case( idgetrf ) !                                                                     0123456789012345678
@@ -407,23 +417,22 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
       case default ;               FATAL( dforce, .true., illegal ifail returned from F07ADF )
       end select
     
-      SALLOCATE( work, (1:Lwork), zero )
+      ! Using DGETRS instead of inverting matrix ; 22 Jul 09
+      !SALLOCATE( work, (1:Lwork), zero )
     
-      idgetri = 1 ; call DGETRI( NN, dMA(0:LDA-1,1:NN), LDA, ipivot(1:NN), work(1:Lwork), Lwork, idgetri )
-    
-      DALLOCATE(work)
+      !idgetri = 1 ; call DGETRI( NN, dMA(0:LDA-1,1:NN), LDA, ipivot(1:NN), work(1:Lwork), Lwork, idgetri )
+      !DALLOCATE(work)
+      !DALLOCATE(ipivot)
       
-      DALLOCATE(ipivot)
-      
-      cput = GETTIME
-      select case( idgetri ) !                                                                     0123456789012345678
-      case(  :-1 ) ;               write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "input error;      "
-      case(  0   ) ; if( Wdforce ) write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "success;          "
-      case( 1:   ) ;               write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "singular;         "
-      case default ;               FATAL( dforce, .true., illegal ifail returned from F07AJF )
-      end select
+      !cput = GETTIME
+      !select case( idgetri ) !                                                                     0123456789012345678
+      !case(  :-1 ) ;               write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "input error;      "
+      !case(  0   ) ; if( Wdforce ) write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "success;          "
+      !case( 1:   ) ;               write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "singular;         "
+      !case default ;               FATAL( dforce, .true., illegal ifail returned from F07AJF )
+      !end select
     
-      oBI(1:NN,1:NN) = dMA(0:LDA-1,1:NN)
+      oBI(1:NN,1:NN) = dMA(1:NN,1:NN)
     
     endif
 
@@ -555,19 +564,28 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
         
         dpsi(1:2) = (/ dtflux(vvol), dpflux(vvol) /) ! local enclosed toroidal and poloidal fluxes;
         
-        rhs(0)    =   half*sum(solution(1:NN,0)*matmul(dMD(1:NN,1:NN),solution(1:NN,0)))
-        rhs(1:NN) = - matmul( dMB(1:NN,1:2 )                            , dpsi(1:2)        ) &
-                    - matmul( dMA(1:NN,1:NN) - mu(vvol) * dMD(1:NN,1:NN), solution(1:NN,0) )
+        ! this is the original without BLAS
+        !rhs(0)    =   half*sum(solution(1:NN,0)*matmul(dMD(1:NN,1:NN),solution(1:NN,0)))
+        !rhs(1:NN) = - matmul( dMB(1:NN,1:2 )                            , dpsi(1:2)        ) &
+        !            - matmul( dMA(1:NN,1:NN) - mu(vvol) * dMD(1:NN,1:NN), solution(1:NN,0) )
+
+        ! BLAS version 17 Jul 2019
+        call DGEMV('N',NN,NN, one,dMD(1,1),NN+1,solution(1,0),1,zero,rhs(1),1)
+        rhs(0) = half * sum(solution(1:NN,0) * rhs(1:NN))
+        call DGEMV('N',NN,NN,-one,dMA(1,1),NN+1,solution(1,0),1,mu(vvol),rhs(1),1)
+        rhs(1:NN) = rhs(1:NN) - matmul( dMB(1:NN,1:2 ), dpsi(1:2) )
 
         if (Lconstraint .eq. 2) then
           SALLOCATE( work, (1:NN+1), zero )
-
-          work(1:NN+1)  =  matmul( oBI(0:NN,0:NN), rhs(0:NN))
-          !write(ounit, *) 'dmu', work(1)
+          work(1:NN+1) = rhs(0:NN)
+          !work(1:NN+1)  =  matmul( oBI(0:NN,0:NN), rhs(0:NN)) ! original version
+          call DGETRS('N',NN+1,1,oBI(0,0),NN+1,ipivot(0:NN),work(1),NN+1,idgetri) ! Change to DGETRS; 22 Jul 19
           solution(1:NN,-1) = work(2:NN+1)
           DALLOCATE(work)
         else
-          solution(1:NN,-1) = matmul( oBI(1:NN,1:NN), rhs(1:NN) )
+          !solution(1:NN,-1) = matmul( oBI(1:NN,1:NN), rhs(1:NN) ) ! original version
+          solution(1:NN,-1) = rhs(1:NN)
+          call DGETRS('N',NN,1,oBI(1,1),NN+1,ipivot(1:NN),solution(1,-1),NN,idgetri) ! Change to DGETRS; 22 Jul 19
         endif
 
         ideriv = -1 ; dpsi(1:2) = (/ dtflux(vvol), dpflux(vvol) /) ! these are also used below;
@@ -971,24 +989,24 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
 
          ; idoc = 0
          
-         ;  dFFdRZ(idoc+1:idoc+mn    ,vvol,iocons,idof,innout) = + efmn(1:mn    ) * psifactor(ii,vvol-1+innout) * BBweight(1:mn) ! pressure;
+         ;  dFFdRZ(idoc+1:idoc+mn    ,iocons,idof,innout,vvol) = + efmn(1:mn    ) * psifactor(ii,vvol-1+innout) * BBweight(1:mn) ! pressure;
          ; idoc = idoc + mn   ! even;
          ;if( Igeometry.ge.3 ) then ! add spectral constraints;
-         ;  dFFdRZ(idoc+1:idoc+mn-1  ,vvol,iocons,idof,innout) = - sfmn(2:mn    ) * psifactor(ii,vvol-1+innout) * epsilon       & ! spectral condensation;
+         ;  dFFdRZ(idoc+1:idoc+mn-1  ,iocons,idof,innout,vvol) = - sfmn(2:mn    ) * psifactor(ii,vvol-1+innout) * epsilon       & ! spectral condensation;
                                                                  - simn(2:mn    ) * psifactor(ii,vvol-1+innout) * sweight(vvol)   ! poloidal length constraint;
          ! if( Ntor.gt.0 ) then
-         !  dFFdRZ(idoc+1:idoc+Ntor  ,vvol,iocons,idof,innout) = + odmn(2:Ntor+1) * psifactor(ii,vvol-1+innout) * apsilon
+         !  dFFdRZ(idoc+1:idoc+Ntor  ,iocons,idof,innout,vvol) = + odmn(2:Ntor+1) * psifactor(ii,vvol-1+innout) * apsilon
          ! endif
          ; ;idoc = idoc + mn-1 ! oddd;
          ;endif ! end of if( Igeometry.ge.3) ;
          if( NOTstellsym ) then
-          ; dFFdRZ(idoc+1:idoc+mn-1  ,vvol,iocons,idof,innout) = + ofmn(2:mn    ) * psifactor(ii,vvol-1+innout) * BBweight(2:mn) ! pressure;
+          ; dFFdRZ(idoc+1:idoc+mn-1  ,iocons,idof,innout,vvol) = + ofmn(2:mn    ) * psifactor(ii,vvol-1+innout) * BBweight(2:mn) ! pressure;
           ;idoc = idoc + mn-1 ! oddd;
           if( Igeometry.ge.3 ) then ! add spectral constraints;
-           ;dFFdRZ(idoc+1:idoc+mn    ,vvol,iocons,idof,innout) = - cfmn(1:mn    ) * psifactor(ii,vvol-1+innout) * epsilon       & ! spectral condensation;
+           ;dFFdRZ(idoc+1:idoc+mn    ,iocons,idof,innout,vvol) = - cfmn(1:mn    ) * psifactor(ii,vvol-1+innout) * epsilon       & ! spectral condensation;
                                                                  - comn(1:mn    ) * psifactor(ii,vvol-1+innout) * sweight(vvol)   ! poloidal length constraint;
           !if( Ntor.ge.0 ) then
-          ! dFFdRZ(idoc+1:idoc+Ntor+1,vvol,iocons,idof,innout) = + evmn(1:Ntor+1) * psifactor(ii,vvol-1+innout) * apsilon ! poloidal origin      ;
+          ! dFFdRZ(idoc+1:idoc+Ntor+1,iocons,idof,innout,vvol) = + evmn(1:Ntor+1) * psifactor(ii,vvol-1+innout) * apsilon ! poloidal origin      ;
           !endif
            idoc = idoc + mn   ! even;
           endif ! end of if( Igeometry.ge.3) ;
@@ -1011,50 +1029,53 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
     enddo ! matches do ii;
     
     dBdX%L = .false. ! probably not needed, but included anyway;
+    DALLOCATE( ipivot )
     
    endif ! end of if( LComputeDerivatives ) ;
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 2000 continue
-   
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
    DALLOCATE(DToocc)
-   DALLOCATE(DToocs)
-   DALLOCATE(DToosc)
-   DALLOCATE(DTooss)
-
-   DALLOCATE(TTsscc)
-   DALLOCATE(TTsscs)
-   DALLOCATE(TTsssc)
    DALLOCATE(TTssss)
-
-   DALLOCATE(TDstcc)
-   DALLOCATE(TDstcs)
    DALLOCATE(TDstsc)
-   DALLOCATE(TDstss)
-
-   DALLOCATE(TDszcc)
-   DALLOCATE(TDszcs)
    DALLOCATE(TDszsc)
-   DALLOCATE(TDszss)
-
    DALLOCATE(DDttcc)
-   DALLOCATE(DDttcs)
-   DALLOCATE(DDttsc)
-   DALLOCATE(DDttss)
-
    DALLOCATE(DDtzcc)
-   DALLOCATE(DDtzcs)
-   DALLOCATE(DDtzsc)
-   DALLOCATE(DDtzss)
-
    DALLOCATE(DDzzcc)
-   DALLOCATE(DDzzcs)
-   DALLOCATE(DDzzsc)
-   DALLOCATE(DDzzss)
 
+   if (NOTstellsym) then
+    DALLOCATE(DToocs)
+    DALLOCATE(DToosc)
+    DALLOCATE(DTooss)
+
+    DALLOCATE(TTsscc)
+    DALLOCATE(TTsscs)
+    DALLOCATE(TTsssc)
+
+    DALLOCATE(TDstcc)
+    DALLOCATE(TDstcs)
+    DALLOCATE(TDstss)
+
+    DALLOCATE(TDszcc)
+    DALLOCATE(TDszcs)
+    DALLOCATE(TDszss)
+
+    DALLOCATE(DDttcs)
+    DALLOCATE(DDttsc)
+    DALLOCATE(DDttss)
+
+    DALLOCATE(DDtzcs)
+    DALLOCATE(DDtzsc)
+    DALLOCATE(DDtzss)
+
+    DALLOCATE(DDzzcs)
+    DALLOCATE(DDzzsc)
+    DALLOCATE(DDzzss)
+   end if !NOTstellsym
+   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
    DALLOCATE(dMA)
@@ -1332,7 +1353,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
          tdof = (vvol-2) * LGdof + idof ! labels degree-of-freedom in internal interface geometry   ;
          tdoc = (vvol-1) * LGdof        ! labels force-balance constraint across internal interfaces;
          idoc = 0                       ! local  force-balance constraint across internal interface ;
-         hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof) =                                           - dFFdRZ(idoc+1:idoc+LGdof,vvol+0,1,idof,0)
+         hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof) =                                           - dFFdRZ(idoc+1:idoc+LGdof,1,idof,0,vvol+0)
          if( Lconstraint.eq.1 ) then ! this is a little clumsy; could include Lfreebound or something . . . ;
          hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof) = hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof)                     &
                                                    - dBBdmp(idoc+1:idoc+LGdof,vvol+0,1,1) * dmupfdx(vvol,1,idof,0) &
@@ -1348,7 +1369,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
         if( Lextrap.eq.1 .and. vvol.eq.1 ) then
         ;hessian(tdoc+idof                  ,tdof) = one ! diagonal elements;
         else
-        ;hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof) = dFFdRZ(idoc+1:idoc+LGdof,vvol+1,0,idof,0) - dFFdRZ(idoc+1:idoc+LGdof,vvol+0,1,idof,1)
+        ;hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof) = dFFdRZ(idoc+1:idoc+LGdof,0,idof,0,vvol+1) - dFFdRZ(idoc+1:idoc+LGdof,1,idof,1,vvol+0)
          if( Lconstraint.eq.1 ) then ! this is a little clumsy;
          hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof) = hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof)                       &
                                                    + dBBdmp(idoc+1:idoc+LGdof,vvol+1,0,1) * dmupfdx(vvol+1,1,idof,0) &
@@ -1368,7 +1389,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
          else                                             ; hessian(tdoc+idof,tdof) = - one
          endif
          else
-         hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof) = dFFdRZ(idoc+1:idoc+LGdof,vvol+1,0,idof,1)
+         hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof) = dFFdRZ(idoc+1:idoc+LGdof,0,idof,1,vvol+1)
          if( Lconstraint.eq.1 ) then ! this is a little clumsy;
          hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof) = hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof)                       &
                                                    + dBBdmp(idoc+1:idoc+LGdof,vvol+1,0,1) * dmupfdx(vvol+1,1,idof,1) &
@@ -1382,7 +1403,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
         !tdof = (vvol+0) * LGdof + idof
          tdoc = (vvol-1) * LGdof ! shorthand ;
          idoc = 0
-         dessian(tdoc+idoc+1:tdoc+idoc+LGdof,idof) = dFFdRZ(idoc+1:idoc+LGdof,vvol+1,0,idof,1)
+         dessian(tdoc+idoc+1:tdoc+idoc+LGdof,idof) = dFFdRZ(idoc+1:idoc+LGdof,0,idof,1,vvol+1)
          if( Lconstraint.eq.1 ) then ! this is a little clumsy;
          dessian(tdoc+idoc+1:tdoc+idoc+LGdof,idof) = dessian(tdoc+idoc+1:tdoc+idoc+LGdof,idof)                       &
                                                    + dBBdmp(idoc+1:idoc+LGdof,vvol+1,0,1) * dmupfdx(vvol+1,1,idof,1) &
