@@ -137,8 +137,8 @@ ifeq ($(CC),intel_raijin)
  # module load netcdf
  # module load hdf5
  CFLAGS=-r8
- NAG=-L${MKLROOT}/lib/intel64 -mkl 
- NETCDF=-lnetcdf
+ NAG=-L${MKLROOT}/lib/intel64 -mkl=parallel -liomp5 -lpthread -lm -ldl
+ NETCDF=
  HDF5compile=-I$(HDF5_BASE)/include
  HDF5link=-L$(HDF5_BASE)/lib -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lpthread -lz -lm
  FFTWcompile=
