@@ -102,7 +102,7 @@ subroutine pp00aa( lvol )
   INTEGER              :: lnPtrj, ioff, itrj
   INTEGER, allocatable :: utflag(:)
   REAL                 :: sti(1:2), ltransform(1:2)
-  REAL, allocatable    :: data(:,:,:), fiota(:,:)
+  REAL, allocatable    :: data(:,:,:,:), fiota(:,:)
   CHARACTER            :: svol*4 ! perhaps this should be global; 11 Aug 13;
   
   BEGIN(pp00aa)
@@ -122,13 +122,7 @@ subroutine pp00aa( lvol )
   open( lunit+myid, file="."//trim(ext)//".sp.P."//svol//".dat", status="unknown", form="unformatted" )
   
 1001 format("pp00aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; odetol=",es8.1," ; nPpts=",i8," ; lnPtrj=",i3," ;")
-  
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-  SALLOCATE( data, (1:4,0:Nz-1,1:nPpts), zero ) ! for block writing to file (allows faster reading of output data files for post-processing plotting routines);
-  
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-   
+
 1002 format("pp00aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; ",i3," : (s,t)=(",f21.17," ,",f21.17," ) ;":" utflag=",i3," ; transform=",es23.15,&
   " ;":" error=",es13.5," ;")  
   
@@ -138,10 +132,13 @@ subroutine pp00aa( lvol )
   else                              ; ioff = 0
   endif
   
+  SALLOCATE( data, (1:4,0:Nz-1,1:nPpts,ioff:lnPtrj), zero ) ! for block writing to file (allows faster reading of output data files for post-processing plotting routines);
+
   SALLOCATE( utflag, (ioff:lnPtrj), 0 ) ! error flag that indicates if fieldlines successfully followed; 22 Apr 13;
   
   SALLOCATE( fiota, (ioff:lnPtrj,1:2), zero ) ! will always need fiota(0,1:2);
   
+!$OMP PARALLEL DO SHARED(lnPtrj,ioff,Wpp00aa,Nz,data,fiota,utflag,iota,oita,myid,lvol,cpus,Lconstraint,nPpts) PRIVATE(itrj,sti)
   do itrj = ioff, lnPtrj ! initialize Poincare plot with trajectories regularly spaced between interfaces along \t=0;
    
    sti(1:2) = (/ - one + itrj    * two / lnPtrj   , zero /)
@@ -149,7 +146,7 @@ subroutine pp00aa( lvol )
    if( itrj.eq.     0 ) sti(1) = - one ! avoid machine precision errors; 08 Feb 16;
    if( itrj.eq.lnPtrj ) sti(1) =   one ! avoid machine precision errors; 08 Feb 16;
    
-   CALL( pp00aa, pp00ab, ( lvol, sti(1:2), Nz, nPpts, data(1:4,0:Nz-1,1:nPpts), fiota(itrj,1:2), utflag(itrj) ) )      
+   CALL( pp00aa, pp00ab, ( lvol, sti(1:2), Nz, nPpts, data(1:4,0:Nz-1,1:nPpts,itrj), fiota(itrj,1:2), utflag(itrj) ) )
    
    if( Wpp00aa ) then
     cput = GETTIME
@@ -160,14 +157,15 @@ subroutine pp00aa( lvol )
     else                                ; write(ounit,1002) cput-cpus, myid, lvol, itrj, sti(1:2), utflag(itrj), fiota(itrj,2)
     endif
    endif
-   
+  enddo ! end of do itrj; 25 Jan 13;
+!$OMP END PARALLEL DO
+
+  do itrj = ioff, lnPtrj
    if( utflag(itrj).eq.1 ) then ! will only write successfully followed trajectories to file; 28 Jan 13;
     write(lunit+myid) Nz, nPpts
-    write(lunit+myid) data(1:4,0:Nz-1,1:nPpts)
+    write(lunit+myid) data(1:4,0:Nz-1,1:nPpts,itrj)
    endif   
-   
-  enddo ! end of do itrj; 25 Jan 13;
-
+  enddo
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   DALLOCATE(data)

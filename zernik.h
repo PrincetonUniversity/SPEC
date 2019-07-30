@@ -25,7 +25,7 @@ subroutine get_zernike(r, lrad, mpol, zernike)
   zernike(:,:,:) = zero
   do m = 0, mpol
     if (lrad >= m) then
-      zernike(m,m,0:1) = (/ r**m, real(m)*rm1 /)
+      zernike(m,m,0:1) = (/ rm, real(m)*rm1 /)
     endif
 
     if (lrad >= m+2) then
@@ -127,11 +127,8 @@ subroutine get_zernike_rm(r, lrad, mpol, zernike)
   INTEGER, intent(in) :: lrad, mpol
   REAL, intent(inout) :: zernike(0:lrad,0:mpol)
 
-  REAL ::    rm, rm1  ! r to the power of m'th and m-1'th
   REAL ::    factor1, factor2, factor3, factor4
   INTEGER :: m, n  ! Zernike R^m_n
-  
-  rm = one  ! r to the power of m'th / r^m
 
   zernike(:,:) = zero
   do m = 0, mpol
@@ -152,6 +149,5 @@ subroutine get_zernike_rm(r, lrad, mpol, zernike)
       zernike(n, m) = factor1 * ((factor2*r**2 - factor3)*zernike(n-2,m) - factor4*zernike(n-4,m))
     enddo
 
-    rm = rm * r
   enddo
 end subroutine get_zernike_rm

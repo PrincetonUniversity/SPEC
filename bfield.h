@@ -49,7 +49,7 @@ subroutine bfield( zeta, st, Bst ) ! the format of this subroutine is constraine
   
   use allglobal, only : myid, ncpu, cpus, mn, im, in, halfmm, regumm, &
                         ivol, gBzeta, Ate, Aze, Ato, Azo, &
-                        NOTstellsym, cheby, zernike, &
+                        NOTstellsym, &
                         Lcoordinatesingularity, Mvol, &
                         Node ! 17 Dec 15;
   
@@ -62,8 +62,9 @@ subroutine bfield( zeta, st, Bst ) ! the format of this subroutine is constraine
   
   INTEGER            :: lvol, ii, ll, mi, ni, ideriv
   REAL               :: teta, lss, sbar, sbarhm(0:1), arg, carg, sarg, dBu(1:3)
+  REAL               :: cheby(0:Lrad(ivol),0:1), zernike(0:Lrad(1),0:Mpol,0:1)
   
-  REAL, allocatable  :: TT(:,:) ! this is almost identical to cheby; 17 Dec 15;
+  REAL               :: TT(0:Lrad(ivol),0:1) ! this is almost identical to cheby; 17 Dec 15;
 
   BEGIN(bfield)
 
@@ -100,11 +101,7 @@ subroutine bfield( zeta, st, Bst ) ! the format of this subroutine is constraine
   end if
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-  SALLOCATE( TT, (0:Lrad(lvol),0:1), zero ) ! unless a regularization factor is required, TT = chebyshev polynomial; 17 Dec 15;
-  
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   dBu(1:3) = zero ! initialize summation;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -117,7 +114,7 @@ subroutine bfield( zeta, st, Bst ) ! the format of this subroutine is constraine
 
     FATAL( bfield, abs(sbar).lt.vsmall, need to avoid divide-by-zero )
 
-    do ll = 0, Lrad(lvol) ; TT(ll,0:1) = (/        zernike(ll,mi,0),        zernike(ll,mi,1)                          /)
+    do ll = 0, Lrad(lvol) ; TT(ll,0:1) = (/        zernike(ll,mi,0),        zernike(ll,mi,1)*half                      /)
     enddo
 
    else
@@ -166,11 +163,7 @@ subroutine bfield( zeta, st, Bst ) ! the format of this subroutine is constraine
   Bst(1:2) = dBu(1:2) / gBzeta ! normalize field line equations to toroidal field; 20 Apr 13;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-  DALLOCATE(TT)
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
   RETURN(bfield)
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
