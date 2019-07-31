@@ -31,3 +31,5 @@ In summary, the convergence looks good. I will begin work on the publication.
 2. The coils consists of 12 PF coils and one central current (3.884526409876309MA). `modified_1r.focus` contains all the data in Fourier harmnics, while `coils.modified_1r` has the xyz points for all the PF coils.
 
 3. The mgrid file 'mgrid.focus_modified_1r_vacuum_1601' is in binary format and the resolutions are `Np=1, Nr=1601, Nz=1601`.
+
+![solovev coils](solovev_coils.png)
