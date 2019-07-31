@@ -161,13 +161,15 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   INTEGER              :: iflag ! indicates whether (i) iflag=1: ``function'' values are required; or (ii) iflag=2: ``derivative'' values are required;
   
   
-  INTEGER, parameter   :: NB = 3 ! optimal workspace block size for LAPACK:DSYSVX;
+  INTEGER, parameter   :: NB = 4 ! optimal workspace block size for LAPACK:DGECON;
   
-  INTEGER              :: lvol, NN, MM, ideriv, lmns, idsysvx(0:1), ii, jj, nnz, Lwork
+  INTEGER              :: lvol, NN, MM, ideriv, lmns, ii, jj, nnz, Lwork
+
+  INTEGER              :: idgetrf(0:1), idgetrs(0:1), idgerfs(0:1), idgecon(0:1)
   
-  REAL                 :: lmu, dpf, dtf, dpsi(1:2), tpsi(1:2), ppsi(1:2), lcpu
+  REAL                 :: lmu, dpf, dtf, dpsi(1:2), tpsi(1:2), ppsi(1:2), lcpu, test(2,2)
   
-  REAL                 :: rcond, ferr(2), berr(2), signfactor
+  REAL                 :: anorm, rcond, ferr(2), berr(2), signfactor
 
   CHARACTER            :: packorunpack
   
@@ -242,7 +244,10 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  idsysvx(0:1) = 0 ! error flags;
+  idgetrf(0:1) = 0 ! error flags;
+  idgetrs(0:1) = 0 ! error flags;
+  idgerfs(0:1) = 0 ! error flags;
+  idgecon(0:1) = 0 ! error flags;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -302,45 +307,45 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
    
    lcpu = GETTIME
    
-   idsysvx(ideriv) = 1
-   
    select case( ideriv )
     
    case( 0 ) ! ideriv=0;
     
     MM = 1
-    LU = matrix
+    !LU = matrix
+    call DCOPY(NN*NN, matrix, 1, LU, 1) ! BLAS version
     solution(1:NN,0   ) = rhs(:,0   )
-    call DGETRF(NN, NN, LU, NN, ipiv, RW, Lwork, idsysvx(ideriv) )
-    call DGETRS('N', NN, MM, LU, NN, ipiv, solution(1:NN,0   ), NN, idsysvx(ideriv) )
-    call DGERFS('N', NN, MM, matrix, NN, LU, NN, ipiv, rhs(1,0), NN, solution(1,0), NN, FERR, BERR, RW, Iwork, idsysvx(ideriv))
+    call DGETRF(NN, NN, LU, NN, ipiv, RW, Lwork, idgetrf(ideriv) ) ! LU factorization
 
+    anorm=maxval(sum(abs(matrix),1))
+    call DGECON('I', NN, LU, NN, anorm, rcond, RW, Iwork, idgecon(ideriv)) ! estimate the condition number
+
+    call DGETRS('N', NN, MM, LU, NN, ipiv, solution(1:NN,0   ), NN, idgetrs(ideriv) ) ! sovle linear equation
+    call DGERFS('N', NN, MM, matrix, NN, LU, NN, ipiv, rhs(1,0), NN, solution(1,0), NN, FERR, BERR, RW, Iwork, idgerfs(ideriv)) ! refine the solution
    case( 1 ) ! ideriv=1;
     
     MM = 2
     solution(1:NN,1:MM) = rhs(:,1:MM)
-    call DGETRS( 'N', NN, MM, LU, NN, ipiv, solution(1:NN,1:MM), NN, idsysvx(ideriv) )
-    call DGERFS('N', NN, MM, matrix, NN, LU, NN, ipiv, rhs(1,1), NN, solution(1,1), NN, FERR, BERR, RW, Iwork, idsysvx(ideriv))
+    call DGETRS( 'N', NN, MM, LU, NN, ipiv, solution(1:NN,1:MM), NN, idgetrs(ideriv) )
+    call DGERFS('N', NN, MM, matrix, NN, LU, NN, ipiv, rhs(1,1), NN, solution(1,1), NN, FERR, BERR, RW, Iwork, idgerfs(ideriv))
 
    end select ! ideriv;
    
    cput = GETTIME
 
-   !write(ounit,*) 'DSYSVX', cput-cpus, cput-lcpu, myid, lvol, ideriv
-
-   if(     idsysvx(ideriv) .eq. 0   ) then
-    if( Wmp00ac ) write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idsysvx", idsysvx(ideriv), "success ;         ", cput-lcpu	   
-   elseif( idsysvx(ideriv) .lt. 0   ) then
-    ;             write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idsysvx", idsysvx(ideriv), "input error ;     "
-   elseif( idsysvx(ideriv) .le. NN  ) then
-    ;             write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idsysvx", idsysvx(ideriv), "singular ;        "
-   elseif( idsysvx(ideriv) .eq. NN+1) then
-    ;             write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idsysvx", idsysvx(ideriv), "ill conditioned ; "
+   if(     idgetrf(ideriv) .eq. 0 .and. idgetrs(ideriv) .eq. 0 .and. idgerfs(ideriv) .eq. 0 .and. rcond .ge. machprec) then
+    if( Wmp00ac ) write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idgetrf idgetrs idgerfs", idgetrf(ideriv), idgetrs(ideriv), idgetrf(ideriv), "success ;         ", cput-lcpu	   
+   elseif( idgetrf(ideriv) .lt. 0 .or. idgetrs(ideriv) .lt. 0 .and. idgerfs(ideriv) .lt. 0   ) then
+    ;             write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idgetrf idgetrs idgerfs", idgetrf(ideriv), idgetrs(ideriv), idgetrf(ideriv), "input error ;     "
+   elseif( idgetrf(ideriv) .ge. 0 ) then
+    ;             write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idgetrf idgetrs idgerfs", idgetrf(ideriv), idgetrs(ideriv), idgetrf(ideriv), "singular ;        "
+   elseif( rcond .le. machprec) then
+    ;             write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idgetrf idgetrs idgerfs", idgetrf(ideriv), idgetrs(ideriv), idgetrf(ideriv), "ill conditioned ; "
    else
-    ;             write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idsysvx", idsysvx(ideriv), "invalid idsysvx ; "
+    ;             write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idgetrf idgetrs idgerfs", idgetrf(ideriv), idgetrs(ideriv), idgetrf(ideriv), "invalid error ; "
    endif
    
-1010 format("mp00ac : ",f10.2," : myid=",i3," ; lvol=",i3," ; ideriv="i2" ; "a7"=",i3," ; "a34,:" time=",f10.2," ;")
+1010 format("mp00ac : ",f10.2," : myid=",i3," ; lvol=",i3," ; ideriv="i2" ; "a23"=",i3,' ',i3,' ',i3," ; "a34,:" time=",f10.2," ;")
    
    
   enddo ! end of do ideriv;
@@ -379,8 +384,8 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   DALLOCATE( Iwork )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-  if( idsysvx(0).ne.0 .or. idsysvx(1).ne.0 ) then ! failed to construct Beltrami/vacuum field and/or derivatives;
+  idgetrf(0:1) = abs(idgetrf(0:1)) + abs(idgetrs(0:1)) + abs(idgerfs(0:1)) + abs(idgecon(0:1))
+  if( idgetrf(0).ne.0 .or. idgetrf(1).ne.0 .or. rcond.le.machprec ) then ! failed to construct Beltrami/vacuum field and/or derivatives;
    
    ImagneticOK(lvol) = .false. ! set error flag;
    

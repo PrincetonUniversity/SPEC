@@ -166,7 +166,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
   REAL,    intent(out) :: force(0:NGdof)      ! force;
   LOGICAL, intent(in)  :: LComputeDerivatives ! indicates whether derivatives are to be calculated;
   
-  INTEGER              :: NN, IA, ifail, if01adf, vflag, MM, LDA, idgetrf, idgetri, Lwork
+  INTEGER              :: NN, IA, ifail, if01adf, vflag, MM, LDA, idgetrf, idgetrs, Lwork
   INTEGER, allocatable :: ipivot(:)
   REAL   , allocatable :: work(:)
   
@@ -579,13 +579,13 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
           SALLOCATE( work, (1:NN+1), zero )
           work(1:NN+1) = rhs(0:NN)
           !work(1:NN+1)  =  matmul( oBI(0:NN,0:NN), rhs(0:NN)) ! original version
-          call DGETRS('N',NN+1,1,oBI(0,0),NN+1,ipivot(0:NN),work(1),NN+1,idgetri) ! Change to DGETRS; 22 Jul 19
+          call DGETRS('N',NN+1,1,oBI(0,0),NN+1,ipivot(0:NN),work(1),NN+1,idgetrs) ! Change to DGETRS; 22 Jul 19
           solution(1:NN,-1) = work(2:NN+1)
           DALLOCATE(work)
         else
           !solution(1:NN,-1) = matmul( oBI(1:NN,1:NN), rhs(1:NN) ) ! original version
           solution(1:NN,-1) = rhs(1:NN)
-          call DGETRS('N',NN,1,oBI(1,1),NN+1,ipivot(1:NN),solution(1,-1),NN,idgetri) ! Change to DGETRS; 22 Jul 19
+          call DGETRS('N',NN,1,oBI(1,1),NN+1,ipivot(1:NN),solution(1,-1),NN,idgetrs) ! Change to DGETRS; 22 Jul 19
         endif
 
         ideriv = -1 ; dpsi(1:2) = (/ dtflux(vvol), dpflux(vvol) /) ! these are also used below;

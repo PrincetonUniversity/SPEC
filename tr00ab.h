@@ -714,9 +714,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
        endif
        
        !dmatrix(1:NN,1:NN,0) = omatrix(1:NN,1:NN) ! original "unperturbed" matrix; 30 Jan 13;
-       !call DCOPY(NN*NN, omatrix(1,1), 1, FAA(1,1), 1) ! BLAS version 21 Jul 19 
        call DCOPY(NN*NN, omatrix(1,1), 1, dmatrix(1,1,0), 1) ! BLAS version 21 Jul 19 
-       !call DGETRF('N', NN, MM, FAA(1,1), NN, ipiv(1:NN)
        
        call dgesvx( 'N', 'N', NN, MM, dmatrix(1:NN,1:NN,0), NN, FAA(1:NN,1:NN), NN, ipiv(1:NN),    &
                    equed, Rdgesvx(1:NN), Cdgesvx(1:NN), drhs(1:NN,1:MM), NN, dlambda(1:NN,1:MM),    & 
