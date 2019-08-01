@@ -87,7 +87,7 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
   
   INTEGER             :: jquad, Lcurvature, ll, ii, jj, kk, uu, ideriv, twolquad, mm
   
-  REAL                :: lss, sbar, sbarhim(0:2), gBu(1:Ntz,1:3,0:3), gJu(1:Ntz,1:3), jerror(1:3)
+  REAL                :: lss, sbar, sbarhim(0:2), gBu(1:Ntz,1:3,0:3), gJu(1:Ntz,1:3), jerror(1:3), jerrormax(1:3), intvol
   
   REAL                :: Atemn(1:mn,0:2), Azemn(1:mn,0:2), Atomn(1:mn,0:2), Azomn(1:mn,0:2)
   
@@ -140,7 +140,8 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   jerror(1:3) = zero ; ideriv = 0 ! three components of the error in \curl B - mu B; initialize summation;
-  
+  jerrormax(1:3) = zero; intvol = zero
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 !latex \item Inside the Gaussian quadrature loop, i.e. for each $s_k$, 
@@ -346,23 +347,25 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
 !latex           E^\z & \equiv & \frac{1}{N} \sum_k \omega_k \sum_{i,j} | \sqrt g j^\z - \mu \sqrt g B^\z |,
 !latex       \ee
 !latex       where $N\equiv \sum_{i,j}1$.
-
-   do ii = 1, 3 ; jerror(ii) = jerror(ii) + weight(jquad) * sum( abs(  gJu(1:Ntz,ii) - mu(lvol) * gBu(1:Ntz,ii,0)  ) )
-   enddo
    
+   do ii = 1, 3 ; jerror(ii) = jerror(ii) + weight(jquad) * sum( abs(  gJu(1:Ntz,ii) - mu(lvol) * gBu(1:Ntz,ii,0)  ) )
+   ;            ; jerrormax(ii) = max(jerrormax(ii), maxval(abs(  gJu(1:Ntz,ii) - mu(lvol) * gBu(1:Ntz,ii,0)  )/ sg(1:Ntz,0)))
+   enddo
+   intvol = intvol + weight(jquad) * sum(sg(1:Ntz,0))
   enddo ! end of do jquad;
    
+  jerror(1:3) = jerror(1:3) / intvol
 
-  jerror(1:3) = jerror(1:3) / Ntz
-   
   cput = GETTIME ; write(ounit,1002) cput-cpus, myid, lvol, Lrad(lvol), jerror(1:3), cput-cpui ! write error to screen;
+  ;              ; write(ounit,1003) cput-cpus, myid, lvol, Lrad(lvol), jerrormax(1:3), cput-cpui ! write error to screen;
 
 !latex \item The error is stored into an array called \type{beltramierror} which is then written to the HDF5 file in \link{hdfint}.
 
   beltramierror(lvol,1:3) = jerror(1:3)   
    
-1002 format("jo00aa : ",f10.2," : myid=",i3," ; lvol =",i3," ; lrad =",i3," ; E^\s="es23.15" , E^\t="es23.15" , E^\z="es23.15" ; time="f8.2"s ;")
-  
+1002 format("jo00aa : ",f10.2," : myid=",i3," ; lvol =",i3," ; lrad =",i3," ; AVG E^\s="es23.15" , E^\t="es23.15" , E^\z="es23.15" ; time="f8.2"s ;")
+1003 format("jo00aa : ",f10.2," : myid=",i3," ; lvol =",i3," ; lrad =",i3," ; MAX E^\s="es23.15" , E^\t="es23.15" , E^\z="es23.15" ; time="f8.2"s ;") 
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   RETURN(jo00aa)
