@@ -343,7 +343,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
 
       ii = mod(mn2-1,mn)+1
 
-      jj = floor(real(mn2-1) * imn2)+1
+      jj = (mn2-ii) / mn + 1
       
       kks = kijs(ii,jj,0) ! ; kds = kijs(ii,jj,1) 
       kka = kija(ii,jj,0) !; kda = kija(ii,jj,1) 
@@ -390,7 +390,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
 
       do lp2 = 1, lp2_max 
         ll = mod(lp2-1,lrad+1)
-        pp = floor(real(lp2-1) * ilrad) 
+        pp = (mn2-ii) / mn + 1 
         
         Tl = cheby(ll,0)
         Dl = cheby(ll,1)
