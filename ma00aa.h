@@ -390,7 +390,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
 
       do lp2 = 1, lp2_max 
         ll = mod(lp2-1,lrad+1)
-        pp = (mn2-ii) / mn + 1 
+        pp = (lp2-ll-1)/(lrad+1) 
         
         Tl = cheby(ll,0)
         Dl = cheby(ll,1)
