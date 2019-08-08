@@ -47,6 +47,23 @@ subroutine get_zernike(r, lrad, mpol, zernike)
     rm = rm * r
 
   enddo
+
+  do n = 2, lrad, 2
+    zernike(n,0,0) = zernike(n,0,0) - (-1)**(n/2)
+  enddo
+
+  if (m >= 1) then
+    do n = 3, lrad, 2
+      zernike(n,1,0) = zernike(n,1,0) - (-1)**((n-1)/2) * real((n+1)/2) * r
+      zernike(n,1,1) = zernike(n,1,1) - (-1)**((n-1)/2) * real((n+1)/2)
+    enddo
+  end if
+
+  do m = 0, mpol
+    do n = m, lrad, 2
+      zernike(n,m,:) = zernike(n,m,:) / real(n+1)
+    end do
+  end do
 end subroutine get_zernike
 
 subroutine get_zernike_d2(r, lrad, mpol, zernike)
@@ -106,7 +123,21 @@ subroutine get_zernike_d2(r, lrad, mpol, zernike)
     rm = rm * r
 
   enddo
+  do n = 2, lrad, 2
+    zernike(n,0,0) = zernike(n,0,0) - (-1)**(n/2)
+  enddo
+  if (m >= 1) then
+    do n = 3, lrad, 2
+      zernike(n,1,0) = zernike(n,1,0) - (-1)**((n-1)/2) * real((n+1)/2) * r
+      zernike(n,1,1) = zernike(n,1,1) - (-1)**((n-1)/2) * real((n+1)/2)
+    enddo
+  end if
 
+  do m = 0, mpol
+    do n = m, lrad, 2
+      zernike(n,m,:) = zernike(n,m,:) / real(n+1)
+    end do
+  end do
 end subroutine get_zernike_d2
 
 subroutine get_zernike_rm(r, lrad, mpol, zernike)
@@ -150,4 +181,18 @@ subroutine get_zernike_rm(r, lrad, mpol, zernike)
     enddo
 
   enddo
+  do n = 2, lrad, 2
+    zernike(n,0) = zernike(n,0) - (-1)**(n/2)
+  enddo
+  if (m >= 1) then
+    do n = 3, lrad, 2
+      zernike(n,1) = zernike(n,1) - (-1)**((n-1)/2) * real((n+1)/2)
+    enddo
+  end if
+
+  do m = 0, mpol
+    do n = m, lrad, 2
+      zernike(n,m) = zernike(n,m) / real(n+1)
+    end do
+  end do
 end subroutine get_zernike_rm

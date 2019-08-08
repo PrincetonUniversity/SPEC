@@ -288,7 +288,7 @@ subroutine preset
 !latex \end{enumerate}
 
   SALLOCATE( kija, (1:mn,1:mn,0:1), 0 )
-  
+!$OMP PARALLEL DO SHARED(mn,mne,im,in,ime,ine,kija)
   do ii = 1, mn  ; mi =  im(ii) ; ni =  in(ii)
    
    do jj = 1, mn  ; mj =  im(jj) ; nj =  in(jj) ; mimj = mi + mj ; ninj = ni + nj !   adding   ; 17 Dec 15;
@@ -306,10 +306,10 @@ subroutine preset
    enddo ! end of do jj; 29 Jan 13;
    
   enddo ! end of do ii; 29 Jan 13;
-
+!$OMP END PARALLEL DO
 
   SALLOCATE( kijs, (1:mn,1:mn,0:1), 0 )
-  
+!$OMP PARALLEL DO SHARED(mn,mne,im,in,ime,ine,kijs)
   do ii = 1, mn  ; mi =  im(ii) ; ni =  in(ii)
    
    do jj = 1, mn  ; mj =  im(jj) ; nj =  in(jj) ; mimj = mi - mj ; ninj = ni - nj ! subtracting; 17 Dec 15;
@@ -337,7 +337,7 @@ subroutine preset
    enddo ! end of do jj; 29 Jan 13;
    
   enddo ! end of do ii; 29 Jan 13;
-
+!$OMP END PARALLEL DO
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !latex \subsubsection{\type{djkp}}
@@ -365,7 +365,7 @@ subroutine preset
   SALLOCATE( iotaksub, (1:mn,1:mns), 0 )
   SALLOCATE( iotaksgn, (1:mn,1:mns), 0 )
   SALLOCATE( iotakadd, (1:mn,1:mns), 0 )
-  
+!$OMP PARALLEL DO SHARED(mn,mns,im,in,ims,ins,iotakkii,iotaksub,iotaksgn,iotakadd)
   do kk = 1, mn ; mk = im(kk) ; nk = in(kk)
    
    
@@ -412,6 +412,7 @@ subroutine preset
    
    
   enddo ! end of do kk; 29 Jan 13;
+!$OMP END PARALLEL DO
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -613,12 +614,15 @@ subroutine preset
       if( NOTstellsym ) zerdof = zerdof + 2*ntor + 1 ! plus and minus sign for n
      enddo
     enddo
-    do jj = 0, Lrad(vvol), 2                         ! for m==0
+    do jj = 2, Lrad(vvol), 2                         ! for m==0
      zerdof = zerdof + ntor + 1                      ! minus sign for n
     enddo
-                                     !                                     a    c      b        d      e      f      g   h
-    if( YESstellsym ) NAdof(vvol) = 2 * zerdof                           + mn        + Ntor+1        + mn-1        + 1 + 0
-    if( NOTstellsym ) NAdof(vvol) = 2 * zerdof                           + mn + mn-1 + Ntor+1 + Ntor + mn-1 + mn-1 + 1 + 0
+                                     !                                     a    c      b        d      e      f      g   h                                 
+    if( YESstellsym ) NAdof(vvol) = 2 * zerdof  + ntor + 1               +(mn-Ntor-1)+ Ntor+1        + mn-1        + 1 + 0
+    if( NOTstellsym ) NAdof(vvol) = 2 * zerdof                           + mn + mn-1 + Ntor+1 + Ntor + mn-1 + mn-1 + 1 + 0 ! this is broken at the moment
+    if (Mpol >= 1) then
+      if( YESstellsym ) NAdof(vvol) = NAdof(vvol) - (2 * ntor + 1) * 2
+    endif
    else ! .not.Lcoordinatesingularity;                                     a    c      b        d      e      f      g   h
     if( YESstellsym ) NAdof(vvol) = 2 * ( mn        ) * ( Lrad(vvol)+1 ) + mn        + mn            + mn-1        + 1 + 1  
     if( NOTstellsym ) NAdof(vvol) = 2 * ( mn + mn-1 ) * ( Lrad(vvol)+1 ) + mn + mn-1 + mn     + mn-1 + mn-1 + mn-1 + 1 + 1
@@ -679,14 +683,18 @@ subroutine preset
     do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
      
      do ll = 0, Lrad(vvol)
-      if (ll>=mi .and. mod(mi+ll,2)==0)then ; idof = idof + 1 ; Ate(vvol,0,ii)%i(ll) = idof ! Zernike 30 Jun 19
+      if (ll>=mi .and. mod(mi+ll,2)==0)then 
+      if (.not.((ll==0.and.mi==0).or.(ll==1.and.mi==1))) then 
+                                            ; idof = idof + 1 ; Ate(vvol,0,ii)%i(ll) = idof ! Zernike 30 Jun 19
+      endif
       ;                                     ; idof = idof + 1 ; Aze(vvol,0,ii)%i(ll) = idof
       if( NOTstellsym .and. ii.gt.1 ) then  ; idof = idof + 1 ; Ato(vvol,0,ii)%i(ll) = idof
        ;                                    ; idof = idof + 1 ; Azo(vvol,0,ii)%i(ll) = idof
       endif ! NOTstellsym
       endif ! Zernike 
      enddo ! end of do ll; 17 Jan 13;
-     ;                                     ; idof = idof + 1 ; Lma(vvol,  ii)       = idof
+     if ( mi.ne.0 .and. mi.ne.1     )  then ; idof = idof + 1 ; Lma(vvol,  ii)       = idof
+     endif
      if(  mi.eq.0                   ) then ; idof = idof + 1 ; Lmb(vvol,  ii)       = idof ! 18 May 16;
      endif
      if(  ii.gt.1                   ) then ; idof = idof + 1 ; Lme(vvol,  ii)       = idof
@@ -705,7 +713,8 @@ subroutine preset
     enddo ! end of do ii; 25 Jan 13;
     
     FATAL( preset, idof.ne.NAdof(vvol), need to count Beltrami degrees-of-freedom more carefully  for coordinate singularity )
-    
+    FATAL( preset, idof.ge.2**31-1), NAdof too big, should be smaller than maximum of int32 type )
+
    else ! .not.Lcoordinatesingularity;
         
     do ii = 1, mn
@@ -749,7 +758,8 @@ subroutine preset
    !endif
     
     FATAL( preset, idof.ne.NAdof(vvol), need to count degrees-of-freedom more carefully for new matrix )
-    
+    FATAL( preset, idof.ge.2**31-1), NAdof too big, should be smaller than maximum of int32 type )
+
    endif ! end of if( Lcoordinatesingularity ) ; 
    
    FATAL( preset, idof.ne.NAdof(vvol), impossible logic )
@@ -899,7 +909,7 @@ subroutine preset
 
   FATAL( preset, Nz.eq.0, illegal division )
   FATAL( preset, Nt.eq.0, illegal division )
-
+!$OMP PARALLEL DO SHARED(mn,pi2nfp,Nz,Nt,cosi,sini,gteta,gzeta,im,in)
   do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over Fourier harmonics;
    
    do kk = 0, Nz-1 ; zeta = kk * pi2nfp / Nz
@@ -912,7 +922,7 @@ subroutine preset
    enddo
    
   enddo ! end of do ii; 13 May 13;
-  
+!$OMP END PARALLEL DO  
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 #ifdef DEBUG
