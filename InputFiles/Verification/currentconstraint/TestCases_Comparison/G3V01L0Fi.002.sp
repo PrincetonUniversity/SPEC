@@ -324,8 +324,8 @@ Rwc(4,4)    =  0.000000000000000E+00 Zws(4,4)    =  0.000000000000000E+00 Rws(4,
  relreq      =   1.000000000000000E-08
  absacc      =   1.000000000000000E-04
  epsr        =   1.000000000000000E-08
- nPpts       =        500
- nPtrj       =        30
+ nPpts       =        1000
+ nPtrj       =        10
  LHevalues   =         F
  LHevectors  =         F
 /

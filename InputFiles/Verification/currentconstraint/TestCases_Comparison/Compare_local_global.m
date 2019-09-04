@@ -1,7 +1,7 @@
-function Compare_with_master
+function Compare_local_global
 
 
-fidL1 = fopen('input_L1');
+fidL1 = fopen('input_local');
 
 i = 1;
 label = cell(1,1);

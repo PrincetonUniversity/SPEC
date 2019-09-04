@@ -4,18 +4,19 @@ TESTCASES_COMPARISON
 
 In this folder, the output of SPEC is compared between a local constraint (either L0 or L1) and the current constraint (L3) for each testcase proposed in SPEC Inputfile directory. We proceed as follows:
 
-	1. Run TestCases with RunL1 script
-	   $ ./RunL1
+	1. Run TestCases with run_local script (~20 minutes)
+	   $ ./run_local
 
-	2. Run L3 files with RunL3 script
-	   $ ./RunL3
+	2. Run L3 files with run_global script (~20 minutes)
+	   $ ./run_global
 
-	3. Plot figures with Compare_with_master.m
+	3. Plot figures with Compare_local_global.m (~2 minutes)
 	   $ matlab -nodesktop
-	   $ Compare_with_master
+	   $ >> addpath ~/SPEC/Utilities/matlabtools
+	   $ >> Compare_local_global
 
-For each testcase, both output (from point 1. and 2.) should be the same, since the same physical system is described (once constrained by (mu, psip) or (iota, oita), and once by the toroidal current). Compare_with_master.m plots one figure per testcase, where the rotational transform profile is compared. An additional figure plots the force difference df between both outputs; if all values are small, outputs can be considered the same (Note that due to resolution, df will not necessarily be 1E-16 but some order of magnitude more).
+For each testcase, both output (from point 1. and 2.) should be the same, since the same physical system is described (once constrained by (mu, psip) or (iota, oita), and once by the toroidal current). Compare_local_global.m plots one figure per testcase, where the rotational transform profile is compared. An additional figure plots the force difference df between both outputs; if all values are small, outputs can be considered the same (Note that due to resolution, df will not necessarily be 1E-16 but some order of magnitude more).
 
-Results obtained with SPEC version 88968859cf1a6cd86e17cb945a055dbe8a41e5f7 on SPC INTEL computer are presented in the .pdf file (with additional information related to how the current constraint has been implemented).
+Results obtained with SPEC version d88a49ef1b94f17ac592cf1b3adc67d3e19c536b on SPC INTEL computer are presented in the .pdf file (with additional information related to how the current constraint has been implemented).
 
 

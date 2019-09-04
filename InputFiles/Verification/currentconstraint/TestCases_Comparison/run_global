@@ -1,6 +1,6 @@
 #!/bin/bash
 
-input="input_L3"
+input="input_global"
 
 while IFS= read -r line
 do 
