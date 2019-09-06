@@ -5,6 +5,8 @@ TESTCASES_COMPARISON
 In this folder, the output of SPEC is compared between a local constraint (either L0 or L1) and the current constraint (L3) for each testcase proposed in SPEC Inputfile directory. We proceed as follows:
 
 	1. Compile SPEC and copy paste the exec file in this directory
+	   $ make
+	   $ cp ~/SPEC/xspec .
 
 	2. Run TestCases with run_local script (~20 minutes)
 	   $ ./run_local
