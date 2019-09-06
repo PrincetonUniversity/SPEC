@@ -195,8 +195,6 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 ! ----------------
 
 ! Here we call ma00aa to compute the geometry dependent matrices
-! This is very computationaly intensive - an attempt to parallelize ma00aa with OpenMP has been implemented
-
   do vvol = 1, Mvol
 
    LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
@@ -292,12 +290,12 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 ! SOLVE FIELD IN AGREEMENT WITH CONSTRAINTS AND GEOMETRY
 ! ------------------------------------------------------
 ! Two different cases, both with their own parallelization. 
-! If local constraint, each process iterates on the local poloidal flux and Lagrange multiplier
-! to match the lcoal constraint. Then all information is broadcasted by the master thread
-! If global constraint, only the master thread iterates on all Lagrange multipliers and poloidal
-! fluxes. Over threads are stuck in an infinite loop where they help the master thread compute
+! If LOCAL constraint, each process iterates on the local poloidal flux and Lagrange multiplier
+! to match the local constraint. Then all information is broadcasted by the master thread
+! If GLOBAL constraint, only the master thread iterates on all Lagrange multipliers and poloidal
+! fluxes. Over threads are stuck in an infinite loop where they "help" the master thread compute
 ! each iteration. At the last iteration, master thread send IconstraintOK=.TRUE. to all threads, and
-! they exit their loops.
+! they exit their infinite loops.
 
 
 ! Local constraint case - simply call dfp100 and then dfp200

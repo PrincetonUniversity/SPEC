@@ -271,7 +271,7 @@ module inputlist
   REAL         :: absacc           =     1.0e-04 ! redundant; 
   REAL         :: epsr             =     1.0e-08 ! redundant; 
   INTEGER      :: nPpts            =     0
-  INTEGER			 :: Ppts						 =     0
+  INTEGER      :: Ppts             =     0
   INTEGER      :: nPtrj(1:MNvol+1) =    -1
   LOGICAL      :: LHevalues        =  .false.
   LOGICAL      :: LHevectors       =  .false.
@@ -358,9 +358,9 @@ module inputlist
                 !latex             and in the vacuum region $\Delta\psi_t$ and $\Delta \psi_p$ are varied to match the transform constraint on the boundary
                 !latex             and to obtain the prescribed linking current, \inputvar{curpol}, and $\mu = 0$.
                 !latex \item[iv.]  if \inputvar{Lconstraint}.eq.2, under reconstruction.
-				!latex \item[v.]	if \inputvar{Lconstraint} eq.3, then the $\mu$ and $\psi_p$ variables are adjusted in order to satisfy the volume and surface toroidal current
-				!latex				computed with \link{lbpol} (excepted in the inner most volume, where the volume current is irrelevant). Not implemented yet in free
-				!latex				boundary. 	
+		!latex \item[v.] if \inputvar{Lconstraint} eq.3, then the $\mu$ and $\psi_p$ variables are adjusted in order to satisfy the volume and surface toroidal current
+		!latex		computed with \link{lbpol} (excepted in the inner most volume, where the volume current is irrelevant). Not implemented yet in free
+		!latex		boundary. 	
                 !latex \ei
  tflux       ,& !latex \item \inputvar{tflux} : \verb!real(1:MNvol+1)! : toroidal flux, $\psi_t$, enclosed by each interface;
                 !latex \bi

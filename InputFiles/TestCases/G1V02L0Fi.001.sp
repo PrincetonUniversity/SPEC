@@ -30,7 +30,7 @@
  rp          =                       0                      0                      0
  rq          =                       0                      0                      0
  oita        =                       0                      0                      0
- mupftol     =   1.000000000000000E-14
+ mupftol     =   1.000000000000000E-16
  mupfits     =         8
  Rac         =   0.000000000000000E+00
  Zas         =   0.000000000000000E+00
@@ -84,8 +84,8 @@ Vns(0,0)    =  0.000000000000000E+00 Bns(0,0)    =  0.000000000000000E+00 Vnc(0,
 /
 &diagnosticslist
  odetol      =   1.000000000000000E-07
- nPpts       =         0
- nPtrj       =     10    10
+ nPpts       =         500
+ nPtrj       =     -1    -1
  LHevalues   =         F
  LHevectors  =         F
  LHmatrix    =         T
