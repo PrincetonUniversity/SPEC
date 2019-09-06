@@ -4,13 +4,15 @@ TESTCASES_COMPARISON
 
 In this folder, the output of SPEC is compared between a local constraint (either L0 or L1) and the current constraint (L3) for each testcase proposed in SPEC Inputfile directory. We proceed as follows:
 
-	1. Run TestCases with run_local script (~20 minutes)
+	1. Compile SPEC and copy paste the exec file in this directory
+
+	2. Run TestCases with run_local script (~20 minutes)
 	   $ ./run_local
 
-	2. Run L3 files with run_global script (~20 minutes)
+	3. Run L3 files with run_global script (~20 minutes)
 	   $ ./run_global
 
-	3. Plot figures with Compare_local_global.m (~2 minutes)
+	4. Plot figures with Compare_local_global.m (~2 minutes)
 	   $ matlab -nodesktop
 	   $ >> addpath ~/SPEC/Utilities/matlabtools
 	   $ >> Compare_local_global
