@@ -1193,6 +1193,9 @@ subroutine preset
   SALLOCATE( Btomn, (1:mn,0:1,1:Mvol), zero )
   SALLOCATE( Bzomn, (1:mn,0:1,1:Mvol), zero )
 
+  SALLOCATE( Bloweremn, (1:mn, 3), zero) ! these are declared in global, calculated in getbco, used in mtrxhs
+  SALLOCATE( Bloweromn, (1:mn, 3), zero)
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !latex \subsubsection{\type{vvolume}, \type{lBBintegral} and \type{lABintegral}}

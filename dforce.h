@@ -155,6 +155,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
                         DDttcc, DDttcs, DDttsc, DDttss, &
                         DDtzcc, DDtzcs, DDtzsc, DDtzss, &
                         DDzzcc, DDzzcs, DDzzsc, DDzzss, &
+                        Tss, Tsc, Dts, Dtc, Dzs, Dzc, &
                         dRodR, dRodZ, dZodR, dZodZ
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -299,6 +300,11 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
    SALLOCATE( DDtzcc, (0:lldof,0:lldof,1:mn,1:mn), zero )
    SALLOCATE( DDzzcc, (0:lldof,0:lldof,1:mn,1:mn), zero )
 
+   SALLOCATE( Tss, (0:lldof,1:mn), zero )
+   SALLOCATE( Dtc, (0:lldof,1:mn), zero )
+   SALLOCATE( Dzc, (0:lldof,1:mn), zero )
+   
+
    if (NOTstellsym) then
     SALLOCATE( DToocs, (0:lldof,0:lldof,1:mn,1:mn), zero )
     SALLOCATE( DToosc, (0:lldof,0:lldof,1:mn,1:mn), zero )
@@ -327,6 +333,10 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
     SALLOCATE( DDzzcs, (0:lldof,0:lldof,1:mn,1:mn), zero )
     SALLOCATE( DDzzsc, (0:lldof,0:lldof,1:mn,1:mn), zero )
     SALLOCATE( DDzzss, (0:lldof,0:lldof,1:mn,1:mn), zero )
+
+    SALLOCATE( Tsc, (0:lldof,1:mn), zero )
+    SALLOCATE( Dts, (0:lldof,1:mn), zero )
+    SALLOCATE( Dzs, (0:lldof,1:mn), zero )
    end if !NOTstellsym
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -558,11 +568,11 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
         
         dBdX%innout = innout
 
-        WCALL( dforce, ma00aa,( Iquad(vvol), mn, vvol, ll ) ) ! compute volume integrals of metric elements;
+        !WCALL( dforce, ma00aa,( Iquad(vvol), mn, vvol, ll ) ) ! compute volume integrals of metric elements;
         
-        WCALL( dforce, matrix,( vvol, mn, ll ) ) ! construct Beltrami matrices;
+        !WCALL( dforce, matrix,( vvol, mn, ll ) ) ! construct Beltrami matrices;
         
-        dpsi(1:2) = (/ dtflux(vvol), dpflux(vvol) /) ! local enclosed toroidal and poloidal fluxes;
+        !dpsi(1:2) = (/ dtflux(vvol), dpflux(vvol) /) ! local enclosed toroidal and poloidal fluxes;
         
         ! this is the original without BLAS
         !rhs(0)    =   half*sum(solution(1:NN,0)*matmul(dMD(1:NN,1:NN),solution(1:NN,0)))
@@ -570,10 +580,16 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
         !            - matmul( dMA(1:NN,1:NN) - mu(vvol) * dMD(1:NN,1:NN), solution(1:NN,0) )
 
         ! BLAS version 17 Jul 2019
-        call DGEMV('N',NN,NN, one,dMD(1,1),NN+1,solution(1,0),1,zero,rhs(1),1)
-        rhs(0) = half * sum(solution(1:NN,0) * rhs(1:NN))
-        call DGEMV('N',NN,NN,-one,dMA(1,1),NN+1,solution(1,0),1,mu(vvol),rhs(1),1)
-        rhs(1:NN) = rhs(1:NN) - matmul( dMB(1:NN,1:2 ), dpsi(1:2) )
+        !call DGEMV('N',NN,NN, one,dMD(1,1),NN+1,solution(1,0),1,zero,rhs(1),1)
+        !rhs(0) = half * sum(solution(1:NN,0) * rhs(1:NN))
+        !call DGEMV('N',NN,NN,-one,dMA(1,1),NN+1,solution(1,0),1,mu(vvol),rhs(1),1)
+        !rhs(1:NN) = rhs(1:NN) - matmul( dMB(1:NN,1:2 ), dpsi(1:2) )
+
+
+        WCALL( dforce, intghs, ( Iquad(vvol), mn, vvol, ll ) )
+        WCALL( dforce, mtrxhs, ( vvol, mn, ll) )
+
+        rhs(1:NN) = -dMA(1:NN,0)
 
         if (Lconstraint .eq. 2) then
           SALLOCATE( work, (1:NN+1), zero )
@@ -1046,6 +1062,10 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
    DALLOCATE(DDtzcc)
    DALLOCATE(DDzzcc)
 
+   DALLOCATE(Tss)
+   DALLOCATE(Dtc)
+   DALLOCATE(Dzc)
+
    if (NOTstellsym) then
     DALLOCATE(DToocs)
     DALLOCATE(DToosc)
@@ -1074,6 +1094,10 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
     DALLOCATE(DDzzcs)
     DALLOCATE(DDzzsc)
     DALLOCATE(DDzzss)
+       
+    DALLOCATE(Tsc)
+    DALLOCATE(Dts)
+    DALLOCATE(Dzs)
    end if !NOTstellsym
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
