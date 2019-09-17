@@ -2324,15 +2324,15 @@ subroutine wrtend( wflag, iflag, rflag )
    enddo ! end of do ii = 1, mn;
   endif ! end of if( Lfreebound.eq.1 .or. . . . ) ; 
 
-  write(iunit,'(" Rac         = ",99es23.15)') Rac(0:Ntor)
-  write(iunit,'(" Zas         = ",99es23.15)') Zas(0:Ntor)
-  write(iunit,'(" Ras         = ",99es23.15)') Ras(0:Ntor)
-  write(iunit,'(" Zac         = ",99es23.15)') Zac(0:Ntor)
+  !write(iunit,'(" Rac         = ",99es23.15)') Rac(0:Ntor)
+  !write(iunit,'(" Zas         = ",99es23.15)') Zas(0:Ntor)
+  !write(iunit,'(" Ras         = ",99es23.15)') Ras(0:Ntor)
+  !write(iunit,'(" Zac         = ",99es23.15)') Zac(0:Ntor)
   
- !write(iunit,'(" Rac         = ",99es23.15)') iRbc(1:Ntor+1,0)
- !write(iunit,'(" Zas         = ",99es23.15)') iZbs(1:Ntor+1,0) 
- !write(iunit,'(" Ras         = ",99es23.15)') iRbs(1:Ntor+1,0) 
- !write(iunit,'(" Zac         = ",99es23.15)') iZbc(1:Ntor+1,0) 
+ write(iunit,'(" Rac         = ",99es23.15)') iRbc(1:Ntor+1,0)
+ write(iunit,'(" Zas         = ",99es23.15)') iZbs(1:Ntor+1,0) 
+ write(iunit,'(" Ras         = ",99es23.15)') iRbs(1:Ntor+1,0) 
+ write(iunit,'(" Zac         = ",99es23.15)') iZbc(1:Ntor+1,0) 
 
   do mm = 0, Mpol ! will write out the plasma boundary harmonics; 
    do nn = -Ntor, Ntor
