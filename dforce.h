@@ -246,50 +246,6 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
    SALLOCATE( DDzzss, (0:ll,0:ll,1:mn,1:mn), zero )
 
    WCALL( dforce, ma00aa, ( Iquad(vvol), mn, vvol, ll ) ) ! compute volume integrals of metric elements - evaluate TD, DT, DD, ...;
-    if(Lconstraint .eq. 2) then
-      dMA(1:NN,1:NN) = dMA(1:NN,1:NN) - mu(vvol) * dMD(1:NN,1:NN) ! this corrupts dMA, but dMA is no longer used;
-      dMA(0,0)       = zero
-      dMA(1:NN,0)    = -matmul(dMD(1:NN,1:NN),solution(1:NN,0))
-      dMA(0,1:NN)    = dMA(1:NN,0) !-matmul(solution(1:NN,0),dMD(1:NN,1:NN))
-      IA = NN + 1 + 1
-      MM = NN ; LDA = NN+1 ; Lwork = NN+1
-      SALLOCATE( ipivot, (0:NN), 0 )
-      idgetrf = 1 ; call DGETRF( MM+1, NN+1, dMA(0:LDA-1,0:NN), LDA, ipivot(0:NN), idgetrf )
-
-      cput = GETTIME
-      select case( idgetrf ) !                                                                     0123456789012345678
-      case(  :-1 ) ;               write(ounit,1010) cput-cpus, myid, vvol, cput-lastcpu, idgetrf, "input error;      "
-      case(  0   ) ; if( Wdforce ) write(ounit,1010) cput-cpus, myid, vvol, cput-lastcpu, idgetrf, "success;          "
-      case( 1:   ) ;               write(ounit,1010) cput-cpus, myid, vvol, cput-lastcpu, idgetrf, "singular;         "
-      case default ;               FATAL( dforce, .true., illegal ifail returned from F07ADF )
-      end select    
-      
-      SALLOCATE( work, (1:Lwork), zero )
-      idgetri = 1 ; call DGETRI( NN+1, dMA(0:LDA-1,0:NN), LDA, ipivot(0:NN), work(1:Lwork), Lwork, idgetri )
-      DALLOCATE(work)
-      DALLOCATE(ipivot)
-
-      cput = GETTIME
-      select case( idgetri ) !                                                                     0123456789012345678
-      case(  :-1 ) ;               write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "input error;      "
-      case(  0   ) ; if( Wdforce ) write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "success;          "
-      case( 1:   ) ;               write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "singular;         "
-      case default ;               FATAL( dforce, .true., illegal ifail returned from F07AJF )
-      end select
-
-      oBI(0:NN,0:NN) = dMA(0:NN,0:NN)
-
-    else ! for LBlinear = T (Linear-solver)
-
-          SALLOCATE( work, (1:NN+1), zero )
-
-          work(1:NN+1)  =  matmul( oBI(0:NN,0:NN), rhs(0:NN))
-          !write(ounit, *) 'dmu', work(1)
-          solution(1:NN,-1) = work(2:NN+1)
-          DALLOCATE(work)
-        else
-          solution(1:NN,-1) = matmul( oBI(1:NN,1:NN), rhs(1:NN) )
-        endif
    WCALL( dforce, matrix, ( vvol, mn, ll ) )
 
    DALLOCATE(DToocc)
