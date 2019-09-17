@@ -70,7 +70,7 @@ contains
   REAL FUNCTION myprec() !Duplicates NAG routine X02AJF (machine precision) ! JAB; 27 Jul 17 ! I suggest that this be removed; SRH: 27 Feb 18;
     implicit none
     intrinsic EPSILON
-    myprec = 0.5*EPSILON(1.0d0)
+    myprec = 0.5*EPSILON(small)
   END FUNCTION myprec
 end module numerical
 
@@ -87,7 +87,7 @@ module fileunits
   INTEGER :: munit = 14 ! matrix elements of Hessian; 
   INTEGER :: iunit = 10 ! input; used in global/readin:ext.sp, global/wrtend:ext.sp.end, global/wrtend:.ext.grid; 
   INTEGER :: lunit = 20 ! local unit; used in lunit+myid: pp00aa:.ext.poincare,.ext.transform; 
-  INTEGER :: ounit =  0 ! screen output;
+  INTEGER :: ounit =  6 ! screen output;
   INTEGER :: vunit = 15 ! for examination of adaptive quadrature; used in casing:.ext.vcint; 
   INTEGER :: zunit = 17 ! for convergence; this file is opened in xspech:.ext.iterations, and written to in globals/wrtend; 
  !INTEGER :: funit = 16 ! force iterations;
@@ -233,6 +233,7 @@ module inputlist
   INTEGER      :: LBeltrami  =  4
   INTEGER      :: Linitgues  =  1
   INTEGER      :: Lposdef    =  0 ! redundant;
+  REAL         :: maxrndgues =  1.0
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -619,7 +620,9 @@ module inputlist
                 !latex \item if \inputvar{Linitgues = 0}, the initial guess for the Beltrami field is trivial;
                 !latex \item if \inputvar{Linitgues = 1}, the initial guess for the Beltrami field is an integrable approximation;
                 !latex \item if \inputvar{Linitgues = 2}, the initial guess for the Beltrami field is read from file; 
+                !latex \item if \inputvar{Linitgues = 3}, the initial guess for the Beltrami field will be randomized with the maximum \inputvar{maxrndgues};
                 !latex \ei
+ maxrndgues,&   !latex \item \inputvar{maxrndgues = 1.0} : real : the maximum random number of the Beltrami field if \inputvar{Linitgues = 3};
  Lposdef        !latex \item\inputvar{Lposdef = 0 : integer} : redundant;
 !Nmaxexp        !l tex \item \inputvar{Nmaxexp = 32 : integer} : indicates maximum exponent used to precondition Beltrami linear system near singularity;
                 !l tex \bi
@@ -1351,7 +1354,7 @@ module allglobal
   REAL                 :: tetazeta(1:2)
 
 ! REAL                 :: virtualcasingfactor = one / ( four*pi * pi2 ) ! this is old factor (before toroidal flux was corrected?) ; 
-  REAL                 :: virtualcasingfactor = one / ( four*pi       ) ! this agrees with diagno; 
+  REAL                 :: virtualcasingfactor = -one / ( four*pi       ) ! this agrees with diagno; 
   
   INTEGER              :: IBerror ! for computing error in magnetic field; 
 
@@ -1362,6 +1365,8 @@ module allglobal
   INTEGER, parameter   :: Node = 2 ! best to make this global for consistency between calling and called routines; 
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  LOGICAL              :: first_free_bound = .false.
 
 contains
 
@@ -1821,6 +1826,7 @@ subroutine readin
   
   IlBCAST( LBeltrami, 1, 0 )
   IlBCAST( Linitgues, 1, 0 )
+  RlBCAST( maxrndgues, 1, 1.0)
 ! IlBCAST( Lposdef  , 1, 0 ) ! redundant;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -2328,6 +2334,8 @@ subroutine wrtend( wflag, iflag, rflag )
   if( Lfreebound.eq.1 .or. Zbs(0,1).gt.zero ) then
    do ii = 1, mn ; mm = im(ii) ; nn = in(ii) / Nfp ; Rbc(nn,mm) = iRbc(ii,Nvol) ; Zbs(nn,mm) = iZbs(ii,Nvol) ; Vns(nn,mm) = iVns(ii) ; Bns(nn,mm) = iBns(ii)
                                                    ; Rbs(nn,mm) = iRbs(ii,Nvol) ; Zbc(nn,mm) = iZbc(ii,Nvol) ; Vnc(nn,mm) = iVnc(ii) ; Bnc(nn,mm) = iBnc(ii)
+                                                   ; Rwc(nn,mm) = iRbc(ii,Mvol) ; Zws(nn,mm) = iZbs(ii,Mvol)
+                                                   ; Rws(nn,mm) = iRbs(ii,Mvol) ; Zwc(nn,mm) = iZbc(ii,Mvol)
    enddo ! end of do ii = 1, mn;
   endif ! end of if( Lfreebound.eq.1 .or. . . . ) ; 
 

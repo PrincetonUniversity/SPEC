@@ -131,7 +131,7 @@ subroutine packab( packorunpack, lvol, NN, solution, ideriv )
    
   case( 'P' )
    
-   FATAL( packab, .true., a trivial revision of packab is required to remove the if from the loop )
+!   FATAL( packab, .true., a trivial revision of packab is required to remove the if from the loop )
    
    do ii = 1, mn
     do ll = 0, llrad

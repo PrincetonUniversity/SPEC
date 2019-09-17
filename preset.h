@@ -39,6 +39,7 @@ subroutine preset
 
   BEGIN(preset)
   
+  call random_seed()
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 
@@ -553,6 +554,16 @@ endif
   if( LBeltrami.eq.2 .or. LBeltrami.eq.3 .or. LBeltrami.eq.6 .or. LBeltrami.eq.7 ) LBnewton = .true.
   if( LBeltrami.eq.4 .or. LBeltrami.eq.5 .or. LBeltrami.eq.6 .or. LBeltrami.eq.7 ) LBlinear = .true.
   
+  if (LBnewton .or. LBsequad) Lconstraint = 2
+
+  if (Lconstraint .eq. 2) then
+    FATAL( preset, Lfreebound.eq.1, The combination of helicity constraint and free boundary is under construction )
+    if (Igeometry .eq. 3) then
+      write(ounit, *) 'WARNING: The Hessian matrix needs further review for Igeometry = 3'
+      write(ounit, *) '         However, it can still serve the purpose of Lfindzero = 2'
+    endif
+  endif
+
   if( myid.eq.0 ) then
    cput = GETTIME
    write(ounit,'("preset : ",f10.2," : LBsequad="L2" , LBnewton="L2" , LBlinear="L2" ;")')cput-cpus, LBsequad, LBnewton, LBlinear
@@ -668,12 +679,33 @@ endif
      SALLOCATE( Azo(vvol,ideriv,ii)%i, (0:Lrad(vvol)), 0 )
     
    enddo ! end of do ii;
-   
+
+
    select case( Linitgues ) ! for iterative solver of the Beltrami fields, an initial guess is required; 11 Mar 16;
    case( 0 )    ; 
    case( 1 )    ; Ate(vvol,0,1)%s(0:1) = dtflux(vvol) * half ! this is an integrable approximation; NEEDS CHECKING; 26 Feb 13;
     ;           ; Aze(vvol,0,1)%s(0:1) = dpflux(vvol) * half ! this is an integrable approximation; NEEDS CHECKING; 26 Feb 13;
    case( 2 )    ;                                            ! will call ra00aa below to read initial vector potential from file;
+   case( 3 )    ;                                            ! the initial guess will be randomized, maximum is maxrndgues; 5 Mar 19;
+    do ii = 1, mn ! loop over Fourier harmonics;
+    
+     do ideriv = -1, 2 ! loop over derivatives; 14 Jan 13;
+
+      call random_number(Ate(vvol,ideriv,ii)%s)
+      call random_number(Aze(vvol,ideriv,ii)%s)
+      Ate(vvol,ideriv,ii)%s = Ate(vvol,ideriv,ii)%s * maxrndgues
+      Aze(vvol,ideriv,ii)%s = Aze(vvol,ideriv,ii)%s * maxrndgues
+      if (.not. YESstellsym) then
+       call random_number(Ato(vvol,ideriv,ii)%s)
+       call random_number(Azo(vvol,ideriv,ii)%s)
+       Ato(vvol,ideriv,ii)%s = Ato(vvol,ideriv,ii)%s * maxrndgues
+       Azo(vvol,ideriv,ii)%s = Azo(vvol,ideriv,ii)%s * maxrndgues
+      endif
+     
+     enddo ! end of do ideriv;
+    
+    enddo ! end of do ii;
+
    end select
    
    idof = 0 ! degree of freedom index; reset to 0 in each volume;

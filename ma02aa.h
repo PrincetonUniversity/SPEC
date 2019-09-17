@@ -282,7 +282,8 @@ subroutine ma02aa( lvol, NN )
    ideriv = 0 ; dpsi(1:2) = (/ dtflux(lvol), dpflux(lvol) /) ! these are also used below;
    
    packorunpack = 'P'
-   CALL( ma02aa, packab ( packorunpack, lvol, NN, xi(1:NN), dpsi(1:2), ideriv ) )
+!   CALL( ma02aa, packab ( packorunpack, lvol, NN, xi(1:NN), dpsi(1:2), ideriv ) )
+   CALL( ma02aa, packab ( packorunpack, lvol, NN, xi(1:NN), ideriv ) )
    
    pNN = NN + 1 ; Ldfmuaa = pNN ; tol = mupftol ; lengthwork = pNN * ( pNN+13 ) / 2
    
@@ -315,9 +316,13 @@ subroutine ma02aa( lvol, NN )
    case( 2 )    
     ;             write(ounit,1020) cput-cpus, myid, lvol, ihybrj1, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, NewtonError, "max. evaluations ;"
    case( 3 )    
+    if(NewtonError>tol) then
     ;             write(ounit,1020) cput-cpus, myid, lvol, ihybrj1, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, NewtonError, "xtol too small ;  "
-   case( 4 )    
+    endif
+   case( 4 )
+    if(NewtonError>tol) then
     ;             write(ounit,1020) cput-cpus, myid, lvol, ihybrj1, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, NewtonError, "bad progress ;    "
+    endif
    case default 
     FATAL( ma02aa, .true., illegal ifail returned by hybrj1 )
    end select
