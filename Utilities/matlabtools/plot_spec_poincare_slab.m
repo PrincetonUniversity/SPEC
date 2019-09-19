@@ -16,6 +16,11 @@ nz     = size(data.R_lines,2);  % # of toroidal planes
 
 nppts  = size(data.R_lines,3);  % # of toroidal transits per trajectory
 
+try
+ rpol   = data.rpol;            % poloidal extent of the slab is 2*pi*rpol
+catch
+ rpol   = 1;                    % in case rpol did not exist due to old version of SPEC
+end
 
 nth    = 1024;  %ploting options for the boundary
 bcol   = 'r';
@@ -31,12 +36,12 @@ end
 hold on
 
 for i=1:nptraj       %for each field line trajectory
- scatter(T(i,:),R(i,:),10,'.k')
+ scatter(rpol*T(i,:),R(i,:),10,'.k')
  hold on
  set(gca,'FontSize',12)
- xlabel('\theta','FontSize',12)
+ xlabel('\theta r_{pol}','FontSize',12)
  ylabel('R','FontSize',12)
- xlim([0 2*pi])
+ xlim([0 2*pi*rpol])
  ylim([-0.1 data.Rbc(1,end)+0.1])
 end
 
@@ -54,5 +59,5 @@ for imn=1:data.mn     % get and plot the boundary
  Rb_d  = Rb_d + data.Rbc(imn,1)*cos(alpha)   + data.Rbs(imn,1)*sin(alpha);
 end
 
-scatter(theta,Rb_u,bthick,'filled',bcol)
-scatter(theta,Rb_d,bthick,'filled',bcol)
+scatter(theta*rpol,Rb_u,bthick,'filled',bcol)
+scatter(theta*rpol,Rb_d,bthick,'filled',bcol)

@@ -172,6 +172,8 @@ module inputlist
   INTEGER      ::        rp(0:MNvol)         =  0
   INTEGER      ::        rq(0:MNvol)         =  0
   REAL         ::      oita(0:MNvol)         =  0.0
+  REAL         :: rpol                       =  1.0
+  REAL         :: rtor                       =  1.0
 
   REAL         :: Rac(     0:MNtor        )  =  0.0 !     stellarator symmetric coordinate axis; 
   REAL         :: Zas(     0:MNtor        )  =  0.0
@@ -419,6 +421,16 @@ module inputlist
                 !latex \item only relevant if constraints on transform, enclosed currents etc. are to be satisfied iteratively, see \inputvar{Lconstraint};
                 !latex \bi
                 !latex \item constraint: \inputvar{mupfits > 0};
+                !latex \ei
+ rpol        ,& !latex \item \inputvar{rpol = 1.0} : \verb!real! : poloidal extent of slab (effective radius);
+                !latex \bi
+                !latex \item[i.] only relevant if \inputvar{Igeometry} $=1$;
+                !latex \item[i.] poloidal size is $L = 2\pi*$\inputvar{rpol};
+                !latex \ei
+ rtor        ,& !latex \item \inputvar{rtor = 1.0} : \verb!real! : toroidal extent of slab (effective radius);
+                !latex \bi
+                !latex \item[i.] only relevant if \inputvar{Igeometry} $=1$;
+                !latex \item[i.] toroidal size is $L = 2\pi*$\inputvar{rtor};
                 !latex \ei
  Rac         ,& !latex \item \inputvar{Rac} : \verb!real(     0:MNtor             )! : Fourier harmonics of axis    ;     stellarator symmetric;
  Zas         ,& !latex \item \inputvar{Zas} : \verb!real(     0:MNtor             )! : Fourier harmonics of axis    ;     stellarator symmetric;
@@ -1533,7 +1545,9 @@ subroutine readin
    FATAL( readin, abs(one+gamma).lt.vsmall, 1+gamma appears in denominator in dforce ) ! Please check this; SRH: 27 Feb 18;
    FATAL( readin, abs(one-gamma).lt.vsmall, 1-gamma appears in denominator in fu00aa ) ! Please check this; SRH: 27 Feb 18;
    FATAL( readin, Lconstraint.lt.-1 .or. Lconstraint.gt.2, illegal Lconstraint )
-   
+   FATAL( readin, Igeometry.eq.1 .and. rpol.lt.vsmall, poloidal extent of slab too small or negative )   
+   FATAL( readin, Igeometry.eq.1 .and. rtor.lt.vsmall, toroidal extent of slab too small or negative )
+
    if( Istellsym.eq.1 ) then
     Rbs(-MNtor:MNtor,-MMpol:MMpol) = zero
     Zbc(-MNtor:MNtor,-MMpol:MMpol) = zero
@@ -1739,6 +1753,8 @@ subroutine readin
   RlBCAST( oita       , MNvol  , 0 )
   RlBCAST( mupftol    ,       1, 0 )
   IlBCAST( mupfits    ,       1, 0 ) 
+  RlBCAST( rpol       ,       1, 0 )
+  RlBCAST( rtor       ,       1, 0 )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -2299,6 +2315,8 @@ subroutine wrtend( wflag, iflag, rflag )
   write(iunit,'(" oita        = ",257es23.15)') oita(0:Mvol)
   write(iunit,'(" mupftol     = ",es23.15   )') mupftol
   write(iunit,'(" mupfits     = ",i9        )') mupfits
+  write(iunit,'(" rpol        = ",es23.15   )') rpol
+  write(iunit,'(" rtor        = ",es23.15   )') rtor
 
   if( Lfreebound.eq.1 .or. Zbs(0,1).gt.zero ) then
    do ii = 1, mn ; mm = im(ii) ; nn = in(ii) / Nfp ; Rbc(nn,mm) = iRbc(ii,Nvol) ; Zbs(nn,mm) = iZbs(ii,Nvol) ; Vns(nn,mm) = iVns(ii) ; Bns(nn,mm) = iBns(ii)
@@ -2308,15 +2326,15 @@ subroutine wrtend( wflag, iflag, rflag )
    enddo ! end of do ii = 1, mn;
   endif ! end of if( Lfreebound.eq.1 .or. . . . ) ; 
 
-  write(iunit,'(" Rac         = ",99es23.15)') Rac(0:Ntor)
-  write(iunit,'(" Zas         = ",99es23.15)') Zas(0:Ntor)
-  write(iunit,'(" Ras         = ",99es23.15)') Ras(0:Ntor)
-  write(iunit,'(" Zac         = ",99es23.15)') Zac(0:Ntor)
+  !write(iunit,'(" Rac         = ",99es23.15)') Rac(0:Ntor)
+  !write(iunit,'(" Zas         = ",99es23.15)') Zas(0:Ntor)
+  !write(iunit,'(" Ras         = ",99es23.15)') Ras(0:Ntor)
+  !write(iunit,'(" Zac         = ",99es23.15)') Zac(0:Ntor)
   
- !write(iunit,'(" Rac         = ",99es23.15)') iRbc(1:Ntor+1,0)
- !write(iunit,'(" Zas         = ",99es23.15)') iZbs(1:Ntor+1,0) 
- !write(iunit,'(" Ras         = ",99es23.15)') iRbs(1:Ntor+1,0) 
- !write(iunit,'(" Zac         = ",99es23.15)') iZbc(1:Ntor+1,0) 
+ write(iunit,'(" Rac         = ",99es23.15)') iRbc(1:Ntor+1,0)
+ write(iunit,'(" Zas         = ",99es23.15)') iZbs(1:Ntor+1,0) 
+ write(iunit,'(" Ras         = ",99es23.15)') iRbs(1:Ntor+1,0) 
+ write(iunit,'(" Zac         = ",99es23.15)') iZbc(1:Ntor+1,0) 
 
   do mm = 0, Mpol ! will write out the plasma boundary harmonics; 
    do nn = -Ntor, Ntor
