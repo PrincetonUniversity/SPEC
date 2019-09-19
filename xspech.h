@@ -188,9 +188,8 @@ program xspech
   
 9000 nfreeboundaryiterations = nfreeboundaryiterations + 1 ! this is the free-boundary iteration loop; 08 Jun 16;
 
-  !first_free_bound = .true.
-  
-  if (nfreeboundaryiterations .eq. 0) then  ! first iteration only run fixed-boundary
+  ! run fix_boundary for the first free_boundary iteration
+  if (Lfreebound.eq.1 .and. nfreeboundaryiterations .eq. 0) then  ! first iteration
      first_free_bound = .true.
      !Mvol = Nvol
      gBnbld_old = gBnbld
@@ -595,7 +594,6 @@ program xspech
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-!  if( LContinueFreeboundaryIterations .and. Lfindzero.gt.0 .and. nfreeboundaryiterations.lt.mfreeits ) goto 9000 
   if( LContinueFreeboundaryIterations .and. nfreeboundaryiterations.lt.mfreeits ) goto 9000  ! removed Lfindzero check; Loizu Dec 18;
   if( Lfreebound.eq.1 .and. First_free_bound ) goto 9000  ! going back to normal free_boundary calculation; Zhu 20190701;
 
