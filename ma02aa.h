@@ -439,7 +439,7 @@ subroutine ma02aa( lvol, NN )
     case(  0 )    ;                                   ; Nxdof = 2 ! poloidal   & toroidal flux ARE varied to match linking current and plasma current;
     case(  1 )    ;                                   ; Nxdof = 2 ! poloidal   & toroidal flux ARE varied to match linking current and transform-constraint;
     case(  2 )    ;                                   ; Nxdof = 2 ! poloidal   & toroidal flux ARE varied to match linking current and plasma current;
-    case(  3 )    ;                                   ; Nxdof = 0 ! Global constraint
+    case(  3 )    ;                                   ; Nxdof = 2 ! poloidal   & toroidal flux ARE varied to match linking current and plasma current;
     end select
 
    endif ! end of if( Lplasmaregion) ;

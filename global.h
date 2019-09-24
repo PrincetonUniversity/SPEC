@@ -1396,7 +1396,7 @@ subroutine readin
 
   LOGICAL              :: Lspexist, Lchangeangle
   INTEGER              :: vvol, mm, nn, nb, imn, ix, ii, jj, ij, kk, mj, nj, mk, nk, ip, lMpol, lNtor, X02BBF, iargc, iarg, numargs, mi, ni, lvol
-  REAL                 :: xx, toroidalflux
+  REAL                 :: xx, toroidalflux, toroidalcurrent
   REAL,    allocatable :: RZRZ(:,:) ! local array used for reading interface Fourier harmonics from file;
   
   CHARACTER            :: ldate*8, ltime*10, arg*100
@@ -1510,6 +1510,11 @@ subroutine readin
 !latex       \inputvar{pflux(1:Mvol)} $\rightarrow$ \inputvar{pflux(1:Mvol)/tflux(Nvol)}.
 !latex
 !latex       (The input $\Phi_{edge} \equiv $ \inputvar{phiedge} will provide the total toroidal flux; see \link{preset}.)
+!latex \item The input value for the toroidal current constraint (\inputvar{Isurf(1:Mvol)} and \inputvar{Ivolume(1:Mvol)}) are also immediately normalized, using \inputvar{curtor}.
+!latex
+!latex		$Ivolume \rightarrow Ivolume\cdot \frac{curtor}{\sum_i Isurf_i + Ivolume_i}$
+!latex
+!latex		$Isurf \rightarrow Isurf\cdot \frac{curtor}{\sum_i Isurf_i + Ivolume_i}$
 !latex \end{enumerate}
       
    if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : reading physicslist     from ext.sp ;")') cput-cpus
@@ -1584,7 +1589,18 @@ subroutine readin
    enddo
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-   
+	! Current constraint normalization
+	
+    toroidalcurrent = sum(Ivolume) + sum(Isurf)
+	
+	Ivolume(1:Mvol) = Ivolume(1:Mvol) * curtor / toroidalcurrent
+	Isurf(1:Mvol) = Isurf(1:Mvol) * curtor / toroidalcurrent
+	
+	
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+
    do vvol = 1, Mvol
     FATAL( readin, Lrad(vvol ).lt.2, require Chebyshev resolution Lrad > 2 so that Lagrange constraints can be satisfied )
    enddo
@@ -1753,7 +1769,7 @@ subroutine readin
   RlBCAST( adiabatic  , MNvol+1, 0 )
   RlBCAST( mu         , MNvol+1, 0 )
   RlBCAST( Ivolume    , MNvol+1, 0 )
-  RlBCAST( Isurf      , MNvol  , 0 )
+  RlBCAST( Isurf      , MNvol+1, 0 )
   IlBCAST( Lconstraint,       1, 0 )
   IlBCAST( pl         , MNvol  , 0 )
   IlBCAST( ql         , MNvol  , 0 )
