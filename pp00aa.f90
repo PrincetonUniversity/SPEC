@@ -74,7 +74,7 @@
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-subroutine pp00aa( lvol ) 
+subroutine pp00aa( lvol, numTrajTotal )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -82,7 +82,7 @@ subroutine pp00aa( lvol )
   
   use numerical, only :
   
-  use fileunits, only : ounit, lunit
+  use fileunits, only : ounit
   
   use inputlist, only : Wmacros, Wpp00aa, Nvol, Lrad, ext, odetol, nPpts, nPtrj, Lconstraint, iota, oita
   
@@ -94,16 +94,17 @@ subroutine pp00aa( lvol )
                         Lcoordinatesingularity, &
                         diotadxup
   
+  use sphdf5, only    : write_poincare, write_transform
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   LOCALS
   
-  INTEGER, intent(in)  :: lvol
+  INTEGER, intent(in)  :: lvol, numTrajTotal
   INTEGER              :: lnPtrj, ioff, itrj
   INTEGER, allocatable :: utflag(:)
   REAL                 :: sti(1:2), ltransform(1:2)
   REAL, allocatable    :: data(:,:,:), fiota(:,:)
-  CHARACTER            :: svol*4 ! perhaps this should be global; 11 Aug 13;
   
   BEGIN(pp00aa)
   
@@ -113,14 +114,12 @@ subroutine pp00aa( lvol )
   else                        ; lnPtrj = 2 * Lrad(lvol) ! adapted  Poincare resolution;
   endif
 
-  if( lnPtrj.le.0 ) goto 9999
+  if( lnPtrj.le.0 ) goto 9999 ! this also skips writing the grid and restart file; since 9999 is at the end of xspech?
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  ivol = lvol ; write(svol,'(i4.4)') lvol
-  
-  open( lunit+myid, file="."//trim(ext)//".sp.P."//svol//".dat", status="unknown", form="unformatted" )
-  
+  ivol = lvol
+
 1001 format("pp00aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; odetol=",es8.1," ; nPpts=",i8," ; lnPtrj=",i3," ;")
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -151,7 +150,7 @@ subroutine pp00aa( lvol )
    if( itrj.eq.     0 ) sti(1) = - one ! avoid machine precision errors; 08 Feb 16;
    if( itrj.eq.lnPtrj ) sti(1) =   one ! avoid machine precision errors; 08 Feb 16;
    
-   CALL( pp00aa, pp00ab, ( lvol, sti(1:2), Nz, nPpts, data(1:4,0:Nz-1,1:nPpts), fiota(itrj,1:2), utflag(itrj) ) )      
+   CALL( pp00aa, pp00ab, ( lvol, sti(1:2), Nz, nPpts, data(1:4,0:Nz-1,1:nPpts), fiota(itrj,1:2), utflag(itrj) ) )
    
    if( Wpp00aa ) then
     cput = GETTIME
@@ -163,32 +162,23 @@ subroutine pp00aa( lvol )
     endif
    endif
    
-   if( utflag(itrj).eq.1 ) then ! will only write successfully followed trajectories to file; 28 Jan 13;
-    write(lunit+myid) Nz, nPpts
-    write(lunit+myid) data(1:4,0:Nz-1,1:nPpts)
-   endif   
-   
+   ! write all trajectories, but only mark successfully followed trajectories with success.eq.1; 21 May 19;
+   WCALL( pp00aa, write_poincare, (data, numTrajTotal+itrj-ioff, utflag(itrj)) )
+
   enddo ! end of do itrj; 25 Jan 13;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   DALLOCATE(data)
-  
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-  close( lunit+myid ) ! Poincare plot is finished; will re-use lunit to write rotational transform data;
-  
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-  open( lunit+myid, file="."//trim(ext)//".sp.t."//svol//".dat", status="unknown", form="unformatted" ) ! rotational transform data;
-  write( lunit+myid ) lnPtrj-ioff+1
-  write( lunit+myid ) diotadxup(0:1,0,lvol)
-  write( lunit+myid ) ( fiota(itrj,1:2), itrj = ioff, lnPtrj )
-  close( lunit+myid )
-  
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   DALLOCATE(utflag)
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+  ! write rotational transform data to output file
+  WCALL( pp00aa, write_transform, (numTrajTotal, lnPtrj-ioff+1, lvol, diotadxup(0:1,0,lvol), fiota(ioff:lnPtrj,1:2)) ) ! 21 May 19;
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   DALLOCATE(fiota)
   

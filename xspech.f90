@@ -18,8 +18,9 @@
 !latex        \link{ra00aa}, 
 !latex        \link{bnorml}, 
 !latex        \link{sc00aa}, 
-!latex        \link{jo00aa} and 
-!latex        \link{pp00aa}}
+!latex        \link{jo00aa},
+!latex        \link{pp00aa} and
+!latex        \link{sphdf5}}
 
 !latex \tableofcontents
 
@@ -37,7 +38,7 @@ program xspech
 
   use numerical, only : vsmall, logtolerance
 
-  use fileunits, only : ounit, zunit, lunit
+  use fileunits, only : ounit, lunit
 
   use inputlist, only : Wmacros, Wxspech, ext, &
                         Nfp, Igeometry, Nvol, Lrad, &
@@ -73,6 +74,8 @@ program xspech
                         nfreeboundaryiterations, &
                         beltramierror
 
+   use sphdf5 ! write _all_ output quantities into a _single_ HDF5 file
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   LOCALS
@@ -85,6 +88,7 @@ program xspech
   REAL                 :: rflag, lastcpu, bnserr, lRwc, lRws, lZwc, lZws, lItor, lGpol, lgBc, lgBs
   REAL,    allocatable :: position(:), gradient(:)
   CHARACTER            :: pack
+  INTEGER              :: lnPtrj, numTrajTotal
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -118,45 +122,43 @@ program xspech
 !latex \item The input namelists and geometry are read in via a call to \link{global}\verb+:readin+.
 !latex       A full description of the required input is given in \link{global}.
 !latex \item Most internal variables, global memory etc., are allocated in \link{preset}.
+!latex \item All quantities in the input file are mirrored into the output file's group \type{input}.
 !latex \end{enumerate} 
 
-  WCALL( xspech, readin ) ! sets Rscale; 03 Nov 16;
+  WCALL( xspech, readin ) ! sets Rscale, Mvol; 03 Nov 16;
+
   WCALL( xspech, preset )
   
+  WCALL( xspech, init_outfile ) ! initialize HDF5 library and open output file ext.h5 for writing during execution
+
+  WCALL( xspech, mirror_input_to_outfile ) ! mirror input file contents to output file
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsection{preparing output file \type{.ext.sp.its}} 
+  if ( myid .eq. 0 ) then ! save restart file;
+    WCALL( xspech, wrtend ) ! write restart file ! 17 May 19
+  endif
+
+!latex \subsection{preparing output file group \type{iterations}}
 
 !latex \begin{enumerate}
 
-!latex \item The file \verb+.ext.sp.its+ is created.
-!latex       This file contains the interface geometry at each iteration, which is useful for constructing movies illustrating the convergence.
-!latex       The format of this file is:
-!latex \begin{verbatim} open(zunit,file="."//trim(ext)//".sp.its",status="unknown",form="unformatted")
-!latex write(zunit) mn, Mvol, Nfp ! integer; 
-!latex write(zunit) im(1:mn) ! integer;
-!latex write(zunit) in(1:mn) ! integer;
-!latex ! begin do loop over iterations;
-!latex write(zunit) wflag, iflag, Energy, rflag ! written in global.h:wrtend; perhaps redundant;
-!latex write(zunit) iRbc(1:mn,0:Mvol) ! real;
-!latex write(zunit) iZbs(1:mn,0:Mvol) ! real;
-!latex write(zunit) iRbs(1:mn,0:Mvol) ! real;
-!latex write(zunit) iZbc(1:mn,0:Mvol) ! real;
-!latex !  end  do loop over iterations; \end{verbatim}
+!latex \item The group \verb+iterations+ is created in the output file.
+!latex       This group contains the interface geometry at each iteration, which is useful for constructing movies illustrating the convergence.
+!latex       The data structure in use is an unlimited array of the following compound datatype:
+!latex \begin{verbatim} DATATYPE  H5T_COMPOUND {
+!latex       H5T_NATIVE_INTEGER "nDcalls";
+!latex       H5T_NATIVE_DOUBLE "Energy";
+!latex       H5T_NATIVE_DOUBLE "ForceErr";
+!latex       H5T_ARRAY { [Mvol+1][mn] H5T_NATIVE_DOUBLE } "iRbc";
+!latex       H5T_ARRAY { [Mvol+1][mn] H5T_NATIVE_DOUBLE } "iZbs";
+!latex       H5T_ARRAY { [Mvol+1][mn] H5T_NATIVE_DOUBLE } "iRbs";
+!latex       H5T_ARRAY { [Mvol+1][mn] H5T_NATIVE_DOUBLE } "iZbc";
+!latex } \end{verbatim}
 !latex \end{enumerate} 
 
-  if( myid.eq.0 ) then ! prepare ``convergence evolution'' output; save restart file;
-   
-   open(zunit, file = "."//trim(ext)//".sp.its", status = "unknown", form = "unformatted" ) ! this file is written to in globals/wrtend; 11 Aug 14;
-   write(zunit) mn, Mvol, Nfp
-   write(zunit) im(1:mn)
-   write(zunit) in(1:mn)
-   
-   wflag = 0 ; iflag = 0 ; rflag = zero
-   WCALL( xspech, wrtend, ( wflag, iflag, rflag ) ) ! write restart file etc. ! 14 Jan 13;
-   
-  endif
-  
+  WCALL( xspech, init_convergence_output ) ! initialize convergence output arrays ! 17 May 19
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   FATAL( xspech, NGdof.lt.0, counting error )
@@ -499,7 +501,7 @@ program xspech
      
     end select ! end select case( mfreeits ) ; 27 Feb 17;
     
-   else          
+   else ! else of if( bnserr.gt.gBntol ) ; 03 Apr 19;
     
     LContinueFreeboundaryIterations = .false.
     
@@ -527,10 +529,7 @@ program xspech
   WCALL( xspech, ra00aa, ('W') ) ! this writes vector potential to file;
 
   if( myid.eq.0 ) then ! write restart file; note that this is inside free-boundary iteration loop; 11 Aug 14;
-
-   wflag = 0 ; iflag = 0 ; rflag = zero
-   WCALL( xspech, wrtend, ( wflag, iflag, rflag ) ) ! write restart file; save initial input;
-
+   WCALL( xspech, wrtend ) ! write restart file; save initial input;
   endif
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -619,27 +618,58 @@ program xspech
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
+  ! determine total number of (possibly successful) Poincare trajectories
+  numTrajTotal = 0
+  do vvol = 1, Mvol
+   LREGION(vvol) ! sets Lcoordinatesingularity and Lplasmaregion ;
+   ! number of trajectories in current volume vvol
+   if( nPtrj(vvol).ge.0 ) then ; lnPtrj =    nPtrj(vvol) ! selected Poincare resolution;
+   else                        ; lnPtrj = 2 * Lrad(vvol) ! adapted  Poincare resolution;
+   endif
+   if( .not.Lcoordinatesingularity ) then ; lnPtrj = lnPtrj + 1 ! all but innermost volume have one trajectory more than specified by nPtrj
+   endif
+   numTrajTotal = numTrajTotal + lnPtrj
+  enddo
+
+  WCALL( xspech, init_flt_output, (numTrajTotal) )
+
+  numTrajTotal = 0 ! re-used as counter along all trajectories from here on
   do vvol = 1, Mvol
 
    LREGION(vvol)
    
-   if( myid.ne.modulo(vvol-1,ncpu) ) cycle ! the following is in parallel; 20 Jun 14;
+   if( myid.eq.modulo(vvol-1,ncpu) .and. myid.lt.Mvol) then ! the following is in parallel; 20 Jun 14;
    
-   if( .not.ImagneticOK(vvol) ) then ; cput = GETTIME ; write(ounit,1002) cput-cpus ; write(ounit,1002) cput-cpus, myid, vvol, ImagneticOK(vvol) ; cycle
-   endif
-   
-   WCALL( xspech, sc00aa, ( vvol, Ntz                  ) ) ! compute covariant field (singular currents);
+    if( .not.ImagneticOK(vvol) ) then ; cput = GETTIME ; write(ounit,1002) cput-cpus ; write(ounit,1002) cput-cpus, myid, vvol, ImagneticOK(vvol) ; cycle
+    endif
 
-   if( Lcheck.eq.1 ) then
-    WCALL( xspech, jo00aa, ( vvol, Ntz, Iquad(vvol), mn ) )
+    WCALL( xspech, sc00aa, ( vvol, Ntz                  ) ) ! compute covariant field (singular currents);
+
+    if( Lcheck.eq.1 ) then
+     WCALL( xspech, jo00aa, ( vvol, Ntz, Iquad(vvol), mn ) )
+    endif
+
+    if( nPpts .gt.0 ) then
+     WCALL( xspech, pp00aa, ( vvol, numTrajTotal         ) ) ! Poincare plots in each volume
+    endif
+   endif ! myid.eq.modulo(vvol-1,ncpu)
+
+   ! number of trajectories needs to be computed here as well to correctly increate numTrajTotal if needed
+   if( nPtrj(vvol).ge.0 ) then ; lnPtrj =    nPtrj(vvol) ! selected Poincare resolution;
+   else                        ; lnPtrj = 2 * Lrad(vvol) ! adapted  Poincare resolution;
    endif
 
-   if( nPpts .gt.0 ) then
-    WCALL( xspech, pp00aa, ( vvol                       ) ) ! Poincare plots in each volume
+   ! all but innermost volume have one trajectory more than specified by nPtrj
+   if( .not.Lcoordinatesingularity ) then ; lnPtrj = lnPtrj + 1
    endif
+
+   ! keep track of where we are along all trajectories
+   numTrajTotal = numTrajTotal + lnPtrj
 
   enddo ! end of do vvol = 1, Mvol; ! end of parallel diagnostics loop; 03 Apr 13;
   
+  WCALL( xspech, finalize_flt_output )
+
 1002 format("xspech : ",f10.2," :":" myid=",i3," ; vvol=",i3," ; IBeltrami="L2" ; construction of Beltrami field failed ;")
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -672,12 +702,9 @@ program xspech
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+  WCALL( xspech, write_grid ) ! write grid
   if( myid.eq.0 ) then
-
-   wflag = 1 ; iflag = 0 ; rflag = zero
-   WCALL( xspech, wrtend, ( wflag, iflag, rflag ) ) ! write restart file; save initial input;
-   
-   close(zunit) ! this file is written to in globals/wrtend; 11 Aug 14;
+   WCALL( xspech, wrtend ) ! write restart file; save initial input;
    
    cput = GETTIME
    write(ounit,'("xspech : ", 10x ," :")')
@@ -690,6 +717,7 @@ program xspech
 9999 continue
 
   WCALL( xspech, ending )
+
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -724,6 +752,7 @@ subroutine ending
   use cputiming
 
   use allglobal, only : myid, cpus, mn
+  use sphdf5
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -762,24 +791,19 @@ dcpu, Ttotal / (/ 1, 60, 3600 /), ecpu, 100*ecpu/dcpu
   endif ! end of if( Ltiming .and. myid.eq.0 ) then; 01 Jul 14;
   
   if( myid.eq.0 ) then
-   
    call date_and_time(date,time)
    write(ounit,'("ending : ", 10x ," : ")')
    write(ounit,1000) dcpu, myid, dcpu / (/ 1, 60, 60*60, 24*60*60 /), date(1:4), date(5:6), date(7:8), time(1:2), time(3:4), time(5:6), ext
    write(ounit,'("ending : ", 10x ," : ")')
-
-   if( myid.eq.0 ) then
-   call hdfint ! 18 Jul 14;
-   endif
-
   endif ! end of if( myid.eq.0 ) ; 14 Jan 15;
+
+  WCALL( xspech, hdfint ) ! write final outputs to HDF5 file ! 18 Jul 14;
+  WCALL( xspech, finish_outfile ) ! close HDF5 output file
 
   MPIFINALIZE
   
 1000 format("ending : ",f10.2," : myid=",i3," ; completion ; time=",f10.2,"s = "f8.2"m = "f6.2"h = "f5.2"d ; date= "&
   a4"/"a2"/"a2" ; time= "a2":"a2":"a2" ; ext = "a60)
-
-  stop
 
 end subroutine ending
 

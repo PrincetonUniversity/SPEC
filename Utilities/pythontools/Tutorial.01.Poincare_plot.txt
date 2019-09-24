@@ -1,0 +1,36 @@
+This is a general tutorial on how to run SPEC for the W7-X OP1.1 limiter configuration
+and plot Poincare maps.
+
+1. run SPEC on the corresponding input file
+xspec G3V01L0Fi.002.sp
+
+2a. make the pythontools package available (the correct way)
+Add "/path/to/pythontools" to the environment variable PYTHONPATH
+
+2b. make the pythontools package available (the quick-and-dirty way)
+In your Python environment, do:
+> import sys
+> sys.path.append("/path/to/pythontools")
+
+3. import the SPEC routines needed for reading SPEC files and plotting the Poincare maps
+> from read_spec import SPEC
+> from plot_spec_poincare import plot_spec_poincare
+
+4. load the output file "G3V01L0Fi.002.h5" which was generated in step 1
+> s = SPEC("/path/to/G3V01L0Fi.002.h5")
+
+5a. make the Poincare plot
+> plot_spec_poincare(s)
+
+5b. make the Poincare plot at a specific toroidal position
+> plot_spec_poincare(s, toroidalIdx=40) # for this run, this corresponds to the triangular-shaped plane in W7-X
+
+5c. make the Poincare plot into a given figure
+> import matplotlib.pyplot as plt
+> plt.figure()
+> plot_spec_poincare(s, plt=plt)
+> plt.title("W7-X OP1.1 limiter configuration")
+> plt.axis("equal")
+> plt.xlabel("R / m")
+> plt.ylabel("Z / m")
+> plt.tight_layout()

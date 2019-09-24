@@ -167,16 +167,16 @@ subroutine preset
 !latex \item Precisely, \type{TT(l,i,d)} $\equiv T_l^{(d)}(s_i)$ for $s_0=-1$ and $s_1=+1$.
 !latex \item Note that $T_l^{(0)}(s)=s^l$ and $T_l^{(1)}(s)=s^{l+1} l^2$ for $s=\pm 1$.
 !latex \item Note that 
-!latex       \be T_l(-1)        = \left\{ \begin{array}{ccccccccccccccc}+1,& \mbox{\rm if $l$ is even,} \\ 
+!latex       \be T_l(-1)        = \left\{ \begin{array}{ccccccccccccccc}+1,& \mbox{\rm if $l$ is even,} \\
 !latex                                                                  -1,& \mbox{\rm if $l$ is odd;}
 !latex                                    \end{array} \right. & \; \;&
-!latex           T_l(+1)        = \left\{ \begin{array}{ccccccccccccccc}+1,& \mbox{\rm if $l$ is even,} \\ 
+!latex           T_l(+1)        = \left\{ \begin{array}{ccccccccccccccc}+1,& \mbox{\rm if $l$ is even,} \\
 !latex                                                                  +1,& \mbox{\rm if $l$ is odd;}
 !latex                                    \end{array} \right. \\
-!latex           T_l^\prime(-1) = \left\{ \begin{array}{ccccccccccccccc}-l^2,& \mbox{\rm if $l$ is even,} \\ 
+!latex           T_l^\prime(-1) = \left\{ \begin{array}{ccccccccccccccc}-l^2,& \mbox{\rm if $l$ is even,} \\
 !latex                                                                  +l^2,& \mbox{\rm if $l$ is odd;}
 !latex                                    \end{array} \right. &\; \;&
-!latex           T_l^\prime(+1) = \left\{ \begin{array}{ccccccccccccccc}+l^2,& \mbox{\rm if $l$ is even,} \\ 
+!latex           T_l^\prime(+1) = \left\{ \begin{array}{ccccccccccccccc}+l^2,& \mbox{\rm if $l$ is even,} \\
 !latex                                                                  +l^2,& \mbox{\rm if $l$ is odd.}
 !latex                                     \end{array} \right.
 !latex       \ee
@@ -964,7 +964,7 @@ subroutine preset
 
 !latex \item In toroidal geometry, the coordinate ``pre-conditioning'' factor is 
 !latex       \be f_{j,v} \equiv \left\{ 
-!latex       \begin{array}{lcccccc}\psi_{t,v}^{0    }&,&\mbox{for $m_j=0$}, \\ 
+!latex       \begin{array}{lcccccc}\psi_{t,v}^{0    }&,&\mbox{for $m_j=0$}, \\
 !latex                             \psi_{t,v}^{m_j/2}&,&\mbox{otherwise}.
 !latex       \end{array}\right.
 !latex       \ee

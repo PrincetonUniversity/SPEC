@@ -1,0 +1,135 @@
+Verification of the HDF5 output module in SPEC as developed on the branch "issue68"
+
+J. Schilling (jonathan.schilling@ipp.mpg.de), 2019-06-24
+
+Objective: Verify that the newly-developed HDF5 output module actually saves identical information
+           as the previous implementation does
+
+Approach:  Run SPEC with both the previous output module and the HDF5 output module on a (number of) test case(s)
+           and check whether the outputs are identical
+
+Detailed list of steps:
+
+0. These operations are listed for execution on the DRACO cluster at IPP: https://www.mpcdf.mpg.de/services/computing/draco
+> ssh -Y draco-i.mpcdf.mpg.de
+> module purge
+> module load git intel impi mkl hdf5-mpi/1.10.4 fftw-mpi
+> module list
+Currently Loaded Modulefiles:
+ 1) intel/18.0.3      2) impi/2018.3       3) mkl/2018.3        4) fftw-mpi/3.3.8    5) git/2.16          6) hdf5-mpi/1.10.4
+> export CC=mpicc
+> export FC=mpiifort
+> export NAG='-L${MKLROOT}/lib/intel64 -lmkl_rt -lpthread -lm -ldl -Wl,-rpath -Wl,${MKLROOT}/lib/intel64 -Wl,-rpath -Wl,${HDF5_HOME}/lib -Wl,-rpath -Wl,${FFTW_HOME}/lib'
+> export FFTWHOME=$FFTW_HOME
+
+1. build SPEC from the master branch at the commit from where "issue68" was branched off:
+> git clone git@github.com:PrincetonUniversity/SPEC.git SPEC_master
+> pushd SPEC_master
+> git checkout 32e19c3
+> patch Makefile < ../adjust_spec_makefile_for_draco.diff
+WEIRD BUG: > change -O3 into -O0 in Makefile; otherwise, slight differences will occur depending on the surrounding code and the results will look slightly different  !!!!!
+> make CC="$CC" FC="$FC" NAG="$NAG" xspec
+> popd
+
+2. build the current state of SPEC on the "issue68" branch:
+> git clone git@github.com:PrincetonUniversity/SPEC.git SPEC_issue68 -b issue68
+> pushd SPEC_issue68
+> make CC="$CC" FC="$FC" NAG="$NAG" xspec
+> popd
+
+3. setup test environment and generate output data
+> mkdir SPEC_output_comparison
+> pushd SPEC_output_comparison
+
+4. create a file slurm_spec with the following content:
+#!/bin/bash -l
+# Standard output and error:
+#SBATCH -o ./%j.out
+#SBATCH -e ./%j.err
+# Initial working directory:
+#SBATCH -D ./
+# Job Name:
+#SBATCH -J SPEC
+# Queue (Partition):
+#SBATCH --partition=express
+# Number of nodes and MPI tasks per node:
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=32
+#
+#SBATCH --mail-type=none
+#SBATCH --mail-user=<userid>@rzg.mpg.de
+#
+# Wall clock limit:
+#SBATCH --time=00:30:00
+#
+# Run the program:
+srun $@
+
+5. do the test run for the master branch
+> mkdir G3V01L0Fi.002_master
+> pushd G3V01L0Fi.002_master
+> ln -s ../../SPEC_master/InputFiles/TestCases/G3V01L0Fi.002.sp .
+> ln -s ../../SPEC_master/xspec .
+> ln -s ../slurm_spec .
+> sbatch slurm_spec ./xspec G3V01L0Fi.002
+> ls -lah
+-rw-r--r-- 1 jons ipg 7,9K 24. Jun 16:01 8704446.err
+-rw-r--r-- 1 jons ipg  982 24. Jun 16:01 8704446.out
+lrwxrwxrwx 1 jons ipg   55 24. Jun 14:53 G3V01L0Fi.002.sp -> ../../SPEC_master/InputFiles/TestCases/G3V01L0Fi.002.sp
+-rw-r--r-- 1 jons ipg  58K 24. Jun 15:46 .G3V01L0Fi.002.sp.A
+-rw-r--r-- 1 jons ipg 118K 24. Jun 16:01 G3V01L0Fi.002.sp.end
+-rw-r--r-- 1 jons ipg 2,1M 24. Jun 16:01 .G3V01L0Fi.002.sp.grid
+-rw-r--r-- 1 jons ipg  59K 24. Jun 16:01 G3V01L0Fi.002.sp.h5
+-rw-r--r-- 1 jons ipg 1,8K 24. Jun 16:01 .G3V01L0Fi.002.sp.its
+-rw-r--r-- 1 jons ipg  37M 24. Jun 16:01 .G3V01L0Fi.002.sp.P.0001.dat
+-rw-r--r-- 1 jons ipg  524 24. Jun 16:01 .G3V01L0Fi.002.sp.t.0001.dat
+lrwxrwxrwx 1 jons ipg   13 24. Jun 15:40 slurm_spec -> ../slurm_spec
+lrwxrwxrwx 1 jons ipg   23 24. Jun 13:35 xspec -> ../../SPEC_master/xspec
+> popd
+
+6. do the test run for the issue68 branch
+> mkdir G3V01L0Fi.002_issue68
+> pushd G3V01L0Fi.002_issue68
+> ln -s ../../SPEC_master/InputFiles/TestCases/G3V01L0Fi.002.sp .
+> ln -s ../../SPEC_issue68/xspec xspec
+> ln -s ../slurm_spec .
+> sbatch slurm_spec ./xspec G3V01L0Fi.002.sp
+> ls -lah
+-rw-r--r-- 1 jons ipg 7,9K 24. Jun 17:44 8705540.err
+-rw-r--r-- 1 jons ipg  984 24. Jun 17:44 8705540.out
+-rw-r--r-- 1 jons ipg  39M 24. Jun 17:44 G3V01L0Fi.002.h5
+lrwxrwxrwx 1 jons ipg   55 24. Jun 17:15 G3V01L0Fi.002.sp -> ../../SPEC_master/InputFiles/TestCases/G3V01L0Fi.002.sp
+-rw-r--r-- 1 jons ipg 118K 24. Jun 17:44 G3V01L0Fi.002.sp.end
+lrwxrwxrwx 1 jons ipg   13 24. Jun 17:15 slurm_spec -> ../slurm_spec
+lrwxrwxrwx 1 jons ipg   24 24. Jun 17:15 xspec -> ../../SPEC_issue68/xspec
+> popd
+
+7. run comparison routine
+> module load matlab/R2018b
+> matlab -nodesktop
+>> addpath('/u/jons/src/SPEC_issue68/Utilities/matlabtools')
+>> fdata = read_spec_field('/u/jons/src/SPEC_output_comparison/G3V01L0Fi.002_master/G3V01L0Fi.002.sp.h5');
+>> gdata = read_spec_grid('/u/jons/src/SPEC_output_comparison/G3V01L0Fi.002_master/G3V01L0Fi.002.sp.h5');
+>> idata = read_spec_iota('/u/jons/src/SPEC_output_comparison/G3V01L0Fi.002_master/G3V01L0Fi.002.sp.h5');
+>> pdata = read_spec_poincare('/u/jons/src/SPEC_output_comparison/G3V01L0Fi.002_master/G3V01L0Fi.002.sp.h5');
+>> data = read_spec('/u/jons/src/SPEC_output_comparison/G3V01L0Fi.002_issue68/G3V01L0Fi.002.h5');
+>> specheck(fdata, gdata, idata, pdata, data);
+... all output quantities
+Matching :)
+
+11. Repeat steps 5 to 7 for any other input files you wish to test the new output writing routine on
+
+e.g.
+>> fdata = read_spec_field('/u/jons/src/SPEC_output_comparison/G3V02L1Fi.001_master/G3V02L1Fi.001.sp.h5');
+>> gdata = read_spec_grid('/u/jons/src/SPEC_output_comparison/G3V02L1Fi.001_master/G3V02L1Fi.001.sp.h5');
+>> idata = read_spec_iota('/u/jons/src/SPEC_output_comparison/G3V02L1Fi.001_master/G3V02L1Fi.001.sp.h5');
+>> pdata = read_spec_poincare('/u/jons/src/SPEC_output_comparison/G3V02L1Fi.001_master/G3V02L1Fi.001.sp.h5');
+>> data = read_spec('/u/jons/src/SPEC_output_comparison/G3V02L1Fi.001_issue68/G3V02L1Fi.001.h5');
+>> specheck(fdata, gdata, idata, pdata, data);
+... all output quantities
+Matching :)
+
+
+
+12. finally leave working directory
+> popd

@@ -1,0 +1,65 @@
+diff --git a/Makefile b/Makefile
+index 8f95a0a..9d07bc2 100644
+--- a/Makefile
++++ b/Makefile
+@@ -42,7 +42,6 @@
+  DFLAGS=-check bounds -check format -check output_conversion -check pointers -check uninit -debug full -D DEBUG
+  #Note: on the PPPL clusters, use module lapack/3.5.0rhel6 only
+  NAG=-L$(LAPACKHOME) -llapack -lblas -L$(BLASHOME) -lgfortran #-lrefblas -lgfortran
+- NETCDF=-L$(NETCDFHOME)/lib -lnetcdf
+  HDF5compile=-I$(HDF5_HOME)/include
+  HDF5link=-L$(HDF5_HOME)/lib -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lpthread -lz -lm
+  FFTWcompile=-I$(FFTWHOME)/include
+@@ -52,7 +51,6 @@ ifeq ($(CC),gfortran)
+  # Not checked
+  CFLAGS=-fdefault-real-8
+  NAG=-L$(ACML_HOME)/lib -lacml
+- NETCDF=-L$(NETCDFHOME)/lib -lnetcdf
+  HDF5compile=-I$(HDF5_HOME)/include
+  HDF5link=-L$(HDF5_HOME)/lib -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lpthread -lz -lm
+  FFTWcompile=-I$(FFTWHOME)/include
+@@ -72,7 +70,6 @@ ifeq ($(CC),gfortran_ubuntu)
+  # sudo apt install libhdf5-openmpi-dev
+  CFLAGS=-fdefault-real-8
+  NAG=-llapack -lblas
+- NETCDF=-lnetcdf
+  HDF5compile=-I/usr/include/hdf5/openmpi
+  HDF5link=-L/usr/lib/x86_64-linux-gnu/hdf5/openmpi -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lpthread -lz -lm
+  FFTWcompile=-I/usr/include
+@@ -98,7 +95,6 @@ ifeq ($(CC),intel_spc)
+  RFLAGS=-O2 -ip -no-prec-div -xHost -fPIC
+  DFLAGS=-traceback -D DEBUG
+  NAG=-L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl
+- NETCDF=-L$(NETCDF_HOME)/lib -lnetcdf
+  FFTWcompile=-I$(FFTW_DIR)/include
+  FFTWlink=-L$(FFTW_DIR)/lib -lfftw3
+ endif
+@@ -110,7 +106,6 @@ ifeq ($(CC),intel_ipp)
+  DFLAGS=-traceback -D DEBUG
+ # NAG=-L$(NAGFLIB_HOME)/lib -lnag_nag 
+  NAG=-L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl 
+- NETCDF=-L$(NETCDF_HOME)/lib -lnetcdf
+  FFTWcompile=-I$(FFTW_DIR)/include
+  FFTWlink=-L$(FFTW_DIR)/lib -lfftw3
+ endif
+@@ -136,7 +131,6 @@ ifeq ($(CC),intel_raijin)
+  # module load hdf5
+  CFLAGS=-r8
+  NAG=-L${MKLROOT}/lib/intel64 -mkl 
+- NETCDF=-lnetcdf
+  HDF5compile=-I$(HDF5_BASE)/include
+  HDF5link=-L$(HDF5_BASE)/lib -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lpthread -lz -lm
+  FFTWcompile=
+@@ -157,10 +151,10 @@ endif
+ ###############################################################################################################################################################
+ 
+ xspec: $(addsuffix _r.o,$(ALLFILES)) $(MACROS) Makefile
+-	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o xspec $(addsuffix _r.o,$(ALLFILES)) $(NAG) $(HDF5compile) $(HDF5link) $(NETCDF) $(FFTWlink)
++	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o xspec $(addsuffix _r.o,$(ALLFILES)) $(NAG) $(HDF5compile) $(HDF5link) $(FFTWlink)
+ 
+ dspec: $(addsuffix _d.o,$(ALLFILES)) $(MACROS) Makefile
+-	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o dspec $(addsuffix _d.o,$(ALLFILES)) $(NAG) $(HDF5compile) $(HDF5link) $(NETCDF) $(FFTWlink)
++	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o dspec $(addsuffix _d.o,$(ALLFILES)) $(NAG) $(HDF5compile) $(HDF5link) $(FFTWlink)
+ 
+ ###############################################################################################################################################################
+ 
