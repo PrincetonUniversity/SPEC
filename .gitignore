@@ -30,3 +30,6 @@ InputFiles/**/*.sp.DF
 # vim temprary files
 *.swo
 *.swp
+
+# python temp file
+*.pyc

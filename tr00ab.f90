@@ -250,7 +250,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
     FATAL( tr00ab, ii.ne.Ndof, counting error )
     
     Ndof = Ndof + 1 ! include rotational-transform as a degree-of-freedom; 23 Apr 13;
-    
+
 ! dense arrays; 24 Apr 13; ! these will eventually be redundant; 24 Apr 13;
     if( Lsparse.eq.1 ) then ! dense transformation; 24 Apr 13;
      SALLOCATE( rmatrix, (1:Ndof,1:Ndof,-1:2), zero ) ! real-space angle transformation matrix; dense; 23 Apr 13;
@@ -259,6 +259,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
      SALLOCATE( wks1   , (1:Ndof            ), zero )
      SALLOCATE( wks2   , (1:Ndof            ), zero )
      SALLOCATE( AA     , (1:Ndof,1:Ndof     ), zero )
+     SALLOCATE( iwork  , (1:Ndof            ),   0  ) ! Missed originally; added by czhu on 2019/07/26;
     endif ! end of if( Lsparse.eq.1 ) ; 24 Apr 13;
     
 ! sparse arrays; ! all of these can be simply defined (1:Ntz) etc. . . . ; 24 Apr 13;
@@ -720,7 +721,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
       Liwork = max(1,11*NN+3*nlvl*NN)
       
       SALLOCATE( work, (1:Lwork), zero )
-      DALLOCATE(iwork)
+      if (allocated(iwork)) deallocate(iwork)
       SALLOCATE( iwork, (1:Liwork), zero )
       
       select case( jderiv ) 

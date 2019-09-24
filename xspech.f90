@@ -126,9 +126,11 @@ program xspech
 !latex \end{enumerate} 
 
   WCALL( xspech, readin ) ! sets Rscale, Mvol; 03 Nov 16;
+
   WCALL( xspech, preset )
   
   WCALL( xspech, init_outfile ) ! initialize HDF5 library and open output file ext.h5 for writing during execution
+
   WCALL( xspech, mirror_input_to_outfile ) ! mirror input file contents to output file
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -636,7 +638,7 @@ program xspech
 
    LREGION(vvol)
    
-   if( myid.eq.modulo(vvol-1,ncpu) ) then ! the following is in parallel; 20 Jun 14;
+   if( myid.eq.modulo(vvol-1,ncpu) .and. myid.lt.Mvol) then ! the following is in parallel; 20 Jun 14;
    
     if( .not.ImagneticOK(vvol) ) then ; cput = GETTIME ; write(ounit,1002) cput-cpus ; write(ounit,1002) cput-cpus, myid, vvol, ImagneticOK(vvol) ; cycle
     endif

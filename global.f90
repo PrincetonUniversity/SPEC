@@ -81,7 +81,7 @@ module fileunits
   implicit none
 
   INTEGER :: iunit = 10 ! input; used in global/readin:ext.sp, global/wrtend:ext.sp.end
-  INTEGER :: ounit =  0 ! screen output;
+  INTEGER :: ounit =  6 ! screen output;
   INTEGER :: gunit = 13 ! wall geometry; used in wa00aa
 
   INTEGER :: aunit = 11 ! vector potential; used in ra00aa:.ext.AtAzmn; 
