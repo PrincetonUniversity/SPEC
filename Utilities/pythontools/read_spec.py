@@ -54,17 +54,19 @@ class SPEC:
             if np.isscalar(self.input.physics.Lrad):
                 self.input.physics.Lrad = np.array([self.input.physics.Lrad])
             
-            # adjust some matrix dimensions
+            # split up radial matrix dimension into list of matrices for each of the nested volumes
+            
+            # target dimensions
             Nvol = self.input.physics.Nvol
             Lrad = self.input.physics.Lrad
             
-            # vector potential
+            # lists for vector potential
             cAte = []
             cAto = []
             cAze = []
             cAzo = []
             
-            # grid
+            # lists for grid
             cRij = []
             cZij = []
             csg  = []
@@ -72,25 +74,26 @@ class SPEC:
             cBp  = []
             cBZ  = []
             
-            # split into separate cells for nested volumes
+            # split into separate matrices for the nested volumes
             start=0
             for i in range(Nvol):
-              # vector potential
-              cAte.append(self.vector_potential.Ate[:,start:start+Lrad[i]+1])
-              cAto.append(self.vector_potential.Ato[:,start:start+Lrad[i]+1])
-              cAze.append(self.vector_potential.Aze[:,start:start+Lrad[i]+1])
-              cAzo.append(self.vector_potential.Azo[:,start:start+Lrad[i]+1])
-            
-              # grid
-              cRij.append(self.grid.Rij[:,start:start+Lrad[i]+1])
-              cZij.append(self.grid.Zij[:,start:start+Lrad[i]+1])
-              csg.append(self.grid.sg[:,start:start+Lrad[i]+1])
-              cBR.append(self.grid.BR[:,start:start+Lrad[i]+1])
-              cBp.append(self.grid.Bp[:,start:start+Lrad[i]+1])
-              cBZ.append(self.grid.BZ[:,start:start+Lrad[i]+1])
-            
-              # move along combined array dimension
-              start = start + Lrad[i]+1;
+                
+                # vector potential
+                cAte.append(self.vector_potential.Ate[:,start:start+Lrad[i]+1])
+                cAto.append(self.vector_potential.Ato[:,start:start+Lrad[i]+1])
+                cAze.append(self.vector_potential.Aze[:,start:start+Lrad[i]+1])
+                cAzo.append(self.vector_potential.Azo[:,start:start+Lrad[i]+1])
+                
+                # grid
+                cRij.append(self.grid.Rij[:,start:start+Lrad[i]+1])
+                cZij.append(self.grid.Zij[:,start:start+Lrad[i]+1])
+                csg.append( self.grid.sg[:,start:start+Lrad[i]+1])
+                cBR.append( self.grid.BR[:,start:start+Lrad[i]+1])
+                cBp.append( self.grid.Bp[:,start:start+Lrad[i]+1])
+                cBZ.append( self.grid.BZ[:,start:start+Lrad[i]+1])
+                
+                # move along combined array dimension
+                start = start + Lrad[i]+1;
             
             # replace original content in data structure
             self.vector_potential.Ate = cAte
@@ -135,12 +138,12 @@ class SPEC:
 # some default demos
 if __name__=="__main__":
     
-    # classical stellarator, 2 volumes
+    # classical stellarator, 2 volumes, 28 iterations
 #    filename = "/home/IPP-HGW/jons/04_PhD/00_programs/SPEC/InputFiles/TestCases/G3V02L1Fi.001.h5"
-#    filename = "/home/jonathan/Uni/04_PhD/01_analysis/SPEC_output_comparison/G3V02L1Fi.001_issue68/G3V02L1Fi.001.h5"
+    filename = "/home/jonathan/Uni/04_PhD/01_analysis/SPEC_output_comparison/G3V02L1Fi.001_issue68/G3V02L1Fi.001.h5"
     
-    # W7-X OP1.1 limiter configuration, 1 volume
-    filename = "/home/jonathan/Uni/04_PhD/00_programs/SPEC/SPEC/InputFiles/TestCases/G3V01L0Fi.002.h5"
+    # W7-X OP1.1 limiter configuration, 1 volume, 0 iterations
+#    filename = "/home/jonathan/Uni/04_PhD/00_programs/SPEC/SPEC/InputFiles/TestCases/G3V01L0Fi.002.h5"
     
 
     s=SPEC(filename)
