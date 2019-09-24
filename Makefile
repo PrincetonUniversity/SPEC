@@ -26,7 +26,7 @@
  
  MACROS=macros
  
- CC?=intel
+ CC=intel
  # if want to use gfortran; make CC=gfortran xfocus; otherwise using Intel
  FC?=mpif90
  
