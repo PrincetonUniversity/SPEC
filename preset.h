@@ -713,7 +713,7 @@ subroutine preset
     enddo ! end of do ii; 25 Jan 13;
     
     FATAL( preset, idof.ne.NAdof(vvol), need to count Beltrami degrees-of-freedom more carefully  for coordinate singularity )
-    FATAL( preset, idof.ge.2**31-1), NAdof too big, should be smaller than maximum of int32 type )
+    FATAL( preset, (idof+1)**2.ge.2**31-1), NAdof too big, should be smaller than maximum of int32 type )
 
    else ! .not.Lcoordinatesingularity;
         
@@ -758,12 +758,22 @@ subroutine preset
    !endif
     
     FATAL( preset, idof.ne.NAdof(vvol), need to count degrees-of-freedom more carefully for new matrix )
-    FATAL( preset, idof.ge.2**31-1), NAdof too big, should be smaller than maximum of int32 type )
+    FATAL( preset, (idof+1)**2.ge.2**31-1), NAdof too big, should be smaller than maximum of int32 type )
 
    endif ! end of if( Lcoordinatesingularity ) ; 
    
    FATAL( preset, idof.ne.NAdof(vvol), impossible logic )
    
+   do ii = 1, mn
+      do jj = 0, Lrad(vvol)
+        if (Ate(vvol,0,ii)%i(jj) == 0) Ate(vvol,0,ii)%s(jj) = zero
+        if (Aze(vvol,0,ii)%i(jj) == 0) Aze(vvol,0,ii)%s(jj) = zero
+        if (.not. YESstellsym) then
+          if (Ato(vvol,0,ii)%i(jj) == 0) Azo(vvol,0,ii)%s(jj) = zero
+          if (Azo(vvol,0,ii)%i(jj) == 0) Azo(vvol,0,ii)%s(jj) = zero
+        end if
+      end do !jj
+   end do !ii
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
   enddo ! end of do vvol = 1, Nvol loop;

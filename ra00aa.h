@@ -119,7 +119,7 @@ subroutine ra00aa( writeorread )
    
   case( 'R' ) ! read potential from file; interpolate onto new radial grid;
    
-   FATAL( ra00aa, .true., under reconstruction )
+   !FATAL( ra00aa, .true., under reconstruction )
 
    if( myid.eq.0 ) then
     
