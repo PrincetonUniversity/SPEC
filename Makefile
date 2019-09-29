@@ -38,7 +38,7 @@
  # module load fftw
  # module load lapack/3.5.0rhel6
  CFLAGS=-r8
- RFLAGS=-mcmodel=large -O0 -m64 -unroll0 -fno-alias -ip -traceback
+ RFLAGS=-mcmodel=large -O3 -m64 -unroll0 -fno-alias -ip -traceback
  DFLAGS=-check bounds -check format -check output_conversion -check pointers -check uninit -debug full -D DEBUG
  #Note: on the PPPL clusters, use module lapack/3.5.0rhel6 only
  NAG?=-L$(LAPACKHOME) -llapack -lblas -L$(BLASHOME) -lgfortran #-lrefblas -lgfortran
@@ -65,7 +65,6 @@ ifeq ($(CC),gfortran_ubuntu)
  # sudo apt install libopenmpi-dev
  # sudo apt install liblapack-dev
  # sudo apt install m4
- # sudo apt install libnetcdf-dev
  # sudo apt install libfftw3-dev
  # sudo apt install libhdf5-openmpi-dev
  CFLAGS=-fdefault-real-8
@@ -120,8 +119,8 @@ ifeq ($(CC),intel_ipp)
  DFLAGS=-traceback -D DEBUG
 # NAG=-L$(NAGFLIB_HOME)/lib -lnag_nag 
  NAG=-L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl 
- FFTWcompile=-I$(FFTW_DIR)/include
- FFTWlink=-L$(FFTW_DIR)/lib -lfftw3
+ FFTWcompile=-I$(FFTW_HOME)/include
+ FFTWlink=-L$(FFTW_HOME)/lib -lfftw3
 endif
 
 ifeq ($(CC),gfortran_ipp)
@@ -141,7 +140,6 @@ ifeq ($(CC),intel_raijin)
  # module load intel-mkl/2018.1.163
  # module load openmpi
  # module load fftw3-mkl/2018.1.163
- # module load netcdf
  # module load hdf5
  CFLAGS=-r8
  NAG=-L${MKLROOT}/lib/intel64 -mkl 
