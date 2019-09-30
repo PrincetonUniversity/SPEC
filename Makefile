@@ -27,25 +27,22 @@
  MACROS=macros
  
  CC=intel
- # if want to use gfortran; make CC=gfortran xspec; otherwise using Intel
- FC=mpif90
+ # if want to use gfortran; make CC=gfortran xfocus; otherwise using Intel
+ FC=mpifort
  
  # Intel Defaults
- # At PPPL
- # module load intel/2017
- # module load hdf5
- # module load openmpi
- # module load fftw
- # module load lapack/3.5.0rhel6
+ # At PPPL, you can use the following commands
+ # module use /p/focus/modules
+ # module load spec
  CFLAGS=-r8
  RFLAGS=-mcmodel=large -O3 -m64 -unroll0 -fno-alias -ip -traceback
- DFLAGS=-check bounds -check format -check output_conversion -check pointers -check uninit -debug full -D DEBUG
- #Note: on the PPPL clusters, use module lapack/3.5.0rhel6 only
- NAG=-L$(LAPACKHOME) -llapack -lblas -L$(BLASHOME) -lgfortran #-lrefblas -lgfortran
+ DFLAGS=-O0 -g -traceback -check bounds -check format -check output_conversion -check pointers -check uninit -debug full -D DEBUG
+ NAG= -I${MKLROOT}/include/intel64/lp64 -mkl
  HDF5compile=-I$(HDF5_HOME)/include
- HDF5link=-L$(HDF5_HOME)/lib -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lpthread -lz -lm
+ HDF5link=-L$(HDF5_HOME)/lib -lhdf5_fortran -lhdf5 -lpthread -lz -lm
  FFTWcompile=-I$(FFTWHOME)/include
- FFTWlink=-L$(FFTWHOME)/lib -lfftw3
+ FFTWlink=-L$(FFTWHOME)/lib -lfftw3 ${MKLROOT}/lib/intel64/libmkl_blas95_ilp64.a \
+     ${MKLROOT}/lib/intel64/libmkl_lapack95_ilp64.a -lpthread -lm -ldl
 
 ifeq ($(CC),gfortran)
  # Not checked
@@ -238,7 +235,7 @@ $(DOBJS): %_d.o: %_m.F90 global_d.o $(MACROS) Makefile
 	@echo ''
 
 $(PREPROC): %_m.F90: %.f90 $(MACROS)
-	awk -v file=$*.f90 '{ gsub("__LINE__", NR); gsub("__FILE__",file); print }' $*.f90 > $*_p.f90
+	@awk -v file=$*.f90 '{ gsub("__LINE__", NR); gsub("__FILE__",file); print }' $*.f90 > $*_p.f90
 	m4 -P $(MACROS) $*_p.f90 > $*_m.F90
 
 ###############################################################################################################################################################
