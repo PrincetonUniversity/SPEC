@@ -131,15 +131,7 @@ program xspech
   
   WCALL( xspech, init_outfile ) ! initialize HDF5 library and open output file ext.h5 for writing during execution
 
-  cput = GETTIME
-  write(ounit,'("xspech : ",f10.2," : myid=",i3," after calling init_outfile")') cput-cpus, myid
-
   WCALL( xspech, mirror_input_to_outfile ) ! mirror input file contents to output file
-
-  cput = GETTIME
-  write(ounit,'("xspech : ",f10.2," : myid=",i3," after calling mirror_input_to_outfile")') cput-cpus, myid
-
-  !!print *, myid, "I'm here."
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
