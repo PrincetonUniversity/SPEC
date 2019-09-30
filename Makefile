@@ -113,6 +113,8 @@ endif
 
 
 ifeq ($(CC),intel_ipp)
+ # tested on draco with the following modules:
+ # intel/18.0.3 impi/2018.3 mkl/2018.3 hdf5-mpi/1.10.5 fftw-mpi/3.3.8
  FC=mpiifort
  CFLAGS=-r8
  RFLAGS=-O3 -ip -no-prec-div -xHost -fPIC
@@ -128,10 +130,11 @@ ifeq ($(CC),gfortran_ipp)
  CFLAGS=-fdefault-real-8
  RFLAGS=-O2 -fPIC -ffree-line-length-none
  DFLAGS=-g -fbacktrace -fbounds-check -DDEBUG -ffree-line-length-none
-# NAG=-L$(NAGFLIB_HOME)/lib -lnag_nag 
- NAG=-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl 
- FFTWcompile=-I$(FFTW_DIR)/include
- FFTWlink=-L$(FFTW_DIR)/lib -lfftw3
+ NAG=-L${MKLROOT}/lib/intel64 -lmkl_rt -lpthread -lm -ldl -Wl,-rpath -Wl,${MKLROOT}/lib/intel64
+ HDF5compile=-I$(HDF5_HOME)/include
+ HDF5link=-L$(HDF5_HOME)/lib -lhdf5_fortran -lhdf5 -lpthread -lz -lm -Wl,-rpath -Wl,$(HDF5_HOME)/lib
+ FFTWcompile=-I$(FFTW_HOME)/include
+ FFTWlink=-L$(FFTW_HOME)/lib -lfftw3 -Wl,-rpath -Wl,$(FFTW_HOME)/lib
 endif
 
 ifeq ($(CC),intel_raijin)
