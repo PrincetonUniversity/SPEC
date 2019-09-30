@@ -27,7 +27,7 @@
  MACROS=macros
  
  CC=intel
- # if want to use gfortran; make CC=gfortran xfocus; otherwise using Intel
+ # if want to use gfortran; make CC=gfortran xspec; otherwise using Intel
  FC=mpifort
  
  # Intel Defaults
@@ -112,13 +112,15 @@ endif
 
 
 ifeq ($(CC),intel_ipp)
+ FC=mpiifort
  CFLAGS=-r8
- RFLAGS=-O2 -ip -no-prec-div -xHost -fPIC
+ RFLAGS=-O3 -ip -no-prec-div -xHost -fPIC
  DFLAGS=-traceback -D DEBUG
-# NAG=-L$(NAGFLIB_HOME)/lib -lnag_nag 
- NAG=-L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl 
- FFTWcompile=-I$(FFTW_DIR)/include
- FFTWlink=-L$(FFTW_DIR)/lib -lfftw3
+ NAG=-L${MKLROOT}/lib/intel64 -lmkl_rt -lpthread -lm -ldl -Wl,-rpath -Wl,${MKLROOT}/lib/intel64
+ HDF5compile=-I$(HDF5_HOME)/include
+ HDF5link=-L$(HDF5_HOME)/lib -lhdf5_fortran -lhdf5 -lpthread -lz -lm -Wl,-rpath -Wl,$(HDF5_HOME)/lib
+ FFTWcompile=-I$(FFTW_HOME)/include
+ FFTWlink=-L$(FFTW_HOME)/lib -lfftw3 -Wl,-rpath -Wl,$(FFTW_HOME)/lib
 endif
 
 ifeq ($(CC),gfortran_ipp)
