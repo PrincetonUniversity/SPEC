@@ -79,9 +79,9 @@ ifeq ($(CC),gfortran_arch)
  # configuration for Arch Linux
  CFLAGS=-fdefault-real-8
  NAG=-llapack -lblas
- HDF5compile=-I/usr/include
- HDF5link=-lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lpthread -lz -lm
- FFTWcompile=-I/usr/include
+ HDF5compile=
+ HDF5link=-lhdf5_fortran -lhdf5 -lpthread -lz -lm
+ FFTWcompile=
  FFTWlink=-lfftw3
  RFLAGS=-O2 -ffixed-line-length-none -ffree-line-length-none -fexternal-blas
  DFLAGS=-g -fbacktrace -fbounds-check -ffree-line-length-none -fexternal-blas -DDEBUG
