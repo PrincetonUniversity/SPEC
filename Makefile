@@ -127,6 +127,9 @@ ifeq ($(CC),intel_ipp)
 endif
 
 ifeq ($(CC),gfortran_ipp)
+ # tested on draco with the following modules:
+ # gcc/8 impi/2018.3 mkl/2018.3 hdf5-mpi/1.10.5 fftw-mpi/3.3.8
+ FC=mpif90
  CFLAGS=-fdefault-real-8
  RFLAGS=-O2 -fPIC -ffree-line-length-none
  DFLAGS=-g -fbacktrace -fbounds-check -DDEBUG -ffree-line-length-none
