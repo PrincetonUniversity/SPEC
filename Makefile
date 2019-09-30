@@ -62,7 +62,6 @@ ifeq ($(CC),gfortran_ubuntu)
  # sudo apt install libopenmpi-dev
  # sudo apt install liblapack-dev
  # sudo apt install m4
- # sudo apt install libnetcdf-dev
  # sudo apt install libfftw3-dev
  # sudo apt install libhdf5-openmpi-dev
  CFLAGS=-fdefault-real-8
@@ -111,7 +110,6 @@ ifeq ($(CC),intel_spc)
  FFTWlink=-L$(FFTW_DIR)/lib -lfftw3
 endif
 
-
 ifeq ($(CC),intel_ipp)
  # tested on draco with the following modules:
  # intel/18.0.3 impi/2018.3 mkl/2018.3 hdf5-mpi/1.10.5 fftw-mpi/3.3.8
@@ -147,7 +145,6 @@ ifeq ($(CC),intel_raijin)
  # module load intel-mkl/2018.1.163
  # module load openmpi
  # module load fftw3-mkl/2018.1.163
- # module load netcdf
  # module load hdf5
  CFLAGS=-r8
  NAG=-L${MKLROOT}/lib/intel64 -mkl 
