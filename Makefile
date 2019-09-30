@@ -77,6 +77,7 @@ endif
 
 ifeq ($(CC),gfortran_arch)
  # configuration for Arch Linux
+ FC=mpif90
  CFLAGS=-fdefault-real-8
  NAG=-llapack -lblas
  HDF5compile=
