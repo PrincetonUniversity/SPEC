@@ -37,7 +37,7 @@
  CFLAGS=-r8
  RFLAGS=-mcmodel=large -O3 -m64 -unroll0 -fno-alias -ip -traceback
  DFLAGS=-O0 -g -traceback -check bounds -check format -check output_conversion -check pointers -check uninit -debug full -D DEBUG
- NAG= -I${MKLROOT}/include/intel64/lp64 -mkl
+ NAG=-I${MKLROOT}/include/intel64/lp64 -mkl
  HDF5compile=-I$(HDF5_HOME)/include
  HDF5link=-L$(HDF5_HOME)/lib -lhdf5_fortran -lhdf5 -lpthread -lz -lm
  FFTWcompile=-I$(FFTWHOME)/include
@@ -45,15 +45,18 @@
      ${MKLROOT}/lib/intel64/libmkl_lapack95_ilp64.a -lpthread -lm -ldl
 
 ifeq ($(CC),gfortran)
- # Not checked
+ # At PPPL, you can use the following commands
+ # module use /p/focus/modules
+ # module load spec/gfortran
+ RFLAGS=-O3 -w -ffree-line-length-none -march=native -ffast-math -fexternal-blas
+ DFLAGS=-Og -w -ffree-line-length-none -Wextra -Wtarget-lifetime -fbacktrace -fbounds-check -fexternal-blas \
+     -ffpe-trap=zero -fcheck=all -DDEBUG
  CFLAGS=-fdefault-real-8
- NAG=-L$(LAPACKHOME) -llapack -lblas -L$(BLASHOME) -lgfortran
+ NAG=-L$(LAPACKHOME) -llapack -lgfortran
  HDF5compile=-I$(HDF5_HOME)/include
  HDF5link=-L$(HDF5_HOME)/lib -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lpthread -lz -lm
  FFTWcompile=-I$(FFTWHOME)/include
- FFTWlink=-L$(FFTWHOME)/lib -lfftw3
- RFLAGS=-O2 -ffixed-line-length-none -ffree-line-length-none -fexternal-blas
- DFLAGS=-g -fbacktrace -fbounds-check -ffree-line-length-none -fexternal-blas -DDEBUG
+ FFTWlink=-L$(FFTWHOME)/lib -lfftw3 -lopenblas
 endif
 
 ifeq ($(CC),gfortran_ubuntu)
