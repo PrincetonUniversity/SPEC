@@ -503,7 +503,9 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 
   case(  2 )
 
-   FATAL( mp00ac, .true., where is helicity calculated )
+   if ( iflag.eq.1 ) Fdof(1     ) = lABintegral(lvol) - helicity(lvol)
+   if ( iflag.eq.2 ) Ddof(1   ,1) = half * sum( solution(1:NN,1) * matmul( dMD(1:NN,1:NN), solution(1:NN,0) ) ) &
+                                  + half * sum( solution(1:NN,0) * matmul( dMD(1:NN,1:NN), solution(1:NN,1) ) )
 
   end select ! end of select case( Lconstraint ) ;
   

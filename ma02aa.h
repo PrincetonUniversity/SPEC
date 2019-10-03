@@ -32,7 +32,7 @@ subroutine ma02aa( lvol, NN )
 !                       dMA, dMB, dMC, dMD, dME, dMF, solution, &
                         dMA, dMB,      dMD,           solution, &
 !                       MBpsi, MEpsi, psiMCpsi, psiMFpsi, &
-                        MBpsi,                            &
+                        MBpsi,  Ate,                          &
                         ImagneticOK, &
                         lBBintegral, lABintegral, &
                         ivol, &
@@ -494,7 +494,7 @@ subroutine ma02aa( lvol, NN )
      
     endif ! end of if( Lplasmaregion ) ;
         
-    helicity(lvol) = lABintegral(lvol) ! this was computed in mp00ac;
+    if (Lconstraint .ne. 2) helicity(lvol) = lABintegral(lvol) ! this was computed in mp00ac;
     
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
