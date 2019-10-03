@@ -653,6 +653,9 @@ subroutine preset
    case( 0 )    ; 
    case( 1 )    ; Ate(vvol,0,1)%s(0:1) = dtflux(vvol) * half ! this is an integrable approximation; NEEDS CHECKING; 26 Feb 13;
     ;           ; Aze(vvol,0,1)%s(0:1) = dpflux(vvol) * half ! this is an integrable approximation; NEEDS CHECKING; 26 Feb 13;
+    if (Lcoordinatesingularity) then
+    ;           ; Ate(vvol,0,1)%s(2) = dtflux(vvol) * half * half
+    endif
    case( 2 )    ;                                            ! will call ra00aa below to read initial vector potential from file;
    case( 3 )    ;                                            ! the initial guess will be randomized, maximum is maxrndgues; 5 Mar 19;
     do ii = 1, mn ! loop over Fourier harmonics;

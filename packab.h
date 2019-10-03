@@ -32,7 +32,7 @@ subroutine packab( packorunpack, lvol, NN, solution, ideriv )
 
   use constants, only : zero
   
-  use numerical, only :
+  use numerical, only : small
   
   use fileunits, only : ounit
   
@@ -133,6 +133,8 @@ subroutine packab( packorunpack, lvol, NN, solution, ideriv )
    
 !   FATAL( packab, .true., a trivial revision of packab is required to remove the if from the loop )
    
+   solution = zero
+
    do ii = 1, mn
     do ll = 0, llrad
      ;                                    ; id = Ate(lvol,0,ii)%i(ll) ; if (id/=0) solution(id) = Ate(lvol,ideriv,ii)%s(ll)

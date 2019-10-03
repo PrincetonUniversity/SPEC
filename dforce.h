@@ -368,9 +368,10 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
       !dMA(1:NN,1:NN) = dMA(1:NN,1:NN) - mu(vvol) * dMD(1:NN,1:NN) ! this corrupts dMA, but dMA is no longer used;
       call DAXPY((NN+1)*(NN+1), -mu(vvol), dMD, 1, dMA, 1) ! BLAS version; 24 Jul 2019
       dMA(0,0)       = zero
-      dMA(1:NN,0)    = zero
-      !dMA(1:NN,0)    = -matmul(dMD(1:NN,1:NN),solution(1:NN,0))
-      call DGEMV('N', NN, NN, -one, dMD(1,1), NN+1, solution(1,0), 1, zero, dMA(1,0), 1) ! BLAS version; 24 Jul 2019
+      !dMA(1:NN,0)    = zero
+      dMA(1:NN,0)    = -matmul(dMD(1:NN,1:NN),solution(1:NN,0))
+      ! There is something wrong with the BLAS version for more than one thread, I don't know why, but let's not use it for the moment
+      !call DGEMV('N', NN, NN, -one, dMD(1,1), NN+1, solution(1,0), 1, zero, dMA(1,0), 1) ! BLAS version; 24 Jul 2019
       dMA(0,1:NN)    = dMA(1:NN,0) !-matmul(solution(1:NN,0),dMD(1:NN,1:NN))
       IA = NN + 1 + 1
       MM = NN ; LDA = NN+1 ; Lwork = NN+1
