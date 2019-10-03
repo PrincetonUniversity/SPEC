@@ -803,8 +803,11 @@ dcpu, Ttotal / (/ 1, 60, 3600 /), ecpu, 100*ecpu/dcpu
    write(ounit,'("ending : ", 10x ," : ")')
   endif ! end of if( myid.eq.0 ) ; 14 Jan 15;
 
+  print *, myid, 'before hdfint'
   WCALL( xspech, hdfint ) ! write final outputs to HDF5 file ! 18 Jul 14;
+  print *, myid, 'after hdfint'
   WCALL( xspech, finish_outfile ) ! close HDF5 output file
+  print *, myid, 'after finish_outfile'
 
   MPIFINALIZE
   
