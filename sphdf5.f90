@@ -20,6 +20,7 @@ module sphdf5
   use fileunits , only : ounit
   use cputiming , only : Tsphdf5
   use allglobal , only : myid, cpus
+  use constants , only : version
   use hdf5
 
   implicit none
@@ -120,6 +121,11 @@ subroutine init_outfile
 
   ! file access property list is not needed after been used to specify MPI I/O during opening of file
   H5CALL( sphdf5, h5pclose_f, (plist_id, hdfier), __FILE__, __LINE__ )
+
+  ! write version number
+  if (myid==0) then
+     HWRITERV( file_id, 1, version, (/ version /))
+  endif
 
 end subroutine init_outfile
 
