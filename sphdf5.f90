@@ -123,9 +123,8 @@ subroutine init_outfile
   H5CALL( sphdf5, h5pclose_f, (plist_id, hdfier), __FILE__, __LINE__ )
 
   ! write version number
-  if (myid==0) then
-     HWRITERV( file_id, 1, version, (/ version /))
-  endif
+  HWRITERV_LO( file_id, 1, version, (/ version /), __FILE__, __LINE__)
+  H5DESCR_CDSET( /version, version of SPEC,        __FILE__, __LINE__)
 
 end subroutine init_outfile
 
