@@ -97,7 +97,7 @@ program xspech
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   if( myid.eq.0 ) then
-   write(ounit,'("xspech : ", 10x ," : ")')
+   write(ounit,'("xspech : ", 10x ," : version = "F5.2)') version
 ! COMPILATION ! do not delete; this line is replaced (see Makefile) with a write statement identifying date, time, compilation flags, etc.;
   endif
   
@@ -128,10 +128,16 @@ program xspech
   WCALL( xspech, readin ) ! sets Rscale, Mvol; 03 Nov 16;
 
   WCALL( xspech, preset )
+
+  print *, myid, 'after preset'
   
   WCALL( xspech, init_outfile ) ! initialize HDF5 library and open output file ext.h5 for writing during execution
 
+  print *, myid, 'after init_outfile'
+
   WCALL( xspech, mirror_input_to_outfile ) ! mirror input file contents to output file
+
+  print *, myid, 'after mirror_input_to_outfile'
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
