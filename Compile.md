@@ -36,6 +36,6 @@ so we have to disable the C++ interface)
 
 `make`
 
-This should leave you with a file "hdf5-1.10.5.dmg" or similar, which you can install similar to any other Mac application.
+This should leave you with a file "hdf5-1.10.5.dmg" or similar, which you can install just as any other Mac application.
 During the build process of SPEC, you then only need to specify the HDF5 folder in the Makefile, which will likely be
-`/Applications/HDF_Group/HDF5_1.10.5/...` or similar.
+`/Applications/HDF_Group/HDF5/1.10.5`.

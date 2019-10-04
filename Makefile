@@ -90,7 +90,18 @@ ifeq ($(CC),gfortran_arch)
  DFLAGS=-g -fbacktrace -fbounds-check -ffree-line-length-none -fexternal-blas -DDEBUG
 endif 
 
-
+ifeq ($(CC),gfortran_mac)
+ # Not checked
+ FC=mpif90
+ CFLAGS=-fdefault-real-8
+ LINKS=-L/usr/local/Cellar/lapack/3.8.0_1/lib -llapack -Wl,-rpath -Wl,/usr/local/Cellar/lapack/3.8.0_1/lib -lblas -L/usr/local/Cellar/openblas/0.3.7 -lgfortran -Wl,-rpath -Wl,/usr/local/Cellar/openblas/0.3.7/lib
+ LIBS=-I/Applications/HDF_Group/HDF5/1.10.5/include/static
+ LINKS+=-L/Applications/HDF_Group/HDF5/1.10.5/lib -lhdf5_f90cstub -lhdf5_fortran -lhdf5 -lpthread -lz -lm -Wl,-rpath -Wl,/Applications/HDF_Group/HDF5/1.10.5/lib
+ LIBS+=-I/usr/local/Cellar/fftw/3.3.8/include
+ LINKS+=-L/usr/local/Cellar/fftw/3.3.8/lib -lfftw3 -Wl,-rpath -Wl,/usr/local/Cellar/fftw/3.3.8/lib
+ RFLAGS=-O2 -ffixed-line-length-none -ffree-line-length-none -fexternal-blas
+ DFLAGS=-g -fbacktrace -fbounds-check -ffree-line-length-none -fexternal-blas -DDEBUG
+endif
 
 ifeq ($(CC),lff95)
  # LF95 SAL
