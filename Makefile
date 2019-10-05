@@ -28,7 +28,7 @@
  
  CC=intel
  # if want to use gfortran; make CC=gfortran xspec; otherwise using Intel
- FC=mpifort
+ FC=mpif90 # at PPPL, mpifort will cause parallel HDF5 hang
  
  # Intel Defaults
  # At PPPL, you can use the following commands
@@ -48,10 +48,10 @@
 ifeq ($(CC),gfortran)
  # At PPPL, you can use the following commands
  # module use /p/focus/modules
- # module load spec/gfortran
+ # module load spec/gcc
  RFLAGS=-O3 -w -ffree-line-length-none -march=native -ffast-math -fexternal-blas
- DFLAGS=-Og -w -ffree-line-length-none -Wextra -Wtarget-lifetime -fbacktrace -fbounds-check -fexternal-blas \
-     -ffpe-trap=zero -fcheck=all -DDEBUG
+ DFLAGS=-O0 -g -w -ffree-line-length-none -Wextra -Wtarget-lifetime -fbacktrace -fbounds-check -fexternal-blas \
+     -fcheck=all -DDEBUG #-ffpe-trap=invalid,zero,overflow,underflow,inexact # for some reason this will cause crash
  CFLAGS=-fdefault-real-8
  LINKS=-L$(LAPACK_HOME) -llapack -lgfortran
  LIBS=-I$(HDF5_HOME)/include

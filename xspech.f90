@@ -128,16 +128,10 @@ program xspech
   WCALL( xspech, readin ) ! sets Rscale, Mvol; 03 Nov 16;
 
   WCALL( xspech, preset )
-
-  print *, myid, 'after preset'
   
   WCALL( xspech, init_outfile ) ! initialize HDF5 library and open output file ext.h5 for writing during execution
 
-  print *, myid, 'after init_outfile'
-
   WCALL( xspech, mirror_input_to_outfile ) ! mirror input file contents to output file
-
-  print *, myid, 'after mirror_input_to_outfile'
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -803,11 +797,9 @@ dcpu, Ttotal / (/ 1, 60, 3600 /), ecpu, 100*ecpu/dcpu
    write(ounit,'("ending : ", 10x ," : ")')
   endif ! end of if( myid.eq.0 ) ; 14 Jan 15;
 
-  print *, myid, 'before hdfint'
   WCALL( xspech, hdfint ) ! write final outputs to HDF5 file ! 18 Jul 14;
-  print *, myid, 'after hdfint'
+
   WCALL( xspech, finish_outfile ) ! close HDF5 output file
-  print *, myid, 'after finish_outfile'
 
   MPIFINALIZE
   
