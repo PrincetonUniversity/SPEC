@@ -91,7 +91,7 @@ ifeq ($(CC),gfortran_arch)
 endif 
 
 ifeq ($(CC),gfortran_mac)
- # Not checked
+ # works on Ksenia's laptop
  FC=mpif90
  CFLAGS=-fdefault-real-8
  LINKS=-L/usr/local/Cellar/lapack/3.8.0_1/lib -llapack -Wl,-rpath -Wl,/usr/local/Cellar/lapack/3.8.0_1/lib -lblas -L/usr/local/Cellar/openblas/0.3.7 -lgfortran -Wl,-rpath -Wl,/usr/local/Cellar/openblas/0.3.7/lib
