@@ -856,6 +856,7 @@ do ii = 1, work1
 enddo
 
 do vvol = 1, Mvol
+  NN = NAdof(vvol)
   allocate( solution(vvol)%mat(1:NN, -1:2))
   solution(vvol)%mat(1:NN, -1:2) = 0
 enddo

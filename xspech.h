@@ -732,15 +732,15 @@ program xspech
     deallocate(dMG(ii)%arr)
     deallocate(MBpsi(ii)%arr)
   enddo
-
-  do ii = 1, size(solution)
-    deallocate(solution(ii)%mat)
-  enddo
   deallocate(dMA)
   deallocate(dMB)
   deallocate(dMD)
   deallocate(dMG)
   deallocate(MBpsi)
+
+  do ii = 1, Mvol
+    deallocate(solution(ii)%mat)
+  enddo
   deallocate(solution)
 
 
