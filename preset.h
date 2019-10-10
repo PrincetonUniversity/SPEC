@@ -34,7 +34,7 @@ subroutine preset
   LOCALS
   
   INTEGER   :: innout, idof, jk, ll, ii, ifail, ideriv, vvol, mi, ni, mj, nj, mk, nk, mimj, ninj, mkmj, nknj, jj, kk, lvol, mm, nn, imn
-  INTEGER   :: lquad, igauleg, maxIquad, Mrad, jquad, Lcurvature, iret
+  INTEGER   :: lquad, igauleg, maxIquad, Mrad, jquad, Lcurvature, iret, work1, work2
   REAL      :: teta, zeta, arg, lss, cszeta(0:1), error
 
   BEGIN(preset)
@@ -830,29 +830,66 @@ endif
 
 ! HERE DEFINE THE NEW MATRICES ARRAY
 
-allocate(dMA(1:Mvol))
-allocate(dMB(1:Mvol))
-allocate(dMD(1:Mvol))
-allocate(dMG(1:Mvol))
-allocate(MBpsi(1:Mvol))
-allocate(solution(1:Mvol))
-do vvol = 1, Mvol
+! generate a matrix containing the pair (cpuid, matrix_index) for each volume
+allocate(IndMatrixArray(1:Mvol, 1:2))
+do vvol=1, Mvol 
+	call WhichCpuID(vvol, work1)
+	IndMatrixArray(vvol,1) = work1 !CpuID associated to this volume
+
+	! Count how many volumes are already associated to this CPU
+	work1=0
+	do lvol=1,vvol
+		call WhichCpuID(lvol, work2)
+		if (work2.EQ.IndMatrixArray(vvol, 1)) then
+			work1 = work1 + 1
+		endif
+	enddo
+	IndMatrixArray(vvol, 2) = work1 ! index of volume in the list of volume for this CPU
+enddo
+
+
+! Allocate matrices
+work1 = 0
+do vvol =1, Mvol !Count how many volumes are associated to this CPU
+	call IsMyVolume(vvol)
+	if (IsMyVolumeValue.EQ.1) then
+		work1=work1+1
+	endif
+enddo
+
+! Allocate only the required number of matrices to each array
+allocate(dMA(1:work1))
+allocate(dMB(1:work1))
+allocate(dMD(1:work1))
+allocate(dMG(1:work1))
+allocate(MBpsi(1:work1))
+allocate(solution(1:Mvol)) !Excepted for solution which is broadcaster
+do ii = 1, work1
+  do jj = 1, Mvol ! Look for associated volume corresponding to (myid, ii)
+	if ((myid.EQ.IndMatrixArray(jj, 1)).AND.(ii.EQ.IndMatrixArray(jj, 2))) then
+		vvol = jj
+		exit !Found the volume, we can exit do loop
+	endif
+  enddo
+
   NN = NAdof(vvol)
-  allocate( dMA(vvol)%mat(0:NN, 0:NN) )
-  dMA(vvol)%mat(0:NN, 0:NN)  = 0
+  allocate( dMA(ii)%mat(0:NN, 0:NN) )
+  dMA(ii)%mat(0:NN, 0:NN)  = 0
   
-  allocate( dMB(vvol)%mat(0:NN, 0:2) )
-  dMB(vvol)%mat(0:NN, 0:2) = 0
+  allocate( dMB(ii)%mat(0:NN, 0:2) )
+  dMB(ii)%mat(0:NN, 0:2) = 0
   
-  allocate( dMD(vvol)%mat(0:NN, 0:NN) )
-  dMD(vvol)%mat(0:NN, 0:NN) = 0
+  allocate( dMD(ii)%mat(0:NN, 0:NN) )
+  dMD(ii)%mat(0:NN, 0:NN) = 0
   
-  allocate( dMG(vvol)%arr(0:NN) )
-  dMG(vvol)%arr(0:NN) = 0
+  allocate( dMG(ii)%arr(0:NN) )
+  dMG(ii)%arr(0:NN) = 0
   
-  allocate( MBpsi(vvol)%arr(1:NN) )
-  MBpsi(vvol)%arr(1:NN) = 0
-  
+  allocate( MBpsi(ii)%arr(1:NN) )
+  MBpsi(ii)%arr(1:NN) = 0
+enddo
+
+do vvol = 1, Mvol
   allocate( solution(vvol)%mat(1:NN, -1:2))
   solution(vvol)%mat(1:NN, -1:2) = 0
 enddo

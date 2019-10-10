@@ -36,7 +36,8 @@ subroutine ma02aa( lvol, NN )
                         ivol, &
                         dtflux, dpflux, &
                         xoffset, &
-                        Lcoordinatesingularity, Lplasmaregion, Lvacuumregion
+                        Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
+						IndMatrixArray
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -46,7 +47,7 @@ subroutine ma02aa( lvol, NN )
   
   
   INTEGER              :: ideriv
-  REAL                 :: tol, dpsi(1:2), lastcpu
+  REAL                 :: tol, dpsi(1:2), lastcpu, ind_matrix
   CHARACTER            :: packorunpack
   
   INTEGER              :: Nxdof, Ndof, Ldfjac, iflag, maxfev, mode, LRR, nfev, njev, nprint, ihybrj
@@ -91,6 +92,7 @@ subroutine ma02aa( lvol, NN )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   ivol = lvol ! various subroutines (e.g. mp00ac, df00ab) that may be called below require volume identification, but the argument list is fixed by NAG;
+  ind_matrix = IndMatrixArray(ivol, 2)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -167,7 +169,7 @@ subroutine ma02aa( lvol, NN )
    
 ! pre-calculate some matrix vector products;
    
-   MBpsi(lvol)%arr(1:NN) =                         matmul( dMB(lvol)%mat(1:NN,1: 2), dpsi(1:2) )
+   MBpsi(ind_matrix)%arr(1:NN) =                         matmul( dMB(ind_matrix)%mat(1:NN,1: 2), dpsi(1:2) )
 !  MEpsi(1:NN) = zero !                  matmul( dME(1:NN,1: 2), dpsi(1:2) )
    
 !  psiMCpsi    = zero ! half * sum( dpsi(1:2) * matmul( dMC(1: 2,1: 2), dpsi(1:2) ) )
@@ -189,11 +191,11 @@ subroutine ma02aa( lvol, NN )
 !                 xi(1:NN), &
 !                 NEEDC(1:NNonLinearConstraints), IWk(1:LIWk), LIWk, RWk(1:LRWk), LRWk, ie04uff )
 !
-!    if( irevcm.eq.1 .or. irevcm.eq.2 .or. irevcm.eq.3 ) Mxi(1:NN) = matmul( dMA(lvol)%mat(1:NN,1:NN), xi(1:NN) ) ! calculate objective  functional and/or gradient;
-!    if( irevcm.eq.4 .or. irevcm.eq.5 .or. irevcm.eq.6 ) Mxi(1:NN) = matmul( dMD(lvol)%mat(1:NN,1:NN), xi(1:NN) ) ! calculate constraint functional and/or gradient;
+!    if( irevcm.eq.1 .or. irevcm.eq.2 .or. irevcm.eq.3 ) Mxi(1:NN) = matmul( dMA(ind_matrix)%mat(1:NN,1:NN), xi(1:NN) ) ! calculate objective  functional and/or gradient;
+!    if( irevcm.eq.4 .or. irevcm.eq.5 .or. irevcm.eq.6 ) Mxi(1:NN) = matmul( dMD(ind_matrix)%mat(1:NN,1:NN), xi(1:NN) ) ! calculate constraint functional and/or gradient;
 !    
-!    if( irevcm.eq.1 .or. irevcm.eq.3 ) objectivefunction       = half * sum( xi(1:NN) * Mxi(1:NN) ) + sum( xi(1:NN) * MBpsi(lvol)%arr(1:NN) ) + psiMCpsi
-!    if( irevcm.eq.2 .or. irevcm.eq.3 ) objectivegradient(1:NN) =                        Mxi(1:NN)   +                 MBpsi(lvol)%arr(1:NN)
+!    if( irevcm.eq.1 .or. irevcm.eq.3 ) objectivefunction       = half * sum( xi(1:NN) * Mxi(1:NN) ) + sum( xi(1:NN) * MBpsi(ind_matrix)%arr(1:NN) ) + psiMCpsi
+!    if( irevcm.eq.2 .or. irevcm.eq.3 ) objectivegradient(1:NN) =                        Mxi(1:NN)   +                 MBpsi(ind_matrix)%arr(1:NN)
 !    
 !   if( irevcm.eq.4 .or. irevcm.eq.6 .and. NEEDC(1).gt.0 ) then
 !    constraintfunction(1     ) = half * sum( xi(1:NN) * Mxi(1:NN) ) + sum( xi(1:NN) * MEpsi(1:NN) ) + psiMFpsi
@@ -258,8 +260,8 @@ subroutine ma02aa( lvol, NN )
    packorunpack = 'U'
    CALL( ma02aa, packab ( packorunpack, lvol, NN, xi(1:NN), ideriv ) )
    
-   lBBintegral(lvol) = half * sum( xi(1:NN) * matmul( dMA(lvol)%mat(1:NN,1:NN), xi(1:NN) ) ) + sum( xi(1:NN) * MBpsi(lvol)%arr(1:NN) ) ! + psiMCpsi
-   lABintegral(lvol) = half * sum( xi(1:NN) * matmul( dMD(lvol)%mat(1:NN,1:NN), xi(1:NN) ) ) ! + sum( xi(1:NN) * MEpsi(1:NN) ) ! + psiMFpsi
+   lBBintegral(lvol) = half * sum( xi(1:NN) * matmul( dMA(ind_matrix)%mat(1:NN,1:NN), xi(1:NN) ) ) + sum( xi(1:NN) * MBpsi(ind_matrix)%arr(1:NN) ) ! + psiMCpsi
+   lABintegral(lvol) = half * sum( xi(1:NN) * matmul( dMD(ind_matrix)%mat(1:NN,1:NN), xi(1:NN) ) ) ! + sum( xi(1:NN) * MEpsi(1:NN) ) ! + psiMFpsi
    
    solution(ivol)%mat(1:NN,0) = xi(1:NN)
    
@@ -289,7 +291,7 @@ subroutine ma02aa( lvol, NN )
    
 ! pre-calculate some matrix vector products; these are used in df00ab;
    
-   MBpsi(lvol)%arr(1:NN) =                         matmul( dMB(lvol)%mat(1:NN,1: 2), dpsi(1:2) )
+   MBpsi(ind_matrix)%arr(1:NN) =                         matmul( dMB(ind_matrix)%mat(1:NN,1: 2), dpsi(1:2) )
 !  MEpsi(1:NN) = zero !                  matmul( dME(1:NN,1: 2), dpsi(1:2) )
 !  psiMCpsi    = zero ! half * sum( dpsi(1:2) * matmul( dMC(1: 2,1: 2), dpsi(1:2) ) )
 !  psiMFpsi    = zero ! half * sum( dpsi(1:2) * matmul( dMF(1: 2,1: 2), dpsi(1:2) ) )
@@ -338,8 +340,8 @@ subroutine ma02aa( lvol, NN )
    ImagneticOK(lvol) = .true. 
 !endif
    
-   lBBintegral(lvol) = half * sum( xi(1:NN) * matmul( dMA(lvol)%mat(1:NN,1:NN), xi(1:NN) ) ) + sum( xi(1:NN) * MBpsi(lvol)%arr(1:NN) ) ! + psiMCpsi
-   lABintegral(lvol) = half * sum( xi(1:NN) * matmul( dMD(lvol)%mat(1:NN,1:NN), xi(1:NN) ) ) ! + sum( xi(1:NN) * MEpsi(1:NN) ) ! + psiMFpsi
+   lBBintegral(lvol) = half * sum( xi(1:NN) * matmul( dMA(ind_matrix)%mat(1:NN,1:NN), xi(1:NN) ) ) + sum( xi(1:NN) * MBpsi(ind_matrix)%arr(1:NN) ) ! + psiMCpsi
+   lABintegral(lvol) = half * sum( xi(1:NN) * matmul( dMD(ind_matrix)%mat(1:NN,1:NN), xi(1:NN) ) ) ! + sum( xi(1:NN) * MEpsi(1:NN) ) ! + psiMFpsi
    
    solution(ivol)%mat(1:NN,0) = xi(1:NN)
    

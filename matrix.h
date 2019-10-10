@@ -360,7 +360,8 @@ subroutine matrix( lvol, mn, lrad )
                         TDszcc, TDszcs, TDszsc, TDszss, &
                         DDttcc, DDttcs, DDttsc, DDttss, &
                         DDtzcc, DDtzcs, DDtzsc, DDtzss, &
-                        DDzzcc, DDzzcs, DDzzsc, DDzzss
+                        DDzzcc, DDzzcs, DDzzsc, DDzzss, &
+						IndMatrixArray
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -372,7 +373,7 @@ subroutine matrix( lvol, mn, lrad )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  INTEGER              :: NN, ii, jj, ll, kk, pp, mi, ni, mj, nj, mimj, minj, nimj, ninj, mjmi, mjni, njmi, njni, id, jd
+  INTEGER              :: NN, ii, jj, ll, kk, pp, mi, ni, mj, nj, mimj, minj, nimj, ninj, mjmi, mjni, njmi, njni, id, jd, ind_matrix
   
   REAL                 :: Wtete, Wteto, Wtote, Wtoto
   REAL                 :: Wteze, Wtezo, Wtoze, Wtozo
@@ -388,21 +389,22 @@ subroutine matrix( lvol, mn, lrad )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
+  ind_matrix = IndMatrixArray(lvol, 2)
 #ifdef DEBUG
-  FATAL( matrix, .not.allocated(dMA(lvol)%mat), error )
-  FATAL( matrix, .not.allocated(dMD(lvol)%mat), error )
-  FATAL( matrix, .not.allocated(dMB(lvol)%mat), error )
-  FATAL( matrix, .not.allocated(dMG(lvol)%arr), error )  
+  FATAL( matrix, .not.allocated(dMA(ind_matrix)%mat), error )
+  FATAL( matrix, .not.allocated(dMD(ind_matrix)%mat), error )
+  FATAL( matrix, .not.allocated(dMB(ind_matrix)%mat), error )
+  FATAL( matrix, .not.allocated(dMG(ind_matrix)%arr), error )  
 #endif
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   NN = NAdof(lvol) ! shorthand;
   
-  dMA(lvol)%mat(0:NN,0:NN) = zero
-  dMD(lvol)%mat(0:NN,0:NN) = zero
-  dMB(lvol)%mat(0:NN,1: 2) = zero
-  dMG(lvol)%arr(0:NN     ) = zero
+  dMA(ind_matrix)%mat(0:NN,0:NN) = zero
+  dMD(ind_matrix)%mat(0:NN,0:NN) = zero
+  dMB(ind_matrix)%mat(0:NN,1: 2) = zero
+  dMG(ind_matrix)%arr(0:NN     ) = zero
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -426,10 +428,10 @@ subroutine matrix( lvol, mn, lrad )
        Hteze = + DToocc(pp,ll,jj,ii) - DToocc(ll,pp,ii,jj)
        Hzeze =   zero 
        
-       id = Ate(lvol,0,ii)%i(ll) ; jd = Ate(lvol,0,jj)%i(pp) ; dMA(lvol)%mat(id,jd) = Wtete ; dMD(lvol)%mat(id,jd) = Htete
-       ;                         ; jd = Aze(lvol,0,jj)%i(pp) ; dMA(lvol)%mat(id,jd) = Wzete ; dMD(lvol)%mat(id,jd) = Hzete
-       id = Aze(lvol,0,ii)%i(ll) ; jd = Ate(lvol,0,jj)%i(pp) ; dMA(lvol)%mat(id,jd) = Wteze ; dMD(lvol)%mat(id,jd) = Hteze
-       ;                         ; jd = Aze(lvol,0,jj)%i(pp) ; dMA(lvol)%mat(id,jd) = Wzeze ; dMD(lvol)%mat(id,jd) = Hzeze
+       id = Ate(lvol,0,ii)%i(ll) ; jd = Ate(lvol,0,jj)%i(pp) ; dMA(ind_matrix)%mat(id,jd) = Wtete ; dMD(ind_matrix)%mat(id,jd) = Htete
+       ;                         ; jd = Aze(lvol,0,jj)%i(pp) ; dMA(ind_matrix)%mat(id,jd) = Wzete ; dMD(ind_matrix)%mat(id,jd) = Hzete
+       id = Aze(lvol,0,ii)%i(ll) ; jd = Ate(lvol,0,jj)%i(pp) ; dMA(ind_matrix)%mat(id,jd) = Wteze ; dMD(ind_matrix)%mat(id,jd) = Hteze
+       ;                         ; jd = Aze(lvol,0,jj)%i(pp) ; dMA(ind_matrix)%mat(id,jd) = Wzeze ; dMD(ind_matrix)%mat(id,jd) = Hzeze
        
       enddo ! end of do pp ;
       
@@ -443,29 +445,29 @@ subroutine matrix( lvol, mn, lrad )
     
     do ll = 0, lrad ! Chebyshev polynomial ;
      
-     ;                  ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lma(lvol,  ii)       ; dMA(lvol)%mat(id,jd) = +      TT(ll, 0,0)
-     ;                  ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lmb(lvol,  ii)       ; dMA(lvol)%mat(id,jd) = +      TT(ll,kk,0) ! check coordinate singularity ;
-     if( ii.gt.1 ) then ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lme(lvol,  ii)       ; dMA(lvol)%mat(id,jd) = - ni * TT(ll, 1,0)
-      ;                 ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lme(lvol,  ii)       ; dMA(lvol)%mat(id,jd) = - mi * TT(ll, 1,0)
-     else               ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lmg(lvol,  ii)       ; dMA(lvol)%mat(id,jd) = +      TT(ll, 1,0)
-      ;                 ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lmh(lvol,  ii)       ; dMA(lvol)%mat(id,jd) = +      TT(ll, 1,0)
+     ;                  ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lma(lvol,  ii)       ; dMA(ind_matrix)%mat(id,jd) = +      TT(ll, 0,0)
+     ;                  ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lmb(lvol,  ii)       ; dMA(ind_matrix)%mat(id,jd) = +      TT(ll,kk,0) ! check coordinate singularity ;
+     if( ii.gt.1 ) then ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lme(lvol,  ii)       ; dMA(ind_matrix)%mat(id,jd) = - ni * TT(ll, 1,0)
+      ;                 ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lme(lvol,  ii)       ; dMA(ind_matrix)%mat(id,jd) = - mi * TT(ll, 1,0)
+     else               ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lmg(lvol,  ii)       ; dMA(ind_matrix)%mat(id,jd) = +      TT(ll, 1,0)
+      ;                 ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lmh(lvol,  ii)       ; dMA(ind_matrix)%mat(id,jd) = +      TT(ll, 1,0)
      endif
      
     enddo ! end of do ll ;
     
-    do pp = 0, lrad     ; id = Lma(lvol,  ii)       ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(lvol)%mat(id,jd) = +      TT(pp, 0,0)
-     ;                  ; id = Lmb(lvol,  ii)       ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(lvol)%mat(id,jd) = +      TT(pp,kk,0) ! check coordinate singularity ;
-     if( ii.gt.1 ) then ; id = Lme(lvol,  ii)       ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(lvol)%mat(id,jd) = - ni * TT(pp, 1,0)
-      ;                 ; id = Lme(lvol,  ii)       ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(lvol)%mat(id,jd) = - mi * TT(pp, 1,0)
-     else               ; id = Lmg(lvol,  ii)       ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(lvol)%mat(id,jd) = +      TT(pp, 1,0)
-      ;                 ; id = Lmh(lvol,  ii)       ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(lvol)%mat(id,jd) = +      TT(pp, 1,0)
+    do pp = 0, lrad     ; id = Lma(lvol,  ii)       ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(ind_matrix)%mat(id,jd) = +      TT(pp, 0,0)
+     ;                  ; id = Lmb(lvol,  ii)       ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(ind_matrix)%mat(id,jd) = +      TT(pp,kk,0) ! check coordinate singularity ;
+     if( ii.gt.1 ) then ; id = Lme(lvol,  ii)       ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(ind_matrix)%mat(id,jd) = - ni * TT(pp, 1,0)
+      ;                 ; id = Lme(lvol,  ii)       ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(ind_matrix)%mat(id,jd) = - mi * TT(pp, 1,0)
+     else               ; id = Lmg(lvol,  ii)       ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(ind_matrix)%mat(id,jd) = +      TT(pp, 1,0)
+      ;                 ; id = Lmh(lvol,  ii)       ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(ind_matrix)%mat(id,jd) = +      TT(pp, 1,0)
      endif
     enddo ! end of do pp ;
     
-    ;if( ii.gt.1 ) then ; id = Lme(lvol,  ii)       ;                           ; dMG(lvol)%arr(id   ) = - ( iVns(ii) + iBns(ii) )
-    ;else               ; id = Lmg(lvol,  ii)       ;                           ; dMB(lvol)%mat(id, 1) = -       one
-!   ;                   ; id = Lmh(lvol,  ii)       ;                           ; dMB(lvol)%mat(id, 2) = -       one ! to be deleted;
-    ;                   ; id = Lmh(lvol,  ii)       ;                           ; dMB(lvol)%mat(id, 2) = +       one ! changed sign;
+    ;if( ii.gt.1 ) then ; id = Lme(lvol,  ii)       ;                           ; dMG(ind_matrix)%arr(id   ) = - ( iVns(ii) + iBns(ii) )
+    ;else               ; id = Lmg(lvol,  ii)       ;                           ; dMB(ind_matrix)%mat(id, 1) = -       one
+!   ;                   ; id = Lmh(lvol,  ii)       ;                           ; dMB(ind_matrix)%mat(id, 2) = -       one ! to be deleted;
+    ;                   ; id = Lmh(lvol,  ii)       ;                           ; dMB(ind_matrix)%mat(id, 2) = +       one ! changed sign;
     ;endif
     
    enddo ! end of do ii ;
@@ -520,22 +522,22 @@ subroutine matrix( lvol, mn, lrad )
        Hzezo =   zero
        Hzozo =   zero
      
-       id = Ate(lvol,0,ii)%i(ll) ; jd = Ate(lvol,0,jj)%i(pp) ; dMA(lvol)%mat(id,jd) = Wtete ; dMD(lvol)%mat(id,jd) = Htete
-       ;                         ; jd = Ato(lvol,0,jj)%i(pp) ; dMA(lvol)%mat(id,jd) = Wtote ; dMD(lvol)%mat(id,jd) = Htote
-       ;                         ; jd = Aze(lvol,0,jj)%i(pp) ; dMA(lvol)%mat(id,jd) = Wzete ; dMD(lvol)%mat(id,jd) = Hzete
-       ;                         ; jd = Azo(lvol,0,jj)%i(pp) ; dMA(lvol)%mat(id,jd) = Wzote ; dMD(lvol)%mat(id,jd) = Hzote
-       id = Ato(lvol,0,ii)%i(ll) ; jd = Ate(lvol,0,jj)%i(pp) ; dMA(lvol)%mat(id,jd) = Wteto ; dMD(lvol)%mat(id,jd) = Hteto
-       ;                         ; jd = Ato(lvol,0,jj)%i(pp) ; dMA(lvol)%mat(id,jd) = Wtoto ; dMD(lvol)%mat(id,jd) = Htoto
-       ;                         ; jd = Aze(lvol,0,jj)%i(pp) ; dMA(lvol)%mat(id,jd) = Wzeto ; dMD(lvol)%mat(id,jd) = Hzeto
-       ;                         ; jd = Azo(lvol,0,jj)%i(pp) ; dMA(lvol)%mat(id,jd) = Wzoto ; dMD(lvol)%mat(id,jd) = Hzoto
-       id = Aze(lvol,0,ii)%i(ll) ; jd = Ate(lvol,0,jj)%i(pp) ; dMA(lvol)%mat(id,jd) = Wteze ; dMD(lvol)%mat(id,jd) = Hteze
-       ;                         ; jd = Ato(lvol,0,jj)%i(pp) ; dMA(lvol)%mat(id,jd) = Wtoze ; dMD(lvol)%mat(id,jd) = Htoze
-       ;                         ; jd = Aze(lvol,0,jj)%i(pp) ; dMA(lvol)%mat(id,jd) = Wzeze ; dMD(lvol)%mat(id,jd) = Hzeze
-       ;                         ; jd = Azo(lvol,0,jj)%i(pp) ; dMA(lvol)%mat(id,jd) = Wzoze ; dMD(lvol)%mat(id,jd) = Hzoze
-       id = Azo(lvol,0,ii)%i(ll) ; jd = Ate(lvol,0,jj)%i(pp) ; dMA(lvol)%mat(id,jd) = Wtezo ; dMD(lvol)%mat(id,jd) = Htezo
-       ;                         ; jd = Ato(lvol,0,jj)%i(pp) ; dMA(lvol)%mat(id,jd) = Wtozo ; dMD(lvol)%mat(id,jd) = Htozo
-       ;                         ; jd = Aze(lvol,0,jj)%i(pp) ; dMA(lvol)%mat(id,jd) = Wzezo ; dMD(lvol)%mat(id,jd) = Hzezo
-       ;                         ; jd = Azo(lvol,0,jj)%i(pp) ; dMA(lvol)%mat(id,jd) = Wzozo ; dMD(lvol)%mat(id,jd) = Hzozo
+       id = Ate(lvol,0,ii)%i(ll) ; jd = Ate(lvol,0,jj)%i(pp) ; dMA(ind_matrix)%mat(id,jd) = Wtete ; dMD(ind_matrix)%mat(id,jd) = Htete
+       ;                         ; jd = Ato(lvol,0,jj)%i(pp) ; dMA(ind_matrix)%mat(id,jd) = Wtote ; dMD(ind_matrix)%mat(id,jd) = Htote
+       ;                         ; jd = Aze(lvol,0,jj)%i(pp) ; dMA(ind_matrix)%mat(id,jd) = Wzete ; dMD(ind_matrix)%mat(id,jd) = Hzete
+       ;                         ; jd = Azo(lvol,0,jj)%i(pp) ; dMA(ind_matrix)%mat(id,jd) = Wzote ; dMD(ind_matrix)%mat(id,jd) = Hzote
+       id = Ato(lvol,0,ii)%i(ll) ; jd = Ate(lvol,0,jj)%i(pp) ; dMA(ind_matrix)%mat(id,jd) = Wteto ; dMD(ind_matrix)%mat(id,jd) = Hteto
+       ;                         ; jd = Ato(lvol,0,jj)%i(pp) ; dMA(ind_matrix)%mat(id,jd) = Wtoto ; dMD(ind_matrix)%mat(id,jd) = Htoto
+       ;                         ; jd = Aze(lvol,0,jj)%i(pp) ; dMA(ind_matrix)%mat(id,jd) = Wzeto ; dMD(ind_matrix)%mat(id,jd) = Hzeto
+       ;                         ; jd = Azo(lvol,0,jj)%i(pp) ; dMA(ind_matrix)%mat(id,jd) = Wzoto ; dMD(ind_matrix)%mat(id,jd) = Hzoto
+       id = Aze(lvol,0,ii)%i(ll) ; jd = Ate(lvol,0,jj)%i(pp) ; dMA(ind_matrix)%mat(id,jd) = Wteze ; dMD(ind_matrix)%mat(id,jd) = Hteze
+       ;                         ; jd = Ato(lvol,0,jj)%i(pp) ; dMA(ind_matrix)%mat(id,jd) = Wtoze ; dMD(ind_matrix)%mat(id,jd) = Htoze
+       ;                         ; jd = Aze(lvol,0,jj)%i(pp) ; dMA(ind_matrix)%mat(id,jd) = Wzeze ; dMD(ind_matrix)%mat(id,jd) = Hzeze
+       ;                         ; jd = Azo(lvol,0,jj)%i(pp) ; dMA(ind_matrix)%mat(id,jd) = Wzoze ; dMD(ind_matrix)%mat(id,jd) = Hzoze
+       id = Azo(lvol,0,ii)%i(ll) ; jd = Ate(lvol,0,jj)%i(pp) ; dMA(ind_matrix)%mat(id,jd) = Wtezo ; dMD(ind_matrix)%mat(id,jd) = Htezo
+       ;                         ; jd = Ato(lvol,0,jj)%i(pp) ; dMA(ind_matrix)%mat(id,jd) = Wtozo ; dMD(ind_matrix)%mat(id,jd) = Htozo
+       ;                         ; jd = Aze(lvol,0,jj)%i(pp) ; dMA(ind_matrix)%mat(id,jd) = Wzezo ; dMD(ind_matrix)%mat(id,jd) = Hzezo
+       ;                         ; jd = Azo(lvol,0,jj)%i(pp) ; dMA(ind_matrix)%mat(id,jd) = Wzozo ; dMD(ind_matrix)%mat(id,jd) = Hzozo
        
       enddo ! end of do pp ;
       
@@ -549,39 +551,39 @@ subroutine matrix( lvol, mn, lrad )
     
     do ll = 0, lrad ! Chebyshev polynomial ;
 
-     ;                  ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lma(lvol,ii)         ; dMA(lvol)%mat(id,jd) = +      TT(ll, 0,0)
-     ;                  ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lmb(lvol,ii)         ; dMA(lvol)%mat(id,jd) = +      TT(ll,kk,0)
-     if( ii.gt.1 ) then ; id = Ato(lvol,0,ii)%i(ll) ; jd = Lmc(lvol,ii)         ; dMA(lvol)%mat(id,jd) = +      TT(ll, 0,0)
-      ;                 ; id = Azo(lvol,0,ii)%i(ll) ; jd = Lmd(lvol,ii)         ; dMA(lvol)%mat(id,jd) = +      TT(ll, 0,0)
-      ;                 ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lme(lvol,ii)         ; dMA(lvol)%mat(id,jd) = - ni * TT(ll, 1,0)
-      ;                 ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lme(lvol,ii)         ; dMA(lvol)%mat(id,jd) = - mi * TT(ll, 1,0)
-      ;                 ; id = Ato(lvol,0,ii)%i(ll) ; jd = Lmf(lvol,ii)         ; dMA(lvol)%mat(id,jd) = + ni * TT(ll, 1,0)
-      ;                 ; id = Azo(lvol,0,ii)%i(ll) ; jd = Lmf(lvol,ii)         ; dMA(lvol)%mat(id,jd) = + mi * TT(ll, 1,0)
-     else               ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lmg(lvol,ii)         ; dMA(lvol)%mat(id,jd) = +      TT(ll, 1,0)
-      ;                 ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lmh(lvol,ii)         ; dMA(lvol)%mat(id,jd) = +      TT(ll, 1,0)
+     ;                  ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lma(lvol,ii)         ; dMA(ind_matrix)%mat(id,jd) = +      TT(ll, 0,0)
+     ;                  ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lmb(lvol,ii)         ; dMA(ind_matrix)%mat(id,jd) = +      TT(ll,kk,0)
+     if( ii.gt.1 ) then ; id = Ato(lvol,0,ii)%i(ll) ; jd = Lmc(lvol,ii)         ; dMA(ind_matrix)%mat(id,jd) = +      TT(ll, 0,0)
+      ;                 ; id = Azo(lvol,0,ii)%i(ll) ; jd = Lmd(lvol,ii)         ; dMA(ind_matrix)%mat(id,jd) = +      TT(ll, 0,0)
+      ;                 ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lme(lvol,ii)         ; dMA(ind_matrix)%mat(id,jd) = - ni * TT(ll, 1,0)
+      ;                 ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lme(lvol,ii)         ; dMA(ind_matrix)%mat(id,jd) = - mi * TT(ll, 1,0)
+      ;                 ; id = Ato(lvol,0,ii)%i(ll) ; jd = Lmf(lvol,ii)         ; dMA(ind_matrix)%mat(id,jd) = + ni * TT(ll, 1,0)
+      ;                 ; id = Azo(lvol,0,ii)%i(ll) ; jd = Lmf(lvol,ii)         ; dMA(ind_matrix)%mat(id,jd) = + mi * TT(ll, 1,0)
+     else               ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lmg(lvol,ii)         ; dMA(ind_matrix)%mat(id,jd) = +      TT(ll, 1,0)
+      ;                 ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lmh(lvol,ii)         ; dMA(ind_matrix)%mat(id,jd) = +      TT(ll, 1,0)
      endif
      
     enddo ! end of do ll;
     
     do pp = 0, lrad
-     ;                  ; id = Lma(lvol,ii)         ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(lvol)%mat(id,jd) = +      TT(pp, 0,0)
-     ;                  ; id = Lmb(lvol,ii)         ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(lvol)%mat(id,jd) = +      TT(pp,kk,0)
-     if( ii.gt.1 ) then ; id = Lmc(lvol,ii)         ; jd = Ato(lvol,0,ii)%i(pp) ; dMA(lvol)%mat(id,jd) = +      TT(pp, 0,0)
-      ;                 ; id = Lmd(lvol,ii)         ; jd = Azo(lvol,0,ii)%i(pp) ; dMA(lvol)%mat(id,jd) = +      TT(pp, 0,0)
-      ;                 ; id = Lme(lvol,ii)         ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(lvol)%mat(id,jd) = - ni * TT(pp, 1,0)
-      ;                 ; id = Lme(lvol,ii)         ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(lvol)%mat(id,jd) = - mi * TT(pp, 1,0)
-      ;                 ; id = Lmf(lvol,ii)         ; jd = Ato(lvol,0,ii)%i(pp) ; dMA(lvol)%mat(id,jd) = + ni * TT(pp, 1,0)
-      ;                 ; id = Lmf(lvol,ii)         ; jd = Azo(lvol,0,ii)%i(pp) ; dMA(lvol)%mat(id,jd) = + mi * TT(pp, 1,0)
-     else               ; id = Lmg(lvol,ii)         ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(lvol)%mat(id,jd) = +      TT(pp, 1,0)
-      ;                 ; id = Lmh(lvol,ii)         ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(lvol)%mat(id,jd) = +      TT(pp, 1,0)
+     ;                  ; id = Lma(lvol,ii)         ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(ind_matrix)%mat(id,jd) = +      TT(pp, 0,0)
+     ;                  ; id = Lmb(lvol,ii)         ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(ind_matrix)%mat(id,jd) = +      TT(pp,kk,0)
+     if( ii.gt.1 ) then ; id = Lmc(lvol,ii)         ; jd = Ato(lvol,0,ii)%i(pp) ; dMA(ind_matrix)%mat(id,jd) = +      TT(pp, 0,0)
+      ;                 ; id = Lmd(lvol,ii)         ; jd = Azo(lvol,0,ii)%i(pp) ; dMA(ind_matrix)%mat(id,jd) = +      TT(pp, 0,0)
+      ;                 ; id = Lme(lvol,ii)         ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(ind_matrix)%mat(id,jd) = - ni * TT(pp, 1,0)
+      ;                 ; id = Lme(lvol,ii)         ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(ind_matrix)%mat(id,jd) = - mi * TT(pp, 1,0)
+      ;                 ; id = Lmf(lvol,ii)         ; jd = Ato(lvol,0,ii)%i(pp) ; dMA(ind_matrix)%mat(id,jd) = + ni * TT(pp, 1,0)
+      ;                 ; id = Lmf(lvol,ii)         ; jd = Azo(lvol,0,ii)%i(pp) ; dMA(ind_matrix)%mat(id,jd) = + mi * TT(pp, 1,0)
+     else               ; id = Lmg(lvol,ii)         ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(ind_matrix)%mat(id,jd) = +      TT(pp, 1,0)
+      ;                 ; id = Lmh(lvol,ii)         ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(ind_matrix)%mat(id,jd) = +      TT(pp, 1,0)
      endif
     enddo ! end of do pp ;
     
-    ;if( ii.gt.1 ) then ; id = Lme(lvol,ii)         ;                           ; dMG(lvol)%arr(id   ) = - ( iVns(ii) + iBns(ii) )
-    ;                   ; id = Lmf(lvol,ii)         ;                           ; dMG(lvol)%arr(id   ) = - ( iVnc(ii) + iBnc(ii) )
-    ;else               ; id = Lmg(lvol,ii)         ;                           ; dMB(lvol)%mat(id, 1) = -       one
-!   ;                   ; id = Lmh(lvol,ii)         ;                           ; dMB(lvol)%mat(id, 2) = -       one ! to be deleted;
-    ;                   ; id = Lmh(lvol,ii)         ;                           ; dMB(lvol)%mat(id, 2) = +       one ! changed sign;
+    ;if( ii.gt.1 ) then ; id = Lme(lvol,ii)         ;                           ; dMG(ind_matrix)%arr(id   ) = - ( iVns(ii) + iBns(ii) )
+    ;                   ; id = Lmf(lvol,ii)         ;                           ; dMG(ind_matrix)%arr(id   ) = - ( iVnc(ii) + iBnc(ii) )
+    ;else               ; id = Lmg(lvol,ii)         ;                           ; dMB(ind_matrix)%mat(id, 1) = -       one
+!   ;                   ; id = Lmh(lvol,ii)         ;                           ; dMB(ind_matrix)%mat(id, 2) = -       one ! to be deleted;
+    ;                   ; id = Lmh(lvol,ii)         ;                           ; dMB(ind_matrix)%mat(id, 2) = +       one ! changed sign;
     ;endif
     
    enddo ! end of do ii ;
@@ -597,12 +599,12 @@ subroutine matrix( lvol, mn, lrad )
    do ii = 1, NN
     
     do jj = 1, NN
-     if( abs(dMA(lvol)%mat(ii,jj)-dMA(lvol)%mat(jj,ii)) .gt. small*abs(dMA(lvol)%mat(ii,jj)+dMA(lvol)%mat(jj,ii)) ) then
-      write(ounit,1000) myid, dMA(lvol)%mat(ii,jj), dMA(lvol)%mat(jj,ii), dMA(lvol)%mat(ii,jj)-dMA(lvol)%mat(jj,ii)
+     if( abs(dMA(ind_matrix)%mat(ii,jj)-dMA(ind_matrix)%mat(jj,ii)) .gt. small*abs(dMA(ind_matrix)%mat(ii,jj)+dMA(ind_matrix)%mat(jj,ii)) ) then
+      write(ounit,1000) myid, dMA(ind_matrix)%mat(ii,jj), dMA(ind_matrix)%mat(jj,ii), dMA(ind_matrix)%mat(ii,jj)-dMA(ind_matrix)%mat(jj,ii)
      endif
      
-     if( abs(dMD(lvol)%mat(ii,jj)-dMD(lvol)%mat(jj,ii)) .gt. small*abs(dMD(lvol)%mat(ii,jj)+dMD(lvol)%mat(jj,ii)) ) then
-      write(ounit,1001) myid, dMD(lvol)%mat(ii,jj), dMD(lvol)%mat(jj,ii), dMD(lvol)%mat(ii,jj)-dMD(lvol)%mat(jj,ii)
+     if( abs(dMD(ind_matrix)%mat(ii,jj)-dMD(ind_matrix)%mat(jj,ii)) .gt. small*abs(dMD(ind_matrix)%mat(ii,jj)+dMD(ind_matrix)%mat(jj,ii)) ) then
+      write(ounit,1001) myid, dMD(ind_matrix)%mat(ii,jj), dMD(ind_matrix)%mat(jj,ii), dMD(ind_matrix)%mat(ii,jj)-dMD(ind_matrix)%mat(jj,ii)
      endif
      
     enddo ! end of do jj;
@@ -611,8 +613,8 @@ subroutine matrix( lvol, mn, lrad )
    
   endif ! end of if( Wmatrix ) ;
   
-1000 format("matrix : " 10x " : myid="i3" : dMA(lvol)%mat(ii,jj)="es23.15", dMA(lvol)%mat(jj,ii)="es23.15", dMA(lvol)%mat(ii,jj)-dMA(lvol)%mat(jj,ii)="es13.5" ;")
-1001 format("matrix : " 10x " : myid="i3" : dMD(lvol)%mat(ii,jj)="es23.15", dMD(lvol)%mat(jj,ii)="es23.15", dMD(lvol)%mat(ii,jj)-dMD(lvol)%mat(jj,ii)="es13.5" ;")
+1000 format("matrix : " 10x " : myid="i3" : dMA(ind_matrix)%mat(ii,jj)="es23.15", dMA(ind_matrix)%mat(jj,ii)="es23.15", dMA(ind_matrix)%mat(ii,jj)-dMA(ind_matrix)%mat(jj,ii)="es13.5" ;")
+1001 format("matrix : " 10x " : myid="i3" : dMD(ind_matrix)%mat(ii,jj)="es23.15", dMD(ind_matrix)%mat(jj,ii)="es23.15", dMD(ind_matrix)%mat(ii,jj)-dMD(ind_matrix)%mat(jj,ii)="es13.5" ;")
   
 #endif
   
