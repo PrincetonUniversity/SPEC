@@ -144,7 +144,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
                         diotadxup, dItGpdxtp, &
                         lBBintegral, lABintegral, &
                         xoffset, &
-                        ImagneticOK
+                        ImagneticOK, IndMatrixArray
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -158,7 +158,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   
   INTEGER, parameter   :: NB = 3 ! optimal workspace block size for LAPACK:DSYSVX;
   
-  INTEGER              :: lvol, NN, MM, ideriv, lmns, idsysvx(0:1), ii, jj, nnz, Lwork
+  INTEGER              :: lvol, NN, MM, ideriv, lmns, idsysvx(0:1), ii, jj, nnz, Lwork, ind_matrix
   
   REAL                 :: lmu, dpf, dtf, dpsi(1:2), tpsi(1:2), ppsi(1:2), lcpu
   
@@ -177,6 +177,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   lvol = ivol ! recall that ivol is global;
+  ind_matrix = IndMatrixArray(lvol, 2)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -251,30 +252,30 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
    
    if( Lcoordinatesingularity ) then
     
-    ;matrix(1:NN,1:NN) = dMA(lvol)%mat(1:NN,1:NN) - lmu * dMD(lvol)%mat(1:NN,1:NN)
+    ;matrix(1:NN,1:NN) = dMA(ind_matrix)%mat(1:NN,1:NN) - lmu * dMD(ind_matrix)%mat(1:NN,1:NN)
     
 !  !;select case( ideriv )
 !  !;case( 0 )    ; rhs(1:NN,0) = - matmul(  dMB(1:NN,1:2) - lmu  * dME(1:NN,1:2), dpsi(1:2) )
-!  !;case( 1 )    ; rhs(1:NN,1) = - matmul(                - one  * dME(1:NN,1:2), dpsi(1:2) ) - matmul( - one  * dMD(lvol)%mat(1:NN,1:NN), solution(lvol)%mat(1:NN,0) )
+!  !;case( 1 )    ; rhs(1:NN,1) = - matmul(                - one  * dME(1:NN,1:2), dpsi(1:2) ) - matmul( - one  * dMD(ind_matrix)%mat(1:NN,1:NN), solution(lvol)%mat(1:NN,0) )
 !  !; ;           ; rhs(1:NN,2) = - matmul(  dMB(1:NN,1:2) - lmu  * dME(1:NN,1:2), ppsi(1:2) )
 !  !;end select
     
     ;select case( ideriv )
-    ;case( 0 )    ; rhs(1:NN,0) = - matmul(  dMB(lvol)%mat(1:NN,1:2)                       , dpsi(1:2) )
-    ;case( 1 )    ; rhs(1:NN,1) =                                                              - matmul( - one  * dMD(lvol)%mat(1:NN,1:NN), solution(lvol)%mat(1:NN,0) )
-    ; ;           ; rhs(1:NN,2) = - matmul(  dMB(lvol)%mat(1:NN,1:2)                       , ppsi(1:2) )
+    ;case( 0 )    ; rhs(1:NN,0) = - matmul(  dMB(ind_matrix)%mat(1:NN,1:2)                       , dpsi(1:2) )
+    ;case( 1 )    ; rhs(1:NN,1) =                                                              - matmul( - one  * dMD(ind_matrix)%mat(1:NN,1:NN), solution(lvol)%mat(1:NN,0) )
+    ; ;           ; rhs(1:NN,2) = - matmul(  dMB(ind_matrix)%mat(1:NN,1:2)                       , ppsi(1:2) )
     ;end select
     
    else ! .not.Lcoordinatesingularity; 
     
     if( Lplasmaregion ) then
      
-     matrix(1:NN,1:NN) = dMA(lvol)%mat(1:NN,1:NN) - lmu * dMD(lvol)%mat(1:NN,1:NN)
+     matrix(1:NN,1:NN) = dMA(ind_matrix)%mat(1:NN,1:NN) - lmu * dMD(ind_matrix)%mat(1:NN,1:NN)
      
      select case( ideriv )
-     case( 0 )    ; rhs(1:NN,0) = - matmul( dMB(lvol)%mat(1:NN,1:2 ), dpsi(1:2) )
-     case( 1 )    ; rhs(1:NN,1) =                                                              - matmul( - one * dMD(lvol)%mat(1:NN,1:NN), solution(lvol)%mat(1:NN,0) )
-      ;           ; rhs(1:NN,2) = - matmul( dMB(lvol)%mat(1:NN,1:2 ), ppsi(1:2) )
+     case( 0 )    ; rhs(1:NN,0) = - matmul( dMB(ind_matrix)%mat(1:NN,1:2 ), dpsi(1:2) )
+     case( 1 )    ; rhs(1:NN,1) =                                                              - matmul( - one * dMD(ind_matrix)%mat(1:NN,1:NN), solution(lvol)%mat(1:NN,0) )
+      ;           ; rhs(1:NN,2) = - matmul( dMB(ind_matrix)%mat(1:NN,1:2 ), ppsi(1:2) )
      end select
      
     else ! Lvacuumregion ;
@@ -282,12 +283,12 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 #ifdef FORCEFREEVACUUM
      FATAL( mp00ac, .true., need to revise Beltrami matrices in vacuum region for arbitrary force-free field )
 #else
-     matrix(1:NN,1:NN) = dMA(lvol)%mat(1:NN,1:NN) ! - lmu * dMD(lvol)%mat(1:NN,1:NN) ;
+     matrix(1:NN,1:NN) = dMA(ind_matrix)%mat(1:NN,1:NN) ! - lmu * dMD(ind_matrix)%mat(1:NN,1:NN) ;
 
      select case( ideriv )
-     case( 0 )    ; rhs(1:NN,0) = - dMG(lvol)%arr(1:NN) - matmul( dMB(lvol)%mat(1:NN,1:2), dpsi(1:2) ) ! perhaps there is an lmu term missing here;
-     case( 1 )    ; rhs(1:NN,1) =             - matmul( dMB(lvol)%mat(1:NN,1:2), tpsi(1:2) ) ! perhaps there is an lmu term missing here;
-      ;           ; rhs(1:NN,2) =             - matmul( dMB(lvol)%mat(1:NN,1:2), ppsi(1:2) ) ! perhaps there is an lmu term missing here;
+     case( 0 )    ; rhs(1:NN,0) = - dMG(ind_matrix)%arr(1:NN) - matmul( dMB(ind_matrix)%mat(1:NN,1:2), dpsi(1:2) ) ! perhaps there is an lmu term missing here;
+     case( 1 )    ; rhs(1:NN,1) =             - matmul( dMB(ind_matrix)%mat(1:NN,1:2), tpsi(1:2) ) ! perhaps there is an lmu term missing here;
+      ;           ; rhs(1:NN,2) =             - matmul( dMB(ind_matrix)%mat(1:NN,1:2), ppsi(1:2) ) ! perhaps there is an lmu term missing here;
      end select
 #endif
 
@@ -337,11 +338,11 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 ! can compute the energy and helicity integrals; easiest to do this with solution in packed format;
-   lBBintegral(lvol) = half * sum( solution(lvol)%mat(1:NN,0) * matmul( dMA(lvol)%mat(1:NN,1:NN), solution(lvol)%mat(1:NN,0) ) ) & 
-                     +        sum( solution(lvol)%mat(1:NN,0) * matmul( dMB(lvol)%mat(1:NN,1: 2),     dpsi(1: 2  ) ) ) !
+   lBBintegral(lvol) = half * sum( solution(lvol)%mat(1:NN,0) * matmul( dMA(ind_matrix)%mat(1:NN,1:NN), solution(lvol)%mat(1:NN,0) ) ) & 
+                     +        sum( solution(lvol)%mat(1:NN,0) * matmul( dMB(ind_matrix)%mat(1:NN,1: 2),     dpsi(1: 2  ) ) ) !
 !                    + half * sum(     dpsi(1: 2  ) * matmul( dMC(1: 2,1: 2),     dpsi(1: 2  ) ) )
   
-   lABintegral(lvol) = half * sum( solution(lvol)%mat(1:NN,0) * matmul( dMD(lvol)%mat(1:NN,1:NN), solution(lvol)%mat(1:NN,0) ) ) ! 
+   lABintegral(lvol) = half * sum( solution(lvol)%mat(1:NN,0) * matmul( dMD(ind_matrix)%mat(1:NN,1:NN), solution(lvol)%mat(1:NN,0) ) ) ! 
 !                    +        sum( solution(lvol)%mat(1:NN,0) * matmul( dME(1:NN,1: 2),     dpsi(1: 2  ) ) ) !
 !                    + half * sum(     dpsi(1: 2  ) * matmul( dMF(1: 2,1: 2),     dpsi(1: 2  ) ) )
 

@@ -91,7 +91,7 @@ subroutine dfp200( LcomputeDerivatives, vvol)
                         DDzzcc, DDzzcs, DDzzsc, DDzzss, &
                         dRodR, dRodZ, dZodR, dZodZ, &
                         LocalConstraint, &
-			IsMyVolume, IsMyVolumeValue
+						IsMyVolume, IsMyVolumeValue, IndMatrixArray
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -101,7 +101,7 @@ subroutine dfp200( LcomputeDerivatives, vvol)
   
   INTEGER              :: NN, IA, ifail, if01adf, vflag, MM, LDA, idgetrf, idgetri, Lwork
   INTEGER              :: vvol, innout, ii, jj, irz, issym, iocons, idoc, idof, imn, ll
-  INTEGER              :: Lcurvature, ideriv, id
+  INTEGER              :: Lcurvature, ideriv, id, ind_matrix
   INTEGER              :: iflag
   INTEGER, allocatable :: ipivot(:)
 
@@ -128,6 +128,8 @@ subroutine dfp200( LcomputeDerivatives, vvol)
 BEGIN(dfp200)
 
 LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
+
+ind_matrix = IndMatrixArray(vvol, 2)
 
 #ifdef DEBUG
 
@@ -224,10 +226,10 @@ LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
     
     lastcpu = GETTIME
     
-    dMA(vvol)%mat(0:NN-1,1:NN) = dMA(vvol)%mat(1:NN,1:NN) - mu(vvol) * dMD(vvol)%mat(1:NN,1:NN) ! this corrupts dMA, but dMA is no longer used;
-    dMA(vvol)%mat(  NN  ,1:NN) = zero
+    dMA(ind_matrix)%mat(0:NN-1,1:NN) = dMA(ind_matrix)%mat(1:NN,1:NN) - mu(vvol) * dMD(ind_matrix)%mat(1:NN,1:NN) ! this corrupts dMA, but dMA is no longer used;
+    dMA(ind_matrix)%mat(  NN  ,1:NN) = zero
     
-    dMD(vvol)%mat(1:NN  ,1:NN) = dMA(vvol)%mat(0:NN-1,1:NN) ! copy of original matrix; this is used below;
+    dMD(ind_matrix)%mat(1:NN  ,1:NN) = dMA(ind_matrix)%mat(0:NN-1,1:NN) ! copy of original matrix; this is used below;
     
     IA = NN + 1
     
@@ -235,7 +237,7 @@ LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
     
     SALLOCATE( ipivot, (1:NN), 0 )
     
-    idgetrf = 1 ; call DGETRF( MM, NN, dMA(vvol)%mat(0:LDA-1,1:NN), LDA, ipivot(1:NN), idgetrf ) !LU decomposition
+    idgetrf = 1 ; call DGETRF( MM, NN, dMA(ind_matrix)%mat(0:LDA-1,1:NN), LDA, ipivot(1:NN), idgetrf ) !LU decomposition
     
     cput = GETTIME
     select case( idgetrf ) !                                                                     0123456789012345678
@@ -250,7 +252,7 @@ LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
     SALLOCATE( work, (1:Lwork), zero )
 
     ! inverse of MA using the LU decomposition of DGETRF
-    idgetri = 1 ; call DGETRI( NN, dMA(vvol)%mat(0:LDA-1,1:NN), LDA, ipivot(1:NN), work(1:Lwork), Lwork, idgetri ) 
+    idgetri = 1 ; call DGETRI( NN, dMA(ind_matrix)%mat(0:LDA-1,1:NN), LDA, ipivot(1:NN), work(1:Lwork), Lwork, idgetri ) 
     
     DALLOCATE(work)
     
@@ -266,7 +268,7 @@ LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
     
 1011 format("dfp200 : ",f10.2," : myid=",i3," ; vvol=",i3," ; called DGETRI ; time=",f10.2,"s ; inverse of Beltrami matrix; idgetrf=",i2," ; ",a18)
     
-    oBI(1:NN,1:NN) = dMA(vvol)%mat(0:LDA-1,1:NN)
+    oBI(1:NN,1:NN) = dMA(ind_matrix)%mat(0:LDA-1,1:NN)
     
 !    do ii = 1, NN
 !     do jj = 1, ii
@@ -400,9 +402,9 @@ LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
         
         dpsi(1:2) = (/ dtflux(vvol), dpflux(vvol) /) ! local enclosed toroidal and poloidal fluxes;
         
-!       rhs(1:NN) = - matmul( dMB(vvol)%mat(1:NN,1:2 ) - mu(vvol) * dME(1:NN,1:2 ), dpsi(1:2)        ) &
-        rhs(1:NN) = - matmul( dMB(vvol)%mat(1:NN,1:2 )                            , dpsi(1:2)        ) &
-                    - matmul( dMA(vvol)%mat(1:NN,1:NN) - mu(vvol) * dMD(vvol)%mat(1:NN,1:NN), solution(vvol)%mat(1:NN,0) )
+!       rhs(1:NN) = - matmul( dMB(ind_matrix)%mat(1:NN,1:2 ) - mu(vvol) * dME(1:NN,1:2 ), dpsi(1:2)        ) &
+        rhs(1:NN) = - matmul( dMB(ind_matrix)%mat(1:NN,1:2 )                            , dpsi(1:2)        ) &
+                    - matmul( dMA(ind_matrix)%mat(1:NN,1:NN) - mu(vvol) * dMD(ind_matrix)%mat(1:NN,1:NN), solution(vvol)%mat(1:NN,0) )
         
         solution(vvol)%mat(1:NN,-1) = matmul( oBI(1:NN,1:NN), rhs(1:NN) ) ! this is the perturbed, packxi solution;
 

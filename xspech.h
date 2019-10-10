@@ -725,13 +725,16 @@ program xspech
   
 9999 continue
 
-  do vvol = 1, Mvol
-    deallocate(dMA(vvol)%mat)
-    deallocate(dMB(vvol)%mat)
-    deallocate(dMD(vvol)%mat)
-    deallocate(dMG(vvol)%arr)
-    deallocate(MBpsi(vvol)%arr)
-    deallocate(solution(vvol)%mat)
+  do ii = 1, size(dMA)
+    deallocate(dMA(ii)%mat)
+    deallocate(dMB(ii)%mat)
+    deallocate(dMD(ii)%mat)
+    deallocate(dMG(ii)%arr)
+    deallocate(MBpsi(ii)%arr)
+  enddo
+
+  do ii = 1, size(solution)
+    deallocate(solution(ii)%mat)
   enddo
   deallocate(dMA)
   deallocate(dMB)
