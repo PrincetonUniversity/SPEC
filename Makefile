@@ -3,7 +3,7 @@
 ###############################################################################################################################################################
 
  afiles=manual rzaxis packxi volume coords zernik
- bfiles=metrix ma00aa        matrix        mp00ac ma02aa packab tr00ab curent df00ab lforce
+ bfiles=metrix ma00aa        matrix        mp00ac ma02aa packab tr00ab curent df00ab lforce getbco intghs mtrxhs
 #cfiles=bc00aa fc02aa jk03aa pc00aa pc00ab
  cfiles=brcast dforce newton 
  dfiles=casing bnorml 
