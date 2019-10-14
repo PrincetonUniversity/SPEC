@@ -76,47 +76,46 @@ BEGIN(dfp100)
 		dpflux(2:Mvol) = x - xoffset
 		IconstraintOK = .false.
 	else
-
-
-! In case of global constraints, dfp100 is called via hybrd1, a modified version of hybrd. hybrd1
-! calls dfp100 one additional time than hybrd1, at the end of the iteration process, with iflag=5.
-! This is the signal that the iteration is over, and the master thread can broadcast the information
-! to its slaves that they can exit the infinit loop.
+		! In case of global constraints, dfp100 is called via hybrd1, a modified version of hybrd. hybrd1
+		! calls dfp100 one additional time than hybrd1, at the end of the iteration process, with iflag=5.
+		! This is the signal that the iteration is over, and the master thread can broadcast the information
+		! to its slaves that they can exit the infinit loop.
+		
 		if( (iflag.EQ.5) .and. (myid.EQ.0) ) then
 			IconstraintOK = .true.
 		else
 			IconstraintOK = .false.
 		endif
 
-! Master broadcast to slaves the info 
+		! Master broadcast to slaves the info 
 		call MPI_BCAST( IconstraintOK, 1, MPI_LOGICAL, 0, MPI_COMM_WORLD, ierr)
 
-! If constraints are OK, no need for one additional computation, skip till the end.
+		! If constraints are OK, no need for one additional computation, skip till the end.
 		if( IconstraintOK ) then
 			!write(*,*) "Exiting dfp100.h with iflag=5"
 			goto 6666
 		endif
 
-! First set up the value of dpflux for calculation
+		! First set up the value of dpflux for calculation
 		if( myid.EQ.0 ) then
 			dpflux(2:Mvol) = x - xoffset
 		endif
 
-! We could scatter dpflux on the volumes - but this depends on how the volumes are divided between the CPUs
-! We would need to restructure the data - might be complicated for little gain.
+		! We could scatter dpflux on the volumes - but this depends on how the volumes are divided between the CPUs
+		! We would need to restructure the data - might be complicated for little gain.
 		call MPI_Bcast( dpflux, Mvol, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
-
 	endif
 
-! Now each CPU perform the calculation in its volume(s)
+
+	! Now each CPU perform the calculation in its volume(s)
 	do vvol = 1, Mvol
 
 		LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
 		ImagneticOK(vvol) = .false.
 
-	!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+		!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-! Determines if this volume vvol should be computed by this thread.
+		! Determines if this volume vvol should be computed by this thread.
 		call IsMyVolume(vvol)
 
 		if( IsMyVolumeValue .EQ. 0 ) then
@@ -125,46 +124,45 @@ BEGIN(dfp100)
 			FATAL(dfp100, .true., Unassociated volume)
 		endif
 
-	!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+		!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 		dBdX%L = .false. ! first, compute Beltrami fields;
 
-	!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+		!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-! Compute fields
+		! Compute fields
 		WCALL( dfp100, ma02aa, ( vvol, NAdof(vvol) ) )
 
-! Compute relevant local quantities for the evaluation of the constraint. Doing it like this 
-! reduces the amount of data sent to the master thread. In the case of current constraint, only two
-! doubles per volume are sent.
+		! Compute relevant local quantities for the evaluation of the constraint. Doing it like this 
+		! reduces the amount of data sent to the master thread. In the case of current constraint, only two
+		! doubles per volume are sent.
 		if( Lconstraint.EQ.3 ) then
-		  WCALL( dfp100, lbpol, (vvol) )				!Compute field at interface for global constraint
+			WCALL( dfp100, lbpol, (vvol) )				!Compute field at interface for global constraint
 		endif
-
 	enddo
 
 
-! Evaluation of global constraint and communications
+	! Evaluation of global constraint and communications
 	if( .not.LocalConstraint ) then
 
 		select case (Lconstraint)
 
-! Case 3: toroidal current constraint
+			! Case 3: toroidal current constraint
 			case( 3 )
 
-! Compute IPDt on each interface. Eventually need to put the do
-! loop inside the surfcurent subroutine... TODO
+				! Compute IPDt on each interface. Eventually need to put the do
+				! loop inside the surfcurent subroutine... TODO
 				do vvol = 1, Mvol-1
 				
-! --------------------------------------------------------------------------------------------------
-! 																	MPI COMMUNICATIONS
+					! --------------------------------------------------------------------------------------------------
+					! 																	MPI COMMUNICATIONS
 					call WhichCpuID(vvol  , cpu_send_one)
 					call WhichCpuID(vvol+1, cpu_send_two)
 					tag1 = 10*vvol + 1
 					tag2 = 10*vvol + 2
 
-! Send poloidal magnetic field at the interface. Non blocking - what happens next depends only on
-! the master thread.
+					! Send poloidal magnetic field at the interface. Non blocking - what happens next depends only on
+					! the master thread.
 					if( myid.EQ.cpu_send_one ) then
 						call MPI_ISEND(Btemn(1, 1, vvol  ), 1, MPI_DOUBLE_PRECISION,            0, tag1, MPI_COMM_WORLD, request1, ierr)
 					endif
@@ -172,7 +170,7 @@ BEGIN(dfp100)
 						call MPI_ISEND(Btemn(1, 0, vvol+1), 1, MPI_DOUBLE_PRECISION,            0, tag2, MPI_COMM_WORLD, request2, ierr)
 					endif
 
-! Master thread receives the poloidal magnetic field at each interface
+					! Master thread receives the poloidal magnetic field at each interface
 					if( myid.EQ.0 ) then
 						call MPI_RECV(Btemn(1, 0, vvol+1), 1, MPI_DOUBLE_PRECISION, cpu_send_two, tag2, MPI_COMM_WORLD, status, ierr)
 						call MPI_RECV(Btemn(1, 1, vvol  ), 1, MPI_DOUBLE_PRECISION, cpu_send_one, tag1, MPI_COMM_WORLD, status, ierr)
@@ -189,22 +187,21 @@ BEGIN(dfp100)
 
 				enddo
 
-! Compute the constraint and store it in Fvec. TODO: Compute analytically the constraint jacobian -
-! this would improve significaly the performances...
+				! Compute the constraint and store it in Fvec. TODO: Compute analytically the constraint jacobian -
+				! this would improve significaly the performances...
 				if( myid.EQ.0 ) then
 					Fvec = IPDt - Isurf(1:Mvol-1)
 					!Ddof = ??? TODO: SEE IF AN ANALYTICAL FORMULATION EXISTS...
 				endif
 
 #ifdef DEBUG 
-        write(ounit, '("dfp100: ", 10x ," : max(IPDt) = "es12.5)') MAXVAL(IPDt)
+        		write(ounit, '("dfp100: ", 10x ," : max(IPDt) = "es12.5)') MAXVAL(IPDt)
 #endif
-! write(ounit,'("xspech : ", 10x ," : sum(Ate(",i3,",",i2,",",i2,")%s) =",99es23.15)') vvol, ideriv, ii, sum(Ate(vvol,ideriv,ii)%s(0:Lrad(vvol)))
+				! write(ounit,'("xspech : ", 10x ," : sum(Ate(",i3,",",i2,",",i2,")%s) =",99es23.15)') vvol, ideriv, ii, sum(Ate(vvol,ideriv,ii)%s(0:Lrad(vvol)))
+			
 			case default
 				FATAL(dfp100, .true., Unaccepted value for Lconstraint)
-
 		end select
-
 	endif
 
 6666 continue

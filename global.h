@@ -1593,11 +1593,14 @@ subroutine readin
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 	! Current constraint normalization
 	
-    toroidalcurrent = sum(Ivolume) + sum(Isurf)
-	
-	Ivolume(1:Mvol) = Ivolume(1:Mvol) * curtor / toroidalcurrent
-	Isurf(1:Mvol) = Isurf(1:Mvol) * curtor / toroidalcurrent
-	
+	if ((Lfreebound.EQ.1) .and. (Lconstraint.EQ.3)) then
+		toroidalcurrent = sum(Ivolume) + sum(Isurf)
+		
+		FATAL( readin, toroidalcurrent.EQ.0, sum of current profiles are zero)
+
+		Ivolume(1:Mvol) = Ivolume(1:Mvol) * curtor / toroidalcurrent
+		Isurf(1:Mvol) = Isurf(1:Mvol) * curtor / toroidalcurrent
+	endif
 	
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

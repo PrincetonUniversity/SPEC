@@ -36,7 +36,7 @@ subroutine ma02aa( lvol, NN )
                         ivol, &
                         dtflux, dpflux, &
                         xoffset, &
-                        Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
+                        Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, LocalConstraint, &
 						IndMatrixArray
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -434,14 +434,14 @@ subroutine ma02aa( lvol, NN )
     
    else ! Lvacuumregion ;
 
-    Xdof(1:2) = xoffset + (/ dtflux(lvol), dpflux(lvol) /) ! initial guess for degrees of freedom; offset from zero so that relative error is small;
+	Xdof(1:2) = xoffset + (/ dtflux(lvol), dpflux(lvol) /) ! initial guess for degrees of freedom; offset from zero so that relative error is small;
     
     select case( Lconstraint )
     case( -1 )    ;                                   ; Nxdof = 0 ! poloidal   & toroidal flux NOT varied to match linking current and plasma current;
     case(  0 )    ;                                   ; Nxdof = 2 ! poloidal   & toroidal flux ARE varied to match linking current and plasma current;
     case(  1 )    ;                                   ; Nxdof = 2 ! poloidal   & toroidal flux ARE varied to match linking current and transform-constraint;
     case(  2 )    ;                                   ; Nxdof = 2 ! poloidal   & toroidal flux ARE varied to match linking current and plasma current;
-    case(  3 )    ;                                   ; Nxdof = 2 ! poloidal   & toroidal flux ARE varied to match linking current and plasma current;
+    case(  3 )    ;                                   ; Nxdof = 1 ! only the toroidal flux is varied: poloidal flux varied in outside loop;
     end select
 
    endif ! end of if( Lplasmaregion) ;
@@ -565,7 +565,11 @@ subroutine ma02aa( lvol, NN )
      endif
     else ! Lvacuumregion;
      Xdof(1:2) = xoffset + (/ dtflux(lvol), dpflux(lvol) /) ! initial guess for degrees of freedom; offset from zero so that relative error is small;
+	 if( LocalConstraint ) then
      ;                                 ; Ndof = 2
+	 else
+	 ;								   ; Ndof = 1
+	 endif
     endif ! end of if( Lplasmaregion) ;
     
     Ldfjac = Ndof ; dFdof(-1:1,-1:1,1:2) = zero
