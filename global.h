@@ -1591,15 +1591,34 @@ subroutine readin
    enddo
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!latex \subsubsection{Current profiles normalization}
+!latex
+!latex In case of a free boundary calculation (\inputvar{Lfreebound}=1) and using a current constraint (\inputvar{Lconstraint}=3), the current profiles are
+!latex renormalized in order to match the linking current \inputvar{curtor}. More specifically,
+!latex \begin{align}
+!latex Isurf_i\ \rightarrow\ Isurf_i\cdot\frac{curtor}{\sum_{i=1}^{Mvol-1} Isurf_i+Ivol_i}
+!latex Ivol_i\ \rightarrow\ Ivol_i\cdot\frac{curtor}{\sum_{i=1}^{Mvol-1} Isurf_i+Ivol_i}.
+!latex \end{align}
+!latex Finally, the volume current in the vacuum region is set to $0$.
+
 	! Current constraint normalization
 	
 	if ((Lfreebound.EQ.1) .and. (Lconstraint.EQ.3)) then
 		toroidalcurrent = sum(Ivolume) + sum(Isurf)
 		
-		FATAL( readin, toroidalcurrent.EQ.0, sum of current profiles are zero)
+		if( toroidalcurrent.EQ.0 ) then
+			! If toroidal current profiles are zero but the total plasma current is non-zero there is a conflict
+			! between two constraints...
+			FATAL( readin, curtor.NE.0, Incompatible current profiles and toroidal linking current)
+
+			! Otherwise, give dummy value to avoid division by 0
+			toroidalcurrent = 1;
+		endif
 
 		Ivolume(1:Mvol) = Ivolume(1:Mvol) * curtor / toroidalcurrent
-		Isurf(1:Mvol) = Isurf(1:Mvol) * curtor / toroidalcurrent
+		Isurf(1:Mvol) 	= Isurf(1:Mvol) * curtor / toroidalcurrent
+
+		Ivolume(Mvol)	= 0; ! To force vacuum in vacuum region
 	endif
 	
 
