@@ -122,6 +122,8 @@ ifeq ($(CC),intel_spc)
  LINKS=-L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl
  LIBS=-I$(FFTW_DIR)/include
  LINKS+=-L$(FFTW_DIR)/lib -lfftw3
+ LIBS+=-I$(HDF5_HOME)/include
+ LINKS+=-L$(HDF5_HOME)/lib -lhdf5_fortran -lhdf5 -lpthread -lz -lm -Wl,-rpath -Wl,$(HDF5_HOME)/lib
 endif
 
 ifeq ($(CC),intel_ipp)
