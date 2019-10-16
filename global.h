@@ -1604,21 +1604,22 @@ subroutine readin
 	! Current constraint normalization
 	
 	if ((Lfreebound.EQ.1) .and. (Lconstraint.EQ.3)) then
-		toroidalcurrent = sum(Ivolume) + sum(Isurf)
 		
-		if( toroidalcurrent.EQ.0 ) then
-			! If toroidal current profiles are zero but the total plasma current is non-zero there is a conflict
-			! between two constraints...
-			FATAL( readin, curtor.NE.0, Incompatible current profiles and toroidal linking current)
+		Ivolume(Mvol) = Ivolume(Mvol-1) !Ensure vacuum in vacuum region
 
-			! Otherwise, give dummy value to avoid division by 0
-			toroidalcurrent = 1;
+		toroidalcurrent = Ivolume(Mvol) + sum(Isurf)
+		
+		if( curtor.NE.0 ) then
+			FATAL( readin, toroidalcurrent.EQ.0 , Incompatible current profiles and toroidal linking current)
+
+			Ivolume(1:Mvol) = Ivolume(1:Mvol) * curtor / toroidalcurrent
+			Isurf(1:Mvol) 	= Isurf(1:Mvol) * curtor / toroidalcurrent
+
+		else
+			FATAL( readin, toroidalcurrent.NE.0, Incompatible current profiles and toroidal linking current)
+
+			! No rescaling if profiles have an overall zero toroidal current
 		endif
-
-		Ivolume(1:Mvol) = Ivolume(1:Mvol) * curtor / toroidalcurrent
-		Isurf(1:Mvol) 	= Isurf(1:Mvol) * curtor / toroidalcurrent
-
-		Ivolume(Mvol)	= 0; ! To force vacuum in vacuum region
 	endif
 	
 

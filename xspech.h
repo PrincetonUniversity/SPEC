@@ -561,24 +561,6 @@ program xspech
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-! Computes the surface current at each interface for output
-
-  do vvol = 1, Mvol
-    WCALL(xspech, lbpol, (vvol, mn) )
-  enddo
-
-  do vvol = 1, Mvol-1
-    Isurf(vvol) = pi2 * (Btemn(1, 0, vvol+1) - Btemn(1, 1, vvol))
-  enddo
-
-! and the volume current
-  sumI = 0
-  do vvol = 1, Mvol
-    Ivolume(vvol) = mu(vvol) * dtflux(vvol) * pi2 + sumI    ! factor pi2 due to normalization in preset
-    sumI = Ivolume(vvol)									! Sum over all volumes since this is how Ivolume is defined
-  enddo
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !latex \subsection{output files: vector potential} 
 !latex \begin{enumerate}
@@ -648,6 +630,24 @@ program xspech
 !2000 format("finish : ",f10.2," : finished ",i3," ; ":"|f|="es12.5" ; ":"time=",f10.2,"s ;":" log"a5,:"="28f6.2" ...")
 !2001 format("finish : ", 10x ," :          ",3x," ; ":"    "  12x "   ":"     ", 10x ,"  ;":" log"a5,:"="28f6.2" ...")
   
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+! Computes the surface current at each interface for output
+
+  do vvol = 1, Mvol
+    WCALL(xspech, lbpol, (vvol, mn) )
+  enddo
+
+  do vvol = 1, Mvol-1
+    Isurf(vvol) = pi2 * (Btemn(1, 0, vvol+1) - Btemn(1, 1, vvol))
+  enddo
+
+! and the volume current
+  sumI = 0
+  do vvol = 1, Mvol
+    Ivolume(vvol) = mu(vvol) * dtflux(vvol) * pi2 + sumI    ! factor pi2 due to normalization in preset
+    sumI = Ivolume(vvol)									! Sum over all volumes since this is how Ivolume is defined
+  enddo
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   if( myid.eq.0 ) then ! this is just screen diagnostics; 20 Jun 14;
