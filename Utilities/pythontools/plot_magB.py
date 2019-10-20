@@ -13,7 +13,7 @@
 import numpy as np
 from read_spec import SPEC
 
-import SPEC_lib
+import SPEC_postprocessing_lib
 
 
 
