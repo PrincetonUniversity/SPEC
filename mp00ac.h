@@ -502,7 +502,12 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
     
    else ! Lvacuumregion
     
-     FATAL( mp00ac, .true., Lconstraint equal three not implemented in free boundary)
+    WCALL( mp00ac, curent,( lvol, mn, Nt, Nz, iflag, dItGpdxtp(0:1,-1:2,lvol) ) )
+    
+	! Iteration only on toroidal flux.
+    if( iflag.eq.1 ) Fdof(1:Ndof  ) = dItGpdxtp(1,0,lvol) - curpol
+    if( iflag.eq.2 ) Ddof(1:Ndof,1:Ndof) = dItGpdxtp(1,1,lvol) 
+    
     
    endif ! end of if( Lplasmaregion) ;
 

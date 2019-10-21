@@ -335,7 +335,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 		  SALLOCATE(fjac, (1:ldfjac,1:Mvol-1), 0)
 		  SALLOCATE(r, (1:lr), 0)
 
-! Hybrid-Powell method, iterates on all poloidal fluxes to match the global constraint
+		  ! Hybrid-Powell method, iterates on all poloidal fluxes to match the global constraint
 		  WCALL( dforce,  hybrd1, (dfp100, Ndofgl, Xdof(1:Ndofgl), Fvec(1:Ndofgl), mupftol, maxfev, ml, muhybr, epsfcn, diag(1:Ndofgl), mode, &
 					  factor, nprint, ihybrd1, nfev, fjac(1:Ndofgl,1:Ndofgl), ldfjac, r(1:lr), lr, qtf(1:Ndofgl), wa1(1:Ndofgl), &
 					  wa2(1:Ndofgl), wa3(1:Ndofgl), wa4(1:Ndofgl)) ) 
@@ -347,76 +347,75 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 
 		else
 
-! Slave threads call loop_dfp100 and help the master thread computation at each iteration.
+			! Slave threads call loop_dfp100 and help the master thread computation at each iteration.
 			call loop_dfp100(Ndofgl, Fvec, iflag)
 
     endif
 
 ! --------------------------------------------------------------------------------------------------
-!																				MPI COMMUNICATIONS
+!									MPI COMMUNICATIONS
 
-! Gather all ImagneticOK
-		do vvol=1, Mvol 
-! Determine which thread has info on which volume
-			call WhichCpuID(vvol, cpu_send) 
+	! Gather all ImagneticOK
+	do vvol=1, Mvol 
+		! Determine which thread has info on which volume
+		call WhichCpuID(vvol, cpu_send) 
 			
-! For now, use MPI_RECV and MPI_SEND. TODO: change implementationo of ImagneticOK to allow the use 
-! of MPI_GATHER
-			if( cpu_send.NE.0	) then
-				if( myid.EQ.0 ) then
-					call MPI_RECV(ImagneticOK(vvol), 1, MPI_LOGICAL, cpu_send, vvol, MPI_COMM_WORLD, status, ierr)
-				else if( myid.EQ.cpu_send ) then
-					call MPI_SEND(ImagneticOK(vvol), 1, MPI_LOGICAL, 				0, vvol, MPI_COMM_WORLD, ierr)
-				endif
+		! For now, use MPI_RECV and MPI_SEND. TODO: change implementationo of ImagneticOK to allow the use 
+		! of MPI_GATHER
+		if( cpu_send.NE.0	) then
+			if( myid.EQ.0 ) then
+				call MPI_RECV(ImagneticOK(vvol), 1, MPI_LOGICAL, cpu_send, vvol, MPI_COMM_WORLD, status, ierr)
+			else if( myid.EQ.cpu_send ) then
+				call MPI_SEND(ImagneticOK(vvol), 1, MPI_LOGICAL, 		0, vvol, MPI_COMM_WORLD, ierr)
 			endif
+		endif
+	enddo
 
-		enddo
-
-! Now master thread broadcast the poloidal flux matching the constraint. It was obtain by iteration
-! via hybrd1
+	! Now master thread broadcast the poloidal flux matching the constraint. It was obtain by iteration
+	! via hybrd1
     call MPI_Bcast( dpflux, Mvol, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
 
-! And broadcast as well the ImagneticOK flag - this determines if the computation was succesful in
-! each volume. If not, this geometry iteration goes to the trash...
+	! And broadcast as well the ImagneticOK flag - this determines if the computation was succesful in
+	! each volume. If not, this geometry iteration goes to the trash...
     call MPI_Bcast( ImagneticOK, Mvol, MPI_LOGICAL, 0, MPI_COMM_WORLD, ierr)
     
-! And finally broadcast the field information to all threads from the thread which did the computation
+	! And finally broadcast the field information to all threads from the thread which did the computation
     do vvol = 1, Mvol
-				call WhichCpuID(vvol, cpu_id)
+		call WhichCpuID(vvol, cpu_id)
 
         NN = NAdof(vvol)
         Nbc = NN * 4
         call MPI_Bcast( solution(vvol)%mat(1:NN, -1:2), Nbc, MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_WORLD, ierr)
 	
-				RlBCAST( diotadxup(0:1, -1:2, vvol), 8, cpu_id)
+		RlBCAST( diotadxup(0:1, -1:2, vvol), 8, cpu_id)
         RlBCAST( dItGpdxtp(0:1, -1:2, vvol), 8, cpu_id)
   	
-				do ii = 1, mn  
+		do ii = 1, mn  
    	  		RlBCAST( Ate(vvol,0,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
    	  		RlBCAST( Aze(vvol,0,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
-  			enddo
+  		enddo
 
         if( NOTstellsym ) then
-          do ii = 1, mn    
-		   	    RlBCAST( Ato(vvol,0,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
+    	    do ii = 1, mn    
+		  	    RlBCAST( Ato(vvol,0,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
    			    RlBCAST( Azo(vvol,0,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
-  			  enddo
-				endif
+  			enddo
+		endif
     enddo
 
-! --------------------------------------------------------------------------------------------------
-! Now that all the communication is over, compute the local force and its derivatives
+	! --------------------------------------------------------------------------------------------------
+	! Now that all the communication is over, compute the local force and its derivatives
     do vvol = 1, Mvol
 
-			WCALL(dforce, IsMyVolume, (vvol))
+		WCALL(dforce, IsMyVolume, (vvol))
 
-			if( IsMyVolumeValue .EQ. 0 ) then
-				cycle
-			else if( IsMyVolumeValue .EQ. -1) then
-				FATAL(dforce, .true., Unassociated volume)
-			endif
+		if( IsMyVolumeValue .EQ. 0 ) then
+			cycle
+		else if( IsMyVolumeValue .EQ. -1) then
+			FATAL(dforce, .true., Unassociated volume)
+		endif
 				
-			WCALL(dforce, dfp200, ( LcomputeDerivatives, vvol) )
+		WCALL(dforce, dfp200, ( LcomputeDerivatives, vvol) )
 
     enddo
 
@@ -430,7 +429,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
         case default ; write(ounit,'("dforce : ",f10.2," : finished ; illegal ifail  ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
       end select
 #endif
-  endif !matches if( LocalConstraint ) 
+
+endif !matches if( LocalConstraint ) 
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   

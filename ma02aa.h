@@ -36,7 +36,7 @@ subroutine ma02aa( lvol, NN )
                         ivol, &
                         dtflux, dpflux, &
                         xoffset, &
-                        Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
+                        Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, LocalConstraint, &
 						IndMatrixArray
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -284,7 +284,8 @@ subroutine ma02aa( lvol, NN )
    ideriv = 0 ; dpsi(1:2) = (/ dtflux(lvol), dpflux(lvol) /) ! these are also used below;
    
    packorunpack = 'P'
-   CALL( ma02aa, packab ( packorunpack, lvol, NN, xi(1:NN), dpsi(1:2), ideriv ) )
+!   CALL( ma02aa, packab ( packorunpack, lvol, NN, xi(1:NN), dpsi(1:2), ideriv ) )
+   CALL( ma02aa, packab ( packorunpack, lvol, NN, xi(1:NN), ideriv ) )
    
    pNN = NN + 1 ; Ldfmuaa = pNN ; tol = mupftol ; lengthwork = pNN * ( pNN+13 ) / 2
    
@@ -317,9 +318,13 @@ subroutine ma02aa( lvol, NN )
    case( 2 )    
     ;             write(ounit,1020) cput-cpus, myid, lvol, ihybrj1, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, NewtonError, "max. evaluations ;"
    case( 3 )    
+    if(NewtonError>tol) then
     ;             write(ounit,1020) cput-cpus, myid, lvol, ihybrj1, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, NewtonError, "xtol too small ;  "
-   case( 4 )    
+    endif
+   case( 4 )
+    if(NewtonError>tol) then
     ;             write(ounit,1020) cput-cpus, myid, lvol, ihybrj1, helicity(lvol), mu(lvol), dpflux(lvol), cput-lastcpu, NewtonError, "bad progress ;    "
+    endif
    case default 
     FATAL( ma02aa, .true., illegal ifail returned by hybrj1 )
    end select
@@ -429,14 +434,14 @@ subroutine ma02aa( lvol, NN )
     
    else ! Lvacuumregion ;
 
-    Xdof(1:2) = xoffset + (/ dtflux(lvol), dpflux(lvol) /) ! initial guess for degrees of freedom; offset from zero so that relative error is small;
+	Xdof(1:2) = xoffset + (/ dtflux(lvol), dpflux(lvol) /) ! initial guess for degrees of freedom; offset from zero so that relative error is small;
     
     select case( Lconstraint )
     case( -1 )    ;                                   ; Nxdof = 0 ! poloidal   & toroidal flux NOT varied to match linking current and plasma current;
     case(  0 )    ;                                   ; Nxdof = 2 ! poloidal   & toroidal flux ARE varied to match linking current and plasma current;
     case(  1 )    ;                                   ; Nxdof = 2 ! poloidal   & toroidal flux ARE varied to match linking current and transform-constraint;
     case(  2 )    ;                                   ; Nxdof = 2 ! poloidal   & toroidal flux ARE varied to match linking current and plasma current;
-    case(  3 )    ;                                   ; Nxdof = 0 ! Global constraint
+    case(  3 )    ;                                   ; Nxdof = 1 ! only the toroidal flux is varied: poloidal flux varied in outside (global constraint) loop;
     end select
 
    endif ! end of if( Lplasmaregion) ;
@@ -560,7 +565,11 @@ subroutine ma02aa( lvol, NN )
      endif
     else ! Lvacuumregion;
      Xdof(1:2) = xoffset + (/ dtflux(lvol), dpflux(lvol) /) ! initial guess for degrees of freedom; offset from zero so that relative error is small;
+	 if( LocalConstraint ) then
      ;                                 ; Ndof = 2
+	 else
+	 ;								   ; Ndof = 1
+	 endif
     endif ! end of if( Lplasmaregion) ;
     
     Ldfjac = Ndof ; dFdof(-1:1,-1:1,1:2) = zero

@@ -1,0 +1,1 @@
+Test case for an unstable (tearing) force-free current sheet. Can be used to test the Hessian calculation at fixed helicity.

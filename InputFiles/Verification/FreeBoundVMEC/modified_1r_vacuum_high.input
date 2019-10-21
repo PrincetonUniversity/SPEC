@@ -1,0 +1,81 @@
+&focusin
+ IsQuiet        =        -1             ! -2 verbose and including unconstrained cost functions; -1: verbose; 0: normal; 1: concise
+ IsSymmetric    =        0              ! 0: no stellarator symmetry enforced; 1: plasma periodicity enforced; 2: coil periodicity enforced
+
+ case_surface   =        0              ! 0: general VMEC-like format (Rbc, Rbs, Zbc, Zbs); 1: read axis for knots
+ knotsurf       =        0.200D-00      ! minor plasma radius for knototrans, only valid for case surface = 1
+ ellipticity    =        0.000D+00      ! ellipticity of plasma for knototrans, only valid for case surface = 1
+ Nteta          =      2048             ! poloidal number for discretizing the surface
+ Nzeta          =      32               ! toroidal number for discretizing the surface
+
+ case_init      =        0              ! -1: read coils.ext file; 0: read ext.focus file; 1: initialize with circular coils
+ case_coils     =        1              ! 0: using piecewise linear representation; (not ready); 1: using Fourier series representation
+ Ncoils         =        32             ! number of coils; only valid when case_init = 1
+ init_current   =        1.000D+06      ! initial coil currents (Amper); only valid when case_init = 1
+ init_radius    =        2.000D+00      ! initial coil radius   (meter); only valid when case_init = 1
+ IsVaryCurrent  =        1              ! 0: all the currents   fixed; 1: currents   can be changed; overwritten by ext.focus
+ IsVaryGeometry =        1              ! 0: all the geometries fixed; 1: geometries can be changed; overwritten by ext.focus
+ NFcoil         =        1              ! number of Fourier harmonics representing the coils; overwritten by ext.focus
+ Nseg           =      512              ! number of coil segments for discretizing; overwritten by ext.focus
+
+ IsNormalize    =        1              ! 0: do not normalize coil parameters; 1: normalize; I = I/I0, x = x/R0; I0 & R0 are quadrtic mean values.
+ IsNormWeight   =        0              ! 0: do not normalize the weights; 1: normalize the weights
+ case_bnormal   =        0              ! 0: keep raw Bn error; 1: Bn residue normalized to local |B|
+ case_length    =        1              ! 1: quadratic format, converging the target length; 2: exponential format, as short as possible
+ weight_bnorm   =        1.000D+00      ! weight for real space Bn errors
+ weight_bharm   =        0.000D+00      ! weight for Bnm harmonic errors
+ weight_tflux   =        0.000D+00      ! weight for toroidal flux error
+ target_tflux   =        1.000D+00      ! target for the toroidal flux
+ weight_ttlen   =        0.000D+00      ! weight for coil length error
+ target_length  =        0.000D+00      ! target value (or for normalization) of the coils length, if zero, automatically set to initial actual length
+ weight_specw   =        0.000D+00      ! weight for spectral condensation error
+ weight_cssep   =        0.000D+00      ! weight for coil-surface separation constraint
+ weight_inorm   =        1.000D+00	! weight for normalization of current. Larger weight makes the derivatives more important.
+ weight_gnorm   =        1.000D+00	! weight for normalization of geometric coefficients. Larger weight makes the derivatives more important.
+
+ case_optimize  =        0            ! -2: check the 2nd derivatives (not ready); -1: check the 1st derivatives; 0: no optimizations performed; 1: optimizing with algorithms using the gradient (DF and/or CG); 2: optimizing with algorithms using the Hessian (HT and/or NT)
+ exit_tol       =        1.000D-04      ! Exit the optimizer if the percent change in the cost function over the last 5 steps is below this threshold
+
+ DF_maxiter     =        0              ! maximum iterations allowed for using Differential Flow (DF)
+ DF_xtol        =        1.000D-08      ! relative error for ODE solver
+ DF_tausta      =        0.000D+00      ! starting value of τ. Usually 0.0 is a good idea
+ DF_tauend      =        1.000D-00      ! ending value of τ. The larger value of τend − τsta, the more optimized
+
+ CG_maxiter     =        50             ! maximum iterations allowed for using Conjugate Gradient (CG)
+ CG_xtol        =        1.000D-08      ! the stopping criteria of finding minimum; if |dχ2/dX| < CG xtol, exit the optimization
+ CG_wolfe_c1    =        1.000D-04      ! c1 value in the strong wolfe condition for line search; 
+ CG_wolfe_c2    =        0.9            ! c2 value in the strong wolfe condition for line search; if one CG step takes too long, try to increase c2, but remember 0 < c1 < c2 < 1
+
+ LM_maxiter     =        20             ! maximum iterations allowed for using Levenberg-Marquard (LM)
+ LM_xtol        =        1.000D-08      ! if the relative error between two consecutivec iterates is at most xtol, the optimization terminates
+ LM_ftol        =        1.000D-08      ! if both the actual and predicted relative reductions in the sum of squares are at most ftol, the optimization terminates;
+ LM_factor      =      100.0            ! the initial step bound, which is set to the product of factor and the euclidean norm of diag*x if nonzero
+
+ HN_maxiter     =        0
+ HN_xtol        =        1.000D-08
+ HN_factor      =      100.0
+
+ TN_maxiter     =        0
+ TN_xtol        =        1.000D-08
+ TN_reorder     =        0
+ TN_cr          =        0.1
+
+ case_postproc  =        7              ! 0: no extra post-processing; 1: evaluate the current coils; 2: write mgrid file (not ready)
+ save_freq      =        1              ! frequency for writing output files; should be positive
+ save_coils     =        0              ! flag for indicating whether write example.focus and example.coils
+ save_harmonics =        0              ! flag for indicating whether write example.harmonics
+ save_filaments =        0              ! flag for indicating whether write .example.filaments.xxxxxx
+
+ input_surf = 'plasma.boundary_vacuum'
+ input_coils = 'modified_1r.focus'
+
+/
+&mgrid
+Nr = 801
+Nz = 801
+Np = 1
+Rmin = 2.0
+Rmax = 6.0
+Zmin = -2.0
+Zmax =  2.0
+/

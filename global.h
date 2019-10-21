@@ -70,7 +70,7 @@ contains
   REAL FUNCTION myprec() !Duplicates NAG routine X02AJF (machine precision) ! JAB; 27 Jul 17 ! I suggest that this be removed; SRH: 27 Feb 18;
     implicit none
     intrinsic EPSILON
-    myprec = 0.5*EPSILON(1.0d0)
+    myprec = 0.5*EPSILON(small)
   END FUNCTION myprec
 end module numerical
 
@@ -87,7 +87,7 @@ module fileunits
   INTEGER :: munit = 14 ! matrix elements of Hessian; 
   INTEGER :: iunit = 10 ! input; used in global/readin:ext.sp, global/wrtend:ext.sp.end, global/wrtend:.ext.grid; 
   INTEGER :: lunit = 20 ! local unit; used in lunit+myid: pp00aa:.ext.poincare,.ext.transform; 
-  INTEGER :: ounit =  0 ! screen output;
+  INTEGER :: ounit =  6 ! screen output;
   INTEGER :: vunit = 15 ! for examination of adaptive quadrature; used in casing:.ext.vcint; 
   INTEGER :: zunit = 17 ! for convergence; this file is opened in xspech:.ext.iterations, and written to in globals/wrtend; 
  !INTEGER :: funit = 16 ! force iterations;
@@ -233,6 +233,7 @@ module inputlist
   INTEGER      :: LBeltrami  =  4
   INTEGER      :: Linitgues  =  1
   INTEGER      :: Lposdef    =  0 ! redundant;
+  REAL         :: maxrndgues =  1.0
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -619,7 +620,9 @@ module inputlist
                 !latex \item if \inputvar{Linitgues = 0}, the initial guess for the Beltrami field is trivial;
                 !latex \item if \inputvar{Linitgues = 1}, the initial guess for the Beltrami field is an integrable approximation;
                 !latex \item if \inputvar{Linitgues = 2}, the initial guess for the Beltrami field is read from file; 
+                !latex \item if \inputvar{Linitgues = 3}, the initial guess for the Beltrami field will be randomized with the maximum \inputvar{maxrndgues};
                 !latex \ei
+ maxrndgues,&   !latex \item \inputvar{maxrndgues = 1.0} : real : the maximum random number of the Beltrami field if \inputvar{Linitgues = 3};
  Lposdef        !latex \item\inputvar{Lposdef = 0 : integer} : redundant;
 !Nmaxexp        !l tex \item \inputvar{Nmaxexp = 32 : integer} : indicates maximum exponent used to precondition Beltrami linear system near singularity;
                 !l tex \bi
@@ -1353,7 +1356,7 @@ module allglobal
   REAL                 :: tetazeta(1:2)
 
 ! REAL                 :: virtualcasingfactor = one / ( four*pi * pi2 ) ! this is old factor (before toroidal flux was corrected?) ; 
-  REAL                 :: virtualcasingfactor = one / ( four*pi       ) ! this agrees with diagno; 
+  REAL                 :: virtualcasingfactor = -one / ( four*pi       ) ! this agrees with diagno; 
   
   INTEGER              :: IBerror ! for computing error in magnetic field; 
 
@@ -1364,6 +1367,8 @@ module allglobal
   INTEGER, parameter   :: Node = 2 ! best to make this global for consistency between calling and called routines; 
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  LOGICAL              :: first_free_bound = .false.
 
 contains
 
@@ -1393,7 +1398,7 @@ subroutine readin
 
   LOGICAL              :: Lspexist, Lchangeangle
   INTEGER              :: vvol, mm, nn, nb, imn, ix, ii, jj, ij, kk, mj, nj, mk, nk, ip, lMpol, lNtor, X02BBF, iargc, iarg, numargs, mi, ni, lvol
-  REAL                 :: xx, toroidalflux
+  REAL                 :: xx, toroidalflux, toroidalcurrent
   REAL,    allocatable :: RZRZ(:,:) ! local array used for reading interface Fourier harmonics from file;
   
   CHARACTER            :: ldate*8, ltime*10, arg*100
@@ -1507,6 +1512,11 @@ subroutine readin
 !latex       \inputvar{pflux(1:Mvol)} $\rightarrow$ \inputvar{pflux(1:Mvol)/tflux(Nvol)}.
 !latex
 !latex       (The input $\Phi_{edge} \equiv $ \inputvar{phiedge} will provide the total toroidal flux; see \link{preset}.)
+!latex \item The input value for the toroidal current constraint (\inputvar{Isurf(1:Mvol)} and \inputvar{Ivolume(1:Mvol)}) are also immediately normalized, using \inputvar{curtor}.
+!latex
+!latex		$Ivolume \rightarrow Ivolume\cdot \frac{curtor}{\sum_i Isurf_i + Ivolume_i}$
+!latex
+!latex		$Isurf \rightarrow Isurf\cdot \frac{curtor}{\sum_i Isurf_i + Ivolume_i}$
 !latex \end{enumerate}
       
    if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : reading physicslist     from ext.sp ;")') cput-cpus
@@ -1581,7 +1591,41 @@ subroutine readin
    enddo
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-   
+!latex \subsubsection{Current profiles normalization}
+!latex
+!latex In case of a free boundary calculation (\inputvar{Lfreebound}=1) and using a current constraint (\inputvar{Lconstraint}=3), the current profiles are
+!latex renormalized in order to match the linking current \inputvar{curtor}. More specifically,
+!latex \begin{align}
+!latex Isurf_i\ \rightarrow\ Isurf_i\cdot\frac{curtor}{\sum_{i=1}^{Mvol-1} Isurf_i+Ivol_i}
+!latex Ivol_i\ \rightarrow\ Ivol_i\cdot\frac{curtor}{\sum_{i=1}^{Mvol-1} Isurf_i+Ivol_i}.
+!latex \end{align}
+!latex Finally, the volume current in the vacuum region is set to $0$.
+
+	! Current constraint normalization
+	
+	if ((Lfreebound.EQ.1) .and. (Lconstraint.EQ.3)) then
+		
+		Ivolume(Mvol) = Ivolume(Mvol-1) !Ensure vacuum in vacuum region
+
+		toroidalcurrent = Ivolume(Mvol) + sum(Isurf)
+		
+		if( curtor.NE.0 ) then
+			FATAL( readin, toroidalcurrent.EQ.0 , Incompatible current profiles and toroidal linking current)
+
+			Ivolume(1:Mvol) = Ivolume(1:Mvol) * curtor / toroidalcurrent
+			Isurf(1:Mvol) 	= Isurf(1:Mvol) * curtor / toroidalcurrent
+
+		else
+			FATAL( readin, toroidalcurrent.NE.0, Incompatible current profiles and toroidal linking current)
+
+			! No rescaling if profiles have an overall zero toroidal current
+		endif
+	endif
+	
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+
    do vvol = 1, Mvol
     FATAL( readin, Lrad(vvol ).lt.2, require Chebyshev resolution Lrad > 2 so that Lagrange constraints can be satisfied )
    enddo
@@ -1750,7 +1794,7 @@ subroutine readin
   RlBCAST( adiabatic  , MNvol+1, 0 )
   RlBCAST( mu         , MNvol+1, 0 )
   RlBCAST( Ivolume    , MNvol+1, 0 )
-  RlBCAST( Isurf      , MNvol  , 0 )
+  RlBCAST( Isurf      , MNvol+1, 0 )
   IlBCAST( Lconstraint,       1, 0 )
   IlBCAST( pl         , MNvol  , 0 )
   IlBCAST( ql         , MNvol  , 0 )
@@ -1823,6 +1867,7 @@ subroutine readin
   
   IlBCAST( LBeltrami, 1, 0 )
   IlBCAST( Linitgues, 1, 0 )
+  RlBCAST( maxrndgues, 1, 1.0)
 ! IlBCAST( Lposdef  , 1, 0 ) ! redundant;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -2330,6 +2375,8 @@ subroutine wrtend( wflag, iflag, rflag )
   if( Lfreebound.eq.1 .or. Zbs(0,1).gt.zero ) then
    do ii = 1, mn ; mm = im(ii) ; nn = in(ii) / Nfp ; Rbc(nn,mm) = iRbc(ii,Nvol) ; Zbs(nn,mm) = iZbs(ii,Nvol) ; Vns(nn,mm) = iVns(ii) ; Bns(nn,mm) = iBns(ii)
                                                    ; Rbs(nn,mm) = iRbs(ii,Nvol) ; Zbc(nn,mm) = iZbc(ii,Nvol) ; Vnc(nn,mm) = iVnc(ii) ; Bnc(nn,mm) = iBnc(ii)
+                                                   ; Rwc(nn,mm) = iRbc(ii,Mvol) ; Zws(nn,mm) = iZbs(ii,Mvol)
+                                                   ; Rws(nn,mm) = iRbs(ii,Mvol) ; Zwc(nn,mm) = iZbc(ii,Mvol)
    enddo ! end of do ii = 1, mn;
   endif ! end of if( Lfreebound.eq.1 .or. . . . ) ; 
 

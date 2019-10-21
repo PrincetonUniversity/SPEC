@@ -464,7 +464,7 @@ subroutine matrix( lvol, mn, lrad )
      endif
     enddo ! end of do pp ;
     
-    ;if( ii.gt.1 ) then ; id = Lme(lvol,  ii)       ;                           ; dMG(ind_matrix)%arr(id   ) = - ( iVns(ii) - iBns(ii) )
+    ;if( ii.gt.1 ) then ; id = Lme(lvol,  ii)       ;                           ; dMG(ind_matrix)%arr(id   ) = - ( iVns(ii) + iBns(ii) )
     ;else               ; id = Lmg(lvol,  ii)       ;                           ; dMB(ind_matrix)%mat(id, 1) = -       one
 !   ;                   ; id = Lmh(lvol,  ii)       ;                           ; dMB(ind_matrix)%mat(id, 2) = -       one ! to be deleted;
     ;                   ; id = Lmh(lvol,  ii)       ;                           ; dMB(ind_matrix)%mat(id, 2) = +       one ! changed sign;
@@ -579,8 +579,8 @@ subroutine matrix( lvol, mn, lrad )
      endif
     enddo ! end of do pp ;
     
-    ;if( ii.gt.1 ) then ; id = Lme(lvol,ii)         ;                           ; dMG(ind_matrix)%arr(id   ) = - ( iVns(ii) - iBns(ii) )
-    ;                   ; id = Lmf(lvol,ii)         ;                           ; dMG(ind_matrix)%arr(id   ) = - ( iVnc(ii) - iBnc(ii) )
+    ;if( ii.gt.1 ) then ; id = Lme(lvol,ii)         ;                           ; dMG(ind_matrix)%arr(id   ) = - ( iVns(ii) + iBns(ii) )
+    ;                   ; id = Lmf(lvol,ii)         ;                           ; dMG(ind_matrix)%arr(id   ) = - ( iVnc(ii) + iBnc(ii) )
     ;else               ; id = Lmg(lvol,ii)         ;                           ; dMB(ind_matrix)%mat(id, 1) = -       one
 !   ;                   ; id = Lmh(lvol,ii)         ;                           ; dMB(ind_matrix)%mat(id, 2) = -       one ! to be deleted;
     ;                   ; id = Lmh(lvol,ii)         ;                           ; dMB(ind_matrix)%mat(id, 2) = +       one ! changed sign;
