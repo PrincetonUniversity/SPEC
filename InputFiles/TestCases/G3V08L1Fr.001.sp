@@ -179,8 +179,8 @@ Vns(0,32)   =  9.623711250383996E-13 Bns(0,32)   = -4.709530705132861E-10 Vnc(0,
 /
 &diagnosticslist
  odetol      =   1.000000000000000E-07
- nPpts       =       500
- nPtrj       =      4     4     4     4     4     4     4     4     4
+ nPpts       =       1000
+ nPtrj       =      10     10     10     10     10     10     10     10     10
  LHevalues   =         F
  LHevectors  =         F
  LHmatrix    =         F
