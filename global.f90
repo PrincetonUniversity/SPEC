@@ -1115,8 +1115,8 @@ module allglobal
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  REAL   , allocatable :: diotadxup(:,:,:) ! measured rotational transform on inner/outer interfaces for each volume;
-  REAL   , allocatable :: dItGpdxtp(:,:,:) ! measured rotational transform on inner/outer interfaces for each volume;
+  REAL   , allocatable :: diotadxup(:,:,:) ! measured rotational transform on inner/outer interfaces for each volume;          d(transform)/dx; (see dforce);
+  REAL   , allocatable :: dItGpdxtp(:,:,:) ! measured toroidal and poloidal current on inner/outer interfaces for each volume; d(Itor,Gpol)/dx; (see dforce);
 
   REAL   , allocatable :: glambda(:,:,:,:) ! save initial guesses for iterative calculation of rotational-transform; 
 
