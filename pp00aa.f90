@@ -74,7 +74,7 @@
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-subroutine pp00aa( lvol, numTrajTotal )
+subroutine pp00aa
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -84,7 +84,7 @@ subroutine pp00aa( lvol, numTrajTotal )
   
   use fileunits, only : ounit
   
-  use inputlist, only : Wmacros, Wpp00aa, Nvol, Lrad, ext, odetol, nPpts, nPtrj, Lconstraint, iota, oita
+  use inputlist, only : Wmacros, Wpp00aa, Nvol, Lrad, ext, odetol, nPpts, nPtrj, Lconstraint, iota, oita, Igeometry
   
   use cputiming, only : Tpp00aa
   
@@ -92,101 +92,201 @@ subroutine pp00aa( lvol, numTrajTotal )
                         Nz, pi2nfp, &
                         ivol, Mvol, &
                         Lcoordinatesingularity, &
-                        diotadxup
-  
-  use sphdf5, only    : write_poincare, write_transform
+                        diotadxup, Lplasmaregion, Lvacuumregion
 
+  use sphdf5,    only : init_flt_output, write_poincare, write_transform, finalize_flt_output
+  
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   LOCALS
   
-  INTEGER, intent(in)  :: lvol, numTrajTotal
-  INTEGER              :: lnPtrj, ioff, itrj
-  INTEGER, allocatable :: utflag(:)
+  INTEGER              :: lnPtrj, ioff, vvol, itrj, lvol
+  INTEGER, allocatable :: utflag(:), numTrajs(:)
   REAL                 :: sti(1:2), ltransform(1:2)
-  REAL, allocatable    :: data(:,:,:), fiota(:,:)
+  REAL, allocatable    :: data(:,:,:,:), fiota(:,:)
   
+  integer :: id, numTraj
+  integer :: status(MPI_STATUS_SIZE)
+
   BEGIN(pp00aa)
   
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-  if( nPtrj(lvol).ge.0 ) then ; lnPtrj =    nPtrj(lvol) ! selected Poincare resolution;
-  else                        ; lnPtrj = 2 * Lrad(lvol) ! adapted  Poincare resolution;
-  endif
-
-  if( lnPtrj.le.0 ) goto 9999 ! this also skips writing the grid and restart file; since 9999 is at the end of xspech?
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  ivol = lvol
-
-1001 format("pp00aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; odetol=",es8.1," ; nPpts=",i8," ; lnPtrj=",i3," ;")
-  
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-  SALLOCATE( data, (1:4,0:Nz-1,1:nPpts), zero ) ! for block writing to file (allows faster reading of output data files for post-processing plotting routines);
-  
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-   
-1002 format("pp00aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; ",i3," : (s,t)=(",f21.17," ,",f21.17," ) ;":" utflag=",i3," ; transform=",es23.15,&
-  " ;":" error=",es13.5," ;")  
-  
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-  if( Lcoordinatesingularity ) then ; ioff = 1 ! keep away from coordinate axis;
-  else                              ; ioff = 0
-  endif
-  
-  SALLOCATE( utflag, (ioff:lnPtrj), 0 ) ! error flag that indicates if fieldlines successfully followed; 22 Apr 13;
-  
-  SALLOCATE( fiota, (ioff:lnPtrj,1:2), zero ) ! will always need fiota(0,1:2);
-  
-  do itrj = ioff, lnPtrj ! initialize Poincare plot with trajectories regularly spaced between interfaces along \t=0;
-   
-   if( Lcoordinatesingularity ) then ; sti(1:2) = (/ - one + itrj**2 * two / lnPtrj**2, zero /) ! equal increments in rr = \sqrt(ss) ; 08 Feb 16;
-   else                              ; sti(1:2) = (/ - one + itrj    * two / lnPtrj   , zero /)
-   endif
-   
-   if( itrj.eq.     0 ) sti(1) = - one ! avoid machine precision errors; 08 Feb 16;
-   if( itrj.eq.lnPtrj ) sti(1) =   one ! avoid machine precision errors; 08 Feb 16;
-   
-   CALL( pp00aa, pp00ab, ( lvol, sti(1:2), Nz, nPpts, data(1:4,0:Nz-1,1:nPpts), fiota(itrj,1:2), utflag(itrj) ) )
-   
-   if( Wpp00aa ) then
-    cput = GETTIME
-    if( Lconstraint.eq.1 ) then
-     if( itrj.eq.0                      ) write(ounit,1002) cput-cpus, myid, lvol, itrj, sti(1:2), utflag(itrj), fiota(itrj,2), fiota(itrj,2)-oita(lvol-1)
-     if( itrj.gt.0 .and. itrj.lt.lnPtrj ) write(ounit,1002) cput-cpus, myid, lvol, itrj, sti(1:2), utflag(itrj), fiota(itrj,2)
-     if(                 itrj.eq.lnPtrj ) write(ounit,1002) cput-cpus, myid, lvol, itrj, sti(1:2), utflag(itrj), fiota(itrj,2), fiota(itrj,2)-iota(lvol  )
-    else                                ; write(ounit,1002) cput-cpus, myid, lvol, itrj, sti(1:2), utflag(itrj), fiota(itrj,2)
+  ! count how many Poincare trajectories should be computed in total ; executed on each CPU
+  allocate(numTrajs(1:Mvol))
+  do vvol = 1, Mvol
+    LREGION(vvol) ! sets e.g. Lcoordinatesingularity
+    if( Lcoordinatesingularity ) then ; ioff = 1 ! keep away from coordinate axis;
+    else                              ; ioff = 0
     endif
-   endif
-   
-   ! write all trajectories, but only mark successfully followed trajectories with success.eq.1; 21 May 19;
-   WCALL( pp00aa, write_poincare, (data, numTrajTotal+itrj-ioff, utflag(itrj)) )
 
-  enddo ! end of do itrj; 25 Jan 13;
+    if( nPtrj(vvol).ge.0 ) then ; lnPtrj =    nPtrj(vvol) ! selected Poincare resolution;
+    else                        ; lnPtrj = 2 * Lrad(vvol) ! adapted  Poincare resolution;
+    endif
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-  DALLOCATE(data)
-
-  DALLOCATE(utflag)
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-  ! write rotational transform data to output file
-  WCALL( pp00aa, write_transform, (numTrajTotal, lnPtrj-ioff+1, lvol, diotadxup(0:1,0,lvol), fiota(ioff:lnPtrj,1:2)) ) ! 21 May 19;
+    numTrajs(vvol) = lnPtrj - ioff + 1 ! interval includes edge
+  enddo
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  DALLOCATE(fiota)
-  
+  ! the total number of Poincare trajectories to be saved later on is given by sum(numTrajs)
+  call init_flt_output( sum(numTrajs) )
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  ! start tracing
+  do vvol = 1, Mvol
+
+    ! skip loop content if in the wrong CPU
+    if( myid.eq.modulo(vvol-1,ncpu) .and. myid.lt.Mvol) then ! the following is in parallel; 20 Jun 14;
+
+      ! lower bound for radial indices
+      LREGION(vvol) ! sets e.g. Lcoordinatesingularity
+      if( Lcoordinatesingularity ) then ; ioff = 1 ! keep away from coordinate axis;
+      else                              ; ioff = 0
+      endif
+
+      ! upper bound for radial indices
+      if( nPtrj(vvol).ge.0 ) then ; lnPtrj =    nPtrj(vvol) ! selected Poincare resolution;
+      else                        ; lnPtrj = 2 * Lrad(vvol) ! adapted  Poincare resolution;
+      endif
+
+      write(*,*) "CPU ",myid," works on trajectories ",ioff," to ",lnPtrj
+
+      SALLOCATE(   data, (ioff:lnPtrj, 1:4,0:Nz-1,1:nPpts), zero ) ! for block writing to file (allows faster reading of output data files for post-processing plotting routines);
+      SALLOCATE( utflag, (ioff:lnPtrj                    ),    0 ) ! error flag that indicates if fieldlines successfully followed; 22 Apr 13;
+      SALLOCATE(  fiota, (ioff:lnPtrj, 1:2               ), zero ) ! will always need fiota(0,1:2);
+
+      do itrj = ioff, lnPtrj ! initialize Poincare plot with trajectories regularly spaced between interfaces along \t=0;
+
+        if( Lcoordinatesingularity ) then ; sti(1:2) = (/ - one + itrj**2 * two / lnPtrj**2, zero /) ! equal increments in rr = \sqrt(ss) ; 08 Feb 16;
+        else                              ; sti(1:2) = (/ - one + itrj    * two / lnPtrj   , zero /)
+        endif
+
+        if( itrj.eq.     0 ) sti(1) = - one ! avoid machine precision errors; 08 Feb 16;
+        if( itrj.eq.lnPtrj ) sti(1) =   one ! avoid machine precision errors; 08 Feb 16;
+
+        ! call actual field line integration subroutine
+        CALL( pp00aa, pp00ab, ( vvol, sti(1:2), Nz, nPpts, data(itrj,1:4,0:Nz-1,1:nPpts), fiota(itrj,1:2), utflag(itrj) ) )
+
+        if( Wpp00aa ) then
+          cput = GETTIME
+          if( Lconstraint.eq.1 ) then
+            if( itrj.eq.0                      ) write(ounit,1002) cput-cpus, myid, vvol, itrj, sti(1:2), utflag(itrj), fiota(itrj,2), fiota(itrj,2)-oita(vvol-1)
+            if( itrj.gt.0 .and. itrj.lt.lnPtrj ) write(ounit,1002) cput-cpus, myid, vvol, itrj, sti(1:2), utflag(itrj), fiota(itrj,2)
+            if(                 itrj.eq.lnPtrj ) write(ounit,1002) cput-cpus, myid, vvol, itrj, sti(1:2), utflag(itrj), fiota(itrj,2), fiota(itrj,2)-iota(vvol  )
+          else                                 ; write(ounit,1002) cput-cpus, myid, vvol, itrj, sti(1:2), utflag(itrj), fiota(itrj,2)
+          endif
+        endif ! Wpp00aa
+
+      enddo ! itrj = ioff, lnPtrj
+
+      write(*,*) "CPU ",myid," finished field line tracing for volume ",vvol
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+      ! write data
+      if (myid.eq.0) then
+        write(*,*) "CPU 0 writes its Poincare data"
+
+        do itrj = ioff, lnPtrj
+          ! write utflag --> success flag vector for field line tracing
+          ! write data --> actual Poincare data
+          if (vvol.gt.1) then
+            write(*,*) "CPU 0 writes a trajectory at offset ",sum(numTrajs(1:vvol-1))+itrj-ioff
+            call write_poincare ( sum(numTrajs(1:vvol-1))+itrj-ioff, data(itrj,:,:,:), utflag )
+          else
+            write(*,*) "CPU 0 writes a trajectory at offset ",itrj-ioff
+            call write_poincare (                       itrj-ioff, data(itrj,:,:,:), utflag )
+          endif
+        enddo
+        call write_transform( 0, numTrajs(1), 1, diotadxup(0:1,0,1), fiota(1:numTrajs(1),1:2) )
+
+        if (Mvol.gt.1) then
+          do lvol = 2, Mvol
+            write(*,*) "CPU 0 writes Poincare data for volume ",lvol
+
+            deallocate(utflag)
+            deallocate(data)
+            deallocate(fiota)
+
+            allocate(utflag(1:numTrajs(lvol)))
+            allocate(  data(1:numTrajs(lvol),1:4,0:Nz-1,1:nPpts))
+            allocate( fiota(1:numTrajs(lvol),1:2))
+
+            call MPI_Recv( utflag, numTrajs(lvol)           , MPI_INTEGER         , modulo(lvol-1,ncpu), lvol, MPI_COMM_WORLD, status, ierr)
+            write(*,*) "CPU 0 got utflag vector from CPU ",modulo(lvol-1,ncpu)
+
+            call MPI_Recv(   data, numTrajs(lvol)*4*Nz*nPpts, MPI_DOUBLE_PRECISION, modulo(lvol-1,ncpu), lvol, MPI_COMM_WORLD, status, ierr)
+            write(*,*) "CPU 0 got the corresponding Poincare data from CPU ",modulo(lvol-1,ncpu)
+
+            call MPI_Recv(  fiota, numTrajs(lvol)*2         , MPI_DOUBLE_PRECISION, modulo(lvol-1,ncpu), lvol, MPI_COMM_WORLD, status, ierr)
+            write(*,*) "CPU 0 got the iota profile from CPU ",modulo(lvol-1,ncpu)
+
+            ! write utflag vector of CPU id
+            ! write data of CPU id
+
+            do itrj = 1, numTrajs(lvol)
+              write(*,*) "CPU 0 writes a trajectory at offset ",sum(numTrajs(1:lvol-1))+itrj-1
+              call write_poincare( sum(numTrajs(1:lvol-1))+itrj-1, data(itrj,:,:,:), utflag )
+            enddo
+
+            ! write fiota --> iota from field line tracing
+            ! write diotadxup --> iota from Beltrami field(?)
+            !call write_transform( sum(numTrajs(1:lvol-1)), numTrajs(lvol), lvol, diotadxup(0:1,0,lvol), fiota(1:numTrajs(lvol),1:2) )
+            call write_transform( sum(numTrajs(1:lvol-1)), numTrajs(lvol), lvol, diotadxup(0:1,0,lvol), fiota(1:numTrajs(lvol),1:2) )
+
+            ! write fiota of CPU id
+          enddo ! vvol = 2, Mvol
+        endif
+
+        deallocate(numTrajs)
+      else
+        call MPI_Send( utflag, numTrajs(vvol)           , MPI_INTEGER         , 0, vvol, MPI_COMM_WORLD, ierr) ! success flag vector
+        call MPI_Send(   data, numTrajs(vvol)*4*Nz*nPpts, MPI_DOUBLE_PRECISION, 0, vvol, MPI_COMM_WORLD, ierr) ! Poincare data
+        call MPI_Send(  fiota, numTrajs(vvol)*2         , MPI_DOUBLE_PRECISION, 0, vvol, MPI_COMM_WORLD, ierr) ! rotational transform profile from field line tracing
+        ! diotadxup should be available in the master already, since it is stored in global
+      endif ! myid.eq.0
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+      DALLOCATE(data)
+      DALLOCATE(utflag)
+      DALLOCATE(fiota)
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+    endif ! myid.eq.modulo(vvol-1,ncpu)
+  enddo ! vvol = 1, Mvol
+
+
+
+  if (myid.eq.0) then
+    call finalize_flt_output
+  endif
+
+
+
+
+       ! write all trajectories, but only mark successfully followed trajectories with success.eq.1; 21 May 19;
+      ! WCALL( pp00aa, write_poincare, (data, numTrajTotal+itrj-ioff, utflag(itrj)) )
+
+      ! write rotational transform data to output file
+      !WCALL( pp00aa, write_transform, (numTrajTotal, lnPtrj-ioff+1, lvol, diotadxup(0:1,0,lvol), fiota(ioff:lnPtrj,1:2)) ) ! 21 May 19;
+
+
   
+
+
+
+
+
+
+
   RETURN(pp00aa)
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+1001 format("pp00aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; odetol=",es8.1," ; nPpts=",i8," ; lnPtrj=",i3," ;")
+1002 format("pp00aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; ",i3," : (s,t)=(",f21.17," ,",f21.17," ) ;":" utflag=",i3," ; transform=",es23.15,&
+  " ;":" error=",es13.5," ;")
 
 end subroutine pp00aa
 

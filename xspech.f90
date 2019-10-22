@@ -218,7 +218,7 @@ program xspech
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-!latex \subsection{solving force-balance} 
+!latex \subsection{solving force-balance}
   
 !latex \begin{enumerate}
 !latex \item If there are geometrical degress of freedom, i.e. if \internal{NGdof.gt.0}, then \bi
@@ -618,57 +618,29 @@ program xspech
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  ! determine total number of (possibly successful) Poincare trajectories
-  numTrajTotal = 0
   do vvol = 1, Mvol
-   LREGION(vvol) ! sets Lcoordinatesingularity and Lplasmaregion ;
-   ! number of trajectories in current volume vvol
-   if( nPtrj(vvol).ge.0 ) then ; lnPtrj =    nPtrj(vvol) ! selected Poincare resolution;
-   else                        ; lnPtrj = 2 * Lrad(vvol) ! adapted  Poincare resolution;
-   endif
-   if( .not.Lcoordinatesingularity ) then ; lnPtrj = lnPtrj + 1 ! all but innermost volume have one trajectory more than specified by nPtrj
-   endif
-   numTrajTotal = numTrajTotal + lnPtrj
-  enddo
-
-  WCALL( xspech, init_flt_output, (numTrajTotal) )
-
-  numTrajTotal = 0 ! re-used as counter along all trajectories from here on
-  do vvol = 1, Mvol
-
-   LREGION(vvol)
    
+   LREGION(vvol)
+
    if( myid.eq.modulo(vvol-1,ncpu) .and. myid.lt.Mvol) then ! the following is in parallel; 20 Jun 14;
    
     if( .not.ImagneticOK(vvol) ) then ; cput = GETTIME ; write(ounit,1002) cput-cpus ; write(ounit,1002) cput-cpus, myid, vvol, ImagneticOK(vvol) ; cycle
     endif
 
-    WCALL( xspech, sc00aa, ( vvol, Ntz                  ) ) ! compute covariant field (singular currents);
+    ;WCALL( xspech, sc00aa, ( vvol, Ntz                  ) ) ! compute covariant field (singular currents);
 
     if( Lcheck.eq.1 ) then
      WCALL( xspech, jo00aa, ( vvol, Ntz, Iquad(vvol), mn ) )
     endif
 
-    if( nPpts .gt.0 ) then
-     WCALL( xspech, pp00aa, ( vvol, numTrajTotal         ) ) ! Poincare plots in each volume
-    endif
+    !if( nPpts .gt.0 ) then
+    ! WCALL( xspech, pp00aa, ( vvol                       ) ) ! Poincare plots in each volume
+    !endif
+
    endif ! myid.eq.modulo(vvol-1,ncpu)
-
-   ! number of trajectories needs to be computed here as well to correctly increate numTrajTotal if needed
-   if( nPtrj(vvol).ge.0 ) then ; lnPtrj =    nPtrj(vvol) ! selected Poincare resolution;
-   else                        ; lnPtrj = 2 * Lrad(vvol) ! adapted  Poincare resolution;
-   endif
-
-   ! all but innermost volume have one trajectory more than specified by nPtrj
-   if( .not.Lcoordinatesingularity ) then ; lnPtrj = lnPtrj + 1
-   endif
-
-   ! keep track of where we are along all trajectories
-   numTrajTotal = numTrajTotal + lnPtrj
-
   enddo ! end of do vvol = 1, Mvol; ! end of parallel diagnostics loop; 03 Apr 13;
   
-  WCALL( xspech, finalize_flt_output )
+  WCALL( xspech, pp00aa ) ! Poincare plots
 
 1002 format("xspech : ",f10.2," :":" myid=",i3," ; vvol=",i3," ; IBeltrami="L2" ; construction of Beltrami field failed ;")
 
@@ -703,6 +675,7 @@ program xspech
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   WCALL( xspech, write_grid ) ! write grid
+
   if( myid.eq.0 ) then
    WCALL( xspech, wrtend ) ! write restart file; save initial input;
    
@@ -717,7 +690,6 @@ program xspech
 9999 continue
 
   WCALL( xspech, ending )
-
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
