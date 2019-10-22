@@ -45,7 +45,7 @@ program xspech
                         Rbc, Zbs, Rbs, Zbc, &
                         Lconstraint, &
                         Lfreebound, mfreeits, gBntol, gBnbld, vcasingtol, &
-                        Lfindzero, &
+                        Lfindzero, LautoinitBn, &
                         odetol, nPpts, nPtrj, &
                         LHevalues, LHevectors, LHmatrix, Lperturbed, Lcheck, &
                         Lzerovac, &
@@ -185,28 +185,28 @@ program xspech
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   nfreeboundaryiterations = -1
- 
-  Lfindzero_old = Lfindzero
-  mfreeits_old = mfreeits
+  
 9000 nfreeboundaryiterations = nfreeboundaryiterations + 1 ! this is the free-boundary iteration loop; 08 Jun 16;
 
   ! run fix_boundary for the first free_boundary iteration
-  if (Lfreebound.eq.1 .and. nfreeboundaryiterations .eq. 0) then  ! first iteration
-     first_free_bound = .true.
-     !Mvol = Nvol
-     gBnbld_old = gBnbld
-     gBnbld = zero
-!     Lfindzero_old = Lfindzero
-     Lfindzero = 0 
-!     mfreeits_old = mfreeits
-     mfreeits = 1
-     if (myid .eq. 0 ) write(ounit,'("xspech : ",10X," : First iteration of free boundary calculation : update Bns from plasma.")')
-  else
-     first_free_bound = .false.
-     Mvol = Nvol + Lfreebound
-     Lfindzero = Lfindzero_old
-     gBnbld = gBnbld_old
-     mfreeits = mfreeits_old
+  if (Lfreebound.eq.1 .and. LautoinitBn.eq.1) then 
+     if (nfreeboundaryiterations.eq.0) then  ! first iteration
+        first_free_bound = .true.
+        !Mvol = Nvol
+        gBnbld_old = gBnbld
+        gBnbld = zero
+        Lfindzero_old = Lfindzero
+        mfreeits_old = mfreeits
+        Lfindzero = 0 
+        mfreeits = 1
+        if (myid.eq.0) write(ounit,'("xspech : ",10X," : First iteration of free boundary calculation : update Bns from plasma.")')
+     else
+        first_free_bound = .false.
+        !Mvol = Nvol + Lfreebound
+        Lfindzero = Lfindzero_old
+        gBnbld = gBnbld_old
+        mfreeits = mfreeits_old
+     endif
   endif
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

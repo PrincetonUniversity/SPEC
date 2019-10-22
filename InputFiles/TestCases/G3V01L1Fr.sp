@@ -474,6 +474,7 @@ Vns(8,8)    =  0.000000000000000E+00 Bns(8,8)    =  0.000000000000000E+00 Vnc(8,
 /
 &numericlist
  Linitialize =         0
+ LautoinitBn = 	       1
  Lzerovac    =         0
  Ndiscrete   =         2
  Nquad       =        -1
