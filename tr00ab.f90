@@ -430,7 +430,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
      call F11ZAF( Ndof, inz(id), smatrix(1:inz(id),id), irow(1:inz(id),id), jcol(1:inz(id),id), duplicate, zeros, istr(1:Ndof+1), iwork(1:Ndof), if11zaf )
      
      cput = GETTIME
-     select case( if11zaf )                                                                  !1234567890123456789012
+     select case( if11zaf )                                                                     !1234567890123456789012
      case( 0 )    ; if( Wtr00ab ) write(ounit,1000) myid, lvol, innout, id, if11zaf, cput-lcpu, "success ;             "
      case( 1 )    ;               write(ounit,1000) myid, lvol, innout, id, if11zaf, cput-lcpu, "input error ;         "
      case( 2 )    ;               write(ounit,1000) myid, lvol, innout, id, if11zaf, cput-lcpu, "row or column error ; "
