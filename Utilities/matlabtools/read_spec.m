@@ -9,11 +9,11 @@ function data = read_spec(filename)
 % -  data     : contains all data from the SPEC run, which can be fed into several routines for analyzing and plotting
 %
 % written by J.Schilling (2019)
-% based on the routines by J.Loizu and read_hdf5.m by S. Lazerson
+% based on the read_spec_<quantity>.m routines by J. Loizu and read_hdf5.m by S. Lazerson
 
 % Try to read the file first
 try
-    data_info = h5info(filename,'/');
+    h5info(filename,'/');
 catch h5info_error
     data=-1;
     disp(['ERROR: Opening HDF5 File: ' filename]);
@@ -85,6 +85,16 @@ for i=1:Nvol
 
   % move along combined array dimension
   start = start + Lrad(i)+1;
+
+  % create rho entry for Poincare plot
+  offset = double(i-1)./double(Nvol);
+  rho = 0.5*(data.poincare.s+1.0)./double(Nvol);
+  data.poincare.rho=rho+offset;
+  
+  data.poincare.t   = permute(data.poincare.t,   [3,1,2]);
+  data.poincare.rho = permute(data.poincare.rho, [3,1,2]);
+  data.poincare.R   = permute(data.poincare.R,   [3,1,2]);
+  data.poincare.Z   = permute(data.poincare.Z,   [3,1,2]);
 end
 
 % replace original content in data structure
@@ -100,11 +110,7 @@ data.grid.BR = cBR;
 data.grid.Bp = cBp;
 data.grid.BZ = cBZ;
 
-% remove unsuccessful Poincare trajectories
-data.poincare.R = data.poincare.R(:,:,data.poincare.success==1)
-data.poincare.Z = data.poincare.Z(:,:,data.poincare.success==1)
-data.poincare.t = data.poincare.t(:,:,data.poincare.success==1)
-data.poincare.s = data.poincare.s(:,:,data.poincare.success==1)
+
 
 end
 
