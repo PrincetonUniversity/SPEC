@@ -86,7 +86,7 @@ ifeq ($(CC),gfortran_arch)
  LIBS=
  LINKS+=-lhdf5_fortran -lhdf5 -lpthread -lz -lm
  LINKS+=-lfftw3
- RFLAGS=-O2 -ffixed-line-length-none -ffree-line-length-none -fexternal-blas
+ RFLAGS=-O0 -ffixed-line-length-none -ffree-line-length-none -fexternal-blas
  DFLAGS=-g -fbacktrace -fbounds-check -ffree-line-length-none -fexternal-blas -DDEBUG
 endif 
 
