@@ -16,7 +16,7 @@ function matching = specheck(fdata, gdata, idata, pdata, data)
 
 matching = 1;
 
-tol=1e-12;
+tol=1.0e-12;
 
 % check equivalence of fdata: from "testcase.sp.h5" file
 % quantities from old .sp.h5 file, sorted by equivalent quantity in the new output file

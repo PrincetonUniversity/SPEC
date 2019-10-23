@@ -3,7 +3,7 @@ function [equal] = isequaltol(A, B, tol)
 %   This function checks two objects for almost equality up to a given
 % tolerance tol.
 equal = isequal(A, B);
-if ~equal
+if ~equal && tol>0.0
     if iscell(A)
         if ~iscell(B)
             equal = 0;
