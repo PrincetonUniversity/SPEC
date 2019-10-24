@@ -65,11 +65,10 @@ The folder structure should be like this now:
 
 ## First test case: G3V01L0Fi.002 (W7-X OP1.1)
 
-5. create a (generic) SLURM batch script for running SPEC on 1 CPU
+5a. create a (generic) SLURM batch script for running SPEC on 1 CPU
 ```
-> mkdir analysis/SPEC_output_comparison/G3V01L0Fi.002_master
-> pushd analysis/SPEC_output_comparison/G3V01L0Fi.002_master
-> cat slurm_spec_1
+> pushd analysis/SPEC_output_comparison
+> cat > slurm_spec_1 << EOF
 #!/bin/bash -l
 # Standard output and error:
 #SBATCH -o ./spec_stdout.%j
@@ -92,21 +91,22 @@ The folder structure should be like this now:
 #SBATCH --time=04:00:00
 
 # Run the program:
-srun $@
+srun \$@
+EOF
 ```
 
-6. run SPEC from the master branch
+5b. enqueue the SPEC run from the master branch
 ```
-> mkdir analysis/SPEC_output_comparison/G3V01L0Fi.002_master
-> pushd analysis/SPEC_output_comparison/G3V01L0Fi.002_master
-> cp ../../../src/SPEC_master/InputFiles/TestCases/G3V01L0Fi.002.sp .
+> mkdir G3V01L0Fi.002_master
+> pushd G3V01L0Fi.002_master
+> ln -s ../../../src/SPEC_master/InputFiles/TestCases/G3V01L0Fi.002.sp .
 > ln -s ../../../src/SPEC_master/xspec .
+> ln -s ../slurm_spec_1 .
 > ls -lh # check that everything is there for running SPEC
-total 128K
--rw-r--r-- 1 jons ipg 43K Oct 24 22:38 G3V01L0Fi.002.sp
--rw-r--r-- 1 jons ipg 512 Oct 24 22:42 slurm_spec_1
-lrwxrwxrwx 1 jons ipg  30 Oct 24 22:38 xspec -> ../../../src/SPEC_master/xspec
-> sbatch slurm_spec_1 ./xspec G3V01L0Fi.002
+lrwxrwxrwx 1 jons ipg   62 Oct 24 23:06 G3V01L0Fi.002.sp -> ../../../src/SPEC_master/InputFiles/TestCases/G3V01L0Fi.002.sp
+lrwxrwxrwx 1 jons ipg   15 Oct 24 23:06 slurm_spec_1 -> ../slurm_spec_1
+lrwxrwxrwx 1 jons ipg   30 Oct 24 22:38 xspec -> ../../../src/SPEC_master/xspec
+> sbatch ../slurm_spec_1 ./xspec G3V01L0Fi.002
 ```
 
 Check the output files ```spec_stdout.<jobid>``` and ```spec_stderr.<jobid>```.
@@ -121,7 +121,88 @@ xspech :            :
                                      ^^^
 ```
 
-7. run SPEC from the issue68 branch on the input file from the master branch
+Finally, leave this run until it is finished and return to the ```SPEC_output_comparison``` directory:
+
+```
+> popd
+```
+
+5c. enqueue SPEC from the issue68 branch on the input file from the master branch
+```
+> mkdir G3V01L0Fi.002_issue68
+> pushd G3V01L0Fi.002_issue68
+> ln -s ../../../src/SPEC_master/InputFiles/TestCases/G3V01L0Fi.002.sp .
+> ln -s ../../../src/SPEC_issue68/xspec .
+> ln -s ../slurm_spec_1 .
+> ls -lh # check that everything is there for running SPEC
+lrwxrwxrwx 1 jons ipg   62 Oct 24 23:02 G3V01L0Fi.002.sp -> ../../../src/SPEC_master/InputFiles/TestCases/G3V01L0Fi.002.sp
+lrwxrwxrwx 1 jons ipg   15 Oct 24 23:01 slurm_spec_1 -> ../slurm_spec_1
+lrwxrwxrwx 1 jons ipg   31 Oct 24 23:03 xspec -> ../../../src/SPEC_issue68/xspec
+> sbatch slurm_spec_1 ./xspec G3V01L0Fi.002.sp
+```
+
+Check the output files ```spec_stdout.<jobid>``` and ```spec_stderr.<jobid>```.
+In the beginning, the flags should include ```-O0```:
+```
+xspech :            : version =  1.90
+       :  compiled  : date    = Thu Oct 24 22:30:49 CEST 2019 ; 
+       :            : srcdir  = /u/jons/src/SPEC_issue68 ; 
+       :            : macros  = macros ; 
+       :            : fc      = mpiifort ; 
+       :            : flags   =  -r8 -O0 -ip -no-prec-div -xHost -fPIC ;
+                                     ^^^
+```
+
+Finally, leave this run until it is finished and return to the ```SPEC_output_comparison``` directory:
+
+```
+> popd
+```
+
+5d. Compare the outputs of the two runs in Matlab
+
+
+
+
+
+
+## Second test case: G2V32L1Fi.001 (Tokamak with 32 volumes)
+
+6a. create a (generic) SLURM batch script for running SPEC on 32 CPUs
+```
+> mkdir analysis/SPEC_output_comparison/G2V32L1Fi.001_master
+> pushd analysis/SPEC_output_comparison/G2V32L1Fi.001_master
+> cat > slurm_spec_32 << EOF
+#!/bin/bash -l
+# Standard output and error:
+#SBATCH -o ./spec_stdout.%j
+#SBATCH -e ./spec_stderr.%j
+# Initial working directory:
+#SBATCH -D ./
+# Job Name:
+#SBATCH -J SPEC
+# Queue (Partition):
+#SBATCH --partition=medium
+# Number of nodes and MPI tasks per node:
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=32
+# #SBATCH --mem=16384 # 16GB could be enough for the beginning...
+#
+#SBATCH --mail-type=none
+#SBATCH --mail-user=<userid>@rzg.mpg.de
+#
+# Wall clock limit:
+#SBATCH --time=04:00:00
+
+# Run the program:
+srun \$@
+EOF
+```
+
+
+
+
+
 
 
 
