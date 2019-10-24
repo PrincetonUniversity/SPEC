@@ -112,7 +112,13 @@ lrwxrwxrwx 1 jons ipg  30 Oct 24 22:38 xspec -> ../../../src/SPEC_master/xspec
 Check the output files ```spec_stdout.<jobid>``` and ```spec_stderr.<jobid>```.
 In the beginning, the flags should include ```-O0```:
 ```
+xspech :            : 
+       :  compiled  : date    = Thu Oct 24 22:31:32 CEST 2019 ; 
+       :            : dir     = /u/jons/src/SPEC_master ; 
+       :            : macros  = macros ; 
+       :            : f90     =  ; 
        :            : flags   =  -r8 -O0 -ip -no-prec-div -xHost -fPIC ; 
+                                     ^^^
 ```
 
 7. run SPEC from the issue68 branch on the input file from the master branch
