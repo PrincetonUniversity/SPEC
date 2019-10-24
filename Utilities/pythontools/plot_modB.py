@@ -8,33 +8,20 @@
 """
 
 import numpy as np
-from read_spec import SPEC
+import py_spec as p
+import sys
+import matplotlib.pyplot as plt
 
-import SPEC_postprocessing_lib
-
-
-
-s = SPEC('G3V01L0Fi.002.ksu1.h5')
-
-
+s = p.SPEC(sys.argv[1])
 
 sarr    = np.linspace(-0.999,1,4)
 tarr    = np.linspace(0,2*np.pi,5)
 zarr    = np.linspace(0,0,6)
 lvol    = 0
 
-
-
-R, Z, jacobian, g, jacobian_from_metric = SPEC_lib.get_grid_and_jacobian_and_metric(s,lvol=lvol,sarr=sarr,tarr=tarr,zarr=zarr)
-Bcontrav          = SPEC_lib.get_B(s,lvol=lvol,jacobian=jacobian,sarr=sarr,tarr=tarr,zarr=zarr)
-
-
-
-modB              = SPEC_lib.get_modB(Bcontrav,g)
-
-
-
-import matplotlib.pyplot as plt
+R, Z, jacobian, g = p.get_grid_and_jacobian_and_metric(s,lvol=lvol,sarr=sarr,tarr=tarr,zarr=zarr)
+Bcontrav          = p.get_B(s,lvol=lvol,jacobian=jacobian,sarr=sarr,tarr=tarr,zarr=zarr)
+modB              = p.get_modB(Bcontrav,g)
 
 fig = plt.figure(figsize=(3*2,5*2))
 ax = fig.add_subplot(111)
@@ -44,7 +31,7 @@ ax.set_xlabel(r"$R$")
 ax.set_ylabel(r"$Z$")
 cbar = fig.colorbar(plot, ax=ax)
 cbar.set_label(r"$|\vec B|$", rotation=0)
-#plt.show()
+plt.show()
 
 
 
