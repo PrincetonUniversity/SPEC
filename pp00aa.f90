@@ -149,7 +149,7 @@ subroutine pp00aa
       else                        ; lnPtrj = 2 * Lrad(vvol) ! adapted  Poincare resolution;
       endif
 
-      write(*,*) "CPU ",myid," works on trajectories ",ioff," to ",lnPtrj
+      ! write(*,*) "CPU ",myid," works on trajectories ",ioff," to ",lnPtrj
 
       SALLOCATE(   data, (ioff:lnPtrj, 1:4,0:Nz-1,1:nPpts), zero ) ! for block writing to file (allows faster reading of output data files for post-processing plotting routines);
       SALLOCATE( utflag, (ioff:lnPtrj                    ),    0 ) ! error flag that indicates if fieldlines successfully followed; 22 Apr 13;
@@ -179,21 +179,21 @@ subroutine pp00aa
 
       enddo ! itrj = ioff, lnPtrj
 
-      write(*,*) "CPU ",myid," finished field line tracing for volume ",vvol
+      ! write(*,*) "CPU ",myid," finished field line tracing for volume ",vvol
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
       ! write data
       if (myid.eq.0) then
-        write(*,*) "CPU 0 writes its Poincare data"
+        ! write(*,*) "CPU 0 writes its Poincare data"
 
         do itrj = ioff, lnPtrj
           ! write utflag --> success flag vector for field line tracing
           ! write data --> actual Poincare data
           if (vvol.gt.1) then
-            write(*,*) "CPU 0 writes a trajectory at offset ",sum(numTrajs(1:vvol-1))+itrj-ioff
+            ! write(*,*) "CPU 0 writes a trajectory at offset ",sum(numTrajs(1:vvol-1))+itrj-ioff
             call write_poincare ( sum(numTrajs(1:vvol-1))+itrj-ioff, data(itrj,:,:,:), utflag )
           else
-            write(*,*) "CPU 0 writes a trajectory at offset ",itrj-ioff
+            ! write(*,*) "CPU 0 writes a trajectory at offset ",itrj-ioff
             call write_poincare (                       itrj-ioff, data(itrj,:,:,:), utflag )
           endif
         enddo
@@ -201,7 +201,7 @@ subroutine pp00aa
 
         if (Mvol.gt.1) then
           do lvol = 2, Mvol
-            write(*,*) "CPU 0 writes Poincare data for volume ",lvol
+            ! write(*,*) "CPU 0 writes Poincare data for volume ",lvol
 
             deallocate(utflag)
             deallocate(data)
@@ -212,25 +212,23 @@ subroutine pp00aa
             allocate( fiota(1:numTrajs(lvol),1:2))
 
             call MPI_Recv( utflag, numTrajs(lvol)           , MPI_INTEGER         , modulo(lvol-1,ncpu), lvol, MPI_COMM_WORLD, status, ierr)
-            write(*,*) "CPU 0 got utflag vector from CPU ",modulo(lvol-1,ncpu)
+            ! write(*,*) "CPU 0 got utflag vector from CPU ",modulo(lvol-1,ncpu)
 
             call MPI_Recv(   data, numTrajs(lvol)*4*Nz*nPpts, MPI_DOUBLE_PRECISION, modulo(lvol-1,ncpu), lvol, MPI_COMM_WORLD, status, ierr)
-            write(*,*) "CPU 0 got the corresponding Poincare data from CPU ",modulo(lvol-1,ncpu)
+            ! write(*,*) "CPU 0 got the corresponding Poincare data from CPU ",modulo(lvol-1,ncpu)
 
             call MPI_Recv(  fiota, numTrajs(lvol)*2         , MPI_DOUBLE_PRECISION, modulo(lvol-1,ncpu), lvol, MPI_COMM_WORLD, status, ierr)
-            write(*,*) "CPU 0 got the iota profile from CPU ",modulo(lvol-1,ncpu)
+            ! write(*,*) "CPU 0 got the iota profile from CPU ",modulo(lvol-1,ncpu)
 
             ! write utflag vector of CPU id
             ! write data of CPU id
-
             do itrj = 1, numTrajs(lvol)
-              write(*,*) "CPU 0 writes a trajectory at offset ",sum(numTrajs(1:lvol-1))+itrj-1
+              ! write(*,*) "CPU 0 writes a trajectory at offset ",sum(numTrajs(1:lvol-1))+itrj-1
               call write_poincare( sum(numTrajs(1:lvol-1))+itrj-1, data(itrj,:,:,:), utflag )
             enddo
 
             ! write fiota --> iota from field line tracing
             ! write diotadxup --> iota from Beltrami field(?)
-            !call write_transform( sum(numTrajs(1:lvol-1)), numTrajs(lvol), lvol, diotadxup(0:1,0,lvol), fiota(1:numTrajs(lvol),1:2) )
             call write_transform( sum(numTrajs(1:lvol-1)), numTrajs(lvol), lvol, diotadxup(0:1,0,lvol), fiota(1:numTrajs(lvol),1:2) )
 
             ! write fiota of CPU id
@@ -256,29 +254,9 @@ subroutine pp00aa
     endif ! myid.eq.modulo(vvol-1,ncpu)
   enddo ! vvol = 1, Mvol
 
-
-
   if (myid.eq.0) then
     call finalize_flt_output
   endif
-
-
-
-
-       ! write all trajectories, but only mark successfully followed trajectories with success.eq.1; 21 May 19;
-      ! WCALL( pp00aa, write_poincare, (data, numTrajTotal+itrj-ioff, utflag(itrj)) )
-
-      ! write rotational transform data to output file
-      !WCALL( pp00aa, write_transform, (numTrajTotal, lnPtrj-ioff+1, lvol, diotadxup(0:1,0,lvol), fiota(ioff:lnPtrj,1:2)) ) ! 21 May 19;
-
-
-  
-
-
-
-
-
-
 
   RETURN(pp00aa)
   
@@ -287,6 +265,8 @@ subroutine pp00aa
 1001 format("pp00aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; odetol=",es8.1," ; nPpts=",i8," ; lnPtrj=",i3," ;")
 1002 format("pp00aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; ",i3," : (s,t)=(",f21.17," ,",f21.17," ) ;":" utflag=",i3," ; transform=",es23.15,&
   " ;":" error=",es13.5," ;")
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 end subroutine pp00aa
 
