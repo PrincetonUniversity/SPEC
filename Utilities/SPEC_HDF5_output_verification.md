@@ -1,6 +1,6 @@
 Verification of the HDF5 output module in SPEC as developed on the branch "issue68"
 
-J. Schilling (jonathan.schilling@ipp.mpg.de), 2019-06-24
+J. Schilling (jonathan.schilling@ipp.mpg.de), 2019-10-23
 
 Objective: Verify that the newly-developed HDF5 output module actually saves identical information
            as the previous implementation does
@@ -10,63 +10,60 @@ Approach:  Run SPEC with both the previous output module and the HDF5 output mod
 
 Detailed list of steps:
 
-0. These operations are listed for execution on the DRACO cluster at IPP: https://www.mpcdf.mpg.de/services/computing/draco
-> ssh -Y draco-i.mpcdf.mpg.de
+0. These operations are listed for execution on the COBRA cluster at IPP: https://www.mpcdf.mpg.de/services/computing/cobra
+> ssh cobra-i.mpcdf.mpg.de
 > module purge
-> module load git intel impi mkl hdf5-mpi/1.10.4 fftw-mpi
+> module load intel impi mkl git hdf5-serial fftw-mpi matlab
 > module list
 Currently Loaded Modulefiles:
- 1) intel/18.0.3      2) impi/2018.3       3) mkl/2018.3        4) fftw-mpi/3.3.8    5) git/2.16          6) hdf5-mpi/1.10.4
-> export CC=mpicc
-> export FC=mpiifort
-> export NAG='-L${MKLROOT}/lib/intel64 -lmkl_rt -lpthread -lm -ldl -Wl,-rpath -Wl,${MKLROOT}/lib/intel64 -Wl,-rpath -Wl,${HDF5_HOME}/lib -Wl,-rpath -Wl,${FFTW_HOME}/lib'
-> export FFTWHOME=$FFTW_HOME
-
-1. build SPEC from the master branch at the commit from where "issue68" was branched off:
-> git clone git@github.com:PrincetonUniversity/SPEC.git SPEC_master
-> pushd SPEC_master
-> git checkout 32e19c3
-> patch Makefile < ../adjust_spec_makefile_for_draco.diff
-WEIRD BUG: > change -O3 into -O0 in Makefile; otherwise, slight differences will occur depending on the surrounding code and the results will look slightly different  !!!!!
-> make CC="$CC" FC="$FC" NAG="$NAG" xspec
-> popd
-
+  1) intel/19.0.4         2) impi/2019.4          3) mkl/2019.4           4) git/2.16             5) hdf5-serial/1.8.21   6) fftw-mpi/3.3.8       7) matlab/R2019a
+  
+1. The source code for SPEC is going into a folder called 'src':
+> mkdir src
+  
 2. build the current state of SPEC on the "issue68" branch:
-> git clone git@github.com:PrincetonUniversity/SPEC.git SPEC_issue68 -b issue68
-> pushd SPEC_issue68
-> make CC="$CC" FC="$FC" NAG="$NAG" xspec
+> git clone git@github.com:PrincetonUniversity/SPEC.git -b issue68 src/SPEC_issue68
+> pushd src/SPEC_issue68
+> make CC=intel_ipp xspec
+> popd
+ 
+3. build SPEC from the master branch at the commit from where "issue68" was branched off:
+> git clone git@github.com:PrincetonUniversity/SPEC.git src/SPEC_master
+> pushd src/SPEC_master
+> git checkout 32e19c3
+> patch Makefile < ../SPEC_issue68/Utilities/adjust_spec_makefile_for_IPP.diff
+> make CC=intel_ipp xspec
 > popd
 
-3. setup test environment and generate output data
-> mkdir SPEC_output_comparison
-> pushd SPEC_output_comparison
+4. The intermediate files for the test runs are going into a separate folder 'analysis/SPEC_output_comparison'
+> mkdir -p analysis/SPEC_output_comparison
 
-4. create a file slurm_spec with the following content:
-#!/bin/bash -l
-# Standard output and error:
-#SBATCH -o ./%j.out
-#SBATCH -e ./%j.err
-# Initial working directory:
-#SBATCH -D ./
-# Job Name:
-#SBATCH -J SPEC
-# Queue (Partition):
-#SBATCH --partition=express
-# Number of nodes and MPI tasks per node:
-#SBATCH --nodes=1
-#SBATCH --ntasks-per-node=32
-#
-#SBATCH --mail-type=none
-#SBATCH --mail-user=<userid>@rzg.mpg.de
-#
-# Wall clock limit:
-#SBATCH --time=00:30:00
-#
-# Run the program:
-srun $@
+The folder structure should be like this now:
 
-5. do the test run for the master branch
-> mkdir G3V01L0Fi.002_master
+/u/jons/src/SPEC_master                 -- contains the master branch of SPEC at commit 32e19c3 (right before the branch to issue68)
+/u/jons/src/SPEC_issue68                -- contains the latest state of the issue68 branch
+/u/jons/analysis/SPEC_output_comparison -- will contain the outputs of the two SPEC versions for a number of input files
+
+################################################################################################################
+The general setup for comparing the two SPEC versions is completed.
+Now we are going to run the two versions of SPEC on a number of input files and compare the outputs.
+################################################################################################################
+
+
+# First test case: G3V01L0Fi.002 (W7-X OP1.1)
+
+
+
+
+
+
+
+
+
+
+
+3. do the test run for the master branch
+> cp src/SPEC_master/
 > pushd G3V01L0Fi.002_master
 > ln -s ../../SPEC_master/InputFiles/TestCases/G3V01L0Fi.002.sp .
 > ln -s ../../SPEC_master/xspec .
@@ -108,11 +105,11 @@ lrwxrwxrwx 1 jons ipg   24 24. Jun 17:15 xspec -> ../../SPEC_issue68/xspec
 > module load matlab/R2018b
 > matlab -nodesktop
 >> addpath('/u/jons/src/SPEC_issue68/Utilities/matlabtools')
->> fdata = read_spec_field('/u/jons/src/SPEC_output_comparison/G3V01L0Fi.002_master/G3V01L0Fi.002.sp.h5');
->> gdata = read_spec_grid('/u/jons/src/SPEC_output_comparison/G3V01L0Fi.002_master/G3V01L0Fi.002.sp.h5');
->> idata = read_spec_iota('/u/jons/src/SPEC_output_comparison/G3V01L0Fi.002_master/G3V01L0Fi.002.sp.h5');
->> pdata = read_spec_poincare('/u/jons/src/SPEC_output_comparison/G3V01L0Fi.002_master/G3V01L0Fi.002.sp.h5');
->> data = read_spec('/u/jons/src/SPEC_output_comparison/G3V01L0Fi.002_issue68/G3V01L0Fi.002.h5');
+>> fdata = read_spec_field('/u/jons/src/SPEC_master/InputFiles/TestCases/G3V01L0Fi.002.sp.h5');
+>> gdata = read_spec_grid('/u/jons/src/SPEC_master/InputFiles/TestCases/G3V01L0Fi.002.sp.h5'); 
+>> idata = read_spec_iota('/u/jons/src/SPEC_master/InputFiles/TestCases/G3V01L0Fi.002.sp.h5');
+>> pdata = read_spec_poincare('/u/jons/src/SPEC_master/InputFiles/TestCases/G3V01L0Fi.002.sp.h5');
+>> data = read_spec('/u/jons/src/SPEC_issue68/InputFiles/TestCases/G3V01L0Fi.002.h5');          
 >> specheck(fdata, gdata, idata, pdata, data);
 ... all output quantities
 Matching :)
