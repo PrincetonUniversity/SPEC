@@ -100,7 +100,6 @@ contains
 subroutine init_outfile
 
   LOCALS
-  !integer(hid_t) :: plist_id      ! Property list identifier used to activate MPI I/O parallel access in HDF5 library
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -114,18 +113,8 @@ subroutine init_outfile
   ! (en/dis)able HDF5 internal error messages; sphdf5 has its own error messages coming from the macros
   H5CALL( sphdf5, h5eset_auto_f, (internalHdf5Msg, hdfier), __FILE__, __LINE__)
 
-  ! Create file access property list to be able to tell HDF5 about MPI I/O
-  !H5CALL( sphdf5, h5pcreate_f, (H5P_FILE_ACCESS_F, plist_id, hdfier), __FILE__, __LINE__ )
-
-  ! enable MPI I/O for parallel I/O access in file access property list
-  !H5CALL( sphdf5, h5pset_fapl_mpio_f, (plist_id, MPI_COMM_WORLD, MPI_INFO_NULL, hdfier), __FILE__, __LINE__ )
-
-  ! Create the file (collectively, since called by all processes)
-  !H5CALL( sphdf5, h5fcreate_f, (trim(ext)//".h5", H5F_ACC_TRUNC_F, file_id, hdfier, access_prp = plist_id), __FILE__, __LINE__ )
+  ! Create the file
   H5CALL( sphdf5, h5fcreate_f, (trim(ext)//".h5", H5F_ACC_TRUNC_F, file_id, hdfier ), __FILE__, __LINE__ )
-
-  ! file access property list is not needed after been used to specify MPI I/O during opening of file
-  !H5CALL( sphdf5, h5pclose_f, (plist_id, hdfier), __FILE__, __LINE__ )
 
   ! write version number
   HWRITERV_LO( file_id, 1, version, (/ version /), __FILE__, __LINE__)
@@ -1091,8 +1080,6 @@ subroutine finish_outfile
 
     deallocate(obj_ids)
   endif ! (obj_count.gt.0)
-
-  !WCALL( sphdf5, MPI_Barrier, (MPI_COMM_WORLD, ierr) ) ! block to wait for screen output before closing file
 
   H5CALL( sphdf5, h5fclose_f, ( file_id, hdfier ), __FILE__, __LINE__ ) ! terminate access on output file;
   H5CALL( sphdf5, h5close_f,  ( hdfier ),          __FILE__, __LINE__ ) ! close Fortran interface to the HDF5 library;

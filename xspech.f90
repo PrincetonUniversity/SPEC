@@ -637,15 +637,11 @@ program xspech
      WCALL( xspech, jo00aa, ( vvol, Ntz, Iquad(vvol), mn ) )
     endif
 
-    !if( nPpts .gt.0 ) then
-    ! WCALL( xspech, pp00aa, ( vvol                       ) ) ! Poincare plots in each volume
-    !endif
-
    endif ! myid.eq.modulo(vvol-1,ncpu)
   enddo ! end of do vvol = 1, Mvol; ! end of parallel diagnostics loop; 03 Apr 13;
 
   if( nPpts .gt.0 ) then
-   WCALL( xspech, pp00aa ) ! Poincare plots
+   WCALL( xspech, pp00aa ) ! do Poincare plots in all volumes; has its own paralellization over volumes internally
   endif
 
 1002 format("xspech : ",f10.2," :":" myid=",i3," ; vvol=",i3," ; IBeltrami="L2" ; construction of Beltrami field failed ;")
