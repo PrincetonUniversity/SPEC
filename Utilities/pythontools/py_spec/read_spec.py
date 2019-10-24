@@ -10,7 +10,6 @@ import numpy as np  # for isscalar
 import os           # for path.abspath
 import keyword      # for getting python keywords
 
-
 # reader class for Stepped Pressure Equilibrium Code output file
 # S. Hudson et al., Physics of Plasmas 19, 112502 (2012); doi: 10.1063/1.4765691
 class SPEC:
