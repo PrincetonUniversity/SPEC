@@ -6,29 +6,38 @@ Plot the Poincare data from a SPEC output file
 @author: Jonathan Schilling (jonathan.schilling@ipp.mpg.de)
 """
 
-import sys
+# fancy command line argment parsing and help texts
+import argparse
+parser = argparse.ArgumentParser(description='Plot the Poincare data from a SPEC output file.')
+
+parser.add_argument('name', \
+                    default='', type=str, help="name of the SPEC output file, e.g. G3V01L1Fi.h5",\
+                    metavar='filename.h5')
+
+parser.add_argument('-t', \
+                    default=0, type=int, help="toroidal cutplane at which to plot the Poincare data",\
+                    metavar='0')
+
+args = parser.parse_args()
+
+# import all these only after successful parsing of command line arguments, since loading these takes a significant amount of time....
 import py_spec as p
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
+import os # for os.path.basename
 
-toroidalIdx=0
-if len(sys.argv)==1:
-    # print help
-    print(sys.argv[0]+"""
-plot the Poincare data from a SPEC output file
-""")
-elif len(sys.argv)==2:
-    # assume that the command-line argument is the filename
-    s = p.SPEC(sys.argv[1])
+# read the data
+s = p.SPEC(args.name)
 
-else: #  len(sys.argv)>2
-    toroidalIdx = int(sys.argv[2])
-
+# create a basic plot
 plt.figure()
 
-p.plot_poincare(s, toroidalIdx, plt)
+p.plot_poincare(s, args.t, plt)
 
 plt.axis("equal")
 plt.xlabel("R / m")
 plt.ylabel("Z / m")
+plt.title(os.path.basename(args.name))
+
+plt.tight_layout()
 
 plt.show()
