@@ -99,28 +99,26 @@ data.poincare.rho = data.poincare.s;
 
 % disentangle Poincare data and generate rho entry; all this code is necessary since it depends on the volume index...
 start=1;
-for i=1:Mvol
+for i=1:Nvol
   nPtrj = data.input.diagnostics.nPtrj(i);
   if (nPtrj==-1)
     nPtrj = 2*Lrad(i);
   end
 
-  % In all the outer volumes (for Nvol>1), there is one additional trajectory than specified in the input file.
   % In the innermost volume, there are exactly as many trajectories as specified.
-  if (data.input.physics.Igeometry==1 || i>1)
-    % mimic LREGION() macro functionality
-    nPtrj = nPtrj+1;
-  else
+  if ~(data.input.physics.Igeometry==1 || i>1)
+    % mimic LREGION() macro functionality and the corresponding logic in pp00aa
     nPtrj = nPtrj-1;
   end
 
-  %disp(sprintf('%d: %d ... %d\n', i, start, start+nPtrj));
+  % disp(sprintf('%d: %d ... %d', i, start, start+nPtrj));
 
   % create rho entry for Poincare plot
   offset = double(i-1)./double(Nvol);
   data.poincare.rho(:,:,start:start+nPtrj) = 0.5*(data.poincare.s(:,:,start:start+nPtrj)+1.0)./double(Nvol)+offset;
   
-  start = start + nPtrj;
+  % In all the outer volumes (for Nvol>1), there is one additional trajectory than specified in the input file.
+  start = start + nPtrj+1;
 end
 
 % ensure compatibility with Joaquim's former reading routine
