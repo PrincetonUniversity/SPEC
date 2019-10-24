@@ -1,10 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # coding: utf-8
 
 # # Plot of |B| in (R,Z) cross-section by K. Aleynikova, ksenia.aleynikova@ipp.mpg.de, 2019
-
-# In[86]:
-
 
 """
 @author Ksenia Aleynikova ksenia.aleynikov@ipp.mpg.de
@@ -48,8 +45,6 @@ ax.set_ylabel(r"$Z$")
 cbar = fig.colorbar(plot, ax=ax)
 cbar.set_label(r"$|\vec B|$", rotation=0)
 #plt.show()
-
-
 
 
 
