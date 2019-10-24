@@ -1,0 +1,34 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Oct 22 19:42:53 2019
+
+@author: Jonathan Schilling (jonathan.schilling@ipp.mpg.de)
+"""
+
+import sys
+import py_spec as p
+import matplotlib.pyplot as plt 
+
+toroidalIdx=0
+if len(sys.argv)==1:
+    # print help
+    print(sys.argv[0]+"""
+plot the Poincare data from a SPEC output file
+""")
+elif len(sys.argv)==2:
+    # assume that the command-line argument is the filename
+    s = p.SPEC(sys.argv[1])
+
+else: #  len(sys.argv)>2
+    toroidalIdx = int(sys.argv[2])
+
+plt.figure()
+
+p.plot_poincare(s, toroidalIdx, plt)
+
+plt.axis("equal")
+plt.xlabel("R / m")
+plt.ylabel("Z / m")
+
+plt.show()
