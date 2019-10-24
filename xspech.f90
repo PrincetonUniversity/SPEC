@@ -72,9 +72,13 @@ program xspech
                         iBns, iBnc, iVns, iVnc, &
                         Ate, Aze, Ato, Azo, & ! only required for debugging; 09 Mar 17;
                         nfreeboundaryiterations, &
-                        beltramierror
+                        beltramierror, version
 
-   use sphdf5 ! write _all_ output quantities into a _single_ HDF5 file
+   ! write _all_ output quantities into a _single_ HDF5 file
+   use sphdf5,   only : init_outfile, &
+                        mirror_input_to_outfile, &
+                        init_convergence_output, &
+                        write_grid
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -639,8 +643,10 @@ program xspech
 
    endif ! myid.eq.modulo(vvol-1,ncpu)
   enddo ! end of do vvol = 1, Mvol; ! end of parallel diagnostics loop; 03 Apr 13;
-  
-  WCALL( xspech, pp00aa ) ! Poincare plots
+
+  if( nPpts .gt.0 ) then
+   WCALL( xspech, pp00aa ) ! Poincare plots
+  endif
 
 1002 format("xspech : ",f10.2," :":" myid=",i3," ; vvol=",i3," ; IBeltrami="L2" ; construction of Beltrami field failed ;")
 
@@ -692,7 +698,11 @@ program xspech
   WCALL( xspech, ending )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
+  ! MPIFINALIZE has to be called as the absolutely last statement in the code and therefore needs to be here;
+  ! otherwise, the second MPI_Wtime call in the WCALL macro is called after MPIFINALIZE and this leads to a MPI error!
+  MPIFINALIZE
+
   stop
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -724,7 +734,7 @@ subroutine ending
   use cputiming
 
   use allglobal, only : myid, cpus, mn
-  use sphdf5
+  use sphdf5,    only : hdfint, finish_outfile
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -773,7 +783,8 @@ dcpu, Ttotal / (/ 1, 60, 3600 /), ecpu, 100*ecpu/dcpu
 
   WCALL( xspech, finish_outfile ) ! close HDF5 output file
 
-  MPIFINALIZE
+  ! wait for writing to finish
+  call MPI_Barrier(MPI_COMM_WORLD, ierr)
   
 1000 format("ending : ",f10.2," : myid=",i3," ; completion ; time=",f10.2,"s = "f8.2"m = "f6.2"h = "f5.2"d ; date= "&
   a4"/"a2"/"a2" ; time= "a2":"a2":"a2" ; ext = "a60)
