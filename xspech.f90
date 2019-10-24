@@ -640,7 +640,7 @@ program xspech
    endif ! myid.eq.modulo(vvol-1,ncpu)
   enddo ! end of do vvol = 1, Mvol; ! end of parallel diagnostics loop; 03 Apr 13;
   
-  WCALL( xspech, pp00aa ) ! Poincare plots
+  WCALL( xspech, pp00aa ) ! Poincare plots (does its own parallelization over volumes)
 
 1002 format("xspech : ",f10.2," :":" myid=",i3," ; vvol=",i3," ; IBeltrami="L2" ; construction of Beltrami field failed ;")
 
