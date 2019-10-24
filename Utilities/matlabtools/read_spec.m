@@ -50,21 +50,28 @@ data = getGroup(filename, '/');
 
 % make adjustments for compatibility with previous reading routines
 Nvol = data.input.physics.Nvol;
+Mvol = data.output.Mvol;
 Lrad = data.input.physics.Lrad;
 
 % vector potential
-cAte = cell(Nvol,1);
-cAto = cell(Nvol,1);
-cAze = cell(Nvol,1);
-cAzo = cell(Nvol,1);
+cAte = cell(Nvol, 1);
+cAto = cell(Nvol, 1);
+cAze = cell(Nvol, 1);
+cAzo = cell(Nvol, 1);
 
 % grid
-cRij = cell(Nvol,1);
-cZij = cell(Nvol,1);
-csg  = cell(Nvol,1);
-cBR  = cell(Nvol,1);
-cBp  = cell(Nvol,1);
-cBZ  = cell(Nvol,1);
+cRij = cell(Nvol, 1);
+cZij = cell(Nvol, 1);
+csg  = cell(Nvol, 1);
+cBR  = cell(Nvol, 1);
+cBp  = cell(Nvol, 1);
+cBZ  = cell(Nvol, 1);
+
+% Poincare data
+cT   = cell(Nvol, 1);
+cRho = cell(Nvol, 1);
+cR   = cell(Nvol, 1);
+cZ   = cell(Nvol, 1);
 
 % split into separate cells for nested volumes
 start=1;
@@ -82,20 +89,45 @@ for i=1:Nvol
   cBR{i}  = data.grid.BR(start:start+Lrad(i),:)';
   cBp{i}  = data.grid.Bp(start:start+Lrad(i),:)';
   cBZ{i}  = data.grid.BZ(start:start+Lrad(i),:)';
-
+ 
   % move along combined array dimension
   start = start + Lrad(i)+1;
+end
+
+% copy to get dimensions right
+data.poincare.rho = data.poincare.s;
+
+% disentangle Poincare data and generate rho entry; all this code is necessary since it depends on the volume index...
+start=1;
+for i=1:Mvol
+  nPtrj = data.input.diagnostics.nPtrj(i);
+  if (nPtrj==-1)
+    nPtrj = 2*Lrad(i);
+  end
+
+  % In all the outer volumes (for Nvol>1), there is one additional trajectory than specified in the input file.
+  % In the innermost volume, there are exactly as many trajectories as specified.
+  if (data.input.physics.Igeometry==1 || i>1)
+    % mimic LREGION() macro functionality
+    nPtrj = nPtrj+1;
+  else
+    nPtrj = nPtrj-1;
+  end
+
+  %disp(sprintf('%d: %d ... %d\n', i, start, start+nPtrj));
 
   % create rho entry for Poincare plot
   offset = double(i-1)./double(Nvol);
-  rho = 0.5*(data.poincare.s+1.0)./double(Nvol);
-  data.poincare.rho=rho+offset;
+  data.poincare.rho(:,:,start:start+nPtrj) = 0.5*(data.poincare.s(:,:,start:start+nPtrj)+1.0)./double(Nvol)+offset;
   
-  data.poincare.t   = permute(data.poincare.t,   [3,1,2]);
-  data.poincare.rho = permute(data.poincare.rho, [3,1,2]);
-  data.poincare.R   = permute(data.poincare.R,   [3,1,2]);
-  data.poincare.Z   = permute(data.poincare.Z,   [3,1,2]);
+  start = start + nPtrj;
 end
+
+% ensure compatibility with Joaquim's former reading routine
+data.poincare.t   = permute(data.poincare.t,   [3,1,2]);
+data.poincare.rho = permute(data.poincare.rho, [3,1,2]);
+data.poincare.R   = permute(data.poincare.R,   [3,1,2]);
+data.poincare.Z   = permute(data.poincare.Z,   [3,1,2]);
 
 % replace original content in data structure
 data.vector_potential.Ate = cAte;
@@ -105,12 +137,10 @@ data.vector_potential.Azo = cAzo;
 
 data.grid.Rij = cRij;
 data.grid.Zij = cZij;
-data.grid.sg = csg;
-data.grid.BR = cBR;
-data.grid.Bp = cBp;
-data.grid.BZ = cBZ;
-
-
+data.grid.sg  = csg;
+data.grid.BR  = cBR;
+data.grid.Bp  = cBp;
+data.grid.BZ  = cBZ;
 
 end
 
