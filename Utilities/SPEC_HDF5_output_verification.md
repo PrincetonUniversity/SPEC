@@ -65,10 +65,57 @@ The folder structure should be like this now:
 
 ## First test case: G3V01L0Fi.002 (W7-X OP1.1)
 
+5. create a (generic) SLURM batch script for running SPEC on 1 CPU
+```
+> mkdir analysis/SPEC_output_comparison/G3V01L0Fi.002_master
+> pushd analysis/SPEC_output_comparison/G3V01L0Fi.002_master
+> cat slurm_spec_1
+#!/bin/bash -l
+# Standard output and error:
+#SBATCH -o ./spec_stdout.%j
+#SBATCH -e ./spec_stderr.%j
+# Initial working directory:
+#SBATCH -D ./
+# Job Name:
+#SBATCH -J SPEC
+# Queue (Partition):
+#SBATCH --partition=medium
+# Number of nodes and MPI tasks per node:
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --mem=16384 # 16GB could be enough for the beginning...
+#
+#SBATCH --mail-type=none
+#SBATCH --mail-user=<userid>@rzg.mpg.de
+#
+# Wall clock limit:
+#SBATCH --time=04:00:00
 
+# Run the program:
+srun $@
+```
 
+6. run SPEC from the master branch
+```
+> mkdir analysis/SPEC_output_comparison/G3V01L0Fi.002_master
+> pushd analysis/SPEC_output_comparison/G3V01L0Fi.002_master
+> cp ../../../src/SPEC_master/InputFiles/TestCases/G3V01L0Fi.002.sp .
+> ln -s ../../../src/SPEC_master/xspec .
+> ls -lh # check that everything is there for running SPEC
+total 128K
+-rw-r--r-- 1 jons ipg 43K Oct 24 22:38 G3V01L0Fi.002.sp
+-rw-r--r-- 1 jons ipg 512 Oct 24 22:42 slurm_spec_1
+lrwxrwxrwx 1 jons ipg  30 Oct 24 22:38 xspec -> ../../../src/SPEC_master/xspec
+> sbatch slurm_spec_1 ./xspec G3V01L0Fi.002
+```
 
+Check the output files ```spec_stdout.<jobid>``` and ```spec_stderr.<jobid>```.
+In the beginning, the flags should include ```-O0```:
+```
+       :            : flags   =  -r8 -O0 -ip -no-prec-div -xHost -fPIC ; 
+```
 
+7. run SPEC from the issue68 branch on the input file from the master branch
 
 
 
