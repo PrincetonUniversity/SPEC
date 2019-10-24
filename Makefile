@@ -42,7 +42,7 @@
  LINKS=-L$(HDF5_HOME)/lib -lhdf5_fortran -lhdf5 -lpthread -lz -lm # HDF5 link
  LIBS+=-I$(FFTW_HOME)/include # FFTW include
  LINKS+=-L$(FFTW_HOME)/lib -lfftw3 # FFTW link
- LINKS+=-I${MKLROOT}/include/intel64/lp64 -mkl ${MKLROOT}/lib/intel64/libmkl_blas95_ilp64.a \
+ LINKS+=${MKLROOT}/lib/intel64/libmkl_blas95_ilp64.a \
      ${MKLROOT}/lib/intel64/libmkl_lapack95_ilp64.a -lpthread -lm -ldl # MKL link
 
 ifeq ($(CC),gfortran)
@@ -71,7 +71,7 @@ ifeq ($(CC),gfortran_ubuntu)
  CFLAGS=-fdefault-real-8
  LINKS=-Wl,-rpath -Wl,/usr/lib/lapack -llapack -lblas
  LIBS=-I/usr/include/hdf5/openmpi
- LINKS+=-L/usr/lib/x86_64-linux-gnu/hdf5/openmpi -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lpthread -lz -lm
+ LINKS+=-L/usr/lib/x86_64-linux-gnu/hdf5/openmpi -lhdf5_fortran -lhdf5 -lpthread -lz -lm
  LIBS+=-I/usr/include
  LINKS+=-lfftw3
  RFLAGS=-O2 -ffixed-line-length-none -ffree-line-length-none -fexternal-blas
@@ -86,7 +86,7 @@ ifeq ($(CC),gfortran_arch)
  LIBS=
  LINKS+=-lhdf5_fortran -lhdf5 -lpthread -lz -lm
  LINKS+=-lfftw3
- RFLAGS=-O2 -ffixed-line-length-none -ffree-line-length-none -fexternal-blas
+ RFLAGS=-O0 -ffixed-line-length-none -ffree-line-length-none -fexternal-blas
  DFLAGS=-g -fbacktrace -fbounds-check -ffree-line-length-none -fexternal-blas -DDEBUG
 endif 
 
@@ -113,7 +113,6 @@ ifeq ($(CC),lff95)
  LIBS=-I$(FFTWHOME)/include
  LINKS+=-L$(FFTWHOME)/lib -lfftw3
 endif
-
 
 ifeq ($(CC),intel_spc)
  CFLAGS=-r8

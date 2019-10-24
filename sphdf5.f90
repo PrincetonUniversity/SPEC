@@ -635,68 +635,67 @@ subroutine init_flt_output( numTrajTotal )
   length    = (/ Nz, nPpts,            1 /) ! which is written in these slice lengths
 
   ! Create the data space for the  dataset.
-  H5CALL( sphdf5, h5screate_simple_f, (rankP, dims_traj, filespace_t, hdfier) )
-  H5CALL( sphdf5, h5screate_simple_f, (rankP, dims_traj, filespace_s, hdfier) )
-  H5CALL( sphdf5, h5screate_simple_f, (rankP, dims_traj, filespace_R, hdfier) )
-  H5CALL( sphdf5, h5screate_simple_f, (rankP, dims_traj, filespace_Z, hdfier) )
-  H5CALL( sphdf5, h5screate_simple_f, (1, int((/ numTrajTotal /),HSIZE_T), filespace_success, hdfier) )
+  H5CALL( sphdf5, h5screate_simple_f, (rankP, dims_traj, filespace_t, hdfier), __FILE__, __LINE__ )
+  H5CALL( sphdf5, h5screate_simple_f, (rankP, dims_traj, filespace_s, hdfier), __FILE__, __LINE__ )
+  H5CALL( sphdf5, h5screate_simple_f, (rankP, dims_traj, filespace_R, hdfier), __FILE__, __LINE__ )
+  H5CALL( sphdf5, h5screate_simple_f, (rankP, dims_traj, filespace_Z, hdfier), __FILE__, __LINE__ )
+  H5CALL( sphdf5, h5screate_simple_f, (1, int((/ numTrajTotal /),HSIZE_T), filespace_success, hdfier), __FILE__, __LINE__ )
 
   ! Create the dataset with default properties.
-  H5CALL( sphdf5, h5dcreate_f, (grpPoincare, "t", H5T_NATIVE_DOUBLE, filespace_t, dset_id_t, hdfier) )
-  H5CALL( sphdf5, h5dcreate_f, (grpPoincare, "s", H5T_NATIVE_DOUBLE, filespace_s, dset_id_s, hdfier) )
-  H5CALL( sphdf5, h5dcreate_f, (grpPoincare, "R", H5T_NATIVE_DOUBLE, filespace_R, dset_id_R, hdfier) )
-  H5CALL( sphdf5, h5dcreate_f, (grpPoincare, "Z", H5T_NATIVE_DOUBLE, filespace_Z, dset_id_Z, hdfier) )
-  H5CALL( sphdf5, h5dcreate_f, (grpPoincare, "success", H5T_NATIVE_INTEGER, filespace_success, dset_id_success, hdfier) )
+  H5CALL( sphdf5, h5dcreate_f, (grpPoincare, "t", H5T_NATIVE_DOUBLE, filespace_t, dset_id_t, hdfier), __FILE__, __LINE__ )
+  H5CALL( sphdf5, h5dcreate_f, (grpPoincare, "s", H5T_NATIVE_DOUBLE, filespace_s, dset_id_s, hdfier), __FILE__, __LINE__ )
+  H5CALL( sphdf5, h5dcreate_f, (grpPoincare, "R", H5T_NATIVE_DOUBLE, filespace_R, dset_id_R, hdfier), __FILE__, __LINE__ )
+  H5CALL( sphdf5, h5dcreate_f, (grpPoincare, "Z", H5T_NATIVE_DOUBLE, filespace_Z, dset_id_Z, hdfier), __FILE__, __LINE__ )
+  H5CALL( sphdf5, h5dcreate_f, (grpPoincare, "success", H5T_NATIVE_INTEGER, filespace_success, dset_id_success, hdfier), __FILE__, __LINE__ )
 
   ! filespaces can be closed as soon as datasets are created
-  H5CALL( sphdf5, h5sclose_f, (filespace_t, hdfier) )
-  H5CALL( sphdf5, h5sclose_f, (filespace_s, hdfier) )
-  H5CALL( sphdf5, h5sclose_f, (filespace_R, hdfier) )
-  H5CALL( sphdf5, h5sclose_f, (filespace_Z, hdfier) )
-  H5CALL( sphdf5, h5sclose_f, (filespace_success, hdfier) )
+  H5CALL( sphdf5, h5sclose_f, (filespace_t, hdfier), __FILE__, __LINE__ )
+  H5CALL( sphdf5, h5sclose_f, (filespace_s, hdfier), __FILE__, __LINE__ )
+  H5CALL( sphdf5, h5sclose_f, (filespace_R, hdfier), __FILE__, __LINE__ )
+  H5CALL( sphdf5, h5sclose_f, (filespace_Z, hdfier), __FILE__, __LINE__ )
+  H5CALL( sphdf5, h5sclose_f, (filespace_success, hdfier), __FILE__, __LINE__ )
 
   ! Select hyperslab in the file.
-  H5CALL( sphdf5, h5dget_space_f, (dset_id_t, filespace_t, hdfier) )
-  H5CALL( sphdf5, h5dget_space_f, (dset_id_s, filespace_s, hdfier) )
-  H5CALL( sphdf5, h5dget_space_f, (dset_id_R, filespace_R, hdfier) )
-  H5CALL( sphdf5, h5dget_space_f, (dset_id_Z, filespace_Z, hdfier) )
-  H5CALL( sphdf5, h5dget_space_f, (dset_id_success, filespace_success, hdfier) )
+  H5CALL( sphdf5, h5dget_space_f, (dset_id_t, filespace_t, hdfier), __FILE__, __LINE__ )
+  H5CALL( sphdf5, h5dget_space_f, (dset_id_s, filespace_s, hdfier), __FILE__, __LINE__ )
+  H5CALL( sphdf5, h5dget_space_f, (dset_id_R, filespace_R, hdfier), __FILE__, __LINE__ )
+  H5CALL( sphdf5, h5dget_space_f, (dset_id_Z, filespace_Z, hdfier), __FILE__, __LINE__ )
+  H5CALL( sphdf5, h5dget_space_f, (dset_id_success, filespace_success, hdfier), __FILE__, __LINE__ )
 
   ! Each process defines dataset in memory and writes it to the hyperslab in the file.
-  H5CALL( sphdf5, h5screate_simple_f, (rankP, length, memspace_t, hdfier) )
-  H5CALL( sphdf5, h5screate_simple_f, (rankP, length, memspace_s, hdfier) )
-  H5CALL( sphdf5, h5screate_simple_f, (rankP, length, memspace_R, hdfier) )
-  H5CALL( sphdf5, h5screate_simple_f, (rankP, length, memspace_Z, hdfier) )
-  H5CALL( sphdf5, h5screate_simple_f, (1, int((/ 1 /),HSIZE_T), memspace_success, hdfier) )
+  H5CALL( sphdf5, h5screate_simple_f, (rankP, length, memspace_t, hdfier), __FILE__, __LINE__ )
+  H5CALL( sphdf5, h5screate_simple_f, (rankP, length, memspace_s, hdfier), __FILE__, __LINE__ )
+  H5CALL( sphdf5, h5screate_simple_f, (rankP, length, memspace_R, hdfier), __FILE__, __LINE__ )
+  H5CALL( sphdf5, h5screate_simple_f, (rankP, length, memspace_Z, hdfier), __FILE__, __LINE__ )
+  H5CALL( sphdf5, h5screate_simple_f, (1, int((/ 1 /),HSIZE_T), memspace_success, hdfier), __FILE__, __LINE__ )
 
   ! create rotational transform group in HDF5 file
   HDEFGRP( file_id, transform, grpTransform )
 
   ! Create the data space for the  dataset.
-  H5CALL( sphdf5, h5screate_simple_f, (rankT, int((/           2,Mvol/),HSIZE_T), filespace_diotadxup, hdfier) )
-  H5CALL( sphdf5, h5screate_simple_f, (rankT, int((/numTrajTotal,   2/),HSIZE_T), filespace_fiota    , hdfier) )
+  H5CALL( sphdf5, h5screate_simple_f, (rankT, int((/           2,Mvol/),HSIZE_T), filespace_diotadxup, hdfier), __FILE__, __LINE__ )
+  H5CALL( sphdf5, h5screate_simple_f, (rankT, int((/numTrajTotal,   2/),HSIZE_T), filespace_fiota    , hdfier), __FILE__, __LINE__ )
 
   ! Create the dataset with default properties.
-  H5CALL( sphdf5, h5dcreate_f, (grpTransform, "diotadxup", H5T_NATIVE_DOUBLE, filespace_diotadxup, dset_id_diotadxup, hdfier) )
-  H5CALL( sphdf5, h5dcreate_f, (grpTransform,     "fiota", H5T_NATIVE_DOUBLE, filespace_fiota    , dset_id_fiota    , hdfier) )
+  H5CALL( sphdf5, h5dcreate_f, (grpTransform, "diotadxup", H5T_NATIVE_DOUBLE, filespace_diotadxup, dset_id_diotadxup, hdfier), __FILE__, __LINE__ )
+  H5CALL( sphdf5, h5dcreate_f, (grpTransform,     "fiota", H5T_NATIVE_DOUBLE, filespace_fiota    , dset_id_fiota    , hdfier), __FILE__, __LINE__ )
 
   ! filespaces can be closed as soon as datasets are created
-  H5CALL( sphdf5, h5sclose_f, (filespace_diotadxup, hdfier) )
-  H5CALL( sphdf5, h5sclose_f, (filespace_fiota    , hdfier) )
+  H5CALL( sphdf5, h5sclose_f, (filespace_diotadxup, hdfier), __FILE__, __LINE__ )
+  H5CALL( sphdf5, h5sclose_f, (filespace_fiota    , hdfier), __FILE__, __LINE__ )
 
   ! Select hyperslab in the file.
-  H5CALL( sphdf5, h5dget_space_f, (dset_id_diotadxup, filespace_diotadxup, hdfier) )
-  H5CALL( sphdf5, h5dget_space_f, (dset_id_fiota    , filespace_fiota    , hdfier) )
+  H5CALL( sphdf5, h5dget_space_f, (dset_id_diotadxup, filespace_diotadxup, hdfier), __FILE__, __LINE__ )
+  H5CALL( sphdf5, h5dget_space_f, (dset_id_fiota    , filespace_fiota    , hdfier), __FILE__, __LINE__ )
 
   ! Each process defines dataset in memory and writes it to the hyperslab in the file.
-  H5CALL( sphdf5, h5screate_simple_f, (rankT, int((/2,1/),HSIZE_T), memspace_diotadxup, hdfier) )
+  H5CALL( sphdf5, h5screate_simple_f, (rankT, int((/2,1/),HSIZE_T), memspace_diotadxup, hdfier), __FILE__, __LINE__ )
 
  endif ! myid.eq.0
 
 end subroutine init_flt_output
 
 ! write a hyperslab of Poincare data
-!subroutine write_poincare( data, offset, success )
 subroutine write_poincare( offset, data, success )
 
   use allglobal, only : Nz
@@ -717,7 +716,7 @@ subroutine write_poincare( offset, data, success )
   length          = (/ Nz, nPpts, 1 /)
 
   ! On entry, Fortran does not know that indexing in data is from 0 to Nz-1.
-  ! Hence, use regular indices 1:Nz in this routine
+  ! Hence, use default indices 1:Nz in this routine
   H5CALL( sphdf5, h5sselect_hyperslab_f, (filespace_t, H5S_SELECT_SET_F, int((/0,0,offset/),HSSIZE_T), length, hdfier), __FILE__, __LINE__ )
   H5CALL( sphdf5, h5dwrite_f, (dset_id_t, H5T_NATIVE_DOUBLE, data(1,1:Nz,1:nPpts), dims_singleTraj, hdfier, &
   &               file_space_id=filespace_t, mem_space_id=memspace_t ), __FILE__, __LINE__ )
@@ -757,7 +756,7 @@ subroutine write_transform( offset, length, lvol, diotadxup, fiota )
   H5CALL( sphdf5, h5dwrite_f, (dset_id_diotadxup, H5T_NATIVE_DOUBLE, diotadxup, int((/2,1/),HSSIZE_T), hdfier, &
   &               file_space_id=filespace_diotadxup, mem_space_id=memspace_diotadxup ), __FILE__, __LINE__ )
 
-  ! length of fiota piece to write here may change, so open and close memspace each time a new slab is written
+  ! length of fiota piece to write here may change, so open and close memspace each time a new hyperslab is written
   H5CALL( sphdf5, h5screate_simple_f, (rankT, int((/length,2/),HSIZE_T), memspace_fiota    , hdfier), __FILE__, __LINE__ )
 
   H5CALL( sphdf5, h5sselect_hyperslab_f, (filespace_fiota, H5S_SELECT_SET_F, int((/offset,0/),HSSIZE_T), int((/length,2/),HSSIZE_T), hdfier), __FILE__, __LINE__ )
@@ -770,6 +769,47 @@ subroutine write_transform( offset, length, lvol, diotadxup, fiota )
 
 end subroutine write_transform
 
+! finalize Poincare output
+subroutine finalize_flt_output
+
+  LOCALS
+
+  BEGIN( sphdf5 )
+
+ if (myid.eq.0) then
+
+  H5CALL( sphdf5, h5sclose_f, (filespace_t,         hdfier), __FILE__, __LINE__ ) ! close filespaces
+  H5CALL( sphdf5, h5sclose_f, (filespace_s,         hdfier), __FILE__, __LINE__ )
+  H5CALL( sphdf5, h5sclose_f, (filespace_R,         hdfier), __FILE__, __LINE__ )
+  H5CALL( sphdf5, h5sclose_f, (filespace_Z,         hdfier), __FILE__, __LINE__ )
+  H5CALL( sphdf5, h5sclose_f, (filespace_success,   hdfier), __FILE__, __LINE__ )
+  H5CALL( sphdf5, h5sclose_f, (filespace_diotadxup, hdfier), __FILE__, __LINE__ )
+  H5CALL( sphdf5, h5sclose_f, (filespace_fiota,     hdfier), __FILE__, __LINE__ )
+
+  H5CALL( sphdf5, h5sclose_f, (memspace_t,          hdfier), __FILE__, __LINE__ ) ! close dataspaces
+  H5CALL( sphdf5, h5sclose_f, (memspace_s,          hdfier), __FILE__, __LINE__ )
+  H5CALL( sphdf5, h5sclose_f, (memspace_R,          hdfier), __FILE__, __LINE__ )
+  H5CALL( sphdf5, h5sclose_f, (memspace_Z,          hdfier), __FILE__, __LINE__ )
+  H5CALL( sphdf5, h5sclose_f, (memspace_success,    hdfier), __FILE__, __LINE__ )
+  H5CALL( sphdf5, h5sclose_f, (memspace_diotadxup,  hdfier), __FILE__, __LINE__ )
+  ! memspace_fiota is re-opened/closed in each iteration (see write_transform)
+
+  H5CALL( sphdf5, h5dclose_f, (dset_id_t,           hdfier), __FILE__, __LINE__ ) ! close datasets
+  H5CALL( sphdf5, h5dclose_f, (dset_id_s,           hdfier), __FILE__, __LINE__ )
+  H5CALL( sphdf5, h5dclose_f, (dset_id_R,           hdfier), __FILE__, __LINE__ )
+  H5CALL( sphdf5, h5dclose_f, (dset_id_Z,           hdfier), __FILE__, __LINE__ )
+  H5CALL( sphdf5, h5dclose_f, (dset_id_success,     hdfier), __FILE__, __LINE__ )
+  H5CALL( sphdf5, h5dclose_f, (dset_id_diotadxup,   hdfier), __FILE__, __LINE__ )
+  H5CALL( sphdf5, h5dclose_f, (dset_id_fiota,       hdfier), __FILE__, __LINE__ )
+
+  HCLOSEGRP( grpPoincare  ) ! close groups
+  HCLOSEGRP( grpTransform )
+
+ endif ! myid.eq.0
+
+end subroutine finalize_flt_output
+
+! write the magnetic vector potential Fourier harmonics to the output file group /vector_potential
 subroutine write_vector_potential(sumLrad, allAte, allAze, allAto, allAzo)
 
   use allglobal, only : mn
@@ -795,46 +835,6 @@ subroutine write_vector_potential(sumLrad, allAte, allAze, allAto, allAzo)
  endif ! myid.eq.0
 
 end subroutine write_vector_potential
-
-! finalize Poincare output
-subroutine finalize_flt_output
-
-  LOCALS
-
-  BEGIN( sphdf5 )
-
- if (myid.eq.0) then
-
-  H5CALL( sphdf5, h5sclose_f, (filespace_t,         hdfier) ) ! close filespaces
-  H5CALL( sphdf5, h5sclose_f, (filespace_s,         hdfier) )
-  H5CALL( sphdf5, h5sclose_f, (filespace_R,         hdfier) )
-  H5CALL( sphdf5, h5sclose_f, (filespace_Z,         hdfier) )
-  H5CALL( sphdf5, h5sclose_f, (filespace_success,   hdfier) )
-  H5CALL( sphdf5, h5sclose_f, (filespace_diotadxup, hdfier) )
-  H5CALL( sphdf5, h5sclose_f, (filespace_fiota,     hdfier) )
-
-  H5CALL( sphdf5, h5sclose_f, (memspace_t,          hdfier) ) ! close dataspaces
-  H5CALL( sphdf5, h5sclose_f, (memspace_s,          hdfier) )
-  H5CALL( sphdf5, h5sclose_f, (memspace_R,          hdfier) )
-  H5CALL( sphdf5, h5sclose_f, (memspace_Z,          hdfier) )
-  H5CALL( sphdf5, h5sclose_f, (memspace_success,    hdfier) )
-  H5CALL( sphdf5, h5sclose_f, (memspace_diotadxup,  hdfier) )
-  ! memspace_fiota is re-opened/closed in each iteration (see write_transform)
-
-  H5CALL( sphdf5, h5dclose_f, (dset_id_t,           hdfier) ) ! close datasets
-  H5CALL( sphdf5, h5dclose_f, (dset_id_s,           hdfier) )
-  H5CALL( sphdf5, h5dclose_f, (dset_id_R,           hdfier) )
-  H5CALL( sphdf5, h5dclose_f, (dset_id_Z,           hdfier) )
-  H5CALL( sphdf5, h5dclose_f, (dset_id_success,     hdfier) )
-  H5CALL( sphdf5, h5dclose_f, (dset_id_diotadxup,   hdfier) )
-  H5CALL( sphdf5, h5dclose_f, (dset_id_fiota,       hdfier) )
-
-  HCLOSEGRP( grpPoincare  ) ! close groups
-  HCLOSEGRP( grpTransform )
-
- endif ! myid.eq.0
-
-end subroutine finalize_flt_output
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 ! final output

@@ -201,7 +201,7 @@ subroutine pp00aa
 
         if (Mvol.gt.1) then
           do lvol = 2, Mvol
-            !write(*,*) "CPU 0 writes Poincare data for volume ",lvol
+            ! write(*,*) "CPU 0 writes Poincare data for volume ",lvol
 
             deallocate(utflag)
             deallocate(data)
@@ -229,7 +229,6 @@ subroutine pp00aa
 
             ! write fiota --> iota from field line tracing
             ! write diotadxup --> iota from Beltrami field(?)
-            !call write_transform( sum(numTrajs(1:lvol-1)), numTrajs(lvol), lvol, diotadxup(0:1,0,lvol), fiota(1:numTrajs(lvol),1:2) )
             call write_transform( sum(numTrajs(1:lvol-1)), numTrajs(lvol), lvol, diotadxup(0:1,0,lvol), fiota(1:numTrajs(lvol),1:2) )
 
             ! write fiota of CPU id
@@ -255,8 +254,6 @@ subroutine pp00aa
     endif ! myid.eq.modulo(vvol-1,ncpu)
   enddo ! vvol = 1, Mvol
 
-
-
   if (myid.eq.0) then
     call finalize_flt_output
   endif
@@ -268,6 +265,8 @@ subroutine pp00aa
 1001 format("pp00aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; odetol=",es8.1," ; nPpts=",i8," ; lnPtrj=",i3," ;")
 1002 format("pp00aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; ",i3," : (s,t)=(",f21.17," ,",f21.17," ) ;":" utflag=",i3," ; transform=",es23.15,&
   " ;":" error=",es13.5," ;")
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 end subroutine pp00aa
 
