@@ -337,7 +337,7 @@ subroutine mirror_input_to_outfile
   HWRITERV( grpInputDiagnostics,       1,  absacc            , (/ absacc         /))           ! redundant;
   HWRITERV( grpInputDiagnostics,       1,  epsr              , (/ epsr           /))           ! redundant;
   HWRITEIV( grpInputDiagnostics,       1,  nPpts             , (/ nPpts          /))
-  HWRITEIV( grpInputDiagnostics,  Nvol+1,  nPtrj             ,    nPtrj(1:Nvol+1)  )
+  HWRITEIV( grpInputDiagnostics,    Mvol,  nPtrj             ,    nPtrj(1:Mvol)    )
   HWRITELV( grpInputDiagnostics,       1,  LHevalues         , (/ LHevalues      /))
   HWRITELV( grpInputDiagnostics,       1,  LHevectors        , (/ LHevectors     /))
   HWRITELV( grpInputDiagnostics,       1,  LHmatrix          , (/ LHmatrix       /))
