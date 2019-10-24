@@ -252,14 +252,14 @@ subroutine mirror_input_to_outfile
   HWRITEIV_LO( grpInputPhysics,           1,   mupfits, (/ mupfits /),                                                                 __FILE__, __LINE__)
   H5DESCR_CDSET( /input/physics/mupfits, mupfits   ,                                                                                   __FILE__, __LINE__)
 
-  HCLOSEGRP( grpInputPhysics , __FILE__, __LINE__))
+  HCLOSEGRP( grpInputPhysics , __FILE__, __LINE__)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 ! the following variables constitute the namelist/numericlist/; note that all variables in namelist need to be broadcasted in readin;
 ! they go into ext.h5/input/numerics
 
-  HDEFGRP( grpInput, numerics, grpInputNumerics, __FILE__, __LINE__))
+  HDEFGRP( grpInput, numerics, grpInputNumerics, __FILE__, __LINE__)
 
   HWRITEIV( grpInputNumerics,          1, Linitialize        , (/ Linitialize /))
   HWRITEIV( grpInputNumerics,          1, Lzerovac           , (/ Lzerovac    /))
@@ -276,7 +276,7 @@ subroutine mirror_input_to_outfile
   HWRITEIV( grpInputNumerics,          1, Lextrap            , (/ Lextrap     /))
   HWRITEIV( grpInputNumerics,          1, Mregular           , (/ Mregular    /))
 
-  HCLOSEGRP( grpInputNumerics, __FILE__, __LINE__))
+  HCLOSEGRP( grpInputNumerics, __FILE__, __LINE__)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
