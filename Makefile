@@ -128,7 +128,9 @@ endif
 
 ifeq ($(CC),intel_ipp)
  # tested on draco with the following modules:
- # intel/18.0.3 impi/2018.3 mkl/2018.3 hdf5-mpi/1.10.5 fftw-mpi/3.3.8
+ # intel/18.0.3 impi/2018.3 mkl/2018.3 hdf5-serial/1.8.21 fftw-mpi/3.3.8
+ # and on cobra with the following modules:
+ # intel/19.0.4 impi/2019.4 mkl/2019.4 hdf5-serial/1.8.21 fftw-mpi/3.3.8
  FC=mpiifort
  CFLAGS=-r8
  RFLAGS=-O0 -ip -no-prec-div -xHost -fPIC
