@@ -105,7 +105,7 @@ subroutine pp00aa
   REAL                 :: sti(1:2), ltransform(1:2)
   REAL, allocatable    :: data(:,:,:,:), fiota(:,:)
   
-  integer :: id, numTraj
+  integer :: id, numTraj, recvId
   integer :: status(MPI_STATUS_SIZE)
 
   BEGIN(pp00aa)
@@ -123,6 +123,7 @@ subroutine pp00aa
     endif
 
     numTrajs(vvol) = lnPtrj - ioff + 1 ! interval includes edge
+!    write(*,*) "we have numTrajs(",vvol,")=",numTrajs(vvol)
   enddo
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -149,7 +150,7 @@ subroutine pp00aa
       else                        ; lnPtrj = 2 * Lrad(vvol) ! adapted  Poincare resolution;
       endif
 
-      ! write(*,*) "CPU ",myid," works on trajectories ",ioff," to ",lnPtrj
+      !write(*,'(ai2ai2ai2ai2)') "CPU ",myid," works on trajectories ",ioff," to ",lnPtrj," in volume ",vvol
 
       SALLOCATE(   data, (ioff:lnPtrj, 1:4,0:Nz-1,1:nPpts), zero ) ! for block writing to file (allows faster reading of output data files for post-processing plotting routines);
       SALLOCATE( utflag, (ioff:lnPtrj                    ),    0 ) ! error flag that indicates if fieldlines successfully followed; 22 Apr 13;
@@ -184,24 +185,34 @@ subroutine pp00aa
 
       ! write data
       if (myid.eq.0) then
-        ! write(*,*) "CPU 0 writes its own Poincare data"
+        !write(*,*) "CPU 0 writes its own Poincare data for numTrajs(",vvol,")=",numTrajs(vvol)
 
         do itrj = ioff, lnPtrj
           ! write utflag --> success flag vector for field line tracing
           ! write data --> actual Poincare data
           if (vvol.gt.1) then
-            ! write(*,*) "CPU 0 writes a trajectory at offset ",sum(numTrajs(1:vvol-1))+itrj-ioff
+            !write(*,*) "CPU 0 writes a trajectory at offset ",sum(numTrajs(1:vvol-1))+itrj-ioff
             call write_poincare ( sum(numTrajs(1:vvol-1))+itrj-ioff, data(itrj,:,:,:), utflag )
           else
-            ! write(*,*) "CPU 0 writes a trajectory at offset ",itrj-ioff
-            call write_poincare (                       itrj-ioff, data(itrj,:,:,:), utflag )
+            !write(*,*) "CPU 0 writes a trajectory at offset ",itrj-ioff
+            call write_poincare (                         itrj-ioff, data(itrj,:,:,:), utflag )
           endif
         enddo
         call write_transform( 0, numTrajs(1), 1, diotadxup(0:1,0,1), fiota(1:numTrajs(1),1:2) )
 
-        if (Mvol.gt.1) then
-          do lvol = 2, Mvol
-            ! write(*,*) "CPU 0 writes Poincare data for volume ",lvol
+        if (Mvol.gt.1 .and. ncpu.gt.1) then
+          
+         ! Gather data from all other parallelly running CPUs; there are min(ncpu-1, Mvol-vvol) of these in this iteration
+         ! If we have so few CPUs that all of them need to perform multiple iteration over the set of volumes in batches of ncpu,
+         ! there are a number ncpu-1 CPUs apart from the master who still have data that needs to be written before they can contine.
+         ! In the last iteration of the batch processing, or if we have many CPUs but just not enough to cover all volumes in one batch,
+         ! there are Mvol-vvol (where vvol is the value of vvol in CPU 0) other CPUs waiting to have their data written.
+         do recvId = 1, min(ncpu-1, Mvol-vvol)
+
+            ! lvol is the volume that the parallel CPU was working on
+            lvol = vvol+recvId
+
+            !write(*,'(ai2ai2)') "CPU 0 writes Poincare data of id ",recvId," for volume ",lvol
 
             deallocate(utflag)
             deallocate(data)
@@ -211,31 +222,30 @@ subroutine pp00aa
             allocate(  data(1:numTrajs(lvol),1:4,0:Nz-1,1:nPpts))
             allocate( fiota(1:numTrajs(lvol),1:2))
 
-            call MPI_Recv( utflag, numTrajs(lvol)           , MPI_INTEGER         , modulo(lvol-1,ncpu), lvol, MPI_COMM_WORLD, status, ierr)
-            ! write(*,*) "CPU 0 got utflag vector from CPU ",modulo(lvol-1,ncpu)
+            call MPI_Recv( utflag, numTrajs(lvol)           , MPI_INTEGER         , recvId, lvol, MPI_COMM_WORLD, status, ierr)
+            !write(*,*) "CPU 0 got utflag vector from CPU ",recvId
 
-            call MPI_Recv(   data, numTrajs(lvol)*4*Nz*nPpts, MPI_DOUBLE_PRECISION, modulo(lvol-1,ncpu), lvol, MPI_COMM_WORLD, status, ierr)
-            ! write(*,*) "CPU 0 got the corresponding Poincare data from CPU ",modulo(lvol-1,ncpu)
+            call MPI_Recv(   data, numTrajs(lvol)*4*Nz*nPpts, MPI_DOUBLE_PRECISION, recvId, lvol, MPI_COMM_WORLD, status, ierr)
+            !write(*,*) "CPU 0 got the corresponding Poincare data from CPU ",recvId
 
-            call MPI_Recv(  fiota, numTrajs(lvol)*2         , MPI_DOUBLE_PRECISION, modulo(lvol-1,ncpu), lvol, MPI_COMM_WORLD, status, ierr)
-            ! write(*,*) "CPU 0 got the iota profile from CPU ",modulo(lvol-1,ncpu)
+            call MPI_Recv(  fiota, numTrajs(lvol)*2         , MPI_DOUBLE_PRECISION, recvId, lvol, MPI_COMM_WORLD, status, ierr)
+            !write(*,*) "CPU 0 got the iota profile from CPU ",recvId
 
             ! write utflag vector of CPU id
             ! write data of CPU id
             do itrj = 1, numTrajs(lvol)
-              ! write(*,*) "CPU 0 writes a trajectory at offset ",sum(numTrajs(1:lvol-1))+itrj-1
+              !write(*,*) "CPU 0 writes a trajectory at offset ",sum(numTrajs(1:lvol-1))+itrj-1
               call write_poincare( sum(numTrajs(1:lvol-1))+itrj-1, data(itrj,:,:,:), utflag )
             enddo
 
             ! write fiota --> iota from field line tracing
-            ! write diotadxup --> iota from Beltrami field(?)
+            ! write diotadxup --> radial derivative of iota from Beltrami field (?)
             call write_transform( sum(numTrajs(1:lvol-1)), numTrajs(lvol), lvol, diotadxup(0:1,0,lvol), fiota(1:numTrajs(lvol),1:2) )
 
             ! write fiota of CPU id
           enddo ! vvol = 2, Mvol
         endif
 
-        deallocate(numTrajs)
       else
         call MPI_Send( utflag, numTrajs(vvol)           , MPI_INTEGER         , 0, vvol, MPI_COMM_WORLD, ierr) ! success flag vector
         call MPI_Send(   data, numTrajs(vvol)*4*Nz*nPpts, MPI_DOUBLE_PRECISION, 0, vvol, MPI_COMM_WORLD, ierr) ! Poincare data
@@ -250,9 +260,11 @@ subroutine pp00aa
       DALLOCATE(fiota)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
     endif ! myid.eq.modulo(vvol-1,ncpu)
   enddo ! vvol = 1, Mvol
+
+  ! keep this until the end because we need it if we write with less CPUs than nested volumes
+  deallocate(numTrajs)
 
   if (myid.eq.0) then
     call finalize_flt_output
