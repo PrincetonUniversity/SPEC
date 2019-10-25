@@ -199,7 +199,7 @@ subroutine pp00aa
             !write(*,*) "CPU 0 writes a trajectory at offset ",itrj-ioff
             call write_poincare (                         itrj-ioff, data(itrj,:,:,:), utflag )
           endif
-        endd
+        enddo
 
         ! The rotational transform data is written at once for a volume
         if (vvol.gt.1) then
