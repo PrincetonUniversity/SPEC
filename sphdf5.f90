@@ -760,7 +760,7 @@ subroutine write_transform( offset, length, lvol, diotadxup, fiota )
   H5CALL( sphdf5, h5screate_simple_f, (rankT, int((/length,2/),HSIZE_T), memspace_fiota    , hdfier), __FILE__, __LINE__ )
 
   H5CALL( sphdf5, h5sselect_hyperslab_f, (filespace_fiota, H5S_SELECT_SET_F, int((/offset,0/),HSSIZE_T), int((/length,2/),HSSIZE_T), hdfier), __FILE__, __LINE__ )
-  H5CALL( sphdf5, h5dwrite_f, (dset_id_fiota, H5T_NATIVE_DOUBLE, fiota, int((/length,2/),HSSIZE_T), hdfier, &
+  H5CALL( sphdf5, h5dwrite_f, (dset_id_fiota, H5T_NATIVE_DOUBLE, fiota(1:length,1:2), int((/length,2/),HSSIZE_T), hdfier, &
   &               file_space_id=filespace_fiota, mem_space_id=memspace_fiota ), __FILE__, __LINE__ )
 
   H5CALL( sphdf5, h5sclose_f, (memspace_fiota, hdfier), __FILE__, __LINE__ )

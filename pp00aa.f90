@@ -187,6 +187,8 @@ subroutine pp00aa
       if (myid.eq.0) then
         !write(*,*) "CPU 0 writes its own Poincare data for numTrajs(",vvol,")=",numTrajs(vvol)
 
+        ! The Poincare trajectories are dumped into the file one after another since this makes it easier to combine the results
+        ! from all the nested volumes at the moment. Feel free to change the code, but verfiy that it works afterwards as well ;-)
         do itrj = ioff, lnPtrj
           ! write utflag --> success flag vector for field line tracing
           ! write data --> actual Poincare data
@@ -197,8 +199,14 @@ subroutine pp00aa
             !write(*,*) "CPU 0 writes a trajectory at offset ",itrj-ioff
             call write_poincare (                         itrj-ioff, data(itrj,:,:,:), utflag )
           endif
-        enddo
-        call write_transform( 0, numTrajs(1), 1, diotadxup(0:1,0,1), fiota(1:numTrajs(1),1:2) )
+        endd
+
+        ! The rotational transform data is written at once for a volume
+        if (vvol.gt.1) then
+          call write_transform( sum(numTrajs(1:vvol-1)), numTrajs(vvol), vvol, diotadxup(0:1,0,vvol), fiota(0:numTrajs(vvol),1:2) )
+        else
+          call write_transform( 0, numTrajs(1), 1, diotadxup(0:1,0,1), fiota(1:numTrajs(1),1:2) )
+        endif
 
         if (Mvol.gt.1 .and. ncpu.gt.1) then
           
@@ -229,7 +237,8 @@ subroutine pp00aa
             !write(*,*) "CPU 0 got the corresponding Poincare data from CPU ",recvId
 
             call MPI_Recv(  fiota, numTrajs(lvol)*2         , MPI_DOUBLE_PRECISION, recvId, lvol, MPI_COMM_WORLD, status, ierr)
-            !write(*,*) "CPU 0 got the iota profile from CPU ",recvId
+!            write(*,*) "CPU 0 got the iota profile from CPU ",recvId,": sarr: "
+!            write(*,*) fiota(:,1)
 
             ! write utflag vector of CPU id
             ! write data of CPU id
@@ -241,6 +250,8 @@ subroutine pp00aa
             ! write fiota --> iota from field line tracing
             ! write diotadxup --> radial derivative of iota from Beltrami field (?)
             call write_transform( sum(numTrajs(1:lvol-1)), numTrajs(lvol), lvol, diotadxup(0:1,0,lvol), fiota(1:numTrajs(lvol),1:2) )
+
+            !write(*,*) "wrote iota data at offset ",sum(numTrajs(1:lvol-1))," with length ",numTrajs(lvol)
 
             ! write fiota of CPU id
           enddo ! vvol = 2, Mvol
