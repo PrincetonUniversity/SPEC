@@ -539,7 +539,7 @@ m4_define(HWRITELV,{! macro expansion of hwritelv;
     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
     stop "sphdf5 : error calling h5dwrite_f from hwritelv at $5:$6 ;"
    endif
-
+   
    call h5dclose_f(dset_id, hdfier)    ! terminate dataset;
    if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5dclose_f from hwritelv at $5:$6 ;")')
@@ -619,7 +619,7 @@ m4_define(HWRITELV_LO,{! macro expansion of hwritelv_lo;
     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
     stop "sphdf5 : error calling h5dwrite_f from hwritelv_lo at $5:$6 ;"
    endif
-
+   
   endif
 
   ! macro expansion of hwritelv_lo; end;})m4_dnl ; can put comments here;
@@ -771,7 +771,7 @@ m4_define(HWRITEIV_LO,{! macro expansion of hwriteiv_lo;
     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
     stop "sphdf5 : error calling h5dwrite_f from hwriteiv_lo at $5:$6 ;"
    endif
-   
+
   endif
 
   ! macro expansion of hwriteiv_lo; end;})m4_dnl ; can put comments here;
@@ -843,7 +843,7 @@ m4_define(HWRITERV,{! macro expansion of hwriterv;
     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
     stop "sphdf5 : error calling h5dwrite_f from hwriterv at $5:$6 ;"
    endif
-
+ 
    call h5dclose_f(dset_id, hdfier)    ! terminate dataset;
    if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5dclose_f from hwriterv at $5:$6 ;")')
@@ -923,7 +923,7 @@ m4_define(HWRITERV_LO,{! macro expansion of hwriterv_lo;
     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
     stop "sphdf5 : error calling h5dwrite_f from hwriterv_lo at $5:$6 ;"
    endif
-   
+
   endif
 
   ! macro expansion of hwriterv_lo; end;})m4_dnl ; can put comments here;
@@ -994,7 +994,7 @@ m4_define(HWRITERA,{! macro expansion of hwritea;
     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
     stop "sphdf5 : error calling h5dwrite_f from hwritera at $6:$7 ;"
    endif
-
+ 
    call h5dclose_f(dset_id, hdfier)    ! terminate dataset;
    if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5dclose_f from hwritera at $6:$7 ;")')
@@ -1073,7 +1073,7 @@ m4_define(HWRITERA_LO,{! macro expansion of hwritea_lo;
     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
     stop "sphdf5 : error calling h5dwrite_f from hwritera_lo at $6:$7 ;"
    endif
-
+ 
   endif
 
   ! macro expansion of hwritea_lo; end;})m4_dnl ; can put comments here;
@@ -1144,7 +1144,7 @@ m4_define(HWRITERC,{! macro expansion of hwriterc;
     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
     stop "sphdf5 : error calling h5dwrite_f from hwriterc at $7:$8 ;"
    endif
-
+   
    call h5dclose_f(dset_id, hdfier)    ! terminate dataset;
    if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5dclose_f from hwriterc at $7:$8 ;")')
@@ -1258,11 +1258,11 @@ m4_define(LREGION,{! macro expansion of lregion;
 ! given annulus number _1, set Lcoordinatesingularity, Lplasmaregion and Lvacuumregion accordingly
 
    if( Igeometry.eq.1 .or. $1.gt.1 ) then ; Lcoordinatesingularity = .false.
-   else                                     ; Lcoordinatesingularity = .true.
+   else                                   ; Lcoordinatesingularity = .true.
    endif
   
    if( $1.le.Nvol ) then ; Lplasmaregion = .true.
-   else                    ; Lplasmaregion = .false.
+   else                  ; Lplasmaregion = .false.
    endif
 
    Lvacuumregion = .not.Lplasmaregion

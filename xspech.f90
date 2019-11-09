@@ -72,9 +72,13 @@ program xspech
                         iBns, iBnc, iVns, iVnc, &
                         Ate, Aze, Ato, Azo, & ! only required for debugging; 09 Mar 17;
                         nfreeboundaryiterations, &
-                        beltramierror
+                        beltramierror, version
 
-   use sphdf5 ! write _all_ output quantities into a _single_ HDF5 file
+   ! write _all_ output quantities into a _single_ HDF5 file
+   use sphdf5,   only : init_outfile, &
+                        mirror_input_to_outfile, &
+                        init_convergence_output, &
+                        write_grid
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -97,7 +101,7 @@ program xspech
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   if( myid.eq.0 ) then
-   write(ounit,'("xspech : ", 10x ," : ")')
+   write(ounit,'("xspech : ", 10x ," : version = "F5.2)') version
 ! COMPILATION ! do not delete; this line is replaced (see Makefile) with a write statement identifying date, time, compilation flags, etc.;
   endif
   
@@ -131,15 +135,7 @@ program xspech
   
   WCALL( xspech, init_outfile ) ! initialize HDF5 library and open output file ext.h5 for writing during execution
 
-  cput = GETTIME
-  write(ounit,'("xspech : ",f10.2," : myid=",i3," after calling init_outfile")') cput-cpus, myid
-
   WCALL( xspech, mirror_input_to_outfile ) ! mirror input file contents to output file
-
-  cput = GETTIME
-  write(ounit,'("xspech : ",f10.2," : myid=",i3," after calling mirror_input_to_outfile")') cput-cpus, myid
-
-  !!print *, myid, "I'm here."
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -226,7 +222,7 @@ program xspech
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-!latex \subsection{solving force-balance} 
+!latex \subsection{solving force-balance}
   
 !latex \begin{enumerate}
 !latex \item If there are geometrical degress of freedom, i.e. if \internal{NGdof.gt.0}, then \bi
@@ -626,57 +622,27 @@ program xspech
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  ! determine total number of (possibly successful) Poincare trajectories
-  numTrajTotal = 0
   do vvol = 1, Mvol
-   LREGION(vvol) ! sets Lcoordinatesingularity and Lplasmaregion ;
-   ! number of trajectories in current volume vvol
-   if( nPtrj(vvol).ge.0 ) then ; lnPtrj =    nPtrj(vvol) ! selected Poincare resolution;
-   else                        ; lnPtrj = 2 * Lrad(vvol) ! adapted  Poincare resolution;
-   endif
-   if( .not.Lcoordinatesingularity ) then ; lnPtrj = lnPtrj + 1 ! all but innermost volume have one trajectory more than specified by nPtrj
-   endif
-   numTrajTotal = numTrajTotal + lnPtrj
-  enddo
-
-  WCALL( xspech, init_flt_output, (numTrajTotal) )
-
-  numTrajTotal = 0 ! re-used as counter along all trajectories from here on
-  do vvol = 1, Mvol
-
-   LREGION(vvol)
    
+   LREGION(vvol)
+
    if( myid.eq.modulo(vvol-1,ncpu) .and. myid.lt.Mvol) then ! the following is in parallel; 20 Jun 14;
    
     if( .not.ImagneticOK(vvol) ) then ; cput = GETTIME ; write(ounit,1002) cput-cpus ; write(ounit,1002) cput-cpus, myid, vvol, ImagneticOK(vvol) ; cycle
     endif
 
-    WCALL( xspech, sc00aa, ( vvol, Ntz                  ) ) ! compute covariant field (singular currents);
+    ;WCALL( xspech, sc00aa, ( vvol, Ntz                  ) ) ! compute covariant field (singular currents);
 
     if( Lcheck.eq.1 ) then
      WCALL( xspech, jo00aa, ( vvol, Ntz, Iquad(vvol), mn ) )
     endif
 
-    if( nPpts .gt.0 ) then
-     WCALL( xspech, pp00aa, ( vvol, numTrajTotal         ) ) ! Poincare plots in each volume
-    endif
    endif ! myid.eq.modulo(vvol-1,ncpu)
-
-   ! number of trajectories needs to be computed here as well to correctly increate numTrajTotal if needed
-   if( nPtrj(vvol).ge.0 ) then ; lnPtrj =    nPtrj(vvol) ! selected Poincare resolution;
-   else                        ; lnPtrj = 2 * Lrad(vvol) ! adapted  Poincare resolution;
-   endif
-
-   ! all but innermost volume have one trajectory more than specified by nPtrj
-   if( .not.Lcoordinatesingularity ) then ; lnPtrj = lnPtrj + 1
-   endif
-
-   ! keep track of where we are along all trajectories
-   numTrajTotal = numTrajTotal + lnPtrj
-
   enddo ! end of do vvol = 1, Mvol; ! end of parallel diagnostics loop; 03 Apr 13;
-  
-  WCALL( xspech, finalize_flt_output )
+
+  if( nPpts .gt.0 ) then
+   WCALL( xspech, pp00aa ) ! do Poincare plots in all volumes; has its own paralellization over volumes internally
+  endif
 
 1002 format("xspech : ",f10.2," :":" myid=",i3," ; vvol=",i3," ; IBeltrami="L2" ; construction of Beltrami field failed ;")
 
@@ -711,6 +677,7 @@ program xspech
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   WCALL( xspech, write_grid ) ! write grid
+
   if( myid.eq.0 ) then
    WCALL( xspech, wrtend ) ! write restart file; save initial input;
    
@@ -726,9 +693,12 @@ program xspech
 
   WCALL( xspech, ending )
 
-
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
+  ! MPIFINALIZE has to be called as the absolutely last statement in the code and therefore needs to be here;
+  ! otherwise, the second MPI_Wtime call in the WCALL macro is called after MPIFINALIZE and this leads to a MPI error!
+  MPIFINALIZE
+
   stop
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -760,7 +730,7 @@ subroutine ending
   use cputiming
 
   use allglobal, only : myid, cpus, mn
-  use sphdf5
+  use sphdf5,    only : hdfint, finish_outfile
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -806,9 +776,11 @@ dcpu, Ttotal / (/ 1, 60, 3600 /), ecpu, 100*ecpu/dcpu
   endif ! end of if( myid.eq.0 ) ; 14 Jan 15;
 
   WCALL( xspech, hdfint ) ! write final outputs to HDF5 file ! 18 Jul 14;
+
   WCALL( xspech, finish_outfile ) ! close HDF5 output file
 
-  MPIFINALIZE
+  ! wait for writing to finish
+  call MPI_Barrier(MPI_COMM_WORLD, ierr)
   
 1000 format("ending : ",f10.2," : myid=",i3," ; completion ; time=",f10.2,"s = "f8.2"m = "f6.2"h = "f5.2"d ; date= "&
   a4"/"a2"/"a2" ; time= "a2":"a2":"a2" ; ext = "a60)
