@@ -21,7 +21,7 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
 
   use numerical, only : sqrtmachprec, small, vsmall
 
-  use fileunits, only : ounit, lunit, hunit, munit
+  use fileunits, only : ounit, hunit, munit
 
   use inputlist, only : Wmacros, Whesian, ext, Igeometry, Nvol, pflux, helicity, mu, Lfreebound, &
                         LHevalues, LHevectors, LHmatrix, &
@@ -365,7 +365,7 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
 !  LComputeDerivatives = .false.
 !  WCALL(hesian,dforce,( NGdof, xx(1:NGdof,0), ff(0:NGdof,0), LComputeDerivatives )) ! calculate the force-imbalance;
 
-   close(lunit+myid)
+   !close(lunit+myid)
    
   endif ! end of if( Lcheck.eq.5 ) ; 01 Jul 14;
 

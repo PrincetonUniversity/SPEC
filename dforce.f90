@@ -1402,6 +1402,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
    
   endif ! end of if( LcomputeDerivatives ) ;
   
+  call MPI_BARRIER( MPI_COMM_WORLD, ierr )
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   RETURN(dforce)

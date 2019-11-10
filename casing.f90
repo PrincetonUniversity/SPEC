@@ -168,7 +168,7 @@ subroutine casing( teta, zeta, gBn, icasing )
    gBn = integrals(1)
    
    cput = GETTIME
-   select case( idcuhre ) !                                                                                          "123456789012345678901234"
+   select case( idcuhre ) !                                                                                      "123456789012345678901234"
    case(0)      ;
     ;           ; exit
    case(1)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "maxpts too smal;        "

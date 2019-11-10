@@ -7,8 +7,8 @@ function out = plot_spec_iota(idata,pdata,fdata,iorq,xaxis,newfig)
 %   -pdata     : must be produced by calling read_spec_poincare(filename)
 %   -fdata     : must be produced by calling read_spec_field(filename)
 %   -iorq      : plot iota('i') or safety factor ('q')
-%   -xaxis='s' : plots s-coordinnate as the x-axis
-%   -xaxis='R' : plots R-coordinnate as the x-axis
+%   -xaxis='s' : plots s-coordinate as the x-axis
+%   -xaxis='R' : plots R-coordinate as the x-axis
 %   -xaxis='f' : plots toroidal flux as the x-axis
 %   -xaxis='r' : plots sqrt(toroidal flux) as the x-axis
 %   -newfig    : opens(=1) or not(=0) a new figure. (=2 to overwrite 
