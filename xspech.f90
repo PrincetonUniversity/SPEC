@@ -45,7 +45,7 @@ program xspech
                         tflux, pflux, phiedge, pressure, pscale, helicity, Ladiabatic, adiabatic, gamma, &
                         Rbc, Zbs, Rbs, Zbc, &
                         Lconstraint, &
-                        Lfreebound, mfreeits, gBntol, gBnbld, vcasingtol, &
+                        Lfreebound, mfreeits, gBntol, gBnbld, vcasingtol, LautoinitBn, &
                         Lfindzero, &
                         odetol, nPpts, nPtrj, &
                         LHevalues, LHevectors, LHmatrix, Lperturbed, Lcheck, &
@@ -180,7 +180,7 @@ program xspech
 9000 nfreeboundaryiterations = nfreeboundaryiterations + 1 ! this is the free-boundary iteration loop; 08 Jun 16;
 
   ! run fix_boundary for the first free_boundary iteration
-  if (Lfreebound.eq.1) then 
+  if (Lfreebound.eq.1 .and. LautoinitBn.eq.1) then 
      if (nfreeboundaryiterations.eq.0) then  ! first iteration
         first_free_bound = .true.
         !Mvol = Nvol
