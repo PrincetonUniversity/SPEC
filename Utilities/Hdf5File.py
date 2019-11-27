@@ -6,37 +6,28 @@ Created on Wed Oct  9 22:48:32 2019
 @author: Jonathan Schilling (jonathan.schilling@ipp.mpg.de)
 """
 
-
-class Group:
-    """A class to define a group in a HDF5 file."""
+class Datatype:
+    """A class to define a (custom) datatype in a HDF5 file."""
     
     parent = None
     name = None
     items = None
-    description = None
     
-    def __init__(self, parent, name):
-        """Define a new Group.
+    def __init__(self, parent, name, dtype, rank=0):
+        """Define a new Datatype.
         
-        parent -- Group or Hdf5File into which this Group belongs
-        name   -- identifier for this Group
+        parent     -- Group or Hdf5File into which this Datatype belongs
+        name       -- identifier for this Datatype
         """
         self.parent = parent
-        self.name   = name
-        self.items  = []
-        if self.parent is not None:
-            self.parent.add(self)
-    
-    def add(self, item):
-        """Add an item to this Group, e.g. a Dataset or another Group."""
-        self.items.append(item)
+        self.name = name
+        self.dtype = dtype
+        self.rank = rank
+        self.parent.add(self)
         
     def getFullName(self):
-        """Get the full path inside the Hdf5File to this Group."""
-        if self.parent is not None:
-            return self.parent.getFullName()+"/"+self.name
-        else:
-            return self.name
+        """Get the full path inside the Hdf5File to this Dataset."""
+        return self.parent.getFullName()+"/"+self.name
     
     def setDescription(self, description):
         """Provide a description of this Dataset to put into a HDF5 attribute or into the source code comments."""
@@ -125,33 +116,41 @@ class Dataset:
         """
         self.indexMapping = indexMapping
 
-class Datatype:
-    """A class to define a (custom) datatype in a HDF5 file."""
+class Group:
+    """A class to define a group in a HDF5 file."""
     
     parent = None
     name = None
     items = None
+    description = None
     
-    def __init__(self, parent, name, dtype, rank=0):
-        """Define a new Datatype.
+    def __init__(self, parent, name):
+        """Define a new Group.
         
-        parent     -- Group or Hdf5File into which this Datatype belongs
-        name       -- identifier for this Datatype
+        parent -- Group or Hdf5File into which this Group belongs
+        name   -- identifier for this Group
         """
         self.parent = parent
-        self.name = name
-        self.dtype = dtype
-        self.rank = rank
-        self.parent.add(self)
+        self.name   = name
+        self.items  = []
+        if self.parent is not None:
+            self.parent.add(self)
+    
+    def add(self, item):
+        """Add an item to this Group, e.g. a Dataset or another Group."""
+        self.items.append(item)
         
     def getFullName(self):
-        """Get the full path inside the Hdf5File to this Dataset."""
-        return self.parent.getFullName()+"/"+self.name
+        """Get the full path inside the Hdf5File to this Group."""
+        if self.parent is not None:
+            return self.parent.getFullName()+"/"+self.name
+        else:
+            return self.name
     
     def setDescription(self, description):
         """Provide a description of this Dataset to put into a HDF5 attribute or into the source code comments."""
         self.description = description
-    
+
 class Hdf5File:
     """A class to define the contents of a HDF5 file."""
     

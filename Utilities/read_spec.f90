@@ -1,5 +1,5 @@
 ! AUTO-GENERATED; DO NOT COMMIT CHANGES TO THIS FILE !
-! auto-created by a user called 'jonathan' on a machine called 'Nebuchadnezaar' at 26/11/2019 15:27:37 UTC
+! auto-created by a user called 'jonathan' on a machine called 'Nebuchadnezaar' at 27/11/2019 11:53:28 UTC
 module read_spec
 TYPE physics
     INTEGER :: Igeometry
@@ -175,9 +175,9 @@ subroutine loadSpec(s, filename, ierr)
   integer(hid_t)                  :: file_id           ! identifier for current file
   integer(hid_t)                  :: dset_id           ! temporary dataset id
   integer(hid_t)                  :: dataspace         ! dataspace used to query dataset size
-  integer(hsize_t)                :: dims_1(1) ! current dimensions of rank-1 dataset
-  integer(hsize_t)                :: dims_2(2) ! current dimensions of rank-2 dataset
-  integer(hsize_t)                :: dims_3(3) ! current dimensions of rank-3 dataset
+  integer(hsize_t)                :: dims_1(1)         ! current dimensions of rank-1 dataset
+  integer(hsize_t)                :: dims_2(2)         ! current dimensions of rank-2 dataset
+  integer(hsize_t)                :: dims_3(3)         ! current dimensions of rank-3 dataset
   integer(hsize_t)                :: max_dims_1(1)     ! maximum dimensions of rank-1 dataset
   integer(hsize_t)                :: max_dims_2(2)     ! maximum dimensions of rank-2 dataset
   integer(hsize_t)                :: max_dims_3(3)     ! maximum dimensions of rank-3 dataset
@@ -2229,13 +2229,68 @@ subroutine loadSpec(s, filename, ierr)
   if (hdfier.ne.0) then ; write(*,*) "error closing HDF5 library" ; ierr = hdfier ; endif 
     
 end subroutine loadSpec
-
 subroutine freeSpec(s)
   implicit none
-  type(SpecOutput), intent(inout) :: s
+  type(SpecOutput), intent(inout) :: s ! datastructure to free
   deallocate(s%input%physics%Lrad)
+  deallocate(s%input%physics%tflux)
+  deallocate(s%input%physics%pflux)
+  deallocate(s%input%physics%helicity)
+  deallocate(s%input%physics%pressure)
+  deallocate(s%input%physics%adiabatic)
+  deallocate(s%input%physics%mu)
+  deallocate(s%input%physics%pl)
+  deallocate(s%input%physics%ql)
+  deallocate(s%input%physics%pr)
+  deallocate(s%input%physics%qr)
+  deallocate(s%input%physics%iota)
+  deallocate(s%input%physics%lp)
+  deallocate(s%input%physics%lq)
+  deallocate(s%input%physics%rp)
+  deallocate(s%input%physics%rq)
+  deallocate(s%input%physics%oita)
+  deallocate(s%input%physics%Rac)
+  deallocate(s%input%physics%Zas)
+  deallocate(s%input%physics%Ras)
+  deallocate(s%input%physics%Zac)
+  deallocate(s%input%physics%Rbc)
+  deallocate(s%input%physics%Zbs)
+  deallocate(s%input%physics%Rbs)
+  deallocate(s%input%physics%Zbc)
+  deallocate(s%input%physics%Rwc)
+  deallocate(s%input%physics%Zws)
+  deallocate(s%input%physics%Rws)
+  deallocate(s%input%physics%Zwc)
+  deallocate(s%input%physics%Vns)
+  deallocate(s%input%physics%Bns)
+  deallocate(s%input%physics%Vnc)
+  deallocate(s%input%physics%Bnc)
+  deallocate(s%input%diagnostics%nPtrj)
+  deallocate(s%output%Vns)
+  deallocate(s%output%Bns)
+  deallocate(s%output%Vnc)
+  deallocate(s%output%Bnc)
+  deallocate(s%output%im)
+  deallocate(s%output%in)
+  deallocate(s%output%Rbc)
+  deallocate(s%output%Zbs)
+  deallocate(s%output%Rbs)
+  deallocate(s%output%Zbc)
+  deallocate(s%output%adiabatic)
+  deallocate(s%output%helicity)
+  deallocate(s%output%mu)
+  deallocate(s%output%tflux)
+  deallocate(s%output%pflux)
+  deallocate(s%output%TT)
+  deallocate(s%output%Btemn)
+  deallocate(s%output%Bzemn)
+  deallocate(s%output%Btomn)
+  deallocate(s%output%Bzomn)
+  deallocate(s%vector_potential%Ate)
+  deallocate(s%vector_potential%Aze)
+  deallocate(s%vector_potential%Ato)
+  deallocate(s%vector_potential%Azo)
 end subroutine freeSpec
-
 end module read_spec
 
 program test_read_spec

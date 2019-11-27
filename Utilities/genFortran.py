@@ -41,10 +41,8 @@ hostname = platform.node()
 
 creation_tag = 'auto-created by a user called \''+username+'\' on a machine called \''+hostname+'\' at '+now_string
 
-#%%
-from Hdf5File import Group, Dataset, Datatype
-
 #%% generate Fortran type declarations
+from Hdf5File import Group, Dataset, Datatype
 
 # datatype in Fortran from specification file
 def fortran_dtype(dtype):
@@ -82,8 +80,7 @@ def fortran_genType(name, members):
 
 # initial code of loading routine
 def fortran_startLoader(f):
-    f.write("""contains
-subroutine loadSpec(s, filename, ierr)
+    f.write("""subroutine loadSpec(s, filename, ierr)
   use hdf5
   implicit none
   type(SpecOutput), intent(inout) :: s                 ! target datastructure
@@ -93,9 +90,9 @@ subroutine loadSpec(s, filename, ierr)
   integer(hid_t)                  :: file_id           ! identifier for current file
   integer(hid_t)                  :: dset_id           ! temporary dataset id
   integer(hid_t)                  :: dataspace         ! dataspace used to query dataset size
-  integer(hsize_t)                :: dims_1(1) ! current dimensions of rank-1 dataset
-  integer(hsize_t)                :: dims_2(2) ! current dimensions of rank-2 dataset
-  integer(hsize_t)                :: dims_3(3) ! current dimensions of rank-3 dataset
+  integer(hsize_t)                :: dims_1(1)         ! current dimensions of rank-1 dataset
+  integer(hsize_t)                :: dims_2(2)         ! current dimensions of rank-2 dataset
+  integer(hsize_t)                :: dims_3(3)         ! current dimensions of rank-3 dataset
   integer(hsize_t)                :: max_dims_1(1)     ! maximum dimensions of rank-1 dataset
   integer(hsize_t)                :: max_dims_2(2)     ! maximum dimensions of rank-2 dataset
   integer(hsize_t)                :: max_dims_3(3)     ! maximum dimensions of rank-3 dataset
@@ -122,14 +119,6 @@ def fortran_endLoader(f):
   if (hdfier.ne.0) then ; write(*,*) "error closing HDF5 library" ; ierr = hdfier ; endif 
     
 end subroutine loadSpec
-
-subroutine freeSpec(s)
-  implicit none
-  type(SpecOutput), intent(inout) :: s
-  deallocate(s%input%physics%Lrad)
-end subroutine freeSpec
-
-end module read_spec
 """)
 
 # write demo code
@@ -240,8 +229,28 @@ def fortran_loadItem(f, item):
 """
     f.write(fmt.format(srcName=srcName, targetName=targetName, h5type=h5type, rank=item.rank))
     
+# initial code of loading routine
+def fortran_startFree(f):
+    f.write("""subroutine freeSpec(s)
+  implicit none
+  type(SpecOutput), intent(inout) :: s ! datastructure to free
+""")
 
+# finalizing code of loading routine
+def fortran_endFree(f):
+    f.write("""end subroutine freeSpec
+""")
 
+# free an allocated item of rank .ge. 1
+def fortran_freeItem(f, item):
+    
+    srcName    = item.getFullName()
+    targetName = "s"+srcName.replace("/","%")
+    
+    if (item.rank > 0):
+        print("free {}".format(targetName))
+        f.write("  deallocate("+targetName+")\n")
+    
 
 #%% actually generate Fortran module for reading SPEC output files
 def genFortranReader(outdir, moduleName, s):
@@ -298,6 +307,8 @@ module """+moduleName+"\n")
     for currentGroup in reverse_groupStack[::-1]:
         f.write(fortran_genType(currentGroup.name, currentGroup.items)+'\n')
     
+    f.write("contains\n")
+    
     # initial code of loading routine
     fortran_startLoader(f)
     
@@ -310,6 +321,19 @@ module """+moduleName+"\n")
     # finalizing code of loading routine
     fortran_endLoader(f)
     
+    # write the freeSpec subroutine to free the memory it occupied
+    fortran_startFree(f)
+    
+    for currentGroup in reverse_groupStack[::-1]:
+        for item in currentGroup.items:
+            if type(item)==Dataset:
+                fortran_freeItem(f, item)
+    
+    # finalizing code of freeing routine
+    fortran_endFree(f)
+    
+    f.write("end module read_spec\n")
+
     # write demo code
     fortran_demoLoader(f)
 
