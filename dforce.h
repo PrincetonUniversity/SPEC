@@ -742,17 +742,17 @@ subroutine loop_dfp100(Ndofgl, Fvec, iflag)
   
   use inputlist, only : Wmacros, Wdforce										! Flags for debugging
 
-	use cputiming, only 	:  Tdforce													! Timer
-	use allglobal, only 	:  Mvol, &													! Total number of volume + vacuum
-											 		 IconstraintOK, &									! Flag to exit loop
-                           cpus, myid
+	use cputiming, only 	:  Tdforce											! Timer
+	use allglobal, only 	:  Mvol, &											! Total number of volume + vacuum
+							   IconstraintOK, &									! Flag to exit loop
+                           	   cpus, myid
 
  LOCALS
 !------
 
 	INTEGER              								:: Ndofgl, iflag			! Input parameters to dfp100
 	DOUBLE PRECISION     								:: Fvec(1:Mvol-1), x(1:Mvol-1) ! Input parameters to dfp100
-	EXTERNAL														:: dfp100							! Field solver
+	EXTERNAL											:: dfp100							! Field solver
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

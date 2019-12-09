@@ -114,14 +114,6 @@ subroutine dfp200( LcomputeDerivatives, vvol)
 
   CHARACTER            :: packorunpack 
 
-#ifdef DEBUG
-  INTEGER              :: isymdiff
-  REAL                 :: dRZ = 1.0e-05, dvol(-1:+1), evolume, imupf(1:2,-2:2)
-  REAL,    allocatable :: oRbc(:,:), oZbs(:,:), oRbs(:,:), oZbc(:,:) ! original geometry;
-  REAL,    allocatable :: isolution(:,:)
-#endif
-
-
 
 
 
@@ -130,21 +122,6 @@ BEGIN(dfp200)
 LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
 
 ind_matrix = IndMatrixArray(vvol, 2)
-
-#ifdef DEBUG
-
-! Store initial arrays for debug purposes.  
-
-  if( Lcheck.eq.3 .or. Lcheck.eq.4 ) then ! will check volume derivatives;
-   
-   SALLOCATE( oRbc, (1:mn,0:Mvol), iRbc(1:mn,0:Mvol) )
-   SALLOCATE( oZbs, (1:mn,0:Mvol), iZbs(1:mn,0:Mvol) )
-   SALLOCATE( oRbs, (1:mn,0:Mvol), iRbs(1:mn,0:Mvol) )
-   SALLOCATE( oZbc, (1:mn,0:Mvol), iZbc(1:mn,0:Mvol) )  
-   
-  endif ! end of if( Lcheck.eq.3 .or. Lcheck.eq.4 ) ;
-  
-#endif
 
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -356,63 +333,8 @@ ind_matrix = IndMatrixArray(vvol, 2)
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 ! Helicity multiplier and poloidal flux derivatives
 
- 		call evaluate_dmupfdx(vvol, innout, idof, issym, irz)
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-        
-        vflag = 1 ! this flag instructs volume to continue even if the volume is invalid;
-        WCALL( dfp200, volume, ( vvol, vflag ) ) ! compute derivative of volume; wrt to harmonic described by dBdX structure;
-        
-#ifdef DEBUG
-
-        if( Lcheck.eq.3 ) then
-         
-         dvol(0) = dvolume
-         
-         cput = GETTIME
-         write(ounit,1001) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, innout, "analytic", dvolume
-         
-1001     format("dfp200 : ",f10.2," : myid=",i3," ; vvol=",i3," ; (",i3," ,",i3,") ; irz=",i2," ; issym=",i2," ; innout=",i2,&
-       " : ",a8," ; dvolume=",f23.15," ;",:," error=",es13.5," ;")
-         
-         dBdX%L = .false. ! instruct volume to not calculate derivatives;
-         
-         do isymdiff = -1, 1, 2 ! symmetric finite-difference estimate of derivative of volume wrt geometrical degree-of-freedom;
-          
-          if( dBdX%issym.eq.0 ) then !     stellarator symmetric harmonics;
-           if( dBdX%irz.eq.0 ) iRbc(dBdX%ii,vvol-1+innout) = oRbc(dBdX%ii,vvol-1+innout) + isymdiff * dRZ * half
-           if( dBdX%irz.eq.1 ) iZbs(dBdX%ii,vvol-1+innout) = oZbs(dBdX%ii,vvol-1+innout) + isymdiff * dRZ * half
-          else                                        ! non-stellarator symmetric harmonics;
-           if( dBdX%irz.eq.0 ) iRbs(dBdX%ii,vvol-1+innout) = oRbs(dBdX%ii,vvol-1+innout) + isymdiff * dRZ * half
-           if( dBdX%irz.eq.1 ) iZbc(dBdX%ii,vvol-1+innout) = oZbc(dBdX%ii,vvol-1+innout) + isymdiff * dRZ * half
-          endif
-          
-          vflag = 1 ! this flag instructs volume to continue even if the volume is invalid;
-          WCALL( dfp200, volume, ( vvol, vflag ) ) ! compute volume; this corrupts calculation of dvolume;
-          
-          dvol(isymdiff) = vvolume(vvol)
-          
-         enddo ! end of do isymdiff;
-         
-         evolume = abs( ( dvol(+1)-dvol(-1) ) / dRZ - dvol(0) ) ! error in finite-difference calculation and analytic derivative;
-         
-         cput = GETTIME
-         write(ounit,1001) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, innout, "finite-d", ( dvol(+1)-dvol(-1) ) / dRZ, evolume
-         
-         FATAL( dfp200, evolume.gt.dRZ, unacceptable error in volume derivative )
-
-         iRbc(1:mn,0:Mvol) = oRbc(1:mn,0:Mvol)
-         iZbs(1:mn,0:Mvol) = oZbs(1:mn,0:Mvol)
-         iRbs(1:mn,0:Mvol) = oRbs(1:mn,0:Mvol)
-         iZbc(1:mn,0:Mvol) = oZbc(1:mn,0:Mvol)
-         
-         dBdX%L = .true.
-         
-         dvolume = dvol(0)
-        
-        endif ! end of if( Lcheck.eq.3 ) ;
-        
-#endif
+! 							  vvol, innout, idof, ii, issym, irz
+ 		call evaluate_dmupfdx(vvol, innout, idof, ii, issym, irz)
         
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-
@@ -670,12 +592,6 @@ ind_matrix = IndMatrixArray(vvol, 2)
     
 	DALLOCATE(oBI)
     
-#ifdef DEBUG
-    if( Lcheck.eq.4 ) then
-     DALLOCATE(isolution)
-    endif
-#endif
-    
    endif ! end of if( LcomputeDerivatives ) ;
 
 
@@ -683,15 +599,6 @@ ind_matrix = IndMatrixArray(vvol, 2)
 
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-#ifdef DEBUG
-  if( Lcheck.eq.3 .or. Lcheck.eq.4 ) then
-   DALLOCATE(oRbc)
-   DALLOCATE(oZbs)
-   DALLOCATE(oRbs)
-   DALLOCATE(oZbc)
-  endif
-#endif
 
 
   DALLOCATE(dAt)
@@ -902,37 +809,33 @@ subroutine evaluate_dmupfdx(vvol, innout, idof, ii, issym, irz)
 	                        Mvol, Iquad, &
                             iRbc, iZbs, iRbs, iZbc, & ! Fourier harmonics of geometry; vector of independent variables, position, is "unpacked" into iRbc,iZbs;
     	                    NAdof, &
-    	                    YESstellsym, NOTstellsym, &
-    	                    mn, im, in, mns, Ntz, &
-    	                    Ate, Aze, Ato, Azo, & ! only required for debugging;
-    	                    ijreal, &
-    	                    efmn, ofmn, cfmn, sfmn, &
-    	                    evmn, odmn, comn, simn, &
+    	                    mn, im, in, mns, &
+    	                    Ate, Aze, Ato, Azo, & 													! only required for debugging;
     	                    Nt, Nz, &
-    	                    cosi, sini, & ! FFT workspace;
     	                    dBdX, &
-    	                    dMA, dMB, dMD, dMG, solution, &
+    	                    solution, &
     	                    dtflux, dpflux, sweight, &
-    	                    mmpp, &
-    	                    Bemn, Bomn, Iomn, Iemn, Somn, Semn, &
-    	                    LGdof, &
-    	                    vvolume, dvolume, &
-    	                    Rij, Zij, sg, guvij, iRij, iZij, dRij, dZij, tRij, tZij, & ! Jacobian and metrics; computed in coords;
-    	                    diotadxup, dItGpdxtp, &
-    	                    dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated, &
-    	                    BBweight, & ! exponential weight on force-imbalance harmonics;
+    	                    Rij, Zij, & 															
+    	                    diotadxup, dItGpdxtp, dmupfdx, &										
     	                    psifactor, &
     	                    lmns, &
     	                    mn, mne, &
-    	                    dRodR, dRodZ, dZodR, dZodZ, &
     	                    LocalConstraint, &
-							IsMyVolume, IsMyVolumeValue, IndMatrixArray
+							vvolume, dvolume, &
+							IsMyVolume, IsMyVolumeValue, IndMatrixArray, &
+							DToocc, DToocs, DToosc, DTooss, &
+		                    TTsscc, TTsscs, TTsssc, TTssss, &
+	                    	TDstcc, TDstcs, TDstsc, TDstss, &
+		                    TDszcc, TDszcs, TDszsc, TDszss, &
+		                    DDttcc, DDttcs, DDttsc, DDttss, &
+		                    DDtzcc, DDtzcs, DDtzsc, DDtzss, &
+		                    DDzzcc, DDzzcs, DDzzsc, DDzzss 
 
 
   LOCALS:
 ! -------
 
-	INTEGER				:: 	vvol, innout, idof, iflag, ii, issym, irz, ll, NN, ifail
+	INTEGER				:: 	vvol, innout, idof, iflag, ii, issym, irz, ll, NN, ifail, vflag
 	REAL				::  det, lfactor
 
 
@@ -946,12 +849,33 @@ subroutine evaluate_dmupfdx(vvol, innout, idof, ii, issym, irz)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+	ll = Lrad(vvol)		! shorthand
+	NN = NAdof(vvol) 	! shorthand;
+
+
 #ifdef DEBUG
 	FATAL( dfp200, vvol-1+innout.gt.Mvol, psifactor needs attention )
 #endif
 
-	ll = Lrad(vvol)		! shorthand
-	NN = NAdof(vvol) 	! shorthand;
+
+#ifdef DEBUG
+
+! Store initial arrays for debug purposes.  
+
+	if( Lcheck.eq.3 .or. Lcheck.eq.4 ) then ! will check volume derivatives;
+		SALLOCATE( oRbc, (1:mn,0:Mvol), iRbc(1:mn,0:Mvol) )
+		SALLOCATE( oZbs, (1:mn,0:Mvol), iZbs(1:mn,0:Mvol) )
+		SALLOCATE( oRbs, (1:mn,0:Mvol), iRbs(1:mn,0:Mvol) )
+		SALLOCATE( oZbc, (1:mn,0:Mvol), iZbc(1:mn,0:Mvol) )  
+	endif ! end of if( Lcheck.eq.3 .or. Lcheck.eq.4 ) ;
+
+	if( Lcheck.eq.4 ) then
+		SALLOCATE( isolution, (1:NN,-2:2), zero )
+	endif
+  
+#endif
+
+
 
 	lfactor = psifactor(ii,vvol-1+innout) 	! this "pre-conditions" the geometrical degrees-of-freedom;
 	dmupfdx(vvol,1,idof,innout) = zero    	! Prepare array
@@ -1028,6 +952,41 @@ subroutine evaluate_dmupfdx(vvol, innout, idof, ii, issym, irz)
 
 	if( Lcheck.eq.4 ) then ! check derivatives of field;
 
+		SALLOCATE( DToocc, (0:ll,0:ll,1:mn,1:mn), zero )
+		SALLOCATE( DToocs, (0:ll,0:ll,1:mn,1:mn), zero )
+		SALLOCATE( DToosc, (0:ll,0:ll,1:mn,1:mn), zero )
+		SALLOCATE( DTooss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+		SALLOCATE( TTsscc, (0:ll,0:ll,1:mn,1:mn), zero )
+		SALLOCATE( TTsscs, (0:ll,0:ll,1:mn,1:mn), zero )
+		SALLOCATE( TTsssc, (0:ll,0:ll,1:mn,1:mn), zero )
+		SALLOCATE( TTssss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+		SALLOCATE( TDstcc, (0:ll,0:ll,1:mn,1:mn), zero )
+		SALLOCATE( TDstcs, (0:ll,0:ll,1:mn,1:mn), zero )
+		SALLOCATE( TDstsc, (0:ll,0:ll,1:mn,1:mn), zero )
+		SALLOCATE( TDstss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+		SALLOCATE( TDszcc, (0:ll,0:ll,1:mn,1:mn), zero )
+		SALLOCATE( TDszcs, (0:ll,0:ll,1:mn,1:mn), zero )
+		SALLOCATE( TDszsc, (0:ll,0:ll,1:mn,1:mn), zero )
+		SALLOCATE( TDszss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+		SALLOCATE( DDttcc, (0:ll,0:ll,1:mn,1:mn), zero )
+		SALLOCATE( DDttcs, (0:ll,0:ll,1:mn,1:mn), zero )
+		SALLOCATE( DDttsc, (0:ll,0:ll,1:mn,1:mn), zero )
+		SALLOCATE( DDttss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+		SALLOCATE( DDtzcc, (0:ll,0:ll,1:mn,1:mn), zero )
+		SALLOCATE( DDtzcs, (0:ll,0:ll,1:mn,1:mn), zero )
+		SALLOCATE( DDtzsc, (0:ll,0:ll,1:mn,1:mn), zero )
+		SALLOCATE( DDtzss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+		SALLOCATE( DDzzcc, (0:ll,0:ll,1:mn,1:mn), zero )
+		SALLOCATE( DDzzcs, (0:ll,0:ll,1:mn,1:mn), zero )
+		SALLOCATE( DDzzsc, (0:ll,0:ll,1:mn,1:mn), zero )
+		SALLOCATE( DDzzss, (0:ll,0:ll,1:mn,1:mn), zero )
+
 		dBdX%L = .false.
 
 		do isymdiff = -2, 2 ! symmetric fourth-order, finite-difference used to approximate derivatives;
@@ -1045,7 +1004,9 @@ subroutine evaluate_dmupfdx(vvol, innout, idof, ii, issym, irz)
 			if( issym.eq.1 .and. irz.eq.1 ) iZbc(ii,vvol-1+innout) = iZbc(ii,vvol-1+innout) + dRZ * isymdiff ! perturb geometry;
 
 			WCALL( dfp200, ma00aa, ( Iquad(vvol), mn, vvol, ll ) )
+
 			WCALL( dfp200, matrix, ( vvol, mn, ll ) )
+
 			WCALL( dfp200, ma02aa, ( vvol, NN ) ) 					! this may or may not iterate on mu and dpflux to enforce transform constraints;
 
 			! TODO: modify in case of semi-global constraint
@@ -1084,10 +1045,112 @@ subroutine evaluate_dmupfdx(vvol, innout, idof, ii, issym, irz)
 		iRbs(1:mn,0:Mvol) = oRbs(1:mn,0:Mvol)
 		iZbc(1:mn,0:Mvol) = oZbc(1:mn,0:Mvol)
 
+		DALLOCATE(DToocc)
+		DALLOCATE(DToocs)
+		DALLOCATE(DToosc)
+		DALLOCATE(DTooss)
+
+		DALLOCATE(TTsscc)
+		DALLOCATE(TTsscs)
+		DALLOCATE(TTsssc)
+		DALLOCATE(TTssss)
+
+		DALLOCATE(TDstcc)
+		DALLOCATE(TDstcs)
+		DALLOCATE(TDstsc)
+		DALLOCATE(TDstss)
+
+		DALLOCATE(TDszcc)
+		DALLOCATE(TDszcs)
+		DALLOCATE(TDszsc)
+		DALLOCATE(TDszss)
+
+		DALLOCATE(DDttcc)
+		DALLOCATE(DDttcs)
+		DALLOCATE(DDttsc)
+		DALLOCATE(DDttss)
+
+		DALLOCATE(DDtzcc)
+		DALLOCATE(DDtzcs)
+		DALLOCATE(DDtzsc)
+		DALLOCATE(DDtzss)
+
+		DALLOCATE(DDzzcc)
+		DALLOCATE(DDzzcs)
+		DALLOCATE(DDzzsc)
+		DALLOCATE(DDzzss)
+
 	endif ! end of if( Lcheck.eq.4 ) ;
 
 #endif
 
+	vflag = 1 ! this flag instructs volume to continue even if the volume is invalid;
+	WCALL( dfp200, volume, ( vvol, vflag ) ) ! compute derivative of volume; wrt to harmonic described by dBdX structure;
+        
+#ifdef DEBUG
+
+	if( Lcheck.eq.3 ) then
+
+		dvol(0) = dvolume
+
+		cput = GETTIME
+		write(ounit,1001) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, innout, "analytic", dvolume
+
+		1001     format("dfp200 : ",f10.2," : myid=",i3," ; vvol=",i3," ; (",i3," ,",i3,") ; irz=",i2," ; issym=",i2," ; innout=",i2,&
+		" : ",a8," ; dvolume=",f23.15," ;",:," error=",es13.5," ;")
+
+		dBdX%L = .false. ! instruct volume to not calculate derivatives;
+
+		do isymdiff = -1, 1, 2 ! symmetric finite-difference estimate of derivative of volume wrt geometrical degree-of-freedom;
+
+			if( dBdX%issym.eq.0 ) then !     stellarator symmetric harmonics;
+				if( dBdX%irz.eq.0 ) iRbc(dBdX%ii,vvol-1+innout) = oRbc(dBdX%ii,vvol-1+innout) + isymdiff * dRZ * half
+				if( dBdX%irz.eq.1 ) iZbs(dBdX%ii,vvol-1+innout) = oZbs(dBdX%ii,vvol-1+innout) + isymdiff * dRZ * half
+			else                                        ! non-stellarator symmetric harmonics;
+				if( dBdX%irz.eq.0 ) iRbs(dBdX%ii,vvol-1+innout) = oRbs(dBdX%ii,vvol-1+innout) + isymdiff * dRZ * half
+				if( dBdX%irz.eq.1 ) iZbc(dBdX%ii,vvol-1+innout) = oZbc(dBdX%ii,vvol-1+innout) + isymdiff * dRZ * half
+			endif
+
+			vflag = 1 ! this flag instructs volume to continue even if the volume is invalid;
+			WCALL( dfp200, volume, ( vvol, vflag ) ) ! compute volume; this corrupts calculation of dvolume;
+
+			dvol(isymdiff) = vvolume(vvol)
+
+		enddo ! end of do isymdiff;
+
+		evolume = abs( ( dvol(+1)-dvol(-1) ) / dRZ - dvol(0) ) ! error in finite-difference calculation and analytic derivative;
+
+		cput = GETTIME
+		write(ounit,1001) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, innout, "finite-d", ( dvol(+1)-dvol(-1) ) / dRZ, evolume
+
+		FATAL( dfp200, evolume.gt.dRZ, unacceptable error in volume derivative )
+
+		iRbc(1:mn,0:Mvol) = oRbc(1:mn,0:Mvol)
+		iZbs(1:mn,0:Mvol) = oZbs(1:mn,0:Mvol)
+		iRbs(1:mn,0:Mvol) = oRbs(1:mn,0:Mvol)
+		iZbc(1:mn,0:Mvol) = oZbc(1:mn,0:Mvol)
+
+		dBdX%L = .true.
+
+		dvolume = dvol(0)
+
+	endif ! end of if( Lcheck.eq.3 ) ;
+        
+#endif
+
+  
+#ifdef DEBUG
+	if( Lcheck.eq.3 .or. Lcheck.eq.4 ) then
+		DALLOCATE(oRbc)
+		DALLOCATE(oZbs)
+		DALLOCATE(oRbs)
+		DALLOCATE(oZbc)
+	endif
+
+	if( Lcheck.eq.4 ) then
+		DALLOCATE(isolution)
+	endif
+#endif
 
 end subroutine evaluate_dmupfdx
 
