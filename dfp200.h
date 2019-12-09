@@ -99,7 +99,7 @@ subroutine dfp200( LcomputeDerivatives, vvol)
   
   LOGICAL, intent(in)  :: LComputeDerivatives ! indicates whether derivatives are to be calculated;
   
-  INTEGER              :: NN, IA, ifail, if01adf, vflag, MM, LDA, idgetrf, idgetri, Lwork
+  INTEGER              :: NN, IA, ifail, if01adf, vflag, MM, idgetrf, idgetri, Lwork
   INTEGER              :: vvol, innout, ii, jj, irz, issym, iocons, idoc, idof, imn, ll
   INTEGER              :: Lcurvature, ideriv, id, ind_matrix
   INTEGER              :: iflag
@@ -168,49 +168,8 @@ ind_matrix = IndMatrixArray(vvol, 2)
    
    if( LcomputeDerivatives ) then ! allocate some additional memory;
     
-    SALLOCATE( oBI, (1:NN,1:NN), zero ) ! inverse of ``original'', i.e. unperturbed, Beltrami matrix;
-    SALLOCATE( rhs, (1:NN     ), zero )
 
    endif ! end of if( LcomputeDerivatives ) ;
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-   ll = Lrad(vvol)
-
-   SALLOCATE( DToocc, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( DToocs, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( DToosc, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( DTooss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-   SALLOCATE( TTsscc, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( TTsscs, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( TTsssc, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( TTssss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-   SALLOCATE( TDstcc, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( TDstcs, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( TDstsc, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( TDstss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-   SALLOCATE( TDszcc, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( TDszcs, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( TDszsc, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( TDszss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-   SALLOCATE( DDttcc, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( DDttcs, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( DDttsc, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( DDttss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-   SALLOCATE( DDtzcc, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( DDtzcs, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( DDtzsc, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( DDtzss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-   SALLOCATE( DDzzcc, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( DDzzcs, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( DDzzsc, (0:ll,0:ll,1:mn,1:mn), zero )
-   SALLOCATE( DDzzss, (0:ll,0:ll,1:mn,1:mn), zero )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -224,6 +183,9 @@ ind_matrix = IndMatrixArray(vvol, 2)
 
    if( LcomputeDerivatives ) then ! compute inverse of Beltrami matrices;
     
+	SALLOCATE( oBI, (1:NN,1:NN), zero ) ! inverse of ``original'', i.e. unperturbed, Beltrami matrix;
+
+
     lastcpu = GETTIME
     
     dMA(ind_matrix)%mat(0:NN-1,1:NN) = dMA(ind_matrix)%mat(1:NN,1:NN) - mu(vvol) * dMD(ind_matrix)%mat(1:NN,1:NN) ! this corrupts dMA, but dMA is no longer used;
@@ -233,11 +195,11 @@ ind_matrix = IndMatrixArray(vvol, 2)
     
     IA = NN + 1
     
-    MM = NN ; LDA = NN ; Lwork = NN
+    MM = NN ; Lwork = NN
     
     SALLOCATE( ipivot, (1:NN), 0 )
     
-    idgetrf = 1 ; call DGETRF( MM, NN, dMA(ind_matrix)%mat(0:LDA-1,1:NN), LDA, ipivot(1:NN), idgetrf ) !LU decomposition
+    idgetrf = 1 ; call DGETRF( MM, NN, dMA(ind_matrix)%mat(0:NN-1,1:NN), NN, ipivot(1:NN), idgetrf ) !LU decomposition
     
     cput = GETTIME
     select case( idgetrf ) !                                                                     0123456789012345678
@@ -252,7 +214,7 @@ ind_matrix = IndMatrixArray(vvol, 2)
     SALLOCATE( work, (1:Lwork), zero )
 
     ! inverse of MA using the LU decomposition of DGETRF
-    idgetri = 1 ; call DGETRI( NN, dMA(ind_matrix)%mat(0:LDA-1,1:NN), LDA, ipivot(1:NN), work(1:Lwork), Lwork, idgetri ) 
+    idgetri = 1 ; call DGETRI( NN, dMA(ind_matrix)%mat(0:NN-1,1:NN), NN, ipivot(1:NN), work(1:Lwork), Lwork, idgetri ) 
     
     DALLOCATE(work)
     
@@ -268,14 +230,7 @@ ind_matrix = IndMatrixArray(vvol, 2)
     
 1011 format("dfp200 : ",f10.2," : myid=",i3," ; vvol=",i3," ; called DGETRI ; time=",f10.2,"s ; inverse of Beltrami matrix; idgetrf=",i2," ; ",a18)
     
-    oBI(1:NN,1:NN) = dMA(ind_matrix)%mat(0:LDA-1,1:NN)
-    
-!    do ii = 1, NN
-!     do jj = 1, ii
-!      oBI(ii,jj) = dMA(ii,jj) ! inverse matrix is returned in lower triangle; see NAG documentation for details;
-!      oBI(jj,ii) = dMA(ii,jj) ! I assume the inverse is symmetric;
-!     enddo
-!    enddo
+	oBI(1:NN,1:NN) = dMA(ind_matrix)%mat(0:NN-1,1:NN)
 
     if( Lconstraint.eq.1 ) then ! first, determine how B^2 varies with mu and dpflux;
      
@@ -351,10 +306,6 @@ ind_matrix = IndMatrixArray(vvol, 2)
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
     
    enddo ! end of do iocons = 0, 1;
-   
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-! still inside do vvol = 1, Mvol loop;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
@@ -395,179 +346,19 @@ ind_matrix = IndMatrixArray(vvol, 2)
         if( vvol.eq.Mvol .and. innout.eq.1 ) cycle ! no degress of freedom                      fixed outer boundary; for linearized displacement;
         
         dBdX%innout = innout
+		ll = Lrad(vvol)
 
-        WCALL( dfp200, ma00aa,( Iquad(vvol), mn, vvol, ll ) ) ! compute volume integrals of metric elements;
-        
-        WCALL( dfp200, matrix,( vvol, mn, ll ) ) ! construct Beltrami matrices;
-        
-        dpsi(1:2) = (/ dtflux(vvol), dpflux(vvol) /) ! local enclosed toroidal and poloidal fluxes;
-        
-!       rhs(1:NN) = - matmul( dMB(ind_matrix)%mat(1:NN,1:2 ) - mu(vvol) * dME(1:NN,1:2 ), dpsi(1:2)        ) &
-        rhs(1:NN) = - matmul( dMB(ind_matrix)%mat(1:NN,1:2 )                            , dpsi(1:2)        ) &
-                    - matmul( dMA(ind_matrix)%mat(1:NN,1:NN) - mu(vvol) * dMD(ind_matrix)%mat(1:NN,1:NN), solution(vvol)%mat(1:NN,0) )
-        
-        solution(vvol)%mat(1:NN,-1) = matmul( oBI(1:NN,1:NN), rhs(1:NN) ) ! this is the perturbed, packxi solution;
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-
+! Perturbed solution
 
-        ideriv = -1 ; dpsi(1:2) = (/ dtflux(vvol), dpflux(vvol) /) ! these are also used below;
-        
-        packorunpack = 'U'
-        
-        WCALL( dfp200, packab,( packorunpack, vvol, NN,  solution(vvol)%mat(1:NN,-1), ideriv ) ) ! derivatives placed in Ate(vvol,ideriv,1:mn)%s(0:Lrad),
+		call get_perturbed_solution(vvol, ind_matrix, oBI, NN)
 
-#ifdef DEBUG
-        FATAL( dfp200, vvol-1+innout.gt.Mvol, psifactor needs attention )
-#endif
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+! Helicity multiplier and poloidal flux derivatives
 
-        lfactor = psifactor(ii,vvol-1+innout) ! this "pre-conditions" the geometrical degrees-of-freedom;
-        
+ 		call evaluate_dmupfdx(vvol, innout, idof, issym, irz)
 
-        dmupfdx(vvol,1,idof,innout) = zero
-        dmupfdx(vvol,2,idof,innout) = zero
-        
-        if( Lconstraint.eq.1 .or. ( Lvacuumregion .and. Lconstraint.ge.0 ) ) then ! will need to accommodate constraints;
-         
-         if(                     Lconstraint.eq.1 ) then
-          iflag = -1 ; WCALL( dfp200, tr00ab, ( vvol, mn, lmns, Nt, Nz, iflag, diotadxup(0:1,-1:2,vvol) ) ) ! compute d(transform)/dx;
-         endif
-         
-         if( Lvacuumregion .and. Lconstraint.ge.0 ) then
-          iflag = -1 ; WCALL( dfp200, curent, ( vvol, mn,       Nt, Nz, iflag, dItGpdxtp(0:1,-1:2,vvol) ) ) ! compute d(Itor,Gpol)/dx;
-         endif
-         
-         if( Lplasmaregion .and. Lconstraint.eq.1 ) then
-          
-          if( Lcoordinatesingularity ) then ! solution does not depend on dpflux, and only outer transform is a constraint;
-           
-           det = diotadxup(1,1,vvol)
-           FATAL( dfp200, abs(det).lt.small, error computing derivatives of mu          wrt geometry at fixed transform )
-           
-           dmupfdx(vvol,1,idof,innout) = - lfactor * (                                                                        diotadxup(1,-1,vvol) ) / det
-           dmupfdx(vvol,2,idof,innout) =   zero
-           
-          else ! if( .not.Lcoordinatesingularity ) ;
-           
-           det = diotadxup(0,1,vvol) * diotadxup(1,2,vvol) - diotadxup(0,2,vvol) * diotadxup(1,1,vvol)
-           FATAL( dfp200, abs(det).lt.small, error computing derivatives of mu & dpflux wrt geometry at fixed transform )
-           
-           dmupfdx(vvol,1,idof,innout) = - lfactor * ( + diotadxup(1, 2,vvol) * diotadxup(0,-1,vvol) - diotadxup(0, 2,vvol) * diotadxup(1,-1,vvol) ) / det
-           dmupfdx(vvol,2,idof,innout) = - lfactor * ( - diotadxup(1, 1,vvol) * diotadxup(0,-1,vvol) + diotadxup(0, 1,vvol) * diotadxup(1,-1,vvol) ) / det
-           
-          endif ! end of if( Lcoordinatesingularity ) ;
-          
-         endif ! end of if( Lplasmaregion .and. Lconstraint.eq.1 ) ;
-         
-         if( Lvacuumregion ) then
-          
-          if    ( Lconstraint.eq.0 ) then ! THIS NEEDS ATTENTION;
-
-           det = dItGpdxtp(0,1,vvol) * dItGpdxtp(1,2,vvol) - dItGpdxtp(0,2,vvol) * dItGpdxtp(1,1,vvol)
-           FATAL( dfp200, abs(det).lt.small, error computing derivatives of dtflux & dpflux wrt geometry at fixed Itor and Gpol )
-           
-           dmupfdx(vvol,1,idof,innout) = - lfactor * ( + dItGpdxtp(1, 2,vvol) * dItGpdxtp(0,-1,vvol) - dItGpdxtp(0, 2,vvol) * dItGpdxtp(1,-1,vvol) ) / det
-           dmupfdx(vvol,2,idof,innout) = - lfactor * ( - dItGpdxtp(1, 1,vvol) * dItGpdxtp(0,-1,vvol) + dItGpdxtp(0, 1,vvol) * dItGpdxtp(1,-1,vvol) ) / det
-           
-          elseif( Lconstraint.eq.1 ) then
-
-           det = diotadxup(0,1,vvol) * dItGpdxtp(1,2,vvol) - diotadxup(0,2,vvol) * dItGpdxtp(1,1,vvol)
-           FATAL( dfp200, abs(det).lt.small, error computing derivatives of dtflux & dpflux wrt geometry at fixed Itor and Gpol )
-           
-           dmupfdx(vvol,1,idof,innout) = - lfactor * ( + dItGpdxtp(1, 2,vvol) * diotadxup(0,-1,vvol) - diotadxup(0, 2,vvol) * dItGpdxtp(1,-1,vvol) ) / det
-           dmupfdx(vvol,2,idof,innout) = - lfactor * ( - dItGpdxtp(1, 1,vvol) * diotadxup(0,-1,vvol) + diotadxup(0, 1,vvol) * dItGpdxtp(1,-1,vvol) ) / det
-          
-		  elseif( Lconstraint.eq.3 ) then
-
-		   FATAL( dfp200, Lfindzero.EQ.2, Lconstraint=3 not compatible with Lfindzero=2 in free boundary. Use Lfindzero=1)
-
-		   ! THIS IS NOT USED
-           det = dItGpdxtp(0,1,vvol) * dItGpdxtp(1,2,vvol) - dItGpdxtp(0,2,vvol) * dItGpdxtp(1,1,vvol)
-           FATAL( dfp200, abs(det).lt.small, error computing derivatives of dtflux & dpflux wrt geometry at fixed Itor and Gpol )
-           
-           dmupfdx(vvol,1,idof,innout) = - lfactor * ( + dItGpdxtp(1, 2,vvol) * dItGpdxtp(0,-1,vvol) - dItGpdxtp(0, 2,vvol) * dItGpdxtp(1,-1,vvol) ) / det
-           dmupfdx(vvol,2,idof,innout) = - lfactor * ( - dItGpdxtp(1, 1,vvol) * dItGpdxtp(0,-1,vvol) + dItGpdxtp(0, 1,vvol) * dItGpdxtp(1,-1,vvol) ) / det
-
-          endif
-          
-         endif ! end of if( Lvacuumregion ) ;
-         
-        endif ! end of if( Lconstraint.eq.1 .or. ( Lvacuumregion .and. Lconstraint.ge.0 ) then;
-        
-
-#ifdef DEBUG
-
-        if( Lcheck.eq.4 ) then ! check derivatives of field;
-         
-         dBdX%L = .false.
-         
-         do isymdiff = -2, 2 ! symmetric fourth-order, finite-difference used to approximate derivatives;
-          
-          if( isymdiff.eq.0 ) cycle
-          
-          iRbc(1:mn,0:Mvol) = oRbc(1:mn,0:Mvol)
-          iZbs(1:mn,0:Mvol) = oZbs(1:mn,0:Mvol)
-          iRbs(1:mn,0:Mvol) = oRbs(1:mn,0:Mvol)
-          iZbc(1:mn,0:Mvol) = oZbc(1:mn,0:Mvol)
-          
-          if( issym.eq.0 .and. irz.eq.0 ) iRbc(ii,vvol-1+innout) = iRbc(ii,vvol-1+innout) + dRZ * isymdiff ! perturb geometry;
-          if( issym.eq.0 .and. irz.eq.1 ) iZbs(ii,vvol-1+innout) = iZbs(ii,vvol-1+innout) + dRZ * isymdiff ! perturb geometry;
-          if( issym.eq.1 .and. irz.eq.0 ) iRbs(ii,vvol-1+innout) = iRbs(ii,vvol-1+innout) + dRZ * isymdiff ! perturb geometry;
-          if( issym.eq.1 .and. irz.eq.1 ) iZbc(ii,vvol-1+innout) = iZbc(ii,vvol-1+innout) + dRZ * isymdiff ! perturb geometry;
-          
-          WCALL( dfp200, ma00aa, ( Iquad(vvol), mn, vvol, ll ) )
-          
-          WCALL( dfp200, matrix, ( vvol, mn, ll ) )
-
-          WCALL( dfp200, ma02aa, ( vvol, NN ) ) ! this may or may not iterate on mu and dpflux to enforce transform constraints;
-          
-          if( Lplasmaregion ) then
-          imupf(1:2,isymdiff) = (/     mu(vvol), dpflux(vvol) /) ! mu     and dpflux are computed for the perturbed geometry by ma02aa/mp00ac if Lconstraint=1;
-          else ! if( Lvacuumregion ) ;
-          imupf(1:2,isymdiff) = (/ dtflux(vvol), dpflux(vvol) /) ! dtflux and dpflux are computed for the perturbed geometry by ma02aa/mp00ac if Lconstraint=1;
-          endif
-          
-          isolution(1:NN,isymdiff) = solution(vvol)%mat(1:NN,0) ! solution is computed in mp00ac, which is called by ma02aa;
-          
-         enddo ! end of do isymdiff;
-         
-         isolution(1:NN,0) = ( - 1 * isolution(1:NN, 2) + 8 * isolution(1:NN, 1) - 8 * isolution(1:NN,-1) + 1 * isolution(1:NN,-2) ) / ( 12 * dRZ )
-         imupf(1:2,0)      = ( - 1 * imupf(1:2, 2)      + 8 * imupf(1:2, 1)      - 8 * imupf(1:2,-1)      + 1 * imupf(1:2,-2)      ) / ( 12 * dRZ )
-         
-          solution(vvol)%mat(1:NN,-1) = abs(  solution(vvol)%mat(1:NN,-1) )
-         isolution(1:NN, 0) = abs( isolution(1:NN, 0) )
-        
-!        ifail = 0 ; call M01CAF(  solution(vvol)%mat(1:NN,-1), 1, NN, 'D', ifail ) ! sorting screen output; this corrupts;
-!        ifail = 0 ; call M01CAF( isolution(1:NN, 0), 1, NN, 'D', ifail ) ! sorting screen output; this corrupts;
-         
-         ifail = 0 ; call dlasrt( 'D', NN,  solution(vvol)%mat(1:NN,-1), ifail ) ! sorting screen output; this corrupts;
-         ifail = 0 ; call dlasrt( 'D', NN, isolution(1:NN, 0), ifail ) ! sorting screen output; this corrupts;        
-         
-         cput = GETTIME
-
-        !select case( Lconstraint )
-        !case( 0 )
-        ! write(ounit,3002) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, innout,  solution(vvol)%mat(1:min(NN,16),-1)
-        ! write(ounit,3002) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, innout, isolution(isol:isol+min(NN,16), 0)
-        !case( 1 )
-          write(ounit,3003)
-          write(ounit,3003) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, innout, "finite-diff", imupf(1:2,0)
-          write(ounit,3003) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, innout, "analytic   ", dmupfdx(vvol,1:2,idof,innout) / lfactor
-        !case default
-        ! FATAL( dfp200, .true., Lconstraint not supported for Lcheck=4 )
-        !end select ! end of select case( Lconstraint ) ;
-         
-!3002     format("dfp200 : ",f10.2," : ",:,"myid=",i3," ; vvol=",i2," ; (",i2,",",i3," ) ; irz=",i1," ; issym=",i1," ; innout=",i1," ; dxi=",99es10.02)
-3003     format("dfp200 : ",f10.2," : ",:,"myid=",i3," ; vvol=",i2," ; (",i2,",",i3," ) ; irz=",i1," ; issym=",i1," ; innout=",i1," ; ",a11,&
-      " : dmupf=",2f11.05" ;")
-         
-         dBdX%L = .true.
-         
-         iRbc(1:mn,0:Mvol) = oRbc(1:mn,0:Mvol)
-         iZbs(1:mn,0:Mvol) = oZbs(1:mn,0:Mvol)
-         iRbs(1:mn,0:Mvol) = oRbs(1:mn,0:Mvol)
-         iZbc(1:mn,0:Mvol) = oZbc(1:mn,0:Mvol)
-         
-        endif ! end of if( Lcheck.eq.4 ) ;
-
-#endif
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
         
         vflag = 1 ! this flag instructs volume to continue even if the volume is invalid;
         WCALL( dfp200, volume, ( vvol, vflag ) ) ! compute derivative of volume; wrt to harmonic described by dBdX structure;
@@ -623,6 +414,11 @@ ind_matrix = IndMatrixArray(vvol, 2)
         
 #endif
         
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-
+! SPECTRAL CONSTRAINTS
+
+
         do iocons = 0, 1
          
          if( vvol.eq.   1 .and. iocons.eq.0 ) cycle ! fixed inner boundary (or coordinate axis); no constraints;
@@ -862,54 +658,17 @@ ind_matrix = IndMatrixArray(vvol, 2)
     dBdX%L = .false. ! probably not needed, but included anyway;
     
    endif ! end of if( LComputeDerivatives ) ;
-   
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 2000 continue
-   
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-   DALLOCATE(DToocc)
-   DALLOCATE(DToocs)
-   DALLOCATE(DToosc)
-   DALLOCATE(DTooss)
-
-   DALLOCATE(TTsscc)
-   DALLOCATE(TTsscs)
-   DALLOCATE(TTsssc)
-   DALLOCATE(TTssss)
-
-   DALLOCATE(TDstcc)
-   DALLOCATE(TDstcs)
-   DALLOCATE(TDstsc)
-   DALLOCATE(TDstss)
-
-   DALLOCATE(TDszcc)
-   DALLOCATE(TDszcs)
-   DALLOCATE(TDszsc)
-   DALLOCATE(TDszss)
-
-   DALLOCATE(DDttcc)
-   DALLOCATE(DDttcs)
-   DALLOCATE(DDttsc)
-   DALLOCATE(DDttss)
-
-   DALLOCATE(DDtzcc)
-   DALLOCATE(DDtzcs)
-   DALLOCATE(DDtzsc)
-   DALLOCATE(DDtzss)
-
-   DALLOCATE(DDzzcc)
-   DALLOCATE(DDzzcs)
-   DALLOCATE(DDzzsc)
-   DALLOCATE(DDzzss)
+  
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
    if( LcomputeDerivatives) then
     
-    DALLOCATE(oBI)
-    DALLOCATE(rhs)
+	DALLOCATE(oBI)
     
 #ifdef DEBUG
     if( Lcheck.eq.4 ) then
@@ -958,3 +717,378 @@ ind_matrix = IndMatrixArray(vvol, 2)
 RETURN(dfp200)
 
 end subroutine
+
+
+
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-
+!																LOCAL SUBROUTINES
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-
+
+subroutine get_perturbed_solution(vvol, ind_matrix, oBI, NN)
+
+! This routine evaluates the value of the magnetic field once the interface is perturbed using matrix perturbation theory.
+! Separated from the main dfp200 core to allow local and semi-global constraints to be prescribed
+
+	use constants, only :	zero, half, one, two
+
+	use fileunits, only : 	ounit
+
+	use cputiming, only :   Tdfp200
+
+	use inputlist, only :	Wmacros, Wdfp200, Lrad, mu
+
+	use allglobal, only :   ncpu, myid, cpus, &
+							mn, Iquad, NAdof, &
+	                    	dMA, dMB, dMD, dMG, solution, &
+							DToocc, DToocs, DToosc, DTooss, &
+		                    TTsscc, TTsscs, TTsssc, TTssss, &
+	                    	TDstcc, TDstcs, TDstsc, TDstss, &
+		                    TDszcc, TDszcs, TDszsc, TDszss, &
+		                    DDttcc, DDttcs, DDttsc, DDttss, &
+		                    DDtzcc, DDtzcs, DDtzsc, DDtzss, &
+		                    DDzzcc, DDzzcs, DDzzsc, DDzzss, &
+		                    dtflux, dpflux
+
+
+ LOCALS
+!------
+
+INTEGER					:: ideriv, vvol, ind_matrix, ll, NN
+REAL					:: dpsi(1:2)
+REAL     , allocatable	:: rhs(:)
+REAL 					:: oBI(1:NN,1:NN)
+CHARACTER           	:: packorunpack 
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-
+	
+	ll = Lrad(vvol)  ! Shorthand
+
+	! Allocate necessary memory...
+
+	SALLOCATE( rhs, (1:NN     ), zero )
+
+	SALLOCATE( DToocc, (0:ll,0:ll,1:mn,1:mn), zero )
+	SALLOCATE( DToocs, (0:ll,0:ll,1:mn,1:mn), zero )
+	SALLOCATE( DToosc, (0:ll,0:ll,1:mn,1:mn), zero )
+	SALLOCATE( DTooss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+	SALLOCATE( TTsscc, (0:ll,0:ll,1:mn,1:mn), zero )
+	SALLOCATE( TTsscs, (0:ll,0:ll,1:mn,1:mn), zero )
+	SALLOCATE( TTsssc, (0:ll,0:ll,1:mn,1:mn), zero )
+	SALLOCATE( TTssss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+	SALLOCATE( TDstcc, (0:ll,0:ll,1:mn,1:mn), zero )
+	SALLOCATE( TDstcs, (0:ll,0:ll,1:mn,1:mn), zero )
+	SALLOCATE( TDstsc, (0:ll,0:ll,1:mn,1:mn), zero )
+	SALLOCATE( TDstss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+	SALLOCATE( TDszcc, (0:ll,0:ll,1:mn,1:mn), zero )
+	SALLOCATE( TDszcs, (0:ll,0:ll,1:mn,1:mn), zero )
+	SALLOCATE( TDszsc, (0:ll,0:ll,1:mn,1:mn), zero )
+	SALLOCATE( TDszss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+	SALLOCATE( DDttcc, (0:ll,0:ll,1:mn,1:mn), zero )
+	SALLOCATE( DDttcs, (0:ll,0:ll,1:mn,1:mn), zero )
+	SALLOCATE( DDttsc, (0:ll,0:ll,1:mn,1:mn), zero )
+	SALLOCATE( DDttss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+	SALLOCATE( DDtzcc, (0:ll,0:ll,1:mn,1:mn), zero )
+	SALLOCATE( DDtzcs, (0:ll,0:ll,1:mn,1:mn), zero )
+	SALLOCATE( DDtzsc, (0:ll,0:ll,1:mn,1:mn), zero )
+	SALLOCATE( DDtzss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+	SALLOCATE( DDzzcc, (0:ll,0:ll,1:mn,1:mn), zero )
+	SALLOCATE( DDzzcs, (0:ll,0:ll,1:mn,1:mn), zero )
+	SALLOCATE( DDzzsc, (0:ll,0:ll,1:mn,1:mn), zero )
+	SALLOCATE( DDzzss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+	! Evaluate perturbed geometry dependent matrices
+
+	WCALL( dfp200, ma00aa,( Iquad(vvol), mn, vvol, ll ) ) ! compute volume integrals of metric elements;
+	WCALL( dfp200, matrix,( vvol, mn, ll ) ) ! construct Beltrami matrices;
+
+	dpsi(1:2) = (/ dtflux(vvol), dpflux(vvol) /) ! local enclosed toroidal and poloidal fluxes;
+	rhs(1:NN) = - matmul( dMB(ind_matrix)%mat(1:NN,1:2 )                            , dpsi(1:2)        ) &
+			    - matmul( dMA(ind_matrix)%mat(1:NN,1:NN) - mu(vvol) * dMD(ind_matrix)%mat(1:NN,1:NN), solution(vvol)%mat(1:NN,0) )
+
+	! Evaluate perturbed solution
+	solution(vvol)%mat(1:NN,-1) = matmul( oBI(1:NN,1:NN), rhs(1:NN) ) ! this is the perturbed, packxi solution;
+
+	ideriv = -1 ; dpsi(1:2) = (/ dtflux(vvol), dpflux(vvol) /) ! these are also used below;
+
+	packorunpack = 'U'
+
+	WCALL( dfp200, packab,( packorunpack, vvol, NN,  solution(vvol)%mat(1:NN,-1), ideriv ) ) ! derivatives placed in Ate(vvol,ideriv,1:mn)%s(0:Lrad),
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+! deallocate memory
+
+	DALLOCATE(DToocc)
+	DALLOCATE(DToocs)
+	DALLOCATE(DToosc)
+	DALLOCATE(DTooss)
+
+	DALLOCATE(TTsscc)
+	DALLOCATE(TTsscs)
+	DALLOCATE(TTsssc)
+	DALLOCATE(TTssss)
+
+	DALLOCATE(TDstcc)
+	DALLOCATE(TDstcs)
+	DALLOCATE(TDstsc)
+	DALLOCATE(TDstss)
+
+	DALLOCATE(TDszcc)
+	DALLOCATE(TDszcs)
+	DALLOCATE(TDszsc)
+	DALLOCATE(TDszss)
+
+	DALLOCATE(DDttcc)
+	DALLOCATE(DDttcs)
+	DALLOCATE(DDttsc)
+	DALLOCATE(DDttss)
+
+	DALLOCATE(DDtzcc)
+	DALLOCATE(DDtzcs)
+	DALLOCATE(DDtzsc)
+	DALLOCATE(DDtzss)
+
+	DALLOCATE(DDzzcc)
+	DALLOCATE(DDzzcs)
+	DALLOCATE(DDzzsc)
+	DALLOCATE(DDzzss)
+
+	DALLOCATE(rhs)
+
+
+end subroutine get_perturbed_solution
+
+
+
+
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+subroutine evaluate_dmupfdx(vvol, innout, idof, ii, issym, irz)
+
+! Evaluate mu and psip derivatives and store them in dmupfdx.
+! If debug and Lcheck=4, compare with finite difference approximation
+!
+! INPUT:
+! ------
+! 	vvol: 	volume number
+! 	innout: inner or outer boundary
+! 	idof:  	???
+! 	ii: 	index of Fourier harmonics, ii=1:mn
+! 	issym: 	loop over stellerator symmetric and non-symmetric terms
+! 	irz: 	loop over R or Z
+
+! MODULES:
+! -------
+	use constants, only :   zero, half, one, two
+
+	use fileunits, only : 	ounit
+
+	use numerical, only : 	small
+
+	use cputiming, only :   Tdfp200
+
+	use inputlist, only :	Wmacros, Wdfp200, Lrad, mu, Lconstraint, Lcheck
+
+  	use allglobal, only : 	ncpu, myid, cpus, &
+                        	Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
+	                        Mvol, Iquad, &
+                            iRbc, iZbs, iRbs, iZbc, & ! Fourier harmonics of geometry; vector of independent variables, position, is "unpacked" into iRbc,iZbs;
+    	                    NAdof, &
+    	                    YESstellsym, NOTstellsym, &
+    	                    mn, im, in, mns, Ntz, &
+    	                    Ate, Aze, Ato, Azo, & ! only required for debugging;
+    	                    ijreal, &
+    	                    efmn, ofmn, cfmn, sfmn, &
+    	                    evmn, odmn, comn, simn, &
+    	                    Nt, Nz, &
+    	                    cosi, sini, & ! FFT workspace;
+    	                    dBdX, &
+    	                    dMA, dMB, dMD, dMG, solution, &
+    	                    dtflux, dpflux, sweight, &
+    	                    mmpp, &
+    	                    Bemn, Bomn, Iomn, Iemn, Somn, Semn, &
+    	                    LGdof, &
+    	                    vvolume, dvolume, &
+    	                    Rij, Zij, sg, guvij, iRij, iZij, dRij, dZij, tRij, tZij, & ! Jacobian and metrics; computed in coords;
+    	                    diotadxup, dItGpdxtp, &
+    	                    dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated, &
+    	                    BBweight, & ! exponential weight on force-imbalance harmonics;
+    	                    psifactor, &
+    	                    lmns, &
+    	                    mn, mne, &
+    	                    dRodR, dRodZ, dZodR, dZodZ, &
+    	                    LocalConstraint, &
+							IsMyVolume, IsMyVolumeValue, IndMatrixArray
+
+
+  LOCALS:
+! -------
+
+	INTEGER				:: 	vvol, innout, idof, iflag, ii, issym, irz, ll, NN, ifail
+	REAL				::  det, lfactor
+
+
+#ifdef DEBUG
+	INTEGER             :: isymdiff
+	REAL                :: dRZ = 1.0e-05, dvol(-1:+1), evolume, imupf(1:2,-2:2)
+	REAL,   allocatable :: oRbc(:,:), oZbs(:,:), oRbs(:,:), oZbc(:,:) ! original geometry;
+	REAL,   allocatable :: isolution(:,:)
+#endif
+
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+#ifdef DEBUG
+	FATAL( dfp200, vvol-1+innout.gt.Mvol, psifactor needs attention )
+#endif
+
+	ll = Lrad(vvol)		! shorthand
+	NN = NAdof(vvol) 	! shorthand;
+
+	lfactor = psifactor(ii,vvol-1+innout) 	! this "pre-conditions" the geometrical degrees-of-freedom;
+	dmupfdx(vvol,1,idof,innout) = zero    	! Prepare array
+	dmupfdx(vvol,2,idof,innout) = zero		! Prepare array
+
+	if( Lconstraint.eq.1 .or. Lconstraint.eq.3 .or. ( Lvacuumregion .and. Lconstraint.ge.0 ) ) then ! will need to accommodate constraints;
+
+		if(                     Lconstraint.eq.1 ) then
+			iflag = -1 ; WCALL( dfp200, tr00ab, ( vvol, mn, lmns, Nt, Nz, iflag, diotadxup(0:1,-1:2,vvol) ) ) ! compute d(transform)/dx;
+		endif
+
+		if( Lvacuumregion .and. Lconstraint.ge.0 ) then
+			iflag = -1 ; WCALL( dfp200, curent, ( vvol, mn,       Nt, Nz, iflag, dItGpdxtp(0:1,-1:2,vvol) ) ) ! compute d(Itor,Gpol)/dx;
+		endif
+
+		if( Lplasmaregion ) then
+
+			if( Lconstraint.eq.1) then
+
+				if( Lcoordinatesingularity ) then ! solution does not depend on dpflux, and only outer transform is a constraint;
+
+					det = diotadxup(1,1,vvol)
+					FATAL( dfp200, abs(det).lt.small, error computing derivatives of mu          wrt geometry at fixed transform )
+
+					dmupfdx(vvol,1,idof,innout) = - lfactor * (                                                                        diotadxup(1,-1,vvol) ) / det
+					dmupfdx(vvol,2,idof,innout) =   zero
+
+				else ! if( .not.Lcoordinatesingularity ) ;
+
+					det = diotadxup(0,1,vvol) * diotadxup(1,2,vvol) - diotadxup(0,2,vvol) * diotadxup(1,1,vvol)
+					FATAL( dfp200, abs(det).lt.small, error computing derivatives of mu & dpflux wrt geometry at fixed transform )
+
+					dmupfdx(vvol,1,idof,innout) = - lfactor * ( + diotadxup(1, 2,vvol) * diotadxup(0,-1,vvol) - diotadxup(0, 2,vvol) * diotadxup(1,-1,vvol) ) / det
+					dmupfdx(vvol,2,idof,innout) = - lfactor * ( - diotadxup(1, 1,vvol) * diotadxup(0,-1,vvol) + diotadxup(0, 1,vvol) * diotadxup(1,-1,vvol) ) / det
+
+				endif ! end of if( Lcoordinatesingularity ) ;
+
+			else if (Lconstraint.eq.3) then		  
+
+				! TODO
+
+			endif ! end of if( Lconstraint.eq.1 ) ;
+		
+		else
+
+			if    ( Lconstraint.eq.0 ) then ! THIS NEEDS ATTENTION;
+
+				det = dItGpdxtp(0,1,vvol) * dItGpdxtp(1,2,vvol) - dItGpdxtp(0,2,vvol) * dItGpdxtp(1,1,vvol)
+				FATAL( dfp200, abs(det).lt.small, error computing derivatives of dtflux & dpflux wrt geometry at fixed Itor and Gpol )
+
+				dmupfdx(vvol,1,idof,innout) = - lfactor * ( + dItGpdxtp(1, 2,vvol) * dItGpdxtp(0,-1,vvol) - dItGpdxtp(0, 2,vvol) * dItGpdxtp(1,-1,vvol) ) / det
+				dmupfdx(vvol,2,idof,innout) = - lfactor * ( - dItGpdxtp(1, 1,vvol) * dItGpdxtp(0,-1,vvol) + dItGpdxtp(0, 1,vvol) * dItGpdxtp(1,-1,vvol) ) / det
+
+			else if( Lconstraint.eq.1 ) then
+
+				det = diotadxup(0,1,vvol) * dItGpdxtp(1,2,vvol) - diotadxup(0,2,vvol) * dItGpdxtp(1,1,vvol)
+				FATAL( dfp200, abs(det).lt.small, error computing derivatives of dtflux & dpflux wrt geometry at fixed Itor and Gpol )
+
+				dmupfdx(vvol,1,idof,innout) = - lfactor * ( + dItGpdxtp(1, 2,vvol) * diotadxup(0,-1,vvol) - diotadxup(0, 2,vvol) * dItGpdxtp(1,-1,vvol) ) / det
+				dmupfdx(vvol,2,idof,innout) = - lfactor * ( - dItGpdxtp(1, 1,vvol) * diotadxup(0,-1,vvol) + diotadxup(0, 1,vvol) * dItGpdxtp(1,-1,vvol) ) / det
+
+			else if( Lconstraint.eq.3 ) then
+
+				! TODO
+
+			endif
+
+		endif ! end of if( Lplasmaregion ) ;
+
+	endif ! end of if( Lconstraint.eq.1 .or. ( Lvacuumregion .and. Lconstraint.ge.0 ) then;
+        
+
+#ifdef DEBUG
+
+	if( Lcheck.eq.4 ) then ! check derivatives of field;
+
+		dBdX%L = .false.
+
+		do isymdiff = -2, 2 ! symmetric fourth-order, finite-difference used to approximate derivatives;
+
+			if( isymdiff.eq.0 ) cycle
+
+			iRbc(1:mn,0:Mvol) = oRbc(1:mn,0:Mvol)
+			iZbs(1:mn,0:Mvol) = oZbs(1:mn,0:Mvol)
+			iRbs(1:mn,0:Mvol) = oRbs(1:mn,0:Mvol)
+			iZbc(1:mn,0:Mvol) = oZbc(1:mn,0:Mvol)
+
+			if( issym.eq.0 .and. irz.eq.0 ) iRbc(ii,vvol-1+innout) = iRbc(ii,vvol-1+innout) + dRZ * isymdiff ! perturb geometry;
+			if( issym.eq.0 .and. irz.eq.1 ) iZbs(ii,vvol-1+innout) = iZbs(ii,vvol-1+innout) + dRZ * isymdiff ! perturb geometry;
+			if( issym.eq.1 .and. irz.eq.0 ) iRbs(ii,vvol-1+innout) = iRbs(ii,vvol-1+innout) + dRZ * isymdiff ! perturb geometry;
+			if( issym.eq.1 .and. irz.eq.1 ) iZbc(ii,vvol-1+innout) = iZbc(ii,vvol-1+innout) + dRZ * isymdiff ! perturb geometry;
+
+			WCALL( dfp200, ma00aa, ( Iquad(vvol), mn, vvol, ll ) )
+			WCALL( dfp200, matrix, ( vvol, mn, ll ) )
+			WCALL( dfp200, ma02aa, ( vvol, NN ) ) 					! this may or may not iterate on mu and dpflux to enforce transform constraints;
+
+			! TODO: modify in case of semi-global constraint
+
+			if( Lplasmaregion ) then
+				imupf(1:2,isymdiff) = (/     mu(vvol), dpflux(vvol) /) ! mu     and dpflux are computed for the perturbed geometry by ma02aa/mp00ac if Lconstraint=1;
+			else ! if( Lvacuumregion ) ;
+				imupf(1:2,isymdiff) = (/ dtflux(vvol), dpflux(vvol) /) ! dtflux and dpflux are computed for the perturbed geometry by ma02aa/mp00ac if Lconstraint=1;
+			endif
+
+			isolution(1:NN,isymdiff) = solution(vvol)%mat(1:NN,0) ! solution is computed in mp00ac, which is called by ma02aa;
+
+		enddo ! end of do isymdiff;
+
+		isolution(1:NN,0) = ( - 1 * isolution(1:NN, 2) + 8 * isolution(1:NN, 1) - 8 * isolution(1:NN,-1) + 1 * isolution(1:NN,-2) ) / ( 12 * dRZ )
+		imupf(1:2,0)      = ( - 1 * imupf(1:2, 2)      + 8 * imupf(1:2, 1)      - 8 * imupf(1:2,-1)      + 1 * imupf(1:2,-2)      ) / ( 12 * dRZ )
+
+		solution(vvol)%mat(1:NN,-1) = abs(  solution(vvol)%mat(1:NN,-1) )
+		isolution(1:NN, 0) = abs( isolution(1:NN, 0) )
+
+		ifail = 0 ; call dlasrt( 'D', NN,  solution(vvol)%mat(1:NN,-1), ifail ) ! sorting screen output; this corrupts;
+		ifail = 0 ; call dlasrt( 'D', NN, isolution(1:NN, 0), ifail ) ! sorting screen output; this corrupts;        
+
+		cput = GETTIME
+
+		write(ounit,3003)
+		write(ounit,3003) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, innout, "finite-diff", imupf(1:2,0)
+		write(ounit,3003) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, innout, "analytic   ", dmupfdx(vvol,1:2,idof,innout) / lfactor
+
+3003    format("dfp200 : ",f10.2," : ",:,"myid=",i3," ; vvol=",i2," ; (",i2,",",i3," ) ; irz=",i1," ; issym=",i1," ; innout=",i1," ; ",a11," : dmupf=",2f11.05" ;")
+
+		dBdX%L = .true.
+
+		iRbc(1:mn,0:Mvol) = oRbc(1:mn,0:Mvol)
+		iZbs(1:mn,0:Mvol) = oZbs(1:mn,0:Mvol)
+		iRbs(1:mn,0:Mvol) = oRbs(1:mn,0:Mvol)
+		iZbc(1:mn,0:Mvol) = oZbc(1:mn,0:Mvol)
+
+	endif ! end of if( Lcheck.eq.4 ) ;
+
+#endif
+
+
+end subroutine evaluate_dmupfdx
+
+
