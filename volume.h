@@ -195,52 +195,52 @@ subroutine volume( lvol, vflag )
     if (lvol.eq.1 .and. innout.eq.0) then
       vol(1) = zero
       dvolume = zero
-    endif
-
-    Lcurvature = 1
-
-    lss = innout * two - one
-    WCALL( volume, coords, ( lvol, lss, Lcurvature, Ntz, mn ) ) 
-
-    vint = Rij(1:Ntz,0,0) * (Zij(1:Ntz,0,0)*Rij(1:Ntz,2,0) - Zij(1:Ntz,2,0)*Rij(1:Ntz,0,0))
-    vol(innout) = four * sum(vint) / float(Ntz)
-
-    if( dBdX%L .and. dBdX%innout.eq.innout  ) then ! compute derivative of volume;
-        
-      ii = dBdX%ii ! shorthand
-
-      if( dBdX%irz.eq.0 ) then ! compute derivatives wrt R;
-         
-        if( dBdX%issym.eq.0 ) then
-          vint = cosi(1:Ntz,ii) * (Zij(1:Ntz,0,0)*Rij(1:Ntz,2,0) - Zij(1:Ntz,2,0)*Rij(1:Ntz,0,0)) &
-               + Rij(1:Ntz,0,0) * (-im(ii) * Zij(1:Ntz,0,0)*sini(1:Ntz,ii)) &
-               + Rij(1:Ntz,0,0) * (-Zij(1:Ntz,2,0)*cosi(1:Ntz,ii))
-        else
-          vint = sini(1:Ntz,ii) * (Zij(1:Ntz,0,0)*Rij(1:Ntz,2,0) - Zij(1:Ntz,2,0)*Rij(1:Ntz,0,0)) &
-               + Rij(1:Ntz,0,0) * (+im(ii) * Zij(1:Ntz,0,0)*cosi(1:Ntz,ii)) &
-               + Rij(1:Ntz,0,0) * (-Zij(1:Ntz,2,0)*sini(1:Ntz,ii))
-        endif
-
-      else ! matches if( dBdX%irz.eq.0 ) then; compute derivative wrt Z;
-         
-        if( dBdX%issym.eq.0 ) then
-          vint = Rij(1:Ntz,0,0) * (sini(1:Ntz,ii)*Rij(1:Ntz,2,0)) & 
-               + Rij(1:Ntz,0,0) * (-im(ii)*cosi(1:Ntz,ii)*Rij(1:Ntz,0,0))
-        else
-          vint = Rij(1:Ntz,0,0) * (cosi(1:Ntz,ii)*Rij(1:Ntz,2,0)) & 
-               + Rij(1:Ntz,0,0) * (+im(ii)*sini(1:Ntz,ii)*Rij(1:Ntz,0,0))
-        endif
-
-      endif ! end of if( dBdX%irz.eq.0 )
-
-      dvolume = four * sum(vint) / float(Ntz)
-
     else
 
-      dvolume = zero
+      Lcurvature = 1
 
-    endif  ! end of if( dBdX%L .and. dBdX%innout.eq.innout )
+      lss = innout * two - one
+      WCALL( volume, coords, ( lvol, lss, Lcurvature, Ntz, mn ) ) 
 
+      vint = Rij(1:Ntz,0,0) * (Zij(1:Ntz,0,0)*Rij(1:Ntz,2,0) - Zij(1:Ntz,2,0)*Rij(1:Ntz,0,0))
+      vol(innout) = four * sum(vint) / float(Ntz)
+
+      if( dBdX%L .and. dBdX%innout.eq.innout  ) then ! compute derivative of volume;
+          
+        ii = dBdX%ii ! shorthand
+
+        if( dBdX%irz.eq.0 ) then ! compute derivatives wrt R;
+          
+          if( dBdX%issym.eq.0 ) then
+            vint = cosi(1:Ntz,ii) * (Zij(1:Ntz,0,0)*Rij(1:Ntz,2,0) - Zij(1:Ntz,2,0)*Rij(1:Ntz,0,0)) &
+                + Rij(1:Ntz,0,0) * (-im(ii) * Zij(1:Ntz,0,0)*sini(1:Ntz,ii)) &
+                + Rij(1:Ntz,0,0) * (-Zij(1:Ntz,2,0)*cosi(1:Ntz,ii))
+          else
+            vint = sini(1:Ntz,ii) * (Zij(1:Ntz,0,0)*Rij(1:Ntz,2,0) - Zij(1:Ntz,2,0)*Rij(1:Ntz,0,0)) &
+                + Rij(1:Ntz,0,0) * (+im(ii) * Zij(1:Ntz,0,0)*cosi(1:Ntz,ii)) &
+                + Rij(1:Ntz,0,0) * (-Zij(1:Ntz,2,0)*sini(1:Ntz,ii))
+          endif
+
+        else ! matches if( dBdX%irz.eq.0 ) then; compute derivative wrt Z;
+          
+          if( dBdX%issym.eq.0 ) then
+            vint = Rij(1:Ntz,0,0) * (sini(1:Ntz,ii)*Rij(1:Ntz,2,0)) & 
+                + Rij(1:Ntz,0,0) * (-im(ii)*cosi(1:Ntz,ii)*Rij(1:Ntz,0,0))
+          else
+            vint = Rij(1:Ntz,0,0) * (cosi(1:Ntz,ii)*Rij(1:Ntz,2,0)) & 
+                + Rij(1:Ntz,0,0) * (+im(ii)*sini(1:Ntz,ii)*Rij(1:Ntz,0,0))
+          endif
+
+        endif ! end of if( dBdX%irz.eq.0 )
+
+        dvolume = four * sum(vint) / float(Ntz)
+
+      else
+
+        dvolume = zero
+
+      endif  ! end of if( dBdX%L .and. dBdX%innout.eq.innout )
+    endif  ! lvol.eq.1 .and. innout.eq.0
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
    end select
