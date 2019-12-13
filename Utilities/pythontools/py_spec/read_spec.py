@@ -73,18 +73,18 @@ class SPEC:
             start = 0
             for i in range(Nvol):
               # vector potential
-              cAte.append(self.vector_potential.Ate[:, start:start + Lrad[i] + 1])
-              cAto.append(self.vector_potential.Ato[:, start:start + Lrad[i] + 1])
-              cAze.append(self.vector_potential.Aze[:, start:start + Lrad[i] + 1])
-              cAzo.append(self.vector_potential.Azo[:, start:start + Lrad[i] + 1])
+              cAte.append(np.atleast_2d(self.vector_potential.Ate)[:, start:start + Lrad[i] + 1])
+              cAto.append(np.atleast_2d(self.vector_potential.Ato)[:, start:start + Lrad[i] + 1])
+              cAze.append(np.atleast_2d(self.vector_potential.Aze)[:, start:start + Lrad[i] + 1])
+              cAzo.append(np.atleast_2d(self.vector_potential.Azo)[:, start:start + Lrad[i] + 1])
 
               # grid
-              cRij.append(self.grid.Rij[:, start:start + Lrad[i] + 1])
-              cZij.append(self.grid.Zij[:, start:start + Lrad[i] + 1])
-              csg.append(self.grid.sg[:, start:start + Lrad[i] + 1])
-              cBR.append(self.grid.BR[:, start:start + Lrad[i] + 1])
-              cBp.append(self.grid.Bp[:, start:start + Lrad[i] + 1])
-              cBZ.append(self.grid.BZ[:, start:start + Lrad[i] + 1])
+              cRij.append(np.atleast_2d(self.grid.Rij)[:, start:start + Lrad[i] + 1])
+              cZij.append(np.atleast_2d(self.grid.Zij)[:, start:start + Lrad[i] + 1])
+              csg.append(np.atleast_2d(self.grid.sg)[:, start:start + Lrad[i] + 1])
+              cBR.append(np.atleast_2d(self.grid.BR)[:, start:start + Lrad[i] + 1])
+              cBp.append(np.atleast_2d(self.grid.Bp)[:, start:start + Lrad[i] + 1])
+              cBZ.append(np.atleast_2d(self.grid.BZ)[:, start:start + Lrad[i] + 1])
             
               # move along the merged array dimension
               start = start + Lrad[i] + 1;

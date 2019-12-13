@@ -45,7 +45,7 @@ program xspech
                         tflux, pflux, phiedge, pressure, pscale, helicity, Ladiabatic, adiabatic, gamma, &
                         Rbc, Zbs, Rbs, Zbc, &
                         Lconstraint, &
-                        Lfreebound, mfreeits, gBntol, gBnbld, &
+                        Lfreebound, mfreeits, gBntol, gBnbld, vcasingtol, LautoinitBn, &
                         Lfindzero, &
                         odetol, nPpts, nPtrj, &
                         LHevalues, LHevectors, LHmatrix, Lperturbed, Lcheck, &
@@ -72,9 +72,15 @@ program xspech
                         iBns, iBnc, iVns, iVnc, &
                         Ate, Aze, Ato, Azo, & ! only required for debugging; 09 Mar 17;
                         nfreeboundaryiterations, &
-                        beltramierror
+                        beltramierror, &
+                        first_free_bound, &
+                        version
 
-   use sphdf5 ! write _all_ output quantities into a _single_ HDF5 file
+   ! write _all_ output quantities into a _single_ HDF5 file
+   use sphdf5,   only : init_outfile, &
+                        mirror_input_to_outfile, &
+                        init_convergence_output, &
+                        write_grid
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -88,6 +94,8 @@ program xspech
   REAL                 :: rflag, lastcpu, bnserr, lRwc, lRws, lZwc, lZws, lItor, lGpol, lgBc, lgBs
   REAL,    allocatable :: position(:), gradient(:)
   CHARACTER            :: pack
+  INTEGER              :: Lfindzero_old, mfreeits_old
+  REAL                 :: gBnbld_old  
   INTEGER              :: lnPtrj, numTrajTotal
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -170,6 +178,27 @@ program xspech
   nfreeboundaryiterations = -1
   
 9000 nfreeboundaryiterations = nfreeboundaryiterations + 1 ! this is the free-boundary iteration loop; 08 Jun 16;
+
+  ! run fix_boundary for the first free_boundary iteration
+  if (Lfreebound.eq.1 .and. LautoinitBn.eq.1) then 
+     if (nfreeboundaryiterations.eq.0) then  ! first iteration
+        first_free_bound = .true.
+        !Mvol = Nvol
+        gBnbld_old = gBnbld
+        gBnbld = zero
+        Lfindzero_old = Lfindzero
+        mfreeits_old = mfreeits
+        Lfindzero = 0 
+        mfreeits = 1
+        if (myid.eq.0) write(ounit,'("xspech : ",10X," : First iteration of free boundary calculation : update Bns from plasma.")')
+     else
+        first_free_bound = .false.
+        !Mvol = Nvol + Lfreebound
+        Lfindzero = Lfindzero_old
+        gBnbld = gBnbld_old
+        mfreeits = mfreeits_old
+     endif
+  endif 
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -343,7 +372,7 @@ program xspech
   case( 2:3 ) ; tflux(1) = dtflux(1) ; pflux(1) =   zero    ! 08 Feb 16;
   end select                                                ! 08 Feb 16;
   
-  do vvol = 2, Mvol ; tflux(vvol) = tflux(vvol-1) + dtflux(vvol) ! 01 Jul 14;
+  do vvol = 2, Mvol; tflux(vvol) = tflux(vvol-1) + dtflux(vvol) ! 01 Jul 14;
    ;                  pflux(vvol) = pflux(vvol-1) + dpflux(vvol) ! 01 Jul 14;
   enddo
   
@@ -402,7 +431,9 @@ program xspech
   endif
   
   if( LupdateBn ) then
-   
+
+   Mvol = Nvol + Lfreebound
+
    lastcpu = GETTIME
    
    WCALL( xspech, bnorml, ( mn, Ntz, efmn(1:mn), ofmn(1:mn) ) ) ! compute normal field etc. on computational boundary;
@@ -534,9 +565,8 @@ program xspech
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-!  if( LContinueFreeboundaryIterations .and. Lfindzero.gt.0 .and. nfreeboundaryiterations.lt.mfreeits ) goto 9000 
   if( LContinueFreeboundaryIterations .and. nfreeboundaryiterations.lt.mfreeits ) goto 9000  ! removed Lfindzero check; Loizu Dec 18;
-
+  if( Lfreebound.eq.1 .and. First_free_bound ) goto 9000  ! going back to normal free_boundary calculation; Zhu 20190701;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -633,14 +663,12 @@ program xspech
      WCALL( xspech, jo00aa, ( vvol, Ntz, Iquad(vvol), mn ) )
     endif
 
-    !if( nPpts .gt.0 ) then
-    ! WCALL( xspech, pp00aa, ( vvol                       ) ) ! Poincare plots in each volume
-    !endif
-
    endif ! myid.eq.modulo(vvol-1,ncpu)
   enddo ! end of do vvol = 1, Mvol; ! end of parallel diagnostics loop; 03 Apr 13;
-  
-  WCALL( xspech, pp00aa ) ! Poincare plots
+
+  if( nPpts .gt.0 ) then
+   WCALL( xspech, pp00aa ) ! do Poincare plots in all volumes; has its own paralellization over volumes internally
+  endif
 
 1002 format("xspech : ",f10.2," :":" myid=",i3," ; vvol=",i3," ; IBeltrami="L2" ; construction of Beltrami field failed ;")
 
@@ -692,7 +720,11 @@ program xspech
   WCALL( xspech, ending )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
+  ! MPIFINALIZE has to be called as the absolutely last statement in the code and therefore needs to be here;
+  ! otherwise, the second MPI_Wtime call in the WCALL macro is called after MPIFINALIZE and this leads to a MPI error!
+  MPIFINALIZE
+
   stop
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -724,7 +756,7 @@ subroutine ending
   use cputiming
 
   use allglobal, only : myid, cpus, mn
-  use sphdf5
+  use sphdf5,    only : hdfint, finish_outfile
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -773,7 +805,8 @@ dcpu, Ttotal / (/ 1, 60, 3600 /), ecpu, 100*ecpu/dcpu
 
   WCALL( xspech, finish_outfile ) ! close HDF5 output file
 
-  MPIFINALIZE
+  ! wait for writing to finish
+  call MPI_Barrier(MPI_COMM_WORLD, ierr)
   
 1000 format("ending : ",f10.2," : myid=",i3," ; completion ; time=",f10.2,"s = "f8.2"m = "f6.2"h = "f5.2"d ; date= "&
   a4"/"a2"/"a2" ; time= "a2":"a2":"a2" ; ext = "a60)

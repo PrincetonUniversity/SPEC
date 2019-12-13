@@ -37,13 +37,15 @@
  CFLAGS=-r8
  RFLAGS=-mcmodel=large -O3 -m64 -unroll0 -fno-alias -ip -traceback
  DFLAGS=-O0 -g -traceback -check bounds -check format -check output_conversion -check pointers -check uninit -debug full -D DEBUG
- LIBS=-I${MKLROOT}/include/intel64/lp64 -mkl # MKL include
+ LIBS=-I${MKLROOT}/include/intel64/lp64 -I${MKLROOT}/include  # MKL include
  LIBS+=-I$(HDF5_HOME)/include # HDF5 include
  LINKS=-L$(HDF5_HOME)/lib -lhdf5_fortran -lhdf5 -lpthread -lz -lm # HDF5 link
  LIBS+=-I$(FFTW_HOME)/include # FFTW include
  LINKS+=-L$(FFTW_HOME)/lib -lfftw3 # FFTW link
- LINKS+=-I${MKLROOT}/include/intel64/lp64 -mkl ${MKLROOT}/lib/intel64/libmkl_blas95_ilp64.a \
-     ${MKLROOT}/lib/intel64/libmkl_lapack95_ilp64.a -lpthread -lm -ldl # MKL link
+ LINKS+=${MKLROOT}/lib/intel64/libmkl_blas95_lp64.a ${MKLROOT}/lib/intel64/libmkl_lapack95_lp64.a \
+     -Wl,--start-group ${MKLROOT}/lib/intel64/libmkl_intel_lp64.a ${MKLROOT}/lib/intel64/libmkl_sequential.a \
+     ${MKLROOT}/lib/intel64/libmkl_core.a -Wl,--end-group -lpthread -lm -ldl # MKL link
+
 
 ifeq ($(CC),gfortran)
  # At PPPL, you can use the following commands
@@ -71,7 +73,7 @@ ifeq ($(CC),gfortran_ubuntu)
  CFLAGS=-fdefault-real-8
  LINKS=-Wl,-rpath -Wl,/usr/lib/lapack -llapack -lblas
  LIBS=-I/usr/include/hdf5/openmpi
- LINKS+=-L/usr/lib/x86_64-linux-gnu/hdf5/openmpi -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lpthread -lz -lm
+ LINKS+=-L/usr/lib/x86_64-linux-gnu/hdf5/openmpi -lhdf5_fortran -lhdf5 -lpthread -lz -lm
  LIBS+=-I/usr/include
  LINKS+=-lfftw3
  RFLAGS=-O2 -ffixed-line-length-none -ffree-line-length-none -fexternal-blas
@@ -114,7 +116,6 @@ ifeq ($(CC),lff95)
  LINKS+=-L$(FFTWHOME)/lib -lfftw3
 endif
 
-
 ifeq ($(CC),intel_spc)
  CFLAGS=-r8
  RFLAGS=-O2 -ip -no-prec-div -xHost -fPIC
@@ -128,7 +129,9 @@ endif
 
 ifeq ($(CC),intel_ipp)
  # tested on draco with the following modules:
- # intel/18.0.3 impi/2018.3 mkl/2018.3 hdf5-mpi/1.10.5 fftw-mpi/3.3.8
+ # intel/18.0.3 impi/2018.3 mkl/2018.3 hdf5-serial/1.8.21 fftw-mpi/3.3.8
+ # and on cobra with the following modules:
+ # intel/19.0.4 impi/2019.4 mkl/2019.4 hdf5-serial/1.8.21 fftw-mpi/3.3.8
  FC=mpiifort
  CFLAGS=-r8
  RFLAGS=-O0 -ip -no-prec-div -xHost -fPIC

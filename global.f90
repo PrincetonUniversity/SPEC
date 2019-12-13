@@ -55,7 +55,7 @@ module constants
   REAL, parameter :: mu0        =   2.0E-07 * pi2
   REAL, parameter :: goldenmean =   1.618033988749895 ! golden mean = ( one + sqrt(five) ) / two ;
 
-  REAL, parameter :: version    =   1.90  
+  REAL, parameter :: version    =   2.00  
 
 end module constants
 
@@ -90,7 +90,7 @@ module fileunits
   INTEGER :: dunit = 12 ! derivative matrix; used in newton:.ext.GF; 
   INTEGER :: hunit = 14 ! eigenvalues of Hessian; under re-construction; 
   INTEGER :: munit = 14 ! matrix elements of Hessian; 
-  INTEGER :: lunit = 20 ! local unit; used to read .Vn normal magnetic field in xspech
+  INTEGER :: lunit = 20 ! local unit; used in lunit+myid: pp00aa:.ext.poincare,.ext.transform; 
   INTEGER :: vunit = 15 ! for examination of adaptive quadrature; used in casing:.ext.vcint; 
  !INTEGER :: funit = 16 ! force iterations;
 
@@ -205,6 +205,7 @@ module inputlist
 ! the following variables constitute the namelist/numericlist/; note that all variables in namelist need to be broadcasted in readin;
 
   INTEGER      :: Linitialize =  0 
+  INTEGER      :: LautoinitBn =  1 
   INTEGER      :: Lzerovac    =  0 
   INTEGER      :: Ndiscrete   =  2
   INTEGER      :: Nquad       = -1
@@ -482,6 +483,11 @@ module inputlist
                 !latex       is {\em always} given by the \inputvar{Rwc} and \inputvar{Zws} 
                 !latex given in \type{physicslist};
                 !latex \item if \inputvar{Linitialize = 1, 2}, it is not required to provide the geometry of the interfaces after the namelists;
+                !latex \ei
+ LautoinitBn ,& !latex \item \inputvar{LautoinitBn = 1 : integer} : to initialize $B_{ns}$ using an initial fixed-boundary calculation;
+                !latex \bi
+                !latex \item only relevant if \inputvar{Lfreebound = 1},
+                !latex \item user-supplied \inputvar{Bns} will only be considered if \inputvar{LautoinitBn = 0} 
                 !latex \ei
  Lzerovac    ,& !latex \item \inputvar{Lzerovac = 0 : integer} : to adjust vacuum field to cancel plasma field on computational boundary;
                 !latex \bi
@@ -1356,6 +1362,8 @@ module allglobal
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+  LOGICAL              :: first_free_bound = .false.
+
 contains
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -1598,12 +1606,12 @@ subroutine readin
    
    write(ounit,'("readin : ", 10x ," : ")')
    
-   write(ounit,1020) cput-cpus, Linitialize, Lzerovac, Ndiscrete
+   write(ounit,1020) cput-cpus, Linitialize, LautoinitBn, Lzerovac, Ndiscrete
    write(ounit,1021)            Nquad, iMpol, iNtor
    write(ounit,1022)            Lsparse, Lsvdiota, imethod, iorder, iprecon, iotatol
    write(ounit,1023)            Lextrap, Mregular
    
-1020 format("readin : ",f10.2," : Linitialize=",i3," ; Lzerovac=",i2," ; Ndiscrete="i2" ;")
+1020 format("readin : ",f10.2," : Linitialize=",i3," ;LautoinitBn=",i3," ; Lzerovac=",i2," ; Ndiscrete="i2" ;")
 1021 format("readin : ", 10x ," : Nquad="i4" ; iMpol="i4" ; iNtor="i4" ;")
 1022 format("readin : ", 10x ," : Lsparse="i2" ; Lsvdiota="i2" ; imethod="i2" ; iorder="i2" ; iprecon="i2" ; iotatol="es13.5" ;")
 1023 format("readin : ", 10x ," : Lextrap="i2" ; Mregular="i3" ;")
@@ -1769,6 +1777,7 @@ subroutine readin
   endif
   
   IlBCAST( Linitialize, 1, 0 )
+  IlBCAST( LautoinitBn, 1, 0 )
   IlBCAST( Lzerovac   , 1, 0 )
   IlBCAST( Ndiscrete  , 1, 0 )
   IlBCAST( Nquad      , 1, 0 )
@@ -2428,6 +2437,7 @@ subroutine wrtend
   
   write(iunit,'("&numericlist")')
   write(iunit,'(" Linitialize = ",i9            )') Linitialize
+  write(iunit,'(" LautoinitBn = ",i9            )') LautoinitBn
   write(iunit,'(" Lzerovac    = ",i9            )') Lzerovac       
   write(iunit,'(" Ndiscrete   = ",i9            )') Ndiscrete
   write(iunit,'(" Nquad       = ",i9            )') Nquad
