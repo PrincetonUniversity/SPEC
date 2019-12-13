@@ -10,7 +10,6 @@ import numpy as np  # for isscalar
 import os           # for path.abspath
 import keyword      # for getting python keywords
 
-
 # reader class for Stepped Pressure Equilibrium Code output file
 # S. Hudson et al., Physics of Plasmas 19, 112502 (2012); doi: 10.1063/1.4765691
 class SPEC:
@@ -103,11 +102,12 @@ class SPEC:
             self.grid.Bp = cBp
             self.grid.BZ = cBZ
             
-            # remove unsuccessful Poincare trajectories
-            self.poincare.R = self.poincare.R[self.poincare.success == 1, :, :]
-            self.poincare.Z = self.poincare.Z[self.poincare.success == 1, :, :]
-            self.poincare.t = self.poincare.t[self.poincare.success == 1, :, :]
-            self.poincare.s = self.poincare.s[self.poincare.success == 1, :, :]
+            if hasattr(self, 'poincare'):
+							# remove unsuccessful Poincare trajectories
+            	self.poincare.R = self.poincare.R[self.poincare.success == 1, :, :]
+            	self.poincare.Z = self.poincare.Z[self.poincare.success == 1, :, :]
+            	self.poincare.t = self.poincare.t[self.poincare.success == 1, :, :]
+            	self.poincare.s = self.poincare.s[self.poincare.success == 1, :, :]
     
     # needed for iterating over the contents of the file
     def __iter__(self):
