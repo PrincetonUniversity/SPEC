@@ -268,9 +268,9 @@ subroutine dvcfield( Ndim, tz, Nfun, vcintegrand ) ! differential virtual-casing
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  use constants, only : zero, half, one, three
+  use constants, only : zero, half, one, three, four
   
-  use numerical, only :
+  use numerical, only : small
   
   use fileunits, only : ounit, vunit
   
@@ -285,7 +285,8 @@ subroutine dvcfield( Ndim, tz, Nfun, vcintegrand ) ! differential virtual-casing
                         Ate, Aze, Ato, Azo, &
                         TT, &
                         YESstellsym, NOTstellsym, &
-                        globaljk, Dxyz, Nxyz
+                        globaljk, Dxyz, Nxyz, &
+                        first_free_bound
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -382,8 +383,7 @@ subroutine dvcfield( Ndim, tz, Nfun, vcintegrand ) ! differential virtual-casing
     do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over Fourier modes; construct surface current; slow transform required as position is arbitrary;
      
      arg = mi * teta - ni * zeta ; carg = cos(arg) ; sarg = sin(arg)
-     
-     dR(0) = dR(0) +          (                   iRbc(ii,Nvol) ) * carg                                            
+     dR(0) = dR(0) +          (                   iRbc(ii,Nvol) ) * carg
      dR(1) = dR(1) +      (   (   iRbc(ii,Mvol) - iRbc(ii,Nvol) ) * carg                                            ) * half
      dR(2) = dR(2) + mi * ( - (                   iRbc(ii,Nvol) ) * sarg                                            )
      dR(3) = dR(3) - ni * ( - (                   iRbc(ii,Nvol) ) * sarg                                            )
@@ -392,16 +392,18 @@ subroutine dvcfield( Ndim, tz, Nfun, vcintegrand ) ! differential virtual-casing
      dZ(1) = dZ(1) +      (                                                ( iZbs(ii,Mvol) - iZbs(ii,Nvol) ) * sarg ) * half
      dZ(2) = dZ(2) + mi * (                                                (                 iZbs(ii,Nvol) ) * carg )
      dZ(3) = dZ(3) - ni * (                                                (                 iZbs(ii,Nvol) ) * carg )
-     
-     do ll = 0, Lrad(Mvol)
-      gBut = gBut - ( Aze(Mvol,ideriv,ii)%s(ll) * carg                                    ) * TT(ll,0,1) ! contravariant; Jacobian comes later; 
-      gBuz = gBuz + ( Ate(Mvol,ideriv,ii)%s(ll) * carg                                    ) * TT(ll,0,1)
-     enddo
-
-!     do ll = 0, Lrad(Nvol)  ! omit the possible current sheet due to a jump in tangential field at the plasma boundary; Loizu Dec 18;
-!      gBut = gBut - ( Aze(Nvol,ideriv,ii)%s(ll) * carg                                    ) * TT(ll,1,1) ! contravariant; Jacobian comes later;
-!      gBuz = gBuz + ( Ate(Nvol,ideriv,ii)%s(ll) * carg                                    ) * TT(ll,1,1)
-!     enddo
+    
+     if (first_free_bound) then
+        do ll = 0, Lrad(Nvol)  ! 1 is for outside thr volume
+           gBut = gBut - ( Aze(Nvol,ideriv,ii)%s(ll) * carg                                    ) * TT(ll,1,1) ! contravariant; Jacobian comes later;
+           gBuz = gBuz + ( Ate(Nvol,ideriv,ii)%s(ll) * carg                                    ) * TT(ll,1,1)
+        enddo
+     else 
+        do ll = 0, Lrad(Mvol)
+           gBut = gBut - ( Aze(Mvol,ideriv,ii)%s(ll) * carg                                    ) * TT(ll,0,1) ! contravariant; Jacobian comes later; 
+           gBuz = gBuz + ( Ate(Mvol,ideriv,ii)%s(ll) * carg                                    ) * TT(ll,0,1)
+        enddo
+     endif
      
     enddo ! end of do ii = 1, mn ;
     
@@ -420,11 +422,18 @@ subroutine dvcfield( Ndim, tz, Nfun, vcintegrand ) ! differential virtual-casing
      dZ(1) = dZ(1) +      (   (   iZbc(ii,Mvol) - iZbc(ii,Nvol) ) * carg + ( iZbs(ii,Mvol) - iZbs(ii,Nvol) ) * sarg ) * half
      dZ(2) = dZ(2) + mi * ( -                     iZbc(ii,Nvol)   * sarg +                   iZbs(ii,Nvol)   * carg )
      dZ(3) = dZ(3) - ni * ( -                     iZbc(ii,Nvol)   * sarg +                   iZbs(ii,Nvol)   * carg )
-     
-     do ll = 0, Lrad(Mvol)
-      gBut = gBut - ( Aze(Mvol,ideriv,ii)%s(ll) * carg + Azo(Mvol,ideriv,ii)%s(ll) * sarg ) * TT(ll,0,1) ! contravariant; Jacobian comes later; 
-      gBuz = gBuz + ( Ate(Mvol,ideriv,ii)%s(ll) * carg + Ato(Mvol,ideriv,ii)%s(ll) * sarg ) * TT(ll,0,1)
-     enddo
+
+     if (first_free_bound) then     
+        do ll = 0, Lrad(Mvol) ! omit the possible current sheet due to a jump in tangential field at the plasma boundary; Zhu 20190603;
+           gBut = gBut - ( Aze(Mvol,ideriv,ii)%s(ll) * carg + Azo(Mvol,ideriv,ii)%s(ll) * sarg ) * TT(ll,1,1) ! contravariant; Jacobian comes later; 
+           gBuz = gBuz + ( Ate(Mvol,ideriv,ii)%s(ll) * carg + Ato(Mvol,ideriv,ii)%s(ll) * sarg ) * TT(ll,1,1)
+        enddo
+     else 
+        do ll = 0, Lrad(Mvol)
+           gBut = gBut - ( Aze(Mvol,ideriv,ii)%s(ll) * carg + Azo(Mvol,ideriv,ii)%s(ll) * sarg ) * TT(ll,0,1) ! contravariant; Jacobian comes later; 
+           gBuz = gBuz + ( Ate(Mvol,ideriv,ii)%s(ll) * carg + Ato(Mvol,ideriv,ii)%s(ll) * sarg ) * TT(ll,0,1)
+        enddo   
+     endif
      
     enddo ! end of do ii = 1, mn ;
     

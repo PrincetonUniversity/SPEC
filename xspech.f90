@@ -45,7 +45,7 @@ program xspech
                         tflux, pflux, phiedge, pressure, pscale, helicity, Ladiabatic, adiabatic, gamma, &
                         Rbc, Zbs, Rbs, Zbc, &
                         Lconstraint, &
-                        Lfreebound, mfreeits, gBntol, gBnbld, &
+                        Lfreebound, mfreeits, gBntol, gBnbld, vcasingtol, LautoinitBn, &
                         Lfindzero, &
                         odetol, nPpts, nPtrj, &
                         LHevalues, LHevectors, LHmatrix, Lperturbed, Lcheck, &
@@ -72,7 +72,9 @@ program xspech
                         iBns, iBnc, iVns, iVnc, &
                         Ate, Aze, Ato, Azo, & ! only required for debugging; 09 Mar 17;
                         nfreeboundaryiterations, &
-                        beltramierror, version
+                        beltramierror, &
+                        first_free_bound, &
+                        version
 
    ! write _all_ output quantities into a _single_ HDF5 file
    use sphdf5,   only : init_outfile, &
@@ -92,6 +94,8 @@ program xspech
   REAL                 :: rflag, lastcpu, bnserr, lRwc, lRws, lZwc, lZws, lItor, lGpol, lgBc, lgBs
   REAL,    allocatable :: position(:), gradient(:)
   CHARACTER            :: pack
+  INTEGER              :: Lfindzero_old, mfreeits_old
+  REAL                 :: gBnbld_old  
   INTEGER              :: lnPtrj, numTrajTotal
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -174,6 +178,27 @@ program xspech
   nfreeboundaryiterations = -1
   
 9000 nfreeboundaryiterations = nfreeboundaryiterations + 1 ! this is the free-boundary iteration loop; 08 Jun 16;
+
+  ! run fix_boundary for the first free_boundary iteration
+  if (Lfreebound.eq.1 .and. LautoinitBn.eq.1) then 
+     if (nfreeboundaryiterations.eq.0) then  ! first iteration
+        first_free_bound = .true.
+        !Mvol = Nvol
+        gBnbld_old = gBnbld
+        gBnbld = zero
+        Lfindzero_old = Lfindzero
+        mfreeits_old = mfreeits
+        Lfindzero = 0 
+        mfreeits = 1
+        if (myid.eq.0) write(ounit,'("xspech : ",10X," : First iteration of free boundary calculation : update Bns from plasma.")')
+     else
+        first_free_bound = .false.
+        !Mvol = Nvol + Lfreebound
+        Lfindzero = Lfindzero_old
+        gBnbld = gBnbld_old
+        mfreeits = mfreeits_old
+     endif
+  endif 
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -347,7 +372,7 @@ program xspech
   case( 2:3 ) ; tflux(1) = dtflux(1) ; pflux(1) =   zero    ! 08 Feb 16;
   end select                                                ! 08 Feb 16;
   
-  do vvol = 2, Mvol ; tflux(vvol) = tflux(vvol-1) + dtflux(vvol) ! 01 Jul 14;
+  do vvol = 2, Mvol; tflux(vvol) = tflux(vvol-1) + dtflux(vvol) ! 01 Jul 14;
    ;                  pflux(vvol) = pflux(vvol-1) + dpflux(vvol) ! 01 Jul 14;
   enddo
   
@@ -406,7 +431,9 @@ program xspech
   endif
   
   if( LupdateBn ) then
-   
+
+   Mvol = Nvol + Lfreebound
+
    lastcpu = GETTIME
    
    WCALL( xspech, bnorml, ( mn, Ntz, efmn(1:mn), ofmn(1:mn) ) ) ! compute normal field etc. on computational boundary;
@@ -538,9 +565,8 @@ program xspech
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-!  if( LContinueFreeboundaryIterations .and. Lfindzero.gt.0 .and. nfreeboundaryiterations.lt.mfreeits ) goto 9000 
   if( LContinueFreeboundaryIterations .and. nfreeboundaryiterations.lt.mfreeits ) goto 9000  ! removed Lfindzero check; Loizu Dec 18;
-
+  if( Lfreebound.eq.1 .and. First_free_bound ) goto 9000  ! going back to normal free_boundary calculation; Zhu 20190701;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
