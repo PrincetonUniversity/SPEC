@@ -1,35 +1,5 @@
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!title (main) ! Main program.
-
-!latex \briefly{main program}
-
-!latex \calledby{}
-
-!latex \calls{\link{global}:readin, 
-!latex        \link{global}:wrtend, 
-!latex        \link{preset}, 
-!latex        \link{packxi}, 
-!latex        \link{volume}, 
-!latex        \link{pc00aa}, 
-!latex        \link{newton}, 
-!latex        \link{dforce}, 
-!latex        \link{hesian}, 
-!latex        \link{ra00aa}, 
-!latex        \link{bnorml}, 
-!latex        \link{sc00aa}, 
-!latex        \link{jo00aa},
-!latex        \link{pp00aa} and
-!latex        \link{sphdf5}}
-
-!latex \tableofcontents
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-! uppercase generally indicates macros;
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+!> \file xspech.f90
+!! \brief Main program
 program xspech
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

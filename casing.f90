@@ -1,3 +1,7 @@
+!> \file casing.f90
+!! \brief Constructs the field created by the plasma currents, at an arbitrary, external location using virtual casing.
+!! \ingroup free-boundary
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !title (free-boundary) ! Constructs magnetic field at external location produced by internal plasma currents.
@@ -86,6 +90,15 @@
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+
+!> @brief Virtual casing
+!!
+!! Compute the external magnetic field using virtual casing.
+!!
+!! @param[in] teta \f$\theta\f$
+!! @param[in] zeta \f$\zeta\f$
+!! @param[out] gBn \f$ \sqrt g {\bf B} \cdot {\bf n}\f$
+!! @param[out] icasing return flag from dcuhre()
 subroutine casing( teta, zeta, gBn, icasing )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -106,18 +119,18 @@ subroutine casing( teta, zeta, gBn, icasing )
   
   LOCALS
   
-  REAL, intent(in)   :: teta, zeta ! arbitrary location; Cartesian;
-  REAL, intent(out)  :: gBn ! magnetic field; Cartesian;
-  INTEGER            :: icasing
+  REAL, intent(in)     :: teta, zeta ! arbitrary location; Cartesian;
+  REAL, intent(out)    :: gBn ! magnetic field; Cartesian;
+  INTEGER, intent(out) :: icasing
   
-  INTEGER, parameter :: Ndim = 2, Nfun = 1
+  INTEGER, parameter   :: Ndim = 2, Nfun = 1
 
-  INTEGER            :: ldim, lfun, minpts, maxpts, Lrwk, idcuhre, jk, irestart, funcls, key, num, maxsub
-  REAL               :: integrals(1:Nfun), low(1:Ndim), upp(1:Ndim), labs, lrel, absest(1:Nfun)
-  REAL, allocatable  :: rwk(:)
+  INTEGER              :: ldim, lfun, minpts, maxpts, Lrwk, idcuhre, jk, irestart, funcls, key, num, maxsub
+  REAL                 :: integrals(1:Nfun), low(1:Ndim), upp(1:Ndim), labs, lrel, absest(1:Nfun)
+  REAL, allocatable    :: rwk(:)
   
-! REAL               :: dvcfield
-  external           :: dvcfield
+! REAL                 :: dvcfield
+  external             :: dvcfield
   
   BEGIN(casing)
   

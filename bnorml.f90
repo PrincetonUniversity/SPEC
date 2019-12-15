@@ -1,29 +1,28 @@
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!> \defgroup free-boundary Free-Boundary Computation
 
-!title (free-boundary) ! Computes ${\bf B}_{Plasma} \cdot {\bf e}_\theta \times {\bf e}_\zeta \;$ on the computational boundary, $\partial {\cal D}$.
+!> \file bnorml.f90
+!! \brief Computes \f${\bf B}_{Plasma} \cdot {\bf e}_\theta \times {\bf e}_\zeta \;\f$ on the computational boundary, \f$\partial {\cal D}\f$.
+!! \ingroup free-boundary
+!!
+!! **free-boundary constraint**
+!! <ul>
+!! <li> The normal field at the computational boundary, \f$\partial {\cal D}\f$, should be equal to 
+!!      \f$\left({\bf B}_P + {\bf B}_C\right)\cdot {\bf e}_\theta \times {\bf e}_\zeta\f$,
+!!      where \f${\bf B}_P\f$ is the "plasma" field (produced by internal plasma currents) and is computed using virtual casing, 
+!!      and \f${\bf B}_C\f$ is the "vacuum" field (produced by the external coils) and is given on input. </li>
+!! <li> The plasma field, \f${\bf B}_P\f$, can only be computed after the equilibrium is determined, 
+!!      but this information is required to compute the equilibrium to begin with; and so there is an iteration involved. </li>
+!! <li> Suggested values of the vacuum field can be self generated; see xspech.f90 for more documentation on this. </li>
+!! </ul>
+!!
+!! **compute the normal field on a regular grid on the computational boundary**
+!! <ul>
+!! <li> For each point on the compuational boundary, \ref casing() is called to compute the normal field produced by the plasma currents. </li>
+!! <li> (There is a very clumsy attempt to parallelize this which could be greatly improved.) </li>
+!! <li> An FFT gives the required Fourier harmonics. </li>
+!! </ul>
+!! @see casing.f90
 
-!latex \briefly{Computes ${\bf B}_P \cdot {\bf e}_\t \times {\bf e}_\z$ on computational boundary, $\partial {\cal D}$.}
-
-!latex \calledby{\link{xspech}}
-
-!latex \calls{\link{coords} and 
-!latex        \link{casing}}
-
-!latex \tableofcontents
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \subsection{free-boundary constraint} 
-
-!latex \begin{enumerate}
-!latex \item The normal field at the computational boundary, $\partial {\cal D}$, should be equal to 
-!latex       $\left({\bf B}_P + {\bf B}_C\right)\cdot {\bf e}_\theta \times {\bf e}_\zeta$,
-!latex       where ${\bf B}_P$ is the ``plasma'' field (produced by internal plasma currents) and is computed using virtual casing, 
-!latex       and ${\bf B}_C$ is the ``vacuum'' field (produced by the external coils) and is given on input.
-!latex \item The plasma field, ${\bf B}_P$, can only be computed after the equilibrium is determined, 
-!latex       but this information is required to compute the equilibrium to begin with; and so there is an iteration involved.
-!latex \item Suggested values of the vacuum field can be self generated; see \link{xspech} for more documentation on this.
-!latex \end{enumerate}
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -63,15 +62,9 @@
 !l tex       \ee
 !l tex       so that ${\bf B} = B^R {\bf e}_R + B^\phi {\bf e}_\phi + B^Z {\bf e}_Z$.
 !l tex \end{enumerate}
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \subsection{compute the normal field on a regular grid on the computational boundary}
-!latex \begin{enumerate}
-!latex \item For each point on the compuational boundary, \link{casing} is called to compute the normal field produced by the plasma currents.
-!latex \item (There is a very clumsy attempt to parallelize this which could be greatly improved.)
-!latex \item An FFT gives the required Fourier harmonics.
-!latex \end{enumerate}
+!!
+!!  -!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!!
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

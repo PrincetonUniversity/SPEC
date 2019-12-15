@@ -37,10 +37,15 @@
 !! IT IS REQUIRED TO SET IVOL THROUGH GLOBAL MEMORY BEFORE CALLING BFIELD.
 !!
 !! The format of this subroutine is constrained by the NAG ode integration routines.
+
+
+!> @brief Compute the magnetic field.
 !!
-!! @param zeta \f$ \zeta \f$
-!! @param st I have no idea.
-!! @param Bst Me neither.
+!! Compute the magnetic field extensively.
+!!
+!! @param[in] zeta toroidal angle \f$ \zeta \f$
+!! @param[in] st radial coordinate \f$s\f$ and poloidal angle \f$\theta\f$
+!! @param[out] Bst tangential magnetic field directions \f$B_s, B_\theta\f$
 subroutine bfield( zeta, st, Bst )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
