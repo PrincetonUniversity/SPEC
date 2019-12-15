@@ -1,4 +1,4 @@
-!> \defgroup diagnostics Diagnostics to check the code.
+!> \defgroup diagnostics Diagnostics to check the code
 
 !> \file bfield.f90
 !! \brief Returns \f$\dot s \equiv B^s / B^\zeta\f$ and \f$\dot \theta \equiv B^\theta / B^\zeta\f$.
