@@ -519,22 +519,22 @@ module inputlist
                                          !< <ul>
                                          !< <li> \c BBweight(i) \f$\displaystyle \equiv \texttt{opsilon} \times \exp\left[-\texttt{escale} \times (m_i^2+n_i^2) \right]\f$ </li>
                                          !< <li> defined in preset.f90; used in dforce() </li>
-                                         !< <li> also see Eqn.\f$\,\eqref{eq:forcebalancemn}\f$ </li>
+                                         !< <li> also see Eqn.\f$(\ref{eq:forcebalancemn})\f$ </li>
                                          !< </ul> 
   REAL         :: opsilon    =   1.0     !< weighting of force-imbalance
                                          !< <ul>
-                                         !< <li> used in dforce(); also see Eqn.\f$\,\eqref{eq:forcebalancemn}\f$ </li>
+                                         !< <li> used in dforce(); also see Eqn.\f$(\ref{eq:forcebalancemn})\f$ </li>
                                          !< </ul>
   REAL         :: pcondense  =   2.0     !< spectral condensation parameter
                                          !< <ul>
                                          !< <li> used in preset() to define \c mmpp(i) \f$\equiv m_i^p\f$, where \f$p\equiv \f$ \c pcondense </li>
                                          !< <li> the angle freedom is exploited to minimize \f$\displaystyle \texttt{epsilon} \sum_{i} m_i^p (R_{i}^2+Z_{i}^2)\f$
                                          !<      with respect to tangential variations in the interface geometry </li>
-                                         !< <li> also see Eqn.\f$\,\eqref{eq:spectralbalancemn}\f$ </li>
+                                         !< <li> also see Eqn.\f$(\ref{eq:spectralbalancemn})\f$ </li>vi 
                                          !< </ul>
   REAL         :: epsilon    =   0.0     !< weighting of spectral-width constraint
                                          !< <ul>
-                                         !< <li> used in dforce(); also see Eqn.\f$\,\eqref{eq:spectralbalancemn}\f$ </li>
+                                         !< <li> used in dforce(); also see Eqn.\f$(\ref{eq:spectralbalancemn})\f$ </li>
                                          !< </ul>
   REAL         :: wpoloidal  =   1.0     !< "star-like" poloidal angle constraint radial exponential factor
                                          !< used in preset() to construct \c sweight
@@ -1263,7 +1263,7 @@ module allglobal
   
   INTEGER              :: ivol !< labels volume; some subroutines (called by NAG) are fixed argument list but require the volume label;
   
-  REAL                 :: gBzeta !< toroidal (contravariant) field; calculated in bfield; required to convert \dot \t to B^\t, \dot s to B^s;
+  REAL                 :: gBzeta !< toroidal (contravariant) field; calculated in bfield; required to convert \f$\dot \theta\f$ to \f$B^\theta\f$, \f$\dot s\f$ to \f$B^s\f$
   
   INTEGER, allocatable :: Iquad(:) !< internal copy of Nquad; 
   

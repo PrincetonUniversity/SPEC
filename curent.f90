@@ -38,8 +38,8 @@
 !!       \f{eqnarray}{ G = \sum_i^\prime g_i \cos(m_i \zeta) 2\pi, \label{eq:linkingcurrent}
 !!       \f}
 !!       where \f$\sum^\prime\f$ includes only the \f$n_i=0\f$ harmonics. </li>
-!! <li>  The plasma  current, Eqn.\f$\,\eqref{eq:plasmacurrent}\f$, should be independent of \f$\zeta\f$,
-!!       and the linking current, Eqn.\f$\,\eqref{eq:linkingcurrent}\f$, should be independent of \f$\theta\f$.
+!! <li>  The plasma  current, Eqn.\f$(\ref{eq:plasmacurrent})\f$, should be independent of \f$\zeta\f$,
+!!       and the linking current, Eqn.\f$(\ref{eq:linkingcurrent})\f$, should be independent of \f$\theta\f$.
 !!       \todo Perhaps this can be proved analytically; in any case it should be confirmed numerically.
 !! 
 !! </li>

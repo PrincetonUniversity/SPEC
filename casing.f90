@@ -54,7 +54,7 @@
 !! <li> When all is said and done, this routine calculates
 !!      \f{eqnarray}{ \int_0^{2\pi} \int_0^{2\pi} \verb+vcintegrand+ \;\; d\theta d\zeta
 !!      \f}
-!!      for a given \f$(X,Y,Z)\f$, where \c vcintegrand  is given in Eqn.\f$\,\eqref{eq:integrand}\f$. </li>
+!!      for a given \f$(X,Y,Z)\f$, where \c vcintegrand  is given in Eqn.\f$(\ref{eq:integrand})\f$. </li>
 !! <li> The surface integral is performed using \c DCUHRE , which 
 !!      uses an adaptive subdivision strategy and also computes absolute error estimates.
 !!      The absolute and relative accuracy required are provided by the \c inputvar \c vcasingtol .

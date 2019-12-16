@@ -17,7 +17,7 @@
 !!
 !! **compute the normal field on a regular grid on the computational boundary**
 !! <ul>
-!! <li> For each point on the compuational boundary, \ref casing() is called to compute the normal field produced by the plasma currents. </li>
+!! <li> For each point on the compuational boundary, casing() is called to compute the normal field produced by the plasma currents. </li>
 !! <li> \todo There is a very clumsy attempt to parallelize this which could be greatly improved.
 !!
 !! </li>
