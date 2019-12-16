@@ -877,13 +877,10 @@ module allglobal
 !> @}
 !> \addtogroup grp_iface_geom Interface geometry: iRbc, iZbs etc.
 !> @{
-!> \subsubsection{\texttt{iRbc, iZbs, etc.} : interface geometry}
-
 !> <ul>
 !> <li> The Fourier harmonics of the interfaces are contained in \texttt{iRbc(1:mn,0:Mvol)} and \texttt{iZbs(1:mn,0:Mvol)}, where
 !> \texttt{iRbc(l,j)}, \texttt{iZbs(l,j)} contains the Fourier harmonics, $R_j$, $Z_j$, of the $l$-th interface.
 !> </ul>
-
   REAL,    allocatable :: iRbc(:,:) , iZbs(:,:)   !< interface surface geometry;     stellarator symmetric;
   REAL,    allocatable :: iRbs(:,:) , iZbc(:,:)   !< interface surface geometry; non-stellarator symmetric;
 
@@ -906,7 +903,6 @@ module allglobal
 !> @}
 !> \addtogroup grp_fourier_transform Fourier Transforms
 !> @{
-!> \subsubsection{Fourier Transforms}
 !> <ul>
 
 !> <li> The coordinate geometry and fields are mapped to/from Fourier space and real space using FFTW3.
@@ -917,7 +913,7 @@ module allglobal
 
 
 !> <li> Various workspace arrays are allocated. 
-!l tex These include \texttt{Rij(1:Ntz,0:3,0:3)} and \texttt{Zij(1:Ntz,0:3,0:3)}, which contain the coordinates in real space and their derivatives;
+!> These include \texttt{Rij(1:Ntz,0:3,0:3)} and \texttt{Zij(1:Ntz,0:3,0:3)}, which contain the coordinates in real space and their derivatives;
 !> \texttt{sg(0:3,Ntz)}, which contains the Jacobian and its derivatives;
 !> and \texttt{guv(0:6,0:3,1:Ntz)}, which contains the metric elements and their derivatives.
 !> </ul>
@@ -951,13 +947,13 @@ module allglobal
 
 !> \addtogroup grp_chebychev_metric Volume-integrated Chebyshev-metrics
 !> @{
-!> \subsubsection{\texttt{DToocc, DToocs, DToosc, DTooss} : volume-integrated Chebyshev-metrics}
-!> \subsubsection{\texttt{TTsscc, TTsscs, TTsssc, TTssss} : volume-integrated Chebyshev-metrics}
-!> \subsubsection{\texttt{TDstcc, TDstcs, TDstsc, TDstss} : volume-integrated Chebyshev-metrics}
-!> \subsubsection{\texttt{TDszcc, TDszcs, TDszsc, TDszss} : volume-integrated Chebyshev-metrics}
-!> \subsubsection{\texttt{DDttcc, DDttcs, DDttsc, DDttss} : volume-integrated Chebyshev-metrics}
-!> \subsubsection{\texttt{DDtzcc, DDtzcs, DDtzsc, DDtzss} : volume-integrated Chebyshev-metrics}
-!> \subsubsection{\texttt{DDzzcc, DDzzcs, DDzzsc, DDzzss} : volume-integrated Chebyshev-metrics}
+! > \subsubsection{\texttt{DToocc, DToocs, DToosc, DTooss} : volume-integrated Chebyshev-metrics}
+! > \subsubsection{\texttt{TTsscc, TTsscs, TTsssc, TTssss} : volume-integrated Chebyshev-metrics}
+! > \subsubsection{\texttt{TDstcc, TDstcs, TDstsc, TDstss} : volume-integrated Chebyshev-metrics}
+! > \subsubsection{\texttt{TDszcc, TDszcs, TDszsc, TDszss} : volume-integrated Chebyshev-metrics}
+! > \subsubsection{\texttt{DDttcc, DDttcs, DDttsc, DDttss} : volume-integrated Chebyshev-metrics}
+! > \subsubsection{\texttt{DDtzcc, DDtzcs, DDtzsc, DDtzss} : volume-integrated Chebyshev-metrics}
+! > \subsubsection{\texttt{DDzzcc, DDzzcs, DDzzsc, DDzzss} : volume-integrated Chebyshev-metrics}
 
 !> <ul>
 !> <li> These are allocated in \link{dforce}, defined in \link{ma00aa}, and are used in \link{matrix} to construct the matrices.
@@ -984,7 +980,6 @@ module allglobal
 
 !> \addtogroup grp_vecpot Vector potential and the Beltrami linear system
 !> @{
-!> \subsubsection{vector potential and the Beltrami linear system}
 
 !> <ul>
 !> <li> In each volume, the total degrees of freedom in the Beltrami linear system is \texttt{NAdof(1:Nvol)}.
@@ -1024,7 +1019,6 @@ module allglobal
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 !> \addtogroup grp_field_matrices Field matrices: dMA, dMB, dMC, dMD, dME, dMF
 !> @{
-!> \subsubsection{\texttt{dMA, dMB, dMC, dMD, dME, dMF} : field matrices}
 
 !> <ul>
 !> <li> The energy, $W \equiv \int \! dv {\; \bf B}\cdot{\bf B}$, and helicity, $K\equiv \int \! dv \; {\bf A}\cdot{\bf B}$, functionals may be written
@@ -1062,7 +1056,7 @@ module allglobal
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 !> \addtogroup grp_force_constr Construction of "force"
 !> @{
-!> \subsubsection{construction of ``force''}
+
 !> <ul>
 !> <li> The force vector is comprised of \texttt{Bomn} and \texttt{Iomn}.
 !> </ul>
@@ -1074,7 +1068,7 @@ module allglobal
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 !> \addtogroup grp_covar_field_ifaces Covariant field on interfaces: Btemn, Bzemn, Btomn, Bzomn
 !> @{
-!> \subsubsection{\texttt{Btemn, Bzemn, Btomn, Bzomn} : covariant field on interfaces}
+
 !> <ul>
 !> <li> The covariant field:
 !> </ul>
@@ -1085,7 +1079,7 @@ module allglobal
 
 !> \addtogroup grp_geomdof Geometrical degrees-of-freedom: LGdof, NGdof
 !> @{
-!> \subsubsection{\texttt{LGdof, NGdof} : geometrical degrees-of-freedom;}    
+
 !> <ul>
 !> <li> The geometrical degrees-of-freedom: 
 !> </ul>
@@ -1096,7 +1090,7 @@ module allglobal
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 !> \addtogroup grp_par_deriv_mat Parallel construction of derivative matrix
 !> @{
-!> \subsubsection{parallel construction of derivative matrix}
+
 
 !> <ul>
 !> <li> The derivatives of force-balance, $[[p+B^2/2]]$, and the spectral constraints (see \link{sw03aa}), with respect to the interface geometry
@@ -1113,7 +1107,7 @@ module allglobal
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 !> \addtogroup grp_deriv_mul_polflux Derivatives of multiplier and poloidal flux with respect to geometry:  dmupfdx
 !> @{
-!> \subsubsection{\texttt{dmupfdx} : derivatives of multiplier and poloidal flux with respect to geometry}
+
 
 !> <ul>
 !> <li> The information in \texttt{dmupfdx} describes how the helicity multiplier, $\mu$, and the enclosed poloidal flux, $\Delta \psi_p$, 
@@ -1176,7 +1170,7 @@ module allglobal
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 !> \addtogroup grp_trig Trigonometric factors
 !> @{
-!> \subsubsection{trigonometric factors}
+
 
 !> <ul>
 !> <li> To facilitate construction of the metric integrals, various trigonometric identities are exploited.
@@ -1202,7 +1196,7 @@ module allglobal
 
 !> \addtogroup grp_volints Volume integrals: lBBintegral, lABintegral
 !> @{
-!> \subsubsection{\texttt{lBBintegral, lABintegral} : volume integrals}
+
 !> <ul>
 
 !> <li> The energy functional, $F \equiv \sum_l F_l$, where
@@ -1313,13 +1307,8 @@ contains
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+!> \brief The master node reads the input namelist and sets various internal variables. The relevant quantities are then broadcast.
 subroutine readin
-
-!> \subsection{subroutine readin}
-
-!> <ul>
-!> <li> The master node reads the input namelist and sets various internal variables. The relevant quantities are then broadcast.
-!> </ul>
 
   use constants
 
