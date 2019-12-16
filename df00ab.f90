@@ -1,14 +1,16 @@
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!> \file df00ab.f90
+!! \brief Evaluates volume integrals, and their derivatives w.r.t. interface geometry, using "packed" format.
 
-!title ! Evaluates volume integrals, and their derivatives w.r.t. interface geometry, using &ldquo;packed&rdquo; format.
-
-!latex \briefly{briefly}
-!latex \calledby{\link{}}
-!latex \calls{\link{}}
-!latex \tableofcontents
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+!> \brief Evaluates volume integrals, and their derivatives w.r.t. interface geometry, using "packed" format.
+!!
+!! Evaluates volume integrals, and their derivatives w.r.t. interface geometry, using "packed" format.
+!! 
+!! @param[in] pNN
+!! @param[in] xi
+!! @param[out] Fxi
+!! @param[out] DFxi
+!! @param[in] Ldfjac
+!! @param[in] iflag
 subroutine df00ab( pNN , xi , Fxi , DFxi , Ldfjac , iflag )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -29,10 +31,10 @@ subroutine df00ab( pNN , xi , Fxi , DFxi , Ldfjac , iflag )
   
   LOCALS
   
-  INTEGER, intent(in) :: pNN, Ldfjac
-  INTEGER             :: iflag
-  REAL   , intent(in) :: xi(0:pNN-1)
-  REAL                :: Fxi(0:pNN-1), DFxi(0:Ldfjac-1,0:pNN-1)
+  INTEGER, intent(in)  :: pNN, Ldfjac
+  INTEGER, intent(in)  :: iflag
+  REAL   , intent(in)  :: xi(0:pNN-1)
+  REAL   , intent(out) :: Fxi(0:pNN-1), DFxi(0:Ldfjac-1,0:pNN-1)
   
   INTEGER             :: NN
   REAL                :: lmu ! , dpsi(1:2)

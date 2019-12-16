@@ -1,32 +1,38 @@
 !> \defgroup grp_input Input namelists and global variables
 
-! ! > \file global.f90
+!> \file global.f90
 !! \brief Defines input namelists and global variables, and opens some output files.
 !! \ingroup grp_input
+!! 
+!latex **input geometry**
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-!23456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789
-!        1         2         3         4         5         6         7         8         9        10        11        12        13        14        15        
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!latex \begin{enumerate}
+!latex \item The geometry of the $l$-th interface, for $l=0,N$ where $N\equiv$ \c Nvol}, is described by a set of Fourier harmonics,
+!latex using an arbitrary poloidal angle,
+!latex \be R_l(\t,\z)&=&\sum_{j}R_{j,l}\cos(m_j\t-n_j\z), \\ Z_l(\t,\z)&=&\sum_{j}Z_{j,l}\sin(m_j\t-n_j\z). \ee
+!latex \item These harmonics are read from the \texttt{ext.sp} file and come directly after the namelists described above.
+!latex The required format is as follows:
+!latex \be \begin{array}{ccccccccc}
+!latex m_1 & n_1 & R_{1,0} & Z_{1,0} & R_{1,1} & Z_{1,1} & \dots & R_{1,N} & Z_{1,N} \\
+!latex m_2 & n_2 & R_{2,0} & Z_{2,0} & R_{2,1} & Z_{2,1} & \dots & R_{2,N} & Z_{2,N} \\
+!latex \dots \\
+!latex m_j & n_j & R_{j,0} & Z_{j,0} & R_{j,1} & Z_{j,1} & \dots & R_{j,N} & Z_{j,N} \\
+!latex \dots
+!latex \end{array}
+!latex \ee
+!latex
+!latex \item The coordinate axis corresponds to $j=0$ and the outermost boundary corresponds to $j=$\c Nvol}.
+!latex \item An arbitrary selection of harmonics may be inluded in any order, but only those within the range specified by \c Mpol} and \c Ntor}
+!latex will be used.
+!latex \item The geometry of {\em all} the interfaces, i.e. $l=0,N$, including the degenerate `coordinate-axis' interface, must be given.
+!latex \end{enumerate}
 
-!title (input) ! Defines input namelists and global variables, and opens some output files.
-
-!latex \briefly{briefly}
-
-!latex \calledby{\link{}}
-!latex \calls{\link{}}
-
-!latex \tableofcontents
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 ! to set keyboard shortcut in emacs                                        
 
 ! (1) define macro         , e.g. \C-x \C-( . . . \C-x \C-)              
 ! (2) name macro           , e.g. Esc-x name-last-kbd-macro arbitraryname ! 11 Oct 12; 
 ! (3) set keyboard shortcut, e.g. Esc-x global-set-key F12 arbitraryname 
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 module constants
 
@@ -59,7 +65,7 @@ module constants
   REAL, parameter :: pi2        =   6.28318530717958623
   REAL, parameter :: pi         =   pi2 / two
   REAL, parameter :: mu0        =   2.0E-07 * pi2
-  REAL, parameter :: goldenmean =   1.618033988749895 ! golden mean = ( one + sqrt(five) ) / two ;
+  REAL, parameter :: goldenmean =   1.618033988749895 !< golden mean = \f$( 1 + \sqrt 5 ) / 2\f$ ;
 
   REAL, parameter :: version    =   2.00  
 
@@ -71,11 +77,11 @@ module numerical
 
   implicit none
 
-  REAL            :: machprec, vsmall, small, sqrtmachprec ! these are assigned below in readin via a call to NAG routine;
-  REAL, parameter :: logtolerance = 1.0e-32 ! this is used to avoid taking alog10(zero); see e.g. dforce; 
+  REAL            :: machprec, vsmall, small, sqrtmachprec !< these are assigned below in readin via a call to NAG routine;
+  REAL, parameter :: logtolerance = 1.0e-32 !< this is used to avoid taking alog10(zero); see e.g. dforce; 
 
 contains
-  REAL FUNCTION myprec() !Duplicates NAG routine X02AJF (machine precision) ! JAB; 27 Jul 17 ! I suggest that this be removed; SRH: 27 Feb 18;
+  REAL FUNCTION myprec() !< Duplicates NAG routine X02AJF (machine precision) ! JAB; 27 Jul 17 ! I suggest that this be removed; SRH: 27 Feb 18;
     implicit none
     intrinsic EPSILON
     myprec = 0.5*EPSILON(small)
@@ -88,26 +94,26 @@ module fileunits
 
   implicit none
 
-  INTEGER :: iunit = 10 ! input; used in global/readin:ext.sp, global/wrtend:ext.sp.end
-  INTEGER :: ounit =  6 ! screen output;
-  INTEGER :: gunit = 13 ! wall geometry; used in wa00aa
+  INTEGER :: iunit = 10 !< input; used in global/readin:ext.sp, global/wrtend:ext.sp.end
+  INTEGER :: ounit =  6 !< screen output;
+  INTEGER :: gunit = 13 !< wall geometry; used in wa00aa
 
-  INTEGER :: aunit = 11 ! vector potential; used in ra00aa:.ext.AtAzmn; 
-  INTEGER :: dunit = 12 ! derivative matrix; used in newton:.ext.GF; 
-  INTEGER :: hunit = 14 ! eigenvalues of Hessian; under re-construction; 
-  INTEGER :: munit = 14 ! matrix elements of Hessian; 
-  INTEGER :: lunit = 20 ! local unit; used in lunit+myid: pp00aa:.ext.poincare,.ext.transform; 
-  INTEGER :: vunit = 15 ! for examination of adaptive quadrature; used in casing:.ext.vcint; 
- !INTEGER :: funit = 16 ! force iterations;
+  INTEGER :: aunit = 11 !< vector potential; used in ra00aa:.ext.AtAzmn; 
+  INTEGER :: dunit = 12 !< derivative matrix; used in newton:.ext.GF; 
+  INTEGER :: hunit = 14 !< eigenvalues of Hessian; under re-construction; 
+  INTEGER :: munit = 14 !< matrix elements of Hessian; 
+  INTEGER :: lunit = 20 !< local unit; used in lunit+myid: pp00aa:.ext.poincare,.ext.transform; 
+  INTEGER :: vunit = 15 !< for examination of adaptive quadrature; used in casing:.ext.vcint; 
+ !INTEGER :: funit = 16 !< force iterations;
 
 end module fileunits
 
 module cputiming
 
-! CPUVARIABLE ! this is expanded by Makefile; do not remove;
+! CPUVARIABLE !< this is expanded by Makefile; do not remove;
 
   REAL :: Treadin = 0.0
-  REAL :: Twritin = 0.0 ! redundant; 
+  REAL :: Twritin = 0.0 !< redundant; 
   REAL :: Twrtend = 0.0
 
 end module cputiming
@@ -125,769 +131,669 @@ end module typedefns
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+!> \brief Input namelists
+!>
+!> Note that all variables in namelist need to be broadcasted in readin.
 module inputlist
-
-!latex \subsection{input namelists}
-
-!latex \begin{enumerate}
 
   implicit none
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  CHARACTER          :: ext*100 !< The input file is , \c ext.sp , where \c ext*100 or \c ext.sp*100 is given as command line input.
 
-!latex \item The input file, \verb+ext.sp+, where \verb+ext*100+ or \verb+ext.sp*100+ is given as command line input, contains the following namelists and interface geometry.
+  !SET MAXIMUM RESOLUTION;
+  INTEGER, parameter :: MNvol     = 256 !< The maximum value of \c Nvol is \c MNvol=256.
+  INTEGER, parameter :: MMpol     =  32 !< The maximum value of \c Mpol is \c MNpol=32 .
+  INTEGER, parameter :: MNtor     =  16 !< The maximum value of \c Ntor is \c MNtor=16 .
 
-!SET MAXIMUM RESOLUTION;
+!> \addtogroup grp_input_physicslist physicslist: Input namelist for physics-related quantities
+!>
+!> The namelist \c physicslist controls the geometry, profiles, and numerical resolution.
+!! @{
+  INTEGER      :: Igeometry                  =  3        !< selects Cartesian, cylindrical or toroidal geometry;
+                                                         !< <ul>
+                                                         !< <li> \c Igeometry=1 : Cartesian; geometry determined by \f$R\f$; </li>
+                                                         !< <li> \c Igeometry=2 : cylindrical; geometry determined by \f$R\f$; </li>
+                                                         !< <li> \c Igeometry=3 : toroidal; geometry determined by \f$R\f$ *and* \f$Z\f$; </li>
+                                                         !< </ul>
+  INTEGER      :: Istellsym                  =  1        !< stellarator symmetry is enforced if \c Istellsym==1
+  INTEGER      :: Lfreebound                 =  0        !< compute vacuum field surrounding plasma
+  REAL         :: phiedge                    =  1.0      !< total enclosed toroidal magnetic flux;
+  REAL         :: curtor                     =  0.0      !< total enclosed (toroidal) plasma current;
+  REAL         :: curpol                     =  0.0      !< total enclosed (poloidal) linking current;
+  REAL         :: gamma                      =  0.0      !< adiabatic index; cannot set \f$|\gamma| = 1\f$
+  INTEGER      :: Nfp                        =  1        !< field periodicity
+                                                         !< <ul>
+                                                         !< <li> all Fourier representations are of the form \f$\cos(m\theta-n N \zeta)\f$, \f$\sin(m\theta-n N \zeta)\f$, where \f$N\equiv\f$\c Nfp </li>
+                                                         !< <li> constraint: \c Nfp >= 1 </li>
+                                                         !< </ul>
+  INTEGER      :: Nvol                       =  1        !< number of volumes
+                                                         !< <ul>
+                                                         !< <li> each volume \f${\cal V}_l\f$ is bounded by the \f${\cal I}_{l-1}\f$ and \f${\cal I}_{l}\f$ interfaces </li>
+                                                         !< <li> note that in cylindrical or toroidal geometry, \f${\cal I}_{0}\f$ is the degenerate coordinate axis </li>
+                                                         !< <li> constraint: \c Nvol<=MNvol </li>
+                                                         !< </ul>
+  INTEGER      :: Mpol                       =  0        !< number of poloidal Fourier harmonics
+                                                         !< <ul>
+                                                         !< <li> all Fourier representations of doubly-periodic functions are of the form 
+                                                         !< \f{eqnarray}{ f(\theta,\zeta) & = & \sum_{n=0}^{\texttt{Ntor}} f_{0,n}\cos(-n \, \texttt{Nfp} \, \zeta) 
+                                                         !<                                   + \sum_{m=1}^{\texttt{Mpol}}\sum_{n=\texttt{-Ntor}}^{\texttt{Ntor}} f_{m,n}\cos(m\theta-n \, \texttt{Nfp} \, \zeta),
+                                                         !< \f}
+                                                         !< Internally these "double" summations are written as a "single" summation,
+                                                         !< e.g. \f$f(\theta,\zeta) = \sum_j f_j \cos(m_j\theta-n_j\zeta)\f$. </li>
+                                                         !< </ul>
+  INTEGER      :: Ntor                       =  0        !< number of toroidal Fourier harmonics
+                                                         !< <ul>
+                                                         !< <li> all Fourier representations of doubly-periodic functions are of the form 
+                                                         !< \f{eqnarray}{ f(\theta,\zeta) & = & \sum_{n=0}^{\texttt{Ntor}} f_{0,n}\cos(-n \, \texttt{Nfp} \, \zeta) 
+                                                         !<                                   + \sum_{m=1}^{\texttt{Mpol}}\sum_{n=\texttt{-Ntor}}^{\texttt{Ntor}} f_{m,n}\cos(m\theta-n \, \texttt{Nfp} \, \zeta),
+                                                         !< \f}
+                                                         !< Internally these "double" summations are written as a "single" summation,
+                                                         !< e.g. \f$f(\theta,\zeta) = \sum_j f_j \cos(m_j\theta-n_j\zeta)\f$. </li>
+                                                         !< </ul>
+  INTEGER      :: Lrad(1:MNvol+1)            =  4        !< Chebyshev resolution in each volume
+                                                         !< <ul>
+                                                         !< <li> constraint : \c Lrad(1:Mvol) >= 2 </li>
+                                                         !< </ul>
+  INTEGER      :: Lconstraint                = -1        !< selects constraints; primarily used in ma02aa() and mp00ac().
+                                                         !< <ul>
+                                                         !< <li> if \c Lconstraint==-1, then in the plasma regions \f$\Delta\psi_t\f$, \f$\mu\f$ and \f$\Delta \psi_p\f$ are *not* varied
+                                                         !<      and in the vacuum region (only for free-boundary) \f$\Delta\psi_t\f$ and \f$\Delta \psi_p\f$ are *not* varied, and \f$\mu = 0\f$. </li>
+                                                         !< <li> if \c Lconstraint==0, then in the plasma regions \f$\Delta\psi_t\f$, \f$\mu\f$ and \f$\Delta \psi_p\f$ are *not* varied
+                                                         !<      and in the vacuum region (only for free-boundary) \f$\Delta\psi_t\f$ and \f$\Delta \psi_p\f$ are varied to match the 
+                                                         !<      prescribed plasma current, \c curtor, and the "linking" current, \c curpol, and \f$\mu = 0\f$ </li>
+                                                         !< <li> if \c Lconstraint==1, then in the plasma regions \f$\mu\f$ and \f$\Delta\psi_p\f$ are adjusted
+                                                         !<      in order to satisfy the inner and outer interface transform constraints
+                                                         !<      (except in the simple torus, where the enclosed poloidal flux is irrelevant,
+                                                         !<      and only \f$\mu\f$ is varied to satisfy the outer interface transform constraint);
+                                                         !<      and in the vacuum region \f$\Delta\psi_t\f$ and \f$\Delta \psi_p\f$ are varied to match the transform constraint on the boundary
+                                                         !<      and to obtain the prescribed linking current, \c curpol, and \f$\mu = 0\f$. </li>
+                                                         !< <li> \todo if \c Lconstraint==2, under reconstruction. </li>
+                                                         !< 
+                                                         !< </ul>
+  REAL         ::     tflux(1:MNvol+1)       =  0.0      !< toroidal flux, \f$\psi_t\f$, enclosed by each interface
+                                                         !< <ul>
+                                                         !< <li> For each of the plasma volumes, this is a constraint: \c tflux is *not* varied </li>
+                                                         !< <li> For the vacuum region (only if \c Lfreebound==1), \c tflux  may be allowed to vary to match constraints </li>
+                                                         !< <li> Note that \c tflux  will be normalized so that \c tflux(Nvol) = 1.0,
+                                                         !<      so that \c tflux  is arbitrary up to a scale factor </li>
+                                                         !< <li> \sa phiedge </li>
+                                                         !< </ul>
+  REAL         ::     pflux(1:MNvol+1)       =  0.0      !< poloidal flux, \f$\psi_p\f$, enclosed by each interface
+  REAL         ::  helicity(1:MNvol)         =  0.0      !< helicity, \f${\cal K}\f$, in each volume, \f${\cal V}_i\f$
+                                                         !< <ul>
+                                                         !< <li> on exit, \c helicity  is set to the computed values of \f${\cal K} \equiv \int {\bf A}\cdot{\bf B}\;dv\f$ </li>
+                                                         !< </ul>
+  REAL         :: pscale                     =  0.0      !< pressure scale factor
+                                                         !< <ul>
+                                                         !< <li> the initial pressure profile is given by \c pscale  \f$*\f$ \c pressure </li>
+                                                         !< </ul>
+  REAL         ::  pressure(1:MNvol+1)       =  0.0      !< pressure in each volume
+                                                         !< <ul>
+                                                         !< <li> The pressure is *not* held constant, but \f$p_l V_l^\gamma = P_l\f$ *is* held constant,
+                                                         !<      where \f$P_l\f$ is determined by the initial pressures and the initial volumes, \f$V_l\f$. </li>
+                                                         !< <li> Note that if \c gamma==0.0, then \f$p_l \equiv P_l\f$. </li>
+                                                         !< <li> On output, the pressure is given by \f$p_l = P_l/V_l^\gamma\f$, where \f$V_l\f$ is the final volume. </li>
+                                                         !< <li> \c pressure is only used in calculation of interface force-balance. </li>
+                                                         !< </ul>
+  INTEGER      :: Ladiabatic                 =  0        !< logical flag
+                                                         !< <ul>
+                                                         !< <li> If \c Ladiabatic==0, the adiabatic constants are determined by the initial pressure and volume. </li>
+                                                         !< <li> If \c Ladiabatic==1, the adiabatic constants are determined by the given input \c adiabatic. </li>
+                                                         !< </ul>
+  REAL         :: adiabatic(1:MNvol+1)       =  0.0      !< adiabatic constants in each volume
+                                                         !< <ul>
+                                                         !< <li> The pressure is *not* held constant, but \f$p_l V_l^\gamma = P_l \equiv\f$\c adiabatic is constant. </li>
+                                                         !< <li> Note that if \c gamma==0.0, then \c pressure==adiabatic. </li>
+                                                         !< <li> \c pressure is only used in calculation of interface force-balance. </li>
+                                                         !< </ul>
+  REAL         ::        mu(1:MNvol+1)       =  0.0      !< helicity-multiplier, \f$\mu\f$, in each volume
+  INTEGER      ::        pl(0:MNvol)         =  0        !< "inside" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,
+                                                         !< where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2 \f$.
+                                                         !<
+                                                         !< If both \f$q_l = 0\f$ *and* \f$q_r = 0\f$, then the (inside) interface rotational-transform is defined by \c iota .
+  INTEGER      ::        ql(0:MNvol)         =  0        !< "inside" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,
+                                                         !< where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2 \f$.
+                                                         !<
+                                                         !< If both \f$q_l = 0\f$ *and* \f$q_r = 0\f$, then the (inside) interface rotational-transform is defined by \c iota .
+  INTEGER      ::        pr(0:MNvol)         =  0        !< "inside" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,
+                                                         !< where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2 \f$.
+                                                         !<
+                                                         !< If both \f$q_l = 0\f$ *and* \f$q_r = 0\f$, then the (inside) interface rotational-transform is defined by \c iota .
+  INTEGER      ::        qr(0:MNvol)         =  0        !< "inside" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,
+                                                         !< where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2 \f$.
+                                                         !<
+                                                         !< If both \f$q_l = 0\f$ *and* \f$q_r = 0\f$, then the (inside) interface rotational-transform is defined by \c iota .
+  REAL         ::      iota(0:MNvol)         =  0.0      !< rotational-transform, \f$\mbox{$\,\iota\!\!$-}\f$, on inner side of each interface
+                                                         !< <ul>
+                                                         !< <li> only relevant if illogical input for \c ql and \c qr are provided </li>
+                                                         !< </ul>
+  INTEGER      ::        lp(0:MNvol)         =  0        !< "outer" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,
+                                                         !<  where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2\f$.
+                                                         !<
+                                                         !< If both \f$q_l = 0\f$ *and* \f$q_r = 0\f$, then the (outer) interface rotational-transform is defined by \c oita .
+  INTEGER      ::        lq(0:MNvol)         =  0        !< "outer" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,
+                                                         !<  where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2\f$.
+                                                         !<
+                                                         !< If both \f$q_l = 0\f$ *and* \f$q_r = 0\f$, then the (outer) interface rotational-transform is defined by \c oita .
+  INTEGER      ::        rp(0:MNvol)         =  0        !< "outer" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,
+                                                         !<  where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2\f$.
+                                                         !<
+                                                         !< If both \f$q_l = 0\f$ *and* \f$q_r = 0\f$, then the (outer) interface rotational-transform is defined by \c oita .
+  INTEGER      ::        rq(0:MNvol)         =  0        !< "outer" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,
+                                                         !<  where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2\f$.
+                                                         !<
+                                                         !< If both \f$q_l = 0\f$ *and* \f$q_r = 0\f$, then the (outer) interface rotational-transform is defined by \c oita .
+  REAL         ::      oita(0:MNvol)         =  0.0      !< rotational-transform, \f$\mbox{$\,\iota\!\!$-}\f$, on outer side of each interface
+                                                         !< <ul>
+                                                         !< <li> only relevant if illogical input for \c ql and \c qr are provided </li>
+                                                         !< </ul>
+  REAL         :: mupftol                    =  1.0e-16  !< accuracy to which \f$\mu\f$ and \f$\Delta\psi_p\f$ are required
+                                                         !< <ul>
+                                                         !< <li> only relevant if constraints on transform, enclosed currents etc. are to be satisfied iteratively, see \c Lconstraint </li>
+                                                         !< </ul>
+  INTEGER      :: mupfits                    =  8        !< an upper limit on the transform/helicity constraint iterations;
+                                                         !< <ul>
+                                                         !< <li> only relevant if constraints on transform, enclosed currents etc. are to be satisfied iteratively, see \c Lconstraint </li>
+                                                         !< <li> constraint: \c mupfits > 0 </li>
+                                                         !< </ul>
+  REAL         :: rpol                       =  1.0      !< poloidal extent of slab (effective radius)
+                                                         !< <ul>
+                                                         !< <li> only relevant if \c Igeometry==1 </li>
+                                                         !< <li> poloidal size is \f$L = 2\pi*\f$\c rpol </li>
+                                                         !< </ul>
+  REAL         :: rtor                       =  1.0      !< toroidal extent of slab (effective radius)
+                                                         !< <ul>
+                                                         !< <li> only relevant if \c Igeometry==1 </li>
+                                                         !< <li> toroidal size is \f$L = 2\pi*\f$\c rtor </li>
+                                                         !< </ul>
 
-  CHARACTER          :: ext*100
+  REAL         :: Rac(     0:MNtor        )  =  0.0      !<     stellarator symmetric coordinate axis; 
+  REAL         :: Zas(     0:MNtor        )  =  0.0      !<     stellarator symmetric coordinate axis; 
+  REAL         :: Ras(     0:MNtor        )  =  0.0      !< non-stellarator symmetric coordinate axis; 
+  REAL         :: Zac(     0:MNtor        )  =  0.0      !< non-stellarator symmetric coordinate axis; 
 
-  INTEGER, parameter :: MNvol     = 256 !latex \item The maximum value of \inputvar{Nvol} is \verb+MNvol=256+.
-  INTEGER, parameter :: MMpol     =  32 !latex \item The maximum value of \inputvar{Mpol} is \verb+MNpol= 32+.
-  INTEGER, parameter :: MNtor     =  16 !latex \item The maximum value of \inputvar{Ntor} is \verb+MNtor= 16+.
+  REAL         :: Rbc(-MNtor:MNtor,-MMpol:MMpol)  =  0.0 !<     stellarator symmetric boundary components;
+  REAL         :: Zbs(-MNtor:MNtor,-MMpol:MMpol)  =  0.0 !<     stellarator symmetric boundary components;
+  REAL         :: Rbs(-MNtor:MNtor,-MMpol:MMpol)  =  0.0 !< non-stellarator symmetric boundary components;
+  REAL         :: Zbc(-MNtor:MNtor,-MMpol:MMpol)  =  0.0 !< non-stellarator symmetric boundary components;
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  REAL         :: Rwc(-MNtor:MNtor,-MMpol:MMpol)  =  0.0 !<     stellarator symmetric boundary components of wall;
+  REAL         :: Zws(-MNtor:MNtor,-MMpol:MMpol)  =  0.0 !<     stellarator symmetric boundary components of wall;
+  REAL         :: Rws(-MNtor:MNtor,-MMpol:MMpol)  =  0.0 !< non-stellarator symmetric boundary components of wall;
+  REAL         :: Zwc(-MNtor:MNtor,-MMpol:MMpol)  =  0.0 !< non-stellarator symmetric boundary components of wall;
 
-! the following variables constitute the namelist/physicslist/; note that all variables in namelist need to be broadcasted in readin;
+  REAL         :: Vns(-MNtor:MNtor,-MMpol:MMpol)  =  0.0 !<     stellarator symmetric normal field at boundary; vacuum component;
+  REAL         :: Bns(-MNtor:MNtor,-MMpol:MMpol)  =  0.0 !<     stellarator symmetric normal field at boundary; plasma component;
+  REAL         :: Vnc(-MNtor:MNtor,-MMpol:MMpol)  =  0.0 !< non-stellarator symmetric normal field at boundary; vacuum component;
+  REAL         :: Bnc(-MNtor:MNtor,-MMpol:MMpol)  =  0.0 !< non-stellarator symmetric normal field at boundary; plasma component;
+!> @}
 
-  INTEGER      :: Igeometry                  =  3
-  INTEGER      :: Istellsym                  =  1
-  INTEGER      :: Lfreebound                 =  0
-  REAL         :: phiedge                    =  1.0
-  REAL         :: curtor                     =  0.0
-  REAL         :: curpol                     =  0.0
-  REAL         :: gamma                      =  0.0
-  INTEGER      :: Nfp                        =  1
-  INTEGER      :: Nvol                       =  1
-  INTEGER      :: Mpol                       =  0
-  INTEGER      :: Ntor                       =  0
-  INTEGER      :: Lrad(1:MNvol+1)            =  4
-  INTEGER      :: Lconstraint                = -1
-  REAL         ::     tflux(1:MNvol+1)       =  0.0
-  REAL         ::     pflux(1:MNvol+1)       =  0.0
-  REAL         ::  helicity(1:MNvol)         =  0.0
-  REAL         :: pscale                     =  0.0
-  REAL         ::  pressure(1:MNvol+1)       =  0.0
-  INTEGER      :: Ladiabatic                 =  0
-  REAL         :: adiabatic(1:MNvol+1)       =  0.0
-  REAL         ::        mu(1:MNvol+1)       =  0.0
-  INTEGER      ::        pl(0:MNvol)         =  0
-  INTEGER      ::        ql(0:MNvol)         =  0
-  INTEGER      ::        pr(0:MNvol)         =  0
-  INTEGER      ::        qr(0:MNvol)         =  0
-  REAL         ::      iota(0:MNvol)         =  0.0
-  INTEGER      ::        lp(0:MNvol)         =  0
-  INTEGER      ::        lq(0:MNvol)         =  0
-  INTEGER      ::        rp(0:MNvol)         =  0
-  INTEGER      ::        rq(0:MNvol)         =  0
-  REAL         ::      oita(0:MNvol)         =  0.0
-  REAL         :: rpol                       =  1.0
-  REAL         :: rtor                       =  1.0
+!> \addtogroup grp_input_numerics numericlist: Input namelist for numerics-related quantities
+!>
+!> The namelist \c numericlist controls internal resolution parameters that the user rarely needs to consider.
+!! @{
+  INTEGER      :: Linitialize =  0   !< Used to initialize geometry using a regularization / extrapolation method
+                                     !< <ul>
+                                     !< <li> if \c Linitialize = \f$-I\f$ , where \f$I\f$ is a positive integer, 
+                                     !<      the geometry of the \f$i=1,N_V-I\f$ surfaces constructed by an extrapolation </li>
+                                     !< <li> if \c Linitialize = 0, the geometry of the interior surfaces is provided after the namelists in the input file </li>
+                                     !< <li> if \c Linitialize = 1, the interior surfaces will be intialized as \f$R_{l,m,n} = R_{N,m,n} \psi_{t,l}^{m/2}\f$,
+                                     !<      where \f$R_{N,m,n}\f$ is the plasma boundary and \f$\psi_{t,l}\f$ is the given toroidal flux enclosed by the
+                                     !<      \f$l\f$-th interface, normalized to the total enclosed toroidal flux;
+                                     !<      a similar extrapolation is used for \f$Z_{l,m,n}\f$ </li>
+                                     !< <li> Note that the Fourier harmonics of the boundary is *always* given by the \c Rbc and \c Zbs
+                                     !<      given in \c physicslist. </li>
+                                     !< <li> if \c Linitialize = 2, the interior surfaces *and the plasma boundary* will be intialized 
+                                     !<       as \f$R_{l,m,n} = R_{W,m,n} \psi_{t,l}^{m/2}\f$, where \f$R_{W,m,n}\f$ is the computational boundary
+                                     !<       and \f$\psi_{t,l}\f$ is the given toroidal flux enclosed by the \f$l\f$-th interface, normalized to the total enclosed toroidal flux;
+                                     !<       a similar extrapolation is used for \f$Z_{l,m,n}\f$ </li>
+                                     !< <li> Note that, for free-boundary calculations, the Fourier harmonics of the computational boundary 
+                                     !<      are *always* given by the \c Rwc and \c Zws given in \c physicslist. </li>
+                                     !< <li> if \c Linitialize = 1, 2, it is not required to provide the geometry of the interfaces after the namelists </li>
+                                     !< </ul>
+  INTEGER      :: LautoinitBn =  1   !< Used to initialize \f$B_{ns}\f$ using an initial fixed-boundary calculation
+                                     !< <ul>
+                                     !< <li> only relevant if \c Lfreebound = 1 </li>
+                                     !< <li> user-supplied \c Bns will only be considered if \c LautoinitBn = 0 </li>
+                                     !< </ul>
+  INTEGER      :: Lzerovac    =  0   !< Used to adjust vacuum field to cancel plasma field on computational boundary
+                                     !< <ul>
+                                     !< <li> only relevant if \c Lfreebound = 1 </li>
+                                     !< </ul>
+  INTEGER      :: Ndiscrete   =  2   !< resolution of the real space grid on which fast Fourier transforms are performed is given by \c Ndiscrete*Mpol*4
+                                     !< <ul>
+                                     !< <li> constraint \c Ndiscrete>0 </li>
+                                     !< </ul>
+  INTEGER      :: Nquad       = -1   !< Resolution of the Gaussian quadrature
+                                     !< <ul>
+                                     !< <li> The resolution of the Gaussian quadrature, \f$\displaystyle \int \!\! f(s) ds = \sum_k \omega_k f(s_k)\f$,
+                                     !<      in each volume is given by \c Iquad\f$_v\f$,  </li>
+                                     !< <li> \c Iquad\f$_v\f$ is set in preset() </li>
+                                     !< </ul>
+  INTEGER      :: iMpol       = -4   !< Fourier resolution of straight-fieldline angle on interfaces
+                                     !< <ul>
+                                     !< <li> the rotational-transform on the interfaces is determined by a transformation to the straight-fieldline angle,
+                                     !<      with poloidal resolution given by \c iMpol </li>
+                                     !< <li> if \c iMpol<=0, then \c iMpol = Mpol - iMpol </li>
+                                     !< </ul>
+  INTEGER      :: iNtor       = -4   !< Fourier resolution of straight-fieldline angle on interfaces;
+                                     !< <ul>
+                                     !< <li> the rotational-transform on the interfaces is determined by a transformation to the straight-fieldline angle,
+                                     !<      with toroidal resolution given by \c iNtor </li>
+                                     !< <li> if \c iNtor<=0 then \c iNtor = Ntor - iNtor </li>
+                                     !< <li> if \c Ntor==0, then the toroidal resolution of the angle transformation is set \c lNtor = 0 </li>
+                                     !< </ul>
+  INTEGER      :: Lsparse     =  0   !< controls method used to solve for rotational-transform on interfaces
+                                     !< <ul>
+                                     !< <li> if \c Lsparse = 0, the transformation to the straight-fieldline angle is computed in Fourier space
+                                     !<      using a dense matrix solver,  \c F04AAF </li>
+                                     !< <li> if \c Lsparse = 1, the transformation to the straight-fieldline angle is computed in real space
+                                     !<      using a dense matrix solver,  \c F04ATF </li>
+                                     !< <li> if \c Lsparse = 2, the transformation to the straight-fieldline angle is computed in real space
+                                     !<      using a sparse matrix solver, \c F11DEF </li>
+                                     !< <li> if \c Lsparse = 3, the different methods for constructing the straight-fieldline angle are compared </li>
+                                     !< </ul>
+  INTEGER      :: Lsvdiota    =  0   !< controls method used to solve for rotational-transform on interfaces;
+                                     !< only relevant if \c Lsparse = 0
+                                     !< <ul>
+                                     !< <li> if \c Lsvdiota = 0, use standard linear solver to construct straight fieldline angle transformation </li>
+                                     !< <li> if \c Lsvdiota = 1, use SVD method to compute rotational-transform </li>
+                                     !< </ul>
+  INTEGER      :: imethod     =  3   !< controls iterative solution to sparse matrix
+                                     !< arising in real-space transformation to the straight-fieldline angle;
+                                     !< only relevant if \c Lsparse.eq.2; \see tr00ab.f90 for details
+                                     !< <ul>
+                                     !< <li> if \c imethod = 1, the method is \c RGMRES   </li>
+                                     !< <li> if \c imethod = 2, the method is \c CGS      </li>
+                                     !< <li> if \c imethod = 3, the method is \c BICGSTAB </li>
+                                     !< </ul>
+  INTEGER      :: iorder      =  2   !< controls real-space grid resolution for constructing the straight-fieldline angle;
+                                     !< only relevant if \c Lsparse>0
+                                     !< 
+                                     !< determines order of finite-difference approximation to the derivatives
+                                     !< <ul>
+                                     !< <li> if \c iorder = 2,  </li>
+                                     !< <li> if \c iorder = 4,  </li>
+                                     !< <li> if \c iorder = 6,  </li>
+                                     !< </ul>
+  INTEGER      :: iprecon     =  0   !< controls iterative solution to sparse matrix arising in real-space transformation
+                                     !< to the straight-fieldline angle;
+                                     !< only relevant if \c Lsparse.eq.2; \see tr00ab.f90 for details
+                                     !< <ul>
+                                     !< <li> if \c iprecon = 0, the preconditioner is `N' </li>
+                                     !< <li> if \c iprecon = 1, the preconditioner is `J' </li>
+                                     !< <li> if \c iprecon = 2, the preconditioner is `S' </li>
+                                     !< </ul>
+  REAL         :: iotatol     = -1.0 !< tolerance required for iterative construction of straight-fieldline angle;
+                                     !< only relevant if \c Lsparse.ge.2
+  INTEGER      :: Lextrap     =  0   !< geometry of innermost interface is defined by extrapolation
+  INTEGER      :: Mregular    = -1   !< maximum regularization factor
+                                     !< <ul>
+                                     !< <li> if \c Mregular.ge.2, then \c regumm \f$_i\f$ = \c Mregular \f$/ 2 \f$ where \c m \f$_i > \f$ \c Mregular </li>
+                                     !< </ul>
+!> @}
 
-  REAL         :: Rac(     0:MNtor        )  =  0.0 !     stellarator symmetric coordinate axis; 
-  REAL         :: Zas(     0:MNtor        )  =  0.0
-  REAL         :: Ras(     0:MNtor        )  =  0.0 ! non-stellarator symmetric coordinate axis; 
-  REAL         :: Zac(     0:MNtor        )  =  0.0
-
-  REAL         :: Rbc(-MNtor:MNtor,-MMpol:MMpol)  =  0.0 !     stellarator symmetric boundary components;
-  REAL         :: Zbs(-MNtor:MNtor,-MMpol:MMpol)  =  0.0 !     stellarator symmetric boundary components;
-  REAL         :: Rbs(-MNtor:MNtor,-MMpol:MMpol)  =  0.0 ! non-stellarator symmetric boundary components;
-  REAL         :: Zbc(-MNtor:MNtor,-MMpol:MMpol)  =  0.0 ! non-stellarator symmetric boundary components;
-
-  REAL         :: Rwc(-MNtor:MNtor,-MMpol:MMpol)  =  0.0 !     stellarator symmetric boundary components of wall;
-  REAL         :: Zws(-MNtor:MNtor,-MMpol:MMpol)  =  0.0 !     stellarator symmetric boundary components of wall;
-  REAL         :: Rws(-MNtor:MNtor,-MMpol:MMpol)  =  0.0 ! non-stellarator symmetric boundary components of wall;
-  REAL         :: Zwc(-MNtor:MNtor,-MMpol:MMpol)  =  0.0 ! non-stellarator symmetric boundary components of wall;
-
-  REAL         :: Vns(-MNtor:MNtor,-MMpol:MMpol)  =  0.0 !     stellarator symmetric normal field at boundary; vacuum component;
-  REAL         :: Bns(-MNtor:MNtor,-MMpol:MMpol)  =  0.0 !     stellarator symmetric normal field at boundary; plasma component;
-  REAL         :: Vnc(-MNtor:MNtor,-MMpol:MMpol)  =  0.0 ! non-stellarator symmetric normal field at boundary; vacuum component;
-  REAL         :: Bnc(-MNtor:MNtor,-MMpol:MMpol)  =  0.0 ! non-stellarator symmetric normal field at boundary; plasma component;
-
-  REAL         :: mupftol                    =  1.0e-16
-  INTEGER      :: mupfits                    =  8
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-! the following variables constitute the namelist/numericlist/; note that all variables in namelist need to be broadcasted in readin;
-
-  INTEGER      :: Linitialize =  0 
-  INTEGER      :: LautoinitBn =  1 
-  INTEGER      :: Lzerovac    =  0 
-  INTEGER      :: Ndiscrete   =  2
-  INTEGER      :: Nquad       = -1
-  INTEGER      :: iMpol       = -4
-  INTEGER      :: iNtor       = -4
-  INTEGER      :: Lsparse     =  0
-  INTEGER      :: Lsvdiota    =  0
-  INTEGER      :: imethod     =  3
-  INTEGER      :: iorder      =  2
-  INTEGER      :: iprecon     =  0
-  REAL         :: iotatol     = -1.0
-  INTEGER      :: Lextrap     =  0
-  INTEGER      :: Mregular    = -1
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-! the following variables constitute the namelist/locallist/; note that all variables in namelist need to be broadcasted in readin;
-
-  INTEGER      :: LBeltrami  =  4
-  INTEGER      :: Linitgues  =  1
-  INTEGER      :: Lposdef    =  0 ! redundant;
-  REAL         :: maxrndgues =  1.0
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-! the following variables constitute the namelist/globallist/; note that all variables in namelist need to be broadcasted in readin;
-
-  INTEGER      :: Lfindzero  =   0
-  REAL         :: escale     =   0.0
-  REAL         :: opsilon    =   1.0
-  REAL         :: pcondense  =   2.0
-  REAL         :: epsilon    =   0.0
-  REAL         :: wpoloidal  =   1.0
-  REAL         :: upsilon    =   1.0
-  REAL         :: forcetol   =   1.0e-10
-  REAL         :: c05xmax    =   1.0e-06
-  REAL         :: c05xtol    =   1.0e-12
-  REAL         :: c05factor  =   1.0e-02
-  LOGICAL      :: LreadGF    =  .true.
-  INTEGER      :: mfreeits   =   0
-  REAL         :: bnstol     =   1.0e-06 ! redundant; 
-  REAL         :: bnsblend   =   0.666   ! redundant; 
-  REAL         :: gBntol     =   1.0e-06
-  REAL         :: gBnbld     =   0.666
-  REAL         :: vcasingeps =   1.e-12
-  REAL         :: vcasingtol =   1.e-08 !< tolerance for virtual casing
-  INTEGER      :: vcasingits =   8
-  INTEGER      :: vcasingper =   1
-  INTEGER      :: mcasingcal =   8 ! redundant; 
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-! the following variables constitute the namelist/diagnosticslist/; note that all variables in namelist need to be broadcasted in readin;
-
-  REAL         :: odetol           =     1.0e-07
-  REAL         :: absreq           =     1.0e-08 ! redundant; 
-  REAL         :: relreq           =     1.0e-08 ! redundant; 
-  REAL         :: absacc           =     1.0e-04 ! redundant; 
-  REAL         :: epsr             =     1.0e-08 ! redundant; 
-  INTEGER      :: nPpts            =     0
-  INTEGER      :: nPtrj(1:MNvol+1) =    -1
-  LOGICAL      :: LHevalues        =  .false.
-  LOGICAL      :: LHevectors       =  .false.
-  LOGICAL      :: LHmatrix         =  .false.
-  INTEGER      :: Lperturbed       =     0   
-  INTEGER      :: dpp              =    -1
-  INTEGER      :: dqq              =    -1
-  INTEGER      :: Lcheck           =     0
-  LOGICAL      :: Ltiming          =  .false.
-  REAL         :: fudge            =     1.0e-00 ! redundant; 
-  REAL         :: scaling          =     1.0e-00 ! redundant; 
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-! the following variables constitute the namelist/screenlist/; note that all variables in namelist need to be broadcasted in readin;
+!> \addtogroup grp_input_local locallist: Input namelist for local force balance-related quantities
+!> 
+!> The namelist \c locallist controls the construction of the Beltrami fields in each volume.
+!> 
+!> The transformation to straight-fieldline coordinates is singular when the rotational-transform of the interfaces is rational;
+!> however, the rotational-transform is still well defined.
+!! @{
+  INTEGER      :: LBeltrami  =  4   !< Control flag for solution of Beltrami equation
+                                    !< <ul>
+                                    !< <li> if \c LBeltrami = 1,3,5 or 7, (SQP) then the Beltrami field in each volume is constructed
+                                    !<      by minimizing the magnetic energy with the constraint of fixed helicity; 
+                                    !<      this is achieved by using sequential quadratic programming as provided by \c E04UFF .
+                                    !<      This approach has the benefit (in theory) of robustly constructing minimum energy solutions
+                                    !<      when multiple, i.e. bifurcated, solutions exist.
+                                    !< <li> if \c LBeltrami = 2,3,6 or 7, (Newton) then the Beltrami fields are constructed by employing a standard Newton method
+                                    !<      for locating an extremum of
+                                    !<      \f$F\equiv \int B^2 dv - \mu (\int {\bf A}\cdot{\bf B}dv-{\cal K})\f$,
+                                    !<      where \f$\mu\f$ is treated as an independent degree of freedom similar to the parameters describing the vector potential
+                                    !<      and \f${\cal K}\f$ is the required value of the helicity; 
+                                    !<      this is the standard Lagrange multipler approach for locating the constrained minimum; 
+                                    !<      this method cannot distinguish saddle-type extrema from minima, and which solution that will be obtained depends on the initial guess;
+                                    !< <li> if \c LBeltrami = 4,5,6 or 7, (linear) it is assumed that the Beltrami fields are parameterized by \f$\mu\f$;
+                                    !<      in this case, it is only required to solve \f$\nabla \times {\bf B} = \mu {\bf B}\f$ which reduces to a system of linear equations;
+                                    !<      \f$\mu\f$ may or may not be adjusted iteratively, depending on \c Lconstraint,
+                                    !<      to satisfy either rotational-transform or helicity constraints;
+                                    !< <li> for flexibility and comparison, each of the above methods can be employed; for example:
+                                    !<      <ul>
+                                    !<      <li> if \c LBeltrami = 1, only the SQP    method will be employed;
+                                    !<      <li> if \c LBeltrami = 2, only the Newton method will be employed;
+                                    !<      <li> if \c LBeltrami = 4, only the linear method will be employed; 
+                                    !<      <li> if \c LBeltrami = 3, the SQP and the Newton method are used;
+                                    !<      <li> if \c LBeltrami = 5, the SQP and the linear method are used;
+                                    !<      <li> if \c LBeltrami = 6, the Newton and the linear method are used;
+                                    !<      <li> if \c LBeltrami = 7, all three methods will be employed;
+                                    !<      </ul>
+                                    !< </ul>
+  INTEGER      :: Linitgues  =  1   !< controls how initial guess for Beltrami field is constructed
+                                    !< <ul>
+                                    !< <li> only relevant for routines that require an initial guess for the Beltrami fields, such as the SQP and Newton methods,
+                                    !<      or the sparse linear solver;
+                                    !< <li> if \c Linitgues = 0, the initial guess for the Beltrami field is trivial
+                                    !< <li> if \c Linitgues = 1, the initial guess for the Beltrami field is an integrable approximation
+                                    !< <li> if \c Linitgues = 2, the initial guess for the Beltrami field is read from file
+                                    !< <li> if \c Linitgues = 3, the initial guess for the Beltrami field will be randomized with the maximum \c maxrndgues
+                                    !< </ul>
+  INTEGER      :: Lposdef    =  0   !< redundant;
+  REAL         :: maxrndgues =  1.0 !< the maximum random number of the Beltrami field if \c Linitgues = 3
+!> @}
   
-! DSCREENLIST ! define screenlist; this is expanded by Makefile; DO NOT REMOVE; each file compiled by Makefile has its own write flag;
-  LOGICAL      :: Wreadin = .false.
-  LOGICAL      :: Wwritin = .false. ! redundant; 
+!> \addtogroup grp_input_global globallist: Input namelist for global force balance-related quantites
+!> 
+!> The namelist \c globallist controls the search for global force-balance.
+!> 
+!> Comments:
+!! <ul>
+!! <li> The "force" vector, \f${\bf F}\f$, which is constructed in dforce(), is a combination of pressure-imbalance Fourier harmonics, 
+!!       \f{eqnarray}{ F_{i,v} \equiv [[ p+B^2/2 ]]_{i,v} \times \exp\left[-\texttt{escale}(m_i^2+n_i^2) \right] \times \texttt{opsilon},
+!!       \label{eq:forcebalancemn} \f}
+!!       and spectral-condensation constraints, \f$I_{i,v}\f$, and the "star-like" angle constraints, \f$S_{i,v,}\f$, (see lforce.f90 for details)
+!!       \f{eqnarray}{ F_{i,v} \equiv \texttt{epsilon} \times I_{i,v} 
+!!           + \texttt{upsilon} \times \left( \psi_v^\omega S_{i,v,1} - \psi_{v+1}^\omega S_{i,v+1,0} \right),
+!!       \label{eq:spectralbalancemn} \f}
+!!       where \f$\psi_v\equiv\f$ normalized toroidal flux, \c tflux, and \f$\omega\equiv\f$ \c wpoloidal. </li>
+!! </ul>
+!! @{
+  INTEGER      :: Lfindzero  =   0   !< use Newton methods to find zero of force-balance, which is computed by dforce()
+                                     !< <ul>
+                                     !< <li> if \c Lfindzero = 0, then dforce() is called once 
+                                     !<      to compute the Beltrami fields consistent with the given geometry and constraints </li>
+                                     !< <li> if \c Lfindzero = 1, then call \c C05NDF (uses   function values only), which iteratively calls dforce() </li>
+                                     !< <li> if \c Lfindzero = 2, then call \c C05PDF (uses derivative information), which iteratively calls dforce() </li>
+                                     !< </ul>
+  REAL         :: escale     =   0.0 !< controls the weight factor, \c BBweight, in the force-imbalance harmonics
+                                     !< <ul>
+                                     !< <li> \c BBweight(i) \f$\displaystyle \equiv \texttt{opsilon} \times \exp\left[-\texttt{escale} \times (m_i^2+n_i^2) \right]\f$ </li>
+                                     !< <li> defined in preset.f90; used in dforce() </li>
+                                     !< <li> also see Eqn.\f$\,\eqref{eq:forcebalancemn}\f$ </li>
+                                     !< </ul> 
+  REAL         :: opsilon    =   1.0 !< weighting of force-imbalance
+                                     !< <ul>
+                                     !< <li> used in dforce(); also see Eqn.\f$\,\eqref{eq:forcebalancemn}\f$ </li>
+                                     !< </ul>
+  REAL         :: pcondense  =   2.0 !< spectral condensation parameter
+                                     !< <ul>
+                                     !< <li> used in preset() to define \c mmpp(i) \f$\equiv m_i^p\f$, where \f$p\equiv \f$ \c pcondense </li>
+                                     !< <li> the angle freedom is exploited to minimize \f$\displaystyle \texttt{epsilon} \sum_{i} m_i^p (R_{i}^2+Z_{i}^2)\f$
+                                     !<      with respect to tangential variations in the interface geometry </li>
+                                     !< <li> also see Eqn.\f$\,\eqref{eq:spectralbalancemn}\f$ </li>
+                                     !< </ul>
+  REAL         :: epsilon    =   0.0 !< weighting of spectral-width constraint
+                                     !< <ul>
+                                     !< <li> used in dforce(); also see Eqn.\f$\,\eqref{eq:spectralbalancemn}\f$ </li>
+                                     !< </ul>
+  REAL         :: wpoloidal  =   1.0 !< "star-like" poloidal angle constraint radial exponential factor
+                                     !< used in preset() to construct \c sweight
+  REAL         :: upsilon    =   1.0 !< weighting of "star-like" poloidal angle constraint
+                                     !< used in preset() to construct \c sweight
+  REAL         :: forcetol   =   1.0e-10 !< required tolerance in force-balance error; only used as an initial check
+                                     !< <ul>
+                                     !< <li> if the initially supplied interfaces are consistent with force-balance to within \c forcetol
+                                     !<      then the geometry of the interfaces is not altered </li>
+                                     !< <li> if not, then the geometry of the interfaces is changed in order to bring the configuration into force balance
+                                     !<      so that the geometry of interfaces is within \c c05xtol, defined below, of the true solution </li>
+                                     !< <li> to force execution of either \c C05NDF or \c C05PDF, regardless of the initial force imbalance, 
+                                     !<      set \c forcetol < 0 </li>
+                                     !< </ul>
+  REAL         :: c05xmax    =   1.0e-06 !< required tolerance in position, \f${\bf x} \equiv \{ R_{i,v}, Z_{i,v}\}\f$
+  REAL         :: c05xtol    =   1.0e-12 !< required tolerance in position, \f${\bf x} \equiv \{ R_{i,v}, Z_{i,v}\}\f$
+                                     !< <ul>
+                                     !< <li> used by both \c C05NDF and \c C05PDF; see the NAG documents for further details on how the error is defined </li>
+                                     !< <li> constraint \c c05xtol > 0.0 </li>
+                                     !< </ul>
+  REAL         :: c05factor  =   1.0e-02 !< used to control initial step size in
+                                     !<       \c C05NDF and \c C05PDF
+                                     !< <ul>
+                                     !< <li> constraint \c c05factor > 0.0 </li>
+                                     !< <li> only relevant if \c Lfindzero > 0 </li>
+                                     !< </ul>
+  LOGICAL      :: LreadGF    =  .true. !< read \f$\nabla_{\bf x} {\bf F}\f$ from file \c ext.GF 
+                                     !< <ul>
+                                     !< <li> only used if \c Lfindzero = 2 </li>
+                                     !< <li> only used in newton() </li>
+                                     !< </ul>
+  INTEGER      :: mfreeits   =   0   !< maximum allowed free-boundary iterations
+                                     !< <ul>
+                                     !< <li> only used if \c Lfreebound = 1 </li>
+                                     !< <li> only used in xspech() </li>
+                                     !< </ul>
+  REAL         :: bnstol     =   1.0e-06 !< redundant; 
+  REAL         :: bnsblend   =   0.666   !< redundant; 
+  REAL         :: gBntol     =   1.0e-06 !< required tolerance in free-boundary iterations
+                                     !< <ul>
+                                     !< <li> only used if \c Lfreebound = 1 </li>
+                                     !< <li> only used in xspech(); see xspech.f90 for more documentation </li>
+                                     !< </ul>
+  REAL         :: gBnbld     =   0.666 !< normal blend
+                                     !< <ul>
+                                     !< <li> The "new" magnetic field at the computational boundary produced by the plasma currents is updated using a Picard scheme:
+                                     !<      \f{eqnarray}{ ({\bf B}\cdot{\bf n})^{j+1} =    \texttt{gBnbld}  \times ({\bf B}\cdot{\bf n})^{j} 
+                                     !<                                      + (1-\texttt{gBnbld}) \times ({\bf B}\cdot{\bf n})^{*},
+                                     !<      \f}
+                                     !<      where \f$j\f$ labels free-boundary iterations, and \f$({\bf B}\cdot{\bf n})^{*}\f$ is computed by virtual casing. </li>
+                                     !< <li> only used if \c Lfreebound = 1 </li>
+                                     !< <li> only used in xspech() </li>
+                                     !< </ul>
+  REAL         :: vcasingeps =   1.e-12 !< regularization of Biot-Savart; see bnorml(), casing()
+  REAL         :: vcasingtol =   1.e-08 !< accuracy on virtual casing integral; see bnorml(), casing()
+  INTEGER      :: vcasingits =   8 !< minimum number of calls to adaptive virtual casing routine; see casing()
+  INTEGER      :: vcasingper =   1 !< periods of integragion  in adaptive virtual casing routine; see casing()
+  INTEGER      :: mcasingcal =   8 !< minimum number of calls to adaptive virtual casing routine; see casing() redundant;
+!> @}
+
+
+!> \addtogroup grp_input_diagnostics diagnosticslist: Input namelist for diagnostics-related quantities
+!> 
+!> The namelist \c diagnosticslist controls post-processor diagnostics, such as Poincaré  plot resolution, etc.
+!> @{
+  REAL         :: odetol           =     1.0e-07 !< o.d.e. integration tolerance for all field line tracing routines
+  REAL         :: absreq           =     1.0e-08 !< redundant
+  REAL         :: relreq           =     1.0e-08 !< redundant
+  REAL         :: absacc           =     1.0e-04 !< redundant
+  REAL         :: epsr             =     1.0e-08 !< redundant
+  INTEGER      :: nPpts            =     0       !< number of toroidal transits used (per trajectory) in following field lines
+                                                 !< for constructing Poincaré plots;
+                                                 !< if \c nPpts<1, no Poincaré plot is constructed;
+  INTEGER      :: nPtrj(1:MNvol+1) =    -1       !< number of trajectories in each annulus to be followed in constructing Poincaré plot
+                                                 !< <ul>
+                                                 !< <li> if \c nPtrj(l)<0, then \c nPtrj(l) = Ni(l),
+                                                 !<       where \c Ni(l) is the grid resolution used to construct the Beltrami field in volume \f$l\f$ </li>
+                                                 !< </ul>
+  LOGICAL      :: LHevalues        =  .false.    !< to compute eigenvalues of \f$\nabla {\bf F}\f$
+  LOGICAL      :: LHevectors       =  .false.    !< to compute eigenvectors (and also eigenvalues) of \f$\nabla {\bf F}\f$
+  LOGICAL      :: LHmatrix         =  .false.    !< to compute and write to file the elements of \f$\nabla {\bf F}\f$
+  INTEGER      :: Lperturbed       =     0       !< to compute linear, perturbed equilibrium
+  INTEGER      :: dpp              =    -1       !< perturbed harmonic
+  INTEGER      :: dqq              =    -1       !< perturbed harmonic
+  INTEGER      :: Lcheck           =     0       !< implement various checks
+                                                 !< <ul>
+                                                 !< <li> if \c Lcheck = 0, no additional check on the calculation is performed </li>
+                                                 !< <li> if \c Lcheck = 1, the error in the current, i.e. \f$\nabla\times{\bf B}-\mu{\bf B}\f$ is computed as a post-diagnostic </li>
+                                                 !< <li> if \c Lcheck = 2, the analytic derivatives of the interface transform w.r.t.
+                                                 !<      the helicity multiplier, \f$\mu\f$, and the enclosed poloidal flux, \f$\Delta\psi_p\f$, are compared to a finite-difference estimate
+                                                 !<      <ul>
+                                                 !<      <li> only if \c Lconstraint==1 </li>
+                                                 !<      <li> only for \c dspec executable, i.e. must compile with \c DFLAGS = "-D DEBUG" </li>
+                                                 !<      </ul> </li>
+                                                 !< <li> if \c Lcheck = 3, the analytic derivatives of the volume w.r.t. interface Fourier harmonic
+                                                 !<      is compared to a finite-difference estimate
+                                                 !<      <ul>
+                                                 !<      <li> must set \c Lfindzero\f$ = 2\f$ </li>
+                                                 !<      <li> set \c forcetol sufficiently small and set \c LreadGF = F,
+                                                 !<           so that the matrix of second derivatives is calculated </li>
+                                                 !<      <li> only for \c dspec executable, i.e. must compile with \c DFLAGS = "-D DEBUG" </li>
+                                                 !<      </ul> </li>
+                                                 !< <li> if \c Lcheck = 4, the analytic calculation of the derivatives of the magnetic field, \f$B^2\f$, at the interfaces
+                                                 !<      is compared to a finite-difference estimate
+                                                 !<      <ul>
+                                                 !<      <li> must set \c Lfindzero\f$ = 2\f$ </li>
+                                                 !<      <li> set \c forcetol sufficiently small </li>
+                                                 !<      <li> set \c LreadGF=F </li>
+                                                 !<      <li> only for \c dspec executable, i.e. must compile with \c DFLAGS = "-D DEBUG" </li>
+                                                 !<      </ul> </li>
+                                                 !< <li> if \c Lcheck = 5, the analytic calculation of the matrix of the derivatives of the force imbalance
+                                                 !<      is compared to a finite-difference estimate </li>
+                                                 !< <li> if \c Lcheck = 6, the virtual casing calculation is compared to \c xdiagno (Lazerson 2013 \cite y2013_lazerson)
+                                                 !<      <ul>
+                                                 !<      <li> the input file for \c xdiagno is written by bnorml() </li>
+                                                 !<      <li> this provides the Cartesian coordinates on the computational boundary where the virtual casing routine casing()
+                                                 !<           computes the magnetic field, with the values of the magnetic field being written to the screen for comparison </li>
+                                                 !<      <li> must set \c Freebound=1, \c Lfindzero>0, \c mfreeits!=0 </li>
+                                                 !<      <li> \c xdiagno must be executed manually </li>
+                                                 !<      </ul> </li>
+                                                 !< </ul>
+  LOGICAL      :: Ltiming          =  .false.    !< to check timing </li>
+  REAL         :: fudge            =     1.0e-00 !< redundant
+  REAL         :: scaling          =     1.0e-00 !< redundant 
+!> @}
+
+
+!> \addtogroup grp_input_screenlist screenlist: Input namelist for screen output-related quantities
+!> 
+!> The namelist \c screenlist controls screen output.
+!> @{  
+! DSCREENLIST !< define screenlist; this is expanded by Makefile; DO NOT REMOVE; each file compiled by Makefile has its own write flag;
+  LOGICAL      :: Wreadin = .false. !< Every subroutine, e.g. \c xy00aa.h, has its own write flag, \c Wxy00aa.
+  LOGICAL      :: Wwritin = .false. !< redundant
   LOGICAL      :: Wwrtend = .false.
   LOGICAL      :: Wmacros = .false.
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \item In the following, all default settings are shown.
-!latex \end{enumerate}
-
-!latex \subsubsection{\type{physicslist} : }
-
-!latex \begin{enumerate}
-!latex \item The namelist \verb+physicslist+ controls the geometry, profiles, and numerical resolution.
-!latex       \bi
-!latex       \verb+namelist/physicslist/+
+!> @}
 
   namelist/physicslist/&
- Igeometry   ,& !latex \item \inputvar{Igeometry = 3} : \verb!integer! : selects Cartesian, cylindrical or toroidal geometry;
-                !latex \bi
-                !latex \item[i.] \inputvar{Igeometry = 1} : Cartesian; geometry determined by $R$;
-                !latex \item[i.] \inputvar{Igeometry = 2} : cylindrical; geometry determined by $R$;
-                !latex \item[i.] \inputvar{Igeometry = 3} : toroidal; geometry determined by $R$ {\em and} $Z$;
-                !latex \ei
- Istellsym   ,& !latex \item \inputvar{Istellsym = 1} : \verb!integer! : stellarator symmetry is enforced if \inputvar{Istellsym.eq.1};
- Lfreebound  ,& !latex \item \inputvar{Lfreebound = 0} : \verb!integer! : compute vacuum field surrounding plasma; 
- phiedge     ,& !latex \item \inputvar{phiedge = 1.0} : \verb!real! : total enclosed toroidal magnetic flux;
- curtor      ,& !latex \item \inputvar{curtor = 0.0} : \verb!real! : total enclosed (toroidal) plasma current;
- curpol      ,& !latex \item \inputvar{curpol = 0.0} : \verb!real! : total enclosed (poloidal) linking current;
- gamma       ,& !latex \item \inputvar{gamma = 0.0} : \verb!real! : adiabatic index; cannot set $|\gamma| = 1$;
- Nfp         ,& !latex \item \inputvar{Nfp = 1} : \verb!integer! : field periodicity;
-                !latex \bi
-                !latex \item[i.] all Fourier representations are of the form $\cos(m\t-nN\z)$, $\sin(m\t-nN\z)$,where $N\equiv$\inputvar{Nfp};
-                !latex \item[i.] constraint : \inputvar{Nfp.ge.1};
-                !latex \ei
- Nvol        ,& !latex \item \inputvar{Nvol = 1} : \verb!integer! : number of volumes;
-                !latex \bi
-                !latex \item[i.] each volume ${\cal V}_l$ is bounded by the ${\cal I}_{l-1}$ and ${\cal I}_{l}$ interfaces;
-                !latex \item[i.] note that in cylindrical or toroidal geometry, ${\cal I}_{0}$ is the degenerate coordinate axis;
-                !latex \item[i.] constraint : \inputvar{Nvol.le.MNvol};
-                !latex \ei
- Mpol        ,& !latex \item \inputvar{Mpol = 1} : \verb!integer! : poloidal resolution;
- Ntor        ,& !latex \item \inputvar{Ntor = 0} : \verb!integer! : toroidal resolution;
-                !latex \bi
-                !l tex \item[i.] all Fourier representations of doubly-periodic functions are of the form 
-                !l tex \be f(\t,\z)& = &\sum_{n=0}^{\type{Ntor}} f_{0,n}\cos(-n \, \type{Nfp} \, \z) 
-                !l tex + \sum_{m=1}^{\type{Mpol}}\sum_{n=\type{-Ntor}}^{\type{Ntor}} f_{m,n}\cos(m\t-n \, \inputvar{Nfp} \, \z),
-                !l tex \ee
-                !latex Internally these ``double'' summations are written as a ``single'' summation,
-                !latex e.g. $f = \sum_j f_j \cos(m_j\t-n_j\z)$.
-                !latex \ei
- Lrad        ,& !latex \item \inputvar{Lrad = 4} : \verb!integer(MNvol+1)! : Chebyshev resolution in each volume;
-                !latex \bi
-                !latex \item[i.] constraint : \inputvar{Lrad(1:Mvol)}.ge.2;
-                !latex \ei
- Lconstraint ,& !latex \item \inputvar{Lconstraint = -1} : \verb!integer! : selects constraints; primarily used in \link{ma02aa} and \link{mp00ac}.
-                !latex \bi
-                !latex \item[i.] if \inputvar{Lconstraint}.eq.-1, then in the plasma regions $\Delta\psi_t$, $\mu$ and $\Delta \psi_p$ are {\em not} varied;
-                !latex           and in the vacuum region (only for free-boundary) $\Delta\psi_t$ and $\Delta \psi_p$ are {\em not} varied, and $\mu = 0$.
-                !latex \item[ii.] if \inputvar{Lconstraint}.eq.0, then in the plasma regions $\Delta\psi_t$, $\mu$ and $\Delta \psi_p$ are {\em not} varied;
-                !latex            and in the vacuum region (only for free-boundary) $\Delta\psi_t$ and $\Delta \psi_p$ are varied to match the 
-                !latex            prescribed plasma current, \inputvar{curtor}, and the ``linking'' current, \inputvar{curpol}, and $\mu = 0$;
-                !latex \item[iii.] if \inputvar{Lconstraint}.eq.1, then in the plasma regions $\mu$ and $\Delta\psi_p$ are adjusted
-                !latex             in order to satisfy the inner and outer interface transform constraints
-                !latex             (except in the simple torus, where the enclosed poloidal flux is irrelevant,
-                !latex             and only $\mu$ is varied to satisfy the outer interface transform constraint);
-                !latex             and in the vacuum region $\Delta\psi_t$ and $\Delta \psi_p$ are varied to match the transform constraint on the boundary
-                !latex             and to obtain the prescribed linking current, \inputvar{curpol}, and $\mu = 0$.
-                !latex \item[iv.]  if \inputvar{Lconstraint}.eq.2, under reconstruction.
-                !latex \ei
- tflux       ,& !latex \item \inputvar{tflux} : \verb!real(1:MNvol+1)! : toroidal flux, $\psi_t$, enclosed by each interface;
-                !latex \bi
-                !latex \item[i.] For each of the plasma volumes, this is a constraint: \inputvar{tflux} is \underline{not} varied;
-                !latex \item[i.] For the vacuum region (only if \inputvar{Lfreebound = 1}), \inputvar{tflux} may be allowed to vary to match constraints;
-                !latex \item[i.] Note that \inputvar{tflux} will be normalized so that \inputvar{tflux(Nvol) = 1.0},
-                !latex so that \inputvar{tflux} is arbitrary up to a scale factor;
-                !latex \item[i.] see also \inputvar{phiedge};
-                !latex \ei
- pflux       ,& !latex \item \inputvar{pflux} : \verb!real(1:MNvol+1)! : poloidal flux, $\psi_p$, enclosed by each interface;
- helicity    ,& !latex \item \inputvar{helicity} : \verb!real(1:MNvol)! : helicity, ${\cal K}$, in each volume, ${\cal V}_i$;
-                !latex \bi
-                !latex \item[i.] on exit, \inputvar{helicity} is set to the computed values of ${\cal K} \equiv \int {\bf A}\cdot{\bf B}\;dv$;
-                !latex \ei
- pscale      ,& !latex \item \inputvar{pscale = 0.0} : \verb!real! : pressure scale factor;
-                !latex \bi
-                !latex \item[i.] the initial pressure profile is given by \inputvar{pscale} $*$ \inputvar{press};
-                !latex \ei
- pressure    ,& !latex \item \inputvar{pressure} : \verb!real(1:MNvol+1)! : pressure in each volume;
-                !latex \bi
-                !latex \item[i.] the pressure is {\em not} held constant, but $p_l V_l^\gamma = P_l$ {\em is} held constant,
-                !latex where $P_l$ is determined by the initial pressures and the initial volumes, $V_l$;
-                !latex \item[i.] (Note that if \inputvar{gamma = 0.0}, then $p_l \equiv P_l$.)
-                !latex \item[i.] on output, the pressure is given by $p_l = P_l/V_l^\gamma$, where $V_l$ is the final volume;
-                !latex \item[i.] \inputvar{pressure} is only used in calculation of interface force-balance;
-                !latex \ei
- Ladiabatic  ,& !latex \item \inputvar{Ladiabatic = 0} : \verb!integer! : logical flag;
-                !latex \bi
-                !latex \item[i.] if \inputvar{Ladiabatic = 0}, the adiabatic constants are determined by the initial pressure and volume;
-                !latex \item[i.] if \inputvar{Ladiabatic = 1}, the adiabatic constants are determined by the given input \inputvar{adiabatic};
-                !latex \ei
- adiabatic   ,& !latex \item \inputvar{adiabatic} : \verb!real(1:MNvol+1)! : adiabatic constants in each volume;
-                !latex \bi
-                !latex \item[i.] the pressure is {\em not} held constant, but $p_l V_l^\gamma = P_l \equiv$\inputvar{adiabatic} is constant,
-                !latex \item[i.] note that if \inputvar{gamma = 0.0}, then \inputvar{pressure = adiabatic};
-                !latex \item[i.] \inputvar{pressure} is only used in calculation of interface force-balance;
-                !latex \ei
- mu          ,& !latex \item \inputvar{mu} : \verb!real(1:MNvol+1)! : helicity-multiplier, $\mu$, in each volume;
- pl          ,& !latex \item \inputvar{pl = 0} : \verb!integer(0:MNvol)! :
- ql          ,& !latex \item \inputvar{ql = 0} : \verb!integer(0:MNvol)! :
- pr          ,& !latex \item \inputvar{pr = 0} : \verb!integer(0:MNvol)! :
- qr          ,& !latex \item \inputvar{qr = 0} : \verb!integer(0:MNvol)! :
-                !latex \bi
-                !latex \item[i.] ``inside'' interface rotational-transform is $\iotabar = (p_l+\gamma p_r)/(q_l+\gamma q_r)$,
-                !latex        where $\gamma$ is the golden mean, $\gamma = (1 + \sqrt 5 ) / 2 $;
-                !latex \item[i.] if both $q_l = 0$ {\em and} $q_r = 0$, then the (inside) interface rotational-transform is defined by \inputvar{iota};
-                !latex \ei
- iota        ,& !latex \item \inputvar{iota} : \verb!real(0:MNvol)! : rotational-transform, $\iotabar$, on inner side of each interface;
-                !latex \bi
-                !latex \item[i.] only relevant if illogical input for \inputvar{ql} and \inputvar{qr} are provided;
-                !latex \ei
- lp          ,& !latex \item \inputvar{lp = 0} : \verb!integer(0:MNvol)! :
- lq          ,& !latex \item \inputvar{lq = 0} : \verb!integer(0:MNvol)! :
- rp          ,& !latex \item \inputvar{rp = 0} : \verb!integer(0:MNvol)! :
- rq          ,& !latex \item \inputvar{rq = 0} : \verb!integer(0:MNvol)! :
-                !latex \bi
-                !latex \item "outer" interface rotational-transform is $\iotabar = (p_l+\gamma p_r)/(q_l+\gamma q_r)$,
-                !latex       where $\gamma$ is the golden mean, $\gamma = (1 + \sqrt 5 ) / 2 $;
-                !latex \item if both $q_l = 0$ {\em and} $q_r = 0$, then the (outer) interface rotational-transform is defined by \inputvar{oita};
-                !latex \ei
- oita        ,& !latex \item \inputvar{oita} : \verb!real(0:MNvol)! : rotational-transform, $\iotabar$, on outer side of each interface;
-                !latex \bi
-                !latex \item only relevant if illogical input for \inputvar{ql} and \inputvar{qr} are provided;
-                !latex \ei
- mupftol     ,& !latex \item \inputvar{mupftol = 1.0e-16} : \verb!real! : accuracy to which $\mu$ and $\Delta\psi_p$ are required;
-                !latex \bi
-                !latex \item only relevant if constraints on transform, enclosed currents etc. are to be satisfied iteratively, see \inputvar{Lconstraint};
-                !latex \ei
- mupfits     ,& !latex \item \inputvar{mupfits = 8} : \verb!integer! : an upper limit on the transform/helicity constraint iterations;
-                !latex \item only relevant if constraints on transform, enclosed currents etc. are to be satisfied iteratively, see \inputvar{Lconstraint};
-                !latex \bi
-                !latex \item constraint: \inputvar{mupfits > 0};
-                !latex \ei
- rpol        ,& !latex \item \inputvar{rpol = 1.0} : \verb!real! : poloidal extent of slab (effective radius);
-                !latex \bi
-                !latex \item[i.] only relevant if \inputvar{Igeometry} $=1$;
-                !latex \item[i.] poloidal size is $L = 2\pi*$\inputvar{rpol};
-                !latex \ei
- rtor        ,& !latex \item \inputvar{rtor = 1.0} : \verb!real! : toroidal extent of slab (effective radius);
-                !latex \bi
-                !latex \item[i.] only relevant if \inputvar{Igeometry} $=1$;
-                !latex \item[i.] toroidal size is $L = 2\pi*$\inputvar{rtor};
-                !latex \ei
- Rac         ,& !latex \item \inputvar{Rac} : \verb!real(     0:MNtor             )! : Fourier harmonics of axis    ;     stellarator symmetric;
- Zas         ,& !latex \item \inputvar{Zas} : \verb!real(     0:MNtor             )! : Fourier harmonics of axis    ;     stellarator symmetric;
- Ras         ,& !latex \item \inputvar{Ras} : \verb!real(     0:MNtor             )! : Fourier harmonics of axis    ; non-stellarator symmetric;
- Zac         ,& !latex \item \inputvar{Zac} : \verb!real(     0:MNtor             )! : Fourier harmonics of axis    ; non-stellarator symmetric;
- Rbc         ,& !latex \item \inputvar{Rbc} : \verb!real(-MNtor:MNtor,-MMpol:MMpol)! : Fourier harmonics of boundary;     stellarator symmetric;
- Zbs         ,& !latex \item \inputvar{Zbs} : \verb!real(-MNtor:MNtor,-MMpol:MMpol)! : Fourier harmonics of boundary;     stellarator symmetric;
- Rbs         ,& !latex \item \inputvar{Rbs} : \verb!real(-MNtor:MNtor,-MMpol:MMpol)! : Fourier harmonics of boundary; non-stellarator symmetric;
- Zbc         ,& !latex \item \inputvar{Zbc} : \verb!real(-MNtor:MNtor,-MMpol:MMpol)! : Fourier harmonics of boundary; non-stellarator symmetric;
- Rwc         ,& !latex \item \inputvar{Rwc} : \verb!real(-MNtor:MNtor,-MMpol:MMpol)! : Fourier harmonics of wall    ;     stellarator symmetric;
- Zws         ,& !latex \item \inputvar{Zws} : \verb!real(-MNtor:MNtor,-MMpol:MMpol)! : Fourier harmonics of wall    ;     stellarator symmetric;
- Rws         ,& !latex \item \inputvar{Rws} : \verb!real(-MNtor:MNtor,-MMpol:MMpol)! : Fourier harmonics of wall    ; non-stellarator symmetric;
- Zwc         ,& !latex \item \inputvar{Zwc} : \verb!real(-MNtor:MNtor,-MMpol:MMpol)! : Fourier harmonics of wall    ; non-stellarator symmetric;
- Vns         ,& !latex \item \inputvar{Vns} : \verb!real(-MNtor:MNtor,-MMpol:MMpol)! : Fourier harmonics of vacuum normal field at boundary;
- Bns         ,& !latex \item \inputvar{Bns} : \verb!real(-MNtor:MNtor,-MMpol:MMpol)! : Fourier harmonics of plasma normal field at boundary;
- Vnc         ,& !latex \item \inputvar{Vnc} : \verb!real(-MNtor:MNtor,-MMpol:MMpol)! : Fourier harmonics of vacuum normal field at boundary;
- Bnc            !latex \item \inputvar{Bnc} : \verb!real(-MNtor:MNtor,-MMpol:MMpol)! : Fourier harmonics of plasma normal field at boundary;
-
-!latex \ei
-
-!latex \end{enumerate}
-
-!latex \subsubsection{\type{numericlist} :}
-
-!latex \begin{enumerate}
-!latex \item The namelist \type{numericlist} controls internal resolution parameters that the user rarely needs to consider.
-!latex \bi
-!latex \type{namelist/numericlist/}
+ Igeometry   ,& 
+ Istellsym   ,& 
+ Lfreebound  ,& 
+ phiedge     ,& 
+ curtor      ,& 
+ curpol      ,& 
+ gamma       ,& 
+ Nfp         ,& 
+ Nvol        ,& 
+ Mpol        ,& 
+ Ntor        ,& 
+ Lrad        ,& 
+ Lconstraint ,& 
+ tflux       ,& 
+ pflux       ,& 
+ helicity    ,& 
+ pscale      ,& 
+ pressure    ,& 
+ Ladiabatic  ,& 
+ adiabatic   ,& 
+ mu          ,& 
+ pl          ,& 
+ ql          ,& 
+ pr          ,& 
+ qr          ,& 
+ iota        ,& 
+ lp          ,& 
+ lq          ,& 
+ rp          ,& 
+ rq          ,& 
+ oita        ,& 
+ mupftol     ,& 
+ mupfits     ,& 
+ rpol        ,& 
+ rtor        ,& 
+ Rac         ,&
+ Zas         ,&
+ Ras         ,&
+ Zac         ,&
+ Rbc         ,&
+ Zbs         ,&
+ Rbs         ,&
+ Zbc         ,&
+ Rwc         ,&
+ Zws         ,&
+ Rws         ,&
+ Zwc         ,&
+ Vns         ,&
+ Bns         ,&
+ Vnc         ,&
+ Bnc           
 
   namelist/numericlist/&
- Linitialize ,& !latex \item \inputvar{Linitialize = 0 : integer} : to initialize geometry using a regularization / extrapolation method;
-                !latex \bi
-                !latex \item if \inputvar{Linitialize = -I}, where $I$ is a positive integer, 
-                !latex       the geometry of the $i=1,N_V-I$ surfaces constructed by an extrapolation;
-                !latex \item if \inputvar{Linitialize = 0}, the geometry of the interior surfaces is provided after the namelists in the input file;
-                !latex \item if \inputvar{Linitialize = 1}, the interior surfaces will be intialized as $R_{l,m,n} = R_{N,m,n} \psi_{t,l}^{m/2}$,
-                !latex where $R_{N,m,n}$ is the plasma boundary
-                !latex       and $\psi_{t,l}$ is the given toroidal flux enclosed by the $l$-th interface, normalized to the total enclosed toroidal flux;
-                !latex       a similar extrapolation is used for $Z_{l,m,n}$;
-                !latex \item note that the Fourier harmonics of the boundary is {\em always} given by the \inputvar{Rbc} and \inputvar{Zbs} 
-                !latex given in \type{physicslist};
-                !latex \item if \inputvar{Linitialize = 2}, the interior surfaces {\em and the plasma boundary} will be intialized 
-                !latex       as $R_{l,m,n} = R_{W,m,n} \psi_{t,l}^{m/2}$, where $R_{W,m,n}$ is the computational boundary
-                !latex       and $\psi_{t,l}$ is the given toroidal flux enclosed by the $l$-th interface, normalized to the total enclosed toroidal flux;
-                !latex       a similar extrapolation is used for $Z_{l,m,n}$;
-                !latex \item note that, for free-boundary calculations, the Fourier harmonics of the computational boundary 
-                !latex       is {\em always} given by the \inputvar{Rwc} and \inputvar{Zws} 
-                !latex given in \type{physicslist};
-                !latex \item if \inputvar{Linitialize = 1, 2}, it is not required to provide the geometry of the interfaces after the namelists;
-                !latex \ei
- LautoinitBn ,& !latex \item \inputvar{LautoinitBn = 1 : integer} : to initialize $B_{ns}$ using an initial fixed-boundary calculation;
-                !latex \bi
-                !latex \item only relevant if \inputvar{Lfreebound = 1},
-                !latex \item user-supplied \inputvar{Bns} will only be considered if \inputvar{LautoinitBn = 0} 
-                !latex \ei
- Lzerovac    ,& !latex \item \inputvar{Lzerovac = 0 : integer} : to adjust vacuum field to cancel plasma field on computational boundary;
-                !latex \bi
-                !latex \item only relevant if \inputvar{Lfreebound = 1},
-                !latex \ei
- Ndiscrete   ,& !latex \item \inputvar{Ndiscrete = 2 : integer} :
-                !latex \bi
-                !latex \item resolution of the real space grid on which fast Fourier transforms are performed is given by \inputvar{Ndiscrete*Mpol*4};
-                !latex \item constraint \inputvar{Ndiscrete>0};
-                !latex \ei
- Nquad       ,& !latex \item \inputvar{Nquad = -1 : integer} : the resolution of the Gaussian quadrature;
-                !latex \bi
-                !latex \item the resolution of the Gaussian quadrature, $\ds \int \!\! f(s) ds = \sum_k \omega_k f(s_k)$,
-                !latex       in each volume is given by \internal{Iquad$_v$}, 
-                !latex \item \internal{Iquad$_v$} is set in \link{preset}.
-                !l tex       and depends on \inputvar{Nquad}, \inputvar{Lrad$_v$} and \inputvar{Mpol}.
-                !l tex \bi
-                !l tex \item if \inputvar{Nquad.gt.0},                                 then \internal{Iquad(vvol) =              Nquad};
-                !l tex \item if \inputvar{Nquad.le.0 and .not.Lcoordinatesingularity}, then \internal{Iquad(vvol) = 2*Lrad(vvol)-Nquad};
-                !l tex \item if \inputvar{Nquad.le.0 and      Lcoordinatesingularity}, then \internal{Iquad(vvol) = 2*Lrad(vvol)-Nquad+Mpol};
-                !l tex \ei
-                !l tex \item \internal{Iquad$_v$} is passed through to \link{ma00aa} to compute various volume integrals; 
-                !l tex       also see \link{jo00aa}, where \internal{Iquad$_v$} 
-                !l tex       is also used in computing the volume integrals of $||\nabla\times{\bf B} - \mu {\bf B}||$;
-                !latex \ei
- iMpol       ,& !latex \item \inputvar{iMpol = -4 : integer} : Fourier resolution of straight-fieldline angle on interfaces;
-                !latex \bi
-                !latex \item the rotational-transform on the interfaces is determined by a transformation to the straight-fieldline angle,
-                !latex with poloidal resolution given by \inputvar{iMpol};
-                !latex \item if \inputvar{iMpol.le.0}, then \inputvar{iMpol = Mpol - iMpol};
-                !latex \ei
- iNtor       ,& !latex \item \inputvar{iNtor = -4 : integer} : Fourier resolution of straight-fieldline angle on interfaces;
-                !latex \bi
-                !latex \item the rotational-transform on the interfaces is determined by a transformation to the straight-fieldline angle,
-                !latex with toroidal resolution given by \inputvar{iNtor};
-                !latex \item if \inputvar{iNtor.le.0}, then \inputvar{iNtor = Ntor - iNtor};
-                !latex \item if \inputvar{Ntor.eq.0}, then the toroidal resolution of the angle transformation is set \inputvar{lNtor = 0}.
-                !latex \ei
- Lsparse     ,& !latex \item \inputvar{Lsparse = 0 : integer} : controls method used to solve for rotational-transform on interfaces;
-                !latex \bi
-                !latex \item if \inputvar{Lsparse = 0}, the transformation to the straight-fieldline angle is computed in Fourier space
-                !latex using a dense matrix solver, \nag{}{F04AAF};
-                !latex \item if \inputvar{Lsparse = 1}, the transformation to the straight-fieldline angle is computed in real space
-                !latex using a dense matrix solver, \nag{}{F04ATF};
-                !latex \item if \inputvar{Lsparse = 2}, the transformation to the straight-fieldline angle is computed in real space
-                !latex using a sparse matrix solver, \nag{}{F11DEF};
-                !latex \item if \inputvar{Lsparse = 3}, the different methods for constructing the straight-fieldline angle are compared;
-                !latex \ei
- Lsvdiota    ,& !latex \item \inputvar{Lsvdiota = 0 : integer} : controls method used to solve for rotational-transform on interfaces;
-                !latex only relevant if \inputvar{Lsparse = 0};
-                !latex \bi
-                !latex \item if \inputvar{Lsvdiota = 0}, use standard linear solver to construct straight fieldline angle transformation;
-                !latex \item if \inputvar{Lsvdiota = 1}, use SVD method to compute rotational-transform;
-                !latex \ei
- imethod     ,& !latex \item \inputvar{Imethod = 3 : integer} : controls iterative solution to sparse matrix
-                !latex arising in real-space transformation to the straight-fieldline angle;
-                !latex only relevant if \inputvar{Lsparse.eq.2}; see \link{tr00ab} for details;
-                !latex \bi
-                !latex \item if \inputvar{imethod = 1}, the method is \type{RGMRES};
-                !latex \item if \inputvar{imethod = 2}, the method is \type{CGS};
-                !latex \item if \inputvar{imethod = 3}, the method is \type{BICGSTAB};
-                !latex \ei
- iorder      ,& !latex \item \inputvar{iorder = 2 : integer} : controls real-space grid resolution for constructing the straight-fieldline angle;
-                !latex only relevant if \inputvar{Lsparse>0};
-                !latex determines order of finite-difference approximation to the derivatives;
-                !latex \bi
-                !latex \item if \inputvar{iorder = 2}, 
-                !latex \item if \inputvar{iorder = 4}, 
-                !latex \item if \inputvar{iorder = 6}, 
-                !latex \ei
- iprecon     ,& !latex \item \inputvar{Iprecon = 0 : integer} : controls iterative solution to sparse matrix arising in real-space transformation
-                !latex to the straight-fieldline angle;
-                !latex only relevant if \inputvar{Lsparse.eq.2}; see \link{tr00ab} for details;
-                !latex \bi
-                !latex \item if \inputvar{iprecon = 0}, the preconditioner is `N';
-                !latex \item if \inputvar{iprecon = 1}, the preconditioner is `J'; 
-                !latex \item if \inputvar{iprecon = 2}, the preconditioner is `S';
-                !latex \ei
- iotatol     ,& !latex \item \inputvar{iotatol = -1.0 : real} : tolerance required for iterative construction of straight-fieldline angle;
-                !latex only relevant if \inputvar{Lsparse.ge.2};
- Lextrap     ,& !latex \item \inputvar{Lextrap = 0 : integer} : geometry of innermost interface is defined by extrapolation;
- Mregular       !latex \item \inputvar{Mregular = -1 : integer} : maximum regularization factor;                !latex \bi
-                !latex \bi
-                !latex \item if \inputvar{Mregular.ge.2}, then \internal{regumm}$_i$ = \inputvar{Mregular} $/ 2 $ where \internal{m}$_i > $ \inputvar{Mregular}
-                !latex \ei
-
-!latex \ei
-
-!latex \end{enumerate}
-
-!latex \subsubsection{\type{locallist} : }
-
-!latex \begin{enumerate}
-!latex \item The namelist \type{locallist} controls the construction of the Beltrami fields in each volume.
-!latex \bi
-!latex \type{namelist/locallist/}
+ Linitialize ,& 
+ LautoinitBn ,& 
+ Lzerovac    ,& 
+ Ndiscrete   ,& 
+ Nquad       ,& 
+ iMpol       ,& 
+ iNtor       ,& 
+ Lsparse     ,& 
+ Lsvdiota    ,& 
+ imethod     ,&
+ iorder      ,& 
+ iprecon     ,&
+ iotatol     ,& 
+ Lextrap     ,& 
+ Mregular      
 
   namelist/locallist/&
- LBeltrami,&    !latex \item\inputvar{LBeltrami = 4  integer}
-                !latex \bi
-                !latex \item if \inputvar{LBeltrami = 1,3,5 or 7}, (SQP) then the Beltrami field in each volume is constructed
-                !latex by minimizing the magnetic energy with the constraint of fixed helicity; 
-                !latex this is achieved by using sequential quadratic programming as provided by \nag{}{E04UFF}; 
-                !latex this approach has the benefit (in theory) of robustly constructing minimum energy solutions
-                !latex when multiple, i.e. bifurcated, solutions exist.
-                !latex \item if \inputvar{LBeltrami = 2,3,6 or 7}, (Newton) then the Beltrami fields are constructed by employing a standard Newton method
-                !latex for locating an extremum of
-                !latex $F\equiv \int B^2 dv - \mu (\int {\bf A}\cdot{\bf B}dv-{\cal K})$,
-                !latex where $\mu$ is treated as an independent degree of freedom similar to the parameters describing the vector potential
-                !latex and ${\cal K}$ is the required value of the helicity; 
-                !latex this is the standard Lagrange multipler approach for locating the constrained minimum; 
-                !latex this method cannot distinguish saddle-type extrema from minima, and which solution that will be obtained depends on the initial guess;
-                !latex \item if \inputvar{LBeltrami = 4,5,6 or 7}, (linear) it is assumed that the Beltrami fields are parameterized by $\mu$;
-                !latex in this case, it is only required to solve $\nabla \times {\bf B} = \mu {\bf B}$ which reduces to a system of linear equations;
-                !latex $\mu$ may or may not be adjusted iteratively, depending on \inputvar{Lconstraint},
-                !latex to satisfy either rotational-transform or helicity constraints;
-                !latex \item for flexibility and comparison, each of the above methods can be employed; for example:
-                !latex \bi
-                !latex \item if \inputvar{LBeltrami = 1}, only the SQP    method will be employed;
-                !latex \item if \inputvar{LBeltrami = 2}, only the Newton method will be employed;
-                !latex \item if \inputvar{LBeltrami = 4}, only the linear method will be employed; 
-                !latex \item if \inputvar{LBeltrami = 3}, the SQP and the Newton method are used;
-                !latex \item if \inputvar{LBeltrami = 5}, the SQP and the linear method are used;
-                !latex \item if \inputvar{LBeltrami = 6}, the Newton and the linear method are used;
-                !latex \item if \inputvar{LBeltrami = 7}, all three methods will be employed;
-                !latex \ei
-                !latex \ei
- Linitgues,&    !latex \item\inputvar{Linitgues = 1  integer} controls how initial guess for Beltrami field is constructed;
-                !latex \bi
-                !latex \item only relevant for routines that require an initial guess for the Beltrami fields, such as the SQP and Newton methods,
-                !latex or the sparse linear solver;
-                !latex \item if \inputvar{Linitgues = 0}, the initial guess for the Beltrami field is trivial;
-                !latex \item if \inputvar{Linitgues = 1}, the initial guess for the Beltrami field is an integrable approximation;
-                !latex \item if \inputvar{Linitgues = 2}, the initial guess for the Beltrami field is read from file; 
-                !latex \item if \inputvar{Linitgues = 3}, the initial guess for the Beltrami field will be randomized with the maximum \inputvar{maxrndgues};
-                !latex \ei
- maxrndgues,&   !latex \item \inputvar{maxrndgues = 1.0} : real : the maximum random number of the Beltrami field if \inputvar{Linitgues = 3};
- Lposdef        !latex \item\inputvar{Lposdef = 0 : integer} : redundant;
-!Nmaxexp        !l tex \item \inputvar{Nmaxexp = 32 : integer} : indicates maximum exponent used to precondition Beltrami linear system near singularity;
-                !l tex \bi
-                !l tex \item a factor of $s^{\bar m_j/2}$ is extracted, where $\bar m \equiv min(\inputvar{Nmaxexp},m_j)$;
-                !l tex \ei
-!latex \ei
-
-!latex \item Comments:
-!latex \begin{enumerate}
-!latex \item The transformation to straight-fieldline coordinates is singular when the rotational-transform of the interfaces is rational;
-!latex       however, the rotational-transform is still well defined.
-!latex \end{enumerate}
-
-!latex \end{enumerate} 
-
-!latex \hrule
-
-!latex \subsubsection{\type{globallist} : } 
-
-!latex \begin{enumerate}
-!latex \item The namelist \type{globallist} controls the search for global force-balance:
-!latex \bi
-!latex \type{namelist/globallist/}
-
+ LBeltrami,&    
+ Linitgues,&    
+ maxrndgues,&   
+ Lposdef     
+ 
   namelist/globallist/&
- Lfindzero   ,& !latex \item \inputvar{Lfindzero = 0} : integer : use Newton methods to find zero of force-balance, which is computed by \link{dforce};
-                !latex \bi
-                !latex \item[o.] if \inputvar{Lfindzero = 0}, then \link{dforce} is called once 
-                !latex           to compute the Beltrami fields consistent with the given geometry and constraints;
-                !latex \item[i.] if \inputvar{Lfindzero = 1}, then call
-                !latex           \nag{www.nag.co.uk/numeric/FL/manual19/pdf/C05/c05ndf_fl19.pdf}{C05NDF} (uses function values only),
-                !latex           which iteratively calls \link{dforce};
-                !latex \item[ii.] if \inputvar{Lfindzero = 2}, then call
-                !latex            \nag{www.nag.co.uk/numeric/FL/manual19/pdf/C05/c05pdf_fl19.pdf}{C05PDF} (uses derivative information),
-                !latex            which iteratively calls \link{dforce};
-                !latex \ei
- escale      ,& !latex \item \inputvar{escale = 0.0} : real : controls the weight factor, \type{BBweight}, in the force-imbalance harmonics;
-                !latex \bi
-                !latex \item[i.] \type{BBweight(i)} $\ds \equiv \inputvar{opsilon} \times \exp\left[-\inputvar{escale} \times (m_i^2+n_i^2) \right]$
-                !latex \item[ii.] defined in \link{preset}; used in \link{dforce};
-                !latex \item[iii.] also see \Eqn{forcebalancemn} below;
-                !latex \ei
- opsilon     ,& !latex \item \inputvar{opsilon = 1.0} : real : weighting of force-imbalance; 
-                !latex \bi
-                !latex \item[i.] used in \link{dforce}; also see \Eqn{forcebalancemn} below;
-                !latex \ei
- pcondense   ,& !latex \item \inputvar{pcondense = 2.0} : real : spectral condensation parameter; 
-                !latex \bi
-                !latex \item[i.] used in \link{preset} to define \type{mmpp(i)} $\equiv m_i^p$, where $p\equiv $ \inputvar{pcondense};
-                !latex \item[ii.] the angle freedom is exploited to minimize $\ds \inputvar{epsilon} \sum_{i} m_i^p (R_{i}^2+Z_{i}^2)$
-                !latex       with respect to tangential variations in the interface geometry;
-                !latex \item[ii.] also see \Eqn{spectralbalancemn} below;
-                !latex \ei
- epsilon     ,& !latex \item \inputvar{epsilon = 0.0} : real : weighting of spectral-width constraint; 
-                !latex \bi
-                !latex \item[i.] used in \link{dforce}; also see \Eqn{spectralbalancemn} below;
-                !latex \ei
- wpoloidal   ,& !latex \item \inputvar{wpoloidal = 1.0} : real : ``star-like'' poloidal angle constraint radial exponential factor;
-                !latex       used in \link{preset} to construct \type{sweight}
- upsilon     ,& !latex \item \inputvar{upsilon = 1.0} : real : weighting of ``star-like'' poloidal angle constraint;
-                !latex       used in \link{preset} to construct \type{sweight};
- forcetol    ,& !latex \item \inputvar{forcetol = 1.0e-10} : real : required tolerance in force-balance error; only used as an initial check;
-                !latex \bi
-                !latex \item[i.] if the initially supplied interfaces are consistent with force-balance to within \inputvar{forcetol},
-                !latex       then the geometry of the interfaces is not altered;
-                !latex \item[ii.] if not, then the geometry of the interfaces is changed in order to bring the configuration into forcebalance
-                !latex       so that the geometry of interfaces is within \inputvar{c05xtol}, defined below, of the true solution;
-                !latex \item[iii.] to force execution of either \nag{www.nag.co.uk/numeric/FL/manual19/pdf/C05/c05ndf_fl19.pdf}{C05NDF}
-                !latex       or \nag{www.nag.co.uk/numeric/FL/manual19/pdf/C05/c05pdf_fl19.pdf}{C05PDF}, regardless of the initial force imbalance, 
-                !latex       set \inputvar{forcetol < 0};
-                !latex \ei
- c05xmax     ,& !latex \item \inputvar{c05xmax = 1.0e-06} : real : required tolerance in position, ${\bf x} \equiv \{ R_{i,v}, Z_{i,v}\}$;
- c05xtol     ,& !latex \item \inputvar{c05xtol = 1.0e-12} : real : required tolerance in position, ${\bf x} \equiv \{ R_{i,v}, Z_{i,v}\}$;
-                !latex \bi
-                !latex \item[i.] used by both \nag{www.nag.co.uk/numeric/FL/manual19/pdf/C05/c05ndf_fl19.pdf}{C05NDF} and 
-                !latex           \nag{www.nag.co.uk/numeric/FL/manual19/pdf/C05/c05pdf_fl19.pdf}{C05PDF};
-                !latex           see the NAG documents for further details on how the error is defined;
-                !latex \item[ii.] constraint \inputvar{c05xtol.gt.0.0};
-                !latex \ei
- c05factor   ,& !latex \item \inputvar{c05factor = 1.0e-02} : real : used to control initial step size in
-                !latex       \nag{www.nag.co.uk/numeric/FL/manual19/pdf/C05/c05ndf_fl19.pdf}{C05NDF} and 
-                !latex       \nag{www.nag.co.uk/numeric/FL/manual19/pdf/C05/c05pdf_fl19.pdf}{C05PDF};
-                !latex \bi
-                !latex \item[i.] constraint \inputvar{c05factor.gt.0.0};
-                !latex \item[ii.] only relevant if \inputvar{Lfindzero.gt.0};
-                !latex \ei
- LreadGF     ,& !latex \item \inputvar{LreadGF = T} : logical : read $\nabla_{\bf x} {\bf F}$ from file \type{.GF}; 
-                !latex \bi
-                !latex \item[i.] only used if \inputvar{Lfindzero = 2}; 
-                !latex \item[ii.] only used in \link{newton};
-                !latex \ei
- mfreeits    ,& !latex \item \inputvar{mfreeits = 0} : integer : maximum allowed free-boundary iterations;
-                !latex \bi
-                !latex \item[i.] only used if \inputvar{Lfreebound = 1}; 
-                !latex \item[ii.] only used in \link{xspech};
-                !latex \ei
- bnstol      ,& !latex \item \inputvar{bnstol = 1.0e-06} : redundant;
- bnsblend    ,& !latex \item \inputvar{bnsblend = 0.666} : redundant;
- gBntol      ,& !latex \item \inputvar{gBntol = 1.0e-06} : real : required tolerance in free-boundary iterations;
-                !latex \bi
-                !latex \item[i.] only used if \inputvar{Lfreebound = 1}; 
-                !latex \item[ii.] only used in \link{xspech}; see \link{xspech} for more documentation;
-                !latex \ei
- gBnbld      ,& !latex \item \inputvar{gBnbld = 0.666} : real : normal blend;
-                !latex \bi
-                !latex \item[i.] The ``new'' magnetic field at the computational boundary produced by the plasma currents is updated using a Picard scheme:
-                !latex           \be ({\bf B}\cdot{\bf n})^{j+1} =    \inputvar{gBnbld}  \times ({\bf B}\cdot{\bf n})^{j} 
-                !latex                                           + (1-\inputvar{gBnbld}) \times ({\bf B}\cdot{\bf n})^{*},
-                !latex           \ee
-                !latex           where $j$ labels free-boundary iterations, and $({\bf B}\cdot{\bf n})^{*}$ is computed by virtual casing.
-                !latex \item[ii.] only used if \inputvar{Lfreebound = 1}; 
-                !latex \item[ii.] only used in \link{xspech};
-                !latex \ei
- vcasingeps  ,& !latex \item \inputvar{vcasingeps = 1.0e-12} : real : regularization of Biot-Savart; see \link{bnorml}, \link{casing};
- vcasingtol  ,& !latex \item \inputvar{vcasingtol = 1.0e-08} : real : accuracy on virtual casing integral; see \link{bnorml}, \link{casing};
- vcasingits  ,& !latex \item \inputvar{vcasingits = 8      } : integer : minimum number of calls to adaptive virtual casing routine; see \link{casing};
- vcasingper  ,& !latex \item \inputvar{vcasingper = 1      } : integer : periods of integragion  in adaptive virtual casing routine; see \link{casing};
- mcasingcal     !latex \item \inputvar{mcasingcal = 8      } : integer : minimum number of calls to adaptive virtual casing routine; see \link{casing};
-!latex \ei
-
-!latex \item Comments:
-!latex \begin{enumerate}
-!latex \item The ``force'' vector, ${\bf F}$, which is constructed in \link{dforce}, is a combination of pressure-imbalance Fourier harmonics, 
-!latex       \be F_{i,v} \equiv [[ p+B^2/2 ]]_{i,v} \times \exp\left[-\inputvar{escale}(m_i^2+n_i^2) \right] \times \inputvar{opsilon},
-!latex       \label{eq:forcebalancemn} \ee
-!latex       and spectral-condensation constraints, $I_{i,v}$, and the ``star-like'' angle constraints, $S_{i,v,}$, (see \link{lforce} for details) 
-!latex       \be F_{i,v} \equiv \inputvar{epsilon} \times I_{i,v} 
-!latex           + \inputvar{upsilon} \times \left( \psi_v^\omega S_{i,v,1} - \psi_{v+1}^\omega S_{i,v+1,0} \right),
-!latex       \label{eq:spectralbalancemn} \ee
-!latex       where $\psi_v\equiv$ normalized toroidal flux, \inputvar{tflux}, and $\omega\equiv $ \inputvar{wpoloidal}.
-!latex \end{enumerate}
-
-!latex \end{enumerate}
-
-!latex \hrule
-
-!latex \subsubsection{\type{diagnosticslist} : } 
-
-!latex \begin{enumerate}
-!latex \item The namelist \type{diagnosticslist} controls post-processor diagnostics, such as \Poincare plot resolution, $\dots$,
-!latex \bi
-!latex \type{namelist/diagnosticslist/}
+ Lfindzero   ,&
+ escale      ,& 
+ opsilon     ,& 
+ pcondense   ,& 
+ epsilon     ,&
+ wpoloidal   ,& 
+ upsilon     ,& 
+ forcetol    ,& 
+ c05xmax     ,& 
+ c05xtol     ,& 
+ c05factor   ,& 
+ LreadGF     ,& 
+ mfreeits    ,& 
+ bnstol      ,& 
+ bnsblend    ,& 
+ gBntol      ,& 
+ gBnbld      ,& 
+ vcasingeps  ,& 
+ vcasingtol  ,& 
+ vcasingits  ,& 
+ vcasingper  ,& 
+ mcasingcal     
 
   namelist/diagnosticslist/&
- odetol     ,&  !latex \item \inputvar{odetol = 1.0e-07} : real : o.d.e. integration tolerance for all field line tracing routines;
- absreq     ,&  !latex \item \inputvar{absreq = 1.0e-08} : real : redundant;
- relreq     ,&  !latex \item \inputvar{relreq = 1.0e-08} : real : redundant;
- absacc     ,&  !latex \item \inputvar{absacc = 1.0e-04} : real : redundant;
- epsr       ,&  !latex \item \inputvar{epsr = 1.0e-06} : real : redundant; 
- nPpts      ,&  !latex \item \inputvar{nPpts = 0} : integer : number of toroidal transits used (per trajectory) in following field lines
-                !latex for constructing \Poincare plots;
-                !latex if \inputvar{nPpts<1}, no \Poincare plot is constructed;
- nPtrj      ,&  !latex \item \inputvar{nPtrj = -1 : integer(1:MNvol+1)} : number of trajectories in each annulus to be followed in constructing \Poincare plot;
-                !latex \bi
-                !latex \item if \inputvar{nPtrj(l)<0}, then \inputvar{nPtrj(l) = Ni(l)},
-                !latex where \type{Ni(l)} is the grid resolution used to construct the Beltrami field in volume $l$;
-                !latex \ei
- LHevalues  ,&  !latex \item \inputvar{LHevalues = F} : logical : to compute eigenvalues of $\nabla {\bf F}$;
- LHevectors ,&  !latex \item \inputvar{LHevectors = F} : logical : to compute eigenvectors (and also eigenvalues) of $\nabla {\bf F}$;
- LHmatrix   ,&  !latex \item \inputvar{LHmatrix = F} : logical : to compute and write to file the elements of $\nabla {\bf F}$;
- Lperturbed ,&  !latex \item \inputvar{Lperturbed = 0} : integer : to compute linear, perturbed equilibrium;
- dpp        ,&  !latex \item \inputvar{dpp = 1} : integer : perturbed harmonic;
- dqq        ,&  !latex \item \inputvar{dqq = 1} : integer : perturbed harmonic;
- Lcheck     ,&  !latex \item \inputvar{Lcheck = 0} : integer : implement various checks;
-                !latex \bi
-                !latex \item if \inputvar{Lcheck = 0}, no additional check on the calculation is performed;
-                !latex \item if \inputvar{Lcheck = 1}, the error in the current, i.e. $\nabla\times{\bf B}-\mu{\bf B}$ is computed as a post-diagnostic;
-                !latex \item if \inputvar{Lcheck = 2}, the analytic derivatives of the interface transform w.r.t.
-                !latex       the helicity multiplier, $\mu$, and the enclosed poloidal flux, $\Delta\psi_p$, are compared to a finite-difference estimate;
-                !latex \bi
-                !latex \item[i.] only if \inputvar{Lconstraint.eq.1};
-                !latex \item[ii.] only for \type{dspec} executable, i.e. must compile with \type{DFLAGS = "-D DEBUG"};
-                !latex \ei
-                !latex \item if \inputvar{Lcheck = 3}, the analytic derivatives of the volume w.r.t. interface Fourier harmonic
-                !latex       is compared to a finite-difference estimate;
-                !latex \bi
-                !latex \item[i.] must set \inputvar{Lfindzero}$ = 2$, 
-                !latex \item[ii.] set \inputvar{forcetol} sufficiently small and set \inputvar{LreadGF = F},
-                !latex       so that the matrix of second derivatives is calculated,
-                !latex \item[iii.] only for \type{dspec} executable, i.e. must compile with \type{DFLAGS = "-D DEBUG"};
-                !latex \ei
-                !latex \item if \inputvar{Lcheck = 4}, the analytic calculation of the derivatives of the magnetic field, $B^2$, at the interfaces
-                !latex       is compared to a finite-difference estimate;
-                !latex \bi
-                !latex \item[i.] must set \inputvar{Lfindzero}$ = 2$, 
-                !latex \item[ii.] set \inputvar{forcetol} sufficiently small,
-                !latex \item[iii.] set \inputvar{LreadGF=F},
-                !latex \item[iv.] only for \type{dspec} executable, i.e. must compile with \type{DFLAGS = "-D DEBUG"};
-                !latex \ei
-                !latex \item if \inputvar{Lcheck = 5}, the analytic calculation of the matrix of the derivatives of the force imbalance
-                !latex       is compared to a finite-difference estimate;
-                !latex \item if \inputvar{Lcheck = 6}, the virtual casing calculation is compared to \verb+xdiagno+;
-                !latex \bi
-                !latex \item[i.] the input file for \verb+xdiagno+ is written by \link{bnorml};
-                !latex \item[ii.] this provides the Cartesian coordinates on the computational boundary where the virtual casing routine \link{casing} 
-                !latex           computes the magnetic field, with the values of the magnetic field being written to the screen for comparison;
-                !latex \item[iii.] must set \inputvar{Freebound=1}, \inputvar{Lfindzero.gt.0}, \inputvar{mfreeits.ne.0};
-                !latex \item[iii.] \verb+xdiagno+; must be executed manually;
-                !latex \ei
-                !latex \ei
- Ltiming    ,&  !latex \item \inputvar{Ltiming = T} : logical : to check timing;
- fudge      ,&  !latex \item \inputvar{fudge = 1.0} : real : redundant;
- scaling        !latex \item \inputvar{scaling = 1.0} : real : redundant;
-
-!latex \ei
-
-!latex \end{enumerate} 
-
-!latex \subsubsection{\type{screenlist} : } 
-
-!latex \begin{enumerate}
-!latex \item The namelist \type{screenlist} controls screen output.
-!latex \bi
-!latex \type{namelist/screenlist/}
+ odetol     ,&  
+ absreq     ,&  
+ relreq     ,&  
+ absacc     ,&  
+ epsr       ,&  
+ nPpts      ,&  
+ nPtrj      ,&  
+ LHevalues  ,&  
+ LHevectors ,&  
+ LHmatrix   ,&  
+ Lperturbed ,&  
+ dpp        ,&  
+ dqq        ,&  
+ Lcheck     ,&  
+ Ltiming    ,& 
+ fudge      ,&
+ scaling      
 
   namelist/screenlist/&
 ! NSCREENLIST ! namelist screenlist; this is expanded by Makefile; DO NOT REMOVE;
- Wreadin , &  !latex \item Every subroutine, e.g. \type{xy00aa.h}, has its own write flag, \type{Wxy00aa}.
- Wwritin , & ! redundant; 
+ Wreadin , &  
+ Wwritin , & 
  Wwrtend , &
  Wmacros
-
-!latex \ei
-
-!latex \end{enumerate} 
-
-!latex \subsection{input geometry} 
-
-!latex \begin{enumerate}
-!latex \item The geometry of the $l$-th interface, for $l=0,N$ where $N\equiv$ \inputvar{Nvol}, is described by a set of Fourier harmonics,
-!latex using an arbitrary poloidal angle,
-!latex \be R_l(\t,\z)&=&\sum_{j}R_{j,l}\cos(m_j\t-n_j\z), \\ Z_l(\t,\z)&=&\sum_{j}Z_{j,l}\sin(m_j\t-n_j\z). \ee
-!latex \item These harmonics are read from the \type{ext.sp} file and come directly after the namelists described above.
-!latex The required format is as follows:
-!latex \be \begin{array}{ccccccccc}
-!latex m_1 & n_1 & R_{1,0} & Z_{1,0} & R_{1,1} & Z_{1,1} & \dots & R_{1,N} & Z_{1,N} \\
-!latex m_2 & n_2 & R_{2,0} & Z_{2,0} & R_{2,1} & Z_{2,1} & \dots & R_{2,N} & Z_{2,N} \\
-!latex \dots \\
-!latex m_j & n_j & R_{j,0} & Z_{j,0} & R_{j,1} & Z_{j,1} & \dots & R_{j,N} & Z_{j,N} \\
-!latex \dots
-!latex \end{array}
-!latex \ee
-!latex
-!latex \item The coordinate axis corresponds to $j=0$ and the outermost boundary corresponds to $j=$\inputvar{Nvol}.
-!latex \item An arbitrary selection of harmonics may be inluded in any order, but only those within the range specified by \inputvar{Mpol} and \inputvar{Ntor}
-!latex will be used.
-!latex \item The geometry of {\em all} the interfaces, i.e. $l=0,N$, including the degenerate `coordinate-axis' interface, must be given.
-!latex \end{enumerate}
-
-! note that all variables in namelist need to be broadcasted in readin;
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 end module inputlist
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+!> \brief global variables used throughout the whole SPEC code
 module allglobal
 
   use constants
@@ -897,10 +803,10 @@ module allglobal
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  INTEGER              :: myid, ncpu       ! mpi variables;
-  REAL                 :: cpus             ! initial time;
+  INTEGER              :: myid, ncpu       !< mpi variables;
+  REAL                 :: cpus             !< initial time;
 
-  REAL                 :: pi2nfp           !       pi2/nfp     ; assigned in readin;
+  REAL                 :: pi2nfp           !<       pi2/nfp     ; assigned in readin;
   REAL                 :: pi2pi2nfp
   REAL                 :: pi2pi2nfphalf
   REAL                 :: pi2pi2nfpquart
@@ -911,15 +817,15 @@ module allglobal
 
   INTEGER              :: Mvol
 
-  LOGICAL              :: YESstellsym, NOTstellsym ! internal shorthand copies of Istellsym, which is an integer input; 
+  LOGICAL              :: YESstellsym, NOTstellsym !< internal shorthand copies of Istellsym, which is an integer input; 
 
-  REAL   , allocatable :: cheby(:,:) ! local workspace;
+  REAL   , allocatable :: cheby(:,:) !< local workspace;
   
-  REAL   , allocatable :: TT(:,:,:) ! derivatives of Chebyshev polynomials at the inner and outer interfaces;
+  REAL   , allocatable :: TT(:,:,:) !< derivatives of Chebyshev polynomials at the inner and outer interfaces;
 
-  LOGICAL, allocatable :: ImagneticOK(:)   ! used to indicate if Beltrami fields have been correctly constructed;
+  LOGICAL, allocatable :: ImagneticOK(:)   !< used to indicate if Beltrami fields have been correctly constructed;
 
-  REAL   , allocatable :: beltramierror(:,:)  ! to store the integral of |curlB-mu*B| computed by jo00aa;
+  REAL   , allocatable :: beltramierror(:,:)  !< to store the integral of |curlB-mu*B| computed by jo00aa;
     
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -943,14 +849,14 @@ module allglobal
  
 ! INTEGER, allocatable :: dnjn(:,:)
 
-!latex \item Enhanced resolution is required for the metric elements, $g_{ij}/\sqrt g$, which is given by \type{mne}, \type{ime}., and \type{ine}.
-!latex The Fourier resolution here is determined by \type{lMpol=2*Mpol} and \type{lNtor=2*Ntor}.
+!latex \item Enhanced resolution is required for the metric elements, $g_{ij}/\sqrt g$, which is given by \texttt{mne}, \texttt{ime}., and \texttt{ine}.
+!latex The Fourier resolution here is determined by \texttt{lMpol=2*Mpol} and \texttt{lNtor=2*Ntor}.
   INTEGER              :: mne ! enhanced resolution for metric elements;
   INTEGER, allocatable :: ime(:), ine(:)
 
 !latex \item Enhanced resolution is required for the transformation to straight-field line angle on the interfaces,
-!latex which is given by \type{mns}, \type{ims}., and \type{ins}.
-!latex The Fourier resolution here is determined by \type{iMpol} and \type{iNtor}.
+!latex which is given by \texttt{mns}, \texttt{ims}., and \texttt{ins}.
+!latex The Fourier resolution here is determined by \texttt{iMpol} and \texttt{iNtor}.
 !latex \end{enumerate}
 
   INTEGER              :: mns ! enhanced resolution for straight field line transformation;
@@ -962,11 +868,11 @@ module allglobal
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\type{iRbc, iZbs, etc.} : interface geometry}
+!latex \subsubsection{\texttt{iRbc, iZbs, etc.} : interface geometry}
 
 !latex \begin{enumerate}
-!latex \item The Fourier harmonics of the interfaces are contained in \type{iRbc(1:mn,0:Mvol)} and \type{iZbs(1:mn,0:Mvol)}, where
-!latex \type{iRbc(l,j)}, \type{iZbs(l,j)} contains the Fourier harmonics, $R_j$, $Z_j$, of the $l$-th interface.
+!latex \item The Fourier harmonics of the interfaces are contained in \texttt{iRbc(1:mn,0:Mvol)} and \texttt{iZbs(1:mn,0:Mvol)}, where
+!latex \texttt{iRbc(l,j)}, \texttt{iZbs(l,j)} contains the Fourier harmonics, $R_j$, $Z_j$, of the $l$-th interface.
 !latex \end{enumerate}
 
   REAL,    allocatable :: iRbc(:,:) , iZbs(:,:)   ! interface surface geometry;     stellarator symmetric;
@@ -993,16 +899,16 @@ module allglobal
 !latex \begin{enumerate}
 
 !latex \item The coordinate geometry and fields are mapped to/from Fourier space and real space using FFTW3.
-!latex \item The resolution of the real space grid is given by \type{Nt=Ndiscrete*4*Mpol} and \type{Nz=Ndiscrete*4*Ntor}.
+!latex \item The resolution of the real space grid is given by \texttt{Nt=Ndiscrete*4*Mpol} and \texttt{Nz=Ndiscrete*4*Ntor}.
 
   INTEGER              :: Nt, Nz, Ntz, hNt, hNz ! discrete resolution; Ntz=Nt*Nz shorthand;
   REAL                 :: soNtz ! one / sqrt (one*Ntz); shorthand;
 
 
 !latex \item Various workspace arrays are allocated. 
-!l tex These include \type{Rij(1:Ntz,0:3,0:3)} and \type{Zij(1:Ntz,0:3,0:3)}, which contain the coordinates in real space and their derivatives;
-!latex \type{sg(0:3,Ntz)}, which contains the Jacobian and its derivatives;
-!latex and \type{guv(0:6,0:3,1:Ntz)}, which contains the metric elements and their derivatives.
+!l tex These include \texttt{Rij(1:Ntz,0:3,0:3)} and \texttt{Zij(1:Ntz,0:3,0:3)}, which contain the coordinates in real space and their derivatives;
+!latex \texttt{sg(0:3,Ntz)}, which contains the Jacobian and its derivatives;
+!latex and \texttt{guv(0:6,0:3,1:Ntz)}, which contains the metric elements and their derivatives.
 !latex \end{enumerate}
 
   REAL   , allocatable :: Rij(:,:,:), Zij(:,:,:), Xij(:,:,:), Yij(:,:,:), sg(:,:), guvij(:,:,:,:), gvuij(:,:,:) ! real-space; 10 Dec 15;
@@ -1031,13 +937,13 @@ module allglobal
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\type{DToocc, DToocs, DToosc, DTooss} : volume-integrated Chebyshev-metrics}
-!latex \subsubsection{\type{TTsscc, TTsscs, TTsssc, TTssss} : volume-integrated Chebyshev-metrics}
-!latex \subsubsection{\type{TDstcc, TDstcs, TDstsc, TDstss} : volume-integrated Chebyshev-metrics}
-!latex \subsubsection{\type{TDszcc, TDszcs, TDszsc, TDszss} : volume-integrated Chebyshev-metrics}
-!latex \subsubsection{\type{DDttcc, DDttcs, DDttsc, DDttss} : volume-integrated Chebyshev-metrics}
-!latex \subsubsection{\type{DDtzcc, DDtzcs, DDtzsc, DDtzss} : volume-integrated Chebyshev-metrics}
-!latex \subsubsection{\type{DDzzcc, DDzzcs, DDzzsc, DDzzss} : volume-integrated Chebyshev-metrics}
+!latex \subsubsection{\texttt{DToocc, DToocs, DToosc, DTooss} : volume-integrated Chebyshev-metrics}
+!latex \subsubsection{\texttt{TTsscc, TTsscs, TTsssc, TTssss} : volume-integrated Chebyshev-metrics}
+!latex \subsubsection{\texttt{TDstcc, TDstcs, TDstsc, TDstss} : volume-integrated Chebyshev-metrics}
+!latex \subsubsection{\texttt{TDszcc, TDszcs, TDszsc, TDszss} : volume-integrated Chebyshev-metrics}
+!latex \subsubsection{\texttt{DDttcc, DDttcs, DDttsc, DDttss} : volume-integrated Chebyshev-metrics}
+!latex \subsubsection{\texttt{DDtzcc, DDtzcs, DDtzsc, DDtzss} : volume-integrated Chebyshev-metrics}
+!latex \subsubsection{\texttt{DDzzcc, DDzzcs, DDzzsc, DDzzss} : volume-integrated Chebyshev-metrics}
 
 !latex \begin{enumerate}
 !latex \item These are allocated in \link{dforce}, defined in \link{ma00aa}, and are used in \link{matrix} to construct the matrices.
@@ -1064,8 +970,8 @@ module allglobal
 !latex \subsubsection{vector potential and the Beltrami linear system}
 
 !latex \begin{enumerate}
-!latex \item In each volume, the total degrees of freedom in the Beltrami linear system is \type{NAdof(1:Nvol)}.
-!latex This depends on \inputvar{Mpol}, \inputvar{Ntor} and \inputvar{Lrad(vvol)}.
+!latex \item In each volume, the total degrees of freedom in the Beltrami linear system is \texttt{NAdof(1:Nvol)}.
+!latex This depends on \c Mpol}, \c Ntor} and \c Lrad(vvol)}.
    
   INTEGER, allocatable :: NAdof(:) ! degrees of freedom in Beltrami fields in each annulus;
 
@@ -1099,7 +1005,7 @@ module allglobal
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-!latex \subsubsection{\type{dMA, dMB, dMC, dMD, dME, dMF} : field matrices}
+!latex \subsubsection{\texttt{dMA, dMB, dMC, dMD, dME, dMF} : field matrices}
 
 !latex \begin{enumerate}
 !latex \item The energy, $W \equiv \int \! dv {\; \bf B}\cdot{\bf B}$, and helicity, $K\equiv \int \! dv \; {\bf A}\cdot{\bf B}$, functionals may be written
@@ -1138,7 +1044,7 @@ module allglobal
 
 !latex \subsubsection{construction of ``force''}
 !latex \begin{enumerate}
-!latex \item The force vector is comprised of \type{Bomn} and \type{Iomn}.
+!latex \item The force vector is comprised of \texttt{Bomn} and \texttt{Iomn}.
 !latex \end{enumerate}
 
   REAL,    allocatable ::  Bemn(:,:,:),  Iomn(:,:), Somn(:,:,:), Pomn(:,:,:)
@@ -1147,7 +1053,7 @@ module allglobal
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\type{Btemn, Bzemn, Btomn, Bzomn} : covariant field on interfaces}
+!latex \subsubsection{\texttt{Btemn, Bzemn, Btomn, Bzomn} : covariant field on interfaces}
 !latex \begin{enumerate}
 !latex \item The covariant field:
 !latex \end{enumerate}
@@ -1156,7 +1062,7 @@ module allglobal
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\type{LGdof, NGdof} : geometrical degrees-of-freedom;}    
+!latex \subsubsection{\texttt{LGdof, NGdof} : geometrical degrees-of-freedom;}    
 !latex \begin{enumerate}
 !latex \item The geometrical degrees-of-freedom: 
 !latex \end{enumerate}
@@ -1182,12 +1088,12 @@ module allglobal
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\type{dmupfdx} : derivatives of multiplier and poloidal flux with respect to geometry}
+!latex \subsubsection{\texttt{dmupfdx} : derivatives of multiplier and poloidal flux with respect to geometry}
 
 !latex \begin{enumerate}
-!latex \item The information in \type{dmupfdx} describes how the helicity multiplier, $\mu$, and the enclosed poloidal flux, $\Delta \psi_p$, 
+!latex \item The information in \texttt{dmupfdx} describes how the helicity multiplier, $\mu$, and the enclosed poloidal flux, $\Delta \psi_p$, 
 !latex       must vary as the geometry is varied in order to satisfy the interface transform constraint.
-!latex \item The internal variable \type{dmupfdx(1:Mvol,1:2,1:LGdof,0:1)} is allocated/deallocated in \link{newton}, and \link{hesian} if selected.
+!latex \item The internal variable \texttt{dmupfdx(1:Mvol,1:2,1:LGdof,0:1)} is allocated/deallocated in \link{newton}, and \link{hesian} if selected.
 !l tex \item The rotational transform on the inner or outer interface of a given volume depends on the magnetic field in that volume, i.e.
 !l tex       \be \iotabar_\pm = \iotabar({\bf B}_\pm),
 !l tex       \ee
@@ -1223,7 +1129,7 @@ module allglobal
 !latex       \ee
 !latex \item This $2\times 2$ linear equation is solved in \link{dforce};
 !latex       and the derivatives of the rotational-transform are given in \internal{diotadxup}, see \link{preset}.
-!latex \item A finite-difference estimate is computed if \inputvar{Lcheck.eq.4}.
+!latex \item A finite-difference estimate is computed if \c Lcheck.eq.4}.
 !latex \end{enumerate}
 
   REAL,    allocatable :: dmupfdx(:,:,:,:)  ! derivatives of mu and dpflux wrt geometry at constant interface transform; 
@@ -1268,7 +1174,7 @@ module allglobal
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\type{lBBintegral, lABintegral} : volume integrals}
+!latex \subsubsection{\texttt{lBBintegral, lABintegral} : volume integrals}
 !latex \begin{enumerate}
 
 !latex \item The energy functional, $F \equiv \sum_l F_l$, where
@@ -1280,21 +1186,21 @@ module allglobal
 !latex (ii) the interface constraint, ${\bf B}\cdot\nabla s=0$; and (iii) the helicity constraint (or the transform constraint)
 !latex \item The derivatives of $F_l$ with respect to the inner and outer adjacent interface geometry are stored in
 !latex
-!latex \type{dFF(1:Nvol,0:1,0:mn+mn-1)}, where
+!latex \texttt{dFF(1:Nvol,0:1,0:mn+mn-1)}, where
 !latex
-!latex $         F_l                      \equiv$ \type{dFF(l,0,    0)}
+!latex $         F_l                      \equiv$ \texttt{dFF(l,0,    0)}
 !latex
 !latex $\partial F_l / \partial R_{l-1,j} \equiv$ \verb&dFF(ll,0,   j)& 
 !latex
 !latex $\partial F_l / \partial Z_{l-1,j} \equiv$ \verb&dFF(ll,0,mn}j)& 
 !latex
-!latex $\partial F_l / \partial R_{l  ,j} \equiv$ \type{dFF(ll,1,   j)} 
+!latex $\partial F_l / \partial R_{l  ,j} \equiv$ \texttt{dFF(ll,1,   j)} 
 !latex
 !latex $\partial F_l / \partial Z_{l  ,j} \equiv$ \verb&dFF(ll,1,mn}j)&
 !latex
 
 !latex \item The volume integrals $\int dv$, $\int B^2 \; dv$ and $\int {\bf A}\cdot{\bf B} \; dv$ in each volume
-!latex       are computed and saved in \type{volume(0:2,1:Nvol)}.
+!latex       are computed and saved in \texttt{volume(0:2,1:Nvol)}.
 !latex \end{enumerate}
 
   REAL   , allocatable :: lBBintegral(:) ! B.B      integral;
@@ -1407,7 +1313,7 @@ subroutine readin
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-!latex \subsubsection{\type{machprec}, \type{vsmall}, \type{small}, \type{sqrtmachprec} : machine precision}
+!latex \subsubsection{\texttt{machprec}, \texttt{vsmall}, \texttt{small}, \texttt{sqrtmachprec} : machine precision}
 
 !latex \begin{enumerate}
 !latex \item The machine precision is determined using the Fortran 90 intrinsic function EPSILON.
@@ -1446,11 +1352,11 @@ subroutine readin
 !latex \subsubsection{input file extension $\equiv$ command line argument}
 
 !latex \begin{enumerate}
-!latex \item The input file name, \type{ext}, is given as the first command line input, and the input file itself is \verb!ext.sp!
+!latex \item The input file name, \texttt{ext}, is given as the first command line input, and the input file itself is \verb!ext.sp!
 !latex \item Additional command line inputs recognized are:
 !latex \begin{enumerate} 
-!latex \item \type{-help, -h} ; will give help information to user; under construction;
-!latex \item \type{-readin} ; will immediately set \type{Wreadin=T}; this may be over-ruled when \type{namelist/screenlist/} is read;
+!latex \item \texttt{-help, -h} ; will give help information to user; under construction;
+!latex \item \texttt{-readin} ; will immediately set \texttt{Wreadin=T}; this may be over-ruled when \texttt{namelist/screenlist/} is read;
 !latex \end{enumerate}
 
 !latex \end{enumerate}
@@ -1506,17 +1412,17 @@ subroutine readin
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
-!latex \subsubsection{reading \type{physicslist}}
+!latex \subsubsection{reading \texttt{physicslist}}
 
 !latex \begin{enumerate}   
-!latex \item The internal variable, \type{Mvol = Nvol + Lfreebound}, gives the number of computational domains.
-!latex \item The input value for the fluxes enclosed within each interface, \inputvar{tflux(1:Mvol)} and \inputvar{tflux(1:Mvol)}, are immediately normalized:
+!latex \item The internal variable, \texttt{Mvol = Nvol + Lfreebound}, gives the number of computational domains.
+!latex \item The input value for the fluxes enclosed within each interface, \c tflux(1:Mvol)} and \c tflux(1:Mvol)}, are immediately normalized:
 !latex 
-!latex       \inputvar{tflux(1:Mvol)} $\rightarrow$ \inputvar{tflux(1:Mvol)/tflux(Nvol)}.
+!latex       \c tflux(1:Mvol)} $\rightarrow$ \c tflux(1:Mvol)/tflux(Nvol)}.
 !latex
-!latex       \inputvar{pflux(1:Mvol)} $\rightarrow$ \inputvar{pflux(1:Mvol)/tflux(Nvol)}.
+!latex       \c pflux(1:Mvol)} $\rightarrow$ \c pflux(1:Mvol)/tflux(Nvol)}.
 !latex
-!latex       (The input $\Phi_{edge} \equiv $ \inputvar{phiedge} will provide the total toroidal flux; see \link{preset}.)
+!latex       (The input $\Phi_{edge} \equiv $ \c phiedge} will provide the total toroidal flux; see \link{preset}.)
 !latex \end{enumerate}
       
    if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : reading physicslist     from ext.sp ;")') cput-cpus
@@ -1600,7 +1506,7 @@ subroutine readin
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
-!latex \subsubsection{reading \type{numericlist}}
+!latex \subsubsection{reading \texttt{numericlist}}
    
    if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : reading numericlist     from ext.sp ;")') cput-cpus
    endif
@@ -1630,7 +1536,7 @@ subroutine readin
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
-!latex \subsubsection{reading \type{locallist}}
+!latex \subsubsection{reading \texttt{locallist}}
    
    if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : reading locallist      from ext.sp ;")') cput-cpus
    endif
@@ -1650,7 +1556,7 @@ subroutine readin
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
-!latex \subsubsection{reading \type{globallist}}
+!latex \subsubsection{reading \texttt{globallist}}
 
    if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : reading globallist   from ext.sp ;")') cput-cpus
    endif
@@ -1684,7 +1590,7 @@ subroutine readin
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
-!latex \subsubsection{reading \type{diagnosticslist}}
+!latex \subsubsection{reading \texttt{diagnosticslist}}
 
    if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : reading diagnosticslist from ext.sp ;")') cput-cpus
    endif
@@ -1710,7 +1616,7 @@ subroutine readin
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
-!latex \subsubsection{reading \type{screenlist}}
+!latex \subsubsection{reading \texttt{screenlist}}
    
    if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : reading screenlist      from ext.sp ;")') cput-cpus
    endif
@@ -1888,9 +1794,9 @@ subroutine readin
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-!latex \subsubsection{\type{Mvol} : total number of volumes}
+!latex \subsubsection{\texttt{Mvol} : total number of volumes}
 !latex \begin{enumerate}
-!latex \item The number of plasma volumes is \internal{Mvol}=\inputvar{Nvol}+\inputvar{Lfreebound};
+!latex \item The number of plasma volumes is \internal{Mvol}=\c Nvol}+\c Lfreebound};
 !latex \end{enumerate}
 
   FATAL( readin, Lfreebound.lt.0 .or. Lfreebound.gt.1, illegal Lfreebound )
@@ -1903,18 +1809,18 @@ subroutine readin
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-!latex \subsubsection{\type{mn}, \type{im(1:mn)} and \type{in(1:mn)} : Fourier mode identification}
+!latex \subsubsection{\texttt{mn}, \texttt{im(1:mn)} and \texttt{in(1:mn)} : Fourier mode identification}
 !latex \begin{enumerate}
 !latex \item The Fourier description of even periodic functions is 
 !latex       \be f(\t,\z) = \sum_{n=0}^{N} f_{0,n} \cos(-n\z) + \sum_{m=1}^{M}\sum_{n=-N}^{N} f_{m,n} \cos(m\t-n\z),
 !latex       \ee
-!latex       where the resolution is given on input, $M\equiv $ \inputvar{ Mpol} and $N\equiv $ \inputvar{ Ntor}.
+!latex       where the resolution is given on input, $M\equiv $ \c  Mpol} and $N\equiv $ \c  Ntor}.
 !latex \item For convenience, the Fourier summations are written as
 !latex       \be f(\s,\t,\z) &=& \sum_j f_j(s) \cos( m_j \t - n_j \z ),
 !latex       \ee
-!latex       for $j=1,$ \type{mn}, where \type{mn}$ = N + 1 +  M  ( 2 N + 1 )$.
-!latex \item The integer arrays \type{im(1:mn)} and \type{in(1:mn)} contain the $m_j$ and $n_j$.
-!latex \item The array \type{in} includes the \type{Nfp} factor.
+!latex       for $j=1,$ \texttt{mn}, where \texttt{mn}$ = N + 1 +  M  ( 2 N + 1 )$.
+!latex \item The integer arrays \texttt{im(1:mn)} and \texttt{in(1:mn)} contain the $m_j$ and $n_j$.
+!latex \item The array \texttt{in} includes the \texttt{Nfp} factor.
 !latex \end{enumerate}
   
   mn = 1 + Ntor +  Mpol * ( 2 *  Ntor + 1 ) ! Fourier resolution of interface geometry & vector potential;
@@ -1926,9 +1832,9 @@ subroutine readin
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-!latex \subsubsection{\type{halfmm(1:mn}, regumm(1:mn) : regularization factor}
+!latex \subsubsection{\texttt{halfmm(1:mn}, regumm(1:mn) : regularization factor}
 !latex \begin{enumerate}
-!latex \item The ``regularization'' factor, \type{halfmm(1:mn)} = \type{im(1:mn)} * \type{half}, is real.
+!latex \item The ``regularization'' factor, \texttt{halfmm(1:mn)} = \texttt{im(1:mn)} * \texttt{half}, is real.
 !latex \item This is used in \link{lforce}, \link{bfield}, \link{stzxyz}, \link{coords}, \link{jo00aa}, \link{ma00aa}, \link{sc00aa} and \link{tr00ab}.
 !latex \end{enumerate}
   
@@ -1945,9 +1851,9 @@ subroutine readin
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-!latex \subsubsection{\type{ime} and \type{ine} : extended resolution Fourier mode identification}
+!latex \subsubsection{\texttt{ime} and \texttt{ine} : extended resolution Fourier mode identification}
 !latex \begin{enumerate}
-!latex \item The ``extended'' Fourier resolution is defined by \internal{lMpol} $ = 4 $ \inputvar{Mpol}, \internal{lNtor} $ = 4 $\inputvar{Ntor}.
+!latex \item The ``extended'' Fourier resolution is defined by \internal{lMpol} $ = 4 $ \c Mpol}, \internal{lNtor} $ = 4 $\c Ntor}.
 !latex \end{enumerate}
 
 ! lMpol =   Mpol ; lNtor =   Ntor ! no    enhanced resolution for metrics; 
@@ -1963,7 +1869,7 @@ subroutine readin
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-!latex \subsubsection{\type{mns}, \type{ims} and \type{ins} : Fourier mode identification for straight-fieldline angle}
+!latex \subsubsection{\texttt{mns}, \texttt{ims} and \texttt{ins} : Fourier mode identification for straight-fieldline angle}
 
   lMpol = iMpol ; lNtor = iNtor
 
@@ -1999,11 +1905,11 @@ subroutine readin
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-!latex \subsubsection{\type{iRbc(1:mn,0:Mvol}, \type{iZbs(1:mn,0:Mvol}, \type{iRbs(1:mn,0:Mvol} and \type{iZbc(1:mn,0:Mvol} : geometry}
+!latex \subsubsection{\texttt{iRbc(1:mn,0:Mvol}, \texttt{iZbs(1:mn,0:Mvol}, \texttt{iRbs(1:mn,0:Mvol} and \texttt{iZbc(1:mn,0:Mvol} : geometry}
   
 !latex \begin{enumerate}
-!latex \item \type{iRbc}, \type{iZbs}, \type{iRbs} and \type{iZbc} : Fourier harmonics of interface geometry;
-!latex \item \type{iVns}, \type{iVnc}, \type{iBns} and \type{iBns} : Fourier harmonics of normal field at computational boundary;
+!latex \item \texttt{iRbc}, \texttt{iZbs}, \texttt{iRbs} and \texttt{iZbc} : Fourier harmonics of interface geometry;
+!latex \item \texttt{iVns}, \texttt{iVnc}, \texttt{iBns} and \texttt{iBns} : Fourier harmonics of normal field at computational boundary;
 !latex \end{enumerate}
 
   SALLOCATE( iRbc, (1:mn,0:Mvol), zero ) ! interface Fourier harmonics;
@@ -2032,7 +1938,7 @@ subroutine readin
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-!latex \subsubsection{\type{ajk} : construction of coordinate axis}
+!latex \subsubsection{\texttt{ajk} : construction of coordinate axis}
 
 !latex \begin{enumerate}
 !latex \item This is only used in \link{rzaxis} to perform the poloidal integration and is defined quite simply: \newline

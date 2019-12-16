@@ -1,100 +1,87 @@
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!> \defgroup grp_global_force "global" force
 
-!title (&ldquo;global&rdquo; force) ! Given &ldquo;position&rdquo;, ${\bf \xi}$, computes ${\bf F}({\bf \xi})$ and $\nabla_{\bf \xi}{\bf F}$.
+!> \file dforce.f90
+!! \brief Calculates \f${\bf F}({\bf x})\f$, where \f${\bf x} \equiv \{\mbox{geometry}\} \equiv \{ R_{i,v}, Z_{i,v}\}\f$ 
+!!        and \f${\bf F}\equiv[[p+B^2/2]] + \{\mbox{spectral constraints}\} \f$, and \f$\nabla {\bf F}\f$.
+!! \ingroup grp_global_force
+!! 
+!! **unpacking**
+!!
+!! <ul>
+!!
+!! <li> The geometrical degrees of freedom are represented as a vector, \f${\bf x} \equiv \{ R_{i,v}, Z_{i,v}\}\f$, 
+!!       where \f$i=1,\f$ \c mn labels the Fourier harmonic and \f$v=1,\f$ \c Mvol\f$-1\f$ is the interface label.
+!!       This vector is "unpacked" using packxi().
+!!       (Note that packxi() also sets the coordinate axis, i.e. the \f$R_{i,0}\f$ and \f$Z_{i,0}\f$.) </li>
+!!
+!! </ul>
+!!
+!! **parallelization over volumes**
+!!
+!! <ul>
+!! <li> In each volume, \c vvol=1,Mvol , 
+!!       <ul>
+!!       <li> the logical array \c ImagneticOK(vvol) is set to \c .false. </li>
+!!       <li> the energy and helicity matrices, \c dMA(0:NN,0:NN), \c dMB(0:NN,0:2), etc. are allocated; </li>
+!!       <li> the volume-integrated metric arrays, \c DToocc, etc. are allocated; </li>
+!!       <li> calls ma00aa() to compute the volume-integrated metric arrays; </li>
+!!       <li> calls matrix() to construct the energy and helicity matrices; </li>
+!!       <li> calls ma02aa() to solve for the magnetic fields consistent with the appropriate constraints, perhaps by iterating on mp00ac(); </li>
+!!       <li> calls volume() to compute the volume of the \f$v\f$-th region; </li>
+!!       <li> calls lforce() to compute \f$p+B^2/2\f$ (and the spectral constraints if required) on the inner and outer interfaces; </li>
+!!       <li> the derivatives of the force-balance will also be computed if \c LComputeDerivatives=1; </li>
+!!       </ul> </li>
+!! <li> After the parallelization loop over the volumes, brcast() is called to broadcast the required information. </li>
+!! </ul>
+!!
+!! **broadcasting**
+!!
+!! <ul>
+!! <li> The required quantities are broadcast by brcast(). </li>
+!! </ul>
+!!
+!! **construction of force**
+!!
+!! <ul>
+!! <li> The force vector, \f${\bf F}({\bf x})\f$, is a combination of the pressure-imbalance Fourier harmonics, \f$[[p+B^2/2]]_{i,v}\f$,
+!!       where \f$i\f$ labels Fourier harmonic and \f$v\f$ is the interface label:
+!!       \f{eqnarray}{ F_{i,v} \equiv \left[ ( p_{v+1}+B^2_{i,v+1}/2 ) - ( p_v + B^2_{i,v}/2 ) \right] \times \texttt{BBweight}_i,
+!!       \f}
+!!       where \c BBweight(i) is defined in preset.f90 ;
+!!       and the spectral condensation constraints, 
+!!       \f{eqnarray}{ F_{i,v} \equiv I_{i,v} \times \texttt{epsilon} + S_{i,v,1} \times \texttt{sweight}_v - S_{i,v+1,0} \times \texttt{sweight}_{v+1},
+!!       \f}
+!!       where the spectral condensation constraints, \f$I_{i,v}\f$, and the "star-like" poloidal angle constraints, \f$S_{i,v,\pm 1}\f$,
+!!       are calculated and defined in lforce.f90;
+!!       and the \c sweight\f$_v\f$ are defined in preset.f90. </li>
+!! </ul>
+!!
+!! **construct derivatives of matrix equation**
+!!
+!! <ul>
+!! <li> Matrix perturbation theory is used to compute the derivatives of the solution, i.e. the Beltrami fields, as the geometry of the 
+!!       interfaces changes: </li>
+!! </ul>
+!!
+!! **extrapolation: planned redundant**
+!!
+!! <ul>
+!! <li> The extrapolation constraint is \f$R_{j,1} = R_{j,2} \, \psi_1^{m/2} / \psi_2^{m/2}\f$.
+!!       Combining this with the regularization factor for the geometry, i.e. \f$R_{j,i}=\psi_{i}^{m/2} \xi_{j,i}\f$, we obtain
+!!       \f{eqnarray}{ \xi_{j,1} = R_{j,2} / \psi_2^{m/2}.
+!!       \f} </li>
+!! </ul>
 
-!latex \briefly{Calculates ${\bf F}({\bf x})$, where ${\bf x} \equiv \{\mbox{\rm geometry}\} \equiv \{ R_{i,v}, Z_{i,v}\}$ 
-!latex          and ${\bf F}\equiv[[p+B^2/2]] + \{\mbox{\rm spectral constraints}\} $, and $\nabla {\bf F}$.}
-
-!latex \calledby{\link{hesian}, 
-!latex           \link{newton}, 
-!latex           \link{pc00aa}, 
-!latex           \link{pc00ab} and 
-!latex           \link{xspech}} \\
-
-!latex \calls{\link{packxi}, 
-!latex        \link{ma00aa}, 
-!latex        \link{matrix}, 
-!latex        \link{ma02aa}, 
-!latex        \link{lforce}, 
-!latex        \link{volume}, 
-!latex        \link{packab}, 
-!latex        \link{tr00ab}, 
-!latex        \link{coords} and 
-!latex        \link{brcast}}
-
-!latex \tableofcontents
-
-!latex \subsection{unpacking}
-
-!latex \begin{enumerate}
-
-!latex \item The geometrical degrees of freedom are represented as a vector, ${\bf x} \equiv \{ R_{i,v}, Z_{i,v}\}$, 
-!latex       where $i=1,$ \internal{mn} labels the Fourier harmonic and $v=1,$ \internal{Mvol}$-1$ is the interface label.
-!latex       This vector is ``unpacked'' using \link{packxi}.
-!latex       (Note that \link{packxi} also sets the coordinate axis, i.e. the $R_{i,0}$ and $Z_{i,0}$.)
-
-!latex \end{enumerate}
-
-!latex \subsection{parallelization over volumes}
-
-!latex \begin{enumerate}
-!latex \item In each volume, \internal{vvol = 1, Mvol}, 
-!latex       \begin{enumerate}
-!latex       \item the logical array \internal{ImagneticOK(vvol)} is set to \internal{.false.}
-!latex       \item the energy and helicity matrices, \internal{dMA(0:NN,0:NN)}, \internal{dMB(0:NN,0:2)}, etc. are allocated;
-!latex       \item the volume-integrated metric arrays, \internal{DToocc}, etc. are allocated;
-!latex       \item calls \link{ma00aa} to compute the volume-integrated metric arrays;
-!latex       \item calls \link{matrix} to construct the energy and helicity matrices;
-!latex       \item calls \link{ma02aa} to solve for the magnetic fields consistent with the appropriate constraints, perhaps by iterating on \link{mp00ac};
-!latex       \item calls \link{volume} to compute the volume of the $v$-th region;
-!latex       \item calls \link{lforce} to compute $p+B^2/2$ (and the spectral constraints if required) on the inner and outer interfaces;
-!latex       \item the derivatives of the force-balance will also be computed if \internal{LComputeDerivatives = 1};
-!latex       \end{enumerate}
-!latex \item After the parallelization loop over the volumes, \link{brcast} is called to broadcast the required information.
-!latex \end{enumerate}
-
-!latex \subsection{broadcasting}
-
-!latex \begin{enumerate}
-!latex \item The required quantities are broadcast by \link{brcast}.
-!latex \end{enumerate}
-
-!latex \subsection{construction of force}
-
-!latex \begin{enumerate}
-!latex \item The force vector, ${\bf F}({\bf x})$, is a combination of the pressure-imbalance Fourier harmonics, $[[p+B^2/2]]_{i,v}$,
-!latex       where $i$ labels Fourier harmonic and $v$ is the interface label:
-!latex       \be F_{i,v} \equiv \left[ ( p_{v+1}+B^2_{i,v+1}/2 ) - ( p_v + B^2_{i,v}/2 ) \right] \times \internal{BBweight}_i,
-!latex       \ee
-!latex       where \internal{BBweight(i)} is defined in \link{preset};
-!latex       and the spectral condensation constraints, 
-!latex       \be F_{i,v} \equiv I_{i,v} \times \inputvar{epsilon} + S_{i,v,1} \times \internal{sweight}_v - S_{i,v+1,0} \times \internal{sweight}_{v+1},
-!latex       \ee
-!latex       where the spectral condensation constraints, $I_{i,v}$, and the ``star-like'' poloidal angle constraints, $S_{i,v,\pm 1}$,
-!latex       are calculated and defined in \link{lforce};
-!latex       and the \internal{sweight}$_v$ are defined in \link{preset}.
-!latex \end{enumerate}
-
-!latex \subsection{construct derivatives of matrix equation}
-
-!latex \begin{enumerate}
-!latex \item Matrix perturbation theory is used to compute the derivatives of the solution, i.e. the Beltrami fields, as the geometry of the 
-!latex       interfaces changes:
-!latex \end{enumerate}
-
-!latex \subsection{extrapolation: planned redundant}
-
-!latex \begin{enumerate}
-!latex \item The extrapolation constraint is $R_{j,1} = R_{j,2} \, \psi_1^{m/2} / \psi_2^{m/2}$.
-!latex       Combining this with the regularization factor for the geometry, i.e. $R_{j,i}=\psi_{i}^{m/2} \xi_{j,i}$, we obtain
-!latex       \be \xi_{j,1} = R_{j,2} / \psi_2^{m/2}.
-!latex       \ee
-!latex \end{enumerate}
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+!> \brief Calculates \f${\bf F}({\bf x})\f$, where \f${\bf x} \equiv \{\mbox{geometry}\} \equiv \{ R_{i,v}, Z_{i,v}\}\f$ 
+!!        and \f${\bf F}\equiv[[p+B^2/2]] + \{\mbox{spectral constraints}\} \f$, and \f$\nabla {\bf F}\f$.
+!!
+!! Calculates \f${\bf F}({\bf x})\f$, where \f${\bf x} \equiv \{\mbox{geometry}\} \equiv \{ R_{i,v}, Z_{i,v}\}\f$ 
+!!        and \f${\bf F}\equiv[[p+B^2/2]] + \{\mbox{spectral constraints}\} \f$, and \f$\nabla {\bf F}\f$.
+!!
+!! @param[in] NGdof number of global degrees of freedom
+!! @param[in] position
+!! @param[out] force
+!! @param[in] LComputeDerivatives
 subroutine dforce( NGdof, position, force, LComputeDerivatives)
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
