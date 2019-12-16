@@ -137,7 +137,7 @@ BEGIN(dfp100)
 		! reduces the amount of data sent to the master thread. In the case of current constraint, only two
 		! doubles per volume are sent.
 		if( Lconstraint.EQ.3 ) then
-			WCALL( dfp100, lbpol, (vvol) )				!Compute field at interface for global constraint
+			WCALL( dfp100, lbpol, (vvol, 0) )				!Compute field at interface for global constraint
 		endif
 	enddo
 
