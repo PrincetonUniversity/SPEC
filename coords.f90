@@ -74,17 +74,17 @@
 !!       <ul>
 !!       <li> \c Igeometry=1 : Cartesian
 !!       \f{eqnarray}{     {\bf e}_\theta \times {\bf e}_\zeta & = & -r_{tor}R_\theta \; \hat {\bf i} -  r_{pol}R_\zeta \; \hat {\bf j} + r_{pol}r_{tor}\hat {\bf k} \\
-!!           \pmb{\xi} \cdot {\bf e}_\theta \times {\bf e}_\zeta & = &  \delta R \\
+!!           \mathbf{\xi} \cdot {\bf e}_\theta \times {\bf e}_\zeta & = &  \delta R \\
 !!           \sqrt g                                           & = &         R_s \ r_{pol} \ r_{tor}
 !!       \f} </li>
 !!       <li>  \c Igeometry=2 : Cylindrical
 !!       \f{eqnarray}{    {\bf e}_\theta \times {\bf e}_\zeta & = & (R_\theta \sin \theta + R \cos\theta ) \; {\bf \hat i} + (R    \sin \theta - R_\theta \cos\theta ) \; {\bf \hat j} - R R_\zeta \; {\bf \hat k} \\
-!!           \pmb{\xi}\cdot {\bf e}_\theta \times {\bf e}_\zeta & = & \delta R \; R \\
+!!           \mathbf{\xi}\cdot {\bf e}_\theta \times {\bf e}_\zeta & = & \delta R \; R \\
 !!           \sqrt g                                          & = & R_s \; R
 !!       \f} </li>
 !!       <li>  \c Igeometry=3 : Toroidal
 !!       \f{eqnarray}{    {\bf e}_\theta \times {\bf e}_\zeta & = & - R \, Z_\theta \, \hat r + (Z_\theta \,R_\zeta - R_\theta \,Z_\zeta) \hat \phi + R \,R_\theta \,\hat z\\
-!!           \pmb{\xi}\cdot {\bf e}_\theta \times {\bf e}_\zeta & = & R ( \delta Z \; R_\theta - \delta R \; Z_\theta ) \\
+!!           \mathbf{\xi}\cdot {\bf e}_\theta \times {\bf e}_\zeta & = & R ( \delta Z \; R_\theta - \delta R \; Z_\theta ) \\
 !!            \sqrt g                                         & = & R ( Z_s      \; R_\theta - R_s      \; Z_\theta )
 !!       \f} </li>
 !!       </ul> 

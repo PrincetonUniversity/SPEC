@@ -18,7 +18,9 @@
 !! **compute the normal field on a regular grid on the computational boundary**
 !! <ul>
 !! <li> For each point on the compuational boundary, \ref casing() is called to compute the normal field produced by the plasma currents. </li>
-!! <li> (There is a very clumsy attempt to parallelize this which could be greatly improved.) </li>
+!! <li> \todo There is a very clumsy attempt to parallelize this which could be greatly improved.
+!!
+!! </li>
 !! <li> An FFT gives the required Fourier harmonics. </li>
 !! </ul>
 !! @see casing.f90
