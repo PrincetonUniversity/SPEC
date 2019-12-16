@@ -5,29 +5,27 @@
 !! \ingroup grp_input
 !! 
 !! Note that all variables in namelist need to be broadcasted in readin.
-
-!latex **input geometry**
-
-!latex \begin{enumerate}
-!latex \item The geometry of the $l$-th interface, for $l=0,N$ where $N\equiv$ \c Nvol}, is described by a set of Fourier harmonics,
-!latex using an arbitrary poloidal angle,
-!latex \be R_l(\t,\z)&=&\sum_{j}R_{j,l}\cos(m_j\t-n_j\z), \\ Z_l(\t,\z)&=&\sum_{j}Z_{j,l}\sin(m_j\t-n_j\z). \ee
-!latex \item These harmonics are read from the \texttt{ext.sp} file and come directly after the namelists described above.
-!latex The required format is as follows:
-!latex \be \begin{array}{ccccccccc}
-!latex m_1 & n_1 & R_{1,0} & Z_{1,0} & R_{1,1} & Z_{1,1} & \dots & R_{1,N} & Z_{1,N} \\
-!latex m_2 & n_2 & R_{2,0} & Z_{2,0} & R_{2,1} & Z_{2,1} & \dots & R_{2,N} & Z_{2,N} \\
-!latex \dots \\
-!latex m_j & n_j & R_{j,0} & Z_{j,0} & R_{j,1} & Z_{j,1} & \dots & R_{j,N} & Z_{j,N} \\
-!latex \dots
-!latex \end{array}
-!latex \ee
-!latex
-!latex \item The coordinate axis corresponds to $j=0$ and the outermost boundary corresponds to $j=$\c Nvol}.
-!latex \item An arbitrary selection of harmonics may be inluded in any order, but only those within the range specified by \c Mpol} and \c Ntor}
-!latex will be used.
-!latex \item The geometry of {\em all} the interfaces, i.e. $l=0,N$, including the degenerate `coordinate-axis' interface, must be given.
-!latex \end{enumerate}
+!>
+!> **Input geometry**
+!> <ul>
+!> <li> The geometry of the \f$l\f$-th interface, for \f$l=0,N\f$ where \f$N\equiv\f$ Nvol, is described by a set of Fourier harmonics,
+!>      using an arbitrary poloidal angle,
+!>      \f{eqnarray}{ R_l(\theta,\zeta)&=&\sum_{j}R_{j,l}\cos(m_j\theta-n_j\zeta), \\
+!>                    Z_l(\theta,\zeta)&=&\sum_{j}Z_{j,l}\sin(m_j\theta-n_j\zeta). \f}
+!> <li> These harmonics are read from the \c ext.sp file and come directly after the namelists described above.
+!>      The required format is as follows:
+!>      \f{eqnarray}{ \begin{array}{ccccccccc}
+!>      m_1 & n_1 & R_{1,0} & Z_{1,0} & R_{1,1} & Z_{1,1} & ... & R_{1,N} & Z_{1,N} \\
+!>      m_2 & n_2 & R_{2,0} & Z_{2,0} & R_{2,1} & Z_{2,1} & ... & R_{2,N} & Z_{2,N} \\
+!>      ... \\
+!>      m_j & n_j & R_{j,0} & Z_{j,0} & R_{j,1} & Z_{j,1} & ... & R_{j,N} & Z_{j,N} \\
+!>      ...
+!>      \end{array}
+!>      \f}
+!> <li> The coordinate axis corresponds to \f$j=0\f$ and the outermost boundary corresponds to \f$j=\f$ Nvol.
+!> <li> An arbitrary selection of harmonics may be inluded in any order, but only those within the range specified by Mpol and Ntor will be used.
+!> <li> The geometry of *all* the interfaces, i.e. \f$l=0,N\f$, including the degenerate "coordinate-axis" interface, must be given.
+!> </ul>
 
 
 ! to set keyboard shortcut in emacs                                        
@@ -804,7 +802,6 @@ end module inputlist
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-! >  \brief global variables used throughout the whole SPEC code
 module allglobal
 
   use constants
@@ -840,18 +837,12 @@ module allglobal
     
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsection{internal variables}
-
-!latex \subsubsection{Fourier representation}
-
-!latex \begin{enumerate} 
-
 !> \ingroup grp_input
 !> \addtogroup grp_internal_vars Internal Variables
 !> @{
 !> \addtogroup grp_fourier_repr Fourier representation
 !> @{
-  INTEGER              :: mn  !< total number of Fourier harmonics for coordinates/fields; calculated from Mpol,Ntor in readin;
+  INTEGER              :: mn           !< total number of Fourier harmonics for coordinates/fields; calculated from Mpol,Ntor in readin;
   INTEGER, allocatable :: im(:), in(:) !< Fourier modes; set in readin;
 
   REAL,    allocatable :: halfmm(:), regumm(:)
@@ -865,15 +856,15 @@ module allglobal
  
 ! INTEGER, allocatable :: dnjn(:,:)
 
-!latex \item Enhanced resolution is required for the metric elements, $g_{ij}/\sqrt g$, which is given by \texttt{mne}, \texttt{ime}., and \texttt{ine}.
-!latex The Fourier resolution here is determined by \texttt{lMpol=2*Mpol} and \texttt{lNtor=2*Ntor}.
+!> Enhanced resolution is required for the metric elements, \f$g_{ij}/\sqrt g\f$, which is given by mne, ime, and ine.
+!> The Fourier resolution here is determined by \texttt{lMpol=2*Mpol} and \texttt{lNtor=2*Ntor}.
   INTEGER              :: mne !< enhanced resolution for metric elements;
   INTEGER, allocatable :: ime(:), ine(:)
 
-!latex \item Enhanced resolution is required for the transformation to straight-field line angle on the interfaces,
-!latex which is given by \texttt{mns}, \texttt{ims}., and \texttt{ins}.
-!latex The Fourier resolution here is determined by \texttt{iMpol} and \texttt{iNtor}.
-!latex \end{enumerate}
+!> <li> Enhanced resolution is required for the transformation to straight-field line angle on the interfaces,
+!> which is given by \texttt{mns}, \texttt{ims}., and \texttt{ins}.
+!> The Fourier resolution here is determined by \texttt{iMpol} and \texttt{iNtor}.
+!> </ul>
 
   INTEGER              :: mns !< enhanced resolution for straight field line transformation;
   INTEGER, allocatable :: ims(:), ins(:)
@@ -886,12 +877,12 @@ module allglobal
 !> @}
 !> \addtogroup grp_iface_geom Interface geometry: iRbc, iZbs etc.
 !> @{
-!latex \subsubsection{\texttt{iRbc, iZbs, etc.} : interface geometry}
+!> \subsubsection{\texttt{iRbc, iZbs, etc.} : interface geometry}
 
-!latex \begin{enumerate}
-!latex \item The Fourier harmonics of the interfaces are contained in \texttt{iRbc(1:mn,0:Mvol)} and \texttt{iZbs(1:mn,0:Mvol)}, where
-!latex \texttt{iRbc(l,j)}, \texttt{iZbs(l,j)} contains the Fourier harmonics, $R_j$, $Z_j$, of the $l$-th interface.
-!latex \end{enumerate}
+!> <ul>
+!> <li> The Fourier harmonics of the interfaces are contained in \texttt{iRbc(1:mn,0:Mvol)} and \texttt{iZbs(1:mn,0:Mvol)}, where
+!> \texttt{iRbc(l,j)}, \texttt{iZbs(l,j)} contains the Fourier harmonics, $R_j$, $Z_j$, of the $l$-th interface.
+!> </ul>
 
   REAL,    allocatable :: iRbc(:,:) , iZbs(:,:)   !< interface surface geometry;     stellarator symmetric;
   REAL,    allocatable :: iRbs(:,:) , iZbc(:,:)   !< interface surface geometry; non-stellarator symmetric;
@@ -915,21 +906,21 @@ module allglobal
 !> @}
 !> \addtogroup grp_fourier_transform Fourier Transforms
 !> @{
-!latex \subsubsection{Fourier Transforms}
-!latex \begin{enumerate}
+!> \subsubsection{Fourier Transforms}
+!> <ul>
 
-!latex \item The coordinate geometry and fields are mapped to/from Fourier space and real space using FFTW3.
-!latex \item The resolution of the real space grid is given by \texttt{Nt=Ndiscrete*4*Mpol} and \texttt{Nz=Ndiscrete*4*Ntor}.
+!> <li> The coordinate geometry and fields are mapped to/from Fourier space and real space using FFTW3.
+!> <li> The resolution of the real space grid is given by \texttt{Nt=Ndiscrete*4*Mpol} and \texttt{Nz=Ndiscrete*4*Ntor}.
 
   INTEGER              :: Nt, Nz, Ntz, hNt, hNz !< discrete resolution; Ntz=Nt*Nz shorthand;
   REAL                 :: soNtz !< one / sqrt (one*Ntz); shorthand;
 
 
-!latex \item Various workspace arrays are allocated. 
+!> <li> Various workspace arrays are allocated. 
 !l tex These include \texttt{Rij(1:Ntz,0:3,0:3)} and \texttt{Zij(1:Ntz,0:3,0:3)}, which contain the coordinates in real space and their derivatives;
-!latex \texttt{sg(0:3,Ntz)}, which contains the Jacobian and its derivatives;
-!latex and \texttt{guv(0:6,0:3,1:Ntz)}, which contains the metric elements and their derivatives.
-!latex \end{enumerate}
+!> \texttt{sg(0:3,Ntz)}, which contains the Jacobian and its derivatives;
+!> and \texttt{guv(0:6,0:3,1:Ntz)}, which contains the metric elements and their derivatives.
+!> </ul>
 
   REAL   , allocatable :: Rij(:,:,:), Zij(:,:,:), Xij(:,:,:), Yij(:,:,:), sg(:,:), guvij(:,:,:,:), gvuij(:,:,:) !< real-space; 10 Dec 15;
   
@@ -960,17 +951,17 @@ module allglobal
 
 !> \addtogroup grp_chebychev_metric Volume-integrated Chebyshev-metrics
 !> @{
-!latex \subsubsection{\texttt{DToocc, DToocs, DToosc, DTooss} : volume-integrated Chebyshev-metrics}
-!latex \subsubsection{\texttt{TTsscc, TTsscs, TTsssc, TTssss} : volume-integrated Chebyshev-metrics}
-!latex \subsubsection{\texttt{TDstcc, TDstcs, TDstsc, TDstss} : volume-integrated Chebyshev-metrics}
-!latex \subsubsection{\texttt{TDszcc, TDszcs, TDszsc, TDszss} : volume-integrated Chebyshev-metrics}
-!latex \subsubsection{\texttt{DDttcc, DDttcs, DDttsc, DDttss} : volume-integrated Chebyshev-metrics}
-!latex \subsubsection{\texttt{DDtzcc, DDtzcs, DDtzsc, DDtzss} : volume-integrated Chebyshev-metrics}
-!latex \subsubsection{\texttt{DDzzcc, DDzzcs, DDzzsc, DDzzss} : volume-integrated Chebyshev-metrics}
+!> \subsubsection{\texttt{DToocc, DToocs, DToosc, DTooss} : volume-integrated Chebyshev-metrics}
+!> \subsubsection{\texttt{TTsscc, TTsscs, TTsssc, TTssss} : volume-integrated Chebyshev-metrics}
+!> \subsubsection{\texttt{TDstcc, TDstcs, TDstsc, TDstss} : volume-integrated Chebyshev-metrics}
+!> \subsubsection{\texttt{TDszcc, TDszcs, TDszsc, TDszss} : volume-integrated Chebyshev-metrics}
+!> \subsubsection{\texttt{DDttcc, DDttcs, DDttsc, DDttss} : volume-integrated Chebyshev-metrics}
+!> \subsubsection{\texttt{DDtzcc, DDtzcs, DDtzsc, DDtzss} : volume-integrated Chebyshev-metrics}
+!> \subsubsection{\texttt{DDzzcc, DDzzcs, DDzzsc, DDzzss} : volume-integrated Chebyshev-metrics}
 
-!latex \begin{enumerate}
-!latex \item These are allocated in \link{dforce}, defined in \link{ma00aa}, and are used in \link{matrix} to construct the matrices.
-!latex \end{enumerate}
+!> <ul>
+!> <li> These are allocated in \link{dforce}, defined in \link{ma00aa}, and are used in \link{matrix} to construct the matrices.
+!> </ul>
   
   REAL,    allocatable :: DToocc(:,:,:,:), DToocs(:,:,:,:), DToosc(:,:,:,:), DTooss(:,:,:,:)
   REAL,    allocatable :: TTsscc(:,:,:,:), TTsscs(:,:,:,:), TTsssc(:,:,:,:), TTssss(:,:,:,:)
@@ -993,30 +984,30 @@ module allglobal
 
 !> \addtogroup grp_vecpot Vector potential and the Beltrami linear system
 !> @{
-!latex \subsubsection{vector potential and the Beltrami linear system}
+!> \subsubsection{vector potential and the Beltrami linear system}
 
-!latex \begin{enumerate}
-!latex \item In each volume, the total degrees of freedom in the Beltrami linear system is \texttt{NAdof(1:Nvol)}.
-!latex This depends on \c Mpol}, \c Ntor} and \c Lrad(vvol)}.
+!> <ul>
+!> <li> In each volume, the total degrees of freedom in the Beltrami linear system is \texttt{NAdof(1:Nvol)}.
+!> This depends on \c Mpol}, \c Ntor} and \c Lrad(vvol)}.
    
   INTEGER, allocatable :: NAdof(:) !< degrees of freedom in Beltrami fields in each annulus;
 
-!latex \item The covariant components of the vector potential are written as
-!latex       \be            A_\t & = & \sum_i \sum_{l=0}^L \Ate{i,l} \; T_{l}(s) \cos\a_i + \sum_i \sum_{l=0}^L \Ato{i,l} \; T_{l}(s) \sin\a_i \\
-!latex                      A_\z & = & \sum_i \sum_{l=0}^L \Aze{i,l} \; T_{l}(s) \cos\a_i + \sum_i \sum_{l=0}^L \Azo{i,l} \; T_{l}(s) \sin\a_i ,
-!latex       \ee
-!latex       where $T_l(s)$ are the Chebyshev polynomials and $\a_i \equiv m_i \t - n_i \z$.
+!> <li> The covariant components of the vector potential are written as
+!>       \be            A_\t & = & \sum_i \sum_{l=0}^L \Ate{i,l} \; T_{l}(s) \cos\a_i + \sum_i \sum_{l=0}^L \Ato{i,l} \; T_{l}(s) \sin\a_i \\
+!>                      A_\z & = & \sum_i \sum_{l=0}^L \Aze{i,l} \; T_{l}(s) \cos\a_i + \sum_i \sum_{l=0}^L \Azo{i,l} \; T_{l}(s) \sin\a_i ,
+!>       \ee
+!>       where $T_l(s)$ are the Chebyshev polynomials and $\a_i \equiv m_i \t - n_i \z$.
 
-!latex \item The following internal arrays are declared in \link{preset}
-!latex
-!latex       \verb{dAte(0,i)%s(l){$\equiv \Ate{i,l}$
-!latex
-!latex       \verb{dAze(0,i)%s(l){$\equiv \Aze{i,l}$
-!latex
-!latex       \verb{dAto(0,i)%s(l){$\equiv \Ato{i,l}$
-!latex
-!latex       \verb{dAzo(0,i)%s(l){$\equiv \Azo{i,l}$
-!latex \end{enumerate}
+!> <li> The following internal arrays are declared in \link{preset}
+!>
+!>       \verb{dAte(0,i)%s(l){$\equiv \Ate{i,l}$
+!>
+!>       \verb{dAze(0,i)%s(l){$\equiv \Aze{i,l}$
+!>
+!>       \verb{dAto(0,i)%s(l){$\equiv \Ato{i,l}$
+!>
+!>       \verb{dAzo(0,i)%s(l){$\equiv \Azo{i,l}$
+!> </ul>
 
   type(subgrid), allocatable :: Ate(:,:,:), Aze(:,:,:)
   type(subgrid), allocatable :: Ato(:,:,:), Azo(:,:,:)
@@ -1033,17 +1024,17 @@ module allglobal
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 !> \addtogroup grp_field_matrices Field matrices: dMA, dMB, dMC, dMD, dME, dMF
 !> @{
-!latex \subsubsection{\texttt{dMA, dMB, dMC, dMD, dME, dMF} : field matrices}
+!> \subsubsection{\texttt{dMA, dMB, dMC, dMD, dME, dMF} : field matrices}
 
-!latex \begin{enumerate}
-!latex \item The energy, $W \equiv \int \! dv {\; \bf B}\cdot{\bf B}$, and helicity, $K\equiv \int \! dv \; {\bf A}\cdot{\bf B}$, functionals may be written
-!latex      \be W & = & \frac{1}{2} \; a_i \; A_{i,j} \; a_j + a_i \; B_{i,j} \; \psi_j + \frac{1}{2} \; \psi_i \; C_{i,j} \; \psi_j \label{eq:energymatrix} \\
-!latex          K & = & \frac{1}{2} \; a_i \; D_{i,j} \; a_j + a_i \; E_{i,j} \; \psi_j + \frac{1}{2} \; \psi_i \; F_{i,j} \; \psi_j \label{eq:helicitymatrix}
-!latex      \ee
-!latex       where ${\bf a} \equiv \{ A_{\t,e,i,l}, A_{\z,e,i,l}, A_{\t,o,i,l}, A_{\z,o,i,l}, f_{e,i}, f_{o,i} \}$ contains the independent degrees of freedom
-!latex       and $\boldpsi \equiv \{\Delta \psi_t,\Delta \psi_p\}$.
-!latex \item These are allocated and deallocated in \link{dforce}, assigned in \link{matrix}, and used in \link{mp00ac} and ? \link{df00aa}.
-!latex \end{enumerate}
+!> <ul>
+!> <li> The energy, $W \equiv \int \! dv {\; \bf B}\cdot{\bf B}$, and helicity, $K\equiv \int \! dv \; {\bf A}\cdot{\bf B}$, functionals may be written
+!>      \be W & = & \frac{1}{2} \; a_i \; A_{i,j} \; a_j + a_i \; B_{i,j} \; \psi_j + \frac{1}{2} \; \psi_i \; C_{i,j} \; \psi_j \label{eq:energymatrix} \\
+!>          K & = & \frac{1}{2} \; a_i \; D_{i,j} \; a_j + a_i \; E_{i,j} \; \psi_j + \frac{1}{2} \; \psi_i \; F_{i,j} \; \psi_j \label{eq:helicitymatrix}
+!>      \ee
+!>       where ${\bf a} \equiv \{ A_{\t,e,i,l}, A_{\z,e,i,l}, A_{\t,o,i,l}, A_{\z,o,i,l}, f_{e,i}, f_{o,i} \}$ contains the independent degrees of freedom
+!>       and $\boldpsi \equiv \{\Delta \psi_t,\Delta \psi_p\}$.
+!> <li> These are allocated and deallocated in \link{dforce}, assigned in \link{matrix}, and used in \link{mp00ac} and ? \link{df00aa}.
+!> </ul>
 
    REAL,   allocatable :: dMA(:,:), dMB(:,:)! dMC(:,:) !< energy and helicity matrices; quadratic forms; 
    REAL,   allocatable :: dMD(:,:)! dME(:,:)! dMF(:,:) !< energy and helicity matrices; quadratic forms; 
@@ -1071,10 +1062,10 @@ module allglobal
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 !> \addtogroup grp_force_constr Construction of "force"
 !> @{
-!latex \subsubsection{construction of ``force''}
-!latex \begin{enumerate}
-!latex \item The force vector is comprised of \texttt{Bomn} and \texttt{Iomn}.
-!latex \end{enumerate}
+!> \subsubsection{construction of ``force''}
+!> <ul>
+!> <li> The force vector is comprised of \texttt{Bomn} and \texttt{Iomn}.
+!> </ul>
 
   REAL,    allocatable ::  Bemn(:,:,:),  Iomn(:,:), Somn(:,:,:), Pomn(:,:,:)
   REAL,    allocatable ::  Bomn(:,:,:),  Iemn(:,:), Semn(:,:,:), Pemn(:,:,:)
@@ -1083,10 +1074,10 @@ module allglobal
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 !> \addtogroup grp_covar_field_ifaces Covariant field on interfaces: Btemn, Bzemn, Btomn, Bzomn
 !> @{
-!latex \subsubsection{\texttt{Btemn, Bzemn, Btomn, Bzomn} : covariant field on interfaces}
-!latex \begin{enumerate}
-!latex \item The covariant field:
-!latex \end{enumerate}
+!> \subsubsection{\texttt{Btemn, Bzemn, Btomn, Bzomn} : covariant field on interfaces}
+!> <ul>
+!> <li> The covariant field:
+!> </ul>
 
   REAL,    allocatable ::  Btemn(:,:,:), Bzemn(:,:,:), Btomn(:,:,:), Bzomn(:,:,:) !< covariant components of the tangential field on interfaces;
 !> @}
@@ -1094,10 +1085,10 @@ module allglobal
 
 !> \addtogroup grp_geomdof Geometrical degrees-of-freedom: LGdof, NGdof
 !> @{
-!latex \subsubsection{\texttt{LGdof, NGdof} : geometrical degrees-of-freedom;}    
-!latex \begin{enumerate}
-!latex \item The geometrical degrees-of-freedom: 
-!latex \end{enumerate}
+!> \subsubsection{\texttt{LGdof, NGdof} : geometrical degrees-of-freedom;}    
+!> <ul>
+!> <li> The geometrical degrees-of-freedom: 
+!> </ul>
 
   INTEGER              :: LGdof !<       geometrical degrees of freedom associated with each interface;                   ; 
   INTEGER              :: NGdof !< total geometrical degrees of freedom                               ;                   ; 
@@ -1105,13 +1096,13 @@ module allglobal
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 !> \addtogroup grp_par_deriv_mat Parallel construction of derivative matrix
 !> @{
-!latex \subsubsection{parallel construction of derivative matrix}
+!> \subsubsection{parallel construction of derivative matrix}
 
-!latex \begin{enumerate}
-!latex \item The derivatives of force-balance, $[[p+B^2/2]]$, and the spectral constraints (see \link{sw03aa}), with respect to the interface geometry
-!latex is constructed in parallel by \link{dforce}.
-!latex \item force-balance across the $l$-th interface depends on the fields in the adjacent interfaces.
-!latex \end{enumerate}
+!> <ul>
+!> <li> The derivatives of force-balance, $[[p+B^2/2]]$, and the spectral constraints (see \link{sw03aa}), with respect to the interface geometry
+!> is constructed in parallel by \link{dforce}.
+!> <li> force-balance across the $l$-th interface depends on the fields in the adjacent interfaces.
+!> </ul>
 
   REAL,    allocatable :: dBBdRZ(:,:,:)
   REAL,    allocatable :: dIIdRZ(:  ,:)
@@ -1122,49 +1113,49 @@ module allglobal
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 !> \addtogroup grp_deriv_mul_polflux Derivatives of multiplier and poloidal flux with respect to geometry:  dmupfdx
 !> @{
-!latex \subsubsection{\texttt{dmupfdx} : derivatives of multiplier and poloidal flux with respect to geometry}
+!> \subsubsection{\texttt{dmupfdx} : derivatives of multiplier and poloidal flux with respect to geometry}
 
-!latex \begin{enumerate}
-!latex \item The information in \texttt{dmupfdx} describes how the helicity multiplier, $\mu$, and the enclosed poloidal flux, $\Delta \psi_p$, 
-!latex       must vary as the geometry is varied in order to satisfy the interface transform constraint.
-!latex \item The internal variable \texttt{dmupfdx(1:Mvol,1:2,1:LGdof,0:1)} is allocated/deallocated in \link{newton}, and \link{hesian} if selected.
-!l tex \item The rotational transform on the inner or outer interface of a given volume depends on the magnetic field in that volume, i.e.
+!> <ul>
+!> <li> The information in \texttt{dmupfdx} describes how the helicity multiplier, $\mu$, and the enclosed poloidal flux, $\Delta \psi_p$, 
+!>       must vary as the geometry is varied in order to satisfy the interface transform constraint.
+!> <li> The internal variable \texttt{dmupfdx(1:Mvol,1:2,1:LGdof,0:1)} is allocated/deallocated in \link{newton}, and \link{hesian} if selected.
+!l tex <li> The rotational transform on the inner or outer interface of a given volume depends on the magnetic field in that volume, i.e.
 !l tex       \be \iotabar_\pm = \iotabar({\bf B}_\pm),
 !l tex       \ee
 !l tex       so that
 !l tex       \be \delta \iotabar_\pm = \frac{\partial \iotabar_\pm}{\partial {\bf B}_\pm} \cdot \delta {\bf B_\pm}.
 !l tex       \ee
-!latex \item The magnetic field depends on the Fourier harmonics of both the inner and outer interface geometry (represented here as $x_j$),
-!latex       the helicity multiplier, and the enclosed poloidal flux, i.e. ${\bf B_\pm} = {\bf B_\pm}(x_j, \mu, \Delta \psi_p)$, so that 
-!latex       \be \delta {\bf B_\pm} = \frac{\partial {\bf B}_\pm}{\partial x_j          } \delta x_j
-!latex                              + \frac{\partial {\bf B}_\pm}{\partial \mu          } \delta \mu
-!latex                              + \frac{\partial {\bf B}_\pm}{\partial \Delta \psi_p} \delta \Delta \psi_p.
-!latex       \ee
-!latex \item This information is used to adjust the calculation of how force-balance, i.e. $B^2$ at the interfaces, 
-!latex       varies with geometry at fixed interface rotational transform. Given 
-!latex       \be B_\pm^2 = B_\pm^2 (x_j, \mu, \Delta \psi_p),
-!latex       \ee
-!latex       we may derive
-!latex       \be \frac{\partial B_\pm^2}{\partial x_j} = \frac{\partial B_\pm^2}{\partial x_j          }                     
-!latex                                                 + \frac{\partial B_\pm^2}{\partial \mu          } \frac{\partial \mu          }{\partial x_j}
-!latex                                                 + \frac{\partial B_\pm^2}{\partial \Delta \psi_p} \frac{\partial \Delta \psi_p}{\partial x_j}
-!latex       \ee
-!latex \item The constraint to be enforced is that $\mu$ and $\Delta \psi_p$ must generally vary as the geometry is varied 
-!latex       if the value of the rotational-transform constraint on the inner/outer interface is to be preserved,
-!latex       \i.e. 
-!latex       \be \left(\begin{array}{ccc} \ds \frac{\partial \iotabar_-}{\partial {\bf B}_-} \cdot \frac{\partial {\bf B}_-}{\partial \mu          } & , & 
-!latex                                    \ds \frac{\partial \iotabar_-}{\partial {\bf B}_-} \cdot \frac{\partial {\bf B}_-}{\partial \Delta \psi_p} \\
-!latex                                    \ds \frac{\partial \iotabar_+}{\partial {\bf B}_+} \cdot \frac{\partial {\bf B}_+}{\partial \mu          } & , & 
-!latex                                    \ds \frac{\partial \iotabar_+}{\partial {\bf B}_+} \cdot \frac{\partial {\bf B}_+}{\partial \Delta \psi_p}
-!latex                   \end{array} \right)
-!latex           \left(\begin{array}{c} \ds \frac{\partial \mu}{\partial x_j} \\ \ds \frac{\partial \Delta \psi_p}{\partial x_j} \end{array} \right) = 
-!latex         - \left(\begin{array}{c} \ds \frac{\partial \iotabar_-}{\partial {\bf B}_-} \cdot \frac{\partial {\bf B}_-}{\partial x_j} \\
-!latex                                  \ds \frac{\partial \iotabar_+}{\partial {\bf B}_+} \cdot \frac{\partial {\bf B}_+}{\partial x_j} \end{array} \right).
-!latex       \ee
-!latex \item This $2\times 2$ linear equation is solved in \link{dforce};
-!latex       and the derivatives of the rotational-transform are given in \internal{diotadxup}, see \link{preset}.
-!latex \item A finite-difference estimate is computed if \c Lcheck.eq.4}.
-!latex \end{enumerate}
+!> <li> The magnetic field depends on the Fourier harmonics of both the inner and outer interface geometry (represented here as $x_j$),
+!>       the helicity multiplier, and the enclosed poloidal flux, i.e. ${\bf B_\pm} = {\bf B_\pm}(x_j, \mu, \Delta \psi_p)$, so that 
+!>       \be \delta {\bf B_\pm} = \frac{\partial {\bf B}_\pm}{\partial x_j          } \delta x_j
+!>                              + \frac{\partial {\bf B}_\pm}{\partial \mu          } \delta \mu
+!>                              + \frac{\partial {\bf B}_\pm}{\partial \Delta \psi_p} \delta \Delta \psi_p.
+!>       \ee
+!> <li> This information is used to adjust the calculation of how force-balance, i.e. $B^2$ at the interfaces, 
+!>       varies with geometry at fixed interface rotational transform. Given 
+!>       \be B_\pm^2 = B_\pm^2 (x_j, \mu, \Delta \psi_p),
+!>       \ee
+!>       we may derive
+!>       \be \frac{\partial B_\pm^2}{\partial x_j} = \frac{\partial B_\pm^2}{\partial x_j          }                     
+!>                                                 + \frac{\partial B_\pm^2}{\partial \mu          } \frac{\partial \mu          }{\partial x_j}
+!>                                                 + \frac{\partial B_\pm^2}{\partial \Delta \psi_p} \frac{\partial \Delta \psi_p}{\partial x_j}
+!>       \ee
+!> <li> The constraint to be enforced is that $\mu$ and $\Delta \psi_p$ must generally vary as the geometry is varied 
+!>       if the value of the rotational-transform constraint on the inner/outer interface is to be preserved,
+!>       \i.e. 
+!>       \be \left(\begin{array}{ccc} \ds \frac{\partial \iotabar_-}{\partial {\bf B}_-} \cdot \frac{\partial {\bf B}_-}{\partial \mu          } & , & 
+!>                                    \ds \frac{\partial \iotabar_-}{\partial {\bf B}_-} \cdot \frac{\partial {\bf B}_-}{\partial \Delta \psi_p} \\
+!>                                    \ds \frac{\partial \iotabar_+}{\partial {\bf B}_+} \cdot \frac{\partial {\bf B}_+}{\partial \mu          } & , & 
+!>                                    \ds \frac{\partial \iotabar_+}{\partial {\bf B}_+} \cdot \frac{\partial {\bf B}_+}{\partial \Delta \psi_p}
+!>                   \end{array} \right)
+!>           \left(\begin{array}{c} \ds \frac{\partial \mu}{\partial x_j} \\ \ds \frac{\partial \Delta \psi_p}{\partial x_j} \end{array} \right) = 
+!>         - \left(\begin{array}{c} \ds \frac{\partial \iotabar_-}{\partial {\bf B}_-} \cdot \frac{\partial {\bf B}_-}{\partial x_j} \\
+!>                                  \ds \frac{\partial \iotabar_+}{\partial {\bf B}_+} \cdot \frac{\partial {\bf B}_+}{\partial x_j} \end{array} \right).
+!>       \ee
+!> <li> This $2\times 2$ linear equation is solved in \link{dforce};
+!>       and the derivatives of the rotational-transform are given in \internal{diotadxup}, see \link{preset}.
+!> <li> A finite-difference estimate is computed if \c Lcheck.eq.4}.
+!> </ul>
 
   REAL,    allocatable :: dmupfdx(:,:,:,:)  !< derivatives of mu and dpflux wrt geometry at constant interface transform; 
 
@@ -1185,12 +1176,12 @@ module allglobal
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 !> \addtogroup grp_trig Trigonometric factors
 !> @{
-!latex \subsubsection{trigonometric factors}
+!> \subsubsection{trigonometric factors}
 
-!latex \begin{enumerate}
-!latex \item To facilitate construction of the metric integrals, various trigonometric identities are exploited.
-!latex \item The required information is saved in
-!latex
+!> <ul>
+!> <li> To facilitate construction of the metric integrals, various trigonometric identities are exploited.
+!> <li> The required information is saved in
+!>
 
   REAL   , allocatable :: cosi(:,:), sini(:,:), gteta(:), gzeta(:)
 
@@ -1201,44 +1192,44 @@ module allglobal
 
   INTEGER, allocatable :: djkp(:,:), djkm(:,:) !< for calculating cylindrical volume; 
 
-!latex \item The following are used for volume integrals (see \link{volume})
-!latex \be a_{i,j,k} &=& 4 \; m_k \ooint \cos(\alpha_i)\cos(\alpha_j)\cos(\alpha_k) /(2\pi)^2 , \\
-!latex     b_{i,j,k} &=& 4 \; m_j \ooint \cos(\alpha_i)\sin(\alpha_j)\sin(\alpha_k) /(2\pi)^2 ,
-!latex \ee 
-!latex \end{enumerate}
+!> <li> The following are used for volume integrals (see \link{volume})
+!> \be a_{i,j,k} &=& 4 \; m_k \ooint \cos(\alpha_i)\cos(\alpha_j)\cos(\alpha_k) /(2\pi)^2 , \\
+!>     b_{i,j,k} &=& 4 \; m_j \ooint \cos(\alpha_i)\sin(\alpha_j)\sin(\alpha_k) /(2\pi)^2 ,
+!> \ee 
+!> </ul>
 !> @}
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !> \addtogroup grp_volints Volume integrals: lBBintegral, lABintegral
 !> @{
-!latex \subsubsection{\texttt{lBBintegral, lABintegral} : volume integrals}
-!latex \begin{enumerate}
+!> \subsubsection{\texttt{lBBintegral, lABintegral} : volume integrals}
+!> <ul>
 
-!latex \item The energy functional, $F \equiv \sum_l F_l$, where
-!latex \be F_l \equiv \left( \int_{{\cal V}_l} \frac{p_l}{\gamma-1} + \frac{B_l^2}{2} dv \right)
-!latex         = \frac{P_l}{\gamma-1}V_l^{1-\gamma}+\int_{{\cal V}_l} \frac{B_l^2}{2} dv, \label{eq:energy}
-!latex \ee
-!latex where the second expression is derived using $p_l V_l^\gamma=P_l$, where $P_l$ is the adiabatic-constant.
-!latex In \Eqn{energy}, it is implicit that ${\bf B}$ satisfies (i) the toroidal and poloidal flux constraints; 
-!latex (ii) the interface constraint, ${\bf B}\cdot\nabla s=0$; and (iii) the helicity constraint (or the transform constraint)
-!latex \item The derivatives of $F_l$ with respect to the inner and outer adjacent interface geometry are stored in
-!latex
-!latex \texttt{dFF(1:Nvol,0:1,0:mn+mn-1)}, where
-!latex
-!latex $         F_l                      \equiv$ \texttt{dFF(l,0,    0)}
-!latex
-!latex $\partial F_l / \partial R_{l-1,j} \equiv$ \verb&dFF(ll,0,   j)& 
-!latex
-!latex $\partial F_l / \partial Z_{l-1,j} \equiv$ \verb&dFF(ll,0,mn}j)& 
-!latex
-!latex $\partial F_l / \partial R_{l  ,j} \equiv$ \texttt{dFF(ll,1,   j)} 
-!latex
-!latex $\partial F_l / \partial Z_{l  ,j} \equiv$ \verb&dFF(ll,1,mn}j)&
-!latex
+!> <li> The energy functional, $F \equiv \sum_l F_l$, where
+!> \be F_l \equiv \left( \int_{{\cal V}_l} \frac{p_l}{\gamma-1} + \frac{B_l^2}{2} dv \right)
+!>         = \frac{P_l}{\gamma-1}V_l^{1-\gamma}+\int_{{\cal V}_l} \frac{B_l^2}{2} dv, \label{eq:energy}
+!> \ee
+!> where the second expression is derived using $p_l V_l^\gamma=P_l$, where $P_l$ is the adiabatic-constant.
+!> In \Eqn{energy}, it is implicit that ${\bf B}$ satisfies (i) the toroidal and poloidal flux constraints; 
+!> (ii) the interface constraint, ${\bf B}\cdot\nabla s=0$; and (iii) the helicity constraint (or the transform constraint)
+!> <li> The derivatives of $F_l$ with respect to the inner and outer adjacent interface geometry are stored in
+!>
+!> \texttt{dFF(1:Nvol,0:1,0:mn+mn-1)}, where
+!>
+!> $         F_l                      \equiv$ \texttt{dFF(l,0,    0)}
+!>
+!> $\partial F_l / \partial R_{l-1,j} \equiv$ \verb&dFF(ll,0,   j)& 
+!>
+!> $\partial F_l / \partial Z_{l-1,j} \equiv$ \verb&dFF(ll,0,mn}j)& 
+!>
+!> $\partial F_l / \partial R_{l  ,j} \equiv$ \texttt{dFF(ll,1,   j)} 
+!>
+!> $\partial F_l / \partial Z_{l  ,j} \equiv$ \verb&dFF(ll,1,mn}j)&
+!>
 
-!latex \item The volume integrals $\int dv$, $\int B^2 \; dv$ and $\int {\bf A}\cdot{\bf B} \; dv$ in each volume
-!latex       are computed and saved in \texttt{volume(0:2,1:Nvol)}.
-!latex \end{enumerate}
+!> <li> The volume integrals $\int dv$, $\int B^2 \; dv$ and $\int {\bf A}\cdot{\bf B} \; dv$ in each volume
+!>       are computed and saved in \texttt{volume(0:2,1:Nvol)}.
+!> </ul>
 
   REAL   , allocatable :: lBBintegral(:) !< B.B      integral;
   REAL   , allocatable :: lABintegral(:) !< A.B      integral;
@@ -1324,11 +1315,11 @@ contains
 
 subroutine readin
 
-!latex \subsection{subroutine readin}
+!> \subsection{subroutine readin}
 
-!latex \begin{enumerate}
-!latex \item The master node reads the input namelist and sets various internal variables. The relevant quantities are then broadcast.
-!latex \end{enumerate}
+!> <ul>
+!> <li> The master node reads the input namelist and sets various internal variables. The relevant quantities are then broadcast.
+!> </ul>
 
   use constants
 
@@ -1355,11 +1346,11 @@ subroutine readin
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-!latex \subsubsection{\texttt{machprec}, \texttt{vsmall}, \texttt{small}, \texttt{sqrtmachprec} : machine precision}
+!> \subsubsection{\texttt{machprec}, \texttt{vsmall}, \texttt{small}, \texttt{sqrtmachprec} : machine precision}
 
-!latex \begin{enumerate}
-!latex \item The machine precision is determined using the Fortran 90 intrinsic function EPSILON.
-!latex \end{enumerate}
+!> <ul>
+!> <li> The machine precision is determined using the Fortran 90 intrinsic function EPSILON.
+!> </ul>
 
   cput = GETTIME
   
@@ -1391,17 +1382,17 @@ subroutine readin
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{input file extension $\equiv$ command line argument}
+!> \subsubsection{input file extension $\equiv$ command line argument}
 
-!latex \begin{enumerate}
-!latex \item The input file name, \texttt{ext}, is given as the first command line input, and the input file itself is \verb!ext.sp!
-!latex \item Additional command line inputs recognized are:
-!latex \begin{enumerate} 
-!latex \item \texttt{-help, -h} ; will give help information to user; under construction;
-!latex \item \texttt{-readin} ; will immediately set \texttt{Wreadin=T}; this may be over-ruled when \texttt{namelist/screenlist/} is read;
-!latex \end{enumerate}
+!> <ul>
+!> <li> The input file name, \texttt{ext}, is given as the first command line input, and the input file itself is \verb!ext.sp!
+!> <li> Additional command line inputs recognized are:
+!> <ul> 
+!> <li> \texttt{-help, -h} ; will give help information to user; under construction;
+!> <li> \texttt{-readin} ; will immediately set \texttt{Wreadin=T}; this may be over-ruled when \texttt{namelist/screenlist/} is read;
+!> </ul>
 
-!latex \end{enumerate}
+!> </ul>
 
    call getarg( 1, ext )
    extlen = len_trim(ext)
@@ -1454,18 +1445,18 @@ subroutine readin
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
-!latex \subsubsection{reading \texttt{physicslist}}
+!> \subsubsection{reading \texttt{physicslist}}
 
-!latex \begin{enumerate}   
-!latex \item The internal variable, \texttt{Mvol = Nvol + Lfreebound}, gives the number of computational domains.
-!latex \item The input value for the fluxes enclosed within each interface, \c tflux(1:Mvol)} and \c tflux(1:Mvol)}, are immediately normalized:
-!latex 
-!latex       \c tflux(1:Mvol)} $\rightarrow$ \c tflux(1:Mvol)/tflux(Nvol)}.
-!latex
-!latex       \c pflux(1:Mvol)} $\rightarrow$ \c pflux(1:Mvol)/tflux(Nvol)}.
-!latex
-!latex       (The input $\Phi_{edge} \equiv $ \c phiedge} will provide the total toroidal flux; see \link{preset}.)
-!latex \end{enumerate}
+!> <ul>   
+!> <li> The internal variable, \texttt{Mvol = Nvol + Lfreebound}, gives the number of computational domains.
+!> <li> The input value for the fluxes enclosed within each interface, \c tflux(1:Mvol)} and \c tflux(1:Mvol)}, are immediately normalized:
+!> 
+!>       \c tflux(1:Mvol)} $\rightarrow$ \c tflux(1:Mvol)/tflux(Nvol)}.
+!>
+!>       \c pflux(1:Mvol)} $\rightarrow$ \c pflux(1:Mvol)/tflux(Nvol)}.
+!>
+!>       (The input $\Phi_{edge} \equiv $ \c phiedge} will provide the total toroidal flux; see \link{preset}.)
+!> </ul>
       
    if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : reading physicslist     from ext.sp ;")') cput-cpus
    endif
@@ -1548,7 +1539,7 @@ subroutine readin
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
-!latex \subsubsection{reading \texttt{numericlist}}
+!> \subsubsection{reading \texttt{numericlist}}
    
    if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : reading numericlist     from ext.sp ;")') cput-cpus
    endif
@@ -1578,7 +1569,7 @@ subroutine readin
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
-!latex \subsubsection{reading \texttt{locallist}}
+!> \subsubsection{reading \texttt{locallist}}
    
    if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : reading locallist      from ext.sp ;")') cput-cpus
    endif
@@ -1598,7 +1589,7 @@ subroutine readin
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
-!latex \subsubsection{reading \texttt{globallist}}
+!> \subsubsection{reading \texttt{globallist}}
 
    if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : reading globallist   from ext.sp ;")') cput-cpus
    endif
@@ -1632,7 +1623,7 @@ subroutine readin
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
-!latex \subsubsection{reading \texttt{diagnosticslist}}
+!> \subsubsection{reading \texttt{diagnosticslist}}
 
    if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : reading diagnosticslist from ext.sp ;")') cput-cpus
    endif
@@ -1658,7 +1649,7 @@ subroutine readin
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
-!latex \subsubsection{reading \texttt{screenlist}}
+!> \subsubsection{reading \texttt{screenlist}}
    
    if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : reading screenlist      from ext.sp ;")') cput-cpus
    endif
@@ -1836,10 +1827,10 @@ subroutine readin
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-!latex \subsubsection{\texttt{Mvol} : total number of volumes}
-!latex \begin{enumerate}
-!latex \item The number of plasma volumes is \internal{Mvol}=\c Nvol}+\c Lfreebound};
-!latex \end{enumerate}
+!> \subsubsection{\texttt{Mvol} : total number of volumes}
+!> <ul>
+!> <li> The number of plasma volumes is \internal{Mvol}=\c Nvol}+\c Lfreebound};
+!> </ul>
 
   FATAL( readin, Lfreebound.lt.0 .or. Lfreebound.gt.1, illegal Lfreebound )
 
@@ -1851,19 +1842,19 @@ subroutine readin
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-!latex \subsubsection{\texttt{mn}, \texttt{im(1:mn)} and \texttt{in(1:mn)} : Fourier mode identification}
-!latex \begin{enumerate}
-!latex \item The Fourier description of even periodic functions is 
-!latex       \be f(\t,\z) = \sum_{n=0}^{N} f_{0,n} \cos(-n\z) + \sum_{m=1}^{M}\sum_{n=-N}^{N} f_{m,n} \cos(m\t-n\z),
-!latex       \ee
-!latex       where the resolution is given on input, $M\equiv $ \c  Mpol} and $N\equiv $ \c  Ntor}.
-!latex \item For convenience, the Fourier summations are written as
-!latex       \be f(\s,\t,\z) &=& \sum_j f_j(s) \cos( m_j \t - n_j \z ),
-!latex       \ee
-!latex       for $j=1,$ \texttt{mn}, where \texttt{mn}$ = N + 1 +  M  ( 2 N + 1 )$.
-!latex \item The integer arrays \texttt{im(1:mn)} and \texttt{in(1:mn)} contain the $m_j$ and $n_j$.
-!latex \item The array \texttt{in} includes the \texttt{Nfp} factor.
-!latex \end{enumerate}
+!> \subsubsection{\texttt{mn}, \texttt{im(1:mn)} and \texttt{in(1:mn)} : Fourier mode identification}
+!> <ul>
+!> <li> The Fourier description of even periodic functions is 
+!>       \be f(\t,\z) = \sum_{n=0}^{N} f_{0,n} \cos(-n\z) + \sum_{m=1}^{M}\sum_{n=-N}^{N} f_{m,n} \cos(m\t-n\z),
+!>       \ee
+!>       where the resolution is given on input, $M\equiv $ \c  Mpol} and $N\equiv $ \c  Ntor}.
+!> <li> For convenience, the Fourier summations are written as
+!>       \be f(\s,\t,\z) &=& \sum_j f_j(s) \cos( m_j \t - n_j \z ),
+!>       \ee
+!>       for $j=1,$ \texttt{mn}, where \texttt{mn}$ = N + 1 +  M  ( 2 N + 1 )$.
+!> <li> The integer arrays \texttt{im(1:mn)} and \texttt{in(1:mn)} contain the $m_j$ and $n_j$.
+!> <li> The array \texttt{in} includes the \texttt{Nfp} factor.
+!> </ul>
   
   mn = 1 + Ntor +  Mpol * ( 2 *  Ntor + 1 ) ! Fourier resolution of interface geometry & vector potential;
   
@@ -1874,11 +1865,11 @@ subroutine readin
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-!latex \subsubsection{\texttt{halfmm(1:mn}, regumm(1:mn) : regularization factor}
-!latex \begin{enumerate}
-!latex \item The ``regularization'' factor, \texttt{halfmm(1:mn)} = \texttt{im(1:mn)} * \texttt{half}, is real.
-!latex \item This is used in \link{lforce}, \link{bfield}, \link{stzxyz}, \link{coords}, \link{jo00aa}, \link{ma00aa}, \link{sc00aa} and \link{tr00ab}.
-!latex \end{enumerate}
+!> \subsubsection{\texttt{halfmm(1:mn}, regumm(1:mn) : regularization factor}
+!> <ul>
+!> <li> The ``regularization'' factor, \texttt{halfmm(1:mn)} = \texttt{im(1:mn)} * \texttt{half}, is real.
+!> <li> This is used in \link{lforce}, \link{bfield}, \link{stzxyz}, \link{coords}, \link{jo00aa}, \link{ma00aa}, \link{sc00aa} and \link{tr00ab}.
+!> </ul>
   
   SALLOCATE( halfmm, (1:mn), im(1:mn) * half )
   SALLOCATE( regumm, (1:mn), im(1:mn) * half )
@@ -1893,10 +1884,10 @@ subroutine readin
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-!latex \subsubsection{\texttt{ime} and \texttt{ine} : extended resolution Fourier mode identification}
-!latex \begin{enumerate}
-!latex \item The ``extended'' Fourier resolution is defined by \internal{lMpol} $ = 4 $ \c Mpol}, \internal{lNtor} $ = 4 $\c Ntor}.
-!latex \end{enumerate}
+!> \subsubsection{\texttt{ime} and \texttt{ine} : extended resolution Fourier mode identification}
+!> <ul>
+!> <li> The ``extended'' Fourier resolution is defined by \internal{lMpol} $ = 4 $ \c Mpol}, \internal{lNtor} $ = 4 $\c Ntor}.
+!> </ul>
 
 ! lMpol =   Mpol ; lNtor =   Ntor ! no    enhanced resolution for metrics; 
 ! lMpol = 2*Mpol ; lNtor = 2*Ntor !       enhanced resolution for metrics;
@@ -1911,7 +1902,7 @@ subroutine readin
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-!latex \subsubsection{\texttt{mns}, \texttt{ims} and \texttt{ins} : Fourier mode identification for straight-fieldline angle}
+!> \subsubsection{\texttt{mns}, \texttt{ims} and \texttt{ins} : Fourier mode identification for straight-fieldline angle}
 
   lMpol = iMpol ; lNtor = iNtor
 
@@ -1947,12 +1938,12 @@ subroutine readin
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-!latex \subsubsection{\texttt{iRbc(1:mn,0:Mvol}, \texttt{iZbs(1:mn,0:Mvol}, \texttt{iRbs(1:mn,0:Mvol} and \texttt{iZbc(1:mn,0:Mvol} : geometry}
+!> \subsubsection{\texttt{iRbc(1:mn,0:Mvol}, \texttt{iZbs(1:mn,0:Mvol}, \texttt{iRbs(1:mn,0:Mvol} and \texttt{iZbc(1:mn,0:Mvol} : geometry}
   
-!latex \begin{enumerate}
-!latex \item \texttt{iRbc}, \texttt{iZbs}, \texttt{iRbs} and \texttt{iZbc} : Fourier harmonics of interface geometry;
-!latex \item \texttt{iVns}, \texttt{iVnc}, \texttt{iBns} and \texttt{iBns} : Fourier harmonics of normal field at computational boundary;
-!latex \end{enumerate}
+!> <ul>
+!> <li> \texttt{iRbc}, \texttt{iZbs}, \texttt{iRbs} and \texttt{iZbc} : Fourier harmonics of interface geometry;
+!> <li> \texttt{iVns}, \texttt{iVnc}, \texttt{iBns} and \texttt{iBns} : Fourier harmonics of normal field at computational boundary;
+!> </ul>
 
   SALLOCATE( iRbc, (1:mn,0:Mvol), zero ) ! interface Fourier harmonics;
   SALLOCATE( iZbs, (1:mn,0:Mvol), zero )
@@ -1980,13 +1971,13 @@ subroutine readin
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-!latex \subsubsection{\texttt{ajk} : construction of coordinate axis}
+!> \subsubsection{\texttt{ajk} : construction of coordinate axis}
 
-!latex \begin{enumerate}
-!latex \item This is only used in \link{rzaxis} to perform the poloidal integration and is defined quite simply: \newline
-!latex       \internal{ajk[i]} $\equiv 2\pi$ if $m_i =   0$, and \newline
-!latex       \internal{ajk[i]} $\equiv 0   $ if $m_i \ne 0$.
-!latex \end{enumerate}
+!> <ul>
+!> <li> This is only used in \link{rzaxis} to perform the poloidal integration and is defined quite simply: \newline
+!>       \internal{ajk[i]} $\equiv 2\pi$ if $m_i =   0$, and \newline
+!>       \internal{ajk[i]} $\equiv 0   $ if $m_i \ne 0$.
+!> </ul>
 
   SALLOCATE( ajk, (1:mn), zero ) ! this must be allocated & assigned now, as it is used in readin; primarily used in packxi; 02 Jan 15;
 
@@ -2202,10 +2193,10 @@ end subroutine readin
 
 subroutine wrtend
 
-!latex \subsection{subroutine wrtend}
-!latex \begin{enumerate}
-!latex \item The restart file is written.
-!latex \end{enumerate}
+!> \subsection{subroutine wrtend}
+!> <ul>
+!> <li> The restart file is written.
+!> </ul>
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
