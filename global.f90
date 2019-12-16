@@ -1,3 +1,9 @@
+!> \defgroup grp_input Input namelists and global variables
+
+! ! > \file global.f90
+!! \brief Defines input namelists and global variables, and opens some output files.
+!! \ingroup grp_input
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 !23456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789
 !        1         2         3         4         5         6         7         8         9        10        11        12        13        14        15        
@@ -251,7 +257,7 @@ module inputlist
   REAL         :: gBntol     =   1.0e-06
   REAL         :: gBnbld     =   0.666
   REAL         :: vcasingeps =   1.e-12
-  REAL         :: vcasingtol =   1.e-08
+  REAL         :: vcasingtol =   1.e-08 !< tolerance for virtual casing
   INTEGER      :: vcasingits =   8
   INTEGER      :: vcasingper =   1
   INTEGER      :: mcasingcal =   8 ! redundant; 

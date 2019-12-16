@@ -1,8 +1,8 @@
-!> \defgroup diagnostics Diagnostics to check the code
+!> \defgroup grp_diagnostics Diagnostics to check the code
 
 !> \file bfield.f90
 !! \brief Returns \f$\dot s \equiv B^s / B^\zeta\f$ and \f$\dot \theta \equiv B^\theta / B^\zeta\f$.
-!! \ingroup diagnostics
+!! \ingroup grp_diagnostics
 !!
 !! Returns the magnetic field field line equations, \f$ d{\bf x}/d\phi = {\bf B}/B^\phi \f$ .
 !!

@@ -1,8 +1,8 @@
-!> \defgroup free-boundary Free-Boundary Computation
+!> \defgroup grp_free-boundary Free-Boundary Computation
 
 !> \file bnorml.f90
 !! \brief Computes \f${\bf B}_{Plasma} \cdot {\bf e}_\theta \times {\bf e}_\zeta \;\f$ on the computational boundary, \f$\partial {\cal D}\f$.
-!! \ingroup free-boundary
+!! \ingroup grp_free-boundary
 !!
 !! **free-boundary constraint**
 !! <ul>
@@ -119,86 +119,6 @@ subroutine bnorml( mn, Ntz, efmn, ofmn )
   
   Lparallel = 1 ! controls choice of parallelization; see below;
   
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-!#ifdef CASING
-!  
-!  lvol = Mvol ; lss = zero ; Lcurvature = 1 ; Lcoordinatesingularity = .false.
-!  
-!  WCALL( bnorml, coords,( lvol, lss, Lcurvature, Ntz, mn ) ) ! re-compute plasma boundary and metrics; this may not be required; 14 Apr 17;
-!  
-!  jireal(1:Ntz) = Rij(1:Ntz,0,0) ! save plasma boundary; 04 May 17;
-!  jiimag(1:Ntz) = Zij(1:Ntz,0,0)
-!
-!  efmn(1:mn) = zero ; sfmn(1:mn) = zero ; cfmn(1:mn) = zero ; ofmn(1:mn) = zero
-!  
-!  ideriv = 1
-!
-!  do ii = 1, mn ! loop over Fourier harmonics; 13 Sep 13;
-!   
-!   do ll = 0, Lrad(Mvol) ! loop over Chebyshev polynomials; Lrad is the radial resolution;
-!    ;                      ; efmn(ii) = efmn(ii) + Ate(Mvol,ideriv,ii)%s(ll) * TT(ll,0,1) ! ideriv labels deriv. wrt mu, pflux; 
-!    ;                      ; cfmn(ii) = cfmn(ii) + Aze(Mvol,ideriv,ii)%s(ll) * TT(ll,0,1) 
-!    if( NOTstellsym ) then ; ofmn(ii) = ofmn(ii) + Ato(Mvol,ideriv,ii)%s(ll) * TT(ll,0,1) 
-!     ;                     ; sfmn(ii) = sfmn(ii) + Azo(Mvol,ideriv,ii)%s(ll) * TT(ll,0,1) 
-!    endif
-!   enddo ! end of do ll; 20 Feb 13;
-!   
-!  enddo ! end of do ii; 20 Feb 13;
-!  
-!  call invfft( mn, im, in, efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt(1:Ntz), dAz(1:Ntz) ) ! map to real space;
-!
-!  ijreal(1:Ntz) = ( dAt(1:Ntz) * guvij(1:Ntz,2,3,0) + dAz(1:Ntz) * guvij(1:Ntz,3,3,0) ) / sg(1:Ntz,0) ! \alpha; 14 Apr 17;
-!  ijimag(1:Ntz) = ( dAt(1:Ntz) * guvij(1:Ntz,2,2,0) + dAz(1:Ntz) * guvij(1:Ntz,2,3,0) ) / sg(1:Ntz,0) ! \beta ; 14 Apr 17;
-!  
-!  select case( Igeometry )
-!   
-!  case( 1 ) ! Igeometry = 1; 14 Apr 17;
-!   
-!   Bxyz(1:Ntz,1) = gteta(1:Ntz) ! plasma boundary; Cartesian; 04 May 17;
-!   Bxyz(1:Ntz,2) = gzeta(1:Ntz)
-!   Bxyz(1:Ntz,3) = Rij(1:Ntz,0,0)
-!   
-!   Jxyz(1:Ntz,1) = ijreal(1:Ntz)                                               ! surface current; Cartesian; 04 May 17;
-!   Jxyz(1:Ntz,2) =                              - ijimag(1:Ntz)                ! surface current; Cartesian; 04 May 17;
-!   Jxyz(1:Ntz,3) = ijreal(1:Ntz)*Rij(1:Ntz,2,0) - ijimag(1:Ntz)*Rij(1:Ntz,3,0) ! surface current; Cartesian; 04 May 17;
-!   
-!  case( 2 ) ! Igeometry = 2 ; 08 May 17;
-!   
-!   FATAL( bnorml, .true., new evaluation of virtual casing for Igeometry = 2 is under construction )
-!   
-!  case( 3 ) ! Igeometry = 3; 14 Apr 17;
-!   
-!   Bxyz(1:Ntz,1) = Rij(1:Ntz,0,0)*cos(gzeta(1:Ntz)) ! plasma boundary; Cartesian; 08 May 17;
-!   Bxyz(1:Ntz,2) = Rij(1:Ntz,0,0)*sin(gzeta(1:Ntz))
-!   Bxyz(1:Ntz,3) = Zij(1:Ntz,0,0)                  
-!   
-!   Jxyz(1:Ntz,1) = ijreal(1:Ntz)*Rij(1:Ntz,2,0)*cos(gzeta(1:Ntz)) - ijimag(1:Ntz)*(Rij(1:Ntz,3,0)*cos(gzeta(1:Ntz))-Rij(1:Ntz,0,0)*sin(gzeta(1:Ntz)))
-!   Jxyz(1:Ntz,2) = ijreal(1:Ntz)*Rij(1:Ntz,2,0)*sin(gzeta(1:Ntz)) - ijimag(1:Ntz)*(Rij(1:Ntz,3,0)*sin(gzeta(1:Ntz))+Rij(1:Ntz,0,0)*cos(gzeta(1:Ntz)))
-!   Jxyz(1:Ntz,3) = ijreal(1:Ntz)*Zij(1:Ntz,2,0)                   - ijimag(1:Ntz)*(Zij(1:Ntz,3,0)                                                   )
-!   
-!  case default
-!   
-!   FATAL( bnorml, .true., illegal Igeometry )
-!   
-!  end select ! end of select case( Igeometry ) ; 08 May 17;
-!  
-!  do jk = 1, Ntz
-!   
-!   distance(1:Ntz) = (Dxyz(jk,1)-Bxyz(1:Ntz,1))**2 + (Dxyz(jk,2)-Bxyz(1:Ntz,2))**2 + (Dxyz(jk,3)-Bxyz(1:Ntz,3))**2
-!   
-!   distance(1:Ntz) = sqrt(distance(1:Ntz)) * distance(1:Ntz)
-!
-!   ijimag(jk) = sum( ( Jxyz(1:Ntz,2)*(Dxyz(jk,3)-Bxyz(1:Ntz,3)) - Jxyz(1:Ntz,3)*(Dxyz(jk,2)-Bxyz(1:Ntz,2)) ) / distance(1:Ntz) ) * Nxyz(jk,1) &
-!              + sum( ( Jxyz(1:Ntz,3)*(Dxyz(jk,1)-Bxyz(1:Ntz,1)) - Jxyz(1:Ntz,1)*(Dxyz(jk,3)-Bxyz(1:Ntz,3)) ) / distance(1:Ntz) ) * Nxyz(jk,2) &
-!              + sum( ( Jxyz(1:Ntz,1)*(Dxyz(jk,2)-Bxyz(1:Ntz,2)) - Jxyz(1:Ntz,2)*(Dxyz(jk,1)-Bxyz(1:Ntz,1)) ) / distance(1:Ntz) ) * Nxyz(jk,3)
-!   
-!  enddo ! end of do jk = 1, Ntz; 08 May 17;
-!
-!  ijimag(1:Ntz) = ijimag(1:Ntz) * pi2 * pi2nfp / Ntz ! WHAT ABOUT FIELD PERIODICITY; 08 May 17;
-!    
-!#endif
-
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   ijreal(1:Ntz) = zero ! normal plasma field; 15 Oct 12;

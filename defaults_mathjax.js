@@ -1,6 +1,7 @@
 MathJax.Hub.Config({
     TeX: { // Enable automatic equation numbering
-        equationNumbers: { autoNumber: "AMS" }
+        equationNumbers: { autoNumber: "AMS" },
+        packages: {'[+]': ['verb']}
     }
 });
 MathJax.Hub.Config({ TeX: { extensions: ["color.js"] }});
