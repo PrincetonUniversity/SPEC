@@ -1005,10 +1005,14 @@ subroutine evaluate_dmupfdx(vvol, innout, idof, ii, issym, irz)
 						dBdx2(pvol) = Btemn(1, 1, pvol) - Btemn(1, 0, pvol)
 					enddo
 
-					N = Nvol-1
-					dmupfdx(1, 2, idof, innout) = zero ! poloidal flux in first volume is not varied in first volume
-				    call dgesvx('N', 'N', N, one, dBdmpf, N, AF(1:N,1:N), N, IPIV(1:N), 'N', R(1:N), C(1:N), dBdx2(1:N), N, dmupfdx(2:Nvol,2,idof,innout), N, rcond, &
-								ferr, berr, work(1:4*N), iwork(1:N), idgesvx)
+					!N = Nvol-1
+					!dmupfdx(1, 2, idof, innout) = zero ! poloidal flux in first volume is not varied in first volume
+				    !call dgesvx('N', 'N', N, one, dBdmpf, N, AF(1:N,1:N), N, IPIV(1:N), 'N', R(1:N), C(1:N), dBdx2(1:N), N, dmupfdx(2:Nvol,2,idof,innout), N, rcond, &
+					!			ferr, berr, work(1:4*N), iwork(1:N), idgesvx)dmupfdx(1, 2, idof, innout) = zero
+					dmupfdx(1, 2, idof, innout) = zero
+					do pvol = 2, Nvol
+						dmupfdx(pvol, 2, idof, innout) = (dBdx2(pvol) - dBdmpf(pvol, pvol-1) * dmupfdx(pvol-1, 2, idof, innout)) / dBdmpf(pvol, pvol)
+					enddo
 
 			endif
 
