@@ -221,7 +221,9 @@ module inputlist
                                                          !<      and only \f$\mu\f$ is varied to satisfy the outer interface transform constraint);
                                                          !<      and in the vacuum region \f$\Delta\psi_t\f$ and \f$\Delta \psi_p\f$ are varied to match the transform constraint on the boundary
                                                          !<      and to obtain the prescribed linking current, \c curpol, and \f$\mu = 0\f$. </li>
-                                                         !< <li> \todo if \c Lconstraint==2, under reconstruction. </li>
+                                                         !< <li> \todo if \c Lconstraint==2, under reconstruction.
+                                                         !< 
+                                                         !< </li>
                                                          !< 
                                                          !< </ul>
   REAL         ::     tflux(1:MNvol+1)       =  0.0      !< toroidal flux, \f$\psi_t\f$, enclosed by each interface

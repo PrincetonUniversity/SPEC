@@ -1,60 +1,60 @@
 !> \defgroup grp_currents Plasma Currents
 
 !> \file curent.f90
-!! \brief Computes the plasma current, \f$I \equiv \int B_\theta \, d\theta\f$, and the "linking" current, \f$G \equiv \int B_\zeta \, d\zeta\f$.
-!! \ingroup grp_currents
-!!
-!! **enclosed currents**
-!!
-!! <ul>
-!! <li>  In the vacuum region, the enclosed currents are given by either surface integrals of the current density or line integrals of the magnetic field,
-!!       \f{eqnarray}{ \int_{\cal S} {\bf j}\cdot d{\bf s} = \int_{\partial \cal S} {\bf B}\cdot d{\bf l},
-!!       \f}
-!!       and line integrals are usually easier to compute than surface integrals. </li>
-!! <li>  The magnetic field is given by the curl of the magnetic vector potential, as described in e.g. bfield.f90 . </li>
-!! <li>  The toroidal, plasma current is obtained by taking a "poloidal" loop, \f$d{\bf l}={\bf e}_\theta \, d\theta\f$, 
-!!       on the plasma boundary, where \f$B^s=0\f$, to obtain
-!!       \f{eqnarray}{ I   \equiv   \int_{0}^{2\pi} \! {\bf B} \cdot {\bf e}_\theta \, d\theta
-!!                            =     \int_{0}^{2\pi} \! \left( - \partial_s A_\zeta \; \bar g_{\theta\theta} + \partial_s A_\theta \; \bar g_{\theta\zeta} \right) \, d\theta,
-!!       \f}
-!!       where \f$\bar g_{\mu\nu} \equiv g_{\mu\nu} / \sqrt g\f$. </li>
-!! <li>  The poloidal, "linking" current through the torus is obtained by taking a "toroidal" loop, \f$d{\bf l}={\bf e}_\zeta \, d\zeta\f$,
-!!       on the plasma boundary to obtain
-!!       \f{eqnarray}{ G \equiv \int_{0}^{2\pi} \! {\bf B}\cdot {\bf e}_\zeta \, d\zeta
-!!                        =     \int_{0}^{2\pi} \! \left( - \partial_s A_\zeta \; \bar g_{\theta\zeta} + \partial_s A_\theta \; \bar g_{\zeta\zeta} \right) \, d\zeta.
-!!       \f} </li>
-!! </ul>
-!!
-!! **Fourier integration**
-!!
-!! <ul>
-!! <li>  Using \f$f \equiv - \partial_s A_\zeta \; \bar g_{\theta\theta} + \partial_s A_\theta \; \bar g_{\theta\zeta}\f$,
-!!       the integral for the plasma current is
-!!       \f{eqnarray}{ I = \sum_i^\prime f_i \cos(n_i \zeta) 2\pi, \label{eq:plasmacurrent}
-!!       \f}
-!!       where \f$\sum^\prime\f$ includes only the \f$m_i=0\f$ harmonics. </li>
-!! <li>  Using \f$g \equiv - \partial_s A_\zeta \; \bar g_{\theta\zeta} + \partial_s A_\theta \; \bar g_{\zeta\zeta}\f$,
-!!       the integral for the linking current is
-!!       \f{eqnarray}{ G = \sum_i^\prime g_i \cos(m_i \zeta) 2\pi, \label{eq:linkingcurrent}
-!!       \f}
-!!       where \f$\sum^\prime\f$ includes only the \f$n_i=0\f$ harmonics. </li>
-!! <li>  The plasma  current, Eqn.\f$(\ref{eq:plasmacurrent})\f$, should be independent of \f$\zeta\f$,
-!!       and the linking current, Eqn.\f$(\ref{eq:linkingcurrent})\f$, should be independent of \f$\theta\f$.
-!!       \todo Perhaps this can be proved analytically; in any case it should be confirmed numerically.
-!! 
-!! </li>
-!! </ul>
+!> \brief Computes the plasma current, \f$I \equiv \int B_\theta \, d\theta\f$, and the "linking" current, \f$G \equiv \int B_\zeta \, d\zeta\f$.
+!> \ingroup grp_currents
+!>
+!> **enclosed currents**
+!>
+!> <ul>
+!> <li>  In the vacuum region, the enclosed currents are given by either surface integrals of the current density or line integrals of the magnetic field,
+!>       \f{eqnarray}{ \int_{\cal S} {\bf j}\cdot d{\bf s} = \int_{\partial \cal S} {\bf B}\cdot d{\bf l},
+!>       \f}
+!>       and line integrals are usually easier to compute than surface integrals. </li>
+!> <li>  The magnetic field is given by the curl of the magnetic vector potential, as described in e.g. bfield.f90 . </li>
+!> <li>  The toroidal, plasma current is obtained by taking a "poloidal" loop, \f$d{\bf l}={\bf e}_\theta \, d\theta\f$, 
+!>       on the plasma boundary, where \f$B^s=0\f$, to obtain
+!>       \f{eqnarray}{ I   \equiv   \int_{0}^{2\pi} \! {\bf B} \cdot {\bf e}_\theta \, d\theta
+!>                            =     \int_{0}^{2\pi} \! \left( - \partial_s A_\zeta \; \bar g_{\theta\theta} + \partial_s A_\theta \; \bar g_{\theta\zeta} \right) \, d\theta,
+!>       \f}
+!>       where \f$\bar g_{\mu\nu} \equiv g_{\mu\nu} / \sqrt g\f$. </li>
+!> <li>  The poloidal, "linking" current through the torus is obtained by taking a "toroidal" loop, \f$d{\bf l}={\bf e}_\zeta \, d\zeta\f$,
+!>       on the plasma boundary to obtain
+!>       \f{eqnarray}{ G \equiv \int_{0}^{2\pi} \! {\bf B}\cdot {\bf e}_\zeta \, d\zeta
+!>                        =     \int_{0}^{2\pi} \! \left( - \partial_s A_\zeta \; \bar g_{\theta\zeta} + \partial_s A_\theta \; \bar g_{\zeta\zeta} \right) \, d\zeta.
+!>       \f} </li>
+!> </ul>
+!>
+!> **Fourier integration**
+!>
+!> <ul>
+!> <li>  Using \f$f \equiv - \partial_s A_\zeta \; \bar g_{\theta\theta} + \partial_s A_\theta \; \bar g_{\theta\zeta}\f$,
+!>       the integral for the plasma current is
+!>       \f{eqnarray}{ I = \sum_i^\prime f_i \cos(n_i \zeta) 2\pi, \label{eq:plasmacurrent}
+!>       \f}
+!>       where \f$\sum^\prime\f$ includes only the \f$m_i=0\f$ harmonics. </li>
+!> <li>  Using \f$g \equiv - \partial_s A_\zeta \; \bar g_{\theta\zeta} + \partial_s A_\theta \; \bar g_{\zeta\zeta}\f$,
+!>       the integral for the linking current is
+!>       \f{eqnarray}{ G = \sum_i^\prime g_i \cos(m_i \zeta) 2\pi, \label{eq:linkingcurrent}
+!>       \f}
+!>       where \f$\sum^\prime\f$ includes only the \f$n_i=0\f$ harmonics. </li>
+!> <li>  The plasma  current, Eqn.\f$(\ref{eq:plasmacurrent})\f$, should be independent of \f$\zeta\f$,
+!>       and the linking current, Eqn.\f$(\ref{eq:linkingcurrent})\f$, should be independent of \f$\theta\f$.
+!>       \todo Perhaps this can be proved analytically; in any case it should be confirmed numerically.
+!> 
+!> </li>
+!> </ul>
 
 !> \brief Computes the plasma current, \f$I \equiv \int B_\theta \, d\theta\f$, and the "linking" current, \f$G \equiv \int B_\zeta \, d\zeta\f$.
-!!
-!! Computes the plasma current, \f$I \equiv \int B_\theta \, d\theta\f$, and the "linking" current, \f$G \equiv \int B_\zeta \, d\zeta\f$.
-!!
-!! @param[in] lvol index of volume
-!! @param[in] mn number of Fourier harmonics
-!! @param[in] Nt number of grid points along \f$\theta\f$
-!! @param[in] Nz number of grid points along \f$\zeta\f$
-!! @param[in] iflag some integer flag
-!! @param[out] ldItGp plasma and linking current
+!>
+!> Computes the plasma current, \f$I \equiv \int B_\theta \, d\theta\f$, and the "linking" current, \f$G \equiv \int B_\zeta \, d\zeta\f$.
+!>
+!> @param[in] lvol index of volume
+!> @param[in] mn number of Fourier harmonics
+!> @param[in] Nt number of grid points along \f$\theta\f$
+!> @param[in] Nz number of grid points along \f$\zeta\f$
+!> @param[in] iflag some integer flag
+!> @param[out] ldItGp plasma and linking current
 subroutine curent( lvol, mn, Nt, Nz, iflag, ldItGp )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

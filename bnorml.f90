@@ -1,29 +1,29 @@
 !> \defgroup grp_free-boundary Free-Boundary Computation
 
 !> \file bnorml.f90
-!! \brief Computes \f${\bf B}_{Plasma} \cdot {\bf e}_\theta \times {\bf e}_\zeta \;\f$ on the computational boundary, \f$\partial {\cal D}\f$.
-!! \ingroup grp_free-boundary
-!!
-!! **free-boundary constraint**
-!! <ul>
-!! <li> The normal field at the computational boundary, \f$\partial {\cal D}\f$, should be equal to 
-!!      \f$\left({\bf B}_P + {\bf B}_C\right)\cdot {\bf e}_\theta \times {\bf e}_\zeta\f$,
-!!      where \f${\bf B}_P\f$ is the "plasma" field (produced by internal plasma currents) and is computed using virtual casing, 
-!!      and \f${\bf B}_C\f$ is the "vacuum" field (produced by the external coils) and is given on input. </li>
-!! <li> The plasma field, \f${\bf B}_P\f$, can only be computed after the equilibrium is determined, 
-!!      but this information is required to compute the equilibrium to begin with; and so there is an iteration involved. </li>
-!! <li> Suggested values of the vacuum field can be self generated; see xspech.f90 for more documentation on this. </li>
-!! </ul>
-!!
-!! **compute the normal field on a regular grid on the computational boundary**
-!! <ul>
-!! <li> For each point on the compuational boundary, casing() is called to compute the normal field produced by the plasma currents. </li>
-!! <li> \todo There is a very clumsy attempt to parallelize this which could be greatly improved.
-!!
-!! </li>
-!! <li> An FFT gives the required Fourier harmonics. </li>
-!! </ul>
-!! @see casing.f90
+!> \brief Computes \f${\bf B}_{Plasma} \cdot {\bf e}_\theta \times {\bf e}_\zeta \;\f$ on the computational boundary, \f$\partial {\cal D}\f$.
+!> \ingroup grp_free-boundary
+!>
+!> **free-boundary constraint**
+!> <ul>
+!> <li> The normal field at the computational boundary, \f$\partial {\cal D}\f$, should be equal to 
+!>      \f$\left({\bf B}_P + {\bf B}_C\right)\cdot {\bf e}_\theta \times {\bf e}_\zeta\f$,
+!>      where \f${\bf B}_P\f$ is the "plasma" field (produced by internal plasma currents) and is computed using virtual casing, 
+!>      and \f${\bf B}_C\f$ is the "vacuum" field (produced by the external coils) and is given on input. </li>
+!> <li> The plasma field, \f${\bf B}_P\f$, can only be computed after the equilibrium is determined, 
+!>      but this information is required to compute the equilibrium to begin with; and so there is an iteration involved. </li>
+!> <li> Suggested values of the vacuum field can be self generated; see xspech.f90 for more documentation on this. </li>
+!> </ul>
+!>
+!> **compute the normal field on a regular grid on the computational boundary**
+!> <ul>
+!> <li> For each point on the compuational boundary, casing() is called to compute the normal field produced by the plasma currents. </li>
+!> <li> \todo There is a very clumsy attempt to parallelize this which could be greatly improved.
+!>
+!> </li>
+!> <li> An FFT gives the required Fourier harmonics. </li>
+!> </ul>
+!> @see casing.f90
 
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -71,13 +71,13 @@
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !> @brief Computes \f${\bf B}_{Plasma} \cdot {\bf e}_\theta \times {\bf e}_\zeta \;\f$ on the computational boundary, \f$\partial {\cal D}\f$.
-!!
-!! Computes \f${\bf B}_{Plasma} \cdot {\bf e}_\theta \times {\bf e}_\zeta \;\f$ on the computational boundary, \f$\partial {\cal D}\f$.
-!!
-!! @param[in] mn total number of Fourier harmonics
-!! @param[in] Ntz total number of grid points in \f$\theta\f$ and \f$zeta\f$
-!! @param[out] efmn even Fourier coefficients
-!! @param[out] ofmn odd Fouier coefficients
+!>
+!> Computes \f${\bf B}_{Plasma} \cdot {\bf e}_\theta \times {\bf e}_\zeta \;\f$ on the computational boundary, \f$\partial {\cal D}\f$.
+!>
+!> @param[in] mn total number of Fourier harmonics
+!> @param[in] Ntz total number of grid points in \f$\theta\f$ and \f$zeta\f$
+!> @param[out] efmn even Fourier coefficients
+!> @param[out] ofmn odd Fouier coefficients
 subroutine bnorml( mn, Ntz, efmn, ofmn )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
