@@ -1093,7 +1093,7 @@ module allglobal
 !>                    K & = & \frac{1}{2} \; a_i \; D_{i,j} \; a_j + a_i \; E_{i,j} \; \psi_j + \frac{1}{2} \; \psi_i \; F_{i,j} \; \psi_j \label{eq:helicitymatrix}
 !>      \f}
 !>       where \f${\bf a} \equiv \{ {\color{red}{A_{\theta,e,i,l}}}, {\color{blue}{A_{\zeta, e,i,l}}}, {\color{magenta}{A_{\theta,o,i,l}}}, {\color{cyan}{A_{\zeta ,o,i,l}}}, f_{e,i}, f_{o,i} \}\f$ 
-!>       contains the independent degrees of freedom and \f$\boldsymbol{\psi} \equiv \{\Delta \psi_t,\Delta \psi_p\}\f$. </li>
+!>       contains the independent degrees of freedom and \f$\mathbf{\psi} \equiv \{\Delta \psi_t,\Delta \psi_p\}\f$. </li>
 !> <li> These are allocated and deallocated in dforce(), assigned in matrix(), and used in mp00ac() and (?) df00aa(). </li>
 !> </ul>
 !> @{
@@ -1200,7 +1200,7 @@ module allglobal
 !>      \f} </li>
 !> <li> The constraint to be enforced is that \f$\mu\f$ and \f$\Delta \psi_p\f$ must generally vary as the geometry is varied 
 !>      if the value of the rotational-transform constraint on the inner/outer interface is to be preserved,
-!>      \i.e. 
+!>      i.e. 
 !>      \f{eqnarray}{ \left(\begin{array}{ccc} \displaystyle \frac{\partial {{\,\iota\!\!\!}-}_-}{\partial {\bf B}_-} \cdot \frac{\partial {\bf B}_-}{\partial \mu          } & , & 
 !>                                             \displaystyle \frac{\partial {{\,\iota\!\!\!}-}_-}{\partial {\bf B}_-} \cdot \frac{\partial {\bf B}_-}{\partial \Delta \psi_p} \\
 !>                                             \displaystyle \frac{\partial {{\,\iota\!\!\!}-}_+}{\partial {\bf B}_+} \cdot \frac{\partial {\bf B}_+}{\partial \mu          } & , & 
@@ -1230,8 +1230,8 @@ module allglobal
 !> <ul>
 !> <li> To facilitate construction of the metric integrals, various trigonometric identities are exploited. </li>
 !> <li> The following are used for volume integrals (see volume() ):
-!>      \f{eqnarray}{ a_{i,j,k} &=& 4 \; m_k \ooint \cos(\alpha_i)\cos(\alpha_j)\cos(\alpha_k) /(2\pi)^2 , \\
-!>                    b_{i,j,k} &=& 4 \; m_j \ooint \cos(\alpha_i)\sin(\alpha_j)\sin(\alpha_k) /(2\pi)^2 ,
+!>      \f{eqnarray}{ a_{i,j,k} &=& 4 \; m_k \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \cos(\alpha_i)\cos(\alpha_j)\cos(\alpha_k) /(2\pi)^2 , \\
+!>                    b_{i,j,k} &=& 4 \; m_j \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \cos(\alpha_i)\sin(\alpha_j)\sin(\alpha_k) /(2\pi)^2 ,
 !>      \f} </li>
 !> </ul>
 !> @{
