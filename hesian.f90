@@ -1,18 +1,16 @@
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!title (diagnostic) ! Computes eigenvalues and eigenvectors of derivative matrix, $\nabla_{\bf \xi}{\bf F}$.
-
-!latex \briefly{briefly}
-
-!latex \calledby{\link{xspech}}
-!latex \calls{\link{packxi} and \link{dforce}}
-
-!latex \tableofcontents
+!> \file hesian.f90
+!> \brief Computes eigenvalues and eigenvectors of derivative matrix, \f$\nabla_{\bf \xi}{\bf F}\f$.
+!> \ingroup grp_diagnostics
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+!> \brief Computes eigenvalues and eigenvectors of derivative matrix, \f$\nabla_{\bf \xi}{\bf F}\f$.
+!> 
+!> @param[in] NGdof number of global degrees of freedom
+!> @param[inout] position internal geometrical degrees of freedom
+!> @param[in] Mvol total number of volumes in computation
+!> @param[in] mn number of Fourier harmonics
+!> @param[in] LGdof what is this?
 subroutine hesian( NGdof, position, Mvol, mn, LGdof )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -43,7 +41,7 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
   LOCALS
   
   INTEGER, intent(in) :: NGdof, Mvol, mn, LGdof
-  REAL                :: position(0:NGdof) ! internal geometrical degrees of freedom;
+  REAL                :: position(0:NGdof) 
   
   LOGICAL             :: LComputeDerivatives
 
@@ -221,16 +219,15 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{construction of Hessian matrix} 
-
-!latex \begin{enumerate}
-!latex \item The routine \link{dforce} is used to compute the derivatives, with respect to interface geometry,
-!latex       of the force imbalance harmonics, $[[p+B^2/2]]_{j}$, which may be considered to be the ``physical'' constraints,
-!latex       and if \inputvar{Igeometry.eq.3} then also the derivatives of the ``artificial'' spectral constraints, $I_j \equiv (R_\t X + Z_\t Y)_j$.
-!latex \item The input variable \inputvar{Lconstraint} determines how the enclosed fluxes, $\Delta \psi_t$ and $\Delta \psi_p$, 
-!latex       and the helicity multiplier, $\mu$, vary as the geometry is varied;
-!latex       see \link{global} and \link{mp00ac} for more details.
-!latex \end{enumerate} 
+!> **construction of Hessian matrix**
+!> <ul>
+!> <li> The routine dforce() is used to compute the derivatives, with respect to interface geometry,
+!>      of the force imbalance harmonics, \f$[[p+B^2/2]]_{j}\f$, which may be considered to be the "physical" constraints,
+!>      and if \c Igeometry==3 then also the derivatives of the "artificial" spectral constraints, \f$I_j \equiv (R_\theta X + Z_\theta Y)_j\f$. </li>
+!> <li> The input variable \c Lconstraint determines how the enclosed fluxes, \f$\Delta \psi_t\f$ and \f$\Delta \psi_p\f$, 
+!>      and the helicity multiplier, \f$\mu\f$, vary as the geometry is varied;
+!>      see global.f90 and mp00ac.f90 for more details. </li>
+!> </ul>
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -371,27 +368,26 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{construction of eigenvalues and eigenvectors} 
-
-!latex \begin{enumerate}
-!latex \item If \inputvar{LHevalues.eq.T} then the eigenvalues of the Hessian are computed using the NAG routine 
-!latex       \nag{www.nag.co.uk/numeric/FL/manual19/pdf/F02/f02ebf_fl19.pdf}{F02EBF}.
-!latex \item If \inputvar{LHevectors.eq.T} then the eigenvalues {\em and} the eigenvectors of the Hessian are computed.
-!latex \item Note that if \inputvar{Igeometry.eq.3}, then the derivative-matrix also contains information regarding how the ``artificial'' spectral constraints
-!latex       vary with geometry; so, the eigenvalues and eigenvectors are not purely ``physical''.
-!latex \item The eigenvalues and eigenvectors (if required) are written to the file \type{+.ext.GF.ev} as follows:
-!latex \begin{verbatim}
-!latex open(hunit,file="."//trim(ext)//".GF.ev",status="unknown",form="unformatted")
-!latex write(hunit)NGdof,Ldvr,Ldvi        ! integers; if only the eigenvalues were computed then Ldvr=Ldvi=1;
-!latex write(hunit)evalr(1:NGdof)         ! reals   ; real      part of eigenvalues;
-!latex write(hunit)evali(1:NGdof)         ! reals   ; imaginary part of eigenvalues; 
-!latex write(hunit)evecr(1:NGdof,1:NGdof) ! reals   ; real      part of eigenvalues; only if Ldvr=NGdof;
-!latex write(hunit)eveci(1:NGdof,1:NGdof) ! reals   ; imaginary part of eigenvalues; only if Ldvi=NGdof;
-!latex close(hunit)
-!latex \end{verbatim}
-!latex \item The eigenvectors are saved in columns of \type{evecr}, \type{eveci}, as described by the NAG documentation for 
-!latex       \nag{www.nag.co.uk/numeric/FL/manual19/pdf/F02/f02ebf_fl19.pdf}{F02EBF}.
-!latex \end{enumerate}
+!> **construction of eigenvalues and eigenvectors**
+!> <ul>
+!> <li> If \c LHevalues==T then the eigenvalues of the Hessian are computed using the NAG routine \c F02EBF. </li>
+!> <li> If \c LHevectors==T then the eigenvalues *and* the eigenvectors of the Hessian are computed. </li>
+!> <li> Note that if \c Igeometry==3, then the derivative-matrix also contains information regarding how the "artificial" spectral constraints
+!>      vary with geometry; so, the eigenvalues and eigenvectors are not purely "physical". </li>
+!> <li> The eigenvalues and eigenvectors (if required) are written to the file \c .ext.GF.ev as follows:
+!> 
+!> ```
+!> open(hunit,file="."//trim(ext)//".GF.ev",status="unknown",form="unformatted")
+!> write(hunit)NGdof,Ldvr,Ldvi        ! integers; if only the eigenvalues were computed then Ldvr=Ldvi=1;
+!> write(hunit)evalr(1:NGdof)         ! reals   ; real      part of eigenvalues;
+!> write(hunit)evali(1:NGdof)         ! reals   ; imaginary part of eigenvalues; 
+!> write(hunit)evecr(1:NGdof,1:NGdof) ! reals   ; real      part of eigenvalues; only if Ldvr=NGdof;
+!> write(hunit)eveci(1:NGdof,1:NGdof) ! reals   ; imaginary part of eigenvalues; only if Ldvi=NGdof;
+!> close(hunit) </li>
+!> ```
+!> 
+!> <li> The eigenvectors are saved in columns of \c evecr, \c eveci, as described by the NAG documentation for \c F02EBF. </li>
+!> </ul>
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
