@@ -21,6 +21,13 @@ function jacobian = get_spec_jacobian_slab(data,lvol,sarr,tarr,zarr)
 Rac     = data.Rbc(:,lvol);   % inner volume boundary harmonics
 Rbc     = data.Rbc(:,lvol+1); % outer volume boundary harmonics
 
+try
+ rpol   = data.rpol;          % poloidal extent of the slab is 2*pi*rpol
+ rtor   = data.rtor;          % toroidal extent of the slab is 2*pi*rtor
+catch
+ rpol   = 1;                  % in case rpol did not exist due to old version of SPEC
+ rtor   = 1;                  % in case rtor did not exist due to old version of SPEC
+end
 
 sarr    = transpose(sarr);
 ns      = length(sarr);
@@ -41,7 +48,7 @@ end
 fac     = cell(mn,2);      % allocate data for regularization factors and their derivatives
 
 
-% Construct regularization (for lvol=1) factors and their derivatives
+% Construct radial factors and their derivatives
 
 for j=1:mn
  fac{j}{1}  = sbar;
@@ -67,5 +74,5 @@ for j=1:mn
 end
 
 
-jacobian = Rarr{2};  %this is dR/ds
+jacobian = Rarr{2}*rpol*rtor;  %this is (dR/ds)*rpol*rtor
 

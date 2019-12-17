@@ -722,6 +722,8 @@ endif !matches if( LocalConstraint )
    
   endif ! end of if( LcomputeDerivatives ) ;
   
+  call MPI_BARRIER( MPI_COMM_WORLD, ierr )
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   RETURN(dforce)

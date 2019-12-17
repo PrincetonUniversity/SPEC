@@ -62,7 +62,7 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
 
   use constants, only : zero, half, one, two
 
-  use fileunits, only : ounit, lunit
+  use fileunits, only : ounit
 
   use inputlist, only : Wmacros, Wjo00aa, ext, Nvol, Lrad, mu
 
