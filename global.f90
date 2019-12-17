@@ -1,10 +1,15 @@
-!> \defgroup grp_input Input namelists and global variables
+!> \defgroup grp_global Input namelists and global variables
+
+! to set keyboard shortcut in emacs                                        
+!
+! (1) define macro         , e.g. \C-x \C-( . . . \C-x \C-)              
+! (2) name macro           , e.g. Esc-x name-last-kbd-macro arbitraryname ! 11 Oct 12; 
+! (3) set keyboard shortcut, e.g. Esc-x global-set-key F12 arbitraryname 
 
 !> \file global.f90
-!! \brief Defines input namelists and global variables, and opens some output files.
-!! \ingroup grp_input
-!! 
-!! Note that all variables in namelist need to be broadcasted in readin.
+!> \brief Defines input namelists and global variables, and opens some output files.
+!> 
+!> Note that all variables in namelist need to be broadcasted in readin.
 !>
 !> **Input geometry**
 !> <ul>
@@ -26,14 +31,11 @@
 !> <li> An arbitrary selection of harmonics may be inluded in any order, but only those within the range specified by Mpol and Ntor will be used.
 !> <li> The geometry of *all* the interfaces, i.e. \f$l=0,N\f$, including the degenerate "coordinate-axis" interface, must be given.
 !> </ul>
+!>
+!>
 
-
-! to set keyboard shortcut in emacs                                        
-
-! (1) define macro         , e.g. \C-x \C-( . . . \C-x \C-)              
-! (2) name macro           , e.g. Esc-x name-last-kbd-macro arbitraryname ! 11 Oct 12; 
-! (3) set keyboard shortcut, e.g. Esc-x global-set-key F12 arbitraryname 
-
+!> \ingroup grp_global
+!> @brief some constants used throughout the code
 module constants
 
   implicit none
@@ -62,17 +64,19 @@ module constants
   REAL, parameter :: fifth      =   one / five
   REAL, parameter :: sixth      =   one / six
 
-  REAL, parameter :: pi2        =   6.28318530717958623
-  REAL, parameter :: pi         =   pi2 / two
-  REAL, parameter :: mu0        =   2.0E-07 * pi2
-  REAL, parameter :: goldenmean =   1.618033988749895 !< golden mean = \f$( 1 + \sqrt 5 ) / 2\f$ ;
+  REAL, parameter :: pi2        =   6.28318530717958623 !< \f$2\pi\f$
+  REAL, parameter :: pi         =   pi2 / two           !< \f$\pi\f$
+  REAL, parameter :: mu0        =   2.0E-07 * pi2       !< \f$4\pi\cdot10^{-7}\f$
+  REAL, parameter :: goldenmean =   1.618033988749895   !< golden mean = \f$( 1 + \sqrt 5 ) / 2\f$ ;
 
-  REAL, parameter :: version    =   2.00  
+  REAL, parameter :: version    =   2.00  !< version of SPEC
 
 end module constants
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+!> \brief platform-dependant numerical resolution
+!> \ingroup grp_global
 module numerical
 
   implicit none
@@ -95,6 +99,8 @@ end module numerical
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+!> \brief central definition of file units to avoid conflicts
+!> \ingroup grp_global
 module fileunits
 
   implicit none
@@ -113,6 +119,8 @@ module fileunits
 
 end module fileunits
 
+!> \brief timing variables
+!> \ingroup grp_global
 module cputiming
 
 ! CPUVARIABLE !< this is expanded by Makefile; do not remove;
@@ -125,8 +133,11 @@ end module cputiming
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+!> \brief type definitions for custom datatypes
+!> \ingroup grp_global
 module typedefns
   
+  !> \brief used for quantities which have different resolutions in different volumes, e.g. the vector potential
   type subgrid
      REAL,    allocatable :: s(:)
      INTEGER, allocatable :: i(:)
@@ -136,12 +147,13 @@ end module typedefns
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+!> \brief Input namelists
+!> \addtogroup grp_global
+!> @{
 module inputlist
 
   implicit none
 
-
-  
   CHARACTER          :: ext*100 !< The input file is , \c ext.sp , where \c ext*100 or \c ext.sp*100 is given as command line input.
 
   !SET MAXIMUM RESOLUTION;
@@ -149,14 +161,10 @@ module inputlist
   INTEGER, parameter :: MMpol     =  32 !< The maximum value of \c Mpol is \c MNpol=32 .
   INTEGER, parameter :: MNtor     =  16 !< The maximum value of \c Ntor is \c MNtor=16 .
 
-!> \addtogroup grp_input
-!> @{
-
-
-!> \addtogroup grp_input_physicslist physicslist
-!>
+!> \defgroup grp_global_physicslist physicslist
 !> The namelist \c physicslist controls the geometry, profiles, and numerical resolution.
-!! @{
+!> \ingroup grp_global_physicslist
+!> @{
   INTEGER      :: Igeometry                  =  3        !< selects Cartesian, cylindrical or toroidal geometry;
                                                          !< <ul>
                                                          !< <li> \c Igeometry=1 : Cartesian; geometry determined by \f$R\f$; </li>
@@ -336,10 +344,10 @@ module inputlist
   REAL         :: Bnc(-MNtor:MNtor,-MMpol:MMpol)  =  0.0 !< non-stellarator symmetric normal field at boundary; plasma component;
 !> @}
 
-!> \addtogroup grp_input_numerics numericlist
-!>
+!> \defgroup grp_global_numerics numericlist
 !> The namelist \c numericlist controls internal resolution parameters that the user rarely needs to consider.
-!! @{
+!> \ingroup grp_global_numerics
+!> @{
   INTEGER      :: Linitialize =  0   !< Used to initialize geometry using a regularization / extrapolation method
                                      !< <ul>
                                      !< <li> if \c Linitialize = \f$-I\f$ , where \f$I\f$ is a positive integer, 
@@ -441,13 +449,13 @@ module inputlist
                                      !< </ul>
 !> @}
 
-!> \addtogroup grp_input_local locallist
-!> 
+!> \defgroup grp_global_local locallist
 !> The namelist \c locallist controls the construction of the Beltrami fields in each volume.
 !> 
 !> The transformation to straight-fieldline coordinates is singular when the rotational-transform of the interfaces is rational;
 !> however, the rotational-transform is still well defined.
-!! @{
+!> \ingroup grp_global_local
+!> @{
   INTEGER      :: LBeltrami  =  4   !< Control flag for solution of Beltrami equation
                                     !< <ul>
                                     !< <li> if \c LBeltrami = 1,3,5 or 7, (SQP) then the Beltrami field in each volume is constructed
@@ -490,22 +498,22 @@ module inputlist
   REAL         :: maxrndgues =  1.0 !< the maximum random number of the Beltrami field if \c Linitgues = 3
 !> @}
   
-!> \addtogroup grp_input_global globallist
-!> 
+!> \defgroup grp_global_global globallist
 !> The namelist \c globallist controls the search for global force-balance.
 !> 
 !> Comments:
-!! <ul>
-!! <li> The "force" vector, \f${\bf F}\f$, which is constructed in dforce(), is a combination of pressure-imbalance Fourier harmonics, 
-!!       \f{eqnarray}{ F_{i,v} \equiv [[ p+B^2/2 ]]_{i,v} \times \exp\left[-\texttt{escale}(m_i^2+n_i^2) \right] \times \texttt{opsilon},
-!!       \label{eq:forcebalancemn} \f}
-!!       and spectral-condensation constraints, \f$I_{i,v}\f$, and the "star-like" angle constraints, \f$S_{i,v,}\f$, (see lforce.f90 for details)
-!!       \f{eqnarray}{ F_{i,v} \equiv \texttt{epsilon} \times I_{i,v} 
-!!           + \texttt{upsilon} \times \left( \psi_v^\omega S_{i,v,1} - \psi_{v+1}^\omega S_{i,v+1,0} \right),
-!!       \label{eq:spectralbalancemn} \f}
-!!       where \f$\psi_v\equiv\f$ normalized toroidal flux, \c tflux, and \f$\omega\equiv\f$ \c wpoloidal. </li>
-!! </ul>
-!! @{
+!> <ul>
+!> <li> The "force" vector, \f${\bf F}\f$, which is constructed in dforce(), is a combination of pressure-imbalance Fourier harmonics, 
+!>       \f{eqnarray}{ F_{i,v} \equiv [[ p+B^2/2 ]]_{i,v} \times \exp\left[-\texttt{escale}(m_i^2+n_i^2) \right] \times \texttt{opsilon},
+!>       \label{eq:forcebalancemn} \f}
+!>       and spectral-condensation constraints, \f$I_{i,v}\f$, and the "star-like" angle constraints, \f$S_{i,v,}\f$, (see lforce.f90 for details)
+!>       \f{eqnarray}{ F_{i,v} \equiv \texttt{epsilon} \times I_{i,v} 
+!>           + \texttt{upsilon} \times \left( \psi_v^\omega S_{i,v,1} - \psi_{v+1}^\omega S_{i,v+1,0} \right),
+!>       \label{eq:spectralbalancemn} \f}
+!>       where \f$\psi_v\equiv\f$ normalized toroidal flux, \c tflux, and \f$\omega\equiv\f$ \c wpoloidal. </li>
+!> </ul>
+!> \ingroup grp_global_global
+!> @{
   INTEGER      :: Lfindzero  =   0       !< use Newton methods to find zero of force-balance, which is computed by dforce()
                                          !< <ul>
                                          !< <li> if \c Lfindzero = 0, then dforce() is called once 
@@ -594,9 +602,9 @@ module inputlist
 !> @}
 
 
-!> \addtogroup grp_input_diagnostics diagnosticslist
-!> 
+!> \defgroup grp_global_diagnostics diagnosticslist
 !> The namelist \c diagnosticslist controls post-processor diagnostics, such as Poincaré  plot resolution, etc.
+!> \ingroup grp_global_diagnostics
 !> @{
   REAL         :: odetol           =     1.0e-07 !< o.d.e. integration tolerance for all field line tracing routines
   REAL         :: absreq           =     1.0e-08 !< redundant
@@ -660,10 +668,11 @@ module inputlist
 !> @}
 
 
-!> \addtogroup grp_input_screenlist screenlist
-!> 
+!> \defgroup grp_global_screenlist screenlist
 !> The namelist \c screenlist controls screen output.
+!> \ingroup grp_global_screenlist
 !> @{  
+
 ! DSCREENLIST !< define screenlist; this is expanded by Makefile; DO NOT REMOVE; each file compiled by Makefile has its own write flag;
   LOGICAL      :: Wreadin = .false. !< Every subroutine, e.g. \c xy00aa.h, has its own write flag, \c Wxy00aa.
   LOGICAL      :: Wwritin = .false. !< redundant
@@ -798,10 +807,10 @@ module inputlist
  Wmacros
 
 end module inputlist
-!> @}
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+!> \brief global variable storage used as "workspace" throughout the code
 module allglobal
 
   use constants
@@ -837,100 +846,103 @@ module allglobal
     
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!> \ingroup grp_input
-!> \addtogroup grp_internal_vars Internal Variables
+!> \defgroup grp_internal_vars Internal Variables
+!> \ingroup grp_internal_vars
 !> @{
-!> \addtogroup grp_fourier_repr Fourier representation
+!> 
+!> \defgroup grp_fourier_repr Fourier representation
+!> \ingroup grp_fourier_repr
 !> @{
-  INTEGER              :: mn           !< total number of Fourier harmonics for coordinates/fields; calculated from Mpol,Ntor in readin;
-  INTEGER, allocatable :: im(:), in(:) !< Fourier modes; set in readin;
+  INTEGER              :: mn           !< total number of Fourier harmonics for coordinates/fields; calculated from Mpol, Ntor in readin
+  INTEGER, allocatable :: im(:), in(:) !< Fourier modes; set in readin
 
   REAL,    allocatable :: halfmm(:), regumm(:)
 
   REAL                 :: Rscale
   REAL,    allocatable :: psifactor(:,:), inifactor(:,:)
 
-  REAL,    allocatable :: BBweight(:) !< weight on force-imbalance harmonics; used in dforce; 
+  REAL,    allocatable :: BBweight(:) !< weight on force-imbalance harmonics; used in dforce()
   
-  REAL,    allocatable :: mmpp(:) !< spectral condensation factors; 
+  REAL,    allocatable :: mmpp(:) !< spectral condensation factors
  
-! INTEGER, allocatable :: dnjn(:,:)
-
+!> \defgroup grp_enh_res_metr Enhanced resolution for metric elements
 !> Enhanced resolution is required for the metric elements, \f$g_{ij}/\sqrt g\f$, which is given by mne, ime, and ine.
-!> The Fourier resolution here is determined by \texttt{lMpol=2*Mpol} and \texttt{lNtor=2*Ntor}.
-  INTEGER              :: mne !< enhanced resolution for metric elements;
+!> The Fourier resolution here is determined by \c lMpol=2*Mpol  and \c lNtor=2*Ntor.
+!> \ingroup grp_enh_res_metr
+!> @{
+  INTEGER              :: mne !< enhanced resolution for metric elements
   INTEGER, allocatable :: ime(:), ine(:)
+!> @}
 
-!> <li> Enhanced resolution is required for the transformation to straight-field line angle on the interfaces,
-!> which is given by \texttt{mns}, \texttt{ims}., and \texttt{ins}.
-!> The Fourier resolution here is determined by \texttt{iMpol} and \texttt{iNtor}.
-!> </ul>
-
-  INTEGER              :: mns !< enhanced resolution for straight field line transformation;
+!> \defgroup grp_enh_res_sfl Enhanced resolution for transformation to straight-field line angle
+!> Enhanced resolution is required for the transformation to straight-field line angle on the interfaces,
+!> which is given by mns, ims  and ins.
+!> The Fourier resolution here is determined by \c iMpol  and \c iNtor.
+!> \ingroup grp_enh_res_sfl
+!> @{
+  INTEGER              :: mns !< enhanced resolution for straight field line transformation
   INTEGER, allocatable :: ims(:), ins(:)
+!> @}
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  REAL                 :: xoffset = 1.0 !< used to normalize NAG routines;
+  REAL                 :: xoffset = 1.0 !< used to normalize NAG routines
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 !> @}
-!> \addtogroup grp_iface_geom Interface geometry: iRbc, iZbs etc.
+
+!> \defgroup grp_iface_geom Interface geometry: iRbc, iZbs etc.
+!> The Fourier harmonics of the interfaces are contained in \c iRbc(1:mn,0:Mvol) and \c iZbs(1:mn,0:Mvol), where
+!> \c iRbc(l,j), \c iZbs(l,j) contains the Fourier harmonics, \f$R_j\f$, \f$Z_j\f$, of the \f$l\f$-th interface.
+!> \ingroup grp_iface_geom
 !> @{
-!> <ul>
-!> <li> The Fourier harmonics of the interfaces are contained in \texttt{iRbc(1:mn,0:Mvol)} and \texttt{iZbs(1:mn,0:Mvol)}, where
-!> \texttt{iRbc(l,j)}, \texttt{iZbs(l,j)} contains the Fourier harmonics, $R_j$, $Z_j$, of the $l$-th interface.
-!> </ul>
-  REAL,    allocatable :: iRbc(:,:) , iZbs(:,:)   !< interface surface geometry;     stellarator symmetric;
-  REAL,    allocatable :: iRbs(:,:) , iZbc(:,:)   !< interface surface geometry; non-stellarator symmetric;
+  REAL,    allocatable :: iRbc(:,:) , iZbs(:,:)   !< interface surface geometry;     stellarator symmetric
+  REAL,    allocatable :: iRbs(:,:) , iZbc(:,:)   !< interface surface geometry; non-stellarator symmetric
 
-  REAL,    allocatable :: dRbc(:,:) , dZbs(:,:)   !< interface surface geometry;     stellarator symmetric; linear deformation;
-  REAL,    allocatable :: dRbs(:,:) , dZbc(:,:)   !< interface surface geometry; non-stellarator symmetric;
+  REAL,    allocatable :: dRbc(:,:) , dZbs(:,:)   !< interface surface geometry;     stellarator symmetric; linear deformation
+  REAL,    allocatable :: dRbs(:,:) , dZbc(:,:)   !< interface surface geometry; non-stellarator symmetric; linear deformation
 
-  REAL,    allocatable :: iRij(:,:) , iZij(:,:)   !< interface surface geometry; real space;
-  REAL,    allocatable :: dRij(:,:) , dZij(:,:)   !< interface surface geometry; real space;
-  REAL,    allocatable :: tRij(:,:) , tZij(:,:)   !< interface surface geometry; real space;
+  REAL,    allocatable :: iRij(:,:) , iZij(:,:)   !< interface surface geometry; real space
+  REAL,    allocatable :: dRij(:,:) , dZij(:,:)   !< interface surface geometry; real space
+  REAL,    allocatable :: tRij(:,:) , tZij(:,:)   !< interface surface geometry; real space
 
-  REAL,    allocatable :: iVns(:)                 ! 
-  REAL,    allocatable :: iBns(:)                 ! 
-  REAL,    allocatable :: iVnc(:)                 !
-  REAL,    allocatable :: iBnc(:)                 !
+  REAL,    allocatable :: iVns(:)                 !< vacuum normal magnetic field on interfaces;     stellarator symmetric
+  REAL,    allocatable :: iBns(:)                 !< plasma normal magnetic field on interfaces;     stellarator symmetric
+  REAL,    allocatable :: iVnc(:)                 !< vacuum normal magnetic field on interfaces; non-stellarator symmetric
+  REAL,    allocatable :: iBnc(:)                 !< plasma normal magnetic field on interfaces; non-stellarator symmetric
 
-  REAL,    allocatable :: lRbc(:)   , lZbs(:)     !< local workspace;
-  REAL,    allocatable :: lRbs(:)   , lZbc(:)     !< local workspace;
+  REAL,    allocatable :: lRbc(:)   , lZbs(:)     !< local workspace
+  REAL,    allocatable :: lRbs(:)   , lZbc(:)     !< local workspace
+!> @}
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-!> @}
-!> \addtogroup grp_fourier_transform Fourier Transforms
+
+!> \defgroup grp_fourier_transform Fourier Transforms
+!> The coordinate geometry and fields are mapped to/from Fourier space and real space using FFTW3.
+!> The resolution of the real space grid is given by \c Nt=Ndiscrete*4*Mpol and \c Nz=Ndiscrete*4*Ntor.
+!> 
+!> Various workspace arrays are allocated.
+!> These include \c Rij(1:Ntz,0:3,0:3) and \c Zij(1:Ntz,0:3,0:3), which contain the coordinates in real space and their derivatives;
+!> \c sg(0:3,Ntz), which contains the Jacobian and its derivatives;
+!> and \c guv(0:6,0:3,1:Ntz), which contains the metric elements and their derivatives.
+!> \ingroup grp_fourier_transform
 !> @{
-!> <ul>
-
-!> <li> The coordinate geometry and fields are mapped to/from Fourier space and real space using FFTW3.
-!> <li> The resolution of the real space grid is given by \texttt{Nt=Ndiscrete*4*Mpol} and \texttt{Nz=Ndiscrete*4*Ntor}.
-
-  INTEGER              :: Nt, Nz, Ntz, hNt, hNz !< discrete resolution; Ntz=Nt*Nz shorthand;
-  REAL                 :: soNtz !< one / sqrt (one*Ntz); shorthand;
-
-
-!> <li> Various workspace arrays are allocated. 
-!> These include \texttt{Rij(1:Ntz,0:3,0:3)} and \texttt{Zij(1:Ntz,0:3,0:3)}, which contain the coordinates in real space and their derivatives;
-!> \texttt{sg(0:3,Ntz)}, which contains the Jacobian and its derivatives;
-!> and \texttt{guv(0:6,0:3,1:Ntz)}, which contains the metric elements and their derivatives.
-!> </ul>
+  INTEGER              :: Nt, Nz, Ntz, hNt, hNz !< discrete resolution; Ntz=Nt*Nz shorthand
+  REAL                 :: soNtz                 !< one / sqrt (one*Ntz); shorthand
 
   REAL   , allocatable :: Rij(:,:,:), Zij(:,:,:), Xij(:,:,:), Yij(:,:,:), sg(:,:), guvij(:,:,:,:), gvuij(:,:,:) !< real-space; 10 Dec 15;
   
-  INTEGER, allocatable :: ki(:,:), kijs(:,:,:), kija(:,:,:) !< identification of Fourier modes; 
+  INTEGER, allocatable :: ki(:,:), kijs(:,:,:), kija(:,:,:) !< identification of Fourier modes
 
-  INTEGER, allocatable :: iotakkii(:), iotaksub(:,:), iotakadd(:,:), iotaksgn(:,:) !< identification of Fourier modes; 
+  INTEGER, allocatable :: iotakkii(:), iotaksub(:,:), iotakadd(:,:), iotaksgn(:,:) !< identification of Fourier modes
 
-  REAL   , allocatable :: efmn(:), ofmn(:), cfmn(:), sfmn(:) !< Fourier harmonics; dummy workspace;
-  REAL   , allocatable :: evmn(:), odmn(:), comn(:), simn(:) !< Fourier harmonics; dummy workspace;
+  REAL   , allocatable :: efmn(:), ofmn(:), cfmn(:), sfmn(:) !< Fourier harmonics; dummy workspace
+  REAL   , allocatable :: evmn(:), odmn(:), comn(:), simn(:) !< Fourier harmonics; dummy workspace
 
   REAL   , allocatable :: ijreal(:), ijimag(:), jireal(:), jiimag(:)
   REAL   , allocatable :: jkreal(:), jkimag(:), kjreal(:), kjimag(:)
 
-  REAL   , allocatable :: Bsupumn(:,:,:), Bsupvmn(:,:,:) !< 11 Oct 12; tangential field on interfaces; required for virtual casing construction of field;
+  REAL   , allocatable :: Bsupumn(:,:,:), Bsupvmn(:,:,:) !< 11 Oct 12; tangential field on interfaces; required for virtual casing construction of field
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -941,24 +953,14 @@ module allglobal
   REAL   , allocatable :: gttmne(:), gttmno(:) !< described in preset.f90
   REAL   , allocatable :: gtzmne(:), gtzmno(:) !< described in preset.f90
   REAL   , allocatable :: gzzmne(:), gzzmno(:) !< described in preset.f90
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 !> @}
 
-!> \addtogroup grp_chebychev_metric Volume-integrated Chebyshev-metrics
-!> @{
-! > \subsubsection{\texttt{DToocc, DToocs, DToosc, DTooss} : volume-integrated Chebyshev-metrics}
-! > \subsubsection{\texttt{TTsscc, TTsscs, TTsssc, TTssss} : volume-integrated Chebyshev-metrics}
-! > \subsubsection{\texttt{TDstcc, TDstcs, TDstsc, TDstss} : volume-integrated Chebyshev-metrics}
-! > \subsubsection{\texttt{TDszcc, TDszcs, TDszsc, TDszss} : volume-integrated Chebyshev-metrics}
-! > \subsubsection{\texttt{DDttcc, DDttcs, DDttsc, DDttss} : volume-integrated Chebyshev-metrics}
-! > \subsubsection{\texttt{DDtzcc, DDtzcs, DDtzsc, DDtzss} : volume-integrated Chebyshev-metrics}
-! > \subsubsection{\texttt{DDzzcc, DDzzcs, DDzzsc, DDzzss} : volume-integrated Chebyshev-metrics}
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!> <ul>
-!> <li> These are allocated in \link{dforce}, defined in \link{ma00aa}, and are used in \link{matrix} to construct the matrices.
-!> </ul>
-  
+!> \defgroup grp_chebychev_metric Volume-integrated Chebyshev-metrics
+!> These are allocated in dforce(), defined in ma00aa(), and are used in matrix() to construct the matrices.
+!> \ingroup grp_chebychev_metric
+!> @{
   REAL,    allocatable :: DToocc(:,:,:,:), DToocs(:,:,:,:), DToosc(:,:,:,:), DTooss(:,:,:,:)
   REAL,    allocatable :: TTsscc(:,:,:,:), TTsscs(:,:,:,:), TTsssc(:,:,:,:), TTssss(:,:,:,:)
   REAL,    allocatable :: TDstcc(:,:,:,:), TDstcs(:,:,:,:), TDstsc(:,:,:,:), TDstss(:,:,:,:)
@@ -969,296 +971,252 @@ module allglobal
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  REAL,    allocatable :: dtflux(:), dpflux(:) !< \delta \psi_{toroidal} and \delta \psi_{poloidal} in each annulus;
+  REAL,    allocatable :: dtflux(:), dpflux(:) !< \f$\delta \psi_{toroidal}\f$ and \f$\delta \psi_{poloidal}\f$ in each annulus
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  REAL,    allocatable :: sweight(:) !< minimum poloidal length constraint weight; 
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  REAL,    allocatable :: sweight(:) !< minimum poloidal length constraint weight
 !> @}
 
-!> \addtogroup grp_vecpot Vector potential and the Beltrami linear system
-!> @{
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+!> \defgroup grp_vecpot Vector potential and the Beltrami linear system
 !> <ul>
-!> <li> In each volume, the total degrees of freedom in the Beltrami linear system is \texttt{NAdof(1:Nvol)}.
-!> This depends on \c Mpol}, \c Ntor} and \c Lrad(vvol)}.
-   
-  INTEGER, allocatable :: NAdof(:) !< degrees of freedom in Beltrami fields in each annulus;
-
+!> <li> In each volume, the total degrees of freedom in the Beltrami linear system is \c NAdof(1:Nvol).
+!>      This depends on \c Mpol, \c Ntor and \c Lrad(vvol). </li>
 !> <li> The covariant components of the vector potential are written as
-!>       \be            A_\t & = & \sum_i \sum_{l=0}^L \Ate{i,l} \; T_{l}(s) \cos\a_i + \sum_i \sum_{l=0}^L \Ato{i,l} \; T_{l}(s) \sin\a_i \\
-!>                      A_\z & = & \sum_i \sum_{l=0}^L \Aze{i,l} \; T_{l}(s) \cos\a_i + \sum_i \sum_{l=0}^L \Azo{i,l} \; T_{l}(s) \sin\a_i ,
-!>       \ee
-!>       where $T_l(s)$ are the Chebyshev polynomials and $\a_i \equiv m_i \t - n_i \z$.
-
-!> <li> The following internal arrays are declared in \link{preset}
-!>
-!>       \verb{dAte(0,i)%s(l){$\equiv \Ate{i,l}$
-!>
-!>       \verb{dAze(0,i)%s(l){$\equiv \Aze{i,l}$
-!>
-!>       \verb{dAto(0,i)%s(l){$\equiv \Ato{i,l}$
-!>
-!>       \verb{dAzo(0,i)%s(l){$\equiv \Azo{i,l}$
+!>       \f{eqnarray}{ A_\theta & = & \sum_i \sum_{l=0}^L {\color{red} {A_{\theta,e,i,l}}} \; T_{l}(s) \cos\alpha_i + \sum_i \sum_{l=0}^L {\color{magenta}{A_{\theta,o,i,l}}} \; T_{l}(s) \sin\alpha_i \\
+!>                     A_\zeta  & = & \sum_i \sum_{l=0}^L {\color{blue}{A_{\zeta, e,i,l}}} \; T_{l}(s) \cos\alpha_i + \sum_i \sum_{l=0}^L {\color{cyan}   {A_{\zeta ,o,i,l}}} \; T_{l}(s) \sin\alpha_i ,
+!>       \f}
+!>       where \f$T_l(s)\f$ are the Chebyshev polynomials and \f$\alpha_i \equiv m_i \theta - n_i \zeta\f$. </li>
+!> <li> The following internal arrays are declared in preset() :
+!> 
+!>       \c dAte(0,i)%%s(l) \f$\equiv {\color{red}    {A_{\theta,e,i,l}}}\f$
+!>       
+!>       \c dAze(0,i)%%s(l) \f$\equiv {\color{blue}   {A_{\zeta, e,i,l}}}\f$
+!>       
+!>       \c dAto(0,i)%%s(l) \f$\equiv {\color{magenta}{A_{\theta,o,i,l}}}\f$
+!>       
+!>       \c dAzo(0,i)%%s(l) \f$\equiv {\color{cyan}   {A_{\zeta ,o,i,l}}}\f$ </li>
 !> </ul>
+!> \ingroup grp_vecpot
+!> @{
+  INTEGER, allocatable :: NAdof(:) !< degrees of freedom in Beltrami fields in each annulus
 
   type(subgrid), allocatable :: Ate(:,:,:), Aze(:,:,:)
   type(subgrid), allocatable :: Ato(:,:,:), Azo(:,:,:)
 
   INTEGER      , allocatable :: Lma(:,:), Lmb(:,:), Lmc(:,:), Lmd(:,:), Lme(:,:), Lmf(:,:), Lmg(:,:), Lmh(:,:)
-! REAL         , allocatable :: Lto(    :), Lzo(    :)
 
-! INTEGER      , allocatable :: Lmo(:,:), Lme(:,:) ! Lagrange multipliers for enforcing the boundary condition that B.n=0; 17 Dec 15;
   INTEGER      , allocatable :: Fso(:,:), Fse(:,:)
 
   LOGICAL                    :: Lcoordinatesingularity, Lplasmaregion, Lvacuumregion
-!>@}
+!> @}
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-!> \addtogroup grp_field_matrices Field matrices: dMA, dMB, dMC, dMD, dME, dMF
-!> @{
 
+!> \defgroup grp_field_matrices Field matrices: dMA, dMB, dMC, dMD, dME, dMF
 !> <ul>
-!> <li> The energy, $W \equiv \int \! dv {\; \bf B}\cdot{\bf B}$, and helicity, $K\equiv \int \! dv \; {\bf A}\cdot{\bf B}$, functionals may be written
-!>      \be W & = & \frac{1}{2} \; a_i \; A_{i,j} \; a_j + a_i \; B_{i,j} \; \psi_j + \frac{1}{2} \; \psi_i \; C_{i,j} \; \psi_j \label{eq:energymatrix} \\
-!>          K & = & \frac{1}{2} \; a_i \; D_{i,j} \; a_j + a_i \; E_{i,j} \; \psi_j + \frac{1}{2} \; \psi_i \; F_{i,j} \; \psi_j \label{eq:helicitymatrix}
-!>      \ee
-!>       where ${\bf a} \equiv \{ A_{\t,e,i,l}, A_{\z,e,i,l}, A_{\t,o,i,l}, A_{\z,o,i,l}, f_{e,i}, f_{o,i} \}$ contains the independent degrees of freedom
-!>       and $\boldpsi \equiv \{\Delta \psi_t,\Delta \psi_p\}$.
-!> <li> These are allocated and deallocated in \link{dforce}, assigned in \link{matrix}, and used in \link{mp00ac} and ? \link{df00aa}.
+!> <li> The energy, \f$W \equiv \int \! dv {\; \bf B}\cdot{\bf B}\f$, and helicity, \f$K\equiv \int \! dv \; {\bf A}\cdot{\bf B}\f$, functionals may be written
+!>      \f{eqnarray}{ W & = & \frac{1}{2} \; a_i \; A_{i,j} \; a_j + a_i \; B_{i,j} \; \psi_j + \frac{1}{2} \; \psi_i \; C_{i,j} \; \psi_j \label{eq:energymatrix} \\
+!>                    K & = & \frac{1}{2} \; a_i \; D_{i,j} \; a_j + a_i \; E_{i,j} \; \psi_j + \frac{1}{2} \; \psi_i \; F_{i,j} \; \psi_j \label{eq:helicitymatrix}
+!>      \f}
+!>       where \f${\bf a} \equiv \{ {\color{red}{A_{\theta,e,i,l}}}, {\color{blue}{A_{\zeta, e,i,l}}}, {\color{magenta}{A_{\theta,o,i,l}}}, {\color{cyan}{A_{\zeta ,o,i,l}}}, f_{e,i}, f_{o,i} \}\f$ contains the independent degrees of freedom
+!>       and \f$\boldsymbol{\psi} \equiv \{\Delta \psi_t,\Delta \psi_p\}\f$. </li>
+!> <li> These are allocated and deallocated in dforce(), assigned in matrix(), and used in mp00ac() and (?) df00aa(). </li>
 !> </ul>
-
-   REAL,   allocatable :: dMA(:,:), dMB(:,:)! dMC(:,:) !< energy and helicity matrices; quadratic forms; 
-   REAL,   allocatable :: dMD(:,:)! dME(:,:)! dMF(:,:) !< energy and helicity matrices; quadratic forms; 
+!> \ingroup grp_field_matrices
+!> @{
+   REAL,   allocatable :: dMA(:,:), dMB(:,:)! dMC(:,:) !< energy and helicity matrices; quadratic forms
+   REAL,   allocatable :: dMD(:,:)! dME(:,:)! dMF(:,:) !< energy and helicity matrices; quadratic forms
 
    REAL,   allocatable :: dMG(:  )
 
-   REAL,   allocatable :: solution(:,:) !< this is allocated in dforce; used in mp00ac and ma02aa; and is passed to packab; 
+   REAL,   allocatable :: solution(:,:)      !< this is allocated in dforce; used in mp00ac and ma02aa; and is passed to packab
 
-!  REAL,   allocatable :: MBpsi(:), MEpsi(:) ! matrix vector products; 
-   REAL,   allocatable :: MBpsi(:)           !< matrix vector products; 
-!  REAL                :: psiMCpsi, psiMFpsi
-!  REAL                ::           psiMFpsi
+   REAL,   allocatable :: MBpsi(:)           !< matrix vector products
 
    REAL,   allocatable :: BeltramiInverse(:,:)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  REAL   , allocatable :: diotadxup(:,:,:) !< measured rotational transform on inner/outer interfaces for each volume;          d(transform)/dx; (see dforce);
-  REAL   , allocatable :: dItGpdxtp(:,:,:) !< measured toroidal and poloidal current on inner/outer interfaces for each volume; d(Itor,Gpol)/dx; (see dforce);
+  REAL   , allocatable :: diotadxup(:,:,:) !< measured rotational transform on inner/outer interfaces for each volume;          d(transform)/dx; (see dforce)
+  REAL   , allocatable :: dItGpdxtp(:,:,:) !< measured toroidal and poloidal current on inner/outer interfaces for each volume; d(Itor,Gpol)/dx; (see dforce)
 
-  REAL   , allocatable :: glambda(:,:,:,:) !< save initial guesses for iterative calculation of rotational-transform; 
+  REAL   , allocatable :: glambda(:,:,:,:) !< save initial guesses for iterative calculation of rotational-transform
 
   INTEGER              :: lmns
 !> @}
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-!> \addtogroup grp_force_constr Construction of "force"
+
+!> \defgroup grp_force_constr Construction of "force"
+!> The force vector is comprised of \c Bomn and \c Iomn.
+!> \ingroup grp_force_constr
 !> @{
-
-!> <ul>
-!> <li> The force vector is comprised of \texttt{Bomn} and \texttt{Iomn}.
-!> </ul>
-
   REAL,    allocatable ::  Bemn(:,:,:),  Iomn(:,:), Somn(:,:,:), Pomn(:,:,:)
   REAL,    allocatable ::  Bomn(:,:,:),  Iemn(:,:), Semn(:,:,:), Pemn(:,:,:)
   REAL,    allocatable ::  BBe(:), IIo(:), BBo(:), IIe(:)
 !> @}
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-!> \addtogroup grp_covar_field_ifaces Covariant field on interfaces: Btemn, Bzemn, Btomn, Bzomn
+!> \defgroup grp_covar_field_ifaces Covariant field on interfaces: Btemn, Bzemn, Btomn, Bzomn
+!> The covariant field
+!> \ingroup grp_covar_field_ifaces
 !> @{
-
-!> <ul>
-!> <li> The covariant field:
-!> </ul>
-
-  REAL,    allocatable ::  Btemn(:,:,:), Bzemn(:,:,:), Btomn(:,:,:), Bzomn(:,:,:) !< covariant components of the tangential field on interfaces;
+  REAL,    allocatable ::  Btemn(:,:,:), Bzemn(:,:,:), Btomn(:,:,:), Bzomn(:,:,:) !< covariant components of the tangential field on interfaces
 !> @}
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!> \addtogroup grp_geomdof Geometrical degrees-of-freedom: LGdof, NGdof
+!> \defgroup grp_geomdof Geometrical degrees-of-freedom: LGdof, NGdof
+!> The geometrical degrees-of-freedom
+!> \ingroup grp_geomdof
 !> @{
-
-!> <ul>
-!> <li> The geometrical degrees-of-freedom: 
-!> </ul>
-
-  INTEGER              :: LGdof !<       geometrical degrees of freedom associated with each interface;                   ; 
-  INTEGER              :: NGdof !< total geometrical degrees of freedom                               ;                   ; 
+  INTEGER              :: LGdof !<       geometrical degrees of freedom associated with each interface
+  INTEGER              :: NGdof !< total geometrical degrees of freedom
 !> @}
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-!> \addtogroup grp_par_deriv_mat Parallel construction of derivative matrix
-!> @{
-
-
+!> \defgroup grp_par_deriv_mat Parallel construction of derivative matrix
 !> <ul>
-!> <li> The derivatives of force-balance, $[[p+B^2/2]]$, and the spectral constraints (see \link{sw03aa}), with respect to the interface geometry
-!> is constructed in parallel by \link{dforce}.
-!> <li> force-balance across the $l$-th interface depends on the fields in the adjacent interfaces.
+!> <li> The derivatives of force-balance, \f$[[p+B^2/2]]\f$, and the spectral constraints (see sw03aa()), with respect to the interface geometry
+!>      is constructed in parallel by dforce(). </li>
+!> <li> force-balance across the \f$l\f$-th interface depends on the fields in the adjacent interfaces. </li>
 !> </ul>
-
+!> \ingroup grp_par_deriv_mat
+!> @{
   REAL,    allocatable :: dBBdRZ(:,:,:)
   REAL,    allocatable :: dIIdRZ(:  ,:)
 
-  REAL,    allocatable :: dFFdRZ(:,:,:,:,:) !< derivatives of B^2 at the interfaces wrt geometry     ; 
-  REAL,    allocatable :: dBBdmp(:,:,:,:  ) !< derivatives of B^2 at the interfaces wrt mu and dpflux; 
+  REAL,    allocatable :: dFFdRZ(:,:,:,:,:) !< derivatives of B^2 at the interfaces wrt geometry
+  REAL,    allocatable :: dBBdmp(:,:,:,:  ) !< derivatives of B^2 at the interfaces wrt mu and dpflux
 !> @}
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-!> \addtogroup grp_deriv_mul_polflux Derivatives of multiplier and poloidal flux with respect to geometry:  dmupfdx
-!> @{
 
-
+!> \defgroup grp_deriv_mul_polflux Derivatives of multiplier and poloidal flux with respect to geometry: dmupfdx
 !> <ul>
-!> <li> The information in \texttt{dmupfdx} describes how the helicity multiplier, $\mu$, and the enclosed poloidal flux, $\Delta \psi_p$, 
-!>       must vary as the geometry is varied in order to satisfy the interface transform constraint.
-!> <li> The internal variable \texttt{dmupfdx(1:Mvol,1:2,1:LGdof,0:1)} is allocated/deallocated in \link{newton}, and \link{hesian} if selected.
-!l tex <li> The rotational transform on the inner or outer interface of a given volume depends on the magnetic field in that volume, i.e.
-!l tex       \be \iotabar_\pm = \iotabar({\bf B}_\pm),
-!l tex       \ee
-!l tex       so that
-!l tex       \be \delta \iotabar_\pm = \frac{\partial \iotabar_\pm}{\partial {\bf B}_\pm} \cdot \delta {\bf B_\pm}.
-!l tex       \ee
-!> <li> The magnetic field depends on the Fourier harmonics of both the inner and outer interface geometry (represented here as $x_j$),
-!>       the helicity multiplier, and the enclosed poloidal flux, i.e. ${\bf B_\pm} = {\bf B_\pm}(x_j, \mu, \Delta \psi_p)$, so that 
-!>       \be \delta {\bf B_\pm} = \frac{\partial {\bf B}_\pm}{\partial x_j          } \delta x_j
-!>                              + \frac{\partial {\bf B}_\pm}{\partial \mu          } \delta \mu
-!>                              + \frac{\partial {\bf B}_\pm}{\partial \Delta \psi_p} \delta \Delta \psi_p.
-!>       \ee
-!> <li> This information is used to adjust the calculation of how force-balance, i.e. $B^2$ at the interfaces, 
-!>       varies with geometry at fixed interface rotational transform. Given 
-!>       \be B_\pm^2 = B_\pm^2 (x_j, \mu, \Delta \psi_p),
-!>       \ee
-!>       we may derive
-!>       \be \frac{\partial B_\pm^2}{\partial x_j} = \frac{\partial B_\pm^2}{\partial x_j          }                     
-!>                                                 + \frac{\partial B_\pm^2}{\partial \mu          } \frac{\partial \mu          }{\partial x_j}
-!>                                                 + \frac{\partial B_\pm^2}{\partial \Delta \psi_p} \frac{\partial \Delta \psi_p}{\partial x_j}
-!>       \ee
-!> <li> The constraint to be enforced is that $\mu$ and $\Delta \psi_p$ must generally vary as the geometry is varied 
-!>       if the value of the rotational-transform constraint on the inner/outer interface is to be preserved,
-!>       \i.e. 
-!>       \be \left(\begin{array}{ccc} \ds \frac{\partial \iotabar_-}{\partial {\bf B}_-} \cdot \frac{\partial {\bf B}_-}{\partial \mu          } & , & 
-!>                                    \ds \frac{\partial \iotabar_-}{\partial {\bf B}_-} \cdot \frac{\partial {\bf B}_-}{\partial \Delta \psi_p} \\
-!>                                    \ds \frac{\partial \iotabar_+}{\partial {\bf B}_+} \cdot \frac{\partial {\bf B}_+}{\partial \mu          } & , & 
-!>                                    \ds \frac{\partial \iotabar_+}{\partial {\bf B}_+} \cdot \frac{\partial {\bf B}_+}{\partial \Delta \psi_p}
-!>                   \end{array} \right)
-!>           \left(\begin{array}{c} \ds \frac{\partial \mu}{\partial x_j} \\ \ds \frac{\partial \Delta \psi_p}{\partial x_j} \end{array} \right) = 
-!>         - \left(\begin{array}{c} \ds \frac{\partial \iotabar_-}{\partial {\bf B}_-} \cdot \frac{\partial {\bf B}_-}{\partial x_j} \\
-!>                                  \ds \frac{\partial \iotabar_+}{\partial {\bf B}_+} \cdot \frac{\partial {\bf B}_+}{\partial x_j} \end{array} \right).
-!>       \ee
-!> <li> This $2\times 2$ linear equation is solved in \link{dforce};
-!>       and the derivatives of the rotational-transform are given in \internal{diotadxup}, see \link{preset}.
-!> <li> A finite-difference estimate is computed if \c Lcheck.eq.4}.
+!> <li> The information in \c dmupfdx describes how the helicity multiplier, \f$\mu\f$, and the enclosed poloidal flux, \f$\Delta \psi_p\f$, 
+!>      must vary as the geometry is varied in order to satisfy the interface transform constraint. </li>
+!> <li> The internal variable \c dmupfdx(1:Mvol,1:2,1:LGdof,0:1) is allocated/deallocated in newton(), and hesian() if selected. </li>
+!> <li> The magnetic field depends on the Fourier harmonics of both the inner and outer interface geometry (represented here as \f$x_j\f$),
+!>      the helicity multiplier, and the enclosed poloidal flux, i.e. \f${\bf B_\pm} = {\bf B_\pm}(x_j, \mu, \Delta \psi_p)\f$, so that 
+!>      \f{eqnarray}{ \delta {\bf B_\pm} = \frac{\partial {\bf B}_\pm}{\partial x_j          } \delta x_j
+!>                                       + \frac{\partial {\bf B}_\pm}{\partial \mu          } \delta \mu
+!>                                       + \frac{\partial {\bf B}_\pm}{\partial \Delta \psi_p} \delta \Delta \psi_p.
+!>      \f} </li>
+!> <li> This information is used to adjust the calculation of how force-balance, i.e. \f$B^2\f$ at the interfaces, 
+!>      varies with geometry at fixed interface rotational transform. Given
+!>      \f{eqnarray}{ B_\pm^2 = B_\pm^2 (x_j, \mu, \Delta \psi_p),
+!>      \f}
+!>      we may derive
+!>      \f{eqnarray}{ \frac{\partial B_\pm^2}{\partial x_j} = \frac{\partial B_\pm^2}{\partial x_j          }                     
+!>                                                          + \frac{\partial B_\pm^2}{\partial \mu          } \frac{\partial \mu          }{\partial x_j}
+!>                                                          + \frac{\partial B_\pm^2}{\partial \Delta \psi_p} \frac{\partial \Delta \psi_p}{\partial x_j}
+!>      \f} </li>
+!> <li> The constraint to be enforced is that \f$\mu\f$ and \f$\Delta \psi_p\f$ must generally vary as the geometry is varied 
+!>      if the value of the rotational-transform constraint on the inner/outer interface is to be preserved,
+!>      \i.e. 
+!>      \f{eqnarray}{ \left(\begin{array}{ccc} \ds \frac{\partial \iotabar_-}{\partial {\bf B}_-} \cdot \frac{\partial {\bf B}_-}{\partial \mu          } & , & 
+!>                                             \ds \frac{\partial \iotabar_-}{\partial {\bf B}_-} \cdot \frac{\partial {\bf B}_-}{\partial \Delta \psi_p} \\
+!>                                             \ds \frac{\partial \iotabar_+}{\partial {\bf B}_+} \cdot \frac{\partial {\bf B}_+}{\partial \mu          } & , & 
+!>                                             \ds \frac{\partial \iotabar_+}{\partial {\bf B}_+} \cdot \frac{\partial {\bf B}_+}{\partial \Delta \psi_p}
+!>                    \end{array} \right)
+!>                      \left(\begin{array}{c} \ds \frac{\partial \mu}{\partial x_j} \\ \ds \frac{\partial \Delta \psi_p}{\partial x_j} \end{array} \right) = 
+!>                    - \left(\begin{array}{c} \ds \frac{\partial \iotabar_-}{\partial {\bf B}_-} \cdot \frac{\partial {\bf B}_-}{\partial x_j} \\
+!>                                             \ds \frac{\partial \iotabar_+}{\partial {\bf B}_+} \cdot \frac{\partial {\bf B}_+}{\partial x_j} \end{array} \right).
+!>      \f} </li>
+!> <li> This \f$2\times 2\f$ linear equation is solved in dforce()
+!>      and the derivatives of the rotational-transform are given in \c diotadxup, see preset.f90 . </li>
+!> <li> A finite-difference estimate is computed if \c Lcheck==4. </li>
 !> </ul>
-
-  REAL,    allocatable :: dmupfdx(:,:,:,:)  !< derivatives of mu and dpflux wrt geometry at constant interface transform; 
+!> \ingroup grp_deriv_mul_polflux
+!> @{
+  REAL,    allocatable :: dmupfdx(:,:,:,:)  !< derivatives of mu and dpflux wrt geometry at constant interface transform
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-! REAL,    allocatable ::   DenergyDrz(:,:,:    ) ! derivatives of \int B^2 dv            wrt interface geometry;
-! REAL,    allocatable :: DanalyticDrz(:,:,:    ) ! derivatives of \int B^2 dv            wrt interface geometry;
-! REAL,    allocatable :: DanalyDrzDrz(:,:,:,:,:) ! derivatives of \int B^2 dv            wrt interface geometry; wrt interface geometry
-
-! REAL,    allocatable :: DforcebalDrz(:,:,:,:,:) ! derivatives of [[p+B^2]]              wrt interface geometry;
-! REAL,    allocatable :: DspectralDrz(:  ,:  ,:) ! derivatives of I \equiv R_t X + Z_t Y wrt interface geometry;
-! LOGICAL, allocatable :: LforcebalDrz(:  ,:    ) ! indicates if derivative information has been previously constructed and saved in file;
 
   LOGICAL              :: Lhessianallocated
   REAL,    allocatable :: hessian(:,:)
   REAL,    allocatable :: dessian(:,:)
 !> @}
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-!> \addtogroup grp_trig Trigonometric factors
-!> @{
-
-
+!> \defgroup grp_trig Trigonometric factors
 !> <ul>
-!> <li> To facilitate construction of the metric integrals, various trigonometric identities are exploited.
-!> <li> The required information is saved in
-!>
-
+!> <li> To facilitate construction of the metric integrals, various trigonometric identities are exploited. </li>
+!> <li> The following are used for volume integrals (see volume() ):
+!>      \f{eqnarray}{ a_{i,j,k} &=& 4 \; m_k \ooint \cos(\alpha_i)\cos(\alpha_j)\cos(\alpha_k) /(2\pi)^2 , \\
+!>                    b_{i,j,k} &=& 4 \; m_j \ooint \cos(\alpha_i)\sin(\alpha_j)\sin(\alpha_k) /(2\pi)^2 ,
+!>      \f} </li>
+!> </ul>
+!> \ingroup grp_trig
+!> @{
   REAL   , allocatable :: cosi(:,:), sini(:,:), gteta(:), gzeta(:)
 
-  REAL   , allocatable :: ajk(:)   !< definition of coordinate axis; 
+  REAL   , allocatable :: ajk(:)   !< definition of coordinate axis
 
-  REAL   , allocatable :: dRadR(:,:,:,:), dRadZ(:,:,:,:), dZadR(:,:,:,:), dZadZ(:,:,:,:) !< derivatives of coordinate axis; 
-  REAL   , allocatable :: dRodR(:,  :,:), dRodZ(:,  :,:), dZodR(:,  :,:), dZodZ(:,  :,:) !< derivatives of coordinate axis; 
+  REAL   , allocatable :: dRadR(:,:,:,:), dRadZ(:,:,:,:), dZadR(:,:,:,:), dZadZ(:,:,:,:) !< derivatives of coordinate axis
+  REAL   , allocatable :: dRodR(:,  :,:), dRodZ(:,  :,:), dZodR(:,  :,:), dZodZ(:,  :,:) !< derivatives of coordinate axis
 
-  INTEGER, allocatable :: djkp(:,:), djkm(:,:) !< for calculating cylindrical volume; 
-
-!> <li> The following are used for volume integrals (see \link{volume})
-!> \be a_{i,j,k} &=& 4 \; m_k \ooint \cos(\alpha_i)\cos(\alpha_j)\cos(\alpha_k) /(2\pi)^2 , \\
-!>     b_{i,j,k} &=& 4 \; m_j \ooint \cos(\alpha_i)\sin(\alpha_j)\sin(\alpha_k) /(2\pi)^2 ,
-!> \ee 
-!> </ul>
+  INTEGER, allocatable :: djkp(:,:), djkm(:,:) !< for calculating cylindrical volume
 !> @}
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!> \addtogroup grp_volints Volume integrals: lBBintegral, lABintegral
-!> @{
-
+!> \defgroup grp_volints Volume integrals: lBBintegral, lABintegral
 !> <ul>
-
-!> <li> The energy functional, $F \equiv \sum_l F_l$, where
-!> \be F_l \equiv \left( \int_{{\cal V}_l} \frac{p_l}{\gamma-1} + \frac{B_l^2}{2} dv \right)
-!>         = \frac{P_l}{\gamma-1}V_l^{1-\gamma}+\int_{{\cal V}_l} \frac{B_l^2}{2} dv, \label{eq:energy}
-!> \ee
-!> where the second expression is derived using $p_l V_l^\gamma=P_l$, where $P_l$ is the adiabatic-constant.
-!> In \Eqn{energy}, it is implicit that ${\bf B}$ satisfies (i) the toroidal and poloidal flux constraints; 
-!> (ii) the interface constraint, ${\bf B}\cdot\nabla s=0$; and (iii) the helicity constraint (or the transform constraint)
-!> <li> The derivatives of $F_l$ with respect to the inner and outer adjacent interface geometry are stored in
+!> <li> The energy functional, \f$F \equiv \sum_l F_l\f$, where
+!>      \f{eqnarray}{ F_l \equiv \left( \int_{{\cal V}_l} \frac{p_l}{\gamma-1} + \frac{B_l^2}{2} dv \right)
+!>                    = \frac{P_l}{\gamma-1}V_l^{1-\gamma}+\int_{{\cal V}_l} \frac{B_l^2}{2} dv, \label{eq:energy}
+!>      \f}
+!>      where the second expression is derived using \f$p_l V_l^\gamma=P_l\f$, where \f$P_l\f$ is the adiabatic-constant.
+!>      In Eqn.\f$(\ref{eq:energy})\f$, it is implicit that \f${\bf B}\f$ satisfies (i) the toroidal and poloidal flux constraints;
+!>      (ii) the interface constraint, \f${\bf B}\cdot\nabla s=0\f$; and (iii) the helicity constraint (or the transform constraint). </li>
+!> <li> The derivatives of \f$F_l\f$ with respect to the inner and outer adjacent interface geometry are stored in
+!>      \c dFF(1:Nvol,0:1,0:mn+mn-1), where
+!>      
+!>      \f$         F_l                      \equiv\f$ \c dFF(l,0,    0)
 !>
-!> \texttt{dFF(1:Nvol,0:1,0:mn+mn-1)}, where
-!>
-!> $         F_l                      \equiv$ \texttt{dFF(l,0,    0)}
-!>
-!> $\partial F_l / \partial R_{l-1,j} \equiv$ \verb&dFF(ll,0,   j)& 
-!>
-!> $\partial F_l / \partial Z_{l-1,j} \equiv$ \verb&dFF(ll,0,mn}j)& 
-!>
-!> $\partial F_l / \partial R_{l  ,j} \equiv$ \texttt{dFF(ll,1,   j)} 
-!>
-!> $\partial F_l / \partial Z_{l  ,j} \equiv$ \verb&dFF(ll,1,mn}j)&
-!>
-
-!> <li> The volume integrals $\int dv$, $\int B^2 \; dv$ and $\int {\bf A}\cdot{\bf B} \; dv$ in each volume
-!>       are computed and saved in \texttt{volume(0:2,1:Nvol)}.
+!>      \f$\partial F_l / \partial R_{l-1,j} \equiv\f$ \c dFF(ll,0,   j)
+!>      
+!>      \f$\partial F_l / \partial Z_{l-1,j} \equiv\f$ \c dFF(ll,0,mn j)
+!>      
+!>      \f$\partial F_l / \partial R_{l  ,j} \equiv\f$ \c dFF(ll,1,   j)
+!>      
+!>      \f$\partial F_l / \partial Z_{l  ,j} \equiv\f$ \c dFF(ll,1,mn j)
+!>      </li>
+!> <li> The volume integrals \f$\int dv\f$, \f$\int B^2 \; dv\f$ and \f$\int {\bf A}\cdot{\bf B} \; dv\f$ in each volume
+!>      are computed and saved in \c volume(0:2,1:Nvol). </li>
 !> </ul>
+!> \ingroup grp_volints
+!> @{
+  REAL   , allocatable :: lBBintegral(:) !< B.B integral
+  REAL   , allocatable :: lABintegral(:) !< A.B integral
 
-  REAL   , allocatable :: lBBintegral(:) !< B.B      integral;
-  REAL   , allocatable :: lABintegral(:) !< A.B      integral;
-
-! REAL                 :: dBBintegral    ! B.B      integral; derivative wrt R, Z;
-
-! REAL   , allocatable :: oBBintegral(:) ! B.B      integral; original; used to normalize; perhaps irrelevant;
-
-
-! REAL                 :: dABintegral    ! A.B      integral; derivative wrt R, Z;
-
-  REAL   , allocatable :: vvolume(:) !< volume integral of \sqrt g; computed in volume;
-  REAL                 :: dvolume    !< derivative of volume wrt interface geometry;
-
+  REAL   , allocatable :: vvolume(:) !< volume integral of \f$\sqrt g\f$; computed in volume
+  REAL                 :: dvolume    !< derivative of volume w.r.t. interface geometry
 !> @}
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!> \addtogroup grp_int_global Internal global variables
-!> @{
-! internal global variables; internal logical variables; default values are provided here; these may be changed according to input values;
-  
-  INTEGER              :: ivol !< labels volume; some subroutines (called by NAG) are fixed argument list but require the volume label;
+!> \defgroup grp_int_global Internal global variables
+!> internal global variables; internal logical variables; default values are provided here; these may be changed according to input values
+!> \ingroup grp_int_global
+!> @{  
+  INTEGER              :: ivol !< labels volume; some subroutines (called by NAG) are fixed argument list but require the volume label
   
   REAL                 :: gBzeta !< toroidal (contravariant) field; calculated in bfield; required to convert \f$\dot \theta\f$ to \f$B^\theta\f$, \f$\dot s\f$ to \f$B^s\f$
   
-  INTEGER, allocatable :: Iquad(:) !< internal copy of Nquad; 
+  INTEGER, allocatable :: Iquad(:) !< internal copy of Nquad
   
-  REAL   , allocatable :: gaussianweight(:,:), gaussianabscissae(:,:)
+  REAL   , allocatable :: gaussianweight(:,:), gaussianabscissae(:,:) !< weights and abscissae for Gaussian quadrature
   
-  LOGICAL              :: LBlinear, LBnewton, LBsequad !< controls selection of Beltrami field solver; depends on LBeltrami;
+  LOGICAL              :: LBlinear, LBnewton, LBsequad !< controls selection of Beltrami field solver; depends on LBeltrami
   
-  REAL                 :: oRZp(1:3) !< used in mg00aa to determine (\s,\t,\z) given (R,Z,p);
-
+  REAL                 :: oRZp(1:3) !< used in mg00aa() to determine (s,\theta,\zeta) given (R,Z,p)
 !> @}
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   type derivative
@@ -1273,36 +1231,33 @@ module allglobal
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-! INTEGER, allocatable :: NNZ(:) ! used to count non-zero elements of Beltrami linear system; required for sparse calculations?;
-  
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-! the following are miscellaneous flags required for the virtual casing field, external (vacuum) field integration,  . . .
-  
-! REAL                 :: gxyz(1:3) ! point at which external field is required; NAG routines employed are fixed argument list, but require position;
-  
-  INTEGER              :: globaljk  ! labels position       ;                ; 
-  REAL, allocatable    :: Dxyz(:,:) ! computational boundary; position       ; 
-  REAL, allocatable    :: Nxyz(:,:) ! computational boundary; normal         ; 
-  REAL, allocatable    :: Jxyz(:,:) ! plasma        boundary; surface current; 
+!> \defgroup grp_misc Miscellaneous
+!> The following are miscellaneous flags required for the virtual casing field, external (vacuum) field integration, ...
+!> \ingroup grp_misc
+!> @{
+  INTEGER              :: globaljk  !< labels position
+  REAL, allocatable    :: Dxyz(:,:) !< computational boundary; position       
+  REAL, allocatable    :: Nxyz(:,:) !< computational boundary; normal         
+  REAL, allocatable    :: Jxyz(:,:) !< plasma        boundary; surface current
 
   REAL                 :: tetazeta(1:2)
 
-! REAL                 :: virtualcasingfactor = one / ( four*pi * pi2 ) ! this is old factor (before toroidal flux was corrected?) ; 
-  REAL                 :: virtualcasingfactor = -one / ( four*pi       ) ! this agrees with diagno; 
+  REAL                 :: virtualcasingfactor = -one / ( four*pi       ) !< this agrees with diagno
   
-  INTEGER              :: IBerror ! for computing error in magnetic field; 
+  INTEGER              :: IBerror !< for computing error in magnetic field
 
   INTEGER              :: nfreeboundaryiterations
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  INTEGER, parameter   :: Node = 2 ! best to make this global for consistency between calling and called routines; 
+  INTEGER, parameter   :: Node = 2 !< best to make this global for consistency between calling and called routines
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   LOGICAL              :: first_free_bound = .false.
-
+!> @}
+!> 
+!> @}
 contains
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -1335,21 +1290,20 @@ subroutine readin
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-!> \subsubsection{\texttt{machprec}, \texttt{vsmall}, \texttt{small}, \texttt{sqrtmachprec} : machine precision}
-
+!> **machine precision**
 !> <ul>
-!> <li> The machine precision is determined using the Fortran 90 intrinsic function EPSILON.
+!> <li> The machine precision \c machprec is determined using myprec(), which is similar to corresponding the NAG routine. </li>
+!> <li> The variables \c vsmall, \c small and \c sqrtmachprec are set. </li>
 !> </ul>
-
   cput = GETTIME
   
   machprec = myprec() ! is this required? Why not just set real, parameter :: machprec = 1.0E-16 ? ; let's simplify the source; SRH: 27 Feb 18;
 
-  vsmall = 100*machprec ; small = 100*vsmall ; sqrtmachprec = sqrt(machprec) ! returns machine precision;
+  vsmall = 100*machprec ; small = 100*vsmall ; sqrtmachprec = sqrt(machprec) ! returns machine precision
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  if( myid.eq.0 ) then ! only the master node reads input file and sets secondary variables;
+  if( myid.eq.0 ) then ! only the master node reads input file and sets secondary variables
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
@@ -1371,22 +1325,20 @@ subroutine readin
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!> \subsubsection{input file extension $\equiv$ command line argument}
-
+!> **input file extension (command line argument)**
 !> <ul>
-!> <li> The input file name, \texttt{ext}, is given as the first command line input, and the input file itself is \verb!ext.sp!
+!> <li> The input file name, \c ext, is given as the first command line input, and the input file itself is \c ext.sp </li>
 !> <li> Additional command line inputs recognized are:
-!> <ul> 
-!> <li> \texttt{-help, -h} ; will give help information to user; under construction;
-!> <li> \texttt{-readin} ; will immediately set \texttt{Wreadin=T}; this may be over-ruled when \texttt{namelist/screenlist/} is read;
-!> </ul>
-
+!>      <ul> 
+!>      <li> \c -help, \c -h : will give help information to user; under construction </li>
+!>      <li> \c -readin will immediately set \c Wreadin=T ; this may be over-ruled when the \c screenlist is read </li>
+!>      </ul> </li>
 !> </ul>
 
    call getarg( 1, ext )
    extlen = len_trim(ext)
    sppos = index(ext, ".sp", .true.) ! search for ".sp" from the back of ext
-   if (sppos.eq.extlen-2) then       ! check if ext ends with ".sp";
+   if (sppos.eq.extlen-2) then       ! check if ext ends with ".sp"
      ext = ext(1:extlen-3)           ! if this is the case, remove ".sp" from end of ext
    endif
 
@@ -1397,7 +1349,7 @@ subroutine readin
      write(ounit,'("readin : ", 10x ," : ")')
      write(ounit,'("readin : ", 10x ," : the input file ext.sp must contain the input namelists; see global.pdf for description ;")')
     endif
-    FATAL( readin, .true., the input file does not exist) ! if not, abort;
+    FATAL( readin, .true., the input file does not exist) ! if not, abort
    endif
    
    write(ounit,'("readin : ", 10x ," : ")')
@@ -1434,17 +1386,16 @@ subroutine readin
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
-!> \subsubsection{reading \texttt{physicslist}}
-
-!> <ul>   
-!> <li> The internal variable, \texttt{Mvol = Nvol + Lfreebound}, gives the number of computational domains.
-!> <li> The input value for the fluxes enclosed within each interface, \c tflux(1:Mvol)} and \c tflux(1:Mvol)}, are immediately normalized:
+!> **reading of physicslist**
+!> <ul> 
+!> <li> The internal variable, \c Mvol=Nvol+Lfreebound , gives the number of computational domains. </li>
+!> <li> The input value for the fluxes enclosed within each interface, \c tflux(1:Mvol) and \c tflux(1:Mvol), are immediately normalized:
 !> 
-!>       \c tflux(1:Mvol)} $\rightarrow$ \c tflux(1:Mvol)/tflux(Nvol)}.
+!>       \c tflux(1:Mvol) \f$\rightarrow\f$ \c tflux(1:Mvol)/tflux(Nvol).
 !>
-!>       \c pflux(1:Mvol)} $\rightarrow$ \c pflux(1:Mvol)/tflux(Nvol)}.
+!>       \c pflux(1:Mvol) \f$\rightarrow\f$ \c pflux(1:Mvol)/tflux(Nvol).
 !>
-!>       (The input $\Phi_{edge} \equiv $ \c phiedge} will provide the total toroidal flux; see \link{preset}.)
+!>       The input \f$\Phi_{edge} \equiv \f$ \c phiedge} will provide the total toroidal flux; see preset(). </li>
 !> </ul>
       
    if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : reading physicslist     from ext.sp ;")') cput-cpus
@@ -1455,7 +1406,7 @@ subroutine readin
    if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : read    physicslist     from ext.sp ;")') cput-cpus
    endif
 
-   Mvol = Nvol + Lfreebound ! this is just for screen output and initial check; true assignment of Mvol appears outside if( myid.eq.0 ) then ; 
+   Mvol = Nvol + Lfreebound ! this is just for screen output and initial check; true assignment of Mvol appears outside if( myid.eq.0 ) then
    
    write(ounit,'("readin : ", 10x ," : ")')
    
@@ -1489,8 +1440,8 @@ subroutine readin
    FATAL( readin, Ntor.lt.0 .or. Ntor.gt.MNtor, invalid toroidal resolution: may need to recompile with higher MNtor )
    FATAL( readin, Nvol.lt.1 .or. Nvol.gt.MNvol, invalid Nvol: may need to recompile with higher MNvol )
    FATAL( readin, mupftol.le.zero, mupftol is too small )
-   FATAL( readin, abs(one+gamma).lt.vsmall, 1+gamma appears in denominator in dforce ) ! Please check this; SRH: 27 Feb 18;
-   FATAL( readin, abs(one-gamma).lt.vsmall, 1-gamma appears in denominator in fu00aa ) ! Please check this; SRH: 27 Feb 18;
+   FATAL( readin, abs(one+gamma).lt.vsmall, 1+gamma appears in denominator in dforce ) !< \todo Please check this; SRH: 27 Feb 18;
+   FATAL( readin, abs(one-gamma).lt.vsmall, 1-gamma appears in denominator in fu00aa ) !< \todo Please check this; SRH: 27 Feb 18;
    FATAL( readin, Lconstraint.lt.-1 .or. Lconstraint.gt.2, illegal Lconstraint )
    FATAL( readin, Igeometry.eq.1 .and. rpol.lt.vsmall, poloidal extent of slab too small or negative )   
    FATAL( readin, Igeometry.eq.1 .and. rtor.lt.vsmall, toroidal extent of slab too small or negative )
@@ -1508,10 +1459,10 @@ subroutine readin
    
    FATAL( readin, abs(tflux(Nvol)).lt. vsmall, enclosed toroidal flux cannot be zero )
 
-   toroidalflux = tflux(Nvol) ! toroidal flux is a local variable; SRH: 27 Feb 18;
+   toroidalflux = tflux(Nvol) ! toroidal flux is a local variable; SRH: 27 Feb 18
 
-   tflux(1:Mvol) = tflux(1:Mvol) / toroidalflux ! normalize toroidal flux; 
-   pflux(1:Mvol) = pflux(1:Mvol) / toroidalflux ! normalize poloidal flux; 
+   tflux(1:Mvol) = tflux(1:Mvol) / toroidalflux ! normalize toroidal flux
+   pflux(1:Mvol) = pflux(1:Mvol) / toroidalflux ! normalize poloidal flux
    
    FATAL( readin, tflux(1).lt.zero, enclosed toroidal flux cannot be zero )
    do vvol = 2, Mvol
@@ -1528,7 +1479,7 @@ subroutine readin
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
-!> \subsubsection{reading \texttt{numericlist}}
+!> **reading of numericlist**
    
    if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : reading numericlist     from ext.sp ;")') cput-cpus
    endif
@@ -1558,7 +1509,7 @@ subroutine readin
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
-!> \subsubsection{reading \texttt{locallist}}
+!> **reading of locallist**
    
    if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : reading locallist      from ext.sp ;")') cput-cpus
    endif
@@ -1578,7 +1529,7 @@ subroutine readin
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
-!> \subsubsection{reading \texttt{globallist}}
+!> **reading of globallist**
 
    if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : reading globallist   from ext.sp ;")') cput-cpus
    endif
@@ -1612,7 +1563,7 @@ subroutine readin
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
-!> \subsubsection{reading \texttt{diagnosticslist}}
+!> **reading of diagnosticslist**
 
    if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : reading diagnosticslist from ext.sp ;")') cput-cpus
    endif
@@ -1638,7 +1589,7 @@ subroutine readin
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
-!> \subsubsection{reading \texttt{screenlist}}
+!> **reading of screenlist**
    
    if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : reading screenlist      from ext.sp ;")') cput-cpus
    endif
@@ -1656,13 +1607,13 @@ subroutine readin
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-! broadcast command line input
+!> **broadcast command line input**
   
   ClBCAST( ext        ,     100, 0 )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-! broadcast namelist/physicslist/
+!> **broadcast physicslist**
   
   if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : broadcasting physicslist     from ext.sp ;")') cput-cpus
   endif
@@ -1705,7 +1656,7 @@ subroutine readin
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-! broadcast namelist/numericlist/
+!> **broadcast numericlist**
   
   if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : broadcasting numericlist     from ext.sp ;")') cput-cpus
   endif
@@ -1728,7 +1679,7 @@ subroutine readin
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-! broadcast namelist/globallist/
+!> **broadcast globallist**
   
   if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : broadcasting globallist      from ext.sp ;")') cput-cpus
   endif
@@ -1755,7 +1706,7 @@ subroutine readin
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-! broadcast namelist/locallist/
+!> **broadcast locallist**
   
   if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : broadcasting locallist       from ext.sp ;")') cput-cpus
   endif
@@ -1767,7 +1718,7 @@ subroutine readin
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-! broadcast namelist/diagnosticslist/
+!> **broadcast diagnosticslist**
   
   if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : broadcasting diagnosticslist from ext.sp ;")') cput-cpus
   endif
@@ -1790,7 +1741,7 @@ subroutine readin
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-! broadcast namelist/screenlist/
+!> **broadcast screenlist**
   
   if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : broadcasting screenlist      from ext.sp ;")') cput-cpus
   endif
@@ -1803,7 +1754,7 @@ subroutine readin
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-! set internal parameters that depend on physicslist;
+!> **set internal parameters that depend on physicslist**
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1816,11 +1767,10 @@ subroutine readin
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-!> \subsubsection{\texttt{Mvol} : total number of volumes}
+!> **total number of volumes: Mvol**
 !> <ul>
-!> <li> The number of plasma volumes is \internal{Mvol}=\c Nvol}+\c Lfreebound};
+!> <li> The number of plasma volumes is \c Mvol = \c Nvol + \c Lfreebound .</li>
 !> </ul>
-
   FATAL( readin, Lfreebound.lt.0 .or. Lfreebound.gt.1, illegal Lfreebound )
 
   Mvol = Nvol + Lfreebound
@@ -1831,21 +1781,20 @@ subroutine readin
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-!> \subsubsection{\texttt{mn}, \texttt{im(1:mn)} and \texttt{in(1:mn)} : Fourier mode identification}
+!> **Fourier mode identification: mn, im(1:mn) and in(1:mn)**
 !> <ul>
 !> <li> The Fourier description of even periodic functions is 
-!>       \be f(\t,\z) = \sum_{n=0}^{N} f_{0,n} \cos(-n\z) + \sum_{m=1}^{M}\sum_{n=-N}^{N} f_{m,n} \cos(m\t-n\z),
-!>       \ee
-!>       where the resolution is given on input, $M\equiv $ \c  Mpol} and $N\equiv $ \c  Ntor}.
+!>      \f{eqnarray}{ f(\theta,\zeta) = \sum_{n=0}^{N} f_{0,n} \cos(-n\zeta) + \sum_{m=1}^{M}\sum_{n=-N}^{N} f_{m,n} \cos(m\theta-n\zeta),
+!>      \f}
+!>      where the resolution is given on input, \f$M\equiv \f$ \c  Mpol and \f$N\equiv \f$ \c  Ntor. </li>
 !> <li> For convenience, the Fourier summations are written as
-!>       \be f(\s,\t,\z) &=& \sum_j f_j(s) \cos( m_j \t - n_j \z ),
-!>       \ee
-!>       for $j=1,$ \texttt{mn}, where \texttt{mn}$ = N + 1 +  M  ( 2 N + 1 )$.
-!> <li> The integer arrays \texttt{im(1:mn)} and \texttt{in(1:mn)} contain the $m_j$ and $n_j$.
-!> <li> The array \texttt{in} includes the \texttt{Nfp} factor.
+!>      \f{eqnarray}{ f(s,\theta,\zeta) &=& \sum_j f_j(s) \cos( m_j \theta - n_j \zeta ),
+!>      \f}
+!>      for \f$j=1,\f$ \c mn, where \c mn \f$ = N + 1 +  M  ( 2 N + 1 )\f$. </li>
+!> <li> The integer arrays \c im(1:mn) and \c in(1:mn) contain the \f$m_j\f$ and \f$n_j\f$. </li>
+!> <li> The array \c in includes the \c Nfp factor. </li>
 !> </ul>
-  
-  mn = 1 + Ntor +  Mpol * ( 2 *  Ntor + 1 ) ! Fourier resolution of interface geometry & vector potential;
+  mn = 1 + Ntor +  Mpol * ( 2 *  Ntor + 1 ) ! Fourier resolution of interface geometry & vector potential
   
   SALLOCATE( im, (1:mn), 0 )
   SALLOCATE( in, (1:mn), 0 )
@@ -2483,6 +2432,7 @@ end subroutine wrtend
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 end module allglobal
+
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
