@@ -11,7 +11,7 @@
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-subroutine ma02aa( lvol, NN )
+subroutine ma02aa( lvol, NN, LcomputeDerivatives )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -80,6 +80,8 @@ subroutine ma02aa( lvol, NN )
   REAL   , allocatable :: LinearConstraintMatrix(:,:), LowerBound(:), UpperBound(:)
   REAL   , allocatable :: constraintfunction(:), constraintgradient(:,:), multipliers(:), objectivegradient(:), RS(:,:), RWk(:)
   CHARACTER            :: optionalparameter*33
+
+  LOGICAL 			   :: LcomputeDerivatives
   
   BEGIN(ma02aa)
   
@@ -450,11 +452,18 @@ subroutine ma02aa( lvol, NN )
     
    case( 0   ) ! need only call mp00ac once, to calculate Beltrami field for given helicity multiplier and enclosed fluxes;
     
-    iflag = 1 ; Ndof = 1     ; Ldfjac = Ndof ; nfev = 1 ; njev = 0 ; ihybrj = 1;  ! provide dummy values for consistency;
+	if( LcomputeDerivatives ) then
+	    iflag = 2
+	else
+		iflag = 1
+	endif
+
+	Ndof = 1     ; Ldfjac = Ndof ; nfev = 1 ; njev = 0 ; ihybrj = 1;  ! provide dummy values for consistency;
     
     WCALL( ma02aa, mp00ac, ( Ndof, Xdof(1:Ndof), Fdof(1:Ndof), Ddof(1:Ldfjac,1:Ndof), Ldfjac, iflag ) )
     
     helicity(lvol) = lABintegral(lvol) ! this was computed in mp00ac;
+
     
    case( 1:2 ) ! will iteratively call mp00ac, to calculate Beltrami field that satisfies constraints;
     
@@ -492,7 +501,7 @@ subroutine ma02aa( lvol, NN )
     
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-    if( Lconstraint.eq.1 .or. ( Lvacuumregion .and. Lconstraint.eq.0 ) ) then
+    if( Lconstraint.eq.1 .or. LcomputeDerivatives .or. ( Lvacuumregion .and. Lconstraint.eq.0 ) ) then
      
      iflag = 2 ; Ldfjac = Ndof ! call mp00ac: tr00ab/curent to ensure the derivatives of B, transform, currents, wrt mu/dtflux & dpflux are calculated;
 

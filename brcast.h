@@ -47,7 +47,7 @@ subroutine brcast( lvol )
                         Lhessianallocated, LGdof, dFFdRZ, dBBdmp, dmupfdx, &
                         lBBintegral, lABintegral, &
                         vvolume, &
-                        NOTstellsym
+                        NOTstellsym, LocalConstraint
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -96,7 +96,12 @@ subroutine brcast( lvol )
    RlBCAST( dBBdmp(1:LGdof,lvol,0:1,1:2), Nbc, llmodnp )
    
    Nbc =                   2*  LGdof*  2
-   RlBCAST( dmupfdx(lvol,1:2,1:LGdof,0:1), Nbc, llmodnp ) ! why is this broadcast; 02 Sep 14;
+   if( LocalConstraint ) then
+	   RlBCAST( dmupfdx(lvol,1:1   ,1:2,1:LGdof,0:1), Nbc, llmodnp ) ! why is this broadcast; 02 Sep 14;
+   else
+	   RlBCAST( dmupfdx(lvol,1:Mvol,1:2,1:LGdof,0:1), Nbc, llmodnp )
+   endif
+
    
   endif ! end of if( Lhessianallocated ) ; 12 Sep 16;
   

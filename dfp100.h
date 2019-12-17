@@ -39,7 +39,7 @@ use constants, only : zero, half, one, two, pi2, pi, mu0
 use fileunits, only : ounit
 
 use inputlist, only : Wmacros, Wdfp100, Igeometry, Nvol, Lrad, Isurf, &
-					  					Lconstraint
+					  					Lconstraint, Lfindzero
 
 use cputiming, only : Tdfp100
 
@@ -67,6 +67,7 @@ use allglobal, only : ncpu, myid, cpus, &
 INTEGER              :: vvol, Ndofgl, iflag, cpu_send_one, cpu_send_two, tag1, tag2
 INTEGER							 :: status(MPI_STATUS_SIZE), request1, request2
 REAL                 :: Fvec(1:Mvol-1), x(1:Mvol-1)
+LOGICAL				 :: LcomputeDerivatives
 
 
 
@@ -83,6 +84,11 @@ BEGIN(dfp100)
 		
 		if( (iflag.EQ.5) .and. (myid.EQ.0) ) then
 			IconstraintOK = .true.
+
+			if( Lfindzero.eq.2 ) then! Compute derivatives of solution w.r.t mu and pflux
+				LcomputeDerivatives = .true.
+				WCALL( dfp100, ma02aa, ( vvol, NAdof(vvol), LcomputeDerivatives ) )
+			endif
 		else
 			IconstraintOK = .false.
 		endif
@@ -131,7 +137,8 @@ BEGIN(dfp100)
 		!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 		! Compute fields
-		WCALL( dfp100, ma02aa, ( vvol, NAdof(vvol) ) )
+		LcomputeDerivatives = .false.
+		WCALL( dfp100, ma02aa, ( vvol, NAdof(vvol), LcomputeDerivatives ) )
 
 		! Compute relevant local quantities for the evaluation of the constraint. Doing it like this 
 		! reduces the amount of data sent to the master thread. In the case of current constraint, only two

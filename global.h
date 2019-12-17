@@ -1233,7 +1233,7 @@ module allglobal
 !latex \item A finite-difference estimate is computed if \inputvar{Lcheck.eq.4}.
 !latex \end{enumerate}
 
-  REAL,    allocatable :: dmupfdx(:,:,:,:)  ! derivatives of mu and dpflux wrt geometry at constant interface transform; 
+  REAL,    allocatable :: dmupfdx(:,:,:,:,:)  ! derivatives of mu and dpflux wrt geometry at constant interface transform; 
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -2698,7 +2698,7 @@ INTEGER :: cpuid_comp
 ! If the volume is not associated to the CPU, get an error
 call WhichCpuID(vvol, cpuid_comp)
 if (cpuid_comp.NE.cpuid) then
-	FATAL( dforce, .true., Error: called IndMatrix with wrong CPU ?)
+	FATAL( IndMatrix, .true., Error: called IndMatrix with wrong CPU ?)
 endif
 
 end subroutine IndMatrix

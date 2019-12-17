@@ -36,7 +36,8 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
                         dRbc, dZbs, dRbs, dZbc, &
                         lBBintegral, dBBdRZ, &
                         NOTstellsym, YESstellsym, Energy, &
-                        dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated, psifactor
+                        dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated, psifactor, &
+						LocalConstraint
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -45,7 +46,7 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
   INTEGER, intent(in) :: NGdof, Mvol, mn, LGdof
   REAL                :: position(0:NGdof) ! internal geometrical degrees of freedom;
   
-  LOGICAL             :: LComputeDerivatives
+  LOGICAL             :: LComputeDerivatives, Lonlyforce
 
   REAL                :: force(0:NGdof), gradient(0:NGdof)
 
@@ -160,7 +161,8 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
        WCALL( hesian, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack ) )
        
        LComputeDerivatives = .false. !; position(0) = zero ! this is not used; 11 Aug 14;
-       WCALL( hesian, dforce, ( NGdof, position(0:NGdof), gradient(0:NGdof), LComputeDerivatives ) ) ! re-calculate Beltrami fields;
+	   Lonlyforce = .false.
+       WCALL( hesian, dforce, ( NGdof, position(0:NGdof), gradient(0:NGdof), LComputeDerivatives, Lonlyforce ) ) ! re-calculate Beltrami fields;
        
        oldBB(1:Mvol,isymdiff) = lBBintegral(1:Mvol)
 
@@ -207,7 +209,11 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
   SALLOCATE( dFFdRZ , (1:LGdof,1:Mvol,0:1,1:LGdof,0:1), zero )
   SALLOCATE( dBBdmp , (1:LGdof,1:Mvol,0:1,        1:2), zero )
 
-  SALLOCATE( dmupfdx, (1:Mvol,1:2,1:LGdof,0:1), zero )
+if( LocalConstraint ) then
+  SALLOCATE( dmupfdx, (1:Mvol,    1:1, 1:2, 1:LGdof, 0:1), zero )
+else
+  SALLOCATE( dmupfdx, (1:Mvol, 1:Mvol, 1:2, 1:LGdof, 0:1), zero)
+endif
 
   SALLOCATE( hessian, (1:NGdof,1:NGdof), zero )
   SALLOCATE( dessian, (1:NGdof,1:LGdof), zero ) ! part of hessian that depends on boundary variations; 18 Dec 14;
@@ -215,7 +221,8 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
   Lhessianallocated = .true.
   
   LComputeDerivatives = .true. !; position(0) = zero ! this is not used; 11 Aug 14;
-  WCALL( hesian, dforce, ( NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives ) ) ! calculate force-imbalance & hessian;
+  Lonlyforce = .false.
+  WCALL( hesian, dforce, ( NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives, Lonlyforce) ) ! calculate force-imbalance & hessian;
   
   ohessian(1:NGdof,1:NGdof) = hessian(1:NGdof,1:NGdof) ! internal copy; 22 Apr 15;
 
@@ -276,7 +283,8 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
         xx(tdof,isymdiff) = position(tdof) + isymdiff * dRZ ! perturb appropriate geometric harmonic;
         
         LComputeDerivatives = .false.
-        WCALL( hesian, dforce, ( NGdof, xx(0:NGdof,isymdiff), ff(0:NGdof,isymdiff), LComputeDerivatives ) ) ! force-imbalance;
+		Lonlyforce = .false.
+        WCALL( hesian, dforce, ( NGdof, xx(0:NGdof,isymdiff), ff(0:NGdof,isymdiff), LComputeDerivatives, Lonlyforce) ) ! force-imbalance;
         
        enddo ! end of do isymdiff; 20 Jun 14;
        
@@ -363,7 +371,8 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
 !  xx(1:NGdof,0) = position(1:NGdof) ! reset geometry to original;
 !  
 !  LComputeDerivatives = .false.
-!  WCALL(hesian,dforce,( NGdof, xx(1:NGdof,0), ff(0:NGdof,0), LComputeDerivatives )) ! calculate the force-imbalance;
+!  Lonlyforce = .false.
+!  WCALL(hesian,dforce,( NGdof, xx(1:NGdof,0), ff(0:NGdof,0), LComputeDerivatives, Lonlyforce )) ! calculate the force-imbalance;
 
    close(lunit+myid)
    
@@ -460,7 +469,8 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
 !    xx(1:NGdof,0) = position(1:NGdof) + evecr(1:NGdof,ieval(1)) * dRZ ! perturb in direction of eigenvector; 04 Dec 14;
 !    
 !    LComputeDerivatives = .false.
-!    WCALL(hesian,dforce,( NGdof, xx(0:NGdof,0), ff(0:NGdof,0), LComputeDerivatives )) ! calculate the force-imbalance;
+!    Lonlyforce = .false.
+!    WCALL(hesian,dforce,( NGdof, xx(0:NGdof,0), ff(0:NGdof,0), LComputeDerivatives, Lonlyforce )) ! calculate the force-imbalance;
 !    
 !    if( myid.eq.0 ) then ! screen output; 04 Dec 14;
 !     write(ounit,'("hesian : " 10x " : Energy(old)=", es23.15," ;")') oldEnergy(0)
