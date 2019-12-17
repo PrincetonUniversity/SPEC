@@ -809,30 +809,30 @@ subroutine evaluate_dmupfdx(vvol, innout, idof, ii, issym, irz)
   	use allglobal, only : 	ncpu, myid, cpus, &
                         	Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
 	                        Mvol, Iquad, NGdof, &
-                            iRbc, iZbs, iRbs, iZbc, & ! Fourier harmonics of geometry; vector of independent variables, position, is "unpacked" into iRbc,iZbs;
-    	                    NAdof, &
-    	                    mn, im, in, mns, &
-    	                    Ate, Aze, Ato, Azo, & 													! only required for debugging;
-    	                    Nt, Nz, &
-    	                    dBdX, &
-    	                    solution, &
-    	                    dtflux, dpflux, sweight, &
-    	                    Rij, Zij, & 															
-    	                    diotadxup, dItGpdxtp, dmupfdx, &										
-    	                    psifactor, &
-    	                    lmns, &
-    	                    mn, mne, &
-    	                    LocalConstraint, &
-							vvolume, dvolume, &
-							IsMyVolume, IsMyVolumeValue, IndMatrixArray, &
-							DToocc, DToocs, DToosc, DTooss, &
-		                    TTsscc, TTsscs, TTsssc, TTssss, &
+                            	iRbc, iZbs, iRbs, iZbc, & ! Fourier harmonics of geometry; vector of independent variables, position, is "unpacked" into iRbc,iZbs;
+	                    	NAdof, &
+    	                    	mn, im, in, mns, &
+    	                    	Ate, Aze, Ato, Azo, & 													! only required for debugging;
+    	                    	Nt, Nz, &
+    	                    	dBdX, &
+    	                    	solution, &
+    	                    	dtflux, dpflux, sweight, &
+    	                    	Rij, Zij, & 															
+    	                    	diotadxup, dItGpdxtp, dmupfdx, &										
+    	                    	psifactor, &
+    	                    	lmns, &
+    	                    	mn, mne, &
+    	                    	LocalConstraint, &
+				vvolume, dvolume, &
+				IsMyVolume, IsMyVolumeValue, IndMatrixArray, &
+				DToocc, DToocs, DToosc, DTooss, &
+		                TTsscc, TTsscs, TTsssc, TTssss, &
 	                    	TDstcc, TDstcs, TDstsc, TDstss, &
-		                    TDszcc, TDszcs, TDszsc, TDszss, &
-		                    DDttcc, DDttcs, DDttsc, DDttss, &
-		                    DDtzcc, DDtzcs, DDtzsc, DDtzss, &
-		                    DDzzcc, DDzzcs, DDzzsc, DDzzss, &
-							Btemn 
+				TDszcc, TDszcs, TDszsc, TDszss, &
+				DDttcc, DDttcs, DDttsc, DDttss, &
+				DDtzcc, DDtzcs, DDtzsc, DDtzss, &
+				DDzzcc, DDzzcs, DDzzsc, DDzzss, &
+				Btemn 
 
 
   LOCALS:
