@@ -1,76 +1,73 @@
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!> \defgroup grp_integrals Integrals
 
-!title (integrals) ! Calculates volume integrals of Chebyshev-polynomials and metric elements.
-
-!latex \briefly{Calculates volume integrals of Chebyshev polynomials and metric element products.}
-
-!latex \calledby{\link{dforce}}
-!latex \calls{\link{metrix}}
-
-!latex \tableofcontents
-
-!l tex \newcommand{\bT}[1]{{\overline T}_{#1}}
+!> \file ma00aa.f90
+!> \brief Calculates volume integrals of Chebyshev polynomials and metric element products.
+!> \ingroup grp_integrals
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsection{chebyshev-metric information}
-
-!latex \begin{enumerate}
-
-!latex \item The following quantities are calculated:
-
-!latex       \be \verb+DToocc(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}' \; \bT{p,j}  \; \ooint \cos\a_i \cos\a_j                  \\
-!latex           \verb+DToocs(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}' \; \bT{p,j}  \; \ooint \cos\a_i \sin\a_j                  \\
-!latex           \verb+DToosc(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}' \; \bT{p,j}  \; \ooint \sin\a_i \cos\a_j                  \\
-!latex           \verb+DTooss(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}' \; \bT{p,j}  \; \ooint \sin\a_i \sin\a_j                  
-!latex       \ee
-
-!latex       \be \verb+TTsscc(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}  \; \bT{p,j}  \; \ooint \cos\a_i \cos\a_j \; \bar g_{\s\s} \\
-!latex           \verb+TTsscs(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}  \; \bT{p,j}  \; \ooint \cos\a_i \sin\a_j \; \bar g_{\s\s} \\
-!latex           \verb+TTsssc(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}  \; \bT{p,j}  \; \ooint \sin\a_i \cos\a_j \; \bar g_{\s\s} \\
-!latex           \verb+TTssss(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}  \; \bT{p,j}  \; \ooint \sin\a_i \sin\a_j \; \bar g_{\s\s}
-!latex       \ee
-
-!latex       \be \verb+TDstcc(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}  \; \bT{p,j}' \; \ooint \cos\a_i \cos\a_j \; \bar g_{\s\t} \\
-!latex           \verb+TDstcs(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}  \; \bT{p,j}' \; \ooint \cos\a_i \sin\a_j \; \bar g_{\s\t} \\
-!latex           \verb+TDstsc(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}  \; \bT{p,j}' \; \ooint \sin\a_i \cos\a_j \; \bar g_{\s\t} \\
-!latex           \verb+TDstss(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}  \; \bT{p,j}' \; \ooint \sin\a_i \sin\a_j \; \bar g_{\s\t}
-!latex       \ee
-
-!latex       \be \verb+TDstcc(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}  \; \bT{p,j}' \; \ooint \cos\a_i \cos\a_j \; \bar g_{\s\z} \\
-!latex           \verb+TDstcs(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}  \; \bT{p,j}' \; \ooint \cos\a_i \sin\a_j \; \bar g_{\s\z} \\
-!latex           \verb+TDstsc(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}  \; \bT{p,j}' \; \ooint \sin\a_i \cos\a_j \; \bar g_{\s\z} \\
-!latex           \verb+TDstss(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}  \; \bT{p,j}' \; \ooint \sin\a_i \sin\a_j \; \bar g_{\s\z}
-!latex       \ee
-
-!latex       \be \verb+DDstcc(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}' \; \bT{p,j}' \; \ooint \cos\a_i \cos\a_j \; \bar g_{\t\t} \\
-!latex           \verb+DDstcs(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}' \; \bT{p,j}' \; \ooint \cos\a_i \sin\a_j \; \bar g_{\t\t} \\
-!latex           \verb+DDstsc(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}' \; \bT{p,j}' \; \ooint \sin\a_i \cos\a_j \; \bar g_{\t\t} \\
-!latex           \verb+DDstss(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}' \; \bT{p,j}' \; \ooint \sin\a_i \sin\a_j \; \bar g_{\t\t}
-!latex       \ee
-
-!latex       \be \verb+DDstcc(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}' \; \bT{p,j}' \; \ooint \cos\a_i \cos\a_j \; \bar g_{\t\z} \\
-!latex           \verb+DDstcs(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}' \; \bT{p,j}' \; \ooint \cos\a_i \sin\a_j \; \bar g_{\t\z} \\
-!latex           \verb+DDstsc(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}' \; \bT{p,j}' \; \ooint \sin\a_i \cos\a_j \; \bar g_{\t\z} \\
-!latex           \verb+DDstss(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}' \; \bT{p,j}' \; \ooint \sin\a_i \sin\a_j \; \bar g_{\t\z}
-!latex       \ee
-
-!latex       \be \verb+DDstcc(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}' \; \bT{p,j}' \; \ooint \cos\a_i \cos\a_j \; \bar g_{\z\z} \\
-!latex           \verb+DDstcs(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}' \; \bT{p,j}' \; \ooint \cos\a_i \sin\a_j \; \bar g_{\z\z} \\
-!latex           \verb+DDstsc(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}' \; \bT{p,j}' \; \ooint \sin\a_i \cos\a_j \; \bar g_{\z\z} \\
-!latex           \verb+DDstss(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}' \; \bT{p,j}' \; \ooint \sin\a_i \sin\a_j \; \bar g_{\z\z}
-!latex       \ee
-
-!latex       where $\bT{l,i}\equiv T_l \, \bar s^{m_i/2}$ if the domain includes the coordinate singularity, and $\bT{l,i}\equiv T_l$ if not;
-!latex       and $\bar g_{\mu\nu} \equiv g_{\mu\nu} / \sqrt g$.
-
-!latex \item The double-angle formulae are used to reduce the above expressions to the Fourier harmonics of $\bar g_{\mu\nu}$:
-!latex       see \internal{kija} and \internal{kijs}, which are defined in \link{preset}.
-
-!latex \end{enumerate}
+!> **Chebyshev-metric information**
+!> <ul>
+!> <li> The following quantities are calculated:
+!>
+!>       \f{eqnarray}{ \verb+DToocc(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}^\prime \; {\overline T}_{p,j}        \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \cos\alpha_i \cos\alpha_j                  \\
+!>                     \verb+DToocs(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}^\prime \; {\overline T}_{p,j}        \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \cos\alpha_i \sin\alpha_j                  \\
+!>                     \verb+DToosc(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}^\prime \; {\overline T}_{p,j}        \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \sin\alpha_i \cos\alpha_j                  \\
+!>                     \verb+DTooss(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}^\prime \; {\overline T}_{p,j}        \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \sin\alpha_i \sin\alpha_j                  
+!>       \f}
+!>
+!>       \f{eqnarray}{ \verb+TTsscc(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}        \; {\overline T}_{p,j}        \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \cos\alpha_i \cos\alpha_j \; \bar g_{ss} \\
+!>                     \verb+TTsscs(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}        \; {\overline T}_{p,j}        \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \cos\alpha_i \sin\alpha_j \; \bar g_{ss} \\
+!>                     \verb+TTsssc(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}        \; {\overline T}_{p,j}        \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \sin\alpha_i \cos\alpha_j \; \bar g_{ss} \\
+!>                     \verb+TTssss(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}        \; {\overline T}_{p,j}        \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \sin\alpha_i \sin\alpha_j \; \bar g_{ss}
+!>       \f}
+!>
+!>       \f{eqnarray}{ \verb+TDstcc(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}        \; {\overline T}_{p,j}^\prime \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \cos\alpha_i \cos\alpha_j \; \bar g_{s\theta} \\
+!>                     \verb+TDstcs(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}        \; {\overline T}_{p,j}^\prime \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \cos\alpha_i \sin\alpha_j \; \bar g_{s\theta} \\
+!>                     \verb+TDstsc(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}        \; {\overline T}_{p,j}^\prime \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \sin\alpha_i \cos\alpha_j \; \bar g_{s\theta} \\
+!>                     \verb+TDstss(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}        \; {\overline T}_{p,j}^\prime \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \sin\alpha_i \sin\alpha_j \; \bar g_{s\theta}
+!>       \f}
+!>
+!>       \f{eqnarray}{ \verb+TDstcc(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}        \; {\overline T}_{p,j}^\prime \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \cos\alpha_i \cos\alpha_j \; \bar g_{s\zeta} \\
+!>                     \verb+TDstcs(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}        \; {\overline T}_{p,j}^\prime \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \cos\alpha_i \sin\alpha_j \; \bar g_{s\zeta} \\
+!>                     \verb+TDstsc(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}        \; {\overline T}_{p,j}^\prime \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \sin\alpha_i \cos\alpha_j \; \bar g_{s\zeta} \\
+!>                     \verb+TDstss(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}        \; {\overline T}_{p,j}^\prime \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \sin\alpha_i \sin\alpha_j \; \bar g_{s\zeta}
+!>       \f}
+!>
+!>       \f{eqnarray}{ \verb+DDstcc(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}^\prime \; {\overline T}_{p,j}^\prime \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \cos\alpha_i \cos\alpha_j \; \bar g_{\theta\theta} \\
+!>                     \verb+DDstcs(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}^\prime \; {\overline T}_{p,j}^\prime \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \cos\alpha_i \sin\alpha_j \; \bar g_{\theta\theta} \\
+!>                     \verb+DDstsc(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}^\prime \; {\overline T}_{p,j}^\prime \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \sin\alpha_i \cos\alpha_j \; \bar g_{\theta\theta} \\
+!>                     \verb+DDstss(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}^\prime \; {\overline T}_{p,j}^\prime \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \sin\alpha_i \sin\alpha_j \; \bar g_{\theta\theta}
+!>       \f}
+!>
+!>       \f{eqnarray}{ \verb+DDstcc(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}^\prime \; {\overline T}_{p,j}^\prime \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \cos\alpha_i \cos\alpha_j \; \bar g_{\theta\zeta} \\
+!>                     \verb+DDstcs(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}^\prime \; {\overline T}_{p,j}^\prime \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \cos\alpha_i \sin\alpha_j \; \bar g_{\theta\zeta} \\
+!>                     \verb+DDstsc(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}^\prime \; {\overline T}_{p,j}^\prime \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \sin\alpha_i \cos\alpha_j \; \bar g_{\theta\zeta} \\
+!>                     \verb+DDstss(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}^\prime \; {\overline T}_{p,j}^\prime \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \sin\alpha_i \sin\alpha_j \; \bar g_{\theta\zeta}
+!>       \f}
+!>
+!>       \f{eqnarray}{ \verb+DDstcc(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}^\prime \; {\overline T}_{p,j}^\prime \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \cos\alpha_i \cos\alpha_j \; \bar g_{\zeta\zeta} \\
+!>                     \verb+DDstcs(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}^\prime \; {\overline T}_{p,j}^\prime \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \cos\alpha_i \sin\alpha_j \; \bar g_{\zeta\zeta} \\
+!>                     \verb+DDstsc(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}^\prime \; {\overline T}_{p,j}^\prime \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \sin\alpha_i \cos\alpha_j \; \bar g_{\zeta\zeta} \\
+!>                     \verb+DDstss(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}^\prime \; {\overline T}_{p,j}^\prime \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \sin\alpha_i \sin\alpha_j \; \bar g_{\zeta\zeta}
+!>       \f}
+!>
+!>       where \f${\overline T}_{l,i}\equiv T_l \, \bar s^{m_i/2}\f$ if the domain includes the coordinate singularity, and \f${\overline T}_{l,i}\equiv T_l\f$ if not;
+!>       and \f$\bar g_{\mu\nu} \equiv g_{\mu\nu} / \sqrt g\f$. </li>
+!>
+!> <li> The double-angle formulae are used to reduce the above expressions to the Fourier harmonics of \f$\bar g_{\mu\nu}\f$:
+!>       see \c kija and \c kijs, which are defined in preset.f90 . </li>
+!>
+!> </ul>
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+!> \brief Calculates volume integrals of Chebyshev polynomials and metric element products.
+!> 
+!> @param[in] lquad degree of quadrature
+!> @param[in] mn    number of Fourier harmonics
+!> @param[in] lvol  index of nested volume
+!> @param[in] lrad  order of Chebychev polynomials
 subroutine ma00aa( lquad, mn, lvol, lrad )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
