@@ -4,5 +4,5 @@ input="input_local"
 
 while IFS= read -r line
 do 
-  ./xspec "${line::-3}"  
+  ./xspec_master "${line::-3}"  
 done < "$input"

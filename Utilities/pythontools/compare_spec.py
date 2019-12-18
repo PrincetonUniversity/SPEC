@@ -5,21 +5,26 @@
 For any help, type ./compare_spec.py -h
 """
 import numpy as np
-from read_spec import SPEC
+from py_spec.read_spec import SPEC
 import argparse
 
 # parse command line arguments
+# =============================================================================
 parser = argparse.ArgumentParser(description="Compare two SPEC HDF5 outputs")
 parser.add_argument("filename", type=str, help="file name to be compared")
 parser.add_argument("reference", type=str, help="reference data")
 parser.add_argument("-t", "--tol", type=float, default=1E-12, help="difference tolerance")
-
+ 
 args = parser.parse_args()
-print('Compare SPEC outputs in {:s} and {:s} with tolerance {:12.5E}'.format(
-        args.filename, args.reference, args.tol))
+print('Compare SPEC outputs in {:s} and {:s} with tolerance {:12.5E}'.format(args.filename, args.reference, args.tol))
 data_A = SPEC(args.filename)
 data_B = SPEC(args.reference)
+# =============================================================================
+#data_A = SPEC('/home/abaillod/SPEC/InputFiles/Verification/currentconstraint/TestCases_Comparison/G3V08L3Fr.001.h5')
+#data_B = SPEC('/home/abaillod/SPEC/InputFiles/Verification/currentconstraint/TestCases_Comparison/G3V08L1Fr.001.h5')
+
 tol = args.tol
+#tol = 1E-12
 match = True
 
 def compare(data, reference):
@@ -36,13 +41,24 @@ def compare(data, reference):
                 continue
             else :
                 #print(key)
-                diff = np.linalg.norm(np.abs(np.array(value) - np.array(reference.__dict__[key])))
-                unmatch = diff > tol
-                if unmatch:
-                    match = False
-                    print('UNMATCHED: '+key, ', diff={:12.5E}'.format(diff))
-                else :
-                    print('ok: '+key)
+                if isinstance(value, list):
+                    for ii in range(len(value)):
+                        diff = np.linalg.norm(np.abs(np.array(value[ii]) - np.array(reference.__dict__[key][ii])))
+                        unmatch = diff > tol
+                        if unmatch:
+                            match = False
+                            print('UNMATCHED: '+key, '[',ii,'], diff={:12.5E}'.format(diff))
+                        else :
+                            print('ok: '+key)
+                else:
+                    diff = np.linalg.norm(np.abs(np.array(value) - np.array(reference.__dict__[key])))
+                    unmatch = diff > tol
+                    if unmatch:
+                        match = False
+                        print('UNMATCHED: '+key, ', diff={:12.5E}'.format(diff))
+                    else :
+                        print('ok: '+key)
+                    
     return 
 
 compare(data_A, data_B)
