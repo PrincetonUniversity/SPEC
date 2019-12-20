@@ -129,92 +129,92 @@
 !> \f{eqnarray}{
 !> \frac{\partial}{\partial {\color{red} A_{\theta,e,i,l}}} \int \!\! dv \; {\bf B} \cdot {\bf B} & = & 
 !> 2 \int \!\! dv \; {\bf B} \cdot \frac{\partial {\bf B}}{\partial {\color{red} A_{\theta,e,i,l}}} =
-!>      2 \int \!\! dv \; {\bf B} \cdot \left[ - n_i {\overline T}_{l,i}  \sin\alpha_i \, {\bf e}_s + {\overline T}_{l,i}' \cos\alpha_i \, {\bf e}_\zeta \right] / \sqrt g \\
+!>      2 \int \!\! dv \; {\bf B} \cdot \left[ - n_i {\overline T}_{l,i}  \sin\alpha_i \, {\bf e}_s + {\overline T}_{l,i}^\prime \cos\alpha_i \, {\bf e}_\zeta \right] / \sqrt g \\
 !> \frac{\partial}{\partial {\color{Orange}  A_{\theta,o,i,l}}} \int \!\! dv \; {\bf B} \cdot {\bf B} & = & 
 !> 2 \int \!\! dv \; {\bf B} \cdot \frac{\partial {\bf B}}{\partial {\color{Orange}  A_{\theta,o,i,l}}} =
-!>      2 \int \!\! dv \; {\bf B} \cdot \left[ + n_i {\overline T}_{l,i}  \cos\alpha_i \, {\bf e}_s + {\overline T}_{l,i}' \sin\alpha_i \, {\bf e}_\zeta \right] / \sqrt g \\
+!>      2 \int \!\! dv \; {\bf B} \cdot \left[ + n_i {\overline T}_{l,i}  \cos\alpha_i \, {\bf e}_s + {\overline T}_{l,i}^\prime \sin\alpha_i \, {\bf e}_\zeta \right] / \sqrt g \\
 !> \frac{\partial}{\partial {\color{blue}A_{\zeta, e,i,l}}} \int \!\! dv \; {\bf B} \cdot {\bf B} & = & 
 !> 2 \int \!\! dv \; {\bf B} \cdot \frac{\partial {\bf B}}{\partial {\color{blue}A_{\zeta, e,i,l}}} =
-!>      2 \int \!\! dv \; {\bf B} \cdot \left[ - m_i {\overline T}_{l,i}  \sin\alpha_i \, {\bf e}_s - {\overline T}_{l,i}' \cos\alpha_i \, {\bf e}_\theta \right] / \sqrt g \\
+!>      2 \int \!\! dv \; {\bf B} \cdot \left[ - m_i {\overline T}_{l,i}  \sin\alpha_i \, {\bf e}_s - {\overline T}_{l,i}^\prime \cos\alpha_i \, {\bf e}_\theta \right] / \sqrt g \\
 !> \frac{\partial}{\partial {\color{Cerulean}A_{\zeta ,o,i,l}}} \int \!\! dv \; {\bf B} \cdot {\bf B} & = & 
 !> 2 \int \!\! dv \; {\bf B} \cdot \frac{\partial {\bf B}}{\partial {\color{Cerulean}A_{\zeta ,o,i,l}}} =
-!>      2 \int \!\! dv \; {\bf B} \cdot \left[ + m_i {\overline T}_{l,i}  \cos\alpha_i \, {\bf e}_s - {\overline T}_{l,i}' \sin\alpha_i \, {\bf e}_\theta \right] / \sqrt g 
+!>      2 \int \!\! dv \; {\bf B} \cdot \left[ + m_i {\overline T}_{l,i}  \cos\alpha_i \, {\bf e}_s - {\overline T}_{l,i}^\prime \sin\alpha_i \, {\bf e}_\theta \right] / \sqrt g 
 !> \f} </li>
 !> <li> The second derivatives of \f$\int \! dv \; {\bf B} \! \cdot \! {\bf B}\f$ with respect to 
 !>  \f${\color{red} A_{\theta,e,i,l}}\f$, \f${\color{Orange}  A_{\theta,o,i,l}}\f$, \f${\color{blue}A_{\zeta, e,i,l}}\f$ and \f${\color{Cerulean}A_{\zeta ,o,i,l}}\f$ are
 !> \f{eqnarray}{ 
 !> \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial {\color{red}     A_{\theta,e,j,p}}} \frac{\partial}{\partial {\color{red} A_{\theta,e,i,l}}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
 !> \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
-!>  ( + n_j n_i {\overline T}_{p,j}  {\overline T}_{l,i}  s_j s_i g_{ss} - n_j {\overline T}_{p,j}  {\overline T}_{l,i}' s_j c_i g_{s\zeta}
-!>    -     n_i {\overline T}_{l,i}  {\overline T}_{p,j}' s_i c_j g_{s\zeta} +     {\overline T}_{p,j}' {\overline T}_{l,i}' c_j c_i g_{\zeta\zeta}) / \sqrt g^2\nonumber \\
+!>  ( + n_j n_i {\overline T}_{p,j}  {\overline T}_{l,i}  s_j s_i g_{ss} - n_j {\overline T}_{p,j}  {\overline T}_{l,i}^\prime s_j c_i g_{s\zeta}
+!>    -     n_i {\overline T}_{l,i}  {\overline T}_{p,j}^\prime s_i c_j g_{s\zeta} +     {\overline T}_{p,j}^\prime {\overline T}_{l,i}^\prime c_j c_i g_{\zeta\zeta}) / \sqrt g^2\nonumber \\
 !> \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial {\color{Orange}  A_{\theta,o,j,p}}} \frac{\partial}{\partial {\color{red} A_{\theta,e,i,l}}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
 !> \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
-!>  ( - n_j n_i {\overline T}_{p,j}  {\overline T}_{l,i}  c_j s_i g_{ss} + n_j {\overline T}_{p,j}  {\overline T}_{l,i}' c_j c_i g_{s\zeta}
-!>    -     n_i {\overline T}_{l,i}  {\overline T}_{p,j}' s_i s_j g_{s\zeta} +     {\overline T}_{p,j}' {\overline T}_{l,i}' s_j c_i g_{\zeta\zeta}) / \sqrt g^2\nonumber \\
+!>  ( - n_j n_i {\overline T}_{p,j}  {\overline T}_{l,i}  c_j s_i g_{ss} + n_j {\overline T}_{p,j}  {\overline T}_{l,i}^\prime c_j c_i g_{s\zeta}
+!>    -     n_i {\overline T}_{l,i}  {\overline T}_{p,j}^\prime s_i s_j g_{s\zeta} +     {\overline T}_{p,j}^\prime {\overline T}_{l,i}^\prime s_j c_i g_{\zeta\zeta}) / \sqrt g^2\nonumber \\
 !> \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial {\color{blue}    A_{\zeta, e,j,p}}} \frac{\partial}{\partial {\color{red} A_{\theta,e,i,l}}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
 !> \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
-!>  ( + m_j n_i {\overline T}_{p,j}  {\overline T}_{l,i}  s_j s_i g_{ss} - m_j {\overline T}_{p,j}  {\overline T}_{l,i}' s_j c_i g_{s\zeta}
-!>    +     n_i {\overline T}_{l,i}  {\overline T}_{p,j}' s_i c_j g_{s\theta} -     {\overline T}_{p,j}' {\overline T}_{l,i}' c_j c_i g_{\theta\zeta}) / \sqrt g^2\nonumber \\
+!>  ( + m_j n_i {\overline T}_{p,j}  {\overline T}_{l,i}  s_j s_i g_{ss} - m_j {\overline T}_{p,j}  {\overline T}_{l,i}^\prime s_j c_i g_{s\zeta}
+!>    +     n_i {\overline T}_{l,i}  {\overline T}_{p,j}^\prime s_i c_j g_{s\theta} -     {\overline T}_{p,j}^\prime {\overline T}_{l,i}^\prime c_j c_i g_{\theta\zeta}) / \sqrt g^2\nonumber \\
 !> \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial {\color{Cerulean}A_{\zeta ,o,j,p}}} \frac{\partial}{\partial {\color{red} A_{\theta,e,i,l}}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
 !> \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
-!>  ( - m_j n_i {\overline T}_{p,j}  {\overline T}_{l,i}  c_j s_i g_{ss} + m_j {\overline T}_{p,j}  {\overline T}_{l,i}' c_j c_i g_{s\zeta}
-!>    +     n_i {\overline T}_{l,i}  {\overline T}_{p,j}' s_i s_j g_{s\theta} -     {\overline T}_{p,j}' {\overline T}_{l,i}' s_j c_i g_{\theta\zeta}) / \sqrt g^2\nonumber
+!>  ( - m_j n_i {\overline T}_{p,j}  {\overline T}_{l,i}  c_j s_i g_{ss} + m_j {\overline T}_{p,j}  {\overline T}_{l,i}^\prime c_j c_i g_{s\zeta}
+!>    +     n_i {\overline T}_{l,i}  {\overline T}_{p,j}^\prime s_i s_j g_{s\theta} -     {\overline T}_{p,j}^\prime {\overline T}_{l,i}^\prime s_j c_i g_{\theta\zeta}) / \sqrt g^2\nonumber
 !> \f} 
 !> \f{eqnarray}{
 !> \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial {\color{red}     A_{\theta,e,j,p}}} \frac{\partial}{\partial {\color{Orange}  A_{\theta,o,i,l}}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
 !> \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
-!>  ( - n_j n_i {\overline T}_{p,j}  {\overline T}_{l,i}  s_j c_i g_{ss} - n_j {\overline T}_{p,j}  {\overline T}_{l,i}' s_j s_i g_{s\zeta}
-!>    +     n_i {\overline T}_{l,i}  {\overline T}_{p,j}' c_i c_j g_{s\zeta} +     {\overline T}_{p,j}' {\overline T}_{l,i}' c_j s_i g_{\zeta\zeta}) / \sqrt g^2\nonumber \\
+!>  ( - n_j n_i {\overline T}_{p,j}  {\overline T}_{l,i}  s_j c_i g_{ss} - n_j {\overline T}_{p,j}  {\overline T}_{l,i}^\prime s_j s_i g_{s\zeta}
+!>    +     n_i {\overline T}_{l,i}  {\overline T}_{p,j}^\prime c_i c_j g_{s\zeta} +     {\overline T}_{p,j}^\prime {\overline T}_{l,i}^\prime c_j s_i g_{\zeta\zeta}) / \sqrt g^2\nonumber \\
 !> \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial {\color{Orange}  A_{\theta,o,j,p}}} \frac{\partial}{\partial {\color{Orange}  A_{\theta,o,i,l}}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
 !> \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
-!>  ( + n_j n_i {\overline T}_{p,j}  {\overline T}_{l,i}  c_j c_i g_{ss} + n_j {\overline T}_{p,j}  {\overline T}_{l,i}' c_j s_i g_{s\zeta}
-!>    +     n_i {\overline T}_{l,i}  {\overline T}_{p,j}' c_i s_j g_{s\zeta} +     {\overline T}_{p,j}' {\overline T}_{l,i}' s_j s_i g_{\zeta\zeta}) / \sqrt g^2\nonumber \\
+!>  ( + n_j n_i {\overline T}_{p,j}  {\overline T}_{l,i}  c_j c_i g_{ss} + n_j {\overline T}_{p,j}  {\overline T}_{l,i}^\prime c_j s_i g_{s\zeta}
+!>    +     n_i {\overline T}_{l,i}  {\overline T}_{p,j}^\prime c_i s_j g_{s\zeta} +     {\overline T}_{p,j}^\prime {\overline T}_{l,i}^\prime s_j s_i g_{\zeta\zeta}) / \sqrt g^2\nonumber \\
 !> \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial {\color{blue}    A_{\zeta, e,j,p}}} \frac{\partial}{\partial {\color{Orange}  A_{\theta,o,i,l}}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
 !> \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
-!>  ( - m_j n_i {\overline T}_{p,j}  {\overline T}_{l,i}  s_j c_i g_{ss} - m_j {\overline T}_{p,j}  {\overline T}_{l,i}' s_j s_i g_{s\zeta}
-!>    -     n_i {\overline T}_{l,i}  {\overline T}_{p,j}' c_i c_j g_{s\theta} -     {\overline T}_{p,j}' {\overline T}_{l,i}' c_j s_i g_{\theta\zeta}) / \sqrt g^2\nonumber \\
+!>  ( - m_j n_i {\overline T}_{p,j}  {\overline T}_{l,i}  s_j c_i g_{ss} - m_j {\overline T}_{p,j}  {\overline T}_{l,i}^\prime s_j s_i g_{s\zeta}
+!>    -     n_i {\overline T}_{l,i}  {\overline T}_{p,j}^\prime c_i c_j g_{s\theta} -     {\overline T}_{p,j}^\prime {\overline T}_{l,i}^\prime c_j s_i g_{\theta\zeta}) / \sqrt g^2\nonumber \\
 !> \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial {\color{Cerulean}A_{\zeta ,o,j,p}}} \frac{\partial}{\partial {\color{Orange}  A_{\theta,o,i,l}}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
 !> \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
-!>  ( + m_j n_i {\overline T}_{p,j}  {\overline T}_{l,i}  c_j c_i g_{ss} + m_j {\overline T}_{p,j}  {\overline T}_{l,i}' c_j s_i g_{s\zeta}
-!>    -     n_i {\overline T}_{l,i}  {\overline T}_{p,j}' c_i s_j g_{s\theta} -     {\overline T}_{p,j}' {\overline T}_{l,i}' s_j s_i g_{\theta\zeta}) / \sqrt g^2\nonumber   
+!>  ( + m_j n_i {\overline T}_{p,j}  {\overline T}_{l,i}  c_j c_i g_{ss} + m_j {\overline T}_{p,j}  {\overline T}_{l,i}^\prime c_j s_i g_{s\zeta}
+!>    -     n_i {\overline T}_{l,i}  {\overline T}_{p,j}^\prime c_i s_j g_{s\theta} -     {\overline T}_{p,j}^\prime {\overline T}_{l,i}^\prime s_j s_i g_{\theta\zeta}) / \sqrt g^2\nonumber   
 !> \f} 
 !> \f{eqnarray}{
 !> \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial {\color{red}     A_{\theta,e,j,p}}} \frac{\partial}{\partial {\color{blue}A_{\zeta, e,i,l}}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
 !> \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
-!>  ( + n_j m_i {\overline T}_{p,j}  {\overline T}_{l,i}  s_j s_i g_{ss} + n_j {\overline T}_{p,j}  {\overline T}_{l,i}' s_j c_i g_{s\theta}
-!>    -     m_i {\overline T}_{l,i}  {\overline T}_{p,j}' s_i c_j g_{s\zeta} -     {\overline T}_{p,j}' {\overline T}_{l,i}' c_j c_i g_{\theta\zeta}) / \sqrt g^2\nonumber \\
+!>  ( + n_j m_i {\overline T}_{p,j}  {\overline T}_{l,i}  s_j s_i g_{ss} + n_j {\overline T}_{p,j}  {\overline T}_{l,i}^\prime s_j c_i g_{s\theta}
+!>    -     m_i {\overline T}_{l,i}  {\overline T}_{p,j}^\prime s_i c_j g_{s\zeta} -     {\overline T}_{p,j}^\prime {\overline T}_{l,i}^\prime c_j c_i g_{\theta\zeta}) / \sqrt g^2\nonumber \\
 !> \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial {\color{Orange}  A_{\theta,o,j,p}}} \frac{\partial}{\partial {\color{blue}A_{\zeta, e,i,l}}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
 !> \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
-!>  ( - n_j m_i {\overline T}_{p,j}  {\overline T}_{l,i}  c_j s_i g_{ss} - n_j {\overline T}_{p,j}  {\overline T}_{l,i}' c_j c_i g_{s\theta}
-!>    -     m_i {\overline T}_{l,i}  {\overline T}_{p,j}' s_i s_j g_{s\zeta} -     {\overline T}_{p,j}' {\overline T}_{l,i}' s_j c_i g_{\theta\zeta}) / \sqrt g^2\nonumber \\
+!>  ( - n_j m_i {\overline T}_{p,j}  {\overline T}_{l,i}  c_j s_i g_{ss} - n_j {\overline T}_{p,j}  {\overline T}_{l,i}^\prime c_j c_i g_{s\theta}
+!>    -     m_i {\overline T}_{l,i}  {\overline T}_{p,j}^\prime s_i s_j g_{s\zeta} -     {\overline T}_{p,j}^\prime {\overline T}_{l,i}^\prime s_j c_i g_{\theta\zeta}) / \sqrt g^2\nonumber \\
 !> \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial {\color{blue}    A_{\zeta, e,j,p}}} \frac{\partial}{\partial {\color{blue}A_{\zeta, e,i,l}}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
 !> \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
-!>  ( + m_j m_i {\overline T}_{p,j}  {\overline T}_{l,i}  s_j s_i g_{ss} + m_j {\overline T}_{p,j}  {\overline T}_{l,i}' s_j c_i g_{s\theta}
-!>    +     m_i {\overline T}_{l,i}  {\overline T}_{p,j}' s_i c_j g_{s\theta} +     {\overline T}_{p,j}' {\overline T}_{l,i}' c_j c_i g_{\theta\theta}) / \sqrt g^2\nonumber \\
+!>  ( + m_j m_i {\overline T}_{p,j}  {\overline T}_{l,i}  s_j s_i g_{ss} + m_j {\overline T}_{p,j}  {\overline T}_{l,i}^\prime s_j c_i g_{s\theta}
+!>    +     m_i {\overline T}_{l,i}  {\overline T}_{p,j}^\prime s_i c_j g_{s\theta} +     {\overline T}_{p,j}^\prime {\overline T}_{l,i}^\prime c_j c_i g_{\theta\theta}) / \sqrt g^2\nonumber \\
 !> \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial {\color{Cerulean}A_{\zeta ,o,j,p}}} \frac{\partial}{\partial {\color{blue}A_{\zeta, e,i,l}}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
 !> \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
-!>  ( - m_j m_i {\overline T}_{p,j}  {\overline T}_{l,i}  c_j s_i g_{ss} - m_j {\overline T}_{p,j}  {\overline T}_{l,i}' c_j c_i g_{s\theta}
-!>    +     m_i {\overline T}_{l,i}  {\overline T}_{p,j}' s_i s_j g_{s\theta} +     {\overline T}_{p,j}' {\overline T}_{l,i}' s_j c_i g_{\theta\theta}) / \sqrt g^2\nonumber
+!>  ( - m_j m_i {\overline T}_{p,j}  {\overline T}_{l,i}  c_j s_i g_{ss} - m_j {\overline T}_{p,j}  {\overline T}_{l,i}^\prime c_j c_i g_{s\theta}
+!>    +     m_i {\overline T}_{l,i}  {\overline T}_{p,j}^\prime s_i s_j g_{s\theta} +     {\overline T}_{p,j}^\prime {\overline T}_{l,i}^\prime s_j c_i g_{\theta\theta}) / \sqrt g^2\nonumber
 !> \f} 
 !> \f{eqnarray}{
 !> \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial {\color{red}     A_{\theta,e,j,p}}} \frac{\partial}{\partial {\color{Cerulean}A_{\zeta ,o,i,l}}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
 !> \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
-!>  ( - n_j m_i {\overline T}_{p,j}  {\overline T}_{l,i}  s_j c_i g_{ss} + n_j {\overline T}_{p,j}  {\overline T}_{l,i}' s_j s_i g_{s\theta}
-!>    +     m_i {\overline T}_{l,i}  {\overline T}_{p,j}' c_i c_j g_{s\zeta} -     {\overline T}_{p,j}' {\overline T}_{l,i}' c_j s_i g_{\theta\zeta}) / \sqrt g^2\nonumber \\
+!>  ( - n_j m_i {\overline T}_{p,j}  {\overline T}_{l,i}  s_j c_i g_{ss} + n_j {\overline T}_{p,j}  {\overline T}_{l,i}^\prime s_j s_i g_{s\theta}
+!>    +     m_i {\overline T}_{l,i}  {\overline T}_{p,j}^\prime c_i c_j g_{s\zeta} -     {\overline T}_{p,j}^\prime {\overline T}_{l,i}^\prime c_j s_i g_{\theta\zeta}) / \sqrt g^2\nonumber \\
 !> \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial {\color{Orange}  A_{\theta,o,j,p}}} \frac{\partial}{\partial {\color{Cerulean}A_{\zeta ,o,i,l}}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
 !> \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
-!>  ( + n_j m_i {\overline T}_{p,j}  {\overline T}_{l,i}  c_j c_i g_{ss} - n_j {\overline T}_{p,j}  {\overline T}_{l,i}' c_j s_i g_{s\theta}
-!>    +     m_i {\overline T}_{l,i}  {\overline T}_{p,j}' c_i s_j g_{s\zeta} -     {\overline T}_{p,j}' {\overline T}_{l,i}' s_j s_i g_{\theta\zeta}) / \sqrt g^2\nonumber \\
+!>  ( + n_j m_i {\overline T}_{p,j}  {\overline T}_{l,i}  c_j c_i g_{ss} - n_j {\overline T}_{p,j}  {\overline T}_{l,i}^\prime c_j s_i g_{s\theta}
+!>    +     m_i {\overline T}_{l,i}  {\overline T}_{p,j}^\prime c_i s_j g_{s\zeta} -     {\overline T}_{p,j}^\prime {\overline T}_{l,i}^\prime s_j s_i g_{\theta\zeta}) / \sqrt g^2\nonumber \\
 !> \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial {\color{blue}    A_{\zeta, e,j,p}}} \frac{\partial}{\partial {\color{Cerulean}A_{\zeta ,o,i,l}}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
 !> \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
 !>
-!>  ( - m_j m_i {\overline T}_{p,j}  {\overline T}_{l,i}  s_j c_i g_{ss} + m_j {\overline T}_{p,j}  {\overline T}_{l,i}' s_j s_i g_{s\theta}
-!>    -     m_i {\overline T}_{l,i}  {\overline T}_{p,j}' c_i c_j g_{s\theta} +     {\overline T}_{p,j}' {\overline T}_{l,i}' c_j s_i g_{\theta\theta}) / \sqrt g^2\nonumber \\
+!>  ( - m_j m_i {\overline T}_{p,j}  {\overline T}_{l,i}  s_j c_i g_{ss} + m_j {\overline T}_{p,j}  {\overline T}_{l,i}^\prime s_j s_i g_{s\theta}
+!>    -     m_i {\overline T}_{l,i}  {\overline T}_{p,j}^\prime c_i c_j g_{s\theta} +     {\overline T}_{p,j}^\prime {\overline T}_{l,i}^\prime c_j s_i g_{\theta\theta}) / \sqrt g^2\nonumber \\
 !> \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial {\color{Cerulean}A_{\zeta ,o,j,p}}} \frac{\partial}{\partial {\color{Cerulean}A_{\zeta ,o,i,l}}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
 !> \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
 !>
-!>  ( + m_j m_i {\overline T}_{p,j}  {\overline T}_{l,i}  c_j c_i g_{ss} - m_j {\overline T}_{p,j}  {\overline T}_{l,i}' c_j s_i g_{s\theta}
-!>    -     m_i {\overline T}_{l,i}  {\overline T}_{p,j}' c_i s_j g_{s\theta} +     {\overline T}_{p,j}' {\overline T}_{l,i}' s_j s_i g_{\theta\theta}) / \sqrt g^2\nonumber
+!>  ( + m_j m_i {\overline T}_{p,j}  {\overline T}_{l,i}  c_j c_i g_{ss} - m_j {\overline T}_{p,j}  {\overline T}_{l,i}^\prime c_j s_i g_{s\theta}
+!>    -     m_i {\overline T}_{l,i}  {\overline T}_{p,j}^\prime c_i s_j g_{s\theta} +     {\overline T}_{p,j}^\prime {\overline T}_{l,i}^\prime s_j s_i g_{\theta\theta}) / \sqrt g^2\nonumber
 !> \f} </li>
 !>
 !> </ul>
@@ -228,16 +228,16 @@
 !> \f{eqnarray}{ 
 !> \frac{\partial}{\partial {\color{red} A_{\theta,e,i,l}}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &
 !> \int \!\! dv \; \left( \frac{\partial {\bf A}}{\partial {\color{red} A_{\theta,e,i,l}}} \cdot {\bf B} + {\bf A} \cdot \frac{\partial {\bf B}}{\partial {\color{red} A_{\theta,e,i,l}}} \right) =
-!> \int \!\! dv \; ( {\overline T}_{l,i} \cos\alpha_i \nabla \theta \cdot {\bf B} + {\bf A} \cdot {\overline T}_{l,i}' \cos\alpha_i \, {\bf e}_\zeta / \sqrt g ) \\
+!> \int \!\! dv \; ( {\overline T}_{l,i} \cos\alpha_i \nabla \theta \cdot {\bf B} + {\bf A} \cdot {\overline T}_{l,i}^\prime \cos\alpha_i \, {\bf e}_\zeta / \sqrt g ) \\
 !> \frac{\partial}{\partial {\color{Orange}  A_{\theta,o,i,l}}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &
 !> \int \!\! dv \; \left( \frac{\partial {\bf A}}{\partial {\color{Orange}  A_{\theta,o,i,l}}} \cdot {\bf B} + {\bf A} \cdot \frac{\partial {\bf B}}{\partial {\color{Orange}  A_{\theta,o,i,l}}} \right) =
-!> \int \!\! dv \; ( {\overline T}_{l,i} \sin\alpha_i \nabla \theta \cdot {\bf B} + {\bf A} \cdot {\overline T}_{l,i}' \sin\alpha_i \, {\bf e}_\zeta / \sqrt g ) \\
+!> \int \!\! dv \; ( {\overline T}_{l,i} \sin\alpha_i \nabla \theta \cdot {\bf B} + {\bf A} \cdot {\overline T}_{l,i}^\prime \sin\alpha_i \, {\bf e}_\zeta / \sqrt g ) \\
 !> \frac{\partial}{\partial {\color{blue}A_{\zeta, e,i,l}}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &
 !> \int \!\! dv \; \left( \frac{\partial {\bf A}}{\partial {\color{blue}A_{\zeta, e,i,l}}} \cdot {\bf B} + {\bf A} \cdot \frac{\partial {\bf B}}{\partial {\color{blue}A_{\zeta, e,i,l}}} \right) =
-!> \int \!\! dv \; ( {\overline T}_{l,i} \cos\alpha_i \nabla \zeta  \cdot {\bf B} - {\bf A} \cdot {\overline T}_{l,i}' \cos\alpha_i \, {\bf e}_\theta / \sqrt g ) \\
+!> \int \!\! dv \; ( {\overline T}_{l,i} \cos\alpha_i \nabla \zeta  \cdot {\bf B} - {\bf A} \cdot {\overline T}_{l,i}^\prime \cos\alpha_i \, {\bf e}_\theta / \sqrt g ) \\
 !> \frac{\partial}{\partial {\color{Cerulean}A_{\zeta ,o,i,l}}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &
 !> \int \!\! dv \; \left( \frac{\partial {\bf A}}{\partial {\color{Cerulean}A_{\zeta ,o,i,l}}} \cdot {\bf B} + {\bf A} \cdot \frac{\partial {\bf B}}{\partial {\color{Cerulean}A_{\zeta ,o,i,l}}} \right) =
-!> \int \!\! dv \; ( {\overline T}_{l,i} \sin\alpha_i \nabla \zeta  \cdot {\bf B} - {\bf A} \cdot {\overline T}_{l,i}' \sin\alpha_i \, {\bf e}_\theta / \sqrt g )
+!> \int \!\! dv \; ( {\overline T}_{l,i} \sin\alpha_i \nabla \zeta  \cdot {\bf B} - {\bf A} \cdot {\overline T}_{l,i}^\prime \sin\alpha_i \, {\bf e}_\theta / \sqrt g )
 !> \f} </li>
 !> <li> Note that in the above expressions, \f${\bf A}\cdot{\bf e}_s=0\f$ has been used. </li>
 !> <li> The second derivatives of \f$\int \! dv \; {\bf A} \cdot{\bf B}\f$ with respect to 
@@ -245,70 +245,70 @@
 !> \f{eqnarray}{
 !> \frac{\partial}{\partial {\color{red}     A_{\theta,e,j,p}}} \frac{\partial}{\partial {\color{red} A_{\theta,e,i,l}}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \; \left[
 !> \cancel{
-!> + {\overline T}_{l,i} \cos\alpha_i \nabla \theta \cdot {\overline T}_{p,j}' \cos\alpha_j \, {\bf e}_\zeta}
+!> + {\overline T}_{l,i} \cos\alpha_i \nabla \theta \cdot {\overline T}_{p,j}^\prime \cos\alpha_j \, {\bf e}_\zeta}
 !> \cancel{
-!> + {\overline T}_{p,j} \cos\alpha_j \nabla \theta \cdot {\overline T}_{l,i}' \cos\alpha_i \, {\bf e}_\zeta}
+!> + {\overline T}_{p,j} \cos\alpha_j \nabla \theta \cdot {\overline T}_{l,i}^\prime \cos\alpha_i \, {\bf e}_\zeta}
 !> \right] / \sqrt g \\
 !> \frac{\partial}{\partial {\color{Orange}  A_{\theta,o,j,p}}} \frac{\partial}{\partial {\color{red} A_{\theta,e,i,l}}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
 !> \cancel{
-!> + {\overline T}_{l,i} \cos\alpha_i \nabla \theta \cdot {\overline T}_{p,j}' \sin\alpha_j \, {\bf e}_\zeta}
+!> + {\overline T}_{l,i} \cos\alpha_i \nabla \theta \cdot {\overline T}_{p,j}^\prime \sin\alpha_j \, {\bf e}_\zeta}
 !> \cancel{
-!> + {\overline T}_{p,j} \sin\alpha_j \nabla \theta \cdot {\overline T}_{l,i}' \cos\alpha_i \, {\bf e}_\zeta}
+!> + {\overline T}_{p,j} \sin\alpha_j \nabla \theta \cdot {\overline T}_{l,i}^\prime \cos\alpha_i \, {\bf e}_\zeta}
 !> \right] / \sqrt g \\
 !> \frac{\partial}{\partial {\color{blue}    A_{\zeta, e,j,p}}} \frac{\partial}{\partial {\color{red} A_{\theta,e,i,l}}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
-!> - {\overline T}_{l,i} \cos\alpha_i \nabla \theta \cdot {\overline T}_{p,j}' \cos\alpha_j \, {\bf e}_\theta + {\overline T}_{p,j} \cos\alpha_j \nabla \zeta  \cdot {\overline T}_{l,i}' \cos\alpha_i \, {\bf e}_\zeta \right] / \sqrt g \\
+!> - {\overline T}_{l,i} \cos\alpha_i \nabla \theta \cdot {\overline T}_{p,j}^\prime \cos\alpha_j \, {\bf e}_\theta + {\overline T}_{p,j} \cos\alpha_j \nabla \zeta  \cdot {\overline T}_{l,i}^\prime \cos\alpha_i \, {\bf e}_\zeta \right] / \sqrt g \\
 !> \frac{\partial}{\partial {\color{Cerulean}A_{\zeta ,o,j,p}}} \frac{\partial}{\partial {\color{red} A_{\theta,e,i,l}}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
-!> - {\overline T}_{l,i} \cos\alpha_i \nabla \theta \cdot {\overline T}_{p,j}' \sin\alpha_j \, {\bf e}_\theta + {\overline T}_{p,j} \sin\alpha_j \nabla \zeta  \cdot {\overline T}_{l,i}' \cos\alpha_i \, {\bf e}_\zeta \right] / \sqrt g \\
+!> - {\overline T}_{l,i} \cos\alpha_i \nabla \theta \cdot {\overline T}_{p,j}^\prime \sin\alpha_j \, {\bf e}_\theta + {\overline T}_{p,j} \sin\alpha_j \nabla \zeta  \cdot {\overline T}_{l,i}^\prime \cos\alpha_i \, {\bf e}_\zeta \right] / \sqrt g \\
 !> \nonumber \\
 !> \frac{\partial}{\partial {\color{red}     A_{\theta,e,j,p}}} \frac{\partial}{\partial {\color{Orange}  A_{\theta,o,i,l}}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
 !> \cancel{
-!> + {\overline T}_{l,i} \sin\alpha_i \nabla \theta \cdot {\overline T}_{p,j}' \cos\alpha_j \, {\bf e}_\zeta}
+!> + {\overline T}_{l,i} \sin\alpha_i \nabla \theta \cdot {\overline T}_{p,j}^\prime \cos\alpha_j \, {\bf e}_\zeta}
 !> \cancel{
-!> + {\overline T}_{p,j} \cos\alpha_j \nabla \theta \cdot {\overline T}_{l,i}' \sin\alpha_i \, {\bf e}_\zeta}
+!> + {\overline T}_{p,j} \cos\alpha_j \nabla \theta \cdot {\overline T}_{l,i}^\prime \sin\alpha_i \, {\bf e}_\zeta}
 !> \right] / \sqrt g \\
 !> \frac{\partial}{\partial {\color{Orange}  A_{\theta,o,j,p}}} \frac{\partial}{\partial {\color{Orange}  A_{\theta,o,i,l}}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
 !> \cancel{
-!> + {\overline T}_{l,i} \sin\alpha_i \nabla \theta \cdot {\overline T}_{p,j}' \sin\alpha_j \, {\bf e}_\zeta}
+!> + {\overline T}_{l,i} \sin\alpha_i \nabla \theta \cdot {\overline T}_{p,j}^\prime \sin\alpha_j \, {\bf e}_\zeta}
 !> \cancel{
-!> + {\overline T}_{p,j} \sin\alpha_j \nabla \theta \cdot {\overline T}_{l,i}' \sin\alpha_i \, {\bf e}_\zeta}
+!> + {\overline T}_{p,j} \sin\alpha_j \nabla \theta \cdot {\overline T}_{l,i}^\prime \sin\alpha_i \, {\bf e}_\zeta}
 !> \right] / \sqrt g \\
 !> \frac{\partial}{\partial {\color{blue}    A_{\zeta, e,j,p}}} \frac{\partial}{\partial {\color{Orange}  A_{\theta,o,i,l}}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
-!> - {\overline T}_{l,i} \sin\alpha_i \nabla \theta \cdot {\overline T}_{p,j}' \cos\alpha_j \, {\bf e}_\theta + {\overline T}_{p,j} \cos\alpha_j \nabla \zeta  \cdot {\overline T}_{l,i}' \sin\alpha_i \, {\bf e}_\zeta \right] / \sqrt g \\
+!> - {\overline T}_{l,i} \sin\alpha_i \nabla \theta \cdot {\overline T}_{p,j}^\prime \cos\alpha_j \, {\bf e}_\theta + {\overline T}_{p,j} \cos\alpha_j \nabla \zeta  \cdot {\overline T}_{l,i}^\prime \sin\alpha_i \, {\bf e}_\zeta \right] / \sqrt g \\
 !> \frac{\partial}{\partial {\color{Cerulean}A_{\zeta ,o,j,p}}} \frac{\partial}{\partial {\color{Orange}  A_{\theta,o,i,l}}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
-!> - {\overline T}_{l,i} \sin\alpha_i \nabla \theta \cdot {\overline T}_{p,j}' \sin\alpha_j \, {\bf e}_\theta + {\overline T}_{p,j} \sin\alpha_j \nabla \zeta  \cdot {\overline T}_{l,i}' \sin\alpha_i \, {\bf e}_\zeta \right] / \sqrt g \\
+!> - {\overline T}_{l,i} \sin\alpha_i \nabla \theta \cdot {\overline T}_{p,j}^\prime \sin\alpha_j \, {\bf e}_\theta + {\overline T}_{p,j} \sin\alpha_j \nabla \zeta  \cdot {\overline T}_{l,i}^\prime \sin\alpha_i \, {\bf e}_\zeta \right] / \sqrt g \\
 !> \nonumber \\
 !> \frac{\partial}{\partial {\color{red}     A_{\theta,e,j,p}}} \frac{\partial}{\partial {\color{blue}A_{\zeta, e,i,l}}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
-!> + {\overline T}_{l,i} \cos\alpha_i \nabla \zeta  \cdot {\overline T}_{p,j}' \cos\alpha_j \, {\bf e}_\zeta - {\overline T}_{p,j} \cos\alpha_j \nabla \theta \cdot {\overline T}_{l,i}' \cos\alpha_i \, {\bf e}_\theta \right] / \sqrt g \\
+!> + {\overline T}_{l,i} \cos\alpha_i \nabla \zeta  \cdot {\overline T}_{p,j}^\prime \cos\alpha_j \, {\bf e}_\zeta - {\overline T}_{p,j} \cos\alpha_j \nabla \theta \cdot {\overline T}_{l,i}^\prime \cos\alpha_i \, {\bf e}_\theta \right] / \sqrt g \\
 !> \frac{\partial}{\partial {\color{Orange}  A_{\theta,o,j,p}}} \frac{\partial}{\partial {\color{blue}A_{\zeta, e,i,l}}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
-!> + {\overline T}_{l,i} \cos\alpha_i \nabla \zeta  \cdot {\overline T}_{p,j}' \sin\alpha_j \, {\bf e}_\zeta - {\overline T}_{p,j} \sin\alpha_j \nabla \theta \cdot {\overline T}_{l,i}' \cos\alpha_i \, {\bf e}_\theta \right] / \sqrt g \\
+!> + {\overline T}_{l,i} \cos\alpha_i \nabla \zeta  \cdot {\overline T}_{p,j}^\prime \sin\alpha_j \, {\bf e}_\zeta - {\overline T}_{p,j} \sin\alpha_j \nabla \theta \cdot {\overline T}_{l,i}^\prime \cos\alpha_i \, {\bf e}_\theta \right] / \sqrt g \\
 !> \frac{\partial}{\partial {\color{blue}    A_{\zeta, e,j,p}}} \frac{\partial}{\partial {\color{blue}A_{\zeta, e,i,l}}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
 !> \cancel{
-!> - {\overline T}_{l,i} \cos\alpha_i \nabla \zeta  \cdot {\overline T}_{p,j}' \cos\alpha_j \, {\bf e}_\theta}
+!> - {\overline T}_{l,i} \cos\alpha_i \nabla \zeta  \cdot {\overline T}_{p,j}^\prime \cos\alpha_j \, {\bf e}_\theta}
 !> \cancel{
-!> - {\overline T}_{p,j} \cos\alpha_j \nabla \zeta  \cdot {\overline T}_{l,i}' \cos\alpha_i \, {\bf e}_\theta}
+!> - {\overline T}_{p,j} \cos\alpha_j \nabla \zeta  \cdot {\overline T}_{l,i}^\prime \cos\alpha_i \, {\bf e}_\theta}
 !> \right] / \sqrt g \\
 !> \frac{\partial}{\partial {\color{Cerulean}A_{\zeta ,o,j,p}}} \frac{\partial}{\partial {\color{blue}A_{\zeta, e,i,l}}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
 !> \cancel{
-!> - {\overline T}_{l,i} \cos\alpha_i \nabla \zeta  \cdot {\overline T}_{p,j}' \sin\alpha_j \, {\bf e}_\theta}
+!> - {\overline T}_{l,i} \cos\alpha_i \nabla \zeta  \cdot {\overline T}_{p,j}^\prime \sin\alpha_j \, {\bf e}_\theta}
 !> \cancel{
-!> - {\overline T}_{p,j} \sin\alpha_j \nabla \zeta  \cdot {\overline T}_{l,i}' \cos\alpha_i \, {\bf e}_\theta}
+!> - {\overline T}_{p,j} \sin\alpha_j \nabla \zeta  \cdot {\overline T}_{l,i}^\prime \cos\alpha_i \, {\bf e}_\theta}
 !> \right] / \sqrt g \\
 !> \nonumber \\
 !> \frac{\partial}{\partial {\color{red}     A_{\theta,e,j,p}}} \frac{\partial}{\partial {\color{Cerulean}A_{\zeta ,o,i,l}}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
-!> + {\overline T}_{l,i} \sin\alpha_i \nabla \zeta  \cdot {\overline T}_{p,j}' \cos\alpha_j \, {\bf e}_\zeta - {\overline T}_{p,j} \cos\alpha_j \nabla \theta \cdot {\overline T}_{l,i}' \sin\alpha_i \, {\bf e}_\theta \right] / \sqrt g \\
+!> + {\overline T}_{l,i} \sin\alpha_i \nabla \zeta  \cdot {\overline T}_{p,j}^\prime \cos\alpha_j \, {\bf e}_\zeta - {\overline T}_{p,j} \cos\alpha_j \nabla \theta \cdot {\overline T}_{l,i}^\prime \sin\alpha_i \, {\bf e}_\theta \right] / \sqrt g \\
 !> \frac{\partial}{\partial {\color{Orange}  A_{\theta,o,j,p}}} \frac{\partial}{\partial {\color{Cerulean}A_{\zeta ,o,i,l}}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
-!> + {\overline T}_{l,i} \sin\alpha_i \nabla \zeta  \cdot {\overline T}_{p,j}' \sin\alpha_j \, {\bf e}_\zeta - {\overline T}_{p,j} \sin\alpha_j \nabla \theta \cdot {\overline T}_{l,i}' \sin\alpha_i \, {\bf e}_\theta \right] / \sqrt g \\
+!> + {\overline T}_{l,i} \sin\alpha_i \nabla \zeta  \cdot {\overline T}_{p,j}^\prime \sin\alpha_j \, {\bf e}_\zeta - {\overline T}_{p,j} \sin\alpha_j \nabla \theta \cdot {\overline T}_{l,i}^\prime \sin\alpha_i \, {\bf e}_\theta \right] / \sqrt g \\
 !> \frac{\partial}{\partial {\color{blue}    A_{\zeta, e,j,p}}} \frac{\partial}{\partial {\color{Cerulean}A_{\zeta ,o,i,l}}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
 !> \cancel{
-!> - {\overline T}_{l,i} \sin\alpha_i \nabla \zeta  \cdot {\overline T}_{p,j}' \cos\alpha_j \, {\bf e}_\theta}
+!> - {\overline T}_{l,i} \sin\alpha_i \nabla \zeta  \cdot {\overline T}_{p,j}^\prime \cos\alpha_j \, {\bf e}_\theta}
 !> \cancel{
-!> - {\overline T}_{p,j} \cos\alpha_j \nabla \zeta  \cdot {\overline T}_{l,i}' \sin\alpha_i \, {\bf e}_\theta}
+!> - {\overline T}_{p,j} \cos\alpha_j \nabla \zeta  \cdot {\overline T}_{l,i}^\prime \sin\alpha_i \, {\bf e}_\theta}
 !> \right] / \sqrt g \\
 !> \frac{\partial}{\partial {\color{Cerulean}A_{\zeta ,o,j,p}}} \frac{\partial}{\partial {\color{Cerulean}A_{\zeta ,o,i,l}}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
 !> \cancel{
-!> - {\overline T}_{l,i} \sin\alpha_i \nabla \zeta  \cdot {\overline T}_{p,j}' \sin\alpha_j \, {\bf e}_\theta}
+!> - {\overline T}_{l,i} \sin\alpha_i \nabla \zeta  \cdot {\overline T}_{p,j}^\prime \sin\alpha_j \, {\bf e}_\theta}
 !> \cancel{
-!> - {\overline T}_{p,j} \sin\alpha_j \nabla \zeta  \cdot {\overline T}_{l,i}' \sin\alpha_i \, {\bf e}_\theta}
+!> - {\overline T}_{p,j} \sin\alpha_j \nabla \zeta  \cdot {\overline T}_{l,i}^\prime \sin\alpha_i \, {\bf e}_\theta}
 !> \right] / \sqrt g
 !> \f} </li>
 !> <li> In these expressions the terms  \f$\nabla \theta \cdot {\bf e}_\theta =        \nabla \zeta \cdot {\bf e}_\zeta =1 \f$, 
