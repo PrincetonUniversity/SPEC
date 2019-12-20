@@ -1,336 +1,345 @@
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!> \defgroup grp_build_matrices Build matrices
+!>
+!> \latexonly
+!> \definecolor{Orange}{rgb}{1.0,0.5,0.0}
+!> \definecolor{Cerulean}{rgb}{0.0,0.5,1.0}
+!> \endlatexonly
+!>
+!> \file matrix.f90
+!> \brief Constructs energy and helicity matrices that represent the Beltrami linear system.
 
-!title (build matrices) ! Constructs matrices that represent the Beltrami linear system.
+!> **gauge conditions**
+!>
+!> <ul>
+!> <li> In the \f$v\f$-th annulus, bounded by the \f$(v-1)\f$-th and \f$v\f$-th interfaces,
+!>       a general covariant representation of the magnetic vector-potential is written
+!>       \f{eqnarray}{ {\bf \bar A}=\bar A_{s} \nabla s + \bar A_{\theta} \nabla \theta + \bar A_{\zeta} \nabla \zeta eta. \f} </li>
+!> <li> To this add \f$\nabla g(s,\theta,\zeta)\f$, where \f$g\f$ satisfies
+!>       \f{eqnarray}{ \begin{array}{cccccccccccccccccccccccccccccccccccccc}
+!>           \partial_s      g( s,\theta,\zeta) & = & - & \bar A_{s     }( s,\theta,\zeta) \\
+!>           \partial_\theta g(-1,\theta,\zeta) & = & - & \bar A_{\theta}(-1,\theta,\zeta) \\
+!>           \partial_\zeta  g(-1,     0,\zeta) & = & - & \bar A_{\zeta }(-1,     0,\zeta).
+!>       \end{array}
+!>      \f} </li>
+!> <li> Then \f${\bf A}={\bf \bar A}+\nabla g\f$ is given by \f${\bf A}=A_{\theta}\nabla\theta+A_{\zeta}\nabla\zeta\f$ with
+!>       \f{eqnarray}{
+!>        A_{\theta}(-1,\theta,\zeta) &=& 0 \label{eq:Atgauge} \\
+!>        A_{\zeta }(-1,     0,\zeta) &=& 0 \label{eq:Azgauge}
+!>       \f} </li>
+!> <li> This specifies the gauge: to see this, notice that no gauge term can be added without violating the conditions in Eqn.\f$(\ref{eq:Atgauge})\f$ or Eqn.\f$(\ref{eq:Azgauge})\f$. </li>
+!> <li> Note that the gauge employed in each volume is distinct. </li>
+!> </ul> 
+!>
+!> **boundary conditions**
+!>
+!> <ul>
+!> <li> The magnetic field is 
+!>       \f$\sqrt g \, {\bf B} = (\partial_\theta A_\zeta - \partial_\zeta A_\theta)\;{\bf e}_s - \partial_s A_\zeta \;{\bf e}_\theta + \partial_s A_\theta \;{\bf e}_\zeta\f$. </li>
+!> <li> In the annular volumes, the condition that the field is tangential to the inner interface, \f$\sqrt g {\bf B}\cdot\nabla s=0\f$ at \f$s=-1\f$,
+!>       gives \f$\partial_\theta A_\zeta - \partial_\zeta A_\theta = 0\f$.
+!>       With the above condition on \f$A_\theta\f$ given in Eqn.\f$(\ref{eq:Atgauge})\f$, this gives \f$\partial_\theta A_\zeta=0\f$, which with Eqn.\f$(\ref{eq:Azgauge})\f$ gives
+!>       \f{eqnarray}{ A_\zeta(-1,\theta,\zeta)=0.
+!>       \f} </li>
+!> <li> The condition at the outer interface, \f$s=+1\f$, is that the field is \f$\sqrt g \, {\bf B}\cdot\nabla s = \partial_\theta A_\zeta - \partial_\zeta A_\theta = b\f$,
+!>       where \f$b\f$ is supplied by the user.
+!>       For each of the plasma regions, \f$b=0\f$.
+!>       For the vacuum region, generally \f$b\ne0\f$. </li>
+!> </ul> 
+!>
+!> **enclosed fluxes**
+!>
+!> <ul>
+!> <li> In the plasma regions, the enclosed fluxes must be constrained. </li>
+!> <li> The toroidal and poloidal fluxes enclosed in each volume are determined using
+!>       \f{eqnarray}{ \int_S {\bf B}\cdot{\bf ds}=\int_{\partial S}{\bf A}\cdot {\bf dl}.
+!>       \f} </li>
+!> </ul> 
+!>
+!> **Fourier-Chebyshev representation**
+!>
+!> <ul>
+!> <li> The components of the vector potential, \f${\bf A}=A_\theta \nabla + A_\zeta \nabla \zeta eta\f$, are
+!>      \f{eqnarray}{
+!>        A_\theta(s,\theta,\zeta) &=& \sum_{i,l} {\color{red} A_{\theta,e,i,l}} \; {\overline T}_{l,i}(s) \cos\alpha_i + \sum_{i,l} {\color{Orange}  A_{\theta,o,i,l}} \; {\overline T}_{l,i}(s) \sin\alpha_i, \label{eq:At} \\
+!>        A_\zeta( s,\theta,\zeta) &=& \sum_{i,l} {\color{blue}A_{\zeta, e,i,l}} \; {\overline T}_{l,i}(s) \cos\alpha_i + \sum_{i,l} {\color{Cerulean}A_{\zeta ,o,i,l}} \; {\overline T}_{l,i}(s) \sin\alpha_i, \label{eq:Az}
+!>      \f}
+!>      where \f${\overline T}_{l,i}(s) \equiv \bar s^{m_i/2} \, T_l(s)\f$, \f$T_l(s)\f$ is the Chebyshev polynomial, and \f$\alpha_j \equiv m_j\theta-n_j\zeta\f$.
+!>      The regularity factor, \f$\bar s^{m_i/2}\f$, where \f$\bar s \equiv (1+s)/2\f$, is only included if there is a coordinate singularity in the domain
+!>      (i.e. only in the innermost volume, and only in cylindrical and toroidal geometry.) </li>
+!> <li> The magnetic field, \f$\sqrt g \, {\bf B} = \sqrt g B^s {\bf e}_s + \sqrt g B^\theta {\bf e}_\theta + \sqrt g B^\zeta {\bf e}_\zeta\f$, is
+!>      \f{eqnarray}{
+!>        \begin{array}{ccccrcrcrcrcccccccccccccccccccccccccccccccccccccccccccccccccccc}
+!>        \sqrt g \, {\bf B} & = & {\bf e}_s      & \sum_{i,l} [ ( & - m_i {\color{blue}A_{\zeta, e,i,l}} & - & n_i {\color{red} A_{\theta,e,i,l}} & ) {\overline T}_{l,i}        \sin\alpha_i + ( & + m_i {\color{Cerulean}A_{\zeta ,o,i,l}} & + & n_i {\color{Orange}  A_{\theta,o,i,l}} & ) {\overline T}_{l,i}        \cos\alpha_i ] \\
+!>                           & + & {\bf e}_\theta & \sum_{i,l} [ ( &                                      & - &     {\color{blue}A_{\zeta, e,i,l}} & ) {\overline T}_{l,i}^\prime \cos\alpha_i + ( &                                          & - &     {\color{Cerulean}A_{\zeta ,o,i,l}} & ) {\overline T}_{l,i}^\prime \sin\alpha_i ] \\
+!>                           & + & {\bf e}_\zeta  & \sum_{i,l} [ ( &       {\color{red} A_{\theta,e,i,l}} &   &                                    & ) {\overline T}_{l,i}^\prime \cos\alpha_i + ( &       {\color{Orange}  A_{\theta,o,i,l}} &   &                                        & ) {\overline T}_{l,i}^\prime \sin\alpha_i ]
+!>        \end{array}
+!>      \f}
+!> </li>
+!> <li> The components of the velocity, \f${\bf v} \equiv v_s \nabla s + v_\theta \nabla \theta + v_\zeta \nabla \zeta eta\f$, are
+!>       \f{eqnarray}{ v_s     (s,\theta,\zeta) &=& \sum_{i,l} {\color{red}  v_{     s,e,i,l}} \; {\overline T}_{l,i}(s) \cos\alpha_i + \sum_{i,l} {\color{Orange}   v_{     s,o,i,l}} \; {\overline T}_{l,i}(s) \sin\alpha_i, \\
+!>                     v_\theta(s,\theta,\zeta) &=& \sum_{i,l} {\color{red}  v_{\theta,e,i,l}} \; {\overline T}_{l,i}(s) \cos\alpha_i + \sum_{i,l} {\color{Orange}   v_{\theta,o,i,l}} \; {\overline T}_{l,i}(s) \sin\alpha_i, \\
+!>                     v_\zeta (s,\theta,\zeta) &=& \sum_{i,l} {\color{blue} v_{\zeta ,e,i,l}} \; {\overline T}_{l,i}(s) \cos\alpha_i + \sum_{i,l} {\color{Cerulean} v_{\zeta ,o,i,l}} \; {\overline T}_{l,i}(s) \sin\alpha_i.
+!>       \f} </li>
+!> </ul> 
+!>
+!> **constrained energy functional**
+!>
+!> <ul>
+!>
+!> <li> The constrained energy functional in each volume depends on the vector potential and the Lagrange multipliers, 
+!> \f{eqnarray}{ {\cal F} \equiv
+!> {\cal F}[{\color{red} A_{\theta,e,i,l}},{\color{blue}A_{\zeta, e,i,l}},{\color{Orange}  A_{\theta,o,i,l}},{\color{Cerulean}A_{\zeta ,o,i,l}},
+!>  {\color{red} v_{s,e,i,l}},{\color{Orange} v_{s,o,i,l}},{\color{red} v_{\theta,e,i,l}},{\color{Orange} v_{\theta,o,i,l}},{\color{blue} v_{\zeta,e,i,l}},{\color{Cerulean} v_{\zeta,o,i,l}},\mu,a_i,b_i,c_i,d_i,e_i,f_i,g_1,h_1],
+!> \f}
+!>       and is given by:
+!> \f{eqnarray}{ \begin{array}{cclcclcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc}
+!>     {\cal F}
+!>     & \equiv & \displaystyle                        \int {\bf B} \cdot {\bf B} \, dv
+!>        +                                            \int {\bf v} \cdot {\bf v} \, dv
+!>        -       \displaystyle       \mu       \left[ \int {\bf A} \cdot {\bf B} \, dv - K \right]                                                                                                              \\
+!>     &  + &   & \displaystyle \sum_{i=1} & a_i       & \displaystyle \left[  \sum_l {\color{red}     A_{\theta,e,i,l}} T_l(-1) - 0                                                                     \right] \\
+!>     &  + &   & \displaystyle \sum_{i=1} & b_i       & \displaystyle \left[  \sum_l {\color{blue}    A_{\zeta, e,i,l}} T_l(-1) - 0                                                                     \right] \\
+!>     &  + &   & \displaystyle \sum_{i=2} & c_i       & \displaystyle \left[  \sum_l {\color{Orange}  A_{\theta,o,i,l}} T_l(-1) - 0                                                                     \right] \\
+!>     &  + &   & \displaystyle \sum_{i=2} & d_i       & \displaystyle \left[  \sum_l {\color{Cerulean}A_{\zeta ,o,i,l}} T_l(-1) - 0                                                                     \right] \\
+!>     &  + &   & \displaystyle \sum_{i=2} & e_i       & \displaystyle \left[  \sum_l \left( - m_i {\color{blue}    A_{\zeta, e,i,l}} - n_i {\color{red}     A_{\theta,e,i,l}} \right) T_l(+1) - b_{s,i} \right] \\
+!>     &  + &   & \displaystyle \sum_{i=2} & f_i       & \displaystyle \left[  \sum_l \left( + m_i {\color{Cerulean}A_{\zeta ,o,i,l}} + n_i {\color{Orange}  A_{\theta,o,i,l}} \right) T_l(+1) - b_{c,i} \right] \\
+!>     &  + &   & \displaystyle            & g_1       & \displaystyle \left[  \sum_l {\color{red}     A_{\theta,e,1,l}} T_l(+1) - \Delta \psi_t \right]                                \\
+!>     &  + &   & \displaystyle            & h_1       & \displaystyle \left[  \sum_l {\color{blue}    A_{\zeta, e,1,l}} T_l(+1) + \Delta \psi_p \right]                             
+!>     \end{array}
+!> \f}   
+!>       where
+!>       <ul>
+!>       <li>\f$a_i\f$, \f$b_i\f$, \f$c_i\f$ and \f$d_i\f$ are Lagrange multipliers used to enforce the combined gauge and interface boundary condition
+!>            on the inner interface, </li>
+!>       <li>\f$e_i\f$ and \f$f_i\f$                       are Lagrange multipliers used to enforce the interface boundary condition on the outer interface, 
+!>            namely \f$\sqrt g \, {\bf B}\cdot\nabla s = b\f$; and </li>
+!>       <li>\f$g_1\f$ and \f$h_1\f$                       are Lagrange multipliers used to enforce the constraints on the enclosed fluxes. </li>
+!>       </ul>
+!> <li> In each plasma volume the boundary condition on the outer interface is \f$b=0\f$.
+!> <li> In the vacuum volume (only for free-boundary), we may set \f$\mu=0\f$.
+!>
+!> </ul> 
+!>
+!> **derivatives of magnetic energy integrals**
+!>
+!> <ul>
+!>
+!> <li> The first  derivatives of \f$\int \! dv \; {\bf B} \! \cdot \! {\bf B}\f$ with respect to 
+!> \f${\color{red} A_{\theta,e,i,l}}\f$, \f${\color{Orange}  A_{\theta,o,i,l}}\f$, \f${\color{blue}A_{\zeta, e,i,l}}\f$ and \f${\color{Cerulean}A_{\zeta ,o,i,l}}\f$ are
+!> \f{eqnarray}{
+!> \frac{\partial}{\partial {\color{red} A_{\theta,e,i,l}}} \int \!\! dv \; {\bf B} \cdot {\bf B} & = & 
+!> 2 \int \!\! dv \; {\bf B} \cdot \frac{\partial {\bf B}}{\partial {\color{red} A_{\theta,e,i,l}}} =
+!>      2 \int \!\! dv \; {\bf B} \cdot \left[ - n_i {\overline T}_{l,i}  \sin\alpha_i \, {\bf e}_s + {\overline T}_{l,i}' \cos\alpha_i \, {\bf e}_\zeta \right] / \sqrt g \\
+!> \frac{\partial}{\partial {\color{Orange}  A_{\theta,o,i,l}}} \int \!\! dv \; {\bf B} \cdot {\bf B} & = & 
+!> 2 \int \!\! dv \; {\bf B} \cdot \frac{\partial {\bf B}}{\partial {\color{Orange}  A_{\theta,o,i,l}}} =
+!>      2 \int \!\! dv \; {\bf B} \cdot \left[ + n_i {\overline T}_{l,i}  \cos\alpha_i \, {\bf e}_s + {\overline T}_{l,i}' \sin\alpha_i \, {\bf e}_\zeta \right] / \sqrt g \\
+!> \frac{\partial}{\partial {\color{blue}A_{\zeta, e,i,l}}} \int \!\! dv \; {\bf B} \cdot {\bf B} & = & 
+!> 2 \int \!\! dv \; {\bf B} \cdot \frac{\partial {\bf B}}{\partial {\color{blue}A_{\zeta, e,i,l}}} =
+!>      2 \int \!\! dv \; {\bf B} \cdot \left[ - m_i {\overline T}_{l,i}  \sin\alpha_i \, {\bf e}_s - {\overline T}_{l,i}' \cos\alpha_i \, {\bf e}_\theta \right] / \sqrt g \\
+!> \frac{\partial}{\partial {\color{Cerulean}A_{\zeta ,o,i,l}}} \int \!\! dv \; {\bf B} \cdot {\bf B} & = & 
+!> 2 \int \!\! dv \; {\bf B} \cdot \frac{\partial {\bf B}}{\partial {\color{Cerulean}A_{\zeta ,o,i,l}}} =
+!>      2 \int \!\! dv \; {\bf B} \cdot \left[ + m_i {\overline T}_{l,i}  \cos\alpha_i \, {\bf e}_s - {\overline T}_{l,i}' \sin\alpha_i \, {\bf e}_\theta \right] / \sqrt g 
+!> \f} </li>
+!> <li> The second derivatives of \f$\int \! dv \; {\bf B} \! \cdot \! {\bf B}\f$ with respect to 
+!>  \f${\color{red} A_{\theta,e,i,l}}\f$, \f${\color{Orange}  A_{\theta,o,i,l}}\f$, \f${\color{blue}A_{\zeta, e,i,l}}\f$ and \f${\color{Cerulean}A_{\zeta ,o,i,l}}\f$ are
+!> \f{eqnarray}{ 
+!> \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial {\color{red}     A_{\theta,e,j,p}}} \frac{\partial}{\partial {\color{red} A_{\theta,e,i,l}}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
+!> \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
+!>  ( + n_j n_i {\overline T}_{p,j}  {\overline T}_{l,i}  s_j s_i g_{ss} - n_j {\overline T}_{p,j}  {\overline T}_{l,i}' s_j c_i g_{s\zeta}
+!>    -     n_i {\overline T}_{l,i}  {\overline T}_{p,j}' s_i c_j g_{s\zeta} +     {\overline T}_{p,j}' {\overline T}_{l,i}' c_j c_i g_{\zeta\zeta}) / \sqrt g^2\nonumber \\
+!> \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial {\color{Orange}  A_{\theta,o,j,p}}} \frac{\partial}{\partial {\color{red} A_{\theta,e,i,l}}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
+!> \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
+!>  ( - n_j n_i {\overline T}_{p,j}  {\overline T}_{l,i}  c_j s_i g_{ss} + n_j {\overline T}_{p,j}  {\overline T}_{l,i}' c_j c_i g_{s\zeta}
+!>    -     n_i {\overline T}_{l,i}  {\overline T}_{p,j}' s_i s_j g_{s\zeta} +     {\overline T}_{p,j}' {\overline T}_{l,i}' s_j c_i g_{\zeta\zeta}) / \sqrt g^2\nonumber \\
+!> \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial {\color{blue}    A_{\zeta, e,j,p}}} \frac{\partial}{\partial {\color{red} A_{\theta,e,i,l}}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
+!> \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
+!>  ( + m_j n_i {\overline T}_{p,j}  {\overline T}_{l,i}  s_j s_i g_{ss} - m_j {\overline T}_{p,j}  {\overline T}_{l,i}' s_j c_i g_{s\zeta}
+!>    +     n_i {\overline T}_{l,i}  {\overline T}_{p,j}' s_i c_j g_{s\theta} -     {\overline T}_{p,j}' {\overline T}_{l,i}' c_j c_i g_{\theta\zeta}) / \sqrt g^2\nonumber \\
+!> \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial {\color{Cerulean}A_{\zeta ,o,j,p}}} \frac{\partial}{\partial {\color{red} A_{\theta,e,i,l}}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
+!> \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
+!>  ( - m_j n_i {\overline T}_{p,j}  {\overline T}_{l,i}  c_j s_i g_{ss} + m_j {\overline T}_{p,j}  {\overline T}_{l,i}' c_j c_i g_{s\zeta}
+!>    +     n_i {\overline T}_{l,i}  {\overline T}_{p,j}' s_i s_j g_{s\theta} -     {\overline T}_{p,j}' {\overline T}_{l,i}' s_j c_i g_{\theta\zeta}) / \sqrt g^2\nonumber
+!> \f} 
+!> \f{eqnarray}{
+!> \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial {\color{red}     A_{\theta,e,j,p}}} \frac{\partial}{\partial {\color{Orange}  A_{\theta,o,i,l}}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
+!> \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
+!>  ( - n_j n_i {\overline T}_{p,j}  {\overline T}_{l,i}  s_j c_i g_{ss} - n_j {\overline T}_{p,j}  {\overline T}_{l,i}' s_j s_i g_{s\zeta}
+!>    +     n_i {\overline T}_{l,i}  {\overline T}_{p,j}' c_i c_j g_{s\zeta} +     {\overline T}_{p,j}' {\overline T}_{l,i}' c_j s_i g_{\zeta\zeta}) / \sqrt g^2\nonumber \\
+!> \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial {\color{Orange}  A_{\theta,o,j,p}}} \frac{\partial}{\partial {\color{Orange}  A_{\theta,o,i,l}}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
+!> \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
+!>  ( + n_j n_i {\overline T}_{p,j}  {\overline T}_{l,i}  c_j c_i g_{ss} + n_j {\overline T}_{p,j}  {\overline T}_{l,i}' c_j s_i g_{s\zeta}
+!>    +     n_i {\overline T}_{l,i}  {\overline T}_{p,j}' c_i s_j g_{s\zeta} +     {\overline T}_{p,j}' {\overline T}_{l,i}' s_j s_i g_{\zeta\zeta}) / \sqrt g^2\nonumber \\
+!> \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial {\color{blue}    A_{\zeta, e,j,p}}} \frac{\partial}{\partial {\color{Orange}  A_{\theta,o,i,l}}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
+!> \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
+!>  ( - m_j n_i {\overline T}_{p,j}  {\overline T}_{l,i}  s_j c_i g_{ss} - m_j {\overline T}_{p,j}  {\overline T}_{l,i}' s_j s_i g_{s\zeta}
+!>    -     n_i {\overline T}_{l,i}  {\overline T}_{p,j}' c_i c_j g_{s\theta} -     {\overline T}_{p,j}' {\overline T}_{l,i}' c_j s_i g_{\theta\zeta}) / \sqrt g^2\nonumber \\
+!> \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial {\color{Cerulean}A_{\zeta ,o,j,p}}} \frac{\partial}{\partial {\color{Orange}  A_{\theta,o,i,l}}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
+!> \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
+!>  ( + m_j n_i {\overline T}_{p,j}  {\overline T}_{l,i}  c_j c_i g_{ss} + m_j {\overline T}_{p,j}  {\overline T}_{l,i}' c_j s_i g_{s\zeta}
+!>    -     n_i {\overline T}_{l,i}  {\overline T}_{p,j}' c_i s_j g_{s\theta} -     {\overline T}_{p,j}' {\overline T}_{l,i}' s_j s_i g_{\theta\zeta}) / \sqrt g^2\nonumber   
+!> \f} 
+!> \f{eqnarray}{
+!> \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial {\color{red}     A_{\theta,e,j,p}}} \frac{\partial}{\partial {\color{blue}A_{\zeta, e,i,l}}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
+!> \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
+!>  ( + n_j m_i {\overline T}_{p,j}  {\overline T}_{l,i}  s_j s_i g_{ss} + n_j {\overline T}_{p,j}  {\overline T}_{l,i}' s_j c_i g_{s\theta}
+!>    -     m_i {\overline T}_{l,i}  {\overline T}_{p,j}' s_i c_j g_{s\zeta} -     {\overline T}_{p,j}' {\overline T}_{l,i}' c_j c_i g_{\theta\zeta}) / \sqrt g^2\nonumber \\
+!> \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial {\color{Orange}  A_{\theta,o,j,p}}} \frac{\partial}{\partial {\color{blue}A_{\zeta, e,i,l}}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
+!> \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
+!>  ( - n_j m_i {\overline T}_{p,j}  {\overline T}_{l,i}  c_j s_i g_{ss} - n_j {\overline T}_{p,j}  {\overline T}_{l,i}' c_j c_i g_{s\theta}
+!>    -     m_i {\overline T}_{l,i}  {\overline T}_{p,j}' s_i s_j g_{s\zeta} -     {\overline T}_{p,j}' {\overline T}_{l,i}' s_j c_i g_{\theta\zeta}) / \sqrt g^2\nonumber \\
+!> \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial {\color{blue}    A_{\zeta, e,j,p}}} \frac{\partial}{\partial {\color{blue}A_{\zeta, e,i,l}}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
+!> \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
+!>  ( + m_j m_i {\overline T}_{p,j}  {\overline T}_{l,i}  s_j s_i g_{ss} + m_j {\overline T}_{p,j}  {\overline T}_{l,i}' s_j c_i g_{s\theta}
+!>    +     m_i {\overline T}_{l,i}  {\overline T}_{p,j}' s_i c_j g_{s\theta} +     {\overline T}_{p,j}' {\overline T}_{l,i}' c_j c_i g_{\theta\theta}) / \sqrt g^2\nonumber \\
+!> \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial {\color{Cerulean}A_{\zeta ,o,j,p}}} \frac{\partial}{\partial {\color{blue}A_{\zeta, e,i,l}}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
+!> \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
+!>  ( - m_j m_i {\overline T}_{p,j}  {\overline T}_{l,i}  c_j s_i g_{ss} - m_j {\overline T}_{p,j}  {\overline T}_{l,i}' c_j c_i g_{s\theta}
+!>    +     m_i {\overline T}_{l,i}  {\overline T}_{p,j}' s_i s_j g_{s\theta} +     {\overline T}_{p,j}' {\overline T}_{l,i}' s_j c_i g_{\theta\theta}) / \sqrt g^2\nonumber
+!> \f} 
+!> \f{eqnarray}{
+!> \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial {\color{red}     A_{\theta,e,j,p}}} \frac{\partial}{\partial {\color{Cerulean}A_{\zeta ,o,i,l}}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
+!> \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
+!>  ( - n_j m_i {\overline T}_{p,j}  {\overline T}_{l,i}  s_j c_i g_{ss} + n_j {\overline T}_{p,j}  {\overline T}_{l,i}' s_j s_i g_{s\theta}
+!>    +     m_i {\overline T}_{l,i}  {\overline T}_{p,j}' c_i c_j g_{s\zeta} -     {\overline T}_{p,j}' {\overline T}_{l,i}' c_j s_i g_{\theta\zeta}) / \sqrt g^2\nonumber \\
+!> \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial {\color{Orange}  A_{\theta,o,j,p}}} \frac{\partial}{\partial {\color{Cerulean}A_{\zeta ,o,i,l}}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
+!> \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
+!>  ( + n_j m_i {\overline T}_{p,j}  {\overline T}_{l,i}  c_j c_i g_{ss} - n_j {\overline T}_{p,j}  {\overline T}_{l,i}' c_j s_i g_{s\theta}
+!>    +     m_i {\overline T}_{l,i}  {\overline T}_{p,j}' c_i s_j g_{s\zeta} -     {\overline T}_{p,j}' {\overline T}_{l,i}' s_j s_i g_{\theta\zeta}) / \sqrt g^2\nonumber \\
+!> \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial {\color{blue}    A_{\zeta, e,j,p}}} \frac{\partial}{\partial {\color{Cerulean}A_{\zeta ,o,i,l}}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
+!> \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
+!>
+!>  ( - m_j m_i {\overline T}_{p,j}  {\overline T}_{l,i}  s_j c_i g_{ss} + m_j {\overline T}_{p,j}  {\overline T}_{l,i}' s_j s_i g_{s\theta}
+!>    -     m_i {\overline T}_{l,i}  {\overline T}_{p,j}' c_i c_j g_{s\theta} +     {\overline T}_{p,j}' {\overline T}_{l,i}' c_j s_i g_{\theta\theta}) / \sqrt g^2\nonumber \\
+!> \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial {\color{Cerulean}A_{\zeta ,o,j,p}}} \frac{\partial}{\partial {\color{Cerulean}A_{\zeta ,o,i,l}}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
+!> \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
+!>
+!>  ( + m_j m_i {\overline T}_{p,j}  {\overline T}_{l,i}  c_j c_i g_{ss} - m_j {\overline T}_{p,j}  {\overline T}_{l,i}' c_j s_i g_{s\theta}
+!>    -     m_i {\overline T}_{l,i}  {\overline T}_{p,j}' c_i s_j g_{s\theta} +     {\overline T}_{p,j}' {\overline T}_{l,i}' s_j s_i g_{\theta\theta}) / \sqrt g^2\nonumber
+!> \f} </li>
+!>
+!> </ul>
+!>
+!> **derivatives of helicity        integrals**
+!>
+!> <ul>
+!>
+!> <li> The first  derivatives of \f$\int \! dv \; {\bf A} \cdot{\bf B}\f$ with respect to 
+!> \f${\color{red} A_{\theta,e,i,l}}\f$, \f${\color{Orange}  A_{\theta,o,i,l}}\f$, \f${\color{blue}A_{\zeta, e,i,l}}\f$ and \f${\color{Cerulean}A_{\zeta ,o,i,l}}\f$ are
+!> \f{eqnarray}{ 
+!> \frac{\partial}{\partial {\color{red} A_{\theta,e,i,l}}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &
+!> \int \!\! dv \; \left( \frac{\partial {\bf A}}{\partial {\color{red} A_{\theta,e,i,l}}} \cdot {\bf B} + {\bf A} \cdot \frac{\partial {\bf B}}{\partial {\color{red} A_{\theta,e,i,l}}} \right) =
+!> \int \!\! dv \; ( {\overline T}_{l,i} \cos\alpha_i \nabla \theta \cdot {\bf B} + {\bf A} \cdot {\overline T}_{l,i}' \cos\alpha_i \, {\bf e}_\zeta / \sqrt g ) \\
+!> \frac{\partial}{\partial {\color{Orange}  A_{\theta,o,i,l}}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &
+!> \int \!\! dv \; \left( \frac{\partial {\bf A}}{\partial {\color{Orange}  A_{\theta,o,i,l}}} \cdot {\bf B} + {\bf A} \cdot \frac{\partial {\bf B}}{\partial {\color{Orange}  A_{\theta,o,i,l}}} \right) =
+!> \int \!\! dv \; ( {\overline T}_{l,i} \sin\alpha_i \nabla \theta \cdot {\bf B} + {\bf A} \cdot {\overline T}_{l,i}' \sin\alpha_i \, {\bf e}_\zeta / \sqrt g ) \\
+!> \frac{\partial}{\partial {\color{blue}A_{\zeta, e,i,l}}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &
+!> \int \!\! dv \; \left( \frac{\partial {\bf A}}{\partial {\color{blue}A_{\zeta, e,i,l}}} \cdot {\bf B} + {\bf A} \cdot \frac{\partial {\bf B}}{\partial {\color{blue}A_{\zeta, e,i,l}}} \right) =
+!> \int \!\! dv \; ( {\overline T}_{l,i} \cos\alpha_i \nabla \zeta  \cdot {\bf B} - {\bf A} \cdot {\overline T}_{l,i}' \cos\alpha_i \, {\bf e}_\theta / \sqrt g ) \\
+!> \frac{\partial}{\partial {\color{Cerulean}A_{\zeta ,o,i,l}}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &
+!> \int \!\! dv \; \left( \frac{\partial {\bf A}}{\partial {\color{Cerulean}A_{\zeta ,o,i,l}}} \cdot {\bf B} + {\bf A} \cdot \frac{\partial {\bf B}}{\partial {\color{Cerulean}A_{\zeta ,o,i,l}}} \right) =
+!> \int \!\! dv \; ( {\overline T}_{l,i} \sin\alpha_i \nabla \zeta  \cdot {\bf B} - {\bf A} \cdot {\overline T}_{l,i}' \sin\alpha_i \, {\bf e}_\theta / \sqrt g )
+!> \f} </li>
+!> <li> Note that in the above expressions, \f${\bf A}\cdot{\bf e}_s=0\f$ has been used. </li>
+!> <li> The second derivatives of \f$\int \! dv \; {\bf A} \cdot{\bf B}\f$ with respect to 
+!> \f${\color{red} A_{\theta,e,i,l}}\f$, \f${\color{Orange}  A_{\theta,o,i,l}}\f$, \f${\color{blue}A_{\zeta, e,i,l}}\f$ and \f${\color{Cerulean}A_{\zeta ,o,i,l}}\f$ are
+!> \f{eqnarray}{
+!> \frac{\partial}{\partial {\color{red}     A_{\theta,e,j,p}}} \frac{\partial}{\partial {\color{red} A_{\theta,e,i,l}}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \; \left[
+!> \cancel{
+!> + {\overline T}_{l,i} \cos\alpha_i \nabla \theta \cdot {\overline T}_{p,j}' \cos\alpha_j \, {\bf e}_\zeta}
+!> \cancel{
+!> + {\overline T}_{p,j} \cos\alpha_j \nabla \theta \cdot {\overline T}_{l,i}' \cos\alpha_i \, {\bf e}_\zeta}
+!> \right] / \sqrt g \\
+!> \frac{\partial}{\partial {\color{Orange}  A_{\theta,o,j,p}}} \frac{\partial}{\partial {\color{red} A_{\theta,e,i,l}}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
+!> \cancel{
+!> + {\overline T}_{l,i} \cos\alpha_i \nabla \theta \cdot {\overline T}_{p,j}' \sin\alpha_j \, {\bf e}_\zeta}
+!> \cancel{
+!> + {\overline T}_{p,j} \sin\alpha_j \nabla \theta \cdot {\overline T}_{l,i}' \cos\alpha_i \, {\bf e}_\zeta}
+!> \right] / \sqrt g \\
+!> \frac{\partial}{\partial {\color{blue}    A_{\zeta, e,j,p}}} \frac{\partial}{\partial {\color{red} A_{\theta,e,i,l}}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
+!> - {\overline T}_{l,i} \cos\alpha_i \nabla \theta \cdot {\overline T}_{p,j}' \cos\alpha_j \, {\bf e}_\theta + {\overline T}_{p,j} \cos\alpha_j \nabla \zeta  \cdot {\overline T}_{l,i}' \cos\alpha_i \, {\bf e}_\zeta \right] / \sqrt g \\
+!> \frac{\partial}{\partial {\color{Cerulean}A_{\zeta ,o,j,p}}} \frac{\partial}{\partial {\color{red} A_{\theta,e,i,l}}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
+!> - {\overline T}_{l,i} \cos\alpha_i \nabla \theta \cdot {\overline T}_{p,j}' \sin\alpha_j \, {\bf e}_\theta + {\overline T}_{p,j} \sin\alpha_j \nabla \zeta  \cdot {\overline T}_{l,i}' \cos\alpha_i \, {\bf e}_\zeta \right] / \sqrt g \\
+!> \nonumber \\
+!> \frac{\partial}{\partial {\color{red}     A_{\theta,e,j,p}}} \frac{\partial}{\partial {\color{Orange}  A_{\theta,o,i,l}}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
+!> \cancel{
+!> + {\overline T}_{l,i} \sin\alpha_i \nabla \theta \cdot {\overline T}_{p,j}' \cos\alpha_j \, {\bf e}_\zeta}
+!> \cancel{
+!> + {\overline T}_{p,j} \cos\alpha_j \nabla \theta \cdot {\overline T}_{l,i}' \sin\alpha_i \, {\bf e}_\zeta}
+!> \right] / \sqrt g \\
+!> \frac{\partial}{\partial {\color{Orange}  A_{\theta,o,j,p}}} \frac{\partial}{\partial {\color{Orange}  A_{\theta,o,i,l}}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
+!> \cancel{
+!> + {\overline T}_{l,i} \sin\alpha_i \nabla \theta \cdot {\overline T}_{p,j}' \sin\alpha_j \, {\bf e}_\zeta}
+!> \cancel{
+!> + {\overline T}_{p,j} \sin\alpha_j \nabla \theta \cdot {\overline T}_{l,i}' \sin\alpha_i \, {\bf e}_\zeta}
+!> \right] / \sqrt g \\
+!> \frac{\partial}{\partial {\color{blue}    A_{\zeta, e,j,p}}} \frac{\partial}{\partial {\color{Orange}  A_{\theta,o,i,l}}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
+!> - {\overline T}_{l,i} \sin\alpha_i \nabla \theta \cdot {\overline T}_{p,j}' \cos\alpha_j \, {\bf e}_\theta + {\overline T}_{p,j} \cos\alpha_j \nabla \zeta  \cdot {\overline T}_{l,i}' \sin\alpha_i \, {\bf e}_\zeta \right] / \sqrt g \\
+!> \frac{\partial}{\partial {\color{Cerulean}A_{\zeta ,o,j,p}}} \frac{\partial}{\partial {\color{Orange}  A_{\theta,o,i,l}}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
+!> - {\overline T}_{l,i} \sin\alpha_i \nabla \theta \cdot {\overline T}_{p,j}' \sin\alpha_j \, {\bf e}_\theta + {\overline T}_{p,j} \sin\alpha_j \nabla \zeta  \cdot {\overline T}_{l,i}' \sin\alpha_i \, {\bf e}_\zeta \right] / \sqrt g \\
+!> \nonumber \\
+!> \frac{\partial}{\partial {\color{red}     A_{\theta,e,j,p}}} \frac{\partial}{\partial {\color{blue}A_{\zeta, e,i,l}}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
+!> + {\overline T}_{l,i} \cos\alpha_i \nabla \zeta  \cdot {\overline T}_{p,j}' \cos\alpha_j \, {\bf e}_\zeta - {\overline T}_{p,j} \cos\alpha_j \nabla \theta \cdot {\overline T}_{l,i}' \cos\alpha_i \, {\bf e}_\theta \right] / \sqrt g \\
+!> \frac{\partial}{\partial {\color{Orange}  A_{\theta,o,j,p}}} \frac{\partial}{\partial {\color{blue}A_{\zeta, e,i,l}}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
+!> + {\overline T}_{l,i} \cos\alpha_i \nabla \zeta  \cdot {\overline T}_{p,j}' \sin\alpha_j \, {\bf e}_\zeta - {\overline T}_{p,j} \sin\alpha_j \nabla \theta \cdot {\overline T}_{l,i}' \cos\alpha_i \, {\bf e}_\theta \right] / \sqrt g \\
+!> \frac{\partial}{\partial {\color{blue}    A_{\zeta, e,j,p}}} \frac{\partial}{\partial {\color{blue}A_{\zeta, e,i,l}}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
+!> \cancel{
+!> - {\overline T}_{l,i} \cos\alpha_i \nabla \zeta  \cdot {\overline T}_{p,j}' \cos\alpha_j \, {\bf e}_\theta}
+!> \cancel{
+!> - {\overline T}_{p,j} \cos\alpha_j \nabla \zeta  \cdot {\overline T}_{l,i}' \cos\alpha_i \, {\bf e}_\theta}
+!> \right] / \sqrt g \\
+!> \frac{\partial}{\partial {\color{Cerulean}A_{\zeta ,o,j,p}}} \frac{\partial}{\partial {\color{blue}A_{\zeta, e,i,l}}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
+!> \cancel{
+!> - {\overline T}_{l,i} \cos\alpha_i \nabla \zeta  \cdot {\overline T}_{p,j}' \sin\alpha_j \, {\bf e}_\theta}
+!> \cancel{
+!> - {\overline T}_{p,j} \sin\alpha_j \nabla \zeta  \cdot {\overline T}_{l,i}' \cos\alpha_i \, {\bf e}_\theta}
+!> \right] / \sqrt g \\
+!> \nonumber \\
+!> \frac{\partial}{\partial {\color{red}     A_{\theta,e,j,p}}} \frac{\partial}{\partial {\color{Cerulean}A_{\zeta ,o,i,l}}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
+!> + {\overline T}_{l,i} \sin\alpha_i \nabla \zeta  \cdot {\overline T}_{p,j}' \cos\alpha_j \, {\bf e}_\zeta - {\overline T}_{p,j} \cos\alpha_j \nabla \theta \cdot {\overline T}_{l,i}' \sin\alpha_i \, {\bf e}_\theta \right] / \sqrt g \\
+!> \frac{\partial}{\partial {\color{Orange}  A_{\theta,o,j,p}}} \frac{\partial}{\partial {\color{Cerulean}A_{\zeta ,o,i,l}}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
+!> + {\overline T}_{l,i} \sin\alpha_i \nabla \zeta  \cdot {\overline T}_{p,j}' \sin\alpha_j \, {\bf e}_\zeta - {\overline T}_{p,j} \sin\alpha_j \nabla \theta \cdot {\overline T}_{l,i}' \sin\alpha_i \, {\bf e}_\theta \right] / \sqrt g \\
+!> \frac{\partial}{\partial {\color{blue}    A_{\zeta, e,j,p}}} \frac{\partial}{\partial {\color{Cerulean}A_{\zeta ,o,i,l}}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
+!> \cancel{
+!> - {\overline T}_{l,i} \sin\alpha_i \nabla \zeta  \cdot {\overline T}_{p,j}' \cos\alpha_j \, {\bf e}_\theta}
+!> \cancel{
+!> - {\overline T}_{p,j} \cos\alpha_j \nabla \zeta  \cdot {\overline T}_{l,i}' \sin\alpha_i \, {\bf e}_\theta}
+!> \right] / \sqrt g \\
+!> \frac{\partial}{\partial {\color{Cerulean}A_{\zeta ,o,j,p}}} \frac{\partial}{\partial {\color{Cerulean}A_{\zeta ,o,i,l}}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
+!> \cancel{
+!> - {\overline T}_{l,i} \sin\alpha_i \nabla \zeta  \cdot {\overline T}_{p,j}' \sin\alpha_j \, {\bf e}_\theta}
+!> \cancel{
+!> - {\overline T}_{p,j} \sin\alpha_j \nabla \zeta  \cdot {\overline T}_{l,i}' \sin\alpha_i \, {\bf e}_\theta}
+!> \right] / \sqrt g
+!> \f} </li>
+!> <li> In these expressions the terms  \f$\nabla \theta \cdot {\bf e}_\theta =        \nabla \zeta \cdot {\bf e}_\zeta =1 \f$, 
+!>                                  and \f$\cancel{\nabla \theta \cdot {\bf e}_\zeta} =\cancel{\nabla \zeta \cdot {\bf e}_\theta}=0\f$ 
+!>       have been included to show the structure of the derivation. </li>
+!> </ul>
+!>
+!> **derivatives of kinetic energy integrals**
+!>
+!> <ul>
+!> <li> The first derivatives of \f$\int \! dv \; v^2\f$ with respect to \f${\color{red}  v_{     s,e,i,l}}\f$ etc. are
+!> \f{eqnarray}{ \frac{\partial}{\partial {\color{red}      v_{     s,e,i,l}}} \int \!\! dv \; {\bf v} \cdot {\bf v} & = & 2 \int \!\! dv \; {\bf v} \cdot {\overline T}_{l,i} \cos\alpha_i \nabla s \\
+!>               \frac{\partial}{\partial {\color{Orange}   v_{     s,o,i,l}}} \int \!\! dv \; {\bf v} \cdot {\bf v} & = & 2 \int \!\! dv \; {\bf v} \cdot {\overline T}_{l,i} \sin\alpha_i \nabla s \\
+!>               \frac{\partial}{\partial {\color{red}      v_{\theta,e,i,l}}} \int \!\! dv \; {\bf v} \cdot {\bf v} & = & 2 \int \!\! dv \; {\bf v} \cdot {\overline T}_{l,i} \cos\alpha_i \nabla \theta \\
+!>               \frac{\partial}{\partial {\color{Orange}   v_{\theta,o,i,l}}} \int \!\! dv \; {\bf v} \cdot {\bf v} & = & 2 \int \!\! dv \; {\bf v} \cdot {\overline T}_{l,i} \sin\alpha_i \nabla \theta \\
+!>               \frac{\partial}{\partial {\color{blue}     v_{\zeta ,e,i,l}}} \int \!\! dv \; {\bf v} \cdot {\bf v} & = & 2 \int \!\! dv \; {\bf v} \cdot {\overline T}_{l,i} \cos\alpha_i \nabla \zeta  \\
+!>               \frac{\partial}{\partial {\color{Cerulean} v_{\zeta ,o,i,l}}} \int \!\! dv \; {\bf v} \cdot {\bf v} & = & 2 \int \!\! dv \; {\bf v} \cdot {\overline T}_{l,i} \sin\alpha_i \nabla \zeta  \\
+!> \f} </li>
+!> </ul>
+!>
+!> **calculation of volume-integrated basis-function-weighted metric information**
+!>
+!> <ul>
+!> <li> The required geometric information is calculated in ma00aa(). </li>as
+!> </ul>
 
-!latex \briefly{Constructs energy and helicity matrices that represent the Beltrami linear system.}
-
-!latex \calledby{\link{dforce}}
-!latex \calls{\link{}}
-
-!latex \tableofcontents
-
-!latex \subsection{gauge conditions} 
-
-!latex \begin{enumerate}
-
-!latex \item In the \mbox{$v$}-th annulus, bounded by the \mbox{$(v-1)$}-th and \mbox{$v$}-th interfaces,
-!latex       a general covariant representation of the magnetic vector-potential is written
-!latex       \be {\bf \bar A}=\bar A_{s} \nabla s + \bar A_{\t} \nabla \t + \bar A_{\z} \nabla \z. \ee
-!latex \item To this add \mbox{$\nabla g(s,\t,\z)$}, where $g$ satisfies
-!latex       \be \begin{array}{cccccccccccccccccccccccccccccccccccccc}
-!latex           \partial_\s g(\s,\t,\z) & = & - & \bar A_{\s}(\s,\t,\z) \\
-!latex           \partial_\t g(-1,\t,\z) & = & - & \bar A_{\t}(-1,\t,\z) \\
-!latex           \partial_\z g(-1, 0,\z) & = & - & \bar A_{\z}(-1, 0,\z).
-!latex       \end{array}\ee
-!latex \item Then \mbox{${\bf A}={\bf \bar A}+\nabla g$} is given by \mbox{${\bf A}=A_{\t}\nabla\t+A_{\z}\nabla\z$} with
-!latex       \be \
-!latex        A_{\t}(-1,\t,\z) &=& 0 \label{eq:Atgauge} \\
-!latex        A_{\z}(-1, 0,\z) &=& 0 \label{eq:Azgauge}
-!latex       \ee
-!latex \item This specifies the gauge: to see this, notice that no gauge term can be added without violating the conditions in \Eqn{Atgauge} or \Eqn{Azgauge}.
-!latex \item Note that the gauge employed in each volume is distinct.
-
-!latex \end{enumerate} 
-
-!latex \subsection{boundary conditions} 
-
-!latex \begin{enumerate}
-
-!latex \item The magnetic field is 
-!latex       $\sqrt g \, {\bf B} = (\partial_\t A_\z - \partial_\z A_\t)\;{\bf e}_\s - \partial_\s A_\z \;{\bf e}_\t + \partial_\s A_\t \;{\bf e}_\z$.
-!latex \item In the annular volumes, the condition that the field is tangential to the inner interface, $\sqrt g {\bf B}\cdot\nabla s=0$ at $s=-1$,
-!latex       gives $\partial_\t A_\z - \partial_\z A_\t = 0$.
-!latex       With the above condition on $A_\t$ given in \Eqn{Atgauge}, this gives $\partial_\t A_\z=0$, which with \Eqn{Azgauge} gives
-!latex       \be A_\z(-1,\t,\z)=0.
-!latex       \ee
-!latex \item The condition at the outer interface, $s=+1$, is that the field is $\sqrt g \, {\bf B}\cdot\nabla s = \partial_\t A_\z - \partial_\z A_\t = b$,
-!latex       where $b$ is supplied by the user.
-!latex       For each of the plasma regions, $b=0$.
-!latex       For the vacuum region, generally $b\ne0$.
-
-!latex \end{enumerate} 
-
-!latex \subsection{enclosed fluxes} 
-
-!latex \begin{enumerate}
-
-!latex \item In the plasma regions, the enclosed fluxes must be constrained.
-!latex \item The toroidal and poloidal fluxes enclosed in each volume are determined using
-!latex       \be \int_S {\bf B}\cdot{\bf ds}=\int_{\partial S}{\bf A}\cdot {\bf dl}.
-!latex       \ee
-
-!latex \end{enumerate} 
-
-!latex \subsection{Fourier-Chebyshev representation} 
-
-!latex \begin{enumerate}
-
-!latex \item \Ais
-!latex \item \Bis
-!latex \item The components of the velocity, ${\bf v} \equiv v_\s \nabla \s + v_\t \nabla \t + v_\z \nabla \z$, are
-!latex       \be v_\s(\s,\t,\z) &=& \sum_{i,l} \vse{i,l} \; \bT{l,i}(s) \ci + \sum_{i,l} \vso{i,l} \; \bT{l,i}(s) \si, \\
-!latex           v_\t(\s,\t,\z) &=& \sum_{i,l} \vte{i,l} \; \bT{l,i}(s) \ci + \sum_{i,l} \vto{i,l} \; \bT{l,i}(s) \si, \\
-!latex           v_\z(\s,\t,\z) &=& \sum_{i,l} \vze{i,l} \; \bT{l,i}(s) \ci + \sum_{i,l} \vzo{i,l} \; \bT{l,i}(s) \si.
-!latex       \ee
-
-!latex \end{enumerate} 
-
-!latex \subsection{constrained energy functional} 
-
-!latex \begin{enumerate}
-
-!latex \item The constrained energy functional in each volume depends on the vector potential and the Lagrange multipliers, 
-!latex \be {\cal F} \equiv
-!latex {\cal F}[\Ate{i,l},\Aze{i,l},\Ato{i,l},\Azo{i,l},\vse{i,l},\vso{i,l},\vte{i,l},\vto{i,l},\vze{i,l},\vzo{i,l},\mu,a_i,b_i,c_i,d_i,e_i,f_i,g_1,h_1],
-!latex \ee
-!latex       and is given by:
-!latex \be \begin{array}{cclcclcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc}
-!latex     {\cal F}
-!latex     & \equiv & \ds                        \int {\bf B} \cdot {\bf B} \, dv
-!latex       +                                   \int {\bf v} \cdot {\bf v} \, dv
-!latex        -       \ds       \mu       \left[ \int {\bf A} \cdot {\bf B} \, dv - K \right]                                                  \\
-!latex     &  + &   & \ds \sum_{i=1} & a_i       & \ds \left[  \sum_l \Ate{i,l} T_l(-1) - 0             \right]                                \\
-!latex     &  + &   & \ds \sum_{i=1} & b_i       & \ds \left[  \sum_l \Aze{i,l} T_l(-1) - 0             \right]                                \\
-!latex     &  + &   & \ds \sum_{i=2} & c_i       & \ds \left[  \sum_l \Ato{i,l} T_l(-1) - 0             \right]                                \\
-!latex     &  + &   & \ds \sum_{i=2} & d_i       & \ds \left[  \sum_l \Azo{i,l} T_l(-1) - 0             \right]                                \\
-!latex     &  + &   & \ds \sum_{i=2} & e_i       & \ds \left[  \sum_l \left( - m_i \Aze{i,l} - n_i \Ate{i,l} \right) T_l(+1) - b_{s,i} \right] \\
-!latex     &  + &   & \ds \sum_{i=2} & f_i       & \ds \left[  \sum_l \left( + m_i \Azo{i,l} + n_i \Ato{i,l} \right) T_l(+1) - b_{c,i} \right] \\
-!latex     &  + &   & \ds            & g_1       & \ds \left[  \sum_l \Ate{1,l} T_l(+1) - \Delta \psi_t \right]                                \\
-!latex     &  + &   & \ds            & h_1       & \ds \left[  \sum_l \Aze{1,l} T_l(+1) + \Delta \psi_p \right]                             
-!latex     \end{array}
-!latex \ee   
-!latex       where
-!latex       \bi
-!latex       \item[  i.] $a_i$, $b_i$, $c_i$ and $d_i$ are Lagrange multipliers used to enforce the combined gauge and interface boundary condition
-!latex                   on the inner interface,
-!latex       \item[ ii.] $e_i$ and $f_i$               are Lagrange multipliers used to enforce the interface boundary condition on the outer interface, 
-!latex                   namely \mbox{$\sqrt g \, {\bf B}\cdot\nabla s = b$}; and
-!latex       \item[iii.] $g_1$    and $h_1$            are Lagrange multipliers used to enforce the constraints on the enclosed fluxes.
-
-!latex       \ei
-!latex \item In each plasma volume the boundary condition on the outer interface is $b=0$.
-!latex \item In the vacuum volume (only for free-boundary), we may set $\mu=0$.
-
-!latex \end{enumerate} 
-
-!latex \subsection{derivatives of magnetic energy integrals}
-
-!latex \begin{enumerate}
-
-!latex \item The first  derivatives of $\int \! dv \; {\bf B} \! \cdot \! {\bf B}$ with respect to $\Ate{i,l}$, $\Ato{i,l}$, $\Aze{i,l}$ and $\Azo{i,l}$ are
-!latex \be 
-!latex \frac{\partial}{\partial \Ate{i,l}} \int \!\! dv \; {\bf B} \cdot {\bf B} & = & 
-!latex 2 \int \!\! dv \; {\bf B} \cdot \frac{\partial {\bf B}}{\partial \Ate{i,l}} =
-!latex      2 \int \!\! dv \; {\bf B} \cdot \left[ - n_i \bT{l,i}  \si \, {\bf e}_\s + \bT{l,i}' \ci \, {\bf e}_\z \right] / \sqrt g \\
-!latex \frac{\partial}{\partial \Ato{i,l}} \int \!\! dv \; {\bf B} \cdot {\bf B} & = & 
-!latex 2 \int \!\! dv \; {\bf B} \cdot \frac{\partial {\bf B}}{\partial \Ato{i,l}} =
-!latex      2 \int \!\! dv \; {\bf B} \cdot \left[ + n_i \bT{l,i}  \ci \, {\bf e}_\s + \bT{l,i}' \si \, {\bf e}_\z \right] / \sqrt g \\
-!latex \frac{\partial}{\partial \Aze{i,l}} \int \!\! dv \; {\bf B} \cdot {\bf B} & = & 
-!latex 2 \int \!\! dv \; {\bf B} \cdot \frac{\partial {\bf B}}{\partial \Aze{i,l}} =
-!latex      2 \int \!\! dv \; {\bf B} \cdot \left[ - m_i \bT{l,i}  \si \, {\bf e}_\s - \bT{l,i}' \ci \, {\bf e}_\t \right] / \sqrt g \\
-!latex \frac{\partial}{\partial \Azo{i,l}} \int \!\! dv \; {\bf B} \cdot {\bf B} & = & 
-!latex 2 \int \!\! dv \; {\bf B} \cdot \frac{\partial {\bf B}}{\partial \Azo{i,l}} =
-!latex      2 \int \!\! dv \; {\bf B} \cdot \left[ + m_i \bT{l,i}  \ci \, {\bf e}_\s - \bT{l,i}' \si \, {\bf e}_\t \right] / \sqrt g 
-!latex \ee
-!latex \item The second derivatives of $\int \! dv \; {\bf B} \! \cdot \! {\bf B}$ with respect to $\Ate{i,l}$, $\Ato{i,l}$, $\Aze{i,l}$ and $\Azo{i,l}$ are
-!latex \be 
-!latex \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial \Ate{j,p}} \frac{\partial}{\partial \Ate{i,l}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
-!latex \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
-!latex  ( + n_j n_i \bT{p,j}  \bT{l,i}  s_j s_i g_{\s\s} - n_j \bT{p,j}  \bT{l,i}' s_j c_i g_{\s\z}
-!latex    -     n_i \bT{l,i}  \bT{p,j}' s_i c_j g_{\s\z} +     \bT{p,j}' \bT{l,i}' c_j c_i g_{\z\z}) / \sqrt g^2\nonumber \\
-!latex \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial \Ato{j,p}} \frac{\partial}{\partial \Ate{i,l}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
-!latex \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
-!latex  ( - n_j n_i \bT{p,j}  \bT{l,i}  c_j s_i g_{\s\s} + n_j \bT{p,j}  \bT{l,i}' c_j c_i g_{\s\z}
-!latex    -     n_i \bT{l,i}  \bT{p,j}' s_i s_j g_{\s\z} +     \bT{p,j}' \bT{l,i}' s_j c_i g_{\z\z}) / \sqrt g^2\nonumber \\
-!latex \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial \Aze{j,p}} \frac{\partial}{\partial \Ate{i,l}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
-!latex \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
-!latex  ( + m_j n_i \bT{p,j}  \bT{l,i}  s_j s_i g_{\s\s} - m_j \bT{p,j}  \bT{l,i}' s_j c_i g_{\s\z}
-!latex    +     n_i \bT{l,i}  \bT{p,j}' s_i c_j g_{\s\t} -     \bT{p,j}' \bT{l,i}' c_j c_i g_{\t\z}) / \sqrt g^2\nonumber \\
-!latex \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial \Azo{j,p}} \frac{\partial}{\partial \Ate{i,l}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
-!latex \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
-!latex  ( - m_j n_i \bT{p,j}  \bT{l,i}  c_j s_i g_{\s\s} + m_j \bT{p,j}  \bT{l,i}' c_j c_i g_{\s\z}
-!latex    +     n_i \bT{l,i}  \bT{p,j}' s_i s_j g_{\s\t} -     \bT{p,j}' \bT{l,i}' s_j c_i g_{\t\z}) / \sqrt g^2\nonumber
-!latex \ee 
-!latex \be
-!latex \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial \Ate{j,p}} \frac{\partial}{\partial \Ato{i,l}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
-!latex \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
-!latex  ( - n_j n_i \bT{p,j}  \bT{l,i}  s_j c_i g_{\s\s} - n_j \bT{p,j}  \bT{l,i}' s_j s_i g_{\s\z}
-!latex    +     n_i \bT{l,i}  \bT{p,j}' c_i c_j g_{\s\z} +     \bT{p,j}' \bT{l,i}' c_j s_i g_{\z\z}) / \sqrt g^2\nonumber \\
-!latex \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial \Ato{j,p}} \frac{\partial}{\partial \Ato{i,l}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
-!latex \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
-!latex  ( + n_j n_i \bT{p,j}  \bT{l,i}  c_j c_i g_{\s\s} + n_j \bT{p,j}  \bT{l,i}' c_j s_i g_{\s\z}
-!latex    +     n_i \bT{l,i}  \bT{p,j}' c_i s_j g_{\s\z} +     \bT{p,j}' \bT{l,i}' s_j s_i g_{\z\z}) / \sqrt g^2\nonumber \\
-!latex \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial \Aze{j,p}} \frac{\partial}{\partial \Ato{i,l}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
-!latex \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
-!latex  ( - m_j n_i \bT{p,j}  \bT{l,i}  s_j c_i g_{\s\s} - m_j \bT{p,j}  \bT{l,i}' s_j s_i g_{\s\z}
-!latex    -     n_i \bT{l,i}  \bT{p,j}' c_i c_j g_{\s\t} -     \bT{p,j}' \bT{l,i}' c_j s_i g_{\t\z}) / \sqrt g^2\nonumber \\
-!latex \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial \Azo{j,p}} \frac{\partial}{\partial \Ato{i,l}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
-!latex \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
-!latex  ( + m_j n_i \bT{p,j}  \bT{l,i}  c_j c_i g_{\s\s} + m_j \bT{p,j}  \bT{l,i}' c_j s_i g_{\s\z}
-!latex    -     n_i \bT{l,i}  \bT{p,j}' c_i s_j g_{\s\t} -     \bT{p,j}' \bT{l,i}' s_j s_i g_{\t\z}) / \sqrt g^2\nonumber   
-!latex \ee 
-!latex \be
-!latex \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial \Ate{j,p}} \frac{\partial}{\partial \Aze{i,l}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
-!latex \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
-!latex  ( + n_j m_i \bT{p,j}  \bT{l,i}  s_j s_i g_{\s\s} + n_j \bT{p,j}  \bT{l,i}' s_j c_i g_{\s\t}
-!latex    -     m_i \bT{l,i}  \bT{p,j}' s_i c_j g_{\s\z} -     \bT{p,j}' \bT{l,i}' c_j c_i g_{\t\z}) / \sqrt g^2\nonumber \\
-!latex \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial \Ato{j,p}} \frac{\partial}{\partial \Aze{i,l}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
-!latex \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
-!latex  ( - n_j m_i \bT{p,j}  \bT{l,i}  c_j s_i g_{\s\s} - n_j \bT{p,j}  \bT{l,i}' c_j c_i g_{\s\t}
-!latex    -     m_i \bT{l,i}  \bT{p,j}' s_i s_j g_{\s\z} -     \bT{p,j}' \bT{l,i}' s_j c_i g_{\t\z}) / \sqrt g^2\nonumber \\
-!latex \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial \Aze{j,p}} \frac{\partial}{\partial \Aze{i,l}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
-!latex \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
-!latex  ( + m_j m_i \bT{p,j}  \bT{l,i}  s_j s_i g_{\s\s} + m_j \bT{p,j}  \bT{l,i}' s_j c_i g_{\s\t}
-!latex    +     m_i \bT{l,i}  \bT{p,j}' s_i c_j g_{\s\t} +     \bT{p,j}' \bT{l,i}' c_j c_i g_{\t\t}) / \sqrt g^2\nonumber \\
-!latex \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial \Azo{j,p}} \frac{\partial}{\partial \Aze{i,l}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
-!latex \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
-!latex  ( - m_j m_i \bT{p,j}  \bT{l,i}  c_j s_i g_{\s\s} - m_j \bT{p,j}  \bT{l,i}' c_j c_i g_{\s\t}
-!latex    +     m_i \bT{l,i}  \bT{p,j}' s_i s_j g_{\s\t} +     \bT{p,j}' \bT{l,i}' s_j c_i g_{\t\t}) / \sqrt g^2\nonumber
-!latex \ee 
-!latex \be
-!latex \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial \Ate{j,p}} \frac{\partial}{\partial \Azo{i,l}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
-!latex \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
-!latex  ( - n_j m_i \bT{p,j}  \bT{l,i}  s_j c_i g_{\s\s} + n_j \bT{p,j}  \bT{l,i}' s_j s_i g_{\s\t}
-!latex    +     m_i \bT{l,i}  \bT{p,j}' c_i c_j g_{\s\z} -     \bT{p,j}' \bT{l,i}' c_j s_i g_{\t\z}) / \sqrt g^2\nonumber \\
-!latex \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial \Ato{j,p}} \frac{\partial}{\partial \Azo{i,l}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
-!latex \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
-!latex  ( + n_j m_i \bT{p,j}  \bT{l,i}  c_j c_i g_{\s\s} - n_j \bT{p,j}  \bT{l,i}' c_j s_i g_{\s\t}
-!latex    +     m_i \bT{l,i}  \bT{p,j}' c_i s_j g_{\s\z} -     \bT{p,j}' \bT{l,i}' s_j s_i g_{\t\z}) / \sqrt g^2\nonumber \\
-!latex \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial \Aze{j,p}} \frac{\partial}{\partial \Azo{i,l}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
-!latex \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
-
-!latex  ( - m_j m_i \bT{p,j}  \bT{l,i}  s_j c_i g_{\s\s} + m_j \bT{p,j}  \bT{l,i}' s_j s_i g_{\s\t}
-!latex    -     m_i \bT{l,i}  \bT{p,j}' c_i c_j g_{\s\t} +     \bT{p,j}' \bT{l,i}' c_j s_i g_{\t\t}) / \sqrt g^2\nonumber \\
-!latex \!\!\!\!\!\!\!\!\! \frac{\partial}{\partial \Azo{j,p}} \frac{\partial}{\partial \Azo{i,l}} \! \int \!\! dv \; {\bf B} \! \cdot \! {\bf B}
-!latex \!\!&\!\!=\!\!&\!\!2 \int \!\! dv \; 
-
-!latex  ( + m_j m_i \bT{p,j}  \bT{l,i}  c_j c_i g_{\s\s} - m_j \bT{p,j}  \bT{l,i}' c_j s_i g_{\s\t}
-!latex    -     m_i \bT{l,i}  \bT{p,j}' c_i s_j g_{\s\t} +     \bT{p,j}' \bT{l,i}' s_j s_i g_{\t\t}) / \sqrt g^2\nonumber
-!latex \ee
-
-!latex \end{enumerate}
-
-!latex \subsection{derivatives of helicity        integrals}
-
-!latex \begin{enumerate}
-
-!latex \item The first  derivatives of $\int \! dv \; {\bf A} \cdot{\bf B}$ with respect to $\Ate{i,l}$, $\Ato{i,l}$, $\Aze{i,l}$ and $\Azo{i,l}$ are
-!latex \be 
-!latex \frac{\partial}{\partial \Ate{i,l}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &
-!latex \int \!\! dv \; \left( \frac{\partial {\bf A}}{\partial \Ate{i,l}} \cdot {\bf B} + {\bf A} \cdot \frac{\partial {\bf B}}{\partial \Ate{i,l}} \right) =
-!latex \int \!\! dv \; ( \bT{l,i} \ci \nabla \t \cdot {\bf B} + {\bf A} \cdot \bT{l,i}' \ci \, {\bf e}_\z / \sqrt g ) \\
-!latex \frac{\partial}{\partial \Ato{i,l}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &
-!latex \int \!\! dv \; \left( \frac{\partial {\bf A}}{\partial \Ato{i,l}} \cdot {\bf B} + {\bf A} \cdot \frac{\partial {\bf B}}{\partial \Ato{i,l}} \right) =
-!latex \int \!\! dv \; ( \bT{l,i} \si \nabla \t \cdot {\bf B} + {\bf A} \cdot \bT{l,i}' \si \, {\bf e}_\z / \sqrt g ) \\
-!latex \frac{\partial}{\partial \Aze{i,l}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &
-!latex \int \!\! dv \; \left( \frac{\partial {\bf A}}{\partial \Aze{i,l}} \cdot {\bf B} + {\bf A} \cdot \frac{\partial {\bf B}}{\partial \Aze{i,l}} \right) =
-!latex \int \!\! dv \; ( \bT{l,i} \ci \nabla \z \cdot {\bf B} - {\bf A} \cdot \bT{l,i}' \ci \, {\bf e}_\t / \sqrt g ) \\
-!latex \frac{\partial}{\partial \Azo{i,l}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &
-!latex \int \!\! dv \; \left( \frac{\partial {\bf A}}{\partial \Azo{i,l}} \cdot {\bf B} + {\bf A} \cdot \frac{\partial {\bf B}}{\partial \Azo{i,l}} \right) =
-!latex \int \!\! dv \; ( \bT{l,i} \si \nabla \z \cdot {\bf B} - {\bf A} \cdot \bT{l,i}' \si \, {\bf e}_\t / \sqrt g )
-!latex \ee
-!latex \item Note that in the above expressions, ${\bf A}\cdot{\bf e}_s=0$ has been used.
-!latex \item The second derivatives of $\int \! dv \; {\bf A} \cdot{\bf B}$ with respect to $\Ate{i,l}$, $\Ato{i,l}$, $\Aze{i,l}$ and $\Azo{i,l}$ are
-!latex \be 
-!latex \frac{\partial}{\partial \Ate{j,p}} \frac{\partial}{\partial \Ate{i,l}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \; \left[
-!latex \cancel{
-!latex + \bT{l,i} \ci \nabla \t \cdot \bT{p,j}' \cj \, {\bf e}_\z}
-!latex \cancel{
-!latex + \bT{p,j} \cj \nabla \t \cdot \bT{l,i}' \ci \, {\bf e}_\z}
-!latex \right] / \sqrt g \\
-!latex \frac{\partial}{\partial \Ato{j,p}} \frac{\partial}{\partial \Ate{i,l}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
-!latex \cancel{
-!latex + \bT{l,i} \ci \nabla \t \cdot \bT{p,j}' \sj \, {\bf e}_\z}
-!latex \cancel{
-!latex + \bT{p,j} \sj \nabla \t \cdot \bT{l,i}' \ci \, {\bf e}_\z}
-!latex \right] / \sqrt g \\
-!latex \frac{\partial}{\partial \Aze{j,p}} \frac{\partial}{\partial \Ate{i,l}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
-!latex - \bT{l,i} \ci \nabla \t \cdot \bT{p,j}' \cj \, {\bf e}_\t + \bT{p,j} \cj \nabla \z \cdot \bT{l,i}' \ci \, {\bf e}_\z \right] / \sqrt g \\
-!latex \frac{\partial}{\partial \Azo{j,p}} \frac{\partial}{\partial \Ate{i,l}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
-!latex - \bT{l,i} \ci \nabla \t \cdot \bT{p,j}' \sj \, {\bf e}_\t + \bT{p,j} \sj \nabla \z \cdot \bT{l,i}' \ci \, {\bf e}_\z \right] / \sqrt g \\
-!latex \nonumber \\
-!latex \frac{\partial}{\partial \Ate{j,p}} \frac{\partial}{\partial \Ato{i,l}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
-!latex \cancel{
-!latex + \bT{l,i} \si \nabla \t \cdot \bT{p,j}' \cj \, {\bf e}_\z}
-!latex \cancel{
-!latex + \bT{p,j} \cj \nabla \t \cdot \bT{l,i}' \si \, {\bf e}_\z}
-!latex \right] / \sqrt g \\
-!latex \frac{\partial}{\partial \Ato{j,p}} \frac{\partial}{\partial \Ato{i,l}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
-!latex \cancel{
-!latex + \bT{l,i} \si \nabla \t \cdot \bT{p,j}' \sj \, {\bf e}_\z}
-!latex \cancel{
-!latex + \bT{p,j} \sj \nabla \t \cdot \bT{l,i}' \si \, {\bf e}_\z}
-!latex \right] / \sqrt g \\
-!latex \frac{\partial}{\partial \Aze{j,p}} \frac{\partial}{\partial \Ato{i,l}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
-!latex - \bT{l,i} \si \nabla \t \cdot \bT{p,j}' \cj \, {\bf e}_\t + \bT{p,j} \cj \nabla \z \cdot \bT{l,i}' \si \, {\bf e}_\z \right] / \sqrt g \\
-!latex \frac{\partial}{\partial \Azo{j,p}} \frac{\partial}{\partial \Ato{i,l}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
-!latex - \bT{l,i} \si \nabla \t \cdot \bT{p,j}' \sj \, {\bf e}_\t + \bT{p,j} \sj \nabla \z \cdot \bT{l,i}' \si \, {\bf e}_\z \right] / \sqrt g \\
-!latex \nonumber \\
-!latex \frac{\partial}{\partial \Ate{j,p}} \frac{\partial}{\partial \Aze{i,l}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
-!latex + \bT{l,i} \ci \nabla \z \cdot \bT{p,j}' \cj \, {\bf e}_\z - \bT{p,j} \cj \nabla \t \cdot \bT{l,i}' \ci \, {\bf e}_\t \right] / \sqrt g \\
-!latex \frac{\partial}{\partial \Ato{j,p}} \frac{\partial}{\partial \Aze{i,l}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
-!latex + \bT{l,i} \ci \nabla \z \cdot \bT{p,j}' \sj \, {\bf e}_\z - \bT{p,j} \sj \nabla \t \cdot \bT{l,i}' \ci \, {\bf e}_\t \right] / \sqrt g \\
-!latex \frac{\partial}{\partial \Aze{j,p}} \frac{\partial}{\partial \Aze{i,l}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
-!latex \cancel{
-!latex - \bT{l,i} \ci \nabla \z \cdot \bT{p,j}' \cj \, {\bf e}_\t}
-!latex \cancel{
-!latex - \bT{p,j} \cj \nabla \z \cdot \bT{l,i}' \ci \, {\bf e}_\t}
-!latex \right] / \sqrt g \\
-!latex \frac{\partial}{\partial \Azo{j,p}} \frac{\partial}{\partial \Aze{i,l}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
-!latex \cancel{
-!latex - \bT{l,i} \ci \nabla \z \cdot \bT{p,j}' \sj \, {\bf e}_\t}
-!latex \cancel{
-!latex - \bT{p,j} \sj \nabla \z \cdot \bT{l,i}' \ci \, {\bf e}_\t}
-!latex \right] / \sqrt g \\
-!latex \nonumber \\
-!latex \frac{\partial}{\partial \Ate{j,p}} \frac{\partial}{\partial \Azo{i,l}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
-!latex + \bT{l,i} \si \nabla \z \cdot \bT{p,j}' \cj \, {\bf e}_\z - \bT{p,j} \cj \nabla \t \cdot \bT{l,i}' \si \, {\bf e}_\t \right] / \sqrt g \\
-!latex \frac{\partial}{\partial \Ato{j,p}} \frac{\partial}{\partial \Azo{i,l}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
-!latex + \bT{l,i} \si \nabla \z \cdot \bT{p,j}' \sj \, {\bf e}_\z - \bT{p,j} \sj \nabla \t \cdot \bT{l,i}' \si \, {\bf e}_\t \right] / \sqrt g \\
-!latex \frac{\partial}{\partial \Aze{j,p}} \frac{\partial}{\partial \Azo{i,l}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
-!latex \cancel{
-!latex - \bT{l,i} \si \nabla \z \cdot \bT{p,j}' \cj \, {\bf e}_\t}
-!latex \cancel{
-!latex - \bT{p,j} \cj \nabla \z \cdot \bT{l,i}' \si \, {\bf e}_\t}
-!latex \right] / \sqrt g \\
-!latex \frac{\partial}{\partial \Azo{j,p}} \frac{\partial}{\partial \Azo{i,l}} \int \!\! dv \; {\bf A} \cdot {\bf B} & = &   \int \!\! dv \;  \left[
-!latex \cancel{
-!latex - \bT{l,i} \si \nabla \z \cdot \bT{p,j}' \sj \, {\bf e}_\t}
-!latex \cancel{
-!latex - \bT{p,j} \sj \nabla \z \cdot \bT{l,i}' \si \, {\bf e}_\t}
-!latex \right] / \sqrt g
-!latex \ee
-!latex \item In these expressions the terms $        \nabla \t \cdot {\bf e}_\t =        \nabla \z \cdot {\bf e}_\z =1$, 
-!latex                                  and $\cancel{\nabla \t \cdot {\bf e}_\z}=\cancel{\nabla \z \cdot {\bf e}_\t}=0$ 
-!latex       have been included to show the structure of the derivation.
-
-!latex \end{enumerate}
-
-!latex \subsection{derivatives of kinetic energy integrals}
-
-!latex \begin{enumerate}
-
-!latex \item The first derivatives of $\int \! dv \; v^2$ with respect to $\vse{i,l}$ etc. are
-!latex \be \frac{\partial}{\partial \vse{i,l}} \int \!\! dv \; {\bf v} \cdot {\bf v} & = & 2 \int \!\! dv \; {\bf v} \cdot \bT{l,i} \ci \nabla \s \\
-!latex     \frac{\partial}{\partial \vso{i,l}} \int \!\! dv \; {\bf v} \cdot {\bf v} & = & 2 \int \!\! dv \; {\bf v} \cdot \bT{l,i} \si \nabla \s \\
-!latex     \frac{\partial}{\partial \vte{i,l}} \int \!\! dv \; {\bf v} \cdot {\bf v} & = & 2 \int \!\! dv \; {\bf v} \cdot \bT{l,i} \ci \nabla \t \\
-!latex     \frac{\partial}{\partial \vto{i,l}} \int \!\! dv \; {\bf v} \cdot {\bf v} & = & 2 \int \!\! dv \; {\bf v} \cdot \bT{l,i} \si \nabla \t \\
-!latex     \frac{\partial}{\partial \vze{i,l}} \int \!\! dv \; {\bf v} \cdot {\bf v} & = & 2 \int \!\! dv \; {\bf v} \cdot \bT{l,i} \ci \nabla \z \\
-!latex     \frac{\partial}{\partial \vzo{i,l}} \int \!\! dv \; {\bf v} \cdot {\bf v} & = & 2 \int \!\! dv \; {\bf v} \cdot \bT{l,i} \si \nabla \z \\
-!latex \ee
-
-!latex \end{enumerate}
-
-!latex \subsection{calculation of volume-integrated basis-function-weighted metric information}
-
-!latex \begin{enumerate}
-
-!latex \item The required geometric information is calculated in \link{ma00aa}.
-
-!latex \end{enumerate}
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+!> \brief Constructs energy and helicity matrices that represent the Beltrami linear system.
+!> \ingroup grp_build_matrices
+!> @param[in] lvol
+!> @param[in] mn
+!> @param[in] lrad
 subroutine matrix( lvol, mn, lrad )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

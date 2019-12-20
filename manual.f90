@@ -116,7 +116,6 @@
 !> For toroidal geometry there is a complication; namely that the hessian matrix includes the derivatives of the spectral constraints.
 !> For Cartesian geometry, it is ready to go. 
 !> SRH will begin writing a paper on the stability of slab MRxMHD equilibria.
-!> </ul>
 !>
 !> \section sec_PhysicsApplications Physics Applications
 !>
