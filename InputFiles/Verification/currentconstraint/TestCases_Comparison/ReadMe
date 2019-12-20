@@ -14,18 +14,18 @@ In this directory, the output of SPEC is compared between a local constraint (ei
 	   $ make
 	   $ cp xspec_master Inputfiles/Verification/currentconstraint/TestCases_Comparison/.
 
-	3. Run TestCases with run_local script (~20 minutes). This will run all L0 and L1 input files with xspec_master.
+	3. Run TestCases with run_local script (~20 minutes). This will run all L0 and L1 input files with xspec.
 	   $ ./run_local
 
 	4. Run L3 files with run_global script (~20 minutes). This will run all L3 files with xspec
 	   $ ./run_global
 
-	5. Compare both outputs using Python tool
-	   $ ~/SPEC/Utilities/pythontools/compare_spec.py input_1 input_2
+	5. Run TestCases with run_master script (~20 minutes). This will set the reference to which files will be compared to.
+	   $ ./run_master
+
+	5. Compare both outputs using Matlab script
+	   $ matlab -nodesktop
+	   $ compare_tests
 
 
-For each testcase, both output (from point 3. and 4.) should be the same, since the same physical system is described (once constrained by (mu, psip) or (iota, oita), and once by the toroidal current). Compare_local_global.m plots one figure per testcase, where the rotational transform profile is compared. An additional figure plots the force difference df between both outputs; if all values are small, outputs can be considered the same (Note that due to resolution, df will not necessarily be 1E-16 but some order of magnitude more).
-
-Results obtained with SPEC version d88a49ef1b94f17ac592cf1b3adc67d3e19c536b on SPC INTEL computer are presented in the .pdf file (with additional information related to how the current constraint has been implemented).
-
-
+For each testcase, outputs (from point 3., 4. and 5.) should be the same, since the same physical system is described (once constrained by (mu, psip) or (iota, oita), and once by the toroidal current). compare_tests.m will evaluate the force difference between two cases. If all values are small, outputs can be considered the same (Note that due to resolution, df will not necessarily be 1E-16 but some order of magnitude more).
