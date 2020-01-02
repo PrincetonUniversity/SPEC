@@ -2,11 +2,9 @@
 
 !> \file ma02aa.f90
 !> \brief Constructs Beltrami field in given volume consistent with flux, helicity, rotational-transform and/or parallel-current constraints.
-!> \ingroup grp_solver_driver
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !> \brief Constructs Beltrami field in given volume consistent with flux, helicity, rotational-transform and/or parallel-current constraints.
+!> \ingroup grp_solver_driver
 !> 
 !> @param[in] lvol index of nested volume for which to run this
 !> @param[in] NN   number of degrees of freedom in the (packed format) vector potential;

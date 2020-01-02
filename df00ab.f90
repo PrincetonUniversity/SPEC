@@ -1,16 +1,15 @@
 !> \file df00ab.f90
-!! \brief Evaluates volume integrals, and their derivatives w.r.t. interface geometry, using "packed" format.
+!> \brief Evaluates volume integrals, and their derivatives w.r.t. interface geometry, using "packed" format.
 
 !> \brief Evaluates volume integrals, and their derivatives w.r.t. interface geometry, using "packed" format.
-!!
-!! Evaluates volume integrals, and their derivatives w.r.t. interface geometry, using "packed" format.
-!! 
-!! @param[in] pNN
-!! @param[in] xi
-!! @param[out] Fxi
-!! @param[out] DFxi
-!! @param[in] Ldfjac
-!! @param[in] iflag
+!> \ingroup grp_integrals
+!> 
+!> @param[in] pNN
+!> @param[in] xi
+!> @param[out] Fxi
+!> @param[out] DFxi
+!> @param[in] Ldfjac
+!> @param[in] iflag
 subroutine df00ab( pNN , xi , Fxi , DFxi , Ldfjac , iflag )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

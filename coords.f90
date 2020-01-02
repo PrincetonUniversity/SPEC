@@ -1,146 +1,144 @@
 !> \defgroup grp_geometry Geometry
 
 !> \file coords.f90
-!! \brief Calculates coordinates, \f${\bf x}(s,\theta,\zeta) \equiv R \, {\bf e}_R + Z \, {\bf e}_Z\f$, and metrics, using FFTs.
-!! \ingroup grp_geometry
-!!
-!! **Coordinates**
-!! <ul>
-!! <li>  We work in coordinates, \f$(s,\theta,\zeta)\f$, which are be defined {\em inversely} via a transformation {\em to} Cartesian coordinates, \f$(x,y,z)\f$. </li>
-!! <li>  The toroidal angle, \f$\zeta\f$, is identical to the cylindrical angle, \f$\zeta\equiv\phi\f$. </li>
-!! <li>  The radial coordinate, \f$s\f$, is {\em not} a global variable: it only needs to be defined in each volume, and in each volume \f$s \in [-1,1]\f$. </li>
-!! <li>  The choice of poloidal angle, \f$\theta\f$, does not affect the following. </li>
-!! </ul>
-!!
-!! **Geometry**
-!! <ul>
-!! <li>  The geometry of the "ideal"-interfaces, \f${\bf x}_v(\theta,\zeta)\f$, is given by \f$R(\theta,\zeta)\f$ and \f$Z(\theta,\zeta)\f$ as follows:
-!!       <ul>
-!!       <li>  \c Igeometry=1 : Cartesian
-!!       \f{eqnarray}{ {\bf x} & \equiv & r_{pol}\theta \; {\bf \hat i} + r_{tor}\zeta \; {\bf \hat j}+ R \; {\bf \hat k}
-!!       \f}
-!!       where \f$r_{pol}\f$ and \f$r_{tor}\f$ are inputs and \f$r_{pol}=r_{tor}=1\f$ by default. </li>
-!!       <li>  \c Igeometry=2 : Cylindrical
-!!       \f{eqnarray}{ {\bf x} & = & R \; \cos\theta \; {\bf \hat i} + R \; \sin\theta \; {\bf \hat j} + \zeta \; {\bf \hat k}
-!!       \f} </li>
-!!       <li>  \c Igeometry=3 : Toroidal
-!!       \f{eqnarray}{ {\bf x} & \equiv & R \; {\bf \hat r} + Z \; {\bf \hat k}
-!!       \f}
-!!       where \f${\bf \hat    r} \equiv   \cos \phi \; {\bf \hat i} + \sin \phi \; {\bf \hat j}\f$ and
-!!             \f${\bf \hat \phi} \equiv - \sin \phi \; {\bf \hat i} + \cos \phi \; {\bf \hat j}\f$. </li>
-!!       </ul> </li>
-!!
-!! <li>  The geometry of the ideal interfaces is given as Fourier summation: e.g., for stellarator-symmetry
-!!       \f{eqnarray}{ R_v(\theta,\zeta) & \equiv & \sum_j R_{j,v} \cos\alpha_j, \\
-!!           Z_v(\theta,\zeta) & \equiv & \sum_j Z_{j,v} \sin\alpha_j,
-!!       \f}
-!!       where \f$\alpha_j \equiv m_j \theta - n_j \zeta\f$. </li>
-!!
-!! </ul> 
-!!       **interpolation between interfaces**
-!! <ul>
-!! <li>  The "coordinate" functions, \f$R(s,\theta,\zeta)\f$ and \f$Z(s,\theta,\zeta)\f$, are constructed by radially interpolating the Fourier representations of the 
-!!       ideal-interfaces. </li>
-!! <li>  The \f$v\f$-th volume is bounded by \f${\bf x}_{v-1}\f$ and \f${\bf x}_{v}\f$. </li>
-!! <li>  In each {\em annular} volume, the coordinates are constructed by linear interpolation:
-!!       \f{eqnarray}{ \begin{array}{cccccccccccccccccccccccccccc}
-!!           R(s,\theta,\zeta) & \equiv & \displaystyle \sum_j & \displaystyle \left[ \; \frac{(1-s)}{2} \; R_{j,v-1} + \frac{(1+s)}{2} \; R_{j,v}\; \right] \; \cos\alpha_j,\\
-!!           Z(s,\theta,\zeta) & \equiv & \displaystyle \sum_j & \displaystyle \left[ \; \frac{(1-s)}{2} \; Z_{j,v-1} + \frac{(1+s)}{2} \; Z_{j,v}\; \right] \; \sin\alpha_j,
-!!           \end{array}
-!!       \f} </li>
-!! </ul> 
-!!       **coordinate singularity: regularized extrapolation**
-!! <ul>
-!!
-!! <li>  For cylindrical or toroidal geometry, in the innermost, "simple-torus" volume, the coordinates are constructed by an interpolation that
-!!       "encourages" the interpolated coordinate surfaces to not intersect. </li>
-!! <li>  Introduce \f$\bar s \equiv (s+1)/2\f$, so that in each volume \f$\bar s \in [0,1]\f$, then
-!!       \f{eqnarray}{ R_{j}(s) & = & R_{j,0} + (R_{j,1} - R_{j,0} ) f_j, \\
-!!           Z_{j}(s) & = & Z_{j,0} + (Z_{j,1} - Z_{j,0} ) f_j,
-!!       \f}
-!!       where, in toroidal geometry, 
-!!       \f{eqnarray}{
-!!       f_j \equiv \left\{ 
-!!       \begin{array}{llcccccccccccccc} \bar s        & , & \mbox{ for } m_j=0, \\
-!!                                       \bar s^{m_j/2}& , & \mbox{ otherwise.} 
-!!       \end{array}\right\}. 
-!!       \f} </li>
-!! <li>  Note: The location of the coordinate axis, i.e. the \f$R_{j,0}\f$ and \f$Z_{j,0}\f$,
-!!       is set in the coordinate "packing" and "unpacking" routine, packxi(). </li>
-!! </ul> 
-!!       **Jacobian**
-!! <ul>
-!! <li>  The coordinate Jacobian (and some other metric information) is given by
-!!       <ul>
-!!       <li> \c Igeometry=1 : Cartesian
-!!       \f{eqnarray}{     {\bf e}_\theta \times {\bf e}_\zeta & = & -r_{tor}R_\theta \; \hat {\bf i} -  r_{pol}R_\zeta \; \hat {\bf j} + r_{pol}r_{tor}\hat {\bf k} \\
-!!           \mathbf{\xi} \cdot {\bf e}_\theta \times {\bf e}_\zeta & = &  \delta R \\
-!!           \sqrt g                                           & = &         R_s \ r_{pol} \ r_{tor}
-!!       \f} </li>
-!!       <li>  \c Igeometry=2 : Cylindrical
-!!       \f{eqnarray}{    {\bf e}_\theta \times {\bf e}_\zeta & = & (R_\theta \sin \theta + R \cos\theta ) \; {\bf \hat i} + (R    \sin \theta - R_\theta \cos\theta ) \; {\bf \hat j} - R R_\zeta \; {\bf \hat k} \\
-!!           \mathbf{\xi}\cdot {\bf e}_\theta \times {\bf e}_\zeta & = & \delta R \; R \\
-!!           \sqrt g                                          & = & R_s \; R
-!!       \f} </li>
-!!       <li>  \c Igeometry=3 : Toroidal
-!!       \f{eqnarray}{    {\bf e}_\theta \times {\bf e}_\zeta & = & - R \, Z_\theta \, \hat r + (Z_\theta \,R_\zeta - R_\theta \,Z_\zeta) \hat \phi + R \,R_\theta \,\hat z\\
-!!           \mathbf{\xi}\cdot {\bf e}_\theta \times {\bf e}_\zeta & = & R ( \delta Z \; R_\theta - \delta R \; Z_\theta ) \\
-!!            \sqrt g                                         & = & R ( Z_s      \; R_\theta - R_s      \; Z_\theta )
-!!       \f} </li>
-!!       </ul> 
-!!       </li>
-!!
-!! </ul> 
-!!       **cartesian metrics**
-!! <ul>
-!! <li>  The cartesian metrics are
-!!       \f{eqnarray}{ \begin{array}{cccccccccccccccccccccccccccccccccccccccccccccccc}
-!!           g_{s     s     } =  R_s      R_s                  ,&
-!!           g_{s     \theta} =  R_s      R_\theta             ,&
-!!           g_{s     \zeta } =  R_s      R_\zeta              ,&
-!!           g_{\theta\theta} =  R_\theta R_\theta + r_{pol}^2 ,&
-!!           g_{\theta\zeta } =  R_\theta R_\zeta              ,&
-!!           g_{\zeta \zeta } =  R_\zeta  R_\zeta  + r_{tor}^2
-!!           \end{array}
-!!       \f} </li>
-!!
-!! </ul> 
-!!       **cylindrical metrics**
-!! <ul>
-!! <li>  The cylindrical metrics are
-!!       \f{eqnarray}{ \begin{array}{cccccccccccccccccccccccccccccccccccccccccccccccc}
-!!           g_{s     s     }  =  R_s      R_s            ,&
-!!           g_{s     \theta}  =  R_s      R_\theta       ,&
-!!           g_{s     \zeta }  =  R_s      R_\zeta        ,&
-!!           g_{\theta\theta}  =  R_\theta R_\theta + R^2 ,&
-!!           g_{\theta\zeta }  =  R_\theta R_\zeta        ,&
-!!           g_{\zeta \zeta }  =  R_\zeta  R_\zeta  + 1
-!!           \end{array}
-!!       \f} </li>
-!!
-!! </ul> 
-!!       **logical control**
-!! <ul>
-!! <li>  The logical control is provided by \c Lcurvature as follows:
-!!       <ul>
-!!       <li> \c Lcurvature=0 : only the coordinate transformation is computed, i.e. only \f$R\f$ and \f$Z\f$ are calculated,          e.g. global() </li>
-!!       <li> \c Lcurvature=1 : the Jacobian, \f$\sqrt g \f$, and "lower" metrics, \f$g_{\mu,\nu}\f$, are calculated ,                 e.g. bnorml(), lforce(), curent(), metrix(), sc00aa() </li>
-!!       <li> \c Lcurvature=2 : the "curvature" terms are calculated, by which I mean the second derivatives of the position vector;
-!!                              this information is required for computing the current, \f${\bf j}=\nabla\times\nabla\times{\bf A}\f$, e.g. jo00aa() </li>
-!!       <li> \c Lcurvature=3 : the derivative of the \f$g_{\mu,\nu}/\sqrt g\f$ w.r.t. the interface boundary geometry is calculated,  e.g. metrix(), curent() </li>
-!!       <li> \c Lcurvature=4 : the derivative of the \f$g_{\mu,\nu}\f$ w.r.t. the interface boundary geometry is calculated,          e.g. dforce() </li>
-!!       </ul> </li>
-!! </ul>
+!> \brief Calculates coordinates, \f${\bf x}(s,\theta,\zeta) \equiv R \, {\bf e}_R + Z \, {\bf e}_Z\f$, and metrics, using FFTs.
 
 !> \brief Calculates coordinates, \f${\bf x}(s,\theta,\zeta) \equiv R \, {\bf e}_R + Z \, {\bf e}_Z\f$, and metrics, using FFTs.
-!!
-!! Calculates coordinates, \f${\bf x}(s,\theta,\zeta) \equiv R \, {\bf e}_R + Z \, {\bf e}_Z\f$, and metrics, using FFTs.
-!!
-!! @param[in] lvol specified in which volume to compute coordinates
-!! @param[in] lss radial coordinate \f$s\f$
-!! @param[in] Lcurvature logical control flag
-!! @param[in] Ntz number of points in \f$\theta\f$ and \f$\zeta\f$
-!! @param[in] mn number of Fourier harmonics
+!> \ingroup grp_geometry
+!>
+!> **Coordinates**
+!> <ul>
+!> <li>  We work in coordinates, \f$(s,\theta,\zeta)\f$, which are be defined {\em inversely} via a transformation {\em to} Cartesian coordinates, \f$(x,y,z)\f$. </li>
+!> <li>  The toroidal angle, \f$\zeta\f$, is identical to the cylindrical angle, \f$\zeta\equiv\phi\f$. </li>
+!> <li>  The radial coordinate, \f$s\f$, is {\em not} a global variable: it only needs to be defined in each volume, and in each volume \f$s \in [-1,1]\f$. </li>
+!> <li>  The choice of poloidal angle, \f$\theta\f$, does not affect the following. </li>
+!> </ul>
+!>
+!> **Geometry**
+!> <ul>
+!> <li>  The geometry of the "ideal"-interfaces, \f${\bf x}_v(\theta,\zeta)\f$, is given by \f$R(\theta,\zeta)\f$ and \f$Z(\theta,\zeta)\f$ as follows:
+!>       <ul>
+!>       <li>  \c Igeometry=1 : Cartesian
+!>       \f{eqnarray}{ {\bf x} & \equiv & r_{pol}\theta \; {\bf \hat i} + r_{tor}\zeta \; {\bf \hat j}+ R \; {\bf \hat k}
+!>       \f}
+!>       where \f$r_{pol}\f$ and \f$r_{tor}\f$ are inputs and \f$r_{pol}=r_{tor}=1\f$ by default. </li>
+!>       <li>  \c Igeometry=2 : Cylindrical
+!>       \f{eqnarray}{ {\bf x} & = & R \; \cos\theta \; {\bf \hat i} + R \; \sin\theta \; {\bf \hat j} + \zeta \; {\bf \hat k}
+!>       \f} </li>
+!>       <li>  \c Igeometry=3 : Toroidal
+!>       \f{eqnarray}{ {\bf x} & \equiv & R \; {\bf \hat r} + Z \; {\bf \hat k}
+!>       \f}
+!>       where \f${\bf \hat    r} \equiv   \cos \phi \; {\bf \hat i} + \sin \phi \; {\bf \hat j}\f$ and
+!>             \f${\bf \hat \phi} \equiv - \sin \phi \; {\bf \hat i} + \cos \phi \; {\bf \hat j}\f$. </li>
+!>       </ul> </li>
+!>
+!> <li>  The geometry of the ideal interfaces is given as Fourier summation: e.g., for stellarator-symmetry
+!>       \f{eqnarray}{ R_v(\theta,\zeta) & \equiv & \sum_j R_{j,v} \cos\alpha_j, \\
+!>           Z_v(\theta,\zeta) & \equiv & \sum_j Z_{j,v} \sin\alpha_j,
+!>       \f}
+!>       where \f$\alpha_j \equiv m_j \theta - n_j \zeta\f$. </li>
+!>
+!> </ul> 
+!>       **interpolation between interfaces**
+!> <ul>
+!> <li>  The "coordinate" functions, \f$R(s,\theta,\zeta)\f$ and \f$Z(s,\theta,\zeta)\f$, are constructed by radially interpolating the Fourier representations of the 
+!>       ideal-interfaces. </li>
+!> <li>  The \f$v\f$-th volume is bounded by \f${\bf x}_{v-1}\f$ and \f${\bf x}_{v}\f$. </li>
+!> <li>  In each {\em annular} volume, the coordinates are constructed by linear interpolation:
+!>       \f{eqnarray}{ \begin{array}{cccccccccccccccccccccccccccc}
+!>           R(s,\theta,\zeta) & \equiv & \displaystyle \sum_j & \displaystyle \left[ \; \frac{(1-s)}{2} \; R_{j,v-1} + \frac{(1+s)}{2} \; R_{j,v}\; \right] \; \cos\alpha_j,\\
+!>           Z(s,\theta,\zeta) & \equiv & \displaystyle \sum_j & \displaystyle \left[ \; \frac{(1-s)}{2} \; Z_{j,v-1} + \frac{(1+s)}{2} \; Z_{j,v}\; \right] \; \sin\alpha_j,
+!>           \end{array}
+!>       \f} </li>
+!> </ul> 
+!>       **coordinate singularity: regularized extrapolation**
+!> <ul>
+!>
+!> <li>  For cylindrical or toroidal geometry, in the innermost, "simple-torus" volume, the coordinates are constructed by an interpolation that
+!>       "encourages" the interpolated coordinate surfaces to not intersect. </li>
+!> <li>  Introduce \f$\bar s \equiv (s+1)/2\f$, so that in each volume \f$\bar s \in [0,1]\f$, then
+!>       \f{eqnarray}{ R_{j}(s) & = & R_{j,0} + (R_{j,1} - R_{j,0} ) f_j, \\
+!>           Z_{j}(s) & = & Z_{j,0} + (Z_{j,1} - Z_{j,0} ) f_j,
+!>       \f}
+!>       where, in toroidal geometry, 
+!>       \f{eqnarray}{
+!>       f_j \equiv \left\{ 
+!>       \begin{array}{llcccccccccccccc} \bar s        & , & \mbox{ for } m_j=0, \\
+!>                                       \bar s^{m_j/2}& , & \mbox{ otherwise.} 
+!>       \end{array}\right\}. 
+!>       \f} </li>
+!> <li>  Note: The location of the coordinate axis, i.e. the \f$R_{j,0}\f$ and \f$Z_{j,0}\f$,
+!>       is set in the coordinate "packing" and "unpacking" routine, packxi(). </li>
+!> </ul> 
+!>       **Jacobian**
+!> <ul>
+!> <li>  The coordinate Jacobian (and some other metric information) is given by
+!>       <ul>
+!>       <li> \c Igeometry=1 : Cartesian
+!>       \f{eqnarray}{     {\bf e}_\theta \times {\bf e}_\zeta & = & -r_{tor}R_\theta \; \hat {\bf i} -  r_{pol}R_\zeta \; \hat {\bf j} + r_{pol}r_{tor}\hat {\bf k} \\
+!>           \mathbf{\xi} \cdot {\bf e}_\theta \times {\bf e}_\zeta & = &  \delta R \\
+!>           \sqrt g                                           & = &         R_s \ r_{pol} \ r_{tor}
+!>       \f} </li>
+!>       <li>  \c Igeometry=2 : Cylindrical
+!>       \f{eqnarray}{    {\bf e}_\theta \times {\bf e}_\zeta & = & (R_\theta \sin \theta + R \cos\theta ) \; {\bf \hat i} + (R    \sin \theta - R_\theta \cos\theta ) \; {\bf \hat j} - R R_\zeta \; {\bf \hat k} \\
+!>           \mathbf{\xi}\cdot {\bf e}_\theta \times {\bf e}_\zeta & = & \delta R \; R \\
+!>           \sqrt g                                          & = & R_s \; R
+!>       \f} </li>
+!>       <li>  \c Igeometry=3 : Toroidal
+!>       \f{eqnarray}{    {\bf e}_\theta \times {\bf e}_\zeta & = & - R \, Z_\theta \, \hat r + (Z_\theta \,R_\zeta - R_\theta \,Z_\zeta) \hat \phi + R \,R_\theta \,\hat z\\
+!>           \mathbf{\xi}\cdot {\bf e}_\theta \times {\bf e}_\zeta & = & R ( \delta Z \; R_\theta - \delta R \; Z_\theta ) \\
+!>            \sqrt g                                         & = & R ( Z_s      \; R_\theta - R_s      \; Z_\theta )
+!>       \f} </li>
+!>       </ul> 
+!>       </li>
+!>
+!> </ul> 
+!>       **cartesian metrics**
+!> <ul>
+!> <li>  The cartesian metrics are
+!>       \f{eqnarray}{ \begin{array}{cccccccccccccccccccccccccccccccccccccccccccccccc}
+!>           g_{s     s     } =  R_s      R_s                  ,&
+!>           g_{s     \theta} =  R_s      R_\theta             ,&
+!>           g_{s     \zeta } =  R_s      R_\zeta              ,&
+!>           g_{\theta\theta} =  R_\theta R_\theta + r_{pol}^2 ,&
+!>           g_{\theta\zeta } =  R_\theta R_\zeta              ,&
+!>           g_{\zeta \zeta } =  R_\zeta  R_\zeta  + r_{tor}^2
+!>           \end{array}
+!>       \f} </li>
+!>
+!> </ul> 
+!>       **cylindrical metrics**
+!> <ul>
+!> <li>  The cylindrical metrics are
+!>       \f{eqnarray}{ \begin{array}{cccccccccccccccccccccccccccccccccccccccccccccccc}
+!>           g_{s     s     }  =  R_s      R_s            ,&
+!>           g_{s     \theta}  =  R_s      R_\theta       ,&
+!>           g_{s     \zeta }  =  R_s      R_\zeta        ,&
+!>           g_{\theta\theta}  =  R_\theta R_\theta + R^2 ,&
+!>           g_{\theta\zeta }  =  R_\theta R_\zeta        ,&
+!>           g_{\zeta \zeta }  =  R_\zeta  R_\zeta  + 1
+!>           \end{array}
+!>       \f} </li>
+!>
+!> </ul> 
+!>       **logical control**
+!> <ul>
+!> <li>  The logical control is provided by \c Lcurvature as follows:
+!>       <ul>
+!>       <li> \c Lcurvature=0 : only the coordinate transformation is computed, i.e. only \f$R\f$ and \f$Z\f$ are calculated,          e.g. global() </li>
+!>       <li> \c Lcurvature=1 : the Jacobian, \f$\sqrt g \f$, and "lower" metrics, \f$g_{\mu,\nu}\f$, are calculated ,                 e.g. bnorml(), lforce(), curent(), metrix(), sc00aa() </li>
+!>       <li> \c Lcurvature=2 : the "curvature" terms are calculated, by which I mean the second derivatives of the position vector;
+!>                              this information is required for computing the current, \f${\bf j}=\nabla\times\nabla\times{\bf A}\f$, e.g. jo00aa() </li>
+!>       <li> \c Lcurvature=3 : the derivative of the \f$g_{\mu,\nu}/\sqrt g\f$ w.r.t. the interface boundary geometry is calculated,  e.g. metrix(), curent() </li>
+!>       <li> \c Lcurvature=4 : the derivative of the \f$g_{\mu,\nu}\f$ w.r.t. the interface boundary geometry is calculated,          e.g. dforce() </li>
+!>       </ul> </li>
+!> </ul>
+!>
+!> @param[in] lvol specified in which volume to compute coordinates
+!> @param[in] lss radial coordinate \f$s\f$
+!> @param[in] Lcurvature logical control flag
+!> @param[in] Ntz number of points in \f$\theta\f$ and \f$\zeta\f$
+!> @param[in] mn number of Fourier harmonics
 subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

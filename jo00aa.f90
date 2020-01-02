@@ -1,8 +1,10 @@
 !> \file jo00aa.f90
 !> \brief Measures error in Beltrami equation, \f$\nabla \times {\bf B} - \mu {\bf B}\f$.
+
+!> \brief Measures error in Beltrami equation, \f$\nabla \times {\bf B} - \mu {\bf B}\f$.
 !> \ingroup grp_diagnostics
-!> This routine is called by xspech() as a post diagnostic and only if \c Lcheck==1.
 !>
+!> This routine is called by xspech() as a post diagnostic and only if \c Lcheck==1.
 !>
 !> **construction of current,** \f${\bf j} \equiv \nabla \times \nabla \times {\bf A}\f$
 !> <ul>
@@ -60,12 +62,6 @@
 !>       where the expected scaling of the error for a finite-element implementation is confirmed numerically.) </li>
 !> <li>  Instead of using Gaussian integration to compute the integral over \f$s\f$, an adaptive quadrature algorithm may be preferable. </li>
 !> </ul>
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!> \brief Measures error in Beltrami equation, \f$\nabla \times {\bf B} - \mu {\bf B}\f$.
-!>
-!> Measures error in Beltrami equation, \f$\nabla \times {\bf B} - \mu {\bf B}\f$.
 !>
 !> @param[in] lvol  in which volume should the Beltrami error be computed
 !> @param[in] Ntz   number of grid points in \f$\theta\f$ and \f$\zeta\f$

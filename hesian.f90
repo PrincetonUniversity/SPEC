@@ -1,10 +1,8 @@
 !> \file hesian.f90
 !> \brief Computes eigenvalues and eigenvectors of derivative matrix, \f$\nabla_{\bf \xi}{\bf F}\f$.
-!> \ingroup grp_diagnostics
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !> \brief Computes eigenvalues and eigenvectors of derivative matrix, \f$\nabla_{\bf \xi}{\bf F}\f$.
+!> \ingroup grp_diagnostics
 !> 
 !> @param[in] NGdof number of global degrees of freedom
 !> @param[inout] position internal geometrical degrees of freedom

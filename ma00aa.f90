@@ -2,10 +2,10 @@
 
 !> \file ma00aa.f90
 !> \brief Calculates volume integrals of Chebyshev polynomials and metric element products.
+
+!> \brief Calculates volume integrals of Chebyshev polynomials and metric element products.
 !> \ingroup grp_integrals
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+!> 
 !> **Chebyshev-metric information**
 !> <ul>
 !> <li> The following quantities are calculated:
@@ -59,10 +59,6 @@
 !>       see \c kija and \c kijs, which are defined in preset.f90 . </li>
 !>
 !> </ul>
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!> \brief Calculates volume integrals of Chebyshev polynomials and metric element products.
 !> 
 !> @param[in] lquad degree of quadrature
 !> @param[in] mn    number of Fourier harmonics

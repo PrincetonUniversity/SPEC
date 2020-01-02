@@ -1,6 +1,10 @@
 !> \file casing.f90
 !> \brief Constructs the field created by the plasma currents, at an arbitrary, external location using virtual casing.
+
+!> \brief Constructs the field created by the plasma currents, at an arbitrary, external location using virtual casing.
 !> \ingroup grp_free-boundary
+!>
+!> Compute the external magnetic field using virtual casing.
 !>
 !> **Theory and numerics**
 !>
@@ -91,11 +95,6 @@
 !>
 !> </li>
 !> </ul>
-
-
-!> @brief Virtual casing driver routine
-!>
-!> Compute the external magnetic field using virtual casing.
 !>
 !> @param[in] teta \f$\theta\f$
 !> @param[in] zeta \f$\zeta\f$
@@ -255,13 +254,14 @@ end subroutine casing
 
 
 !> @brief Differential virtual casing integrand
-!!
-!! Differential virtual casing integrand
-!!
-!! @param[in] Ndim number of parameters (==2)
-!! @param[in] tz \f$\theta\f$ and \f$\zeta\f$
-!! @param[in] Nfun number of function values (==3)
-!! @param[out] vcintegrand cartesian components of magnetic field
+!> \ingroup grp_free-boundary
+!>
+!> Differential virtual casing integrand
+!>
+!> @param[in] Ndim number of parameters (==2)
+!> @param[in] tz \f$\theta\f$ and \f$\zeta\f$
+!> @param[in] Nfun number of function values (==3)
+!> @param[out] vcintegrand cartesian components of magnetic field
 subroutine dvcfield( Ndim, tz, Nfun, vcintegrand ) ! differential virtual-casing field; format is fixed by NAG requirements;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

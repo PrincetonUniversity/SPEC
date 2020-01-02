@@ -1,6 +1,6 @@
 !> \file manual.f90
 !> \brief Code development issues and future physics applications.
-!> See \ref grp_documentation
+!> \see \ref grp_documentation
 
 
 !> \page grp_documentation Manual / Documentation

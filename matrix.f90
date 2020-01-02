@@ -8,6 +8,8 @@
 !> \file matrix.f90
 !> \brief Constructs energy and helicity matrices that represent the Beltrami linear system.
 
+!> \brief Constructs energy and helicity matrices that represent the Beltrami linear system.
+!> \ingroup grp_build_matrices
 !> **gauge conditions**
 !>
 !> <ul>
@@ -332,11 +334,9 @@
 !> **calculation of volume-integrated basis-function-weighted metric information**
 !>
 !> <ul>
-!> <li> The required geometric information is calculated in ma00aa(). </li>as
+!> <li> The required geometric information is calculated in ma00aa(). </li>
 !> </ul>
-
-!> \brief Constructs energy and helicity matrices that represent the Beltrami linear system.
-!> \ingroup grp_build_matrices
+!> 
 !> @param[in] lvol
 !> @param[in] mn
 !> @param[in] lrad

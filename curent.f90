@@ -2,6 +2,8 @@
 
 !> \file curent.f90
 !> \brief Computes the plasma current, \f$I \equiv \int B_\theta \, d\theta\f$, and the "linking" current, \f$G \equiv \int B_\zeta \, d\zeta\f$.
+
+!> \brief Computes the plasma current, \f$I \equiv \int B_\theta \, d\theta\f$, and the "linking" current, \f$G \equiv \int B_\zeta \, d\zeta\f$.
 !> \ingroup grp_currents
 !>
 !> **enclosed currents**
@@ -44,10 +46,6 @@
 !> 
 !> </li>
 !> </ul>
-
-!> \brief Computes the plasma current, \f$I \equiv \int B_\theta \, d\theta\f$, and the "linking" current, \f$G \equiv \int B_\zeta \, d\zeta\f$.
-!>
-!> Computes the plasma current, \f$I \equiv \int B_\theta \, d\theta\f$, and the "linking" current, \f$G \equiv \int B_\zeta \, d\zeta\f$.
 !>
 !> @param[in] lvol index of volume
 !> @param[in] mn number of Fourier harmonics
