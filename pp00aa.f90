@@ -1,79 +1,66 @@
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!> \file pp00aa.f90
+!> \brief Constructs Poincaré plot and "approximate" rotational-transform (driver).
 
-!title (diagnostic) ! Constructs Poincar&eacute; plot and &ldquo;approximate&rdquo; rotational-transform (driver).
-
-!latex \briefly{Constructs \Poincare plot and ``approximate" rotational-transform (driver).}
-
-!latex \calledby{\link{xspech}}
-!latex \calls{\link{pp00ab}}
-
-!latex \tableofcontents
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-!latex \subsection{relevant input variables}
-
-!latex \begin{enumerate}
-!latex \item The resolution of \Poincare plot is controlled by 
-!latex       \begin{itemize}
-!latex       \item[i.] \inputvar{nPtraj} trajectories will be located in each volume;
-!latex       \item[ii.] \inputvar{nPpts} iterations per trajectory;
-!latex       \item[iii.] \inputvar{odetol} o.d.e. integration tolerance;
-!latex       \end{itemize}
-!latex \item The magnetic field is given by \link{bfield}.
-!latex \item The approximate rotational transform is determined, in \link{pp00ab}, by fieldline integration.
-!latex  \end{enumerate}
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \subsection{format of output: \Poincare}
-
-!latex \begin{enumerate}
-!latex \item The \Poincare data is written to \type{.ext.poincare:xxxx}, where \type{xxxx} is an integer indicating the volume.
-!latex       The format of this file is as follows:
-!latex \begin{verbatim}
-!latex  write(svol,'(i4.4)')lvol ! lvol labels volume;
-!latex  open(lunit+myid,file="."//trim(ext)//".poincare."//svol,status="unknown",form="unformatted")
-!latex  do until end of file
-!latex   write(lunit+myid) Nz, nPpts                ! integers
-!latex   write(lunit+myid) data(1:4,0:Nz-1,1:nPpts) ! doubles
-!latex  enddo
-!latex  close(lunit+myid)
-!latex \end{verbatim}
-!latex       where \begin{itemize}
-!latex       \item[i.] $\t \equiv$ \type{data(1,k,j)} is the poloidal angle,
-!latex       \item[ii.] $\s \equiv$ \type{data(2,k,j)} is the radial coordinate, 
-!latex       \item[iii.] $ R \equiv$ \type{data(3,k,j)} is the cylindrical $R$, 
-!latex       \item[iv.]   $ Z \equiv$ \type{data(4,k,j)} is the cylindrical $Z$,
-!latex       \end{itemize}
-!latex \item The integer \type{k=0,Nz-1} labels toroidal planes, so that $\phi = ( 2 \pi / $\inputvar{Nfp}$ ) ( k / \type{Nz})$,
-!latex \item The integer \type{j=1,}\inputvar{nPpts} labels toroidal iterations.
-!latex \item Usually (if no fieldline integration errors are encountered) the number of fieldlines followed in volume \type{lvol}
-!latex       is given by $N+1$, where the radial resolution, $N\equiv$\type{Ni(lvol)}, is given on input.
-!latex       This will be over-ruled by if \inputvar{nPtrj(lvol)}, given on input, is non-negative.
-!latex \item The starting location for the fieldline integrations are equally spaced in the radial coordinate $s_i=s_{l-1}+ i (s_{l}-s_{l-1})/N$ for $i=0,N$,
-!latex       along the line $\t=0$, $\z=0$.
-!latex \end{enumerate} 
-  
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-!latex \subsection{format of output: rotational-transform}
-
-!latex \begin{enumerate}
-  
-!latex \item The rotational-transform data is written to \type{.exttransform:xxxx}, where \type{xxxx} is an integer indicating the volume.
-!latex       The format of this file is as follows:
-!latex \begin{verbatim}
-!latex  open(lunit+myid,file="."//trim(ext)//".sp.t."//svol,status="unknown",form="unformatted")
-!latex  write(lunit+myid) lnPtrj-ioff+1                                      ! integer
-!latex  write(lunit+myid) diotadxup(0:1,0,lvol)                              ! doubles
-!latex  write(lunit+myid) ( fiota(itrj,1:2), itrj = ioff, lnPtrj ) ! doubles
-!latex  close(lunit+myid)
-!latex \end{verbatim}
-!latex \end{enumerate}
-  
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+!> \brief Constructs Poincaré plot and "approximate" rotational-transform (driver).
+!> \ingroup grp_diagnostics
+!>
+!> **relevant input variables**
+!>
+!> <ul>
+!> <li> The resolution of Poincaré plot is controlled by 
+!>       <ul>
+!>       <li> \c nPtraj trajectories will be located in each volume;
+!>       <li> \c nPpts  iterations per trajectory;
+!>       <li> \c odetol o.d.e. integration tolerance;
+!>       </ul> </li>
+!> <li> The magnetic field is given by bfield() . </li>
+!> <li> The approximate rotational transform is determined, in pp00ab() , by fieldline integration. </li>
+!> </ul>
+!>
+!> **format of output: Poincaré**
+!>
+!> <ul>
+!> <li> The Poincaré data is written to \c .ext.poincare:xxxx , where \c xxxx is an integer indicating the volume.
+!>       The format of this file is as follows:
+!> ```
+!>  write(svol,'(i4.4)')lvol ! lvol labels volume;
+!>  open(lunit+myid,file="."//trim(ext)//".poincare."//svol,status="unknown",form="unformatted")
+!>  do until end of file
+!>   write(lunit+myid) Nz, nPpts                ! integers
+!>   write(lunit+myid) data(1:4,0:Nz-1,1:nPpts) ! doubles
+!>  enddo
+!>  close(lunit+myid)
+!> ```
+!>       where <ul>
+!>       <li> \f$\theta \equiv\,\f$\c data(1,k,j) is the poloidal angle,    </li>
+!>       <li> \f$ s     \equiv\,\f$\c data(2,k,j) is the radial coordinate, </li>
+!>       <li> \f$ R     \equiv\,\f$\c data(3,k,j) is the cylindrical \f$R\f$,   </li>
+!>       <li> \f$ Z     \equiv\,\f$\c data(4,k,j) is the cylindrical \f$Z\f$,   </li>
+!>       </ul>
+!> <li> The integer \c k=0,Nz-1 labels toroidal planes, so that \f$\phi = ( 2 \pi / \texttt{Nfp}) ( k / \texttt{Nz})\f$,
+!> <li> The integer \c j=1,nPpts labels toroidal iterations.
+!> <li> Usually (if no fieldline integration errors are encountered) the number of fieldlines followed in volume \c lvol
+!>       is given by \f$N+1\f$, where the radial resolution, \f$N\equiv\,\f$\c Ni(lvol) , is given on input.
+!>       This will be over-ruled by if \c nPtrj(lvol) , given on input, is non-negative.
+!> <li> The starting location for the fieldline integrations are equally spaced in the radial coordinate \f$s_i=s_{l-1}+ i (s_{l}-s_{l-1})/N\f$ for \f$i=0,N\f$,
+!>       along the line \f$\theta=0\f$, \f$\zeta=0\f$.
+!> </ul> 
+!>
+!> **format of output: rotational-transform**
+!>
+!> <ul>
+!>
+!> <li> The rotational-transform data is written to \c .ext.transform:xxxx , where \c xxxx is an integer indicating the volume.
+!>       The format of this file is as follows:
+!> ```
+!>  open(lunit+myid,file="."//trim(ext)//".sp.t."//svol,status="unknown",form="unformatted")
+!>  write(lunit+myid) lnPtrj-ioff+1                                      ! integer
+!>  write(lunit+myid) diotadxup(0:1,0,lvol)                              ! doubles
+!>  write(lunit+myid) ( fiota(itrj,1:2), itrj = ioff, lnPtrj ) ! doubles
+!>  close(lunit+myid)
+!> ```
+!> </ul>
+!>
 subroutine pp00aa
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

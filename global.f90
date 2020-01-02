@@ -1,4 +1,9 @@
 !> \defgroup grp_global Input namelists and global variables
+!>
+!> \latexonly
+!> \definecolor{Orange}{rgb}{1.0,0.5,0.0}
+!> \definecolor{Cerulean}{rgb}{0.0,0.5,1.0}
+!> \endlatexonly
 
 ! to set keyboard shortcut in emacs                                        
 !
@@ -1047,19 +1052,19 @@ module allglobal
 !> <li> In each volume, the total degrees of freedom in the Beltrami linear system is \c NAdof(1:Nvol).
 !>      This depends on \c Mpol, \c Ntor and \c Lrad(vvol). </li>
 !> <li> The covariant components of the vector potential are written as
-!>       \f{eqnarray}{ A_\theta & = & \sum_i \sum_{l=0}^L {\color{red} {A_{\theta,e,i,l}}} \; T_{l}(s) \cos\alpha_i + \sum_i \sum_{l=0}^L {\color{magenta}{A_{\theta,o,i,l}}} \; T_{l}(s) \sin\alpha_i \\
-!>                     A_\zeta  & = & \sum_i \sum_{l=0}^L {\color{blue}{A_{\zeta, e,i,l}}} \; T_{l}(s) \cos\alpha_i + \sum_i \sum_{l=0}^L {\color{cyan}   {A_{\zeta ,o,i,l}}} \; T_{l}(s) \sin\alpha_i ,
+!>       \f{eqnarray}{ A_\theta & = & \sum_i \sum_{l=0}^L {\color{red}  A_{\theta,e,i,l}} \; T_{l}(s) \cos\alpha_i + \sum_i \sum_{l=0}^L {\color{Orange}  A_{\theta,o,i,l}} \; T_{l}(s) \sin\alpha_i \\
+!>                     A_\zeta  & = & \sum_i \sum_{l=0}^L {\color{blue} A_{\zeta, e,i,l}} \; T_{l}(s) \cos\alpha_i + \sum_i \sum_{l=0}^L {\color{Cerulean}A_{\zeta ,o,i,l}} \; T_{l}(s) \sin\alpha_i ,
 !>       \f}
 !>       where \f$T_l(s)\f$ are the Chebyshev polynomials and \f$\alpha_i \equiv m_i \theta - n_i \zeta\f$. </li>
 !> <li> The following internal arrays are declared in preset() :
 !> 
-!>       \c dAte(0,i)%%s(l) \f$\equiv {\color{red}    {A_{\theta,e,i,l}}}\f$
+!>       \c dAte(0,i)%%s(l) \f$\equiv {\color{red}     A_{\theta,e,i,l}}\f$
 !>       
-!>       \c dAze(0,i)%%s(l) \f$\equiv {\color{blue}   {A_{\zeta, e,i,l}}}\f$
+!>       \c dAze(0,i)%%s(l) \f$\equiv {\color{blue}    A_{\zeta, e,i,l}}\f$
 !>       
-!>       \c dAto(0,i)%%s(l) \f$\equiv {\color{magenta}{A_{\theta,o,i,l}}}\f$
+!>       \c dAto(0,i)%%s(l) \f$\equiv {\color{Orange}  A_{\theta,o,i,l}}\f$
 !>       
-!>       \c dAzo(0,i)%%s(l) \f$\equiv {\color{cyan}   {A_{\zeta ,o,i,l}}}\f$ </li>
+!>       \c dAzo(0,i)%%s(l) \f$\equiv {\color{Cerulean}A_{\zeta ,o,i,l}}\f$ </li>
 !> </ul>
 !> @{
   INTEGER, allocatable :: NAdof(:) !< degrees of freedom in Beltrami fields in each annulus
@@ -1094,7 +1099,7 @@ module allglobal
 !>      \f{eqnarray}{ W & = & \frac{1}{2} \; a_i \; A_{i,j} \; a_j + a_i \; B_{i,j} \; \psi_j + \frac{1}{2} \; \psi_i \; C_{i,j} \; \psi_j \label{eq:energymatrix} \\
 !>                    K & = & \frac{1}{2} \; a_i \; D_{i,j} \; a_j + a_i \; E_{i,j} \; \psi_j + \frac{1}{2} \; \psi_i \; F_{i,j} \; \psi_j \label{eq:helicitymatrix}
 !>      \f}
-!>       where \f${\bf a} \equiv \{ {\color{red}{A_{\theta,e,i,l}}}, {\color{blue}{A_{\zeta, e,i,l}}}, {\color{magenta}{A_{\theta,o,i,l}}}, {\color{cyan}{A_{\zeta ,o,i,l}}}, f_{e,i}, f_{o,i} \}\f$ 
+!>       where \f${\bf a} \equiv \{ {\color{red} A_{\theta,e,i,l}}, {\color{blue} A_{\zeta, e,i,l}}, {\color{Orange}  A_{\theta,o,i,l}}, {\color{Cerulean}A_{\zeta ,o,i,l}}, f_{e,i}, f_{o,i} \}\f$ 
 !>       contains the independent degrees of freedom and \f$\mathbf{\psi} \equiv \{\Delta \psi_t,\Delta \psi_p\}\f$. </li>
 !> <li> These are allocated and deallocated in dforce(), assigned in matrix(), and used in mp00ac() and (?) df00aa(). </li>
 !> </ul>
