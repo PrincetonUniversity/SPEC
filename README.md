@@ -1,4 +1,4 @@
-# The SPEC code
+# The Stepped Pressure Equilibrium Code
 
 - [Github pages](https://princetonuniversity.github.io/SPEC/)
 - [Subroutine documentations](https://princetonuniversity.github.io/SPEC/subroutines.html)
