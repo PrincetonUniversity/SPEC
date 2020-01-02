@@ -1,8 +1,11 @@
+!> \defgroup grp_conjugate_gradient Conjugate-Gradient method
+
 !> \file pc00aa.f90
 !> \brief Use preconditioned conjugate gradient method to find minimum of energy functional.
 
 !> \brief Use preconditioned conjugate gradient method to find minimum of energy functional.
-!>
+!> \ingroup grp_conjugate_gradient
+!> 
 !> **energy functional**
 !>
 !> The energy functional is described in pc00ab() .
