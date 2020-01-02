@@ -275,7 +275,7 @@ subroutine preset
 !>       \f}
 !>       where \f$(m_{k_{ij+}}, n_{k_{ij+}}) = (m_i + m_j, n_i + n_j)\f$ and \f$(m_{k_{ij-}}, n_{k_{ij-}}) = (m_i - m_j, n_i - n_j)\f$;
 !>       then \c kija(i,j,0) \f$\equiv k_{ij+}\f$ and \c kijs(i,j,0) \f$\equiv k_{ij-}\f$. </li>
-!> <li> Note that \Eqn{enhancedFourierrepresentation} does not include \f$m<0\f$; so,
+!> <li> Note that Eqn.\f$(\ref{eq:enhancedFourierrepresentation})\f$ does not include \f$m<0\f$; so,
 !>       if \f$m_i - m_j < 0\f$ then \f$k_{ij-}\f$ is re-defined such that \f$(m_{k_{ij-}}, n_{k_{ij-}}) = (m_j - m_i, n_j - n_i)\f$; and
 !>       similarly for the case \f$m=0\f$ and \f$n<0\f$.
 !>       Also, take care that the sign of the sine harmonics in the above expressions will change for these cases. </li>
