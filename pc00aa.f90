@@ -1,44 +1,40 @@
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!> \file pc00aa.f90
+!> \brief Use preconditioned conjugate gradient method to find minimum of energy functional.
 
-!title ! Use preconditioned conjugate gradient method to find minimum of energy functional.
-
-!latex \briefly{Use preconditioned conjugate gradient method to find minimum of energy functional.}
-
-!latex \calledby{\link{xspech}}
-!latex \calls{\link{dforce} and \link{pc00ab}}
-
-!latex \tableofcontents
-
-!latex \subsection{energy functional}
-
-!latex The energy functional is described in \link{pc00ab}.
-
-!latex \subsection{relevant input variables}
-
-!latex \begin{enumerate}
-
-!latex \item The following input variables control the operation of \nag{www.nag.co.uk/numeric/FL/manual19/pdf/E04/e04dgf_fl18.pdf}{E04DGF}
-!latex      \begin{itemize}
-!latex      \item[i.]   \type{epsilon} : 
-!latex                  weighting of ``spectral energy''; see \link{pc00ab};
-!latex      \item[ii.]  \type{maxstep} :
-!latex                  this is given to \nag{www.nag.co.uk/numeric/FL/manual19/pdf/E04/e04dgf_fl18.pdf}{E04DGF} for the \type{Maximum Step Length};
-!latex      \item[iii.] \type{maxiter} : 
-!latex                  upper limit on derivative calculations used in the conjugate gradient iterations;
-!latex      \item[iv.]  \type{verify}  : 
-!latex                  if \type{verify}$=1$, then \nag{www.nag.co.uk/numeric/FL/manual19/pdf/E04/e04dgf_fl18.pdf}{E04DGF}
-!latex                  will confirm user supplied gradients (provided by \link{pc00ab}) are correct;
-!latex      \end{itemize}
-
-!latex \item Unfortunately, \nag{www.nag.co.uk/numeric/FL/manual19/pdf/E04/e04dgf_fl18.pdf}{E04DGF} 
-!latex       seems to require approximately $3 N$ function evaluations before proceeding to minimize the energy functional,
-!latex       where there are $N$ degrees of freedom.
-!latex       I don't know how to turn this off!
-
-!latex \end{enumerate}
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+!> \brief Use preconditioned conjugate gradient method to find minimum of energy functional.
+!>
+!> **energy functional**
+!>
+!> The energy functional is described in pc00ab() .
+!>
+!> **relevant input variables**
+!>
+!> <ul>
+!> <li> The following input variables control the operation of \c E04DGF :
+!>      <ul>
+!>      <li> \c epsilon : 
+!>           weighting of "spectral energy"; see pc00ab() </li>
+!>      <li> \c maxstep :
+!>           this is given to \c E04DGF for the \f$\texttt{Maximum Step Length}\f$ </li>
+!>      <li> \c maxiter :
+!>           upper limit on derivative calculations used in the conjugate gradient iterations </li>
+!>      <li> \c verify :
+!>           if \c verify=1, then \c E04DGF
+!>           will confirm user supplied gradients (provided by pc00ab() ) are correct; </li>
+!>      </ul> </li>
+!> <li> \todo Unfortunately, \c E04DGF
+!>       seems to require approximately \f$3 N\f$ function evaluations before proceeding to minimize the energy functional,
+!>       where there are \f$N\f$ degrees of freedom.
+!>       I don't know how to turn this off!
+!>
+!> </li>
+!> </ul>
+!>
+!> @param[in]    NGdof
+!> @param[inout] position
+!> @param[in]    Nvol
+!> @param[in]    mn
+!> @param        ie04dgf
 subroutine pc00aa( NGdof, position, Nvol, mn, ie04dgf ) ! argument list is optional;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
