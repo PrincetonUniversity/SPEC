@@ -1,42 +1,34 @@
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!> \file pp00ab.f90
+!> \brief Follows magnetic fieldline using ode-integration routine from rksuite.f .
 
-!title (diagnostic) ! Follows magnetic fieldline using NAG ode-integration routine, D02BJF.
-
-!latex \briefly{Constructs \Poincare plot and ``approximate'' rotational-transform (for single field line).}
-
-!latex \calledby{\link{}}
-!latex \calls{\link{}}
-
-!latex \tableofcontents
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-!latex \subsubsection{relevant input variables} 
-
-!latex \begin{enumerate}
-  
-!latex \item The resolution of \Poincare plot is controlled by 
-!latex \begin{itemize} 
-!latex \item \verb+nPpts+ iterations per trajectory;
-!latex \item \verb+odetol+ o.d.e. integration tolerance;
-!latex \end{itemize}
-!latex The magnetic field is given by \verb+bfield+. 
-!latex \end{enumerate}
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \subsubsection{rotational-transform} 
-
-!latex \begin{enumerate}
-  
-!latex \item The approximate rotational transform is determined by field line integration.
-!latex       This is constructed by fitting a least squares fit to the field line trajectory.
-!latex \end{enumerate}
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+!> \brief Constructs Poincaré plot and "approximate" rotational-transform (for single field line).
+!> \ingroup grp_diagnostics
+!>
+!> **relevant input variables**
+!>
+!> <ul>
+!> <li> The resolution of Poincaré plot is controlled by 
+!>      <ul>
+!>      <li> \c nPpts iterations per trajectory; </li>
+!>      <li> \c odetol o.d.e. integration tolerance; </li>
+!>      </ul>
+!>      The magnetic field is given by bfield() . </li>
+!> </ul>
+!>
+!> **rotational-transform**
+!>
+!> <ul>
+!> <li> The approximate rotational transform is determined by field line integration.
+!>      This is constructed by fitting a least squares fit to the field line trajectory. </li>
+!> </ul>
+!>
+!> @param[in]  lvol
+!> @param      sti
+!> @param[in]  Nz
+!> @param[in]  nPpts
+!> @param      poincaredata
+!> @param      fittedtransform
+!> @param[out] utflag
 subroutine pp00ab( lvol, sti, Nz, nPpts, poincaredata, fittedtransform, utflag ) 
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
