@@ -1,48 +1,54 @@
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!> \file sc00aa.f90
+!> \brief The covariant components of the tangential magnetic field are computed from the singular currents at the interfaces.
+!>
+!> \latexonly
+!> \definecolor{Orange}{rgb}{1.0,0.5,0.0}
+!> \definecolor{Cerulean}{rgb}{0.0,0.5,1.0}
+!> \endlatexonly
 
-!title (diagnostic) ! Returns &ldquo;covariant&rdquo; magnetic field, ${\bf B} = B_s \nabla s + B_\theta \nabla \theta + B_\zeta \nabla \zeta$, on ${\cal I}$.
-!latex \briefly{The covariant components of the tangential magnetic field are related to the singular currents at the interfaces.}
-
-!latex \calledby{\link{xspech}}
-!latex \calls{\link{coords}}
-
-!latex \tableofcontents
- 
-!latex \subsection{covariant representation}
-
-!latex \begin{enumerate}
-    
-!latex \item \Ais
-!latex \item \Bis
-!latex \item The covariant representation for the field is ${\bf B} = B_\s \nabla\s + B_\t \nabla\t + B_\z\nabla\z$, where
-!latex       \be B_\s &=& B^\s g_{\s\s} + B^\t g_{\s\t} + B^\z g_{\s\z} \nonumber \\
-!latex           B_\t &=& B^\s g_{\s\t} + B^\t g_{\t\t} + B^\z g_{\t\z} \nonumber \\
-!latex           B_\z &=& B^\s g_{\s\z} + B^\t g_{\t\z} + B^\z g_{\z\z} \nonumber
-!latex       \ee
-!latex       where $g_{\a\b}$ are the metric elements (computed by \link{coords}).
-!latex \item On the interfaces, $B^\s=0$ by construction.
-
-!latex \end{enumerate}
- 
-!latex \subsection{output data}
-
-!latex \begin{enumerate}
-    
-!latex \item The Fourier harmonics of the even-and-odd, covariant components of the magnetic field, $B_\s$, $B_\t$ and $B_\z$, are saved in 
-!latex       \begin{itemize}
-!latex       \item[] \internal{Btemn(1:mn,0:1,1:Mvol)},
-!latex       \item[] \internal{Bzemn(1:mn,0:1,1:Mvol)},
-!latex       \item[] \internal{Btomn(1:mn,0:1,1:Mvol)},
-!latex       \item[] \internal{Bzomn(1:mn,0:1,1:Mvol)};
-!latex       \end{itemize}
-!latex       and these are written to \verb+ext.sp.h5+ by \link{hdfint}.
-
-!latex \end{enumerate}
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+!> \brief The covariant components of the tangential magnetic field are computed from the singular currents at the interfaces.
+!> \ingroup grp_diagnostics
+!> 
+!> Returns "covariant" magnetic field, \f${\bf B} = B_s \nabla s + B_\theta \nabla \theta + B_\zeta \nabla \zeta\f$, on \f${\cal I}\f$.
+!>
+!> **covariant representation**
+!>
+!> <ul>
+!> <li> The components of the vector potential, \f${\bf A}=A_\theta \nabla + A_\zeta \nabla \zeta\f$, are
+!>      \f{eqnarray}{
+!>        A_\theta(s,\theta,\zeta) &=& \sum_{i,l} {\color{red}  A_{\theta,e,i,l}} \; {\overline T}_{l,i}(s) \cos\alpha_i + \sum_{i,l} {\color{Orange}  A_{\theta,o,i,l}} \; {\overline T}_{l,i}(s) \sin\alpha_i, \label{eq:At} \\
+!>        A_\zeta( s,\theta,\zeta) &=& \sum_{i,l} {\color{blue} A_{\zeta, e,i,l}} \; {\overline T}_{l,i}(s) \cos\alpha_i + \sum_{i,l} {\color{Cerulean}A_{\zeta ,o,i,l}} \; {\overline T}_{l,i}(s) \sin\alpha_i, \label{eq:Az}
+!>      \f}
+!>      where \f${\overline T}_{l,i}(s) \equiv \bar s^{m_i/2} \, T_l(s)\f$, \f$T_l(s)\f$ is the Chebyshev polynomial, and \f$\alpha_j \equiv m_j\theta-n_j\zeta\f$.
+!>      The regularity factor, \f$\bar s^{m_i/2}\f$, where \f$\bar s \equiv (1+s)/2\f$, is only included if there is a coordinate singularity in the domain
+!>      (i.e. only in the innermost volume, and only in cylindrical and toroidal geometry.) </li>
+!> <li> The magnetic field, \f$\sqrt g \, {\bf B} = \sqrt g B^s {\bf e}_s + \sqrt g B^\theta {\bf e}_\theta + \sqrt g B^\zeta {\bf e}_\zeta\f$, is
+!>      \f{eqnarray}{
+!>        \begin{array}{ccccrcrcrcrcccccccccccccccccccccccccccccccccccccccccccccccccccc}
+!>        \sqrt g \, {\bf B} & = & {\bf e}_s      & \sum_{i,l} [ ( & - m_i {\color{blue}{A_{\zeta, e,i,l}}} & - & n_i {\color{red} {A_{\theta,e,i,l}}} & ) {\overline T}_{l,i}        \sin\alpha_i + ( & + m_i {\color{Cerulean}A_{\zeta ,o,i,l}} & + & n_i {\color{Orange}  A_{\theta,o,i,l}} & ) {\overline T}_{l,i}        \cos\alpha_i ] \\
+!>                           & + & {\bf e}_\theta & \sum_{i,l} [ ( &                                        & - &     {\color{blue}{A_{\zeta, e,i,l}}} & ) {\overline T}_{l,i}^\prime \cos\alpha_i + ( &                                           & - &     {\color{Cerulean}A_{\zeta ,o,i,l}} & ) {\overline T}_{l,i}^\prime \sin\alpha_i ] \\
+!>                           & + & {\bf e}_\zeta  & \sum_{i,l} [ ( &       {\color{red} {A_{\theta,e,i,l}}} &   &                                      & ) {\overline T}_{l,i}^\prime \cos\alpha_i + ( &       {\color{Orange}  A_{\theta,o,i,l}} &   &                                         & ) {\overline T}_{l,i}^\prime \sin\alpha_i ]
+!>        \end{array}
+!>      \f}
+!> </li>
+!> <li> On the interfaces, \f$B^s=0\f$ by construction. </li>
+!> </ul>
+!>
+!> **output data**
+!>
+!> <ul>
+!> <li> The Fourier harmonics of the even-and-odd, covariant components of the magnetic field, \f$B_s\f$, \f$B_\theta\f$ and \f$B_\zeta\f$, are saved in 
+!>       <ul>
+!>       <li>\c Btemn(1:mn,0:1,1:Mvol) , </li>
+!>       <li>\c Bzemn(1:mn,0:1,1:Mvol) , </li>
+!>       <li>\c Btomn(1:mn,0:1,1:Mvol) , </li>
+!>       <li>\c Bzomn(1:mn,0:1,1:Mvol) ; </li>
+!>       </ul>
+!>       and these are written to \c ext.sp.h5 by hdfint() . </li>
+!> </ul>
+!> 
+!> @param[in] lvol
+!> @param[in] Ntz
 subroutine sc00aa( lvol, Ntz )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
