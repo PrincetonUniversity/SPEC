@@ -9,7 +9,7 @@
 !> <ul>
 !> <li> The energy functional is
 !>      \f{eqnarray}{ F \equiv \sum_{l=1}^{N} \int_{\cal V} \left( \frac{p}{\gamma-1} + \frac{B^2}{2} \right) dv,
-!>      \label{eq:energyfunctional}
+!>      \label{eq:energyfunctional_pc00ab}
 !>      \f}
 !>      where \f$N \equiv\,\f$\c Nvol is the number of interfaces. </li>
 !> <li> Assuming that the toroidal and poloidal fluxes, \f$\psi_t\f$ and \f$\psi_p\f$, the helicity, \f${\cal K}\f$, the helicity multiplier, \f$\mu\f$,
@@ -22,7 +22,7 @@
 !>                     - \frac{\partial }{\partial R_j} \sum_{l=1}^{N} \int \left( \frac{p}{\gamma-1} + \frac{B^2}{2} \right) dv,\\
 !>                     \displaystyle \frac{\partial Z_j}{\partial t} & \equiv & \displaystyle 
 !>                     - \frac{\partial }{\partial Z_j} \sum_{l=1}^{N} \int \left( \frac{p}{\gamma-1} + \frac{B^2}{2} \right) dv.
-!>       \end{array} \label{eq:descent} \f} </li>
+!>       \end{array} \label{eq:descent_pc00ab} \f} </li>
 !> <li> There remain degrees of freedom in the angle representation of the interfaces. </li>
 !> </ul>
 !> 

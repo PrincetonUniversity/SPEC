@@ -20,7 +20,7 @@
 !>       \f}
 !>       where \f${{\,\iota\!\!\!}-}\f$ is a constant that is to be determined. </li>
 !> <li> Writing \f$\dot \theta = - \partial_s A_\zeta / \partial_s A_\theta\f$, we have
-!>       \f{eqnarray}{ \label{eq:sfla} 
+!>       \f{eqnarray}{ \label{eq:sfla_tr00ab} 
 !>       \partial_s A_\theta \, {{\,\iota\!\!\!}-} + \partial_s A_\zeta \, \lambda_\theta - \partial_s A_\theta \, \lambda_\zeta = - \partial_s A_\zeta
 !>       \f} </li>
 !> <li> Expanding this equation we obtain

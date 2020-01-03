@@ -224,7 +224,7 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
 !>      and if \c Igeometry==3 then also the derivatives of the "artificial" spectral constraints, \f$I_j \equiv (R_\theta X + Z_\theta Y)_j\f$. </li>
 !> <li> The input variable \c Lconstraint determines how the enclosed fluxes, \f$\Delta \psi_t\f$ and \f$\Delta \psi_p\f$, 
 !>      and the helicity multiplier, \f$\mu\f$, vary as the geometry is varied;
-!>      see global.f90 and mp00ac.f90 for more details. </li>
+!>      see global.f90 and mp00ac() for more details. </li>
 !> </ul>
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -381,9 +381,9 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
 !> write(hunit)evali(1:NGdof)         ! reals   ; imaginary part of eigenvalues; 
 !> write(hunit)evecr(1:NGdof,1:NGdof) ! reals   ; real      part of eigenvalues; only if Ldvr=NGdof;
 !> write(hunit)eveci(1:NGdof,1:NGdof) ! reals   ; imaginary part of eigenvalues; only if Ldvi=NGdof;
-!> close(hunit) </li>
+!> close(hunit)
 !> ```
-!> 
+!> </li>
 !> <li> The eigenvectors are saved in columns of \c evecr, \c eveci, as described by the NAG documentation for \c F02EBF. </li>
 !> </ul>
 

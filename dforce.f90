@@ -48,13 +48,13 @@
 !>       where \f$i\f$ labels Fourier harmonic and \f$v\f$ is the interface label:
 !>       \f{eqnarray}{ F_{i,v} \equiv \left[ ( p_{v+1}+B^2_{i,v+1}/2 ) - ( p_v + B^2_{i,v}/2 ) \right] \times \texttt{BBweight}_i,
 !>       \f}
-!>       where \c BBweight(i) is defined in preset.f90 ;
+!>       where \c BBweight(i) is defined in preset() ;
 !>       and the spectral condensation constraints, 
 !>       \f{eqnarray}{ F_{i,v} \equiv I_{i,v} \times \texttt{epsilon} + S_{i,v,1} \times \texttt{sweight}_v - S_{i,v+1,0} \times \texttt{sweight}_{v+1},
 !>       \f}
 !>       where the spectral condensation constraints, \f$I_{i,v}\f$, and the "star-like" poloidal angle constraints, \f$S_{i,v,\pm 1}\f$,
-!>       are calculated and defined in lforce.f90;
-!>       and the \c sweight\f$_v\f$ are defined in preset.f90. </li>
+!>       are calculated and defined in lforce() ;
+!>       and the \c sweight\f$_v\f$ are defined in preset(). </li>
 !> </ul>
 !>
 !> **construct derivatives of matrix equation**

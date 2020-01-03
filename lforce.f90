@@ -79,7 +79,7 @@
 !>       \nonumber \\
 !>       & - & {\color{red}{\sum_{i=1}^{N-1} \delta_{i+1}   \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \!\! \left( \frac{\Delta R_{i+1} R_{i,\theta} + \Delta Z_{i+1} Z_{i,\theta}}{L_{i+1}} \right) 
 !>             \delta u_i}}
-!>       \label{eq:firstvariation}
+!>       \label{eq:firstvariation_lforce}
 !>       \f}
 !>       where, for the stellarator symmetric case,
 !>       \f{eqnarray}{
@@ -90,13 +90,13 @@
 !>       \f{eqnarray}{ {\color{red}{\Delta R_{i}}} & \equiv & {\color{red}{R_{i}(\theta,\zeta)-R_{i-1}(\theta,\zeta)}},\\
 !>           {\color{red}{\Delta Z_{i}}} & \equiv & {\color{red}{Z_{i}(\theta,\zeta)-Z_{i-1}(\theta,\zeta)}},
 !>       \f} </li>
-!> <li> The spectral constraints derived from Eqn.\f$(\ref{eq:firstvariation})\f$ are
+!> <li> The spectral constraints derived from Eqn.\f$(\ref{eq:firstvariation_lforce})\f$ are
 !>       \f{eqnarray}{ I_i(\theta,\zeta) & \equiv & - 2 \alpha_i \frac{\Theta_{i,\theta\theta}}{\Theta_{i,\theta}^{2}}
 !>               + \beta_i \left( R_{i,\theta} X_i + Z_{i,\theta} Y_i \right)
 !>               + \gamma_i \left( Z_{i}(0,\zeta) - Z_{i,0} \right) Z_{i,\theta}(0,\zeta) \nonumber \\
 !>             & + & {\color{red}{\delta_{i  } \frac{\Delta R_{i  } R_{i,\theta} + \Delta Z_{i  } Z_{i,\theta}}{L_i}}}
 !>               -   {\color{red}{\delta_{i+1} \frac{\Delta R_{i+1} R_{i,\theta} + \Delta Z_{i+1} Z_{i,\theta}}{L_{i+1} } } }
-!>       \label{eq:spectralconstraints}
+!>       \label{eq:spectralconstraints_lforce}
 !>       \f} </li>
 !> <li> Note that choosing \f$p=2\f$ gives \f$X=-R_{\theta\theta}\f$ and \f$Y=-Z_{\theta\theta}\f$, and the spectrally condensed angle constraint, \f$R_\theta X + Z_\theta Y=0\f$, 
 !>       becomes \f$\partial_\theta (R_\theta^2+Z_\theta^2)=0\f$,
@@ -124,7 +124,7 @@
 !> <li> The polar constraint does not need normalization.
 !>       The spectral width constraint has already been normalized.
 !>       The length constraint is not yet normalized, but perhaps it should be. </li>
-!> <li> The spectral constraints given in Eqn.\f$(\ref{eq:spectralconstraints})\f$ need to be differentiated
+!> <li> The spectral constraints given in Eqn.\f$(\ref{eq:spectralconstraints_lforce})\f$ need to be differentiated
 !>       with respect to the interface Fourier harmonics, \f$R_{j,i}\f$ and \f$Z_{j,i}\f$.
 !>       The first and second terms lead to a block diagonal hessian, and the length term leads to a block tri-diagonal hessian. </li>
 !> <li> Including the poloidal-angle origin constraint means that the polar angle constraint can probably be ignored, i.e. \f$\alpha_i=0\f$. </li>

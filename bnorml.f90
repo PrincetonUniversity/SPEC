@@ -58,7 +58,7 @@
 !>      and \f${\bf B}_C\f$ is the "vacuum" field (produced by the external coils) and is given on input. </li>
 !> <li> The plasma field, \f${\bf B}_P\f$, can only be computed after the equilibrium is determined, 
 !>      but this information is required to compute the equilibrium to begin with; and so there is an iteration involved. </li>
-!> <li> Suggested values of the vacuum field can be self generated; see xspech.f90 for more documentation on this. </li>
+!> <li> Suggested values of the vacuum field can be self generated; see xspech() for more documentation on this. </li>
 !> </ul>
 !>
 !> **compute the normal field on a regular grid on the computational boundary**

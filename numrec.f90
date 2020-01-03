@@ -10,7 +10,7 @@
 !>
 !> <li> This routine assigns the Fourier mode labels that converts a double-sum into a single sum; i.e., the \f$m_j\f$ and \f$n_j\f$ are assigned where
 !> \f{eqnarray}{ f(\theta,\zeta) & = & \sum_{n=0}^{N} f_{0,n}\cos(-n \, N_P \, \zeta) + \sum_{m=1}^{M} \sum_{n=-N}^{N} f_{m,n}\cos(m\theta-n \, N_P \, \zeta) \\
-!>                               & = & \sum_j f_j \cos(m_j\theta-n_j\zeta), \label{eq:condensedFourierrepresentation}
+!>                               & = & \sum_j f_j \cos(m_j\theta-n_j\zeta), \label{eq:condensedFourierrepresentation_numrec}
 !> \f}
 !> where \f$N\equiv\,\f$\c Ntor and \f$M\equiv\,\f$\c Mpol are given on input, and \f$N_P \equiv\,\f$\c Nfp is the field periodicity. </li>
 !> </ul>
@@ -53,8 +53,8 @@ end subroutine gi00ab
 !>      The "packing" is governed by \f$i = 1 + j + k N_\theta\f$.
 !>      The "discrete" resolution is \f$N_\theta \equiv\,\f$\c Nt, \f$N_\zeta \equiv\,\f$\c Nz and \c Ntz \f$=\f$ \c Nt \f$\times\f$ \c Nz , 
 !>      which are set in preset() . </li>
-!> <li> The Fourier harmonics consistent with Eqn.\f$(\ref{eq:condensedFourierrepresentation})\f$ are constructed.
-!>      The mode identification labels appearing in Eqn.\f$(\ref{eq:condensedFourierrepresentation})\f$ are \f$m_j \equiv\,\f$\c im(j) and \f$n_j \equiv\,\f$\c in(j) ,
+!> <li> The Fourier harmonics consistent with Eqn.\f$(\ref{eq:condensedFourierrepresentation_numrec})\f$ are constructed.
+!>      The mode identification labels appearing in Eqn.\f$(\ref{eq:condensedFourierrepresentation_numrec})\f$ are \f$m_j \equiv\,\f$\c im(j) and \f$n_j \equiv\,\f$\c in(j) ,
 !>      which are set in readin() via a call to gi00ab() . </li>
 !> </ul>
 !>

@@ -58,7 +58,7 @@
 !> <li> When all is said and done, this routine calculates
 !>      \f{eqnarray}{ \int_0^{2\pi} \int_0^{2\pi} \verb+vcintegrand+ \;\; d\theta d\zeta
 !>      \f}
-!>      for a given \f$(X,Y,Z)\f$, where \c vcintegrand  is given in Eqn.\f$(\ref{eq:integrand})\f$. </li>
+!>      for a given \f$(X,Y,Z)\f$, where \c vcintegrand  is given in Eqn.\f$(\ref{eq:integrand_casing})\f$. </li>
 !> <li> The surface integral is performed using \c DCUHRE , which 
 !>      uses an adaptive subdivision strategy and also computes absolute error estimates.
 !>      The absolute and relative accuracy required are provided by the \c inputvar \c vcasingtol .
@@ -87,7 +87,7 @@
 !>      \f{eqnarray}{ D \equiv \sqrt{(X-x)^2 + (Y-y)^2 + (Z-Z)^2} + \epsilon^2.
 !>      \f} </li>
 !> <li> On taking the limit that \f$\epsilon \rightarrow 0\f$, the virtual casing integrand is 
-!>       \f{eqnarray}{ \verb+vcintegrand+ \equiv ( B_x n_x + B_y n_y + B_z n_z ) ( 1 + 3 \epsilon^2 / D^2 ) / D^3, \label{eq:integrand}
+!>       \f{eqnarray}{ \verb+vcintegrand+ \equiv ( B_x n_x + B_y n_y + B_z n_z ) ( 1 + 3 \epsilon^2 / D^2 ) / D^3, \label{eq:integrand_casing}
 !>       \f}
 !>      where the normal vector is \f${\bf n} \equiv n_x {\bf i} + n_y {\bf j} + n_z {\bf k}\f$.
 !>      The normal vector, \c Nxyz , to the computational boundary (which does not change) is computed in preset().

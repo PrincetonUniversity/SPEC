@@ -1,5 +1,9 @@
 !> \file xspech.f90
-!! \brief Main program
+!> \brief Main program
+
+!> \brief Main program of SPEC
+!> 
+!> @return none
 program xspech
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -94,14 +98,14 @@ program xspech
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-!latex \subsection{reading input, allocating global variables} 
-
-!latex \begin{enumerate}
-!latex \item The input namelists and geometry are read in via a call to \link{global}\verb+:readin+.
-!latex       A full description of the required input is given in \link{global}.
-!latex \item Most internal variables, global memory etc., are allocated in \link{preset}.
-!latex \item All quantities in the input file are mirrored into the output file's group \type{input}.
-!latex \end{enumerate} 
+!> **reading input, allocating global variables**
+!>
+!> <ul>
+!> <li> The input namelists and geometry are read in via a call to readin() .
+!>       A full description of the required input is given in global.f90 . </li>
+!> <li> Most internal variables, global memory etc., are allocated in preset() . </li>
+!> <li> All quantities in the input file are mirrored into the output file's group \c input . </li>
+!> </ul>
 
   WCALL( xspech, readin ) ! sets Rscale, Mvol; 03 Nov 16;
 
@@ -117,23 +121,25 @@ program xspech
     WCALL( xspech, wrtend ) ! write restart file ! 17 May 19
   endif
 
-!latex \subsection{preparing output file group \type{iterations}}
-
-!latex \begin{enumerate}
-
-!latex \item The group \verb+iterations+ is created in the output file.
-!latex       This group contains the interface geometry at each iteration, which is useful for constructing movies illustrating the convergence.
-!latex       The data structure in use is an unlimited array of the following compound datatype:
-!latex \begin{verbatim} DATATYPE  H5T_COMPOUND {
-!latex       H5T_NATIVE_INTEGER "nDcalls";
-!latex       H5T_NATIVE_DOUBLE "Energy";
-!latex       H5T_NATIVE_DOUBLE "ForceErr";
-!latex       H5T_ARRAY { [Mvol+1][mn] H5T_NATIVE_DOUBLE } "iRbc";
-!latex       H5T_ARRAY { [Mvol+1][mn] H5T_NATIVE_DOUBLE } "iZbs";
-!latex       H5T_ARRAY { [Mvol+1][mn] H5T_NATIVE_DOUBLE } "iRbs";
-!latex       H5T_ARRAY { [Mvol+1][mn] H5T_NATIVE_DOUBLE } "iZbc";
-!latex } \end{verbatim}
-!latex \end{enumerate} 
+!> **preparing output file group iterations**
+!>
+!> <ul>
+!> <li> The group \c iterations is created in the output file.
+!>       This group contains the interface geometry at each iteration, which is useful for constructing movies illustrating the convergence.
+!>       The data structure in use is an unlimited array of the following compound datatype:
+!> ```
+!> DATATYPE  H5T_COMPOUND {
+!>       H5T_NATIVE_INTEGER "nDcalls";
+!>       H5T_NATIVE_DOUBLE "Energy";
+!>       H5T_NATIVE_DOUBLE "ForceErr";
+!>       H5T_ARRAY { [Mvol+1][mn] H5T_NATIVE_DOUBLE } "iRbc";
+!>       H5T_ARRAY { [Mvol+1][mn] H5T_NATIVE_DOUBLE } "iZbs";
+!>       H5T_ARRAY { [Mvol+1][mn] H5T_NATIVE_DOUBLE } "iRbs";
+!>       H5T_ARRAY { [Mvol+1][mn] H5T_NATIVE_DOUBLE } "iZbc";
+!> }
+!> ```
+!> </li>
+!> </ul> 
 
   WCALL( xspech, init_convergence_output ) ! initialize convergence output arrays ! 17 May 19
 
@@ -172,12 +178,12 @@ program xspech
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-!latex \subsection{``packing" geometrical degrees-of-freedom into vector}
-
-!latex \begin{enumerate}
-!latex \item If \internal{NGdof.gt.0}, where \internal{NGdof}$\equiv $ counts the geometrical degrees-of-freedom, i.e. the $R_{bc}$, $Z_{bs}$, etc.,
-!latex       then \link{packxi} is called to ``pack" the geometrical degrees-of-freedom into \internal{position(0:NGdof)}.
-!latex \end{enumerate} 
+!> **packing geometrical degrees-of-freedom into vector**
+!>
+!> <ul>
+!> <li> If \c NGdof.gt.0 , where \c NGdof counts the geometrical degrees-of-freedom, i.e. the \f$R_{bc}\f$, \f$Z_{bs}\f$, etc.,
+!>       then packxi() is called to "pack" the geometrical degrees-of-freedom into \c position(0:NGdof) . </li>
+!> </ul> 
 
   if( NGdof.gt.0 ) then ! pack geometry into vector; 14 Jan 13;
 
@@ -188,15 +194,15 @@ program xspech
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsection{initialize adiabatic constants} 
-
-!latex \begin{enumerate}
-!latex \item If \inputvar{Ladiabatic.eq.0}, then the ``adiabatic constants'' in each region, $P_v$, are calculated as
-!latex       \be P_v \equiv p_v V_v^\gamma, \label{eq:adiabatic}
-!latex       \ee
-!latex       where $p_v\equiv$ \inputvar{pressure(vvol)}, the volume $V_v$ of each region is computed by \link{volume},
-!latex       and the adiabatic index $\gamma\equiv$ \inputvar{gamma}.
-!latex \end{enumerate} 
+!> **initialize adiabatic constants**
+!>
+!> <ul>
+!> <li> If \c Ladiabatic.eq.0 , then the "adiabatic constants" in each region, \f$P_v\f$, are calculated as
+!>       \f{eqnarray}{ P_v \equiv p_v V_v^\gamma, \label{eq:adiabatic_xspech}
+!>       \f}
+!>       where \f$p_v\equiv\,\f$\c pressure(vvol) , the volume \f$V_v\f$ of each region is computed by volume() ,
+!>       and the adiabatic index \f$\gamma\equiv\,\f$\c gamma . </li>
+!> </ul> 
 
   do vvol = 1, Mvol
 
@@ -217,16 +223,18 @@ program xspech
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-!latex \subsection{solving force-balance}
-  
-!latex \begin{enumerate}
-!latex \item If there are geometrical degress of freedom, i.e. if \internal{NGdof.gt.0}, then \bi
-!l tex \item[] if \inputvar{Lminimize.eq.1}, call \link{pc00aa} to find minimum of energy functional
-!l tex         using quasi-Newton, preconditioned conjugate gradient method, \nag{www.nag.co.uk/numeric/FL/manual19/pdf/E04/e04dgf_fl18.pdf}{E04DGF};
-!latex \item[] If \inputvar{Lfindzero.gt.0}, call \link{newton} to find extremum of constrained energy functional using a Newton method, 
-!latex         \nag{www.nag.co.uk/numeric/FL/manual19/pdf/C05/c05pdf_fl19.pdf}{C05PDF};
-!latex \ei
-!latex \end{enumerate} 
+!> **solving force-balance**
+!>
+!> <ul>
+!> <li> If there are geometrical degress of freedom, i.e. if \c NGdof.gt.0 , then
+!>      <ul>
+!>      <li> \todo If \c Lminimize.eq.1 , call pc00aa() to find minimum of energy functional
+!>              using quasi-Newton, preconditioned conjugate gradient method, \c E04DGF 
+!>      
+!>      </li>
+!>      <li> If \c Lfindzero.gt.0 , call newton() to find extremum of constrained energy functional using a Newton method, \c C05PDF . </li>
+!>      </ul> </li>
+!> </ul> 
   
 !    if( Lminimize.eq.1 ) then
 !
@@ -252,13 +260,13 @@ program xspech
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsection{post diagnostics} 
-  
-!latex \begin{enumerate}
-!latex \item The pressure is computed from the adiabatic constants from \Eqn{adiabatic}, i.e. $p=P/V^\gamma$.
-!latex \item The Beltrami/vacuum fields in each region are re-calculated using \link{dforce}.
-!latex \item If \inputvar{Lcheck.eq.5 .or. LHevalues .or. LHevectors .or. Lperturbed.eq.1}, then the ``Hessian'' matrix is examined using \link{hesian}.
-!latex \end{enumerate} 
+!> **post diagnostics**
+!>
+!> <ul>
+!> <li> The pressure is computed from the adiabatic constants from Eqn.\f$(\ref{eq:adiabatic_xspech})\f$, i.e. \f$p=P/V^\gamma\f$. </li>
+!> <li> The Beltrami/vacuum fields in each region are re-calculated using dforce() . </li>
+!> <li> If \c Lcheck.eq.5 \c .or. \c LHevalues \c .or. \c LHevectors \c .or. \c Lperturbed.eq.1 , then the force-gradient matrix is examined using hesian() . </li>
+!> </ul> 
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -351,45 +359,44 @@ program xspech
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsection{free-boundary: re-computing normal field} 
-
-!latex \begin{enumerate}
-!latex \item If \inputvar{Lfreebound.eq.1} and \inputvar{Lfindzero.gt.0} and\inputvar{mfreeits.ne.0},
-!latex       then the magnetic field at the computational boundary produced by the plasma currents is computed using \link{bnorml}.
-!latex \item The ``new'' magnetic field at the computational boundary produced by the plasma currents is updated using a Picard scheme:
-!latex       \be \verb+Bns+_i^{j} = \lambda \, \verb+Bns+_i^{j-1} + (1-\lambda) \verb+Bns+_i, \label{eq:blending}
-!latex       \ee
-!latex       where $j$ labels free-boundary iterations, the ``blending parameter'' is $\lambda\equiv $ \inputvar{gBnbld}, 
-!latex       and \verb+Bns+$_i$ is computed by virtual casing.
-!latex       The subscript ``$i$'' labels Fourier harmonics. 
-!latex \item If the new (unblended) normal field is {\em not} sufficiently close to the old normal field, as quantified by \inputvar{gBntol}, 
-!latex       then the free-boundary iterations continue.
-!latex       This is quantified by
-!latex       \be \sum_i | \verb+Bns+_i^{j-1} - \verb+Bns+_i | / N, \label{eq:gBntol}
-!latex       \ee
-!latex       where $N$ is the total number of Fourier harmonics.
-!latex \item There are several choices that are available:
-!latex       \begin{enumerate}
-!latex       \item if \inputvar{mfreeits} $= -2$ : the vacuum magnetic field 
-!latex             (really, the normal component of the field produced by the external currents at the computational boundary)
-!latex             required to hold the given equlibrium is written to file.
-!latex             This information is required as input by 
-!latex             \paper{FOCUS}{Caoxiang Zhu, Stuart Hudson et al.}{10.1088/1741-4326/aa8e0a}{Nucl. Fusion}{58}{016008}{2017}
-!latex             for example. (This option probably needs to revised.)
-!latex       \item if \inputvar{mfreeits} $= -1$ : after the plasma field is computed by virtual casing, 
-!latex             the vacuum magnetic field is set to exactly balance the plasma field 
-!latex             (again, we are really talking about the normal component at the computational boundary.)
-!latex             This will ensure that the computational boundary itself if a flux surface of the total magnetic field.
-!latex       \item if \inputvar{mfreeits} $= 0$ : the plasma field at the computational boundary is not updated; no ``free-boundary'' iterations take place.
-!latex       \item if \inputvar{mfreeits} $> 0$ : the plasma field at the computational boundary is updated according to the above blending \Eqn{blending},
-!latex             and the free-boundary iterations will continue until either the tolerance condition is met (see \inputvar{gBntol} and \Eqn{gBntol})
-!latex             or the maximum number of free-boundary iterations, namely \inputvar{mfreeits}, is reached.
-!latex             For this case, \inputvar{Lzerovac} is relevant: 
-!latex             if \inputvar{Lzerovac} $= 1$, then the vacuum field is set equal to the normal field at every iteration, 
-!latex             which results in the computational boundary being a flux surface. 
-!latex             (I am not sure if this is identical to setting \inputvar{mfreeits}$= -1$; the logic etc. needs to be revised.)
-!latex       \end{enumerate}
-!latex \end{enumerate}
+!> **free-boundary: re-computing normal field**
+!>
+!> <ul>
+!> <li> If \c Lfreebound.eq.1 and \c Lfindzero.gt.0 and \c mfreeits.ne.0 ,
+!>       then the magnetic field at the computational boundary produced by the plasma currents is computed using bnorml() . </li>
+!> <li> The "new" magnetic field at the computational boundary produced by the plasma currents is updated using a Picard scheme:
+!>       \f{eqnarray}{ \texttt{Bns}_i^{j} = \lambda \, \texttt{Bns}_i^{j-1} + (1-\lambda) \texttt{Bns}_i, \label{eq:blending_xspech}
+!>       \f}
+!>       where \f$j\f$ labels free-boundary iterations, the "blending parameter" is \f$\lambda\equiv\,\f$\c gBnbld , 
+!>       and \c Bns \f$_i\f$ is computed by virtual casing.
+!>       The subscript "$i$" labels Fourier harmonics.  </li>
+!> <li> If the new (unblended) normal field is _not_ sufficiently close to the old normal field, as quantified by \c gBntol , 
+!>       then the free-boundary iterations continue.
+!>       This is quantified by
+!>       \f{eqnarray}{ \sum_i | \texttt{Bns}_i^{j-1} - \texttt{Bns}_i | / N, \label{eq:gBntol_xspech}
+!>       \f}
+!>       where \f$N\f$ is the total number of Fourier harmonics. </li>
+!> <li> There are several choices that are available:
+!>       <ul>
+!>       <li> if \c mfreeits=-2 : the vacuum magnetic field 
+!>             (really, the normal component of the field produced by the external currents at the computational boundary)
+!>             required to hold the given equlibrium is written to file.
+!>             This information is required as input by FOCUS \cite y2017_zhu
+!>             for example. (This option probably needs to revised.) </li>
+!>       <li> if \c mfreeits=-1 : after the plasma field is computed by virtual casing, 
+!>             the vacuum magnetic field is set to exactly balance the plasma field 
+!>             (again, we are really talking about the normal component at the computational boundary.)
+!>             This will ensure that the computational boundary itself if a flux surface of the total magnetic field. </li>
+!>       <li> if \c mfreeits=0 : the plasma field at the computational boundary is not updated; no "free-boundary" iterations take place. </li>
+!>       <li> if \c mfreeits>0 : the plasma field at the computational boundary is updated according to the above blending Eqn.\f$(\ref{eq:blending_xspech})\f$,
+!>             and the free-boundary iterations will continue until either the tolerance condition is met (see \c gBntol and Eqn.\f$(\ref{eq:gBntol_xspech})\f$)
+!>             or the maximum number of free-boundary iterations, namely \c mfreeits , is reached.
+!>             For this case, \c Lzerovac is relevant: 
+!>             if \c Lzerovac=1 , then the vacuum field is set equal to the normal field at every iteration, 
+!>             which results in the computational boundary being a flux surface. 
+!>             (I am not sure if this is identical to setting \c mfreeits=-1 ; the logic etc. needs to be revised.) </li>
+!>       </ul> </li>
+!> </ul>
 
   LContinueFreeboundaryIterations = .false.
 
@@ -522,10 +529,11 @@ program xspech
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsection{output files: vector potential} 
-!latex \begin{enumerate}
-!latex \item The vector potential is written to file using \link{ra00aa}.
-!latex \end{enumerate} 
+!> **output files: vector potential**
+!>
+!> <ul>
+!> <li> The vector potential is written to file using ra00aa() . </li>
+!> </ul> 
 
   WCALL( xspech, ra00aa, ('W') ) ! this writes vector potential to file;
 
@@ -607,14 +615,14 @@ program xspech
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsection{final diagnostics} 
-
-!latex \begin{enumerate}
-!latex \item \link{sc00aa} is called to compute the covariant components of the magnetic field at the interfaces;
-!latex       these are related to the singular currents;
-!latex \item if \inputvar{Lcheck} $= 1$, \link{jo00aa} is called to compute the error in the Beltrami equation;
-!latex \item \link{pp00aa} is called to construct the \Poincare plot;
-!latex \end{enumerate} 
+!> **final diagnostics**
+!>
+!> <ul>
+!> <li> sc00aa() is called to compute the covariant components of the magnetic field at the interfaces;
+!>       these are related to the singular currents; </li>
+!> <li> if \c Lcheck=1 , jo00aa() is called to compute the error in the Beltrami equation; </li>
+!> <li> pp00aa() is called to construct the Poincaré plot; </li>
+!> </ul> 
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -664,11 +672,11 @@ program xspech
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsection{restart files} 
-
-!latex \begin{enumerate}
-!latex \item \link{global}:\type{wrtend} is called to write the restart files.
-!latex \end{enumerate}
+!> **restart files** 
+!>
+!> <ul>
+!> <li> wrtend() is called to write the restart files. </li>
+!> </ul>
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -705,14 +713,8 @@ end program xspech
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsection{subroutine : ending}
-
-!latex \begin{enumerate}
-!latex \item Closes output files, writes screen summary.
-!latex \end{enumerate}
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+!> \brief Closes output files, writes screen summary.
+!> 
 subroutine ending
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -784,3 +786,5 @@ dcpu, Ttotal / (/ 1, 60, 3600 /), ecpu, 100*ecpu/dcpu
 end subroutine ending
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+

@@ -1,50 +1,50 @@
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!> \defgroup grp_smooth_boundary Smooth boundary
 
-!title (smooth boundary) ! Constructs smooth approximation to wall.
-
-!latex \briefly{Constructs smooth approximation to wall.}
-
-!latex \calledby{\link{xspech}}
-!latex \calls{\link{xspech}}
-
-!latex \tableofcontents
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \subsection{solution of Laplace's equation in two-dimensions}
-
-!latex \begin{enumerate}
-
-!latex \item The wall is given by a discrete set of points.
-!latex \item The points must go anti-clockwise.
-
-!latex \end{enumerate}
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!> \file wa00aa.f90
+!> \brief Constructs smooth approximation to wall.
 
 module laplaces
 
-  LOGICAL              :: stage1, exterior, dorm
-  INTEGER              :: Nintervals, Nsegments, IC, NP4, NP1
-  INTEGER, allocatable :: icint(:)
-  REAL                 :: originalalpha
-  REAL, allocatable    :: xpoly(:), ypoly(:), phi(:), phid(:), CC(:,:)
+  LOGICAL              :: stage1        !< what is this ?
+  LOGICAL              :: exterior      !< what is this ?
+  LOGICAL              :: dorm          !< what is this ?
+  INTEGER              :: Nintervals    !< what is this ?
+  INTEGER              :: Nsegments     !< what is this ?
+  INTEGER              :: IC            !< what is this ?
+  INTEGER              :: NP4           !< what is this ?
+  INTEGER              :: NP1           !< what is this ?
+  INTEGER, allocatable :: icint(:)      !< what is this ?
+  REAL                 :: originalalpha !< what is this ?
+  REAL, allocatable    :: xpoly(:)      !< what is this ?
+  REAL, allocatable    :: ypoly(:)      !< what is this ?
+  REAL, allocatable    :: phi(:)        !< what is this ?
+  REAL, allocatable    :: phid(:)       !< what is this ?
+  REAL, allocatable    :: CC(:,:)       !< what is this ?
 
-  INTEGER              :: ilength
-  REAL                 :: totallength
+  INTEGER              :: ilength       !< what is this ?
+  REAL                 :: totallength   !< what is this ?
 
-  INTEGER              :: niterations ! counter; eventually redundant; 24 Oct 12;
+  INTEGER              :: niterations   !< counter; eventually redundant; 24 Oct 12;
   
-  INTEGER              :: iangle ! angle ! eventually redundant; 24 Oct 12;
+  INTEGER              :: iangle        !< angle ; eventually redundant; 24 Oct 12;
 
-  REAL                 :: Rmid, Zmid ! used to define local polar coordinate; eventually redundant; 24 Oct 12;
+  REAL                 :: Rmid          !< used to define local polar coordinate; eventually redundant; 24 Oct 12;
+  REAL                 :: Zmid          !< used to define local polar coordinate; eventually redundant; 24 Oct 12;
 
-  REAL                 :: alpha ! eventually redundant; 24 Oct 12;
+  REAL                 :: alpha         !< eventually redundant; 24 Oct 12;
 
 end module laplaces
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+!> \brief Constructs smooth approximation to wall.
+!> \ingroup grp_smooth_boundary
+!>
+!> **solution of Laplace's equation in two-dimensions**
+!>
+!> <ul>
+!> <li> The wall is given by a discrete set of points. </li>
+!> <li> The points must go anti-clockwise. </li>
+!> </ul>
+!>
 subroutine wa00aa( iwa00aa )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -292,6 +292,13 @@ end subroutine wa00aa
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+!> \brief Compute vacuum magnetic scalar potential (?)
+!> \ingroup grp_smooth_boundary
+!>
+!> @param Nconstraints
+!> @param rho
+!> @param fvec
+!> @param iflag
 subroutine VacuumPhi( Nconstraints, rho, fvec, iflag )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

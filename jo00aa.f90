@@ -10,8 +10,8 @@
 !> <ul>
 !> <li> The components of the vector potential, \f${\bf A}=A_\theta \nabla + A_\zeta \nabla \zeta\f$, are
 !>      \f{eqnarray}{
-!>        A_\theta(s,\theta,\zeta) &=& \sum_{i,l} {\color{red} {A_{\theta,e,i,l}}} \; {\overline T}_{l,i}(s) \cos\alpha_i + \sum_{i,l} {\color{Orange}  A_{\theta,o,i,l}} \; {\overline T}_{l,i}(s) \sin\alpha_i, \label{eq:At} \\
-!>        A_\zeta (s,\theta,\zeta) &=& \sum_{i,l} {\color{blue}{A_{\zeta, e,i,l}}} \; {\overline T}_{l,i}(s) \cos\alpha_i + \sum_{i,l} {\color{Cerulean}A_{\zeta ,o,i,l}} \; {\overline T}_{l,i}(s) \sin\alpha_i, \label{eq:Az}
+!>        A_\theta(s,\theta,\zeta) &=& \sum_{i,l} {\color{red}  A_{\theta,e,i,l}} \; {\overline T}_{l,i}(s) \cos\alpha_i + \sum_{i,l} {\color{Orange}  A_{\theta,o,i,l}} \; {\overline T}_{l,i}(s) \sin\alpha_i, \label{eq:At_jo00aa} \\
+!>        A_\zeta (s,\theta,\zeta) &=& \sum_{i,l} {\color{blue} A_{\zeta, e,i,l}} \; {\overline T}_{l,i}(s) \cos\alpha_i + \sum_{i,l} {\color{Cerulean}A_{\zeta ,o,i,l}} \; {\overline T}_{l,i}(s) \sin\alpha_i, \label{eq:Az_jo00aa}
 !>      \f}
 !>      where \f${\overline T}_{l,i}(s) \equiv \bar s^{m_i/2} \, T_l(s)\f$, \f$T_l(s)\f$ is the Chebyshev polynomial, and \f$\alpha_j \equiv m_j\theta-n_j\zeta\f$.
 !>      The regularity factor, \f$\bar s^{m_i/2}\f$, where \f$\bar s \equiv (1+s)/2\f$, is only included if there is a coordinate singularity in the domain
@@ -19,9 +19,9 @@
 !> <li> The magnetic field, \f$\sqrt g \, {\bf B} = \sqrt g B^s {\bf e}_s + \sqrt g B^\theta {\bf e}_\theta + \sqrt g B^\zeta {\bf e}_\zeta\f$, is
 !>      \f{eqnarray}{
 !>        \begin{array}{ccccrcrcrcrcccccccccccccccccccccccccccccccccccccccccccccccccccc}
-!>        \sqrt g \, {\bf B} & = & {\bf e}_s      & \sum_{i,l} [ ( & - m_i {\color{blue}{A_{\zeta, e,i,l}}} & - & n_i {\color{red} {A_{\theta,e,i,l}}} & ) {\overline T}_{l,i}        \sin\alpha_i + ( & + m_i {\color{Cerulean}A_{\zeta ,o,i,l}} & + & n_i {\color{Orange}  A_{\theta,o,i,l}} & ) {\overline T}_{l,i}        \cos\alpha_i ] \\
-!>                           & + & {\bf e}_\theta & \sum_{i,l} [ ( &                                        & - &     {\color{blue}{A_{\zeta, e,i,l}}} & ) {\overline T}_{l,i}^\prime \cos\alpha_i + ( &                                           & - &     {\color{Cerulean}A_{\zeta ,o,i,l}} & ) {\overline T}_{l,i}^\prime \sin\alpha_i ] \\
-!>                           & + & {\bf e}_\zeta  & \sum_{i,l} [ ( &       {\color{red} {A_{\theta,e,i,l}}} &   &                                      & ) {\overline T}_{l,i}^\prime \cos\alpha_i + ( &       {\color{Orange}  A_{\theta,o,i,l}} &   &                                         & ) {\overline T}_{l,i}^\prime \sin\alpha_i ]
+!>        \sqrt g \, {\bf B} & = & {\bf e}_s      & \sum_{i,l} [ ( & - m_i {\color{blue} A_{\zeta, e,i,l}} & - & n_i {\color{red}  A_{\theta,e,i,l}} & ) {\overline T}_{l,i}        \sin\alpha_i + ( & + m_i {\color{Cerulean}A_{\zeta ,o,i,l}} & + & n_i {\color{Orange}  A_{\theta,o,i,l}} & ) {\overline T}_{l,i}        \cos\alpha_i ] \\
+!>                           & + & {\bf e}_\theta & \sum_{i,l} [ ( &                                       & - &     {\color{blue} A_{\zeta, e,i,l}} & ) {\overline T}_{l,i}^\prime \cos\alpha_i + ( &                                          & - &     {\color{Cerulean}A_{\zeta ,o,i,l}} & ) {\overline T}_{l,i}^\prime \sin\alpha_i ] \\
+!>                           & + & {\bf e}_\zeta  & \sum_{i,l} [ ( &       {\color{red}  A_{\theta,e,i,l}} &   &                                     & ) {\overline T}_{l,i}^\prime \cos\alpha_i + ( &       {\color{Orange}  A_{\theta,o,i,l}} &   &                                        & ) {\overline T}_{l,i}^\prime \sin\alpha_i ]
 !>        \end{array}
 !>      \f} </li>
 !> <li> The current is
@@ -42,11 +42,11 @@
 !> <li> The measures of the error are
 !>      \f{eqnarray}{
 !>          ||\left( {\bf j}-\mu {\bf B}\right)\cdot\nabla s      || &  \equiv  & 
-!>        \int \!\! ds \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \left| \sqrt g \, {\bf j}\cdot\nabla s     -\mu \; \sqrt g \, {\bf B} \cdot\nabla s      \right|, \label{eq:Es} \\
+!>        \int \!\! ds \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \left| \sqrt g \, {\bf j}\cdot\nabla s     -\mu \; \sqrt g \, {\bf B} \cdot\nabla s      \right|, \label{eq:Es_jo00aa} \\
 !>          ||\left( {\bf j}-\mu {\bf B}\right)\cdot\nabla \theta || &  \equiv  & 
-!>        \int \!\! ds \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \left| \sqrt g \, {\bf j}\cdot\nabla \theta-\mu \; \sqrt g \, {\bf B} \cdot\nabla \theta \right|, \label{eq:Et} \\
+!>        \int \!\! ds \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \left| \sqrt g \, {\bf j}\cdot\nabla \theta-\mu \; \sqrt g \, {\bf B} \cdot\nabla \theta \right|, \label{eq:Et_jo00aa} \\
 !>          ||\left( {\bf j}-\mu {\bf B}\right)\cdot\nabla \zeta  || &  \equiv  & 
-!>        \int \!\! ds \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \left| \sqrt g \, {\bf j}\cdot\nabla \zeta -\mu \; \sqrt g \, {\bf B} \cdot\nabla \zeta  \right|. \label{eq:Ez} 
+!>        \int \!\! ds \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \left| \sqrt g \, {\bf j}\cdot\nabla \zeta -\mu \; \sqrt g \, {\bf B} \cdot\nabla \zeta  \right|. \label{eq:Ez_jo00aa} 
 !>      \f} </li>
 !> </ul>
 !>
@@ -54,11 +54,11 @@
 !> <ul>
 !> <li>  Is there a better definition and quantification of the error? For example, should we employ an error measure that is dimensionless? </li>
 !> <li>  If the coordinate singularity is in the domain, then \f$|\nabla\theta|\rightarrow\infty\f$ at the coordinate origin. 
-!>       What then happens to \f$||\left( {\bf j}-\mu {\bf B}\right)\cdot\nabla \theta ||\f$ as defined in Eqn.\f$(\ref{eq:Et})\f$? </li>
+!>       What then happens to \f$||\left( {\bf j}-\mu {\bf B}\right)\cdot\nabla \theta ||\f$ as defined in Eqn.\f$(\ref{eq:Et_jo00aa})\f$? </li>
 !> <li>  What is the predicted scaling of the error in the Chebyshev-Fourier representation scale with numerical resolution?
 !>       Note that the predicted error scaling for \f$E^s\f$, \f$E^\theta\f$ and \f$E^\zeta\f$ may not be standard, 
 !>       as various radial derivatives are taken to compute the components of \f${\bf j}\f$.
-!>       (See for example the discussion in Sec.IV.C in Hudson et al. (2012) \cite y2012_hudson ,
+!>       (See for example the discussion in Sec.IV.C in Hudson et al. (2011) \cite y2011_hudson ,
 !>       where the expected scaling of the error for a finite-element implementation is confirmed numerically.) </li>
 !> <li>  Instead of using Gaussian integration to compute the integral over \f$s\f$, an adaptive quadrature algorithm may be preferable. </li>
 !> </ul>
@@ -121,7 +121,7 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
 !> <ul>
 !> <li> The integration over \f$s\f$ is performed using Gaussian integration, e.g., \f$\displaystyle \int \!\! f(s) ds \approx \sum_k \omega_k f(s_k)\f$;
 !>      with the abscissae, \f$s_k\f$, and the weights, \f$\omega_k\f$, for \f$k=1,\f$ \c Iquad\f$_v\f$, determined by \c CDGQF.
-!>      The resolution, \c N \f$ \equiv \f$ \c Iquad\f$_v\f$, is determined by \c Nquad  (see global.f90 and preset.f90).
+!>      The resolution, \c N \f$ \equiv \f$ \c Iquad\f$_v\f$, is determined by \c Nquad  (see global.f90 and preset() ).
 !>      A fatal error is enforced by jo00aa() if \c CDGQF returns an \c ifail \f$\ne 0\f$. </li>
   
   itype = 1 ; aa = -one ; bb = +one ; cc = zero ; dd = zero ; twolquad = 2 * lquad
@@ -192,7 +192,7 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
    
     do ii = 1, mn  ! Fourier resolution of magnetic vector potential;
      
-!>          <li>  The Fourier components of the vector potential given in Eqn.\f$(\ref{eq:At})\f$ and Eqn.\f$(\ref{eq:Az})\f$, and their first and second radial derivatives, are summed. </li>
+!>          <li>  The Fourier components of the vector potential given in Eqn.\f$(\ref{eq:At_jo00aa})\f$ and Eqn.\f$(\ref{eq:Az_jo00aa})\f$, and their first and second radial derivatives, are summed. </li>
 
      if( Lcoordinatesingularity ) then ! compute regularization factor; 10 Jan 2018;
       sbarhim(0) = sbar**regumm(ii) ; sbarhim(1) = half * regumm(ii) * sbarhim(0) / sbar ; sbarhim(2) = half * ( regumm(ii)-one ) * sbarhim(1) / sbar

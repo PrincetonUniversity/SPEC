@@ -25,10 +25,10 @@
 !>      \f} </li>
 !> <li> Then \f${\bf A}={\bf \bar A}+\nabla g\f$ is given by \f${\bf A}=A_{\theta}\nabla\theta+A_{\zeta}\nabla\zeta\f$ with
 !>       \f{eqnarray}{
-!>        A_{\theta}(-1,\theta,\zeta) &=& 0 \label{eq:Atgauge} \\
-!>        A_{\zeta }(-1,     0,\zeta) &=& 0 \label{eq:Azgauge}
+!>        A_{\theta}(-1,\theta,\zeta) &=& 0 \label{eq:At_matrixgauge_matrix} \\
+!>        A_{\zeta }(-1,     0,\zeta) &=& 0 \label{eq:Az_matrixgauge_matrix}
 !>       \f} </li>
-!> <li> This specifies the gauge: to see this, notice that no gauge term can be added without violating the conditions in Eqn.\f$(\ref{eq:Atgauge})\f$ or Eqn.\f$(\ref{eq:Azgauge})\f$. </li>
+!> <li> This specifies the gauge: to see this, notice that no gauge term can be added without violating the conditions in Eqn.\f$(\ref{eq:At_matrixgauge_matrix})\f$ or Eqn.\f$(\ref{eq:Az_matrixgauge_matrix})\f$. </li>
 !> <li> Note that the gauge employed in each volume is distinct. </li>
 !> </ul> 
 !>
@@ -39,7 +39,7 @@
 !>       \f$\sqrt g \, {\bf B} = (\partial_\theta A_\zeta - \partial_\zeta A_\theta)\;{\bf e}_s - \partial_s A_\zeta \;{\bf e}_\theta + \partial_s A_\theta \;{\bf e}_\zeta\f$. </li>
 !> <li> In the annular volumes, the condition that the field is tangential to the inner interface, \f$\sqrt g {\bf B}\cdot\nabla s=0\f$ at \f$s=-1\f$,
 !>       gives \f$\partial_\theta A_\zeta - \partial_\zeta A_\theta = 0\f$.
-!>       With the above condition on \f$A_\theta\f$ given in Eqn.\f$(\ref{eq:Atgauge})\f$, this gives \f$\partial_\theta A_\zeta=0\f$, which with Eqn.\f$(\ref{eq:Azgauge})\f$ gives
+!>       With the above condition on \f$A_\theta\f$ given in Eqn.\f$(\ref{eq:At_matrixgauge_matrix})\f$, this gives \f$\partial_\theta A_\zeta=0\f$, which with Eqn.\f$(\ref{eq:Az_matrixgauge_matrix})\f$ gives
 !>       \f{eqnarray}{ A_\zeta(-1,\theta,\zeta)=0.
 !>       \f} </li>
 !> <li> The condition at the outer interface, \f$s=+1\f$, is that the field is \f$\sqrt g \, {\bf B}\cdot\nabla s = \partial_\theta A_\zeta - \partial_\zeta A_\theta = b\f$,
@@ -62,8 +62,8 @@
 !> <ul>
 !> <li> The components of the vector potential, \f${\bf A}=A_\theta \nabla + A_\zeta \nabla \zeta eta\f$, are
 !>      \f{eqnarray}{
-!>        A_\theta(s,\theta,\zeta) &=& \sum_{i,l} {\color{red} A_{\theta,e,i,l}} \; {\overline T}_{l,i}(s) \cos\alpha_i + \sum_{i,l} {\color{Orange}  A_{\theta,o,i,l}} \; {\overline T}_{l,i}(s) \sin\alpha_i, \label{eq:At} \\
-!>        A_\zeta( s,\theta,\zeta) &=& \sum_{i,l} {\color{blue}A_{\zeta, e,i,l}} \; {\overline T}_{l,i}(s) \cos\alpha_i + \sum_{i,l} {\color{Cerulean}A_{\zeta ,o,i,l}} \; {\overline T}_{l,i}(s) \sin\alpha_i, \label{eq:Az}
+!>        A_\theta(s,\theta,\zeta) &=& \sum_{i,l} {\color{red} A_{\theta,e,i,l}} \; {\overline T}_{l,i}(s) \cos\alpha_i + \sum_{i,l} {\color{Orange}  A_{\theta,o,i,l}} \; {\overline T}_{l,i}(s) \sin\alpha_i, \label{eq:At_matrix} \\
+!>        A_\zeta( s,\theta,\zeta) &=& \sum_{i,l} {\color{blue}A_{\zeta, e,i,l}} \; {\overline T}_{l,i}(s) \cos\alpha_i + \sum_{i,l} {\color{Cerulean}A_{\zeta ,o,i,l}} \; {\overline T}_{l,i}(s) \sin\alpha_i, \label{eq:Az_matrix}
 !>      \f}
 !>      where \f${\overline T}_{l,i}(s) \equiv \bar s^{m_i/2} \, T_l(s)\f$, \f$T_l(s)\f$ is the Chebyshev polynomial, and \f$\alpha_j \equiv m_j\theta-n_j\zeta\f$.
 !>      The regularity factor, \f$\bar s^{m_i/2}\f$, where \f$\bar s \equiv (1+s)/2\f$, is only included if there is a coordinate singularity in the domain

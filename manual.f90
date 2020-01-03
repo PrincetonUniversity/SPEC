@@ -143,14 +143,14 @@
 !>
 !> <ul>
 !> <li> Consider a general, magnetic vector potential given in Cartesian coordinates,
-!>       \f{eqnarray}{{\bf A} = A_x \nabla x + A_y \nabla y +  A_z \nabla z + \nabla g \label{eq:CartesianVectorPotential}
+!>       \f{eqnarray}{{\bf A} = A_x \nabla x + A_y \nabla y +  A_z \nabla z + \nabla g \label{eq:CartesianVectorPotential_manual}
 !>       \f}
 !>       where \f$A_x\f$, \f$A_y\f$, \f$A_z\f$, and the as-yet-arbitrary gauge function, \f$g\f$, are regular at \f$(x,y)=(0,0)\f$,
 !>       i.e. they can be expanded as a Taylor series, e.g.
 !>       \f{eqnarray}{A_x = \sum_{i,j} \alpha_{i,j} x^i y^j, \qquad
 !>           A_y = \sum_{i,j}  \beta_{i,j} x^i y^j, \qquad
 !>           A_z = \sum_{i,j} \gamma_{i,j} x^i y^j, \qquad
-!>            g  = \sum_{i,j} \delta_{i,j} x^i y^j, \label{eq:Taylorexpansion}
+!>            g  = \sum_{i,j} \delta_{i,j} x^i y^j, \label{eq:Taylorexpansion_manual}
 !>       \f}
 !>       for small \f$x\f$ and small \f$y\f$. </li>
 !> <li> Note that we have restricted attention to the "axisymmetric" case, as there is no dependence on \f$z\f$. </li>
@@ -165,7 +165,7 @@
 !> <li> By repeated applications of the double-angle formula, the expressions for \f$A_x\f$, \f$A_y\f$ and \f$g\f$ can be cast as functions of \f$(r,\theta)\f$,
 !>       \f{eqnarray}{A_x & = & \sum_m r^m [ a_{m,0} + a_{m,1} \; r^2 + a_{m,2} \; r^4 + ... ] \sin(m\theta), \\
 !>                    A_y & = & \sum_m r^m [ b_{m,0} + b_{m,1} \; r^2 + b_{m,2} \; r^4 + ... ] \cos(m\theta), \\
-!>                    A_z & = & \sum_m r^m [ c_{m,0} + c_{m,1} \; r^2 + c_{m,2} \; r^4 + ... ] \cos(m\theta), \label{eq:regularAz} \\
+!>                    A_z & = & \sum_m r^m [ c_{m,0} + c_{m,1} \; r^2 + c_{m,2} \; r^4 + ... ] \cos(m\theta), \label{eq:regularAz_manual} \\
 !>                     g  & = & \sum_m r^m [ g_{m,0} + g_{m,1} \; r^2 + g_{m,2} \; r^4 + ... ] \sin(m\theta), 
 !>       \f}
 !>       where attention is restricted to stellarator symmetric geometry, but similar expressions hold for the non-stellarator symmetric terms. </li>
@@ -191,11 +191,11 @@
 !>       \end{array} \f}
 !>       eliminates the lowest order \f$r\f$ dependence in each harmonic. </li>
 !> <li> By working through the algebra (again, using Mathematica) the expressions for \f$A_\theta\f$ and \f$A_\zeta\f$ become
-!>       \f{eqnarray}{A_\theta &=& r^2     f_0(\rho) + r^3 f_1(\rho) \cos(\theta) + r^4 f_2(\rho) \cos(2\theta) + r^5 f_3(\rho) \cos(3\theta) + ... \label{eq:nearoriginAt} \\
-!>                    A_\zeta  &=& \;\;\;\,g_0(\rho) + r^1 g_1(\rho) \cos(\theta) + r^2 g_2(\rho) \cos(2\theta) + r^3 g_3(\rho) \cos(3\theta) + ... \label{eq:nearoriginAz}
+!>       \f{eqnarray}{A_\theta &=& r^2     f_0(\rho) + r^3 f_1(\rho) \cos(\theta) + r^4 f_2(\rho) \cos(2\theta) + r^5 f_3(\rho) \cos(3\theta) + ... \label{eq:nearoriginAt_manual} \\
+!>                    A_\zeta  &=& \;\;\;\,g_0(\rho) + r^1 g_1(\rho) \cos(\theta) + r^2 g_2(\rho) \cos(2\theta) + r^3 g_3(\rho) \cos(3\theta) + ... \label{eq:nearoriginAz_manual}
 !>       \f}
 !>       where \f$\rho\equiv r^2\f$ and the \f$f_m(\rho)\f$ and \f$g_m(\rho)\f$ are abitrary polynomials in \f$\rho\f$.
-!>       [The expression for \f$A_\zeta\f$ is unchanged from Eqn.\f$(\ref{eq:regularAz})\f$.] </li>
+!>       [The expression for \f$A_\zeta\f$ is unchanged from Eqn.\f$(\ref{eq:regularAz_manual})\f$.] </li>
 !> </ul>
 !>
 !> \subsection sec_generally somewhat generally, ...
@@ -205,16 +205,16 @@
 !>       \f{eqnarray}{{\bf A} = \sum_{m,n} A_{\theta,m,n} \cos(m\theta-n\zeta) \nabla \theta + \sum_{m,n} A_{\zeta,m,n} \cos(m\theta-n\zeta) \nabla \zeta,
 !>       \f}
 !>       where now the dependence on \f$\zeta\f$ is included, and the angles are arbitrary. </li>
-!> <li> The near-origin behaviour of \f$A_\theta\f$ and \f$A_\zeta\f$ given in Eqn.\f$(\ref{eq:nearoriginAt})\f$ and Eqn.\f$(\ref{eq:nearoriginAz})\f$ are flippantly generalized to
+!> <li> The near-origin behaviour of \f$A_\theta\f$ and \f$A_\zeta\f$ given in Eqn.\f$(\ref{eq:nearoriginAt_manual})\f$ and Eqn.\f$(\ref{eq:nearoriginAz_manual})\f$ are flippantly generalized to
 !>       \f{eqnarray}{
-!>           A_{\theta,m,n} & = & r^{m+2}          f_{m,n}(\rho), \label{eq:Atmn} \\
-!>           A_{\zeta ,m,n} & = & r^{m  } \;\;\;\; g_{m,n}(\rho), \label{eq:Azmn}
+!>           A_{\theta,m,n} & = & r^{m+2}          f_{m,n}(\rho), \label{eq:Atmn_manual} \\
+!>           A_{\zeta ,m,n} & = & r^{m  } \;\;\;\; g_{m,n}(\rho), \label{eq:Azmn_manual}
 !>       \f}
 !>       where the \f$f_{m,n}(\rho)\f$ and \f$g_{m,n}(\rho)\f$ are arbitrary polynomials in \f$\rho\f$. </li>
 !> <li> Additional gauge freedom can be exploited: including an additional gauge term \f$\nabla h\f$ where \f$h\f$ only depends on \f$\zeta\f$, e.g.
 !>       \f{eqnarray}{h(\zeta) = h_{0,0} \, \zeta + \sum h_{0,n} \sin( - n\zeta),\f} 
 !>       does not change the magnetic field and does not change any of the above discussion. </li>
-!> <li> The representation for the \f$A_{\theta,m,n}\f$ does not change, but we must clarify that Eqn.\f$(\ref{eq:Azmn})\f$ holds for only the \f$m\ne0\f$ harmonics:
+!> <li> The representation for the \f$A_{\theta,m,n}\f$ does not change, but we must clarify that Eqn.\f$(\ref{eq:Azmn_manual})\f$ holds for only the \f$m\ne0\f$ harmonics:
 !>       \f{eqnarray}{A_{\zeta,m,n} & = & r^{m} \;\;\;\;g_{m,n}(\rho), \;\;\;\mathrm{for}\;\;\; m \ne 0.
 !>       \f} </li>
 !> <li> For the \f$m=0\f$, \f$n\ne0\f$ harmonics of \f$A_\zeta\f$, including the additional gauge gives \f$A_{\zeta,0,n} = g_{0,n}(\rho) + n \, h_{0,n}\f$.
@@ -227,7 +227,7 @@
 !>       \f} </li>
 !> <li> To simplify the algorithmic implementation of these conditions,
 !>       we shall introduce a "regularization" factor, \f$\rho^{m/2} = r^m\f$. </li>
-!> <li> Note that the representation for \f$A_{\theta,m,n}\f$ given in Eqn.\f$(\ref{eq:Atmn})\f$,
+!> <li> Note that the representation for \f$A_{\theta,m,n}\f$ given in Eqn.\f$(\ref{eq:Atmn_manual})\f$,
 !>       with an arbitrary polynomial \f$f_{m,n}(\rho) = f_{m,n,0} + f_{m,n,1}\rho + f_{m,n,2}\rho^2 + ...\f$, 
 !>       is equivalent to \f$A_{\theta,m,n} = \rho^{m/2} \alpha_{m,n}(\rho)\f$ where \f$\alpha_{m,n}(\rho)\f$ is an arbitrary polynomial
 !>       with the constraint \f$\alpha_{m,n}(0)=0\f$. </li>

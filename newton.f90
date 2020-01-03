@@ -1,7 +1,7 @@
 !> \defgroup grp_force_driver Force-driver
 
 !> \file newton.f90
-!> \brief Employs Newton method to find \f${\bf F}({\bf x})=0\f$, where \f${\bf x}\equiv\{\mathrm{geometry}\}\f$ and \f${\bf F}\f$ is defined in dforce.f90 .
+!> \brief Employs Newton method to find \f${\bf F}({\bf x})=0\f$, where \f${\bf x}\equiv\{\mathrm{geometry}\}\f$ and \f${\bf F}\f$ is defined in dforce() .
 
 !> \brief timing of Newton iterations
 module newtontime 
@@ -12,7 +12,7 @@ module newtontime
   
 end module newtontime
 
-!> \brief Employs Newton method to find \f${\bf F}({\bf x})=0\f$, where \f${\bf x}\equiv\{\mathrm{geometry}\}\f$ and \f${\bf F}\f$ is defined in dforce.f90 .
+!> \brief Employs Newton method to find \f${\bf F}({\bf x})=0\f$, where \f${\bf x}\equiv\{\mathrm{geometry}\}\f$ and \f${\bf F}\f$ is defined in dforce() .
 !> \ingroup grp_force_driver
 !>
 !> Solves \f${\bf F}({\bf \xi})=0\f$, where \f${\bf F} \equiv \{ [[p+B^2/2]]_{i,l}, I_{i,l} \}\f$ and \f${\bf \xi} \equiv \{ R_{i,l},Z_{i,l} \}\f$.

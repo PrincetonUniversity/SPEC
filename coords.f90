@@ -8,9 +8,9 @@
 !>
 !> **Coordinates**
 !> <ul>
-!> <li>  We work in coordinates, \f$(s,\theta,\zeta)\f$, which are be defined {\em inversely} via a transformation {\em to} Cartesian coordinates, \f$(x,y,z)\f$. </li>
+!> <li>  We work in coordinates, \f$(s,\theta,\zeta)\f$, which are be defined _inversely_ via a transformation _to_ Cartesian coordinates, \f$(x,y,z)\f$. </li>
 !> <li>  The toroidal angle, \f$\zeta\f$, is identical to the cylindrical angle, \f$\zeta\equiv\phi\f$. </li>
-!> <li>  The radial coordinate, \f$s\f$, is {\em not} a global variable: it only needs to be defined in each volume, and in each volume \f$s \in [-1,1]\f$. </li>
+!> <li>  The radial coordinate, \f$s\f$, is _not_ a global variable: it only needs to be defined in each volume, and in each volume \f$s \in [-1,1]\f$. </li>
 !> <li>  The choice of poloidal angle, \f$\theta\f$, does not affect the following. </li>
 !> </ul>
 !>
@@ -44,7 +44,7 @@
 !> <li>  The "coordinate" functions, \f$R(s,\theta,\zeta)\f$ and \f$Z(s,\theta,\zeta)\f$, are constructed by radially interpolating the Fourier representations of the 
 !>       ideal-interfaces. </li>
 !> <li>  The \f$v\f$-th volume is bounded by \f${\bf x}_{v-1}\f$ and \f${\bf x}_{v}\f$. </li>
-!> <li>  In each {\em annular} volume, the coordinates are constructed by linear interpolation:
+!> <li>  In each _annular_ volume, the coordinates are constructed by linear interpolation:
 !>       \f{eqnarray}{ \begin{array}{cccccccccccccccccccccccccccc}
 !>           R(s,\theta,\zeta) & \equiv & \displaystyle \sum_j & \displaystyle \left[ \; \frac{(1-s)}{2} \; R_{j,v-1} + \frac{(1+s)}{2} \; R_{j,v}\; \right] \; \cos\alpha_j,\\
 !>           Z(s,\theta,\zeta) & \equiv & \displaystyle \sum_j & \displaystyle \left[ \; \frac{(1-s)}{2} \; Z_{j,v-1} + \frac{(1+s)}{2} \; Z_{j,v}\; \right] \; \sin\alpha_j,

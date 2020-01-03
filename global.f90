@@ -421,7 +421,7 @@ module inputlist
                                      !< </ul>
   INTEGER      :: imethod     =  3   !< controls iterative solution to sparse matrix
                                      !< arising in real-space transformation to the straight-fieldline angle;
-                                     !< only relevant if \c Lsparse.eq.2; \see tr00ab.f90 for details
+                                     !< only relevant if \c Lsparse.eq.2; \see tr00ab() for details
                                      !< <ul>
                                      !< <li> if \c imethod = 1, the method is \c RGMRES   </li>
                                      !< <li> if \c imethod = 2, the method is \c CGS      </li>
@@ -438,7 +438,7 @@ module inputlist
                                      !< </ul>
   INTEGER      :: iprecon     =  0   !< controls iterative solution to sparse matrix arising in real-space transformation
                                      !< to the straight-fieldline angle;
-                                     !< only relevant if \c Lsparse.eq.2; \see tr00ab.f90 for details
+                                     !< only relevant if \c Lsparse.eq.2; \see tr00ab() for details
                                      !< <ul>
                                      !< <li> if \c iprecon = 0, the preconditioner is `N' </li>
                                      !< <li> if \c iprecon = 1, the preconditioner is `J' </li>
@@ -508,11 +508,11 @@ module inputlist
 !> <ul>
 !> <li> The "force" vector, \f${\bf F}\f$, which is constructed in dforce(), is a combination of pressure-imbalance Fourier harmonics, 
 !>       \f{eqnarray}{ F_{i,v} \equiv [[ p+B^2/2 ]]_{i,v} \times \exp\left[-\texttt{escale}(m_i^2+n_i^2) \right] \times \texttt{opsilon},
-!>       \label{eq:forcebalancemn} \f}
-!>       and spectral-condensation constraints, \f$I_{i,v}\f$, and the "star-like" angle constraints, \f$S_{i,v,}\f$, (see lforce.f90 for details)
+!>       \label{eq:forcebalancemn_global} \f}
+!>       and spectral-condensation constraints, \f$I_{i,v}\f$, and the "star-like" angle constraints, \f$S_{i,v,}\f$, (see lforce() for details)
 !>       \f{eqnarray}{ F_{i,v} \equiv \texttt{epsilon} \times I_{i,v} 
 !>           + \texttt{upsilon} \times \left( \psi_v^\omega S_{i,v,1} - \psi_{v+1}^\omega S_{i,v+1,0} \right),
-!>       \label{eq:spectralbalancemn} \f}
+!>       \label{eq:spectralbalancemn_global} \f}
 !>       where \f$\psi_v\equiv\f$ normalized toroidal flux, \c tflux, and \f$\omega\equiv\f$ \c wpoloidal. </li>
 !> </ul>
 !> @{
@@ -526,23 +526,23 @@ module inputlist
   REAL         :: escale     =   0.0     !< controls the weight factor, \c BBweight, in the force-imbalance harmonics
                                          !< <ul>
                                          !< <li> \c BBweight(i) \f$\displaystyle \equiv \texttt{opsilon} \times \exp\left[-\texttt{escale} \times (m_i^2+n_i^2) \right]\f$ </li>
-                                         !< <li> defined in preset.f90; used in dforce() </li>
-                                         !< <li> also see Eqn.\f$(\ref{eq:forcebalancemn})\f$ </li>
+                                         !< <li> defined in preset() ; used in dforce() </li>
+                                         !< <li> also see Eqn.\f$(\ref{eq:forcebalancemn_global})\f$ </li>
                                          !< </ul> 
   REAL         :: opsilon    =   1.0     !< weighting of force-imbalance
                                          !< <ul>
-                                         !< <li> used in dforce(); also see Eqn.\f$(\ref{eq:forcebalancemn})\f$ </li>
+                                         !< <li> used in dforce(); also see Eqn.\f$(\ref{eq:forcebalancemn_global})\f$ </li>
                                          !< </ul>
   REAL         :: pcondense  =   2.0     !< spectral condensation parameter
                                          !< <ul>
                                          !< <li> used in preset() to define \c mmpp(i) \f$\equiv m_i^p\f$, where \f$p\equiv \f$ \c pcondense </li>
                                          !< <li> the angle freedom is exploited to minimize \f$\displaystyle \texttt{epsilon} \sum_{i} m_i^p (R_{i}^2+Z_{i}^2)\f$
                                          !<      with respect to tangential variations in the interface geometry </li>
-                                         !< <li> also see Eqn.\f$(\ref{eq:spectralbalancemn})\f$ </li>vi 
+                                         !< <li> also see Eqn.\f$(\ref{eq:spectralbalancemn_global})\f$ </li>
                                          !< </ul>
   REAL         :: epsilon    =   0.0     !< weighting of spectral-width constraint
                                          !< <ul>
-                                         !< <li> used in dforce(); also see Eqn.\f$(\ref{eq:spectralbalancemn})\f$ </li>
+                                         !< <li> used in dforce(); also see Eqn.\f$(\ref{eq:spectralbalancemn_global})\f$ </li>
                                          !< </ul>
   REAL         :: wpoloidal  =   1.0     !< "star-like" poloidal angle constraint radial exponential factor
                                          !< used in preset() to construct \c sweight
@@ -584,7 +584,7 @@ module inputlist
   REAL         :: gBntol     =   1.0e-06 !< required tolerance in free-boundary iterations
                                          !< <ul>
                                          !< <li> only used if \c Lfreebound = 1 </li>
-                                         !< <li> only used in xspech(); see xspech.f90 for more documentation </li>
+                                         !< <li> only used in xspech() </li>
                                          !< </ul>
   REAL         :: gBnbld     =   0.666   !< normal blend
                                          !< <ul>
@@ -985,20 +985,20 @@ module allglobal
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  REAL   , allocatable :: goomne(:) !< described in preset.f90
-  REAL   , allocatable :: goomno(:) !< described in preset.f90
-  REAL   , allocatable :: gssmne(:) !< described in preset.f90
-  REAL   , allocatable :: gssmno(:) !< described in preset.f90
-  REAL   , allocatable :: gstmne(:) !< described in preset.f90
-  REAL   , allocatable :: gstmno(:) !< described in preset.f90
-  REAL   , allocatable :: gszmne(:) !< described in preset.f90
-  REAL   , allocatable :: gszmno(:) !< described in preset.f90
-  REAL   , allocatable :: gttmne(:) !< described in preset.f90
-  REAL   , allocatable :: gttmno(:) !< described in preset.f90
-  REAL   , allocatable :: gtzmne(:) !< described in preset.f90
-  REAL   , allocatable :: gtzmno(:) !< described in preset.f90
-  REAL   , allocatable :: gzzmne(:) !< described in preset.f90
-  REAL   , allocatable :: gzzmno(:) !< described in preset.f90
+  REAL   , allocatable :: goomne(:) !< described in preset()
+  REAL   , allocatable :: goomno(:) !< described in preset()
+  REAL   , allocatable :: gssmne(:) !< described in preset()
+  REAL   , allocatable :: gssmno(:) !< described in preset()
+  REAL   , allocatable :: gstmne(:) !< described in preset()
+  REAL   , allocatable :: gstmno(:) !< described in preset()
+  REAL   , allocatable :: gszmne(:) !< described in preset()
+  REAL   , allocatable :: gszmno(:) !< described in preset()
+  REAL   , allocatable :: gttmne(:) !< described in preset()
+  REAL   , allocatable :: gttmno(:) !< described in preset()
+  REAL   , allocatable :: gtzmne(:) !< described in preset()
+  REAL   , allocatable :: gtzmno(:) !< described in preset()
+  REAL   , allocatable :: gzzmne(:) !< described in preset()
+  REAL   , allocatable :: gzzmno(:) !< described in preset()
 !> @}
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -1006,34 +1006,34 @@ module allglobal
 !> \addtogroup grp_chebychev_metric Volume-integrated Chebyshev-metrics
 !> These are allocated in dforce(), defined in ma00aa(), and are used in matrix() to construct the matrices.
 !> @{
-  REAL,    allocatable :: DToocc(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix.f90
-  REAL,    allocatable :: DToocs(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix.f90
-  REAL,    allocatable :: DToosc(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix.f90
-  REAL,    allocatable :: DTooss(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix.f90
-  REAL,    allocatable :: TTsscc(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix.f90
-  REAL,    allocatable :: TTsscs(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix.f90
-  REAL,    allocatable :: TTsssc(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix.f90
-  REAL,    allocatable :: TTssss(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix.f90
-  REAL,    allocatable :: TDstcc(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix.f90
-  REAL,    allocatable :: TDstcs(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix.f90
-  REAL,    allocatable :: TDstsc(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix.f90
-  REAL,    allocatable :: TDstss(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix.f90
-  REAL,    allocatable :: TDszcc(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix.f90
-  REAL,    allocatable :: TDszcs(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix.f90
-  REAL,    allocatable :: TDszsc(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix.f90
-  REAL,    allocatable :: TDszss(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix.f90
-  REAL,    allocatable :: DDttcc(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix.f90
-  REAL,    allocatable :: DDttcs(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix.f90
-  REAL,    allocatable :: DDttsc(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix.f90
-  REAL,    allocatable :: DDttss(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix.f90
-  REAL,    allocatable :: DDtzcc(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix.f90
-  REAL,    allocatable :: DDtzcs(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix.f90
-  REAL,    allocatable :: DDtzsc(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix.f90
-  REAL,    allocatable :: DDtzss(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix.f90
-  REAL,    allocatable :: DDzzcc(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix.f90
-  REAL,    allocatable :: DDzzcs(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix.f90
-  REAL,    allocatable :: DDzzsc(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix.f90
-  REAL,    allocatable :: DDzzss(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix.f90 
+  REAL,    allocatable :: DToocc(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix()
+  REAL,    allocatable :: DToocs(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix()
+  REAL,    allocatable :: DToosc(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix()
+  REAL,    allocatable :: DTooss(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix()
+  REAL,    allocatable :: TTsscc(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix()
+  REAL,    allocatable :: TTsscs(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix()
+  REAL,    allocatable :: TTsssc(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix()
+  REAL,    allocatable :: TTssss(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix()
+  REAL,    allocatable :: TDstcc(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix()
+  REAL,    allocatable :: TDstcs(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix()
+  REAL,    allocatable :: TDstsc(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix()
+  REAL,    allocatable :: TDstss(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix()
+  REAL,    allocatable :: TDszcc(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix()
+  REAL,    allocatable :: TDszcs(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix()
+  REAL,    allocatable :: TDszsc(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix()
+  REAL,    allocatable :: TDszss(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix()
+  REAL,    allocatable :: DDttcc(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix()
+  REAL,    allocatable :: DDttcs(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix()
+  REAL,    allocatable :: DDttsc(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix()
+  REAL,    allocatable :: DDttss(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix()
+  REAL,    allocatable :: DDtzcc(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix()
+  REAL,    allocatable :: DDtzcs(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix()
+  REAL,    allocatable :: DDtzsc(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix()
+  REAL,    allocatable :: DDtzss(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix()
+  REAL,    allocatable :: DDzzcc(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix()
+  REAL,    allocatable :: DDzzcs(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix()
+  REAL,    allocatable :: DDzzsc(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix()
+  REAL,    allocatable :: DDzzss(:,:,:,:) !< volume-integrated Chebychev-metrics; see matrix() 
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1096,8 +1096,8 @@ module allglobal
 !> \addtogroup grp_field_matrices Field matrices: dMA, dMB, dMC, dMD, dME, dMF
 !> <ul>
 !> <li> The energy, \f$W \equiv \int \! dv {\; \bf B}\cdot{\bf B}\f$, and helicity, \f$K\equiv \int \! dv \; {\bf A}\cdot{\bf B}\f$, functionals may be written
-!>      \f{eqnarray}{ W & = & \frac{1}{2} \; a_i \; A_{i,j} \; a_j + a_i \; B_{i,j} \; \psi_j + \frac{1}{2} \; \psi_i \; C_{i,j} \; \psi_j \label{eq:energymatrix} \\
-!>                    K & = & \frac{1}{2} \; a_i \; D_{i,j} \; a_j + a_i \; E_{i,j} \; \psi_j + \frac{1}{2} \; \psi_i \; F_{i,j} \; \psi_j \label{eq:helicitymatrix}
+!>      \f{eqnarray}{ W & = & \frac{1}{2} \; a_i \; A_{i,j} \; a_j + a_i \; B_{i,j} \; \psi_j + \frac{1}{2} \; \psi_i \; C_{i,j} \; \psi_j \label{eq:energy_globalmatrix_global} \\
+!>                    K & = & \frac{1}{2} \; a_i \; D_{i,j} \; a_j + a_i \; E_{i,j} \; \psi_j + \frac{1}{2} \; \psi_i \; F_{i,j} \; \psi_j \label{eq:helicitymatrix_global}
 !>      \f}
 !>       where \f${\bf a} \equiv \{ {\color{red} A_{\theta,e,i,l}}, {\color{blue} A_{\zeta, e,i,l}}, {\color{Orange}  A_{\theta,o,i,l}}, {\color{Cerulean}A_{\zeta ,o,i,l}}, f_{e,i}, f_{o,i} \}\f$ 
 !>       contains the independent degrees of freedom and \f$\mathbf{\psi} \equiv \{\Delta \psi_t,\Delta \psi_p\}\f$. </li>
@@ -1269,10 +1269,10 @@ module allglobal
 !> <ul>
 !> <li> The energy functional, \f$F \equiv \sum_l F_l\f$, where
 !>      \f{eqnarray}{ F_l \equiv \left( \int_{{\cal V}_l} \frac{p_l}{\gamma-1} + \frac{B_l^2}{2} dv \right)
-!>                    = \frac{P_l}{\gamma-1}V_l^{1-\gamma}+\int_{{\cal V}_l} \frac{B_l^2}{2} dv, \label{eq:energy}
+!>                    = \frac{P_l}{\gamma-1}V_l^{1-\gamma}+\int_{{\cal V}_l} \frac{B_l^2}{2} dv, \label{eq:energy_global}
 !>      \f}
 !>      where the second expression is derived using \f$p_l V_l^\gamma=P_l\f$, where \f$P_l\f$ is the adiabatic-constant.
-!>      In Eqn.\f$(\ref{eq:energy})\f$, it is implicit that \f${\bf B}\f$ satisfies (i) the toroidal and poloidal flux constraints;
+!>      In Eqn.\f$(\ref{eq:energy_global})\f$, it is implicit that \f${\bf B}\f$ satisfies (i) the toroidal and poloidal flux constraints;
 !>      (ii) the interface constraint, \f${\bf B}\cdot\nabla s=0\f$; and (iii) the helicity constraint (or the transform constraint). </li>
 !> <li> The derivatives of \f$F_l\f$ with respect to the inner and outer adjacent interface geometry are stored in
 !>      \c dFF(1:Nvol,0:1,0:mn+mn-1), where
@@ -1526,7 +1526,7 @@ subroutine readin
 !>
 !>       \c pflux(1:Mvol) \f$\rightarrow\f$ \c pflux(1:Mvol)/tflux(Nvol).
 !>
-!>       The input \f$\Phi_{edge} \equiv \f$ \c phiedge} will provide the total toroidal flux; see preset(). </li>
+!>       The input \f$\Phi_{edge} \equiv \f$ \c phiedge will provide the total toroidal flux; see preset(). </li>
 !> </ul>
       
    if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : reading physicslist     from ext.sp ;")') cput-cpus

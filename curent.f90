@@ -13,7 +13,7 @@
 !>       \f{eqnarray}{ \int_{\cal S} {\bf j}\cdot d{\bf s} = \int_{\partial \cal S} {\bf B}\cdot d{\bf l},
 !>       \f}
 !>       and line integrals are usually easier to compute than surface integrals. </li>
-!> <li>  The magnetic field is given by the curl of the magnetic vector potential, as described in e.g. bfield.f90 . </li>
+!> <li>  The magnetic field is given by the curl of the magnetic vector potential, as described in e.g. bfield() . </li>
 !> <li>  The toroidal, plasma current is obtained by taking a "poloidal" loop, \f$d{\bf l}={\bf e}_\theta \, d\theta\f$, 
 !>       on the plasma boundary, where \f$B^s=0\f$, to obtain
 !>       \f{eqnarray}{ I   \equiv   \int_{0}^{2\pi} \! {\bf B} \cdot {\bf e}_\theta \, d\theta
@@ -32,16 +32,16 @@
 !> <ul>
 !> <li>  Using \f$f \equiv - \partial_s A_\zeta \; \bar g_{\theta\theta} + \partial_s A_\theta \; \bar g_{\theta\zeta}\f$,
 !>       the integral for the plasma current is
-!>       \f{eqnarray}{ I = \sum_i^\prime f_i \cos(n_i \zeta) 2\pi, \label{eq:plasmacurrent}
+!>       \f{eqnarray}{ I = {\sum_i}^\prime f_i \cos(n_i \zeta) 2\pi, \label{eq:plasmacurrent_curent}
 !>       \f}
 !>       where \f$\sum^\prime\f$ includes only the \f$m_i=0\f$ harmonics. </li>
 !> <li>  Using \f$g \equiv - \partial_s A_\zeta \; \bar g_{\theta\zeta} + \partial_s A_\theta \; \bar g_{\zeta\zeta}\f$,
 !>       the integral for the linking current is
-!>       \f{eqnarray}{ G = \sum_i^\prime g_i \cos(m_i \zeta) 2\pi, \label{eq:linkingcurrent}
+!>       \f{eqnarray}{ G = {\sum_i}^\prime g_i \cos(m_i \zeta) 2\pi, \label{eq:linkingcurrent_curent}
 !>       \f}
 !>       where \f$\sum^\prime\f$ includes only the \f$n_i=0\f$ harmonics. </li>
-!> <li>  The plasma  current, Eqn.\f$(\ref{eq:plasmacurrent})\f$, should be independent of \f$\zeta\f$,
-!>       and the linking current, Eqn.\f$(\ref{eq:linkingcurrent})\f$, should be independent of \f$\theta\f$.
+!> <li>  The plasma  current, Eqn.\f$(\ref{eq:plasmacurrent_curent})\f$, should be independent of \f$\zeta\f$,
+!>       and the linking current, Eqn.\f$(\ref{eq:linkingcurrent_curent})\f$, should be independent of \f$\theta\f$.
 !>       \todo Perhaps this can be proved analytically; in any case it should be confirmed numerically.
 !> 
 !> </li>

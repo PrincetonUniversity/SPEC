@@ -1,7 +1,10 @@
+!> \defgroup grp_volume Plasma volume
+
 !> \file volume.f90
 !> \brief Computes volume of each region; and, if required, the derivatives of the volume with respect to the interface geometry.
 
 !> \brief Computes volume of each region; and, if required, the derivatives of the volume with respect to the interface geometry.
+!> \ingroup grp_volume
 !> 
 !> Calculates volume of each region; \f${\cal V}_i \equiv \int dv\f$.
 !>

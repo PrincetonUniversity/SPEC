@@ -238,7 +238,7 @@ subroutine preset
 !>       and the same representation but with enhanced resolution,
 !>       \f{eqnarray}{ \sum_k \bar f_k \cos(\bar m_k \theta - \bar n_k \zeta) \equiv                         \sum_{n=      0  }^{     N_1} f_{0,n} \cos(       -n\zeta)
 !>                                                                                   + \sum_{m=1}^{     M_1} \sum_{n=-     N_1}^{     N_1} f_{m,n} \cos(m\theta-n\zeta),
-!>       \label{eq:enhancedFourierrepresentation}
+!>       \label{eq:enhancedFourierrepresentation_preset}
 !>       \f}
 !>       with \f$M_1 \ge M_0\f$ and \f$N_1 \ge N_0\f$;
 !>       then \f$k_i\equiv\,\f$\c ki(i,0) is defined such that \f$\bar m_{k_i} = m_i\f$ and \f$\bar n_{k_i} = n_i\f$. </li>
@@ -275,7 +275,7 @@ subroutine preset
 !>       \f}
 !>       where \f$(m_{k_{ij+}}, n_{k_{ij+}}) = (m_i + m_j, n_i + n_j)\f$ and \f$(m_{k_{ij-}}, n_{k_{ij-}}) = (m_i - m_j, n_i - n_j)\f$;
 !>       then \c kija(i,j,0) \f$\equiv k_{ij+}\f$ and \c kijs(i,j,0) \f$\equiv k_{ij-}\f$. </li>
-!> <li> Note that Eqn.\f$(\ref{eq:enhancedFourierrepresentation})\f$ does not include \f$m<0\f$; so,
+!> <li> Note that Eqn.\f$(\ref{eq:enhancedFourierrepresentation_preset})\f$ does not include \f$m<0\f$; so,
 !>       if \f$m_i - m_j < 0\f$ then \f$k_{ij-}\f$ is re-defined such that \f$(m_{k_{ij-}}, n_{k_{ij-}}) = (m_j - m_i, n_j - n_i)\f$; and
 !>       similarly for the case \f$m=0\f$ and \f$n<0\f$.
 !>       Also, take care that the sign of the sine harmonics in the above expressions will change for these cases. </li>
@@ -560,8 +560,8 @@ subroutine preset
 !>       This can de deduced from matrix(). </li>
 !> <li> The components of the vector potential, \f${\bf A}=A_\theta \nabla + A_\zeta \nabla \zeta\f$, are
 !>      \f{eqnarray}{
-!>        A_\theta(s,\theta,\zeta) &=& \sum_{i,l} {\color{red}  A_{\theta,e,i,l}} \; {\overline T}_{l,i}(s) \cos\alpha_i + \sum_{i,l} {\color{Orange}  A_{\theta,o,i,l}} \; {\overline T}_{l,i}(s) \sin\alpha_i, \label{eq:At} \\
-!>        A_\zeta( s,\theta,\zeta) &=& \sum_{i,l} {\color{blue} A_{\zeta, e,i,l}} \; {\overline T}_{l,i}(s) \cos\alpha_i + \sum_{i,l} {\color{Cerulean}A_{\zeta ,o,i,l}} \; {\overline T}_{l,i}(s) \sin\alpha_i, \label{eq:Az}
+!>        A_\theta(s,\theta,\zeta) &=& \sum_{i,l} {\color{red}  A_{\theta,e,i,l}} \; {\overline T}_{l,i}(s) \cos\alpha_i + \sum_{i,l} {\color{Orange}  A_{\theta,o,i,l}} \; {\overline T}_{l,i}(s) \sin\alpha_i, \label{eq:At_preset} \\
+!>        A_\zeta( s,\theta,\zeta) &=& \sum_{i,l} {\color{blue} A_{\zeta, e,i,l}} \; {\overline T}_{l,i}(s) \cos\alpha_i + \sum_{i,l} {\color{Cerulean}A_{\zeta ,o,i,l}} \; {\overline T}_{l,i}(s) \sin\alpha_i, \label{eq:Az_preset}
 !>      \f}
 !>      where \f${\overline T}_{l,i}(s) \equiv \bar s^{m_i/2} \, T_l(s)\f$, \f$T_l(s)\f$ is the Chebyshev polynomial, and \f$\alpha_j \equiv m_j\theta-n_j\zeta\f$.
 !>      The regularity factor, \f$\bar s^{m_i/2}\f$, where \f$\bar s \equiv (1+s)/2\f$, is only included if there is a coordinate singularity in the domain
@@ -803,25 +803,25 @@ subroutine preset
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 !> **goomne, goomno: metric information**
-!> These are defined in metrix.f90 , and used in ma00aa().
+!> These are defined in metrix() , and used in ma00aa().
 !>
 !> **gssmne, gssmno: metric information**
-!> These are defined in metrix.f90 , and used in ma00aa().
+!> These are defined in metrix() , and used in ma00aa().
 !>
 !> **gstmne, gstmno: metric information**
-!> These are defined in metrix.f90 , and used in ma00aa().
+!> These are defined in metrix() , and used in ma00aa().
 !>
 !> **gszmne, gszmno: metric information**
-!> These are defined in metrix.f90 , and used in ma00aa().
+!> These are defined in metrix() , and used in ma00aa().
 !>
 !> **gttmne, gttmno: metric information**
-!> These are defined in metrix.f90 , and used in ma00aa().
+!> These are defined in metrix() , and used in ma00aa().
 !>
 !> **gtzmne, gtzmno: metric information**
-!> These are defined in metrix.f90 , and used in ma00aa().
+!> These are defined in metrix() , and used in ma00aa().
 !>
 !> **gzzmne, gzzmno: metric information**
-!> These are defined in metrix.f90 , and used in ma00aa().
+!> These are defined in metrix() , and used in ma00aa().
 !>  
   SALLOCATE( goomne, (0:mne), zero ) ! workspace for Fourier decomposition of metric terms;
   SALLOCATE( goomno, (0:mne), zero )
