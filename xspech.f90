@@ -99,12 +99,12 @@ program xspech
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 !> **reading input, allocating global variables**
-!>
+!> 
 !> <ul>
 !> <li> The input namelists and geometry are read in via a call to readin() .
 !>       A full description of the required input is given in global.f90 . </li>
 !> <li> Most internal variables, global memory etc., are allocated in preset() . </li>
-!> <li> All quantities in the input file are mirrored into the output file's group \c input . </li>
+!> <li> All quantities in the input file are mirrored into the output file's group \c /input . </li>
 !> </ul>
 
   WCALL( xspech, readin ) ! sets Rscale, Mvol; 03 Nov 16;
@@ -124,10 +124,10 @@ program xspech
 !> **preparing output file group iterations**
 !>
 !> <ul>
-!> <li> The group \c iterations is created in the output file.
+!> <li> The group \c /iterations is created in the output file.
 !>       This group contains the interface geometry at each iteration, which is useful for constructing movies illustrating the convergence.
 !>       The data structure in use is an unlimited array of the following compound datatype:
-!> ```
+!> ```C
 !> DATATYPE  H5T_COMPOUND {
 !>       H5T_NATIVE_INTEGER "nDcalls";
 !>       H5T_NATIVE_DOUBLE "Energy";
