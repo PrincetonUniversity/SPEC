@@ -10,7 +10,9 @@
 !> <li> This routine is a "copy" of co01aa(),
 !>       which calculates the coordinate information on a regular, discrete grid in \f$\theta\f$ and \f$\zeta\f$ at given \f$s\f$
 !>       whereas stzxyz() calculates the coordinate information at a single point \f$(s,\theta,\zeta)\f$. </li>
-!> <li> Please see co01aa() for documentation. </li>
+!> <li> \todo Please see co01aa() for documentation.
+!> 
+!> </li>
 !> </ul>
 !>
 !> @param[in]  lvol

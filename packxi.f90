@@ -8,10 +8,10 @@
 !> <ul>
 !> <li> The geometrical degrees-of-freedom,
 !>      namely the \f$R_{j,v}\f$ and \f$Z_{j,v}\f$ where \f$v\f$ labels the interface and \f$j\f$ labels the Fourier harmonic,
-!>      must be "packxi", and "unpackxi", into a single vector, \f$\boldxi\f$, so that standard numerical routines can be
-!>      called to find solutions to force-balance, i.e. \f${\bf F}[\boldxi]=0\f$. </li>
+!>      must be "packxi", and "unpackxi", into a single vector, \f$\boldsymbol{\xi}\f$, so that standard numerical routines can be
+!>      called to find solutions to force-balance, i.e. \f${\bf F}[\boldsymbol{\xi}]=0\f$. </li>
 !> <li> A coordinate "pre-conditioning" factor is included: 
-!>      \f{eqnarray}{ \boldxi_k \equiv \frac{R_{j,v}}{\Psi_{j,v}},
+!>      \f{eqnarray}{ \boldsymbol{\xi}_k \equiv \frac{R_{j,v}}{\Psi_{j,v}},
 !>      \f}
 !>      where \f$\Psi_{j,v} \equiv\,\f$\c psifactor(j,v) , which is defined in global.f90 . </li>
 !> </ul> 

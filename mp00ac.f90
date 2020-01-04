@@ -8,8 +8,8 @@
 !> **unpacking fluxes, helicity multiplier**
 !> 
 !> <ul>
-!> <li> The vector of "parameters", \f$\boldmu\f$, is unpacked. (Recall that \f$\boldmu\f$ was "packed" in ma02aa() .)
-!>      In the following, \f$\boldpsi \equiv (\Delta \psi_t, \Delta \psi_p)^T\f$. </li>
+!> <li> The vector of "parameters", \f$\boldsymbol{\mu}\f$, is unpacked. (Recall that \f$\boldsymbol{\mu}\f$ was "packed" in ma02aa() .)
+!>      In the following, \f$\boldsymbol{\psi} \equiv (\Delta \psi_t, \Delta \psi_p)^T\f$. </li>
 !> </ul>
 !> 
 !> **construction of linear system**
@@ -24,13 +24,13 @@
 !>       Note that in the vacuum region, \f$\mu=0\f$, so \f${\cal M}\f$ reduces to \f${\cal M} \equiv {\cal A}\f$. </li>
 !> <li> The construction of the vector \f${\cal R}\f$ is as follows:
 !>       <ul> <li> if \c Lcoordinatesingularity=T , then 
-!>            \f{eqnarray}{ {\cal R} \equiv - \left( {\cal B} - \mu {\cal E} \right) \cdot \boldpsi 
+!>            \f{eqnarray}{ {\cal R} \equiv - \left( {\cal B} - \mu {\cal E} \right) \cdot \boldsymbol{\psi} 
 !>            \f} </li>
 !>            <li> if \c Lcoordinatesingularity=F and \c Lplasmaregion=T , then 
-!>            \f{eqnarray}{ {\cal R} \equiv - {\cal B} \cdot \boldpsi 
+!>            \f{eqnarray}{ {\cal R} \equiv - {\cal B} \cdot \boldsymbol{\psi} 
 !>            \f} </li>
 !>            <li> if \c Lcoordinatesingularity=F and \c Lvacuumregion=T , then 
-!>            \f{eqnarray}{ {\cal R} \equiv - {\cal G} - {\cal B} \cdot \boldpsi
+!>            \f{eqnarray}{ {\cal R} \equiv - {\cal G} - {\cal B} \cdot \boldsymbol{\psi}
 !>            \f} </li>
 !>       </ul>
 !>       The quantities \f${\cal B}\equiv\,\f$\c dMB, \f${\cal E}\equiv\,\f$\c dME and \f${\cal G}\equiv\,\f$\c dMG are constructed in matrix() . </li>
@@ -52,7 +52,7 @@
 !> **construction of "constraint" function**
 !> 
 !> <ul>
-!> <li> The construction of the function \f${\bf f}(\boldmu)\f$ is required so that iterative methods can be used to construct the Beltrami field
+!> <li> The construction of the function \f${\bf f}(\boldsymbol{\mu})\f$ is required so that iterative methods can be used to construct the Beltrami field
 !>       consistent with the required constraints (e.g. on the enclosed fluxes, helicity, rotational-transform, ...).
 !>       \see ma02aa() for additional details.
 !> 

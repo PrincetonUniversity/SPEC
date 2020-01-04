@@ -568,17 +568,17 @@ subroutine preset
 !>      (i.e. only in the innermost volume, and only in cylindrical and toroidal geometry.) </li>
 !> <li> The Chebyshev-Fourier harmonics of the covariant components of the magnetic vector potential are kept in
 !>      \f{eqnarray}{
-!>          {\color{red}     A_{\theta,e,i,l}} &\equiv& \texttt{Ate(v,0,j)%s(l)} , \\
-!>          {\color{blue}    A_{\zeta, e,i,l}} &\equiv& \texttt{Aze(v,0,j)%s(l)} , \\
-!>          {\color{Orange}  A_{\theta,o,i,l}} &\equiv& \texttt{Ato(v,0,j)%s(l)} , \mathrm{and} \\
-!>          {\color{Cerulean}A_{\zeta ,o,i,l}} &\equiv& \texttt{Azo(v,0,j)%s(l)} ;
+!>          {\color{red}     A_{\theta,e,i,l}} &\equiv& \texttt{Ate(v,0,j)}\%\texttt{s(l)} , \\
+!>          {\color{blue}    A_{\zeta, e,i,l}} &\equiv& \texttt{Aze(v,0,j)}\%\texttt{s(l)} , \\
+!>          {\color{Orange}  A_{\theta,o,i,l}} &\equiv& \texttt{Ato(v,0,j)}\%\texttt{s(l)} , \mathrm{and} \\
+!>          {\color{Cerulean}A_{\zeta ,o,i,l}} &\equiv& \texttt{Azo(v,0,j)}\%\texttt{s(l)} ;
 !>      \f}
-!>        where \f$v=1,\texttt{Mvol}\f$ labels volume, \f$j=1,\texttt{mn}\f$ labels Fourier harmonic, and \f$l=0,\,\f$\c Lrad \f$(v)\f$ labels Chebyshev polynomial.
-!>       (These arrays also contains derivative information.) </li>
+!>      where \f$v=1,\texttt{Mvol}\f$ labels volume, \f$j=1,\texttt{mn}\f$ labels Fourier harmonic, and \f$l=0,\,\f$\c Lrad \f$(v)\f$ labels Chebyshev polynomial.
+!>      (These arrays also contains derivative information.) </li>
 !> <li> If \c Linitguess=1 , a guess for the initial state for the Beltrami fields is constructed. 
-!>       An initial state is required for iterative solvers of the Beltrami fields, see \c LBeltrami . </li>
+!>      An initial state is required for iterative solvers of the Beltrami fields, see \c LBeltrami . </li>
 !> <li> If \c Linitguess=2 , the initial state for the Beltrami fields is read from file (see ra00aa() ).
-!>       An initial state is required for iterative solvers of the Beltrami fields, see \c LBeltrami . </li>
+!>      An initial state is required for iterative solvers of the Beltrami fields, see \c LBeltrami . </li>
 !> </ul>
   
   SALLOCATE( NAdof, (1:Mvol          ), 0 ) ! Beltrami degrees-of-freedom in each annulus;
