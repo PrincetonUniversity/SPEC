@@ -97,7 +97,12 @@ program xspech
   endif
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
+!> **todo remark**
+!> 
+!> \todo The following belongs to the docs of the program xspech, not to the ending() subroutine.
+!>       If you know how to attach the docs to the program xspech, please fix this.
+!>
 !> **reading input, allocating global variables**
 !> 
 !> <ul>
