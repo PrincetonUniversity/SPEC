@@ -365,17 +365,17 @@ subroutine ma02aa( lvol, NN )
 !> <li> In addition to the enclosed toroidal flux, \f$\Delta \psi_t\f$, which is held constant in the plasma volumes,
 !>       the Beltrami field in a given volume is assumed to be parameterized by \f$\mu\f$ and \f$\Delta \psi_p\f$.
 !>       (Note that \f$\Delta \psi_p\f$ is not defined in a torus.) </li>
-!> <li> These are "packed" into an array, e.g. \f$\mathbf{\mu} \equiv (\mu, \Delta\psi_p)^T\f$, so that standard library routines ,
-!>       e.g. \c C05PCF, can be used to (iteratively) find the appropriately-constrained Beltrami solution, i.e. \f${\bf f}(\mathbf{\mu})=0\f$. </li>
-!> <li> The function \f${\bf f}(\mathbf{\mu})\f$, which is computed by mp00ac(), is defined by the input parameter \c Lconstraint:
+!> <li> These are "packed" into an array, e.g. \f$\boldsymbol{\mu} \equiv (\mu, \Delta\psi_p)^T\f$, so that standard library routines ,
+!>       e.g. \c C05PCF, can be used to (iteratively) find the appropriately-constrained Beltrami solution, i.e. \f${\bf f}(\boldsymbol{\mu})=0\f$. </li>
+!> <li> The function \f${\bf f}(\boldsymbol{\mu})\f$, which is computed by mp00ac(), is defined by the input parameter \c Lconstraint:
 !> <ul>
-!> <li> If \c Lconstraint = -1, 0, then \f$\mathbf{\mu}\f$       is *not* varied and \c Nxdof=0. </li>
-!> <li> If \c Lconstraint =  1,    then \f$\mathbf{\mu}\f$       is       varied to satisfy the transform constraints;
+!> <li> If \c Lconstraint = -1, 0, then \f$\boldsymbol{\mu}\f$       is *not* varied and \c Nxdof=0. </li>
+!> <li> If \c Lconstraint =  1,    then \f$\boldsymbol{\mu}\f$       is       varied to satisfy the transform constraints;
 !>      and \c Nxdof=1 in the simple torus and \c Nxdof=2 in the annular regions.
 !>      (Note that in the "simple-torus" region, the enclosed poloidal flux \f$\Delta\psi_p\f$ is not well-defined, 
-!>      and only \f$\mu=\mathbf{\mu}_1\f$ is varied in order to satisfy the transform constraint on the "outer" interface of that volume.) </li>
-!> <li> \todo If \c Lconstraint =  2,    then \f$\mu=\mathbf{\mu}_1\f$ is       varied in order to satisfy the helicity constraint, 
-!>      and \f$\Delta\psi_p=\mathbf{\mu}_2\f$ is *not* varied, and \c Nxdof=1.
+!>      and only \f$\mu=\boldsymbol{\mu}_1\f$ is varied in order to satisfy the transform constraint on the "outer" interface of that volume.) </li>
+!> <li> \todo If \c Lconstraint =  2,    then \f$\mu=\boldsymbol{\mu}_1\f$ is       varied in order to satisfy the helicity constraint, 
+!>      and \f$\Delta\psi_p=\boldsymbol{\mu}_2\f$ is *not* varied, and \c Nxdof=1.
 !>      (under re-construction)
 !>
 !> </li>
@@ -389,24 +389,24 @@ subroutine ma02aa( lvol, NN )
 !>
 !> <li> In the vacuum, \f$\mu=0\f$, and the enclosed fluxes, \f$\Delta \psi_t\f$ and \f$\Delta \psi_p\f$, are considered to parameterize the family of solutions.
 !>      (These quantities may not be well-defined if \f${\bf B}\cdot{\bf n}\ne 0\f$ on the computational boundary.) </li>
-!> <li> These are "packed" into an array, \f$\mathbf{\mu} \equiv (\Delta\psi_t,\Delta\psi_p)^T\f$, so that, as above, standard routines can be used
-!>      to iteratively find the appropriately constrained solution, i.e. \f${\bf f}(\mathbf{\mu})=0\f$. </li>
-!> <li> The function \f${\bf f}(\mathbf{\mu})\f$, which is computed by mp00ac(), is defined by the input parameter \c Lconstraint:
+!> <li> These are "packed" into an array, \f$\boldsymbol{\mu} \equiv (\Delta\psi_t,\Delta\psi_p)^T\f$, so that, as above, standard routines can be used
+!>      to iteratively find the appropriately constrained solution, i.e. \f${\bf f}(\boldsymbol{\mu})=0\f$. </li>
+!> <li> The function \f${\bf f}(\boldsymbol{\mu})\f$, which is computed by mp00ac(), is defined by the input parameter \c Lconstraint:
 !> <ul>
-!> <li> If \c Lconstraint = -1,   then \f$\mathbf{\mu}\f$ is *not* varied and \c Nxdof=0. </li>
-!> <li> If \c Lconstraint =  0,2, then \f$\mathbf{\mu}\f$ is varied to satisfy the enclosed current constraints, and \c Nxdof=2. </li>
-!> <li> If \c Lconstraint =  1,   then \f$\mathbf{\mu}\f$ is varied to satisfy 
+!> <li> If \c Lconstraint = -1,   then \f$\boldsymbol{\mu}\f$ is *not* varied and \c Nxdof=0. </li>
+!> <li> If \c Lconstraint =  0,2, then \f$\boldsymbol{\mu}\f$ is varied to satisfy the enclosed current constraints, and \c Nxdof=2. </li>
+!> <li> If \c Lconstraint =  1,   then \f$\boldsymbol{\mu}\f$ is varied to satisfy 
 !>      the constraint on the transform on the inner boundary \f$\equiv\f$ plasma boundary and the "linking" current, and \c Nxdof=2.  </li>
 !> </ul> </li>
 !>
 !> </ul>  </li>
 !>
-!> <li> The Beltrami fields, and the rotational-transform and helicity etc. as required to determine the function \f${\bf f}(\mathbf{\mu})\f$
+!> <li> The Beltrami fields, and the rotational-transform and helicity etc. as required to determine the function \f${\bf f}(\boldsymbol{\mu})\f$
 !>      are calculated in mp00ac(). </li>
 !> <li> This routine, mp00ac(), is called iteratively if \c Nxdof>1 via
-!>      \c C05PCF to determine the appropriately constrained Beltrami field, \f${\bf B}_{\mathbf{\mu}}\f$, so that \f${\bf f}(\mathbf{\mu})=0\f$. </li>
+!>      \c C05PCF to determine the appropriately constrained Beltrami field, \f${\bf B}_{\boldsymbol{\mu}}\f$, so that \f${\bf f}(\boldsymbol{\mu})=0\f$. </li>
 !> <li> The input variables \c mupftol and \c mupfits control the required accuracy and maximum number of iterations. </li>
-!> <li> If \c Nxdof=1, then mp00ac() is called only once to provide the Beltrami fields with the given value of \f$\mathbf{\mu}\f$. </li>
+!> <li> If \c Nxdof=1, then mp00ac() is called only once to provide the Beltrami fields with the given value of \f$\boldsymbol{\mu}\f$. </li>
 !>
 !> </ul>
   
