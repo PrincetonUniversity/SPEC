@@ -335,6 +335,6 @@ module """+moduleName+"\n")
     f.write("end module read_spec\n")
 
     # write demo code
-    fortran_demoLoader(f)
+    #fortran_demoLoader(f)
 
     f.close()
