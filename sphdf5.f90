@@ -114,7 +114,7 @@ subroutine init_outfile
   H5CALL( sphdf5, h5eset_auto_f, (internalHdf5Msg, hdfier), __FILE__, __LINE__)
 
   ! Create the file
-  H5CALL( sphdf5, h5fcreate_f, (trim(ext)//".h5", H5F_ACC_TRUNC_F, file_id, hdfier ), __FILE__, __LINE__ )
+  H5CALL( sphdf5, h5fcreate_f, (trim(ext)//".sp.h5", H5F_ACC_TRUNC_F, file_id, hdfier ), __FILE__, __LINE__ )
 
   ! write version number
   HWRITERV_LO( file_id, 1, version, (/ version /), __FILE__, __LINE__)
