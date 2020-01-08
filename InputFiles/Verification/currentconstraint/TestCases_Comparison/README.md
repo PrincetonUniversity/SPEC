@@ -58,5 +58,5 @@ If the estimates for df are small enough (below 1E-14), outputs are considered t
 Again, `compare_spec_outputs.m` will evaluate the force difference between both runs.
 If the estimate for `df` is small enough (below 1E-14), outputs are considered to be the same.
 
-If you have the time, repeat point 6. on other input files.
+If you have the time, repeat point 7. on other input files.
 
