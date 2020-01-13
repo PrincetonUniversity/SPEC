@@ -577,7 +577,8 @@ subroutine fcn2( NGdof, xx, fvec, fjac, Ldfjac, irevcm )
    case( 0 ) ! indicates start of new iteration; no action is required; position and force available for printing; force must not be changed;
     
     pack = 'U' ! unpack geometrical degrees of freedom;
-    WCALL( newton, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack ) )
+    LComputeDerivatives = .false.
+    WCALL( newton, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, LComputeDerivatives ) )
     
     if( myid.eq.0 ) then
      
