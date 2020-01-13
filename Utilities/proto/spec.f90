@@ -25,6 +25,14 @@ program spec
   
   infile_src = 0 ! only ext on cmd line is the default
   
+  ! check that at least one command-line argument is given
+  
+  ! check that command-line argument is not one of the following:
+  ! '-h', '--help'            <-- show this help text
+  ! '-v', '--verbose'         <-- enable verbal diarreha for debugging
+  ! '-f', '--force-overwrite' <-- force SPEC to override existing output file(s)
+  ! which are already reserved flags to control the program flow
+  
   ! parse first command-line argument; should be the name of the input file
   call getarg( 1, ext )
   extlen = len_trim(ext)
