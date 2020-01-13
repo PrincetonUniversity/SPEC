@@ -181,7 +181,7 @@ program xspech
   if( NGdof.gt.0 ) then ! pack geometry into vector; 14 Jan 13;
 
    pack = 'P'
-   WCALL( xspech, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack ) )
+   WCALL( xspech, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, .false. ) )
 
   endif
   
@@ -245,7 +245,7 @@ program xspech
    endif
    
    pack = 'U' ! unpack geometrical degrees of freedom; 13 Sep 13;
-   WCALL( xspech, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack ) )
+   WCALL( xspech, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, .false. ) )
 
   endif
 
@@ -674,7 +674,7 @@ program xspech
 
   if( myid.eq.0 ) then
 
-   wflag = 1 ; iflag = 0 ; rflag = zero
+   wflag = 0 ; iflag = 0 ; rflag = zero
    WCALL( xspech, wrtend, ( wflag, iflag, rflag ) ) ! write restart file; save initial input;
    
    close(zunit) ! this file is written to in globals/wrtend; 11 Aug 14;

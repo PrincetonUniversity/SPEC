@@ -994,7 +994,7 @@ subroutine preset
    case(   2 ) ; vvol = Mvol
    end select
 
-   WCALL( preset, rzaxis, ( Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), vvol ) ) ! set coordinate axis; 19 Jul 16;
+   WCALL( preset, rzaxis, ( Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), vvol, .false. ) ) ! set coordinate axis; 19 Jul 16;
 
   endif ! end of if( Igeometry.eq.3 ) then ; 19 Jul 16;
   
