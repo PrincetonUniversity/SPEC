@@ -11,8 +11,18 @@ end module fileunits
 
 module spec_version
   implicit none
-  double precision, parameter :: version = 2.10 !< version of SPEC
+  integer, parameter :: version(3) = (/ 2, 1, 0 /) !< version of SPEC
 end module spec_version
+
+! compare two version numbers to be less or equal, i.e. compatible
+pure function version_le(query_version, ref_version)
+  integer, intent(in)  :: query_version(3)
+  integer, intent(in)  :: ref_version(3)
+  logical              :: version_le
+  version_le = (query_version(1).le.ref_version(1) .and. &
+             &  query_version(2).le.ref_version(2) .and. &
+             &  query_version(3).le.ref_version(3))
+end function version_le
 
 module inputlist
   
@@ -74,6 +84,8 @@ module inputlist
     
     implicit none
     
+    logical :: version_le ! function to compare version numbers
+    
     character(len=*),intent(in) :: filename_h5 ! name of input file
     
     integer                     :: hdfier            ! error flag for HDF5 library calls
@@ -98,7 +110,7 @@ module inputlist
     integer(hid_t)              :: dset_input_Lrad
     integer(hid_t)              :: dset_input_phiedge
     
-    double precision            :: input_version ! version of input data
+    integer                     :: input_version(3)  ! version of input data
     
     ! check if file exists
     inquire(file=filename_h5, exist=Lsph5exist)
@@ -177,92 +189,115 @@ module inputlist
                         write(ounit,*) "error getting dataspace of /version"
                       else
                       
-                        ! check that the dataspace of /version is scalar
+                        ! check that the dataspace of /version is simple
                         call h5sget_simple_extent_type_f(dataspace, dspace_type, hdfier)
                         if (hdfier.ne.0) then
                           write(ounit,*) "error getting type of /version dataspace"
                         else
                         
-                          ! check that the type of the /version dataspace is H5S_SCALAR_F
-                          if (dspace_type.eq.H5S_SCALAR_F) then
-                            write(ounit,*) "successfully verified that the type of the /version dataspace is H5S_SCALAR_F"
-                            
-                            ! query datatype of /version
-                            call h5dget_type_f(dset_version, dtype_id, hdfier)
+                          ! check that the type of the /version dataspace is H5S_SIMPLE_F
+                          if (dspace_type.eq.H5S_SIMPLE_F) then
+                            write(ounit,*) "successfully verified that the type of the /version dataspace is H5S_SIMPLE_F"
+                      
+                            ! query rank of /version
+                            call h5sget_simple_extent_ndims_f(dataspace, rank, hdfier)
                             if (hdfier.ne.0) then
-                              write(ounit,*) "error querying datatype of /version"
+                              write(ounit,*) "error getting rank of /version; expected ",rank,", got ",hdfier
                             else
-                              if (verbose) then ; write(ounit,*) "successfully queried datatype of /version" ; endif
-                                
-                              ! convert datatype to native array for comparison
-                              call h5tget_native_type_f(dtype_id, 1, dtype_id_native, hdfier)
-                              if (hdfier.ne.0) then
-                                write(ounit,*) "error converting datatype of /version to native datatype"
-                              else
-                                if (verbose) then ; write(ounit,*) "successfully converted datatype of /version to native datatype" ; endif
-                                
-                                ! call comparison routine for /version datatype
-                                call h5tequal_f(dtype_id_native, H5T_NATIVE_DOUBLE, datatypes_equal, hdfier)
-                                if (hdfier.ne.0) then
-                                  write(ounit,*) "error comparing datatype of /version to H5T_NATIVE_DOUBLE"
-                                else
-                                  if (verbose) then ; write(ounit,*) "successfully executed comparison of datatype of /version with H5T_NATIVE_DOUBLE" ; endif
-                                  
-                                  ! verify correct datatype of /version
-                                  if (datatypes_equal) then
-                                    if (verbose) then ; write(ounit,*) "successfully checked that datatype of /version is H5T_NATIVE_DOUBLE :-)" ; endif
-                                    
-                                    ! read version Dataset
-                                    call h5dread_f(dset_version, H5T_NATIVE_DOUBLE, input_version, int((/1/), HSIZE_T), hdfier)
-                                    if (hdfier.ne.0) then
-                                      write(*,*) "error reading Dataset /version"
-                                    else
-                                      if (verbose) then ; write(ounit,'(" successfully read /version from input data: ",f4.2)') input_version ; endif
-                                      
-                                      ! verify that version number in input file is less than or equal to the current version of SPEC
-                                      if (input_version.le.version) then
-                                        if (verbose) then
-                                          write(ounit,'(" INFO: The version of the input data (",f4.2,") is compatible with SPEC ",f4.2)') &
-                                          & input_version, version
-                                        endif
-                                      else
-                                        write(ounit,'(" WARNING: the version of the input data (",f4.2,") may be incompatible with SPEC ",f4.2)') &
-                                        & input_version, version
-                                      endif ! verify that version number in input file is less than or equal to the current version of SPEC
-                                    endif ! read version Dataset
-                                  else
-                                    write(ounit,*) "ERROR: native datatype of /version should be H5T_NATIVE_DOUBLE but is ",dtype_id_native
-                                  endif !verify correct datatype of /version
-                                endif ! call comparison routine for /version datatype
-                              endif ! convert datatype to native array for comparison
+                              if (verbose) then ; write(ounit,*) "successfully queried rank of /version" ; endif
                               
-                              ! close datatype of /version
-                              call h5tclose_f(dtype_id, hdfier)
-                              if (hdfier.ne.0) then
-                                write(ounit,*) "error closing datatype of /version"
-                              elseif (verbose) then
-                                write(ounit,*) "successfully closed datatype of /version"
-                              endif ! close datatype of /version
-                            endif ! query datatype of /version
+                              ! get the current and maximum dimensions of /version
+                              call h5sget_simple_extent_dims_f(dataspace, dims_1, max_dims_1, hdfier)
+                              if (hdfier.ne.rank) then
+                                write(ounit,*) "ERROR: rank mismatch of /version; expected ",rank,", but got ",hdfier
+                              else
+                                write(ounit,*) "successfully queried length of /version"
+                                
+                                ! check that /version has the correct length
+                                if (dims_1(1).ne.3) then
+                                  write(ounit,*) "ERROR: expected length of /version is 3, but got ", dims_1
+                                else
+                                  if (verbose) then ; write(ounit,*) "successfully verified the correct length of /version" ; endif
+                                  
+                                  ! query datatype of /version
+                                  call h5dget_type_f(dset_version, dtype_id, hdfier)
+                                  if (hdfier.ne.0) then
+                                    write(ounit,*) "error querying datatype of /version"
+                                  else
+                                    if (verbose) then ; write(ounit,*) "successfully queried datatype of /version" ; endif
+                                      
+                                    ! convert datatype to native array for comparison
+                                    call h5tget_native_type_f(dtype_id, 1, dtype_id_native, hdfier)
+                                    if (hdfier.ne.0) then
+                                      write(ounit,*) "error converting datatype of /version to native datatype"
+                                    else
+                                      if (verbose) then ; write(ounit,*) "successfully converted datatype of /version to native datatype" ; endif
+                                      
+                                      ! call comparison routine for /version datatype
+                                      call h5tequal_f(dtype_id_native, H5T_NATIVE_INTEGER, datatypes_equal, hdfier)
+                                      if (hdfier.ne.0) then
+                                        write(ounit,*) "error comparing datatype of /version to H5T_NATIVE_INTEGER"
+                                      else
+                                        if (verbose) then ; write(ounit,*) "successfully executed comparison of datatype of /version with H5T_NATIVE_INTEGER" ; endif
+                                        
+                                        ! verify correct datatype of /version
+                                        if (datatypes_equal) then
+                                          if (verbose) then ; write(ounit,*) "successfully checked that datatype of /version is H5T_NATIVE_INTEGER :-)" ; endif
+                                          
+                                          ! read /version Dataset
+                                          call h5dread_f(dset_version, H5T_NATIVE_INTEGER, input_version(1:3), int((/3/), HSIZE_T), hdfier)
+                                          if (hdfier.ne.0) then
+                                            write(*,*) "error reading Dataset /version"
+                                          else
+                                            if (verbose) then ; write(ounit,'(" successfully read /version from input data: ",2(i1,"."),i1)') input_version(1:3) ; endif
+                                            
+                                            ! verify that version number in input file is less than or equal to the current version of SPEC
+                                            if (version_le(input_version, version)) then
+                                              if (verbose) then
+                                                write(ounit,'(" INFO: The version of the input data (",2(i1,"."),i1,") is compatible with SPEC ",2(i1,"."),i1)') &
+                                                & input_version, version
+                                              endif
+                                            else
+                                              write(ounit,'(" WARNING: the version of the input data (",2(i1,"."),i1,") may be incompatible with SPEC ",2(i1,"."),i1)') &
+                                              & input_version, version
+                                            endif ! verify that version number in input file is less than or equal to the current version of SPEC
+                                          endif ! read /version Dataset
+                                        else
+                                          write(ounit,*) "ERROR: native datatype of /version should be H5T_NATIVE_INTEGER but is ",dtype_id_native
+                                        endif !verify correct datatype of /version
+                                      
+                                      endif ! call comparison routine for /version datatype
+                                    endif ! convert datatype to native array for comparison
+                                    
+                                    ! close datatype of /version
+                                    call h5tclose_f(dtype_id, hdfier)
+                                    if (hdfier.ne.0) then
+                                      write(ounit,*) "error closing datatype of /version"
+                                    elseif (verbose) then
+                                      write(ounit,*) "successfully closed datatype of /version"
+                                    endif ! close datatype of /version
+                                  endif ! query datatype of /version
+                                endif ! check that /version has the correct length
+                              endif ! get the current and maximum dimensions of /version
+                            endif ! query rank of /version
                           else
-                            write(ounit,*) "ERROR: type of dataspace /version is not H5S_SCALAR_F but ",dspace_type
-                          endif ! check that the type of the /version dataspace is H5S_SCALAR_F
-                        endif ! check that the dataspace of /version is scalar
+                            write(ounit,*) "ERROR: type of dataspace /version is not H5S_SIMPLE_F but ",dspace_type
+                          endif ! check that the type of the /version dataspace is H5S_SIMPLE_F
+                        endif ! check that the dataspace of /version is simple
                         
                         ! close dataspace of /version
                         call h5sclose_f(dataspace, hdfier)
                         if (hdfier.ne.0) then ; write(ounit,*) "error closing dataspace of /version" ; endif
                       endif ! open dataspace of /version
-                    endif ! check if /version is a Dataset
-                  endif ! query type of /version object
-                  
-                  ! close /version object
+                    endif ! query type of /version object
+                  endif ! check if /version is a Dataset
+                          
                   call h5oclose_f(dset_version, hdfier)
                   if (hdfier.ne.0) then
                     write(*,*) "error closing object /version"
                   elseif (verbose) then
                     write(ounit,*) "successfully closed object /version"
-                  endif ! close /version object
+                  endif
                 endif ! try to open /version object
               else
                 ! /version link present but does not resolve to any object
@@ -271,8 +306,7 @@ module inputlist
             endif ! query existence of object at /version link
           else
             ! /version link not present in input file
-            write(ounit,'(" WARNING: /version not found; cannot check if the given input file works for SPEC ",f4.2)')&
-            & version
+            write(ounit,*) " WARNING: /version not found. Using default value "
           endif ! check if /version link exists
         endif ! query existence of /version link
         
@@ -593,7 +627,7 @@ module inputlist
                           endif ! query existence of object at /input/Nvol link
                         else
                           ! /input/Nvol link not present in input file
-                          write(ounit,*) " WARNING: /input/Nvol not found. Using default value ", Nvol
+                          write(ounit,*) "WARNING: /input/Nvol not found. Using default value ", Nvol
                         endif ! check if /input/Nvol link exists
                       endif ! query existence of /input/Nvol link
                       
@@ -753,7 +787,7 @@ module inputlist
                           endif ! query existence of object at /input/Lrad link
                         else
                           ! /input/Lrad link not present in input file
-                          write(ounit,*) " WARNING: /input/Lrad not found. Using default value ", Lrad(1:Nvol)
+                          write(ounit,*) "WARNING: /input/Lrad not found. Using default value ", Lrad(1:Nvol)
                         endif ! check if /input/Lrad link exists
                       endif ! query existence of /input/Lrad link
                                             
@@ -892,7 +926,7 @@ module inputlist
                           endif ! query existence of object at /input/phiedge link
                         else
                           ! /input/phiedge link not present in input file
-                          write(ounit,*) " WARNING: /input/phiedge not found. Using default value ", phiedge
+                          write(ounit,*) "WARNING: /input/phiedge not found. Using default value ", phiedge
                         endif ! check if /input/phiedge link exists
                       endif ! query existence of /input/phiedge link
                       
@@ -945,6 +979,46 @@ module sphdf5
   
   contains
   
+  subroutine attach_description(item_id, description)
+    use hdf5
+    implicit none
+    integer(hid_t),   intent(in) :: item_id
+    character(len=*), intent(in) :: description
+    
+    character(LEN=15), parameter       :: attr_name = "description" !< name of the descriptive Attribute to be attached to each Dataset and Group
+    integer(HID_T)                     :: attr_id                   !< Attribute identifier
+    integer(HID_T)                     :: attr_dspace               !< Attribute Dataspace identifier
+    integer(HID_T)                     :: attr_dtype                !< Attribute Dataspace identifier
+    integer(HSIZE_T)                   :: attr_len                  !< Length of the attribute string
+    
+    integer :: hdfier   !< error flag for HDF5 library
+    
+    ! compute length of current attribute
+    attr_len = len(description)
+    
+    ! create dataspace for descriptive Attribute; only one description per item, so H5S_SCALAR_F
+    call h5screate_f(H5S_SCALAR_F, attr_dspace, hdfier)
+    
+    ! base type for attribute data is a string
+    call h5tcopy_f(H5T_C_S1, attr_dtype, hdfier)
+    
+    ! set charset used for attribute string to be UTF-8, e.g. for Poincaré
+    call h5tset_cset_f(attr_dtype, H5T_CSET_UTF8_F, hdfier)
+    
+    ! set attribute string length
+    call h5tset_size_f(attr_dtype, attr_len, hdfier)
+    
+    ! create Attribute 'description' attached to /version
+    call h5acreate_f(item_id, attr_name, attr_dtype, attr_dspace, attr_id, hdfier)
+    
+    ! write attribute data
+    call h5awrite_f(attr_id, attr_dtype, description, int((/attr_len/),size_t), hdfier)
+    
+    ! close dataspace of attribute
+    call h5sclose_f(attr_dspace, hdfier)
+    
+  end subroutine attach_description
+  
   subroutine mirror_input_to_outfile(filename_h5)
     use hdf5
     use fileunits
@@ -957,7 +1031,7 @@ module sphdf5
     integer(HID_T)                     :: attr_dspace               ! Attribute Dataspace identifier
     integer(HID_T)                     :: attr_dtype                ! Attribute Dataspace identifier
     integer(SIZE_T)                    :: attr_len                  ! Length of the attribute string
-    character(len=:), allocatable      :: attr_data                 ! Attribute data == description content
+    character(len=:), allocatable      :: description                 ! Attribute data == description content
     
     character(len=*),intent(in) :: filename_h5 ! name of output file
     logical :: file_exists
@@ -981,51 +1055,31 @@ module sphdf5
     
     write(ounit,*) "writing input data into output HDF5 file '",filename_h5,"'"
     
-    ! create the HDF5 output file
+    ! create and open the HDF5 output file
     call h5fcreate_f(filename_h5, H5F_ACC_TRUNC_F, file_id, hdfier)
     
     
+    
+    
+    
+    
+    
+    
+    
     ! create dataspace for /version
-    call h5screate_f(H5S_SCALAR_F, dataspace, hdfier)
+    call h5screate_simple_f(1, int((/3/),hsize_t), dataspace, hdfier)
     
     ! create dataset for /version
-    call h5dcreate_f(file_id, "version", H5T_NATIVE_DOUBLE, dataspace, dset_version, hdfier)
+    call h5dcreate_f(file_id, "version", H5T_NATIVE_INTEGER, dataspace, dset_version, hdfier)
     
     ! write version number to output file
-    call h5dwrite_f(dset_version, H5T_NATIVE_DOUBLE, version, int((/1/),size_t), hdfier)
+    call h5dwrite_f(dset_version, H5T_NATIVE_INTEGER, version, int((/3/),hsize_t), hdfier)
     
-    
-    
-    attr_data = "selects Cartesian, cylindrical or toroidal geometry"//new_line('A') &
-    &        // "<ul>"//new_line('A') &
-    &        // "<li> \c Igeometry=1 : Cartesian; geometry determined by \f$R\f$              </li>"//new_line('A') &
-    &        // "<li> \c Igeometry=2 : cylindrical; geometry determined by \f$R\f$            </li>"//new_line('A') &
-    &        // "<li> \c Igeometry=3 : toroidal; geometry determined by \f$R\f$ *and* \f$Z\f$ </li>"//new_line('A') &
-    &        // "</ul>"
-    attr_len = len(attr_data)
+    ! attribute content is description of /version
+    description = "version of SPEC"
 
-    
-    ! create dataspace for descriptive Attribute; only one description per item, so H5S_SCALAR_F
-    call h5screate_f(H5S_SCALAR_F, attr_dspace, hdfier)
-    
-    call h5tcopy_f(H5T_C_S1, attr_dtype, hdfier)
-    call h5tset_cset_f(attr_dtype, H5T_CSET_UTF8_F, hdfier)
-    call h5tset_size_f(attr_dtype, attr_len, hdfier)
-    
-    
-    ! create Attribute 'description' attached to /version
-    call h5acreate_f(dset_version, attr_name, attr_dtype, attr_dspace, attr_id, hdfier)
-    
-    
-    
-    
-    call h5awrite_f(attr_id, attr_dtype, attr_data, int((/attr_len/),size_t), hdfier)
-    
-    
-    
-    
-    ! close dataspace of attribute
-    call h5sclose_f(attr_dspace, hdfier)
+    ! attach description to /version Dataset
+    call attach_description(dset_version, description)
     
     ! close dataset of /version
     call h5dclose_f(dset_version, hdfier)
@@ -1033,7 +1087,170 @@ module sphdf5
     
     
     
+    ! create /input group
+    call h5gcreate_f(file_id, "input", grp_input, hdfier)
     
+    ! attribute content is description of /input group
+    description = "group for mirrored input data"
+    
+    ! attach description to /input Group
+    call attach_description(grp_input, description)
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    ! and now for some more variables :-)
+    
+    
+    
+    
+    
+    ! create dataspace for /input/Igeometry
+    call h5screate_f(H5S_SCALAR_F, dataspace, hdfier)
+    
+    ! create dataset for /input/Igeometry
+    call h5dcreate_f(grp_input, "Igeometry", H5T_NATIVE_INTEGER, dataspace, dset_input_Igeometry, hdfier)
+    
+    ! write /input/Igeometry to output file
+    call h5dwrite_f(dset_input_Igeometry, H5T_NATIVE_INTEGER, Igeometry, int((/1/),hsize_t), hdfier)
+    
+    ! close dataspace of /input/Igeometry
+    call h5sclose_f(dataspace, hdfier)
+    
+    ! attribute content is description of /input/Igeometry
+    description = "selects Cartesian, cylindrical or toroidal geometry"//new_line('A') &
+    &        // "<ul>"//new_line('A') &
+    &        // "<li> \c Igeometry=1 : Cartesian; geometry determined by \f$R\f$              </li>"//new_line('A') &
+    &        // "<li> \c Igeometry=2 : cylindrical; geometry determined by \f$R\f$            </li>"//new_line('A') &
+    &        // "<li> \c Igeometry=3 : toroidal; geometry determined by \f$R\f$ *and* \f$Z\f$ </li>"//new_line('A') &
+    &        // "</ul>"
+    
+    ! attach description to /input/Igeometry Dataset
+    call attach_description(dset_input_Igeometry, description)
+    
+    ! close dataset of /input/Igeometry
+    call h5dclose_f(dset_input_Igeometry, hdfier)
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    ! create dataspace for /input/Nvol
+    call h5screate_f(H5S_SCALAR_F, dataspace, hdfier)
+    
+    ! create dataset for /input/Nvol
+    call h5dcreate_f(grp_input, "Nvol", H5T_NATIVE_INTEGER, dataspace, dset_input_Nvol, hdfier)
+    
+    ! write /input/Nvol to output file
+    call h5dwrite_f(dset_input_Nvol, H5T_NATIVE_INTEGER, Nvol, int((/1/),hsize_t), hdfier)
+    
+    ! close dataspace of /input/Nvol
+    call h5sclose_f(dataspace, hdfier)
+    
+    ! attribute content is description of /input/Nvol
+    description = "number of volumes"//new_line('A') &
+    &        // "<ul>"//new_line('A') &
+    &        // "<li> each volume \f${\cal V}_l\f$ is bounded by the \f${\cal I}_{l-1}\f$ and \f${\cal I}_{l}\f$ interfaces </li>"//new_line('A') &
+    &        // "<li> note that in cylindrical or toroidal geometry, \f${\cal I}_{0}\f$ is the degenerate coordinate axis   </li>"//new_line('A') &
+    &        // "<li> constraint: \c Nvol<=MNvol                                                                            </li>"//new_line('A') &
+    &        // "</ul>"
+    
+    ! attach description to /input/Nvol Dataset
+    call attach_description(dset_input_Nvol, description)
+    
+    ! close dataset of /input/Nvol
+    call h5dclose_f(dset_input_Nvol, hdfier)
+    
+    
+    
+    
+   
+   
+   
+   
+   ! create dataspace for /input/Lrad
+    call h5screate_simple_f(1, int((/Nvol/),hsize_t), dataspace, hdfier) ! TODO: Nvol+Lfreeboundary
+    
+    ! create dataset for /input/Lrad
+    call h5dcreate_f(grp_input, "Lrad", H5T_NATIVE_INTEGER, dataspace, dset_input_Lrad, hdfier)
+    
+    ! write /input/Lrad to output file
+    call h5dwrite_f(dset_input_Lrad, H5T_NATIVE_INTEGER, Lrad(1:Nvol), int((/Nvol/),hsize_t), hdfier) ! TODO: Nvol+Lfreeboundary
+    
+    ! attribute content is description of /version
+    description = "Chebyshev resolution in each volume"//new_line('A') &
+    &        // "<ul>"//new_line('A') &
+    &        // "<li> constraint : \c Lrad(1:Mvol) >= 2 </li>"//new_line('A') &
+    &        // "</ul>"
+
+    ! attach description to /input/Lrad Dataset
+    call attach_description(dset_input_Lrad, description)
+    
+    ! close dataset of /version
+    call h5dclose_f(dset_input_Lrad, hdfier)
+   
+   
+   
+   
+   
+   
+   
+   
+    ! create dataspace for /input/phiedge
+    call h5screate_f(H5S_SCALAR_F, dataspace, hdfier)
+    
+    ! create dataset for /input/phiedge
+    call h5dcreate_f(grp_input, "phiedge", H5T_NATIVE_DOUBLE, dataspace, dset_input_phiedge, hdfier)
+    
+    ! write /input/phiedge to output file
+    call h5dwrite_f(dset_input_phiedge, H5T_NATIVE_DOUBLE, phiedge, int((/1/),hsize_t), hdfier)
+    
+    ! close dataspace of /input/phiedge
+    call h5sclose_f(dataspace, hdfier)
+    
+    ! attribute content is description of /input/phiedge
+    description = "total enclosed toroidal magnetic flux"
+    
+    ! attach description to /input/phiedge Dataset
+    call attach_description(dset_input_phiedge, description)
+    
+    ! close dataset of /input/phiedge
+    call h5dclose_f(dset_input_phiedge, hdfier)
+   
+   
+   
+    
+    
+    
+    
+    ! close /input group
+    call h5gclose_f(grp_input, hdfier)
+    
+    
+    
+    
+    ! finally, close the output file
     call h5fclose_f(file_id, hdfier)
     
   

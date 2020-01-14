@@ -1,7 +1,6 @@
 program spec
   use hdf5
   use fileunits
-  !use inputlist
   use allglobal
   use sphdf5
   
@@ -14,7 +13,8 @@ program spec
   integer :: infile_src !< 0: no input file found; 1: textual namelist in ext.sp; 2: HDF5 file with prepared input contents
   integer :: hdfier     ! error for HDF5 library
   
-  write(*,'("SPEC version = ",f5.2)') version
+  ! output info on this version of SPEC
+  write(*,'("SPEC ",2(i1,"."),i1)') version
   
   ! open HDF5 library
   call h5open_f(hdfier)
