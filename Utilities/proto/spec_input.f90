@@ -666,58 +666,89 @@ module inputlist
                                         if (dspace_type.eq.H5S_SIMPLE_F) then
                                           write(ounit,*) "successfully verified that the type of the /input/Lrad dataspace is H5S_SIMPLE_F"
                                     
+                                    
+                                    
                                           ! query rank of /input/Lrad
-                                          
-                                          ! check that dimension of /input/Lrad is equal to Nvol+LFreeboundary
-                                          
-                                          ! query datatype of /input/Lrad
-                                          call h5dget_type_f(dset_input_Lrad, dtype_id, hdfier)
+                                          call h5sget_simple_extent_ndims_f(dataspace, rank, hdfier)
                                           if (hdfier.ne.0) then
-                                            write(ounit,*) "error querying datatype of /input/Lrad"
+                                            write(ounit,*) "error getting rank of /input/Lrad; expected ",rank,", got ",hdfier
                                           else
-                                            if (verbose) then ; write(ounit,*) "successfully queried datatype of /input/Lrad" ; endif
-                                              
-                                            ! convert datatype to native array for comparison
-                                            call h5tget_native_type_f(dtype_id, 1, dtype_id_native, hdfier)
-                                            if (hdfier.ne.0) then
-                                              write(ounit,*) "error converting datatype of /input/Lrad to native datatype"
+                                            if (verbose) then ; write(ounit,*) "successfully queried rank of /input/Lrad" ; endif
+                                          
+                                          
+                                            
+                                            ! get the current and maximum dimensions of /input/Lrad
+                                            call h5sget_simple_extent_dims_f(dataspace, dims_1, max_dims_1, hdfier)
+                                            if (hdfier.ne.rank) then
+                                              write(ounit,*) "ERROR: rank mismatch of /input/Lrad; expected ",rank,", but got ",hdfier
                                             else
-                                              if (verbose) then ; write(ounit,*) "successfully converted datatype of /input/Lrad to native datatype" ; endif
+                                              write(ounit,*) "successfully queried length of /input/Lrad"
                                               
-                                              ! call comparison routine for /input/Lrad datatype
-                                              call h5tequal_f(dtype_id_native, H5T_NATIVE_INTEGER, datatypes_equal, hdfier)
-                                              if (hdfier.ne.0) then
-                                                write(ounit,*) "error comparing datatype of /input/Lrad to H5T_NATIVE_INTEGER"
+                                              
+                                              ! check that /input/Lrad has the correct length
+                                              if (dims_1(1).ne.Nvol) then ! TODO: Nvol+Lfreeboundary
+                                                write(ounit,*) "ERROR: expected length of /input/Lrad is Nvol+Lfreeboundary, but got ", dims_1
                                               else
-                                                if (verbose) then ; write(ounit,*) "successfully executed comparison of datatype of /input/Lrad with H5T_NATIVE_INTEGER" ; endif
+                                                if (verbose) then ; write(ounit,*) "successfully verified the correct length of /input/Lrad" ; endif
                                                 
-                                                ! verify correct datatype of /input/Lrad
-                                                if (datatypes_equal) then
-                                                  if (verbose) then ; write(ounit,*) "successfully checked that datatype of /input/Lrad is H5T_NATIVE_INTEGER :-)" ; endif
-                                                  
-                                                  ! read /input/Lrad Dataset
-                                                  call h5dread_f(dset_input_Lrad, H5T_NATIVE_INTEGER, Lrad(1:Nvol), int((/Nvol/), HSIZE_T), hdfier)
-                                                  if (hdfier.ne.0) then
-                                                    write(*,*) "error reading Dataset /input/Lrad"
-                                                  else
-                                                    if (verbose) then ; write(ounit,'(" successfully read /input/Lrad from input data: ",i2)') Lrad(1:Nvol) ; endif
-                                                  endif ! read /input/Lrad Dataset
+                                                ! query datatype of /input/Lrad
+                                                call h5dget_type_f(dset_input_Lrad, dtype_id, hdfier)
+                                                if (hdfier.ne.0) then
+                                                  write(ounit,*) "error querying datatype of /input/Lrad"
                                                 else
-                                                  write(ounit,*) "ERROR: native datatype of /input/Lrad should be H5T_NATIVE_INTEGER but is ",dtype_id_native
-                                                endif !verify correct datatype of /input/Lrad
-                                              
-                                              endif ! call comparison routine for /input/Lrad datatype
-                                            endif ! convert datatype to native array for comparison
+                                                  if (verbose) then ; write(ounit,*) "successfully queried datatype of /input/Lrad" ; endif
+                                                    
+                                                  ! convert datatype to native array for comparison
+                                                  call h5tget_native_type_f(dtype_id, 1, dtype_id_native, hdfier)
+                                                  if (hdfier.ne.0) then
+                                                    write(ounit,*) "error converting datatype of /input/Lrad to native datatype"
+                                                  else
+                                                    if (verbose) then ; write(ounit,*) "successfully converted datatype of /input/Lrad to native datatype" ; endif
+                                                    
+                                                    ! call comparison routine for /input/Lrad datatype
+                                                    call h5tequal_f(dtype_id_native, H5T_NATIVE_INTEGER, datatypes_equal, hdfier)
+                                                    if (hdfier.ne.0) then
+                                                      write(ounit,*) "error comparing datatype of /input/Lrad to H5T_NATIVE_INTEGER"
+                                                    else
+                                                      if (verbose) then ; write(ounit,*) "successfully executed comparison of datatype of /input/Lrad with H5T_NATIVE_INTEGER" ; endif
+                                                      
+                                                      ! verify correct datatype of /input/Lrad
+                                                      if (datatypes_equal) then
+                                                        if (verbose) then ; write(ounit,*) "successfully checked that datatype of /input/Lrad is H5T_NATIVE_INTEGER :-)" ; endif
+                                                        
+                                                        ! read /input/Lrad Dataset
+                                                        call h5dread_f(dset_input_Lrad, H5T_NATIVE_INTEGER, Lrad(1:Nvol), int((/Nvol/), HSIZE_T), hdfier)
+                                                        if (hdfier.ne.0) then
+                                                          write(*,*) "error reading Dataset /input/Lrad"
+                                                        else
+                                                          if (verbose) then ; write(ounit,'(" successfully read /input/Lrad from input data: ",i2)') Lrad(1:Nvol) ; endif
+                                                        endif ! read /input/Lrad Dataset
+                                                      else
+                                                        write(ounit,*) "ERROR: native datatype of /input/Lrad should be H5T_NATIVE_INTEGER but is ",dtype_id_native
+                                                      endif !verify correct datatype of /input/Lrad
+                                                    
+                                                    endif ! call comparison routine for /input/Lrad datatype
+                                                  endif ! convert datatype to native array for comparison
+                                                  
+                                                  ! close datatype of /input/Lrad
+                                                  call h5tclose_f(dtype_id, hdfier)
+                                                  if (hdfier.ne.0) then
+                                                    write(ounit,*) "error closing datatype of /input/Lrad"
+                                                  elseif (verbose) then
+                                                    write(ounit,*) "successfully closed datatype of /input/Lrad"
+                                                  endif ! close datatype of /input/Lrad
+                                                  
+                                                endif ! query datatype of /input/Lrad
                                             
-                                            ! close datatype of /input/Lrad
-                                            call h5tclose_f(dtype_id, hdfier)
-                                            if (hdfier.ne.0) then
-                                              write(ounit,*) "error closing datatype of /input/Lrad"
-                                            elseif (verbose) then
-                                              write(ounit,*) "successfully closed datatype of /input/Lrad"
-                                            endif ! close datatype of /input/Lrad
                                             
-                                          endif ! query datatype of /input/Lrad
+                                              endif ! check that /input/Lrad has the correct length
+                                            
+                                            endif ! get the current and maximum dimensions of /input/Lrad
+                                          
+                                          
+                                          
+                                          endif ! query rank of /input/Lrad
+                                          
                                         else
                                           write(ounit,*) "ERROR: type of dataspace /input/Lrad is not H5S_SIMPLE_F but ",dspace_type
                                         endif ! check that the type of the /input/Lrad dataspace is H5S_SIMPLE_F
