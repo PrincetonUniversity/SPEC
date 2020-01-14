@@ -76,9 +76,9 @@ module inputlist
     
     character(len=*),intent(in) :: filename_h5 ! name of input file
     
-    logical                     :: Lsph5exist !< flag to indicate that the file \c ext.sp.h5 exists
-    integer                     :: hdfier ! error flag for HDF5 library calls
-    integer(hid_t)              :: file_id, dtype_id, dtype_id_native
+    integer                     :: hdfier            ! error flag for HDF5 library calls
+    logical                     :: Lsph5exist        !< flag to indicate that the file \c ext.sp.h5 exists
+    integer(hid_t)              :: dtype_id, dtype_id_native
     integer(hid_t)              :: dataspace         ! dataspace used to query Dataset size
     integer                     :: rank              ! rank of a dataspace, i.e. number of dimensions
     integer(hsize_t)            :: dims_1(1)         ! current dimensions of rank-1 Dataset
@@ -90,6 +90,7 @@ module inputlist
     logical                     :: item_exists, datatypes_equal
     integer                     :: item_type, dspace_type
     
+    integer(hid_t)              :: file_id
     integer(hid_t)              :: dset_version
     integer(hid_t)              :: grp_input
     integer(hid_t)              :: dset_input_Igeometry
@@ -232,7 +233,6 @@ module inputlist
                                   else
                                     write(ounit,*) "ERROR: native datatype of /version should be H5T_NATIVE_DOUBLE but is ",dtype_id_native
                                   endif !verify correct datatype of /version
-                                
                                 endif ! call comparison routine for /version datatype
                               endif ! convert datatype to native array for comparison
                               
@@ -243,23 +243,17 @@ module inputlist
                               elseif (verbose) then
                                 write(ounit,*) "successfully closed datatype of /version"
                               endif ! close datatype of /version
-                              
                             endif ! query datatype of /version
-                          
                           else
                             write(ounit,*) "ERROR: type of dataspace /version is not H5S_SCALAR_F but ",dspace_type
                           endif ! check that the type of the /version dataspace is H5S_SCALAR_F
-                        
                         endif ! check that the dataspace of /version is scalar
                         
                         ! close dataspace of /version
                         call h5sclose_f(dataspace, hdfier)
                         if (hdfier.ne.0) then ; write(ounit,*) "error closing dataspace of /version" ; endif
-
                       endif ! open dataspace of /version
-                      
                     endif ! check if /version is a Dataset
-                    
                   endif ! query type of /version object
                   
                   ! close /version object
@@ -572,7 +566,6 @@ module inputlist
                                             elseif (verbose) then
                                               write(ounit,*) "successfully closed datatype of /input/Nvol"
                                             endif ! close datatype of /input/Nvol
-                                            
                                           endif ! query datatype of /input/Nvol
                                         else
                                           write(ounit,*) "ERROR: type of dataspace /input/Nvol is not H5S_SCALAR_F but ",dspace_type
@@ -583,9 +576,7 @@ module inputlist
                                       call h5sclose_f(dataspace, hdfier)
                                       if (hdfier.ne.0) then ; write(ounit,*) "error closing dataspace of /input/Nvol" ; endif
                                     endif ! open dataspace of /input/Nvol
-                                    
                                   endif ! check if /input/Nvol is a Dataset
-                                  
                                 endif ! query type of /input/Nvol object
                                         
                                 call h5oclose_f(dset_input_Nvol, hdfier)
@@ -666,16 +657,12 @@ module inputlist
                                         if (dspace_type.eq.H5S_SIMPLE_F) then
                                           write(ounit,*) "successfully verified that the type of the /input/Lrad dataspace is H5S_SIMPLE_F"
                                     
-                                    
-                                    
                                           ! query rank of /input/Lrad
                                           call h5sget_simple_extent_ndims_f(dataspace, rank, hdfier)
                                           if (hdfier.ne.0) then
                                             write(ounit,*) "error getting rank of /input/Lrad; expected ",rank,", got ",hdfier
                                           else
                                             if (verbose) then ; write(ounit,*) "successfully queried rank of /input/Lrad" ; endif
-                                          
-                                          
                                             
                                             ! get the current and maximum dimensions of /input/Lrad
                                             call h5sget_simple_extent_dims_f(dataspace, dims_1, max_dims_1, hdfier)
@@ -683,7 +670,6 @@ module inputlist
                                               write(ounit,*) "ERROR: rank mismatch of /input/Lrad; expected ",rank,", but got ",hdfier
                                             else
                                               write(ounit,*) "successfully queried length of /input/Lrad"
-                                              
                                               
                                               ! check that /input/Lrad has the correct length
                                               if (dims_1(1).ne.Nvol) then ! TODO: Nvol+Lfreeboundary
@@ -737,18 +723,10 @@ module inputlist
                                                   elseif (verbose) then
                                                     write(ounit,*) "successfully closed datatype of /input/Lrad"
                                                   endif ! close datatype of /input/Lrad
-                                                  
                                                 endif ! query datatype of /input/Lrad
-                                            
-                                            
                                               endif ! check that /input/Lrad has the correct length
-                                            
                                             endif ! get the current and maximum dimensions of /input/Lrad
-                                          
-                                          
-                                          
                                           endif ! query rank of /input/Lrad
-                                          
                                         else
                                           write(ounit,*) "ERROR: type of dataspace /input/Lrad is not H5S_SIMPLE_F but ",dspace_type
                                         endif ! check that the type of the /input/Lrad dataspace is H5S_SIMPLE_F
@@ -974,22 +952,89 @@ module sphdf5
     
     implicit none
     
+    character(LEN=15), parameter       :: attr_name = "description" !< name of the descriptive Attribute to be attached to each Dataset and Group
+    integer(HID_T)                     :: attr_id                   ! Attribute identifier
+    integer(HID_T)                     :: attr_dspace               ! Attribute Dataspace identifier
+    integer(HID_T)                     :: attr_dtype                ! Attribute Dataspace identifier
+    integer(SIZE_T)                    :: attr_len                  ! Length of the attribute string
+    character(len=:), allocatable      :: attr_data                 ! Attribute data == description content
+    
     character(len=*),intent(in) :: filename_h5 ! name of output file
     logical :: file_exists
     integer :: hdfier ! error flag for HDF5 library
     
+    integer(hid_t)              :: dataspace         ! dataspace used to write stuff
+    
+    integer(hid_t)              :: file_id
+    integer(hid_t)              :: dset_version
+    integer(hid_t)              :: grp_input
+    integer(hid_t)              :: dset_input_Igeometry
+    integer(hid_t)              :: dset_input_Nvol
+    integer(hid_t)              :: dset_input_Lrad
+    integer(hid_t)              :: dset_input_phiedge
+    
     inquire( file=filename_h5, exist=file_exists ) ! check if file exists
     if (file_exists) then
       write(ounit,*) "output HDF5 file '",filename_h5,"' already exists"
+      call exit(1)
     endif
     
     write(ounit,*) "writing input data into output HDF5 file '",filename_h5,"'"
     
+    ! create the HDF5 output file
+    call h5fcreate_f(filename_h5, H5F_ACC_TRUNC_F, file_id, hdfier)
+    
+    
+    ! create dataspace for /version
+    call h5screate_f(H5S_SCALAR_F, dataspace, hdfier)
+    
+    ! create dataset for /version
+    call h5dcreate_f(file_id, "version", H5T_NATIVE_DOUBLE, dataspace, dset_version, hdfier)
+    
+    ! write version number to output file
+    call h5dwrite_f(dset_version, H5T_NATIVE_DOUBLE, version, int((/1/),size_t), hdfier)
+    
+    
+    
+    attr_data = "selects Cartesian, cylindrical or toroidal geometry"//new_line('A') &
+    &        // "<ul>"//new_line('A') &
+    &        // "<li> \c Igeometry=1 : Cartesian; geometry determined by \f$R\f$              </li>"//new_line('A') &
+    &        // "<li> \c Igeometry=2 : cylindrical; geometry determined by \f$R\f$            </li>"//new_line('A') &
+    &        // "<li> \c Igeometry=3 : toroidal; geometry determined by \f$R\f$ *and* \f$Z\f$ </li>"//new_line('A') &
+    &        // "</ul>"
+    attr_len = len(attr_data)
+
+    
+    ! create dataspace for descriptive Attribute; only one description per item, so H5S_SCALAR_F
+    call h5screate_f(H5S_SCALAR_F, attr_dspace, hdfier)
+    
+    call h5tcopy_f(H5T_C_S1, attr_dtype, hdfier)
+    call h5tset_cset_f(attr_dtype, H5T_CSET_UTF8_F, hdfier)
+    call h5tset_size_f(attr_dtype, attr_len, hdfier)
+    
+    
+    ! create Attribute 'description' attached to /version
+    call h5acreate_f(dset_version, attr_name, attr_dtype, attr_dspace, attr_id, hdfier)
+    
+    
+    
+    
+    call h5awrite_f(attr_id, attr_dtype, attr_data, int((/attr_len/),size_t), hdfier)
+    
+    
+    
+    
+    ! close dataspace of attribute
+    call h5sclose_f(attr_dspace, hdfier)
+    
+    ! close dataset of /version
+    call h5dclose_f(dset_version, hdfier)
     
     
     
     
     
+    call h5fclose_f(file_id, hdfier)
     
   
   

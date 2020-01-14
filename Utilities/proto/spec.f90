@@ -7,6 +7,7 @@ program spec
   
   implicit none
   
+  integer :: numargs    ! number of command-line arguments
   integer :: extlen     !< length of input filename
   integer :: sppos      !< position of ".sp"    in input filename
   integer :: sph5pos    !< position of ".sp.h5" in input filename
@@ -26,12 +27,11 @@ program spec
   infile_src = 0 ! only ext on cmd line is the default
   
   ! check that at least one command-line argument is given
-  
-  ! check that command-line argument is not one of the following:
-  ! '-h', '--help'            <-- show this help text
-  ! '-v', '--verbose'         <-- enable verbal diarreha for debugging
-  ! '-f', '--force-overwrite' <-- force SPEC to override existing output file(s)
-  ! which are already reserved flags to control the program flow
+  numargs = command_argument_count()
+  if (numargs.ne.1) then
+    write(ounit,'(" number of command-line argument should be exactly 1 (name of the input file), but it is ",i2)') numargs
+    call exit(1)
+  endif
   
   ! parse first command-line argument; should be the name of the input file
   call getarg( 1, ext )
