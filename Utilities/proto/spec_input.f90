@@ -369,6 +369,11 @@ module inputlist
                       
                       ! check for contents of /input Group
                       
+                      
+                      
+                      
+                      
+                      
                       write(ounit,*) " "
                       
                       ! query existence of /input/Igeometry link
@@ -750,11 +755,11 @@ module inputlist
                                                         if (verbose) then ; write(ounit,*) "successfully checked that datatype of /input/Lrad is H5T_NATIVE_INTEGER :-)" ; endif
                                                         
                                                         ! read /input/Lrad Dataset
-                                                        call h5dread_f(dset_input_Lrad, H5T_NATIVE_INTEGER, Lrad(1:Nvol), int((/Nvol/), HSIZE_T), hdfier)
+                                                        call h5dread_f(dset_input_Lrad, H5T_NATIVE_INTEGER, Lrad(1:Nvol), int((/Nvol/), HSIZE_T), hdfier) ! TODO: Nvol+Lfreeboundary
                                                         if (hdfier.ne.0) then
                                                           write(*,*) "error reading Dataset /input/Lrad"
                                                         else
-                                                          if (verbose) then ; write(ounit,'(" successfully read /input/Lrad from input data: ",i2)') Lrad(1:Nvol) ; endif
+                                                          if (verbose) then ; write(ounit,'(" successfully read /input/Lrad from input data: ",i2)') Lrad(1:Nvol) ; endif ! TODO: Nvol+Lfreeboundary
                                                         endif ! read /input/Lrad Dataset
                                                       else
                                                         write(ounit,*) "ERROR: native datatype of /input/Lrad should be H5T_NATIVE_INTEGER but is ",dtype_id_native
@@ -944,6 +949,15 @@ module inputlist
                       endif ! query existence of /input/phiedge link
                       
                       write(ounit,*) " "
+                      
+                      
+                      
+                      
+                      
+                      
+                      
+                      
+                      
                       
                     endif ! check if /input is a Group
                   endif ! query type of /input object
@@ -1180,9 +1194,6 @@ module sphdf5
       write(ounit,*) "error creating or opening output file"
     else
       if (verbose) then ; write(ounit,*) "successfully opened output file" ; endif
-      
-      
-      
       
       write(ounit,*) " "
       
@@ -1472,5 +1483,27 @@ module sphdf5
     endif ! create and open the output file
   
   end subroutine mirror_input_to_outfile
-
+  
+  
+  subroutine wrtend(restart_filename)
+    use fileunits
+    use allglobal
+    implicit none
+    character(len=*),intent(in) :: restart_filename !< filename of the restart file
+    
+    ! open restart input file
+    open(iunit, file=restart_filename, status="unknown")
+    
+    write(iunit,'("&physicslist")')
+    write(iunit,'(" Igeometry   = ",i9        )') Igeometry
+    write(iunit,'(" Nvol        = ",i9        )') Nvol
+    write(iunit,'(" Lrad        = ",257i23    )') Lrad(1:Nvol) ! TODO: Nvol+Lfreeboundary
+    write(iunit,'(" phiedge     = ",es23.15   )') phiedge
+    write(iunit,'("/")')
+    
+    ! close restart input file
+    close(iunit)
+    
+  end subroutine wrtend
+  
 end module sphdf5

@@ -51,9 +51,9 @@ program spec
   
   write(ounit,*) "ext = '",trim(ext),"'"
   if (infile_src.eq.0) then
-    write(ounit,*) "input file name specified by ext only  --> textual namelist"
+    write(ounit,*) "input file name specified by ext only --> textual namelist"
   elseif (infile_src.eq.1) then
-    write(ounit,*) "input file name specified by ext.sp    --> textual namelist"
+    write(ounit,*) "input file name specified by ext.sp --> textual namelist"
   elseif (infile_src.eq.2) then
     write(ounit,*) "input file name specified by ext.sp.h5 --> HDF5 file for input"
   endif
@@ -79,6 +79,28 @@ program spec
     ! mirror the input file contents to the output file
     call mirror_input_to_outfile(trim(ext)//".sp.h5")
   endif 
+  
+  ! write restart file
+  call wrtend(trim(ext)//".sp.end")
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  ! solve fusion
+  
+  
+  
+  
+  
+  ! write output data
+  
+  
   
   ! close HDF5 library
   call h5close_f(hdfier)
