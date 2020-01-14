@@ -40,10 +40,23 @@ module inputlist
   character :: ext*255
   
   ! input namelist 'physicslist'
-  integer :: Igeometry        = 3
-  integer :: Nvol             = 1
-  integer :: Lrad(1:MNvol+1)  = 4
-  double precision :: phiedge = 1.0
+  integer :: Igeometry        = 3   !< selects Cartesian, cylindrical or toroidal geometry;
+                                    !< <ul>
+                                    !< <li> \c Igeometry=1 : Cartesian; geometry determined by \f$R\f$; </li>
+                                    !< <li> \c Igeometry=2 : cylindrical; geometry determined by \f$R\f$; </li>
+                                    !< <li> \c Igeometry=3 : toroidal; geometry determined by \f$R\f$ *and* \f$Z\f$; </li>
+                                    !< </ul>
+  integer :: Nvol             = 1   !< number of volumes
+                                    !< <ul>
+                                    !< <li> each volume \f${\cal V}_l\f$ is bounded by the \f${\cal I}_{l-1}\f$ and \f${\cal I}_{l}\f$ interfaces </li>
+                                    !< <li> note that in cylindrical or toroidal geometry, \f${\cal I}_{0}\f$ is the degenerate coordinate axis </li>
+                                    !< <li> constraint: \c Nvol<=MNvol </li>
+                                    !< </ul>
+  integer :: Lrad(1:MNvol+1)  = 4   !< Chebyshev resolution in each volume
+                                    !< <ul>
+                                    !< <li> constraint : \c Lrad(1:Mvol) >= 2 </li>
+                                    !< </ul>
+  double precision :: phiedge = 1.0 !< total enclosed toroidal magnetic flux
   
   namelist /physicslist/ &
   Igeometry,&
@@ -1051,10 +1064,83 @@ module sphdf5
         write(ounit,*) "error closing dataspace of attribute"
       elseif (verbose) then ; write(ounit,*) "successfully closed dataspace of attribute"
       endif ! close dataspace of attribute
-    
     endif ! create dataspace for descriptive Attribute
-    
   end subroutine attach_description
+  
+  ! attach a unit attribute to the given HDF5 Dataset
+  subroutine attach_unit(dataset_id, unit_txt)
+    use hdf5
+    use fileunits
+    use allglobal
+    implicit none
+    integer(hid_t),   intent(in) :: dataset_id
+    character(len=*), intent(in) :: unit_txt
+    
+    character(LEN=15), parameter       :: attr_name = "unit" !< name of the Attribute containing the unit of the respective Dataset
+    integer(HID_T)                     :: attr_id            !< Attribute identifier
+    integer(HID_T)                     :: attr_dspace        !< Attribute Dataspace identifier
+    integer(HID_T)                     :: attr_dtype         !< Attribute Dataspace identifier
+    integer(HSIZE_T)                   :: attr_len           !< Length of the attribute string
+    
+    integer :: hdfier   !< error flag for HDF5 library
+    
+    ! compute length of current attribute
+    attr_len = len(unit_txt)
+    
+    ! create dataspace for descriptive Attribute; only one description per item, so H5S_SCALAR_F
+    call h5screate_f(H5S_SCALAR_F, attr_dspace, hdfier)
+    if (hdfier.ne.0) then
+      write(ounit,*) "error creating dataspace for unit attribute"
+    else
+      if (verbose) then ; write(ounit,*) "successfully created dataspace for unit attribute" ; endif
+      
+      ! copy base type for attribute data (String)
+      call h5tcopy_f(H5T_C_S1, attr_dtype, hdfier)
+      if (hdfier.ne.0) then
+        write(ounit,*) "error copying H5T_C_S1 to attr_dtype"
+      else
+        if (verbose) then ; write(ounit,*) "successfully copyied H5T_C_S1 to attr_dtype" ; endif
+      
+        ! set charset used for attribute string to be UTF-8; e.g. for Ampère
+        call h5tset_cset_f(attr_dtype, H5T_CSET_UTF8_F, hdfier)
+        if (hdfier.ne.0) then
+          write(ounit,*) "error setting charset used for unit attribute string to be UTF-8"
+        else
+          if (verbose) then ; write(ounit,*) "successfully set charset used for unit attribute string to be UTF-8" ; endif
+        
+          ! set attribute string length
+          call h5tset_size_f(attr_dtype, attr_len, hdfier)
+          if (hdfier.ne.0) then
+            write(ounit,*) "error setting unit attribute string length"
+          else
+            if (verbose) then ; write(ounit,*) "successfully set unit attribute string length" ; endif
+          
+            ! create Attribute 'unit' attached to Dataset identified by dataset_id
+            call h5acreate_f(dataset_id, attr_name, attr_dtype, attr_dspace, attr_id, hdfier)
+            if (hdfier.ne.0) then
+              write(ounit,*) "error creating 'unit' attribute"
+            else
+              if (verbose) then ; write(ounit,*) "successfully created 'unit' attribute" ; endif
+            
+              ! write unit attribute data
+              call h5awrite_f(attr_id, attr_dtype, unit_txt, int((/attr_len/),size_t), hdfier)
+              if (hdfier.ne.0) then
+                write(ounit,*) "error writing 'unit' data"
+              elseif (verbose) then ; write(ounit,*) "successfully wrote 'unit' attribute data"
+              endif ! write unit attribute data  
+            endif ! create Attribute 'unit' attached to Dataset identified by dataset_id
+          endif ! set attribute string length
+        endif ! set charset used for attribute string to be UTF-8
+      endif ! copy base type for attribute data (String)
+      
+      ! close dataspace of attribute
+      call h5sclose_f(attr_dspace, hdfier)
+      if (hdfier.ne.0) then
+        write(ounit,*) "error closing dataspace of unit attribute"
+      elseif (verbose) then ; write(ounit,*) "successfully closed dataspace of unit attribute"
+      endif ! close dataspace of attribute
+    endif ! create dataspace for unit Attribute
+  end subroutine attach_unit
   
   subroutine mirror_input_to_outfile(filename_h5)
     use hdf5
@@ -1063,12 +1149,8 @@ module sphdf5
     
     implicit none
     
-    character(LEN=15), parameter       :: attr_name = "description" !< name of the descriptive Attribute to be attached to each Dataset and Group
-    integer(HID_T)                     :: attr_id                   ! Attribute identifier
-    integer(HID_T)                     :: attr_dspace               ! Attribute Dataspace identifier
-    integer(HID_T)                     :: attr_dtype                ! Attribute Dataspace identifier
-    integer(SIZE_T)                    :: attr_len                  ! Length of the attribute string
-    character(len=:), allocatable      :: description                 ! Attribute data == description content
+    character(len=:), allocatable      :: description ! description Attribute
+    character(len=:), allocatable      :: unit_txt    ! unit Attribute
     
     character(len=*),intent(in) :: filename_h5 ! name of output file
     logical :: file_exists
@@ -1341,11 +1423,13 @@ module sphdf5
             else
               if (verbose) then ; write(ounit,*) "successfully wrote data of /input/phiedge Dataset" ; endif
               
-              ! attribute content is description of /input/phiedge
+              ! attach description of /input/phiedge
               description = "total enclosed toroidal magnetic flux"
-              
-              ! attach description to /input/phiedge Dataset
               call attach_description(dset_input_phiedge, description)
+              
+              ! attach unit of /input/phiedge Dataset
+              unit_txt = "Vs"
+              call attach_unit(dset_input_phiedge, unit_txt)
             
             endif ! write /input/phiedge to output file
             
