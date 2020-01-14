@@ -45,7 +45,7 @@ module inputlist
   integer :: Lrad(1:MNvol+1)  = 4
   double precision :: phiedge = 1.0
   
-  namelist/physicslist/ &
+  namelist /physicslist/ &
   Igeometry,&
   Nvol,&
   Lrad,&
@@ -979,8 +979,11 @@ module sphdf5
   
   contains
   
+  ! attach a description attribute to the given HDF5 item (Group or Dataset)
   subroutine attach_description(item_id, description)
     use hdf5
+    use fileunits
+    use allglobal
     implicit none
     integer(hid_t),   intent(in) :: item_id
     character(len=*), intent(in) :: description
@@ -998,24 +1001,58 @@ module sphdf5
     
     ! create dataspace for descriptive Attribute; only one description per item, so H5S_SCALAR_F
     call h5screate_f(H5S_SCALAR_F, attr_dspace, hdfier)
+    if (hdfier.ne.0) then
+      write(ounit,*) "error creating dataspace for attribute"
+    else
+      if (verbose) then ; write(ounit,*) "successfully created dataspace for attribute" ; endif
+      
+      ! copy base type for attribute data (String)
+      call h5tcopy_f(H5T_C_S1, attr_dtype, hdfier)
+      if (hdfier.ne.0) then
+        write(ounit,*) "error copying H5T_C_S1 to attr_dtype"
+      else
+        if (verbose) then ; write(ounit,*) "successfully copyied H5T_C_S1 to attr_dtype" ; endif
+      
+        ! set charset used for attribute string to be UTF-8; e.g. for Poincaré
+        call h5tset_cset_f(attr_dtype, H5T_CSET_UTF8_F, hdfier)
+        if (hdfier.ne.0) then
+          write(ounit,*) "error setting charset used for attribute string to be UTF-8"
+        else
+          if (verbose) then ; write(ounit,*) "successfully set charset used for attribute string to be UTF-8" ; endif
+        
+          ! set attribute string length
+          call h5tset_size_f(attr_dtype, attr_len, hdfier)
+          if (hdfier.ne.0) then
+            write(ounit,*) "error setting attribute string length"
+          else
+            if (verbose) then ; write(ounit,*) "successfully set attribute string length" ; endif
+          
+            ! create Attribute 'description' attached to Group or Dataset identified by item_id
+            call h5acreate_f(item_id, attr_name, attr_dtype, attr_dspace, attr_id, hdfier)
+            if (hdfier.ne.0) then
+              write(ounit,*) "error creating 'description' attribute"
+            else
+              if (verbose) then ; write(ounit,*) "successfully created 'description' attribute" ; endif
+            
+              ! write attribute data
+              call h5awrite_f(attr_id, attr_dtype, description, int((/attr_len/),size_t), hdfier)
+              if (hdfier.ne.0) then
+                write(ounit,*) "error writing 'description' data"
+              elseif (verbose) then ; write(ounit,*) "successfully wrote 'description' data"
+              endif ! write attribute data  
+            endif ! create Attribute 'description' attached to Group or Dataset identified by item_id
+          endif ! set attribute string length
+        endif ! set charset used for attribute string to be UTF-8
+      endif ! copy base type for attribute data (String)
+      
+      ! close dataspace of attribute
+      call h5sclose_f(attr_dspace, hdfier)
+      if (hdfier.ne.0) then
+        write(ounit,*) "error closing dataspace of attribute"
+      elseif (verbose) then ; write(ounit,*) "successfully closed dataspace of attribute"
+      endif ! close dataspace of attribute
     
-    ! base type for attribute data is a string
-    call h5tcopy_f(H5T_C_S1, attr_dtype, hdfier)
-    
-    ! set charset used for attribute string to be UTF-8, e.g. for Poincaré
-    call h5tset_cset_f(attr_dtype, H5T_CSET_UTF8_F, hdfier)
-    
-    ! set attribute string length
-    call h5tset_size_f(attr_dtype, attr_len, hdfier)
-    
-    ! create Attribute 'description' attached to /version
-    call h5acreate_f(item_id, attr_name, attr_dtype, attr_dspace, attr_id, hdfier)
-    
-    ! write attribute data
-    call h5awrite_f(attr_id, attr_dtype, description, int((/attr_len/),size_t), hdfier)
-    
-    ! close dataspace of attribute
-    call h5sclose_f(attr_dspace, hdfier)
+    endif ! create dataspace for descriptive Attribute
     
   end subroutine attach_description
   
@@ -1050,210 +1087,305 @@ module sphdf5
     inquire( file=filename_h5, exist=file_exists ) ! check if file exists
     if (file_exists) then
       write(ounit,*) "output HDF5 file '",filename_h5,"' already exists"
-      call exit(1)
+      call exit(1) ! TODO: Loverwrite?
     endif
     
     write(ounit,*) "writing input data into output HDF5 file '",filename_h5,"'"
     
-    ! create and open the HDF5 output file
+    ! create and open the output file; will be overwritten if already existent
     call h5fcreate_f(filename_h5, H5F_ACC_TRUNC_F, file_id, hdfier)
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    ! create dataspace for /version
-    call h5screate_simple_f(1, int((/3/),hsize_t), dataspace, hdfier)
-    
-    ! create dataset for /version
-    call h5dcreate_f(file_id, "version", H5T_NATIVE_INTEGER, dataspace, dset_version, hdfier)
-    
-    ! write version number to output file
-    call h5dwrite_f(dset_version, H5T_NATIVE_INTEGER, version, int((/3/),hsize_t), hdfier)
-    
-    ! attribute content is description of /version
-    description = "version of SPEC"
-
-    ! attach description to /version Dataset
-    call attach_description(dset_version, description)
-    
-    ! close dataset of /version
-    call h5dclose_f(dset_version, hdfier)
-    
-    
-    
-    
-    ! create /input group
-    call h5gcreate_f(file_id, "input", grp_input, hdfier)
-    
-    ! attribute content is description of /input group
-    description = "group for mirrored input data"
-    
-    ! attach description to /input Group
-    call attach_description(grp_input, description)
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    ! and now for some more variables :-)
-    
-    
-    
-    
-    
-    ! create dataspace for /input/Igeometry
-    call h5screate_f(H5S_SCALAR_F, dataspace, hdfier)
-    
-    ! create dataset for /input/Igeometry
-    call h5dcreate_f(grp_input, "Igeometry", H5T_NATIVE_INTEGER, dataspace, dset_input_Igeometry, hdfier)
-    
-    ! write /input/Igeometry to output file
-    call h5dwrite_f(dset_input_Igeometry, H5T_NATIVE_INTEGER, Igeometry, int((/1/),hsize_t), hdfier)
-    
-    ! close dataspace of /input/Igeometry
-    call h5sclose_f(dataspace, hdfier)
-    
-    ! attribute content is description of /input/Igeometry
-    description = "selects Cartesian, cylindrical or toroidal geometry"//new_line('A') &
-    &        // "<ul>"//new_line('A') &
-    &        // "<li> \c Igeometry=1 : Cartesian; geometry determined by \f$R\f$              </li>"//new_line('A') &
-    &        // "<li> \c Igeometry=2 : cylindrical; geometry determined by \f$R\f$            </li>"//new_line('A') &
-    &        // "<li> \c Igeometry=3 : toroidal; geometry determined by \f$R\f$ *and* \f$Z\f$ </li>"//new_line('A') &
-    &        // "</ul>"
-    
-    ! attach description to /input/Igeometry Dataset
-    call attach_description(dset_input_Igeometry, description)
-    
-    ! close dataset of /input/Igeometry
-    call h5dclose_f(dset_input_Igeometry, hdfier)
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    ! create dataspace for /input/Nvol
-    call h5screate_f(H5S_SCALAR_F, dataspace, hdfier)
-    
-    ! create dataset for /input/Nvol
-    call h5dcreate_f(grp_input, "Nvol", H5T_NATIVE_INTEGER, dataspace, dset_input_Nvol, hdfier)
-    
-    ! write /input/Nvol to output file
-    call h5dwrite_f(dset_input_Nvol, H5T_NATIVE_INTEGER, Nvol, int((/1/),hsize_t), hdfier)
-    
-    ! close dataspace of /input/Nvol
-    call h5sclose_f(dataspace, hdfier)
-    
-    ! attribute content is description of /input/Nvol
-    description = "number of volumes"//new_line('A') &
-    &        // "<ul>"//new_line('A') &
-    &        // "<li> each volume \f${\cal V}_l\f$ is bounded by the \f${\cal I}_{l-1}\f$ and \f${\cal I}_{l}\f$ interfaces </li>"//new_line('A') &
-    &        // "<li> note that in cylindrical or toroidal geometry, \f${\cal I}_{0}\f$ is the degenerate coordinate axis   </li>"//new_line('A') &
-    &        // "<li> constraint: \c Nvol<=MNvol                                                                            </li>"//new_line('A') &
-    &        // "</ul>"
-    
-    ! attach description to /input/Nvol Dataset
-    call attach_description(dset_input_Nvol, description)
-    
-    ! close dataset of /input/Nvol
-    call h5dclose_f(dset_input_Nvol, hdfier)
-    
-    
-    
-    
-   
-   
-   
-   
-   ! create dataspace for /input/Lrad
-    call h5screate_simple_f(1, int((/Nvol/),hsize_t), dataspace, hdfier) ! TODO: Nvol+Lfreeboundary
-    
-    ! create dataset for /input/Lrad
-    call h5dcreate_f(grp_input, "Lrad", H5T_NATIVE_INTEGER, dataspace, dset_input_Lrad, hdfier)
-    
-    ! write /input/Lrad to output file
-    call h5dwrite_f(dset_input_Lrad, H5T_NATIVE_INTEGER, Lrad(1:Nvol), int((/Nvol/),hsize_t), hdfier) ! TODO: Nvol+Lfreeboundary
-    
-    ! attribute content is description of /version
-    description = "Chebyshev resolution in each volume"//new_line('A') &
-    &        // "<ul>"//new_line('A') &
-    &        // "<li> constraint : \c Lrad(1:Mvol) >= 2 </li>"//new_line('A') &
-    &        // "</ul>"
-
-    ! attach description to /input/Lrad Dataset
-    call attach_description(dset_input_Lrad, description)
-    
-    ! close dataset of /version
-    call h5dclose_f(dset_input_Lrad, hdfier)
-   
-   
-   
-   
-   
-   
-   
-   
-    ! create dataspace for /input/phiedge
-    call h5screate_f(H5S_SCALAR_F, dataspace, hdfier)
-    
-    ! create dataset for /input/phiedge
-    call h5dcreate_f(grp_input, "phiedge", H5T_NATIVE_DOUBLE, dataspace, dset_input_phiedge, hdfier)
-    
-    ! write /input/phiedge to output file
-    call h5dwrite_f(dset_input_phiedge, H5T_NATIVE_DOUBLE, phiedge, int((/1/),hsize_t), hdfier)
-    
-    ! close dataspace of /input/phiedge
-    call h5sclose_f(dataspace, hdfier)
-    
-    ! attribute content is description of /input/phiedge
-    description = "total enclosed toroidal magnetic flux"
-    
-    ! attach description to /input/phiedge Dataset
-    call attach_description(dset_input_phiedge, description)
-    
-    ! close dataset of /input/phiedge
-    call h5dclose_f(dset_input_phiedge, hdfier)
-   
-   
-   
-    
-    
-    
-    
-    ! close /input group
-    call h5gclose_f(grp_input, hdfier)
-    
-    
-    
-    
-    ! finally, close the output file
-    call h5fclose_f(file_id, hdfier)
-    
-  
+    if (hdfier.ne.0) then
+      write(ounit,*) "error creating or opening output file"
+    else
+      if (verbose) then ; write(ounit,*) "successfully opened output file" ; endif
+      
+      
+      
+      
+      write(ounit,*) " "
+      
+      ! create dataspace for /version
+      call h5screate_simple_f(1, int((/3/),hsize_t), dataspace, hdfier)
+      if (hdfier.ne.0) then
+        write(ounit,*) "error creating dataspace for /version"
+      else
+        if (verbose) then ; write(ounit,*) "successfully created dataspace for /version" ; endif
+        
+        ! create dataset for /version
+        call h5dcreate_f(file_id, "version", H5T_NATIVE_INTEGER, dataspace, dset_version, hdfier)
+        if (hdfier.ne.0) then
+          write(ounit,*) "error creating dataspace for /version"
+        else
+          if (verbose) then ; write(ounit,*) "successfully created dataset for /version" ; endif
+          
+          ! write version number to output file
+          call h5dwrite_f(dset_version, H5T_NATIVE_INTEGER, version, int((/3/),hsize_t), hdfier)
+          if (hdfier.ne.0) then
+            write(ounit,*) "error writing data of /version Dataset"
+          else
+            if (verbose) then ; write(ounit,*) "successfully wrote data of /version Dataset" ; endif
+            
+            ! attribute content is description of /version
+            description = "version of SPEC"
+            
+            ! attach description to /version Dataset
+            call attach_description(dset_version, description)
+          
+          endif ! write version number to output file
+          
+          ! close dataset of /version
+          call h5dclose_f(dset_version, hdfier)
+          if (hdfier.ne.0) then
+            write(ounit,*) "error closing /version Dataset"
+          elseif (verbose) then ; write(ounit,*) "successfully closed /version Datset"
+          endif ! close dataset of /version
+        endif ! create dataset for /version
+        
+        ! close dataspace for /version
+        call h5sclose_f(dataspace, hdfier)
+        if (hdfier.ne.0) then
+          write(ounit,*) "error closing dataspace for /version"
+        elseif (verbose) then ; write(ounit,*) "successfully closed dataspace for /version"
+        endif ! close dataspace for /version
+      endif ! create dataspace for /version
+      
+      write(ounit,*) " "
+      
+      ! create /input group
+      call h5gcreate_f(file_id, "input", grp_input, hdfier)
+      if (hdfier.ne.0) then
+        write(ounit,*) "error creating /input Group"
+      else
+        if (verbose) then ; write(ounit,*) "successfully created /input Group" ; endif
+        
+        ! attribute content is description of /input group
+        description = "group for mirrored input data"
+        
+        ! attach description to /input Group
+        call attach_description(grp_input, description)
+        
+        write(ounit,*) " "
+        
+        ! create dataspace for /input/Igeometry
+        call h5screate_f(H5S_SCALAR_F, dataspace, hdfier)
+        if (hdfier.ne.0) then
+          write(ounit,*) "error creating dataspace for /input/Igeometry"
+        else
+          if (verbose) then ; write(ounit,*) "successfully created dataspace for /input/Igeometry" ; endif
+          
+          ! create dataset for /input/Igeometry
+          call h5dcreate_f(grp_input, "Igeometry", H5T_NATIVE_INTEGER, dataspace, dset_input_Igeometry, hdfier)
+          if (hdfier.ne.0) then
+            write(ounit,*) "error creating dataspace for /input/Igeometry"
+          else
+            if (verbose) then ; write(ounit,*) "successfully created dataset for /input/Igeometry" ; endif
+            
+            ! write /input/Igeometry to output file
+            call h5dwrite_f(dset_input_Igeometry, H5T_NATIVE_INTEGER, Igeometry, int((/1/),hsize_t), hdfier)
+            if (hdfier.ne.0) then
+              write(ounit,*) "error writing data of /input/Igeometry Dataset"
+            else
+              if (verbose) then ; write(ounit,*) "successfully wrote data of /input/Igeometry Dataset" ; endif
+              
+              ! attribute content is description of /input/Igeometry
+              description = "selects Cartesian, cylindrical or toroidal geometry"//new_line('A') &
+              &          // "<ul>"//new_line('A') &
+              &          // "<li> \c Igeometry=1 : Cartesian; geometry determined by \f$R\f$              </li>"//new_line('A') &
+              &          // "<li> \c Igeometry=2 : cylindrical; geometry determined by \f$R\f$            </li>"//new_line('A') &
+              &          // "<li> \c Igeometry=3 : toroidal; geometry determined by \f$R\f$ *and* \f$Z\f$ </li>"//new_line('A') &
+              &          // "</ul>"
+              
+              ! attach description to /input/Igeometry Dataset
+              call attach_description(dset_input_Igeometry, description)
+            
+            endif ! write /input/Igeometry to output file
+            
+            ! close dataset of /input/Igeometry
+            call h5dclose_f(dset_input_Igeometry, hdfier)
+            if (hdfier.ne.0) then
+              write(ounit,*) "error closing /input/Igeometry Dataset"
+            elseif (verbose) then ; write(ounit,*) "successfully closed /input/Igeometry Datset"
+            endif ! close dataset of /input/Igeometry
+          endif ! create dataset for /input/Igeometry
+          
+          ! close dataspace for /input/Igeometry
+          call h5sclose_f(dataspace, hdfier)
+          if (hdfier.ne.0) then
+            write(ounit,*) "error closing dataspace for /input/Igeometry"
+          elseif (verbose) then ; write(ounit,*) "successfully closed dataspace for /input/Igeometry"
+          endif ! close dataspace for /input/Igeometry
+        endif ! create dataspace for /input/Igeometry
+        
+        write(ounit,*) " "
+        
+        ! create dataspace for /input/Nvol
+        call h5screate_f(H5S_SCALAR_F, dataspace, hdfier)
+        if (hdfier.ne.0) then
+          write(ounit,*) "error creating dataspace for /input/Nvol"
+        else
+          if (verbose) then ; write(ounit,*) "successfully created dataspace for /input/Nvol" ; endif
+          
+          ! create dataset for /input/Nvol
+          call h5dcreate_f(grp_input, "Nvol", H5T_NATIVE_INTEGER, dataspace, dset_input_Nvol, hdfier)
+          if (hdfier.ne.0) then
+            write(ounit,*) "error creating dataspace for /input/Nvol"
+          else
+            if (verbose) then ; write(ounit,*) "successfully created dataset for /input/Nvol" ; endif
+            
+            ! write /input/Nvol to output file
+            call h5dwrite_f(dset_input_Nvol, H5T_NATIVE_INTEGER, Nvol, int((/1/),hsize_t), hdfier)
+            if (hdfier.ne.0) then
+              write(ounit,*) "error writing data of /input/Nvol Dataset"
+            else
+              if (verbose) then ; write(ounit,*) "successfully wrote data of /input/Nvol Dataset" ; endif
+              
+              ! attribute content is description of /input/Nvol
+              description = "number of volumes"//new_line('A') &
+              &          // "<ul>"//new_line('A') &
+              &          // "<li> each volume \f${\cal V}_l\f$ is bounded by the \f${\cal I}_{l-1}\f$ and \f${\cal I}_{l}\f$ interfaces </li>"//new_line('A') &
+              &          // "<li> note that in cylindrical or toroidal geometry, \f${\cal I}_{0}\f$ is the degenerate coordinate axis   </li>"//new_line('A') &
+              &          // "<li> constraint: \c Nvol<=MNvol                                                                            </li>"//new_line('A') &
+              &          // "</ul>"
+              
+              ! attach description to /input/Nvol Dataset
+              call attach_description(dset_input_Nvol, description)
+            
+            endif ! write /input/Nvol to output file
+            
+            ! close dataset of /input/Nvol
+            call h5dclose_f(dset_input_Nvol, hdfier)
+            if (hdfier.ne.0) then
+              write(ounit,*) "error closing /input/Nvol Dataset"
+            elseif (verbose) then ; write(ounit,*) "successfully closed /input/Nvol Datset"
+            endif ! close dataset of /input/Nvol
+          endif ! create dataset for /input/Nvol
+          
+          ! close dataspace for /input/Nvol
+          call h5sclose_f(dataspace, hdfier)
+          if (hdfier.ne.0) then
+            write(ounit,*) "error closing dataspace for /input/Nvol"
+          elseif (verbose) then ; write(ounit,*) "successfully closed dataspace for /input/Nvol"
+          endif ! close dataspace for /input/Nvol
+        endif ! create dataspace for /input/Nvol
+        
+        write(ounit,*) " "
+        
+        ! create dataspace for /input/Lrad
+        call h5screate_simple_f(1, int((/Nvol/),hsize_t), dataspace, hdfier) ! TODO: Nvol+Lfreeboundary
+        if (hdfier.ne.0) then
+          write(ounit,*) "error creating dataspace for /input/Lrad"
+        else
+          if (verbose) then ; write(ounit,*) "successfully created dataspace for /input/Lrad" ; endif
+          
+          ! create dataset for /input/Lrad
+          call h5dcreate_f(grp_input, "Lrad", H5T_NATIVE_INTEGER, dataspace, dset_input_Lrad, hdfier)
+          if (hdfier.ne.0) then
+            write(ounit,*) "error creating dataspace for /input/Lrad"
+          else
+            if (verbose) then ; write(ounit,*) "successfully created dataset for /input/Lrad" ; endif
+            
+            ! write /input/Lrad to output file
+            call h5dwrite_f(dset_input_Lrad, H5T_NATIVE_INTEGER, Lrad(1:Nvol), int((/Nvol/),hsize_t), hdfier) ! TODO: Nvol+Lfreeboundary
+            if (hdfier.ne.0) then
+              write(ounit,*) "error writing data of /input/Lrad Dataset"
+            else
+              if (verbose) then ; write(ounit,*) "successfully wrote data of /input/Lrad Dataset" ; endif
+              
+              ! attribute content is description of /input/Lrad
+              description = "Chebyshev resolution in each volume"//new_line('A') &
+              &          // "<ul>"//new_line('A') &
+              &          // "<li> constraint : \c Lrad(1:Mvol) >= 2 </li>"//new_line('A') &
+              &          // "</ul>"
+              
+              ! attach description to /input/Lrad Dataset
+              call attach_description(dset_input_Lrad, description)
+            
+            endif ! write /input/Lrad to output file
+            
+            ! close dataset of /input/Lrad
+            call h5dclose_f(dset_input_Lrad, hdfier)
+            if (hdfier.ne.0) then
+              write(ounit,*) "error closing /input/Lrad Dataset"
+            elseif (verbose) then ; write(ounit,*) "successfully closed /input/Lrad Datset"
+            endif ! close dataset of /input/Lrad
+          endif ! create dataset for /input/Lrad
+          
+          ! close dataspace for /input/Lrad
+          call h5sclose_f(dataspace, hdfier)
+          if (hdfier.ne.0) then
+            write(ounit,*) "error closing dataspace for /input/Lrad"
+          elseif (verbose) then ; write(ounit,*) "successfully closed dataspace for /input/Lrad"
+          endif ! close dataspace for /input/Lrad
+        endif ! create dataspace for /input/Lrad
+        
+        write(ounit,*) " "
+        
+        ! create dataspace for /input/phiedge
+        call h5screate_f(H5S_SCALAR_F, dataspace, hdfier)
+        if (hdfier.ne.0) then
+          write(ounit,*) "error creating dataspace for /input/phiedge"
+        else
+          if (verbose) then ; write(ounit,*) "successfully created dataspace for /input/phiedge" ; endif
+          
+          ! create dataset for /input/phiedge
+          call h5dcreate_f(grp_input, "phiedge", H5T_NATIVE_DOUBLE, dataspace, dset_input_phiedge, hdfier)
+          if (hdfier.ne.0) then
+            write(ounit,*) "error creating dataspace for /input/phiedge"
+          else
+            if (verbose) then ; write(ounit,*) "successfully created dataset for /input/phiedge" ; endif
+            
+            ! write /input/phiedge to output file
+            call h5dwrite_f(dset_input_phiedge, H5T_NATIVE_DOUBLE, phiedge, int((/1/),hsize_t), hdfier)
+            if (hdfier.ne.0) then
+              write(ounit,*) "error writing data of /input/phiedge Dataset"
+            else
+              if (verbose) then ; write(ounit,*) "successfully wrote data of /input/phiedge Dataset" ; endif
+              
+              ! attribute content is description of /input/phiedge
+              description = "total enclosed toroidal magnetic flux"
+              
+              ! attach description to /input/phiedge Dataset
+              call attach_description(dset_input_phiedge, description)
+            
+            endif ! write /input/phiedge to output file
+            
+            ! close dataset of /input/phiedge
+            call h5dclose_f(dset_input_phiedge, hdfier)
+            if (hdfier.ne.0) then
+              write(ounit,*) "error closing /input/phiedge Dataset"
+            elseif (verbose) then ; write(ounit,*) "successfully closed /input/phiedge Datset"
+            endif ! close dataset of /input/phiedge
+          endif ! create dataset for /input/phiedge
+          
+          ! close dataspace for /input/phiedge
+          call h5sclose_f(dataspace, hdfier)
+          if (hdfier.ne.0) then
+            write(ounit,*) "error closing dataspace for /input/phiedge"
+          elseif (verbose) then ; write(ounit,*) "successfully closed dataspace for /input/phiedge"
+          endif ! close dataspace for /input/phiedge
+        endif ! create dataspace for /input/phiedge
+        
+        write(ounit,*) " "
+      
+      endif ! create /input group
+      
+      ! close /input group
+      call h5gclose_f(grp_input, hdfier)
+      if (hdfier.ne.0) then
+        write(ounit,*) "error closing /input Group"
+      elseif (verbose) then ; write(ounit,*) "successfully closed /input Group"
+      endif ! close /input group
+      
+      write(ounit,*) " "
+      
+      ! finally, close the output file
+      call h5fclose_f(file_id, hdfier)
+      if (hdfier.ne.0) then
+        write(ounit,*) "error closing output file"
+      elseif (verbose) then ; write(ounit,*) "successfully closed output file"
+      endif ! finally, close the output file
+      
+    endif ! create and open the output file
   
   end subroutine mirror_input_to_outfile
 
