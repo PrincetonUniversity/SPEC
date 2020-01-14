@@ -80,8 +80,13 @@ module inputlist
     integer                     :: hdfier ! error flag for HDF5 library calls
     integer(hid_t)              :: file_id, dtype_id, dtype_id_native
     integer(hid_t)              :: dataspace         ! dataspace used to query Dataset size
+    integer                     :: rank              ! rank of a dataspace, i.e. number of dimensions
     integer(hsize_t)            :: dims_1(1)         ! current dimensions of rank-1 Dataset
+    integer(hsize_t)            :: dims_2(2)         ! current dimensions of rank-2 Dataset
+    integer(hsize_t)            :: dims_3(3)         ! current dimensions of rank-3 Dataset
     integer(hsize_t)            :: max_dims_1(1)     ! maximum dimensions of rank-1 Dataset
+    integer(hsize_t)            :: max_dims_2(2)     ! maximum dimensions of rank-2 Dataset
+    integer(hsize_t)            :: max_dims_3(3)     ! maximum dimensions of rank-3 Dataset
     logical                     :: item_exists, datatypes_equal
     integer                     :: item_type, dspace_type
     
@@ -121,10 +126,7 @@ module inputlist
         !  9. close the native datatype
         ! 10. close the Dataset object
         
-        
-        
-        
-        
+        write(ounit,*) " "
         
         ! query existence of /version link
         call h5lexists_f(file_id, "version", item_exists, hdfier)
@@ -219,7 +221,7 @@ module inputlist
                                       ! verify that version number in input file is less than or equal to the current version of SPEC
                                       if (input_version.le.version) then
                                         if (verbose) then
-                                          write(ounit,'(" The version of the input data (",f4.2,") is compatible with SPEC ",f4.2)') &
+                                          write(ounit,'(" INFO: The version of the input data (",f4.2,") is compatible with SPEC ",f4.2)') &
                                           & input_version, version
                                         endif
                                       else
@@ -259,13 +261,14 @@ module inputlist
                     endif ! check if /version is a Dataset
                     
                   endif ! query type of /version object
-                          
+                  
+                  ! close /version object
                   call h5oclose_f(dset_version, hdfier)
                   if (hdfier.ne.0) then
                     write(*,*) "error closing object /version"
                   elseif (verbose) then
                     write(ounit,*) "successfully closed object /version"
-                  endif
+                  endif ! close /version object
                 endif ! try to open /version object
               else
                 ! /version link present but does not resolve to any object
@@ -279,10 +282,7 @@ module inputlist
           endif ! check if /version link exists
         endif ! query existence of /version link
         
-        
-        
-        
-        
+        write(ounit,*) " "
         
         ! query existence of /input link
         call h5lexists_f(file_id, "input", item_exists, hdfier)
@@ -326,16 +326,9 @@ module inputlist
                     else
                       if (verbose) then ; write(ounit,*) "successfully verified that /input is a Group" ; endif
                       
-                      
-                      
-                      
                       ! check for contents of /input Group
                       
-                      
-                      
-                      
-                      
-                      
+                      write(ounit,*) " "
                       
                       ! query existence of /input/Igeometry link
                       call h5lexists_f(grp_input, "Igeometry", item_exists, hdfier)
@@ -379,56 +372,80 @@ module inputlist
                                   else
                                     if (verbose) then ; write(ounit,*) "successfully verified that /input/Igeometry is a Dataset" ; endif
                                     
-                                    ! query datatype of /input/Igeometry
-                                    call h5dget_type_f(dset_input_Igeometry, dtype_id, hdfier)
+                                    ! open dataspace of /input/Igeometry
+                                    call h5dget_space_f(dset_input_Igeometry, dataspace, hdfier)
                                     if (hdfier.ne.0) then
-                                      write(ounit,*) "error querying datatype of /input/Igeometry"
+                                      write(ounit,*) "error getting dataspace of /input/Igeometry"
                                     else
-                                      if (verbose) then ; write(ounit,*) "successfully queried datatype of /input/Igeometry" ; endif
-                                        
-                                      ! convert datatype to native array for comparison
-                                      call h5tget_native_type_f(dtype_id, 1, dtype_id_native, hdfier)
+                                    
+                                      ! check that the dataspace of /input/Igeometry is scalar
+                                      call h5sget_simple_extent_type_f(dataspace, dspace_type, hdfier)
                                       if (hdfier.ne.0) then
-                                        write(ounit,*) "error converting datatype of /input/Igeometry to native datatype"
+                                        write(ounit,*) "error getting type of /input/Igeometry dataspace"
                                       else
-                                        if (verbose) then ; write(ounit,*) "successfully converted datatype of /input/Igeometry to native datatype" ; endif
-                                        
-                                        ! call comparison routine for /input/Igeometry datatype
-                                        call h5tequal_f(dtype_id_native, H5T_NATIVE_INTEGER, datatypes_equal, hdfier)
-                                        if (hdfier.ne.0) then
-                                          write(ounit,*) "error comparing datatype of /input/Igeometry to H5T_NATIVE_INTEGER"
-                                        else
-                                          if (verbose) then ; write(ounit,*) "successfully executed comparison of datatype of /input/Igeometry with H5T_NATIVE_INTEGER" ; endif
-                                          
-                                          ! verify correct datatype of /input/Igeometry
-                                          if (datatypes_equal) then
-                                            if (verbose) then ; write(ounit,*) "successfully checked that datatype of /input/Igeometry is H5T_NATIVE_INTEGER :-)" ; endif
-                                            
-                                            ! read /input/Igeometry Dataset
-                                            call h5dread_f(dset_input_Igeometry, H5T_NATIVE_INTEGER, Igeometry, int((/1/), HSIZE_T), hdfier)
-                                            if (hdfier.ne.0) then
-                                              write(*,*) "error reading Dataset /input/Igeometry"
-                                            else
-                                              if (verbose) then ; write(ounit,'(" successfully read /input/Igeometry from input data: ",i2)') Igeometry ; endif
-                                            endif ! read /input/Igeometry Dataset
+                                      
+                                        ! check that the type of the /input/Igeometry dataspace is H5S_SCALAR_F
+                                        if (dspace_type.eq.H5S_SCALAR_F) then
+                                          write(ounit,*) "successfully verified that the type of the /input/Igeometry dataspace is H5S_SCALAR_F"
+                                    
+                                          ! query datatype of /input/Igeometry
+                                          call h5dget_type_f(dset_input_Igeometry, dtype_id, hdfier)
+                                          if (hdfier.ne.0) then
+                                            write(ounit,*) "error querying datatype of /input/Igeometry"
                                           else
-                                            write(ounit,*) "ERROR: native datatype of /input/Igeometry should be H5T_NATIVE_INTEGER but is ",dtype_id_native
-                                          endif !verify correct datatype of /input/Igeometry
-                                        
-                                        endif ! call comparison routine for /input/Igeometry datatype
-                                      endif ! convert datatype to native array for comparison
+                                            if (verbose) then ; write(ounit,*) "successfully queried datatype of /input/Igeometry" ; endif
+                                              
+                                            ! convert datatype to native array for comparison
+                                            call h5tget_native_type_f(dtype_id, 1, dtype_id_native, hdfier)
+                                            if (hdfier.ne.0) then
+                                              write(ounit,*) "error converting datatype of /input/Igeometry to native datatype"
+                                            else
+                                              if (verbose) then ; write(ounit,*) "successfully converted datatype of /input/Igeometry to native datatype" ; endif
+                                              
+                                              ! call comparison routine for /input/Igeometry datatype
+                                              call h5tequal_f(dtype_id_native, H5T_NATIVE_INTEGER, datatypes_equal, hdfier)
+                                              if (hdfier.ne.0) then
+                                                write(ounit,*) "error comparing datatype of /input/Igeometry to H5T_NATIVE_INTEGER"
+                                              else
+                                                if (verbose) then ; write(ounit,*) "successfully executed comparison of datatype of /input/Igeometry with H5T_NATIVE_INTEGER" ; endif
+                                                
+                                                ! verify correct datatype of /input/Igeometry
+                                                if (datatypes_equal) then
+                                                  if (verbose) then ; write(ounit,*) "successfully checked that datatype of /input/Igeometry is H5T_NATIVE_INTEGER :-)" ; endif
+                                                  
+                                                  ! read /input/Igeometry Dataset
+                                                  call h5dread_f(dset_input_Igeometry, H5T_NATIVE_INTEGER, Igeometry, int((/1/), HSIZE_T), hdfier)
+                                                  if (hdfier.ne.0) then
+                                                    write(*,*) "error reading Dataset /input/Igeometry"
+                                                  else
+                                                    if (verbose) then ; write(ounit,'(" successfully read /input/Igeometry from input data: ",i2)') Igeometry ; endif
+                                                  endif ! read /input/Igeometry Dataset
+                                                else
+                                                  write(ounit,*) "ERROR: native datatype of /input/Igeometry should be H5T_NATIVE_INTEGER but is ",dtype_id_native
+                                                endif !verify correct datatype of /input/Igeometry
+                                              
+                                              endif ! call comparison routine for /input/Igeometry datatype
+                                            endif ! convert datatype to native array for comparison
+                                            
+                                            ! close datatype of /input/Igeometry
+                                            call h5tclose_f(dtype_id, hdfier)
+                                            if (hdfier.ne.0) then
+                                              write(ounit,*) "error closing datatype of /input/Igeometry"
+                                            elseif (verbose) then
+                                              write(ounit,*) "successfully closed datatype of /input/Igeometry"
+                                            endif ! close datatype of /input/Igeometry
+                                            
+                                          endif ! query datatype of /input/Igeometry
+                                        else
+                                          write(ounit,*) "ERROR: type of dataspace /input/Igeometry is not H5S_SCALAR_F but ",dspace_type
+                                        endif ! check that the type of the /input/Igeometry dataspace is H5S_SCALAR_F
+                                      endif ! check that the dataspace of /input/Igeometry is scalar
                                       
-                                      ! close datatype of /input/Igeometry
-                                      call h5tclose_f(dtype_id, hdfier)
-                                      if (hdfier.ne.0) then
-                                        write(ounit,*) "error closing datatype of /input/Igeometry"
-                                      elseif (verbose) then
-                                        write(ounit,*) "successfully closed datatype of /input/Igeometry"
-                                      endif ! close datatype of /input/Igeometry
-                                      
-                                    endif ! query datatype of /input/Igeometry
+                                      ! close dataspace of /input/Igeometry
+                                      call h5sclose_f(dataspace, hdfier)
+                                      if (hdfier.ne.0) then ; write(ounit,*) "error closing dataspace of /input/Igeometry" ; endif
+                                    endif ! open dataspace of /input/Igeometry
                                   endif ! check if /input/Igeometry is a Dataset
-                                  
                                 endif ! query type of /input/Igeometry object
                                         
                                 call h5oclose_f(dset_input_Igeometry, hdfier)
@@ -445,25 +462,11 @@ module inputlist
                           endif ! query existence of object at /input/Igeometry link
                         else
                           ! /input/Igeometry link not present in input file
-                          write(ounit,'(" WARNING: /input/Igeometry not found; cannot check if the given input file works for SPEC ",f4.2)')&
-                          & version
+                          write(ounit,*) " WARNING: /input/Igeometry not found. Using default value ", Igeometry
                         endif ! check if /input/Igeometry link exists
                       endif ! query existence of /input/Igeometry link
                       
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
+                      write(ounit,*) " "
                       
                       ! query existence of /input/Nvol link
                       call h5lexists_f(grp_input, "Nvol", item_exists, hdfier)
@@ -507,54 +510,80 @@ module inputlist
                                   else
                                     if (verbose) then ; write(ounit,*) "successfully verified that /input/Nvol is a Dataset" ; endif
                                     
-                                    ! query datatype of /input/Nvol
-                                    call h5dget_type_f(dset_input_Nvol, dtype_id, hdfier)
+                                    ! open dataspace of /input/Nvol
+                                    call h5dget_space_f(dset_input_Nvol, dataspace, hdfier)
                                     if (hdfier.ne.0) then
-                                      write(ounit,*) "error querying datatype of /input/Nvol"
+                                      write(ounit,*) "error getting dataspace of /input/Nvol"
                                     else
-                                      if (verbose) then ; write(ounit,*) "successfully queried datatype of /input/Nvol" ; endif
-                                        
-                                      ! convert datatype to native array for comparison
-                                      call h5tget_native_type_f(dtype_id, 1, dtype_id_native, hdfier)
+                                    
+                                      ! check that the dataspace of /input/Nvol is scalar
+                                      call h5sget_simple_extent_type_f(dataspace, dspace_type, hdfier)
                                       if (hdfier.ne.0) then
-                                        write(ounit,*) "error converting datatype of /input/Nvol to native datatype"
+                                        write(ounit,*) "error getting type of /input/Nvol dataspace"
                                       else
-                                        if (verbose) then ; write(ounit,*) "successfully converted datatype of /input/Nvol to native datatype" ; endif
-                                        
-                                        ! call comparison routine for /input/Nvol datatype
-                                        call h5tequal_f(dtype_id_native, H5T_NATIVE_INTEGER, datatypes_equal, hdfier)
-                                        if (hdfier.ne.0) then
-                                          write(ounit,*) "error comparing datatype of /input/Nvol to H5T_NATIVE_INTEGER"
-                                        else
-                                          if (verbose) then ; write(ounit,*) "successfully executed comparison of datatype of /input/Nvol with H5T_NATIVE_INTEGER" ; endif
-                                          
-                                          ! verify correct datatype of /input/Nvol
-                                          if (datatypes_equal) then
-                                            if (verbose) then ; write(ounit,*) "successfully checked that datatype of /input/Nvol is H5T_NATIVE_INTEGER :-)" ; endif
-                                            
-                                            ! read /input/Nvol Dataset
-                                            call h5dread_f(dset_input_Nvol, H5T_NATIVE_INTEGER, Nvol, int((/1/), HSIZE_T), hdfier)
-                                            if (hdfier.ne.0) then
-                                              write(*,*) "error reading Dataset /input/Nvol"
-                                            else
-                                              if (verbose) then ; write(ounit,'(" successfully read /input/Nvol from input data: ",i2)') Nvol ; endif
-                                            endif ! read /input/Nvol Dataset
+                                      
+                                        ! check that the type of the /input/Nvol dataspace is H5S_SCALAR_F
+                                        if (dspace_type.eq.H5S_SCALAR_F) then
+                                          write(ounit,*) "successfully verified that the type of the /input/Nvol dataspace is H5S_SCALAR_F"
+                                    
+                                          ! query datatype of /input/Nvol
+                                          call h5dget_type_f(dset_input_Nvol, dtype_id, hdfier)
+                                          if (hdfier.ne.0) then
+                                            write(ounit,*) "error querying datatype of /input/Nvol"
                                           else
-                                            write(ounit,*) "ERROR: native datatype of /input/Nvol should be H5T_NATIVE_INTEGER but is ",dtype_id_native
-                                          endif !verify correct datatype of /input/Nvol
-                                        
-                                        endif ! call comparison routine for /input/Nvol datatype
-                                      endif ! convert datatype to native array for comparison
+                                            if (verbose) then ; write(ounit,*) "successfully queried datatype of /input/Nvol" ; endif
+                                              
+                                            ! convert datatype to native array for comparison
+                                            call h5tget_native_type_f(dtype_id, 1, dtype_id_native, hdfier)
+                                            if (hdfier.ne.0) then
+                                              write(ounit,*) "error converting datatype of /input/Nvol to native datatype"
+                                            else
+                                              if (verbose) then ; write(ounit,*) "successfully converted datatype of /input/Nvol to native datatype" ; endif
+                                              
+                                              ! call comparison routine for /input/Nvol datatype
+                                              call h5tequal_f(dtype_id_native, H5T_NATIVE_INTEGER, datatypes_equal, hdfier)
+                                              if (hdfier.ne.0) then
+                                                write(ounit,*) "error comparing datatype of /input/Nvol to H5T_NATIVE_INTEGER"
+                                              else
+                                                if (verbose) then ; write(ounit,*) "successfully executed comparison of datatype of /input/Nvol with H5T_NATIVE_INTEGER" ; endif
+                                                
+                                                ! verify correct datatype of /input/Nvol
+                                                if (datatypes_equal) then
+                                                  if (verbose) then ; write(ounit,*) "successfully checked that datatype of /input/Nvol is H5T_NATIVE_INTEGER :-)" ; endif
+                                                  
+                                                  ! read /input/Nvol Dataset
+                                                  call h5dread_f(dset_input_Nvol, H5T_NATIVE_INTEGER, Nvol, int((/1/), HSIZE_T), hdfier)
+                                                  if (hdfier.ne.0) then
+                                                    write(*,*) "error reading Dataset /input/Nvol"
+                                                  else
+                                                    if (verbose) then ; write(ounit,'(" successfully read /input/Nvol from input data: ",i2)') Nvol ; endif
+                                                  endif ! read /input/Nvol Dataset
+                                                else
+                                                  write(ounit,*) "ERROR: native datatype of /input/Nvol should be H5T_NATIVE_INTEGER but is ",dtype_id_native
+                                                endif !verify correct datatype of /input/Nvol
+                                              
+                                              endif ! call comparison routine for /input/Nvol datatype
+                                            endif ! convert datatype to native array for comparison
+                                            
+                                            ! close datatype of /input/Nvol
+                                            call h5tclose_f(dtype_id, hdfier)
+                                            if (hdfier.ne.0) then
+                                              write(ounit,*) "error closing datatype of /input/Nvol"
+                                            elseif (verbose) then
+                                              write(ounit,*) "successfully closed datatype of /input/Nvol"
+                                            endif ! close datatype of /input/Nvol
+                                            
+                                          endif ! query datatype of /input/Nvol
+                                        else
+                                          write(ounit,*) "ERROR: type of dataspace /input/Nvol is not H5S_SCALAR_F but ",dspace_type
+                                        endif ! check that the type of the /input/Nvol dataspace is H5S_SCALAR_F
+                                      endif ! check that the dataspace of /input/Nvol is scalar
                                       
-                                      ! close datatype of /input/Nvol
-                                      call h5tclose_f(dtype_id, hdfier)
-                                      if (hdfier.ne.0) then
-                                        write(ounit,*) "error closing datatype of /input/Nvol"
-                                      elseif (verbose) then
-                                        write(ounit,*) "successfully closed datatype of /input/Nvol"
-                                      endif ! close datatype of /input/Nvol
-                                      
-                                    endif ! query datatype of /input/Nvol
+                                      ! close dataspace of /input/Nvol
+                                      call h5sclose_f(dataspace, hdfier)
+                                      if (hdfier.ne.0) then ; write(ounit,*) "error closing dataspace of /input/Nvol" ; endif
+                                    endif ! open dataspace of /input/Nvol
+                                    
                                   endif ! check if /input/Nvol is a Dataset
                                   
                                 endif ! query type of /input/Nvol object
@@ -573,85 +602,292 @@ module inputlist
                           endif ! query existence of object at /input/Nvol link
                         else
                           ! /input/Nvol link not present in input file
-                          write(ounit,'(" WARNING: /input/Nvol not found; cannot check if the given input file works for SPEC ",f4.2)')&
-                          & version
+                          write(ounit,*) " WARNING: /input/Nvol not found. Using default value ", Nvol
                         endif ! check if /input/Nvol link exists
                       endif ! query existence of /input/Nvol link
                       
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      ! /input/Lrad --> Lrad(1:dims_1(1)); rank=1
-                      call h5dopen_f(grp_input, "Lrad", dset_input_Lrad, hdfier)
+                      write(ounit,*) " "
+                                            
+                      ! query existence of /input/Lrad link
+                      call h5lexists_f(grp_input, "Lrad", item_exists, hdfier)
                       if (hdfier.ne.0) then
-                        write(*,*) "error opening Dataset /input/Lrad"
+                        write(*,*) "error checking if /input/Lrad link exists"
                       else
-                        ! open dataspace to get current state of Dataset
-                        call h5dget_space_f(dset_input_Lrad, dataspace, hdfier)
-                        if (hdfier.ne.0) then ; write(*,*) "error getting dataspace for Dataset /input/Lrad" ; endif
-                        
-                        ! get current size of Dataset
-                        call h5sget_simple_extent_dims_f(dataspace, dims_1, max_dims_1, hdfier)
-                        if (hdfier.ne.1) then ; write(*,*) "unexpected rank of Dataset /input/Lrad: ",hdfier," .ne. 1" ; endif
-                        
-                        ! close dataspace after it has been used to query the size of the variable
-                        call h5sclose_f(dataspace, hdfier)
-                        if (hdfier.ne.0) then ; write(*,*) "error closing dataspace for Dataset /input/Lrad" ; endif
-                        
-                        call h5dread_f(dset_input_Lrad, H5T_NATIVE_INTEGER, Lrad(1:dims_1(1)), dims_1, hdfier)
-                        if (hdfier.ne.0) then ; write(*,*) "error reading Dataset /input/Lrad" ; endif
-                        
-                        call h5dclose_f(dset_input_Lrad, hdfier)
-                        if (hdfier.ne.0) then ; write(*,*) "error closing Dataset /input/Lrad" ; endif
-                      endif
+                        if (verbose) then ; write(ounit,*) "successfully checked if the /input/Lrad link exists" ; endif
                       
-                      ! /input/phiedge --> phiedge
-                      call h5dopen_f(grp_input, "phiedge", dset_input_phiedge, hdfier)
+                        ! check that /input/Lrad link exists
+                        if (item_exists) then
+                          if (verbose) then; write(ounit,*) "successfully checked that the link /input/Lrad exists" ; endif
+                         
+                          ! query existence of object at /input/Lrad link
+                          call h5oexists_by_name_f(grp_input, "Lrad", item_exists, hdfier)
+                          if (hdfier.ne.0) then
+                            write(*,*) "error checking for presence of object at /input/Lrad"
+                          else
+                            if (verbose) then ; write(ounit,*) "successfully checked for presence of an object at /input/Lrad link" ; endif
+                          
+                            ! check that there exists an item at the /input/Lrad link
+                            if (item_exists) then
+                              if (verbose) then ; write(ounit,*) "successfully checked that there exists an item at /input/Lrad" ; endif
+                            
+                              ! try to open /input/Lrad object
+                              call h5oopen_f(grp_input, "Lrad", dset_input_Lrad, hdfier)
+                              if (hdfier.ne.0) then
+                                write(*,*) "error opening object /input/Lrad"
+                              else
+                                if (verbose) then ; write(ounit,*) "successfully opened object at /input/Lrad" ; endif
+                              
+                                ! query type of /input/Lrad object
+                                call h5iget_type_f(dset_input_Lrad, item_type, hdfier)
+                                if (hdfier.ne.0) then
+                                  write(*,*) "error querying type of object /input/Lrad"
+                                else
+                                  if (verbose) then ; write(ounit,*) "successfully queried item type of /input/Lrad" ; endif
+                                
+                                  ! check if /input/Lrad is a Dataset
+                                  if (item_type.ne.H5I_DATASET_F) then
+                                    write(ounit,*) "error verifying that object /input/Lrad is a Dataset(",H5I_DATASET_F,"); rather it is ",item_type
+                                  else
+                                    if (verbose) then ; write(ounit,*) "successfully verified that /input/Lrad is a Dataset" ; endif
+                                    
+                                    ! open dataspace of /input/Lrad
+                                    call h5dget_space_f(dset_input_Lrad, dataspace, hdfier)
+                                    if (hdfier.ne.0) then
+                                      write(ounit,*) "error getting dataspace of /input/Lrad"
+                                    else
+                                    
+                                      ! check that the dataspace of /input/Lrad is simple
+                                      call h5sget_simple_extent_type_f(dataspace, dspace_type, hdfier)
+                                      if (hdfier.ne.0) then
+                                        write(ounit,*) "error getting type of /input/Lrad dataspace"
+                                      else
+                                      
+                                        ! check that the type of the /input/Lrad dataspace is H5S_SIMPLE_F
+                                        if (dspace_type.eq.H5S_SIMPLE_F) then
+                                          write(ounit,*) "successfully verified that the type of the /input/Lrad dataspace is H5S_SIMPLE_F"
+                                    
+                                          ! query rank of /input/Lrad
+                                          
+                                          ! check that dimension of /input/Lrad is equal to Nvol+LFreeboundary
+                                          
+                                          ! query datatype of /input/Lrad
+                                          call h5dget_type_f(dset_input_Lrad, dtype_id, hdfier)
+                                          if (hdfier.ne.0) then
+                                            write(ounit,*) "error querying datatype of /input/Lrad"
+                                          else
+                                            if (verbose) then ; write(ounit,*) "successfully queried datatype of /input/Lrad" ; endif
+                                              
+                                            ! convert datatype to native array for comparison
+                                            call h5tget_native_type_f(dtype_id, 1, dtype_id_native, hdfier)
+                                            if (hdfier.ne.0) then
+                                              write(ounit,*) "error converting datatype of /input/Lrad to native datatype"
+                                            else
+                                              if (verbose) then ; write(ounit,*) "successfully converted datatype of /input/Lrad to native datatype" ; endif
+                                              
+                                              ! call comparison routine for /input/Lrad datatype
+                                              call h5tequal_f(dtype_id_native, H5T_NATIVE_INTEGER, datatypes_equal, hdfier)
+                                              if (hdfier.ne.0) then
+                                                write(ounit,*) "error comparing datatype of /input/Lrad to H5T_NATIVE_INTEGER"
+                                              else
+                                                if (verbose) then ; write(ounit,*) "successfully executed comparison of datatype of /input/Lrad with H5T_NATIVE_INTEGER" ; endif
+                                                
+                                                ! verify correct datatype of /input/Lrad
+                                                if (datatypes_equal) then
+                                                  if (verbose) then ; write(ounit,*) "successfully checked that datatype of /input/Lrad is H5T_NATIVE_INTEGER :-)" ; endif
+                                                  
+                                                  ! read /input/Lrad Dataset
+                                                  call h5dread_f(dset_input_Lrad, H5T_NATIVE_INTEGER, Lrad(1:Nvol), int((/Nvol/), HSIZE_T), hdfier)
+                                                  if (hdfier.ne.0) then
+                                                    write(*,*) "error reading Dataset /input/Lrad"
+                                                  else
+                                                    if (verbose) then ; write(ounit,'(" successfully read /input/Lrad from input data: ",i2)') Lrad(1:Nvol) ; endif
+                                                  endif ! read /input/Lrad Dataset
+                                                else
+                                                  write(ounit,*) "ERROR: native datatype of /input/Lrad should be H5T_NATIVE_INTEGER but is ",dtype_id_native
+                                                endif !verify correct datatype of /input/Lrad
+                                              
+                                              endif ! call comparison routine for /input/Lrad datatype
+                                            endif ! convert datatype to native array for comparison
+                                            
+                                            ! close datatype of /input/Lrad
+                                            call h5tclose_f(dtype_id, hdfier)
+                                            if (hdfier.ne.0) then
+                                              write(ounit,*) "error closing datatype of /input/Lrad"
+                                            elseif (verbose) then
+                                              write(ounit,*) "successfully closed datatype of /input/Lrad"
+                                            endif ! close datatype of /input/Lrad
+                                            
+                                          endif ! query datatype of /input/Lrad
+                                        else
+                                          write(ounit,*) "ERROR: type of dataspace /input/Lrad is not H5S_SIMPLE_F but ",dspace_type
+                                        endif ! check that the type of the /input/Lrad dataspace is H5S_SIMPLE_F
+                                      endif ! check that the dataspace of /input/Lrad is scalar
+                                      
+                                      ! close dataspace of /input/Lrad
+                                      call h5sclose_f(dataspace, hdfier)
+                                      if (hdfier.ne.0) then ; write(ounit,*) "error closing dataspace of /input/Lrad" ; endif
+                                    endif ! open dataspace of /input/Lrad
+                                  endif ! query type of /input/Lrad object
+                                endif ! check if /input/Lrad is a Dataset
+                                        
+                                call h5oclose_f(dset_input_Lrad, hdfier)
+                                if (hdfier.ne.0) then
+                                  write(*,*) "error closing object /input/Lrad"
+                                elseif (verbose) then
+                                  write(ounit,*) "successfully closed object /input/Lrad"
+                                endif
+                              endif ! try to open /input/Lrad object
+                            else
+                              ! /input/Lrad link present but does not resolve to any object
+                              write(ounit,*) "/input/Lrad link present but does not resolve to any object"
+                            endif ! check that there exists an item at the /input/Lrad link
+                          endif ! query existence of object at /input/Lrad link
+                        else
+                          ! /input/Lrad link not present in input file
+                          write(ounit,*) " WARNING: /input/Lrad not found. Using default value ", Lrad(1:Nvol)
+                        endif ! check if /input/Lrad link exists
+                      endif ! query existence of /input/Lrad link
+                                            
+                      write(ounit,*) " "
+                      
+                      ! query existence of /input/phiedge link
+                      call h5lexists_f(grp_input, "phiedge", item_exists, hdfier)
                       if (hdfier.ne.0) then
-                        write(*,*) "error opening Dataset /input/phiedge"
+                        write(*,*) "error checking if /input/phiedge link exists"
                       else
-                        call h5dread_f(dset_input_phiedge, H5T_NATIVE_DOUBLE, phiedge, int((/1/), HSIZE_T), hdfier)
-                        if (hdfier.ne.0) then ; write(*,*) "error reading Dataset /input/phiedge" ; endif
-                        call h5dclose_f(dset_input_phiedge, hdfier)
-                        if (hdfier.ne.0) then ; write(*,*) "error closing Dataset /input/phiedge" ; endif
-                      endif
-        
+                        if (verbose) then ; write(ounit,*) "successfully checked if the /input/phiedge link exists" ; endif
                       
+                        ! check that /input/phiedge link exists
+                        if (item_exists) then
+                          if (verbose) then; write(ounit,*) "successfully checked that the link /input/phiedge exists" ; endif
+                         
+                          ! query existence of object at /input/phiedge link
+                          call h5oexists_by_name_f(grp_input, "phiedge", item_exists, hdfier)
+                          if (hdfier.ne.0) then
+                            write(*,*) "error checking for presence of object at /input/phiedge"
+                          else
+                            if (verbose) then ; write(ounit,*) "successfully checked for presence of an object at /input/phiedge link" ; endif
+                          
+                            ! check that there exists an item at the /input/phiedge link
+                            if (item_exists) then
+                              if (verbose) then ; write(ounit,*) "successfully checked that there exists an item at /input/phiedge" ; endif
+                            
+                              ! try to open /input/phiedge object
+                              call h5oopen_f(grp_input, "phiedge", dset_input_phiedge, hdfier)
+                              if (hdfier.ne.0) then
+                                write(*,*) "error opening object /input/phiedge"
+                              else
+                                if (verbose) then ; write(ounit,*) "successfully opened object at /input/phiedge" ; endif
+                              
+                                ! query type of /input/phiedge object
+                                call h5iget_type_f(dset_input_phiedge, item_type, hdfier)
+                                if (hdfier.ne.0) then
+                                  write(*,*) "error querying type of object /input/phiedge"
+                                else
+                                  if (verbose) then ; write(ounit,*) "successfully queried item type of /input/phiedge" ; endif
+                                
+                                  ! check if /input/phiedge is a Dataset
+                                  if (item_type.ne.H5I_DATASET_F) then
+                                    write(ounit,*) "error verifying that object /input/phiedge is a Dataset(",H5I_DATASET_F,"); rather it is ",item_type
+                                  else
+                                    if (verbose) then ; write(ounit,*) "successfully verified that /input/phiedge is a Dataset" ; endif
+                                    
+                                    ! open dataspace of /input/phiedge
+                                    call h5dget_space_f(dset_input_phiedge, dataspace, hdfier)
+                                    if (hdfier.ne.0) then
+                                      write(ounit,*) "error getting dataspace of /input/phiedge"
+                                    else
+                                    
+                                      ! check that the dataspace of /input/phiedge is scalar
+                                      call h5sget_simple_extent_type_f(dataspace, dspace_type, hdfier)
+                                      if (hdfier.ne.0) then
+                                        write(ounit,*) "error getting type of /input/phiedge dataspace"
+                                      else
+                                      
+                                        ! check that the type of the /input/phiedge dataspace is H5S_SCALAR_F
+                                        if (dspace_type.eq.H5S_SCALAR_F) then
+                                          write(ounit,*) "successfully verified that the type of the /input/phiedge dataspace is H5S_SCALAR_F"
+                                          
+                                          ! query datatype of /input/phiedge
+                                          call h5dget_type_f(dset_input_phiedge, dtype_id, hdfier)
+                                          if (hdfier.ne.0) then
+                                            write(ounit,*) "error querying datatype of /input/phiedge"
+                                          else
+                                            if (verbose) then ; write(ounit,*) "successfully queried datatype of /input/phiedge" ; endif
+                                              
+                                            ! convert datatype to native array for comparison
+                                            call h5tget_native_type_f(dtype_id, 1, dtype_id_native, hdfier)
+                                            if (hdfier.ne.0) then
+                                              write(ounit,*) "error converting datatype of /input/phiedge to native datatype"
+                                            else
+                                              if (verbose) then ; write(ounit,*) "successfully converted datatype of /input/phiedge to native datatype" ; endif
+                                              
+                                              ! call comparison routine for /input/phiedge datatype
+                                              call h5tequal_f(dtype_id_native, H5T_NATIVE_DOUBLE, datatypes_equal, hdfier)
+                                              if (hdfier.ne.0) then
+                                                write(ounit,*) "error comparing datatype of /input/phiedge to H5T_NATIVE_DOUBLE"
+                                              else
+                                                if (verbose) then ; write(ounit,*) "successfully executed comparison of datatype of /input/phiedge with H5T_NATIVE_DOUBLE" ; endif
+                                                
+                                                ! verify correct datatype of /input/phiedge
+                                                if (datatypes_equal) then
+                                                  if (verbose) then ; write(ounit,*) "successfully checked that datatype of /input/phiedge is H5T_NATIVE_DOUBLE :-)" ; endif
+                                                  
+                                                  ! read /input/phiedge Dataset
+                                                  call h5dread_f(dset_input_phiedge, H5T_NATIVE_DOUBLE, phiedge, int((/1/), HSIZE_T), hdfier)
+                                                  if (hdfier.ne.0) then
+                                                    write(*,*) "error reading Dataset /input/phiedge"
+                                                  else
+                                                    if (verbose) then ; write(ounit,'(" successfully read /input/phiedge from input data: ",f4.2)') phiedge ; endif
+                                                  endif ! read /input/phiedge Dataset
+                                                else
+                                                  write(ounit,*) "ERROR: native datatype of /input/phiedge should be H5T_NATIVE_DOUBLE but is ",dtype_id_native
+                                                endif !verify correct datatype of /input/phiedge
+                                              
+                                              endif ! call comparison routine for /input/phiedge datatype
+                                            endif ! convert datatype to native array for comparison
+                                            
+                                            ! close datatype of /input/phiedge
+                                            call h5tclose_f(dtype_id, hdfier)
+                                            if (hdfier.ne.0) then
+                                              write(ounit,*) "error closing datatype of /input/phiedge"
+                                            elseif (verbose) then
+                                              write(ounit,*) "successfully closed datatype of /input/phiedge"
+                                            endif ! close datatype of /input/phiedge
+                                          endif ! query datatype of /input/phiedge
+                                        else
+                                          write(ounit,*) "ERROR: type of dataspace /input/phiedge is not H5S_SCALAR_F but ",dspace_type
+                                        endif ! check that the type of the /input/phiedge dataspace is H5S_SCALAR_F
+                                      
+                                      endif ! check that the dataspace of /input/phiedge is scalar
+                                      
+                                      ! close dataspace of /input/phiedge
+                                      call h5sclose_f(dataspace, hdfier)
+                                      if (hdfier.ne.0) then ; write(ounit,*) "error closing dataspace of /input/phiedge" ; endif
+                                    endif ! open dataspace of /input/phiedge
+                                  endif ! check if /input/phiedge is a Dataset
+                                endif ! query type of /input/phiedge object
+                                
+                                ! close /input/phiedge object
+                                call h5oclose_f(dset_input_phiedge, hdfier)
+                                if (hdfier.ne.0) then
+                                  write(*,*) "error closing object /input/phiedge"
+                                elseif (verbose) then
+                                  write(ounit,*) "successfully closed object /input/phiedge"
+                                endif ! close /input/phiedge object
+                              endif ! try to open /input/phiedge object
+                            else
+                              ! /input/phiedge link present but does not resolve to any object
+                              write(ounit,*) "/input/phiedge link present but does not resolve to any object"
+                            endif ! check that there exists an item at the /input/phiedge link
+                          endif ! query existence of object at /input/phiedge link
+                        else
+                          ! /input/phiedge link not present in input file
+                          write(ounit,*) " WARNING: /input/phiedge not found. Using default value ", phiedge
+                        endif ! check if /input/phiedge link exists
+                      endif ! query existence of /input/phiedge link
                       
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
+                      write(ounit,*) " "
                       
                     endif ! check if /input is a Group
                   endif ! query type of /input object
@@ -674,30 +910,7 @@ module inputlist
           endif ! check if /input link exists
         endif ! query existence of /input link
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+        write(ounit,*) " "
         
         ! close input file
         call h5fclose_f(file_id, hdfier)
