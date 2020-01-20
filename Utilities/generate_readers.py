@@ -141,7 +141,7 @@ input_physics_Lrad.setDescription([r"Chebyshev resolution in each volume",
 input_physics_Lrad.setType("int")
 input_physics_Lrad.setRank(1)
 input_physics_Lrad.setDefaultValue(4)
-input_physics_Lrad.setMaximumDimensions([r"MNvol+1"])
+input_physics_Lrad.setMaximumIndices([r"MNvol+1"])
 
 
 input_physics_Lconstraint = Variable("Lconstraint")
@@ -175,7 +175,7 @@ input_physics_tflux.setDescription([r"toroidal flux, \f$\psi_t\f$, enclosed by e
 input_physics_tflux.setType("double")
 input_physics_tflux.setRank(1)
 input_physics_tflux.setDefaultValue(0.0)
-input_physics_tflux.setMaximumDimensions([r"MNvol+1"])
+input_physics_tflux.setMaximumIndices([r"MNvol+1"])
 
 
 input_physics_pflux = Variable("pflux")
@@ -183,7 +183,7 @@ input_physics_pflux.setDescription(r"poloidal flux, \f$\psi_p\f$, enclosed by ea
 input_physics_pflux.setType("double")
 input_physics_pflux.setRank(1)
 input_physics_pflux.setDefaultValue(0.0)
-input_physics_pflux.setMaximumDimensions([r"MNvol+1"])
+input_physics_pflux.setMaximumIndices([r"MNvol+1"])
 
 
 input_physics_helicity = Variable("helicity")
@@ -192,7 +192,7 @@ input_physics_helicity.setDescription([r"helicity, \f${\cal K}\f$, in each volum
 input_physics_helicity.setType("double")
 input_physics_helicity.setRank(1)
 input_physics_helicity.setDefaultValue(0.0)
-input_physics_helicity.setMaximumDimensions([r"MNvol+1"])
+input_physics_helicity.setMaximumIndices([r"MNvol+1"])
 
 
 input_physics_pscale = Variable("pscale")
@@ -214,7 +214,7 @@ input_physics_pressure.setDescription([r"pressure in each volume",
 input_physics_pressure.setType("double")
 input_physics_pressure.setRank(1)
 input_physics_pressure.setDefaultValue(0.0)
-input_physics_pressure.setMaximumDimensions([r"MNvol+1"])
+input_physics_pressure.setMaximumIndices([r"MNvol+1"])
 
 
 input_physics_Ladiabatic = Variable("Ladiabatic")
@@ -235,7 +235,7 @@ input_physics_adiabatic.setDescription([r"adiabatic constants in each volume",
 input_physics_adiabatic.setType("double")
 input_physics_adiabatic.setRank(1)
 input_physics_adiabatic.setDefaultValue(0.0)
-input_physics_adiabatic.setMaximumDimensions([r"MNvol+1"])
+input_physics_adiabatic.setMaximumIndices([r"MNvol+1"])
 
 
 input_physics_mu = Variable("mu")
@@ -243,7 +243,7 @@ input_physics_mu.setDescription(r"helicity-multiplier, \f$\mu\f$, in each volume
 input_physics_mu.setType("double")
 input_physics_mu.setRank(1)
 input_physics_mu.setDefaultValue(0.0)
-input_physics_mu.setMaximumDimensions([r"MNvol+1"])
+input_physics_mu.setMaximumIndices([r"MNvol+1"])
 
 
 input_physics_pl = Variable("pl")
@@ -254,7 +254,7 @@ input_physics_pl.setType("int")
 input_physics_pl.setRank(1)
 input_physics_pl.setDefaultValue(0)
 input_physics_pl.setStartingIndices([r"0"])
-input_physics_pl.setMaximumDimensions([r"MNvol"])
+input_physics_pl.setMaximumIndices([r"MNvol"])
 
 
 input_physics_ql = Variable("ql")
@@ -265,7 +265,7 @@ input_physics_ql.setType("int")
 input_physics_ql.setRank(1)
 input_physics_ql.setDefaultValue(0)
 input_physics_ql.setStartingIndices([r"0"])
-input_physics_ql.setMaximumDimensions([r"MNvol"])
+input_physics_ql.setMaximumIndices([r"MNvol"])
 
 
 input_physics_pr = Variable("pr")
@@ -276,7 +276,7 @@ input_physics_pr.setType("int")
 input_physics_pr.setRank(1)
 input_physics_pr.setDefaultValue(0)
 input_physics_pr.setStartingIndices([r"0"])
-input_physics_pr.setMaximumDimensions([r"MNvol"])
+input_physics_pr.setMaximumIndices([r"MNvol"])
 
 
 input_physics_qr = Variable("qr")
@@ -287,16 +287,17 @@ input_physics_qr.setType("int")
 input_physics_qr.setRank(1)
 input_physics_qr.setDefaultValue(0)
 input_physics_qr.setStartingIndices([r"0"])
-input_physics_qr.setMaximumDimensions([r"MNvol"])
+input_physics_qr.setMaximumIndices([r"MNvol"])
 
 input_physics_iota = Variable("iota")
 input_physics_iota.setDescription([r"rotational-transform, \f$\mbox{$\,\iota\!\!$-}\f$, on inner side of each interface",
                                    [r"only relevant if illogical input for \c ql and \c qr are provided"]
                                    ])
 input_physics_iota.setType("double")
+input_physics_iota.setRank(1)
 input_physics_iota.setDefaultValue(0.0)
 input_physics_iota.setStartingIndices([r"0"])
-input_physics_iota.setMaximumDimensions([r"MNvol"])
+input_physics_iota.setMaximumIndices([r"MNvol"])
 
 
 input_physics_lp = Variable("lp")
@@ -304,9 +305,10 @@ input_physics_lp.setDescription(r"\"outer\" interface rotational-transform is \f
                                 +r"where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2\f$."+"\n"
                                 +r"If both \f$q_l = 0\f$ *and* \f$q_r = 0\f$, then the (outer) interface rotational-transform is defined by \c oita .")
 input_physics_lp.setType("int")
+input_physics_lp.setRank(1)
 input_physics_lp.setDefaultValue(0)
 input_physics_lp.setStartingIndices([r"0"])
-input_physics_lp.setMaximumDimensions([r"MNvol"])
+input_physics_lp.setMaximumIndices([r"MNvol"])
 
 
 input_physics_lq = Variable("lq")
@@ -314,9 +316,10 @@ input_physics_lq.setDescription(r"\"outer\" interface rotational-transform is \f
                                 +r"where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2\f$."+"\n"
                                 +r"If both \f$q_l = 0\f$ *and* \f$q_r = 0\f$, then the (outer) interface rotational-transform is defined by \c oita .")
 input_physics_lq.setType("int")
+input_physics_lq.setRank(1)
 input_physics_lq.setDefaultValue(0)
 input_physics_lq.setStartingIndices([r"0"])
-input_physics_lq.setMaximumDimensions([r"MNvol"])
+input_physics_lq.setMaximumIndices([r"MNvol"])
 
 
 input_physics_rp = Variable("rp")
@@ -324,9 +327,10 @@ input_physics_rp.setDescription(r"\"outer\" interface rotational-transform is \f
                                 +r"where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2\f$."+"\n"
                                 +r"If both \f$q_l = 0\f$ *and* \f$q_r = 0\f$, then the (outer) interface rotational-transform is defined by \c oita .")
 input_physics_rp.setType("int")
+input_physics_rp.setRank(1)
 input_physics_rp.setDefaultValue(0)
 input_physics_rp.setStartingIndices([r"0"])
-input_physics_rp.setMaximumDimensions([r"MNvol"])
+input_physics_rp.setMaximumIndices([r"MNvol"])
 
 
 input_physics_rq = Variable("rq")
@@ -334,9 +338,10 @@ input_physics_rq.setDescription(r"\"outer\" interface rotational-transform is \f
                                 +r"where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2\f$."+"\n"
                                 +r"If both \f$q_l = 0\f$ *and* \f$q_r = 0\f$, then the (outer) interface rotational-transform is defined by \c oita .")
 input_physics_rq.setType("int")
+input_physics_rq.setRank(1)
 input_physics_rq.setDefaultValue(0)
 input_physics_rq.setStartingIndices([r"0"])
-input_physics_rq.setMaximumDimensions([r"MNvol"])
+input_physics_rq.setMaximumIndices([r"MNvol"])
 
 
 input_physics_oita = Variable("oita")
@@ -344,9 +349,10 @@ input_physics_oita.setDescription([r"rotational-transform, \f$\mbox{$\,\iota\!\!
                                    [r"only relevant if illogical input for \c ql and \c qr are provided"]
                                    ])
 input_physics_oita.setType("double")
+input_physics_oita.setRank(1)
 input_physics_oita.setDefaultValue(0.0)
 input_physics_oita.setStartingIndices([r"0"])
-input_physics_oita.setMaximumDimensions([r"MNvol"])
+input_physics_oita.setMaximumIndices([r"MNvol"])
 
 
 input_physics_mupftol = Variable("mupftol")

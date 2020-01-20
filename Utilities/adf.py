@@ -16,7 +16,7 @@ class Variable:
     description = None
     isParameter = False
     unit = None
-    maxDims = None
+    maximumIndices = None
     startingIndices = None
     
     def __init__(self, name):
@@ -40,8 +40,8 @@ class Variable:
     def setUnit(self, unit):
         self.unit = unit
     
-    def setMaximumDimensions(self, maxDims):
-        self.maxDims = maxDims
+    def setMaximumIndices(self, maximumIndices):
+        self.maximumIndices = maximumIndices
         
     def setStartingIndices(self, startingIndices):
         self.startingIndices = startingIndices
