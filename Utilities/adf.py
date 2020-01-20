@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Jan  8 16:10:39 2020
+Algorithm Definition Framework
 
-@author: jonathan
+@author: Jonathan Schilling (jonathan.schilling@mail.de)
 """
 
 #%% Class declarations
@@ -14,6 +14,10 @@ class Variable:
     defaultValue = None
     rank = 0 # scalars by default
     description = None
+    isParameter = False
+    unit = None
+    maxDims = None
+    startingIndices = None
     
     def __init__(self, name):
         self.name = name
@@ -30,6 +34,18 @@ class Variable:
     def setDefaultValue(self, defaultValue):
         self.defaultValue = defaultValue
         
+    def setIsParameter(self, isParameter):
+        self.isParameter = isParameter
+        
+    def setUnit(self, unit):
+        self.unit = unit
+    
+    def setMaximumDimensions(self, maxDims):
+        self.maxDims = maxDims
+        
+    def setStartingIndices(self, startingIndices):
+        self.startingIndices = startingIndices
+    
     def printDescription_HTML_lists(self):
         for d in self.description:
             if type(d) is list:

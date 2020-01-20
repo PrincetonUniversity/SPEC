@@ -41,19 +41,68 @@ hostname = platform.node()
 
 creation_tag = 'auto-created by a user called \''+username+'\' on a machine called \''+hostname+'\' at '+now_string
 
-#%% generate Fortran type declarations
-from Hdf5File import Group, Dataset, Datatype
 
 # datatype in Fortran from specification file
 def fortran_dtype(dtype):
     if dtype=='int':
-        return 'INTEGER'
+        return 'integer'
     elif dtype=='double':
-        return 'DOUBLE PRECISION'
+        return 'real'
     elif dtype=='boolean':
-        return 'LOGICAL'
+        return 'logical'
     else:
-        return 'TYPE('+dtype.upper()+')'
+        return 'type('+dtype+')'
+
+
+from adf import Variable
+
+def declareVariable(var):
+    if type(var) is Variable:
+        decl  = fortran_dtype(var.dtype)
+        decl += " :: "
+        decl += var.name
+        decl += " = "
+        decl += str(var.defaultValue)
+        indentLength = len(decl)+1
+        decl += " "
+        if type(var.description) is list:
+            for d in var.description:
+                if type(d) is list:
+                    decl += indented(indentLength, "!< <ul>\n", " ")
+                    listItems = ""
+                    for dl in d:
+                        dl = dl.replace("\n", "\n!<      ")
+                        listItems += "!< <li> "+dl+" </li>\n"
+                    decl += indented(indentLength, listItems, " ")
+                    decl += indented(indentLength, "!< </ul>\n", " ")
+                else:
+                    decl += "!< "+d.strip()+"\n"
+        elif var.description is not None:
+            descr = var.description.replace("\n", "\n!< ")
+            descr_parts = descr.split("\n")
+            decl += "!< "+descr_parts[0]+"\n"+indented(indentLength, "\n".join(descr_parts[1:]), " ")+"\n"
+        return decl.strip()
+    else:
+        raise ValueError("var "+var.name+" is not a adf.Variable")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#%% generate Fortran type declarations
+from Hdf5File import Group, Dataset, Datatype
+
 
 # generate custom compound datatype declaration in Fortran
 def fortran_genType(name, members):
