@@ -17,6 +17,35 @@ and compile SPEC again to use your changes.
 
 @author: Jonathan Schilling (jonathan.schilling@ipp.mpg.de)
 """
+#%% define the input quantities for SPEC
+from adf import Variable
+
+input_physics_Igeometry = Variable("Igeometry")
+input_physics_Igeometry.setDescription([r"selects Cartesian, cylindrical or toroidal geometry",
+                                        [r"\c Igeometry=1 : Cartesian; geometry determined by \f$R\f$",
+                                         r"\c Igeometry=2 : cylindrical; geometry determined by \f$R\f$",
+                                         r"\c Igeometry=3 : toroidal; geometry determined by \f$R\f$ *and* \f$Z\f$"]
+                                        ])
+input_physics_Igeometry.setType("int")
+input_physics_Igeometry.setDefaultValue(3)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #%% define the output file structure of the SPEC HDF5 file
 from Hdf5File import Hdf5File, Group, Dataset
