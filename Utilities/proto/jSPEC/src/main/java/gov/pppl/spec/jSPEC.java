@@ -1,6 +1,7 @@
 package gov.pppl.spec;
 
 import de.labathome.FortranNamelist;
+import gov.pppl.spec.SpecInput.InputPhysics;
 
 /**
  * Toolbox for the SPEC MRxMHD equilibrium code
@@ -8,13 +9,23 @@ import de.labathome.FortranNamelist;
  */
 public class jSPEC {
 
-	public static SpecInput read_input(String input_nmlists) {
-		SpecInput physicslist = new SpecInput();
+	/**
+	 * read the input data from a namelist
+	 * @param input_nmlists
+	 * @return
+	 */
+	public static SpecInput parseInputNamelists(String inputNamelists) {
+		SpecInput specInput = new SpecInput();
 		
-		FortranNamelist input_parser = new FortranNamelist(input_nmlists, "physicslist", physicslist);
-		physicslist = (SpecInput)input_parser.getParsed();
+		// parse physicslist
+		FortranNamelist inputParser = new FortranNamelist(inputNamelists, "physicslist", specInput.physics);
+		specInput.physics = (InputPhysics)inputParser.getParsed();
 		
-		return physicslist;
+        
+		
+		
+		
+		return specInput;
 	}
 	
 	

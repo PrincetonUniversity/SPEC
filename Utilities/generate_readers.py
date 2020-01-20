@@ -1,7 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Tue Oct  8 20:22:55 2019
+This is the definition script which controls the generation of the input file
+and output file reading and writing routines for the SPEC MRxMHD
+equilibrium code.
+
+In the first part of this script, the input file format and the output file
+format are declared in an abstract way.
+
+Based on these declarations, reading and writing routines in various
+programming languages are generated automagically.
+
+If you want to have an input or output variable added to SPEC, this script
+is the place to put it. Then run it, commit your changed source code to Git
+and compile SPEC again to use your changes.
 
 @author: Jonathan Schilling (jonathan.schilling@ipp.mpg.de)
 """

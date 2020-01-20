@@ -102,6 +102,12 @@ program spec
   
   
   
+  
+  
+  
+  
+  
+  
   ! close HDF5 library
   call h5close_f(hdfier)
   if (hdfier.ne.0) then
