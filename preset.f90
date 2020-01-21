@@ -45,7 +45,8 @@ subroutine preset
 
 	if( (Lconstraint.EQ.3) .and. (Lfindzero.EQ.2)) then
 		if( myid.EQ.0 ) then
-			write(ounit, '(/, "!!! WARNING: Using Lfindzero=2 with Lconstraint=3 might not converge. The hessian at fixed toroidal current has not yet been implemented. !!!", /)') 
+			!write(ounit, '(/, "!!! WARNING: Using Lfindzero=2 with Lconstraint=3 might not converge. The hessian at fixed toroidal current has not yet been implemented. !!!", /)') 
+			FATAL(preset, .true., Lconstraint=3 is incompatible with Lfindzero=2. Use Lfindzero=1 instead)
 		endif
 	endif
   
