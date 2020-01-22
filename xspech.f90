@@ -50,7 +50,7 @@ program xspech
                         odetol, nPpts, nPtrj, &
                         LHevalues, LHevectors, LHmatrix, Lperturbed, Lcheck, &
                         Lzerovac, &
-			mu, Isurf, Ivolume
+						mu, Isurf, Ivolume
 
   use cputiming, only : Txspech
 
@@ -75,7 +75,7 @@ program xspech
                         nfreeboundaryiterations, &
                         beltramierror, &
                         first_free_bound, &
-                        dMA, dMB, dMD, dMG, MBpsi, solution, dtflux, &
+                        dMA, dMB, dMD, dMG, MBpsi, solution, dtflux, IPDt, &
                         version
 						
    ! write _all_ output quantities into a _single_ HDF5 file
@@ -637,7 +637,7 @@ program xspech
   enddo
 
   do vvol = 1, Mvol-1
-    Isurf(vvol) = pi2 * (Btemn(1, 0, vvol+1) - Btemn(1, 1, vvol))
+    IPDt(vvol) = pi2 * (Btemn(1, 0, vvol+1) - Btemn(1, 1, vvol))
   enddo
 
 ! and the volume current
