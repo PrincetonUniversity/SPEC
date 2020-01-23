@@ -679,26 +679,137 @@ input_numeric_iNtor.setType("int")
 input_numeric_iNtor.setDefaultValue(-4)
 
 
+input_numeric_Lsparse = Variable("Lsparse")
+input_numeric_Lsparse.setDescription([r"controls method used to solve for rotational-transform on interfaces",
+                                      [ r"if \c Lsparse = 0, the transformation to the straight-fieldline angle is computed in Fourier space"+"\n"
+                                       +r"using a dense matrix solver, \c F04AAF",
+                                        r"if \c Lsparse = 1, the transformation to the straight-fieldline angle is computed in real space"+"\n"
+                                       +r"using a dense matrix solver, \c F04ATF",
+                                        r"if \c Lsparse = 2, the transformation to the straight-fieldline angle is computed in real space"+"\n"
+                                       +r"using a sparse matrix solver, \c F11DEF",
+                                        r"if \c Lsparse = 3, the different methods for constructing the straight-fieldline angle are compared"]
+                                      ])
+input_numeric_Lsparse.setType("int")
+input_numeric_Lsparse.setDefaultValue(0)
 
 
+input_numeric_Lsvdiota = Variable("Lsvdiota")
+input_numeric_Lsvdiota.setDescription([r"controls method used to solve for rotational-transform on interfaces",
+                                       r"only relevant if \c Lsparse=0",
+                                       [r"if \c Lsvdiota=0, use standard linear solver to construct straight fieldline angle transformation",
+                                        r"if \c Lsvdiota = 1, use SVD method to compute rotational-transform"]
+                                       ])
+input_numeric_Lsvdiota.setType("int")
+input_numeric_Lsvdiota.setDefaultValue(0)
 
 
+input_numeric_imethod = Variable("imethod")
+input_numeric_imethod.setDescription([ r"controls iterative solution to sparse matrix"+"\n"
+                                      +r"arising in real-space transformation to the straight-fieldline angle",
+                                       r"only relevant if \c Lsparse=2; \see tr00ab() for details",
+                                       [r"if \c imethod=1, the method is \c RGMRES",
+                                        r"if \c imethod=2, the method is \c CGS",
+                                        r"if \c imethod=3, the method is \c BICGSTAB"]
+                                      ])
+input_numeric_imethod.setType("int")
+input_numeric_imethod.setDefaultValue(3)
 
 
+input_numeric_iorder = Variable("iorder")
+input_numeric_iorder.setDescription([r"controls real-space grid resolution for constructing the straight-fieldline angle",
+                                     r"only relevant if \c Lsparse>0",
+                                     r"determines order of finite-difference approximation to the derivatives",
+                                     [r"if \c iorder=2, WHAT?",
+                                      r"if \c iorder=4, WHAT?",
+                                      r"if \c iorder=6, WHAT?"]
+                                    ])
+input_numeric_iorder.setType("int")
+input_numeric_iorder.setDefaultValue(2)
 
 
+input_numeric_iprecon = Variable("iprecon")
+input_numeric_iprecon.setDescription([ r"controls iterative solution to sparse matrix arising in real-space transformation"+"\n"
+                                      +r"to the straight-fieldline angle",
+                                       r"only relevant if \c Lsparse=2; \see tr00ab() for details",
+                                       [r"if \c iprecon=0, the preconditioner is `N'",
+                                        r"if \c iprecon=1, the preconditioner is `J'",
+                                        r"if \c iprecon=2, the preconditioner is `S'"]
+                                      ])
+input_numeric_iprecon.setType("int")
+input_numeric_iprecon.setDefaultValue(0)
 
 
+input_numeric_iotatol = Variable("iotatol")
+input_numeric_iotatol.setDescription([r"tolerance required for iterative construction of straight-fieldline angle",
+                                      r"only relevant if \c Lsparse.ge.2"])
+input_numeric_iotatol.setType("double")
+input_numeric_iotatol.setDefaultValue(-1.0)
 
 
+input_numeric_Lextrap = Variable("Lextrap")
+input_numeric_Lextrap.setDescription(r"geometry of innermost interface is defined by extrapolation")
+input_numeric_Lextrap.setType("int")
+input_numeric_Lextrap.setDefaultValue(0)
 
+
+input_numeric_Mregular = Variable("Mregular")
+input_numeric_Mregular.setDescription([r"maximum regularization factor",
+                                       [r"if \c Mregular>=2, then \c regumm \f$_i\f$ = \c Mregular \f$/ 2 \f$ where \c m \f$_i > \f$ \c Mregular"]
+                                       ])
+input_numeric_Mregular.setType("int")
+input_numeric_Mregular.setDefaultValue(-1)
 
 
 vars_numericlist = [
-        input_numeric_Linitialize
+        input_numeric_Linitialize,
+        input_numeric_LautoinitBn,
+        input_numeric_Lzerovac,
+        input_numeric_Ndiscrete,
+        input_numeric_Nquad,
+        input_numeric_iMpol,
+        input_numeric_iNtor,
+        input_numeric_Lsparse,
+        input_numeric_Lsvdiota,
+        input_numeric_imethod,
+        input_numeric_iorder,
+        input_numeric_iprecon,
+        input_numeric_iotatol,
+        input_numeric_Lextrap,
+        input_numeric_Mregular
         ]
 
+###############################################################################
+# locallist 
+###############################################################################
 
+input_local_LBeltrami = Variable("LBeltrami")
+input_local_LBeltrami.setDescription([r""])
+input_local_LBeltrami.setType("int")
+input_local_LBeltrami.setDefaultValue(4)
+
+input_local_Linitgues = Variable("Linitgues")
+input_local_Linitgues.setDescription([r""])
+input_local_Linitgues.setType("int")
+input_local_Linitgues.setDefaultValue(1)
+
+input_local_Lposdef = Variable("Lposdef")
+input_local_Lposdef.setDescription([r""])
+input_local_Lposdef.setType("int")
+input_local_Lposdef.setDefaultValue(0)
+
+input_local_maxrndgues = Variable("maxrndgues")
+input_local_maxrndgues.setDescription([r""])
+input_local_maxrndgues.setType("double")
+input_local_maxrndgues.setDefaultValue(1.0)
+
+
+
+vars_locallist = [
+        input_local_LBeltrami,
+        input_local_Linitgues,
+        input_local_Lposdef,
+        input_local_maxrndgues
+        ]
 
 ###############################################################################
 
@@ -710,7 +821,8 @@ for var in vars_physicslist:
 for var in vars_numericlist:
     print(declareVariable(var))
 
-
+for var in vars_locallist:
+    print(declareVariable(var))
 
 
 
