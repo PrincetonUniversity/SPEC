@@ -44,7 +44,8 @@ MNvol.setDefaultValue(16)
 MNvol.setIsParameter(True)
 
 ###############################################################################
-
+# physicslist 
+###############################################################################
 input_physics_Igeometry = Variable("Igeometry")
 input_physics_Igeometry.setDescription([r"selects Cartesian, cylindrical or toroidal geometry",
                                         [r"\c Igeometry=1 : Cartesian; geometry determined by \f$R\f$",
@@ -595,27 +596,76 @@ vars_physicslist = [
         input_physics_Bnc
         ]
 
+###############################################################################
+# numericlist 
+###############################################################################
+
+input_numerics_Linitialize = Variable("Linitialize")
+input_numerics_Linitialize.setDescription([r"Used to initialize geometry using a regularization / extrapolation method",
+                                           [ r"if \c Linitialize = \f$-I\f$ , where \f$I\f$ is a positive integer,"+"\n"
+                                            +r"the geometry of the \f$i=1,N_V-I\f$ surfaces constructed by an extrapolation",
+                                             r"if \c Linitialize = 0, the geometry of the interior surfaces is provided after the namelists in the input file",
+                                             r"if \c Linitialize = 1, the interior surfaces will be intialized as \f$R_{l,m,n} = R_{N,m,n} \psi_{t,l}^{m/2}\f$,"+"\n"
+                                            +r"where \f$R_{N,m,n}\f$ is the plasma boundary and \f$\psi_{t,l}\f$ is the given toroidal flux enclosed by the"+"\n"
+                                            +r"\f$l\f$-th interface, normalized to the total enclosed toroidal flux;"+"\n"
+                                            +r"a similar extrapolation is used for \f$Z_{l,m,n}\f$",
+                                             r"Note that the Fourier harmonics of the boundary is *always* given by the \c Rbc and \c Zbs"+"\n"
+                                            +r"given in \c physicslist.",
+                                             r"if \c Linitialize = 2, the interior surfaces *and the plasma boundary* will be intialized"+"\n"
+                                            +r"as \f$R_{l,m,n} = R_{W,m,n} \psi_{t,l}^{m/2}\f$, where \f$R_{W,m,n}\f$ is the computational boundary"+"\n"
+                                            +r"and \f$\psi_{t,l}\f$ is the given toroidal flux enclosed by the \f$l\f$-th interface, normalized to the total enclosed toroidal flux;"+"\n"
+                                            +r"a similar extrapolation is used for \f$Z_{l,m,n}\f$",
+                                             r"Note that, for free-boundary calculations, the Fourier harmonics of the computational boundary"+"\n"
+                                            +r"are *always* given by the \c Rwc and \c Zws given in \c physicslist.",
+                                             r"if \c Linitialize = 1, 2, it is not required to provide the geometry of the interfaces after the namelists"]
+                                           ])
+input_numerics_Linitialize.setType("int")
+input_numerics_Linitialize.setDefaultValue(0)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+vars_numericlist = [
+        input_numerics_Linitialize
+        ]
+
+
 
 ###############################################################################
 
-
-
-
-
-
-
-
-
-
-
-
-
 from genFortran import declareVariable
+
 for var in vars_physicslist:
     print(declareVariable(var))
 
-
-
+for var in vars_numericlist:
+    print(declareVariable(var))
 
 
 

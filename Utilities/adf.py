@@ -34,9 +34,6 @@ class Variable:
     def setDefaultValue(self, defaultValue):
         self.defaultValue = defaultValue
         
-    def setIsParameter(self, isParameter):
-        self.isParameter = isParameter
-        
     def setUnit(self, unit):
         self.unit = unit
     
@@ -45,6 +42,9 @@ class Variable:
         
     def setStartingIndices(self, startingIndices):
         self.startingIndices = startingIndices
+    
+    def setIsParameter(self, isParameter):
+        self.isParameter = isParameter
     
     def printDescription_HTML_lists(self):
         for d in self.description:
