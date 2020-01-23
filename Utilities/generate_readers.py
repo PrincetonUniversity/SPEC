@@ -1040,47 +1040,75 @@ vars_globallist = [
 
 input_diagnostics_odetol = Variable("odetol")
 input_diagnostics_odetol.setDescription(r"o.d.e. integration tolerance for all field line tracing routines")
+input_diagnostics_odetol.setType("double")
+input_diagnostics_odetol.setDefaultValue(1.0e-7)
 
 input_diagnostics_absreq = Variable("absreq")
 input_diagnostics_absreq.setDescription(r"redundant")
+input_diagnostics_absreq.setType("double")
+input_diagnostics_absreq.setDefaultValue(1.0e-8)
 
 input_diagnostics_relreq = Variable("relreq")
 input_diagnostics_relreq.setDescription(r"redundant")
+input_diagnostics_relreq.setType("double")
+input_diagnostics_relreq.setDefaultValue(1.0e-8)
 
 input_diagnostics_absacc = Variable("absacc")
 input_diagnostics_absacc.setDescription(r"redundant")
+input_diagnostics_absacc.setType("double")
+input_diagnostics_absacc.setDefaultValue(1.0e-4)
 
 input_diagnostics_epsr = Variable("epsr")
 input_diagnostics_epsr.setDescription(r"redundant")
+input_diagnostics_epsr.setType("double")
+input_diagnostics_epsr.setDefaultValue(1.0e-8)
 
 input_diagnostics_nPpts = Variable("nPpts")
 input_diagnostics_nPpts.setDescription([ r"number of toroidal transits used (per trajectory) in following field lines"+"\n"
                                         +r"for constructing Poincaré plots",
                                          r"if \c nPpts<1, no Poincaré plot is constructed"])
+input_diagnostics_nPpts.setType("int")
+input_diagnostics_nPpts.setDefaultValue(0)
 
 input_diagnostics_nPtrj = Variable("nPtrj")
 input_diagnostics_nPtrj.setDescription([r"number of trajectories in each annulus to be followed in constructing Poincaré plot",
                                         [ r"if \c nPtrj(l)<0, then \c nPtrj(l) = Ni(l),"+"\n"
                                          +r"where \c Ni(l) is the grid resolution used to construct the Beltrami field in volume \f$l\f$"]
                                         ])
+input_diagnostics_nPtrj.setType("int")
+input_diagnostics_nPtrj.setRank(1)
+input_diagnostics_nPtrj.setDefaultValue(-1)
+input_diagnostics_nPtrj.setMaximumIndices([r"MNvol+1"])
 
 input_diagnostics_LHevalues = Variable("LHevalues")
 input_diagnostics_LHevalues.setDescription(r"to compute eigenvalues of \f$\nabla {\bf F}\f$")
+input_diagnostics_LHevalues.setType("boolean")
+input_diagnostics_LHevalues.setDefaultValue(False)
 
 input_diagnostics_LHevectors = Variable("LHevectors")
 input_diagnostics_LHevectors.setDescription(r"to compute eigenvectors (and also eigenvalues) of \f$\nabla {\bf F}\f$")
+input_diagnostics_LHevectors.setType("boolean")
+input_diagnostics_LHevectors.setDefaultValue(False)
 
 input_diagnostics_LHmatrix = Variable("LHmatrix")
 input_diagnostics_LHmatrix.setDescription(r"to compute and write to file the elements of \f$\nabla {\bf F}\f$")
+input_diagnostics_LHmatrix.setType("boolean")
+input_diagnostics_LHmatrix.setDefaultValue(False)
 
 input_diagnostics_Lperturbed = Variable("Lperturbed")
 input_diagnostics_Lperturbed.setDescription(r"to compute linear, perturbed equilibrium")
+input_diagnostics_Lperturbed.setType("int")
+input_diagnostics_Lperturbed.setDefaultValue(0)
 
 input_diagnostics_dpp = Variable("dpp")
 input_diagnostics_dpp.setDescription(r"perturbed harmonic")
+input_diagnostics_dpp.setType("int")
+input_diagnostics_dpp.setDefaultValue(-1)
 
 input_diagnostics_dqq = Variable("dqq")
 input_diagnostics_dqq.setDescription(r"perturbed harmonic")
+input_diagnostics_dqq.setType("int")
+input_diagnostics_dqq.setDefaultValue(-1)
 
 input_diagnostics_Lcheck = Variable("Lcheck")
 input_diagnostics_Lcheck.setDescription([r"implement various checks",
@@ -1112,15 +1140,23 @@ input_diagnostics_Lcheck.setDescription([r"implement various checks",
                                              r"\c xdiagno must be executed manually"]
                                           ]
                                          ])
+input_diagnostics_Lcheck.setType("int")
+input_diagnostics_Lcheck.setDefaultValue(0)
 
 input_diagnostics_Ltiming = Variable("Ltiming")
 input_diagnostics_Ltiming.setDescription(r"to check timing")
+input_diagnostics_Ltiming.setType("boolean")
+input_diagnostics_Ltiming.setDefaultValue(False)
 
 input_diagnostics_fudge = Variable("fudge")
 input_diagnostics_fudge.setDescription(r"redundant")
+input_diagnostics_fudge.setType("double")
+input_diagnostics_fudge.setDefaultValue(1.0)
 
 input_diagnostics_scaling = Variable("scaling")
 input_diagnostics_scaling.setDescription(r"redundant")
+input_diagnostics_scaling.setType("double")
+input_diagnostics_scaling.setDefaultValue(1.0)
 
 
 vars_diagnosticslist = [
