@@ -17,8 +17,11 @@ and compile SPEC again to use your changes.
 
 @author: Jonathan Schilling (jonathan.schilling@ipp.mpg.de)
 """
-#%% define the input quantities for SPEC
+
+#%% framework for source code generation
 from adf import Variable
+
+#%% define the input quantities for SPEC
 
 MNvol = Variable("MNvol")
 MNvol.setDescription(r"The maximum value of \c Nvol is \c MNvol=256.")
@@ -40,7 +43,7 @@ MNvol.setType("int")
 MNvol.setDefaultValue(16)
 MNvol.setIsParameter(True)
 
-
+###############################################################################
 
 input_physics_Igeometry = Variable("Igeometry")
 input_physics_Igeometry.setDescription([r"selects Cartesian, cylindrical or toroidal geometry",
@@ -379,6 +382,7 @@ input_physics_rpol.setDescription([r"poloidal extent of slab (effective radius)"
                                    ])
 input_physics_rpol.setType("double")
 input_physics_rpol.setDefaultValue(1.0)
+input_physics_rpol.setUnit("m")
 
 
 input_physics_rtor = Variable("rtor")
@@ -388,29 +392,157 @@ input_physics_rtor.setDescription([r"toroidal extent of slab (effective radius)"
                                    ])
 input_physics_rtor.setType("double")
 input_physics_rtor.setDefaultValue(1.0)
+input_physics_rtor.setUnit("m")
 
 
 input_physics_Rac = Variable("Rac")
+input_physics_Rac.setDescription(r"    stellarator symmetric coordinate axis; R; cosine")
+input_physics_Rac.setType("double")
+input_physics_Rac.setRank(1)
+input_physics_Rac.setDefaultValue(0.0)
+input_physics_Rac.setUnit("m")
+input_physics_Rac.setStartingIndices([r"0"])
+input_physics_Rac.setMaximumIndices([r"MNtor"])
+
 input_physics_Zas = Variable("Zas")
+input_physics_Zas.setDescription(r"    stellarator symmetric coordinate axis; Z;   sine")
+input_physics_Zas.setType("double")
+input_physics_Zas.setRank(1)
+input_physics_Zas.setDefaultValue(0.0)
+input_physics_Zas.setUnit("m")
+input_physics_Zas.setStartingIndices([r"0"])
+input_physics_Zas.setMaximumIndices([r"MNtor"])
+
 input_physics_Ras = Variable("Ras")
+input_physics_Ras.setDescription(r"non-stellarator symmetric coordinate axis; R;   sine")
+input_physics_Ras.setType("double")
+input_physics_Ras.setRank(1)
+input_physics_Ras.setDefaultValue(0.0)
+input_physics_Ras.setUnit("m")
+input_physics_Ras.setStartingIndices([r"0"])
+input_physics_Ras.setMaximumIndices([r"MNtor"])
+
 input_physics_Zac = Variable("Zac")
+input_physics_Zac.setDescription(r"non-stellarator symmetric coordinate axis; Z; cosine")
+input_physics_Zac.setType("double")
+input_physics_Zac.setRank(1)
+input_physics_Zac.setDefaultValue(0.0)
+input_physics_Zac.setUnit("m")
+input_physics_Zac.setStartingIndices([r"0"])
+input_physics_Zac.setMaximumIndices([r"MNtor"])
+
+
 
 input_physics_Rbc = Variable("Rbc")
+input_physics_Rbc.setDescription(r"    stellarator symmetric boundary components; R; cosine")
+input_physics_Rbc.setType("double")
+input_physics_Rbc.setRank(2)
+input_physics_Rbc.setDefaultValue(0.0)
+input_physics_Rbc.setUnit("m")
+input_physics_Rbc.setStartingIndices([r"-MNtor", r"-MMpol"])
+input_physics_Rbc.setMaximumIndices([r"MNtor", r"MMpol"])
+
 input_physics_Zbs = Variable("Zbs")
+input_physics_Zbs.setDescription(r"    stellarator symmetric boundary components; Z;   sine")
+input_physics_Zbs.setType("double")
+input_physics_Zbs.setRank(2)
+input_physics_Zbs.setDefaultValue(0.0)
+input_physics_Zbs.setUnit("m")
+input_physics_Zbs.setStartingIndices([r"-MNtor", r"-MMpol"])
+input_physics_Zbs.setMaximumIndices([r"MNtor", r"MMpol"])
+
 input_physics_Rbs = Variable("Rbs")
+input_physics_Rbs.setDescription(r"non-stellarator symmetric boundary components; R;   sine")
+input_physics_Rbs.setType("double")
+input_physics_Rbs.setRank(2)
+input_physics_Rbs.setDefaultValue(0.0)
+input_physics_Rbs.setUnit("m")
+input_physics_Rbs.setStartingIndices([r"-MNtor", r"-MMpol"])
+input_physics_Rbs.setMaximumIndices([r"MNtor", r"MMpol"])
+
 input_physics_Zbc = Variable("Zbc")
+input_physics_Zbc.setDescription(r"non-stellarator symmetric boundary components; Z; cosine")
+input_physics_Zbc.setType("double")
+input_physics_Zbc.setRank(2)
+input_physics_Zbc.setDefaultValue(0.0)
+input_physics_Zbc.setUnit("m")
+input_physics_Zbc.setStartingIndices([r"-MNtor", r"-MMpol"])
+input_physics_Zbc.setMaximumIndices([r"MNtor", r"MMpol"])
+
+
 
 input_physics_Rwc = Variable("Rwc")
+input_physics_Rwc.setDescription(r"    stellarator symmetric boundary components of wall; R; cosine")
+input_physics_Rwc.setType("double")
+input_physics_Rwc.setRank(2)
+input_physics_Rwc.setDefaultValue(0.0)
+input_physics_Rwc.setUnit("m")
+input_physics_Rwc.setStartingIndices([r"-MNtor", r"-MMpol"])
+input_physics_Rwc.setMaximumIndices([r"MNtor", r"MMpol"])
+
 input_physics_Zws = Variable("Zws")
+input_physics_Zws.setDescription(r"    stellarator symmetric boundary components of wall; Z;   sine")
+input_physics_Zws.setType("double")
+input_physics_Zws.setRank(2)
+input_physics_Zws.setDefaultValue(0.0)
+input_physics_Zws.setUnit("m")
+input_physics_Zws.setStartingIndices([r"-MNtor", r"-MMpol"])
+input_physics_Zws.setMaximumIndices([r"MNtor", r"MMpol"])
+
 input_physics_Rws = Variable("Rws")
+input_physics_Rws.setDescription(r"non-stellarator symmetric boundary components of wall; R;   sine")
+input_physics_Rws.setType("double")
+input_physics_Rws.setRank(2)
+input_physics_Rws.setDefaultValue(0.0)
+input_physics_Rws.setUnit("m")
+input_physics_Rws.setStartingIndices([r"-MNtor", r"-MMpol"])
+input_physics_Rws.setMaximumIndices([r"MNtor", r"MMpol"])
+
 input_physics_Zwc = Variable("Zwc")
+input_physics_Zwc.setDescription(r"non-stellarator symmetric boundary components of wall; Z; cosine")
+input_physics_Zwc.setType("double")
+input_physics_Zwc.setRank(2)
+input_physics_Zwc.setDefaultValue(0.0)
+input_physics_Zwc.setUnit("m")
+input_physics_Zwc.setStartingIndices([r"-MNtor", r"-MMpol"])
+input_physics_Zwc.setMaximumIndices([r"MNtor", r"MMpol"])
+
 
 input_physics_Vns = Variable("Vns")
+input_physics_Vns.setDescription(r"    stellarator symmetric normal field at boundary; vacuum component;   sine")
+input_physics_Vns.setType("double")
+input_physics_Vns.setRank(2)
+input_physics_Vns.setDefaultValue(0.0)
+input_physics_Vns.setUnit("T")
+input_physics_Vns.setStartingIndices([r"-MNtor", r"-MMpol"])
+input_physics_Vns.setMaximumIndices([r"MNtor", r"MMpol"])
+
 input_physics_Bns = Variable("Bns")
+input_physics_Bns.setDescription(r"    stellarator symmetric normal field at boundary; plasma component;   sine")
+input_physics_Bns.setType("double")
+input_physics_Bns.setRank(2)
+input_physics_Bns.setDefaultValue(0.0)
+input_physics_Bns.setUnit("T")
+input_physics_Bns.setStartingIndices([r"-MNtor", r"-MMpol"])
+input_physics_Bns.setMaximumIndices([r"MNtor", r"MMpol"])
+
 input_physics_Vnc = Variable("Vnc")
+input_physics_Vnc.setDescription(r"non-stellarator symmetric normal field at boundary; vacuum component; cosine")
+input_physics_Vnc.setType("double")
+input_physics_Vnc.setRank(2)
+input_physics_Vnc.setDefaultValue(0.0)
+input_physics_Vnc.setUnit("T")
+input_physics_Vnc.setStartingIndices([r"-MNtor", r"-MMpol"])
+input_physics_Vnc.setMaximumIndices([r"MNtor", r"MMpol"])
+
 input_physics_Bnc = Variable("Bnc")
-
-
+input_physics_Bnc.setDescription(r"non-stellarator symmetric normal field at boundary; plasma component; cosine")
+input_physics_Bnc.setType("double")
+input_physics_Bnc.setRank(2)
+input_physics_Bnc.setDefaultValue(0.0)
+input_physics_Bnc.setUnit("T")
+input_physics_Bnc.setStartingIndices([r"-MNtor", r"-MMpol"])
+input_physics_Bnc.setMaximumIndices([r"MNtor", r"MMpol"])
 
 
 vars_physicslist = [
@@ -448,8 +580,31 @@ vars_physicslist = [
         input_physics_mupftol,
         input_physics_mupfits,
         input_physics_rpol,
-        input_physics_rtor
+        input_physics_rtor,
+        input_physics_Rac,
+        input_physics_Zas,
+        input_physics_Ras,
+        input_physics_Zac,
+        input_physics_Rbc,
+        input_physics_Zbs,
+        input_physics_Rbs,
+        input_physics_Zbc,
+        input_physics_Vns,
+        input_physics_Bns,
+        input_physics_Vnc,
+        input_physics_Bnc
         ]
+
+
+###############################################################################
+
+
+
+
+
+
+
+
 
 
 
