@@ -849,27 +849,165 @@ vars_locallist = [
 ###############################################################################
 
 input_global_Lfindzero = Variable("Lfindzero")
+input_global_Lfindzero.setDescription([r"use Newton methods to find zero of force-balance, which is computed by dforce()",
+                                       [ r"if \c Lfindzero=0 , then dforce() is called once"+"\n"
+                                        +r"to compute the Beltrami fields consistent with the given geometry and constraints",
+                                         r"if \c Lfindzero=1 , then call \c C05NDF (uses   function values only), which iteratively calls dforce()",
+                                         r"if \c Lfindzero=2 , then call \c C05PDF (uses derivative information), which iteratively calls dforce()"]
+                                       ])
+input_global_Lfindzero.setType("int")
+input_global_Lfindzero.setDefaultValue(0)
+
 input_global_escale = Variable("escale")
+input_global_escale.setDescription([r"controls the weight factor, \c BBweight, in the force-imbalance harmonics",
+                                    [r"\c BBweight(i) \f$\displaystyle \equiv \texttt{opsilon} \times \exp\left[-\texttt{escale} \times (m_i^2+n_i^2) \right]\f$",
+                                     r"defined in preset() ; used in dforce()",
+                                     r"\sa Eqn.\f$(\ref{eq:forcebalancemn_global})\f$"]
+                                    ])
+input_global_escale.setType("double")
+input_global_escale.setDefaultValue(0.0)
+
 input_global_opsilon = Variable("opsilon")
+input_global_opsilon.setDescription([r"weighting of force-imbalance",
+                                     [r"used in dforce(); \sa Eqn.\f$(\ref{eq:forcebalancemn_global})\f$"]
+                                     ])
+input_global_opsilon.setType("double")
+input_global_opsilon.setDefaultValue(1.0)
+
 input_global_pcondense = Variable("pcondense")
+input_global_pcondense.setDescription([r"spectral condensation parameter",
+                                       [ r"used in preset() to define \c mmpp(i) \f$\equiv m_i^p\f$, where \f$p\equiv \f$ \c pcondense",
+                                         r"the angle freedom is exploited to minimize \f$\displaystyle \texttt{epsilon} \sum_{i} m_i^p (R_{i}^2+Z_{i}^2)\f$"+"\n"
+                                        +r"with respect to tangential variations in the interface geometry",
+                                         r"\sa Eqn.\f$(\ref{eq:spectralbalancemn_global})\f$"]
+                                       ])
+input_global_pcondense.setType("double")
+input_global_pcondense.setDefaultValue(2.0)
+
 input_global_epsilon = Variable("epsilon")
+input_global_epsilon.setDescription([r"weighting of spectral-width constraint",
+                                     [r"used in dforce(); \sa Eqn.\f$(\ref{eq:spectralbalancemn_global})\f$"]
+                                     ])
+input_global_epsilon.setType("double")
+input_global_epsilon.setDefaultValue(0.0)
+
 input_global_wpoloidal = Variable("wpoloidal")
+input_global_wpoloidal.setDescription([r"\"star-like\" poloidal angle constraint radial exponential factor",
+                                       r"used in preset() to construct \c sweight"])
+input_global_wpoloidal.setType("double")
+input_global_wpoloidal.setDefaultValue(1.0)
+
 input_global_upsilon = Variable("upsilon")
+input_global_upsilon.setDescription([r"weighting of \"star-like\" poloidal angle constraint",
+                                     r"used in preset() to construct \c sweight"])
+input_global_upsilon.setType("double")
+input_global_upsilon.setDefaultValue(1.0)
+
 input_global_forcetol = Variable("forcetol")
+input_global_forcetol.setDescription([r"required tolerance in force-balance error; only used as an initial check",
+                                      [ r"if the initially supplied interfaces are consistent with force-balance to within \c forcetol"+"\n"
+                                       +r"then the geometry of the interfaces is not altered",
+                                        r"if not, then the geometry of the interfaces is changed in order to bring the configuration into force balance"+"\n"
+                                       +r"so that the geometry of interfaces is within \c c05xtol, defined below, of the true solution",
+                                        r"to force execution of either \c C05NDF or \c C05PDF, regardless of the initial force imbalance,"+"\n"
+                                       +r"set \c forcetol<0"]
+                                      ])
+input_global_forcetol.setType("double")
+input_global_forcetol.setDefaultValue(1.0e-10)
+
 input_global_c05xmax = Variable("c05xmax")
+input_global_c05xmax.setDescription(r"required tolerance in position, \f${\bf x} \equiv \{ R_{i,v}, Z_{i,v}\}\f$")
+input_global_c05xmax.setType("double")
+input_global_c05xmax.setDefaultValue(1.0e-6)
+
 input_global_c05xtol = Variable("c05xtol")
+input_global_c05xtol.setDescription([r"required tolerance in position, \f${\bf x} \equiv \{ R_{i,v}, Z_{i,v}\}\f$",
+                                     [r"used by both \c C05NDF and \c C05PDF; see the NAG documents for further details on how the error is defined",
+                                      r"constraint \c c05xtol>0.0"]
+                                     ])
+input_global_c05xtol.setType("double")
+input_global_c05xtol.setDefaultValue(1.0e-12)
+
 input_global_c05factor = Variable("c05factor")
+input_global_c05factor.setDescription([r"used to control initial step size in \c C05NDF and \c C05PDF",
+                                       [r"constraint \c c05factor>0.0",
+                                        r"only relevant if \c Lfindzero>0"]
+                                       ])
+input_global_c05factor.setType("double")
+input_global_c05factor.setDefaultValue(1.0e-2)
+
 input_global_LreadGF = Variable("LreadGF")
+input_global_LreadGF.setDescription([r"read \f$\nabla_{\bf x} {\bf F}\f$ from file \c ext.GF ",
+                                     [r"only used if \c Lfindzero=2",
+                                      r"only used in newton()"]
+                                     ])
+input_global_LreadGF.setType("boolean")
+input_global_LreadGF.setDefaultValue(True)
+
 input_global_mfreeits = Variable("mfreeits")
+input_global_mfreeits.setDescription([r"maximum allowed free-boundary iterations",
+                                      [r"only used if \c Lfreebound=1",
+                                       r"only used in xspech()"]
+                                      ])
+input_global_mfreeits.setType("int")
+input_global_mfreeits.setDefaultValue(0)
+
 input_global_bnstol = Variable("bnstol")
+input_global_bnstol.setDescription(r"redundant")
+input_global_bnstol.setType("double")
+input_global_bnstol.setDefaultValue(1.0e-6)
+
 input_global_bnsblend = Variable("bnsblend")
+input_global_bnsblend.setDescription(r"redundant")
+input_global_bnsblend.setType("double")
+input_global_bnsblend.setDefaultValue(0.666)
+
 input_global_gBntol = Variable("gBntol")
+input_global_gBntol.setDescription([r"required tolerance in free-boundary iterations",
+                                    [r"only used if \c Lfreebound=1",
+                                     r"only used in xspech()"]
+                                    ])
+input_global_gBntol.setType("double")
+input_global_gBntol.setDefaultValue(1.0e-6)
+
 input_global_gBnbld = Variable("gBnbld")
+input_global_gBnbld.setDescription([r"normal blend",
+                                    [ r"The \"new\" magnetic field at the computational boundary produced by the plasma currents is updated using a Picard scheme:"+"\n"
+                                     +r"\f{eqnarray}{ ({\bf B}\cdot{\bf n})^{j+1} =    \texttt{gBnbld}  \times ({\bf B}\cdot{\bf n})^{j}"+"\n"
+                                     +r"                                          + (1-\texttt{gBnbld}) \times ({\bf B}\cdot{\bf n})^{*},"+"\n"
+                                     +r"\f}"+"\n"
+                                     +r"where \f$j\f$ labels free-boundary iterations, and \f$({\bf B}\cdot{\bf n})^{*}\f$ is computed by virtual casing.",
+                                      r"only used if \c Lfreebound=1",
+                                      r"only used in xspech()"]
+                                    ])
+input_global_gBnbld.setType("double")
+input_global_gBnbld.setDefaultValue(0.666)
+
 input_global_vcasingeps = Variable("vcasingeps")
+input_global_vcasingeps.setDescription(r"regularization of Biot-Savart; see bnorml(), casing()")
+input_global_vcasingeps.setType("double")
+input_global_vcasingeps.setDefaultValue(1.0e-12)
+
 input_global_vcasingtol = Variable("vcasingtol")
+input_global_vcasingtol.setDescription(r"accuracy on virtual casing integral; see bnorml(), casing()")
+input_global_vcasingtol.setType("double")
+input_global_vcasingtol.setDefaultValue(1.0e-8)
+
 input_global_vcasingits = Variable("vcasingits")
+input_global_vcasingits.setDescription(r"minimum number of calls to adaptive virtual casing routine; see casing()")
+input_global_vcasingits.setType("int")
+input_global_vcasingits.setDefaultValue(8)
+
 input_global_vcasingper = Variable("vcasingper")
+input_global_vcasingper.setDescription(r"periods of integragion  in adaptive virtual casing routine; see casing()")
+input_global_vcasingper.setType("int")
+input_global_vcasingper.setDefaultValue(1)
+
 input_global_mcasingcal = Variable("mcasingcal")
+input_global_mcasingcal.setDescription(r"minimum number of calls to adaptive virtual casing routine; see casing() redundant")
+input_global_mcasingcal.setType("int")
+input_global_mcasingcal.setDefaultValue(8)
+
 
 vars_globallist = [
         input_global_Lfindzero,
@@ -901,22 +1039,56 @@ vars_globallist = [
 ###############################################################################
 
 input_diagnostics_odetol = Variable("odetol")
+input_diagnostics_odetol.setDescription([r""])
+
 input_diagnostics_absreq = Variable("absreq")
+input_diagnostics_absreq.setDescription([r""])
+
 input_diagnostics_relreq = Variable("relreq")
+input_diagnostics_relreq.setDescription([r""])
+
 input_diagnostics_absacc = Variable("absacc")
+input_diagnostics_absacc.setDescription([r""])
+
 input_diagnostics_epsr = Variable("epsr")
+input_diagnostics_epsr.setDescription([r""])
+
 input_diagnostics_nPpts = Variable("nPpts")
+input_diagnostics_nPpts.setDescription([r""])
+
 input_diagnostics_nPtrj = Variable("nPtrj")
+input_diagnostics_nPtrj.setDescription([r""])
+
 input_diagnostics_LHevalues = Variable("LHevalues")
+input_diagnostics_LHevalues.setDescription([r""])
+
 input_diagnostics_LHevectors = Variable("LHevectors")
+input_diagnostics_LHevectors.setDescription([r""])
+
 input_diagnostics_LHmatrix = Variable("LHmatrix")
+input_diagnostics_LHmatrix.setDescription([r""])
+
 input_diagnostics_Lperturbed = Variable("Lperturbed")
+input_diagnostics_Lperturbed.setDescription([r""])
+
 input_diagnostics_dpp = Variable("dpp")
+input_diagnostics_dpp.setDescription([r""])
+
 input_diagnostics_dqq = Variable("dqq")
+input_diagnostics_dqq.setDescription([r""])
+
 input_diagnostics_Lcheck = Variable("Lcheck")
+input_diagnostics_Lcheck.setDescription([r""])
+
 input_diagnostics_Ltiming = Variable("Ltiming")
+input_diagnostics_Ltiming.setDescription([r""])
+
 input_diagnostics_fudge = Variable("fudge")
+input_diagnostics_fudge.setDescription([r""])
+
 input_diagnostics_scaling = Variable("scaling")
+input_diagnostics_scaling.setDescription([r""])
+
 
 vars_diagnosticslist = [
         input_diagnostics_odetol,

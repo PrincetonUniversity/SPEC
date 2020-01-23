@@ -8,8 +8,8 @@ Created on Tue Nov 26 15:17:47 2019
 
 #%% prepare for code generation
 
-def indented(tabs, lines, indentationChar="\t"):
-    indentation = ""
+def indented(tabs, lines, indentationChar='\t'):
+    indentation = ''
     for i in range(tabs):
         indentation += indentationChar
     indented = ''
@@ -21,10 +21,10 @@ def indented(tabs, lines, indentationChar="\t"):
         indented = indentation+lines#.strip()
     return indented
 
-def indent(tabs, lines, indentationChar="\t"):
+def indent(tabs, lines, indentationChar='\t'):
     return tabs+1, indented(tabs, lines, indentationChar)
 
-def unindent(tabs, lines, indentationChar="\t"):
+def unindent(tabs, lines, indentationChar='\t'):
     return tabs-1, indented(tabs, lines, indentationChar)
 
 
@@ -42,7 +42,7 @@ hostname = platform.node()
 creation_tag = 'auto-created by a user called \''+username+'\' on a machine called \''+hostname+'\' at '+now_string
 
 
-# datatype in Fortran from specification file
+#%% datatype in Fortran from specification file
 def fortran_dtype(dtype):
     if dtype=='int':
         return 'integer'
@@ -51,11 +51,12 @@ def fortran_dtype(dtype):
     elif dtype=='boolean':
         return 'logical'
     else:
-        return 'type('+dtype+')'
+        return 'type('+str(dtype)+')'
 
 
 from adf import Variable
 
+# declare a variable including dimensions(TODO) and doxygen-compatible comments
 def declareVariable(var):
     if type(var) is Variable:
         decl  = fortran_dtype(var.dtype)

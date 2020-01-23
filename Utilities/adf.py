@@ -12,7 +12,7 @@ class Variable:
     name = None
     dtype = None
     defaultValue = None
-    rank = 0 # scalars by default
+    rank = 0 # scalar by default
     description = None
     isParameter = False
     unit = None
