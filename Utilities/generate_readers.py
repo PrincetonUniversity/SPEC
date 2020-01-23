@@ -783,25 +783,57 @@ vars_numericlist = [
 ###############################################################################
 
 input_local_LBeltrami = Variable("LBeltrami")
-input_local_LBeltrami.setDescription([r""])
+input_local_LBeltrami.setDescription([r"Control flag for solution of Beltrami equation",
+                                      [ r"if \c LBeltrami = 1,3,5 or 7, (SQP) then the Beltrami field in each volume is constructed"+"\n"
+                                       +r"by minimizing the magnetic energy with the constraint of fixed helicity;"+"\n"
+                                       +r"this is achieved by using sequential quadratic programming as provided by \c E04UFF ."+"\n"
+                                       +r"This approach has the benefit (in theory) of robustly constructing minimum energy solutions"+"\n"
+                                       +r"when multiple, i.e. bifurcated, solutions exist.",
+                                        r"if \c LBeltrami = 2,3,6 or 7, (Newton) then the Beltrami fields are constructed by employing a standard Newton method"+"\n"
+                                       +r"for locating an extremum of"+"\n"
+                                       +r"\f$F\equiv \int B^2 dv - \mu (\int {\bf A}\cdot{\bf B}dv-{\cal K})\f$,"+"\n"
+                                       +r"where \f$\mu\f$ is treated as an independent degree of freedom similar to the parameters describing the vector potential"+"\n"
+                                       +r"and \f${\cal K}\f$ is the required value of the helicity;"+"\n"
+                                       +r"this is the standard Lagrange multipler approach for locating the constrained minimum;"+"\n"
+                                       +r"this method cannot distinguish saddle-type extrema from minima, and which solution that will be obtained depends on the initial guess",
+                                        r"if \c LBeltrami = 4,5,6 or 7, (linear) it is assumed that the Beltrami fields are parameterized by \f$\mu\f$;"+"\n"
+                                       +r"in this case, it is only required to solve \f$\nabla \times {\bf B} = \mu {\bf B}\f$ which reduces to a system of linear equations;"+"\n"
+                                       +r"\f$\mu\f$ may or may not be adjusted iteratively, depending on \c Lconstraint,"+"\n"
+                                       +r"to satisfy either rotational-transform or helicity constraints",
+                                        r"for flexibility and comparison, each of the above methods can be employed; for example:",
+                                        [r"if \c LBeltrami = 1, only the SQP    method will be employed",
+                                         r"if \c LBeltrami = 2, only the Newton method will be employed",
+                                         r"if \c LBeltrami = 4, only the linear method will be employed",
+                                         r"if \c LBeltrami = 3, the SQP and the Newton method are used",
+                                         r"if \c LBeltrami = 5, the SQP and the linear method are used",
+                                         r"if \c LBeltrami = 6, the Newton and the linear method are used",
+                                         r"if \c LBeltrami = 7, all three methods will be employed"
+                                        ]]
+                                      ])
 input_local_LBeltrami.setType("int")
 input_local_LBeltrami.setDefaultValue(4)
 
 input_local_Linitgues = Variable("Linitgues")
-input_local_Linitgues.setDescription([r""])
+input_local_Linitgues.setDescription([r"controls how initial guess for Beltrami field is constructed",
+                                      [ r"only relevant for routines that require an initial guess for the Beltrami fields, such as the SQP and Newton methods,"+"\n"
+                                       +r"or the sparse linear solver",
+                                        r"if \c Linitgues = 0, the initial guess for the Beltrami field is trivial",
+                                        r"if \c Linitgues = 1, the initial guess for the Beltrami field is an integrable approximation",
+                                        r"if \c Linitgues = 2, the initial guess for the Beltrami field is read from file",
+                                        r"if \c Linitgues = 3, the initial guess for the Beltrami field will be randomized with the maximum \c maxrndgues"]
+                                      ])
 input_local_Linitgues.setType("int")
 input_local_Linitgues.setDefaultValue(1)
 
 input_local_Lposdef = Variable("Lposdef")
-input_local_Lposdef.setDescription([r""])
+input_local_Lposdef.setDescription(r"redundant")
 input_local_Lposdef.setType("int")
 input_local_Lposdef.setDefaultValue(0)
 
 input_local_maxrndgues = Variable("maxrndgues")
-input_local_maxrndgues.setDescription([r""])
+input_local_maxrndgues.setDescription(r"the maximum random number of the Beltrami field if \c Linitgues = 3")
 input_local_maxrndgues.setType("double")
 input_local_maxrndgues.setDefaultValue(1.0)
-
 
 
 vars_locallist = [
@@ -810,6 +842,108 @@ vars_locallist = [
         input_local_Lposdef,
         input_local_maxrndgues
         ]
+
+
+###############################################################################
+# globallist 
+###############################################################################
+
+input_global_Lfindzero = Variable("Lfindzero")
+input_global_escale = Variable("escale")
+input_global_opsilon = Variable("opsilon")
+input_global_pcondense = Variable("pcondense")
+input_global_epsilon = Variable("epsilon")
+input_global_wpoloidal = Variable("wpoloidal")
+input_global_upsilon = Variable("upsilon")
+input_global_forcetol = Variable("forcetol")
+input_global_c05xmax = Variable("c05xmax")
+input_global_c05xtol = Variable("c05xtol")
+input_global_c05factor = Variable("c05factor")
+input_global_LreadGF = Variable("LreadGF")
+input_global_mfreeits = Variable("mfreeits")
+input_global_bnstol = Variable("bnstol")
+input_global_bnsblend = Variable("bnsblend")
+input_global_gBntol = Variable("gBntol")
+input_global_gBnbld = Variable("gBnbld")
+input_global_vcasingeps = Variable("vcasingeps")
+input_global_vcasingtol = Variable("vcasingtol")
+input_global_vcasingits = Variable("vcasingits")
+input_global_vcasingper = Variable("vcasingper")
+input_global_mcasingcal = Variable("mcasingcal")
+
+vars_globallist = [
+        input_global_Lfindzero,
+        input_global_escale,
+        input_global_opsilon,
+        input_global_pcondense,
+        input_global_epsilon,
+        input_global_wpoloidal,
+        input_global_upsilon,
+        input_global_forcetol,
+        input_global_c05xmax,
+        input_global_c05xtol,
+        input_global_c05factor,
+        input_global_LreadGF,
+        input_global_mfreeits,
+        input_global_bnstol,
+        input_global_bnsblend,
+        input_global_gBntol,
+        input_global_gBnbld,
+        input_global_vcasingeps,
+        input_global_vcasingtol,
+        input_global_vcasingits,
+        input_global_vcasingper,
+        input_global_mcasingcal
+        ]
+
+###############################################################################
+# diagnosticslist 
+###############################################################################
+
+input_diagnostics_odetol = Variable("odetol")
+input_diagnostics_absreq = Variable("absreq")
+input_diagnostics_relreq = Variable("relreq")
+input_diagnostics_absacc = Variable("absacc")
+input_diagnostics_epsr = Variable("epsr")
+input_diagnostics_nPpts = Variable("nPpts")
+input_diagnostics_nPtrj = Variable("nPtrj")
+input_diagnostics_LHevalues = Variable("LHevalues")
+input_diagnostics_LHevectors = Variable("LHevectors")
+input_diagnostics_LHmatrix = Variable("LHmatrix")
+input_diagnostics_Lperturbed = Variable("Lperturbed")
+input_diagnostics_dpp = Variable("dpp")
+input_diagnostics_dqq = Variable("dqq")
+input_diagnostics_Lcheck = Variable("Lcheck")
+input_diagnostics_Ltiming = Variable("Ltiming")
+input_diagnostics_fudge = Variable("fudge")
+input_diagnostics_scaling = Variable("scaling")
+
+vars_diagnosticslist = [
+        input_diagnostics_odetol,
+        input_diagnostics_absreq,
+        input_diagnostics_relreq,
+        input_diagnostics_absacc,
+        input_diagnostics_epsr,
+        input_diagnostics_nPpts,
+        input_diagnostics_nPtrj,
+        input_diagnostics_LHevalues,
+        input_diagnostics_LHevectors,
+        input_diagnostics_LHmatrix,
+        input_diagnostics_Lperturbed,
+        input_diagnostics_dpp,
+        input_diagnostics_dqq,
+        input_diagnostics_Lcheck,
+        input_diagnostics_Ltiming,
+        input_diagnostics_fudge,
+        input_diagnostics_scaling
+        ]
+
+
+###############################################################################
+# screenlist --> not in output file
+###############################################################################
+
+
 
 ###############################################################################
 
@@ -821,12 +955,14 @@ for var in vars_physicslist:
 for var in vars_numericlist:
     print(declareVariable(var))
 
-for var in vars_locallist:
+#for var in vars_locallist:
+#    print(declareVariable(var))
+
+for var in vars_globallist:
     print(declareVariable(var))
 
-
-
-
+for var in vars_diagnosticslist:
+    print(declareVariable(var))
 
 
 
