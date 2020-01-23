@@ -600,8 +600,8 @@ vars_physicslist = [
 # numericlist 
 ###############################################################################
 
-input_numerics_Linitialize = Variable("Linitialize")
-input_numerics_Linitialize.setDescription([r"Used to initialize geometry using a regularization / extrapolation method",
+input_numeric_Linitialize = Variable("Linitialize")
+input_numeric_Linitialize.setDescription([r"Used to initialize geometry using a regularization / extrapolation method",
                                            [ r"if \c Linitialize = \f$-I\f$ , where \f$I\f$ is a positive integer,"+"\n"
                                             +r"the geometry of the \f$i=1,N_V-I\f$ surfaces constructed by an extrapolation",
                                              r"if \c Linitialize = 0, the geometry of the interior surfaces is provided after the namelists in the input file",
@@ -619,21 +619,64 @@ input_numerics_Linitialize.setDescription([r"Used to initialize geometry using a
                                             +r"are *always* given by the \c Rwc and \c Zws given in \c physicslist.",
                                              r"if \c Linitialize = 1, 2, it is not required to provide the geometry of the interfaces after the namelists"]
                                            ])
-input_numerics_Linitialize.setType("int")
-input_numerics_Linitialize.setDefaultValue(0)
+input_numeric_Linitialize.setType("int")
+input_numeric_Linitialize.setDefaultValue(0)
 
 
+input_numeric_LautoinitBn = Variable("LautoinitBn")
+input_numeric_LautoinitBn.setDescription([r"Used to initialize \f$B_{ns}\f$ using an initial fixed-boundary calculation",
+                                          [r"only relevant if \c Lfreebound=1",
+                                           r"user-supplied \c Bns will only be considered if \c LautoinitBn=0"]
+                                          ])
+input_numeric_LautoinitBn.setType("int")
+input_numeric_LautoinitBn.setDefaultValue(1)
 
 
+input_numeric_Lzerovac = Variable("Lzerovac")
+input_numeric_Lzerovac.setDescription([r"Used to adjust vacuum field to cancel plasma field on computational boundary",
+                                       [r"only relevant if \c Lfreebound=1"]
+                                       ])
+input_numeric_Lzerovac.setType("int")
+input_numeric_Lzerovac.setDefaultValue(0)
 
 
+input_numeric_Ndiscrete = Variable("Ndiscrete")
+input_numeric_Ndiscrete.setDescription([r"resolution of the real space grid on which fast Fourier transforms are performed is given by \c Ndiscrete*Mpol*4",
+                                        [r"constraint \c Ndiscrete>0"]
+                                        ])
+input_numeric_Ndiscrete.setType("int")
+input_numeric_Ndiscrete.setDefaultValue(2)
 
 
+input_numeric_Nquad = Variable("Nquad")
+input_numeric_Nquad.setDescription([r"Resolution of the Gaussian quadrature",
+                                    [ r"The resolution of the Gaussian quadrature, \f$\displaystyle \int \!\! f(s) ds = \sum_k \omega_k f(s_k)\f$,"+"\n"
+                                     +r"in each volume is given by \c Iquad\f$_v\f$",
+                                      r"\c Iquad\f$_v\f$ is set in preset()"]
+                                    ])
+input_numeric_Nquad.setType("int")
+input_numeric_Nquad.setDefaultValue(-1)
 
 
+input_numeric_iMpol = Variable("iMpol")
+input_numeric_iMpol.setDescription([r"Fourier resolution of straight-fieldline angle on interfaces",
+                                    [ r"the rotational-transform on the interfaces is determined by a transformation to the straight-fieldline angle,"+"\n"
+                                     +r"with poloidal resolution given by \c iMpol",
+                                      r"if \c iMpol<=0, then \c iMpol = Mpol - iMpol"]
+                                    ])
+input_numeric_iMpol.setType("int")
+input_numeric_iMpol.setDefaultValue(-4)
 
 
-
+input_numeric_iNtor = Variable("iNtor")
+input_numeric_iNtor.setDescription([r"Fourier resolution of straight-fieldline angle on interfaces",
+                                    [ r"the rotational-transform on the interfaces is determined by a transformation to the straight-fieldline angle,"+"\n"
+                                     +r"with toroidal resolution given by \c iNtor",
+                                      r"if \c iNtor<=0 then \c iNtor = Ntor - iNtor",
+                                      r"if \c Ntor==0, then the toroidal resolution of the angle transformation is set \c lNtor=0"]
+                                    ])
+input_numeric_iNtor.setType("int")
+input_numeric_iNtor.setDefaultValue(-4)
 
 
 
@@ -652,7 +695,7 @@ input_numerics_Linitialize.setDefaultValue(0)
 
 
 vars_numericlist = [
-        input_numerics_Linitialize
+        input_numeric_Linitialize
         ]
 
 
