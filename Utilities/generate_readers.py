@@ -1039,55 +1039,88 @@ vars_globallist = [
 ###############################################################################
 
 input_diagnostics_odetol = Variable("odetol")
-input_diagnostics_odetol.setDescription([r""])
+input_diagnostics_odetol.setDescription(r"o.d.e. integration tolerance for all field line tracing routines")
 
 input_diagnostics_absreq = Variable("absreq")
-input_diagnostics_absreq.setDescription([r""])
+input_diagnostics_absreq.setDescription(r"redundant")
 
 input_diagnostics_relreq = Variable("relreq")
-input_diagnostics_relreq.setDescription([r""])
+input_diagnostics_relreq.setDescription(r"redundant")
 
 input_diagnostics_absacc = Variable("absacc")
-input_diagnostics_absacc.setDescription([r""])
+input_diagnostics_absacc.setDescription(r"redundant")
 
 input_diagnostics_epsr = Variable("epsr")
-input_diagnostics_epsr.setDescription([r""])
+input_diagnostics_epsr.setDescription(r"redundant")
 
 input_diagnostics_nPpts = Variable("nPpts")
-input_diagnostics_nPpts.setDescription([r""])
+input_diagnostics_nPpts.setDescription([ r"number of toroidal transits used (per trajectory) in following field lines"+"\n"
+                                        +r"for constructing Poincaré plots",
+                                         r"if \c nPpts<1, no Poincaré plot is constructed"])
 
 input_diagnostics_nPtrj = Variable("nPtrj")
-input_diagnostics_nPtrj.setDescription([r""])
+input_diagnostics_nPtrj.setDescription([r"number of trajectories in each annulus to be followed in constructing Poincaré plot",
+                                        [ r"if \c nPtrj(l)<0, then \c nPtrj(l) = Ni(l),"+"\n"
+                                         +r"where \c Ni(l) is the grid resolution used to construct the Beltrami field in volume \f$l\f$"]
+                                        ])
 
 input_diagnostics_LHevalues = Variable("LHevalues")
-input_diagnostics_LHevalues.setDescription([r""])
+input_diagnostics_LHevalues.setDescription(r"to compute eigenvalues of \f$\nabla {\bf F}\f$")
 
 input_diagnostics_LHevectors = Variable("LHevectors")
-input_diagnostics_LHevectors.setDescription([r""])
+input_diagnostics_LHevectors.setDescription(r"to compute eigenvectors (and also eigenvalues) of \f$\nabla {\bf F}\f$")
 
 input_diagnostics_LHmatrix = Variable("LHmatrix")
-input_diagnostics_LHmatrix.setDescription([r""])
+input_diagnostics_LHmatrix.setDescription(r"to compute and write to file the elements of \f$\nabla {\bf F}\f$")
 
 input_diagnostics_Lperturbed = Variable("Lperturbed")
-input_diagnostics_Lperturbed.setDescription([r""])
+input_diagnostics_Lperturbed.setDescription(r"to compute linear, perturbed equilibrium")
 
 input_diagnostics_dpp = Variable("dpp")
-input_diagnostics_dpp.setDescription([r""])
+input_diagnostics_dpp.setDescription(r"perturbed harmonic")
 
 input_diagnostics_dqq = Variable("dqq")
-input_diagnostics_dqq.setDescription([r""])
+input_diagnostics_dqq.setDescription(r"perturbed harmonic")
 
 input_diagnostics_Lcheck = Variable("Lcheck")
-input_diagnostics_Lcheck.setDescription([r""])
+input_diagnostics_Lcheck.setDescription([r"implement various checks",
+                                         [ r"if \c Lcheck = 0, no additional check on the calculation is performed",
+                                           r"if \c Lcheck = 1, the error in the current, i.e. \f$\nabla\times{\bf B}-\mu{\bf B}\f$ is computed as a post-diagnostic",
+                                           r"if \c Lcheck = 2, the analytic derivatives of the interface transform w.r.t."+"\n"
+                                          +r"the helicity multiplier, \f$\mu\f$, and the enclosed poloidal flux, \f$\Delta\psi_p\f$, are compared to a finite-difference estimate",
+                                          [ r"only if \c Lconstraint=1",
+                                            r"only for \c dspec executable, i.e. must compile with \c DFLAGS=\"-D DEBUG\""],
+                                           r"if \c Lcheck = 3, the analytic derivatives of the volume w.r.t. interface Fourier harmonic"+"\n"
+                                          +r"is compared to a finite-difference estimate",
+                                          [ r"must set \c Lfindzero=2",
+                                            r"set \c forcetol sufficiently small and set \c LreadGF=F,"+"\n"
+                                           +r"so that the matrix of second derivatives is calculated",
+                                            r"only for \c dspec executable, i.e. must compile with \c DFLAGS=\"-D DEBUG\""],
+                                           r"if \c Lcheck = 4, the analytic calculation of the derivatives of the magnetic field, \f$B^2\f$, at the interfaces"+"\n"
+                                          +r"is compared to a finite-difference estimate",
+                                          [ r"must set \c Lfindzero=2",
+                                            r"set \c forcetol sufficiently small",
+                                            r"set \c LreadGF=F",
+                                            r"only for \c dspec executable, i.e. must compile with \c DFLAGS=\"-D DEBUG\""],
+                                           r"if \c Lcheck = 5, the analytic calculation of the matrix of the derivatives of the force imbalance"+"\n"
+                                          +r"is compared to a finite-difference estimate",
+                                           r"if \c Lcheck = 6, the virtual casing calculation is compared to \c xdiagno (Lazerson 2013 \cite y2013_lazerson)",
+                                           [ r"the input file for \c xdiagno is written by bnorml()",
+                                             r"this provides the Cartesian coordinates on the computational boundary where the virtual casing routine casing()"+"\n"
+                                            +r"computes the magnetic field, with the values of the magnetic field being written to the screen for comparison",
+                                             r"must set \c Freebound=1, \c Lfindzero>0, \c mfreeits!=0",
+                                             r"\c xdiagno must be executed manually"]
+                                          ]
+                                         ])
 
 input_diagnostics_Ltiming = Variable("Ltiming")
-input_diagnostics_Ltiming.setDescription([r""])
+input_diagnostics_Ltiming.setDescription(r"to check timing")
 
 input_diagnostics_fudge = Variable("fudge")
-input_diagnostics_fudge.setDescription([r""])
+input_diagnostics_fudge.setDescription(r"redundant")
 
 input_diagnostics_scaling = Variable("scaling")
-input_diagnostics_scaling.setDescription([r""])
+input_diagnostics_scaling.setDescription(r"redundant")
 
 
 vars_diagnosticslist = [
@@ -1133,8 +1166,8 @@ for var in vars_numericlist:
 for var in vars_globallist:
     print(declareVariable(var))
 
-for var in vars_diagnosticslist:
-    print(declareVariable(var))
+#for var in vars_diagnosticslist:
+#    print(declareVariable(var))
 
 
 
