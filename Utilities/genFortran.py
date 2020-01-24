@@ -42,6 +42,15 @@ def fortran_dtype(dtype):
     else:
         return 'type('+str(dtype)+')'
 
+def fortran_val(val):
+    if type(val) is bool:
+        if val:
+            return ".TRUE."
+        else:
+            return ".FALSE."
+    else:
+        return str(val)
+
 def commentOut(multilineString):
     comment = "!< "
     if type(multilineString) is not str:
@@ -63,7 +72,7 @@ def declareVariable(var, indentLength=None):
         decl += " :: "
         decl += var.name
         decl += " = "
-        decl += str(var.defaultValue)
+        decl += fortran_val(var.defaultValue)
         if indentLength is None:
             indentLength = len(decl)+1
         decl += " "

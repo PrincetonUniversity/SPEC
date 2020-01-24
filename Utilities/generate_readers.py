@@ -855,45 +855,45 @@ vars_locallist = [
 ###############################################################################
 
 input_global_Lfindzero = Variable("Lfindzero")
-input_global_Lfindzero.setDescription([r"use Newton methods to find zero of force-balance, which is computed by dforce()",
+input_global_Lfindzero.setDescription({r"use Newton methods to find zero of force-balance, which is computed by dforce()":
                                        [ r"if \c Lfindzero=0 , then dforce() is called once"+"\n"
                                         +r"to compute the Beltrami fields consistent with the given geometry and constraints",
                                          r"if \c Lfindzero=1 , then call \c C05NDF (uses   function values only), which iteratively calls dforce()",
                                          r"if \c Lfindzero=2 , then call \c C05PDF (uses derivative information), which iteratively calls dforce()"]
-                                       ])
+                                       })
 input_global_Lfindzero.setType("int")
 input_global_Lfindzero.setDefaultValue(0)
 
 input_global_escale = Variable("escale")
-input_global_escale.setDescription([r"controls the weight factor, \c BBweight, in the force-imbalance harmonics",
+input_global_escale.setDescription({r"controls the weight factor, \c BBweight, in the force-imbalance harmonics":
                                     [r"\c BBweight(i) \f$\displaystyle \equiv \texttt{opsilon} \times \exp\left[-\texttt{escale} \times (m_i^2+n_i^2) \right]\f$",
                                      r"defined in preset() ; used in dforce()",
                                      r"\sa Eqn.\f$(\ref{eq:forcebalancemn_global})\f$"]
-                                    ])
+                                    })
 input_global_escale.setType("double")
 input_global_escale.setDefaultValue(0.0)
 
 input_global_opsilon = Variable("opsilon")
-input_global_opsilon.setDescription([r"weighting of force-imbalance",
+input_global_opsilon.setDescription({r"weighting of force-imbalance":
                                      [r"used in dforce(); \sa Eqn.\f$(\ref{eq:forcebalancemn_global})\f$"]
-                                     ])
+                                     })
 input_global_opsilon.setType("double")
 input_global_opsilon.setDefaultValue(1.0)
 
 input_global_pcondense = Variable("pcondense")
-input_global_pcondense.setDescription([r"spectral condensation parameter",
+input_global_pcondense.setDescription({r"spectral condensation parameter":
                                        [ r"used in preset() to define \c mmpp(i) \f$\equiv m_i^p\f$, where \f$p\equiv \f$ \c pcondense",
                                          r"the angle freedom is exploited to minimize \f$\displaystyle \texttt{epsilon} \sum_{i} m_i^p (R_{i}^2+Z_{i}^2)\f$"+"\n"
                                         +r"with respect to tangential variations in the interface geometry",
                                          r"\sa Eqn.\f$(\ref{eq:spectralbalancemn_global})\f$"]
-                                       ])
+                                       })
 input_global_pcondense.setType("double")
 input_global_pcondense.setDefaultValue(2.0)
 
 input_global_epsilon = Variable("epsilon")
-input_global_epsilon.setDescription([r"weighting of spectral-width constraint",
+input_global_epsilon.setDescription({r"weighting of spectral-width constraint":
                                      [r"used in dforce(); \sa Eqn.\f$(\ref{eq:spectralbalancemn_global})\f$"]
-                                     ])
+                                     })
 input_global_epsilon.setType("double")
 input_global_epsilon.setDefaultValue(0.0)
 
@@ -910,14 +910,14 @@ input_global_upsilon.setType("double")
 input_global_upsilon.setDefaultValue(1.0)
 
 input_global_forcetol = Variable("forcetol")
-input_global_forcetol.setDescription([r"required tolerance in force-balance error; only used as an initial check",
+input_global_forcetol.setDescription({r"required tolerance in force-balance error; only used as an initial check":
                                       [ r"if the initially supplied interfaces are consistent with force-balance to within \c forcetol"+"\n"
                                        +r"then the geometry of the interfaces is not altered",
                                         r"if not, then the geometry of the interfaces is changed in order to bring the configuration into force balance"+"\n"
                                        +r"so that the geometry of interfaces is within \c c05xtol, defined below, of the true solution",
                                         r"to force execution of either \c C05NDF or \c C05PDF, regardless of the initial force imbalance,"+"\n"
                                        +r"set \c forcetol<0"]
-                                      ])
+                                      })
 input_global_forcetol.setType("double")
 input_global_forcetol.setDefaultValue(1.0e-10)
 
@@ -927,34 +927,34 @@ input_global_c05xmax.setType("double")
 input_global_c05xmax.setDefaultValue(1.0e-6)
 
 input_global_c05xtol = Variable("c05xtol")
-input_global_c05xtol.setDescription([r"required tolerance in position, \f${\bf x} \equiv \{ R_{i,v}, Z_{i,v}\}\f$",
+input_global_c05xtol.setDescription({r"required tolerance in position, \f${\bf x} \equiv \{ R_{i,v}, Z_{i,v}\}\f$":
                                      [r"used by both \c C05NDF and \c C05PDF; see the NAG documents for further details on how the error is defined",
                                       r"constraint \c c05xtol>0.0"]
-                                     ])
+                                     })
 input_global_c05xtol.setType("double")
 input_global_c05xtol.setDefaultValue(1.0e-12)
 
 input_global_c05factor = Variable("c05factor")
-input_global_c05factor.setDescription([r"used to control initial step size in \c C05NDF and \c C05PDF",
+input_global_c05factor.setDescription({r"used to control initial step size in \c C05NDF and \c C05PDF":
                                        [r"constraint \c c05factor>0.0",
                                         r"only relevant if \c Lfindzero>0"]
-                                       ])
+                                       })
 input_global_c05factor.setType("double")
 input_global_c05factor.setDefaultValue(1.0e-2)
 
 input_global_LreadGF = Variable("LreadGF")
-input_global_LreadGF.setDescription([r"read \f$\nabla_{\bf x} {\bf F}\f$ from file \c ext.GF ",
+input_global_LreadGF.setDescription({r"read \f$\nabla_{\bf x} {\bf F}\f$ from file \c ext.GF ":
                                      [r"only used if \c Lfindzero=2",
                                       r"only used in newton()"]
-                                     ])
+                                     })
 input_global_LreadGF.setType("boolean")
 input_global_LreadGF.setDefaultValue(True)
 
 input_global_mfreeits = Variable("mfreeits")
-input_global_mfreeits.setDescription([r"maximum allowed free-boundary iterations",
+input_global_mfreeits.setDescription({r"maximum allowed free-boundary iterations":
                                       [r"only used if \c Lfreebound=1",
                                        r"only used in xspech()"]
-                                      ])
+                                      })
 input_global_mfreeits.setType("int")
 input_global_mfreeits.setDefaultValue(0)
 
@@ -969,15 +969,15 @@ input_global_bnsblend.setType("double")
 input_global_bnsblend.setDefaultValue(0.666)
 
 input_global_gBntol = Variable("gBntol")
-input_global_gBntol.setDescription([r"required tolerance in free-boundary iterations",
+input_global_gBntol.setDescription({r"required tolerance in free-boundary iterations":
                                     [r"only used if \c Lfreebound=1",
                                      r"only used in xspech()"]
-                                    ])
+                                    })
 input_global_gBntol.setType("double")
 input_global_gBntol.setDefaultValue(1.0e-6)
 
 input_global_gBnbld = Variable("gBnbld")
-input_global_gBnbld.setDescription([r"normal blend",
+input_global_gBnbld.setDescription({r"normal blend":
                                     [ r"The \"new\" magnetic field at the computational boundary produced by the plasma currents is updated using a Picard scheme:"+"\n"
                                      +r"\f{eqnarray}{ ({\bf B}\cdot{\bf n})^{j+1} =    \texttt{gBnbld}  \times ({\bf B}\cdot{\bf n})^{j}"+"\n"
                                      +r"                                          + (1-\texttt{gBnbld}) \times ({\bf B}\cdot{\bf n})^{*},"+"\n"
@@ -985,7 +985,7 @@ input_global_gBnbld.setDescription([r"normal blend",
                                      +r"where \f$j\f$ labels free-boundary iterations, and \f$({\bf B}\cdot{\bf n})^{*}\f$ is computed by virtual casing.",
                                       r"only used if \c Lfreebound=1",
                                       r"only used in xspech()"]
-                                    ])
+                                    })
 input_global_gBnbld.setType("double")
 input_global_gBnbld.setDefaultValue(0.666)
 
@@ -1010,7 +1010,7 @@ input_global_vcasingper.setType("int")
 input_global_vcasingper.setDefaultValue(1)
 
 input_global_mcasingcal = Variable("mcasingcal")
-input_global_mcasingcal.setDescription(r"minimum number of calls to adaptive virtual casing routine; see casing() redundant")
+input_global_mcasingcal.setDescription(r'minimum number of calls to adaptive virtual casing routine; see casing() redundant')
 input_global_mcasingcal.setType("int")
 input_global_mcasingcal.setDefaultValue(8)
 
@@ -1070,17 +1070,18 @@ input_diagnostics_epsr.setType("double")
 input_diagnostics_epsr.setDefaultValue(1.0e-8)
 
 input_diagnostics_nPpts = Variable("nPpts")
-input_diagnostics_nPpts.setDescription([ r"number of toroidal transits used (per trajectory) in following field lines"+"\n"
-                                        +r"for constructing Poincaré plots",
-                                         r"if \c nPpts<1, no Poincaré plot is constructed"])
+input_diagnostics_nPpts.setDescription({ r"number of toroidal transits used (per trajectory) in following field lines"+"\n"
+                                        +r"for constructing Poincaré plots":
+                                         [r"if \c nPpts<1, no Poincaré plot is constructed"]
+                                         })
 input_diagnostics_nPpts.setType("int")
 input_diagnostics_nPpts.setDefaultValue(0)
 
 input_diagnostics_nPtrj = Variable("nPtrj")
-input_diagnostics_nPtrj.setDescription([r"number of trajectories in each annulus to be followed in constructing Poincaré plot",
+input_diagnostics_nPtrj.setDescription({r"number of trajectories in each annulus to be followed in constructing Poincaré plot":
                                         [ r"if \c nPtrj(l)<0, then \c nPtrj(l) = Ni(l),"+"\n"
                                          +r"where \c Ni(l) is the grid resolution used to construct the Beltrami field in volume \f$l\f$"]
-                                        ])
+                                        })
 input_diagnostics_nPtrj.setType("int")
 input_diagnostics_nPtrj.setRank(1)
 input_diagnostics_nPtrj.setDefaultValue(-1)
@@ -1117,35 +1118,35 @@ input_diagnostics_dqq.setType("int")
 input_diagnostics_dqq.setDefaultValue(-1)
 
 input_diagnostics_Lcheck = Variable("Lcheck")
-input_diagnostics_Lcheck.setDescription([r"implement various checks",
+input_diagnostics_Lcheck.setDescription({r"implement various checks":
                                          [ r"if \c Lcheck = 0, no additional check on the calculation is performed",
                                            r"if \c Lcheck = 1, the error in the current, i.e. \f$\nabla\times{\bf B}-\mu{\bf B}\f$ is computed as a post-diagnostic",
-                                           r"if \c Lcheck = 2, the analytic derivatives of the interface transform w.r.t."+"\n"
-                                          +r"the helicity multiplier, \f$\mu\f$, and the enclosed poloidal flux, \f$\Delta\psi_p\f$, are compared to a finite-difference estimate",
+                                          {r"if \c Lcheck = 2, the analytic derivatives of the interface transform w.r.t."+"\n"
+                                          +r"the helicity multiplier, \f$\mu\f$, and the enclosed poloidal flux, \f$\Delta\psi_p\f$, are compared to a finite-difference estimate":
                                           [ r"only if \c Lconstraint=1",
-                                            r"only for \c dspec executable, i.e. must compile with \c DFLAGS=\"-D DEBUG\""],
-                                           r"if \c Lcheck = 3, the analytic derivatives of the volume w.r.t. interface Fourier harmonic"+"\n"
-                                          +r"is compared to a finite-difference estimate",
+                                            r"only for \c dspec executable, i.e. must compile with \c DFLAGS=\"-D DEBUG\""]},
+                                          {r"if \c Lcheck = 3, the analytic derivatives of the volume w.r.t. interface Fourier harmonic"+"\n"
+                                          +r"is compared to a finite-difference estimate":
                                           [ r"must set \c Lfindzero=2",
                                             r"set \c forcetol sufficiently small and set \c LreadGF=F,"+"\n"
                                            +r"so that the matrix of second derivatives is calculated",
-                                            r"only for \c dspec executable, i.e. must compile with \c DFLAGS=\"-D DEBUG\""],
-                                           r"if \c Lcheck = 4, the analytic calculation of the derivatives of the magnetic field, \f$B^2\f$, at the interfaces"+"\n"
-                                          +r"is compared to a finite-difference estimate",
+                                            r"only for \c dspec executable, i.e. must compile with \c DFLAGS=\"-D DEBUG\""]},
+                                          {r"if \c Lcheck = 4, the analytic calculation of the derivatives of the magnetic field, \f$B^2\f$, at the interfaces"+"\n"
+                                          +r"is compared to a finite-difference estimate":
                                           [ r"must set \c Lfindzero=2",
                                             r"set \c forcetol sufficiently small",
                                             r"set \c LreadGF=F",
-                                            r"only for \c dspec executable, i.e. must compile with \c DFLAGS=\"-D DEBUG\""],
+                                            r"only for \c dspec executable, i.e. must compile with \c DFLAGS=\"-D DEBUG\""]},
                                            r"if \c Lcheck = 5, the analytic calculation of the matrix of the derivatives of the force imbalance"+"\n"
                                           +r"is compared to a finite-difference estimate",
-                                           r"if \c Lcheck = 6, the virtual casing calculation is compared to \c xdiagno (Lazerson 2013 \cite y2013_lazerson)",
+                                          {r"if \c Lcheck = 6, the virtual casing calculation is compared to \c xdiagno (Lazerson 2013 \cite y2013_lazerson)":
                                            [ r"the input file for \c xdiagno is written by bnorml()",
                                              r"this provides the Cartesian coordinates on the computational boundary where the virtual casing routine casing()"+"\n"
                                             +r"computes the magnetic field, with the values of the magnetic field being written to the screen for comparison",
                                              r"must set \c Freebound=1, \c Lfindzero>0, \c mfreeits!=0",
-                                             r"\c xdiagno must be executed manually"]
+                                             r"\c xdiagno must be executed manually"]}
                                           ]
-                                         ])
+                                         })
 input_diagnostics_Lcheck.setType("int")
 input_diagnostics_Lcheck.setDefaultValue(0)
 
@@ -1189,12 +1190,6 @@ vars_diagnosticslist = [
 ###############################################################################
 # screenlist --> not in output file
 ###############################################################################
-##%%
-#desc=input_local_LBeltrami.description
-#
-#
-#
-#print(commentOut(toDoc(desc)))
 
 
 
@@ -1208,23 +1203,18 @@ from genFortran import declareVariable
 with open("/home/jonathan/test.f90", "w") as f:
     
     for var in vars_physicslist:
-        #print(declareVariable(var))
         f.write(declareVariable(var)+"\n")
     
     for var in vars_numericlist:
-        #print(declareVariable(var))
         f.write(declareVariable(var)+"\n")
     
     for var in vars_locallist:
-        #print(declareVariable(var))
         f.write(declareVariable(var)+"\n")
     
     for var in vars_globallist:
-        #print(declareVariable(var))
         f.write(declareVariable(var)+"\n")
     
     for var in vars_diagnosticslist:
-        #print(declareVariable(var))
         f.write(declareVariable(var)+"\n")
 
 
