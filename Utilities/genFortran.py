@@ -8,18 +8,7 @@ Created on Tue Nov 26 15:17:47 2019
 
 #%% prepare for code generation
 
-def indented(tabs, lines, indentationChar='\t'):
-    indentation = ''
-    for i in range(tabs):
-        indentation += indentationChar
-    indented = ''
-    if '\n' in lines.strip():
-        for line in lines.split('\n'):
-            if line != '':
-                indented += indentation+line+'\n'
-    else:
-        indented = indentation+lines#.strip()
-    return indented
+from adf import indented
 
 def indent(tabs, lines, indentationChar='\t'):
     return tabs+1, indented(tabs, lines, indentationChar)
@@ -53,50 +42,41 @@ def fortran_dtype(dtype):
     else:
         return 'type('+str(dtype)+')'
 
+def commentOut(multilineString):
+    comment = "!< "
+    if type(multilineString) is not str:
+        raise TypeError("type of given multilineString should be str, not "+
+                        str(type(multilineString))+
+                        "; how to comment out this?")
+    lines = multilineString.split("\n")
+    result = ""
+    for line in lines:
+        result += comment+line+"\n"
+    return result
 
-from adf import Variable
+from adf import Variable, toDoc
 
 # declare a variable including dimensions(TODO) and doxygen-compatible comments
-def declareVariable(var):
+def declareVariable(var, indentLength=None):
     if type(var) is Variable:
         decl  = fortran_dtype(var.dtype)
         decl += " :: "
         decl += var.name
         decl += " = "
         decl += str(var.defaultValue)
-        indentLength = len(decl)+1
+        if indentLength is None:
+            indentLength = len(decl)+1
         decl += " "
-        if type(var.description) is list:
-            for d in var.description:
-                if type(d) is list:
-                    decl += indented(indentLength, "!< <ul>\n", " ")
-                    listItems = ""
-                    for dl in d:
-                        dl = dl.replace("\n", "\n!<      ")
-                        listItems += "!< <li> "+dl+" </li>\n"
-                    decl += indented(indentLength, listItems, " ")
-                    decl += indented(indentLength, "!< </ul>\n", " ")
-                else:
-                    decl += "!< "+d.strip()+"\n"
-        elif var.description is not None:
-            descr = var.description.replace("\n", "\n!< ")
-            descr_parts = descr.split("\n")
-            decl += "!< "+descr_parts[0]+"\n"+indented(indentLength, "\n".join(descr_parts[1:]), " ")+"\n"
+        decl_doc = commentOut(toDoc(var.description))
+        if "\n" in decl_doc:
+            docparts = decl_doc.split("\n")
+            decl += docparts[0]+"\n"
+            decl += indented(indentLength, "\n".join(docparts[1:]), " ")
+        else:
+            decl += decl_doc
         return decl.strip()
     else:
         raise ValueError("var "+var.name+" is not a adf.Variable")
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

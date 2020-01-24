@@ -15,6 +15,12 @@ If you want to have an input or output variable added to SPEC, this script
 is the place to put it. Then run it, commit your changed source code to Git
 and compile SPEC again to use your changes.
 
+In order to get the correct order of the comments, you should use Python >=3.7.
+From Python 3.7 on, it is guaranteed that the insertion order of dict()
+items is kept and this is relied on in this code when iterating over the keys
+of the documentation parts.
+More on this: https://docs.python.org/3/whatsnew/3.7.html
+
 @author: Jonathan Schilling (jonathan.schilling@ipp.mpg.de)
 """
 
@@ -47,17 +53,17 @@ MNvol.setIsParameter(True)
 # physicslist 
 ###############################################################################
 input_physics_Igeometry = Variable("Igeometry")
-input_physics_Igeometry.setDescription([r"selects Cartesian, cylindrical or toroidal geometry",
+input_physics_Igeometry.setDescription({r"selects Cartesian, cylindrical or toroidal geometry":
                                         [r"\c Igeometry=1 : Cartesian; geometry determined by \f$R\f$",
                                          r"\c Igeometry=2 : cylindrical; geometry determined by \f$R\f$",
                                          r"\c Igeometry=3 : toroidal; geometry determined by \f$R\f$ *and* \f$Z\f$"]
-                                        ])
+                                        })
 input_physics_Igeometry.setType("int")
 input_physics_Igeometry.setDefaultValue(3)
 
 
 input_physics_Istellsym = Variable("Istellsym")
-input_physics_Istellsym.setDescription(r"stellarator symmetry is enforced if \c Istellsym==1")
+input_physics_Istellsym.setDescription(r"stellarator symmetry is enforced if \c Istellsym=1")
 input_physics_Istellsym.setType("int")
 input_physics_Istellsym.setDefaultValue(1)
 
@@ -94,33 +100,33 @@ input_physics_gamma.setDefaultValue(0.0)
 
 
 input_physics_Nfp = Variable("Nfp")
-input_physics_Nfp.setDescription([r"field periodicity",
+input_physics_Nfp.setDescription({r"field periodicity":
                                   [r"all Fourier representations are of the form \f$\cos(m\theta-n N \zeta)\f$, \f$\sin(m\theta-n N \zeta)\f$, where \f$N\equiv\f$\c Nfp",
                                    r"constraint: \c Nfp >= 1"]
-                                  ])
+                                  })
 input_physics_Nfp.setType("int")
 input_physics_Nfp.setDefaultValue(1)
 
 
 input_physics_Nvol = Variable("Nvol")
-input_physics_Nvol.setDescription([r"number of volumes",
+input_physics_Nvol.setDescription({r"number of volumes":
                                    [r"each volume \f${\cal V}_l\f$ is bounded by the \f${\cal I}_{l-1}\f$ and \f${\cal I}_{l}\f$ interfaces",
                                     r"note that in cylindrical or toroidal geometry, \f${\cal I}_{0}\f$ is the degenerate coordinate axis",
                                     r"constraint: \c Nvol<=MNvol"]
-                                   ])
+                                   })
 input_physics_Nvol.setType("int")
 input_physics_Nvol.setDefaultValue(1)
 
 
 input_physics_Mpol = Variable("Mpol")
-input_physics_Mpol.setDescription([r"number of poloidal Fourier harmonics",
+input_physics_Mpol.setDescription({r"number of poloidal Fourier harmonics":
                                    [ r"all Fourier representations of doubly-periodic functions are of the form"+"\n"
                                     +r"\f{eqnarray}{ f(\theta,\zeta) & = & \sum_{n=0}^{\texttt{Ntor}} f_{0,n}\cos(-n \, \texttt{Nfp} \, \zeta)"+"\n"
                                     +r"\sum_{m=1}^{\texttt{Mpol}}\sum_{n=\texttt{-Ntor}}^{\texttt{Ntor}} f_{m,n}\cos(m\theta-n \, \texttt{Nfp} \, \zeta),"+"\n"
                                     +r"\f}"+"\n"
                                     +r"Internally these \"double\" summations are written as a \"single\" summation,"+"\n"
                                     +r"e.g. \f$f(\theta,\zeta) = \sum_j f_j \cos(m_j\theta-n_j\zeta)\f$."]
-                                   ])
+                                   })
 input_physics_Mpol.setType("int")
 input_physics_Mpol.setDefaultValue(0)
 
@@ -149,32 +155,31 @@ input_physics_Lrad.setMaximumIndices([r"MNvol+1"])
 
 
 input_physics_Lconstraint = Variable("Lconstraint")
-input_physics_Lconstraint.setDescription([r"selects constraints; primarily used in ma02aa() and mp00ac()",
-                                          [r"if \c Lconstraint==-1, then in the plasma regions \f$\Delta\psi_t\f$, \f$\mu\f$ and \f$\Delta \psi_p\f$ are *not* varied"+"\n"
+input_physics_Lconstraint.setDescription({r"selects constraints; primarily used in ma02aa() and mp00ac()":
+                                          [ r"if \c Lconstraint=-1, then in the plasma regions \f$\Delta\psi_t\f$, \f$\mu\f$ and \f$\Delta \psi_p\f$ are *not* varied"+"\n"
                                            +r"and in the vacuum region (only for free-boundary) \f$\Delta\psi_t\f$ and \f$\Delta \psi_p\f$ are *not* varied, and \f$\mu = 0\f$",
-                                           r"if \c Lconstraint==0, then in the plasma regions \f$\Delta\psi_t\f$, \f$\mu\f$ and \f$\Delta \psi_p\f$ are *not* varied"+"\n"
+                                            r"if \c Lconstraint=0, then in the plasma regions \f$\Delta\psi_t\f$, \f$\mu\f$ and \f$\Delta \psi_p\f$ are *not* varied"+"\n"
                                            +r"and in the vacuum region (only for free-boundary) \f$\Delta\psi_t\f$ and \f$\Delta \psi_p\f$ are varied to match the"+"\n"
                                            +r"prescribed plasma current, \c curtor, and the \"linking\" current, \c curpol, and \f$\mu = 0\f$",
-                                           r"if \c Lconstraint==1, then in the plasma regions \f$\mu\f$ and \f$\Delta\psi_p\f$ are adjusted"+"\n"
+                                            r"if \c Lconstraint=1, then in the plasma regions \f$\mu\f$ and \f$\Delta\psi_p\f$ are adjusted"+"\n"
                                            +r"in order to satisfy the inner and outer interface transform constraints"+"\n"
                                            +r"(except in the simple torus, where the enclosed poloidal flux is irrelevant,"+"\n"
                                            +r"and only \f$\mu\f$ is varied to satisfy the outer interface transform constraint);"+"\n"
                                            +r"and in the vacuum region \f$\Delta\psi_t\f$ and \f$\Delta \psi_p\f$ are varied to match the transform constraint on the boundary"+"\n"
                                            +r"and to obtain the prescribed linking current, \c curpol, and \f$\mu = 0\f$",
-                                           r"\todo if \c Lconstraint==2, under reconstruction"+"\n"
-                                           +"\n"
-                                           ]])
+                                            r"\todo if \c Lconstraint=2, under reconstruction"]
+                                          })
 input_physics_Lconstraint.setType("int")
 input_physics_Lconstraint.setDefaultValue(-1)
 
 
 input_physics_tflux = Variable("tflux")
 input_physics_tflux.setDescription([r"toroidal flux, \f$\psi_t\f$, enclosed by each interface",
-                                    [r"For each of the plasma volumes, this is a constraint: \c tflux is *not* varied",
-                                     r"For the vacuum region (only if \c Lfreebound==1), \c tflux  may be allowed to vary to match constraints",
-                                     r"Note that \c tflux  will be normalized so that \c tflux(Nvol) = 1.0,"+"\n"
+                                    [ r"For each of the plasma volumes, this is a constraint: \c tflux is *not* varied",
+                                      r"For the vacuum region (only if \c Lfreebound==1), \c tflux  may be allowed to vary to match constraints",
+                                      r"Note that \c tflux  will be normalized so that \c tflux(Nvol) = 1.0,"+"\n"
                                      +r"so that \c tflux  is arbitrary up to a scale factor",
-                                     r"\sa phiedge"]
+                                      r"\sa phiedge"]
                                     ])
 input_physics_tflux.setType("double")
 input_physics_tflux.setRank(1)
@@ -192,7 +197,8 @@ input_physics_pflux.setMaximumIndices([r"MNvol+1"])
 
 input_physics_helicity = Variable("helicity")
 input_physics_helicity.setDescription([r"helicity, \f${\cal K}\f$, in each volume, \f${\cal V}_i\f$",
-                                       [r"on exit, \c helicity  is set to the computed values of \f${\cal K} \equiv \int {\bf A}\cdot{\bf B}\;dv\f$"]])
+                                       [r"on exit, \c helicity  is set to the computed values of \f${\cal K} \equiv \int {\bf A}\cdot{\bf B}\;dv\f$"]
+                                       ])
 input_physics_helicity.setType("double")
 input_physics_helicity.setRank(1)
 input_physics_helicity.setDefaultValue(0.0)
@@ -209,11 +215,11 @@ input_physics_pscale.setDefaultValue(0.0) #TODO maybe this should be 1.0?
 
 input_physics_pressure = Variable("pressure")
 input_physics_pressure.setDescription([r"pressure in each volume",
-                                       [r"The pressure is *not* held constant, but \f$p_l V_l^\gamma = P_l\f$ *is* held constant,"+"\n"
+                                       [ r"The pressure is *not* held constant, but \f$p_l V_l^\gamma = P_l\f$ *is* held constant,"+"\n"
                                         +r"where \f$P_l\f$ is determined by the initial pressures and the initial volumes, \f$V_l\f$.",
-                                        r"Note that if \c gamma==0.0, then \f$p_l \equiv P_l\f$.",
-                                        r"On output, the pressure is given by \f$p_l = P_l/V_l^\gamma\f$, where \f$V_l\f$ is the final volume.",
-                                        r"\c pressure is only used in calculation of interface force-balance."]
+                                         r"Note that if \c gamma==0.0, then \f$p_l \equiv P_l\f$.",
+                                         r"On output, the pressure is given by \f$p_l = P_l/V_l^\gamma\f$, where \f$V_l\f$ is the final volume.",
+                                         r"\c pressure is only used in calculation of interface force-balance."]
                                        ])
 input_physics_pressure.setType("double")
 input_physics_pressure.setRank(1)
@@ -251,7 +257,7 @@ input_physics_mu.setMaximumIndices([r"MNvol+1"])
 
 
 input_physics_pl = Variable("pl")
-input_physics_pl.setDescription(r"\"inside\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+"\n"
+input_physics_pl.setDescription( r"\"inside\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+"\n"
                                 +r"where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2 \f$."+"\n"
                                 +r"If both \f$q_l = 0\f$ *and* \f$q_r = 0\f$, then the (inside) interface rotational-transform is defined by \c iota .")
 input_physics_pl.setType("int")
@@ -262,7 +268,7 @@ input_physics_pl.setMaximumIndices([r"MNvol"])
 
 
 input_physics_ql = Variable("ql")
-input_physics_ql.setDescription(r"\"inside\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+"\n"
+input_physics_ql.setDescription( r"\"inside\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+"\n"
                                 +r"where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2 \f$."+"\n"
                                 +r"If both \f$q_l = 0\f$ *and* \f$q_r = 0\f$, then the (inside) interface rotational-transform is defined by \c iota .")
 input_physics_ql.setType("int")
@@ -273,7 +279,7 @@ input_physics_ql.setMaximumIndices([r"MNvol"])
 
 
 input_physics_pr = Variable("pr")
-input_physics_pr.setDescription(r"\"inside\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+"\n"
+input_physics_pr.setDescription( r"\"inside\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+"\n"
                                 +r"where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2 \f$."+"\n"
                                 +r"If both \f$q_l = 0\f$ *and* \f$q_r = 0\f$, then the (inside) interface rotational-transform is defined by \c iota .")
 input_physics_pr.setType("int")
@@ -284,7 +290,7 @@ input_physics_pr.setMaximumIndices([r"MNvol"])
 
 
 input_physics_qr = Variable("qr")
-input_physics_qr.setDescription(r"\"inside\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+"\n"
+input_physics_qr.setDescription( r"\"inside\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+"\n"
                                 +r"where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2 \f$."+"\n"
                                 +r"If both \f$q_l = 0\f$ *and* \f$q_r = 0\f$, then the (inside) interface rotational-transform is defined by \c iota .")
 input_physics_qr.setType("int")
@@ -305,7 +311,7 @@ input_physics_iota.setMaximumIndices([r"MNvol"])
 
 
 input_physics_lp = Variable("lp")
-input_physics_lp.setDescription(r"\"outer\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+"\n"
+input_physics_lp.setDescription( r"\"outer\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+"\n"
                                 +r"where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2\f$."+"\n"
                                 +r"If both \f$q_l = 0\f$ *and* \f$q_r = 0\f$, then the (outer) interface rotational-transform is defined by \c oita .")
 input_physics_lp.setType("int")
@@ -316,7 +322,7 @@ input_physics_lp.setMaximumIndices([r"MNvol"])
 
 
 input_physics_lq = Variable("lq")
-input_physics_lq.setDescription(r"\"outer\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+"\n"
+input_physics_lq.setDescription( r"\"outer\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+"\n"
                                 +r"where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2\f$."+"\n"
                                 +r"If both \f$q_l = 0\f$ *and* \f$q_r = 0\f$, then the (outer) interface rotational-transform is defined by \c oita .")
 input_physics_lq.setType("int")
@@ -327,7 +333,7 @@ input_physics_lq.setMaximumIndices([r"MNvol"])
 
 
 input_physics_rp = Variable("rp")
-input_physics_rp.setDescription(r"\"outer\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+"\n"
+input_physics_rp.setDescription( r"\"outer\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+"\n"
                                 +r"where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2\f$."+"\n"
                                 +r"If both \f$q_l = 0\f$ *and* \f$q_r = 0\f$, then the (outer) interface rotational-transform is defined by \c oita .")
 input_physics_rp.setType("int")
@@ -338,7 +344,7 @@ input_physics_rp.setMaximumIndices([r"MNvol"])
 
 
 input_physics_rq = Variable("rq")
-input_physics_rq.setDescription(r"\"outer\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+"\n"
+input_physics_rq.setDescription( r"\"outer\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+"\n"
                                 +r"where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2\f$."+"\n"
                                 +r"If both \f$q_l = 0\f$ *and* \f$q_r = 0\f$, then the (outer) interface rotational-transform is defined by \c oita .")
 input_physics_rq.setType("int")
@@ -601,24 +607,24 @@ vars_physicslist = [
 ###############################################################################
 
 input_numeric_Linitialize = Variable("Linitialize")
-input_numeric_Linitialize.setDescription([r"Used to initialize geometry using a regularization / extrapolation method",
+input_numeric_Linitialize.setDescription({r"Used to initialize geometry using a regularization / extrapolation method":
                                            [ r"if \c Linitialize = \f$-I\f$ , where \f$I\f$ is a positive integer,"+"\n"
                                             +r"the geometry of the \f$i=1,N_V-I\f$ surfaces constructed by an extrapolation",
-                                             r"if \c Linitialize = 0, the geometry of the interior surfaces is provided after the namelists in the input file",
-                                             r"if \c Linitialize = 1, the interior surfaces will be intialized as \f$R_{l,m,n} = R_{N,m,n} \psi_{t,l}^{m/2}\f$,"+"\n"
+                                             r"if \c Linitialize=0, the geometry of the interior surfaces is provided after the namelists in the input file",
+                                             r"if \c Linitialize=1, the interior surfaces will be intialized as \f$R_{l,m,n} = R_{N,m,n} \psi_{t,l}^{m/2}\f$,"+"\n"
                                             +r"where \f$R_{N,m,n}\f$ is the plasma boundary and \f$\psi_{t,l}\f$ is the given toroidal flux enclosed by the"+"\n"
                                             +r"\f$l\f$-th interface, normalized to the total enclosed toroidal flux;"+"\n"
                                             +r"a similar extrapolation is used for \f$Z_{l,m,n}\f$",
                                              r"Note that the Fourier harmonics of the boundary is *always* given by the \c Rbc and \c Zbs"+"\n"
                                             +r"given in \c physicslist.",
-                                             r"if \c Linitialize = 2, the interior surfaces *and the plasma boundary* will be intialized"+"\n"
+                                             r"if \c Linitialize=2, the interior surfaces *and the plasma boundary* will be intialized"+"\n"
                                             +r"as \f$R_{l,m,n} = R_{W,m,n} \psi_{t,l}^{m/2}\f$, where \f$R_{W,m,n}\f$ is the computational boundary"+"\n"
                                             +r"and \f$\psi_{t,l}\f$ is the given toroidal flux enclosed by the \f$l\f$-th interface, normalized to the total enclosed toroidal flux;"+"\n"
                                             +r"a similar extrapolation is used for \f$Z_{l,m,n}\f$",
                                              r"Note that, for free-boundary calculations, the Fourier harmonics of the computational boundary"+"\n"
                                             +r"are *always* given by the \c Rwc and \c Zws given in \c physicslist.",
-                                             r"if \c Linitialize = 1, 2, it is not required to provide the geometry of the interfaces after the namelists"]
-                                           ])
+                                             r"if \c Linitialize=1,2 , it is not required to provide the geometry of the interfaces after the namelists"]
+                                          })
 input_numeric_Linitialize.setType("int")
 input_numeric_Linitialize.setDefaultValue(0)
 
@@ -673,22 +679,22 @@ input_numeric_iNtor.setDescription([r"Fourier resolution of straight-fieldline a
                                     [ r"the rotational-transform on the interfaces is determined by a transformation to the straight-fieldline angle,"+"\n"
                                      +r"with toroidal resolution given by \c iNtor",
                                       r"if \c iNtor<=0 then \c iNtor = Ntor - iNtor",
-                                      r"if \c Ntor==0, then the toroidal resolution of the angle transformation is set \c lNtor=0"]
+                                      r"if \c Ntor=0, then the toroidal resolution of the angle transformation is set \c lNtor=0"]
                                     ])
 input_numeric_iNtor.setType("int")
 input_numeric_iNtor.setDefaultValue(-4)
 
 
 input_numeric_Lsparse = Variable("Lsparse")
-input_numeric_Lsparse.setDescription([r"controls method used to solve for rotational-transform on interfaces",
-                                      [ r"if \c Lsparse = 0, the transformation to the straight-fieldline angle is computed in Fourier space"+"\n"
+input_numeric_Lsparse.setDescription({r"controls method used to solve for rotational-transform on interfaces":
+                                      [ r"if \c Lsparse=0, the transformation to the straight-fieldline angle is computed in Fourier space"+"\n"
                                        +r"using a dense matrix solver, \c F04AAF",
-                                        r"if \c Lsparse = 1, the transformation to the straight-fieldline angle is computed in real space"+"\n"
+                                        r"if \c Lsparse=1, the transformation to the straight-fieldline angle is computed in real space"+"\n"
                                        +r"using a dense matrix solver, \c F04ATF",
-                                        r"if \c Lsparse = 2, the transformation to the straight-fieldline angle is computed in real space"+"\n"
+                                        r"if \c Lsparse=2, the transformation to the straight-fieldline angle is computed in real space"+"\n"
                                        +r"using a sparse matrix solver, \c F11DEF",
-                                        r"if \c Lsparse = 3, the different methods for constructing the straight-fieldline angle are compared"]
-                                      ])
+                                        r"if \c Lsparse=3, the different methods for constructing the straight-fieldline angle are compared"]
+                                      })
 input_numeric_Lsparse.setType("int")
 input_numeric_Lsparse.setDefaultValue(0)
 
@@ -697,7 +703,7 @@ input_numeric_Lsvdiota = Variable("Lsvdiota")
 input_numeric_Lsvdiota.setDescription([r"controls method used to solve for rotational-transform on interfaces",
                                        r"only relevant if \c Lsparse=0",
                                        [r"if \c Lsvdiota=0, use standard linear solver to construct straight fieldline angle transformation",
-                                        r"if \c Lsvdiota = 1, use SVD method to compute rotational-transform"]
+                                        r"if \c Lsvdiota=1, use SVD method to compute rotational-transform"]
                                        ])
 input_numeric_Lsvdiota.setType("int")
 input_numeric_Lsvdiota.setDefaultValue(0)
@@ -783,7 +789,7 @@ vars_numericlist = [
 ###############################################################################
 
 input_local_LBeltrami = Variable("LBeltrami")
-input_local_LBeltrami.setDescription([r"Control flag for solution of Beltrami equation",
+input_local_LBeltrami.setDescription({r"Control flag for solution of Beltrami equation":
                                       [ r"if \c LBeltrami = 1,3,5 or 7, (SQP) then the Beltrami field in each volume is constructed"+"\n"
                                        +r"by minimizing the magnetic energy with the constraint of fixed helicity;"+"\n"
                                        +r"this is achieved by using sequential quadratic programming as provided by \c E04UFF ."+"\n"
@@ -800,16 +806,16 @@ input_local_LBeltrami.setDescription([r"Control flag for solution of Beltrami eq
                                        +r"in this case, it is only required to solve \f$\nabla \times {\bf B} = \mu {\bf B}\f$ which reduces to a system of linear equations;"+"\n"
                                        +r"\f$\mu\f$ may or may not be adjusted iteratively, depending on \c Lconstraint,"+"\n"
                                        +r"to satisfy either rotational-transform or helicity constraints",
-                                        r"for flexibility and comparison, each of the above methods can be employed; for example:",
+                                       {r"for flexibility and comparison, each of the above methods can be employed; for example:":
                                         [r"if \c LBeltrami = 1, only the SQP    method will be employed",
                                          r"if \c LBeltrami = 2, only the Newton method will be employed",
                                          r"if \c LBeltrami = 4, only the linear method will be employed",
                                          r"if \c LBeltrami = 3, the SQP and the Newton method are used",
                                          r"if \c LBeltrami = 5, the SQP and the linear method are used",
                                          r"if \c LBeltrami = 6, the Newton and the linear method are used",
-                                         r"if \c LBeltrami = 7, all three methods will be employed"
-                                        ]]
-                                      ])
+                                         r"if \c LBeltrami = 7, all three methods will be employed"]
+                                        }]
+                                      })
 input_local_LBeltrami.setType("int")
 input_local_LBeltrami.setDefaultValue(4)
 
@@ -1183,6 +1189,15 @@ vars_diagnosticslist = [
 ###############################################################################
 # screenlist --> not in output file
 ###############################################################################
+##%%
+#desc=input_local_LBeltrami.description
+#
+#
+#
+#print(commentOut(toDoc(desc)))
+
+
+
 
 
 
@@ -1190,20 +1205,27 @@ vars_diagnosticslist = [
 
 from genFortran import declareVariable
 
-for var in vars_physicslist:
-    print(declareVariable(var))
-
-for var in vars_numericlist:
-    print(declareVariable(var))
-
-#for var in vars_locallist:
-#    print(declareVariable(var))
-
-for var in vars_globallist:
-    print(declareVariable(var))
-
-#for var in vars_diagnosticslist:
-#    print(declareVariable(var))
+with open("/home/jonathan/test.f90", "w") as f:
+    
+    for var in vars_physicslist:
+        #print(declareVariable(var))
+        f.write(declareVariable(var)+"\n")
+    
+    for var in vars_numericlist:
+        #print(declareVariable(var))
+        f.write(declareVariable(var)+"\n")
+    
+    for var in vars_locallist:
+        #print(declareVariable(var))
+        f.write(declareVariable(var)+"\n")
+    
+    for var in vars_globallist:
+        #print(declareVariable(var))
+        f.write(declareVariable(var)+"\n")
+    
+    for var in vars_diagnosticslist:
+        #print(declareVariable(var))
+        f.write(declareVariable(var)+"\n")
 
 
 

@@ -33,3 +33,4 @@ InputFiles/**/*.sp.DF
 
 # python temp file
 *.pyc
+/.metadata/
