@@ -25,7 +25,7 @@ More on this: https://docs.python.org/3/whatsnew/3.7.html
 """
 
 #%% framework for source code generation
-from adf import Variable
+from adf import Variable, Namelist
 
 #%% define the input quantities for SPEC
 
@@ -609,6 +609,10 @@ vars_physicslist = [
         input_physics_Bnc
         ]
 
+physicslist = Namelist("physicslist")
+physicslist.setDescription(r"The namelist \c physicslist controls the geometry, profiles, and numerical resolution.")
+physicslist.addVariables(vars_physicslist)
+
 ###############################################################################
 # numericlist 
 ###############################################################################
@@ -791,6 +795,10 @@ vars_numericlist = [
         input_numeric_Mregular
         ]
 
+numericlist = Namelist("numericlist")
+numericlist.setDescription(r"The namelist \c numericlist controls internal resolution parameters that the user rarely needs to consider.")
+numericlist.addVariables(vars_numericlist)
+
 ###############################################################################
 # locallist 
 ###############################################################################
@@ -856,6 +864,12 @@ vars_locallist = [
         input_local_maxrndgues
         ]
 
+locallist = Namelist("locallist")
+locallist.setDescription({r"The namelist \c locallist controls the construction of the Beltrami fields in each volume.":
+                          [ r"The transformation to straight-fieldline coordinates is singular when the rotational-transform of the interfaces is rational;"+"\n"
+                           +r"however, the rotational-transform is still well defined."]
+                          })
+locallist.addVariables(vars_locallist)
 
 ###############################################################################
 # globallist 
@@ -1047,6 +1061,20 @@ vars_globallist = [
         input_global_mcasingcal
         ]
 
+globallist = Namelist("globallist")
+globallist.setDescription({r"The namelist \c globallist controls the search for global force-balance.": None,
+                           r"Comments:":
+                           [ r'The "force" vector, \f${\bf F}\f$, which is constructed in dforce(), is a combination of pressure-imbalance Fourier harmonics,'+"\n"
+                            +r"\f{eqnarray}{ F_{i,v} \equiv [[ p+B^2/2 ]]_{i,v} \times \exp\left[-\texttt{escale}(m_i^2+n_i^2) \right] \times \texttt{opsilon},"+"\n"
+                            +r"\label{eq:forcebalancemn_global} \f}"+"\n"
+                            +r'and spectral-condensation constraints, \f$I_{i,v}\f$, and the "star-like" angle constraints, \f$S_{i,v,}\f$, (see lforce() for details)'+"\n"
+                            +r"\f{eqnarray}{ F_{i,v} \equiv \texttt{epsilon} \times I_{i,v}"+"\n"
+                            +r"                           + \texttt{upsilon} \times \left( \psi_v^\omega S_{i,v,1} - \psi_{v+1}^\omega S_{i,v+1,0} \right),"+"\n"
+                            +r"\label{eq:spectralbalancemn_global} \f}"+"\n"
+                            +r"where \f$\psi_v\equiv\f$ normalized toroidal flux, \c tflux, and \f$\omega\equiv\f$ \c wpoloidal."]
+                           })
+globallist.addVariables(vars_globallist)
+
 ###############################################################################
 # diagnosticslist 
 ###############################################################################
@@ -1193,6 +1221,9 @@ vars_diagnosticslist = [
         input_diagnostics_scaling
         ]
 
+diagnosticslist = Namelist("diagnosticslist")
+diagnosticslist.setDescription(r"The namelist \c diagnosticslist controls post-processor diagnostics, such as Poincaré  plot resolution, etc.")
+diagnosticslist.addVariables(vars_diagnosticslist)
 
 ###############################################################################
 # screenlist --> not in output file
@@ -1205,7 +1236,8 @@ vars_diagnosticslist = [
 
 ###############################################################################
 
-from genFortran import declareVariable
+from adf import toDoc
+from genFortran import declareVariable, commentOut
 
 # dry-run declaration to determine maximum declaration length for doc indentation
 maxLength = 0
@@ -1229,34 +1261,63 @@ print("maximum decl. length: "+str(maxLength))
 
 with open("spec_inputs.f90", "w") as f:
     
+    # parameters
     for param in params_maxDims:
         f.write(declareVariable(param, refDeclLength=maxLength)+"\n")
     
     f.write("\n")
     
-    for var in vars_physicslist:
+    # input variables, i.e. namelist contents
+    for var in physicslist.variables:
         f.write(declareVariable(var, refDeclLength=maxLength)+"\n")
-        
     f.write("\n")
-        
-    for var in vars_numericlist:
+    for var in numericlist.variables:
         f.write(declareVariable(var, refDeclLength=maxLength)+"\n")
-    
     f.write("\n")
-    
-    for var in vars_locallist:
+    for var in locallist.variables:
         f.write(declareVariable(var, refDeclLength=maxLength)+"\n")
-    
     f.write("\n")
-    
-    for var in vars_globallist:
+    for var in globallist.variables:
         f.write(declareVariable(var, refDeclLength=maxLength)+"\n")
-    
     f.write("\n")
-    
-    for var in vars_diagnosticslist:
+    for var in diagnosticslist.variables:
         f.write(declareVariable(var, refDeclLength=maxLength)+"\n")
 
+    f.write("\n")
+
+    # namelist declarations
+    f.write(commentOut(toDoc(physicslist.description)))
+    f.write("namelist /"+physicslist.name+"/ &\n")
+    for var in physicslist.variables[:-1]:
+        f.write(" "+var.name+" ,&\n")
+    f.write(" "+physicslist.variables[-1].name+"\n")
+    f.write("\n")
+    f.write(commentOut(toDoc(numericlist.description)))
+    f.write("namelist /"+numericlist.name+"/ &\n")
+    for var in numericlist.variables[:-1]:
+        f.write(" "+var.name+" ,&\n")
+    f.write(" "+numericlist.variables[-1].name+"\n")
+    f.write("\n")
+    f.write(commentOut(toDoc(locallist.description)))
+    f.write("namelist /"+locallist.name+"/ &\n")
+    for var in locallist.variables[:-1]:
+        f.write(" "+var.name+" ,&\n")
+    f.write(" "+locallist.variables[-1].name+"\n")
+    f.write("\n")
+    f.write(commentOut(toDoc(globallist.description)))
+    f.write("namelist /"+globallist.name+"/ &\n")
+    for var in globallist.variables[:-1]:
+        f.write(" "+var.name+" ,&\n")
+    f.write(" "+globallist.variables[-1].name+"\n")
+    f.write("\n")
+    f.write(commentOut(toDoc(diagnosticslist.description)))
+    f.write("namelist /"+diagnosticslist.name+"/ &\n")
+    for var in diagnosticslist.variables[:-1]:
+        f.write(" "+var.name+" ,&\n")
+    f.write(" "+diagnosticslist.variables[-1].name+"\n")
+    
+    
+    f.write("\n")
 #%%
 
 

@@ -7,13 +7,15 @@ Algorithm Definition Framework
 """
 
 # Class declarations
+
+# data container class for all information specifying a variable
 class Variable:
     
     name = None
+    description = None
     dtype = None
     defaultValue = None
     rank = 0 # scalar by default
-    description = None
     isParameter = False
     unit = None
     startingIndices = None
@@ -37,25 +39,50 @@ class Variable:
     def setUnit(self, unit):
         self.unit = unit
     
-    def setMaximumIndices(self, maximumIndices):
-        self.maximumIndices = maximumIndices
-        
     def setStartingIndices(self, startingIndices):
         self.startingIndices = startingIndices
     
+    def setMaximumIndices(self, maximumIndices):
+        self.maximumIndices = maximumIndices
+    
     def setIsParameter(self, isParameter):
         self.isParameter = isParameter
-    
-    def printDescription_HTML_lists(self):
-        for d in self.description:
-            if type(d) is list:
-                print("<ul>")
-                for dl in d:
-                    print("<li> "+dl+" </li>")
-                print("</ul>")
-            else:
-                print(d)
 
+# data container class for all information specifying a namelist
+class Namelist(object):
+    
+    name = None
+    description = None
+    variables = None
+    
+    def __init__(self, name):
+        self.name = name
+        self.variables = []
+    
+    def setDescription(self, description):
+        self.description = description
+    
+    def addVariable(self, var):
+        if type(var) is not Variable:
+            raise TypeError("type of var is not Variable but '"+str(type(var))+"'")
+        self.variables.append(var)
+
+    def addVariables(self, listOfVars):
+        if type(listOfVars) is not list:
+            raise TypeError("type of listOfVars is not list but '"+str(type(listOfVars))+"'")
+        for var in listOfVars:
+            self.addVariable(var)
+
+
+
+
+
+
+
+# source code generation utility methods
+
+# indent a string (which might consist of multiple lines) by a given number of tabs or
+# some other given character
 def indented(tabs, strInput, indentationChar="\t"):
     indentation = ''
     for i in range(tabs):
@@ -74,12 +101,13 @@ def indented(tabs, strInput, indentationChar="\t"):
 
 # convert the description item from a Variable into the corresponding documentation
 def toDoc(desc):
-    if   type(desc) is dict:
+    if   type(desc) is str:
+        return desc
+    elif type(desc) is dict:
         return desc_dictToDoc(desc)
     elif type(desc) is list:
         return desc_listToDoc(desc)
-    elif type(desc) is str:
-        return desc
+    
     elif desc is not None:
         raise TypeError("what is this that you want to document of type "+str(type(desc))+"?")
     else:
