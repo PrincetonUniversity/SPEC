@@ -16,8 +16,8 @@ class Variable:
     description = None
     isParameter = False
     unit = None
-    maximumIndices = None
     startingIndices = None
+    maximumIndices = None
     
     def __init__(self, name):
         self.name = name

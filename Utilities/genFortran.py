@@ -71,6 +71,34 @@ def declareVariable(var, attachDescription=True, refDeclLength=None):
         decl  = fortran_dtype(var.dtype)
         decl += " :: "
         decl += var.name
+        
+        if var.rank>0:
+            if var.maximumIndices is None:
+                raise ValueError("maximumIndices of Variable '"+var.name+
+                                 "' not set")
+            
+            # add array dimensions if rank>0
+            decl += "("
+            
+            # default start index is 1 in Fortran
+            startIdx = ["1"]*var.rank
+            if var.startingIndices is not None:
+                if len(var.startingIndices) != var.rank:
+                    raise ValueError("number of starting indices should match rank of Variable '"+var.name+"'")
+                for i in range(var.rank):
+                    if var.startingIndices[i] is not None:
+                        startIdx[i] = var.startingIndices[i]
+            if var.maximumIndices is None:
+                raise ValueError("maximumIndices not set for rank-"+str(var.rank)+" Variable '"+var.name+"'")
+            else:
+                if len(var.maximumIndices) != var.rank:
+                    raise ValueError("number of maximum indices should match rank of Variable '"+var.name+"'")
+            
+            decl += startIdx[0]+":"+var.maximumIndices[0]
+            for i in range(1,var.rank):
+                decl += ", "+startIdx[i]+":"+var.maximumIndices[i]
+            decl += ")"
+        
         decl += " = "
         decl += fortran_val(var.defaultValue)
         if refDeclLength is None:
