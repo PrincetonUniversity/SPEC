@@ -132,22 +132,22 @@ input_physics_Mpol.setDefaultValue(0)
 
 
 input_physics_Ntor = Variable("Ntor")
-input_physics_Ntor.setDescription([r"number of toroidal Fourier harmonics",
+input_physics_Ntor.setDescription({r"number of toroidal Fourier harmonics":
                                    [ r"all Fourier representations of doubly-periodic functions are of the form"+"\n"
                                     +r"\f{eqnarray}{ f(\theta,\zeta) & = & \sum_{n=0}^{\texttt{Ntor}} f_{0,n}\cos(-n \, \texttt{Nfp} \, \zeta)"+"\n"
                                     +r"\sum_{m=1}^{\texttt{Mpol}}\sum_{n=\texttt{-Ntor}}^{\texttt{Ntor}} f_{m,n}\cos(m\theta-n \, \texttt{Nfp} \, \zeta),"+"\n"
                                     +r"\f}"+"\n"
                                     +r"Internally these \"double\" summations are written as a \"single\" summation,"+"\n"
                                     +r"e.g. \f$f(\theta,\zeta) = \sum_j f_j \cos(m_j\theta-n_j\zeta)\f$."]
-                                   ])
+                                   })
 input_physics_Ntor.setType("int")
 input_physics_Ntor.setDefaultValue(0)
 
 
 input_physics_Lrad = Variable("Lrad")
-input_physics_Lrad.setDescription([r"Chebyshev resolution in each volume",
+input_physics_Lrad.setDescription({r"Chebyshev resolution in each volume":
                                    [r"constraint : \c Lrad(1:Mvol) >= 2"]
-                                   ])
+                                   })
 input_physics_Lrad.setType("int")
 input_physics_Lrad.setRank(1)
 input_physics_Lrad.setDefaultValue(4)
@@ -174,13 +174,13 @@ input_physics_Lconstraint.setDefaultValue(-1)
 
 
 input_physics_tflux = Variable("tflux")
-input_physics_tflux.setDescription([r"toroidal flux, \f$\psi_t\f$, enclosed by each interface",
+input_physics_tflux.setDescription({r"toroidal flux, \f$\psi_t\f$, enclosed by each interface":
                                     [ r"For each of the plasma volumes, this is a constraint: \c tflux is *not* varied",
                                       r"For the vacuum region (only if \c Lfreebound==1), \c tflux  may be allowed to vary to match constraints",
                                       r"Note that \c tflux  will be normalized so that \c tflux(Nvol) = 1.0,"+"\n"
                                      +r"so that \c tflux  is arbitrary up to a scale factor",
                                       r"\sa phiedge"]
-                                    ])
+                                    })
 input_physics_tflux.setType("double")
 input_physics_tflux.setRank(1)
 input_physics_tflux.setDefaultValue(0.0)
@@ -196,9 +196,9 @@ input_physics_pflux.setMaximumIndices([r"MNvol+1"])
 
 
 input_physics_helicity = Variable("helicity")
-input_physics_helicity.setDescription([r"helicity, \f${\cal K}\f$, in each volume, \f${\cal V}_i\f$",
+input_physics_helicity.setDescription({r"helicity, \f${\cal K}\f$, in each volume, \f${\cal V}_i\f$":
                                        [r"on exit, \c helicity  is set to the computed values of \f${\cal K} \equiv \int {\bf A}\cdot{\bf B}\;dv\f$"]
-                                       ])
+                                       })
 input_physics_helicity.setType("double")
 input_physics_helicity.setRank(1)
 input_physics_helicity.setDefaultValue(0.0)
@@ -206,21 +206,21 @@ input_physics_helicity.setMaximumIndices([r"MNvol+1"])
 
 
 input_physics_pscale = Variable("pscale")
-input_physics_pscale.setDescription([r"pressure scale factor",
+input_physics_pscale.setDescription({r"pressure scale factor":
                                      [r"the initial pressure profile is given by \c pscale  \f$*\f$ \c pressure"]
-                                    ])
+                                    })
 input_physics_pscale.setType("double")
 input_physics_pscale.setDefaultValue(0.0) #TODO maybe this should be 1.0?
 
 
 input_physics_pressure = Variable("pressure")
-input_physics_pressure.setDescription([r"pressure in each volume",
+input_physics_pressure.setDescription({r"pressure in each volume":
                                        [ r"The pressure is *not* held constant, but \f$p_l V_l^\gamma = P_l\f$ *is* held constant,"+"\n"
                                         +r"where \f$P_l\f$ is determined by the initial pressures and the initial volumes, \f$V_l\f$.",
                                          r"Note that if \c gamma==0.0, then \f$p_l \equiv P_l\f$.",
                                          r"On output, the pressure is given by \f$p_l = P_l/V_l^\gamma\f$, where \f$V_l\f$ is the final volume.",
                                          r"\c pressure is only used in calculation of interface force-balance."]
-                                       ])
+                                       })
 input_physics_pressure.setType("double")
 input_physics_pressure.setRank(1)
 input_physics_pressure.setDefaultValue(0.0)
@@ -228,20 +228,20 @@ input_physics_pressure.setMaximumIndices([r"MNvol+1"])
 
 
 input_physics_Ladiabatic = Variable("Ladiabatic")
-input_physics_Ladiabatic.setDescription([r"logical flag",
+input_physics_Ladiabatic.setDescription({r"logical flag":
                                          [r"If \c Ladiabatic==0, the adiabatic constants are determined by the initial pressure and volume.",
                                           r"If \c Ladiabatic==1, the adiabatic constants are determined by the given input \c adiabatic."]
-                                         ])
+                                         })
 input_physics_Ladiabatic.setType("int")
 input_physics_Ladiabatic.setDefaultValue(0)
 
 
 input_physics_adiabatic = Variable("adiabatic")
-input_physics_adiabatic.setDescription([r"adiabatic constants in each volume",
+input_physics_adiabatic.setDescription({r"adiabatic constants in each volume":
                                         [r"The pressure is *not* held constant, but \f$p_l V_l^\gamma = P_l \equiv\f$\c adiabatic is constant.",
                                          r"Note that if \c gamma==0.0, then \c pressure==adiabatic.",
                                          r"\c pressure is only used in calculation of interface force-balance."]
-                                        ])
+                                        })
 input_physics_adiabatic.setType("double")
 input_physics_adiabatic.setRank(1)
 input_physics_adiabatic.setDefaultValue(0.0)
@@ -300,9 +300,9 @@ input_physics_qr.setStartingIndices([r"0"])
 input_physics_qr.setMaximumIndices([r"MNvol"])
 
 input_physics_iota = Variable("iota")
-input_physics_iota.setDescription([r"rotational-transform, \f$\mbox{$\,\iota\!\!$-}\f$, on inner side of each interface",
+input_physics_iota.setDescription({r"rotational-transform, \f$\mbox{$\,\iota\!\!$-}\f$, on inner side of each interface":
                                    [r"only relevant if illogical input for \c ql and \c qr are provided"]
-                                   ])
+                                   })
 input_physics_iota.setType("double")
 input_physics_iota.setRank(1)
 input_physics_iota.setDefaultValue(0.0)
@@ -355,9 +355,9 @@ input_physics_rq.setMaximumIndices([r"MNvol"])
 
 
 input_physics_oita = Variable("oita")
-input_physics_oita.setDescription([r"rotational-transform, \f$\mbox{$\,\iota\!\!$-}\f$, on outer side of each interface",
+input_physics_oita.setDescription({r"rotational-transform, \f$\mbox{$\,\iota\!\!$-}\f$, on outer side of each interface":
                                    [r"only relevant if illogical input for \c ql and \c qr are provided"]
-                                   ])
+                                   })
 input_physics_oita.setType("double")
 input_physics_oita.setRank(1)
 input_physics_oita.setDefaultValue(0.0)
@@ -366,37 +366,37 @@ input_physics_oita.setMaximumIndices([r"MNvol"])
 
 
 input_physics_mupftol = Variable("mupftol")
-input_physics_mupftol.setDescription([r"accuracy to which \f$\mu\f$ and \f$\Delta\psi_p\f$ are required",
+input_physics_mupftol.setDescription({r"accuracy to which \f$\mu\f$ and \f$\Delta\psi_p\f$ are required":
                                       [r"only relevant if constraints on transform, enclosed currents etc. are to be satisfied iteratively, see \c Lconstraint"]
-                                      ])
+                                      })
 input_physics_mupftol.setType("double")
 input_physics_mupftol.setDefaultValue(1.0e-16)
 
 
 input_physics_mupfits = Variable("mupfits")
-input_physics_mupfits.setDescription([r"an upper limit on the transform/helicity constraint iterations",
+input_physics_mupfits.setDescription({r"an upper limit on the transform/helicity constraint iterations":
                                       [r"only relevant if constraints on transform, enclosed currents etc. are to be satisfied iteratively, see \c Lconstraint",
                                        r"constraint: \c mupfits > 0"]
-                                      ])
+                                      })
 input_physics_mupfits.setType("int")
 input_physics_mupfits.setDefaultValue(8)
 
 
 input_physics_rpol = Variable("rpol")
-input_physics_rpol.setDescription([r"poloidal extent of slab (effective radius)",
+input_physics_rpol.setDescription({r"poloidal extent of slab (effective radius)":
                                    [r"only relevant if \c Igeometry==1",
                                     r"poloidal size is \f$L = 2\pi*\f$\c rpol"]
-                                   ])
+                                   })
 input_physics_rpol.setType("double")
 input_physics_rpol.setDefaultValue(1.0)
 input_physics_rpol.setUnit("m")
 
 
 input_physics_rtor = Variable("rtor")
-input_physics_rtor.setDescription([r"toroidal extent of slab (effective radius)",
+input_physics_rtor.setDescription({r"toroidal extent of slab (effective radius)":
                                    [r"only relevant if \c Igeometry==1",
                                     r"toroidal size is \f$L = 2\pi*\f$\c rtor"]
-                                   ])
+                                   })
 input_physics_rtor.setType("double")
 input_physics_rtor.setDefaultValue(1.0)
 input_physics_rtor.setUnit("m")
