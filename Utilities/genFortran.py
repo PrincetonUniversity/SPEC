@@ -66,26 +66,34 @@ def commentOut(multilineString):
 from adf import Variable, toDoc
 
 # declare a variable including dimensions(TODO) and doxygen-compatible comments
-def declareVariable(var, indentLength=None):
+def declareVariable(var, attachDescription=True, refDeclLength=None):
     if type(var) is Variable:
         decl  = fortran_dtype(var.dtype)
         decl += " :: "
         decl += var.name
         decl += " = "
         decl += fortran_val(var.defaultValue)
-        if indentLength is None:
-            indentLength = len(decl)+1
-        decl += " "
-        decl_doc = commentOut(toDoc(var.description))
-        if "\n" in decl_doc:
-            docparts = decl_doc.split("\n")
-            decl += docparts[0]+"\n"
-            decl += indented(indentLength, "\n".join(docparts[1:]), " ")
-        else:
-            decl += decl_doc
+        if refDeclLength is None:
+            # take length of this declaration as reference if no external one proviede
+            refDeclLength = len(decl)
+        if attachDescription:
+            decl += " "
+            decl_doc = commentOut(toDoc(var.description))
+            if "\n" in decl_doc:
+                # indent all but first line by length of declaration,
+                # so that the following documentation lines are aligned
+                # first line has to be indented the difference between decl length
+                # and desired indentLength
+                docparts = decl_doc.split("\n")
+                if len(decl) <= refDeclLength:
+                    decl += " "*(refDeclLength-len(decl)+1)
+                decl += docparts[0]+"\n"
+                decl += indented(refDeclLength+1, "\n".join(docparts[1:]), " ")
+            else:
+                decl += decl_doc
         return decl.strip()
     else:
-        raise ValueError("var "+var.name+" is not a adf.Variable")
+        raise TypeError("var "+var.name+" is not a adf.Variable")
 
 
 

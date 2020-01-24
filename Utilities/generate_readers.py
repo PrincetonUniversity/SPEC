@@ -1200,22 +1200,42 @@ vars_diagnosticslist = [
 
 from genFortran import declareVariable
 
+# dry-run declaration to determine maximum declaration length for doc indentation
+maxLength = 0
+for var in vars_physicslist:
+    declLen = len(declareVariable(var, attachDescription=False))
+    if declLen>maxLength: maxLength = declLen
+for var in vars_numericlist:
+    declLen = len(declareVariable(var, attachDescription=False))
+    if declLen>maxLength: maxLength = declLen
+for var in vars_locallist:
+    declLen = len(declareVariable(var, attachDescription=False))
+    if declLen>maxLength: maxLength = declLen
+for var in vars_globallist:
+    declLen = len(declareVariable(var, attachDescription=False))
+    if declLen>maxLength: maxLength = declLen
+for var in vars_diagnosticslist:
+    declLen = len(declareVariable(var, attachDescription=False))
+    if declLen>maxLength: maxLength = declLen
+
+print("maximum decl. length: "+str(maxLength))
+
 with open("/home/jonathan/test.f90", "w") as f:
     
     for var in vars_physicslist:
-        f.write(declareVariable(var)+"\n")
-    
+        f.write(declareVariable(var, refDeclLength=maxLength)+"\n")
+        
     for var in vars_numericlist:
-        f.write(declareVariable(var)+"\n")
+        f.write(declareVariable(var, refDeclLength=maxLength)+"\n")
     
     for var in vars_locallist:
-        f.write(declareVariable(var)+"\n")
+        f.write(declareVariable(var, refDeclLength=maxLength)+"\n")
     
     for var in vars_globallist:
-        f.write(declareVariable(var)+"\n")
+        f.write(declareVariable(var, refDeclLength=maxLength)+"\n")
     
     for var in vars_diagnosticslist:
-        f.write(declareVariable(var)+"\n")
+        f.write(declareVariable(var, refDeclLength=maxLength)+"\n")
 
 
 
