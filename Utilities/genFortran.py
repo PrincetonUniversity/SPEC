@@ -69,6 +69,10 @@ from adf import Variable, toDoc
 def declareVariable(var, attachDescription=True, refDeclLength=None):
     if type(var) is Variable:
         decl  = fortran_dtype(var.dtype)
+        
+        if var.isParameter:
+            decl += ", parameter"
+        
         decl += " :: "
         decl += var.name
         
