@@ -630,57 +630,57 @@ input_numeric_Linitialize.setDefaultValue(0)
 
 
 input_numeric_LautoinitBn = Variable("LautoinitBn")
-input_numeric_LautoinitBn.setDescription([r"Used to initialize \f$B_{ns}\f$ using an initial fixed-boundary calculation",
+input_numeric_LautoinitBn.setDescription({r"Used to initialize \f$B_{ns}\f$ using an initial fixed-boundary calculation":
                                           [r"only relevant if \c Lfreebound=1",
                                            r"user-supplied \c Bns will only be considered if \c LautoinitBn=0"]
-                                          ])
+                                          })
 input_numeric_LautoinitBn.setType("int")
 input_numeric_LautoinitBn.setDefaultValue(1)
 
 
 input_numeric_Lzerovac = Variable("Lzerovac")
-input_numeric_Lzerovac.setDescription([r"Used to adjust vacuum field to cancel plasma field on computational boundary",
+input_numeric_Lzerovac.setDescription({r"Used to adjust vacuum field to cancel plasma field on computational boundary":
                                        [r"only relevant if \c Lfreebound=1"]
-                                       ])
+                                       })
 input_numeric_Lzerovac.setType("int")
 input_numeric_Lzerovac.setDefaultValue(0)
 
 
 input_numeric_Ndiscrete = Variable("Ndiscrete")
-input_numeric_Ndiscrete.setDescription([r"resolution of the real space grid on which fast Fourier transforms are performed is given by \c Ndiscrete*Mpol*4",
+input_numeric_Ndiscrete.setDescription({r"resolution of the real space grid on which fast Fourier transforms are performed is given by \c Ndiscrete*Mpol*4":
                                         [r"constraint \c Ndiscrete>0"]
-                                        ])
+                                        })
 input_numeric_Ndiscrete.setType("int")
 input_numeric_Ndiscrete.setDefaultValue(2)
 
 
 input_numeric_Nquad = Variable("Nquad")
-input_numeric_Nquad.setDescription([r"Resolution of the Gaussian quadrature",
+input_numeric_Nquad.setDescription({r"Resolution of the Gaussian quadrature":
                                     [ r"The resolution of the Gaussian quadrature, \f$\displaystyle \int \!\! f(s) ds = \sum_k \omega_k f(s_k)\f$,"+"\n"
                                      +r"in each volume is given by \c Iquad\f$_v\f$",
                                       r"\c Iquad\f$_v\f$ is set in preset()"]
-                                    ])
+                                    })
 input_numeric_Nquad.setType("int")
 input_numeric_Nquad.setDefaultValue(-1)
 
 
 input_numeric_iMpol = Variable("iMpol")
-input_numeric_iMpol.setDescription([r"Fourier resolution of straight-fieldline angle on interfaces",
+input_numeric_iMpol.setDescription({r"Fourier resolution of straight-fieldline angle on interfaces":
                                     [ r"the rotational-transform on the interfaces is determined by a transformation to the straight-fieldline angle,"+"\n"
                                      +r"with poloidal resolution given by \c iMpol",
                                       r"if \c iMpol<=0, then \c iMpol = Mpol - iMpol"]
-                                    ])
+                                    })
 input_numeric_iMpol.setType("int")
 input_numeric_iMpol.setDefaultValue(-4)
 
 
 input_numeric_iNtor = Variable("iNtor")
-input_numeric_iNtor.setDescription([r"Fourier resolution of straight-fieldline angle on interfaces",
+input_numeric_iNtor.setDescription({r"Fourier resolution of straight-fieldline angle on interfaces":
                                     [ r"the rotational-transform on the interfaces is determined by a transformation to the straight-fieldline angle,"+"\n"
                                      +r"with toroidal resolution given by \c iNtor",
                                       r"if \c iNtor<=0 then \c iNtor = Ntor - iNtor",
                                       r"if \c Ntor=0, then the toroidal resolution of the angle transformation is set \c lNtor=0"]
-                                    ])
+                                    })
 input_numeric_iNtor.setType("int")
 input_numeric_iNtor.setDefaultValue(-4)
 
@@ -700,54 +700,54 @@ input_numeric_Lsparse.setDefaultValue(0)
 
 
 input_numeric_Lsvdiota = Variable("Lsvdiota")
-input_numeric_Lsvdiota.setDescription([r"controls method used to solve for rotational-transform on interfaces",
-                                       r"only relevant if \c Lsparse=0",
+input_numeric_Lsvdiota.setDescription({r"controls method used to solve for rotational-transform on interfaces":
                                        [r"if \c Lsvdiota=0, use standard linear solver to construct straight fieldline angle transformation",
-                                        r"if \c Lsvdiota=1, use SVD method to compute rotational-transform"]
-                                       ])
+                                        r"if \c Lsvdiota=1, use SVD method to compute rotational-transform"],
+                                       r"only relevant if \c Lsparse=0": None
+                                       })
 input_numeric_Lsvdiota.setType("int")
 input_numeric_Lsvdiota.setDefaultValue(0)
 
 
 input_numeric_imethod = Variable("imethod")
-input_numeric_imethod.setDescription([ r"controls iterative solution to sparse matrix"+"\n"
-                                      +r"arising in real-space transformation to the straight-fieldline angle",
-                                       r"only relevant if \c Lsparse=2; \see tr00ab() for details",
+input_numeric_imethod.setDescription({ r"controls iterative solution to sparse matrix"+"\n"
+                                      +r"arising in real-space transformation to the straight-fieldline angle":
                                        [r"if \c imethod=1, the method is \c RGMRES",
                                         r"if \c imethod=2, the method is \c CGS",
-                                        r"if \c imethod=3, the method is \c BICGSTAB"]
-                                      ])
+                                        r"if \c imethod=3, the method is \c BICGSTAB"],
+                                       r"only relevant if \c Lsparse=2; \see tr00ab() for details": None
+                                      })
 input_numeric_imethod.setType("int")
 input_numeric_imethod.setDefaultValue(3)
 
 
 input_numeric_iorder = Variable("iorder")
-input_numeric_iorder.setDescription([r"controls real-space grid resolution for constructing the straight-fieldline angle",
-                                     r"only relevant if \c Lsparse>0",
-                                     r"determines order of finite-difference approximation to the derivatives",
-                                     [r"if \c iorder=2, WHAT?",
-                                      r"if \c iorder=4, WHAT?",
-                                      r"if \c iorder=6, WHAT?"]
-                                    ])
+input_numeric_iorder.setDescription({r"determines order of finite-difference approximation to the derivatives":
+                                     [r"if \c iorder=2, second-order",
+                                      r"if \c iorder=4, fourth-order",
+                                      r"if \c iorder=6, sixth-order"],
+                                     r"controls real-space grid resolution for constructing the straight-fieldline angle": None,
+                                     r"only relevant if \c Lsparse>0": None
+                                    })
 input_numeric_iorder.setType("int")
 input_numeric_iorder.setDefaultValue(2)
 
 
 input_numeric_iprecon = Variable("iprecon")
-input_numeric_iprecon.setDescription([ r"controls iterative solution to sparse matrix arising in real-space transformation"+"\n"
-                                      +r"to the straight-fieldline angle",
-                                       r"only relevant if \c Lsparse=2; \see tr00ab() for details",
+input_numeric_iprecon.setDescription({ r"controls iterative solution to sparse matrix arising in real-space transformation"+"\n"
+                                      +r"to the straight-fieldline angle":
                                        [r"if \c iprecon=0, the preconditioner is `N'",
                                         r"if \c iprecon=1, the preconditioner is `J'",
-                                        r"if \c iprecon=2, the preconditioner is `S'"]
-                                      ])
+                                        r"if \c iprecon=2, the preconditioner is `S'"],
+                                       r"only relevant if \c Lsparse=2; \see tr00ab() for details": None
+                                      })
 input_numeric_iprecon.setType("int")
 input_numeric_iprecon.setDefaultValue(0)
 
 
 input_numeric_iotatol = Variable("iotatol")
-input_numeric_iotatol.setDescription([r"tolerance required for iterative construction of straight-fieldline angle",
-                                      r"only relevant if \c Lsparse.ge.2"])
+input_numeric_iotatol.setDescription({r"tolerance required for iterative construction of straight-fieldline angle":
+                                      r"only relevant if \c Lsparse.ge.2"})
 input_numeric_iotatol.setType("double")
 input_numeric_iotatol.setDefaultValue(-1.0)
 
@@ -759,9 +759,9 @@ input_numeric_Lextrap.setDefaultValue(0)
 
 
 input_numeric_Mregular = Variable("Mregular")
-input_numeric_Mregular.setDescription([r"maximum regularization factor",
+input_numeric_Mregular.setDescription({r"maximum regularization factor":
                                        [r"if \c Mregular>=2, then \c regumm \f$_i\f$ = \c Mregular \f$/ 2 \f$ where \c m \f$_i > \f$ \c Mregular"]
-                                       ])
+                                       })
 input_numeric_Mregular.setType("int")
 input_numeric_Mregular.setDefaultValue(-1)
 
@@ -807,27 +807,27 @@ input_local_LBeltrami.setDescription({r"Control flag for solution of Beltrami eq
                                        +r"\f$\mu\f$ may or may not be adjusted iteratively, depending on \c Lconstraint,"+"\n"
                                        +r"to satisfy either rotational-transform or helicity constraints",
                                        {r"for flexibility and comparison, each of the above methods can be employed; for example:":
-                                        [r"if \c LBeltrami = 1, only the SQP    method will be employed",
-                                         r"if \c LBeltrami = 2, only the Newton method will be employed",
-                                         r"if \c LBeltrami = 4, only the linear method will be employed",
-                                         r"if \c LBeltrami = 3, the SQP and the Newton method are used",
-                                         r"if \c LBeltrami = 5, the SQP and the linear method are used",
-                                         r"if \c LBeltrami = 6, the Newton and the linear method are used",
-                                         r"if \c LBeltrami = 7, all three methods will be employed"]
+                                        [r"if \c LBeltrami=1 , only the SQP    method will be employed",
+                                         r"if \c LBeltrami=2 , only the Newton method will be employed",
+                                         r"if \c LBeltrami=4 , only the linear method will be employed",
+                                         r"if \c LBeltrami=3 , the SQP and the Newton method are used",
+                                         r"if \c LBeltrami=5 , the SQP and the linear method are used",
+                                         r"if \c LBeltrami=6 , the Newton and the linear method are used",
+                                         r"if \c LBeltrami=7 , all three methods will be employed"]
                                         }]
                                       })
 input_local_LBeltrami.setType("int")
 input_local_LBeltrami.setDefaultValue(4)
 
 input_local_Linitgues = Variable("Linitgues")
-input_local_Linitgues.setDescription([r"controls how initial guess for Beltrami field is constructed",
+input_local_Linitgues.setDescription({r"controls how initial guess for Beltrami field is constructed":
                                       [ r"only relevant for routines that require an initial guess for the Beltrami fields, such as the SQP and Newton methods,"+"\n"
                                        +r"or the sparse linear solver",
-                                        r"if \c Linitgues = 0, the initial guess for the Beltrami field is trivial",
-                                        r"if \c Linitgues = 1, the initial guess for the Beltrami field is an integrable approximation",
-                                        r"if \c Linitgues = 2, the initial guess for the Beltrami field is read from file",
-                                        r"if \c Linitgues = 3, the initial guess for the Beltrami field will be randomized with the maximum \c maxrndgues"]
-                                      ])
+                                        r"if \c Linitgues=0, the initial guess for the Beltrami field is trivial",
+                                        r"if \c Linitgues=1, the initial guess for the Beltrami field is an integrable approximation",
+                                        r"if \c Linitgues=2, the initial guess for the Beltrami field is read from file",
+                                        r"if \c Linitgues=3, the initial guess for the Beltrami field will be randomized with the maximum \c maxrndgues"]
+                                      })
 input_local_Linitgues.setType("int")
 input_local_Linitgues.setDefaultValue(1)
 

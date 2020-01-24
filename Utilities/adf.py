@@ -80,19 +80,26 @@ def toDoc(desc):
         return desc_listToDoc(desc)
     elif type(desc) is str:
         return desc
-    else:
+    elif desc is not None:
         raise TypeError("what is this that you want to document of type "+str(type(desc))+"?")
+    else:
+        return ""
 
 # convert a dict from a Variable's description into the corresponding documentation
 def desc_dictToDoc(desc_dict):
     if type(desc_dict) is not dict:
         raise RuntimeError("desc_dictToDoc was called with "+str(type(desc_dict))+" instead of dict")
     result = ""
+    iKey=0
     for key in desc_dict.keys():
         if type(key) is not str:
             raise RuntimeError("desc_dictToDoc was given a dict with key type "+str(type(desc_dict))+" instead of str keys")
-        result += key+"\n"
-        result += toDoc(desc_dict[key])
+        if iKey>0:
+            result += "\n"
+        result += key
+        if desc_dict[key] is not None:
+            result += "\n"+toDoc(desc_dict[key])
+        iKey+=1
     return result
 
 # convert a list from a Variable's description into the corresponding documentation
