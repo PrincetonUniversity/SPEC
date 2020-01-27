@@ -1,5 +1,5 @@
 subroutine get_zernike(r, lrad, mpol, zernike)
-  ! Get the Zernike polynomials with zeroth, first derivatives
+  ! Get the (regrouped) Zernike polynomials with zeroth, first derivatives
   ! Inputs:
   ! r - REAL, coordinate input r
   ! lrad - INTEGER, radial resolution
@@ -9,6 +9,7 @@ subroutine get_zernike(r, lrad, mpol, zernike)
   ! zernike - REAL(0:lrad,0:mpol,0:1), the value, first derivative of Zernike polynomial
 
   use constants, only : zero, one, two
+  use allglobal, only : RTM
 
   implicit none
 
@@ -48,26 +49,17 @@ subroutine get_zernike(r, lrad, mpol, zernike)
 
   enddo
 
-  do n = 2, lrad, 2
-    zernike(n,0,0) = zernike(n,0,0) - (-1)**(n/2)
+  do m = 0, mpol
+    do n = m+2, lrad, 2
+      zernike(n,m,0) = zernike(n,m,0) - RTM(n,m)/RTM(m,m) * zernike(m,m,0)
+      zernike(n,m,1) = zernike(n,m,1) - RTM(n,m)/RTM(m,m) * zernike(m,m,1)
+    enddo
   enddo
 
-  if (m >= 1) then
-    do n = 3, lrad, 2
-      zernike(n,1,0) = zernike(n,1,0) - (-1)**((n-1)/2) * real((n+1)/2) * r
-      zernike(n,1,1) = zernike(n,1,1) - (-1)**((n-1)/2) * real((n+1)/2)
-    enddo
-  end if
-
-  do m = 0, mpol
-    do n = m, lrad, 2
-      zernike(n,m,:) = zernike(n,m,:) / real(n+1)
-    end do
-  end do
 end subroutine get_zernike
 
 subroutine get_zernike_d2(r, lrad, mpol, zernike)
-  ! Get the Zernike polynomials with zeroth, first, second derivatives
+  ! Get the (regrouped) Zernike polynomials with zeroth, first, second derivatives
   ! Inputs:
   ! r - REAL, coordinate input r
   ! lrad - INTEGER, radial resolution
@@ -77,6 +69,7 @@ subroutine get_zernike_d2(r, lrad, mpol, zernike)
   ! zernike - REAL(0:lrad,0:mpol,0:2), the value, first/second derivative of Zernike polynomial
   
   use constants, only : zero, one, two
+  use allglobal, only : RTM
 
   implicit none
 
@@ -123,25 +116,19 @@ subroutine get_zernike_d2(r, lrad, mpol, zernike)
     rm = rm * r
 
   enddo
-  do n = 2, lrad, 2
-    zernike(n,0,0) = zernike(n,0,0) - (-1)**(n/2)
-  enddo
-  if (m >= 1) then
-    do n = 3, lrad, 2
-      zernike(n,1,0) = zernike(n,1,0) - (-1)**((n-1)/2) * real((n+1)/2) * r
-      zernike(n,1,1) = zernike(n,1,1) - (-1)**((n-1)/2) * real((n+1)/2)
-    enddo
-  end if
 
   do m = 0, mpol
-    do n = m, lrad, 2
-      zernike(n,m,:) = zernike(n,m,:) / real(n+1)
-    end do
-  end do
+    do n = m+2, lrad, 2
+      zernike(n,m,0) = zernike(n,m,0) - RTM(n,m)/RTM(m,m) * zernike(m,m,0)
+      zernike(n,m,1) = zernike(n,m,1) - RTM(n,m)/RTM(m,m) * zernike(m,m,1)
+      zernike(n,m,2) = zernike(n,m,2) - RTM(n,m)/RTM(m,m) * zernike(m,m,2)
+    enddo
+  enddo
+
 end subroutine get_zernike_d2
 
 subroutine get_zernike_rm(r, lrad, mpol, zernike)
-  ! Get the Zernike polynomials Z(n,m,r)/r^m
+  ! Get the original Zernike polynomials Z(n,m,r)/r^m
   ! Inputs:
   ! r - REAL, coordinate input r
   ! lrad - INTEGER, radial resolution
@@ -181,18 +168,5 @@ subroutine get_zernike_rm(r, lrad, mpol, zernike)
     enddo
 
   enddo
-  do n = 2, lrad, 2
-    zernike(n,0) = zernike(n,0) - (-1)**(n/2)
-  enddo
-  if (m >= 1) then
-    do n = 3, lrad, 2
-      zernike(n,1) = zernike(n,1) - (-1)**((n-1)/2) * real((n+1)/2)
-    enddo
-  end if
 
-  do m = 0, mpol
-    do n = m, lrad, 2
-      zernike(n,m) = zernike(n,m) / real(n+1)
-    end do
-  end do
 end subroutine get_zernike_rm

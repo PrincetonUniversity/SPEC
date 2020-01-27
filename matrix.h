@@ -407,7 +407,7 @@ subroutine matrix( lvol, mn, lrad )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   if( YESstellsym ) then
-!$OMP PARALLEL DEFAULT(PRIVATE) SHARED(lvol,mn,lrad,Lcoordinatesingularity,im,in,TTssss,TDszsc,TDstsc,DDzzcc,DDtzcc,DDttcc,DToocc,Ate,Aze,dMA,dMD,dMG,dMB,Lma,Lmb,Lme,Lmg,Lmh,TT,RTT,RTM,iVns,iBns)   
+!$OMP PARALLEL SHARED(lvol,lrad)   
 !$OMP DO PRIVATE(ii,jj,ll,pp)   
    do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
     
@@ -436,7 +436,8 @@ subroutine matrix( lvol, mn, lrad )
        Hzete = - DToocc(pp1,ll1,jj,ii) + DToocc(ll1,pp1,ii,jj)
        Hteze = + DToocc(pp1,ll1,jj,ii) - DToocc(ll1,pp1,ii,jj)
        Hzeze =   zero 
-       
+       !if(ii.ne.jj) cycle
+       !if(abs(im(ii)-im(jj)).gt.1 .or. abs(in(ii)-in(jj)).gt.1) cycle
        id = Ate(lvol,0,ii)%i(ll) ; jd = Ate(lvol,0,jj)%i(pp) ; dMA(id,jd) = Wtete ; dMD(id,jd) = Htete
        ;                         ; jd = Aze(lvol,0,jj)%i(pp) ; dMA(id,jd) = Wzete ; dMD(id,jd) = Hzete
        id = Aze(lvol,0,ii)%i(ll) ; jd = Ate(lvol,0,jj)%i(pp) ; dMA(id,jd) = Wteze ; dMD(id,jd) = Hteze
@@ -455,7 +456,7 @@ subroutine matrix( lvol, mn, lrad )
     if( Lcoordinatesingularity ) then
       do ll = mi, lrad, 2 ! Zernike polynomial 30 Jun 2019;
 
-      ;                  ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lma(lvol,  ii)       ; dMA(id,jd) = +      RTM(ll, mi)
+      !;                  ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lma(lvol,  ii)       ; dMA(id,jd) = +      RTM(ll, mi)
       ;                  ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lmb(lvol,  ii)       ; dMA(id,jd) = +      RTT(ll, mi,kk,0) ! check coordinate singularity ;
       if( ii.gt.1 ) then ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lme(lvol,  ii)       ; dMA(id,jd) = - ni * RTT(ll, mi, 1,0)
         ;                 ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lme(lvol,  ii)       ; dMA(id,jd) = - mi * RTT(ll, mi, 1,0)
@@ -465,7 +466,7 @@ subroutine matrix( lvol, mn, lrad )
       
       enddo ! end of do ll ;
       
-      do pp = 0, lrad     ; id = Lma(lvol,  ii)       ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(id,jd) = +      RTM(pp, mi)
+      do pp = 0, lrad     !; id = Lma(lvol,  ii)       ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(id,jd) = +      RTM(pp, mi)
       ;                  ; id = Lmb(lvol,  ii)       ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(id,jd) = +      RTT(pp, mi,kk,0) ! check coordinate singularity ;
       if( ii.gt.1 ) then ; id = Lme(lvol,  ii)       ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(id,jd) = - ni * RTT(pp, mi, 1,0)
         ;                 ; id = Lme(lvol,  ii)       ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(id,jd) = - mi * RTT(pp, mi, 1,0)
@@ -514,7 +515,8 @@ subroutine matrix( lvol, mn, lrad )
 !$OMP END PARALLEL
    
   else ! NOTstellsym ;
-   
+!$OMP PARALLEL SHARED(lvol,lrad)   
+!$OMP DO PRIVATE(ii,jj,ll,pp)    
    do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
     
     do jj = 1, mn ; mj = im(jj) ; nj = in(jj) ; mjmi = mi * mj ; mjni = ni * mj ; njmi = mi * nj ; njni = ni * nj
@@ -601,34 +603,34 @@ subroutine matrix( lvol, mn, lrad )
     endif
 
     if (Lcoordinatesingularity) then
-          do ll = 0, lrad ! Chebyshev polynomial ;
+      do ll = 0, lrad ! Chebyshev polynomial ;
 
-      ;                  ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lma(lvol,ii)         ; dMA(id,jd) = RTM(ll, mi)
-      ;                  ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lmb(lvol,ii)         ; dMA(id,jd) = RTT(ll, mi,kk,0)
-      if( ii.gt.1 ) then ; id = Ato(lvol,0,ii)%i(ll) ; jd = Lmc(lvol,ii)         ; dMA(id,jd) = RTM(ll, mi)
-        ;                 ; id = Azo(lvol,0,ii)%i(ll) ; jd = Lmd(lvol,ii)         ; dMA(id,jd) = RTT(ll, mi, 0,0)
-        ;                 ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lme(lvol,ii)         ; dMA(id,jd) = - ni * RTT(ll, mi, 1,0)
-        ;                 ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lme(lvol,ii)         ; dMA(id,jd) = - mi * RTT(ll, mi, 1,0)
-        ;                 ; id = Ato(lvol,0,ii)%i(ll) ; jd = Lmf(lvol,ii)         ; dMA(id,jd) = + ni * RTT(ll, mi, 1,0)
-        ;                 ; id = Azo(lvol,0,ii)%i(ll) ; jd = Lmf(lvol,ii)         ; dMA(id,jd) = + mi * RTT(ll, mi, 1,0)
-      else               ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lmg(lvol,ii)         ; dMA(id,jd) = +      RTT(ll, mi, 1,0)
-        ;                 ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lmh(lvol,ii)         ; dMA(id,jd) = +      RTT(ll, mi, 1,0)
-      endif
+        !;                  ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lma(lvol,ii)         ; dMA(id,jd) = RTM(ll, mi)
+          ;                 ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lmb(lvol,ii)         ; dMA(id,jd) = RTT(ll, mi,kk,0)
+        if( ii.gt.1 ) then !; id = Ato(lvol,0,ii)%i(ll) ; jd = Lmc(lvol,ii)         ; dMA(id,jd) = RTM(ll, mi)
+          ;                 ; id = Azo(lvol,0,ii)%i(ll) ; jd = Lmd(lvol,ii)         ; dMA(id,jd) = RTT(ll, mi,kk,0)
+          ;                 ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lme(lvol,ii)         ; dMA(id,jd) = - ni * RTT(ll, mi, 1,0)
+          ;                 ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lme(lvol,ii)         ; dMA(id,jd) = - mi * RTT(ll, mi, 1,0)
+          ;                 ; id = Ato(lvol,0,ii)%i(ll) ; jd = Lmf(lvol,ii)         ; dMA(id,jd) = + ni * RTT(ll, mi, 1,0)
+          ;                 ; id = Azo(lvol,0,ii)%i(ll) ; jd = Lmf(lvol,ii)         ; dMA(id,jd) = + mi * RTT(ll, mi, 1,0)
+        else                ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lmg(lvol,ii)         ; dMA(id,jd) = +      RTT(ll, mi, 1,0)
+          ;                 ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lmh(lvol,ii)         ; dMA(id,jd) = +      RTT(ll, mi, 1,0)
+        endif
       
       enddo ! end of do ll;
       
       do pp = 0, lrad
-      ;                  ; id = Lma(lvol,ii)         ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(id,jd) = RTM(pp, mi)
-      ;                  ; id = Lmb(lvol,ii)         ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(id,jd) = RTT(pp, mi,kk,0)
-      if( ii.gt.1 ) then ; id = Lmc(lvol,ii)         ; jd = Ato(lvol,0,ii)%i(pp) ; dMA(id,jd) = RTM(ll, mi)
-        ;                 ; id = Lmd(lvol,ii)         ; jd = Azo(lvol,0,ii)%i(pp) ; dMA(id,jd) = RTT(ll, mi, 0,0)
-        ;                 ; id = Lme(lvol,ii)         ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(id,jd) = - ni * RTT(ll, mi, 1,0)
-        ;                 ; id = Lme(lvol,ii)         ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(id,jd) = - mi * RTT(ll, mi, 1,0)
-        ;                 ; id = Lmf(lvol,ii)         ; jd = Ato(lvol,0,ii)%i(pp) ; dMA(id,jd) = + ni * RTT(ll, mi, 1,0)
-        ;                 ; id = Lmf(lvol,ii)         ; jd = Azo(lvol,0,ii)%i(pp) ; dMA(id,jd) = + mi * RTT(ll, mi, 1,0)
-      else               ; id = Lmg(lvol,ii)         ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(id,jd) = +      RTT(ll, mi, 1,0)
-        ;                 ; id = Lmh(lvol,ii)         ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(id,jd) = +      RTT(ll, mi, 1,0)
-      endif
+        !;                  ; id = Lma(lvol,ii)         ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(id,jd) = RTM(pp, mi)
+        ;                  ; id = Lmb(lvol,ii)         ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(id,jd) = RTT(pp, mi,kk,0)
+        if( ii.gt.1 ) then !; id = Lmc(lvol,ii)         ; jd = Ato(lvol,0,ii)%i(pp) ; dMA(id,jd) = RTM(ll, mi)
+          ;                 ; id = Lmd(lvol,ii)         ; jd = Azo(lvol,0,ii)%i(pp) ; dMA(id,jd) = RTT(pp, mi, kk,0)
+          ;                 ; id = Lme(lvol,ii)         ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(id,jd) = - ni * RTT(pp, mi, 1,0)
+          ;                 ; id = Lme(lvol,ii)         ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(id,jd) = - mi * RTT(pp, mi, 1,0)
+          ;                 ; id = Lmf(lvol,ii)         ; jd = Ato(lvol,0,ii)%i(pp) ; dMA(id,jd) = + ni * RTT(pp, mi, 1,0)
+          ;                 ; id = Lmf(lvol,ii)         ; jd = Azo(lvol,0,ii)%i(pp) ; dMA(id,jd) = + mi * RTT(pp, mi, 1,0)
+        else               ; id = Lmg(lvol,ii)         ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(id,jd) = +      RTT(pp, mi, 1,0)
+          ;                 ; id = Lmh(lvol,ii)         ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(id,jd) = +      RTT(pp, mi, 1,0)
+        endif
       enddo ! end of do pp ;
     else
       do ll = 0, lrad ! Chebyshev polynomial ;
@@ -670,7 +672,8 @@ subroutine matrix( lvol, mn, lrad )
     ;endif
     
    enddo ! end of do ii ;
-   
+!$OMP END DO
+!$OMP END PARALLEL   
   endif ! end of if( YESstellsym ) ;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

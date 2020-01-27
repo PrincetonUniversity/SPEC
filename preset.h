@@ -203,9 +203,10 @@ subroutine preset
    
   enddo ! end of do innout = 0, 1 ;
 
+  call get_zernike_rm(zero, Lrad(1), Mpol, RTM(:,:))
   call get_zernike( zero, Lrad(1), Mpol, RTT(:,:,0,:))
   call get_zernike( one, Lrad(1), Mpol, RTT(:,:,1,:))
-  call get_zernike_rm(zero, Lrad(1), Mpol, RTM(:,:))
+  
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -614,15 +615,13 @@ subroutine preset
       if( NOTstellsym ) zerdof = zerdof + 2*ntor + 1 ! plus and minus sign for n
      enddo
     enddo
-    do jj = 2, Lrad(vvol), 2                         ! for m==0
+    do jj = 0, Lrad(vvol), 2                         ! for m==0
      zerdof = zerdof + ntor + 1                      ! minus sign for n
+     if( NOTstellsym ) zerdof = zerdof + ntor        ! no constant term for NOTstellsym
     enddo
-                                     !                                     a    c      b        d      e      f      g   h                                 
-    if( YESstellsym ) NAdof(vvol) = 2 * zerdof  + ntor + 1               +(mn-Ntor-1)+ Ntor+1        + mn-1        + 1 + 0
-    if( NOTstellsym ) NAdof(vvol) = 2 * zerdof                           + mn + mn-1 + Ntor+1 + Ntor + mn-1 + mn-1 + 1 + 0 ! this is broken at the moment
-    if (Mpol >= 1) then
-      if( YESstellsym ) NAdof(vvol) = NAdof(vvol) - (2 * ntor + 1) * 2
-    endif
+                                     !          At~r^(m+2)                 a    c      b        d      e      f      g   h                                 
+    if( YESstellsym ) NAdof(vvol) = 2 * zerdof  -   mn                   + 0         + Ntor+1        + mn-1        + 1 + 0
+    if( NOTstellsym ) NAdof(vvol) = 2 * zerdof  - 2*mn+1                 + 0  + 0    + Ntor+1 + Ntor + mn-1 + mn-1 + 1 + 0
    else ! .not.Lcoordinatesingularity;                                     a    c      b        d      e      f      g   h
     if( YESstellsym ) NAdof(vvol) = 2 * ( mn        ) * ( Lrad(vvol)+1 ) + mn        + mn            + mn-1        + 1 + 1  
     if( NOTstellsym ) NAdof(vvol) = 2 * ( mn + mn-1 ) * ( Lrad(vvol)+1 ) + mn + mn-1 + mn     + mn-1 + mn-1 + mn-1 + 1 + 1
@@ -687,17 +686,20 @@ subroutine preset
      
      do ll = 0, Lrad(vvol)
       if (ll>=mi .and. mod(mi+ll,2)==0)then 
-      if (.not.((ll==0.and.mi==0).or.(ll==1.and.mi==1))) then 
+       if (ll.ne.mi) then 
                                             ; idof = idof + 1 ; Ate(vvol,0,ii)%i(ll) = idof ! Zernike 30 Jun 19
-      endif
+       endif
       ;                                     ; idof = idof + 1 ; Aze(vvol,0,ii)%i(ll) = idof
-      if( NOTstellsym .and. ii.gt.1 ) then  ; idof = idof + 1 ; Ato(vvol,0,ii)%i(ll) = idof
+       if( NOTstellsym .and. ii>1 )  then
+        if (ll.ne.mi) then     
+                                            ; idof = idof + 1 ; Ato(vvol,0,ii)%i(ll) = idof ! Zernike 27 Jan 20
+        endif
        ;                                    ; idof = idof + 1 ; Azo(vvol,0,ii)%i(ll) = idof
-      endif ! NOTstellsym
+       endif ! NOTstellsym
       endif ! Zernike 
      enddo ! end of do ll; 17 Jan 13;
-     if ( mi.ne.0 .and. mi.ne.1     )  then ; idof = idof + 1 ; Lma(vvol,  ii)       = idof
-     endif
+     !if ( mi.ne.0 .and. mi.ne.1     )  then ; idof = idof + 1 ; Lma(vvol,  ii)       = idof ! basis combination used instead
+     !endif
      if(  mi.eq.0                   ) then ; idof = idof + 1 ; Lmb(vvol,  ii)       = idof ! 18 May 16;
      endif
      if(  ii.gt.1                   ) then ; idof = idof + 1 ; Lme(vvol,  ii)       = idof
@@ -706,7 +708,7 @@ subroutine preset
 !   ! ;                                    ; idof = idof + 1 ; Lmh(vvol,  ii)       = idof ! no constraint on poloidal flux in innermost volume; 11 Mar 16;
      endif
      if( NOTstellsym ) then
-     if(  ii.gt.1                   ) then ; idof = idof + 1 ; Lmc(vvol,  ii)       = idof ! 18 May 16;
+     if(  ii.gt.1                   ) then !; idof = idof + 1 ; Lmc(vvol,  ii)       = idof ! 18 May 16; ! basis combination used instead
       ;                                    ; idof = idof + 1 ; Lmf(vvol,  ii)       = idof ! 18 May 16;
      endif
      if(  ii.gt.1 .and. mi.eq.0     ) then ; idof = idof + 1 ; Lmd(vvol,  ii)       = idof ! 18 May 16;
