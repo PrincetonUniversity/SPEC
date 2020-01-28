@@ -131,7 +131,8 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   use inputlist, only : Wmacros, Wmp00ac, Wtr00ab, Wcurent, Wma02aa, &
                         mu, helicity, iota, oita, curtor, curpol, Lrad, &
                        !Lposdef, &
-                        Lconstraint, mupftol
+                        Lconstraint, mupftol, &
+                        Lmatsolver, NiterGMRES, epsGMRES, LGMRESprec, epsILU
   
   use cputiming, only : Tmp00ac
   
@@ -143,7 +144,8 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
                         NAdof, &
 !                       dMA, dMB, dMC, dMD, dME, dMF, dMG, &
                         dMA, dMB,      dMD,           dMG, &
-                        solution, &
+                        NdMASmax, NdMAS, dMAS, dMDS, idMAS, jdMAS, & ! preconditioning matrix
+                        solution, GMRESlastsolution, &
                         dtflux, dpflux, &
                         diotadxup, dItGpdxtp, &
                         lBBintegral, lABintegral, &
@@ -178,7 +180,13 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   REAL   , allocatable :: matrix(:,:), rhs(:,:)
 
   REAL   , allocatable :: RW(:), RD(:,:), LU(:,:)
+
+  REAL   , allocatable :: matrixC(:,:)
   
+#ifdef MKL
+  !include 'mkl.fi'
+#endif 
+
   BEGIN(mp00ac)
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

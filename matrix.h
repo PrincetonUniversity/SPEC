@@ -350,6 +350,7 @@ subroutine matrix( lvol, mn, lrad )
                         im, in, &
                         NAdof, &
                         dMA, dMD, dMB, dMG, &
+                        LILUprecond, NdMASmax, NdMAS, dMAS, dMDS, idMAS, jdMAS, & ! preconditioning matrix
                         Ate, Ato, Aze, Azo, &
                         iVns, iBns, iVnc, iBnc, &
                         Lma, Lmb, Lmc, Lmd, Lme, Lmf, Lmg, Lmh, &
@@ -403,7 +404,14 @@ subroutine matrix( lvol, mn, lrad )
   dMD(0:NN,0:NN) = zero
   dMB(0:NN,1: 2) = zero
   dMG(0:NN     ) = zero
-  
+
+  if (LILUprecond) then
+    NdMAS(lvol) = 0
+    dMAS = zero
+    dMDS = zero
+    idMAS = 0
+    jdMAS = 0
+  endif
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   if( YESstellsym ) then
@@ -676,6 +684,33 @@ subroutine matrix( lvol, mn, lrad )
 !$OMP END PARALLEL   
   endif ! end of if( YESstellsym ) ;
   
+  ! construct the sparse preconditioner
+  if (LILUprecond) then
+    do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
+      
+      ! only keeping the ii==jj terms
+      jj = ii ; mj = im(jj) ; nj = in(jj) ; mimj = mi * mj ; minj = mi * nj ; nimj = ni * mj ; ninj = ni * nj
+      
+      do ll = 0, lrad
+
+        if (Lcoordinatesingularity) then
+          if (ll < mi) cycle ! rule out zero components of Zernike; 02 Jul 19
+          if (mod(ll+mi,2)>0) cycle ! rule out zero components of Zernike; 02 Jul 19
+          ll1 = (ll - mod(ll, 2)) / 2! shrinked dof for Zernike; 02 Jul 19
+        else
+          ll1 = ll
+        end if
+
+        do pp = 0, lrad
+
+        if (Lcoordinatesingularity) then
+          if (ll < mi) cycle ! rule out zero components of Zernike; 02 Jul 19
+          if (mod(ll+mi,2)>0) cycle ! rule out zero components of Zernike; 02 Jul 19
+          ll1 = (ll - mod(ll, 2)) / 2! shrinked dof for Zernike; 02 Jul 19
+        else
+          ll1 = ll
+        end if
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 #ifdef DEBUG

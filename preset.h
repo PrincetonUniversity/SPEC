@@ -585,6 +585,8 @@ subroutine preset
 !latex \end{enumerate}
   
   SALLOCATE( NAdof, (1:Mvol          ), 0 ) ! Beltrami degrees-of-freedom in each annulus;
+  SALLOCATE( NdMASmax, (1:Mvol       ), 0 ) ! The maximum size of sparse matrix for GMRES preconditioning;
+  SALLOCATE( NdMAS   , (1:Mvol       ), 0 ) ! The actual size of sparse matrix for GMRES preconditioning;
   
   NALLOCATE( Ate  , (1:Mvol,-1:2,1:mn)    ) ! recall that this is type:sub-grid; 31 Jan 13;
   NALLOCATE( Aze  , (1:Mvol,-1:2,1:mn)    )
@@ -622,11 +624,20 @@ subroutine preset
                                      !          At~r^(m+2)                 a    c      b        d      e      f      g   h                                 
     if( YESstellsym ) NAdof(vvol) = 2 * zerdof  -   mn                   + 0         + Ntor+1        + mn-1        + 1 + 0
     if( NOTstellsym ) NAdof(vvol) = 2 * zerdof  - 2*mn+1                 + 0  + 0    + Ntor+1 + Ntor + mn-1 + mn-1 + 1 + 0
+
+    ! Guess the size of the sparse matrix ! 28 Jan 20
+    if( YESstellsym ) NdMASmax(vvol) = (2 * (Lrad(vvol)/2 + 1))**2 * mn + (Ntor+mn) * NAdof(vvol)
+    if( NOTstellsym ) NdMASmax(vvol) = (4 * (Lrad(vvol)/2 + 1))**2 * mn + (Ntor+mn) * NAdof(vvol) * 2 
+
    else ! .not.Lcoordinatesingularity;                                     a    c      b        d      e      f      g   h
     if( YESstellsym ) NAdof(vvol) = 2 * ( mn        ) * ( Lrad(vvol)+1 ) + mn        + mn            + mn-1        + 1 + 1  
     if( NOTstellsym ) NAdof(vvol) = 2 * ( mn + mn-1 ) * ( Lrad(vvol)+1 ) + mn + mn-1 + mn     + mn-1 + mn-1 + mn-1 + 1 + 1
+
+    ! Guess the size of the sparse matrix ! 28 Jan 20
+    if( YESstellsym ) NdMASmax(vvol) = (2 * (Lrad(vvol) + 1))**2 * mn + (3*mn+1) * NAdof(vvol)
+    if( NOTstellsym ) NdMASmax(vvol) = (4 * (Lrad(vvol) + 1))**2 * mn + (6*mn  ) * NAdof(vvol)
    endif ! end of if( Lcoordinatesingularity );
-   
+
    do ii = 1, mn ! loop over Fourier harmonics;
     
     do ideriv = -1, 2 ! loop over derivatives; 14 Jan 13;
@@ -698,6 +709,9 @@ subroutine preset
        endif ! NOTstellsym
       endif ! Zernike 
      enddo ! end of do ll; 17 Jan 13;
+    enddo ! end of do ii
+
+    do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
      !if ( mi.ne.0 .and. mi.ne.1     )  then ; idof = idof + 1 ; Lma(vvol,  ii)       = idof ! basis combination used instead
      !endif
      if(  mi.eq.0                   ) then ; idof = idof + 1 ; Lmb(vvol,  ii)       = idof ! 18 May 16;
@@ -729,6 +743,9 @@ subroutine preset
        ;                                   ; idof = idof + 1 ; Azo(vvol,0,ii)%i(ll) = idof
       endif
      enddo ! end of do ll; 08 Feb 16;
+    enddo
+
+    do ii = 1, mn
      ;                                     ; idof = idof + 1 ; Lma(vvol,  ii)       = idof
      ;                                     ; idof = idof + 1 ; Lmb(vvol,  ii)       = idof
      if(  ii.gt.1 .and. NOTstellsym ) then ; idof = idof + 1 ; Lmc(vvol,  ii)       = idof
@@ -1210,6 +1227,14 @@ subroutine preset
 
   SALLOCATE( Bloweremn, (1:mn, 3), zero) ! these are declared in global, calculated in getbco, used in mtrxhs
   SALLOCATE( Bloweromn, (1:mn, 3), zero)
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  ! Allocate matrix to store the last solution of GMRES as initialization
+  if (Lmatsolver .eq. 2) then ! use GMRES
+    SALLOCATE(GMRESlastsolution, (MAXVAL(NAdof),0:2,1:Mvol), zero )
+    if (LGMRESprec .eq. 1) LILUprecond = .true.
+  endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

@@ -223,6 +223,11 @@ module inputlist
   INTEGER      :: Linitgues  =  1
   INTEGER      :: Lposdef    =  0 ! redundant;
   REAL         :: maxrndgues =  1.0
+  INTEGER      :: Lmatsolver = 1
+  INTEGER      :: NiterGMRES = 50
+  REAL         :: epsGMRES = 1e-9
+  INTEGER      :: LGMRESprec = 1
+  REAL         :: epsILU = 1e-6
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -605,6 +610,11 @@ module inputlist
                 !latex \item if \inputvar{Linitgues = 3}, the initial guess for the Beltrami field will be randomized with the maximum \inputvar{maxrndgues};
                 !latex \ei
  maxrndgues,&   !latex \item \inputvar{maxrndgues = 1.0} : real : the maximum random number of the Beltrami field if \inputvar{Linitgues = 3};
+ Lmatsolver,&!latex \item \inputvar{Lmatsolver = 1} : integer : 1 for LU factorization, 2 for GMRES (currently with Intel MKL only)
+ NiterGMRES,&   !latex \item \inputvar{LGMRESniter = 50} : integer : number of max iteration for GMRES
+ epsGMRES,&     !latex \item \inputvar{epsGMRES = 1e-9} : real : the precision of GMRES
+ LGMRESprec,&!latex \item \inputvar{LGMRESprec = 1} : integer : type of preconditioner for GMRES, 1 for ILU sparse matrix
+ epsILU,&       !latex \item \inputvar{epsILU = 1e-6} : real : the precision of incomplete LU factorization for preconditioning
  Lposdef        !latex \item\inputvar{Lposdef = 0 : integer} : redundant;
 !Nmaxexp        !l tex \item \inputvar{Nmaxexp = 32 : integer} : indicates maximum exponent used to precondition Beltrami linear system near singularity;
                 !l tex \bi
@@ -891,6 +901,7 @@ module allglobal
   
   REAL   , allocatable :: TT(:,:,:), RTT(:,:,:,:) ! derivatives of Chebyshev and Zernike polynomials at the inner and outer interfaces;
   REAL   , allocatable :: RTM(:,:) ! r^m term of Zernike polynomials at the origin
+  REAL   , allocatable :: ZernikeDof(:) ! Zernike degree of freedom for each m
 
   LOGICAL, allocatable :: ImagneticOK(:)   ! used to indicate if Beltrami fields have been correctly constructed;
 
@@ -1093,15 +1104,22 @@ module allglobal
    REAL,   allocatable :: dMA(:,:), dMB(:,:)! dMC(:,:) ! energy and helicity matrices; quadratic forms; 
    REAL,   allocatable :: dMD(:,:)! dME(:,:)! dMF(:,:) ! energy and helicity matrices; quadratic forms; 
 
+   REAL,   allocatable :: dMAS(:), dMDS(:) ! sparse version of dMA and dMD, data
+   INTEGER,allocatable :: idMAS(:), jdMAS(:) ! sparse version of dMA and dMD, indices
+   INTEGER,allocatable :: NdMASmax(:), NdMAS(:) ! number of elements for sparse matrices
+
    REAL,   allocatable :: dMG(:  )
 
-   REAL,   allocatable :: solution(:,:) ! this is allocated in dforce; used in mp00ac and ma02aa; and is passed to packab; 
+   REAL,   allocatable :: solution(:,:) ! this is allocated in dforce; used in mp00ac and ma02aa; and is passed to packab;
+
+   REAL,   allocatable :: GMRESlastsolution(:,:,:) ! used to store the last solution for restarting GMRES
 
 !  REAL,   allocatable :: MBpsi(:), MEpsi(:) ! matrix vector products; 
    REAL,   allocatable :: MBpsi(:)           ! matrix vector products; 
 !  REAL                :: psiMCpsi, psiMFpsi
 !  REAL                ::           psiMFpsi
 
+   LOGICAL             :: LILUprecond        ! whether to use ILU preconditioner for GMRES
    REAL,   allocatable :: BeltramiInverse(:,:)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -1545,6 +1563,12 @@ subroutine readin
    FATAL( readin, abs(one+gamma).lt.vsmall, 1+gamma appears in denominator in dforce ) ! Please check this; SRH: 27 Feb 18;
    FATAL( readin, abs(one-gamma).lt.vsmall, 1-gamma appears in denominator in fu00aa ) ! Please check this; SRH: 27 Feb 18;
    FATAL( readin, Lconstraint.lt.-1 .or. Lconstraint.gt.2, illegal Lconstraint )
+
+#ifndef MKL
+   FATAL( readin, Lmatsolver.eq.2, GMRES currently only available with MKL library)
+#endif
+   FATAL( readin, Lmatsolver.gt.2 .or. Lmatsolver.lt.1, illegal Lmatsolver )
+   FATAL( readin, Lmatsolver.eq.2 .and. LGMRESprec.ne.1, illegal LGMRESprec )
    
    if( Istellsym.eq.1 ) then
     Rbs(-MNtor:MNtor,-MMpol:MMpol) = zero
@@ -1575,6 +1599,10 @@ subroutine readin
     FATAL( readin, Lrad(vvol ).lt.2, require Chebyshev resolution Lrad > 2 so that Lagrange constraints can be satisfied )
    enddo
    
+   if (Igeometry.ge.2 .and. Lrad(1).lt.Mpol) then
+     write(ounit,'("readin : ",f10.2," : Minimum Lrad(1) is Mpol, automatically adjusted it to Mpol+4")') cput-cpus
+     Lrad(1) = Mpol + 4
+   endif
    FATAL( readin, mupfits.le.0, must give ma01aa:hybrj a postive integer value for the maximum iterations = mupfits given on input )
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -1808,9 +1836,14 @@ subroutine readin
   if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : broadcasting locallist       from ext.sp ;")') cput-cpus
   endif
   
-  IlBCAST( LBeltrami, 1, 0 )
-  IlBCAST( Linitgues, 1, 0 )
-  RlBCAST( maxrndgues, 1, 1.0)
+  IlBCAST( LBeltrami    , 1, 0 )
+  IlBCAST( Linitgues    , 1, 0 )
+  RlBCAST( maxrndgues   , 1, 0)
+  IlBCAST( Lmatsolver   , 1, 0 )
+  IlBCAST( NiterGMRES   , 1, 0 )
+  RlBCAST( epsGMRES     , 1, 0 )
+  IlBCAST( LGMRESprec   , 1, 0 )
+  RlBCAST( epsILU       , 1, 0 )
 ! IlBCAST( Lposdef  , 1, 0 ) ! redundant;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

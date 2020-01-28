@@ -133,6 +133,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
                         dBdX, &
                        !dMA, dMB, dMC, dMD, dME, dMF, dMG, solution, &
                         dMA, dMB,      dMD,           dMG, solution, &
+                        NdMASmax, NdMAS, dMAS, dMDS, idMAS, jdMAS, & ! preconditioning matrix
                         MBpsi,        &
                         dtflux, dpflux, sweight, &
                         mmpp, &
@@ -156,7 +157,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
                         DDtzcc, DDtzcs, DDtzsc, DDtzss, &
                         DDzzcc, DDzzcs, DDzzsc, DDzzss, &
                         Tss, Tsc, Dts, Dtc, Dzs, Dzc, &
-                        dRodR, dRodZ, dZodR, dZodZ
+                        dRodR, dRodZ, dZodR, dZodZ, &
+                        LILUprecond
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -268,6 +270,13 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
    
    SALLOCATE( MBpsi, (1:NN), zero )
 !  SALLOCATE( MEpsi, (1:NN), zero )
+
+   if (LILUprecond) then
+     SALLOCATE( dMAS, (1:NdMASmax(vvol)), zero)
+     SALLOCATE( dMDS, (1:NdMASmax(vvol)), zero)
+     SALLOCATE( idMAS, (1:NN+1), 0)
+     SALLOCATE( jdMAS, (1:NdMASmax(vvol)), 0)
+   endif ! if we use GMRES and ILU preconditioner
    
    if( LcomputeDerivatives ) then ! allocate some additional memory;
     
@@ -1117,6 +1126,13 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
    DALLOCATE(MBpsi)
 !  DALLOCATE(MEpsi)
    
+   if (LILUprecond) then
+     DALLOCATE(dMAS)
+     DALLOCATE(dMDS)
+     DALLOCATE(idMAS)
+     DALLOCATE(jdMAS)
+   endif ! if we use GMRES and ILU preconditioner
+
    if( LcomputeDerivatives) then
     
     DALLOCATE(oBI)
