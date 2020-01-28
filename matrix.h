@@ -385,6 +385,10 @@ subroutine matrix( lvol, mn, lrad )
   REAL                 :: Hzete, Hzeto, Hzote, Hzoto
   REAL                 :: Hzeze, Hzezo, Hzoze, Hzozo
   
+  REAL,allocatable     :: dMASqueue(:,:), dMDSqueue(:,:) ! queues to construct sparse matrices
+  INTEGER,allocatable  :: jdMASqueue(:,:) ! indices
+  INTEGER              :: nqueue(4), nrow, ns
+
   BEGIN(matrix)
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -411,6 +415,7 @@ subroutine matrix( lvol, mn, lrad )
     dMDS = zero
     idMAS = 0
     jdMAS = 0
+    ns = 0
   endif
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -686,6 +691,14 @@ subroutine matrix( lvol, mn, lrad )
   
   ! construct the sparse preconditioner
   if (LILUprecond) then
+
+    NdMAS(lvol) = 0
+    nrow = 0
+
+    SALLOCATE( dMASqueue, (1:NN, 4), zero)
+    SALLOCATE( dMDSqueue, (1:NN, 4), zero)
+    SALLOCATE( jdMASqueue, (1:NN, 4), zero)
+
     do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
       
       ! only keeping the ii==jj terms
@@ -696,20 +709,82 @@ subroutine matrix( lvol, mn, lrad )
         if (Lcoordinatesingularity) then
           if (ll < mi) cycle ! rule out zero components of Zernike; 02 Jul 19
           if (mod(ll+mi,2)>0) cycle ! rule out zero components of Zernike; 02 Jul 19
-          ll1 = (ll - mod(ll, 2)) / 2! shrinked dof for Zernike; 02 Jul 19
-        else
-          ll1 = ll
         end if
+
+        nqueue = 0
+        dMASqueue = zero
+        dMDSqueue = zero
+        jdMASqueue = 0
 
         do pp = 0, lrad
 
-        if (Lcoordinatesingularity) then
-          if (ll < mi) cycle ! rule out zero components of Zernike; 02 Jul 19
-          if (mod(ll+mi,2)>0) cycle ! rule out zero components of Zernike; 02 Jul 19
-          ll1 = (ll - mod(ll, 2)) / 2! shrinked dof for Zernike; 02 Jul 19
-        else
-          ll1 = ll
+          if (Lcoordinatesingularity) then
+            if (pp < mj) cycle ! rule out zero components of Zernike; 02 Jul 19
+            if (mod(pp+mj,2)>0) cycle ! rule out zero components of Zernike; 02 Jul 19
+          end if
+          
+          id = Ate(lvol,0,ii)%i(ll) ; jd = Ate(lvol,0,jj)%i(pp)
+          if (id.ne.0 .and. jd.ne.0) call push_back(1,nqueue,NN,dMA(id,jd),dMD(id,jd),jd,dMASqueue,dMDSqueue,jdMASqueue)
+          ;                         ; jd = Aze(lvol,0,jj)%i(pp)
+          if (id.ne.0 .and. jd.ne.0) call push_back(1,nqueue,NN,dMA(id,jd),dMD(id,jd),jd,dMASqueue,dMDSqueue,jdMASqueue)
+
+          
+          id = Aze(lvol,0,ii)%i(ll) ; jd = Ate(lvol,0,jj)%i(pp)
+          if (id.ne.0 .and. jd.ne.0) call push_back(2,nqueue,NN,dMA(id,jd),dMD(id,jd),jd,dMASqueue,dMDSqueue,jdMASqueue)
+          ;                         ; jd = Aze(lvol,0,jj)%i(pp)
+          if (id.ne.0 .and. jd.ne.0) call push_back(2,nqueue,NN,dMA(id,jd),dMD(id,jd),jd,dMASqueue,dMDSqueue,jdMASqueue)
+
+        end do ! pp
+        
+        ;                  ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lma(lvol,  ii)
+        if (id.ne.0 .and. jd.ne.0)   call push_back(1,nqueue,NN,dMA(id,jd),dMD(id,jd),jd,dMASqueue,dMDSqueue,jdMASqueue)
+        ;                  ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lmb(lvol,  ii)
+        if (id.ne.0 .and. jd.ne.0)   call push_back(2,nqueue,NN,dMA(id,jd),dMD(id,jd),jd,dMASqueue,dMDSqueue,jdMASqueue)
+        if( ii.gt.1 ) then ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lme(lvol,  ii)
+          if (id.ne.0 .and. jd.ne.0) call push_back(1,nqueue,NN,dMA(id,jd),dMD(id,jd),jd,dMASqueue,dMDSqueue,jdMASqueue)
+        ;                  ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lme(lvol,  ii)
+          if (id.ne.0 .and. jd.ne.0) call push_back(2,nqueue,NN,dMA(id,jd),dMD(id,jd),jd,dMASqueue,dMDSqueue,jdMASqueue)
+        else               ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lmg(lvol,  ii)
+          if (id.ne.0 .and. jd.ne.0) call push_back(1,nqueue,NN,dMA(id,jd),dMD(id,jd),jd,dMASqueue,dMDSqueue,jdMASqueue)
+        ;                  ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lmh(lvol,  ii)
+          if (id.ne.0 .and. jd.ne.0) call push_back(2,nqueue,NN,dMA(id,jd),dMD(id,jd),jd,dMASqueue,dMDSqueue,jdMASqueue)
+        endif
+
+        ! putting things in the sparse matrix
+        do pp = 1, 4
+          if (nqueue(pp) .eq. 0) cycle
+          nrow = nrow + 1
+          dMAS(ns+1:ns+nqueue(pp)) = dMASqueue(1:nqueue(pp),pp)
+          dMDS(ns+1:ns+nqueue(pp)) = dMDSqueue(1:nqueue(pp),pp)
+          jdMAS(ns+1:ns+nqueue(pp)) = jdMASqueue(1:nqueue(pp),pp)
+          idMAS(nrow) = ns + 1
+          ns = ns + nqueue(pp)
+        end do ! pp = 1:4
+      end do ! ll = 0, lrad
+    end do ! ii = 1, mn
+    
+    ! deal with rest of the columes
+    do ii = nrow + 1, NN
+      idMAS(ii) = ns + 1
+      do jj = 1, NN
+        if (abs(dMA(jj, ii)).ge. small) then
+          ns = ns + 1
+          dMAS(ns) = dMA(jj,ii)
+          dMDS(ns) = dMD(jj,ii)
+          jdMAS(ns) = jj
         end if
+      enddo
+    enddo
+
+    NdMAS(lvol) = ns
+    idMAS(NN+1) = ns+1
+
+    DALLOCATE( dMASqueue )
+    DALLOCATE( dMDSqueue )
+    DALLOCATE( jdMASqueue )
+
+  end if ! if (LILUprecond)   
+
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -748,3 +823,27 @@ subroutine matrix( lvol, mn, lrad )
 end subroutine matrix
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+subroutine push_back(iq, nq, NN, vA, vD, vjA, qA, qD, qjA)
+  ! push a new element at the back of the queue
+  ! INPUTS:
+  ! iq - INTEGER, which queue (1-4)
+  ! nq - INTEGER(4), number of element in the queue
+  ! NN - INTEGER, max length of matrix
+  ! vA, vD - REAL, values to put in
+  ! vjA - INTEGER, column index to put in
+  ! qA, qD, qjA - the queues
+  implicit none
+
+  REAL, INTENT(IN)       :: vA, vD
+  INTEGER, INTENT(IN)    :: vjA, iq, NN
+  REAL, INTENT(INOUT)    :: qA(NN,4), qD(NN,4)
+  INTEGER, INTENT(INOUT) :: qjA(NN,4), nq(4)
+
+  nq(iq) = nq(iq) + 1
+  qA(nq(iq),iq) = vA
+  qD(nq(iq),iq) = vD
+  qjA(nq(iq),iq) = vjA
+
+  return
+end subroutine push_back
