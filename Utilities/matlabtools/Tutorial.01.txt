@@ -18,7 +18,7 @@
 
 2. Load output data from field-line-tracing:
    
-   pdata = read_spec_poincare(fname);
+   pdata = read_spec(fname)
    
 3. Call ploting routine for Poincare section:
    
@@ -46,7 +46,7 @@ plot_spec_poincare_slab(pdata,1,1);
 plot_spec_kam_slab(fname,0,0);
 
 
-%%%%%%%%%%%% written by J.Loizu (2017) %%%%%%%%%%%%
-
+%%%%%%%%%%%%%%%%%% written by J.Loizu (2017) %%%%%%%%%%%%%%%%%%
+% updated for new reading HDF5 routine by J. Schilling (2020) %
 
 
