@@ -1235,9 +1235,10 @@ diagnosticslist.addVariables(vars_diagnosticslist)
 
 
 ###############################################################################
-
-from adf import toDoc
-from genFortran import declareVariable, commentOut
+# generate Fortran declarations of the input quantities of SPEC
+###############################################################################
+from adf import indented, toDoc
+from genFortran import declareVariable, declareNamelist
 
 # dry-run declaration to determine maximum declaration length for doc indentation
 maxLength = 0
@@ -1257,67 +1258,74 @@ for var in vars_diagnosticslist:
     declLen = len(declareVariable(var, attachDescription=False))
     if declLen>maxLength: maxLength = declLen
 
-print("maximum decl. length: "+str(maxLength))
+#print("maximum decl. length: "+str(maxLength))
 
-with open("spec_inputs.f90", "w") as f:
-    
-    # parameters
-    for param in params_maxDims:
-        f.write(declareVariable(param, refDeclLength=maxLength)+"\n")
-    
-    f.write("\n")
-    
-    # input variables, i.e. namelist contents
-    for var in physicslist.variables:
-        f.write(declareVariable(var, refDeclLength=maxLength)+"\n")
-    f.write("\n")
-    for var in numericlist.variables:
-        f.write(declareVariable(var, refDeclLength=maxLength)+"\n")
-    f.write("\n")
-    for var in locallist.variables:
-        f.write(declareVariable(var, refDeclLength=maxLength)+"\n")
-    f.write("\n")
-    for var in globallist.variables:
-        f.write(declareVariable(var, refDeclLength=maxLength)+"\n")
-    f.write("\n")
-    for var in diagnosticslist.variables:
-        f.write(declareVariable(var, refDeclLength=maxLength)+"\n")
+module_inputlist = "implicit none\n"
 
-    f.write("\n")
+# parameters: maximum array dimensions
+for param in params_maxDims:
+    module_inputlist += declareVariable(param, refDeclLength=maxLength)+"\n"
 
-    # namelist declarations
-    f.write(commentOut(toDoc(physicslist.description)))
-    f.write("namelist /"+physicslist.name+"/ &\n")
-    for var in physicslist.variables[:-1]:
-        f.write(" "+var.name+" ,&\n")
-    f.write(" "+physicslist.variables[-1].name+"\n")
-    f.write("\n")
-    f.write(commentOut(toDoc(numericlist.description)))
-    f.write("namelist /"+numericlist.name+"/ &\n")
-    for var in numericlist.variables[:-1]:
-        f.write(" "+var.name+" ,&\n")
-    f.write(" "+numericlist.variables[-1].name+"\n")
-    f.write("\n")
-    f.write(commentOut(toDoc(locallist.description)))
-    f.write("namelist /"+locallist.name+"/ &\n")
-    for var in locallist.variables[:-1]:
-        f.write(" "+var.name+" ,&\n")
-    f.write(" "+locallist.variables[-1].name+"\n")
-    f.write("\n")
-    f.write(commentOut(toDoc(globallist.description)))
-    f.write("namelist /"+globallist.name+"/ &\n")
-    for var in globallist.variables[:-1]:
-        f.write(" "+var.name+" ,&\n")
-    f.write(" "+globallist.variables[-1].name+"\n")
-    f.write("\n")
-    f.write(commentOut(toDoc(diagnosticslist.description)))
-    f.write("namelist /"+diagnosticslist.name+"/ &\n")
-    for var in diagnosticslist.variables[:-1]:
-        f.write(" "+var.name+" ,&\n")
-    f.write(" "+diagnosticslist.variables[-1].name+"\n")
+module_inputlist += "\n"
+
+# input variables, i.e. namelist contents
+module_inputlist += r"""!> \addtogroup grp_global_physicslist physicslist
+!> \brief """+toDoc(physicslist.description)+r"""
+!> @{
+"""
+for var in physicslist.variables:
+    module_inputlist += declareVariable(var, refDeclLength=maxLength)+"\n"
+module_inputlist += "!> @}\n"
+
+
+for var in numericlist.variables:
+    module_inputlist += declareVariable(var, refDeclLength=maxLength)+"\n"
+module_inputlist += "\n"
+for var in locallist.variables:
+    module_inputlist += declareVariable(var, refDeclLength=maxLength)+"\n"
+module_inputlist += "\n"
+for var in globallist.variables:
+    module_inputlist += declareVariable(var, refDeclLength=maxLength)+"\n"
+module_inputlist += "\n"
+for var in diagnosticslist.variables:
+    module_inputlist += declareVariable(var, refDeclLength=maxLength)+"\n"
+
+module_inputlist += "\n"
+
+# namelist declarations
+module_inputlist += declareNamelist(physicslist)+"\n"
+module_inputlist += "\n"
+module_inputlist += declareNamelist(numericlist)+"\n"
+module_inputlist += "\n"
+module_inputlist += declareNamelist(locallist)+"\n"
+module_inputlist += "\n"
+module_inputlist += declareNamelist(globallist)+"\n"
+module_inputlist += "\n"
+module_inputlist += declareNamelist(diagnosticslist)+"\n"
+
+with open("../inplst.f90", "w") as f:
+    
+    f.write(r"""!> @file inplst.f90
+!> \brief Input namelists
+!> \addtogroup grp_global
+!> @{
+""")
+    
+    f.write(r"""module inputlist
+!> \brief Input namelists
+!> \addtogroup grp_global
+!> @{
+""")
+    f.write(indented(2, module_inputlist, " "))
+    f.write("end module inputlist\n")
     
     
-    f.write("\n")
+    
+    
+    
+    
+    
+    
 #%%
 
 

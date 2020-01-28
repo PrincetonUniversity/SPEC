@@ -59,8 +59,9 @@ def commentOut(multilineString):
                         "; how to comment out this?")
     lines = multilineString.split("\n")
     result = ""
-    for line in lines:
+    for line in lines[:-1]:
         result += comment+line+"\n"
+    result += comment+lines[-1]
     return result
 
 from adf import Variable, toDoc
@@ -122,12 +123,20 @@ def declareVariable(var, attachDescription=True, refDeclLength=None):
                 decl += docparts[0]+"\n"
                 decl += indented(refDeclLength+1, "\n".join(docparts[1:]), " ")
             else:
+                if len(decl) <= refDeclLength:
+                    decl += " "*(refDeclLength-len(decl)+1)
                 decl += decl_doc
         return decl.strip()
     else:
         raise TypeError("var "+var.name+" is not a adf.Variable")
 
-
+def declareNamelist(nml):
+    result  = commentOut(toDoc(nml.description))+"\n"
+    result += "namelist /"+nml.name+"/ &\n"
+    for var in nml.variables[:-1]:
+        result += " "+var.name+" ,&\n"
+    result += " "+nml.variables[-1].name
+    return result
 
 
 #%% generate Fortran type declarations
