@@ -610,15 +610,15 @@ subroutine preset
    if( Lcoordinatesingularity ) then 
     zerdof = 0                                       ! count Zernike degree of freedom 30 Jun 19
     do ii = 1, Mpol                                  ! for m>0
-     do jj = ii, Lrad(vvol), 2
-      zerdof = zerdof + 2 * ntor + 1                 ! plus and minus sign for n>1, unique for n==0
-      if( NOTstellsym ) zerdof = zerdof + 2*ntor + 1 ! plus and minus sign for n
-     enddo
+      call get_zernike_dof(ii, Lrad(vvol), jj)
+      zerdof = zerdof + jj * (2 * ntor + 1)
+      if( NOTstellsym ) zerdof = zerdof + jj * (2 * ntor + 1)
     enddo
-    do jj = 0, Lrad(vvol), 2                         ! for m==0
-     zerdof = zerdof + ntor + 1                      ! minus sign for n
-     if( NOTstellsym ) zerdof = zerdof + ntor        ! no constant term for NOTstellsym
-    enddo
+
+    call get_zernike_dof(0, Lrad(vvol), jj)
+    zerdof = zerdof + jj * (ntor + 1)
+    if( NOTstellsym ) zerdof = zerdof + jj* (ntor)
+
                                      !          At~r^(m+2)                 a    c      b        d      e      f      g   h                                 
     if( YESstellsym ) NAdof(vvol) = 2 * zerdof  -   mn                   + 0         + Ntor+1        + mn-1        + 1 + 0
     if( NOTstellsym ) NAdof(vvol) = 2 * zerdof  - 2*mn+1                 + 0  + 0    + Ntor+1 + Ntor + mn-1 + mn-1 + 1 + 0
