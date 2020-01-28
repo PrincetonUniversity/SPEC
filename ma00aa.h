@@ -451,11 +451,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   endif ! end of if( Lcoordinatesingularity ) ; 17 Dec 15;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  if (Lcoordinatesingularity) then ! different radial dof for Zernike; 02 Jul 19
-     nele = ((lrad - mod(lrad,2)) / 2 + 1)**2 * mn2_max
-   else
-     nele = mn2_max * lp2_max
-   end if
+  nele = SIZE(TTssss)
  
   call DSCAL(nele, pi2pi2nfphalf, DToocc, 1)
   call DSCAL(nele, pi2pi2nfphalf, TTssss, 1)
