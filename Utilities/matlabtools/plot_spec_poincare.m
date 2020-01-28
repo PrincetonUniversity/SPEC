@@ -3,7 +3,7 @@ function plot_spec_poincare(data,nz0,nfp,trjstep,newfig)
 % Produces Poincare plots of the field lines on different sections (within one field period)
 %
 % INPUT    
-%   -data     : must be produced by calling read_spec_poincare(filename)
+%   -data     : must be produced by calling read_spec(filename)
 %   -nz0=-1   : shows a number of equidistant toroidal planes
 %   -nz0=-2   : shows selected toroidal planes
 %   -nz0>0    : shows the nz0 toroidal plane
@@ -12,7 +12,7 @@ function plot_spec_poincare(data,nz0,nfp,trjstep,newfig)
 %   -newfig   : opens(=1) or not(=0) a new figure
 %
 %   originally written by J.Loizu (2015)
-
+%   modified for new HDF5 output by J.Schilling (2020)
 
 nptraj   = size(data.poincare.R,1);  % # of poincare trajectories (field lines)
 
