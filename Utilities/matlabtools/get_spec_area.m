@@ -22,18 +22,11 @@ smin     = -0.999; %avoids singular inversion of the metric matrix
 sarr     = linspace(smin,1,ns);
 tarr     = linspace(0,2*pi,nt);
 
-sqrtgradphi = 1;
+jacobian = get_spec_jacobian(data,lvol,sarr,tarr,phi0);
+gcontrav = get_spec_metric_contrav(data,lvol,sarr,tarr,phi0);
 
-if(data.Igeometry==1)
-
- jacobian = get_spec_jacobian_slab(data,lvol,sarr,tarr,phi0);
- 
-else
-
- jacobian = get_spec_jacobian(data,lvol,sarr,tarr,phi0);
- gcontrav = get_spec_metric_contrav(data,lvol,sarr,tarr,phi0);
- sqrtgradphi = sqrt(gcontrav{3}{3});
+sqrtgradphi = sqrt(gcontrav{3}{3});
   
-end
-
 Avol  = sum(sum(jacobian(2:end,:).*sqrtgradphi(2:end,:)))*(2*2*pi)/(ns*nt);
+
+end

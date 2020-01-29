@@ -34,26 +34,15 @@ try
   if(machine_format ~= machform)
    machine_format =  machform;  % update value
   end
-  
-  [filepath,name,ext]=fileparts(filename);
-  fid=0;
-  if (isempty(filepath))
-    % file is in the current working directory, so there is no need to prepend the path to it
-    hessian_file = ['.' name(1:length(name)-3) '.GF.ma'];
-    fid        = fopen(hessian_file,'r',machine_format);
-  else
-    % file is outside the current working directory, so include the path to it
-    hessian_file = [filepath filesep '.' name(1:length(name)-3) '.GF.ma'];
-    fid        = fopen(hessian_file,'r',machine_format);
-  end
-  
+  hessian_file = ['.' filename(1:length(filename)-6) '.GF.ma'];
+  fid        = fopen(hessian_file,'r',machine_format);
   if (fid > 0)
     % Read through NGdof
     fread(fid,1,spacer_format);
     ngdof = fread(fid,1,int_format); % NGdof 
     fread(fid,1,spacer_format);  
   else
-   disp([' - File "' hessian_file '" does not exist']); break;
+   disp(' - File does not exist'); break;
   end  
 
   fread(fid,1,spacer_format);  

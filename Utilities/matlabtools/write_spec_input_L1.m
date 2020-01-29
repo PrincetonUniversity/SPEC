@@ -32,17 +32,10 @@ sref{8}  = ' pflux       =';
 sref{9}  = ' mu          =';
 sref{10} = ' phiedge     =';
 
-bool_slab = (length(iota) == Nvol+1);
-
 snew1    = sref{1};
 snew2    = sref{2};
-if bool_slab
-    snew3    = sref{3};
-    snew4    = sref{4};     
-else
-    snew3    = strcat(sref{3}, {'    '}, num2str(iota(1), 16), {'    '});
-    snew4    = strcat(sref{4}, {'    '}, num2str(oita(1), 16), {'    '});
-end
+snew3    = strcat(sref{3}, {'    '}, num2str(iota(1), 16), {'    '});
+snew4    = strcat(sref{4}, {'    '}, num2str(oita(1), 16), {'    '});
 snew5    = sref{5};
 snew6    = sref{6};
 snew7    = strcat(sref{7},{'   '},num2str(Nvol), {'   '});
@@ -59,11 +52,6 @@ for i=1:Nvol
   snew6  = strcat(snew6, {'   '},num2str(nptr(i),16), {'   '});
   snew8  = strcat(snew8, {'   '},num2str(pfl(i) ,16), {'   '});
   snew9  = strcat(snew9, {'   '},num2str(mu(i)  ,16), {'   '});  
-end
-
-if bool_slab
-  snew3  = strcat(snew3, {'   '},num2str(iota(Nvol+1),16), {'   '});
-  snew4  = strcat(snew4, {'   '},num2str(oita(Nvol+1),16), {'   '});    
 end
 
 snew{1}    = snew1{1};

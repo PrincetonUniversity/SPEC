@@ -3,22 +3,21 @@ function plot_spec_poincare(data,nz0,nfp,trjstep,newfig)
 % Produces Poincare plots of the field lines on different sections (within one field period)
 %
 % INPUT    
-%   -data     : must be produced by calling read_spec(filename)
+%   -data     : must be produced by calling read_spec_poincare(filename)
 %   -nz0=-1   : shows a number of equidistant toroidal planes
 %   -nz0=-2   : shows selected toroidal planes
 %   -nz0>0    : shows the nz0 toroidal plane
 %   -nfp      : is the number of field periods
 %   -trjstep  : step to skip field-line trajectories when ploting (trjstep=0 means all trajectories are ploted)
-%   -newfig   : opens(=1) or not(=0) a new figure
+%   -newfig   : opens(=1) or not(=0) a new figure. =2 to overwrite last
+%   		plot
 %
 %   originally written by J.Loizu (2015)
-%   modified for new HDF5 output by J.Schilling (2020)
 
-nptraj   = size(data.poincare.R,1);  % # of poincare trajectories (field lines)
 
-nz       = size(data.poincare.R,2);  % # of toroidal planes
+nptraj   = size(data.R_lines,1);  % # of poincare trajectories (field lines)
 
-nppts    = size(data.poincare.R,3);  % # of iterations per trajectory
+nz       = size(data.R_lines,2);  % # of toroidal planes
 
 flag2col = 'F';                   % flag for ploting field lines with alternating colour ('T') or not ('F')
 
@@ -29,15 +28,34 @@ nz
 disp(' ');
 
 
-rmax   = max(max(max(data.poincare.R)));
-rmin   = min(min(min(data.poincare.R)));
-zmax   = max(max(max(data.poincare.Z)));
-zmin   = min(min(min(data.poincare.Z)));
+rmax   = max(max(max(data.R_lines)));
+rmin   = min(min(min(data.R_lines)));
+zmax   = max(max(max(data.Z_lines)));
+zmin   = min(min(min(data.Z_lines)));
+
+switch data.Igeometry
+    case 1
+        xmin =  0;
+        xmax =  2*pi;
+        ymin = -0.1;
+        ymax =  data.Rbc(1,end)+0.1;
+    case 2
+        xmin = -1.1*rmax;
+        xmax =  1.1*rmax;
+        ymin = -1.1*rmax;
+        ymax =  1.1*rmax;
+    case 3
+        xmin =  0.9*rmin;
+        xmax =  1.1*rmax;
+        ymin =  1.1*zmin;
+        ymax =  1.1*zmax;
+end
+
 
 nth    = 5096;  %ploting options for the boundary
 bcol   = 'r';
 bthick = 3;
-if(data.input.physics.Lfreebound==1)
+if(data.Lfreebound==1)
 bcol   = 'k';
 bthick = 1;
 end
@@ -50,10 +68,15 @@ else
  pcol   = ['k' 'k'];
 end
 
-if(newfig==1)
-figure
+switch newfig
+    case 0
+        hold on
+    case 1
+        figure
+        hold on
+    case 2
+        hold off
 end
-hold on
 
 switch nz0
 
@@ -68,33 +91,65 @@ switch nz0
 
    subplot(npl,1,k)
  
-   R = squeeze(data.poincare.R(:,j,:));
-
-   Z = squeeze(data.poincare.Z(:,j,:));
-
-   for i=1:nptraj     %for each field line trajectory
-    scatter(R(i,:),Z(i,:),10,'.k')
-    axis equal
-    hold on
-    set(gca,'FontSize',12)
-    xlim([0.9*rmin 1.1*rmax])
-    ylim([1.1*zmin 1.1*zmax])
+   switch data.Igeometry
+       case 1
+           R    = squeeze(data.R_lines(:,j,:));
+           T    = mod(squeeze(data.th_lines(:,j,:)),2*pi);
+           for i=1:1+trjstep:nptraj       %for each field line trajectory
+               scatter(T(i,:),R(i,:),10,'.k')
+               hold on
+           end
+       case 2  
+           R    = squeeze(data.R_lines(:,j,:));
+           T    = squeeze(data.th_lines(:,j,:));
+           for i=1:1+trjstep:nptraj       %for each field line trajectory
+               scatter(R(i,:).*cos(T(i,:)),R(i,:).*sin(T(i,:)),10,'.k')
+               hold on;
+           end
+       case 3
+           R = squeeze(data.R_lines(:,j,:));
+           Z = squeeze(data.Z_lines(:,j,:));
+           for i=1:1+trjstep:nptraj     %for each field line trajectory
+            scatter(R(i,:),Z(i,:),10,'.k')
+            hold on;
+           end
+       otherwise
+           error('Unsupported geometry')
    end
-
+   
    Rb    = 0;    
    Zb    = 0;
    dth   = 2*pi/nth;
    theta = dth:dth:2*pi; 
    zeta  = (j-1)*(2*pi/nz)/nfp;
 
-   for imn=1:data.output.mn  % get and plot the boundary  % the data.in values go in steps of nfp
-    alpha = double(data.output.im(imn))*theta-double(data.output.in(imn))*zeta;
-    Rb    = Rb + data.output.Rbc(imn,end)*cos(alpha) + data.output.Rbs(imn,end)*sin(alpha);
-    Zb    = Zb + data.output.Zbs(imn,end)*sin(alpha) + data.output.Zbc(imn,end)*cos(alpha); 
+   switch data.Igeometry
+     case 1
+       for imn=1:data.mn     % get and plot the boundary
+         alpha = double(data.im(imn))*theta-double(data.in(imn))*zeta;
+         Rb    = Rb   + data.Rbc(imn,end)*cos(alpha) + data.Rbs(imn,end)*sin(alpha);
+         Rb    = Rb   + data.Rbc(imn,1)*cos(alpha)   + data.Rbs(imn,1)*sin(alpha);
+       end
+     case 2  
+       for imn=1:data.mn     % get and plot the boundary
+         Rb = Rb + data.Rbc(imn,end)*cos(double(data.im(imn))*theta-double(data.in(imn))*zeta).*cos(theta);
+         Zb = Zb + data.Rbc(imn,end)*cos(double(data.im(imn))*theta-double(data.in(imn))*zeta).*sin(theta);
+       end
+     case 3
+       for imn=1:data.mn  % get and plot the boundary  % the data.in values go in steps of nfp
+         alpha = double(data.im(imn))*theta-double(data.in(imn))*zeta;
+         Rb    = Rb + data.Rbc(imn,end)*cos(alpha) + data.Rbs(imn,end)*sin(alpha);
+         Zb    = Zb + data.Zbs(imn,end)*sin(alpha) + data.Zbc(imn,end)*cos(alpha); 
+       end
+     otherwise
+       error('Unsupported geometry')
    end
 
    scatter(Rb,Zb,bthick,'*',bcol)
-
+   hold on;
+    set(gca,'FontSize',12)
+    xlim([xmin xmax])
+    ylim([ymin ymax])
   end
 
  case -2            
@@ -109,22 +164,35 @@ switch nz0
   k   = 0;
   
   for j=1:npl %for npl toroidal planes
-
+      
    k = k+1;
-
    subplot(npl,1,k)
- 
-   R = squeeze(data.poincare.R(:,ipl(j),:));
-
-   Z = squeeze(data.poincare.Z(:,ipl(j),:));
-
-   for i=1:nptraj     %for each field line trajectory
-    scatter(R(i,:),Z(i,:),10,'.k')
-    axis equal
-    hold on
-    set(gca,'FontSize',12)
-    xlim([0.9*rmin 1.1*rmax])
-    ylim([1.1*zmin 1.1*zmax])
+   
+   
+   switch data.Igeometry
+       case 1
+           R    = squeeze(data.R_lines(:,ipl(j),:));
+           T    = mod(squeeze(data.th_lines(:,ipl(j),:)),2*pi);
+           for i=1:1+trjstep:nptraj       %for each field line trajectory
+               scatter(T(i,:),R(i,:),10,'.k')
+               hold on
+           end
+       case 2  
+           R    = squeeze(data.R_lines(:,ipl(j),:));
+           T    = squeeze(data.th_lines(:,ipl(j),:));
+           for i=1:1+trjstep:nptraj       %for each field line trajectory
+               scatter(R(i,:).*cos(T(i,:)),R(i,:).*sin(T(i,:)),10,'.k')
+               hold on;
+           end
+       case 3
+           R = squeeze(data.R_lines(:,ipl(j),:));
+           Z = squeeze(data.Z_lines(:,ipl(j),:));
+           for i=1:1+trjstep:nptraj     %for each field line trajectory
+            scatter(R(i,:),Z(i,:),10,'.k')
+            hold on;
+           end
+       otherwise
+           error('Unsupported geometry')
    end
 
    Rb    = 0;    
@@ -133,50 +201,107 @@ switch nz0
    theta = dth:dth:2*pi; 
    zeta  = (ipl(j)-1)*(2*pi/nz)/nfp;
 
-   for imn=1:data.output.mn  % get and plot the boundary
-    alpha = double(data.output.im(imn))*theta-double(data.output.in(imn))*zeta;
-    Rb    = Rb + data.output.Rbc(imn,end)*cos(alpha) + data.output.Rbs(imn,end)*sin(alpha);
-    Zb    = Zb + data.output.Zbs(imn,end)*sin(alpha) + data.output.Zbc(imn,end)*cos(alpha); 
+   switch data.Igeometry
+     case 1
+       for imn=1:data.mn     % get and plot the boundary
+         alpha = double(data.im(imn))*theta-double(data.in(imn))*zeta;
+         Rb    = Rb   + data.Rbc(imn,end)*cos(alpha) + data.Rbs(imn,end)*sin(alpha);
+         Rb    = Rb   + data.Rbc(imn,1)*cos(alpha)   + data.Rbs(imn,1)*sin(alpha);
+       end
+     case 2  
+       for imn=1:data.mn     % get and plot the boundary
+         Rb = Rb + data.Rbc(imn,end)*cos(double(data.im(imn))*theta-double(data.in(imn))*zeta).*cos(theta);
+         Zb = Zb + data.Rbc(imn,end)*cos(double(data.im(imn))*theta-double(data.in(imn))*zeta).*sin(theta);
+       end
+     case 3
+       for imn=1:data.mn  % get and plot the boundary  % the data.in values go in steps of nfp
+         alpha = double(data.im(imn))*theta-double(data.in(imn))*zeta;
+         Rb    = Rb + data.Rbc(imn,end)*cos(alpha) + data.Rbs(imn,end)*sin(alpha);
+         Zb    = Zb + data.Zbs(imn,end)*sin(alpha) + data.Zbc(imn,end)*cos(alpha); 
+       end
+     otherwise
+       error('Unsupported geometry')
    end
 
    scatter(Rb,Zb,bthick,'*',bcol)
-
+   hold on;
+    set(gca,'FontSize',12)
+    xlim([xmin xmax])
+    ylim([ymin ymax])
   end
 
 
  otherwise  
- 
-  R    = squeeze(data.poincare.R(:,nz0,:));
-
-  Z    = squeeze(data.poincare.Z(:,nz0,:));
-
-  for i=1:1+trjstep:nptraj       %for each field line trajectory 
-   scatter(R(i,:),Z(i,:),10,'.',pcol(1+mod(i,2)))
-   axis equal
-   hold on
-   set(gca,'FontSize',12)
-   xlabel('R','FontSize',12)
-   ylabel('Z','FontSize',12)
-   xlim([0.9*rmin 1.1*rmax])
-   ylim([1.1*zmin 1.1*zmax])
-  end
+    
+   
+   switch data.Igeometry
+       case 1
+           R    = squeeze(data.R_lines(:,nz0,:));
+           T    = mod(squeeze(data.th_lines(:,nz0,:)),2*pi);
+           for i=1:1+trjstep:nptraj       %for each field line trajectory
+               scatter(T(i,:),R(i,:),10,'.k')
+               hold on
+           end
+       case 2  
+           R    = squeeze(data.R_lines(:,nz0,:));
+           T    = squeeze(data.th_lines(:,nz0,:));
+           for i=1:1+trjstep:nptraj       %for each field line trajectory
+               scatter(R(i,:).*cos(T(i,:)),R(i,:).*sin(T(i,:)),10,'.k')
+               hold on;
+           end
+       case 3
+           R = squeeze(data.R_lines(:,nz0,:));
+           Z = squeeze(data.Z_lines(:,nz0,:));
+           for i=1:1+trjstep:nptraj     %for each field line trajectory
+            scatter(R(i,:),Z(i,:),10,'.k')
+            hold on;
+           end
+       otherwise
+           error('Unsupported geometry')
+   end
 
   Rb    = 0;
   Zb    = 0;
   dth   = 2*pi/nth;
   theta = dth:dth:2*pi; 
-  zeta  = (nz0-1)*(2*pi/nz)/nfp;
-
-  for imn=1:data.output.mn     % get and plot the boundary
-   alpha = double(data.output.im(imn))*theta-double(data.output.in(imn))*zeta;
-   Rb    = Rb + data.output.Rbc(imn,end)*cos(alpha) + data.output.Rbs(imn,end)*sin(alpha);
-   Zb    = Zb + data.output.Zbs(imn,end)*sin(alpha) + data.output.Zbc(imn,end)*cos(alpha);
-  end
+  zeta  = (nz0-1.0)*(2.0*pi/nz)/double(nfp);
+   
+  
+  switch data.Igeometry
+     case 1
+       for imn=1:data.mn     % get and plot the boundary
+         alpha = double(data.im(imn))*theta-double(data.in(imn))*zeta;
+         Rb    = Rb   + data.Rbc(imn,end)*cos(alpha) + data.Rbs(imn,end)*cos(alpha);
+         Zb    = Zb   + data.Rbc(imn,1)  *cos(alpha) + data.Rbs(imn,1)  *sin(alpha);
+       end
+     case 2  
+       for imn=1:data.mn     % get and plot the boundary
+         Rb = Rb + data.Rbc(imn,end)*cos(double(data.im(imn))*theta-double(data.in(imn))*zeta).*cos(theta);
+         Zb = Zb + data.Rbc(imn,end)*cos(double(data.im(imn))*theta-double(data.in(imn))*zeta).*sin(theta);
+       end
+     case 3
+       for imn=1:data.mn  % get and plot the boundary  % the data.in values go in steps of nfp
+         alpha = double(data.im(imn))*theta-double(data.in(imn))*zeta;
+         Rb    = Rb + data.Rbc(imn,end)*cos(alpha) + data.Rbs(imn,end)*sin(alpha);
+         Zb    = Zb + data.Zbs(imn,end)*sin(alpha) + data.Zbc(imn,end)*cos(alpha); 
+       end
+     otherwise
+       error('Unsupported geometry')
+  end  
 
   scatter(Rb,Zb,bthick,'*',bcol)
-
+  
+  hold on;
+  set(gca,'FontSize',12)
+  xlabel('R','FontSize',12)
+  ylabel('Z','FontSize',12)
+  xlim([xmin xmax])
+  ylim([ymin ymax])
 end
 
+if data.Igeometry ~= 1
+    axis equal
+end
 
 disp(' ');
 disp('--- end of program ---');

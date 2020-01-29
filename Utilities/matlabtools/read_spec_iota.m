@@ -11,6 +11,12 @@ function idata = read_spec_iota(filename)
 % written by J.Loizu (2017)
 % modified by J.Loizu  (02.2018)
 
+if ~exist(filename)
+    ME = MException('MyComp:FileDoesNotExist', ...
+        'The file %s does not exist (in this directory)', filename);
+    throw(ME)
+end
+
 global machform;
 
 machform = 's';
@@ -31,7 +37,6 @@ spacer_format  = 'int32';
 
 j=1;
 
-[filepath,name,ext]=fileparts(filename);
 for i=1:nvol
     success      = 0;
     triedallform = 0;
@@ -40,18 +45,8 @@ for i=1:nvol
         if(machine_format ~= machform)
          machine_format =  machform;  % update value
         end
-        
-        fid=0;
-	    if (isempty(filepath))
-	      % file is in the current working directory, so there is no need to prepend the path to it
-	      transform_file = ['.' name '.t.' num2str(i,'%4.4i') '.dat'];
-	      fid        = fopen(transform_file,'r',machine_format);
-	    else
-	      % file is outside the current working directory, so include the path to it
-	      transform_file = [filepath filesep '.' name '.t.' num2str(i,'%4.4i') '.dat'];
-	      fid        = fopen(transform_file,'r',machine_format);
-	    end
-       
+        transform_file=['.' filename(1:length(filename)-3) '.t.' num2str(i,'%4.4i') '.dat'];
+        fid = fopen(transform_file,'r',machine_format);
         if (fid > 0)
             % Get subgrid
             fread(fid,1,spacer_format);
@@ -73,7 +68,7 @@ for i=1:nvol
 	    fclose(fid);
         fid = -1;
         else
-         disp([' - File "' transform_file '" does not exist']); break
+        disp(' - File does not exist'); break
         end        
     catch
         if(triedallform==1)      

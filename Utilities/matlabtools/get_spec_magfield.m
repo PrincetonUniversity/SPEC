@@ -27,11 +27,9 @@ Azo     = fdata.Azo{lvol};
 
 Lrad    = fdata.Lrad(lvol);
 
-sarr    = transpose(sarr);
 ns      = length(sarr);
 nt      = length(tarr);
 nz      = length(zarr);
-sbar    = (sarr+1)/2;
 
 mn      = fdata.mn;
 im      = double(fdata.im);
@@ -42,53 +40,36 @@ Bt      = zeros(ns,nt,nz); % allocate data for magnetic field along theta
 Bz      = zeros(ns,nt,nz); % allocate data for magnetic field along zeta
 
 T       = cell(Lrad+1,2);  % allocate data for Chebyshev polynomials and their derivatives
-fac     = cell(mn,2);      % allocate data for regularization factors and their derivatives
 
 T{1}{1} = ones(ns,1);
 T{1}{2} = zeros(ns,1);
 
-T{2}{1} = sarr;
+T{2}{1} = transpose(sarr);
 T{2}{2} = ones(ns,1);
 
 
 % Construct Chebyshev polynomials and their derivatives
-
 for l=3:Lrad+1
-  T{l}{1} = 2*sarr.*T{l-1}{1} - T{l-2}{1};
-  T{l}{2} = 2*T{l-1}{1} + 2*sarr.*T{l-1}{2} - T{l-2}{2};
+  T{l}{1} = 2*transpose(sarr).*T{l-1}{1} - T{l-2}{1};
+  T{l}{2} = 2*T{l-1}{1} + 2*transpose(sarr).*T{l-1}{2} - T{l-2}{2};
 end
-
 
 % Construct regularization factors and their derivatives
-
-for j=1:mn
-  if(lvol>1 || im(j)==0) 
-   fac{j}{1}  = ones(ns,1);
-   fac{j}{2}  = zeros(ns,1);
-  elseif(im(j)==2)
-   fac{j}{1}  = sbar;
-   fac{j}{2}  = 0.5*ones(ns,1);
-  else
-   fac{j}{1}  = sbar.^(im(j)/2);
-   fac{j}{2}  = (im(j)/4)*sbar.^(im(j)/2-1);
-  end
-end
-
+fac = get_spec_regularisation_factor(fdata, lvol, sarr, 'F');
 
 % Construct magnetic field contravariant components
-
 for l=1:Lrad+1
-  for j=1:mn
-    for it=1:nt
-      for iz=1:nz
-       cosa = cos(im(j)*tarr(it)-in(j)*zarr(iz));
-       sina = sin(im(j)*tarr(it)-in(j)*zarr(iz));
-       Bs(:,it,iz) = Bs(:,it,iz) + fac{j}{1}.*T{l}{1}.*( (im(j)*Azo(l,j) + in(j)*Ato(l,j))*cosa - (im(j)*Aze(l,j) + in(j)*Ate(l,j))*sina  );
-       Bt(:,it,iz) = Bt(:,it,iz) - (fac{j}{1}.*T{l}{2}+fac{j}{2}.*T{l}{1}).*( Aze(l,j)*cosa + Azo(l,j)*sina );
-       Bz(:,it,iz) = Bz(:,it,iz) + (fac{j}{1}.*T{l}{2}+fac{j}{2}.*T{l}{1}).*( Ate(l,j)*cosa + Ato(l,j)*sina );
-      end
+    for j=1:mn
+        for it=1:nt
+            for iz=1:nz
+                cosa = cos(im(j)*tarr(it)-in(j)*zarr(iz));
+                sina = sin(im(j)*tarr(it)-in(j)*zarr(iz));
+                Bs(:,it,iz) = Bs(:,it,iz) +  fac{j}{1}.*T{l}{1}.*( (im(j)*Azo(l,j) + in(j)*Ato(l,j))*cosa - (im(j)*Aze(l,j) + in(j)*Ate(l,j))*sina  );
+                Bt(:,it,iz) = Bt(:,it,iz) - (fac{j}{1}.*T{l}{2}+fac{j}{2}.*T{l}{1}).*( Aze(l,j)*cosa + Azo(l,j)*sina );
+                Bz(:,it,iz) = Bz(:,it,iz) + (fac{j}{1}.*T{l}{2}+fac{j}{2}.*T{l}{1}).*( Ate(l,j)*cosa + Ato(l,j)*sina );
+            end
+        end
     end
-  end
 end
 
 
