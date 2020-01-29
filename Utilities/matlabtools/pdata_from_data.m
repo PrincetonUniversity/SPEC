@@ -3,12 +3,12 @@ function pdata = pdata_from_data(data)
 % Reads Poincare data from field-line-tracing using output from SPEC
 %
 % INPUT
-% - data : data file obtained from read_spec(filename)
+% - data   : data file obtained from read_spec(filename)
 %
 % OUTPUT
-% - pdata    : contains all the poincare data, which can be fed into several routines for analyzing and ploting
+% - pdata  : contains all the poincare data, which can be fed into several routines for analyzing and ploting
 %
-% written by A.Baillod (2017)
+% written by A.Baillod (2019)
 
 nvol            = double(data.input.physics.Nvol);
 Lfreebound      = data.input.physics.Lfreebound;
