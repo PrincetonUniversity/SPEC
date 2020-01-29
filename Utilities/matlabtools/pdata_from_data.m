@@ -8,14 +8,11 @@ function pdata = pdata_from_data(data)
 % OUTPUT
 % - pdata    : contains all the poincare data, which can be fed into several routines for analyzing and ploting
 %
-% written by J.Loizu (2017)
+% written by A.Baillod (2017)
 
-global machform;
-machform = 's'; 
-
-nvol     = double(data.input.physics.Nvol);
-Lfreebound = data.input.physics.Lfreebound;
-nvol = nvol + Lfreebound;
+nvol            = double(data.input.physics.Nvol);
+Lfreebound      = data.input.physics.Lfreebound;
+nvol            = nvol + Lfreebound;
 
 pdata.R_lines   = data.poincare.R;
 pdata.Z_lines   = data.poincare.Z;

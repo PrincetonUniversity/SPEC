@@ -1,6 +1,6 @@
 function plot_spec_modB_boundary(data,Nvol,nt,nz)
 
-% Produces plot of |B| on the full boundary surface
+% Produces plot of |B| on the full boundary surface in toroidal geometry.
 %
 % INPUT
 %   -data   : data obtained via read_spec(filename)
