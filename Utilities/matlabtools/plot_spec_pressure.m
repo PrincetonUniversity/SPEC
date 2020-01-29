@@ -1,10 +1,13 @@
 function plot_spec_pressure(data, newfig)
 
-% Plots stepped-pressure profile (without pscale) versus normalized toroidal flux used in SPEC
-%   -data   : data obtained from read_spec_data
-%   -newfig : open a new figue (=1), plots on an existing one (=0) or
-%   	       overwrite last plot (=2)
-%   written by J.Loizu (2018)
+% Plots stepped-pressure profile versus normalized toroidal flux used in SPEC
+%
+% INPUT
+%   -data   : data obtained from read_spec(fname)
+%   -newfig : open a new figue (=1), plots on an existing one (=0) or overwrite last plot (=2)
+%
+% written by J.Loizu (2018)
+% modified by A. Baillod (2019)
 
 
 pvol = data.input.physics.pressure * data.input.physics.pscale;
