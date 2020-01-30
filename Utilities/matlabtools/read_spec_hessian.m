@@ -1,21 +1,20 @@
-function hdata = read_spec_hessian(filename)
+function Hmatrix = read_spec_hessian(filename)
 
 % Reads Hessian matrix using output from SPEC
 %
 % INPUT
-% - filename : path to the hdf5 output file (e.g. 'testcase.h5')
+% - filename : path to the hdf5 output file (e.g. 'testcase.sp.h5')
 %
 % OUTPUT
-% - hdata    : contains the Hessian matrix, which can be fed into several routines for analyzing and ploting
+% - Hmatrix    : Hessian matrix, which can be fed into several routines for analyzing and ploting
 %
 % written by J.Loizu (2017)
+% updated by J.Loizu (2020)
 
 
 global machform;
 
 machform = 's'; 
-
-data     = read_hdf5(filename);
 
 
 % Read the hessian file
@@ -48,8 +47,6 @@ try
   fread(fid,1,spacer_format);  
   Hmatrix = fread(fid,[ngdof ngdof],float_format);
   fread(fid,1,spacer_format);
-
-  data.Hmatrix = Hmatrix;
  
   success=1;
     
@@ -77,6 +74,3 @@ if (fid ~= -1)
     fclose(fid);
 end
 
-
-%return output
-hdata = data;
