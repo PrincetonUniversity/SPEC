@@ -21,7 +21,7 @@ function fac = get_spec_regularisation_factor(data, lvol, sarr, ForG)
 
 sarr = transpose(sarr);
 
-G       = data.Igeometry;
+Igeometry= data.Igeometry;
 mn      = data.mn;
 im      = double(data.im);
 ns      = length(sarr);
@@ -41,7 +41,7 @@ halfmm = im / 2.0;
 
 
 if ForG=='G'
-    switch G
+    switch Igeometry
         case 1 % Slab geometry
 
             for j=1:mn
@@ -89,7 +89,7 @@ if ForG=='G'
     
     
 elseif ForG=='F'
-    switch G
+    switch Igeometry
         case 1
             for j=1:mn
                 fac{j}{1}  = ones(ns,1);
