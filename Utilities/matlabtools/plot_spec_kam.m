@@ -22,6 +22,11 @@ Rbsmn           = data.output.Rbs;
 Zbcmn           = data.output.Zbc;
 Zbsmn           = data.output.Zbs;
 Igeometry       = data.input.physics.Igeometry;
+try
+ rpol           = data.input.physics.rpol;
+catch
+ rpol           = 1;
+end
 
 % Compute (x,y) coordinates of each KAM surface
 
@@ -37,11 +42,13 @@ Y      = zeros(Nvol,nth);
 
 switch Igeometry
     case 1
-        for i=1:Nvol
-            X(i,:) = theta;
+        X     = zeros(Nvol+1,nth);
+        Y     = zeros(Nvol+1,nth);
+        for i=1:Nvol+1
+            X(i,:) = rpol*theta;
             for k=1:mn
                 alpha  = double(im(k))*theta-double(in(k))*zeta;
-                Y(i,:) = Y(i,:) + Rbcmn(k,i+1)*cos(alpha) + Rbsmn(k,i+1)*sin(alpha);
+                Y(i,:) = Y(i,:) + Rbcmn(k,i)*cos(alpha) + Rbsmn(k,i)*sin(alpha);
             end
         end
     case 2
@@ -77,15 +84,19 @@ switch newfig
         hold off
 end
 
-for i=1:Nvol
+for i=1:size(X,1)
  scatter(X(i,:),Y(i,:),3,'filled','r')
  hold on
 end
 
-if Igeometry~=1
-    axis equal
-end
 hold on
 set(gca,'FontSize',12)
-xlabel('R','FontSize',12)
-ylabel('Z','FontSize',12)
+
+if Igeometry~=1
+ axis equal
+ xlabel('R','FontSize',12)
+ ylabel('Z','FontSize',12)
+else
+ xlabel('\theta r_{pol}','FontSize',12)
+ ylabel('R','FontSize',12)
+end

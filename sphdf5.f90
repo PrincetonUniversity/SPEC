@@ -251,6 +251,10 @@ subroutine mirror_input_to_outfile
   H5DESCR_CDSET( /input/physics/mupftol, mupftol   ,                                                                                   __FILE__, __LINE__)
   HWRITEIV_LO( grpInputPhysics,           1,   mupfits, (/ mupfits /),                                                                 __FILE__, __LINE__)
   H5DESCR_CDSET( /input/physics/mupfits, mupfits   ,                                                                                   __FILE__, __LINE__)
+  HWRITERV_LO( grpInputPhysics,           1,   rpol, (/ rpol /),                                                                       __FILE__, __LINE__)
+  H5DESCR_CDSET( /input/physics/rpol, poloidal extent of slab   ,                                                                      __FILE__, __LINE__)
+  HWRITERV_LO( grpInputPhysics,           1,   rtor, (/ rtor /),                                                                       __FILE__, __LINE__)
+  H5DESCR_CDSET( /input/physics/rtor, toroidal extent of slab   ,                                                                      __FILE__, __LINE__)
 
   HCLOSEGRP( grpInputPhysics , __FILE__, __LINE__)
 
