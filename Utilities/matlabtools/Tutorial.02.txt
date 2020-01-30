@@ -15,14 +15,18 @@
    
    fname = 'G3V02L1Fi.001.sp.h5';
 
-2. Call ploting routine for |B| on the boundary surface:
+2. Load output data:
+
+   data = read_spec(fname); 
+
+3. Call ploting routine for |B| on the boundary surface:
    
-   plot_spec_modB_boundary(fname,2,64,64); 
+   plot_spec_modB_boundary(data,2,32,64); 
 
 3. Call ploting routine for |B| on a cross-section for volumes lvol=2 and lvol=1:
 
-   plot_spec_modB(fname,2,'d','d','d',1);
-   plot_spec_modB(fname,1,'d','d','d',0);
+   plot_spec_modB(data,2,'d','d','d',1);
+   plot_spec_modB(data,1,'d','d','d',0);
 
 
 %%% More details %%% 
@@ -31,13 +35,14 @@ In order to see how to change cross-section, or other ploting options, use the h
 
 Example: help plot_spec_modB
 
-In order to obtain the magnetic field components in order to use them for other purposes, see routines
+In order to obtain the magnetic field components to use them for other purposes, see routines
 
  - get_spec_magfield 
  - get_spec_modB
  
 
 %%%%%%%%%%%% written by J.Loizu (2017) %%%%%%%%%%%%
+% updated for new reading HDF5 routine by J.Loizu (2020) %
 
 
 

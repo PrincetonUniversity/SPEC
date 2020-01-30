@@ -26,7 +26,7 @@
    
 3. Call ploting routine for iota on the ideal-interfaces:
 
-   plot_spec_iotakam(fname,0,'i','f',0);
+   plot_spec_iotakam(data,'i','f',0);
    
 
 %%% More details %%% 
@@ -35,10 +35,9 @@ In order to see how to change cross-section, or other ploting options, use the h
 
 Example: help plot_spec_iota
 
-For runs in slab geometry (e.g. G1V02L0Fi.001.sp), the same calls can be used.
-
 
 %%%%%%%%%%%% written by J.Loizu (2017) %%%%%%%%%%%%
+% updated for new reading HDF5 routine by J.Loizu (2020) %
 
 
 
