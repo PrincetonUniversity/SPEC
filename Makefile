@@ -51,13 +51,13 @@ ifeq ($(CC),gfortran)
  # At PPPL, you can use the following commands
  # module use /p/focus/modules
  # module load spec/gcc
- RFLAGS=-O3 -w -ffree-line-length-none -march=native -ffast-math -fexternal-blas
+ RFLAGS=-O3 -w -ffree-line-length-none -ffast-math -fexternal-blas
  DFLAGS=-O0 -g -w -ffree-line-length-none -Wextra -Wtarget-lifetime -fbacktrace -fbounds-check -fexternal-blas \
      -fcheck=all -DDEBUG #-ffpe-trap=invalid,zero,overflow,underflow,inexact # for some reason this will cause crash
  CFLAGS=-fdefault-real-8
- LINKS=-L$(LAPACK_HOME) -llapack -lgfortran
+ LINKS=-L$(LAPACK_HOME) -llapack #-lgfortran
  LIBS=-I$(HDF5_HOME)/include
- LINKS+=-L$(HDF5_HOME)/lib -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lpthread -lz -lm
+ LINKS+=-L$(HDF5_HOME)/lib -lhdf5hl_fortran -lhdf5 -lhdf5_fortran -lhdf5 -lpthread -lz -lm
  LIBS+=-I$(FFTW_HOME)/include
  LINKS+=-L$(FFTW_HOME)/lib -lfftw3 -lopenblas
 endif
