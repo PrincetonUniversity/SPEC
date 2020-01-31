@@ -1,4 +1,4 @@
-function plot_spec_Ivolume(data, newfig)
+function plot_spec_Ivolume(data, cumul, newfig)
 
 % plot_spec_Ivolume(filename, newfig)
 %
@@ -7,6 +7,7 @@ function plot_spec_Ivolume(data, newfig)
 % INPUT
 % -----
 %    filename: SPEC output filename (.sp.h5)
+%    cumul:    Cumulative (=1) or not cumulative (=0) quantity
 %    newfig  : Plots on an existing figure (=0), a new one (=1) or
 %    overwrite an existing one (=2)
 %
@@ -46,7 +47,7 @@ function plot_spec_Ivolume(data, newfig)
 %     sumI = I_vol(ivol);
 % end
 
-[psi_coord, I_vol] = get_spec_volume_current(data);
+[psi_coord, I_vol] = get_spec_volume_current(data, cumul);
 
 
 % some plots

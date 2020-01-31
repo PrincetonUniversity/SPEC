@@ -26,7 +26,7 @@ fdata = fdata_from_data(data);
 
 if(newfig==1)
     figure
-    hold on
+    hold on;
 elseif newfig==0
     hold on;
 elseif newfig==2

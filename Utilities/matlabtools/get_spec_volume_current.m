@@ -1,4 +1,4 @@
-function [psi_coord, I_vol] = get_spec_volume_current(data)
+function [psi_coord, I_vol] = get_spec_volume_current(data, cumul)
 
 % Returns the toroidal current flowing in each volume, normalized by mu_0
 %
@@ -37,7 +37,11 @@ for ivol=1:Nvol
     else
         % Add previous current volumes (sumI) since we use a cumulative 
         % representation
-        I_vol(ivol) = mu(ivol)  * (tflux(ivol) - tflux(ivol-1)) * phiedge + sumI;
+        if cumul
+            I_vol(ivol) = mu(ivol)  * (tflux(ivol) - tflux(ivol-1)) * phiedge + sumI;
+        else
+            I_vol(ivol) = mu(ivol)  * (tflux(ivol) - tflux(ivol-1)) * phiedge;
+        end
     end
     
     psi_coord(ivol) = tflux(ivol);    
