@@ -689,7 +689,8 @@ subroutine matrix( lvol, mn, lrad )
 !$OMP END PARALLEL   
   endif ! end of if( YESstellsym ) ;
   
-  ! construct the sparse preconditioner
+  ! Construct the sparse preconditioner
+  ! The sparse matrix is stored in the Compressed Sparse Row (CSR) format
   if (LILUprecond) then
 
     NdMAS(lvol) = 0
@@ -704,63 +705,67 @@ subroutine matrix( lvol, mn, lrad )
       ! only keeping the ii==jj terms
       jj = ii ; mj = im(jj) ; nj = in(jj) ; mimj = mi * mj ; minj = mi * nj ; nimj = ni * mj ; ninj = ni * nj
       
-      do ll = 0, lrad
+        !if (abs(mj-mi).gt.0 .or. abs(nj-ni).gt.0) cycle
+        !if (jj.ne.ii) cycle
 
-        if (Lcoordinatesingularity) then
-          if (ll < mi) cycle ! rule out zero components of Zernike; 02 Jul 19
-          if (mod(ll+mi,2)>0) cycle ! rule out zero components of Zernike; 02 Jul 19
-        end if
-
-        nqueue = 0
-        dMASqueue = zero
-        dMDSqueue = zero
-        jdMASqueue = 0
-
-        do pp = 0, lrad
+        do ll = 0, lrad
 
           if (Lcoordinatesingularity) then
-            if (pp < mj) cycle ! rule out zero components of Zernike; 02 Jul 19
-            if (mod(pp+mj,2)>0) cycle ! rule out zero components of Zernike; 02 Jul 19
+            if (ll < mi) cycle ! rule out zero components of Zernike; 02 Jul 19
+            if (mod(ll+mi,2)>0) cycle ! rule out zero components of Zernike; 02 Jul 19
           end if
+
+          nqueue = 0
+          dMASqueue = zero
+          dMDSqueue = zero
+          jdMASqueue = 0
+
+          do pp = 0, lrad
+
+            if (Lcoordinatesingularity) then
+              if (pp < mj) cycle ! rule out zero components of Zernike; 02 Jul 19
+              if (mod(pp+mj,2)>0) cycle ! rule out zero components of Zernike; 02 Jul 19
+            end if
+            
+            id = Ate(lvol,0,ii)%i(ll) ; jd = Ate(lvol,0,jj)%i(pp)
+            if (id.ne.0 .and. jd.ne.0) call push_back(1,nqueue,NN,dMA(id,jd),dMD(id,jd),jd,dMASqueue,dMDSqueue,jdMASqueue)
+            ;                         ; jd = Aze(lvol,0,jj)%i(pp)
+            if (id.ne.0 .and. jd.ne.0) call push_back(1,nqueue,NN,dMA(id,jd),dMD(id,jd),jd,dMASqueue,dMDSqueue,jdMASqueue)
+
+            
+            id = Aze(lvol,0,ii)%i(ll) ; jd = Ate(lvol,0,jj)%i(pp)
+            if (id.ne.0 .and. jd.ne.0) call push_back(2,nqueue,NN,dMA(id,jd),dMD(id,jd),jd,dMASqueue,dMDSqueue,jdMASqueue)
+            ;                         ; jd = Aze(lvol,0,jj)%i(pp)
+            if (id.ne.0 .and. jd.ne.0) call push_back(2,nqueue,NN,dMA(id,jd),dMD(id,jd),jd,dMASqueue,dMDSqueue,jdMASqueue)
+
+          end do ! pp
           
-          id = Ate(lvol,0,ii)%i(ll) ; jd = Ate(lvol,0,jj)%i(pp)
-          if (id.ne.0 .and. jd.ne.0) call push_back(1,nqueue,NN,dMA(id,jd),dMD(id,jd),jd,dMASqueue,dMDSqueue,jdMASqueue)
-          ;                         ; jd = Aze(lvol,0,jj)%i(pp)
-          if (id.ne.0 .and. jd.ne.0) call push_back(1,nqueue,NN,dMA(id,jd),dMD(id,jd),jd,dMASqueue,dMDSqueue,jdMASqueue)
+          ;                  ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lma(lvol,  ii)
+          if (id.ne.0 .and. jd.ne.0)   call push_back(1,nqueue,NN,dMA(id,jd),dMD(id,jd),jd,dMASqueue,dMDSqueue,jdMASqueue)
+          ;                  ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lmb(lvol,  ii)
+          if (id.ne.0 .and. jd.ne.0)   call push_back(2,nqueue,NN,dMA(id,jd),dMD(id,jd),jd,dMASqueue,dMDSqueue,jdMASqueue)
+          if( ii.gt.1 ) then ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lme(lvol,  ii)
+            if (id.ne.0 .and. jd.ne.0) call push_back(1,nqueue,NN,dMA(id,jd),dMD(id,jd),jd,dMASqueue,dMDSqueue,jdMASqueue)
+          ;                  ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lme(lvol,  ii)
+            if (id.ne.0 .and. jd.ne.0) call push_back(2,nqueue,NN,dMA(id,jd),dMD(id,jd),jd,dMASqueue,dMDSqueue,jdMASqueue)
+          else               ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lmg(lvol,  ii)
+            if (id.ne.0 .and. jd.ne.0) call push_back(1,nqueue,NN,dMA(id,jd),dMD(id,jd),jd,dMASqueue,dMDSqueue,jdMASqueue)
+          ;                  ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lmh(lvol,  ii)
+            if (id.ne.0 .and. jd.ne.0) call push_back(2,nqueue,NN,dMA(id,jd),dMD(id,jd),jd,dMASqueue,dMDSqueue,jdMASqueue)
+          endif
 
-          
-          id = Aze(lvol,0,ii)%i(ll) ; jd = Ate(lvol,0,jj)%i(pp)
-          if (id.ne.0 .and. jd.ne.0) call push_back(2,nqueue,NN,dMA(id,jd),dMD(id,jd),jd,dMASqueue,dMDSqueue,jdMASqueue)
-          ;                         ; jd = Aze(lvol,0,jj)%i(pp)
-          if (id.ne.0 .and. jd.ne.0) call push_back(2,nqueue,NN,dMA(id,jd),dMD(id,jd),jd,dMASqueue,dMDSqueue,jdMASqueue)
-
-        end do ! pp
-        
-        ;                  ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lma(lvol,  ii)
-        if (id.ne.0 .and. jd.ne.0)   call push_back(1,nqueue,NN,dMA(id,jd),dMD(id,jd),jd,dMASqueue,dMDSqueue,jdMASqueue)
-        ;                  ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lmb(lvol,  ii)
-        if (id.ne.0 .and. jd.ne.0)   call push_back(2,nqueue,NN,dMA(id,jd),dMD(id,jd),jd,dMASqueue,dMDSqueue,jdMASqueue)
-        if( ii.gt.1 ) then ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lme(lvol,  ii)
-          if (id.ne.0 .and. jd.ne.0) call push_back(1,nqueue,NN,dMA(id,jd),dMD(id,jd),jd,dMASqueue,dMDSqueue,jdMASqueue)
-        ;                  ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lme(lvol,  ii)
-          if (id.ne.0 .and. jd.ne.0) call push_back(2,nqueue,NN,dMA(id,jd),dMD(id,jd),jd,dMASqueue,dMDSqueue,jdMASqueue)
-        else               ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lmg(lvol,  ii)
-          if (id.ne.0 .and. jd.ne.0) call push_back(1,nqueue,NN,dMA(id,jd),dMD(id,jd),jd,dMASqueue,dMDSqueue,jdMASqueue)
-        ;                  ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lmh(lvol,  ii)
-          if (id.ne.0 .and. jd.ne.0) call push_back(2,nqueue,NN,dMA(id,jd),dMD(id,jd),jd,dMASqueue,dMDSqueue,jdMASqueue)
-        endif
-
-        ! putting things in the sparse matrix
-        do pp = 1, 4
-          if (nqueue(pp) .eq. 0) cycle
-          nrow = nrow + 1
-          dMAS(ns+1:ns+nqueue(pp)) = dMASqueue(1:nqueue(pp),pp)
-          dMDS(ns+1:ns+nqueue(pp)) = dMDSqueue(1:nqueue(pp),pp)
-          jdMAS(ns+1:ns+nqueue(pp)) = jdMASqueue(1:nqueue(pp),pp)
-          idMAS(nrow) = ns + 1
-          ns = ns + nqueue(pp)
-        end do ! pp = 1:4
-      end do ! ll = 0, lrad
+          ! putting things in the sparse matrix
+          do pp = 1, 4
+            if (nqueue(pp) .eq. 0) cycle
+            nrow = nrow + 1
+            dMAS(ns+1:ns+nqueue(pp)) = dMASqueue(1:nqueue(pp),pp)
+            dMDS(ns+1:ns+nqueue(pp)) = dMDSqueue(1:nqueue(pp),pp)
+            jdMAS(ns+1:ns+nqueue(pp)) = jdMASqueue(1:nqueue(pp),pp)
+            idMAS(nrow) = ns + 1
+            ns = ns + nqueue(pp)
+          end do ! pp = 1:4
+        end do ! ll = 0, lrad
+      !end do ! jj = 1 ,mn
     end do ! ii = 1, mn
     
     ! deal with rest of the columes

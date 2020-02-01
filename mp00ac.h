@@ -132,7 +132,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
                         mu, helicity, iota, oita, curtor, curpol, Lrad, &
                        !Lposdef, &
                         Lconstraint, mupftol, &
-                        Lmatsolver, NiterGMRES, epsGMRES, LGMRESprec, epsILU
+                        Lmatsolver, NiterGMRES, epsGMRES, LGMRESprec, epsILU, NiterGMRES
   
   use cputiming, only : Tmp00ac
   
@@ -151,12 +151,16 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
                         lBBintegral, lABintegral, &
                         xoffset, &
                         ImagneticOK, &
-                        Ate, Aze, Ato, Azo, Mvol
+                        Ate, Aze, Ato, Azo, Mvol, &
+                        LILUprecond, GMRESlastsolution
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   LOCALS
   
+  INTEGER, parameter   :: maxfil = 10   ! for ILU subroutines
+  INTEGER, parameter   :: nrestart = 5 ! do GMRES restart after 5 iterations 
+
   INTEGER, intent(in)  :: Ndof, Ldfjac
   REAL   , intent(in)  :: Xdof(1:Ndof)
   REAL                 :: Fdof(1:Ndof), Ddof(1:Ldfjac,1:Ndof)
@@ -175,6 +179,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 
   CHARACTER            :: packorunpack
   
+  ! For direct LU decompose
   INTEGER, allocatable :: ipiv(:), Iwork(:)
 
   REAL   , allocatable :: matrix(:,:), rhs(:,:)
@@ -182,9 +187,20 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   REAL   , allocatable :: RW(:), RD(:,:), LU(:,:)
 
   REAL   , allocatable :: matrixC(:,:)
+
+! For GMRES + ILU
+  INTEGER              :: NS, itercount, Nbilut
+
+  REAL   , allocatable :: matrixS(:), bilut(:)
+  INTEGER, allocatable :: ibilut(:),  jbilut(:)
   
 #ifdef MKL
-  !include 'mkl.fi'
+  INTEGER, parameter   :: MKL_SIZE = 128
+  INTEGER              :: ipar(MKL_SIZE), iluierr, RCI_REQUEST, ntmp, t1, t2, t3
+  REAL                 :: dpar(MKL_SIZE), v1
+  REAL, allocatable    :: TMP(:), trvec(:)
+
+  include 'mkl.fi'
 #endif 
 
   BEGIN(mp00ac)
@@ -237,19 +253,37 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   
   NN = NAdof(lvol) ! shorthand;
   
-  SALLOCATE( matrix, (1:NN,1:NN), zero )
   SALLOCATE( rhs   , (1:NN,0:2 ), zero )
+  SALLOCATE( matrix, (1:NN,1:NN), zero )
 
   solution(1:NN,-1:2) = zero ! this is a global array allocated in dforce;
-  
-  Lwork = NB*NN
 
-  SALLOCATE( RW,    (1:Lwork ),  zero )
-  SALLOCATE( RD,    (1:NN,0:2),  zero )
-  SALLOCATE( LU,    (1:NN,1:NN), zero )
-  SALLOCATE( ipiv,  (1:NN),         0 )
-  SALLOCATE( Iwork, (1:NN),         0 )
+  ! allocate work space
+  select case (Lmatsolver)
+  case (1) ! direct matrix solver
+    Lwork = NB*NN
 
+    SALLOCATE( RW,    (1:Lwork ),  zero )
+    SALLOCATE( RD,    (1:NN,0:2),  zero )
+    SALLOCATE( LU,    (1:NN,1:NN), zero )
+    SALLOCATE( ipiv,  (1:NN),         0 )
+    SALLOCATE( Iwork, (1:NN),         0 )
+  case (2) ! GMRES
+    if (LILUprecond) then
+      NS = NdMAS(lvol) ! shorthand
+      SALLOCATE( matrixS, (1:NS), zero )
+      Nbilut = (2*maxfil+1)*NN
+      SALLOCATE( bilut, (1:Nbilut), zero)
+      SALLOCATE( jbilut, (1:Nbilut), 0)
+      SALLOCATE( ibilut, (1:NN+1), 0)
+      write(ounit, *) NS, NdMASmax(lvol), NN*NN
+    endif
+#ifdef MKL
+      ntmp = ((2*nrestart+1)*NN + nrestart*(nrestart+9)/2 + 1)
+      SALLOCATE( TMP, (1:ntmp), zero)
+      SALLOCATE( trvec, (1:NN), zero)
+#endif
+  end select
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   idgetrf(0:1) = 0 ! error flags;
@@ -313,51 +347,155 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 
    endif ! end of if( Lcoordinatesingularity ) ;
    
-   lcpu = GETTIME
-   
-   select case( ideriv )
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+   select case( Lmatsolver )
+
+   case(1) ! Using direct matrix solver (LU factorization)  
+
+    lcpu = GETTIME
     
-   case( 0 ) ! ideriv=0;
+    select case( ideriv )
+      
+    case( 0 ) ! ideriv=0;
+      
+      MM = 1
+      !LU = matrix
+      call DCOPY(NN*NN, matrix, 1, LU, 1) ! BLAS version
+      solution(1:NN,0   ) = rhs(:,0   )
+      call DGETRF(NN, NN, LU, NN, ipiv, idgetrf(ideriv) ) ! LU factorization
+
+      anorm=maxval(sum(abs(matrix),1))
+      call DGECON('I', NN, LU, NN, anorm, rcond, RW, Iwork, idgecon(ideriv)) ! estimate the condition number
+
+      call DGETRS('N', NN, MM, LU, NN, ipiv, solution(1:NN,0   ), NN, idgetrs(ideriv) ) ! sovle linear equation
+      call DGERFS('N', NN, MM, matrix, NN, LU, NN, ipiv, rhs(1,0), NN, solution(1,0), NN, FERR, BERR, RW, Iwork, idgerfs(ideriv)) ! refine the solution
+    case( 1 ) ! ideriv=1;
+      
+      MM = 2
+      solution(1:NN,1:MM) = rhs(:,1:MM)
+      call DGETRS( 'N', NN, MM, LU, NN, ipiv, solution(1:NN,1:MM), NN, idgetrs(ideriv) )
+      call DGERFS('N', NN, MM, matrix, NN, LU, NN, ipiv, rhs(1,1), NN, solution(1,1), NN, FERR, BERR, RW, Iwork, idgerfs(ideriv))
+
+    end select ! ideriv;
     
-    MM = 1
-    !LU = matrix
-    call DCOPY(NN*NN, matrix, 1, LU, 1) ! BLAS version
-    solution(1:NN,0   ) = rhs(:,0   )
-    call DGETRF(NN, NN, LU, NN, ipiv, RW, Lwork, idgetrf(ideriv) ) ! LU factorization
+    cput = GETTIME
 
-    anorm=maxval(sum(abs(matrix),1))
-    call DGECON('I', NN, LU, NN, anorm, rcond, RW, Iwork, idgecon(ideriv)) ! estimate the condition number
-
-    call DGETRS('N', NN, MM, LU, NN, ipiv, solution(1:NN,0   ), NN, idgetrs(ideriv) ) ! sovle linear equation
-    call DGERFS('N', NN, MM, matrix, NN, LU, NN, ipiv, rhs(1,0), NN, solution(1,0), NN, FERR, BERR, RW, Iwork, idgerfs(ideriv)) ! refine the solution
-   case( 1 ) ! ideriv=1;
+    if(     idgetrf(ideriv) .eq. 0 .and. idgetrs(ideriv) .eq. 0 .and. idgerfs(ideriv) .eq. 0 .and. rcond .ge. machprec) then
+      if( Wmp00ac ) write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idgetrf idgetrs idgerfs", idgetrf(ideriv), idgetrs(ideriv), idgetrf(ideriv), "success ;         ", cput-lcpu	   
+    elseif( idgetrf(ideriv) .lt. 0 .or. idgetrs(ideriv) .lt. 0 .or. idgerfs(ideriv) .lt. 0   ) then
+      ;             write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idgetrf idgetrs idgerfs", idgetrf(ideriv), idgetrs(ideriv), idgetrf(ideriv), "input error ;     "
+    elseif( idgetrf(ideriv) .gt. 0 ) then
+      ;             write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idgetrf idgetrs idgerfs", idgetrf(ideriv), idgetrs(ideriv), idgetrf(ideriv), "singular ;        "
+    elseif( rcond .le. machprec) then
+      ;             write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idgetrf idgetrs idgerfs", idgetrf(ideriv), idgetrs(ideriv), idgetrf(ideriv), "ill conditioned ; "
+    else
+      ;             write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idgetrf idgetrs idgerfs", idgetrf(ideriv), idgetrs(ideriv), idgetrf(ideriv), "invalid error ; "
+    endif
     
-    MM = 2
-    solution(1:NN,1:MM) = rhs(:,1:MM)
-    call DGETRS( 'N', NN, MM, LU, NN, ipiv, solution(1:NN,1:MM), NN, idgetrs(ideriv) )
-    call DGERFS('N', NN, MM, matrix, NN, LU, NN, ipiv, rhs(1,1), NN, solution(1,1), NN, FERR, BERR, RW, Iwork, idgerfs(ideriv))
-
-   end select ! ideriv;
-   
-   cput = GETTIME
-
-   if(     idgetrf(ideriv) .eq. 0 .and. idgetrs(ideriv) .eq. 0 .and. idgerfs(ideriv) .eq. 0 .and. rcond .ge. machprec) then
-    if( Wmp00ac ) write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idgetrf idgetrs idgerfs", idgetrf(ideriv), idgetrs(ideriv), idgetrf(ideriv), "success ;         ", cput-lcpu	   
-   elseif( idgetrf(ideriv) .lt. 0 .or. idgetrs(ideriv) .lt. 0 .or. idgerfs(ideriv) .lt. 0   ) then
-    ;             write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idgetrf idgetrs idgerfs", idgetrf(ideriv), idgetrs(ideriv), idgetrf(ideriv), "input error ;     "
-   elseif( idgetrf(ideriv) .gt. 0 ) then
-    ;             write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idgetrf idgetrs idgerfs", idgetrf(ideriv), idgetrs(ideriv), idgetrf(ideriv), "singular ;        "
-   elseif( rcond .le. machprec) then
-    ;             write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idgetrf idgetrs idgerfs", idgetrf(ideriv), idgetrs(ideriv), idgetrf(ideriv), "ill conditioned ; "
-   else
-    ;             write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idgetrf idgetrs idgerfs", idgetrf(ideriv), idgetrs(ideriv), idgetrf(ideriv), "invalid error ; "
-   endif
-   
-1010 format("mp00ac : ",f10.2," : myid=",i3," ; lvol=",i3," ; ideriv="i2" ; "a23"=",i3,' ',i3,' ',i3," ; "a34,:" time=",f10.2," ;")
-   
-   
-  enddo ! end of do ideriv;
+  1010 format("mp00ac : ",f10.2," : myid=",i3," ; lvol=",i3," ; ideriv="i2" ; "a23"=",i3,' ',i3,' ',i3," ; "a34,:" time=",f10.2," ;")
   
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+   case(2) ! Using GMRES
+
+    select case (ideriv)
+
+    case (0) ! ideriv = 0
+      if (LILUprecond) then ! Using ILU preconditioner
+        matrixS(1:NS) = dMAS - lmu * dMDS  ! construct the sparse precondtioner matrix
+      end if ! if (LILUprecond)
+      
+      if (MAXVAL(abs(GMRESlastsolution(1:NN,0,lvol))) .le. small) then
+        if (MAXVAL(abs(solution(1:NN,0))) .le. small) solution(1:NN,0) = rhs(1:NN,0)
+      else
+          solution(1:NN,0) = GMRESlastsolution(1:NN,0,lvol)
+      endif
+
+#ifdef MKL
+      call DFGMRES_INIT(NN, solution(1,0), rhs(1,0), RCI_REQUEST, IPAR, DPAR, TMP)
+      IF (RCI_REQUEST .NE. 0) GO TO 999 ! unsuccessful
+
+      if (LILUprecond) then
+      ! ILU factorization
+!---------------------------------------------------------------------------
+      ipar(2) = 6 ! - output of error messages to the screen,
+      ipar(7) = 1 ! - output warn messages if any and continue
+      ipar(31)= 1 ! - change small diagonal value to that given by dpar(31),
+      dpar(31)= epsILU
+!---------------------------------------------------------------------------
+        call DCSRILUT(NN, matrixS, idMAS, jdMAS, bilut, ibilut, jbilut, epsILU, maxfil, ipar, dpar, iluierr) ! call the ILU subroutine
+      end if
+      bilut = zero
+      ibilut = 0
+      jbilut = 0
+      t3 = 0
+      do ii = 1, 42912 
+        read(55,*) t1, t2, v1
+        if (t1.gt.t3) then 
+          ibilut(t1) = ii
+          t3 = t1
+        end if
+        jbilut(ii) = t2
+        bilut(ii) = v1
+      end do
+      ibilut(NN+1) = 42913
+
+      write(ounit,*) bilut(1:10)
+
+
+      IF (RCI_REQUEST .NE. 0) GO TO 999 ! unsuccessful
+
+      IPAR(15) = nrestart                 ! restarting parameter
+      IPAR(5) = max(0,NiterGMRES)         ! maximum number of iteration
+      IPAR(8:9) = 1                       ! automatic stopping test
+      IPAR(10) = 0                        ! automatic stopping test
+      IPAR(12) = 1
+      if (LGMRESprec .gt. 0) then
+        IPAR(11) = 1                      ! use preconditioner
+      else
+        IPAR(11) = 0                      ! do not use preconditioner (will never work by the way)
+      end if
+      DPAR(1) = epsGMRES                  ! GMRES precision
+      call DFGMRES_CHECK(NN, solution(1,0), rhs(1,0), RCI_REQUEST, IPAR, DPAR, TMP) ! check settings
+      
+      do while (RCI_REQUEST.ne.999) ! main reverse communication loop
+        call DFGMRES(NN, solution(1,0), rhs(1,0), RCI_REQUEST, IPAR, DPAR, TMP)
+        write(ounit,*) 'iter', RCI_REQUEST
+        if (RCI_REQUEST .EQ. 0) then ! successful
+          exit 
+        elseif (RCI_REQUEST .EQ. 1) then ! compute TMP(IPAR(23) = matmul(matrix, TMP(IPAR(22)))
+          call DGEMV('N', NN, NN, one, matrix, NN, TMP(IPAR(22)), 1, zero, TMP(IPAR(23)), 1)
+        elseif (RCI_REQUEST .EQ. 2) then ! do some check
+          ! we don't do anything here yet
+        elseif (RCI_REQUEST .EQ. 3) then ! apply the precondtioner
+          trvec = zero
+          tmp(ipar(23):ipar(23)+NN-1) = zero
+          call mkl_dcsrtrsv('L','N','U', NN, bilut, ibilut, jbilut, tmp(ipar(22)),trvec)
+          call mkl_dcsrtrsv('U','N','N', NN, bilut, ibilut, jbilut, trvec, tmp(ipar(23)))
+        elseif (RCI_REQUEST .EQ. 4) then ! do some check
+          ! we don't do anything here yet
+        else ! error
+          exit
+        end if
+
+      end do ! end of the reverse communication loop
+      
+      call dfgmres_get(NN, solution(1,0), rhs(1,0), RCI_REQUEST, IPAR, DPAR, TMP, itercount)
+! #else
+!       ! using SPARSKIT
+!       FATAL(mp00ac, .true., SPARSKIT NOT IMPLEMENTED)
+#endif
+999     write(ounit,*) RCI_REQUEST, itercount, dpar(5), ipar(11), iluierr
+        ImagneticOK(lvol) = .true.
+      case (1) ! ideriv = 1
+      
+      end select ! ideriv
+
+
+   end select ! Lmatsolver 
+
+  enddo ! end of do ideriv;
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 ! can compute the energy and helicity integrals; easiest to do this with solution in packed format;
@@ -384,12 +522,27 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   DALLOCATE( matrix )
-  DALLOCATE( rhs    )  
-  DALLOCATE( RW )
-  DALLOCATE( RD )
-  DALLOCATE( LU )
-  DALLOCATE( ipiv )
-  DALLOCATE( Iwork )
+  DALLOCATE( rhs    )
+
+  select case (Lmatsolver)
+  case (1) ! LU
+      DALLOCATE( RW )
+      DALLOCATE( RD )
+      DALLOCATE( LU )
+      DALLOCATE( ipiv )
+      DALLOCATE( Iwork )
+  case (2) ! GMRES
+    if (LILUprecond) then
+      DALLOCATE( matrixS )
+      DALLOCATE( bilut )
+      DALLOCATE( jbilut )
+      DALLOCATE( ibilut )
+    endif
+#ifdef MKL
+    DALLOCATE( TMP )
+    DALLOCATE( trvec )
+#endif
+  end select    
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   idgetrf(0:1) = abs(idgetrf(0:1)) + abs(idgetrs(0:1)) + abs(idgerfs(0:1)) + abs(idgecon(0:1))
