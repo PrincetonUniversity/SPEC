@@ -157,9 +157,6 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   LOCALS
-  
-  INTEGER, parameter   :: maxfil = 10   ! for ILU subroutines
-  INTEGER, parameter   :: nrestart = 5 ! do GMRES restart after 5 iterations 
 
   INTEGER, intent(in)  :: Ndof, Ldfjac
   REAL   , intent(in)  :: Xdof(1:Ndof)
@@ -189,19 +186,19 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   REAL   , allocatable :: matrixC(:,:)
 
 ! For GMRES + ILU
+  INTEGER, parameter   :: nrestart = 5 ! do GMRES restart after nrestart iterations 
+  INTEGER              :: maxfil   ! bandwidth for ILU subroutines, will be estimated
+
   INTEGER              :: NS, itercount, Nbilut
 
   REAL   , allocatable :: matrixS(:), bilut(:)
   INTEGER, allocatable :: ibilut(:),  jbilut(:)
   
-#ifdef MKL
-  INTEGER, parameter   :: MKL_SIZE = 128
-  INTEGER              :: ipar(MKL_SIZE), iluierr, RCI_REQUEST, ntmp, t1, t2, t3
-  REAL                 :: dpar(MKL_SIZE), v1
-  REAL, allocatable    :: TMP(:), trvec(:)
-
-  include 'mkl.fi'
-#endif 
+  INTEGER, parameter   :: ipar_SIZE = 128
+  INTEGER              :: ipar(ipar_SIZE), iluierr, RCI_REQUEST, nw, t1, t2, t3
+  REAL                 :: fpar(ipar_SIZE), v1
+  REAL, allocatable    :: wk(:), tempv(:)
+  INTEGER,allocatable  :: jw(:), iperm(:)
 
   BEGIN(mp00ac)
   
@@ -272,17 +269,25 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
     if (LILUprecond) then
       NS = NdMAS(lvol) ! shorthand
       SALLOCATE( matrixS, (1:NS), zero )
-      Nbilut = (2*maxfil+1)*NN
+      
+      ! estimate bandwidth
+      if (Lcoordinatesingularity) then
+        maxfil = Lrad(lvol) + 2 *  mn
+      else
+        maxfil = 2 * Lrad(lvol) + 3 * mn
+      end if
+
+      Nbilut = (2*maxfil+2)*NN
       SALLOCATE( bilut, (1:Nbilut), zero)
       SALLOCATE( jbilut, (1:Nbilut), 0)
       SALLOCATE( ibilut, (1:NN+1), 0)
-      write(ounit, *) NS, NdMASmax(lvol), NN*NN
+
     endif
-#ifdef MKL
-      ntmp = ((2*nrestart+1)*NN + nrestart*(nrestart+9)/2 + 1)
-      SALLOCATE( TMP, (1:ntmp), zero)
-      SALLOCATE( trvec, (1:NN), zero)
-#endif
+    nw = (NN+3)*(nrestart+2) + (nrestart+1)*nrestart
+    SALLOCATE( wk, (1:nw), zero)
+    SALLOCATE( tempv, (1:NN), zero)
+    SALLOCATE( jw, (1:2*NN), 0)
+    SALLOCATE( iperm, (1:2*NN), 0)
   end select
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -407,91 +412,63 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
       end if ! if (LILUprecond)
       
       if (MAXVAL(abs(GMRESlastsolution(1:NN,0,lvol))) .le. small) then
-        if (MAXVAL(abs(solution(1:NN,0))) .le. small) solution(1:NN,0) = rhs(1:NN,0)
+        if (MAXVAL(abs(solution(1:NN,0))) .le. small) solution(1:NN,0) = zero
       else
           solution(1:NN,0) = GMRESlastsolution(1:NN,0,lvol)
       endif
 
-#ifdef MKL
-      call DFGMRES_INIT(NN, solution(1,0), rhs(1,0), RCI_REQUEST, IPAR, DPAR, TMP)
-      IF (RCI_REQUEST .NE. 0) GO TO 999 ! unsuccessful
-
       if (LILUprecond) then
       ! ILU factorization
-!---------------------------------------------------------------------------
-      ipar(2) = 6 ! - output of error messages to the screen,
-      ipar(7) = 1 ! - output warn messages if any and continue
-      ipar(31)= 1 ! - change small diagonal value to that given by dpar(31),
-      dpar(31)= epsILU
-!---------------------------------------------------------------------------
-        call DCSRILUT(NN, matrixS, idMAS, jdMAS, bilut, ibilut, jbilut, epsILU, maxfil, ipar, dpar, iluierr) ! call the ILU subroutine
-      end if
-      bilut = zero
-      ibilut = 0
-      jbilut = 0
-      t3 = 0
-      do ii = 1, 42912 
-        read(55,*) t1, t2, v1
-        if (t1.gt.t3) then 
-          ibilut(t1) = ii
-          t3 = t1
-        end if
-        jbilut(ii) = t2
-        bilut(ii) = v1
-      end do
-      ibilut(NN+1) = 42913
-
-      write(ounit,*) bilut(1:10)
-
-
-      IF (RCI_REQUEST .NE. 0) GO TO 999 ! unsuccessful
-
-      IPAR(15) = nrestart                 ! restarting parameter
-      IPAR(5) = max(0,NiterGMRES)         ! maximum number of iteration
-      IPAR(8:9) = 1                       ! automatic stopping test
-      IPAR(10) = 0                        ! automatic stopping test
-      IPAR(12) = 1
-      if (LGMRESprec .gt. 0) then
-        IPAR(11) = 1                      ! use preconditioner
+        call ilutp(NN,matrixS,jdMAS,idMAS,maxfil,epsILU,0.1,NN,bilut,jbilut,ibilut,Nbilut,wk,jw,iperm,iluierr)
+        FATAL(mp00ac, iluierr.ne.0, construction of preconditioner failed)
+        ipar(2) = 1 ! tell GMRES to use preconditioner
       else
-        IPAR(11) = 0                      ! do not use preconditioner (will never work by the way)
+        ipar(2) = 0 ! do not use preconditioner, not recommended
       end if
-      DPAR(1) = epsGMRES                  ! GMRES precision
-      call DFGMRES_CHECK(NN, solution(1,0), rhs(1,0), RCI_REQUEST, IPAR, DPAR, TMP) ! check settings
-      
-      do while (RCI_REQUEST.ne.999) ! main reverse communication loop
-        call DFGMRES(NN, solution(1,0), rhs(1,0), RCI_REQUEST, IPAR, DPAR, TMP)
-        write(ounit,*) 'iter', RCI_REQUEST
-        if (RCI_REQUEST .EQ. 0) then ! successful
-          exit 
-        elseif (RCI_REQUEST .EQ. 1) then ! compute TMP(IPAR(23) = matmul(matrix, TMP(IPAR(22)))
-          call DGEMV('N', NN, NN, one, matrix, NN, TMP(IPAR(22)), 1, zero, TMP(IPAR(23)), 1)
-        elseif (RCI_REQUEST .EQ. 2) then ! do some check
-          ! we don't do anything here yet
+
+      ipar(3) = 2           ! stopping test type, see iters.f
+      ipar(4) = nw          ! length of work array
+      ipar(5) = nrestart    ! restart parameter, size of Krylov subspace
+      ipar(6) = NiterGMRES  ! maximum number of iteration
+      fpar(1) = epsGMRES    ! stop criterion, relative error
+      fpar(2) = epsGMRES    ! stop criterion, absolute error
+      fpar(11) = 0.0
+
+      RCI_REQUEST = 999     ! RC control variable, set to 999 to start the loop
+      ipar(1) = 0
+      itercount = 0 ! iteration counter
+      do while (RCI_REQUEST.gt.0) ! main reverse communication loop
+
+        call gmres(NN, rhs(1,0), solution(1,0), ipar, fpar, wk) ! main GMRES subroutine, see iters.f
+        RCI_REQUEST = ipar(1) ! shorthand for RC control variable
+        !write(ounit,*) 'RCI', RCI_REQUEST, fpar(6)
+
+        if (RCI_REQUEST .EQ. 0) then ! successful, end the loop
+          exit
+
+        elseif (RCI_REQUEST .EQ. 1) then ! compute A.x
+          ! we should compute wk(ipar(9) = matmul(matrix, wk(ipar(8)))
+          call DGEMV('N', NN, NN, one, matrix, NN, wk(ipar(8)), 1, zero, wk(ipar(9)), 1)
+
         elseif (RCI_REQUEST .EQ. 3) then ! apply the precondtioner
-          trvec = zero
-          tmp(ipar(23):ipar(23)+NN-1) = zero
-          call mkl_dcsrtrsv('L','N','U', NN, bilut, ibilut, jbilut, tmp(ipar(22)),trvec)
-          call mkl_dcsrtrsv('U','N','N', NN, bilut, ibilut, jbilut, trvec, tmp(ipar(23)))
-        elseif (RCI_REQUEST .EQ. 4) then ! do some check
-          ! we don't do anything here yet
-        else ! error
+          call lusol(NN,wk(ipar(8)),tempv,bilut,jbilut,ibilut) ! sparse LU solve
+          !  apply permutation
+          do ii = 1, NN
+            wk(ipar(9)+ii-1) = tempv(iperm(ii+NN))
+          enddo
+
+        else ! error, end main loop
           exit
         end if
 
       end do ! end of the reverse communication loop
+
+      itercount = ipar(7) ! iteration count
       
-      call dfgmres_get(NN, solution(1,0), rhs(1,0), RCI_REQUEST, IPAR, DPAR, TMP, itercount)
-! #else
-!       ! using SPARSKIT
-!       FATAL(mp00ac, .true., SPARSKIT NOT IMPLEMENTED)
-#endif
-999     write(ounit,*) RCI_REQUEST, itercount, dpar(5), ipar(11), iluierr
-        ImagneticOK(lvol) = .true.
+      ImagneticOK(lvol) = .true.
       case (1) ! ideriv = 1
       
       end select ! ideriv
-
 
    end select ! Lmatsolver 
 
@@ -538,10 +515,9 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
       DALLOCATE( jbilut )
       DALLOCATE( ibilut )
     endif
-#ifdef MKL
-    DALLOCATE( TMP )
-    DALLOCATE( trvec )
-#endif
+    DALLOCATE( wk )
+    DALLOCATE( jw )
+    DALLOCATE( iperm )
   end select    
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -725,6 +701,93 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-end subroutine mp00ac
+
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+! subroutine runrc(n,rhs,sol,ipar,fpar,wk,guess,a,au,jau,ju,solver)
+!   ! Driver subroutine for GMRES, CG, etc
+!   ! modified from riters.f from SPARSKIT v2.0 
+!   ! by ZSQ 02 Feb 2020
+!   implicit none
+!   integer :: n,ipar(16),ju(:),jau(:)
+!   real :: fpar(16),rhs(n),sol(n),guess(n),wk(:),a(:),au(:)
+!   external solver
+! c-----------------------------------------------------------------------
+! c     It starts the iterative linear system solvers
+! c     with a initial guess suppied by the user.
+! c
+! c     The structure {au, jau, ju} is assumed to have the output from
+! c     the ILU* routines in ilut.f.
+! c
+! c-----------------------------------------------------------------------
+! c     local variables
+! c
+!   integer :: i, iou, its
+!   real :: res, dnrm2
+
+!   its = 0
+!   res = 0.0D0
+! c
+!   do i = 1, n
+!     sol(i) = guess(i)
+!   enddo
+! c
+!   iou = 6
+!   ipar(1) = 999
+!   do while (ipar(1) .ge. 0)
+!     call solver(n,rhs,sol,ipar,fpar,wk)
+
+!     if (ipar(7).ne.its) then
+!         write (iou, *) its, real(res)
+!         its = ipar(7)
+!     endif
+!     res = fpar(5)
+! c
+!       if (ipar(1).eq.1) then
+!          call amux(n, wk(ipar(8)), wk(ipar(9)), a, ja, ia)
+!          goto 10
+!       else if (ipar(1).eq.2) then
+!          call atmux(n, wk(ipar(8)), wk(ipar(9)), a, ja, ia)
+!          goto 10
+!       else if (ipar(1).eq.3 .or. ipar(1).eq.5) then
+!          call lusol(n,wk(ipar(8)),wk(ipar(9)),au,jau,ju)
+!          goto 10
+!       else if (ipar(1).eq.4 .or. ipar(1).eq.6) then
+!          call lutsol(n,wk(ipar(8)),wk(ipar(9)),au,jau,ju)
+!          goto 10
+!       else if (ipar(1).le.0) then
+!          if (ipar(1).eq.0) then
+!             print *, 'Iterative solver has satisfied convergence test.'
+!          else if (ipar(1).eq.-1) then
+!             print *, 'Iterative solver has iterated too many times.'
+!          else if (ipar(1).eq.-2) then
+!             print *, 'Iterative solver was not given enough work space.'
+!             print *, 'The work space should at least have ', ipar(4),
+!      &           ' elements.'
+!          else if (ipar(1).eq.-3) then
+!             print *, 'Iterative solver is facing a break-down.'
+!          else
+!             print *, 'Iterative solver terminated. code =', ipar(1)
+!          endif
+!       endif
+! c     time = dtime(dt)
+!       write (iou, *) ipar(7), real(fpar(6))
+!       write (iou, *) '# retrun code =', ipar(1),
+!      +     '	convergence rate =', fpar(7)
+! c     write (iou, *) '# total execution time (sec)', time
+! c
+! c     check the error
+! c
+!       call amux(n,sol,wk,a,ja,ia)
+!       do i = 1, n
+!          wk(n+i) = sol(i) -1.0D0
+!          wk(i) = wk(i) - rhs(i)
+!       enddo
+!       write (iou, *) '# the actual residual norm is', dnrm2(n,wk,1)
+!       write (iou, *) '# the error norm is', dnrm2(n,wk(1+n),1)
+! c
+!       if (iou.ne.6) close(iou)
+!       return
+!       end
+end subroutine mp00ac

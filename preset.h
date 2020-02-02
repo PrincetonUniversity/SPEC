@@ -626,8 +626,8 @@ subroutine preset
     if( NOTstellsym ) NAdof(vvol) = 2 * zerdof  - 2*mn+1                 + 0  + 0    + Ntor+1 + Ntor + mn-1 + mn-1 + 1 + 0
 
     ! Guess the size of the sparse matrix ! 28 Jan 20
-    if( YESstellsym ) NdMASmax(vvol) = (2 * (Lrad(vvol)/2 + 1))**2 * mn + (Ntor+mn) * NAdof(vvol)
-    if( NOTstellsym ) NdMASmax(vvol) = (4 * (Lrad(vvol)/2 + 1))**2 * mn + (Ntor+mn) * NAdof(vvol) * 2 
+    if( YESstellsym ) NdMASmax(vvol) = (2 * (Lrad(vvol)/2 + 1))**2 * mn + (Ntor+mn) * NAdof(vvol) * 2
+    if( NOTstellsym ) NdMASmax(vvol) = (4 * (Lrad(vvol)/2 + 1))**2 * mn + (Ntor+mn) * NAdof(vvol) * 4 
 
    else ! .not.Lcoordinatesingularity;                                     a    c      b        d      e      f      g   h
     if( YESstellsym ) NAdof(vvol) = 2 * ( mn        ) * ( Lrad(vvol)+1 ) + mn        + mn            + mn-1        + 1 + 1  

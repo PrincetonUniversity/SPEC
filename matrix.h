@@ -772,7 +772,7 @@ subroutine matrix( lvol, mn, lrad )
     do ii = nrow + 1, NN
       idMAS(ii) = ns + 1
       do jj = 1, NN
-        if (abs(dMA(jj, ii)).ge. small) then
+        if (abs(dMA(jj, ii)).gt. zero) then
           ns = ns + 1
           dMAS(ns) = dMA(jj,ii)
           dMDS(ns) = dMD(jj,ii)
@@ -838,17 +838,21 @@ subroutine push_back(iq, nq, NN, vA, vD, vjA, qA, qD, qjA)
   ! vA, vD - REAL, values to put in
   ! vjA - INTEGER, column index to put in
   ! qA, qD, qjA - the queues
+  use constants, only : zero
   implicit none
 
   REAL, INTENT(IN)       :: vA, vD
   INTEGER, INTENT(IN)    :: vjA, iq, NN
   REAL, INTENT(INOUT)    :: qA(NN,4), qD(NN,4)
   INTEGER, INTENT(INOUT) :: qjA(NN,4), nq(4)
+  
+  if (abs(vA).gt.zero .or. abs(vD).gt.zero) then
 
-  nq(iq) = nq(iq) + 1
-  qA(nq(iq),iq) = vA
-  qD(nq(iq),iq) = vD
-  qjA(nq(iq),iq) = vjA
+    nq(iq) = nq(iq) + 1
+    qA(nq(iq),iq) = vA
+    qD(nq(iq),iq) = vD
+    qjA(nq(iq),iq) = vjA
 
+  end if
   return
 end subroutine push_back
