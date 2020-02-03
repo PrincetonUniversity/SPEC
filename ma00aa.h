@@ -202,7 +202,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
 
     WCALL( ma00aa, metrix,( lvol, lss ) ) ! compute metric elements; 16 Jan 13;
 
-!$OMP PARALLEL SHARED(lvol,mn2_max,jthweight,lrad,lp2_max)
+!$OMP PARALLEL DEFAULT(PRIVATE) SHARED(NOTstellsym,lvol,mn2_max,mn,im,jthweight,lrad,lp2_max,kijs,kija,goomne,goomno,gssmne,gssmno,gstmne,gstmno,gttmne,gttmno,gszmne,gszmno,gtzmne,gtzmno,gzzmne,gzzmno,zernike,DToocc,DToocs,DToosc,DTooss,TTsscc,TTsscs,TTsssc,TTssss,TDstcc,TDstcs,TDstsc,TDstss,TDszcc,TDszcs,TDszsc,TDszss,DDttcc,DDttcs,DDttsc,DDttss,DDtzcc,DDtzcs,DDtzsc,DDtzss,DDzzcc,DDzzcs,DDzzsc,DDzzss)
 !$OMP DO PRIVATE(MN2,LP2)  
     do mn2 = 1, mn2_max
       ii = mod(mn2-1,mn)+1
@@ -451,7 +451,11 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   endif ! end of if( Lcoordinatesingularity ) ; 17 Dec 15;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  nele = SIZE(TTssss)
+  if (Lcoordinatesingularity) then ! different radial dof for Zernike; 02 Jul 19
+     nele = ((lrad - mod(lrad,2)) / 2 + 1)**2 * mn2_max
+   else
+     nele = mn2_max * lp2_max
+   end if
  
   call DSCAL(nele, pi2pi2nfphalf, DToocc, 1)
   call DSCAL(nele, pi2pi2nfphalf, TTssss, 1)

@@ -465,7 +465,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 
     cput = GETTIME
 
-    if (ierr.eq.0) then
+    if (ierr.ge.0) then
       if( Wmp00ac ) write(ounit,1011) cput-cpus, myid, lvol, ideriv, ierr, " successful ; "
     elseif (ierr.eq.-1) then
         ;           write(ounit,1011) cput-cpus, myid, lvol, ideriv, ierr, " max niter, epsGMRES not reached ; "
@@ -477,7 +477,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
         ;           write(ounit,1011) cput-cpus, myid, lvol, ideriv, ierr, " check iters.f for error code ; "
     end if
 
-1011 format("mp00ac : ",f10.2," : myid=",i3," ; lvol=",i3," ; ideriv=",i2," ; GMRES ierr=",i3, " ; "a34" ")
+1011 format("mp00ac : ",f10.2," : myid=",i3," ; lvol=",i3," ; ideriv=",i2," ; GMRES ierr=",i4, " ; "a34" ")
 
    end select ! Lmatsolver 
 
@@ -760,6 +760,7 @@ subroutine rungmres(n,rhs,sol,ipar,fpar,wk,nw,guess,a,au,jau,ju,iperm,ierr)
   end do ! end main loop
 
   ierr = ipar(1)
+  if (ierr.eq.0) ierr = its
 
   return
 end subroutine rungmres
