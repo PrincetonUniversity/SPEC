@@ -1,5 +1,17 @@
 function compare_spec_outputs2(data1, data2, tolerance)
 
+% Compare field and geoemtry between two SPEC outputs. Prints message only
+% in case of missmatch
+%
+% INPUT
+% -----
+% data1:     obtained via read_spec(filename1)
+% data2:     obtained via read_spec(filename2)
+% tolerance: Print message if difference above this parameter
+%
+% Written by A. Baillod (2020)
+
+
     %test vector potential
     N = length(data1.vector_potential.Ate);
 
