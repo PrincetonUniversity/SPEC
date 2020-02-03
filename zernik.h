@@ -56,7 +56,6 @@ subroutine get_zernike(r, lrad, mpol, zernike)
     enddo
   enddo
 
-  return
 end subroutine get_zernike
 
 subroutine get_zernike_d2(r, lrad, mpol, zernike)
@@ -126,7 +125,6 @@ subroutine get_zernike_d2(r, lrad, mpol, zernike)
     enddo
   enddo
 
-  return
 end subroutine get_zernike_d2
 
 subroutine get_zernike_rm(r, lrad, mpol, zernike)
@@ -171,50 +169,4 @@ subroutine get_zernike_rm(r, lrad, mpol, zernike)
 
   enddo
 
-  return
 end subroutine get_zernike_rm
-
-subroutine get_zernike_index(irad, im, lrad, izrad)
-  ! converting from normal index to zernike index
-  ! INPUTS:
-  ! irad - INTEGER, the normal index
-  ! im - INTEGER, the poloidal mode number
-  ! lrad - INTEGER, LRAD
-  !
-  ! RETURNS:
-  ! izrad - INTEGER, the computed Zernike index
-  
-  INTEGER, INTENT(IN) :: irad, im, lrad
-  INTEGER, INTENT(OUT) :: izrad
-
-  if (irad.lt.im .or. irad.gt.lrad) then 
-    izrad = -1
-  elseif (mod(im+irad, 2).ne.0) then
-    izrad = -1
-  else
-    izrad = (irad - im) / 2
-  end if
-
-  return
-end subroutine get_zernike_index
-
-subroutine get_zernike_dof(im, lrad, zdof)
-  ! calculating the total dof of Zernike polynomials with m=im
-  ! INPUTS:
-  ! im - INTEGER, the poloidal mode number
-  ! lrad - INTEGER, LRAD
-  !
-  ! RETURNS:
-  ! zdof - INTEGER, the total dof of Zernike polynomial
-  
-  INTEGER, INTENT(IN) :: im, lrad
-  INTEGER, INTENT(OUT) :: zdof
-
-  if (lrad .lt. im) then 
-    zdof = 0
-  else
-    zdof = (lrad - im - mod(lrad+im, 2)) / 2 + 1
-  end if
-
-  return
-end subroutine get_zernike_dof
