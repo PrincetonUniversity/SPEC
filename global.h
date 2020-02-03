@@ -1564,9 +1564,6 @@ subroutine readin
    FATAL( readin, abs(one-gamma).lt.vsmall, 1-gamma appears in denominator in fu00aa ) ! Please check this; SRH: 27 Feb 18;
    FATAL( readin, Lconstraint.lt.-1 .or. Lconstraint.gt.2, illegal Lconstraint )
 
-#ifndef MKL
-   FATAL( readin, Lmatsolver.eq.2, GMRES currently only available with MKL library)
-#endif
    FATAL( readin, Lmatsolver.gt.2 .or. Lmatsolver.lt.1, illegal Lmatsolver )
    FATAL( readin, Lmatsolver.eq.2 .and. LGMRESprec.ne.1, illegal LGMRESprec )
    
