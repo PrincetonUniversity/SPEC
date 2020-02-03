@@ -626,16 +626,22 @@ subroutine preset
     if( NOTstellsym ) NAdof(vvol) = 2 * zerdof  - 2*mn+1                 + 0  + 0    + Ntor+1 + Ntor + mn-1 + mn-1 + 1 + 0
 
     ! Guess the size of the sparse matrix ! 28 Jan 20
-    if( YESstellsym ) NdMASmax(vvol) = (2 * (Lrad(vvol)/2 + 1))**2 * mn + (Ntor+mn) * NAdof(vvol) * 2
-    if( NOTstellsym ) NdMASmax(vvol) = (4 * (Lrad(vvol)/2 + 1))**2 * mn + (Ntor+mn) * NAdof(vvol) * 4 
+    ! If an iterative method is used and requires an preconditioner, we need to construct it as a sparse matrix
+    if (Lmatsolver.eq.2 .and. LGMRESprec.gt.0) then
+      if( YESstellsym ) NdMASmax(vvol) = (2 * (Lrad(vvol)/2 + 1))**2 * mn + (Ntor+mn) * NAdof(vvol)     ! Ate, Aze
+      if( NOTstellsym ) NdMASmax(vvol) = (4 * (Lrad(vvol)/2 + 1))**2 * mn + 2 * (Ntor+mn) * NAdof(vvol) ! Ate, Aze, Ato, Azo
+    end if
 
    else ! .not.Lcoordinatesingularity;                                     a    c      b        d      e      f      g   h
     if( YESstellsym ) NAdof(vvol) = 2 * ( mn        ) * ( Lrad(vvol)+1 ) + mn        + mn            + mn-1        + 1 + 1  
     if( NOTstellsym ) NAdof(vvol) = 2 * ( mn + mn-1 ) * ( Lrad(vvol)+1 ) + mn + mn-1 + mn     + mn-1 + mn-1 + mn-1 + 1 + 1
 
     ! Guess the size of the sparse matrix ! 28 Jan 20
-    if( YESstellsym ) NdMASmax(vvol) = (2 * (Lrad(vvol) + 1))**2 * mn + (3*mn+1) * NAdof(vvol)
-    if( NOTstellsym ) NdMASmax(vvol) = (4 * (Lrad(vvol) + 1))**2 * mn + (6*mn  ) * NAdof(vvol)
+    ! If an iterative method is used and requires an preconditioner, we need to construct it as a sparse matrix
+    if (Lmatsolver.eq.2 .and. LGMRESprec.gt.0) then
+      if( YESstellsym ) NdMASmax(vvol) = (2 * (Lrad(vvol) + 1))**2 * mn + (3*mn+1) * NAdof(vvol)        ! Ate, Aze
+      if( NOTstellsym ) NdMASmax(vvol) = (4 * (Lrad(vvol) + 1))**2 * mn + (6*mn  ) * NAdof(vvol)        ! Ate, Aze, Ato, Azo
+    end if
    endif ! end of if( Lcoordinatesingularity );
 
    do ii = 1, mn ! loop over Fourier harmonics;

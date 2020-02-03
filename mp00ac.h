@@ -357,8 +357,6 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
    select case( Lmatsolver )
 
    case(1) ! Using direct matrix solver (LU factorization)  
-
-    lcpu = GETTIME
     
     select case( ideriv )
       
@@ -412,9 +410,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
       end if ! if (LILUprecond)
       
       if (MAXVAL(abs(GMRESlastsolution(1:NN,0,lvol))) .le. small) then
-        if (MAXVAL(abs(solution(1:NN,0))) .le. small) solution(1:NN,0) = zero
-      else
-          solution(1:NN,0) = GMRESlastsolution(1:NN,0,lvol)
+        GMRESlastsolution(1:NN,0,lvol) = zero
       endif
 
       if (LILUprecond) then
@@ -432,43 +428,48 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
       ipar(6) = NiterGMRES  ! maximum number of iteration
       fpar(1) = epsGMRES    ! stop criterion, relative error
       fpar(2) = epsGMRES    ! stop criterion, absolute error
-      fpar(11) = 0.0
 
-      RCI_REQUEST = 999     ! RC control variable, set to 999 to start the loop
-      ipar(1) = 0
-      itercount = 0 ! iteration counter
-      do while (RCI_REQUEST.gt.0) ! main reverse communication loop
-
-        call gmres(NN, rhs(1,0), solution(1,0), ipar, fpar, wk) ! main GMRES subroutine, see iters.f
-        RCI_REQUEST = ipar(1) ! shorthand for RC control variable
-        !write(ounit,*) 'RCI', RCI_REQUEST, fpar(6)
-
-        if (RCI_REQUEST .EQ. 0) then ! successful, end the loop
-          exit
-
-        elseif (RCI_REQUEST .EQ. 1) then ! compute A.x
-          ! we should compute wk(ipar(9) = matmul(matrix, wk(ipar(8)))
-          call DGEMV('N', NN, NN, one, matrix, NN, wk(ipar(8)), 1, zero, wk(ipar(9)), 1)
-
-        elseif (RCI_REQUEST .EQ. 3) then ! apply the precondtioner
-          call lusol(NN,wk(ipar(8)),tempv,bilut,jbilut,ibilut) ! sparse LU solve
-          !  apply permutation
-          do ii = 1, NN
-            wk(ipar(9)+ii-1) = tempv(iperm(ii+NN))
-          enddo
-
-        else ! error, end main loop
-          exit
-        end if
-
-      end do ! end of the reverse communication loop
-
-      itercount = ipar(7) ! iteration count
+      call rungmres(NN,rhs(1,0),solution(1,0),ipar,fpar,wk,nw,GMRESlastsolution(1,0,lvol),matrix,bilut,jbilut,ibilut,iperm,ierr)
       
-      ImagneticOK(lvol) = .true.
-      case (1) ! ideriv = 1
+      if (ierr .eq. 0) then
+        ImagneticOK(lvol) = .true.
+        GMRESlastsolution(1:NN,0,lvol) = solution(1:NN,0)
+      else
+        ImagneticOK(lvol) = .false.
+      endif 
+
+    case (1) ! ideriv = 1
+
+      do ii = 1, 2
+        if (MAXVAL(abs(GMRESlastsolution(1:NN,ii,lvol))) .le. small) then
+          GMRESlastsolution(1:NN,ii,lvol) = zero
+        endif
+
+        call rungmres(NN,rhs(1,ii),solution(1,ii),ipar,fpar,wk,nw,GMRESlastsolution(1,ii,lvol),matrix,bilut,jbilut,ibilut,iperm,ierr)
       
-      end select ! ideriv
+        if (ierr .eq. 0) then
+          GMRESlastsolution(1:NN,ii,lvol) = solution(1:NN,ii)
+        else
+          exit
+        endif 
+      end do ! ii
+    end select ! ideriv
+
+    cput = GETTIME
+
+    if (ierr.eq.0) then
+      if( Wmp00ac ) write(ounit,1011) cput-cpus, myid, lvol, ideriv, ierr, " successful ; "
+    elseif (ierr.eq.-1) then
+        ;           write(ounit,1011) cput-cpus, myid, lvol, ideriv, ierr, " max niter, epsGMRES not reached ; "
+    elseif (ierr.eq.-2) then
+        ;           write(ounit,1011) cput-cpus, myid, lvol, ideriv, ierr, " more workspace needed ; "
+    elseif (ierr.eq.-3) then
+        ;           write(ounit,1011) cput-cpus, myid, lvol, ideriv, ierr, " solver internal break down ; "  
+    else
+        ;           write(ounit,1011) cput-cpus, myid, lvol, ideriv, ierr, " check iters.f for error code ; "
+    end if
+
+1011 format("mp00ac : ",f10.2," : myid=",i3," ; lvol=",i3," ; ideriv=",i2," ; GMRES ierr=",i3, " ; "a34" ")
 
    end select ! Lmatsolver 
 
@@ -701,93 +702,89 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-
+end subroutine mp00ac
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-! subroutine runrc(n,rhs,sol,ipar,fpar,wk,guess,a,au,jau,ju,solver)
-!   ! Driver subroutine for GMRES, CG, etc
-!   ! modified from riters.f from SPARSKIT v2.0 
-!   ! by ZSQ 02 Feb 2020
-!   implicit none
-!   integer :: n,ipar(16),ju(:),jau(:)
-!   real :: fpar(16),rhs(n),sol(n),guess(n),wk(:),a(:),au(:)
-!   external solver
-! c-----------------------------------------------------------------------
-! c     It starts the iterative linear system solvers
-! c     with a initial guess suppied by the user.
-! c
-! c     The structure {au, jau, ju} is assumed to have the output from
-! c     the ILU* routines in ilut.f.
-! c
-! c-----------------------------------------------------------------------
-! c     local variables
-! c
-!   integer :: i, iou, its
-!   real :: res, dnrm2
+subroutine rungmres(n,rhs,sol,ipar,fpar,wk,nw,guess,a,au,jau,ju,iperm,ierr)
+  ! Driver subroutine for GMRES
+  ! modified from riters.f from SPARSKIT v2.0 
+  ! by ZSQ 02 Feb 2020
+  use constants, only : zero, one
+  implicit none
+  INTEGER  :: n, nw, ju(*), jau(*), iperm(*)
+  INTEGER  :: ipar(16)
+  INTEGER  :: ierr
+  REAL     :: guess(n), au(*)
+  REAL     :: fpar(16), rhs(1:n), sol(1:n), wk(1:nw), a(*)
 
-!   its = 0
-!   res = 0.0D0
-! c
-!   do i = 1, n
-!     sol(i) = guess(i)
-!   enddo
-! c
-!   iou = 6
-!   ipar(1) = 999
-!   do while (ipar(1) .ge. 0)
-!     call solver(n,rhs,sol,ipar,fpar,wk)
+  INTEGER :: i, its
+  REAL :: res, tmprhs(1:n)
 
-!     if (ipar(7).ne.its) then
-!         write (iou, *) its, real(res)
-!         its = ipar(7)
-!     endif
-!     res = fpar(5)
-! c
-!       if (ipar(1).eq.1) then
-!          call amux(n, wk(ipar(8)), wk(ipar(9)), a, ja, ia)
-!          goto 10
-!       else if (ipar(1).eq.2) then
-!          call atmux(n, wk(ipar(8)), wk(ipar(9)), a, ja, ia)
-!          goto 10
-!       else if (ipar(1).eq.3 .or. ipar(1).eq.5) then
-!          call lusol(n,wk(ipar(8)),wk(ipar(9)),au,jau,ju)
-!          goto 10
-!       else if (ipar(1).eq.4 .or. ipar(1).eq.6) then
-!          call lutsol(n,wk(ipar(8)),wk(ipar(9)),au,jau,ju)
-!          goto 10
-!       else if (ipar(1).le.0) then
-!          if (ipar(1).eq.0) then
-!             print *, 'Iterative solver has satisfied convergence test.'
-!          else if (ipar(1).eq.-1) then
-!             print *, 'Iterative solver has iterated too many times.'
-!          else if (ipar(1).eq.-2) then
-!             print *, 'Iterative solver was not given enough work space.'
-!             print *, 'The work space should at least have ', ipar(4),
-!      &           ' elements.'
-!          else if (ipar(1).eq.-3) then
-!             print *, 'Iterative solver is facing a break-down.'
-!          else
-!             print *, 'Iterative solver terminated. code =', ipar(1)
-!          endif
-!       endif
-! c     time = dtime(dt)
-!       write (iou, *) ipar(7), real(fpar(6))
-!       write (iou, *) '# retrun code =', ipar(1),
-!      +     '	convergence rate =', fpar(7)
-! c     write (iou, *) '# total execution time (sec)', time
-! c
-! c     check the error
-! c
-!       call amux(n,sol,wk,a,ja,ia)
-!       do i = 1, n
-!          wk(n+i) = sol(i) -1.0D0
-!          wk(i) = wk(i) - rhs(i)
-!       enddo
-!       write (iou, *) '# the actual residual norm is', dnrm2(n,wk,1)
-!       write (iou, *) '# the error norm is', dnrm2(n,wk(1+n),1)
-! c
-!       if (iou.ne.6) close(iou)
-!       return
-!       end
-end subroutine mp00ac
+  its = 0
+  res = zero
+
+  sol(1:n) = guess(1:n)
+  tmprhs(1:n) = rhs(1:n) ! copy to a temp vector because it will be destroyed by gmres
+
+  ipar(1) = 999
+  do while (ipar(1) .gt. 0)
+
+    call gmres(n,tmprhs,sol,ipar,fpar,wk)
+    res = fpar(5)
+    its = ipar(7)
+
+    if (ipar(1).eq.1) then ! compute A.x
+      ! we should compute wk(ipar(9) = matmul(matrix, wk(ipar(8)))
+      call matvec(n, wk(ipar(8)), wk(ipar(9)), a)
+      ! currently the matvec subroutine uses the following
+      ! call DGEMV('N', n, n, one, a, n, wk(ipar(8)), 1, zero, wk(ipar(9)), 1)
+
+    else if (ipar(1).eq.3) then
+      ! apply the preconditioner
+      call prec_solve(n,wk(ipar(8)),wk(ipar(9)),au,jau,ju,iperm)
+
+    else if (ipar(1).lt.0) then 
+      ! error or max iter reached, exit
+      exit
+    endif
+  
+  end do ! end main loop
+
+  ierr = ipar(1)
+
+  return
+end subroutine rungmres
+
+  subroutine matvec(n, x, ax, a)
+    ! compute a.x by either by coumputing it directly, 
+    ! or using a matrix free method
+    use constants, only : zero, one
+    implicit none
+    INTEGER, intent(in) :: n
+    REAL                :: ax(1:n), x(1:n), a(*)
+
+    call DGEMV('N', n, n, one, a, n, x, 1, zero, ax, 1)
+
+    return
+
+  end subroutine matvec
+
+  subroutine prec_solve(n,vecin,vecout,au,jau,ju,iperm)
+    ! apply the preconditioner
+    implicit none
+    INTEGER :: n, iperm(*), jau(*), ju(*)
+    REAL    :: vecin(*), au(*)
+    REAL    :: vecout(*)
+
+    INTEGER :: ii
+    REAL :: tempv(n)
+
+    call lusol(n,vecin,tempv,au,jau,ju) ! sparse LU solve
+    !  apply permutation
+    do ii = 1, n
+      vecout(ii) = tempv(iperm(ii+n))
+    enddo
+
+    return
+  end subroutine prec_solve
