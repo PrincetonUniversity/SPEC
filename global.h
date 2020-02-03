@@ -224,10 +224,10 @@ module inputlist
   INTEGER      :: Lposdef    =  0 ! redundant;
   REAL         :: maxrndgues =  1.0
   INTEGER      :: Lmatsolver = 1
-  INTEGER      :: NiterGMRES = 50
+  INTEGER      :: NiterGMRES = 100
   REAL         :: epsGMRES = 1e-9
   INTEGER      :: LGMRESprec = 1
-  REAL         :: epsILU = 1e-6
+  REAL         :: epsILU = 1e-9
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

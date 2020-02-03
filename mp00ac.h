@@ -402,9 +402,26 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 
    case(2) ! Using GMRES
 
+    ! setup solver parameters
+    ipar = 0
+    fpar = zero
+    wk = zero
+    if (LILUprecond) then
+      ipar(2) = 1 ! tell GMRES to use preconditioner
+    else
+      ipar(2) = 0 ! do not use preconditioner, not recommended
+    end if
+    ipar(3) = 2           ! stopping test type, see iters.f
+    ipar(4) = nw          ! length of work array
+    ipar(5) = nrestart    ! restart parameter, size of Krylov subspace
+    ipar(6) = NiterGMRES  ! maximum number of iteration
+    fpar(1) = epsGMRES    ! stop criterion, relative error
+    fpar(2) = epsGMRES    ! stop criterion, absolute error
+
     select case (ideriv)
 
     case (0) ! ideriv = 0
+
       if (LILUprecond) then ! Using ILU preconditioner
         matrixS(1:NS) = dMAS - lmu * dMDS  ! construct the sparse precondtioner matrix
       end if ! if (LILUprecond)
@@ -417,17 +434,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
       ! ILU factorization
         call ilutp(NN,matrixS,jdMAS,idMAS,maxfil,epsILU,0.1,NN,bilut,jbilut,ibilut,Nbilut,wk,jw,iperm,iluierr)
         FATAL(mp00ac, iluierr.ne.0, construction of preconditioner failed)
-        ipar(2) = 1 ! tell GMRES to use preconditioner
-      else
-        ipar(2) = 0 ! do not use preconditioner, not recommended
-      end if
-
-      ipar(3) = 2           ! stopping test type, see iters.f
-      ipar(4) = nw          ! length of work array
-      ipar(5) = nrestart    ! restart parameter, size of Krylov subspace
-      ipar(6) = NiterGMRES  ! maximum number of iteration
-      fpar(1) = epsGMRES    ! stop criterion, relative error
-      fpar(2) = epsGMRES    ! stop criterion, absolute error
+      endif
 
       call rungmres(NN,rhs(1,0),solution(1,0),ipar,fpar,wk,nw,GMRESlastsolution(1,0,lvol),matrix,bilut,jbilut,ibilut,iperm,ierr)
       
@@ -451,7 +458,8 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
           GMRESlastsolution(1:NN,ii,lvol) = solution(1:NN,ii)
         else
           exit
-        endif 
+        endif
+        
       end do ! ii
     end select ! ideriv
 
