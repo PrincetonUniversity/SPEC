@@ -447,9 +447,11 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 
       call rungmres(NN,lmu,rhs(1,0),solution(1,0),ipar,fpar,wk,nw,GMRESlastsolution(1,0,lvol),matrix,bilut,jbilut,ibilut,iperm,ierr)
       
-      if (ierr .eq. 0) then
+      if (ierr .gt. 0) then
         ImagneticOK(lvol) = .true.
         GMRESlastsolution(1:NN,0,lvol) = solution(1:NN,0)
+      elseif (ierr .eq. 0) then
+        solution(1:NN,0) = GMRESlastsolution(1:NN,0,lvol)
       else
         ImagneticOK(lvol) = .false.
       endif 
@@ -463,8 +465,10 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 
         call rungmres(NN,lmu,rhs(1,ii),solution(1,ii),ipar,fpar,wk,nw,GMRESlastsolution(1,ii,lvol),matrix,bilut,jbilut,ibilut,iperm,ierr)
       
-        if (ierr .eq. 0) then
+        if (ierr .gt. 0) then
           GMRESlastsolution(1:NN,ii,lvol) = solution(1:NN,ii)
+        elseif (ierr .eq. 0) then
+          solution(1:NN,0) = GMRESlastsolution(1:NN,0,lvol)
         else
           exit
         endif
