@@ -33,7 +33,7 @@ case1:
   artifacts:
     when: always
     paths:
-    - G1V03L2Fi.001.sp.h5
+    - ci/G1V03L2Fi/G1V03L2Fi.001.sp.h5
     expire_in: 1 week
   dependencies:
   - build:centos7

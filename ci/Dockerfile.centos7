@@ -5,6 +5,7 @@ RUN yum group install "Development Tools" -y
 RUN yum -y install epel-release
 RUN yum install gcc-gfortran openmpi openmpi-devel hdf5 hdf5-devel -y
 RUN yum install fftw3 fftw3-devel openblas openblas-devel -y
+RUN yum install blas blas-devel lapack lapack-devel -y
 
 # direct the existing makefile to the system install location
 ENV FFTW_HOME=/usr
