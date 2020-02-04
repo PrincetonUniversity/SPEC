@@ -610,11 +610,11 @@ module inputlist
                 !latex \item if \inputvar{Linitgues = 3}, the initial guess for the Beltrami field will be randomized with the maximum \inputvar{maxrndgues};
                 !latex \ei
  maxrndgues,&   !latex \item \inputvar{maxrndgues = 1.0} : real : the maximum random number of the Beltrami field if \inputvar{Linitgues = 3};
- Lmatsolver,&!latex \item \inputvar{Lmatsolver = 1} : integer : 1 for LU factorization, 2 for GMRES (currently with Intel MKL only)
- NiterGMRES,&   !latex \item \inputvar{LGMRESniter = 50} : integer : number of max iteration for GMRES
+ Lmatsolver,&!latex \item \inputvar{Lmatsolver = 1} : integer : 1 for LU factorization, 2 for GMRES, 3 for GMRES matrix-free
+ NiterGMRES,&   !latex \item \inputvar{LGMRESniter = 100} : integer : number of max iteration for GMRES
  epsGMRES,&     !latex \item \inputvar{epsGMRES = 1e-9} : real : the precision of GMRES
  LGMRESprec,&!latex \item \inputvar{LGMRESprec = 1} : integer : type of preconditioner for GMRES, 1 for ILU sparse matrix
- epsILU,&       !latex \item \inputvar{epsILU = 1e-6} : real : the precision of incomplete LU factorization for preconditioning
+ epsILU,&       !latex \item \inputvar{epsILU = 1e-9} : real : the precision of incomplete LU factorization for preconditioning
  Lposdef        !latex \item\inputvar{Lposdef = 0 : integer} : redundant;
 !Nmaxexp        !l tex \item \inputvar{Nmaxexp = 32 : integer} : indicates maximum exponent used to precondition Beltrami linear system near singularity;
                 !l tex \bi
@@ -896,6 +896,8 @@ module allglobal
   INTEGER              :: Mvol
 
   LOGICAL              :: YESstellsym, NOTstellsym ! internal shorthand copies of Istellsym, which is an integer input; 
+
+  LOGICAL              :: YESMatrixFree, NOTMatrixFree ! to use matrix-free method or not
 
   REAL   , allocatable :: cheby(:,:), zernike(:,:,:) ! local workspace;
   
@@ -1563,9 +1565,6 @@ subroutine readin
    FATAL( readin, abs(one+gamma).lt.vsmall, 1+gamma appears in denominator in dforce ) ! Please check this; SRH: 27 Feb 18;
    FATAL( readin, abs(one-gamma).lt.vsmall, 1-gamma appears in denominator in fu00aa ) ! Please check this; SRH: 27 Feb 18;
    FATAL( readin, Lconstraint.lt.-1 .or. Lconstraint.gt.2, illegal Lconstraint )
-
-   FATAL( readin, Lmatsolver.gt.2 .or. Lmatsolver.lt.1, illegal Lmatsolver )
-   FATAL( readin, Lmatsolver.eq.2 .and. LGMRESprec.ne.1, illegal LGMRESprec )
    
    if( Istellsym.eq.1 ) then
     Rbs(-MNtor:MNtor,-MMpol:MMpol) = zero
@@ -1651,6 +1650,11 @@ subroutine readin
 1030 format("readin : ",f10.2," : LBeltrami="i2" ; Linitgues="i2" ;")
    
    FATAL( readin, LBeltrami.lt.0 .or. LBeltrami.gt.7, error )
+   FATAL( readin, Lmatsolver.lt.0 .or. Lmatsolver.gt.3, error )
+   FATAL( readin, LGMRESprec.lt.0 .or. LGMRESprec.gt.1, error )
+   FATAL( readin, NiterGMRES.lt.0, error )
+   FATAL( readin, abs(epsGMRES).le.machprec , error )
+   FATAL( readin, abs(epsILU).le.machprec , error )
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    

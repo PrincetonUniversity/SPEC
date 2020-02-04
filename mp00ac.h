@@ -132,7 +132,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
                         mu, helicity, iota, oita, curtor, curpol, Lrad, &
                        !Lposdef, &
                         Lconstraint, mupftol, &
-                        Lmatsolver, NiterGMRES, epsGMRES, LGMRESprec, epsILU, NiterGMRES
+                        Lmatsolver, NiterGMRES, epsGMRES, LGMRESprec, epsILU
   
   use cputiming, only : Tmp00ac
   
@@ -152,7 +152,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
                         xoffset, &
                         ImagneticOK, &
                         Ate, Aze, Ato, Azo, Mvol, &
-                        LILUprecond, GMRESlastsolution
+                        LILUprecond, GMRESlastsolution, NOTMatrixFree
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -251,7 +251,9 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   NN = NAdof(lvol) ! shorthand;
   
   SALLOCATE( rhs   , (1:NN,0:2 ), zero )
-  SALLOCATE( matrix, (1:NN,1:NN), zero )
+  if (NOTMatrixFree) then
+    SALLOCATE( matrix, (1:NN,1:NN), zero )
+  endif
 
   solution(1:NN,-1:2) = zero ! this is a global array allocated in dforce;
 
@@ -265,7 +267,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
     SALLOCATE( LU,    (1:NN,1:NN), zero )
     SALLOCATE( ipiv,  (1:NN),         0 )
     SALLOCATE( Iwork, (1:NN),         0 )
-  case (2) ! GMRES
+  case (2:3) ! GMRES
     if (LILUprecond) then
       NS = NdMAS(lvol) ! shorthand
       SALLOCATE( matrixS, (1:NS), zero )
@@ -308,7 +310,9 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
    
    if( Lcoordinatesingularity ) then
     
-    ;matrix(1:NN,1:NN) = dMA(1:NN,1:NN) - lmu * dMD(1:NN,1:NN)
+    if (NOTMatrixFree) then
+      ;matrix(1:NN,1:NN) = dMA(1:NN,1:NN) - lmu * dMD(1:NN,1:NN)
+    endif
     
 !  !;select case( ideriv )
 !  !;case( 0 )    ; rhs(1:NN,0) = - matmul(  dMB(1:NN,1:2) - lmu  * dME(1:NN,1:2), dpsi(1:2) )
@@ -325,9 +329,11 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
    else ! .not.Lcoordinatesingularity; 
     
     if( Lplasmaregion ) then
-     
-     matrix(1:NN,1:NN) = dMA(1:NN,1:NN) - lmu * dMD(1:NN,1:NN)
-     
+
+     if (NOTMatrixFree) then
+       matrix(1:NN,1:NN) = dMA(1:NN,1:NN) - lmu * dMD(1:NN,1:NN)
+     endif
+
      select case( ideriv )
      case( 0 )    ; rhs(1:NN,0) = - matmul( dMB(1:NN,1:2 ), dpsi(1:2) )
      case( 1 )    ; rhs(1:NN,1) =                                                              - matmul( - one * dMD(1:NN,1:NN), solution(1:NN,0) )
@@ -339,7 +345,10 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 #ifdef FORCEFREEVACUUM
      FATAL( mp00ac, .true., need to revise Beltrami matrices in vacuum region for arbitrary force-free field )
 #else
-     matrix(1:NN,1:NN) = dMA(1:NN,1:NN) ! - lmu * dMD(1:NN,1:NN) ;
+     
+     if (NOTMatrixFree) then
+       matrix(1:NN,1:NN) = dMA(1:NN,1:NN) ! - lmu * dMD(1:NN,1:NN) ;
+     endif
 
      select case( ideriv )
      case( 0 )    ; rhs(1:NN,0) = - dMG(1:NN) - matmul( dMB(1:NN,1:2), dpsi(1:2) ) ! perhaps there is an lmu term missing here;
@@ -356,7 +365,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 
    select case( Lmatsolver )
 
-   case(1) ! Using direct matrix solver (LU factorization)  
+   case(1) ! Using direct matrix solver (LU factorization), must not be matrix free
     
     select case( ideriv )
       
@@ -400,7 +409,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-   case(2) ! Using GMRES
+   case(2) ! Using GMRES, can be matrix free
 
     ! setup solver parameters
     ipar = 0
@@ -436,7 +445,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
         FATAL(mp00ac, iluierr.ne.0, construction of preconditioner failed)
       endif
 
-      call rungmres(NN,rhs(1,0),solution(1,0),ipar,fpar,wk,nw,GMRESlastsolution(1,0,lvol),matrix,bilut,jbilut,ibilut,iperm,ierr)
+      call rungmres(NN,lmu,rhs(1,0),solution(1,0),ipar,fpar,wk,nw,GMRESlastsolution(1,0,lvol),matrix,bilut,jbilut,ibilut,iperm,ierr)
       
       if (ierr .eq. 0) then
         ImagneticOK(lvol) = .true.
@@ -452,7 +461,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
           GMRESlastsolution(1:NN,ii,lvol) = zero
         endif
 
-        call rungmres(NN,rhs(1,ii),solution(1,ii),ipar,fpar,wk,nw,GMRESlastsolution(1,ii,lvol),matrix,bilut,jbilut,ibilut,iperm,ierr)
+        call rungmres(NN,lmu,rhs(1,ii),solution(1,ii),ipar,fpar,wk,nw,GMRESlastsolution(1,ii,lvol),matrix,bilut,jbilut,ibilut,iperm,ierr)
       
         if (ierr .eq. 0) then
           GMRESlastsolution(1:NN,ii,lvol) = solution(1:NN,ii)
@@ -486,6 +495,8 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   
 ! can compute the energy and helicity integrals; easiest to do this with solution in packed format;
   
+  if (NOTMatrixFree) then
+
    lBBintegral(lvol) = half * sum( solution(1:NN,0) * matmul( dMA(1:NN,1:NN), solution(1:NN,0) ) ) & 
                      +        sum( solution(1:NN,0) * matmul( dMB(1:NN,1: 2),     dpsi(1: 2  ) ) ) !
 !                    + half * sum(     dpsi(1: 2  ) * matmul( dMC(1: 2,1: 2),     dpsi(1: 2  ) ) )
@@ -493,6 +504,9 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
    lABintegral(lvol) = half * sum( solution(1:NN,0) * matmul( dMD(1:NN,1:NN), solution(1:NN,0) ) ) ! 
 !                    +        sum( solution(1:NN,0) * matmul( dME(1:NN,1: 2),     dpsi(1: 2  ) ) ) !
 !                    + half * sum(     dpsi(1: 2  ) * matmul( dMF(1: 2,1: 2),     dpsi(1: 2  ) ) )
+  else
+    ! some other way to compute
+  endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -507,7 +521,9 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  DALLOCATE( matrix )
+  if (NOTMatrixFree) then
+    DALLOCATE( matrix )
+  endif
   DALLOCATE( rhs    )
 
   select case (Lmatsolver)
@@ -714,7 +730,7 @@ end subroutine mp00ac
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-subroutine rungmres(n,rhs,sol,ipar,fpar,wk,nw,guess,a,au,jau,ju,iperm,ierr)
+subroutine rungmres(n,mu,rhs,sol,ipar,fpar,wk,nw,guess,a,au,jau,ju,iperm,ierr)
   ! Driver subroutine for GMRES
   ! modified from riters.f from SPARSKIT v2.0 
   ! by ZSQ 02 Feb 2020
@@ -723,7 +739,7 @@ subroutine rungmres(n,rhs,sol,ipar,fpar,wk,nw,guess,a,au,jau,ju,iperm,ierr)
   INTEGER  :: n, nw, ju(*), jau(*), iperm(*)
   INTEGER  :: ipar(16)
   INTEGER  :: ierr
-  REAL     :: guess(n), au(*)
+  REAL     :: guess(n), au(*), mu
   REAL     :: fpar(16), rhs(1:n), sol(1:n), wk(1:nw), a(*)
 
   INTEGER :: i, its
@@ -744,7 +760,7 @@ subroutine rungmres(n,rhs,sol,ipar,fpar,wk,nw,guess,a,au,jau,ju,iperm,ierr)
 
     if (ipar(1).eq.1) then ! compute A.x
       ! we should compute wk(ipar(9) = matmul(matrix, wk(ipar(8)))
-      call matvec(n, wk(ipar(8)), wk(ipar(9)), a)
+      call matvec(n, wk(ipar(8)), wk(ipar(9)), a, mu)
       ! currently the matvec subroutine uses the following
       ! call DGEMV('N', n, n, one, a, n, wk(ipar(8)), 1, zero, wk(ipar(9)), 1)
 
@@ -765,15 +781,20 @@ subroutine rungmres(n,rhs,sol,ipar,fpar,wk,nw,guess,a,au,jau,ju,iperm,ierr)
   return
 end subroutine rungmres
 
-  subroutine matvec(n, x, ax, a)
+  subroutine matvec(n, x, ax, a, mu)
     ! compute a.x by either by coumputing it directly, 
     ! or using a matrix free method
     use constants, only : zero, one
+    use allglobal, only : NOTMatrixFree
     implicit none
     INTEGER, intent(in) :: n
-    REAL                :: ax(1:n), x(1:n), a(*)
+    REAL                :: ax(1:n), x(1:n), a(*), mu
 
-    call DGEMV('N', n, n, one, a, n, x, 1, zero, ax, 1)
+    if (NOTMatrixFree) then
+      call DGEMV('N', n, n, one, a, n, x, 1, zero, ax, 1)
+    else
+      ! use matrix free method!
+    endif
 
     return
 

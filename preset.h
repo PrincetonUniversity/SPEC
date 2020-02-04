@@ -1231,10 +1231,20 @@ subroutine preset
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   ! Allocate matrix to store the last solution of GMRES as initialization
-  if (Lmatsolver .eq. 2) then ! use GMRES
+  if (Lmatsolver.eq.2 .or. Lmatsolver.eq.3) then ! use GMRES
     SALLOCATE(GMRESlastsolution, (MAXVAL(NAdof),0:2,1:Mvol), zero )
     if (LGMRESprec .eq. 1) LILUprecond = .true.
   endif
+  
+  if (Lmatsolver.eq.3) then
+    YESMatrixFree = .true.
+    NOTMatrixFree = .false.
+  else
+    YESMatrixFree = .false.
+    NOTMatrixFree = .true.
+  endif
+
+  FATAL(preset, Lmatsolver.eq.3 .and. Lfindzero.ne.0, matrix free currently only support Lfindzero=0)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
