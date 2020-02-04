@@ -93,11 +93,7 @@ subroutine bfield( zeta, st, Bst ) ! the format of this subroutine is constraine
   if (Lcoordinatesingularity) then
     call get_zernike(sbar, Lrad(lvol), Mpol, zernike(:,:,0:1))
   else
-    cheby(0,0:1) = (/ one, zero /) ! Chebyshev initialization; 16 Jan 13;
-    cheby(1,0:1) = (/ lss,  one /)
-    do ll = 2, Lrad(lvol) ; cheby(ll,0:1) = (/ two * lss * cheby(ll-1,0)                             - cheby(ll-2,0) , & ! Chebyshev recurrence; 17 Dec 15;
-                                              two       * cheby(ll-1,0) + two * lss * cheby(ll-1,1) - cheby(ll-2,1)   /)
-    enddo
+    call get_cheby(lss, Lrad(lvol), cheby(0:Lrad(lvol),0:1))
   end if
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

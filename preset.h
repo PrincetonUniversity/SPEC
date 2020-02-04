@@ -194,14 +194,9 @@ subroutine preset
   SALLOCATE( TT, (0:Mrad,0:1,0:1), zero )
   SALLOCATE(RTT, (0:Lrad(1),0:Mpol,0:1,0:1), zero )
   SALLOCATE(RTM, (0:Lrad(1),0:Mpol), zero )
-  
-  do innout = 0, 1 ; lss = two * innout - one
    
-   do ll = 0, Mrad ; TT(ll,innout,0) = lss**(ll  )        
-    ;              ; TT(ll,innout,1) = lss**(ll+1) * ll**2 ! derivative; 26 Jan 16;
-   enddo
-   
-  enddo ! end of do innout = 0, 1 ;
+  call get_cheby( -one, Mrad, TT(:,0,:))
+  call get_cheby( one , Mrad, TT(:,1,:))
 
   call get_zernike( zero, Lrad(1), Mpol, RTT(:,:,0,:))
   call get_zernike( one, Lrad(1), Mpol, RTT(:,:,1,:))
@@ -633,8 +628,8 @@ subroutine preset
       if( NOTstellsym ) NdMASmax(vvol) = (4 * (Lrad(vvol)/2 + 1))**2 * mn + 2 * (Ntor+mn) * NAdof(vvol) ! Ate, Aze, Ato, Azo
     end if
    else ! .not.Lcoordinatesingularity;                                     a    c      b        d      e      f      g   h
-    if( YESstellsym ) NAdof(vvol) = 2 * ( mn        ) * ( Lrad(vvol)+1 ) + mn        + mn            + mn-1        + 1 + 1  
-    if( NOTstellsym ) NAdof(vvol) = 2 * ( mn + mn-1 ) * ( Lrad(vvol)+1 ) + mn + mn-1 + mn     + mn-1 + mn-1 + mn-1 + 1 + 1
+    if( YESstellsym ) NAdof(vvol) = 2 * ( mn        ) * ( Lrad(vvol)    ) +0*mn       +0*mn           + mn-1        + 1 + 1  
+    if( NOTstellsym ) NAdof(vvol) = 2 * ( mn + mn-1 ) * ( Lrad(vvol)    ) +0*mn+0*mn-1+0*mn    +0*mn-1+ mn-1 + mn-1 + 1 + 1
 
     ! Guess the size of the sparse matrix ! 28 Jan 20
     ! If an iterative method is used and requires an preconditioner, we need to construct it as a sparse matrix
@@ -742,7 +737,7 @@ subroutine preset
    else ! .not.Lcoordinatesingularity;
         
     do ii = 1, mn
-     do ll = 0, Lrad(vvol)                 ; idof = idof + 1 ; Ate(vvol,0,ii)%i(ll) = idof
+     do ll = 1, Lrad(vvol)                 ; idof = idof + 1 ; Ate(vvol,0,ii)%i(ll) = idof
       ;                                    ; idof = idof + 1 ; Aze(vvol,0,ii)%i(ll) = idof
       if( ii.gt.1 .and. NOTstellsym ) then ; idof = idof + 1 ; Ato(vvol,0,ii)%i(ll) = idof
        ;                                   ; idof = idof + 1 ; Azo(vvol,0,ii)%i(ll) = idof
@@ -751,11 +746,11 @@ subroutine preset
     enddo
 
     do ii = 1, mn
-     ;                                     ; idof = idof + 1 ; Lma(vvol,  ii)       = idof
-     ;                                     ; idof = idof + 1 ; Lmb(vvol,  ii)       = idof
-     if(  ii.gt.1 .and. NOTstellsym ) then ; idof = idof + 1 ; Lmc(vvol,  ii)       = idof
-      ;                                    ; idof = idof + 1 ; Lmd(vvol,  ii)       = idof
-     endif
+     !;                                     ; idof = idof + 1 ; Lma(vvol,  ii)       = idof
+     !;                                     ; idof = idof + 1 ; Lmb(vvol,  ii)       = idof
+     !if(  ii.gt.1 .and. NOTstellsym ) then ; idof = idof + 1 ; Lmc(vvol,  ii)       = idof
+     !;                                     ; idof = idof + 1 ; Lmd(vvol,  ii)       = idof
+     !endif
      if(  ii.gt.1                   ) then ; idof = idof + 1 ; Lme(vvol,  ii)       = idof
      endif
      if(  ii.gt.1 .and. NOTstellsym ) then ; idof = idof + 1 ; Lmf(vvol,  ii)       = idof

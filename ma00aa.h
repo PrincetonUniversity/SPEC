@@ -328,11 +328,8 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
    do jquad = 1, lquad ! Gaussian quadrature loop;
 
     lss = gaussianabscissae(jquad,lvol) ; jthweight = gaussianweight(jquad,lvol)
-    
-    ;                 cheby( 0,0:1) = (/ one                                       , zero                                                            /)
-    ;                 cheby( 1,0:1) = (/ lss                                       , one                                                             /)
-    do ll = 2, lrad ; cheby(ll,0:1) = (/ two * lss * cheby(ll-1,0) - cheby(ll-2,0) , two * cheby(ll-1,0) + two * lss * cheby(ll-1,1) - cheby(ll-2,1) /)
-    enddo
+
+    call get_cheby(lss, lrad, cheby(0:lrad,0:1))
     
     WCALL( ma00aa, metrix,( lvol, lss ) ) ! compute metric elements; 16 Jan 13;
 
@@ -451,11 +448,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   endif ! end of if( Lcoordinatesingularity ) ; 17 Dec 15;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  if (Lcoordinatesingularity) then ! different radial dof for Zernike; 02 Jul 19
-     nele = ((lrad - mod(lrad,2)) / 2 + 1)**2 * mn2_max
-   else
-     nele = mn2_max * lp2_max
-   end if
+  nele = SIZE(TTssss)
  
   call DSCAL(nele, pi2pi2nfphalf, DToocc, 1)
   call DSCAL(nele, pi2pi2nfphalf, TTssss, 1)

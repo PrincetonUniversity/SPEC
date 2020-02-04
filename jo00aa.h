@@ -164,12 +164,7 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
    if (Lcoordinatesingularity) then ! Zernike 1 Jul 2019
      call get_zernike_d2(sbar, Lrad(lvol), mpol, zernike)
    else
-     ;                     ; cheby( 0,0:2) = (/ one, zero, zero /) ! T_0: Chebyshev initialization; function, 1st-derivative, 2nd-derivative;
-     ;                     ; cheby( 1,0:2) = (/ lss,  one, zero /) ! T_1: Chebyshev initialization; function, 1st-derivative, 2nd-derivative;
-     do ll = 2, Lrad(lvol) ; cheby(ll,0:2) = (/ two * lss * cheby(ll-1,0)                                                         - cheby(ll-2,0) , &
-                                                two       * cheby(ll-1,0) + two * lss * cheby(ll-1,1)                             - cheby(ll-2,1) , &
-                                                two       * cheby(ll-1,1) + two       * cheby(ll-1,1) + two * lss * cheby(ll-1,2) - cheby(ll-2,2) /)
-     enddo ! end of do ll; 20 Jun 14;
+     call get_cheby_d2(lss, Lrad(lvol), cheby(0:Lrad(lvol),0:2))
    endif
 
    Atemn(1:mn,0:2) = zero ! initialize summation over Chebyshev/Zernike polynomials;

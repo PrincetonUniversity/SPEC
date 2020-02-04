@@ -104,8 +104,14 @@ subroutine packab( packorunpack, lvol, NN, solution, ideriv )
    if( YESstellsym ) then
     
     do ii = 1, mn
-     do ll = 0, llrad ; id = Ate(lvol,0,ii)%i(ll) ; if (id/=0) Ate(lvol,ideriv,ii)%s(ll) = solution(id)
-      ;               ; id = Aze(lvol,0,ii)%i(ll) ; if (id/=0) Aze(lvol,ideriv,ii)%s(ll) = solution(id)
+     do ll = 0, llrad ; id = Ate(lvol,0,ii)%i(ll) ;
+       if (id/=0) then; Ate(lvol,ideriv,ii)%s(ll) = solution(id)
+       else           ; Ate(lvol,ideriv,ii)%s(ll) = zero
+       endif
+      ;               ; id = Aze(lvol,0,ii)%i(ll) ;
+       if (id/=0) then; Aze(lvol,ideriv,ii)%s(ll) = solution(id)
+       else           ; Aze(lvol,ideriv,ii)%s(ll) = zero
+       endif
       ;               ;                           ; Ato(lvol,ideriv,ii)%s(ll) = zero
       ;               ;                           ; Azo(lvol,ideriv,ii)%s(ll) = zero
      enddo ! end of do ll;
@@ -114,16 +120,34 @@ subroutine packab( packorunpack, lvol, NN, solution, ideriv )
    else ! NOTstellsym;
     
     ;  ii = 1
-     do ll = 0, llrad ; id = Ate(lvol,0,ii)%i(ll) ; if (id/=0) Ate(lvol,ideriv,ii)%s(ll) = solution(id)
-      ;               ; id = Aze(lvol,0,ii)%i(ll) ; if (id/=0) Aze(lvol,ideriv,ii)%s(ll) = solution(id)
+     do ll = 0, llrad ; id = Ate(lvol,0,ii)%i(ll) ;
+       if (id/=0) then; Ate(lvol,ideriv,ii)%s(ll) = solution(id)
+       else           ; Ate(lvol,ideriv,ii)%s(ll) = zero
+       endif
+      ;               ; id = Aze(lvol,0,ii)%i(ll) ;
+       if (id/=0) then; Aze(lvol,ideriv,ii)%s(ll) = solution(id)
+       else           ; Aze(lvol,ideriv,ii)%s(ll) = zero
+       endif
       ;               ;                           ; Ato(lvol,ideriv,ii)%s(ll) = zero         ! sin( m \t - n \z ) = 0 for (m,n)=(0,0);
       ;               ;                           ; Azo(lvol,ideriv,ii)%s(ll) = zero         ! sin( m \t - n \z ) = 0 for (m,n)=(0,0);
      enddo
     do ii = 2, mn
-     do ll = 0, llrad ; id = Ate(lvol,0,ii)%i(ll) ; if (id/=0) Ate(lvol,ideriv,ii)%s(ll) = solution(id)
-      ;               ; id = Aze(lvol,0,ii)%i(ll) ; if (id/=0) Aze(lvol,ideriv,ii)%s(ll) = solution(id)
-      ;               ; id = Ato(lvol,0,ii)%i(ll) ; if (id/=0) Ato(lvol,ideriv,ii)%s(ll) = solution(id)
-      ;               ; id = Azo(lvol,0,ii)%i(ll) ; if (id/=0) Azo(lvol,ideriv,ii)%s(ll) = solution(id)
+     do ll = 0, llrad ; id = Ate(lvol,0,ii)%i(ll) ;
+       if (id/=0) then; Ate(lvol,ideriv,ii)%s(ll) = solution(id)
+       else           ; Ate(lvol,ideriv,ii)%s(ll) = zero
+       endif
+      ;               ; id = Aze(lvol,0,ii)%i(ll) ;
+       if (id/=0) then; Aze(lvol,ideriv,ii)%s(ll) = solution(id)
+       else           ; Aze(lvol,ideriv,ii)%s(ll) = zero
+       endif
+      ;               ; id = Ato(lvol,0,ii)%i(ll) ;
+       if (id/=0) then; Ato(lvol,ideriv,ii)%s(ll) = solution(id)
+       else           ; Ato(lvol,ideriv,ii)%s(ll) = zero
+       endif
+      ;               ; id = Azo(lvol,0,ii)%i(ll) ;
+       if (id/=0) then; Azo(lvol,ideriv,ii)%s(ll) = solution(id)
+       else           ; Azo(lvol,ideriv,ii)%s(ll) = zero
+       endif
      enddo ! end of do ll;
     enddo ! end of do ii;
 

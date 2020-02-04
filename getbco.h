@@ -93,10 +93,7 @@ subroutine getbco( lvol, Ntz, lss )
     sbar = (lss + one) * half
     call get_zernike(sbar, Lrad(lvol), mpol, zernike(:,:,0:1))
   else
-    ;                       cheby( 0,0:1) = (/ one                                       , zero                                                            /)
-    ;                       cheby( 1,0:1) = (/ lss                                       , one                                                             /)
-    do ll = 2, Lrad(lvol) ; cheby(ll,0:1) = (/ two * lss * cheby(ll-1,0) - cheby(ll-2,0) , two * cheby(ll-1,0) + two * lss * cheby(ll-1,1) - cheby(ll-2,1) /)
-    enddo
+    call get_cheby(lss, Lrad(lvol), cheby(0:Lrad(lvol),0:1))
   endif
    
   WCALL( getbco, coords,( lvol, lss, Lcurvature, Ntz, mn ) ) ! get coordinates and derivatives wrt Rj, Zj, at specific radial location;
