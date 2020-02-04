@@ -109,9 +109,9 @@ docker run -v `pwd`:`pwd` -w `pwd` my_tag_name yourcommand
 Try it:
 
 ```
-➜  testspec docker run -v `pwd`:`pwd` -w `pwd` testspec uname -a
+➜  docker run -v `pwd`:`pwd` -w `pwd` testspec uname -a
 Linux 77f967b2d9b8 4.19.76-linuxkit #1 SMP Thu Oct 17 19:31:58 UTC 2019 x86_64 x86_64 x86_64 GNU/Linux
-➜  testspec uname -a
+➜  uname -a
 Darwin gwright-lt 18.7.0 Darwin Kernel Version 18.7.0: Thu Jan 23 06:52:12 PST 2020; root:xnu-4903.278.25~1/RELEASE_X86_64 x86_64
 ```
 

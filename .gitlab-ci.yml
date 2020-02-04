@@ -27,13 +27,13 @@ case1:
   stage: test
   image: garrettwrong/spec_centos-7
   script:
-  - #cd ci/case1
-  - #../../xspec #something something
-  - #compare
+  - cd ci/G1V03L2Fi
+  - ../../xspec G1V03L2Fi.001.sp
+  #- comparison
   artifacts:
     when: always
     paths:
-    #- ci/case1/output_files
+    - G1V03L2Fi.001.sp.h5
     expire_in: 1 week
   dependencies:
   - build:centos7
