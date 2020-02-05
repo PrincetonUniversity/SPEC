@@ -119,7 +119,7 @@ class SPEC:
         '''
         import matplotlib.pyplot as plt
         pressure = self.input.physics.pressure * self.input.physics.pscale
-        tflux = self.output.tflux
+        tflux = self.output.tflux[:len(pressure)]
         if not normalize :
             #  remove  mu_0
             pressure /= (4*np.pi*1.0E-7)
@@ -134,13 +134,17 @@ class SPEC:
             kwargs.update({'linewidth': 2.0}) # prefer thicker lines
         if kwargs.get('label') == None:
             kwargs.update({'label': 'SPEC_pressure'}) # default label 
-        # plots
-        for ivol in range(len(pressure)):
-            if ivol == 0:
-                ax.plot([0, tflux[ivol]],[pressure[ivol], pressure[ivol]],**kwargs)
-            else:
-                ax.plot([tflux[ivol-1], tflux[ivol]],[pressure[ivol], pressure[ivol]],**kwargs)
-                ax.plot([tflux[ivol-1], tflux[ivol-1]],[pressure[ivol-1], pressure[ivol]],**kwargs)
+        # process data
+        _tflux = np.insert(tflux, 0, 0)
+        _pressure = np.append(pressure, 0)
+        x_tflux = np.zeros(2*len(tflux)+1)
+        x_tflux[0::2] = _tflux
+        x_tflux[1::2] =  tflux
+        y_pressure = np.zeros(2*len(pressure)+1)
+        y_pressure[0::2] = _pressure
+        y_pressure[1::2] =  pressure        
+        # plot
+        ax.plot(x_tflux, y_pressure, **kwargs)
         # Figure properties
         plt.xlabel('Normalized flux',fontsize=20)
         plt.ylabel('Pressure',fontsize=20)
@@ -148,9 +152,40 @@ class SPEC:
         plt.yticks(fontsize=16)
         return
     
-    def plot_kam_surface(self, **kwargs):
-        # should we use FourSurf class?
-        pass
+    def plot_kam_surface(self, ns=None, zeta=0.0, **kwargs):
+        '''Plot SPEC KAM surfaces
+        parameters:
+            ns -- None (default) or integer list. list of surface index to be plotted. 
+                 (0 for axis, -1 for the computational boundary if applied).
+            zeta -- float, defaultr: 0.0. The toroidal angle where the cross-sections are plotted.
+            **kwargs -- keyword arguments. FourSurf.plot keyword arguments.
+        returns:
+            surfs -- list of FourSurf classes
+        '''
+        # use FourSurf, can be found at 
+        # https://github.com/zhucaoxiang/CoilPy/blob/master/surface.py
+        from surface import FourSurf
+        surfs = []
+        # check if plot all
+        if ns is None:
+            # 0 for the axis
+            ns = np.arange(self.input.physics.Nvol+self.input.physics.Lfreebound+1)
+        else :
+            ns = np.atleast_1d(ns)
+        # set default plotting parameters
+        if kwargs.get('label') == None:
+            kwargs.update({'label': 'SPEC_KAM'}) # default label 
+        # plot all the surfaces
+        for i in ns:
+           _surf = FourSurf.read_spec_output(spec, i)
+           if i==0:
+               # plot axis as a curve
+               _r, _z = _surf.rz(0.0, zeta)
+               plt.scatter(_r, _z, **kwargs)
+           else:
+               _surf.plot(zeta=zeta, **kwargs)
+           surfs.append(_surf)
+        return surfs
     
     def plot_poincare(self, toroidalIdx=0, prange='full', **kwargs):
         '''Poincare plots
