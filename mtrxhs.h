@@ -331,7 +331,7 @@
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-subroutine mtrxhs( lvol, mn, lrad )
+subroutine mtrxhs( lvol, mn, lrad, resultA, resultD )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -349,7 +349,6 @@ subroutine mtrxhs( lvol, mn, lrad )
                         YESstellsym, NOTstellsym, &
                         im, in, &
                         NAdof, &
-                        dMA, &
                         Ate, Ato, Aze, Azo, &
                         Lcoordinatesingularity, TT, RTT, RTM, &
                         Tss, Tsc, Dts, Dtc, Dzs, Dzc
@@ -361,6 +360,8 @@ subroutine mtrxhs( lvol, mn, lrad )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   INTEGER, intent(in)  :: lvol, mn, lrad
+
+  REAL, intent(out) :: resultA(0:NAdof(lvol)), resultD(0:NAdof(lvol))
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -376,7 +377,8 @@ subroutine mtrxhs( lvol, mn, lrad )
   NN = NAdof(lvol) ! shorthand;
   
   ! making use of only the zeroth component of dMA
-  dMA(0:NN,0) = zero
+  resultA(0:NN) = zero
+  resultD(0:NN) = zero
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -397,8 +399,8 @@ subroutine mtrxhs( lvol, mn, lrad )
        Wte = -two * ni * Tss(ll1,ii) + two * Dzc(ll1,ii)
        Wze = -two * mi * Tss(ll1,ii) - two * Dtc(ll1,ii)
 
-       id = Ate(lvol,0,ii)%i(ll) ; jd = 0 ; dMA(id,jd) = Wte
-       id = Aze(lvol,0,ii)%i(ll) ; jd = 0 ; dMA(id,jd) = Wze
+       id = Ate(lvol,0,ii)%i(ll) ; jd = 0 ; resultA(id) = Wte
+       id = Aze(lvol,0,ii)%i(ll) ; jd = 0 ; resultA(id) = Wze
       
       enddo ! end of do ll ;
       

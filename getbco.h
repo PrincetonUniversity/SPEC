@@ -42,7 +42,7 @@
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-subroutine getbco( lvol, Ntz, lss )
+subroutine getbco( lvol, Ntz, lss, isave, idx )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -66,13 +66,13 @@ subroutine getbco( lvol, Ntz, lss )
                         Ate, Aze, Ato, Azo, &
                         cheby, zernike,&
                         sg, guvij, Rij, Zij, &
-                        dBdX
+                        dBdX, guvijsave, Lsavedguvij
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   LOCALS
   
-  INTEGER, intent(in)  :: lvol, Ntz
+  INTEGER, intent(in)  :: lvol, Ntz, idx, isave
   REAL   , intent(in)  :: lss
   REAL                 :: gBupper(1:Ntz,3), Blower(1:Ntz,3)
   
@@ -88,16 +88,18 @@ subroutine getbco( lvol, Ntz, lss )
   endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
+  if (.not.Lsavedguvij) then ! if gij was computed elsewhere, we just need to use it
+    WCALL( getbco, coords,( lvol, lss, Lcurvature, Ntz, mn ) ) ! get coordinates and derivatives wrt Rj, Zj, at specific radial location;
+  end if
+
   if (Lcoordinatesingularity) then
     sbar = (lss + one) * half
     call get_zernike(sbar, Lrad(lvol), mpol, zernike(:,:,0:1))
   else
     call get_cheby(lss, Lrad(lvol), cheby(0:Lrad(lvol),0:1))
   endif
-   
-  WCALL( getbco, coords,( lvol, lss, Lcurvature, Ntz, mn ) ) ! get coordinates and derivatives wrt Rj, Zj, at specific radial location;
-   
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
   efmn(1:mn) = zero ; ofmn(1:mn) = zero ; cfmn(1:mn) = zero ; sfmn(1:mn) = zero
@@ -109,26 +111,26 @@ subroutine getbco( lvol, Ntz, lss )
     
     if (Lcoordinatesingularity) then
       do ll = mi, Lrad(lvol), 2 ! loop over Zernike polynomials; Lrad is the radial resolution;
-      ;                      ; efmn(ii) = efmn(ii) + Ate(lvol,0,ii)%s(ll) * ( zernike(ll,mi,1)*half) 
-      ;                      ; cfmn(ii) = cfmn(ii) - Aze(lvol,0,ii)%s(ll) * ( zernike(ll,mi,1)*half)
-      ;                      ; odmn(ii) = odmn(ii) - Ate(lvol,0,ii)%s(ll) * ( zernike(ll,mi,0)) * ni & 
-                                                   - Aze(lvol,0,ii)%s(ll) * ( zernike(ll,mi,0)) * mi
-      if( NOTstellsym ) then ; ofmn(ii) = ofmn(ii) + Ato(lvol,0,ii)%s(ll) * ( zernike(ll,mi,1)*half)
-        ;                    ; sfmn(ii) = sfmn(ii) - Azo(lvol,0,ii)%s(ll) * ( zernike(ll,mi,1)*half)
-        ;                    ; evmn(ii) = evmn(ii) + Ato(lvol,0,ii)%s(ll) * ( zernike(ll,mi,1)) * ni & 
-                                                   + Azo(lvol,0,ii)%s(ll) * ( zernike(ll,mi,1)) * mi
+      ;                      ; efmn(ii) = efmn(ii) + Ate(lvol,idx,ii)%s(ll) * ( zernike(ll,mi,1)*half) 
+      ;                      ; cfmn(ii) = cfmn(ii) - Aze(lvol,idx,ii)%s(ll) * ( zernike(ll,mi,1)*half)
+      ;                      ; odmn(ii) = odmn(ii) - Ate(lvol,idx,ii)%s(ll) * ( zernike(ll,mi,0)) * ni & 
+                                                   - Aze(lvol,idx,ii)%s(ll) * ( zernike(ll,mi,0)) * mi
+      if( NOTstellsym ) then ; ofmn(ii) = ofmn(ii) + Ato(lvol,idx,ii)%s(ll) * ( zernike(ll,mi,1)*half)
+        ;                    ; sfmn(ii) = sfmn(ii) - Azo(lvol,idx,ii)%s(ll) * ( zernike(ll,mi,1)*half)
+        ;                    ; evmn(ii) = evmn(ii) + Ato(lvol,idx,ii)%s(ll) * ( zernike(ll,mi,1)) * ni & 
+                                                   + Azo(lvol,idx,ii)%s(ll) * ( zernike(ll,mi,1)) * mi
       endif
       enddo ! end of do ll; 20 Feb 13;
     else
       do ll = 0, Lrad(lvol) ! loop over Chebyshev polynomials; Lrad is the radial resolution;
-      ;                      ; efmn(ii) = efmn(ii) + Ate(lvol,0,ii)%s(ll) * ( cheby(ll,1))
-      ;                      ; cfmn(ii) = cfmn(ii) - Aze(lvol,0,ii)%s(ll) * ( cheby(ll,1))
-      ;                      ; odmn(ii) = odmn(ii) - Ate(lvol,0,ii)%s(ll) * ( cheby(ll,0)) * ni & 
-                                                   - Aze(lvol,0,ii)%s(ll) * ( cheby(ll,0)) * mi
-      if( NOTstellsym ) then ; ofmn(ii) = ofmn(ii) + Ato(lvol,0,ii)%s(ll) * ( cheby(ll,1))
-        ;                    ; sfmn(ii) = sfmn(ii) - Azo(lvol,0,ii)%s(ll) * ( cheby(ll,1))
-        ;                    ; evmn(ii) = evmn(ii) + Ato(lvol,0,ii)%s(ll) * ( cheby(ll,0)) * ni & 
-                                                   + Azo(lvol,0,ii)%s(ll) * ( cheby(ll,0)) * mi
+      ;                      ; efmn(ii) = efmn(ii) + Ate(lvol,idx,ii)%s(ll) * ( cheby(ll,1))
+      ;                      ; cfmn(ii) = cfmn(ii) - Aze(lvol,idx,ii)%s(ll) * ( cheby(ll,1))
+      ;                      ; odmn(ii) = odmn(ii) - Ate(lvol,idx,ii)%s(ll) * ( cheby(ll,0)) * ni & 
+                                                   - Aze(lvol,idx,ii)%s(ll) * ( cheby(ll,0)) * mi
+      if( NOTstellsym ) then ; ofmn(ii) = ofmn(ii) + Ato(lvol,idx,ii)%s(ll) * ( cheby(ll,1))
+        ;                    ; sfmn(ii) = sfmn(ii) - Azo(lvol,idx,ii)%s(ll) * ( cheby(ll,1))
+        ;                    ; evmn(ii) = evmn(ii) + Ato(lvol,idx,ii)%s(ll) * ( cheby(ll,0)) * ni & 
+                                                   + Azo(lvol,idx,ii)%s(ll) * ( cheby(ll,0)) * mi
       endif
       enddo ! end of do ll; 20 Feb 13;
     end if ! Lcoordinatesingularity; 01 Jul 19
@@ -138,11 +140,19 @@ subroutine getbco( lvol, Ntz, lss )
   call invfft( mn, im, in, efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, gBupper(1:Ntz,3), gBupper(1:Ntz,2) )
   call invfft( mn, im, in, evmn(1:mn), odmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, gBupper(1:Ntz,1), gBupper(1:Ntz,2) )
    
-  do ii = 1, 3
-    do jj = 1, 3
-      Blower(:,ii) = Blower(:,ii) + gBupper(:,jj) * guvij(1:Ntz,jj,ii,ideriv) / sg(1:Ntz,0)
+  if (.not.Lsavedguvij) then
+    do ii = 1, 3
+      do jj = 1, 3
+        Blower(:,ii) = Blower(:,ii) + gBupper(:,jj) * guvij(1:Ntz,jj,ii,ideriv) / sg(1:Ntz,0)
+      enddo
     enddo
-  enddo
+  else
+    do ii = 1, 3
+      do jj = 1, 3
+        Blower(:,ii) = Blower(:,ii) + gBupper(:,jj) * guvijsave(1:Ntz,jj,ii,isave)
+      enddo
+    enddo
+  endif
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
     

@@ -406,8 +406,6 @@ subroutine matrix( lvol, mn, lrad )
   
   dMA(0:NN,0:NN) = zero
   dMD(0:NN,0:NN) = zero
-  dMB(0:NN,1: 2) = zero
-  dMG(0:NN     ) = zero
 
   if (LILUprecond) then
     NdMAS(lvol) = 0
@@ -420,7 +418,7 @@ subroutine matrix( lvol, mn, lrad )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   if( YESstellsym ) then
-!$OMP PARALLEL DEFAULT(PRIVATE) SHARED(lvol,mn,lrad,Lcoordinatesingularity,im,in,TTssss,TDszsc,TDstsc,DDzzcc,DDtzcc,DDttcc,DToocc,Ate,Aze,dMA,dMD,dMG,dMB,Lma,Lmb,Lme,Lmg,Lmh,TT,RTT,RTM,iVns,iBns)   
+!$OMP PARALLEL DEFAULT(PRIVATE) SHARED(lvol,mn,lrad,Lcoordinatesingularity,im,in,TTssss,TDszsc,TDstsc,DDzzcc,DDtzcc,DDttcc,DToocc,Ate,Aze,dMA,dMD,Lma,Lmb,Lme,Lmg,Lmh,TT,RTT,RTM,iVns,iBns)   
 !$OMP DO PRIVATE(ii,jj,ll,pp)   
    do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
     
@@ -487,11 +485,6 @@ subroutine matrix( lvol, mn, lrad )
       endif
       enddo ! end of do pp ;
       
-      ;if( ii.gt.1 ) then ; id = Lme(lvol,  ii)       ;                           ; dMG(id   ) = - ( iVns(ii) + iBns(ii) )
-      ;else               ; id = Lmg(lvol,  ii)       ;                           ; dMB(id, 1) = -       one
-  !   ;                   ; id = Lmh(lvol,  ii)       ;                           ; dMB(id, 2) = -       one ! to be deleted;
-      ;                   ; id = Lmh(lvol,  ii)       ;                           ; dMB(id, 2) = +       one ! changed sign;
-      ;endif
     else 
 
       do ll = 0, lrad ! Chebyshev polynomial ;
@@ -514,12 +507,6 @@ subroutine matrix( lvol, mn, lrad )
         ;                 ; id = Lmh(lvol,  ii)       ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(id,jd) = +      TT(pp, 1,0)
       endif
       enddo ! end of do pp ;
-      
-      ;if( ii.gt.1 ) then ; id = Lme(lvol,  ii)       ;                           ; dMG(id   ) = - ( iVns(ii) + iBns(ii) )
-      ;else               ; id = Lmg(lvol,  ii)       ;                           ; dMB(id, 1) = -       one
-  !   ;                   ; id = Lmh(lvol,  ii)       ;                           ; dMB(id, 2) = -       one ! to be deleted;
-      ;                   ; id = Lmh(lvol,  ii)       ;                           ; dMB(id, 2) = +       one ! changed sign;
-      ;endif
 
     endif ! if( Lcoordinatesingularity )  
    enddo ! end of do ii ;
@@ -674,18 +661,14 @@ subroutine matrix( lvol, mn, lrad )
       endif
       enddo ! end of do pp ;
     end if
-
-    ;if( ii.gt.1 ) then ; id = Lme(lvol,ii)         ;                           ; dMG(id   ) = - ( iVns(ii) + iBns(ii) )
-    ;                   ; id = Lmf(lvol,ii)         ;                           ; dMG(id   ) = - ( iVnc(ii) + iBnc(ii) )
-    ;else               ; id = Lmg(lvol,ii)         ;                           ; dMB(id, 1) = -       one
-!   ;                   ; id = Lmh(lvol,ii)         ;                           ; dMB(id, 2) = -       one ! to be deleted;
-    ;                   ; id = Lmh(lvol,ii)         ;                           ; dMB(id, 2) = +       one ! changed sign;
-    ;endif
     
    enddo ! end of do ii ;
    
   endif ! end of if( YESstellsym ) ;
   
+  ! call subroutine matrixBG to construct dMB and dMG
+  WCALL( matrix, matrixBG, ( lvol, mn, lrad ) )
+
   ! Construct the sparse preconditioner
   ! The sparse matrix is stored in the Compressed Sparse Row (CSR) format
   if (LILUprecond) then
@@ -823,6 +806,60 @@ subroutine matrix( lvol, mn, lrad )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 end subroutine matrix
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+subroutine matrixBG( lvol, mn, lrad )
+  ! only compute the dMB and dMG matrix for matrix-free mode
+  use constants, only : zero, one
+  use allglobal, only : NAdof, im, in,&
+                        dMG, dMB, YESstellsym, &
+                        iVnc, iVns, iBnc, iBns, &
+                        Lme, Lmf, Lmg, Lmh
+  implicit none
+  INTEGER, intent(in)  :: lvol, mn, lrad
+
+  INTEGER :: NN, ii, id, mi, ni
+
+  NN = NAdof(lvol) ! shorthand;
+
+  dMB(0:NN,1: 2) = zero
+  dMG(0:NN     ) = zero
+
+  if( YESstellsym ) then
+ 
+   do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
+    
+    ;if( ii.gt.1 ) then ; id = Lme(lvol,  ii)       ;                           ; dMG(id   ) = - ( iVns(ii) + iBns(ii) )
+    ;else               ; id = Lmg(lvol,  ii)       ;                           ; dMB(id, 1) = -       one
+!   ;                   ; id = Lmh(lvol,  ii)       ;                           ; dMB(id, 2) = -       one ! to be deleted;
+    ;                   ; id = Lmh(lvol,  ii)       ;                           ; dMB(id, 2) = +       one ! changed sign;
+    ;endif
+ 
+   enddo ! end of do ii ;
+   
+  else ! NOTstellsym ;
+
+   do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
+   
+    ;if( ii.gt.1 ) then ; id = Lme(lvol,ii)         ;                           ; dMG(id   ) = - ( iVns(ii) + iBns(ii) )
+    ;                   ; id = Lmf(lvol,ii)         ;                           ; dMG(id   ) = - ( iVnc(ii) + iBnc(ii) )
+    ;else               ; id = Lmg(lvol,ii)         ;                           ; dMB(id, 1) = -       one
+!   ;                   ; id = Lmh(lvol,ii)         ;                           ; dMB(id, 2) = -       one ! to be deleted;
+    ;                   ; id = Lmh(lvol,ii)         ;                           ; dMB(id, 2) = +       one ! changed sign;
+    ;endif
+    
+   enddo ! end of do ii ;
+   
+  endif ! end of if( YESstellsym ) ;
+
+  return
+
+end subroutine matrixBG
+
+subroutine spsmat
+
+end subroutine spsmat
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

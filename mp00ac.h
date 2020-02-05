@@ -129,7 +129,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   use fileunits, only : ounit
   
   use inputlist, only : Wmacros, Wmp00ac, Wtr00ab, Wcurent, Wma02aa, &
-                        mu, helicity, iota, oita, curtor, curpol, Lrad, &
+                        mu, helicity, iota, oita, curtor, curpol, Lrad, Ntor,&
                        !Lposdef, &
                         Lconstraint, mupftol, &
                         Lmatsolver, NiterGMRES, epsGMRES, LGMRESprec, epsILU
@@ -151,7 +151,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
                         lBBintegral, lABintegral, &
                         xoffset, &
                         ImagneticOK, &
-                        Ate, Aze, Ato, Azo, Mvol, &
+                        Ate, Aze, Ato, Azo, Mvol, Iquad, &
                         LILUprecond, GMRESlastsolution, NOTMatrixFree
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -197,7 +197,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   INTEGER, parameter   :: ipar_SIZE = 128
   INTEGER              :: ipar(ipar_SIZE), iluierr, RCI_REQUEST, nw, t1, t2, t3
   REAL                 :: fpar(ipar_SIZE), v1
-  REAL, allocatable    :: wk(:), tempv(:)
+  REAL, allocatable    :: wk(:)
   INTEGER,allocatable  :: jw(:), iperm(:)
 
   BEGIN(mp00ac)
@@ -251,8 +251,10 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   NN = NAdof(lvol) ! shorthand;
   
   SALLOCATE( rhs   , (1:NN,0:2 ), zero )
-  if (NOTMatrixFree) then
+  if (NOTMatrixFree) then ! create the full size matrix
     SALLOCATE( matrix, (1:NN,1:NN), zero )
+  else                    ! create a dummy variable
+    SALLOCATE( matrix, (1:1,1:1), zero )
   endif
 
   solution(1:NN,-1:2) = zero ! this is a global array allocated in dforce;
@@ -274,9 +276,11 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
       
       ! estimate bandwidth
       if (Lcoordinatesingularity) then
-        maxfil = Lrad(lvol) + 2 *  mn
+        maxfil = Lrad(lvol) + mn + Ntor + 1
+        if (NOTstellsym) maxfil = maxfil + mn + Ntor + 1 
       else
-        maxfil = 2 * Lrad(lvol) + 3 * mn
+        maxfil = 2 * Lrad(lvol) + mn + 2
+        if (NOTstellsym) maxfil = maxfil + mn
       end if
 
       Nbilut = (2*maxfil+2)*NN
@@ -287,7 +291,6 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
     endif
     nw = (NN+3)*(nrestart+2) + (nrestart+1)*nrestart
     SALLOCATE( wk, (1:nw), zero)
-    SALLOCATE( tempv, (1:NN), zero)
     SALLOCATE( jw, (1:2*NN), 0)
     SALLOCATE( iperm, (1:2*NN), 0)
   end select
@@ -409,7 +412,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-   case(2) ! Using GMRES, can be matrix free
+   case(2:3) ! Using GMRES, can be matrix free
 
     ! setup solver parameters
     ipar = 0
@@ -445,7 +448,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
         FATAL(mp00ac, iluierr.ne.0, construction of preconditioner failed)
       endif
 
-      call rungmres(NN,lmu,rhs(1,0),solution(1,0),ipar,fpar,wk,nw,GMRESlastsolution(1,0,lvol),matrix,bilut,jbilut,ibilut,iperm,ierr)
+      call rungmres(NN,lmu,lvol,rhs(1,0),solution(1,0),ipar,fpar,wk,nw,GMRESlastsolution(1,0,lvol),matrix,bilut,jbilut,ibilut,iperm,ierr)
       
       if (ierr .gt. 0) then
         ImagneticOK(lvol) = .true.
@@ -463,7 +466,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
           GMRESlastsolution(1:NN,ii,lvol) = zero
         endif
 
-        call rungmres(NN,lmu,rhs(1,ii),solution(1,ii),ipar,fpar,wk,nw,GMRESlastsolution(1,ii,lvol),matrix,bilut,jbilut,ibilut,iperm,ierr)
+        call rungmres(NN,lmu,lvol,rhs(1,ii),solution(1,ii),ipar,fpar,wk,nw,GMRESlastsolution(1,ii,lvol),matrix,bilut,jbilut,ibilut,iperm,ierr)
       
         if (ierr .gt. 0) then
           GMRESlastsolution(1:NN,ii,lvol) = solution(1:NN,ii)
@@ -496,7 +499,17 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 
   enddo ! end of do ideriv;
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
+  do ideriv = 0, 2
+   
+   if( iflag.eq.1 .and. ideriv.gt.0 ) cycle
+   
+   packorunpack = 'U'
+   WCALL( mp00ac, packab, ( packorunpack, lvol, NN, solution(1:NN,ideriv), ideriv ) ) ! unpacking; this assigns oAt, oAz through common;
+   
+  enddo ! do ideriv = 0, 2;
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 ! can compute the energy and helicity integrals; easiest to do this with solution in packed format;
   
   if (NOTMatrixFree) then
@@ -509,25 +522,17 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 !                    +        sum( solution(1:NN,0) * matmul( dME(1:NN,1: 2),     dpsi(1: 2  ) ) ) !
 !                    + half * sum(     dpsi(1: 2  ) * matmul( dMF(1: 2,1: 2),     dpsi(1: 2  ) ) )
   else
-    ! some other way to compute
+    call intghs(Iquad(lvol), mn, lvol, Lrad(lvol), 0) ! compute the integrals of B_lower
+    call mtrxhs(lvol, mn, Lrad(lvol), wk(1:NN+1), wk(NN+2:2*NN+2)) ! construct a.x from the integral
+
+    lBBintegral(lvol) = half * sum( solution(1:NN,0) * wk(2:NN+1) ) & 
+                      +        sum( solution(1:NN,0) * matmul( dMB(1:NN,1: 2),     dpsi(1: 2  ) ) ) !
+
+    lABintegral(lvol) = half * sum( solution(1:NN,0) * wk(NN+3:2*NN+2) )
   endif
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  do ideriv = 0, 2
-   
-   if( iflag.eq.1 .and. ideriv.gt.0 ) cycle
-   
-   packorunpack = 'U'
-   WCALL( mp00ac, packab, ( packorunpack, lvol, NN, solution(1:NN,ideriv), ideriv ) ) ! unpacking; this assigns oAt, oAz through common;
-   
-  enddo ! do ideriv = 0, 2;
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-  if (NOTMatrixFree) then
-    DALLOCATE( matrix )
-  endif
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!  
+  DALLOCATE( matrix )
   DALLOCATE( rhs    )
 
   select case (Lmatsolver)
@@ -537,7 +542,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
       DALLOCATE( LU )
       DALLOCATE( ipiv )
       DALLOCATE( Iwork )
-  case (2) ! GMRES
+  case (2:3) ! GMRES
     if (LILUprecond) then
       DALLOCATE( matrixS )
       DALLOCATE( bilut )
@@ -734,13 +739,13 @@ end subroutine mp00ac
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-subroutine rungmres(n,mu,rhs,sol,ipar,fpar,wk,nw,guess,a,au,jau,ju,iperm,ierr)
+subroutine rungmres(n,mu,vvol,rhs,sol,ipar,fpar,wk,nw,guess,a,au,jau,ju,iperm,ierr)
   ! Driver subroutine for GMRES
   ! modified from riters.f from SPARSKIT v2.0 
   ! by ZSQ 02 Feb 2020
   use constants, only : zero, one
   implicit none
-  INTEGER  :: n, nw, ju(*), jau(*), iperm(*)
+  INTEGER  :: n, nw, vvol, ju(*), jau(*), iperm(*)
   INTEGER  :: ipar(16)
   INTEGER  :: ierr
   REAL     :: guess(n), au(*), mu
@@ -756,17 +761,15 @@ subroutine rungmres(n,mu,rhs,sol,ipar,fpar,wk,nw,guess,a,au,jau,ju,iperm,ierr)
   tmprhs(1:n) = rhs(1:n) ! copy to a temp vector because it will be destroyed by gmres
 
   ipar(1) = 999
-  do while (ipar(1) .gt. 0)
+  do while (ipar(1) .gt. 0) ! main reversed communication loop
 
     call gmres(n,tmprhs,sol,ipar,fpar,wk)
-    res = fpar(5)
-    its = ipar(7)
+    res = fpar(5) ! shorthand for resolution
+    its = ipar(7) ! shorthand for iteration number
 
     if (ipar(1).eq.1) then ! compute A.x
       ! we should compute wk(ipar(9) = matmul(matrix, wk(ipar(8)))
-      call matvec(n, wk(ipar(8)), wk(ipar(9)), a, mu)
-      ! currently the matvec subroutine uses the following
-      ! call DGEMV('N', n, n, one, a, n, wk(ipar(8)), 1, zero, wk(ipar(9)), 1)
+      call matvec(n, wk(ipar(8)), wk(ipar(9)), a, mu, vvol)
 
     else if (ipar(1).eq.3) then
       ! apply the preconditioner
@@ -785,40 +788,53 @@ subroutine rungmres(n,mu,rhs,sol,ipar,fpar,wk,nw,guess,a,au,jau,ju,iperm,ierr)
   return
 end subroutine rungmres
 
-  subroutine matvec(n, x, ax, a, mu)
+subroutine matvec(n, x, ax, a, mu, vvol)
+  ! compute a.x by either by coumputing it directly, 
     ! compute a.x by either by coumputing it directly, 
-    ! or using a matrix free method
-    use constants, only : zero, one
-    use allglobal, only : NOTMatrixFree
-    implicit none
-    INTEGER, intent(in) :: n
-    REAL                :: ax(1:n), x(1:n), a(*), mu
+  ! compute a.x by either by coumputing it directly, 
+    ! compute a.x by either by coumputing it directly, 
+  ! compute a.x by either by coumputing it directly, 
+  ! or using a matrix free method
+  use constants, only : zero, one
+  use inputlist, only : Lrad
+  use allglobal, only : NOTMatrixFree, Iquad, mn
+  implicit none
+  INTEGER, intent(in) :: n, vvol
+  REAL                :: ax(1:n), x(1:n), a(*), mu
+  INTEGER             :: ideriv
+  REAL                :: dax(0:n), ddx(0:n)
+  CHARACTER           :: packorunpack
 
-    if (NOTMatrixFree) then
-      call DGEMV('N', n, n, one, a, n, x, 1, zero, ax, 1)
-    else
-      ! use matrix free method!
-    endif
+  if (NOTMatrixFree) then ! if we have the matrix, then just multiply it to x
+    call DGEMV('N', n, n, one, a, n, x, 1, zero, ax, 1)
+  else ! if we are matrix-free, then we construct a.x directly
+    ideriv = -2        ! this is used for matrix-free only
+    packorunpack = 'U'
+    call packab(packorunpack, vvol, n, x, ideriv)          ! unpack solution to construct a.x
+    call intghs(Iquad(vvol), mn, vvol, Lrad(vvol), ideriv) ! compute the integrals of B_lower
+    call mtrxhs(vvol, mn, Lrad(vvol), dax, ddx)            ! construct a.x from the integral
+    ax = dax(1:n) - mu * ddx(1:n)                          ! put in the mu factor
+  endif
 
-    return
+  return
 
-  end subroutine matvec
+end subroutine matvec
 
-  subroutine prec_solve(n,vecin,vecout,au,jau,ju,iperm)
-    ! apply the preconditioner
-    implicit none
-    INTEGER :: n, iperm(*), jau(*), ju(*)
-    REAL    :: vecin(*), au(*)
-    REAL    :: vecout(*)
+subroutine prec_solve(n,vecin,vecout,au,jau,ju,iperm)
+  ! apply the preconditioner
+  implicit none
+  INTEGER :: n, iperm(*), jau(*), ju(*)
+  REAL    :: vecin(*), au(*)
+  REAL    :: vecout(*)
 
-    INTEGER :: ii
-    REAL :: tempv(n)
+  INTEGER :: ii
+  REAL :: tempv(n)
 
-    call lusol(n,vecin,tempv,au,jau,ju) ! sparse LU solve
-    !  apply permutation
-    do ii = 1, n
-      vecout(ii) = tempv(iperm(ii+n))
-    enddo
+  call lusol(n,vecin,tempv,au,jau,ju) ! sparse LU solve
+  !  apply permutation
+  do ii = 1, n
+    vecout(ii) = tempv(iperm(ii+n))
+  enddo
 
-    return
-  end subroutine prec_solve
+  return
+end subroutine prec_solve

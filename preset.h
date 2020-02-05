@@ -582,10 +582,10 @@ subroutine preset
   SALLOCATE( NdMASmax, (1:Mvol       ), 0 ) ! The maximum size of sparse matrix for GMRES preconditioning;
   SALLOCATE( NdMAS   , (1:Mvol       ), 0 ) ! The actual size of sparse matrix for GMRES preconditioning;
   
-  NALLOCATE( Ate  , (1:Mvol,-1:2,1:mn)    ) ! recall that this is type:sub-grid; 31 Jan 13;
-  NALLOCATE( Aze  , (1:Mvol,-1:2,1:mn)    )
-  NALLOCATE( Ato  , (1:Mvol,-1:2,1:mn)    )
-  NALLOCATE( Azo  , (1:Mvol,-1:2,1:mn)    )
+  NALLOCATE( Ate  , (1:Mvol,-2:2,1:mn)    ) ! recall that this is type:sub-grid; 31 Jan 13;
+  NALLOCATE( Aze  , (1:Mvol,-2:2,1:mn)    ) ! -2 : for use of matrix-free solver ; -1 : for use of force gradient
+  NALLOCATE( Ato  , (1:Mvol,-2:2,1:mn)    ) !  0 : normal data
+  NALLOCATE( Azo  , (1:Mvol,-2:2,1:mn)    ) ! 1:2: use to compute derivative w.r.t. fluxes
   
   SALLOCATE( Fso  , (1:Mvol,     1:mn), 0 ) ! these will become redundant if/when Lagrange multipliers are used to enforce bounday constraints; 26 Jan 16;
   SALLOCATE( Fse  , (1:Mvol,     1:mn), 0 )
@@ -641,7 +641,7 @@ subroutine preset
 
    do ii = 1, mn ! loop over Fourier harmonics;
     
-    do ideriv = -1, 2 ! loop over derivatives; 14 Jan 13;
+    do ideriv = -2, 2 ! loop over derivatives; 14 Jan 13;
      
      SALLOCATE( Ate(vvol,ideriv,ii)%s, (0:Lrad(vvol)), zero )
      SALLOCATE( Aze(vvol,ideriv,ii)%s, (0:Lrad(vvol)), zero )
@@ -671,7 +671,7 @@ subroutine preset
    case( 3 )    ;                                            ! the initial guess will be randomized, maximum is maxrndgues; 5 Mar 19;
     do ii = 1, mn ! loop over Fourier harmonics;
     
-     do ideriv = -1, 2 ! loop over derivatives; 14 Jan 13;
+     do ideriv = -2, 2 ! loop over derivatives; 14 Jan 13;
 
       call random_number(Ate(vvol,ideriv,ii)%s)
       call random_number(Aze(vvol,ideriv,ii)%s)

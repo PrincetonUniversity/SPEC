@@ -994,6 +994,7 @@ module allglobal
 !latex \end{enumerate}
 
   REAL   , allocatable :: Rij(:,:,:), Zij(:,:,:), Xij(:,:,:), Yij(:,:,:), sg(:,:), guvij(:,:,:,:), gvuij(:,:,:) ! real-space; 10 Dec 15;
+  REAL   , allocatable :: guvijsave(:,:,:,:)
   
   INTEGER, allocatable :: ki(:,:), kijs(:,:,:), kija(:,:,:) ! identification of Fourier modes; 
 
@@ -1088,6 +1089,7 @@ module allglobal
   INTEGER      , allocatable :: Fso(:,:), Fse(:,:)
 
   LOGICAL                    :: Lcoordinatesingularity, Lplasmaregion, Lvacuumregion
+  LOGICAL                    :: Lsavedguvij        ! flag used in matrix free
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   

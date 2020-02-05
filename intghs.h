@@ -71,7 +71,7 @@
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-subroutine intghs( lquad, mn, lvol, lrad )
+subroutine intghs( lquad, mn, lvol, lrad, idx )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -100,7 +100,7 @@ subroutine intghs( lquad, mn, lvol, lrad )
   
   LOCALS
   
-  INTEGER, intent(in) :: lquad, mn, lvol, lrad
+  INTEGER, intent(in) :: lquad, mn, lvol, lrad, idx
   
   INTEGER             :: jquad, ll, pp, ll1, pp1, uv, ii, jj, io, mn2, lp2, mn2_max, lp2_max, nele 
   
@@ -126,7 +126,8 @@ subroutine intghs( lquad, mn, lvol, lrad )
     do jquad = 1, lquad
 
       lss = gaussianabscissae(jquad,lvol) ; jthweight = gaussianweight(jquad,lvol)
-      WCALL( intghs, getbco, (lvol, Ntz, lss) )
+      WCALL( intghs, getbco, (lvol, Ntz, lss, jquad, idx) )
+
 !$OMP PARALLEL DO PRIVATE(ii,ik,ll,ll1,Tl,Dl) SHARED(mn,jthweight,lrad)
       do ii = 1, mn
 
@@ -165,7 +166,7 @@ subroutine intghs( lquad, mn, lvol, lrad )
     do jquad = 1, lquad
 
       lss = gaussianabscissae(jquad,lvol) ; jthweight = gaussianweight(jquad,lvol)
-      WCALL( intghs, getbco, (lvol, Ntz, lss) )
+      WCALL( intghs, getbco, (lvol, Ntz, lss, jquad, idx) )
 !$OMP PARALLEL DO PRIVATE(ii,ik,ll,ll1,Tl,Dl) SHARED(mn,jthweight,lrad)
       do ii = 1, mn
 

@@ -158,7 +158,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
                         DDzzcc, DDzzcs, DDzzsc, DDzzss, &
                         Tss, Tsc, Dts, Dtc, Dzs, Dzc, &
                         dRodR, dRodZ, dZodR, dZodZ, &
-                        LILUprecond
+                        LILUprecond, NOTMatrixFree, YESMatrixFree, &
+                        gaussianabscissae, guvijsave, Lsavedguvij
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -175,7 +176,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
   
   INTEGER              :: vvol, innout, ii, jj, irz, issym, iocons, tdoc, idoc, idof, tdof, jdof, ivol, imn, ll, lldof
 
-  INTEGER              :: Lcurvature, ideriv, id
+  INTEGER              :: Lcurvature, ideriv, id, jquad
   
   REAL                 :: lastcpu, lss, lfactor, DDl, MMl
 
@@ -257,13 +258,13 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
    
    NN = NAdof(vvol) ! shorthand;
    
-   SALLOCATE( dMA, (0:NN,0:NN), zero ) ! required for both plasma region and vacuum region;
-   SALLOCATE( dMB, (0:NN,0: 2), zero )
-! !SALLOCATE( dMC, (1: 2,1: 2), zero )
-   SALLOCATE( dMD, (0:NN,0:NN), zero )
-!  SALLOCATE( dME, (0:NN,1: 2), zero )
-! !SALLOCATE( dMF, (1: 2,1: 2), zero )  
+   if (NOTMatrixFree) then
+     SALLOCATE( dMA, (0:NN,0:NN), zero ) ! required for both plasma region and vacuum region;
+     SALLOCATE( dMD, (0:NN,0:NN), zero )
+   endif
 
+   ! we will the rest even with or without matrix-free
+   SALLOCATE( dMB, (0:NN,0: 2), zero )
    SALLOCATE( dMG, (0:NN     ), zero )  
    
    SALLOCATE( solution, (1:NN,-1:2), zero ) ! this will contain the vector potential from the linear solver and its derivatives;
@@ -279,7 +280,9 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
    endif ! if we use GMRES and ILU preconditioner
    
    if( LcomputeDerivatives ) then ! allocate some additional memory;
-    
+
+    FATAL(dforce, YESMatrixFree, we do not support Lfindzero=2 with matrix free yet)
+
     SALLOCATE( oBI, (0:NN,0:NN), zero ) ! inverse of ``original'', i.e. unperturbed, Beltrami matrix;
     SALLOCATE( rhs, (0:NN     ), zero )
     
@@ -301,13 +304,28 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
      lldof = Lrad(vvol)
    end if
 
-   SALLOCATE( DToocc, (0:lldof,0:lldof,1:mn,1:mn), zero )
-   SALLOCATE( TTssss, (0:lldof,0:lldof,1:mn,1:mn), zero )
-   SALLOCATE( TDstsc, (0:lldof,0:lldof,1:mn,1:mn), zero )
-   SALLOCATE( TDszsc, (0:lldof,0:lldof,1:mn,1:mn), zero )
-   SALLOCATE( DDttcc, (0:lldof,0:lldof,1:mn,1:mn), zero )
-   SALLOCATE( DDtzcc, (0:lldof,0:lldof,1:mn,1:mn), zero )
-   SALLOCATE( DDzzcc, (0:lldof,0:lldof,1:mn,1:mn), zero )
+   if (NOTMatrixFree) then
+     ! we need full size array if we don't go matrix-free
+     SALLOCATE( DToocc, (0:lldof,0:lldof,1:mn,1:mn), zero )
+     SALLOCATE( TTssss, (0:lldof,0:lldof,1:mn,1:mn), zero )
+     SALLOCATE( TDstsc, (0:lldof,0:lldof,1:mn,1:mn), zero )
+     SALLOCATE( TDszsc, (0:lldof,0:lldof,1:mn,1:mn), zero )
+     SALLOCATE( DDttcc, (0:lldof,0:lldof,1:mn,1:mn), zero )
+     SALLOCATE( DDtzcc, (0:lldof,0:lldof,1:mn,1:mn), zero )
+     SALLOCATE( DDzzcc, (0:lldof,0:lldof,1:mn,1:mn), zero )
+   else
+     ! we still need them, but with a reduced size
+     SALLOCATE( DToocc, (0:lldof,0:lldof,1:1,1:1), zero )
+     SALLOCATE( TTssss, (0:lldof,0:lldof,1:1,1:1), zero )
+     SALLOCATE( TDstsc, (0:lldof,0:lldof,1:1,1:1), zero )
+     SALLOCATE( TDszsc, (0:lldof,0:lldof,1:1,1:1), zero )
+     SALLOCATE( DDttcc, (0:lldof,0:lldof,1:1,1:1), zero )
+     SALLOCATE( DDtzcc, (0:lldof,0:lldof,1:1,1:1), zero )
+     SALLOCATE( DDzzcc, (0:lldof,0:lldof,1:1,1:1), zero )
+
+     SALLOCATE( guvijsave, (1:Ntz,1:3,1:3,1:Iquad(vvol)), zero)
+     Lsavedguvij = .true.
+   endif
 
    SALLOCATE( Tss, (0:lldof,1:mn), zero )
    SALLOCATE( Dtc, (0:lldof,1:mn), zero )
@@ -315,33 +333,65 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
    
 
    if (NOTstellsym) then
-    SALLOCATE( DToocs, (0:lldof,0:lldof,1:mn,1:mn), zero )
-    SALLOCATE( DToosc, (0:lldof,0:lldof,1:mn,1:mn), zero )
-    SALLOCATE( DTooss, (0:lldof,0:lldof,1:mn,1:mn), zero )
+    if (NOTMatrixFree) then
+      ! we need full size array if we don't go matrix-free
+      SALLOCATE( DToocs, (0:lldof,0:lldof,1:mn,1:mn), zero )
+      SALLOCATE( DToosc, (0:lldof,0:lldof,1:mn,1:mn), zero )
+      SALLOCATE( DTooss, (0:lldof,0:lldof,1:mn,1:mn), zero )
 
-    SALLOCATE( TTsscc, (0:lldof,0:lldof,1:mn,1:mn), zero )
-    SALLOCATE( TTsscs, (0:lldof,0:lldof,1:mn,1:mn), zero )
-    SALLOCATE( TTsssc, (0:lldof,0:lldof,1:mn,1:mn), zero )
+      SALLOCATE( TTsscc, (0:lldof,0:lldof,1:mn,1:mn), zero )
+      SALLOCATE( TTsscs, (0:lldof,0:lldof,1:mn,1:mn), zero )
+      SALLOCATE( TTsssc, (0:lldof,0:lldof,1:mn,1:mn), zero )
 
-    SALLOCATE( TDstcc, (0:lldof,0:lldof,1:mn,1:mn), zero )
-    SALLOCATE( TDstcs, (0:lldof,0:lldof,1:mn,1:mn), zero )
-    SALLOCATE( TDstss, (0:lldof,0:lldof,1:mn,1:mn), zero )
+      SALLOCATE( TDstcc, (0:lldof,0:lldof,1:mn,1:mn), zero )
+      SALLOCATE( TDstcs, (0:lldof,0:lldof,1:mn,1:mn), zero )
+      SALLOCATE( TDstss, (0:lldof,0:lldof,1:mn,1:mn), zero )
 
-    SALLOCATE( TDszcc, (0:lldof,0:lldof,1:mn,1:mn), zero )
-    SALLOCATE( TDszcs, (0:lldof,0:lldof,1:mn,1:mn), zero )
-    SALLOCATE( TDszss, (0:lldof,0:lldof,1:mn,1:mn), zero )
+      SALLOCATE( TDszcc, (0:lldof,0:lldof,1:mn,1:mn), zero )
+      SALLOCATE( TDszcs, (0:lldof,0:lldof,1:mn,1:mn), zero )
+      SALLOCATE( TDszss, (0:lldof,0:lldof,1:mn,1:mn), zero )
 
-    SALLOCATE( DDttcs, (0:lldof,0:lldof,1:mn,1:mn), zero )
-    SALLOCATE( DDttsc, (0:lldof,0:lldof,1:mn,1:mn), zero )
-    SALLOCATE( DDttss, (0:lldof,0:lldof,1:mn,1:mn), zero )
+      SALLOCATE( DDttcs, (0:lldof,0:lldof,1:mn,1:mn), zero )
+      SALLOCATE( DDttsc, (0:lldof,0:lldof,1:mn,1:mn), zero )
+      SALLOCATE( DDttss, (0:lldof,0:lldof,1:mn,1:mn), zero )
 
-    SALLOCATE( DDtzcs, (0:lldof,0:lldof,1:mn,1:mn), zero )
-    SALLOCATE( DDtzsc, (0:lldof,0:lldof,1:mn,1:mn), zero )
-    SALLOCATE( DDtzss, (0:lldof,0:lldof,1:mn,1:mn), zero )
+      SALLOCATE( DDtzcs, (0:lldof,0:lldof,1:mn,1:mn), zero )
+      SALLOCATE( DDtzsc, (0:lldof,0:lldof,1:mn,1:mn), zero )
+      SALLOCATE( DDtzss, (0:lldof,0:lldof,1:mn,1:mn), zero )
 
-    SALLOCATE( DDzzcs, (0:lldof,0:lldof,1:mn,1:mn), zero )
-    SALLOCATE( DDzzsc, (0:lldof,0:lldof,1:mn,1:mn), zero )
-    SALLOCATE( DDzzss, (0:lldof,0:lldof,1:mn,1:mn), zero )
+      SALLOCATE( DDzzcs, (0:lldof,0:lldof,1:mn,1:mn), zero )
+      SALLOCATE( DDzzsc, (0:lldof,0:lldof,1:mn,1:mn), zero )
+      SALLOCATE( DDzzss, (0:lldof,0:lldof,1:mn,1:mn), zero )
+    else
+      ! we still need them, but with a reduced size
+      SALLOCATE( DToocs, (0:lldof,0:lldof,1:1,1:1), zero )
+      SALLOCATE( DToosc, (0:lldof,0:lldof,1:1,1:1), zero )
+      SALLOCATE( DTooss, (0:lldof,0:lldof,1:1,1:1), zero )
+
+      SALLOCATE( TTsscc, (0:lldof,0:lldof,1:1,1:1), zero )
+      SALLOCATE( TTsscs, (0:lldof,0:lldof,1:1,1:1), zero )
+      SALLOCATE( TTsssc, (0:lldof,0:lldof,1:1,1:1), zero )
+
+      SALLOCATE( TDstcc, (0:lldof,0:lldof,1:1,1:1), zero )
+      SALLOCATE( TDstcs, (0:lldof,0:lldof,1:1,1:1), zero )
+      SALLOCATE( TDstss, (0:lldof,0:lldof,1:1,1:1), zero )
+
+      SALLOCATE( TDszcc, (0:lldof,0:lldof,1:1,1:1), zero )
+      SALLOCATE( TDszcs, (0:lldof,0:lldof,1:1,1:1), zero )
+      SALLOCATE( TDszss, (0:lldof,0:lldof,1:1,1:1), zero )
+
+      SALLOCATE( DDttcs, (0:lldof,0:lldof,1:1,1:1), zero )
+      SALLOCATE( DDttsc, (0:lldof,0:lldof,1:1,1:1), zero )
+      SALLOCATE( DDttss, (0:lldof,0:lldof,1:1,1:1), zero )
+
+      SALLOCATE( DDtzcs, (0:lldof,0:lldof,1:1,1:1), zero )
+      SALLOCATE( DDtzsc, (0:lldof,0:lldof,1:1,1:1), zero )
+      SALLOCATE( DDtzss, (0:lldof,0:lldof,1:1,1:1), zero )
+
+      SALLOCATE( DDzzcs, (0:lldof,0:lldof,1:1,1:1), zero )
+      SALLOCATE( DDzzsc, (0:lldof,0:lldof,1:1,1:1), zero )
+      SALLOCATE( DDzzss, (0:lldof,0:lldof,1:1,1:1), zero )
+    end if
 
     SALLOCATE( Tsc, (0:lldof,1:mn), zero )
     SALLOCATE( Dts, (0:lldof,1:mn), zero )
@@ -353,12 +403,40 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
    dBdX%L = .false. ! first, compute Beltrami fields;
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
-   WCALL( dforce, ma00aa, ( Iquad(vvol), mn, vvol, ll ) ) ! compute volume integrals of metric elements;
+   if (NOTMatrixFree) then ! construct Beltrami matrix
+
+     WCALL( dforce, ma00aa, ( Iquad(vvol), mn, vvol, ll ) ) ! compute volume integrals of metric elements;
    
-   WCALL( dforce, matrix, ( vvol, mn, ll ) )
+     WCALL( dforce, matrix, ( vvol, mn, ll ) )
+
+   else ! matrix free, so construct something else
+
+     ! we need to compute guvij and save it in guvijsave
+     Lsavedguvij = .true.
+     do jquad = 1, Iquad(vvol)
+      lss = gaussianabscissae(jquad,vvol)
+      WCALL( dforce, coords, ( vvol, lss, 1, Ntz, mn ) )
+      guvijsave(1:Ntz,1:3,1:3,jquad) = guvij(1:Ntz,1:3,1:3,0)
+      do ii = 1, 3
+        do jj = 1, 3
+          guvijsave(1:Ntz,jj,ii,jquad) = guvijsave(1:Ntz,jj,ii,jquad) / sg(1:Ntz, 0)
+        enddo
+      enddo
+     enddo
+
+     ! we will still need to construct the dMB and dMG matrix
+     WCALL( dforce, matrixBG, ( vvol, mn, ll ) )
+
+     ! we then need to construct the preconditioner using some other method without dMA and dMD
+     if (LILUprecond) then
+      !WCALL( dforce, spsint, ( Iquad(vvol), mn, vvol, ll ) )
+      !WCALL( dforce, spsmat, (vvol, mn, ll) )
+     endif
+
+   endif
 
    WCALL( dforce, ma02aa, ( vvol, NN ) )
-
+   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 #ifdef DEBUG
@@ -595,9 +673,9 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
         !call DGEMV('N',NN,NN,-one,dMA(1,1),NN+1,solution(1,0),1,mu(vvol),rhs(1),1)
         !rhs(1:NN) = rhs(1:NN) - matmul( dMB(1:NN,1:2 ), dpsi(1:2) )
 
+        WCALL( dforce, intghs, ( Iquad(vvol), mn, vvol, ll, 0 ) )
 
-        WCALL( dforce, intghs, ( Iquad(vvol), mn, vvol, ll ) )
-        WCALL( dforce, mtrxhs, ( vvol, mn, ll) )
+        WCALL( dforce, mtrxhs, ( vvol, mn, ll, dMA(0:NN,0), dMD(0:NN,0)) )
 
         rhs(1:NN) = -dMA(1:NN,0)
 
@@ -1064,6 +1142,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
 2000 continue
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
    DALLOCATE(DToocc)
    DALLOCATE(TTssss)
    DALLOCATE(TDstsc)
@@ -1071,6 +1150,11 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
    DALLOCATE(DDttcc)
    DALLOCATE(DDtzcc)
    DALLOCATE(DDzzcc)
+
+  if (YesMatrixFree) then
+    Lsavedguvij = .false.
+    DALLOCATE(guvijsave)
+  endif
 
    DALLOCATE(Tss)
    DALLOCATE(Dtc)
@@ -1111,11 +1195,13 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
    end if !NOTstellsym
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+   if (NOTMatrixFree) then
+     DALLOCATE(dMA)
+     DALLOCATE(dMD)
+   endif
 
-   DALLOCATE(dMA)
    DALLOCATE(dMB)
 ! !DALLOCATE(dMC)
-   DALLOCATE(dMD)
 ! !DALLOCATE(dME)
 ! !DALLOCATE(dMF)
 
