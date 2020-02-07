@@ -89,11 +89,13 @@ subroutine intghs( lquad, mn, lvol, lrad, idx )
                         Mvol, im, in, mne, Ntz, &
                         YESstellsym, NOTstellsym, &
                         gaussianweight, gaussianabscissae, &
+                        efmn, ofmn, cfmn, sfmn, evmn, odmn, comn, simn, &
                         Tsc, Tss, Dtc, Dts, Dzc, Dzs, &
+                        Ttc, Tts, Tzc, Tzs, &
                         Bloweremn, Bloweromn, &
                         cheby, zernike, &
                         Lcoordinatesingularity, &
-                        pi2pi2nfp, pi2pi2nfphalf
+                        pi2pi2nfp, pi2pi2nfphalf, dBdX
                         
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -110,14 +112,24 @@ subroutine intghs( lquad, mn, lvol, lrad, idx )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  Tss = 0
-  Dtc = 0
-  Dzc = 0
+  Tss = zero
+  Dtc = zero
+  Dzc = zero
+
+  if (.not.dBdX%L) then
+    Ttc = zero
+    Tzc = zero
+  endif
 
   if (NOTstellsym) then
-    Tsc = 0
-    Dts = 0
-    Dzs = 0
+    Tsc = zero
+    Dts = zero
+    Dzs = zero
+    if (.not.dBdX%L) then
+      Tts = zero
+      Tzs = zero
+    endif
+    
   endif !NOTstellsym
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -151,6 +163,16 @@ subroutine intghs( lquad, mn, lvol, lrad, idx )
             Tsc(ll1,ii) = Tsc(ll1,ii) + Tl * Bloweromn(ii,1) * ik
             Dts(ll1,ii) = Dts(ll1,ii) + Dl * Bloweromn(ii,2) * ik
             Dzs(ll1,ii) = Dzs(ll1,ii) + Dl * Bloweromn(ii,3) * ik
+          endif
+
+          if (dBdX%L) cycle ! dMD matrix does not depend on geometry
+
+          Ttc(ll1,ii) = Ttc(ll1,ii) + Tl * cfmn(ii) * ik
+          Tzc(ll1,ii) = Tzc(ll1,ii) + Tl * efmn(ii) * ik
+
+          if (NOTstellsym) then
+            Tts(ll1,ii) = Tts(ll1,ii) + Tl * sfmn(ii) * ik
+            Tzs(ll1,ii) = Tzs(ll1,ii) + Tl * ofmn(ii) * ik
           endif
 
         enddo !ll
@@ -192,6 +214,15 @@ subroutine intghs( lquad, mn, lvol, lrad, idx )
             Dzs(ll1,ii) = Dzs(ll1,ii) + Dl * Bloweromn(ii,3) * ik
           endif
 
+          if (dBdX%L) cycle ! dMD matrix does not depend on geometry
+
+          Ttc(ll1,ii) = Ttc(ll1,ii) + Tl * cfmn(ii) * ik
+          Tzc(ll1,ii) = Tzc(ll1,ii) + Tl * efmn(ii) * ik
+
+          if (NOTstellsym) then
+            Tts(ll1,ii) = Tts(ll1,ii) + Tl * sfmn(ii) * ik
+            Tzs(ll1,ii) = Tzs(ll1,ii) + Tl * ofmn(ii) * ik
+          endif
         enddo !ll
       enddo !ii
 !OMP END PARALLEL DO
@@ -204,11 +235,21 @@ subroutine intghs( lquad, mn, lvol, lrad, idx )
   Dtc = Dtc * pi2pi2nfphalf
   Dzc = Dzc * pi2pi2nfphalf
 
+  if (.not.dBdX%L) then
+    Ttc = Ttc * pi2pi2nfphalf
+    Tzc = Tzc * pi2pi2nfphalf
+  endif
+
   if (NOTstellsym) then
     
     Tsc = Tsc * pi2pi2nfphalf
     Dts = Dts * pi2pi2nfphalf
     Dzc = Dzc * pi2pi2nfphalf
+
+    if (.not.dBdX%L) then
+      Tts = Tts * pi2pi2nfphalf
+      Tzs = Tzs * pi2pi2nfphalf
+    endif
   
   endif
   

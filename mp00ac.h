@@ -523,7 +523,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 !                    + half * sum(     dpsi(1: 2  ) * matmul( dMF(1: 2,1: 2),     dpsi(1: 2  ) ) )
   else
     call intghs(Iquad(lvol), mn, lvol, Lrad(lvol), 0) ! compute the integrals of B_lower
-    call mtrxhs(lvol, mn, Lrad(lvol), wk(1:NN+1), wk(NN+2:2*NN+2)) ! construct a.x from the integral
+    call mtrxhs(lvol, mn, Lrad(lvol), wk(1:NN+1), wk(NN+2:2*NN+2), 0) ! construct a.x from the integral
 
     lBBintegral(lvol) = half * sum( solution(1:NN,0) * wk(2:NN+1) ) & 
                       +        sum( solution(1:NN,0) * matmul( dMB(1:NN,1: 2),     dpsi(1: 2  ) ) ) !
@@ -797,24 +797,26 @@ subroutine matvec(n, x, ax, a, mu, vvol)
   ! or using a matrix free method
   use constants, only : zero, one
   use inputlist, only : Lrad
-  use allglobal, only : NOTMatrixFree, Iquad, mn
+  use allglobal, only : NOTMatrixFree, Iquad, mn, dmd
   implicit none
   INTEGER, intent(in) :: n, vvol
   REAL                :: ax(1:n), x(1:n), a(*), mu
   INTEGER             :: ideriv
   REAL                :: dax(0:n), ddx(0:n)
   CHARACTER           :: packorunpack
-
+write(*,*) 'x', x
   if (NOTMatrixFree) then ! if we have the matrix, then just multiply it to x
+    call DGEMV('N', n, n, one, dMD(1,1), n+1, x, 1, zero, ddx, 1)
     call DGEMV('N', n, n, one, a, n, x, 1, zero, ax, 1)
   else ! if we are matrix-free, then we construct a.x directly
     ideriv = -2        ! this is used for matrix-free only
     packorunpack = 'U'
     call packab(packorunpack, vvol, n, x, ideriv)          ! unpack solution to construct a.x
     call intghs(Iquad(vvol), mn, vvol, Lrad(vvol), ideriv) ! compute the integrals of B_lower
-    call mtrxhs(vvol, mn, Lrad(vvol), dax, ddx)            ! construct a.x from the integral
+    call mtrxhs(vvol, mn, Lrad(vvol), dax, ddx, ideriv)    ! construct a.x from the integral
     ax = dax(1:n) - mu * ddx(1:n)                          ! put in the mu factor
   endif
+  write(*,*) 'ax', ddx
 
   return
 

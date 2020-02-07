@@ -1043,6 +1043,7 @@ module allglobal
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   REAL,    allocatable :: Tsc(:,:), Tss(:,:), Dtc(:,:), Dts(:,:), Dzc(:,:), Dzs(:,:)
+  REAL,    allocatable :: Ttc(:,:), Tzc(:,:) ,Tts(:,:), Tzs(:,:)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1083,6 +1084,8 @@ module allglobal
   type(subgrid), allocatable :: Ato(:,:,:), Azo(:,:,:)
 
   INTEGER      , allocatable :: Lma(:,:), Lmb(:,:), Lmc(:,:), Lmd(:,:), Lme(:,:), Lmf(:,:), Lmg(:,:), Lmh(:,:)
+  REAL         , allocatable :: Lmavalue(:,:), Lmbvalue(:,:), Lmcvalue(:,:), Lmdvalue(:,:), Lmevalue(:,:), Lmfvalue(:,:)
+  REAL         , allocatable :: Lmgvalue(:,:), Lmhvalue(:,:)
 ! REAL         , allocatable :: Lto(    :), Lzo(    :)
 
 ! INTEGER      , allocatable :: Lmo(:,:), Lme(:,:) ! Lagrange multipliers for enforcing the boundary condition that B.n=0; 17 Dec 15;

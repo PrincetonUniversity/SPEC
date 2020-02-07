@@ -598,6 +598,15 @@ subroutine preset
   SALLOCATE( Lmf  , (1:Mvol,     1:mn), 0 ) ! only need Lmf(2:mn) ; only for NOTstellsym; 08 Feb 16;
   SALLOCATE( Lmg  , (1:Mvol,     1:mn), 0 ) ! only need Lmg(1   ) ;
   SALLOCATE( Lmh  , (1:Mvol,     1:mn), 0 ) ! only need Lmh(1   ) ;
+
+  SALLOCATE( Lmavalue, (1:Mvol,     1:mn), zero )
+  SALLOCATE( Lmbvalue, (1:Mvol,     1:mn), zero )
+  SALLOCATE( Lmcvalue, (1:Mvol,     1:mn), zero )
+  SALLOCATE( Lmdvalue, (1:Mvol,     1:mn), zero )
+  SALLOCATE( Lmevalue, (1:Mvol,     1:mn), zero )
+  SALLOCATE( Lmfvalue, (1:Mvol,     1:mn), zero )
+  SALLOCATE( Lmgvalue, (1:Mvol,     1:mn), zero )
+  SALLOCATE( Lmhvalue, (1:Mvol,     1:mn), zero )
   
   do vvol = 1, Mvol
    
@@ -623,9 +632,9 @@ subroutine preset
 
     ! Guess the size of the sparse matrix ! 28 Jan 20
     ! If an iterative method is used and requires an preconditioner, we need to construct it as a sparse matrix
-    if (Lmatsolver.eq.2 .and. LGMRESprec.gt.0) then
-      if( YESstellsym ) NdMASmax(vvol) = (2 * (Lrad(vvol)/2 + 1))**2 * mn + (Ntor+mn) * NAdof(vvol)     ! Ate, Aze
-      if( NOTstellsym ) NdMASmax(vvol) = (4 * (Lrad(vvol)/2 + 1))**2 * mn + 2 * (Ntor+mn) * NAdof(vvol) ! Ate, Aze, Ato, Azo
+    if (Lmatsolver.ge.2 .and. LGMRESprec.gt.0) then
+      if( YESstellsym ) NdMASmax(vvol) = (2 * (Lrad(vvol)/2 + 1))**2 * mn + 2 * 2 * 5 * Lrad(vvol) * mn ! Ate, Aze
+      if( NOTstellsym ) NdMASmax(vvol) = (4 * (Lrad(vvol)/2 + 1))**2 * mn + 2 * 4 * 8 * Lrad(vvol) * mn ! Ate, Aze, Ato, Azo
     end if
    else ! .not.Lcoordinatesingularity;                                     a    c      b        d      e      f      g   h
     if( YESstellsym ) NAdof(vvol) = 2 * ( mn        ) * ( Lrad(vvol)    ) +0*mn       +0*mn           + mn-1        + 1 + 1  
@@ -633,9 +642,9 @@ subroutine preset
 
     ! Guess the size of the sparse matrix ! 28 Jan 20
     ! If an iterative method is used and requires an preconditioner, we need to construct it as a sparse matrix
-    if (Lmatsolver.eq.2 .and. LGMRESprec.gt.0) then
-      if( YESstellsym ) NdMASmax(vvol) = (2 * (Lrad(vvol) + 1))**2 * mn + (3*mn+1) * NAdof(vvol)        ! Ate, Aze
-      if( NOTstellsym ) NdMASmax(vvol) = (4 * (Lrad(vvol) + 1))**2 * mn + (6*mn  ) * NAdof(vvol)        ! Ate, Aze, Ato, Azo
+    if (Lmatsolver.ge.2 .and. LGMRESprec.gt.0) then
+      if( YESstellsym ) NdMASmax(vvol) = (2 * (Lrad(vvol) + 1))**2 * mn + 2 * 2 * 5 * Lrad(vvol) * mn        ! Ate, Aze
+      if( NOTstellsym ) NdMASmax(vvol) = (4 * (Lrad(vvol) + 1))**2 * mn + 2 * 4 * 8 * Lrad(vvol) * mn       ! Ate, Aze, Ato, Azo
     end if
    endif ! end of if( Lcoordinatesingularity );
 
@@ -1244,7 +1253,7 @@ subroutine preset
     NOTMatrixFree = .true.
   endif
 
-  FATAL(preset, Lmatsolver.eq.3 .and. Lfindzero.ne.0, matrix free currently only support Lfindzero=0)
+  FATAL(preset, Lmatsolver.eq.3 .and. Lfindzero.eq.2, matrix free currently only support Lfindzero=0,1)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

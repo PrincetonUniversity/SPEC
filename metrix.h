@@ -146,3 +146,56 @@ subroutine metrix( lvol, lss )
 end subroutine metrix
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+subroutine spsmetrix( lvol, lss, isave )
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+  use constants, only : zero, one
+  
+  use numerical, only : small
+  
+  use fileunits, only : ounit
+  
+  
+  use allglobal, only : myid, ncpu, cpus, &
+                        dBdX, &
+                        mn, im, in, mne, ime, ine, &
+                        Nt, Nz, Ntz, efmn, ofmn, cfmn, sfmn, &   ! 10 Dec 15;
+                        sg, guvijsave, &                             ! calculated in coords;
+                        goomne, goomno, &
+                        gssmne, gssmno, &
+                        gstmne, gstmno, &
+                        gszmne, gszmno, &
+                        gttmne, gttmno, &
+                        gtzmne, gtzmno, &
+                        gzzmne, gzzmno
+  
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+  LOCALS
+  
+  INTEGER, intent(in) :: lvol, isave
+  REAL   , intent(in) :: lss
+  
+  INTEGER             :: Lcurvature, ifail, ideriv
+  
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+  goomne(0) = one
+  gssmne(0) = SUM(guvijsave(1:Ntz,1,1,isave)) / real(Ntz)
+  gstmne(0) = SUM(guvijsave(1:Ntz,1,2,isave)) / real(Ntz)
+  gszmne(0) = SUM(guvijsave(1:Ntz,1,3,isave)) / real(Ntz)
+  gttmne(0) = SUM(guvijsave(1:Ntz,2,2,isave)) / real(Ntz)
+  gtzmne(0) = SUM(guvijsave(1:Ntz,2,3,isave)) / real(Ntz)
+  gzzmne(0) = SUM(guvijsave(1:Ntz,3,3,isave)) / real(Ntz)
+  
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+  return
+  
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+end subroutine spsmetrix
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
