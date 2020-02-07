@@ -33,3 +33,6 @@ InputFiles/**/*.sp.DF
 
 # python temp file
 *.pyc
+
+#jupyter
+.ipynb_checkpoint
