@@ -66,7 +66,8 @@ subroutine getbco( lvol, Ntz, lss, isave, idx )
                         Ate, Aze, Ato, Azo, &
                         cheby, zernike,&
                         sg, guvij, Rij, Zij, &
-                        dBdX, guvijsave, Lsavedguvij
+                        dBdX, guvijsave, Lsavedguvij, &
+                        ijreal, jireal, jkreal, kjreal
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -104,7 +105,16 @@ subroutine getbco( lvol, Ntz, lss, isave, idx )
    
   efmn(1:mn) = zero ; ofmn(1:mn) = zero ; cfmn(1:mn) = zero ; sfmn(1:mn) = zero
   evmn(1:mn) = zero ; odmn(1:mn) = zero ; comn(1:mn) = zero ; simn(1:mn) = zero
+
+  ijreal(1:mn) = zero ; jireal(1:mn) = zero ; jkreal(1:mn) = zero ; kjreal(1:mn) = zero
+  
   gBupper = zero; Blower = zero;
+
+! A_t  : ijreal, jireal
+! A_z  : jkreal, kjreal
+! gB^s : evmn, odmn
+! gB^t : cfmn, sfmn
+! gB^z : efmn, ofmn
 
 !$OMP PARALLEL DO PRIVATE(ii,mi,ni,ll) SHARED(mn,lvol)   
   do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over Fourier harmonics;
@@ -115,10 +125,14 @@ subroutine getbco( lvol, Ntz, lss, isave, idx )
       ;                      ; cfmn(ii) = cfmn(ii) - Aze(lvol,idx,ii)%s(ll) * ( zernike(ll,mi,1)*half)
       ;                      ; odmn(ii) = odmn(ii) - Ate(lvol,idx,ii)%s(ll) * ( zernike(ll,mi,0)) * ni & 
                                                    - Aze(lvol,idx,ii)%s(ll) * ( zernike(ll,mi,0)) * mi
+      ;                      ; ijreal(ii) = ijreal(ii) + Ate(lvol,idx,ii)%s(ll) * zernike(ll,mi,0)
+      ;                      ; jkreal(ii) = jkreal(ii) + Aze(lvol,idx,ii)%s(ll) * zernike(ll,mi,0)
       if( NOTstellsym ) then ; ofmn(ii) = ofmn(ii) + Ato(lvol,idx,ii)%s(ll) * ( zernike(ll,mi,1)*half)
         ;                    ; sfmn(ii) = sfmn(ii) - Azo(lvol,idx,ii)%s(ll) * ( zernike(ll,mi,1)*half)
         ;                    ; evmn(ii) = evmn(ii) + Ato(lvol,idx,ii)%s(ll) * ( zernike(ll,mi,1)) * ni & 
                                                    + Azo(lvol,idx,ii)%s(ll) * ( zernike(ll,mi,1)) * mi
+        ;                    ; jireal(ii) = jireal(ii) + Ato(lvol,idx,ii)%s(ll) * zernike(ll,mi,0)
+        ;                    ; kjreal(ii) = kjreal(ii) + Azo(lvol,idx,ii)%s(ll) * zernike(ll,mi,0)
       endif
       enddo ! end of do ll; 20 Feb 13;
     else
@@ -127,10 +141,14 @@ subroutine getbco( lvol, Ntz, lss, isave, idx )
       ;                      ; cfmn(ii) = cfmn(ii) - Aze(lvol,idx,ii)%s(ll) * ( cheby(ll,1))
       ;                      ; odmn(ii) = odmn(ii) - Ate(lvol,idx,ii)%s(ll) * ( cheby(ll,0)) * ni & 
                                                    - Aze(lvol,idx,ii)%s(ll) * ( cheby(ll,0)) * mi
+      ;                      ; ijreal(ii) = ijreal(ii) + Ate(lvol,idx,ii)%s(ll) * cheby(ll,0)
+      ;                      ; jkreal(ii) = jkreal(ii) + Aze(lvol,idx,ii)%s(ll) * cheby(ll,0)
       if( NOTstellsym ) then ; ofmn(ii) = ofmn(ii) + Ato(lvol,idx,ii)%s(ll) * ( cheby(ll,1))
         ;                    ; sfmn(ii) = sfmn(ii) - Azo(lvol,idx,ii)%s(ll) * ( cheby(ll,1))
         ;                    ; evmn(ii) = evmn(ii) + Ato(lvol,idx,ii)%s(ll) * ( cheby(ll,0)) * ni & 
                                                    + Azo(lvol,idx,ii)%s(ll) * ( cheby(ll,0)) * mi
+        ;                    ; jireal(ii) = jireal(ii) + Ato(lvol,idx,ii)%s(ll) * cheby(ll,0)
+        ;                    ; kjreal(ii) = kjreal(ii) + Azo(lvol,idx,ii)%s(ll) * cheby(ll,0)
       endif
       enddo ! end of do ll; 20 Feb 13;
     end if ! Lcoordinatesingularity; 01 Jul 19

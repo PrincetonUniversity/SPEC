@@ -446,8 +446,6 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
 
      endif
 
-     write(ounit,*) NdMASmax(vvol), NdMAS(vvol)
-
    endif
 
    WCALL( dforce, ma02aa, ( vvol, NN ) )

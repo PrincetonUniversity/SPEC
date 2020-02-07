@@ -8,7 +8,7 @@ subroutine mtrxhs( lvol, mn, lrad, resultA, resultD, idx )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  use constants, only : zero, one, two
+  use constants, only : zero, one, two, half
   
   use numerical, only : small
   
@@ -76,7 +76,7 @@ subroutine mtrxhs( lvol, mn, lrad, resultA, resultD, idx )
   endif
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+  !write(ounit,*) Ttc(0,1), Tzc(0,1)
   if( YESstellsym ) then
 !!$OMP PARALLEL DO PRIVATE(ii,mi,ni,ll,ll1,kk,Wte,Wze,Hte,Hze,id,jd) SHARED(mn,lrad,resultA,resultD,TTMdata,TTdata)
     do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
@@ -104,6 +104,7 @@ subroutine mtrxhs( lvol, mn, lrad, resultA, resultD, idx )
 
         id = Ate(lvol,0,ii)%i(ll) ; resultD(id) = Hte
         id = Aze(lvol,0,ii)%i(ll) ; resultD(id) = Hze
+        !write(ounit,*) 'Hze', id, ii, ll, Hze
         
         if( Lcoordinatesingularity .and. ii.eq.1 ) then ; kk = 1
         else                                            ; kk = 0

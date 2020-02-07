@@ -95,7 +95,8 @@ subroutine intghs( lquad, mn, lvol, lrad, idx )
                         Bloweremn, Bloweromn, &
                         cheby, zernike, &
                         Lcoordinatesingularity, &
-                        pi2pi2nfp, pi2pi2nfphalf, dBdX
+                        pi2pi2nfp, pi2pi2nfphalf, dBdX, &
+                        ijreal, jireal, jkreal, kjreal
                         
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -167,12 +168,12 @@ subroutine intghs( lquad, mn, lvol, lrad, idx )
 
           if (dBdX%L) cycle ! dMD matrix does not depend on geometry
 
-          Ttc(ll1,ii) = Ttc(ll1,ii) + Tl * cfmn(ii) * ik
-          Tzc(ll1,ii) = Tzc(ll1,ii) + Tl * efmn(ii) * ik
+          Ttc(ll1,ii) = Ttc(ll1,ii) + (Tl * cfmn(ii) + Dl * jkreal(ii)) * ik
+          Tzc(ll1,ii) = Tzc(ll1,ii) + (Tl * efmn(ii) - Dl * ijreal(ii)) * ik
 
           if (NOTstellsym) then
-            Tts(ll1,ii) = Tts(ll1,ii) + Tl * sfmn(ii) * ik
-            Tzs(ll1,ii) = Tzs(ll1,ii) + Tl * ofmn(ii) * ik
+            Tts(ll1,ii) = Tts(ll1,ii) + (Tl * sfmn(ii) + Dl * kjreal(ii)) * ik
+            Tzs(ll1,ii) = Tzs(ll1,ii) + (Tl * ofmn(ii) - Dl * ijreal(ii)) * ik
           endif
 
         enddo !ll
@@ -216,13 +217,14 @@ subroutine intghs( lquad, mn, lvol, lrad, idx )
 
           if (dBdX%L) cycle ! dMD matrix does not depend on geometry
 
-          Ttc(ll1,ii) = Ttc(ll1,ii) + Tl * cfmn(ii) * ik
-          Tzc(ll1,ii) = Tzc(ll1,ii) + Tl * efmn(ii) * ik
+          Ttc(ll1,ii) = Ttc(ll1,ii) + (Tl * cfmn(ii) + Dl * jkreal(ii)) * ik
+          Tzc(ll1,ii) = Tzc(ll1,ii) + (Tl * efmn(ii) - Dl * ijreal(ii)) * ik
 
           if (NOTstellsym) then
-            Tts(ll1,ii) = Tts(ll1,ii) + Tl * sfmn(ii) * ik
-            Tzs(ll1,ii) = Tzs(ll1,ii) + Tl * ofmn(ii) * ik
+            Tts(ll1,ii) = Tts(ll1,ii) + (Tl * sfmn(ii) + Dl * kjreal(ii)) * ik
+            Tzs(ll1,ii) = Tzs(ll1,ii) + (Tl * ofmn(ii) - Dl * ijreal(ii)) * ik
           endif
+          
         enddo !ll
       enddo !ii
 !OMP END PARALLEL DO

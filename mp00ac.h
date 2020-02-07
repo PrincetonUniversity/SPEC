@@ -804,9 +804,9 @@ subroutine matvec(n, x, ax, a, mu, vvol)
   INTEGER             :: ideriv
   REAL                :: dax(0:n), ddx(0:n)
   CHARACTER           :: packorunpack
-write(*,*) 'x', x
+!write(*,*) 'x', x
   if (NOTMatrixFree) then ! if we have the matrix, then just multiply it to x
-    call DGEMV('N', n, n, one, dMD(1,1), n+1, x, 1, zero, ddx, 1)
+    call DGEMV('N', n, n, one, dMD(1,1), n+1, x, 1, zero, ddx(1), 1)
     call DGEMV('N', n, n, one, a, n, x, 1, zero, ax, 1)
   else ! if we are matrix-free, then we construct a.x directly
     ideriv = -2        ! this is used for matrix-free only
@@ -816,7 +816,7 @@ write(*,*) 'x', x
     call mtrxhs(vvol, mn, Lrad(vvol), dax, ddx, ideriv)    ! construct a.x from the integral
     ax = dax(1:n) - mu * ddx(1:n)                          ! put in the mu factor
   endif
-  write(*,*) 'ax', ddx
+  !write(*,*) 'ax', ddx(1:n)
 
   return
 
