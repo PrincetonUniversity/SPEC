@@ -245,22 +245,6 @@ subroutine preset
 !latex       \newline then $k_i\equiv$ \type{ki(i,0)} is defined such that $\bar m_{k_i} = m_i$ and $\bar n_{k_i} = n_i$.
 !latex \end{enumerate}
 
-  SALLOCATE( ki, (1:mn,0:1), 0 )
-  
-  do ii = 1, mn  ; mi = im(ii)  ; ni = in(ii)
-   
-   do kk = 1, mne ; mk = ime(kk) ; nk = ine(kk)
-    
-    if( mk.eq. mi .and. nk.eq. ni ) then
-     if( mk.eq.0 .and. nk.eq.0 ) then ; ki(ii,0:1) = (/ kk, 1 /)
-     else                             ; ki(ii,0:1) = (/ kk, 2 /)
-     endif
-    endif
-    
-   enddo ! end of do kk = 1, mne ;
-   
-  enddo ! end of do ii ;
-
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !latex \subsubsection{\type{kija(1:mn,1:mn,0:1)}, \type{kijs(1:mn,1:mn,0:1)} : Fourier identification;}
@@ -282,57 +266,46 @@ subroutine preset
 !latex       Also, take care that the sign of the sine harmonics in the above expressions will change for these cases.
 !latex \end{enumerate}
 
+  SALLOCATE( ki, (1:mn,0:1), 0 )
   SALLOCATE( kija, (1:mn,1:mn,0:1), 0 )
-!$OMP PARALLEL DO SHARED(mn,mne,im,in,ime,ine,kija)
-  do ii = 1, mn  ; mi =  im(ii) ; ni =  in(ii)
-   
-   do jj = 1, mn  ; mj =  im(jj) ; nj =  in(jj) ; mimj = mi + mj ; ninj = ni + nj !   adding   ; 17 Dec 15;
-    
-    do kk = 1, mne ; mk = ime(kk) ; nk = ine(kk)
-     
-     if( mk.eq. mimj .and. nk.eq. ninj ) then
-      if( mk.eq.0 .and. nk.eq.0 ) then ; kija(ii,jj,0:1) = (/ kk ,   1 /)
-      else                             ; kija(ii,jj,0:1) = (/ kk ,   2 /)
-      endif
-     endif
-     
-    enddo ! end of do kk; 29 Jan 13;
-    
-   enddo ! end of do jj; 29 Jan 13;
-   
-  enddo ! end of do ii; 29 Jan 13;
-!$OMP END PARALLEL DO
-
   SALLOCATE( kijs, (1:mn,1:mn,0:1), 0 )
-!$OMP PARALLEL DO SHARED(mn,mne,im,in,ime,ine,kijs)
+
   do ii = 1, mn  ; mi =  im(ii) ; ni =  in(ii)
    
-   do jj = 1, mn  ; mj =  im(jj) ; nj =  in(jj) ; mimj = mi - mj ; ninj = ni - nj ! subtracting; 17 Dec 15;
-    
-    do kk = 1, mne ; mk = ime(kk) ; nk = ine(kk)
-     
-     if( mimj.gt.0 .or. ( mimj.eq.0 .and. ninj.ge.0 ) ) then ! no re-definition required; 17 Dec 15;
-      
-      if( mk.eq. mimj .and. nk.eq. ninj ) then
-       if( mk.eq.0 .and. nk.eq.0 ) then ; kijs(ii,jj,0:1) = (/ kk ,   1 /)
-       else                             ; kijs(ii,jj,0:1) = (/ kk ,   2 /)
-       endif
+    call getimn(lMpol, lNtor, Nfp, mi, ni, kk)
+    if (kk.gt.0) then
+      if( mi.eq.0 .and. ni.eq.0 ) then ; ki(ii,0:1) = (/ kk, 1 /)
+      else                             ; ki(ii,0:1) = (/ kk, 2 /)
       endif
-      
-     else
-      
-      if( mk.eq.-mimj .and. nk.eq.-ninj ) then
-       ;                                ; kijs(ii,jj,0:1) = (/ kk , - 2 /) ! only the sine modes need the sign factor; 17 Dec 15;
+    endif
+
+    do jj = 1, mn  ; mj =  im(jj) ; nj =  in(jj) ; mimj = mi + mj ; ninj = ni + nj !   adding   ; 17 Dec 15;
+
+      call getimn(lMpol, lNtor, Nfp, mimj, ninj, kk)
+      if (kk.gt.0) then
+        if( mimj.eq.0 .and. ninj.eq.0 ) then ; kija(ii,jj,0:1) = (/ kk, 1 /)
+        else                                 ; kija(ii,jj,0:1) = (/ kk, 2 /)
+        endif
       endif
-      
-     endif
-     
-    enddo ! end of do kk; 29 Jan 13;
+      ;                                           ; mimj = mi - mj ; ninj = ni - nj ! subtracting; 17 Dec 15;
+
+      if( mimj.gt.0 .or. ( mimj.eq.0 .and. ninj.ge.0 ) ) then
+        call getimn(lMpol, lNtor, Nfp, mimj, ninj, kk)
+        if (kk.gt.0) then
+          if( mimj.eq.0 .and. ninj.eq.0 ) then ; kijs(ii,jj,0:1) = (/ kk, 1 /)
+          else                                 ; kijs(ii,jj,0:1) = (/ kk, 2 /)
+          endif
+        endif
+      else
+        call getimn(lMpol, lNtor, Nfp, -mimj, -ninj, kk)
+        if (kk.gt.0) then
+          ;                                    ; kijs(ii,jj,0:1) = (/ kk , - 2 /) ! only the sine modes need the sign factor; 17 Dec 15;
+        endif
+      endif
     
-   enddo ! end of do jj; 29 Jan 13;
+    enddo ! end of do jj; 29 Jan 13;
    
   enddo ! end of do ii; 29 Jan 13;
-!$OMP END PARALLEL DO
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !latex \subsubsection{\type{djkp}}
@@ -363,48 +336,34 @@ subroutine preset
 !$OMP PARALLEL DO SHARED(mn,mns,im,in,ims,ins,iotakkii,iotaksub,iotaksgn,iotakadd)
   do kk = 1, mn ; mk = im(kk) ; nk = in(kk)
    
+    call getimn(sMpol, sNtor, Nfp, mk, nk, ii)
+    if (ii.gt.0) iotakkii(kk) = ii
    
-   do ii = 1, mns ; mi = ims(ii) ; ni = ins(ii)
+    do jj = 1, mns ; mj = ims(jj) ; nj = ins(jj)
     
-    if( mk.eq.mi .and. nk.eq.ni ) iotakkii(kk) = ii
-    
-   enddo
-   
-   
-   do jj = 1, mns ; mj = ims(jj) ; nj = ins(jj)
-    
-    
-    mkmj = mk - mj ; nknj = nk - nj
-    
-    do ii = 1, mns ; mi = ims(ii) ; ni = ins(ii)
-     
-     if( mkmj.gt.0 .or. ( mkmj.eq.0 .and. nknj.ge.0 ) ) then
+      mkmj = mk - mj ; nknj = nk - nj
+
+      if( mkmj.gt.0 .or. ( mkmj.eq.0 .and. nknj.ge.0 ) ) then
+
+        call getimn(sMpol, sNtor, Nfp, mkmj, nknj, ii)
+        if (ii.gt.0) then ; iotaksub(kk,jj) = ii ; iotaksgn(kk,jj) =  1
+        endif
+
+      else
       
-      if( mi.eq. mkmj .and. ni.eq. nknj ) then ; iotaksub(kk,jj) = ii ; iotaksgn(kk,jj) =  1
+        call getimn(sMpol, sNtor, Nfp, -mkmj, -nknj, ii)
+        if (ii.gt.0) then ; iotaksub(kk,jj) = ii ; iotaksgn(kk,jj) =  -1
+        endif
+
       endif
-      
-     else
-      
-      if( mi.eq.-mkmj .and. ni.eq.-nknj ) then ; iotaksub(kk,jj) = ii ; iotaksgn(kk,jj) = -1
+    
+      mkmj = mk + mj ; nknj = nk + nj
+
+      call getimn(sMpol, sNtor, Nfp, mkmj, nknj, ii)
+      if (ii.gt.0) then ; iotakadd(kk,jj) = ii
       endif
-      
-     endif
-     
-    enddo ! end of do ii; 30 Jan 13;
     
-    
-    mkmj = mk + mj ; nknj = nk + nj
-    
-    do ii = 1, mns ; mi = ims(ii) ; ni = ins(ii)
-     
-     if( mi.eq. mkmj .and. ni.eq. nknj ) then ; iotakadd(kk,jj) = ii
-     endif
-     
-    enddo ! end of do ii; 29 Jan 13;
-    
-    
-   enddo ! end of do jj; 29 Jan 13;
-   
+    enddo ! end of do jj; 29 Jan 13;
    
   enddo ! end of do kk; 29 Jan 13;
 !$OMP END PARALLEL DO

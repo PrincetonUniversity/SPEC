@@ -85,6 +85,24 @@ end subroutine gi00ab
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+subroutine getimn(Mpol, Ntor, Nfp, mi, ni, idx)
+  ! convert m and n to index
+  implicit none
+  integer, intent(in) :: Mpol, Ntor, Nfp, mi, ni
+  integer, intent(out) :: idx
+
+  if (mi.gt.Mpol .or. mi.lt.0 .or. ni.gt.Ntor*Nfp .or. ni.lt.-Ntor*Nfp ) then
+    idx = 0
+  elseif (mi .eq. 0) then
+    idx = 1 + ni / Nfp
+  else
+    idx = 1 + Ntor + (2 * Ntor + 1) * (mi - 1) + (ni / Nfp + Ntor + 1)
+  end if
+
+end subroutine getimn
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
 !latex \subsection{\type{tfft}}
 
 !latex \begin{enumerate}

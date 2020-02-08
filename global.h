@@ -944,6 +944,8 @@ module allglobal
   INTEGER              :: mns ! enhanced resolution for straight field line transformation;
   INTEGER, allocatable :: ims(:), ins(:)
 
+  INTEGER              :: lMpol, lNtor, sMpol, sNtor
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   REAL                 :: xoffset = 1.0 ! used to normalize NAG routines;
@@ -1408,7 +1410,7 @@ subroutine readin
   LOCALS
 
   LOGICAL              :: Lspexist, Lchangeangle
-  INTEGER              :: vvol, mm, nn, nb, imn, ix, ii, jj, ij, kk, mj, nj, mk, nk, ip, lMpol, lNtor, X02BBF, iargc, iarg, numargs, mi, ni, lvol
+  INTEGER              :: vvol, mm, nn, nb, imn, ix, ii, jj, ij, kk, mj, nj, mk, nk, ip, X02BBF, iargc, iarg, numargs, mi, ni, lvol
   REAL                 :: xx, toroidalflux
   REAL,    allocatable :: RZRZ(:,:) ! local array used for reading interface Fourier harmonics from file;
   
@@ -1980,18 +1982,18 @@ subroutine readin
   
 !latex \subsubsection{\type{mns}, \type{ims} and \type{ins} : Fourier mode identification for straight-fieldline angle}
 
-  lMpol = iMpol ; lNtor = iNtor
+  sMpol = iMpol ; sNtor = iNtor
 
-  if( iMpol.le.0 ) lMpol = Mpol - iMpol
-  if( iNtor.le.0 ) lNtor = Ntor - iNtor
-  if(  Ntor.eq.0 ) lNtor = 0
+  if( iMpol.le.0 ) sMpol = Mpol - iMpol
+  if( iNtor.le.0 ) sNtor = Ntor - iNtor
+  if(  Ntor.eq.0 ) sNtor = 0
   
-  mns = 1 + lNtor + lMpol * ( 2 * lNtor + 1 ) ! resolution of straight-field line transformation on interfaces; see tr00ab; soon to be redundant; 
+  mns = 1 + sNtor + sMpol * ( 2 * sNtor + 1 ) ! resolution of straight-field line transformation on interfaces; see tr00ab; soon to be redundant; 
 
   SALLOCATE( ims, (1:mns), 0 )
   SALLOCATE( ins, (1:mns), 0 )
 
-  call gi00ab( lMpol, lNtor, Nfp, mns, ims(1:mns), ins(1:mns) ) ! note that the field periodicity factor is included in ins;
+  call gi00ab( sMpol, sNtor, Nfp, mns, ims(1:mns), ins(1:mns) ) ! note that the field periodicity factor is included in ins;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
