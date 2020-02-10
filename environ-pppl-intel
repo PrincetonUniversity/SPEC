@@ -1,4 +1,0 @@
-module load intel/2019.u3
-module load openmpi/4.0.1
-module load fftw/3.3.8
-module load hdf5-serial/1.10.5
