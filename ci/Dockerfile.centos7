@@ -1,0 +1,18 @@
+FROM centos:7
+
+#setup the base sysem
+RUN yum group install "Development Tools" -y
+RUN yum -y install epel-release
+RUN yum install gcc-gfortran openmpi openmpi-devel hdf5 hdf5-devel -y
+RUN yum install fftw3 fftw3-devel openblas openblas-devel -y
+RUN yum install blas blas-devel lapack lapack-devel -y
+
+# direct the existing makefile to the system install location
+ENV FFTW_HOME=/usr
+# hack
+ENV HDF5_HOME="/usr/lib64/gfortran/modules -I/usr"
+
+
+# Complete the setup of openmpi, they used environmentmodules, blehgh
+ENV PATH="/usr/lib64/openmpi/bin:${PATH}"
+ENV LD_LIBRARY_PATH="/usr/lib64/openmpi/lib:${LD_LIBRARY_PATH}"
