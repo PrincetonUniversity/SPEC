@@ -435,7 +435,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
     case (0) ! ideriv = 0
 
       if (LILUprecond) then ! Using ILU preconditioner
-        matrixS(1:NS) = dMAS - lmu * dMDS  ! construct the sparse precondtioner matrix
+        matrixS(1:NS) = dMAS(1:NS) - lmu * dMDS(1:NS)  ! construct the sparse precondtioner matrix
       end if ! if (LILUprecond)
       
       if (MAXVAL(abs(GMRESlastsolution(1:NN,0,lvol))) .le. small) then
