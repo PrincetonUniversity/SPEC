@@ -496,6 +496,7 @@ ind_matrix = IndMatrixArray(vvol, 2)
 
         if( Lcheck.eq.4 ) then ! check derivatives of field;
          
+         SALLOCATE( isolution, (1:NN,-2:2), zero )
          dBdX%L = .false.
          
          do isymdiff = -2, 2 ! symmetric fourth-order, finite-difference used to approximate derivatives;
@@ -565,6 +566,8 @@ ind_matrix = IndMatrixArray(vvol, 2)
          iRbs(1:mn,0:Mvol) = oRbs(1:mn,0:Mvol)
          iZbc(1:mn,0:Mvol) = oZbc(1:mn,0:Mvol)
          
+
+         DALLOCATE(isolution)
         endif ! end of if( Lcheck.eq.4 ) ;
 
 #endif
@@ -910,12 +913,6 @@ ind_matrix = IndMatrixArray(vvol, 2)
     
     DALLOCATE(oBI)
     DALLOCATE(rhs)
-    
-#ifdef DEBUG
-    if( Lcheck.eq.4 ) then
-     DALLOCATE(isolution)
-    endif
-#endif
     
    endif ! end of if( LcomputeDerivatives ) ;
 
