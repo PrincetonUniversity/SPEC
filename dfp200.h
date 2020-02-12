@@ -222,80 +222,80 @@ if( LocalConstraint ) then
 
 							dBdX%innout = innout
 
-			SALLOCATE( DToocc, (0:ll,0:ll,1:mn,1:mn), zero )
-			SALLOCATE( DToocs, (0:ll,0:ll,1:mn,1:mn), zero )
-			SALLOCATE( DToosc, (0:ll,0:ll,1:mn,1:mn), zero )
-			SALLOCATE( DTooss, (0:ll,0:ll,1:mn,1:mn), zero )
+							SALLOCATE( DToocc, (0:ll,0:ll,1:mn,1:mn), zero )
+							SALLOCATE( DToocs, (0:ll,0:ll,1:mn,1:mn), zero )
+							SALLOCATE( DToosc, (0:ll,0:ll,1:mn,1:mn), zero )
+							SALLOCATE( DTooss, (0:ll,0:ll,1:mn,1:mn), zero )
 
-			SALLOCATE( TTsscc, (0:ll,0:ll,1:mn,1:mn), zero )
-			SALLOCATE( TTsscs, (0:ll,0:ll,1:mn,1:mn), zero )
-			SALLOCATE( TTsssc, (0:ll,0:ll,1:mn,1:mn), zero )
-			SALLOCATE( TTssss, (0:ll,0:ll,1:mn,1:mn), zero )
+							SALLOCATE( TTsscc, (0:ll,0:ll,1:mn,1:mn), zero )
+							SALLOCATE( TTsscs, (0:ll,0:ll,1:mn,1:mn), zero )
+							SALLOCATE( TTsssc, (0:ll,0:ll,1:mn,1:mn), zero )
+							SALLOCATE( TTssss, (0:ll,0:ll,1:mn,1:mn), zero )
 
-			SALLOCATE( TDstcc, (0:ll,0:ll,1:mn,1:mn), zero )
-			SALLOCATE( TDstcs, (0:ll,0:ll,1:mn,1:mn), zero )
-			SALLOCATE( TDstsc, (0:ll,0:ll,1:mn,1:mn), zero )
-			SALLOCATE( TDstss, (0:ll,0:ll,1:mn,1:mn), zero )
+							SALLOCATE( TDstcc, (0:ll,0:ll,1:mn,1:mn), zero )
+							SALLOCATE( TDstcs, (0:ll,0:ll,1:mn,1:mn), zero )
+							SALLOCATE( TDstsc, (0:ll,0:ll,1:mn,1:mn), zero )
+							SALLOCATE( TDstss, (0:ll,0:ll,1:mn,1:mn), zero )
 
-			SALLOCATE( TDszcc, (0:ll,0:ll,1:mn,1:mn), zero )
-			SALLOCATE( TDszcs, (0:ll,0:ll,1:mn,1:mn), zero )
-			SALLOCATE( TDszsc, (0:ll,0:ll,1:mn,1:mn), zero )
-			SALLOCATE( TDszss, (0:ll,0:ll,1:mn,1:mn), zero )
+							SALLOCATE( TDszcc, (0:ll,0:ll,1:mn,1:mn), zero )
+							SALLOCATE( TDszcs, (0:ll,0:ll,1:mn,1:mn), zero )
+							SALLOCATE( TDszsc, (0:ll,0:ll,1:mn,1:mn), zero )
+							SALLOCATE( TDszss, (0:ll,0:ll,1:mn,1:mn), zero )
 
-			SALLOCATE( DDttcc, (0:ll,0:ll,1:mn,1:mn), zero )
-			SALLOCATE( DDttcs, (0:ll,0:ll,1:mn,1:mn), zero )
-			SALLOCATE( DDttsc, (0:ll,0:ll,1:mn,1:mn), zero )
-			SALLOCATE( DDttss, (0:ll,0:ll,1:mn,1:mn), zero )
+							SALLOCATE( DDttcc, (0:ll,0:ll,1:mn,1:mn), zero )
+							SALLOCATE( DDttcs, (0:ll,0:ll,1:mn,1:mn), zero )
+							SALLOCATE( DDttsc, (0:ll,0:ll,1:mn,1:mn), zero )
+							SALLOCATE( DDttss, (0:ll,0:ll,1:mn,1:mn), zero )
 
-			SALLOCATE( DDtzcc, (0:ll,0:ll,1:mn,1:mn), zero )
-			SALLOCATE( DDtzcs, (0:ll,0:ll,1:mn,1:mn), zero )
-			SALLOCATE( DDtzsc, (0:ll,0:ll,1:mn,1:mn), zero )
-			SALLOCATE( DDtzss, (0:ll,0:ll,1:mn,1:mn), zero )
+							SALLOCATE( DDtzcc, (0:ll,0:ll,1:mn,1:mn), zero )
+							SALLOCATE( DDtzcs, (0:ll,0:ll,1:mn,1:mn), zero )
+							SALLOCATE( DDtzsc, (0:ll,0:ll,1:mn,1:mn), zero )
+							SALLOCATE( DDtzss, (0:ll,0:ll,1:mn,1:mn), zero )
 
-			SALLOCATE( DDzzcc, (0:ll,0:ll,1:mn,1:mn), zero )
-			SALLOCATE( DDzzcs, (0:ll,0:ll,1:mn,1:mn), zero )
-			SALLOCATE( DDzzsc, (0:ll,0:ll,1:mn,1:mn), zero )
-			SALLOCATE( DDzzss, (0:ll,0:ll,1:mn,1:mn), zero )
+							SALLOCATE( DDzzcc, (0:ll,0:ll,1:mn,1:mn), zero )
+							SALLOCATE( DDzzcs, (0:ll,0:ll,1:mn,1:mn), zero )
+							SALLOCATE( DDzzsc, (0:ll,0:ll,1:mn,1:mn), zero )
+							SALLOCATE( DDzzss, (0:ll,0:ll,1:mn,1:mn), zero )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-
 							! Perturbed solution
 
 							call get_perturbed_solution(vvol, rhs, oBI, NN)
 
-			DALLOCATE(DToocc)
-			DALLOCATE(DToocs)
-			DALLOCATE(DToosc)
-			DALLOCATE(DTooss)
+							DALLOCATE(DToocc)
+							DALLOCATE(DToocs)
+							DALLOCATE(DToosc)
+							DALLOCATE(DTooss)
 
-			DALLOCATE(TTsscc)
-			DALLOCATE(TTsscs)
-			DALLOCATE(TTsssc)
-			DALLOCATE(TTssss)
+							DALLOCATE(TTsscc)
+							DALLOCATE(TTsscs)
+							DALLOCATE(TTsssc)
+							DALLOCATE(TTssss)
 
-			DALLOCATE(TDstcc)
-			DALLOCATE(TDstcs)
-			DALLOCATE(TDstsc)
-			DALLOCATE(TDstss)
+							DALLOCATE(TDstcc)
+							DALLOCATE(TDstcs)
+							DALLOCATE(TDstsc)
+							DALLOCATE(TDstss)
 
-			DALLOCATE(TDszcc)
-			DALLOCATE(TDszcs)
-			DALLOCATE(TDszsc)
-			DALLOCATE(TDszss)
+							DALLOCATE(TDszcc)
+							DALLOCATE(TDszcs)
+							DALLOCATE(TDszsc)
+							DALLOCATE(TDszss)
 
-			DALLOCATE(DDttcc)
-			DALLOCATE(DDttcs)
-			DALLOCATE(DDttsc)
-			DALLOCATE(DDttss)
+							DALLOCATE(DDttcc)
+							DALLOCATE(DDttcs)
+							DALLOCATE(DDttsc)
+							DALLOCATE(DDttss)
 
-			DALLOCATE(DDtzcc)
-			DALLOCATE(DDtzcs)
-			DALLOCATE(DDtzsc)
-			DALLOCATE(DDtzss)
+							DALLOCATE(DDtzcc)
+							DALLOCATE(DDtzcs)
+							DALLOCATE(DDtzsc)
+							DALLOCATE(DDtzss)
 
-			DALLOCATE(DDzzcc)
-			DALLOCATE(DDzzcs)
-			DALLOCATE(DDzzsc)
-			DALLOCATE(DDzzss)
+							DALLOCATE(DDzzcc)
+							DALLOCATE(DDzzcs)
+							DALLOCATE(DDzzsc)
+							DALLOCATE(DDzzss)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 							! Helicity multiplier and poloidal flux derivatives
@@ -1033,41 +1033,6 @@ subroutine evaluate_dmupfdx(vvol, innout, idof, ii, issym, irz)
 
 	if( Lcheck.eq.4 ) then ! check derivatives of field;
 
-		!SALLOCATE( DToocc, (0:ll,0:ll,1:mn,1:mn), zero )
-		!SALLOCATE( DToocs, (0:ll,0:ll,1:mn,1:mn), zero )
-		!SALLOCATE( DToosc, (0:ll,0:ll,1:mn,1:mn), zero )
-		!SALLOCATE( DTooss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-		!SALLOCATE( TTsscc, (0:ll,0:ll,1:mn,1:mn), zero )
-		!SALLOCATE( TTsscs, (0:ll,0:ll,1:mn,1:mn), zero )
-		!SALLOCATE( TTsssc, (0:ll,0:ll,1:mn,1:mn), zero )
-		!SALLOCATE( TTssss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-		!SALLOCATE( TDstcc, (0:ll,0:ll,1:mn,1:mn), zero )
-		!SALLOCATE( TDstcs, (0:ll,0:ll,1:mn,1:mn), zero )
-		!SALLOCATE( TDstsc, (0:ll,0:ll,1:mn,1:mn), zero )
-		!SALLOCATE( TDstss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-		!SALLOCATE( TDszcc, (0:ll,0:ll,1:mn,1:mn), zero )
-		!SALLOCATE( TDszcs, (0:ll,0:ll,1:mn,1:mn), zero )
-		!SALLOCATE( TDszsc, (0:ll,0:ll,1:mn,1:mn), zero )
-		!SALLOCATE( TDszss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-		!SALLOCATE( DDttcc, (0:ll,0:ll,1:mn,1:mn), zero )
-		!SALLOCATE( DDttcs, (0:ll,0:ll,1:mn,1:mn), zero )
-		!SALLOCATE( DDttsc, (0:ll,0:ll,1:mn,1:mn), zero )
-		!SALLOCATE( DDttss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-		!SALLOCATE( DDtzcc, (0:ll,0:ll,1:mn,1:mn), zero )
-		!SALLOCATE( DDtzcs, (0:ll,0:ll,1:mn,1:mn), zero )
-		!SALLOCATE( DDtzsc, (0:ll,0:ll,1:mn,1:mn), zero )
-		!SALLOCATE( DDtzss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-		!SALLOCATE( DDzzcc, (0:ll,0:ll,1:mn,1:mn), zero )
-		!SALLOCATE( DDzzcs, (0:ll,0:ll,1:mn,1:mn), zero )
-		!SALLOCATE( DDzzsc, (0:ll,0:ll,1:mn,1:mn), zero )
-		!SALLOCATE( DDzzss, (0:ll,0:ll,1:mn,1:mn), zero )
-
 		dBdX%L = .false.
 
 		do isymdiff = -2, 2 ! symmetric fourth-order, finite-difference used to approximate derivatives;
@@ -1084,20 +1049,13 @@ subroutine evaluate_dmupfdx(vvol, innout, idof, ii, issym, irz)
 			if( issym.eq.1 .and. irz.eq.0 ) iRbs(ii,vvol-1+innout) = iRbs(ii,vvol-1+innout) + dRZ * isymdiff ! perturb geometry;
 			if( issym.eq.1 .and. irz.eq.1 ) iZbc(ii,vvol-1+innout) = iZbc(ii,vvol-1+innout) + dRZ * isymdiff ! perturb geometry;
 
-			! Call dforce again but only for the field solver... slow but required in case of global constraint
-
+			! Call dforce again but only for the field solver
 			packorunpack = 'P'
 			WCALL( dfp200, packxi, ( NGdof, position, Mvol, mn, iRbc, iZbs, iRbs, iZbc, packorunpack ) )
 
 			LcomputeDerivatives = .false.
 			Lonlysolution = .true.
 			WCALL( dfp200, dforce, ( NGdof, position, force, LComputeDerivatives, Lonlysolution ))
-
-			!WCALL( dfp200, ma00aa, ( Iquad(vvol), mn, vvol, ll ) )
-
-			!WCALL( dfp200, matrix, ( vvol, mn, ll ) )
-
-			!WCALL( dfp200, ma02aa, ( vvol, NN ) ) 					! this may or may not iterate on mu and dpflux to enforce transform constraints;
 
 			if( LocalConstraint ) then
 				if( Lplasmaregion ) then
@@ -1130,25 +1088,28 @@ subroutine evaluate_dmupfdx(vvol, innout, idof, ii, issym, irz)
 
 		solution(vvol)%mat(1:NN,-1) = abs(  solution(vvol)%mat(1:NN,-1) )
 		isolution(1:NN, 0) = abs( isolution(1:NN, 0) )
-
-		ifail = 0 ; call dlasrt( 'D', NN,  solution(vvol)%mat(1:NN,-1), ifail ) ! sorting screen output; this corrupts;
-		ifail = 0 ; call dlasrt( 'D', NN, isolution(1:NN, 0), ifail ) ! sorting screen output; this corrupts;        
+     
 
 		cput = GETTIME
 
 		write(ounit,3003)
 		if( LocalConstraint ) then
+			!ifail = 0 ; call dlasrt( 'D', NN,  solution(vvol)%mat(1:NN,-1), ifail ) ! sorting screen output; this corrupts;
+			!ifail = 0 ; call dlasrt( 'D', NN, isolution(1:NN, 0), ifail ) ! sorting screen output; this corrupts;   
 			write(ounit,3003) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, innout, "finite-diff", imupf(1,1:2,0)
 			write(ounit,3003) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, innout, "analytic   ", dmupfdx(vvol,1,1:2,idof,innout) / lfactor
 		else
-			write(ounit,3003) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, innout, "dmu finite-diff", imupf(1:Mvol,1,0)
-			write(ounit,3003) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, innout, "dmu analytic   ", dmupfdx(1:Mvol,vvol,1,idof,innout) / lfactor
-			write(ounit,3003) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, innout, "dpflux finite-diff", imupf(1:Mvol,2,0)
-			write(ounit,3003) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, innout, "dpflux analytic   ", dmupfdx(1:Mvol,vvol,2,idof,innout) / lfactor
+			write(ounit,3004) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, innout, "dmu finite-diff", imupf(1:Mvol,1,0)
+			write(ounit,3004) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, innout, "dmu analytic   ", dmupfdx(1:Mvol,vvol,1,idof,innout) / lfactor
+			write(ounit,3004) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, innout, "dpflux finite-diff", imupf(1:Mvol,2,0)
+			write(ounit,3004) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, innout, "dpflux analytic   ", dmupfdx(1:Mvol,vvol,2,idof,innout) / lfactor
 		endif
 
-3003    format("dfp200 : ",f10.2," : ",:,"myid=",i3," ; vvol=",i2," ; (",i2,",",i3," ) ; irz=",i1," ; issym=",i1," ; innout=",i1," ; ",a18," : dmupf=",2f11.05" ;")
+3003    format("dfp200 : ",f10.2," : ",:,"myid=",i3," ; vvol=",i2," ; (",i2,",",i3," ) ; irz=",i1," ; issym=",i1," ; innout=",i1," ; ",a18," : dmupf=",8f11.05" ;")
+3004    format("dfp200 : ",f10.2," : ",:,"myid=",i3," ; vvol=",i2," ; (",i2,",",i3," ) ; irz=",i1," ; issym=",i1," ; innout=",i1," ; ",a18," : dmupf=",8f11.05" ;")
 
+
+		! Re-evaluate unperturbed solution
 		dBdX%L = .true.
 
 		iRbc(1:mn,0:Mvol) = oRbc(1:mn,0:Mvol)
@@ -1156,40 +1117,12 @@ subroutine evaluate_dmupfdx(vvol, innout, idof, ii, issym, irz)
 		iRbs(1:mn,0:Mvol) = oRbs(1:mn,0:Mvol)
 		iZbc(1:mn,0:Mvol) = oZbc(1:mn,0:Mvol)
 
-		!DALLOCATE(DToocc)
-		!DALLOCATE(DToocs)
-		!DALLOCATE(DToosc)
-		!DALLOCATE(DTooss)
+		packorunpack = 'P'
+		WCALL( dfp200, packxi, ( NGdof, position, Mvol, mn, iRbc, iZbs, iRbs, iZbc, packorunpack ) )
 
-		!DALLOCATE(TTsscc)
-		!DALLOCATE(TTsscs)
-		!DALLOCATE(TTsssc)
-		!DALLOCATE(TTssss)
-
-		!DALLOCATE(TDstcc)
-		!DALLOCATE(TDstcs)
-		!DALLOCATE(TDstsc)
-		!DALLOCATE(TDstss)
-
-		!DALLOCATE(TDszcc)
-		!DALLOCATE(TDszcs)
-		!DALLOCATE(TDszsc)
-		!DALLOCATE(TDszss)
-
-		!DALLOCATE(DDttcc)
-		!DALLOCATE(DDttcs)
-		!DALLOCATE(DDttsc)
-		!DALLOCATE(DDttss)
-
-		!DALLOCATE(DDtzcc)
-		!DALLOCATE(DDtzcs)
-		!DALLOCATE(DDtzsc)
-		!DALLOCATE(DDtzss)
-
-		!DALLOCATE(DDzzcc)
-		!DALLOCATE(DDzzcs)
-		!DALLOCATE(DDzzsc)
-		!DALLOCATE(DDzzss)
+		LcomputeDerivatives = .false.
+		Lonlysolution = .true.
+		WCALL( dfp200, dforce, ( NGdof, position, force, LComputeDerivatives, Lonlysolution ))
 
 	endif ! end of if( Lcheck.eq.4 ) ;
 
