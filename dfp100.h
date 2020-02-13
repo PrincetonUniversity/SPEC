@@ -49,9 +49,9 @@ use allglobal, only : ncpu, myid, cpus, &
                       dBdX, &
                       Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, Localconstraint, &
                       IPDt, xoffset, dpflux, &
-											Btemn, &
-								      IsMyVolume, IsMyVolumeValue, WhichCpuID, &
-											IconstraintOK
+					  Btemn, &
+					  IsMyVolume, IsMyVolumeValue, WhichCpuID, &
+				      IconstraintOK
 
  LOCALS
 !------
@@ -202,7 +202,7 @@ BEGIN(dfp100)
 				endif
 
 #ifdef DEBUG 
-        		write(ounit, '("dfp100: ", 10x ," : max(IPDt) = "es12.5)') MAXVAL(IPDt)
+        		!write(ounit, '("dfp100: ", 10x ," : max(IPDt) = "es12.5)') MAXVAL(IPDt)
 #endif
 				! write(ounit,'("xspech : ", 10x ," : sum(Ate(",i3,",",i2,",",i2,")%s) =",99es23.15)') vvol, ideriv, ii, sum(Ate(vvol,ideriv,ii)%s(0:Lrad(vvol)))
 			

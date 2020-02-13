@@ -73,6 +73,7 @@ subroutine lbpol(lvol, ideriv)
 
 ! innout=0 -> inner boundary of volume (s=-1) and innout=1 -> outer boundary (s=1)
 
+  Btemn(1:mn, 0:1, lvol) = zero
   do innout=0,1
 
   lss = two * innout - one
