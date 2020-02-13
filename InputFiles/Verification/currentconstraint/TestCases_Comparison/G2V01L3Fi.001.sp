@@ -64,7 +64,7 @@ Vns(0,0)    =  0.000000000000000E+00 Bns(0,0)    =  0.000000000000000E+00 Vnc(0,
  Lposdef     =         0
 /
 &globallist
- Lfindzero   =         2
+ Lfindzero   =         1
  escale      =   0.000000000000000E+00
  opsilon     =   1.000000000000000E+00
  pcondense   =   2.000000000000000E+00
@@ -90,7 +90,7 @@ Vns(0,0)    =  0.000000000000000E+00 Bns(0,0)    =  0.000000000000000E+00 Vnc(0,
  nPtrj       =         10    
  LHevalues   =         F
  LHevectors  =         F
- LHmatrix    =         T
+ LHmatrix    =         F
  Lperturbed  =         0
  dpp         =        -1
  dqq         =        -1

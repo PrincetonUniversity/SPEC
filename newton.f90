@@ -64,7 +64,7 @@ subroutine newton( NGdof, position, ihybrd )
 
   use cputiming, only : Tnewton
 
-  use allglobal, only : wrtend, myid, ncpu, cpus, &
+  use allglobal, only : myid, ncpu, cpus, &
                         NOTstellsym, &
                         ForceErr, Energy, &
                         mn, im, in, iRbc, iZbs, iRbs, iZbc, Mvol, &
@@ -74,6 +74,8 @@ subroutine newton( NGdof, position, ihybrd )
 						LocalConstraint
   
   use newtontime
+
+  use sphdf5, only: write_convergence_output
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -422,6 +424,8 @@ subroutine fcn1( NGdof, xx, fvec, irevcm )
   
   use newtontime
 
+  use sphdf5, only : write_convergence_output
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   LOCALS
@@ -433,8 +437,7 @@ subroutine fcn1( NGdof, xx, fvec, irevcm )
   REAL                   :: position(0:NGdof), force(0:NGdof)
 
   LOGICAL                :: LComputeDerivatives, Lonlysolution 
-  INTEGER                :: wflag, iflag, idof, jdof, ijdof, ireadhessian, igdof, lvol, ii, imn 
-  REAL                   :: rflag          
+  INTEGER                :: idof, jdof, ijdof, ireadhessian, igdof, lvol, ii, imn
   CHARACTER              :: pack
     
   BEGIN(newton)
@@ -470,11 +473,12 @@ subroutine fcn1( NGdof, xx, fvec, irevcm )
      endif
      lastcpu = GETTIME
      
-     wflag = -1 ; iflag = nDcalls ; rflag = ForceErr
-     WCALL( newton, wrtend, ( wflag, iflag, rflag ) ) ! write restart file; save geometry to ext.end; iRbc, iZbs consistent with position;
-     
+     WCALL( newton, wrtend ) ! write restart file; save geometry to ext.end;
+
     endif ! end of if( myid.eq.0 );
     
+    WCALL( newton, write_convergence_output, ( nDcalls, ForceErr ) ) ! save iRbc, iZbs consistent with position;
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
     
    case( 1:2 ) ! before re-entry to C05NDF / C05PDF, force must contain the function values;
@@ -543,6 +547,8 @@ subroutine fcn2( NGdof, xx, fvec, fjac, Ldfjac, irevcm )
   
   use newtontime
 
+  use sphdf5, only: write_convergence_output
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   LOCALS
@@ -554,8 +560,7 @@ subroutine fcn2( NGdof, xx, fvec, fjac, Ldfjac, irevcm )
   REAL                   :: position(0:NGdof), force(0:NGdof)
 
   LOGICAL                :: LComputeDerivatives, Lonlysolution
-  INTEGER                :: wflag, iflag, idof, jdof, ijdof, ireadhessian, igdof, lvol, ii, imn 
-  REAL                   :: rflag          
+  INTEGER                :: idof, jdof, ijdof, ireadhessian, igdof, lvol, ii, imn
   CHARACTER              :: pack
     
   BEGIN(newton)
@@ -591,11 +596,12 @@ subroutine fcn2( NGdof, xx, fvec, fjac, Ldfjac, irevcm )
      endif
      lastcpu = GETTIME
      
-     wflag = -1 ; iflag = nDcalls ; rflag = ForceErr
-     WCALL( newton, wrtend, ( wflag, iflag, rflag ) ) ! write restart file; save geometry to ext.end; iRbc, iZbs consistent with position;
-     
+     WCALL( newton, wrtend ) ! write restart file; save geometry to ext.end;
+
     endif ! end of if( myid.eq.0 );
     
+    WCALL( newton, write_convergence_output, ( nDcalls, ForceErr ) ) ! save iRbc, iZbs consistent with position;
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
     
    case( 1 ) ! before re-entry to C05NDF / C05PDF, force must contain the function values;

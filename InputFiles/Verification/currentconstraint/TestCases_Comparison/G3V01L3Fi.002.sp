@@ -309,7 +309,7 @@ Rwc(4,4)    =  0.000000000000000E+00 Zws(4,4)    =  0.000000000000000E+00 Rws(4,
  Linitgues   =         1
 /
 &globallist
- Lfindzero   =         2
+ Lfindzero   =         1
  escale      =   0.000000000000000E+00
  pcondense   =   4.000000000000000E+00
  forcetol    =   1.000000000000000E-12

@@ -1019,7 +1019,7 @@ subroutine evaluate_dmupfdx(vvol, innout, idof, ii, issym, irz)
 
 	if( Lcheck.eq.4 ) then ! check derivatives of field;
 
-
+         SALLOCATE( isolution, (1:NN,-2:2), zero )
 		SALLOCATE( isolution, (1:NN,-2:2), zero )
 		dBdX%L = .false.
 
@@ -1225,8 +1225,8 @@ subroutine evaluate_dmupfdx(vvol, innout, idof, ii, issym, irz)
 		iRbs(1:mn,0:Mvol) = oRbs(1:mn,0:Mvol)
 		iZbc(1:mn,0:Mvol) = oZbc(1:mn,0:Mvol)
 
-!		packorunpack = 'P'
-!		WCALL( dfp200, packxi, ( NGdof, position, Mvol, mn, iRbc, iZbs, iRbs, iZbc, packorunpack ) )
+
+         DALLOCATE(isolution)
 
 !		LcomputeDerivatives = .false.
 !		Lonlysolution = .true.
