@@ -1351,6 +1351,7 @@ module allglobal
   
   type derivative
      LOGICAL :: L
+     INTEGER :: vol      ! Used in coords.f90; required for global constraint force gradient evaluation
      INTEGER :: innout
      INTEGER :: ii
      INTEGER :: irz

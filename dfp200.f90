@@ -139,7 +139,8 @@ if( LocalConstraint ) then
 					
 			
 		LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
-
+		
+		dBdX%vol = vvol  ! Useless when local constraint
 		ll = Lrad(vvol)  ! Shorthand
 	   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -406,6 +407,7 @@ else ! CASE SEMI GLOBAL CONSTRAINT
 ! i.e. relevant routines are run with lvol=vvol, innout=1 and lvol=vvol+1, innout=0
 
 		do vvol = 1, Mvol-1 !degree of freedom; local to interface; labels which interface is perturbed
+		dBdX%vol = vvol
 
 		do ii = 1, mn ! loop over deformations in Fourier harmonics; inside do vvol;
 			dBdX%ii = ii ! controls construction of derivatives in subroutines called below;     
@@ -427,8 +429,8 @@ else ! CASE SEMI GLOBAL CONSTRAINT
 
 					do lvol = vvol, vvol+1
 					  do innout = 0, 1 ! loop over deformations to inner and outer interface; inside do vvol; inside do ii; inside do irz;
-							if( vvol.eq.1    .and. innout.eq.0 ) cycle ! no degrees of freedom at coordinate axis / fixed inner boundary;
-							if( vvol.eq.Mvol .and. innout.eq.1 ) cycle ! no degress of freedom                      fixed outer boundary; for linearized displacement;
+							if( lvol.eq.1    .and. innout.eq.0 ) cycle ! no degrees of freedom at coordinate axis / fixed inner boundary;
+							if( lvol.eq.Mvol .and. innout.eq.1 ) cycle ! no degress of freedom                      fixed outer boundary; for linearized displacement;
 
                             if( lvol.eq.vvol   .and. innout.eq.0 ) cycle ! do not perturb inner interface of volume vvol
                             if( lvol.eq.vvol+1 .and. innout.eq.1 ) cycle ! do not perturn outer interface of volume vvol+1
@@ -560,7 +562,7 @@ else ! CASE SEMI GLOBAL CONSTRAINT
  						  do innout = 0, 1
 							if( vvol.eq.1    .and. innout.eq.0 ) cycle ! no degrees of freedom at coordinate axis / fixed inner boundary;
 							if( vvol.eq.Mvol .and. innout.eq.1 ) cycle ! no degress of freedom                      fixed outer boundary; for linearized displacement;
-
+							dBdx%innout = innout
 
 							WCALL(dfp200, IsMyVolume, (vvol))
 
@@ -872,7 +874,7 @@ subroutine evaluate_dmupfdx(vvol, innout, idof, ii, issym, irz)
 #ifdef DEBUG
 	INTEGER             :: isymdiff, maxfev, nfev, lr, ldfjac, ml, muhybr, epsfcn, mode, nprint
 	INTEGER             :: jj, tdoc, idoc, tdof, jdof, ivol, imn, ihybrd1, lwa, Ndofgl, llmodnp
-	REAL                :: dRZ = 1.0e-5, dvol(-1:+1), evolume, imupf_global(1:Mvol,1:2,-2:2), imupf_local(1:2,-2:2), factor
+	REAL                :: dRZ = 1.0e-5, dvol(-1:+1), evolume, imupf_global(1:Mvol,1:2,-2:2), imupf_local(1:2,-2:2), factor, Btemn_debug(1:mn, 0:1, 1:Mvol, -1:2)
     DOUBLE PRECISION     :: diag(1:Mvol-1), qtf(1:Mvol-1), wa1(1:Mvol-1), wa2(1:Mvol-1), wa3(1:Mvol-1), wa4(1:mvol-1)
 	REAL,   allocatable :: oRbc(:,:), oZbs(:,:), oRbs(:,:), oZbc(:,:) ! original geometry;
 	REAL,   allocatable :: isolution(:,:)
@@ -936,6 +938,11 @@ subroutine evaluate_dmupfdx(vvol, innout, idof, ii, issym, irz)
 				LREGION(pvol)
 				WCALL(dfp200, lbpol, (pvol, 2)) ! Stores derivative in global variable Btemn
 			enddo
+
+#ifdef DEBUG
+			Btemn_debug(1:mn, 0:1, 1:Mvol, 2) = zero
+			Btemn_debug(1:mn, 0:1, 1:Mvol, 2) = Btemn(1:mn, 0:1, 1:Mvol)
+#endif
 			
 			dBdmpf(1:Mvol-1,1:Mvol-1) = zero ! Initialize
 			do pvol=1, Mvol-2
@@ -947,8 +954,23 @@ subroutine evaluate_dmupfdx(vvol, innout, idof, ii, issym, irz)
 			! RHS coefficients evaluation
 			do pvol = vvol, vvol+1
 				LREGION(pvol)
+				if( pvol.eq.vvol ) then
+                    dBdX%innout = 1
+                else
+                    dBdX%innout = 0
+                endif
+
 				WCALL(dfp200, lbpol, (pvol, -1)) ! derivate w.r.t geometry
 			enddo
+
+#ifdef DEBUG
+			Btemn_debug(1:mn, 0:1, 1:Mvol, -1) = Btemn(1:mn, 0:1, 1:Mvol)
+
+			do pvol=1,Mvol-1
+				WCALL(dfp200, lbpol, (pvol, 0))
+			enddo
+			Btemn_debug(1:mn, 0:1, 1:Mvol,  0) = Btemn(1:mn, 0:1, 1:Mvol)
+#endif
 
 			dBdx2(1:Mvol-1) = zero
 		    dBdx2(vvol-1)   =                     - Btemn(1, 0, vvol  )
@@ -1019,7 +1041,6 @@ subroutine evaluate_dmupfdx(vvol, innout, idof, ii, issym, irz)
 
 	if( Lcheck.eq.4 ) then ! check derivatives of field;
 
-         SALLOCATE( isolution, (1:NN,-2:2), zero )
 		SALLOCATE( isolution, (1:NN,-2:2), zero )
 		dBdX%L = .false.
 
@@ -1232,7 +1253,6 @@ subroutine evaluate_dmupfdx(vvol, innout, idof, ii, issym, irz)
 !		Lonlysolution = .true.
 !		WCALL( dfp200, dforce, ( NGdof, position, force, LComputeDerivatives, Lonlysolution ))
 
-		DALLOCATE(isolution)
 
 	endif ! end of if( Lcheck.eq.4 ) ;
 

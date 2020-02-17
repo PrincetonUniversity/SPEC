@@ -189,7 +189,7 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
 #ifdef DEBUG
   FATAL( coords, lvol.lt.1 .or. lvol.gt.Mvol, invalid volume label )
   FATAL( coords, abs(lss).gt.one, invalid radial coordinate )
-  FATAL( coords, Lcurvature.lt.0 .or. Lcurvature.gt.4, invalid input value for Lcurvature )
+  FATAL( coords, Lcurvature.lt.0 .or. Lcurvature.gt.5, invalid input value for Lcurvature )
 #endif
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -297,12 +297,15 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
     
   endif ! end of if( Lcoordinatesingularity ); 01 Feb 13;
 
+  ! Derivative w.r.t s
   call invfft( mn, im(1:mn), in(1:mn),           Remn(1:mn,1),           Romn(1:mn,1),           Zemn(1:mn,1),           Zomn(1:mn,1), &
                Nt, Nz, Rij(1:Ntz,1,0), Zij(1:Ntz,1,0) ) ! maps to real space;
 
+  ! Derivative w.r.t theta
   call invfft( mn, im(1:mn), in(1:mn),  im(1:mn)*Romn(1:mn,0), -im(1:mn)*Remn(1:mn,0),  im(1:mn)*Zomn(1:mn,0), -im(1:mn)*Zemn(1:mn,0), &
                Nt, Nz, Rij(1:Ntz,2,0), Zij(1:Ntz,2,0) ) ! maps to real space;
 
+  ! Derivative w.r.t zeta
   call invfft( mn, im(1:mn), in(1:mn), -in(1:mn)*Romn(1:mn,0),  in(1:mn)*Remn(1:mn,0), -in(1:mn)*Zomn(1:mn,0),  in(1:mn)*Zemn(1:mn,0), &
                Nt, Nz, Rij(1:Ntz,3,0), Zij(1:Ntz,3,0) ) ! maps to real space;
 
@@ -531,7 +534,7 @@ Nt, Nz, Rij(1:Ntz,3,3), Zij(1:Ntz,3,3) ) ! maps to real space;
    enddo
    
    
-  case( 3,4 ) ! Lcurvature=3,4 ; get derivatives wrt R_j and Z_j; 19 Sep 13;
+  case( 3,4,5 ) ! Lcurvature=3,4,5 ; get derivatives wrt R_j and Z_j; 19 Sep 13;
    
    
    ii = dBdX%ii ; innout = dBdX%innout ; irz = dBdX%irz ; issym = dBdX%issym ! shorthand;
@@ -584,7 +587,7 @@ Nt, Nz, Rij(1:Ntz,3,3), Zij(1:Ntz,3,3) ) ! maps to real space;
    
    select case( Igeometry )
     
-   case( 1 ) ! Lcurvature=3,4 ; Igeometry=1 ; Cartesian; 04 Dec 14;
+   case( 1 ) ! Lcurvature=3,4,5 ; Igeometry=1 ; Cartesian; 04 Dec 14;
 
 #ifdef DEBUG
     FATAL( coords, irz.eq.1, there is no dependence on Zbs or Zbc )
@@ -601,7 +604,7 @@ Nt, Nz, Rij(1:Ntz,3,3), Zij(1:Ntz,3,3) ) ! maps to real space;
      enddo
     enddo
 
-   case( 2 ) ! Lcurvature=3,4 ; Igeometry=2 ; cylindrical;
+   case( 2 ) ! Lcurvature=3,4,5 ; Igeometry=2 ; cylindrical;
 
 #ifdef DEBUG
     FATAL( coords, irz.eq.1, there is no dependence on Zbs or Zbc )
@@ -621,7 +624,7 @@ Nt, Nz, Rij(1:Ntz,3,3), Zij(1:Ntz,3,3) ) ! maps to real space;
     dguvij(1:Ntz,2,2) = dguvij(1:Ntz,2,2) + two * Dij(1:Ntz,0) * Rij(1:Ntz,0,0)
    !dguvij(1:Ntz,3,3) = additional term is unity;
 
-   case( 3 ) ! Lcurvature=3,4 ; Igeometry=3 ; toroidal; 04 Dec 14;
+   case( 3 ) ! Lcurvature=3,4,5 ; Igeometry=3 ; toroidal; 04 Dec 14;
 
 !                  sg(1:Ntz,0) = Rij(1:Ntz,0,0) * ( Zij(1:Ntz,1,0)*Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Zij(1:Ntz,2,0) )
     if( irz.eq.0 ) sg(1:Ntz,1) = Dij(1:Ntz,0  ) * ( Zij(1:Ntz,1,0)*Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Zij(1:Ntz,2,0) ) & 
@@ -641,7 +644,7 @@ Nt, Nz, Rij(1:Ntz,3,3), Zij(1:Ntz,3,3) ) ! maps to real space;
 
    case default
     
-    FATAL( coords, .true., supplied Igeometry is not yet supported for Lcurvature.eq.3 or Lcurvature.eq.4 )
+    FATAL( coords, .true., supplied Igeometry is not yet supported for Lcurvature.eq.3 or Lcurvature.eq.4 or Lcurvature.eq.5)
     
    end select ! end of select case( Igeometry );  7 Mar 13; 
    
@@ -659,6 +662,13 @@ Nt, Nz, Rij(1:Ntz,3,3), Zij(1:Ntz,3,3) ) ! maps to real space;
      enddo
     enddo
     
+   else if( Lcurvature.eq.5 ) then
+
+    do ii = 1, 3
+     do jj = 1, 3 ; guvij(1:Ntz,ii,jj,1) = dguvij(1:Ntz,ii,jj) / sg(1:Ntz,0) - guvij(1:Ntz,ii,jj,0) * sg(1:Ntz,1) / (sg(1:Ntz,0)*sg(1:Ntz,0)) ! differentiated metric elements; 7 Mar 13; 
+     enddo
+    enddo
+
    else ! if( Lcurvature.eq.4 ) ; 
     
     do ii = 1, 3
@@ -670,6 +680,7 @@ Nt, Nz, Rij(1:Ntz,3,3), Zij(1:Ntz,3,3) ) ! maps to real space;
    
   end select ! matches select case( Lcurvature ) ; 10 Mar 13;
   
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   RETURN(coords)

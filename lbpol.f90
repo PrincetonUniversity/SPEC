@@ -54,9 +54,10 @@ subroutine lbpol(lvol, ideriv)
   INTEGER                :: Lcurvature, ideriv, ii, ll, ifail, lvol, mi, ni
   REAL                   :: lss, innout
   REAL                   :: lAte(1:mn), lAze(1:mn), lAto(1:mn), lAzo(1:mn)
-  REAL                   :: dAt(1:Ntz), dAz(1:Ntz), Bt(1:Ntz), Bz(1:Ntz)
+  REAL                   :: dAt(1:Ntz), dAz(1:Ntz), Bt(1:Ntz), Bz(1:Ntz), dAt0(1:Ntz), dAz0(1:Ntz)
   REAL                   :: dBtzero	      ! Value of first B_theta mode jump
   REAL                   :: mfactor           ! Regularisation factor
+  LOGICAL                :: LGeometricDerivative
 
 ! Lcurvature:             Controls what the routine coords computes.
 ! lint:                   Interface number
@@ -86,6 +87,10 @@ subroutine lbpol(lvol, ideriv)
 	  goto 5555; ! No need to compute at the singularity (and crash with debug...)
 	endif
 
+    if( lvol.eq.Mvol .and. innout.eq.1) then
+	  goto 5555;
+    endif
+
   WCALL( lbpol, coords, (lvol, lss, Lcurvature, Ntz, mn ) ) ! get guvij and sg
   
 
@@ -109,15 +114,47 @@ subroutine lbpol(lvol, ideriv)
       if( NOTstellsym ) then ; ofmn(ii) = ofmn(ii) + Ato(lvol,ideriv,ii)%s(ll) * ( TT(ll,innout,1) + mfactor )
         ;                    ; sfmn(ii) = sfmn(ii) + Azo(lvol,ideriv,ii)%s(ll) * ( TT(ll,innout,1) + mfactor )
       endif
-    enddo ! end of do ll; 20 Feb 13;
-    
-  enddo ! end of do ii; 20 Feb 13;
+    enddo ! end of do ll;
+  enddo ! end of do ii; 
 
-! Inverse Fourier transform to map to real space
+  ! Inverse Fourier transform to map to real space
   call invfft( mn, im, in, efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt(1:Ntz), dAz(1:Ntz) ) ! get covariant component of dA / contravariant of B
 
-  Bt(1:Ntz) = ( - dAz(1:Ntz) * guvij(1:Ntz,2,2,0) + dAt(1:Ntz) * guvij(1:Ntz,2,3,0) ) / sg(1:Ntz,0) ! Get covariant components
-  Bz(1:Ntz) = ( - dAz(1:Ntz) * guvij(1:Ntz,2,3,0) + dAt(1:Ntz) * guvij(1:Ntz,3,3,0) ) / sg(1:Ntz,0)
+  ! Construct covariant Fourier components of B
+  Bt(1:Ntz) = ( - dAz(1:Ntz ) * guvij(1:Ntz,2,2, 0) + dAt(1:Ntz ) * guvij(1:Ntz,2,3, 0) )
+  Bz(1:Ntz) = ( - dAz(1:Ntz ) * guvij(1:Ntz,2,3, 0) + dAt(1:Ntz ) * guvij(1:Ntz,3,3, 0) )
+
+  if( ideriv.eq.-1) then ! need to take into account derivatives of metric elements
+   
+    efmn(1:mn) = zero ; ofmn(1:mn) = zero ; cfmn(1:mn) = zero ; sfmn(1:mn) = zero
+    do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over Fourier harmonics;
+    
+      ! In case of singularity, point at sbar=0 not computed - no problem here!
+      ! For definition of the regularisation factor, see jo00aa documentation.
+      if( Lcoordinatesingularity ) then ; mfactor = regumm(ii) * half ! derivative of regularisation factor;
+      else                              ; mfactor = zero
+      endif
+
+        do ll = 0, Lrad(lvol) ! loop over Chebyshev polynomials; Lrad is the radial resolution;
+          ! Note that the minus sine is included at line 122-123
+          ;                      ; efmn(ii) = efmn(ii) + Ate(lvol,0,ii)%s(ll) * ( TT(ll,innout,1) + mfactor ) ! B^\t;
+          ;                      ; cfmn(ii) = cfmn(ii) + Aze(lvol,0,ii)%s(ll) * ( TT(ll,innout,1) + mfactor ) ! B^\z;
+          if( NOTstellsym ) then ; ofmn(ii) = ofmn(ii) + Ato(lvol,0,ii)%s(ll) * ( TT(ll,innout,1) + mfactor )
+            ;                    ; sfmn(ii) = sfmn(ii) + Azo(lvol,0,ii)%s(ll) * ( TT(ll,innout,1) + mfactor )
+          endif
+        enddo ! end of do ll;
+      enddo ! end of do ii; 
+
+    !and now add variation of metric contribution
+    call invfft( mn, im, in, efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt0(1:Ntz), dAz0(1:Ntz) ) ! get covariant component of dA without derivatives
+
+    Lcurvature = 5
+    WCALL( lbpol, coords, (lvol, lss, Lcurvature, Ntz, mn ) ) ! get guvij and sg
+
+    Bt(1:Ntz) = Bt(1:Ntz) + ( - dAz0(1:Ntz ) * guvij(1:Ntz,2,2, 0) + dAt0(1:Ntz ) * guvij(1:Ntz,2,3, 0) )
+    Bz(1:Ntz) = Bz(1:Ntz) + ( - dAz0(1:Ntz ) * guvij(1:Ntz,2,3, 0) + dAt0(1:Ntz ) * guvij(1:Ntz,3,3, 0) ) 
+
+  endif ! matches if ideriv.eq.-1
 
 ! Fourier transform, map to Fourier space
   ifail = 0

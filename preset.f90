@@ -43,12 +43,12 @@ subroutine preset
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 
-	if( (Lconstraint.EQ.3) .and. (Lfindzero.EQ.2)) then
-		if( myid.EQ.0 ) then
-			!write(ounit, '(/, "!!! WARNING: Using Lfindzero=2 with Lconstraint=3 might not converge. The hessian at fixed toroidal current has not yet been implemented. !!!", /)') 
-			FATAL(preset, .true., Lconstraint=3 is incompatible with Lfindzero=2. Use Lfindzero=1 instead)
-		endif
-	endif
+	!if( (Lconstraint.EQ.3) .and. (Lfindzero.EQ.2)) then
+!		if( myid.EQ.0 ) then
+!			!write(ounit, '(/, "!!! WARNING: Using Lfindzero=2 with Lconstraint=3 might not converge. The hessian at fixed toroidal current has not yet been implemented. !!!", /)') 
+!			FATAL(preset, .true., Lconstraint=3 is incompatible with Lfindzero=2. Use Lfindzero=1 instead)
+!		endif
+!	endif
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -924,7 +924,7 @@ enddo
   SALLOCATE(   Rij, (1:Ntz,0:3,0:3    ), zero ) ! these are used for inverse fft to reconstruct real space geometry from interpolated Fourier harmonics;
   SALLOCATE(   Zij, (1:Ntz,0:3,0:3    ), zero )
   SALLOCATE(   sg , (1:Ntz,0:3        ), zero )
-  SALLOCATE( guvij, (1:Ntz,0:3,0:3,0:3), zero ) ! need this on higher resolution grid for accurate Fourier decomposition;
+  SALLOCATE( guvij, (1:Ntz,0:3,0:3,-1:3), zero ) ! need this on higher resolution grid for accurate Fourier decomposition;
   SALLOCATE( gvuij, (1:Ntz,0:3,0:3    ), zero ) ! need this on higher resolution grid for accurate Fourier decomposition; 10 Dec 15;
   
   SALLOCATE( dRadR, (1:mn,0:1,0:1,1:mn), zero ) ! calculated in rzaxis; 19 Sep 16;
