@@ -34,11 +34,10 @@ in      = double(data.in);
 Rarr    = cell(2); % allocate data for R-array and its derivatives in (s,theta)
 
 for k=1:2
-Rarr{k} = zeros(ns,nt,nz); 
+  Rarr{k} = zeros(ns,nt,nz);
 end
 
 fac     = cell(mn,2);      % allocate data for regularization factors and their derivatives
-
 
 % Construct regularization (for lvol=1) factors and their derivatives
 
@@ -79,7 +78,7 @@ for j=1:mn
      
      Rarr{1}(:,it,iz) = Rarr{1}(:,it,iz) + (Rac(j) + fac{j}{1}.*(Rbc(j)-Rac(j)) )*cosa;
      
-     Rarr{2}(:,it,iz) = Rarr{2}(:,it,iz) + fac{j}{2}.*(Rbc(j)-Rac(j))*cosa;
+     Rarr{2}(:,it,iz) = Rarr{2}(:,it,iz) +           fac{j}{2}.*(Rbc(j)-Rac(j))  *cosa;
     end
   end
 end
