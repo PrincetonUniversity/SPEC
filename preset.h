@@ -782,7 +782,7 @@ subroutine preset
   endif
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  write(ounit,*) 'allocate dradr'
+
 !latex \subsubsection{\type{workspace}}
 
 ! Fourier transforms;
@@ -824,7 +824,7 @@ subroutine preset
     SALLOCATE( dZodR, (1:Ntz,0:1,1:mn), zero )
     SALLOCATE( dZodZ, (1:Ntz,0:1,1:mn), zero )
   endif
-write(ounit,*) 'finish allocate dradr'
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 !latex \subsubsection{\type{goomne, goomno} : metric information}
@@ -902,7 +902,7 @@ write(ounit,*) 'finish allocate dradr'
 !latex           \mbox{\type{sini}}_{j,i} & = & \sin( m_i \t_j - n_i \z_j ).
 !latex       \ee
 !latex \end{enumerate}
-write(ounit,*) 'compute cosi'
+
   SALLOCATE( gteta, (1:Ntz), zero )
   SALLOCATE( gzeta, (1:Ntz), zero )
   
