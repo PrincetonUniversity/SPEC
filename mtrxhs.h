@@ -78,7 +78,7 @@ subroutine mtrxhs( lvol, mn, lrad, resultA, resultD, idx )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   !write(ounit,*) Ttc(0,1), Tzc(0,1)
   if( YESstellsym ) then
-!!$OMP PARALLEL DO PRIVATE(ii,mi,ni,ll,ll1,kk,Wte,Wze,Hte,Hze,id,jd) SHARED(mn,lrad,resultA,resultD,TTMdata,TTdata)
+!$OMP PARALLEL DO PRIVATE(ii,mi,ni,ll,ll1,kk,Wte,Wze,Hte,Hze,id,jd) SHARED(mn,lrad,resultA,resultD,TTMdata,TTdata)
     do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
     
       do ll = 0, lrad
@@ -130,7 +130,7 @@ subroutine mtrxhs( lvol, mn, lrad, resultA, resultD, idx )
       enddo ! end of do ll ;
       
     enddo ! end of do ii ;
-!!$OMP END PARALLEL DO
+!$OMP END PARALLEL DO
 
   else ! NOTstellsym ;
    

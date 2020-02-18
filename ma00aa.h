@@ -202,7 +202,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
 
     WCALL( ma00aa, metrix,( lvol, lss ) ) ! compute metric elements; 16 Jan 13;
 
-!$OMP PARALLEL DEFAULT(PRIVATE) SHARED(NOTstellsym,lvol,mn2_max,mn,im,jthweight,lrad,lp2_max,kijs,kija,goomne,goomno,gssmne,gssmno,gstmne,gstmno,gttmne,gttmno,gszmne,gszmno,gtzmne,gtzmno,gzzmne,gzzmno,zernike,DToocc,DToocs,DToosc,DTooss,TTsscc,TTsscs,TTsssc,TTssss,TDstcc,TDstcs,TDstsc,TDstss,TDszcc,TDszcs,TDszsc,TDszss,DDttcc,DDttcs,DDttsc,DDttss,DDtzcc,DDtzcs,DDtzsc,DDtzss,DDzzcc,DDzzcs,DDzzsc,DDzzss)
+!$OMP PARALLEL SHARED(lvol,mn2_max,jthweight,lrad,lp2_max)
 !$OMP DO PRIVATE(MN2,LP2)  
     do mn2 = 1, mn2_max
       ii = mod(mn2-1,mn)+1
@@ -333,8 +333,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
     
     WCALL( ma00aa, metrix,( lvol, lss ) ) ! compute metric elements; 16 Jan 13;
 
-!$OMP PARALLEL DEFAULT(PRIVATE) SHARED(NOTstellsym,lvol,mn2_max,mn,imn2,jthweight,lrad,lp2_max,ilrad,kijs,kija,goomne,goomno,gssmne,gssmno,gstmne,gstmno,gttmne,gttmno,gszmne,gszmno,gtzmne,gtzmno,gzzmne,gzzmno,cheby,DToocc,DToocs,DToosc,DTooss,TTsscc,TTsscs,TTsssc,TTssss,TDstcc,TDstcs,TDstsc,TDstss,TDszcc,TDszcs,TDszsc,TDszss,DDttcc,DDttcs,DDttsc,DDttss,DDtzcc,DDtzcs,DDtzsc,DDtzss,DDzzcc,DDzzcs,DDzzsc,DDzzss)
-
+!$OMP PARALLEL SHARED(lvol,mn2_max,jthweight,lrad,lp2_max)
 !$OMP DO PRIVATE(MN2,LP2)   
     do mn2 = 1, mn2_max
 

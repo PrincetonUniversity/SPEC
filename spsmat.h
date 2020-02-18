@@ -61,7 +61,7 @@ subroutine spsmat( lvol, mn, lrad )
   
   REAL,allocatable     :: dMASqueue(:,:), dMDSqueue(:,:), TTdata(:,:,:), TTMdata(:,:) ! queues to construct sparse matrices
   INTEGER,allocatable  :: jdMASqueue(:,:) ! indices
-  INTEGER              :: nqueue(4), nrow, ns
+  INTEGER              :: nqueue(4), nrow, ns, nmaxqueue
 
   BEGIN(spsmat)
   
@@ -75,10 +75,12 @@ subroutine spsmat( lvol, mn, lrad )
   dMDS = zero
   idMAS = 0
   ns = 0
+
+  nmaxqueue = 4 * lrad + 10 ! estimate the size of the queue
   
-  SALLOCATE( dMASqueue, (1:NN, 4), zero)
-  SALLOCATE( dMDSqueue, (1:NN, 4), zero)
-  SALLOCATE( jdMASqueue, (1:NN, 4), zero)
+  SALLOCATE( dMASqueue, (1:nmaxqueue, 4), zero)
+  SALLOCATE( dMDSqueue, (1:nmaxqueue, 4), zero)
+  SALLOCATE( jdMASqueue, (1:nmaxqueue, 4), zero)
 
   SALLOCATE( TTdata, (0:lrad, 0:mpol, 0:1), zero)
   SALLOCATE( TTMdata, (0:lrad, 0:mpol), zero)
@@ -118,19 +120,22 @@ subroutine spsmat( lvol, mn, lrad )
       
       do ll = 0, lrad
         ! clean up the queue
-        call clean_queue(nqueue, NN, dMASqueue, dMDSqueue, jdMASqueue)
+        call clean_queue(nqueue, nmaxqueue, dMASqueue, dMDSqueue, jdMASqueue)
         
+        if (Lcoordinatesingularity) then
+          if (ll.lt.mi .or. mod(ll+mi,2).gt.0) cycle
+        endif
+
         do pp = 0, lrad
         
         if (Lcoordinatesingularity) then
-          if (ll < mi .or. pp < mj) cycle ! rule out zero components of Zernike; 02 Jul 19
-          if (mod(ll+mi,2)+mod(pp+mj,2)>0) cycle ! rule out zero components of Zernike; 02 Jul 19
+          if (pp.lt.mj .or. mod(pp+mj,2).gt.0) cycle ! rule out zero components of Zernike; 02 Jul 19
           ll1 = (ll - mod(ll, 2)) / 2 ! shrinked dof for Zernike; 02 Jul 19
           pp1 = (pp - mod(pp, 2)) / 2 ! shrinked dof for Zernike; 02 Jul 19
         else
           ll1 = ll
           pp1 = pp
-        end if
+        endif
 
         Wtete = + 2 * ninj * TTssss(ll1,pp1,idx,1) * factorss + 2 * DDzzcc(ll1,pp1,idx,1) * factorcc
         Wzete = + 2 * nimj * TTssss(ll1,pp1,idx,1) * factorss - 2 * DDtzcc(pp1,ll1,idx,1) * factorcc
@@ -143,13 +148,13 @@ subroutine spsmat( lvol, mn, lrad )
         Hzeze =   zero
         
         id = Ate(lvol,0,ii)%i(ll) ; jd = Ate(lvol,0,jj)%i(pp)
-        if (id.ne.0 .and. jd.ne.0) call push_back(1,nqueue,NN,Wtete,Htete,jd,dMASqueue,dMDSqueue,jdMASqueue)
+        if (id.ne.0 .and. jd.ne.0) call push_back(1,nqueue,nmaxqueue,Wtete,Htete,jd,dMASqueue,dMDSqueue,jdMASqueue)
         ;                         ; jd = Aze(lvol,0,jj)%i(pp)
-        if (id.ne.0 .and. jd.ne.0) call push_back(1,nqueue,NN,Wzete,Hzete,jd,dMASqueue,dMDSqueue,jdMASqueue)
+        if (id.ne.0 .and. jd.ne.0) call push_back(1,nqueue,nmaxqueue,Wzete,Hzete,jd,dMASqueue,dMDSqueue,jdMASqueue)
         id = Aze(lvol,0,ii)%i(ll) ; jd = Ate(lvol,0,jj)%i(pp)
-        if (id.ne.0 .and. jd.ne.0) call push_back(2,nqueue,NN,Wteze,Hteze,jd,dMASqueue,dMDSqueue,jdMASqueue)
+        if (id.ne.0 .and. jd.ne.0) call push_back(2,nqueue,nmaxqueue,Wteze,Hteze,jd,dMASqueue,dMDSqueue,jdMASqueue)
         ;                         ; jd = Aze(lvol,0,jj)%i(pp)
-        if (id.ne.0 .and. jd.ne.0) call push_back(2,nqueue,NN,Wzeze,Hzeze,jd,dMASqueue,dMDSqueue,jdMASqueue)
+        if (id.ne.0 .and. jd.ne.0) call push_back(2,nqueue,nmaxqueue,Wzeze,Hzeze,jd,dMASqueue,dMDSqueue,jdMASqueue)
         
         enddo ! end of do pp ;
         
@@ -159,21 +164,21 @@ subroutine spsmat( lvol, mn, lrad )
 
         ddata = zero
         ;                  ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lma(lvol,  ii) ; adata = +      TTMdata(ll, mi)
-        if (id.ne.0 .and. jd.ne.0)   call push_back(1,nqueue,NN,adata,ddata,jd,dMASqueue,dMDSqueue,jdMASqueue)
+        if (id.ne.0 .and. jd.ne.0)   call push_back(1,nqueue,nmaxqueue,adata,ddata,jd,dMASqueue,dMDSqueue,jdMASqueue)
         ;                  ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lmb(lvol,  ii) ; adata = +      TTdata(ll, mi,kk)
-        if (id.ne.0 .and. jd.ne.0)   call push_back(2,nqueue,NN,adata,ddata,jd,dMASqueue,dMDSqueue,jdMASqueue)
+        if (id.ne.0 .and. jd.ne.0)   call push_back(2,nqueue,nmaxqueue,adata,ddata,jd,dMASqueue,dMDSqueue,jdMASqueue)
         if( ii.gt.1 ) then ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lme(lvol,  ii) ; adata = - ni * TTdata(ll, mi, 1)
-          if (id.ne.0 .and. jd.ne.0) call push_back(1,nqueue,NN,adata,ddata,jd,dMASqueue,dMDSqueue,jdMASqueue)
+          if (id.ne.0 .and. jd.ne.0) call push_back(1,nqueue,nmaxqueue,adata,ddata,jd,dMASqueue,dMDSqueue,jdMASqueue)
         ;                  ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lme(lvol,  ii) ; adata = - mi * TTdata(ll, mi, 1)
-          if (id.ne.0 .and. jd.ne.0) call push_back(2,nqueue,NN,adata,ddata,jd,dMASqueue,dMDSqueue,jdMASqueue)
+          if (id.ne.0 .and. jd.ne.0) call push_back(2,nqueue,nmaxqueue,adata,ddata,jd,dMASqueue,dMDSqueue,jdMASqueue)
         else               ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lmg(lvol,  ii) ; adata = +      TTdata(ll, mi, 1)
-          if (id.ne.0 .and. jd.ne.0) call push_back(1,nqueue,NN,adata,ddata,jd,dMASqueue,dMDSqueue,jdMASqueue)
+          if (id.ne.0 .and. jd.ne.0) call push_back(1,nqueue,nmaxqueue,adata,ddata,jd,dMASqueue,dMDSqueue,jdMASqueue)
         ;                  ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lmh(lvol,  ii) ; adata = +      TTdata(ll, mi, 1)
-          if (id.ne.0 .and. jd.ne.0) call push_back(2,nqueue,NN,adata,ddata,jd,dMASqueue,dMDSqueue,jdMASqueue)
+          if (id.ne.0 .and. jd.ne.0) call push_back(2,nqueue,nmaxqueue,adata,ddata,jd,dMASqueue,dMDSqueue,jdMASqueue)
         endif
         
         ! putting things in the sparse matrix
-        call addline(nqueue, NN, dMASqueue, dMDSqueue, jdMASqueue, ns, nrow, dMAS, dMDS, jdMAS, idMAS)
+        call addline(nqueue, nmaxqueue, dMASqueue, dMDSqueue, jdMASqueue, ns, nrow, dMAS, dMDS, jdMAS, idMAS)
         
       enddo ! end of do ll ;
  
@@ -190,30 +195,30 @@ subroutine spsmat( lvol, mn, lrad )
         else                                            ; kk = 0
         endif
 
-        call clean_queue(nqueue, NN, dMASqueue, dMDSqueue, jdMASqueue)
+        call clean_queue(nqueue, nmaxqueue, dMASqueue, dMDSqueue, jdMASqueue)
         do ll = 0, lrad ; jd = Ate(lvol,0,ii)%i(ll) ; id = Lma(lvol,  ii) ; adata = +      TTMdata(ll, mi)
-        if (id.ne.0 .and. jd.ne.0)   call push_back(1,nqueue,NN,adata,zero,jd,dMASqueue,dMDSqueue,jdMASqueue)
+        if (id.ne.0 .and. jd.ne.0)   call push_back(1,nqueue,nmaxqueue,adata,zero,jd,dMASqueue,dMDSqueue,jdMASqueue)
         enddo
         do ll = 0, lrad ; jd = Aze(lvol,0,ii)%i(ll) ; id = Lmb(lvol,  ii) ; adata = +      TTdata(ll, mi,kk)
-        if (id.ne.0 .and. jd.ne.0)   call push_back(2,nqueue,NN,adata,zero,jd,dMASqueue,dMDSqueue,jdMASqueue)
+        if (id.ne.0 .and. jd.ne.0)   call push_back(2,nqueue,nmaxqueue,adata,zero,jd,dMASqueue,dMDSqueue,jdMASqueue)
         enddo
-        call addline(nqueue, NN, dMASqueue, dMDSqueue, jdMASqueue, ns, nrow, dMAS, dMDS, jdMAS, idMAS)
+        call addline(nqueue, nmaxqueue, dMASqueue, dMDSqueue, jdMASqueue, ns, nrow, dMAS, dMDS, jdMAS, idMAS)
 
-        call clean_queue(nqueue, NN, dMASqueue, dMDSqueue, jdMASqueue)
+        call clean_queue(nqueue, nmaxqueue, dMASqueue, dMDSqueue, jdMASqueue)
         if (ii.gt.1) then
           do ll = 0, lrad ; jd = Ate(lvol,0,ii)%i(ll) ; id = Lme(lvol,  ii) ; adata = - ni * TTdata(ll, mi, 1)
-          if (id.ne.0 .and. jd.ne.0)   call push_back(1,nqueue,NN,adata,zero,jd,dMASqueue,dMDSqueue,jdMASqueue)
+          if (id.ne.0 .and. jd.ne.0)   call push_back(1,nqueue,nmaxqueue,adata,zero,jd,dMASqueue,dMDSqueue,jdMASqueue)
           ;               ; jd = Aze(lvol,0,ii)%i(ll) ; id = Lme(lvol,  ii) ; adata = - mi * TTdata(ll, mi, 1)
-          if (id.ne.0 .and. jd.ne.0)   call push_back(1,nqueue,NN,adata,zero,jd,dMASqueue,dMDSqueue,jdMASqueue)
+          if (id.ne.0 .and. jd.ne.0)   call push_back(1,nqueue,nmaxqueue,adata,zero,jd,dMASqueue,dMDSqueue,jdMASqueue)
           enddo
         else
           do ll = 0, lrad ; jd = Ate(lvol,0,ii)%i(ll) ; id = Lmg(lvol,  ii) ; adata = +      TTdata(ll, mi, 1)
-          if (id.ne.0 .and. jd.ne.0)   call push_back(1,nqueue,NN,adata,zero,jd,dMASqueue,dMDSqueue,jdMASqueue)
+          if (id.ne.0 .and. jd.ne.0)   call push_back(1,nqueue,nmaxqueue,adata,zero,jd,dMASqueue,dMDSqueue,jdMASqueue)
           ;               ; jd = Aze(lvol,0,ii)%i(ll) ; id = Lmh(lvol,  ii) ; adata = +      TTdata(ll, mi, 1)
-          if (id.ne.0 .and. jd.ne.0)   call push_back(2,nqueue,NN,adata,zero,jd,dMASqueue,dMDSqueue,jdMASqueue)
+          if (id.ne.0 .and. jd.ne.0)   call push_back(2,nqueue,nmaxqueue,adata,zero,jd,dMASqueue,dMDSqueue,jdMASqueue)
           enddo
         endif
-        call addline(nqueue, NN, dMASqueue, dMDSqueue, jdMASqueue, ns, nrow, dMAS, dMDS, jdMAS, idMAS)
+        call addline(nqueue, nmaxqueue, dMASqueue, dMDSqueue, jdMASqueue, ns, nrow, dMAS, dMDS, jdMAS, idMAS)
 
       enddo
 

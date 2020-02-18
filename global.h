@@ -134,8 +134,8 @@ module inputlist
   CHARACTER          :: ext*100
 
   INTEGER, parameter :: MNvol     = 256 !latex \item The maximum value of \inputvar{Nvol} is \verb+MNvol=256+.
-  INTEGER, parameter :: MMpol     =  32 !latex \item The maximum value of \inputvar{Mpol} is \verb+MNpol= 32+.
-  INTEGER, parameter :: MNtor     =  32 !latex \item The maximum value of \inputvar{Ntor} is \verb+MNtor= 32+.
+  INTEGER, parameter :: MMpol     =  64 !latex \item The maximum value of \inputvar{Mpol} is \verb+MNpol= 32+.
+  INTEGER, parameter :: MNtor     =  64 !latex \item The maximum value of \inputvar{Ntor} is \verb+MNtor= 32+.
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -273,6 +273,8 @@ module inputlist
   INTEGER      :: Lperturbed       =     0   
   INTEGER      :: dpp              =    -1
   INTEGER      :: dqq              =    -1
+  INTEGER      :: Lerrortype       =     0
+  INTEGER      :: Ngrid            =    -1
   INTEGER      :: Lcheck           =     0
   LOGICAL      :: Ltiming          =  .false.
   REAL         :: fudge            =     1.0e-00 ! redundant; 
@@ -778,6 +780,8 @@ module inputlist
  Lperturbed ,&  !latex \item \inputvar{Lperturbed = 0} : integer : to compute linear, perturbed equilibrium;
  dpp        ,&  !latex \item \inputvar{dpp = 1} : integer : perturbed harmonic;
  dqq        ,&  !latex \item \inputvar{dqq = 1} : integer : perturbed harmonic;
+ Lerrortype ,&  !latex \item \inputvar{Lerrortype = 0} : integer : the type of error output for Lcheck=1
+ Ngrid      ,&  !latex \item \inputvar{Ngrid=-1} : integer : the number of points to output in the grid, -1 for Lrad(vvol)
  Lcheck     ,&  !latex \item \inputvar{Lcheck = 0} : integer : implement various checks;
                 !latex \bi
                 !latex \item if \inputvar{Lcheck = 0}, no additional check on the calculation is performed;
@@ -1874,6 +1878,8 @@ subroutine readin
   IlBCAST( Lperturbed, 1      , 0 )
   IlBCAST( dpp       , 1      , 0 )
   IlBCAST( dqq       , 1      , 0 )
+  IlBCAST( Lerrortype, 1      , 0 )
+  IlBCAST( Ngrid     , 1      , 0 )
   IlBCAST( Lcheck    , 1      , 0 )
   LlBCAST( Ltiming   , 1      , 0 )
 
@@ -1916,7 +1922,7 @@ subroutine readin
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  SALLOCATE( beltramierror,(1:Mvol,1:3), zero)  
+  SALLOCATE( beltramierror,(1:Mvol,1:9), zero)  
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -2296,7 +2302,7 @@ subroutine wrtend( wflag, iflag, rflag )
   REAL   , intent(in)  :: rflag
   
   INTEGER              :: vvol, imn, ii, jj, kk, jk, Lcurvature, mm, nn
-  REAL                 :: lss, teta, zeta, st(1:Node), Bst(1:Node)
+  REAL                 :: lss, teta, zeta, st(1:Node), Bst(1:Node), BR, BZ, BP
   
   BEGIN(wrtend)
 
@@ -2597,13 +2603,16 @@ subroutine wrtend( wflag, iflag, rflag )
    
    do vvol = 1, Mvol ; ivol = vvol
     
-    LREGION(vvol) ! sets Lcoordinatesingularity and Lplasmaregion ; 
+    LREGION(vvol) ! sets Lcoordinatesingularity and Lplasmaregion ;
+
+    if (Ngrid .lt. 0) Ngrid = Lrad(vvol)  ! default
+    if (Ngrid .eq. 0) cycle               ! nothing to output
     
-    write(iunit) Lrad(vvol) ! sub-grid radial resolution; not really sub-grid resolution, but really the Chebyshev resolution; 
+    write(iunit) Ngrid ! sub-grid radial resolution; not really sub-grid resolution, but really the Chebyshev resolution; 
     
-    do ii = 0, Lrad(vvol) ! sub-grid;
+    do ii = 0, Ngrid ! sub-grid;
      
-     lss = ii * two / Lrad(vvol) - one
+     lss = ii * two / Ngrid - one
      
      if( Lcoordinatesingularity .and. ii.eq.0 ) then ; Lcurvature = 0 ! Jacobian is not defined; 
      else                                            ; Lcurvature = 1 ! compute Jacobian       ; 

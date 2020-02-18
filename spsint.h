@@ -121,7 +121,7 @@ subroutine spsint( lquad, mn, lvol, lrad )
    sbar(1:lquad) = ( gaussianabscissae(1:lquad,lvol) + one ) * half
    
    halfoversbar(1:lquad) = half / sbar(1:lquad)
-
+  
    do jquad = 1, lquad ! Gaussian quadrature loop;
     
     lss = gaussianabscissae(jquad,lvol) ; jthweight = gaussianweight(jquad,lvol)
@@ -138,7 +138,6 @@ subroutine spsint( lquad, mn, lvol, lrad )
     ftzcc = gtzmne(0) * jthweight
     fzzcc = gzzmne(0) * jthweight
 
-    !write(ounit,*) fttcc
 
     if (NOTstellsym) then
       !foocs = zero * jthweight

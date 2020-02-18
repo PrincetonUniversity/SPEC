@@ -321,8 +321,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
       if (LILUprecond) then
         SALLOCATE( DToocc, (0:lldof,0:lldof,0:iidof,1:1), zero )
         SALLOCATE( TTssss, (0:lldof,0:lldof,0:iidof,1:1), zero )
-        !SALLOCATE( TDstsc, (0:lldof,0:lldof,0:iidof,1:1), zero )
-        !SALLOCATE( TDszsc, (0:lldof,0:lldof,0:iidof,1:1), zero )
+        SALLOCATE( TDstsc, (0:lldof,0:lldof,0:iidof,1:1), zero )
+        SALLOCATE( TDszsc, (0:lldof,0:lldof,0:iidof,1:1), zero )
         SALLOCATE( DDttcc, (0:lldof,0:lldof,0:iidof,1:1), zero )
         SALLOCATE( DDtzcc, (0:lldof,0:lldof,0:iidof,1:1), zero )
         SALLOCATE( DDzzcc, (0:lldof,0:lldof,0:iidof,1:1), zero )
@@ -371,32 +371,32 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
     else
       ! we still need them, but with a reduced size
       if (LILUprecond) then
-        !SALLOCATE( DToocs, (0:lldof,0:lldof,1:iidof,1:1), zero )
-        !SALLOCATE( DToosc, (0:lldof,0:lldof,1:iidof,1:1), zero )
+        SALLOCATE( DToocs, (0:lldof,0:lldof,1:iidof,1:1), zero )
+        SALLOCATE( DToosc, (0:lldof,0:lldof,1:iidof,1:1), zero )
         SALLOCATE( DTooss, (0:lldof,0:lldof,1:iidof,1:1), zero )
 
         SALLOCATE( TTsscc, (0:lldof,0:lldof,1:iidof,1:1), zero )
-        !SALLOCATE( TTsscs, (0:lldof,0:lldof,1:iidof,1:1), zero )
-        !SALLOCATE( TTsssc, (0:lldof,0:lldof,1:iidof,1:1), zero )
+        SALLOCATE( TTsscs, (0:lldof,0:lldof,1:iidof,1:1), zero )
+        SALLOCATE( TTsssc, (0:lldof,0:lldof,1:iidof,1:1), zero )
 
         SALLOCATE( TDstcc, (0:lldof,0:lldof,1:iidof,1:1), zero )
-        !SALLOCATE( TDstcs, (0:lldof,0:lldof,1:iidof,1:1), zero )
+        SALLOCATE( TDstcs, (0:lldof,0:lldof,1:iidof,1:1), zero )
         SALLOCATE( TDstss, (0:lldof,0:lldof,1:iidof,1:1), zero )
 
         SALLOCATE( TDszcc, (0:lldof,0:lldof,1:iidof,1:1), zero )
-        !SALLOCATE( TDszcs, (0:lldof,0:lldof,1:iidof,1:1), zero )
+        SALLOCATE( TDszcs, (0:lldof,0:lldof,1:iidof,1:1), zero )
         SALLOCATE( TDszss, (0:lldof,0:lldof,1:iidof,1:1), zero )
 
-        !SALLOCATE( DDttcs, (0:lldof,0:lldof,1:iidof,1:1), zero )
-        !SALLOCATE( DDttsc, (0:lldof,0:lldof,1:iidof,1:1), zero )
+        SALLOCATE( DDttcs, (0:lldof,0:lldof,1:iidof,1:1), zero )
+        SALLOCATE( DDttsc, (0:lldof,0:lldof,1:iidof,1:1), zero )
         SALLOCATE( DDttss, (0:lldof,0:lldof,1:iidof,1:1), zero )
 
-        !SALLOCATE( DDtzcs, (0:lldof,0:lldof,1:iidof,1:1), zero )
-        !SALLOCATE( DDtzsc, (0:lldof,0:lldof,1:iidof,1:1), zero )
+        SALLOCATE( DDtzcs, (0:lldof,0:lldof,1:iidof,1:1), zero )
+        SALLOCATE( DDtzsc, (0:lldof,0:lldof,1:iidof,1:1), zero )
         SALLOCATE( DDtzss, (0:lldof,0:lldof,1:iidof,1:1), zero )
 
-        !SALLOCATE( DDzzcs, (0:lldof,0:lldof,1:iidof,1:1), zero )
-        !SALLOCATE( DDzzsc, (0:lldof,0:lldof,1:iidof,1:1), zero )
+        SALLOCATE( DDzzcs, (0:lldof,0:lldof,1:iidof,1:1), zero )
+        SALLOCATE( DDzzsc, (0:lldof,0:lldof,1:iidof,1:1), zero )
         SALLOCATE( DDzzss, (0:lldof,0:lldof,1:iidof,1:1), zero )
       endif
     end if

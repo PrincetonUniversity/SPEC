@@ -333,7 +333,7 @@ subroutine preset
   SALLOCATE( iotaksub, (1:mn,1:mns), 0 )
   SALLOCATE( iotaksgn, (1:mn,1:mns), 0 )
   SALLOCATE( iotakadd, (1:mn,1:mns), 0 )
-!$OMP PARALLEL DO SHARED(mn,mns,im,in,ims,ins,iotakkii,iotaksub,iotaksgn,iotakadd)
+
   do kk = 1, mn ; mk = im(kk) ; nk = in(kk)
    
     call getimn(sMpol, sNtor, Nfp, mk, nk, ii)
@@ -366,7 +366,7 @@ subroutine preset
     enddo ! end of do jj; 29 Jan 13;
    
   enddo ! end of do kk; 29 Jan 13;
-!$OMP END PARALLEL DO
+
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -782,7 +782,7 @@ subroutine preset
   endif
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+  write(ounit,*) 'allocate dradr'
 !latex \subsubsection{\type{workspace}}
 
 ! Fourier transforms;
@@ -812,17 +812,19 @@ subroutine preset
   SALLOCATE(   sg , (1:Ntz,0:3        ), zero )
   SALLOCATE( guvij, (1:Ntz,0:3,0:3,0:3), zero ) ! need this on higher resolution grid for accurate Fourier decomposition;
   SALLOCATE( gvuij, (1:Ntz,0:3,0:3    ), zero ) ! need this on higher resolution grid for accurate Fourier decomposition; 10 Dec 15;
-  
-  SALLOCATE( dRadR, (1:mn,0:1,0:1,1:mn), zero ) ! calculated in rzaxis; 19 Sep 16;
-  SALLOCATE( dRadZ, (1:mn,0:1,0:1,1:mn), zero )
-  SALLOCATE( dZadR, (1:mn,0:1,0:1,1:mn), zero )
-  SALLOCATE( dZadZ, (1:mn,0:1,0:1,1:mn), zero )
 
-  SALLOCATE( dRodR, (1:Ntz,0:1,1:mn), zero ) ! calculated in rzaxis; 19 Sep 16;
-  SALLOCATE( dRodZ, (1:Ntz,0:1,1:mn), zero )
-  SALLOCATE( dZodR, (1:Ntz,0:1,1:mn), zero )
-  SALLOCATE( dZodZ, (1:Ntz,0:1,1:mn), zero )
+  if (Lfindzero .eq. 2) then
+    SALLOCATE( dRadR, (1:mn,0:1,0:1,1:mn), zero ) ! calculated in rzaxis; 19 Sep 16;
+    SALLOCATE( dRadZ, (1:mn,0:1,0:1,1:mn), zero )
+    SALLOCATE( dZadR, (1:mn,0:1,0:1,1:mn), zero )
+    SALLOCATE( dZadZ, (1:mn,0:1,0:1,1:mn), zero )
 
+    SALLOCATE( dRodR, (1:Ntz,0:1,1:mn), zero ) ! calculated in rzaxis; 19 Sep 16;
+    SALLOCATE( dRodZ, (1:Ntz,0:1,1:mn), zero )
+    SALLOCATE( dZodR, (1:Ntz,0:1,1:mn), zero )
+    SALLOCATE( dZodZ, (1:Ntz,0:1,1:mn), zero )
+  endif
+write(ounit,*) 'finish allocate dradr'
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 !latex \subsubsection{\type{goomne, goomno} : metric information}
@@ -900,29 +902,31 @@ subroutine preset
 !latex           \mbox{\type{sini}}_{j,i} & = & \sin( m_i \t_j - n_i \z_j ).
 !latex       \ee
 !latex \end{enumerate}
-
+write(ounit,*) 'compute cosi'
   SALLOCATE( gteta, (1:Ntz), zero )
   SALLOCATE( gzeta, (1:Ntz), zero )
   
-  SALLOCATE( cosi, (1:Ntz,1:mn), zero )
-  SALLOCATE( sini, (1:Ntz,1:mn), zero )
+  if (Lfindzero .eq. 2) then
+    SALLOCATE( cosi, (1:Ntz,1:mn), zero )
+    SALLOCATE( sini, (1:Ntz,1:mn), zero )
 
-  FATAL( preset, Nz.eq.0, illegal division )
-  FATAL( preset, Nt.eq.0, illegal division )
-!$OMP PARALLEL DO SHARED(mn,pi2nfp,Nz,Nt,cosi,sini,gteta,gzeta,im,in)
-  do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over Fourier harmonics;
-   
-   do kk = 0, Nz-1 ; zeta = kk * pi2nfp / Nz
-    do jj = 0, Nt-1 ; teta = jj * pi2    / Nt ; jk = 1 + jj + kk*Nt ; arg = mi * teta - ni * zeta 
-     gteta(jk) = teta
-     gzeta(jk) = zeta
-     cosi(jk,ii) = cos(arg)
-     sini(jk,ii) = sin(arg)
+    FATAL( preset, Nz.eq.0, illegal division )
+    FATAL( preset, Nt.eq.0, illegal division )
+
+    do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over Fourier harmonics;
+    
+    do kk = 0, Nz-1 ; zeta = kk * pi2nfp / Nz
+      do jj = 0, Nt-1 ; teta = jj * pi2    / Nt ; jk = 1 + jj + kk*Nt ; arg = mi * teta - ni * zeta 
+      gteta(jk) = teta
+      gzeta(jk) = zeta
+      cosi(jk,ii) = cos(arg)
+      sini(jk,ii) = sin(arg)
+      enddo
     enddo
-   enddo
-   
-  enddo ! end of do ii; 13 May 13;
-!$OMP END PARALLEL DO  
+    
+    enddo ! end of do ii; 13 May 13;
+
+  endif
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 #ifdef DEBUG
