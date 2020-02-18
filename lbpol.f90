@@ -154,6 +154,11 @@ subroutine lbpol(lvol, ideriv)
     Bt(1:Ntz) = Bt(1:Ntz) + ( - dAz0(1:Ntz ) * guvij(1:Ntz,2,2, 0) + dAt0(1:Ntz ) * guvij(1:Ntz,2,3, 0) )
     Bz(1:Ntz) = Bz(1:Ntz) + ( - dAz0(1:Ntz ) * guvij(1:Ntz,2,3, 0) + dAt0(1:Ntz ) * guvij(1:Ntz,3,3, 0) ) 
 
+  else
+
+    Bt(1:Ntz) = Bt(1:Ntz) / sg(1:Ntz,0)
+    Bz(1:Ntz) = Bz(1:Ntz) / sg(1:Ntz,0)
+
   endif ! matches if ideriv.eq.-1
 
 ! Fourier transform, map to Fourier space
