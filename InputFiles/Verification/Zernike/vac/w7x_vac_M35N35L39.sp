@@ -332,7 +332,7 @@ Rwc(4,4)    =  0.000000000000000E+00 Zws(4,4)    =  0.000000000000000E+00 Rws(4,
  nPtrj       =        30
  LHevalues   =         F
  LHevectors  =         F
- Lerrortype  =         1
+ Lerrortype  =         0
  Ngrid       =         1
  Lcheck      =         1
 /
