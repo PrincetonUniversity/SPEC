@@ -25,12 +25,26 @@ m4_define(MPIFINALIZE,{! macro expansion of mpifinalize;
   ! macro expansion of mpifinalize; end;})m4_dnl can put comments here
 m4_define(LOCALS,{! macro expansion of locals;
 
+#ifdef OPENMP
+  USE OMP_LIB
+#endif
   implicit none
   include "mpif.h"
-  INTEGER   :: ierr, astat, ios
+  INTEGER   :: ierr, astat, ios, nthreads, ithread
   REAL      :: cput, cpui, cpuo ! cpu time; cpu initial; cpu old; 31 Jan 13;
 
   ! macro expansion of locals; end;})m4_dnl ; can put comments here;
+
+m4_define(GETTHREAD,{! macro expansion of getthread;
+
+#ifdef OPENMP
+  ithread = omp_get_thread_num() + 1
+#else
+  ithread = 1
+#endif
+
+  ! macro expansion of getthread; end;})m4_dnl ; can put comments here;
+
 m4_define(SALLOCATE,{ ! macro expansion of sallocate = set allocate;
 
 #ifdef DEBUG
@@ -443,6 +457,11 @@ m4_define(BEGIN,{! macro expansion of begin;
  !cpui = zero
   cpui = MPI_WTIME()
   cpuo = cpui
+#ifdef OPENMP
+  nthreads = omp_get_max_threads()
+#else
+  nthreads = 1
+#endif
 
 #ifdef DEBUG
 

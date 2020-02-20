@@ -2682,7 +2682,7 @@ module fftw_interface ! JAB; 25 Jul 17
   include 'fftw3.f03'
 
   TYPE(C_PTR)                            :: planf, planb
-  COMPLEX(C_DOUBLE_COMPLEX), allocatable :: cplxin(:,:), cplxout(:,:)
+  COMPLEX(C_DOUBLE_COMPLEX), allocatable :: cplxin(:,:,:), cplxout(:,:,:)
 
 end module fftw_interface
 

@@ -86,17 +86,16 @@ subroutine intghs( lquad, mn, lvol, lrad, idx )
   use cputiming, only : Tintghs
   
   use allglobal, only : myid, ncpu, cpus, &
-                        Mvol, im, in, mne, Ntz, &
+                        Mvol, im, in, mne, Ntz, Nt, Nz, &
                         YESstellsym, NOTstellsym, &
                         gaussianweight, gaussianabscissae, &
-                        efmn, ofmn, cfmn, sfmn, evmn, odmn, comn, simn, &
                         Tsc, Tss, Dtc, Dts, Dzc, Dzs, &
                         Ttc, Tts, Tzc, Tzs, &
-                        Bloweremn, Bloweromn, &
-                        cheby, zernike, &
                         Lcoordinatesingularity, &
                         pi2pi2nfp, pi2pi2nfphalf, dBdX, &
-                        ijreal, jireal, jkreal, kjreal
+                        Ntz, NOTstellsym, dBdX, Lsavedguvij, &
+                        Ate, Ato, Aze, Azo, &
+                        sg, guvij, guvijsave
                         
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -105,9 +104,18 @@ subroutine intghs( lquad, mn, lvol, lrad, idx )
   
   INTEGER, intent(in) :: lquad, mn, lvol, lrad, idx
   
-  INTEGER             :: jquad, ll, pp, ll1, pp1, uv, ii, jj, io, mn2, lp2, mn2_max, lp2_max, nele 
+  INTEGER             :: jquad, ll, pp, ll1, pp1, uv, ii, jj, io, mn2, lp2, mn2_max, lp2_max, nele, ideriv, ifail, Lcurvature
+  INTEGER             :: mi, ni
   
-  REAL                :: lss, jthweight, Tl, Dl, ik
+  REAL                :: lss, jthweight, Tl, Dl, ik, sbar
+
+  REAL, allocatable   :: gBupper(:,:), Blower(:,:), basis(:,:,:)
+
+  REAL, allocatable   :: efmn(:), ofmn(:), cfmn(:), sfmn(:)
+  REAL, allocatable   :: evmn(:), odmn(:)
+
+  REAL, allocatable   :: ijreal(:), jireal(:), jkreal(:), kjreal(:)
+  REAL, allocatable   :: Bloweremn(:,:), Bloweromn(:,:)
 
   BEGIN( intghs )
   
@@ -133,15 +141,128 @@ subroutine intghs( lquad, mn, lvol, lrad, idx )
     
   endif !NOTstellsym
 
+  if( dBdX%L ) then ; Lcurvature = 3 ; ideriv = 1
+  else              ; Lcurvature = 1 ; ideriv = 0
+  endif
+
+  SALLOCATE(basis,     (0:lrad,0:mpol,0:1), zero)
+  SALLOCATE(gBupper,   (1:Ntz,3), zero)
+  SALLOCATE(Blower,    (1:Ntz,3), zero)
+  SALLOCATE(Bloweremn, (1:mn,3), zero)
+  SALLOCATE(Bloweromn, (1:mn,3), zero)
+  SALLOCATE(efmn,      (1:mn), zero)
+  SALLOCATE(ofmn,      (1:mn), zero)
+  SALLOCATE(evmn,      (1:mn), zero)
+  SALLOCATE(odmn,      (1:mn), zero)
+  SALLOCATE(cfmn,      (1:mn), zero)
+  SALLOCATE(sfmn,      (1:mn), zero)
+  SALLOCATE(ijreal,    (1:mn), zero)
+  SALLOCATE(jkreal,    (1:mn), zero)
+  SALLOCATE(jireal,    (1:mn), zero)
+  SALLOCATE(kjreal,    (1:mn), zero)
+  
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  if (Lcoordinatesingularity) then
+!$OMP PARALLEL DO PRIVATE(ll1,lss,jthweight,sbar,Tl,Dl,ii,jj,ll,mi,ni,ik,gBupper,Blower,efmn,ofmn,cfmn,sfmn,evmn,odmn,ijreal,jireal,jkreal,kjreal,Bloweremn,Bloweromn,basis) SHARED(lquad,mn,lvol,lrad,idx)
+  do jquad = 1, lquad
+    
+    GETTHREAD
 
-    do jquad = 1, lquad
+    lss = gaussianabscissae(jquad,lvol) ; jthweight = gaussianweight(jquad,lvol)
+    !WCALL( intghs, getbco, (lvol, Ntz, lss, jquad, idx) )
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-      lss = gaussianabscissae(jquad,lvol) ; jthweight = gaussianweight(jquad,lvol)
-      WCALL( intghs, getbco, (lvol, Ntz, lss, jquad, idx) )
+    if (.not.Lsavedguvij) then ! if gij was computed elsewhere, we just need to use it
+      !WCALL( intghs, coords,( lvol, lss, Lcurvature, Ntz, mn ) ) ! get coordinates and derivatives wrt Rj, Zj, at specific radial location;   
+    end if
 
-!$OMP PARALLEL DO PRIVATE(ii,ik,ll,ll1,Tl,Dl) SHARED(mn,jthweight,lrad)
+    if (Lcoordinatesingularity) then
+      sbar = (lss + one) * half
+      call get_zernike(sbar, lrad, mpol, basis(:,:,0:1))
+    else
+      call get_cheby(lss, lrad, basis(:,0,0:1))
+    endif
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+   
+    efmn(1:mn) = zero ; ofmn(1:mn) = zero ; cfmn(1:mn) = zero ; sfmn(1:mn) = zero
+    evmn(1:mn) = zero ; odmn(1:mn) = zero ;
+
+    ijreal(1:mn) = zero ; jireal(1:mn) = zero ; jkreal(1:mn) = zero ; kjreal(1:mn) = zero
+  
+    gBupper(:,:) = zero; Blower(:,:) = zero;
+
+    ! A_t  : ijreal, jireal
+    ! A_z  : jkreal, kjreal
+    ! gB^s : evmn, odmn
+    ! gB^t : cfmn, sfmn
+    ! gB^z : efmn, ofmn
+    
+    do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over Fourier harmonics;
+      
+      if (Lcoordinatesingularity) then
+        do ll = mi, lrad, 2 ! loop over Zernike polynomials; Lrad is the radial resolution;
+        ;                      ; efmn(ii) = efmn(ii) + Ate(lvol,idx,ii)%s(ll) * ( basis(ll,mi,1)*half) 
+        ;                      ; cfmn(ii) = cfmn(ii) - Aze(lvol,idx,ii)%s(ll) * ( basis(ll,mi,1)*half)
+        ;                      ; odmn(ii) = odmn(ii) - Ate(lvol,idx,ii)%s(ll) * ( basis(ll,mi,0)) * ni & 
+                                                    - Aze(lvol,idx,ii)%s(ll) * ( basis(ll,mi,0)) * mi
+        ;                      ; ijreal(ii) = ijreal(ii) + Ate(lvol,idx,ii)%s(ll) * basis(ll,mi,0)
+        ;                      ; jkreal(ii) = jkreal(ii) + Aze(lvol,idx,ii)%s(ll) * basis(ll,mi,0)
+        if( NOTstellsym ) then ; ofmn(ii) = ofmn(ii) + Ato(lvol,idx,ii)%s(ll) * ( basis(ll,mi,1)*half)
+          ;                    ; sfmn(ii) = sfmn(ii) - Azo(lvol,idx,ii)%s(ll) * ( basis(ll,mi,1)*half)
+          ;                    ; evmn(ii) = evmn(ii) + Ato(lvol,idx,ii)%s(ll) * ( basis(ll,mi,1)) * ni & 
+                                                    + Azo(lvol,idx,ii)%s(ll) * ( basis(ll,mi,1)) * mi
+          ;                    ; jireal(ii) = jireal(ii) + Ato(lvol,idx,ii)%s(ll) * basis(ll,mi,0)
+          ;                    ; kjreal(ii) = kjreal(ii) + Azo(lvol,idx,ii)%s(ll) * basis(ll,mi,0)
+        endif
+        enddo ! end of do ll; 20 Feb 13;
+      else
+        do ll = 0, lrad ! loop over Chebyshev polynomials; Lrad is the radial resolution;
+        ;                      ; efmn(ii) = efmn(ii) + Ate(lvol,idx,ii)%s(ll) * ( basis(ll,0,1))
+        ;                      ; cfmn(ii) = cfmn(ii) - Aze(lvol,idx,ii)%s(ll) * ( basis(ll,0,1))
+        ;                      ; odmn(ii) = odmn(ii) - Ate(lvol,idx,ii)%s(ll) * ( basis(ll,0,0)) * ni & 
+                                                    - Aze(lvol,idx,ii)%s(ll) * ( basis(ll,0,0)) * mi
+        ;                      ; ijreal(ii) = ijreal(ii) + Ate(lvol,idx,ii)%s(ll) * basis(ll,0,0)
+        ;                      ; jkreal(ii) = jkreal(ii) + Aze(lvol,idx,ii)%s(ll) * basis(ll,0,0)
+        if( NOTstellsym ) then ; ofmn(ii) = ofmn(ii) + Ato(lvol,idx,ii)%s(ll) * ( basis(ll,0,1))
+          ;                    ; sfmn(ii) = sfmn(ii) - Azo(lvol,idx,ii)%s(ll) * ( basis(ll,0,1))
+          ;                    ; evmn(ii) = evmn(ii) + Ato(lvol,idx,ii)%s(ll) * ( basis(ll,0,0)) * ni & 
+                                                    + Azo(lvol,idx,ii)%s(ll) * ( basis(ll,0,0)) * mi
+          ;                    ; jireal(ii) = jireal(ii) + Ato(lvol,idx,ii)%s(ll) * basis(ll,0,0)
+          ;                    ; kjreal(ii) = kjreal(ii) + Azo(lvol,idx,ii)%s(ll) * basis(ll,0,0)
+        endif
+        enddo ! end of do ll; 20 Feb 13;
+      end if ! Lcoordinatesingularity; 01 Jul 19
+    enddo ! end of do ii; 20 Feb 13;
+    
+    call invfft( mn, im, in, efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, gBupper(1:Ntz,3), gBupper(1:Ntz,2) )
+    call invfft( mn, im, in, evmn(1:mn), odmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, gBupper(1:Ntz,1), gBupper(1:Ntz,2) )
+
+    if (.not.Lsavedguvij) then
+      do ii = 1, 3
+        do jj = 1, 3
+          Blower(:,ii) = Blower(:,ii) + gBupper(:,jj) * guvij(1:Ntz,jj,ii,ideriv) / sg(1:Ntz,0)
+        enddo
+      enddo
+    else
+      do ii = 1, 3
+        do jj = 1, 3
+          Blower(:,ii) = Blower(:,ii) + gBupper(:,jj) * guvijsave(1:Ntz,jj,ii,jquad)
+        enddo
+      enddo
+    endif
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+    
+    ifail = 0
+   
+    call tfft( Nt, Nz, Blower(1:Ntz,2), Blower(1:Ntz,3), &
+               mn, im(1:mn), in(1:mn), Bloweremn(1:mn,2), Bloweromn(1:mn,2), Bloweremn(1:mn,3), Bloweromn(1:mn,3), ifail )
+    call tfft( Nt, Nz, Blower(1:Ntz,1), Blower(1:Ntz,3), &
+               mn, im(1:mn), in(1:mn), Bloweromn(1:mn,1), Bloweremn(1:mn,1), Bloweremn(1:mn,3), Bloweromn(1:mn,3), ifail )
+    Bloweremn(1,1  ) = zero
+    Bloweromn(1,2:3) = zero
+    
+    if (Lcoordinatesingularity) then
       do ii = 1, mn
 
         if (ii==1) then ;ik = jthweight * two
@@ -153,44 +274,47 @@ subroutine intghs( lquad, mn, lvol, lrad, idx )
           ll1 = (ll - mod(ll,2))/2 ! shrinked dof for Zernike; 02 Jul 19
           
           ! get the basis functions, they are generated in getbco
-          Tl = zernike(ll, im(ii), 0)
-          Dl = zernike(ll, im(ii), 1) * half
-
+          Tl = basis(ll, im(ii), 0)
+          Dl = basis(ll, im(ii), 1) * half
+          
+!$OMP ATOMIC UPDATE
           Tss(ll1,ii) = Tss(ll1,ii) + Tl * Bloweremn(ii,1) * ik
+!$OMP ATOMIC UPDATE
           Dtc(ll1,ii) = Dtc(ll1,ii) + Dl * Bloweremn(ii,2) * ik
+!$OMP ATOMIC UPDATE
           Dzc(ll1,ii) = Dzc(ll1,ii) + Dl * Bloweremn(ii,3) * ik
         
           if (NOTstellsym) then
+!$OMP ATOMIC UPDATE
             Tsc(ll1,ii) = Tsc(ll1,ii) + Tl * Bloweromn(ii,1) * ik
+!$OMP ATOMIC UPDATE
             Dts(ll1,ii) = Dts(ll1,ii) + Dl * Bloweromn(ii,2) * ik
+!$OMP ATOMIC UPDATE
             Dzs(ll1,ii) = Dzs(ll1,ii) + Dl * Bloweromn(ii,3) * ik
           endif
 
           if (dBdX%L) cycle ! dMD matrix does not depend on geometry
-
+!$OMP ATOMIC UPDATE
           Ttc(ll1,ii) = Ttc(ll1,ii) + (Tl * cfmn(ii) + Dl * jkreal(ii)) * ik
+!$OMP ATOMIC UPDATE          
           Tzc(ll1,ii) = Tzc(ll1,ii) + (Tl * efmn(ii) - Dl * ijreal(ii)) * ik
 
           if (NOTstellsym) then
+!$OMP ATOMIC UPDATE          
             Tts(ll1,ii) = Tts(ll1,ii) + (Tl * sfmn(ii) + Dl * kjreal(ii)) * ik
+!$OMP ATOMIC UPDATE            
             Tzs(ll1,ii) = Tzs(ll1,ii) + (Tl * ofmn(ii) - Dl * ijreal(ii)) * ik
           endif
 
         enddo !ll
       enddo !ii
-!$OMP END PARALLEL DO
-    enddo !jquad
+    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  else ! .not.Lcoordinatesingularity; 
+    else ! .not.Lcoordinatesingularity; 
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-   
-    do jquad = 1, lquad
 
-      lss = gaussianabscissae(jquad,lvol) ; jthweight = gaussianweight(jquad,lvol)
-      WCALL( intghs, getbco, (lvol, Ntz, lss, jquad, idx) )
-!$OMP PARALLEL DO PRIVATE(ii,ik,ll,ll1,Tl,Dl) SHARED(mn,jthweight,lrad)
       do ii = 1, mn
 
         if (ii==1) then ;ik = jthweight * two
@@ -200,37 +324,47 @@ subroutine intghs( lquad, mn, lvol, lrad, idx )
         do ll = 0, lrad
           
           ! get the basis functions, they are generated in getbco
-          Tl = cheby(ll, 0)
-          Dl = cheby(ll, 1)
+          Tl = basis(ll,0,0)
+          Dl = basis(ll,0,1)
 
           ll1 = ll
-
+!$OMP ATOMIC UPDATE
           Tss(ll1,ii) = Tss(ll1,ii) + Tl * Bloweremn(ii,1) * ik
+!$OMP ATOMIC UPDATE          
           Dtc(ll1,ii) = Dtc(ll1,ii) + Dl * Bloweremn(ii,2) * ik
+!$OMP ATOMIC UPDATE          
           Dzc(ll1,ii) = Dzc(ll1,ii) + Dl * Bloweremn(ii,3) * ik
         
           if (NOTstellsym) then
+!$OMP ATOMIC UPDATE          
             Tsc(ll1,ii) = Tsc(ll1,ii) + Tl * Bloweromn(ii,1) * ik
+!$OMP ATOMIC UPDATE            
             Dts(ll1,ii) = Dts(ll1,ii) + Dl * Bloweromn(ii,2) * ik
+!$OMP ATOMIC UPDATE            
             Dzs(ll1,ii) = Dzs(ll1,ii) + Dl * Bloweromn(ii,3) * ik
           endif
 
           if (dBdX%L) cycle ! dMD matrix does not depend on geometry
-
+!$OMP ATOMIC UPDATE
           Ttc(ll1,ii) = Ttc(ll1,ii) + (Tl * cfmn(ii) + Dl * jkreal(ii)) * ik
+!$OMP ATOMIC UPDATE          
           Tzc(ll1,ii) = Tzc(ll1,ii) + (Tl * efmn(ii) - Dl * ijreal(ii)) * ik
 
           if (NOTstellsym) then
+!$OMP ATOMIC UPDATE          
             Tts(ll1,ii) = Tts(ll1,ii) + (Tl * sfmn(ii) + Dl * kjreal(ii)) * ik
+!$OMP ATOMIC UPDATE            
             Tzs(ll1,ii) = Tzs(ll1,ii) + (Tl * ofmn(ii) - Dl * ijreal(ii)) * ik
           endif
           
         enddo !ll
       enddo !ii
-!OMP END PARALLEL DO
-    enddo !jquad
-
-  endif  ! Lcoordinatesingularity;
+      
+    endif  ! Lcoordinatesingularity;
+    
+  enddo !jquad
+!$OMP END PARALLEL DO
+  
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   Tss = Tss * pi2pi2nfphalf
@@ -255,8 +389,23 @@ subroutine intghs( lquad, mn, lvol, lrad, idx )
   
   endif
   
+  DALLOCATE(basis)
+  DALLOCATE(gBupper)
+  DALLOCATE(Blower)
+  DALLOCATE(Bloweremn)
+  DALLOCATE(Bloweromn)
+  DALLOCATE(efmn)
+  DALLOCATE(ofmn)
+  DALLOCATE(evmn)
+  DALLOCATE(odmn)
+  DALLOCATE(cfmn)
+  DALLOCATE(sfmn)
+  DALLOCATE(ijreal)
+  DALLOCATE(jkreal)
+  DALLOCATE(jireal)
+  DALLOCATE(kjreal)
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   RETURN( intghs )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

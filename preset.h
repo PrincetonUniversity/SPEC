@@ -36,7 +36,7 @@ subroutine preset
   INTEGER   :: innout, idof, jk, ll, ii, ifail, ideriv, vvol, mi, ni, mj, nj, mk, nk, mimj, ninj, mkmj, nknj, jj, kk, lvol, mm, nn, imn
   INTEGER   :: lquad, igauleg, maxIquad, Mrad, jquad, Lcurvature, zerdof
   REAL      :: teta, zeta, arg, lss, cszeta(0:1), error
-  
+
   BEGIN(preset)
   
   call random_seed()
@@ -876,12 +876,12 @@ subroutine preset
   SALLOCATE( kjreal, (1:Ntz), zero )
   SALLOCATE( kjimag, (1:Ntz), zero )
 
-  SALLOCATE( cplxin,  (1:Nt,1:Nz), zero )
-  SALLOCATE( cplxout, (1:Nt,1:Nz), zero )
+  SALLOCATE( cplxin,  (1:Nt,1:Nz,nthreads), zero )
+  SALLOCATE( cplxout, (1:Nt,1:Nz,nthreads), zero )
 
   ! Create and save optimal plans for forward and inverse 2D fast Fourier transforms with FFTW. -JAB; 25 Jul 2017
-  planf = fftw_plan_dft_2d( Nz, Nt, cplxin, cplxout, FFTW_FORWARD,  FFTW_MEASURE + FFTW_DESTROY_INPUT )
-  planb = fftw_plan_dft_2d( Nz, Nt, cplxin, cplxout, FFTW_BACKWARD, FFTW_MEASURE + FFTW_DESTROY_INPUT )
+  planf = fftw_plan_dft_2d( Nz, Nt, cplxin(:,:,1), cplxout(:,:,1), FFTW_FORWARD,  FFTW_MEASURE + FFTW_DESTROY_INPUT )
+  planb = fftw_plan_dft_2d( Nz, Nt, cplxin(:,:,1), cplxout(:,:,1), FFTW_BACKWARD, FFTW_MEASURE + FFTW_DESTROY_INPUT )
 
   SALLOCATE( efmn, (1:mne), zero ) ! Fourier harmonics workspace; 24 Apr 13;
   SALLOCATE( ofmn, (1:mne), zero )
