@@ -146,3 +146,28 @@ subroutine metrix( lvol, lss )
 end subroutine metrix
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+subroutine compute_guvijsave(lquad, vvol, ideriv, Lcurvature)
+
+  use allglobal, only : gaussianabscissae, Ntz, mn, guvij, guvijsave, &
+                        sg
+
+  implicit none
+
+  INTEGER, intent(in):: vvol, lquad, ideriv, Lcurvature
+  INTEGER            :: jquad, ii, jj
+  REAL               :: lss
+
+  ! we need to compute guvij and save it in guvijsave
+  do jquad = 1, lquad
+    lss = gaussianabscissae(jquad,vvol)
+    call coords( vvol, lss, Lcurvature, Ntz, mn )
+    guvijsave(1:Ntz,1:3,1:3,jquad) = guvij(1:Ntz,1:3,1:3,ideriv)
+    do ii = 1, 3
+      do jj = 1, 3
+        guvijsave(1:Ntz,jj,ii,jquad) = guvijsave(1:Ntz,jj,ii,jquad) / sg(1:Ntz, 0)
+      enddo
+    enddo
+  enddo
+
+end subroutine compute_guvijsave

@@ -105,9 +105,9 @@ subroutine spsmat( lvol, mn, lrad )
       jj = ii ; mj = im(jj) ; nj = in(jj) ; mimj = mi * mj ; minj = mi * nj ; nimj = ni * mj ; ninj = ni * nj
 
       if (Lcoordinatesingularity) then
-        idx = mi
+        idx = mi + 1
       else
-        idx = 0
+        idx = 1
       endif
 
       if (ii.eq.1) then

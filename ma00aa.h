@@ -81,7 +81,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   
   use fileunits, only : ounit
   
-  use inputlist, only : mpol, Wma00aa
+  use inputlist, only : mpol, Wma00aa, Wmacros
   
   use cputiming, only : Tma00aa
   

@@ -350,7 +350,6 @@ subroutine matrix( lvol, mn, lrad )
                         im, in, &
                         NAdof, &
                         dMA, dMD, dMB, dMG, &
-                        LILUprecond, NdMASmax, NdMAS, dMAS, dMDS, idMAS, jdMAS, & ! preconditioning matrix
                         Ate, Ato, Aze, Azo, &
                         iVns, iBns, iVnc, iBnc, &
                         Lma, Lmb, Lmc, Lmd, Lme, Lmf, Lmg, Lmh, &
@@ -385,9 +384,7 @@ subroutine matrix( lvol, mn, lrad )
   REAL                 :: Hzete, Hzeto, Hzote, Hzoto
   REAL                 :: Hzeze, Hzezo, Hzoze, Hzozo
   
-  REAL,allocatable     :: dMASqueue(:,:), dMDSqueue(:,:), TTdata(:,:,:), TTMdata(:,:) ! queues to construct sparse matrices
-  INTEGER,allocatable  :: jdMASqueue(:,:) ! indices
-  INTEGER              :: nqueue(4), nrow, ns
+  REAL,allocatable     :: TTdata(:,:,:), TTMdata(:,:) ! queues to construct sparse matrices
 
   BEGIN(matrix)
   
@@ -421,19 +418,10 @@ subroutine matrix( lvol, mn, lrad )
     enddo
   endif
 
-  if (LILUprecond) then
-    NdMAS(lvol) = 0
-    dMAS = zero
-    dMDS = zero
-    idMAS = 0
-    jdMAS = 0
-    ns = 0
-  endif
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   if( YESstellsym ) then
-!$OMP PARALLEL SHARED(lvol,lrad)  
-!$OMP DO PRIVATE(ii,jj,ll,pp)   
+!$OMP PARALLEL DO PRIVATE(ii,jj,ll,pp,mi,ni,mj,nj,mimj,minj,nimj,ninj,ll1,pp1,Wtete,Wzete,Wteze,Wzeze,Htete,Hzete,Hteze,Hzeze,id,jd,kk) SHARED(lvol,lrad)  
    do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
     
     do jj = 1, mn ; mj = im(jj) ; nj = in(jj) ; mimj = mi * mj ; minj = mi * nj ; nimj = ni * mj ; ninj = ni * nj
@@ -498,8 +486,7 @@ subroutine matrix( lvol, mn, lrad )
     enddo ! end of do pp ;
       
    enddo ! end of do ii ;
-!$OMP END DO
-!$OMP END PARALLEL
+!$OMP END PARALLEL DO
    
   else ! NOTstellsym ;
 !$OMP PARALLEL SHARED(lvol,lrad)   
@@ -626,95 +613,6 @@ subroutine matrix( lvol, mn, lrad )
   
   ! call subroutine matrixBG to construct dMB and dMG
   WCALL( matrix, matrixBG, ( lvol, mn, lrad ) )
-
-  ! Construct the sparse preconditioner
-  ! The sparse matrix is stored in the Compressed Sparse Row (CSR) format
-  if (LILUprecond) then
-
-    NdMAS(lvol) = 0
-    nrow = 0
-
-    SALLOCATE( dMASqueue, (1:NN, 4), zero)
-    SALLOCATE( dMDSqueue, (1:NN, 4), zero)
-    SALLOCATE( jdMASqueue, (1:NN, 4), zero)
-
-    do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
-      
-      ! only keeping the ii==jj terms
-      jj = ii ; mj = im(jj) ; nj = in(jj) ; mimj = mi * mj ; minj = mi * nj ; nimj = ni * mj ; ninj = ni * nj
-      
-        !if (abs(mj-mi).gt.0 .or. abs(nj-ni).gt.0) cycle
-        !if (jj.ne.ii) cycle
-
-        do ll = 0, lrad
-
-          if (Lcoordinatesingularity) then
-            if (ll < mi) cycle ! rule out zero components of Zernike; 02 Jul 19
-            if (mod(ll+mi,2)>0) cycle ! rule out zero components of Zernike; 02 Jul 19
-          end if
-
-          call clean_queue(nqueue, NN, dMASqueue, dMDSqueue, jdMASqueue)
-
-          do pp = 0, lrad
-
-            if (Lcoordinatesingularity) then
-              if (pp < mj) cycle ! rule out zero components of Zernike; 02 Jul 19
-              if (mod(pp+mj,2)>0) cycle ! rule out zero components of Zernike; 02 Jul 19
-            end if
-            
-            id = Ate(lvol,0,ii)%i(ll) ; jd = Ate(lvol,0,jj)%i(pp)
-            if (id.ne.0 .and. jd.ne.0) call push_back(1,nqueue,NN,dMA(id,jd),dMD(id,jd),jd,dMASqueue,dMDSqueue,jdMASqueue)
-            ;                         ; jd = Aze(lvol,0,jj)%i(pp)
-            if (id.ne.0 .and. jd.ne.0) call push_back(1,nqueue,NN,dMA(id,jd),dMD(id,jd),jd,dMASqueue,dMDSqueue,jdMASqueue)
-
-            
-            id = Aze(lvol,0,ii)%i(ll) ; jd = Ate(lvol,0,jj)%i(pp)
-            if (id.ne.0 .and. jd.ne.0) call push_back(2,nqueue,NN,dMA(id,jd),dMD(id,jd),jd,dMASqueue,dMDSqueue,jdMASqueue)
-            ;                         ; jd = Aze(lvol,0,jj)%i(pp)
-            if (id.ne.0 .and. jd.ne.0) call push_back(2,nqueue,NN,dMA(id,jd),dMD(id,jd),jd,dMASqueue,dMDSqueue,jdMASqueue)
-
-          end do ! pp
-          
-          ;                  ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lma(lvol,  ii)
-          if (id.ne.0 .and. jd.ne.0)   call push_back(1,nqueue,NN,dMA(id,jd),dMD(id,jd),jd,dMASqueue,dMDSqueue,jdMASqueue)
-          ;                  ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lmb(lvol,  ii)
-          if (id.ne.0 .and. jd.ne.0)   call push_back(2,nqueue,NN,dMA(id,jd),dMD(id,jd),jd,dMASqueue,dMDSqueue,jdMASqueue)
-          if( ii.gt.1 ) then ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lme(lvol,  ii)
-            if (id.ne.0 .and. jd.ne.0) call push_back(1,nqueue,NN,dMA(id,jd),dMD(id,jd),jd,dMASqueue,dMDSqueue,jdMASqueue)
-          ;                  ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lme(lvol,  ii)
-            if (id.ne.0 .and. jd.ne.0) call push_back(2,nqueue,NN,dMA(id,jd),dMD(id,jd),jd,dMASqueue,dMDSqueue,jdMASqueue)
-          else               ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lmg(lvol,  ii)
-            if (id.ne.0 .and. jd.ne.0) call push_back(1,nqueue,NN,dMA(id,jd),dMD(id,jd),jd,dMASqueue,dMDSqueue,jdMASqueue)
-          ;                  ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lmh(lvol,  ii)
-            if (id.ne.0 .and. jd.ne.0) call push_back(2,nqueue,NN,dMA(id,jd),dMD(id,jd),jd,dMASqueue,dMDSqueue,jdMASqueue)
-          endif
-
-          ! putting things in the sparse matrix
-          call addline(nqueue, NN, dMASqueue, dMDSqueue, jdMASqueue, ns, nrow, dMAS, dMDS, jdMAS, idMAS)
-
-        end do ! ll = 0, lrad
-      !end do ! jj = 1 ,mn
-    end do ! ii = 1, mn
-    
-    !deal with rest of the columes
-    do ii = nrow + 1, NN
-      call clean_queue(nqueue, NN, dMASqueue, dMDSqueue, jdMASqueue)
-      do jj = 1, NN
-        if (abs(dMA(jj, ii)).gt. zero) then
-          call push_back(1,nqueue,NN,dMA(jj,ii),dMD(jj,ii),jj,dMASqueue,dMDSqueue,jdMASqueue)
-        end if
-      enddo
-      call addline(nqueue, NN, dMASqueue, dMDSqueue, jdMASqueue, ns, nrow, dMAS, dMDS, jdMAS, idMAS)
-    enddo
-
-    NdMAS(lvol) = ns
-    idMAS(NN+1) = ns+1
-
-    DALLOCATE( dMASqueue )
-    DALLOCATE( dMDSqueue )
-    DALLOCATE( jdMASqueue )
-
-  end if ! if (LILUprecond)   
 
   DALLOCATE( TTdata )
   DALLOCATE( TTMdata )

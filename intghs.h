@@ -81,7 +81,7 @@ subroutine intghs( lquad, mn, lvol, lrad, idx )
   
   use fileunits, only : ounit
   
-  use inputlist, only : mpol, Wintghs
+  use inputlist, only : mpol, Wintghs, Wmacros
   
   use cputiming, only : Tintghs
   
@@ -146,16 +146,7 @@ subroutine intghs( lquad, mn, lvol, lrad, idx )
   endif
   
   if (.not. Lsavedguvij) then
-    do jquad = 1, lquad
-      lss = gaussianabscissae(jquad,lvol)
-      WCALL( intghs, coords, ( lvol, lss, Lcurvature, Ntz, mn ) )
-      guvijsave(1:Ntz,1:3,1:3,jquad) = guvij(1:Ntz,1:3,1:3,ideriv)
-      do ii = 1, 3
-        do jj = 1, 3
-          guvijsave(1:Ntz,jj,ii,jquad) = guvijsave(1:Ntz,jj,ii,jquad) / sg(1:Ntz, 0)
-        enddo
-      enddo
-    enddo
+    WCALL( intghs, compute_guvijsave, (lquad, lvol, ideriv, Lcurvature) )
   endif
 
   SALLOCATE(basis,     (0:lrad,0:mpol,0:1), zero)
