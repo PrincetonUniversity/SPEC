@@ -327,11 +327,9 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
         SALLOCATE( DDtzcc, (0:lldof,0:lldof,0:iidof,1:1), zero )
         SALLOCATE( DDzzcc, (0:lldof,0:lldof,0:iidof,1:1), zero )
       endif
-
    endif
 
    SALLOCATE( guvijsave, (1:Ntz,1:3,1:3,1:Iquad(vvol)), zero)
-   Lsavedguvij = .true.
 
    SALLOCATE( Tss, (0:lldof,1:mn), zero )
    SALLOCATE( Dtc, (0:lldof,1:mn), zero )
@@ -415,6 +413,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
    if (NOTMatrixFree) then ! construct Beltrami matrix
+     Lsavedguvij = .false.
 
      WCALL( dforce, ma00aa, ( Iquad(vvol), mn, vvol, ll ) ) ! compute volume integrals of metric elements;
    
@@ -450,6 +449,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
    endif
 
    WCALL( dforce, ma02aa, ( vvol, NN ) )
+   Lsavedguvij = .false.
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

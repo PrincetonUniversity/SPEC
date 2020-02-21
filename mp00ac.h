@@ -276,11 +276,11 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
       
       ! estimate bandwidth
       if (Lcoordinatesingularity) then
-        maxfil = Lrad(lvol) + mn + Ntor + 1
-        if (NOTstellsym) maxfil = maxfil + mn + Ntor + 1 
+        maxfil = Lrad(lvol) + 10
+        if (NOTstellsym) maxfil = maxfil + Lrad(lvol) + 10 
       else
-        maxfil = 2 * Lrad(lvol) + mn + 2
-        if (NOTstellsym) maxfil = maxfil + mn
+        maxfil = 2 * Lrad(lvol) + 10
+        if (NOTstellsym) maxfil = maxfil + 2 * Lrad(lvol) + 10
       end if
 
       Nbilut = (2*maxfil+2)*NN
@@ -802,9 +802,9 @@ subroutine matvec(n, x, ax, a, mu, vvol)
   INTEGER, intent(in) :: n, vvol
   REAL                :: ax(1:n), x(1:n), a(*), mu
   INTEGER             :: ideriv
-  REAL                :: dax(0:n), ddx(0:n)
+  REAL                :: dax(0:n), ddx(0:n), cput, lastcpu
   CHARACTER           :: packorunpack
-!write(*,*) 'x', x
+
   if (NOTMatrixFree) then ! if we have the matrix, then just multiply it to x
     call DGEMV('N', n, n, one, dMD(1,1), n+1, x, 1, zero, ddx(1), 1)
     call DGEMV('N', n, n, one, a, n, x, 1, zero, ax, 1)

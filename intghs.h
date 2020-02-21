@@ -144,6 +144,19 @@ subroutine intghs( lquad, mn, lvol, lrad, idx )
   if( dBdX%L ) then ; Lcurvature = 3 ; ideriv = 1
   else              ; Lcurvature = 1 ; ideriv = 0
   endif
+  
+  if (.not. Lsavedguvij) then
+    do jquad = 1, lquad
+      lss = gaussianabscissae(jquad,lvol)
+      WCALL( intghs, coords, ( lvol, lss, Lcurvature, Ntz, mn ) )
+      guvijsave(1:Ntz,1:3,1:3,jquad) = guvij(1:Ntz,1:3,1:3,ideriv)
+      do ii = 1, 3
+        do jj = 1, 3
+          guvijsave(1:Ntz,jj,ii,jquad) = guvijsave(1:Ntz,jj,ii,jquad) / sg(1:Ntz, 0)
+        enddo
+      enddo
+    enddo
+  endif
 
   SALLOCATE(basis,     (0:lrad,0:mpol,0:1), zero)
   SALLOCATE(gBupper,   (1:Ntz,3), zero)
@@ -162,18 +175,15 @@ subroutine intghs( lquad, mn, lvol, lrad, idx )
   SALLOCATE(kjreal,    (1:mn), zero)
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-!$OMP PARALLEL DO PRIVATE(ll1,lss,jthweight,sbar,Tl,Dl,ii,jj,ll,mi,ni,ik,gBupper,Blower,efmn,ofmn,cfmn,sfmn,evmn,odmn,ijreal,jireal,jkreal,kjreal,Bloweremn,Bloweromn,basis) SHARED(lquad,mn,lvol,lrad,idx)
+!$OMP PARALLEL PRIVATE(jquad,ll1,lss,jthweight,sbar,Tl,Dl,ii,jj,ll,mi,ni,ik,gBupper,Blower,efmn,ofmn,cfmn,sfmn,evmn,odmn,ijreal,jireal,jkreal,kjreal,Bloweremn,Bloweromn,basis) SHARED(lquad,mn,lvol,lrad,idx)
+!$OMP DO
   do jquad = 1, lquad
     
     GETTHREAD
 
     lss = gaussianabscissae(jquad,lvol) ; jthweight = gaussianweight(jquad,lvol)
-    !WCALL( intghs, getbco, (lvol, Ntz, lss, jquad, idx) )
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-    if (.not.Lsavedguvij) then ! if gij was computed elsewhere, we just need to use it
-      !WCALL( intghs, coords,( lvol, lss, Lcurvature, Ntz, mn ) ) ! get coordinates and derivatives wrt Rj, Zj, at specific radial location;   
-    end if
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
     if (Lcoordinatesingularity) then
       sbar = (lss + one) * half
@@ -237,19 +247,11 @@ subroutine intghs( lquad, mn, lvol, lrad, idx )
     call invfft( mn, im, in, efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, gBupper(1:Ntz,3), gBupper(1:Ntz,2) )
     call invfft( mn, im, in, evmn(1:mn), odmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, gBupper(1:Ntz,1), gBupper(1:Ntz,2) )
 
-    if (.not.Lsavedguvij) then
-      do ii = 1, 3
-        do jj = 1, 3
-          Blower(:,ii) = Blower(:,ii) + gBupper(:,jj) * guvij(1:Ntz,jj,ii,ideriv) / sg(1:Ntz,0)
-        enddo
+    do ii = 1, 3
+      do jj = 1, 3
+        Blower(:,ii) = Blower(:,ii) + gBupper(:,jj) * guvijsave(1:Ntz,jj,ii,jquad)
       enddo
-    else
-      do ii = 1, 3
-        do jj = 1, 3
-          Blower(:,ii) = Blower(:,ii) + gBupper(:,jj) * guvijsave(1:Ntz,jj,ii,jquad)
-        enddo
-      enddo
-    endif
+    enddo
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
     
@@ -363,7 +365,7 @@ subroutine intghs( lquad, mn, lvol, lrad, idx )
     endif  ! Lcoordinatesingularity;
     
   enddo !jquad
-!$OMP END PARALLEL DO
+!$OMP END PARALLEL
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

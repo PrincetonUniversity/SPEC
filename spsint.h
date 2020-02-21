@@ -20,7 +20,7 @@ subroutine spsint( lquad, mn, lvol, lrad )
   use cputiming, only : Tspsint
   
   use allglobal, only : myid, ncpu, cpus, &
-                        Mvol, im, in, mne, &
+                        Mvol, im, in, mne, Ntz, &
                         YESstellsym, NOTstellsym, &
                         gaussianweight, gaussianabscissae, &
                         DToocc, DToocs, DToosc, DTooss, &
@@ -31,16 +31,9 @@ subroutine spsint( lquad, mn, lvol, lrad )
                         DDtzcc, DDtzcs, DDtzsc, DDtzss, &
                         DDzzcc, DDzzcs, DDzzsc, DDzzss, &
                         ki, kija, kijs, &
-                        goomne, goomno, &
-                        gssmne, gssmno, &
-                        gstmne, gstmno, &
-                        gszmne, gszmno, &
-                        gttmne, gttmno, &
-                        gtzmne, gtzmno, &
-                        gzzmne, gzzmno, &
-                        cheby, zernike, &
                         Lcoordinatesingularity, regumm, &
-                        pi2pi2nfp, pi2pi2nfphalf
+                        pi2pi2nfp, pi2pi2nfphalf, &
+                        guvijsave
                         
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -55,18 +48,21 @@ subroutine spsint( lquad, mn, lvol, lrad )
   
   REAL                :: lss, jthweight, fee, feo, foe, foo, Tl, Dl, Tp, Dp, TlTp, TlDp, DlTp, DlDp, ikda, ikds, imn2, ilrad, lssm
 
-  REAL                :: foocc, foocs, foosc, fooss
-  REAL                :: fsscc, fsscs, fsssc, fssss
-  REAL                :: fstcc, fstcs, fstsc, fstss
-  REAL                :: fszcc, fszcs, fszsc, fszss
-  REAL                :: fttcc, fttcs, fttsc, fttss
-  REAL                :: ftzcc, ftzcs, ftzsc, ftzss
-  REAL                :: fzzcc, fzzcs, fzzsc, fzzss
+  REAL                :: foocc, fooss
+  REAL                :: fsscc, fssss
+  REAL                :: fstcc, fstss
+  REAL                :: fszcc, fszss
+  REAL                :: fttcc, fttss
+  REAL                :: ftzcc, ftzss
+  REAL                :: fzzcc, fzzss
+
+  REAL                :: goomne, gssmne, gstmne, gszmne, gttmne, gtzmne, gzzmne
   
-  REAL                :: sbar(1:lquad), halfoversbar(1:lquad), sbarhim(1:lquad,1:mn) ! regularization factors; 10 Dec 15;
+  REAL                :: sbar
+
+  REAL, allocatable   :: basis(:,:,:)
   
   BEGIN( spsint )
-  
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   mn2_max = mn*mn
@@ -76,97 +72,65 @@ subroutine spsint( lquad, mn, lvol, lrad )
 
   DToocc = zero
   TTssss = zero
-  !TDstsc = zero
-  !TDszsc = zero
   DDttcc = zero
   DDtzcc = zero
   DDzzcc = zero
 
   if (NOTstellsym) then
-    !DToocs = zero
-    !DToosc = zero
     DTooss = zero
-
     TTsscc = zero
-    !TTsscs = zero
-    !TTsssc = zero
-
     TDstcc = zero
-    !TDstcs = zero
     TDstss = zero
-
     TDszcc = zero
-    !TDszcs = zero
     TDszss = zero
-
-    !DDttcs = zero
-    !DDttsc = zero
     DDttss = zero
-
-    !DDtzcs = zero
-    !DDtzsc = zero
     DDtzss = zero
-
-    !DDzzcs = zero
-    !DDzzsc = zero
     DDzzss = zero
   endif !NOTstellsym
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-  if( Lcoordinatesingularity ) then
-   ! switch to sbar=r; 29 Jun 19
+  SALLOCATE(basis,     (0:lrad,0:mpol,0:1), zero)
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
-   sbar(1:lquad) = ( gaussianabscissae(1:lquad,lvol) + one ) * half
-   
-   halfoversbar(1:lquad) = half / sbar(1:lquad)
-  
-   do jquad = 1, lquad ! Gaussian quadrature loop;
+!$OMP PARALLEL DO PRIVATE(TlTp,TlDp,DlTp,DlDp,Tl,Dl,Tp,Dp,ll1,pp1,ll,pp,lss,jthweight,sbar,basis,goomne,gssmne,gstmne,gszmne,gttmne,gtzmne,gzzmne,foocc,fooss,fsscc,fssss,fstcc,fstss,fszcc,fszss,fttcc,fttss,ftzcc,ftzss,fzzcc,fzzss) SHARED(lquad,lp2_max,lrad)
+  do jquad = 1, lquad ! Gaussian quadrature loop;
     
     lss = gaussianabscissae(jquad,lvol) ; jthweight = gaussianweight(jquad,lvol)
 
-    call get_zernike(sbar(jquad), lrad, mpol, zernike(:,:,0:1)) ! use Zernike polynomials 29 Jun 19;
+    sbar = (lss + one) * half
 
-    WCALL( spsint, spsmetrix,( lvol, lss, jquad ) ) ! compute metric elements; 16 Jan 13;
+    if (Lcoordinatesingularity) then
+      call get_zernike(sbar, lrad, mpol, basis(:,:,0:1)) ! use Zernike polynomials 29 Jun 19;
+    else
+      call get_cheby(sbar, lrad, basis(:,0,0:1)) ! use Zernike polynomials 29 Jun 19;
+    endif
+
+    ! compute metric
+
+    goomne = one                                        
+    gssmne = SUM(guvijsave(1:Ntz,1,1,jquad)) / real(Ntz)
+    gstmne = SUM(guvijsave(1:Ntz,1,2,jquad)) / real(Ntz)
+    gszmne = SUM(guvijsave(1:Ntz,1,3,jquad)) / real(Ntz)
+    gttmne = SUM(guvijsave(1:Ntz,2,2,jquad)) / real(Ntz)
+    gtzmne = SUM(guvijsave(1:Ntz,2,3,jquad)) / real(Ntz)
+    gzzmne = SUM(guvijsave(1:Ntz,3,3,jquad)) / real(Ntz)
  
-    foocc = goomne(0) * jthweight
-    fssss = gssmne(0) * jthweight
-    !fstsc = zero * jthweight
-    !fszsc = zero * jthweight
-    fttcc = gttmne(0) * jthweight
-    ftzcc = gtzmne(0) * jthweight
-    fzzcc = gzzmne(0) * jthweight
+    foocc = goomne * jthweight
+    fssss = gssmne * jthweight
+    fttcc = gttmne * jthweight
+    ftzcc = gtzmne * jthweight
+    fzzcc = gzzmne * jthweight
 
 
     if (NOTstellsym) then
-      !foocs = zero * jthweight
-      !foosc = zero * jthweight
-      fooss = goomne(0) * jthweight
-
-      fsscc = gssmne(0) * jthweight
-      !fsscs = zero * jthweight
-      !fsssc = zero * jthweight
-
-      fstcc = gstmne(0) * jthweight
-      !fstcs = zero * jthweight
-      fstss = gstmne(0) * jthweight
-
-      fszcc = gszmne(0) * jthweight
-      !fszcs = zero * jthweight
-      fszss = gszmne(0) * jthweight
-
-      !fttcs = zero * jthweight
-      !fttsc = zero * jthweight
-      fttss = gttmne(0) * jthweight
-
-      !ftzcs = zero * jthweight
-      !ftzsc = zero * jthweight
-      ftzss = gtzmne(0) * jthweight
-
-      !fzzcs = zero * jthweight
-      !fzzsc = zero * jthweight
-      fzzss = gzzmne(0) * jthweight
+      fooss = goomne * jthweight
+      fsscc = gssmne * jthweight
+      fstcc = gstmne * jthweight
+      fstss = gstmne * jthweight
+      fszcc = gszmne * jthweight
+      fszss = gszmne * jthweight
+      fttss = gttmne * jthweight
+      ftzss = gtzmne * jthweight
+      fzzss = gzzmne * jthweight
     end if !NOTstellsym
 
     do mi = 0, mpol
@@ -175,60 +139,67 @@ subroutine spsint( lquad, mn, lvol, lrad )
         ll = mod(lp2-1,lrad+1)
         pp = (lp2-ll-1)/(lrad+1)
 
-        ll1 = (ll - mod(ll,2))/2 ! shrinked dof for Zernike; 02 Jul 19
-        pp1 = (pp - mod(pp,2))/2 ! shrinked dof for Zernike; 02 Jul 19
+        if (Lcoordinatesingularity) then
 
-        if (ll < mi) cycle ! zernike only non-zero for ll>=ii
-        if (pp < mi) cycle ! zernike only non-zero for pp>=jj
-        if (mod(ll+mi,2)/=0) cycle ! zernike only non-zero if ll and ii have the same parity
-        if (mod(pp+mi,2)/=0) cycle ! zernike only non-zero if pp and jj have the same parity
+          ll1 = (ll - mod(ll,2))/2 ! shrinked dof for Zernike; 02 Jul 19
+          pp1 = (pp - mod(pp,2))/2 ! shrinked dof for Zernike; 02 Jul 19
 
-        Tl = zernike(ll, mi, 0)         ! use Zernike polynomials 29 Jun 19;
-        Dl = zernike(ll, mi, 1) * half  ! use Zernike polynomials 29 Jun 19;
+          if (ll < mi) cycle ! zernike only non-zero for ll>=ii
+          if (pp < mi) cycle ! zernike only non-zero for pp>=jj
+          if (mod(ll+mi,2)/=0) cycle ! zernike only non-zero if ll and ii have the same parity
+          if (mod(pp+mi,2)/=0) cycle ! zernike only non-zero if pp and jj have the same parity
 
-        Tp = zernike(pp, mi, 0)         ! use Zernike polynomials 29 Jun 19;
-        Dp = zernike(pp, mi, 1) * half  ! use Zernike polynomials 29 Jun 19;
+          Tl = basis(ll, mi, 0)         ! use Zernike polynomials 29 Jun 19;
+          Dl = basis(ll, mi, 1) * half  ! use Zernike polynomials 29 Jun 19;
+
+          Tp = basis(pp, mi, 0)         ! use Zernike polynomials 29 Jun 19;
+          Dp = basis(pp, mi, 1) * half  ! use Zernike polynomials 29 Jun 19;
+
+        else
+
+          ll1 = ll
+          pp1 = pp
+          
+          Tl = basis(ll, 0, 0) ! Cheby
+          Dl = basis(ll, 0, 1) ! Cheby
+
+          Tp = basis(pp, 0, 0) ! Cheby
+          Dp = basis(pp, 0, 1) ! Cheby
+
+        end if ! if (Lcoordinatesingularity)
 
         TlTp = Tl * Tp
         TlDp = Tl * Dp
         DlTp = Dl * Tp
-        DlDp = Dl * Dp 
+        DlDp = Dl * Dp
 
+!$OMP ATOMIC UPDATE
         DToocc( ll1, pp1, mi, 1 ) = DToocc( ll1, pp1, mi, 1 ) + DlTp * foocc
+!$OMP ATOMIC UPDATE
         TTssss( ll1, pp1, mi, 1 ) = TTssss( ll1, pp1, mi, 1 ) + TlTp * fssss
-        !TDstsc( ll1, pp1, mi, 1 ) = TDstsc( ll1, pp1, mi, 1 ) + TlDp * fstsc
-        !TDszsc( ll1, pp1, mi, 1 ) = TDszsc( ll1, pp1, mi, 1 ) + TlDp * fszsc
+!$OMP ATOMIC UPDATE
         DDttcc( ll1, pp1, mi, 1 ) = DDttcc( ll1, pp1, mi, 1 ) + DlDp * fttcc
+!$OMP ATOMIC UPDATE
         DDtzcc( ll1, pp1, mi, 1 ) = DDtzcc( ll1, pp1, mi, 1 ) + DlDp * ftzcc
+!$OMP ATOMIC UPDATE
         DDzzcc( ll1, pp1, mi, 1 ) = DDzzcc( ll1, pp1, mi, 1 ) + DlDp * fzzcc
 
         if (NOTstellsym) then
-          !DToocs( ll1, pp1, mi, 1 ) = DToocs( ll1, pp1, mi, 1 ) + DlTp * foocs
-          !DToosc( ll1, pp1, mi, 1 ) = DToosc( ll1, pp1, mi, 1 ) + DlTp * foosc
+!$OMP ATOMIC UPDATE
           DTooss( ll1, pp1, mi, 1 ) = DTooss( ll1, pp1, mi, 1 ) + DlTp * fooss
-
+!$OMP ATOMIC UPDATE
           TTsscc( ll1, pp1, mi, 1 ) = TTsscc( ll1, pp1, mi, 1 ) + TlTp * fsscc
-          !TTsscs( ll1, pp1, mi, 1 ) = TTsscs( ll1, pp1, mi, 1 ) + TlTp * fsscs
-          !TTsssc( ll1, pp1, mi, 1 ) = TTsssc( ll1, pp1, mi, 1 ) + TlTp * fsssc
-
+!$OMP ATOMIC UPDATE
           TDstcc( ll1, pp1, mi, 1 ) = TDstcc( ll1, pp1, mi, 1 ) + TlDp * fstcc
-          !TDstcs( ll1, pp1, mi, 1 ) = TDstcs( ll1, pp1, mi, 1 ) + TlDp * fstcs
-          !TDstss( ll1, pp1, mi, 1 ) = TDstss( ll1, pp1, mi, 1 ) + TlDp * fstss
-
+!$OMP ATOMIC UPDATE
           TDszcc( ll1, pp1, mi, 1 ) = TDszcc( ll1, pp1, mi, 1 ) + TlDp * fszcc
-          !TDszcs( ll1, pp1, mi, 1 ) = TDszcs( ll1, pp1, mi, 1 ) + TlDp * fszcs
+!$OMP ATOMIC UPDATE
           TDszss( ll1, pp1, mi, 1 ) = TDszss( ll1, pp1, mi, 1 ) + TlDp * fszss
-
-          DDttcs( ll1, pp1, mi, 1 ) = DDttcs( ll1, pp1, mi, 1 ) + DlDp * fttcs
-          !DDttsc( ll1, pp1, mi, 1 ) = DDttsc( ll1, pp1, mi, 1 ) + DlDp * fttsc
+!$OMP ATOMIC UPDATE
           DDttss( ll1, pp1, mi, 1 ) = DDttss( ll1, pp1, mi, 1 ) + DlDp * fttss
-
-          !DDtzcs( ll1, pp1, mi, 1 ) = DDtzcs( ll1, pp1, mi, 1 ) + DlDp * ftzcs
-          !DDtzsc( ll1, pp1, mi, 1 ) = DDtzsc( ll1, pp1, mi, 1 ) + DlDp * ftzsc
+!$OMP ATOMIC UPDATE
           DDtzss( ll1, pp1, mi, 1 ) = DDtzss( ll1, pp1, mi, 1 ) + DlDp * ftzss
-
-          !DDzzcs( ll1, pp1, mi, 1 ) = DDzzcs( ll1, pp1, mi, 1 ) + DlDp * fzzcs
-          !DDzzsc( ll1, pp1, mi, 1 ) = DDzzsc( ll1, pp1, mi, 1 ) + DlDp * fzzsc
+!$OMP ATOMIC UPDATE
           DDzzss( ll1, pp1, mi, 1 ) = DDzzss( ll1, pp1, mi, 1 ) + DlDp * fzzss
         end if !NOTstellsym
        
@@ -236,164 +207,33 @@ subroutine spsint( lquad, mn, lvol, lrad )
      
     enddo ! end of do mi
  
-   enddo ! end of do jquad; ! 16 Jan 13;
-   
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-   
-  else ! .not.Lcoordinatesingularity; 17 Dec 15;
-   
+  enddo ! end of do jquad; ! 16 Jan 13;
+!$OMP END PARALLEL DO
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-   do jquad = 1, lquad ! Gaussian quadrature loop;
-
-    lss = gaussianabscissae(jquad,lvol) ; jthweight = gaussianweight(jquad,lvol)
-
-    call get_cheby(lss, lrad, cheby(0:lrad,0:1))
-    
-    WCALL( spsint, spsmetrix, ( lvol, lss, jquad ) ) ! compute metric elements; 16 Jan 13;
-    
-    mi = 0
-   
-    foocc = goomne(0)
-    fssss = gssmne(0)
-    !fstsc = zero
-    !fszsc = zero
-    fttcc = gttmne(0)
-    ftzcc = gtzmne(0)
-    fzzcc = gtzmne(0)
-
-    if (NOTstellsym) then
-      !foocs = zero
-      !foosc = zero
-      fooss = goomne(0)
-
-      fsscc = gssmne(0)
-      !fsscs = zero
-      !fsssc = zero
-
-      fstcc = gstmne(0)
-      !fstcs = zero 
-      fstss = gstmne(0)
-
-      fszcc = gszmne(0)
-      !fszcs = zero 
-      fszss = gszmne(0)
-
-      !fttcs = zero
-      !fttsc = zero
-      fttss = gttmne(0)
-
-      !ftzcs = zero
-      !ftzsc = zero
-      ftzss = gtzmne(0)
-
-      !fzzcs = zero
-      !fzzsc = zero
-      fzzss = gzzmne(0)
-    end if !NOTstellsym
-
-    do lp2 = 1, lp2_max 
-      ll = mod(lp2-1,lrad+1)
-      pp = (lp2-ll-1)/(lrad+1)
-      
-      Tl = cheby(ll,0)
-      Dl = cheby(ll,1)
-      Tp = cheby(pp,0)
-      Dp = cheby(pp,1)
-      
-      TlTp = Tl * Tp
-      TlDp = Tl * Dp
-      DlTp = Dl * Tp
-      DlDp = Dl * Dp
-
-      DToocc( ll1, pp1, mi, 1 ) = DToocc( ll1, pp1, mi, 1 ) + DlTp * foocc
-      TTssss( ll1, pp1, mi, 1 ) = TTssss( ll1, pp1, mi, 1 ) + TlTp * fssss
-      !TDstsc( ll1, pp1, mi, 1 ) = TDstsc( ll1, pp1, mi, 1 ) + TlDp * fstsc
-      !TDszsc( ll1, pp1, mi, 1 ) = TDszsc( ll1, pp1, mi, 1 ) + TlDp * fszsc
-      DDttcc( ll1, pp1, mi, 1 ) = DDttcc( ll1, pp1, mi, 1 ) + DlDp * fttcc
-      DDtzcc( ll1, pp1, mi, 1 ) = DDtzcc( ll1, pp1, mi, 1 ) + DlDp * ftzcc
-      DDzzcc( ll1, pp1, mi, 1 ) = DDzzcc( ll1, pp1, mi, 1 ) + DlDp * fzzcc
-
-      if (NOTstellsym) then
-        !DToocs( ll1, pp1, mi, 1 ) = DToocs( ll1, pp1, mi, 1 ) + DlTp * foocs
-        !DToosc( ll1, pp1, mi, 1 ) = DToosc( ll1, pp1, mi, 1 ) + DlTp * foosc
-        DTooss( ll1, pp1, mi, 1 ) = DTooss( ll1, pp1, mi, 1 ) + DlTp * fooss
-
-        TTsscc( ll1, pp1, mi, 1 ) = TTsscc( ll1, pp1, mi, 1 ) + TlTp * fsscc
-        !TTsscs( ll1, pp1, mi, 1 ) = TTsscs( ll1, pp1, mi, 1 ) + TlTp * fsscs
-        !TTsssc( ll1, pp1, mi, 1 ) = TTsssc( ll1, pp1, mi, 1 ) + TlTp * fsssc
-
-        TDstcc( ll1, pp1, mi, 1 ) = TDstcc( ll1, pp1, mi, 1 ) + TlDp * fstcc
-        !TDstcs( ll1, pp1, mi, 1 ) = TDstcs( ll1, pp1, mi, 1 ) + TlDp * fstcs
-        !TDstss( ll1, pp1, mi, 1 ) = TDstss( ll1, pp1, mi, 1 ) + TlDp * fstss
-
-        TDszcc( ll1, pp1, mi, 1 ) = TDszcc( ll1, pp1, mi, 1 ) + TlDp * fszcc
-        !TDszcs( ll1, pp1, mi, 1 ) = TDszcs( ll1, pp1, mi, 1 ) + TlDp * fszcs
-        TDszss( ll1, pp1, mi, 1 ) = TDszss( ll1, pp1, mi, 1 ) + TlDp * fszss
-
-        DDttcs( ll1, pp1, mi, 1 ) = DDttcs( ll1, pp1, mi, 1 ) + DlDp * fttcs
-        !DDttsc( ll1, pp1, mi, 1 ) = DDttsc( ll1, pp1, mi, 1 ) + DlDp * fttsc
-        DDttss( ll1, pp1, mi, 1 ) = DDttss( ll1, pp1, mi, 1 ) + DlDp * fttss
-
-        !DDtzcs( ll1, pp1, mi, 1 ) = DDtzcs( ll1, pp1, mi, 1 ) + DlDp * ftzcs
-        !DDtzsc( ll1, pp1, mi, 1 ) = DDtzsc( ll1, pp1, mi, 1 ) + DlDp * ftzsc
-        DDtzss( ll1, pp1, mi, 1 ) = DDtzss( ll1, pp1, mi, 1 ) + DlDp * ftzss
-
-        !DDzzcs( ll1, pp1, mi, 1 ) = DDzzcs( ll1, pp1, mi, 1 ) + DlDp * fzzcs
-        !DDzzsc( ll1, pp1, mi, 1 ) = DDzzsc( ll1, pp1, mi, 1 ) + DlDp * fzzsc
-        DDzzss( ll1, pp1, mi, 1 ) = DDzzss( ll1, pp1, mi, 1 ) + DlDp * fzzss
-      end if !NOTstellsym
-       
-     enddo ! end of do lp2;  1 Feb 13;
-
-    enddo ! end of do jquad; ! 16 Jan 13;
-
-
-  endif ! end of if( Lcoordinatesingularity ) ; 17 Dec 15;
-  
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   nele = SIZE(TTssss)
  
   call DSCAL(nele, pi2pi2nfphalf, DToocc, 1)
   call DSCAL(nele, pi2pi2nfphalf, TTssss, 1)
-  !call DSCAL(nele, pi2pi2nfphalf, TDstsc, 1)
-  !call DSCAL(nele, pi2pi2nfphalf, TDszsc, 1)
   call DSCAL(nele, pi2pi2nfphalf, DDttcc, 1)
   call DSCAL(nele, pi2pi2nfphalf, DDtzcc, 1)
   call DSCAL(nele, pi2pi2nfphalf, DDzzcc, 1)
 
   if (NOTstellsym) then
 
-    !call DSCAL(nele, pi2pi2nfphalf, DToocs, 1)
-    !call DSCAL(nele, pi2pi2nfphalf, DToosc, 1)
     call DSCAL(nele, pi2pi2nfphalf, DTooss, 1)
-
     call DSCAL(nele, pi2pi2nfphalf, TTsscc, 1)
-    !call DSCAL(nele, pi2pi2nfphalf, TTsscs, 1)
-    !call DSCAL(nele, pi2pi2nfphalf, TTsssc, 1)
-
     call DSCAL(nele, pi2pi2nfphalf, TDstcc, 1)
-    !call DSCAL(nele, pi2pi2nfphalf, TDstcs, 1)
     call DSCAL(nele, pi2pi2nfphalf, TDstss, 1)
-
     call DSCAL(nele, pi2pi2nfphalf, TDszcc, 1)
-    !call DSCAL(nele, pi2pi2nfphalf, TDszcs, 1)
     call DSCAL(nele, pi2pi2nfphalf, TDszss, 1)
-
-    !call DSCAL(nele, pi2pi2nfphalf, DDttsc, 1)
-    !call DSCAL(nele, pi2pi2nfphalf, DDttcs, 1)
     call DSCAL(nele, pi2pi2nfphalf, DDttss, 1)
-
-    !call DSCAL(nele, pi2pi2nfphalf, DDtzsc, 1)
-    !call DSCAL(nele, pi2pi2nfphalf, DDtzcs, 1)
     call DSCAL(nele, pi2pi2nfphalf, DDtzss, 1)
-
-    !call DSCAL(nele, pi2pi2nfphalf, DDzzsc, 1)
-    !call DSCAL(nele, pi2pi2nfphalf, DDzzcs, 1)
     call DSCAL(nele, pi2pi2nfphalf, DDzzss, 1)
 
   end if !NOTstellsym
 
+  DALLOCATE(basis)
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   RETURN( spsint )
