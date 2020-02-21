@@ -196,7 +196,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
     if (Lcoordinatesingularity) then
       call get_zernike(sbar, lrad, mpol, basis(:,:,0:1)) ! use Zernike polynomials 29 Jun 19;
     else
-      call get_cheby(sbar, lrad, basis(:,0,0:1))
+      call get_cheby(lss, lrad, basis(:,0,0:1))
     endif
 
     WCALL( ma00aa, metrix,( lvol, lss ) ) ! compute metric elements; 16 Jan 13;

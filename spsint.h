@@ -101,7 +101,7 @@ subroutine spsint( lquad, mn, lvol, lrad )
     if (Lcoordinatesingularity) then
       call get_zernike(sbar, lrad, mpol, basis(:,:,0:1)) ! use Zernike polynomials 29 Jun 19;
     else
-      call get_cheby(sbar, lrad, basis(:,0,0:1)) ! use Zernike polynomials 29 Jun 19;
+      call get_cheby(lss, lrad, basis(:,0,0:1)) ! use Zernike polynomials 29 Jun 19;
     endif
 
     ! compute metric
