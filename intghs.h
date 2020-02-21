@@ -175,11 +175,8 @@ subroutine intghs( lquad, mn, lvol, lrad, idx )
   SALLOCATE(kjreal,    (1:mn), zero)
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-!$OMP PARALLEL PRIVATE(jquad,ll1,lss,jthweight,sbar,Tl,Dl,ii,jj,ll,mi,ni,ik,gBupper,Blower,efmn,ofmn,cfmn,sfmn,evmn,odmn,ijreal,jireal,jkreal,kjreal,Bloweremn,Bloweromn,basis) SHARED(lquad,mn,lvol,lrad,idx)
-!$OMP DO
+!$OMP PARALLEL DO PRIVATE(jquad,ll1,lss,jthweight,sbar,Tl,Dl,ii,jj,ll,mi,ni,ik,gBupper,Blower,efmn,ofmn,cfmn,sfmn,evmn,odmn,ijreal,jireal,jkreal,kjreal,Bloweremn,Bloweromn,basis) SHARED(lquad,mn,lvol,lrad,idx)
   do jquad = 1, lquad
-    
-    GETTHREAD
 
     lss = gaussianabscissae(jquad,lvol) ; jthweight = gaussianweight(jquad,lvol)
 
@@ -365,7 +362,7 @@ subroutine intghs( lquad, mn, lvol, lrad, idx )
     endif  ! Lcoordinatesingularity;
     
   enddo !jquad
-!$OMP END PARALLEL
+!$OMP END PARALLEL DO
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
