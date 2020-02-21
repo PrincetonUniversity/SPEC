@@ -1016,13 +1016,13 @@ module allglobal
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  REAL   , allocatable :: goomne(:), goomno(:) ! described in preset;
-  REAL   , allocatable :: gssmne(:), gssmno(:) ! described in preset;
-  REAL   , allocatable :: gstmne(:), gstmno(:) ! described in preset;
-  REAL   , allocatable :: gszmne(:), gszmno(:) ! described in preset;
-  REAL   , allocatable :: gttmne(:), gttmno(:) ! described in preset;
-  REAL   , allocatable :: gtzmne(:), gtzmno(:) ! described in preset;
-  REAL   , allocatable :: gzzmne(:), gzzmno(:) ! described in preset;
+  REAL   , allocatable :: goomne(:,:), goomno(:,:) ! described in preset;
+  REAL   , allocatable :: gssmne(:,:), gssmno(:,:) ! described in preset;
+  REAL   , allocatable :: gstmne(:,:), gstmno(:,:) ! described in preset;
+  REAL   , allocatable :: gszmne(:,:), gszmno(:,:) ! described in preset;
+  REAL   , allocatable :: gttmne(:,:), gttmno(:,:) ! described in preset;
+  REAL   , allocatable :: gtzmne(:,:), gtzmno(:,:) ! described in preset;
+  REAL   , allocatable :: gzzmne(:,:), gzzmno(:,:) ! described in preset;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

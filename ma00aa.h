@@ -105,7 +105,8 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
                         gtzmne, gtzmno, &
                         gzzmne, gzzmno, &
                         Lcoordinatesingularity, regumm, &
-                        pi2pi2nfp, pi2pi2nfphalf
+                        pi2pi2nfp, pi2pi2nfphalf, Lsavedguvij, &
+                        dBdX
                         
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -116,7 +117,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   
   INTEGER             :: jquad, ll, pp, ll1, pp1, uv, ii, jj, io, mn2, lp2, mn2_max, lp2_max, nele 
   
-  INTEGER             :: kk, kd, kka, kks, kda, kds
+  INTEGER             :: kk, kd, kka, kks, kda, kds, Lcurvature, ideriv
   
   REAL                :: lss, jthweight, fee, feo, foe, foo, Tl, Dl, Tp, Dp, TlTp, TlDp, DlTp, DlDp, ikda, ikds, imn2, ilrad, lssm
 
@@ -186,8 +187,17 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   
   SALLOCATE(basis, (0:lrad,0:mpol,0:1), zero)
 
+  if( dBdX%L ) then ; Lcurvature = 3 ; ideriv = 1
+  else              ; Lcurvature = 1 ; ideriv = 0
+  endif
+
+  if (.not. Lsavedguvij) then
+    WCALL( ma00aa, compute_guvijsave, (lquad, lvol, ideriv, Lcurvature) )
+  endif
+  WCALL( ma00aa, metrix,( lquad, lvol ) ) ! compute metric elements; 16 Jan 13;
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-   
+ !$OMP PARALLEL DO SHARED(lquad,lrad,lvol,mn) PRIVATE(jquad,lss,jthweight,sbar,basis,mn2,ii,jj,kka,kks,ikds,ikda,lp2,ll,pp,ll1,pp1,Tl,Tp,Dl,Dp,TlTP,Tldp,DlTp,DlDp,foocc,fssss,fstsc,fszsc,fttcc,ftzcc,fzzcc,foocs,foosc,fooss,fsscc,fsscs,fsssc,fstcc,fstcs,fstss,fszcc,fszcs,fszss,fttcs,fttsc,fttss,ftzcs,ftzsc,ftzss)
   do jquad = 1, lquad ! Gaussian quadrature loop;
     
     lss = gaussianabscissae(jquad,lvol) ; jthweight = gaussianweight(jquad,lvol)
@@ -199,8 +209,6 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
       call get_cheby(lss, lrad, basis(:,0,0:1))
     endif
 
-    WCALL( ma00aa, metrix,( lvol, lss ) ) ! compute metric elements; 16 Jan 13;
-
     do mn2 = 1, mn2_max
       ii = mod(mn2-1,mn)+1
       jj = (mn2-ii) / mn + 1
@@ -210,42 +218,42 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
       ikds = jthweight / kijs(ii,jj,1)
       ikda = jthweight / kija(ii,jj,1)
 
-      foocc = ( + goomne(kks) * abs(ikds) + goomne(kka) * abs(ikda) )
-      fssss = ( + gssmne(kks) * abs(ikds) - gssmne(kka) * abs(ikda) )
-      fstsc = ( + gstmno(kks) *     ikds  + gstmno(kka) *     ikda  )
-      fszsc = ( + gszmno(kks) *     ikds  + gszmno(kka) *     ikda  )
-      fttcc = ( + gttmne(kks) * abs(ikds) + gttmne(kka) * abs(ikda) )
-      ftzcc = ( + gtzmne(kks) * abs(ikds) + gtzmne(kka) * abs(ikda) )
-      fzzcc = ( + gzzmne(kks) * abs(ikds) + gzzmne(kka) * abs(ikda) )
+      foocc = ( + goomne(kks,jquad) * abs(ikds) + goomne(kka,jquad) * abs(ikda) )
+      fssss = ( + gssmne(kks,jquad) * abs(ikds) - gssmne(kka,jquad) * abs(ikda) )
+      fstsc = ( + gstmno(kks,jquad) *     ikds  + gstmno(kka,jquad) *     ikda  )
+      fszsc = ( + gszmno(kks,jquad) *     ikds  + gszmno(kka,jquad) *     ikda  )
+      fttcc = ( + gttmne(kks,jquad) * abs(ikds) + gttmne(kka,jquad) * abs(ikda) )
+      ftzcc = ( + gtzmne(kks,jquad) * abs(ikds) + gtzmne(kka,jquad) * abs(ikda) )
+      fzzcc = ( + gzzmne(kks,jquad) * abs(ikds) + gzzmne(kka,jquad) * abs(ikda) )
 
       if (NOTstellsym) then
-        foocs = ( - goomno(kks) *     ikds  + goomno(kka) *     ikda  )
-        foosc = ( + goomno(kks) *     ikds  + goomno(kka) *     ikda  )
-        fooss = ( + goomne(kks) * abs(ikds) - goomne(kka) * abs(ikda) )
+        foocs = ( - goomno(kks,jquad) *     ikds  + goomno(kka,jquad) *     ikda  )
+        foosc = ( + goomno(kks,jquad) *     ikds  + goomno(kka,jquad) *     ikda  )
+        fooss = ( + goomne(kks,jquad) * abs(ikds) - goomne(kka,jquad) * abs(ikda) )
 
-        fsscc = ( + gssmne(kks) * abs(ikds) + gssmne(kka) * abs(ikda) )
-        fsscs = ( - gssmno(kks) *     ikds  + gssmno(kka) *     ikda  )
-        fsssc = ( + gssmno(kks) *     ikds  + gssmno(kka) *     ikda  )
+        fsscc = ( + gssmne(kks,jquad) * abs(ikds) + gssmne(kka,jquad) * abs(ikda) )
+        fsscs = ( - gssmno(kks,jquad) *     ikds  + gssmno(kka,jquad) *     ikda  )
+        fsssc = ( + gssmno(kks,jquad) *     ikds  + gssmno(kka,jquad) *     ikda  )
 
-        fstcc = ( + gstmne(kks) * abs(ikds) + gstmne(kka) * abs(ikda) )
-        fstcs = ( - gstmno(kks) *     ikds  + gstmno(kka) *     ikda  )
-        fstss = ( + gstmne(kks) * abs(ikds) - gstmne(kka) * abs(ikda) )
+        fstcc = ( + gstmne(kks,jquad) * abs(ikds) + gstmne(kka,jquad) * abs(ikda) )
+        fstcs = ( - gstmno(kks,jquad) *     ikds  + gstmno(kka,jquad) *     ikda  )
+        fstss = ( + gstmne(kks,jquad) * abs(ikds) - gstmne(kka,jquad) * abs(ikda) )
 
-        fszcc = ( + gszmne(kks) * abs(ikds) + gszmne(kka) * abs(ikda) )
-        fszcs = ( - gszmno(kks) *     ikds  + gszmno(kka) *     ikda  )
-        fszss = ( + gszmne(kks) * abs(ikds) - gszmne(kka) * abs(ikda) )
+        fszcc = ( + gszmne(kks,jquad) * abs(ikds) + gszmne(kka,jquad) * abs(ikda) )
+        fszcs = ( - gszmno(kks,jquad) *     ikds  + gszmno(kka,jquad) *     ikda  )
+        fszss = ( + gszmne(kks,jquad) * abs(ikds) - gszmne(kka,jquad) * abs(ikda) )
 
-        fttcs = ( - gttmno(kks) *     ikds  + gttmno(kka) *     ikda  )
-        fttsc = ( + gttmno(kks) *     ikds  + gttmno(kka) *     ikda  )
-        fttss = ( + gttmne(kks) * abs(ikds) - gttmne(kka) * abs(ikda) )
+        fttcs = ( - gttmno(kks,jquad) *     ikds  + gttmno(kka,jquad) *     ikda  )
+        fttsc = ( + gttmno(kks,jquad) *     ikds  + gttmno(kka,jquad) *     ikda  )
+        fttss = ( + gttmne(kks,jquad) * abs(ikds) - gttmne(kka,jquad) * abs(ikda) )
 
-        ftzcs = ( - gtzmno(kks) *     ikds  + gtzmno(kka) *     ikda  )
-        ftzsc = ( + gtzmno(kks) *     ikds  + gtzmno(kka) *     ikda  )
-        ftzss = ( + gtzmne(kks) * abs(ikds) - gtzmne(kka) * abs(ikda) )
+        ftzcs = ( - gtzmno(kks,jquad) *     ikds  + gtzmno(kka,jquad) *     ikda  )
+        ftzsc = ( + gtzmno(kks,jquad) *     ikds  + gtzmno(kka,jquad) *     ikda  )
+        ftzss = ( + gtzmne(kks,jquad) * abs(ikds) - gtzmne(kka,jquad) * abs(ikda) )
 
-        fzzcs = ( - gzzmno(kks) *     ikds  + gzzmno(kka) *     ikda  )
-        fzzsc = ( + gzzmno(kks) *     ikds  + gzzmno(kka) *     ikda  )
-        fzzss = ( + gzzmne(kks) * abs(ikds) - gzzmne(kka) * abs(ikda) )
+        fzzcs = ( - gzzmno(kks,jquad) *     ikds  + gzzmno(kka,jquad) *     ikda  )
+        fzzsc = ( + gzzmno(kks,jquad) *     ikds  + gzzmno(kka,jquad) *     ikda  )
+        fzzss = ( + gzzmne(kks,jquad) * abs(ikds) - gzzmne(kka,jquad) * abs(ikda) )
       end if !NOTstellsym
 
       do lp2 = 1, lp2_max 
@@ -285,52 +293,79 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
         TlDp = Tl * Dp
         DlTp = Dl * Tp
         DlDp = Dl * Dp 
-
+!$OMP ATOMIC UPDATE
         DToocc( ll1, pp1, ii, jj ) = DToocc( ll1, pp1, ii, jj ) + DlTp * foocc
+!$OMP ATOMIC UPDATE
         TTssss( ll1, pp1, ii, jj ) = TTssss( ll1, pp1, ii, jj ) + TlTp * fssss
+!$OMP ATOMIC UPDATE
         TDstsc( ll1, pp1, ii, jj ) = TDstsc( ll1, pp1, ii, jj ) + TlDp * fstsc
+!$OMP ATOMIC UPDATE
         TDszsc( ll1, pp1, ii, jj ) = TDszsc( ll1, pp1, ii, jj ) + TlDp * fszsc
+!$OMP ATOMIC UPDATE
         DDttcc( ll1, pp1, ii, jj ) = DDttcc( ll1, pp1, ii, jj ) + DlDp * fttcc
+!$OMP ATOMIC UPDATE
         DDtzcc( ll1, pp1, ii, jj ) = DDtzcc( ll1, pp1, ii, jj ) + DlDp * ftzcc
+!$OMP ATOMIC UPDATE
         DDzzcc( ll1, pp1, ii, jj ) = DDzzcc( ll1, pp1, ii, jj ) + DlDp * fzzcc
 
         if (NOTstellsym) then
+!$OMP ATOMIC UPDATE
           DToocs( ll1, pp1, ii, jj ) = DToocs( ll1, pp1, ii, jj ) + DlTp * foocs
+!$OMP ATOMIC UPDATE
           DToosc( ll1, pp1, ii, jj ) = DToosc( ll1, pp1, ii, jj ) + DlTp * foosc
+!$OMP ATOMIC UPDATE
           DTooss( ll1, pp1, ii, jj ) = DTooss( ll1, pp1, ii, jj ) + DlTp * fooss
 
+!$OMP ATOMIC UPDATE
           TTsscc( ll1, pp1, ii, jj ) = TTsscc( ll1, pp1, ii, jj ) + TlTp * fsscc
+!$OMP ATOMIC UPDATE
           TTsscs( ll1, pp1, ii, jj ) = TTsscs( ll1, pp1, ii, jj ) + TlTp * fsscs
+!$OMP ATOMIC UPDATE 
           TTsssc( ll1, pp1, ii, jj ) = TTsssc( ll1, pp1, ii, jj ) + TlTp * fsssc
 
+!$OMP ATOMIC UPDATE
           TDstcc( ll1, pp1, ii, jj ) = TDstcc( ll1, pp1, ii, jj ) + TlDp * fstcc
+!$OMP ATOMIC UPDATE
           TDstcs( ll1, pp1, ii, jj ) = TDstcs( ll1, pp1, ii, jj ) + TlDp * fstcs
+!$OMP ATOMIC UPDATE
           TDstss( ll1, pp1, ii, jj ) = TDstss( ll1, pp1, ii, jj ) + TlDp * fstss
 
+!$OMP ATOMIC UPDATE
           TDszcc( ll1, pp1, ii, jj ) = TDszcc( ll1, pp1, ii, jj ) + TlDp * fszcc
+!$OMP ATOMIC UPDATE
           TDszcs( ll1, pp1, ii, jj ) = TDszcs( ll1, pp1, ii, jj ) + TlDp * fszcs
+!$OMP ATOMIC UPDATE
           TDszss( ll1, pp1, ii, jj ) = TDszss( ll1, pp1, ii, jj ) + TlDp * fszss
 
+!$OMP ATOMIC UPDATE
           DDttcs( ll1, pp1, ii, jj ) = DDttcs( ll1, pp1, ii, jj ) + DlDp * fttcs
+!$OMP ATOMIC UPDATE
           DDttsc( ll1, pp1, ii, jj ) = DDttsc( ll1, pp1, ii, jj ) + DlDp * fttsc
+!$OMP ATOMIC UPDATE
           DDttss( ll1, pp1, ii, jj ) = DDttss( ll1, pp1, ii, jj ) + DlDp * fttss
 
+!$OMP ATOMIC UPDATE
           DDtzcs( ll1, pp1, ii, jj ) = DDtzcs( ll1, pp1, ii, jj ) + DlDp * ftzcs
+!$OMP ATOMIC UPDATE
           DDtzsc( ll1, pp1, ii, jj ) = DDtzsc( ll1, pp1, ii, jj ) + DlDp * ftzsc
+!$OMP ATOMIC UPDATE
           DDtzss( ll1, pp1, ii, jj ) = DDtzss( ll1, pp1, ii, jj ) + DlDp * ftzss
 
+!$OMP ATOMIC UPDATE
           DDzzcs( ll1, pp1, ii, jj ) = DDzzcs( ll1, pp1, ii, jj ) + DlDp * fzzcs
+!$OMP ATOMIC UPDATE
           DDzzsc( ll1, pp1, ii, jj ) = DDzzsc( ll1, pp1, ii, jj ) + DlDp * fzzsc
+ !$OMP ATOMIC UPDATE
           DDzzss( ll1, pp1, ii, jj ) = DDzzss( ll1, pp1, ii, jj ) + DlDp * fzzss
         end if !NOTstellsym
        
       enddo ! end of do lp2; 08 Feb 16;
      
     enddo ! end of do mn2; 08 Feb 16;
-!!$OMP END DO
-!!$OMP END PARALLEL    
+
   enddo ! end of do jquad; ! 16 Jan 13;
-  
+!$OMP END PARALLEL DO
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   DALLOCATE(basis)
   

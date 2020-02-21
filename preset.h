@@ -849,20 +849,20 @@ subroutine preset
 !latex \item These are defined in \link{metrix}, and used in \link{ma00aa}.
 !latex \end{enumerate}
   
-  SALLOCATE( goomne, (0:mne), zero ) ! workspace for Fourier decomposition of metric terms;
-  SALLOCATE( goomno, (0:mne), zero )
-  SALLOCATE( gssmne, (0:mne), zero ) ! workspace for Fourier decomposition of metric terms;
-  SALLOCATE( gssmno, (0:mne), zero )
-  SALLOCATE( gstmne, (0:mne), zero ) ! workspace for Fourier decomposition of metric terms;
-  SALLOCATE( gstmno, (0:mne), zero )
-  SALLOCATE( gszmne, (0:mne), zero ) ! workspace for Fourier decomposition of metric terms;
-  SALLOCATE( gszmno, (0:mne), zero )
-  SALLOCATE( gttmne, (0:mne), zero ) ! workspace for Fourier decomposition of metric terms;
-  SALLOCATE( gttmno, (0:mne), zero )
-  SALLOCATE( gtzmne, (0:mne), zero ) ! workspace for Fourier decomposition of metric terms;
-  SALLOCATE( gtzmno, (0:mne), zero )
-  SALLOCATE( gzzmne, (0:mne), zero ) ! workspace for Fourier decomposition of metric terms;
-  SALLOCATE( gzzmno, (0:mne), zero )
+  SALLOCATE( goomne, (0:mne, maxIquad), zero ) ! workspace for Fourier decomposition of metric terms;
+  SALLOCATE( goomno, (0:mne, maxIquad), zero )
+  SALLOCATE( gssmne, (0:mne, maxIquad), zero ) ! workspace for Fourier decomposition of metric terms;
+  SALLOCATE( gssmno, (0:mne, maxIquad), zero )
+  SALLOCATE( gstmne, (0:mne, maxIquad), zero ) ! workspace for Fourier decomposition of metric terms;
+  SALLOCATE( gstmno, (0:mne, maxIquad), zero )
+  SALLOCATE( gszmne, (0:mne, maxIquad), zero ) ! workspace for Fourier decomposition of metric terms;
+  SALLOCATE( gszmno, (0:mne, maxIquad), zero )
+  SALLOCATE( gttmne, (0:mne, maxIquad), zero ) ! workspace for Fourier decomposition of metric terms;
+  SALLOCATE( gttmno, (0:mne, maxIquad), zero )
+  SALLOCATE( gtzmne, (0:mne, maxIquad), zero ) ! workspace for Fourier decomposition of metric terms;
+  SALLOCATE( gtzmno, (0:mne, maxIquad), zero )
+  SALLOCATE( gzzmne, (0:mne, maxIquad), zero ) ! workspace for Fourier decomposition of metric terms;
+  SALLOCATE( gzzmno, (0:mne, maxIquad), zero )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
