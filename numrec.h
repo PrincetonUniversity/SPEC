@@ -143,12 +143,13 @@ subroutine tfft( Nt, Nz, ijreal, ijimag, mn, im, in, efmn, ofmn, cfmn, sfmn, ifa
   
   LOGICAL :: Lcheck = .false.
   INTEGER :: jj, kk, ithread
-  REAL    :: jireal(1:Nt*Nz), jiimag(1:Nt*Nz), arg, ca, sa
+  !REAL    :: jireal(1:Nt*Nz), jiimag(1:Nt*Nz), arg, ca, sa
+  REAL    :: arg, ca, sa
   COMPLEX(C_DOUBLE_COMPLEX) :: z1, z2, z3
 
   GETTHREAD
-  if( Lcheck ) then ; jireal = ijreal ; jiimag = ijimag
-  endif
+  !if( Lcheck ) then ; jireal = ijreal ; jiimag = ijimag
+  !endif
 
   do jj = 1, Nz ; cplxin(:,jj,ithread) = CMPLX( ijreal((jj-1)*Nt+1:jj*Nt), ijimag((jj-1)*Nt+1:jj*Nt), KIND=C_DOUBLE_COMPLEX )
   enddo
@@ -188,7 +189,7 @@ subroutine tfft( Nt, Nz, ijreal, ijimag, mn, im, in, efmn, ofmn, cfmn, sfmn, ifa
    enddo
   enddo
   
-  write(ounit,'("tfft   : ",10x," : Fourier reconstruction error =",2es15.5," ;")') sqrt(sum((ijreal-jireal)**2)/Ntz), sqrt(sum((ijimag-jiimag)**2)/Ntz)
+  !write(ounit,'("tfft   : ",10x," : Fourier reconstruction error =",2es15.5," ;")') sqrt(sum((ijreal-jireal)**2)/Ntz), sqrt(sum((ijimag-jiimag)**2)/Ntz)
 
   return
 

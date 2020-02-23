@@ -372,6 +372,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
     SALLOCATE( Tzs, (0:lldof,1:mn), zero )
    end if !NOTstellsym
 
+   call intghs_workspace_init(vvol)
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
    dBdX%L = .false. ! first, compute Beltrami fields;
@@ -1105,6 +1107,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
 2000 continue
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+   call intghs_workspace_destroy()
 
    if (NOTMatrixFree .or. LILUprecond) then
     DALLOCATE(DToocc)

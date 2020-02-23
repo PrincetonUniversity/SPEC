@@ -60,7 +60,7 @@ subroutine spsint( lquad, mn, lvol, lrad )
   
   REAL                :: sbar
 
-  REAL, allocatable   :: basis(:,:,:)
+  REAL, allocatable   :: basis(:,:,:,:)
   
   BEGIN( spsint )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -88,21 +88,22 @@ subroutine spsint( lquad, mn, lvol, lrad )
     DDzzss = zero
   endif !NOTstellsym
 
-  SALLOCATE(basis,     (0:lrad,0:mpol,0:1), zero)
+  SALLOCATE(basis,     (0:lrad,0:mpol,0:1,lquad), zero)
+  do jquad = 1, lquad
+    lss = gaussianabscissae(jquad,lvol) ; jthweight = gaussianweight(jquad,lvol)
+    sbar = (lss + one) * half
+    if (Lcoordinatesingularity) then
+      call get_zernike(sbar, lrad, mpol, basis(:,:,0:1,jquad)) ! use Zernike polynomials 29 Jun 19;
+    else
+      call get_cheby(lss, lrad, basis(:,0,0:1,jquad))
+    endif
+  enddo
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
-!$OMP PARALLEL DO PRIVATE(TlTp,TlDp,DlTp,DlDp,Tl,Dl,Tp,Dp,ll1,pp1,ll,pp,lss,jthweight,sbar,basis,goomne,gssmne,gstmne,gszmne,gttmne,gtzmne,gzzmne,foocc,fooss,fsscc,fssss,fstcc,fstss,fszcc,fszss,fttcc,fttss,ftzcc,ftzss,fzzcc,fzzss) SHARED(lquad,lp2_max,lrad)
+!$OMP PARALLEL DO PRIVATE(TlTp,TlDp,DlTp,DlDp,Tl,Dl,Tp,Dp,ll1,pp1,ll,pp,lss,jthweight,sbar,goomne,gssmne,gstmne,gszmne,gttmne,gtzmne,gzzmne,foocc,fooss,fsscc,fssss,fstcc,fstss,fszcc,fszss,fttcc,fttss,ftzcc,ftzss,fzzcc,fzzss) SHARED(lquad,lp2_max,lrad,basis)
   do jquad = 1, lquad ! Gaussian quadrature loop;
     
     lss = gaussianabscissae(jquad,lvol) ; jthweight = gaussianweight(jquad,lvol)
-
-    sbar = (lss + one) * half
-
-    if (Lcoordinatesingularity) then
-      call get_zernike(sbar, lrad, mpol, basis(:,:,0:1)) ! use Zernike polynomials 29 Jun 19;
-    else
-      call get_cheby(lss, lrad, basis(:,0,0:1)) ! use Zernike polynomials 29 Jun 19;
-    endif
 
     ! compute metric
 
@@ -149,11 +150,11 @@ subroutine spsint( lquad, mn, lvol, lrad )
           if (mod(ll+mi,2)/=0) cycle ! zernike only non-zero if ll and ii have the same parity
           if (mod(pp+mi,2)/=0) cycle ! zernike only non-zero if pp and jj have the same parity
 
-          Tl = basis(ll, mi, 0)         ! use Zernike polynomials 29 Jun 19;
-          Dl = basis(ll, mi, 1) * half  ! use Zernike polynomials 29 Jun 19;
+          Tl = basis(ll, mi, 0, jquad)         ! use Zernike polynomials 29 Jun 19;
+          Dl = basis(ll, mi, 1, jquad) * half  ! use Zernike polynomials 29 Jun 19;
 
-          Tp = basis(pp, mi, 0)         ! use Zernike polynomials 29 Jun 19;
-          Dp = basis(pp, mi, 1) * half  ! use Zernike polynomials 29 Jun 19;
+          Tp = basis(pp, mi, 0, jquad)         ! use Zernike polynomials 29 Jun 19;
+          Dp = basis(pp, mi, 1, jquad) * half  ! use Zernike polynomials 29 Jun 19;
 
         else
 
@@ -162,11 +163,11 @@ subroutine spsint( lquad, mn, lvol, lrad )
           ll1 = ll
           pp1 = pp
           
-          Tl = basis(ll, 0, 0) ! Cheby
-          Dl = basis(ll, 0, 1) ! Cheby
+          Tl = basis(ll, 0, 0, jquad) ! Cheby
+          Dl = basis(ll, 0, 1, jquad) ! Cheby
 
-          Tp = basis(pp, 0, 0) ! Cheby
-          Dp = basis(pp, 0, 1) ! Cheby
+          Tp = basis(pp, 0, 0, jquad) ! Cheby
+          Dp = basis(pp, 0, 1, jquad) ! Cheby
 
         end if ! if (Lcoordinatesingularity)
 
