@@ -130,7 +130,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   REAL                :: fzzcc, fzzcs, fzzsc, fzzss
   
   REAL                :: sbar
-  REAL, allocatable   :: basis(:,:,:)
+  REAL, allocatable   :: basis(:,:,:,:)
   
   BEGIN( ma00aa )
   
@@ -185,7 +185,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
     DDzzss = zero
   endif !NOTstellsym
   
-  SALLOCATE(basis, (0:lrad,0:mpol,0:1), zero)
+  SALLOCATE(basis, (0:lrad,0:mpol,0:1,lquad), zero)
 
   if( dBdX%L ) then ; Lcurvature = 3 ; ideriv = 1
   else              ; Lcurvature = 1 ; ideriv = 0
@@ -196,22 +196,26 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   endif
   WCALL( ma00aa, metrix,( lquad, lvol ) ) ! compute metric elements; 16 Jan 13;
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
- !$OMP PARALLEL DO SHARED(lquad,lrad,lvol,mn) PRIVATE(jquad,lss,jthweight,sbar,basis,mn2,ii,jj,kka,kks,ikds,ikda,lp2,ll,pp,ll1,pp1,Tl,Tp,Dl,Dp,TlTP,Tldp,DlTp,DlDp,foocc,fssss,fstsc,fszsc,fttcc,ftzcc,fzzcc,foocs,foosc,fooss,fsscc,fsscs,fsssc,fstcc,fstcs,fstss,fszcc,fszcs,fszss,fttcs,fttsc,fttss,ftzcs,ftzsc,ftzss)
-  do jquad = 1, lquad ! Gaussian quadrature loop;
-    
+  do jquad = 1, lquad
     lss = gaussianabscissae(jquad,lvol) ; jthweight = gaussianweight(jquad,lvol)
     sbar = (lss + one) * half
-    
     if (Lcoordinatesingularity) then
-      call get_zernike(sbar, lrad, mpol, basis(:,:,0:1)) ! use Zernike polynomials 29 Jun 19;
+      call get_zernike(sbar, lrad, mpol, basis(:,:,0:1,jquad)) ! use Zernike polynomials 29 Jun 19;
     else
-      call get_cheby(lss, lrad, basis(:,0,0:1))
+      call get_cheby(lss, lrad, basis(:,0,0:1,jquad))
     endif
+  enddo
 
-    do mn2 = 1, mn2_max
-      ii = mod(mn2-1,mn)+1
-      jj = (mn2-ii) / mn + 1
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!$OMP PARALLEL DO SHARED(lquad,lrad,lvol,mn,basis) PRIVATE(jquad,lss,jthweight,sbar,mn2,ii,jj,kka,kks,ikds,ikda,lp2,ll,pp,ll1,pp1,Tl,Tp,Dl,Dp,TlTP,Tldp,DlTp,DlDp,foocc,fssss,fstsc,fszsc,fttcc,ftzcc,fzzcc,foocs,foosc,fooss,fsscc,fsscs,fsssc,fstcc,fstcs,fstss,fszcc,fszcs,fszss,fttcs,fttsc,fttss,ftzcs,ftzsc,ftzss)
+  do mn2 = 1, mn2_max
+    ii = mod(mn2-1,mn)+1
+    jj = (mn2-ii) / mn + 1
+
+    do jquad = 1, lquad ! Gaussian quadrature loop;
+    
+      lss = gaussianabscissae(jquad,lvol) ; jthweight = gaussianweight(jquad,lvol)
+      sbar = (lss + one) * half
       
       kks = kijs(ii,jj,0) !; kds = kijs(ii,jj,1) 
       kka = kija(ii,jj,0) !; kda = kija(ii,jj,1) 
@@ -270,22 +274,22 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
           if (mod(ll+im(ii),2)/=0) cycle ! zernike only non-zero if ll and ii have the same parity
           if (mod(pp+im(jj),2)/=0) cycle ! zernike only non-zero if pp and jj have the same parity
 
-          Tl = basis(ll, im(ii), 0)         ! use Zernike polynomials 29 Jun 19;
-          Dl = basis(ll, im(ii), 1) * half  ! use Zernike polynomials 29 Jun 19;
+          Tl = basis(ll, im(ii), 0, jquad)         ! use Zernike polynomials 29 Jun 19;
+          Dl = basis(ll, im(ii), 1, jquad) * half  ! use Zernike polynomials 29 Jun 19;
             
-          Tp = basis(pp, im(jj), 0)         ! use Zernike polynomials 29 Jun 19;
-          Dp = basis(pp, im(jj), 1) * half  ! use Zernike polynomials 29 Jun 19;
+          Tp = basis(pp, im(jj), 0, jquad)         ! use Zernike polynomials 29 Jun 19;
+          Dp = basis(pp, im(jj), 1, jquad) * half  ! use Zernike polynomials 29 Jun 19;
         
         else
 
           ll1 = ll
           pp1 = pp
 
-          Tl = basis(ll, 0, 0)
-          Dl = basis(ll, 0, 1)
+          Tl = basis(ll, 0, 0, jquad)
+          Dl = basis(ll, 0, 1, jquad)
             
-          Tp = basis(pp, 0, 0)
-          Dp = basis(pp, 0, 1)
+          Tp = basis(pp, 0, 0, jquad)
+          Dp = basis(pp, 0, 1, jquad)
 
         endif ! Lcoordinatesingularity
 
@@ -293,77 +297,56 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
         TlDp = Tl * Dp
         DlTp = Dl * Tp
         DlDp = Dl * Dp 
-!$OMP ATOMIC UPDATE
+
         DToocc( ll1, pp1, ii, jj ) = DToocc( ll1, pp1, ii, jj ) + DlTp * foocc
-!$OMP ATOMIC UPDATE
         TTssss( ll1, pp1, ii, jj ) = TTssss( ll1, pp1, ii, jj ) + TlTp * fssss
-!$OMP ATOMIC UPDATE
         TDstsc( ll1, pp1, ii, jj ) = TDstsc( ll1, pp1, ii, jj ) + TlDp * fstsc
-!$OMP ATOMIC UPDATE
         TDszsc( ll1, pp1, ii, jj ) = TDszsc( ll1, pp1, ii, jj ) + TlDp * fszsc
-!$OMP ATOMIC UPDATE
         DDttcc( ll1, pp1, ii, jj ) = DDttcc( ll1, pp1, ii, jj ) + DlDp * fttcc
-!$OMP ATOMIC UPDATE
         DDtzcc( ll1, pp1, ii, jj ) = DDtzcc( ll1, pp1, ii, jj ) + DlDp * ftzcc
-!$OMP ATOMIC UPDATE
         DDzzcc( ll1, pp1, ii, jj ) = DDzzcc( ll1, pp1, ii, jj ) + DlDp * fzzcc
 
         if (NOTstellsym) then
-!$OMP ATOMIC UPDATE
+
           DToocs( ll1, pp1, ii, jj ) = DToocs( ll1, pp1, ii, jj ) + DlTp * foocs
-!$OMP ATOMIC UPDATE
           DToosc( ll1, pp1, ii, jj ) = DToosc( ll1, pp1, ii, jj ) + DlTp * foosc
-!$OMP ATOMIC UPDATE
           DTooss( ll1, pp1, ii, jj ) = DTooss( ll1, pp1, ii, jj ) + DlTp * fooss
 
-!$OMP ATOMIC UPDATE
+
           TTsscc( ll1, pp1, ii, jj ) = TTsscc( ll1, pp1, ii, jj ) + TlTp * fsscc
-!$OMP ATOMIC UPDATE
           TTsscs( ll1, pp1, ii, jj ) = TTsscs( ll1, pp1, ii, jj ) + TlTp * fsscs
-!$OMP ATOMIC UPDATE 
           TTsssc( ll1, pp1, ii, jj ) = TTsssc( ll1, pp1, ii, jj ) + TlTp * fsssc
 
-!$OMP ATOMIC UPDATE
           TDstcc( ll1, pp1, ii, jj ) = TDstcc( ll1, pp1, ii, jj ) + TlDp * fstcc
-!$OMP ATOMIC UPDATE
           TDstcs( ll1, pp1, ii, jj ) = TDstcs( ll1, pp1, ii, jj ) + TlDp * fstcs
-!$OMP ATOMIC UPDATE
           TDstss( ll1, pp1, ii, jj ) = TDstss( ll1, pp1, ii, jj ) + TlDp * fstss
 
-!$OMP ATOMIC UPDATE
+
           TDszcc( ll1, pp1, ii, jj ) = TDszcc( ll1, pp1, ii, jj ) + TlDp * fszcc
-!$OMP ATOMIC UPDATE
           TDszcs( ll1, pp1, ii, jj ) = TDszcs( ll1, pp1, ii, jj ) + TlDp * fszcs
-!$OMP ATOMIC UPDATE
           TDszss( ll1, pp1, ii, jj ) = TDszss( ll1, pp1, ii, jj ) + TlDp * fszss
 
-!$OMP ATOMIC UPDATE
+
           DDttcs( ll1, pp1, ii, jj ) = DDttcs( ll1, pp1, ii, jj ) + DlDp * fttcs
-!$OMP ATOMIC UPDATE
           DDttsc( ll1, pp1, ii, jj ) = DDttsc( ll1, pp1, ii, jj ) + DlDp * fttsc
-!$OMP ATOMIC UPDATE
           DDttss( ll1, pp1, ii, jj ) = DDttss( ll1, pp1, ii, jj ) + DlDp * fttss
 
-!$OMP ATOMIC UPDATE
+
           DDtzcs( ll1, pp1, ii, jj ) = DDtzcs( ll1, pp1, ii, jj ) + DlDp * ftzcs
-!$OMP ATOMIC UPDATE
           DDtzsc( ll1, pp1, ii, jj ) = DDtzsc( ll1, pp1, ii, jj ) + DlDp * ftzsc
-!$OMP ATOMIC UPDATE
           DDtzss( ll1, pp1, ii, jj ) = DDtzss( ll1, pp1, ii, jj ) + DlDp * ftzss
 
-!$OMP ATOMIC UPDATE
+
           DDzzcs( ll1, pp1, ii, jj ) = DDzzcs( ll1, pp1, ii, jj ) + DlDp * fzzcs
-!$OMP ATOMIC UPDATE
           DDzzsc( ll1, pp1, ii, jj ) = DDzzsc( ll1, pp1, ii, jj ) + DlDp * fzzsc
- !$OMP ATOMIC UPDATE
           DDzzss( ll1, pp1, ii, jj ) = DDzzss( ll1, pp1, ii, jj ) + DlDp * fzzss
         end if !NOTstellsym
        
       enddo ! end of do lp2; 08 Feb 16;
      
-    enddo ! end of do mn2; 08 Feb 16;
+    enddo ! end of do jquad
 
-  enddo ! end of do jquad; ! 16 Jan 13;
+  enddo ! end of do mn
 !$OMP END PARALLEL DO
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
