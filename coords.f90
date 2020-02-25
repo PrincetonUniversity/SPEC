@@ -617,10 +617,12 @@ Nt, Nz, Rij(1:Ntz,3,3), Zij(1:Ntz,3,3) ) ! maps to real space;
     do ii = 1, 3 ! careful: ii was used with a different definition above; 13 Sep 13;
      do jj = ii, 3
       if( irz.eq.0 ) dguvij(1:Ntz,ii,jj) = Dij(1:Ntz,ii) * Rij(1:Ntz,jj,0) + Rij(1:Ntz,ii,0) * Dij(1:Ntz,jj)
-      if( irz.eq.1 ) dguvij(1:Ntz,ii,jj) = Dij(1:Ntz,ii) * Zij(1:Ntz,jj,0) + Zij(1:Ntz,ii,0) * Dij(1:Ntz,jj)
+      if( irz.eq.1 ) then
+         FATAL(coords, .true., No Z-geometrical degree of freedom when Igeometry=2)!dguvij(1:Ntz,ii,jj) = Dij(1:Ntz,ii) * Zij(1:Ntz,jj,0) + Zij(1:Ntz,ii,0) * Dij(1:Ntz,jj) ! TODO REMOVE
+      endif
      enddo
     enddo
-    
+
     dguvij(1:Ntz,2,2) = dguvij(1:Ntz,2,2) + two * Dij(1:Ntz,0) * Rij(1:Ntz,0,0)
    !dguvij(1:Ntz,3,3) = additional term is unity;
 
@@ -648,6 +650,11 @@ Nt, Nz, Rij(1:Ntz,3,3), Zij(1:Ntz,3,3) ) ! maps to real space;
     
    end select ! end of select case( Igeometry );  7 Mar 13; 
    
+
+
+
+
+
    do ii = 2, 3
     do jj = 1, ii-1 ; dguvij(1:Ntz,ii,jj) = dguvij(1:Ntz,jj,ii) ! symmetry of metrics; 13 Sep 13;
     enddo

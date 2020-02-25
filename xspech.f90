@@ -327,7 +327,7 @@ program xspech
 ! vvol = Mvol ; ideriv = 0 ; ii = 1
 ! write(ounit,'("xspech : ", 10x ," : sum(Ate(",i3,",",i2,",",i2,")%s) =",99es23.15)') vvol, ideriv, ii, sum(Ate(vvol,ideriv,ii)%s(0:Lrad(vvol)))
   
-  WCALL( xspech, dforce, ( NGdof, position(0:NGdof), gradient(0:NGdof), LComputeDerivatives, .false. ) ) ! (re-)calculate Beltrami fields;
+  WCALL( xspech, dforce, ( NGdof, position(0:NGdof), gradient(0:NGdof), LComputeDerivatives) ) ! (re-)calculate Beltrami fields;
   
   DALLOCATE(gradient)
   

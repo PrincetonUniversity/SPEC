@@ -85,7 +85,7 @@ subroutine newton( NGdof, position, ihybrd )
   REAL   , intent(inout) :: position(0:NGdof)
   INTEGER, intent(out)   :: ihybrd
   
-  LOGICAL                :: LComputeDerivatives, Lonlysolution
+  LOGICAL                :: LComputeDerivatives
   INTEGER                :: wflag, iflag, idof, jdof, ijdof, ireadhessian, igdof, lvol, ii, imn
   REAL                   :: rflag
   CHARACTER              :: pack
@@ -146,8 +146,7 @@ subroutine newton( NGdof, position, ihybrd )
   if( Lexit ) then ! will call initial force, and if ForceErr.lt.forcetol will immediately exit; 
 
    LComputeDerivatives= .false.
-   Lonlysolution = .false.
-   WCALL( newton, dforce, ( NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives, Lonlysolution ) ) ! calculate the force-imbalance;
+   WCALL( newton, dforce, ( NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives) ) ! calculate the force-imbalance;
    
    if( myid.eq.0 ) then ! screen output; 
     cput = GETTIME
@@ -486,8 +485,7 @@ subroutine fcn1( NGdof, xx, fvec, irevcm )
     nFcalls = nFcalls + 1
     
     LComputeDerivatives = .false.
-	Lonlysolution = .false.
-    WCALL( newton, dforce, ( NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives, Lonlysolution ) ) ! calculate the force-imbalance;
+    WCALL( newton, dforce, ( NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives ) ) ! calculate the force-imbalance;
 
     fvec(1:NGdof) = force(1:NGdof)
 
@@ -609,8 +607,7 @@ subroutine fcn2( NGdof, xx, fvec, fjac, Ldfjac, irevcm )
     nFcalls = nFcalls + 1
     
     LComputeDerivatives = .false.
-	Lonlysolution = .false.
-    WCALL( newton, dforce, ( NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives, Lonlysolution ) ) ! calculate the force-imbalance;
+    WCALL( newton, dforce, ( NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives ) ) ! calculate the force-imbalance;
 
     fvec(1:NGdof) = force(1:NGdof)
 
@@ -643,8 +640,7 @@ subroutine fcn2( NGdof, xx, fvec, fjac, Ldfjac, irevcm )
     if( ireadhessian.eq.0 ) then
      
      LComputeDerivatives = .true.
-	 Lonlysolution = .false.
-     WCALL( newton, dforce, ( NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives, Lonlysolution ) ) ! calculate the force-imbalance;
+     WCALL( newton, dforce, ( NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives ) ) ! calculate the force-imbalance;
 
 #ifdef DEBUG
      FATAL( newton, Lcheck.eq.4, derivatives of Beltrami field have been computed )

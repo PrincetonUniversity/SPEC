@@ -287,8 +287,8 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 
      select case( ideriv )
      case( 0 )    ; rhs(1:NN,0) = - dMG(ind_matrix)%arr(1:NN) - matmul( dMB(ind_matrix)%mat(1:NN,1:2), dpsi(1:2) ) ! perhaps there is an lmu term missing here;
-     case( 1 )    ; rhs(1:NN,1) =             - matmul( dMB(ind_matrix)%mat(1:NN,1:2), tpsi(1:2) ) ! perhaps there is an lmu term missing here;
-      ;           ; rhs(1:NN,2) =             - matmul( dMB(ind_matrix)%mat(1:NN,1:2), ppsi(1:2) ) ! perhaps there is an lmu term missing here;
+     case( 1 )    ; rhs(1:NN,1) =                             - matmul( dMB(ind_matrix)%mat(1:NN,1:2), tpsi(1:2) ) ! perhaps there is an lmu term missing here;
+      ;           ; rhs(1:NN,2) =                             - matmul( dMB(ind_matrix)%mat(1:NN,1:2), ppsi(1:2) ) ! perhaps there is an lmu term missing here;
      end select
 #endif
 

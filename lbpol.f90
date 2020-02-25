@@ -38,7 +38,7 @@ subroutine lbpol(lvol, ideriv)
                         Btemn, Bzemn, Btomn, Bzomn, &
                         Nt, Nz, &
                         regumm, &
-                        cpus, myid
+                        cpus, myid, dBdX
 
   use inputlist, only : Lrad, Wlbpol, Igeometry
 
@@ -68,9 +68,7 @@ subroutine lbpol(lvol, ideriv)
 
   BEGIN(lbpol)
 
-! First get the metric component and jacobian
 
-  Lcurvature = 1
 
 ! innout=0 -> inner boundary of volume (s=-1) and innout=1 -> outer boundary (s=1)
 
@@ -79,18 +77,20 @@ subroutine lbpol(lvol, ideriv)
 
   lss = two * innout - one
   
-  if((lvol==1) .and. (Igeometry/=1)) then ; Lcoordinatesingularity = .true.;
-  else; Lcoordinatesingularity = .false.;
-  endif
+!  if((lvol==1) .and. (Igeometry/=1)) then ; Lcoordinatesingularity = .true.;
+!  else; Lcoordinatesingularity = .false.;
+!  endif
 
 	if( Lcoordinatesingularity .and. innout.EQ.0) then
-	  goto 5555; ! No need to compute at the singularity (and crash with debug...)
+	  goto 5555; ! No need to compute at the singularity
 	endif
 
     if( lvol.eq.Mvol .and. innout.eq.1) then
 	  goto 5555;
     endif
 
+! First get the metric component and jacobian
+  Lcurvature = 1
   WCALL( lbpol, coords, (lvol, lss, Lcurvature, Ntz, mn ) ) ! get guvij and sg
   
 
@@ -107,25 +107,26 @@ subroutine lbpol(lvol, ideriv)
    else                              ; mfactor = zero
    endif
    
-   do ll = 0, Lrad(lvol) ! loop over Chebyshev polynomials; Lrad is the radial resolution;
-   ! Note that the minus sine is included at line 122-123
+   do ll = 0, Lrad(lvol) ! loop over Chebyshev polynomials; Lrad is the radial resolution
       ;                      ; efmn(ii) = efmn(ii) + Ate(lvol,ideriv,ii)%s(ll) * ( TT(ll,innout,1) + mfactor ) ! B^\t;
-      ;                      ; cfmn(ii) = cfmn(ii) + Aze(lvol,ideriv,ii)%s(ll) * ( TT(ll,innout,1) + mfactor ) ! B^\z;
+      ;                      ; cfmn(ii) = cfmn(ii) - Aze(lvol,ideriv,ii)%s(ll) * ( TT(ll,innout,1) + mfactor ) ! B^\z;
       if( NOTstellsym ) then ; ofmn(ii) = ofmn(ii) + Ato(lvol,ideriv,ii)%s(ll) * ( TT(ll,innout,1) + mfactor )
-        ;                    ; sfmn(ii) = sfmn(ii) + Azo(lvol,ideriv,ii)%s(ll) * ( TT(ll,innout,1) + mfactor )
+        ;                    ; sfmn(ii) = sfmn(ii) - Azo(lvol,ideriv,ii)%s(ll) * ( TT(ll,innout,1) + mfactor )
       endif
     enddo ! end of do ll;
   enddo ! end of do ii; 
 
   ! Inverse Fourier transform to map to real space
-  call invfft( mn, im, in, efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt(1:Ntz), dAz(1:Ntz) ) ! get covariant component of dA / contravariant of B
+  call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt(1:Ntz), dAz(1:Ntz) ) ! get covariant component of dA / contravariant of B
 
   ! Construct covariant Fourier components of B
-  Bt(1:Ntz) = ( - dAz(1:Ntz ) * guvij(1:Ntz,2,2, 0) + dAt(1:Ntz ) * guvij(1:Ntz,2,3, 0) )
-  Bz(1:Ntz) = ( - dAz(1:Ntz ) * guvij(1:Ntz,2,3, 0) + dAt(1:Ntz ) * guvij(1:Ntz,3,3, 0) )
+  Bt(1:Ntz) = ( dAz(1:Ntz ) * guvij(1:Ntz,2,2, 0) + dAt(1:Ntz ) * guvij(1:Ntz,2,3, 0) )/ sg(1:Ntz,0)
+  Bz(1:Ntz) = ( dAz(1:Ntz ) * guvij(1:Ntz,2,3, 0) + dAt(1:Ntz ) * guvij(1:Ntz,3,3, 0) )/ sg(1:Ntz,0)
 
-  if( ideriv.eq.-1) then ! need to take into account derivatives of metric elements
-   
+  select case ( ideriv ) ! need to take into account derivatives of metric elements
+  case(-1)
+    dBdX%innout = innout
+
     efmn(1:mn) = zero ; ofmn(1:mn) = zero ; cfmn(1:mn) = zero ; sfmn(1:mn) = zero
     do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over Fourier harmonics;
     
@@ -138,9 +139,9 @@ subroutine lbpol(lvol, ideriv)
         do ll = 0, Lrad(lvol) ! loop over Chebyshev polynomials; Lrad is the radial resolution;
           ! Note that the minus sine is included at line 122-123
           ;                      ; efmn(ii) = efmn(ii) + Ate(lvol,0,ii)%s(ll) * ( TT(ll,innout,1) + mfactor ) ! B^\t;
-          ;                      ; cfmn(ii) = cfmn(ii) + Aze(lvol,0,ii)%s(ll) * ( TT(ll,innout,1) + mfactor ) ! B^\z;
+          ;                      ; cfmn(ii) = cfmn(ii) - Aze(lvol,0,ii)%s(ll) * ( TT(ll,innout,1) + mfactor ) ! B^\z;
           if( NOTstellsym ) then ; ofmn(ii) = ofmn(ii) + Ato(lvol,0,ii)%s(ll) * ( TT(ll,innout,1) + mfactor )
-            ;                    ; sfmn(ii) = sfmn(ii) + Azo(lvol,0,ii)%s(ll) * ( TT(ll,innout,1) + mfactor )
+            ;                    ; sfmn(ii) = sfmn(ii) - Azo(lvol,0,ii)%s(ll) * ( TT(ll,innout,1) + mfactor )
           endif
         enddo ! end of do ll;
       enddo ! end of do ii; 
@@ -151,15 +152,15 @@ subroutine lbpol(lvol, ideriv)
     Lcurvature = 5
     WCALL( lbpol, coords, (lvol, lss, Lcurvature, Ntz, mn ) ) ! get guvij and sg
 
-    Bt(1:Ntz) = Bt(1:Ntz) + ( - dAz0(1:Ntz ) * guvij(1:Ntz,2,2, 0) + dAt0(1:Ntz ) * guvij(1:Ntz,2,3, 0) )
-    Bz(1:Ntz) = Bz(1:Ntz) + ( - dAz0(1:Ntz ) * guvij(1:Ntz,2,3, 0) + dAt0(1:Ntz ) * guvij(1:Ntz,3,3, 0) ) 
+    Bt(1:Ntz) = Bt(1:Ntz) + ( dAz0(1:Ntz ) * guvij(1:Ntz,2,2, 1) + dAt0(1:Ntz ) * guvij(1:Ntz,2,3, 1) ) ! Add metric derivatives
+    Bz(1:Ntz) = Bz(1:Ntz) + ( dAz0(1:Ntz ) * guvij(1:Ntz,2,3, 1) + dAt0(1:Ntz ) * guvij(1:Ntz,3,3, 1) ) 
 
-  else
+  case(2)
+    
+    Bt(1:Ntz) = Bt(1:Ntz) / pi2 ! Due to normalization of poloidal flux
+    Bz(1:Ntz) = Bz(1:Ntz) / pi2
 
-    Bt(1:Ntz) = Bt(1:Ntz) / sg(1:Ntz,0)
-    Bz(1:Ntz) = Bz(1:Ntz) / sg(1:Ntz,0)
-
-  endif ! matches if ideriv.eq.-1
+  end select ! matches if ideriv.eq.-1
 
 ! Fourier transform, map to Fourier space
   ifail = 0
@@ -170,7 +171,7 @@ subroutine lbpol(lvol, ideriv)
   enddo ! end of do innout;
 
 
-! Now Btemn(1, 0, vvol) and Btemn(1, 1, vvol) contain Bet00(s=-1) and Bet00(s=1) for each volume vvol.
+! Now Btemn(1, 0, vvol) and Btemn(1, 1, vvol) contain Bte00(s=-1) and Bte00(s=1) for each volume vvol.
 
 
   RETURN(lbpol)

@@ -91,7 +91,7 @@ subroutine dfp200( LcomputeDerivatives, vvol)
                         DDzzcc, DDzzcs, DDzzsc, DDzzss, &
                         dRodR, dRodZ, dZodR, dZodZ, &
                         LocalConstraint, &
-						IsMyVolume, IsMyVolumeValue, IndMatrixArray
+						IsMyVolume, IsMyVolumeValue, IndMatrixArray, Btemn
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -406,6 +406,15 @@ else ! CASE SEMI GLOBAL CONSTRAINT
 ! Then the perturbed solution is evaluated on volumes sharing the interface vvol (volume vvol and vvol+1).
 ! i.e. relevant routines are run with lvol=vvol, innout=1 and lvol=vvol+1, innout=0
 
+		! Allocate memory
+		SALLOCATE( dBB       , (1:Ntz,-1:2), zero ) ! magnetic field strength (on interfaces) in real space and derivatives;
+		SALLOCATE( dRR       , (1:Ntz,-1:1), zero )
+		SALLOCATE( dZZ       , (1:Ntz,-1:1), zero )
+		SALLOCATE( dII       , (1:Ntz     ), zero ) ! spectral constraint;
+		SALLOCATE( dLL       , (1:Ntz     ), zero ) ! length   constraint;
+		SALLOCATE( dPP       , (1:Ntz     ), zero ) ! poloidal constraint;
+		SALLOCATE( constraint, (1:Ntz     ), zero )
+
 		do vvol = 1, Mvol-1 !degree of freedom; local to interface; labels which interface is perturbed
 		dBdX%vol = vvol
 
@@ -426,6 +435,11 @@ else ! CASE SEMI GLOBAL CONSTRAINT
 #ifdef DEBUG
 					FATAL( dfp200, idof.gt.LGdof, illegal degree-of-freedom index constructing derivatives ) ! this can be deleted;
 #endif
+
+					do lvol=1,Mvol
+						WCALL(dfp200, lbpol, (lvol, 0))
+					enddo
+
 
 					do lvol = vvol, vvol+1
 					  do innout = 0, 1 ! loop over deformations to inner and outer interface; inside do vvol; inside do ii; inside do irz;
@@ -558,13 +572,13 @@ else ! CASE SEMI GLOBAL CONSTRAINT
 						call evaluate_dmupfdx(vvol, 1, idof, ii, issym, irz)
 
 
-						do lvol = 1, Mvol
+						do lvol = vvol, vvol+1
  						  do innout = 0, 1
-							if( vvol.eq.1    .and. innout.eq.0 ) cycle ! no degrees of freedom at coordinate axis / fixed inner boundary;
-							if( vvol.eq.Mvol .and. innout.eq.1 ) cycle ! no degress of freedom                      fixed outer boundary; for linearized displacement;
+							if( lvol.eq.1    .and. innout.eq.0 ) cycle ! no degrees of freedom at coordinate axis / fixed inner boundary;
+							if( lvol.eq.Mvol .and. innout.eq.1 ) cycle ! no degress of freedom                      fixed outer boundary; for linearized displacement;
 							dBdx%innout = innout
 
-							WCALL(dfp200, IsMyVolume, (vvol))
+							WCALL(dfp200, IsMyVolume, (lvol))
 
 							if( IsMyVolumeValue .EQ. 0 ) then
 								cycle
@@ -573,36 +587,15 @@ else ! CASE SEMI GLOBAL CONSTRAINT
 							endif
 										
 								
-							LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
+							LREGION(lvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
 						   
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-							! Allocate memory
-							SALLOCATE( dBB       , (1:Ntz,-1:2), zero ) ! magnetic field strength (on interfaces) in real space and derivatives;
-							SALLOCATE( dRR       , (1:Ntz,-1:1), zero )
-							SALLOCATE( dZZ       , (1:Ntz,-1:1), zero )
-							SALLOCATE( dII       , (1:Ntz     ), zero ) ! spectral constraint;
-							SALLOCATE( dLL       , (1:Ntz     ), zero ) ! length   constraint;
-							SALLOCATE( dPP       , (1:Ntz     ), zero ) ! poloidal constraint;
-							SALLOCATE( constraint, (1:Ntz     ), zero )
-
-						
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 
 							! EVALUATE dBB
-							call evaluate_dBB(vvol, idof, innout, issym, irz, ii, dAt, dAz, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
+							call evaluate_dBB(lvol, idof, innout, issym, irz, ii, dAt, dAz, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-
 									
-								
-						  	! Free memory
-							DALLOCATE(dRR)
-							DALLOCATE(dZZ)
-							DALLOCATE(dII)
-							DALLOCATE(dLL)
-							DALLOCATE(dPP)
-							DALLOCATE(constraint)
-							DALLOCATE(dBB)
 
 						enddo ! matches do lvol = vvol, vvol+1
 					enddo ! matches do innout;
@@ -610,15 +603,25 @@ else ! CASE SEMI GLOBAL CONSTRAINT
 			enddo ! matches do irz;
 		enddo ! matches do ii;
     enddo ! matches do vvol;
+								
+	! Free memory
+	DALLOCATE(dRR)
+	DALLOCATE(dZZ)
+	DALLOCATE(dII)
+	DALLOCATE(dLL)
+	DALLOCATE(dPP)
+	DALLOCATE(constraint)
+	DALLOCATE(dBB)
 
-		dBdX%L = .false. ! probably not needed, but included anyway;
+	dBdX%L = .false. ! probably not needed, but included anyway;
+
 	endif ! End of if( LComputeDerivatives ) 
 
-	DALLOCATE(dAt)
-	DALLOCATE(dAz)
-	DALLOCATE( XX) ! spectral constraints; not used;
-	DALLOCATE( YY)
-	DALLOCATE(length)
+DALLOCATE(dAt)
+DALLOCATE(dAz)
+DALLOCATE( XX) ! spectral constraints; not used;
+DALLOCATE( YY)
+DALLOCATE(length)
 
 
 endif ! End of if( LocalConstraint )
@@ -676,7 +679,7 @@ subroutine get_inverse_beltrami_matrices(vvol, oBI, NN)
   LOCALS
 ! ------
 
-INTEGER 			:: lastcpu, NN, ind_matrix, vvol, IA
+INTEGER 			:: lastcpu, NN, ind_matrix, vvol, IA, MM, LDA, Lwork
 INTEGER 			:: idgetrf, idgetri
 REAL, allocatable   :: ipivot(:), work(:)
 REAL	 			:: oBI(1:NN, 1:NN)
@@ -692,11 +695,12 @@ REAL	 			:: oBI(1:NN, 1:NN)
 		dMA(ind_matrix)%mat(  NN  ,1:NN) = zero
 		dMD(ind_matrix)%mat(1:NN  ,1:NN) = dMA(ind_matrix)%mat(0:NN-1,1:NN) ! copy of original matrix; this is used below;
 
-		IA = NN + 1
-
-		SALLOCATE( ipivot, (1:NN), 0 )
-
-		idgetrf = 1 ; call DGETRF( NN, NN, dMA(ind_matrix)%mat(0:NN-1,1:NN), NN, ipivot(1:NN), idgetrf ) !LU decomposition
+    
+        IA = NN + 1
+        MM = NN ; LDA = NN ; Lwork = NN
+        SALLOCATE( ipivot, (1:NN), 0 )
+    
+        idgetrf = 1 ; call DGETRF( MM, NN, dMA(ind_matrix)%mat(0:LDA-1,1:NN), LDA, ipivot(1:NN), idgetrf ) !LU decomposition
 
 		cput = GETTIME
 		select case( idgetrf ) !                                                                     0123456789012345678
@@ -711,7 +715,7 @@ REAL	 			:: oBI(1:NN, 1:NN)
 		SALLOCATE( work, (1:NN), zero )
 
 		! inverse of MA using the LU decomposition of DGETRF
-		idgetri = 1 ; call DGETRI( NN, dMA(ind_matrix)%mat(0:NN-1,1:NN), NN, ipivot(1:NN), work(1:NN), NN, idgetri ) 
+		idgetri = 1 ; call DGETRI( NN, dMA(ind_matrix)%mat(0:LDA-1,1:NN), LDA, ipivot(1:NN), work(1:Lwork), Lwork, idgetri ) 
 
 		DALLOCATE(work)
 		DALLOCATE(ipivot)
@@ -726,7 +730,7 @@ REAL	 			:: oBI(1:NN, 1:NN)
 
 1011 format("dfp200 : ",f10.2," : myid=",i3," ; vvol=",i3," ; called DGETRI ; time=",f10.2,"s ; inverse of Beltrami matrix; idgetrf=",i2," ; ",a18)
 
-		oBI(1:NN,1:NN) = dMA(ind_matrix)%mat(0:NN-1,1:NN)
+		oBI(1:NN,1:NN) = dMA(ind_matrix)%mat(0:LDA-1,1:NN)
 
 end subroutine get_inverse_beltrami_matrices
 
@@ -951,25 +955,23 @@ subroutine evaluate_dmupfdx(vvol, innout, idof, ii, issym, irz)
 			enddo
 			dBdmpf(Mvol-1,Mvol-1) = Btemn(1, 0, Mvol)
 
+
+#ifdef DEBUG
+			do pvol=1,Mvol
+                LREGION(pvol)
+				WCALL(dfp200, lbpol, (pvol, 0))
+			enddo
+			Btemn_debug(1:mn, 0:1, 1:Mvol,  0) = Btemn(1:mn, 0:1, 1:Mvol)
+#endif
+
 			! RHS coefficients evaluation
 			do pvol = vvol, vvol+1
 				LREGION(pvol)
-				if( pvol.eq.vvol ) then
-                    dBdX%innout = 1
-                else
-                    dBdX%innout = 0
-                endif
-
 				WCALL(dfp200, lbpol, (pvol, -1)) ! derivate w.r.t geometry
 			enddo
 
 #ifdef DEBUG
 			Btemn_debug(1:mn, 0:1, 1:Mvol, -1) = Btemn(1:mn, 0:1, 1:Mvol)
-
-			do pvol=1,Mvol-1
-				WCALL(dfp200, lbpol, (pvol, 0))
-			enddo
-			Btemn_debug(1:mn, 0:1, 1:Mvol,  0) = Btemn(1:mn, 0:1, 1:Mvol)
 #endif
 
 			dBdx2(1:Mvol-1) = zero
@@ -1065,13 +1067,6 @@ subroutine evaluate_dmupfdx(vvol, innout, idof, ii, issym, irz)
 				if( issym.eq.1 .and. irz.eq.1 ) iZbc(ii,vvol) = iZbc(ii,vvol) + dRZ * isymdiff ! perturb geometry;
 			endif
 
-			! Call dforce again but only for the field solver
-			!packorunpack = 'P'
-			!WCALL( dfp200, packxi, ( NGdof, position, Mvol, mn, iRbc, iZbs, iRbs, iZbc, packorunpack ) )
-
-			!LcomputeDerivatives = .false.
-			!Lonlysolution = .true.
-			!WCALL( dfp200, dforce, ( NGdof, position, force, LComputeDerivatives, Lonlysolution ))
 
 			do pvol = 1,Mvol
 
@@ -1168,29 +1163,36 @@ subroutine evaluate_dmupfdx(vvol, innout, idof, ii, issym, irz)
 				SALLOCATE(fjac, (1:ldfjac,1:Mvol-1), 0)
 				SALLOCATE(r_deb, (1:lr), 0)
 
+                ! TODO PROBLEM WITH MPI - not important, this is only for debug
 				! Hybrid-Powell method, iterates on all poloidal fluxes to match the global constraint
-				WCALL( dfp200,  hybrd1, (dfp100, Ndofgl, Xdof(1:Ndofgl), Fvec(1:Ndofgl), mupftol, maxfev, ml, muhybr, epsfcn, diag(1:Ndofgl), mode, &
+				WCALL( dfp200,  hybrd, (dfp100, Ndofgl, Xdof(1:Ndofgl), Fvec(1:Ndofgl), mupftol, maxfev, ml, muhybr, epsfcn, diag(1:Ndofgl), mode, &
 						  factor, nprint, ihybrd1, nfev, fjac(1:Ndofgl,1:Ndofgl), ldfjac, r_deb(1:lr), lr, qtf(1:Ndofgl), wa1(1:Ndofgl), &
 						  wa2(1:Ndofgl), wa3(1:Ndofgl), wa4(1:Ndofgl)) ) 
+				dpflux(2:Mvol) = Xdof(1:Ndofgl) - xoffset
+		        Xdof(1:Mvol-1) = dpflux(2:Mvol) + xoffset
+                WCALL( dfp200, dfp100, (Ndofgl, Xdof(1:Ndofgl), Fvec(1:Ndofgl), 6) )
 
 				DALLOCATE(fjac)
 				DALLOCATE(r_deb)
 
-				dpflux(2:Mvol) = Xdof(1:Ndofgl) - xoffset
 			endif
 
 
-			LREGION(vvol)
-			ll = Lrad(vvol)		! shorthand
-			NN = NAdof(vvol) 	! shorthand;
 
 
 			if( LocalConstraint ) then
+                LREGION(vvol)
+                ll = Lrad(vvol)		! shorthand
+			    NN = NAdof(vvol) 	! shorthand;
+
 				if( Lplasmaregion ) then
 					imupf_local(1:2,isymdiff) = (/     mu(vvol), dpflux(vvol) /) ! mu     and dpflux are computed for the perturbed geometry by ma02aa/mp00ac if Lconstraint=1;
 				else ! if( Lvacuumregion ) ;
 					imupf_local(1:2,isymdiff) = (/ dtflux(vvol), dpflux(vvol) /) ! dtflux and dpflux are computed for the perturbed geometry by ma02aa/mp00ac if Lconstraint=1;
 				endif
+			
+                isolution(1:NN,isymdiff) = solution(vvol)%mat(1:NN,0) ! solution is computed in mp00ac, which is called by ma02aa;
+
 			else
 				if( Lplasmaregion ) then
 					imupf_global(1:Mvol,1,isymdiff) = (/  mu(1:Mvol)     /) ! mu     is computed for the perturbed geometry by ma02aa/mp00ac
@@ -1199,25 +1201,28 @@ subroutine evaluate_dmupfdx(vvol, innout, idof, ii, issym, irz)
 					imupf_global(1:Mvol,1,isymdiff) = (/ dtflux(1:Mvol) /) ! dtflux is computed for the perturbed geometry by ma02aa/mp00ac 
 					imupf_global(1:Mvol,2,isymdiff) = (/ dpflux(1:Mvol) /) ! dpflux is computed for the perturbed geometry by ma02aa/mp00ac 
 				endif
-			endif
-				
-			isolution(1:NN,isymdiff) = solution(vvol)%mat(1:NN,0) ! solution is computed in mp00ac, which is called by ma02aa;
 
+			endif
 		enddo ! end of do isymdiff;
 
 
-		isolution(1:NN,0) = ( - 1 * isolution(1:NN, 2) + 8 * isolution(1:NN, 1) - 8 * isolution(1:NN,-1) + 1 * isolution(1:NN,-2) ) / ( 12 * dRZ )
+        ! Evaluate derivatives using finite differences
 		if( LocalConstraint ) then
-			imupf_local(1:2,0)      = ( - 1 * imupf_local(1:2, 2)      + 8 * imupf_local(1:2, 1)      - 8 * imupf_local(1:2,-1)      + 1 * imupf_local(1:2,-2)      ) / ( 12 * dRZ )
+		    isolution(1:NN,0) = ( - 1 * isolution(1:NN, 2) + 8 * isolution(1:NN, 1)&
+                                  - 8 * isolution(1:NN,-1) + 1 * isolution(1:NN,-2)   ) / ( 12 * dRZ )
+			imupf_local(1:2,0)      = ( - 1 * imupf_local(1:2, 2)  + 8 * imupf_local(1:2, 1)&
+                                        - 8 * imupf_local(1:2,-1)  + 1 * imupf_local(1:2,-2)   ) / ( 12 * dRZ )
+
+			! TODO: see if necesseray to take absolute value - this is not used anyway...
+		    solution(vvol)%mat(1:NN,-1) = abs(  solution(vvol)%mat(1:NN,-1) ) !WHY?
+		    isolution(1:NN, 0) = abs( isolution(1:NN, 0) )                    !WHY?
+
 		else
-			imupf_global(1:Mvol,1:2,0)      = ( - 1 * imupf_global(1:Mvol,1:2, 2)      + 8 * imupf_global(1:Mvol,1:2, 1)      - 8 * imupf_global(1:Mvol,1:2,-1)      + 1 * imupf_global(1:Mvol,1:2,-2)      ) / ( 12 * dRZ )
+			imupf_global(1:Mvol,1:2,0)      = ( - 1 * imupf_global(1:Mvol,1:2, 2)&
+                                                + 8 * imupf_global(1:Mvol,1:2, 1)&
+                                                - 8 * imupf_global(1:Mvol,1:2,-1)&
+                                                + 1 * imupf_global(1:Mvol,1:2,-2)   ) / ( 12 * dRZ )
 		endif
-
-
-		solution(vvol)%mat(1:NN,-1) = abs(  solution(vvol)%mat(1:NN,-1) )
-		isolution(1:NN, 0) = abs( isolution(1:NN, 0) )
-
-
 
 		cput = GETTIME
 
@@ -1251,7 +1256,7 @@ subroutine evaluate_dmupfdx(vvol, innout, idof, ii, issym, irz)
 
 !		LcomputeDerivatives = .false.
 !		Lonlysolution = .true.
-!		WCALL( dfp200, dforce, ( NGdof, position, force, LComputeDerivatives, Lonlysolution ))
+!		WCALL( dfp200, dforce, ( NGdof, position, force, LComputeDerivatives ))
 
 
 	endif ! end of if( Lcheck.eq.4 ) ;
@@ -1393,7 +1398,7 @@ REAL					:: dPP(1:Ntz), length(1:Ntz), dRR(1:Ntz,-1:2), dZZ(1:Ntz,-1:2), constra
 
 do iocons = 0, 1
 
-	if( Lconstraint.eq.1 ) then ! first, determine how B^2 varies with mu and dpflux;
+	if( Lconstraint.eq.1 .OR. Lconstraint.eq.3 ) then ! first, determine how B^2 varies with mu and dpflux;
 
 		if( vvol.eq.   1 .and. iocons.eq.0 ) cycle ! fixed inner boundary (or coordinate axis); no force-balance constraints;
 		if( vvol.eq.Mvol .and. iocons.eq.1 ) cycle ! fixed outer boundary                     ; no force-balance constraints;
@@ -1424,7 +1429,7 @@ do iocons = 0, 1
 
 		endif ! end of if( NOTstellsym) ;
 
-	endif ! end of if( Lconstraint.eq.1 ) ;
+	endif ! end of if( Lconstraint.eq.1 .OR. Lconstraint.eq.3 ) ;
 
 
 	if( vvol.eq.   1 .and. iocons.eq.0 ) cycle ! fixed inner boundary (or coordinate axis); no constraints;
@@ -1615,7 +1620,7 @@ do iocons = 0, 1
 
 	endif ! end of if( Igeometry.ge.3 ) ;
 
-	call tfft( 	Nt, Nz, ijreal(1:Ntz), dII(1:Ntz), & ! recall that ijreal contains pressure term;
+	call tfft( 	Nt, Nz, ijreal(1:Ntz), dII(1:Ntz), & ! recall that ijreal contains derivatives of pressure term;
 				mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), ifail )
 
 
@@ -1637,6 +1642,7 @@ do iocons = 0, 1
 	! endif
 	; ;idoc = idoc + mn-1 ! oddd;
 	;endif ! end of if( Igeometry.ge.3) ;
+
 	if( NOTstellsym ) then
 		; dFFdRZ(idoc+1:idoc+mn-1  ,vvol,iocons,idof,innout) = + ofmn(2:mn    ) * psifactor(ii,vvol-1+innout) * BBweight(2:mn) ! pressure;
 		;idoc = idoc + mn-1 ! oddd;

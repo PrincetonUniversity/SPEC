@@ -82,13 +82,14 @@ BEGIN(dfp100)
 		! This is the signal that the iteration is over, and the master thread can broadcast the information
 		! to its slaves that they can exit the infinit loop.
 		
-		if( (iflag.EQ.5) .and. (myid.EQ.0) ) then
-			IconstraintOK = .true.
+		! First set up the value of dpflux for calculation
+		if( myid.EQ.0 ) then
+			dpflux(2:Mvol) = x - xoffset
+		endif
 
-			if( Lfindzero.eq.2 ) then! Compute derivatives of solution w.r.t mu and pflux
-				LcomputeDerivatives = .true.
-				WCALL( dfp100, ma02aa, ( vvol, NAdof(vvol), LcomputeDerivatives ) )
-			endif
+        ! Check if global constraint has been satisfied on last step
+		if( (iflag.EQ.5 .or. iflag.EQ.6) .and. (myid.EQ.0) ) then
+			IconstraintOK = .true.
 		else
 			IconstraintOK = .false.
 		endif
@@ -96,20 +97,15 @@ BEGIN(dfp100)
 		! Master broadcast to slaves the info 
 		call MPI_BCAST( IconstraintOK, 1, MPI_LOGICAL, 0, MPI_COMM_WORLD, ierr)
 
-		! If constraints are OK, no need for one additional computation, skip till the end.
-		if( IconstraintOK ) then
-			!write(*,*) "Exiting dfp100.h with iflag=5"
-			goto 6666
-		endif
-
-		! First set up the value of dpflux for calculation
-		if( myid.EQ.0 ) then
-			dpflux(2:Mvol) = x - xoffset
-		endif
-
-		! We could scatter dpflux on the volumes - but this depends on how the volumes are divided between the CPUs
+		! We could scatter instead of broadcast dpflux on the volumes - but this depends on how the volumes are divided between the CPUs
 		! We would need to restructure the data - might be complicated for little gain.
 		call MPI_Bcast( dpflux, Mvol, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
+
+		! If constraints are OK, no need for one additional computation, skip till the end.
+		if( IconstraintOK ) then
+			!write(*,*) "Exiting dfp100.h with iflag=5, 6"
+			goto 6666
+		endif
 	endif
 
 
@@ -212,6 +208,25 @@ BEGIN(dfp100)
 	endif
 
 6666 continue
+
+if( Lfindzero.eq.2 .and. iflag.eq.5 ) then! Compute derivatives of solution w.r.t mu and pflux
+
+  LcomputeDerivatives = .true.
+  do vvol = 1, Mvol  LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
+
+    ! Determines if this volume vvol should be computed by this thread.
+    call IsMyVolume(vvol)
+
+    if( IsMyVolumeValue .EQ. 0 ) then
+      cycle
+    else if( IsMyVolumeValue .EQ. -1) then
+      FATAL(dfp100, .true., Unassociated volume)
+    endif
+
+    WCALL( dfp100, ma02aa, ( vvol, NAdof(vvol), LcomputeDerivatives ) )
+  enddo
+
+endif
 
 RETURN(dfp100)
 

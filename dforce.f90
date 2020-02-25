@@ -93,11 +93,12 @@
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-subroutine dforce( NGdof, position, force, LComputeDerivatives, Lonlysolution )
+! TODO: REMOVE lONLYSOLUTION FLAG (if not used) 
+subroutine dforce( NGdof, position, force, LComputeDerivatives)
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  use constants, only : zero, half, one, pi
+  use constants, only : zero, half, one, pi, pi2
   
   use numerical, only : logtolerance
   
@@ -139,7 +140,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, Lonlysolution )
                         DDzzcc, DDzzcs, DDzzsc, DDzzss, &
                         LocalConstraint, xoffset, &
 												solution, &
-								      	IsMyVolume, IsMyVolumeValue, WhichCpuID
+								      	IsMyVolume, IsMyVolumeValue, WhichCpuID, Btemn
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -148,8 +149,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, Lonlysolution )
   INTEGER, intent(in)  :: NGdof                  ! dimensions;
   REAL,    intent(in)  :: position(0:NGdof)      ! degrees-of-freedom = internal geometry;
   REAL,    intent(out) :: force(0:NGdof)         ! force;
-  LOGICAL, intent(in)  :: LComputeDerivatives, & ! indicates whether derivatives are to be calculated;
-						  Lonlysolution			 ! indicate if only the solution is required (debug)
+  LOGICAL, intent(in)  :: LComputeDerivatives    ! indicates whether derivatives are to be calculated;
 
   INTEGER              :: vvol, innout, ii, jj, irz, issym, iocons, tdoc, idoc, idof, tdof, jdof, ivol, imn, ll, ihybrd1, lwa, Ndofgl, llmodnp
   INTEGER              :: maxfev, ml, muhybr, mode, nprint, nfev, ldfjac, lr, Nbc, NN, cpu_id
@@ -167,7 +167,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, Lonlysolution )
 
 #ifdef DEBUG
   INTEGER              :: isymdiff
-  REAL                 :: dRZ = 1.0e-05, dvol(-1:+1), evolume, imupf(1:2,-2:2)
+  REAL                 :: dRZ = 1.0e-05, dvol(-1:+1), evolume, imupf(1:2,-2:2), Btemn_debug(1:mn, 0:1, 1:Mvol, -1:2)
   REAL,    allocatable :: isolution(:,:)
 #endif
 
@@ -323,14 +323,21 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, Lonlysolution )
 		SALLOCATE(r, (1:lr), 0)
 
 		! Hybrid-Powell method, iterates on all poloidal fluxes to match the global constraint
-		WCALL( dforce,  hybrd1, (dfp100, Ndofgl, Xdof(1:Ndofgl), Fvec(1:Ndofgl), mupftol, maxfev, ml, muhybr, epsfcn, diag(1:Ndofgl), mode, &
+		WCALL( dforce,  hybrd, (dfp100, Ndofgl, Xdof(1:Ndofgl), Fvec(1:Ndofgl), mupftol, maxfev, ml, muhybr, epsfcn, diag(1:Ndofgl), mode, &
 				  factor, nprint, ihybrd1, nfev, fjac(1:Ndofgl,1:Ndofgl), ldfjac, r(1:lr), lr, qtf(1:Ndofgl), wa1(1:Ndofgl), &
 				  wa2(1:Ndofgl), wa3(1:Ndofgl), wa4(1:Ndofgl)) ) 
+
+		dpflux(2:Mvol) = Xdof(1:Ndofgl) - xoffset
+
+        if( LcomputeDerivatives ) then
+		  Xdof(1:Mvol-1)   = dpflux(2:Mvol) + xoffset
+          iflag = 5
+          WCALL( dforce, dfp100, (Ndofgl, Xdof(1:Ndofgl), Fvec(1:Ndofgl), iflag) )
+        endif
 
 		DALLOCATE(fjac)
 		DALLOCATE(r)
 
-		dpflux(2:Mvol) = Xdof(1:Ndofgl) - xoffset
 
 	else
 
@@ -402,8 +409,6 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, Lonlysolution )
 #endif
 
 endif !matches if( LocalConstraint ) 
-
-if( Lonlysolution ) goto 6666
 
 WCALL(dforce, dfp200, ( LcomputeDerivatives, vvol) )
 
@@ -686,10 +691,10 @@ if( LcomputeDerivatives ) then ! construct Hessian;
 						else ! Global constraint
 						
 							! In the general case of global constraint, there are no zero element in the hessian. We thus loop again on all volumes
-							tdoc = (vvol-1) * LGdof ! shorthand ;
 							idoc = 0				! useless ? ;
 							do ivol = 1, Mvol-1
-								tdof = (ivol-1) * LGdof + idof
+							    tdoc = (ivol-1) * LGdof ! shorthand ;
+								tdof = (vvol-1) * LGdof + idof
 
 								if( ivol.eq.vvol-1 ) then 
 										hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof) = -dFFdRZ(idoc+1:idoc+LGdof,vvol+0,1,idof,0)
@@ -699,11 +704,12 @@ if( LcomputeDerivatives ) then ! construct Hessian;
 										hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof) = dFFdRZ(idoc+1:idoc+LGdof,vvol+1,0,idof,1)
 								endif
 
+                                ! factor 1/pi2 due to normalization of dpflux -> dAt/dpflux has a factor 2pi difference with analytical formula. Same for dBBdmp. 
 								hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof) =  hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof)                       &
-																			   + dBBdmp(idoc+1:idoc+LGdof,vvol+1,0,1) * dmupfdx(vvol+1,ivol,1,idof,0) &
-																			   + dBBdmp(idoc+1:idoc+LGdof,vvol+1,0,2) * dmupfdx(vvol+1,ivol,2,idof,0) &
-																			   - dBBdmp(idoc+1:idoc+LGdof,vvol+0,1,1) * dmupfdx(vvol+0,ivol,1,idof,1) &
-																			   - dBBdmp(idoc+1:idoc+LGdof,vvol+0,1,2) * dmupfdx(vvol+0,ivol,2,idof,1)
+																			   + dBBdmp(idoc+1:idoc+LGdof,ivol+1,0,1) * dmupfdx(ivol+1,vvol,1,idof,1)/pi2 &
+																			   + dBBdmp(idoc+1:idoc+LGdof,ivol+1,0,2) * dmupfdx(ivol+1,vvol,2,idof,1)/pi2 &
+																			   - dBBdmp(idoc+1:idoc+LGdof,ivol+0,1,1) * dmupfdx(ivol+0,vvol,1,idof,1)/pi2 &
+																			   - dBBdmp(idoc+1:idoc+LGdof,ivol+0,1,2) * dmupfdx(ivol+0,vvol,2,idof,1)/pi2
 
 							enddo
 
