@@ -107,7 +107,6 @@ subroutine dfp200( LcomputeDerivatives, vvol)
 
   REAL                 :: lastcpu, lss, lfactor, DDl, MMl
   REAL                 :: det
-  REAL                 :: dpsi(1:2)
   REAL   , allocatable :: oBI(:,:), rhs(:) ! original Beltrami-matrix inverse; used to compute derivatives of matrix equation;
   REAL   , allocatable :: dAt(:,:), dAz(:,:), XX(:), YY(:), dBB(:,:), dII(:), dLL(:), dPP(:), length(:), dRR(:,:), dZZ(:,:), constraint(:)
   REAL   , allocatable :: work(:)
@@ -393,7 +392,6 @@ else ! CASE SEMI GLOBAL CONSTRAINT
 
 	if( LComputeDerivatives ) then
 		dBdX%L = .true. ! will need derivatives;
-		idof = 0 ! labels 
 						
 
 ! Evaluation of froce gradient in case of semi-global constraint (for now, this is specific to Lconstraint=3)
@@ -415,8 +413,9 @@ else ! CASE SEMI GLOBAL CONSTRAINT
 		SALLOCATE( dPP       , (1:Ntz     ), zero ) ! poloidal constraint;
 		SALLOCATE( constraint, (1:Ntz     ), zero )
 
-		do vvol = 1, Mvol-1 !degree of freedom; local to interface; labels which interface is perturbed
+		do vvol = 1, Mvol-1 !labels which interface is perturbed
 		dBdX%vol = vvol
+		idof = 0 ! labels degree of freedom of interface vvol
 
 		do ii = 1, mn ! loop over deformations in Fourier harmonics; inside do vvol;
 			dBdX%ii = ii ! controls construction of derivatives in subroutines called below;     
@@ -470,7 +469,7 @@ else ! CASE SEMI GLOBAL CONSTRAINT
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 							vflag = 1
-							WCALL( dfp200, volume, ( lvol, vflag ) ) ! compute volume;				! REVIEW: IS THIS NECESSARY?
+							WCALL( dfp200, volume, ( lvol, vflag ) ) ! compute volume;				! TODO: IS THIS NECESSARY?
 
 							! Allocate memory
 							SALLOCATE( oBI,    (1:NN,1:NN          ), zero ) ! inverse of ``original'', i.e. unperturbed, Beltrami matrix;
@@ -513,7 +512,7 @@ else ! CASE SEMI GLOBAL CONSTRAINT
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-					   		call get_inverse_Beltrami_matrices(lvol, oBI, NN)
+					   		call get_inverse_Beltrami_matrices(lvol, oBI, NN)! TODO: move outside of loops
 
 							! Perturbed solution
 							call get_perturbed_solution(lvol, rhs, oBI, NN)
@@ -797,7 +796,7 @@ CHARACTER           	:: packorunpack
 	! Evaluate perturbed solution
 	solution(vvol)%mat(1:NN,-1) = matmul( oBI(1:NN,1:NN), rhs(1:NN) ) ! this is the perturbed, packxi solution;
 
-	ideriv = -1 ; dpsi(1:2) = (/ dtflux(vvol), dpflux(vvol) /) ! these are also used below;
+	ideriv = -1 ;
 
 	packorunpack = 'U'
 
@@ -917,8 +916,6 @@ subroutine evaluate_dmupfdx(vvol, innout, idof, ii, issym, irz)
 
 
 	lfactor = psifactor(ii,vvol-1+innout) 	! this "pre-conditions" the geometrical degrees-of-freedom;
-	dmupfdx(vvol,1,1,idof,innout) = zero    	! Prepare array
-	dmupfdx(vvol,1,2,idof,innout) = zero		! Prepare array
 
 	if( Lconstraint.eq.1 .or. Lconstraint.eq.3 .or. ( Lvacuumregion .and. Lconstraint.ge.0 ) ) then ! will need to accommodate constraints;
 
@@ -975,9 +972,11 @@ subroutine evaluate_dmupfdx(vvol, innout, idof, ii, issym, irz)
 #endif
 
 			dBdx2(1:Mvol-1) = zero
-		    dBdx2(vvol-1)   =                     - Btemn(1, 0, vvol  )
-			dBdx2(vvol  )   = Btemn(1, 1, vvol  ) - Btemn(1, 0, vvol+1)
-		    dBdx2(vvol+1)   = Btemn(1, 1, vvol+1)
+            if( vvol.gt.1 ) then
+			    dBdx2(vvol-1)   =                     - Btemn(1, 0, vvol  )
+			endif
+			;   dBdx2(vvol  )   = Btemn(1, 1, vvol  ) - Btemn(1, 0, vvol+1)
+		    ;   dBdx2(vvol+1)   = Btemn(1, 1, vvol+1)
 
 			dmupfdx(1:Mvol, vvol, 2, idof, 1) = zero ! Set all components to zero excepted below
 			dmupfdx(2     , vvol, 2, idof, 1) = dBdx2(1) / dBdmpf(1, 1)
@@ -986,7 +985,10 @@ subroutine evaluate_dmupfdx(vvol, innout, idof, ii, issym, irz)
 				dmupfdx(pvol, vvol, 2, idof, 1) = ( dBdx2(pvol-1) - dmupfdx(pvol-1, vvol, 2, idof, 1) * dBdmpf(pvol-1, pvol-2) ) / dBdmpf(pvol-1, pvol-1) 
 			enddo
 
-	else
+	else ! LocalConstraint
+
+        dmupfdx(vvol,1,1,idof,innout) = zero    	! Prepare array
+        dmupfdx(vvol,1,2,idof,innout) = zero		! Prepare array
 
 		if( Lplasmaregion ) then
 

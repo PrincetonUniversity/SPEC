@@ -398,6 +398,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
     enddo
 
 #ifdef DEBUG
+if( Wdforce ) then
       select case( ihybrd1 )
         case( 1   )  ; write(ounit,'("dforce : ",f10.2," : finished ; success        ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
         case( 0   )  ; write(ounit,'("dforce : ",f10.2," : finished ; input error    ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
@@ -406,6 +407,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
         case( 4:5 )  ; write(ounit,'("dforce : ",f10.2," : finished ; bad progress   ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
         case default ; write(ounit,'("dforce : ",f10.2," : finished ; illegal ifail  ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
       end select
+endif
 #endif
 
 endif !matches if( LocalConstraint ) 

@@ -124,41 +124,41 @@ subroutine lbpol(lvol, ideriv)
   Bz(1:Ntz) = ( dAz(1:Ntz ) * guvij(1:Ntz,2,3, 0) + dAt(1:Ntz ) * guvij(1:Ntz,3,3, 0) )/ sg(1:Ntz,0)
 
   select case ( ideriv ) ! need to take into account derivatives of metric elements
-  case(-1)
-    dBdX%innout = innout
+    case(-1)
+      dBdX%innout = innout
 
-    efmn(1:mn) = zero ; ofmn(1:mn) = zero ; cfmn(1:mn) = zero ; sfmn(1:mn) = zero
-    do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over Fourier harmonics;
+      efmn(1:mn) = zero ; ofmn(1:mn) = zero ; cfmn(1:mn) = zero ; sfmn(1:mn) = zero
+      do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over Fourier harmonics;
     
-      ! In case of singularity, point at sbar=0 not computed - no problem here!
-      ! For definition of the regularisation factor, see jo00aa documentation.
-      if( Lcoordinatesingularity ) then ; mfactor = regumm(ii) * half ! derivative of regularisation factor;
-      else                              ; mfactor = zero
-      endif
+        ! In case of singularity, point at sbar=0 not computed - no problem here!
+        ! For definition of the regularisation factor, see jo00aa documentation.
+        if( Lcoordinatesingularity ) then ; mfactor = regumm(ii) * half ! derivative of regularisation factor;
+        else                              ; mfactor = zero
+        endif
 
-        do ll = 0, Lrad(lvol) ! loop over Chebyshev polynomials; Lrad is the radial resolution;
-          ! Note that the minus sine is included at line 122-123
-          ;                      ; efmn(ii) = efmn(ii) + Ate(lvol,0,ii)%s(ll) * ( TT(ll,innout,1) + mfactor ) ! B^\t;
-          ;                      ; cfmn(ii) = cfmn(ii) - Aze(lvol,0,ii)%s(ll) * ( TT(ll,innout,1) + mfactor ) ! B^\z;
-          if( NOTstellsym ) then ; ofmn(ii) = ofmn(ii) + Ato(lvol,0,ii)%s(ll) * ( TT(ll,innout,1) + mfactor )
-            ;                    ; sfmn(ii) = sfmn(ii) - Azo(lvol,0,ii)%s(ll) * ( TT(ll,innout,1) + mfactor )
-          endif
-        enddo ! end of do ll;
-      enddo ! end of do ii; 
+          do ll = 0, Lrad(lvol) ! loop over Chebyshev polynomials; Lrad is the radial resolution;
+            ! Note that the minus sine is included at line 122-123
+            ;                      ; efmn(ii) = efmn(ii) + Ate(lvol,0,ii)%s(ll) * ( TT(ll,innout,1) + mfactor ) ! B^\t;
+            ;                      ; cfmn(ii) = cfmn(ii) - Aze(lvol,0,ii)%s(ll) * ( TT(ll,innout,1) + mfactor ) ! B^\z;
+            if( NOTstellsym ) then ; ofmn(ii) = ofmn(ii) + Ato(lvol,0,ii)%s(ll) * ( TT(ll,innout,1) + mfactor )
+              ;                    ; sfmn(ii) = sfmn(ii) - Azo(lvol,0,ii)%s(ll) * ( TT(ll,innout,1) + mfactor )
+            endif
+          enddo ! end of do ll;
+        enddo ! end of do ii; 
 
-    !and now add variation of metric contribution
-    call invfft( mn, im, in, efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt0(1:Ntz), dAz0(1:Ntz) ) ! get covariant component of dA without derivatives
+      !and now add variation of metric contribution
+      call invfft( mn, im, in, efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt0(1:Ntz), dAz0(1:Ntz) ) ! get covariant component of dA without derivatives
 
-    Lcurvature = 5
-    WCALL( lbpol, coords, (lvol, lss, Lcurvature, Ntz, mn ) ) ! get guvij and sg
+      Lcurvature = 5
+      WCALL( lbpol, coords, (lvol, lss, Lcurvature, Ntz, mn ) ) ! get guvij and sg
 
-    Bt(1:Ntz) = Bt(1:Ntz) + ( dAz0(1:Ntz ) * guvij(1:Ntz,2,2, 1) + dAt0(1:Ntz ) * guvij(1:Ntz,2,3, 1) ) ! Add metric derivatives
-    Bz(1:Ntz) = Bz(1:Ntz) + ( dAz0(1:Ntz ) * guvij(1:Ntz,2,3, 1) + dAt0(1:Ntz ) * guvij(1:Ntz,3,3, 1) ) 
+      Bt(1:Ntz) = Bt(1:Ntz) + ( dAz0(1:Ntz ) * guvij(1:Ntz,2,2, 1) + dAt0(1:Ntz ) * guvij(1:Ntz,2,3, 1) ) ! Add metric derivatives
+      Bz(1:Ntz) = Bz(1:Ntz) + ( dAz0(1:Ntz ) * guvij(1:Ntz,2,3, 1) + dAt0(1:Ntz ) * guvij(1:Ntz,3,3, 1) ) 
 
-  case(2)
+    case(2)
     
-    Bt(1:Ntz) = Bt(1:Ntz) / pi2 ! Due to normalization of poloidal flux
-    Bz(1:Ntz) = Bz(1:Ntz) / pi2
+      Bt(1:Ntz) = Bt(1:Ntz) / pi2 ! Due to normalization of poloidal flux
+      Bz(1:Ntz) = Bz(1:Ntz) / pi2
 
   end select ! matches if ideriv.eq.-1
 
