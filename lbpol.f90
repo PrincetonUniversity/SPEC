@@ -157,8 +157,9 @@ subroutine lbpol(lvol, ideriv)
 
     case(2)
     
-      Bt(1:Ntz) = Bt(1:Ntz) / pi2 ! Due to normalization of poloidal flux
-      Bz(1:Ntz) = Bz(1:Ntz) / pi2
+      !Bt(1:Ntz) = Bt(1:Ntz) / pi2 ! Due to normalization of poloidal flux
+      !Bz(1:Ntz) = Bz(1:Ntz) / pi2
+	  continue
 
   end select ! matches if ideriv.eq.-1
 

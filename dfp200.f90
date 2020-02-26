@@ -985,6 +985,8 @@ subroutine evaluate_dmupfdx(vvol, innout, idof, ii, issym, irz)
 				dmupfdx(pvol, vvol, 2, idof, 1) = ( dBdx2(pvol-1) - dmupfdx(pvol-1, vvol, 2, idof, 1) * dBdmpf(pvol-1, pvol-2) ) / dBdmpf(pvol-1, pvol-1) 
 			enddo
 
+            dmupfdx(1:Mvol, vvol, 2, idof, 1) = lfactor * dmupfdx(1:Mvol, vvol, 2, idof, 1) ! multiply by coordinate pre-conditioning factor
+
 	else ! LocalConstraint
 
         dmupfdx(vvol,1,1,idof,innout) = zero    	! Prepare array

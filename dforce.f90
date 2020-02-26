@@ -108,7 +108,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
                         epsilon, &
                         Lconstraint, Lcheck, &
                         Lextrap, &
-												mupftol
+                        mupftol
   
   use cputiming, only : Tdforce
   
@@ -708,10 +708,10 @@ if( LcomputeDerivatives ) then ! construct Hessian;
 
                                 ! factor 1/pi2 due to normalization of dpflux -> dAt/dpflux has a factor 2pi difference with analytical formula. Same for dBBdmp. 
 								hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof) =  hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof)                       &
-																			   + dBBdmp(idoc+1:idoc+LGdof,ivol+1,0,1) * dmupfdx(ivol+1,vvol,1,idof,1)/pi2 &
-																			   + dBBdmp(idoc+1:idoc+LGdof,ivol+1,0,2) * dmupfdx(ivol+1,vvol,2,idof,1)/pi2 &
-																			   - dBBdmp(idoc+1:idoc+LGdof,ivol+0,1,1) * dmupfdx(ivol+0,vvol,1,idof,1)/pi2 &
-																			   - dBBdmp(idoc+1:idoc+LGdof,ivol+0,1,2) * dmupfdx(ivol+0,vvol,2,idof,1)/pi2
+																			   + dBBdmp(idoc+1:idoc+LGdof,ivol+1,0,1) * dmupfdx(ivol+1,vvol,1,idof,1) &
+																			   + dBBdmp(idoc+1:idoc+LGdof,ivol+1,0,2) * dmupfdx(ivol+1,vvol,2,idof,1) &
+																			   - dBBdmp(idoc+1:idoc+LGdof,ivol+0,1,1) * dmupfdx(ivol+0,vvol,1,idof,1) &
+																			   - dBBdmp(idoc+1:idoc+LGdof,ivol+0,1,2) * dmupfdx(ivol+0,vvol,2,idof,1)
 
 							enddo
 
