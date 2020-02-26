@@ -133,7 +133,6 @@ subroutine tfft( Nt, Nz, ijreal, ijimag, mn, im, in, efmn, ofmn, cfmn, sfmn, ifa
   enddo
    
   call fftw_execute_dft( planf, cplxin, cplxout ) !Forward transform
-
   Ntz = Nt * Nz
   cplxout = cplxout / Ntz
   cplxout(1,1) = half*cplxout(1,1)
