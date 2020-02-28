@@ -62,7 +62,7 @@ toroidal_freeboundary_vacuum:
   script:
   - source source.sh
   - cd ci/toroidal_freeboundary_vacuum
-  - mpirun -n 4 xspec G3V02L0Fr.sp 
+  - mpirun -n 4 --allow-run-as-root xspec G3V02L0Fr.sp 
   - python3 -m py_spec.ci.test G3V02L0Fr.sp.h5 compare.h5
   artifacts:
     when: always
