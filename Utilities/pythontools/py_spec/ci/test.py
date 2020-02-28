@@ -33,7 +33,9 @@ def compare(data, reference):
         else:
             if key in ['filename', 'version']:  # not compare filename and version
                 continue
-            elif key == 'iterations': # skip iteration data (might be revised)
+            elif key == 'iterations':  # skip iteration data (might be revised)
+                continue
+            elif key == 't' and reference == 'poincare':  # skip poincare.t
                 continue
             else:
                 # print(key)
@@ -42,16 +44,18 @@ def compare(data, reference):
                 if unmatch:
                     match = False
                     print('UNMATCHED: '+key, ', diff={:12.5E}'.format(diff))
-                else :
+                else:
                     print('ok: '+key)
     return
 
+
 compare(data_A, data_B)
 print('===================')
-if match :
+if match:
     print('All the terms are within tolerance.')
-else :
-    print('Differences in some elements are larger than the tolerence.')
+else:
+    raise SystemExit('Differences in some elements are larger than the tolerence.')
+
 
 exit
 
