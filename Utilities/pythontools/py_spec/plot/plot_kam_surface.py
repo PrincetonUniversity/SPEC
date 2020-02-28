@@ -31,7 +31,7 @@ def plot_kam_surface(SPEC, ns=None, zeta=0.0, **kwargs):
         kwargs.update({'label': 'SPEC_KAM'})  # default label
     # plot all the surfaces
     for i in ns:
-        _surf = math.fourier_surface.read_spec_output(SPEC, i)  #look into which spec fourier_surface needs.
+        _surf = math.fourier_surface.read_spec_output(SPEC, i)  # look into which spec fourier_surface needs.
         if i == 0:
             # plot axis as a curve
             _r, _z = _surf.rz(0.0, zeta)
