@@ -35,7 +35,7 @@ def compare(data, reference):
                 continue
             elif key == 'iterations':  # skip iteration data (might be revised)
                 continue
-            elif key == 't' and reference == 'poincare':  # skip poincare.t
+            elif key == 't':  # skip poincare.t Not the best, but only t so far (so good)
                 continue
             else:
                 # print(key)

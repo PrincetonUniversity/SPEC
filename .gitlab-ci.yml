@@ -39,6 +39,8 @@ stable_force_free_sheet:
     expire_in: 1 week
   dependencies:
   - build:centos7
+# reproduce:
+# docker run -v `pwd`:`pwd` -w `pwd` csmiet/testspec sh -c'source source.sh;cd ci/G1V03L2Fi; xspec G1V03L2Fi.001.sp; python3 -m py_spec.ci.test G1V03L2Fi.001.sp.h5 compare.h5'
 
 cylindrical_many_volumes:
   stage: test
@@ -55,6 +57,8 @@ cylindrical_many_volumes:
     expire_in: 1 week
   dependencies:
   - build:centos7
+# reproduce:
+# docker run -v `pwd`:`pwd` -w `pwd` csmiet/testspec sh -c'source source.sh; cd ci/G2V32L1Fi; xspec G2V32L1Fi.001.sp; python3 -m py_spec.ci.test G2V32L1Fi.001.sp.h5 compare.h5'
 
 toroidal_freeboundary_vacuum:
   stage: test
@@ -71,5 +75,5 @@ toroidal_freeboundary_vacuum:
     expire_in: 1 week
   dependencies:
   - build:centos7
-
-
+# reproduce:
+# docker run -v `pwd`:`pwd` -w `pwd` csmiet/testspec sh -c'source source.sh; cd ci/toroidal_freeboundary_vacuum; mpirun -n 4 --allow-run-as-root xspec G3V02L0Fr.sp; python3 -m py_spec.ci.test G3V02L0Fr.sp.h5 compare.h5'
