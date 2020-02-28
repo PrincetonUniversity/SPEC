@@ -23,7 +23,7 @@ build:centos7:
     - xspec
     expire_in: 1 week
 
-case1:
+stable_force_free_sheet:
   stage: test
   image: csmiet/testspec
   script:
@@ -39,4 +39,37 @@ case1:
     expire_in: 1 week
   dependencies:
   - build:centos7
+
+cylindrical_many_volumes:
+  stage: test
+  image: csmiet/testspec
+  script:
+  - source source.sh
+  - cd ci/G2V32L1Fi
+  - xspec G2V32L1Fi.001.sp
+  - python3 -m py_spec.ci.test G1V03L2Fi.001.sp.h5 compare.h5
+  artifacts:
+    when: always
+    paths:
+    - ci/G2V32L1Fi/G2V32L1Fi.001.sp.h5
+    expire_in: 1 week
+  dependencies:
+  - build:centos7
+
+toroidal_freeboundary_vacuum:
+  stage: test
+  image: csmiet/testspec
+  script:
+  - source source.sh
+  - cd ci/toroidal_freeboundary_vacuum
+  - mpirun -n4 xspec G3V02L0Fr.sp 
+  - python3 -m py_spec.ci.test G3V02L0Fr.sp.h5 compare.h5
+  artifacts:
+    when: always
+    paths:
+    - ci/G2V32L1Fi/G2V32L1Fi.001.sp.h5
+    expire_in: 1 week
+  dependencies:
+  - build:centos7
+
 
