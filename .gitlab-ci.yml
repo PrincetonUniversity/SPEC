@@ -15,7 +15,7 @@ enforce_unixish:
 
 build:centos7:
   stage: build
-  image: garrettwrong/spec_centos-7
+  image: csmiet/testspec
   script:
   - make CC=gfortran xspec
   artifacts:
@@ -30,7 +30,7 @@ case1:
   - source source.sh
   - cd ci/G1V03L2Fi
   - xspec G1V03L2Fi.001.sp
-  - python3 -m py_spec.ci.test G1V03L2Fi.001.sp.h5 comparison.h5
+  - python3 -m py_spec.ci.test G1V03L2Fi.001.sp.h5 compare.h5
   #comparison python3 -m py_spec.ci.testspec f1 f2
   artifacts:
     when: always
