@@ -166,11 +166,11 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 
   CHARACTER            :: packorunpack
   
-  INTEGER, allocatable :: ipiv(:), Iwork(:)
+  INTEGER, allocatable :: Iwork(:), ipiv(:)
 
-  REAL   , allocatable :: matrix(:,:), rhs(:,:)
+  REAL   , allocatable :: matrix(:,:), rhs(:,:), LU(:,:)
 
-  REAL   , allocatable :: RW(:), RD(:,:), LU(:,:)
+  REAL   , allocatable :: RW(:), RD(:,:)
   
   BEGIN(mp00ac)
   
@@ -178,6 +178,11 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   
   lvol = ivol ! recall that ivol is global;
   ind_matrix = IndMatrixArray(lvol, 2)
+
+  NN = NAdof(lvol) ! shorthand;
+
+  SALLOCATE( LU, (1:NN, 1:NN), zero )
+  SALLOCATE( ipiv, (1:NN), 0 )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -221,8 +226,6 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  NN = NAdof(lvol) ! shorthand;
-  
   SALLOCATE( matrix, (1:NN,1:NN), zero )
   SALLOCATE( rhs   , (1:NN,0:2 ), zero )
 
@@ -232,8 +235,6 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 
   SALLOCATE( RW,    (1:Lwork ),  zero )
   SALLOCATE( RD,    (1:NN,0:2),  zero )
-  SALLOCATE( LU,    (1:NN,1:NN), zero )
-  SALLOCATE( ipiv,  (1:NN),         0 )
   SALLOCATE( Iwork, (1:NN),         0 )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -363,8 +364,6 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   DALLOCATE( rhs    )  
   DALLOCATE( RW )
   DALLOCATE( RD )
-  DALLOCATE( LU )
-  DALLOCATE( ipiv )
   DALLOCATE( Iwork )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

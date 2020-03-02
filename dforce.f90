@@ -118,7 +118,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
                         ImagneticOK, &
                         Energy, ForceErr, &
                         YESstellsym, NOTstellsym, &
-												Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
+						Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
                         mn, im, in, &
                         dpflux, sweight, &
                         Bemn, Bomn, Iomn, Iemn, Somn, Semn, &
@@ -138,8 +138,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
                         DDtzcc, DDtzcs, DDtzsc, DDtzss, &
                         DDzzcc, DDzzcs, DDzzsc, DDzzss, &
                         LocalConstraint, xoffset, &
-												solution, &
-								      	IsMyVolume, IsMyVolumeValue, WhichCpuID
+						solution, &
+					    IsMyVolume, IsMyVolumeValue, WhichCpuID
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -325,7 +325,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 ! Global constraint - call the master thread calls hybrd1 on dfp100, others call dfp100_loop.
   else
 
-		Ndofgl = Mvol-1; 
+	Ndofgl = Mvol-1; 
+
     if( myid.eq. 0) then
           lwa = 8 * Ndofgl * Ndofgl; maxfev = 1000; nfev=0; lr=Mvol*(Mvol-1); ldfjac=Mvol-1
 		  ml = Mvol-2; muhybr = Mvol-2; epsfcn=1E-16; diag=0.0; mode=1; factor=0.01; nprint=1e5;	!nprint=1e5 to force last call - used for MPI communications
@@ -746,8 +747,8 @@ subroutine loop_dfp100(Ndofgl, Fvec, iflag)
 
 	use cputiming, only 	:  Tdforce													! Timer
 	use allglobal, only 	:  Mvol, &													! Total number of volume + vacuum
-											 		 IconstraintOK, &									! Flag to exit loop
-                           cpus, myid
+                               IconstraintOK, &									! Flag to exit loop
+                               cpus, myid
 
  LOCALS
 !------

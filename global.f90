@@ -1144,7 +1144,7 @@ module allglobal
 !  REAL                :: psiMCpsi, psiMFpsi
 !  REAL                ::           psiMFpsi
 
-   REAL,   allocatable :: BeltramiInverse(:,:)
+   REAL,    allocatable :: BeltramiInverse(:,:)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

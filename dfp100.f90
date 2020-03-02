@@ -59,12 +59,11 @@ use allglobal, only : ncpu, myid, cpus, &
 ! Ndofgl:											Input parameter necessary for the use of hybrd1. Unused otherwise.
 ! iflag:											Flag changed by hybrd1
 ! cpu_send_one, cpu_send_two: CPU IDs, used for MPI communications
-! tag1, tag2: 								Communication tags
 ! status:											MPI status
 ! Fvec:												Global constraint values
 ! x:													Degrees of freedom of hybrd1. For now contains only the poloidal flux
 
-INTEGER              :: vvol, Ndofgl, iflag, cpu_send_one, cpu_send_two, tag1, tag2
+INTEGER              :: vvol, Ndofgl, iflag, cpu_send_one, cpu_send_two
 INTEGER							 :: status(MPI_STATUS_SIZE), request1, request2
 REAL                 :: Fvec(1:Mvol-1), x(1:Mvol-1)
 
@@ -112,7 +111,6 @@ BEGIN(dfp100)
 
 		LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
 		ImagneticOK(vvol) = .false.
-
 		!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 		! Determines if this volume vvol should be computed by this thread.
@@ -133,6 +131,7 @@ BEGIN(dfp100)
 		! Compute fields
 		WCALL( dfp100, ma02aa, ( vvol, NAdof(vvol) ) )
 
+
 		! Compute relevant local quantities for the evaluation of the constraint. Doing it like this 
 		! reduces the amount of data sent to the master thread. In the case of current constraint, only two
 		! doubles per volume are sent.
@@ -150,48 +149,23 @@ BEGIN(dfp100)
 			! Case 3: toroidal current constraint
 			case( 3 )
 
-				! Compute IPDt on each interface. Eventually need to put the do
-				! loop inside the surfcurent subroutine... TODO
+				! Compute IPDt on each interface.
 				do vvol = 1, Mvol-1
 				
 					! --------------------------------------------------------------------------------------------------
 					! 																	MPI COMMUNICATIONS
 					call WhichCpuID(vvol  , cpu_send_one)
 					call WhichCpuID(vvol+1, cpu_send_two)
-					tag1 = 10*vvol + 1
-					tag2 = 10*vvol + 2
 
-					! Send poloidal magnetic field at the interface. Non blocking - what happens next depends only on
-					! the master thread.
-					if( myid.EQ.cpu_send_one ) then
-						call MPI_ISEND(Btemn(1, 1, vvol  ), 1, MPI_DOUBLE_PRECISION,            0, tag1, MPI_COMM_WORLD, request1, ierr)
-					endif
-					if( myid.EQ.cpu_send_two ) then
-						call MPI_ISEND(Btemn(1, 0, vvol+1), 1, MPI_DOUBLE_PRECISION,            0, tag2, MPI_COMM_WORLD, request2, ierr)
-					endif
-
-					! Master thread receives the poloidal magnetic field at each interface
-					if( myid.EQ.0 ) then
-						call MPI_RECV(Btemn(1, 0, vvol+1), 1, MPI_DOUBLE_PRECISION, cpu_send_two, tag2, MPI_COMM_WORLD, status, ierr)
-						call MPI_RECV(Btemn(1, 1, vvol  ), 1, MPI_DOUBLE_PRECISION, cpu_send_one, tag1, MPI_COMM_WORLD, status, ierr)
-          				IPDt(vvol) = pi2 * (Btemn(1, 0, vvol+1) - Btemn(1, 1, vvol))
-					endif
-
-					if( myid.EQ.cpu_send_one ) then
-						call MPI_WAIT(request1, status, ierr)
-					endif
-
-					if( myid.EQ.cpu_send_two ) then
-						call MPI_WAIT(request2, status, ierr)
-					endif
+					! Broadcast magnetic field at the interface.
+					RlBCAST(Btemn(1,1,vvol  ), 1, cpu_send_one)
+                    RlBCAST(Btemn(1,0,vvol+1), 1, cpu_send_two)
 
 				enddo
 
-				! Compute the constraint and store it in Fvec. TODO: Compute analytically the constraint jacobian -
-				! this would improve significaly the performances...
+				! Compute the constraint and store it in Fvec. TODO: Compute analytically the constraint jacobian ?
 				if( myid.EQ.0 ) then
 					Fvec = IPDt - Isurf(1:Mvol-1)
-					!Ddof = ??? TODO: SEE IF AN ANALYTICAL FORMULATION EXISTS...
 				endif
 
 #ifdef DEBUG 

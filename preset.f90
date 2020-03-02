@@ -865,6 +865,7 @@ allocate(dMD(1:work1))
 allocate(dMG(1:work1))
 allocate(MBpsi(1:work1))
 allocate(solution(1:Mvol)) !Excepted for solution which is broadcaster
+
 do ii = 1, work1
   do jj = 1, Mvol ! Look for associated volume corresponding to (myid, ii)
 	if ((myid.EQ.IndMatrixArray(jj, 1)).AND.(ii.EQ.IndMatrixArray(jj, 2))) then
@@ -888,6 +889,7 @@ do ii = 1, work1
   
   allocate( MBpsi(ii)%arr(1:NN) )
   MBpsi(ii)%arr(1:NN) = 0
+
 enddo
 
 do vvol = 1, Mvol
