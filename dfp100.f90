@@ -161,6 +161,9 @@ BEGIN(dfp100)
 					RlBCAST(Btemn(1,1,vvol  ), 1, cpu_send_one)
                     RlBCAST(Btemn(1,0,vvol+1), 1, cpu_send_two)
 
+                    ! Evaluate surface current
+                    IPDt(vvol) = pi2 * (Btemn(1, 0, vvol+1) - Btemn(1, 1, vvol))
+
 				enddo
 
 				! Compute the constraint and store it in Fvec. TODO: Compute analytically the constraint jacobian ?

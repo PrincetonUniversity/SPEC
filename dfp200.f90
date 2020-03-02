@@ -177,7 +177,20 @@ ind_matrix = IndMatrixArray(vvol, 2)
 
    ll = Lrad(vvol)
 
-   SALLOCATE( DToocc, (0:ll,0:ll,1:mn,1:mn), zero )
+
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+#ifdef DEBUG
+   if( Lcheck.eq.2 ) then
+    goto 2000 ! will take no other action except a finite-difference comparison on the derivatives of the rotational-transform wrt mu and dpflux;
+   endif
+#endif
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+   if( LcomputeDerivatives ) then ! compute inverse of Beltrami matrices;
+       SALLOCATE( DToocc, (0:ll,0:ll,1:mn,1:mn), zero )
    SALLOCATE( DToocs, (0:ll,0:ll,1:mn,1:mn), zero )
    SALLOCATE( DToosc, (0:ll,0:ll,1:mn,1:mn), zero )
    SALLOCATE( DTooss, (0:ll,0:ll,1:mn,1:mn), zero )
@@ -212,18 +225,6 @@ ind_matrix = IndMatrixArray(vvol, 2)
    SALLOCATE( DDzzsc, (0:ll,0:ll,1:mn,1:mn), zero )
    SALLOCATE( DDzzss, (0:ll,0:ll,1:mn,1:mn), zero )
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-#ifdef DEBUG
-   if( Lcheck.eq.2 ) then
-    goto 2000 ! will take no other action except a finite-difference comparison on the derivatives of the rotational-transform wrt mu and dpflux;
-   endif
-#endif
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-   if( LcomputeDerivatives ) then ! compute inverse of Beltrami matrices;
-    
     lastcpu = GETTIME
     
     dMA(ind_matrix)%mat(0:NN-1,1:NN) = dMA(ind_matrix)%mat(1:NN,1:NN) - mu(vvol) * dMD(ind_matrix)%mat(1:NN,1:NN) ! this corrupts dMA, but dMA is no longer used;
@@ -863,14 +864,7 @@ ind_matrix = IndMatrixArray(vvol, 2)
     enddo ! matches do ii;
     
     dBdX%L = .false. ! probably not needed, but included anyway;
-    
-   endif ! end of if( LComputeDerivatives ) ;
-   
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-2000 continue
-   
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+    !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
    DALLOCATE(DToocc)
    DALLOCATE(DToocs)
@@ -906,6 +900,13 @@ ind_matrix = IndMatrixArray(vvol, 2)
    DALLOCATE(DDzzcs)
    DALLOCATE(DDzzsc)
    DALLOCATE(DDzzss)
+
+   endif ! end of if( LComputeDerivatives ) ;
+   
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+2000 continue
+   
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
