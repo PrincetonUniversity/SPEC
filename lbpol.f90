@@ -13,7 +13,7 @@
 !latex \begin{enumerate}
 !latex \item Call \link{coords} to compute the metric coefficients and the jacobian.
 !latex \item Build coefficients \inputvar{efmn}, \inputvar{ofmn}, \inputvar{cfmn}, \inputvar{sfmn} from the field vector potential \inputvar{Ate}, \inputvar{Ato}, 
-!latex 		 \inputvar{Aze} and \inputvar{Azo}, and radial derivatives of the Chebyshev polynomials \inputvar{TT(ll,innout,1)}. These variables
+!latex 		 \inputvar{Aze} and \inputvar{Azo}, and radial derivatives of the Chebyshev polynomials \inputvar{TT(ll,iocons,1)}. These variables
 !latex		 are the radial derivative of the Fourier coefficients of the magnetic field vector potential. 
 !latex \item Take the inverse Fourier transform of \inputvar{efmn}, \inputvar{ofmn}, \inputvar{cfmn}, \inputvar{sfmn}. These are the covariant components of $dA$, 
 !latex 		 \textit{i.e.} the contravariant components of $\mathbf{B}$.
@@ -38,7 +38,7 @@ subroutine lbpol(lvol, ideriv)
                         Btemn, Bzemn, Btomn, Bzomn, &
                         Nt, Nz, &
                         regumm, &
-                        cpus, myid, dBdX
+                        cpus, myid
 
   use inputlist, only : Lrad, Wlbpol, Igeometry
 
@@ -52,7 +52,7 @@ subroutine lbpol(lvol, ideriv)
 ! ------
   
   INTEGER                :: Lcurvature, ideriv, ii, ll, ifail, lvol, mi, ni
-  REAL                   :: lss, innout
+  REAL                   :: lss, iocons
   REAL                   :: lAte(1:mn), lAze(1:mn), lAto(1:mn), lAzo(1:mn)
   REAL                   :: dAt(1:Ntz), dAz(1:Ntz), Bt(1:Ntz), Bz(1:Ntz), dAt0(1:Ntz), dAz0(1:Ntz)
   REAL                   :: dBtzero	      ! Value of first B_theta mode jump
@@ -70,22 +70,22 @@ subroutine lbpol(lvol, ideriv)
 
 
 
-! innout=0 -> inner boundary of volume (s=-1) and innout=1 -> outer boundary (s=1)
+! iocons=0 -> inner boundary of volume (s=-1) and iocons=1 -> outer boundary (s=1)
 
   Btemn(1:mn, 0:1, lvol) = zero
-  do innout=0,1
+  do iocons=0,1
 
-  lss = two * innout - one
+  lss = two * iocons - one
   
 !  if((lvol==1) .and. (Igeometry/=1)) then ; Lcoordinatesingularity = .true.;
 !  else; Lcoordinatesingularity = .false.;
 !  endif
 
-	if( Lcoordinatesingularity .and. innout.EQ.0) then
+	if( Lcoordinatesingularity .and. iocons.EQ.0) then
 	  goto 5555; ! No need to compute at the singularity
 	endif
 
-    if( lvol.eq.Mvol .and. innout.eq.1) then
+    if( lvol.eq.Mvol .and. iocons.eq.1) then
 	  goto 5555;
     endif
 
@@ -108,10 +108,10 @@ subroutine lbpol(lvol, ideriv)
    endif
    
    do ll = 0, Lrad(lvol) ! loop over Chebyshev polynomials; Lrad is the radial resolution
-      ;                      ; efmn(ii) = efmn(ii) + Ate(lvol,ideriv,ii)%s(ll) * ( TT(ll,innout,1) + mfactor ) ! B^\t;
-      ;                      ; cfmn(ii) = cfmn(ii) - Aze(lvol,ideriv,ii)%s(ll) * ( TT(ll,innout,1) + mfactor ) ! B^\z;
-      if( NOTstellsym ) then ; ofmn(ii) = ofmn(ii) + Ato(lvol,ideriv,ii)%s(ll) * ( TT(ll,innout,1) + mfactor )
-        ;                    ; sfmn(ii) = sfmn(ii) - Azo(lvol,ideriv,ii)%s(ll) * ( TT(ll,innout,1) + mfactor )
+      ;                      ; efmn(ii) = efmn(ii) + Ate(lvol,ideriv,ii)%s(ll) * ( TT(ll,iocons,1) + mfactor ) ! B^\t;
+      ;                      ; cfmn(ii) = cfmn(ii) - Aze(lvol,ideriv,ii)%s(ll) * ( TT(ll,iocons,1) + mfactor ) ! B^\z;
+      if( NOTstellsym ) then ; ofmn(ii) = ofmn(ii) + Ato(lvol,ideriv,ii)%s(ll) * ( TT(ll,iocons,1) + mfactor )
+        ;                    ; sfmn(ii) = sfmn(ii) - Azo(lvol,ideriv,ii)%s(ll) * ( TT(ll,iocons,1) + mfactor )
       endif
     enddo ! end of do ll;
   enddo ! end of do ii; 
@@ -125,8 +125,6 @@ subroutine lbpol(lvol, ideriv)
 
   select case ( ideriv ) ! need to take into account derivatives of metric elements
     case(-1)
-      dBdX%innout = innout
-
       efmn(1:mn) = zero ; ofmn(1:mn) = zero ; cfmn(1:mn) = zero ; sfmn(1:mn) = zero
       do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over Fourier harmonics;
     
@@ -138,10 +136,10 @@ subroutine lbpol(lvol, ideriv)
 
           do ll = 0, Lrad(lvol) ! loop over Chebyshev polynomials; Lrad is the radial resolution;
             ! Note that the minus sine is included at line 122-123
-            ;                      ; efmn(ii) = efmn(ii) + Ate(lvol,0,ii)%s(ll) * ( TT(ll,innout,1) + mfactor ) ! B^\t;
-            ;                      ; cfmn(ii) = cfmn(ii) - Aze(lvol,0,ii)%s(ll) * ( TT(ll,innout,1) + mfactor ) ! B^\z;
-            if( NOTstellsym ) then ; ofmn(ii) = ofmn(ii) + Ato(lvol,0,ii)%s(ll) * ( TT(ll,innout,1) + mfactor )
-              ;                    ; sfmn(ii) = sfmn(ii) - Azo(lvol,0,ii)%s(ll) * ( TT(ll,innout,1) + mfactor )
+            ;                      ; efmn(ii) = efmn(ii) + Ate(lvol,0,ii)%s(ll) * ( TT(ll,iocons,1) + mfactor ) ! B^\t;
+            ;                      ; cfmn(ii) = cfmn(ii) - Aze(lvol,0,ii)%s(ll) * ( TT(ll,iocons,1) + mfactor ) ! B^\z;
+            if( NOTstellsym ) then ; ofmn(ii) = ofmn(ii) + Ato(lvol,0,ii)%s(ll) * ( TT(ll,iocons,1) + mfactor )
+              ;                    ; sfmn(ii) = sfmn(ii) - Azo(lvol,0,ii)%s(ll) * ( TT(ll,iocons,1) + mfactor )
             endif
           enddo ! end of do ll;
         enddo ! end of do ii; 
@@ -166,10 +164,10 @@ subroutine lbpol(lvol, ideriv)
 ! Fourier transform, map to Fourier space
   ifail = 0
   call tfft( Nt, Nz, Bt(1:Ntz), Bz(1:Ntz), &
-              mn, im(1:mn), in(1:mn), Btemn(1:mn,innout,lvol), Btomn(1:mn,innout,lvol), Bzemn(1:mn,innout,lvol), Bzomn(1:mn,innout,lvol), ifail )
+              mn, im(1:mn), in(1:mn), Btemn(1:mn,iocons,lvol), Btomn(1:mn,iocons,lvol), Bzemn(1:mn,iocons,lvol), Bzomn(1:mn,iocons,lvol), ifail )
 
 5555 continue
-  enddo ! end of do innout;
+  enddo ! end of do iocons;
 
 
 ! Now Btemn(1, 0, vvol) and Btemn(1, 1, vvol) contain Bte00(s=-1) and Bte00(s=1) for each volume vvol.

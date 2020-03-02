@@ -435,13 +435,8 @@ else ! CASE SEMI GLOBAL CONSTRAINT
 					FATAL( dfp200, idof.gt.LGdof, illegal degree-of-freedom index constructing derivatives ) ! this can be deleted;
 #endif
 
-					do lvol=1,Mvol
-						WCALL(dfp200, lbpol, (lvol, 0))
-					enddo
-
-
 					do lvol = vvol, vvol+1
-					  do innout = 0, 1 ! loop over deformations to inner and outer interface; inside do vvol; inside do ii; inside do irz;
+					  do innout = 0, 1 ! inside do vvol; inside do ii; inside do irz; 
 							if( lvol.eq.1    .and. innout.eq.0 ) cycle ! no degrees of freedom at coordinate axis / fixed inner boundary;
 							if( lvol.eq.Mvol .and. innout.eq.1 ) cycle ! no degress of freedom                      fixed outer boundary; for linearized displacement;
 
@@ -512,7 +507,7 @@ else ! CASE SEMI GLOBAL CONSTRAINT
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-					   		call get_inverse_Beltrami_matrices(lvol, oBI, NN)! TODO: move outside of loops
+					   		call get_inverse_Beltrami_matrices(lvol, oBI, NN)! Can't be moved outside of loops - need OBI after.
 
 							! Perturbed solution
 							call get_perturbed_solution(lvol, rhs, oBI, NN)
@@ -572,10 +567,13 @@ else ! CASE SEMI GLOBAL CONSTRAINT
 
 
 						do lvol = vvol, vvol+1
- 						  do innout = 0, 1
-							if( lvol.eq.1    .and. innout.eq.0 ) cycle ! no degrees of freedom at coordinate axis / fixed inner boundary;
-							if( lvol.eq.Mvol .and. innout.eq.1 ) cycle ! no degress of freedom                      fixed outer boundary; for linearized displacement;
-							dBdx%innout = innout
+							if( lvol.eq.vvol ) then
+                                innout      = 1
+								dBdx%innout = innout
+							else
+                                innout      = 0
+								dBdX%innout = innout
+							endif
 
 							WCALL(dfp200, IsMyVolume, (lvol))
 
@@ -596,8 +594,7 @@ else ! CASE SEMI GLOBAL CONSTRAINT
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-
 									
 
-						enddo ! matches do lvol = vvol, vvol+1
-					enddo ! matches do innout;
+					enddo ! matches do lvol = vvol, vvol+1
 				enddo ! matches do issym;
 			enddo ! matches do irz;
 		enddo ! matches do ii;
@@ -876,7 +873,7 @@ subroutine evaluate_dmupfdx(vvol, innout, idof, ii, issym, irz)
 
 #ifdef DEBUG
 	INTEGER             :: isymdiff, maxfev, nfev, lr, ldfjac, ml, muhybr, epsfcn, mode, nprint
-	INTEGER             :: jj, tdoc, idoc, tdof, jdof, ivol, imn, ihybrd1, lwa, Ndofgl, llmodnp
+	INTEGER             :: jj, tdoc, idoc, tdof, jdof, imn, ihybrd1, lwa, Ndofgl, llmodnp
 	REAL                :: dRZ = 1.0e-5, dvol(-1:+1), evolume, imupf_global(1:Mvol,1:2,-2:2), imupf_local(1:2,-2:2), factor, Btemn_debug(1:mn, 0:1, 1:Mvol, -1:2)
     DOUBLE PRECISION     :: diag(1:Mvol-1), qtf(1:Mvol-1), wa1(1:Mvol-1), wa2(1:Mvol-1), wa3(1:Mvol-1), wa4(1:mvol-1)
 	REAL,   allocatable :: oRbc(:,:), oZbs(:,:), oRbs(:,:), oZbc(:,:) ! original geometry;
@@ -964,6 +961,11 @@ subroutine evaluate_dmupfdx(vvol, innout, idof, ii, issym, irz)
 			! RHS coefficients evaluation
 			do pvol = vvol, vvol+1
 				LREGION(pvol)
+                if( pvol.eq.vvol ) then
+                    dBdX%innout = 1 ! take derivative w.r.t outer interface
+                else !pvol.eq.vvol+1
+                    dBdX%innout = 0 ! w.r.t inner interface
+                endif
 				WCALL(dfp200, lbpol, (pvol, -1)) ! derivate w.r.t geometry
 			enddo
 
@@ -978,6 +980,8 @@ subroutine evaluate_dmupfdx(vvol, innout, idof, ii, issym, irz)
 			;   dBdx2(vvol  )   = Btemn(1, 1, vvol  ) - Btemn(1, 0, vvol+1)
 		    ;   dBdx2(vvol+1)   = Btemn(1, 1, vvol+1)
 
+
+			! TODO: use standard library to solve linear system
 			dmupfdx(1:Mvol, vvol, 2, idof, 1) = zero ! Set all components to zero excepted below
 			dmupfdx(2     , vvol, 2, idof, 1) = dBdx2(1) / dBdmpf(1, 1)
 
@@ -1350,7 +1354,7 @@ subroutine evaluate_dBB(vvol, idof, innout, issym, irz, ii, dAt, dAz, dBB, XX, Y
 ! -----
 !	vvol: 	Volume number
 !   idof: 	Labels degree of freedom
-!   innout: Index for loop on inner / outer interface
+!   innout: Index for loop on inner / outer interface (which interface is perturbed)
 !   issym:  Index for loop on stellarator non-symmetric terms
 !   irz: 	Index for loop on R or Z modes
 !   ii: 	Index for loop on Fourier mode
@@ -1389,7 +1393,7 @@ subroutine evaluate_dBB(vvol, idof, innout, issym, irz, ii, dAt, dAz, dBB, XX, Y
                         BBweight, & ! exponential weight on force-imbalance harmonics;
                         psifactor, &
                         mn, &
-                        dRodR, dRodZ, dZodR, dZodZ
+                        dRodR, dRodZ, dZodR, dZodZ, dBdX
 
  LOCALS
 !------
@@ -1450,6 +1454,7 @@ do iocons = 0, 1
 
 	ideriv = -1 ; id = ideriv ; iflag = 1 ! compute derivatives of magnetic field;
 
+    !                        lvol  iocons  ideriv  Ntz  dAt            dAz
 	WCALL( dfp200, lforce, ( vvol, iocons, ideriv, Ntz, dAt(1:Ntz,id), dAz(1:Ntz,id), XX(1:Ntz), YY(1:Ntz), length(1:Ntz), DDl, MMl, iflag ) )
 
 	lss = two * iocons - one ; Lcurvature = 4
