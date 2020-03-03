@@ -5,21 +5,21 @@
 !latex \briefly{Computes Btheta at the interface - used to compute the toroidal surface current}
 
 !latex \calledby{\link{xspech} and
-!latex   		 \link{dfp100}}
+!latex            \link{dfp100}}
 !latex \calls{\link{coords} and 
-!latex 		  \link{numrec}}
+!latex           \link{numrec}}
 
 
 !latex \begin{enumerate}
 !latex \item Call \link{coords} to compute the metric coefficients and the jacobian.
 !latex \item Build coefficients \inputvar{efmn}, \inputvar{ofmn}, \inputvar{cfmn}, \inputvar{sfmn} from the field vector potential \inputvar{Ate}, \inputvar{Ato}, 
-!latex 		 \inputvar{Aze} and \inputvar{Azo}, and radial derivatives of the Chebyshev polynomials \inputvar{TT(ll,innout,1)}. These variables
-!latex		 are the radial derivative of the Fourier coefficients of the magnetic field vector potential. 
+!latex          \inputvar{Aze} and \inputvar{Azo}, and radial derivatives of the Chebyshev polynomials \inputvar{TT(ll,innout,1)}. These variables
+!latex         are the radial derivative of the Fourier coefficients of the magnetic field vector potential. 
 !latex \item Take the inverse Fourier transform of \inputvar{efmn}, \inputvar{ofmn}, \inputvar{cfmn}, \inputvar{sfmn}. These are the covariant components of $dA$, 
-!latex 		 \textit{i.e.} the contravariant components of $\mathbf{B}$.
+!latex          \textit{i.e.} the contravariant components of $\mathbf{B}$.
 !latex \item Build covariant components of the field using the metric coefficients \inputvar{guvij} and the jacobian \inputvar{sg}.
 !latex \item Fourier transform the covariant components of the field and store them in the variables \inputvar{Btemn}, \inputvar{Btomn}, \inputvar{Bzemn} and 
-!latex  	 \inputvar{Bzomn}.
+!latex       \inputvar{Bzomn}.
 !latex \end{enumerate}
 
 
@@ -55,7 +55,7 @@ subroutine lbpol(lvol)
   REAL                   :: lss, innout
   REAL                   :: lAte(1:mn), lAze(1:mn), lAto(1:mn), lAzo(1:mn)
   REAL                   :: dAt(1:Ntz), dAz(1:Ntz), Bt(1:Ntz), Bz(1:Ntz)
-  REAL                   :: dBtzero	      ! Value of first B_theta mode jump
+  REAL                   :: dBtzero          ! Value of first B_theta mode jump
   REAL                   :: mfactor           ! Regularisation factor
 
 ! Lcurvature:             Controls what the routine coords computes.
@@ -81,9 +81,9 @@ subroutine lbpol(lvol)
   else; Lcoordinatesingularity = .false.;
   endif
 
-	if( Lcoordinatesingularity .and. innout.EQ.0) then
-	  goto 5555; ! No need to compute at the singularity (and crash with debug...)
-	endif
+    if( Lcoordinatesingularity .and. innout.EQ.0) then
+      goto 5555; ! No need to compute at the singularity (and crash with debug...)
+    endif
 
   WCALL( lbpol, coords, (lvol, lss, Lcurvature, Ntz, mn ) ) ! get guvij and sg
   

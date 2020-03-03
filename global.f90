@@ -117,11 +117,11 @@ module typedefns
   
   
   type VarSizeMatrix
-		REAL, allocatable :: mat(:,:)
+        REAL, allocatable :: mat(:,:)
   end type VarSizeMatrix
   
   type VarSizeArray
-		REAL, allocatable :: arr(:)
+        REAL, allocatable :: arr(:)
   end type VarSizeArray
 
 end module typedefns
@@ -364,9 +364,9 @@ module inputlist
                 !latex             and in the vacuum region $\Delta\psi_t$ and $\Delta \psi_p$ are varied to match the transform constraint on the boundary
                 !latex             and to obtain the prescribed linking current, \inputvar{curpol}, and $\mu = 0$.
                 !latex \item[iv.]  if \inputvar{Lconstraint}.eq.2, under reconstruction.
-		!latex \item[v.] if \inputvar{Lconstraint} eq.3, then the $\mu$ and $\psi_p$ variables are adjusted in order to satisfy the volume and surface toroidal current
-		!latex		computed with \link{lbpol} (excepted in the inner most volume, where the volume current is irrelevant). Not implemented yet in free
-		!latex		boundary. 	
+        !latex \item[v.] if \inputvar{Lconstraint} eq.3, then the $\mu$ and $\psi_p$ variables are adjusted in order to satisfy the volume and surface toroidal current
+        !latex        computed with \link{lbpol} (excepted in the inner most volume, where the volume current is irrelevant). Not implemented yet in free
+        !latex        boundary.     
                 !latex \ei
  tflux       ,& !latex \item \inputvar{tflux} : \verb!real(1:MNvol+1)! : toroidal flux, $\psi_t$, enclosed by each interface;
                 !latex \bi
@@ -406,7 +406,7 @@ module inputlist
                 !latex \ei
  mu          ,& !latex \item \inputvar{mu} : \verb!real(1:MNvol+1)! : helicity-multiplier, $\mu$, in each volume;
  Ivolume     ,& !latex \item \inputvar{Ivolume} : \verb!real(1:MNvol+1)! : Toroidal current constraint normalized by $\mu_0$ ($I_{volume} = \mu_0\cdot [A]$), in each volume. This is a 
-				!latex 		 cumulative quantity: $I_{\mathcal{V},i} = \int_0^{\psi_{t,i}} \mathbf{J}\cdot\mathbf{dS}$. Physically, it represents the sum of all non-pressure driven currents;
+                !latex          cumulative quantity: $I_{\mathcal{V},i} = \int_0^{\psi_{t,i}} \mathbf{J}\cdot\mathbf{dS}$. Physically, it represents the sum of all non-pressure driven currents;
  Isurf       ,& !latex \item \inputvar{Isurf} : \verb!real(1:MNvol)! : Toroidal current normalized by $\mu_0$ at each interface (cumulative). This is the sum of all pressure driven currents.;
  pl          ,& !latex \item \inputvar{pl = 0} : \verb!integer(0:MNvol)! :
  ql          ,& !latex \item \inputvar{ql = 0} : \verb!integer(0:MNvol)! :
@@ -912,7 +912,7 @@ module allglobal
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!``-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   INTEGER              :: myid, ncpu       ! mpi variables;
-  INTEGER	       :: IsMyVolumeValue
+  INTEGER           :: IsMyVolumeValue
   REAL                 :: cpus             ! initial time;
 
   REAL                 :: pi2nfp           !       pi2/nfp     ; assigned in readin;
@@ -936,7 +936,7 @@ module allglobal
 
   LOGICAL, allocatable :: ImagneticOK(:)   ! used to indicate if Beltrami fields have been correctly constructed;
 
-  LOGICAL	       :: IconstraintOK		 ! Used to break iteration loops of slaves in the global constraint minimization.
+  LOGICAL           :: IconstraintOK         ! Used to break iteration loops of slaves in the global constraint minimization.
 
   REAL   , allocatable :: beltramierror(:,:)  ! to store the integral of |curlB-mu*B| computed by jo00aa;
     
@@ -1116,7 +1116,7 @@ module allglobal
 
   LOGICAL                    :: Lcoordinatesingularity, Lplasmaregion, Lvacuumregion
   
-  LOGICAL		     :: Localconstraint
+  LOGICAL             :: Localconstraint
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -1132,7 +1132,7 @@ module allglobal
 !latex \item These are allocated and deallocated in \link{dforce}, assigned in \link{matrix}, and used in \link{mp00ac} and ? \link{df00aa}.
 !latex \end{enumerate}
 
-   INTEGER, allocatable :: IndMatrixArray(:,:)	! Store matrices index in geometry dependent matrice arrays
+   INTEGER, allocatable :: IndMatrixArray(:,:)    ! Store matrices index in geometry dependent matrice arrays
    
    type(VarSizeMatrix),   allocatable :: dMA(:), dMB(:)! dMC(:,:) ! energy and helicity matrices; quadratic forms; 
    type(VarSizeMatrix),   allocatable :: dMD(:)! dME(:,:)! dMF(:,:) ! energy and helicity matrices; quadratic forms; 
@@ -1540,9 +1540,9 @@ subroutine readin
 !latex       (The input $\Phi_{edge} \equiv $ \inputvar{phiedge} will provide the total toroidal flux; see \link{preset}.)
 !latex \item The input value for the toroidal current constraint (\inputvar{Isurf(1:Mvol)} and \inputvar{Ivolume(1:Mvol)}) are also immediately normalized, using \inputvar{curtor}.
 !latex
-!latex		$Ivolume \rightarrow Ivolume\cdot \frac{curtor}{\sum_i Isurf_i + Ivolume_i}$
+!latex        $Ivolume \rightarrow Ivolume\cdot \frac{curtor}{\sum_i Isurf_i + Ivolume_i}$
 !latex
-!latex		$Isurf \rightarrow Isurf\cdot \frac{curtor}{\sum_i Isurf_i + Ivolume_i}$
+!latex        $Isurf \rightarrow Isurf\cdot \frac{curtor}{\sum_i Isurf_i + Ivolume_i}$
 !latex \end{enumerate}
       
    if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : reading physicslist     from ext.sp ;")') cput-cpus
@@ -1629,27 +1629,27 @@ subroutine readin
 !latex \end{align}
 !latex Finally, the volume current in the vacuum region is set to $0$.
 
-	! Current constraint normalization
-	
-	if ((Lfreebound.EQ.1) .and. (Lconstraint.EQ.3)) then
-		
-		Ivolume(Mvol) = Ivolume(Mvol-1) !Ensure vacuum in vacuum region
+    ! Current constraint normalization
+    
+    if ((Lfreebound.EQ.1) .and. (Lconstraint.EQ.3)) then
+        
+        Ivolume(Mvol) = Ivolume(Mvol-1) !Ensure vacuum in vacuum region
 
-		toroidalcurrent = Ivolume(Mvol) + sum(Isurf)
-		
-		if( curtor.NE.0 ) then
-			FATAL( readin, toroidalcurrent.EQ.0 , Incompatible current profiles and toroidal linking current)
+        toroidalcurrent = Ivolume(Mvol) + sum(Isurf)
+        
+        if( curtor.NE.0 ) then
+            FATAL( readin, toroidalcurrent.EQ.0 , Incompatible current profiles and toroidal linking current)
 
-			Ivolume(1:Mvol) = Ivolume(1:Mvol) * curtor / toroidalcurrent
-			Isurf(1:Mvol) 	= Isurf(1:Mvol) * curtor / toroidalcurrent
+            Ivolume(1:Mvol) = Ivolume(1:Mvol) * curtor / toroidalcurrent
+            Isurf(1:Mvol)     = Isurf(1:Mvol) * curtor / toroidalcurrent
 
-		else
-			FATAL( readin, toroidalcurrent.NE.0, Incompatible current profiles and toroidal linking current)
+        else
+            FATAL( readin, toroidalcurrent.NE.0, Incompatible current profiles and toroidal linking current)
 
-			! No rescaling if profiles have an overall zero toroidal current
-		endif
-	endif
-	
+            ! No rescaling if profiles have an overall zero toroidal current
+        endif
+    endif
+    
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -2632,7 +2632,7 @@ INTEGER :: cpuid_comp
 ! If the volume is not associated to the CPU, get an error
 call WhichCpuID(vvol, cpuid_comp)
 if (cpuid_comp.NE.cpuid) then
-	FATAL( dforce, .true., Error: called IndMatrix with wrong CPU ?)
+    FATAL( dforce, .true., Error: called IndMatrix with wrong CPU ?)
 endif
 
 end subroutine IndMatrix
@@ -2668,7 +2668,7 @@ subroutine WhichCpuID(vvol, cpu_id)
 
 LOCALS
 
-INTEGER			:: vvol, cpu_id
+INTEGER            :: vvol, cpu_id
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

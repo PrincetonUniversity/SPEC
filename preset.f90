@@ -43,12 +43,12 @@ subroutine preset
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 
-	if( (Lconstraint.EQ.3) .and. (Lfindzero.EQ.2)) then
-		if( myid.EQ.0 ) then
-			!write(ounit, '(/, "!!! WARNING: Using Lfindzero=2 with Lconstraint=3 might not converge. The hessian at fixed toroidal current has not yet been implemented. !!!", /)') 
-			FATAL(preset, .true., Lconstraint=3 is incompatible with Lfindzero=2. Use Lfindzero=1 instead)
-		endif
-	endif
+    if( (Lconstraint.EQ.3) .and. (Lfindzero.EQ.2)) then
+        if( myid.EQ.0 ) then
+            !write(ounit, '(/, "!!! WARNING: Using Lfindzero=2 with Lconstraint=3 might not converge. The hessian at fixed toroidal current has not yet been implemented. !!!", /)') 
+            FATAL(preset, .true., Lconstraint=3 is incompatible with Lfindzero=2. Use Lfindzero=1 instead)
+        endif
+    endif
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -816,16 +816,16 @@ endif
 !latex Variables \internal{dMA}, \internal{dMB}, \internal{dMD} and \internal{solution} are arrays of size (1:Mvol). Then each array element has a 
 !latex data field called \emph{mat}, with size
 !latex \begin{itemize}
-!latex 		\item  \internal{dMA(vvol)\% mat(0:NN, 0:NN)}
-!latex 		\item  \internal{dMB(vvol)\% mat(0:NN, 0:2)}
-!latex 		\item  \internal{dMD(vvol)\% mat(0:NN, 0:NN)}
-!latex 		\item  \internal{solution(vvol)\% mat(0:NN, -1:2)}. 
+!latex         \item  \internal{dMA(vvol)\% mat(0:NN, 0:NN)}
+!latex         \item  \internal{dMB(vvol)\% mat(0:NN, 0:2)}
+!latex         \item  \internal{dMD(vvol)\% mat(0:NN, 0:NN)}
+!latex         \item  \internal{solution(vvol)\% mat(0:NN, -1:2)}. 
 !latex \end{itemize}
 !latex
 !latex Arrays \internal{dMG(1:Mvol)} and \internal{MBpsi(1:Mvol)} has a field called \emph{arr} with size
 !latex \begin{itemize}
-!latex 		\item \internal{dMG(vvol)\% arr(0:NN)}
-!latex 		\item \internal{MBpsi(vvol)\% arr(1:NN)}
+!latex         \item \internal{dMG(vvol)\% arr(0:NN)}
+!latex         \item \internal{MBpsi(vvol)\% arr(1:NN)}
 !latex \end{itemize}
 
 
@@ -834,28 +834,28 @@ endif
 ! generate a matrix containing the pair (cpuid, matrix_index) for each volume
 allocate(IndMatrixArray(1:Mvol, 1:2))
 do vvol=1, Mvol 
-	call WhichCpuID(vvol, work1)
-	IndMatrixArray(vvol,1) = work1 !CpuID associated to this volume
+    call WhichCpuID(vvol, work1)
+    IndMatrixArray(vvol,1) = work1 !CpuID associated to this volume
 
-	! Count how many volumes are already associated to this CPU
-	work1=0
-	do lvol=1,vvol
-		call WhichCpuID(lvol, work2)
-		if (work2.EQ.IndMatrixArray(vvol, 1)) then
-			work1 = work1 + 1
-		endif
-	enddo
-	IndMatrixArray(vvol, 2) = work1 ! index of volume in the list of volume for this CPU
+    ! Count how many volumes are already associated to this CPU
+    work1=0
+    do lvol=1,vvol
+        call WhichCpuID(lvol, work2)
+        if (work2.EQ.IndMatrixArray(vvol, 1)) then
+            work1 = work1 + 1
+        endif
+    enddo
+    IndMatrixArray(vvol, 2) = work1 ! index of volume in the list of volume for this CPU
 enddo
 
 
 ! Allocate matrices
 work1 = 0
 do vvol =1, Mvol !Count how many volumes are associated to this CPU
-	call IsMyVolume(vvol)
-	if (IsMyVolumeValue.EQ.1) then
-		work1=work1+1
-	endif
+    call IsMyVolume(vvol)
+    if (IsMyVolumeValue.EQ.1) then
+        work1=work1+1
+    endif
 enddo
 
 ! Allocate only the required number of matrices to each array
@@ -868,10 +868,10 @@ allocate(solution(1:Mvol)) !Excepted for solution which is broadcaster
 
 do ii = 1, work1
   do jj = 1, Mvol ! Look for associated volume corresponding to (myid, ii)
-	if ((myid.EQ.IndMatrixArray(jj, 1)).AND.(ii.EQ.IndMatrixArray(jj, 2))) then
-		vvol = jj
-		exit !Found the volume, we can exit do loop
-	endif
+    if ((myid.EQ.IndMatrixArray(jj, 1)).AND.(ii.EQ.IndMatrixArray(jj, 2))) then
+        vvol = jj
+        exit !Found the volume, we can exit do loop
+    endif
   enddo
 
   NN = NAdof(vvol)
@@ -1372,7 +1372,7 @@ enddo
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   if( Lconstraint .EQ. 3) then
-	Localconstraint = .false.
+    Localconstraint = .false.
   else
     Localconstraint = .true.
   endif

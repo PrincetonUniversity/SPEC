@@ -50,7 +50,7 @@ program xspech
                         odetol, nPpts, nPtrj, &
                         LHevalues, LHevectors, LHmatrix, Lperturbed, Lcheck, &
                         Lzerovac, &
-						mu, Isurf, Ivolume
+                        mu, Isurf, Ivolume
 
   use cputiming, only : Txspech
 
@@ -77,7 +77,7 @@ program xspech
                         first_free_bound, &
                         dMA, dMB, dMD, dMG, MBpsi, solution, dtflux, IPDt, &
                         version
-						
+                        
    ! write _all_ output quantities into a _single_ HDF5 file
    use sphdf5,   only : init_outfile, &
                         mirror_input_to_outfile, &
@@ -109,7 +109,7 @@ program xspech
 !  status = hostnm( hostname )
 !  write(*,*) 'Process with PID: ', pid, 'ready to attach. Hostname: ', hostname
 !  do while( iwait .EQ. 0 )
-!	!wait for debugger
+!    !wait for debugger
 !  enddo
 !#endif
   
@@ -644,7 +644,7 @@ program xspech
   sumI = 0
   do vvol = 1, Mvol
     Ivolume(vvol) = mu(vvol) * dtflux(vvol) * pi2 + sumI    ! factor pi2 due to normalization in preset
-    sumI = Ivolume(vvol)									! Sum over all volumes since this is how Ivolume is defined
+    sumI = Ivolume(vvol)                                    ! Sum over all volumes since this is how Ivolume is defined
   enddo
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

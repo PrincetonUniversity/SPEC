@@ -35,9 +35,9 @@
 !latex \subsection{Matrices computation}
 
 !latex \begin{enumerate}
-!latex       \item 	the volume-integrated metric arrays, \internal{DToocc}, etc. are evaluated in each volume by calling \link{ma00aa};
-!latex       \item 	the energy and helicity matrices, \internal{dMA(0:NN,0:NN)}, \internal{dMB(0:NN,0:2)}, etc. are evaluated in each 
-!latex 				volume by calling \link{matrix};
+!latex       \item     the volume-integrated metric arrays, \internal{DToocc}, etc. are evaluated in each volume by calling \link{ma00aa};
+!latex       \item     the energy and helicity matrices, \internal{dMA(0:NN,0:NN)}, \internal{dMB(0:NN,0:2)}, etc. are evaluated in each 
+!latex                 volume by calling \link{matrix};
 !latex \end{enumerate}
 
 !latex \subsection{parallelization over volumes}
@@ -49,10 +49,10 @@
 !latex In each volume, \internal{vvol = 1, Mvol}, 
 !latex       \begin{enumerate}
 !latex       \item The logical array \internal{ImagneticOK(vvol)} is set to \internal{.false.}
-!latex 		 \item The MPI node associated to the volume calls \link{dfp100}. This routine calls \link{ma02aa} (and might iterate on \link{mp00ac}) and computes the
-!latex 			   field solution in each volume consistent with the constraint.
-!latex		 \item The MPI node associated to the volume calls \link{dfp200}. This computes $p+B^2/2$ (and the spectral constraints if required) at the interfaces in 
-!latex 			   each volumes, as well as the derivatives of the force-balance if \internal{LComputeDerivatives = 1};
+!latex          \item The MPI node associated to the volume calls \link{dfp100}. This routine calls \link{ma02aa} (and might iterate on \link{mp00ac}) and computes the
+!latex                field solution in each volume consistent with the constraint.
+!latex         \item The MPI node associated to the volume calls \link{dfp200}. This computes $p+B^2/2$ (and the spectral constraints if required) at the interfaces in 
+!latex                each volumes, as well as the derivatives of the force-balance if \internal{LComputeDerivatives = 1};
 !latex       \end{enumerate}
 
 !latex \subsubsection{Global constraint}
@@ -85,7 +85,7 @@
 !latex       where the spectral condensation constraints, $I_{i,v}$, and the ``star-like'' poloidal angle constraints, $S_{i,v,\pm 1}$,
 !latex       are calculated and defined in \link{lforce};
 !latex       and the \internal{sweight}$_v$ are defined in \link{preset}. All quantities local to a volume are computed in \link{dfp200},
-!latex 		 information is then broadcasted to the MPI node $0$ in \link{dforce} and the global force is evaluated.
+!latex          information is then broadcasted to the MPI node $0$ in \link{dforce} and the global force is evaluated.
 !latex \end{enumerate}
 
 
@@ -107,7 +107,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
                         epsilon, &
                         Lconstraint, Lcheck, &
                         Lextrap, &
-												mupftol
+                                                mupftol
   
   use cputiming, only : Tdforce
   
@@ -118,7 +118,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
                         ImagneticOK, &
                         Energy, ForceErr, &
                         YESstellsym, NOTstellsym, &
-						Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
+                        Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
                         mn, im, in, &
                         dpflux, sweight, &
                         Bemn, Bomn, Iomn, Iemn, Somn, Semn, &
@@ -138,8 +138,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
                         DDtzcc, DDtzcs, DDtzsc, DDtzss, &
                         DDzzcc, DDzzcs, DDzzsc, DDzzss, &
                         LocalConstraint, xoffset, &
-						solution, &
-					    IsMyVolume, IsMyVolumeValue, WhichCpuID
+                        solution, &
+                        IsMyVolume, IsMyVolumeValue, WhichCpuID
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -157,12 +157,12 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
   DOUBLE PRECISION     :: diag(1:Mvol-1), qtf(1:Mvol-1), wa1(1:Mvol-1), wa2(1:Mvol-1), wa3(1:Mvol-1), wa4(1:mvol-1)
   DOUBLE PRECISION, allocatable :: fjac(:, :), r(:) 
 
-  INTEGER	       			 :: status(MPI_STATUS_SIZE), request_recv, request_send, cpu_send
+  INTEGER                        :: status(MPI_STATUS_SIZE), request_recv, request_send, cpu_send
   INTEGER              :: id
   INTEGER              :: iflag
 
   CHARACTER            :: packorunpack 
-  EXTERNAL 	       		 :: dfp100, dfp200, loop_dfp100
+  EXTERNAL                     :: dfp100, dfp200, loop_dfp100
 
 #ifdef DEBUG
   INTEGER              :: isymdiff
@@ -200,13 +200,13 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
    LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
 
 ! Determines if this volume vvol should be computed by this thread.
-		call IsMyVolume(vvol)
+        call IsMyVolume(vvol)
 
-		if( IsMyVolumeValue .EQ. 0 ) then
-			cycle
-		else if( IsMyVolumeValue .EQ. -1) then
-			FATAL(dfp100, .true., Unassociated volume)
-		endif
+        if( IsMyVolumeValue .EQ. 0 ) then
+            cycle
+        else if( IsMyVolumeValue .EQ. -1) then
+            FATAL(dfp100, .true., Unassociated volume)
+        endif
 
    ll = Lrad(vvol)
 
@@ -301,122 +301,122 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 ! Local constraint case - simply call dfp100 and then dfp200
   if( LocalConstraint ) then
 
-	Ndofgl = 0; Fvec(1:Mvol-1) = 0; iflag = 0;
-	Xdof(1:Mvol-1) = dpflux(2:Mvol) + xoffset
-	
-	! Solve for field
-	WCALL(dforce, dfp100, (Ndofgl, Xdof, Fvec, iflag) )
+    Ndofgl = 0; Fvec(1:Mvol-1) = 0; iflag = 0;
+    Xdof(1:Mvol-1) = dpflux(2:Mvol) + xoffset
+    
+    ! Solve for field
+    WCALL(dforce, dfp100, (Ndofgl, Xdof, Fvec, iflag) )
  
-	! Get force imbalance and jacobian
-	do vvol = 1, Mvol
+    ! Get force imbalance and jacobian
+    do vvol = 1, Mvol
    
-		WCALL(dforce, IsMyVolume, (vvol))
+        WCALL(dforce, IsMyVolume, (vvol))
 
-		if( IsMyVolumeValue .EQ. 0 ) then
-			cycle
-		else if( IsMyVolumeValue .EQ. -1) then
-			FATAL(dforce, .true., Unassociated volume)
-		endif
+        if( IsMyVolumeValue .EQ. 0 ) then
+            cycle
+        else if( IsMyVolumeValue .EQ. -1) then
+            FATAL(dforce, .true., Unassociated volume)
+        endif
 
-		WCALL(dforce, dfp200, ( LcomputeDerivatives, vvol) )
-	enddo ! end of do vvol = 1, Mvol
+        WCALL(dforce, dfp200, ( LcomputeDerivatives, vvol) )
+    enddo ! end of do vvol = 1, Mvol
 
 ! --------------------------------------------------------------------------------------------------
 ! Global constraint - call the master thread calls hybrd1 on dfp100, others call dfp100_loop.
   else
 
-	Ndofgl = Mvol-1; 
+    Ndofgl = Mvol-1; 
 
     if( myid.eq. 0) then
           lwa = 8 * Ndofgl * Ndofgl; maxfev = 1000; nfev=0; lr=Mvol*(Mvol-1); ldfjac=Mvol-1
-		  ml = Mvol-2; muhybr = Mvol-2; epsfcn=1E-16; diag=0.0; mode=1; factor=0.01; nprint=1e5;	!nprint=1e5 to force last call - used for MPI communications
+          ml = Mvol-2; muhybr = Mvol-2; epsfcn=1E-16; diag=0.0; mode=1; factor=0.01; nprint=1e5;    !nprint=1e5 to force last call - used for MPI communications
 
-		  Xdof(1:Mvol-1)   = dpflux(2:Mvol) + xoffset  ! xoffset reduces the number of iterations needed by hybrd for an obscure reason...
+          Xdof(1:Mvol-1)   = dpflux(2:Mvol) + xoffset  ! xoffset reduces the number of iterations needed by hybrd for an obscure reason...
 
-		  SALLOCATE(fjac, (1:ldfjac,1:Mvol-1), 0)
-		  SALLOCATE(r, (1:lr), 0)
+          SALLOCATE(fjac, (1:ldfjac,1:Mvol-1), 0)
+          SALLOCATE(r, (1:lr), 0)
 
-		  ! Hybrid-Powell method, iterates on all poloidal fluxes to match the global constraint
-		  WCALL( dforce,  hybrd1, (dfp100, Ndofgl, Xdof(1:Ndofgl), Fvec(1:Ndofgl), mupftol, maxfev, ml, muhybr, epsfcn, diag(1:Ndofgl), mode, &
-					  factor, nprint, ihybrd1, nfev, fjac(1:Ndofgl,1:Ndofgl), ldfjac, r(1:lr), lr, qtf(1:Ndofgl), wa1(1:Ndofgl), &
-					  wa2(1:Ndofgl), wa3(1:Ndofgl), wa4(1:Ndofgl)) ) 
+          ! Hybrid-Powell method, iterates on all poloidal fluxes to match the global constraint
+          WCALL( dforce,  hybrd1, (dfp100, Ndofgl, Xdof(1:Ndofgl), Fvec(1:Ndofgl), mupftol, maxfev, ml, muhybr, epsfcn, diag(1:Ndofgl), mode, &
+                      factor, nprint, ihybrd1, nfev, fjac(1:Ndofgl,1:Ndofgl), ldfjac, r(1:lr), lr, qtf(1:Ndofgl), wa1(1:Ndofgl), &
+                      wa2(1:Ndofgl), wa3(1:Ndofgl), wa4(1:Ndofgl)) ) 
 
-		  DALLOCATE(fjac)
-		  DALLOCATE(r)
-	 
-		  dpflux(2:Mvol) = Xdof(1:Ndofgl) - xoffset
+          DALLOCATE(fjac)
+          DALLOCATE(r)
+     
+          dpflux(2:Mvol) = Xdof(1:Ndofgl) - xoffset
 
-		else
+        else
 
-			! Slave threads call loop_dfp100 and help the master thread computation at each iteration.
-			call loop_dfp100(Ndofgl, Fvec, iflag)
+            ! Slave threads call loop_dfp100 and help the master thread computation at each iteration.
+            call loop_dfp100(Ndofgl, Fvec, iflag)
 
     endif
 
 ! --------------------------------------------------------------------------------------------------
-!									MPI COMMUNICATIONS
+!                                    MPI COMMUNICATIONS
 
-	! Gather all ImagneticOK
-	do vvol=1, Mvol 
-		! Determine which thread has info on which volume
-		call WhichCpuID(vvol, cpu_send) 
-			
-		! For now, use MPI_RECV and MPI_SEND. TODO: change implementationo of ImagneticOK to allow the use 
-		! of MPI_GATHER
-		if( cpu_send.NE.0	) then
-			if( myid.EQ.0 ) then
-				call MPI_RECV(ImagneticOK(vvol), 1, MPI_LOGICAL, cpu_send, vvol, MPI_COMM_WORLD, status, ierr)
-			else if( myid.EQ.cpu_send ) then
-				call MPI_SEND(ImagneticOK(vvol), 1, MPI_LOGICAL, 		0, vvol, MPI_COMM_WORLD, ierr)
-			endif
-		endif
-	enddo
+    ! Gather all ImagneticOK
+    do vvol=1, Mvol 
+        ! Determine which thread has info on which volume
+        call WhichCpuID(vvol, cpu_send) 
+            
+        ! For now, use MPI_RECV and MPI_SEND. TODO: change implementationo of ImagneticOK to allow the use 
+        ! of MPI_GATHER
+        if( cpu_send.NE.0    ) then
+            if( myid.EQ.0 ) then
+                call MPI_RECV(ImagneticOK(vvol), 1, MPI_LOGICAL, cpu_send, vvol, MPI_COMM_WORLD, status, ierr)
+            else if( myid.EQ.cpu_send ) then
+                call MPI_SEND(ImagneticOK(vvol), 1, MPI_LOGICAL,         0, vvol, MPI_COMM_WORLD, ierr)
+            endif
+        endif
+    enddo
 
-	! Now master thread broadcast the poloidal flux matching the constraint. It was obtain by iteration
-	! via hybrd1
+    ! Now master thread broadcast the poloidal flux matching the constraint. It was obtain by iteration
+    ! via hybrd1
     call MPI_Bcast( dpflux, Mvol, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
 
-	! And broadcast as well the ImagneticOK flag - this determines if the computation was succesful in
-	! each volume. If not, this geometry iteration goes to the trash...
+    ! And broadcast as well the ImagneticOK flag - this determines if the computation was succesful in
+    ! each volume. If not, this geometry iteration goes to the trash...
     call MPI_Bcast( ImagneticOK, Mvol, MPI_LOGICAL, 0, MPI_COMM_WORLD, ierr)
     
-	! And finally broadcast the field information to all threads from the thread which did the computation
+    ! And finally broadcast the field information to all threads from the thread which did the computation
     do vvol = 1, Mvol
-		call WhichCpuID(vvol, cpu_id)
+        call WhichCpuID(vvol, cpu_id)
 
         NN = NAdof(vvol)
         Nbc = NN * 4
         call MPI_Bcast( solution(vvol)%mat(1:NN, -1:2), Nbc, MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_WORLD, ierr)
-	
-		RlBCAST( diotadxup(0:1, -1:2, vvol), 8, cpu_id)
+    
+        RlBCAST( diotadxup(0:1, -1:2, vvol), 8, cpu_id)
         RlBCAST( dItGpdxtp(0:1, -1:2, vvol), 8, cpu_id)
-  	
-		do ii = 1, mn  
-   	  		RlBCAST( Ate(vvol,0,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
-   	  		RlBCAST( Aze(vvol,0,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
-  		enddo
+      
+        do ii = 1, mn  
+                 RlBCAST( Ate(vvol,0,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
+                 RlBCAST( Aze(vvol,0,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
+          enddo
 
         if( NOTstellsym ) then
-    	    do ii = 1, mn    
-		  	    RlBCAST( Ato(vvol,0,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
-   			    RlBCAST( Azo(vvol,0,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
-  			enddo
-		endif
+            do ii = 1, mn    
+                  RlBCAST( Ato(vvol,0,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
+                   RlBCAST( Azo(vvol,0,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
+              enddo
+        endif
     enddo
 
-	! --------------------------------------------------------------------------------------------------
-	! Now that all the communication is over, compute the local force and its derivatives
+    ! --------------------------------------------------------------------------------------------------
+    ! Now that all the communication is over, compute the local force and its derivatives
     do vvol = 1, Mvol
 
-		WCALL(dforce, IsMyVolume, (vvol))
+        WCALL(dforce, IsMyVolume, (vvol))
 
-		if( IsMyVolumeValue .EQ. 0 ) then
-			cycle
-		else if( IsMyVolumeValue .EQ. -1) then
-			FATAL(dforce, .true., Unassociated volume)
-		endif
-				
-		WCALL(dforce, dfp200, ( LcomputeDerivatives, vvol) )
+        if( IsMyVolumeValue .EQ. 0 ) then
+            cycle
+        else if( IsMyVolumeValue .EQ. -1) then
+            FATAL(dforce, .true., Unassociated volume)
+        endif
+                
+        WCALL(dforce, dfp200, ( LcomputeDerivatives, vvol) )
 
     enddo
 
@@ -741,34 +741,34 @@ subroutine loop_dfp100(Ndofgl, Fvec, iflag)
 ! LOOP_DFP100 - infinite loop for slaves helping the master thread iterating to match global 
 ! constraint
   
-  use fileunits, only : ounit																! Unit identifier for write
+  use fileunits, only : ounit                                                                ! Unit identifier for write
   
-  use inputlist, only : Wmacros, Wdforce										! Flags for debugging
+  use inputlist, only : Wmacros, Wdforce                                        ! Flags for debugging
 
-	use cputiming, only 	:  Tdforce													! Timer
-	use allglobal, only 	:  Mvol, &													! Total number of volume + vacuum
-                               IconstraintOK, &									! Flag to exit loop
+    use cputiming, only     :  Tdforce                                                    ! Timer
+    use allglobal, only     :  Mvol, &                                                    ! Total number of volume + vacuum
+                               IconstraintOK, &                                    ! Flag to exit loop
                                cpus, myid
 
  LOCALS
 !------
 
-	INTEGER              								:: Ndofgl, iflag			! Input parameters to dfp100
-	DOUBLE PRECISION     								:: Fvec(1:Mvol-1), x(1:Mvol-1) ! Input parameters to dfp100
-	EXTERNAL														:: dfp100							! Field solver
+    INTEGER                                              :: Ndofgl, iflag            ! Input parameters to dfp100
+    DOUBLE PRECISION                                     :: Fvec(1:Mvol-1), x(1:Mvol-1) ! Input parameters to dfp100
+    EXTERNAL                                                        :: dfp100                            ! Field solver
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 ! Initialize - for now the constraint is not matched
-	IconstraintOK = .false.
+    IconstraintOK = .false.
 
 ! Enter the infinit loop. Master thread broadcasts IconstraintOK at each iteration - the value is
 ! .TRUE. when the constraint is matched
-	do while (.not.IconstraintOK)
+    do while (.not.IconstraintOK)
 
 ! Compute solution in every associated volumes
-		WCALL(dforce, dfp100, (Ndofgl, x, Fvec, iflag) )
+        WCALL(dforce, dfp100, (Ndofgl, x, Fvec, iflag) )
 
-	end do !matches do while IconstraintOK
+    end do !matches do while IconstraintOK
 
 end subroutine loop_dfp100

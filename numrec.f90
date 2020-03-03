@@ -274,7 +274,7 @@ subroutine gauleg( n, weight, abscis, ifail )
         enddo !j
 
         pp = n*(z*p1 - p2)/(z*z - one) !Derivative of P(x)
-	z1 = z;  z = z1 - p1/pp        !Newton iteration
+    z1 = z;  z = z1 - p1/pp        !Newton iteration
         if (abs(z - z1) .le. eps) exit !Convergence test
      enddo !iter
      if (iter > maxiter) then
