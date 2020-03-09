@@ -38,9 +38,9 @@ subroutine lbpol(lvol, ideriv)
                         Btemn, Bzemn, Btomn, Bzomn, &
                         Nt, Nz, &
                         regumm, &
-                        cpus, myid
+                        cpus, myid, dBdX
 
-  use inputlist, only : Lrad, Wlbpol, Igeometry
+  use inputlist, only : Lrad, Wlbpol, Igeometry, Lcheck
 
   use fileunits, only : ounit
 
@@ -51,8 +51,8 @@ subroutine lbpol(lvol, ideriv)
   LOCALS
 ! ------
   
-  INTEGER                :: Lcurvature, ideriv, ii, ll, ifail, lvol, mi, ni
-  REAL                   :: lss, iocons
+  INTEGER                :: Lcurvature, ideriv, ii, ll, ifail, lvol, mi, ni, iocons
+  REAL                   :: lss
   REAL                   :: lAte(1:mn), lAze(1:mn), lAto(1:mn), lAzo(1:mn)
   REAL                   :: dAt(1:Ntz), dAz(1:Ntz), Bt(1:Ntz), Bz(1:Ntz), dAt0(1:Ntz), dAz0(1:Ntz)
   REAL                   :: dBtzero	      ! Value of first B_theta mode jump
@@ -123,8 +123,19 @@ subroutine lbpol(lvol, ideriv)
   Bt(1:Ntz) = ( dAz(1:Ntz ) * guvij(1:Ntz,2,2, 0) + dAt(1:Ntz ) * guvij(1:Ntz,2,3, 0) )/ sg(1:Ntz,0)
   Bz(1:Ntz) = ( dAz(1:Ntz ) * guvij(1:Ntz,2,3, 0) + dAt(1:Ntz ) * guvij(1:Ntz,3,3, 0) )/ sg(1:Ntz,0)
 
+
+
   select case ( ideriv ) ! need to take into account derivatives of metric elements
     case(-1)
+#ifdef DEBUG
+if( Lcheck.eq.1 ) then
+	write(ounit, 8375) dBdX%vol, dBdX%innout, lvol, iocons, dAz(1:Ntz), dAt(1:Ntz)
+	write(ounit, 8376) dBdX%vol, dBdX%innout, lvol, iocons, guvij(1:Ntz,2,2,0), guvij(1:Ntz,2,3,0), guvij(1:Ntz,3,3,0), sg(1:Ntz,0)
+ 
+8375 format("lbpol  : vvol=",i7,", innout=", i7 ,", lvol=",i7,", iocons=", i7 ,";  dAz=",f10.6,",  dAt=", f10.6)
+8376 format("lbpol  : vvol=",i7,", innout=", i7 ,", lvol=",i7,", iocons=", i7 ,";  g22=",f10.6,",  g23=", f10.6,",  g33=", f10.6,",  sg=", f10.6)
+endif
+#endif
       efmn(1:mn) = zero ; ofmn(1:mn) = zero ; cfmn(1:mn) = zero ; sfmn(1:mn) = zero
       do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over Fourier harmonics;
     
@@ -148,11 +159,20 @@ subroutine lbpol(lvol, ideriv)
       call invfft( mn, im, in, efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt0(1:Ntz), dAz0(1:Ntz) ) ! get covariant component of dA without derivatives
 
       Lcurvature = 5
-      WCALL( lbpol, coords, (lvol, lss, Lcurvature, Ntz, mn ) ) ! get guvij and sg
+      WCALL( lbpol, coords, (lvol, lss, Lcurvature, Ntz, mn ) ) ! get guvij over sg derivatives
 
       Bt(1:Ntz) = Bt(1:Ntz) + ( dAz0(1:Ntz ) * guvij(1:Ntz,2,2, 1) + dAt0(1:Ntz ) * guvij(1:Ntz,2,3, 1) ) ! Add metric derivatives
       Bz(1:Ntz) = Bz(1:Ntz) + ( dAz0(1:Ntz ) * guvij(1:Ntz,2,3, 1) + dAt0(1:Ntz ) * guvij(1:Ntz,3,3, 1) ) 
 
+#ifdef DEBUG
+if( Lcheck.eq.1 ) then
+	write(ounit, 8377) dBdX%vol, dBdX%innout, lvol, iocons, dAz0(1:Ntz), dAt0(1:Ntz)
+	write(ounit, 8378) dBdX%vol, dBdX%innout, lvol, iocons, guvij(1:Ntz,2,2,1), guvij(1:Ntz,2,3,1), guvij(1:Ntz,3,3,1)
+ 
+8377 format("lbpol  : vvol=",i7,", innout=", i7 ,", lvol=",i7,", iocons=", i7 ,"; dAz0=",f10.6,", dAt0=", f10.6)
+8378 format("lbpol  : vvol=",i7,", innout=", i7 ,", lvol=",i7,", iocons=", i7 ,"; dg22=",f10.6,", dg23=", f10.6,", dg33=", f10.6)
+endif
+#endif
     case(2)
     
       !Bt(1:Ntz) = Bt(1:Ntz) / pi2 ! Due to normalization of poloidal flux

@@ -695,7 +695,7 @@ if( LcomputeDerivatives ) then ! construct Hessian;
 								endif ! end of if( Lconstraint.eq.1 ) then;
 
 							endif ! end of if( vvol.lt.Mvol-1 ) ;
-						
+					
 						else ! Global constraint
 						
 							! In the general case of global constraint, there are no zero element in the hessian. We thus loop again on all volumes
@@ -719,6 +719,9 @@ if( LcomputeDerivatives ) then ! construct Hessian;
 
 							enddo
 
+
+
+						endif ! matches if( LocalConstraint );
 #ifdef DEBUG
 							if( Lcheck.eq.6 ) then
 								dBdX%L = .false.
@@ -776,8 +779,6 @@ if( LcomputeDerivatives ) then ! construct Hessian;
 
 							endif
 #endif
-
-						endif ! matches if( LocalConstraint );
 					enddo ! matches do issym ;
 				enddo ! matches do irz ;
 			enddo ! matches do ii ;

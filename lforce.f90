@@ -148,7 +148,7 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dAt, dAz, XX, YY, length, DDl, MMl
   
   use fileunits, only : ounit
   
-  use inputlist, only : Wlforce, Igeometry, Nvol, Lrad, gamma, pscale, adiabatic
+  use inputlist, only : Wlforce, Igeometry, Nvol, Lrad, gamma, pscale, adiabatic, Lcheck
   
   use cputiming, only : Tlforce
   
@@ -245,6 +245,17 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dAt, dAz, XX, YY, length, DDl, MMl
                         +       dAt(1:Ntz   )*dAt(1:Ntz   )*guvij(1:Ntz,3,3,0) ) / sg(1:Ntz,0)**2
    
   ijreal(1:Ntz) = adiabatic(lvol) * pscale / vvolume(lvol)**gamma + dBB(1:Ntz) ! p + B^2/2; 13 Sep 13;
+
+#ifdef DEBUG
+	if( Lcheck.eq.1 ) then
+		write(ounit, 8375) lvol, iocons, ideriv, dAz(1:Ntz), dAt(1:Ntz)
+		write(ounit, 8376) lvol, iocons, ideriv, guvij(1:Ntz,2,2,0), guvij(1:Ntz,2,3,0), guvij(1:Ntz,3,3,0), sg(1:Ntz,0)
+	 
+8375 format("lforce : lvol=",i7,", iocons=", i7, ", ideriv=", i7 ,"; dAz=",f10.6,", dAt=", f10.6)
+8376 format("lforce : lvol=",i7,", iocons=", i7, ", ideriv=", i7 ,"; g22=",f10.6,", g23=", f10.6,", g33=", f10.6,", sg=", f10.6)
+	endif
+#endif
+
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
