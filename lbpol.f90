@@ -124,16 +124,16 @@ subroutine lbpol(lvol, ideriv)
   Bz(1:Ntz) = ( dAz(1:Ntz ) * guvij(1:Ntz,2,3, 0) + dAt(1:Ntz ) * guvij(1:Ntz,3,3, 0) )/ sg(1:Ntz,0)
 
 
-
   select case ( ideriv ) ! need to take into account derivatives of metric elements
     case(-1)
+
 #ifdef DEBUG
-if( Lcheck.eq.1 ) then
-	write(ounit, 8375) dBdX%vol, dBdX%innout, lvol, iocons, dAz(1:Ntz), dAt(1:Ntz)
-	write(ounit, 8376) dBdX%vol, dBdX%innout, lvol, iocons, guvij(1:Ntz,2,2,0), guvij(1:Ntz,2,3,0), guvij(1:Ntz,3,3,0), sg(1:Ntz,0)
+if( Lcheck.eq.7 ) then
+	write(ounit, 8375) dBdX%vol, dBdX%innout, ideriv, lvol, iocons, dAz(1:Ntz), dAt(1:Ntz)
+	write(ounit, 8376) dBdX%vol, dBdX%innout, ideriv, lvol, iocons, guvij(1:Ntz,2,2,0), guvij(1:Ntz,2,3,0), guvij(1:Ntz,3,3,0), sg(1:Ntz,0)
  
-8375 format("lbpol  : vvol=",i7,", innout=", i7 ,", lvol=",i7,", iocons=", i7 ,";  dAz=",f10.6,",  dAt=", f10.6)
-8376 format("lbpol  : vvol=",i7,", innout=", i7 ,", lvol=",i7,", iocons=", i7 ,";  g22=",f10.6,",  g23=", f10.6,",  g33=", f10.6,",  sg=", f10.6)
+8375 format("lbpol  : vvol=",i7,", innout=", i7 ,", ideriv=", i7, ", lvol=",i7,", iocons=", i7 ,";  dAz=",f10.6,",  dAt=", f10.6)
+8376 format("lbpol  : vvol=",i7,", innout=", i7 ,", ideriv=", i7,", lvol=",i7,", iocons=", i7 ,";  g22=",f10.6,",  g23=", f10.6,",  g33=", f10.6,",  sg=", f10.6)
 endif
 #endif
       efmn(1:mn) = zero ; ofmn(1:mn) = zero ; cfmn(1:mn) = zero ; sfmn(1:mn) = zero
@@ -165,12 +165,12 @@ endif
       Bz(1:Ntz) = Bz(1:Ntz) + ( dAz0(1:Ntz ) * guvij(1:Ntz,2,3, 1) + dAt0(1:Ntz ) * guvij(1:Ntz,3,3, 1) ) 
 
 #ifdef DEBUG
-if( Lcheck.eq.1 ) then
-	write(ounit, 8377) dBdX%vol, dBdX%innout, lvol, iocons, dAz0(1:Ntz), dAt0(1:Ntz)
-	write(ounit, 8378) dBdX%vol, dBdX%innout, lvol, iocons, guvij(1:Ntz,2,2,1), guvij(1:Ntz,2,3,1), guvij(1:Ntz,3,3,1)
+if( Lcheck.eq.7 ) then
+	write(ounit, 8377) dBdX%vol, dBdX%innout, ideriv, lvol, iocons, dAz0(1:Ntz), dAt0(1:Ntz)
+	write(ounit, 8378) dBdX%vol, dBdX%innout, ideriv, lvol, iocons, guvij(1:Ntz,2,2,1), guvij(1:Ntz,2,3,1), guvij(1:Ntz,3,3,1)
  
-8377 format("lbpol  : vvol=",i7,", innout=", i7 ,", lvol=",i7,", iocons=", i7 ,"; dAz0=",f10.6,", dAt0=", f10.6)
-8378 format("lbpol  : vvol=",i7,", innout=", i7 ,", lvol=",i7,", iocons=", i7 ,"; dg22=",f10.6,", dg23=", f10.6,", dg33=", f10.6)
+8377 format("lbpol  : vvol=",i7,", innout=", i7 ,", ideriv=",i7,", lvol=",i7,", iocons=", i7 ,"; dAz0=",f10.6,", dAt0=", f10.6)
+8378 format("lbpol  : vvol=",i7,", innout=", i7 ,", ideriv=",i7,", lvol=",i7,", iocons=", i7 ,"; dg22=",f10.6,", dg23=", f10.6,", dg33=", f10.6)
 endif
 #endif
     case(2)
