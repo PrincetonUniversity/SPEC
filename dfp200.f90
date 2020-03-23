@@ -91,7 +91,7 @@ subroutine dfp200( LcomputeDerivatives, vvol)
                         DDzzcc, DDzzcs, DDzzsc, DDzzss, &
                         dRodR, dRodZ, dZodR, dZodZ, &
                         LocalConstraint, &
-						IsMyVolume, IsMyVolumeValue, IndMatrixArray, Btemn
+						IsMyVolume, IsMyVolumeValue, IndMatrixArray, Btemn, WhichCpuID
 
   use typedefns
   
@@ -100,11 +100,13 @@ subroutine dfp200( LcomputeDerivatives, vvol)
   LOCALS
   
   LOGICAL, intent(in)  :: LComputeDerivatives ! indicates whether derivatives are to be calculated;
+  LOGICAL              :: LInnerVolume
   
-  INTEGER              :: NN, IA, ifail, if01adf, vflag, MM, idgetrf, idgetri, Lwork, lvol
+  INTEGER              :: NN, IA, ifail, if01adf, vflag, MM, idgetrf, idgetri, Lwork, lvol, pvol
   INTEGER              :: vvol, innout, ii, jj, irz, issym, iocons, idoc, idof, imn, ll
   INTEGER              :: Lcurvature, ideriv, id, ind_matrix
-  INTEGER              :: iflag
+  INTEGER              :: iflag, cpu_id, cpu_id1, even_or_odd, vol_parity
+  INTEGER              :: stat(MPI_STATUS_SIZE), tag, req1, req2, req3, req4
   INTEGER, allocatable :: ipivot(:)
 
   REAL                 :: lastcpu, lss, lfactor, DDl, MMl
@@ -141,7 +143,7 @@ if( LocalConstraint ) then
 			
 		LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
 		
-		dBdX%vol = vvol  ! Useless when local constraint
+		dBdX%vol = vvol  ! Label
 		ll = Lrad(vvol)  ! Shorthand
 	   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -415,26 +417,83 @@ else ! CASE SEMI GLOBAL CONSTRAINT
 		SALLOCATE( dPP       , (1:Ntz     ), zero ) ! poloidal constraint;
 		SALLOCATE( constraint, (1:Ntz     ), zero )
 
+
+		! First invert Beltrami matrices and store them in OBI
 		do vvol = 1, Mvol
-			LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
+			LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ; TODO: maybe not necessary, remove
 			NN = NAdof(vvol) ! shorthand;
-			!vflag = 1
-			!WCALL( dfp200, volume, ( vvol, vflag ) ) ! compute volume;
 
             SALLOCATE( oBI(vvol)%mat, (1:NN,1:NN), zero)
+
+			! Parallelization
+			WCALL(dfp200, IsMyVolume, (vvol))
+			if( IsMyVolumeValue .EQ. 0 ) then
+				cycle
+			else if( IsMyVolumeValue .EQ. -1) then
+				FATAL(dfp200, .true., Unassociated volume)
+			endif
+
 
             ! Invert LHS of Beltrami system and store it in oBI. This will be used to 
             ! evaluate derivatives of solution.
 			call get_inverse_Beltrami_matrices(vvol, oBI(vvol)%mat(1:NN,1:NN), NN)! Can't be moved outside of loops - need OBI after.
         enddo
             
+		! Broadcast oBI to all CPU
+		if( ncpu .gt. 1 ) then
+			do vvol = 1, Mvol
+				NN = NAdof(vvol)
+				call WhichCpuID(vvol, cpu_id)
+				call MPI_BCAST( oBI(vvol)%mat , NN**2 , MPI_DOUBLE_PRECISION, cpu_id , MPI_COMM_WORLD , ierr)
+			enddo
+		endif
 
 
-		do vvol = 1, Mvol-1 !labels which interface is perturbed
-		dBdX%vol = vvol     ! Perturbed interface
-		idof = 0 ! labels degree of freedom of interface vvol
 
-		do ii = 1, mn ! loop over deformations in Fourier harmonics; inside do vvol;
+
+		! Loop on perturbed interfaces
+		do even_or_odd = 0, 1 ! First loop on even interfaces perturbation, then on odd interfaces. This allow efficient parallelization
+		
+			do vvol = 1, Mvol-1 !labels which interface is perturbed
+
+			
+			! Parallelization - parallelization on perturbed interface and not on volume (outermost loop)
+			vol_parity = MODULO(vvol,2)
+            if( (vol_parity.eq.0 ) .and. (even_or_odd.eq.1) ) cycle ! even_or_odd=1 thus perturb only odd  interfaces
+            if( (vol_parity.eq.1 ) .and. (even_or_odd.eq.0) ) cycle ! even_or_odd=0 thus perturb only even interfaces
+            
+			WCALL(dfp200, IsMyVolume, (vvol))
+
+			if( IsMyVolumeValue.EQ.0 ) then ! This CPU does not deal with interface's inner volume
+				WCALL(dfp200, IsMyVolume, (vvol+1))
+				
+				if( IsMyVolumeValue.eq.0 ) then ! This CPU does not deal with interface's outer volume either - cycle
+					cycle
+
+				else if( IsMyVolumeValue.eq.-1 ) then
+					FATAL(dfp200, .true., Unassociated volume)
+
+                else
+                    LInnerVolume = .false.
+
+				endif
+
+			else if( IsMyVolumeValue.EQ.-1 ) then
+				FATAL(dfp200, .true., Unassociated volume)
+
+            else
+                LinnerVolume = .true.
+
+			endif
+
+
+
+
+
+			dBdX%vol = vvol     ! Perturbed interface
+			idof = 0 ! labels degree of freedom of interface vvol
+
+			do ii = 1, mn ! loop over deformations in Fourier harmonics; inside do vvol;
 			dBdX%ii = ii ! controls construction of derivatives in subroutines called below;     
 
 			do irz = 0, 1 ! loop over deformations in R and Z; inside do vvol; inside do ii;
@@ -453,12 +512,14 @@ else ! CASE SEMI GLOBAL CONSTRAINT
 #endif
 
 
-                    ! Reset geometrical derivatives of solution to 0. This ensures that all derivatives
-                    ! are zero excepted derivatives of solution in volume adjacent to perturbed interface
-                    call reset_solution_derivative() ! Maybe not necessary. TODO: see if can be removed safely
-
-
 					do lvol = vvol, vvol+1
+
+						if( ncpu.gt.1 ) then
+		
+		                    if(      LinnerVolume .and. (lvol.eq.vvol+1) ) cycle
+		                    if( .not.LinnerVolume .and. (lvol.eq.vvol  ) ) cycle
+						
+						endif
 
                         if( lvol.eq.vvol   ) innout=1 ! Perturb w.r.t outer interface
                         if( lvol.eq.vvol+1 ) innout=0 ! Perturb w.r.t inner interface
@@ -466,16 +527,7 @@ else ! CASE SEMI GLOBAL CONSTRAINT
 						dBdX%innout = innout
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-! Set up volume information
-						WCALL(dfp200, IsMyVolume, (lvol))
-
-						if( IsMyVolumeValue .EQ. 0 ) then
-							cycle
-						else if( IsMyVolumeValue .EQ. -1) then
-							FATAL(dfp200, .true., Unassociated volume)
-						endif
-									
-							
+! Set up volume information						
 						LREGION(lvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
 						ll = Lrad(lvol)  ! Shorthand
 					   	NN = NAdof(lvol) ! shorthand;
@@ -573,49 +625,71 @@ else ! CASE SEMI GLOBAL CONSTRAINT
 					enddo ! end of do lvol = vvol, vvol+1
 
 
-! TODO : add some broadcast
+                    ! Now volumes neighbouring the interface share perturbed solution
+					call WhichCpuID(vvol  , cpu_id ) 
+					call WhichCpuID(vvol+1, cpu_id1) 
 
-! At this point, we have the inverse Beltrami matrices dMA, ..., the origin Beltrami matrix oBI 
-! and the perturbed solution for each volume neighboring the perturbed interface.
-! We now loop again on everything to compute the derivatives of mu and psip w.r.t the position and dBB.
 
+					! TODO IMPROVE MPI COMMUNICATIONS
+					! TODO ADD STELLARATOR NON SYMMETRIC TERMS
+					! Gather everything in inner volume
+					if( ncpu.gt. 1) then
+						if( LinnerVolume ) then	
+							do jj = 1, mn  
+		                		tag = vvol+jj ! Tags for MPI communications
+
+								call MPI_RECV(Ate(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id1, tag, MPI_COMM_WORLD, stat, ierr)
+								call MPI_RECV(Aze(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id1, tag, MPI_COMM_WORLD, stat, ierr)
+							enddo
+
+						else
+							do jj = 1, mn  
+		                		tag = vvol+jj
+
+								call MPI_iSEND(Ate(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id , tag, MPI_COMM_WORLD, req3, ierr)
+								call MPI_iSEND(Aze(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id , tag, MPI_COMM_WORLD, req4, ierr)
+							enddo
+						endif
+					endif
+
+					! At this point, we have the inverse Beltrami matrices dMA, ..., the inverted original Beltrami matrix oBI 
+					! and the perturbed solution for each volume neighboring the perturbed interface in inner volume cpu.
+					! We now loop again on everything to compute the derivatives of mu and psip w.r.t the position and dBB.
+
+					if( LinnerVolume) then
 						! Helicity multiplier and poloidal flux derivatives
 						call evaluate_dmupfdx(1, idof, ii, issym, irz)
+					else
+						dmupfdx(1:Mvol, vvol, 1:2, idof, 1) = zero
+					endif
 
+					do lvol = vvol, vvol+1
+						WCALL(dfp200, IsMyVolume, (lvol))
 
-						do lvol = vvol, vvol+1
-							if( lvol.eq.vvol ) then
-                                innout      = 1
-								dBdx%innout = innout
-							else
-                                innout      = 0
-								dBdX%innout = innout
-							endif
+						if( IsMyVolumeValue .EQ. 0 ) then
+							cycle
+						else if( IsMyVolumeValue .EQ. -1) then
+							FATAL(dfp200, .true., Unassociated volume)
+						endif
 
-							WCALL(dfp200, IsMyVolume, (lvol))
+						if( lvol.eq.vvol ) then
+	                        innout      = 1
+						else
+	                        innout      = 0
+						endif
+						dBdX%innout = innout						
+						
+						LREGION(lvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
 
-							if( IsMyVolumeValue .EQ. 0 ) then
-								cycle
-							else if( IsMyVolumeValue .EQ. -1) then
-								FATAL(dfp200, .true., Unassociated volume)
-							endif
-										
-								
-							LREGION(lvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
-						   
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+						! EVALUATE dBB
+						call evaluate_dBB(lvol, idof, innout, issym, irz, ii, dAt, dAz, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
+					enddo	 ! matches do lvol = vvol, vvol+1 
 
-
-							! EVALUATE dBB
-							call evaluate_dBB(lvol, idof, innout, issym, irz, ii, dAt, dAz, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-
-									
-
-					enddo ! matches do lvol = vvol, vvol+1
 				enddo ! matches do issym;
 			enddo ! matches do irz;
 		enddo ! matches do ii;
-    enddo ! matches do vvol;
+      enddo ! matches do vvol;
+	enddo ! matches do even_or_odd;
 								
 	! Free memory
 
@@ -632,6 +706,19 @@ else ! CASE SEMI GLOBAL CONSTRAINT
 	DALLOCATE(dBB)
 
 	dBdX%L = .false. ! probably not needed, but included anyway;
+
+	! We know need to broadcast the vectors dmupfdx and dFFdRZ and dBBdmp
+	do vvol = 1, Mvol
+		call WhichCpuID(vvol, cpu_id)
+
+		if( vvol.ne.Mvol ) then
+			call MPI_BCAST( dmupfdx(1:Mvol, vvol ,1:2, 1:LGdof,   1), Mvol*2*LGdof  , MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_WORLD, ierr )
+		endif
+	
+		call MPI_BCAST( dFFdRZ(1:LGdof, vvol ,0:1, 1:LGdof, 0:1), 2*2*(LGdof**2), MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_WORLD, ierr )
+		call MPI_BCAST( dBBdmp(1:LGdof, vvol ,0:1, 1:2         ), 2*2*LGdof, MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_WORLD, ierr )
+		! Actually no need to bcast dBBdmp - all cpus have evaluated it in evaluate_dBB.
+	enddo
 
 	endif ! End of if( LComputeDerivatives ) 
 
@@ -795,7 +882,8 @@ INTEGER					:: ideriv, lvol, ind_matrix, ll, NN
 REAL					:: dpsi(1:2)
 REAL					:: rhs(1:NN)
 REAL 					:: oBI(1:NN,1:NN)
-CHARACTER           	:: packorunpack 
+CHARACTER           	:: packorunpack
+
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-
 	
@@ -809,7 +897,7 @@ CHARACTER           	:: packorunpack
 	WCALL( dfp200, matrix,( lvol, mn, ll ) ) ! construct Beltrami matrices;
 
 	dpsi(1:2) = (/ dtflux(lvol), dpflux(lvol) /) ! local enclosed toroidal and poloidal fluxes;
-	rhs(1:NN) = - matmul( dMB(ind_matrix)%mat(1:NN,1:2 )                            , dpsi(1:2)        ) &
+	rhs(1:NN) = - matmul( dMB(ind_matrix)%mat(1:NN,1:2 )                                            , dpsi(1:2)                  ) &
 			    - matmul( dMA(ind_matrix)%mat(1:NN,1:NN) - mu(lvol) * dMD(ind_matrix)%mat(1:NN,1:NN), solution(lvol)%mat(1:NN,0) )
 
 	! Evaluate perturbed solution
@@ -958,6 +1046,11 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 			do pvol = 1, Mvol
 				LREGION(pvol)
 				WCALL(dfp200, lbpol, (pvol, 2)) ! Stores derivative in global variable Btemn
+#ifdef DEBUG
+				if( .false. ) then
+					write(ounit, 8375) myid, dBdX%vol, dBdX%innout, 2, pvol, Btemn(1:mn, 0:1, pvol)
+				endif
+#endif
 			enddo
 
 #ifdef DEBUG
@@ -977,6 +1070,11 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 			do pvol=1,Mvol
                 LREGION(pvol)
 				WCALL(dfp200, lbpol, (pvol, 0))
+#ifdef DEBUG
+			if( .false. ) then
+				write(ounit, 8375) myid, dBdX%vol, dBdX%innout, 0, pvol, Btemn(1:mn, 0:1, pvol)
+			endif
+#endif
 			enddo
 			Btemn_debug(1:mn, 0:1, 1:Mvol,  0) = Btemn(1:mn, 0:1, 1:Mvol)
 #endif
@@ -992,10 +1090,10 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 				WCALL(dfp200, lbpol, (pvol, -1)) ! derivate w.r.t geometry
 
 #ifdef DEBUG
-			if( .true. ) then
-				write(ounit, 8375) dBdX%vol, dBdX%innout, -1, pvol, Btemn(1:mn, 0:1, pvol)
+			if( .false. ) then
+				write(ounit, 8375) myid, dBdX%vol, dBdX%innout, -1, pvol, Btemn(1:mn, 0:1, pvol)
 			 
-8375 			format("dfp200  : vvol=",i7,", innout=", i7 ,", ideriv=", i7, ", lvol=",i7,";  Btemn=",2f10.6)
+8375 			format("dfp200  : myid=",i3, ", vvol=",i3,", innout=", i3 ,", ideriv=", i3, ", lvol=",i3,";  Btemn=",2f10.6)
 			endif
 #endif
 			enddo
@@ -1085,6 +1183,11 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 	if( Lcheck.eq.4 ) then ! check derivatives of field;
 
 		SALLOCATE( isolution, (1:NN,-2:2), zero )
+
+		if( (ncpu.gt.1) .and. (Lconstraint.eq.3) ) then
+			goto 8294
+		endif
+
 		dBdX%L = .false.
 
 		do isymdiff = -2, 2 ! symmetric fourth-order, finite-difference used to approximate derivatives;
@@ -1220,7 +1323,6 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 
 
 
-
 			if( LocalConstraint ) then
                 LREGION(vvol)
                 ll = Lrad(vvol)		! shorthand
@@ -1247,6 +1349,7 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 		enddo ! end of do isymdiff;
 
 
+8294		continue
         ! Evaluate derivatives using finite differences
 		if( LocalConstraint ) then
 		    isolution(1:NN,0) = ( - 1 * isolution(1:NN, 2) + 8 * isolution(1:NN, 1)&
@@ -1700,9 +1803,16 @@ do iocons = 0, 1
 
 #ifdef DEBUG
 	FATAL( dfp200, idoc.ne.LGdof, counting error )
+
 #endif
      
 enddo ! end of do iocons;
+
+
+!write(ounit, 3363) myid, lvol, ", innout=0, dFFdRZ =",  dFFdRZ(1, lvol  , 0:1, 1, 0)
+!write(ounit, 3363) myid, lvol, ", innout=1, dFFdRZ =",  dFFdRZ(1, lvol  , 0:1, 1, 1)
+
+!3363 		format("evaluate_dBB : myid=", i3, ", lvol=", i3, a12, 20f12.8)
 
 end subroutine evaluate_dBB
 

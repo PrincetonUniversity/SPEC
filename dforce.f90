@@ -340,7 +340,7 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives)
 	else
 
 		! Other threads call loop_dfp100 and help the master thread computation at each iteration.
-		call loop_dfp100(Ndofgl, Fvec, iflag)
+		call loop_dfp100(Ndofgl, Fvec)
 
     endif
 
@@ -699,6 +699,7 @@ if( LcomputeDerivatives ) then ! construct Hessian;
 						else ! Global constraint
 						
 							! In the general case of global constraint, there are no zero element in the hessian. We thus loop again on all volumes
+
 							do ivol = 1, Mvol-1
 							    tdoc = (ivol-1) * LGdof ! shorthand ;
 								tdof = (vvol-1) * LGdof + idof
@@ -710,6 +711,7 @@ if( LcomputeDerivatives ) then ! construct Hessian;
 								elseif( ivol.eq.vvol+1 ) then
 										hessian(tdoc+1:tdoc+LGdof,tdof) =                                  - dFFdRZ(1:LGdof,ivol,1,idof,0)
 								endif
+
 
 								hessian(tdoc+1:tdoc+LGdof,tdof) = hessian(tdoc+1:tdoc+LGdof,tdof)                            &
 															      + dBBdmp(1:LGdof,ivol+1,0,1) * dmupfdx(ivol+1,vvol,1,idof,1) &
@@ -734,6 +736,8 @@ if( LcomputeDerivatives ) then ! construct Hessian;
 
 								lfactor = psifactor(ii,vvol) 	! this "pre-conditions" the geometrical degrees-of-freedom;
 								
+								if( ncpu.eq.1) then
+
 								do isymdiff = -2, 2 ! symmetric fourth-order, finite-difference used to approximate derivatives;
 									if( isymdiff.eq.0 ) cycle
 
@@ -769,6 +773,8 @@ if( LcomputeDerivatives ) then ! construct Hessian;
 								iRbs(1:mn,0:Mvol) = oRbs(1:mn,0:Mvol)
 								iZbc(1:mn,0:Mvol) = oZbc(1:mn,0:Mvol)
 
+								endif
+
 								DALLOCATE(oRbc)
 								DALLOCATE(oZbs)
 								DALLOCATE(oRbs)
@@ -780,6 +786,7 @@ if( LcomputeDerivatives ) then ! construct Hessian;
 							endif
 #endif
 					enddo ! matches do issym ;
+
 				enddo ! matches do irz ;
 			enddo ! matches do ii ;
 
@@ -804,11 +811,13 @@ if( Lcheck.eq.6 ) then
         
         write(ounit,'(A)') NEW_LINE('A')
 
-		do ii=1, NGdof
-			write(ounit,1346) cput-cpus, myid, vvol, im(ii), in(ii), finitediff_hessian(ii,:)
-1346   		format("dforce : ",f10.2," : ",:,"myid=",i3," ; vvol=",i2," ; (",i2,",",i3," ) ; Finite differences = ",8f16.10 "   ;")
-		enddo		
-        write(ounit,'(A)') NEW_LINE('A')
+		if( ncpu.eq.1 ) then
+			do ii=1, NGdof
+				write(ounit,1346) cput-cpus, myid, vvol, im(ii), in(ii), finitediff_hessian(ii,:)
+1346	   		format("dforce : ",f10.2," : ",:,"myid=",i3," ; vvol=",i2," ; (",i2,",",i3," ) ; Finite differences = ",8f16.10 "   ;")
+			enddo		
+		    write(ounit,'(A)') NEW_LINE('A')
+		endif
 
 		DALLOCATE(finitediff_hessian)
 
@@ -831,7 +840,7 @@ end subroutine dforce
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 
-subroutine loop_dfp100(Ndofgl, Fvec, iflag)
+subroutine loop_dfp100(Ndofgl, Fvec)
 
 ! LOOP_DFP100 - infinite loop for slaves helping the master thread iterating to match global 
 ! constraint
@@ -862,6 +871,7 @@ subroutine loop_dfp100(Ndofgl, Fvec, iflag)
 	do while (.not.IconstraintOK)
 
 ! Compute solution in every associated volumes
+		iflag = 5
 		WCALL(dforce, dfp100, (Ndofgl, x, Fvec, iflag) )
 
 	end do !matches do while IconstraintOK

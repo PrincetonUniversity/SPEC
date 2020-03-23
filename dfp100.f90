@@ -209,7 +209,7 @@ BEGIN(dfp100)
 
 6666 continue
 
-if( Lfindzero.eq.2 .and. iflag.eq.5 ) then! Compute derivatives of solution w.r.t mu and pflux
+if( Lfindzero.eq.2 .and. iflag.eq.5 .and. IconstraintOK ) then! Compute derivatives of solution w.r.t mu and pflux
 
   LcomputeDerivatives = .true.
   do vvol = 1, Mvol  LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;

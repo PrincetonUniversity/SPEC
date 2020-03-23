@@ -247,7 +247,7 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dAt, dAz, XX, YY, length, DDl, MMl
   ijreal(1:Ntz) = adiabatic(lvol) * pscale / vvolume(lvol)**gamma + dBB(1:Ntz) ! p + B^2/2; 13 Sep 13;
 
 #ifdef DEBUG
-	if( Lcheck.eq.1 ) then
+	if( Wlforce ) then
 		write(ounit, 8375) lvol, iocons, ideriv, dAz(1:Ntz), dAt(1:Ntz)
 		write(ounit, 8376) lvol, iocons, ideriv, guvij(1:Ntz,2,2,0), guvij(1:Ntz,2,3,0), guvij(1:Ntz,3,3,0), sg(1:Ntz,0)
 	 

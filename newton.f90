@@ -86,7 +86,7 @@ subroutine newton( NGdof, position, ihybrd )
   INTEGER, intent(out)   :: ihybrd
   
   LOGICAL                :: LComputeDerivatives
-  INTEGER                :: wflag, iflag, idof, jdof, ijdof, ireadhessian, igdof, lvol, ii, imn
+  INTEGER                :: wflag, iflag, idof, jdof, ijdof, ireadhessian, igdof, lvol, ii, imn, ierr2
   REAL                   :: rflag
   CHARACTER              :: pack
 
@@ -184,7 +184,7 @@ subroutine newton( NGdof, position, ihybrd )
    if( LocalConstraint ) then
    	SALLOCATE( dmupfdx, (1:Mvol,    1:1,1:2,1:LGdof,0:1), zero )
    else
-   	SALLOCATE( dmupfdx, (1:Mvol, 1:Mvol,1:2,1:LGdof,1), zero )
+   	SALLOCATE( dmupfdx, (1:Mvol, 1:Mvol-1,1:2,1:LGdof,1), zero ) ! TODO change the format to put vvol in last index position...
    endif
 
    SALLOCATE( hessian, (1:NGdof,1:NGdof), zero )
@@ -258,7 +258,8 @@ subroutine newton( NGdof, position, ihybrd )
   endif ! end of if( myid.eq.0 ) then;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+	call MPI_BARRIER( MPI_COMM_WORLD, ierr2)
+
   if( Lfindzero.eq.2 ) then 
    DALLOCATE( dFFdRZ )
    DALLOCATE( dBBdmp )
@@ -269,7 +270,6 @@ subroutine newton( NGdof, position, ihybrd )
   endif
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
   RETURN(newton)
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
