@@ -5,7 +5,7 @@
 For any help, type ./compare_spec.py -h
 """
 import numpy as np
-from read_spec import SPEC
+from py_spec import SPEC
 import argparse
 
 # parse command line arguments
@@ -22,20 +22,21 @@ data_B = SPEC(args.reference)
 tol = args.tol
 match = True
 
+
 def compare(data, reference):
-    global match 
+    global match
     for key, value in vars(data).items():
-        if isinstance(value, SPEC): # recurse data
+        if isinstance(value, SPEC):  # recurse data
             print('------------------')
             print('Elements in '+key)
             compare(value, reference.__dict__[key])
-        else :
-            if key in ['filename', 'version']: # not compare filename and version
+        else:
+            if key in ['filename', 'version']:  # not compare filename and version
                 continue
-            elif key=='iterations': # skip iteration data (might be revised)
+            elif key == 'iterations': # skip iteration data (might be revised)
                 continue
-            else :
-                #print(key)
+            else:
+                # print(key)
                 diff = np.linalg.norm(np.abs(np.array(value) - np.array(reference.__dict__[key])))
                 unmatch = diff > tol
                 if unmatch:
@@ -43,7 +44,7 @@ def compare(data, reference):
                     print('UNMATCHED: '+key, ', diff={:12.5E}'.format(diff))
                 else :
                     print('ok: '+key)
-    return 
+    return
 
 compare(data_A, data_B)
 print('===================')
@@ -53,4 +54,4 @@ else :
     print('Differences in some elements are larger than the tolerence.')
 
 exit
-        
+
