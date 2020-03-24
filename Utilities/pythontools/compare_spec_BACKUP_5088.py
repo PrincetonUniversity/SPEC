@@ -5,7 +5,11 @@
 For any help, type ./compare_spec.py -h
 """
 import numpy as np
+<<<<<<< HEAD
+from py_spec.read_spec import SPEC
+=======
 from py_spec import SPEC
+>>>>>>> master
 import argparse
 
 # parse command line arguments
@@ -40,6 +44,29 @@ def compare(data, reference):
                 continue
             elif key == 'iterations': # skip iteration data (might be revised)
                 continue
+<<<<<<< HEAD
+            else :
+                #print(key)
+                if isinstance(value, list):
+                    for ii in range(len(value)):
+                        diff = np.linalg.norm(np.abs(np.array(value[ii]) - np.array(reference.__dict__[key][ii])))
+                        unmatch = diff > tol
+                        if unmatch:
+                            match = False
+                            print('UNMATCHED: '+key, '[',ii,'], diff={:12.5E}'.format(diff))
+                        else :
+                            print('ok: '+key)
+                else:
+                    diff = np.linalg.norm(np.abs(np.array(value) - np.array(reference.__dict__[key])))
+                    unmatch = diff > tol
+                    if unmatch:
+                        match = False
+                        print('UNMATCHED: '+key, ', diff={:12.5E}'.format(diff))
+                    else :
+                        print('ok: '+key)
+                    
+    return 
+=======
             else:
                 # print(key)
                 diff = np.linalg.norm(np.abs(np.array(value) - np.array(reference.__dict__[key])))
@@ -50,6 +77,7 @@ def compare(data, reference):
                 else :
                     print('ok: '+key)
     return
+>>>>>>> master
 
 compare(data_A, data_B)
 print('===================')

@@ -4,7 +4,7 @@
 
 def interface_current(SPEC, interface_number):
     """
-    returns the ruccent on the interface given by interface_number.
+    returns the current on the interface given by interface_number.
     Not working yet
 
     We are calculating a loop integral over the difference in magnetic field on the surface.
@@ -21,13 +21,15 @@ def interface_current(SPEC, interface_number):
     outer_volume = SPEC.output.Btemn[0:Ntor, 0, interface_number]
     inner_volume = SPEC.output.Btemn[0:Ntor, 1, interface_number-1]
 
-    current = np.sum(outer_volume-inner_volume)* np.pi * 2  # check if idl's pi2 is pi squared or just two pi
+    current = np.sum(outer_volume-inner_volume) * np.pi * 2  # check if idl's pi2 is pi squared or just two pi
 
     return current
 
+
 def interface_current_total(SPEC):
     """
-    returns the ruccent on the interface given by interface_number.
+    NOT TESTED!
+    returns the current on the interface given by interface_number.
     Not working yet
 
     We are calculating a loop integral over the difference in magnetic field on the surface.

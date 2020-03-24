@@ -4,16 +4,15 @@
 # adapted by @smiet (csmiet@pppl.gov)
 #
 
+import numpy as np
 
 class fourier_surface(object):
-    import numpy as np
     '''
     toroidal surface in Fourier representation
     R = \sum RBC cos(mu-nv) + RBS sin(mu-nv)
     Z = \sum ZBC cos(mu-nv) + ZBS sin(mu-nv)
     '''
     def __init__(self, xm=[], xn=[], rbc=[], zbs=[], rbs=[], zbc=[]):
-        import numpy as np
         """Initialization with Fourier harmonics.
 
         Parameters:
@@ -45,7 +44,6 @@ class fourier_surface(object):
         Returns:
           fourier_surface class
         """
-        import numpy as np
         # check if spec_out is in correct format
         #if not isinstance(spec_out, SPEC):
         #    raise TypeError("Invalid type of input data, should be SPEC type.")
@@ -74,7 +72,6 @@ class fourier_surface(object):
         Returns:
           fourier_surface class
         """
-        import numpy as np
         import xarray as ncdata # read netcdf file
         vmec = ncdata.open_dataset(woutfile)
         xm = vmec['xm'].values
@@ -108,7 +105,6 @@ class fourier_surface(object):
         Returns:
           fourier_surface class
         """
-        import numpy as np
         with open(filename, 'r') as f:
             line = f.readline() #skip one line
             line = f.readline()
@@ -152,7 +148,6 @@ class fourier_surface(object):
         Returns:
           fourier_surface class
         """
-        import numpy as np
         with open(filename, 'r') as f:
             line = ''
             while "phip_edge" not in line:
@@ -205,7 +200,6 @@ class fourier_surface(object):
            r, z -- float array_like
            r, z, [rt, zt], [rz, zz] -- if normal
         """
-        import numpy as np
         assert len(np.atleast_1d(theta)) == len(np.atleast_1d(zeta)), "theta, zeta should be equal size"
         # mt - nz (in matrix)
         _mtnz = np.matmul( np.reshape(self.xm, (-1,1)), np.reshape(theta, (1,-1)) ) \
@@ -243,7 +237,6 @@ class fourier_surface(object):
            x, y, z -- float array_like
            x, y, z, [nx, ny, nz] -- if normal
         """
-        import numpy as np
         data = self.rz(theta, zeta, normal)
         r = data[0]
         z = data[1]
@@ -277,7 +270,6 @@ class fourier_surface(object):
           area -- surface area
           volume -- surface volume
         """
-        import numpy as np
         # get mesh data
         _theta = np.linspace(theta0, theta1, npol, endpoint=False)
         _zeta = np.linspace(zeta0, zeta1, ntor, endpoint=False)
@@ -299,7 +291,6 @@ class fourier_surface(object):
         Returns:
            area
         """
-        import numpy as np
         self.area, _volume = self._areaVolume()
         return self.area
 
@@ -325,7 +316,6 @@ class fourier_surface(object):
            line class in matplotlib.pyplot
         """
         import matplotlib.pyplot as plt
-        import numpy as np
         # get figure and ax data
         if plt.get_fignums():
             fig = plt.gcf()
@@ -363,7 +353,6 @@ class fourier_surface(object):
         Returns:
            xsurf, ysurf, zsurf -- arrays of x,y,z coordinates on the surface
         """
-        import numpy as np
         # get mesh data
         _theta = np.linspace(theta0, theta1, npol)
         _zeta = np.linspace(zeta0, zeta1, ntor)
@@ -405,7 +394,6 @@ class fourier_surface(object):
         Returns:
 
         """
-        import numpy as np
         from pyevtk.hl import gridToVTK # save to binary vtk
         _xx, _yy, _zz = self.plot3d('noplot', zeta0=0.0, zeta1=2*np.pi,
                                     theta0=0.0, theta1=2*np.pi, npol=npol, ntor=ntor)

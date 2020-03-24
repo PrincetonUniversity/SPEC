@@ -18,13 +18,11 @@
 
 2. Load output data from field-line-tracing and magnetic-field-solution:
    
-   pdata = read_spec_poincare(fname);
-   idata = read_spec_iota(fname);
-   fdata = read_spec_field(fname);
+   data = read_spec(fname);
    
 3. Call ploting routine for iota versus toroidal flux:
    
-   plot_spec_iota(idata,pdata,fdata,'i','f',1);
+   plot_spec_iota(data,'i','f',1);
    
 3. Call ploting routine for iota on the ideal-interfaces:
 
