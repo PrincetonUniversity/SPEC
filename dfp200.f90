@@ -1032,11 +1032,9 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 			iflag = -1 ; WCALL( dfp200, tr00ab, ( vvol, mn, lmns, Nt, Nz, iflag, diotadxup(0:1,-1:2,vvol) ) ) ! compute d(transform)/dx;
 		endif
 
-		if( Lvacuumregion .and. Lconstraint.ge.0 ) then
-			iflag = -1 ; WCALL( dfp200, curent, ( vvol, mn,       Nt, Nz, iflag, dItGpdxtp(0:1,-1:2,vvol) ) ) ! compute d(Itor,Gpol)/dx;
-		endif
-
-		if (Lconstraint.eq.3) then		  
+		
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+		if (Lconstraint.eq.3) then	
 	
 			! In case of freeboundary, there is an additional equation in the linear system, related to the poloidal linking current.
 			if( Lfreebound ) then
@@ -1110,20 +1108,40 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 		    ;   dBdx2(vvol+1)   = Btemn(1, 1, vvol+1)
 
 
-
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 			if( Lfreebound ) then ! Need to modify last two equations
+
+				
+				! Set all last column to zero - maybe not necessary ?
 				dBdmpf(1:Mvol, Mvol  ) = zero
 
 				! Get derivatives of B_theta w.r.t the toroidal flux in vacuum region
-				WCALL(dfp200, lbpol, (pvol, 1)) 
-				dBdmpf(Mvol-1, Mvol  ) = Btemn(1, 0, Mvol)!dBdpsit
+				WCALL(dfp200, lbpol, (Mvol, 1)) 
 
-				dBdmpf(Mvol  , Mvol-1) =  dItGpdxtp( 1, 2, Mvol)!dIpdpsip
-				dBdmpf(Mvol  , Mvol  ) =  dItGpdxtp( 1, 1, Mvol)!dIpdpsit
+				! compute d(Itor,Gpol)/dpsip and d(Itor,Gpol)/dpsit 
+				! TODO: this should already be evaluated in mp00ac...
+				! TODO: THIS COULD BE MOVED OUTSIDE THE LOOPS
+				iflag =  2 ; WCALL( dfp200, curent, ( Mvol, mn, Nt, Nz, iflag, dItGpdxtp(0:1,-1:2,Mvol) ) ) 
 
-				dBdx2( Mvol          ) = -dItGpdxtp( 1,-1, Mvol)!-dIpdxj           
+				dBdmpf(Mvol-1, Mvol  ) =  Btemn(1, 0, Mvol) 		!dBdpsit
+				dBdmpf(Mvol  , Mvol-1) =  dItGpdxtp( 1, 2, Mvol)	!dIpdpsip
+				dBdmpf(Mvol  , Mvol  ) =  dItGpdxtp( 1, 1, Mvol)	!dIpdpsit
+
+				! compute d(Itor,Gpol)/dx
+				if( vvol.eq.Mvol-1 ) then ! Plasma interface is perturbed
+					iflag = -1 ; WCALL( dfp200, curent, ( Mvol, mn, Nt, Nz, iflag, dItGpdxtp(0:1,-1:2,Mvol) ) ) 
+					dBdx2( Mvol ) = -dItGpdxtp( 1,-1, Mvol)	!-dIpdxj    
+				else ! Inner interface is perturbed
+					dBdx2( Mvol ) = zero
+				endif
+#ifdef DEBUG
+				write(ounit, 8827) vvol, dBdmpf(Mvol-1, Mvol-1), Btemn(1, 0, Mvol), dItGpdxtp( 1, 2, Mvol), dItGpdxtp( 1, 1, Mvol), dBdx2(Mvol-1), dBdx2(Mvol)
+8827 			format("dfp200: vvol = ", i3, ", dBdpsip = ", f10.8, ", dBdpsit = ", f10.8, ", dIpdpsip = ", f10.8, ", dIpdpsit = ", f16.10, ", dBdx2(N-1) = ", f10.8, ", dIpdxj = ", f10.8)
+#endif       
 			endif
 
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 			! Solve linear system dBdmpf * x = dBdx2. Solution (x) is stored in dBdx2 on exit
 			call DGESV(order, 1   , dBdmpf(1:order,1:order), order, IPIV, dBdx2(1:order), order, IDGESV )
 
@@ -1140,7 +1158,12 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 			DALLOCATE( dBdx2  )
 			DALLOCATE( IPIV   )
 
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 	else ! LocalConstraint
+
+		if( Lvacuumregion .and. Lconstraint.ge.0 ) then
+			iflag = -1 ; WCALL( dfp200, curent, ( vvol, mn,       Nt, Nz, iflag, dItGpdxtp(0:1,-1:2,vvol) ) ) ! compute d(Itor,Gpol)/dx;
+		endif
 
         dmupfdx(vvol,1,1,idof,innout) = zero    	! Prepare array
         dmupfdx(vvol,1,2,idof,innout) = zero		! Prepare array
@@ -1195,7 +1218,7 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 
 	endif ! end of if( Lconstraint.eq.1 .or. ( Lvacuumregion .and. Lconstraint.ge.0 ) then;
         
-
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 #ifdef DEBUG
 
 	if( Lcheck.eq.4 ) then ! check derivatives of field;
@@ -1395,8 +1418,14 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 			write(ounit,3003) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, innout, "finite-diff", imupf_local(1:2,0)
 			write(ounit,3003) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, innout, "analytic   ", dmupfdx(vvol,1,1:2,idof,innout) / lfactor
 		else
-			write(ounit,3004) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, 1, "dmu finite-diff", imupf_global(1:Mvol,1,0)
-			write(ounit,3004) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, 1, "dmu analytic   ", dmupfdx(1:Mvol,vvol,1,idof,1) / lfactor
+			if( Lplasmaregion ) then
+				write(ounit,3004) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, 1, "dmu finite-diff", imupf_global(1:Mvol,1,0)
+				write(ounit,3004) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, 1, "dmu analytic   ", dmupfdx(1:Mvol,vvol,1,idof,1) / lfactor
+			else ! vacuum
+				write(ounit,3004) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, 1, "dtflux finite-diff", imupf_global(1:Mvol,1,0)
+				write(ounit,3004) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, 1, "dtflux analytic   ", dmupfdx(1:Mvol,vvol,1,idof,1) / lfactor
+			endif
+
 			write(ounit,3004) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, 1, "dpflux finite-diff", imupf_global(1:Mvol,2,0)
 			write(ounit,3004) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, 1, "dpflux analytic   ", dmupfdx(1:Mvol,vvol,2,idof,1) / lfactor
 		endif
@@ -1424,6 +1453,7 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 	endif ! end of if( Lcheck.eq.4 ) ;
 
 #endif
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 	vflag = 1 ! this flag instructs volume to continue even if the volume is invalid;
 	WCALL( dfp200, volume, ( vvol, vflag ) ) ! compute derivative of volume; wrt to harmonic described by dBdX structure;

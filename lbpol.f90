@@ -68,7 +68,7 @@ subroutine lbpol(lvol, ideriv)
 
   BEGIN(lbpol)
 
-
+! TODO: This subroutine is very similar to curent.f90 - maybe merge both in a single subroutine to simplify?
 
 ! iocons=0 -> inner boundary of volume (s=-1) and iocons=1 -> outer boundary (s=1)
 
