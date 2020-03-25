@@ -974,11 +974,12 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
   LOCALS:
 ! -------
 
-	INTEGER				:: 	vvol, innout, idof, iflag, ii, issym, irz, ll, NN, ifail, vflag, N, iwork(1:Nvol-1), idgesvx, pvol
-	REAL				::  det, lfactor, dBdmpf(1:Mvol-1,1:Mvol-1), dBdx2(1:Mvol-1), AF(1:Nvol-1,1:Nvol-1), IPIV(1:Nvol-1)
+	INTEGER				:: 	vvol, innout, idof, iflag, ii, issym, irz, ll, NN, ifail, vflag, N, iwork(1:Nvol-1), idgesvx, pvol, order, IDGESV
+	INTEGER, allocatable::  IPIV(:)
+	REAL				::  det, lfactor
 	REAL 				::  R(1:Nvol-1), C(1:Nvol-1), work(1:4*Nvol-4), ferr, berr, rcond, tmp(2:Nvol)
 	LOGICAL 			::  Lonlysolution, LcomputeDerivatives
-
+    REAL, allocatable   ::  dBdmpf(:,:), dBdx2(:)
 
 #ifdef DEBUG
 	INTEGER             :: isymdiff, maxfev, nfev, lr, ldfjac, ml, muhybr, epsfcn, mode, nprint
@@ -1037,9 +1038,20 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 
 		if (Lconstraint.eq.3) then		  
 	
-			! Derivatives of helicity multipliers
-			dmupfdx(1:Mvol,vvol,1,idof,1) = zero ! The helicity multiplier is not varied (constrained)
+			! In case of freeboundary, there is an additional equation in the linear system, related to the poloidal linking current.
+			if( Lfreebound ) then
+				order = Mvol
+			else
+				order = Mvol-1
+			endif
+			
+			SALLOCATE(dBdmpf , ( 1:order, 1:order ), zero)
+			SALLOCATE(dBdx2  , ( 1:order ), zero)
+			SALLOCATE(IPIV   , ( 1:order ), zero)
 
+
+			! Derivatives of helicity multipliers
+			dmupfdx(1:Nvol,vvol,1,idof,1) = zero ! The helicity multiplier is not varied (constrained). However dtflux is varied in vacuum region, if free boundary
 
 			! Derivatives of poloidal flux. Need to solve a linear system of 5 equations - by hand for now
 			! Matrix coefficients evaluation
@@ -1052,13 +1064,8 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 				endif
 #endif
 			enddo
-
-#ifdef DEBUG
-			Btemn_debug(1:mn, 0:1, 1:Mvol, 2) = zero
-			Btemn_debug(1:mn, 0:1, 1:Mvol, 2) = Btemn(1:mn, 0:1, 1:Mvol)
-#endif
 			
-			dBdmpf(1:Mvol-1,1:Mvol-1) = zero ! Initialize
+			dBdmpf(1:order,1:order) = zero ! Initialize. TODO: useless?
 			do pvol=1, Mvol-2
 				dBdmpf(pvol,   pvol) =  Btemn(1, 0, pvol+1)
 				dBdmpf(pvol+1, pvol) = -Btemn(1, 1, pvol+1)
@@ -1066,7 +1073,6 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 			dBdmpf(Mvol-1,Mvol-1) = Btemn(1, 0, Mvol)
 
 
-#ifdef DEBUG
 			do pvol=1,Mvol
                 LREGION(pvol)
 				WCALL(dfp200, lbpol, (pvol, 0))
@@ -1076,8 +1082,6 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 			endif
 #endif
 			enddo
-			Btemn_debug(1:mn, 0:1, 1:Mvol,  0) = Btemn(1:mn, 0:1, 1:Mvol)
-#endif
 
 			! RHS coefficients evaluation
 			do pvol = vvol, vvol+1
@@ -1097,11 +1101,7 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 			endif
 #endif
 			enddo
-
-#ifdef DEBUG
-			Btemn_debug(1:mn, 0:1, 1:Mvol, -1) = Btemn(1:mn, 0:1, 1:Mvol)
-#endif
-
+			
 			dBdx2(1:Mvol-1) = zero
             if( vvol.gt.1 ) then
 			    dBdx2(vvol-1)   =                     - Btemn(1, 0, vvol  )
@@ -1110,17 +1110,35 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 		    ;   dBdx2(vvol+1)   = Btemn(1, 1, vvol+1)
 
 
-			! TODO: use standard library to solve linear system
-			dmupfdx(1:Mvol, vvol, 2, idof, 1) = zero ! Set all components to zero excepted below
-			dmupfdx(2     , vvol, 2, idof, 1) = dBdx2(1) / dBdmpf(1, 1)
 
-			do pvol = 3, Mvol
-				dmupfdx(pvol, vvol, 2, idof, 1) = ( dBdx2(pvol-1) - dmupfdx(pvol-1, vvol, 2, idof, 1) * dBdmpf(pvol-1, pvol-2) ) / dBdmpf(pvol-1, pvol-1) 
-			enddo
+			if( Lfreebound ) then ! Need to modify last two equations
+				dBdmpf(1:Mvol, Mvol  ) = zero
 
-            dmupfdx(1:Mvol, vvol, 2, idof, 1) = lfactor * dmupfdx(1:Mvol, vvol, 2, idof, 1) ! multiply by coordinate pre-conditioning factor
+				! Get derivatives of B_theta w.r.t the toroidal flux in vacuum region
+				WCALL(dfp200, lbpol, (pvol, 1)) 
+				dBdmpf(Mvol-1, Mvol  ) = Btemn(1, 0, Mvol)!dBdpsit
 
+				dBdmpf(Mvol  , Mvol-1) =  dItGpdxtp( 1, 2, Mvol)!dIpdpsip
+				dBdmpf(Mvol  , Mvol  ) =  dItGpdxtp( 1, 1, Mvol)!dIpdpsit
 
+				dBdx2( Mvol          ) = -dItGpdxtp( 1,-1, Mvol)!-dIpdxj           
+			endif
+
+			! Solve linear system dBdmpf * x = dBdx2. Solution (x) is stored in dBdx2 on exit
+			call DGESV(order, 1   , dBdmpf(1:order,1:order), order, IPIV, dBdx2(1:order), order, IDGESV )
+
+			! Fill dmupfdx array with solution and multiply by coordinate conditioning factor
+			dmupfdx(1     , vvol, 2, idof, 1) = zero ! First poloidal flux is always zero
+			dmupfdx(2:Mvol, vvol, 2, idof, 1) = lfactor * dBdx2(1:Mvol-1) ! These are the derivatives of pflux
+
+			if( Lfreebound ) then
+				dmupfdx(Mvol, vvol, 1, idof, 1) = lfactor * dBdx2(Mvol) ! This is the derivative of tflux
+			endif
+
+			! Free memory
+			DALLOCATE( dBdmpf )
+			DALLOCATE( dBdx2  )
+			DALLOCATE( IPIV   )
 
 	else ! LocalConstraint
 
