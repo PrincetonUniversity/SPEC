@@ -661,12 +661,12 @@ subroutine fcn2( NGdof, xx, fvec, fjac, Ldfjac, irevcm )
 
     FATAL( newton, Lcheck.eq.3, volume derivatives have been compared ) ! the first process will terminate all processes; 
 
-    if( Lcheck.eq.4 ) then
+    if( (Lcheck.eq.4) .and. (nDcalls.ne.1) ) then
      write(ounit,'("newton : ", 10x ," : myid=",i3," ; field derivatives have been compared ;")') myid
      stop "newton :            : myid=    ; field derivatives have been compared ;"
     endif
 
-    FATAL( newton, Lcheck.eq.4, field derivatives have been compared ) ! the first process will terminate all processes; 
+    FATAL( newton, (Lcheck.eq.4) .and. (nDcalls.ne.1), field derivatives have been compared ) ! the first process will terminate all processes; 
 
 #endif
 

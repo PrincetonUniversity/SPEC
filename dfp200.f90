@@ -50,7 +50,8 @@ subroutine dfp200( LcomputeDerivatives, vvol)
                         epsilon, &
                         Lfindzero, &
                         Lconstraint, Lcheck, &
-                        Lextrap
+                        Lextrap, &
+						Lfreebound
   
   use cputiming, only : Tdfp200
   
@@ -397,16 +398,33 @@ else ! CASE SEMI GLOBAL CONSTRAINT
 	if( LComputeDerivatives ) then
 		dBdX%L = .true. ! will need derivatives;
 						
+		! Each volume will need solution and derivative information in vacuum region. Thus, broadcast!
+		! Derivative of w.r.t geometry only required if plasma interface is perturbed - this is 
+		! calculated below
+		if( Lfreebound ) then
+			do ideriv = 0, 2
+				do ii = 1, mn  
 
-! Evaluation of froce gradient in case of semi-global constraint (for now, this is specific to Lconstraint=3)
-! Loop over all geometrical degrees of freedom. Thi means we loop over
-! - each interface (vvol)
-! - each Fourier mode (ii)
-! - on R or Z (irz)
-! - on symmetric and non stellarator symmetric terms (issym)
-! 
-! Then the perturbed solution is evaluated on volumes sharing the interface vvol (volume vvol and vvol+1).
-! i.e. relevant routines are run with lvol=vvol, innout=1 and lvol=vvol+1, innout=0
+					call WhichCpuID(Mvol, cpu_id)
+					
+
+					RlBCAST( Ate(Mvol,ideriv,ii)%s(0:Lrad(Mvol)), Lrad(Mvol)+1, cpu_id )
+					RlBCAST( Aze(Mvol,ideriv,ii)%s(0:Lrad(Mvol)), Lrad(Mvol)+1, cpu_id )
+				enddo
+			 enddo  
+		endif
+
+
+
+		! Evaluation of froce gradient in case of semi-global constraint (for now, this is specific to Lconstraint=3)
+		! Loop over all geometrical degrees of freedom. Thi means we loop over
+		! - each interface (vvol)
+		! - each Fourier mode (ii)
+		! - on R or Z (irz)
+		! - on symmetric and non stellarator symmetric terms (issym)
+
+		! Then the perturbed solution is evaluated on volumes sharing the interface vvol (volume vvol and vvol+1).
+		! i.e. relevant routines are run with lvol=vvol, innout=1 and lvol=vvol+1, innout=0
 
 		! Allocate memory
 		SALLOCATE( dBB       , (1:Ntz,-1:2), zero ) ! magnetic field strength (on interfaces) in real space and derivatives;
@@ -1135,8 +1153,10 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 					dBdx2( Mvol ) = zero
 				endif
 #ifdef DEBUG
-				write(ounit, 8827) vvol, dBdmpf(Mvol-1, Mvol-1), Btemn(1, 0, Mvol), dItGpdxtp( 1, 2, Mvol), dItGpdxtp( 1, 1, Mvol), dBdx2(Mvol-1), dBdx2(Mvol)
-8827 			format("dfp200: vvol = ", i3, ", dBdpsip = ", f10.8, ", dBdpsit = ", f10.8, ", dIpdpsip = ", f10.8, ", dIpdpsit = ", f16.10, ", dBdx2(N-1) = ", f10.8, ", dIpdxj = ", f10.8)
+				IF( .FALSE. ) then
+					write(ounit, 8827) vvol, dBdmpf(Mvol-1, Mvol-1), Btemn(1, 0, Mvol), dItGpdxtp( 1, 2, Mvol), dItGpdxtp( 1, 1, Mvol), dBdx2(Mvol-1), dBdx2(Mvol)
+8827 				format("dfp200: vvol = ", i3, ", dBdpsip = ", f10.8, ", dBdpsit = ", f10.8, ", dIpdpsip = ", f10.8, ", dIpdpsit = ", f16.10, ", dBdx2(N-1) = ", f10.8, ", dIpdxj = ", f10.8)
+				endif
 #endif       
 			endif
 
@@ -1222,6 +1242,8 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 #ifdef DEBUG
 
 	if( Lcheck.eq.4 ) then ! check derivatives of field;
+
+		!FATAL( dfp200, Lfreebound, Lcheck.eq.4 not compatible with free boundary calculation )
 
 		SALLOCATE( isolution, (1:NN,-2:2), zero )
 
@@ -1359,7 +1381,6 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 
 				DALLOCATE(fjac)
 				DALLOCATE(r_deb)
-
 			endif
 
 

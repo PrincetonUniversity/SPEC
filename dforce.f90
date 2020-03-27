@@ -713,7 +713,7 @@ if( LcomputeDerivatives ) then ! construct Hessian;
 								endif
 
 
-								hessian(tdoc+1:tdoc+LGdof,tdof) = hessian(tdoc+1:tdoc+LGdof,tdof)                            &
+								hessian(tdoc+1:tdoc+LGdof,tdof) = hessian(tdoc+1:tdoc+LGdof,tdof)                              &
 															      + dBBdmp(1:LGdof,ivol+1,0,1) * dmupfdx(ivol+1,vvol,1,idof,1) &
 															      + dBBdmp(1:LGdof,ivol+1,0,2) * dmupfdx(ivol+1,vvol,2,idof,1) &
 															      - dBBdmp(1:LGdof,ivol+0,1,1) * dmupfdx(ivol+0,vvol,1,idof,1) &
@@ -724,6 +724,7 @@ if( LcomputeDerivatives ) then ! construct Hessian;
 
 
 						endif ! matches if( LocalConstraint );
+
 #ifdef DEBUG
 							if( Lcheck.eq.6 ) then
 								dBdX%L = .false.
@@ -800,24 +801,35 @@ if( LcomputeDerivatives ) then ! construct Hessian;
 
 	enddo ! end of do vvol;
 
+
+
 #ifdef DEBUG
 
+! Print hessian and finite differences estimate (if single CPU). 
 if( Lcheck.eq.6 ) then
+		open(10, file='Lcheck6_output.txt', status='unknown')
         write(ounit,'(A)') NEW_LINE('A')
 		do ii=1, NGdof
-			write(ounit,1345) cput-cpus, myid, vvol, im(ii), in(ii), hessian(ii,:)
-1345    	format("dforce : ",f10.2," : ",:,"myid=",i3," ; vvol=",i2," ; (",i2,",",i3," ) ; Hessian            = ",8f16.10 "   ;")
+			write(ounit,1345) myid, im(ii), in(ii), hessian(ii,:)
+			write(10   ,1347) hessian(ii,:)
 		enddo
+		close(10)
         
         write(ounit,'(A)') NEW_LINE('A')
 
+		open(10, file='Lcheck6_output.FiniteDiff.txt', status='unknown')
 		if( ncpu.eq.1 ) then
 			do ii=1, NGdof
-				write(ounit,1346) cput-cpus, myid, vvol, im(ii), in(ii), finitediff_hessian(ii,:)
-1346	   		format("dforce : ",f10.2," : ",:,"myid=",i3," ; vvol=",i2," ; (",i2,",",i3," ) ; Finite differences = ",8f16.10 "   ;")
+				write(ounit,1346) myid, im(ii), in(ii), finitediff_hessian(ii,:)
+				write(10   ,1347) finitediff_hessian(ii,:)
 			enddo		
 		    write(ounit,'(A)') NEW_LINE('A')
 		endif
+		close(10)
+
+1345   	format("dforce: myid=",i3," ; (",i4,",",i4," ) ; Hessian            = ",8f16.10 "   ;")
+1346   	format("dforce: myid=",i3," ; (",i4,",",i4," ) ; Finite differences = ",8f16.10 "   ;")
+1347   	format(512F22.16, " ")
 
 		DALLOCATE(finitediff_hessian)
 
@@ -827,11 +839,11 @@ endif
 
 endif ! end of if( LcomputeDerivatives ) ;
 
-call MPI_BARRIER( MPI_COMM_WORLD, ierr )
+!call MPI_BARRIER( MPI_COMM_WORLD, ierr )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  RETURN(dforce)
+RETURN(dforce)
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
