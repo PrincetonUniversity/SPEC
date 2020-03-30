@@ -401,7 +401,7 @@ else ! CASE SEMI GLOBAL CONSTRAINT
 		! Each volume will need solution and derivative information in vacuum region. Thus, broadcast!
 		! Derivative of w.r.t geometry only required if plasma interface is perturbed - this is 
 		! calculated below
-		if( Lfreebound ) then
+		if( Lfreebound.eq.1 ) then
 			do ideriv = 0, 2
 				do ii = 1, mn  
 
@@ -1055,7 +1055,7 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 		if (Lconstraint.eq.3) then	
 	
 			! In case of freeboundary, there is an additional equation in the linear system, related to the poloidal linking current.
-			if( Lfreebound ) then
+			if( Lfreebound.eq.1 ) then
 				order = Mvol
 			else
 				order = Mvol-1
@@ -1127,7 +1127,7 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-			if( Lfreebound ) then ! Need to modify last two equations
+			if( Lfreebound.eq.1 ) then ! Need to modify last two equations
 
 				
 				! Set all last column to zero - maybe not necessary ?
@@ -1169,7 +1169,7 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 			dmupfdx(1     , vvol, 2, idof, 1) = zero ! First poloidal flux is always zero
 			dmupfdx(2:Mvol, vvol, 2, idof, 1) = lfactor * dBdx2(1:Mvol-1) ! These are the derivatives of pflux
 
-			if( Lfreebound ) then
+			if( Lfreebound.eq.1 ) then
 				dmupfdx(Mvol, vvol, 1, idof, 1) = lfactor * dBdx2(Mvol) ! This is the derivative of tflux
 			endif
 
