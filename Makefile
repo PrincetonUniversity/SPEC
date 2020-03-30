@@ -127,6 +127,20 @@ ifeq ($(CC),intel_spc)
  LINKS+=-L$(HDF5_HOME)/lib -lhdf5_fortran -lhdf5 -lpthread -lz -lm -Wl,-rpath -Wl,$(HDF5_HOME)/lib
 endif
 
+ifeq ($(CC),gfort_spc)
+ # This is not yet working. Work in progress...
+ FC=mpifort
+ CFLAGS=-fdefault-real-8
+ RFLAGS=-O2 -ffixed-line-length-none -ffree-line-length-none -fexternal-blas
+ DFLAGS=-g -fbacktrace -fbounds-check -ffree-line-length-none -fexternal-blas -DDEBUG
+ LINKS=-L/lib -lmkl_rt -lpthread -lm -ldl -Wl,-rpath
+ LINKS+=-L$(FFTW_DIR)/lib -lfftw3
+ LINKS+=-L/usr/local/hdf5-1.8.18-gcc6.3/lib -lhdf5_fortran -lhdf5 -lz
+ LIBS=-I$(FFTW_DIR)/include
+ LIBS+=-I/usr/local/hdf5-1.8.18-gcc6.3/include
+endif
+
+
 ifeq ($(CC),intel_ipp)
  # tested on draco with the following modules:
  # intel/18.0.3 impi/2018.3 mkl/2018.3 hdf5-serial/1.8.21 fftw-mpi/3.3.8
