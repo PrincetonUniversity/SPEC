@@ -453,12 +453,18 @@ endif
    
    WCALL( xspech, bnorml, ( mn, Ntz, efmn(1:mn), ofmn(1:mn) ) ) ! compute normal field etc. on computational boundary;
    
-   FATAL( xspech, mn-1.le.0, divide by zero )
+   !FATAL( xspech, mn-1.le.0, divide by zero )
 
-   if( YESstellsym ) bnserr = sum( abs( iBns(2:mn) - ofmn(2:mn) ) ) / (mn-1)
-   if( NOTstellsym ) bnserr = sum( abs( iBns(2:mn) - ofmn(2:mn) ) ) / (mn-1) &
-                            + sum( abs( iBnc(1:mn) - efmn(1:mn) ) ) / (mn  )
-   
+   if(mn.eq.1) then
+     if( YESstellsym ) bnserr = 0.0 !TODO: NOT SURE, this should test if bns is actually 0
+     if( NOTstellsym ) bnserr = sum( abs( iBnc(1:mn) - efmn(1:mn) ) ) / (mn  )
+   else
+     if( YESstellsym ) bnserr = sum( abs( iBns(2:mn) - ofmn(2:mn) ) ) / (mn-1)
+     if( NOTstellsym ) bnserr = sum( abs( iBns(2:mn) - ofmn(2:mn) ) ) / (mn-1) &
+                              + sum( abs( iBnc(1:mn) - efmn(1:mn) ) ) / (mn  )
+   endif
+
+
    if( bnserr.gt.gBntol ) then
     
     LContinueFreeboundaryIterations = .true.
