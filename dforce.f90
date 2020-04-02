@@ -299,6 +299,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 
 
 ! Local constraint case - simply call dfp100 and then dfp200
+  Xdof(1:Mvol-1) = zero
   if( LocalConstraint ) then
 
     Ndofgl = 0; Fvec(1:Mvol-1) = 0; iflag = 0;

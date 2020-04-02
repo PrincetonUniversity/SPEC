@@ -129,7 +129,7 @@ endif
 
 ifeq ($(CC),gfort_spc)
  # This is not yet working. Work in progress...
- FC=mpifort
+ FC=mpif90
  CFLAGS=-fdefault-real-8
  RFLAGS=-O2 -ffixed-line-length-none -ffree-line-length-none -fexternal-blas
  DFLAGS=-g -fbacktrace -fbounds-check -ffree-line-length-none -fexternal-blas -DDEBUG

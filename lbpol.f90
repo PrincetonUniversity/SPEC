@@ -51,8 +51,8 @@ subroutine lbpol(lvol)
   LOCALS
 ! ------
   
-  INTEGER                :: Lcurvature, ideriv, ii, ll, ifail, lvol, mi, ni
-  REAL                   :: lss, innout
+  INTEGER                :: Lcurvature, ideriv, ii, ll, ifail, lvol, mi, ni, innout
+  REAL                   :: lss
   REAL                   :: lAte(1:mn), lAze(1:mn), lAto(1:mn), lAzo(1:mn)
   REAL                   :: dAt(1:Ntz), dAz(1:Ntz), Bt(1:Ntz), Bz(1:Ntz)
   REAL                   :: dBtzero          ! Value of first B_theta mode jump

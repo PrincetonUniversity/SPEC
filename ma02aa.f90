@@ -46,8 +46,8 @@ subroutine ma02aa( lvol, NN )
   INTEGER, intent(in)  :: lvol, NN ! NN is the number of degrees of freedom in the (packed format) vector potential;
   
   
-  INTEGER              :: ideriv
-  REAL                 :: tol, dpsi(1:2), lastcpu, ind_matrix
+  INTEGER              :: ideriv, ind_matrix
+  REAL                 :: tol, dpsi(1:2), lastcpu
   CHARACTER            :: packorunpack
   
   INTEGER              :: Nxdof, Ndof, Ldfjac, iflag, maxfev, mode, LRR, nfev, njev, nprint, ihybrj
