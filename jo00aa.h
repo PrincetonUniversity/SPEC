@@ -169,131 +169,7 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
    Lcurvature = 2
    
    WCALL( jo00aa, coords, ( lvol, lss, Lcurvature, Ntz, mn ) ) ! returns coordinates, metrics, . . .
-   
-   if (Lcoordinatesingularity) then ! Zernike 1 Jul 2019
-     call get_zernike_d2(sbar, Lrad(lvol), mpol, zernike)
-   else
-     call get_cheby_d2(lss, Lrad(lvol), cheby(0:Lrad(lvol),0:2))
-   endif
-
-   Atemn(1:mn,0:2) = zero ! initialize summation over Chebyshev/Zernike polynomials;
-   Azemn(1:mn,0:2) = zero
-   if( NOTstellsym ) then
-   Atomn(1:mn,0:2) = zero
-   Azomn(1:mn,0:2) = zero
-   else
-   Atomn(1:mn,0:2) = zero ! these are used below;
-   Azomn(1:mn,0:2) = zero
-   endif
-   
-  !latex \item The Fourier components of the vector potential given in \Eqn{At} and \Eqn{Az}, and their first and second radial derivatives, are summed.
-
-   if (Lcoordinatesingularity) then
-    do ll = 0, Lrad(lvol) ! radial (Chebyshev) resolution of magnetic vector potential;
-    
-      do ii = 1, mn  ! Fourier resolution of magnetic vector potential;
-      mm = im(ii)
-      if (ll < mm) cycle
-      if (mod(ll+mm, 2) > 0) cycle
-      
-      ;Atemn(ii,0) = Atemn(ii,0) + Ate(lvol,ideriv,ii)%s(ll) * zernike(ll,mm,0)
-      ;Atemn(ii,1) = Atemn(ii,1) + Ate(lvol,ideriv,ii)%s(ll) * zernike(ll,mm,1) * half
-      ;Atemn(ii,2) = Atemn(ii,2) + Ate(lvol,ideriv,ii)%s(ll) * zernike(ll,mm,2) * half * half
-
-      ;Azemn(ii,0) = Azemn(ii,0) + Aze(lvol,ideriv,ii)%s(ll) * zernike(ll,mm,0)
-      ;Azemn(ii,1) = Azemn(ii,1) + Aze(lvol,ideriv,ii)%s(ll) * zernike(ll,mm,1) * half
-      ;Azemn(ii,2) = Azemn(ii,2) + Aze(lvol,ideriv,ii)%s(ll) * zernike(ll,mm,2) * half * half
-
-      if( NOTstellsym ) then
-
-        Atomn(ii,0) = Atomn(ii,0) + Ato(lvol,ideriv,ii)%s(ll) * zernike(ll,mm,0)
-        Atomn(ii,1) = Atomn(ii,1) + Ato(lvol,ideriv,ii)%s(ll) * zernike(ll,mm,1) * half
-        Atomn(ii,2) = Atomn(ii,2) + Ato(lvol,ideriv,ii)%s(ll) * zernike(ll,mm,2) * half * half
-
-        Azomn(ii,0) = Azomn(ii,0) + Azo(lvol,ideriv,ii)%s(ll) * zernike(ll,mm,0)
-        Azomn(ii,1) = Azomn(ii,1) + Azo(lvol,ideriv,ii)%s(ll) * zernike(ll,mm,1) * half
-        Azomn(ii,2) = Azomn(ii,2) + Azo(lvol,ideriv,ii)%s(ll) * zernike(ll,mm,2) * half * half
-
-      endif ! end of if( NOTstellsym) ; 20 Jun 14;
-        
-      enddo ! end of do ii;
-      
-    enddo ! end of do ll;
-
-   else
-
-    do ll = 0, Lrad(lvol) ! radial (Chebyshev) resolution of magnetic vector potential;
-    
-      do ii = 1, mn  ! Fourier resolution of magnetic vector potential;
-      
-      ;Atemn(ii,0) = Atemn(ii,0) + Ate(lvol,ideriv,ii)%s(ll) * cheby(ll,0)
-      ;Atemn(ii,1) = Atemn(ii,1) + Ate(lvol,ideriv,ii)%s(ll) * cheby(ll,1)
-      ;Atemn(ii,2) = Atemn(ii,2) + Ate(lvol,ideriv,ii)%s(ll) * cheby(ll,2)
-
-      ;Azemn(ii,0) = Azemn(ii,0) + Aze(lvol,ideriv,ii)%s(ll) * cheby(ll,0)
-      ;Azemn(ii,1) = Azemn(ii,1) + Aze(lvol,ideriv,ii)%s(ll) * cheby(ll,1)
-      ;Azemn(ii,2) = Azemn(ii,2) + Aze(lvol,ideriv,ii)%s(ll) * cheby(ll,2)
-
-      if( NOTstellsym ) then
-
-        Atomn(ii,0) = Atomn(ii,0) + Ato(lvol,ideriv,ii)%s(ll) * cheby(ll,0)
-        Atomn(ii,1) = Atomn(ii,1) + Ato(lvol,ideriv,ii)%s(ll) * cheby(ll,1)
-        Atomn(ii,2) = Atomn(ii,2) + Ato(lvol,ideriv,ii)%s(ll) * cheby(ll,2)
-
-        Azomn(ii,0) = Azomn(ii,0) + Azo(lvol,ideriv,ii)%s(ll) * cheby(ll,0)
-        Azomn(ii,1) = Azomn(ii,1) + Azo(lvol,ideriv,ii)%s(ll) * cheby(ll,1)
-        Azomn(ii,2) = Azomn(ii,2) + Azo(lvol,ideriv,ii)%s(ll) * cheby(ll,2)
-
-      endif ! end of if( NOTstellsym) ; 20 Jun 14;
-        
-      enddo ! end of do ii;
-      
-    enddo ! end of do ll;
-   end if 
-!latex \item The quantities $\sqrt g B^\s$, $\sqrt g B^\t$ and $\sqrt g B^\z$, and their first and second derivatives with respect to $(\s,\t,\z)$, 
-!latex       are computed on the regular angular grid (using FFTs).
-
-   ofmn(1:mn) = -          im(1:mn)*Azemn(1:mn,0) -          in(1:mn)*Atemn(1:mn,0)
-   efmn(1:mn) = +          im(1:mn)*Azomn(1:mn,0) +          in(1:mn)*Atomn(1:mn,0)
-   sfmn(1:mn) = -          im(1:mn)*Azemn(1:mn,1) -          in(1:mn)*Atemn(1:mn,1)
-   cfmn(1:mn) = +          im(1:mn)*Azomn(1:mn,1) +          in(1:mn)*Atomn(1:mn,1)
-   
-   call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, gBu(1:Ntz,1,0), gBu(1:Ntz,1,1) ) !  (gB^s)   , d(gB^s)/ds;
-   
-   efmn(1:mn) = - im(1:mn)*im(1:mn)*Azemn(1:mn,0) - im(1:mn)*in(1:mn)*Atemn(1:mn,0)
-   ofmn(1:mn) = - im(1:mn)*im(1:mn)*Azomn(1:mn,0) - im(1:mn)*in(1:mn)*Atomn(1:mn,0)
-   cfmn(1:mn) = + in(1:mn)*im(1:mn)*Azemn(1:mn,0) + in(1:mn)*in(1:mn)*Atemn(1:mn,0)
-   sfmn(1:mn) = + in(1:mn)*im(1:mn)*Azomn(1:mn,0) + in(1:mn)*in(1:mn)*Atomn(1:mn,0)
-   
-   call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, gBu(1:Ntz,1,2), gBu(1:Ntz,1,3) ) ! d(gB^s)/dt, d(gB^s)/dz;
-   
-   efmn(1:mn) =                                   -                   Azemn(1:mn,1)
-   ofmn(1:mn) =                                   -                   Azomn(1:mn,1)
-   cfmn(1:mn) =                                   -                   Azemn(1:mn,2)
-   sfmn(1:mn) =                                   -                   Azomn(1:mn,2)
-   
-   call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, gBu(1:Ntz,2,0), gBu(1:Ntz,2,1) ) !  (gB^t)   , d(gB^t)/ds;
-
-   ofmn(1:mn) =                                   +          im(1:mn)*Azemn(1:mn,1)
-   efmn(1:mn) =                                   -          im(1:mn)*Azomn(1:mn,1)
-   sfmn(1:mn) =                                   -          in(1:mn)*Azemn(1:mn,1)
-   cfmn(1:mn) =                                   +          in(1:mn)*Azomn(1:mn,1)
-   
-   call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, gBu(1:Ntz,2,2), gBu(1:Ntz,2,3) ) ! d(gB^t)/dt, d(gB^t)/dz;
-   
-   efmn(1:mn) = +                   Atemn(1:mn,1)
-   ofmn(1:mn) = +                   Atomn(1:mn,1)
-   cfmn(1:mn) = +                   Atemn(1:mn,2)
-   sfmn(1:mn) = +                   Atomn(1:mn,2)
-   
-   call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, gBu(1:Ntz,3,0), gBu(1:Ntz,3,1) ) !  (gB^z)   , d(gB^z)/ds;
-
-   ofmn(1:mn) = -          im(1:mn)*Atemn(1:mn,1)
-   efmn(1:mn) = +          im(1:mn)*Atomn(1:mn,1)
-   sfmn(1:mn) = +          in(1:mn)*Atemn(1:mn,1)
-   cfmn(1:mn) = -          in(1:mn)*Atomn(1:mn,1)
-   
-   call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, gBu(1:Ntz,3,2), gBu(1:Ntz,3,3) ) ! d(gB^z)/dt, d(gB^z)/dz;
+   WCALL( jo00aa, compbu, ( lvol, lss, Ntz, mn, gBu, ideriv ) )
      
 !latex \item The following quantities are then computed on the regular angular grid
 !latex       \be \sqrt g j^\s & = & \sum_u \left[
@@ -432,16 +308,16 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
   
   if (Lcoordinatesingularity) then
     do ll = 0, Lrad(lvol)
-        Bst(1) = Bst(1) + Ate(lvol,0,1)%s(ll) * RTT(ll,0,1,0)
+        Bst(1) = Bst(1) + Ate(lvol,ideriv,1)%s(ll) * RTT(ll,0,1,0)
       enddo
     Bst(1) = abs(Bst(1) - dtflux(lvol))
   else
     do ll = 0, Lrad(lvol)
-        Bst(1) = Bst(1) + Ate(lvol,0,1)%s(ll) * TT(ll,1,0)
+        Bst(1) = Bst(1) + Ate(lvol,ideriv,1)%s(ll) * TT(ll,1,0)
     enddo
     Bst(1) = abs(Bst(1) - dtflux(lvol))
     do ll = 0, Lrad(lvol)
-        Bst(2) = Bst(2) - Aze(lvol,0,1)%s(ll) * TT(ll,1,0)
+        Bst(2) = Bst(2) - Aze(lvol,ideriv,1)%s(ll) * TT(ll,1,0)
     enddo
     Bst(2) = abs(Bst(2) - dpflux(lvol))
   endif

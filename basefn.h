@@ -25,9 +25,9 @@ subroutine get_cheby(lss, lrad, cheby)
     enddo
 
   ! basis recombination
-  do ll = 1, lrad
-    cheby(ll, 0) = cheby(ll, 0)  - (-1)**ll
-  enddo
+  !do ll = 1, lrad
+    !cheby(ll, 0) = cheby(ll, 0) ! - (-1)**ll
+  !enddo
 
   do ll = 0, lrad
     cheby(ll, 0:1) = cheby(ll, 0:1) / real(ll+1) ! scale for better conditioning
@@ -65,9 +65,9 @@ subroutine get_cheby_d2(lss, lrad, cheby)
                        two       * cheby(ll-1,1) + two       * cheby(ll-1,1) + two * lss * cheby(ll-1,2) - cheby(ll-2,2) /)
   enddo 
 
-  do ll = 1, lrad
-    cheby(ll, 0) = cheby(ll, 0)  - (-1)**ll
-  enddo
+  !do ll = 1, lrad
+    !cheby(ll, 0) = cheby(ll, 0)  !- (-1)**ll
+  !enddo
 
   do ll = 0, lrad
     cheby(ll, 0:2) = cheby(ll, 0:2) / real(ll+1) ! scale for better conditioning

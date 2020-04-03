@@ -189,6 +189,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
 
   REAL   , allocatable :: dAt(:,:), dAz(:,:), XX(:), YY(:), dBB(:,:), dII(:), dLL(:), dPP(:), length(:), dRR(:,:), dZZ(:,:), constraint(:)
 
+  REAL   , allocatable :: dxi(:,:,:), gBu(:,:,:) ,gBu1(:,:,:)
+
   CHARACTER            :: packorunpack 
 
 #ifdef DEBUG
@@ -235,6 +237,9 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
   SALLOCATE( dLL       , (1:Ntz     ), zero ) ! length   constraint;
   SALLOCATE( dPP       , (1:Ntz     ), zero ) ! poloidal constraint;
   SALLOCATE( constraint, (1:Ntz     ), zero )
+  SALLOCATE( dxi       , (1:Ntz,1:3,0:3), zero) ! boundary perturbation 
+  SALLOCATE( gBu       , (1:Ntz,1:3,0:3), zero) ! magnetic field and derivative
+  SALLOCATE( gBu1      , (1:Ntz,1:3,0:3), zero) ! magnetic field and derivative, perturbed
  
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -621,31 +626,27 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
         
         dBdX%innout = innout
 
-        !WCALL( dforce, ma00aa,( Iquad(vvol), mn, vvol, ll ) ) ! compute volume integrals of metric elements;
-        
-        !WCALL( dforce, matrix,( vvol, mn, ll ) ) ! construct Beltrami matrices;
-        
-        !dpsi(1:2) = (/ dtflux(vvol), dpflux(vvol) /) ! local enclosed toroidal and poloidal fluxes;
-        
-        ! this is the original without BLAS
-        !rhs(0)    =   half*sum(solution(1:NN,0)*matmul(dMD(1:NN,1:NN),solution(1:NN,0)))
-        !rhs(1:NN) = - matmul( dMB(1:NN,1:2 )                            , dpsi(1:2)        ) &
-        !            - matmul( dMA(1:NN,1:NN) - mu(vvol) * dMD(1:NN,1:NN), solution(1:NN,0) )
+        !WCALL( dforce, intghs, ( Iquad(vvol), mn, vvol, ll, 0 ) )
 
-        ! BLAS version 17 Jul 2019
-        !call DGEMV('N',NN,NN, one,dMD(1,1),NN+1,solution(1,0),1,zero,rhs(1),1)
-        !rhs(0) = half * sum(solution(1:NN,0) * rhs(1:NN))
-        !call DGEMV('N',NN,NN,-one,dMA(1,1),NN+1,solution(1,0),1,mu(vvol),rhs(1),1)
-        !rhs(1:NN) = rhs(1:NN) - matmul( dMB(1:NN,1:2 ), dpsi(1:2) )
+        !WCALL( dforce, mtrxhs, ( vvol, mn, ll, dMA(0:NN,0), dMD(0:NN,0), 0) )
 
-        WCALL( dforce, intghs, ( Iquad(vvol), mn, vvol, ll, 0 ) )
+        ! rhs(1:NN) = -dMA(1:NN,0)
 
-        WCALL( dforce, mtrxhs, ( vvol, mn, ll, dMA(0:NN,0), dMD(0:NN,0), 0) )
+        ! first, construct the coordinates on the interface
+        lss = innout * two - one
+        Lcurvature = 2 ; ideriv = 0
+        WCALL( dforce, coords, ( vvol, lss, Lcurvature, Ntz, mn) )
+        WCALL( dforce, compBu, ( vvol, lss, Ntz, mn, gBu, ideriv) )
 
-        rhs(1:NN) = -dMA(1:NN,0)
+        ! second, construct xi on the surface
+        WCALL( dforce, compxi, ( vvol, Ntz, mn, dxi) )
+
+        ! third, construct the perturbed boundary condition
+        WCALL( dforce, ptbrhs, ( vvol, mn, Lrad(vvol), dxi, gBu, rhs) )
 
         if (Lconstraint .eq. 2) then
-          SALLOCATE( work, (1:NN+1), zero )
+          SALLOCATE( work, (1:NN+1), zero )    
+          rhs(0) = zero ! clean up the junk in rhs(0)
           work(1:NN+1) = rhs(0:NN)
           !work(1:NN+1)  =  matmul( oBI(0:NN,0:NN), rhs(0:NN)) ! original version
           call DGETRS('N',NN+1,1,oBI(0,0),NN+1,ipivot(0:NN),work(1),NN+1,idgetrs) ! Change to DGETRS; 22 Jul 19
@@ -658,7 +659,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
         endif
 
         ideriv = -1 ; dpsi(1:2) = (/ dtflux(vvol), dpflux(vvol) /) ! these are also used below;
-        
+
         packorunpack = 'U'
         
         WCALL( dforce, packab,( packorunpack, vvol, NN,  solution(1:NN,-1), ideriv ) ) ! derivatives placed in Ate(vvol,ideriv,1:mn)%s(0:Lrad),
@@ -772,8 +773,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
           solution(1:NN,-1) = abs(  solution(1:NN,-1) )
          isolution(1:NN, 0) = abs( isolution(1:NN, 0) )
         
-!        ifail = 0 ; call M01CAF(  solution(1:NN,-1), 1, NN, 'D', ifail ) ! sorting screen output; this corrupts;
-!        ifail = 0 ; call M01CAF( isolution(1:NN, 0), 1, NN, 'D', ifail ) ! sorting screen output; this corrupts;
+ !        ifail = 0 ; call M01CAF(  solution(1:NN,-1), 1, NN, 'D', ifail ) ! sorting screen output; this corrupts;
+ !        ifail = 0 ; call M01CAF( isolution(1:NN, 0), 1, NN, 'D', ifail ) ! sorting screen output; this corrupts;
          
          ifail = 0 ; call dlasrt( 'D', NN,  solution(1:NN,-1), ifail ) ! sorting screen output; this corrupts;
          ifail = 0 ; call dlasrt( 'D', NN, isolution(1:NN, 0), ifail ) ! sorting screen output; this corrupts;        
@@ -792,8 +793,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
         ! FATAL( dforce, .true., Lconstraint not supported for Lcheck=4 )
         !end select ! end of select case( Lconstraint ) ;
          
-!3002     format("dforce : ",f10.2," : ",:,"myid=",i3," ; vvol=",i2," ; (",i2,",",i3," ) ; irz=",i1," ; issym=",i1," ; innout=",i1," ; dxi=",99es10.02)
-3003     format("dforce : ",f10.2," : ",:,"myid=",i3," ; vvol=",i2," ; (",i2,",",i3," ) ; irz=",i1," ; issym=",i1," ; innout=",i1," ; ",a11,&
+ !3002     format("dforce : ",f10.2," : ",:,"myid=",i3," ; vvol=",i2," ; (",i2,",",i3," ) ; irz=",i1," ; issym=",i1," ; innout=",i1," ; dxi=",99es10.02)
+ 3003     format("dforce : ",f10.2," : ",:,"myid=",i3," ; vvol=",i2," ; (",i2,",",i3," ) ; irz=",i1," ; issym=",i1," ; innout=",i1," ; ",a11,&
       " : dmupf=",2f11.05" ;")
          
          dBdX%L = .true.
@@ -880,13 +881,28 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
          
          lss = two * iocons - one ; Lcurvature = 4
          WCALL( dforce, coords, ( vvol, lss, Lcurvature, Ntz, mn ) ) ! get coordinate metrics and their derivatives wrt Rj, Zj on interface;
+
+         WCALL( dforce, compBu, ( vvol, lss, Ntz, mn, gBu ,  0) ) ! compute original field
+         WCALL( dforce, compBu, ( vvol, lss, Ntz, mn, gBu1, -1) ) ! compute perturbed field
+         write(ounit,*) vvol, im(ii), in(ii), maxval(gBu1(:,1,0))
+         dBB(1:Ntz,id) = zero
+
+         do ll = 1, 3
+          do jj = 1, 3
+            dBB(1:Ntz,id) = dBB(1:Ntz,id) + gBu1(1:Ntz,ll,0) * guvij(1:Ntz,ll,jj,0) * gBu(1:Ntz,jj,0)
+          end do
+         end do
+         dBB(1:Ntz,id)= dBB(1:Ntz,id) / sg(1:Ntz,0)**2
+         WCALL( dforce, jo00aa, ( vvol, Ntz, Iquad(vvol), mn ) )
+
+
          
-         dBB(1:Ntz,id) = half * ( &
-      dAz(1:Ntz,id)*dAz(1:Ntz, 0)*guvij(1:Ntz,2,2,0) - two * dAz(1:Ntz,id)*dAt(1:Ntz, 0)*guvij(1:Ntz,2,3,0) + dAt(1:Ntz,id)*dAt(1:Ntz, 0)*guvij(1:Ntz,3,3,0) &
-    + dAz(1:Ntz, 0)*dAz(1:Ntz,id)*guvij(1:Ntz,2,2,0) - two * dAz(1:Ntz, 0)*dAt(1:Ntz,id)*guvij(1:Ntz,2,3,0) + dAt(1:Ntz, 0)*dAt(1:Ntz,id)*guvij(1:Ntz,3,3,0) &
-    + dAz(1:Ntz, 0)*dAz(1:Ntz, 0)*guvij(1:Ntz,2,2,1) - two * dAz(1:Ntz, 0)*dAt(1:Ntz, 0)*guvij(1:Ntz,2,3,1) + dAt(1:Ntz, 0)*dAt(1:Ntz, 0)*guvij(1:Ntz,3,3,1) &
-    ) / sg(1:Ntz,0)**2                                                                                                                                       &
-    - dBB(1:Ntz,0) * two * sg(1:Ntz,1) / sg(1:Ntz,0)
+    !      dBB(1:Ntz,id) = half * ( &
+    !   dAz(1:Ntz,id)*dAz(1:Ntz, 0)*guvij(1:Ntz,2,2,0) - two * dAz(1:Ntz,id)*dAt(1:Ntz, 0)*guvij(1:Ntz,2,3,0) + dAt(1:Ntz,id)*dAt(1:Ntz, 0)*guvij(1:Ntz,3,3,0) &
+    ! + dAz(1:Ntz, 0)*dAz(1:Ntz,id)*guvij(1:Ntz,2,2,0) - two * dAz(1:Ntz, 0)*dAt(1:Ntz,id)*guvij(1:Ntz,2,3,0) + dAt(1:Ntz, 0)*dAt(1:Ntz,id)*guvij(1:Ntz,3,3,0) &
+    ! + dAz(1:Ntz, 0)*dAz(1:Ntz, 0)*guvij(1:Ntz,2,2,1) - two * dAz(1:Ntz, 0)*dAt(1:Ntz, 0)*guvij(1:Ntz,2,3,1) + dAt(1:Ntz, 0)*dAt(1:Ntz, 0)*guvij(1:Ntz,3,3,1) &
+    ! ) / sg(1:Ntz,0)**2                                                                                                                                       &
+    ! - dBB(1:Ntz,0) * two * sg(1:Ntz,1) / sg(1:Ntz,0)
 
          FATAL( dforce, vvolume(vvol).lt.small, shall divide by vvolume(vvol)**(gamma+one) )
 
@@ -1048,7 +1064,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
 
          call tfft( Nt, Nz, ijreal(1:Ntz), dII(1:Ntz), & ! recall that ijreal contains pressure term;
                     mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), ifail )
-         
+         !write(ounit,*) vvol, im(ii), in(ii), efmn(ii), ofmn(ii)
 
          call tfft( Nt, Nz, dPP(1:Ntz)   , dLL(1:Ntz), & ! recall that ijreal is probably just a dummy;
                     mn, im(1:mn), in(1:mn), evmn(1:mn), odmn(1:mn), comn(1:mn), simn(1:mn), ifail )          ! evmn and odmn are available as workspace;
@@ -1120,10 +1136,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
     DALLOCATE(DDzzcc)
    endif
 
-  if (YesMatrixFree) then
-    Lsavedguvij = .false.
-    DALLOCATE(guvijsave)
-  endif
+  Lsavedguvij = .false.
+  DALLOCATE(guvijsave)
 
    DALLOCATE(Tss)
    DALLOCATE(Dtc)
@@ -1228,6 +1242,10 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
   DALLOCATE(dII)
   DALLOCATE(dLL)
   DALLOCATE(dPP)
+
+  DALLOCATE(dxi)
+  DALLOCATE(gBu)
+  DALLOCATE(gBu1)
 
   DALLOCATE(constraint)
 

@@ -596,8 +596,8 @@ subroutine preset
       if( NOTstellsym ) NdMASmax(vvol) = (4 * (Lrad(vvol)/2 + 1))**2 * mn + 2 * 4 * 8 * Lrad(vvol) * mn ! Ate, Aze, Ato, Azo
     end if
    else ! .not.Lcoordinatesingularity;                                     a    c      b        d      e      f      g   h
-    if( YESstellsym ) NAdof(vvol) = 2 * ( mn        ) * ( Lrad(vvol)    ) +0*mn       +0*mn           + mn-1        + 1 + 1  
-    if( NOTstellsym ) NAdof(vvol) = 2 * ( mn + mn-1 ) * ( Lrad(vvol)    ) +0*mn+0*mn-1+0*mn    +0*mn-1+ mn-1 + mn-1 + 1 + 1
+    if( YESstellsym ) NAdof(vvol) = 2 * ( mn        ) * ( Lrad(vvol)    ) +mn          +mn           + mn-1        + 1 + 1  
+    if( NOTstellsym ) NAdof(vvol) = 2 * ( mn + mn-1 ) * ( Lrad(vvol)    ) +2*mn+2*mn-1+2*mn    +2*mn-1+ mn-1 + mn-1 + 1 + 1
 
     ! Guess the size of the sparse matrix ! 28 Jan 20
     ! If an iterative method is used and requires an preconditioner, we need to construct it as a sparse matrix
@@ -714,11 +714,11 @@ subroutine preset
     enddo
 
     do ii = 1, mn
-     !;                                     ; idof = idof + 1 ; Lma(vvol,  ii)       = idof
-     !;                                     ; idof = idof + 1 ; Lmb(vvol,  ii)       = idof
-     !if(  ii.gt.1 .and. NOTstellsym ) then ; idof = idof + 1 ; Lmc(vvol,  ii)       = idof
-     !;                                     ; idof = idof + 1 ; Lmd(vvol,  ii)       = idof
-     !endif
+     ;                                     ; idof = idof + 1 ; Lma(vvol,  ii)       = idof
+     ;                                     ; idof = idof + 1 ; Lmb(vvol,  ii)       = idof
+     if(  ii.gt.1 .and. NOTstellsym ) then ; idof = idof + 1 ; Lmc(vvol,  ii)       = idof
+     ;                                     ; idof = idof + 1 ; Lmd(vvol,  ii)       = idof
+     endif
      if(  ii.gt.1                   ) then ; idof = idof + 1 ; Lme(vvol,  ii)       = idof
      endif
      if(  ii.gt.1 .and. NOTstellsym ) then ; idof = idof + 1 ; Lmf(vvol,  ii)       = idof
