@@ -94,10 +94,10 @@ program xspech
   INTEGER              :: imn, lmn, lNfp, lim, lin, ii, ideriv
   INTEGER              :: vvol, llmodnp, ifail, wflag, iflag, vflag
   REAL                 :: rflag, lastcpu, bnserr, lRwc, lRws, lZwc, lZws, lItor, lGpol, lgBc, lgBs, sumI
-  REAL,    allocatable :: position(:), gradient(:)
+  REAL,    allocatable :: position(:), gradient(:), Bt00(:,:)
   CHARACTER            :: pack
   INTEGER              :: Lfindzero_old, mfreeits_old
-  REAL                 :: gBnbld_old  
+  REAL                 :: gBnbld_old
   INTEGER              :: lnPtrj, numTrajTotal
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -632,13 +632,17 @@ program xspech
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 ! Computes the surface current at each interface for output
 
+  SALLOCATE( Bt00, (1:Mvol, 0:1) , zero)
+
   do vvol = 1, Mvol
-    WCALL(xspech, lbpol, (vvol, mn) )
+    WCALL(xspech, lbpol, (vvol, Bt00(1:Mvol, 0:1)) )
   enddo
 
   do vvol = 1, Mvol-1
-    IPDt(vvol) = pi2 * (Btemn(1, 0, vvol+1) - Btemn(1, 1, vvol))
+    IPDt(vvol) = pi2 * (Bt00(vvol+1, 0) - Bt00(vvol, 1))
   enddo
+
+  DALLOCATE( Bt00 )
 
 ! and the volume current
   sumI = 0

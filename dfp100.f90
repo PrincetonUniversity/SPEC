@@ -49,7 +49,6 @@ use allglobal, only : ncpu, myid, cpus, &
                       dBdX, &
                       Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, Localconstraint, &
                       IPDt, xoffset, dpflux, &
-                      Btemn, &
                       IsMyVolume, IsMyVolumeValue, WhichCpuID, &
                       IconstraintOK
 
@@ -65,7 +64,7 @@ use allglobal, only : ncpu, myid, cpus, &
 
 INTEGER              :: vvol, Ndofgl, iflag, cpu_send_one, cpu_send_two
 INTEGER              :: status(MPI_STATUS_SIZE), request1, request2
-REAL                 :: Fvec(1:Mvol-1), x(1:Mvol-1)
+REAL                 :: Fvec(1:Mvol-1), x(1:Mvol-1), Bt00(1:Mvol, 0:1)
 
 
 
@@ -136,7 +135,7 @@ BEGIN(dfp100)
         ! reduces the amount of data sent to the master thread. In the case of current constraint, only two
         ! doubles per volume are sent.
         if( Lconstraint.EQ.3 ) then
-            WCALL( dfp100, lbpol, (vvol) )                !Compute field at interface for global constraint
+            WCALL( dfp100, lbpol, (vvol, Bt00(1:Mvol, 0:1)) )                !Compute field at interface for global constraint
         endif
     enddo
 
@@ -158,11 +157,11 @@ BEGIN(dfp100)
                     call WhichCpuID(vvol+1, cpu_send_two)
 
                     ! Broadcast magnetic field at the interface.
-                    RlBCAST(Btemn(1,1,vvol  ), 1, cpu_send_one)
-                    RlBCAST(Btemn(1,0,vvol+1), 1, cpu_send_two)
+                    RlBCAST(Bt00(vvol  , 1), 1, cpu_send_one)
+                    RlBCAST(Bt00(vvol+1, 0), 1, cpu_send_two)
 
                     ! Evaluate surface current
-                    IPDt(vvol) = pi2 * (Btemn(1, 0, vvol+1) - Btemn(1, 1, vvol))
+                    IPDt(vvol) = pi2 * (Bt00(vvol+1, 0) - Bt00(vvol, 1))
 
                 enddo
 
