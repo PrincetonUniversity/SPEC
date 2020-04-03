@@ -107,7 +107,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
                         epsilon, &
                         Lconstraint, Lcheck, &
                         Lextrap, &
-                                                mupftol
+                        mupftol
   
   use cputiming, only : Tdforce
   
@@ -152,17 +152,17 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
   
   INTEGER              :: vvol, innout, ii, jj, irz, issym, iocons, tdoc, idoc, idof, tdof, jdof, ivol, imn, ll, ihybrd1, lwa, Ndofgl, llmodnp
   INTEGER              :: maxfev, ml, muhybr, mode, nprint, nfev, ldfjac, lr, Nbc, NN, cpu_id
-  DOUBLE PRECISION     :: epsfcn, factor
-  DOUBLE PRECISION     :: Fdof(1:Mvol-1), Xdof(1:Mvol-1), Fvec(1:Mvol-1)
-  DOUBLE PRECISION     :: diag(1:Mvol-1), qtf(1:Mvol-1), wa1(1:Mvol-1), wa2(1:Mvol-1), wa3(1:Mvol-1), wa4(1:mvol-1)
-  DOUBLE PRECISION, allocatable :: fjac(:, :), r(:) 
+  REAL                 :: epsfcn, factor
+  REAL                 :: Fdof(1:Mvol-1), Xdof(1:Mvol-1), Fvec(1:Mvol-1)
+  REAL                 :: diag(1:Mvol-1), qtf(1:Mvol-1), wa1(1:Mvol-1), wa2(1:Mvol-1), wa3(1:Mvol-1), wa4(1:mvol-1)
+  REAL, allocatable    :: fjac(:, :), r(:) 
 
-  INTEGER                        :: status(MPI_STATUS_SIZE), request_recv, request_send, cpu_send
+  INTEGER              :: status(MPI_STATUS_SIZE), request_recv, request_send, cpu_send
   INTEGER              :: id
   INTEGER              :: iflag
 
   CHARACTER            :: packorunpack 
-  EXTERNAL                     :: dfp100, dfp200, loop_dfp100
+  EXTERNAL             :: dfp100, dfp200, loop_dfp100
 
 #ifdef DEBUG
   INTEGER              :: isymdiff
@@ -299,12 +299,19 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 
 
 ! Local constraint case - simply call dfp100 and then dfp200
-  Xdof(1:Mvol-1) = zero
+  Xdof(1:Mvol-1) = zero;
+
+#ifdef DEBUG
+  write(ounit, '("dforce: Mvol = ", i3)') Mvol
+#endif
+
   if( LocalConstraint ) then
 
-    Ndofgl = 0; Fvec(1:Mvol-1) = 0; iflag = 0;
+    Ndofgl = 0; Fvec(1:Mvol-1) = zero; iflag = zero;
+
     Xdof(1:Mvol-1) = dpflux(2:Mvol) + xoffset
-    
+
+
     ! Solve for field
     WCALL(dforce, dfp100, (Ndofgl, Xdof, Fvec, iflag) )
  
@@ -746,30 +753,30 @@ subroutine loop_dfp100(Ndofgl, Fvec, iflag)
   
   use inputlist, only : Wmacros, Wdforce                                        ! Flags for debugging
 
-    use cputiming, only     :  Tdforce                                                    ! Timer
-    use allglobal, only     :  Mvol, &                                                    ! Total number of volume + vacuum
-                               IconstraintOK, &                                    ! Flag to exit loop
-                               cpus, myid
+  use cputiming, only     :  Tdforce                                                    ! Timer
+  use allglobal, only     :  Mvol, &                                                    ! Total number of volume + vacuum
+                             IconstraintOK, &                                    ! Flag to exit loop
+                             cpus, myid
 
  LOCALS
 !------
 
-    INTEGER                                              :: Ndofgl, iflag            ! Input parameters to dfp100
-    DOUBLE PRECISION                                     :: Fvec(1:Mvol-1), x(1:Mvol-1) ! Input parameters to dfp100
-    EXTERNAL                                                        :: dfp100                            ! Field solver
+  INTEGER        :: Ndofgl, iflag               ! Input parameters to dfp100
+  REAL           :: Fvec(1:Mvol-1), x(1:Mvol-1) ! Input parameters to dfp100
+  EXTERNAL       :: dfp100                      ! Field solver
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 ! Initialize - for now the constraint is not matched
-    IconstraintOK = .false.
+  IconstraintOK = .false.
 
 ! Enter the infinit loop. Master thread broadcasts IconstraintOK at each iteration - the value is
 ! .TRUE. when the constraint is matched
-    do while (.not.IconstraintOK)
+  do while (.not.IconstraintOK)
 
 ! Compute solution in every associated volumes
-        WCALL(dforce, dfp100, (Ndofgl, x, Fvec, iflag) )
+    WCALL(dforce, dfp100, (Ndofgl, x, Fvec, iflag) )
 
-    end do !matches do while IconstraintOK
+  end do !matches do while IconstraintOK
 
 end subroutine loop_dfp100

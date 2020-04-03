@@ -3,9 +3,9 @@
 ###############################################################################################################################################################
 
  afiles=manual rzaxis packxi volume coords
- bfiles=metrix ma00aa        matrix        mp00ac ma02aa packab tr00ab curent df00ab lforce dfp100 dfp200 lbpol
+ bfiles=metrix ma00aa        matrix        mp00ac ma02aa packab tr00ab curent df00ab lforce lbpol
 #cfiles=bc00aa fc02aa jk03aa pc00aa pc00ab
- cfiles=brcast dforce newton 
+ cfiles=brcast dfp100 dfp200 dforce newton 
  dfiles=casing bnorml 
  efiles=jo00aa pp00aa pp00ab bfield stzxyz sc00aa
  ffiles=hesian ra00aa numrec
@@ -128,7 +128,6 @@ ifeq ($(CC),intel_spc)
 endif
 
 ifeq ($(CC),gfort_spc)
- # This is not yet working. Work in progress...
  FC=mpif90
  CFLAGS=-fdefault-real-8
  RFLAGS=-O2 -ffixed-line-length-none -ffree-line-length-none -fexternal-blas
