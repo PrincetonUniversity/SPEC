@@ -175,7 +175,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
   INTEGER, allocatable :: ipivot(:)
   REAL   , allocatable :: work(:)
   
-  INTEGER              :: vvol, innout, ii, jj, irz, issym, iocons, tdoc, idoc, idof, tdof, jdof, ivol, imn, ll, lldof, iidof, jjdof
+  INTEGER              :: vvol, innout, ii, jj, irz, issym, iocons, tdoc, idoc, idof, tdof, jdof, ivol, imn, ll, kk, lldof, iidof, jjdof
 
   INTEGER              :: Lcurvature, ideriv, id, jquad
   
@@ -879,12 +879,12 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
          
          WCALL( dforce, lforce, ( vvol, iocons, ideriv, Ntz, dAt(1:Ntz,id), dAz(1:Ntz,id), XX(1:Ntz), YY(1:Ntz), length(1:Ntz), DDl, MMl, iflag ) )
          
-         lss = two * iocons - one ; Lcurvature = 4
+         lss = two * iocons - one ; Lcurvature = 2
          WCALL( dforce, coords, ( vvol, lss, Lcurvature, Ntz, mn ) ) ! get coordinate metrics and their derivatives wrt Rj, Zj on interface;
 
          WCALL( dforce, compBu, ( vvol, lss, Ntz, mn, gBu ,  0) ) ! compute original field
          WCALL( dforce, compBu, ( vvol, lss, Ntz, mn, gBu1, -1) ) ! compute perturbed field
-         write(ounit,*) vvol, im(ii), in(ii), maxval(gBu1(:,1,0))
+
          dBB(1:Ntz,id) = zero
 
          do ll = 1, 3
@@ -893,8 +893,18 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
           end do
          end do
          dBB(1:Ntz,id)= dBB(1:Ntz,id) / sg(1:Ntz,0)**2
-         WCALL( dforce, jo00aa, ( vvol, Ntz, Iquad(vvol), mn ) )
 
+         do kk = 1, 3
+          do ll = 1, 3
+            do jj = 1, 3
+              dBB(1:Ntz,id) = dBB(1:Ntz,id) + dxi(1:Ntz,kk,0) * (   gBu(1:Ntz,ll,kk) * guvij(1:Ntz,ll,jj,0 ) * gBu(1:Ntz,jj,0 ) &
+                                                                +   gBu(1:Ntz,ll,0 ) * guvij(1:Ntz,ll,jj,kk) * gBu(1:Ntz,jj,0 ) &
+                                                                +   gBu(1:Ntz,ll,0 ) * guvij(1:Ntz,ll,jj,0 ) * gBu(1:Ntz,jj,kk) &
+                                                                -2*(gBu(1:Ntz,ll,0 ) * guvij(1:Ntz,ll,jj,0 ) * gBu(1:Ntz,jj,0 )) * sg(1:Ntz,kk)/sg(1:Ntz,0)) &
+                                                              / sg(1:Ntz,0)**2 * half
+            end do !jj
+          end do !ll
+         end do !kk
 
          
     !      dBB(1:Ntz,id) = half * ( &
@@ -906,7 +916,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
 
          FATAL( dforce, vvolume(vvol).lt.small, shall divide by vvolume(vvol)**(gamma+one) )
 
-         ijreal(1:Ntz) = - adiabatic(vvol) * pscale * gamma * dvolume / vvolume(vvol)**(gamma+one) + dBB(1:Ntz,-1) ! derivatives of force wrt geometry;
+         ijreal(1:Ntz) = dBB(1:Ntz,id)!gBu1(1:Ntz,2,0)*gBu(1:Ntz,2,0)*guvij(1:Ntz,2,2,0)/sg(1:Ntz,0)**2!- 0*adiabatic(vvol) * pscale * gamma * dvolume / vvolume(vvol)**(gamma+one) + dBB(1:Ntz,-1) ! derivatives of force wrt geometry;
 
          dLL(1:Ntz) = zero ! either no spectral constraint, or not the appropriate interface;
          dPP(1:Ntz) = zero ! either no spectral constraint, or not the appropriate interface;

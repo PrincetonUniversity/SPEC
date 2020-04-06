@@ -446,8 +446,8 @@ subroutine matrix( lvol, mn, lrad )
        Wzeze = + 2 * mimj * TTssss(ll1,pp1,ii,jj) + 2 * mi      * TDstsc(ll1,pp1,ii,jj) + 2      * mj * TDstsc(pp1,ll1,jj,ii) + 2 * DDttcc(ll1,pp1,ii,jj)
        
        Htete =   zero
-       Hzete = - DToocc(pp1,ll1,jj,ii) + DToocc(ll1,pp1,ii,jj)
-       Hteze = + DToocc(pp1,ll1,jj,ii) - DToocc(ll1,pp1,ii,jj)
+       Hzete = - 0*DToocc(pp1,ll1,jj,ii) + 2*DToocc(ll1,pp1,ii,jj)
+       Hteze = + 0*DToocc(pp1,ll1,jj,ii) - 2*DToocc(ll1,pp1,ii,jj)
        Hzeze =   zero 
        
        id = Ate(lvol,0,ii)%i(ll) ; jd = Ate(lvol,0,jj)%i(pp) ; dMA(id,jd) = Wtete ; dMD(id,jd) = Htete
@@ -461,8 +461,8 @@ subroutine matrix( lvol, mn, lrad )
      
     enddo ! end of do jj ;
     
-    if( Lcoordinatesingularity .and. ii.eq.1 ) then ; kk = 1
-    else                                            ; kk = 0
+    if( Lcoordinatesingularity .and. im(ii).eq.1 ) then ; kk = 1
+    else                                                ; kk = 0
     endif
     
     do ll = 0, lrad
