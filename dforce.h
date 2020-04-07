@@ -1120,10 +1120,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
     DALLOCATE(DDzzcc)
    endif
 
-  if (YesMatrixFree) then
-    Lsavedguvij = .false.
-    DALLOCATE(guvijsave)
-  endif
+   Lsavedguvij = .false.
+   DALLOCATE(guvijsave)
 
    DALLOCATE(Tss)
    DALLOCATE(Dtc)
