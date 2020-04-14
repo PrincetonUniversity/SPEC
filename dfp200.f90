@@ -958,7 +958,7 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 
 	use cputiming, only :   Tdfp200
 
-	use inputlist, only :	Wmacros, Wdfp200, Lrad, mu, Lconstraint, Lcheck, Nvol, Igeometry, mupftol, Lfreebound
+	use inputlist, only :	Wmacros, Wdfp200, Lrad, mu, Lconstraint, Lcheck, Nvol, Igeometry, mupftol, Lfreebound, dRZ
 
   	use allglobal, only : 	ncpu, myid, cpus, &
                         	Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
@@ -966,27 +966,27 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
                            	iRbc, iZbs, iRbs, iZbc, & ! Fourier harmonics of geometry; vector of independent variables, position, is "unpacked" into iRbc,iZbs;
 	                    	NAdof, &
     	                   	mn, im, in, mns, &
-    	                   	Ate, Aze, Ato, Azo, & 													! only required for debugging;
+    	                   	Ate, Aze, Ato, Azo, &     ! only required for debugging;
     	                   	Nt, Nz, &
     	                   	dBdX, &
     	                   	solution, &
     	                   	dtflux, dpflux, sweight, &
-    	                   	Rij, Zij, & 															
-    	                   	diotadxup, dItGpdxtp, dmupfdx, &										
+    	                   	Rij, Zij, &
+				diotadxup, dItGpdxtp, dmupfdx, &
     	                   	psifactor, &
     	                   	lmns, &
     	                   	mn, mne, &
     	                   	LocalConstraint, &
-							vvolume, dvolume, &
-							IsMyVolume, IsMyVolumeValue, IndMatrixArray, &
-							DToocc, DToocs, DToosc, DTooss, &
-							TTsscc, TTsscs, TTsssc, TTssss, &
-					       	TDstcc, TDstcs, TDstsc, TDstss, &
-							TDszcc, TDszcs, TDszsc, TDszss, &
-							DDttcc, DDttcs, DDttsc, DDttss, &
-							DDtzcc, DDtzcs, DDtzsc, DDtzss, &
-							DDzzcc, DDzzcs, DDzzsc, DDzzss, &
-							Btemn, xoffset
+				vvolume, dvolume, &
+				IsMyVolume, IsMyVolumeValue, IndMatrixArray, &
+				DToocc, DToocs, DToosc, DTooss, &
+				TTsscc, TTsscs, TTsssc, TTssss, &
+				TDstcc, TDstcs, TDstsc, TDstss, &
+				TDszcc, TDszcs, TDszsc, TDszss, &
+				DDttcc, DDttcs, DDttsc, DDttss, &
+				DDtzcc, DDtzcs, DDtzsc, DDtzss, &
+				DDzzcc, DDzzcs, DDzzsc, DDzzss, &
+				Btemn, xoffset 
 
 
   LOCALS:
@@ -1002,7 +1002,7 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 #ifdef DEBUG
 	INTEGER             :: isymdiff, maxfev, nfev, lr, ldfjac, ml, muhybr, epsfcn, mode, nprint
 	INTEGER             :: jj, tdoc, idoc, tdof, jdof, imn, ihybrd1, lwa, Ndofgl, llmodnp
-	REAL                :: dRZ = 1.0e-5, dvol(-1:+1), evolume, imupf_global(1:Mvol,1:2,-2:2), imupf_local(1:2,-2:2), factor, Btemn_debug(1:mn, 0:1, 1:Mvol, -1:2)
+	REAL                :: dvol(-1:+1), evolume, imupf_global(1:Mvol,1:2,-2:2), imupf_local(1:2,-2:2), factor, Btemn_debug(1:mn, 0:1, 1:Mvol, -1:2)
     DOUBLE PRECISION     :: diag(1:Mvol-1), qtf(1:Mvol-1), wa1(1:Mvol-1), wa2(1:Mvol-1), wa3(1:Mvol-1), wa4(1:mvol-1)
 	REAL,   allocatable :: oRbc(:,:), oZbs(:,:), oRbs(:,:), oZbc(:,:) ! original geometry;
 	REAL,   allocatable :: isolution(:,:)

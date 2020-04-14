@@ -105,7 +105,7 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives)
   
   use inputlist, only : Wmacros, Wdforce, ext, Nvol, Ntor, Lrad, Igeometry, &
                         epsilon, &
-                        Lconstraint, Lcheck, &
+                        Lconstraint, Lcheck, dRZ, &
                         Lextrap, &
                         mupftol
   
@@ -166,7 +166,7 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives)
 
 #ifdef DEBUG
   INTEGER              :: isymdiff
-  REAL                 :: dRZ = 1.0e-05, dvol(-1:+1), evolume, imupf(1:2,-2:2), lfactor
+  REAL                 :: dvol(-1:+1), evolume, imupf(1:2,-2:2), lfactor
   REAL,    allocatable :: isolution(:,:)
   REAL,   allocatable :: oRbc(:,:), oZbs(:,:), oRbs(:,:), oZbc(:,:), iforce(:,:), iposition(:,:), finitediff_hessian(:,:) ! original geometry;
 #endif

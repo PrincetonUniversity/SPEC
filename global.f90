@@ -285,6 +285,7 @@ module inputlist
   INTEGER      :: Lperturbed       =     0   
   INTEGER      :: dpp              =    -1
   INTEGER      :: dqq              =    -1
+  REAL         :: dRZ              =     1E-5    ! For finite difference estimate
   INTEGER      :: Lcheck           =     0
   LOGICAL      :: Ltiming          =  .false.
   REAL         :: fudge            =     1.0e-00 ! redundant; 
@@ -845,6 +846,7 @@ module inputlist
                 !latex \item[iii.] \verb+xdiagno+; must be executed manually;
                 !latex \ei
                 !latex \ei
+ dRZ        ,&  !latex \item \inputvar{dRZ = 1E-5} : real; difference in geometry for finite difference estimate (debug only)
  Ltiming    ,&  !latex \item \inputvar{Ltiming = T} : logical : to check timing;
  fudge      ,&  !latex \item \inputvar{fudge = 1.0} : real : redundant;
  scaling        !latex \item \inputvar{scaling = 1.0} : real : redundant;
@@ -1760,10 +1762,10 @@ subroutine readin
    write(ounit,'("readin : ", 10x ," : ")')
    
    write(ounit,1050) cput-cpus, odetol, nPpts
-   write(ounit,1051)            LHevalues, LHevectors, LHmatrix, Lperturbed, dpp, dqq, Lcheck, Ltiming
+   write(ounit,1051)            LHevalues, LHevectors, LHmatrix, Lperturbed, dpp, dqq, dRZ, Lcheck, Ltiming
    
 1050 format("readin : ",f10.2," : odetol="es10.2" ; nPpts="i6" ;")
-1051 format("readin : ", 10x ," : LHevalues="L2" ; LHevectors="L2" ; LHmatrix="L2" ; Lperturbed="i2" ; dpp="i3" ; dqq="i3" ; Lcheck="i3" ; Ltiming="L2" ;")
+1051 format("readin : ", 10x ," : LHevalues="L2" ; LHevectors="L2" ; LHmatrix="L2" ; Lperturbed="i2" ; dpp="i3" ; dqq="i3" ; dRZ="es16.8" ; Lcheck="i3" ; Ltiming="L2" ;")
    
    FATAL( readin, odetol.le.zero, input error )
   !FATAL( readin, absreq.le.zero, input error )
@@ -1923,6 +1925,7 @@ subroutine readin
   IlBCAST( Lperturbed, 1      , 0 )
   IlBCAST( dpp       , 1      , 0 )
   IlBCAST( dqq       , 1      , 0 )
+  RlBCAST( dRZ       , 1      , 0 )
   IlBCAST( Lcheck    , 1      , 0 )
   LlBCAST( Ltiming   , 1      , 0 )
 
@@ -2580,6 +2583,7 @@ subroutine wrtend
   write(iunit,'(" Lperturbed  = ",i9            )') Lperturbed
   write(iunit,'(" dpp         = ",i9            )') dpp
   write(iunit,'(" dqq         = ",i9            )') dqq
+  write(iunit,'(" dRZ         = ",es23.15       )') dRZ
   write(iunit,'(" Lcheck      = ",i9            )') Lcheck
   write(iunit,'(" Ltiming     = ",L9            )') Ltiming
   write(iunit,'("/")')
