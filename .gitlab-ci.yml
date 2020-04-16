@@ -74,7 +74,7 @@ toroidal_freeboundary_vacuum:
   artifacts:
     when: always
     paths:
-    - ci/G3V02L0Fr/G3V02L0Fr.001.sp.h5
+    - ci/toroidal_freeboundary_vacuum/G3V02L0Fr.sp.h5
     expire_in: 1 week
   dependencies:
   - build:centos7
