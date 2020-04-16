@@ -571,233 +571,233 @@ WCALL(dforce, dfp200, ( LcomputeDerivatives, vvol) )
 if( LcomputeDerivatives ) then ! construct Hessian;
 
 #ifdef DEBUG
-	FATAL( dforce, .not.Lhessianallocated, need to allocate hessian )
+    FATAL( dforce, .not.Lhessianallocated, need to allocate hessian )
 #endif
 
-	hessian(1:NGdof,1:NGdof) = zero 
+    hessian(1:NGdof,1:NGdof) = zero 
 
 #ifdef DEBUG
-	if( Lcheck.eq.6 ) then
-		SALLOCATE( finitediff_hessian, (1:NGdof, 1:NGdof), zero )
-	endif
+    if( Lcheck.eq.6 ) then
+        SALLOCATE( finitediff_hessian, (1:NGdof, 1:NGdof), zero )
+    endif
 #endif
 
-	do vvol = 1, Mvol-1 ! loop over interior surfaces;
+    do vvol = 1, Mvol-1 ! loop over interior surfaces;
 
-		if( ImagneticOK(vvol) .and. ImagneticOK(vvol+1) ) then ! the magnetic fields in the volumes adjacent to this interface are valid;
+        if( ImagneticOK(vvol) .and. ImagneticOK(vvol+1) ) then ! the magnetic fields in the volumes adjacent to this interface are valid;
 
-			idof = 0 ! labels degree-of-freedom = Fourier harmonic of surface geometry;
+            idof = 0 ! labels degree-of-freedom = Fourier harmonic of surface geometry;
 
 #ifdef DEBUG
-			if( idof.gt.LGdof ) write(ounit,1000) myid, vvol, -1, -1, -1, idof, LGdof ! can be deleted;
+            if( idof.gt.LGdof ) write(ounit,1000) myid, vvol, -1, -1, -1, idof, LGdof ! can be deleted;
 
-	
+    
 #endif
 
-			do ii = 1, mn ! loop over degrees-of-freedom;
+            do ii = 1, mn ! loop over degrees-of-freedom;
 
 #ifdef DEBUG
-				if( idof.gt.LGdof ) write(ounit,1000) myid, vvol, ii, -1, -1, idof, LGdof ! can be deleted;
+                if( idof.gt.LGdof ) write(ounit,1000) myid, vvol, ii, -1, -1, idof, LGdof ! can be deleted;
 #endif
 
-				do irz = 0, 1 ! Fourier harmonic of R, Fourier harmonic of Z;
+                do irz = 0, 1 ! Fourier harmonic of R, Fourier harmonic of Z;
 
 #ifdef DEBUG
-					if( idof.gt.LGdof ) write(ounit,1000) myid, vvol, ii, irz, -1, idof, LGdof ! can be deleted;
+                    if( idof.gt.LGdof ) write(ounit,1000) myid, vvol, ii, irz, -1, idof, LGdof ! can be deleted;
 #endif
 
-					if( irz.eq.1 .and. Igeometry.lt.3 ) cycle ! no dependence on Z;
+                    if( irz.eq.1 .and. Igeometry.lt.3 ) cycle ! no dependence on Z;
 
-					do issym = 0, 1 ! stellarator symmetry;
+                    do issym = 0, 1 ! stellarator symmetry;
 
 #ifdef DEBUG
-						if( idof.gt.LGdof ) write(ounit,1000) myid, vvol, ii, irz, issym, idof, LGdof ! can be deleted;
+                        if( idof.gt.LGdof ) write(ounit,1000) myid, vvol, ii, irz, issym, idof, LGdof ! can be deleted;
 #endif
 
-						if( issym.eq.1 .and. YESstellsym ) cycle ! no dependence on the non-stellarator symmetric harmonics;
+                        if( issym.eq.1 .and. YESstellsym ) cycle ! no dependence on the non-stellarator symmetric harmonics;
 
-						if( ii.eq.1 .and. irz.eq.1 .and. issym.eq.0 ) cycle ! no dependence on Zbs_{m=0,n=0};
-						if( ii.eq.1 .and. irz.eq.0 .and. issym.eq.1 ) cycle ! no dependence on Rbs_{m=0,n=0};
-		
-						idof = idof + 1 ! labels degree-of-freedom;
+                        if( ii.eq.1 .and. irz.eq.1 .and. issym.eq.0 ) cycle ! no dependence on Zbs_{m=0,n=0};
+                        if( ii.eq.1 .and. irz.eq.0 .and. issym.eq.1 ) cycle ! no dependence on Rbs_{m=0,n=0};
+        
+                        idof = idof + 1 ! labels degree-of-freedom;
 
 #ifdef DEBUG
-						if( idof.gt.LGdof ) write(ounit,1000) myid, vvol, ii, irz, issym, idof, LGdof ! can be deleted;
-						1000 format("hforce : " 10x " : myid=",i3," ; vvol=",i3," ; ii= ",i3," ; irz="i3" ; issym="i3" ; idof="i3" ; LGdof="i3" ;")
-						FATAL( hforce, idof.gt.LGdof, illegal degree-of-freedom index constructing hessian ) ! can be deleted;
+                        if( idof.gt.LGdof ) write(ounit,1000) myid, vvol, ii, irz, issym, idof, LGdof ! can be deleted;
+                        1000 format("hforce : " 10x " : myid=",i3," ; vvol=",i3," ; ii= ",i3," ; irz="i3" ; issym="i3" ; idof="i3" ; LGdof="i3" ;")
+                        FATAL( hforce, idof.gt.LGdof, illegal degree-of-freedom index constructing hessian ) ! can be deleted;
 #endif
 
-						if( LocalConstraint ) then
-							! Derivative with respect to previous interface
-							if( vvol.gt.1 ) then
-								tdof = (vvol-2) * LGdof + idof ! labels degree-of-freedom in internal interface geometry   ;
-								tdoc = (vvol-1) * LGdof        ! labels force-balance constraint across internal interfaces;
-								idoc = 0                       ! local  force-balance constraint across internal interface ;
-								hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof) =                                           - dFFdRZ(idoc+1:idoc+LGdof,vvol+0,1,idof,0)
-								if( Lconstraint.eq.1 ) then ! this is a little clumsy; could include Lfreebound or something . . . ;
-									hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof) =  hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof)                     &
-																			   - dBBdmp(idoc+1:idoc+LGdof,vvol+0,1,1) * dmupfdx(vvol,1,1,idof,0) &
-																			   - dBBdmp(idoc+1:idoc+LGdof,vvol+0,1,2) * dmupfdx(vvol,1,2,idof,0)
-								endif ! end of if( Lconstraint.eq.1 ) ; 
-							endif ! end of if( vvol.gt.1 ) ;
+                        if( LocalConstraint ) then
+                            ! Derivative with respect to previous interface
+                            if( vvol.gt.1 ) then
+                                tdof = (vvol-2) * LGdof + idof ! labels degree-of-freedom in internal interface geometry   ;
+                                tdoc = (vvol-1) * LGdof        ! labels force-balance constraint across internal interfaces;
+                                idoc = 0                       ! local  force-balance constraint across internal interface ;
+                                hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof) =                                           - dFFdRZ(idoc+1:idoc+LGdof,vvol+0,1,idof,0)
+                                if( Lconstraint.eq.1 ) then ! this is a little clumsy; could include Lfreebound or something . . . ;
+                                    hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof) =  hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof)                     &
+                                                                               - dBBdmp(idoc+1:idoc+LGdof,vvol+0,1,1) * dmupfdx(vvol,1,1,idof,0) &
+                                                                               - dBBdmp(idoc+1:idoc+LGdof,vvol+0,1,2) * dmupfdx(vvol,1,2,idof,0)
+                                endif ! end of if( Lconstraint.eq.1 ) ; 
+                            endif ! end of if( vvol.gt.1 ) ;
 
 
-							! Derivative with respect to current interface
-							;tdof = (vvol-1) * LGdof + idof
-							;tdoc = (vvol-1) * LGdof ! shorthand;
-							;idoc = 0
-							if( Lextrap.eq.1 .and. vvol.eq.1 ) then
-								;hessian(tdoc+idof                  ,tdof) = one ! diagonal elements;
-							else
-								;hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof) = dFFdRZ(idoc+1:idoc+LGdof,vvol+1,0,idof,0) - dFFdRZ(idoc+1:idoc+LGdof,vvol+0,1,idof,1)
-								if( Lconstraint.eq.1 ) then ! this is a little clumsy;
-									hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof) =  hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof)                       &
-																			   + dBBdmp(idoc+1:idoc+LGdof,vvol+1,0,1) * dmupfdx(vvol+1,1,1,idof,0) &
-																			   + dBBdmp(idoc+1:idoc+LGdof,vvol+1,0,2) * dmupfdx(vvol+1,1,2,idof,0) &
-																			   - dBBdmp(idoc+1:idoc+LGdof,vvol+0,1,1) * dmupfdx(vvol+0,1,1,idof,1) &
-																			   - dBBdmp(idoc+1:idoc+LGdof,vvol+0,1,2) * dmupfdx(vvol+0,1,2,idof,1)
-								endif ! end of if( Lconstraint.eq.1 );
-							endif ! end of if( Lextrap.eq.1 .and. vvol.eq.1 )
+                            ! Derivative with respect to current interface
+                            ;tdof = (vvol-1) * LGdof + idof
+                            ;tdoc = (vvol-1) * LGdof ! shorthand;
+                            ;idoc = 0
+                            if( Lextrap.eq.1 .and. vvol.eq.1 ) then
+                                ;hessian(tdoc+idof                  ,tdof) = one ! diagonal elements;
+                            else
+                                ;hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof) = dFFdRZ(idoc+1:idoc+LGdof,vvol+1,0,idof,0) - dFFdRZ(idoc+1:idoc+LGdof,vvol+0,1,idof,1)
+                                if( Lconstraint.eq.1 ) then ! this is a little clumsy;
+                                    hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof) =  hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof)                       &
+                                                                               + dBBdmp(idoc+1:idoc+LGdof,vvol+1,0,1) * dmupfdx(vvol+1,1,1,idof,0) &
+                                                                               + dBBdmp(idoc+1:idoc+LGdof,vvol+1,0,2) * dmupfdx(vvol+1,1,2,idof,0) &
+                                                                               - dBBdmp(idoc+1:idoc+LGdof,vvol+0,1,1) * dmupfdx(vvol+0,1,1,idof,1) &
+                                                                               - dBBdmp(idoc+1:idoc+LGdof,vvol+0,1,2) * dmupfdx(vvol+0,1,2,idof,1)
+                                endif ! end of if( Lconstraint.eq.1 );
+                            endif ! end of if( Lextrap.eq.1 .and. vvol.eq.1 )
 
 
-							! Derivative with respect to next interface
-							if( vvol.lt.Mvol-1 ) then
-								tdof = (vvol+0) * LGdof + idof
-								tdoc = (vvol-1) * LGdof ! shorthand;
-								idoc = 0
-								if( Lextrap.eq.1 .and. vvol.eq.1 ) then
-									if    ( im(idof).le.0                     ) then ; hessian(tdoc+idof,tdof) = - one
-									else                                             ; hessian(tdoc+idof,tdof) = - one
-									endif
-								else
-									hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof) = dFFdRZ(idoc+1:idoc+LGdof,vvol+1,0,idof,1)
-									if( Lconstraint.eq.1 ) then ! this is a little clumsy;
-										hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof) =  hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof)                       &
-																				   + dBBdmp(idoc+1:idoc+LGdof,vvol+1,0,1) * dmupfdx(vvol+1,1,1,idof,1) &
-																				   + dBBdmp(idoc+1:idoc+LGdof,vvol+1,0,2) * dmupfdx(vvol+1,1,2,idof,1)
-									endif ! end of if( Lconstraint.eq.1 ) then;
-								endif
-							endif ! end of if( vvol.lt.Mvol-1 ) ;
+                            ! Derivative with respect to next interface
+                            if( vvol.lt.Mvol-1 ) then
+                                tdof = (vvol+0) * LGdof + idof
+                                tdoc = (vvol-1) * LGdof ! shorthand;
+                                idoc = 0
+                                if( Lextrap.eq.1 .and. vvol.eq.1 ) then
+                                    if    ( im(idof).le.0                     ) then ; hessian(tdoc+idof,tdof) = - one
+                                    else                                             ; hessian(tdoc+idof,tdof) = - one
+                                    endif
+                                else
+                                    hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof) = dFFdRZ(idoc+1:idoc+LGdof,vvol+1,0,idof,1)
+                                    if( Lconstraint.eq.1 ) then ! this is a little clumsy;
+                                        hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof) =  hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof)                       &
+                                                                                   + dBBdmp(idoc+1:idoc+LGdof,vvol+1,0,1) * dmupfdx(vvol+1,1,1,idof,1) &
+                                                                                   + dBBdmp(idoc+1:idoc+LGdof,vvol+1,0,2) * dmupfdx(vvol+1,1,2,idof,1)
+                                    endif ! end of if( Lconstraint.eq.1 ) then;
+                                endif
+                            endif ! end of if( vvol.lt.Mvol-1 ) ;
 
 
-							! Case of last interface in case of boundary variation ?
-							if( vvol.eq.Mvol-1 ) then
-								!tdof = (vvol+0) * LGdof + idof
-								tdoc = (vvol-1) * LGdof ! shorthand ;
-								idoc = 0
-								dessian(tdoc+idoc+1:tdoc+idoc+LGdof,idof) = dFFdRZ(idoc+1:idoc+LGdof,vvol+1,0,idof,1)
-								if( Lconstraint.eq.1 ) then ! this is a little clumsy;
-									dessian(tdoc+idoc+1:tdoc+idoc+LGdof,idof) =  dessian(tdoc+idoc+1:tdoc+idoc+LGdof,idof)                       &
-																			   + dBBdmp(idoc+1:idoc+LGdof,vvol+1,0,1) * dmupfdx(vvol+1,1,1,idof,1) &
-																			   + dBBdmp(idoc+1:idoc+LGdof,vvol+1,0,2) * dmupfdx(vvol+1,1,2,idof,1)
-								endif ! end of if( Lconstraint.eq.1 ) then;
+                            ! Case of last interface in case of boundary variation ?
+                            if( vvol.eq.Mvol-1 ) then
+                                !tdof = (vvol+0) * LGdof + idof
+                                tdoc = (vvol-1) * LGdof ! shorthand ;
+                                idoc = 0
+                                dessian(tdoc+idoc+1:tdoc+idoc+LGdof,idof) = dFFdRZ(idoc+1:idoc+LGdof,vvol+1,0,idof,1)
+                                if( Lconstraint.eq.1 ) then ! this is a little clumsy;
+                                    dessian(tdoc+idoc+1:tdoc+idoc+LGdof,idof) =  dessian(tdoc+idoc+1:tdoc+idoc+LGdof,idof)                       &
+                                                                               + dBBdmp(idoc+1:idoc+LGdof,vvol+1,0,1) * dmupfdx(vvol+1,1,1,idof,1) &
+                                                                               + dBBdmp(idoc+1:idoc+LGdof,vvol+1,0,2) * dmupfdx(vvol+1,1,2,idof,1)
+                                endif ! end of if( Lconstraint.eq.1 ) then;
 
-							endif ! end of if( vvol.lt.Mvol-1 ) ;
-					
-						else ! Global constraint
-						
-							! In the general case of global constraint, there are no zero element in the hessian. We thus loop again on all volumes
+                            endif ! end of if( vvol.lt.Mvol-1 ) ;
+                    
+                        else ! Global constraint
+                        
+                            ! In the general case of global constraint, there are no zero element in the hessian. We thus loop again on all volumes
 
-							do ivol = 1, Mvol-1
-							    tdoc = (ivol-1) * LGdof ! shorthand ;
-								tdof = (vvol-1) * LGdof + idof
+                            do ivol = 1, Mvol-1
+                                tdoc = (ivol-1) * LGdof ! shorthand ;
+                                tdof = (vvol-1) * LGdof + idof
 
-								if( ivol.eq.vvol-1 ) then 
-										hessian(tdoc+1:tdoc+LGdof,tdof) =  dFFdRZ(1:LGdof,ivol+1,0,idof,1)
-								elseif( ivol.eq.vvol ) then 
-										hessian(tdoc+1:tdoc+LGdof,tdof) =  dFFdRZ(1:LGdof,ivol+1,0,idof,0) - dFFdRZ(1:LGdof,ivol,1,idof,1)
-								elseif( ivol.eq.vvol+1 ) then
-										hessian(tdoc+1:tdoc+LGdof,tdof) =                                  - dFFdRZ(1:LGdof,ivol,1,idof,0)
-								endif
-
-
-								hessian(tdoc+1:tdoc+LGdof,tdof) = hessian(tdoc+1:tdoc+LGdof,tdof)                              &
-															      + dBBdmp(1:LGdof,ivol+1,0,1) * dmupfdx(ivol+1,vvol,1,idof,1) &
-															      + dBBdmp(1:LGdof,ivol+1,0,2) * dmupfdx(ivol+1,vvol,2,idof,1) &
-															      - dBBdmp(1:LGdof,ivol+0,1,1) * dmupfdx(ivol+0,vvol,1,idof,1) &
-															      - dBBdmp(1:LGdof,ivol+0,1,2) * dmupfdx(ivol+0,vvol,2,idof,1)
-
-							enddo
+                                if( ivol.eq.vvol-1 ) then 
+                                        hessian(tdoc+1:tdoc+LGdof,tdof) =  dFFdRZ(1:LGdof,ivol+1,0,idof,1)
+                                elseif( ivol.eq.vvol ) then 
+                                        hessian(tdoc+1:tdoc+LGdof,tdof) =  dFFdRZ(1:LGdof,ivol+1,0,idof,0) - dFFdRZ(1:LGdof,ivol,1,idof,1)
+                                elseif( ivol.eq.vvol+1 ) then
+                                        hessian(tdoc+1:tdoc+LGdof,tdof) =                                  - dFFdRZ(1:LGdof,ivol,1,idof,0)
+                                endif
 
 
+                                hessian(tdoc+1:tdoc+LGdof,tdof) = hessian(tdoc+1:tdoc+LGdof,tdof)                              &
+                                                                  + dBBdmp(1:LGdof,ivol+1,0,1) * dmupfdx(ivol+1,vvol,1,idof,1) &
+                                                                  + dBBdmp(1:LGdof,ivol+1,0,2) * dmupfdx(ivol+1,vvol,2,idof,1) &
+                                                                  - dBBdmp(1:LGdof,ivol+0,1,1) * dmupfdx(ivol+0,vvol,1,idof,1) &
+                                                                  - dBBdmp(1:LGdof,ivol+0,1,2) * dmupfdx(ivol+0,vvol,2,idof,1)
 
-						endif ! matches if( LocalConstraint );
+                            enddo
+
+
+
+                        endif ! matches if( LocalConstraint );
 
 #ifdef DEBUG
-							if( Lcheck.eq.6 ) then
-								dBdX%L = .false.
-								SALLOCATE( oRbc, (1:mn,0:Mvol), iRbc(1:mn,0:Mvol) ) !save unperturbed geometry
-								SALLOCATE( oZbs, (1:mn,0:Mvol), iZbs(1:mn,0:Mvol) )
-								SALLOCATE( oRbs, (1:mn,0:Mvol), iRbs(1:mn,0:Mvol) )
-								SALLOCATE( oZbc, (1:mn,0:Mvol), iZbc(1:mn,0:Mvol) ) 
-								SALLOCATE( iforce,    (-2:2, 0:NGdof), zero)
-								SALLOCATE( iposition, (-2:2, 0:NGdof), zero)
+                            if( Lcheck.eq.6 ) then
+                                dBdX%L = .false.
+                                SALLOCATE( oRbc, (1:mn,0:Mvol), iRbc(1:mn,0:Mvol) ) !save unperturbed geometry
+                                SALLOCATE( oZbs, (1:mn,0:Mvol), iZbs(1:mn,0:Mvol) )
+                                SALLOCATE( oRbs, (1:mn,0:Mvol), iRbs(1:mn,0:Mvol) )
+                                SALLOCATE( oZbc, (1:mn,0:Mvol), iZbc(1:mn,0:Mvol) ) 
+                                SALLOCATE( iforce,    (-2:2, 0:NGdof), zero)
+                                SALLOCATE( iposition, (-2:2, 0:NGdof), zero)
 
-								lfactor = psifactor(ii,vvol) 	! this "pre-conditions" the geometrical degrees-of-freedom;
-								
-								if( ncpu.eq.1) then
+                                lfactor = psifactor(ii,vvol)     ! this "pre-conditions" the geometrical degrees-of-freedom;
+                                
+                                if( ncpu.eq.1) then
 
-								do isymdiff = -2, 2 ! symmetric fourth-order, finite-difference used to approximate derivatives;
-									if( isymdiff.eq.0 ) cycle
+                                do isymdiff = -2, 2 ! symmetric fourth-order, finite-difference used to approximate derivatives;
+                                    if( isymdiff.eq.0 ) cycle
 
-									iRbc(1:mn,0:Mvol) = oRbc(1:mn,0:Mvol)
-									iZbs(1:mn,0:Mvol) = oZbs(1:mn,0:Mvol)
-									iRbs(1:mn,0:Mvol) = oRbs(1:mn,0:Mvol)
-									iZbc(1:mn,0:Mvol) = oZbc(1:mn,0:Mvol)
+                                    iRbc(1:mn,0:Mvol) = oRbc(1:mn,0:Mvol)
+                                    iZbs(1:mn,0:Mvol) = oZbs(1:mn,0:Mvol)
+                                    iRbs(1:mn,0:Mvol) = oRbs(1:mn,0:Mvol)
+                                    iZbc(1:mn,0:Mvol) = oZbc(1:mn,0:Mvol)
 
-									! Perturb geometry
-									if( issym.eq.0 .and. irz.eq.0 ) iRbc(ii,vvol) = iRbc(ii,vvol) + dRZ * isymdiff ! perturb geometry;
-									if( issym.eq.0 .and. irz.eq.1 ) iZbs(ii,vvol) = iZbs(ii,vvol) + dRZ * isymdiff ! perturb geometry;
-									if( issym.eq.1 .and. irz.eq.0 ) iRbs(ii,vvol) = iRbs(ii,vvol) + dRZ * isymdiff ! perturb geometry;
-									if( issym.eq.1 .and. irz.eq.1 ) iZbc(ii,vvol) = iZbc(ii,vvol) + dRZ * isymdiff ! perturb geometry;
+                                    ! Perturb geometry
+                                    if( issym.eq.0 .and. irz.eq.0 ) iRbc(ii,vvol) = iRbc(ii,vvol) + dRZ * isymdiff ! perturb geometry;
+                                    if( issym.eq.0 .and. irz.eq.1 ) iZbs(ii,vvol) = iZbs(ii,vvol) + dRZ * isymdiff ! perturb geometry;
+                                    if( issym.eq.1 .and. irz.eq.0 ) iRbs(ii,vvol) = iRbs(ii,vvol) + dRZ * isymdiff ! perturb geometry;
+                                    if( issym.eq.1 .and. irz.eq.1 ) iZbc(ii,vvol) = iZbc(ii,vvol) + dRZ * isymdiff ! perturb geometry;
 
-									packorunpack = 'P' ! pack geometrical degrees-of-freedom;
+                                    packorunpack = 'P' ! pack geometrical degrees-of-freedom;
 
-									WCALL(dforce, packxi,( NGdof, iposition(isymdiff,0:NGdof), Mvol, mn,iRbc(1:mn,0:Mvol),iZbs(1:mn,0:Mvol),iRbs(1:mn,0:Mvol),iZbc(1:mn,0:Mvol),packorunpack ) )
-									WCALL(dforce, dforce,( NGdof, iposition(isymdiff,0:NGdof), iforce(isymdiff,0:NGdof), .false.) )
-									
-								enddo
+                                    WCALL(dforce, packxi,( NGdof, iposition(isymdiff,0:NGdof), Mvol, mn,iRbc(1:mn,0:Mvol),iZbs(1:mn,0:Mvol),iRbs(1:mn,0:Mvol),iZbc(1:mn,0:Mvol),packorunpack ) )
+                                    WCALL(dforce, dforce,( NGdof, iposition(isymdiff,0:NGdof), iforce(isymdiff,0:NGdof), .false.) )
+                                    
+                                enddo
 
-								iforce(0, 0:NGdof)               = ( - 1 * iforce(2,0:NGdof) &
-											                        + 8 * iforce(1,0:NGdof) &
-											                        - 8 * iforce(-1,0:NGdof) &
-											                        + 1 * iforce(-2,0:NGdof))  / ( 12 * dRZ )
-								tdof = (vvol-1) * LGdof + idof
-								finitediff_hessian(1:NGdof, tdof) = iforce(0, 1:NGdof)* lfactor
+                                iforce(0, 0:NGdof)               = ( - 1 * iforce(2,0:NGdof) &
+                                                                    + 8 * iforce(1,0:NGdof) &
+                                                                    - 8 * iforce(-1,0:NGdof) &
+                                                                    + 1 * iforce(-2,0:NGdof))  / ( 12 * dRZ )
+                                tdof = (vvol-1) * LGdof + idof
+                                finitediff_hessian(1:NGdof, tdof) = iforce(0, 1:NGdof)* lfactor
 
-								cput = GETTIME
+                                cput = GETTIME
 
-								iRbc(1:mn,0:Mvol) = oRbc(1:mn,0:Mvol)
-								iZbs(1:mn,0:Mvol) = oZbs(1:mn,0:Mvol)
-								iRbs(1:mn,0:Mvol) = oRbs(1:mn,0:Mvol)
-								iZbc(1:mn,0:Mvol) = oZbc(1:mn,0:Mvol)
+                                iRbc(1:mn,0:Mvol) = oRbc(1:mn,0:Mvol)
+                                iZbs(1:mn,0:Mvol) = oZbs(1:mn,0:Mvol)
+                                iRbs(1:mn,0:Mvol) = oRbs(1:mn,0:Mvol)
+                                iZbc(1:mn,0:Mvol) = oZbc(1:mn,0:Mvol)
 
-								endif
+                                endif
 
-								DALLOCATE(oRbc)
-								DALLOCATE(oZbs)
-								DALLOCATE(oRbs)
-								DALLOCATE(oZbc)
-								DALLOCATE(iforce)
-								DALLOCATE(iposition)
+                                DALLOCATE(oRbc)
+                                DALLOCATE(oZbs)
+                                DALLOCATE(oRbs)
+                                DALLOCATE(oZbc)
+                                DALLOCATE(iforce)
+                                DALLOCATE(iposition)
 
 
-							endif
+                            endif
 #endif
-					enddo ! matches do issym ;
+                    enddo ! matches do issym ;
 
-				enddo ! matches do irz ;
-			enddo ! matches do ii ;
+                enddo ! matches do irz ;
+            enddo ! matches do ii ;
 
 
 
-		else ! matches if( ImagneticOK(vvol) .and. ImagneticOK(vvol+1) ) ; 
+        else ! matches if( ImagneticOK(vvol) .and. ImagneticOK(vvol+1) ) ; 
 
-			FATAL( dforce, .true., need to provide suitable values for hessian in case of field failure )
+            FATAL( dforce, .true., need to provide suitable values for hessian in case of field failure )
 
-		endif ! end of if( ImagneticOK(vvol) .and. ImagneticOK(vvol+1) ) ;
+        endif ! end of if( ImagneticOK(vvol) .and. ImagneticOK(vvol+1) ) ;
 
-	enddo ! end of do vvol;
+    enddo ! end of do vvol;
 
 
 
@@ -805,31 +805,31 @@ if( LcomputeDerivatives ) then ! construct Hessian;
 
 ! Print hessian and finite differences estimate (if single CPU). 
 if( Lcheck.eq.6 ) then
-		open(10, file='Lcheck6_output.txt', status='unknown')
+        open(10, file='Lcheck6_output.txt', status='unknown')
         write(ounit,'(A)') NEW_LINE('A')
-		do ii=1, NGdof
-			write(ounit,1345) myid, im(ii), in(ii), hessian(ii,:)
-			write(10   ,1347) hessian(ii,:)
-		enddo
-		close(10)
+        do ii=1, NGdof
+            write(ounit,1345) myid, im(ii), in(ii), hessian(ii,:)
+            write(10   ,1347) hessian(ii,:)
+        enddo
+        close(10)
         
         write(ounit,'(A)') NEW_LINE('A')
 
-		open(10, file='Lcheck6_output.FiniteDiff.txt', status='unknown')
-		if( ncpu.eq.1 ) then
-			do ii=1, NGdof
-				write(ounit,1346) myid, im(ii), in(ii), finitediff_hessian(ii,:)
-				write(10   ,1347) finitediff_hessian(ii,:)
-			enddo		
-		    write(ounit,'(A)') NEW_LINE('A')
-		endif
-		close(10)
+        open(10, file='Lcheck6_output.FiniteDiff.txt', status='unknown')
+        if( ncpu.eq.1 ) then
+            do ii=1, NGdof
+                write(ounit,1346) myid, im(ii), in(ii), finitediff_hessian(ii,:)
+                write(10   ,1347) finitediff_hessian(ii,:)
+            enddo        
+            write(ounit,'(A)') NEW_LINE('A')
+        endif
+        close(10)
 
-1345   	format("dforce: myid=",i3," ; (",i4,",",i4," ) ; Hessian            = ",8f16.10 "   ;")
-1346   	format("dforce: myid=",i3," ; (",i4,",",i4," ) ; Finite differences = ",8f16.10 "   ;")
-1347   	format(512F22.16, " ")
+1345       format("dforce: myid=",i3," ; (",i4,",",i4," ) ; Hessian            = ",8f16.10 "   ;")
+1346       format("dforce: myid=",i3," ; (",i4,",",i4," ) ; Finite differences = ",8f16.10 "   ;")
+1347       format(512F22.16, " ")
 
-		DALLOCATE(finitediff_hessian)
+        DALLOCATE(finitediff_hessian)
 
 FATAL(dforce, Lcheck.eq.6, Lcheck.eq.6 test has been completed. )
 endif

@@ -184,10 +184,12 @@ BEGIN(dfp100)
 
 6666 continue
 
-if( Lfindzero.eq.2 .and. iflag.eq.5 .and. IconstraintOK ) then! Compute derivatives of solution w.r.t mu and pflux
+if( (Lfindzero.eq.2 .or. Lfindzero.eq.0) .and. iflag.eq.5 .and. IconstraintOK ) then! Compute derivatives of solution w.r.t mu and pflux
 
   LcomputeDerivatives = .true.
-  do vvol = 1, Mvol  LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
+  do vvol = 1, Mvol 
+  
+    LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
 
     ! Determines if this volume vvol should be computed by this thread.
     call IsMyVolume(vvol)

@@ -211,7 +211,7 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
 if( LocalConstraint ) then
   SALLOCATE( dmupfdx, (1:Mvol,    1:1, 1:2, 1:LGdof, 0:1), zero )
 else
-  SALLOCATE( dmupfdx, (1:Mvol, 1:Mvol, 1:2, 1:LGdof, 0:1), zero)
+  SALLOCATE( dmupfdx, (1:Mvol, 1:Mvol-1, 1:2, 1:LGdof, 0:1), zero)
 endif
 
   SALLOCATE( hessian, (1:NGdof,1:NGdof), zero )
