@@ -1,8 +1,10 @@
-# import of all SPEC-related python scripts. 
+# import of all SPEC-related python scripts.
 
 from .read_spec import SPEC
 from .proc_spec import *
-del(read_spec)
-del(proc_spec)
+from . import plot
+from . import math
+from . import external
+from . import ci
 
 

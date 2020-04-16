@@ -5,27 +5,27 @@
 !latex \briefly{Computes Btheta at the interface - used to compute the toroidal surface current}
 
 !latex \calledby{\link{xspech} and
-!latex   		 \link{dfp100}}
+!latex            \link{dfp100}}
 !latex \calls{\link{coords} and 
-!latex 		  \link{numrec}}
+!latex           \link{numrec}}
 
 
 !latex \begin{enumerate}
 !latex \item Call \link{coords} to compute the metric coefficients and the jacobian.
 !latex \item Build coefficients \inputvar{efmn}, \inputvar{ofmn}, \inputvar{cfmn}, \inputvar{sfmn} from the field vector potential \inputvar{Ate}, \inputvar{Ato}, 
-!latex 		 \inputvar{Aze} and \inputvar{Azo}, and radial derivatives of the Chebyshev polynomials \inputvar{TT(ll,iocons,1)}. These variables
-!latex		 are the radial derivative of the Fourier coefficients of the magnetic field vector potential. 
+!latex          \inputvar{Aze} and \inputvar{Azo}, and radial derivatives of the Chebyshev polynomials \inputvar{TT(ll,innout,1)}. These variables
+!latex         are the radial derivative of the Fourier coefficients of the magnetic field vector potential. 
 !latex \item Take the inverse Fourier transform of \inputvar{efmn}, \inputvar{ofmn}, \inputvar{cfmn}, \inputvar{sfmn}. These are the covariant components of $dA$, 
-!latex 		 \textit{i.e.} the contravariant components of $\mathbf{B}$.
+!latex          \textit{i.e.} the contravariant components of $\mathbf{B}$.
 !latex \item Build covariant components of the field using the metric coefficients \inputvar{guvij} and the jacobian \inputvar{sg}.
 !latex \item Fourier transform the covariant components of the field and store them in the variables \inputvar{Btemn}, \inputvar{Btomn}, \inputvar{Bzemn} and 
-!latex  	 \inputvar{Bzomn}.
+!latex       \inputvar{Bzomn}.
 !latex \end{enumerate}
 
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-subroutine lbpol(lvol, ideriv)
+subroutine lbpol(lvol, Bt00, ideriv)
 
   use constants, only : mu0, pi, pi2, two, one, half, zero
 
@@ -35,7 +35,6 @@ subroutine lbpol(lvol, ideriv)
                         sg, guvij, &
                         Ntz, Lcoordinatesingularity, &
                         efmn, ofmn, cfmn, sfmn, evmn, odmn, comn, simn, &
-                        Btemn, Bzemn, Btomn, Bzomn, &
                         Nt, Nz, &
                         regumm, &
                         cpus, myid, dBdX
@@ -52,10 +51,10 @@ subroutine lbpol(lvol, ideriv)
 ! ------
   
   INTEGER                :: Lcurvature, ideriv, ii, ll, ifail, lvol, mi, ni, iocons
-  REAL                   :: lss
+  REAL                   :: lss, Bt00(1:Mvol, 0:1)
   REAL                   :: lAte(1:mn), lAze(1:mn), lAto(1:mn), lAzo(1:mn)
   REAL                   :: dAt(1:Ntz), dAz(1:Ntz), Bt(1:Ntz), Bz(1:Ntz), dAt0(1:Ntz), dAz0(1:Ntz)
-  REAL                   :: dBtzero	      ! Value of first B_theta mode jump
+  REAL                   :: dBtzero      ! Value of first B_theta mode jump
   REAL                   :: mfactor           ! Regularisation factor
   LOGICAL                :: LGeometricDerivative
 
@@ -72,21 +71,20 @@ subroutine lbpol(lvol, ideriv)
 
 ! iocons=0 -> inner boundary of volume (s=-1) and iocons=1 -> outer boundary (s=1)
 
-  Btemn(1:mn, 0:1, lvol) = zero
   do iocons=0,1
 
-  lss = two * iocons - one
+    lss = two * iocons - one
   
 !  if((lvol==1) .and. (Igeometry/=1)) then ; Lcoordinatesingularity = .true.;
 !  else; Lcoordinatesingularity = .false.;
 !  endif
 
-	if( Lcoordinatesingularity .and. iocons.EQ.0) then
-	  goto 5555; ! No need to compute at the singularity
-	endif
+    if( Lcoordinatesingularity .and. iocons.EQ.0) then
+      goto 5555; ! No need to compute at the singularity
+    endif
 
     if( lvol.eq.Mvol .and. iocons.eq.1) then
-	  goto 5555;
+      goto 5555;
     endif
 
 ! First get the metric component and jacobian
@@ -129,8 +127,8 @@ subroutine lbpol(lvol, ideriv)
 
 #ifdef DEBUG
 if( Lcheck.eq.7 ) then
-	write(ounit, 8375) dBdX%vol, dBdX%innout, ideriv, lvol, iocons, dAz(1:Ntz), dAt(1:Ntz)
-	write(ounit, 8376) dBdX%vol, dBdX%innout, ideriv, lvol, iocons, guvij(1:Ntz,2,2,0), guvij(1:Ntz,2,3,0), guvij(1:Ntz,3,3,0), sg(1:Ntz,0)
+     write(ounit, 8375) dBdX%vol, dBdX%innout, ideriv, lvol, iocons, dAz(1:Ntz), dAt(1:Ntz)
+     write(ounit, 8376) dBdX%vol, dBdX%innout, ideriv, lvol, iocons, guvij(1:Ntz,2,2,0), guvij(1:Ntz,2,3,0), guvij(1:Ntz,3,3,0), sg(1:Ntz,0)
  
 8375 format("lbpol  : vvol=",i7,", innout=", i7 ,", ideriv=", i7, ", lvol=",i7,", iocons=", i7 ,";  dAz=",f10.6,",  dAt=", f10.6)
 8376 format("lbpol  : vvol=",i7,", innout=", i7 ,", ideriv=", i7,", lvol=",i7,", iocons=", i7 ,";  g22=",f10.6,",  g23=", f10.6,",  g33=", f10.6,",  sg=", f10.6)
@@ -166,8 +164,8 @@ endif
 
 #ifdef DEBUG
 if( Lcheck.eq.7 ) then
-	write(ounit, 8377) dBdX%vol, dBdX%innout, ideriv, lvol, iocons, dAz0(1:Ntz), dAt0(1:Ntz)
-	write(ounit, 8378) dBdX%vol, dBdX%innout, ideriv, lvol, iocons, guvij(1:Ntz,2,2,1), guvij(1:Ntz,2,3,1), guvij(1:Ntz,3,3,1)
+     write(ounit, 8377) dBdX%vol, dBdX%innout, ideriv, lvol, iocons, dAz0(1:Ntz), dAt0(1:Ntz)
+     write(ounit, 8378) dBdX%vol, dBdX%innout, ideriv, lvol, iocons, guvij(1:Ntz,2,2,1), guvij(1:Ntz,2,3,1), guvij(1:Ntz,3,3,1)
  
 8377 format("lbpol  : vvol=",i7,", innout=", i7 ,", ideriv=",i7,", lvol=",i7,", iocons=", i7 ,"; dAz0=",f10.6,", dAt0=", f10.6)
 8378 format("lbpol  : vvol=",i7,", innout=", i7 ,", ideriv=",i7,", lvol=",i7,", iocons=", i7 ,"; dg22=",f10.6,", dg23=", f10.6,", dg33=", f10.6)
@@ -177,14 +175,16 @@ endif
     
       !Bt(1:Ntz) = Bt(1:Ntz) / pi2 ! Due to normalization of poloidal flux
       !Bz(1:Ntz) = Bz(1:Ntz) / pi2
-	  continue
+    continue
 
   end select ! matches if ideriv.eq.-1
 
 ! Fourier transform, map to Fourier space
   ifail = 0
   call tfft( Nt, Nz, Bt(1:Ntz), Bz(1:Ntz), &
-              mn, im(1:mn), in(1:mn), Btemn(1:mn,iocons,lvol), Btomn(1:mn,iocons,lvol), Bzemn(1:mn,iocons,lvol), Bzomn(1:mn,iocons,lvol), ifail )
+             mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), ifail )
+
+  Bt00(lvol, iocons) = efmn(1)
 
 5555 continue
   enddo ! end of do iocons;

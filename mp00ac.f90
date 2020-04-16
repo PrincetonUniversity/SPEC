@@ -166,11 +166,11 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 
   CHARACTER            :: packorunpack
   
-  INTEGER, allocatable :: ipiv(:), Iwork(:)
+  INTEGER, allocatable :: Iwork(:), ipiv(:)
 
-  REAL   , allocatable :: matrix(:,:), rhs(:,:)
+  REAL   , allocatable :: matrix(:,:), rhs(:,:), LU(:,:)
 
-  REAL   , allocatable :: RW(:), RD(:,:), LU(:,:)
+  REAL   , allocatable :: RW(:), RD(:,:)
   
   BEGIN(mp00ac)
   
@@ -178,6 +178,11 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   
   lvol = ivol ! recall that ivol is global;
   ind_matrix = IndMatrixArray(lvol, 2)
+
+  NN = NAdof(lvol) ! shorthand;
+
+  SALLOCATE( LU, (1:NN, 1:NN), zero )
+  SALLOCATE( ipiv, (1:NN), 0 )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -221,8 +226,6 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  NN = NAdof(lvol) ! shorthand;
-  
   SALLOCATE( matrix, (1:NN,1:NN), zero )
   SALLOCATE( rhs   , (1:NN,0:2 ), zero )
 
@@ -232,8 +235,6 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 
   SALLOCATE( RW,    (1:Lwork ),  zero )
   SALLOCATE( RD,    (1:NN,0:2),  zero )
-  SALLOCATE( LU,    (1:NN,1:NN), zero )
-  SALLOCATE( ipiv,  (1:NN),         0 )
   SALLOCATE( Iwork, (1:NN),         0 )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -319,7 +320,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
    cput = GETTIME
    
    if(     idsysvx(ideriv) .eq. 0   ) then
-    if( Wmp00ac ) write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idsysvx", idsysvx(ideriv), "success ;         ", cput-lcpu	   
+    if( Wmp00ac ) write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idsysvx", idsysvx(ideriv), "success ;         ", cput-lcpu       
    elseif( idsysvx(ideriv) .lt. 0   ) then
     ;             write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idsysvx", idsysvx(ideriv), "input error ;     "
    elseif( idsysvx(ideriv) .le. NN  ) then
@@ -363,8 +364,6 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   DALLOCATE( rhs    )  
   DALLOCATE( RW )
   DALLOCATE( RD )
-  DALLOCATE( LU )
-  DALLOCATE( ipiv )
   DALLOCATE( Iwork )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -504,7 +503,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
     
     WCALL( mp00ac, curent,( lvol, mn, Nt, Nz, iflag, dItGpdxtp(0:1,-1:2,lvol) ) )
     
-	! Iteration only on toroidal flux. Poloidal flux iteration is made globally
+    ! Iteration only on toroidal flux.
     if( iflag.eq.1 ) Fdof(1:Ndof  ) = dItGpdxtp(1,0,lvol) - curpol
     if( iflag.eq.2 ) Ddof(1:Ndof,1:Ndof) = dItGpdxtp(1,1,lvol) 
     

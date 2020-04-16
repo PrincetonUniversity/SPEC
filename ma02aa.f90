@@ -37,7 +37,7 @@ subroutine ma02aa( lvol, NN, LcomputeDerivatives )
                         dtflux, dpflux, &
                         xoffset, &
                         Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, LocalConstraint, &
-						IndMatrixArray
+                        IndMatrixArray
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -46,8 +46,8 @@ subroutine ma02aa( lvol, NN, LcomputeDerivatives )
   INTEGER, intent(in)  :: lvol, NN ! NN is the number of degrees of freedom in the (packed format) vector potential;
   
   
-  INTEGER              :: ideriv
-  REAL                 :: tol, dpsi(1:2), lastcpu, ind_matrix
+  INTEGER              :: ideriv, ind_matrix
+  REAL                 :: tol, dpsi(1:2), lastcpu
   CHARACTER            :: packorunpack
   
   INTEGER              :: Nxdof, Ndof, Ldfjac, iflag, maxfev, mode, LRR, nfev, njev, nprint, ihybrj
@@ -436,7 +436,7 @@ subroutine ma02aa( lvol, NN, LcomputeDerivatives )
     
    else ! Lvacuumregion ;
 
-	Xdof(1:2) = xoffset + (/ dtflux(lvol), dpflux(lvol) /) ! initial guess for degrees of freedom; offset from zero so that relative error is small;
+    Xdof(1:2) = xoffset + (/ dtflux(lvol), dpflux(lvol) /) ! initial guess for degrees of freedom; offset from zero so that relative error is small;
     
     select case( Lconstraint )
     case( -1 )    ;                                   ; Nxdof = 0 ! poloidal   & toroidal flux NOT varied to match linking current and plasma current;
@@ -475,7 +475,7 @@ subroutine ma02aa( lvol, NN, LcomputeDerivatives )
 
     WCALL( ma02aa, hybrj2, ( mp00ac, Ndof, Xdof(1:Ndof), Fdof(1:Ndof), Ddof(1:Ldfjac,1:Ndof), Ldfjac, tol, &
                              maxfev, diag(1:Ndof), mode, factor, nprint, ihybrj, nfev, njev, RR(1:LRR), LRR, QTF(1:Ndof), &
-			     WK(1:Ndof,1), WK(1:Ndof,2), WK(1:Ndof,3), WK(1:Ndof,4) ) )
+                 WK(1:Ndof,1), WK(1:Ndof,2), WK(1:Ndof,3), WK(1:Ndof,4) ) )
 
     if( Lplasmaregion ) then
      
@@ -538,6 +538,8 @@ subroutine ma02aa( lvol, NN, LcomputeDerivatives )
 
   endif ! end of if( LBlinear ) then;
   
+
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-
  
 !latex \subsection{debugging: finite-difference confirmation of the derivatives of the rotational-transform}
@@ -574,11 +576,11 @@ subroutine ma02aa( lvol, NN, LcomputeDerivatives )
      endif
     else ! Lvacuumregion;
      Xdof(1:2) = xoffset + (/ dtflux(lvol), dpflux(lvol) /) ! initial guess for degrees of freedom; offset from zero so that relative error is small;
-	 if( LocalConstraint ) then
+     if( LocalConstraint ) then
      ;                                 ; Ndof = 2
-	 else
-	 ;								   ; Ndof = 1
-	 endif
+     else
+     ;                                   ; Ndof = 1
+     endif
     endif ! end of if( Lplasmaregion) ;
     
     Ldfjac = Ndof ; dFdof(-1:1,-1:1,1:2) = zero

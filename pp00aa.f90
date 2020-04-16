@@ -203,9 +203,9 @@ subroutine pp00aa
 
         ! The rotational transform data is written at once for a volume
         if (vvol.gt.1) then
-          call write_transform( sum(numTrajs(1:vvol-1)), numTrajs(vvol), vvol, diotadxup(0:1,0,vvol), fiota(0:numTrajs(vvol),1:2) )
+          call write_transform( sum(numTrajs(1:vvol-1)), numTrajs(vvol), vvol, diotadxup(0:1,0,vvol), fiota(0:lnPtrj,1:2) )
         else
-          call write_transform( 0, numTrajs(1), 1, diotadxup(0:1,0,1), fiota(1:numTrajs(1),1:2) )
+          call write_transform( 0, numTrajs(1), 1, diotadxup(0:1,0,1), fiota(ioff:lnPtrj,1:2) )
         endif
 
         if (Mvol.gt.1 .and. ncpu.gt.1) then

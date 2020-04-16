@@ -50,7 +50,7 @@ program xspech
                         odetol, nPpts, nPtrj, &
                         LHevalues, LHevectors, LHmatrix, Lperturbed, Lcheck, &
                         Lzerovac, &
-						mu, Isurf, Ivolume
+                        mu, Isurf, Ivolume
 
   use cputiming, only : Txspech
 
@@ -77,7 +77,7 @@ program xspech
                         first_free_bound, &
                         dMA, dMB, dMD, dMG, MBpsi, solution, dtflux, IPDt, &
                         version
-						
+                        
    ! write _all_ output quantities into a _single_ HDF5 file
    use sphdf5,   only : init_outfile, &
                         mirror_input_to_outfile, &
@@ -94,27 +94,24 @@ program xspech
   INTEGER              :: imn, lmn, lNfp, lim, lin, ii, ideriv, stat
   INTEGER              :: vvol, llmodnp, ifail, wflag, iflag, vflag
   REAL                 :: rflag, lastcpu, bnserr, lRwc, lRws, lZwc, lZws, lItor, lGpol, lgBc, lgBs, sumI
-  REAL,    allocatable :: position(:), gradient(:)
-  CHARACTER            :: pack, hostname
+  REAL,    allocatable :: position(:), gradient(:), Bt00(:,:)
+  CHARACTER            :: pack
   INTEGER              :: Lfindzero_old, mfreeits_old
-  REAL                 :: gBnbld_old  
-  INTEGER              :: lnPtrj, numTrajTotal, iwait, pid
-  INTEGER, external    :: getpid, hostnm
+  REAL                 :: gBnbld_old
+  INTEGER              :: lnPtrj, numTrajTotal
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   MPISTART ! It might be easy to read the source if this macro was removed; SRH: 27 Feb 18;
 
-#ifdef DEBUG
-if(.false.) then
-  iwait = 0; pid = getpid()
-  stat = hostnm( hostname )
-  write(*,*) 'Process with PID: ', pid, 'ready to attach. Hostname: ', hostname
-  do while( iwait .EQ. 0 )
-	call sleep(5)
-  enddo
-endif
-#endif
+!#ifdef DEBUG
+!  iwait = 0; pid = getpid()
+!  status = hostnm( hostname )
+!  write(*,*) 'Process with PID: ', pid, 'ready to attach. Hostname: ', hostname
+!  do while( iwait .EQ. 0 )
+!    !wait for debugger
+!  enddo
+!#endif
   
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -641,19 +638,23 @@ endif
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 ! Computes the surface current at each interface for output
 
+  SALLOCATE( Bt00, (1:Mvol, 0:1) , zero)
+
   do vvol = 1, Mvol
-    WCALL(xspech, lbpol, (vvol, 0) )
+    WCALL(xspech, lbpol, (vvol, Bt00(1:Mvol, 0:1), 0) )
   enddo
 
   do vvol = 1, Mvol-1
-    IPDt(vvol) = pi2 * (Btemn(1, 0, vvol+1) - Btemn(1, 1, vvol))
+    IPDt(vvol) = pi2 * (Bt00(vvol+1, 0) - Bt00(vvol, 1))
   enddo
 
-! and the volume current
+  DALLOCATE( Bt00 )
+
+! and the volume currentdd
   sumI = 0
   do vvol = 1, Mvol
     Ivolume(vvol) = mu(vvol) * dtflux(vvol) * pi2 + sumI    ! factor pi2 due to normalization in preset
-    sumI = Ivolume(vvol)									! Sum over all volumes since this is how Ivolume is defined
+    sumI = Ivolume(vvol)                                    ! Sum over all volumes since this is how Ivolume is defined
   enddo
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
