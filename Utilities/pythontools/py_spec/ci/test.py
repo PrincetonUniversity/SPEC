@@ -35,7 +35,7 @@ def compare(data, reference, localtol = tol, action='ERR'):
         if isinstance(value, SPEC):  # recurse data (csmiet: I'm nt the biggest fan of this recursion...)
             print('------------------')
             print('Elements in '+key)
-            if key == ['poincare', 'transform']:
+            if key in ['poincare', 'transform']:
                 print('differences in ' + key + ' are not important to regression')
                 compare(value, reference.__dict__[key], localtol, action='WARN')
             else:
