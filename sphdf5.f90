@@ -908,9 +908,9 @@ subroutine hdfint
 !latex \type{ForceErr}               & real    & \pb{force-balance error across interfaces} \\
   HWRITERV( grpOutput,  1, ForceErr, (/ ForceErr /))
 !latex \type{Ivolume}                & real    & \pb{Volume current at output (parallel, externally induced)}
-  HWRITERV( grpOutput, Mvol+1, Ivolume, Ivolume(1:Mvol))
+  HWRITERV( grpOutput, Mvol, Ivolume, Ivolume(1:Mvol))
 !latex \type{IPDt}                   & real    & \pb{Surface current at output}
-  HWRITERV( grpOutput, Mvol+1, IPDt, IPDt(1:Mvol))
+  HWRITERV( grpOutput, Mvol, IPDt, IPDt(1:Mvol))
 
   ! the following quantites can be different from input value
   HWRITERV( grpOutput,   Mvol, adiabatic         , adiabatic(1:Nvol)   )
