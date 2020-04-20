@@ -32,10 +32,10 @@ def compare(data, reference, localtol = tol, action='ERR'):
     """
     global match
     for key, value in vars(data).items():
-        if isinstance(value, SPEC):  # recurse data (csmiet: I'm nt the biggest fan of this recursion...)
+        if isinstance(value, SPEC):  # recurse data (csmiet: I'm not the biggest fan of this recursion...)
             print('------------------')
             print('Elements in '+key)
-            if key in ['poincare', 'transform']:
+            if key in ['poincare']:
                 print('differences in ' + key + ' are not important to regression')
                 compare(value, reference.__dict__[key], localtol, action='WARN')
             else:
@@ -43,13 +43,12 @@ def compare(data, reference, localtol = tol, action='ERR'):
         else:
             if key in ['filename', 'version']:  # not compare filename and version
                 continue
-            elif key == 'iterations':  # skip iteration data (might be revised)
-                continue
             else:
-                # print(key)
                 diff = np.linalg.norm(np.abs(np.array(value) - np.array(reference.__dict__[key]))) \
                         / np.size(np.array(value)) # divide by number of elements
                 unmatch = diff > localtol
+                if key in ['iterations', 'volume', 'fiota']:  # Warn about certain problematic variables. NOT A GOOD IDEA TO CHANGE (might be revised)
+                    action = 'ERR'
                 if unmatch:
                     if action == 'ERR':
                         match = False
