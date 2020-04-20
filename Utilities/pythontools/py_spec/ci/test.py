@@ -45,7 +45,7 @@ def compare(data, reference, localtol = tol, action='ERR'):
                 continue
             else:
                 if key in ['volume', 'fiota']:  # skip certain problematic variables. NOT A GOOD IDEA TO CHANGE (might be revised)
-                    action = 'ERR'
+                    action = 'WARN'
                 diff = np.linalg.norm(np.abs(np.array(value) - np.array(reference.__dict__[key]))) \
                         / np.size(np.array(value)) # divide by number of elements
                 unmatch = diff > localtol
