@@ -41,14 +41,14 @@ def compare(data, reference, localtol = tol, action='ERR'):
             else:
                 compare(value, reference.__dict__[key], localtol)
         else:
-            if key in ['filename', 'version']:  # not compare filename and version
+            if key in ['filename', 'version', 'iterations']:  # not compare filename and version and iterations
                 continue
             else:
+                if key in ['volume', 'fiota']:  # skip certain problematic variables. NOT A GOOD IDEA TO CHANGE (might be revised)
+                    action = 'ERR'
                 diff = np.linalg.norm(np.abs(np.array(value) - np.array(reference.__dict__[key]))) \
                         / np.size(np.array(value)) # divide by number of elements
                 unmatch = diff > localtol
-                if key in ['iterations', 'volume', 'fiota']:  # Warn about certain problematic variables. NOT A GOOD IDEA TO CHANGE (might be revised)
-                    action = 'ERR'
                 if unmatch:
                     if action == 'ERR':
                         match = False
