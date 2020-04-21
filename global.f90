@@ -165,7 +165,7 @@ module inputlist
   INTEGER      :: Ntor                       =  0
   INTEGER      :: Lrad(1:MNvol+1)            =  4
   INTEGER      :: Lconstraint                = -1
-  REAL         ::     tflux(1:MNvol+1)       =  0.0
+  REAL         :: tflux(1:MNvol+1)           =  0.0
   REAL         ::     pflux(1:MNvol+1)       =  0.0
   REAL         ::  helicity(1:MNvol)         =  0.0
   REAL         :: pscale                     =  0.0
@@ -1635,13 +1635,13 @@ subroutine readin
         
         Ivolume(Mvol) = Ivolume(Mvol-1) !Ensure vacuum in vacuum region
 
-        toroidalcurrent = Ivolume(Mvol) + sum(Isurf)
+        toroidalcurrent = Ivolume(Mvol) + sum(Isurf(1:Mvol-1))
         
         if( curtor.NE.0 ) then
             FATAL( readin, toroidalcurrent.EQ.0 , Incompatible current profiles and toroidal linking current)
 
             Ivolume(1:Mvol) = Ivolume(1:Mvol) * curtor / toroidalcurrent
-            Isurf(1:Mvol)     = Isurf(1:Mvol) * curtor / toroidalcurrent
+            Isurf(1:Mvol-1) = Isurf(1:Mvol-1) * curtor / toroidalcurrent
 
         else
             FATAL( readin, toroidalcurrent.NE.0, Incompatible current profiles and toroidal linking current)
@@ -2384,7 +2384,7 @@ subroutine wrtend
   write(iunit,'(" adiabatic   = ",257es23.15)') adiabatic(1:Mvol)
   write(iunit,'(" mu          = ",257es23.15)') mu(1:Mvol)
   write(iunit,'(" Ivolume     = ",257es23.15)') Ivolume(1:Mvol)
-  write(iunit,'(" Isurf       = ",257es23.15)') Isurf(1:Mvol)
+  write(iunit,'(" Isurf       = ",257es23.15)') Isurf(1:Mvol-1)
   write(iunit,'(" Lconstraint = ",i9        )') Lconstraint
   write(iunit,'(" pl          = ",257i23    )') pl(0:Mvol)
   write(iunit,'(" ql          = ",257i23    )') ql(0:Mvol)
