@@ -277,7 +277,7 @@ module inputlist
   REAL         :: absacc           =     1.0e-04 ! redundant; 
   REAL         :: epsr             =     1.0e-08 ! redundant; 
   INTEGER      :: nPpts            =     0
-  INTEGER      :: Ppts             =     0
+  REAL         :: Ppts             =     0.0
   INTEGER      :: nPtrj(1:MNvol+1) =    -1
   LOGICAL      :: LHevalues        =  .false.
   LOGICAL      :: LHevectors       =  .false.
@@ -1914,7 +1914,7 @@ subroutine readin
  !RlBCAST( absacc    , 1      , 0 )
  !RlBCAST( epsr      , 1      , 0 )
   IlBCAST( nPpts     , 1      , 0 )
-  IlBCAST( Ppts      , 1      , 0 )
+  RlBCAST( Ppts      , 1      , 0 )
   IlBCAST( nPtrj     , MNvol+1, 0 )
   LlBCAST( LHevalues , 1      , 0 )
   LlBCAST( LHevectors, 1      , 0 )
@@ -2571,7 +2571,7 @@ subroutine wrtend
  !write(iunit,'(" absacc      = ",es23.15       )') absacc
  !write(iunit,'(" epsr        = ",es23.15       )') epsr
   write(iunit,'(" nPpts       = ",i9            )') nPpts
-  write(iunit,'(" Ppts        = ",i9            )') Ppts
+  write(iunit,'(" Ppts        = ",es23.15       )') Ppts
   write(iunit,'(" nPtrj       = ",256i6         )') nPtrj(1:Mvol)
   write(iunit,'(" LHevalues   = ",L9            )') LHevalues
   write(iunit,'(" LHevectors  = ",L9            )') LHevectors
