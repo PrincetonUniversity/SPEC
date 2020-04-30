@@ -216,10 +216,11 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
    
    select case( Igeometry )
    case( 2   )  ; fj(     1:Ntor+1,0) = sbar**half              ! these are the mj.eq.0 harmonics; 11 Aug 14;
+   ;            ; fj(Ntor+2:mn    ,0) = sbar**(im(Ntor+2:mn)+1)
    case( 3   )  ; fj(     1:Ntor+1,0) = sbar
+   ;            ; fj(Ntor+2:mn    ,0) = sbar**im(Ntor+2:mn)
    case default ; FATAL( coords, .true., invalid Igeometry for Lcoordinatesingularity=T )
    end select
-   ;            ; fj(Ntor+2:mn    ,0) = sbar**halfmm(Ntor+2:mn) ! these are the me.ne.0 harmonics; 11 Aug 14;
    
    Remn(1:mn,0) = iRbc(1:mn,0) + ( iRbc(1:mn,1) - iRbc(1:mn,0) ) * fj(1:mn,0)
    if( NOTstellsym ) then
@@ -266,10 +267,11 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
    
    select case( Igeometry )
    case( 2   )  ; fj(     1:Ntor+1,1) = half * half              * fj(     1:Ntor+1,0) / sbar ! these are the mj.eq.0 harmonics; 11 Aug 14;
+   ;            ; fj(Ntor+2:mn    ,1) = half*(im(Ntor+2:mn)+one) * fj(Ntor+2:mn    ,0) / sbar
    case( 3   )  ; fj(     1:Ntor+1,1) = half                                                  ! these are the mj.eq.0 harmonics; 11 Aug 14;
+   ;            ; fj(Ntor+2:mn    ,1) = half * im(Ntor+2:mn) * fj(Ntor+2:mn    ,0) / sbar 
    case default ; FATAL( coords, .true., invalid Igeometry for Lcoordinatesingularity=T and Lcurvature.ne.0 )
    end select
-   ;            ; fj(Ntor+2:mn    ,1) = half * halfmm(Ntor+2:mn) * fj(Ntor+2:mn    ,0) / sbar ! these are the me.ne.0 harmonics; 11 Aug 14;
 
    Remn(1:mn,1) =                       ( iRbc(1:mn,1) - iRbc(1:mn,0) ) * fj(1:mn,1)
    if( NOTstellsym ) then
@@ -401,11 +403,12 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
     
     select case( Igeometry )
     case( 2 )    ; fj(     1:Ntor+1,2) = half * ( half              - one ) * fj(     1:Ntor+1,1) / sbar ! these are the mj.eq.0 harmonics; 11 Aug 14;
+     ;           ; fj(Ntor+2:mn    ,2) = half * ( im(Ntor+2:mn)       ) * fj(Ntor+2:mn    ,1) / sbar
     case( 3 )    ; fj(     1:Ntor+1,2) = zero                                                            ! these are the mj.eq.0 harmonics; 11 Aug 14;
+     ;           ; fj(Ntor+2:mn    ,2) = half * ( im(Ntor+2:mn) - one ) * fj(Ntor+2:mn    ,1) / sbar
     case default ; 
      ;           ; FATAL( coords, .true., invalid Igeometry for Lcoordinatesingularity=T and Lcurvature=2 )
     end select   ;
-    ;            ; fj(Ntor+2:mn    ,2) = half * ( halfmm(Ntor+2:mn) - one ) * fj(Ntor+2:mn    ,1) / sbar ! these are the me.ne.0 harmonics; 11 Aug 14;
     
     Remn(1:mn,2) =                       ( iRbc(1:mn,1) - iRbc(1:mn,0) ) * fj(1:mn,2)
     if( NOTstellsym ) then
