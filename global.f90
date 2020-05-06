@@ -164,6 +164,8 @@ module inputlist
   INTEGER      :: Ladiabatic                 =  0
   REAL         :: adiabatic(1:MNvol+1)       =  0.0
   REAL         ::        mu(1:MNvol+1)       =  0.0
+  REAL         :: Ivolume(1:MNvol+1)         =  0.0
+  REAL         :: Isurf(1:MNvol)             =  0.0 
   INTEGER      ::        pl(0:MNvol)         =  0
   INTEGER      ::        ql(0:MNvol)         =  0
   INTEGER      ::        pr(0:MNvol)         =  0
@@ -273,6 +275,7 @@ module inputlist
   INTEGER      :: Lperturbed       =     0   
   INTEGER      :: dpp              =    -1
   INTEGER      :: dqq              =    -1
+  REAL         :: dRZ              =    1E-5
   INTEGER      :: Lcheck           =     0
   LOGICAL      :: Ltiming          =  .false.
   REAL         :: fudge            =     1.0e-00 ! redundant; 
@@ -390,6 +393,9 @@ module inputlist
                 !latex \item[i.] \inputvar{pressure} is only used in calculation of interface force-balance;
                 !latex \ei
  mu          ,& !latex \item \inputvar{mu} : \verb!real(1:MNvol+1)! : helicity-multiplier, $\mu$, in each volume;
+ Ivolume     ,& !latex \item \inputvar{Ivolume} : \verb!real(1:MNvol+1)! : Toroidal current constraint normalized by $\mu_0$ ($I_{volume} = \mu_0\cdot [A]$), in each volume. This is a 
+				!latex 		 cumulative quantity: $I_{\mathcal{V},i} = \int_0^{\psi_{t,i}} \mathbf{J}\cdot\mathbf{dS}$. Physically, it represents the sum of all non-pressure driven currents;
+ Isurf       ,& 
  pl          ,& !latex \item \inputvar{pl = 0} : \verb!integer(0:MNvol)! :
  ql          ,& !latex \item \inputvar{ql = 0} : \verb!integer(0:MNvol)! :
  pr          ,& !latex \item \inputvar{pr = 0} : \verb!integer(0:MNvol)! :
@@ -788,6 +794,7 @@ module inputlist
  Lperturbed ,&  !latex \item \inputvar{Lperturbed = 0} : integer : to compute linear, perturbed equilibrium;
  dpp        ,&  !latex \item \inputvar{dpp = 1} : integer : perturbed harmonic;
  dqq        ,&  !latex \item \inputvar{dqq = 1} : integer : perturbed harmonic;
+ dRZ        ,&
  Lcheck     ,&  !latex \item \inputvar{Lcheck = 0} : integer : implement various checks;
                 !latex \bi
                 !latex \item if \inputvar{Lcheck = 0}, no additional check on the calculation is performed;
@@ -1851,6 +1858,7 @@ subroutine readin
   IlBCAST( Lperturbed, 1      , 0 )
   IlBCAST( dpp       , 1      , 0 )
   IlBCAST( dqq       , 1      , 0 )
+  RlBCAST( dRZ       , 1      , 0 )
   IlBCAST( Lcheck    , 1      , 0 )
   LlBCAST( Ltiming   , 1      , 0 )
 
@@ -2505,6 +2513,7 @@ subroutine wrtend
   write(iunit,'(" Lperturbed  = ",i9            )') Lperturbed
   write(iunit,'(" dpp         = ",i9            )') dpp
   write(iunit,'(" dqq         = ",i9            )') dqq
+  write(iunit,'(" dRZ         = ",es23.15       )') dRZ
   write(iunit,'(" Lcheck      = ",i9            )') Lcheck
   write(iunit,'(" Ltiming     = ",L9            )') Ltiming
   write(iunit,'("/")')
