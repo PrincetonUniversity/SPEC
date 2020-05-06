@@ -308,6 +308,7 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives)
     Xdof(1:Mvol-1) = dpflux(2:Mvol) + xoffset
     
     ! Solve for field
+	dBdX%L = LComputeDerivatives
     WCALL(dforce, dfp100, (Ndofgl, Xdof, Fvec, iflag) )
 
 ! --------------------------------------------------------------------------------------------------
@@ -326,6 +327,7 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives)
           SALLOCATE(r, (1:lr), 0)
 
           ! Hybrid-Powell method, iterates on all poloidal fluxes to match the global constraint
+		  dBdX%L = .false.
           WCALL( dforce,  hybrd1, (dfp100, Ndofgl, Xdof(1:Ndofgl), Fvec(1:Ndofgl), mupftol, maxfev, ml, muhybr, epsfcn, diag(1:Ndofgl), mode, &
                       factor, nprint, ihybrd1, nfev, fjac(1:Ndofgl,1:Ndofgl), ldfjac, r(1:lr), lr, qtf(1:Ndofgl), wa1(1:Ndofgl), &
                       wa2(1:Ndofgl), wa3(1:Ndofgl), wa4(1:Ndofgl)) ) 
@@ -825,8 +827,8 @@ if( Lcheck.eq.6 ) then
         endif
         close(10)
 
-1345       format("dforce: myid=",i3," ; (",i4,",",i4,"), irz=",i4," ; Hessian            = ",8f16.10 "   ;")
-1346       format("dforce: myid=",i3," ; (",i4,",",i4,"), irz=",i4," ; Finite differences = ",8f16.10 "   ;")
+1345       format("dforce: myid=",i3," ; (",i4,",",i4,"), irz=",i4," ; Hessian            = ",64f16.10 "   ;")
+1346       format("dforce: myid=",i3," ; (",i4,",",i4,"), irz=",i4," ; Finite differences = ",64f16.10 "   ;")
 1347       format(512F22.16, " ")
 
         DALLOCATE(finitediff_hessian)

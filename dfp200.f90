@@ -1568,14 +1568,14 @@ subroutine evaluate_dBB(lvol, idof, innout, issym, irz, ii, dAt, dAz, dBB, XX, Y
   use fileunits, only : ounit
   
   use inputlist, only : Wmacros, Wdfp200, ext, Ntor, Igeometry, Lconstraint, &
-                        gamma, adiabatic, pscale, &
-                        epsilon
+                        gamma, adiabatic, pscale, Lcheck, dRZ, Nvol, &
+                        epsilon, Lrad
   
   use cputiming, only : Tdfp200
   
   use allglobal, only : ncpu, myid, cpus, &
-                        Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
-                        Mvol, &
+                        Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, LocalConstraint, &
+                        Mvol, dpflux, &
                         iRbc, iZbs, iRbs, iZbc, & ! Fourier harmonics of geometry; vector of independent variables, position, is "unpacked" into iRbc,iZbs;
                         NOTstellsym, &
                         mn, im, in, mns, &
@@ -1586,23 +1586,37 @@ subroutine evaluate_dBB(lvol, idof, innout, issym, irz, ii, dAt, dAz, dBB, XX, Y
                         cosi, sini, & ! FFT workspace
                         sweight, &
                         mmpp, &
-                        LGdof, &
+                        LGdof, NGdof, NAdof, &
                         vvolume, dvolume, &
                         Rij, Zij, sg, guvij, iRij, iZij, dRij, dZij, tRij, tZij, & ! Jacobian and metrics; computed in coords;
                         dFFdRZ, dBBdmp, &
                         BBweight, & ! exponential weight on force-imbalance harmonics;
                         psifactor, &
-                        mn, &
-                        dRodR, dRodZ, dZodR, dZodZ, dBdX
+                        mn, Iquad, &
+                        dRodR, dRodZ, dZodR, dZodZ, dBdX, &
+                        DToocc, DToocs, DToosc, DTooss, &
+                        TTsscc, TTsscs, TTsssc, TTssss, &
+                        TDstcc, TDstcs, TDstsc, TDstss, &
+                        TDszcc, TDszcs, TDszsc, TDszss, &
+                        DDttcc, DDttcs, DDttsc, DDttss, &
+                        DDtzcc, DDtzcs, DDtzsc, DDtzss, &
+                        DDzzcc, DDzzcs, DDzzsc, DDzzss, &
+                        xoffset
 
  LOCALS
 !------
 
-INTEGER                      :: iocons, lvol, ideriv, id, iflag, Lcurvature, innout, issym, irz, ii, ifail, idoc, idof, Ntz
-REAL                     :: lss, DDl, MMl
-REAL                     :: dAt(1:Ntz,-1:2), dAz(1:Ntz,-1:2), XX(1:Ntz), YY(1:Ntz), dBB(1:Ntz,-1:2), dII(1:Ntz), dLL(1:Ntz)
+INTEGER                 :: iocons, lvol, ideriv, id, iflag, Lcurvature, innout, issym, irz, ii, ifail, idoc, idof, Ntz
+REAL                    :: lss, DDl, MMl
+REAL                    :: dAt(1:Ntz,-1:2), dAz(1:Ntz,-1:2), XX(1:Ntz), YY(1:Ntz), dBB(1:Ntz,-1:2), dII(1:Ntz), dLL(1:Ntz)
 REAL                    :: dPP(1:Ntz), length(1:Ntz), dRR(1:Ntz,-1:2), dZZ(1:Ntz,-1:2), constraint(1:Ntz)
-
+#ifdef DEBUG
+INTEGER					:: isymdiff, ll, NN, ndofgl, pvol
+REAL                    :: Fvec(1:Mvol-1), Xdof(1:Mvol-1)
+REAL,   allocatable 	:: oRbc(:,:), oZbs(:,:), oRbs(:,:), oZbc(:,:) ! original geometry;
+REAL,   allocatable 	:: idBB(:,:), iforce(:,:), iposition(:,:)
+CHARACTER               :: packorunpack
+#endif
 
 do iocons = 0, 1
 
@@ -1643,7 +1657,7 @@ do iocons = 0, 1
     if( lvol.eq.   1 .and. iocons.eq.0 ) cycle ! fixed inner boundary (or coordinate axis); no constraints;
     if( lvol.eq.Mvol .and. iocons.eq.1 ) cycle ! fixed outer boundary                     ; no constraints;
 
-    ideriv = 0 ; id = ideriv ; iflag = 0 ! why does lforce need to be re-called; need to determine which quantity (if any) has been corrupted;
+    ideriv = 0 ; id = ideriv ; iflag = 0
 
     WCALL( dfp200, lforce, ( lvol, iocons, ideriv, Ntz, dAt(1:Ntz,id), dAz(1:Ntz,id), XX(1:Ntz), YY(1:Ntz), length(1:Ntz), DDl, MMl, iflag ) )
 
@@ -1674,6 +1688,180 @@ do iocons = 0, 1
     FATAL( dfp200, vvolume(lvol).lt.small, shall divide by vvolume(lvol)**(gamma+one) )
 
     ijreal(1:Ntz) = - adiabatic(lvol) * pscale * gamma * dvolume / vvolume(lvol)**(gamma+one) + dBB(1:Ntz,-1) ! derivatives of force wrt geometry;
+
+
+#ifdef DEBUG
+! Finite difference estimate of ijreal
+if(Lcheck.eq.7) then
+	write(ounit, '("WARNING: this test in not working yet...")')
+
+	! Need to recompute dBB with different geometry, but same mu and psip. Thus change Lconstraint
+	Lconstraint = 0
+	LocalConstraint = .true.
+
+	dBdX%L = .true.
+    SALLOCATE( oRbc, (1:mn,0:Mvol), iRbc(1:mn,0:Mvol) ) !save unperturbed geometry
+    SALLOCATE( oZbs, (1:mn,0:Mvol), iZbs(1:mn,0:Mvol) )
+    SALLOCATE( oRbs, (1:mn,0:Mvol), iRbs(1:mn,0:Mvol) )
+    SALLOCATE( oZbc, (1:mn,0:Mvol), iZbc(1:mn,0:Mvol) ) 
+    SALLOCATE( idBB,    (-2:2, 1:Ntz), zero)
+    SALLOCATE( iforce,    (-2:2, 0:NGdof), zero)
+    SALLOCATE( iposition, (-2:2, 0:NGdof), zero)
+
+    
+    if( ncpu.eq.1) then
+
+    do isymdiff = -2, 2 ! symmetric fourth-order, finite-difference used to approximate derivatives;
+        if( isymdiff.eq.0 ) cycle
+
+        iRbc(1:mn,0:Mvol) = oRbc(1:mn,0:Mvol)
+        iZbs(1:mn,0:Mvol) = oZbs(1:mn,0:Mvol)
+        iRbs(1:mn,0:Mvol) = oRbs(1:mn,0:Mvol)
+        iZbc(1:mn,0:Mvol) = oZbc(1:mn,0:Mvol)
+
+        ! Perturb geometry
+        if( issym.eq.0 .and. irz.eq.0 ) iRbc(ii,lvol+innout-1) = iRbc(ii,lvol+innout-1) + dRZ * isymdiff ! perturb geometry;
+        if( issym.eq.0 .and. irz.eq.1 ) iZbs(ii,lvol+innout-1) = iZbs(ii,lvol+innout-1) + dRZ * isymdiff ! perturb geometry;
+        if( issym.eq.1 .and. irz.eq.0 ) iRbs(ii,lvol+innout-1) = iRbs(ii,lvol+innout-1) + dRZ * isymdiff ! perturb geometry;
+        if( issym.eq.1 .and. irz.eq.1 ) iZbc(ii,lvol+innout-1) = iZbc(ii,lvol+innout-1) + dRZ * isymdiff ! perturb geometry;
+
+
+        do pvol = 1,Mvol
+            LREGION(pvol)
+            ll = Lrad(pvol)        ! shorthand
+            NN = NAdof(pvol)     ! shorthand;
+
+           SALLOCATE( DToocc, (0:ll,0:ll,1:mn,1:mn), zero )
+           SALLOCATE( DToocs, (0:ll,0:ll,1:mn,1:mn), zero )
+           SALLOCATE( DToosc, (0:ll,0:ll,1:mn,1:mn), zero )
+           SALLOCATE( DTooss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+           SALLOCATE( TTsscc, (0:ll,0:ll,1:mn,1:mn), zero )
+           SALLOCATE( TTsscs, (0:ll,0:ll,1:mn,1:mn), zero )
+           SALLOCATE( TTsssc, (0:ll,0:ll,1:mn,1:mn), zero )
+           SALLOCATE( TTssss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+           SALLOCATE( TDstcc, (0:ll,0:ll,1:mn,1:mn), zero )
+           SALLOCATE( TDstcs, (0:ll,0:ll,1:mn,1:mn), zero )
+           SALLOCATE( TDstsc, (0:ll,0:ll,1:mn,1:mn), zero )
+           SALLOCATE( TDstss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+           SALLOCATE( TDszcc, (0:ll,0:ll,1:mn,1:mn), zero )
+           SALLOCATE( TDszcs, (0:ll,0:ll,1:mn,1:mn), zero )
+           SALLOCATE( TDszsc, (0:ll,0:ll,1:mn,1:mn), zero )
+           SALLOCATE( TDszss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+           SALLOCATE( DDttcc, (0:ll,0:ll,1:mn,1:mn), zero )
+           SALLOCATE( DDttcs, (0:ll,0:ll,1:mn,1:mn), zero )
+           SALLOCATE( DDttsc, (0:ll,0:ll,1:mn,1:mn), zero )
+           SALLOCATE( DDttss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+           SALLOCATE( DDtzcc, (0:ll,0:ll,1:mn,1:mn), zero )
+           SALLOCATE( DDtzcs, (0:ll,0:ll,1:mn,1:mn), zero )
+           SALLOCATE( DDtzsc, (0:ll,0:ll,1:mn,1:mn), zero )
+           SALLOCATE( DDtzss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+           SALLOCATE( DDzzcc, (0:ll,0:ll,1:mn,1:mn), zero )
+           SALLOCATE( DDzzcs, (0:ll,0:ll,1:mn,1:mn), zero )
+           SALLOCATE( DDzzsc, (0:ll,0:ll,1:mn,1:mn), zero )
+           SALLOCATE( DDzzss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+                  WCALL( dfp200, ma00aa, ( Iquad(pvol), mn, pvol, ll ) )
+                  
+                  WCALL( dfp200, matrix, ( pvol, mn, ll ) )
+
+           DALLOCATE(DToocc)
+           DALLOCATE(DToocs)
+           DALLOCATE(DToosc)
+           DALLOCATE(DTooss)
+
+           DALLOCATE(TTsscc)
+           DALLOCATE(TTsscs)
+           DALLOCATE(TTsssc)
+           DALLOCATE(TTssss)
+
+           DALLOCATE(TDstcc)
+           DALLOCATE(TDstcs)
+           DALLOCATE(TDstsc)
+           DALLOCATE(TDstss)
+
+           DALLOCATE(TDszcc)
+           DALLOCATE(TDszcs)
+           DALLOCATE(TDszsc)
+           DALLOCATE(TDszss)
+
+           DALLOCATE(DDttcc)
+           DALLOCATE(DDttcs)
+           DALLOCATE(DDttsc)
+           DALLOCATE(DDttss)
+
+           DALLOCATE(DDtzcc)
+           DALLOCATE(DDtzcs)
+           DALLOCATE(DDtzsc)
+           DALLOCATE(DDtzss)
+
+           DALLOCATE(DDzzcc)
+           DALLOCATE(DDzzcs)
+           DALLOCATE(DDzzsc)
+           DALLOCATE(DDzzss)
+        enddo
+
+        Ndofgl = 0; Fvec(1:Mvol-1) = 0; iflag = 0;
+        Xdof(1:Mvol-1) = dpflux(2:Mvol) + xoffset
+		dBdX%L = .false. ! No derivatives are required
+        WCALL(dfp200, dfp100, (Ndofgl, Xdof, Fvec, iflag) )
+
+		dpflux(2:Mvol) = Xdof(1:Mvol-1) -xoffset
+   
+		ideriv = 0 ; id = ideriv ; iflag = 0 
+    	WCALL( dfp200, lforce, ( lvol, iocons, ideriv, Ntz, dAt(1:Ntz,id), dAz(1:Ntz,id), XX(1:Ntz), YY(1:Ntz), length(1:Ntz), DDl, MMl, iflag ) )
+
+    	idBB(isymdiff,1:Ntz) =     half * (  dAz(1:Ntz, 0)*dAz(1:Ntz, 0)*guvij(1:Ntz,2,2,0) &
+                   					 - two * dAz(1:Ntz, 0)*dAt(1:Ntz, 0)*guvij(1:Ntz,2,3,0) &
+                                     +       dAt(1:Ntz, 0)*dAt(1:Ntz, 0)*guvij(1:Ntz,3,3,0)  ) / sg(1:Ntz,0)**2
+		
+
+    enddo
+
+    idBB(0, 1:Ntz)                = ( - 1 * idBB(2,1:Ntz) &
+                                        + 8 * idBB(1,1:Ntz) &
+                                        - 8 * idBB(-1,1:Ntz) &
+                                        + 1 * idBB(-2,1:Ntz))  / ( 12 * dRZ )
+
+    cput = GETTIME
+
+    iRbc(1:mn,0:Mvol) = oRbc(1:mn,0:Mvol)
+    iZbs(1:mn,0:Mvol) = oZbs(1:mn,0:Mvol)
+    iRbs(1:mn,0:Mvol) = oRbs(1:mn,0:Mvol)
+    iZbc(1:mn,0:Mvol) = oZbc(1:mn,0:Mvol)
+
+
+	write(ounit,1345) myid, dBB(1:Ntz,-1)
+    write(ounit,1346) myid, idBB(0,1:Ntz)
+
+1345 format("dfp200: myid=",i3," ; dBB                = ",64f16.10 "   ;")
+1346 format("dfp200: myid=",i3," ; Finite differences = ",64f16.10 "   ;")
+
+
+    endif
+
+    DALLOCATE(oRbc)
+    DALLOCATE(oZbs)
+    DALLOCATE(oRbs)
+    DALLOCATE(oZbc)
+    DALLOCATE(idBB)
+	DALLOCATE(iforce)
+	DALLOCATE(iposition)
+
+	FATAL(dfp200, .true., Finite difference estimate of ijreal have been computed)
+endif
+#endif
+
+
+
+
+
+
 
     dLL(1:Ntz) = zero ! either no spectral constraint, or not the appropriate interface;
     dPP(1:Ntz) = zero ! either no spectral constraint, or not the appropriate interface;

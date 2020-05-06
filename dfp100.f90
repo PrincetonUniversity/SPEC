@@ -123,14 +123,18 @@ BEGIN(dfp100)
             FATAL(dfp100, .true., Unassociated volume)
         endif
 
-        !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-        dBdX%L = .false. ! first, compute Beltrami fields;
 
         !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
         ! Compute fields
-        WCALL( dfp100, ma02aa, ( vvol, NAdof(vvol) ) )
+		if( LocalConstraint ) then
+			LComputeDerivatives = dBdX%L
+		else
+			LComputeDerivatives = .false. ! Derivatives, if required, are computed later.
+		endif
+
+
+        WCALL( dfp100, ma02aa, ( vvol, NAdof(vvol), LComputeDerivatives ) )
 
 
         ! Compute relevant local quantities for the evaluation of the constraint. Doing it like this 
