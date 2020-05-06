@@ -1849,12 +1849,12 @@ do iocons = 0, 1
     ! if( Ntor.gt.0 ) then
     !  dFFdRZ(idoc+1:idoc+Ntor  ,lvol,iocons,idof,innout) = + odmn(2:Ntor+1) * psifactor(ii,lvol-1+innout) * apsilon
     ! endif
-    ; ;idoc = idoc + mn-1 ! oddd;
+    ; ;idoc = idoc + mn-1 ! odd;
     ;endif ! end of if( Igeometry.ge.3) ;
 
     if( NOTstellsym ) then
         ; dFFdRZ(idoc+1:idoc+mn-1  ,lvol,iocons,idof,innout) = + ofmn(2:mn    ) * psifactor(ii,lvol-1+innout) * BBweight(2:mn) ! pressure;
-        ;idoc = idoc + mn-1 ! oddd;
+        ;idoc = idoc + mn-1 ! odd;
         if( Igeometry.ge.3 ) then ! add spectral constraints;
             ;dFFdRZ(idoc+1:idoc+mn    ,lvol,iocons,idof,innout) = - cfmn(1:mn    ) * psifactor(ii,lvol-1+innout) * epsilon       & ! spectral condensation;
             - comn(1:mn    ) * psifactor(ii,lvol-1+innout) * sweight(lvol)   ! poloidal length constraint;
