@@ -269,7 +269,7 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
    case( 2   )  ; fj(     1:Ntor+1,1) = half * half              * fj(     1:Ntor+1,0) / sbar ! these are the mj.eq.0 harmonics; 11 Aug 14;
    ;            ; fj(Ntor+2:mn    ,1) = half*(im(Ntor+2:mn)+one) * fj(Ntor+2:mn    ,0) / sbar
    case( 3   )  ; fj(     1:Ntor+1,1) = half                                                  ! these are the mj.eq.0 harmonics; 11 Aug 14;
-   ;            ; fj(Ntor+2:mn    ,1) = half * halfmm(Ntor+2:mn) * fj(Ntor+2:mn    ,0) / sbar
+   ;            ; fj(Ntor+2:mn    ,1) = halfmm(Ntor+2:mn) * fj(Ntor+2:mn    ,0) / sbar
    case default ; FATAL( coords, .true., invalid Igeometry for Lcoordinatesingularity=T and Lcurvature.ne.0 )
    end select
 
@@ -405,7 +405,7 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
     case( 2 )    ; fj(     1:Ntor+1,2) = half * ( half              - one ) * fj(     1:Ntor+1,1) / sbar ! these are the mj.eq.0 harmonics; 11 Aug 14;
      ;           ; fj(Ntor+2:mn    ,2) = half * ( im(Ntor+2:mn)       ) * fj(Ntor+2:mn    ,1) / sbar
     case( 3 )    ; fj(     1:Ntor+1,2) = zero                                                            ! these are the mj.eq.0 harmonics; 11 Aug 14;
-     ;           ; fj(Ntor+2:mn    ,2) = half * ( halfmm(Ntor+2:mn) - one ) * fj(Ntor+2:mn    ,1) / sbar
+     ;           ; fj(Ntor+2:mn    ,2) = ( halfmm(Ntor+2:mn) - one ) * fj(Ntor+2:mn    ,1) / sbar
     case default ; 
      ;           ; FATAL( coords, .true., invalid Igeometry for Lcoordinatesingularity=T and Lcurvature=2 )
     end select   ;
