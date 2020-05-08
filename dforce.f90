@@ -457,14 +457,14 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives)
       ; dBBdmp(idoc+1:idoc+mn  ,vvol,iocons,1) = efmn(1:mn) * BBweight(1:mn) ! pressure;
       ; dBBdmp(idoc+1:idoc+mn  ,vvol,iocons,2) = cfmn(1:mn) * BBweight(1:mn) ! pressure;
       ; idoc = idoc + mn   ! even;
-      if( Igeometry.ge.3 ) then ! add spectral constraints; spectral constraints do not depend on mu or dpflux;
+      if( (Igeometry.ge.3) .and. (Lcheck.ne.6) ) then ! add spectral constraints; spectral constraints do not depend on mu or dpflux;
        ;idoc = idoc + mn-1 ! oddd;
       endif ! end of if( Igeometry.ge.3) ;
       if( NOTstellsym ) then
        ;dBBdmp(idoc+1:idoc+mn-1,vvol,iocons,1) = ofmn(2:mn) * BBweight(2:mn) ! pressure;
        ;dBBdmp(idoc+1:idoc+mn-1,vvol,iocons,2) = sfmn(2:mn) * BBweight(2:mn) ! pressure;
        ;idoc = idoc + mn-1 ! oddd;
-       if( Igeometry.ge.3 ) then ! add spectral constraints;
+       if( (Igeometry.ge.3) .and. (Lcheck.ne.6) ) then ! add spectral constraints;
         idoc = idoc + mn   ! even;
        endif ! end of if( Igeometry.ge.3) ;
       endif ! end of if( NOTstellsym) ;
@@ -802,7 +802,7 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives)
          dLL(1:Ntz) = zero ! either no spectral constraint, or not the appropriate interface;
          dPP(1:Ntz) = zero ! either no spectral constraint, or not the appropriate interface;
          
-         if( Igeometry.ge.3 ) then ! spectral constraints are only required in toroidal or extended-cylindrical geometry;
+         if( (Igeometry.ge.3) .and. (Lcheck.ne.6) ) then ! spectral constraints are only required in toroidal or extended-cylindrical geometry;
           
           if( innout.eq.1 .and. iocons.eq.1 ) then ! include derivatives of spectral constraints;
 #ifdef DEBUG
@@ -967,23 +967,31 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives)
          
          ;  dFFdRZ(idoc+1:idoc+mn    ,vvol,iocons,idof,innout) = + efmn(1:mn    ) * psifactor(ii,vvol-1+innout) * BBweight(1:mn) ! pressure;
          ; idoc = idoc + mn   ! even;
-         ;if( Igeometry.ge.3 ) then ! add spectral constraints;
+         ;if( (Igeometry.ge.3) ) then ! add spectral constraints;
+	  if(Lcheck.eq.6) then
+         ;  dFFdRZ(idoc+1:idoc+mn-1  ,vvol,iocons,idof,innout) = zero
+	  else
          ;  dFFdRZ(idoc+1:idoc+mn-1  ,vvol,iocons,idof,innout) = - sfmn(2:mn    ) * psifactor(ii,vvol-1+innout) * epsilon       & ! spectral condensation;
                                                                  - simn(2:mn    ) * psifactor(ii,vvol-1+innout) * sweight(vvol)   ! poloidal length constraint;
          ! if( Ntor.gt.0 ) then
          !  dFFdRZ(idoc+1:idoc+Ntor  ,vvol,iocons,idof,innout) = + odmn(2:Ntor+1) * psifactor(ii,vvol-1+innout) * apsilon
          ! endif
+	 endif
          ; ;idoc = idoc + mn-1 ! oddd;
          ;endif ! end of if( Igeometry.ge.3) ;
          if( NOTstellsym ) then
           ; dFFdRZ(idoc+1:idoc+mn-1  ,vvol,iocons,idof,innout) = + ofmn(2:mn    ) * psifactor(ii,vvol-1+innout) * BBweight(2:mn) ! pressure;
           ;idoc = idoc + mn-1 ! oddd;
-          if( Igeometry.ge.3 ) then ! add spectral constraints;
+          if( (Igeometry.ge.3) ) then ! add spectral constraints;
+	  if( Lcheck.eq.6 ) then
+           ;dFFdRZ(idoc+1:idoc+mn    ,vvol,iocons,idof,innout) = zero 
+	  else
            ;dFFdRZ(idoc+1:idoc+mn    ,vvol,iocons,idof,innout) = - cfmn(1:mn    ) * psifactor(ii,vvol-1+innout) * epsilon       & ! spectral condensation;
                                                                  - comn(1:mn    ) * psifactor(ii,vvol-1+innout) * sweight(vvol)   ! poloidal length constraint;
           !if( Ntor.ge.0 ) then
           ! dFFdRZ(idoc+1:idoc+Ntor+1,vvol,iocons,idof,innout) = + evmn(1:Ntor+1) * psifactor(ii,vvol-1+innout) * apsilon ! poloidal origin      ;
           !endif
+	  endif
            idoc = idoc + mn   ! even;
           endif ! end of if( Igeometry.ge.3) ;
          endif ! end of if( NOTstellsym) ;

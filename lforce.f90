@@ -150,7 +150,7 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dAt, dAz, XX, YY, length, DDl, MMl
   
   use fileunits, only : ounit
   
-  use inputlist, only : Wlforce, Igeometry, Nvol, Ntor, Lrad, gamma, pscale, adiabatic
+  use inputlist, only : Wlforce, Igeometry, Nvol, Ntor, Lrad, gamma, pscale, adiabatic, Lcheck
   
   use cputiming, only : Tlforce
   
@@ -261,7 +261,8 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dAt, dAz, XX, YY, length, DDl, MMl
   case( 1:2 ) ; dLL(1:Ntz) = zero ! placeholder; 08 Feb 16;
    ;          ; IIl(1:Ntz) = zero ! placeholder; 11 Aug 14;   
   case(   3 )
-   
+  
+   if( Lcheck.ne.6 ) then
    do ivol = 0, 1
     
     call invfft( mn, im(1:mn), in(1:mn),            iRbc(1:mn,lvol-1+ivol),              iRbs(1:mn,lvol-1+ivol), &
@@ -306,6 +307,7 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dAt, dAz, XX, YY, length, DDl, MMl
     IIl(1:Ntz) = zero ! placeholder; 11 Aug 14;
 
    endif ! end of if( iocons.eq.1 ) ; 20 Feb 13;
+   endif
    
   end select ! end of select case( Igeometry ) ; 08 Feb 16;
   
@@ -323,7 +325,7 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dAt, dAz, XX, YY, length, DDl, MMl
   ;call tfft( Nt, Nz, ijreal(1:Ntz), IIl(1:Ntz  ), & ! compute force-imbalance and spectral constraints;
               mn, im(1:mn), in(1:mn), Bemn(1:mn,lvol,iocons), Bomn(1:mn,lvol,iocons), Iemn(1:mn,lvol       ), Iomn(1:mn,lvol       ), ifail )
   
-  if( Igeometry.ge.3 ) then ! add minimal length constraint; 18 Jul 14;
+  if( (Igeometry.ge.3) .and. (Lcheck.ne.6) ) then ! add minimal length constraint; 18 Jul 14;
    
    ifail = 0 ; ijimag(1:Ntz) = zero
 
