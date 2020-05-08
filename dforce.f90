@@ -1188,7 +1188,9 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives)
     ;  idoc = idoc + mn   ! degree-of-constraint counter; increment;
     
     if( Igeometry.ge.3 ) then ! add spectral constraints;
-    
+      if( Lcheck.eq.6 ) then
+     ;force(tdoc+idoc+1:tdoc+idoc+mn-1  ) = zero
+      else
      ;force(tdoc+idoc+1:tdoc+idoc+mn-1  ) = (                           Iomn(2:mn    ,vvol+0  ) ) * epsilon         & ! spectral constraints;
                                           + (                         + Somn(2:mn    ,vvol+0,1) ) * sweight(vvol+0) & ! poloidal length constraint;
                                           - ( Somn(2:mn    ,vvol+1,0)                           ) * sweight(vvol+1)
@@ -1198,9 +1200,8 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives)
 !     endif
      
      ;IIo(vvol) = max( sum( abs( force(tdoc+idoc+1:tdoc+idoc+mn-1) ) ) / (mn-1), logtolerance ) ! screen diagnostics;
-     
+     endif 
      ; idoc = idoc + mn-1
-     
     endif ! end of if( Igeometry.ge.3 ) ;
     
     if( NOTstellsym ) then
@@ -1212,7 +1213,9 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives)
      ; idoc = idoc + mn-1 ! degree-of-constraint counter; increment;
      
      if( Igeometry.ge.3 ) then ! add spectral constraints;
-      
+      if( Lcheck.eq.6 ) then
+      force(tdoc+idoc+1:tdoc+idoc+mn    ) = zero 
+      else
       force(tdoc+idoc+1:tdoc+idoc+mn    ) = (                           Iemn(1:mn    ,vvol+0  ) ) * epsilon         & ! spectral constraints;
                                           + (                         + Semn(1:mn    ,vvol+0,1) ) * sweight(vvol+0) & ! poloidal length constraint;
                                           - ( Semn(1:mn    ,vvol+1,0)                           ) * sweight(vvol+1)
@@ -1222,9 +1225,8 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives)
 !     endif
       
       ;IIe(vvol) = max( sum( abs( force(tdoc+idoc+1:tdoc+idoc+mn  ) ) ) / (mn  ), logtolerance ) ! screen diagnostics;
-      
+      endif 
       ;idoc = idoc + mn   ! degree-of-constraint counter; increment;
-      
      endif ! end of if( Igeometry.ge.3 ) ;
      
     endif ! end of if( NOTstellsym ) ;
