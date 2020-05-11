@@ -6,7 +6,7 @@ function plot_spec_poincare_cyl(data,nz0,newfig)
 %   -nz0=-1 shows a number of equidistant toroidal planes
 %   -nz0=-2 shows selected toroidal planes
 %   -nz0>0  shows the nz0 toroidal plane
-%   -newfig opens(=1) or not(=0) a new figure
+%   -newfig opens(=1) or not(=0) a new figure. =2 to overwrite last plot
 %   written by J.Loizu (2015)
 
 
@@ -31,7 +31,12 @@ bthick = 10;
 if(newfig==1)
 figure
 end
-hold on
+
+if newfig==2
+    hold off
+else
+    hold on
+end
 
 switch nz0
 
@@ -52,13 +57,7 @@ switch nz0
 
    for i=1:nptraj     %for each field line trajectory
     scatter(R(i,:).*cos(T(i,:)),R(i,:).*sin(T(i,:)),10,'.k')
-    axis equal
-    hold on
-    set(gca,'FontSize',12)
-    xlabel('R','FontSize',12)
-    ylabel('Z','FontSize',12)
-    xlim([-1.1*rmax 1.1*rmax])
-    ylim([-1.1*rmax 1.1*rmax])
+    hold on;
    end
 
    xb    = 0;    
@@ -74,6 +73,13 @@ switch nz0
 
    scatter(xb,yb,bthick,'filled',bcol)
 
+    axis equal
+    hold on
+    set(gca,'FontSize',12)
+    xlabel('R','FontSize',12)
+    ylabel('Z','FontSize',12)
+    xlim([-1.1*rmax 1.1*rmax])
+    ylim([-1.1*rmax 1.1*rmax])
   end
 
  case -2            
@@ -99,13 +105,7 @@ switch nz0
 
    for i=1:nptraj     %for each field line trajectory
     scatter(R(i,:).*cos(T(i,:)),R(i,:).*sin(T(i,:)),10,'.k')
-    axis equal
-    hold on
-    set(gca,'FontSize',12)
-    xlabel('R','FontSize',12)
-    ylabel('Z','FontSize',12)
-    xlim([-1.1*rmax 1.1*rmax])
-    ylim([-1.1*rmax 1.1*rmax])
+    hold on;
    end
 
    xb    = 0;    
@@ -121,6 +121,13 @@ switch nz0
 
    scatter(xb,yb,bthick,'filled',bcol)
 
+    axis equal
+    hold on
+    set(gca,'FontSize',12)
+    xlabel('R','FontSize',12)
+    ylabel('Z','FontSize',12)
+    xlim([-1.1*rmax 1.1*rmax])
+    ylim([-1.1*rmax 1.1*rmax])
   end
 
 
@@ -132,13 +139,7 @@ switch nz0
 
   for i=1:nptraj       %for each field line trajectory
    scatter(R(i,:).*cos(T(i,:)),R(i,:).*sin(T(i,:)),10,'.k')
-   axis equal
-   hold on
-   set(gca,'FontSize',12)
-   xlabel('R','FontSize',12)
-   ylabel('Z','FontSize',12)
-   xlim([-1.1*rmax 1.1*rmax])
-   ylim([-1.1*rmax 1.1*rmax])
+   hold on;
   end
 
   xb    = 0;
@@ -154,6 +155,13 @@ switch nz0
   
   scatter(xb,yb,bthick,'filled',bcol)
 
+   axis equal
+   hold on
+   set(gca,'FontSize',12)
+   xlabel('R','FontSize',12)
+   ylabel('Z','FontSize',12)
+   xlim([-1.1*rmax 1.1*rmax])
+   ylim([-1.1*rmax 1.1*rmax])
 end
 
 

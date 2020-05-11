@@ -22,7 +22,7 @@ subroutine df00ab( pNN , xi , Fxi , DFxi , Ldfjac , iflag )
                         dMA, dMD, & ! energy and helicity matrices; 26 Feb 13;
 !                       MBpsi, MEpsi, psiMCpsi, psiMFpsi, & ! pre-calculated matrix vector products; 26 Feb 13;
                         MBpsi,                            & ! pre-calculated matrix vector products; 26 Feb 13;
-                        ivol
+                        ivol, IndMatrixArray
 
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -34,7 +34,7 @@ subroutine df00ab( pNN , xi , Fxi , DFxi , Ldfjac , iflag )
   REAL   , intent(in) :: xi(0:pNN-1)
   REAL                :: Fxi(0:pNN-1), DFxi(0:Ldfjac-1,0:pNN-1)
   
-  INTEGER             :: NN
+  INTEGER             :: NN, ind_matrix
   REAL                :: lmu ! , dpsi(1:2)
   
   BEGIN(df00ab)
@@ -50,27 +50,28 @@ subroutine df00ab( pNN , xi , Fxi , DFxi , Ldfjac , iflag )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   NN = pNN-1 ; lmu = xi(0)
-  
+  ind_matrix = IndMatrixArray(ivol, 2)
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   select case( iflag ) ! F = B.B - mu ( A.B - helicity );
    
   case( 1 ) ! return d F; 
 
-! !Fxi(   0) = - half * sum( xi(1:NN) * matmul( dMD(1:NN,1:NN), xi(1:NN) ) ) - sum( xi(1:NN) * MEpsi(1:NN) ) - psiMFpsi + helicity(ivol)
-   Fxi(   0) = - half * sum( xi(1:NN) * matmul( dMD(1:NN,1:NN), xi(1:NN) ) )                                            + helicity(ivol)
+! !Fxi(   0) = - half * sum( xi(1:NN) * matmul( dMD(ind_matrix)%mat(1:NN,1:NN), xi(1:NN) ) ) - sum( xi(1:NN) * MEpsi(1:NN) ) - psiMFpsi + helicity(ivol)
+   Fxi(   0) = - half * sum( xi(1:NN) * matmul( dMD(ind_matrix)%mat(1:NN,1:NN), xi(1:NN) ) )                                            + helicity(ivol)
 
-! !Fxi(1:NN) = matmul( dMA(1:NN,1:NN), xi(1:NN)  ) + MBpsi(1:NN) - lmu * ( matmul( dMD(1:NN,1:NN), xi(1:NN)  ) + MEpsi(1:NN) )
-   Fxi(1:NN) = matmul( dMA(1:NN,1:NN), xi(1:NN)  ) + MBpsi(1:NN) - lmu * ( matmul( dMD(1:NN,1:NN), xi(1:NN)  )               )
+! !Fxi(1:NN) = matmul( dMA(ind_matrix)%mat(1:NN,1:NN), xi(1:NN)  ) + MBpsi(ind_matrix)%arr(1:NN) - lmu * ( matmul( dMD(ind_matrix)%mat(1:NN,1:NN), xi(1:NN)  ) + MEpsi(1:NN) )
+   Fxi(1:NN) = matmul( dMA(ind_matrix)%mat(1:NN,1:NN), xi(1:NN)  ) + MBpsi(ind_matrix)%arr(1:NN) - lmu * ( matmul( dMD(ind_matrix)%mat(1:NN,1:NN), xi(1:NN)  )               )
 
   case( 2 ) ! return ddF;
 
    DFxi(   0,   0) = zero
 
-   DFxi(   0,1:NN) = - matmul( dMD(1:NN,1:NN), xi(1:NN)  ) ! - MEpsi(1:NN)
-   DFxi(1:NN,   0) = - matmul( dMD(1:NN,1:NN), xi(1:NN)  ) ! - MEpsi(1:NN)
+   DFxi(   0,1:NN) = - matmul( dMD(ind_matrix)%mat(1:NN,1:NN), xi(1:NN)  ) ! - MEpsi(1:NN)
+   DFxi(1:NN,   0) = - matmul( dMD(ind_matrix)%mat(1:NN,1:NN), xi(1:NN)  ) ! - MEpsi(1:NN)
 
-   DFxi(1:NN,1:NN) = dMA(1:NN,1:NN) - lmu * dMD(1:NN,1:NN)
+   DFxi(1:NN,1:NN) = dMA(ind_matrix)%mat(1:NN,1:NN) - lmu * dMD(ind_matrix)%mat(1:NN,1:NN)
 
   case default
 

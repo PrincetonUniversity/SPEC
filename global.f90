@@ -114,6 +114,15 @@ module typedefns
      REAL,    allocatable :: s(:)
      INTEGER, allocatable :: i(:)
   end type subgrid
+  
+  
+  type VarSizeMatrix
+        REAL, allocatable :: mat(:,:)
+  end type VarSizeMatrix
+  
+  type VarSizeArray
+        REAL, allocatable :: arr(:)
+  end type VarSizeArray
 
 end module typedefns
 
@@ -156,7 +165,7 @@ module inputlist
   INTEGER      :: Ntor                       =  0
   INTEGER      :: Lrad(1:MNvol+1)            =  4
   INTEGER      :: Lconstraint                = -1
-  REAL         ::     tflux(1:MNvol+1)       =  0.0
+  REAL         :: tflux(1:MNvol+1)           =  0.0
   REAL         ::     pflux(1:MNvol+1)       =  0.0
   REAL         ::  helicity(1:MNvol)         =  0.0
   REAL         :: pscale                     =  0.0
@@ -164,6 +173,8 @@ module inputlist
   INTEGER      :: Ladiabatic                 =  0
   REAL         :: adiabatic(1:MNvol+1)       =  0.0
   REAL         ::        mu(1:MNvol+1)       =  0.0
+  REAL         :: Ivolume(1:MNvol+1)         =  0.0
+  REAL         :: Isurf(1:MNvol)             =  0.0   
   INTEGER      ::        pl(0:MNvol)         =  0
   INTEGER      ::        ql(0:MNvol)         =  0
   INTEGER      ::        pr(0:MNvol)         =  0
@@ -266,6 +277,7 @@ module inputlist
   REAL         :: absacc           =     1.0e-04 ! redundant; 
   REAL         :: epsr             =     1.0e-08 ! redundant; 
   INTEGER      :: nPpts            =     0
+  REAL         :: Ppts             =     0.0
   INTEGER      :: nPtrj(1:MNvol+1) =    -1
   LOGICAL      :: LHevalues        =  .false.
   LOGICAL      :: LHevectors       =  .false.
@@ -352,6 +364,9 @@ module inputlist
                 !latex             and in the vacuum region $\Delta\psi_t$ and $\Delta \psi_p$ are varied to match the transform constraint on the boundary
                 !latex             and to obtain the prescribed linking current, \inputvar{curpol}, and $\mu = 0$.
                 !latex \item[iv.]  if \inputvar{Lconstraint}.eq.2, under reconstruction.
+        !latex \item[v.] if \inputvar{Lconstraint} eq.3, then the $\mu$ and $\psi_p$ variables are adjusted in order to satisfy the volume and surface toroidal current
+        !latex        computed with \link{lbpol} (excepted in the inner most volume, where the volume current is irrelevant). Not implemented yet in free
+        !latex        boundary.     
                 !latex \ei
  tflux       ,& !latex \item \inputvar{tflux} : \verb!real(1:MNvol+1)! : toroidal flux, $\psi_t$, enclosed by each interface;
                 !latex \bi
@@ -390,6 +405,9 @@ module inputlist
                 !latex \item[i.] \inputvar{pressure} is only used in calculation of interface force-balance;
                 !latex \ei
  mu          ,& !latex \item \inputvar{mu} : \verb!real(1:MNvol+1)! : helicity-multiplier, $\mu$, in each volume;
+ Ivolume     ,& !latex \item \inputvar{Ivolume} : \verb!real(1:MNvol+1)! : Toroidal current constraint normalized by $\mu_0$ ($I_{volume} = \mu_0\cdot [A]$), in each volume. This is a 
+                !latex          cumulative quantity: $I_{\mathcal{V},i} = \int_0^{\psi_{t,i}} \mathbf{J}\cdot\mathbf{dS}$. Physically, it represents the sum of all non-pressure driven currents;
+ Isurf       ,& !latex \item \inputvar{Isurf} : \verb!real(1:MNvol)! : Toroidal current normalized by $\mu_0$ at each interface (cumulative). This is the sum of all pressure driven currents.;
  pl          ,& !latex \item \inputvar{pl = 0} : \verb!integer(0:MNvol)! :
  ql          ,& !latex \item \inputvar{ql = 0} : \verb!integer(0:MNvol)! :
  pr          ,& !latex \item \inputvar{pr = 0} : \verb!integer(0:MNvol)! :
@@ -777,6 +795,8 @@ module inputlist
  nPpts      ,&  !latex \item \inputvar{nPpts = 0} : integer : number of toroidal transits used (per trajectory) in following field lines
                 !latex for constructing \Poincare plots;
                 !latex if \inputvar{nPpts<1}, no \Poincare plot is constructed;
+ Ppts       ,&  !latex \item \inputvar{Ppts = 0} : stands for Poincare plot theta start. Chose at which angle (normalized over $\pi$) the Poincare field-line 
+                !latex tracing start.
  nPtrj      ,&  !latex \item \inputvar{nPtrj = -1 : integer(1:MNvol+1)} : number of trajectories in each annulus to be followed in constructing \Poincare plot;
                 !latex \bi
                 !latex \item if \inputvar{nPtrj(l)<0}, then \inputvar{nPtrj(l) = Ni(l)},
@@ -889,9 +909,10 @@ module allglobal
 
   implicit none
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!``-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   INTEGER              :: myid, ncpu       ! mpi variables;
+  INTEGER           :: IsMyVolumeValue
   REAL                 :: cpus             ! initial time;
 
   REAL                 :: pi2nfp           !       pi2/nfp     ; assigned in readin;
@@ -903,6 +924,8 @@ module allglobal
 
   REAL                 :: ForceErr, Energy
 
+  REAL   , allocatable :: IPDt(:)                    ! Toroidal pressure-driven current
+
   INTEGER              :: Mvol
 
   LOGICAL              :: YESstellsym, NOTstellsym ! internal shorthand copies of Istellsym, which is an integer input; 
@@ -912,6 +935,8 @@ module allglobal
   REAL   , allocatable :: TT(:,:,:) ! derivatives of Chebyshev polynomials at the inner and outer interfaces;
 
   LOGICAL, allocatable :: ImagneticOK(:)   ! used to indicate if Beltrami fields have been correctly constructed;
+
+  LOGICAL           :: IconstraintOK         ! Used to break iteration loops of slaves in the global constraint minimization.
 
   REAL   , allocatable :: beltramierror(:,:)  ! to store the integral of |curlB-mu*B| computed by jo00aa;
     
@@ -1090,6 +1115,8 @@ module allglobal
   INTEGER      , allocatable :: Fso(:,:), Fse(:,:)
 
   LOGICAL                    :: Lcoordinatesingularity, Lplasmaregion, Lvacuumregion
+  
+  LOGICAL             :: Localconstraint
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -1105,19 +1132,19 @@ module allglobal
 !latex \item These are allocated and deallocated in \link{dforce}, assigned in \link{matrix}, and used in \link{mp00ac} and ? \link{df00aa}.
 !latex \end{enumerate}
 
-   REAL,   allocatable :: dMA(:,:), dMB(:,:)! dMC(:,:) ! energy and helicity matrices; quadratic forms; 
-   REAL,   allocatable :: dMD(:,:)! dME(:,:)! dMF(:,:) ! energy and helicity matrices; quadratic forms; 
-
-   REAL,   allocatable :: dMG(:  )
-
-   REAL,   allocatable :: solution(:,:) ! this is allocated in dforce; used in mp00ac and ma02aa; and is passed to packab; 
+   INTEGER, allocatable :: IndMatrixArray(:,:)    ! Store matrices index in geometry dependent matrice arrays
+   
+   type(VarSizeMatrix),   allocatable :: dMA(:), dMB(:)! dMC(:,:) ! energy and helicity matrices; quadratic forms; 
+   type(VarSizeMatrix),   allocatable :: dMD(:)! dME(:,:)! dMF(:,:) ! energy and helicity matrices; quadratic forms; 
+   type(VarSizeArray) ,   allocatable :: dMG(:  )
+   type(VarSizeMatrix),   allocatable :: solution(:) ! this is allocated in dforce; used in mp00ac and ma02aa; and is passed to packab; 
 
 !  REAL,   allocatable :: MBpsi(:), MEpsi(:) ! matrix vector products; 
-   REAL,   allocatable :: MBpsi(:)           ! matrix vector products; 
+   type(VarSizeArray),   allocatable :: MBpsi(:)           ! matrix vector products; 
 !  REAL                :: psiMCpsi, psiMFpsi
 !  REAL                ::           psiMFpsi
 
-   REAL,   allocatable :: BeltramiInverse(:,:)
+   REAL,    allocatable :: BeltramiInverse(:,:)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1392,7 +1419,7 @@ subroutine readin
 
   LOGICAL              :: Lspexist, Lchangeangle
   INTEGER              :: vvol, mm, nn, nb, imn, ix, ii, jj, ij, kk, mj, nj, mk, nk, ip, lMpol, lNtor, X02BBF, iargc, iarg, numargs, mi, ni, lvol, extlen, sppos
-  REAL                 :: xx, toroidalflux
+  REAL                 :: xx, toroidalflux, toroidalcurrent
   REAL,    allocatable :: RZRZ(:,:) ! local array used for reading interface Fourier harmonics from file;
   
   CHARACTER            :: ldate*8, ltime*10, arg*100
@@ -1511,6 +1538,11 @@ subroutine readin
 !latex       \inputvar{pflux(1:Mvol)} $\rightarrow$ \inputvar{pflux(1:Mvol)/tflux(Nvol)}.
 !latex
 !latex       (The input $\Phi_{edge} \equiv $ \inputvar{phiedge} will provide the total toroidal flux; see \link{preset}.)
+!latex \item The input value for the toroidal current constraint (\inputvar{Isurf(1:Mvol)} and \inputvar{Ivolume(1:Mvol)}) are also immediately normalized, using \inputvar{curtor}.
+!latex
+!latex        $Ivolume \rightarrow Ivolume\cdot \frac{curtor}{\sum_i Isurf_i + Ivolume_i}$
+!latex
+!latex        $Isurf \rightarrow Isurf\cdot \frac{curtor}{\sum_i Isurf_i + Ivolume_i}$
 !latex \end{enumerate}
       
    if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : reading physicslist     from ext.sp ;")') cput-cpus
@@ -1538,7 +1570,7 @@ subroutine readin
 1013 format("readin : ", 10x ," : Nfp=",i3," ; Nvol=",i3," ; Mvol=",i3," ; Mpol=",i3," ; Ntor=",i3," ;")
 1014 format("readin : ", 10x ," : pscale="es13.5" ; Ladiabatic="i2" ; Lconstraint="i3" ; mupf: tol,its="es10.2" ,"i4" ;")
 1015 format("readin : ", 10x ," : Lrad = "257(i2,",",:))
-   
+
 #ifdef DEBUG
    if( Wreadin ) then
     write(ounit,'("readin : ",f10.2," : tflux    ="257(es11.3" ,":))') cput-cpus, (    tflux(vvol), vvol = 1, Mvol )
@@ -1546,6 +1578,8 @@ subroutine readin
     write(ounit,'("readin : ",f10.2," : helicity ="256(es11.3" ,":))') cput-cpus, ( helicity(vvol), vvol = 1, Nvol )
     write(ounit,'("readin : ",f10.2," : pressure ="257(es11.3" ,":))') cput-cpus, ( pressure(vvol), vvol = 1, Mvol )
     write(ounit,'("readin : ",f10.2," : mu       ="257(es11.3" ,":))') cput-cpus, (       mu(vvol), vvol = 1, Mvol )
+    write(ounit,'("readin : ",f10.2," : Ivolume  ="257(es11.3" ,":))') cput-cpus, (  Ivolume(vvol), vvol = 1, Mvol )
+    write(ounit,'("readin : ",f10.2," : Isurf    ="257(es11.3" ,":))') cput-cpus, (    Isurf(vvol), vvol = 1, Mvol )
    endif
 #endif
    
@@ -1557,7 +1591,7 @@ subroutine readin
    FATAL( readin, mupftol.le.zero, mupftol is too small )
    FATAL( readin, abs(one+gamma).lt.vsmall, 1+gamma appears in denominator in dforce ) ! Please check this; SRH: 27 Feb 18;
    FATAL( readin, abs(one-gamma).lt.vsmall, 1-gamma appears in denominator in fu00aa ) ! Please check this; SRH: 27 Feb 18;
-   FATAL( readin, Lconstraint.lt.-1 .or. Lconstraint.gt.2, illegal Lconstraint )
+   FATAL( readin, Lconstraint.lt.-1 .or. Lconstraint.gt.3, illegal Lconstraint )
    FATAL( readin, Igeometry.eq.1 .and. rpol.lt.vsmall, poloidal extent of slab too small or negative )   
    FATAL( readin, Igeometry.eq.1 .and. rtor.lt.vsmall, toroidal extent of slab too small or negative )
 
@@ -1585,7 +1619,41 @@ subroutine readin
    enddo
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-   
+!latex \subsubsection{Current profiles normalization}
+!latex
+!latex In case of a free boundary calculation (\inputvar{Lfreebound}=1) and using a current constraint (\inputvar{Lconstraint}=3), the current profiles are
+!latex renormalized in order to match the linking current \inputvar{curtor}. More specifically,
+!latex \begin{align}
+!latex Isurf_i\ \rightarrow\ Isurf_i\cdot\frac{curtor}{\sum_{i=1}^{Mvol-1} Isurf_i+Ivol_i}
+!latex Ivol_i\ \rightarrow\ Ivol_i\cdot\frac{curtor}{\sum_{i=1}^{Mvol-1} Isurf_i+Ivol_i}.
+!latex \end{align}
+!latex Finally, the volume current in the vacuum region is set to $0$.
+
+    ! Current constraint normalization
+    
+    if ((Lfreebound.EQ.1) .and. (Lconstraint.EQ.3)) then
+        
+        Ivolume(Mvol) = Ivolume(Mvol-1) !Ensure vacuum in vacuum region
+
+        toroidalcurrent = Ivolume(Mvol) + sum(Isurf(1:Mvol-1))
+        
+        if( curtor.NE.0 ) then
+            FATAL( readin, toroidalcurrent.EQ.0 , Incompatible current profiles and toroidal linking current)
+
+            Ivolume(1:Mvol) = Ivolume(1:Mvol) * curtor / toroidalcurrent
+            Isurf(1:Mvol-1) = Isurf(1:Mvol-1) * curtor / toroidalcurrent
+
+        else
+            FATAL( readin, toroidalcurrent.NE.0, Incompatible current profiles and toroidal linking current)
+
+            ! No rescaling if profiles have an overall zero toroidal current
+        endif
+    endif
+    
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+
    do vvol = 1, Mvol
     FATAL( readin, Lrad(vvol ).lt.2, require Chebyshev resolution Lrad > 2 so that Lagrange constraints can be satisfied )
    enddo
@@ -1753,6 +1821,8 @@ subroutine readin
   IlBCAST( Ladiabatic ,       1, 0 )
   RlBCAST( adiabatic  , MNvol+1, 0 )
   RlBCAST( mu         , MNvol+1, 0 )
+  RlBCAST( Ivolume    , MNvol+1, 0 )
+  RlBCAST( Isurf      , MNvol+1, 0 )
   IlBCAST( Lconstraint,       1, 0 )
   IlBCAST( pl         , MNvol  , 0 )
   IlBCAST( ql         , MNvol  , 0 )
@@ -1844,6 +1914,7 @@ subroutine readin
  !RlBCAST( absacc    , 1      , 0 )
  !RlBCAST( epsr      , 1      , 0 )
   IlBCAST( nPpts     , 1      , 0 )
+  RlBCAST( Ppts      , 1      , 0 )
   IlBCAST( nPtrj     , MNvol+1, 0 )
   LlBCAST( LHevalues , 1      , 0 )
   LlBCAST( LHevectors, 1      , 0 )
@@ -2312,6 +2383,8 @@ subroutine wrtend
   write(iunit,'(" pressure    = ",257es23.15)') pressure(1:Mvol)
   write(iunit,'(" adiabatic   = ",257es23.15)') adiabatic(1:Mvol)
   write(iunit,'(" mu          = ",257es23.15)') mu(1:Mvol)
+  write(iunit,'(" Ivolume     = ",257es23.15)') Ivolume(1:Mvol)
+  write(iunit,'(" Isurf       = ",257es23.15)') Isurf(1:Mvol-1)
   write(iunit,'(" Lconstraint = ",i9        )') Lconstraint
   write(iunit,'(" pl          = ",257i23    )') pl(0:Mvol)
   write(iunit,'(" ql          = ",257i23    )') ql(0:Mvol)
@@ -2498,6 +2571,7 @@ subroutine wrtend
  !write(iunit,'(" absacc      = ",es23.15       )') absacc
  !write(iunit,'(" epsr        = ",es23.15       )') epsr
   write(iunit,'(" nPpts       = ",i9            )') nPpts
+  write(iunit,'(" Ppts        = ",es23.15       )') Ppts
   write(iunit,'(" nPtrj       = ",256i6         )') nPtrj(1:Mvol)
   write(iunit,'(" LHevalues   = ",L9            )') LHevalues
   write(iunit,'(" LHevectors  = ",L9            )') LHevectors
@@ -2544,7 +2618,63 @@ subroutine wrtend
 
 end subroutine wrtend
   
+subroutine IndMatrix(cpuid, vvol, ind_matrix)
+
+!latex \subsection{subroutine IndMatrix}
+!latex To reduce the size of Geometry dependent matrices array \internal{dMA}, \internal{dMB}, \internal{dMD}, \internal{dMG}, \internal{MBpsi} and \internal{solution},
+!latex we allocate them only the relevant number of matrices (one per volume associated to this \interl{cpuid}).
+
+LOCALS
+
+INTEGER :: vvol, cpuid, ind_matrix
+INTEGER :: cpuid_comp
+
+! If the volume is not associated to the CPU, get an error
+call WhichCpuID(vvol, cpuid_comp)
+if (cpuid_comp.NE.cpuid) then
+    FATAL( dforce, .true., Error: called IndMatrix with wrong CPU ?)
+endif
+
+end subroutine IndMatrix
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+subroutine IsMyVolume(vvol)
+
+!latex \subsection{subroutine IsMyVolume}
+!latex Check if volume vvol is associated to the corresponding MPI node.
+
+LOCALS
+
+INTEGER :: vvol
+INTEGER :: lwbnd, upbnd
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+IsMyVolumeValue = -1 ! Error value - Problem with vvol / id
+if( myid.ne.modulo(vvol-1,ncpu) ) then
+  IsMyVolumeValue = 0
+else
+  IsMyVolumeValue = 1
+endif
+
+end subroutine IsMyVolume
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+subroutine WhichCpuID(vvol, cpu_id)
+!latex \subsection{subroutine WhichCpuID}
+!latex Returns which MPI node is associated to a given volume.
+
+LOCALS
+
+INTEGER            :: vvol, cpu_id
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+cpu_id = modulo(vvol-1,ncpu)
+
+end subroutine WhichCpuID
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

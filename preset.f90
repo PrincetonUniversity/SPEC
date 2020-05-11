@@ -15,7 +15,7 @@ subroutine preset
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  use constants, only : zero
+  use constants, only : zero, mu0
   
   use numerical, only : sqrtmachprec, vsmall, small
   
@@ -34,14 +34,26 @@ subroutine preset
   LOCALS
   
   INTEGER   :: innout, idof, jk, ll, ii, ifail, ideriv, vvol, mi, ni, mj, nj, mk, nk, mimj, ninj, mkmj, nknj, jj, kk, lvol, mm, nn, imn
-  INTEGER   :: lquad, igauleg, maxIquad, Mrad, jquad, Lcurvature
+  INTEGER   :: lquad, igauleg, maxIquad, Mrad, jquad, Lcurvature, iret, work1, work2
   REAL      :: teta, zeta, arg, lss, cszeta(0:1), error
-  
+
   BEGIN(preset)
   
   call random_seed()
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+
+    if( (Lconstraint.EQ.3) .and. (Lfindzero.EQ.2)) then
+        if( myid.EQ.0 ) then
+            !write(ounit, '(/, "!!! WARNING: Using Lfindzero=2 with Lconstraint=3 might not converge. The hessian at fixed toroidal current has not yet been implemented. !!!", /)') 
+            FATAL(preset, .true., Lconstraint=3 is incompatible with Lfindzero=2. Use Lfindzero=1 instead)
+        endif
+    endif
   
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+
+
  !FATAL( preset, Nfp.eq.0, illegal division ) ! this was checked in global: readin; SRH: 27 Feb 18;
 
   pi2nfp         = pi2 / Nfp
@@ -136,6 +148,34 @@ subroutine preset
   
   dtflux(1:Mvol) = dtflux(1:Mvol) * phiedge / pi2
   dpflux(1:Mvol) = dpflux(1:Mvol) * phiedge / pi2
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+!latex \subsubsection{\type{mu(1:Mvol)} evaluation of \inputvar{mu} from \inputvar{Ivolume};}
+!latex Only used when $Lconstraint = 3$. The coefficients \inputvar{mu} are evaluated as
+!latex \begin{equation}
+!latex \mu_1 = \mu_0 \frac{I_{volume}(1)}{\psi_{t,1}}
+!latex \end{equation}
+!latex \begin{equation}
+!latex \mu_n = \mu_0 \frac{I_{volume}(n) - I_{volume}(n-1)}{\psi_{t,n}-\psi_{t,n-1}},\qquad \forall\ n>1;
+!latex \end{equation}
+
+if (Lconstraint.EQ.3) then
+
+  mu(1) = Ivolume(1) / (tflux(1) * phiedge)
+  
+  do vvol = 2, Mvol
+    mu(vvol) = (Ivolume(vvol) - Ivolume(vvol-1)) / ((tflux(vvol) - tflux(vvol-1)) * phiedge)
+  end do
+
+#ifdef DEBUG
+  write(*,*) " "
+  write(ounit,'("preset : ", 10x ," : Ivolume = "257(es11.3",",:))') (Ivolume(vvol), vvol=1, Mvol)
+  write(ounit,'("preset : ", 10x ," : tflux   = "257(es11.3",",:))') (  tflux(vvol), vvol=1, Mvol)
+  write(ounit,'("preset : ", 10x ," : phiedge = "257(es11.3",",:))') phiedge
+  write(ounit,'("preset : ", 10x ," : mu      = "257(es11.3",",:))') (     mu(vvol), vvol=1, Mvol)
+#endif
+endif
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -216,8 +256,19 @@ subroutine preset
   SALLOCATE( ImagneticOK, (1:Mvol), .false. )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+!latex \subsubsection{\type{IconstraintOK} : Global constraint flag;}
+  
+!latex \begin{enumerate}
+!latex \item error flags that indicate if solution found is consistent with the global constraint
+!latex \item \type{ImagneticOK} is initialized to \type{.false.}
+!latex       If the construction the difference between the evaluated global constraint and in the input is small enough, 
+!latex       then \type{ImagneticOK} is set to \type{.true.}.
+!latex \end{enumerate}
 
-!latex \subsubsection{\type{Lhessianallocated}}
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+!latex \subsubsection{\type{Lhessianallocated};}
 
 !latex \begin{enumerate}
 !latex \item The internal logical variable, \type{Lhessianallocated}, indicates whether the ``Hessian'' matrix of second-partial derivatives
@@ -334,7 +385,7 @@ subroutine preset
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\type{djkp}}
+!latex \subsubsection{\type{djkp};}
 
   if( Igeometry.eq.2 ) then ! standard cylindrical; 04 Dec 14;
    
@@ -352,7 +403,7 @@ subroutine preset
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-!latex \subsubsection{\type{iotakki}}
+!latex \subsubsection{\type{iotakki};}
 
   SALLOCATE( iotakkii, (1:mn      ), 0 ) ! used to identify matrix elements in straight-field-line angle transformation;
   
@@ -407,6 +458,12 @@ subroutine preset
    
   enddo ! end of do kk; 29 Jan 13;
   
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+! Allocate space for the toroidal current array in each interface
+
+  SALLOCATE( IPDt, (1:Mvol-1), zero)
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !latex \subsubsection{\type{cheby(0:Lrad,0:2)} : Chebyshev polynomial workspace;}
@@ -486,7 +543,7 @@ subroutine preset
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
  
-!latex \subsubsection{\type{LBsequad}, \type{LBnewton} and \type{LBlinear}}
+!latex \subsubsection{\type{LBsequad}, \type{LBnewton} and \type{LBlinear};}
   
 !latex \begin{enumerate}
 !latex \item \type{LBsequad}, \type{LBnewton} and \type{LBlinear} depend simply on \type{LBeltrami}, which is described in \link{global}.
@@ -517,7 +574,7 @@ subroutine preset
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-!latex \subsubsection{\type{BBweight(1:mn)} : weighting of force-imbalance harmonics}
+!latex \subsubsection{\type{BBweight(1:mn)} : weighting of force-imbalance harmonics;}
 
 !latex \begin{enumerate}
 !latex \item weight on force-imbalance harmonics;
@@ -535,7 +592,7 @@ subroutine preset
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\type{mmpp(1:mn)} : spectral condensation weight factors}
+!latex \subsubsection{\type{mmpp(1:mn)} : spectral condensation weight factors;}
 
 !latex \begin{enumerate}
 !latex \item spectral condensation weight factors;
@@ -556,7 +613,7 @@ subroutine preset
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-!latex \subsubsection{\type{NAdof}, \type{Ate}, \type{Aze}, \type{Ato} and \type{Azo} : degrees-of-freedom in magnetic vector potential}
+!latex \subsubsection{\type{NAdof}, \type{Ate}, \type{Aze}, \type{Ato} and \type{Azo} : degrees-of-freedom in magnetic vector potential;}
   
 !latex \begin{enumerate}
 !latex \item \type{NAdof(1:Mvol)} $\equiv$ total number of degrees-of-freedom in magnetic vector potential, including Lagrange multipliers, in each volume.
@@ -751,10 +808,98 @@ subroutine preset
    write(ounit,'("preset : ", 10x ," : ")')         
    write(ounit,'("preset : ",f10.2," : Nquad="i4" ; mn="i5" ; NGdof="i6" ; NAdof="16(i6",")" ...")') cput-cpus, Nquad, mn, NGdof, NAdof(1:min(Mvol,16))
   endif
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+!latex \subsection{Definition and allocation of Chebyshev-metric matrices;}
+!latex
+!latex Variables \internal{dMA}, \internal{dMB}, \internal{dMD} and \internal{solution} are arrays of size (1:Mvol). Then each array element has a 
+!latex data field called \emph{mat}, with size
+!latex \begin{itemize}
+!latex         \item  \internal{dMA(vvol)\% mat(0:NN, 0:NN)}
+!latex         \item  \internal{dMB(vvol)\% mat(0:NN, 0:2)}
+!latex         \item  \internal{dMD(vvol)\% mat(0:NN, 0:NN)}
+!latex         \item  \internal{solution(vvol)\% mat(0:NN, -1:2)}. 
+!latex \end{itemize}
+!latex
+!latex Arrays \internal{dMG(1:Mvol)} and \internal{MBpsi(1:Mvol)} has a field called \emph{arr} with size
+!latex \begin{itemize}
+!latex         \item \internal{dMG(vvol)\% arr(0:NN)}
+!latex         \item \internal{MBpsi(vvol)\% arr(1:NN)}
+!latex \end{itemize}
+
+
+! HERE DEFINE THE NEW MATRICES ARRAY
+
+! generate a matrix containing the pair (cpuid, matrix_index) for each volume
+allocate(IndMatrixArray(1:Mvol, 1:2))
+do vvol=1, Mvol 
+    call WhichCpuID(vvol, work1)
+    IndMatrixArray(vvol,1) = work1 !CpuID associated to this volume
+
+    ! Count how many volumes are already associated to this CPU
+    work1=0
+    do lvol=1,vvol
+        call WhichCpuID(lvol, work2)
+        if (work2.EQ.IndMatrixArray(vvol, 1)) then
+            work1 = work1 + 1
+        endif
+    enddo
+    IndMatrixArray(vvol, 2) = work1 ! index of volume in the list of volume for this CPU
+enddo
+
+
+! Allocate matrices
+work1 = 0
+do vvol =1, Mvol !Count how many volumes are associated to this CPU
+    call IsMyVolume(vvol)
+    if (IsMyVolumeValue.EQ.1) then
+        work1=work1+1
+    endif
+enddo
+
+! Allocate only the required number of matrices to each array
+allocate(dMA(1:work1))
+allocate(dMB(1:work1))
+allocate(dMD(1:work1))
+allocate(dMG(1:work1))
+allocate(MBpsi(1:work1))
+allocate(solution(1:Mvol)) !Excepted for solution which is broadcaster
+
+do ii = 1, work1
+  do jj = 1, Mvol ! Look for associated volume corresponding to (myid, ii)
+    if ((myid.EQ.IndMatrixArray(jj, 1)).AND.(ii.EQ.IndMatrixArray(jj, 2))) then
+        vvol = jj
+        exit !Found the volume, we can exit do loop
+    endif
+  enddo
+
+  NN = NAdof(vvol)
+  allocate( dMA(ii)%mat(0:NN, 0:NN) )
+  dMA(ii)%mat(0:NN, 0:NN)  = 0
   
+  allocate( dMB(ii)%mat(0:NN, 0:2) )
+  dMB(ii)%mat(0:NN, 0:2) = 0
+  
+  allocate( dMD(ii)%mat(0:NN, 0:NN) )
+  dMD(ii)%mat(0:NN, 0:NN) = 0
+  
+  allocate( dMG(ii)%arr(0:NN) )
+  dMG(ii)%arr(0:NN) = 0
+  
+  allocate( MBpsi(ii)%arr(1:NN) )
+  MBpsi(ii)%arr(1:NN) = 0
+
+enddo
+
+do vvol = 1, Mvol
+  NN = NAdof(vvol)
+  allocate( solution(vvol)%mat(1:NN, -1:2))
+  solution(vvol)%mat(1:NN, -1:2) = 0
+enddo
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-!latex \subsubsection{\type{workspace}}
+!latex \subsubsection{\type{workspace};}
 
 ! Fourier transforms;
 
@@ -863,7 +1008,7 @@ subroutine preset
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\type{cosi(1:Ntz,1:mn)} and \type{sini(1:Ntz,1:mn)}}
+!latex \subsubsection{\type{cosi(1:Ntz,1:mn)} and \type{sini(1:Ntz,1:mn)};}
 
 !latex \begin{enumerate}
 !latex \item Trigonometric factors used in various Fast Fourier transforms, where
@@ -958,7 +1103,7 @@ subroutine preset
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\type{psifactor(1:mn,1:Mvol)} : coordinate ``pre-conditioning'' factor}
+!latex \subsubsection{\type{psifactor(1:mn,1:Mvol)} : coordinate ``pre-conditioning'' factor;}
   
 !latex \begin{enumerate}
 
@@ -1098,7 +1243,7 @@ subroutine preset
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\type{diotadxup} and \type{glambda} : transformation to straight fieldline angle}
+!latex \subsubsection{\type{diotadxup} and \type{glambda} : transformation to straight fieldline angle;}
 
 !latex \begin{enumerate}
 !latex \item Given the Beltrami fields in any volume, the rotational-transform on the adjacent interfaces 
@@ -1166,7 +1311,7 @@ subroutine preset
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\type{vvolume}, \type{lBBintegral} and \type{lABintegral}}
+!latex \subsubsection{\type{vvolume}, \type{lBBintegral} and \type{lABintegral};}
 
 !latex \begin{enumerate}
 !latex \item volume integrals
@@ -1225,6 +1370,12 @@ subroutine preset
   endif ! Lfreebound > 1; 7 Nov 18;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  if( Lconstraint .EQ. 3) then
+    Localconstraint = .false.
+  else
+    Localconstraint = .true.
+  endif
 
   RETURN(preset)
 

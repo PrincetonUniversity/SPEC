@@ -34,7 +34,7 @@ program xspech
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  use constants, only : zero, one, pi2
+  use constants, only : zero, one, pi2, mu0
 
   use numerical, only : vsmall, logtolerance
 
@@ -46,10 +46,11 @@ program xspech
                         Rbc, Zbs, Rbs, Zbc, &
                         Lconstraint, &
                         Lfreebound, mfreeits, gBntol, gBnbld, vcasingtol, LautoinitBn, &
-                        Lfindzero, &
+                        Lfindzero, LautoinitBn, &
                         odetol, nPpts, nPtrj, &
                         LHevalues, LHevectors, LHmatrix, Lperturbed, Lcheck, &
-                        Lzerovac
+                        Lzerovac, &
+                        mu, Isurf, Ivolume
 
   use cputiming, only : Txspech
 
@@ -74,8 +75,9 @@ program xspech
                         nfreeboundaryiterations, &
                         beltramierror, &
                         first_free_bound, &
+                        dMA, dMB, dMD, dMG, MBpsi, solution, dtflux, IPDt, &
                         version
-
+                        
    ! write _all_ output quantities into a _single_ HDF5 file
    use sphdf5,   only : init_outfile, &
                         mirror_input_to_outfile, &
@@ -88,19 +90,29 @@ program xspech
 
   LOGICAL              :: LComputeDerivatives, LContinueFreeboundaryIterations, exist, LupdateBn
 
-! INTEGER              :: nfreeboundaryiterations, imn, lmn, lNfp, lim, lin, ii ! 09 Mar 17;
+! INTEGER              :: nfreeboundaryiterations, imn, lmn, lNfp, lim, lin, ii, lvol ! 09 Mar 17;
   INTEGER              :: imn, lmn, lNfp, lim, lin, ii, ideriv
   INTEGER              :: vvol, llmodnp, ifail, wflag, iflag, vflag
-  REAL                 :: rflag, lastcpu, bnserr, lRwc, lRws, lZwc, lZws, lItor, lGpol, lgBc, lgBs
-  REAL,    allocatable :: position(:), gradient(:)
+  REAL                 :: rflag, lastcpu, bnserr, lRwc, lRws, lZwc, lZws, lItor, lGpol, lgBc, lgBs, sumI
+  REAL,    allocatable :: position(:), gradient(:), Bt00(:,:)
   CHARACTER            :: pack
   INTEGER              :: Lfindzero_old, mfreeits_old
-  REAL                 :: gBnbld_old  
+  REAL                 :: gBnbld_old
   INTEGER              :: lnPtrj, numTrajTotal
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   MPISTART ! It might be easy to read the source if this macro was removed; SRH: 27 Feb 18;
+
+!#ifdef DEBUG
+!  iwait = 0; pid = getpid()
+!  status = hostnm( hostname )
+!  write(*,*) 'Process with PID: ', pid, 'ready to attach. Hostname: ', hostname
+!  do while( iwait .EQ. 0 )
+!    !wait for debugger
+!  enddo
+!#endif
+  
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -198,7 +210,7 @@ program xspech
         gBnbld = gBnbld_old
         mfreeits = mfreeits_old
      endif
-  endif 
+  endif
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -552,6 +564,7 @@ program xspech
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+
 !latex \subsection{output files: vector potential} 
 !latex \begin{enumerate}
 !latex \item The vector potential is written to file using \link{ra00aa}.
@@ -616,6 +629,28 @@ program xspech
 !2000 format("finish : ",f10.2," : finished ",i3," ; ":"|f|="es12.5" ; ":"time=",f10.2,"s ;":" log"a5,:"="28f6.2" ...")
 !2001 format("finish : ", 10x ," :          ",3x," ; ":"    "  12x "   ":"     ", 10x ,"  ;":" log"a5,:"="28f6.2" ...")
   
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+! Computes the surface current at each interface for output
+
+  SALLOCATE( Bt00, (1:Mvol, 0:1) , zero)
+
+  do vvol = 1, Mvol
+    WCALL(xspech, lbpol, (vvol, Bt00(1:Mvol, 0:1)) )
+  enddo
+
+  do vvol = 1, Mvol-1
+    IPDt(vvol) = pi2 * (Bt00(vvol+1, 0) - Bt00(vvol, 1))
+  enddo
+
+  DALLOCATE( Bt00 )
+
+! and the volume current
+  sumI = 0
+  do vvol = 1, Mvol
+    Ivolume(vvol) = mu(vvol) * dtflux(vvol) * pi2 + sumI    ! factor pi2 due to normalization in preset
+    sumI = Ivolume(vvol)                                    ! Sum over all volumes since this is how Ivolume is defined
+  enddo
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   if( myid.eq.0 ) then ! this is just screen diagnostics; 20 Jun 14;
@@ -716,6 +751,25 @@ program xspech
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 9999 continue
+
+  do ii = 1, size(dMA)
+    deallocate(dMA(ii)%mat)
+    deallocate(dMB(ii)%mat)
+    deallocate(dMD(ii)%mat)
+    deallocate(dMG(ii)%arr)
+    deallocate(MBpsi(ii)%arr)
+  enddo
+  deallocate(dMA)
+  deallocate(dMB)
+  deallocate(dMD)
+  deallocate(dMG)
+  deallocate(MBpsi)
+
+  do ii = 1, Mvol
+    deallocate(solution(ii)%mat)
+  enddo
+  deallocate(solution)
+
 
   WCALL( xspech, ending )
 

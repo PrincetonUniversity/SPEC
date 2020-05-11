@@ -1,8 +1,12 @@
-function plot_spec_pressure(fname)
+function plot_spec_pressure(fname, new_figure)
 
 % Plots stepped-pressure profile (without pscale) versus normalized toroidal flux used in SPEC
-%   -fname   : filename in HDF5 format 
+%   -fname   :      filename in HDF5 format 
+%   -new_figure:    1 (0) to (not) open a new figure. =2 to erase existing
+%                   figure
 %   written by J.Loizu (2018)
+%		modified by A. Baillod (2019)
+
 
 
 data = read_spec_grid(fname);
@@ -15,39 +19,27 @@ Nvol = data.Nvol;
 
 p0   = zeros(1,10);
 
-figure
-hold on
-
-p0(1:end) = pvol(1);
-tmin      = 0;
-tmax      = tfl(1);
-tarr      = linspace(tmin,tmax,10);
-plot(tarr,p0,'b')
-x         = [tfl(1),tfl(1)];
-y         = [pvol(2) pvol(1)];
-plot(x,y,'b')
-
-for i=2:Nvol-1
-
- p0(1:end) = pvol(i);
- tmin      = tfl(i-1);
- tmax      = tfl(i);
- tarr      = linspace(tmin,tmax,10);
- plot(tarr,p0,'b')
- x         = [tfl(i),tfl(i)];
- y         = [pvol(i+1) pvol(i)];
- plot(x,y,'b')
-
+if new_figure==1
+    figure
+    hold on;
+elseif new_figure==2
+    hold off;
+elseif new_figure==0
+    hold on;
 end
 
-p0(1:end) = pvol(Nvol);
-tmin      = tfl(Nvol-1);
-tmax      = tfl(Nvol);
-tarr      = linspace(tmin,tmax,10);
-plot(tarr,p0,'b')
-x         = [tfl(Nvol),tfl(Nvol)];
-y         = [0 pvol(Nvol)];
-plot(x,y,'b')
+
+phi_plot = linspace(0, max(tfl), 1E6);
+p_plot = zeros(0, 1E6);
+temp = 1;
+
+for i=1:length(tfl)
+   [val, jj] = min(abs(phi_plot - tfl(i)));
+   p_plot(temp:jj) = pvol(i);
+   temp = jj;
+end
+
+plot(phi_plot, p_plot)
 
 ylabel('p')
 xlabel('\Psi / \Psi_{edge}')

@@ -77,8 +77,6 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   
   use constants, only : zero, half, one, two, pi, pi2
   
-  use numerical, only : vsmall, small, sqrtmachprec
-  
   use fileunits, only : ounit
   
   use inputlist, only : Wma00aa
@@ -86,7 +84,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   use cputiming, only : Tma00aa
   
   use allglobal, only : myid, ncpu, cpus, &
-                        Mvol, im, in, mne, &
+                        Mvol, &
                         gaussianweight, gaussianabscissae, &
                         DToocc, DToocs, DToosc, DTooss, &
                         TTsscc, TTsscs, TTsssc, TTssss, &
@@ -113,11 +111,11 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   
   INTEGER, intent(in) :: lquad, mn, lvol, lrad
   
-  INTEGER             :: jquad, ll, pp, uv, ii, jj, io, mn2, lp2, mn2_max, lp2_max
+  INTEGER             :: jquad, ll, pp, ii, jj, mn2, lp2, mn2_max, lp2_max
   
-  INTEGER             :: kk, kd, kka, kks, kda, kds
+  INTEGER             :: kka, kks, kda, kds
   
-  REAL                :: lss, jthweight, fee, feo, foe, foo, Tl, Dl, Tp, Dp, TlTp, TlDp, DlTp, DlDp, ikda, ikds, imn2, ilrad
+  REAL                :: lss, jthweight, Tl, Dl, Tp, Dp, TlTp, TlDp, DlTp, DlDp, ikda, ikds, imn2, ilrad
 
   REAL                :: foocc, foocs, foosc, fooss
   REAL                :: fsscc, fsscs, fsssc, fssss
@@ -126,6 +124,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   REAL                :: fttcc, fttcs, fttsc, fttss
   REAL                :: ftzcc, ftzcs, ftzsc, ftzss
   REAL                :: fzzcc, fzzcs, fzzsc, fzzss
+
   
   REAL                :: sbar(1:lquad), halfoversbar(1:lquad), sbarhim(1:lquad,1:mn) ! regularization factors; 10 Dec 15;
   
@@ -180,7 +179,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   DDzzss( 0:lrad, 0:lrad, 1:mn, 1:mn ) = zero
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   if( Lcoordinatesingularity ) then
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -191,7 +190,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
    
    do jquad = 1, lquad ; sbarhim(jquad,1:mn) = sbar(jquad)**regumm(1:mn) ! pre-calculation of regularization factor; 12 Sep 13;
    enddo
-   
+
    do jquad = 1, lquad ! Gaussian quadrature loop;
     
     lss = gaussianabscissae(jquad,lvol) ; jthweight = gaussianweight(jquad,lvol)
@@ -201,7 +200,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
     do ll = 2, lrad ; cheby(ll,0:1) = (/ two * lss * cheby(ll-1,0) - cheby(ll-2,0) , two * cheby(ll-1,0) + two * lss * cheby(ll-1,1) - cheby(ll-2,1) /)
     enddo
     
-    WCALL( ma00aa, metrix,( lvol, lss ) ) ! compute metric elements; 16 Jan 13;
+    WCALL( ma00aa, metrix,( lvol, lss ) ) ! compute metric elements; 16 Jan 13; 
 
     do mn2 = 1, mn2_max
       ii = mod(mn2-1,mn)+1
@@ -302,13 +301,13 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
     enddo ! end of do mn2; 08 Feb 16;
     
    enddo ! end of do jquad; ! 16 Jan 13;
-   
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
   else ! .not.Lcoordinatesingularity; 17 Dec 15;
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-   
+
    do jquad = 1, lquad ! Gaussian quadrature loop;
     
     lss = gaussianabscissae(jquad,lvol) ; jthweight = gaussianweight(jquad,lvol)
@@ -420,9 +419,9 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
     enddo ! end of do mn2;  1 Feb 13;
     
    enddo ! end of do jquad; ! 16 Jan 13;
-    
+
   endif ! end of if( Lcoordinatesingularity ) ; 17 Dec 15;
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   DToocc( 0:lrad, 0:lrad, 1:mn, 1:mn ) = DToocc( 0:lrad, 0:lrad, 1:mn, 1:mn ) * pi2pi2nfphalf

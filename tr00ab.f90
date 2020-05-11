@@ -555,6 +555,10 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
      endif ! end of if( Lsparse.ge.2 ) ; 24 Apr 13;
      
     enddo ! end of do ideriv; 23 Apr 13;
+
+    if( Lsparse.ge.2 ) then
+        DALLOCATE(iwork)
+    endif
     
     DALLOCATE(swork)
     
@@ -640,159 +644,158 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
 ! FOURIER MATRICES HAVE BEEN CONSTRUCTED; SAVE UNPERTURBED MATRIX AND UNPERTURBED SOLUTION; FOR FUTURE USE; 20 Jun 14;
 
     omatrix(1:NN,1:NN) = dmatrix(1:NN,1:NN,0) ! original "unperturbed" matrix; 30 Jan 13;
-    
+
     do jderiv = 0, 1
-     
-     if( iflag.eq. 1 .and. jderiv.ne.0 ) cycle ! derivatives of rotational transform (wrt either enclosed-fluxes/currents/geometry) are not required;
-     
-     select case( jderiv )
-     case( 0 ) ;!             drhs(1:NN, 0) = drhs(1:NN, 0) 
-     case( 1 ) ;
-      if( iflag.eq. 2) then ; drhs(1:NN, 1) = drhs(1:NN, 1) - matmul( dmatrix(1:NN,1:NN, 1), dlambda(1:NN,0) ) ! derivative wrt helicity multiplier        ;
-       ;                    ; drhs(1:NN, 2) = drhs(1:NN, 2) - matmul( dmatrix(1:NN,1:NN, 2), dlambda(1:NN,0) ) ! derivative wrt differential poloidal flux ;
-      endif
-      if( iflag.eq.-1) then ; drhs(1:NN,-1) = drhs(1:NN,-1) - matmul( dmatrix(1:NN,1:NN,-1), dlambda(1:NN,0) ) ! derivative wrt geometry;
-      endif
-     case default
-      FATAL( tr00ab, .true., invalid jderiv )
-     end select
-     
-     lcpu = GETTIME ! record time taken in dgesvx; 09 Nov 17;
-     
-     select case( Lsvdiota )
-      
-     case( 0 ) ! Lsvdiota = 0; use linear solver to invert linear equations that define the straight fieldline angle; 01 Jul 14;
-           
-      if04aaf = 1 
-      
-      select case( jderiv )
-       
-      case( 0 ) ! Lsvdiota = 0; jderiv = 0; 02 Sep 14;
-       
-       MM = 1
-    
-       call dgesvx( 'N', 'N', NN, MM, dmatrix(1:NN,1:NN,0), NN, FAA(1:NN,1:NN), NN, ipiv(1:NN),  &
-                 equed, Rdgesvx(1:NN), Cdgesvx(1:NN), drhs(1:NN,0:0), NN, dlambda(1:NN,0:0),    & 
-		 NN, rcond, ferr, berr, work4(1:4*NN), iwork4(1:NN), idgesvx )        
-   
-       ;                 ldiota(innout,    0) = dlambda(1,  0) ! return intent out; 21 Apr 13;
-       
-      case( 1 ) ! Lsvdiota = 0; jderiv = 1; 02 Sep 14;
-       
-       MM = 2
-       if( iflag.eq.-1 ) then ; drhs(1:NN, 1) = drhs(1:NN,-1)
-        ;                     ; drhs(1:NN, 2) = zero         
-       endif
-       
-       dmatrix(1:NN,1:NN,0) = omatrix(1:NN,1:NN) ! original "unperturbed" matrix; 30 Jan 13;       
-    
-       call dgesvx( 'N', 'N', NN, MM, dmatrix(1:NN,1:NN,0), NN, FAA(1:NN,1:NN), NN, ipiv(1:NN),    &
-                   equed, Rdgesvx(1:NN), Cdgesvx(1:NN), drhs(1:NN,1:MM), NN, dlambda(1:NN,1:MM),    & 
-	           NN, rcond, ferr2(1:MM), berr2(1:MM), work4(1:4*NN), iwork4(1:NN), idgesvx )
-    
-       if( iflag.eq. 2 ) ldiota(innout, 1:2) = dlambda(1,1:2) ! return intent out; 21 Apr 13;
-       if( iflag.eq.-1 ) ldiota(innout,-1  ) = dlambda(1,  1) ! return intent out; 21 Apr 13;
-       
-      case default
-       
-       FATAL( tr00ab, .true., invalid jderiv )
-       
-      end select ! end of select case jderiv; 02 Sep 14;
-      
-      cput = GETTIME
-      
-      select case( idgesvx )                                                                                           !12345678901234567
-      case( 0   )    ; if( Wtr00ab ) write(ounit,1030) cput-cpus, myid, lvol, innout, id, "idgesvx", idgesvx, cput-lcpu, "solved Fourier ; ", dlambda(1,0)
-      case( 1:  )    ;               write(ounit,1030) cput-cpus, myid, lvol, innout, id, "idgesvx", idgesvx, cput-lcpu, "singular ;       "
-      case( :-1 )    ;               write(ounit,1030) cput-cpus, myid, lvol, innout, id, "idgesvx", idgesvx, cput-lcpu, "input error ;    "
-      case default ;               FATAL( tr00ab, .true., illegal ifail returned by dgesvx )
-      end select
-      
-      FATAL( tr00ab, idgesvx.ne.0, failed to construct straight-fieldline angle using dgesvx )
-      
-     case( 1 ) ! Lsvdiota = 1; use least-squares to invert linear equations that define the straight fieldline angle; 01 Jul 14;
-      
 
-!     Here Lwork = 12*N + 2*N*SMLSIZ + 8*N*NLVL + N*NRHS + (SMLSIZ+1)**2  and Liwork = (11+3*NLVL)*NN
-!     where SMLSIZ=25 and NLVL = MAX( 0, INT( LOG_2( MIN( M,N )/(SMLSIZ+1) ) ) + 1 )
-!     Warning: this could become insufficient in some cases and produce input error message; 12 Nov 17
-      nlvl   = max(0, int(log( real(NN)/26 )/log(2.0D0))+1)
-      Lwork  = (63+8*nlvl)*NN+676
-      Liwork = max(1,11*NN+3*nlvl*NN)
-      
-      SALLOCATE( work, (1:Lwork), zero )
+        if( iflag.eq. 1 .and. jderiv.ne.0 ) cycle ! derivatives of rotational transform (wrt either enclosed-fluxes/currents/geometry) are not required;
+
+        select case( jderiv )
+            case( 0 ) ;!                drhs(1:NN, 0) = drhs(1:NN, 0) 
+            case( 1 ) ;
+                if( iflag.eq. 2) then ; drhs(1:NN, 1) = drhs(1:NN, 1) - matmul( dmatrix(1:NN,1:NN, 1), dlambda(1:NN,0) ) ! derivative wrt helicity multiplier        ;
+                ;                     ; drhs(1:NN, 2) = drhs(1:NN, 2) - matmul( dmatrix(1:NN,1:NN, 2), dlambda(1:NN,0) ) ! derivative wrt differential poloidal flux ;
+                endif
+
+                if( iflag.eq.-1) then ; drhs(1:NN,-1) = drhs(1:NN,-1) - matmul( dmatrix(1:NN,1:NN,-1), dlambda(1:NN,0) ) ! derivative wrt geometry;
+                endif
+
+            case default
+                FATAL( tr00ab, .true., invalid jderiv )
+        end select
+
+        lcpu = GETTIME ! record time taken in dgesvx; 09 Nov 17;
+     
+        select case( Lsvdiota )
+
+            case( 0 ) ! Lsvdiota = 0; use linear solver to invert linear equations that define the straight fieldline angle; 01 Jul 14;
+
+                if04aaf = 1 
+
+                select case( jderiv )
+
+                    case( 0 ) ! Lsvdiota = 0; jderiv = 0; 02 Sep 14;
+                        MM = 1
+
+                        call dgesvx( 'N', 'N', NN, MM, dmatrix(1:NN,1:NN,0), NN, FAA(1:NN,1:NN), NN, ipiv(1:NN),  &
+                        equed, Rdgesvx(1:NN), Cdgesvx(1:NN), drhs(1:NN,0:0), NN, dlambda(1:NN,0:0),    & 
+                        NN, rcond, ferr, berr, work4(1:4*NN), iwork4(1:NN), idgesvx )        
+
+                        ;                 ldiota(innout,    0) = dlambda(1,  0) ! return intent out; 21 Apr 13;
+
+                    case( 1 ) ! Lsvdiota = 0; jderiv = 1; 02 Sep 14;
+                        MM = 2
+                        if( iflag.eq.-1 ) then ; drhs(1:NN, 1) = drhs(1:NN,-1)
+                        ;                     ; drhs(1:NN, 2) = zero         
+                        endif
+
+                        dmatrix(1:NN,1:NN,0) = omatrix(1:NN,1:NN) ! original "unperturbed" matrix; 30 Jan 13;       
+
+                        call dgesvx( 'N', 'N', NN, MM, dmatrix(1:NN,1:NN,0), NN, FAA(1:NN,1:NN), NN, ipiv(1:NN),    &
+                        equed, Rdgesvx(1:NN), Cdgesvx(1:NN), drhs(1:NN,1:MM), NN, dlambda(1:NN,1:MM),    & 
+                        NN, rcond, ferr2(1:MM), berr2(1:MM), work4(1:4*NN), iwork4(1:NN), idgesvx )
+
+                        if( iflag.eq. 2 ) ldiota(innout, 1:2) = dlambda(1,1:2) ! return intent out; 21 Apr 13;
+                        if( iflag.eq.-1 ) ldiota(innout,-1  ) = dlambda(1,  1) ! return intent out; 21 Apr 13;
+
+                    case default
+                        FATAL( tr00ab, .true., invalid jderiv )
+
+                    end select ! end of select case jderiv; 02 Sep 14;
+
+                    cput = GETTIME
+
+                    select case( idgesvx )                                                                                           !12345678901234567
+                        case( 0   )    ; if( Wtr00ab ) write(ounit,1030) cput-cpus, myid, lvol, innout, id, "idgesvx", idgesvx, cput-lcpu, "solved Fourier ; ", dlambda(1,0)
+                        case( 1:  )    ;               write(ounit,1030) cput-cpus, myid, lvol, innout, id, "idgesvx", idgesvx, cput-lcpu, "singular ;       "
+                        case( :-1 )    ;               write(ounit,1030) cput-cpus, myid, lvol, innout, id, "idgesvx", idgesvx, cput-lcpu, "input error ;    "
+                        case default ;               FATAL( tr00ab, .true., illegal ifail returned by dgesvx )
+                    end select
+
+                    FATAL( tr00ab, idgesvx.ne.0, failed to construct straight-fieldline angle using dgesvx )
+
+            case( 1 ) ! Lsvdiota = 1; use least-squares to invert linear equations that define the straight fieldline angle; 01 Jul 14;
+
+                !     Here Lwork = 12*N + 2*N*SMLSIZ + 8*N*NLVL + N*NRHS + (SMLSIZ+1)**2  and Liwork = (11+3*NLVL)*NN
+                !     where SMLSIZ=25 and NLVL = MAX( 0, INT( LOG_2( MIN( M,N )/(SMLSIZ+1) ) ) + 1 )
+                !     Warning: this could become insufficient in some cases and produce input error message; 12 Nov 17
+                nlvl   = max(0, int(log( real(NN)/26 )/log(2.0D0))+1)
+                Lwork  = (63+8*nlvl)*NN+676
+                Liwork = max(1,11*NN+3*nlvl*NN)
+
+                SALLOCATE( work, (1:Lwork), zero )
       if (allocated(iwork)) deallocate(iwork)
-      SALLOCATE( iwork, (1:Liwork), zero )
-      
-      select case( jderiv ) 
-       
-      case( 0 ) ! Lsvdiota = 1; jderiv = 0; 02 Sep 14;
-       
-       dlambda(1:NN,0) = drhs(1:NN,0) ! on entry, rhs; on exit, solution; 20 Jun 14;
-       
-       call dgelsd( NN, NN, 1, dmatrix(1:NN,1:NN,0), NN, dlambda(1:NN,0), NN, sval(1:NN), rcond, Irank, & 
-                    work(1:Lwork), Lwork, iwork(1:Liwork), idgelsd ) 
+                SALLOCATE( iwork, (1:Liwork), zero )
 
-       ldiota(innout,0) = dlambda(1,0)
-       
-      case( 1 ) ! Lsvdiota = 1; jderiv = 1; 02 Sep 14;
-       
-       if(     iflag.eq. 2 ) then
-        do imupf = 1, 2
-         dmatrix(1:NN,1:NN,0) = omatrix(1:NN,1:NN) ; dlambda(1:NN,imupf) = drhs(1:NN,imupf)
+                select case( jderiv ) 
 
-         call dgelsd( NN, NN, 1, dmatrix(1:NN,1:NN,0), NN, dlambda(1:NN,imupf), NN, sval(1:NN), rcond, Irank, & 
-                      work(1:Lwork), Lwork, iwork(1:Liwork), idgelsd ) 
-		      
-         ldiota(innout,imupf) = dlambda(1,imupf)
-        enddo
-       elseif( iflag.eq.-1 ) then
-        do imupf = -1, -1
-         dmatrix(1:NN,1:NN,0) = omatrix(1:NN,1:NN) ; dlambda(1:NN,imupf) = drhs(1:NN,imupf)
+                    case( 0 ) ! Lsvdiota = 1; jderiv = 0; 02 Sep 14;
 
-         call dgelsd( NN, NN, 1, dmatrix(1:NN,1:NN,0), NN, dlambda(1:NN,imupf), NN, sval(1:NN), rcond, Irank, & 
-                      work(1:Lwork), Lwork, iwork(1:Liwork), idgelsd ) 
+                        dlambda(1:NN,0) = drhs(1:NN,0) ! on entry, rhs; on exit, solution; 20 Jun 14;
 
-         ldiota(innout,imupf) = dlambda(1,imupf)
-        enddo
-       else
-        FATAL( tr00ab, .true., invalid iflag )
-       endif
-       
-      case default
-       
-       FATAL( tr00ab, .true., invalid jderiv )
-       
-      end select ! end of select case( jderiv) ; 02 Sep 14;
-      
-      DALLOCATE(work)
-      
-      cput = GETTIME
-      
-      select case( idgelsd )                                                                                           !12345678901234567
-      case( 0   )    ; if( Wtr00ab)  write(ounit,1030) cput-cpus, myid, lvol, innout, id, "idgelsd", idgelsd, cput-lcpu, "solved Fourier ; ", dlambda(1,0)
-      case( :-1 )    ;               write(ounit,1030) cput-cpus, myid, lvol, innout, id, "idgelsd", idgelsd, cput-lcpu, "input error ;    "
-      case( 1:  )    ;               write(ounit,1030) cput-cpus, myid, lvol, innout, id, "idgelsd", idgelsd, cput-lcpu, "QR failed ;      "
-      case default ;               FATAL( tr00ab, .true., illegal ifail returned by f04arf )
-      end select
-      
-      FATAL( tr00ab, idgelsd.ne.0, failed to construct straight-fieldline angle using dgelsd )      
-      
-      dmatrix(1:NN,1:NN, 0) = omatrix(1:NN,1:NN) ! original "unperturbed" matrix; 30 Jan 13;
-      
-      case default
+                        call dgelsd( NN, NN, 1, dmatrix(1:NN,1:NN,0), NN, dlambda(1:NN,0), NN, sval(1:NN), rcond, Irank, & 
+                                     work(1:Lwork), Lwork, iwork(1:Liwork), idgelsd ) 
 
-       FATAL( tr00ab, .true., illegal Lsvdiota )
+                        ldiota(innout,0) = dlambda(1,0)
 
-      end select ! end of select case( Lsvdiota ) ; 02 Sep 14;
+                    case( 1 ) ! Lsvdiota = 1; jderiv = 1; 02 Sep 14;
+
+                        if(     iflag.eq. 2 ) then
+                            do imupf = 1, 2
+                                dmatrix(1:NN,1:NN,0) = omatrix(1:NN,1:NN) ; dlambda(1:NN,imupf) = drhs(1:NN,imupf)
+
+                                call dgelsd( NN, NN, 1, dmatrix(1:NN,1:NN,0), NN, dlambda(1:NN,imupf), NN, sval(1:NN), rcond, Irank, & 
+                                             work(1:Lwork), Lwork, iwork(1:Liwork), idgelsd ) 
+
+                                ldiota(innout,imupf) = dlambda(1,imupf)
+                            enddo
+
+                        elseif( iflag.eq.-1 ) then
+                            do imupf = -1, -1
+                                dmatrix(1:NN,1:NN,0) = omatrix(1:NN,1:NN) ; dlambda(1:NN,imupf) = drhs(1:NN,imupf)
+
+                                call dgelsd( NN, NN, 1, dmatrix(1:NN,1:NN,0), NN, dlambda(1:NN,imupf), NN, sval(1:NN), rcond, Irank, & 
+                                             work(1:Lwork), Lwork, iwork(1:Liwork), idgelsd ) 
+
+                                ldiota(innout,imupf) = dlambda(1,imupf)
+                            enddo
+                        else
+                            FATAL( tr00ab, .true., invalid iflag )
+                        endif
+
+                    case default
+
+                        FATAL( tr00ab, .true., invalid jderiv )
+
+                end select ! end of select case( jderiv) ; 02 Sep 14;
+
+                cput = GETTIME
+
+                select case( idgelsd )                                                                                           !12345678901234567
+                case( 0   )    ; if( Wtr00ab)  write(ounit,1030) cput-cpus, myid, lvol, innout, id, "idgelsd", idgelsd, cput-lcpu, "solved Fourier ; ", dlambda(1,0)
+                case( :-1 )    ;               write(ounit,1030) cput-cpus, myid, lvol, innout, id, "idgelsd", idgelsd, cput-lcpu, "input error ;    "
+                case( 1:  )    ;               write(ounit,1030) cput-cpus, myid, lvol, innout, id, "idgelsd", idgelsd, cput-lcpu, "QR failed ;      "
+                case default ;               FATAL( tr00ab, .true., illegal ifail returned by f04arf )
+                end select
+
+                FATAL( tr00ab, idgelsd.ne.0, failed to construct straight-fieldline angle using dgelsd )      
+
+                dmatrix(1:NN,1:NN, 0) = omatrix(1:NN,1:NN) ! original "unperturbed" matrix; 30 Jan 13;
+                
+                DALLOCATE(iwork)
+
+            case default
+
+                FATAL( tr00ab, .true., illegal Lsvdiota )
+
+        end select ! end of select case( Lsvdiota ) ; 02 Sep 14;
 
 1030 format("tr00ab : ",f10.2," ; myid=",i3," ; lvol=",i3," ; innout="i2" ; jderiv="i2" ; "a7"="i2" ; time="f10.4" ; "a17,:" [d]iota="es17.09" ;")
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-     
+         
     enddo ! end of do jderiv; 31 Jan 13;
-    
-   endif ! end of if( Lsparse.eq.0 .or. Lsparse.eq.3 ); 
+
+endif ! end of if( Lsparse.eq.0 .or. Lsparse.eq.3 ); 
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

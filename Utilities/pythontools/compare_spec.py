@@ -9,17 +9,22 @@ from py_spec import SPEC
 import argparse
 
 # parse command line arguments
+# =============================================================================
 parser = argparse.ArgumentParser(description="Compare two SPEC HDF5 outputs")
 parser.add_argument("filename", type=str, help="file name to be compared")
 parser.add_argument("reference", type=str, help="reference data")
 parser.add_argument("-t", "--tol", type=float, default=1E-12, help="difference tolerance")
-
+ 
 args = parser.parse_args()
-print('Compare SPEC outputs in {:s} and {:s} with tolerance {:12.5E}'.format(
-        args.filename, args.reference, args.tol))
+print('Compare SPEC outputs in {:s} and {:s} with tolerance {:12.5E}'.format(args.filename, args.reference, args.tol))
 data_A = SPEC(args.filename)
 data_B = SPEC(args.reference)
+# =============================================================================
+#data_A = SPEC('/home/abaillod/SPEC/InputFiles/Verification/currentconstraint/TestCases_Comparison/G3V08L3Fr.001.h5')
+#data_B = SPEC('/home/abaillod/SPEC/InputFiles/Verification/currentconstraint/TestCases_Comparison/G3V08L1Fr.001.h5')
+
 tol = args.tol
+#tol = 1E-12
 match = True
 
 

@@ -144,17 +144,15 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dAt, dAz, XX, YY, length, DDl, MMl
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  use constants, only : zero, half, one, two, pi2
-  
-  use numerical, only : vsmall
+  use constants, only : zero, half, one, two
   
   use fileunits, only : ounit
   
-  use inputlist, only : Wlforce, Igeometry, Nvol, Ntor, Lrad, gamma, pscale, adiabatic
+  use inputlist, only : Wlforce, Igeometry, Nvol, Lrad, gamma, pscale, adiabatic
   
   use cputiming, only : Tlforce
   
-  use allglobal, only : ncpu, myid, cpus, pi2nfp, &
+  use allglobal, only : ncpu, myid, cpus, &
                         Lcoordinatesingularity, Mvol, &
                         iRbc, iZbs, iRbs, iZbc, &
                         YESstellsym, NOTstellsym, &

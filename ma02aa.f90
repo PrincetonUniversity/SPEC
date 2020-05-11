@@ -15,9 +15,9 @@ subroutine ma02aa( lvol, NN )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  use constants, only : zero, half, one, two, ten, goldenmean
+  use constants, only : zero, half, one, ten
   
-  use numerical, only : sqrtmachprec, vsmall, small
+  use numerical, only : vsmall, small
 
   use fileunits, only : ounit
 
@@ -29,16 +29,15 @@ subroutine ma02aa( lvol, NN )
   
   use allglobal, only : ncpu, myid, cpus, Mvol, mn, im, in, &
                         LBlinear, LBnewton, LBsequad, &
-!                       dMA, dMB, dMC, dMD, dME, dMF, solution, &
-                        dMA, dMB,      dMD,           solution, &
-!                       MBpsi, MEpsi, psiMCpsi, psiMFpsi, &
-                        MBpsi,                            &
+                        dMA, dMB, dMD, solution, &
+                        MBpsi, &
                         ImagneticOK, &
                         lBBintegral, lABintegral, &
                         ivol, &
                         dtflux, dpflux, &
                         xoffset, &
-                        Lcoordinatesingularity, Lplasmaregion, Lvacuumregion
+                        Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, LocalConstraint, &
+                        IndMatrixArray
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -47,7 +46,7 @@ subroutine ma02aa( lvol, NN )
   INTEGER, intent(in)  :: lvol, NN ! NN is the number of degrees of freedom in the (packed format) vector potential;
   
   
-  INTEGER              :: ideriv
+  INTEGER              :: ideriv, ind_matrix
   REAL                 :: tol, dpsi(1:2), lastcpu
   CHARACTER            :: packorunpack
   
@@ -93,7 +92,8 @@ subroutine ma02aa( lvol, NN )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   ivol = lvol ! various subroutines (e.g. mp00ac, df00ab) that may be called below require volume identification, but the argument list is fixed by NAG;
-  
+  ind_matrix = IndMatrixArray(ivol, 2)
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 !latex \subsection{seqeuntial quadratic programming}
@@ -103,7 +103,6 @@ subroutine ma02aa( lvol, NN )
 !latex \end{enumerate}
 
   if( LBsequad ) then ! sequential quadratic programming (SQP); construct minimum energy with constrained helicity;
-   
    lastcpu = GETTIME
    
    NLinearConstraints = 0 ! no linear constraints;
@@ -120,7 +119,7 @@ subroutine ma02aa( lvol, NN )
    
    SALLOCATE( LowerBound, (1:NN+NLinearConstraints+NNonLinearConstraints), zero ) ! lower bounds on variables, linear constraints and non-linear constraints;
    SALLOCATE( UpperBound, (1:NN+NLinearConstraints+NNonLinearConstraints), zero ) ! upper bounds on variables, linear constraints and non-linear constraints;
-   
+
    LowerBound(                       1 : NN                                          ) = -1.0E+21       !   variable constraints; no constraint;
    UpperBound(                       1 : NN                                          ) = +1.0E+21       !
    LowerBound( NN+                   1 : NN+NLinearConstraints                       ) = -1.0E+21       !     linear constraints; no constraint;
@@ -143,10 +142,10 @@ subroutine ma02aa( lvol, NN )
    SALLOCATE( objectivegradient, (1:NN), zero ) ! derivatives of objective function;
    
    SALLOCATE( RS, (1:LDR,1:NN), zero )
-   
    ideriv = 0 ; dpsi(1:2) = (/ dtflux(lvol), dpflux(lvol) /) ! these are also used below;
    
    packorunpack = 'P'
+
    CALL( ma02aa, packab, ( packorunpack, lvol, NN, xi(1:NN), ideriv ) )
    
    SALLOCATE( NEEDC, (1:NNonLinearConstraints), 0 )
@@ -170,7 +169,7 @@ subroutine ma02aa( lvol, NN )
    
 ! pre-calculate some matrix vector products;
    
-   MBpsi(1:NN) =                         matmul( dMB(1:NN,1: 2), dpsi(1:2) )
+   MBpsi(ind_matrix)%arr(1:NN) =                         matmul( dMB(ind_matrix)%mat(1:NN,1: 2), dpsi(1:2) )
 !  MEpsi(1:NN) = zero !                  matmul( dME(1:NN,1: 2), dpsi(1:2) )
    
 !  psiMCpsi    = zero ! half * sum( dpsi(1:2) * matmul( dMC(1: 2,1: 2), dpsi(1:2) ) )
@@ -192,11 +191,11 @@ subroutine ma02aa( lvol, NN )
 !                 xi(1:NN), &
 !                 NEEDC(1:NNonLinearConstraints), IWk(1:LIWk), LIWk, RWk(1:LRWk), LRWk, ie04uff )
 !
-!    if( irevcm.eq.1 .or. irevcm.eq.2 .or. irevcm.eq.3 ) Mxi(1:NN) = matmul( dMA(1:NN,1:NN), xi(1:NN) ) ! calculate objective  functional and/or gradient;
-!    if( irevcm.eq.4 .or. irevcm.eq.5 .or. irevcm.eq.6 ) Mxi(1:NN) = matmul( dMD(1:NN,1:NN), xi(1:NN) ) ! calculate constraint functional and/or gradient;
+!    if( irevcm.eq.1 .or. irevcm.eq.2 .or. irevcm.eq.3 ) Mxi(1:NN) = matmul( dMA(ind_matrix)%mat(1:NN,1:NN), xi(1:NN) ) ! calculate objective  functional and/or gradient;
+!    if( irevcm.eq.4 .or. irevcm.eq.5 .or. irevcm.eq.6 ) Mxi(1:NN) = matmul( dMD(ind_matrix)%mat(1:NN,1:NN), xi(1:NN) ) ! calculate constraint functional and/or gradient;
 !    
-!    if( irevcm.eq.1 .or. irevcm.eq.3 ) objectivefunction       = half * sum( xi(1:NN) * Mxi(1:NN) ) + sum( xi(1:NN) * MBpsi(1:NN) ) + psiMCpsi
-!    if( irevcm.eq.2 .or. irevcm.eq.3 ) objectivegradient(1:NN) =                        Mxi(1:NN)   +                 MBpsi(1:NN)
+!    if( irevcm.eq.1 .or. irevcm.eq.3 ) objectivefunction       = half * sum( xi(1:NN) * Mxi(1:NN) ) + sum( xi(1:NN) * MBpsi(ind_matrix)%arr(1:NN) ) + psiMCpsi
+!    if( irevcm.eq.2 .or. irevcm.eq.3 ) objectivegradient(1:NN) =                        Mxi(1:NN)   +                 MBpsi(ind_matrix)%arr(1:NN)
 !    
 !   if( irevcm.eq.4 .or. irevcm.eq.6 .and. NEEDC(1).gt.0 ) then
 !    constraintfunction(1     ) = half * sum( xi(1:NN) * Mxi(1:NN) ) + sum( xi(1:NN) * MEpsi(1:NN) ) + psiMFpsi
@@ -261,11 +260,10 @@ subroutine ma02aa( lvol, NN )
    packorunpack = 'U'
    CALL( ma02aa, packab ( packorunpack, lvol, NN, xi(1:NN), ideriv ) )
    
-   lBBintegral(lvol) = half * sum( xi(1:NN) * matmul( dMA(1:NN,1:NN), xi(1:NN) ) ) + sum( xi(1:NN) * MBpsi(1:NN) ) ! + psiMCpsi
-   lABintegral(lvol) = half * sum( xi(1:NN) * matmul( dMD(1:NN,1:NN), xi(1:NN) ) ) ! + sum( xi(1:NN) * MEpsi(1:NN) ) ! + psiMFpsi
+   lBBintegral(lvol) = half * sum( xi(1:NN) * matmul( dMA(ind_matrix)%mat(1:NN,1:NN), xi(1:NN) ) ) + sum( xi(1:NN) * MBpsi(ind_matrix)%arr(1:NN) ) ! + psiMCpsi
+   lABintegral(lvol) = half * sum( xi(1:NN) * matmul( dMD(ind_matrix)%mat(1:NN,1:NN), xi(1:NN) ) ) ! + sum( xi(1:NN) * MEpsi(1:NN) ) ! + psiMFpsi
    
-   
-   solution(1:NN,0) = xi(1:NN)
+   solution(ivol)%mat(1:NN,0) = xi(1:NN)
    
    
   endif ! end of if( LBsequad ) then;
@@ -293,7 +291,7 @@ subroutine ma02aa( lvol, NN )
    
 ! pre-calculate some matrix vector products; these are used in df00ab;
    
-   MBpsi(1:NN) =                         matmul( dMB(1:NN,1: 2), dpsi(1:2) )
+   MBpsi(ind_matrix)%arr(1:NN) =                         matmul( dMB(ind_matrix)%mat(1:NN,1: 2), dpsi(1:2) )
 !  MEpsi(1:NN) = zero !                  matmul( dME(1:NN,1: 2), dpsi(1:2) )
 !  psiMCpsi    = zero ! half * sum( dpsi(1:2) * matmul( dMC(1: 2,1: 2), dpsi(1:2) ) )
 !  psiMFpsi    = zero ! half * sum( dpsi(1:2) * matmul( dMF(1: 2,1: 2), dpsi(1:2) ) )
@@ -342,10 +340,10 @@ subroutine ma02aa( lvol, NN )
    ImagneticOK(lvol) = .true. 
 !endif
    
-   lBBintegral(lvol) = half * sum( xi(1:NN) * matmul( dMA(1:NN,1:NN), xi(1:NN) ) ) + sum( xi(1:NN) * MBpsi(1:NN) ) ! + psiMCpsi
-   lABintegral(lvol) = half * sum( xi(1:NN) * matmul( dMD(1:NN,1:NN), xi(1:NN) ) ) ! + sum( xi(1:NN) * MEpsi(1:NN) ) ! + psiMFpsi
+   lBBintegral(lvol) = half * sum( xi(1:NN) * matmul( dMA(ind_matrix)%mat(1:NN,1:NN), xi(1:NN) ) ) + sum( xi(1:NN) * MBpsi(ind_matrix)%arr(1:NN) ) ! + psiMCpsi
+   lABintegral(lvol) = half * sum( xi(1:NN) * matmul( dMD(ind_matrix)%mat(1:NN,1:NN), xi(1:NN) ) ) ! + sum( xi(1:NN) * MEpsi(1:NN) ) ! + psiMFpsi
    
-   solution(1:NN,0) = xi(1:NN)
+   solution(ivol)%mat(1:NN,0) = xi(1:NN)
    
   endif ! end of if( LBnewton ) then
   
@@ -413,10 +411,10 @@ subroutine ma02aa( lvol, NN )
 
 !latex \end{enumerate}
   
+
   if( LBlinear ) then ! assume Beltrami field is parameterized by helicity multiplier (and poloidal flux);
    
    lastcpu = GETTIME
-   
    
    if( Lplasmaregion ) then
     
@@ -429,6 +427,9 @@ subroutine ma02aa( lvol, NN )
      ;              else                              ; Nxdof = 2 ! multiplier & poloidal flux ARE varied to match inner/outer transform;
      ;              endif                                         
     case(  2 )    ;                                     Nxdof = 1 ! multiplier                 IS  varied to match             helicity ;
+    case(  3 )    ; if( Lcoordinatesingularity ) then ; Nxdof = 0 ! multiplier & poloidal flux NOT varied                               ;
+     ;              else                              ; Nxdof = 0 ! Global constraint, no dof locally
+     ;              endif
     end select
     
    else ! Lvacuumregion ;
@@ -440,11 +441,11 @@ subroutine ma02aa( lvol, NN )
     case(  0 )    ;                                   ; Nxdof = 2 ! poloidal   & toroidal flux ARE varied to match linking current and plasma current;
     case(  1 )    ;                                   ; Nxdof = 2 ! poloidal   & toroidal flux ARE varied to match linking current and transform-constraint;
     case(  2 )    ;                                   ; Nxdof = 2 ! poloidal   & toroidal flux ARE varied to match linking current and plasma current;
+    case(  3 )    ;                                   ; Nxdof = 1 ! only the toroidal flux is varied: poloidal flux varied in outside (global constraint) loop;
     end select
 
    endif ! end of if( Lplasmaregion) ;
    
-
    select case( Nxdof )
     
    case( 0   ) ! need only call mp00ac once, to calculate Beltrami field for given helicity multiplier and enclosed fluxes;
@@ -465,7 +466,7 @@ subroutine ma02aa( lvol, NN )
 
     WCALL( ma02aa, hybrj2, ( mp00ac, Ndof, Xdof(1:Ndof), Fdof(1:Ndof), Ddof(1:Ldfjac,1:Ndof), Ldfjac, tol, &
                              maxfev, diag(1:Ndof), mode, factor, nprint, ihybrj, nfev, njev, RR(1:LRR), LRR, QTF(1:Ndof), &
-			     WK(1:Ndof,1), WK(1:Ndof,2), WK(1:Ndof,3), WK(1:Ndof,4) ) )
+                 WK(1:Ndof,1), WK(1:Ndof,2), WK(1:Ndof,3), WK(1:Ndof,4) ) )
 
     if( Lplasmaregion ) then
      
@@ -528,6 +529,8 @@ subroutine ma02aa( lvol, NN )
 
   endif ! end of if( LBlinear ) then;
   
+
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-
  
 !latex \subsection{debugging: finite-difference confirmation of the derivatives of the rotational-transform}
@@ -564,7 +567,11 @@ subroutine ma02aa( lvol, NN )
      endif
     else ! Lvacuumregion;
      Xdof(1:2) = xoffset + (/ dtflux(lvol), dpflux(lvol) /) ! initial guess for degrees of freedom; offset from zero so that relative error is small;
+     if( LocalConstraint ) then
      ;                                 ; Ndof = 2
+     else
+     ;                                   ; Ndof = 1
+     endif
     endif ! end of if( Lplasmaregion) ;
     
     Ldfjac = Ndof ; dFdof(-1:1,-1:1,1:2) = zero
@@ -575,8 +582,8 @@ subroutine ma02aa( lvol, NN )
     
     CALL( ma02aa, mp00ac( Ndof, Xdof(1:Ndof), dFdof(ixx,jxx,1:Ndof), oDdof(1:Ldfjac,1:Ndof), Ldfjac, iflag ) ) ! compute "exact" derivatives;
     
-    dsolution(1:NN,1,0,0) = solution(1:NN,1) ! packed vector potential; derivative wrt mu    ;
-    dsolution(1:NN,2,0,0) = solution(1:NN,2) ! packed vector potential; derivative wrt dpflux;
+    dsolution(1:NN,1,0,0) = solution(ivol)%mat(1:NN,1) ! packed vector potential; derivative wrt mu    ;
+    dsolution(1:NN,2,0,0) = solution(ivol)%mat(1:NN,2) ! packed vector potential; derivative wrt dpflux;
     
     jfinite = 0
     cput = GETTIME 
@@ -601,7 +608,7 @@ subroutine ma02aa( lvol, NN )
        
        CALL( ma02aa, mp00ac( Ndof, Xdof(1:Ndof), dFdof(ixx,jxx,1:Ndof), Ddof(1:Ldfjac,1:Ndof), Ldfjac, iflag ) ) ! compute function values only;
        
-       dsolution(1:NN,0,ixx,jxx) = solution(1:NN,0)
+       dsolution(1:NN,0,ixx,jxx) = solution(ivol)%mat(1:NN,0)
        
       enddo ! end of do jxx;
      enddo ! end of do ixx;

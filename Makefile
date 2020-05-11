@@ -3,9 +3,9 @@
 ###############################################################################################################################################################
 
  afiles=manual rzaxis packxi volume coords
- bfiles=metrix ma00aa        matrix        mp00ac ma02aa packab tr00ab curent df00ab lforce
+ bfiles=metrix ma00aa        matrix        mp00ac ma02aa packab tr00ab curent df00ab lforce lbpol
 #cfiles=bc00aa fc02aa jk03aa pc00aa pc00ab
- cfiles=brcast dforce newton 
+ cfiles=brcast dfp100 dfp200 dforce newton 
  dfiles=casing bnorml 
  efiles=jo00aa pp00aa pp00ab bfield stzxyz sc00aa
  ffiles=hesian ra00aa numrec
@@ -119,13 +119,26 @@ endif
 ifeq ($(CC),intel_spc)
  CFLAGS=-r8
  RFLAGS=-O2 -ip -no-prec-div -xHost -fPIC
- DFLAGS=-traceback -D DEBUG
+ DFLAGS=-traceback -D DEBUG -g
  LINKS=-L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl
  LIBS=-I$(FFTW_DIR)/include
  LINKS+=-L$(FFTW_DIR)/lib -lfftw3
  LIBS+=-I$(HDF5_HOME)/include
  LINKS+=-L$(HDF5_HOME)/lib -lhdf5_fortran -lhdf5 -lpthread -lz -lm -Wl,-rpath -Wl,$(HDF5_HOME)/lib
 endif
+
+ifeq ($(CC),gfort_spc)
+ FC=mpif90
+ CFLAGS=-fdefault-real-8
+ RFLAGS=-O2 -ffixed-line-length-none -ffree-line-length-none -fexternal-blas
+ DFLAGS=-g -fbacktrace -fbounds-check -ffree-line-length-none -fexternal-blas -DDEBUG
+ LINKS=-L/lib -lmkl_rt -lpthread -lm -ldl -Wl,-rpath
+ LINKS+=-L$(FFTW_DIR)/lib -lfftw3
+ LINKS+=-L/usr/local/hdf5-1.8.18-gcc6.3/lib -lhdf5_fortran -lhdf5 -lz
+ LIBS=-I$(FFTW_DIR)/include
+ LIBS+=-I/usr/local/hdf5-1.8.18-gcc6.3/include
+endif
+
 
 ifeq ($(CC),intel_ipp)
  # tested on draco with the following modules:

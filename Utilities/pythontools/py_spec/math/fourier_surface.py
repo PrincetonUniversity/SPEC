@@ -3,6 +3,7 @@
 # coded by @zhucaoxiang (czhu@pppl.gov)
 # adapted by @smiet (csmiet@pppl.gov)
 #
+
 import numpy as np
 
 class fourier_surface(object):
