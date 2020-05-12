@@ -883,7 +883,7 @@ subroutine loop_dfp100(Ndofgl, Fvec)
   do while (.not.IconstraintOK)
 
 ! Compute solution in every associated volumes
-  iflag = 0
+  iflag = 5
   WCALL(dforce, dfp100, (Ndofgl, x, Fvec, iflag) )
 
   end do !matches do while IconstraintOK

@@ -735,7 +735,6 @@ else ! CASE SEMI GLOBAL CONSTRAINT
     
         call MPI_BCAST( dFFdRZ(1:LGdof, vvol ,0:1, 1:LGdof, 0:1), 2*2*(LGdof**2), MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_WORLD, ierr )
         call MPI_BCAST( dBBdmp(1:LGdof, vvol ,0:1, 1:2         ), 2*2*LGdof, MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_WORLD, ierr )
-        ! Actually no need to bcast dBBdmp - all cpus have evaluated it in evaluate_dBB.
     enddo
 
     endif ! End of if( LComputeDerivatives ) 
