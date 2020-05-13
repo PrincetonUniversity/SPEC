@@ -152,7 +152,7 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives)
 
   INTEGER              :: vvol, innout, ii, jj, irz, issym, iocons, tdoc, idoc, idof, tdof, jdof, ivol, imn, ll, ihybrd1, lwa, Ndofgl, llmodnp
   INTEGER              :: maxfev, ml, muhybr, mode, nprint, nfev, ldfjac, lr, Nbc, NN, cpu_id
-  REAL                 :: epsfcn, factor
+  REAL                 :: epsfcn, factor, dRZ_tmp
   REAL                 :: Fdof(1:Mvol-1), Xdof(1:Mvol-1), Fvec(1:Mvol-1)
   REAL                 :: diag(1:Mvol-1), qtf(1:Mvol-1), wa1(1:Mvol-1), wa2(1:Mvol-1), wa3(1:Mvol-1), wa4(1:mvol-1)
   REAL, allocatable    :: fjac(:, :), r(:) 
@@ -748,10 +748,19 @@ if( LcomputeDerivatives ) then ! construct Hessian;
                                     iZbc(1:mn,0:Mvol) = oZbc(1:mn,0:Mvol)
 
                                     ! Perturb geometry
-                                    if( issym.eq.0 .and. irz.eq.0 ) iRbc(ii,vvol) = iRbc(ii,vvol) + dRZ * isymdiff ! perturb geometry;
-                                    if( issym.eq.0 .and. irz.eq.1 ) iZbs(ii,vvol) = iZbs(ii,vvol) + dRZ * isymdiff ! perturb geometry;
-                                    if( issym.eq.1 .and. irz.eq.0 ) iRbs(ii,vvol) = iRbs(ii,vvol) + dRZ * isymdiff ! perturb geometry;
-                                    if( issym.eq.1 .and. irz.eq.1 ) iZbc(ii,vvol) = iZbc(ii,vvol) + dRZ * isymdiff ! perturb geometry;
+                                    if( issym.eq.0 .and. irz.eq.0 ) then
+				        dRZ_tmp = dRZ * iRbc(ii,vvol) + 1E-12
+                                        iRbc(ii,vvol) = iRbc(ii,vvol) + dRZ_tmp * isymdiff ! perturb geometry;
+                                    else if( issym.eq.0 .and. irz.eq.1 ) then
+				        dRZ_tmp = dRZ * iZbs(ii,vvol) + 1E-12
+                                        iZbs(ii,vvol) = iZbs(ii,vvol) + dRZ_tmp * isymdiff ! perturb geometry;
+                                    else if( issym.eq.1 .and. irz.eq.0 ) then
+				        dRZ_tmp = dRZ * iRbs(ii,vvol) + 1E-12
+				        iRbs(ii,vvol) = iRbs(ii,vvol) + dRZ_tmp * isymdiff ! perturb geometry;
+                                    else if( issym.eq.1 .and. irz.eq.1 ) then
+				        dRZ_tmp = dRZ * iZbc(ii,vvol) + 1E-12
+				        iZbc(ii,vvol) = iZbc(ii,vvol) + dRZ_tmp * isymdiff ! perturb geometry;
+			            endif
 
                                     packorunpack = 'P' ! pack geometrical degrees-of-freedom;
 
@@ -763,7 +772,7 @@ if( LcomputeDerivatives ) then ! construct Hessian;
                                 iforce(0, 0:NGdof)               = ( - 1 * iforce(2,0:NGdof) &
                                                                     + 8 * iforce(1,0:NGdof) &
                                                                     - 8 * iforce(-1,0:NGdof) &
-                                                                    + 1 * iforce(-2,0:NGdof))  / ( 12 * dRZ )
+                                                                    + 1 * iforce(-2,0:NGdof))  / ( 12 * dRZ_tmp )
                                 tdof = (vvol-1) * LGdof + idof
                                 finitediff_hessian(1:NGdof, tdof) = iforce(0, 1:NGdof)* lfactor
 
