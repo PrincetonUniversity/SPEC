@@ -25,7 +25,7 @@
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-subroutine lbpol(lvol, Bt00)
+subroutine lbpol(lvol, Bt00, ideriv)
 
   use constants, only : mu0, pi, pi2, two, one, half, zero
 
@@ -91,7 +91,6 @@ subroutine lbpol(lvol, Bt00)
 
 ! Then compute the vector potential and its derivatives. Copied from sc00aa.h
 
-  ideriv = 0; 
    efmn(1:mn) = zero ; ofmn(1:mn) = zero ; cfmn(1:mn) = zero ; sfmn(1:mn) = zero
    do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over Fourier harmonics;
     

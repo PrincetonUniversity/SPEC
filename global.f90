@@ -924,7 +924,7 @@ module allglobal
 
   REAL                 :: ForceErr, Energy
 
-  REAL   , allocatable :: IPDt(:)                    ! Toroidal pressure-driven current
+  REAL   , allocatable :: IPDt(:), IPDtDpf(:,:)    ! Toroidal pressure-driven current
 
   INTEGER              :: Mvol
 

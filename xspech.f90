@@ -635,7 +635,7 @@ program xspech
   SALLOCATE( Bt00, (1:Mvol, 0:1) , zero)
 
   do vvol = 1, Mvol
-    WCALL(xspech, lbpol, (vvol, Bt00(1:Mvol, 0:1)) )
+    WCALL(xspech, lbpol, (vvol, Bt00(1:Mvol, 0:1), 0) )
   enddo
 
   do vvol = 1, Mvol-1

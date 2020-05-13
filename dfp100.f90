@@ -48,7 +48,7 @@ use allglobal, only : ncpu, myid, cpus, &
                       Mvol, &
                       dBdX, &
                       Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, Localconstraint, &
-                      IPDt, xoffset, dpflux, &
+                      IPDt, IPDtdPf, xoffset, dpflux, &
                       IsMyVolume, IsMyVolumeValue, WhichCpuID, &
                       IconstraintOK
 
@@ -64,7 +64,7 @@ use allglobal, only : ncpu, myid, cpus, &
 
 INTEGER              :: vvol, Ndofgl, iflag, cpu_send_one, cpu_send_two
 INTEGER              :: status(MPI_STATUS_SIZE), request1, request2
-REAL                 :: Fvec(1:Mvol-1), x(1:Mvol-1), Bt00(1:Mvol, 0:1)
+REAL                 :: Fvec(1:Mvol-1), x(1:Mvol-1), Bt00(1:Mvol, 0:1, 0:1)
 
 
 
@@ -135,7 +135,8 @@ BEGIN(dfp100)
         ! reduces the amount of data sent to the master thread. In the case of current constraint, only two
         ! doubles per volume are sent.
         if( Lconstraint.EQ.3 ) then
-            WCALL( dfp100, lbpol, (vvol, Bt00(1:Mvol, 0:1)) )                !Compute field at interface for global constraint
+            WCALL( dfp100, lbpol, (vvol, Bt00(1:Mvol, 0:1, 0), 0) )                !Compute field at interface for global constraint
+            WCALL( dfp100, lbpol, (vvol, Bt00(1:Mvol, 0:1, 1), 2) )                !Compute field at interface for global constraint, d w.r.t. pflux
         endif
     enddo
 
@@ -157,12 +158,17 @@ BEGIN(dfp100)
                     call WhichCpuID(vvol+1, cpu_send_two)
 
                     ! Broadcast magnetic field at the interface.
-                    RlBCAST(Bt00(vvol  , 1), 1, cpu_send_one)
-                    RlBCAST(Bt00(vvol+1, 0), 1, cpu_send_two)
+                    RlBCAST(Bt00(vvol  , 1, 0), 1, cpu_send_one)
+                    RlBCAST(Bt00(vvol+1, 0, 0), 1, cpu_send_two)
+                    RlBCAST(Bt00(vvol  , 1, 1), 1, cpu_send_one)
+                    RlBCAST(Bt00(vvol+1, 0, 1), 1, cpu_send_two)
 
                     ! Evaluate surface current
-                    IPDt(vvol) = pi2 * (Bt00(vvol+1, 0) - Bt00(vvol, 1))
-
+                    IPDt(vvol) = pi2 * (Bt00(vvol+1, 0,0 ) - Bt00(vvol, 1, 0))
+                    
+                    ! their derivatives
+                    IPDtdPf(vvol,vvol) = pi2 * Bt00(vvol+1, 0, 1)
+                    if (vvol .ne. 1) IPDtdPf(vvol,vvol-1) = -pi2 * Bt00(vvol, 1, 1)
                 enddo
 
                 ! Compute the constraint and store it in Fvec. TODO: Compute analytically the constraint jacobian ?

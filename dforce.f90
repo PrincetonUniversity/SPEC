@@ -138,13 +138,15 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
                         DDtzcc, DDtzcs, DDtzsc, DDtzss, &
                         DDzzcc, DDzzcs, DDzzsc, DDzzss, &
                         LocalConstraint, xoffset, &
-                        solution, &
+                        solution, IPdtdPf, & 
                         IsMyVolume, IsMyVolumeValue, WhichCpuID
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   LOCALS
   
+  INTEGER, parameter   :: NB = 3 ! optimal workspace block size for LAPACK:DSYSVX;
+
   INTEGER, intent(in)  :: NGdof               ! dimensions;
   REAL,    intent(in)  :: position(0:NGdof)   ! degrees-of-freedom = internal geometry;
   REAL,    intent(out) :: force(0:NGdof)      ! force;
@@ -155,11 +157,13 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
   REAL                 :: epsfcn, factor
   REAL                 :: Fdof(1:Mvol-1), Xdof(1:Mvol-1), Fvec(1:Mvol-1)
   REAL                 :: diag(1:Mvol-1), qtf(1:Mvol-1), wa1(1:Mvol-1), wa2(1:Mvol-1), wa3(1:Mvol-1), wa4(1:mvol-1)
+  REAL                 :: dpfluxout(1:Mvol-1)
+  INTEGER              :: ipiv(1:Mvol-1)
   REAL, allocatable    :: fjac(:, :), r(:) 
 
   INTEGER              :: status(MPI_STATUS_SIZE), request_recv, request_send, cpu_send
   INTEGER              :: id
-  INTEGER              :: iflag
+  INTEGER              :: iflag, idgesv, Lwork
 
   CHARACTER            :: packorunpack 
   EXTERNAL             :: dfp100, dfp200, loop_dfp100
@@ -335,31 +339,77 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 
     Ndofgl = Mvol-1; 
 
-    if( myid.eq. 0) then
-          lwa = 8 * Ndofgl * Ndofgl; maxfev = 1000; nfev=0; lr=Mvol*(Mvol-1); ldfjac=Mvol-1
-          ml = Mvol-2; muhybr = Mvol-2; epsfcn=1E-16; diag=0.0; mode=1; factor=0.01; nprint=1e5;    !nprint=1e5 to force last call - used for MPI communications
+    IPDtdPf = zero
 
-          Xdof(1:Mvol-1)   = dpflux(2:Mvol) + xoffset  ! xoffset reduces the number of iterations needed by hybrd for an obscure reason...
+    Xdof(1:Mvol-1)   = dpflux(2:Mvol) + xoffset
+    WCALL(dforce, dfp100, (Ndofgl, Xdof(1:Ndofgl), Fvec(1:Ndofgl), 1))
 
-          SALLOCATE(fjac, (1:ldfjac,1:Mvol-1), 0)
-          SALLOCATE(r, (1:lr), 0)
+    Fdof = Fvec
 
-          ! Hybrid-Powell method, iterates on all poloidal fluxes to match the global constraint
-          WCALL( dforce,  hybrd1, (dfp100, Ndofgl, Xdof(1:Ndofgl), Fvec(1:Ndofgl), mupftol, maxfev, ml, muhybr, epsfcn, diag(1:Ndofgl), mode, &
-                      factor, nprint, ihybrd1, nfev, fjac(1:Ndofgl,1:Ndofgl), ldfjac, r(1:lr), lr, qtf(1:Ndofgl), wa1(1:Ndofgl), &
-                      wa2(1:Ndofgl), wa3(1:Ndofgl), wa4(1:Ndofgl)) ) 
+    if ( myid .eq. 0 ) then 
 
-          DALLOCATE(fjac)
-          DALLOCATE(r)
+        dpfluxout = Fvec
+        call DGESV( Ndofgl, 1, IPdtdPf, Ndofgl, ipiv, dpfluxout, Ndofgl, idgesv )
+
+        ! one step Newton's method
+        dpflux(2:Mvol) = dpflux(2:Mvol) - dpfluxout
+
+        !write(ounit,*) dpflux(2:Mvol) - dpfluxout
+
+        ! bcast the difference in dpflux
+        RlBCAST(dpfluxout, Ndofgl, 0)
+    else
+        ! receive the field and pflux
+        RlBCAST(dpfluxout, Ndofgl, 0)
+    end if
+
+    do vvol = 2, Mvol
+   
+        WCALL(dforce, IsMyVolume, (vvol))
+
+        if( IsMyVolumeValue .EQ. 0 ) then
+            cycle
+        else if( IsMyVolumeValue .EQ. -1) then
+            FATAL(dforce, .true., Unassociated volume)
+        endif
+
+        NN = NAdof(vvol)
+
+        ! compute the field with renewed dpflux
+        solution(vvol)%mat(1:NN, 0) = solution(vvol)%mat(1:NN, 0) - dpfluxout(vvol-1) * solution(vvol)%mat(1:NN, 2)
+
+        packorunpack = 'U'
+        WCALL( dforce, packab, ( packorunpack, vvol, NN, solution(vvol)%mat(1:NN,0), 0 ) ) ! unpacking;
+
+    enddo ! end of do vvol = 1, Mvol
+
+    ! if( myid.eq. 0) then
+    !       lwa = 8 * Ndofgl * Ndofgl; maxfev = 1000; nfev=0; lr=Mvol*(Mvol-1); ldfjac=Mvol-1
+    !       ml = Mvol-2; muhybr = Mvol-2; epsfcn=1E-16; diag=0.0; mode=1; factor=0.01; nprint=1e5;    !nprint=1e5 to force last call - used for MPI communications
+
+    !       Xdof(1:Mvol-1)   = dpflux(2:Mvol) + xoffset  ! xoffset reduces the number of iterations needed by hybrd for an obscure reason...
+
+    !       SALLOCATE(fjac, (1:ldfjac,1:Mvol-1), 0)
+    !       SALLOCATE(r, (1:lr), 0)
+
+    !       ! Hybrid-Powell method, iterates on all poloidal fluxes to match the global constraint
+    !       WCALL( dforce,  hybrd1, (dfp100, Ndofgl, Xdof(1:Ndofgl), Fvec(1:Ndofgl), mupftol, maxfev, ml, muhybr, epsfcn, diag(1:Ndofgl), mode, &
+    !                   factor, nprint, ihybrd1, nfev, fjac(1:Ndofgl,1:Ndofgl), ldfjac, r(1:lr), lr, qtf(1:Ndofgl), wa1(1:Ndofgl), &
+    !                   wa2(1:Ndofgl), wa3(1:Ndofgl), wa4(1:Ndofgl)) ) 
+
+    !       DALLOCATE(fjac)
+    !       DALLOCATE(r)
      
-          dpflux(2:Mvol) = Xdof(1:Ndofgl) - xoffset
+    !       dpflux(2:Mvol) = Xdof(1:Ndofgl) - xoffset
 
-        else
+    !       !write(ounit,*) dpflux(0:Mvol)
 
-            ! Slave threads call loop_dfp100 and help the master thread computation at each iteration.
-            call loop_dfp100(Ndofgl, Fvec, iflag)
+    !     else
 
-    endif
+    !         ! Slave threads call loop_dfp100 and help the master thread computation at each iteration.
+    !         call loop_dfp100(Ndofgl, Fvec, iflag)
+
+    ! endif
 
 ! --------------------------------------------------------------------------------------------------
 !                                    MPI COMMUNICATIONS

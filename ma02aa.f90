@@ -422,7 +422,9 @@ subroutine ma02aa( lvol, NN )
     
     select case( Lconstraint )
     case( -1 )    ;                                   ; Nxdof = 0 ! multiplier & poloidal flux NOT varied                               ;
-    case(  0 )    ;                                   ; Nxdof = 0 ! multiplier & poloidal flux NOT varied                               ;
+    ;             ; iflag = 1 !(we don't need derivatives)
+    case(  0 )    ;                                   ; Nxdof = 0 ! multiplier & poloidal flux NOT varied   
+    ;             ; iflag = 1 !(we don't need derivatives)                            ;
     case(  1 )    ; if( Lcoordinatesingularity ) then ; Nxdof = 1 ! multiplier                 IS  varied to match       outer transform;
      ;              else                              ; Nxdof = 2 ! multiplier & poloidal flux ARE varied to match inner/outer transform;
      ;              endif                                         
@@ -430,6 +432,7 @@ subroutine ma02aa( lvol, NN )
     case(  3 )    ; if( Lcoordinatesingularity ) then ; Nxdof = 0 ! multiplier & poloidal flux NOT varied                               ;
      ;              else                              ; Nxdof = 0 ! Global constraint, no dof locally
      ;              endif
+     ;            ; iflag = 2 !(we still need derivatives)
     end select
     
    else ! Lvacuumregion ;
@@ -450,7 +453,7 @@ subroutine ma02aa( lvol, NN )
     
    case( 0   ) ! need only call mp00ac once, to calculate Beltrami field for given helicity multiplier and enclosed fluxes;
     
-    iflag = 1 ; Ndof = 1     ; Ldfjac = Ndof ; nfev = 1 ; njev = 0 ; ihybrj = 1;  ! provide dummy values for consistency;
+    ;         ; Ndof = 1     ; Ldfjac = Ndof ; nfev = 1 ; njev = 0 ; ihybrj = 1;  ! provide dummy values for consistency;
     
     WCALL( ma02aa, mp00ac, ( Ndof, Xdof(1:Ndof), Fdof(1:Ndof), Ddof(1:Ldfjac,1:Ndof), Ldfjac, iflag ) )
     
