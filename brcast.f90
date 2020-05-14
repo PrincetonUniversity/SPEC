@@ -109,13 +109,14 @@ subroutine brcast( lvol )
   
   LlBCAST( ImagneticOK(lvol), 1, llmodnp )
   
-  do ideriv = 0, 2
-  	if( (ideriv.ne.0) .and. (Lconstraint.ne.3) ) cycle
-	do ii = 1, mn  
-	  RlBCAST( Ate(lvol,ideriv,ii)%s(0:Lrad(lvol)), Lrad(lvol)+1, llmodnp )
-	  RlBCAST( Aze(lvol,ideriv,ii)%s(0:Lrad(lvol)), Lrad(lvol)+1, llmodnp )
-	enddo
-  enddo  
+  ! Commented - broadcasted in dfp200
+  ! do ideriv = 0, 2
+  ! 	if( (ideriv.ne.0) .and. (Lconstraint.ne.3) ) cycle
+  !     do ii = 1, mn  
+  !       RlBCAST( Ate(lvol,ideriv,ii)%s(0:Lrad(lvol)), Lrad(lvol)+1, llmodnp )
+  !       RlBCAST( Aze(lvol,ideriv,ii)%s(0:Lrad(lvol)), Lrad(lvol)+1, llmodnp )
+  !     enddo
+  ! enddo  
 
 
   RlBCAST( Bemn(1:mn,lvol,0:1), 2*mn, llmodnp ) ! perhaps all these should be re-ordered; 18 Jul 14;
@@ -124,17 +125,17 @@ subroutine brcast( lvol )
   RlBCAST( Pomn(1:mn,lvol,0:2), 3*mn, llmodnp ) ! 15 Sep 15;
   
   if( NOTstellsym ) then
-   
-  do ii = 1, mn    
-   RlBCAST( Ato(lvol,ideriv,ii)%s(0:Lrad(lvol)), Lrad(lvol)+1, llmodnp )
-   RlBCAST( Azo(lvol,ideriv,ii)%s(0:Lrad(lvol)), Lrad(lvol)+1, llmodnp )
-  enddo
-  
-  RlBCAST( Bomn(1:mn,lvol,0:1), 2*mn, llmodnp )
-  RlBCAST( Iemn(1:mn,lvol    ),   mn, llmodnp )
-  RlBCAST( Semn(1:mn,lvol,0:1), 2*mn, llmodnp )
-  RlBCAST( Pemn(1:mn,lvol,0:2), 3*mn, llmodnp )
-
+    ! do ideriv = 0, 2
+    !   do ii = 1, mn    
+    !     RlBCAST( Ato(lvol,ideriv,ii)%s(0:Lrad(lvol)), Lrad(lvol)+1, llmodnp )
+    !     RlBCAST( Azo(lvol,ideriv,ii)%s(0:Lrad(lvol)), Lrad(lvol)+1, llmodnp )
+    !   enddo
+    ! enddo
+      
+      RlBCAST( Bomn(1:mn,lvol,0:1), 2*mn, llmodnp )
+      RlBCAST( Iemn(1:mn,lvol    ),   mn, llmodnp )
+      RlBCAST( Semn(1:mn,lvol,0:1), 2*mn, llmodnp )
+      RlBCAST( Pemn(1:mn,lvol,0:2), 3*mn, llmodnp )
   endif ! end of if( NOTstellsym) ; 11 Aug 14;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

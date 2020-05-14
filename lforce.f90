@@ -166,7 +166,8 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dAt, dAz, XX, YY, length, DDl, MMl
                         mmpp, &
                         Bemn, Bomn, Iomn, Iemn, Somn, Semn, &
                         Pomn, Pemn, &
-                        vvolume
+                        vvolume, & 
+                        build_vector_potential
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -220,24 +221,7 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dAt, dAz, XX, YY, length, DDl, MMl
   
 ! compute B^2 on interface;
   
-  efmn(1:mn) = zero ; sfmn(1:mn) = zero ; cfmn(1:mn) = zero ; ofmn(1:mn) = zero
-  
-  do ii = 1, mn ! loop over Fourier harmonics; 13 Sep 13;
-   
-   if( Lcoordinatesingularity ) then ; mfactor = regumm(ii) * half ! only required at outer interface, where \bar s = 1; 15 Jan 15;
-   else                              ; mfactor = zero
-   endif
-   
-   do ll = 0, Lrad(lvol) ! loop over Chebyshev polynomials; Lrad is the radial resolution;
-    ;                      ; efmn(ii) = efmn(ii) +          Ate(lvol,ideriv,ii)%s(ll) * ( TT(ll,iocons,1) + mfactor ) ! ideriv labels deriv. wrt mu, pflux; 
-    ;                      ; cfmn(ii) = cfmn(ii) +          Aze(lvol,ideriv,ii)%s(ll) * ( TT(ll,iocons,1) + mfactor )
-    if( NOTstellsym ) then ; ofmn(ii) = ofmn(ii) +          Ato(lvol,ideriv,ii)%s(ll) * ( TT(ll,iocons,1) + mfactor )
-     ;                     ; sfmn(ii) = sfmn(ii) +          Azo(lvol,ideriv,ii)%s(ll) * ( TT(ll,iocons,1) + mfactor )
-    endif
-   enddo ! end of do ll; 20 Feb 13;
-    
-  enddo ! end of do ii; 20 Feb 13;
-
+  call build_vector_potential(lvol, iocons, ideriv, 1)
   call invfft( mn, im, in, efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt(1:Ntz), dAz(1:Ntz) ) ! map to real space;
 
   dBB(1:Ntz) = half * (         dAz(1:Ntz   )*dAz(1:Ntz   )*guvij(1:Ntz,2,2,0) &

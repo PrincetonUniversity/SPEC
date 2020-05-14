@@ -296,6 +296,7 @@ module inputlist
 ! the following variables constitute the namelist/screenlist/; note that all variables in namelist need to be broadcasted in readin;
   
 ! DSCREENLIST ! define screenlist; this is expanded by Makefile; DO NOT REMOVE; each file compiled by Makefile has its own write flag;
+  LOGICAL      :: Wbuild_vector_potential = .false.
   LOGICAL      :: Wreadin = .false.
   LOGICAL      :: Wwritin = .false. ! redundant; 
   LOGICAL      :: Wwrtend = .false.
@@ -864,6 +865,7 @@ module inputlist
 
   namelist/screenlist/&
 ! NSCREENLIST ! namelist screenlist; this is expanded by Makefile; DO NOT REMOVE;
+ Wbuild_vector_potential , &
  Wreadin , &  !latex \item Every subroutine, e.g. \type{xy00aa.h}, has its own write flag, \type{Wxy00aa}.
  Wwritin , & ! redundant; 
  Wwrtend , &
@@ -1395,6 +1397,64 @@ module allglobal
   LOGICAL              :: first_free_bound = .false.
 
 contains
+
+subroutine build_vector_potential(lvol, iocons, aderiv, tderiv)
+
+! Builds the covariant component of the vector potential and store them in efmn, ofmn, sfmn, cfmn.
+
+  use constants, only: zero, half
+
+  use fileunits, only: ounit
+
+  use inputlist, only: Lrad, Wbuild_vector_potential
+
+  use cputiming
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+LOCALS
+
+INTEGER              :: aderiv    ! Derivative of A. -1: w.r.t geometrical degree of freedom
+                                  !                   0: no derivatives
+                                  !                   1: w.r.t mu
+                                  !                   2: w.r.t pflux
+INTEGER              :: tderiv    ! Derivative of Chebyshev polynomialc. 0: no derivatives
+                                  !                                      1: w.r.t radial coordinate s
+INTEGER              :: ii,  &    ! Loop index on Fourier harmonics
+                        ll,  &    ! Loop index on radial resolution
+                        lvol,&    ! Volume number
+                        iocons    ! inner (0) or outer (1) side of the volume
+REAL                 :: mfactor   ! Regularization factor when LcoordinateSingularity
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+BEGIN(build_vector_potential)
+
+
+  efmn(1:mn) = zero ; sfmn(1:mn) = zero ; cfmn(1:mn) = zero ; ofmn(1:mn) = zero
+  
+  do ii = 1, mn ! loop over Fourier harmonics; 13 Sep 13;
+   
+   if( Lcoordinatesingularity ) then ; mfactor = regumm(ii) * half ! only required at outer interface, where \bar s = 1; 15 Jan 15;
+   else                              ; mfactor = zero
+   endif
+   
+    do ll = 0, Lrad(lvol)
+      efmn(ii) = efmn(ii) +  Ate(lvol,aderiv,ii)%s(ll) * ( TT(ll,iocons,tderiv) + mfactor )
+      cfmn(ii) = cfmn(ii) +  Aze(lvol,aderiv,ii)%s(ll) * ( TT(ll,iocons,tderiv) + mfactor )
+    enddo ! end of do ll; 20 Feb 13;
+
+    if( NOTstellsym ) then
+      do ll = 0, Lrad(lvol)
+        ofmn(ii) = ofmn(ii) +  Ato(lvol,aderiv,ii)%s(ll) * ( TT(ll,iocons,tderiv) + mfactor )
+        sfmn(ii) = sfmn(ii) +  Azo(lvol,aderiv,ii)%s(ll) * ( TT(ll,iocons,tderiv) + mfactor )
+      enddo
+    endif
+    
+  enddo ! end of do ii; 20 Feb 13;
+
+end subroutine build_vector_potential
+
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

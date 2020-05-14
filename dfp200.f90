@@ -564,20 +564,19 @@ else ! CASE SEMI GLOBAL CONSTRAINT
 
                     do lvol = vvol, vvol+1
 
+                        ! Only interested in one interface perturbation
                         if( ncpu.gt.1 ) then
-        
                             if(      LinnerVolume .and. (lvol.eq.vvol+1) ) cycle
                             if( .not.LinnerVolume .and. (lvol.eq.vvol  ) ) cycle
-                        
                         endif
 
+                        ! Set up perturbation information
                         if( lvol.eq.vvol   ) innout=1 ! Perturb w.r.t outer interface
                         if( lvol.eq.vvol+1 ) innout=0 ! Perturb w.r.t inner interface
 
                         dBdX%innout = innout
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-! Set up volume information                        
+                        ! Set up volume information                        
                         LREGION(lvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
                         ll = Lrad(lvol)  ! Shorthand
                         NN = NAdof(lvol) ! shorthand;
@@ -588,6 +587,7 @@ else ! CASE SEMI GLOBAL CONSTRAINT
                         ! Get derivative of vector potential w.r.t geometry. Matrix perturbation theory.
                         call get_perturbed_solution(lvol, rhs, oBI(lvol)%mat(1:NN,1:NN), NN)
                     
+                        ! Free memory
                         DALLOCATE(rhs)
 
                     enddo ! end of do lvol = vvol, vvol+1
@@ -1919,9 +1919,11 @@ if( ideriv.eq.-1 ) then
 else
     iflag = 1
 endif
-! lforce will only return dAt(1:Ntz,id) and dAz(1:Ntz,id);
+
+! lforce will only return dAt(1:Ntz,id) and dAz(1:Ntz,id); as well as 
 WCALL( dfp200, lforce, ( vvol, iocons, ideriv, Ntz, dAt(1:Ntz,id), dAz(1:Ntz,id), &
                          XX(1:Ntz), YY(1:Ntz), length(1:Ntz), DDl, MMl, iflag ) )
+
 
 if( ideriv.eq.0 ) then
     dBB(1:Ntz,id) = half * (        dAz(1:Ntz, 0)*dAz(1:Ntz, 0)*guvij(1:Ntz,2,2,0) &
