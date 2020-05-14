@@ -140,7 +140,7 @@
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-subroutine lforce( lvol, iocons, ideriv, Ntz, dAt, dAz, XX, YY, length, DDl, MMl, iflag )
+subroutine lforce( lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, iflag )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -174,12 +174,11 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dAt, dAz, XX, YY, length, DDl, MMl
   LOCALS
   
   INTEGER, intent(in)  :: lvol, iocons, ideriv, Ntz, iflag
-  REAL                 :: dAt(1:Ntz), dAz(1:Ntz), XX(1:Ntz), YY(1:Ntz), dRR(1:Ntz,-1:1), dZZ(1:Ntz,-1:1), DDl, MMl
+  REAL                 :: dAt(1:Ntz, -1:2), dAz(1:Ntz, -1:2), XX(1:Ntz), YY(1:Ntz), dRR(1:Ntz,-1:1), dZZ(1:Ntz,-1:1), DDl, MMl
 
   REAL                 :: IIl(1:Ntz), length(1:Ntz), dLL(1:Ntz)
-  
-  INTEGER              :: Lcurvature, ii, jj, kk, ll, ifail, ivol, lnn!, oicons
-  REAL                 :: dBB(1:Ntz), lss, mfactor
+  INTEGER              :: Lcurvature, ii, jj, kk, ll, ifail, ivol, lnn, id!, oicons
+  REAL                 :: dBB(1:Ntz, -1:2), lss, mfactor
   
   REAL                 :: dAs(1:Ntz)!, dRdt(-1:1,0:1), dZdt(-1:1,0:1)
   REAL                 :: lgvuij(1:Ntz,1:3,1:3) ! local workspace; 13 Sep 13;
@@ -197,8 +196,8 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dAt, dAz, XX, YY, length, DDl, MMl
  
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  dAt(1:Ntz) = zero ! initialize intent out; 01 Jul 14;
-  dAz(1:Ntz) = zero ! initialize intent out; 01 Jul 14;
+  dAt(1:Ntz, -1:2) = zero ! initialize intent out; 01 Jul 14;
+  dAz(1:Ntz, -1:2) = zero ! initialize intent out; 01 Jul 14;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -220,19 +219,52 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dAt, dAz, XX, YY, length, DDl, MMl
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 ! compute B^2 on interface;
-  
-  call build_vector_potential(lvol, iocons, ideriv, 1)
-  call invfft( mn, im, in, efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt(1:Ntz), dAz(1:Ntz) ) ! map to real space;
+  ! Compute covariant vector potential. Stored in efmn, ofmn, cfmn, sfmn.
+  !                                         ideriv, tderiv
+  call build_vector_potential(lvol, iocons,      0,      1)
 
-  dBB(1:Ntz) = half * (         dAz(1:Ntz   )*dAz(1:Ntz   )*guvij(1:Ntz,2,2,0) &
-                        - two * dAz(1:Ntz   )*dAt(1:Ntz   )*guvij(1:Ntz,2,3,0) &
-                        +       dAt(1:Ntz   )*dAt(1:Ntz   )*guvij(1:Ntz,3,3,0) ) / sg(1:Ntz,0)**2
+  ! Map to real space
+  call invfft( mn, im, in, efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt(1:Ntz, 0), dAz(1:Ntz, 0) )
+
+  id = ideriv
+  if( id.eq.0 ) then
+
+    dBB(1:Ntz,id) = half * (        dAz(1:Ntz, id)*dAz(1:Ntz, id)*guvij(1:Ntz,2,2,id) &
+                            - two * dAz(1:Ntz, id)*dAt(1:Ntz, id)*guvij(1:Ntz,2,3,id) &
+                            +       dAt(1:Ntz, id)*dAt(1:Ntz, id)*guvij(1:Ntz,3,3,id)  ) / sg(1:Ntz,0)**2
+
+  else
+    ! Compute covariant vector potential. Stored in efmn, ofmn, cfmn, sfmn.
+    call build_vector_potential(lvol, iocons, id, 1)
+    ! Map to real space
+    call invfft( mn, im, in, efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt(1:Ntz, id), dAz(1:Ntz, id) )
+
+    dBB(1:Ntz,id) = half * (        dAz(1:Ntz,id)*dAz(1:Ntz, 0)*guvij(1:Ntz,2,2,0) &
+                            - two * dAz(1:Ntz,id)*dAt(1:Ntz, 0)*guvij(1:Ntz,2,3,0) &
+                            +       dAt(1:Ntz,id)*dAt(1:Ntz, 0)*guvij(1:Ntz,3,3,0) &
+                            +       dAz(1:Ntz, 0)*dAz(1:Ntz,id)*guvij(1:Ntz,2,2,0) &
+                            - two * dAz(1:Ntz, 0)*dAt(1:Ntz,id)*guvij(1:Ntz,2,3,0) &
+                            +       dAt(1:Ntz, 0)*dAt(1:Ntz,id)*guvij(1:Ntz,3,3,0)  ) / sg(1:Ntz,0)**2
+  endif ! end of if( ideriv.gt.0 ) ;
+
+  ! If derivatives w.r.t geometry, take into account metric derivatives
+  if( ideriv.eq.-1 ) then
+    ! Get coordinate metrics and their derivatives wrt Rj, Zj on interface;
+    lss = two * iocons - one ; Lcurvature = 4
+    WCALL( lforce, coords, ( lvol, lss, Lcurvature, Ntz, mn ) ) 
+
+    dBB(1:Ntz,id) = dBB(1:Ntz, id) + &
+                    half * (        dAz(1:Ntz, 0)*dAz(1:Ntz, 0)*guvij(1:Ntz,2,2,1) &
+                            - two * dAz(1:Ntz, 0)*dAt(1:Ntz, 0)*guvij(1:Ntz,2,3,1) &
+                            +       dAt(1:Ntz, 0)*dAt(1:Ntz, 0)*guvij(1:Ntz,3,3,1)  ) / sg(1:Ntz,0)**2 & 
+                    - dBB(1:Ntz,0) * two * sg(1:Ntz,1) / sg(1:Ntz,0)
+  endif
    
-  ijreal(1:Ntz) = adiabatic(lvol) * pscale / vvolume(lvol)**gamma + dBB(1:Ntz) ! p + B^2/2; 13 Sep 13;
+  ijreal(1:Ntz) = adiabatic(lvol) * pscale / vvolume(lvol)**gamma + dBB(1:Ntz, 0) ! p + B^2/2; 13 Sep 13;
 
 #ifdef DEBUG
 	if( Wlforce ) then
-		write(ounit, 8375) lvol, iocons, ideriv, dAz(1:Ntz), dAt(1:Ntz)
+		write(ounit, 8375) lvol, iocons, ideriv, dAz(1:Ntz, id), dAt(1:Ntz, id)
 		write(ounit, 8376) lvol, iocons, ideriv, guvij(1:Ntz,2,2,0), guvij(1:Ntz,2,3,0), guvij(1:Ntz,3,3,0), sg(1:Ntz,0)
 	 
 8375 format("lforce : lvol=",i7,", iocons=", i7, ", ideriv=", i7 ,"; dAz=",f10.6,", dAt=", f10.6)

@@ -83,13 +83,6 @@ subroutine dfp200( LcomputeDerivatives, vvol)
                         psifactor, &
                         lmns, &
                         mn, mne, &
-                        DToocc, DToocs, DToosc, DTooss, &
-                        TTsscc, TTsscs, TTsssc, TTssss, &
-                        TDstcc, TDstcs, TDstsc, TDstss, &
-                        TDszcc, TDszcs, TDszsc, TDszss, &
-                        DDttcc, DDttcs, DDttsc, DDttss, &
-                        DDtzcc, DDtzcs, DDtzsc, DDtzss, &
-                        DDzzcc, DDzzcs, DDzzsc, DDzzss, &
                         dRodR, dRodZ, dZodR, dZodZ, &
                         LocalConstraint, &
                         IsMyVolume, IsMyVolumeValue, IndMatrixArray, Btemn, WhichCpuID, &
@@ -114,7 +107,7 @@ subroutine dfp200( LcomputeDerivatives, vvol)
   REAL                 :: lastcpu, lss, lfactor, DDl, MMl
   REAL                 :: det
   REAL   , allocatable :: rhs(:) ! original Beltrami-matrix inverse; used to compute derivatives of matrix equation;
-  REAL   , allocatable :: dAt(:,:), dAz(:,:), XX(:), YY(:), dBB(:,:), dII(:), dLL(:), dPP(:), length(:), dRR(:,:), dZZ(:,:), constraint(:)
+  REAL   , allocatable :: XX(:), YY(:), dBB(:,:), dII(:), dLL(:), dPP(:), length(:), dRR(:,:), dZZ(:,:), constraint(:)
   REAL   , allocatable :: work(:)
 
   CHARACTER            :: packorunpack 
@@ -131,19 +124,22 @@ BEGIN(dfp200)
     endif
 #endif
 
+SALLOCATE( dBB       , (1:Ntz,-1:2), zero ) ! magnetic field strength (on interfaces) in real space and derivatives;
+SALLOCATE(  XX       , (1:Ntz     ), zero )
+SALLOCATE(  YY       , (1:Ntz     ), zero )
+SALLOCATE( length    , (1:Ntz     ), zero ) ! this is calculated in lforce;
+
+if( LComputeDerivatives ) then
+    SALLOCATE( dRR       , (1:Ntz,-1:1), zero )
+    SALLOCATE( dZZ       , (1:Ntz,-1:1), zero )
+    SALLOCATE( dII       , (1:Ntz     ), zero ) ! spectral constraint;
+    SALLOCATE( dLL       , (1:Ntz     ), zero ) ! length   constraint;
+    SALLOCATE( dPP       , (1:Ntz     ), zero ) ! poloidal constraint;
+    SALLOCATE( constraint, (1:Ntz     ), zero )
+endif
+
 if( LocalConstraint ) then
-
-    if( LComputeDerivatives ) then
-        SALLOCATE( dBB       , (1:Ntz,-1:2), zero ) ! magnetic field strength (on interfaces) in real space and derivatives;
-        SALLOCATE( dRR       , (1:Ntz,-1:1), zero )
-        SALLOCATE( dZZ       , (1:Ntz,-1:1), zero )
-        SALLOCATE( dII       , (1:Ntz     ), zero ) ! spectral constraint;
-        SALLOCATE( dLL       , (1:Ntz     ), zero ) ! length   constraint;
-        SALLOCATE( dPP       , (1:Ntz     ), zero ) ! poloidal constraint;
-        SALLOCATE( constraint, (1:Ntz     ), zero )
-    endif
-
-
+    
     do vvol = 1, Mvol
 
         WCALL(dfp200, IsMyVolume, (vvol))
@@ -161,11 +157,6 @@ if( LocalConstraint ) then
         ll = Lrad(vvol)  ! Shorthand
         NN = NAdof(vvol) ! shorthand;
 
-        SALLOCATE( dAt       , (1:Ntz,-1:2), zero )
-        SALLOCATE( dAz       , (1:Ntz,-1:2), zero )
-        SALLOCATE(  XX       , (1:Ntz     ), zero )
-        SALLOCATE(  YY       , (1:Ntz     ), zero )
-        SALLOCATE( length    , (1:Ntz     ), zero ) ! this is calculated in lforce;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -180,8 +171,8 @@ if( LocalConstraint ) then
             if( vvol.eq.Mvol .and. iocons.eq.1 ) cycle ! fixed outer boundary                     ; there are no constraints at outer boundary;
             
             ideriv = 0 ; id = ideriv
-            iflag = 0 ! dAt, dAz, XX & YY are returned by lforce; Bemn(1:mn,vvol,iocons), Iomn(1:mn,vvol) etc. are returned through global;
-            WCALL( dfp200, lforce, ( vvol, iocons, ideriv, Ntz, dAt(1:Ntz,id), dAz(1:Ntz,id), XX(1:Ntz), YY(1:Ntz), length(1:Ntz), DDl, MMl, iflag ) )
+            iflag = 0 ! XX & YY are returned by lforce; Bemn(1:mn,vvol,iocons), Iomn(1:mn,vvol) etc. are returned through global;
+            WCALL( dfp200, lforce, ( vvol, iocons, ideriv, Ntz, dBB(1:Ntz,id), XX(1:Ntz), YY(1:Ntz), length(1:Ntz), DDl, MMl, iflag ) )
            
         enddo ! end of do iocons = 0, 1;
 
@@ -242,7 +233,7 @@ if( LocalConstraint ) then
 
 
                             ! Evaluate derivatives of B square 
-                            call evaluate_dBB(vvol, idof, innout, issym, irz, ii, dAt, dAz, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
+                            call evaluate_dBB(vvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
 
                         enddo ! matches do innout;
                     enddo ! matches do issym;
@@ -262,35 +253,13 @@ if( LocalConstraint ) then
        
         endif ! end of if( LComputeDerivatives ) ;
 
-        DALLOCATE(dAt)
-        DALLOCATE(dAz)
-        DALLOCATE( XX) ! spectral constraints; not used;
-        DALLOCATE( YY)
-        DALLOCATE(length)
 
 
     enddo ! matches do vvol = 1, Mvol
 
-    if( LcomputeDerivatives ) then
-        DALLOCATE(constraint)
-        DALLOCATE(dPP)
-        DALLOCATE(dLL)
-        DALLOCATE(dII)
-        DALLOCATE(dZZ)
-        DALLOCATE(dRR)
-        DALLOCATE(dBB)
-    endif
-
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 else ! CASE SEMI GLOBAL CONSTRAINT
-
-
-    SALLOCATE( dAt       , (1:Ntz,-1:2), zero )
-    SALLOCATE( dAz       , (1:Ntz,-1:2), zero )
-    SALLOCATE(  XX       , (1:Ntz     ), zero )
-    SALLOCATE(  YY       , (1:Ntz     ), zero )
-    SALLOCATE( length    , (1:Ntz     ), zero ) ! this is calculated in lforce;
 
     do vvol = 1, Mvol
             WCALL(dfp200, IsMyVolume, (vvol))
@@ -323,7 +292,7 @@ else ! CASE SEMI GLOBAL CONSTRAINT
                 
                 ideriv = 0 ; id = ideriv
                 iflag = 0 ! dAt, dAz, XX & YY are returned by lforce; Bemn(1:mn,vvol,iocons), Iomn(1:mn,vvol) etc. are returned through global;
-                WCALL( dfp200, lforce, ( vvol, iocons, ideriv, Ntz, dAt(1:Ntz,id), dAz(1:Ntz,id), XX(1:Ntz), YY(1:Ntz), length(1:Ntz), DDl, MMl, iflag ) )
+                WCALL( dfp200, lforce, ( vvol, iocons, ideriv, Ntz, dBB(1:Ntz,id), XX(1:Ntz), YY(1:Ntz), length(1:Ntz), DDl, MMl, iflag ) )
                
             enddo ! end of do iocons = 0, 1;
     enddo
@@ -359,15 +328,6 @@ else ! CASE SEMI GLOBAL CONSTRAINT
 
         ! Then the perturbed solution is evaluated on volumes sharing the interface vvol (volume vvol and vvol+1).
         ! i.e. relevant routines are run with lvol=vvol, innout=1 and lvol=vvol+1, innout=0
-
-        ! Allocate memory
-        SALLOCATE( dBB       , (1:Ntz,-1:2), zero ) ! magnetic field strength (on interfaces) in real space and derivatives;
-        SALLOCATE( dRR       , (1:Ntz,-1:1), zero )
-        SALLOCATE( dZZ       , (1:Ntz,-1:1), zero )
-        SALLOCATE( dII       , (1:Ntz     ), zero ) ! spectral constraint;
-        SALLOCATE( dLL       , (1:Ntz     ), zero ) ! length   constraint;
-        SALLOCATE( dPP       , (1:Ntz     ), zero ) ! poloidal constraint;
-        SALLOCATE( constraint, (1:Ntz     ), zero )
 
 
         ! First invert Beltrami matrices and store them in OBI
@@ -548,7 +508,7 @@ else ! CASE SEMI GLOBAL CONSTRAINT
                         LREGION(lvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
 
                         ! EVALUATE dBB
-                        call evaluate_dBB(lvol, idof, innout, issym, irz, ii, dAt, dAz, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
+                        call evaluate_dBB(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
                     enddo     ! matches do lvol = vvol, vvol+1 
 
                 enddo ! matches do issym;
@@ -561,14 +521,6 @@ else ! CASE SEMI GLOBAL CONSTRAINT
     do vvol = 1, Mvol
          DALLOCATE(oBi(vvol)%mat)
     enddo
-
-    DALLOCATE(dRR)
-    DALLOCATE(dZZ)
-    DALLOCATE(dII)
-    DALLOCATE(dLL)
-    DALLOCATE(dPP)
-    DALLOCATE(constraint)
-    DALLOCATE(dBB)
 
     dBdX%L = .false. ! probably not needed, but included anyway;
 
@@ -586,15 +538,23 @@ else ! CASE SEMI GLOBAL CONSTRAINT
 
     endif ! End of if( LComputeDerivatives ) 
 
-DALLOCATE(dAt)
-DALLOCATE(dAz)
-DALLOCATE( XX) ! spectral constraints; not used;
-DALLOCATE( YY)
-DALLOCATE(length)
 
 
 endif ! End of if( LocalConstraint )
 
+if( LcomputeDerivatives ) then
+    DALLOCATE(constraint)
+    DALLOCATE(dPP)
+    DALLOCATE(dLL)
+    DALLOCATE(dII)
+    DALLOCATE(dZZ)
+    DALLOCATE(dRR)
+endif
+
+DALLOCATE(dBB)
+DALLOCATE( XX) ! spectral constraints; not used;
+DALLOCATE( YY)
+DALLOCATE(length)
 
 
 2000 continue
@@ -729,13 +689,6 @@ subroutine get_perturbed_solution(lvol, rhs, oBI, NN)
     use allglobal, only :   ncpu, myid, cpus, &
                             mn, Iquad, NAdof, &
                             dMA, dMB, dMD, dMG, solution, &
-                            DToocc, DToocs, DToosc, DTooss, &
-                            TTsscc, TTsscs, TTsssc, TTssss, &
-                            TDstcc, TDstcs, TDstsc, TDstss, &
-                            TDszcc, TDszcs, TDszsc, TDszss, &
-                            DDttcc, DDttcs, DDttsc, DDttss, &
-                            DDtzcc, DDtzcs, DDtzsc, DDtzss, &
-                            DDzzcc, DDzzcs, DDzzsc, DDzzss, &
                             dtflux, dpflux, IndMatrixArray
 
 
@@ -825,14 +778,8 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
                             LocalConstraint, &
                             vvolume, dvolume, &
                             IsMyVolume, IsMyVolumeValue, IndMatrixArray, &
-                            DToocc, DToocs, DToosc, DTooss, &
-                            TTsscc, TTsscs, TTsssc, TTssss, &
-                            TDstcc, TDstcs, TDstsc, TDstss, &
-                            TDszcc, TDszcs, TDszsc, TDszss, &
-                            DDttcc, DDttcs, DDttsc, DDttss, &
-                            DDtzcc, DDtzcs, DDtzsc, DDtzss, &
-                            DDzzcc, DDzzcs, DDzzsc, DDzzss, &
-                            Btemn, xoffset 
+                            Btemn, xoffset, &
+                            allocate_geometry_matrices, deallocate_geometry_matrices
 
 
   LOCALS:
@@ -1126,79 +1073,13 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
                 ll = Lrad(vvol)        ! shorthand
                 NN = NAdof(vvol)     ! shorthand;
 
-               SALLOCATE( DToocc, (0:ll,0:ll,1:mn,1:mn), zero )
-               SALLOCATE( DToocs, (0:ll,0:ll,1:mn,1:mn), zero )
-               SALLOCATE( DToosc, (0:ll,0:ll,1:mn,1:mn), zero )
-               SALLOCATE( DTooss, (0:ll,0:ll,1:mn,1:mn), zero )
+                call allocate_geometry_matrices(ll)
 
-               SALLOCATE( TTsscc, (0:ll,0:ll,1:mn,1:mn), zero )
-               SALLOCATE( TTsscs, (0:ll,0:ll,1:mn,1:mn), zero )
-               SALLOCATE( TTsssc, (0:ll,0:ll,1:mn,1:mn), zero )
-               SALLOCATE( TTssss, (0:ll,0:ll,1:mn,1:mn), zero )
+                WCALL( dfp200, ma00aa, ( Iquad(pvol), mn, pvol, ll ) )
+                
+                WCALL( dfp200, matrix, ( pvol, mn, ll ) )
 
-               SALLOCATE( TDstcc, (0:ll,0:ll,1:mn,1:mn), zero )
-               SALLOCATE( TDstcs, (0:ll,0:ll,1:mn,1:mn), zero )
-               SALLOCATE( TDstsc, (0:ll,0:ll,1:mn,1:mn), zero )
-               SALLOCATE( TDstss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-               SALLOCATE( TDszcc, (0:ll,0:ll,1:mn,1:mn), zero )
-               SALLOCATE( TDszcs, (0:ll,0:ll,1:mn,1:mn), zero )
-               SALLOCATE( TDszsc, (0:ll,0:ll,1:mn,1:mn), zero )
-               SALLOCATE( TDszss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-               SALLOCATE( DDttcc, (0:ll,0:ll,1:mn,1:mn), zero )
-               SALLOCATE( DDttcs, (0:ll,0:ll,1:mn,1:mn), zero )
-               SALLOCATE( DDttsc, (0:ll,0:ll,1:mn,1:mn), zero )
-               SALLOCATE( DDttss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-               SALLOCATE( DDtzcc, (0:ll,0:ll,1:mn,1:mn), zero )
-               SALLOCATE( DDtzcs, (0:ll,0:ll,1:mn,1:mn), zero )
-               SALLOCATE( DDtzsc, (0:ll,0:ll,1:mn,1:mn), zero )
-               SALLOCATE( DDtzss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-               SALLOCATE( DDzzcc, (0:ll,0:ll,1:mn,1:mn), zero )
-               SALLOCATE( DDzzcs, (0:ll,0:ll,1:mn,1:mn), zero )
-               SALLOCATE( DDzzsc, (0:ll,0:ll,1:mn,1:mn), zero )
-               SALLOCATE( DDzzss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-                      WCALL( dfp200, ma00aa, ( Iquad(pvol), mn, pvol, ll ) )
-                      
-                      WCALL( dfp200, matrix, ( pvol, mn, ll ) )
-
-               DALLOCATE(DToocc)
-               DALLOCATE(DToocs)
-               DALLOCATE(DToosc)
-               DALLOCATE(DTooss)
-
-               DALLOCATE(TTsscc)
-               DALLOCATE(TTsscs)
-               DALLOCATE(TTsssc)
-               DALLOCATE(TTssss)
-
-               DALLOCATE(TDstcc)
-               DALLOCATE(TDstcs)
-               DALLOCATE(TDstsc)
-               DALLOCATE(TDstss)
-
-               DALLOCATE(TDszcc)
-               DALLOCATE(TDszcs)
-               DALLOCATE(TDszsc)
-               DALLOCATE(TDszss)
-
-               DALLOCATE(DDttcc)
-               DALLOCATE(DDttcs)
-               DALLOCATE(DDttsc)
-               DALLOCATE(DDttss)
-
-               DALLOCATE(DDtzcc)
-               DALLOCATE(DDtzcs)
-               DALLOCATE(DDtzsc)
-               DALLOCATE(DDtzss)
-
-               DALLOCATE(DDzzcc)
-               DALLOCATE(DDzzcs)
-               DALLOCATE(DDzzsc)
-               DALLOCATE(DDzzss)
+                call deallocate_geometry_matrices()
             enddo
 
             if( LocalConstraint ) then
@@ -1391,7 +1272,7 @@ end subroutine evaluate_dmupfdx
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 
-subroutine evaluate_dBB(lvol, idof, innout, issym, irz, ii, dAt, dAz, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
+subroutine evaluate_dBB(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
 
 ! Evaluate the derivative of the square of the magnetic field modulus. Add spectral constraint derivatives if
 ! required. 
@@ -1440,13 +1321,6 @@ subroutine evaluate_dBB(lvol, idof, innout, issym, irz, ii, dAt, dAz, dBB, XX, Y
                         psifactor, &
                         mn, Iquad, &
                         dRodR, dRodZ, dZodR, dZodZ, dBdX, &
-                        DToocc, DToocs, DToosc, DTooss, &
-                        TTsscc, TTsscs, TTsssc, TTssss, &
-                        TDstcc, TDstcs, TDstsc, TDstss, &
-                        TDszcc, TDszcs, TDszsc, TDszss, &
-                        DDttcc, DDttcs, DDttsc, DDttss, &
-                        DDtzcc, DDtzcs, DDtzsc, DDtzss, &
-                        DDzzcc, DDzzcs, DDzzsc, DDzzss, &
                         xoffset
 
  LOCALS
@@ -1482,8 +1356,10 @@ do iocons = 0, 1
 ! ----------------------------------------------
     if( Lconstraint.eq.1 .OR. Lconstraint.eq.3 ) then ! first, determine how B^2 varies with mu and dpflux;
 
+        iflag = 1
         do ideriv=1, 2
-            call evaluate_Bsquare(iocons, lvol, dBB, dAt, dAz, XX, YY, length, DDl, MMl, ideriv)! In a subroutine; called somewhere else when semi global constraint
+            !call evaluate_Bsquare(iocons, lvol, dBB, dAt, dAz, XX, YY, length, DDl, MMl, ideriv)! In a subroutine; called somewhere else when semi global constraint
+            WCALL(dfp200, lforce, (lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, iflag) )
         enddo
 
         call tfft(    Nt, Nz, dBB(1:Ntz,1), dBB(1:Ntz,2), & ! derivatives of B^2 wrt mu and dpflux;
@@ -1514,8 +1390,9 @@ do iocons = 0, 1
 
 ! Evaluate B^2 (no derivatives)
 ! -----------------------------------
-    ideriv = 0
-    call evaluate_Bsquare(iocons, lvol, dBB, dAt, dAz, XX, YY, length, DDl, MMl, ideriv)
+    ideriv = 0; iflag=1
+    !call evaluate_Bsquare(iocons, lvol, dBB, dAt, dAz, XX, YY, length, DDl, MMl, ideriv)
+    WCALL( dfp200, lforce, (lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, iflag) )
 
 
 ! dFFdRZ CONSTRUCTION
@@ -1523,9 +1400,10 @@ do iocons = 0, 1
 
 ! B square contribution
 ! ---------------------
-    ideriv = -1; id = ideriv
+    ideriv = -1; iflag=0
 
-    call evaluate_Bsquare(iocons, lvol, dBB, dAt, dAz, XX, YY, length, DDl, MMl, ideriv)
+    !call evaluate_Bsquare(iocons, lvol, dBB, dAt, dAz, XX, YY, length, DDl, MMl, ideriv)
+    WCALL( dfp200, lforce, (lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, iflag) )
 
     ! Add derivatives of pressure as well
     FATAL( dfp200, vvolume(lvol).lt.small, shall divide by vvolume(lvol)**(gamma+one) )
@@ -1740,90 +1618,4 @@ enddo ! end of do iocons;
 !3363         format("evaluate_dBB : myid=", i3, ", lvol=", i3, a12, 20f12.8)
 
 end subroutine evaluate_dBB
-
-
-
-subroutine evaluate_Bsquare(iocons, vvol, dBB, dAt, dAz, XX, YY, length, DDl, MMl, ideriv)
-
-! INPUT
-! -----
-!     iocons:     0: inner interface, 1: outer interface
-!     vvol:        Volume number
-
-! MODULES
-! -------
-
-  use constants, only : zero, half, one, two
-  
-  use numerical, only : small
-  
-  use fileunits, only : ounit
-  
-  use inputlist, only : Wmacros, Wdfp200
-  
-  use cputiming, only : Tdfp200
-  
-  use allglobal, only : ncpu, myid, cpus, &
-                        Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
-                        sg, guvij, Ntz, &
-                        mn
-
-
- LOCALS
-!------
-
-INTEGER                 :: ideriv, id, iocons, vvol, iflag, Lcurvature
-REAL                    :: dAt(1:Ntz,-1:2), dAz(1:Ntz,-1:2), XX(1:Ntz), YY(1:Ntz), dBB(1:Ntz,-1:2), length(1:Ntz), DDl, MMl
-REAL                    :: lss
-
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-id = ideriv ! derivatives wrt helicity multiplier and differential poloidal flux;
-
-if( ideriv.eq.-1 ) then
-    iflag = 0
-else
-    iflag = 1
-endif
-
-! lforce will only return dAt(1:Ntz,id) and dAz(1:Ntz,id); as well as 
-WCALL( dfp200, lforce, ( vvol, iocons, ideriv, Ntz, dAt(1:Ntz,id), dAz(1:Ntz,id), &
-                         XX(1:Ntz), YY(1:Ntz), length(1:Ntz), DDl, MMl, iflag ) )
-
-
-if( ideriv.eq.0 ) then
-    dBB(1:Ntz,id) = half * (        dAz(1:Ntz, 0)*dAz(1:Ntz, 0)*guvij(1:Ntz,2,2,0) &
-                            - two * dAz(1:Ntz, 0)*dAt(1:Ntz, 0)*guvij(1:Ntz,2,3,0) &
-                            +       dAt(1:Ntz, 0)*dAt(1:Ntz, 0)*guvij(1:Ntz,3,3,0)  ) / sg(1:Ntz,0)**2
-else
-    dBB(1:Ntz,id) = half * (        dAz(1:Ntz,id)*dAz(1:Ntz, 0)*guvij(1:Ntz,2,2,0) &
-                            - two * dAz(1:Ntz,id)*dAt(1:Ntz, 0)*guvij(1:Ntz,2,3,0) &
-                            +       dAt(1:Ntz,id)*dAt(1:Ntz, 0)*guvij(1:Ntz,3,3,0) &
-                            +       dAz(1:Ntz, 0)*dAz(1:Ntz,id)*guvij(1:Ntz,2,2,0) &
-                            - two * dAz(1:Ntz, 0)*dAt(1:Ntz,id)*guvij(1:Ntz,2,3,0) &
-                            +       dAt(1:Ntz, 0)*dAt(1:Ntz,id)*guvij(1:Ntz,3,3,0)  ) / sg(1:Ntz,0)**2
-endif ! end of if( ideriv.gt.0 ) ;
-
-! If derivatives w.r.t geometry, take into account metric derivatives
-if( ideriv.eq.-1 ) then
-    ! Get coordinate metrics and their derivatives wrt Rj, Zj on interface;
-    lss = two * iocons - one ; Lcurvature = 4
-    WCALL( dfp200, coords, ( vvol, lss, Lcurvature, Ntz, mn ) ) 
-
-    dBB(1:Ntz,id) = dBB(1:Ntz, id) + &
-                    half * (        dAz(1:Ntz, 0)*dAz(1:Ntz, 0)*guvij(1:Ntz,2,2,1) &
-                            - two * dAz(1:Ntz, 0)*dAt(1:Ntz, 0)*guvij(1:Ntz,2,3,1) &
-                            +       dAt(1:Ntz, 0)*dAt(1:Ntz, 0)*guvij(1:Ntz,3,3,1)  ) / sg(1:Ntz,0)**2 & 
-                    - dBB(1:Ntz,0) * two * sg(1:Ntz,1) / sg(1:Ntz,0)
-endif
-
-
-end subroutine evaluate_Bsquare
-
-
-
-
-
-
-
 
