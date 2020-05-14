@@ -466,8 +466,43 @@ else ! CASE SEMI GLOBAL CONSTRAINT
             enddo
         endif
 
+        ! Need to evaluate perturbed matrices of Beltrami linear system. This requires to
+        ! re-evaluate all these large, expensive matrices. Maybe not necessary if stored
+        ! somewhere else?
+        SALLOCATE( DToocc, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( DToocs, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( DToosc, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( DTooss, (0:ll,0:ll,1:mn,1:mn), zero )
 
+        SALLOCATE( TTsscc, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( TTsscs, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( TTsssc, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( TTssss, (0:ll,0:ll,1:mn,1:mn), zero )
 
+        SALLOCATE( TDstcc, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( TDstcs, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( TDstsc, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( TDstss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+        SALLOCATE( TDszcc, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( TDszcs, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( TDszsc, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( TDszss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+        SALLOCATE( DDttcc, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( DDttcs, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( DDttsc, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( DDttss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+        SALLOCATE( DDtzcc, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( DDtzcs, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( DDtzsc, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( DDtzss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+        SALLOCATE( DDzzcc, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( DDzzcs, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( DDzzsc, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( DDzzss, (0:ll,0:ll,1:mn,1:mn), zero )
 
         ! Loop on perturbed interfaces
         do even_or_odd = 0, 1 ! First loop on even interfaces perturbation, then on odd interfaces. This allow efficient parallelization
@@ -503,9 +538,6 @@ else ! CASE SEMI GLOBAL CONSTRAINT
                 LinnerVolume = .true.
 
             endif
-
-
-
 
 
             dBdX%vol = vvol     ! Perturbed interface
@@ -548,96 +580,14 @@ else ! CASE SEMI GLOBAL CONSTRAINT
 ! Set up volume information                        
                         LREGION(lvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
                         ll = Lrad(lvol)  ! Shorthand
-                           NN = NAdof(lvol) ! shorthand;
+                        NN = NAdof(lvol) ! shorthand;
                        
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-
-                        ! Allocate memory
+                        ! Allocate memory. This cannot be moved outside due to NN dependence on volume.
                         SALLOCATE( rhs,    (1:NN               ), zero )
 
-
-                        ! Need to evaluate perturbed matrices of Beltrami linear system. This requires to
-                        ! re-evaluate all these large, expensive matrices. Maybe not necessary if stored
-                        ! somewhere else?
-                        SALLOCATE( DToocc, (0:ll,0:ll,1:mn,1:mn), zero )
-                        SALLOCATE( DToocs, (0:ll,0:ll,1:mn,1:mn), zero )
-                        SALLOCATE( DToosc, (0:ll,0:ll,1:mn,1:mn), zero )
-                        SALLOCATE( DTooss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-                        SALLOCATE( TTsscc, (0:ll,0:ll,1:mn,1:mn), zero )
-                        SALLOCATE( TTsscs, (0:ll,0:ll,1:mn,1:mn), zero )
-                        SALLOCATE( TTsssc, (0:ll,0:ll,1:mn,1:mn), zero )
-                        SALLOCATE( TTssss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-                        SALLOCATE( TDstcc, (0:ll,0:ll,1:mn,1:mn), zero )
-                        SALLOCATE( TDstcs, (0:ll,0:ll,1:mn,1:mn), zero )
-                        SALLOCATE( TDstsc, (0:ll,0:ll,1:mn,1:mn), zero )
-                        SALLOCATE( TDstss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-                        SALLOCATE( TDszcc, (0:ll,0:ll,1:mn,1:mn), zero )
-                        SALLOCATE( TDszcs, (0:ll,0:ll,1:mn,1:mn), zero )
-                        SALLOCATE( TDszsc, (0:ll,0:ll,1:mn,1:mn), zero )
-                        SALLOCATE( TDszss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-                        SALLOCATE( DDttcc, (0:ll,0:ll,1:mn,1:mn), zero )
-                        SALLOCATE( DDttcs, (0:ll,0:ll,1:mn,1:mn), zero )
-                        SALLOCATE( DDttsc, (0:ll,0:ll,1:mn,1:mn), zero )
-                        SALLOCATE( DDttss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-                        SALLOCATE( DDtzcc, (0:ll,0:ll,1:mn,1:mn), zero )
-                        SALLOCATE( DDtzcs, (0:ll,0:ll,1:mn,1:mn), zero )
-                        SALLOCATE( DDtzsc, (0:ll,0:ll,1:mn,1:mn), zero )
-                        SALLOCATE( DDtzss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-                        SALLOCATE( DDzzcc, (0:ll,0:ll,1:mn,1:mn), zero )
-                        SALLOCATE( DDzzcs, (0:ll,0:ll,1:mn,1:mn), zero )
-                        SALLOCATE( DDzzsc, (0:ll,0:ll,1:mn,1:mn), zero )
-                        SALLOCATE( DDzzss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-
-
-                        ! Perturbed solution
+                        ! Get derivative of vector potential w.r.t geometry. Matrix perturbation theory.
                         call get_perturbed_solution(lvol, rhs, oBI(lvol)%mat(1:NN,1:NN), NN)
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-                        ! Free memory
-                        DALLOCATE(DToocc)
-                        DALLOCATE(DToocs)
-                        DALLOCATE(DToosc)
-                        DALLOCATE(DTooss)
-
-                        DALLOCATE(TTsscc)
-                        DALLOCATE(TTsscs)
-                        DALLOCATE(TTsssc)
-                        DALLOCATE(TTssss)
-
-                        DALLOCATE(TDstcc)
-                        DALLOCATE(TDstcs)
-                        DALLOCATE(TDstsc)
-                        DALLOCATE(TDstss)
-
-                        DALLOCATE(TDszcc)
-                        DALLOCATE(TDszcs)
-                        DALLOCATE(TDszsc)
-                        DALLOCATE(TDszss)
-
-                        DALLOCATE(DDttcc)
-                        DALLOCATE(DDttcs)
-                        DALLOCATE(DDttsc)
-                        DALLOCATE(DDttss)
-
-                        DALLOCATE(DDtzcc)
-                        DALLOCATE(DDtzcs)
-                        DALLOCATE(DDtzsc)
-                        DALLOCATE(DDtzss)
-
-                        DALLOCATE(DDzzcc)
-                        DALLOCATE(DDzzcs)
-                        DALLOCATE(DDzzsc)
-                        DALLOCATE(DDzzss)
-
+                    
                         DALLOCATE(rhs)
 
                     enddo ! end of do lvol = vvol, vvol+1
@@ -708,9 +658,43 @@ else ! CASE SEMI GLOBAL CONSTRAINT
         enddo ! matches do ii;
       enddo ! matches do vvol;
     enddo ! matches do even_or_odd;
-                                
-    ! Free memory
 
+    ! Free memory
+    DALLOCATE(DToocc)
+    DALLOCATE(DToocs)
+    DALLOCATE(DToosc)
+    DALLOCATE(DTooss)
+
+    DALLOCATE(TTsscc)
+    DALLOCATE(TTsscs)
+    DALLOCATE(TTsssc)
+    DALLOCATE(TTssss)
+
+    DALLOCATE(TDstcc)
+    DALLOCATE(TDstcs)
+    DALLOCATE(TDstsc)
+    DALLOCATE(TDstss)
+
+    DALLOCATE(TDszcc)
+    DALLOCATE(TDszcs)
+    DALLOCATE(TDszsc)
+    DALLOCATE(TDszss)
+
+    DALLOCATE(DDttcc)
+    DALLOCATE(DDttcs)
+    DALLOCATE(DDttsc)
+    DALLOCATE(DDttss)
+
+    DALLOCATE(DDtzcc)
+    DALLOCATE(DDtzcs)
+    DALLOCATE(DDtzsc)
+    DALLOCATE(DDtzss)
+
+    DALLOCATE(DDzzcc)
+    DALLOCATE(DDzzcs)
+    DALLOCATE(DDzzsc)
+    DALLOCATE(DDzzss)
+                          
     do vvol = 1, Mvol
          DALLOCATE(oBi(vvol)%mat)
     enddo
