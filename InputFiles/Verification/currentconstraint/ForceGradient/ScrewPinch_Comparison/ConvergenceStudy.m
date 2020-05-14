@@ -59,3 +59,5 @@ saveas(gcf,'Convergence_ScrewPinch','epsc')
 
 ! rm Run_*
 ! rm ScrewPinch_Nvol3.sp.*
+! rm .Screw*
+! rm .Run*

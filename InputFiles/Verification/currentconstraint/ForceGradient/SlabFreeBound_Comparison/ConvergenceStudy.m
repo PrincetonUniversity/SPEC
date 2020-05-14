@@ -64,3 +64,5 @@ saveas(gcf, 'Convergence_Slab', 'epsc');
 ! rm Run_*
 ! rm *.h5
 ! rm *.end
+! rm .Run*
+! rm .Slab*
