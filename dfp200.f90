@@ -92,7 +92,8 @@ subroutine dfp200( LcomputeDerivatives, vvol)
                         DDzzcc, DDzzcs, DDzzsc, DDzzss, &
                         dRodR, dRodZ, dZodR, dZodZ, &
                         LocalConstraint, &
-                        IsMyVolume, IsMyVolumeValue, IndMatrixArray, Btemn, WhichCpuID
+                        IsMyVolume, IsMyVolumeValue, IndMatrixArray, Btemn, WhichCpuID, &
+                        deallocate_geometry_matrices, allocate_geometry_matrices
 
   use typedefns
   
@@ -131,6 +132,18 @@ BEGIN(dfp200)
 #endif
 
 if( LocalConstraint ) then
+
+    if( LComputeDerivatives ) then
+        SALLOCATE( dBB       , (1:Ntz,-1:2), zero ) ! magnetic field strength (on interfaces) in real space and derivatives;
+        SALLOCATE( dRR       , (1:Ntz,-1:1), zero )
+        SALLOCATE( dZZ       , (1:Ntz,-1:1), zero )
+        SALLOCATE( dII       , (1:Ntz     ), zero ) ! spectral constraint;
+        SALLOCATE( dLL       , (1:Ntz     ), zero ) ! length   constraint;
+        SALLOCATE( dPP       , (1:Ntz     ), zero ) ! poloidal constraint;
+        SALLOCATE( constraint, (1:Ntz     ), zero )
+    endif
+
+
     do vvol = 1, Mvol
 
         WCALL(dfp200, IsMyVolume, (vvol))
@@ -146,10 +159,8 @@ if( LocalConstraint ) then
         
         dBdX%vol = vvol  ! Label
         ll = Lrad(vvol)  ! Shorthand
-       
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+        NN = NAdof(vvol) ! shorthand;
 
-           NN = NAdof(vvol) ! shorthand;
         SALLOCATE( dAt       , (1:Ntz,-1:2), zero )
         SALLOCATE( dAz       , (1:Ntz,-1:2), zero )
         SALLOCATE(  XX       , (1:Ntz     ), zero )
@@ -177,28 +188,23 @@ if( LocalConstraint ) then
 
            if( LcomputeDerivatives ) then ! compute inverse of Beltrami matrices;
 
-
-            SALLOCATE( dBB       , (1:Ntz,-1:2), zero ) ! magnetic field strength (on interfaces) in real space and derivatives;
-            SALLOCATE( dRR       , (1:Ntz,-1:1), zero )
-            SALLOCATE( dZZ       , (1:Ntz,-1:1), zero )
-            SALLOCATE( dII       , (1:Ntz     ), zero ) ! spectral constraint;
-            SALLOCATE( dLL       , (1:Ntz     ), zero ) ! length   constraint;
-            SALLOCATE( dPP       , (1:Ntz     ), zero ) ! poloidal constraint;
-            SALLOCATE( constraint, (1:Ntz     ), zero )
+            ! Allocate some memory
             SALLOCATE( oBI(vvol)%mat, (1:NN,1:NN ), zero ) ! inverse of ``original'', i.e. unperturbed, Beltrami matrix;
+
+            ! Allocate DToocc, DToocs, ...
+            call allocate_geometry_matrices(ll)
 
             SALLOCATE( rhs, (1:NN     ), zero )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-               call get_inverse_Beltrami_matrices(vvol, oBI(vvol)%mat(1:NN,1:NN), NN)
+            ! Invert beltrami matrix. Required for matrix perturbation theory
+            call get_inverse_Beltrami_matrices(vvol, oBI(vvol)%mat(1:NN,1:NN), NN)
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
             dBdX%L = .true. ! will need derivatives;
             idof = 0 ! labels degree of freedom; local to interface;
-               
-                
+                            
             do ii = 1, mn ! loop over deformations in Fourier harmonics; inside do vvol;
                 
                 dBdX%ii = ii ! controls construction of derivatives in subroutines called below;     
@@ -227,92 +233,16 @@ if( LocalConstraint ) then
 
                             dBdX%innout = innout
 
-                            SALLOCATE( DToocc, (0:ll,0:ll,1:mn,1:mn), zero )
-                            SALLOCATE( DToocs, (0:ll,0:ll,1:mn,1:mn), zero )
-                            SALLOCATE( DToosc, (0:ll,0:ll,1:mn,1:mn), zero )
-                            SALLOCATE( DTooss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-                            SALLOCATE( TTsscc, (0:ll,0:ll,1:mn,1:mn), zero )
-                            SALLOCATE( TTsscs, (0:ll,0:ll,1:mn,1:mn), zero )
-                            SALLOCATE( TTsssc, (0:ll,0:ll,1:mn,1:mn), zero )
-                            SALLOCATE( TTssss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-                            SALLOCATE( TDstcc, (0:ll,0:ll,1:mn,1:mn), zero )
-                            SALLOCATE( TDstcs, (0:ll,0:ll,1:mn,1:mn), zero )
-                            SALLOCATE( TDstsc, (0:ll,0:ll,1:mn,1:mn), zero )
-                            SALLOCATE( TDstss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-                            SALLOCATE( TDszcc, (0:ll,0:ll,1:mn,1:mn), zero )
-                            SALLOCATE( TDszcs, (0:ll,0:ll,1:mn,1:mn), zero )
-                            SALLOCATE( TDszsc, (0:ll,0:ll,1:mn,1:mn), zero )
-                            SALLOCATE( TDszss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-                            SALLOCATE( DDttcc, (0:ll,0:ll,1:mn,1:mn), zero )
-                            SALLOCATE( DDttcs, (0:ll,0:ll,1:mn,1:mn), zero )
-                            SALLOCATE( DDttsc, (0:ll,0:ll,1:mn,1:mn), zero )
-                            SALLOCATE( DDttss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-                            SALLOCATE( DDtzcc, (0:ll,0:ll,1:mn,1:mn), zero )
-                            SALLOCATE( DDtzcs, (0:ll,0:ll,1:mn,1:mn), zero )
-                            SALLOCATE( DDtzsc, (0:ll,0:ll,1:mn,1:mn), zero )
-                            SALLOCATE( DDtzss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-                            SALLOCATE( DDzzcc, (0:ll,0:ll,1:mn,1:mn), zero )
-                            SALLOCATE( DDzzcs, (0:ll,0:ll,1:mn,1:mn), zero )
-                            SALLOCATE( DDzzsc, (0:ll,0:ll,1:mn,1:mn), zero )
-                            SALLOCATE( DDzzss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-
-                            ! Perturbed solution
-
+                            ! Evaluate derivatives of field w.r.t geometry
                             call get_perturbed_solution(vvol, rhs, oBI(vvol)%mat(1:NN,1:NN), NN)
 
-                            DALLOCATE(DToocc)
-                            DALLOCATE(DToocs)
-                            DALLOCATE(DToosc)
-                            DALLOCATE(DTooss)
 
-                            DALLOCATE(TTsscc)
-                            DALLOCATE(TTsscs)
-                            DALLOCATE(TTsssc)
-                            DALLOCATE(TTssss)
-
-                            DALLOCATE(TDstcc)
-                            DALLOCATE(TDstcs)
-                            DALLOCATE(TDstsc)
-                            DALLOCATE(TDstss)
-
-                            DALLOCATE(TDszcc)
-                            DALLOCATE(TDszcs)
-                            DALLOCATE(TDszsc)
-                            DALLOCATE(TDszss)
-
-                            DALLOCATE(DDttcc)
-                            DALLOCATE(DDttcs)
-                            DALLOCATE(DDttsc)
-                            DALLOCATE(DDttss)
-
-                            DALLOCATE(DDtzcc)
-                            DALLOCATE(DDtzcs)
-                            DALLOCATE(DDtzsc)
-                            DALLOCATE(DDtzss)
-
-                            DALLOCATE(DDzzcc)
-                            DALLOCATE(DDzzcs)
-                            DALLOCATE(DDzzsc)
-                            DALLOCATE(DDzzss)
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-                            ! Helicity multiplier and poloidal flux derivatives
-
+                            ! Helicity multiplier and poloidal flux derivatives w.r.t geometry
                             call evaluate_dmupfdx(innout, idof, ii, issym, irz)
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-
-                            ! EVALUATE dBB
 
+                            ! Evaluate derivatives of B square 
                             call evaluate_dBB(vvol, idof, innout, issym, irz, ii, dAt, dAz, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
-
-
 
                         enddo ! matches do innout;
                     enddo ! matches do issym;
@@ -323,17 +253,12 @@ if( LocalConstraint ) then
             dBdX%L = .false. ! probably not needed, but included anyway;
 
 
-
+            ! Free some memory
             DALLOCATE(rhs)
 
+            call deallocate_geometry_matrices()
+
             DALLOCATE(oBI(vvol)%mat)
-            DALLOCATE(dRR)
-            DALLOCATE(dZZ)
-            DALLOCATE(dII)
-            DALLOCATE(dLL)
-            DALLOCATE(dPP)
-            DALLOCATE(constraint)
-            DALLOCATE(dBB)
        
         endif ! end of if( LComputeDerivatives ) ;
 
@@ -343,8 +268,18 @@ if( LocalConstraint ) then
         DALLOCATE( YY)
         DALLOCATE(length)
 
+
     enddo ! matches do vvol = 1, Mvol
 
+    if( LcomputeDerivatives ) then
+        DALLOCATE(constraint)
+        DALLOCATE(dPP)
+        DALLOCATE(dLL)
+        DALLOCATE(dII)
+        DALLOCATE(dZZ)
+        DALLOCATE(dRR)
+        DALLOCATE(dBB)
+    endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -407,7 +342,6 @@ else ! CASE SEMI GLOBAL CONSTRAINT
 
                     call WhichCpuID(Mvol, cpu_id)
                     
-
                     RlBCAST( Ate(Mvol,ideriv,ii)%s(0:Lrad(Mvol)), Lrad(Mvol)+1, cpu_id )
                     RlBCAST( Aze(Mvol,ideriv,ii)%s(0:Lrad(Mvol)), Lrad(Mvol)+1, cpu_id )
                 enddo
@@ -455,7 +389,7 @@ else ! CASE SEMI GLOBAL CONSTRAINT
             ! Invert LHS of Beltrami system and store it in oBI. This will be used to 
             ! evaluate derivatives of solution.
             call get_inverse_Beltrami_matrices(vvol, oBI(vvol)%mat(1:NN,1:NN), NN)! Can't be moved outside of loops - need OBI after.
-        enddo
+        enddo ! end of vvol = 1, Mvol
             
         ! Broadcast oBI to all CPU
         if( ncpu .gt. 1 ) then
@@ -465,44 +399,6 @@ else ! CASE SEMI GLOBAL CONSTRAINT
                 call MPI_BCAST( oBI(vvol)%mat , NN**2 , MPI_DOUBLE_PRECISION, cpu_id , MPI_COMM_WORLD , ierr)
             enddo
         endif
-
-        ! Need to evaluate perturbed matrices of Beltrami linear system. This requires to
-        ! re-evaluate all these large, expensive matrices. Maybe not necessary if stored
-        ! somewhere else?
-        SALLOCATE( DToocc, (0:ll,0:ll,1:mn,1:mn), zero )
-        SALLOCATE( DToocs, (0:ll,0:ll,1:mn,1:mn), zero )
-        SALLOCATE( DToosc, (0:ll,0:ll,1:mn,1:mn), zero )
-        SALLOCATE( DTooss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-        SALLOCATE( TTsscc, (0:ll,0:ll,1:mn,1:mn), zero )
-        SALLOCATE( TTsscs, (0:ll,0:ll,1:mn,1:mn), zero )
-        SALLOCATE( TTsssc, (0:ll,0:ll,1:mn,1:mn), zero )
-        SALLOCATE( TTssss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-        SALLOCATE( TDstcc, (0:ll,0:ll,1:mn,1:mn), zero )
-        SALLOCATE( TDstcs, (0:ll,0:ll,1:mn,1:mn), zero )
-        SALLOCATE( TDstsc, (0:ll,0:ll,1:mn,1:mn), zero )
-        SALLOCATE( TDstss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-        SALLOCATE( TDszcc, (0:ll,0:ll,1:mn,1:mn), zero )
-        SALLOCATE( TDszcs, (0:ll,0:ll,1:mn,1:mn), zero )
-        SALLOCATE( TDszsc, (0:ll,0:ll,1:mn,1:mn), zero )
-        SALLOCATE( TDszss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-        SALLOCATE( DDttcc, (0:ll,0:ll,1:mn,1:mn), zero )
-        SALLOCATE( DDttcs, (0:ll,0:ll,1:mn,1:mn), zero )
-        SALLOCATE( DDttsc, (0:ll,0:ll,1:mn,1:mn), zero )
-        SALLOCATE( DDttss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-        SALLOCATE( DDtzcc, (0:ll,0:ll,1:mn,1:mn), zero )
-        SALLOCATE( DDtzcs, (0:ll,0:ll,1:mn,1:mn), zero )
-        SALLOCATE( DDtzsc, (0:ll,0:ll,1:mn,1:mn), zero )
-        SALLOCATE( DDtzss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-        SALLOCATE( DDzzcc, (0:ll,0:ll,1:mn,1:mn), zero )
-        SALLOCATE( DDzzcs, (0:ll,0:ll,1:mn,1:mn), zero )
-        SALLOCATE( DDzzsc, (0:ll,0:ll,1:mn,1:mn), zero )
-        SALLOCATE( DDzzss, (0:ll,0:ll,1:mn,1:mn), zero )
 
         ! Loop on perturbed interfaces
         do even_or_odd = 0, 1 ! First loop on even interfaces perturbation, then on odd interfaces. This allow efficient parallelization
@@ -581,7 +477,8 @@ else ! CASE SEMI GLOBAL CONSTRAINT
                         ll = Lrad(lvol)  ! Shorthand
                         NN = NAdof(lvol) ! shorthand;
                        
-                        ! Allocate memory. This cannot be moved outside due to NN dependence on volume.
+                        ! Allocate memory. This cannot be moved outside due to NN and ll dependence on volume.
+                        call allocate_geometry_matrices(ll)
                         SALLOCATE( rhs,    (1:NN               ), zero )
 
                         ! Get derivative of vector potential w.r.t geometry. Matrix perturbation theory.
@@ -589,6 +486,7 @@ else ! CASE SEMI GLOBAL CONSTRAINT
                     
                         ! Free memory
                         DALLOCATE(rhs)
+                        call deallocate_geometry_matrices()
 
                     enddo ! end of do lvol = vvol, vvol+1
 
@@ -659,42 +557,7 @@ else ! CASE SEMI GLOBAL CONSTRAINT
       enddo ! matches do vvol;
     enddo ! matches do even_or_odd;
 
-    ! Free memory
-    DALLOCATE(DToocc)
-    DALLOCATE(DToocs)
-    DALLOCATE(DToosc)
-    DALLOCATE(DTooss)
-
-    DALLOCATE(TTsscc)
-    DALLOCATE(TTsscs)
-    DALLOCATE(TTsssc)
-    DALLOCATE(TTssss)
-
-    DALLOCATE(TDstcc)
-    DALLOCATE(TDstcs)
-    DALLOCATE(TDstsc)
-    DALLOCATE(TDstss)
-
-    DALLOCATE(TDszcc)
-    DALLOCATE(TDszcs)
-    DALLOCATE(TDszsc)
-    DALLOCATE(TDszss)
-
-    DALLOCATE(DDttcc)
-    DALLOCATE(DDttcs)
-    DALLOCATE(DDttsc)
-    DALLOCATE(DDttss)
-
-    DALLOCATE(DDtzcc)
-    DALLOCATE(DDtzcs)
-    DALLOCATE(DDtzsc)
-    DALLOCATE(DDtzss)
-
-    DALLOCATE(DDzzcc)
-    DALLOCATE(DDzzcs)
-    DALLOCATE(DDzzsc)
-    DALLOCATE(DDzzss)
-                          
+    ! Free memory                          
     do vvol = 1, Mvol
          DALLOCATE(oBi(vvol)%mat)
     enddo
@@ -1614,18 +1477,13 @@ do iocons = 0, 1
 ! dBBdmp CONSTRUCTION
 ! ===================
 
-! First evaluate B^2 (no derivatives)
-! -----------------------------------
-    ideriv = 0
-    call evaluate_Bsquare(iocons, lvol, dBB, dAt, dAz, XX, YY, DDl, MMl, ideriv)
-
 
 ! Evaluate derivatives of B^2 w.r.t mu and pflux
 ! ----------------------------------------------
     if( Lconstraint.eq.1 .OR. Lconstraint.eq.3 ) then ! first, determine how B^2 varies with mu and dpflux;
 
         do ideriv=1, 2
-            call evaluate_Bsquare(iocons, lvol, dBB, dAt, dAz, XX, YY, DDl, MMl, ideriv)! In a subroutine; called somewhere else when semi global constraint
+            call evaluate_Bsquare(iocons, lvol, dBB, dAt, dAz, XX, YY, length, DDl, MMl, ideriv)! In a subroutine; called somewhere else when semi global constraint
         enddo
 
         call tfft(    Nt, Nz, dBB(1:Ntz,1), dBB(1:Ntz,2), & ! derivatives of B^2 wrt mu and dpflux;
@@ -1652,6 +1510,14 @@ do iocons = 0, 1
 
     endif ! end of if( Lconstraint.eq.1 .OR. Lconstraint.eq.3 ) ;
 
+
+
+! Evaluate B^2 (no derivatives)
+! -----------------------------------
+    ideriv = 0
+    call evaluate_Bsquare(iocons, lvol, dBB, dAt, dAz, XX, YY, length, DDl, MMl, ideriv)
+
+
 ! dFFdRZ CONSTRUCTION
 ! ===================
 
@@ -1659,7 +1525,7 @@ do iocons = 0, 1
 ! ---------------------
     ideriv = -1; id = ideriv
 
-    call evaluate_Bsquare(iocons, lvol, dBB, dAt, dAz, XX, YY, DDl, MMl, ideriv)
+    call evaluate_Bsquare(iocons, lvol, dBB, dAt, dAz, XX, YY, length, DDl, MMl, ideriv)
 
     ! Add derivatives of pressure as well
     FATAL( dfp200, vvolume(lvol).lt.small, shall divide by vvolume(lvol)**(gamma+one) )
@@ -1877,7 +1743,7 @@ end subroutine evaluate_dBB
 
 
 
-subroutine evaluate_Bsquare(iocons, vvol, dBB, dAt, dAz, XX, YY, DDl, MMl, ideriv)
+subroutine evaluate_Bsquare(iocons, vvol, dBB, dAt, dAz, XX, YY, length, DDl, MMl, ideriv)
 
 ! INPUT
 ! -----
@@ -1915,7 +1781,7 @@ REAL                    :: lss
 id = ideriv ! derivatives wrt helicity multiplier and differential poloidal flux;
 
 if( ideriv.eq.-1 ) then
-    iflag = 0 
+    iflag = 0
 else
     iflag = 1
 endif
@@ -1953,6 +1819,9 @@ endif
 
 
 end subroutine evaluate_Bsquare
+
+
+
 
 
 

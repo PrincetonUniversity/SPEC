@@ -297,6 +297,8 @@ module inputlist
   
 ! DSCREENLIST ! define screenlist; this is expanded by Makefile; DO NOT REMOVE; each file compiled by Makefile has its own write flag;
   LOGICAL      :: Wbuild_vector_potential = .false.
+  LOGICAL      :: Wallocate_geometry_matrices = .false.
+  LOGICAL      :: Wdeallocate_geometry_matrices = .false.
   LOGICAL      :: Wreadin = .false.
   LOGICAL      :: Wwritin = .false. ! redundant; 
   LOGICAL      :: Wwrtend = .false.
@@ -866,6 +868,8 @@ module inputlist
   namelist/screenlist/&
 ! NSCREENLIST ! namelist screenlist; this is expanded by Makefile; DO NOT REMOVE;
  Wbuild_vector_potential , &
+ Wallocate_geometry_matrices , &
+ Wdeallocate_geometry_matrices , &
  Wreadin , &  !latex \item Every subroutine, e.g. \type{xy00aa.h}, has its own write flag, \type{Wxy00aa}.
  Wwritin , & ! redundant; 
  Wwrtend , &
@@ -1406,7 +1410,7 @@ subroutine build_vector_potential(lvol, iocons, aderiv, tderiv)
 
   use fileunits, only: ounit
 
-  use inputlist, only: Lrad, Wbuild_vector_potential
+  use inputlist, only: Lrad, Wbuild_vector_potential, Wmacros
 
   use cputiming
 
@@ -1454,6 +1458,125 @@ BEGIN(build_vector_potential)
   enddo ! end of do ii; 20 Feb 13;
 
 end subroutine build_vector_potential
+
+
+
+subroutine allocate_geometry_matrices(ll)
+
+! Allocate all geometry dependent matrices for a given ll
+
+  use constants, only: zero
+
+  use fileunits
+
+  use inputlist, only:  Wallocate_geometry_matrices, Wmacros
+
+  use cputiming
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  LOCALS
+
+  INTEGER         :: ll
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  BEGIN(allocate_geometry_matrices)
+
+  SALLOCATE( DToocc, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( DToocs, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( DToosc, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( DTooss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+  SALLOCATE( TTsscc, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( TTsscs, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( TTsssc, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( TTssss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+  SALLOCATE( TDstcc, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( TDstcs, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( TDstsc, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( TDstss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+  SALLOCATE( TDszcc, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( TDszcs, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( TDszsc, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( TDszss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+  SALLOCATE( DDttcc, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( DDttcs, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( DDttsc, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( DDttss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+  SALLOCATE( DDtzcc, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( DDtzcs, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( DDtzsc, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( DDtzss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+  SALLOCATE( DDzzcc, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( DDzzcs, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( DDzzsc, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( DDzzss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+
+end subroutine allocate_geometry_matrices
+
+
+subroutine deallocate_geometry_matrices()
+
+! Deallocate all geometry dependent matrices
+  use constants, only: zero
+
+  use fileunits
+
+  use inputlist, only:  Wdeallocate_geometry_matrices, Wmacros
+
+  use cputiming
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  LOCALS
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  BEGIN(deallocate_geometry_matrices)
+
+    DALLOCATE(DToocc)
+    DALLOCATE(DToocs)
+    DALLOCATE(DToosc)
+    DALLOCATE(DTooss)
+
+    DALLOCATE(TTsscc)
+    DALLOCATE(TTsscs)
+    DALLOCATE(TTsssc)
+    DALLOCATE(TTssss)
+
+    DALLOCATE(TDstcc)
+    DALLOCATE(TDstcs)
+    DALLOCATE(TDstsc)
+    DALLOCATE(TDstss)
+
+    DALLOCATE(TDszcc)
+    DALLOCATE(TDszcs)
+    DALLOCATE(TDszsc)
+    DALLOCATE(TDszss)
+
+    DALLOCATE(DDttcc)
+    DALLOCATE(DDttcs)
+    DALLOCATE(DDttsc)
+    DALLOCATE(DDttss)
+
+    DALLOCATE(DDtzcc)
+    DALLOCATE(DDtzcs)
+    DALLOCATE(DDtzsc)
+    DALLOCATE(DDtzss)
+
+    DALLOCATE(DDzzcc)
+    DALLOCATE(DDzzcs)
+    DALLOCATE(DDzzsc)
+    DALLOCATE(DDzzss)
+
+  end subroutine deallocate_geometry_matrices
 
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
