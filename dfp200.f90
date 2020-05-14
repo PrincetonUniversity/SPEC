@@ -1617,16 +1617,32 @@ REAL,   allocatable 	:: idBB(:,:), iforce(:,:), iposition(:,:)
 CHARACTER               :: packorunpack
 #endif
 
+
+
+
+
 do iocons = 0, 1
 
+    if( lvol.eq.   1 .and. iocons.eq.0 ) cycle ! fixed inner boundary (or coordinate axis); no constraints;
+    if( lvol.eq.Mvol .and. iocons.eq.1 ) cycle ! fixed outer boundary                     ; no constraints;
+
+
+! dBBdmp CONSTRUCTION
+! ===================
+
+! First evaluate B^2 (no derivatives)
+! -----------------------------------
+    ideriv = 0
+    call evaluate_Bsquare(iocons, lvol, dBB, dAt, dAz, XX, YY, DDl, MMl, ideriv)
+
+
+! Evaluate derivatives of B^2 w.r.t mu and pflux
+! ----------------------------------------------
     if( Lconstraint.eq.1 .OR. Lconstraint.eq.3 ) then ! first, determine how B^2 varies with mu and dpflux;
 
-        if( lvol.eq.   1 .and. iocons.eq.0 ) cycle ! fixed inner boundary (or coordinate axis); no force-balance constraints;
-        if( lvol.eq.Mvol .and. iocons.eq.1 ) cycle ! fixed outer boundary                     ; no force-balance constraints;
-
-        
-        call evaluate_derivative_BB(iocons, lvol, dBB)! In a subroutine; called somewhere else when semi global constraint
-
+        do ideriv=1, 2
+            call evaluate_Bsquare(iocons, lvol, dBB, dAt, dAz, XX, YY, DDl, MMl, ideriv)! In a subroutine; called somewhere else when semi global constraint
+        enddo
 
         call tfft(    Nt, Nz, dBB(1:Ntz,1), dBB(1:Ntz,2), & ! derivatives of B^2 wrt mu and dpflux;
                     mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), ifail )
@@ -1652,215 +1668,23 @@ do iocons = 0, 1
 
     endif ! end of if( Lconstraint.eq.1 .OR. Lconstraint.eq.3 ) ;
 
+! dFFdRZ CONSTRUCTION
+! ===================
 
-    if( lvol.eq.   1 .and. iocons.eq.0 ) cycle ! fixed inner boundary (or coordinate axis); no constraints;
-    if( lvol.eq.Mvol .and. iocons.eq.1 ) cycle ! fixed outer boundary                     ; no constraints;
+! B square contribution
+! ---------------------
+    ideriv = -1; id = ideriv
 
-    ideriv = 0 ; id = ideriv ; iflag = 0
+    call evaluate_Bsquare(iocons, lvol, dBB, dAt, dAz, XX, YY, DDl, MMl, ideriv)
 
-    WCALL( dfp200, lforce, ( lvol, iocons, ideriv, Ntz, dAt(1:Ntz,id), dAz(1:Ntz,id), XX(1:Ntz), YY(1:Ntz), length(1:Ntz), DDl, MMl, iflag ) )
-
-    dBB(1:Ntz,0) =     half * ( &
-                            dAz(1:Ntz, 0)*dAz(1:Ntz, 0)*guvij(1:Ntz,2,2,0) &
-                    - two * dAz(1:Ntz, 0)*dAt(1:Ntz, 0)*guvij(1:Ntz,2,3,0) &
-                    +         dAt(1:Ntz, 0)*dAt(1:Ntz, 0)*guvij(1:Ntz,3,3,0)  ) / sg(1:Ntz,0)**2
-
-    ideriv = -1 ; id = ideriv ; iflag = 1 ! compute derivatives of magnetic field;
-
-    !                        lvol  iocons  ideriv  Ntz  dAt            dAz
-    WCALL( dfp200, lforce, ( lvol, iocons, ideriv, Ntz, dAt(1:Ntz,id), dAz(1:Ntz,id), XX(1:Ntz), YY(1:Ntz), length(1:Ntz), DDl, MMl, iflag ) )
-
-    lss = two * iocons - one ; Lcurvature = 4
-    WCALL( dfp200, coords, ( lvol, lss, Lcurvature, Ntz, mn ) ) ! get coordinate metrics and their derivatives wrt Rj, Zj on interface;
-
-    dBB(1:Ntz,id) = half * ( &
-                            dAz(1:Ntz,id)*dAz(1:Ntz, 0)*guvij(1:Ntz,2,2,0) &
-                    - two * dAz(1:Ntz,id)*dAt(1:Ntz, 0)*guvij(1:Ntz,2,3,0) &
-                    +         dAt(1:Ntz,id)*dAt(1:Ntz, 0)*guvij(1:Ntz,3,3,0) &
-                    +         dAz(1:Ntz, 0)*dAz(1:Ntz,id)*guvij(1:Ntz,2,2,0) &
-                    - two * dAz(1:Ntz, 0)*dAt(1:Ntz,id)*guvij(1:Ntz,2,3,0) &
-                    +         dAt(1:Ntz, 0)*dAt(1:Ntz,id)*guvij(1:Ntz,3,3,0) &
-                    +         dAz(1:Ntz, 0)*dAz(1:Ntz, 0)*guvij(1:Ntz,2,2,1) &
-                    - two * dAz(1:Ntz, 0)*dAt(1:Ntz, 0)*guvij(1:Ntz,2,3,1) &
-                    +         dAt(1:Ntz, 0)*dAt(1:Ntz, 0)*guvij(1:Ntz,3,3,1)) / sg(1:Ntz,0)**2 -    dBB(1:Ntz,0) * two * sg(1:Ntz,1) / sg(1:Ntz,0)
-
+    ! Add derivatives of pressure as well
     FATAL( dfp200, vvolume(lvol).lt.small, shall divide by vvolume(lvol)**(gamma+one) )
-
     ijreal(1:Ntz) = - adiabatic(lvol) * pscale * gamma * dvolume / vvolume(lvol)**(gamma+one) + dBB(1:Ntz,-1) ! derivatives of force wrt geometry;
 
 
-#ifdef DEBUG
-! Finite difference estimate of ijreal
-if(Lcheck.eq.7) then
-	write(ounit, '("WARNING: this test in not working yet...")')
 
-	! Need to recompute dBB with different geometry, but same mu and psip. Thus change Lconstraint
-	Lconstraint = 0
-	LocalConstraint = .true.
-
-	dBdX%L = .true.
-    SALLOCATE( oRbc, (1:mn,0:Mvol), iRbc(1:mn,0:Mvol) ) !save unperturbed geometry
-    SALLOCATE( oZbs, (1:mn,0:Mvol), iZbs(1:mn,0:Mvol) )
-    SALLOCATE( oRbs, (1:mn,0:Mvol), iRbs(1:mn,0:Mvol) )
-    SALLOCATE( oZbc, (1:mn,0:Mvol), iZbc(1:mn,0:Mvol) ) 
-    SALLOCATE( idBB,    (-2:2, 1:Ntz), zero)
-    SALLOCATE( iforce,    (-2:2, 0:NGdof), zero)
-    SALLOCATE( iposition, (-2:2, 0:NGdof), zero)
-
-    
-    if( ncpu.eq.1) then
-
-    do isymdiff = -2, 2 ! symmetric fourth-order, finite-difference used to approximate derivatives;
-        if( isymdiff.eq.0 ) cycle
-
-        iRbc(1:mn,0:Mvol) = oRbc(1:mn,0:Mvol)
-        iZbs(1:mn,0:Mvol) = oZbs(1:mn,0:Mvol)
-        iRbs(1:mn,0:Mvol) = oRbs(1:mn,0:Mvol)
-        iZbc(1:mn,0:Mvol) = oZbc(1:mn,0:Mvol)
-
-        ! Perturb geometry
-        if( issym.eq.0 .and. irz.eq.0 ) iRbc(ii,lvol+innout-1) = iRbc(ii,lvol+innout-1) + dRZ * isymdiff ! perturb geometry;
-        if( issym.eq.0 .and. irz.eq.1 ) iZbs(ii,lvol+innout-1) = iZbs(ii,lvol+innout-1) + dRZ * isymdiff ! perturb geometry;
-        if( issym.eq.1 .and. irz.eq.0 ) iRbs(ii,lvol+innout-1) = iRbs(ii,lvol+innout-1) + dRZ * isymdiff ! perturb geometry;
-        if( issym.eq.1 .and. irz.eq.1 ) iZbc(ii,lvol+innout-1) = iZbc(ii,lvol+innout-1) + dRZ * isymdiff ! perturb geometry;
-
-
-        do pvol = 1,Mvol
-            LREGION(pvol)
-            ll = Lrad(pvol)        ! shorthand
-            NN = NAdof(pvol)     ! shorthand;
-
-           SALLOCATE( DToocc, (0:ll,0:ll,1:mn,1:mn), zero )
-           SALLOCATE( DToocs, (0:ll,0:ll,1:mn,1:mn), zero )
-           SALLOCATE( DToosc, (0:ll,0:ll,1:mn,1:mn), zero )
-           SALLOCATE( DTooss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-           SALLOCATE( TTsscc, (0:ll,0:ll,1:mn,1:mn), zero )
-           SALLOCATE( TTsscs, (0:ll,0:ll,1:mn,1:mn), zero )
-           SALLOCATE( TTsssc, (0:ll,0:ll,1:mn,1:mn), zero )
-           SALLOCATE( TTssss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-           SALLOCATE( TDstcc, (0:ll,0:ll,1:mn,1:mn), zero )
-           SALLOCATE( TDstcs, (0:ll,0:ll,1:mn,1:mn), zero )
-           SALLOCATE( TDstsc, (0:ll,0:ll,1:mn,1:mn), zero )
-           SALLOCATE( TDstss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-           SALLOCATE( TDszcc, (0:ll,0:ll,1:mn,1:mn), zero )
-           SALLOCATE( TDszcs, (0:ll,0:ll,1:mn,1:mn), zero )
-           SALLOCATE( TDszsc, (0:ll,0:ll,1:mn,1:mn), zero )
-           SALLOCATE( TDszss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-           SALLOCATE( DDttcc, (0:ll,0:ll,1:mn,1:mn), zero )
-           SALLOCATE( DDttcs, (0:ll,0:ll,1:mn,1:mn), zero )
-           SALLOCATE( DDttsc, (0:ll,0:ll,1:mn,1:mn), zero )
-           SALLOCATE( DDttss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-           SALLOCATE( DDtzcc, (0:ll,0:ll,1:mn,1:mn), zero )
-           SALLOCATE( DDtzcs, (0:ll,0:ll,1:mn,1:mn), zero )
-           SALLOCATE( DDtzsc, (0:ll,0:ll,1:mn,1:mn), zero )
-           SALLOCATE( DDtzss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-           SALLOCATE( DDzzcc, (0:ll,0:ll,1:mn,1:mn), zero )
-           SALLOCATE( DDzzcs, (0:ll,0:ll,1:mn,1:mn), zero )
-           SALLOCATE( DDzzsc, (0:ll,0:ll,1:mn,1:mn), zero )
-           SALLOCATE( DDzzss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-                  WCALL( dfp200, ma00aa, ( Iquad(pvol), mn, pvol, ll ) )
-                  
-                  WCALL( dfp200, matrix, ( pvol, mn, ll ) )
-
-           DALLOCATE(DToocc)
-           DALLOCATE(DToocs)
-           DALLOCATE(DToosc)
-           DALLOCATE(DTooss)
-
-           DALLOCATE(TTsscc)
-           DALLOCATE(TTsscs)
-           DALLOCATE(TTsssc)
-           DALLOCATE(TTssss)
-
-           DALLOCATE(TDstcc)
-           DALLOCATE(TDstcs)
-           DALLOCATE(TDstsc)
-           DALLOCATE(TDstss)
-
-           DALLOCATE(TDszcc)
-           DALLOCATE(TDszcs)
-           DALLOCATE(TDszsc)
-           DALLOCATE(TDszss)
-
-           DALLOCATE(DDttcc)
-           DALLOCATE(DDttcs)
-           DALLOCATE(DDttsc)
-           DALLOCATE(DDttss)
-
-           DALLOCATE(DDtzcc)
-           DALLOCATE(DDtzcs)
-           DALLOCATE(DDtzsc)
-           DALLOCATE(DDtzss)
-
-           DALLOCATE(DDzzcc)
-           DALLOCATE(DDzzcs)
-           DALLOCATE(DDzzsc)
-           DALLOCATE(DDzzss)
-        enddo
-
-        Ndofgl = 0; Fvec(1:Mvol-1) = 0; iflag = 0;
-        Xdof(1:Mvol-1) = dpflux(2:Mvol) + xoffset
-		dBdX%L = .false. ! No derivatives are required
-        WCALL(dfp200, dfp100, (Ndofgl, Xdof, Fvec, iflag) )
-
-		dpflux(2:Mvol) = Xdof(1:Mvol-1) -xoffset
-   
-		ideriv = 0 ; id = ideriv ; iflag = 0 
-    	WCALL( dfp200, lforce, ( lvol, iocons, ideriv, Ntz, dAt(1:Ntz,id), dAz(1:Ntz,id), XX(1:Ntz), YY(1:Ntz), length(1:Ntz), DDl, MMl, iflag ) )
-
-    	idBB(isymdiff,1:Ntz) =     half * (  dAz(1:Ntz, 0)*dAz(1:Ntz, 0)*guvij(1:Ntz,2,2,0) &
-                   					 - two * dAz(1:Ntz, 0)*dAt(1:Ntz, 0)*guvij(1:Ntz,2,3,0) &
-                                     +       dAt(1:Ntz, 0)*dAt(1:Ntz, 0)*guvij(1:Ntz,3,3,0)  ) / sg(1:Ntz,0)**2
-		
-
-    enddo
-
-    idBB(0, 1:Ntz)                = ( - 1 * idBB(2,1:Ntz) &
-                                        + 8 * idBB(1,1:Ntz) &
-                                        - 8 * idBB(-1,1:Ntz) &
-                                        + 1 * idBB(-2,1:Ntz))  / ( 12 * dRZ )
-
-    cput = GETTIME
-
-    iRbc(1:mn,0:Mvol) = oRbc(1:mn,0:Mvol)
-    iZbs(1:mn,0:Mvol) = oZbs(1:mn,0:Mvol)
-    iRbs(1:mn,0:Mvol) = oRbs(1:mn,0:Mvol)
-    iZbc(1:mn,0:Mvol) = oZbc(1:mn,0:Mvol)
-
-
-	write(ounit,1345) myid, dBB(1:Ntz,-1)
-    write(ounit,1346) myid, idBB(0,1:Ntz)
-
-1345 format("dfp200: myid=",i3," ; dBB                = ",64f16.10 "   ;")
-1346 format("dfp200: myid=",i3," ; Finite differences = ",64f16.10 "   ;")
-
-
-    endif
-
-    DALLOCATE(oRbc)
-    DALLOCATE(oZbs)
-    DALLOCATE(oRbs)
-    DALLOCATE(oZbc)
-    DALLOCATE(idBB)
-	DALLOCATE(iforce)
-	DALLOCATE(iposition)
-
-	FATAL(dfp200, .true., Finite difference estimate of ijreal have been computed)
-endif
-#endif
-
-
-
-
-
-
+! Spectral condensation contribution
+! ----------------------------------
 
     dLL(1:Ntz) = zero ! either no spectral constraint, or not the appropriate interface;
     dPP(1:Ntz) = zero ! either no spectral constraint, or not the appropriate interface;
@@ -2069,7 +1893,7 @@ end subroutine evaluate_dBB
 
 
 
-subroutine evaluate_derivative_BB(iocons, vvol, dBB)
+subroutine evaluate_Bsquare(iocons, vvol, dBB, dAt, dAz, XX, YY, DDl, MMl, ideriv)
 
 ! INPUT
 ! -----
@@ -2091,37 +1915,58 @@ subroutine evaluate_derivative_BB(iocons, vvol, dBB)
   
   use allglobal, only : ncpu, myid, cpus, &
                         Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
-                        sg, guvij, Ntz
+                        sg, guvij, Ntz, &
+                        mn
 
 
  LOCALS
 !------
 
-INTEGER                 :: ideriv, id, iocons, vvol, iflag
-REAL                     :: dAt(1:Ntz,-1:2), dAz(1:Ntz,-1:2), XX(1:Ntz), YY(1:Ntz), dBB(1:Ntz,-1:2), length(1:Ntz), DDl, MMl
+INTEGER                 :: ideriv, id, iocons, vvol, iflag, Lcurvature
+REAL                    :: dAt(1:Ntz,-1:2), dAz(1:Ntz,-1:2), XX(1:Ntz), YY(1:Ntz), dBB(1:Ntz,-1:2), length(1:Ntz), DDl, MMl
+REAL                    :: lss
 
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-do ideriv = 0, 2 ; id = ideriv ! derivatives wrt helicity multiplier and differential poloidal flux;
+id = ideriv ! derivatives wrt helicity multiplier and differential poloidal flux;
 
-    iflag = 1 ! lforce will only return dAt(1:Ntz,id) and dAz(1:Ntz,id);
-    WCALL( dfp200, lforce, ( vvol, iocons, ideriv, Ntz, dAt(1:Ntz,id), dAz(1:Ntz,id), XX(1:Ntz), YY(1:Ntz), length(1:Ntz), DDl, MMl, iflag ) )
+if( ideriv.eq.-1 ) then
+    iflag = 0 
+else
+    iflag = 1
+endif
+! lforce will only return dAt(1:Ntz,id) and dAz(1:Ntz,id);
+WCALL( dfp200, lforce, ( vvol, iocons, ideriv, Ntz, dAt(1:Ntz,id), dAz(1:Ntz,id), &
+                         XX(1:Ntz), YY(1:Ntz), length(1:Ntz), DDl, MMl, iflag ) )
 
-    if( ideriv.eq.0 ) then
-        dBB(1:Ntz,id) = half * (     dAz(1:Ntz, 0)*dAz(1:Ntz, 0)*guvij(1:Ntz,2,2,0) - &
-                              two * dAz(1:Ntz, 0)*dAt(1:Ntz, 0)*guvij(1:Ntz,2,3,0) + &
-                                    dAt(1:Ntz, 0)*dAt(1:Ntz, 0)*guvij(1:Ntz,3,3,0)         ) / sg(1:Ntz,0)**2
-    else
-        dBB(1:Ntz,id) = half * (    dAz(1:Ntz,id)*dAz(1:Ntz, 0)*guvij(1:Ntz,2,2,0) - &
-                              two * dAz(1:Ntz,id)*dAt(1:Ntz, 0)*guvij(1:Ntz,2,3,0) + &
-                                    dAt(1:Ntz,id)*dAt(1:Ntz, 0)*guvij(1:Ntz,3,3,0) + &
-                                    dAz(1:Ntz, 0)*dAz(1:Ntz,id)*guvij(1:Ntz,2,2,0) - &
-                              two * dAz(1:Ntz, 0)*dAt(1:Ntz,id)*guvij(1:Ntz,2,3,0) + &
-                                    dAt(1:Ntz, 0)*dAt(1:Ntz,id)*guvij(1:Ntz,3,3,0) ) / sg(1:Ntz,0)**2
-    endif ! end of if( ideriv.gt.0 ) ;
-enddo ! end of do ideriv = 0, 2;
+if( ideriv.eq.0 ) then
+    dBB(1:Ntz,id) = half * (        dAz(1:Ntz, 0)*dAz(1:Ntz, 0)*guvij(1:Ntz,2,2,0) &
+                            - two * dAz(1:Ntz, 0)*dAt(1:Ntz, 0)*guvij(1:Ntz,2,3,0) &
+                            +       dAt(1:Ntz, 0)*dAt(1:Ntz, 0)*guvij(1:Ntz,3,3,0)  ) / sg(1:Ntz,0)**2
+else
+    dBB(1:Ntz,id) = half * (        dAz(1:Ntz,id)*dAz(1:Ntz, 0)*guvij(1:Ntz,2,2,0) &
+                            - two * dAz(1:Ntz,id)*dAt(1:Ntz, 0)*guvij(1:Ntz,2,3,0) &
+                            +       dAt(1:Ntz,id)*dAt(1:Ntz, 0)*guvij(1:Ntz,3,3,0) &
+                            +       dAz(1:Ntz, 0)*dAz(1:Ntz,id)*guvij(1:Ntz,2,2,0) &
+                            - two * dAz(1:Ntz, 0)*dAt(1:Ntz,id)*guvij(1:Ntz,2,3,0) &
+                            +       dAt(1:Ntz, 0)*dAt(1:Ntz,id)*guvij(1:Ntz,3,3,0)  ) / sg(1:Ntz,0)**2
+endif ! end of if( ideriv.gt.0 ) ;
 
-end subroutine evaluate_derivative_BB
+! If derivatives w.r.t geometry, take into account metric derivatives
+if( ideriv.eq.-1 ) then
+    ! Get coordinate metrics and their derivatives wrt Rj, Zj on interface;
+    lss = two * iocons - one ; Lcurvature = 4
+    WCALL( dfp200, coords, ( vvol, lss, Lcurvature, Ntz, mn ) ) 
+
+    dBB(1:Ntz,id) = dBB(1:Ntz, id) + &
+                    half * (        dAz(1:Ntz, 0)*dAz(1:Ntz, 0)*guvij(1:Ntz,2,2,1) &
+                            - two * dAz(1:Ntz, 0)*dAt(1:Ntz, 0)*guvij(1:Ntz,2,3,1) &
+                            +       dAt(1:Ntz, 0)*dAt(1:Ntz, 0)*guvij(1:Ntz,3,3,1)  ) / sg(1:Ntz,0)**2 & 
+                    - dBB(1:Ntz,0) * two * sg(1:Ntz,1) / sg(1:Ntz,0)
+endif
+
+
+end subroutine evaluate_Bsquare
 
 
 

@@ -239,7 +239,7 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dAt, dAz, XX, YY, length, DDl, MMl
   enddo ! end of do ii; 20 Feb 13;
 
   call invfft( mn, im, in, efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt(1:Ntz), dAz(1:Ntz) ) ! map to real space;
-   
+
   dBB(1:Ntz) = half * (         dAz(1:Ntz   )*dAz(1:Ntz   )*guvij(1:Ntz,2,2,0) &
                         - two * dAz(1:Ntz   )*dAt(1:Ntz   )*guvij(1:Ntz,2,3,0) &
                         +       dAt(1:Ntz   )*dAt(1:Ntz   )*guvij(1:Ntz,3,3,0) ) / sg(1:Ntz,0)**2
@@ -273,13 +273,13 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dAt, dAz, XX, YY, length, DDl, MMl
    
    do ivol = 0, 1
     
-    call invfft( mn, im(1:mn), in(1:mn),            iRbc(1:mn,lvol-1+ivol),              iRbs(1:mn,lvol-1+ivol), &
-                                                    iZbc(1:mn,lvol-1+ivol),              iZbs(1:mn,lvol-1+ivol), & 
-                                         Nt, Nz, iRij(1:Ntz,lvol-1+ivol), iZij(1:Ntz,lvol-1+ivol) )
+    call invfft( mn, im(1:mn), in(1:mn),            iRbc(1:mn ,lvol-1+ivol),              iRbs(1:mn ,lvol-1+ivol), &
+                                                    iZbc(1:mn ,lvol-1+ivol),              iZbs(1:mn ,lvol-1+ivol), & 
+                                         Nt, Nz,    iRij(1:Ntz,lvol-1+ivol),              iZij(1:Ntz,lvol-1+ivol)   )
 
-    call invfft( mn, im(1:mn), in(1:mn), im(1:mn) * iRbs(1:mn,lvol-1+ivol), - im(1:mn) * iRbc(1:mn,lvol-1+ivol), &
-                                         im(1:mn) * iZbs(1:mn,lvol-1+ivol), - im(1:mn) * iZbc(1:mn,lvol-1+ivol), &
-                                         Nt, Nz, tRij(1:Ntz,lvol-1+ivol), tZij(1:Ntz,lvol-1+ivol) )
+    call invfft( mn, im(1:mn), in(1:mn), im(1:mn) * iRbs(1:mn ,lvol-1+ivol), - im(1:mn) * iRbc(1:mn ,lvol-1+ivol), &
+                                         im(1:mn) * iZbs(1:mn ,lvol-1+ivol), - im(1:mn) * iZbc(1:mn ,lvol-1+ivol), &
+                                         Nt, Nz,    tRij(1:Ntz,lvol-1+ivol),              tZij(1:Ntz,lvol-1+ivol) )
    enddo ! end of do ivol = 0, 1 ; 18 Jul 14;
    
    dRij(1:Ntz,lvol) = iRij(1:Ntz,lvol) - iRij(1:Ntz,lvol-1)
