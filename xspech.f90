@@ -752,25 +752,6 @@ program xspech
   
 9999 continue
 
-  do ii = 1, size(dMA)
-    deallocate(dMA(ii)%mat)
-    deallocate(dMB(ii)%mat)
-    deallocate(dMD(ii)%mat)
-    deallocate(dMG(ii)%arr)
-    deallocate(MBpsi(ii)%arr)
-  enddo
-  deallocate(dMA)
-  deallocate(dMB)
-  deallocate(dMD)
-  deallocate(dMG)
-  deallocate(MBpsi)
-
-  do ii = 1, Mvol
-    deallocate(solution(ii)%mat)
-  enddo
-  deallocate(solution)
-
-
   WCALL( xspech, ending )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

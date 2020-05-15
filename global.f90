@@ -114,15 +114,6 @@ module typedefns
      REAL,    allocatable :: s(:)
      INTEGER, allocatable :: i(:)
   end type subgrid
-  
-  
-  type VarSizeMatrix
-        REAL, allocatable :: mat(:,:)
-  end type VarSizeMatrix
-  
-  type VarSizeArray
-        REAL, allocatable :: arr(:)
-  end type VarSizeArray
 
 end module typedefns
 
@@ -1132,15 +1123,14 @@ module allglobal
 !latex \item These are allocated and deallocated in \link{dforce}, assigned in \link{matrix}, and used in \link{mp00ac} and ? \link{df00aa}.
 !latex \end{enumerate}
 
-   INTEGER, allocatable :: IndMatrixArray(:,:)    ! Store matrices index in geometry dependent matrice arrays
    
-   type(VarSizeMatrix),   allocatable :: dMA(:), dMB(:)! dMC(:,:) ! energy and helicity matrices; quadratic forms; 
-   type(VarSizeMatrix),   allocatable :: dMD(:)! dME(:,:)! dMF(:,:) ! energy and helicity matrices; quadratic forms; 
-   type(VarSizeArray) ,   allocatable :: dMG(:  )
-   type(VarSizeMatrix),   allocatable :: solution(:) ! this is allocated in dforce; used in mp00ac and ma02aa; and is passed to packab; 
+   REAL,   allocatable :: dMA(:,:), dMB(:,:)! dMC(:,:) ! energy and helicity matrices; quadratic forms; 
+   REAL,   allocatable :: dMD(:,:)! dME(:,:)! dMF(:,:) ! energy and helicity matrices; quadratic forms; 
+   REAL,   allocatable :: dMG(:  )
+   REAL,   allocatable :: solution(:,:) ! this is allocated in dforce; used in mp00ac and ma02aa; and is passed to packab; 
 
 !  REAL,   allocatable :: MBpsi(:), MEpsi(:) ! matrix vector products; 
-   type(VarSizeArray),   allocatable :: MBpsi(:)           ! matrix vector products; 
+   REAL,   allocatable :: MBpsi(:)           ! matrix vector products; 
 !  REAL                :: psiMCpsi, psiMFpsi
 !  REAL                ::           psiMFpsi
 
@@ -2618,25 +2608,6 @@ subroutine wrtend
 
 end subroutine wrtend
   
-subroutine IndMatrix(cpuid, vvol, ind_matrix)
-
-!latex \subsection{subroutine IndMatrix}
-!latex To reduce the size of Geometry dependent matrices array \internal{dMA}, \internal{dMB}, \internal{dMD}, \internal{dMG}, \internal{MBpsi} and \internal{solution},
-!latex we allocate them only the relevant number of matrices (one per volume associated to this \interl{cpuid}).
-
-LOCALS
-
-INTEGER :: vvol, cpuid, ind_matrix
-INTEGER :: cpuid_comp
-
-! If the volume is not associated to the CPU, get an error
-call WhichCpuID(vvol, cpuid_comp)
-if (cpuid_comp.NE.cpuid) then
-    FATAL( dforce, .true., Error: called IndMatrix with wrong CPU ?)
-endif
-
-end subroutine IndMatrix
-
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 subroutine IsMyVolume(vvol)

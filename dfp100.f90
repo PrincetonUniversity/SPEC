@@ -32,7 +32,7 @@
 
 
 
-subroutine dfp100(Ndofgl, x, Fvec, iflag)
+subroutine dfp100(Ndofgl, x, Fvec, LComputeDerivatives)
 
 use constants, only : zero, half, one, two, pi2, pi, mu0
 
@@ -45,65 +45,41 @@ use cputiming, only : Tdfp100
 
 use allglobal, only : ncpu, myid, cpus, &
                       ImagneticOK, NAdof, mn, &
-                      Mvol, &
+                      Mvol, Iquad, &
                       dBdX, &
                       Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, Localconstraint, &
                       IPDt, IPDtdPf, xoffset, dpflux, &
                       IsMyVolume, IsMyVolumeValue, WhichCpuID, &
-                      IconstraintOK
+                      IconstraintOK, &
+                      DToocc, DToocs, DToosc, DTooss, &
+                      TTsscc, TTsscs, TTsssc, TTssss, &
+                      TDstcc, TDstcs, TDstsc, TDstss, &
+                      TDszcc, TDszcs, TDszsc, TDszss, &
+                      DDttcc, DDttcs, DDttsc, DDttss, &
+                      DDtzcc, DDtzcs, DDtzsc, DDtzss, &
+                      DDzzcc, DDzzcs, DDzzsc, DDzzss, &
+                      dMA, dMB, dMD, dMG, MBpsi, solution
 
  LOCALS
 !------
-! vvol:                                             loop index on volumes
-! Ndofgl:                                            Input parameter necessary for the use of hybrd1. Unused otherwise.
-! iflag:                                            Flag changed by hybrd1
+! vvol:                       loop index on volumes
+! Ndofgl:                     Input parameter necessary for the use of hybrd1. Unused otherwise.
+! iflag:                      Flag changed by hybrd1
 ! cpu_send_one, cpu_send_two: CPU IDs, used for MPI communications
-! status:                                            MPI status
-! Fvec:                                                Global constraint values
-! x:                                                    Degrees of freedom of hybrd1. For now contains only the poloidal flux
+! status:                     MPI status
+! Fvec:                       Global constraint values
+! x:                          Degrees of freedom of hybrd1. For now contains only the poloidal flux
 
-INTEGER              :: vvol, Ndofgl, iflag, cpu_send_one, cpu_send_two
+INTEGER              :: vvol, Ndofgl, iflag, cpu_send_one, cpu_send_two, ll, NN
 INTEGER              :: status(MPI_STATUS_SIZE), request1, request2
 REAL                 :: Fvec(1:Mvol-1), x(1:Mvol-1), Bt00(1:Mvol, 0:1, 0:1)
+LOGICAL              :: LComputeDerivatives
 
 
 
 BEGIN(dfp100)
 
-    if( LocalConstraint ) then
-        dpflux(2:Mvol) = x - xoffset
-        IconstraintOK = .false.
-    else
-        ! In case of global constraints, dfp100 is called via hybrd1, a modified version of hybrd. hybrd1
-        ! calls dfp100 one additional time than hybrd1, at the end of the iteration process, with iflag=5.
-        ! This is the signal that the iteration is over, and the master thread can broadcast the information
-        ! to its slaves that they can exit the infinit loop.
-        
-        if( (iflag.EQ.5) .and. (myid.EQ.0) ) then
-            IconstraintOK = .true.
-        else
-            IconstraintOK = .false.
-        endif
-
-        ! Master broadcast to slaves the info 
-        call MPI_BCAST( IconstraintOK, 1, MPI_LOGICAL, 0, MPI_COMM_WORLD, ierr)
-
-        ! If constraints are OK, no need for one additional computation, skip till the end.
-        if( IconstraintOK ) then
-            !write(*,*) "Exiting dfp100.h with iflag=5"
-            goto 6666
-        endif
-
-        ! First set up the value of dpflux for calculation
-        if( myid.EQ.0 ) then
-            dpflux(2:Mvol) = x - xoffset
-        endif
-
-        ! We could scatter dpflux on the volumes - but this depends on how the volumes are divided between the CPUs
-        ! We would need to restructure the data - might be complicated for little gain.
-        call MPI_Bcast( dpflux, Mvol, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
-    endif
-
+    dpflux(2:Mvol) = x - xoffset
 
     ! Now each CPU perform the calculation in its volume(s)
     do vvol = 1, Mvol
@@ -121,19 +97,115 @@ BEGIN(dfp100)
             FATAL(dfp100, .true., Unassociated volume)
         endif
 
+        
+        ll = Lrad(vvol)
+        NN = NAdof(vvol)
+
+        SALLOCATE( DToocc, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( DToocs, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( DToosc, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( DTooss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+        SALLOCATE( TTsscc, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( TTsscs, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( TTsssc, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( TTssss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+        SALLOCATE( TDstcc, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( TDstcs, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( TDstsc, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( TDstss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+        SALLOCATE( TDszcc, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( TDszcs, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( TDszsc, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( TDszss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+        SALLOCATE( DDttcc, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( DDttcs, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( DDttsc, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( DDttss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+        SALLOCATE( DDtzcc, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( DDtzcs, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( DDtzsc, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( DDtzss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+        SALLOCATE( DDzzcc, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( DDzzcs, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( DDzzsc, (0:ll,0:ll,1:mn,1:mn), zero )
+        SALLOCATE( DDzzss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+        SALLOCATE( dMA, (0:NN, 0:NN), zero )
+        SALLOCATE( dMB, (0:NN, 0: 2), zero )
+        SALLOCATE( dMD, (0:NN, 0:NN), zero )
+        SALLOCATE( dMG, (0:NN      ), zero )
+
+        SALLOCATE( solution, (1:NN, -1:2), zero )
+        SALLOCATE( MBpsi, (1:NN), zero )
+
+        dBdX%L = .false. ! No need to take derivatives of matrices w.r.t geometry.
+
+        WCALL( dfp100, ma00aa, ( Iquad(vvol), mn, vvol, ll ) ) ! compute volume integrals of metric elements - evaluate TD, DT, DD, ...;
+        WCALL( dfp100, matrix, ( vvol, mn, ll ) )
+
         !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-        dBdX%L = .false. ! first, compute Beltrami fields;
-
-        !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+        ! Flag to chose if derivatives w.r.t mu and pflux should be taken
+        dBdX%L = LComputeDerivatives
 
         ! Compute fields
         WCALL( dfp100, ma02aa, ( vvol, NAdof(vvol) ) )
 
+        !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-        ! Compute relevant local quantities for the evaluation of the constraint. Doing it like this 
-        ! reduces the amount of data sent to the master thread. In the case of current constraint, only two
-        ! doubles per volume are sent.
+        ! Free memory
+
+        DALLOCATE(MBpsi)
+        DALLOCATE(solution)
+        DALLOCATE(dMG)
+        DALLOCATE(dMD)
+        DALLOCATE(dMB)
+        DALLOCATE(dMA)
+
+        DALLOCATE(DToocc)
+        DALLOCATE(DToocs)
+        DALLOCATE(DToosc)
+        DALLOCATE(DTooss)
+
+        DALLOCATE(TTsscc)
+        DALLOCATE(TTsscs)
+        DALLOCATE(TTsssc)
+        DALLOCATE(TTssss)
+
+        DALLOCATE(TDstcc)
+        DALLOCATE(TDstcs)
+        DALLOCATE(TDstsc)
+        DALLOCATE(TDstss)
+
+        DALLOCATE(TDszcc)
+        DALLOCATE(TDszcs)
+        DALLOCATE(TDszsc)
+        DALLOCATE(TDszss)
+
+        DALLOCATE(DDttcc)
+        DALLOCATE(DDttcs)
+        DALLOCATE(DDttsc)
+        DALLOCATE(DDttss)
+
+        DALLOCATE(DDtzcc)
+        DALLOCATE(DDtzcs)
+        DALLOCATE(DDtzsc)
+        DALLOCATE(DDtzss)
+
+        DALLOCATE(DDzzcc)
+        DALLOCATE(DDzzcs)
+        DALLOCATE(DDzzsc)
+        DALLOCATE(DDzzss)
+
+
+
+        ! Compute relevant local quantities for the evaluation of global constraints
         if( Lconstraint.EQ.3 ) then
             WCALL( dfp100, lbpol, (vvol, Bt00(1:Mvol, 0:1, 0), 0) )                !Compute field at interface for global constraint
             WCALL( dfp100, lbpol, (vvol, Bt00(1:Mvol, 0:1, 1), 2) )                !Compute field at interface for global constraint, d w.r.t. pflux

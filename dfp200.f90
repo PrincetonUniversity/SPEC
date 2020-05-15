@@ -69,7 +69,6 @@ subroutine dfp200( LcomputeDerivatives, vvol)
                         Nt, Nz, &
                         cosi, sini, & ! FFT workspace;
                         dBdX, &
-                        dMA, dMB, dMD, dMG, solution, &
                         dtflux, dpflux, sweight, &
                         mmpp, &
                         Bemn, Bomn, Iomn, Iemn, Somn, Semn, &
@@ -89,9 +88,10 @@ subroutine dfp200( LcomputeDerivatives, vvol)
                         DDttcc, DDttcs, DDttsc, DDttss, &
                         DDtzcc, DDtzcs, DDtzsc, DDtzss, &
                         DDzzcc, DDzzcs, DDzzsc, DDzzss, &
+                        dMA, dMB, dMD, dMG, solution, MBpsi, &
                         dRodR, dRodZ, dZodR, dZodZ, &
                         LocalConstraint, &
-                        IsMyVolume, IsMyVolumeValue, IndMatrixArray
+                        IsMyVolume, IsMyVolumeValue
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -101,7 +101,7 @@ subroutine dfp200( LcomputeDerivatives, vvol)
   
   INTEGER              :: NN, IA, ifail, if01adf, vflag, MM, LDA, idgetrf, idgetri, Lwork
   INTEGER              :: vvol, innout, ii, jj, irz, issym, iocons, idoc, idof, imn, ll
-  INTEGER              :: Lcurvature, ideriv, id, ind_matrix
+  INTEGER              :: Lcurvature, ideriv, id
   INTEGER              :: iflag
   INTEGER, allocatable :: ipivot(:)
 
@@ -128,8 +128,6 @@ subroutine dfp200( LcomputeDerivatives, vvol)
 BEGIN(dfp200)
 
 LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
-
-ind_matrix = IndMatrixArray(vvol, 2)
 
 #ifdef DEBUG
 
@@ -225,12 +223,20 @@ ind_matrix = IndMatrixArray(vvol, 2)
    SALLOCATE( DDzzsc, (0:ll,0:ll,1:mn,1:mn), zero )
    SALLOCATE( DDzzss, (0:ll,0:ll,1:mn,1:mn), zero )
 
+   SALLOCATE( dMA, (0:NN, 0:NN), zero )
+  SALLOCATE( dMB, (0:NN, 0: 2), zero )
+  SALLOCATE( dMD, (0:NN, 0:NN), zero )
+  SALLOCATE( dMG, (0:NN      ), zero )
+
+  SALLOCATE( solution, (1:NN, -1:2), zero )
+  SALLOCATE( MBpsi, (1:NN), zero )
+
     lastcpu = GETTIME
     
-    dMA(ind_matrix)%mat(0:NN-1,1:NN) = dMA(ind_matrix)%mat(1:NN,1:NN) - mu(vvol) * dMD(ind_matrix)%mat(1:NN,1:NN) ! this corrupts dMA, but dMA is no longer used;
-    dMA(ind_matrix)%mat(  NN  ,1:NN) = zero
+    dMA(0:NN-1,1:NN) = dMA(1:NN,1:NN) - mu(vvol) * dMD(1:NN,1:NN) ! this corrupts dMA, but dMA is no longer used;
+    dMA(  NN  ,1:NN) = zero
     
-    dMD(ind_matrix)%mat(1:NN  ,1:NN) = dMA(ind_matrix)%mat(0:NN-1,1:NN) ! copy of original matrix; this is used below;
+    dMD(1:NN  ,1:NN) = dMA(0:NN-1,1:NN) ! copy of original matrix; this is used below;
     
     IA = NN + 1
     
@@ -238,7 +244,7 @@ ind_matrix = IndMatrixArray(vvol, 2)
     
     SALLOCATE( ipivot, (1:NN), 0 )
     
-    idgetrf = 1 ; call DGETRF( MM, NN, dMA(ind_matrix)%mat(0:LDA-1,1:NN), LDA, ipivot(1:NN), idgetrf ) !LU decomposition
+    idgetrf = 1 ; call DGETRF( MM, NN, dMA(0:LDA-1,1:NN), LDA, ipivot(1:NN), idgetrf ) !LU decomposition
     
     cput = GETTIME
     select case( idgetrf ) !                                                                     0123456789012345678
@@ -253,7 +259,7 @@ ind_matrix = IndMatrixArray(vvol, 2)
     SALLOCATE( work, (1:Lwork), zero )
 
     ! inverse of MA using the LU decomposition of DGETRF
-    idgetri = 1 ; call DGETRI( NN, dMA(ind_matrix)%mat(0:LDA-1,1:NN), LDA, ipivot(1:NN), work(1:Lwork), Lwork, idgetri ) 
+    idgetri = 1 ; call DGETRI( NN, dMA(0:LDA-1,1:NN), LDA, ipivot(1:NN), work(1:Lwork), Lwork, idgetri ) 
     
     DALLOCATE(work)
     
@@ -269,7 +275,7 @@ ind_matrix = IndMatrixArray(vvol, 2)
     
 1011 format("dfp200 : ",f10.2," : myid=",i3," ; vvol=",i3," ; called DGETRI ; time=",f10.2,"s ; inverse of Beltrami matrix; idgetrf=",i2," ; ",a18)
     
-    oBI(1:NN,1:NN) = dMA(ind_matrix)%mat(0:LDA-1,1:NN)
+    oBI(1:NN,1:NN) = dMA(0:LDA-1,1:NN)
     
 !    do ii = 1, NN
 !     do jj = 1, ii
@@ -403,17 +409,17 @@ ind_matrix = IndMatrixArray(vvol, 2)
         
         dpsi(1:2) = (/ dtflux(vvol), dpflux(vvol) /) ! local enclosed toroidal and poloidal fluxes;
         
-!       rhs(1:NN) = - matmul( dMB(ind_matrix)%mat(1:NN,1:2 ) - mu(vvol) * dME(1:NN,1:2 ), dpsi(1:2)        ) &
-        rhs(1:NN) = - matmul( dMB(ind_matrix)%mat(1:NN,1:2 )                            , dpsi(1:2)        ) &
-                    - matmul( dMA(ind_matrix)%mat(1:NN,1:NN) - mu(vvol) * dMD(ind_matrix)%mat(1:NN,1:NN), solution(vvol)%mat(1:NN,0) )
+!       rhs(1:NN) = - matmul( dMB(1:NN,1:2 ) - mu(vvol) * dME(1:NN,1:2 ), dpsi(1:2)        ) &
+        rhs(1:NN) = - matmul( dMB(1:NN,1:2 )                            , dpsi(1:2)        ) &
+                    - matmul( dMA(1:NN,1:NN) - mu(vvol) * dMD(1:NN,1:NN), solution(1:NN,0) )
         
-        solution(vvol)%mat(1:NN,-1) = matmul( oBI(1:NN,1:NN), rhs(1:NN) ) ! this is the perturbed, packxi solution;
+        solution(1:NN,-1) = matmul( oBI(1:NN,1:NN), rhs(1:NN) ) ! this is the perturbed, packxi solution;
 
         ideriv = -1 ; dpsi(1:2) = (/ dtflux(vvol), dpflux(vvol) /) ! these are also used below;
         
         packorunpack = 'U'
         
-        WCALL( dfp200, packab,( packorunpack, vvol, NN,  solution(vvol)%mat(1:NN,-1), ideriv ) ) ! derivatives placed in Ate(vvol,ideriv,1:mn)%s(0:Lrad),
+        WCALL( dfp200, packab,( packorunpack, vvol, NN,  solution(1:NN,-1), ideriv ) ) ! derivatives placed in Ate(vvol,ideriv,1:mn)%s(0:Lrad),
 
 #ifdef DEBUG
         FATAL( dfp200, vvol-1+innout.gt.Mvol, psifactor needs attention )
@@ -526,27 +532,27 @@ ind_matrix = IndMatrixArray(vvol, 2)
           imupf(1:2,isymdiff) = (/ dtflux(vvol), dpflux(vvol) /) ! dtflux and dpflux are computed for the perturbed geometry by ma02aa/mp00ac if Lconstraint=1;
           endif
           
-          isolution(1:NN,isymdiff) = solution(vvol)%mat(1:NN,0) ! solution is computed in mp00ac, which is called by ma02aa;
+          isolution(1:NN,isymdiff) = solution(1:NN,0) ! solution is computed in mp00ac, which is called by ma02aa;
           
          enddo ! end of do isymdiff;
          
          isolution(1:NN,0) = ( - 1 * isolution(1:NN, 2) + 8 * isolution(1:NN, 1) - 8 * isolution(1:NN,-1) + 1 * isolution(1:NN,-2) ) / ( 12 * dRZ )
          imupf(1:2,0)      = ( - 1 * imupf(1:2, 2)      + 8 * imupf(1:2, 1)      - 8 * imupf(1:2,-1)      + 1 * imupf(1:2,-2)      ) / ( 12 * dRZ )
          
-          solution(vvol)%mat(1:NN,-1) = abs(  solution(vvol)%mat(1:NN,-1) )
+          solution(1:NN,-1) = abs(  solution(1:NN,-1) )
          isolution(1:NN, 0) = abs( isolution(1:NN, 0) )
         
-!        ifail = 0 ; call M01CAF(  solution(vvol)%mat(1:NN,-1), 1, NN, 'D', ifail ) ! sorting screen output; this corrupts;
+!        ifail = 0 ; call M01CAF(  solution(1:NN,-1), 1, NN, 'D', ifail ) ! sorting screen output; this corrupts;
 !        ifail = 0 ; call M01CAF( isolution(1:NN, 0), 1, NN, 'D', ifail ) ! sorting screen output; this corrupts;
          
-         ifail = 0 ; call dlasrt( 'D', NN,  solution(vvol)%mat(1:NN,-1), ifail ) ! sorting screen output; this corrupts;
+         ifail = 0 ; call dlasrt( 'D', NN,  solution(1:NN,-1), ifail ) ! sorting screen output; this corrupts;
          ifail = 0 ; call dlasrt( 'D', NN, isolution(1:NN, 0), ifail ) ! sorting screen output; this corrupts;        
          
          cput = GETTIME
 
         !select case( Lconstraint )
         !case( 0 )
-        ! write(ounit,3002) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, innout,  solution(vvol)%mat(1:min(NN,16),-1)
+        ! write(ounit,3002) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, innout,  solution(1:min(NN,16),-1)
         ! write(ounit,3002) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, innout, isolution(isol:isol+min(NN,16), 0)
         !case( 1 )
           write(ounit,3003)
@@ -865,6 +871,13 @@ ind_matrix = IndMatrixArray(vvol, 2)
     
     dBdX%L = .false. ! probably not needed, but included anyway;
     !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+    DALLOCATE(MBpsi)
+    DALLOCATE(solution)
+    DALLOCATE(dMG)
+    DALLOCATE(dMD)
+    DALLOCATE(dMB)
+    DALLOCATE(dMA)
 
    DALLOCATE(DToocc)
    DALLOCATE(DToocs)
