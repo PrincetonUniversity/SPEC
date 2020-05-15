@@ -348,10 +348,15 @@ else ! CASE SEMI GLOBAL CONSTRAINT
 
             ! Invert LHS of Beltrami system and store it in oBI. This will be used to 
             ! evaluate derivatives of solution.
+            ! TODO: Storage of OBi is not optimal. Find a way around?
             call get_inverse_Beltrami_matrices(vvol, oBI(vvol)%mat(1:NN,1:NN), NN)! Can't be moved outside of loops - need OBI after.
+
         enddo ! end of vvol = 1, Mvol
             
         ! Broadcast oBI to all CPU
+        ! TODO: THIS is bad! oBI can be very large... Change parallelization?
+        !       Another possible parallelization: Each CPU keep derivatives info about its solution, 
+        !                                         CPU1 build linear system and solve it?
         if( ncpu .gt. 1 ) then
             do vvol = 1, Mvol
                 NN = NAdof(vvol)
@@ -439,7 +444,7 @@ else ! CASE SEMI GLOBAL CONSTRAINT
                        
                         ! Allocate memory. This cannot be moved outside due to NN and ll dependence on volume.
                         call allocate_geometry_matrices(ll)
-                        SALLOCATE( rhs,    (1:NN               ), zero )
+                        SALLOCATE( rhs, ( 1:NN ), zero )
 
                         ! Get derivative of vector potential w.r.t geometry. Matrix perturbation theory.
                         call get_perturbed_solution(lvol, rhs, oBI(lvol)%mat(1:NN,1:NN), NN)
@@ -456,8 +461,7 @@ else ! CASE SEMI GLOBAL CONSTRAINT
                     call WhichCpuID(vvol+1, cpu_id1) 
 
 
-                    ! TODO IMPROVE MPI COMMUNICATIONS
-                    ! TODO ADD STELLARATOR NON SYMMETRIC TERMS
+                    ! TODO IMPROVE MPI COMMUNICATIONS. Could directly send dAt and dAz?
                     ! Gather everything in inner volume
                     if( ncpu.gt. 1) then
                         if( LinnerVolume ) then    
@@ -468,6 +472,16 @@ else ! CASE SEMI GLOBAL CONSTRAINT
                                 call MPI_RECV(Aze(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id1, tag, MPI_COMM_WORLD, stat, ierr)
                             enddo
 
+                            ! Non-stellarator symmetric terms
+                            if( NOTstellsym ) then
+                                do jj = 1, mn  
+                                    tag = vvol+jj
+
+                                    call MPI_RECV(Ato(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id1, tag, MPI_COMM_WORLD, stat, ierr)
+                                    call MPI_RECV(Azo(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id1, tag, MPI_COMM_WORLD, stat, ierr)
+                                enddo
+                            endif
+
                         else
                             do jj = 1, mn  
                                 tag = vvol+jj
@@ -475,18 +489,27 @@ else ! CASE SEMI GLOBAL CONSTRAINT
                                 call MPI_iSEND(Ate(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id , tag, MPI_COMM_WORLD, req3, ierr)
                                 call MPI_iSEND(Aze(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id , tag, MPI_COMM_WORLD, req4, ierr)
                             enddo
+
+                            if( NOTstellsym ) then
+                                do jj = 1, mn  
+                                    tag = vvol+jj
+
+                                    call MPI_iSEND(Ato(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id , tag, MPI_COMM_WORLD, req3, ierr)
+                                    call MPI_iSEND(Azo(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id , tag, MPI_COMM_WORLD, req4, ierr)
+                                enddo
+                            endif
                         endif
                     endif
 
-                    ! At this point, we have the inverse Beltrami matrices dMA, ..., the inverted original Beltrami matrix oBI 
-                    ! and the perturbed solution for each volume neighboring the perturbed interface in inner volume cpu.
-                    ! We now loop again on everything to compute the derivatives of mu and psip w.r.t the position and dBB.
-
+                    ! At this point, the inverted original Beltrami matrix oBI and the perturbed solution for each volume 
+                    ! neighboring the perturbed interface in inner volume cpu. We now compute the derivatives of mu and 
+                    ! psip w.r.t the position and dBB.
                     if( LinnerVolume) then
                         ! Helicity multiplier and poloidal flux derivatives
                         call evaluate_dmupfdx(1, idof, ii, issym, irz)
                     else
-                        dmupfdx(1:Mvol, vvol, 1:2, idof, 1) = zero
+                        ! Only inner volume computes the derivatives in all volumes (it will be broadcasted later)
+                        dmupfdx(1:Mvol, vvol, 1:2, idof, 1) = zero 
                     endif
 
                     do lvol = vvol, vvol+1
@@ -509,6 +532,7 @@ else ! CASE SEMI GLOBAL CONSTRAINT
 
                         ! EVALUATE dBB
                         call evaluate_dBB(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
+
                     enddo     ! matches do lvol = vvol, vvol+1 
 
                 enddo ! matches do issym;
@@ -589,13 +613,13 @@ subroutine get_inverse_beltrami_matrices(vvol, oBI, NN)
 ! MODULES
 ! -------
 
-    use constants, only :    zero, half, one, two
+    use constants, only :   zero, half, one, two
 
-    use fileunits, only :     ounit
+    use fileunits, only :   ounit
 
     use cputiming, only :   Tdfp200
 
-    use inputlist, only :    Wmacros, Wdfp200, Lrad, mu
+    use inputlist, only :   Wmacros, Wdfp200, Lrad, mu
 
     use allglobal, only :   ncpu, myid, cpus, &
                             Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
@@ -611,7 +635,7 @@ subroutine get_inverse_beltrami_matrices(vvol, oBI, NN)
 INTEGER             :: lastcpu, NN, ind_matrix, vvol, IA, MM, LDA, Lwork
 INTEGER             :: idgetrf, idgetri
 REAL, allocatable   :: ipivot(:), work(:)
-REAL                 :: oBI(1:NN, 1:NN)
+REAL                :: oBI(1:NN, 1:NN)
 
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-
@@ -678,13 +702,13 @@ subroutine get_perturbed_solution(lvol, rhs, oBI, NN)
 !
 ! Attention: Solution is perturbed for a given degree of freedom (information stored in dBdX)
 
-    use constants, only :    zero, half, one, two
+    use constants, only :   zero, half, one, two
 
-    use fileunits, only :     ounit
+    use fileunits, only :   ounit
 
     use cputiming, only :   Tdfp200
 
-    use inputlist, only :    Wmacros, Wdfp200, Lrad, mu
+    use inputlist, only :   Wmacros, Wdfp200, Lrad, mu
 
     use allglobal, only :   ncpu, myid, cpus, &
                             mn, Iquad, NAdof, &
@@ -695,10 +719,10 @@ subroutine get_perturbed_solution(lvol, rhs, oBI, NN)
  LOCALS
 !------
 
-INTEGER                    :: ideriv, lvol, ind_matrix, ll, NN
+INTEGER                 :: ideriv, lvol, ind_matrix, ll, NN
 REAL                    :: dpsi(1:2)
 REAL                    :: rhs(1:NN)
-REAL                     :: oBI(1:NN,1:NN)
+REAL                    :: oBI(1:NN,1:NN)
 CHARACTER               :: packorunpack
 
 
@@ -785,10 +809,10 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
   LOCALS:
 ! -------
 
-    INTEGER                ::     vvol, innout, idof, iflag, ii, issym, irz, ll, NN, ifail, vflag, N, iwork(1:Nvol-1), idgesvx, pvol, order, IDGESV
+    INTEGER             ::     vvol, innout, idof, iflag, ii, issym, irz, ll, NN, ifail, vflag, N, iwork(1:Nvol-1), idgesvx, pvol, order, IDGESV
     INTEGER, allocatable::  IPIV(:)
     REAL                ::  det, lfactor, Bt00(1:Mvol, 0:1)
-    REAL                 ::  R(1:Nvol-1), C(1:Nvol-1), work(1:4*Nvol-4), ferr, berr, rcond, tmp(2:Nvol)
+    REAL                ::  R(1:Nvol-1), C(1:Nvol-1), work(1:4*Nvol-4), ferr, berr, rcond, tmp(2:Nvol)
     LOGICAL             ::  Lonlysolution, LcomputeDerivatives
     REAL, allocatable   ::  dBdmpf(:,:), dBdx2(:)
 
@@ -796,15 +820,15 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
     INTEGER             :: isymdiff, maxfev, nfev, lr, ldfjac, ml, muhybr, epsfcn, mode, nprint
     INTEGER             :: jj, tdoc, idoc, tdof, jdof, imn, ihybrd1, lwa, Ndofgl, llmodnp
     REAL                :: dvol(-1:+1), evolume, imupf_global(1:Mvol,1:2,-2:2), imupf_local(1:2,-2:2), factor, Btemn_debug(1:mn, 0:1, 1:Mvol, -1:2)
-    DOUBLE PRECISION     :: diag(1:Mvol-1), qtf(1:Mvol-1), wa1(1:Mvol-1), wa2(1:Mvol-1), wa3(1:Mvol-1), wa4(1:mvol-1)
+    DOUBLE PRECISION    :: diag(1:Mvol-1), qtf(1:Mvol-1), wa1(1:Mvol-1), wa2(1:Mvol-1), wa3(1:Mvol-1), wa4(1:mvol-1)
     REAL,   allocatable :: oRbc(:,:), oZbs(:,:), oRbs(:,:), oZbc(:,:) ! original geometry;
     REAL,   allocatable :: isolution(:,:)
     REAL                :: position(0:NGdof), force(0:NGdof)
-    CHARACTER            :: packorunpack
+    CHARACTER           :: packorunpack
     DOUBLE PRECISION    ::  Fdof(1:Mvol-1), Xdof(1:Mvol-1), Fvec(1:Mvol-1)
     DOUBLE PRECISION, allocatable :: fjac(:, :), r_deb(:)
 
-    EXTERNAL             :: dfp100
+    EXTERNAL            :: dfp100
 #endif
 
 
@@ -1351,7 +1375,6 @@ do iocons = 0, 1
 ! dBBdmp CONSTRUCTION
 ! ===================
 
-
 ! Evaluate derivatives of B^2 w.r.t mu and pflux
 ! ----------------------------------------------
     if( Lconstraint.eq.1 .OR. Lconstraint.eq.3 ) then ! first, determine how B^2 varies with mu and dpflux;
@@ -1369,18 +1392,22 @@ do iocons = 0, 1
         dBBdmp(idoc+1:idoc+mn  ,lvol,iocons,2) = cfmn(1:mn) * BBweight(1:mn) ! pressure;
         idoc = idoc + mn   ! even;
 
-        if( Igeometry.ge.3 ) then ! add spectral constraints; spectral constraints do not depend on mu or dpflux;
-            idoc = idoc + mn-1 ! oddd;
-        endif ! end of if( Igeometry.ge.3) ;
+        ! Add spectral constraints; spectral constraints do not depend on mu or dpflux; thus add nothing
+        ! Commented - kept for understanding
+        !if( Igeometry.ge.3 ) then 
+        !    idoc = idoc + mn-1 ! oddd;
+        !endif ! end of if( Igeometry.ge.3) ;
 
         if( NOTstellsym ) then
             dBBdmp(idoc+1:idoc+mn-1,lvol,iocons,1) = ofmn(2:mn) * BBweight(2:mn) ! pressure;
             dBBdmp(idoc+1:idoc+mn-1,lvol,iocons,2) = sfmn(2:mn) * BBweight(2:mn) ! pressure;
             idoc = idoc + mn-1 ! oddd;
 
-            if( Igeometry.ge.3 ) then ! add spectral constraints;
-                idoc = idoc + mn   ! even;
-            endif ! end of if( Igeometry.ge.3) ;
+            ! Add spectral constraints; spectral constraints do not depend on mu or dpflux; thus add nothing
+            ! Commented - kept for understanding
+            !if( Igeometry.ge.3 ) then 
+            !    idoc = idoc + mn   ! even;
+            !endif ! end of if( Igeometry.ge.3) ;
 
         endif ! end of if( NOTstellsym) ;
 
@@ -1391,7 +1418,7 @@ do iocons = 0, 1
 ! Evaluate B^2 (no derivatives)
 ! -----------------------------------
     ideriv = 0; iflag=1
-    !call evaluate_Bsquare(iocons, lvol, dBB, dAt, dAz, XX, YY, length, DDl, MMl, ideriv)
+
     WCALL( dfp200, lforce, (lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, iflag) )
 
 
@@ -1402,12 +1429,13 @@ do iocons = 0, 1
 ! ---------------------
     ideriv = -1; iflag=0
 
-    !call evaluate_Bsquare(iocons, lvol, dBB, dAt, dAz, XX, YY, length, DDl, MMl, ideriv)
     WCALL( dfp200, lforce, (lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, iflag) )
 
     ! Add derivatives of pressure as well
     FATAL( dfp200, vvolume(lvol).lt.small, shall divide by vvolume(lvol)**(gamma+one) )
-    ijreal(1:Ntz) = - adiabatic(lvol) * pscale * gamma * dvolume / vvolume(lvol)**(gamma+one) + dBB(1:Ntz,-1) ! derivatives of force wrt geometry;
+
+    ! Derivatives of force wrt geometry; In real space.
+    ijreal(1:Ntz) = - adiabatic(lvol) * pscale * gamma * dvolume / vvolume(lvol)**(gamma+one) + dBB(1:Ntz,-1) 
 
 
 
@@ -1420,9 +1448,11 @@ do iocons = 0, 1
     if( Igeometry.ge.3 ) then ! spectral constraints are only required in toroidal or extended-cylindrical geometry;
 
         if( innout.eq.1 .and. iocons.eq.1 ) then ! include derivatives of spectral constraints;
+
 #ifdef DEBUG
-        FATAL( dfp200, abs(DDl).lt.small, divide by zero on spectral constraint )
+            FATAL( dfp200, abs(DDl).lt.small, divide by zero on spectral constraint )
 #endif
+
             if( issym.eq.0 ) then ! take derivatives wrt Rbc and Zbs;
                 if( irz.eq.0 ) then ! take derivative wrt Rbc;
                     dII(1:Ntz) = - im(ii) * sini(1:Ntz,ii) * ( XX(1:Ntz) - MMl * iRij(1:Ntz,lvol) ) &
@@ -1568,54 +1598,55 @@ do iocons = 0, 1
 
     endif ! end of if( Igeometry.ge.3 ) ;
 
-    call tfft(     Nt, Nz, ijreal(1:Ntz), dII(1:Ntz), & ! recall that ijreal contains derivatives of pressure term;
+    ! Map to Fourier space
+    call tfft(  Nt, Nz, ijreal(1:Ntz), dII(1:Ntz), & ! recall that ijreal contains derivatives of pressure term;
                 mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), ifail )
 
 
-    call tfft(     Nt, Nz, dPP(1:Ntz)   , dLL(1:Ntz), & ! recall that ijreal is probably just a dummy;
+    call tfft(  Nt, Nz, dPP(1:Ntz)   , dLL(1:Ntz), &
                 mn, im(1:mn), in(1:mn), evmn(1:mn), odmn(1:mn), comn(1:mn), simn(1:mn), ifail )          ! evmn and odmn are available as workspace;
 
 
     FATAL( dfp200, lvol-1+innout.gt.Mvol, psifactor needs attention )
 
-    ; idoc = 0
-
-    ;  dFFdRZ(idoc+1:idoc+mn    ,lvol,iocons,idof,innout) = + efmn(1:mn    ) * psifactor(ii,lvol-1+innout) * BBweight(1:mn) ! pressure;
-    ; idoc = idoc + mn   ! even;
-    ;if( Igeometry.ge.3 ) then ! add spectral constraints;
-    ;  dFFdRZ(idoc+1:idoc+mn-1  ,lvol,iocons,idof,innout) = - sfmn(2:mn    ) * psifactor(ii,lvol-1+innout) * epsilon       & ! spectral condensation;
-    - simn(2:mn    ) * psifactor(ii,lvol-1+innout) * sweight(lvol)   ! poloidal length constraint;
+    
+    idoc = 0
+  
+    ! Plasma and magnetic pressure;
+    ;   dFFdRZ(idoc+1:idoc+mn    ,lvol,iocons,idof,innout) = + efmn(1:mn) * psifactor(ii,lvol-1+innout) * BBweight(1:mn)
+    
+    idoc = idoc + mn   ! even;
+    if( Igeometry.ge.3 ) then ! Add spectral constraints;
+        dFFdRZ(idoc+1:idoc+mn-1  ,lvol,iocons,idof,innout) = - sfmn(2:mn) * psifactor(ii,lvol-1+innout) * epsilon       & ! spectral condensation;
+                                                             - simn(2:mn) * psifactor(ii,lvol-1+innout) * sweight(lvol)   ! poloidal length constraint;
     ! if( Ntor.gt.0 ) then
     !  dFFdRZ(idoc+1:idoc+Ntor  ,lvol,iocons,idof,innout) = + odmn(2:Ntor+1) * psifactor(ii,lvol-1+innout) * apsilon
     ! endif
-    ; ;idoc = idoc + mn-1 ! odd;
-    ;endif ! end of if( Igeometry.ge.3) ;
+      idoc = idoc + mn-1 ! odd;
+    endif ! end of if( Igeometry.ge.3) ;
 
-    if( NOTstellsym ) then
-        ; dFFdRZ(idoc+1:idoc+mn-1  ,lvol,iocons,idof,innout) = + ofmn(2:mn    ) * psifactor(ii,lvol-1+innout) * BBweight(2:mn) ! pressure;
-        ;idoc = idoc + mn-1 ! odd;
-        if( Igeometry.ge.3 ) then ! add spectral constraints;
-            ;dFFdRZ(idoc+1:idoc+mn    ,lvol,iocons,idof,innout) = - cfmn(1:mn    ) * psifactor(ii,lvol-1+innout) * epsilon       & ! spectral condensation;
-            - comn(1:mn    ) * psifactor(ii,lvol-1+innout) * sweight(lvol)   ! poloidal length constraint;
+    if( NOTstellsym ) then ! Construct non-stellarator symmetric terms
+
+    ! Plasma and magnetic pressure;
+    ;       dFFdRZ(idoc+1:idoc+mn-1  ,lvol,iocons,idof,innout) = + ofmn(2:mn) * psifactor(ii,lvol-1+innout) * BBweight(2:mn) 
+      
+        idoc = idoc + mn-1 ! odd;
+        if( Igeometry.ge.3 ) then ! Add spectral constraints;
+            dFFdRZ(idoc+1:idoc+mn    ,lvol,iocons,idof,innout) = - cfmn(1:mn) * psifactor(ii,lvol-1+innout) * epsilon       & ! spectral condensation;
+                                                                 - comn(1:mn) * psifactor(ii,lvol-1+innout) * sweight(lvol)   ! poloidal length constraint;
             !if( Ntor.ge.0 ) then
                 ! dFFdRZ(idoc+1:idoc+Ntor+1,lvol,iocons,idof,innout) = + evmn(1:Ntor+1) * psifactor(ii,lvol-1+innout) * apsilon ! poloidal origin      ;
             !endif
             idoc = idoc + mn   ! even;
         endif ! end of if( Igeometry.ge.3) ;
+
     endif ! end of if( NOTstellsym) ;
 
 #ifdef DEBUG
     FATAL( dfp200, idoc.ne.LGdof, counting error )
-
 #endif
      
 enddo ! end of do iocons;
-
-
-!write(ounit, 3363) myid, lvol, ", innout=0, dFFdRZ =",  dFFdRZ(1, lvol  , 0:1, 1, 0)
-!write(ounit, 3363) myid, lvol, ", innout=1, dFFdRZ =",  dFFdRZ(1, lvol  , 0:1, 1, 1)
-
-!3363         format("evaluate_dBB : myid=", i3, ", lvol=", i3, a12, 20f12.8)
 
 end subroutine evaluate_dBB
 
