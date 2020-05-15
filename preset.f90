@@ -463,7 +463,11 @@ endif
 ! Allocate space for the toroidal current array in each interface
 
   SALLOCATE( IPDt, (1:Mvol-1), zero)
-  SALLOCATE( IPDtDpf, (1:Mvol-1, 1:Mvol-1), zero)
+  if( Lfreebound ) then
+    SALLOCATE( IPDtDpf, (1:Mvol  , 1:Mvol  ), zero)
+  else
+    SALLOCATE( IPDtDpf, (1:Mvol-1, 1:Mvol-1), zero)
+  endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

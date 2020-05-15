@@ -39,7 +39,7 @@ use constants, only : zero, half, one, two, pi2, pi, mu0
 use fileunits, only : ounit
 
 use inputlist, only : Wmacros, Wdfp100, Igeometry, Nvol, Lrad, Isurf, &
-                      Lconstraint
+                      Lconstraint, Lfreebound, curpol
 
 use cputiming, only : Tdfp100
 
@@ -58,7 +58,8 @@ use allglobal, only : ncpu, myid, cpus, &
                       DDttcc, DDttcs, DDttsc, DDttss, &
                       DDtzcc, DDtzcs, DDtzsc, DDtzss, &
                       DDzzcc, DDzzcs, DDzzsc, DDzzss, &
-                      dMA, dMB, dMD, dMG, MBpsi, solution
+                      dMA, dMB, dMD, dMG, MBpsi, solution, &
+                      Nt, Nz
 
  LOCALS
 !------
@@ -70,9 +71,9 @@ use allglobal, only : ncpu, myid, cpus, &
 ! Fvec:                       Global constraint values
 ! x:                          Degrees of freedom of hybrd1. For now contains only the poloidal flux
 
-INTEGER              :: vvol, Ndofgl, iflag, cpu_send_one, cpu_send_two, ll, NN
+INTEGER              :: vvol, Ndofgl, iflag, cpu_send_one, cpu_send_two, ll, NN, ideriv
 INTEGER              :: status(MPI_STATUS_SIZE), request1, request2
-REAL                 :: Fvec(1:Mvol-1), x(1:Mvol-1), Bt00(1:Mvol, 0:1, 0:1)
+REAL                 :: Fvec(1:Mvol-1), x(1:Mvol-1), Bt00(1:Mvol, 0:1, 0:1), ldItGp(0:1,-1:2)
 LOGICAL              :: LComputeDerivatives
 
 
@@ -232,23 +233,33 @@ BEGIN(dfp100)
                     RlBCAST(Bt00(vvol+1, 0, 1), 1, cpu_send_two)
 
                     ! Evaluate surface current
-                    IPDt(vvol) = pi2 * (Bt00(vvol+1, 0,0 ) - Bt00(vvol, 1, 0))
+                    IPDt(vvol) = pi2 * (Bt00(vvol+1, 0, 0) - Bt00(vvol, 1, 0))
                     
                     ! their derivatives
                     IPDtdPf(vvol,vvol) = pi2 * Bt00(vvol+1, 0, 1)
                     if (vvol .ne. 1) IPDtdPf(vvol,vvol-1) = -pi2 * Bt00(vvol, 1, 1)
                 enddo
 
-                ! Compute the constraint and store it in Fvec. TODO: Compute analytically the constraint jacobian ?
+                ! Compute the constraint and store it in Fvec.
                 if( myid.EQ.0 ) then
-                    Fvec = IPDt - Isurf(1:Mvol-1)
+                    Fvec(1:Mvol-1) = IPDt - Isurf(1:Mvol-1)
                 endif
 
-#ifdef DEBUG 
-                write(ounit, '("dfp100: ", 10x ," : max(IPDt) = "es12.5)') MAXVAL(IPDt)
-#endif
-                ! write(ounit,'("xspech : ", 10x ," : sum(Ate(",i3,",",i2,",",i2,")%s) =",99es23.15)') vvol, ideriv, ii, sum(Ate(vvol,ideriv,ii)%s(0:Lrad(vvol)))
-            
+                ! Compute poloidal linking current constraint as well in case of free boundary computation
+                if ( Lfreebound ) then
+                    Fvec(Mvol    ) = ldItGp(1, 0) - curpol          
+                    
+                    ideriv=1 ! derivatives of Btheta w.r.t tflux
+                    WCALL( dfp100, lbpol, (Mvol, Bt00(Mvol, 0:1, 1), ideriv) )
+                    IPDtdPf(Mvol-1, Mvol  ) = Bt00(Mvol, 0, 1)
+
+                    iflag=2 ! derivatives of poloidal linking current w.r.t geometry not required
+                    WCALL( dfp100, curent, (Mvol, mn, Nt, Nz, iflag, ldItGp ) )
+                    IPDtdPf(Mvol  , Mvol-1) = ldItGp(1, 2)
+                    IPDtdPf(Mvol  , Mvol  ) = ldItGp(1, 1)
+                endif
+
+
             case default
                 FATAL(dfp100, .true., Unaccepted value for Lconstraint)
         end select

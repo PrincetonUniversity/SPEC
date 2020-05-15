@@ -107,7 +107,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
                         epsilon, &
                         Lconstraint, Lcheck, &
                         Lextrap, &
-                        mupftol
+                        mupftol, &
+                        Lfreebound
   
   use cputiming, only : Tdforce
   
@@ -120,7 +121,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
                         YESstellsym, NOTstellsym, &
                         Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
                         mn, im, in, &
-                        dpflux, sweight, &
+                        dpflux, dtflux, sweight, &
                         Bemn, Bomn, Iomn, Iemn, Somn, Semn, &
                         BBe, IIo, BBo, IIe, & ! these are just used for screen diagnostics;
                         LGdof, dBdX, &
@@ -149,11 +150,10 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
   INTEGER              :: vvol, innout, ii, jj, irz, issym, iocons, tdoc, idoc, idof, tdof, jdof, ivol, imn, ll, ihybrd1, lwa, Ndofgl, llmodnp
   INTEGER              :: maxfev, ml, muhybr, mode, nprint, nfev, ldfjac, lr, Nbc, NN, cpu_id
   REAL                 :: epsfcn, factor
-  REAL                 :: Fdof(1:Mvol-1), Xdof(1:Mvol-1), Fvec(1:Mvol-1)
+  REAL                 :: Fdof(1:Mvol-1), Xdof(1:Mvol-1)
   REAL                 :: diag(1:Mvol-1), qtf(1:Mvol-1), wa1(1:Mvol-1), wa2(1:Mvol-1), wa3(1:Mvol-1), wa4(1:mvol-1)
-  REAL                 :: dpfluxout(1:Mvol-1)
   INTEGER              :: ipiv(1:Mvol-1)
-  REAL, allocatable    :: fjac(:, :), r(:) 
+  REAL, allocatable    :: fjac(:, :), r(:), Fvec(:), dpfluxout(:)
 
   INTEGER              :: status(MPI_STATUS_SIZE), request_recv, request_send, cpu_send
   INTEGER              :: id
@@ -210,13 +210,13 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 
   if( LocalConstraint ) then
 
-    Ndofgl = 0; Fvec(1:Mvol-1) = zero
+    Ndofgl = 0; 
 
     Xdof(1:Mvol-1) = dpflux(2:Mvol) + xoffset
 
     ! Solve for field
     WCALL(dforce, dfp100, (Ndofgl, Xdof, Fvec, LcomputeDerivatives) )
- 
+
     ! Get force imbalance and jacobian
     do vvol = 1, Mvol
    
@@ -231,26 +231,39 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
         WCALL(dforce, dfp200, ( LcomputeDerivatives, vvol) )
     enddo ! end of do vvol = 1, Mvol
 
+
+
 ! --------------------------------------------------------------------------------------------------
 ! Global constraint - call the master thread calls hybrd1 on dfp100, others call dfp100_loop.
   else
-
-    Ndofgl = Mvol-1; 
+ 
 
     IPDtdPf = zero
-
     Xdof(1:Mvol-1)   = dpflux(2:Mvol) + xoffset
+
+    if( Lfreebound ) then
+      ! Mvol-1 surface current plus 1 poloidal linking current constraints
+      Ndofgl = Mvol
+    else
+      ! Mvol-1 surface current constraints
+      Ndofgl = Mvol-1
+    endif 
+
+    SALLOCATE( Fvec, (1:Ndofgl), zero )
+
     WCALL(dforce, dfp100, (Ndofgl, Xdof(1:Ndofgl), Fvec(1:Ndofgl), 1))
 
-    Fdof = Fvec
-
+    SALLOCATE(dpfluxout, (1:Ndofgl), zero )
     if ( myid .eq. 0 ) then 
 
         dpfluxout = Fvec
         call DGESV( Ndofgl, 1, IPdtdPf, Ndofgl, ipiv, dpfluxout, Ndofgl, idgesv )
 
         ! one step Newton's method
-        dpflux(2:Mvol) = dpflux(2:Mvol) - dpfluxout
+        dpflux(2:Mvol) = dpflux(2:Mvol) - dpfluxout(1:Mvol-1)
+        if( Lfreebound ) then
+          dtflux(Mvol) = dtflux(Mvol  ) - dpfluxout(Mvol    )
+        endif
 
         ! bcast the difference in dpflux
         RlBCAST(dpfluxout, Ndofgl, 0)
@@ -260,7 +273,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
     end if
 
     do vvol = 2, Mvol
-   
+  
         WCALL(dforce, IsMyVolume, (vvol))
 
         if( IsMyVolumeValue .EQ. 0 ) then
@@ -279,15 +292,26 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
         WCALL( dforce, packab, ( packorunpack, vvol, NN, solution(1:NN,2), 2 ) ) ! packing;
 
         ! compute the field with renewed dpflux via single Newton method step
-        solution(1:NN, 0) = solution(1:NN, 0) - dpfluxout(vvol-1) * solution(1:NN, 2)
+        if( Lfreebound .and.(vvol.eq.Mvol) ) then
+          WCALL( dforce, packab, ( packorunpack, vvol, NN, solution(1:NN,1), 1 ) ) ! packing;
+          solution(1:NN, 0) = solution(1:NN, 0) - dpfluxout(vvol-1) * solution(1:NN, 2) & ! derivative w.r.t pflux
+                                                - dpfluxout(vvol  ) * solution(1:NN, 1)   ! derivative w.r.t tflux
+        else
+          solution(1:NN, 0) = solution(1:NN, 0) - dpfluxout(vvol-1) * solution(1:NN, 2)
+        endif
         
         ! Unpack field in vector potential Fourier harmonics
         packorunpack = 'U'
-        WCALL( dforce, packab, ( packorunpack, vvol, NN, solution(1:NN,0), 0 ) ) ! unpacking;
+        WCALL( dforce, packab, ( packorunpack, vvol, NN, solution(1:NN,0), 0 ) ) ! unpacking;          
 
         DALLOCATE( solution )
 
     enddo ! end of do vvol = 1, Mvol
+
+
+
+    DALLOCATE(Fvec)
+    DALLOCATE(dpfluxout)
 
 ! --------------------------------------------------------------------------------------------------
 !                                    MPI COMMUNICATIONS
