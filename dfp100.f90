@@ -64,7 +64,7 @@ use allglobal, only : ncpu, myid, cpus, &
 ! x:                                                    Degrees of freedom of hybrd1. For now contains only the poloidal flux
 
 INTEGER              :: vvol, Ndofgl, iflag, cpu_send_one, cpu_send_two
-INTEGER              :: status(MPI_STATUS_SIZE), request1, request2
+INTEGER              :: status(MPI_STATUS_SIZE), request1, request2, iocons
 REAL                 :: Fvec(1:Mvol-1), x(1:Mvol-1), Bt00(1:Mvol, 0:1)
 LOGICAL              :: LcomputeDerivatives
 
@@ -141,7 +141,9 @@ BEGIN(dfp100)
         ! reduces the amount of data sent to the master thread. In the case of current constraint, only two
         ! doubles per volume are sent.
         if( Lconstraint.EQ.3 ) then
-            WCALL( dfp100, lbpol, (vvol, Bt00(1:Mvol, 0:1), 0) )                !Compute field at interface for global constraint
+            do iocons = 0, 1
+                WCALL( dfp100, lbpol, (vvol, Bt00(1:Mvol, 0:1), 0, iocons) )                !Compute field at interface for global constraint
+            enddo
         endif
     enddo
 

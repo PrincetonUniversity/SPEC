@@ -69,7 +69,7 @@ program xspech
                         dtflux, dpflux, &
                         ImagneticOK, &
                         ForceErr, &
-                        efmn, ofmn, &
+                        efmn, ofmn, cfmn, sfmn, &
                         iBns, iBnc, iVns, iVnc, &
                         Ate, Aze, Ato, Azo, & ! only required for debugging; 09 Mar 17;
                         nfreeboundaryiterations, &
@@ -91,7 +91,7 @@ program xspech
   LOGICAL              :: LComputeDerivatives, LContinueFreeboundaryIterations, exist, LupdateBn
 
 ! INTEGER              :: nfreeboundaryiterations, imn, lmn, lNfp, lim, lin, ii, lvol ! 09 Mar 17;
-  INTEGER              :: imn, lmn, lNfp, lim, lin, ii, ideriv, stat
+  INTEGER              :: imn, lmn, lNfp, lim, lin, ii, ideriv, stat, iocons
   INTEGER              :: vvol, llmodnp, ifail, wflag, iflag, vflag
   REAL                 :: rflag, lastcpu, bnserr, lRwc, lRws, lZwc, lZws, lItor, lGpol, lgBc, lgBs, sumI
   REAL,    allocatable :: position(:), gradient(:), Bt00(:,:)
@@ -635,27 +635,6 @@ program xspech
 !2000 format("finish : ",f10.2," : finished ",i3," ; ":"|f|="es12.5" ; ":"time=",f10.2,"s ;":" log"a5,:"="28f6.2" ...")
 !2001 format("finish : ", 10x ," :          ",3x," ; ":"    "  12x "   ":"     ", 10x ,"  ;":" log"a5,:"="28f6.2" ...")
   
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-! Computes the surface current at each interface for output
-
-  SALLOCATE( Bt00, (1:Mvol, 0:1) , zero)
-
-  do vvol = 1, Mvol
-    WCALL(xspech, lbpol, (vvol, Bt00(1:Mvol, 0:1), 0) )
-  enddo
-
-  do vvol = 1, Mvol-1
-    IPDt(vvol) = pi2 * (Bt00(vvol+1, 0) - Bt00(vvol, 1))
-  enddo
-
-  DALLOCATE( Bt00 )
-
-! and the volume currentdd
-  sumI = 0
-  do vvol = 1, Mvol
-    Ivolume(vvol) = mu(vvol) * dtflux(vvol) * pi2 + sumI    ! factor pi2 due to normalization in preset
-    sumI = Ivolume(vvol)                                    ! Sum over all volumes since this is how Ivolume is defined
-  enddo
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -689,6 +668,40 @@ program xspech
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
+
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+! Computes the surface current at each interface for output
+
+  SALLOCATE( Bt00, (1:Mvol, 0:1) , zero)
+
+  do vvol = 1, Mvol
+    do iocons = 0, 1
+      ! Compute covariant magnetic field at interface
+      WCALL(xspech, lbpol, (vvol, Bt00(1:Mvol, 0:1), 0, iocons) )
+
+      ! Save covariant magnetic field at interface for output
+      Btemn(1:mn, iocons, vvol) = efmn(1:mn)
+      Btomn(1:mn, iocons, vvol) = ofmn(1:mn)
+      Bzemn(1:mn, iocons, vvol) = cfmn(1:mn)
+      Bzomn(1:mn, iocons, vvol) = sfmn(1:mn)
+    enddo
+  enddo
+
+  ! Evaluate surface current
+  do vvol = 1, Mvol-1
+    IPDt(vvol) = pi2 * (Bt00(vvol+1, 0) - Bt00(vvol, 1))
+  enddo
+
+  DALLOCATE( Bt00 )
+
+  ! Evaluate volume current
+  sumI = 0
+  do vvol = 1, Mvol
+    Ivolume(vvol) = mu(vvol) * dtflux(vvol) * pi2 + sumI    ! factor pi2 due to normalization in preset
+    sumI = Ivolume(vvol)                                    ! Sum over all volumes since this is how Ivolume is defined
+  enddo
+
+
   do vvol = 1, Mvol
    
    LREGION(vvol)
@@ -698,8 +711,9 @@ program xspech
     if( .not.ImagneticOK(vvol) ) then ; cput = GETTIME ; write(ounit,1002) cput-cpus ; write(ounit,1002) cput-cpus, myid, vvol, ImagneticOK(vvol) ; cycle
     endif
 
-    ;WCALL( xspech, sc00aa, ( vvol, Ntz                  ) ) ! compute covariant field (singular currents);
-
+    ! No need for sc00aa anymore - this is done in lbpol
+    !;WCALL( xspech, sc00aa, ( vvol, Ntz                  ) ) ! compute covariant field (singular currents);
+ 
     if( Lcheck.eq.1 ) then
      WCALL( xspech, jo00aa, ( vvol, Ntz, Iquad(vvol), mn ) )
     endif

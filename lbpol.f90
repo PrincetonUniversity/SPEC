@@ -25,7 +25,7 @@
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-subroutine lbpol(lvol, Bt00, ideriv)
+subroutine lbpol(lvol, Bt00, ideriv, iocons)
 
   use constants, only : mu0, pi, pi2, two, one, half, zero
 
@@ -72,59 +72,56 @@ subroutine lbpol(lvol, Bt00, ideriv)
 
 ! iocons=0 -> inner boundary of volume (s=-1) and iocons=1 -> outer boundary (s=1)
 
-  do iocons=0,1
+  lss = two * iocons - one
 
-    lss = two * iocons - one
+  if( Lcoordinatesingularity .and. iocons.EQ.0) then
+    goto 5555; ! No need to compute at the singularity
+  endif
+
+  if( lvol.eq.Mvol .and. iocons.eq.1) then
+    goto 5555;
+  endif
+
+  ! First get the metric component and jacobian
+  Lcurvature = 1
+  WCALL( lbpol, coords, (lvol, lss, Lcurvature, Ntz, mn ) ) ! get guvij and sg
   
-    if( Lcoordinatesingularity .and. iocons.EQ.0) then
-      goto 5555; ! No need to compute at the singularity
-    endif
+  ! Then compute the vector potential and its derivatives.
+  call build_vector_potential(lvol, iocons, ideriv, 1)
 
-    if( lvol.eq.Mvol .and. iocons.eq.1) then
-      goto 5555;
-    endif
+  ! Inverse Fourier transform to map to real space
+  call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt(1:Ntz), dAz(1:Ntz) ) ! get covariant component of dA / contravariant of B
 
-    ! First get the metric component and jacobian
-    Lcurvature = 1
-    WCALL( lbpol, coords, (lvol, lss, Lcurvature, Ntz, mn ) ) ! get guvij and sg
-    
-    ! Then compute the vector potential and its derivatives.
-    call build_vector_potential(lvol, iocons, ideriv, 1)
-
-    ! Inverse Fourier transform to map to real space
-    call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt(1:Ntz), dAz(1:Ntz) ) ! get covariant component of dA / contravariant of B
-
-    ! Construct covariant Fourier components of B
-    Bt(1:Ntz) = ( - dAz(1:Ntz ) * guvij(1:Ntz,2,2, 0) + dAt(1:Ntz ) * guvij(1:Ntz,2,3, 0) )/ sg(1:Ntz,0)
-    Bz(1:Ntz) = ( - dAz(1:Ntz ) * guvij(1:Ntz,2,3, 0) + dAt(1:Ntz ) * guvij(1:Ntz,3,3, 0) )/ sg(1:Ntz,0)
+  ! Construct covariant Fourier components of B
+  Bt(1:Ntz) = ( - dAz(1:Ntz ) * guvij(1:Ntz,2,2, 0) + dAt(1:Ntz ) * guvij(1:Ntz,2,3, 0) )/ sg(1:Ntz,0)
+  Bz(1:Ntz) = ( - dAz(1:Ntz ) * guvij(1:Ntz,2,3, 0) + dAt(1:Ntz ) * guvij(1:Ntz,3,3, 0) )/ sg(1:Ntz,0)
 
 
-    if( ideriv.eq.-1 ) then
+  if( ideriv.eq.-1 ) then
 
-      ! Get derivatives of metric element
-      Lcurvature = 5
-      WCALL( lbpol, coords, (lvol, lss, Lcurvature, Ntz, mn ) ) ! get guvij over sg derivatives
+    ! Get derivatives of metric element
+    Lcurvature = 5
+    WCALL( lbpol, coords, (lvol, lss, Lcurvature, Ntz, mn ) ) ! get guvij over sg derivatives
 
-      ! Compute vector potential without taking derivatives
-      call build_vector_potential(lvol, iocons, 0, 1)
+    ! Compute vector potential without taking derivatives
+    call build_vector_potential(lvol, iocons, 0, 1)
 
-      ! And now add variation of metric contribution
-      call invfft( mn, im, in, efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt0(1:Ntz), dAz0(1:Ntz) ) ! get covariant component of dA without derivatives
+    ! And now add variation of metric contribution
+    call invfft( mn, im, in, efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt0(1:Ntz), dAz0(1:Ntz) ) ! get covariant component of dA without derivatives
 
 
-      Bt(1:Ntz) = Bt(1:Ntz) + ( - dAz0(1:Ntz ) * guvij(1:Ntz,2,2, 1) + dAt0(1:Ntz ) * guvij(1:Ntz,2,3, 1) ) ! Add metric derivatives
-      Bz(1:Ntz) = Bz(1:Ntz) + ( - dAz0(1:Ntz ) * guvij(1:Ntz,2,3, 1) + dAt0(1:Ntz ) * guvij(1:Ntz,3,3, 1) ) 
+    Bt(1:Ntz) = Bt(1:Ntz) + ( - dAz0(1:Ntz ) * guvij(1:Ntz,2,2, 1) + dAt0(1:Ntz ) * guvij(1:Ntz,2,3, 1) ) ! Add metric derivatives
+    Bz(1:Ntz) = Bz(1:Ntz) + ( - dAz0(1:Ntz ) * guvij(1:Ntz,2,3, 1) + dAt0(1:Ntz ) * guvij(1:Ntz,3,3, 1) ) 
 
-    endif
+  endif
 
-    ! Fourier transform, map to Fourier space
-    ifail = 0
-    call tfft( Nt, Nz, Bt(1:Ntz), Bz(1:Ntz), mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), ifail )
+  ! Fourier transform, map to Fourier space
+  ifail = 0
+  call tfft( Nt, Nz, Bt(1:Ntz), Bz(1:Ntz), mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), ifail )
 
-    Bt00(lvol, iocons) = efmn(1)
+  Bt00(lvol, iocons) = efmn(1)
 
 5555 continue
-  enddo ! end of do iocons;
 
 
 ! Now Btemn(1, 0, vvol) and Btemn(1, 1, vvol) contain Bte00(s=-1) and Bte00(s=1) for each volume vvol.

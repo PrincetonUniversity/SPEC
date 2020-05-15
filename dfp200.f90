@@ -809,7 +809,8 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
   LOCALS:
 ! -------
 
-    INTEGER             ::     vvol, innout, idof, iflag, ii, issym, irz, ll, NN, ifail, vflag, N, iwork(1:Nvol-1), idgesvx, pvol, order, IDGESV
+    INTEGER             ::  vvol, innout, idof, iflag, ii, issym, irz, ll, NN, ifail, vflag, N, iwork(1:Nvol-1), idgesvx, pvol, order, IDGESV
+    INTEGER             ::  iocons
     INTEGER, allocatable::  IPIV(:)
     REAL                ::  det, lfactor, Bt00(1:Mvol, 0:1)
     REAL                ::  R(1:Nvol-1), C(1:Nvol-1), work(1:4*Nvol-4), ferr, berr, rcond, tmp(2:Nvol)
@@ -890,7 +891,10 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
             ! Matrix coefficients evaluation
             do pvol = 1, Mvol
                 LREGION(pvol)
-                WCALL(dfp200, lbpol, (pvol, Bt00(1:Mvol, 0:1), 2)) ! Stores derivative in global variable Btemn
+
+                do iocons = 0, 1
+                    WCALL(dfp200, lbpol, (pvol, Bt00(1:Mvol, 0:1), 2, iocons)) ! Stores derivative in global variable Btemn
+                enddo
 #ifdef DEBUG
                 if( .false. ) then
                     write(ounit, 8375) myid, dBdX%vol, dBdX%innout, 2, pvol, Bt00(pvol, 0:1)
@@ -908,7 +912,10 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 
             do pvol=1,Mvol
                 LREGION(pvol)
-                WCALL(dfp200, lbpol, (pvol, Bt00(1:Mvol, 0:1), 0))
+
+                do iocons = 0, 1
+                    WCALL(dfp200, lbpol, (pvol, Bt00(1:Mvol, 0:1), 0, iocons))
+                enddo
 #ifdef DEBUG
             if( .false. ) then
                 write(ounit, 8375) myid, dBdX%vol, dBdX%innout, 0, pvol, Bt00(pvol, 0:1)
@@ -924,7 +931,10 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
                 else !pvol.eq.vvol+1
                     dBdX%innout = 0 ! w.r.t inner interface
                 endif
-                WCALL(dfp200, lbpol, (pvol, Bt00(1:Mvol, 0:1), -1)) ! derivate w.r.t geometry
+
+                do iocons = 0, 1
+                    WCALL(dfp200, lbpol, (pvol, Bt00(1:Mvol, 0:1), -1, iocons)) ! derivate w.r.t geometry
+                enddo
 
 #ifdef DEBUG
             if( .false. ) then
@@ -950,7 +960,9 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
                 dBdmpf(1:Mvol, Mvol  ) = zero
 
                 ! Get derivatives of B_theta w.r.t the toroidal flux in vacuum region
-                WCALL(dfp200, lbpol, (Mvol, Bt00(1:Mvol, 0:1), 1)) 
+                do iocons = 0, 1
+                    WCALL(dfp200, lbpol, (Mvol, Bt00(1:Mvol, 0:1), 1, iocons))
+                enddo  
 
                 ! compute d(Itor,Gpol)/dpsip and d(Itor,Gpol)/dpsit 
                 ! TODO: this should already be evaluated in mp00ac...
@@ -1604,7 +1616,7 @@ do iocons = 0, 1
 
 
     call tfft(  Nt, Nz, dPP(1:Ntz)   , dLL(1:Ntz), &
-                mn, im(1:mn), in(1:mn), evmn(1:mn), odmn(1:mn), comn(1:mn), simn(1:mn), ifail )          ! evmn and odmn are available as workspace;
+                mn, im(1:mn), in(1:mn), evmn(1:mn), odmn(1:mn), comn(1:mn), simn(1:mn), ifail ) ! evmn and odmn are available as workspace;
 
 
     FATAL( dfp200, lvol-1+innout.gt.Mvol, psifactor needs attention )
