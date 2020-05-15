@@ -146,13 +146,9 @@ BEGIN(dfp100)
 
         dBdX%L = .false. ! No need to take derivatives of matrices w.r.t geometry.
 
-        WCALL( dfp100, ma00aa, ( Iquad(vvol), mn, vvol, ll ) ) ! compute volume integrals of metric elements - evaluate TD, DT, DD, ...;
+        ! Compute matrices
+        WCALL( dfp100, ma00aa, ( Iquad(vvol), mn, vvol, ll ) )
         WCALL( dfp100, matrix, ( vvol, mn, ll ) )
-
-        !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-        ! Flag to chose if derivatives w.r.t mu and pflux should be taken
-        dBdX%L = LComputeDerivatives
 
         ! Compute fields
         WCALL( dfp100, ma02aa, ( vvol, NAdof(vvol) ) )

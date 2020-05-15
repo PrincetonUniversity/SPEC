@@ -187,8 +187,11 @@ LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-   if( LcomputeDerivatives ) then ! compute inverse of Beltrami matrices;
-       SALLOCATE( DToocc, (0:ll,0:ll,1:mn,1:mn), zero )
+  if( LcomputeDerivatives ) then ! compute inverse of Beltrami matrices;
+   
+
+   
+   SALLOCATE( DToocc, (0:ll,0:ll,1:mn,1:mn), zero )
    SALLOCATE( DToocs, (0:ll,0:ll,1:mn,1:mn), zero )
    SALLOCATE( DToosc, (0:ll,0:ll,1:mn,1:mn), zero )
    SALLOCATE( DTooss, (0:ll,0:ll,1:mn,1:mn), zero )
@@ -230,6 +233,18 @@ LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
 
   SALLOCATE( solution, (1:NN, -1:2), zero )
   SALLOCATE( MBpsi, (1:NN), zero )
+
+    
+    ! Compute matrices
+    WCALL( dfp200, ma00aa, ( Iquad(vvol), mn, vvol, ll ) )
+    WCALL( dfp200, matrix, ( vvol, mn, ll ) )
+
+    ! Pack solution
+    packorunpack = 'P'
+    WCALL( dfp200, packab, ( packorunpack, vvol, NN, solution(1:NN,0), 0 ) ) ! packing;
+    WCALL( dfp200, packab, ( packorunpack, vvol, NN, solution(1:NN,1), 1 ) ) ! packing;
+    WCALL( dfp200, packab, ( packorunpack, vvol, NN, solution(1:NN,2), 2 ) ) ! packing;
+    
 
     lastcpu = GETTIME
     

@@ -132,7 +132,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
                         psifactor, &
                         LocalConstraint, xoffset, &
                         IPdtdPf, & 
-                        IsMyVolume, IsMyVolumeValue, WhichCpuID
+                        IsMyVolume, IsMyVolumeValue, WhichCpuID, &
+                        solution
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -185,31 +186,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 #endif
    dBBdmp(1:LGdof,1:Mvol,0:1,1:2) = zero
   endif
-  
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-! COMPUTE MATRICES
-! ----------------
-
-! Here we call ma00aa to compute the geometry dependent matrices
-  do vvol = 1, Mvol
-
-   LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
-
-! Determines if this volume vvol should be computed by this thread.
-        call IsMyVolume(vvol)
-
-        if( IsMyVolumeValue .EQ. 0 ) then
-            cycle
-        else if( IsMyVolumeValue .EQ. -1) then
-            FATAL(dfp100, .true., Unassociated volume)
-        endif
-
-   ll = Lrad(vvol)
-
-
-
-  enddo
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -233,13 +210,12 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 
   if( LocalConstraint ) then
 
-    Ndofgl = 0; Fvec(1:Mvol-1) = zero; iflag = zero;
+    Ndofgl = 0; Fvec(1:Mvol-1) = zero
 
     Xdof(1:Mvol-1) = dpflux(2:Mvol) + xoffset
 
-
     ! Solve for field
-    WCALL(dforce, dfp100, (Ndofgl, Xdof, Fvec, iflag) )
+    WCALL(dforce, dfp100, (Ndofgl, Xdof, Fvec, LcomputeDerivatives) )
  
     ! Get force imbalance and jacobian
     do vvol = 1, Mvol
@@ -276,16 +252,14 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
         ! one step Newton's method
         dpflux(2:Mvol) = dpflux(2:Mvol) - dpfluxout
 
-        !write(ounit,*) dpflux(2:Mvol) - dpfluxout
-
         ! bcast the difference in dpflux
-        RlBCAST(dpflux, Ndofgl, 0)
+        RlBCAST(dpfluxout, Ndofgl, 0)
     else
         ! receive the field and pflux
-        RlBCAST(dpflux, Ndofgl, 0)
+        RlBCAST(dpfluxout, Ndofgl, 0)
     end if
 
-    do vvol = 1, Mvol
+    do vvol = 2, Mvol
    
         WCALL(dforce, IsMyVolume, (vvol))
 
@@ -295,42 +269,25 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
             FATAL(dforce, .true., Unassociated volume)
         endif
 
-        Ndofgl = Mvol-1; 
+        NN = NAdof(vvol)
 
-        Xdof(1:Mvol-1)   = dpflux(2:Mvol) + xoffset
+        SALLOCATE( solution, (1:NN, 0:2), zero)
 
-        ! Recompute solution, now with correct poloidal flux
-        WCALL(dforce, dfp100, (Ndofgl, Xdof(1:Ndofgl), Fvec(1:Ndofgl), LComputeDerivatives))
+        ! Pack field and its derivatives
+        packorunpack = 'P'
+        WCALL( dforce, packab, ( packorunpack, vvol, NN, solution(1:NN,0), 0 ) ) ! packing;
+        WCALL( dforce, packab, ( packorunpack, vvol, NN, solution(1:NN,2), 2 ) ) ! packing;
+
+        ! compute the field with renewed dpflux via single Newton method step
+        solution(1:NN, 0) = solution(1:NN, 0) - dpfluxout(vvol-1) * solution(1:NN, 2)
+        
+        ! Unpack field in vector potential Fourier harmonics
+        packorunpack = 'U'
+        WCALL( dforce, packab, ( packorunpack, vvol, NN, solution(1:NN,0), 0 ) ) ! unpacking;
+
+        DALLOCATE( solution )
 
     enddo ! end of do vvol = 1, Mvol
-
-    ! if( myid.eq. 0) then
-    !       lwa = 8 * Ndofgl * Ndofgl; maxfev = 1000; nfev=0; lr=Mvol*(Mvol-1); ldfjac=Mvol-1
-    !       ml = Mvol-2; muhybr = Mvol-2; epsfcn=1E-16; diag=0.0; mode=1; factor=0.01; nprint=1e5;    !nprint=1e5 to force last call - used for MPI communications
-
-    !       Xdof(1:Mvol-1)   = dpflux(2:Mvol) + xoffset  ! xoffset reduces the number of iterations needed by hybrd for an obscure reason...
-
-    !       SALLOCATE(fjac, (1:ldfjac,1:Mvol-1), 0)
-    !       SALLOCATE(r, (1:lr), 0)
-
-    !       ! Hybrid-Powell method, iterates on all poloidal fluxes to match the global constraint
-    !       WCALL( dforce,  hybrd1, (dfp100, Ndofgl, Xdof(1:Ndofgl), Fvec(1:Ndofgl), mupftol, maxfev, ml, muhybr, epsfcn, diag(1:Ndofgl), mode, &
-    !                   factor, nprint, ihybrd1, nfev, fjac(1:Ndofgl,1:Ndofgl), ldfjac, r(1:lr), lr, qtf(1:Ndofgl), wa1(1:Ndofgl), &
-    !                   wa2(1:Ndofgl), wa3(1:Ndofgl), wa4(1:Ndofgl)) ) 
-
-    !       DALLOCATE(fjac)
-    !       DALLOCATE(r)
-     
-    !       dpflux(2:Mvol) = Xdof(1:Ndofgl) - xoffset
-
-    !       !write(ounit,*) dpflux(0:Mvol)
-
-    !     else
-
-    !         ! Slave threads call loop_dfp100 and help the master thread computation at each iteration.
-    !         call loop_dfp100(Ndofgl, Fvec, iflag)
-
-    ! endif
 
 ! --------------------------------------------------------------------------------------------------
 !                                    MPI COMMUNICATIONS
