@@ -312,28 +312,17 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 ! --------------------------------------------------------------------------------------------------
 !                                    MPI COMMUNICATIONS
 
-    ! Gather all ImagneticOK
-    do vvol=1, Mvol 
-        ! Determine which thread has info on which volume
-        call WhichCpuID(vvol, cpu_send) 
-            
-        call MPI_Bcast( ImagneticOK(vvol), 1, MPI_LOGICAL, cpu_send, MPI_COMM_WORLD, ierr)
-    enddo
-
     ! And finally broadcast the field information to all threads from the thread which did the computation
     do vvol = 1, Mvol
         call WhichCpuID(vvol, cpu_id)
 
-        NN = NAdof(vvol)
-        Nbc = NN * 4
-    
-        RlBCAST( diotadxup(0:1, -1:2, vvol), 8, cpu_id)
-        RlBCAST( dItGpdxtp(0:1, -1:2, vvol), 8, cpu_id)
+        ! Broadcast all ImagneticOK
+        LlBCAST( ImagneticOK(vvol)         , 1, cpu_id)
       
         do ii = 1, mn  
                  RlBCAST( Ate(vvol,0,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
                  RlBCAST( Aze(vvol,0,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
-          enddo
+        enddo
 
         if( NOTstellsym ) then
             do ii = 1, mn    
