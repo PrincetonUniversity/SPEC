@@ -73,7 +73,7 @@ use allglobal, only : ncpu, myid, cpus, &
 
 INTEGER              :: vvol, Ndofgl, iflag, cpu_send_one, cpu_send_two, ll, NN, ideriv
 INTEGER              :: status(MPI_STATUS_SIZE), request1, request2
-REAL                 :: Fvec(1:Mvol-1), x(1:Mvol-1), Bt00(1:Mvol, 0:1, 0:1), ldItGp(0:1,-1:2)
+REAL                 :: Fvec(1:Ndofgl), x(1:Mvol-1), Bt00(1:Mvol, 0:1, -1:2), ldItGp(0:1, -1:2)
 LOGICAL              :: LComputeDerivatives
 
 
@@ -204,8 +204,24 @@ BEGIN(dfp100)
 
         ! Compute relevant local quantities for the evaluation of global constraints
         if( Lconstraint.EQ.3 ) then
-            WCALL( dfp100, lbpol, (vvol, Bt00(1:Mvol, 0:1, 0), 0) )                !Compute field at interface for global constraint
-            WCALL( dfp100, lbpol, (vvol, Bt00(1:Mvol, 0:1, 1), 2) )                !Compute field at interface for global constraint, d w.r.t. pflux
+            ideriv = 0
+            WCALL( dfp100, lbpol, (vvol, Bt00(1:Mvol, 0:1, -1:2), ideriv) ) !Compute field at interface for global constraint
+
+            ideriv = 2
+            WCALL( dfp100, lbpol, (vvol, Bt00(1:Mvol, 0:1, -1:2), ideriv) ) !Compute field at interface for global constraint, d w.r.t. pflux
+
+            if( Lvacuumregion ) then
+
+#ifdef DEBUG
+                FATAL( dfp100, vvol.ne.Mvol, Incorrect vvol in last volume)
+#endif
+                
+                ideriv=1 ! derivatives of Btheta w.r.t tflux
+                WCALL( dfp100, lbpol, (Mvol, Bt00(1:Mvol, 0:1, -1:2), ideriv) )
+
+                iflag=2 ! derivatives of poloidal linking current w.r.t geometry not required
+                WCALL( dfp100, curent, (Mvol, mn, Nt, Nz, iflag, ldItGp(0:1,-1:2) ) )
+            endif
         endif
     enddo
 
@@ -229,15 +245,15 @@ BEGIN(dfp100)
                     ! Broadcast magnetic field at the interface.
                     RlBCAST(Bt00(vvol  , 1, 0), 1, cpu_send_one)
                     RlBCAST(Bt00(vvol+1, 0, 0), 1, cpu_send_two)
-                    RlBCAST(Bt00(vvol  , 1, 1), 1, cpu_send_one)
-                    RlBCAST(Bt00(vvol+1, 0, 1), 1, cpu_send_two)
+                    RlBCAST(Bt00(vvol  , 1, 2), 1, cpu_send_one)
+                    RlBCAST(Bt00(vvol+1, 0, 2), 1, cpu_send_two)
 
                     ! Evaluate surface current
                     IPDt(vvol) = pi2 * (Bt00(vvol+1, 0, 0) - Bt00(vvol, 1, 0))
                     
                     ! their derivatives
-                    IPDtdPf(vvol,vvol) = pi2 * Bt00(vvol+1, 0, 1)
-                    if (vvol .ne. 1) IPDtdPf(vvol,vvol-1) = -pi2 * Bt00(vvol, 1, 1)
+                    IPDtdPf(vvol,vvol) = pi2 * Bt00(vvol+1, 0, 2)
+                    if (vvol .ne. 1) IPDtdPf(vvol,vvol-1) = -pi2 * Bt00(vvol, 1, 2)
                 enddo
 
                 ! Compute the constraint and store it in Fvec.
@@ -247,14 +263,17 @@ BEGIN(dfp100)
 
                 ! Compute poloidal linking current constraint as well in case of free boundary computation
                 if ( Lfreebound ) then
+
+                    ! Communicate additional derivatives
+                    call WhichCpuID(Mvol, cpu_send_one)
+                    RlBCAST( ldItGp(0:1, -1:2), 8, cpu_send_one )
+                    RlBCAST( Bt00(Mvol, 0:1, 1), 2, cpu_send_one )
+
+                    ! Complete output: RHS
                     Fvec(Mvol    ) = ldItGp(1, 0) - curpol          
                     
-                    ideriv=1 ! derivatives of Btheta w.r.t tflux
-                    WCALL( dfp100, lbpol, (Mvol, Bt00(Mvol, 0:1, 1), ideriv) )
+                    ! Complete output: LHS
                     IPDtdPf(Mvol-1, Mvol  ) = Bt00(Mvol, 0, 1)
-
-                    iflag=2 ! derivatives of poloidal linking current w.r.t geometry not required
-                    WCALL( dfp100, curent, (Mvol, mn, Nt, Nz, iflag, ldItGp ) )
                     IPDtdPf(Mvol  , Mvol-1) = ldItGp(1, 2)
                     IPDtdPf(Mvol  , Mvol  ) = ldItGp(1, 1)
                 endif

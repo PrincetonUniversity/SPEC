@@ -204,10 +204,6 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 ! Local constraint case - simply call dfp100 and then dfp200
   Xdof(1:Mvol-1) = zero;
 
-#ifdef DEBUG
-  write(ounit, '("dforce: Mvol = ", i3)') Mvol
-#endif
-
   if( LocalConstraint ) then
 
     Ndofgl = 0; 
@@ -251,7 +247,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 
     SALLOCATE( Fvec, (1:Ndofgl), zero )
 
-    WCALL(dforce, dfp100, (Ndofgl, Xdof(1:Ndofgl), Fvec(1:Ndofgl), 1))
+    WCALL(dforce, dfp100, (Ndofgl, Xdof(1:Mvol-1), Fvec(1:Ndofgl), 1))
 
     SALLOCATE(dpfluxout, (1:Ndofgl), zero )
     if ( myid .eq. 0 ) then 
@@ -363,16 +359,16 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives )
 
     enddo
 
-#ifdef DEBUG
-      select case( ihybrd1 )
-        case( 1   )  ; write(ounit,'("dforce : ",f10.2," : finished ; success        ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
-        case( 0   )  ; write(ounit,'("dforce : ",f10.2," : finished ; input error    ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
-        case( 2   )  ; write(ounit,'("dforce : ",f10.2," : finished ; max. iter      ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
-        case( 3   )  ; write(ounit,'("dforce : ",f10.2," : finished ; xtol too small ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
-        case( 4:5 )  ; write(ounit,'("dforce : ",f10.2," : finished ; bad progress   ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
-        case default ; write(ounit,'("dforce : ",f10.2," : finished ; illegal ifail  ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
-      end select
-#endif
+! #ifdef DEBUG
+!       select case( ihybrd1 )
+!         case( 1   )  ; write(ounit,'("dforce : ",f10.2," : finished ; success        ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
+!         case( 0   )  ; write(ounit,'("dforce : ",f10.2," : finished ; input error    ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
+!         case( 2   )  ; write(ounit,'("dforce : ",f10.2," : finished ; max. iter      ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
+!         case( 3   )  ; write(ounit,'("dforce : ",f10.2," : finished ; xtol too small ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
+!         case( 4:5 )  ; write(ounit,'("dforce : ",f10.2," : finished ; bad progress   ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
+!         case default ; write(ounit,'("dforce : ",f10.2," : finished ; illegal ifail  ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
+!       end select
+! #endif
 
 endif !matches if( LocalConstraint ) 
 
