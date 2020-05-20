@@ -451,6 +451,7 @@ else ! CASE SEMI GLOBAL CONSTRAINT
                         if( lvol.eq.vvol+1 ) innout=0 ! Perturb w.r.t inner interface
 
                         dBdX%innout = innout
+                        dBdX%L      = .true.
 
                         ! Set up volume information                        
                         LREGION(lvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
