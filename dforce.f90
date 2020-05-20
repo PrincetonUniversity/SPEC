@@ -322,22 +322,6 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives)
         endif
     enddo
 
-    ! --------------------------------------------------------------------------------------------------
-    ! Now that all the communication is over, compute the local force and its derivatives
-    do vvol = 1, Mvol
-
-        WCALL(dforce, IsMyVolume, (vvol))
-
-        if( IsMyVolumeValue .EQ. 0 ) then
-            cycle
-        else if( IsMyVolumeValue .EQ. -1) then
-            FATAL(dforce, .true., Unassociated volume)
-        endif
-                
-        WCALL(dforce, dfp200, ( LcomputeDerivatives, vvol) )
-
-    enddo
-
 ! #ifdef DEBUG
 !       select case( ihybrd1 )
 !         case( 1   )  ; write(ounit,'("dforce : ",f10.2," : finished ; success        ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
@@ -351,6 +335,8 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives)
 
 endif !matches if( LocalConstraint ) 
 
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+! Compute local force and derivatives 
 WCALL(dforce, dfp200, ( LcomputeDerivatives, vvol) )
 
 
