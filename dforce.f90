@@ -107,7 +107,8 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives)
                         epsilon, &
                         Lconstraint, Lcheck, dRZ, &
                         Lextrap, &
-                        mupftol
+                        mupftol, &
+                        Lfreebound
   
   use cputiming, only : Tdforce
   
@@ -120,7 +121,7 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives)
                         YESstellsym, NOTstellsym, &
                         Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
                         mn, im, in, &
-                        dpflux, sweight, &
+                        dpflux, dtflux, sweight, &
                         Bemn, Bomn, Iomn, Iemn, Somn, Semn, &
                         BBe, IIo, BBo, IIe, & ! these are just used for screen diagnostics;
                         LGdof, dBdX, &
@@ -130,15 +131,8 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives)
                         dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated, &
                         BBweight, & ! exponential weight on force-imbalance harmonics;
                         psifactor, &
-                        DToocc, DToocs, DToosc, DTooss, &
-                        TTsscc, TTsscs, TTsssc, TTssss, &
-                        TDstcc, TDstcs, TDstsc, TDstss, &
-                        TDszcc, TDszcs, TDszsc, TDszss, &
-                        DDttcc, DDttcs, DDttsc, DDttss, &
-                        DDtzcc, DDtzcs, DDtzsc, DDtzss, &
-                        DDzzcc, DDzzcs, DDzzsc, DDzzss, &
                         LocalConstraint, xoffset, &
-                        solution, &
+                        solution, IPdtdPf, &
                         IsMyVolume, IsMyVolumeValue, WhichCpuID, &
                         allocate_geometry_matrices, deallocate_geometry_matrices
   
@@ -146,21 +140,24 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives)
   
   LOCALS
   
-  INTEGER, intent(in)  :: NGdof                  ! dimensions;
-  REAL,    intent(in)  :: position(0:NGdof)      ! degrees-of-freedom = internal geometry;
-  REAL,    intent(out) :: force(0:NGdof)         ! force;
-  LOGICAL, intent(in)  :: LComputeDerivatives    ! indicates whether derivatives are to be calculated;
+  INTEGER, parameter   :: NB = 3 ! optimal workspace block size for LAPACK:DSYSVX;
 
+  INTEGER, intent(in)  :: NGdof               ! dimensions;
+  REAL,    intent(in)  :: position(0:NGdof)   ! degrees-of-freedom = internal geometry;
+  REAL,    intent(out) :: force(0:NGdof)      ! force;
+  LOGICAL, intent(in)  :: LComputeDerivatives ! indicates whether derivatives are to be calculated;
+  
   INTEGER              :: vvol, innout, ii, jj, irz, issym, iocons, tdoc, idoc, idof, tdof, jdof, ivol, imn, ll, ihybrd1, lwa, Ndofgl, llmodnp
   INTEGER              :: maxfev, ml, muhybr, mode, nprint, nfev, ldfjac, lr, Nbc, NN, cpu_id
   REAL                 :: epsfcn, factor, dRZ_tmp
-  REAL                 :: Fdof(1:Mvol-1), Xdof(1:Mvol-1), Fvec(1:Mvol-1)
+  REAL                 :: Fdof(1:Mvol-1), Xdof(1:Mvol-1)
   REAL                 :: diag(1:Mvol-1), qtf(1:Mvol-1), wa1(1:Mvol-1), wa2(1:Mvol-1), wa3(1:Mvol-1), wa4(1:mvol-1)
-  REAL, allocatable    :: fjac(:, :), r(:) 
+  INTEGER              :: ipiv(1:Mvol-1)
+  REAL, allocatable    :: fjac(:, :), r(:), Fvec(:), dpfluxout(:)
 
   INTEGER              :: status(MPI_STATUS_SIZE), request_recv, request_send, cpu_send
   INTEGER              :: id
-  INTEGER              :: iflag
+  INTEGER              :: iflag, idgesv, Lwork
 
   CHARACTER            :: packorunpack 
   EXTERNAL             :: dfp100, dfp200, loop_dfp100
@@ -190,36 +187,7 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives)
 #endif
    dBBdmp(1:LGdof,1:Mvol,0:1,1:2) = zero
   endif
-  
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-! COMPUTE MATRICES
-! ----------------
-
-! Here we call ma00aa to compute the geometry dependent matrices
-  do vvol = 1, Mvol
-
-   LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
-
-! Determines if this volume vvol should be computed by this thread.
-        call IsMyVolume(vvol)
-
-        if( IsMyVolumeValue .EQ. 0 ) then
-            cycle
-        else if( IsMyVolumeValue .EQ. -1) then
-            FATAL(dfp100, .true., Unassociated volume)
-        endif
-
-   ll = Lrad(vvol)
-
-   call allocate_geometry_matrices(ll)
-
-   WCALL( dforce, ma00aa, ( Iquad(vvol), mn, vvol, ll ) ) ! compute volume integrals of metric elements - evaluate TD, DT, DD, ...;
-   WCALL( dforce, matrix, ( vvol, mn, ll ) )
-
-   call deallocate_geometry_matrices()
-
-  enddo
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -239,92 +207,112 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives)
 
   if( LocalConstraint ) then
 
+    SALLOCATE( Fvec, (1:Mvol-1), zero)
+
     Ndofgl = 0; Fvec(1:Mvol-1) = 0; iflag = 0;
     Xdof(1:Mvol-1) = dpflux(2:Mvol) + xoffset
     
     ! Solve for field
-	dBdX%L = LComputeDerivatives
+	  dBdX%L = LComputeDerivatives
     WCALL(dforce, dfp100, (Ndofgl, Xdof, Fvec, iflag) )
+
+    DALLOCATE( Fvec )
 
 ! --------------------------------------------------------------------------------------------------
 ! Global constraint - call the master thread calls hybrd1 on dfp100, others call dfp100_loop.
   else
+ 
 
-    Ndofgl = Mvol-1; 
+    IPDtdPf = zero
+    Xdof(1:Mvol-1)   = dpflux(2:Mvol) + xoffset
 
-    if( myid.eq. 0) then
-          lwa = 8 * Ndofgl * Ndofgl; maxfev = 1000; nfev=0; lr=Mvol*(Mvol-1); ldfjac=Mvol-1
-          ml = Mvol-2; muhybr = Mvol-2; epsfcn=1E-16; diag=0.0; mode=1; factor=0.01; nprint=1e5;    !nprint=1e5 to force last call - used for MPI communications
+    if( Lfreebound ) then
+      ! Mvol-1 surface current plus 1 poloidal linking current constraints
+      Ndofgl = Mvol
+    else
+      ! Mvol-1 surface current constraints
+      Ndofgl = Mvol-1
+    endif 
 
-          Xdof(1:Mvol-1)   = dpflux(2:Mvol) + xoffset  ! xoffset reduces the number of iterations needed by hybrd for an obscure reason...
+    SALLOCATE( Fvec, (1:Ndofgl), zero )
 
-          SALLOCATE(fjac, (1:ldfjac,1:Mvol-1), 0)
-          SALLOCATE(r, (1:lr), 0)
+    WCALL(dforce, dfp100, (Ndofgl, Xdof(1:Mvol-1), Fvec(1:Ndofgl), 1))
 
-          ! Hybrid-Powell method, iterates on all poloidal fluxes to match the global constraint
-		      dBdX%L = .false.
-          WCALL( dforce,  hybrd, (dfp100, Ndofgl, Xdof(1:Ndofgl), Fvec(1:Ndofgl), mupftol, maxfev, ml, muhybr, epsfcn, diag(1:Ndofgl), mode, &
-                                  factor, nprint, ihybrd1, nfev, fjac(1:Ndofgl,1:Ndofgl), ldfjac, r(1:lr), lr, qtf(1:Ndofgl), wa1(1:Ndofgl), &
-                                  wa2(1:Ndofgl), wa3(1:Ndofgl), wa4(1:Ndofgl)) ) 
+    SALLOCATE(dpfluxout, (1:Ndofgl), zero )
+    if ( myid .eq. 0 ) then 
 
-          iflag = 5
-          WCALL( dforce, dfp100, (Ndofgl, Xdof, Fvec, iflag) )
+        dpfluxout = Fvec
+        call DGESV( Ndofgl, 1, IPdtdPf, Ndofgl, ipiv, dpfluxout, Ndofgl, idgesv )
 
-          DALLOCATE(fjac)
-          DALLOCATE(r)
-     
-          dpflux(2:Mvol) = Xdof(1:Ndofgl) - xoffset
+        ! one step Newton's method
+        dpflux(2:Mvol) = dpflux(2:Mvol) - dpfluxout(1:Mvol-1)
+        if( Lfreebound ) then
+          dtflux(Mvol) = dtflux(Mvol  ) - dpfluxout(Mvol    )
+        endif
 
+        ! bcast the difference in dpflux
+        RlBCAST(dpfluxout, Ndofgl, 0)
+    else
+        ! receive the field and pflux
+        RlBCAST(dpfluxout, Ndofgl, 0)
+    end if
+
+    do vvol = 2, Mvol
+  
+        WCALL(dforce, IsMyVolume, (vvol))
+
+        if( IsMyVolumeValue .EQ. 0 ) then
+            cycle
+        else if( IsMyVolumeValue .EQ. -1) then
+            FATAL(dforce, .true., Unassociated volume)
+        endif
+
+        NN = NAdof(vvol)
+
+        SALLOCATE( solution, (1:NN, 0:2), zero)
+
+        ! Pack field and its derivatives
+        packorunpack = 'P'
+        WCALL( dforce, packab, ( packorunpack, vvol, NN, solution(1:NN,0), 0 ) ) ! packing;
+        WCALL( dforce, packab, ( packorunpack, vvol, NN, solution(1:NN,2), 2 ) ) ! packing;
+
+        ! compute the field with renewed dpflux via single Newton method step
+        if( Lfreebound .and.(vvol.eq.Mvol) ) then
+          WCALL( dforce, packab, ( packorunpack, vvol, NN, solution(1:NN,1), 1 ) ) ! packing;
+          solution(1:NN, 0) = solution(1:NN, 0) - dpfluxout(vvol-1) * solution(1:NN, 2) & ! derivative w.r.t pflux
+                                                - dpfluxout(vvol  ) * solution(1:NN, 1)   ! derivative w.r.t tflux
         else
+          solution(1:NN, 0) = solution(1:NN, 0) - dpfluxout(vvol-1) * solution(1:NN, 2)
+        endif
+        
+        ! Unpack field in vector potential Fourier harmonics
+        packorunpack = 'U'
+        WCALL( dforce, packab, ( packorunpack, vvol, NN, solution(1:NN,0), 0 ) ) ! unpacking;          
 
-            ! Slave threads call loop_dfp100 and help the master thread computation at each iteration.
-            call loop_dfp100(Ndofgl, Fvec)
+        DALLOCATE( solution )
 
-    endif
+    enddo ! end of do vvol = 1, Mvol
+
+
+
+    DALLOCATE(Fvec)
+    DALLOCATE(dpfluxout)
 
 ! --------------------------------------------------------------------------------------------------
 !                                    MPI COMMUNICATIONS
 
-    ! Gather all ImagneticOK
-    do vvol=1, Mvol 
-        ! Determine which thread has info on which volume
-        call WhichCpuID(vvol, cpu_send) 
-            
-        ! For now, use MPI_RECV and MPI_SEND. TODO: change implementationo of ImagneticOK to allow the use 
-        ! of MPI_GATHER
-        if( cpu_send.NE.0    ) then
-            if( myid.EQ.0 ) then
-                call MPI_RECV(ImagneticOK(vvol), 1, MPI_LOGICAL, cpu_send, vvol, MPI_COMM_WORLD, status, ierr)
-            else if( myid.EQ.cpu_send ) then
-                call MPI_SEND(ImagneticOK(vvol), 1, MPI_LOGICAL,         0, vvol, MPI_COMM_WORLD, ierr)
-            endif
-        endif
-    enddo
-
-    ! Now master thread broadcast the poloidal flux matching the constraint. It was obtain by iteration
-    ! via hybrd1
-    call MPI_Bcast( dpflux, Mvol, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
-
-    ! And broadcast as well the ImagneticOK flag - this determines if the computation was succesful in
-    ! each volume. If not, this geometry iteration goes to the trash...
-    call MPI_Bcast( ImagneticOK, Mvol, MPI_LOGICAL, 0, MPI_COMM_WORLD, ierr)
-    
     ! And finally broadcast the field information to all threads from the thread which did the computation
     ! TODO: improve MPI communication
     do vvol = 1, Mvol
         call WhichCpuID(vvol, cpu_id)
 
-        NN = NAdof(vvol)
-        Nbc = NN * 4
-        call MPI_Bcast( solution(vvol)%mat(1:NN, -1:2), Nbc, MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_WORLD, ierr)
-    
-        RlBCAST( diotadxup(0:1, -1:2, vvol), 8, cpu_id)
-        RlBCAST( dItGpdxtp(0:1, -1:2, vvol), 8, cpu_id)
+        ! Broadcast all ImagneticOK
+        LlBCAST( ImagneticOK(vvol)         , 1, cpu_id)
       
         do ii = 1, mn  
                  RlBCAST( Ate(vvol,0,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
                  RlBCAST( Aze(vvol,0,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
-          enddo
+        enddo
 
         if( NOTstellsym ) then
             do ii = 1, mn    
@@ -334,18 +322,32 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives)
         endif
     enddo
 
-#ifdef DEBUG
-if( Wdforce ) then
-      select case( ihybrd1 )
-        case( 1   )  ; write(ounit,'("dforce : ",f10.2," : finished ; success        ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
-        case( 0   )  ; write(ounit,'("dforce : ",f10.2," : finished ; input error    ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
-        case( 2   )  ; write(ounit,'("dforce : ",f10.2," : finished ; max. iter      ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
-        case( 3   )  ; write(ounit,'("dforce : ",f10.2," : finished ; xtol too small ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
-        case( 4:5 )  ; write(ounit,'("dforce : ",f10.2," : finished ; bad progress   ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
-        case default ; write(ounit,'("dforce : ",f10.2," : finished ; illegal ifail  ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
-      end select
-endif
-#endif
+    ! --------------------------------------------------------------------------------------------------
+    ! Now that all the communication is over, compute the local force and its derivatives
+    do vvol = 1, Mvol
+
+        WCALL(dforce, IsMyVolume, (vvol))
+
+        if( IsMyVolumeValue .EQ. 0 ) then
+            cycle
+        else if( IsMyVolumeValue .EQ. -1) then
+            FATAL(dforce, .true., Unassociated volume)
+        endif
+                
+        WCALL(dforce, dfp200, ( LcomputeDerivatives, vvol) )
+
+    enddo
+
+! #ifdef DEBUG
+!       select case( ihybrd1 )
+!         case( 1   )  ; write(ounit,'("dforce : ",f10.2," : finished ; success        ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
+!         case( 0   )  ; write(ounit,'("dforce : ",f10.2," : finished ; input error    ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
+!         case( 2   )  ; write(ounit,'("dforce : ",f10.2," : finished ; max. iter      ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
+!         case( 3   )  ; write(ounit,'("dforce : ",f10.2," : finished ; xtol too small ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
+!         case( 4:5 )  ; write(ounit,'("dforce : ",f10.2," : finished ; bad progress   ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
+!         case default ; write(ounit,'("dforce : ",f10.2," : finished ; illegal ifail  ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
+!       end select
+! #endif
 
 endif !matches if( LocalConstraint ) 
 

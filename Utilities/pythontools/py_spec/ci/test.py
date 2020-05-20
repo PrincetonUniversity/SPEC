@@ -23,28 +23,38 @@ tol = args.tol
 match = True
 
 
-def compare(data, reference, localtol):
+def compare(data, reference, localtol = tol, action='ERR'):
+    """
+    compare all items in data to items in reference with the same keys.
+    Throws an error or prints a warning when there is a diference.
+    *action*: 'ERR' or 'WARN'. If ERR an error is thrown and the program
+    fails on exit. if 'WARN' only an error is printed.
+    """
     global match
     for key, value in vars(data).items():
-        if isinstance(value, SPEC):  # recurse data (csmiet: I'm nt the biggest fan of this recursion...)
+        if isinstance(value, SPEC):  # recurse data (csmiet: I'm not the biggest fan of this recursion...)
             print('------------------')
             print('Elements in '+key)
-            compare(value, reference.__dict__[key], localtol)
+            if key in ['poincare']:
+                print('differences in ' + key + ' are not important to regression')
+                compare(value, reference.__dict__[key], localtol, action='WARN')
+            else:
+                compare(value, reference.__dict__[key], localtol)
         else:
-            if key in ['filename', 'version']:  # not compare filename and version
-                continue
-            elif key == 'iterations':  # skip iteration data (might be revised)
-                continue
-            elif key == 't':  # skip poincare.t Not the best, but only t so far (so good)
+            if key in ['filename', 'version', 'iterations']:  # not compare filename and version and iterations
                 continue
             else:
-                # print(key)
+                if key in ['volume', 'fiota']:  # skip certain problematic variables. NOT A GOOD IDEA TO CHANGE (might be revised)
+                    action = 'WARN'
                 diff = np.linalg.norm(np.abs(np.array(value) - np.array(reference.__dict__[key]))) \
                         / np.size(np.array(value)) # divide by number of elements
                 unmatch = diff > localtol
                 if unmatch:
-                    match = False
-                    print('UNMATCHED: '+key, ', diff={:12.5E}'.format(diff))
+                    if action == 'ERR':
+                        match = False
+                        print('ERROR: '+key, ', element average difference = {:12.5E}'.format(diff))
+                    if action == 'WARN':
+                        print('WARNING: '+key, ', element average difference = {:12.5E}'.format(diff))
                 else:
                     print('ok: ',key, 'element average difference = {}'.format(diff))
     return

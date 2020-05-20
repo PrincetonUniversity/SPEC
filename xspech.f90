@@ -94,7 +94,7 @@ program xspech
   INTEGER              :: imn, lmn, lNfp, lim, lin, ii, ideriv, stat, iocons
   INTEGER              :: vvol, llmodnp, ifail, wflag, iflag, vflag
   REAL                 :: rflag, lastcpu, bnserr, lRwc, lRws, lZwc, lZws, lItor, lGpol, lgBc, lgBs, sumI
-  REAL,    allocatable :: position(:), gradient(:), Bt00(:,:)
+  REAL,    allocatable :: position(:), gradient(:), Bt00(:,:,:)
   CHARACTER            :: pack
   INTEGER              :: Lfindzero_old, mfreeits_old
   REAL                 :: gBnbld_old
@@ -672,14 +672,14 @@ program xspech
   !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 ! Computes the surface current at each interface for output
 
-  SALLOCATE( Bt00, (1:Mvol, 0:1) , zero)
+  SALLOCATE( Bt00, (1:Mvol, 0:1, -1:2) , zero)
 
   do vvol = 1, Mvol
     do iocons = 0, 1
       ! Compute covariant magnetic field at interface
-      WCALL(xspech, lbpol, (vvol, Bt00(1:Mvol, 0:1), 0, iocons) )
+      WCALL(xspech, lbpol, (vvol, Bt00(1:Mvol, 0:1, -1:2), 0, iocons) )
 
-      ! Save covariant magnetic field at interface for output
+      ! Save covariant magnetic field at interface for output - computed in lbpol
       Btemn(1:mn, iocons, vvol) = efmn(1:mn)
       Btomn(1:mn, iocons, vvol) = ofmn(1:mn)
       Bzemn(1:mn, iocons, vvol) = cfmn(1:mn)
@@ -689,7 +689,7 @@ program xspech
 
   ! Evaluate surface current
   do vvol = 1, Mvol-1
-    IPDt(vvol) = pi2 * (Bt00(vvol+1, 0) - Bt00(vvol, 1))
+    IPDt(vvol) = pi2 * (Bt00(vvol+1, 0, 0) - Bt00(vvol, 1, 0))
   enddo
 
   DALLOCATE( Bt00 )
@@ -771,25 +771,6 @@ program xspech
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 9999 continue
-
-  do ii = 1, size(dMA)
-    deallocate(dMA(ii)%mat)
-    deallocate(dMB(ii)%mat)
-    deallocate(dMD(ii)%mat)
-    deallocate(dMG(ii)%arr)
-    deallocate(MBpsi(ii)%arr)
-  enddo
-  deallocate(dMA)
-  deallocate(dMB)
-  deallocate(dMD)
-  deallocate(dMG)
-  deallocate(MBpsi)
-
-  do ii = 1, Mvol
-    deallocate(solution(ii)%mat)
-  enddo
-  deallocate(solution)
-
 
   WCALL( xspech, ending )
 

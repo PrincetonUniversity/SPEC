@@ -192,7 +192,7 @@ subroutine mirror_input_to_outfile
   H5DESCR_CDSET( /input/physics/mu, Beltrami parameter{,} parallel current profile,                                                    __FILE__, __LINE__)
   HWRITERV_LO( grpInputPhysics,  (1+Nvol), Ivolume    ,   Ivolume(1:Mvol)   ,                                                          __FILE__, __LINE__)
   H5DESCR_CDSET( /input/physics/Ivolume, Volume current{,} externally driven, parallel current profile,                                __FILE__, __LINE__)
-  HWRITERV_LO( grpInputPhysics,  (1+Nvol), Isurf      ,     Isurf(1:Mvol)   ,                                                          __FILE__, __LINE__)
+  HWRITERV_LO( grpInputPhysics,  (Mvol-1), Isurf      ,   Isurf(1:Mvol-1)   ,                                                          __FILE__, __LINE__)
   H5DESCR_CDSET( /input/physics/mu, Surface current{,} currents that are not volume currents (pressure driven, shielding currents) ,   __FILE__, __LINE__)
   HWRITEIV_LO( grpInputPhysics,  (1+Mvol), pl         ,        pl(0:Nvol)   ,                                                          __FILE__, __LINE__)
   H5DESCR_CDSET( /input/physics/pl, pl ?,                                                                                              __FILE__, __LINE__)
@@ -341,6 +341,7 @@ subroutine mirror_input_to_outfile
   HWRITERV( grpInputDiagnostics,       1,  absacc            , (/ absacc         /))           ! redundant;
   HWRITERV( grpInputDiagnostics,       1,  epsr              , (/ epsr           /))           ! redundant;
   HWRITEIV( grpInputDiagnostics,       1,  nPpts             , (/ nPpts          /))
+  HWRITEIV( grpInputDiagnostics,       1,   Ppts             , (/  Ppts          /))
   HWRITEIV( grpInputDiagnostics,    Mvol,  nPtrj             ,    nPtrj(1:Mvol)    )
   HWRITELV( grpInputDiagnostics,       1,  LHevalues         , (/ LHevalues      /))
   HWRITELV( grpInputDiagnostics,       1,  LHevectors        , (/ LHevectors     /))
@@ -908,9 +909,9 @@ subroutine hdfint
 !latex \type{ForceErr}               & real    & \pb{force-balance error across interfaces} \\
   HWRITERV( grpOutput,  1, ForceErr, (/ ForceErr /))
 !latex \type{Ivolume}                & real    & \pb{Volume current at output (parallel, externally induced)}
-  HWRITERV( grpOutput, Mvol+1, Ivolume, Ivolume(1:Mvol))
+  HWRITERV( grpOutput, Mvol, Ivolume, Ivolume(1:Mvol))
 !latex \type{IPDt}                   & real    & \pb{Surface current at output}
-  HWRITERV( grpOutput, Mvol+1, IPDt, IPDt(1:Mvol))
+  HWRITERV( grpOutput, Mvol-1, IPDt, IPDt(1:Mvol-1))
 
   ! the following quantites can be different from input value
   HWRITERV( grpOutput,   Mvol, adiabatic         , adiabatic(1:Nvol)   )

@@ -70,9 +70,9 @@ subroutine dfp200( LcomputeDerivatives, vvol)
                         Nt, Nz, &
                         cosi, sini, & ! FFT workspace;
                         dBdX, &
-                        dMA, dMB, dMD, dMG, solution, &
                         dtflux, dpflux, sweight, &
                         mmpp, &
+                        dMA, dMB, dMD, dMG, &
                         Bemn, Bomn, Iomn, Iemn, Somn, Semn, &
                         LGdof, &
                         vvolume, dvolume, &
@@ -85,7 +85,7 @@ subroutine dfp200( LcomputeDerivatives, vvol)
                         mn, mne, &
                         dRodR, dRodZ, dZodR, dZodZ, &
                         LocalConstraint, &
-                        IsMyVolume, IsMyVolumeValue, IndMatrixArray, Btemn, WhichCpuID, &
+                        IsMyVolume, IsMyVolumeValue, Btemn, WhichCpuID, &
                         deallocate_geometry_matrices, allocate_geometry_matrices
 
   use typedefns
@@ -99,7 +99,7 @@ subroutine dfp200( LcomputeDerivatives, vvol)
   
   INTEGER              :: NN, IA, ifail, if01adf, vflag, MM, idgetrf, idgetri, Lwork, lvol, pvol
   INTEGER              :: vvol, innout, ii, jj, irz, issym, iocons, idoc, idof, imn, ll
-  INTEGER              :: Lcurvature, ideriv, id, ind_matrix
+  INTEGER              :: Lcurvature, ideriv, id
   INTEGER              :: iflag, cpu_id, cpu_id1, even_or_odd, vol_parity
   INTEGER              :: stat(MPI_STATUS_SIZE), tag, req1, req2, req3, req4
   INTEGER, allocatable :: ipivot(:)
@@ -177,7 +177,7 @@ if( LocalConstraint ) then
         enddo ! end of do iocons = 0, 1;
 
 
-           if( LcomputeDerivatives ) then ! compute inverse of Beltrami matrices;
+        if( LcomputeDerivatives ) then ! compute inverse of Beltrami matrices;
 
             ! Allocate some memory
             SALLOCATE( oBI(vvol)%mat, (1:NN,1:NN ), zero ) ! inverse of ``original'', i.e. unperturbed, Beltrami matrix;
@@ -187,11 +187,14 @@ if( LocalConstraint ) then
 
             SALLOCATE( rhs, (1:NN     ), zero )
 
+            SALLOCATE( dMA, (0:NN, 0:NN), zero )
+            SALLOCATE( dMB, (0:NN, 0: 2), zero )
+            SALLOCATE( dMD, (0:NN, 0:NN), zero )
+            SALLOCATE( dMG, (0:NN      ), zero )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
             ! Invert beltrami matrix. Required for matrix perturbation theory
             call get_inverse_Beltrami_matrices(vvol, oBI(vvol)%mat(1:NN,1:NN), NN)
-
    
             dBdX%L = .true. ! will need derivatives;
             idof = 0 ! labels degree of freedom; local to interface;
@@ -245,6 +248,10 @@ if( LocalConstraint ) then
 
 
             ! Free some memory
+            DALLOCATE(dMG)
+            DALLOCATE(dMD)
+            DALLOCATE(dMB)
+            DALLOCATE(dMA)
             DALLOCATE(rhs)
 
             call deallocate_geometry_matrices()
@@ -334,6 +341,7 @@ else ! CASE SEMI GLOBAL CONSTRAINT
         do vvol = 1, Mvol
             LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ; TODO: maybe not necessary, remove
             NN = NAdof(vvol) ! shorthand;
+            ll = Lrad(vvol)
 
             SALLOCATE( oBI(vvol)%mat, (1:NN,1:NN), zero)
 
@@ -349,8 +357,20 @@ else ! CASE SEMI GLOBAL CONSTRAINT
             ! Invert LHS of Beltrami system and store it in oBI. This will be used to 
             ! evaluate derivatives of solution.
             ! TODO: Storage of OBi is not optimal. Find a way around?
+
+            call allocate_geometry_matrices(ll)
+            SALLOCATE( dMA, (0:NN, 0:NN), zero )
+            SALLOCATE( dMB, (0:NN, 0: 2), zero )
+            SALLOCATE( dMD, (0:NN, 0:NN), zero )
+            SALLOCATE( dMG, (0:NN      ), zero )
+
             call get_inverse_Beltrami_matrices(vvol, oBI(vvol)%mat(1:NN,1:NN), NN)! Can't be moved outside of loops - need OBI after.
 
+            DALLOCATE(dMG)
+            DALLOCATE(dMD)
+            DALLOCATE(dMB)
+            DALLOCATE(dMA)
+            call deallocate_geometry_matrices()
         enddo ! end of vvol = 1, Mvol
             
         ! Broadcast oBI to all CPU
@@ -445,11 +465,19 @@ else ! CASE SEMI GLOBAL CONSTRAINT
                         ! Allocate memory. This cannot be moved outside due to NN and ll dependence on volume.
                         call allocate_geometry_matrices(ll)
                         SALLOCATE( rhs, ( 1:NN ), zero )
+                        SALLOCATE( dMA, (0:NN, 0:NN), zero )
+                        SALLOCATE( dMB, (0:NN, 0: 2), zero )
+                        SALLOCATE( dMD, (0:NN, 0:NN), zero )
+                        SALLOCATE( dMG, (0:NN      ), zero )
 
                         ! Get derivative of vector potential w.r.t geometry. Matrix perturbation theory.
                         call get_perturbed_solution(lvol, rhs, oBI(lvol)%mat(1:NN,1:NN), NN)
                     
                         ! Free memory
+                        DALLOCATE(dMG)
+                        DALLOCATE(dMD)
+                        DALLOCATE(dMB)
+                        DALLOCATE(dMA)
                         DALLOCATE(rhs)
                         call deallocate_geometry_matrices()
 
@@ -625,14 +653,15 @@ subroutine get_inverse_beltrami_matrices(vvol, oBI, NN)
                             Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
                             Nt, Nz, &
                             dBdX, &
-                            dMA, dMB, dMD, dMG, solution, &
-                            mn, mne, IndMatrixArray
+                            dMA, dMB, dMD, dMG, &
+                            mn, mne, Iquad, &
+                            allocate_geometry_matrices, deallocate_geometry_matrices
 
 
   LOCALS
 ! ------
 
-INTEGER             :: lastcpu, NN, ind_matrix, vvol, IA, MM, LDA, Lwork
+INTEGER             :: lastcpu, NN, vvol, IA, MM, LDA, Lwork, ll
 INTEGER             :: idgetrf, idgetri
 REAL, allocatable   :: ipivot(:), work(:)
 REAL                :: oBI(1:NN, 1:NN)
@@ -640,50 +669,58 @@ REAL                :: oBI(1:NN, 1:NN)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-
 
+    lastcpu = GETTIME
 
-        lastcpu = GETTIME
+    ll = Lrad(vvol)
 
-        ind_matrix = IndMatrixArray(vvol, 2)
-        
-        dMA(ind_matrix)%mat(0:NN-1,1:NN) = dMA(ind_matrix)%mat(1:NN,1:NN) - mu(vvol) * dMD(ind_matrix)%mat(1:NN,1:NN) ! this corrupts dMA in this volume, but dMA is no longer used;
-        dMA(ind_matrix)%mat(  NN  ,1:NN) = zero
-        dMD(ind_matrix)%mat(1:NN  ,1:NN) = dMA(ind_matrix)%mat(0:NN-1,1:NN) ! copy of original matrix; this is used below; !TODO: remove?
+    ! Evaluate dMa, dMD
+    dBdX%L = .false.
+    WCALL( dfp200, ma00aa, (Iquad(vvol), mn, vvol, ll) )
+    WCALL( dfp200, matrix, (vvol, mn, ll) )
 
-        IA = NN + 1
-        MM = NN ; LDA = NN ; Lwork = NN
-        SALLOCATE( ipivot, (1:NN), 0 )
     
-        idgetrf = 1 ; call DGETRF( MM, NN, dMA(ind_matrix)%mat(0:LDA-1,1:NN), LDA, ipivot(1:NN), idgetrf ) !LU decomposition
+    ! Prepare linear system
+    dMA(0:NN-1,1:NN) = dMA(1:NN,1:NN) - mu(vvol) * dMD(1:NN,1:NN) ! this corrupts dMA in this volume, but dMA is no longer used;
+    dMA(  NN  ,1:NN) = zero
+    dMD(1:NN  ,1:NN) = dMA(0:NN-1,1:NN) ! copy of original matrix; this is used below; !TODO: remove?
 
-        cput = GETTIME
-        select case( idgetrf ) !                                                                     0123456789012345678
-            case(  :-1 ) ;               write(ounit,1010) cput-cpus, myid, vvol, cput-lastcpu, idgetrf, "input error;      "
-            case(  0   ) ; if( Wdfp200 ) write(ounit,1010) cput-cpus, myid, vvol, cput-lastcpu, idgetrf, "success;          "
-            case( 1:   ) ;               write(ounit,1010) cput-cpus, myid, vvol, cput-lastcpu, idgetrf, "singular;         "
-            case default ;               FATAL( dfp200, .true., illegal ifail returned from F07ADF )
-        end select
+    IA = NN + 1
+    MM = NN ; LDA = NN ; Lwork = NN
+    SALLOCATE( ipivot, (1:NN), 0 )
+
+    ! Solve linear system
+    idgetrf = 1 ; call DGETRF( MM, NN, dMA(0:LDA-1,1:NN), LDA, ipivot(1:NN), idgetrf ) !LU decomposition
+
+    cput = GETTIME
+    select case( idgetrf ) !                                                                     0123456789012345678
+        case(  :-1 ) ;               write(ounit,1010) cput-cpus, myid, vvol, cput-lastcpu, idgetrf, "input error;      "
+        case(  0   ) ; if( Wdfp200 ) write(ounit,1010) cput-cpus, myid, vvol, cput-lastcpu, idgetrf, "success;          "
+        case( 1:   ) ;               write(ounit,1010) cput-cpus, myid, vvol, cput-lastcpu, idgetrf, "singular;         "
+        case default ;               FATAL( dfp200, .true., illegal ifail returned from F07ADF )
+    end select
 
 1010 format("dfp200 : ",f10.2," : myid=",i3," ; vvol=",i3," ; called DGETRF ; time=",f10.2,"s ; LU factorization of matrix; idgetrf=",i2," ; ",a18)
 
-        SALLOCATE( work, (1:NN), zero )
+    SALLOCATE( work, (1:NN), zero )
 
-        ! inverse of MA using the LU decomposition of DGETRF
-        idgetri = 1 ; call DGETRI( NN, dMA(ind_matrix)%mat(0:LDA-1,1:NN), LDA, ipivot(1:NN), work(1:Lwork), Lwork, idgetri ) 
+    ! inverse of MA using the LU decomposition of DGETRF
+    idgetri = 1 ; call DGETRI( NN, dMA(0:LDA-1,1:NN), LDA, ipivot(1:NN), work(1:Lwork), Lwork, idgetri ) 
 
-        DALLOCATE(work)
-        DALLOCATE(ipivot)
+    DALLOCATE(work)
+    DALLOCATE(ipivot)
 
-        cput = GETTIME
-        select case( idgetri ) !                                                                     0123456789012345678
-            case(  :-1 ) ;               write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "input error;      "
-            case(  0   ) ; if( Wdfp200 ) write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "success;          "
-            case( 1:   ) ;               write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "singular;         "
-            case default ;               FATAL( dfp200, .true., illegal ifail returned from F07AJF )
-        end select
+    cput = GETTIME
+    select case( idgetri ) !                                                                     0123456789012345678
+        case(  :-1 ) ;               write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "input error;      "
+        case(  0   ) ; if( Wdfp200 ) write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "success;          "
+        case( 1:   ) ;               write(ounit,1011) cput-cpus, myid, vvol, cput-lastcpu, idgetri, "singular;         "
+        case default ;               FATAL( dfp200, .true., illegal ifail returned from F07AJF )
+    end select
 
 1011 format("dfp200 : ",f10.2," : myid=",i3," ; vvol=",i3," ; called DGETRI ; time=",f10.2,"s ; inverse of Beltrami matrix; idgetrf=",i2," ; ",a18)
 
-        oBI(1:NN,1:NN) = dMA(ind_matrix)%mat(0:LDA-1,1:NN)
+    ! Save inverse in oBI.
+    oBI(1:NN,1:NN) = dMA(0:LDA-1,1:NN)
 
 end subroutine get_inverse_beltrami_matrices
 
@@ -713,13 +750,13 @@ subroutine get_perturbed_solution(lvol, rhs, oBI, NN)
     use allglobal, only :   ncpu, myid, cpus, &
                             mn, Iquad, NAdof, &
                             dMA, dMB, dMD, dMG, solution, &
-                            dtflux, dpflux, IndMatrixArray
+                            dtflux, dpflux
 
 
  LOCALS
 !------
 
-INTEGER                 :: ideriv, lvol, ind_matrix, ll, NN
+INTEGER                 :: ideriv, lvol, ll, NN
 REAL                    :: dpsi(1:2)
 REAL                    :: rhs(1:NN)
 REAL                    :: oBI(1:NN,1:NN)
@@ -729,26 +766,30 @@ CHARACTER               :: packorunpack
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-
     
     ll = Lrad(lvol)  ! Shorthand
-    ind_matrix = IndMatrixArray(lvol, 2)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
     ! Evaluate perturbed geometry dependent matrices
-
     WCALL( dfp200, ma00aa,( Iquad(lvol), mn, lvol, ll ) ) ! compute volume integrals of metric elements;
     WCALL( dfp200, matrix,( lvol, mn, ll ) ) ! construct Beltrami matrices;
 
+    ! Pack field
+    SALLOCATE( solution, (1:NN, -1:2), zero) 
+    packorunpack = 'P'
+    WCALL( dfp200, packab, ( packorunpack, lvol, NN, solution(1:NN, 0), 0 ) ) ! packing;
+
     dpsi(1:2) = (/ dtflux(lvol), dpflux(lvol) /) ! local enclosed toroidal and poloidal fluxes;
-    rhs(1:NN) = - matmul( dMB(ind_matrix)%mat(1:NN,1:2 )                                            , dpsi(1:2)                  ) &
-                - matmul( dMA(ind_matrix)%mat(1:NN,1:NN) - mu(lvol) * dMD(ind_matrix)%mat(1:NN,1:NN), solution(lvol)%mat(1:NN,0) )
+    rhs(1:NN) = - matmul( dMB(1:NN,1:2 )                                            , dpsi(1:2)                  ) &
+                - matmul( dMA(1:NN,1:NN) - mu(lvol) * dMD(1:NN,1:NN), solution(1:NN,0) )
 
     ! Evaluate perturbed solution
-    solution(lvol)%mat(1:NN,-1) = matmul( oBI(1:NN,1:NN), rhs(1:NN) ) ! this is the perturbed, packxi solution;
+    solution(1:NN,-1) = matmul( oBI(1:NN,1:NN), rhs(1:NN) ) ! this is the perturbed, packxi solution;
 
-    ideriv = -1 ;
-
+    ! Unpack derivatives of solution
     packorunpack = 'U'
+    WCALL( dfp200, packab,( packorunpack, lvol, NN,  solution(1:NN,-1), -1 ) ) ! derivatives placed in Ate(lvol,ideriv,1:mn)%s(0:Lrad),
 
-    WCALL( dfp200, packab,( packorunpack, lvol, NN,  solution(lvol)%mat(1:NN,-1), ideriv ) ) ! derivatives placed in Ate(lvol,ideriv,1:mn)%s(0:Lrad),
+    DALLOCATE(solution)
+
 
 end subroutine get_perturbed_solution
 
@@ -801,15 +842,17 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
                             mn, mne, &
                             LocalConstraint, &
                             vvolume, dvolume, &
-                            IsMyVolume, IsMyVolumeValue, IndMatrixArray, &
+                            IsMyVolume, IsMyVolumeValue, &
                             Btemn, xoffset, &
-                            allocate_geometry_matrices, deallocate_geometry_matrices
+                            allocate_geometry_matrices, deallocate_geometry_matrices, &
+                            IPdtdPf
 
 
   LOCALS:
 ! -------
 
-    INTEGER             ::  vvol, innout, idof, iflag, ii, issym, irz, ll, NN, ifail, vflag, N, iwork(1:Nvol-1), idgesvx, pvol, order, IDGESV
+    INTEGER             ::  vvol, innout, idof, iflag, ii, issym, irz, ll, NN, ifail
+    INTEGER             ::  vflag, N, iwork(1:Nvol-1), idgesvx, pvol, order, IDGESV
     INTEGER             ::  iocons
     INTEGER, allocatable::  IPIV(:)
     REAL                ::  det, lfactor, Bt00(1:Mvol, 0:1)
@@ -818,16 +861,15 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
     REAL, allocatable   ::  dBdmpf(:,:), dBdx2(:)
 
 #ifdef DEBUG
-    INTEGER             :: isymdiff, maxfev, nfev, lr, ldfjac, ml, muhybr, epsfcn, mode, nprint
-    INTEGER             :: jj, tdoc, idoc, tdof, jdof, imn, ihybrd1, lwa, Ndofgl, llmodnp
+    INTEGER             :: isymdiff, lr, ml, mode
+    INTEGER             :: jj, tdoc, idoc, tdof, jdof, imn, Ndofgl
     REAL                :: dvol(-1:+1), evolume, imupf_global(1:Mvol,1:2,-2:2), imupf_local(1:2,-2:2), factor, Btemn_debug(1:mn, 0:1, 1:Mvol, -1:2)
-    DOUBLE PRECISION    :: diag(1:Mvol-1), qtf(1:Mvol-1), wa1(1:Mvol-1), wa2(1:Mvol-1), wa3(1:Mvol-1), wa4(1:mvol-1)
-    REAL,   allocatable :: oRbc(:,:), oZbs(:,:), oRbs(:,:), oZbc(:,:) ! original geometry;
-    REAL,   allocatable :: isolution(:,:)
     REAL                :: position(0:NGdof), force(0:NGdof)
+    REAL                :: Fdof(1:Mvol-1), Xdof(1:Mvol-1)
+    REAL, allocatable   :: fjac(:, :), r_deb(:), Fvec(:), dpfluxout(:), isolution(:,:)
+    REAL, allocatable   :: oRbc(:,:), oZbs(:,:), oRbs(:,:), oZbc(:,:) ! original geometry;
+
     CHARACTER           :: packorunpack
-    DOUBLE PRECISION    ::  Fdof(1:Mvol-1), Xdof(1:Mvol-1), Fvec(1:Mvol-1)
-    DOUBLE PRECISION, allocatable :: fjac(:, :), r_deb(:)
 
     EXTERNAL            :: dfp100
 #endif
@@ -1102,47 +1144,53 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
                 if( issym.eq.1 .and. irz.eq.1 ) iZbc(ii,vvol) = iZbc(ii,vvol) + dRZ * isymdiff ! perturb geometry;
             endif
 
-
-            do pvol = 1,Mvol
-
-                LREGION(pvol)
-                ll = Lrad(vvol)        ! shorthand
-                NN = NAdof(vvol)     ! shorthand;
-
-                call allocate_geometry_matrices(ll)
-
-                WCALL( dfp200, ma00aa, ( Iquad(pvol), mn, pvol, ll ) )
-                
-                WCALL( dfp200, matrix, ( pvol, mn, ll ) )
-
-                call deallocate_geometry_matrices()
-            enddo
-
+            ! Solve Beltrami equation consistently with constraints
+            Xdof(1:Mvol-1) = zero;
             if( LocalConstraint ) then
+
+                SALLOCATE( Fvec, (1:Mvol-1), zero)
+
                 Ndofgl = 0; Fvec(1:Mvol-1) = 0; iflag = 0;
                 Xdof(1:Mvol-1) = dpflux(2:Mvol) + xoffset
+                
+                ! Solve for field
+                dBdX%L = .false. ! No need for derivatives in this context
                 WCALL(dfp200, dfp100, (Ndofgl, Xdof, Fvec, iflag) )
-            else
-                Ndofgl = Mvol-1; 
-                lwa = 8 * Ndofgl * Ndofgl; maxfev = 1000; nfev=0; lr=Mvol*(Mvol-1); ldfjac=Mvol-1
-                ml = Mvol-2; muhybr = Mvol-2; epsfcn=1E-16; diag=0.0; mode=1; factor=0.01; nprint=1e5;    !nprint=1e5 to force last call - used for MPI communications
 
+                DALLOCATE( Fvec )
+
+            ! --------------------------------------------------------------------------------------------------
+            ! Global constraint - call the master thread calls hybrd1 on dfp100, others call dfp100_loop.
+            else
+        
+                IPDtdPf = zero
                 Xdof(1:Mvol-1)   = dpflux(2:Mvol) + xoffset
 
-                SALLOCATE(fjac, (1:ldfjac,1:Mvol-1), 0)
-                SALLOCATE(r_deb, (1:lr), 0)
+                if( Lfreebound ) then
+                    ! Mvol-1 surface current plus 1 poloidal linking current constraints
+                    Ndofgl = Mvol
+                else
+                    ! Mvol-1 surface current constraints
+                    Ndofgl = Mvol-1
+                endif 
 
-                ! TODO PROBLEM WITH MPI - not important, this is only for debug
-                ! Hybrid-Powell method, iterates on all poloidal fluxes to match the global constraint
-                WCALL( dfp200,  hybrd, (dfp100, Ndofgl, Xdof(1:Ndofgl), Fvec(1:Ndofgl), mupftol, maxfev, ml, muhybr, epsfcn, diag(1:Ndofgl), mode, &
-                          factor, nprint, ihybrd1, nfev, fjac(1:Ndofgl,1:Ndofgl), ldfjac, r_deb(1:lr), lr, qtf(1:Ndofgl), wa1(1:Ndofgl), &
-                          wa2(1:Ndofgl), wa3(1:Ndofgl), wa4(1:Ndofgl)) ) 
-                dpflux(2:Mvol) = Xdof(1:Ndofgl) - xoffset
-                Xdof(1:Mvol-1) = dpflux(2:Mvol) + xoffset
-                WCALL( dfp200, dfp100, (Ndofgl, Xdof(1:Ndofgl), Fvec(1:Ndofgl), 6) )
+                SALLOCATE(dpfluxout, (1:Ndofgl), zero )
+                SALLOCATE(     Fvec, (1:Ndofgl), zero )
 
-                DALLOCATE(fjac)
-                DALLOCATE(r_deb)
+                WCALL(dfp200, dfp100, (Ndofgl, Xdof(1:Mvol-1), Fvec(1:Ndofgl), 1))
+
+                ! Only one cpu with this test - thus no need for broadcast
+                dpfluxout = Fvec
+                call DGESV( Ndofgl, 1, IPdtdPf, Ndofgl, ipiv, dpfluxout, Ndofgl, idgesv )
+
+                ! one step Newton's method
+                dpflux(2:Mvol) = dpflux(2:Mvol) - dpfluxout(1:Mvol-1)
+                if( Lfreebound ) then
+                    dtflux(Mvol) = dtflux(Mvol  ) - dpfluxout(Mvol    )
+                endif
+
+                DALLOCATE(Fvec)
+                DALLOCATE(dpfluxout)
             endif
 
 
@@ -1158,7 +1206,7 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
                     imupf_local(1:2,isymdiff) = (/ dtflux(vvol), dpflux(vvol) /) ! dtflux and dpflux are computed for the perturbed geometry by ma02aa/mp00ac if Lconstraint=1;
                 endif
             
-                isolution(1:NN,isymdiff) = solution(vvol)%mat(1:NN,0) ! solution is computed in mp00ac, which is called by ma02aa;
+                isolution(1:NN,isymdiff) = solution(1:NN,0) ! solution is computed in mp00ac, which is called by ma02aa;
 
             else ! global constraint<
                 if( Lplasmaregion ) then
@@ -1182,7 +1230,7 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
                                         - 8 * imupf_local(1:2,-1)  + 1 * imupf_local(1:2,-2)   ) / ( 12 * dRZ )
 
             ! TODO: see if necesseray to take absolute value - this is not used anyway...
-            solution(vvol)%mat(1:NN,-1) = abs(  solution(vvol)%mat(1:NN,-1) ) !WHY?
+            solution(1:NN,-1) = abs(  solution(1:NN,-1) ) !WHY?
             isolution(1:NN, 0) = abs( isolution(1:NN, 0) )                    !WHY?
 
         else

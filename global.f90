@@ -114,15 +114,10 @@ module typedefns
      REAL,    allocatable :: s(:)
      INTEGER, allocatable :: i(:)
   end type subgrid
-  
-  
+
   type VarSizeMatrix
         REAL, allocatable :: mat(:,:)
   end type VarSizeMatrix
-  
-  type VarSizeArray
-        REAL, allocatable :: arr(:)
-  end type VarSizeArray
 
 end module typedefns
 
@@ -165,7 +160,7 @@ module inputlist
   INTEGER      :: Ntor                       =  0
   INTEGER      :: Lrad(1:MNvol+1)            =  4
   INTEGER      :: Lconstraint                = -1
-  REAL         ::     tflux(1:MNvol+1)       =  0.0
+  REAL         :: tflux(1:MNvol+1)           =  0.0
   REAL         ::     pflux(1:MNvol+1)       =  0.0
   REAL         ::  helicity(1:MNvol)         =  0.0
   REAL         :: pscale                     =  0.0
@@ -277,7 +272,7 @@ module inputlist
   REAL         :: absacc           =     1.0e-04 ! redundant; 
   REAL         :: epsr             =     1.0e-08 ! redundant; 
   INTEGER      :: nPpts            =     0
-  INTEGER      :: Ppts             =     0
+  REAL         :: Ppts             =     0.0
   INTEGER      :: nPtrj(1:MNvol+1) =    -1
   LOGICAL      :: LHevalues        =  .false.
   LOGICAL      :: LHevectors       =  .false.
@@ -932,7 +927,7 @@ module allglobal
 
   REAL                 :: ForceErr, Energy
 
-  REAL   , allocatable :: IPDt(:)                    ! Toroidal pressure-driven current
+  REAL   , allocatable :: IPDt(:), IPDtDpf(:,:)    ! Toroidal pressure-driven current
 
   INTEGER              :: Mvol
 
@@ -1140,15 +1135,14 @@ module allglobal
 !latex \item These are allocated and deallocated in \link{dforce}, assigned in \link{matrix}, and used in \link{mp00ac} and ? \link{df00aa}.
 !latex \end{enumerate}
 
-   INTEGER, allocatable :: IndMatrixArray(:,:)    ! Store matrices index in geometry dependent matrice arrays
    
-   type(VarSizeMatrix),   allocatable :: dMA(:), dMB(:)! dMC(:,:) ! energy and helicity matrices; quadratic forms; 
-   type(VarSizeMatrix),   allocatable :: dMD(:)! dME(:,:)! dMF(:,:) ! energy and helicity matrices; quadratic forms; 
-   type(VarSizeArray) ,   allocatable :: dMG(:  )
-   type(VarSizeMatrix),   allocatable :: solution(:) ! this is allocated in dforce; used in mp00ac and ma02aa; and is passed to packab; 
+   REAL,   allocatable :: dMA(:,:), dMB(:,:)! dMC(:,:) ! energy and helicity matrices; quadratic forms; 
+   REAL,   allocatable :: dMD(:,:)! dME(:,:)! dMF(:,:) ! energy and helicity matrices; quadratic forms; 
+   REAL,   allocatable :: dMG(:  )
+   REAL,   allocatable :: solution(:,:) ! this is allocated in dforce; used in mp00ac and ma02aa; and is passed to packab; 
 
 !  REAL,   allocatable :: MBpsi(:), MEpsi(:) ! matrix vector products; 
-   type(VarSizeArray),   allocatable :: MBpsi(:)           ! matrix vector products; 
+   REAL,   allocatable :: MBpsi(:)           ! matrix vector products; 
 !  REAL                :: psiMCpsi, psiMFpsi
 !  REAL                ::           psiMFpsi
 
@@ -1821,13 +1815,13 @@ subroutine readin
         
         Ivolume(Mvol) = Ivolume(Mvol-1) !Ensure vacuum in vacuum region
 
-        toroidalcurrent = Ivolume(Mvol) + sum(Isurf)
+        toroidalcurrent = Ivolume(Mvol) + sum(Isurf(1:Mvol-1))
         
         if( curtor.NE.0 ) then
             FATAL( readin, toroidalcurrent.EQ.0 , Incompatible current profiles and toroidal linking current)
 
             Ivolume(1:Mvol) = Ivolume(1:Mvol) * curtor / toroidalcurrent
-            Isurf(1:Mvol)     = Isurf(1:Mvol) * curtor / toroidalcurrent
+            Isurf(1:Mvol-1) = Isurf(1:Mvol-1) * curtor / toroidalcurrent
 
         else
             FATAL( readin, toroidalcurrent.NE.0, Incompatible current profiles and toroidal linking current)
@@ -2100,7 +2094,7 @@ subroutine readin
  !RlBCAST( absacc    , 1      , 0 )
  !RlBCAST( epsr      , 1      , 0 )
   IlBCAST( nPpts     , 1      , 0 )
-  IlBCAST( Ppts      , 1      , 0 )
+  RlBCAST( Ppts      , 1      , 0 )
   IlBCAST( nPtrj     , MNvol+1, 0 )
   LlBCAST( LHevalues , 1      , 0 )
   LlBCAST( LHevectors, 1      , 0 )
@@ -2571,7 +2565,7 @@ subroutine wrtend
   write(iunit,'(" adiabatic   = ",257es23.15)') adiabatic(1:Mvol)
   write(iunit,'(" mu          = ",257es23.15)') mu(1:Mvol)
   write(iunit,'(" Ivolume     = ",257es23.15)') Ivolume(1:Mvol)
-  write(iunit,'(" Isurf       = ",257es23.15)') Isurf(1:Mvol)
+  write(iunit,'(" Isurf       = ",257es23.15)') Isurf(1:Mvol-1)
   write(iunit,'(" Lconstraint = ",i9        )') Lconstraint
   write(iunit,'(" pl          = ",257i23    )') pl(0:Mvol)
   write(iunit,'(" ql          = ",257i23    )') ql(0:Mvol)
@@ -2758,7 +2752,7 @@ subroutine wrtend
  !write(iunit,'(" absacc      = ",es23.15       )') absacc
  !write(iunit,'(" epsr        = ",es23.15       )') epsr
   write(iunit,'(" nPpts       = ",i9            )') nPpts
-  write(iunit,'(" Ppts        = ",i9            )') Ppts
+  write(iunit,'(" Ppts        = ",es23.15       )') Ppts
   write(iunit,'(" nPtrj       = ",256i6         )') nPtrj(1:Mvol)
   write(iunit,'(" LHevalues   = ",L9            )') LHevalues
   write(iunit,'(" LHevectors  = ",L9            )') LHevectors
@@ -2806,25 +2800,6 @@ subroutine wrtend
 
 end subroutine wrtend
   
-subroutine IndMatrix(cpuid, vvol, ind_matrix)
-
-!latex \subsection{subroutine IndMatrix}
-!latex To reduce the size of Geometry dependent matrices array \internal{dMA}, \internal{dMB}, \internal{dMD}, \internal{dMG}, \internal{MBpsi} and \internal{solution},
-!latex we allocate them only the relevant number of matrices (one per volume associated to this \interl{cpuid}).
-
-LOCALS
-
-INTEGER :: vvol, cpuid, ind_matrix
-INTEGER :: cpuid_comp
-
-! If the volume is not associated to the CPU, get an error
-call WhichCpuID(vvol, cpuid_comp)
-if (cpuid_comp.NE.cpuid) then
-    FATAL( dforce, .true., Error: called IndMatrix with wrong CPU ?)
-endif
-
-end subroutine IndMatrix
-
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 subroutine IsMyVolume(vvol)

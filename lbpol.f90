@@ -52,7 +52,7 @@ subroutine lbpol(lvol, Bt00, ideriv, iocons)
 ! ------
   
   INTEGER                :: Lcurvature, ideriv, ii, ll, ifail, lvol, mi, ni, iocons
-  REAL                   :: lss, Bt00(1:Mvol, 0:1)
+  REAL                   :: lss, Bt00(1:Mvol, 0:1, -1:2)
   REAL                   :: lAte(1:mn), lAze(1:mn), lAto(1:mn), lAzo(1:mn)
   REAL                   :: dAt(1:Ntz), dAz(1:Ntz), Bt(1:Ntz), Bz(1:Ntz), dAt0(1:Ntz), dAz0(1:Ntz)
   REAL                   :: dBtzero      ! Value of first B_theta mode jump
@@ -119,7 +119,7 @@ subroutine lbpol(lvol, Bt00, ideriv, iocons)
   ifail = 0
   call tfft( Nt, Nz, Bt(1:Ntz), Bz(1:Ntz), mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), ifail )
 
-  Bt00(lvol, iocons) = efmn(1)
+  Bt00(lvol, iocons, ideriv) = efmn(1)
 
 5555 continue
 
