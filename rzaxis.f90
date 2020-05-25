@@ -70,7 +70,7 @@
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-subroutine rzaxis( Mvol, mn, iRbc, iZbs, iRbs, iZbc, ivol )
+subroutine rzaxis( Mvol, mn, iRbc, iZbs, iRbs, iZbc, ivol, LComputeAxis )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -80,7 +80,7 @@ subroutine rzaxis( Mvol, mn, iRbc, iZbs, iRbs, iZbc, ivol )
   
   use fileunits, only : ounit
   
-  use inputlist, only : Wrzaxis, Igeometry, Ntor
+  use inputlist, only : Wrzaxis, Igeometry, Ntor, Lcheck
   
   use cputiming, only : Trzaxis
   
@@ -100,6 +100,8 @@ subroutine rzaxis( Mvol, mn, iRbc, iZbs, iRbs, iZbc, ivol )
   REAL                   :: iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol)
   
   INTEGER                :: jvol, ii, ifail
+
+  LOGICAL                :: LComputeAxis
   
   BEGIN(rzaxis)
   
@@ -124,59 +126,64 @@ subroutine rzaxis( Mvol, mn, iRbc, iZbs, iRbs, iZbc, ivol )
    
   case(   3 )
    
-   call invfft( mn, im(1:mn), in(1:mn), im(1:mn) * iRbs(1:mn,ivol), - im(1:mn) * iRbc(1:mn,ivol), &
-                                        im(1:mn) * iZbs(1:mn,ivol), - im(1:mn) * iZbc(1:mn,ivol), &
-                Nt, Nz, jkreal(1:Ntz), jkimag(1:Ntz) ) ! R_\t, Z_\t; 03 Nov 16;
- 
-   ijreal(1:Ntz) = sqrt( jkreal(1:Ntz)**2 + jkimag(1:Ntz)**2 ) ! dl ; 11 Aug 14;
-   ijimag(1:Ntz) = zero
+    call invfft( mn, im(1:mn), in(1:mn), im(1:mn) * iRbs(1:mn,ivol), - im(1:mn) * iRbc(1:mn,ivol), &
+                                          im(1:mn) * iZbs(1:mn,ivol), - im(1:mn) * iZbc(1:mn,ivol), &
+                  Nt, Nz, jkreal(1:Ntz), jkimag(1:Ntz) ) ! R_\t, Z_\t; 03 Nov 16;
+  
+    ijreal(1:Ntz) = sqrt( jkreal(1:Ntz)**2 + jkimag(1:Ntz)**2 ) ! dl ; 11 Aug 14;
+    ijimag(1:Ntz) = zero
 
-   jireal(1:Ntz) = ijreal(1:Ntz) ! dl ; 19 Sep 16;
-   
-   ifail = 0
-   call tfft( Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz), &
-              mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), ifail ) ! Fourier harmonics of differential poloidal length; 11 Mar 16;
-
-   efmn(1:mn) = efmn(1:mn) * ajk(1:mn) ! poloidal integration of length; only take m=0 harmonics; 11 Aug 14;
-   ofmn(1:mn) = ofmn(1:mn) * ajk(1:mn)
-   cfmn(1:mn) = zero
-   sfmn(1:mn) = zero
-      
-   call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), & ! map length = "integrated dl" back to real space; 19 Sep 16;
-                Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz) )
+    jireal(1:Ntz) = ijreal(1:Ntz) ! dl ; 19 Sep 16;
     
-   jiimag(1:Ntz) = ijreal(1:Ntz) !  L ; 19 Sep 16;
+    ifail = 0
+    call tfft( Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz), &
+                mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), ifail ) ! Fourier harmonics of differential poloidal length; 11 Mar 16;
+
+    efmn(1:mn) = efmn(1:mn) * ajk(1:mn) ! poloidal integration of length; only take m=0 harmonics; 11 Aug 14;
+    ofmn(1:mn) = ofmn(1:mn) * ajk(1:mn)
+    cfmn(1:mn) = zero
+    sfmn(1:mn) = zero
+        
+    call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), & ! map length = "integrated dl" back to real space; 19 Sep 16;
+                  Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz) )
+      
+    jiimag(1:Ntz) = ijreal(1:Ntz) !  L ; 19 Sep 16;
 
 
-   call invfft( mn, im(1:mn), in(1:mn),            iRbc(1:mn,ivol),              iRbs(1:mn,ivol), &
-                                                   iZbc(1:mn,ivol),              iZbs(1:mn,ivol), &
-                Nt, Nz, kjreal(1:Ntz), kjimag(1:Ntz) ) ! R, Z; 03 Nov 16;
-   
-   ijreal(1:Ntz) = kjreal(1:Ntz) * jireal(1:Ntz) ! R dl;
-   ijimag(1:Ntz) = kjimag(1:Ntz) * jireal(1:Ntz) ! Z dl;
-   
-   ifail = 0
-   call tfft( Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz), &
-              mn, im(1:mn), in(1:mn), evmn(1:mn), odmn(1:mn), comn(1:mn), simn(1:mn), ifail ) ! Fourier harmonics of weighted R & Z; 11 Mar 16;
+    call invfft( mn, im(1:mn), in(1:mn),            iRbc(1:mn,ivol),              iRbs(1:mn,ivol), &
+                                                    iZbc(1:mn,ivol),              iZbs(1:mn,ivol), &
+                  Nt, Nz, kjreal(1:Ntz), kjimag(1:Ntz) ) ! R, Z; 03 Nov 16;
+    
+    ijreal(1:Ntz) = kjreal(1:Ntz) * jireal(1:Ntz) ! R dl;
+    ijimag(1:Ntz) = kjimag(1:Ntz) * jireal(1:Ntz) ! Z dl;
+    
+    ifail = 0
+    call tfft( Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz), &
+                mn, im(1:mn), in(1:mn), evmn(1:mn), odmn(1:mn), comn(1:mn), simn(1:mn), ifail ) ! Fourier harmonics of weighted R & Z; 11 Mar 16;
 
-   evmn(1:mn) = evmn(1:mn) * ajk(1:mn) ! poloidal integration of R dl; 19 Sep 16;
-   odmn(1:mn) = odmn(1:mn) * ajk(1:mn)
-   comn(1:mn) = comn(1:mn) * ajk(1:mn) ! poloidal integration of Z dl; 19 Sep 16;
-   simn(1:mn) = simn(1:mn) * ajk(1:mn)
-   
-   call invfft( mn, im(1:mn), in(1:mn), evmn(1:mn), odmn(1:mn), comn(1:mn), simn(1:mn), &
-                Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz) )
- 
-   ijreal(1:Ntz) = ijreal(1:Ntz) / jiimag(1:Ntz) ! Ro; 19 Sep 16;
-   ijimag(1:Ntz) = ijimag(1:Ntz) / jiimag(1:Ntz) ! Zo; 19 Sep 16;
-   
-   kjreal(1:Ntz) = kjreal(1:Ntz) - ijreal(1:Ntz) ! \Delta R = R_1 - R_0 ; 03 Nov 16;
-   kjimag(1:Ntz) = kjimag(1:Ntz) - ijimag(1:Ntz) ! \Delta R = Z_1 - Z_0 ; 03 Nov 16;
+    evmn(1:mn) = evmn(1:mn) * ajk(1:mn) ! poloidal integration of R dl; 19 Sep 16;
+    odmn(1:mn) = odmn(1:mn) * ajk(1:mn)
+    comn(1:mn) = comn(1:mn) * ajk(1:mn) ! poloidal integration of Z dl; 19 Sep 16;
+    simn(1:mn) = simn(1:mn) * ajk(1:mn)
+    
+    call invfft( mn, im(1:mn), in(1:mn), evmn(1:mn), odmn(1:mn), comn(1:mn), simn(1:mn), &
+                  Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz) )
+  
+    ijreal(1:Ntz) = ijreal(1:Ntz) / jiimag(1:Ntz) ! Ro; 19 Sep 16;
+    ijimag(1:Ntz) = ijimag(1:Ntz) / jiimag(1:Ntz) ! Zo; 19 Sep 16;
+    
+    kjreal(1:Ntz) = kjreal(1:Ntz) - ijreal(1:Ntz) ! \Delta R = R_1 - R_0 ; 03 Nov 16;
+    kjimag(1:Ntz) = kjimag(1:Ntz) - ijimag(1:Ntz) ! \Delta R = Z_1 - Z_0 ; 03 Nov 16;
 
-   ifail = 0
-   call tfft( Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz), &
-              mn, im(1:mn), in(1:mn), iRbc(1:mn,jvol), iRbs(1:mn,jvol), iZbc(1:mn,jvol), iZbs(1:mn,jvol), ifail )
-   
+   ! Evaluate new axis position. .false. only when using finite differences (Lcheck.eq.6)
+   ! Careful! derivatives won't correspond to the actual axis position. Not important for finite differences estimate
+   if( LComputeAxis ) then 
+    ifail = 0
+    call tfft( Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz), &
+                mn, im(1:mn), in(1:mn), iRbc(1:mn,jvol), iRbs(1:mn,jvol), iZbc(1:mn,jvol), iZbs(1:mn,jvol), ifail )
+   else
+    FATAL( rzaxis, Lcheck.ne.6, Incompatible Lcheck )
+   endif
 #ifdef DEBUG
    if( Wrzaxis ) then
     cput = GETTIME

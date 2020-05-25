@@ -1269,10 +1269,6 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
             SALLOCATE( dMG, (0:NN      ), zero )
         endif
 
-!        LcomputeDerivatives = .false.
-!        Lonlysolution = .true.
-!        WCALL( dfp200, dforce, ( NGdof, position, force, LComputeDerivatives ))
-
 
     endif ! end of if( Lcheck.eq.4 ) ;
 

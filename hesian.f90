@@ -46,7 +46,7 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
   INTEGER, intent(in) :: NGdof, Mvol, mn, LGdof
   REAL                :: position(0:NGdof) ! internal geometrical degrees of freedom;
   
-  LOGICAL             :: LComputeDerivatives
+  LOGICAL             :: LComputeDerivatives, LComputeAxis
 
   REAL                :: force(0:NGdof), gradient(0:NGdof)
 
@@ -158,10 +158,12 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
        endif
        
        pack = 'P' !; position(0) = zero ! this is not used; 11 Aug 14;
-       WCALL( hesian, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack ) )
+       LComputeAxis = .true.
+       WCALL( hesian, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), &
+                                iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, LComputeAxis ) )
        
        LComputeDerivatives = .false. !; position(0) = zero ! this is not used; 11 Aug 14;
-       WCALL( hesian, dforce, ( NGdof, position(0:NGdof), gradient(0:NGdof), LComputeDerivatives ) ) ! re-calculate Beltrami fields;
+       WCALL( hesian, dforce, ( NGdof, position(0:NGdof), gradient(0:NGdof), LComputeDerivatives, LComputeAxis ) ) ! re-calculate Beltrami fields;
        
        oldBB(1:Mvol,isymdiff) = lBBintegral(1:Mvol)
 
@@ -199,7 +201,8 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
   iZbc(1:mn,0:Mvol) = oZbc(1:mn,0:Mvol)
   
   pack = 'P' !; position(0) = zero ! this is not used; 11 Aug 14;
-  WCALL( hesian, packxi,( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack ) )
+  WCALL( hesian, packxi,( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), &
+                          iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, LComputeAxis ) )
   
 #endif
 
@@ -220,7 +223,8 @@ endif
   Lhessianallocated = .true.
   
   LComputeDerivatives = .true. !; position(0) = zero ! this is not used; 11 Aug 14;
-  WCALL( hesian, dforce, ( NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives) ) ! calculate force-imbalance & hessian;
+  LComputeAxis = .true.
+  WCALL( hesian, dforce, ( NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives, LComputeAxis) ) ! calculate force-imbalance & hessian;
   
   ohessian(1:NGdof,1:NGdof) = hessian(1:NGdof,1:NGdof) ! internal copy; 22 Apr 15;
 
@@ -281,7 +285,8 @@ endif
         xx(tdof,isymdiff) = position(tdof) + isymdiff * dRZ ! perturb appropriate geometric harmonic;
         
         LComputeDerivatives = .false.
-        WCALL( hesian, dforce, ( NGdof, xx(0:NGdof,isymdiff), ff(0:NGdof,isymdiff), LComputeDerivatives) ) ! force-imbalance;
+        LComputeAxis = .true.
+        WCALL( hesian, dforce, ( NGdof, xx(0:NGdof,isymdiff), ff(0:NGdof,isymdiff), LComputeDerivatives, LComputeAxis) ) ! force-imbalance;
         
        enddo ! end of do isymdiff; 20 Jun 14;
        
@@ -361,7 +366,8 @@ endif
    enddo ! end of do vvol;
    
    pack = 'U' !; position(0) = zero ! this is not used; 11 Aug 14;
-   WCALL( hesian, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack ) )
+   WCALL( hesian, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), &
+                            iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, LComputeAxis ) )
    
    mu(1:Nvol) = lmu(1:Nvol) ; pflux(1:Nvol) = lpflux(1:Nvol) ; helicity(1:Nvol) = lhelicity(1:Nvol)
    
@@ -608,7 +614,8 @@ endif
     end select
     
     pack = 'U' ! unpack geometrical degrees-of-freedom; 13 Sep 13;
-    WCALL( hesian, packxi, ( NGdof,     solution(0:NGdof), Mvol, mn, dRbc(1:mn,0:Mvol), dZbs(1:mn,0:Mvol), dRbs(1:mn,0:Mvol), dZbc(1:mn,0:Mvol), pack ) )
+    WCALL( hesian, packxi, ( NGdof,     solution(0:NGdof), Mvol, mn, dRbc(1:mn,0:Mvol), dZbs(1:mn,0:Mvol), &
+                             dRbs(1:mn,0:Mvol), dZbc(1:mn,0:Mvol), pack, LComputeAxis ) )
     
     dRbc(1:mn,Mvol) = perturbation(1:LGdof)
     

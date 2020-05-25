@@ -99,6 +99,7 @@ subroutine newton( NGdof, position, ihybrd )
   INTEGER                :: ML, MU ! required for only Lc05ndf;
   
   LOGICAL                :: Lexit = .true. ! perhaps this could be made user input;
+  LOGICAL                :: LComputeAxis
 
   INTEGER                :: nprint = 1, nfev, njev
 
@@ -146,7 +147,8 @@ subroutine newton( NGdof, position, ihybrd )
   if( Lexit ) then ! will call initial force, and if ForceErr.lt.forcetol will immediately exit; 
 
    LComputeDerivatives= .false.
-   WCALL( newton, dforce, ( NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives) ) ! calculate the force-imbalance;
+   LComputeAxis = .true.
+   WCALL( newton, dforce, ( NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives, LComputeAxis) ) ! calculate the force-imbalance;
    
    if( myid.eq.0 ) then ! screen output; 
     cput = GETTIME
@@ -435,7 +437,7 @@ subroutine fcn1( NGdof, xx, fvec, irevcm )
 
   REAL                   :: position(0:NGdof), force(0:NGdof)
 
-  LOGICAL                :: LComputeDerivatives, Lonlysolution 
+  LOGICAL                :: LComputeDerivatives, Lonlysolution, LComputeAxis
   INTEGER                :: idof, jdof, ijdof, ireadhessian, igdof, lvol, ii, imn
   CHARACTER              :: pack
     
@@ -454,7 +456,9 @@ subroutine fcn1( NGdof, xx, fvec, irevcm )
    case( 0 ) ! indicates start of new iteration; no action is required; position and force available for printing; force must not be changed;
     
     pack = 'U' ! unpack geometrical degrees of freedom;
-    WCALL( newton, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack ) )
+    LComputeAxis = .true.
+    WCALL( newton, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), &
+                             iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, LComputeAxis ) )
 
     if( myid.eq.0 ) then
      
@@ -485,7 +489,8 @@ subroutine fcn1( NGdof, xx, fvec, irevcm )
     nFcalls = nFcalls + 1
     
     LComputeDerivatives = .false.
-    WCALL( newton, dforce, ( NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives ) ) ! calculate the force-imbalance;
+    LComputeAxis = .true.
+    WCALL( newton, dforce, ( NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives, LComputeAxis ) ) ! calculate the force-imbalance;
 
     fvec(1:NGdof) = force(1:NGdof)
 
@@ -557,7 +562,7 @@ subroutine fcn2( NGdof, xx, fvec, fjac, Ldfjac, irevcm )
 
   REAL                   :: position(0:NGdof), force(0:NGdof)
 
-  LOGICAL                :: LComputeDerivatives, Lonlysolution
+  LOGICAL                :: LComputeDerivatives, Lonlysolution, LComputeAxis
   INTEGER                :: idof, jdof, ijdof, ireadhessian, igdof, lvol, ii, imn
   CHARACTER              :: pack
     
@@ -576,7 +581,9 @@ subroutine fcn2( NGdof, xx, fvec, fjac, Ldfjac, irevcm )
    case( 0 ) ! indicates start of new iteration; no action is required; position and force available for printing; force must not be changed;
     
     pack = 'U' ! unpack geometrical degrees of freedom;
-    WCALL( newton, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack ) )
+    LComputeAxis = .true.
+    WCALL( newton, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), &
+                             iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, LComputeAxis ) )
     
     if( myid.eq.0 ) then
      
@@ -607,7 +614,8 @@ subroutine fcn2( NGdof, xx, fvec, fjac, Ldfjac, irevcm )
     nFcalls = nFcalls + 1
     
     LComputeDerivatives = .false.
-    WCALL( newton, dforce, ( NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives ) ) ! calculate the force-imbalance;
+    LComputeAxis = .true.
+    WCALL( newton, dforce, ( NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives, LComputeAxis ) ) ! calculate the force-imbalance;
 
     fvec(1:NGdof) = force(1:NGdof)
 
@@ -640,7 +648,8 @@ subroutine fcn2( NGdof, xx, fvec, fjac, Ldfjac, irevcm )
     if( ireadhessian.eq.0 ) then
      
      LComputeDerivatives = .true.
-     WCALL( newton, dforce, ( NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives ) ) ! calculate the force-imbalance;
+     LComputeAxis = .true.
+     WCALL( newton, dforce, ( NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives, LComputeAxis ) ) ! calculate the force-imbalance;
 
 #ifdef DEBUG
      FATAL( newton, Lcheck.eq.4, derivatives of Beltrami field have been computed )

@@ -93,7 +93,7 @@
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-recursive subroutine dforce( NGdof, position, force, LComputeDerivatives)
+recursive subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -162,6 +162,8 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives)
   CHARACTER            :: packorunpack 
   EXTERNAL             :: dfp100, dfp200, loop_dfp100
 
+  LOGICAL              :: LComputeAxis
+
 #ifdef DEBUG
   INTEGER              :: isymdiff
   REAL                 :: dvol(-1:+1), evolume, imupf(1:2,-2:2), lfactor
@@ -177,7 +179,8 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives)
 
   packorunpack = 'U' ! unpack geometrical degrees-of-freedom;
 
-  WCALL( dforce, packxi,( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), packorunpack ) )
+  WCALL( dforce, packxi,( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), &
+                          iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), packorunpack, LComputeAxis ) )
  
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -690,9 +693,11 @@ if( LcomputeDerivatives ) then ! construct Hessian;
 			            endif
 
                                     packorunpack = 'P' ! pack geometrical degrees-of-freedom;
+                                    LComputeAxis = .false.
 
-                                    WCALL(dforce, packxi,( NGdof, iposition(isymdiff,0:NGdof), Mvol, mn,iRbc(1:mn,0:Mvol),iZbs(1:mn,0:Mvol),iRbs(1:mn,0:Mvol),iZbc(1:mn,0:Mvol),packorunpack ) )
-                                    WCALL(dforce, dforce,( NGdof, iposition(isymdiff,0:NGdof), iforce(isymdiff,0:NGdof), .false.) )
+                                    WCALL(dforce, packxi,( NGdof, iposition(isymdiff,0:NGdof), Mvol, mn,iRbc(1:mn,0:Mvol),iZbs(1:mn,0:Mvol),iRbs(1:mn,0:Mvol),&
+                                                           iZbc(1:mn,0:Mvol),packorunpack, LComputeAxis ) )
+                                    WCALL(dforce, dforce,( NGdof, iposition(isymdiff,0:NGdof), iforce(isymdiff,0:NGdof), .false., LComputeAxis) )
                                     
                                 enddo
 

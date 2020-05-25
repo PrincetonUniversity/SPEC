@@ -88,7 +88,7 @@ program xspech
 
   LOCALS
 
-  LOGICAL              :: LComputeDerivatives, LContinueFreeboundaryIterations, exist, LupdateBn
+  LOGICAL              :: LComputeDerivatives, LContinueFreeboundaryIterations, exist, LupdateBn, LComputeAxis
 
 ! INTEGER              :: nfreeboundaryiterations, imn, lmn, lNfp, lim, lin, ii, lvol ! 09 Mar 17;
   INTEGER              :: imn, lmn, lNfp, lim, lin, ii, ideriv, stat, iocons
@@ -224,7 +224,9 @@ program xspech
   if( NGdof.gt.0 ) then ! pack geometry into vector; 14 Jan 13;
 
    pack = 'P'
-   WCALL( xspech, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack ) )
+   LComputeAxis = .true.
+   WCALL( xspech, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), &
+                            iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, LComputeAxis ) )
 
   endif
   
@@ -288,7 +290,9 @@ program xspech
    endif
    
    pack = 'U' ! unpack geometrical degrees of freedom; 13 Sep 13;
-   WCALL( xspech, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack ) )
+   LComputeAxis = .true.
+   WCALL( xspech, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), &
+                            iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, LComputeAxis ) )
 
   endif
 
@@ -323,11 +327,11 @@ program xspech
   lastcpu = GETTIME
   
   LComputeDerivatives = .false.
-
+  LComputeAxis = .true.
 ! vvol = Mvol ; ideriv = 0 ; ii = 1
 ! write(ounit,'("xspech : ", 10x ," : sum(Ate(",i3,",",i2,",",i2,")%s) =",99es23.15)') vvol, ideriv, ii, sum(Ate(vvol,ideriv,ii)%s(0:Lrad(vvol)))
   
-  WCALL( xspech, dforce, ( NGdof, position(0:NGdof), gradient(0:NGdof), LComputeDerivatives) ) ! (re-)calculate Beltrami fields;
+  WCALL( xspech, dforce, ( NGdof, position(0:NGdof), gradient(0:NGdof), LComputeDerivatives, LComputeAxis) ) ! (re-)calculate Beltrami fields;
   
   DALLOCATE(gradient)
   
