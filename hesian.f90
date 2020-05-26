@@ -223,7 +223,7 @@ endif
   Lhessianallocated = .true.
   
   LComputeDerivatives = .true. !; position(0) = zero ! this is not used; 11 Aug 14;
-  LComputeAxis = .true.
+  LComputeAxis = .false.
   WCALL( hesian, dforce, ( NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives, LComputeAxis) ) ! calculate force-imbalance & hessian;
   
   ohessian(1:NGdof,1:NGdof) = hessian(1:NGdof,1:NGdof) ! internal copy; 22 Apr 15;

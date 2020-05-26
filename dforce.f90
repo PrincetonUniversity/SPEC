@@ -160,7 +160,7 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives, LCompu
   INTEGER              :: iflag, idgesv, Lwork
 
   CHARACTER            :: packorunpack 
-  EXTERNAL             :: dfp100, dfp200, loop_dfp100
+  EXTERNAL             :: dfp100, dfp200
 
   LOGICAL              :: LComputeAxis
 
@@ -789,44 +789,4 @@ RETURN(dforce)
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 end subroutine dforce
- 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-
-subroutine loop_dfp100(Ndofgl, Fvec)
-
-! LOOP_DFP100 - infinite loop for slaves helping the master thread iterating to match global 
-! constraint
-  
-  use fileunits, only : ounit                                               ! Unit identifier for write
- 
-  use inputlist, only : Wmacros, Wdforce                                    ! Flags for debugging
-
-  use cputiming, only :  Tdforce                                            ! Timer
-  use allglobal, only :  Mvol, &                                            ! Total number of volume + vacuum
-                         IconstraintOK, &                                   ! Flag to exit loop
-                         cpus, myid
-
- LOCALS
-!------
-
-  INTEGER        :: Ndofgl, iflag               ! Input parameters to dfp100
-  REAL           :: Fvec(1:Mvol-1), x(1:Mvol-1) ! Input parameters to dfp100
-  EXTERNAL       :: dfp100                      ! Field solver
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-! Initialize - for now the constraint is not matched
-  IconstraintOK = .false.
-
-! Enter the infinit loop. Master thread broadcasts IconstraintOK at each iteration - the value is
-! .TRUE. when the constraint is matched
-  do while (.not.IconstraintOK)
-
-! Compute solution in every associated volumes
-  iflag = 5
-  WCALL(dforce, dfp100, (Ndofgl, x, Fvec, iflag) )
-
-  end do !matches do while IconstraintOK
-
-end subroutine loop_dfp100
