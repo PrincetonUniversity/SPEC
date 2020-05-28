@@ -679,6 +679,9 @@ program xspech
   SALLOCATE( Bt00, (1:Mvol, 0:1, -1:2) , zero)
 
   do vvol = 1, Mvol
+
+    LREGION(vvol)
+
     do iocons = 0, 1
       ! Compute covariant magnetic field at interface
       WCALL(xspech, lbpol, (vvol, Bt00(1:Mvol, 0:1, -1:2), 0, iocons) )
