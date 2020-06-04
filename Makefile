@@ -7,7 +7,7 @@
 #cfiles=bc00aa fc02aa jk03aa pc00aa pc00ab
  cfiles=brcast dforce newton 
  dfiles=casing bnorml 
- efiles=jo00aa pp00aa pp00ab bfield stzxyz sc00aa
+ efiles=jo00aa pp00aa pp00ab bfield stzxyz sc00aa prunin
  ffiles=hesian ra00aa numrec
  sfiles=dcuhre minpack iqpack rksuite i1mach d1mach ilut iters # below assumes the .f files are double precision; the CFLAGS = -r8 option is not required;
 
