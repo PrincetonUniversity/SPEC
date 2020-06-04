@@ -148,7 +148,7 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives, LCompu
   LOGICAL, intent(in)  :: LComputeDerivatives ! indicates whether derivatives are to be calculated;
   
   INTEGER              :: vvol, innout, ii, jj, irz, issym, iocons, tdoc, idoc, idof, tdof, jdof, ivol, imn, ll, ihybrd1, lwa, Ndofgl, llmodnp
-  INTEGER              :: maxfev, ml, muhybr, mode, nprint, nfev, ldfjac, lr, Nbc, NN, cpu_id
+  INTEGER              :: maxfev, ml, muhybr, mode, nprint, nfev, ldfjac, lr, Nbc, NN, cpu_id, ideriv
   REAL                 :: epsfcn, factor
   REAL                 :: Fdof(1:Mvol-1), Xdof(1:Mvol-1)
   REAL                 :: diag(1:Mvol-1), qtf(1:Mvol-1), wa1(1:Mvol-1), wa2(1:Mvol-1), wa3(1:Mvol-1), wa4(1:mvol-1)
@@ -255,9 +255,17 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives, LCompu
 
         ! bcast the difference in dpflux
         RlBCAST(dpfluxout, Ndofgl, 0)
+        RlBCAST(dpflux   , Ndofgl, 0)
+        if( Lfreebound ) then
+          RlBCAST(dtflux(Mvol), Ndofgl, 0)
+        endif
     else
         ! receive the field and pflux
         RlBCAST(dpfluxout, Ndofgl, 0)
+        RlBCAST(dpflux   , Ndofgl, 0)
+        if( Lfreebound ) then
+          RlBCAST(dtflux(Mvol), Ndofgl, 0)
+        endif
     end if
 
     do vvol = 2, Mvol
@@ -312,16 +320,21 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives, LCompu
         ! Broadcast all ImagneticOK
         LlBCAST( ImagneticOK(vvol)         , 1, cpu_id)
       
-        do ii = 1, mn  
-                 RlBCAST( Ate(vvol,0,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
-                 RlBCAST( Aze(vvol,0,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
+        do ideriv=0,2
+          do ii = 1, mn  
+                  RlBCAST( Ate(vvol,ideriv,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
+                  RlBCAST( Aze(vvol,ideriv,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
+          enddo
         enddo
 
+
         if( NOTstellsym ) then
+          do ideriv=0,2
             do ii = 1, mn    
-                  RlBCAST( Ato(vvol,0,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
-                  RlBCAST( Azo(vvol,0,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
-              enddo
+                  RlBCAST( Ato(vvol,ideriv,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
+                  RlBCAST( Azo(vvol,ideriv,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
+            enddo
+          enddo
         endif
     enddo
 
@@ -744,10 +757,11 @@ if( LcomputeDerivatives ) then ! construct Hessian;
 
 ! Print hessian and finite differences estimate (if single CPU). 
 if( Lcheck.eq.6 ) then
+  if(myid.eq.0) then
         open(10, file='Lcheck6_output.txt', status='unknown')
         write(ounit,'(A)') NEW_LINE('A')
         do ii=1, NGdof
-            write(ounit,1345) myid, im(ii), in(ii), irz, hessian(ii,:)
+            write(ounit,1345) myid, im(ii), in(ii), hessian(ii,:)
             write(10   ,1347) hessian(ii,:)
         enddo
         close(10)
@@ -757,18 +771,19 @@ if( Lcheck.eq.6 ) then
         open(10, file='Lcheck6_output.FiniteDiff.txt', status='unknown')
         if( ncpu.eq.1 ) then
             do ii=1, NGdof
-                write(ounit,1346) myid, im(ii), in(ii), irz, finitediff_hessian(ii,:)
+                write(ounit,1346) myid, im(ii), in(ii), finitediff_hessian(ii,:)
                 write(10   ,1347) finitediff_hessian(ii,:)
             enddo        
             write(ounit,'(A)') NEW_LINE('A')
         endif
         close(10)
 
-1345       format("dforce: myid=",i3," ; (",i4,",",i4,"), irz=",i4," ; Hessian            = ",64f16.10 "   ;")
-1346       format("dforce: myid=",i3," ; (",i4,",",i4,"), irz=",i4," ; Finite differences = ",64f16.10 "   ;")
+1345       format("dforce: myid=",i3," ; (",i4,",",i4," ; Hessian            = ",64f16.10 "   ;")
+1346       format("dforce: myid=",i3," ; (",i4,",",i4," ; Finite differences = ",64f16.10 "   ;")
 1347       format(512F22.16, " ")
 
         DALLOCATE(finitediff_hessian)
+    endif
 
 FATAL(dforce, Lcheck.eq.6, Lcheck.eq.6 test has been completed. )
 endif

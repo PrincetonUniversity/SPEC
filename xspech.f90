@@ -91,27 +91,28 @@ program xspech
   LOGICAL              :: LComputeDerivatives, LContinueFreeboundaryIterations, exist, LupdateBn, LComputeAxis
 
 ! INTEGER              :: nfreeboundaryiterations, imn, lmn, lNfp, lim, lin, ii, lvol ! 09 Mar 17;
-  INTEGER              :: imn, lmn, lNfp, lim, lin, ii, ideriv, stat, iocons
+  INTEGER              :: imn, lmn, lNfp, lim, lin, ii, ideriv, stat, iocons, iwait, pid, status
   INTEGER              :: vvol, llmodnp, ifail, wflag, iflag, vflag
   REAL                 :: rflag, lastcpu, bnserr, lRwc, lRws, lZwc, lZws, lItor, lGpol, lgBc, lgBs, sumI
   REAL,    allocatable :: position(:), gradient(:), Bt00(:,:,:)
-  CHARACTER            :: pack
+  CHARACTER            :: pack, hostname
   INTEGER              :: Lfindzero_old, mfreeits_old
   REAL                 :: gBnbld_old
   INTEGER              :: lnPtrj, numTrajTotal
+  INTEGER, external    :: getpid, hostnm
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   MPISTART ! It might be easy to read the source if this macro was removed; SRH: 27 Feb 18;
 
-!#ifdef DEBUG
-!  iwait = 0; pid = getpid()
-!  status = hostnm( hostname )
-!  write(*,*) 'Process with PID: ', pid, 'ready to attach. Hostname: ', hostname
-!  do while( iwait .EQ. 0 )
-!    !wait for debugger
-!  enddo
-!#endif
+! #ifdef DEBUG
+!   iwait = 0; pid = getpid()
+!   status = hostnm( hostname )
+!   write(*,*) 'Process with PID: ', pid, 'ready to attach. Hostname: ', hostname
+!   do while( iwait .EQ. 0 )
+!     !wait for debugger
+!   enddo
+! #endif
   
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
