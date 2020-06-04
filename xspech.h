@@ -638,6 +638,10 @@ program xspech
     WCALL( xspech, pp00aa, ( vvol                       ) ) ! Poincare plots in each volume
    endif
 
+   if (nPpts .gt.0 .and. Lcheck.eq.7 ) then                                   ! interface pruning algorithm
+    WCALL( xspech, prunin, ( vvol ) )
+   endif 
+
   enddo ! end of do vvol = 1, Mvol; ! end of parallel diagnostics loop; 03 Apr 13;
   
 1002 format("xspech : ",f10.2," :":" myid=",i3," ; vvol=",i3," ; IBeltrami="L2" ; construction of Beltrami field failed ;")

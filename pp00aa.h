@@ -166,6 +166,9 @@ subroutine pp00aa( lvol )
     write(lunit+myid) data(1:4,0:Nz-1,1:nPpts,itrj)
    endif   
   enddo
+
+  !iota(lvol) = fiota(lnPtrj,2)
+  !oita(lvol-1) = fiota(ioff,2)
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   DALLOCATE(data)
