@@ -259,7 +259,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
    
    NN = NAdof(vvol) ! shorthand;
    
-   if (NOTMatrixFree) then
+   if (NOTMatrixFree .or. LcomputeDerivatives) then
      SALLOCATE( dMA, (0:NN,0:NN), zero ) ! required for both plasma region and vacuum region;
      SALLOCATE( dMD, (0:NN,0:NN), zero )
    endif
@@ -282,7 +282,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
    
    if( LcomputeDerivatives ) then ! allocate some additional memory;
 
-    FATAL(dforce, YESMatrixFree, we do not support Lfindzero=2 with matrix free yet)
+    !FATAL(dforce, YESMatrixFree, we do not support Lfindzero=2 with matrix free yet)
 
     SALLOCATE( oBI, (0:NN,0:NN), zero ) ! inverse of ``original'', i.e. unperturbed, Beltrami matrix;
     SALLOCATE( rhs, (0:NN     ), zero )
@@ -301,7 +301,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
 
    if (Lcoordinatesingularity) then ! different radial dof for Zernike; 02 Jul 19
      lldof = (Lrad(vvol) - mod(Lrad(vvol),2)) / 2
-     if (YESMatrixFree) then
+     if (YESMatrixFree .and. .not. LcomputeDerivatives) then
        iidof = Mpol + 1
        jjdof = 1
      else
@@ -310,7 +310,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
      endif
    else
      lldof = Lrad(vvol)
-     if (YESMatrixFree) then
+     if (YESMatrixFree .and. .not. LcomputeDerivatives) then
        iidof = 1
        jjdof = 1
      else
@@ -390,7 +390,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
       WCALL( dforce, spsmat, ( vvol, mn, ll) )
    endif
 
-   if (NOTMatrixFree) then ! construct Beltrami matrix
+   if (NOTMatrixFree .or. LcomputeDerivatives) then ! construct Beltrami matrix
      WCALL( dforce, ma00aa, ( Iquad(vvol), mn, vvol, ll ) ) ! compute volume integrals of metric elements;
      WCALL( dforce, matrix, ( vvol, mn, ll ) )
    else ! matrix free, so construct something else

@@ -2489,6 +2489,12 @@ subroutine wrtend( wflag, iflag, rflag )
   write(iunit,'("&locallist")')
   write(iunit,'(" LBeltrami   = ",i9            )') LBeltrami
   write(iunit,'(" Linitgues   = ",i9            )') Linitgues
+  write(iunit,'(" Lmatsolver  = ",i9            )') Lmatsolver
+  write(iunit,'(" NiterGMRES  = ",i9            )') NiterGMRES
+  write(iunit,'(" LGMRESprec  = ",i9            )') LGMRESprec
+  write(iunit,'(" epsGMRES    = ",es23.15       )') epsGMRES
+  write(iunit,'(" epsILU      = ",es23.15       )') epsILU
+
  !write(iunit,'(" Lposdef     = ",i9            )') Lposdef ! redundant;
  !write(iunit,'(" Nmaxexp     = ",i9            )') Nmaxexp
   write(iunit,'("/")')

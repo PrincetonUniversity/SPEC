@@ -1217,7 +1217,7 @@ subroutine preset
     NOTMatrixFree = .true.
   endif
 
-  FATAL(preset, Lmatsolver.eq.3 .and. Lfindzero.eq.2, matrix free currently only support Lfindzero=0,1)
+  !FATAL(preset, Lmatsolver.eq.3 .and. Lfindzero.eq.2, matrix free currently only support Lfindzero=0,1)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
