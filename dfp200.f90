@@ -101,7 +101,7 @@ subroutine dfp200( LcomputeDerivatives, vvol)
   INTEGER              :: vvol, innout, ii, jj, irz, issym, iocons, idoc, idof, imn, ll
   INTEGER              :: Lcurvature, ideriv, id
   INTEGER              :: iflag, cpu_id, cpu_id1, even_or_odd, vol_parity
-  INTEGER              :: stat(MPI_STATUS_SIZE), tag, req1, req2, req3, req4
+  INTEGER              :: stat(MPI_STATUS_SIZE), tag, tag2, req1, req2, req3, req4
   INTEGER, allocatable :: ipivot(:)
 
   REAL                 :: lastcpu, lss, lfactor, DDl, MMl
@@ -490,36 +490,46 @@ else ! CASE SEMI GLOBAL CONSTRAINT
                     if( ncpu.gt. 1) then
                         if( LinnerVolume ) then    
                             do jj = 1, mn  
-                                tag = vvol+jj ! Tags for MPI communications
+                                tag  = 1 ! Tags for MPI communications
+                                tag2 = 2
 
-                                call MPI_RECV(Ate(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id1, tag, MPI_COMM_WORLD, stat, ierr)
-                                call MPI_RECV(Aze(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id1, tag, MPI_COMM_WORLD, stat, ierr)
+                                call MPI_RECV(Ate(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id1, tag , MPI_COMM_WORLD, stat, ierr)
+                                call MPI_RECV(Aze(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id1, tag2, MPI_COMM_WORLD, stat, ierr)
                             enddo
 
                             ! Non-stellarator symmetric terms
                             if( NOTstellsym ) then
                                 do jj = 1, mn  
-                                    tag = vvol+jj
+                                    tag  = 3
+                                    tag2 = 4
 
-                                    call MPI_RECV(Ato(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id1, tag, MPI_COMM_WORLD, stat, ierr)
-                                    call MPI_RECV(Azo(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id1, tag, MPI_COMM_WORLD, stat, ierr)
+                                    call MPI_RECV(Ato(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id1, tag , MPI_COMM_WORLD, stat, ierr)
+                                    call MPI_RECV(Azo(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id1, tag2, MPI_COMM_WORLD, stat, ierr)
                                 enddo
                             endif
 
                         else
                             do jj = 1, mn  
-                                tag = vvol+jj
+                                tag  = 1
+                                tag2 = 2
 
-                                call MPI_iSEND(Ate(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id , tag, MPI_COMM_WORLD, req3, ierr)
-                                call MPI_iSEND(Aze(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id , tag, MPI_COMM_WORLD, req4, ierr)
+                                call MPI_iSEND(Ate(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id , tag , MPI_COMM_WORLD, req1, ierr)
+                                call MPI_iSEND(Aze(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id , tag2, MPI_COMM_WORLD, req2, ierr)
+                            
+                                call MPI_WAIT(req1, MPI_STATUS_IGNORE, ierr)
+                                call MPI_WAIT(req2, MPI_STATUS_IGNORE, ierr)
                             enddo
 
                             if( NOTstellsym ) then
                                 do jj = 1, mn  
-                                    tag = vvol+jj
+                                    tag  = 3
+                                    tag2 = 4
 
-                                    call MPI_iSEND(Ato(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id , tag, MPI_COMM_WORLD, req3, ierr)
-                                    call MPI_iSEND(Azo(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id , tag, MPI_COMM_WORLD, req4, ierr)
+                                    call MPI_iSEND(Ato(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id , tag , MPI_COMM_WORLD, req3, ierr)
+                                    call MPI_iSEND(Azo(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id , tag2, MPI_COMM_WORLD, req4, ierr)
+
+                                    call MPI_WAIT(req3, MPI_STATUS_IGNORE, ierr)
+                                    call MPI_WAIT(req4, MPI_STATUS_IGNORE, ierr)
                                 enddo
                             endif
                         endif
