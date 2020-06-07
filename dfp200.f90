@@ -513,11 +513,8 @@ else ! CASE SEMI GLOBAL CONSTRAINT
                                 tag  = 1
                                 tag2 = 2
 
-                                call MPI_iSEND(Ate(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id , tag , MPI_COMM_WORLD, req1, ierr)
-                                call MPI_iSEND(Aze(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id , tag2, MPI_COMM_WORLD, req2, ierr)
-                            
-                                call MPI_WAIT(req1, MPI_STATUS_IGNORE, ierr)
-                                call MPI_WAIT(req2, MPI_STATUS_IGNORE, ierr)
+                                call MPI_SEND(Ate(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id , tag , MPI_COMM_WORLD, ierr)
+                                call MPI_SEND(Aze(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id , tag2, MPI_COMM_WORLD, ierr)
                             enddo
 
                             if( NOTstellsym ) then
@@ -525,11 +522,8 @@ else ! CASE SEMI GLOBAL CONSTRAINT
                                     tag  = 3
                                     tag2 = 4
 
-                                    call MPI_iSEND(Ato(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id , tag , MPI_COMM_WORLD, req3, ierr)
-                                    call MPI_iSEND(Azo(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id , tag2, MPI_COMM_WORLD, req4, ierr)
-
-                                    call MPI_WAIT(req3, MPI_STATUS_IGNORE, ierr)
-                                    call MPI_WAIT(req4, MPI_STATUS_IGNORE, ierr)
+                                    call MPI_SEND(Ato(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id , tag , MPI_COMM_WORLD, ierr)
+                                    call MPI_SEND(Azo(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id , tag2, MPI_COMM_WORLD, ierr)
                                 enddo
                             endif
                         endif

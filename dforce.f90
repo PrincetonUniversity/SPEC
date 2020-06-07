@@ -318,6 +318,8 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives, LCompu
         call WhichCpuID(vvol, cpu_id)
 
         ! Broadcast all ImagneticOK
+        !write(ounit,'("dforce : " 10x " : myid="i3"; vvol="i3"; ; ImagneticOK="999L2)') myid, vvol, ImagneticOK(1:Mvol)
+        !write(ounit,'("dforce : " 10x " : cpu_id="i3"; vvol="i3"; ; ImagneticOK="999L2)') cpu_id, vvol, ImagneticOK(vvol)
         LlBCAST( ImagneticOK(vvol)         , 1, cpu_id)
       
         do ideriv=0,2
