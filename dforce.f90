@@ -230,7 +230,7 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives, LCompu
     IPDtdPf = zero
     Xdof(1:Mvol-1)   = dpflux(2:Mvol) + xoffset
 
-    if( Lfreebound ) then
+    if( Lfreebound.eq.1 ) then
       ! Mvol-1 surface current plus 1 poloidal linking current constraints
       Ndofgl = Mvol
     else
@@ -250,7 +250,7 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives, LCompu
 
         ! one step Newton's method
         dpflux(2:Mvol) = dpflux(2:Mvol) - dpfluxout(1:Mvol-1)
-        if( Lfreebound ) then
+        if( Lfreebound.eq.1 ) then
           dtflux(Mvol) = dtflux(Mvol  ) - dpfluxout(Mvol    )
         endif
     endif
@@ -258,7 +258,7 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives, LCompu
     ! Broadcast the field and pflux
     RlBCAST(dpfluxout(1:NGdof), Ndofgl, 0)
     RlBCAST(dpflux(1:Mvol)   , Mvol, 0)
-    if( Lfreebound ) then
+    if( Lfreebound.eq.1 ) then
       RlBCAST(dtflux(Mvol), 1, 0)
     endif
 
@@ -282,7 +282,7 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives, LCompu
         WCALL( dforce, packab, ( packorunpack, vvol, NN, solution(1:NN,2), 2 ) ) ! packing;
 
         ! compute the field with renewed dpflux via single Newton method step
-        if( Lfreebound .and.(vvol.eq.Mvol) ) then
+        if( Lfreebound.eq.1 .and.(vvol.eq.Mvol) ) then
           WCALL( dforce, packab, ( packorunpack, vvol, NN, solution(1:NN,1), 1 ) ) ! packing;
           solution(1:NN, 0) = solution(1:NN, 0) - dpfluxout(vvol-1) * solution(1:NN, 2) & ! derivative w.r.t pflux
                                                 - dpfluxout(vvol  ) * solution(1:NN, 1)   ! derivative w.r.t tflux

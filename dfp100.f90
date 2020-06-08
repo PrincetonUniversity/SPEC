@@ -201,7 +201,7 @@ if( .not.LocalConstraint ) then
             endif
 
             ! Compute poloidal linking current constraint as well in case of free boundary computation
-            if ( Lfreebound ) then
+            if ( Lfreebound.eq.1 ) then
 
                 ! Communicate additional derivatives
                 call WhichCpuID(Mvol, cpu_send_one)
