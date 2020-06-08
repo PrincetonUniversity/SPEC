@@ -108,7 +108,8 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives, LCompu
                         Lconstraint, Lcheck, dRZ, &
                         Lextrap, &
                         mupftol, &
-                        Lfreebound
+                        Lfreebound, &
+                        ext ! For outputing Lcheck = 6 test
   
   use cputiming, only : Tdforce
   
@@ -753,7 +754,7 @@ if( LcomputeDerivatives ) then ! construct Hessian;
 ! Print hessian and finite differences estimate (if single CPU). 
 if( Lcheck.eq.6 ) then
   if(myid.eq.0) then
-        open(10, file='Lcheck6_output.txt', status='unknown')
+        open(10, file=trim(ext)//'.Lcheck6_output.txt', status='unknown')
         write(ounit,'(A)') NEW_LINE('A')
         do ii=1, NGdof
             write(ounit,1345) myid, im(ii), in(ii), hessian(ii,:)
@@ -763,7 +764,7 @@ if( Lcheck.eq.6 ) then
         
         write(ounit,'(A)') NEW_LINE('A')
 
-        open(10, file='Lcheck6_output.FiniteDiff.txt', status='unknown')
+        open(10, file=trim(ext)//'.Lcheck6_output.FiniteDiff.txt', status='unknown')
         if( ncpu.eq.1 ) then
             do ii=1, NGdof
                 write(ounit,1346) myid, im(ii), in(ii), finitediff_hessian(ii,:)
