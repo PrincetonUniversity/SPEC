@@ -252,21 +252,14 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives, LCompu
         if( Lfreebound ) then
           dtflux(Mvol) = dtflux(Mvol  ) - dpfluxout(Mvol    )
         endif
+    endif
 
-        ! bcast the difference in dpflux
-        RlBCAST(dpfluxout, Ndofgl, 0)
-        RlBCAST(dpflux   , Ndofgl, 0)
-        if( Lfreebound ) then
-          RlBCAST(dtflux(Mvol), Ndofgl, 0)
-        endif
-    else
-        ! receive the field and pflux
-        RlBCAST(dpfluxout, Ndofgl, 0)
-        RlBCAST(dpflux   , Ndofgl, 0)
-        if( Lfreebound ) then
-          RlBCAST(dtflux(Mvol), Ndofgl, 0)
-        endif
-    end if
+    ! Broadcast the field and pflux
+    RlBCAST(dpfluxout(1:NGdof), Ndofgl, 0)
+    RlBCAST(dpflux(1:Mvol)   , Mvol, 0)
+    if( Lfreebound ) then
+      RlBCAST(dtflux(Mvol), 1, 0)
+    endif
 
     do vvol = 2, Mvol
   
