@@ -108,7 +108,6 @@ subroutine dfp200( LcomputeDerivatives, vvol)
   REAL                 :: det
   REAL   , allocatable :: rhs(:) ! original Beltrami-matrix inverse; used to compute derivatives of matrix equation;
   REAL   , allocatable :: XX(:), YY(:), dBB(:,:), dII(:), dLL(:), dPP(:), length(:), dRR(:,:), dZZ(:,:), constraint(:)
-  REAL   , allocatable :: work(:)
 
   CHARACTER            :: packorunpack 
 

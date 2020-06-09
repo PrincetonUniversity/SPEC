@@ -723,7 +723,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
                 Liwork = max(1,11*NN+3*nlvl*NN)
 
                 SALLOCATE( work, (1:Lwork), zero )
-      if (allocated(iwork)) deallocate(iwork)
+                if (allocated(iwork)) deallocate(iwork)
                 SALLOCATE( iwork, (1:Liwork), zero )
 
                 select case( jderiv ) 
@@ -782,6 +782,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
                 dmatrix(1:NN,1:NN, 0) = omatrix(1:NN,1:NN) ! original "unperturbed" matrix; 30 Jan 13;
                 
                 DALLOCATE(iwork)
+                DALLOCATE(work)
 
             case default
 
