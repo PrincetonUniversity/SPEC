@@ -196,6 +196,8 @@ module inputlist
   REAL         :: mupftol                    =  1.0e-16
   INTEGER      :: mupfits                    =  8
 
+  INTEGER      :: Lreflect                   =  0
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 ! the following variables constitute the namelist/numericlist/; note that all variables in namelist need to be broadcasted in readin;
@@ -214,6 +216,8 @@ module inputlist
   REAL         :: iotatol     = -1.0
   INTEGER      :: Lextrap     =  0
   INTEGER      :: Mregular    = -1
+  INTEGER      :: Lrzaxis     = 1
+  INTEGER      :: Ntoraxis    = 3
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -442,8 +446,8 @@ module inputlist
  Vns         ,& !latex \item \inputvar{Vns} : \verb!real(-MNtor:MNtor,-MMpol:MMpol)! : Fourier harmonics of vacuum normal field at boundary;
  Bns         ,& !latex \item \inputvar{Bns} : \verb!real(-MNtor:MNtor,-MMpol:MMpol)! : Fourier harmonics of plasma normal field at boundary;
  Vnc         ,& !latex \item \inputvar{Vnc} : \verb!real(-MNtor:MNtor,-MMpol:MMpol)! : Fourier harmonics of vacuum normal field at boundary;
- Bnc            !latex \item \inputvar{Bnc} : \verb!real(-MNtor:MNtor,-MMpol:MMpol)! : Fourier harmonics of plasma normal field at boundary;
-
+ Bnc         ,& !latex \item \inputvar{Bnc} : \verb!real(-MNtor:MNtor,-MMpol:MMpol)! : Fourier harmonics of plasma normal field at boundary;
+ Lreflect       !latex \item \inputvar{Lreflect = 0} : \verb!integer! : =1 reflect the upper and lower bound in slab, =0 do not reflect
 !latex \ei
 
 !latex \end{enumerate}
@@ -556,10 +560,17 @@ module inputlist
  iotatol     ,& !latex \item \inputvar{iotatol = -1.0 : real} : tolerance required for iterative construction of straight-fieldline angle;
                 !latex only relevant if \inputvar{Lsparse.ge.2};
  Lextrap     ,& !latex \item \inputvar{Lextrap = 0 : integer} : geometry of innermost interface is defined by extrapolation;
- Mregular       !latex \item \inputvar{Mregular = -1 : integer} : maximum regularization factor;                !latex \bi
+ Mregular    ,& !latex \item \inputvar{Mregular = -1 : integer} : maximum regularization factor;                !latex \bi
                 !latex \bi
                 !latex \item if \inputvar{Mregular.ge.2}, then \internal{regumm}$_i$ = \inputvar{Mregular} $/ 2 $ where \internal{m}$_i > $ \inputvar{Mregular}
                 !latex \ei
+ Lrzaxis     ,& !latex \item \inputvar{Lrzaxis = 1 : integer} : controls the guess of geometry axis in the innermost volume or initialization of interfaces
+                !latex \bi
+                !latex \item if \inputvar{iprecon = 1}, the centroid is used;
+                !latex \item if \inputvar{iprecon = 2}, the Jacobian $m=1$ harmonic elimination method is used; 
+                !latex \ei
+ Ntoraxis       !latex \item \inputvar{Ntoraxis = 3 : integer} : the number of $n$ harmonics used in the Jacobian $m=1$ harmonic elimination method;
+                !latex only relevant if \inputvar{Lrzaxis.ge.1};
 
 !latex \ei
 
@@ -1791,6 +1802,7 @@ subroutine readin
   RlBCAST( oita       , MNvol  , 0 )
   RlBCAST( mupftol    ,       1, 0 )
   IlBCAST( mupfits    ,       1, 0 ) 
+  IlBCAST( Lreflect   ,       1, 0 ) 
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1813,6 +1825,8 @@ subroutine readin
   RlBCAST( iotatol    , 1, 0 )
   IlBCAST( Lextrap    , 1, 0 )
   IlBCAST( Mregular   , 1, 0 )
+  IlBCAST( Lrzaxis    , 1, 0 )
+  IlBCAST( Ntoraxis   , 1, 0 )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -2257,6 +2271,15 @@ subroutine readin
    iRbs(1,0:Mvol) = zero ! Rbs_{m=0,n=0} is irrelevant;
   endif
 
+  if ( Igeometry.eq.1 .and. Lreflect.eq.1) then ! reflect upper and lower bound in slab, each take half the amplitude
+    iRbc(2:mn,Mvol) = iRbc(2:mn,Mvol) * half
+    iRbc(2:mn,0) = -iRbc(2:mn,Mvol) 
+   if( NOTstellsym ) then
+    iRbs(2:mn,Mvol) = iRbs(2:mn,Mvol) * half
+    iRbs(2:mn,0) = -iRbs(2:mn,Mvol)
+   endif
+  endif
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   Rscale = iRbc(1,Mvol) ! this will be used to normalize the geometrical degrees-of-freedom; 
@@ -2358,6 +2381,7 @@ subroutine wrtend( wflag, iflag, rflag )
   write(iunit,'(" oita        = ",257es23.15)') oita(0:Mvol)
   write(iunit,'(" mupftol     = ",es23.15   )') mupftol
   write(iunit,'(" mupfits     = ",i9        )') mupfits
+  write(iunit,'(" Lreflect    = ",i9        )') Lreflect
 
   if( Lfreebound.eq.1 .or. Zbs(0,1).gt.zero ) then
    do ii = 1, mn ; mm = im(ii) ; nn = in(ii) / Nfp ; Rbc(nn,mm) = iRbc(ii,Nvol) ; Zbs(nn,mm) = iZbs(ii,Nvol) ; Vns(nn,mm) = iVns(ii) ; Bns(nn,mm) = iBns(ii)
@@ -2481,6 +2505,8 @@ subroutine wrtend( wflag, iflag, rflag )
   write(iunit,'(" iotatol     = ",es23.15       )') iotatol
   write(iunit,'(" Lextrap     = ",i9            )') Lextrap
   write(iunit,'(" Mregular    = ",i9            )') Mregular
+  write(iunit,'(" Lrzaxis     = ",i9            )') Lrzaxis
+  write(iunit,'(" Ntoraxis    = ",i9            )') Ntoraxis
   write(iunit,'("/")')
 
   if( Wwrtend ) then ; cput = GETTIME ; write(ounit,'("wrtend : ",f10.2," : myid=",i3," ; writing locallist ;")') cput-cpus, myid

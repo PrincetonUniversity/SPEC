@@ -80,7 +80,7 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
   
   use fileunits, only : ounit
   
-  use inputlist, only : Wrzaxis, Igeometry, Ntor, Lcheck, Wmacros
+  use inputlist, only : Wrzaxis, Igeometry, Ntor, Lcheck, Wmacros, Lreflect, Ntoraxis, Lrzaxis
   
   use cputiming, only : Trzaxis
   
@@ -111,7 +111,7 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
 
   INTEGER                :: jvol, ii, ifail, jj, id, issym, irz, imn
 
-  INTEGER                :: Lrzaxis, Ntoraxis, Lcurvature
+  INTEGER                :: Lcurvature
 
   INTEGER                :: Njac, idgetrf, idgetrs ! internal variables used in Jacobian method
   REAL, allocatable      :: jacrhs(:), djacrhs(:), jacmat(:,:), djacmat(:,:), solution(:), LU(:,:) ! internal matrices used in Jacobian method
@@ -135,8 +135,7 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
 
   jvol = 0 ! this identifies the "surface" in which the poloidal averaged harmonics will be placed; 19 Jul 16; 
 
-  Lrzaxis = 1 ! hard coded for testing only
-  Ntoraxis = min(Ntor,3)
+  Ntoraxis = min(Ntor,Ntoraxis)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -146,6 +145,15 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
    
    inRbc(1:mn,jvol) = zero
    inRbs(1:mn,jvol) = zero
+
+   if ( Igeometry.eq.1 .and. Lreflect.eq.1) then ! reflect upper and lower bound in slab, each take half the amplitude
+    iRbc(2:mn,Mvol) = iRbc(2:mn,Mvol) * half
+    iRbc(2:mn,0) = -iRbc(2:mn,Mvol) 
+   if( NOTstellsym ) then
+    iRbs(2:mn,Mvol) = iRbs(2:mn,Mvol) * half
+    iRbs(2:mn,0) = -iRbs(2:mn,Mvol)
+    endif
+   endif
    
   case(   3 )
    
