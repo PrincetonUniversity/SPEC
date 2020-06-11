@@ -147,11 +147,9 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
    inRbs(1:mn,jvol) = zero
 
    if ( Igeometry.eq.1 .and. Lreflect.eq.1) then ! reflect upper and lower bound in slab, each take half the amplitude
-    iRbc(2:mn,Mvol) = iRbc(2:mn,Mvol) * half
-    iRbc(2:mn,0) = -iRbc(2:mn,Mvol) 
+    inRbc(2:mn,0) = -inRbc(2:mn,Mvol) 
    if( NOTstellsym ) then
-    iRbs(2:mn,Mvol) = iRbs(2:mn,Mvol) * half
-    iRbs(2:mn,0) = -iRbs(2:mn,Mvol)
+    inRbs(2:mn,0) = -inRbs(2:mn,Mvol)
     endif
    endif
    
