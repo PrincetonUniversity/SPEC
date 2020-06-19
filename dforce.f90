@@ -172,7 +172,7 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives, LCompu
   REAL,   allocatable :: oRbc(:,:), oZbs(:,:), oRbs(:,:), oZbc(:,:), iforce(:,:), iposition(:,:), finitediff_hessian(:,:) ! original geometry;
 #endif
 
-  BEGIN(dforce)<
+  BEGIN(dforce)
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -222,6 +222,9 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives, LCompu
 
     DALLOCATE( Fvec )
 
+    !do vvol=1,Mvol
+    !  WCALL(dforce, brcast, (vvol) )
+    !enddo
 ! --------------------------------------------------------------------------------------------------
 ! Global constraint - call the master thread calls hybrd1 on dfp100, others call dfp100_loop.
   else
@@ -303,36 +306,7 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives, LCompu
     DALLOCATE(Fvec)
     DALLOCATE(dpfluxout)
 
-! --------------------------------------------------------------------------------------------------
-!                                    MPI COMMUNICATIONS
 
-    ! And finally broadcast the field information to all threads from the thread which did the computation
-    ! TODO: improve MPI communication
-    do vvol = 1, Mvol
-        call WhichCpuID(vvol, cpu_id)
-
-        ! Broadcast all ImagneticOK
-        !write(ounit,'("dforce : " 10x " : myid="i3"; vvol="i3"; ; ImagneticOK="999L2)') myid, vvol, ImagneticOK(1:Mvol)
-        !write(ounit,'("dforce : " 10x " : cpu_id="i3"; vvol="i3"; ; ImagneticOK="999L2)') cpu_id, vvol, ImagneticOK(vvol)
-        LlBCAST( ImagneticOK(vvol)         , 1, cpu_id)
-      
-        do ideriv=0,2
-          do ii = 1, mn  
-                  RlBCAST( Ate(vvol,ideriv,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
-                  RlBCAST( Aze(vvol,ideriv,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
-          enddo
-        enddo
-
-
-        if( NOTstellsym ) then
-          do ideriv=0,2
-            do ii = 1, mn    
-                  RlBCAST( Ato(vvol,ideriv,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
-                  RlBCAST( Azo(vvol,ideriv,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
-            enddo
-          enddo
-        endif
-    enddo
 
 ! #ifdef DEBUG
 !       select case( ihybrd1 )
@@ -346,6 +320,39 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives, LCompu
 ! #endif
 
 endif !matches if( LocalConstraint ) 
+
+! --------------------------------------------------------------------------------------------------
+!                                    MPI COMMUNICATIONS
+
+! Finally broadcast the field information to all threads from the thread which did the computation
+! TODO: improve MPI communication
+do vvol = 1, Mvol
+    call WhichCpuID(vvol, cpu_id)
+
+    ! Broadcast all ImagneticOK
+    !write(ounit,'("dforce : " 10x " : myid="i3"; vvol="i3"; ; ImagneticOK="999L2)') myid, vvol, ImagneticOK(1:Mvol)
+    !write(ounit,'("dforce : " 10x " : cpu_id="i3"; vvol="i3"; ; ImagneticOK="999L2)') cpu_id, vvol, ImagneticOK(vvol)
+    LlBCAST( ImagneticOK(vvol)         , 1, cpu_id)
+  
+    do ideriv=0,2
+      if( (.not.LcomputeDerivatives) .and. (ideriv.ne.0) ) cycle
+      do ii = 1, mn
+              RlBCAST( Ate(vvol,ideriv,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
+              RlBCAST( Aze(vvol,ideriv,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
+      enddo
+    enddo
+
+
+    if( NOTstellsym ) then
+      do ideriv=0,2
+      if( (.not.LcomputeDerivatives) .and. (ideriv.ne.0) ) cycle
+        do ii = 1, mn
+              RlBCAST( Ato(vvol,ideriv,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
+              RlBCAST( Azo(vvol,ideriv,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
+        enddo
+      enddo
+    endif
+enddo
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 ! Compute local force and derivatives 
