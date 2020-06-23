@@ -212,7 +212,7 @@ if( .not.LocalConstraint ) then
                 Fvec(Mvol    ) = ldItGp(1, 0) - curpol          
                 
                 ! Complete output: LHS
-                IPDtdPf(Mvol-1, Mvol  ) = Bt00(Mvol, 0, 1)
+                IPDtdPf(Mvol-1, Mvol  ) = pi2 * Bt00(Mvol, 0, 1)
                 IPDtdPf(Mvol  , Mvol-1) = ldItGp(1, 2)
                 IPDtdPf(Mvol  , Mvol  ) = ldItGp(1, 1)
             endif
