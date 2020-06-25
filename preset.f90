@@ -36,6 +36,7 @@ subroutine preset
   INTEGER   :: innout, idof, jk, ll, ii, ifail, ideriv, vvol, mi, ni, mj, nj, mk, nk, mimj, ninj, mkmj, nknj, jj, kk, lvol, mm, nn, imn
   INTEGER   :: lquad, igauleg, maxIquad, Mrad, jquad, Lcurvature, iret, work1, work2
   REAL      :: teta, zeta, arg, lss, cszeta(0:1), error
+  LOGICAL   :: LComputeAxis
 
   BEGIN(preset)
   
@@ -1002,7 +1003,9 @@ endif
    case(   2 ) ; vvol = Mvol
    end select
 
-   WCALL( preset, rzaxis, ( Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), vvol ) ) ! set coordinate axis; 19 Jul 16;
+  LComputeAxis = .true.
+
+   WCALL( preset, rzaxis, ( Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), vvol, LComputeAxis ) ) ! set coordinate axis; 19 Jul 16;
 
   endif ! end of if( Igeometry.eq.3 ) then ; 19 Jul 16;
   
