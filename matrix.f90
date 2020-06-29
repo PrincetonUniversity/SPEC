@@ -345,7 +345,8 @@ subroutine matrix( lvol, mn, lrad )
                         TDszcc, TDszcs, TDszsc, TDszss, &
                         DDttcc, DDttcs, DDttsc, DDttss, &
                         DDtzcc, DDtzcs, DDtzsc, DDtzss, &
-                        DDzzcc, DDzzcs, DDzzsc, DDzzss
+                        DDzzcc, DDzzcs, DDzzsc, DDzzss, &
+                        dBdX
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -422,6 +423,8 @@ subroutine matrix( lvol, mn, lrad )
      
     enddo ! end of do jj ;
     
+    if (dBdX%L) cycle
+
     if( Lcoordinatesingularity .and. ii.eq.1 ) then ; kk = 1
     else                                            ; kk = 0
     endif
@@ -527,6 +530,8 @@ subroutine matrix( lvol, mn, lrad )
      enddo ! end of do jj ;
      
     enddo ! end of do ll ;
+
+    if (dBdX%L) cycle
     
     if( Lcoordinatesingularity .and. ii.eq.1 ) then ; kk = 1
     else                                            ; kk = 0

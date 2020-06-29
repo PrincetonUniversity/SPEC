@@ -1163,7 +1163,7 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
                 IPDtdPf = zero
                 Xdof(1:Mvol-1)   = dpflux(2:Mvol) + xoffset
 
-                if( Lfreebound ) then
+                if( Lfreebound.eq.1 ) then
                     ! Mvol-1 surface current and 1 poloidal linking current constraints
                     Ndofgl = Mvol
                 else
@@ -1183,7 +1183,7 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 
                 ! one step Newton's method
                 dpflux(2:Mvol)   = dpflux(2:Mvol) - dpfluxout(1:Mvol-1)
-                if( Lfreebound ) then
+                if( Lfreebound.eq.1 ) then
                     dtflux(Mvol) = dtflux(Mvol  ) - dpfluxout(Mvol    )
                 endif
 
