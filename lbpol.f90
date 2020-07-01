@@ -74,13 +74,13 @@ subroutine lbpol(lvol, Bt00, ideriv, iocons)
 
   lss = two * iocons - one
 
-  if( Lcoordinatesingularity .and. iocons.EQ.0) then
-    goto 5555; ! No need to compute at the singularity
-  endif
+  !if( Lcoordinatesingularity .and. iocons.EQ.0) then
+  !  goto 5555; ! No need to compute at the singularity
+  !endif
 
-  if( lvol.eq.Mvol .and. iocons.eq.1) then
-    goto 5555;
-  endif
+  !if( lvol.eq.Mvol .and. iocons.eq.1) then
+  !  goto 5555;
+  !endif
 
   ! First get the metric component and jacobian
   Lcurvature = 1

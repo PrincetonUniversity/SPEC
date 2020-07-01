@@ -926,6 +926,7 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
                 LREGION(pvol)
 
                 do iocons = 0, 1
+	  				if( ( Lcoordinatesingularity .and. iocons.eq.0 ) .or. ( Lvacuumregion .and. iocons.eq.1 ) ) cycle
                     WCALL(dfp200, lbpol, (pvol, Bt00(1:Mvol, 0:1, -1:2), 2, iocons)) ! Stores derivative in global variable Btemn
                 enddo
 #ifdef DEBUG
@@ -966,6 +967,7 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
                 endif
 
                 do iocons = 0, 1
+	 				if( ( Lcoordinatesingularity .and. iocons.eq.0 ) .or. ( Lvacuumregion .and. iocons.eq.1 ) ) cycle
                     WCALL(dfp200, lbpol, (pvol, Bt00(1:Mvol, 0:1, -1:2), -1, iocons)) ! derivate w.r.t geometry
                 enddo
 
@@ -991,9 +993,8 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
                 dBdmpf(1:Mvol, Mvol  ) = zero
 
                 ! Get derivatives of B_theta w.r.t the toroidal flux in vacuum region
-                do iocons = 0, 1
-                    WCALL(dfp200, lbpol, (Mvol, Bt00(1:Mvol, 0:1, -1:2), 1, iocons))
-                enddo  
+                iocons = 0
+                WCALL(dfp200, lbpol, (Mvol, Bt00(1:Mvol, 0:1, -1:2), 1, iocons))
 
                 ! compute d(Itor,Gpol)/dpsip and d(Itor,Gpol)/dpsit 
                 ! TODO: this should already be evaluated in mp00ac...

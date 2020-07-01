@@ -141,6 +141,8 @@ do vvol = 1, Mvol
     ! Compute relevant local quantities for the evaluation of global constraints
     if( Lconstraint.EQ.3 ) then
         do iocons=0,1
+	 		if( ( Lcoordinatesingularity .and. iocons.eq.0 ) .or. ( Lvacuumregion .and. iocons.eq.1 ) ) cycle
+			
             ideriv = 0
             WCALL( dfp100, lbpol, (vvol, Bt00(1:Mvol, 0:1, -1:2), ideriv, iocons) ) !Compute field at interface for global constraint
 
