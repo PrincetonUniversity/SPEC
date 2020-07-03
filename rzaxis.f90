@@ -181,8 +181,6 @@ subroutine rzaxis( Mvol, mn, iRbc, iZbs, iRbs, iZbc, ivol, LComputeAxis )
     ifail = 0
     call tfft( Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz), &
                 mn, im(1:mn), in(1:mn), iRbc(1:mn,jvol), iRbs(1:mn,jvol), iZbc(1:mn,jvol), iZbs(1:mn,jvol), ifail )
-   else
-    FATAL( rzaxis, Lcheck.ne.6, Incompatible Lcheck )
    endif
 #ifdef DEBUG
    if( Wrzaxis ) then
