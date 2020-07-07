@@ -199,7 +199,7 @@ if( .not.LocalConstraint ) then
 
             ! Compute the constraint and store it in Fvec.
             if( myid.EQ.0 ) then
-                Fvec(1:Mvol-1) = IPDt - Isurf(1:Mvol-1)
+                Fvec(1:Mvol-1) = IPDt(1:Mvol-1) - Isurf(1:Mvol-1)
             endif
 
             ! Compute poloidal linking current constraint as well in case of free boundary computation
