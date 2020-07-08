@@ -678,7 +678,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
 
                         call dgesvx( 'N', 'N', NN, MM, dmatrix(1:NN,1:NN,0), NN, FAA(1:NN,1:NN), NN, ipiv(1:NN),  &
                         equed, Rdgesvx(1:NN), Cdgesvx(1:NN), drhs(1:NN,0:0), NN, dlambda(1:NN,0:0),    & 
-                        NN, rcond, ferr, berr, work4(1:4*NN), iwork4(1:NN), idgesvx )        
+                        NN, rcond, [ferr], [berr], work4(1:4*NN), iwork4(1:NN), idgesvx )        
 
                         ;                 ldiota(innout,    0) = dlambda(1,  0) ! return intent out; 21 Apr 13;
 
