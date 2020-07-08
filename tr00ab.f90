@@ -114,7 +114,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
   INTEGER              :: IA, if04aaf, idgesvx, ipiv(1:NN), iwork4(1:NN)
   REAL                 :: dmatrix(1:NN,1:NN,-1:2), drhs(1:NN,-1:2), dlambda(1:NN,-1:2), FAA(1:NN,1:NN)
   REAL                 :: omatrix(1:NN,1:NN)
-  REAL                 :: Rdgesvx(1:NN), Cdgesvx(1:NN), work4(1:4*NN), rcond, ferr, berr, ferr2(1:2), berr2(1:2)
+  REAL                 :: Rdgesvx(1:NN), Cdgesvx(1:NN), work4(1:4*NN), rcond, ferr(1), berr(1), ferr2(1:2), berr2(1:2)
   CHARACTER            :: equed 
 
 ! required for real-space routines;
@@ -678,7 +678,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
 
                         call dgesvx( 'N', 'N', NN, MM, dmatrix(1:NN,1:NN,0), NN, FAA(1:NN,1:NN), NN, ipiv(1:NN),  &
                         equed, Rdgesvx(1:NN), Cdgesvx(1:NN), drhs(1:NN,0:0), NN, dlambda(1:NN,0:0),    & 
-                        NN, rcond, [ferr], [berr], work4(1:4*NN), iwork4(1:NN), idgesvx )        
+                        NN, rcond, ferr, berr, work4(1:4*NN), iwork4(1:NN), idgesvx )        
 
                         ;                 ldiota(innout,    0) = dlambda(1,  0) ! return intent out; 21 Apr 13;
 
