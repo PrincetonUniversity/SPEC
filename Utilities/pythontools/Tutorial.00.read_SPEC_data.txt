@@ -1,0 +1,29 @@
+This is a general tutorial on how to read SPEC data using the Python reading routine "read_spec.py".
+
+1. run SPEC on the corresponding input file
+xspec G3V02L1Fi.001.sp
+
+2a. make the pythontools package available (the correct way)
+Add "/path/to/pythontools" to the environment variable PYTHONPATH
+
+2b. make the pythontools package available (the quick-and-dirty way)
+In your Python environment, do:
+> import sys
+> sys.path.append("/path/to/pythontools")
+
+3. import the SPEC routines needed for reading SPEC files
+> from read_spec import SPEC
+
+4. load the output file "G3V02L1Fi.001.h5" which was generated in step 1
+> s = SPEC("/path/to/G3V02L1Fi.001.h5")
+
+5. Now you can e.g. examine the contents of the SPEC output file:
+> s.inventory()
+
+6. You can also plot the convergence of the run:
+> import matplotlib.pyplot as plt
+> plt.semilogy(s.iterations['ForceErr'])
+> plt.title("convergence of G3V02L1Fi.001")
+> plt.xlabel("iteration")
+> plt.ylabel("ForceErr")
+> plt.tight_layout()

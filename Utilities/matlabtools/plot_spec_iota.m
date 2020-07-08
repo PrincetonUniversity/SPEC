@@ -7,8 +7,8 @@ function out = plot_spec_iota(idata,pdata,fdata,iorq,xaxis,newfig)
 %   -pdata     : must be produced by calling read_spec_poincare(filename)
 %   -fdata     : must be produced by calling read_spec_field(filename)
 %   -iorq      : plot iota('i') or safety factor ('q')
-%   -xaxis='s' : plots s-coordinnate as the x-axis
-%   -xaxis='R' : plots R-coordinnate as the x-axis
+%   -xaxis='s' : plots s-coordinate as the x-axis
+%   -xaxis='R' : plots R-coordinate as the x-axis
 %   -xaxis='f' : plots toroidal flux as the x-axis
 %   -xaxis='r' : plots sqrt(toroidal flux) as the x-axis
 %   -newfig    : opens(=1) or not(=0) a new figure. (=2 to overwrite 
@@ -24,7 +24,7 @@ if(newfig==1)
     hold on
 elseif newfig==0
     hold on;
-elseif newfig==2
+elseif newfig==2			% A.Baillod (06.2019)
     hold off;
 end
 
@@ -75,15 +75,15 @@ switch xaxis
   kstart   = 1;
   psitor   = zeros(1,length(sval));
 
-  switch idata.Igeometry
+  switch idata.Igeometry			% A.Baillod (06.2019)
       
       case 1
           for lvol=1:nvol
               for k=kstart:kstart-1+nptrj(lvol)
                   psitor(k) = cumflux + get_spec_torflux_slab(fdata,lvol,0,-1,sval(k),ns,nt);
               end
-              cumflux = cumflux + psitor(nptrj(lvol));
-              kstart  = kstart+nptrj(lvol);
+              cumflux = psitor(k);
+              kstart  = kstart+nptrj(lvol);			% A.Baillod (06.2019)
           end  
   
       case 2
@@ -91,8 +91,8 @@ switch xaxis
               for k=kstart:kstart-1+nptrj(lvol)
                   psitor(k) = cumflux + get_spec_torflux_cyl(fdata,lvol,0,-1,sval(k),ns,nt);
               end
-              cumflux = cumflux + psitor(nptrj(lvol));
-              kstart  = kstart+nptrj(lvol);
+              cumflux = psitor(k);
+              kstart  = kstart+nptrj(lvol);			% A.Baillod (06.2019)
           end
 
       case 3
@@ -136,28 +136,36 @@ case 'r'
   cumflux  = 0;
   kstart   = 1;
   psitor   = zeros(1,length(sval));
+ 
+  switch idata.Igeometry			% A.Baillod (06.2019)
+      
+      case 1
+          for lvol=1:nvol
+              for k=kstart:kstart-1+nptrj(lvol)
+                  psitor(k) = cumflux + get_spec_torflux_slab(fdata,lvol,0,-1,sval(k),ns,nt);
+              end
+              cumflux = psitor(k);
+              kstart  = kstart+nptrj(lvol);			% A.Baillod (06.2019)
+          end  
   
-  if(idata.Igeometry==1)
+      case 2
+          for lvol=1:nvol
+              for k=kstart:kstart-1+nptrj(lvol)
+                  psitor(k) = cumflux + get_spec_torflux_cyl(fdata,lvol,0,-1,sval(k),ns,nt);
+              end
+              cumflux = psitor(k);
+              kstart  = kstart+nptrj(lvol);			% A.Baillod (06.2019)
+          end
 
-   for lvol=1:nvol
-    for k=kstart:kstart-1+nptrj(lvol)
-    psitor(k) = cumflux + get_spec_torflux_slab(fdata,lvol,0,-1,sval(k),ns,nt);
-    end
-    cumflux = cumflux + psitor(nptrj(lvol));
-    kstart  = kstart+nptrj(lvol);
-   end
-   
-  else
-
-   for lvol=1:nvol
-    for k=kstart:kstart-1+nptrj(lvol)
-    psitor(k) = cumflux + get_spec_torflux(fdata,lvol,0,-1,sval(k),ns,nt);
-    end
-    cumflux = cumflux + psitor(nptrj(lvol));
-    kstart  = kstart+nptrj(lvol);
-   end
-  
-  end
+      case 3
+          for lvol=1:nvol
+              for k=kstart:kstart-1+nptrj(lvol)
+                  psitor(k) = cumflux + get_spec_torflux(fdata,lvol,0,-1,sval(k),ns,nt);
+              end
+              cumflux = psitor(k);
+              kstart  = kstart+nptrj(lvol);
+          end
+  end  
     
   plot(sqrt(psitor/psitor(end)),F(1:nsucctrj),'*','MarkerSize',8,'LineWidth',2)
   ylabel(Flabel)

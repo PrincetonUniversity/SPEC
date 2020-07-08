@@ -20,7 +20,7 @@ function vcov = contra2cov_cyl(filename, vol, s, vcontrav, ns, theta, phi, norm)
 %   vcov:       covariant vector as a function v
 
 
-[sarr, Rarr] = getR_derivatives(filename, vol, ns, theta, phi);
+[sarr, Rarr] = getR_derivatives(filename, vol, ns, theta, phi, 'R');
 
 
 % transform in covariant basis

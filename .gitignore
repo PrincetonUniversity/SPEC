@@ -1,15 +1,38 @@
 
 *.o
 *.mod
-*.F90
+*_p.f90
+*_m.F90
 *~
 xspec
 dspec
 
-#pdfs related
+# pdfs related
 /docs/
 *.pdf
 *.dvi
 *.toc
 *.out
 .*.date
+
+# Eclipse IDE
+.settings
+.project
+.cproject
+.pydevproject
+
+# output files from example runs
+InputFiles/**/*.h5
+InputFiles/**/*.sp.end
+InputFiles/**/*.sp.DF
+**/__pycache__
+
+# vim temprary files
+*.swo
+*.swp
+
+# python temp file
+*.pyc
+
+#jupyter
+.ipynb_checkpoint
