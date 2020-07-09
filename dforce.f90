@@ -764,7 +764,7 @@ if( Lcheck.eq.6 ) then
         open(10, file=trim(ext)//'.Lcheck6_output.txt', status='unknown')
         write(ounit,'(A)') NEW_LINE('A')
         do ii=1, NGdof
-            write(ounit,1345) myid, im(ii), in(ii), hessian(ii,:)
+!            write(ounit,1345) myid, im(ii), in(ii), hessian(ii,:)
             write(10   ,1347) hessian(ii,:)
         enddo
         close(10)
@@ -774,15 +774,15 @@ if( Lcheck.eq.6 ) then
         open(10, file=trim(ext)//'.Lcheck6_output.FiniteDiff.txt', status='unknown')
         if( ncpu.eq.1 ) then
             do ii=1, NGdof
-                write(ounit,1346) myid, im(ii), in(ii), finitediff_hessian(ii,:)
+!                write(ounit,1346) myid, im(ii), in(ii), finitediff_hessian(ii,:)
                 write(10   ,1347) finitediff_hessian(ii,:)
             enddo        
             write(ounit,'(A)') NEW_LINE('A')
         endif
         close(10)
 
-1345       format("dforce: myid=",i3," ; (",i4,",",i4," ; Hessian            = ",64f16.10 "   ;")
-1346       format("dforce: myid=",i3," ; (",i4,",",i4," ; Finite differences = ",64f16.10 "   ;")
+1345       format("dforce: myid=",i3," ; (",i4,",",i4," ; Hessian            = ",512f16.10 "   ;")
+1346       format("dforce: myid=",i3," ; (",i4,",",i4," ; Finite differences = ",512f16.10 "   ;")
 1347       format(512F22.16, " ")
 
         DALLOCATE(finitediff_hessian)
