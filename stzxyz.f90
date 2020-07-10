@@ -76,15 +76,11 @@ subroutine stzxyz( lvol , stz , RpZ )
    if( Lcoordinatesingularity ) then
     
     sbar = ( lss + one ) * half
-    
     if( mi.eq.0 ) then
      if( Igeometry.eq.2 ) then ; fj = sbar**half
      else                      ; fj = sbar
      endif
-    else              
-     if( Igeometry.eq.2 ) then ; fj = sbar**(mi+1)
-     else                      ; fj = sbar**halfmm(ii)
-     endif
+    else                       ; fj = sbar**halfmm(ii)
     endif
     
     Remn = iRbc(ii,0) + ( iRbc(ii,1) - iRbc(ii,0) ) * fj
