@@ -913,7 +913,15 @@ subroutine hdfint
 !latex \type{IPDt}                   & real    & \pb{Surface current at output}
   HWRITERV( grpOutput, Mvol-1, IPDt, IPDt(1:Mvol-1))
 
-  ! the following quantites can be different from input value
+! the following quantites can be different from their respective input value:
+
+!latex \type{iota}
+  HWRITERV_LO( grpOutput, (1+Mvol), iota, iota(0:Mvol),                                     __FILE__, __LINE__)
+  H5DESCR_CDSET( /output/iota, rotational transform profile on inside of ideal interfaces,  __FILE__, __LINE__)
+!latex \type{oita}
+  HWRITERV_LO( grpOutput, (1+Mvol), oita, oita(0:Mvol),                                     __FILE__, __LINE__)
+  H5DESCR_CDSET( /output/oita, rotational transform profile on outside of ideal interfaces, __FILE__, __LINE__)
+  
   HWRITERV( grpOutput,   Mvol, adiabatic         , adiabatic(1:Nvol)   )
   HWRITERV( grpOutput,   Nvol, helicity          ,  helicity(1:Nvol)   )
   HWRITERV( grpOutput, 1+Nvol, mu                ,        mu(1:Mvol)   )
