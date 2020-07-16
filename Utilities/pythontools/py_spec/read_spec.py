@@ -43,7 +43,10 @@ class SPEC:
             for key in _content:
                 if isinstance(_content[key], h5py.Group):
                     # recurse into group
-                    setattr(self, key, SPEC(content=_content[key]))
+                    if key in keyword.kwlist:  # avoid assign python keywords
+                        setattr(self, key + '1', SPEC(content=_content[key]))
+                    else:
+                        setattr(self, key, SPEC(content=_content[key]))
                 elif isinstance(_content[key], h5py.Dataset):  # read dataset
                     if key in keyword.kwlist:  # avoid assign python keywords
                         setattr(self, key + '1', _content[key][()])

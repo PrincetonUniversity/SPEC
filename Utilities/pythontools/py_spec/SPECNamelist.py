@@ -149,10 +149,11 @@ class SPECNamelist(Namelist):
         run_result = subprocess.run(spec_command + ' ' + filename, shell=True)
 
         if run_result.returncode == 0: # the run is successful
-            print('SPEC runs successfully')
+            print('SPEC runs successfully.')
             return py_spec.SPEC(filename + '.h5')
         else:
-            print('SPEC runs unsuccessfully')
+            print('SPEC runs unsuccessfully, check terminal output.')
+            return None
 
     def update_resolution(self, new_Mpol, new_Ntor):
         '''Change the Fourier resolution of the SPEC namelist
