@@ -29,8 +29,13 @@
 # If you already have HDF5 1.12, you need to define H5_VERS_MINOR=12,
 # since an API change breaks our calls to h5l_get_info_f.
 # Do it here statically or use https://github.com/jonathanschilling/get_hdf5_version .
- H5_VERS_MINOR=$(shell get_hdf5_version --minor)
- 
+ H5_VERS_MINOR:=$(shell get_hdf5_version --minor)
+
+# If above command fails, cheat by simulating that HDF5 1.8 is being used (which should be the oldest release
+# that compiles with SPEC anyway).
+ H5_VERS_MINOR+=8
+ H5_VERS_MINOR:=$(word 1, $(H5_VERS_MINOR))
+
  CC=intel
  # if want to use gfortran; make CC=gfortran xspec; otherwise using Intel
  FC=mpif90 # at PPPL, mpifort will cause parallel HDF5 hang
