@@ -35,7 +35,24 @@ module sphdf5
   logical                        :: grp_exists, var_exists                     ! flags used to signal if a group or variable already exists
   logical                        :: dummy_f_corder_valid                       ! dummy argument for outputs of h5lget_info_f
   integer                        :: dummy_cset, dummy_corder, dummy_link_type  ! dummy argument for outputs of h5lget_info_f
-  integer(haddr_t)               :: dummy_address                              ! dummy argument for outputs of h5lget_info_f
+
+! make sure that the H5_VERS_MINOR preprocessor variable is available
+#ifndef H5_VERS_MINOR
+#error H5_VERS_MINOR not defined
+#endif
+
+! The HDF5 API for h5lget_info_f has changed slightly for version 1.12,
+! so use the correct type
+#ifdef H5_VERS_MINOR
+#if H5_VERS_MINOR<11
+  integer(haddr_t)               :: dummy_addr_token                           ! dummy argument for outputs of h5lget_info_f for HDF5 1.10
+#else
+  type(h5o_token_t_f)            :: dummy_addr_token                           ! dummy argument for outputs of h5lget_info_f for HDF5 1.12
+#endif
+#else
+! fallback if H5_VERS_MINOR is not defined
+  integer(haddr_t)               :: dummy_addr_token                           ! dummy argument for outputs of h5lget_info_f for HDF5 1.10
+#endif
   integer(size_t)                :: dummy_val_size                             ! dummy argument for outputs of h5lget_info_f
 
 

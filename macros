@@ -280,7 +280,7 @@ m4_define(HDEFGRP,{! macro expansion of hdefgrp;
 
   ! check if group exists
   call h5lget_info_f($1, "$2", dummy_cset, dummy_corder, dummy_f_corder_valid, dummy_link_type, &
-  &                            dummy_address, dummy_val_size, hdfier)
+  &                            dummy_addr_token, dummy_val_size, hdfier)
   if (hdfier.lt.0) then
    grp_exists = .false.
    if (hdfDebug .and. myid.eq.0) then ; write(*,*) "group $2 does not exist yet, creating it"
