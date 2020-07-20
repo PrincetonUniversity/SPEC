@@ -14,7 +14,7 @@ import numpy as np
 class SPECNamelist(Namelist):
     '''The SPEC namelist class
     To get a content within the namelist, use:
-        somevariable = spec_nml['whichlist']['whichitem'], e.g. spec_nml['physicslist']['Ntor'] = 4 sets Ntor in physicslist list to 4
+        somevariable = spec_nml['whichlist']['whichitem'], e.g. spec_nml['physicslist']['Lconstraint'] = 1 sets Lconstraint in physicslist list to 4
 
     To change (or add) an item on the namelist, use:
         spec_nml['whichlist']['whichitem'] = somevalue
@@ -102,7 +102,7 @@ class SPECNamelist(Namelist):
         if not self._Ntor == self['physicslist']['ntor']:
             raise RuntimeError('Inconsistent Ntor. If one wishes to change Mpol or Ntor, please call member function update_resolution')
         if not self._Nvol == self['physicslist']['nvol']:
-            raise RuntimeError('Inconsistent Nvol. If one wishes to change Nvol, please call member function update_Nvol')
+            raise RuntimeError('Inconsistent Nvol. If one wishes to change Nvol, please call member function insert_volume, remove_volume')
 
         if os.path.exists(filename):
             if not force:
@@ -123,6 +123,12 @@ class SPECNamelist(Namelist):
 
         # conclude the first line
         file_object.write('\n')
+
+        # convert all np.ndarray to list
+        for key1 in self:
+            for key2 in self[key1]:
+                if isinstance(self[key1][key2], np.ndarray):
+                    self[key1][key2] = self[key1][key2].tolist()
 
         # write the main content of the namelist
         super().write(file_object)
@@ -146,6 +152,9 @@ class SPECNamelist(Namelist):
         import py_spec
 
         self.write(filename, force=force)
+
+        print('SPEC is running...')
+
         run_result = subprocess.run(spec_command + ' ' + filename, shell=True)
 
         if run_result.returncode == 0: # the run is successful
@@ -154,6 +163,91 @@ class SPECNamelist(Namelist):
         else:
             print('SPEC runs unsuccessfully, check terminal output.')
             return None
+    
+    def insert_volume(self, ivol=0, tflux=None):
+        '''Insert a volume
+        parameters:
+            ivol - insert volume inside the ivol-th volume (Python index starts from 0)
+                    if ivol == Nvol, insert a volume outside the plasma boundary
+            tflux - the tflux of the volume inserted, default is the middle point of the volume
+        '''
+        assert ivol>=0 and ivol<=self._Nvol
+        Nvol = self._Nvol
+
+        # set default tflux
+        if tflux is None:
+            if ivol == 0:
+                tflux = self['physicslist']['tflux'][0] / 2.0
+            elif ivol == Nvol and self['physicslist']['Lfreebound'] == 0:
+                tflux = self['physicslist']['tflux'][ivol-1] * 1.1
+            else:
+                tflux = (self['physicslist']['tflux'][ivol-1] + self['physicslist']['tflux'][ivol]) / 2.0
+
+        # we interpolate the initial guess first
+        self._interpolate_guess(ivol, tflux)
+
+        zero_index_keys = ['pflux', 'mu', 'helicity', 'pressure', 'adiabatic', 'Lrad', 'nPtrj', 'Ivolume', 'Isurf']
+        for key in zero_index_keys:
+            if key.lower() in self['physicslist'].keys():
+                # make it a list if there is only a single item, and convert it to float
+                if isinstance(self['physicslist'][key], int) or isinstance(self['physicslist'][key], float):
+                    self['physicslist'][key] = [float(self['physicslist'][key])]
+                self['physicslist'][key].insert(ivol, self['physicslist'][key][min(ivol, Nvol-1)])
+            
+            if key.lower() in self['diagnosticslist'].keys():
+                self['diagnosticslist'][key].insert(ivol, self['diagnosticslist'][key][min(ivol, Nvol-1)])
+
+        one_index_keys = ['iota', 'oita', 'qr', 'pr', 'ql', 'pl', 'rq', 'rp', 'lq', 'lp']
+        for key in one_index_keys:
+            if key.lower() in self['physicslist'].keys():
+                self['physicslist'][key].insert(ivol+1, self['physicslist'][key][min(ivol+1, Nvol-1)])
+        
+        self['physicslist']['tflux'].insert(ivol, tflux)
+
+        # interpolate to get quantities in the new volume
+        if ivol == Nvol:
+            # add a new volume outside the plasma boundary, we can extrapolate so don't do anything
+            pass
+        else:
+            interpolate_list = ['pflux', 'mu', 'helicity', 'Ivolume', 'Isurf']
+
+        # update Nvol
+        self._Nvol = self._Nvol + 1
+        self['physicslist']['nvol'] = self['physicslist']['nvol'] + 1
+
+    def remove_volume(self, ivol=0):
+        '''Remove a volume
+        parameters:
+            ivol - Remove the ivol-th interface (Python index starts from 0)
+        '''
+        assert ivol>=0 and ivol<self._Nvol
+
+        if self._Nvol == 1:
+            raise RuntimeError('At least one volume should remain')
+        if ivol==self._Nvol-1 and self['physicslist']['Lfreebound'] == 0:
+            raise RuntimeError('You can remove the last interface (plasma boundary).')
+
+        zero_index_keys = ['tflux', 'pflux', 'mu', 'helicity', 'pressure', 'adiabatic', 'Lrad', 'nPtrj', 'Ivolume', 'Isurf']
+        for key in zero_index_keys:
+            if key.lower() in self['physicslist'].keys():
+                self['physicslist'][key].remove(self['physicslist'][key][ivol])
+            
+            if key.lower() in self['diagnosticslist'].keys():
+                self['diagnosticslist'][key].remove(self['diagnosticslist'][key][ivol])
+
+        one_index_keys = ['iota', 'oita', 'qr', 'pr', 'ql', 'pl', 'rq', 'rp', 'lq', 'lp']
+        for key in one_index_keys:
+            if key.lower() in self['physicslist'].keys():
+                self['physicslist'][key].remove(self['physicslist'][key][ivol+1])
+            
+        guess_index_keys = ['Rbc', 'Zbs', 'Rbs', 'Zbc']
+        for harmonics, data in self.interface_guess.items():
+            for key in guess_index_keys:
+                data[key] = np.delete(data[key], ivol)
+
+        # update Nvol
+        self._Nvol = self._Nvol - 1
+        self['physicslist']['nvol'] = self['physicslist']['nvol'] - 1
 
     def update_resolution(self, new_Mpol, new_Ntor):
         '''Change the Fourier resolution of the SPEC namelist
@@ -407,16 +501,31 @@ class SPECNamelist(Namelist):
         self._Nvol = self['physicslist']['nvol']
 
         # replace some namelist objects by those from the output
+        # 1. replace guess of the geometry axis
         self['physicslist']['Rac'] = spec_hdf5.output.Rbc[0,:self._Mpol+1].tolist()
         self['physicslist']['Zas'] = spec_hdf5.output.Zbs[0,:self._Mpol+1].tolist()
         self['physicslist']['Ras'] = spec_hdf5.output.Rbs[0,:self._Mpol+1].tolist()
         self['physicslist']['Zac'] = spec_hdf5.output.Zbc[0,:self._Mpol+1].tolist()
-        self['physicslist']['mu'] = spec_hdf5.output.mu.tolist()
-        self['physicslist']['pflux'] = spec_hdf5.output.pflux.tolist()
-        self['physicslist']['helicity'] = spec_hdf5.output.helicity.tolist()
-        self['physicslist']['adiabatic'] = spec_hdf5.output.adiabatic.tolist()
 
-        # generate the guess of the interface
+        # 2. replace the boundary
+        Nvol = spec_hdf5.input.physics.Nvol
+        Ntor = spec_hdf5.input.physics.Ntor
+        Nfp = spec_hdf5.input.physics.Nfp
+        for ii in range(spec_hdf5.output.mn):
+            mm = spec_hdf5.output.im[ii]
+            nn = int((spec_hdf5.output.in1[ii])/Nfp)+self._Ntor
+            self['physicslist']['Rbc'][mm][nn] = spec_hdf5.output.Rbc[Nvol,ii]
+            self['physicslist']['Zbs'][mm][nn] = spec_hdf5.output.Zbs[Nvol,ii]
+            self['physicslist']['Rbs'][mm][nn] = spec_hdf5.output.Rbs[Nvol,ii]
+            self['physicslist']['Zbc'][mm][nn] = spec_hdf5.output.Zbc[Nvol,ii]
+        
+        # 3. replace some physics quantities
+        output_list = ['mu', 'pflux', 'helicity', 'adabatic', 'iota', 'oita']
+        for key in output_list:
+            if key in dir(spec_hdf5.output):
+                self['physicslist'][key] = getattr(spec_hdf5.output, key).tolist()
+
+        # 4. generate the guess of the interface
         self.interface_guess = dict()
         for ii in range(spec_hdf5.output.mn):
             m = spec_hdf5.output.im[ii]
@@ -426,3 +535,153 @@ class SPECNamelist(Namelist):
             self.interface_guess[(m,n)]['Zbs'] = spec_hdf5.output.Zbs[1:,ii]
             self.interface_guess[(m,n)]['Rbs'] = spec_hdf5.output.Rbs[1:,ii]
             self.interface_guess[(m,n)]['Zbc'] = spec_hdf5.output.Zbc[1:,ii]
+
+    def _interpolate_guess(self, ivol, tflux):
+        '''Interpolated interface harmonics guess
+        parameters:
+            ivol -- where is the new volume
+            tflux -- the new tflux
+        '''
+
+        # The way we interpolate
+        Lcoordinatesingularity = False
+
+        if self['physicslist']['Igeometry'] >= 2:
+            Lslab = False
+            if ivol == 0 or ivol == self._Nvol:
+                Lcoordinatesingularity = True
+        else:
+            Lslab = True
+
+        if ivol == self._Nvol:
+            if self['physicslist']['Lfreebound'] == 0:
+                Lextrapolate = True
+            else:
+                Lextrapolate = False
+        else:
+            Lextrapolate = False
+
+        # if the inserted volume is outside the last volume, we need to extrapolate
+        if Lextrapolate:
+            raise RuntimeError['Extrapolating outside the plasma boundary is not supported']
+        else:
+            if Lcoordinatesingularity:
+            
+                r_left = 0.0
+                r_right = np.sqrt(self['physicslist']['tflux'][0])
+                r_int = np.sqrt(tflux)
+
+                self._interpolate_guess_singular_each('Rbc',ivol,r_left,r_right,r_int)
+                self._interpolate_guess_singular_each('Zbs',ivol,r_left,r_right,r_int)
+                self._interpolate_guess_singular_each('Rbs',ivol,r_left,r_right,r_int)
+                self._interpolate_guess_singular_each('Zbc',ivol,r_left,r_right,r_int)
+            else:
+                if ivol == 0:
+                    tflux_left = 0.0
+                else:
+                    tflux_left = self['physicslist']['tflux'][ivol-1]
+                
+                tflux_right = self['physicslist']['tflux'][ivol]
+
+                if Lslab: # for a slab, radius is the same as tflux
+                    r_left = tflux_left
+                    r_right = tflux_right
+                    r_int = tflux
+                else: # for cylinder or toroidal, radius is the same as sqrt(tflux)
+                    r_left = np.sqrt(tflux_left)
+                    r_right = np.sqrt(tflux_right)
+                    r_int = np.sqrt(tflux)
+
+                # interpolate
+                self._interpolate_guess_normal_each('Rbc',ivol,r_left,r_right,r_int)
+                self._interpolate_guess_normal_each('Zbs',ivol,r_left,r_right,r_int)
+                self._interpolate_guess_normal_each('Rbs',ivol,r_left,r_right,r_int)
+                self._interpolate_guess_normal_each('Zbc',ivol,r_left,r_right,r_int)
+
+    def _interpolate_guess_normal_each(self, key, ivol, r_left, r_right, r_int):
+        '''Interpolate the interface harmonic guess, normal way
+        parameters:
+            key -- which item? 'Rbc', etc
+            ivol -- which volume?
+            r_left, r_right -- the left and right "radius"
+            r_int -- the interpolate "radius"
+        '''
+        for mnkey, item in self.interface_guess.items():
+            value_int = self._interpolate_normal(item[key], ivol, r_left, r_right, r_int)
+            item[key] = np.insert(item[key], ivol, value_int)
+
+    def _interpolate_guess_singular_each(self, key, ivol, r_left, r_right, r_int):
+        '''Interpolate the interface harmonic guess, normal way
+        parameters:
+            key -- which item? 'Rbc', etc
+            ivol -- which volume?
+            r_left -- dummy, not used
+            r_right -- the right "radius"
+            r_int -- the interpolate "radius"
+        '''
+        # replacing 'b' by 'a' we will get the keys for Rac and so on
+        key_axis = key.replace('b', 'a')
+
+        for mnkey, item in self.interface_guess.items():
+            m = mnkey[0]
+            n = mnkey[1]
+            if m == 0:
+                value_axis = self['physicslist'][key_axis][n]
+            else:
+                value_axis = 0.0
+            value_int = self._interpolate_singular(item[key], ivol, m, r_right, r_int, value_axis)
+            item[key] = np.insert(item[key], ivol, value_int)
+
+    def _extrapolate_guess_singular_each(self, key, ivol, r_left, r_right, r_int):
+        '''Interpolate the interface harmonic guess, normal way
+        parameters:
+            key -- which item? 'Rbc', etc
+            ivol -- which volume?
+            r_left -- dummy, not used
+            r_right -- the right "radius"
+            r_int -- the interpolate "radius"
+        '''
+        # replacing 'b' by 'a' we will get the keys for Rac and so on
+        key_axis = key.replace('b', 'a')
+
+        for mnkey, item in self.interface_guess.items():
+            m = mnkey[0]
+            n = mnkey[1]
+            if m == 0:
+                value_axis = self['physicslist'][key_axis][n]
+            else:
+                value_axis = 0.0
+            value_int = self._interpolate_singular(item[key], ivol-1, m, r_right, r_int, value_axis)
+            item[key] = np.insert(item[key], ivol, value_int)
+    
+    @staticmethod
+    def _interpolate_normal(data, ivol, r_left, r_right, r_int):
+        '''Linear interpolation'''
+        if ivol == 0:
+            value_left = 0.0
+        else:
+            value_left = data[ivol-1]
+        value_right = data[ivol]
+        # linear interpolate
+        value_int = (value_right - value_left) / (r_right - r_left) * (r_int - r_left) + value_left
+
+        return value_int
+
+    @staticmethod
+    def _interpolate_singular(data, ivol, m, r_right, r_int, value_left):
+        '''Singular interpolation'''
+        value_right = data[ivol]
+
+        # interpolate
+        s = float(r_int)/float(r_right)
+        if m == 0: # for m==0, we need to interpolate between axis value and boundary value
+            value_int = value_right * s**2 + value_left * (1.0 - s**2)
+        else: # otherwise, we don't need the axis value
+            value_int = value_right * s**m
+
+        return value_int
+
+
+
+
+
