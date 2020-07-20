@@ -128,6 +128,13 @@ class SPEC:
     def __next__(self):
         return next(self.__dict__)
 
+     # needed for using SPEC with 'with' statement
+    def __enter__(self):
+        return self
+
+    def __exit__(self, t, v, tb):
+        return
+
     # print a list of items contained in this object
     def inventory(self, prefix=""):
         _prefix = ""
