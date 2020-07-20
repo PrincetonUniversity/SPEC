@@ -26,16 +26,6 @@
  
  MACROS=macros
 
-# If you already have HDF5 1.12, you need to define H5_VERS_MINOR=12,
-# since an API change breaks our calls to h5l_get_info_f.
-# Do it here statically or use https://github.com/jonathanschilling/get_hdf5_version .
- H5_VERS_MINOR:=$(shell get_hdf5_version --minor)
-
-# If above command fails, cheat by simulating that HDF5 1.8 is being used (which should be the oldest release
-# that compiles with SPEC anyway).
- H5_VERS_MINOR+=8
- H5_VERS_MINOR:=$(word 1, $(H5_VERS_MINOR))
-
  CC=intel
  # if want to use gfortran; make CC=gfortran xspec; otherwise using Intel
  FC=mpif90 # at PPPL, mpifort will cause parallel HDF5 hang
@@ -258,12 +248,12 @@ global_d.o: %_d.o: global.f90 $(MACROS)
 ###############################################################################################################################################################
 
 $(ROBJS): %_r.o: %_m.F90 global_r.o $(MACROS) 
-	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -DH5_VERS_MINOR=$(H5_VERS_MINOR) -o $*_r.o -c $*_m.F90 $(LIBS)
+	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o $*_r.o -c $*_m.F90 $(LIBS)
 	@wc -l -L -w $*_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
 $(DOBJS): %_d.o: %_m.F90 global_d.o $(MACROS) 
-	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -DH5_VERS_MINOR=$(H5_VERS_MINOR) -o $*_d.o -c $*_m.F90 $(LIBS)
+	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o $*_d.o -c $*_m.F90 $(LIBS)
 	@wc -l -L -w $*_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 

@@ -270,34 +270,7 @@ m4_define(WCALL,{! macro expansion of wcall;
 m4_define(HDEFGRP,{! macro expansion of hdefgrp;
 ! define a HDF5 group in _1 with name _2 and save reference into hid_t _3; _4 and _5 should be __FILE__ and __LINE__
 
-  ! temporarily disable error printing to not confuse users
-  call h5eset_auto_f(0, hdfier)
-  if( hdfier.ne.0 ) then
-    write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hdefgrp at $4:$5;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
-    stop "sphdf5 : error calling h5eset_auto_f from hdefgrp at $4:$5 ;"
-  endif
-
-  ! check if group exists
-  call h5lget_info_f($1, "$2", dummy_cset, dummy_corder, dummy_f_corder_valid, dummy_link_type, &
-  &                            dummy_addr_token, dummy_val_size, hdfier)
-  if (hdfier.lt.0) then
-   grp_exists = .false.
-   if (hdfDebug .and. myid.eq.0) then ; write(*,*) "group $2 does not exist yet, creating it"
-   endif
-  else
-   grp_exists = .true.
-   if (hdfDebug .and. myid.eq.0) then ; write(*,*) "group $2 exists already, opening it"
-   endif
-  endif
-  
-  ! re-establish previous state of error printing to be sensitive to "real" errors
-  call h5eset_auto_f(internalHdf5Msg, hdfier)
-  if( hdfier.ne.0 ) then
-    write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hdefgrp at $4:$5 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
-    stop "sphdf5 : error calling h5eset_auto_f from hdefgrp at $4:$5 ;"
-  endif
+  call h5lexists_f($1, "$2", grp_exists, hdfier)
   
   if (.not.grp_exists) then
    ! if group does not exist, create it
