@@ -14,10 +14,11 @@ import numpy as np
 class SPECNamelist(Namelist):
     '''The SPEC namelist class
     To get a content within the namelist, use:
-        somevariable = spec_nml['whichlist']['whichitem'], e.g. spec_nml['physicslist']['Lconstraint'] = 1 sets Lconstraint in physicslist list to 4
+        somevariable = spec_nml['whichlist']['whichitem']
 
     To change (or add) an item on the namelist, use:
         spec_nml['whichlist']['whichitem'] = somevalue
+    e.g. spec_nml['physicslist']['Lconstraint'] = 1 sets Lconstraint in physicslist list to 1
 
     Please do not change Mpol, Ntor and Nvol directly. To change them, please use
         spec_nml.update_resolution(new_Mpol, new_Ntor)
@@ -32,7 +33,7 @@ class SPECNamelist(Namelist):
     Alternatively, one can directly modify spec_nml.interface_guess
 
     member functions:
-        read, write, run, update_resolution, insert_volume, remove_volume,
+        write, run, update_resolution, insert_volume, remove_volume,
         get_interface_guess, set_interface_guess, remove_interface_guess
     '''
     
@@ -49,19 +50,17 @@ class SPECNamelist(Namelist):
             # the first argument is a string, read from this namelist
             # first create the namelist using __init__ of the namelist object
 
-            file_object  = open(args[0], 'r')
+            with open(args[0], 'r') as file_object:
 
-            super().__init__(f90nml.read(file_object))
+                super().__init__(f90nml.read(file_object))
 
-            # now we should mind some variables that are important: we include them in the object itself and need to monitor them
-            self._Mpol = self['physicslist']['mpol']
-            self._Ntor = self['physicslist']['ntor']
-            self._Nvol = self['physicslist']['nvol']
-            
-            # then read the part that specifies the guess of the interface geometry
-            self._read_interface_guess(file_object)
-
-            file_object.close()
+                # now we should mind some variables that are important: we include them in the object itself and need to monitor them
+                self._Mpol = self['physicslist']['mpol']
+                self._Ntor = self['physicslist']['ntor']
+                self._Nvol = self['physicslist']['nvol']
+                
+                # then read the part that specifies the guess of the interface geometry
+                self._read_interface_guess(file_object)
 
             # we don't know the verson of SPEC from its namelist, so leave it as 'unknown
             self._spec_version = 'unknown'
@@ -135,6 +134,8 @@ class SPECNamelist(Namelist):
 
         # write the interface guess
         self._write_interface_guess(file_object)
+
+        file_object.close()
 
     def run(self, spec_command='./xspec', filename='spec.sp', force=False):
         '''Run SPEC on the current namelist and obtain its output
@@ -347,10 +348,8 @@ class SPECNamelist(Namelist):
         if (m,n) not in self.interface_guess.keys():
             # add a new item
             self.interface_guess[(m,n)] = dict()
-            self.interface_guess[(m,n)]['Rbc'] = np.zeros([self._Nvol])
-            self.interface_guess[(m,n)]['Zbs'] = np.zeros([self._Nvol])
-            self.interface_guess[(m,n)]['Rbs'] = np.zeros([self._Nvol])
-            self.interface_guess[(m,n)]['Zbc'] = np.zeros([self._Nvol])
+            for key in ['Rbc', 'Rbs', 'Zbc', 'Zbs']:
+                self.interface_guess[(m,n)][key] = np.zeros([self._Nvol])
 
         self.interface_guess[(m,n)][key][ivol] = value
 
@@ -478,63 +477,58 @@ class SPECNamelist(Namelist):
         '''
 
         # create the namelists
-        self['physicslist'] = Namelist()
-        self['numericlist'] = Namelist()
-        self['locallist'] = Namelist()
-        self['globallist'] = Namelist()
-        self['diagnosticslist'] = Namelist()
-        self['screenlist'] = Namelist()
+        for key in ['physicslist', 'numericlist', 'locallist', 'globallist', 'diagnosticslist', 'screenlist']:
+            self[key] = Namelist()
 
-        self._dump_to_namelist(spec_hdf5.input.physics, self['physicslist'])
-        self._dump_to_namelist(spec_hdf5.input.numerics, self['numericlist'])
-        self._dump_to_namelist(spec_hdf5.input.local, self['locallist'])
-        self._dump_to_namelist(spec_hdf5.input.global1, self['globallist'])
-        self._dump_to_namelist(spec_hdf5.input.diagnostics, self['diagnosticslist'])
+        with spec_hdf5.input as i:
+            self._dump_to_namelist(i.physics, self['physicslist'])
+            self._dump_to_namelist(i.numerics, self['numericlist'])
+            self._dump_to_namelist(i.local, self['locallist'])
+            self._dump_to_namelist(i.global1, self['globallist'])
+            self._dump_to_namelist(i.diagnostics, self['diagnosticslist'])
 
-        # we don't dump screenlist since it is not saved in the hdf5
-        #self._dump_to_namelist(spec_hdf5.input.screen, self['screenlist'])
+            # we don't dump screenlist since it is not saved in the hdf5
+            # self._dump_to_namelist(i.screen, self['screenlist'])
 
 
-         # now we should mind some variables that are important: we include them in the object itself and need to monitor them
+        # now we should mind some variables that are important: we include them in the object itself and need to monitor them
         self._Mpol = self['physicslist']['mpol']
         self._Ntor = self['physicslist']['ntor']
         self._Nvol = self['physicslist']['nvol']
 
         # replace some namelist objects by those from the output
-        # 1. replace guess of the geometry axis
-        self['physicslist']['Rac'] = spec_hdf5.output.Rbc[0,:self._Mpol+1].tolist()
-        self['physicslist']['Zas'] = spec_hdf5.output.Zbs[0,:self._Mpol+1].tolist()
-        self['physicslist']['Ras'] = spec_hdf5.output.Rbs[0,:self._Mpol+1].tolist()
-        self['physicslist']['Zac'] = spec_hdf5.output.Zbc[0,:self._Mpol+1].tolist()
+        with spec_hdf5.output as o, spec_hdf5.input.physics as p:
+            # 1. replace guess of the geometry axis
+            self['physicslist']['Rac'] = o.Rbc[0,:p.Mpol+1].tolist()
+            self['physicslist']['Zas'] = o.Zbs[0,:p.Mpol+1].tolist()
+            self['physicslist']['Ras'] = o.Rbs[0,:p.Mpol+1].tolist()
+            self['physicslist']['Zac'] = o.Zbc[0,:p.Mpol+1].tolist()
 
-        # 2. replace the boundary
-        Nvol = spec_hdf5.input.physics.Nvol
-        Ntor = spec_hdf5.input.physics.Ntor
-        Nfp = spec_hdf5.input.physics.Nfp
-        for ii in range(spec_hdf5.output.mn):
-            mm = spec_hdf5.output.im[ii]
-            nn = int((spec_hdf5.output.in1[ii])/Nfp)+self._Ntor
-            self['physicslist']['Rbc'][mm][nn] = spec_hdf5.output.Rbc[Nvol,ii]
-            self['physicslist']['Zbs'][mm][nn] = spec_hdf5.output.Zbs[Nvol,ii]
-            self['physicslist']['Rbs'][mm][nn] = spec_hdf5.output.Rbs[Nvol,ii]
-            self['physicslist']['Zbc'][mm][nn] = spec_hdf5.output.Zbc[Nvol,ii]
+            # 2. replace the boundary
+            for ii in range(spec_hdf5.output.mn):
+                mm = o.im[ii]
+                nn = int((o.in1[ii])/p.Nfp)+self._Ntor
+                self['physicslist']['Rbc'][mm][nn] = o.Rbc[p.Nvol,ii]
+                self['physicslist']['Zbs'][mm][nn] = o.Zbs[p.Nvol,ii]
+                self['physicslist']['Rbs'][mm][nn] = o.Rbs[p.Nvol,ii]
+                self['physicslist']['Zbc'][mm][nn] = o.Zbc[p.Nvol,ii]
         
-        # 3. replace some physics quantities
-        output_list = ['mu', 'pflux', 'helicity', 'adabatic', 'iota', 'oita']
-        for key in output_list:
-            if key in dir(spec_hdf5.output):
-                self['physicslist'][key] = getattr(spec_hdf5.output, key).tolist()
+            # 3. replace some physics quantities
+            output_list = ['mu', 'pflux', 'helicity', 'adabatic', 'iota', 'oita', 'Isurf', 'Ivolume']
+            for key in output_list:
+                if key in dir(o):
+                    self['physicslist'][key] = getattr(o, key).tolist()
 
-        # 4. generate the guess of the interface
-        self.interface_guess = dict()
-        for ii in range(spec_hdf5.output.mn):
-            m = spec_hdf5.output.im[ii]
-            n = int(spec_hdf5.output.in1[ii] / spec_hdf5.input.physics.Nfp)
-            self.interface_guess[(m,n)] = dict()
-            self.interface_guess[(m,n)]['Rbc'] = spec_hdf5.output.Rbc[1:,ii]
-            self.interface_guess[(m,n)]['Zbs'] = spec_hdf5.output.Zbs[1:,ii]
-            self.interface_guess[(m,n)]['Rbs'] = spec_hdf5.output.Rbs[1:,ii]
-            self.interface_guess[(m,n)]['Zbc'] = spec_hdf5.output.Zbc[1:,ii]
+            # 4. generate the guess of the interface
+            self.interface_guess = dict()
+            for ii in range(o.mn):
+                m = o.im[ii]
+                n = int(o.in1[ii] / p.Nfp)
+                self.interface_guess[(m,n)] = dict()
+                self.interface_guess[(m,n)]['Rbc'] = o.Rbc[1:,ii]
+                self.interface_guess[(m,n)]['Zbs'] = o.Zbs[1:,ii]
+                self.interface_guess[(m,n)]['Rbs'] = o.Rbs[1:,ii]
+                self.interface_guess[(m,n)]['Zbc'] = o.Zbc[1:,ii]
 
     def _interpolate_guess(self, ivol, tflux):
         '''Interpolated interface harmonics guess
@@ -571,10 +565,9 @@ class SPECNamelist(Namelist):
                 r_right = np.sqrt(self['physicslist']['tflux'][0])
                 r_int = np.sqrt(tflux)
 
-                self._interpolate_guess_singular_each('Rbc',ivol,r_left,r_right,r_int)
-                self._interpolate_guess_singular_each('Zbs',ivol,r_left,r_right,r_int)
-                self._interpolate_guess_singular_each('Rbs',ivol,r_left,r_right,r_int)
-                self._interpolate_guess_singular_each('Zbc',ivol,r_left,r_right,r_int)
+                for key in ['Rbc', 'Zbs', 'Rbs', 'Zbc']:
+                    self._interpolate_guess_singular_each(key,ivol,r_left,r_right,r_int)
+
             else:
                 if ivol == 0:
                     tflux_left = 0.0
@@ -593,10 +586,8 @@ class SPECNamelist(Namelist):
                     r_int = np.sqrt(tflux)
 
                 # interpolate
-                self._interpolate_guess_normal_each('Rbc',ivol,r_left,r_right,r_int)
-                self._interpolate_guess_normal_each('Zbs',ivol,r_left,r_right,r_int)
-                self._interpolate_guess_normal_each('Rbs',ivol,r_left,r_right,r_int)
-                self._interpolate_guess_normal_each('Zbc',ivol,r_left,r_right,r_int)
+                for key in ['Rbc', 'Zbs', 'Rbs', 'Zbc']:
+                    self._interpolate_guess_normal_each(key,ivol,r_left,r_right,r_int)
 
     def _interpolate_guess_normal_each(self, key, ivol, r_left, r_right, r_int):
         '''Interpolate the interface harmonic guess, normal way
