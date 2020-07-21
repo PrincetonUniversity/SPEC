@@ -50,7 +50,7 @@ program xspech
                         odetol, nPpts, nPtrj, &
                         LHevalues, LHevectors, LHmatrix, Lperturbed, Lcheck, &
                         Lzerovac, &
-                        mu, Isurf, Ivolume
+                        mu, Isurf, Ivolume, iota, oita
 
   use cputiming, only : Txspech
 
@@ -76,7 +76,7 @@ program xspech
                         beltramierror, &
                         first_free_bound, &
                         dMA, dMB, dMD, dMG, MBpsi, solution, dtflux, IPDt, &
-                        version
+                        version, diotadxup, IsMyVolumeValue, mns, Nt, Nz, IsMyVolume
                         
    ! write _all_ output quantities into a _single_ HDF5 file
    use sphdf5,   only : init_outfile, &
@@ -91,7 +91,7 @@ program xspech
   LOGICAL              :: LComputeDerivatives, LContinueFreeboundaryIterations, exist, LupdateBn
 
 ! INTEGER              :: nfreeboundaryiterations, imn, lmn, lNfp, lim, lin, ii, lvol ! 09 Mar 17;
-  INTEGER              :: imn, lmn, lNfp, lim, lin, ii, ideriv
+  INTEGER              :: imn, lmn, lmns, lNfp, lim, lin, ii, ideriv
   INTEGER              :: vvol, llmodnp, ifail, wflag, iflag, vflag
   REAL                 :: rflag, lastcpu, bnserr, lRwc, lRws, lZwc, lZws, lItor, lGpol, lgBc, lgBs, sumI
   REAL,    allocatable :: position(:), gradient(:), Bt00(:,:)
@@ -299,6 +299,7 @@ program xspech
 !latex \begin{enumerate}
 !latex \item The pressure is computed from the adiabatic constants from \Eqn{adiabatic}, i.e. $p=P/V^\gamma$.
 !latex \item The Beltrami/vacuum fields in each region are re-calculated using \link{dforce}.
+!latex \item The rotational transform, iota and oita, are computed as output
 !latex \item If \inputvar{Lcheck.eq.5 .or. LHevalues .or. LHevectors .or. Lperturbed.eq.1}, then the ``Hessian'' matrix is examined using \link{hesian}.
 !latex \end{enumerate} 
 
@@ -650,6 +651,48 @@ program xspech
     Ivolume(vvol) = mu(vvol) * dtflux(vvol) * pi2 + sumI    ! factor pi2 due to normalization in preset
     sumI = Ivolume(vvol)                                    ! Sum over all volumes since this is how Ivolume is defined
   enddo
+
+
+  iflag = 0
+
+  if( YESstellsym ) then ; lmns = 1 + (mns-1)           ! number of independent degrees of freedom in angle transformation;
+  else                   ; lmns = 1 + (mns-1) + (mns-1) ! only required for dense, Fourier angle transformation;
+  endif
+
+  do vvol = 1, Mvol
+
+    LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
+
+! Determines if this volume vvol should be computed by this thread.
+    call IsMyVolume(vvol)
+
+    if( IsMyVolumeValue .EQ. 0 ) then
+      cycle
+    endif
+
+    WCALL( xspech, tr00ab, ( vvol, mn, lmns, Nt, Nz, iflag, diotadxup(0:1,-1:2,vvol) ) )
+
+    if( .not. Lcoordinatesingularity ) then
+      oita(vvol-1) = diotadxup(0,0,vvol)
+    endif
+    iota(vvol) = diotadxup(1,0,vvol)
+
+  enddo
+
+  ! brcast iota and oita
+  do vvol = 1, Mvol
+    
+    LREGION(vvol)
+
+    llmodnp = modulo(vvol-1,ncpu)
+    RlBCAST( iota(vvol), 1, llmodnp )
+
+    if( .not. Lcoordinatesingularity ) then
+        RlBCAST( oita(vvol-1), 1, llmodnp )
+    endif
+
+  enddo
+  
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
