@@ -114,7 +114,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
   INTEGER              :: IA, if04aaf, idgesvx, ipiv(1:NN), iwork4(1:NN)
   REAL                 :: dmatrix(1:NN,1:NN,-1:2), drhs(1:NN,-1:2), dlambda(1:NN,-1:2), FAA(1:NN,1:NN)
   REAL                 :: omatrix(1:NN,1:NN)
-  REAL                 :: Rdgesvx(1:NN), Cdgesvx(1:NN), work4(1:4*NN), rcond, ferr, berr, ferr2(1:2), berr2(1:2)
+  REAL                 :: Rdgesvx(1:NN), Cdgesvx(1:NN), work4(1:4*NN), rcond, ferr(1), berr(1), ferr2(1:2), berr2(1:2)
   CHARACTER            :: equed 
 
 ! required for real-space routines;
@@ -723,7 +723,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
                 Liwork = max(1,11*NN+3*nlvl*NN)
 
                 SALLOCATE( work, (1:Lwork), zero )
-      if (allocated(iwork)) deallocate(iwork)
+                if (allocated(iwork)) deallocate(iwork)
                 SALLOCATE( iwork, (1:Liwork), zero )
 
                 select case( jderiv ) 
@@ -782,6 +782,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
                 dmatrix(1:NN,1:NN, 0) = omatrix(1:NN,1:NN) ! original "unperturbed" matrix; 30 Jan 13;
                 
                 DALLOCATE(iwork)
+                DALLOCATE(work)
 
             case default
 

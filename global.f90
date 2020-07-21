@@ -114,15 +114,10 @@ module typedefns
      REAL,    allocatable :: s(:)
      INTEGER, allocatable :: i(:)
   end type subgrid
-  
-  
+
   type VarSizeMatrix
         REAL, allocatable :: mat(:,:)
   end type VarSizeMatrix
-  
-  type VarSizeArray
-        REAL, allocatable :: arr(:)
-  end type VarSizeArray
 
 end module typedefns
 
@@ -285,6 +280,7 @@ module inputlist
   INTEGER      :: Lperturbed       =     0   
   INTEGER      :: dpp              =    -1
   INTEGER      :: dqq              =    -1
+  REAL         :: dRZ              =     1E-5    ! For finite difference estimate
   INTEGER      :: Lcheck           =     0
   LOGICAL      :: Ltiming          =  .false.
   REAL         :: fudge            =     1.0e-00 ! redundant; 
@@ -295,6 +291,9 @@ module inputlist
 ! the following variables constitute the namelist/screenlist/; note that all variables in namelist need to be broadcasted in readin;
   
 ! DSCREENLIST ! define screenlist; this is expanded by Makefile; DO NOT REMOVE; each file compiled by Makefile has its own write flag;
+  LOGICAL      :: Wbuild_vector_potential = .false.
+  LOGICAL      :: Wallocate_geometry_matrices = .false.
+  LOGICAL      :: Wdeallocate_geometry_matrices = .false.
   LOGICAL      :: Wreadin = .false.
   LOGICAL      :: Wwritin = .false. ! redundant; 
   LOGICAL      :: Wwrtend = .false.
@@ -845,6 +844,7 @@ module inputlist
                 !latex \item[iii.] \verb+xdiagno+; must be executed manually;
                 !latex \ei
                 !latex \ei
+ dRZ        ,&  !latex \item \inputvar{dRZ = 1E-5} : real; difference in geometry for finite difference estimate (debug only)
  Ltiming    ,&  !latex \item \inputvar{Ltiming = T} : logical : to check timing;
  fudge      ,&  !latex \item \inputvar{fudge = 1.0} : real : redundant;
  scaling        !latex \item \inputvar{scaling = 1.0} : real : redundant;
@@ -862,6 +862,9 @@ module inputlist
 
   namelist/screenlist/&
 ! NSCREENLIST ! namelist screenlist; this is expanded by Makefile; DO NOT REMOVE;
+ Wbuild_vector_potential , &
+ Wallocate_geometry_matrices , &
+ Wdeallocate_geometry_matrices , &
  Wreadin , &  !latex \item Every subroutine, e.g. \type{xy00aa.h}, has its own write flag, \type{Wxy00aa}.
  Wwritin , & ! redundant; 
  Wwrtend , &
@@ -924,7 +927,7 @@ module allglobal
 
   REAL                 :: ForceErr, Energy
 
-  REAL   , allocatable :: IPDt(:)                    ! Toroidal pressure-driven current
+  REAL   , allocatable :: IPDt(:), IPDtDpf(:,:)    ! Toroidal pressure-driven current
 
   INTEGER              :: Mvol
 
@@ -1132,15 +1135,14 @@ module allglobal
 !latex \item These are allocated and deallocated in \link{dforce}, assigned in \link{matrix}, and used in \link{mp00ac} and ? \link{df00aa}.
 !latex \end{enumerate}
 
-   INTEGER, allocatable :: IndMatrixArray(:,:)    ! Store matrices index in geometry dependent matrice arrays
    
-   type(VarSizeMatrix),   allocatable :: dMA(:), dMB(:)! dMC(:,:) ! energy and helicity matrices; quadratic forms; 
-   type(VarSizeMatrix),   allocatable :: dMD(:)! dME(:,:)! dMF(:,:) ! energy and helicity matrices; quadratic forms; 
-   type(VarSizeArray) ,   allocatable :: dMG(:  )
-   type(VarSizeMatrix),   allocatable :: solution(:) ! this is allocated in dforce; used in mp00ac and ma02aa; and is passed to packab; 
+   REAL,   allocatable :: dMA(:,:), dMB(:,:)! dMC(:,:) ! energy and helicity matrices; quadratic forms; 
+   REAL,   allocatable :: dMD(:,:)! dME(:,:)! dMF(:,:) ! energy and helicity matrices; quadratic forms; 
+   REAL,   allocatable :: dMG(:  )
+   REAL,   allocatable :: solution(:,:) ! this is allocated in dforce; used in mp00ac and ma02aa; and is passed to packab; 
 
 !  REAL,   allocatable :: MBpsi(:), MEpsi(:) ! matrix vector products; 
-   type(VarSizeArray),   allocatable :: MBpsi(:)           ! matrix vector products; 
+   REAL,   allocatable :: MBpsi(:)           ! matrix vector products; 
 !  REAL                :: psiMCpsi, psiMFpsi
 !  REAL                ::           psiMFpsi
 
@@ -1247,7 +1249,7 @@ module allglobal
 !latex \item A finite-difference estimate is computed if \inputvar{Lcheck.eq.4}.
 !latex \end{enumerate}
 
-  REAL,    allocatable :: dmupfdx(:,:,:,:)  ! derivatives of mu and dpflux wrt geometry at constant interface transform; 
+  REAL,    allocatable :: dmupfdx(:,:,:,:,:)  ! derivatives of mu and dpflux wrt geometry at constant interface transform; 
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1351,6 +1353,7 @@ module allglobal
   
   type derivative
      LOGICAL :: L
+     INTEGER :: vol      ! Used in coords.f90; required for global constraint force gradient evaluation
      INTEGER :: innout
      INTEGER :: ii
      INTEGER :: irz
@@ -1392,6 +1395,183 @@ module allglobal
   LOGICAL              :: first_free_bound = .false.
 
 contains
+
+subroutine build_vector_potential(lvol, iocons, aderiv, tderiv)
+
+! Builds the covariant component of the vector potential and store them in efmn, ofmn, sfmn, cfmn.
+
+  use constants, only: zero, half
+
+  use fileunits, only: ounit
+
+  use inputlist, only: Lrad, Wbuild_vector_potential, Wmacros
+
+  use cputiming
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+LOCALS
+
+INTEGER              :: aderiv    ! Derivative of A. -1: w.r.t geometrical degree of freedom
+                                  !                   0: no derivatives
+                                  !                   1: w.r.t mu
+                                  !                   2: w.r.t pflux
+INTEGER              :: tderiv    ! Derivative of Chebyshev polynomialc. 0: no derivatives
+                                  !                                      1: w.r.t radial coordinate s
+INTEGER              :: ii,  &    ! Loop index on Fourier harmonics
+                        ll,  &    ! Loop index on radial resolution
+                        lvol,&    ! Volume number
+                        iocons    ! inner (0) or outer (1) side of the volume
+REAL                 :: mfactor   ! Regularization factor when LcoordinateSingularity
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+BEGIN(build_vector_potential)
+
+
+  efmn(1:mn) = zero ; sfmn(1:mn) = zero ; cfmn(1:mn) = zero ; ofmn(1:mn) = zero
+  
+  do ii = 1, mn ! loop over Fourier harmonics; 13 Sep 13;
+   
+   if( Lcoordinatesingularity ) then ; mfactor = regumm(ii) * half ! only required at outer interface, where \bar s = 1; 15 Jan 15;
+   else                              ; mfactor = zero
+   endif
+   
+    do ll = 0, Lrad(lvol)
+      efmn(ii) = efmn(ii) +  Ate(lvol,aderiv,ii)%s(ll) * ( TT(ll,iocons,tderiv) + mfactor )
+      cfmn(ii) = cfmn(ii) +  Aze(lvol,aderiv,ii)%s(ll) * ( TT(ll,iocons,tderiv) + mfactor )
+    enddo ! end of do ll; 20 Feb 13;
+
+    if( NOTstellsym ) then
+      do ll = 0, Lrad(lvol)
+        ofmn(ii) = ofmn(ii) +  Ato(lvol,aderiv,ii)%s(ll) * ( TT(ll,iocons,tderiv) + mfactor )
+        sfmn(ii) = sfmn(ii) +  Azo(lvol,aderiv,ii)%s(ll) * ( TT(ll,iocons,tderiv) + mfactor )
+      enddo
+    endif
+    
+  enddo ! end of do ii; 20 Feb 13;
+
+end subroutine build_vector_potential
+
+
+
+subroutine allocate_geometry_matrices(ll)
+
+! Allocate all geometry dependent matrices for a given ll
+
+  use constants, only: zero
+
+  use fileunits
+
+  use inputlist, only:  Wallocate_geometry_matrices, Wmacros
+
+  use cputiming
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  LOCALS
+
+  INTEGER         :: ll
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  BEGIN(allocate_geometry_matrices)
+
+  SALLOCATE( DToocc, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( DToocs, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( DToosc, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( DTooss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+  SALLOCATE( TTsscc, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( TTsscs, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( TTsssc, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( TTssss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+  SALLOCATE( TDstcc, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( TDstcs, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( TDstsc, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( TDstss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+  SALLOCATE( TDszcc, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( TDszcs, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( TDszsc, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( TDszss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+  SALLOCATE( DDttcc, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( DDttcs, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( DDttsc, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( DDttss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+  SALLOCATE( DDtzcc, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( DDtzcs, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( DDtzsc, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( DDtzss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+  SALLOCATE( DDzzcc, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( DDzzcs, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( DDzzsc, (0:ll,0:ll,1:mn,1:mn), zero )
+  SALLOCATE( DDzzss, (0:ll,0:ll,1:mn,1:mn), zero )
+
+
+end subroutine allocate_geometry_matrices
+
+
+subroutine deallocate_geometry_matrices()
+
+! Deallocate all geometry dependent matrices
+  use constants, only: zero
+
+  use fileunits
+
+  use inputlist, only:  Wdeallocate_geometry_matrices, Wmacros
+
+  use cputiming
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  LOCALS
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  BEGIN(deallocate_geometry_matrices)
+
+    DALLOCATE(DToocc)
+    DALLOCATE(DToocs)
+    DALLOCATE(DToosc)
+    DALLOCATE(DTooss)
+
+    DALLOCATE(TTsscc)
+    DALLOCATE(TTsscs)
+    DALLOCATE(TTsssc)
+    DALLOCATE(TTssss)
+
+    DALLOCATE(TDstcc)
+    DALLOCATE(TDstcs)
+    DALLOCATE(TDstsc)
+    DALLOCATE(TDstss)
+
+    DALLOCATE(TDszcc)
+    DALLOCATE(TDszcs)
+    DALLOCATE(TDszsc)
+    DALLOCATE(TDszss)
+
+    DALLOCATE(DDttcc)
+    DALLOCATE(DDttcs)
+    DALLOCATE(DDttsc)
+    DALLOCATE(DDttss)
+
+    DALLOCATE(DDtzcc)
+    DALLOCATE(DDtzcs)
+    DALLOCATE(DDtzsc)
+    DALLOCATE(DDtzss)
+
+    DALLOCATE(DDzzcc)
+    DALLOCATE(DDzzcs)
+    DALLOCATE(DDzzsc)
+    DALLOCATE(DDzzss)
+
+  end subroutine deallocate_geometry_matrices
+
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1759,10 +1939,10 @@ subroutine readin
    write(ounit,'("readin : ", 10x ," : ")')
    
    write(ounit,1050) cput-cpus, odetol, nPpts
-   write(ounit,1051)            LHevalues, LHevectors, LHmatrix, Lperturbed, dpp, dqq, Lcheck, Ltiming
+   write(ounit,1051)            LHevalues, LHevectors, LHmatrix, Lperturbed, dpp, dqq, dRZ, Lcheck, Ltiming
    
 1050 format("readin : ",f10.2," : odetol="es10.2" ; nPpts="i6" ;")
-1051 format("readin : ", 10x ," : LHevalues="L2" ; LHevectors="L2" ; LHmatrix="L2" ; Lperturbed="i2" ; dpp="i3" ; dqq="i3" ; Lcheck="i3" ; Ltiming="L2" ;")
+1051 format("readin : ", 10x ," : LHevalues="L2" ; LHevectors="L2" ; LHmatrix="L2" ; Lperturbed="i2" ; dpp="i3" ; dqq="i3" ; dRZ="es16.8" ; Lcheck="i3" ; Ltiming="L2" ;")
    
    FATAL( readin, odetol.le.zero, input error )
   !FATAL( readin, absreq.le.zero, input error )
@@ -1922,6 +2102,7 @@ subroutine readin
   IlBCAST( Lperturbed, 1      , 0 )
   IlBCAST( dpp       , 1      , 0 )
   IlBCAST( dqq       , 1      , 0 )
+  RlBCAST( dRZ       , 1      , 0 )
   IlBCAST( Lcheck    , 1      , 0 )
   LlBCAST( Ltiming   , 1      , 0 )
 
@@ -2579,6 +2760,7 @@ subroutine wrtend
   write(iunit,'(" Lperturbed  = ",i9            )') Lperturbed
   write(iunit,'(" dpp         = ",i9            )') dpp
   write(iunit,'(" dqq         = ",i9            )') dqq
+  write(iunit,'(" dRZ         = ",es23.15       )') dRZ
   write(iunit,'(" Lcheck      = ",i9            )') Lcheck
   write(iunit,'(" Ltiming     = ",L9            )') Ltiming
   write(iunit,'("/")')
@@ -2618,25 +2800,6 @@ subroutine wrtend
 
 end subroutine wrtend
   
-subroutine IndMatrix(cpuid, vvol, ind_matrix)
-
-!latex \subsection{subroutine IndMatrix}
-!latex To reduce the size of Geometry dependent matrices array \internal{dMA}, \internal{dMB}, \internal{dMD}, \internal{dMG}, \internal{MBpsi} and \internal{solution},
-!latex we allocate them only the relevant number of matrices (one per volume associated to this \interl{cpuid}).
-
-LOCALS
-
-INTEGER :: vvol, cpuid, ind_matrix
-INTEGER :: cpuid_comp
-
-! If the volume is not associated to the CPU, get an error
-call WhichCpuID(vvol, cpuid_comp)
-if (cpuid_comp.NE.cpuid) then
-    FATAL( dforce, .true., Error: called IndMatrix with wrong CPU ?)
-endif
-
-end subroutine IndMatrix
-
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 subroutine IsMyVolume(vvol)

@@ -47,7 +47,8 @@ subroutine brcast( lvol )
                         Lhessianallocated, LGdof, dFFdRZ, dBBdmp, dmupfdx, &
                         lBBintegral, lABintegral, &
                         vvolume, &
-                        NOTstellsym
+                        NOTstellsym, LocalConstraint, &
+						IsMyVolume, IsMyVolumeValue
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -89,14 +90,18 @@ subroutine brcast( lvol )
   
   if( Lhessianallocated ) then
    
-   Nbc =             LGdof*       2*  LGdof*  2
-   RlBCAST( dFFdRZ(1:LGdof,lvol,0:1,1:LGdof,0:1), Nbc, llmodnp )
    
-   Nbc =             LGdof*       2*  2                
-   RlBCAST( dBBdmp(1:LGdof,lvol,0:1,1:2), Nbc, llmodnp )
-   
-   Nbc =                   2*  LGdof*  2
-   RlBCAST( dmupfdx(lvol,1:2,1:LGdof,0:1), Nbc, llmodnp ) ! why is this broadcast; 02 Sep 14;
+   if( LocalConstraint ) then
+ 	  Nbc =             LGdof*       2*  LGdof*  2
+ 	  RlBCAST( dFFdRZ(1:LGdof,lvol,0:1,1:LGdof,0:1), Nbc, llmodnp )
+
+	  Nbc =             LGdof*       2*  2                
+	  RlBCAST( dBBdmp(1:LGdof,lvol,0:1,1:2), Nbc, llmodnp )
+
+	  Nbc =                   2*  LGdof*  2
+	  RlBCAST( dmupfdx(lvol,1:1   ,1:2,1:LGdof,0:1), Nbc, llmodnp ) ! why is this broadcast; 02 Sep 14;
+   endif
+
    
   endif ! end of if( Lhessianallocated ) ; 12 Sep 16;
   
@@ -104,30 +109,33 @@ subroutine brcast( lvol )
   
   LlBCAST( ImagneticOK(lvol), 1, llmodnp )
   
-  ideriv = 0
-  
-  do ii = 1, mn  
-   RlBCAST( Ate(lvol,ideriv,ii)%s(0:Lrad(lvol)), Lrad(lvol)+1, llmodnp )
-   RlBCAST( Aze(lvol,ideriv,ii)%s(0:Lrad(lvol)), Lrad(lvol)+1, llmodnp )
-  enddo
-  
+  ! Commented - broadcasted in dfp200
+  ! do ideriv = 0, 2
+  ! 	if( (ideriv.ne.0) .and. (Lconstraint.ne.3) ) cycle
+  !     do ii = 1, mn  
+  !       RlBCAST( Ate(lvol,ideriv,ii)%s(0:Lrad(lvol)), Lrad(lvol)+1, llmodnp )
+  !       RlBCAST( Aze(lvol,ideriv,ii)%s(0:Lrad(lvol)), Lrad(lvol)+1, llmodnp )
+  !     enddo
+  ! enddo  
+
+
   RlBCAST( Bemn(1:mn,lvol,0:1), 2*mn, llmodnp ) ! perhaps all these should be re-ordered; 18 Jul 14;
   RlBCAST( Iomn(1:mn,lvol    ),   mn, llmodnp )
   RlBCAST( Somn(1:mn,lvol,0:1), 2*mn, llmodnp )
   RlBCAST( Pomn(1:mn,lvol,0:2), 3*mn, llmodnp ) ! 15 Sep 15;
   
   if( NOTstellsym ) then
-   
-  do ii = 1, mn    
-   RlBCAST( Ato(lvol,ideriv,ii)%s(0:Lrad(lvol)), Lrad(lvol)+1, llmodnp )
-   RlBCAST( Azo(lvol,ideriv,ii)%s(0:Lrad(lvol)), Lrad(lvol)+1, llmodnp )
-  enddo
-  
-  RlBCAST( Bomn(1:mn,lvol,0:1), 2*mn, llmodnp )
-  RlBCAST( Iemn(1:mn,lvol    ),   mn, llmodnp )
-  RlBCAST( Semn(1:mn,lvol,0:1), 2*mn, llmodnp )
-  RlBCAST( Pemn(1:mn,lvol,0:2), 3*mn, llmodnp )
-
+    ! do ideriv = 0, 2
+    !   do ii = 1, mn    
+    !     RlBCAST( Ato(lvol,ideriv,ii)%s(0:Lrad(lvol)), Lrad(lvol)+1, llmodnp )
+    !     RlBCAST( Azo(lvol,ideriv,ii)%s(0:Lrad(lvol)), Lrad(lvol)+1, llmodnp )
+    !   enddo
+    ! enddo
+      
+      RlBCAST( Bomn(1:mn,lvol,0:1), 2*mn, llmodnp )
+      RlBCAST( Iemn(1:mn,lvol    ),   mn, llmodnp )
+      RlBCAST( Semn(1:mn,lvol,0:1), 2*mn, llmodnp )
+      RlBCAST( Pemn(1:mn,lvol,0:2), 3*mn, llmodnp )
   endif ! end of if( NOTstellsym) ; 11 Aug 14;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -138,7 +146,6 @@ subroutine brcast( lvol )
    RlBCAST( curtor, 1, llmodnp )
    RlBCAST( curpol, 1, llmodnp )
   endif
-
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   RETURN(brcast)

@@ -192,7 +192,7 @@ subroutine mirror_input_to_outfile
   H5DESCR_CDSET( /input/physics/mu, Beltrami parameter{,} parallel current profile,                                                    __FILE__, __LINE__)
   HWRITERV_LO( grpInputPhysics,  (1+Nvol), Ivolume    ,   Ivolume(1:Mvol)   ,                                                          __FILE__, __LINE__)
   H5DESCR_CDSET( /input/physics/Ivolume, Volume current{,} externally driven, parallel current profile,                                __FILE__, __LINE__)
-  HWRITERV_LO( grpInputPhysics,  (Mvol-1), Isurf      ,   Isurf(1:Mvol-1)   ,                                                          __FILE__, __LINE__)
+  HWRITERV_LO( grpInputPhysics,  (Mvol  ), Isurf      ,   Isurf(1:Mvol  )   ,                                                          __FILE__, __LINE__)
   H5DESCR_CDSET( /input/physics/mu, Surface current{,} currents that are not volume currents (pressure driven, shielding currents) ,   __FILE__, __LINE__)
   HWRITEIV_LO( grpInputPhysics,  (1+Mvol), pl         ,        pl(0:Nvol)   ,                                                          __FILE__, __LINE__)
   H5DESCR_CDSET( /input/physics/pl, pl ?,                                                                                              __FILE__, __LINE__)
@@ -214,6 +214,10 @@ subroutine mirror_input_to_outfile
   H5DESCR_CDSET( /input/physics/rq, rq ?,                                                                                              __FILE__, __LINE__)
   HWRITERV_LO( grpInputPhysics,  (1+Nvol), oita       ,      oita(0:Nvol)   ,                                                          __FILE__, __LINE__)
   H5DESCR_CDSET( /input/physics/oita, rotational transform profile on outside of ideal interfaces,                                     __FILE__, __LINE__)
+  HWRITEIV_LO( grpInputPhysics,         1, rtor  , (/ rtor      /),                                                                    __FILE__, __LINE__)
+  H5DESCR_CDSET( /input/physics/rpol, for aspect ratio in slab,                                                                        __FILE__, __LINE__)
+  HWRITEIV_LO( grpInputPhysics,         1, rpol  , (/ rpol      /),                                                                    __FILE__, __LINE__)
+  H5DESCR_CDSET( /input/physics/rpol, for aspect ratio in slab,                                                                        __FILE__, __LINE__)
 
   HWRITERV_LO( grpInputPhysics,  (1+Ntor), Rac        ,       Rac(0:Ntor)   ,                                                          __FILE__, __LINE__)
   H5DESCR_CDSET( /input/physics/Rac,     stellarator symmetric coordinate axis R cosine Fourier coefficients,                          __FILE__, __LINE__)
@@ -911,7 +915,7 @@ subroutine hdfint
 !latex \type{Ivolume}                & real    & \pb{Volume current at output (parallel, externally induced)}
   HWRITERV( grpOutput, Mvol, Ivolume, Ivolume(1:Mvol))
 !latex \type{IPDt}                   & real    & \pb{Surface current at output}
-  HWRITERV( grpOutput, Mvol-1, IPDt, IPDt(1:Mvol-1))
+  HWRITERV( grpOutput, Mvol, IPDt, IPDt(1:Mvol))
 
   ! the following quantites can be different from input value
   HWRITERV( grpOutput,   Mvol, adiabatic         , adiabatic(1:Nvol)   )

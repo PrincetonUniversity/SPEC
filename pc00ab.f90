@@ -105,7 +105,7 @@ subroutine pc00ab( mode, NGdof, Position, Energy, Gradient, nstate, iuser, ruser
   INTEGER :: mode, NGdof, nstate, iuser(1:2)
   REAL    :: Position(1:NGdof), Energy, Gradient(1:NGdof), ruser(1:1)
   
-  LOGICAL :: LComputeDerivatives
+  LOGICAL :: LComputeDerivatives, LComputeAxis
   INTEGER :: ii, vvol, irz, issym, totaldof, localdof, wflag, iflag!, mi, ni !idof, imn, irz, totaldof, localdof, jj, kk, ll, mi, ni, mj, nj, mk, nk, ml, nl, mjmk
   REAL    :: force(0:NGdof), gradienterror, rflag
   
@@ -118,7 +118,8 @@ subroutine pc00ab( mode, NGdof, Position, Energy, Gradient, nstate, iuser, ruser
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   LComputeDerivatives = .false.
-  WCALL(pc00ab,dforce,( NGdof, Position(1:NGdof), force(0:NGdof), LComputeDerivatives ))
+  LComputeAxis = .true.
+  WCALL(pc00ab,dforce,( NGdof, Position(1:NGdof), force(0:NGdof), LComputeDerivatives, LComputeAxis ))
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

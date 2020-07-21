@@ -32,155 +32,198 @@
 
 
 
-subroutine dfp100(Ndofgl, x, Fvec, iflag)
+subroutine dfp100(Ndofgl, x, Fvec, LComputeDerivatives)
 
 use constants, only : zero, half, one, two, pi2, pi, mu0
 
 use fileunits, only : ounit
 
 use inputlist, only : Wmacros, Wdfp100, Igeometry, Nvol, Lrad, Isurf, &
-                      Lconstraint
+                      Lconstraint, Lfreebound, curpol
 
 use cputiming, only : Tdfp100
 
 use allglobal, only : ncpu, myid, cpus, &
                       ImagneticOK, NAdof, mn, &
-                      Mvol, &
+                      Mvol, Iquad, &
                       dBdX, &
                       Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, Localconstraint, &
-                      IPDt, xoffset, dpflux, &
+                      IPDt, IPDtdPf, xoffset, dpflux, &
                       IsMyVolume, IsMyVolumeValue, WhichCpuID, &
-                      IconstraintOK
+                      IconstraintOK, &
+                      DToocc, DToocs, DToosc, DTooss, &
+                      TTsscc, TTsscs, TTsssc, TTssss, &
+                      TDstcc, TDstcs, TDstsc, TDstss, &
+                      TDszcc, TDszcs, TDszsc, TDszss, &
+                      DDttcc, DDttcs, DDttsc, DDttss, &
+                      DDtzcc, DDtzcs, DDtzsc, DDtzss, &
+                      DDzzcc, DDzzcs, DDzzsc, DDzzss, &
+                      dMA, dMB, dMD, dMG, MBpsi, solution, &
+                      Nt, Nz, &
+                      allocate_geometry_matrices, deallocate_geometry_matrices
 
  LOCALS
 !------
-! vvol:                                             loop index on volumes
-! Ndofgl:                                            Input parameter necessary for the use of hybrd1. Unused otherwise.
-! iflag:                                            Flag changed by hybrd1
+! vvol:                       loop index on volumes
+! Ndofgl:                     Input parameter necessary for the use of hybrd1. Unused otherwise.
+! iflag:                      Flag changed by hybrd1
 ! cpu_send_one, cpu_send_two: CPU IDs, used for MPI communications
-! status:                                            MPI status
-! Fvec:                                                Global constraint values
-! x:                                                    Degrees of freedom of hybrd1. For now contains only the poloidal flux
+! status:                     MPI status
+! Fvec:                       Global constraint values
+! x:                          Degrees of freedom of hybrd1. For now contains only the poloidal flux
 
-INTEGER              :: vvol, Ndofgl, iflag, cpu_send_one, cpu_send_two
+INTEGER              :: vvol, Ndofgl, iflag, cpu_send_one, cpu_send_two, ll, NN, ideriv, iocons
 INTEGER              :: status(MPI_STATUS_SIZE), request1, request2
-REAL                 :: Fvec(1:Mvol-1), x(1:Mvol-1), Bt00(1:Mvol, 0:1)
+REAL                 :: Fvec(1:Ndofgl), x(1:Mvol-1), Bt00(1:Mvol, 0:1, -1:2), ldItGp(0:1, -1:2)
+LOGICAL              :: LComputeDerivatives
 
 
 
 BEGIN(dfp100)
 
-    if( LocalConstraint ) then
-        dpflux(2:Mvol) = x - xoffset
-        IconstraintOK = .false.
-    else
-        ! In case of global constraints, dfp100 is called via hybrd1, a modified version of hybrd. hybrd1
-        ! calls dfp100 one additional time than hybrd1, at the end of the iteration process, with iflag=5.
-        ! This is the signal that the iteration is over, and the master thread can broadcast the information
-        ! to its slaves that they can exit the infinit loop.
-        
-        if( (iflag.EQ.5) .and. (myid.EQ.0) ) then
-            IconstraintOK = .true.
-        else
-            IconstraintOK = .false.
-        endif
+dpflux(2:Mvol) = x - xoffset
 
-        ! Master broadcast to slaves the info 
-        call MPI_BCAST( IconstraintOK, 1, MPI_LOGICAL, 0, MPI_COMM_WORLD, ierr)
+! Now each CPU perform the calculation in its volume(s)
+do vvol = 1, Mvol
 
-        ! If constraints are OK, no need for one additional computation, skip till the end.
-        if( IconstraintOK ) then
-            !write(*,*) "Exiting dfp100.h with iflag=5"
-            goto 6666
-        endif
+    LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
+    ImagneticOK(vvol) = .false.
+    !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-        ! First set up the value of dpflux for calculation
-        if( myid.EQ.0 ) then
-            dpflux(2:Mvol) = x - xoffset
-        endif
+    ! Determines if this volume vvol should be computed by this thread.
+    call IsMyVolume(vvol)
 
-        ! We could scatter dpflux on the volumes - but this depends on how the volumes are divided between the CPUs
-        ! We would need to restructure the data - might be complicated for little gain.
-        call MPI_Bcast( dpflux, Mvol, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
+    if( IsMyVolumeValue .EQ. 0 ) then
+        cycle
+    else if( IsMyVolumeValue .EQ. -1) then
+        FATAL(dfp100, .true., Unassociated volume)
     endif
 
+    
+    ll = Lrad(vvol)
+    NN = NAdof(vvol)
 
-    ! Now each CPU perform the calculation in its volume(s)
-    do vvol = 1, Mvol
+    call allocate_geometry_matrices(ll)
 
-        LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
-        ImagneticOK(vvol) = .false.
-        !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+    SALLOCATE( dMA, (0:NN, 0:NN), zero )
+    SALLOCATE( dMB, (0:NN, 0: 2), zero )
+    SALLOCATE( dMD, (0:NN, 0:NN), zero )
+    SALLOCATE( dMG, (0:NN      ), zero )
 
-        ! Determines if this volume vvol should be computed by this thread.
-        call IsMyVolume(vvol)
+    SALLOCATE( solution, (1:NN, -1:2), zero )
+    SALLOCATE( MBpsi, (1:NN), zero )
 
-        if( IsMyVolumeValue .EQ. 0 ) then
-            cycle
-        else if( IsMyVolumeValue .EQ. -1) then
-            FATAL(dfp100, .true., Unassociated volume)
-        endif
+    dBdX%L = .false. ! No need to take derivatives of matrices w.r.t geometry.
 
-        !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+    ! Compute matrices
+    WCALL( dfp100, ma00aa, ( Iquad(vvol), mn, vvol, ll ) )
+    WCALL( dfp100, matrix, ( vvol, mn, ll ) )
 
-        dBdX%L = .false. ! first, compute Beltrami fields;
+    ! Compute fields
+    WCALL( dfp100, ma02aa, ( vvol, NAdof(vvol) ) )
 
-        !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+    !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-        ! Compute fields
-        WCALL( dfp100, ma02aa, ( vvol, NAdof(vvol) ) )
+    ! Free memory
+
+    DALLOCATE(MBpsi)
+    DALLOCATE(solution)
+
+    DALLOCATE(dMG)
+    DALLOCATE(dMD)
+    DALLOCATE(dMB)
+    DALLOCATE(dMA)
+
+    call deallocate_geometry_matrices()
 
 
-        ! Compute relevant local quantities for the evaluation of the constraint. Doing it like this 
-        ! reduces the amount of data sent to the master thread. In the case of current constraint, only two
-        ! doubles per volume are sent.
-        if( Lconstraint.EQ.3 ) then
-            WCALL( dfp100, lbpol, (vvol, Bt00(1:Mvol, 0:1)) )                !Compute field at interface for global constraint
-        endif
-    enddo
 
+    ! Compute relevant local quantities for the evaluation of global constraints
+    if( Lconstraint.EQ.3 ) then
+        do iocons=0,1
+	 		if( ( Lcoordinatesingularity .and. iocons.eq.0 ) .or. ( Lvacuumregion .and. iocons.eq.1 ) ) cycle
+			
+            ideriv = 0
+            WCALL( dfp100, lbpol, (vvol, Bt00(1:Mvol, 0:1, -1:2), ideriv, iocons) ) !Compute field at interface for global constraint
 
-    ! Evaluation of global constraint and communications
-    if( .not.LocalConstraint ) then
+            ideriv = 2
+            WCALL( dfp100, lbpol, (vvol, Bt00(1:Mvol, 0:1, -1:2), ideriv, iocons) ) !Compute field at interface for global constraint, d w.r.t. pflux
+        enddo
 
-        select case (Lconstraint)
+        if( Lvacuumregion ) then
 
-            ! Case 3: toroidal current constraint
-            case( 3 )
-
-                ! Compute IPDt on each interface.
-                do vvol = 1, Mvol-1
-                
-                    ! --------------------------------------------------------------------------------------------------
-                    !                                                                     MPI COMMUNICATIONS
-                    call WhichCpuID(vvol  , cpu_send_one)
-                    call WhichCpuID(vvol+1, cpu_send_two)
-
-                    ! Broadcast magnetic field at the interface.
-                    RlBCAST(Bt00(vvol  , 1), 1, cpu_send_one)
-                    RlBCAST(Bt00(vvol+1, 0), 1, cpu_send_two)
-
-                    ! Evaluate surface current
-                    IPDt(vvol) = pi2 * (Bt00(vvol+1, 0) - Bt00(vvol, 1))
-
-                enddo
-
-                ! Compute the constraint and store it in Fvec. TODO: Compute analytically the constraint jacobian ?
-                if( myid.EQ.0 ) then
-                    Fvec = IPDt - Isurf(1:Mvol-1)
-                endif
-
-#ifdef DEBUG 
-                write(ounit, '("dfp100: ", 10x ," : max(IPDt) = "es12.5)') MAXVAL(IPDt)
+#ifdef DEBUG
+            FATAL( dfp100, vvol.ne.Mvol, Incorrect vvol in last volume)
 #endif
-                ! write(ounit,'("xspech : ", 10x ," : sum(Ate(",i3,",",i2,",",i2,")%s) =",99es23.15)') vvol, ideriv, ii, sum(Ate(vvol,ideriv,ii)%s(0:Lrad(vvol)))
             
-            case default
-                FATAL(dfp100, .true., Unaccepted value for Lconstraint)
-        end select
-    endif
+            ideriv=1 ! derivatives of Btheta w.r.t tflux
+            iocons=0 ! Only need inner side of volume derivatives
+            WCALL( dfp100, lbpol, (Mvol, Bt00(1:Mvol, 0:1, -1:2), ideriv, iocons) )
 
-6666 continue
+            iflag=2 ! derivatives of poloidal linking current w.r.t geometry not required
+            WCALL( dfp100, curent, (Mvol, mn, Nt, Nz, iflag, ldItGp(0:1,-1:2) ) )
+        endif
+    endif
+enddo
+
+
+! Evaluation of global constraint and communications
+if( .not.LocalConstraint ) then
+
+    select case (Lconstraint)
+
+        ! Case 3: toroidal current constraint
+        case( 3 )
+
+            ! Compute IPDt on each interface.
+            do vvol = 1, Mvol-1
+            
+                ! --------------------------------------------------------------------------------------------------
+                !                                                                     MPI COMMUNICATIONS
+                call WhichCpuID(vvol  , cpu_send_one)
+                call WhichCpuID(vvol+1, cpu_send_two)
+
+                ! Broadcast magnetic field at the interface.
+                RlBCAST(Bt00(vvol  , 1, 0), 1, cpu_send_one)
+                RlBCAST(Bt00(vvol+1, 0, 0), 1, cpu_send_two)
+                RlBCAST(Bt00(vvol  , 1, 2), 1, cpu_send_one)
+                RlBCAST(Bt00(vvol+1, 0, 2), 1, cpu_send_two)
+
+                ! Evaluate surface current
+                IPDt(vvol) = pi2 * (Bt00(vvol+1, 0, 0) - Bt00(vvol, 1, 0))
+                
+                ! their derivatives
+                IPDtdPf(vvol,vvol) = pi2 * Bt00(vvol+1, 0, 2)
+                if (vvol .ne. 1) IPDtdPf(vvol,vvol-1) = -pi2 * Bt00(vvol, 1, 2)
+            enddo
+
+            ! Compute the constraint and store it in Fvec.
+            if( myid.EQ.0 ) then
+                Fvec(1:Mvol-1) = IPDt(1:Mvol-1) - Isurf(1:Mvol-1)
+            endif
+
+            ! Compute poloidal linking current constraint as well in case of free boundary computation
+            if ( Lfreebound.eq.1 ) then
+
+                ! Communicate additional derivatives
+                call WhichCpuID(Mvol, cpu_send_one)
+                RlBCAST( ldItGp(0:1, -1:2), 8, cpu_send_one )
+                RlBCAST( Bt00(Mvol, 0:1, 1), 2, cpu_send_one )
+
+                ! Complete output: RHS
+                Fvec(Mvol    ) = ldItGp(1, 0) - curpol          
+                
+                ! Complete output: LHS
+                IPDtdPf(Mvol-1, Mvol  ) = pi2 * Bt00(Mvol, 0, 1)
+                IPDtdPf(Mvol  , Mvol-1) = ldItGp(1, 2)
+                IPDtdPf(Mvol  , Mvol  ) = ldItGp(1, 1)
+            endif
+
+
+        case default
+            FATAL(dfp100, .true., Unaccepted value for Lconstraint)
+    end select
+endif
 
 RETURN(dfp100)
 

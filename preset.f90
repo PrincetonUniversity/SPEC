@@ -36,23 +36,12 @@ subroutine preset
   INTEGER   :: innout, idof, jk, ll, ii, ifail, ideriv, vvol, mi, ni, mj, nj, mk, nk, mimj, ninj, mkmj, nknj, jj, kk, lvol, mm, nn, imn
   INTEGER   :: lquad, igauleg, maxIquad, Mrad, jquad, Lcurvature, iret, work1, work2
   REAL      :: teta, zeta, arg, lss, cszeta(0:1), error
+  LOGICAL   :: LComputeAxis
 
   BEGIN(preset)
   
   call random_seed()
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-
-    if( (Lconstraint.EQ.3) .and. (Lfindzero.EQ.2)) then
-        if( myid.EQ.0 ) then
-            !write(ounit, '(/, "!!! WARNING: Using Lfindzero=2 with Lconstraint=3 might not converge. The hessian at fixed toroidal current has not yet been implemented. !!!", /)') 
-            FATAL(preset, .true., Lconstraint=3 is incompatible with Lfindzero=2. Use Lfindzero=1 instead)
-        endif
-    endif
-  
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-
 
  !FATAL( preset, Nfp.eq.0, illegal division ) ! this was checked in global: readin; SRH: 27 Feb 18;
 
@@ -462,7 +451,12 @@ endif
 
 ! Allocate space for the toroidal current array in each interface
 
-  SALLOCATE( IPDt, (1:Mvol-1), zero)
+  SALLOCATE( IPDt, (1:Mvol), zero)
+  if( Lfreebound.eq.1 ) then
+    SALLOCATE( IPDtDpf, (1:Mvol  , 1:Mvol  ), zero)
+  else
+    SALLOCATE( IPDtDpf, (1:Mvol-1, 1:Mvol-1), zero)
+  endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -810,94 +804,6 @@ endif
   endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \subsection{Definition and allocation of Chebyshev-metric matrices;}
-!latex
-!latex Variables \internal{dMA}, \internal{dMB}, \internal{dMD} and \internal{solution} are arrays of size (1:Mvol). Then each array element has a 
-!latex data field called \emph{mat}, with size
-!latex \begin{itemize}
-!latex         \item  \internal{dMA(vvol)\% mat(0:NN, 0:NN)}
-!latex         \item  \internal{dMB(vvol)\% mat(0:NN, 0:2)}
-!latex         \item  \internal{dMD(vvol)\% mat(0:NN, 0:NN)}
-!latex         \item  \internal{solution(vvol)\% mat(0:NN, -1:2)}. 
-!latex \end{itemize}
-!latex
-!latex Arrays \internal{dMG(1:Mvol)} and \internal{MBpsi(1:Mvol)} has a field called \emph{arr} with size
-!latex \begin{itemize}
-!latex         \item \internal{dMG(vvol)\% arr(0:NN)}
-!latex         \item \internal{MBpsi(vvol)\% arr(1:NN)}
-!latex \end{itemize}
-
-
-! HERE DEFINE THE NEW MATRICES ARRAY
-
-! generate a matrix containing the pair (cpuid, matrix_index) for each volume
-allocate(IndMatrixArray(1:Mvol, 1:2))
-do vvol=1, Mvol 
-    call WhichCpuID(vvol, work1)
-    IndMatrixArray(vvol,1) = work1 !CpuID associated to this volume
-
-    ! Count how many volumes are already associated to this CPU
-    work1=0
-    do lvol=1,vvol
-        call WhichCpuID(lvol, work2)
-        if (work2.EQ.IndMatrixArray(vvol, 1)) then
-            work1 = work1 + 1
-        endif
-    enddo
-    IndMatrixArray(vvol, 2) = work1 ! index of volume in the list of volume for this CPU
-enddo
-
-
-! Allocate matrices
-work1 = 0
-do vvol =1, Mvol !Count how many volumes are associated to this CPU
-    call IsMyVolume(vvol)
-    if (IsMyVolumeValue.EQ.1) then
-        work1=work1+1
-    endif
-enddo
-
-! Allocate only the required number of matrices to each array
-allocate(dMA(1:work1))
-allocate(dMB(1:work1))
-allocate(dMD(1:work1))
-allocate(dMG(1:work1))
-allocate(MBpsi(1:work1))
-allocate(solution(1:Mvol)) !Excepted for solution which is broadcaster
-
-do ii = 1, work1
-  do jj = 1, Mvol ! Look for associated volume corresponding to (myid, ii)
-    if ((myid.EQ.IndMatrixArray(jj, 1)).AND.(ii.EQ.IndMatrixArray(jj, 2))) then
-        vvol = jj
-        exit !Found the volume, we can exit do loop
-    endif
-  enddo
-
-  NN = NAdof(vvol)
-  allocate( dMA(ii)%mat(0:NN, 0:NN) )
-  dMA(ii)%mat(0:NN, 0:NN)  = 0
-  
-  allocate( dMB(ii)%mat(0:NN, 0:2) )
-  dMB(ii)%mat(0:NN, 0:2) = 0
-  
-  allocate( dMD(ii)%mat(0:NN, 0:NN) )
-  dMD(ii)%mat(0:NN, 0:NN) = 0
-  
-  allocate( dMG(ii)%arr(0:NN) )
-  dMG(ii)%arr(0:NN) = 0
-  
-  allocate( MBpsi(ii)%arr(1:NN) )
-  MBpsi(ii)%arr(1:NN) = 0
-
-enddo
-
-do vvol = 1, Mvol
-  NN = NAdof(vvol)
-  allocate( solution(vvol)%mat(1:NN, -1:2))
-  solution(vvol)%mat(1:NN, -1:2) = 0
-enddo
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 !latex \subsubsection{\type{workspace};}
 
@@ -926,7 +832,7 @@ enddo
   SALLOCATE(   Rij, (1:Ntz,0:3,0:3    ), zero ) ! these are used for inverse fft to reconstruct real space geometry from interpolated Fourier harmonics;
   SALLOCATE(   Zij, (1:Ntz,0:3,0:3    ), zero )
   SALLOCATE(   sg , (1:Ntz,0:3        ), zero )
-  SALLOCATE( guvij, (1:Ntz,0:3,0:3,0:3), zero ) ! need this on higher resolution grid for accurate Fourier decomposition;
+  SALLOCATE( guvij, (1:Ntz,0:3,0:3,-1:3), zero ) ! need this on higher resolution grid for accurate Fourier decomposition;
   SALLOCATE( gvuij, (1:Ntz,0:3,0:3    ), zero ) ! need this on higher resolution grid for accurate Fourier decomposition; 10 Dec 15;
   
   SALLOCATE( dRadR, (1:mn,0:1,0:1,1:mn), zero ) ! calculated in rzaxis; 19 Sep 16;
@@ -1097,7 +1003,9 @@ enddo
    case(   2 ) ; vvol = Mvol
    end select
 
-   WCALL( preset, rzaxis, ( Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), vvol ) ) ! set coordinate axis; 19 Jul 16;
+  LComputeAxis = .true.
+
+   WCALL( preset, rzaxis, ( Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), vvol, LComputeAxis ) ) ! set coordinate axis; 19 Jul 16;
 
   endif ! end of if( Igeometry.eq.3 ) then ; 19 Jul 16;
   

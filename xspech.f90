@@ -69,7 +69,7 @@ program xspech
                         dtflux, dpflux, &
                         ImagneticOK, &
                         ForceErr, &
-                        efmn, ofmn, &
+                        efmn, ofmn, cfmn, sfmn, &
                         iBns, iBnc, iVns, iVnc, &
                         Ate, Aze, Ato, Azo, & ! only required for debugging; 09 Mar 17;
                         nfreeboundaryiterations, &
@@ -88,30 +88,31 @@ program xspech
 
   LOCALS
 
-  LOGICAL              :: LComputeDerivatives, LContinueFreeboundaryIterations, exist, LupdateBn
+  LOGICAL              :: LComputeDerivatives, LContinueFreeboundaryIterations, exist, LupdateBn, LComputeAxis
 
 ! INTEGER              :: nfreeboundaryiterations, imn, lmn, lNfp, lim, lin, ii, lvol ! 09 Mar 17;
-  INTEGER              :: imn, lmn, lNfp, lim, lin, ii, ideriv
+  INTEGER              :: imn, lmn, lNfp, lim, lin, ii, ideriv, stat, iocons, iwait, pid, status
   INTEGER              :: vvol, llmodnp, ifail, wflag, iflag, vflag
   REAL                 :: rflag, lastcpu, bnserr, lRwc, lRws, lZwc, lZws, lItor, lGpol, lgBc, lgBs, sumI
-  REAL,    allocatable :: position(:), gradient(:), Bt00(:,:)
-  CHARACTER            :: pack
+  REAL,    allocatable :: position(:), gradient(:), Bt00(:,:,:)
+  CHARACTER            :: pack, hostname
   INTEGER              :: Lfindzero_old, mfreeits_old
   REAL                 :: gBnbld_old
   INTEGER              :: lnPtrj, numTrajTotal
+  INTEGER, external    :: getpid, hostnm
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   MPISTART ! It might be easy to read the source if this macro was removed; SRH: 27 Feb 18;
 
-!#ifdef DEBUG
-!  iwait = 0; pid = getpid()
-!  status = hostnm( hostname )
-!  write(*,*) 'Process with PID: ', pid, 'ready to attach. Hostname: ', hostname
-!  do while( iwait .EQ. 0 )
-!    !wait for debugger
-!  enddo
-!#endif
+! #ifdef DEBUG
+!   iwait = 0; pid = getpid()
+!   status = hostnm( hostname )
+!   write(*,*) 'Process with PID: ', pid, 'ready to attach. Hostname: ', hostname
+!   do while( iwait .EQ. 0 )
+!     !wait for debugger
+!   enddo
+! #endif
   
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -224,7 +225,9 @@ program xspech
   if( NGdof.gt.0 ) then ! pack geometry into vector; 14 Jan 13;
 
    pack = 'P'
-   WCALL( xspech, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack ) )
+   LComputeAxis = .true.
+   WCALL( xspech, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), &
+                            iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, LComputeAxis ) )
 
   endif
   
@@ -288,7 +291,9 @@ program xspech
    endif
    
    pack = 'U' ! unpack geometrical degrees of freedom; 13 Sep 13;
-   WCALL( xspech, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack ) )
+   LComputeAxis = .true.
+   WCALL( xspech, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), &
+                            iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, LComputeAxis ) )
 
   endif
 
@@ -323,11 +328,11 @@ program xspech
   lastcpu = GETTIME
   
   LComputeDerivatives = .false.
-
+  LComputeAxis = .true.
 ! vvol = Mvol ; ideriv = 0 ; ii = 1
 ! write(ounit,'("xspech : ", 10x ," : sum(Ate(",i3,",",i2,",",i2,")%s) =",99es23.15)') vvol, ideriv, ii, sum(Ate(vvol,ideriv,ii)%s(0:Lrad(vvol)))
   
-  WCALL( xspech, dforce, ( NGdof, position(0:NGdof), gradient(0:NGdof), LComputeDerivatives ) ) ! (re-)calculate Beltrami fields;
+  WCALL( xspech, dforce, ( NGdof, position(0:NGdof), gradient(0:NGdof), LComputeDerivatives, LComputeAxis) ) ! (re-)calculate Beltrami fields;
   
   DALLOCATE(gradient)
   
@@ -450,12 +455,18 @@ program xspech
    
    WCALL( xspech, bnorml, ( mn, Ntz, efmn(1:mn), ofmn(1:mn) ) ) ! compute normal field etc. on computational boundary;
    
-   FATAL( xspech, mn-1.le.0, divide by zero )
+   !FATAL( xspech, mn-1.le.0, divide by zero )
 
-   if( YESstellsym ) bnserr = sum( abs( iBns(2:mn) - ofmn(2:mn) ) ) / (mn-1)
-   if( NOTstellsym ) bnserr = sum( abs( iBns(2:mn) - ofmn(2:mn) ) ) / (mn-1) &
-                            + sum( abs( iBnc(1:mn) - efmn(1:mn) ) ) / (mn  )
-   
+   if(mn.eq.1) then
+     if( YESstellsym ) bnserr = 0.0 !TODO: NOT SURE, this should test if bns is actually 0
+     if( NOTstellsym ) bnserr = sum( abs( iBnc(1:mn) - efmn(1:mn) ) ) / (mn  )
+   else
+     if( YESstellsym ) bnserr = sum( abs( iBns(2:mn) - ofmn(2:mn) ) ) / (mn-1)
+     if( NOTstellsym ) bnserr = sum( abs( iBns(2:mn) - ofmn(2:mn) ) ) / (mn-1) &
+                              + sum( abs( iBnc(1:mn) - efmn(1:mn) ) ) / (mn  )
+   endif
+
+
    if( bnserr.gt.gBntol ) then
     
     LContinueFreeboundaryIterations = .true.
@@ -629,27 +640,6 @@ program xspech
 !2000 format("finish : ",f10.2," : finished ",i3," ; ":"|f|="es12.5" ; ":"time=",f10.2,"s ;":" log"a5,:"="28f6.2" ...")
 !2001 format("finish : ", 10x ," :          ",3x," ; ":"    "  12x "   ":"     ", 10x ,"  ;":" log"a5,:"="28f6.2" ...")
   
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-! Computes the surface current at each interface for output
-
-  SALLOCATE( Bt00, (1:Mvol, 0:1) , zero)
-
-  do vvol = 1, Mvol
-    WCALL(xspech, lbpol, (vvol, Bt00(1:Mvol, 0:1)) )
-  enddo
-
-  do vvol = 1, Mvol-1
-    IPDt(vvol) = pi2 * (Bt00(vvol+1, 0) - Bt00(vvol, 1))
-  enddo
-
-  DALLOCATE( Bt00 )
-
-! and the volume current
-  sumI = 0
-  do vvol = 1, Mvol
-    Ivolume(vvol) = mu(vvol) * dtflux(vvol) * pi2 + sumI    ! factor pi2 due to normalization in preset
-    sumI = Ivolume(vvol)                                    ! Sum over all volumes since this is how Ivolume is defined
-  enddo
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -683,6 +673,44 @@ program xspech
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
+
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+! Computes the surface current at each interface for output
+
+  SALLOCATE( Bt00, (1:Mvol, 0:1, -1:2) , zero)
+
+  do vvol = 1, Mvol
+
+    LREGION(vvol)
+
+    do iocons = 0, 1
+	  if( ( Lcoordinatesingularity .and. iocons.eq.0 ) .or. ( Lvacuumregion .and. iocons.eq.1 ) ) cycle
+      ! Compute covariant magnetic field at interface
+      WCALL(xspech, lbpol, (vvol, Bt00(1:Mvol, 0:1, -1:2), 0, iocons) )
+
+      ! Save covariant magnetic field at interface for output - computed in lbpol
+      Btemn(1:mn, iocons, vvol) = efmn(1:mn)
+      Btomn(1:mn, iocons, vvol) = ofmn(1:mn)
+      Bzemn(1:mn, iocons, vvol) = cfmn(1:mn)
+      Bzomn(1:mn, iocons, vvol) = sfmn(1:mn)
+    enddo
+  enddo
+
+  ! Evaluate surface current
+  do vvol = 1, Mvol-1
+    IPDt(vvol) = pi2 * (Bt00(vvol+1, 0, 0) - Bt00(vvol, 1, 0))
+  enddo
+
+  DALLOCATE( Bt00 )
+
+  ! Evaluate volume current
+  sumI = 0
+  do vvol = 1, Mvol
+    Ivolume(vvol) = mu(vvol) * dtflux(vvol) * pi2 + sumI    ! factor pi2 due to normalization in preset
+    sumI = Ivolume(vvol)                                    ! Sum over all volumes since this is how Ivolume is defined
+  enddo
+
+
   do vvol = 1, Mvol
    
    LREGION(vvol)
@@ -692,8 +720,9 @@ program xspech
     if( .not.ImagneticOK(vvol) ) then ; cput = GETTIME ; write(ounit,1002) cput-cpus ; write(ounit,1002) cput-cpus, myid, vvol, ImagneticOK(vvol) ; cycle
     endif
 
-    ;WCALL( xspech, sc00aa, ( vvol, Ntz                  ) ) ! compute covariant field (singular currents);
-
+    ! No need for sc00aa anymore - this is done in lbpol
+    !;WCALL( xspech, sc00aa, ( vvol, Ntz                  ) ) ! compute covariant field (singular currents);
+ 
     if( Lcheck.eq.1 ) then
      WCALL( xspech, jo00aa, ( vvol, Ntz, Iquad(vvol), mn ) )
     endif
@@ -751,25 +780,6 @@ program xspech
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 9999 continue
-
-  do ii = 1, size(dMA)
-    deallocate(dMA(ii)%mat)
-    deallocate(dMB(ii)%mat)
-    deallocate(dMD(ii)%mat)
-    deallocate(dMG(ii)%arr)
-    deallocate(MBpsi(ii)%arr)
-  enddo
-  deallocate(dMA)
-  deallocate(dMB)
-  deallocate(dMD)
-  deallocate(dMG)
-  deallocate(MBpsi)
-
-  do ii = 1, Mvol
-    deallocate(solution(ii)%mat)
-  enddo
-  deallocate(solution)
-
 
   WCALL( xspech, ending )
 
