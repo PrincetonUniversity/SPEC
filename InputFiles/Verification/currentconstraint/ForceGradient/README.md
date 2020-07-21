@@ -1,4 +1,4 @@
-##Force gradient verification
+## Force gradient verification
 
 In this directory, tests are proposed in slab and cylindrical geometry to verify the convergence of the force gradient **at fixed toroidal current** (Lconstraint=3). For the complete derivation and results, see the attached file *ForceGradient\_CurrentConstraint.pdf*. 
 
