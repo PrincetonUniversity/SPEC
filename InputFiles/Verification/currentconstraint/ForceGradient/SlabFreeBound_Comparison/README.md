@@ -1,4 +1,4 @@
-##Screw pinch convergence
+## Screw pinch convergence
 
 *ConvergenceStudy.m* is a matlab script that will compute the force gradient in a free boundary plasma slab for different values of Lrad and compare it to the analytical force gradient. The maximal absolute difference between both it plotted. To run, first be sure to have compiled **the debug version of SPEC** with
 

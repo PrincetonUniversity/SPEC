@@ -115,7 +115,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
   INTEGER              :: IA, if04aaf, idgesvx, ipiv(1:NN), iwork4(1:NN)
   REAL  , allocatable  :: dmatrix(:,:,:), omatrix(:,:), FAA(:,:)
   REAL                 :: drhs(1:NN,-1:2), dlambda(1:NN,-1:2)
-  REAL                 :: Rdgesvx(1:NN), Cdgesvx(1:NN), work4(1:4*NN), rcond, ferr, berr, ferr2(1:2), berr2(1:2)
+  REAL                 :: Rdgesvx(1:NN), Cdgesvx(1:NN), work4(1:4*NN), rcond, ferr(1), berr(1), ferr2(1:2), berr2(1:2)
   CHARACTER            :: equed 
 
 ! required for real-space routines;

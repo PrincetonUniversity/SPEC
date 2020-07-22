@@ -170,55 +170,56 @@ subroutine dfp100(Ndofgl, x, Fvec, LComputeDerivatives)
 
     select case (Lconstraint)
 
-    ! Case 3: toroidal current constraint
-    case( 3 )
+      ! Case 3: toroidal current constraint
+      case( 3 )
 
-      ! Compute IPDt on each interface.
-      do vvol = 1, Mvol-1
-
-        ! --------------------------------------------------------------------------------------------------
-        !                                                                     MPI COMMUNICATIONS
-        call WhichCpuID(vvol  , cpu_send_one)
-        call WhichCpuID(vvol+1, cpu_send_two)
-
-        ! Broadcast magnetic field at the interface.
-        RlBCAST(Bt00(vvol  , 1, 0), 1, cpu_send_one)
-        RlBCAST(Bt00(vvol+1, 0, 0), 1, cpu_send_two)
-        RlBCAST(Bt00(vvol  , 1, 2), 1, cpu_send_one)
-        RlBCAST(Bt00(vvol+1, 0, 2), 1, cpu_send_two)
-
-        ! Evaluate surface current
-        IPDt(vvol) = pi2 * (Bt00(vvol+1, 0, 0) - Bt00(vvol, 1, 0))
+        ! Compute IPDt on each interface.
+        do vvol = 1, Mvol-1
         
-        ! their derivatives
-        IPDtdPf(vvol,vvol) = pi2 * Bt00(vvol+1, 0, 2)
-        if (vvol .ne. 1) IPDtdPf(vvol,vvol-1) = -pi2 * Bt00(vvol, 1, 2)
-      enddo
+          ! --------------------------------------------------------------------------------------------------
+          !                                                                     MPI COMMUNICATIONS
+          call WhichCpuID(vvol  , cpu_send_one)
+          call WhichCpuID(vvol+1, cpu_send_two)
 
-      ! Compute the constraint and store it in Fvec.
-      if( myid.EQ.0 ) then
-        Fvec(1:Mvol-1) = IPDt - Isurf(1:Mvol-1)
-      endif
+          ! Broadcast magnetic field at the interface.
+          RlBCAST(Bt00(vvol  , 1, 0), 1, cpu_send_one)
+          RlBCAST(Bt00(vvol+1, 0, 0), 1, cpu_send_two)
+          RlBCAST(Bt00(vvol  , 1, 2), 1, cpu_send_one)
+          RlBCAST(Bt00(vvol+1, 0, 2), 1, cpu_send_two)
 
-      ! Compute poloidal linking current constraint as well in case of free boundary computation
-      if ( Lfreebound.eq.1 ) then
+          ! Evaluate surface current
+          IPDt(vvol) = pi2 * (Bt00(vvol+1, 0, 0) - Bt00(vvol, 1, 0))
+          
+          ! their derivatives
+          IPDtdPf(vvol,vvol) = pi2 * Bt00(vvol+1, 0, 2)
+          if (vvol .ne. 1) IPDtdPf(vvol,vvol-1) = -pi2 * Bt00(vvol, 1, 2)
+        enddo
 
-        ! Communicate additional derivatives
-        call WhichCpuID(Mvol, cpu_send_one)
-        RlBCAST( ldItGp(0:1, -1:2), 8, cpu_send_one )
-        RlBCAST( Bt00(Mvol, 0:1, 1), 2, cpu_send_one )
+        ! Compute the constraint and store it in Fvec.
+        if( myid.EQ.0 ) then
+            Fvec(1:Mvol-1) = IPDt(1:Mvol-1) - Isurf(1:Mvol-1)
+        endif
 
-        ! Complete output: RHS
-        Fvec(Mvol    ) = ldItGp(1, 0) - curpol          
-        
-        ! Complete output: LHS
-        IPDtdPf(Mvol-1, Mvol  ) = pi2 * Bt00(Mvol, 0, 1)
-        IPDtdPf(Mvol  , Mvol-1) = ldItGp(1, 2)
-        IPDtdPf(Mvol  , Mvol  ) = ldItGp(1, 1)
-      endif
+        ! Compute poloidal linking current constraint as well in case of free boundary computation
+        if ( Lfreebound.eq.1 ) then
 
-    case default
-      FATAL(dfp100, .true., Unaccepted value for Lconstraint)
+          ! Communicate additional derivatives
+          call WhichCpuID(Mvol, cpu_send_one)
+          RlBCAST( ldItGp(0:1, -1:2), 8, cpu_send_one )
+          RlBCAST( Bt00(Mvol, 0:1, 1), 2, cpu_send_one )
+
+          ! Complete output: RHS
+          Fvec(Mvol    ) = ldItGp(1, 0) - curpol          
+          
+          ! Complete output: LHS
+          IPDtdPf(Mvol-1, Mvol  ) = pi2 * Bt00(Mvol, 0, 1)
+          IPDtdPf(Mvol  , Mvol-1) = ldItGp(1, 2)
+          IPDtdPf(Mvol  , Mvol  ) = ldItGp(1, 1)
+        endif
+
+
+      case default
+        FATAL(dfp100, .true., Unaccepted value for Lconstraint)
     end select
   endif
 

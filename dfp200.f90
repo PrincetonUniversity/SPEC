@@ -978,7 +978,9 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
                 dBdx2(vvol-1)   =                 - Bt00(vvol,   0, -1)
             endif
             ;   dBdx2(vvol  )   = Bt00(vvol  , 1, -1) - Bt00(vvol+1, 0, -1)
-            ;   dBdx2(vvol+1)   = Bt00(vvol+1, 1, -1)
+            if (vvol.lt.Mvol-1) then
+            ; dBdx2(vvol+1) = Bt00(vvol+1, 1, -1)
+            endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
             if( Lfreebound.eq.1 ) then ! Need to modify last two equations

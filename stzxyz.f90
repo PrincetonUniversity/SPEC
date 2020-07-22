@@ -76,7 +76,6 @@ subroutine stzxyz( lvol , stz , RpZ )
    if( Lcoordinatesingularity ) then
     
     sbar = ( lss + one ) * half
-    
     if( mi.eq.0 ) then
      if( Igeometry.eq.2 ) then ; fj = sbar
      else                      ; fj = sbar**2
