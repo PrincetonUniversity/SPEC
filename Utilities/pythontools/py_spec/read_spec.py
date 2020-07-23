@@ -62,6 +62,10 @@ class SPEC:
 
             # these define the target dimensions in the radial direction
             Nvol = self.input.physics.Nvol
+            if (self.input.physics.Lfreebound):
+                Nvol += 1
+                self.input.physics.Nvol += 1
+            
             Lrad = self.input.physics.Lrad
 
             # lists for vector potential
