@@ -222,7 +222,6 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
    ;            ; fj(Ntor+2:mn    ,0) = sbar**im(Ntor+2:mn)     ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
    case default ; FATAL( coords, .true., invalid Igeometry for Lcoordinatesingularity=T )
    end select
-   ;            ; fj(Ntor+2:mn    ,0) = sbar**halfmm(Ntor+2:mn) ! these are the me.ne.0 harmonics; 11 Aug 14;
    
    
    Remn(1:mn,0) = iRbc(1:mn,0) + ( iRbc(1:mn,1) - iRbc(1:mn,0) ) * fj(1:mn,0)
@@ -274,7 +273,6 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
    ;            ; fj(Ntor+2:mn    ,1) = half * im(Ntor+2:mn) * fj(Ntor+2:mn    ,0) / sbar     ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
    case default ; FATAL( coords, .true., invalid Igeometry for Lcoordinatesingularity=T and Lcurvature.ne.0 )
    end select
-   ;            ; fj(Ntor+2:mn    ,1) = half * halfmm(Ntor+2:mn) * fj(Ntor+2:mn    ,0) / sbar ! these are the me.ne.0 harmonics; 11 Aug 14;
 
    Remn(1:mn,1) =                       ( iRbc(1:mn,1) - iRbc(1:mn,0) ) * fj(1:mn,1)
    if( NOTstellsym ) then
@@ -411,7 +409,6 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
     case default ; 
      ;           ; FATAL( coords, .true., invalid Igeometry for Lcoordinatesingularity=T and Lcurvature=2 )
     end select   ;
-    ;            ; fj(Ntor+2:mn    ,2) = half * ( halfmm(Ntor+2:mn) - one ) * fj(Ntor+2:mn    ,1) / sbar ! these are the me.ne.0 harmonics; 11 Aug 14;
     
     Remn(1:mn,2) =                       ( iRbc(1:mn,1) - iRbc(1:mn,0) ) * fj(1:mn,2)
     if( NOTstellsym ) then

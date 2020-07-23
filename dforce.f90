@@ -562,7 +562,7 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives, LCompu
               if( idof.gt.LGdof ) write(ounit,1000) myid, vvol, ii, irz, issym, idof, LGdof ! can be deleted;
 #endif
 
-            if( issym.eq.1 .and. YESstellsym ) cycle ! no dependence on the non-stellarator symmetric harmonics;
+              if( issym.eq.1 .and. YESstellsym ) cycle ! no dependence on the non-stellarator symmetric harmonics;
 
               if( ii.eq.1 .and. irz.eq.1 .and. issym.eq.0 ) cycle ! no dependence on Zbs_{m=0,n=0};
               if( ii.eq.1 .and. irz.eq.0 .and. issym.eq.1 ) cycle ! no dependence on Rbs_{m=0,n=0};
@@ -747,41 +747,31 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives, LCompu
 
               endif
 #endif
-          enddo ! matches do issym ;
+            enddo ! matches do issym ;
 
-        enddo ! matches do irz ;
-      enddo ! matches do ii ;
+          enddo ! matches do irz ;
+        enddo ! matches do ii ;
 
-    else ! matches if( ImagneticOK(vvol) .and. ImagneticOK(vvol+1) ) ; 
+      else ! matches if( ImagneticOK(vvol) .and. ImagneticOK(vvol+1) ) ; 
 
-      FATAL( dforce, .true., need to provide suitable values for hessian in case of field failure )
+        FATAL( dforce, .true., need to provide suitable values for hessian in case of field failure )
 
-    endif ! end of if( ImagneticOK(vvol) .and. ImagneticOK(vvol+1) ) ;
+      endif ! end of if( ImagneticOK(vvol) .and. ImagneticOK(vvol+1) ) ;
 
-  enddo ! end of do vvol;
+    enddo ! end of do vvol;
 
 
 
 #ifdef DEBUG
 
 ! Print hessian and finite differences estimate (if single CPU). 
-  if( Lcheck.eq.6 ) then
-    if(myid.eq.0) then
-      open(10, file=trim(ext)//'.Lcheck6_output.txt', status='unknown')
-      write(ounit,'(A)') NEW_LINE('A')
-      do ii=1, NGdof
-        write(ounit,1345) myid, im(ii), in(ii), hessian(ii,:)
-        write(10   ,1347) hessian(ii,:)
-      enddo
-      close(10)
-      
-      write(ounit,'(A)') NEW_LINE('A')
-
-      open(10, file=trim(ext)//'.Lcheck6_output.FiniteDiff.txt', status='unknown')
-      if( ncpu.eq.1 ) then
+    if( Lcheck.eq.6 ) then
+      if(myid.eq.0) then
+        open(10, file=trim(ext)//'.Lcheck6_output.txt', status='unknown')
+        write(ounit,'(A)') NEW_LINE('A')
         do ii=1, NGdof
-!            write(ounit,1345) myid, im(ii), in(ii), hessian(ii,:)
-            write(10   ,1347) hessian(ii,:)
+          write(ounit,1345) myid, im(ii), in(ii), hessian(ii,:)
+          write(10   ,1347) hessian(ii,:)
         enddo
         close(10)
         
@@ -789,9 +779,19 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives, LCompu
 
         open(10, file=trim(ext)//'.Lcheck6_output.FiniteDiff.txt', status='unknown')
         if( ncpu.eq.1 ) then
+          do ii=1, NGdof
+            write(10   ,1347) hessian(ii,:)
+          enddo
+        endif
+        close(10)
+
+          
+        write(ounit,'(A)') NEW_LINE('A')
+
+        open(10, file=trim(ext)//'.Lcheck6_output.FiniteDiff.txt', status='unknown')
+        if( ncpu.eq.1 ) then
             do ii=1, NGdof
-!                write(ounit,1346) myid, im(ii), in(ii), finitediff_hessian(ii,:)
-                write(10   ,1347) finitediff_hessian(ii,:)
+              write(10   ,1347) finitediff_hessian(ii,:)
             enddo        
             write(ounit,'(A)') NEW_LINE('A')
         endif
@@ -801,10 +801,10 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives, LCompu
 1346       format("dforce: myid=",i3," ; (",i4,",",i4," ; Finite differences = ",512f16.10 "   ;")
 1347       format(512F22.16, " ")
 
-        DALLOCATE(finitediff_hessian)
       endif
+      DALLOCATE(finitediff_hessian)
 
-      FATAL(dforce, Lcheck.eq.6, Lcheck.eq.6 test has been completed. )
+    FATAL(dforce, Lcheck.eq.6, Lcheck.eq.6 test has been completed. )
     endif
 #endif
 
