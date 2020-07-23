@@ -2,12 +2,12 @@
 
 ###############################################################################################################################################################
 
- afiles=manual rzaxis packxi volume coords basefn
+ afiles=manual rzaxis packxi volume coords basefn memory
  bfiles=metrix ma00aa matrix spsmat spsint mp00ac ma02aa packab tr00ab curent df00ab lforce intghs mtrxhs lbpol
 #cfiles=bc00aa fc02aa jk03aa pc00aa pc00ab
  cfiles=brcast dfp100 dfp200 dforce newton 
  dfiles=casing bnorml 
- efiles=jo00aa pp00aa pp00ab bfield stzxyz prunin
+ efiles=jo00aa pp00aa pp00ab bfield stzxyz
  ffiles=hesian ra00aa numrec
  sfiles=dcuhre minpack iqpack rksuite i1mach d1mach ilut iters # below assumes the .f files are double precision; the CFLAGS = -r8 option is not required;
 
@@ -26,7 +26,7 @@
  
  MACROS=macros
  
- CC=gfortran_ubuntu
+ CC=intel
  # if want to use gfortran; make CC=gfortran; otherwise using Intel
  FC=mpif90
  OMP=yes
@@ -73,9 +73,9 @@ ifeq ($(CC),gfortran_ubuntu)
  # sudo apt install libfftw3-dev
  # sudo apt install libhdf5-openmpi-dev
  CFLAGS=-fdefault-real-8
- LINKS=-Wl,-rpath  -llapack -lblas
- LIBS=-I/Users/zhisong/Codes/lib/hdf5-1.10.5/hdf5/include
- LINKS+=-L/Users/zhisong/Codes/lib/hdf5-1.10.5/hdf5/lib -lhdf5_fortran -lhdf5 -lpthread -lz -lm
+ LINKS=-Wl,-rpath -Wl,/usr/lib/lapack -llapack -lblas
+ LIBS=-I/usr/include/hdf5/openmpi
+ LINKS+=-L/usr/lib/x86_64-linux-gnu/hdf5/openmpi -lhdf5_fortran -lhdf5 -lpthread -lz -lm
  LIBS+=-I/usr/include
  LINKS+=-lfftw3
  RFLAGS=-O2 -ffixed-line-length-none -ffree-line-length-none -fexternal-blas
