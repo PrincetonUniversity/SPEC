@@ -25,7 +25,7 @@ def get_grid_and_jacobian_and_metric(s,lvol=0,sarr=_np.linspace(1,1,1),tarr=_np.
     sbar    = (sarr+1)/2;
     fac = []
     for j in range(mn):
-        if (lvol>1 or im[j]==0):
+        if (lvol>0 or im[j]==0):
             fac.append([sbar,0.5*_np.ones(sarr.size)])
         else:
             fac.append([sbar**(im[j]/2.),(im[j]/4.)*sbar**(im[j]/2.-1.)])
@@ -99,7 +99,7 @@ def get_B(s,lvol=0,jacobian=None,sarr=_np.linspace(0,0,1),tarr=_np.linspace(0,0,
     fac = []
     sbar    = (sarr+1)/2;
     for j in range(mn):
-        if (lvol>1 or im[j]==0):
+        if (lvol>0 or im[j]==0):
             fac.append([_np.ones(sarr.size),_np.zeros(sarr.size)])
         else:
             fac.append([sbar**(im[j]/2.),(im[j]/4.)*sbar**(im[j]/2.-1.)])
