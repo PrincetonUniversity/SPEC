@@ -76,8 +76,9 @@ program xspech
                         beltramierror, &
                         first_free_bound, &
                         dMA, dMB, dMD, dMG, MBpsi, solution, dtflux, IPDt, &
-                        version, diotadxup, IsMyVolumeValue, mns, Nt, Nz, IsMyVolume
-                        
+                        version, IsMyVolumeValue, mns, Nt, Nz, IsMyVolume, &
+                        lmnSin, lmnCos
+
    ! write _all_ output quantities into a _single_ HDF5 file
    use sphdf5,   only : init_outfile, &
                         mirror_input_to_outfile, &
@@ -99,6 +100,7 @@ program xspech
   INTEGER              :: Lfindzero_old, mfreeits_old
   REAL                 :: gBnbld_old
   INTEGER              :: lnPtrj, numTrajTotal
+  REAL                 :: ldiota(0:1,-1:2) ! as temporary argument to tr00ab
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -663,36 +665,51 @@ program xspech
 
     LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
 
-! Determines if this volume vvol should be computed by this thread.
+    ! Determines if this volume vvol should be computed by this thread.
     call IsMyVolume(vvol)
 
     if( IsMyVolumeValue .EQ. 0 ) then
       cycle
     endif
 
-    WCALL( xspech, tr00ab, ( vvol, mn, lmns, Nt, Nz, iflag, diotadxup(0:1,-1:2,vvol) ) )
+    SALLOCATE( lmnSin, (1:Nvol,1:2, 1:mns), zero )
+    if (NOTstellsym) then
+      SALLOCATE( lmnCos, (1:Nvol,1:2, 1:mns), zero )
+    endif
+
+    WCALL( xspech, tr00ab, ( vvol, mn, lmns, Nt, Nz, iflag, ldiota(0:1,-1:2) ) )
 
     if( .not. Lcoordinatesingularity ) then
-      oita(vvol-1) = diotadxup(0,0,vvol)
+      oita(vvol-1) = ldiota(0,0)
     endif
-    iota(vvol) = diotadxup(1,0,vvol)
+    iota(vvol) = ldiota(1,0)
 
   enddo
 
-  ! brcast iota and oita
+  ! brcast iota and oita; lmnSin and lmnCos
   do vvol = 1, Mvol
-    
+
     LREGION(vvol)
 
     llmodnp = modulo(vvol-1,ncpu)
     RlBCAST( iota(vvol), 1, llmodnp )
+    RlBCAST( lmnSin(vvol,:,:), 2*mns, llmodnp )
+    if (NOTstellsym) then
+      RlBCAST( lmnCos(vvol,:,:), 2*mns, llmodnp )
+    endif
 
     if( .not. Lcoordinatesingularity ) then
-        RlBCAST( oita(vvol-1), 1, llmodnp )
+      RlBCAST( oita(vvol-1), 1, llmodnp )
+      RlBCAST( lmnSin(vvol-1,:,:), 2*mns, llmodnp )
+      if (NOTstellsym) then
+        RlBCAST( lmnCos(vvol-1,:,:), 2*mns, llmodnp )
+      endif
     endif
 
   enddo
-  
+
+  ! iota, oita, lmnSin and lmnCos are now broadcast to the master node, so they can be written to the output file
+  ! in the "hdfint" subroutine, which is called by "ending".
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -813,8 +830,14 @@ program xspech
   enddo
   deallocate(solution)
 
-
   WCALL( xspech, ending )
+
+  if (allocated(lmnSin)) then
+    deallocate(lmnSin)
+  endif
+  if (NOTstellsym .and. allocated(lmnCos)) then
+    deallocate(lmnCos)
+  endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
