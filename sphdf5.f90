@@ -854,7 +854,8 @@ subroutine hdfint
                         lmns, &
                         TT, &
                         beltramierror, &
-                        IPDt
+                        IPDt, &
+                        mns, NOTstellsym, lmnSin, lmnCos
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -972,7 +973,20 @@ subroutine hdfint
   endif
 
 !latex \type{lmns}                   & integer & \pb{resolution of straight fieldline transformation} \\
+! TODO: This is misleading, since lmns actually is the number of degrees of freedom, not the Fourier resolution, of the straight-fieldline transformation.
   HWRITEIV( grpOutput, 1, lmns, (/ lmns /))
+
+!latex \type{mns}                   & integer & \pb{number of Fourier harmonics of the straight-fieldline angle} \\
+  HWRITEIV( grpOutput, 1, mns, (/ mns /))
+
+!latex \type{lmnSin}                   & real & \pb{stellarator-symmetric sin(mu-nv) Fourier coefficients of the straight-fieldline angle} \\
+  HWRITERC( grpOutput, Nvol, 2, mns, lmnSin, lmnSin(1:Nvol,1:2,1:mns) )
+  if (NOTstellsym) then
+!latex \type{lmnCos}                   & real & \pb{non-stellarator-symmetric cos(mu-nv) Fourier coefficients of the straight-fieldline angle} \\
+    HWRITERC( grpOutput, Nvol, 2, mns, lmnCos, lmnCos(1:Nvol,1:2,1:mns) )
+  endif
+
+
 
 !latex \hline \end{tabular}
 
