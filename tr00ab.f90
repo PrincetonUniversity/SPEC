@@ -89,7 +89,8 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
                         Ntz, hNt, hNz, &
                         iotakkii, iotaksub, iotakadd, iotaksgn, &
                         Ate, Aze, Ato, Azo, TT, &
-                        Lcoordinatesingularity, Lvacuumregion, regumm
+                        Lcoordinatesingularity, Lvacuumregion, regumm, &
+                        lmnSin, lmnCos ! Fourier coefficients of straight-fieldline angle
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -700,18 +701,18 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
                     case default
                         FATAL( tr00ab, .true., invalid jderiv )
 
-                    end select ! end of select case jderiv; 02 Sep 14;
+                end select ! end of select case jderiv; 02 Sep 14;
 
-                    cput = GETTIME
+                cput = GETTIME
 
-                    select case( idgesvx )                                                                                           !12345678901234567
-                        case( 0   )    ; if( Wtr00ab ) write(ounit,1030) cput-cpus, myid, lvol, innout, id, "idgesvx", idgesvx, cput-lcpu, "solved Fourier ; ", dlambda(1,0)
-                        case( 1:  )    ;               write(ounit,1030) cput-cpus, myid, lvol, innout, id, "idgesvx", idgesvx, cput-lcpu, "singular ;       "
-                        case( :-1 )    ;               write(ounit,1030) cput-cpus, myid, lvol, innout, id, "idgesvx", idgesvx, cput-lcpu, "input error ;    "
-                        case default ;               FATAL( tr00ab, .true., illegal ifail returned by dgesvx )
-                    end select
+                select case( idgesvx )                                                                                           !12345678901234567
+                    case( 0   )    ; if( Wtr00ab ) write(ounit,1030) cput-cpus, myid, lvol, innout, id, "idgesvx", idgesvx, cput-lcpu, "solved Fourier ; ", dlambda(1,0)
+                    case( 1:  )    ;               write(ounit,1030) cput-cpus, myid, lvol, innout, id, "idgesvx", idgesvx, cput-lcpu, "singular ;       "
+                    case( :-1 )    ;               write(ounit,1030) cput-cpus, myid, lvol, innout, id, "idgesvx", idgesvx, cput-lcpu, "input error ;    "
+                    case default ;               FATAL( tr00ab, .true., illegal ifail returned by dgesvx )
+                end select
 
-                    FATAL( tr00ab, idgesvx.ne.0, failed to construct straight-fieldline angle using dgesvx )
+                FATAL( tr00ab, idgesvx.ne.0, failed to construct straight-fieldline angle using dgesvx )
 
             case( 1 ) ! Lsvdiota = 1; use least-squares to invert linear equations that define the straight fieldline angle; 01 Jul 14;
 
@@ -723,7 +724,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
                 Liwork = max(1,11*NN+3*nlvl*NN)
 
                 SALLOCATE( work, (1:Lwork), zero )
-      if (allocated(iwork)) deallocate(iwork)
+                if (allocated(iwork)) deallocate(iwork)
                 SALLOCATE( iwork, (1:Liwork), zero )
 
                 select case( jderiv ) 
@@ -774,7 +775,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
                 case( 0   )    ; if( Wtr00ab)  write(ounit,1030) cput-cpus, myid, lvol, innout, id, "idgelsd", idgelsd, cput-lcpu, "solved Fourier ; ", dlambda(1,0)
                 case( :-1 )    ;               write(ounit,1030) cput-cpus, myid, lvol, innout, id, "idgelsd", idgelsd, cput-lcpu, "input error ;    "
                 case( 1:  )    ;               write(ounit,1030) cput-cpus, myid, lvol, innout, id, "idgelsd", idgelsd, cput-lcpu, "QR failed ;      "
-                case default ;               FATAL( tr00ab, .true., illegal ifail returned by f04arf )
+                case default   ;               FATAL( tr00ab, .true., illegal ifail returned by f04arf )
                 end select
 
                 FATAL( tr00ab, idgelsd.ne.0, failed to construct straight-fieldline angle using dgelsd )      
@@ -848,6 +849,16 @@ endif ! end of if( Lsparse.eq.0 .or. Lsparse.eq.3 );
    endif
 
 #endif
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+   ! Save the Fourier harmonics of the straight-fieldline angle, if the appropriate arrays have been allocated by xspech.
+   if (allocated(lmnSin)) then
+     lmnSin(lvol, innout+1, 1:mns) = dlambda(2:mns+1, 0)
+   endif
+   if (NOTstellsym .and. allocated(lmnCos)) then
+     lmnSin(lvol, innout+1, 1:mns) = dlambda(2+mns:NN, 0)
+   endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
