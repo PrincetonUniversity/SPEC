@@ -912,7 +912,7 @@ module allglobal
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!``-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   INTEGER              :: myid, ncpu       ! mpi variables;
-  INTEGER           :: IsMyVolumeValue
+  INTEGER              :: IsMyVolumeValue
   REAL                 :: cpus             ! initial time;
 
   REAL                 :: pi2nfp           !       pi2/nfp     ; assigned in readin;
@@ -936,7 +936,7 @@ module allglobal
 
   LOGICAL, allocatable :: ImagneticOK(:)   ! used to indicate if Beltrami fields have been correctly constructed;
 
-  LOGICAL           :: IconstraintOK         ! Used to break iteration loops of slaves in the global constraint minimization.
+  LOGICAL              :: IconstraintOK    ! Used to break iteration loops of slaves in the global constraint minimization.
 
   REAL   , allocatable :: beltramierror(:,:)  ! to store the integral of |curlB-mu*B| computed by jo00aa;
     
@@ -1152,6 +1152,14 @@ module allglobal
   REAL   , allocatable :: dItGpdxtp(:,:,:) ! measured toroidal and poloidal current on inner/outer interfaces for each volume; d(Itor,Gpol)/dx; (see dforce);
 
   REAL   , allocatable :: glambda(:,:,:,:) ! save initial guesses for iterative calculation of rotational-transform; 
+
+  ! The following two arrays have the following structure:
+  ! (1:Nvol, 1:2, 1:mnmax_lambda)
+  ! The first dimension is the interface number.
+  ! The second dimension is the inner and outer side of the interfaces; 1: inner, 2: outer.
+  ! The third dimension is the number of Fourier harmonics for the straight-fieldline angle. It is defined by iMpol and iNtor.
+  REAL   , allocatable :: lmnSin(:,:,:) !     stellarator-symmetric sin(mu-nv) Fourier harmonics of the straight-fieldline angle lambda; (1:Nvol, 1:2, 1:nn)
+  REAL   , allocatable :: lmnCos(:,:,:) ! non-stellarator-symmetric cos(mu-nv) Fourier harmonics of the straight-fieldline angle lambda; (1:Nvol, 1:2, 1:nn)
 
   INTEGER              :: lmns
 
