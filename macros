@@ -182,7 +182,7 @@ m4_define(IlBCAST,{! macro expansion of ilbcast;
 
   ! macro expansion of ilbcast; end;})m4_dnl can put comments here
 m4_define(RlBCAST,{! macro expansion of rlbcast;
-! real MPI broadcast of _1; length is _2; what is _3 ?
+! real MPI broadcast of _1; length is _2; _3 is radial volume which is worked on
 
 #ifdef DEBUG
 
