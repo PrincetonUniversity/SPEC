@@ -751,7 +751,7 @@ endif
     enddo ! end of do ii; 25 Jan 13;
     
     FATAL( preset, idof.ne.NAdof(vvol), need to count Beltrami degrees-of-freedom more carefully  for coordinate singularity )
-    FATAL( preset, (idof+1)**2.ge.2**31-1), NAdof too big, should be smaller than maximum of int32 type )
+    FATAL( preset, (idof+1)**2.ge.HUGE(idof)), NAdof too big, should be smaller than maximum of int32 type )
 
    else ! .not.Lcoordinatesingularity;
         
@@ -799,7 +799,7 @@ endif
    !endif
     
     FATAL( preset, idof.ne.NAdof(vvol), need to count degrees-of-freedom more carefully for new matrix )
-    FATAL( preset, (idof+1)**2.ge.2**31-1), NAdof too big, should be smaller than maximum of int32 type )
+    FATAL( preset, (idof+1)**2.ge.HUGE(idof)), NAdof too big, should be smaller than maximum of int32 type )
 
    endif ! end of if( Lcoordinatesingularity ) ; 
    
