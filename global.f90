@@ -1825,6 +1825,11 @@ subroutine readin
    endif
    
    write(ounit,'("readin : ", 10x ," : ")')
+
+   if (LBeltrami .ne. 4 .and. Lmatsolver .ne.1) then
+    write(ounit,'("readin : ", 10x ," : ***Lmatsolver set to 1 for nonlinear solver***")')
+    Lmatsolver = 1
+   endif
    
    write(ounit,1030) cput-cpus, LBeltrami, Linitgues, Lmatsolver, LGMRESprec, NiterGMRES, epsGMRES, epsILU
    
