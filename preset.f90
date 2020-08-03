@@ -624,20 +624,48 @@ endif
    
    if( Lcoordinatesingularity ) then 
     zerdof = 0                                       ! count Zernike degree of freedom 30 Jun 19
-    do ii = 1, Mpol                                  ! for m>0
+    do ii = 2, Mpol                                  ! for m>1
      do jj = ii, Lrad(vvol), 2
       zerdof = zerdof + 2 * ntor + 1                 ! plus and minus sign for n>1, unique for n==0
       if( NOTstellsym ) zerdof = zerdof + 2*ntor + 1 ! plus and minus sign for n
      enddo
     enddo
-    do jj = 2, Lrad(vvol), 2                         ! for m==0
-     zerdof = zerdof + ntor + 1                      ! minus sign for n
+    zerdof = zerdof * 2                              ! we have one for At and one for Az
+
+    do jj = 0, Lrad(vvol), 2                         ! for m==0
+     zerdof = zerdof + ntor + 1                      ! minus sign for n, Aze
+     if (jj .ge. 2) zerdof = zerdof + ntor + 1       ! minus sign for n, Ate, without l=0 due to recombination
+
+     if( NOTstellsym ) then
+      zerdof = zerdof + ntor                         ! sin component minus sign for n, Azo
+      if (jj .ge. 2) zerdof = zerdof + ntor          ! minus sign for n, Ato, without l=0 due to recombination
+     endif
     enddo
+
+    if (Mpol .ge. 1) then ! for m==1
+      do jj = 1, Lrad(vvol), 2                         
+        zerdof = zerdof + 2 * ntor + 1                  ! minus and plus sign for n, Aze
+        if (jj .ge. 2) zerdof = zerdof + 2 * ntor + 1   ! minus sign for n, Ate, without l=0 due to recombination
+
+        if( NOTstellsym ) then
+          zerdof = zerdof + 2 * ntor + 1                 ! sin component minus and plus sign for n, Azo
+          if (jj .ge. 2) zerdof = zerdof + 2 * ntor + 1  ! minus and plus sign for n, Ato, without l=0 due to recombination
+        endif
+      enddo
+    endif
                                      !                                     a    c      b        d      e      f      g   h                                 
-    if( YESstellsym ) NAdof(vvol) = 2 * zerdof  + ntor + 1               +(mn-Ntor-1)+ Ntor+1        + mn-1        + 1 + 0
-    if( NOTstellsym ) NAdof(vvol) = 2 * zerdof                           + mn + mn-1 + Ntor+1 + Ntor + mn-1 + mn-1 + 1 + 0 ! this is broken at the moment
-    if (Mpol >= 1) then
-      if( YESstellsym ) NAdof(vvol) = NAdof(vvol) - (2 * ntor + 1) * 2
+    if( YESstellsym ) NAdof(vvol) = zerdof                               + mn        + Ntor+1        + mn-1        + 1 + 0
+    if( NOTstellsym ) NAdof(vvol) = zerdof                               + mn + mn-1 + Ntor+1 + Ntor + mn-1 + mn-1 + 1 + 0 ! this is broken at the moment
+
+    ! due to basis recombination, Lma will not have the m=0 and m=1 harmonics. We substract them now
+    ! m = 0
+    NAdof(vvol) = NAdof(vvol) - (ntor + 1)
+    if (NOTstellsym) NAdof(vvol) = NAdof(vvol) - ntor
+
+    ! m = 1
+    if (Mpol .ge. 1) then
+      NAdof(vvol) = NAdof(vvol) - (2 * ntor + 1)
+      if (NOTstellsym) NAdof(vvol) = NAdof(vvol) - (2 * ntor + 1)
     endif
 
     ! Guess the size of the sparse matrix ! 28 Jan 20
@@ -647,8 +675,8 @@ endif
       if( NOTstellsym ) NdMASmax(vvol) = (4 * (Lrad(vvol)/2 + 1))**2 * mn + 2 * 4 * 8 * Lrad(vvol) * mn ! Ate, Aze, Ato, Azo
     end if
    else ! .not.Lcoordinatesingularity;                                     a    c      b        d      e      f      g   h
-    if( YESstellsym ) NAdof(vvol) = 2 * ( mn        ) * ( Lrad(vvol)    ) +0*mn       +0*mn           + mn-1        + 1 + 1  
-    if( NOTstellsym ) NAdof(vvol) = 2 * ( mn + mn-1 ) * ( Lrad(vvol)    ) +0*mn+0*(mn-1)+0*mn+0*(mn-1)+ mn-1 + mn-1 + 1 + 1
+    if( YESstellsym ) NAdof(vvol) = 2 * ( mn        ) * ( Lrad(vvol)    )                            + mn-1        + 1 + 1  
+    if( NOTstellsym ) NAdof(vvol) = 2 * ( mn + mn-1 ) * ( Lrad(vvol)    )                            + mn-1 + mn-1 + 1 + 1
 
     ! Guess the size of the sparse matrix ! 28 Jan 20
     ! If an iterative method is used and requires an preconditioner, we need to construct it as a sparse matrix
@@ -716,12 +744,17 @@ endif
     do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
      
      do ll = 0, Lrad(vvol)
+      ! Zernike is non zero only if ll>=mi and when they have the same parity
       if (ll>=mi .and. mod(mi+ll,2)==0)then 
+      ! We use the basis combination for m=0 and 1. They don't have ll=0 component.
       if (.not.((ll==0.and.mi==0).or.(ll==1.and.mi==1))) then 
                                             ; idof = idof + 1 ; Ate(vvol,0,ii)%i(ll) = idof ! Zernike 30 Jun 19
       endif
       ;                                     ; idof = idof + 1 ; Aze(vvol,0,ii)%i(ll) = idof
-      if( NOTstellsym .and. ii.gt.1 ) then  ; idof = idof + 1 ; Ato(vvol,0,ii)%i(ll) = idof
+      if( NOTstellsym .and. ii.gt.1 ) then  
+        if (.not.((ll==0.and.mi==0).or.(ll==1.and.mi==1))) then 
+                                            ; idof = idof + 1 ; Ato(vvol,0,ii)%i(ll) = idof ! Zernike 30 Jun 19
+        endif
        ;                                    ; idof = idof + 1 ; Azo(vvol,0,ii)%i(ll) = idof
       endif ! NOTstellsym
       endif ! Zernike 
@@ -730,20 +763,27 @@ endif
     enddo ! end of do ii
 
     do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
+     ! Lma is for Ate boundary condition on axis. For m=0 and 1, the boundary condition has been satisfied by basis recombination, so they are excluded.
      if ( mi.ne.0 .and. mi.ne.1     )  then ; idof = idof + 1 ; Lma(vvol,  ii)       = idof
      endif
-
+     ! Lmb is for Aze boundary condition on axis. We only have that for m=0.
      if(  mi.eq.0                   ) then ; idof = idof + 1 ; Lmb(vvol,  ii)       = idof ! 18 May 16;
      endif
+     ! Lme is for B.n at the outer boundary cos component. We don't have it for m=n=0.
      if(  ii.gt.1                   ) then ; idof = idof + 1 ; Lme(vvol,  ii)       = idof
      endif
+     ! Lmg is for dtflux. We only have it for m=n=0.
      if(  ii.eq.1                   ) then ; idof = idof + 1 ; Lmg(vvol,  ii)       = idof
 !   ! ;                                    ; idof = idof + 1 ; Lmh(vvol,  ii)       = idof ! no constraint on poloidal flux in innermost volume; 11 Mar 16;
      endif
      if( NOTstellsym ) then
-     if(  ii.gt.1                   ) then ; idof = idof + 1 ; Lmc(vvol,  ii)       = idof ! 18 May 16;
-      ;                                    ; idof = idof + 1 ; Lmf(vvol,  ii)       = idof ! 18 May 16;
+      ! Lmc is for Ato boundary condition on axis. Same as Lma.
+      if(  mi.ne.0 .and. mi.ne.1    ) then ; idof = idof + 1 ; Lmc(vvol,  ii)       = idof ! 18 May 16;
+      endif
+      ! Lmf is for B.n at the outer boundary sin component. Same as Lme.
+      if(  ii.gt.1                  ) then ; idof = idof + 1 ; Lmf(vvol,  ii)       = idof ! 18 May 16;
      endif
+     ! Lmd is for Azo on axis. We only have it for m=0, but not m=n=0.
      if(  ii.gt.1 .and. mi.eq.0     ) then ; idof = idof + 1 ; Lmd(vvol,  ii)       = idof ! 18 May 16;
      endif
      endif ! end of if( NOTstellsym ) ; 19 Jul 16;
@@ -756,6 +796,7 @@ endif
    else ! .not.Lcoordinatesingularity;
         
     do ii = 1, mn
+     ! We use basis recombination method to ensure the inner boundary has At=Az=0. Therefore they don't have ll=0 component.
      do ll = 1, Lrad(vvol)                 ; idof = idof + 1 ; Ate(vvol,0,ii)%i(ll) = idof
       ;                                    ; idof = idof + 1 ; Aze(vvol,0,ii)%i(ll) = idof
       if( ii.gt.1 .and. NOTstellsym ) then ; idof = idof + 1 ; Ato(vvol,0,ii)%i(ll) = idof
@@ -770,10 +811,13 @@ endif
      !if(  ii.gt.1 .and. NOTstellsym ) then ; idof = idof + 1 ; Lmc(vvol,  ii)       = idof
      !;                                     ; idof = idof + 1 ; Lmd(vvol,  ii)       = idof
      !endif
+     ! Lme is for B.n at the outer boundary cos component. We don't have it for m=n=0.
      if(  ii.gt.1                   ) then ; idof = idof + 1 ; Lme(vvol,  ii)       = idof
      endif
+     ! Lmf is for B.n at the outer boundary sin component. Same as Lme
      if(  ii.gt.1 .and. NOTstellsym ) then ; idof = idof + 1 ; Lmf(vvol,  ii)       = idof
      endif
+     ! Lmg and Lmh are the dtflux and dpflux constraint. Only present for m=n=0
      if(  ii.eq.1                   ) then ; idof = idof + 1 ; Lmg(vvol,  ii)       = idof
       ;                                    ; idof = idof + 1 ; Lmh(vvol,  ii)       = idof
      endif
