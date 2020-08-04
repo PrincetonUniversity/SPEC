@@ -283,7 +283,7 @@ do ii = 1, mn
 
       if (NOTstellsym) then
         Tts(ll1,ii) = (sum(wk%basis(ll, bid, 0, :) * wk%sfmn(ii,:) * w) + sum(wk%basis(ll, bid, 1, :) * wk%kjreal(ii,:) * w) * dfactor) * ik
-        Tzs(ll1,ii) = (sum(wk%basis(ll, bid, 0, :) * wk%ofmn(ii,:) * w) - sum(wk%basis(ll, bid, 1, :) * wk%ijreal(ii,:) * w) * dfactor) * ik
+        Tzs(ll1,ii) = (sum(wk%basis(ll, bid, 0, :) * wk%ofmn(ii,:) * w) - sum(wk%basis(ll, bid, 1, :) * wk%jireal(ii,:) * w) * dfactor) * ik
       endif
 
     enddo !ll
@@ -305,7 +305,7 @@ do ii = 1, mn
     
     Tsc = Tsc * pi2pi2nfphalf
     Dts = Dts * pi2pi2nfphalf
-    Dzc = Dzc * pi2pi2nfphalf
+    Dzs = Dzs * pi2pi2nfphalf
 
     if (.not.dBdX%L) then
       Tts = Tts * pi2pi2nfphalf

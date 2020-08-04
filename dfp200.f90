@@ -229,12 +229,6 @@ subroutine dfp200( LcomputeDerivatives, vvol)
 
 
               ! Evaluate derivatives of B square 
-                            ! Evaluate derivatives of B square 
-              ! Evaluate derivatives of B square 
-                            ! Evaluate derivatives of B square 
-              ! Evaluate derivatives of B square 
-                            ! Evaluate derivatives of B square 
-              ! Evaluate derivatives of B square 
               call evaluate_dBB(vvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
 
             enddo ! matches do innout;

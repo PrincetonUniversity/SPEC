@@ -184,202 +184,236 @@ subroutine spsmat( lvol, mn, lrad )
  
     enddo ! end of do ii ;
 
-    ! deal with rest of the columes
+  else ! NOTstellsym
 
-    idMAS(NN+1) = ns+1
-    if (YESstellsym) then
+    do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
+    
+      jj = ii ; mj = im(jj) ; nj = in(jj) ; mimj = mi * mj ; minj = mi * nj ; nimj = ni * mj ; ninj = ni * nj
 
-      do ii = 1, mn; mi = im(ii) ; ni = in(ii)
+      if (Lcoordinatesingularity) then
+        idx = mi + 1
+      else
+        idx = 1
+      endif
 
+      if (ii.eq.1) then
+        factorcc = two
+        factorss = zero
+      else
+        factorcc = one
+        factorss = one
+      endif
+      
+      do ll = 0, lrad
+        ! clean up the queue
+        call clean_queue(nqueue, nmaxqueue, dMASqueue, dMDSqueue, jdMASqueue)
+        
+        if (Lcoordinatesingularity) then
+          if (ll.lt.mi .or. mod(ll+mi,2).gt.0) cycle
+        endif
+
+        do pp = 0, lrad
+        
+        if (Lcoordinatesingularity) then
+          if (pp.lt.mj .or. mod(pp+mj,2).gt.0) cycle ! rule out zero components of Zernike; 02 Jul 19
+          ll1 = (ll - mod(ll, 2)) / 2 ! shrinked dof for Zernike; 02 Jul 19
+          pp1 = (pp - mod(pp, 2)) / 2 ! shrinked dof for Zernike; 02 Jul 19
+        else
+          ll1 = ll
+          pp1 = pp
+        endif
+
+        Wtete = + 2 * ninj * TTssss(ll1,pp1,idx,1) * factorss + 2 * DDzzcc(ll1,pp1,idx,1) * factorcc
+        Wzete = + 2 * nimj * TTssss(ll1,pp1,idx,1) * factorss - 2 * DDtzcc(pp1,ll1,idx,1) * factorcc
+        Wteze = + 2 * minj * TTssss(ll1,pp1,idx,1) * factorss - 2 * DDtzcc(ll1,pp1,idx,1) * factorcc
+        Wzeze = + 2 * mimj * TTssss(ll1,pp1,idx,1) * factorss + 2 * DDttcc(ll1,pp1,idx,1) * factorcc
+              
+        Wtote = 2 * (   + nj * TDszcc(pp1,ll1,idx,1) * factorcc - ni * TDszss(ll1,pp1,idx,1) * factorss )
+        Wzote = 2 * (   + mj * TDszcc(pp1,ll1,idx,1) * factorcc + ni * TDstss(ll1,pp1,idx,1) * factorss )
+       
+        Wteto = 2 * (   - nj * TDszss(pp1,ll1,idx,1) * factorss + ni * TDszcc(ll1,pp1,idx,1) * factorcc )
+        Wtoto = 2 * ( + njni * TTsscc(pp1,ll1,idx,1) * factorcc +      DDzzss(pp1,ll1,idx,1) * factorss )
+        Wzeto = 2 * (   - mj * TDszss(pp1,ll1,idx,1) * factorss - ni * TDstcc(ll1,pp1,idx,1) * factorcc )
+        Wzoto = 2 * ( + mjni * TTsscc(pp1,ll1,idx,1) * factorcc -      DDtzss(pp1,ll1,idx,1) * factorss )
+       
+        Wtoze = 2 * (   - nj * TDstcc(pp1,ll1,idx,1) * factorcc - mi * TDszss(ll1,pp1,idx,1) * factorss )
+        Wzoze = 2 * (   - mj * TDstcc(pp1,ll1,idx,1) * factorcc + mi * TDstss(ll1,pp1,idx,1) * factorss )
+       
+        Wtezo = 2 * (   + nj * TDstss(pp1,ll1,idx,1) * factorss + mi * TDszcc(ll1,pp1,idx,1) * factorcc )
+        Wtozo = 2 * ( + njmi * TTsscc(pp1,ll1,idx,1) * factorcc -      DDtzss(pp1,ll1,idx,1) * factorss )
+        Wzezo = 2 * (   + mj * TDstss(pp1,ll1,idx,1) * factorss - mi * TDstcc(ll1,pp1,idx,1) * factorcc )
+        Wzozo = 2 * ( + mjmi * TTsscc(pp1,ll1,idx,1) * factorcc +      DDttss(pp1,ll1,idx,1) * factorss )
+        
+        Htete =   zero
+        Hzete = (- DToocc(pp1,ll1,idx,1) + DToocc(ll1,pp1,idx,1)) * factorcc
+        Hteze = (+ DToocc(pp1,ll1,idx,1) - DToocc(ll1,pp1,idx,1)) * factorcc
+        Hzeze =   zero
+
+
+        Htote =   zero
+        Hzote =   zero
+       
+        Hteto =   zero
+        Htoto =   zero
+        Hzeto =   zero
+        Hzoto = (- DTooss(pp1,ll1,idx,1) + DTooss(ll1,pp1,idx,1)) * factorss
+       
+        Htoze =   zero
+        Hzeze =   zero 
+        Hzoze =   zero
+       
+        Htezo =   zero
+        Htozo = (+ DTooss(pp1,ll1,idx,1) - DTooss(ll1,pp1,idx,1)) * factorss
+        Hzezo =   zero
+        Hzozo =   zero
+
+        
+        id = Ate(lvol,0,ii)%i(ll) ; jd = Ate(lvol,0,jj)%i(pp)
+        if (id.ne.0 .and. jd.ne.0) call push_back(1,nqueue,nmaxqueue,Wtete,Htete,jd,dMASqueue,dMDSqueue,jdMASqueue)
+        ;                         ; jd = Aze(lvol,0,jj)%i(pp)
+        if (id.ne.0 .and. jd.ne.0) call push_back(1,nqueue,nmaxqueue,Wzete,Hzete,jd,dMASqueue,dMDSqueue,jdMASqueue)
+        ;                         ; jd = Ato(lvol,0,jj)%i(pp)
+        if (id.ne.0 .and. jd.ne.0) call push_back(1,nqueue,nmaxqueue,Wtote,Htote,jd,dMASqueue,dMDSqueue,jdMASqueue)
+        ;                         ; jd = Azo(lvol,0,jj)%i(pp)
+        if (id.ne.0 .and. jd.ne.0) call push_back(1,nqueue,nmaxqueue,Wzote,Hzote,jd,dMASqueue,dMDSqueue,jdMASqueue)
+
+        id = Aze(lvol,0,ii)%i(ll) ; jd = Ate(lvol,0,jj)%i(pp)
+        if (id.ne.0 .and. jd.ne.0) call push_back(2,nqueue,nmaxqueue,Wteze,Hteze,jd,dMASqueue,dMDSqueue,jdMASqueue)
+        ;                         ; jd = Aze(lvol,0,jj)%i(pp)
+        if (id.ne.0 .and. jd.ne.0) call push_back(2,nqueue,nmaxqueue,Wzeze,Hzeze,jd,dMASqueue,dMDSqueue,jdMASqueue)
+        ;                         ; jd = Ato(lvol,0,jj)%i(pp)
+        if (id.ne.0 .and. jd.ne.0) call push_back(2,nqueue,nmaxqueue,Wtoze,Htoze,jd,dMASqueue,dMDSqueue,jdMASqueue)
+        ;                         ; jd = Azo(lvol,0,jj)%i(pp)
+        if (id.ne.0 .and. jd.ne.0) call push_back(2,nqueue,nmaxqueue,Wzoze,Hzoze,jd,dMASqueue,dMDSqueue,jdMASqueue)
+
+        id = Ato(lvol,0,ii)%i(ll) ; jd = Ate(lvol,0,jj)%i(pp)
+        if (id.ne.0 .and. jd.ne.0) call push_back(3,nqueue,nmaxqueue,Wteto,Hteto,jd,dMASqueue,dMDSqueue,jdMASqueue)
+        ;                         ; jd = Aze(lvol,0,jj)%i(pp)
+        if (id.ne.0 .and. jd.ne.0) call push_back(3,nqueue,nmaxqueue,Wzeto,Hzeto,jd,dMASqueue,dMDSqueue,jdMASqueue)
+        ;                         ; jd = Ato(lvol,0,jj)%i(pp)
+        if (id.ne.0 .and. jd.ne.0) call push_back(3,nqueue,nmaxqueue,Wtoto,Htoto,jd,dMASqueue,dMDSqueue,jdMASqueue)
+        ;                         ; jd = Azo(lvol,0,jj)%i(pp)
+        if (id.ne.0 .and. jd.ne.0) call push_back(3,nqueue,nmaxqueue,Wzoto,Hzoto,jd,dMASqueue,dMDSqueue,jdMASqueue)
+
+        id = Azo(lvol,0,ii)%i(ll) ; jd = Ate(lvol,0,jj)%i(pp)
+        if (id.ne.0 .and. jd.ne.0) call push_back(4,nqueue,nmaxqueue,Wtezo,Htezo,jd,dMASqueue,dMDSqueue,jdMASqueue)
+        ;                         ; jd = Aze(lvol,0,jj)%i(pp)
+        if (id.ne.0 .and. jd.ne.0) call push_back(4,nqueue,nmaxqueue,Wzezo,Hzezo,jd,dMASqueue,dMDSqueue,jdMASqueue)
+        ;                         ; jd = Ato(lvol,0,jj)%i(pp)
+        if (id.ne.0 .and. jd.ne.0) call push_back(4,nqueue,nmaxqueue,Wtozo,Htozo,jd,dMASqueue,dMDSqueue,jdMASqueue)
+        ;                         ; jd = Azo(lvol,0,jj)%i(pp)
+        if (id.ne.0 .and. jd.ne.0) call push_back(4,nqueue,nmaxqueue,Wzozo,Hzozo,jd,dMASqueue,dMDSqueue,jdMASqueue)
+        
+        enddo ! end of do pp ;
+        
         if( Lcoordinatesingularity .and. ii.eq.1 ) then ; kk = 1
         else                                            ; kk = 0
         endif
 
-        call clean_queue(nqueue, nmaxqueue, dMASqueue, dMDSqueue, jdMASqueue)
-        do ll = 0, lrad ; jd = Ate(lvol,0,ii)%i(ll) ; id = Lma(lvol,  ii) ; adata = +      TTMdata(ll, mi)
+        ddata = zero
+        ! inner boundary Lagrange multiplier terms
+        ;                  ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lma(lvol,  ii) ; adata = +      TTMdata(ll, mi)
+        if (id.ne.0 .and. jd.ne.0)   call push_back(1,nqueue,nmaxqueue,adata,ddata,jd,dMASqueue,dMDSqueue,jdMASqueue)
+        ;                  ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lmb(lvol,  ii) ; adata = +      TTdata(ll, mi,kk)
+        if (id.ne.0 .and. jd.ne.0)   call push_back(2,nqueue,nmaxqueue,adata,ddata,jd,dMASqueue,dMDSqueue,jdMASqueue)
+
+        ;                  ; id = Ato(lvol,0,ii)%i(ll) ; jd = Lmc(lvol,  ii) ; adata = +      TTMdata(ll, mi)
+        if (id.ne.0 .and. jd.ne.0)   call push_back(3,nqueue,nmaxqueue,adata,ddata,jd,dMASqueue,dMDSqueue,jdMASqueue)
+        ;                  ; id = Azo(lvol,0,ii)%i(ll) ; jd = Lmd(lvol,  ii) ; adata = +      TTdata(ll, mi,0)
+        if (id.ne.0 .and. jd.ne.0)   call push_back(4,nqueue,nmaxqueue,adata,ddata,jd,dMASqueue,dMDSqueue,jdMASqueue)
+
+        ! outer boundary Lagrange multiplier terms & fluxes
+        if( ii.gt.1 ) then ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lme(lvol,  ii) ; adata = - ni * TTdata(ll, mi, 1)
+          if (id.ne.0 .and. jd.ne.0) call push_back(1,nqueue,nmaxqueue,adata,ddata,jd,dMASqueue,dMDSqueue,jdMASqueue)
+        ;                  ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lme(lvol,  ii) ; adata = - mi * TTdata(ll, mi, 1)
+          if (id.ne.0 .and. jd.ne.0) call push_back(2,nqueue,nmaxqueue,adata,ddata,jd,dMASqueue,dMDSqueue,jdMASqueue)
+        ;                  ; id = Ato(lvol,0,ii)%i(ll) ; jd = Lmf(lvol,  ii) ; adata = + ni * TTdata(ll, mi, 1)
+          if (id.ne.0 .and. jd.ne.0) call push_back(3,nqueue,nmaxqueue,adata,ddata,jd,dMASqueue,dMDSqueue,jdMASqueue)
+        ;                  ; id = Azo(lvol,0,ii)%i(ll) ; jd = Lmf(lvol,  ii) ; adata = + mi * TTdata(ll, mi, 1)
+          if (id.ne.0 .and. jd.ne.0) call push_back(4,nqueue,nmaxqueue,adata,ddata,jd,dMASqueue,dMDSqueue,jdMASqueue)
+
+        else               ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lmg(lvol,  ii) ; adata = +      TTdata(ll, mi, 1)
+          if (id.ne.0 .and. jd.ne.0) call push_back(1,nqueue,nmaxqueue,adata,ddata,jd,dMASqueue,dMDSqueue,jdMASqueue)
+        ;                  ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lmh(lvol,  ii) ; adata = +      TTdata(ll, mi, 1)
+          if (id.ne.0 .and. jd.ne.0) call push_back(2,nqueue,nmaxqueue,adata,ddata,jd,dMASqueue,dMDSqueue,jdMASqueue)
+        endif
+        
+        ! putting things in the sparse matrix
+        call addline(nqueue, nmaxqueue, dMASqueue, dMDSqueue, jdMASqueue, ns, nrow, dMAS, dMDS, jdMAS, idMAS)
+        
+      enddo ! end of do ll ;
+ 
+    enddo ! end of do ii ;
+
+  endif ! if (YESstellsym)
+
+  ! deal with rest of the columes
+
+  do ii = 1, mn; mi = im(ii) ; ni = in(ii)
+
+    if( Lcoordinatesingularity .and. ii.eq.1 ) then ; kk = 1
+    else                                            ; kk = 0
+    endif
+
+    call clean_queue(nqueue, nmaxqueue, dMASqueue, dMDSqueue, jdMASqueue)
+    ! the inner boundary condition terms, YESstellsym
+    do ll = 0, lrad ; jd = Ate(lvol,0,ii)%i(ll) ; id = Lma(lvol,  ii) ; adata = +      TTMdata(ll, mi)
+    if (id.ne.0 .and. jd.ne.0)   call push_back(1,nqueue,nmaxqueue,adata,zero,jd,dMASqueue,dMDSqueue,jdMASqueue)
+    enddo
+    do ll = 0, lrad ; jd = Aze(lvol,0,ii)%i(ll) ; id = Lmb(lvol,  ii) ; adata = +      TTdata(ll, mi,kk)
+    if (id.ne.0 .and. jd.ne.0)   call push_back(2,nqueue,nmaxqueue,adata,zero,jd,dMASqueue,dMDSqueue,jdMASqueue)
+    enddo
+    call addline(nqueue, nmaxqueue, dMASqueue, dMDSqueue, jdMASqueue, ns, nrow, dMAS, dMDS, jdMAS, idMAS)
+
+    ! the outerboundary and flux terms, YESstellsym
+    call clean_queue(nqueue, nmaxqueue, dMASqueue, dMDSqueue, jdMASqueue)
+    if (ii.gt.1) then
+      do ll = 0, lrad ; jd = Ate(lvol,0,ii)%i(ll) ; id = Lme(lvol,  ii) ; adata = - ni * TTdata(ll, mi, 1)
+      if (id.ne.0 .and. jd.ne.0)   call push_back(1,nqueue,nmaxqueue,adata,zero,jd,dMASqueue,dMDSqueue,jdMASqueue)
+      ;               ; jd = Aze(lvol,0,ii)%i(ll) ; id = Lme(lvol,  ii) ; adata = - mi * TTdata(ll, mi, 1)
+      if (id.ne.0 .and. jd.ne.0)   call push_back(1,nqueue,nmaxqueue,adata,zero,jd,dMASqueue,dMDSqueue,jdMASqueue)
+      enddo
+    else
+      do ll = 0, lrad ; jd = Ate(lvol,0,ii)%i(ll) ; id = Lmg(lvol,  ii) ; adata = +      TTdata(ll, mi, 1)
+      if (id.ne.0 .and. jd.ne.0)   call push_back(1,nqueue,nmaxqueue,adata,zero,jd,dMASqueue,dMDSqueue,jdMASqueue)
+      ;               ; jd = Aze(lvol,0,ii)%i(ll) ; id = Lmh(lvol,  ii) ; adata = +      TTdata(ll, mi, 1)
+      if (id.ne.0 .and. jd.ne.0)   call push_back(2,nqueue,nmaxqueue,adata,zero,jd,dMASqueue,dMDSqueue,jdMASqueue)
+      enddo
+    endif
+    call addline(nqueue, nmaxqueue, dMASqueue, dMDSqueue, jdMASqueue, ns, nrow, dMAS, dMDS, jdMAS, idMAS)
+
+    if (NOTstellsym) then
+      call clean_queue(nqueue, nmaxqueue, dMASqueue, dMDSqueue, jdMASqueue)
+      ! the inner boundary condition terms, NOTstellsym
+      do ll = 0, lrad ; jd = Ato(lvol,0,ii)%i(ll) ; id = Lmc(lvol,  ii) ; adata = +      TTMdata(ll, mi)
+      if (id.ne.0 .and. jd.ne.0)   call push_back(1,nqueue,nmaxqueue,adata,zero,jd,dMASqueue,dMDSqueue,jdMASqueue)
+      enddo
+      do ll = 0, lrad ; jd = Azo(lvol,0,ii)%i(ll) ; id = Lmd(lvol,  ii) ; adata = +      TTdata(ll, mi,0)
+      if (id.ne.0 .and. jd.ne.0)   call push_back(2,nqueue,nmaxqueue,adata,zero,jd,dMASqueue,dMDSqueue,jdMASqueue)
+      enddo
+      call addline(nqueue, nmaxqueue, dMASqueue, dMDSqueue, jdMASqueue, ns, nrow, dMAS, dMDS, jdMAS, idMAS)
+
+      ! the outer boundary and flux terms, NOTstellsym
+      call clean_queue(nqueue, nmaxqueue, dMASqueue, dMDSqueue, jdMASqueue)
+      if (ii.gt.1) then
+        do ll = 0, lrad ; jd = Ato(lvol,0,ii)%i(ll) ; id = Lmf(lvol,  ii) ; adata = + ni * TTdata(ll, mi, 1)
+        if (id.ne.0 .and. jd.ne.0)   call push_back(1,nqueue,nmaxqueue,adata,zero,jd,dMASqueue,dMDSqueue,jdMASqueue)
+        ;               ; jd = Azo(lvol,0,ii)%i(ll) ; id = Lmf(lvol,  ii) ; adata = + mi * TTdata(ll, mi, 1)
         if (id.ne.0 .and. jd.ne.0)   call push_back(1,nqueue,nmaxqueue,adata,zero,jd,dMASqueue,dMDSqueue,jdMASqueue)
         enddo
-        do ll = 0, lrad ; jd = Aze(lvol,0,ii)%i(ll) ; id = Lmb(lvol,  ii) ; adata = +      TTdata(ll, mi,kk)
-        if (id.ne.0 .and. jd.ne.0)   call push_back(2,nqueue,nmaxqueue,adata,zero,jd,dMASqueue,dMDSqueue,jdMASqueue)
-        enddo
-        call addline(nqueue, nmaxqueue, dMASqueue, dMDSqueue, jdMASqueue, ns, nrow, dMAS, dMDS, jdMAS, idMAS)
+      endif
+      call addline(nqueue, nmaxqueue, dMASqueue, dMDSqueue, jdMASqueue, ns, nrow, dMAS, dMDS, jdMAS, idMAS)
+    endif ! if (NOTstellsym)
+  enddo
 
-        call clean_queue(nqueue, nmaxqueue, dMASqueue, dMDSqueue, jdMASqueue)
-        if (ii.gt.1) then
-          do ll = 0, lrad ; jd = Ate(lvol,0,ii)%i(ll) ; id = Lme(lvol,  ii) ; adata = - ni * TTdata(ll, mi, 1)
-          if (id.ne.0 .and. jd.ne.0)   call push_back(1,nqueue,nmaxqueue,adata,zero,jd,dMASqueue,dMDSqueue,jdMASqueue)
-          ;               ; jd = Aze(lvol,0,ii)%i(ll) ; id = Lme(lvol,  ii) ; adata = - mi * TTdata(ll, mi, 1)
-          if (id.ne.0 .and. jd.ne.0)   call push_back(1,nqueue,nmaxqueue,adata,zero,jd,dMASqueue,dMDSqueue,jdMASqueue)
-          enddo
-        else
-          do ll = 0, lrad ; jd = Ate(lvol,0,ii)%i(ll) ; id = Lmg(lvol,  ii) ; adata = +      TTdata(ll, mi, 1)
-          if (id.ne.0 .and. jd.ne.0)   call push_back(1,nqueue,nmaxqueue,adata,zero,jd,dMASqueue,dMDSqueue,jdMASqueue)
-          ;               ; jd = Aze(lvol,0,ii)%i(ll) ; id = Lmh(lvol,  ii) ; adata = +      TTdata(ll, mi, 1)
-          if (id.ne.0 .and. jd.ne.0)   call push_back(2,nqueue,nmaxqueue,adata,zero,jd,dMASqueue,dMDSqueue,jdMASqueue)
-          enddo
-        endif
-        call addline(nqueue, nmaxqueue, dMASqueue, dMDSqueue, jdMASqueue, ns, nrow, dMAS, dMDS, jdMAS, idMAS)
+  NdMAS(lvol) = ns
+  idMAS(NN+1) = ns+1
 
-      enddo
-
-    else
-    endif ! if (YESstellsym)
-
-    NdMAS(lvol) = ns
-    idMAS(NN+1) = ns+1
-
-  else ! NOTstellsym ;
-   
-  !  do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
-    
-  !   do jj = 1, mn ; mj = im(jj) ; nj = in(jj) ; mjmi = mi * mj ; mjni = ni * mj ; njmi = mi * nj ; njni = ni * nj
-     
-  !    do ll = 0, lrad
-      
-  !     do pp = 0, lrad
-
-  !      if (Lcoordinatesingularity) then
-  !       if (ll < mi .or. pp < mj) cycle ! rule out zero components of Zernike; 02 Jul 19
-  !       if (mod(ll+mi,2)+mod(pp+mj,2)>0) cycle ! rule out zero components of Zernike; 02 Jul 19
-  !       ll1 = (ll - mod(ll, 2)) / 2! shrinked dof for Zernike; 02 Jul 19
-  !       pp1 = (pp - mod(pp, 2)) / 2 ! shrinked dof for Zernike; 02 Jul 19
-  !      else
-  !       ll1 = ll
-  !       pp1 = pp
-  !      end if
-       
-  !      Wtete = 2 * ( + njni * TTssss(pp1,ll1,jj,ii) - nj * TDszsc(pp1,ll1,jj,ii) - ni * TDszsc(ll1,pp1,ii,jj) + DDzzcc(pp1,ll1,jj,ii) )
-  !      Wtote = 2 * ( - njni * TTsscs(pp1,ll1,jj,ii) + nj * TDszcc(pp1,ll1,jj,ii) - ni * TDszss(ll1,pp1,ii,jj) + DDzzsc(pp1,ll1,jj,ii) )
-  !      Wzete = 2 * ( + mjni * TTssss(pp1,ll1,jj,ii) - mj * TDszsc(pp1,ll1,jj,ii) + ni * TDstsc(ll1,pp1,ii,jj) - DDtzcc(pp1,ll1,jj,ii) )
-  !      Wzote = 2 * ( - mjni * TTsscs(pp1,ll1,jj,ii) + mj * TDszcc(pp1,ll1,jj,ii) + ni * TDstss(ll1,pp1,ii,jj) - DDtzsc(pp1,ll1,jj,ii) )
-       
-  !      Wteto = 2 * ( - njni * TTsssc(pp1,ll1,jj,ii) - nj * TDszss(pp1,ll1,jj,ii) + ni * TDszcc(ll1,pp1,ii,jj) + DDzzcs(pp1,ll1,jj,ii) )
-  !      Wtoto = 2 * ( + njni * TTsscc(pp1,ll1,jj,ii) + nj * TDszcs(pp1,ll1,jj,ii) + ni * TDszcs(ll1,pp1,ii,jj) + DDzzss(pp1,ll1,jj,ii) )
-  !      Wzeto = 2 * ( - mjni * TTsssc(pp1,ll1,jj,ii) - mj * TDszss(pp1,ll1,jj,ii) - ni * TDstcc(ll1,pp1,ii,jj) - DDtzcs(pp1,ll1,jj,ii) )
-  !      Wzoto = 2 * ( + mjni * TTsscc(pp1,ll1,jj,ii) + mj * TDszcs(pp1,ll1,jj,ii) - ni * TDstcs(ll1,pp1,ii,jj) - DDtzss(pp1,ll1,jj,ii) )
-       
-  !      Wteze = 2 * ( + njmi * TTssss(pp1,ll1,jj,ii) + nj * TDstsc(pp1,ll1,jj,ii) - mi * TDszsc(ll1,pp1,ii,jj) - DDtzcc(pp1,ll1,jj,ii) )
-  !      Wtoze = 2 * ( - njmi * TTsscs(pp1,ll1,jj,ii) - nj * TDstcc(pp1,ll1,jj,ii) - mi * TDszss(ll1,pp1,ii,jj) - DDtzsc(pp1,ll1,jj,ii) )
-  !      Wzeze = 2 * ( + mjmi * TTssss(pp1,ll1,jj,ii) + mj * TDstsc(pp1,ll1,jj,ii) + mi * TDstsc(ll1,pp1,ii,jj) + DDttcc(pp1,ll1,jj,ii) )
-  !      Wzoze = 2 * ( - mjmi * TTsscs(pp1,ll1,jj,ii) - mj * TDstcc(pp1,ll1,jj,ii) + mi * TDstss(ll1,pp1,ii,jj) + DDttsc(pp1,ll1,jj,ii) )
-       
-  !      Wtezo = 2 * ( - njmi * TTsssc(pp1,ll1,jj,ii) + nj * TDstss(pp1,ll1,jj,ii) + mi * TDszcc(ll1,pp1,ii,jj) - DDtzcs(pp1,ll1,jj,ii) )
-  !      Wtozo = 2 * ( + njmi * TTsscc(pp1,ll1,jj,ii) - nj * TDstcs(pp1,ll1,jj,ii) + mi * TDszcs(ll1,pp1,ii,jj) - DDtzss(pp1,ll1,jj,ii) )
-  !      Wzezo = 2 * ( - mjmi * TTsssc(pp1,ll1,jj,ii) + mj * TDstss(pp1,ll1,jj,ii) - mi * TDstcc(ll1,pp1,ii,jj) + DDttcs(pp1,ll1,jj,ii) )
-  !      Wzozo = 2 * ( + mjmi * TTsscc(pp1,ll1,jj,ii) - mj * TDstcs(pp1,ll1,jj,ii) - mi * TDstcs(ll1,pp1,ii,jj) + DDttss(pp1,ll1,jj,ii) )
-       
-  !      Htete =   zero
-  !      Htote =   zero
-  !      Hzete = - DToocc(pp1,ll1,jj,ii) + DToocc(ll1,pp1,ii,jj)
-  !      Hzote = - DToosc(pp1,ll1,jj,ii) + DToocs(ll1,pp1,ii,jj)
-       
-  !      Hteto =   zero
-  !      Htoto =   zero
-  !      Hzeto = - DToocs(pp1,ll1,jj,ii) + DToosc(ll1,pp1,ii,jj)
-  !      Hzoto = - DTooss(pp1,ll1,jj,ii) + DTooss(ll1,pp1,ii,jj)  
-       
-  !      Hteze = + DToocc(pp1,ll1,jj,ii) - DToocc(ll1,pp1,ii,jj)
-  !      Htoze = + DToosc(pp1,ll1,jj,ii) - DToocs(ll1,pp1,ii,jj)
-  !      Hzeze =   zero 
-  !      Hzoze =   zero
-       
-  !      Htezo = + DToocs(pp1,ll1,jj,ii) - DToosc(ll1,pp1,ii,jj)
-  !      Htozo = + DTooss(pp1,ll1,jj,ii) - DTooss(ll1,pp1,ii,jj)
-  !      Hzezo =   zero
-  !      Hzozo =   zero
-     
-  !      id = Ate(lvol,0,ii)%i(ll) ; jd = Ate(lvol,0,jj)%i(pp) ; dMA(id,jd) = Wtete ; dMD(id,jd) = Htete
-  !      ;                         ; jd = Ato(lvol,0,jj)%i(pp) ; dMA(id,jd) = Wtote ; dMD(id,jd) = Htote
-  !      ;                         ; jd = Aze(lvol,0,jj)%i(pp) ; dMA(id,jd) = Wzete ; dMD(id,jd) = Hzete
-  !      ;                         ; jd = Azo(lvol,0,jj)%i(pp) ; dMA(id,jd) = Wzote ; dMD(id,jd) = Hzote
-  !      id = Ato(lvol,0,ii)%i(ll) ; jd = Ate(lvol,0,jj)%i(pp) ; dMA(id,jd) = Wteto ; dMD(id,jd) = Hteto
-  !      ;                         ; jd = Ato(lvol,0,jj)%i(pp) ; dMA(id,jd) = Wtoto ; dMD(id,jd) = Htoto
-  !      ;                         ; jd = Aze(lvol,0,jj)%i(pp) ; dMA(id,jd) = Wzeto ; dMD(id,jd) = Hzeto
-  !      ;                         ; jd = Azo(lvol,0,jj)%i(pp) ; dMA(id,jd) = Wzoto ; dMD(id,jd) = Hzoto
-  !      id = Aze(lvol,0,ii)%i(ll) ; jd = Ate(lvol,0,jj)%i(pp) ; dMA(id,jd) = Wteze ; dMD(id,jd) = Hteze
-  !      ;                         ; jd = Ato(lvol,0,jj)%i(pp) ; dMA(id,jd) = Wtoze ; dMD(id,jd) = Htoze
-  !      ;                         ; jd = Aze(lvol,0,jj)%i(pp) ; dMA(id,jd) = Wzeze ; dMD(id,jd) = Hzeze
-  !      ;                         ; jd = Azo(lvol,0,jj)%i(pp) ; dMA(id,jd) = Wzoze ; dMD(id,jd) = Hzoze
-  !      id = Azo(lvol,0,ii)%i(ll) ; jd = Ate(lvol,0,jj)%i(pp) ; dMA(id,jd) = Wtezo ; dMD(id,jd) = Htezo
-  !      ;                         ; jd = Ato(lvol,0,jj)%i(pp) ; dMA(id,jd) = Wtozo ; dMD(id,jd) = Htozo
-  !      ;                         ; jd = Aze(lvol,0,jj)%i(pp) ; dMA(id,jd) = Wzezo ; dMD(id,jd) = Hzezo
-  !      ;                         ; jd = Azo(lvol,0,jj)%i(pp) ; dMA(id,jd) = Wzozo ; dMD(id,jd) = Hzozo
-       
-  !     enddo ! end of do pp ;
-      
-  !    enddo ! end of do jj ;
-     
-  !   enddo ! end of do ll ;
-    
-  !   if( Lcoordinatesingularity .and. ii.eq.1 ) then ; kk = 1
-  !   else                                            ; kk = 0
-  !   endif
-
-  !   if (Lcoordinatesingularity) then
-  !         do ll = 0, lrad ! Chebyshev polynomial ;
-
-  !     ;                  ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lma(lvol,ii)         ; dMA(id,jd) = RTM(ll, mi)
-  !     ;                  ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lmb(lvol,ii)         ; dMA(id,jd) = RTT(ll, mi,kk,0)
-  !     if( ii.gt.1 ) then ; id = Ato(lvol,0,ii)%i(ll) ; jd = Lmc(lvol,ii)         ; dMA(id,jd) = RTM(ll, mi)
-  !       ;                 ; id = Azo(lvol,0,ii)%i(ll) ; jd = Lmd(lvol,ii)         ; dMA(id,jd) = RTT(ll, mi, 0,0)
-  !       ;                 ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lme(lvol,ii)         ; dMA(id,jd) = - ni * RTT(ll, mi, 1,0)
-  !       ;                 ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lme(lvol,ii)         ; dMA(id,jd) = - mi * RTT(ll, mi, 1,0)
-  !       ;                 ; id = Ato(lvol,0,ii)%i(ll) ; jd = Lmf(lvol,ii)         ; dMA(id,jd) = + ni * RTT(ll, mi, 1,0)
-  !       ;                 ; id = Azo(lvol,0,ii)%i(ll) ; jd = Lmf(lvol,ii)         ; dMA(id,jd) = + mi * RTT(ll, mi, 1,0)
-  !     else               ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lmg(lvol,ii)         ; dMA(id,jd) = +      RTT(ll, mi, 1,0)
-  !       ;                 ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lmh(lvol,ii)         ; dMA(id,jd) = +      RTT(ll, mi, 1,0)
-  !     endif
-      
-  !     enddo ! end of do ll;
-      
-  !     do pp = 0, lrad
-  !     ;                  ; id = Lma(lvol,ii)         ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(id,jd) = RTM(pp, mi)
-  !     ;                  ; id = Lmb(lvol,ii)         ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(id,jd) = RTT(pp, mi,kk,0)
-  !     if( ii.gt.1 ) then ; id = Lmc(lvol,ii)         ; jd = Ato(lvol,0,ii)%i(pp) ; dMA(id,jd) = RTM(ll, mi)
-  !       ;                 ; id = Lmd(lvol,ii)         ; jd = Azo(lvol,0,ii)%i(pp) ; dMA(id,jd) = RTT(ll, mi, 0,0)
-  !       ;                 ; id = Lme(lvol,ii)         ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(id,jd) = - ni * RTT(ll, mi, 1,0)
-  !       ;                 ; id = Lme(lvol,ii)         ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(id,jd) = - mi * RTT(ll, mi, 1,0)
-  !       ;                 ; id = Lmf(lvol,ii)         ; jd = Ato(lvol,0,ii)%i(pp) ; dMA(id,jd) = + ni * RTT(ll, mi, 1,0)
-  !       ;                 ; id = Lmf(lvol,ii)         ; jd = Azo(lvol,0,ii)%i(pp) ; dMA(id,jd) = + mi * RTT(ll, mi, 1,0)
-  !     else               ; id = Lmg(lvol,ii)         ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(id,jd) = +      RTT(ll, mi, 1,0)
-  !       ;                 ; id = Lmh(lvol,ii)         ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(id,jd) = +      RTT(ll, mi, 1,0)
-  !     endif
-  !     enddo ! end of do pp ;
-  !   else
-  !     do ll = 0, lrad ! Chebyshev polynomial ;
-
-  !     ;                  ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lma(lvol,ii)         ; dMA(id,jd) = +      TT(ll, 0,0)
-  !     ;                  ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lmb(lvol,ii)         ; dMA(id,jd) = +      TT(ll,kk,0)
-  !     if( ii.gt.1 ) then ; id = Ato(lvol,0,ii)%i(ll) ; jd = Lmc(lvol,ii)         ; dMA(id,jd) = +      TT(ll, 0,0)
-  !       ;                 ; id = Azo(lvol,0,ii)%i(ll) ; jd = Lmd(lvol,ii)         ; dMA(id,jd) = +      TT(ll, 0,0)
-  !       ;                 ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lme(lvol,ii)         ; dMA(id,jd) = - ni * TT(ll, 1,0)
-  !       ;                 ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lme(lvol,ii)         ; dMA(id,jd) = - mi * TT(ll, 1,0)
-  !       ;                 ; id = Ato(lvol,0,ii)%i(ll) ; jd = Lmf(lvol,ii)         ; dMA(id,jd) = + ni * TT(ll, 1,0)
-  !       ;                 ; id = Azo(lvol,0,ii)%i(ll) ; jd = Lmf(lvol,ii)         ; dMA(id,jd) = + mi * TT(ll, 1,0)
-  !     else               ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lmg(lvol,ii)         ; dMA(id,jd) = +      TT(ll, 1,0)
-  !       ;                 ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lmh(lvol,ii)         ; dMA(id,jd) = +      TT(ll, 1,0)
-  !     endif
-      
-  !     enddo ! end of do ll;
-      
-  !     do pp = 0, lrad
-  !     ;                  ; id = Lma(lvol,ii)         ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(id,jd) = +      TT(pp, 0,0)
-  !     ;                  ; id = Lmb(lvol,ii)         ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(id,jd) = +      TT(pp,kk,0)
-  !     if( ii.gt.1 ) then ; id = Lmc(lvol,ii)         ; jd = Ato(lvol,0,ii)%i(pp) ; dMA(id,jd) = +      TT(pp, 0,0)
-  !       ;                 ; id = Lmd(lvol,ii)         ; jd = Azo(lvol,0,ii)%i(pp) ; dMA(id,jd) = +      TT(pp, 0,0)
-  !       ;                 ; id = Lme(lvol,ii)         ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(id,jd) = - ni * TT(pp, 1,0)
-  !       ;                 ; id = Lme(lvol,ii)         ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(id,jd) = - mi * TT(pp, 1,0)
-  !       ;                 ; id = Lmf(lvol,ii)         ; jd = Ato(lvol,0,ii)%i(pp) ; dMA(id,jd) = + ni * TT(pp, 1,0)
-  !       ;                 ; id = Lmf(lvol,ii)         ; jd = Azo(lvol,0,ii)%i(pp) ; dMA(id,jd) = + mi * TT(pp, 1,0)
-  !     else               ; id = Lmg(lvol,ii)         ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(id,jd) = +      TT(pp, 1,0)
-  !       ;                 ; id = Lmh(lvol,ii)         ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(id,jd) = +      TT(pp, 1,0)
-  !     endif
-  !     enddo ! end of do pp ;
-  !   end if
-    
-  !  enddo ! end of do ii ;
-   
-  endif ! end of if( YESstellsym ) ;
+  ! write(ounit,*) nrow, NN
+  ! write(ounit,*) dMAS(1:ns)
+  ! write(ounit,*) jdMAS(1:ns)
+  ! write(ounit,*) idMAS(1:NN+1)
+  ! stop
   
   ! dMB and dMG are constructed elsewhere
 
