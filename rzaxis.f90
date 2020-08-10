@@ -70,13 +70,17 @@
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+#ifdef DEBUG
+recursive subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivatives )
+#else
 subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivatives )
+#endif
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   use constants, only : zero, one, half, two
   
-  use numerical, only :
+  use numerical, only : vsmall
   
   use fileunits, only : ounit
   
@@ -110,6 +114,7 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
   REAL                   :: junkc(1:mn), junks(1:mn) ! these are junk matrices used for fft
 
   INTEGER                :: jvol, ii, ifail, jj, id, issym, irz, imn
+  INTEGER                :: idJc, idJs, idRc, idRs, idZc, idZs
 
   INTEGER                :: Lcurvature
 
@@ -234,8 +239,10 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
   !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 #ifdef DEBUG
-    FATAL( rzaxis, .not.allocated(cosi), fatal )
-    FATAL( rzaxis, .not.allocated(sini), fatal )
+    if (LComputeDerivatives) then
+      FATAL( rzaxis, .not.allocated(cosi), fatal )
+      FATAL( rzaxis, .not.allocated(sini), fatal )
+    endif
 #endif
 
   !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -374,6 +381,14 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
     Lcurvature = 1
     dBdX%innout = 1
 
+    ! the indices in the matrix
+    idJc = Ntoraxis+1                 ! rhs index for J cos n=0 term
+    idJs = Ntoraxis+1 + 2*Ntoraxis+1  ! rhs index for J sin n=0 term
+    idRc = 1
+    idZs = Ntoraxis + 1
+    idRs = 2 * Ntoraxis + 1
+    idZc = 3 * Ntoraxis + 2
+
     WCALL( rzaxis, coords, (1, one, Lcurvature, Ntz, mn ))
 
     jacbase = sg(1:Ntz,0) / Rij(1:Ntz,0,0)  ! extract the baseline 2D jacobian, note the definition here does not have the R factor
@@ -418,6 +433,72 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
 
       end do ! ii
 
+    else ! for NOTstellsym
+      
+      do ii = -Ntoraxis, Ntoraxis
+        do jj = 1, Ntoraxis
+
+          if (ii-jj .ge. -Ntor) then
+            id = 2 * (Ntor + 1) + ii - jj
+            ! for J cos terms
+            ! the DRcn' term
+            jacmat(ii+idJc, jj+idRc) = jacmat(ii+idJc, jj+idRc) - jZbs(id,ivol)
+            ! the DZsn' term
+            jacmat(ii+idJc, jj+idZs) = jacmat(ii+idJc, jj+idZs) + jRbc(id,ivol)
+            ! the DRsn' term
+            jacmat(ii+idJc, jj+idRs) = jacmat(ii+idJc, jj+idRs) - jZbc(id,ivol)
+            ! the DZsn' term
+            jacmat(ii+idJc, jj+idZc) = jacmat(ii+idJc, jj+idZc) + jRbs(id,ivol)
+            
+            ! for J sin terms
+            ! the DRcn' term
+            jacmat(ii+idJs, jj+idRc) = jacmat(ii+idJs, jj+idRc) + jZbc(id,ivol)
+            ! the DZsn' term
+            jacmat(ii+idJs, jj+idZs) = jacmat(ii+idJs, jj+idZs) + jRbs(id,ivol)
+            ! the DRsn' term
+            jacmat(ii+idJs, jj+idRs) = jacmat(ii+idJs, jj+idRs) - jZbs(id,ivol)
+            ! the DZsn' term
+            jacmat(ii+idJs, jj+idZc) = jacmat(ii+idJs, jj+idZc) - jRbc(id,ivol)
+              
+          end if ! if (ii-jj .ge. -Ntor)
+
+          if (ii+jj .le. Ntor) then
+            id = 2 * (Ntor + 1) + ii + jj
+
+            ! for J cos terms
+            ! the DRcn' term
+            jacmat(ii+idJc, jj+idRc) = jacmat(ii+idJc, jj+idRc) - jZbs(id,ivol)
+            ! the DZsn' term
+            jacmat(ii+idJc, jj+idZs) = jacmat(ii+idJc, jj+idZs) - jRbc(id,ivol)
+            ! the DRsn' term
+            jacmat(ii+idJc, jj+idRs) = jacmat(ii+idJc, jj+idRs) + jZbc(id,ivol)
+            ! the DZsn' term
+            jacmat(ii+idJc, jj+idZc) = jacmat(ii+idJc, jj+idZc) + jRbs(id,ivol)
+            
+            ! for J sin terms
+            ! the DRcn' term
+            jacmat(ii+idJs, jj+idRc) = jacmat(ii+idJs, jj+idRc) + jZbc(id,ivol)
+            ! the DZsn' term
+            jacmat(ii+idJs, jj+idZs) = jacmat(ii+idJs, jj+idZs) - jRbs(id,ivol)
+            ! the DRsn' term
+            jacmat(ii+idJs, jj+idRs) = jacmat(ii+idJs, jj+idRs) + jZbs(id,ivol)
+            ! the DZsn' term
+            jacmat(ii+idJs, jj+idZc) = jacmat(ii+idJs, jj+idZc) - jRbc(id,ivol)
+          end if ! if (ii+jj .le. Ntor)
+
+        end do ! jj
+        
+        ! the DR0 term
+        id = 2 * (Ntor + 1) + ii
+        ! for J cos terms
+        jacmat(ii+idJc, idRc) = - two * jZbs(id,ivol)
+        jacmat(ii+idJc, idZc) = + two * jRbs(id,ivol)
+        ! for J sin terms
+        jacmat(ii+idJs, idRc) = + two * jZbc(id,ivol)
+        jacmat(ii+idJs, idZc) = - two * jRbc(id,ivol)
+
+      end do ! ii
+
     endif ! if (YESstellsym)
 
     jacmat = jacmat * half ! because we are using (1+s)/2 instead of s
@@ -437,12 +518,17 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
 
     if (LComputeDerivatives) then
       ! copy the data to jRbc etc
-      if (YESstellsym) then
-        jRbc(1:Ntor+1,jvol) = zero
-        jZbs(2:Ntor+1,jvol) = zero
-        jRbc(1:Ntoraxis+1,jvol) = jRbc(1:Ntoraxis+1,ivol) - solution(1:Ntoraxis+1)
-        jZbs(2:Ntoraxis+1 ,jvol) = jZbs(2:Ntoraxis+1,ivol) - solution(Ntoraxis+2:2*Ntoraxis+1)
-      endif ! YESstellsym
+
+      jRbc(1:Ntor+1,jvol) = zero
+      jZbs(2:Ntor+1,jvol) = zero
+      jRbc(1:Ntoraxis+1,jvol) = jRbc(1:Ntoraxis+1,ivol) - solution(1:Ntoraxis+1)
+      jZbs(2:Ntoraxis+1 ,jvol) = jZbs(2:Ntoraxis+1,ivol) - solution(Ntoraxis+2:2*Ntoraxis+1)
+      if (NOTstellsym) then
+        jRbs(2:Ntor+1,jvol) = zero
+        jZbc(1:Ntor+1,jvol) = zero
+        jRbs(2:Ntoraxis+1,jvol) = jRbs(2:Ntoraxis+1,ivol) - solution(idRs+1:idRs+Ntoraxis)
+        jZbc(1:Ntoraxis+1 ,jvol) = jZbc(1:Ntoraxis+1,ivol) - solution(idZc:idZc+Ntoraxis)
+      endif ! NOTstellsym
 
       ! compute the derivative w.r.t. Rjc, Rjs, Zjc, Zjs using matrix perturbation theory
       ! clean up the result from last time
@@ -524,7 +610,71 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
                   if (id .eq. imn .and. irz .eq. 1) djacmat(ii+Ntoraxis+1, 1) = - two
 
                 end do ! ii
+              else ! if (YESstellsym)
+                do ii = -Ntoraxis, Ntoraxis
+                  do jj = 1, Ntoraxis
 
+                    if (ii-jj .ge. -Ntor) then
+                      id = 2 * (Ntor + 1) + ii - jj
+                      ! for J cos terms
+                      ! the DRcn' term
+                      if (id.eq.imn .and. irz.eq.1 .and. issym.eq.0) djacmat(ii+idJc, jj+idRc) = djacmat(ii+idJc, jj+idRc) - one
+                      ! the DZsn' term
+                      if (id.eq.imn .and. irz.eq.0 .and. issym.eq.0) djacmat(ii+idJc, jj+idZs) = djacmat(ii+idJc, jj+idZs) + one
+                      ! the DRsn' term
+                      if (id.eq.imn .and. irz.eq.1 .and. issym.eq.1) djacmat(ii+idJc, jj+idRs) = djacmat(ii+idJc, jj+idRs) - one
+                      ! the DZsn' term
+                      if (id.eq.imn .and. irz.eq.0 .and. issym.eq.1) djacmat(ii+idJc, jj+idZc) = djacmat(ii+idJc, jj+idZc) + one
+                      
+                      ! for J sin terms
+                      ! the DRcn' term
+                      if (id.eq.imn .and. irz.eq.1 .and. issym.eq.1) djacmat(ii+idJs, jj+idRc) = djacmat(ii+idJs, jj+idRc) + one
+                      ! the DZsn' term
+                      if (id.eq.imn .and. irz.eq.0 .and. issym.eq.1) djacmat(ii+idJs, jj+idZs) = djacmat(ii+idJs, jj+idZs) + one
+                      ! the DRsn' term
+                      if (id.eq.imn .and. irz.eq.1 .and. issym.eq.0) djacmat(ii+idJs, jj+idRs) = djacmat(ii+idJs, jj+idRs) - one
+                      ! the DZsn' term
+                      if (id.eq.imn .and. irz.eq.0 .and. issym.eq.0) djacmat(ii+idJs, jj+idZc) = djacmat(ii+idJs, jj+idZc) - one
+
+                    end if ! if (ii-jj .ge. -Ntor)
+
+                    if (ii+jj .le. Ntor) then
+                      id = 2 * (Ntor + 1) + ii + jj
+                      ! for J cos terms
+                      ! the DRcn' term
+                      if (id.eq.imn .and. irz.eq.1 .and. issym.eq.0) djacmat(ii+idJc, jj+idRc) = djacmat(ii+idJc, jj+idRc) - one
+                      ! the DZsn' term
+                      if (id.eq.imn .and. irz.eq.0 .and. issym.eq.0) djacmat(ii+idJc, jj+idZs) = djacmat(ii+idJc, jj+idZs) - one
+                      ! the DRsn' term
+                      if (id.eq.imn .and. irz.eq.1 .and. issym.eq.1) djacmat(ii+idJc, jj+idRs) = djacmat(ii+idJc, jj+idRs) + one
+                      ! the DZsn' term
+                      if (id.eq.imn .and. irz.eq.0 .and. issym.eq.1) djacmat(ii+idJc, jj+idZc) = djacmat(ii+idJc, jj+idZc) + one
+                      
+                      ! for J sin terms
+                      ! the DRcn' term
+                      if (id.eq.imn .and. irz.eq.1 .and. issym.eq.1) djacmat(ii+idJs, jj+idRc) = djacmat(ii+idJs, jj+idRc) + one
+                      ! the DZsn' term
+                      if (id.eq.imn .and. irz.eq.0 .and. issym.eq.1) djacmat(ii+idJs, jj+idZs) = djacmat(ii+idJs, jj+idZs) - one
+                      ! the DRsn' term
+                      if (id.eq.imn .and. irz.eq.1 .and. issym.eq.0) djacmat(ii+idJs, jj+idRs) = djacmat(ii+idJs, jj+idRs) + one
+                      ! the DZsn' term
+                      if (id.eq.imn .and. irz.eq.0 .and. issym.eq.0) djacmat(ii+idJs, jj+idZc) = djacmat(ii+idJs, jj+idZc) - one
+
+                    end if ! if (ii+jj .le. Ntor)
+
+                  end do ! jj
+                  
+                  ! the DR0 term
+                  id = 2 * (Ntor + 1) + ii
+                  ! for J cos terms
+                  if (id.eq.imn .and. irz.eq.1 .and. issym.eq.0) djacmat(ii+idJc, idRc) = - two
+                  if (id.eq.imn .and. irz.eq.0 .and. issym.eq.1) djacmat(ii+idJc, idZc) = + two
+                  ! for J sin terms
+                  if (id.eq.imn .and. irz.eq.1 .and. issym.eq.1) djacmat(ii+idJs, idRc) = + two 
+                  if (id.eq.imn .and. irz.eq.0 .and. issym.eq.0) djacmat(ii+idJs, idZc) = - two
+
+                end do ! ii
+                        
               endif ! if (YESstellsym)
 
               djacmat = djacmat * half ! because we are using (1+s)/2 instead of s
@@ -550,7 +700,24 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
                 end if
               end if
             else
-              
+              if (irz .eq. 0) then
+                dRadR(1:Ntoraxis+1,0,issym,imn) = -djacrhs(idRc:idRc+Ntoraxis)
+                dZadR(2:Ntoraxis+1,1,issym,imn) = -djacrhs(idZs+1:idZs+Ntoraxis)
+                dRadR(2:Ntoraxis+1,1,issym,imn) = -djacrhs(idRs+1:idRs+Ntoraxis)
+                dZadR(1:Ntoraxis+1,0,issym,imn) = -djacrhs(idZc:idZc+Ntoraxis)
+                if (im(imn).eq.0) then ! addtional one
+                  dRadR(imn,issym,issym,imn) = dRadR(imn,issym,issym,imn) + one
+                end if
+                
+              else
+                dRadZ(1:Ntoraxis+1,0,1-issym,imn) = -djacrhs(idRc:idRc+Ntoraxis)
+                dZadZ(2:Ntoraxis+1,1,1-issym,imn) = -djacrhs(idZs+1:idZs+Ntoraxis)
+                dRadZ(2:Ntoraxis+1,1,1-issym,imn) = -djacrhs(idRs+1:idRs+Ntoraxis)
+                dZadZ(1:Ntoraxis+1,0,1-issym,imn) = -djacrhs(idZc:idZc+Ntoraxis)
+                if (im(imn).eq.0) then ! addtional one
+                  dZadZ(imn,1-issym,1-issym,imn) = dZadZ(imn,1-issym,1-issym,imn) + one
+                end if
+              end if
             end if ! YESstellsym
 
             call invfft( mn, im(1:mn), in(1:mn), dRadR(1:mn,0,0,imn), dRadR(1:mn,1,0,imn), dRadR(1:mn,0,1,imn), dRadR(1:mn,1,1,imn), &
@@ -563,46 +730,64 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
                          Nt, Nz, dZodZ(1:Ntz,0,imn), dZodZ(1:Ntz,1,imn) )
 
 !******* This part is used to benchmark the matrices perturbation result with finite difference *******
-! #ifdef DEBUG
-!             if (Lcheck .eq. 7) then ! check the analytical derivative with the finite difference
-!               threshold = 1e-8 ! print with difference between FD and analytical more than this threshold
-!               dx = 1e-8 * jRbc(1,ivol)
+#ifdef DEBUG
+            if (Lcheck .eq. 8) then ! check the analytical derivative with the finite difference
+              threshold = 1e-8 ! print with difference between FD and analytical more than this threshold
+              dx = 1e-8 * jRbc(1,ivol)
 
-!               newRbc = jRbc
-!               newRbs = jRbs
-!               newZbc = jZbc
-!               newZbs = jZbs
+              newRbc = jRbc
+              newRbs = jRbs
+              newZbc = jZbc
+              newZbs = jZbs
 
-!               if (irz .eq. 0) then
-!                 newRbc(imn, ivol) = jRbc(imn, ivol) + dx
-!               else
-!                 newZbs(imn, ivol) = jZbs(imn, ivol) + dx
-!               end if
+              if (irz .eq. 0 .and. issym .eq. 0) then
+                newRbc(imn, ivol) = jRbc(imn, ivol) + dx
+              else if (irz .eq. 1 .and. issym .eq. 0) then
+                newZbs(imn, ivol) = jZbs(imn, ivol) + dx
+              else if (irz .eq. 0 .and. issym .eq. 1) then
+                newRbs(imn, ivol) = jRbs(imn, ivol) + dx
+              else if (irz .eq. 1 .and. issym .eq. 1) then
+                newZbc(imn, ivol) = jZbc(imn, ivol) + dx
+              end if
               
-!               ! call the same subroutine recursively, but do not compute derivatives
-!               call rzaxis( Mvol, mn, newRbc, newZbs, newRbs, newZbc, ivol, .false. )
+              ! call the same subroutine recursively, but do not compute derivatives
+              call rzaxis( Mvol, mn, newRbc, newZbs, newRbs, newZbc, ivol, .false. )
 
-!               ! compare the derivatives
-!               do ii = 1, Ntoraxis+1
-!                 if (irz.eq.0) then
-!                   if (abs((newRbc(ii,0) - jRbc(ii,jvol))/dx -  dRadR(ii,0,0,imn))/jRbc(1,ivol) .ge. threshold) then
-!                     write(ounit, *) 'dR/dR: ii,m,n', ii, im(imn), in(imn), (newRbc(ii,0) - jRbc(ii,jvol))/dx, dRadR(ii,0,0,imn)
-!                   endif
-!                   if (abs((newZbs(ii,0) - jZbs(ii,jvol))/dx -  dZadR(ii,1,0,imn))/jRbc(1,ivol) .ge. threshold) then
-!                     write(ounit, *) 'dZ/dR: ii,m,n', ii, im(imn), in(imn), (newZbs(ii,0) - jZbs(ii,jvol))/dx, dZadR(ii,1,0,imn)
-!                   endif
-!                 else
-!                   if (abs((newRbc(ii,0) - jRbc(ii,jvol))/dx -  dRadZ(ii,0,1,imn))/jRbc(1,ivol) .ge. threshold) then
-!                     write(ounit, *) 'dR/dZ: ii,m,n', ii, im(imn), in(imn), (newRbc(ii,0) - jRbc(ii,jvol))/dx, dRadZ(ii,0,1,imn)
-!                   endif
-!                   if (abs((newZbs(ii,0) - jZbs(ii,jvol))/dx -  dZadZ(ii,1,1,imn))/jRbc(1,ivol) .ge. threshold) then
-!                     write(ounit, *) 'dZ/dZ: ii,m,n', ii, im(imn), in(imn), (newZbs(ii,0) - jZbs(ii,jvol))/dx, dZadZ(ii,1,1,imn)
-!                   endif
-!                 endif
-!               enddo
+              ! compare the derivatives
+              do ii = 1, Ntoraxis+1
+                if (irz.eq.0) then
+                  if (abs((newRbc(ii,0) - jRbc(ii,jvol))/dx -  dRadR(ii,0,issym,imn))/jRbc(1,ivol) .ge. threshold) then
+                    write(ounit, *) 'dRc/dR: ii,m,n,issym', ii, im(imn), in(imn),issym, (newRbc(ii,0) - jRbc(ii,jvol))/dx, dRadR(ii,0,issym,imn), dx, newRbc(ii,0), jRbc(ii,jvol)
+                  endif
+                  if (abs((newZbs(ii,0) - jZbs(ii,jvol))/dx -  dZadR(ii,1,issym,imn))/jRbc(1,ivol) .ge. threshold) then
+                    write(ounit, *) 'dZs/dR: ii,m,n,issym', ii, im(imn), in(imn),issym, (newZbs(ii,0) - jZbs(ii,jvol))/dx, dZadR(ii,1,issym,imn), dx
+                  endif
+                  if (NOTstellsym) then
+                    if (abs((newRbs(ii,0) - jRbs(ii,jvol))/dx -  dRadR(ii,1,issym,imn))/jRbc(1,ivol) .ge. threshold) then
+                      write(ounit, *) 'dRs/dR: ii,m,n,issym', ii, im(imn), in(imn),issym, (newRbs(ii,0) - jRbs(ii,jvol))/dx, dRadR(ii,1,issym,imn), dx
+                    endif
+                    if (abs((newZbc(ii,0) - jZbc(ii,jvol))/dx -  dZadR(ii,0,issym,imn))/jRbc(1,ivol) .ge. threshold) then
+                      write(ounit, *) 'dZc/dR: ii,m,n,issym', ii, im(imn), in(imn),issym, (newZbc(ii,0) - jZbc(ii,jvol))/dx, dZadR(ii,0,issym,imn), dx
+                    endif
+                  endif
+                else if (irz.eq.1) then
+                  if (abs((newRbc(ii,0) - jRbc(ii,jvol))/dx -  dRadZ(ii,0,1-issym,imn))/jRbc(1,ivol) .ge. threshold) then
+                    write(ounit, *) 'dRc/dZ: ii,m,n,issym', ii, im(imn), in(imn),issym, (newRbc(ii,0) - jRbc(ii,jvol))/dx, dRadZ(ii,0,1-issym,imn), dx
+                  endif
+                  if (abs((newZbs(ii,0) - jZbs(ii,jvol))/dx -  dZadZ(ii,1,1-issym,imn))/jRbc(1,ivol) .ge. threshold) then
+                    write(ounit, *) 'dZs/dZ: ii,m,n,issym', ii, im(imn), in(imn),issym, (newZbs(ii,0) - jZbs(ii,jvol))/dx, dZadZ(ii,1,1-issym,imn), dx
+                  endif
+                  if (abs((newRbs(ii,0) - jRbs(ii,jvol))/dx -  dRadZ(ii,1,1-issym,imn))/jRbc(1,ivol) .ge. threshold) then
+                    write(ounit, *) 'dRs/dZ: ii,m,n,issym', ii, im(imn), in(imn),issym, (newRbs(ii,0) - jRbs(ii,jvol))/dx, dRadZ(ii,1,1-issym,imn), dx
+                  endif
+                  if (abs((newZbc(ii,0) - jZbc(ii,jvol))/dx -  dZadZ(ii,0,1-issym,imn))/jRbc(1,ivol) .ge. threshold) then
+                    write(ounit, *) 'dZc/dZ: ii,m,n,issym', ii, im(imn), in(imn),issym, (newZbc(ii,0) - jZbc(ii,jvol))/dx, dZadZ(ii,0,1-issym,imn), dx
+                  endif
+                endif
+              enddo
 
-!             end if ! Lcheck .eq. 7
-! #endif
+            end if ! Lcheck .eq. 8
+#endif
 !******* END part used to benchmark the matrices perturbation result with finite difference *******
 
           end do ! issym
@@ -618,26 +803,38 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
     end if ! if (LcomputeDerivatives)
 
 !******* This part is used to check if the m=1 harmonics were successfully eliminated *******
-! #ifdef DEBUG
-!     if (Lcheck .eq. 7)
-!       ! check if m=1 harmonic of Jacobian is eliminated
-!       write(ounit, *) 'coords : Using Jacobian first harmonic elimination'
-!       write(ounit, *) 'coords : before elimination m=1 harmonics:', jacrhs
+#ifdef DEBUG
+    if (Lcheck .eq. 8) then
+      ! check if m=1 harmonic of Jacobian is eliminated
+      !write(ounit, *) 'coords : Using Jacobian first harmonic elimination'
+      !write(ounit, *) 'coords : before elimination m=1 harmonics:', jacrhs
 
-!       iRbc(1:Ntoraxis+1,0) = -solution(1:Ntoraxis+1) + iRbc(1:Ntoraxis+1,0)
-!       iZbs(2:Ntoraxis+1,0) = -solution(Ntoraxis+2:2*Ntoraxis+1) + iZbs(2:Ntoraxis+1,0)
-!       WCALL( rzaxis, coords, (1, one, Lcurvature, Ntz, mn ))
-!       jacbase = sg(1:Ntz,0) / Rij(1:Ntz,0,0)  ! extract the baseline 2D jacobian
+      iRbc(1:Ntoraxis+1,0) = -solution(1:Ntoraxis+1) + iRbc(1:Ntoraxis+1,0)
+      iZbs(2:Ntoraxis+1,0) = -solution(Ntoraxis+2:2*Ntoraxis+1) + iZbs(2:Ntoraxis+1,0)
+      if (NOTstellsym) then
+        iRbs(2:Ntoraxis+1,0) = -solution(2*Ntoraxis+2:3*Ntoraxis+1) + iRbs(2:Ntoraxis+1,0)
+        iZbc(1:Ntoraxis+1,0) = -solution(3*Ntoraxis+2:4*Ntoraxis+2) + iZbc(1:Ntoraxis+1,0)
+      endif
+        
+      WCALL( rzaxis, coords, (1, one, Lcurvature, Ntz, mn ))
+      jacbase = sg(1:Ntz,0) / Rij(1:Ntz,0,0)  ! extract the baseline 2D jacobian
 
-!       call tfft( Nt, Nz, jacbase, Rij, &
-!                 mn, im(1:mn), in(1:mn), jacbasec(1:mn), jacbases(1:mn), junkc(1:mn), junks(1:mn), ifail )
+      call tfft( Nt, Nz, jacbase, Rij, &
+                mn, im(1:mn), in(1:mn), jacbasec(1:mn), jacbases(1:mn), junkc(1:mn), junks(1:mn), ifail )
 
-!       ! fill in the right hand side with m=1 terms of Jacobian
-!       jacrhs = -jacbasec(2*(Ntor+1)-Ntoraxis:2*(Ntor+1)+Ntoraxis)
+      ! fill in the right hand side with m=1 terms of Jacobian
+      jacrhs(1:2*Ntoraxis+1) = -jacbasec(2*(Ntor+1)-Ntoraxis:2*(Ntor+1)+Ntoraxis)
+      if (NOTstellsym) then
+        jacrhs(2*Ntoraxis+2:4*Ntoraxis+2) = -jacbases(2*(Ntor+1)-Ntoraxis:2*(Ntor+1)+Ntoraxis)
+      endif
 
-!       write(ounit,*) 'coords : after elimination m=1 harmonics', jacrhs
-!     end if !Lcheck .eq. 7
-! #endif
+      do ii = 1, Njac
+        if (abs(jacrhs(ii)) > vsmall) then
+          write(ounit,*) 'rzaxis: harmonic elimination failed for ii', ii, jacrhs(ii)
+        endif
+      enddo
+    end if !Lcheck .eq. 8
+#endif
 !******* End part used to check if the m=1 harmonics were successfully eliminated *******
 
     ! Clean up
@@ -648,11 +845,20 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
     iZbc = tmpZbc
 
     ! copy the data to output
+
+    inRbc(:,jvol) = zero
+    inZbs(:,jvol) = zero
+    inRbs(:,jvol) = zero
+    inZbc(:,jvol) = zero
+
+    inRbc(1:Ntoraxis+1,jvol) = inRbc(1:Ntoraxis+1,ivol) - solution(idRc:idRc+Ntoraxis)
+    inZbs(2:Ntoraxis+1 ,jvol) = inZbs(2:Ntoraxis+1,ivol) - solution(idZs+1:idZs+Ntoraxis)
     if (YESstellsym) then
-      inRbc(1:Ntor+1,jvol) = zero
-      inZbs(2:Ntor+1,jvol) = zero
-      inRbc(1:Ntoraxis+1,jvol) = inRbc(1:Ntoraxis+1,ivol) - solution(1:Ntoraxis+1)
-      inZbs(2:Ntoraxis+1 ,jvol) = inZbs(2:Ntoraxis+1,ivol) - solution(Ntoraxis+2:2*Ntoraxis+1)
+      inRbs(1:Ntoraxis+1,jvol) = zero
+      inZbc(2:Ntoraxis+1,jvol) = zero
+    else
+      inRbs(2:Ntoraxis+1,jvol) = inRbs(2:Ntoraxis+1,ivol) - solution(idRs+1:idRs+Ntoraxis)
+      inZbc(1:Ntoraxis+1,jvol) = inZbc(1:Ntoraxis+1,ivol) - solution(idZc:idZc+Ntoraxis)
     endif ! YESstellsym
 
     ! Deallocate
