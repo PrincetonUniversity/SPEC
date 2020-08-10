@@ -188,7 +188,8 @@ subroutine spsmat( lvol, mn, lrad )
 
     do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
     
-      jj = ii ; mj = im(jj) ; nj = in(jj) ; mimj = mi * mj ; minj = mi * nj ; nimj = ni * mj ; ninj = ni * nj
+      jj = ii ; mj = im(jj) ; nj = in(jj) ; mjmi = mi * mj ; mjni = ni * mj ; njmi = mi * nj ; njni = ni * nj;
+                                          ; mimj = mi * mj ; minj = mi * nj ; nimj = ni * mj ; ninj = ni * nj;
 
       if (Lcoordinatesingularity) then
         idx = mi + 1
@@ -249,7 +250,6 @@ subroutine spsmat( lvol, mn, lrad )
         Hteze = (+ DToocc(pp1,ll1,idx,1) - DToocc(ll1,pp1,idx,1)) * factorcc
         Hzeze =   zero
 
-
         Htote =   zero
         Hzote =   zero
        
@@ -305,6 +305,8 @@ subroutine spsmat( lvol, mn, lrad )
         if (id.ne.0 .and. jd.ne.0) call push_back(4,nqueue,nmaxqueue,Wzozo,Hzozo,jd,dMASqueue,dMDSqueue,jdMASqueue)
         
         enddo ! end of do pp ;
+
+        
         
         if( Lcoordinatesingularity .and. ii.eq.1 ) then ; kk = 1
         else                                            ; kk = 0

@@ -854,7 +854,6 @@ subroutine matvec(n, x, ax, a, mu, vvol)
     call mtrxhs(vvol, mn, Lrad(vvol), dax, ddx, ideriv)    ! construct a.x from the integral
     ax = dax(1:n) - mu * ddx(1:n)                          ! put in the mu factor
   endif
-  !write(*,*) 'ax', ddx(1:n)
 
   return
 
