@@ -748,7 +748,7 @@ subroutine get_perturbed_solution(vvol, oBI, NN)
   TYPE(MatrixLU),intent(inout) :: oBI
 
   INTEGER                 :: ideriv, ll, idgetrs
-  REAL                    :: dpsi(1:2), work(1:NN+1), rhs(0:NN)
+  REAL                    :: dpsi(1:2), work(1:NN+1), rhs(0:NN), dVA(0:NN), dVD(0:NN)
   CHARACTER               :: packorunpack
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-
@@ -760,10 +760,10 @@ subroutine get_perturbed_solution(vvol, oBI, NN)
   
   WCALL( dfp200, intghs, ( Iquad(vvol), mn, vvol, ll, 0 ) )
 
-  WCALL( dfp200, mtrxhs, ( vvol, mn, ll, dMA(0:NN,0), dMD(0:NN,0), 0) )
+  WCALL( dfp200, mtrxhs, ( vvol, mn, ll, dVA, dVD, 0) )
 
   rhs(0)    = zero
-  rhs(1:NN) = -dMA(1:NN,0)
+  rhs(1:NN) = -dVA(1:NN)
 
   if (Lconstraint .eq. 2) then
     work(1:NN+1) = rhs(0:NN)
