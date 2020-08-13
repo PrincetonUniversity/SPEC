@@ -253,36 +253,36 @@ subroutine dfp200( LcomputeDerivatives, vvol)
 
 else ! CASE SEMI GLOBAL CONSTRAINT
 
-!     do vvol = 1, Mvol
-!         WCALL(dfp200, IsMyVolume, (vvol))
+     do vvol = 1, Mvol
+         WCALL(dfp200, IsMyVolume, (vvol))
 
-!         if( IsMyVolumeValue .EQ. 0 ) then
-!             cycle
-!         else if( IsMyVolumeValue .EQ. -1) then
-!             FATAL(dfp200, .true., Unassociated volume)
-!         endif
+         if( IsMyVolumeValue .EQ. 0 ) then
+             cycle
+         else if( IsMyVolumeValue .EQ. -1) then
+             FATAL(dfp200, .true., Unassociated volume)
+         endif
                     
             
-!         LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
-!         ll = Lrad(vvol)  ! Shorthand
-!         NN = NAdof(vvol) ! shorthand;
+         LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
+         ll = Lrad(vvol)  ! Shorthand
+         NN = NAdof(vvol) ! shorthand;
 
-! !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!         vflag = 1
-!         WCALL( dfp200, volume, ( vvol, vflag ) ) ! compute volume;
+         vflag = 1
+         WCALL( dfp200, volume, ( vvol, vflag ) ) ! compute volume;
 
-!         do iocons = 0, 1 ! construct field magnitude on inner and outer interfaces; inside do vvol;
+         do iocons = 0, 1 ! construct field magnitude on inner and outer interfaces; inside do vvol;
         
-!             if( vvol.eq.1    .and. iocons.eq.0 ) cycle ! fixed inner boundary (or coordinate axis);
-!             if( vvol.eq.Mvol .and. iocons.eq.1 ) cycle ! fixed outer boundary                     ; there are no constraints at outer boundary;
+             if( vvol.eq.1    .and. iocons.eq.0 ) cycle ! fixed inner boundary (or coordinate axis);
+             if( vvol.eq.Mvol .and. iocons.eq.1 ) cycle ! fixed outer boundary                     ; there are no constraints at outer boundary;
             
-!             ideriv = 0 ; id = ideriv
-!             iflag = 0 ! dAt, dAz, XX & YY are returned by lforce; Bemn(1:mn,vvol,iocons), Iomn(1:mn,vvol) etc. are returned through global;
-!             WCALL( dfp200, lforce, ( vvol, iocons, ideriv, Ntz, dBB(1:Ntz,id), XX(1:Ntz), YY(1:Ntz), length(1:Ntz), DDl, MMl, iflag ) )
+             ideriv = 0 ; id = ideriv
+             iflag = 0 ! dAt, dAz, XX & YY are returned by lforce; Bemn(1:mn,vvol,iocons), Iomn(1:mn,vvol) etc. are returned through global;
+             WCALL( dfp200, lforce, ( vvol, iocons, ideriv, Ntz, dBB(1:Ntz,id), XX(1:Ntz), YY(1:Ntz), length(1:Ntz), DDl, MMl, iflag ) )
             
-!         enddo ! end of do iocons = 0, 1;
-!     enddo
+         enddo ! end of do iocons = 0, 1;
+     enddo
 
 
 
