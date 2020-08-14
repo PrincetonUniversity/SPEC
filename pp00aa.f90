@@ -178,7 +178,7 @@ subroutine pp00aa
         endif ! Wpp00aa
 
       enddo ! itrj = ioff, lnPtrj
-!$OMP end parallel
+!$OMP END PARALLEL DO
 
       ! write(*,*) "CPU ",myid," finished field line tracing for volume ",vvol
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
