@@ -141,7 +141,7 @@ Vns(0,32)   =  9.623711250383996E-13 Bns(0,32)   = -4.709530705132861E-10 Vnc(0,
 &numericlist
  Linitialize =         0
  Lzerovac    =         0
- Ndiscrete   =        12
+ Ndiscrete   =        4
  Nquad       =       -12
  iMpol       =       -12
  iNtor       =       -12
