@@ -10,7 +10,7 @@
  Nvol        =         2
  Mpol        =         4
  Ntor        =         4
- Lrad        =                       4                      4
+ Lrad        =                       8                      4
  tflux       =   3.033538489388870E-01  1.000000000000000E+00
  pflux       =   0.000000000000000E+00 -2.040878894181875E-01
  helicity    =   2.036396095021530E-02  1.559429589793997E-03
@@ -135,6 +135,7 @@ Rwc(4,4)    =  0.000000000000000E+00 Zws(4,4)    =  0.000000000000000E+00 Rws(4,
 &locallist
  LBeltrami   =         4
  Linitgues   =         1
+ Lmatsolver  =         1
 /
 &globallist
  Lfindzero   =         2
