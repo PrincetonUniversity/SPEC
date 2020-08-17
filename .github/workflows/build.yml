@@ -28,5 +28,10 @@ jobs:
           echo ${PYTHONPATH}
           mpiexec -n 3 --allow-run-as-root ${SPEC_PATH}/xspec G1V03L2Fi.001.sp
           python3 -m py_spec.ci.test compare.h5 G1V03L2Fi.001.sp.h5 
+      - name: toroidal_freeboundary_vacuum
+        run: |
+          cd ${SPEC_PATH}/ci/toroidal_freeboundary_vacuum
+          mpiexec -n 4 --allow-run-as-root ${SPEC_PATH}/xspec G3V02L0Fr.sp 
+          python3 -m py_spec.ci.test compare.h5 G3V02L0Fr.sp.h5 
 
 
