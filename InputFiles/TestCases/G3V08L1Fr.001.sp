@@ -155,6 +155,7 @@ Vns(0,32)   =  9.623711250383996E-13 Bns(0,32)   = -4.709530705132861E-10 Vnc(0,
 &locallist
  LBeltrami   =         4
  Linitgues   =         1
+ epsGMRES    =       1e-15
 /
 &globallist
  Lfindzero   =         2
