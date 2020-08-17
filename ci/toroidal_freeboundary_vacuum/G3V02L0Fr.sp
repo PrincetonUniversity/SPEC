@@ -218,7 +218,7 @@ Vns(3,6)    =  2.246627430067221E-04 Bns(3,6)    =  0.000000000000000E+00 Vnc(3,
 /
 &diagnosticslist
  odetol      =   1.000000000000000E-10
- nPpts       =        1000
+ nPpts       =        0
  nPtrj       =     8 8 8    -1    -1
  LHevalues   =         F
  LHevectors  =         F
