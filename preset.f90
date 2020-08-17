@@ -589,6 +589,7 @@ endif
 !latex \end{enumerate}
   
   SALLOCATE( NAdof, (1:Mvol          ), 0 ) ! Beltrami degrees-of-freedom in each annulus;
+  SALLOCATE( Nfielddof,(1:Mvol       ), 0 ) ! Beltrami degrees-of-freedom in each annulus, field only;
   SALLOCATE( NdMASmax, (1:Mvol       ), 0 ) ! The maximum size of sparse matrix for GMRES preconditioning;
   SALLOCATE( NdMAS   , (1:Mvol       ), 0 ) ! The actual size of sparse matrix for GMRES preconditioning;
   
@@ -653,6 +654,9 @@ endif
         endif
       enddo
     endif
+
+    ! the degree of freedom in the Beltrami field without Lagrange multipliers
+    Nfielddof(vvol) = zerdof
                                      !                                     a    c      b        d      e      f      g   h                                 
     if( YESstellsym ) NAdof(vvol) = zerdof                               + mn        + Ntor+1        + mn-1        + 1 + 0
     if( NOTstellsym ) NAdof(vvol) = zerdof                               + mn + mn-1 + Ntor+1 + Ntor + mn-1 + mn-1 + 1 + 0 ! this is broken at the moment
@@ -677,6 +681,10 @@ endif
    else ! .not.Lcoordinatesingularity;                                     a    c      b        d      e      f      g   h
     if( YESstellsym ) NAdof(vvol) = 2 * ( mn        ) * ( Lrad(vvol)    )                            + mn-1        + 1 + 1  
     if( NOTstellsym ) NAdof(vvol) = 2 * ( mn + mn-1 ) * ( Lrad(vvol)    )                            + mn-1 + mn-1 + 1 + 1
+
+    ! dof for field variables only
+    if( YESstellsym ) Nfielddof(vvol) = 2 * ( mn        ) * ( Lrad(vvol)    )
+    if( NOTstellsym ) Nfielddof(vvol) = 2 * ( mn + mn-1 ) * ( Lrad(vvol)    )
 
     ! Guess the size of the sparse matrix ! 28 Jan 20
     ! If an iterative method is used and requires an preconditioner, we need to construct it as a sparse matrix
@@ -1301,6 +1309,7 @@ endif
   LILUprecond = .false.
   if (Lmatsolver.eq.2 .or. Lmatsolver.eq.3) then ! use GMRES
     SALLOCATE(GMRESlastsolution, (MAXVAL(NAdof),0:2,1:Mvol), zero )
+    GMRESlastsolution = zero
     if (LGMRESprec .eq. 1) LILUprecond = .true.
   endif
   

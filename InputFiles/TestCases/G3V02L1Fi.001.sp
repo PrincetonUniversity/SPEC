@@ -135,7 +135,6 @@ Rwc(4,4)    =  0.000000000000000E+00 Zws(4,4)    =  0.000000000000000E+00 Rws(4,
 &locallist
  LBeltrami   =         4
  Linitgues   =         1
- Lmatsolver  =         1
 /
 &globallist
  Lfindzero   =         2

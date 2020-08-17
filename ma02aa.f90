@@ -35,7 +35,7 @@ subroutine ma02aa( lvol, NN )
                         MBpsi,  Ate,                          &
                         ImagneticOK, &
                         lBBintegral, lABintegral, &
-                        ivol, &
+                        ivol, Nfielddof, &
                         dtflux, dpflux, &
                         xoffset, &
                         Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, LocalConstraint
@@ -337,7 +337,7 @@ subroutine ma02aa( lvol, NN )
    xo(1:NN) = xi(1:NN) ! save original for comparison;
    packorunpack = 'P' ; ideriv = 0
    CALL( ma02aa, packab( packorunpack, lvol, NN, xi(1:NN), ideriv ) )
-   FATAL( ma02aa, sum(abs(xi(1:NN)-xo(1:NN)))/NN.gt.vsmall, un/packing routine is incorrect )
+   FATAL( ma02aa, sum(abs(xi(1:Nfielddof(lvol))-xo(1:Nfielddof(lvol))))/Nfielddof(lvol).gt.vsmall, un/packing routine is incorrect )
 #endif
    
 !if( NewtonError.lt.mupftol ) then

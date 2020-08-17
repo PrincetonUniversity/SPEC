@@ -568,7 +568,11 @@ subroutine write_grid
   HWRITERV( grpGrid,           1, pi2nfp           , (/ pi2nfp        /))
 
   ! combine all radial parts into one dimension as Lrad values can be different for different volumes
-  sumLrad = sum(Lrad(1:Mvol)+1)
+  if (Ngrid .lt. 0) then 
+    sumLrad = sum(Lrad(1:Mvol)+1)
+  else
+    sumLrad = (Ngrid + 1) * Mvol
+  endif
 
   SALLOCATE(    Rij_grid, (1:sumLrad, 1:Ntz), zero )
   SALLOCATE(    Zij_grid, (1:sumLrad, 1:Ntz), zero )
@@ -589,8 +593,8 @@ subroutine write_grid
    endif
    if (Ngrid_local .eq. 0) cycle               ! nothing to output
 
-   do ii = 0, Ngrid ! sub-grid;
-    lss = ii * two / Ngrid - one
+   do ii = 0, Ngrid_local ! sub-grid;
+    lss = ii * two / Ngrid_local - one
     if( Lcoordinatesingularity .and. ii.eq.0 ) then ; Lcurvature = 0 ! Jacobian is not defined;
     else                                            ; Lcurvature = 1 ! compute Jacobian       ;
     endif

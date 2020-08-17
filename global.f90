@@ -1124,6 +1124,7 @@ module allglobal
 !latex This depends on \inputvar{Mpol}, \inputvar{Ntor} and \inputvar{Lrad(vvol)}.
    
   INTEGER, allocatable :: NAdof(:) ! degrees of freedom in Beltrami fields in each annulus;
+  INTEGER, allocatable :: Nfielddof(:) ! degrees of freedom in Beltrami fields in each annulus, field only, no Lagrange multipliers;
 
 !latex \item The covariant components of the vector potential are written as
 !latex       \be            A_\t & = & \sum_i \sum_{l=0}^L \Ate{i,l} \; T_{l}(s) \cos\a_i + \sum_i \sum_{l=0}^L \Ato{i,l} \; T_{l}(s) \sin\a_i \\
