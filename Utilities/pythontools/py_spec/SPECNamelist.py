@@ -459,7 +459,7 @@ class SPECNamelist(Namelist):
             self.interface_guess[(m,n)]['Rbc'] = [float(line_split[2+lvol*4]) for lvol in range(self._Nvol)]
             self.interface_guess[(m,n)]['Zbs'] = [float(line_split[2+lvol*4+1]) for lvol in range(self._Nvol)]
             self.interface_guess[(m,n)]['Rbs'] = [float(line_split[2+lvol*4+2]) for lvol in range(self._Nvol)]
-            self.interface_guess[(m,n)]['Zbc'] = [float(line_split[2+lvol*4+2]) for lvol in range(self._Nvol)]
+            self.interface_guess[(m,n)]['Zbc'] = [float(line_split[2+lvol*4+3]) for lvol in range(self._Nvol)]
 
     def _generate_namelist_from_output(self, spec_hdf5):
         '''initialize the namelist from SPEC output:
