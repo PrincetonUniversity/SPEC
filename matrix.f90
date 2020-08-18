@@ -477,8 +477,8 @@ subroutine matrix( lvol, mn, lrad )
 !$OMP END PARALLEL DO
    
   else ! NOTstellsym ;
-!$OMP PARALLEL SHARED(lvol,lrad)   
-!$OMP DO PRIVATE(ii,jj,ll,pp)    
+
+!$OMP PARALLEL DO PRIVATE(ii,jj,ll,pp,mi,ni,mj,nj,mjmi,mjni,njmi,njni,ll1,pp1,Wtete,Wzete,Wteze,Wzeze,Htete,Hzete,Hteze,Hzeze,Wteto,Wzeto,Wtezo,Wzezo,Hteto,Hzeto,Htezo,Hzezo,Wtote,Wzote,Wtoze,Wzoze,Htote,Hzote,Htoze,Hzoze,Wtoto,Wzoto,Wtozo,Wzozo,Htoto,Hzoto,Htozo,Hzozo,id,jd,kk) SHARED(lvol,lrad) 
    do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
     
     do jj = 1, mn ; mj = im(jj) ; nj = in(jj) ; mjmi = mi * mj ; mjni = ni * mj ; njmi = mi * nj ; njni = ni * nj
@@ -597,8 +597,7 @@ subroutine matrix( lvol, mn, lrad )
     enddo ! end of do pp ;
     
    enddo ! end of do ii ;
-!$OMP END DO
-!$OMP END PARALLEL   
+!$OMP END PARALLEL DO  
   endif ! end of if( YESstellsym ) ;
   
   ! call subroutine matrixBG to construct dMB and dMG

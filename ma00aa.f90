@@ -206,7 +206,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   enddo
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-!$OMP PARALLEL DO SHARED(lquad,lrad,lvol,mn,basis) PRIVATE(jquad,lss,jthweight,sbar,mn2,ii,jj,kka,kks,ikds,ikda,lp2,ll,pp,ll1,pp1,Tl,Tp,Dl,Dp,TlTP,Tldp,DlTp,DlDp,foocc,fssss,fstsc,fszsc,fttcc,ftzcc,fzzcc,foocs,foosc,fooss,fsscc,fsscs,fsssc,fstcc,fstcs,fstss,fszcc,fszcs,fszss,fttcs,fttsc,fttss,ftzcs,ftzsc,ftzss)
+!$OMP PARALLEL DO SHARED(lquad,lrad,lvol,mn,basis,mn2_max,lp2_max) PRIVATE(jquad,lss,jthweight,sbar,mn2,ii,jj,kka,kks,ikds,ikda,lp2,ll,pp,ll1,pp1,Tl,Tp,Dl,Dp,TlTP,Tldp,DlTp,DlDp,foocc,fssss,fstsc,fszsc,fttcc,ftzcc,fzzcc,foocs,foosc,fooss,fsscc,fsscs,fsssc,fstcc,fstcs,fstss,fszcc,fszcs,fszss,fttcs,fttsc,fttss,ftzcs,ftzsc,ftzss,fzzcs,fzzsc,fzzss)
   do mn2 = 1, mn2_max
     ii = mod(mn2-1,mn)+1
     jj = (mn2-ii) / mn + 1
@@ -350,46 +350,43 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   DALLOCATE(basis)
-  
-  nele = SIZE(TTssss)
  
-  call DSCAL(nele, pi2pi2nfphalf, DToocc, 1)
-  call DSCAL(nele, pi2pi2nfphalf, TTssss, 1)
-  call DSCAL(nele, pi2pi2nfphalf, TDstsc, 1)
-  call DSCAL(nele, pi2pi2nfphalf, TDszsc, 1)
-  call DSCAL(nele, pi2pi2nfphalf, DDttcc, 1)
-  call DSCAL(nele, pi2pi2nfphalf, DDtzcc, 1)
-  call DSCAL(nele, pi2pi2nfphalf, DDzzcc, 1)
+  DToocc = DToocc * pi2pi2nfphalf
+  TTssss = TTssss * pi2pi2nfphalf
+  TDstsc = TDstsc * pi2pi2nfphalf
+  TDszsc = TDszsc * pi2pi2nfphalf
+  DDttcc = DDttcc * pi2pi2nfphalf
+  DDtzcc = DDtzcc * pi2pi2nfphalf
+  DDzzcc = DDzzcc * pi2pi2nfphalf
 
   if (NOTstellsym) then
+    DToocs = DToocs * pi2pi2nfphalf
+    DToosc = DToosc * pi2pi2nfphalf
+    DTooss = DTooss * pi2pi2nfphalf
 
-    call DSCAL(nele, pi2pi2nfphalf, DToocs, 1)
-    call DSCAL(nele, pi2pi2nfphalf, DToosc, 1)
-    call DSCAL(nele, pi2pi2nfphalf, DTooss, 1)
+    TTsscc = TTsscc * pi2pi2nfphalf
+    TTsscs = TTsscs * pi2pi2nfphalf
+    TTsssc = TTsssc * pi2pi2nfphalf
 
-    call DSCAL(nele, pi2pi2nfphalf, TTsscc, 1)
-    call DSCAL(nele, pi2pi2nfphalf, TTsscs, 1)
-    call DSCAL(nele, pi2pi2nfphalf, TTsssc, 1)
+    TDstcc = TDstcc * pi2pi2nfphalf
+    TDstcs = TDstcs * pi2pi2nfphalf
+    TDstss = TDstss * pi2pi2nfphalf
 
-    call DSCAL(nele, pi2pi2nfphalf, TDstcc, 1)
-    call DSCAL(nele, pi2pi2nfphalf, TDstcs, 1)
-    call DSCAL(nele, pi2pi2nfphalf, TDstss, 1)
+    TDszcc = TDszcc * pi2pi2nfphalf
+    TDszcs = TDszcs * pi2pi2nfphalf
+    TDszss = TDszss * pi2pi2nfphalf
 
-    call DSCAL(nele, pi2pi2nfphalf, TDszcc, 1)
-    call DSCAL(nele, pi2pi2nfphalf, TDszcs, 1)
-    call DSCAL(nele, pi2pi2nfphalf, TDszss, 1)
+    DDttcs = DDttcs * pi2pi2nfphalf
+    DDttsc = DDttsc * pi2pi2nfphalf
+    DDttss = DDttss * pi2pi2nfphalf
 
-    call DSCAL(nele, pi2pi2nfphalf, DDttsc, 1)
-    call DSCAL(nele, pi2pi2nfphalf, DDttcs, 1)
-    call DSCAL(nele, pi2pi2nfphalf, DDttss, 1)
+    DDtzcs = DDtzcs * pi2pi2nfphalf
+    DDtzsc = DDtzsc * pi2pi2nfphalf
+    DDtzss = DDtzss * pi2pi2nfphalf
 
-    call DSCAL(nele, pi2pi2nfphalf, DDtzsc, 1)
-    call DSCAL(nele, pi2pi2nfphalf, DDtzcs, 1)
-    call DSCAL(nele, pi2pi2nfphalf, DDtzss, 1)
-
-    call DSCAL(nele, pi2pi2nfphalf, DDzzsc, 1)
-    call DSCAL(nele, pi2pi2nfphalf, DDzzcs, 1)
-    call DSCAL(nele, pi2pi2nfphalf, DDzzss, 1)
+    DDzzcs = DDzzcs * pi2pi2nfphalf
+    DDzzsc = DDzzsc * pi2pi2nfphalf
+    DDzzss = DDzzss * pi2pi2nfphalf
 
   end if !NOTstellsym
   
