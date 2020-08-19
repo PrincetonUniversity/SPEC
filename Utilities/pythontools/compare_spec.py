@@ -41,8 +41,12 @@ def compare(data, reference):
             elif key == 'iterations': # skip iteration data (might be revised)
                 continue
             else:
-                # print(key)
-                diff = np.linalg.norm(np.abs(np.array(value) - np.array(reference.__dict__[key])))
+                if isinstance(value, list):  # compare each list
+                    diff = 0.0
+                    for ii, item in enumerate(value):
+                        diff = np.max([diff, np.max(np.abs(np.array(item) - np.array(reference.__dict__[key][ii])))])
+                else:
+                    diff = np.max(np.abs(np.array(value) - np.array(reference.__dict__[key])))
                 unmatch = diff > tol
                 if unmatch:
                     match = False

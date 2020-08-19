@@ -37,6 +37,18 @@ class SPECNamelist(Namelist):
         get_interface_guess, set_interface_guess, remove_interface_guess
     '''
     
+    # items in 'physicslist' that are arrays with index 0 being the quatities in the first volume
+    zero_index_keys = ['tflux', 'pflux', 'mu', 'helicity', 'pressure', 'adiabatic', 'Lrad', 'nPtrj', 'Ivolume', 'Isurf']
+
+    # items in 'physicslist' that are arrays with index 1 being the quatities in the first volume
+    one_index_keys = ['iota', 'oita', 'qr', 'pr', 'ql', 'pl', 'rq', 'rp', 'lq', 'lp']
+
+    # items for the boundary
+    boundary_keys = ['Rbc','Rbs','Zbc','Zbs','Vns','Vnc','Bns','Bnc','Rwc','Rws','Zwc','Zws']
+
+    # items for the axis
+    axis_keys = ['Rac','Zas','Ras','Zac']
+
     def __init__(self, *args, **kwargs):
         '''Initialization
             use one of the following
@@ -79,6 +91,9 @@ class SPECNamelist(Namelist):
         else:
             # the input is of unknown type, abort
             raise ValueError('The first argument should contain either a path to the SPEC namelist, or a SPEC object generated from reading SPEC hdf5 output')
+
+        # correct the size/type of the namelist objects and so on
+        self._rectify_namelist()
 
     def read(self, *args, **kwargs):
         raise NotImplementedError("SPECNamelist does not support 'read' directly. Please call the constructor __init__.")
@@ -185,9 +200,10 @@ class SPECNamelist(Namelist):
         # we interpolate the initial guess first
         self._interpolate_guess(ivol, tflux)
 
-        zero_index_keys = ['pflux', 'mu', 'helicity', 'pressure', 'adiabatic', 'Lrad', 'nPtrj', 'Ivolume', 'Isurf']
-        for key in zero_index_keys:
+        for key in self.zero_index_keys:
             if key.lower() in self['physicslist'].keys():
+                if key.lower == 'tflux':
+                    continue
                 # make it a list if there is only a single item, and convert it to float
                 if isinstance(self['physicslist'][key], int) or isinstance(self['physicslist'][key], float):
                     self['physicslist'][key] = [float(self['physicslist'][key])]
@@ -196,8 +212,7 @@ class SPECNamelist(Namelist):
             if key.lower() in self['diagnosticslist'].keys():
                 self['diagnosticslist'][key].insert(ivol, self['diagnosticslist'][key][min(ivol, Nvol-1)])
 
-        one_index_keys = ['iota', 'oita', 'qr', 'pr', 'ql', 'pl', 'rq', 'rp', 'lq', 'lp']
-        for key in one_index_keys:
+        for key in self.one_index_keys:
             if key.lower() in self['physicslist'].keys():
                 self['physicslist'][key].insert(ivol+1, self['physicslist'][key][min(ivol+1, Nvol-1)])
         
@@ -280,13 +295,16 @@ class SPECNamelist(Namelist):
             self['physicslist'].start_index[key.lower()][0] = -new_Ntor
 
         # We will need to update the size of Rac, etc and their indexing    
-        changelist = ['Rac', 'Ras', 'Zac', 'Zas']
+        changelist = self.axis_keys
 
         for key in changelist:
-            data = np.array(self['physicslist'][key], dtype=np.float64)
+            if not isinstance(self['physicslist'][key], list):
+                data = np.array([self['physicslist'][key]], dtype=np.float64)
+            else:
+                data = np.array(self['physicslist'][key], dtype=np.float64)
 
             newnlen = new_Ntor + 1
-            orgnlen = len(data)
+            orgnlen = data.shape[0]
             newdata = np.zeros([newnlen])
 
             newdata[:min(orgnlen,newnlen)] = data[:min(orgnlen,newnlen)]
@@ -356,6 +374,51 @@ class SPECNamelist(Namelist):
         else:
             del self.interface_guess[(m,n)]
 
+    def _rectify_namelist(self):
+        '''correct the size/type of the namelist objects and so on
+        '''
+
+        for key in self.zero_index_keys:
+            if key.lower() in self['physicslist'].keys():
+                if not isinstance(self['physicslist'][key], list):
+                    self['physicslist'][key] = [self['physicslist'][key]]
+            
+            if key.lower() in self['diagnosticslist'].keys():
+                if not isinstance(self['diagnosticslist'][key], list):
+                    self['diagnosticslist'][key] = [self['diagnosticslist'][key]]
+
+        for key in self.one_index_keys:
+            if key.lower() in self['physicslist'].keys():
+                if not isinstance(self['physicslist'][key], list):
+                    self['physicslist'][key] = [self['physicslist'][key]]
+            
+        # check the boundary namelist, create non-existence items
+        for key in self.boundary_keys:
+            if key.lower() not in self['physicslist'].keys():
+                self['physicslist'][key] = np.zeros([self._Mpol, self._Ntor * 2 + 1], dtype=np.float).tolist()
+                self['physicslist'].start_index[key.lower()] = [-self._Ntor, 0]
+            else:
+                # fill in all the none terms as zeros
+                for item1 in self['physicslist'][key]:
+                    for idx, item2 in enumerate(item1):
+                        if item2 is None:
+                            item1[idx] = 0.0
+
+
+        # check the axis namelist, create non-existence items
+        for key in self.axis_keys:
+            if key.lower() not in self['physicslist'].keys():
+                self['physicslist'][key] = np.zeros([self._Ntor + 1], dtype=np.float).tolist()
+                self['physicslist'].start_index[key.lower()] = [0]
+            else:
+                # check if the item is a list. if not, make it a list
+                if not isinstance(self['physicslist'][key], list):
+                    self['physicslist'][key] = [self['physicslist'][key]]
+                # fill in all the none terms as zeros
+                for idx, item1 in enumerate(self['physicslist'][key]):
+                    if item1 is None:
+                        self['physicslist'][key][idx] = 0.0
+
     def _dump_to_namelist(self, spec_hdf5_subgroup, target_namelist):
         '''dump the properties in the SPEC hdf5 group to the namelist
         parameters:
@@ -366,7 +429,7 @@ class SPECNamelist(Namelist):
         for key in dir(spec_hdf5_subgroup):
             # add to the namelist if it is not starting with '_' (internal python functions)
             if not key.startswith('_') and not key.startswith('inventory'):
-                if key in ['Rbc','Rbs','Zbc','Zbs','Vns','Vnc','Bns','Bnc','Rwc','Rws','Zwc','Zws']:
+                if key in self.boundary_keys:
                     # take care of all the boundary inputs
                     data = getattr(spec_hdf5_subgroup, key)
                     # we only need half of the mpol, since the data is -mpol:mpol
@@ -459,7 +522,7 @@ class SPECNamelist(Namelist):
             self.interface_guess[(m,n)]['Rbc'] = [float(line_split[2+lvol*4]) for lvol in range(self._Nvol)]
             self.interface_guess[(m,n)]['Zbs'] = [float(line_split[2+lvol*4+1]) for lvol in range(self._Nvol)]
             self.interface_guess[(m,n)]['Rbs'] = [float(line_split[2+lvol*4+2]) for lvol in range(self._Nvol)]
-            self.interface_guess[(m,n)]['Zbc'] = [float(line_split[2+lvol*4+2]) for lvol in range(self._Nvol)]
+            self.interface_guess[(m,n)]['Zbc'] = [float(line_split[2+lvol*4+3]) for lvol in range(self._Nvol)]
 
     def _generate_namelist_from_output(self, spec_hdf5):
         '''initialize the namelist from SPEC output:

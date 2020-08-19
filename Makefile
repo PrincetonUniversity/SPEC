@@ -253,12 +253,12 @@ global_d.o: %_d.o: global.f90 $(MACROS)
 
 ###############################################################################################################################################################
 
-$(ROBJS): %_r.o: %_m.F90 global_r.o $(MACROS) 
+$(ROBJS): %_r.o: %_m.F90 global_r.o sphdf5_r.o $(MACROS) 
 	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o $*_r.o -c $*_m.F90 $(LIBS)
 	@wc -l -L -w $*_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
-$(DOBJS): %_d.o: %_m.F90 global_d.o $(MACROS) 
+$(DOBJS): %_d.o: %_m.F90 global_d.o  sphdf5_d.o $(MACROS) 
 	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o $*_d.o -c $*_m.F90 $(LIBS)
 	@wc -l -L -w $*_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
@@ -272,7 +272,7 @@ $(PREPROC): %_m.F90: %.f90 $(MACROS)
 
 ###############################################################################################################################################################
 
-xspech_r.o: xspech.f90 global_r.o $(addsuffix _r.o,$(files)) $(MACROS) 
+xspech_r.o: xspech.f90 global_r.o sphdf5_r.o $(addsuffix _r.o,$(files)) $(MACROS) 
 	@awk -v date='$(date)' -v pwd='$(PWD)' -v macros='$(MACROS)' -v fc='$(FC)' -v flags='$(FLAGS) $(CFLAGS) $(RFLAGS)' -v allfiles='$(ALLFILES)' \
 	'BEGIN{nfiles=split(allfiles,files," ")} \
 	{if($$2=="COMPILATION") {print "    write(ounit,*)\"      :  compiled  : date    = "date" ; \"" ; \
@@ -289,7 +289,7 @@ xspech_r.o: xspech.f90 global_r.o $(addsuffix _r.o,$(files)) $(MACROS)
 	@wc -l -L -w xspech_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
-xspech_d.o: xspech.f90 global_d.o $(addsuffix _d.o,$(files)) $(MACROS) 
+xspech_d.o: xspech.f90 global_d.o sphdf5_d.o $(addsuffix _d.o,$(files)) $(MACROS) 
 	@awk -v date='$(date)' -v pwd='$(PWD)' -v macros='$(MACROS)' -v fc='$(FC)' -v flags='$(FLAGS) $(CFLAGS) $(DFLAGS)' -v allfiles='$(ALLFILES)' \
 	'BEGIN{nfiles=split(allfiles,files," ")} \
 	{if($$2=="COMPILATION") {print "    write(ounit,*)\"      :  compiled  : date    = "date" ; \"" ; \

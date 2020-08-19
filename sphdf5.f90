@@ -568,7 +568,11 @@ subroutine write_grid
   HWRITERV( grpGrid,           1, pi2nfp           , (/ pi2nfp        /))
 
   ! combine all radial parts into one dimension as Lrad values can be different for different volumes
-  sumLrad = sum(Lrad(1:Mvol)+1)
+  if (Ngrid .lt. 0) then 
+    sumLrad = sum(Lrad(1:Mvol)+1)
+  else
+    sumLrad = (Ngrid + 1) * Mvol
+  endif
 
   SALLOCATE(    Rij_grid, (1:sumLrad, 1:Ntz), zero )
   SALLOCATE(    Zij_grid, (1:sumLrad, 1:Ntz), zero )

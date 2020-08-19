@@ -196,6 +196,7 @@ Vns(3,6)    =  2.246627430067221E-04 Bns(3,6)    =  0.000000000000000E+00 Vnc(3,
  LBeltrami   =         4
  Linitgues   =         1
  Lposdef     =         0
+ Lmatsolver  =         1
  epsGMRES    =        1e-15
 /
 &globallist

@@ -44,10 +44,15 @@ def compare(data, reference, localtol = tol, action='ERR'):
             if key in ['filename', 'version', 'iterations']:  # not compare filename and version and iterations
                 continue
             else:
-                if key in ['volume', 'fiota']:  # skip certain problematic variables. NOT A GOOD IDEA TO CHANGE (might be revised)
+                if key in ['volume', 'fiota', 'Lmatsolver']:  # skip certain problematic variables. NOT A GOOD IDEA TO CHANGE (might be revised)
                     action = 'WARN'
-                diff = np.linalg.norm(np.abs(np.array(value) - np.array(reference.__dict__[key]))) \
-                        / np.size(np.array(value)) # divide by number of elements
+
+                if isinstance(value, list):  # compare each list
+                    diff = 0.0
+                    for ii, item in enumerate(value):
+                        diff = np.max([diff, np.max(np.abs(np.array(item) - np.array(reference.__dict__[key][ii])))])
+                else:
+                    diff = np.max(np.abs(np.array(value) - np.array(reference.__dict__[key])))
                 unmatch = diff > localtol
                 if unmatch:
                     if action == 'ERR':
