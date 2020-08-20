@@ -149,7 +149,7 @@ PlotChoice = uicontrol('Style', 'popupmenu', 'Parent', tab2, 'Units', 'normalize
                        'Position', [.025, .825, .95, .03], 'FontSize', 11, ...
                        'String', {'Poincare (default)', 'pressure', 'Toroidal flux', 'Poloidal flux', 'iota', ...
                                   'safety factor', 'modB', 'grid', ...
-                                  'Surface current', 'Volume current'}, ...
+                                  'Surface current', 'Volume current', 'B field'}, ...
                        'Callback', {@PlotChoiceFct, id}, 'Tag', ['PlotChoice_', id]);
     
 
@@ -366,8 +366,8 @@ function PlotChoiceFct(src,event,id)
             PlotOption.String = {'No option'};
         case 'Volume current'
             PlotOption.String = {'Non cumulative', 'Cumulative'};
-%         case 'B field'
-%             PlotOption.String = {'All', 'radial component', 'poloidal component', 'toroidal component'};
+         case 'B field'
+             PlotOption.String = {'All', 'radial component', 'poloidal component', 'toroidal component'};
     end
     
     AutoPlot = findobj('Tag', ['AutoPlot_', id]);
@@ -452,11 +452,11 @@ function InfoButtonFct(src,event,id)
             str = {[newline, 'Volume current plot', newline, '-------------------', newline, newline, ...
                     'Produce a bar plot of the volume current in each volume. Useful for comparison with', ...
                     'toroidal current constraint.']}; 
-%         case 'B field'
-%             str = {[newline, 'Magnetic field plot', newline, '-------------------', newline, newline, ...
-%                     'Plots the toroidal, poloidal and radial component of the magnetic field as a function of', ...
-%                     'the distance to the magnetic axis. The toroidal and poloidal angles can be changed with',...
-%                     'the "+" / "-" buttons and the slider respectively.']}; 
+         case 'B field'
+             str = {[newline, 'Magnetic field plot', newline, '-------------------', newline, newline, ...
+                     'Plots the toroidal, poloidal and radial component of the magnetic field as a function of', ...
+                     'the distance to the magnetic axis. The toroidal and poloidal angles can be changed with',...
+                     'the "+" / "-" buttons and the slider respectively.']}; 
     end
         
     set(t, 'String', str);
@@ -703,16 +703,16 @@ function PlotButtonFct(src,event,id)
         case 'Toroidal flux'
             switch PlotOption.Value
                 case 1
-                    out = plot_torflux(Status, false, id)
+                    out = plot_torflux(Status, false, id);
                 case 2
-                    out = plot_torflux(Status, true, id)
+                    out = plot_torflux(Status, true, id);
             end                
         case 'Poloidal flux'
             switch PlotOption.Value
                 case 1
-                    out = plot_polflux(Status, false, id)
+                    out = plot_polflux(Status, false, id);
                 case 2
-                    out = plot_polflux(Status, true, id)
+                    out = plot_polflux(Status, true, id);
             end                  
         case 'iota'
             switch PlotOption.Value
@@ -751,8 +751,8 @@ function PlotButtonFct(src,event,id)
                 case 2
                     out = plot_volI(Status, id, true);
             end
-%         case 'B field'
-%             plot_field(Status, id);
+         case 'B field'
+             out = plot_field(Status, id);
     end
     
     
@@ -1118,7 +1118,7 @@ function out = plot_surfI(Status, id)
         newfig = 2;
     end
     
-    plot_spec_surfcurent(data, 50, 50, zeta, newfig);
+    plot_spec_surfcurent(data, 256, 256, zeta, newfig);
     out = true;
 end
 
@@ -1151,51 +1151,55 @@ function out = plot_volI(Status, id, cumul)
     out = true;
 end
 
-% function plot_field(Status, id)
-% %Load poincare data
-%     try
-%         RunInfos = findobj('Tag', ['RunInfos_', id]);
-%         data = RunInfos.UserData.data;
-%     catch ME
-%        Status.String = ME.message;
-%        return
-%     end
-%     
-%     pdata = pdata_from_data(data);
-%     
-%     DispTorPlane = findobj('Tag', ['DispTorPlane_', id]);
-%     NTorPlane   = DispTorPlane.UserData.TorPlane;
-%     Nfp         = double(pdata.Nfp);
-%     nz          = size(pdata.R_lines,2);  % # of toroidal planes
-%     zeta        = double((NTorPlane-1) * (2 * pi / nz) * 1 / Nfp);
-%     
-%     ThetaSlider = findobj('Tag', ['ThetaSlider_', id]);
-%     theta = ThetaSlider.Value;
-%     
-%     theta = theta * pi / 180;
-%     
-%     Overlay = findobj('Tag', ['Overlay_', id]);
-%     if Overlay.Value
-%         newfig = 0;
-%     else
-%         newfig = 2;
-%     end
-%     
-%     PlotOption = findobj('Tag', ['PlotOption_', id]);
-%     Pltopt = PlotOption.String{PlotOption.Value};
-%     
-%     switch Pltopt
-%         case 'All'
-%             plot_spec_Bfield(data, 'all', theta, zeta, 500, newfig)
-%         case 'radial component'
-%             plot_spec_Bfield(data, 'psi', theta, zeta, 500, newfig)
-%         case 'poloidal component'
-%             plot_spec_Bfield(data, 'theta', theta, zeta, 500, newfig)
-%         case 'toroidal component'
-%             plot_spec_Bfield(data, 'phi', theta, zeta, 500, newfig)
-%     end
-%     
-% end
+function out = plot_field(Status, id)
+%Load poincare data
+disp('!!! WARNING: This plot might be wrong in slab geometry. to debug!')
+    try
+        RunInfos = findobj('Tag', ['RunInfos_', id]);
+        data = RunInfos.UserData.data;
+    catch ME
+       Status.String = ME.message;
+       out = false;
+       return
+    end
+    
+    pdata = pdata_from_data(data);
+    
+    DispTorPlane = findobj('Tag', ['DispTorPlane_', id]);
+    NTorPlane   = DispTorPlane.UserData.TorPlane;
+    Nfp         = double(pdata.Nfp);
+    nz          = size(pdata.R_lines,2);  % # of toroidal planes
+    zeta        = double((NTorPlane-1) * (2 * pi / nz) * 1 / Nfp);
+    
+    ThetaSlider = findobj('Tag', ['ThetaSlider_', id]);
+    theta = ThetaSlider.Value;
+    
+    theta = theta * pi / 180;
+    
+    Overlay = findobj('Tag', ['Overlay_', id]);
+    if Overlay.Value
+        newfig = 0;
+    else
+        newfig = 2;
+    end
+    
+    PlotOption = findobj('Tag', ['PlotOption_', id]);
+    Pltopt = PlotOption.String{PlotOption.Value};
+    
+    switch Pltopt
+        case 'All'
+            plot_spec_Bfield(data, 'all', theta, zeta, 500, newfig)
+        case 'radial component'
+            plot_spec_Bfield(data, 'psi', theta, zeta, 500, newfig)
+        case 'poloidal component'
+            plot_spec_Bfield(data, 'theta', theta, zeta, 500, newfig)
+        case 'toroidal component'
+            plot_spec_Bfield(data, 'phi', theta, zeta, 500, newfig)
+    end
+    
+    out = true;
+    
+end
 
 
 

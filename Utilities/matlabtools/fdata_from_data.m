@@ -13,6 +13,8 @@ function fdata = fdata_from_data(data)
 
 nvol        = double(data.input.physics.Nvol);
 Lfreebound  = data.input.physics.Lfreebound;
+Lrad        = data.input.physics.Lrad;
+
 
 fdata       = data.input.physics;
 
@@ -23,7 +25,7 @@ end
 
 f = fieldnames(data.vector_potential);
 for i = 1:length(f)
-fdata.(f{i}) = data.vector_potential.(f{i});
+    fdata.(f{i}) = data.vector_potential.(f{i}); 
 end
 
 fdata.Mregular = data.input.numerics.Mregular;

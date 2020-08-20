@@ -1,4 +1,4 @@
-function plot_spec_poincare(data,nz0,nfp,trjstep,newfig)
+function plot_spec_poincare(data,nz0,nfp,arr,newfig)
 
 % Produces Poincare plots of the field lines on different sections (within one field period)
 %
@@ -6,7 +6,8 @@ function plot_spec_poincare(data,nz0,nfp,trjstep,newfig)
 %   -data     : must be produced by calling read_spec(fname)
 %   -nz0      : shows the nz0 toroidal plane or equidistant planes (nz0=-1)
 %   -nfp      : number of field periods
-%   -trjstep  : step to skip field-line trajectories when ploting (trjstep=0 means all trajectories are ploted)
+%   -arr      : step to skip field-line trajectories when ploting (arr=1 means all trajectories are ploted)
+%             : can be an array of which field line should be plotted, if size(arra)>1
 %   -newfig   : opens(=1) or not(=0) a new figure, or overwrites (=2) last plot
 %
 % written by J.Loizu (2015)
@@ -26,6 +27,16 @@ nptraj   = size(pdata.R_lines,1);   % # of poincare trajectories (field lines)
 nz       = size(pdata.R_lines,2);   % # of toroidal planes
 
 flag2col = 'F';                     % flag for ploting field lines with alternating colour ('T') or not ('F')
+
+ind = find(arr>nptraj);
+if ~isempty(ind)
+   error(['Index out of bound in arr. All elements should be smaller than ', num2str(nptraj)]) 
+end
+
+if length(arr) == 1
+   arr = 1:arr:nptraj; 
+end
+
 
 
 disp(' ');
@@ -101,21 +112,21 @@ switch nz0
        case 1
            R    = squeeze(pdata.R_lines(:,j,:));
            T    = rpol*mod(squeeze(pdata.th_lines(:,j,:)),2*pi);
-           for i=1:1+trjstep:nptraj       %for each field line trajectory
+           for i=arr       %for each field line trajectory
                scatter(T(i,:),R(i,:),10,'.k')
                hold on
            end
        case 2  
            R    = squeeze(pdata.R_lines(:,j,:));
            T    = squeeze(pdata.th_lines(:,j,:));
-           for i=1:1+trjstep:nptraj       %for each field line trajectory
+           for i=arr       %for each field line trajectory
                scatter(R(i,:).*cos(T(i,:)),R(i,:).*sin(T(i,:)),10,'.k')
                hold on;
            end
        case 3
            R = squeeze(pdata.R_lines(:,j,:));
            Z = squeeze(pdata.Z_lines(:,j,:));
-           for i=1:1+trjstep:nptraj     %for each field line trajectory
+           for i=arr     %for each field line trajectory
             scatter(R(i,:),Z(i,:),10,'.k')
             hold on;
            end
@@ -184,21 +195,21 @@ switch nz0
        case 1
            R    = squeeze(pdata.R_lines(:,nz0,:));
            T    = rpol*mod(squeeze(pdata.th_lines(:,nz0,:)),2*pi);
-           for i=1:1+trjstep:nptraj       %for each field line trajectory
+           for i=arr       %for each field line trajectory
                scatter(T(i,:),R(i,:),10,'.k')
                hold on
            end
        case 2  
            R    = squeeze(pdata.R_lines(:,nz0,:));
            T    = squeeze(pdata.th_lines(:,nz0,:));
-           for i=1:1+trjstep:nptraj       %for each field line trajectory
+           for i=arr       %for each field line trajectory
                scatter(R(i,:).*cos(T(i,:)),R(i,:).*sin(T(i,:)),10,'.k')
                hold on;
            end
        case 3
            R = squeeze(pdata.R_lines(:,nz0,:));
            Z = squeeze(pdata.Z_lines(:,nz0,:));
-           for i=1:1+trjstep:nptraj     %for each field line trajectory
+           for i=arr     %for each field line trajectory
             scatter(R(i,:),Z(i,:),10,'.k')
             hold on;
            end

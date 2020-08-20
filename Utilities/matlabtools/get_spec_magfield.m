@@ -73,6 +73,7 @@ for l=1:Lrad+1
 end
 
 
+
 Bcontrav{1} = Bs./jac; %actual B^s
 Bcontrav{2} = Bt./jac; %actual B^theta
 Bcontrav{3} = Bz./jac; %actual B^zeta

@@ -4,7 +4,7 @@ function jacobian = get_spec_jacobian(data,lvol,sarr,tarr,zarr)
 % Calculates the coordinate Jacobian in volume number lvol
 %
 % INPUT
-%   -data      : must be produced by calling fdata_from_data
+%   -data      : must be produced by calling gdata_from_data
 %   -lvol      : volume number
 %   -sarr      : is the array of values for the s-coordinate
 %   -tarr      : is the array of values for the theta-coordinate

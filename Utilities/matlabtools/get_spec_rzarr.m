@@ -40,16 +40,9 @@ fac     = cell(mn,1);      % allocate data for regularization factors
 
 
 
-% Construct regularization factors
+% Construct REG FACTOR
 
-for j=1:mn
-  if(lvol>1 || im(j)==0) 
-   fac{j} = sbar;
-  else
-   fac{j} = sbar.^(im(j)/2);
-  end
-end
-
+fac = get_spec_regularisation_factor(data, lvol, sarr', 'G');
 
 % Construct (R,Z) coordinates array
 
@@ -58,8 +51,8 @@ for j=1:mn
     for iz=1:nz
      cosa = cos(im(j)*tarr(it)-in(j)*zarr(iz));
      sina = sin(im(j)*tarr(it)-in(j)*zarr(iz));
-     Rarr(:,it,iz) = Rarr(:,it,iz) + (Rac(j) + fac{j}.*(Rbc(j)-Rac(j)) )*cosa;
-     Zarr(:,it,iz) = Zarr(:,it,iz) + (Zas(j) + fac{j}.*(Zbs(j)-Zas(j)) )*sina;
+     Rarr(:,it,iz) = Rarr(:,it,iz) + (Rac(j) + fac{j}{1}.*(Rbc(j)-Rac(j)) )*cosa;
+     Zarr(:,it,iz) = Zarr(:,it,iz) + (Zas(j) + fac{j}{1}.*(Zbs(j)-Zas(j)) )*sina;
     end
   end
 end

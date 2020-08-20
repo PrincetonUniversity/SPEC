@@ -28,7 +28,7 @@ epsilon = 1E-5;
 
 % Data loading
 fdata = fdata_from_data(data);      % Read data
-Nvol = fdata.Nvol;                      % Total number of volumes
+Nvol = fdata.Mvol;                      % Total number of volumes
 sarr = linspace(-1, 1, ns);
 
 % Allocate memory

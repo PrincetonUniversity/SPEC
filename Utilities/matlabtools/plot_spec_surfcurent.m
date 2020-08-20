@@ -16,7 +16,7 @@ function plot_spec_surfcurent(data, ns, nt, zeta, newfig)
 
 [tflux, IPDt] = get_spec_surface_current(data, ns, nt, zeta);
 
-Nvol = data.input.physics.Nvol;
+Nvol = data.input.physics.Mvol;
 
 switch newfig
     case 0

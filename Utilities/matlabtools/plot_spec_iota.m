@@ -64,8 +64,13 @@ switch xaxis
   nptrj   = zeros(1,nvol);
   count   = 1;
   
+  ind = find(sval==-2); %Remove wrongly written data
+  sval(ind) = [];
+  F(ind) = [];
+  nsucctrj = nsucctrj - length(ind);
+  
   for is=1:length(sval)-1
-   if(sval(is)>0 && sval(is+1)<0)
+   if(sval(is)>0 && sval(is+1)<0) %Reached the end of a volume
     if(count==1) 
     nptrj(count) = is;
     else
@@ -84,6 +89,11 @@ switch xaxis
 
 
   for lvol=1:nvol
+      
+      if lvol==nvol % Required if last value had a -2 (often in free bound)
+          phiedge = cumflux + get_spec_torflux(fdata, nvol, 0, -1, 1, ns, nt);
+      end
+      
       for k=kstart:kstart-1+nptrj(lvol)
           psitor(k) = cumflux + get_spec_torflux(fdata,lvol,0,-1,sval(k),ns,nt);
       end
@@ -91,7 +101,7 @@ switch xaxis
       kstart  = kstart+nptrj(lvol);
   end
     
-  plot(psitor/psitor(end),F(1:nsucctrj),'*','MarkerSize',8,'LineWidth',2)
+  plot(psitor/phiedge,F(1:nsucctrj),'*','MarkerSize',8,'LineWidth',2)
   ylabel(Flabel)
   xlabel('\Psi / \Psi_{edge}')
   
@@ -105,6 +115,11 @@ case 'r'
   nptrj   = zeros(1,nvol);
   count   = 1;
   
+  ind = find(sval==-2); %Remove wrongly written data
+  sval(ind) = [];
+  F(ind) = [];
+  nsucctrj = nsucctrj - length(ind);
+  
   for is=1:length(sval)-1
    if(sval(is)>0 && sval(is+1)<0)
     if(count==1) 
@@ -124,6 +139,11 @@ case 'r'
   psitor   = zeros(1,length(sval));
 
   for lvol=1:nvol
+      
+      if lvol==nvol % Required if last value had a -2 (often in free bound)
+          phiedge = cumflux + get_spec_torflux(fdata, nvol, 0, -1, 1, ns, nt);
+      end
+      
       for k=kstart:kstart-1+nptrj(lvol)
           psitor(k) = cumflux + get_spec_torflux(fdata,lvol,0,-1,sval(k),ns,nt);
       end
@@ -131,7 +151,7 @@ case 'r'
       kstart  = kstart+nptrj(lvol);
   end
     
-  plot(sqrt(psitor/psitor(end)),F(1:nsucctrj),'*','MarkerSize',8,'LineWidth',2)
+  plot(sqrt(psitor/phiedge),F(1:nsucctrj),'*','MarkerSize',8,'LineWidth',2)
   ylabel(Flabel)
   xlabel('(\Psi / \Psi_{edge})^{1/2}')
   

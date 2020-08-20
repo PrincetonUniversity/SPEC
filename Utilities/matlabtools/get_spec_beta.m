@@ -1,11 +1,11 @@
-function [beta_ax, beta_av] = get_spec_beta(fname, vols)
+function [beta_ax, beta_av] = get_spec_beta(data, vols)
  
 % Calculates beta of the equilibrium, both the average beta=2*<p>/B(0)^2 
 % and the axis beta=2*p(0)/B(0)^2, and returns the latter
 %
 % INPUT
-%   -fname   : path to the hdf5 output file (e.g. 'testcase.sp.h5')
-%   -vols    : volumes to average beta
+%   -data    : Produced via read_spec('filename.sp.h5');
+%   -vols    : volumes on which beta is averaged
 %
 % OUTPUT
 %  -beta     : value of beta on axis
@@ -13,12 +13,14 @@ function [beta_ax, beta_av] = get_spec_beta(fname, vols)
 % written by J.Loizu (2016) 
 % modified by J.Loizu (05.2017)
 % modified by A.Baillod (06.2019)
+%
+% A.Baillod: update for new hdf5 format (04.2020)
 
 % Read some data
-gdata  = read_spec_grid(fname);
-fdata  = read_spec_field(fname);
-pscale = h5read(fname,'/pscale');
-press  = pscale*h5read(fname,'/pressure');
+gdata  = gdata_from_data(data);
+fdata  = fdata_from_data(data);
+pscale = data.input.physics.pscale;
+press  = pscale * data.input.physics.pressure;
 
 % Define integration coordinates
 tarr    = linspace(0,2*pi,16);
