@@ -33,10 +33,6 @@ module sphdf5
   integer(hid_t)                 :: file_id, space_id, dset_id                 ! default IDs used in macros
   integer(hsize_t)               :: onedims(1:1), twodims(1:2), threedims(1:3) ! dimension specifiers used in macros
   logical                        :: grp_exists, var_exists                     ! flags used to signal if a group or variable already exists
-  logical                        :: dummy_f_corder_valid                       ! dummy argument for outputs of h5lget_info_f
-  integer                        :: dummy_cset, dummy_corder, dummy_link_type  ! dummy argument for outputs of h5lget_info_f
-  integer(haddr_t)               :: dummy_address                              ! dummy argument for outputs of h5lget_info_f
-  integer(size_t)                :: dummy_val_size                             ! dummy argument for outputs of h5lget_info_f
 
 
   integer(hid_t)                 :: iteration_dset_id                          ! Dataset identifier for "iteration"
