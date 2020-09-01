@@ -342,7 +342,7 @@ else ! CASE SEMI GLOBAL CONSTRAINT
             call allocate_geometry_matrices(vvol, LcomputeDerivatives)
             call allocate_Beltrami_matrices(vvol, LcomputeDerivatives)
 
-            call get_LU_beltrami_matrices(vvol, oBI, NN)
+            call get_LU_beltrami_matrices(vvol, oBI(vvol), NN)
 
             call deallocate_Beltrami_matrices(LcomputeDerivatives)
             call deallocate_geometry_matrices(LcomputeDerivatives)
@@ -432,15 +432,16 @@ else ! CASE SEMI GLOBAL CONSTRAINT
 
                         ! Set up volume information                        
                         LREGION(lvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
-                        ll = Lrad(lvol)  ! Shorthand
-                        NN = NAdof(lvol) ! shorthand;
+                        NN = NAdof(lvol)
                        
                         ! Allocate memory. This cannot be moved outside due to NN and ll dependence on volume.
                         call allocate_geometry_matrices(lvol, LcomputeDerivatives)
                         call allocate_Beltrami_matrices(lvol, LcomputeDerivatives)
 
                         ! Get derivative of vector potential w.r.t geometry. Matrix perturbation theory.
-                        call get_perturbed_solution(lvol, oBI, NN)
+                        call intghs_workspace_init(lvol)
+                        call get_perturbed_solution(lvol, oBI(lvol), NN)
+                        call intghs_workspace_destroy()
                     
                         ! Free memory
                         call deallocate_Beltrami_matrices(LcomputeDerivatives)
