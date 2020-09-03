@@ -9,7 +9,7 @@ on:
 jobs:
   py_sepc-build:
     runs-on: ubuntu-latest
-    name: py_spec test
+    name: py_spec build
     env:
       PY_SPEC_DIR: ${GITHUB_WORKSPACE}/Utilities/pythontools
     steps:
@@ -32,18 +32,20 @@ jobs:
         # This path is specific to Ubuntu
         path: ${{ steps.pip-cache.outputs.dir }}
         # Look to see if there is a cache hit for the corresponding requirements file
-        key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+        key: ${{ runner.os }}-pip-${{ hashFiles('${env.PY_SPEC_DIR}/requirements.txt') }}
         restore-keys: |
           ${{ runner.os }}-pip
 
     - name: Install dependencies
       if: steps.cache-pip.outputs.cache-hit != 'true'
+      working-directory: ${env.PY_SPEC_DIR}
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install setuptools wheel twine      
 
     - name: Build py_spec
+      working-directory: ${env.PY_SPEC_DIR}
       run: |
         echo "install py_spec"
         pip --version
@@ -57,11 +59,12 @@ jobs:
         # This path is specific to Ubuntu
         path: ${PY_SPEC_DIR}/py_spec
         # Look to see if there is a cache hit for the corresponding requirements file
-        key: ${{ runner.os }}-pip-${{ hashFiles('__init__.py') }}
+        key: ${{ runner.os }}-pip-${{ hashFiles('${env.PY_SPEC_DIR}/py_spec/__init__.py') }}
         restore-keys: |
           ${{ runner.os }}-pypi
 
     - name: publish to PYPI
+      working-directory: ${env.PY_SPEC_DIR}
       if: steps.cache-pypi.outputs.cache-hit != 'true'
       env:
         TWINE_USERNAME: __token__
