@@ -105,14 +105,14 @@ program xspech
 
   MPISTART ! It might be easy to read the source if this macro was removed; SRH: 27 Feb 18;
 
-! #ifdef DEBUG
+!#ifdef DEBUG
 !   iwait = 0; pid = getpid()
 !   status = hostnm( hostname )
 !   write(*,*) 'Process with PID: ', pid, 'ready to attach. Hostname: ', hostname
 !   do while( iwait .EQ. 0 )
 !     !wait for debugger
 !   enddo
-! #endif
+!#endif
   
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

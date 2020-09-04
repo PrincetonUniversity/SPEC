@@ -356,8 +356,8 @@ else ! CASE SEMI GLOBAL CONSTRAINT
             do vvol = 1, Mvol
                 NN = NAdof(vvol)
                 call WhichCpuID(vvol, cpu_id)
-                call MPI_BCAST( oBI(vvol)%mat   , (NN+1)**2, MPI_DOUBLE_PRECISION, cpu_id , MPI_COMM_WORLD , ierr)
-                call MPI_BCAST( oBI(vvol)%ipivot,  NN+1    , MPI_DOUBLE_PRECISION, cpu_id , MPI_COMM_WORLD , ierr)
+                call MPI_BCAST( oBI(vvol)%mat(0:NN,0:NN), (NN+1)**2, MPI_DOUBLE_PRECISION, cpu_id , MPI_COMM_WORLD , ierr)
+                call MPI_BCAST( oBI(vvol)%ipivot(0:NN)  ,  NN+1    , MPI_INTEGER         , cpu_id , MPI_COMM_WORLD , ierr)
             enddo
         endif
 
@@ -555,7 +555,7 @@ else ! CASE SEMI GLOBAL CONSTRAINT
             call MPI_BCAST( dmupfdx(1:Mvol, vvol ,1:2, 1:LGdof,   1), Mvol*2*LGdof  , MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_WORLD, ierr )
         endif
     
-        call MPI_BCAST( dFFdRZ(1:LGdof, vvol ,0:1, 1:LGdof, 0:1), 2*2*(LGdof**2), MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_WORLD, ierr )
+        call MPI_BCAST( dFFdRZ(1:LGdof, 0:1, 1:LGdof, 0:1, vvol), 2*2*(LGdof**2), MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_WORLD, ierr )
         call MPI_BCAST( dBBdmp(1:LGdof, vvol ,0:1, 1:2         ), 2*2*LGdof, MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_WORLD, ierr )
     enddo
 
