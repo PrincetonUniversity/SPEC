@@ -216,9 +216,9 @@ subroutine mirror_input_to_outfile
   H5DESCR_CDSET( /input/physics/rq, rq ?,                                                                                              __FILE__, __LINE__)
   HWRITERV_LO( grpInputPhysics,  (1+Nvol), oita       ,      oita(0:Nvol)   ,                                                          __FILE__, __LINE__)
   H5DESCR_CDSET( /input/physics/oita, rotational transform profile on outside of ideal interfaces,                                     __FILE__, __LINE__)
-  HWRITEIV_LO( grpInputPhysics,         1, rtor  , (/ rtor      /),                                                                    __FILE__, __LINE__)
+  HWRITERV_LO( grpInputPhysics,         1, rtor  , (/ rtor      /),                                                                    __FILE__, __LINE__)
   H5DESCR_CDSET( /input/physics/rpol, for aspect ratio in slab,                                                                        __FILE__, __LINE__)
-  HWRITEIV_LO( grpInputPhysics,         1, rpol  , (/ rpol      /),                                                                    __FILE__, __LINE__)
+  HWRITERV_LO( grpInputPhysics,         1, rpol  , (/ rpol      /),                                                                    __FILE__, __LINE__)
   H5DESCR_CDSET( /input/physics/rpol, for aspect ratio in slab,                                                                        __FILE__, __LINE__)
 
   HWRITERV_LO( grpInputPhysics,  (1+Ntor), Rac        ,       Rac(0:Ntor)   ,                                                          __FILE__, __LINE__)
@@ -543,7 +543,7 @@ subroutine write_grid
   &                     Nt, Nz, Ntz, Mvol, pi2nfp, ivol, mn, Node, gBzeta, &
   &                     Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
   &                     Rij, Zij, sg
-  use inputlist, only : Lrad, Igeometry, Nvol, Ngrid
+  use inputlist, only : Lrad, Igeometry, Nvol, Ngrid, rtor, rpol
   use cputiming, only : Tsphdf5
 
   LOCALS
@@ -608,14 +608,30 @@ subroutine write_grid
     sg_grid (alongLrad,1:Ntz) =  sg(1:Ntz,0)
 
     if( Lcurvature.eq.1 ) then
-     do kk = 0, Nz-1 ; zeta = kk * pi2nfp / Nz
-      do jj = 0, Nt-1 ; teta = jj * pi2    / Nt ; jk = 1 + jj + kk*Nt ; st(1:2) = (/ lss, teta /)
-       WCALL( sphdf5, bfield, ( zeta, st(1:Node), Bst(1:Node) ) )
-       ijreal(jk) = ( Rij(jk,1,0) * Bst(1) + Rij(jk,2,0) * Bst(2) + Rij(jk,3,0) * one ) * gBzeta / sg(jk,0) ! BR;
-       ijimag(jk) = (                                                             one ) * gBzeta / sg(jk,0) ! Bp;
-       jireal(jk) = ( Zij(jk,1,0) * Bst(1) + Zij(jk,2,0) * Bst(2) + Zij(jk,3,0) * one ) * gBzeta / sg(jk,0) ! BZ;
+
+     select case (Igeometry)
+
+     case (3)
+      do kk = 0, Nz-1 ; zeta = kk * pi2nfp / Nz
+        do jj = 0, Nt-1 ; teta = jj * pi2    / Nt ; jk = 1 + jj + kk*Nt ; st(1:2) = (/ lss, teta /)
+        WCALL( sphdf5, bfield, ( zeta, st(1:Node), Bst(1:Node) ) )
+        ijreal(jk) = ( Rij(jk,1,0) * Bst(1) + Rij(jk,2,0) * Bst(2) + Rij(jk,3,0) * one ) * gBzeta / sg(jk,0) ! BR;
+        ijimag(jk) = (                                                             one ) * gBzeta / sg(jk,0) ! Bp;
+        jireal(jk) = ( Zij(jk,1,0) * Bst(1) + Zij(jk,2,0) * Bst(2) + Zij(jk,3,0) * one ) * gBzeta / sg(jk,0) ! BZ;
+        enddo
       enddo
-     enddo
+
+     case (1)
+      do kk = 0, Nz-1 ; zeta = kk * pi2nfp / Nz
+        do jj = 0, Nt-1 ; teta = jj * pi2    / Nt ; jk = 1 + jj + kk*Nt ; st(1:2) = (/ lss, teta /)
+        WCALL( sphdf5, bfield, ( zeta, st(1:Node), Bst(1:Node) ) )
+        ijreal(jk) = ( Rij(jk,1,0) * Bst(1) + Rij(jk,2,0) * Bst(2) + Rij(jk,3,0) * one ) * gBzeta / sg(jk,0) ! BR;
+        ijimag(jk) = (                                                            rpol ) * gBzeta / sg(jk,0) ! Bzeta;
+        jireal(jk) = (                      +        rtor * Bst(2)                     ) * gBzeta / sg(jk,0) ! Btheta;
+        enddo
+      enddo
+    
+     end select !Igeometry
     endif ! end of if( Lcurvature.eq.1 ) ;
 
    ijreal_grid(alongLrad,1:Ntz) = ijreal(1:Ntz)
