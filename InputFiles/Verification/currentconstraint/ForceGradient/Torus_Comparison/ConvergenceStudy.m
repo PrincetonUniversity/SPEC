@@ -1,5 +1,8 @@
-init_fname = 'G3V08L3Fr.001.sp';
+%init_fname = 'G3V08L3Fr.001.sp';
+%init_fname = 'G3V02L3Fi.001.sp';
+init_fname = 'G3V02L1Fi.001.sp';
 
+exec_path = '../../../../../dspec ';
 
 max_DeltaRel = [];
 
@@ -14,7 +17,7 @@ for ii = 1:length(DeltaR)
 
     fname_new = ['Run_', num2str(ii), '.sp'];
     change_spec_inputfile(init_fname, fname_new, 'dRZ', DeltaR(ii), 'Lcheck', 6, 'Lfindzero', 2)
-    system(['../../../../../dspec ', fname_new])
+    system([exec_path, fname_new])
 
     fname_out = ['Run_', num2str(ii) '.Lcheck6_output.FiniteDiff.txt'];
     FG_FiniteDiff = importdata(fname_out);

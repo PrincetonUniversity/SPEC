@@ -1090,11 +1090,9 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
         dBdX%L = .false.
 
         if( LocalConstraint ) then
-            call deallocate_geometry_matrices(LcomputeDerivatives)
-            DALLOCATE( dMA )
-            DALLOCATE( dMB )
-            DALLOCATE( dMD )
-            DALLOCATE( dMG )
+            WCALL(dfp200, deallocate_geometry_matrices, (LcomputeDerivatives))
+            WCALL(dfp200, deallocate_Beltrami_matrices, (LcomputeDerivatives))
+            WCALL(dfp200, intghs_workspace_destroy, ()))
         endif
 
         do isymdiff = -2, 2 ! symmetric fourth-order, finite-difference used to approximate derivatives;
@@ -1182,7 +1180,8 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
                     imupf_local(1:2,isymdiff) = (/ dtflux(vvol), dpflux(vvol) /) ! dtflux and dpflux are computed for the perturbed geometry by ma02aa/mp00ac if Lconstraint=1;
                 endif
 
-            else ! global constraint<
+
+            else ! global constraint
                 if( Lplasmaregion ) then
                     imupf_global(1:Mvol,1,isymdiff) = (/  mu(1:Mvol)     /) ! mu     is computed for the perturbed geometry by ma02aa/mp00ac
                     imupf_global(1:Mvol,2,isymdiff) = (/  dpflux(1:Mvol) /) ! dpflux is computed for the perturbed geometry by ma02aa/mp00ac
@@ -1194,6 +1193,12 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
             endif
         enddo ! end of do isymdiff;
 
+        if( LocalConstraint ) then
+            ! reallocate matrices for next iteration
+            WCALL(dfp200, intghs_workspace_init, (vvol))
+            WCALL(dfp200, allocate_Beltrami_matrices, (vvol,LcomputeDerivatives))
+            WCALL(dfp200, allocate_geometry_matrices, (vvol,LcomputeDerivatives))
+        endif
 
 8294        continue
         ! Evaluate derivatives using finite differences
@@ -1239,15 +1244,6 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
         iZbs(1:mn,0:Mvol) = oZbs(1:mn,0:Mvol)
         iRbs(1:mn,0:Mvol) = oRbs(1:mn,0:Mvol)
         iZbc(1:mn,0:Mvol) = oZbc(1:mn,0:Mvol)
-
-
-        if( LocalConstraint ) then ! reallocate matrices for next iteration
-            call allocate_geometry_matrices(ll,LcomputeDerivatives)
-            SALLOCATE( dMA, (0:NN, 0:NN), zero )
-            SALLOCATE( dMB, (0:NN, 0: 2), zero )
-            SALLOCATE( dMD, (0:NN, 0:NN), zero )
-            SALLOCATE( dMG, (0:NN      ), zero )
-        endif
 
 
     endif ! end of if( Lcheck.eq.4 ) ;
