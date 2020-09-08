@@ -1,6 +1,6 @@
-%init_fname = 'G3V08L3Fr.001.sp';
+init_fname = 'G3V08L3Fr.001.sp';
 %init_fname = 'G3V02L3Fi.001.sp';
-init_fname = 'G3V02L1Fi.001.sp';
+%init_fname = 'G3V02L1Fi.001.sp';
 
 exec_path = '../../../../../dspec ';
 
