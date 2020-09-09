@@ -58,13 +58,13 @@ subroutine curent( lvol, mn, Nt, Nz, iflag, ldItGp )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  use constants, only : zero, one, two, pi2
+  use constants, only : zero, one, two, pi2, half
   
   use numerical, only : 
   
   use fileunits, only : ounit
   
-  use inputlist, only : Wmacros, Wcurent, Lrad
+  use inputlist, only : Wmacros, Wcurent, Lrad, Lconstraint
 
   use cputiming, only : Tcurent
 
@@ -74,7 +74,7 @@ subroutine curent( lvol, mn, Nt, Nz, iflag, ldItGp )
                         sg, guvij, &
                         Ntz, ijreal, ijimag, jireal, jiimag, &
                         efmn, ofmn, cfmn, sfmn, evmn, odmn, comn, simn, &
-                        Ate, Aze, Ato, Azo, TT
+                        Ate, Aze, Ato, Azo, TT, Lcoordinatesingularity, regumm
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -84,9 +84,9 @@ subroutine curent( lvol, mn, Nt, Nz, iflag, ldItGp )
   REAL   , intent(out) :: ldItGp(0:1,-1:2)
 
   INTEGER              :: innout, lvol, ideriv, ii, ll, Lcurvature, ifail
-  REAL                 :: lss
-  REAL                 :: lAte(1:mn,-1:2), lAze(1:mn,-1:2), lAto(1:mn,-1:2), lAzo(1:mn,-1:2)
-  REAL                 :: Bsupt(1:Nt*Nz,-1:2), Bsupz(1:Nt*Nz,-1:2)
+  REAL                 :: lss, mfactor
+  REAL                 :: lAte(1:mn,-1:2), lAze(1:mn,-1:2), lAto(1:mn,-1:2), lAzo(1:mn,-1:2), tAze(1:mn,-1:2), zAte(1:mn,-1:2)
+  REAL                 :: Bsupt(1:Nt*Nz,-1:2), Bsupz(1:Nt*Nz,-1:2), Bsups(1:Nt*Nz,-1:2), Bsups_2(1:Nt*Nz,-1:2)
   
   BEGIN(curent)
   
@@ -108,12 +108,19 @@ subroutine curent( lvol, mn, Nt, Nz, iflag, ldItGp )
   
   lAte(1:mn,-1:2) = zero ! radial derivatives of vector potential evaluated at interfaces; 20 Apr 13;
   lAze(1:mn,-1:2) = zero
+  zAte(1:mn,-1:2) = zero
+  tAze(1:mn,-1:2) = zero
 ! if( NOTstellsym ) then
   lAto(1:mn,-1:2) = zero ! this is used below and needs to be assigned a (trivial) value ; 26 Jan 16;
   lAzo(1:mn,-1:2) = zero ! this is used below and needs to be assigned a (trivial) value ; 26 Jan 16;
 ! endif
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  if (lconstraint .eq. -2) then
+    innout = 1.0
+    lss = 1.0
+  end if
 
   do ideriv = -1, 2 ! labels derivative of magnetic field wrt enclosed fluxes; 20 Apr 13;
    
@@ -124,11 +131,17 @@ subroutine curent( lvol, mn, Nt, Nz, iflag, ldItGp )
    if( YESstellsym ) then
    
     do ii = 1, mn ! loop over Fourier harmonics; 20 Apr 13;
+
+      if( Lcoordinatesingularity ) then ; mfactor = regumm(ii) * half ! include radial regularization factor near coordinate origin; 21 Apr 13;
+        else                              ; mfactor = zero
+      endif
      
      do ll = 0, Lrad(lvol) ! loop over Chebyshev polynomials; 20 Apr 13;
       
-      lAte(ii,ideriv) = lAte(ii,ideriv) + Ate(lvol,ideriv,ii)%s(ll) * TT(ll,innout,1) ! compute radial derivative of vector potential; 20 Apr 13;
-      lAze(ii,ideriv) = lAze(ii,ideriv) - Aze(lvol,ideriv,ii)%s(ll) * TT(ll,innout,1) ! note      inclusion of sign factor           ; 26 Jan 16;
+      lAte(ii,ideriv) = lAte(ii,ideriv) + Ate(lvol,ideriv,ii)%s(ll) * (TT(ll,innout,1) + mfactor) ! compute radial derivative of vector potential; 20 Apr 13;
+      lAze(ii,ideriv) = lAze(ii,ideriv) - Aze(lvol,ideriv,ii)%s(ll) * (TT(ll,innout,1) + mfactor) ! note      inclusion of sign factor           ; 26 Jan 16;
+      tAze(ii,ideriv) = tAze(ii,ideriv) - im(ii)*Aze(lvol,ideriv,ii)%s(ll) * TT(ll,innout,0) ! theta derivative of Az
+      ZAte(ii,ideriv) = zAte(ii,ideriv) - in(ii)*Ate(lvol,ideriv,ii)%s(ll) * TT(ll,innout,0) ! zeta derivative of At
       
      enddo ! end of do ll;
      
@@ -155,6 +168,14 @@ subroutine curent( lvol, mn, Nt, Nz, iflag, ldItGp )
    call invfft( mn, im(1:mn), in(1:mn), lAte(1:mn,ideriv), lAto(1:mn,ideriv), lAze(1:mn,ideriv), lAzo(1:mn,ideriv), &
                 Nt, Nz, Bsupz(1:Ntz,ideriv), Bsupt(1:Ntz,ideriv) ) ! map to real space;
 
+   if (Lconstraint .eq. -2) then
+        call invfft( mn, im(1:mn), in(1:mn), lAto(1:mn,ideriv), tAze(1:mn,ideriv), lAzo(1:mn,ideriv), zAte(1:mn,ideriv), &
+                Nt, Nz, Bsups(1:Ntz,ideriv), Bsups_2(1:Ntz,ideriv))
+        Bsups(1:Ntz,ideriv) = Bsups(1:Ntz,ideriv) + Bsups_2(1:ntz,ideriv)
+   else
+        Bsups = zero
+   end if
+
   enddo ! end of do ideriv; 31 Jan 13;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -175,8 +196,13 @@ subroutine curent( lvol, mn, Nt, Nz, iflag, ldItGp )
    if( iflag.eq. 2 .and. ideriv.lt.0 ) cycle ! derivatives of currents  wrt geometry                                     is  not required; 20 Jun 14;
    if( iflag.eq.-1 .and. ideriv.gt.0 ) cycle ! derivatives of currents  wrt enclosed toroidal and enclosed poloidal flux are not required; 20 Jun 14;
 
-   ijreal(1:Ntz) =                 ( Bsupt(1:Ntz,ideriv) * guvij(1:Ntz,2,2,0) + Bsupz(1:Ntz,ideriv) * guvij(1:Ntz,2,3,0) ) / sg(1:Ntz,0)
-   ijimag(1:Ntz) =                 ( Bsupt(1:Ntz,ideriv) * guvij(1:Ntz,2,3,0) + Bsupz(1:Ntz,ideriv) * guvij(1:Ntz,3,3,0) ) / sg(1:Ntz,0)
+   if (Lconstraint .eq. -2) then
+   ijreal(1:Ntz) =  (Bsups(1:Ntz,ideriv) * guvij(1:Ntz,2,1,0) + Bsupt(1:Ntz,ideriv) * guvij(1:Ntz,2,2,0) + Bsupz(1:Ntz,ideriv) * guvij(1:Ntz,2,3,0) ) / sg(1:Ntz,0)
+   ijimag(1:Ntz) =  (Bsups(1:Ntz,ideriv) * guvij(1:Ntz,1,3,0) + Bsupt(1:Ntz,ideriv) * guvij(1:Ntz,2,3,0) + Bsupz(1:Ntz,ideriv) * guvij(1:Ntz,3,3,0) ) / sg(1:Ntz,0)
+   else
+   ijreal(1:Ntz) =  (Bsupt(1:Ntz,ideriv) * guvij(1:Ntz,2,2,0) + Bsupz(1:Ntz,ideriv) * guvij(1:Ntz,2,3,0) ) / sg(1:Ntz,0)
+   ijimag(1:Ntz) =  (Bsupt(1:Ntz,ideriv) * guvij(1:Ntz,2,3,0) + Bsupz(1:Ntz,ideriv) * guvij(1:Ntz,3,3,0) ) / sg(1:Ntz,0)
+   end if 
    if( ideriv.eq.-1 ) then ! add derivatives of metrics with respect to interface geometry; 15 Sep 16;
    ijreal(1:Ntz) = ijreal(1:Ntz) + ( Bsupt(1:Ntz,     0) * guvij(1:Ntz,2,2,1) + Bsupz(1:Ntz,     0) * guvij(1:Ntz,2,3,1) ) / sg(1:Ntz,0)
    ijimag(1:Ntz) = ijimag(1:Ntz) + ( Bsupt(1:Ntz,     0) * guvij(1:Ntz,2,3,1) + Bsupz(1:Ntz,     0) * guvij(1:Ntz,3,3,1) ) / sg(1:Ntz,0)

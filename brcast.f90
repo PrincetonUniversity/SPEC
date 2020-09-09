@@ -133,7 +133,7 @@ subroutine brcast( lvol )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 ! if( lvol.gt.Nvol .and. Lconstraint.eq.-1 .and. Wcurent ) then ! 27 Feb 17;
-  if( lvol.gt.Nvol                         .and. Wcurent ) then ! 27 Feb 17;
+  if( (lvol.gt.Nvol .or. Lconstraint .eq.-2)                         .and. Wcurent ) then ! 27 Feb 17;
   !write(ounit,'("brcast : " 10x " : myid="i3" ; broadcasting : curtor="es13.5" ; curpol="es13.5" ;")') myid, curtor, curpol
    RlBCAST( curtor, 1, llmodnp )
    RlBCAST( curpol, 1, llmodnp )

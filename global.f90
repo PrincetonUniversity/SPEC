@@ -1557,7 +1557,7 @@ subroutine readin
    FATAL( readin, mupftol.le.zero, mupftol is too small )
    FATAL( readin, abs(one+gamma).lt.vsmall, 1+gamma appears in denominator in dforce ) ! Please check this; SRH: 27 Feb 18;
    FATAL( readin, abs(one-gamma).lt.vsmall, 1-gamma appears in denominator in fu00aa ) ! Please check this; SRH: 27 Feb 18;
-   FATAL( readin, Lconstraint.lt.-1 .or. Lconstraint.gt.2, illegal Lconstraint )
+   FATAL( readin, Lconstraint.lt.-2 .or. Lconstraint.gt.2, illegal Lconstraint )
    FATAL( readin, Igeometry.eq.1 .and. rpol.lt.vsmall, poloidal extent of slab too small or negative )   
    FATAL( readin, Igeometry.eq.1 .and. rtor.lt.vsmall, toroidal extent of slab too small or negative )
 
@@ -2118,6 +2118,8 @@ subroutine readin
       iZbc(ii,Mvol) =   zero
       endif
 
+     endif ! matches if( Lfreebound.eq.1 ) ;
+
       iVns(ii     ) = ( Vns( kk, mm) - Vns(-kk,-mm) ) * jj
       iBns(ii     ) = ( Bns( kk, mm) - Bns(-kk,-mm) ) * jj
       if( NOTstellsym ) then
@@ -2128,8 +2130,6 @@ subroutine readin
       iBnc(ii     ) =   zero
       endif
 
-     endif ! matches if( Lfreebound.eq.1 ) ; 
-     
     endif ! end of if( mm.eq.0 .and. nn.eq.0 ) ; 
  
    enddo ! end of do ii = 1, mn;
