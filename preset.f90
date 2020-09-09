@@ -1009,27 +1009,25 @@ endif
   SALLOCATE( gteta, (1:Ntz), zero )
   SALLOCATE( gzeta, (1:Ntz), zero )
   
-  if (Lfindzero .eq. 2) then
-    SALLOCATE( cosi, (1:Ntz,1:mn), zero )
-    SALLOCATE( sini, (1:Ntz,1:mn), zero )
+  SALLOCATE( cosi, (1:Ntz,1:mn), zero )
+  SALLOCATE( sini, (1:Ntz,1:mn), zero )
 
-    FATAL( preset, Nz.eq.0, illegal division )
-    FATAL( preset, Nt.eq.0, illegal division )
+  FATAL( preset, Nz.eq.0, illegal division )
+  FATAL( preset, Nt.eq.0, illegal division )
 
-    do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over Fourier harmonics;
-    
-    do kk = 0, Nz-1 ; zeta = kk * pi2nfp / Nz
-      do jj = 0, Nt-1 ; teta = jj * pi2    / Nt ; jk = 1 + jj + kk*Nt ; arg = mi * teta - ni * zeta 
-      gteta(jk) = teta
-      gzeta(jk) = zeta
-      cosi(jk,ii) = cos(arg)
-      sini(jk,ii) = sin(arg)
-      enddo
+  do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over Fourier harmonics;
+  
+  do kk = 0, Nz-1 ; zeta = kk * pi2nfp / Nz
+    do jj = 0, Nt-1 ; teta = jj * pi2    / Nt ; jk = 1 + jj + kk*Nt ; arg = mi * teta - ni * zeta 
+    gteta(jk) = teta
+    gzeta(jk) = zeta
+    cosi(jk,ii) = cos(arg)
+    sini(jk,ii) = sin(arg)
     enddo
-    
-    enddo ! end of do ii; 13 May 13;
+  enddo
+  
+  enddo ! end of do ii; 13 May 13;
 
-  endif
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 #ifdef DEBUG

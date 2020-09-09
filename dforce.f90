@@ -183,7 +183,9 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives, LCompu
 
   packorunpack = 'U' ! unpack geometrical degrees-of-freedom;
 
+#ifndef DEBUG  
   LComputeAxis = .true.
+#endif
 
   WCALL( dforce, packxi,( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), &
                           iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), packorunpack, LcomputeDerivatives, LComputeAxis ) )
@@ -677,14 +679,6 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives, LCompu
                 SALLOCATE( oRbc, (1:mn,0:Mvol), iRbc(1:mn,0:Mvol) ) !save unperturbed geometry
                 SALLOCATE( oZbs, (1:mn,0:Mvol), iZbs(1:mn,0:Mvol) )
                 SALLOCATE( oRbs, (1:mn,0:Mvol), iRbs(1:mn,0:Mvol) )
-                SALLOCATE( oZbc, (1:mn,0:Mvol), iZbc(1:mn,0:Mvol) ) 
-                                SALLOCATE( oZbc, (1:mn,0:Mvol), iZbc(1:mn,0:Mvol) ) 
-                SALLOCATE( oZbc, (1:mn,0:Mvol), iZbc(1:mn,0:Mvol) ) 
-                                SALLOCATE( oZbc, (1:mn,0:Mvol), iZbc(1:mn,0:Mvol) ) 
-                SALLOCATE( oZbc, (1:mn,0:Mvol), iZbc(1:mn,0:Mvol) ) 
-                                SALLOCATE( oZbc, (1:mn,0:Mvol), iZbc(1:mn,0:Mvol) ) 
-                SALLOCATE( oZbc, (1:mn,0:Mvol), iZbc(1:mn,0:Mvol) ) 
-                                SALLOCATE( oZbc, (1:mn,0:Mvol), iZbc(1:mn,0:Mvol) ) 
                 SALLOCATE( oZbc, (1:mn,0:Mvol), iZbc(1:mn,0:Mvol) ) 
                 SALLOCATE( iforce,    (-2:2, 0:NGdof), zero)
                 SALLOCATE( iposition, (-2:2, 0:NGdof), zero)

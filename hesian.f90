@@ -26,7 +26,7 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
   use inputlist, only : Wmacros, Whesian, ext, Igeometry, Nvol, pflux, helicity, mu, Lfreebound, &
                         LHevalues, LHevectors, LHmatrix, &
                         Lperturbed, dpp, dqq, &
-                        Lcheck
+                        Lcheck, Lfindzero
 
   use cputiming, only : Thesian
 
