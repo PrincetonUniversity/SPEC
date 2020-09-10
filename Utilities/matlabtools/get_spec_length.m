@@ -18,11 +18,9 @@ function Lvol = get_spec_area(data,lvol,nt,phi0)
 
 tarr        = linspace(0,2*pi,nt);
 
-sqrtetheta  = 1;
-
 gcov        = get_spec_metric(data,lvol,1,tarr,phi0);
 sqrtetheta  = sqrt(gcov{2}{2});
   
-
-
 Lvol  = sum(sqrtetheta(:))*(2*pi)/nt;
+
+end

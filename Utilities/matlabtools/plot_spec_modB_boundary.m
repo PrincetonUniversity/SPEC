@@ -1,10 +1,10 @@
-function plot_spec_modB_boundary(fname,Nvol,nt,nz)
+function plot_spec_modB_boundary(data,vol,nt,nz)
 
-% Produces plot of |B| on the full boundary surface
+% Produces plot of |B| on the full boundary surface in toroidal geometry.
 %
 % INPUT
-%   -fname  : path to the hdf5 output file (e.g. 'testcase.sp.h5')
-%   -Nvol   : total number of volumes
+%   -data   : data obtained via read_spec(filename)
+%   -vol    : Volume on which modB should be plotted
 %   -nt     : poloidal resolution for the plotting (e.g. nt=64)
 %   -nz     : toroidal resolution for the plotting (e.g. nz=64)
 %
@@ -18,19 +18,24 @@ tarr = linspace(0,2*pi,nt);
 zarr = linspace(0,2*pi,nz);
 
 
+Mvol = data.output.Mvol;
+if(vol>Mvol)
+  error('vol not valid')
+end
+
+
 % Read vector potential
 
-fdata  = read_spec_field(fname);
-
+fdata  = fdata_from_data(data);
 
 % Compute |B|
 
-modB   = get_spec_modB(fdata,Nvol,sarr,tarr,zarr);
+modB   = get_spec_modB(fdata,vol,sarr,tarr,zarr);
 
 
 % Compute function (R,Z)(s,theta,zeta)
 
-rzdata = get_spec_rzarr(fdata,Nvol,sarr,tarr,zarr);
+rzdata = get_spec_rzarr(fdata,vol,sarr,tarr,zarr);
 
 R = squeeze(rzdata{1});   
 Z = squeeze(rzdata{2});

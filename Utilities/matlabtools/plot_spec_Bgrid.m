@@ -3,7 +3,7 @@ function plot_spec_Bgrid(data,nz0,plotstyle,newfig)
 % Produces plot of BR, Bphi, BZ, on the coordinate grid points
 %
 % INPUT
-%   -data      : must be produced by calling read_spec_grid(filename)
+%   -data      : must be produced by calling read_spec(filename)
 %   -nz0       : toroidal plane number at which B is obtained (nz0=1 at toroidal angle phi=0)
 %   -plotstyle : whether pcolor ('pcolor') or scatter ('scatter') is to be used
 %   -newfig    : opens(=1) or not(=0) a new figure
@@ -11,28 +11,31 @@ function plot_spec_Bgrid(data,nz0,plotstyle,newfig)
 % Note: The B components are the cylindrical contravariant terms, that is why Bphi is multiplied by R in order to get B \dot unitvectorphi.
 %
 % written by J.Loizu (2018)
-
+%
+% OUTDATED - NEED DEBUG
 
 if(newfig==1)
 figure
 end
 
-nvol   = data.Mvol;
+gdata = gdata_from_data(data);
 
-Lrad   = data.Lrad;
-Nt     = data.Nt;
-Nz     = data.Nz;
-Nfp    = data.Nfp;
+nvol   = data.output.Mvol;
 
-Rij    = data.Rij;
-Zij    = data.Zij;
-BR     = data.BR;  
-Bp     = data.Bp; 
-BZ     = data.BZ;  
+Lrad   = data.input.physics.Lrad;
+Nt     = data.grid.Nt;
+Nz     = data.grid.Nz;
+Nfp    = data.input.physics.Nfp;
+
+Rij    = data.grid.Rij;
+Zij    = data.grid.Zij;
+BR     = data.grid.BR;  
+Bp     = data.grid.Bp; 
+BZ     = data.grid.BZ;  
 
 iz     = nz0-1;
 phi0   = double((2*pi/Nfp)*(iz/Nt));
-rzdata = get_spec_rzarr(data,nvol,1,linspace(0,2*pi,32),phi0);
+rzdata = get_spec_rzarr(gdata,nvol,1,linspace(0,2*pi,32),phi0);
 rmax   = max(rzdata{1});
 rmin   = min(rzdata{1});
 zmax   = max(rzdata{2});

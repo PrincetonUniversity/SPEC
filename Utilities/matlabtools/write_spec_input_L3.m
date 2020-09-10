@@ -1,5 +1,5 @@
-function write_spec_input_L3(template, inputname, Nvol, tfl, phit_edge, ...
-                             Ivol, Isurf, pressure, lrad, nptr)
+function write_spec_input_L3(template, inputname, Nvol, Lfreebound, tfl, phit_edge, ...
+                             pflux, Ivol, Isurf, curtor, pressure, lrad, nptr, Linitialize)
 
 % Writes spec input file from template with constraints corresponding to 
 % Lconstraint=1 (tfl,iota,oita)
@@ -7,18 +7,24 @@ function write_spec_input_L3(template, inputname, Nvol, tfl, phit_edge, ...
 % INPUT
 %   -template   : template input file name with .sp format 
 %   -inputname  : new input file name with .sp format
-%   -Nvol       : number of volumes
+%   -Nvol       : number of volume
+%   -Lfreebound : Flag for free boundary
 %   -tfl        : toroidal flux enclosed by each interface
 %   -phit_edge  : total toroidal flux
+%   -pflux      : Poloidal flux (used as guess)
 %   -Ivol       : volume current in each volume
 %   -Isurf      : surface current at each interface
+%   -curtor     : Total plasma current. only relevant if Lfreebound=1
 %   -pressure   : pressure in each volume
 %   -lrad       : radial resolution in each volume
 %   -nptr       : number of Poincare trajectories in each volume
+%   -Linitialize: How to initialize interfaces
 %
 %   written by A.Baillod (2019)
 
-nlmod    = 9;
+Mvol = Nvol+Lfreebound;
+
+nlmod    = 11;
 
 sref{1}  = ' pressure    =';
 sref{2}  = ' tflux       =';
@@ -28,7 +34,9 @@ sref{5}  = ' Nvol        =';
 sref{6}  = ' phiedge     =';
 sref{7}  = ' Ivolume     =';
 sref{8}  = ' Isurf       =';
-sref{9}  = ' mu          =';
+sref{9}  = ' curtor      =';
+sref{10}  = ' pflux       =';
+sref{11}  = ' Linitialize =';
 
 snew1    = sref{1};
 snew2    = sref{2};
@@ -38,16 +46,18 @@ snew5    = strcat(sref{5}, {'    '}, num2str(Nvol)     , {'    '});
 snew6    = strcat(sref{6}, {'    '}, num2str(phit_edge), {'    '});
 snew7    = sref{7};
 snew8    = sref{8};
-snew9    = sref{9};
+snew9    = strcat(sref{9}, {'    '}, num2str(curtor), {'    '});
+snew10   = sref{10};
+snew11    = strcat(sref{11}, {'    '}, num2str(Linitialize), {'    '});
 
-for i=1:Nvol
+for i=1:Mvol
   snew1  = strcat(snew1, {'   '},num2str(pressure(i) ,16), {'   '});
   snew2  = strcat(snew2, {'   '},num2str(tfl(i)      ,16), {'   '});
   snew3  = strcat(snew3, {'   '},num2str(lrad(i)     ,16), {'   '});
   snew4  = strcat(snew4, {'   '},num2str(nptr(i)     ,16), {'   '});
   snew7  = strcat(snew7, {'   '},num2str(Ivol(i)     ,16), {'   '});
   snew8  = strcat(snew8, {'   '},num2str(Isurf(i)    ,16), {'   '}); 
-  snew9  = strcat(snew9, {'   '},num2str(1.0         ,16), {'   '}); 
+  snew10 = strcat(snew10, {'   '},num2str(pflux(i)    ,16), {'   '}); 
 end
 
 snew{1}    = snew1{1};
@@ -59,6 +69,8 @@ snew{6}    = snew6{1};
 snew{7}    = snew7{1};
 snew{8}    = snew8{1};
 snew{9}    = snew9{1};
+snew{10}   = snew10{1};
+snew{11}   = snew11{1};
 
 
 % Open template file for reading

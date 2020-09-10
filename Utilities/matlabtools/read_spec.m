@@ -75,7 +75,7 @@ cZ   = cell(Nvol, 1);
 
 % split into separate cells for nested volumes
 start=1;
-for i=1:Nvol
+for i=1:Mvol
   % vector potential
   cAte{i} = data.vector_potential.Ate(start:start+Lrad(i),:);
   cAto{i} = data.vector_potential.Ato(start:start+Lrad(i),:);

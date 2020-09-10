@@ -1,6 +1,6 @@
-function rzbdata = plot_spec_modB(data,lvol,sarr,tarr,zarr,newfig)
+function plot_spec_jacobian(data,lvol,sarr,tarr,zarr,newfig)
 
-% Produces plot of |B| in (R,Z,zarr) cross-section(s)
+% Produces plot of sqrt(g) in (R,Z,zarr) cross-section(s)
 %
 % INPUT
 %   -data    : data obtained via read_spec(filename)
@@ -34,10 +34,11 @@ rzbdata = cell(3);
 % Read vector potential
 
 fdata  = fdata_from_data(data);
+gdata  = gdata_from_data(data);
 
-% Compute |B|
+% Compute sqrt(g)
 
-modB   = get_spec_modB(fdata,lvol,sarr,tarr,zarr);
+jac   = get_spec_jacobian(gdata,lvol,sarr,tarr,zarr);
 
 % Compute function (R,Z)(s,theta,zeta)
 
@@ -77,7 +78,7 @@ end
 
 for iz=1:length(zarr)
  
- pcolor(R(:,:,iz),Z(:,:,iz),modB(:,:,iz)); shading interp; colorbar
+ pcolor(R(:,:,iz),Z(:,:,iz),jac(:,:,iz)); shading interp; colorbar
  hold on
 
  axis equal
@@ -90,5 +91,4 @@ end
 
 rzbdata{1} = R;
 rzbdata{2} = Z;
-rzbdata{3} = modB;
-
+rzbdata{3} = jac;

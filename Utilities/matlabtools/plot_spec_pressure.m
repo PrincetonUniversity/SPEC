@@ -1,48 +1,77 @@
-function plot_spec_pressure(fname, new_figure)
+function plot_spec_pressure(data, newfig)
 
-% Plots stepped-pressure profile (without pscale) versus normalized toroidal flux used in SPEC
-%   -fname   :      filename in HDF5 format 
-%   -new_figure:    1 (0) to (not) open a new figure. =2 to erase existing
-%                   figure
-%   written by J.Loizu (2018)
-%		modified by A. Baillod (2019)
+% Plots stepped-pressure profile versus normalized toroidal flux used in SPEC
+%
+% INPUT
+%   -data   : data obtained from read_spec(fname)
+%   -newfig : open a new figue (=1), plots on an existing one (=0) or overwrite last plot (=2)
+%
+% written by J.Loizu (2018)
+% modified by A. Baillod (2019)
 
 
+pvol = data.input.physics.pressure * data.input.physics.pscale;
+pmax = max(pvol);
+pmin = min(pvol);
 
-data = read_spec_grid(fname);
+tfl  = data.input.physics.tflux;
 
-pvol = data.pressure;
-
-tfl  = data.tflux;
-
-Nvol = data.Nvol;
+Nvol = data.input.physics.Nvol;
 
 p0   = zeros(1,10);
 
-if new_figure==1
-    figure
-    hold on;
-elseif new_figure==2
-    hold off;
-elseif new_figure==0
-    hold on;
+switch newfig
+    case 0
+        hold on
+    case 1
+        figure
+        hold on
+    case 2
+        hold off
 end
 
-
-phi_plot = linspace(0, max(tfl), 1E6);
-p_plot = zeros(0, 1E6);
-temp = 1;
-
-for i=1:length(tfl)
-   [val, jj] = min(abs(phi_plot - tfl(i)));
-   p_plot(temp:jj) = pvol(i);
-   temp = jj;
+p0(1:end) = pvol(1);
+tmin      = 0;
+tmax      = tfl(1);
+tarr      = linspace(tmin,tmax,10);
+plot(tarr,p0,'b')
+hold on
+x         = [tfl(1),tfl(1)];
+if Nvol>1
+    y         = [pvol(2) pvol(1)];
+    plot(x,y,'b')
 end
 
-plot(phi_plot, p_plot)
+for i=2:Nvol-1
 
+ p0(1:end) = pvol(i);
+ tmin      = tfl(i-1);
+ tmax      = tfl(i);
+ tarr      = linspace(tmin,tmax,10);
+ plot(tarr,p0,'b')
+ x         = [tfl(i),tfl(i)];
+ y         = [pvol(i+1) pvol(i)];
+ plot(x,y,'b')
+ 
+end
+
+if Nvol>1
+    p0(1:end) = pvol(Nvol);
+    tmin      = tfl(Nvol-1);
+    tmax      = tfl(Nvol);
+    tarr      = linspace(tmin,tmax,10);
+    plot(tarr,p0,'b')
+    x         = [tfl(Nvol),tfl(Nvol)];
+    y         = [0 pvol(Nvol)];
+    plot(x,y,'b')
+end
+    
 ylabel('p')
 xlabel('\Psi / \Psi_{edge}')
+
+if (pmin~=0 || pmax~=0)
+    ylim([0.9*pmin, 1.1*pmax]);
+end
 
 
 

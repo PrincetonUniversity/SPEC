@@ -14,6 +14,12 @@ function fdata = read_spec_field(filename)
 % modified by J.Loizu (10.2017)
 % modified by J.Loizu (02.2018)
 
+if ~exist(filename)
+    ME = MException('MyComp:FileDoesNotExist', ...
+        'The file %s does not exist (in this directory)', filename);
+    throw(ME)
+end
+
 global machform;
 
 machform  = 's';
@@ -27,9 +33,13 @@ mn        = data.mn;
 data.Lrad = zeros(nvol,1);  % allocate data set for Lrad(1:nvol)
 
 data.Ate = cell(nvol,1);    % create cells for each volume's field 
+
 data.Aze = cell(nvol,1);
+
 data.Ato = cell(nvol,1);
+
 data.Azo = cell(nvol,1);
+
 
 % Read the field files
 
@@ -46,18 +56,8 @@ try
   if(machine_format ~= machform)
    machine_format =  machform;  % update value
   end
-  [filepath,name,ext]=fileparts(filename);
-  fid=0;
-  if (isempty(filepath))
-    % file is in the current working directory, so there is no need to prepend the path to it
-    field_file = ['.' name '.A'];
-    fid        = fopen(field_file,'r',machine_format);
-  else
-    % file is outside the current working directory, so include the path to it
-    field_file = [filepath filesep '.' name '.A'];
-    fid        = fopen(field_file,'r',machine_format);
-  end
-
+  field_file = ['.' filename(1:length(filename)-3) '.A'];
+  fid        = fopen(field_file,'r',machine_format);
   if (fid > 0)
     % Read through Mvol, Mpol, Ntor, mn, Nfp, im(1:mn), in(1:mn)
     fread(fid,1,spacer_format);
@@ -68,7 +68,7 @@ try
     fread(fid,mn,int_format); % in
     fread(fid,1,spacer_format);
   else
-   disp([' - File "' field_file '" does not exist']); break;
+   disp(' - File does not exist'); break;
   end  
 
   for v=1:nvol
@@ -77,6 +77,7 @@ try
    Lrad = fread(fid,1,int_format);
    fread(fid,1,spacer_format);
    data.Lrad(v,1) = Lrad;
+   % Allocate data for the fields
    data.Ate{v} = zeros(Lrad+1,mn);
    data.Aze{v} = zeros(Lrad+1,mn);
    data.Ato{v} = zeros(Lrad+1,mn);

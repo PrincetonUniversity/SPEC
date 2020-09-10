@@ -5,11 +5,9 @@ function plot_spec_hessian(data)
 %   -data     : must be produced by calling read_spec_hessian(filename)
 %   written by J.Loizu (2017)
 
-H = data.Hmatrix;
-
 figure
 
-imagesc(H)
+imagesc(data)
 
 colorbar
 

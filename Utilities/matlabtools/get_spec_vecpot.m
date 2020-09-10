@@ -1,10 +1,10 @@
-function Acov = get_spec_vecpot(fdata,lvol,sarr,tarr,zarr)
+function Acov = get_spec_vecpot(data,lvol,sarr,tarr,zarr)
  
  
 % Computes covariant components of A in volume lvol
 %
 % INPUT
-%   -fdata    : must be produced by calling read_spec_field(filename)
+%   -data     : must be produced by calling read_spec_field(filename)
 %   -lvol     : is the volume number 
 %   -sarr     : is the array of values for the s-coordinate
 %   -tarr     : is the array of values for the theta-coordinate
@@ -16,12 +16,12 @@ function Acov = get_spec_vecpot(fdata,lvol,sarr,tarr,zarr)
 % written by J.Loizu (2018)
 
 
-Ate     = fdata.Ate{lvol};
-Aze     = fdata.Aze{lvol};
-Ato     = fdata.Ato{lvol};
-Azo     = fdata.Azo{lvol};
+Ate     = data.vector_potential.Ate{lvol};
+Aze     = data.vector_potential.Aze{lvol};
+Ato     = data.vector_potential.Ato{lvol};
+Azo     = data.vector_potential.Azo{lvol};
 
-Lrad    = fdata.Lrad(lvol);
+Lrad    = data.input.physics.Lrad(lvol);
 
 sarr    = transpose(sarr);
 ns      = length(sarr);
@@ -29,9 +29,9 @@ nt      = length(tarr);
 nz      = length(zarr);
 sbar    = (sarr+1)/2;
 
-mn      = fdata.mn;
-im      = double(fdata.im);
-in      = double(fdata.in);
+mn      = data.output.mn;
+im      = double(data.output.im);
+in      = double(data.output.in);
 
 At      = zeros(ns,nt,nz); % allocate data for vector potential along theta
 Az      = zeros(ns,nt,nz); % allocate data for vector potential along zeta

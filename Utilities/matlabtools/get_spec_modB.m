@@ -17,7 +17,6 @@ function modB = get_spec_modB(fdata,lvol,sarr,tarr,zarr)
 %
 % written by J.Loizu (2016)
 
-
 ns      = length(sarr);
 nt      = length(tarr);
 nz      = length(zarr);
@@ -27,19 +26,9 @@ modB    = zeros(ns,nt,nz); % allocate data for mod(B)
 
 % Calculate the magnetic field contravariant components
 
-if(fdata.Igeometry == 1)
-bvec = get_spec_magfield_slab(fdata,lvol,sarr,tarr,zarr); 
-else
 bvec = get_spec_magfield(fdata,lvol,sarr,tarr,zarr); 
-end
+gmat = get_spec_metric(fdata,lvol,sarr,tarr,zarr);
 
-% Calculate the metric matrix 
-
-if(fdata.Igeometry == 1)
-gmat = get_spec_metric_slab(fdata,lvol,sarr,tarr,zarr); 
-else
-gmat = get_spec_metric(fdata,lvol,sarr,tarr,zarr); 
-end
 
 % Calculate modB = sqrt(Bcontrav*gmat*Bcontrav)
 
@@ -63,7 +52,7 @@ for is=1:ns
    modB(is,it,iz) =  sqrt(( bs*(a0*bs+b0*bt+c0*bz)  ...
                            +bt*(d0*bs+e0*bt+f0*bz)  ...
                            +bz*(g0*bs+h0*bt+i0*bz)) ...
-                        );
+                          );
   end
  end
 end

@@ -15,6 +15,7 @@ function psipol = get_spec_polflux(fdata,lvol,theta,start,send,ns,nz)
 %   -psipol  : total enclosed poloidal flux 
 %
 %   written by J.Loizu (2016)
+%   modified by A. Baillod (2019) - Added switch for geometry
 
 sarr = linspace(start,send,ns);
 
@@ -25,17 +26,12 @@ ds   = sarr(2)-sarr(1);
 dz   = zarr(2)-zarr(1);
 
 
-% Get B^{theta}
-
 Bcontrav = get_spec_magfield(fdata,lvol,sarr,theta,zarr);
-
-Btheta    = Bcontrav{2};
-
-
-% Get Jacobian of the coordinates
-
 jac      = squeeze(get_spec_jacobian(fdata,lvol,sarr,theta,zarr));
 
+        
+        
+Btheta    = Bcontrav{2};
 
 % Compute surface integral
 

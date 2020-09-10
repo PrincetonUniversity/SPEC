@@ -22,14 +22,6 @@ sarr     = linspace(-1,1,ns);
 tarr     = linspace(0,2*pi,nt);
 zarr     = linspace(0,2*pi,nz);
 
-if(data.Igeometry==1)
-
- jacobian = get_spec_jacobian_slab(data,lvol,sarr,tarr,zarr);
- 
-else
-
- jacobian = get_spec_jacobian(data,lvol,sarr,tarr,zarr);
- 
-end
+jacobian = get_spec_jacobian(data,lvol,sarr,tarr,zarr);
 
 volume   = sum(sum(sum(jacobian(2:end,:,:))))*(2*2*pi*2*pi)/(ns*nt*nz);
