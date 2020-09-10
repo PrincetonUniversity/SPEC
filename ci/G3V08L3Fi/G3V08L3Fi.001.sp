@@ -138,7 +138,7 @@ Rwc(4,4)    =  0.000000000000000E+00 Zws(4,4)    =  0.000000000000000E+00 Rws(4,
 &locallist
  LBeltrami   =         4
  Linitgues   =         1
- epsGMRES    =      1e-14
+ epsGMRES    =      1e-15
 /
 &globallist
  Lfindzero   =         2
