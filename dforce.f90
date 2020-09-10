@@ -155,8 +155,7 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives, LCompu
   INTEGER              :: maxfev, ml, muhybr, mode, nprint, nfev, ldfjac, lr, Nbc, NN, cpu_id, ideriv
   REAL                 :: epsfcn, factor
   REAL                 :: Fdof(1:Mvol-1), Xdof(1:Mvol-1)
-  REAL                 :: diag(1:Mvol-1), qtf(1:Mvol-1), wa1(1:Mvol-1), wa2(1:Mvol-1), wa3(1:Mvol-1), wa4(1:mvol-1)
-  INTEGER              :: ipiv(1:Mvol-1)
+  INTEGER              :: ipiv(1:Mvol)
   REAL, allocatable    :: fjac(:, :), r(:), Fvec(:), dpfluxout(:)
 
   INTEGER              :: status(MPI_STATUS_SIZE), request_recv, request_send, cpu_send

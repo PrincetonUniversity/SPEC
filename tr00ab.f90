@@ -751,7 +751,9 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
       Liwork = max(1,11*NN+3*nlvl*NN)
       
       SALLOCATE( work, (1:Lwork), zero )
-      DALLOCATE(iwork)
+      if (allocated(iwork)) then 
+        DALLOCATE(iwork)
+      endif
       SALLOCATE( iwork, (1:Liwork), zero )
       
       select case( jderiv ) 
