@@ -38,9 +38,6 @@ if Mregular>1
    regumm(ind) = Mregular / 2.0;
 end
 
-halfmm = im / 2.0;
-
-
 
 if ForG=='G'
     switch Igeometry
@@ -52,15 +49,14 @@ if ForG=='G'
             end
 
         case 2 % Cylindrical geometry
-            %TODO: add glab if Lextrap is not set to 1!
             for j=1:mn
                 if(lvol==1) 
                     if im(j)==0
-                        fac{j}{1} = sqrt(sbar);
-                        fac{j}{2} = 0.25 * fac{j}{1} ./ sbar;
+                        fac{j}{1} = sbar;
+                        fac{j}{2} = 0.5*ones(ns,1);
                     else
-                        fac{j}{1} = sbar.^halfmm(j); 
-                        fac{j}{2} = 0.5 * halfmm(j) * fac{j}{1} ./ sbar;
+                        fac{j}{1} = sbar.^im(j); 
+                        fac{j}{2} = 0.5 * im(j) * fac{j}{1} ./ sbar;
                     end
                 else
                     fac{j}{1}  = sbar;
@@ -73,11 +69,11 @@ if ForG=='G'
             for j=1:mn
                 if lvol==1 %coordinate singularity
                     if im(j)==0
-                       fac{j}{1} = sbar; 
-                       fac{j}{2} = 0.5;
+                       fac{j}{1} = sbar^2; 
+                       fac{j}{2} = sbar;
                     else
-                       fac{j}{1} = sbar.^halfmm(j);
-                       fac{j}{2} = 0.5 * halfmm(j) * fac{j}{1} ./ sbar;
+                       fac{j}{1} = sbar.^im(j);
+                       fac{j}{2} = 0.5 * im(j) * fac{j}{1} ./ sbar;
                     end
                 else
                     fac{j}{1}  = sbar;
