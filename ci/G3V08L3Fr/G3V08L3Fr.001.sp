@@ -153,13 +153,15 @@ Vns(0,32)   =  9.623711250383996E-13 Bns(0,32)   = -4.709530705132861E-10 Vnc(0,
  iotatol     =  -1.000000000000000E+00
  Lextrap     =         0
  Mregular    =        -1
+ LautoinitBn =         0
 /
 &locallist
  LBeltrami   =         4
  Linitgues   =         1
+ epsGMRES    =       1e-15
 /
 &globallist
- Lfindzero   =         1
+ Lfindzero   =         2
  escale      =   0.000000000000000E+00
  opsilon     =   1.000000000000000E+00
  pcondense   =   4.000000000000000E+00
@@ -181,7 +183,7 @@ Vns(0,32)   =  9.623711250383996E-13 Bns(0,32)   = -4.709530705132861E-10 Vnc(0,
 /
 &diagnosticslist
  odetol      =   1.000000000000000E-07
- nPpts       =       500
+ nPpts       =       200
  nPtrj       =      3     3     3     3     3     3     3     3     3
  LHevalues   =         F
  LHevectors  =         F
