@@ -35,6 +35,11 @@ jobs:
           mpiexec -n 3 --allow-run-as-root ${SPEC_PATH}/xspec G3V02L0Fr.sp 
           python3 -m py_spec.ci.test compare.h5 G3V02L0Fr_LU.sp.h5 --tol 1e-11
           python3 -m py_spec.ci.test compare.h5 G3V02L0Fr.sp.h5 --tol 1e-11
+      - name: vmec_spec_freeboundary
+        run: |
+          cd ${SPEC_PATH}/ci/vmec_spec
+          mpiexec -n 3 --allow-run-as-root ${SPEC_PATH}/xspec vmec_spec_8vol_freebound.sp
+          python3 -m py_spec.ci.test compare.h5 vmec_spec_8vol_freebound.sp.h5 --tol 1e-10
 
 
 
