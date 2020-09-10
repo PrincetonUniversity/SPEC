@@ -41,34 +41,11 @@ Rarr    = zeros(ns,nt); % allocate data for R-array
 Tarr    = zeros(ns,nt); % allocate data for theta-array
 dRarr   = zeros(ns,nt); % allocate data for R-array derivative (in s)
 
-fac     = cell(mn,2);   % allocate data for regularization factors 
 
 
 % Construct regularization factors
 
-switch data.input.physics.Igeometry
- case 1
-  for j=1:mn
-   fac{j}{1} = sbar;
-   fac{j}{2} = 0.5;
-  end
- case 2
-  for j=1:mn
-    if lvol==1
-        if im(j)==0
-            fac{j}{1}  = sqrt(sbar);
-            fac{j}{2}  = 0.25./sqrt(sbar);
-        else
-            fac{j}{1} = sbar.*(im(j) / 2);
-            fac{j}{2}  = (im(j)/4)*sbar.^(im(j)/2-1);
-        end
-    else
-        fac{j}{1}  = sbar;
-        fac{j}{2}  = 0.5;
-    end
-  end
-end
-
+fac = get_spec_regularization_factor(data, lvol, sarr, 'G');
 
 % Construct (R,theta) coordinates array
 

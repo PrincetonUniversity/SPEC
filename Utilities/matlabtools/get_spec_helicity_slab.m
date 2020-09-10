@@ -41,23 +41,10 @@ h1      = zeros(ns,nt,nz); % allocate data for magnetic helicity integrand 1
 h2      = zeros(ns,nt,nz); % allocate data for magnetic helicity integrand 2
 h3      = zeros(ns,nt,nz); % allocate data for magnetic helicity integrand 3
 h4      = zeros(ns,nt,nz); % allocate data for magnetic helicity integrand 4
-T       = cell(Lrad+1,2);  % allocate data for Chebyshev polynomials and their derivatives
-fac     = cell(mn,2);      % allocate data for regularization factors and their derivatives
-
-T{1}{1} = ones(ns,1);
-T{1}{2} = zeros(ns,1);
-
-T{2}{1} = sarr;
-T{2}{2} = ones(ns,1);
-
 
 % Construct Chebyshev polynomials and their derivatives
 
-for l=3:Lrad+1
-  T{l}{1} = 2*sarr.*T{l-1}{1} - T{l-2}{1};
-  T{l}{2} = 2*T{l-1}{1} + 2*sarr.*T{l-1}{2} - T{l-2}{2};
-end
-
+T = get_spec_polynomial_basis(data, lvol, sarr);
 
 % Construct regularization factors and their derivatives
 

@@ -36,8 +36,7 @@ for k=1:3
  end
 end
 
-
-% Construct regularization (for lvol=1) factors and their derivatives
+% Get R and Z and their derivatives
 
 [out, Rarr] = get_spec_R_derivatives(data,lvol,sarr,tarr,zarr,'R');
 [out, Zarr] = get_spec_R_derivatives(data,lvol,sarr,tarr,zarr,'Z');

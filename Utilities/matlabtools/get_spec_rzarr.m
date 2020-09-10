@@ -41,9 +41,6 @@ in      = double(data.output.in);
 Rarr    = zeros(ns,nt,nz); % allocate data for R-array
 Zarr    = zeros(ns,nt,nz); % allocate data for Z-array
 
-fac     = cell(mn,1);      % allocate data for regularization factors 
-
-
 
 % Construct REG FACTOR
 
