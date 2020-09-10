@@ -24,18 +24,17 @@ function plot_spec_polflux(data, zeta, cumulative, newfig)
 %
 %
 
-fdata = fdata_from_data(data);
-Nvol = fdata.Nvol;
+Nvol = data.input.physics.Nvol;
 
 polflux = zeros(1,Nvol);
 
 % Start at one only if slab geometry (otherwise it is zero by definition)
-if fdata.Igeometry==1
-    polflux(1) = get_spec_polflux(fdata,1,zeta,-1,1,64,64);
+if data.input.physics.Igeometry==1
+    polflux(1) = get_spec_polflux(data,1,zeta,-1,1,64,64);
 end
 
 for lvol=2:Nvol
-    tmp = get_spec_polflux(fdata,lvol,zeta,-1,1,64,64);
+    tmp = get_spec_polflux(data,lvol,zeta,-1,1,64,64);
     
     if cumulative
         polflux(lvol) = polflux(lvol-1) + tmp;

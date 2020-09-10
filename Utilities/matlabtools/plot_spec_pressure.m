@@ -1,8 +1,13 @@
 function plot_spec_pressure(data, newfig)
 
+%
+% PLOT_SPEC_PRESSURE( DATA, NEWFIG )
+% ==================================
+%
 % Plots stepped-pressure profile versus normalized toroidal flux used in SPEC
 %
 % INPUT
+% -----
 %   -data   : data obtained from read_spec(fname)
 %   -newfig : open a new figue (=1), plots on an existing one (=0) or overwrite last plot (=2)
 %

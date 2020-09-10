@@ -1,11 +1,17 @@
 function Hmatrix = read_spec_hessian(filename)
 
+%
+% READ_SPEC_HESSIAN( FILENAME )
+% =============================
+%
 % Reads Hessian matrix using output from SPEC
 %
 % INPUT
+% -----
 % - filename : path to the hdf5 output file (e.g. 'testcase.sp.h5')
 %
 % OUTPUT
+% ------
 % - Hmatrix    : Hessian matrix, which can be fed into several routines for analyzing and ploting
 %
 % written by J.Loizu (2017)

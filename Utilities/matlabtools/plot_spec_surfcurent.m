@@ -1,5 +1,9 @@
 function plot_spec_surfcurent(data, ns, nt, zeta, newfig)
- 
+
+%
+% PLOT_SPEC_SURFCURRENT( DATA, NS, NT, ZETA, NEWFIG )
+% ===================================================
+%
 % Plot pressure-driven currents located at each volume interface
 %
 % INPUT

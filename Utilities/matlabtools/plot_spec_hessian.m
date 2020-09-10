@@ -1,9 +1,16 @@
 function plot_spec_hessian(data)
 
-
+%
+% PLOT_SPEC_HESSIAN( DATA )
+% =========================
+%
 % Plots the hessian matrix elements
+%
+% INPUT
+% -----
 %   -data     : must be produced by calling read_spec_hessian(filename)
-%   written by J.Loizu (2017)
+%
+% written by J.Loizu (2017)
 
 figure
 

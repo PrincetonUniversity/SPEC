@@ -1,8 +1,13 @@
 function plot_spec_Bgrid(data,nz0,plotstyle,newfig)
 
+%
+% PLOT_SPEC_BGRID( DATA, NZ0, PLOTSTYLE, NEWFIG )
+% ===============================================
+%
 % Produces plot of BR, Bphi, BZ, on the coordinate grid points
 %
 % INPUT
+% -----
 %   -data      : must be produced by calling read_spec(filename)
 %   -nz0       : toroidal plane number at which B is obtained (nz0=1 at toroidal angle phi=0)
 %   -plotstyle : whether pcolor ('pcolor') or scatter ('scatter') is to be used
@@ -17,8 +22,6 @@ function plot_spec_Bgrid(data,nz0,plotstyle,newfig)
 if(newfig==1)
 figure
 end
-
-gdata = gdata_from_data(data);
 
 nvol   = data.output.Mvol;
 
@@ -35,7 +38,7 @@ BZ     = data.grid.BZ;
 
 iz     = nz0-1;
 phi0   = double((2*pi/Nfp)*(iz/Nt));
-rzdata = get_spec_rzarr(gdata,nvol,1,linspace(0,2*pi,32),phi0);
+rzdata = get_spec_rzarr(data,nvol,1,linspace(0,2*pi,32),phi0);
 rmax   = max(rzdata{1});
 rmin   = min(rzdata{1});
 zmax   = max(rzdata{2});

@@ -1,5 +1,9 @@
 function [tflux, IPDt] = get_spec_surface_current(data, ns, nt, zeta)
 
+%
+% GET_SPEC_SURFACE_CURRENT( DATA, NS, NT, ZETA )
+% ==============================================
+%
 % OUTDATED - should directly do 2*pi*[[B_\theta]]
 %
 % Returns the sheet current flowing through each interface, normalized by 
@@ -29,8 +33,7 @@ mu0 = 4*pi*1E-7;
 epsilon = 1E-5;
 
 % Data loading
-fdata = fdata_from_data(data);      % Read data
-Nvol = fdata.Mvol;                      % Total number of volumes
+Nvol = data.output.Mvol;                      % Total number of volumes
 sarr = linspace(-1, 1, ns);
 
 % Allocate memory
@@ -48,9 +51,9 @@ for ivol=1:Nvol
         sarr(1)=-1;
     end
     
-    temp = get_spec_magfield(fdata, ivol, sarr, theta, zeta);  
+    temp = get_spec_magfield(data, ivol, sarr, theta, zeta);  
     
-    Bcov{ivol} = contra2cov(fdata, ivol, temp, sarr, theta, zeta, 0);                     
+    Bcov{ivol} = contra2cov(data, ivol, temp, sarr, theta, zeta, 0);                     
 end
 
 for ivol=1:Nvol-1
@@ -58,6 +61,6 @@ for ivol=1:Nvol-1
     IPDt(ivol) = trapz(theta, dBtheta);
 end
 
-tflux = fdata.tflux;
+tflux = data.output.tflux;
 
 end

@@ -1,16 +1,21 @@
-function H = get_spec_helicity_slab(fdata,lvol,ns,nt,nz)
+function H = get_spec_helicity_slab(data,lvol,ns,nt,nz)
  
- 
+% 
+% GET_SPEC_HELICITY_SLAB( DATA, LVOL, NS, NT, NZ )
+% ================================================
+%
 % Calculates Magnetic Helicity in a given volume in slab geometry
 %
 % INPUT
-%   -data      : must be produced by calling read_spec_field(filename)
+% -----
+%   -data      : must be produced by calling read_spec(filename)
 %   -lvol      : volume in which the helicity is evaluated
 %   -ns        : is the s-coordinate resolution 
 %   -nt        : is the theta-coordinate resolution
 %   -nz        : is the zeta-coordinate resolution
 %
 % OUTPUT
+% ------
 %   -H         : Magnetic Helicity in volume lvol 
 %
 % Note: Stellarator symmetry is assumed
@@ -18,8 +23,8 @@ function H = get_spec_helicity_slab(fdata,lvol,ns,nt,nz)
 %
 % written by J.Loizu (2018)
 
-Ate     = fdata.Ate{lvol};
-Aze     = fdata.Aze{lvol};
+Ate     = data.vector_potential.Ate{lvol};
+Aze     = data.vector_potential.Aze{lvol};
 
 sarr    = linspace(-1,1,ns);
 tarr    = linspace(0,2*pi,nt);
@@ -27,10 +32,10 @@ zarr    = linspace(0,2*pi,nz);
 sarr    = transpose(sarr);
 sbar    = (sarr+1)/2;
 
-Lrad    = fdata.Lrad(lvol);
-mn      = fdata.mn;
-im      = double(fdata.im);
-in      = double(fdata.in);
+Lrad    = data.input.physics.Lrad(lvol);
+mn      = data.output.mn;
+im      = double(data.output.im);
+in      = double(data.output.in);
 
 h1      = zeros(ns,nt,nz); % allocate data for magnetic helicity integrand 1
 h2      = zeros(ns,nt,nz); % allocate data for magnetic helicity integrand 2
@@ -56,11 +61,7 @@ end
 
 % Construct regularization factors and their derivatives
 
-for j=1:mn
-  fac{j}{1}  = ones(ns,1);
-  fac{j}{2}  = zeros(ns,1);
-end
-
+fac = get_spec_regularization_factor(data,lvol,sarr,'F');
 
 % Construct magnetic helicity integrand
 

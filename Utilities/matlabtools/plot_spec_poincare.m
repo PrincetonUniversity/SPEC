@@ -1,8 +1,13 @@
 function plot_spec_poincare(data,nz0,nfp,arr,newfig)
 
+%
+% PLOT_SPEC_POINCARE( DATA, NZ0, NFP, ARR, NEWFIG )
+% =================================================
+%
 % Produces Poincare plots of the field lines on different sections (within one field period)
 %
 % INPUT    
+% -----
 %   -data     : must be produced by calling read_spec(fname)
 %   -nz0      : shows the nz0 toroidal plane or equidistant planes (nz0=-1)
 %   -nfp      : number of field periods
@@ -20,11 +25,9 @@ catch
  rpol    = 1;
 end
 
-pdata    = pdata_from_data(data);   % construct stucture with poincare data information
+nptraj   = size(data.poincare.R,1);   % # of poincare trajectories (field lines)
 
-nptraj   = size(pdata.R_lines,1);   % # of poincare trajectories (field lines)
-
-nz       = size(pdata.R_lines,2);   % # of toroidal planes
+nz       = size(data.poincare.R,2);   % # of toroidal planes
 
 flag2col = 'F';                     % flag for ploting field lines with alternating colour ('T') or not ('F')
 
@@ -45,17 +48,17 @@ nz
 disp(' ');
 
 
-rmax   = max(max(max(pdata.R_lines)));
-rmin   = min(min(min(pdata.R_lines)));
-zmax   = max(max(max(pdata.Z_lines)));
-zmin   = min(min(min(pdata.Z_lines)));
+rmax   = max(max(max(data.poincare.R)));
+rmin   = min(min(min(data.poincare.R)));
+zmax   = max(max(max(data.poincare.Z)));
+zmin   = min(min(min(data.poincare.Z)));
 
-switch pdata.Igeometry
+switch data.input.physics.Igeometry
     case 1
         xmin =  0;
         xmax =  2*pi*rpol;
         ymin = -0.1;
-        ymax =  pdata.Rbc(1,end)+0.1;
+        ymax =  data.output.Rbc(1,end)+0.1;
     case 2
         xmin = -1.1*rmax;
         xmax =  1.1*rmax;
@@ -72,7 +75,7 @@ end
 nth    = 5096;  %ploting options for the boundary
 bcol   = 'r';
 bthick = 3;
-if(pdata.Lfreebound==1)
+if(data.input.physics.Lfreebound==1)
 bcol   = 'k';
 bthick = 1;
 end
@@ -108,24 +111,24 @@ switch nz0
 
    subplot(npl,1,k)
  
-   switch pdata.Igeometry
+   switch data.input.physics.Igeometry
        case 1
-           R    = squeeze(pdata.R_lines(:,j,:));
-           T    = rpol*mod(squeeze(pdata.th_lines(:,j,:)),2*pi);
+           R    = squeeze(data.poincare.R(:,j,:));
+           T    = rpol*mod(squeeze(data.poincare.t(:,j,:)),2*pi);
            for i=arr       %for each field line trajectory
                scatter(T(i,:),R(i,:),10,'.k')
                hold on
            end
        case 2  
-           R    = squeeze(pdata.R_lines(:,j,:));
-           T    = squeeze(pdata.th_lines(:,j,:));
+           R    = squeeze(data.poincare.R(:,j,:));
+           T    = squeeze(data.poincare.t(:,j,:));
            for i=arr       %for each field line trajectory
                scatter(R(i,:).*cos(T(i,:)),R(i,:).*sin(T(i,:)),10,'.k')
                hold on;
            end
        case 3
-           R = squeeze(pdata.R_lines(:,j,:));
-           Z = squeeze(pdata.Z_lines(:,j,:));
+           R = squeeze(data.poincare.R(:,j,:));
+           Z = squeeze(data.poincare.Z(:,j,:));
            for i=arr     %for each field line trajectory
             scatter(R(i,:),Z(i,:),10,'.k')
             hold on;
@@ -138,37 +141,37 @@ switch nz0
    theta = dth:dth:2*pi; 
    zeta  = (j-1)*(2*pi/nz)/nfp;
 
-   switch pdata.Igeometry
+   switch data.input.physics.Igeometry
      case 1
        Xb  = rpol*theta;
        Yb1 = 0;
        Yb2 = 0;
-       for imn=1:pdata.mn     % get and plot the boundary
-         alpha = double(pdata.im(imn))*theta-double(pdata.in(imn))*zeta;
-         Yb1    = Yb1   + pdata.Rbc(imn,1)*cos(alpha) + pdata.Rbs(imn,1)*sin(alpha);
-         Yb2    = Yb2   + pdata.Rbc(imn,end)*cos(alpha) + pdata.Rbs(imn,end)*sin(alpha);
+       for imn=1:data.output.mn     % get and plot the boundary
+         alpha = double(data.output.im(imn))*theta-double(data.output.in(imn))*zeta;
+         Yb1   = Yb1   + data.output.Rbc(imn,1  )*cos(alpha) + data.output.Rbs(imn,1  )*sin(alpha);
+         Yb2   = Yb2   + data.output.Rbc(imn,end)*cos(alpha) + data.output.Rbs(imn,end)*sin(alpha);
        end
      case 2  
        Rb = 0;
        Zb = 0;
-       for imn=1:pdata.mn     % get and plot the boundary
-         alpha = double(pdata.im(imn))*theta-double(pdata.in(imn))*zeta;
-         Rb = Rb + (pdata.Rbc(imn,end)*cos(alpha) + pdata.Rbs(imn,end)*sin(alpha)).*cos(theta);
-         Zb = Zb + (pdata.Rbc(imn,end)*cos(alpha) + pdata.Rbs(imn,end)*sin(alpha)).*sin(theta);
+       for imn=1:data.output.mn     % get and plot the boundary
+         alpha = double(data.output.im(imn))*theta-double(data.output.in(imn))*zeta;
+         Rb = Rb + (data.output.Rbc(imn,end)*cos(alpha) + data.output.Rbs(imn,end)*sin(alpha)).*cos(theta);
+         Zb = Zb + (data.output.Rbc(imn,end)*cos(alpha) + data.output.Rbs(imn,end)*sin(alpha)).*sin(theta);
        end
      case 3
        Rb = 0;
        Zb = 0;
-       for imn=1:pdata.mn  % get and plot the boundary  % the pdata.in values go in steps of nfp
-         alpha = double(pdata.im(imn))*theta-double(pdata.in(imn))*zeta;
-         Rb    = Rb + pdata.Rbc(imn,end)*cos(alpha) + pdata.Rbs(imn,end)*sin(alpha);
-         Zb    = Zb + pdata.Zbs(imn,end)*sin(alpha) + pdata.Zbc(imn,end)*cos(alpha); 
+       for imn=1:data.output.mn  % get and plot the boundary  % the data.output.in values go in steps of nfp
+         alpha = double(data.output.im(imn))*theta-double(data.output.in(imn))*zeta;
+         Rb    = Rb   + data.output.Rbc(imn,end)*cos(alpha) + data.output.Rbs(imn,end)*sin(alpha);
+         Zb    = Zb   + data.output.Zbs(imn,end)*sin(alpha) + data.output.Zbc(imn,end)*cos(alpha); 
        end
      otherwise
        error('Unsupported geometry')
    end  
 
-  if pdata.Igeometry ~= 1
+  if data.input.physics.Igeometry ~= 1
    scatter(Rb,Zb,bthick,'*',bcol)
    hold on
    set(gca,'FontSize',12)
@@ -191,24 +194,24 @@ switch nz0
 
  otherwise  %if nz0>0
        
-   switch pdata.Igeometry
+   switch data.input.physics.Igeometry
        case 1
-           R    = squeeze(pdata.R_lines(:,nz0,:));
-           T    = rpol*mod(squeeze(pdata.th_lines(:,nz0,:)),2*pi);
+           R    = squeeze(data.poincare.R(:,nz0,:));
+           T    = rpol*mod(squeeze(data.poincare.t(:,nz0,:)),2*pi);
            for i=arr       %for each field line trajectory
                scatter(T(i,:),R(i,:),10,'.k')
                hold on
            end
        case 2  
-           R    = squeeze(pdata.R_lines(:,nz0,:));
-           T    = squeeze(pdata.th_lines(:,nz0,:));
+           R    = squeeze(data.poincare.R(:,nz0,:));
+           T    = squeeze(data.poincare.t(:,nz0,:));
            for i=arr       %for each field line trajectory
                scatter(R(i,:).*cos(T(i,:)),R(i,:).*sin(T(i,:)),10,'.k')
                hold on;
            end
        case 3
-           R = squeeze(pdata.R_lines(:,nz0,:));
-           Z = squeeze(pdata.Z_lines(:,nz0,:));
+           R = squeeze(data.poincare.R(:,nz0,:));
+           Z = squeeze(data.poincare.Z(:,nz0,:));
            for i=arr     %for each field line trajectory
             scatter(R(i,:),Z(i,:),10,'.k')
             hold on;
@@ -223,37 +226,37 @@ switch nz0
   zeta  = (nz0-1.0)*(2.0*pi/nz)/double(nfp);
    
   
-  switch pdata.Igeometry
+  switch data.input.physics.Igeometry
      case 1
        Xb  = rpol*theta;
        Yb1 = 0;
        Yb2 = 0;
-       for imn=1:pdata.mn     % get and plot the boundary
-         alpha = double(pdata.im(imn))*theta-double(pdata.in(imn))*zeta;
-         Yb1    = Yb1   + pdata.Rbc(imn,1)*cos(alpha) + pdata.Rbs(imn,1)*sin(alpha);
-         Yb2    = Yb2   + pdata.Rbc(imn,end)*cos(alpha) + pdata.Rbs(imn,end)*sin(alpha);
+       for imn=1:data.output.mn     % get and plot the boundary
+         alpha = double(data.output.im(imn))*theta-double(data.output.in(imn))*zeta;
+         Yb1    = Yb1   + data.output.Rbc(imn,1)*cos(alpha) + data.output.Rbs(imn,1)*sin(alpha);
+         Yb2    = Yb2   + data.output.Rbc(imn,end)*cos(alpha) + data.output.Rbs(imn,end)*sin(alpha);
        end
      case 2  
        Rb = 0;
        Zb = 0;
-       for imn=1:pdata.mn     % get and plot the boundary
-         alpha = double(pdata.im(imn))*theta-double(pdata.in(imn))*zeta;
-         Rb = Rb + (pdata.Rbc(imn,end)*cos(alpha) + pdata.Rbs(imn,end)*sin(alpha)).*cos(theta);
-         Zb = Zb + (pdata.Rbc(imn,end)*cos(alpha) + pdata.Rbs(imn,end)*sin(alpha)).*sin(theta);
+       for imn=1:data.output.mn     % get and plot the boundary
+         alpha = double(data.output.im(imn))*theta-double(data.output.in(imn))*zeta;
+         Rb = Rb + (data.output.Rbc(imn,end)*cos(alpha) + data.output.Rbs(imn,end)*sin(alpha)).*cos(theta);
+         Zb = Zb + (data.output.Rbc(imn,end)*cos(alpha) + data.output.Rbs(imn,end)*sin(alpha)).*sin(theta);
        end
      case 3
        Rb = 0;
        Zb = 0;
-       for imn=1:pdata.mn  % get and plot the boundary  % the pdata.in values go in steps of nfp
-         alpha = double(pdata.im(imn))*theta-double(pdata.in(imn))*zeta;
-         Rb    = Rb + pdata.Rbc(imn,end)*cos(alpha) + pdata.Rbs(imn,end)*sin(alpha);
-         Zb    = Zb + pdata.Zbs(imn,end)*sin(alpha) + pdata.Zbc(imn,end)*cos(alpha); 
+       for imn=1:data.output.mn  % get and plot the boundary  % the data.output.in values go in steps of nfp
+         alpha = double(data.output.im(imn))*theta-double(data.output.in(imn))*zeta;
+         Rb    = Rb + data.output.Rbc(imn,end)*cos(alpha) + data.output.Rbs(imn,end)*sin(alpha);
+         Zb    = Zb + data.output.Zbs(imn,end)*sin(alpha) + data.output.Zbc(imn,end)*cos(alpha); 
        end
      otherwise
        error('Unsupported geometry')
   end  
 
-  if pdata.Igeometry ~= 1
+  if data.input.physics.Igeometry ~= 1
    scatter(Rb,Zb,bthick,'*',bcol)
    hold on
    set(gca,'FontSize',12)

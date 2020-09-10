@@ -1,16 +1,21 @@
 function Acov = get_spec_vecpot(data,lvol,sarr,tarr,zarr)
  
- 
+%
+% GET_SPEC_VECPOT( DATA, LVOL, SARR, TARR, ZARR )
+% ===============================================
+%
 % Computes covariant components of A in volume lvol
 %
 % INPUT
-%   -data     : must be produced by calling read_spec_field(filename)
+% -----
+%   -data     : must be produced by calling read_spec(filename)
 %   -lvol     : is the volume number 
 %   -sarr     : is the array of values for the s-coordinate
 %   -tarr     : is the array of values for the theta-coordinate
 %   -zarr     : is the array of values for the zeta-coordinate
 %
 % OUTPUT
+% ------
 %   -Acov     : cell structure with 2 arrays: A_theta, A_zeta each with size length(sarr)*length(tarr)*length(zarr)
 %
 % written by J.Loizu (2018)

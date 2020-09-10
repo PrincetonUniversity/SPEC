@@ -1,8 +1,13 @@
 function plot_spec_wall(data,zetaov2pi,newfig)
 
+% 
+% PLOT_SPEC_WALL( DATA, ZETAOV2PI, NEWFIG )
+% =========================================
+% 
 % Produces a "Poincare plot" of the computational boundary surface in toroidal geometry.
 %
 % INPUT
+% -----
 %   -data       : obtained from read_spec(fname) 
 %   -zetaov2pi  : shows the toroidal plane at zeta=2*pi*(zetaov2pi)
 %   -newfig     : opens(=1) or not(=0) a new figure

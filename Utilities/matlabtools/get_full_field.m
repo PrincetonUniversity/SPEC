@@ -1,5 +1,9 @@
 function B = get_full_field(data, r, theta, zeta, nr)
 
+%
+% GET_FULL_FIELD( DATA, R, THETA, ZETA, NR )
+% ==========================================
+%
 % Return SPEC magnetic field solution componants as a function of r, theta,
 % zeta. The coordinate r is constructed from the radial position of the
 % volume interface for a given pair (theta, zeta) and from the coordinate
@@ -20,10 +24,10 @@ function B = get_full_field(data, r, theta, zeta, nr)
 %
 % Written by A.Baillod(2019)
 
+
 % Load data
-fdata = fdata_from_data(data);
-G = fdata.Igeometry;
-Nvol = fdata.Nvol;
+G = data.input.physics.Igeometry;
+Nvol = data.output.Mvol;
 
 epsilon = 1E-16;
 
@@ -40,6 +44,7 @@ r0 = get_spec_radius(data, theta, zeta, 0);
 B = zeros(3,length(r),nt,nz);
 for i=1:Nvol
    
+   % if first volume, don't take rmin=0
    if i==1
        rmin = epsilon;
    else
@@ -54,7 +59,7 @@ for i=1:Nvol
    r_vol = r_vol(2:end);
    
    if i==1
-       if fdata.Igeometry == 1
+       if G == 1
         sarr = 2.0 * (r_vol - rmin) ./ (rmax - rmin) - 1; 
        else
         sarr = 2.0 * ((r_vol - rmin) ./ (rmax - rmin)).^2 - 1;
@@ -62,14 +67,14 @@ for i=1:Nvol
    else
        sarr = 2.0 * (r_vol - rmin) ./ (rmax - rmin) - 1;
    end
-   Bcontrav = get_spec_magfield(fdata, i, sarr, theta, zeta);
+   Bcontrav = get_spec_magfield(data, i, sarr, theta, zeta);
    
    % Generate radial coordinate array
    iimax = iimax + length(r_vol);
    r_temp(iimin:iimax) = r_vol;
    
    % And convert it to covariant basis (normalized here)
-   B_cov = contra2cov(fdata, i, Bcontrav, sarr, theta, zeta, 1);
+   B_cov = contra2cov(data, i, Bcontrav, sarr, theta, zeta, 1);
    
    B_temp(1, iimin:iimax, :, :) = B_cov{1};
    B_temp(2, iimin:iimax, :, :) = B_cov{2};

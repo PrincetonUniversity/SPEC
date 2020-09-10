@@ -1,16 +1,21 @@
 function rtdata = get_spec_rtarr(data,lvol,sarr,tarr,zarr0)
  
- 
+%
+% GET_SPEC_RTARR( DATA, LVOL, SARR, TARR, ZARR0 )
+% ===============================================
+%
 % Transforms (s,theta) array into (R,theta) array in volume number lvol in slab or cylindrical geometry
 %
 % INPUT
-%   -data    : must be produced by calling e.g. read_spec_grid(filename)
+% -----
+%   -data    : must be produced by calling e.g. read_spec(filename)
 %   -lvol    : volume number
 %   -sarr    : is the array of values for the s-coordinate
 %   -tarr    : is the array of values for the theta-coordinate
 %   -zarr    : is the array of values for the zeta-coordinate
 %
 % OUTPUT
+% ------
 %   -rtdata  : array with (R,theta,dRds) data array with size 3*ns*nt where ns=length(sarr),nt=length(tarr)
 %
 % Note: Stellarator symmetry is assumed
@@ -19,8 +24,8 @@ function rtdata = get_spec_rtarr(data,lvol,sarr,tarr,zarr0)
 % updated by J.Loizu (2020)
 
 
-Rac     = data.Rbc(:,lvol);   % inner volume boundary harmonics
-Rbc     = data.Rbc(:,lvol+1); % outer volume boundary harmonics
+Rac     = data.output.Rbc(:,lvol);   % inner volume boundary harmonics
+Rbc     = data.output.Rbc(:,lvol+1); % outer volume boundary harmonics
 
 
 sarr    = transpose(sarr);
@@ -28,9 +33,9 @@ ns      = length(sarr);
 nt      = length(tarr);
 sbar    = (sarr+1)/2;
 
-mn      = data.mn;
-im      = double(data.im);
-in      = double(data.in);
+mn      = data.output.mn;
+im      = double(data.output.im);
+in      = double(data.output.in);
 
 Rarr    = zeros(ns,nt); % allocate data for R-array
 Tarr    = zeros(ns,nt); % allocate data for theta-array
@@ -41,7 +46,7 @@ fac     = cell(mn,2);   % allocate data for regularization factors
 
 % Construct regularization factors
 
-switch data.Igeometry
+switch data.input.physics.Igeometry
  case 1
   for j=1:mn
    fac{j}{1} = sbar;

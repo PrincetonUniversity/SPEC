@@ -1,6 +1,8 @@
 function plot_spec_Ivolume(data, cumul, newfig)
 
-% plot_spec_Ivolume(filename, newfig)
+% 
+% PLOT_SPEC_IVOLUME( DATA, CUMUL, NEWFIG )
+% ========================================
 %
 % Plots volume current
 %

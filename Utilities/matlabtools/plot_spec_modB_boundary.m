@@ -1,8 +1,13 @@
 function plot_spec_modB_boundary(data,vol,nt,nz)
 
+%
+% PLOT_SPEC_MODB_BOUNDARY( DATA, VOL, NT, NZ )
+% ============================================
+%
 % Produces plot of |B| on the full boundary surface in toroidal geometry.
 %
 % INPUT
+% -----
 %   -data   : data obtained via read_spec(filename)
 %   -vol    : Volume on which modB should be plotted
 %   -nt     : poloidal resolution for the plotting (e.g. nt=64)
@@ -24,18 +29,14 @@ if(vol>Mvol)
 end
 
 
-% Read vector potential
-
-fdata  = fdata_from_data(data);
-
 % Compute |B|
 
-modB   = get_spec_modB(fdata,vol,sarr,tarr,zarr);
+modB   = get_spec_modB(data,vol,sarr,tarr,zarr);
 
 
 % Compute function (R,Z)(s,theta,zeta)
 
-rzdata = get_spec_rzarr(fdata,vol,sarr,tarr,zarr);
+rzdata = get_spec_rzarr(data,vol,sarr,tarr,zarr);
 
 R = squeeze(rzdata{1});   
 Z = squeeze(rzdata{2});

@@ -1,13 +1,19 @@
 function [beta_ax, beta_av] = get_spec_beta(data, vols)
- 
+
+%
+% GET_SPEC_BETA( DATA, VOLS )
+% ===========================
+%
 % Calculates beta of the equilibrium, both the average beta=2*<p>/B(0)^2 
 % and the axis beta=2*p(0)/B(0)^2, and returns the latter
 %
 % INPUT
+% -----
 %   -data    : Produced via read_spec('filename.sp.h5');
 %   -vols    : volumes on which beta is averaged
 %
 % OUTPUT
+% ------
 %  -beta		: value of beta on axis
 %
 % written by J.Loizu (2016) 
@@ -15,10 +21,9 @@ function [beta_ax, beta_av] = get_spec_beta(data, vols)
 % modified by A.Baillod (06.2019)
 %
 % A.Baillod: update for new hdf5 format (04.2020)
+%
 
 % Read some data
-gdata  = gdata_from_data(data);
-fdata  = fdata_from_data(data);
 pscale = data.input.physics.pscale;
 press  = pscale * data.input.physics.pressure;
 
@@ -43,12 +48,11 @@ for lvol=1:length(vols)
  end
      
  % Compute total volume
- volume = volume + get_spec_volume(gdata,volume_number,64,64,64);
+ volume = volume + get_spec_volume(data,volume_number,64,64,64);
  
  % And integral 2*p/B^2
- modB     = get_spec_modB(fdata,volume_number,sarr,tarr,zarr);
- %modB     = get_spec_modB(fdata,1,-0.99,tarr,zarr);
- jacobian = get_spec_jacobian(gdata, volume_number, sarr, tarr, zarr);
+ modB     = get_spec_modB(data,volume_number,sarr,tarr,zarr);
+ jacobian = get_spec_jacobian(data, volume_number, sarr, tarr, zarr);
  arg = jacobian ./ (modB.^2);
  av_beta(lvol) = 2*press(volume_number)*trapz(zarr, trapz(tarr, trapz(sarr, arg, 1), 2), 3);
  
@@ -58,10 +62,9 @@ beta_av = sum(av_beta) / volume;
 ind = find(vols==1);
 if length(ind)==0 volume_number = vols(lvol);
     volume_number = 1;
-    volume = get_spec_volume(gdata,volume_number,64,64,64);
-    %modB     = get_spec_modB(fdata,1,-0.99,tarr,zarr);
-    modB     = get_spec_modB(fdata,volume_number,sarr,tarr,zarr);
-    jacobian = get_spec_jacobian(gdata, volume_number, sarr, tarr, zarr);
+    volume = get_spec_volume(data,volume_number,64,64,64);
+    modB     = get_spec_modB(data,volume_number,sarr,tarr,zarr);
+    jacobian = get_spec_jacobian(data, volume_number, sarr, tarr, zarr);
     arg = jacobian ./ (modB.^2);
     av_beta(lvol) = press(volume_number)*trapz(zarr, trapz(tarr, trapz(sarr, arg, 1), 2), 3) / volume;
     beta_ax = av_beta(1);

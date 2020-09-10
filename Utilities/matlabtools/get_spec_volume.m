@@ -1,16 +1,21 @@
 function volume = get_spec_volume(data,lvol,ns,nt,nz)
  
- 
+%
+% GET_SPEC_VOLUME( DATA, LVOL, NS, NT, NZ )
+% =========================================
+%
 % Calculates volume of a given volume lvol
 %
 % INPUT
-%   -data    : must be produced by calling e.g. read_spec_grid(filename)
+% -----
+%   -data    : must be produced by calling read_spec(filename)
 %   -lvol    : volume number
 %   -ns      : is the resolution in the s-coordinate     (e.g. 64)
 %   -nt      : is the resolution in the theta-coordinate (e.g. 64)
 %   -nz      : is the resolution in the zeta-coordinate  (e.g. 64)
 %
 % OUTPUT
+% ------
 %   -volume  : volume in m^3 if geometrical dimensions (R,Z) are interpreted in meters.
 %
 % Note: Stellarator symmetry is assumed

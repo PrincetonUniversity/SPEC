@@ -1,23 +1,28 @@
 function W = get_spec_energy_slab(data,lv,ns,nt,nz)
  
- 
+%
+% GET_SPEC_ENERGY_SLAB( DATA, LV, NS, NT, NZ )
+% ============================================
+%
 % Calculates Plasma Magnetic Energy in volume lv in slab geometry 
 %
 % INPUT
-%   -data      : must be produced by calling read_spec_field(filename)
+% -----
+%   -data      : must be produced by calling read_spec(filename)
 %   -lv        : volume in which to calculate the energy (total energy for lvol=0)
 %   -ns        : is the s-coordinate resolution 
 %   -nt        : is the theta-coordinate resolution
 %   -nz        : is the zeta-coordinate resolution
 %
 % OUTPUT
+% ------
 %   -W         : total energy 
 %
 % Note: Stellarator symmetry is assumed
 %
 % written by J.Loizu (2018)
 
-Nvol = data.Nvol;
+Nvol = data.input.physics.Nvol;
 
 W    = 0;
 

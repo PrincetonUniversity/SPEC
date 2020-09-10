@@ -1,11 +1,11 @@
 function plot_spec_torflux(data, zeta, cumulative, newfig)
+
 %
-%
-% PLOT_SPEC_TORFLUX( FILENAME, CUMULATIVE )
+% PLOT_SPEC_TORFLUX( DATA, ZETA, CUMULATIVE, NEWFIG )
 % -----------------------------------------
 %
-% Plots the toroidal flux from the output file filename, in a cumulative or
-% non-cumulative way.
+% Integrates the magnetic field on a constant toroidal surface,
+% in a cumulative or non-cumulative way.
 %
 % INPUTS
 % ------
@@ -22,17 +22,13 @@ function plot_spec_torflux(data, zeta, cumulative, newfig)
 %
 % Written by A. Baillod (2019)
 %
-%
 
-
-fdata = fdata_from_data(data);
-Nvol = fdata.Nvol;
-
+Nvol = data.input.physics.Nvol;
 
 torflux = zeros(1,Nvol);
 
 for lvol=1:Nvol
-    tmp = get_spec_torflux(fdata,lvol,zeta,-1,1,64,64);
+    tmp = get_spec_torflux(data,lvol,zeta,-1,1,64,64);
     
     if cumulative
         if lvol==1

@@ -1,35 +1,39 @@
 function [sarr, out] = get_spec_R_derivatives(data, vol, sarr, tarr, zarr, RorZ)
+
+%
+% GET_SPEC_R_DERIVATIVES( DATA, VOL, SARR, TARR, ZARR, RORZ )
+% ===========================================================
 %
 % Returns the derivatives of R corresponding to SPEC coordinate 
 % system. Stellarator symmetry assumed.
 %
 % INPUT
 % -----
-%	data: 	    fdata produced via fdata_from_data
-%	vol:		Volume number
-%	sarr:       s-coordinate array, shape (ns, 1)
-%	tarr:		Theta angle array
-%	zarr:		Phi angle array
-%   RorZ:       Returns either R derivatives (='R') or Z derivatives (='Z')
+%  data: data produced via read_spec(filename)
+%  vol:  Volume number
+%  sarr: s-coordinate array, shape (ns, 1)
+%  tarr: Theta angle array
+%  zarr: Phi angle array
+%  RorZ: Returns either R derivatives (='R') or Z derivatives (='Z')
 %
 % OUTPUT
 % ------
-%	sarr:		s-coordinate array
-%	R:		4xlength(sarr) array containing R, dR / ds, 
-%			dR / dtheta and dR / dphi
+%  sarr: s-coordinate array
+%  R:    4xlength(sarr) array containing R, dR / ds, 
+%        dR / dtheta and dR / dphi
 %
 % Written by A.Baillod (2019)
 %
 
 
 % Load geometry
-mn     = data.mn;
-im     = double(data.im);
-in     = double(data.in);
-Rmn    = data.Rbc(:,vol  );
-Rmn_p  = data.Rbc(:,vol+1);
-Zmn    = data.Zbs(:,vol  );
-Zmn_p  = data.Zbs(:,vol+1);
+mn     = data.output.mn;
+im     = double(data.output.im);
+in     = double(data.output.in);
+Rmn    = data.output.Rbc(:,vol  );
+Rmn_p  = data.output.Rbc(:,vol+1);
+Zmn    = data.output.Zbs(:,vol  );
+Zmn_p  = data.output.Zbs(:,vol+1);
     
 % Allocate data for R and its derivative in s, theta and phi (4), for each
 % and for ns points 

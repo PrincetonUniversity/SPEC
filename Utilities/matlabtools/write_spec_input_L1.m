@@ -1,9 +1,14 @@
 function write_spec_input_L1(template, inputname, Nvol, tfl, pfl, iota, oita, phit_edge, pre, mu, lrad, nptr)
 
+%
+% WRITE_SPEC_INPUT_L1( TEMPLATE, INPUTNAME, NVOL, TFL, PFL, IOTA, OITA, PHIT_EDGE, PRE, MU, LRAD, NPTR )
+% ======================================================================================================
+%
 % Writes spec input file from template with constraints corresponding to 
 % Lconstraint=1 (tfl,iota,oita)
 %
 % INPUT
+% -----
 %   -template   : template input file name with .sp format 
 %   -inputname  : new input file name with .sp format
 %   -Nvol       : number of volumes

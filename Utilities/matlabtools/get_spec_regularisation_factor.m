@@ -1,11 +1,14 @@
 function fac = get_spec_regularisation_factor(data, lvol, sarr, ForG)
+
 %
+% GET_SPEC_REGULARIZATION_FACTOR( DATA, LVOL, SARR, FORG )
+% ========================================================
 %
 % Computes the regularisation factor in the correct geometry
 %
 % INPUT
 % -----
-%   data:     Produced by fdata_from_data(data);
+%   data:     Produced by read_spec(filename);
 %   lvol:     Volume number
 %   sarr:     s-coordinate array, shape (ns, 1)
 %   ForG:     'F' for field reg. factor, 'G' for geometry reg. factor
@@ -17,17 +20,16 @@ function fac = get_spec_regularisation_factor(data, lvol, sarr, ForG)
 %
 % Written by A.Baillod (2019)
 %
-%
 
 sarr = transpose(sarr);
 
-Igeometry= data.Igeometry;
-mn      = data.mn;
-im      = double(data.im);
-ns      = length(sarr);
-fac     = cell(mn,2);
-sbar    = (1+sarr)/2.0;
-Mregular= double(data.Mregular);
+Igeometry = data.input.physics.Igeometry;
+mn        = data.output.mn;
+im        = double(data.output.im);
+ns        = length(sarr);
+fac       = cell(mn,2);
+sbar      = (1+sarr)/2.0;
+Mregular  = double(data.input.numerics.Mregular);
 
 
 regumm = im / 2.0;

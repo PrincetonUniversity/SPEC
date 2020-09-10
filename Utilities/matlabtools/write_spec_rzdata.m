@@ -1,8 +1,13 @@
 function write_spec_rzdata(R,Z,outfname)
 
+% 
+% WRITE_SPEC_RZDATA( R, Z, OUTFNAME )
+% ===================================
+%
 % Writes text file with R,Z data as two columns 
 %
 % INPUT
+% -----
 %   -R,Z      : data in the form of matrices (np x np)
 %   -outfname : output file name with .txt form 
 %

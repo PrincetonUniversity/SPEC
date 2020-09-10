@@ -1,15 +1,20 @@
 function plot_spec_grid(data,nz0,newfig)
 
+% 
+% PLOT_SPEC_GRID( DATA, NZ0, NEWFIG )
+% ===================================
+%
 % Produces plot of coordinate surfaces
 %
 % INPUT
-%   -data     : must be produced by calling read_spec_grid(filename)
+% -----
+%   -data     : must be produced by calling read_spec(filename)
 %   -nz0      : toroidal plane number at which coordinates are shown (nz0=1 at toroidal angle phi=0)
 %   -newfig   : opens(=1) or not(=0) a new figure, or overwrite selected
 %   figure (=2)
 %
 %   written by J.Loizu (2015)
-
+%
 
 switch newfig
     case 0
