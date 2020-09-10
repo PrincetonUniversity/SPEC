@@ -52,15 +52,29 @@ T = get_spec_polynomial_basis(data, lvol, sarr);
 fac = get_spec_regularisation_factor(data, lvol, sarr, 'F');
 
 % Construct magnetic field contravariant components
+
+Lsingularity = false;
+if (lvol==1) && (data.input.physics.Igeometry~=1)
+  Lsingularity = true;
+end
+
 for l=1:Lrad+1
     for j=1:mn
+        if Lsingularity
+            basis  = T{l}{1}(im(j));
+	    dbasis = T{l}{2}(im(j)); 
+        else
+	    basis  = T{l}{1};
+            dbasis = T{l}{2};
+	end
+
         for it=1:nt
             for iz=1:nz
                 cosa = cos(im(j)*tarr(it)-in(j)*zarr(iz));
                 sina = sin(im(j)*tarr(it)-in(j)*zarr(iz));
-                Bs(:,it,iz) = Bs(:,it,iz) +  fac{j}{1}.*T{l}{1}.*( (im(j)*Azo(l,j) + in(j)*Ato(l,j))*cosa - (im(j)*Aze(l,j) + in(j)*Ate(l,j))*sina  );
-                Bt(:,it,iz) = Bt(:,it,iz) - (fac{j}{1}.*T{l}{2}+fac{j}{2}.*T{l}{1}).*( Aze(l,j)*cosa + Azo(l,j)*sina );
-                Bz(:,it,iz) = Bz(:,it,iz) + (fac{j}{1}.*T{l}{2}+fac{j}{2}.*T{l}{1}).*( Ate(l,j)*cosa + Ato(l,j)*sina );
+                Bs(:,it,iz) = Bs(:,it,iz) +  fac{j}{1}.* basis.*( (im(j)*Azo(l,j) + in(j)*Ato(l,j))*cosa - (im(j)*Aze(l,j) + in(j)*Ate(l,j))*sina  );
+                Bt(:,it,iz) = Bt(:,it,iz) - (fac{j}{1}.*dbasis+fac{j}{2}.* basis).*( Aze(l,j)*cosa + Azo(l,j)*sina );
+                Bz(:,it,iz) = Bz(:,it,iz) + (fac{j}{1}.*dbasis+fac{j}{2}.* basis).*( Ate(l,j)*cosa + Ato(l,j)*sina );
             end
         end
     end

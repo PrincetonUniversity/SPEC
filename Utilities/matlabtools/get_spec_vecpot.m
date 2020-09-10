@@ -52,14 +52,28 @@ fac = get_spec_regularization_factor(data, lvol, sarr, 'F');
 
 % Construct vector potential covariant components
 
+Lsingularity = false;
+if (lvol==1) && (data.input.physics.Igeometry~=1)
+  Lsingularity = true;
+end
+
+
 for l=1:Lrad+1
   for j=1:mn
+    if( Lsingularity )
+       basis = T{l}{1}(im(j));
+      dbasis = T{l}{2}(im(j));
+    else
+       basis = T{l}{1};
+      dbasis = T{l}{2};
+    end
+
     for it=1:nt
       for iz=1:nz
        cosa = cos(im(j)*tarr(it)-in(j)*zarr(iz));
        sina = sin(im(j)*tarr(it)-in(j)*zarr(iz));
-       At(:,it,iz) = At(:,it,iz) + fac{j}{1}.*T{l}{1}.*( Ate(l,j)*cosa + Ato(l,j)*sina );
-       Az(:,it,iz) = Az(:,it,iz) + fac{j}{1}.*T{l}{1}.*( Aze(l,j)*cosa + Azo(l,j)*sina );
+       At(:,it,iz) = At(:,it,iz) + fac{j}{1}.* basis.*( Ate(l,j)*cosa + Ato(l,j)*sina );
+       Az(:,it,iz) = Az(:,it,iz) + fac{j}{1}.* basis.*( Aze(l,j)*cosa + Azo(l,j)*sina );
       end
     end
   end

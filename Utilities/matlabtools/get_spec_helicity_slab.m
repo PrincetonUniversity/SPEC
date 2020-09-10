@@ -52,16 +52,29 @@ fac = get_spec_regularization_factor(data,lvol,sarr,'F');
 
 % Construct magnetic helicity integrand
 
+Lsingularity = false;
+if (lvol==1) && (data.input.physics.Igeometry~=1)
+  Lsingularity = true;
+end
+
 for l=1:Lrad+1
   for j=1:mn
+    if Lsingularity
+      basis  = T{l}{1}(im(j));
+      dbasis = T{l}{2}(im(j));
+    else
+      basis  = T{l}{1};
+      dbasis = T{l}{2};
+    end
+
     for it=1:nt
       for iz=1:nz
        cosa = cos(im(j)*tarr(it)-in(j)*zarr(iz));
        sina = sin(im(j)*tarr(it)-in(j)*zarr(iz));
-       h1(:,it,iz) = h1(:,it,iz) + fac{j}{1}.*T{l}{1}.*Ate(l,j)*cosa; %A_t
-       h2(:,it,iz) = h2(:,it,iz) - (fac{j}{1}.*T{l}{2}+fac{j}{2}.*T{l}{1}).*Aze(l,j)*cosa;  % -dA_z/ds
-       h3(:,it,iz) = h3(:,it,iz) + fac{j}{1}.*T{l}{1}.*Aze(l,j)*cosa; %A_z
-       h4(:,it,iz) = h4(:,it,iz) + (fac{j}{1}.*T{l}{2}+fac{j}{2}.*T{l}{1}).*Ate(l,j)*cosa;  % +dA_t/ds
+       h1(:,it,iz) = h1(:,it,iz) + fac{j}{1}.* basis.*Ate(l,j)*cosa; %A_t
+       h2(:,it,iz) = h2(:,it,iz) - (fac{j}{1}.*dbasis+fac{j}{2}.* basis).*Aze(l,j)*cosa;  % -dA_z/ds
+       h3(:,it,iz) = h3(:,it,iz) + fac{j}{1}.* basis.*Aze(l,j)*cosa; %A_z
+       h4(:,it,iz) = h4(:,it,iz) + (fac{j}{1}.*dbasis+fac{j}{2}.* basis).*Ate(l,j)*cosa;  % +dA_t/ds
       end
     end
   end
