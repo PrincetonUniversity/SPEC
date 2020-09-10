@@ -626,6 +626,16 @@ subroutine write_grid
         jireal(jk) = (                      +        rtor * Bst(2)                     ) * gBzeta / sg(jk,0) ! Btheta;
         enddo
       enddo
+
+     case (2)
+      do kk = 0, Nz-1 ; zeta = kk * pi2nfp / Nz
+        do jj = 0, Nt-1 ; teta = jj * pi2    / Nt ; jk = 1 + jj + kk*Nt ; st(1:2) = (/ lss, teta /)
+        WCALL( sphdf5, bfield, ( zeta, st(1:Node), Bst(1:Node) ) )
+        ijreal(jk) = ( Rij(jk,1,0) * Bst(1) + Rij(jk,2,0) * Bst(2) + Rij(jk,3,0) * one ) * gBzeta / sg(jk,0) ! BR;
+        ijimag(jk) = (                                                             one ) * gBzeta / sg(jk,0) ! Bp;
+        jireal(jk) = (                                      Bst(2)                     ) * gBzeta / sg(jk,0) ! BZ;
+        enddo
+      enddo
     
      end select !Igeometry
     endif ! end of if( Lcurvature.eq.1 ) ;
