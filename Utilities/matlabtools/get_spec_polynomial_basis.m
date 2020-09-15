@@ -47,13 +47,13 @@ if( Lsingularity ) % Build zernike polynomials
 
   for m = 0:mpol
     if (Lrad >= m)
-      zernike(m,m,0) = rm
-      zernike(m,m,1) = double(m)*rm1
+      zernike(m,m,1) = rm
+      zernike(m,m,2) = double(m)*rm1
     end
 
     if (lrad >= m+2)
-      zernike(m+2,m,0) = double(m+2)     *rm*r^2 - double(m+1)    *rm
-      zernike(m+2,m,1) = double((m+2)^2)*rm*r    - double((m+1)*m)*rm1
+      zernike(m+2,m,1) = double(m+2)     *rm*r^2 - double(m+1)    *rm
+      zernike(m+2,m,2) = double((m+2)^2)*rm*r    - double((m+1)*m)*rm1
     end
 
     for n = m+4:2:Lrad
@@ -62,9 +62,9 @@ if( Lsingularity ) % Build zernike polynomials
       factor3 = double((n-2+m)^2)/double(n-2) + double((n-m)^2)/double(n)
       factor4 = double((n-2)^2-m^2) / double(n-2)
  
-      zernike(n, m, 0) = factor1 * ((factor2*r^2 - factor3)*zernike(n-2,m    ,0) - factor4*zernike(n-4,m,0))
-      zernike(n, m, 1) = factor1 * (two*factor2*r*zernike(n-2,m,0) + (fact    or2*r^2 - factor3)*zernike(n-2,m,1) - factor4*zernike(n-4,m,1))
-    enddo
+      zernike(n, m, 1) = factor1 * ((factor2*r^2 - factor3)*zernike(n-2,m    ,1) - factor4*zernike(n-4,m,1))
+      zernike(n, m, 2) = factor1 * (2.0*factor2*r*zernike(n-2,m,1) + (fact    or2*r^2 - factor3)*zernike(n-2,m,2) - factor4*zernike(n-4,m,2))
+    end
  
     rm1 = rm
     rm = rm * r
@@ -78,7 +78,7 @@ if( Lsingularity ) % Build zernike polynomials
     for n = 3:2:lrad
       zernike(n,1,0) = zernike(n,1,0) - (-1)^((n-1)/2) * double((n+1)/2) *     r
       zernike(n,1,1) = zernike(n,1,1) - (-1)^((n-1)/2) * double((n+1)/2)
-    enddo
+    end
   end
 
   for m = 0:mpol
