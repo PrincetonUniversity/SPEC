@@ -46,7 +46,7 @@ Bz      = zeros(ns,nt,nz); % allocate data for magnetic field along zeta
 
 % Construct Chebyshev polynomials and their derivatives
 
-T = get_spec_polynomial_basis(data, lvol, sarr);
+T = get_spec_polynomial_basis(data, lvol, sarr');
 
 % Construct regularization factors and their derivatives
 fac = get_spec_regularisation_factor(data, lvol, sarr, 'F');
@@ -61,11 +61,11 @@ end
 for l=1:Lrad+1
     for j=1:mn
         if Lsingularity
-            basis  = T{l}{1}(im(j));
-	    dbasis = T{l}{2}(im(j)); 
+          basis  = T{l}{1}(im(j)+1);
+	      dbasis = T{l}{2}(im(j)+1); 
         else
-	    basis  = T{l}{1};
-            dbasis = T{l}{2};
+	      basis  = T{l}{1};
+          dbasis = T{l}{2};
 	end
 
         for it=1:nt

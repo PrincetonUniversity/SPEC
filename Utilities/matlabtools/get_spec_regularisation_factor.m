@@ -69,7 +69,7 @@ if ForG=='G'
             for j=1:mn
                 if lvol==1 %coordinate singularity
                     if im(j)==0
-                       fac{j}{1} = sbar^2; 
+                       fac{j}{1} = sbar.^2; 
                        fac{j}{2} = sbar;
                     else
                        fac{j}{1} = sbar.^im(j);
