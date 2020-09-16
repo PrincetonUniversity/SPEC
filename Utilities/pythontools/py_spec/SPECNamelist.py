@@ -553,10 +553,10 @@ class SPECNamelist(Namelist):
         # replace some namelist objects by those from the output
         with spec_hdf5.output as o, spec_hdf5.input.physics as p:
             # 1. replace guess of the geometry axis
-            self['physicslist']['Rac'] = o.Rbc[0,:p.Mpol+1].tolist()
-            self['physicslist']['Zas'] = o.Zbs[0,:p.Mpol+1].tolist()
-            self['physicslist']['Ras'] = o.Rbs[0,:p.Mpol+1].tolist()
-            self['physicslist']['Zac'] = o.Zbc[0,:p.Mpol+1].tolist()
+            self['physicslist']['Rac'] = o.Rbc[0,:p.Ntor+1].tolist()
+            self['physicslist']['Zas'] = o.Zbs[0,:p.Ntor+1].tolist()
+            self['physicslist']['Ras'] = o.Rbs[0,:p.Ntor+1].tolist()
+            self['physicslist']['Zac'] = o.Zbc[0,:p.Ntor+1].tolist()
 
             # 2. replace the boundary
             for ii in range(spec_hdf5.output.mn):

@@ -70,7 +70,7 @@ toroidal_freeboundary_vacuum:
   - source source.sh
   - cd ci/toroidal_freeboundary_vacuum
   - mpirun -n 4 --allow-run-as-root xspec G3V02L0Fr.sp 
-  - python3 -m py_spec.ci.test compare.h5 G3V02L0Fr.sp.h5 
+  - python3 -m py_spec.ci.test compare.h5 G3V02L0Fr.sp.h5 --tol 1e-10
   artifacts:
     when: always
     paths:
@@ -89,7 +89,7 @@ CurrentConstraint_fixed:
   - source source.sh
   - cd ci/G3V08L3Fi
   - mpirun -n 4 --allow-run-as-root xspec G3V08L3Fi.001.sp 
-  - python3 -m py_spec.ci.test compare.h5 G3V08L3Fi.001.sp.h5 
+  - python3 -m py_spec.ci.test compare.h5 G3V08L3Fi.001.sp.h5  --tol 1e-10
   artifacts:
     when: always
     paths:
@@ -109,7 +109,7 @@ CurrentConstraint_free:
   - source source.sh
   - cd ci/G3V08L3Fr
   - mpirun -n 4 --allow-run-as-root xspec G3V08L3Fr.001.sp 
-  - python3 -m py_spec.ci.test compare.h5 G3V08L3Fr.001.sp.h5 
+  - python3 -m py_spec.ci.test compare.h5 G3V08L3Fr.001.sp.h5 --tol 1e-10
   artifacts:
     when: always
     paths:
