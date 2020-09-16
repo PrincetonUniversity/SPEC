@@ -49,7 +49,7 @@ Bz      = zeros(ns,nt,nz); % allocate data for magnetic field along zeta
 T = get_spec_polynomial_basis(data, lvol, sarr');
 
 % Construct regularization factors and their derivatives
-fac = get_spec_regularisation_factor(data, lvol, sarr, 'F');
+%fac = get_spec_regularisation_factor(data, lvol, sarr, 'F');
 
 % Construct magnetic field contravariant components
 
@@ -62,9 +62,9 @@ for l=1:Lrad+1
     for j=1:mn
         if Lsingularity
           basis  = T{l}{1}(im(j)+1);
-	      dbasis = T{l}{2}(im(j)+1); 
+	  dbasis = T{l}{2}(im(j)+1); 
         else
-	      basis  = T{l}{1};
+	  basis  = T{l}{1};
           dbasis = T{l}{2};
 	end
 
@@ -72,9 +72,9 @@ for l=1:Lrad+1
             for iz=1:nz
                 cosa = cos(im(j)*tarr(it)-in(j)*zarr(iz));
                 sina = sin(im(j)*tarr(it)-in(j)*zarr(iz));
-                Bs(:,it,iz) = Bs(:,it,iz) +  fac{j}{1}.* basis.*( (im(j)*Azo(l,j) + in(j)*Ato(l,j))*cosa - (im(j)*Aze(l,j) + in(j)*Ate(l,j))*sina  );
-                Bt(:,it,iz) = Bt(:,it,iz) - (fac{j}{1}.*dbasis+fac{j}{2}.* basis).*( Aze(l,j)*cosa + Azo(l,j)*sina );
-                Bz(:,it,iz) = Bz(:,it,iz) + (fac{j}{1}.*dbasis+fac{j}{2}.* basis).*( Ate(l,j)*cosa + Ato(l,j)*sina );
+                Bs(:,it,iz) = Bs(:,it,iz) +  basis .* ( (im(j)*Azo(l,j) + in(j)*Ato(l,j))*cosa - (im(j)*Aze(l,j) + in(j)*Ate(l,j))*sina  );
+                Bt(:,it,iz) = Bt(:,it,iz) - dbasis .* ( Aze(l,j)*cosa + Azo(l,j)*sina );
+                Bz(:,it,iz) = Bz(:,it,iz) + dbasis .* ( Ate(l,j)*cosa + Ato(l,j)*sina );
             end
         end
     end

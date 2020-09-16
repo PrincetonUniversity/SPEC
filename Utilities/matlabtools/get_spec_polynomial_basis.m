@@ -24,9 +24,9 @@ Lrad = double(data.input.physics.Lrad(lvol));
 ns   = length(sarr);
 Mpol = data.input.physics.Mpol;
 
-Lsingularity = false;
+Lzernike = false;
 if ((lvol==1) && (data.input.physics.Igeometry~=1))
-  Lsingularity = true;
+  Lzernike = true;
 end
 
 
@@ -39,10 +39,11 @@ T{2}{1} = sarr;
 T{2}{2} = ones(ns,1);
 
 
-if( Lsingularity ) % Build zernike polynomials
+if( Lzernike ) % Build zernike polynomials
 % Copy pasted from Frotran source, translated to Matlab language
-  zernike = zeros(Lrad+1,Mpol+1,3,length(sarr));
-  rm  = zeros(size(sarr));
+% Tested on the 16.09.2020 (A. Baillod) against SPEC source. perfect match
+  zernike = zeros(Lrad+1,Mpol+1,2,length(sarr));
+  rm  = ones(size(sarr));
   rm1 = zeros(size(sarr));
 
   sbar = (1 + sarr ) / 2.0;
@@ -50,13 +51,13 @@ if( Lsingularity ) % Build zernike polynomials
 
   for m = 0:Mpol
     if (Lrad >= m)
-      zernike(m+1,m+1,2,:) = rm;
-      zernike(m+1,m+1,3,:) = double(m)*rm1;
+      zernike(m+1,m+1,1,:) = rm;
+      zernike(m+1,m+1,2,:) = double(m)*rm1;
     end
 
     if (Lrad >= m+2)
-      zernike(m+3,m+1,2,:) = double(m+2)     *rm.*sbar.^2 - double(m+1)    *rm;
-      zernike(m+3,m+1,3,:) = double((m+2)^2) *rm.*sbar    - double((m+1)*m)*rm1;
+      zernike(m+3,m+1,1,:) = double(m+2)     *rm.*sbar.^2 - double(m+1)    *rm;
+      zernike(m+3,m+1,2,:) = double((m+2)^2) *rm.*sbar    - double((m+1)*m)*rm1;
     end
 
     for n = m+4:2:Lrad
@@ -65,8 +66,8 @@ if( Lsingularity ) % Build zernike polynomials
       factor3 = double((n-2+m)^2)/double(n-2) + double((n-m)^2)/double(n);
       factor4 = double((n-2)^2-m^2) / double(n-2);
  
-      zernike(n+1, m+1, 2, :) = factor1 * ((factor2*sbar.^2 - factor3) .* reshape(zernike(n-1, m+1, 2, :), [ns,1]) - factor4 * reshape(zernike(n-3, m+1, 2, :), [ns, 1]));
-      zernike(n+1, m+1, 3, :) = factor1 * (2.0*factor2*sbar .* reshape(zernike(n-1, m+1, 2, :), [ns,1]) + (factor2*sbar.^2 - factor3) .* reshape(zernike(n-1, m+1, 3, :), [ns,1]) - factor4 * reshape(zernike(n-3, m+1, 3, :), [ns,1]));
+      zernike(n+1, m+1, 1, :) = factor1 * ((factor2*sbar.^2 - factor3) .* reshape(zernike(n-1, m+1, 1, :), [ns,1]) - factor4 * reshape(zernike(n-3, m+1, 1, :), [ns, 1]));
+      zernike(n+1, m+1, 2, :) = factor1 * (2.0*factor2*sbar .* reshape(zernike(n-1, m+1, 1, :), [ns,1]) + (factor2*sbar.^2 - factor3) .* reshape(zernike(n-1, m+1, 2, :), [ns,1]) - factor4 * reshape(zernike(n-3, m+1, 2, :), [ns,1]));
     end
  
     rm1 = rm;
@@ -101,5 +102,14 @@ else % Otherwise construct Chebychev basis
   for l=3:Lrad+1
     T{l}{1} = 2*sarr.*T{l-1}{1} - T{l-2}{1};
     T{l}{2} = 2*T{l-1}{1} + 2*sarr.*T{l-1}{2} - T{l-2}{2};
+  end
+
+  for l = 1:Lrad
+    T{l+1}{1} = T{l+1}{1}  - (-1)^l;
+  end
+
+  for l = 0:Lrad
+    T{l+1}{1} = T{l+1}{1} / double(l+1); % scale for better conditioning
+    T{l+1}{2} = T{l+1}{2} / double(l+1); % scale for better conditioning
   end
 end
