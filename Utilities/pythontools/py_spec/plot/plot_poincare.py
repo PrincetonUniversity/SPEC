@@ -16,9 +16,14 @@ def plot_poincare(SPEC, toroidalIdx=0, prange='full', **kwargs):
     '''
     import matplotlib.pyplot as plt
     import matplotlib.lines as mlines
+    import numpy as np
     # extract slice corresponding to the given toroidal cutplane
-    rr = SPEC.poincare.R[:, :, toroidalIdx]
-    zz = SPEC.poincare.Z[:, :, toroidalIdx]
+    if (SPEC.input.physics.Igeometry==3):
+        rr = SPEC.poincare.R[:, :, toroidalIdx]
+        zz = SPEC.poincare.Z[:, :, toroidalIdx]
+    elif (SPEC.input.physics.Igeometry==1):
+        rr = np.mod(SPEC.poincare.t[:, :, toroidalIdx],np.pi*2)
+        zz = SPEC.poincare.R[:, :, toroidalIdx]
     # get current figure or build new one;
     if plt.get_fignums():
         fig = plt.gcf()
@@ -46,5 +51,8 @@ def plot_poincare(SPEC, toroidalIdx=0, prange='full', **kwargs):
     plt.ylabel('Z [m]', fontsize=20)
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
-    plt.axis('equal')
+    if (SPEC.input.physics.Igeometry==1):
+        pass
+    else:
+        plt.axis('equal')
     return fig, ax
