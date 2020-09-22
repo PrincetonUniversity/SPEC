@@ -219,7 +219,7 @@ m4_define(RlBCAST,{! macro expansion of rlbcast;
 
   ! macro expansion of rlbcast; end;})m4_dnl can put comments here
 m4_define(ClBCAST,{! macro expansion of clbcast;
-! character MPI broadcast of _1; length is _2; what is _3 ?
+! character MPI broadcast of _1; length is _2; index is _3
   
 #ifdef DEBUG
 
