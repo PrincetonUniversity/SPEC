@@ -55,8 +55,9 @@ def compare(data, reference, localtol = tol, action='ERR'):
                     if np.shape(value) == np.shape(reference.__dict__[key]):
                         diff = np.max(np.abs(np.array(value) - np.array(reference.__dict__[key])))
                     else:
+                        match = False
                         print('ERROR: '+key, ', dimensions mismatch: {} .ne. {}'.format(np.shape(value), np.shape(reference.__dict__[key])))
-                        next
+                        next # there is no point in computing differences if not even the dimensions match, so skip to next variable here
                 unmatch = diff > localtol
                 if unmatch:
                     if action == 'ERR':
