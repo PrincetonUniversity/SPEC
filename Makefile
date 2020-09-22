@@ -85,7 +85,7 @@ endif
 ifeq ($(CC),gfortran_arch)
  # configuration for Arch Linux
  FC=mpif90
- CFLAGS=-fdefault-real-8
+ CFLAGS=-fdefault-real-8 -fallow-argument-mismatch
  LINKS=-llapack -lblas
  LIBS=
  LINKS+=-lhdf5_fortran -lhdf5 -lpthread -lz -lm
