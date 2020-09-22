@@ -52,7 +52,11 @@ def compare(data, reference, localtol = tol, action='ERR'):
                     for ii, item in enumerate(value):
                         diff = np.max([diff, np.max(np.abs(np.array(item) - np.array(reference.__dict__[key][ii])))])
                 else:
-                    diff = np.max(np.abs(np.array(value) - np.array(reference.__dict__[key])))
+                    diff = np.inf
+                    if np.shape(value) == np.shape(reference.__dict__[key]):
+                        diff = np.max(np.abs(np.array(value) - np.array(reference.__dict__[key])))
+                    else:
+                        print('ERROR: '+key, ', dimensions mismatch: {} .ne. {}'.format(np.shape(value), np.shape(reference.__dict__[key])))
                 unmatch = diff > localtol
                 if unmatch:
                     if action == 'ERR':
