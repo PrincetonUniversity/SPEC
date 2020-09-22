@@ -24,7 +24,7 @@ build:centos7:
     expire_in: 1 week
 
 # do it yourself: 
-# docker run -v `pwd`:`pwd` -w `pwd` csmiet/testspec make CC=gfortran xpec
+# docker run -v `pwd`:`pwd` -w `pwd` csmiet/testspec make CC=gfortran xspec
 
 stable_force_free_sheet:
   stage: test
