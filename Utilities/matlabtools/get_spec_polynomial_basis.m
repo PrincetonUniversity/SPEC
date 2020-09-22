@@ -4,7 +4,7 @@ function T = get_spec_polynomial_basis(data,lvol,sarr)
 % GET_SPEC_POLYNOMIAL_BASIS( DATA, LVOL, SARR )
 % =============================================
 %
-% Return the Chebychev of the Zernike polynomial basis
+% Return the Chebychev or the Zernike polynomial basis
 %
 % INPUT
 % -----

@@ -55,8 +55,8 @@ if ForG=='G'
                         fac{j}{1} = sbar;
                         fac{j}{2} = 0.5*ones(ns,1);
                     else
-                        fac{j}{1} = sbar.^im(j); 
-                        fac{j}{2} = 0.5 * im(j) * fac{j}{1} ./ sbar;
+                        fac{j}{1} = sbar.^(im(j)+1); 
+                        fac{j}{2} = 0.5 * (im(j)+1) * fac{j}{1} ./ sbar;
                     end
                 else
                     fac{j}{1}  = sbar;
@@ -87,49 +87,11 @@ if ForG=='G'
     
     
 elseif ForG=='F'
-    switch Igeometry
-        case 1
-            for j=1:mn
-                fac{j}{1}  = ones(ns,1);
-                fac{j}{2}  = zeros(ns,1);
-            end
-            
-        case 2
-            for j=1:mn
-                if lvol==1 % coordinate singularity
-                   if im(j)==0
-                      fac{j}{1} = 1;
-                      fac{j}{2} = 0;
-                   else
-                      fac{j}{1} = sbar.^regumm(j);
-                      fac{j}{2} = 0.5 * regumm(j) * fac{j}{1} ./ sbar;
-                   end
-                else
-                  fac{j}{1} = 1;
-                  fac{j}{2} = 0;
-                end
-            end
-            
-        case 3
-            for j=1:mn
-                if lvol==1 % coordinate singularity
-                   if im(j)==0
-                      fac{j}{1} = 1;
-                      fac{j}{2} = 0;
-                   else
-                      fac{j}{1} = sbar.^regumm(j);
-                      fac{j}{2} = 0.5 * regumm(j) * fac{j}{1} ./ sbar;
-                   end
-                else
-                  fac{j}{1} = 1;
-                  fac{j}{2} = 0;
-                end
-            end   
-          
-        otherwise
-            error('Unsupported geometry in get_spec_regularisation_factor')
+    for j=1:mn
+        fac{j}{1}  = ones(ns,1);
+        fac{j}{2}  = zeros(ns,1);
     end
-    
+            
 else
     error('Unsupported ForG value in get_spec_regularisation_factor.')
 end

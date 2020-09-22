@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 """
 @author: Caoxiang Zhu (czhu@ppp.gov)
-For any help, type ./compare_spec.py -h
+For any help, type ./test.py -h
 """
 import numpy as np
-from py_spec import SPEC
+from py_spec.output import SPECout
 import argparse
 
 # parse command line arguments
@@ -17,8 +17,8 @@ parser.add_argument("-t", "--tol", type=float, default=1E-12, help="difference t
 args = parser.parse_args()
 print('Compare SPEC outputs in {:s} and {:s} with tolerance {:12.5E}'.format(
         args.filename, args.reference, args.tol))
-data_A = SPEC(args.filename)
-data_B = SPEC(args.reference)
+data_A = SPECout(args.filename)
+data_B = SPECout(args.reference)
 tol = args.tol
 match = True
 
@@ -32,7 +32,7 @@ def compare(data, reference, localtol = tol, action='ERR'):
     """
     global match
     for key, value in vars(data).items():
-        if isinstance(value, SPEC):  # recurse data (csmiet: I'm not the biggest fan of this recursion...)
+        if isinstance(value, SPECout):  # recurse data (csmiet: I'm not the biggest fan of this recursion...)
             print('------------------')
             print('Elements in '+key)
             if key in ['poincare']:
