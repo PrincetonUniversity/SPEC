@@ -47,16 +47,16 @@ def compare(data, reference, localtol = tol, action='ERR'):
                 if key in ['volume', 'fiota', 'Lmatsolver']:  # skip certain problematic variables. NOT A GOOD IDEA TO CHANGE (might be revised)
                     action = 'WARN'
 
+                diff = 0.0
                 if isinstance(value, list):  # compare each list
-                    diff = 0.0
                     for ii, item in enumerate(value):
                         diff = np.max([diff, np.max(np.abs(np.array(item) - np.array(reference.__dict__[key][ii])))])
                 else:
-                    diff = np.inf
                     if np.shape(value) == np.shape(reference.__dict__[key]):
                         diff = np.max(np.abs(np.array(value) - np.array(reference.__dict__[key])))
                     else:
                         print('ERROR: '+key, ', dimensions mismatch: {} .ne. {}'.format(np.shape(value), np.shape(reference.__dict__[key])))
+                        next
                 unmatch = diff > localtol
                 if unmatch:
                     if action == 'ERR':
