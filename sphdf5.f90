@@ -970,7 +970,7 @@ subroutine hdfint
   ! the following quantites can be different from input value
   HWRITERV( grpOutput,   Mvol, adiabatic         , adiabatic(1:Nvol)   )
   HWRITERV( grpOutput,   Nvol, helicity          ,  helicity(1:Nvol)   )
-  HWRITERV( grpOutput, 1+Nvol, mu                ,        mu(1:Mvol)   )
+  HWRITERV( grpOutput,   Mvol, mu                ,        mu(1:Mvol)   )
   HWRITERV( grpOutput,   Mvol, tflux             ,     tflux(1:Mvol)   )
   HWRITERV( grpOutput,   Mvol, pflux             ,     pflux(1:Mvol)   )
 
