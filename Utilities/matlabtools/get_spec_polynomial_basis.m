@@ -93,8 +93,8 @@ if( Lzernike ) % Build zernike polynomials
 
   % Store in T{}{} structure
   for ll = 1:Lrad+1
-    T{ll}{1} = zernike(ll,:,1,:);
-    T{ll}{2} = zernike(ll,:,2,:) / 2.0;
+    T{ll}{1} = reshape(zernike(ll,:,1,:)      , Mpol+1, length(sarr));
+    T{ll}{2} = reshape(zernike(ll,:,2,:) / 2.0, Mpol+1, length(sarr));
   end
 
 else % Otherwise construct Chebychev basis
