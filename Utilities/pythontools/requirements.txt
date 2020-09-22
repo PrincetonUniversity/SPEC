@@ -1,5 +1,5 @@
 h5py
 matplotlib
 f90nml
-numpy
+numpy>=17
 coilpy
