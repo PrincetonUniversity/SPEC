@@ -1,4 +1,4 @@
-def plot_iota(self, xaxis='R', yaxis='i', ax=None, **kwargs):
+def plot_iota(self, xaxis="R", yaxis="i", ax=None, **kwargs):
     """Iota plots
     @param xaxis the choose of the xaxis, 'R'(default) or 's'
     @param yaxis the choose of the yaxis, 'i'(default) or 'q'
@@ -21,24 +21,24 @@ def plot_iota(self, xaxis='R', yaxis='i', ax=None, **kwargs):
     # use gray color
     if kwargs.get("c") == None:
         pass
-        #kwargs.update({"c": "gray"})
+        # kwargs.update({"c": "gray"})
 
     if xaxis == "s":
-        xdata = self.transform.fiota[0,:]
-        ydata = self.transform.fiota[1,:]
+        xdata = self.transform.fiota[0, :]
+        ydata = self.transform.fiota[1, :]
         xlabel = r"s"
     elif xaxis == "R":
-        xdata = self.poincare.R[:,0,0]
-        ydata = self.transform.fiota[1,:]
+        xdata = self.poincare.R[:, 0, 0]
+        ydata = self.transform.fiota[1, :]
         xlabel = r"R"
     else:
         raise ValueError("xaxis should be one of ['R', 's'].")
 
     dots = ax.scatter(xdata, ydata, **kwargs)
 
-    if yaxis=='i':
+    if yaxis == "i":
         ylabel = r"$\iota$"
-    elif yaxis=='q':
+    elif yaxis == "q":
         ydata = 1.0 / ydata
         ylabel = r"q"
     else:
@@ -49,5 +49,5 @@ def plot_iota(self, xaxis='R', yaxis='i', ax=None, **kwargs):
 
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
-   
+
     return

@@ -25,8 +25,12 @@ def plot_poincare(self, toroidalIdx=0, prange="full", ax=None, **kwargs):
         rr = np.mod(self.poincare.t[:, :, toroidalIdx], np.pi * 2)
         zz = self.poincare.R[:, :, toroidalIdx]
     elif Igeometry == 2:
-        rr = self.poincare.R[:, :, toroidalIdx] * np.cos(self.poincare.t[:, :, toroidalIdx])
-        zz = self.poincare.R[:, :, toroidalIdx] * np.sin(self.poincare.t[:, :, toroidalIdx])
+        rr = self.poincare.R[:, :, toroidalIdx] * np.cos(
+            self.poincare.t[:, :, toroidalIdx]
+        )
+        zz = self.poincare.R[:, :, toroidalIdx] * np.sin(
+            self.poincare.t[:, :, toroidalIdx]
+        )
     # get axix data
     if ax is None:
         fig, ax = plt.subplots()
@@ -41,12 +45,12 @@ def plot_poincare(self, toroidalIdx=0, prange="full", ax=None, **kwargs):
     # size of marker
     if kwargs.get("s") == None:
         kwargs.update({"s": 0.3})
-        #kwargs.update({"c": "gray"})
+        # kwargs.update({"c": "gray"})
     # make plot depending on the 'range'
     if prange == "full":
         nptrj = rr.shape[0]
         for ii in range(nptrj):
-            dots = ax.scatter(rr[ii,:], zz[ii,:], **kwargs)
+            dots = ax.scatter(rr[ii, :], zz[ii, :], **kwargs)
     elif prange == "upper":
         dots = ax.scatter(rr[zz >= 0], zz[zz >= 0], **kwargs)
     elif prange == "lower":
@@ -65,8 +69,8 @@ def plot_poincare(self, toroidalIdx=0, prange="full", ax=None, **kwargs):
     if self.input.physics.Igeometry == 1:
         plt.ylabel("R [m]", fontsize=20)
         plt.xlabel(r"$\theta$", fontsize=20)
-        plt.xlim([0,np.pi])
+        plt.xlim([0, np.pi])
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
-   
+
     return

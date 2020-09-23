@@ -8,7 +8,7 @@ def plot_modB(
     zarr=np.linspace(0, 0, 2),
     lvol=None,
     ax=None,
-    colorbar = True,
+    colorbar=True,
     **kwargs,
 ):
     """[summary]
@@ -21,6 +21,7 @@ def plot_modB(
         ax (Matplotlib axis, optional): Matplotlib axis to be plotted on. Defaults to None.
     """
     import matplotlib.pyplot as plt
+
     Nvol = self.input.physics.Nvol
     if lvol == None:
         lvollist = np.arange(0, Nvol, dtype=int).tolist()
@@ -36,31 +37,33 @@ def plot_modB(
     nr = sarr.size
     nt = tarr.size
 
-    plotR = np.zeros([len(lvollist)*nr, nt], dtype=np.float64)
-    plotZ = np.zeros([len(lvollist)*nr, nt], dtype=np.float64)
-    plotB = np.zeros([len(lvollist)*nr, nt], dtype=np.float64)
+    plotR = np.zeros([len(lvollist) * nr, nt], dtype=np.float64)
+    plotZ = np.zeros([len(lvollist) * nr, nt], dtype=np.float64)
+    plotB = np.zeros([len(lvollist) * nr, nt], dtype=np.float64)
 
     for i, ivol in enumerate(lvollist):
         # parse data
         R, Z, jacobian, g = self.get_grid_and_jacobian_and_metric(
             lvol=ivol, sarr=sarr, tarr=tarr, zarr=zarr
         )
-        Bcontrav = self.get_B(lvol=ivol, jacobian=jacobian, sarr=sarr, tarr=tarr, zarr=zarr)
+        Bcontrav = self.get_B(
+            lvol=ivol, jacobian=jacobian, sarr=sarr, tarr=tarr, zarr=zarr
+        )
         modB = self.get_modB(Bcontrav, g)
-        
-        Igeometry = self.input.physics.Igeometry
-    
-        if Igeometry == 1:
-            plotR[i*nr:(i+1)*nr,:] = tarr[None, :]
-            plotZ[i*nr:(i+1)*nr,:] = R[:, :, 0]
-        if Igeometry == 2:
-            plotR[i*nr:(i+1)*nr,:] = R[:, :, 0] * np.cos(tarr[None, :])
-            plotZ[i*nr:(i+1)*nr,:] = R[:, :, 0] * np.sin(tarr[None, :])
-        if Igeometry == 3:
-            plotR[i*nr:(i+1)*nr,:] = R[:, :, 0]
-            plotZ[i*nr:(i+1)*nr,:] = Z[:, :, 0]
 
-        plotB[i*nr:(i+1)*nr,:] =  modB[:, :, 0]
+        Igeometry = self.input.physics.Igeometry
+
+        if Igeometry == 1:
+            plotR[i * nr : (i + 1) * nr, :] = tarr[None, :]
+            plotZ[i * nr : (i + 1) * nr, :] = R[:, :, 0]
+        if Igeometry == 2:
+            plotR[i * nr : (i + 1) * nr, :] = R[:, :, 0] * np.cos(tarr[None, :])
+            plotZ[i * nr : (i + 1) * nr, :] = R[:, :, 0] * np.sin(tarr[None, :])
+        if Igeometry == 3:
+            plotR[i * nr : (i + 1) * nr, :] = R[:, :, 0]
+            plotZ[i * nr : (i + 1) * nr, :] = Z[:, :, 0]
+
+        plotB[i * nr : (i + 1) * nr, :] = modB[:, :, 0]
 
     plot = ax.pcolormesh(plotR[:, :], plotZ[:, :], plotB[:, :], **kwargs)
     if Igeometry == 1:
