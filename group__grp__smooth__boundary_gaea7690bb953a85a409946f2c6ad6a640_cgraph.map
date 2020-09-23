@@ -1,0 +1,5 @@
+<map id="vacuumphi" name="vacuumphi">
+<area shape="rect" id="node1" title="Compute vacuum magnetic scalar potential (?)" alt="" coords="5,5,100,32"/>
+<area shape="rect" id="node2" href="$group__grp__smooth__boundary.xhtml#ga5d58e428e5062d645244ff572b06e117" title="Constructs smooth approximation to wall." alt="" coords="148,5,221,32"/>
+<area shape="rect" id="node3" href="$group__grp__numerics.xhtml#ga041138109a57e651c57117bb4180409e" title="Forward Fourier transform (fftw wrapper)" alt="" coords="269,5,311,32"/>
+</map>

@@ -1,0 +1,4 @@
+<map id="tr00ab" name="tr00ab">
+<area shape="rect" id="node1" title="Calculates rotational transform given an arbitrary tangential field." alt="" coords="5,5,69,32"/>
+<area shape="rect" id="node2" href="$group__grp__numerics.xhtml#ga1fd52accb0646f535f9bcc46cf5a68f3" title="Inverse Fourier transform (fftw wrapper)" alt="" coords="117,5,173,32"/>
+</map>

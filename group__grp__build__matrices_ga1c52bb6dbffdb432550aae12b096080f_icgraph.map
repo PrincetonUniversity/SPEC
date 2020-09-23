@@ -1,0 +1,11 @@
+<map id="matrix" name="matrix">
+<area shape="rect" id="node1" title="Constructs energy and helicity matrices that represent the Beltrami linear system...." alt="" coords="611,88,676,115"/>
+<area shape="rect" id="node2" href="$group__grp__initialization.xhtml#ga28628de0fdb3b3497668007d8d0643bd" title="Allocates and initializes internal arrays." alt="" coords="355,31,417,57"/>
+<area shape="rect" id="node6" href="$group__grp__force__driver.xhtml#ga382822b303cbf8c56d6f54dcb379caf2" title="read or write force&#45;derivative matrix" alt="" coords="465,113,563,140"/>
+<area shape="rect" id="node3" href="$group__grp__diagnostics.xhtml#ga7401b50ec10c6598ee4a8112717a63ec" title="Computes eigenvalues and eigenvectors of derivative matrix, ." alt="" coords="239,5,304,32"/>
+<area shape="rect" id="node4" href="$xspech_8f90.xhtml#aea782eae089760a491c2c54f9903abcc" title="Main program of SPEC." alt="" coords="120,56,188,83"/>
+<area shape="rect" id="node5" href="$xspech_8f90.xhtml#a537af4990058c0b0f2cd8b3669af204f" title="todo remark" alt="" coords="5,56,72,83"/>
+<area shape="rect" id="node7" href="$group__grp__force__driver.xhtml#ga8ccd6c7d901872702521d0a0edf95412" title="fcn2" alt="" coords="361,81,411,108"/>
+<area shape="rect" id="node8" href="$group__grp__force__driver.xhtml#gaec14f81fbdbedafbc4189489ec8ae178" title="Employs Newton method to find , where &#160;and &#160;is defined in dforce() ." alt="" coords="236,107,307,133"/>
+<area shape="rect" id="node9" href="$group__grp__force__driver.xhtml#gabbc245b3884ee8d8d3e2a52f25149f78" title="fcn1" alt="" coords="129,107,179,133"/>
+</map>

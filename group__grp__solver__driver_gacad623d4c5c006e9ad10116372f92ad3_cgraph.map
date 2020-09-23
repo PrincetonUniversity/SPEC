@@ -1,0 +1,12 @@
+<map id="ma02aa" name="ma02aa">
+<area shape="rect" id="node1" title="Constructs Beltrami field in given volume consistent with flux, helicity, rotational&#45;transform and/or..." alt="" coords="5,81,80,108"/>
+<area shape="rect" id="node2" href="$group__grp__integrals.xhtml#ga6d086e8d1af527def50b653b86e8373a" title="Evaluates volume integrals, and their derivatives w.r.t. interface geometry, using &quot;packed&quot; format." alt="" coords="132,31,199,57"/>
+<area shape="rect" id="node3" href="$group__grp__solver.xhtml#ga6626839aff500f060beb5bce2b90c447" title="Solves Beltrami/vacuum (linear) system, given matrices.unpacking fluxes, helicity multiplier" alt="" coords="128,81,203,108"/>
+<area shape="rect" id="node9" href="$group__grp__packing.xhtml#gaee2357e570aebf8559e169def6b619dd" title="Packs and unpacks Beltrami field solution vector." alt="" coords="251,132,319,159"/>
+<area shape="rect" id="node4" href="$group__grp__currents.xhtml#gacaf4411e0ba378631dcd2ccb3752e452" title="Computes the plasma current, , and the &quot;linking&quot; current, ." alt="" coords="253,81,316,108"/>
+<area shape="rect" id="node10" href="$group__grp__transform.xhtml#ga0e0447653b8da82f06748dd8831bc337" title="Calculates rotational transform given an arbitrary tangential field." alt="" coords="367,5,431,32"/>
+<area shape="rect" id="node5" href="$group__grp__geometry.xhtml#gaaca20aa60eaf39055f3c9d5c02a24ac2" title="Calculates coordinates, , and metrics, using FFTs." alt="" coords="367,107,432,133"/>
+<area shape="rect" id="node6" href="$group__grp__numerics.xhtml#ga1fd52accb0646f535f9bcc46cf5a68f3" title="Inverse Fourier transform (fftw wrapper)" alt="" coords="487,56,543,83"/>
+<area shape="rect" id="node8" href="$group__grp__numerics.xhtml#ga041138109a57e651c57117bb4180409e" title="Forward Fourier transform (fftw wrapper)" alt="" coords="379,157,420,184"/>
+<area shape="rect" id="node7" href="$group__grp__volume.xhtml#gae4c62d20b8fef07f4471b5b0889ab005" title="Computes volume of each region; and, if required, the derivatives of the volume with respect to the i..." alt="" coords="480,107,551,133"/>
+</map>
