@@ -17,12 +17,16 @@ def plot_poincare(self, toroidalIdx=0, prange="full", ax=None, **kwargs):
     import numpy as np
 
     # extract slice corresponding to the given toroidal cutplane
-    if self.input.physics.Igeometry == 3:
+    Igeometry = self.input.physics.Igeometry
+    if Igeometry == 3:
         rr = self.poincare.R[:, :, toroidalIdx]
         zz = self.poincare.Z[:, :, toroidalIdx]
-    elif self.input.physics.Igeometry == 1:
+    elif Igeometry == 1:
         rr = np.mod(self.poincare.t[:, :, toroidalIdx], np.pi * 2)
         zz = self.poincare.R[:, :, toroidalIdx]
+    elif Igeometry == 2:
+        rr = self.poincare.R[:, :, toroidalIdx] * np.cos(self.poincare.t[:, :, toroidalIdx])
+        zz = self.poincare.R[:, :, toroidalIdx] * np.sin(self.poincare.t[:, :, toroidalIdx])
     # get axix data
     if ax is None:
         fig, ax = plt.subplots()
@@ -33,10 +37,16 @@ def plot_poincare(self, toroidalIdx=0, prange="full", ax=None, **kwargs):
         kwargs.update({"marker": "."})
     # use gray color
     if kwargs.get("c") == None:
-        kwargs.update({"c": "gray"})
+        pass
+    # size of marker
+    if kwargs.get("s") == None:
+        kwargs.update({"s": 0.3})
+        #kwargs.update({"c": "gray"})
     # make plot depending on the 'range'
     if prange == "full":
-        dots = ax.scatter(rr, zz, **kwargs)
+        nptrj = rr.shape[0]
+        for ii in range(nptrj):
+            dots = ax.scatter(rr[ii,:], zz[ii,:], **kwargs)
     elif prange == "upper":
         dots = ax.scatter(rr[zz >= 0], zz[zz >= 0], **kwargs)
     elif prange == "lower":
@@ -44,9 +54,19 @@ def plot_poincare(self, toroidalIdx=0, prange="full", ax=None, **kwargs):
     else:
         raise ValueError("prange should be one of ['full'(default), 'upper', 'lower'].")
     # adjust figure properties
-    plt.xlabel("R [m]", fontsize=20)
-    plt.ylabel("Z [m]", fontsize=20)
+    if self.input.physics.Igeometry == 3:
+        plt.xlabel("R [m]", fontsize=20)
+        plt.ylabel("Z [m]", fontsize=20)
+        plt.axis("equal")
+    if self.input.physics.Igeometry == 2:
+        plt.xlabel("X [m]", fontsize=20)
+        plt.ylabel("Y [m]", fontsize=20)
+        plt.axis("equal")
+    if self.input.physics.Igeometry == 1:
+        plt.ylabel("R [m]", fontsize=20)
+        plt.xlabel(r"$\theta$", fontsize=20)
+        plt.xlim([0,np.pi])
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
-    plt.axis("equal")
+   
     return

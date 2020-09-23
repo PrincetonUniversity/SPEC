@@ -4,6 +4,7 @@
 @author: Jonathan Schilling (jonathan.schilling@ipp.mpg.de)
 @author: Caoxiang Zhu (czhu@pppl.gov)
 @author: Ksenia Aleynikova (ksenia.aleynikov@ipp.mpg.de)
+@author: Zhisong Qu (zhisong.qu@anu.edu.au)
 """
 
 import h5py
@@ -36,6 +37,7 @@ class SPECout:
         get_modB,
     )
     from ._plot_modB import plot_modB
+    from ._plot_iota import plot_iota
     from ._interface_current import interface_current, interface_current_total
 
     def __init__(self, *args, **kwargs):
@@ -80,6 +82,12 @@ class SPECout:
             # make sure that Lrad is always an array
             if np.isscalar(self.input.physics.Lrad):
                 self.input.physics.Lrad = np.array([self.input.physics.Lrad])
+            # make sure that im always an array
+            if np.isscalar(self.output.im):
+                self.output.im = np.array([self.output.im])
+            # make sure that in_ is always an array
+            if np.isscalar(self.output.in_):
+                self.output.in_ = np.array([self.output.in_])
 
             # these define the target dimensions in the radial direction
             Nvol = self.input.physics.Nvol

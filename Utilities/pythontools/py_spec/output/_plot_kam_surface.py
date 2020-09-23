@@ -1,4 +1,4 @@
-def plot_kam_surface(self, ns=[], zeta=0.0, ax=None, **kwargs):
+def plot_kam_surface(self, ns=[], ntheta=1000, zeta=0.0, ax=None, **kwargs):
     """Plot SPEC KAM surfaces
 
     Args:
@@ -12,6 +12,8 @@ def plot_kam_surface(self, ns=[], zeta=0.0, ax=None, **kwargs):
     """
     import numpy as np
     import matplotlib.pyplot as plt
+
+    Igeometry = self.input.physics.Igeometry
     from coilpy import FourSurf
 
     surfs = []
@@ -28,14 +30,38 @@ def plot_kam_surface(self, ns=[], zeta=0.0, ax=None, **kwargs):
     # set default plotting parameters
     if kwargs.get("label") == None:
         kwargs.update({"label": "SPEC_KAM"})  # default label
+    if kwargs.get("c") == None:
+        kwargs.update({"c": "red"})
     # plot all the surfaces
-    for i in ns:
-        _surf = FourSurf.read_spec_output(self, i)
-        if i == 0:
+    if Igeometry == 3:
+
+        for i in ns:
+            _surf = FourSurf.read_spec_output(self, i)
+            if i == 0:
+                # plot axis as a curve
+                _r, _z = _surf.rz(0.0, zeta)
+                plt.scatter(_r, _z, **kwargs)
+            else:
+                _surf.plot(zeta=zeta, **kwargs)
+            surfs.append(_surf)
+        return surfs
+    elif Igeometry == 2:
+        for i in ns:
+            _surf = FourSurf.read_spec_output(self, i)
+            if i == 0:
+                pass # don't do anything for the axis
+            else:
+                _theta = np.arange(0, 2*np.pi+2*np.pi/ntheta, 2*np.pi/ntheta)
+                _r, _z = _surf.rz(_theta, np.ones_like(_theta)*zeta)
+                plt.scatter(_r*np.cos(_theta), _r*np.sin(_theta), **kwargs)
+            surfs.append(_surf)
+        return surfs
+    elif Igeometry == 1:
+        for i in ns:
+            _surf = FourSurf.read_spec_output(self, i)
             # plot axis as a curve
-            _r, _z = _surf.rz(0.0, zeta)
-            plt.scatter(_r, _z, **kwargs)
-        else:
-            _surf.plot(zeta=zeta, **kwargs)
-        surfs.append(_surf)
-    return surfs
+            _theta = np.arange(0, 2*np.pi+2*np.pi/ntheta, 2*np.pi/ntheta)
+            _r, _z = _surf.rz(_theta, np.ones_like(_theta)*zeta)
+            plt.scatter(_theta, _r, **kwargs)
+            surfs.append(_surf)
+        return surfs
