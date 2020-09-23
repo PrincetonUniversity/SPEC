@@ -1,0 +1,4 @@
+<map id="metrix" name="metrix">
+<area shape="rect" id="node1" title="Calculates the metric quantities, , which are required for the energy and helicity integrals." alt="" coords="128,5,193,32"/>
+<area shape="rect" id="node2" href="$group__grp__integrals.html#ga400af9e33dd5465ff9a4bba9fbf91108" title="Calculates volume integrals of Chebyshev polynomials and metric element products." alt="" coords="5,5,80,32"/>
+</map>

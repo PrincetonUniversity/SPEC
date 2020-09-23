@@ -1,0 +1,5 @@
+<map id="packab" name="packab">
+<area shape="rect" id="node1" title="Packs and unpacks Beltrami field solution vector." alt="" coords="251,5,319,32"/>
+<area shape="rect" id="node2" href="$group__grp__solver__driver.html#gacad623d4c5c006e9ad10116372f92ad3" title="Constructs Beltrami field in given volume consistent with flux, helicity, rotational&#45;transform and/or..." alt="" coords="5,5,80,32"/>
+<area shape="rect" id="node3" href="$group__grp__solver.html#ga6626839aff500f060beb5bce2b90c447" title="Solves Beltrami/vacuum (linear) system, given matrices.unpacking fluxes, helicity multiplier" alt="" coords="128,31,203,57"/>
+</map>

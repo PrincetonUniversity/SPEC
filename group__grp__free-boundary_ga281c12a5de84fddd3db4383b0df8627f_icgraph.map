@@ -1,0 +1,9 @@
+<map id="dvcfield" name="dvcfield">
+<area shape="rect" id="node1" title="Differential virtual casing integrand." alt="" coords="688,81,761,108"/>
+<area shape="rect" id="node2" href="$group__grp__free-boundary.html#ga180576a10002ebf3840fce98d56316bb" title="Constructs the field created by the plasma currents, at an arbitrary, external location using virtual..." alt="" coords="576,81,640,108"/>
+<area shape="rect" id="node3" href="$group__grp__free-boundary.html#gac0a2cc2241947b27241bb8ef75c5e0ed" title="Computes &#160;on the computational boundary, ." alt="" coords="460,81,528,108"/>
+<area shape="rect" id="node4" href="$group__grp__initialization.html#ga28628de0fdb3b3497668007d8d0643bd" title="Allocates and initializes internal arrays." alt="" coords="349,56,412,83"/>
+<area shape="rect" id="node6" href="$xspech_8f90.html#aea782eae089760a491c2c54f9903abcc" title="Main program of SPEC." alt="" coords="120,56,188,83"/>
+<area shape="rect" id="node5" href="$group__grp__diagnostics.html#ga7401b50ec10c6598ee4a8112717a63ec" title="Computes eigenvalues and eigenvectors of derivative matrix, ." alt="" coords="236,5,301,32"/>
+<area shape="rect" id="node7" href="$xspech_8f90.html#a537af4990058c0b0f2cd8b3669af204f" title="todo remark" alt="" coords="5,56,72,83"/>
+</map>
