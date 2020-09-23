@@ -197,7 +197,7 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
    Azomn(1:mn,0:2) = zero
    endif
    
-!> <li>  The Fourier components of the vector potential given in Eqn.\f$(\ref{eq:At_jo00aa})\f$ and Eqn.\f$(\ref{eq:Az_jo00aa})\f$, and their first and second radial derivatives, are summed. </li>
+!>       <li>  The Fourier components of the vector potential given in Eqn.\f$(\ref{eq:At_jo00aa})\f$ and Eqn.\f$(\ref{eq:Az_jo00aa})\f$, and their first and second radial derivatives, are summed. </li>
 
    if (Lcoordinatesingularity) then
     do ll = 0, Lrad(lvol) ! radial (Chebyshev) resolution of magnetic vector potential;
@@ -235,8 +235,8 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
 
     do ll = 0, Lrad(lvol) ! radial (Chebyshev) resolution of magnetic vector potential;
     
-!>           <li>  The quantities \f$\sqrt g B^s\f$, \f$\sqrt g B^\theta\f$ and \f$\sqrt g B^\zeta\f$, and their first and second derivatives with respect to \f$(s,\theta,\zeta)\f$, 
-!>                 are computed on the regular angular grid (using FFTs). </li>
+!>       <li>  The quantities \f$\sqrt g B^s\f$, \f$\sqrt g B^\theta\f$ and \f$\sqrt g B^\zeta\f$, and their first and second derivatives with respect to \f$(s,\theta,\zeta)\f$, 
+!>             are computed on the regular angular grid (using FFTs). </li>
 
       do ii = 1, mn  ! Fourier resolution of magnetic vector potential;
       
@@ -307,26 +307,27 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
    
    call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, gBu(1:Ntz,3,2), gBu(1:Ntz,3,3) ) ! d(gB^z)/dt, d(gB^z)/dz;
      
-!>            <li>  The following quantities are then computed on the regular angular grid
-!>                  \f{eqnarray}{ \sqrt g j^s      & = & \sum_u \left[
-!>                                \partial_\theta (\sqrt g B^u) \; g_{u,\zeta } + (\sqrt g B^u) \; \partial_\theta g_{u,\zeta } - (\sqrt g B^u) g_{u,\zeta } \; \partial_\theta \sqrt g / \sqrt g
-!>                                                         \right] / \sqrt g \nonumber \\
-!>                                            & - & \sum_u \left[
-!>                                \partial_\zeta  (\sqrt g B^u) \; g_{u,\theta} + (\sqrt g B^u) \; \partial_\zeta  g_{u,\theta} - (\sqrt g B^u) g_{u,\theta} \; \partial_\zeta  \sqrt g / \sqrt g
-!>                                                         \right] / \sqrt g, \\
-!>                                \sqrt g j^\theta & = & \sum_u \left[
-!>                                \partial_\zeta  (\sqrt g B^u) \; g_{u,s     } + (\sqrt g B^u) \; \partial_\zeta  g_{u,s     } - (\sqrt g B^u) g_{u,s     } \; \partial_\zeta  \sqrt g / \sqrt g
-!>                                                         \right] / \sqrt g \nonumber \\
-!>                                            & - & \sum_u \left[
-!>                                \partial_s      (\sqrt g B^u) \; g_{u,\zeta } + (\sqrt g B^u) \; \partial_s      g_{u,\zeta } - (\sqrt g B^u) g_{u,\zeta } \; \partial_s      \sqrt g / \sqrt g
-!>                                                         \right] / \sqrt g, \\
-!>                                \sqrt g j^\zeta  & = & \sum_u \left[
-!>                                \partial_s      (\sqrt g B^u) \; g_{u,\theta} + (\sqrt g B^u) \; \partial_s      g_{u,\theta} - (\sqrt g B^u) g_{u,\theta} \; \partial_s      \sqrt g / \sqrt g
-!>                                                         \right] / \sqrt g \nonumber \\
-!>                                            & - & \sum_u \left[
-!>                                \partial_\theta (\sqrt g B^u) \; g_{u,s     } + (\sqrt g B^u) \; \partial_\theta g_{u,s     } - (\sqrt g B^u) g_{u,s     } \; \partial_\theta \sqrt g / \sqrt g
-!>                                                         \right] / \sqrt g.
-!>                  \f} </li>
+!>       <li>  The following quantities are then computed on the regular angular grid
+!>             \f{eqnarray}{ \sqrt g j^s      & = & \sum_u \left[
+!>                           \partial_\theta (\sqrt g B^u) \; g_{u,\zeta } + (\sqrt g B^u) \; \partial_\theta g_{u,\zeta } - (\sqrt g B^u) g_{u,\zeta } \; \partial_\theta \sqrt g / \sqrt g
+!>                                                    \right] / \sqrt g \nonumber \\
+!>                                       & - & \sum_u \left[
+!>                           \partial_\zeta  (\sqrt g B^u) \; g_{u,\theta} + (\sqrt g B^u) \; \partial_\zeta  g_{u,\theta} - (\sqrt g B^u) g_{u,\theta} \; \partial_\zeta  \sqrt g / \sqrt g
+!>                                                    \right] / \sqrt g, \\
+!>                           \sqrt g j^\theta & = & \sum_u \left[
+!>                           \partial_\zeta  (\sqrt g B^u) \; g_{u,s     } + (\sqrt g B^u) \; \partial_\zeta  g_{u,s     } - (\sqrt g B^u) g_{u,s     } \; \partial_\zeta  \sqrt g / \sqrt g
+!>                                                    \right] / \sqrt g \nonumber \\
+!>                                       & - & \sum_u \left[
+!>                           \partial_s      (\sqrt g B^u) \; g_{u,\zeta } + (\sqrt g B^u) \; \partial_s      g_{u,\zeta } - (\sqrt g B^u) g_{u,\zeta } \; \partial_s      \sqrt g / \sqrt g
+!>                                                    \right] / \sqrt g, \\
+!>                           \sqrt g j^\zeta  & = & \sum_u \left[
+!>                           \partial_s      (\sqrt g B^u) \; g_{u,\theta} + (\sqrt g B^u) \; \partial_s      g_{u,\theta} - (\sqrt g B^u) g_{u,\theta} \; \partial_s      \sqrt g / \sqrt g
+!>                                                    \right] / \sqrt g \nonumber \\
+!>                                       & - & \sum_u \left[
+!>                           \partial_\theta (\sqrt g B^u) \; g_{u,s     } + (\sqrt g B^u) \; \partial_\theta g_{u,s     } - (\sqrt g B^u) g_{u,s     } \; \partial_\theta \sqrt g / \sqrt g
+!>                                                    \right] / \sqrt g.
+!>             \f} </li>
+!>       </ul>
 
    do ii = 1, 3
     
