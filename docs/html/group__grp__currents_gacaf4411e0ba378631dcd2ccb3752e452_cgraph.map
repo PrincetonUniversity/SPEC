@@ -1,7 +1,0 @@
-<map id="curent" name="curent">
-<area shape="rect" id="node1" title="Computes the plasma current, , and the &quot;linking&quot; current, ." alt="" coords="5,56,68,83"/>
-<area shape="rect" id="node2" href="$group__grp__geometry.xhtml#gaaca20aa60eaf39055f3c9d5c02a24ac2" title="Calculates coordinates, , and metrics, using FFTs." alt="" coords="116,56,181,83"/>
-<area shape="rect" id="node3" href="$group__grp__numerics.xhtml#ga1fd52accb0646f535f9bcc46cf5a68f3" title="Inverse Fourier transform (fftw wrapper)" alt="" coords="237,5,293,32"/>
-<area shape="rect" id="node5" href="$group__grp__numerics.xhtml#ga041138109a57e651c57117bb4180409e" title="Forward Fourier transform (fftw wrapper)" alt="" coords="128,107,169,133"/>
-<area shape="rect" id="node4" href="$group__grp__volume.xhtml#gae4c62d20b8fef07f4471b5b0889ab005" title="Computes volume of each region; and, if required, the derivatives of the volume with respect to the i..." alt="" coords="229,56,300,83"/>
-</map>

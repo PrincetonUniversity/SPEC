@@ -1,5 +1,0 @@
-<map id="allglobal::readin" name="allglobal::readin">
-<area shape="rect" id="node1" title="The master node reads the input namelist and sets various internal variables. The relevant quantities..." alt="" coords="5,31,132,57"/>
-<area shape="rect" id="node2" href="$group__grp__numerics.xhtml#ga02a336a22890e7ae5a5c2d525260666c" title="Assign Fourier mode labels." alt="" coords="219,5,285,32"/>
-<area shape="rect" id="node3" href="$namespacenumerical.xhtml#ac9cf42743694682672a82103c8ffedda" title="Duplicates NAG routine X02AJF (machine precision)" alt="" coords="180,56,324,83"/>
-</map>

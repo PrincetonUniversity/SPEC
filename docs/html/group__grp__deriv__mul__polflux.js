@@ -1,7 +1,0 @@
-var group__grp__deriv__mul__polflux =
-[
-    [ "dmupfdx", "group__grp__deriv__mul__polflux.xhtml#gadbfeeb10efad1a2a84fe800073a0ba18", null ],
-    [ "lhessianallocated", "group__grp__deriv__mul__polflux.xhtml#gaf1a9487e823ebb9ca913e69a122ed9a8", null ],
-    [ "hessian", "group__grp__deriv__mul__polflux.xhtml#gaa553e278b8449f3bb0b7dc4d4c17e115", null ],
-    [ "dessian", "group__grp__deriv__mul__polflux.xhtml#ga62fde4fa7074396fee8b02aae1ce5230", null ]
-];
