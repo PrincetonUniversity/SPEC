@@ -1,5 +1,0 @@
-<map id="coords" name="coords">
-<area shape="rect" id="node1" title="Calculates coordinates, , and metrics, using FFTs." alt="" coords="5,56,71,83"/>
-<area shape="rect" id="node2" href="$group__grp__numerics.xhtml#ga1fd52accb0646f535f9bcc46cf5a68f3" title="Inverse Fourier transform (fftw wrapper)" alt="" coords="126,5,182,32"/>
-<area shape="rect" id="node3" href="$group__grp__volume.xhtml#gae4c62d20b8fef07f4471b5b0889ab005" title="Computes volume of each region; and, if required, the derivatives of the volume with respect to the i..." alt="" coords="119,56,189,83"/>
-</map>

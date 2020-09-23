@@ -1,8 +1,0 @@
-<map id="gi00ab" name="gi00ab">
-<area shape="rect" id="node1" title="Assign Fourier mode labels." alt="" coords="635,81,701,108"/>
-<area shape="rect" id="node2" href="$namespaceallglobal.xhtml#ad32ae6194892fe7d876622a6455189e2" title="The master node reads the input namelist and sets various internal variables. The relevant quantities..." alt="" coords="460,81,587,108"/>
-<area shape="rect" id="node3" href="$group__grp__initialization.xhtml#ga28628de0fdb3b3497668007d8d0643bd" title="Allocates and initializes internal arrays." alt="" coords="349,56,412,83"/>
-<area shape="rect" id="node5" href="$xspech_8f90.xhtml#aea782eae089760a491c2c54f9903abcc" title="Main program of SPEC." alt="" coords="120,56,188,83"/>
-<area shape="rect" id="node4" href="$group__grp__diagnostics.xhtml#ga7401b50ec10c6598ee4a8112717a63ec" title="Computes eigenvalues and eigenvectors of derivative matrix, ." alt="" coords="236,5,301,32"/>
-<area shape="rect" id="node6" href="$xspech_8f90.xhtml#a537af4990058c0b0f2cd8b3669af204f" title="todo remark" alt="" coords="5,56,72,83"/>
-</map>
