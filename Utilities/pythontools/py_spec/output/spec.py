@@ -38,7 +38,6 @@ class SPECout:
     )
     from ._plot_modB import plot_modB
     from ._plot_iota import plot_iota
-    from ._interface_current import interface_current, interface_current_total
 
     def __init__(self, *args, **kwargs):
         # args[0] should always be the name of a file or an item inside the root object
