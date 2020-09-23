@@ -1,11 +1,17 @@
 function data = read_spec(filename)
-  
+
+% 
+% READ_SPEC ( FILENAME )
+% ======================
+%
 % Reads the HDF5 output file produced by SPEC
 %
 % INPUT
+% -----
 % -  filename : path to the HDF5 output file (e.g. 'testcase.h5')
 %
 % OUTPUT
+% ------
 % -  data     : contains all data from the SPEC run, which can be fed into several routines for analyzing and plotting
 %
 % written by J.Schilling (2019)
@@ -75,7 +81,7 @@ cZ   = cell(Nvol, 1);
 
 % split into separate cells for nested volumes
 start=1;
-for i=1:Nvol
+for i=1:Mvol
   % vector potential
   cAte{i} = data.vector_potential.Ate(start:start+Lrad(i),:);
   cAto{i} = data.vector_potential.Ato(start:start+Lrad(i),:);
@@ -94,38 +100,42 @@ for i=1:Nvol
   start = start + Lrad(i)+1;
 end
 
-% copy to get dimensions right
-data.poincare.rho = data.poincare.s;
+% check if any poincare data was written to the output file
+if isfield(data, 'poincare')
+  % copy to get dimensions right
+  data.poincare.rho = data.poincare.s;
 
-% disentangle Poincare data and generate rho entry; all this code is necessary since it depends on the volume index...
-start=1;
-for i=1:Nvol
-  nPtrj = data.input.diagnostics.nPtrj(i);
-  if (nPtrj==-1)
-    nPtrj = 2*Lrad(i);
-  end
+  % disentangle Poincare data and generate rho entry; all this code is necessary since it depends on the volume index...
+  start=1;
+  for i=1:Nvol
+    nPtrj = data.input.diagnostics.nPtrj(i);
+    if (nPtrj==-1)
+      nPtrj = 2*Lrad(i);
+    end
 
-  % In the innermost volume, there are exactly as many trajectories as specified.
-  if ~(data.input.physics.Igeometry==1 || i>1)
-    % mimic LREGION() macro functionality and the corresponding logic in pp00aa
-    nPtrj = nPtrj-1;
-  end
+    % In the innermost volume, there are exactly as many trajectories as specified.
+    if ~(data.input.physics.Igeometry==1 || i>1)
+      % mimic LREGION() macro functionality and the corresponding logic in pp00aa
+      nPtrj = nPtrj-1;
+    end
 
-  % disp(sprintf('%d: %d ... %d', i, start, start+nPtrj));
+    % disp(sprintf('%d: %d ... %d', i, start, start+nPtrj));
 
-  % create rho entry for Poincare plot
-  offset = double(i-1)./double(Nvol);
-  data.poincare.rho(:,:,start:start+nPtrj) = 0.5*(data.poincare.s(:,:,start:start+nPtrj)+1.0)./double(Nvol)+offset;
+    % create rho entry for Poincare plot
+    offset = double(i-1)./double(Nvol);
+    data.poincare.rho(:,:,start:start+nPtrj) = 0.5*(data.poincare.s(:,:,start:start+nPtrj)+1.0)./double(Nvol)+offset;
   
-  % In all the outer volumes (for Nvol>1), there is one additional trajectory than specified in the input file.
-  start = start + nPtrj+1;
-end
+    % In all the outer volumes (for Nvol>1), there is one additional trajectory than specified in the input file.
+    start = start + nPtrj+1;
+  end
 
-% ensure compatibility with Joaquim's former reading routine
-data.poincare.t   = permute(data.poincare.t,   [3,1,2]);
-data.poincare.rho = permute(data.poincare.rho, [3,1,2]);
-data.poincare.R   = permute(data.poincare.R,   [3,1,2]);
-data.poincare.Z   = permute(data.poincare.Z,   [3,1,2]);
+  % ensure compatibility with Joaquim's former reading routine
+  data.poincare.t   = permute(data.poincare.t,   [3,1,2]);
+  data.poincare.rho = permute(data.poincare.rho, [3,1,2]);
+  data.poincare.R   = permute(data.poincare.R,   [3,1,2]);
+  data.poincare.Z   = permute(data.poincare.Z,   [3,1,2]);
+end % check presence of data.poincare
+
 
 % replace original content in data structure
 data.vector_potential.Ate = cAte;

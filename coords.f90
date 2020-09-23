@@ -63,8 +63,8 @@
 !>       where, in toroidal geometry, 
 !>       \f{eqnarray}{
 !>       f_j \equiv \left\{ 
-!>       \begin{array}{llcccccccccccccc} \bar s        & , & \mbox{ for } m_j=0, \\
-!>                                       \bar s^{m_j/2}& , & \mbox{ otherwise.} 
+!>       \begin{array}{llcccccccccccccc} \bar s       & , & \mbox{ for } m_j=0, \\
+!>                                       \bar s^{m_j} & , & \mbox{ otherwise.} 
 !>       \end{array}\right\}. 
 !>       \f} </li>
 !> <li>  Note: The location of the coordinate axis, i.e. the \f$R_{j,0}\f$ and \f$Z_{j,0}\f$,
@@ -131,6 +131,7 @@
 !>                              this information is required for computing the current, \f${\bf j}=\nabla\times\nabla\times{\bf A}\f$, e.g. jo00aa() </li>
 !>       <li> \c Lcurvature=3 : the derivative of the \f$g_{\mu,\nu}/\sqrt g\f$ w.r.t. the interface boundary geometry is calculated,  e.g. metrix(), curent() </li>
 !>       <li> \c Lcurvature=4 : the derivative of the \f$g_{\mu,\nu}\f$ w.r.t. the interface boundary geometry is calculated,          e.g. dforce() </li>
+!>       <li> \c Lcurvature=5 : the derivative of \f$\sqrt{g}\f$ w.r.t. the interface boundary geometry is calculated,                 e.g. rzaxis() </li>
 !>       </ul> </li>
 !> </ul>
 !>
@@ -182,7 +183,7 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
 #ifdef DEBUG
   FATAL( coords, lvol.lt.1 .or. lvol.gt.Mvol, invalid volume label )
   FATAL( coords, abs(lss).gt.one, invalid radial coordinate )
-  FATAL( coords, Lcurvature.lt.0 .or. Lcurvature.gt.4, invalid input value for Lcurvature )
+  FATAL( coords, Lcurvature.lt.0 .or. Lcurvature.gt.5, invalid input value for Lcurvature )
 #endif
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -206,13 +207,14 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
 #ifdef DEBUG
    FATAL( coords, sbar.lt.zero .or. sbar.gt.one, invalid sbar )
 #endif
-   
    select case( Igeometry )
-   case( 2   )  ; fj(     1:Ntor+1,0) = sbar**half              ! these are the mj.eq.0 harmonics; 11 Aug 14;
-   case( 3   )  ; fj(     1:Ntor+1,0) = sbar
+   case( 2   )  ; fj(     1:Ntor+1,0) = sbar                    ! these are the mj.eq.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+   ;            ; fj(Ntor+2:mn    ,0) = sbar**(im(Ntor+2:mn)+1) ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+   case( 3   )  ; fj(     1:Ntor+1,0) = sbar**2                 ! switch to sbar=r; 29 Jun 19
+   ;            ; fj(Ntor+2:mn    ,0) = sbar**im(Ntor+2:mn)     ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
    case default ; FATAL( coords, .true., invalid Igeometry for Lcoordinatesingularity=T )
    end select
-   ;            ; fj(Ntor+2:mn    ,0) = sbar**halfmm(Ntor+2:mn) ! these are the me.ne.0 harmonics; 11 Aug 14;
+   
    
    Remn(1:mn,0) = iRbc(1:mn,0) + ( iRbc(1:mn,1) - iRbc(1:mn,0) ) * fj(1:mn,0)
    if( NOTstellsym ) then
@@ -242,7 +244,6 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
     
   endif ! end of if( Lcoordinatesingularity ); 01 Feb 13;
 
-
   call invfft( mn, im(1:mn), in(1:mn), Remn(1:mn,0), Romn(1:mn,0), Zemn(1:mn,0), Zomn(1:mn,0), &
                Nt, Nz, Rij(1:Ntz,0,0), Zij(1:Ntz,0,0) ) ! maps to real space;
   
@@ -257,13 +258,13 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
 #ifdef DEBUG
    FATAL( coords, sbar.lt.small, small denominator )
 #endif
-   
    select case( Igeometry )
-   case( 2   )  ; fj(     1:Ntor+1,1) = half * half              * fj(     1:Ntor+1,0) / sbar ! these are the mj.eq.0 harmonics; 11 Aug 14;
-   case( 3   )  ; fj(     1:Ntor+1,1) = half                                                  ! these are the mj.eq.0 harmonics; 11 Aug 14;
+   case( 2   )  ; fj(     1:Ntor+1,1) = half                                                  ! these are the mj.eq.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+   ;            ; fj(Ntor+2:mn    ,1) = half*(im(Ntor+2:mn)+one) * fj(Ntor+2:mn    ,0) / sbar ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+   case( 3   )  ; fj(     1:Ntor+1,1) = sbar                                                  ! these are the mj.eq.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+   ;            ; fj(Ntor+2:mn    ,1) = half * im(Ntor+2:mn) * fj(Ntor+2:mn    ,0) / sbar     ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
    case default ; FATAL( coords, .true., invalid Igeometry for Lcoordinatesingularity=T and Lcurvature.ne.0 )
    end select
-   ;            ; fj(Ntor+2:mn    ,1) = half * halfmm(Ntor+2:mn) * fj(Ntor+2:mn    ,0) / sbar ! these are the me.ne.0 harmonics; 11 Aug 14;
 
    Remn(1:mn,1) =                       ( iRbc(1:mn,1) - iRbc(1:mn,0) ) * fj(1:mn,1)
    if( NOTstellsym ) then
@@ -291,13 +292,15 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
     
   endif ! end of if( Lcoordinatesingularity ); 01 Feb 13;
 
-  
+  ! Derivative w.r.t s
   call invfft( mn, im(1:mn), in(1:mn),           Remn(1:mn,1),           Romn(1:mn,1),           Zemn(1:mn,1),           Zomn(1:mn,1), &
                Nt, Nz, Rij(1:Ntz,1,0), Zij(1:Ntz,1,0) ) ! maps to real space;
 
+  ! Derivative w.r.t theta
   call invfft( mn, im(1:mn), in(1:mn),  im(1:mn)*Romn(1:mn,0), -im(1:mn)*Remn(1:mn,0),  im(1:mn)*Zomn(1:mn,0), -im(1:mn)*Zemn(1:mn,0), &
                Nt, Nz, Rij(1:Ntz,2,0), Zij(1:Ntz,2,0) ) ! maps to real space;
 
+  ! Derivative w.r.t zeta
   call invfft( mn, im(1:mn), in(1:mn), -in(1:mn)*Romn(1:mn,0),  in(1:mn)*Remn(1:mn,0), -in(1:mn)*Zomn(1:mn,0),  in(1:mn)*Zemn(1:mn,0), &
                Nt, Nz, Rij(1:Ntz,3,0), Zij(1:Ntz,3,0) ) ! maps to real space;
 
@@ -390,14 +393,14 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
 #ifdef DEBUG
     FATAL( coords, sbar.lt.small, small denominator )
 #endif
-    
     select case( Igeometry )
-    case( 2 )    ; fj(     1:Ntor+1,2) = half * ( half              - one ) * fj(     1:Ntor+1,1) / sbar ! these are the mj.eq.0 harmonics; 11 Aug 14;
-    case( 3 )    ; fj(     1:Ntor+1,2) = zero                                                            ! these are the mj.eq.0 harmonics; 11 Aug 14;
+    case( 2 )    ; fj(     1:Ntor+1,2) = zero                                                            ! these are the mj.eq.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+     ;           ; fj(Ntor+2:mn    ,2) = half * ( im(Ntor+2:mn)       ) * fj(Ntor+2:mn    ,1) / sbar     ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+    case( 3 )    ; fj(     1:Ntor+1,2) = half                                                            ! these are the mj.eq.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+     ;           ; fj(Ntor+2:mn    ,2) = half * ( im(Ntor+2:mn) - one ) * fj(Ntor+2:mn    ,1) / sbar     ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
     case default ; 
      ;           ; FATAL( coords, .true., invalid Igeometry for Lcoordinatesingularity=T and Lcurvature=2 )
     end select   ;
-    ;            ; fj(Ntor+2:mn    ,2) = half * ( halfmm(Ntor+2:mn) - one ) * fj(Ntor+2:mn    ,1) / sbar ! these are the me.ne.0 harmonics; 11 Aug 14;
     
     Remn(1:mn,2) =                       ( iRbc(1:mn,1) - iRbc(1:mn,0) ) * fj(1:mn,2)
     if( NOTstellsym ) then
@@ -425,7 +428,6 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
     
    endif ! end of if( Lcoordinatesingularity ); 01 Feb 13;
    
-
    call invfft( mn, im(1:mn), in(1:mn),&
                    Remn(1:mn,2),                   Romn(1:mn,2),                   Zemn(1:mn,2),                   Zomn(1:mn,2), &
                 Nt, Nz, Rij(1:Ntz,1,1), Zij(1:Ntz,1,1) ) ! maps to real space;
@@ -527,7 +529,7 @@ Nt, Nz, Rij(1:Ntz,3,3), Zij(1:Ntz,3,3) ) ! maps to real space;
    enddo
    
    
-  case( 3,4 ) ! Lcurvature=3,4 ; get derivatives wrt R_j and Z_j; 19 Sep 13;
+  case( 3,4,5 ) ! Lcurvature=3,4,5 ; get derivatives wrt R_j and Z_j; 19 Sep 13;
    
    
    ii = dBdX%ii ; innout = dBdX%innout ; irz = dBdX%irz ; issym = dBdX%issym ! shorthand;
@@ -577,10 +579,21 @@ Nt, Nz, Rij(1:Ntz,3,3), Zij(1:Ntz,3,3) ) ! maps to real space;
     
    endif ! end of if( Lcoordinatesingularity ) ;  7 Mar 13; 
    
-   
-   select case( Igeometry )
-    
-   case( 1 ) ! Lcurvature=3,4 ; Igeometry=1 ; Cartesian; 04 Dec 14;
+   if (Lcurvature .eq. 5) then ! we only need the 2D Jacobian
+    if (Igeometry .eq. 3) then ! only works for toroidal
+
+      if( irz.eq.0 ) sg(1:Ntz,1) = ( Zij(1:Ntz,1,0)*Dij(1:Ntz,2  ) - Dij(1:Ntz,1  )*Zij(1:Ntz,2,0) ) 
+      if( irz.eq.1 ) sg(1:Ntz,1) = ( Dij(1:Ntz,1  )*Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Dij(1:Ntz,2  ) )
+
+    else
+      FATAL( coords, Lcurvature.eq.5 .and. Igeometry.ne.3, Lcurvature.eq.5 can only be combined with Igeometry.ne.3 )
+    end if ! if (Igeometry .eq. 3) ; 13 Jan 20
+
+   else ! we need more for Lcurvature=3,4 ; 13 Jan 20
+
+    select case( Igeometry )
+      
+    case( 1 ) ! Lcurvature=3,4 ; Igeometry=1 ; Cartesian; 04 Dec 14;
 
 #ifdef DEBUG
     FATAL( coords, irz.eq.1, there is no dependence on Zbs or Zbc )
@@ -597,75 +610,79 @@ Nt, Nz, Rij(1:Ntz,3,3), Zij(1:Ntz,3,3) ) ! maps to real space;
      enddo
     enddo
 
-   case( 2 ) ! Lcurvature=3,4 ; Igeometry=2 ; cylindrical;
+   case( 2 ) ! Lcurvature=3,4,5 ; Igeometry=2 ; cylindrical;
 
 #ifdef DEBUG
-    FATAL( coords, irz.eq.1, there is no dependence on Zbs or Zbc )
+      FATAL( coords, irz.eq.1, there is no dependence on Zbs or Zbc )
 #endif
 
-!                  sg(1:Ntz,0) = Rij(1:Ntz,1,0) * Rij(1:Ntz,0,0)
-    if( irz.eq.0 ) sg(1:Ntz,1) = Dij(1:Ntz,1  ) * Rij(1:Ntz,0,0) &
-                               + Rij(1:Ntz,1,0) * Dij(1:Ntz,0  )
+  !                  sg(1:Ntz,0) = Rij(1:Ntz,1,0) * Rij(1:Ntz,0,0)
+      if( irz.eq.0 ) sg(1:Ntz,1) = Dij(1:Ntz,1  ) * Rij(1:Ntz,0,0) &
+                                + Rij(1:Ntz,1,0) * Dij(1:Ntz,0  )
 
     do ii = 1, 3 ! careful: ii was used with a different definition above; 13 Sep 13;
      do jj = ii, 3
       if( irz.eq.0 ) dguvij(1:Ntz,ii,jj) = Dij(1:Ntz,ii) * Rij(1:Ntz,jj,0) + Rij(1:Ntz,ii,0) * Dij(1:Ntz,jj)
-      if( irz.eq.1 ) dguvij(1:Ntz,ii,jj) = Dij(1:Ntz,ii) * Zij(1:Ntz,jj,0) + Zij(1:Ntz,ii,0) * Dij(1:Ntz,jj)
+      if( irz.eq.1 ) then
+         FATAL(coords, .true., No Z-geometrical degree of freedom when Igeometry=2)!dguvij(1:Ntz,ii,jj) = Dij(1:Ntz,ii) * Zij(1:Ntz,jj,0) + Zij(1:Ntz,ii,0) * Dij(1:Ntz,jj) ! TODO REMOVE
+      endif
      enddo
     enddo
-    
+
     dguvij(1:Ntz,2,2) = dguvij(1:Ntz,2,2) + two * Dij(1:Ntz,0) * Rij(1:Ntz,0,0)
    !dguvij(1:Ntz,3,3) = additional term is unity;
 
-   case( 3 ) ! Lcurvature=3,4 ; Igeometry=3 ; toroidal; 04 Dec 14;
+   case( 3 ) ! Lcurvature=3,4,5 ; Igeometry=3 ; toroidal; 04 Dec 14;
 
-!                  sg(1:Ntz,0) = Rij(1:Ntz,0,0) * ( Zij(1:Ntz,1,0)*Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Zij(1:Ntz,2,0) )
-    if( irz.eq.0 ) sg(1:Ntz,1) = Dij(1:Ntz,0  ) * ( Zij(1:Ntz,1,0)*Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Zij(1:Ntz,2,0) ) & 
-                               + Rij(1:Ntz,0,0) * ( Zij(1:Ntz,1,0)*Dij(1:Ntz,2  ) - Dij(1:Ntz,1  )*Zij(1:Ntz,2,0) ) 
-    if( irz.eq.1 ) sg(1:Ntz,1) = Rij(1:Ntz,0,0) * ( Dij(1:Ntz,1  )*Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Dij(1:Ntz,2  ) )
+  !                  sg(1:Ntz,0) = Rij(1:Ntz,0,0) * ( Zij(1:Ntz,1,0)*Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Zij(1:Ntz,2,0) )
+      if( irz.eq.0 ) sg(1:Ntz,1) = Dij(1:Ntz,0  ) * ( Zij(1:Ntz,1,0)*Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Zij(1:Ntz,2,0) ) & 
+                                + Rij(1:Ntz,0,0) * ( Zij(1:Ntz,1,0)*Dij(1:Ntz,2  ) - Dij(1:Ntz,1  )*Zij(1:Ntz,2,0) ) 
+      if( irz.eq.1 ) sg(1:Ntz,1) = Rij(1:Ntz,0,0) * ( Dij(1:Ntz,1  )*Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Dij(1:Ntz,2  ) )
 
-    sg(1:Ntz,1) = sg(1:Ntz,1)
-    
-    do ii = 1, 3 ! careful: ii was used with a different definition above; 13 Sep 13;
-     do jj = ii, 3
-      if( irz.eq.0 ) dguvij(1:Ntz,ii,jj) = Dij(1:Ntz,ii) * Rij(1:Ntz,jj,0) + Rij(1:Ntz,ii,0) * Dij(1:Ntz,jj)
-      if( irz.eq.1 ) dguvij(1:Ntz,ii,jj) = Dij(1:Ntz,ii) * Zij(1:Ntz,jj,0) + Zij(1:Ntz,ii,0) * Dij(1:Ntz,jj)
-     enddo
-    enddo
-    
-    if( irz.eq.0 ) dguvij(1:Ntz,3,3) = dguvij(1:Ntz,3,3) + two * Dij(1:Ntz,0) * Rij(1:Ntz,0,0)
+      sg(1:Ntz,1) = sg(1:Ntz,1)
+      
+      do ii = 1, 3 ! careful: ii was used with a different definition above; 13 Sep 13;
+        do jj = ii, 3
+          if( irz.eq.0 ) dguvij(1:Ntz,ii,jj) = Dij(1:Ntz,ii) * Rij(1:Ntz,jj,0) + Rij(1:Ntz,ii,0) * Dij(1:Ntz,jj)
+          if( irz.eq.1 ) dguvij(1:Ntz,ii,jj) = Dij(1:Ntz,ii) * Zij(1:Ntz,jj,0) + Zij(1:Ntz,ii,0) * Dij(1:Ntz,jj)
+        enddo
+      enddo
+      
+      if( irz.eq.0 ) dguvij(1:Ntz,3,3) = dguvij(1:Ntz,3,3) + two * Dij(1:Ntz,0) * Rij(1:Ntz,0,0)
 
-   case default
+    case default
+      
+      FATAL( coords, .true., supplied Igeometry is not yet supported for Lcurvature.eq.3 or Lcurvature.eq.4 )
+      
+    end select ! end of select case( Igeometry );  7 Mar 13; 
     
-    FATAL( coords, .true., supplied Igeometry is not yet supported for Lcurvature.eq.3 or Lcurvature.eq.4 )
-    
-   end select ! end of select case( Igeometry );  7 Mar 13; 
-   
-   do ii = 2, 3
-    do jj = 1, ii-1 ; dguvij(1:Ntz,ii,jj) = dguvij(1:Ntz,jj,ii) ! symmetry of metrics; 13 Sep 13;
-    enddo
-   enddo
-   
-   guvij(1:Ntz,0,0,1) = zero ! this "metric" does not depend on geometry; helicity matrix does not depend on geometry; 10 Mar 13;
-   
-   if( Lcurvature.eq.3 ) then
-    
-    do ii = 1, 3
-     do jj = 1, 3 ; guvij(1:Ntz,ii,jj,1) = dguvij(1:Ntz,ii,jj) - guvij(1:Ntz,ii,jj,0) * sg(1:Ntz,1) / sg(1:Ntz,0) ! differentiated metric elements; 7 Mar 13; 
-     enddo
+    do ii = 2, 3
+      do jj = 1, ii-1 ; dguvij(1:Ntz,ii,jj) = dguvij(1:Ntz,jj,ii) ! symmetry of metrics; 13 Sep 13;
+      enddo
     enddo
     
-   else ! if( Lcurvature.eq.4 ) ; 
+    guvij(1:Ntz,0,0,1) = zero ! this "metric" does not depend on geometry; helicity matrix does not depend on geometry; 10 Mar 13;
     
-    do ii = 1, 3
-     do jj = 1, 3 ; guvij(1:Ntz,ii,jj,1) = dguvij(1:Ntz,ii,jj)                                                    ! differentiated metric elements; 7 Mar 13; 
-     enddo
-    enddo
-    
-   endif ! end of if( Lcurvature.eq.3 ) ; 15 Sep 16;
-   
+    if( Lcurvature.eq.3 ) then
+      
+      do ii = 1, 3
+      do jj = 1, 3 ; guvij(1:Ntz,ii,jj,1) = dguvij(1:Ntz,ii,jj) - guvij(1:Ntz,ii,jj,0) * sg(1:Ntz,1) / sg(1:Ntz,0) ! differentiated metric elements; 7 Mar 13; 
+      enddo
+      enddo
+      
+    else ! if( Lcurvature.eq.4 ) ; 
+      
+      do ii = 1, 3
+      do jj = 1, 3 ; guvij(1:Ntz,ii,jj,1) = dguvij(1:Ntz,ii,jj)                                                    ! differentiated metric elements; 7 Mar 13; 
+      enddo
+      enddo
+      
+    endif ! end of if( Lcurvature.eq.3 ) ; 15 Sep 16;
+
+   endif ! end of if( Lcurvature.eq.5 ) ; 13 Jan 20; 
   end select ! matches select case( Lcurvature ) ; 10 Mar 13;
   
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   RETURN(coords)

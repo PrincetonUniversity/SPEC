@@ -169,6 +169,8 @@ C     .. Common Block for Error Message ..
       CHARACTER*80      REC(10)
       COMMON /RKCOM9/   REC
       SAVE   /RKCOM9/
+!$OMP THREADPRIVATE(/RKCOM1/,/RKCOM2/,/RKCOM3/,/RKCOM4/,/RKCOM5/)
+!$OMP THREADPRIVATE(/RKCOM6/,/RKCOM7/,/RKCOM8/,/RKCOM9/)
 C     .. Parameters ..
       CHARACTER*6       SRNAME
       PARAMETER         (SRNAME='SETUP')
@@ -572,6 +574,8 @@ C     .. Common Block for Error Message ..
       CHARACTER*80      REC(10)
       COMMON /RKCOM9/   REC
       SAVE   /RKCOM9/
+!$OMP THREADPRIVATE(/RKCOM1/,/RKCOM2/,/RKCOM3/,/RKCOM4/,/RKCOM5/)
+!$OMP THREADPRIVATE(/RKCOM7/,/RKCOM8/,/RKCOM9/)
 C     .. Parameters ..
       CHARACTER*6       SRNAME
       PARAMETER         (SRNAME='UT')
@@ -591,6 +595,7 @@ C     .. Intrinsic Functions ..
       INTRINSIC         ABS, MAX, MIN
 C     .. Save statement ..
       SAVE              UTEND, TLAST
+!$OMP THREADPRIVATE(UTEND, TLAST)
 C     .. Executable Statements ..
       IER = 1
       NREC = 0
@@ -907,6 +912,7 @@ C     .. Common Block for Error Message ..
       CHARACTER*80      REC(10)
       COMMON /RKCOM9/   REC
       SAVE   /RKCOM9/
+!$OMP THREADPRIVATE(/RKCOM2/,/RKCOM5/,/RKCOM6/,/RKCOM8/,/RKCOM9/)
 C     .. Parameters ..
       CHARACTER*6       SRNAME
       PARAMETER         (SRNAME='STAT')
@@ -1051,6 +1057,7 @@ C     .. Common Block for Error Message ..
       CHARACTER*80      REC(10)
       COMMON /RKCOM9/   REC
       SAVE   /RKCOM9/
+!$OMP THREADPRIVATE(/RKCOM1/,/RKCOM2/,/RKCOM6/,/RKCOM8/,/RKCOM9/)
 C     .. Parameters ..
       CHARACTER*6       SRNAME
       PARAMETER         (SRNAME='GLBERR')
@@ -1280,6 +1287,8 @@ C     .. Common Block for Error Message ..
       CHARACTER*80      REC(10)
       COMMON /RKCOM9/   REC
       SAVE   /RKCOM9/
+!$OMP THREADPRIVATE(/RKCOM1/,/RKCOM2/,/RKCOM3/,/RKCOM5/,/RKCOM6/)
+!$OMP THREADPRIVATE(/RKCOM7/,/RKCOM8/,/RKCOM9/)
 C     .. Parameters ..
       CHARACTER*6       SRNAME
       PARAMETER         (SRNAME='CT')
@@ -1306,6 +1315,7 @@ C     .. Intrinsic Functions ..
 C     .. Save statement ..
       SAVE              JFLSTP, NTEND, ERROLD, HAVG, PHASE2, YNEW,
      &                  YPOLD, CHKEFF
+!$OMP THREADPRIVATE(JFLSTP,NTEND,ERROLD,HAVG,PHASE2,YNEW,YPOLD,CHKEFF)
 C     .. Executable Statements ..
 C
       IER = 1
@@ -1847,6 +1857,7 @@ C     .. Common Block for Error Message ..
       CHARACTER*80      REC(10)
       COMMON /RKCOM9/   REC
       SAVE   /RKCOM9/
+!$OMP THREADPRIVATE(/RKCOM1/,/RKCOM3/,/RKCOM4/,/RKCOM8/,/RKCOM9/)
 C     .. Parameters ..
       CHARACTER*6       SRNAME
       PARAMETER         (SRNAME='INTRP')
@@ -1864,6 +1875,7 @@ C     .. Intrinsic Functions ..
       INTRINSIC         MAX
 C     .. Save statement ..
       SAVE              NWNTSV, ININTP, STARTP
+!$OMP THREADPRIVATE(NWNTSV, ININTP, STARTP)
 C     .. Data statements ..
       DATA              NWNTSV/MINUS1/
 C     .. Executable Statements ..
@@ -2088,6 +2100,8 @@ C     .. Common Block for Error Message ..
       CHARACTER*80      REC(10)
       COMMON /RKCOM9/   REC
       SAVE   /RKCOM9/
+!$OMP THREADPRIVATE(/RKCOM1/,/RKCOM2/,/RKCOM5/,/RKCOM7/)
+!$OMP THREADPRIVATE(/RKCOM8/,/RKCOM9/)
 C     .. Parameters ..
       CHARACTER*6       SRNAME
       PARAMETER         (SRNAME='RESET')
@@ -2221,6 +2235,7 @@ C     .. Common Block for Environment Parameters ..
       COMMON /RKCOM7/   MCHEPS, DWARF, RNDOFF, SQRRMC, CUBRMC, TINY,
      &                  OUTCH
       SAVE   /RKCOM7/
+!$OMP THREADPRIVATE(/RKCOM7/)
 C     .. Parameters ..
       DOUBLE PRECISION  TEN, THIRD
       PARAMETER         (TEN=10.0D+0,THIRD=1.0D+0/3.0D+0)
@@ -2462,6 +2477,7 @@ C     .. Common Block for Environment Parameters ..
       COMMON /RKCOM7/   MCHEPS, DWARF, RNDOFF, SQRRMC, CUBRMC, TINY,
      &                  OUTCH
       SAVE   /RKCOM7/
+!$OMP THREADPRIVATE(/RKCOM4/,/RKCOM5/,/RKCOM7/)
 C     .. Parameters ..
       DOUBLE PRECISION  ONE, ZERO, TWO, FIFTY, FIVEPC
       PARAMETER         (ONE=1.0D+0,ZERO=0.0D+0,TWO=2.0D+0,FIFTY=50.D+0,
@@ -3000,6 +3016,7 @@ C     .. Common Block to hold Formula Definitions ..
       COMMON /RKCOM4/   A, B, C, BHAT, R, E, PTR, NSTAGE, METHD,
      &                  MINTP, INTP
       SAVE   /RKCOM4/
+!$OMP THREADPRIVATE(/RKCOM4/)
 C     .. Local Scalars ..
       DOUBLE PRECISION  D1, D2, D3, D4, HYP, HYPOLD
       INTEGER           I, J, K, L
@@ -3193,6 +3210,7 @@ C     .. Common Block to hold Formula Definitions ..
       COMMON /RKCOM4/   A, B, C, BHAT, R, E, PTR, NSTAGE, METHD,
      &                  MINTP, INTP
       SAVE   /RKCOM4/
+!$OMP THREADPRIVATE(/RKCOM2/,/RKCOM4/)
 C     .. Local Scalars ..
       DOUBLE PRECISION  SIGMA
       INTEGER           K, L
@@ -3304,6 +3322,7 @@ C     .. Common Block for Error Message ..
       CHARACTER*80      REC(10)
       COMMON /RKCOM9/   REC
       SAVE   /RKCOM9/
+!$OMP THREADPRIVATE(/RKCOM7/,/RKCOM8/,/RKCOM9/)
 C     .. Parameters ..
       INTEGER           PLUS1
       LOGICAL           ASK, TELL
@@ -3418,6 +3437,7 @@ C     .. Local Arrays ..
       INTEGER           SVSTA(STATES)
 C     .. Save statement ..
       SAVE              SVSTA
+!$OMP THREADPRIVATE(SVSTA)
 C     .. Data statements ..
       DATA              SVSTA/STATES*MINUS1/
 C     .. Executable Statements ..
@@ -3542,6 +3562,7 @@ C     .. Common Block for Environment Parameters ..
       COMMON /RKCOM7/   MCHEPS, DWARF, RNDOFF, SQRRMC, CUBRMC, TINY,
      &                  OUTCH
       SAVE   /RKCOM7/
+!$OMP THREADPRIVATE(/RKCOM2/,/RKCOM5/,/RKCOM6/,/RKCOM7/)
 C     .. Parameters ..
       DOUBLE PRECISION  PT1, TEN, DUMMY
       PARAMETER         (PT1=0.1D0,TEN=10.0D0,DUMMY=1.0D0)
@@ -3764,6 +3785,7 @@ C     .. Common Block for Global Error Assessment ..
       COMMON /RKCOM6/   MAXERR, LOCMAX, GNFCN, PRZSTG, PRZY, PRZYP,
      &                  PRZERS, PRZERR, PRZYNU, ERASON, ERASFL
       SAVE   /RKCOM6/
+!$OMP THREADPRIVATE(/RKCOM1/,/RKCOM2/,/RKCOM4/,/RKCOM5/,/RKCOM6/)
 C     .. Parameters ..
       DOUBLE PRECISION  ZERO, HALF, ONE
       PARAMETER         (ZERO=0.0D0,HALF=0.5D0,ONE=1.0D0)
@@ -4011,6 +4033,7 @@ C     .. Common Block for Environment Parameters ..
       COMMON /RKCOM7/   MCHEPS, DWARF, RNDOFF, SQRRMC, CUBRMC, TINY,
      &                  OUTCH
       SAVE   /RKCOM7/
+!$OMP THREADPRIVATE(/RKCOM1/,/RKCOM5/,/RKCOM7/)
 C     .. Parameters ..
       DOUBLE PRECISION  ZERO
       PARAMETER         (ZERO=0.0D0)
@@ -4118,6 +4141,7 @@ C     .. Common Block to hold Formula Definitions ..
       COMMON /RKCOM4/   A, B, C, BHAT, R, E, PTR, NSTAGE, METHD,
      &                  MINTP, INTP
       SAVE   /RKCOM4/
+!$OMP THREADPRIVATE(/RKCOM4/)
 C     .. Parameters ..
       DOUBLE PRECISION  ZERO, HALF
       PARAMETER         (ZERO=0.0D0,HALF=0.5D0)
@@ -4219,6 +4243,7 @@ C     .. Common Block for Error Message ..
       CHARACTER*80      REC(10)
       COMMON /RKCOM9/   REC
       SAVE   /RKCOM9/
+!$OMP THREADPRIVATE(/RKCOM1/,/RKCOM2/,/RKCOM3/,/RKCOM5/,/RKCOM9/)
 C     .. Parameters ..
       DOUBLE PRECISION  HALF
       PARAMETER         (HALF=0.5D0)
@@ -4369,6 +4394,7 @@ C     .. Common Block for Environment Parameters ..
       COMMON /RKCOM7/   MCHEPS, DWARF, RNDOFF, SQRRMC, CUBRMC, TINY,
      &                  OUTCH
       SAVE   /RKCOM7/
+!$OMP THREADPRIVATE(/RKCOM1/,/RKCOM5/,/RKCOM7/)
 C     .. Parameters ..
       DOUBLE PRECISION  LARGE
       PARAMETER         (LARGE=1.0D+10)
@@ -4780,6 +4806,7 @@ C     .. Common Block to hold Problem Status ..
       COMMON /RKCOM2/   T, H, TOLD, HOLD, NFCN, SVNFCN, OKSTP, FLSTP,
      &                  FIRST, LAST
       SAVE   /RKCOM2/
+!$OMP THREADPRIVATE(/RKCOM1/,/RKCOM2/)
 C     .. Local Scalars ..
       DOUBLE PRECISION  TEMP1, TEMP2
       INTEGER           L
@@ -4881,6 +4908,7 @@ C     .. Local Scalars ..
       LOGICAL           SOFT
 C     .. Save statement ..
       SAVE              SOFT
+!$OMP THREADPRIVATE(SOFT)
 C     .. Data statements ..
       DATA              SOFT/.FALSE./
 C     .. Executable Statements ..
@@ -4925,6 +4953,8 @@ C     .. Local Scalars ..
       LOGICAL           SAVERR
 C     .. Save statement ..
       SAVE              SAVERR
+!$OMP THREADPRIVATE(SAVERR)
+
 C     .. Data statements ..
       DATA              SAVERR/.FALSE./
 C     .. Executable Statements ..

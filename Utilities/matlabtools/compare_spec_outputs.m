@@ -1,4 +1,4 @@
-function compare_spec_outputs(fname1,fname2)
+function [Dabs, Drel, df] = compare_spec_outputs(fname1,fname2)
 
 % Compares the interface geometry of two spec outputs
 % Two outputs are considered "the same" if df ~ 1e-15 (or less)
@@ -15,15 +15,23 @@ function compare_spec_outputs(fname1,fname2)
 % written by J.Loizu (08.2017)
 % modified by J.Loizu (10.2017)
 
+% 
+% Rmn1        = h5read(fname1,'/Rbc');
+% Zmn1        = h5read(fname1,'/Zbs');
+% 
+%   
+% Rmn2        = h5read(fname2,'/Rbc');
+% Zmn2        = h5read(fname2,'/Zbs');
 
-Rmn1        = h5read(fname1,'/Rbc');
-Zmn1        = h5read(fname1,'/Zbs');
+data        = read_spec(fname1);
+Rmn1        = data.output.Rbc;
+Zmn1        = data.output.Zbs;
 
-  
-Rmn2        = h5read(fname2,'/Rbc');
-Zmn2        = h5read(fname2,'/Zbs');
+data        = read_spec(fname2);
+Rmn2        = data.output.Rbc;
+Zmn2        = data.output.Zbs;
 
-  
+
 maxR        = max(max(abs(Rmn1-Rmn2)));
 
 maxZ        = max(max(abs(Zmn1-Zmn2)));
@@ -43,7 +51,11 @@ Dabs        = max(maxR,maxZ);
 Drel        = max(maxrelR,maxrelZ);
 
 %Estimate for df~R*dR~(Dabs/Drel)*Dabs
-df          = (Dabs^2)/Drel;
+if Drel==0
+    df = 0;
+else
+    df = (Dabs^2)/Drel;
+end
 
 %Output 
 display(['Dabs:            ' num2str(Dabs)]);

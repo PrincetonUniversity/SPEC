@@ -1,8 +1,13 @@
-function write_spec_input_L0(template,inputname,Nvol,tfl,pfl,mu,pre,lrad,nptr)
+function write_spec_input_L0(template,inputname,Nvol,phiedge,tfl,pfl,mu,pre,lrad,nptr)
 
+% 
+% WRITE_SPEC_INPUT_L0( TEMPLATE, INPUTNAME, NVOL, PHIEDGE, TFL, PFL, MU, PRE, LRAD, NPTR )
+% ========================================================================================
+%
 % Writes spec input file from template with constraints corresponding to Lconstraint=0 (tfl,pfl,mu)
 %
 % INPUT
+% -----
 %   -template   : template input file name with .sp format 
 %   -inputname  : new input file name with .sp format
 %   -Nvol       : number of volumes
@@ -15,7 +20,7 @@ function write_spec_input_L0(template,inputname,Nvol,tfl,pfl,mu,pre,lrad,nptr)
 %
 %   written by J.Loizu (2016)
 
-nlmod    = 6;
+nlmod    = 8;
 
 sref{1}  = ' pressure    =';
 sref{2}  = ' tflux       =';
@@ -23,6 +28,8 @@ sref{3}  = ' pflux       =';
 sref{4}  = ' mu          =';
 sref{5}  = ' Lrad        =';
 sref{6}  = ' nPtrj       =';
+sref{7}  = ' phiedge     =';
+sref{8}  = ' Nvol        =';
 
 snew1    = sref{1};
 snew2    = sref{2};
@@ -30,6 +37,8 @@ snew3    = sref{3};
 snew4    = sref{4};
 snew5    = sref{5};
 snew6    = sref{6};
+snew7    = strcat(sref{7},{'      '}, num2str(phiedge));
+snew8    = strcat(sref{8}, {'      '}, num2str(Nvol));
 
 for i=1:Nvol
   snew1  = strcat(snew1,{'   '},num2str(pre(i),16), {'   '});
@@ -46,6 +55,8 @@ snew{3}    = snew3{1};
 snew{4}    = snew4{1};
 snew{5}    = snew5{1};
 snew{6}    = snew6{1};
+snew{7}    = snew7{1};
+snew{8}    = snew8{1};
 
 % Open template file for reading
 

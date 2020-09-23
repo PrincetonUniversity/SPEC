@@ -2,14 +2,14 @@
 
 ###############################################################################################################################################################
 
- afiles=manual rzaxis packxi volume coords
- bfiles=metrix ma00aa        matrix        mp00ac ma02aa packab tr00ab curent df00ab lforce
+ afiles=manual rzaxis packxi volume coords basefn memory
+ bfiles=metrix ma00aa matrix spsmat spsint mp00ac ma02aa packab tr00ab curent df00ab lforce intghs mtrxhs lbpol
 #cfiles=bc00aa fc02aa jk03aa pc00aa pc00ab
- cfiles=brcast dforce newton 
+ cfiles=brcast dfp100 dfp200 dforce newton 
  dfiles=casing bnorml 
- efiles=jo00aa pp00aa pp00ab bfield stzxyz sc00aa
+ efiles=jo00aa pp00aa pp00ab bfield stzxyz
  ffiles=hesian ra00aa numrec
- sfiles=dcuhre minpack iqpack rksuite i1mach d1mach # below assumes the .f files are double precision; the CFLAGS = -r8 option is not required;
+ sfiles=dcuhre minpack iqpack rksuite i1mach d1mach ilut iters # below assumes the .f files are double precision; the CFLAGS = -r8 option is not required;
 
 ###############################################################################################################################################################
 
@@ -27,8 +27,10 @@
  MACROS=macros
  
  CC=intel
- # if want to use gfortran; make CC=gfortran xspec; otherwise using Intel
- FC=mpif90 # at PPPL, mpifort will cause parallel HDF5 hang
+ # if want to use gfortran; make CC=gfortran; otherwise using Intel
+ FC=mpif90
+ OMP=yes
+ # to enable OpenMP acceleration within volume, set OMP=yes, otherwise set OMP=no
  
  # Intel Defaults
  # At PPPL, you can use the following commands
@@ -51,13 +53,13 @@ ifeq ($(CC),gfortran)
  # At PPPL, you can use the following commands
  # module use /p/focus/modules
  # module load spec/gcc
- RFLAGS=-O3 -w -ffree-line-length-none -march=native -ffast-math -fexternal-blas
+ RFLAGS=-O3 -w -ffree-line-length-none -fexternal-blas
  DFLAGS=-O0 -g -w -ffree-line-length-none -Wextra -Wtarget-lifetime -fbacktrace -fbounds-check -fexternal-blas \
      -fcheck=all -DDEBUG #-ffpe-trap=invalid,zero,overflow,underflow,inexact # for some reason this will cause crash
  CFLAGS=-fdefault-real-8
- LINKS=-L$(LAPACK_HOME) -llapack -lgfortran
+ LINKS=-L$(LAPACK_HOME) -llapack #-lgfortran
  LIBS=-I$(HDF5_HOME)/include
- LINKS+=-L$(HDF5_HOME)/lib -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lpthread -lz -lm
+ LINKS+=-L$(HDF5_HOME)/lib -lhdf5hl_fortran -lhdf5 -lhdf5_fortran -lhdf5 -lpthread -lz -lm
  LIBS+=-I$(FFTW_HOME)/include
  LINKS+=-L$(FFTW_HOME)/lib -lfftw3 -lopenblas
 endif
@@ -83,7 +85,7 @@ endif
 ifeq ($(CC),gfortran_arch)
  # configuration for Arch Linux
  FC=mpif90
- CFLAGS=-fdefault-real-8
+ CFLAGS=-fdefault-real-8 -fallow-argument-mismatch
  LINKS=-llapack -lblas
  LIBS=
  LINKS+=-lhdf5_fortran -lhdf5 -lpthread -lz -lm
@@ -119,13 +121,26 @@ endif
 ifeq ($(CC),intel_spc)
  CFLAGS=-r8
  RFLAGS=-O2 -ip -no-prec-div -xHost -fPIC
- DFLAGS=-traceback -D DEBUG
+ DFLAGS=-traceback -D DEBUG -g
  LINKS=-L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl
  LIBS=-I$(FFTW_DIR)/include
  LINKS+=-L$(FFTW_DIR)/lib -lfftw3
  LIBS+=-I$(HDF5_HOME)/include
  LINKS+=-L$(HDF5_HOME)/lib -lhdf5_fortran -lhdf5 -lpthread -lz -lm -Wl,-rpath -Wl,$(HDF5_HOME)/lib
 endif
+
+ifeq ($(CC),gfort_spc)
+ FC=mpif90
+ CFLAGS=-fdefault-real-8
+ RFLAGS=-O2 -ffixed-line-length-none -ffree-line-length-none -fexternal-blas
+ DFLAGS=-g -fbacktrace -fbounds-check -ffree-line-length-none -fexternal-blas -DDEBUG
+ LINKS=-L/lib -lmkl_rt -lpthread -lm -ldl -Wl,-rpath
+ LINKS+=-L$(FFTW_DIR)/lib -lfftw3
+ LINKS+=-L/usr/local/hdf5-1.8.18-gcc6.3/lib -lhdf5_fortran -lhdf5 -lz
+ LIBS=-I$(FFTW_DIR)/include
+ LIBS+=-I/usr/local/hdf5-1.8.18-gcc6.3/include
+endif
+
 
 ifeq ($(CC),intel_ipp)
  # tested on draco with the following modules:
@@ -166,11 +181,15 @@ ifeq ($(CC),intel_raijin)
  # module load fftw3-mkl/2018.1.163
  # module load hdf5
  CFLAGS=-r8
- LINKS=-L${MKLROOT}/lib/intel64 -mkl 
+ LINKS=-L${MKLROOT}/lib/intel64 -mkl=parallel -liomp5 
  LIBS=-I$(HDF5_BASE)/include
  LINKS+=-L$(HDF5_BASE)/lib -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lpthread -lz -lm
  RFLAGS=-mcmodel=large -O3 -m64 -unroll0 -fno-alias -ip -traceback -fPIC
  DFLAGS=-check bounds -check format -check output_conversion -check pointers -check uninit -debug full -D DEBUG
+endif
+
+ifeq ($(OMP),yes)
+ RFLAGS+=-DOPENMP -fopenmp
 endif
 
 ###############################################################################################################################################################
@@ -234,12 +253,12 @@ global_d.o: %_d.o: global.f90 $(MACROS)
 
 ###############################################################################################################################################################
 
-$(ROBJS): %_r.o: %_m.F90 global_r.o $(MACROS) 
+$(ROBJS): %_r.o: %_m.F90 global_r.o sphdf5_r.o $(MACROS) 
 	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o $*_r.o -c $*_m.F90 $(LIBS)
 	@wc -l -L -w $*_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
-$(DOBJS): %_d.o: %_m.F90 global_d.o $(MACROS) 
+$(DOBJS): %_d.o: %_m.F90 global_d.o  sphdf5_d.o $(MACROS) 
 	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o $*_d.o -c $*_m.F90 $(LIBS)
 	@wc -l -L -w $*_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
@@ -253,7 +272,7 @@ $(PREPROC): %_m.F90: %.f90 $(MACROS)
 
 ###############################################################################################################################################################
 
-xspech_r.o: xspech.f90 global_r.o $(addsuffix _r.o,$(files)) $(MACROS) 
+xspech_r.o: xspech.f90 global_r.o sphdf5_r.o $(addsuffix _r.o,$(files)) $(MACROS) 
 	@awk -v date='$(date)' -v pwd='$(PWD)' -v macros='$(MACROS)' -v fc='$(FC)' -v flags='$(FLAGS) $(CFLAGS) $(RFLAGS)' -v allfiles='$(ALLFILES)' \
 	'BEGIN{nfiles=split(allfiles,files," ")} \
 	{if($$2=="COMPILATION") {print "    write(ounit,*)\"      :  compiled  : date    = "date" ; \"" ; \
@@ -270,7 +289,7 @@ xspech_r.o: xspech.f90 global_r.o $(addsuffix _r.o,$(files)) $(MACROS)
 	@wc -l -L -w xspech_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
-xspech_d.o: xspech.f90 global_d.o $(addsuffix _d.o,$(files)) $(MACROS) 
+xspech_d.o: xspech.f90 global_d.o sphdf5_d.o $(addsuffix _d.o,$(files)) $(MACROS) 
 	@awk -v date='$(date)' -v pwd='$(PWD)' -v macros='$(MACROS)' -v fc='$(FC)' -v flags='$(FLAGS) $(CFLAGS) $(DFLAGS)' -v allfiles='$(ALLFILES)' \
 	'BEGIN{nfiles=split(allfiles,files," ")} \
 	{if($$2=="COMPILATION") {print "    write(ounit,*)\"      :  compiled  : date    = "date" ; \"" ; \

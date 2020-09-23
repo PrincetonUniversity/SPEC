@@ -1,6 +1,14 @@
 function produce_spec_movie(inputroot,seqstart,seqstep,seqend,framerate,nfp,nz0,zetaov2pi,xrange,yrange,labtext)
 
+
+%
+% PRODUCE_SPEC_MOVIE( INPUTROOT, SEQSTART, SEQSTEP, SEQEND, FRAMERATE, NFP, NZ0, ZETAOV2PI, XRANGE, YRANGE, LABTEXT )
+% ===================================================================================================================
+%
 % Produces Poincare movie from SPEC sequence of result files (Poincare data must exist)
+%
+% INPUT
+% -----
 %   -inputroot : spec input file name of the form 'somename_seq', and the '.end/.h5' files must already exist.
 %   -seqstart  : sequence number to start the movie
 %   -seqstep   : step to be taken as sequence files are read and showed
@@ -12,6 +20,8 @@ function produce_spec_movie(inputroot,seqstart,seqstep,seqend,framerate,nfp,nz0,
 %   -xrange:    minimum and maximum values for xaxis, i.e. [xmin xmax]
 %   -yrange:    minimum and maximum values for yaxis, i.e. [ymin ymax]
 %   -labtext:   text label to add on each snapshot ('b' for beta, 'I' for current, 'none' for nothing)
+%
+%
 %   written by J.Loizu (2017)
 %   modified by J.Loizu (2019)
 
@@ -37,7 +47,7 @@ for it=seqstart:seqstep:seqend
 
  spec_hdf5   = strcat(inputroot,num2str(it),'.h5');
 
- pdata       = read_spec_poincare(spec_hdf5);
+ data       = read_spec(spec_hdf5);
 
  if(labtext=='b')
  beta        = get_spec_beta(spec_hdf5);  
@@ -49,7 +59,7 @@ for it=seqstart:seqstep:seqend
  figtext     = strcat('I_{\phi} = ', num2str(abs(round((Itor/mu0)/1000))),' kA');
  end
  
- plot_spec_poincare(pdata,nz0,nfp,0,1)
+ plot_spec_poincare(data,nz0,nfp,0,1)
  
  plot_spec_kam(spec_hdf5,zetaov2pi,0)
  

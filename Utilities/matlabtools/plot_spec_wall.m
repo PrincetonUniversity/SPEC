@@ -1,23 +1,28 @@
-function plot_spec_wall(filename,zetaov2pi,newfig)
+function plot_spec_wall(data,zetaov2pi,newfig)
 
-% Produces a "Poincare plot" of the computational boundary surface (used in free-boundary mode)
+% 
+% PLOT_SPEC_WALL( DATA, ZETAOV2PI, NEWFIG )
+% =========================================
+% 
+% Produces a "Poincare plot" of the computational boundary surface in toroidal geometry.
 %
 % INPUT
-%   -filename   : SPEC output hdf5 file
+% -----
+%   -data       : obtained from read_spec(fname) 
 %   -zetaov2pi  : shows the toroidal plane at zeta=2*pi*(zetaov2pi)
 %   -newfig     : opens(=1) or not(=0) a new figure
 %
-%   written by J.Loizu (2018)
+% written by J.Loizu (2018)
+% modified by J.Loizu (2020)
 
 
-tflux  = h5read(filename,'/tflux');
-mn     = h5read(filename,'/mn');
-im     = h5read(filename,'/im');
-in     = h5read(filename,'/in');
-Rbcmn  = h5read(filename,'/Rbc');
-Rbsmn  = h5read(filename,'/Rbs');
-Zbcmn  = h5read(filename,'/Zbc');
-Zbsmn  = h5read(filename,'/Zbs');
+mn     = data.output.mn;
+im     = data.output.im;
+in     = data.output.in;
+Rbcmn  = data.output.Rbc;
+Rbsmn  = data.output.Rbs;
+Zbcmn  = data.output.Zbc;
+Zbsmn  = data.output.Zbs;
 
 Rwcmn  = Rbcmn(:,end);
 Rwsmn  = Rbsmn(:,end);
@@ -26,7 +31,7 @@ Zwsmn  = Zbsmn(:,end);
 
 % Compute (x,y) coordinates of the boundary surface
 
-zeta  = zetaov2pi*(2*pi);
+zeta   = zetaov2pi*(2*pi);
 
 nth    = 2048;
 dth    = 2*pi/nth;

@@ -18,17 +18,15 @@
 
 2. Load output data from field-line-tracing and magnetic-field-solution:
    
-   pdata = read_spec_poincare(fname);
-   idata = read_spec_iota(fname);
-   fdata = read_spec_field(fname);
+   data = read_spec(fname);
    
 3. Call ploting routine for iota versus toroidal flux:
    
-   plot_spec_iota(idata,pdata,fdata,'i','f',1);
+   plot_spec_iota(data,'i','f',1);
    
 3. Call ploting routine for iota on the ideal-interfaces:
 
-   plot_spec_iotakam(fname,0,'i','f',0);
+   plot_spec_iotakam(data,'i','f',0);
    
 
 %%% More details %%% 
@@ -37,10 +35,9 @@ In order to see how to change cross-section, or other ploting options, use the h
 
 Example: help plot_spec_iota
 
-For runs in slab geometry (e.g. G1V02L0Fi.001.sp), the same calls can be used.
-
 
 %%%%%%%%%%%% written by J.Loizu (2017) %%%%%%%%%%%%
+% updated for new reading HDF5 routine by J.Loizu (2020) %
 
 
 

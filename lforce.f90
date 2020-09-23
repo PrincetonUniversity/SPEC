@@ -3,6 +3,7 @@
 !> \file lforce.f90
 !> \brief Computes \f$B^2\f$, and the spectral condensation constraints if required, on the interfaces, \f${\cal I}_i\f$.
 
+<<<<<<< HEAD
 !> \brief Computes \f$B^2\f$, and the spectral condensation constraints if required, on the interfaces, \f${\cal I}_i\f$.
 !> \ingroup grp_local_force
 !>
@@ -134,29 +135,26 @@
 !> @param[in] iocons
 !> @param[in] ideriv
 !> @param[in] Ntz
-!> @param dAt
-!> @param dAz
+!> @param dBB
 !> @param XX
 !> @param YY
 !> @param length
 !> @param DDl
 !> @param MMl
 !> @param[in] iflag
-subroutine lforce( lvol, iocons, ideriv, Ntz, dAt, dAz, XX, YY, length, DDl, MMl, iflag )
-  
+subroutine lforce( lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, iflag )
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  use constants, only : zero, half, one, two, pi2
-  
-  use numerical, only : vsmall
+  use constants, only : zero, half, one, two
   
   use fileunits, only : ounit
   
-  use inputlist, only : Wlforce, Igeometry, Nvol, Ntor, Lrad, gamma, pscale, adiabatic
+  use inputlist, only : Wlforce, Igeometry, Nvol, Lrad, gamma, pscale, adiabatic, Lcheck
   
   use cputiming, only : Tlforce
   
-  use allglobal, only : ncpu, myid, cpus, pi2nfp, &
+  use allglobal, only : ncpu, myid, cpus, &
                         Lcoordinatesingularity, Mvol, &
                         iRbc, iZbs, iRbs, iZbc, &
                         YESstellsym, NOTstellsym, &
@@ -165,24 +163,24 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dAt, dAz, XX, YY, length, DDl, MMl
                         efmn, ofmn, cfmn, sfmn, evmn, odmn, comn, simn, &
                         Nt, Nz, &
                         Ate, Aze, Ato, Azo, &
-                        TT, &
+                        TT, RTT, &
                         sg, guvij, iRij, iZij, dRij, dZij, tRij, tZij, &
                         mmpp, &
                         Bemn, Bomn, Iomn, Iemn, Somn, Semn, &
                         Pomn, Pemn, &
-                        vvolume
+                        vvolume, & 
+                        build_vector_potential
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   LOCALS
   
   INTEGER, intent(in)  :: lvol, iocons, ideriv, Ntz, iflag
-  REAL                 :: dAt(1:Ntz), dAz(1:Ntz), XX(1:Ntz), YY(1:Ntz), dRR(1:Ntz,-1:1), dZZ(1:Ntz,-1:1), DDl, MMl
+  REAL                 :: dAt(1:Ntz, -1:2), dAz(1:Ntz, -1:2), XX(1:Ntz), YY(1:Ntz), dRR(1:Ntz,-1:1), dZZ(1:Ntz,-1:1), DDl, MMl
 
   REAL                 :: IIl(1:Ntz), length(1:Ntz), dLL(1:Ntz)
-  
-  INTEGER              :: Lcurvature, ii, jj, kk, ll, ifail, ivol, lnn!, oicons
-  REAL                 :: dBB(1:Ntz), lss, mfactor
+  INTEGER              :: Lcurvature, ii, jj, kk, ll, ifail, ivol, lnn, mi, id!, oicons
+  REAL                 :: dBB(1:Ntz, -1:2), lss, mfactor
   
   REAL                 :: dAs(1:Ntz)!, dRdt(-1:1,0:1), dZdt(-1:1,0:1)
   REAL                 :: lgvuij(1:Ntz,1:3,1:3) ! local workspace; 13 Sep 13;
@@ -200,8 +198,8 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dAt, dAz, XX, YY, length, DDl, MMl
  
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  dAt(1:Ntz) = zero ! initialize intent out; 01 Jul 14;
-  dAz(1:Ntz) = zero ! initialize intent out; 01 Jul 14;
+  dAt(1:Ntz, -1:2) = zero ! initialize intent out; 01 Jul 14;
+  dAz(1:Ntz, -1:2) = zero ! initialize intent out; 01 Jul 14;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -223,32 +221,59 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dAt, dAz, XX, YY, length, DDl, MMl
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 ! compute B^2 on interface;
-  
-  efmn(1:mn) = zero ; sfmn(1:mn) = zero ; cfmn(1:mn) = zero ; ofmn(1:mn) = zero
-  
-  do ii = 1, mn ! loop over Fourier harmonics; 13 Sep 13;
-   
-   if( Lcoordinatesingularity ) then ; mfactor = regumm(ii) * half ! only required at outer interface, where \bar s = 1; 15 Jan 15;
-   else                              ; mfactor = zero
-   endif
-   
-   do ll = 0, Lrad(lvol) ! loop over Chebyshev polynomials; Lrad is the radial resolution;
-    ;                      ; efmn(ii) = efmn(ii) +          Ate(lvol,ideriv,ii)%s(ll) * ( TT(ll,iocons,1) + mfactor ) ! ideriv labels deriv. wrt mu, pflux; 
-    ;                      ; cfmn(ii) = cfmn(ii) +          Aze(lvol,ideriv,ii)%s(ll) * ( TT(ll,iocons,1) + mfactor )
-    if( NOTstellsym ) then ; ofmn(ii) = ofmn(ii) +          Ato(lvol,ideriv,ii)%s(ll) * ( TT(ll,iocons,1) + mfactor )
-     ;                     ; sfmn(ii) = sfmn(ii) +          Azo(lvol,ideriv,ii)%s(ll) * ( TT(ll,iocons,1) + mfactor )
-    endif
-   enddo ! end of do ll; 20 Feb 13;
-    
-  enddo ! end of do ii; 20 Feb 13;
+  ! Compute covariant vector potential. Stored in efmn, ofmn, cfmn, sfmn.
+  !                                         ideriv, tderiv
+  call build_vector_potential(lvol, iocons,      0,      1)
 
-  call invfft( mn, im, in, efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt(1:Ntz), dAz(1:Ntz) ) ! map to real space;
+  ! Map to real space
+  call invfft( mn, im, in, efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt(1:Ntz, 0), dAz(1:Ntz, 0) )
+
+  id = ideriv
+  if( id.eq.0 ) then
+
+    dBB(1:Ntz,id) = half * (        dAz(1:Ntz, id)*dAz(1:Ntz, id)*guvij(1:Ntz,2,2,id) &
+                            - two * dAz(1:Ntz, id)*dAt(1:Ntz, id)*guvij(1:Ntz,2,3,id) &
+                            +       dAt(1:Ntz, id)*dAt(1:Ntz, id)*guvij(1:Ntz,3,3,id)  ) / sg(1:Ntz,0)**2
+
+  else
+    ! Compute covariant vector potential. Stored in efmn, ofmn, cfmn, sfmn.
+    call build_vector_potential(lvol, iocons, id, 1)
+    ! Map to real space
+    call invfft( mn, im, in, efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt(1:Ntz, id), dAz(1:Ntz, id) )
+
+    dBB(1:Ntz,id) = half * (        dAz(1:Ntz,id)*dAz(1:Ntz, 0)*guvij(1:Ntz,2,2,0) &
+                            - two * dAz(1:Ntz,id)*dAt(1:Ntz, 0)*guvij(1:Ntz,2,3,0) &
+                            +       dAt(1:Ntz,id)*dAt(1:Ntz, 0)*guvij(1:Ntz,3,3,0) &
+                            +       dAz(1:Ntz, 0)*dAz(1:Ntz,id)*guvij(1:Ntz,2,2,0) &
+                            - two * dAz(1:Ntz, 0)*dAt(1:Ntz,id)*guvij(1:Ntz,2,3,0) &
+                            +       dAt(1:Ntz, 0)*dAt(1:Ntz,id)*guvij(1:Ntz,3,3,0)  ) / sg(1:Ntz,0)**2
+  endif ! end of if( ideriv.gt.0 ) ;
+
+  ! If derivatives w.r.t geometry, take into account metric derivatives
+  if( ideriv.eq.-1 ) then
+    ! Get coordinate metrics and their derivatives wrt Rj, Zj on interface;
+    lss = two * iocons - one ; Lcurvature = 4
+    WCALL( lforce, coords, ( lvol, lss, Lcurvature, Ntz, mn ) ) 
+
+    dBB(1:Ntz,id) = dBB(1:Ntz, id) + &
+                    half * (        dAz(1:Ntz, 0)*dAz(1:Ntz, 0)*guvij(1:Ntz,2,2,1) &
+                            - two * dAz(1:Ntz, 0)*dAt(1:Ntz, 0)*guvij(1:Ntz,2,3,1) &
+                            +       dAt(1:Ntz, 0)*dAt(1:Ntz, 0)*guvij(1:Ntz,3,3,1)  ) / sg(1:Ntz,0)**2 & 
+                    - dBB(1:Ntz,0) * two * sg(1:Ntz,1) / sg(1:Ntz,0)
+  endif
    
-  dBB(1:Ntz) = half * (         dAz(1:Ntz   )*dAz(1:Ntz   )*guvij(1:Ntz,2,2,0) &
-                        - two * dAz(1:Ntz   )*dAt(1:Ntz   )*guvij(1:Ntz,2,3,0) &
-                        +       dAt(1:Ntz   )*dAt(1:Ntz   )*guvij(1:Ntz,3,3,0) ) / sg(1:Ntz,0)**2
-   
-  ijreal(1:Ntz) = adiabatic(lvol) * pscale / vvolume(lvol)**gamma + dBB(1:Ntz) ! p + B^2/2; 13 Sep 13;
+  ijreal(1:Ntz) = adiabatic(lvol) * pscale / vvolume(lvol)**gamma + dBB(1:Ntz, 0) ! p + B^2/2; 13 Sep 13;
+
+#ifdef DEBUG
+	if( Wlforce ) then
+		write(ounit, 8375) lvol, iocons, ideriv, dAz(1:Ntz, id), dAt(1:Ntz, id)
+		write(ounit, 8376) lvol, iocons, ideriv, guvij(1:Ntz,2,2,0), guvij(1:Ntz,2,3,0), guvij(1:Ntz,3,3,0), sg(1:Ntz,0)
+	 
+8375 format("lforce : lvol=",i7,", iocons=", i7, ", ideriv=", i7 ,"; dAz=",f10.6,", dAt=", f10.6)
+8376 format("lforce : lvol=",i7,", iocons=", i7, ", ideriv=", i7 ,"; g22=",f10.6,", g23=", f10.6,", g33=", f10.6,", sg=", f10.6)
+	endif
+#endif
+
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
@@ -266,13 +291,13 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dAt, dAz, XX, YY, length, DDl, MMl
    
    do ivol = 0, 1
     
-    call invfft( mn, im(1:mn), in(1:mn),            iRbc(1:mn,lvol-1+ivol),              iRbs(1:mn,lvol-1+ivol), &
-                                                    iZbc(1:mn,lvol-1+ivol),              iZbs(1:mn,lvol-1+ivol), & 
-                                         Nt, Nz, iRij(1:Ntz,lvol-1+ivol), iZij(1:Ntz,lvol-1+ivol) )
+    call invfft( mn, im(1:mn), in(1:mn),            iRbc(1:mn ,lvol-1+ivol),              iRbs(1:mn ,lvol-1+ivol), &
+                                                    iZbc(1:mn ,lvol-1+ivol),              iZbs(1:mn ,lvol-1+ivol), & 
+                                         Nt, Nz,    iRij(1:Ntz,lvol-1+ivol),              iZij(1:Ntz,lvol-1+ivol)   )
 
-    call invfft( mn, im(1:mn), in(1:mn), im(1:mn) * iRbs(1:mn,lvol-1+ivol), - im(1:mn) * iRbc(1:mn,lvol-1+ivol), &
-                                         im(1:mn) * iZbs(1:mn,lvol-1+ivol), - im(1:mn) * iZbc(1:mn,lvol-1+ivol), &
-                                         Nt, Nz, tRij(1:Ntz,lvol-1+ivol), tZij(1:Ntz,lvol-1+ivol) )
+    call invfft( mn, im(1:mn), in(1:mn), im(1:mn) * iRbs(1:mn ,lvol-1+ivol), - im(1:mn) * iRbc(1:mn ,lvol-1+ivol), &
+                                         im(1:mn) * iZbs(1:mn ,lvol-1+ivol), - im(1:mn) * iZbc(1:mn ,lvol-1+ivol), &
+                                         Nt, Nz,    tRij(1:Ntz,lvol-1+ivol),              tZij(1:Ntz,lvol-1+ivol) )
    enddo ! end of do ivol = 0, 1 ; 18 Jul 14;
    
    dRij(1:Ntz,lvol) = iRij(1:Ntz,lvol) - iRij(1:Ntz,lvol-1)
