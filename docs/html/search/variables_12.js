@@ -1,0 +1,22 @@
+var searchData=
+[
+  ['s_1111',['s',['../namespacetypedefns.xhtml#a616a0ae9df0b6d616e7cf3830f0af80e',1,'typedefns::subgrid']]],
+  ['scaling_1112',['scaling',['../group__grp__global__diagnostics.xhtml#ga6c30950013a3a513aad46ef0d53563d0',1,'inputlist']]],
+  ['semn_1113',['semn',['../group__grp__force__constr.xhtml#ga8442ed8bc98d6b1a379f307e1e026ca6',1,'allglobal']]],
+  ['seven_1114',['seven',['../namespaceconstants.xhtml#a06bc2e060d80000c19c2cabad1498e5d',1,'constants']]],
+  ['sfmn_1115',['sfmn',['../group__grp__fourier__transform.xhtml#ga45e62efd92657124df197ceac8133393',1,'allglobal']]],
+  ['sg_1116',['sg',['../group__grp__fourier__transform.xhtml#ga4b1c60e25eab68b6372bf28f84aecc97',1,'allglobal']]],
+  ['simn_1117',['simn',['../group__grp__fourier__transform.xhtml#gaefb7a462fa8aafa9cb735e81f4152784',1,'allglobal']]],
+  ['sini_1118',['sini',['../group__grp__trig.xhtml#ga336f0f101210992b9897cc28e417b1fb',1,'allglobal']]],
+  ['six_1119',['six',['../namespaceconstants.xhtml#a2052025a2f420e1571e84d83f9561a01',1,'constants']]],
+  ['sixth_1120',['sixth',['../namespaceconstants.xhtml#aca1caa434e75595b077ce28307a0d1d5',1,'constants']]],
+  ['small_1121',['small',['../namespacenumerical.xhtml#a418dc9a594b02ab4c08290cfcfe4e2ff',1,'numerical']]],
+  ['smpol_1122',['smpol',['../group__grp__fourier__repr.xhtml#ga64cb213f08c1ff9e4c563f0101473c8e',1,'allglobal']]],
+  ['sntor_1123',['sntor',['../group__grp__fourier__repr.xhtml#ga5d8e76e5915007156bfb7cf850ffe352',1,'allglobal']]],
+  ['solution_1124',['solution',['../group__grp__field__matrices.xhtml#ga8d8e425308b9103e03d3f17df8dac68a',1,'allglobal']]],
+  ['somn_1125',['somn',['../group__grp__force__constr.xhtml#ga814cd3b7d34578905279db2c8e5fe9e5',1,'allglobal']]],
+  ['sontz_1126',['sontz',['../group__grp__fourier__transform.xhtml#ga7bdcab0600a99091a462f4ee9b38ed76',1,'allglobal']]],
+  ['sqrtmachprec_1127',['sqrtmachprec',['../namespacenumerical.xhtml#acb4083c85190da89c335008275bcaaf4',1,'numerical']]],
+  ['stage1_1128',['stage1',['../wa00aa_8f90.xhtml#a60f8e751589f66e261bb80a5d666e80b',1,'laplaces']]],
+  ['sweight_1129',['sweight',['../group__grp__chebychev__metric.xhtml#ga46103d26fa6a154afc6b8e43d6021436',1,'allglobal']]]
+];

@@ -1,0 +1,6 @@
+<map id="bnorml" name="bnorml">
+<area shape="rect" id="node1" title="Computes &#160;on the computational boundary, ." alt="" coords="5,31,73,57"/>
+<area shape="rect" id="node2" href="$group__grp__free-boundary.xhtml#ga180576a10002ebf3840fce98d56316bb" title="Constructs the field created by the plasma currents, at an arbitrary, external location using virtual..." alt="" coords="121,5,185,32"/>
+<area shape="rect" id="node4" href="$group__grp__numerics.xhtml#ga041138109a57e651c57117bb4180409e" title="Forward Fourier transform (fftw wrapper)" alt="" coords="133,56,174,83"/>
+<area shape="rect" id="node3" href="$group__grp__free-boundary.xhtml#ga281c12a5de84fddd3db4383b0df8627f" title="Differential virtual casing integrand." alt="" coords="233,5,307,32"/>
+</map>

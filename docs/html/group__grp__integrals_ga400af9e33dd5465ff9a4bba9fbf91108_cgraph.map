@@ -1,0 +1,8 @@
+<map id="ma00aa" name="ma00aa">
+<area shape="rect" id="node1" title="Calculates volume integrals of Chebyshev polynomials and metric element products." alt="" coords="5,107,80,133"/>
+<area shape="rect" id="node2" href="$group__grp__metrics.xhtml#ga254ce8e645c4110d77e3b3dbc3a89885" title="Calculates the metric quantities, , which are required for the energy and helicity integrals." alt="" coords="128,81,193,108"/>
+<area shape="rect" id="node5" href="$group__grp__volume.xhtml#gae4c62d20b8fef07f4471b5b0889ab005" title="Computes volume of each region; and, if required, the derivatives of the volume with respect to the i..." alt="" coords="355,56,425,83"/>
+<area shape="rect" id="node3" href="$group__grp__geometry.xhtml#gaaca20aa60eaf39055f3c9d5c02a24ac2" title="Calculates coordinates, , and metrics, using FFTs." alt="" coords="241,31,307,57"/>
+<area shape="rect" id="node6" href="$group__grp__numerics.xhtml#ga041138109a57e651c57117bb4180409e" title="Forward Fourier transform (fftw wrapper)" alt="" coords="253,81,295,108"/>
+<area shape="rect" id="node4" href="$group__grp__numerics.xhtml#ga1fd52accb0646f535f9bcc46cf5a68f3" title="Inverse Fourier transform (fftw wrapper)" alt="" coords="362,5,418,32"/>
+</map>

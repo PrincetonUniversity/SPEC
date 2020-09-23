@@ -1,0 +1,7 @@
+<map id="metrix" name="metrix">
+<area shape="rect" id="node1" title="Calculates the metric quantities, , which are required for the energy and helicity integrals." alt="" coords="5,81,71,108"/>
+<area shape="rect" id="node2" href="$group__grp__geometry.xhtml#gaaca20aa60eaf39055f3c9d5c02a24ac2" title="Calculates coordinates, , and metrics, using FFTs." alt="" coords="119,56,184,83"/>
+<area shape="rect" id="node5" href="$group__grp__numerics.xhtml#ga041138109a57e651c57117bb4180409e" title="Forward Fourier transform (fftw wrapper)" alt="" coords="131,107,172,133"/>
+<area shape="rect" id="node3" href="$group__grp__numerics.xhtml#ga1fd52accb0646f535f9bcc46cf5a68f3" title="Inverse Fourier transform (fftw wrapper)" alt="" coords="239,5,295,32"/>
+<area shape="rect" id="node4" href="$group__grp__volume.xhtml#gae4c62d20b8fef07f4471b5b0889ab005" title="Computes volume of each region; and, if required, the derivatives of the volume with respect to the i..." alt="" coords="232,56,303,83"/>
+</map>

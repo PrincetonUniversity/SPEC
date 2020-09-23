@@ -1,0 +1,9 @@
+<map id="pp00aa" name="pp00aa">
+<area shape="rect" id="node1" title="Constructs Poincaré plot and &quot;approximate&quot; rotational&#45;transform (driver)." alt="" coords="5,56,76,83"/>
+<area shape="rect" id="node2" href="$group__grp__diagnostics.xhtml#ga831aed2458140e266ee4d37461dd5350" title="Constructs Poincaré plot and &quot;approximate&quot; rotational&#45;transform (for single field line)." alt="" coords="124,56,195,83"/>
+<area shape="rect" id="node3" href="$group__grp__diagnostics.xhtml#ga20985df1b0df0503ca03ca13f1daf642" title="Compute the magnetic field." alt="" coords="249,5,307,32"/>
+<area shape="rect" id="node4" href="$group__grp__diagnostics.xhtml#ga08ad6b6635a598c0d0578e42f46b63c5" title="Calculates coordinates, , and metrics, at given ." alt="" coords="246,56,310,83"/>
+<area shape="rect" id="node5" href="$group__grp__volume.xhtml#gae4c62d20b8fef07f4471b5b0889ab005" title="Computes volume of each region; and, if required, the derivatives of the volume with respect to the i..." alt="" coords="243,107,313,133"/>
+<area shape="rect" id="node6" href="$group__grp__geometry.xhtml#gaaca20aa60eaf39055f3c9d5c02a24ac2" title="Calculates coordinates, , and metrics, using FFTs." alt="" coords="361,107,427,133"/>
+<area shape="rect" id="node7" href="$group__grp__numerics.xhtml#ga1fd52accb0646f535f9bcc46cf5a68f3" title="Inverse Fourier transform (fftw wrapper)" alt="" coords="475,107,531,133"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="ra00aa" name="ra00aa">
+<area shape="rect" id="node1" title="Writes vector potential to .ext.sp.A ." alt="" coords="460,81,527,108"/>
+<area shape="rect" id="node2" href="$group__grp__initialization.xhtml#ga28628de0fdb3b3497668007d8d0643bd" title="Allocates and initializes internal arrays." alt="" coords="349,56,412,83"/>
+<area shape="rect" id="node4" href="$xspech_8f90.xhtml#aea782eae089760a491c2c54f9903abcc" title="Main program of SPEC." alt="" coords="120,56,188,83"/>
+<area shape="rect" id="node3" href="$group__grp__diagnostics.xhtml#ga7401b50ec10c6598ee4a8112717a63ec" title="Computes eigenvalues and eigenvectors of derivative matrix, ." alt="" coords="236,5,301,32"/>
+<area shape="rect" id="node5" href="$xspech_8f90.xhtml#a537af4990058c0b0f2cd8b3669af204f" title="todo remark" alt="" coords="5,56,72,83"/>
+</map>

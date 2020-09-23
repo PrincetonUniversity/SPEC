@@ -1,0 +1,25 @@
+var group__grp__iface__geom =
+[
+    [ "irbc", "group__grp__iface__geom.xhtml#ga9f6e014546551429956a2a47c134d07b", null ],
+    [ "izbs", "group__grp__iface__geom.xhtml#gadcc12f5e32287fd4b60dc01afc6e64d2", null ],
+    [ "irbs", "group__grp__iface__geom.xhtml#ga05ba18442623cf5f34f7a2193a03e0b1", null ],
+    [ "izbc", "group__grp__iface__geom.xhtml#ga6c7ad3b18081227f992e4c3e73a2e216", null ],
+    [ "drbc", "group__grp__iface__geom.xhtml#gafa2f03a88e4ba78c9bda1e3bacf9c9e2", null ],
+    [ "dzbs", "group__grp__iface__geom.xhtml#gad49624ff761950b3d7684815994db03a", null ],
+    [ "drbs", "group__grp__iface__geom.xhtml#gad0e2b0f2bc8714bcaa028f2515417323", null ],
+    [ "dzbc", "group__grp__iface__geom.xhtml#gadf12baed692019acfd4f87edfb30e135", null ],
+    [ "irij", "group__grp__iface__geom.xhtml#ga073e40076931980ddd1ff91dc2b9743f", null ],
+    [ "izij", "group__grp__iface__geom.xhtml#ga0d167c6ccafc8d639a630f6f9da74506", null ],
+    [ "drij", "group__grp__iface__geom.xhtml#ga4b9388877c5ab6690c339e765b358fe7", null ],
+    [ "dzij", "group__grp__iface__geom.xhtml#ga18494687040caa3b3c9bd9a04fe334d4", null ],
+    [ "trij", "group__grp__iface__geom.xhtml#ga3c0cbb57d90e281734cb62b6802c7477", null ],
+    [ "tzij", "group__grp__iface__geom.xhtml#ga038ab443cc07f6a754154a4163699afd", null ],
+    [ "ivns", "group__grp__iface__geom.xhtml#ga026d4427227376a01e0515e55f15d7f6", null ],
+    [ "ibns", "group__grp__iface__geom.xhtml#ga9a4fe7e982a7490f6074dd4698c869d6", null ],
+    [ "ivnc", "group__grp__iface__geom.xhtml#ga2090710c425371738a7802b5d044ef04", null ],
+    [ "ibnc", "group__grp__iface__geom.xhtml#gaa5c3bcffd4f21074dd5a496a63489737", null ],
+    [ "lrbc", "group__grp__iface__geom.xhtml#ga3086b1d6a7ac0922ceb6e59949894d3d", null ],
+    [ "lzbs", "group__grp__iface__geom.xhtml#ga15b234457f842881dcf03b095bc8d396", null ],
+    [ "lrbs", "group__grp__iface__geom.xhtml#ga52bc44234d8044ead526a811dfbddd8b", null ],
+    [ "lzbc", "group__grp__iface__geom.xhtml#gaabca2751b684811a6103c8a4cdd00f94", null ]
+];
