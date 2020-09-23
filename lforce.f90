@@ -3,7 +3,6 @@
 !> \file lforce.f90
 !> \brief Computes \f$B^2\f$, and the spectral condensation constraints if required, on the interfaces, \f${\cal I}_i\f$.
 
-<<<<<<< HEAD
 !> \brief Computes \f$B^2\f$, and the spectral condensation constraints if required, on the interfaces, \f${\cal I}_i\f$.
 !> \ingroup grp_local_force
 !>

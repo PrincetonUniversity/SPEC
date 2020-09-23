@@ -822,7 +822,6 @@ module inputlist
  mcasingcal     
 
   namelist/diagnosticslist/&
-<<<<<<< HEAD
  odetol     ,&  
  absreq     ,&  
  relreq     ,&  
@@ -848,7 +847,7 @@ module inputlist
   namelist/screenlist/&
 ! NSCREENLIST ! namelist screenlist; this is expanded by Makefile; DO NOT REMOVE;
  Wbuild_vector_potential , &
- Wreadin , &  
+ Wreadin , &
  Wwrtend , &
  Wmacros
 
@@ -882,7 +881,7 @@ module allglobal
   REAL                 :: Energy   !< MHD energy
 
   REAL   , allocatable :: IPDt(:)      !< Toroidal pressure-driven current
-  REAL,  , allocatable :: IPDtDpf(:,:) !< Toroidal pressure-driven current
+  REAL   , allocatable :: IPDtDpf(:,:) !< Toroidal pressure-driven current
   INTEGER              :: Mvol     !< number of total volumes; equal to Nvol for fixed-boundary; equal to Nvol+1 for free-boundary
 
   LOGICAL              :: YESstellsym !< internal shorthand copies of Istellsym, which is an integer input; 
@@ -1321,7 +1320,7 @@ module allglobal
 !>                                             \displaystyle \frac{\partial {{\,\iota\!\!\!}-}_+}{\partial {\bf B}_+} \cdot \frac{\partial {\bf B}_+}{\partial \mu          } & , & 
 !>                                             \displaystyle \frac{\partial {{\,\iota\!\!\!}-}_+}{\partial {\bf B}_+} \cdot \frac{\partial {\bf B}_+}{\partial \Delta \psi_p}
 !>                    \end{array} \right)
-!>                      \left(\begin{array}{c} \displaystyle \frac{\partial \mu}{\partial x_j} \\ 
+!>                      \left(\begin{array}{c} \displaystyle \frac{\partial \mu}{\partial x_j} \\
 !>                                             \displaystyle \frac{\partial \Delta \psi_p}{\partial x_j} \end{array} \right) = 
 !>                    - \left(\begin{array}{c} \displaystyle \frac{\partial {{\,\iota\!\!\!}-}_-}{\partial {\bf B}_-} \cdot \frac{\partial {\bf B}_-}{\partial x_j} \\
 !>                                             \displaystyle \frac{\partial {{\,\iota\!\!\!}-}_+}{\partial {\bf B}_+} \cdot \frac{\partial {\bf B}_+}{\partial x_j} \end{array} \right).
@@ -2115,7 +2114,6 @@ subroutine readin
   
 ! BSCREENLIST ! broadcast screenlist; this is expanded by Makefile; do not remove;
   LlBCAST( Wreadin, 1, 0 )
-  LlBCAST( Wwritin, 1, 0 ) ! redundant; 
   LlBCAST( Wwrtend, 1, 0 )
   LlBCAST( Wmacros, 1, 0 )
   
