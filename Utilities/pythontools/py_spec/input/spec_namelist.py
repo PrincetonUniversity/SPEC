@@ -197,6 +197,7 @@ class SPECNamelist(Namelist):
                             or 'mpirun -np (ncpus) /path/to/spec/xspec', with (ncpus) replaced by the number of cpus
             filename -- write this namelist to the temporary file 'filename' in current folder
             force -- if file exists, force overwrite or not
+            quiet -- True if you want some more screen output
 
         Returns:
             result -- after running SPEC, read the output hdf5 with py_spec and return the SPEC object
