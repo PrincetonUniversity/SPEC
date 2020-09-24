@@ -519,7 +519,7 @@ class SPECNamelist(Namelist):
 
         for key in dir(spec_hdf5_subgroup):
             # add to the namelist if it is not starting with '_' (internal python functions)
-            if not key.startswith("_") and not key.startswith("inventory"):
+            if not key.startswith("_") and not(key in self._not_to_dump_list):
                 if key in self.boundary_keys:
                     # take care of all the boundary inputs
                     data = getattr(spec_hdf5_subgroup, key)
@@ -646,6 +646,7 @@ class SPECNamelist(Namelist):
         ]:
             self[key] = Namelist()
 
+        self._not_to_dump_list = dir(spec_hdf5)
         with spec_hdf5.input as i:
             self._dump_to_namelist(i.physics, self["physicslist"])
             self._dump_to_namelist(i.numerics, self["numericlist"])
