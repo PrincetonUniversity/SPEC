@@ -190,7 +190,7 @@ class SPECNamelist(Namelist):
             # write the interface guess
             self._write_interface_guess(file_object)
 
-    def run(self, spec_command="./xspec", filename="spec.sp", force=False):
+    def run(self, spec_command="./xspec", filename="spec.sp", force=False, quiet=False):
         """Run SPEC on the current namelist and obtain its output
         parameters:
             spec_command -- the command to call SPEC, usually it looks like '/path/to/spec/xspec'
@@ -207,12 +207,14 @@ class SPECNamelist(Namelist):
 
         self.write(filename, force=force)
 
-        print("SPEC is running...")
+        if not quite:
+            print("SPEC is running...")
 
         run_result = subprocess.run(spec_command + " " + filename, shell=True)
 
         if run_result.returncode == 0:  # the run is successful
-            print("SPEC runs successfully.")
+            if not quite:
+                print("SPEC runs successfully.")
             return SPECout(filename + ".h5")
         else:
             print("SPEC runs unsuccessfully, check terminal output.")
