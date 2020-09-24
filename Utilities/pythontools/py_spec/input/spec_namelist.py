@@ -672,7 +672,7 @@ class SPECNamelist(Namelist):
             # 2. replace the boundary
             for ii in range(spec_hdf5.output.mn):
                 mm = o.im[ii]
-                nn = int((o.in1[ii]) / p.Nfp) + self._Ntor
+                nn = int((o.in_[ii]) / p.Nfp) + self._Ntor
                 self["physicslist"]["Rbc"][mm][nn] = o.Rbc[p.Nvol, ii]
                 self["physicslist"]["Zbs"][mm][nn] = o.Zbs[p.Nvol, ii]
                 self["physicslist"]["Rbs"][mm][nn] = o.Rbs[p.Nvol, ii]
@@ -697,7 +697,7 @@ class SPECNamelist(Namelist):
             self.interface_guess = dict()
             for ii in range(o.mn):
                 m = o.im[ii]
-                n = int(o.in1[ii] / p.Nfp)
+                n = int(o.in_[ii] / p.Nfp)
                 self.interface_guess[(m, n)] = dict()
                 self.interface_guess[(m, n)]["Rbc"] = o.Rbc[1:, ii]
                 self.interface_guess[(m, n)]["Zbs"] = o.Zbs[1:, ii]
