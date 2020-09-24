@@ -22,20 +22,22 @@
 !> <ul>
 !> <li> The Poincaré data is written to \c .ext.poincare:xxxx , where \c xxxx is an integer indicating the volume.
 !>       The format of this file is as follows:
-!> ```
-!>  write(svol,'(i4.4)')lvol ! lvol labels volume;
-!>  open(lunit+myid,file="."//trim(ext)//".poincare."//svol,status="unknown",form="unformatted")
-!>  do until end of file
+!>
+!>~~~~~~~~~~~~
+!> write(svol,'(i4.4)')lvol ! lvol labels volume;
+!> open(lunit+myid,file="."//trim(ext)//".poincare."//svol,status="unknown",form="unformatted")
+!> do until end of file
 !>   write(lunit+myid) Nz, nPpts                ! integers
 !>   write(lunit+myid) data(1:4,0:Nz-1,1:nPpts) ! doubles
-!>  enddo
-!>  close(lunit+myid)
-!> ```
-!>       where <ul>
-!>       <li> \f$\theta \equiv\,\f$\c data(1,k,j) is the poloidal angle,    </li>
-!>       <li> \f$ s     \equiv\,\f$\c data(2,k,j) is the radial coordinate, </li>
-!>       <li> \f$ R     \equiv\,\f$\c data(3,k,j) is the cylindrical \f$R\f$,   </li>
-!>       <li> \f$ Z     \equiv\,\f$\c data(4,k,j) is the cylindrical \f$Z\f$,   </li>
+!> enddo
+!> close(lunit+myid)
+!>~~~~~~~~~~~~
+!> `where`
+!>       <ul>
+!>       <li> \f$\theta \equiv\,\f$\c data(1,k,j) is the poloidal angle,      </li>
+!>       <li> \f$ s     \equiv\,\f$\c data(2,k,j) is the radial coordinate,   </li>
+!>       <li> \f$ R     \equiv\,\f$\c data(3,k,j) is the cylindrical \f$R\f$, </li>
+!>       <li> \f$ Z     \equiv\,\f$\c data(4,k,j) is the cylindrical \f$Z\f$, </li>
 !>       </ul>
 !> <li> The integer \c k=0,Nz-1 labels toroidal planes, so that \f$\phi = ( 2 \pi / \texttt{Nfp}) ( k / \texttt{Nz})\f$,
 !> <li> The integer \c j=1,nPpts labels toroidal iterations.
