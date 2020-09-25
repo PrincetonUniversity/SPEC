@@ -31,6 +31,7 @@ jobs:
         working-directory: "." # default is .
     
     - name: Make Pdf
+      uses: xu-cheng/latex-action@v2
       working-directory: ${{ github.workspace }}
       run: |
         cd ./docs/latex && make
