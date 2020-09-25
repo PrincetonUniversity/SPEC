@@ -22,7 +22,11 @@ jobs:
     steps:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
-        
+    
+    # install perl and bibtex for the bibliography
+    - name: Install perl and bibtex
+      run: sudo apt-get install perl bibtex
+    
     - name: Doxygen Action
       uses: mattnotmitt/doxygen-action@v1.1.0
       with:
