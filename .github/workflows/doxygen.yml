@@ -34,13 +34,13 @@ jobs:
     - name: Make Pdf
       uses: xu-cheng/latex-action@v2
       with:
-        working_directory: ${{ env.LATEX_DOC_DIR }}
+        working_directory: "./docs/latex"
         root_file: refman.tex
 
     - name: Copy Pdf
       working-directory: ${{ github.workspace }}
       run: |
-        cp ./docs/html/latex/refman.pdf ./docs/html/SPEC_manual.pdf
+        cp ./docs/latex/refman.pdf ./docs/html/SPEC_manual.pdf
 
     - name: Deploy
       uses: peaceiris/actions-gh-pages@v3
