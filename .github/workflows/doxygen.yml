@@ -16,7 +16,8 @@ jobs:
   build:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
-
+    env:
+      LATEX_DOC_DIR: ${{ github.workspace }}/docs/latex
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
@@ -32,7 +33,7 @@ jobs:
     
     - name: Make Pdf
       uses: xu-cheng/latex-action@v2
-      working-directory: ${{ github.workspace }}/docs/latex
+      working-directory: ${{ env.LATEX_DOC_DIR }}
       with:
         root_file: refman.tex
 
