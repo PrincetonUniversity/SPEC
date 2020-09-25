@@ -33,7 +33,7 @@ jobs:
     
     - name: Make Pdf
       uses: xu-cheng/latex-action@v2
-      working-directory: ${{ env.LATEX_DOC_DIR }}
+      working_directory: ${{ env.LATEX_DOC_DIR }}
       with:
         root_file: refman.tex
 
