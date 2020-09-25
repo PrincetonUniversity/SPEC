@@ -23,15 +23,9 @@ jobs:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
     
-    - name: Install doxygen and make
-      run: sudo apt-get install perl doxygen doxygen-latex graphviz build-essential
-    
     - name: Doxygen Action (based on mattnotmitt/doxygen-action@v1.1.0)
-      run: doxygen ./Doxyfile
-    
-    - name: Make Pdf
-      run: cd ./docs/latex && make
-
+      uses: jonathanschilling/doxygen-action@v1.1.1
+      
     - name: Copy Pdf
       working-directory: ${{ github.workspace }}
       run: cp ./docs/latex/refman.pdf ./docs/html/SPEC_manual.pdf
