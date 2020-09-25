@@ -1,8 +1,8 @@
 <map id="bfield" name="bfield">
-<area shape="rect" id="node1" title="Compute the magnetic field." alt="" coords="473,31,532,57"/>
-<area shape="rect" id="node2" href="$group__grp__diagnostics.html#ga6411205c36a7d50002d7f3fb3133c441" title="Measures error in Beltrami equation, ." alt="" coords="238,5,305,32"/>
-<area shape="rect" id="node5" href="$group__grp__diagnostics.html#ga831aed2458140e266ee4d37461dd5350" title="Constructs Poincaré plot and &quot;approximate&quot; rotational&#45;transform (for single field line)." alt="" coords="355,56,425,83"/>
-<area shape="rect" id="node3" href="$xspech_8f90.html#aea782eae089760a491c2c54f9903abcc" title="Main program of SPEC." alt="" coords="120,31,188,57"/>
-<area shape="rect" id="node4" href="$xspech_8f90.html#a537af4990058c0b0f2cd8b3669af204f" title="todo remark" alt="" coords="5,31,72,57"/>
-<area shape="rect" id="node6" href="$group__grp__diagnostics.html#gad67931244268a09bd077dae8910c7096" title="Constructs Poincaré plot and &quot;approximate&quot; rotational&#45;transform (driver)." alt="" coords="236,56,307,83"/>
+<area shape="rect" id="node1" title="Compute the magnetic field." alt="" coords="448,31,500,57"/>
+<area shape="rect" id="node2" href="$group__grp__diagnostics.html#ga6411205c36a7d50002d7f3fb3133c441" title="Measures error in Beltrami equation, ." alt="" coords="226,5,286,32"/>
+<area shape="rect" id="node5" href="$group__grp__diagnostics.html#ga831aed2458140e266ee4d37461dd5350" title="Constructs Poincaré plot and &quot;approximate&quot; rotational&#45;transform (for single field line)." alt="" coords="336,56,400,83"/>
+<area shape="rect" id="node3" href="$xspech_8f90.html#aea782eae089760a491c2c54f9903abcc" title="Main program of SPEC." alt="" coords="113,31,176,57"/>
+<area shape="rect" id="node4" href="$xspech_8f90.html#a537af4990058c0b0f2cd8b3669af204f" title="todo remark" alt="" coords="5,31,65,57"/>
+<area shape="rect" id="node6" href="$group__grp__diagnostics.html#gad67931244268a09bd077dae8910c7096" title="Constructs Poincaré plot and &quot;approximate&quot; rotational&#45;transform (driver)." alt="" coords="224,56,288,83"/>
 </map>

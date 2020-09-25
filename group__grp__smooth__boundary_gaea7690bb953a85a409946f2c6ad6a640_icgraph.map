@@ -1,4 +1,4 @@
 <map id="vacuumphi" name="vacuumphi">
-<area shape="rect" id="node1" title="Compute vacuum magnetic scalar potential (?)" alt="" coords="127,5,221,32"/>
-<area shape="rect" id="node2" href="$group__grp__smooth__boundary.html#ga5d58e428e5062d645244ff572b06e117" title="Constructs smooth approximation to wall." alt="" coords="5,5,79,32"/>
+<area shape="rect" id="node1" title="Compute vacuum magnetic scalar potential (?)" alt="" coords="120,5,205,32"/>
+<area shape="rect" id="node2" href="$group__grp__smooth__boundary.html#ga5d58e428e5062d645244ff572b06e117" title="Constructs smooth approximation to wall." alt="" coords="5,5,72,32"/>
 </map>

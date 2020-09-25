@@ -1,4 +1,4 @@
 <map id="pc00aa" name="pc00aa">
-<area shape="rect" id="node1" title="Use preconditioned conjugate gradient method to find minimum of energy functional." alt="" coords="5,5,75,32"/>
-<area shape="rect" id="node2" href="$group__grp__conjugate__gradient.html#ga4d8415226e62a9fdb42b0fd0b464251e" title="Returns the energy functional and it&#39;s derivatives with respect to geometry." alt="" coords="123,5,192,32"/>
+<area shape="rect" id="node1" title="Use preconditioned conjugate gradient method to find minimum of energy functional." alt="" coords="5,5,69,32"/>
+<area shape="rect" id="node2" href="$group__grp__conjugate__gradient.html#ga4d8415226e62a9fdb42b0fd0b464251e" title="Returns the energy functional and it&#39;s derivatives with respect to geometry." alt="" coords="117,5,181,32"/>
 </map>

@@ -214,7 +214,7 @@ In Eqn. \((\ref{eq:stdot_bfield})\) , the coordinate Jacobian, \(\sqrt g\), canc
 <div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="group__grp__diagnostics_ga20985df1b0df0503ca03ca13f1daf642_icgraph.svg" width="538" height="88"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
+<div class="center"><iframe scrolling="no" frameborder="0" src="group__grp__diagnostics_ga20985df1b0df0503ca03ca13f1daf642_icgraph.svg" width="506" height="88"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
 </div>
 </div>
 
@@ -309,13 +309,13 @@ The eigenvectors are saved in columns of <code>evecr</code>, <code>eveci</code>,
 <div class="dynheader">
 Here is the call graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="group__grp__diagnostics_ga7401b50ec10c6598ee4a8112717a63ec_cgraph.svg" width="678" height="418"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
+<div class="center"><iframe scrolling="no" frameborder="0" src="group__grp__diagnostics_ga7401b50ec10c6598ee4a8112717a63ec_cgraph.svg" width="626" height="418"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
 </div>
 </div>
 <div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="group__grp__diagnostics_ga7401b50ec10c6598ee4a8112717a63ec_icgraph.svg" width="307" height="38"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
+<div class="center"><iframe scrolling="no" frameborder="0" src="group__grp__diagnostics_ga7401b50ec10c6598ee4a8112717a63ec_icgraph.svg" width="290" height="38"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
 </div>
 </div>
 
@@ -394,7 +394,7 @@ Is there a better definition and quantification of the error? For example, shoul
 <li>
 If the coordinate singularity is in the domain, then \(|\nabla\theta|\rightarrow\infty\) at the coordinate origin. What then happens to \(||\left( {\bf j}-\mu {\bf B}\right)\cdot\nabla \theta ||\) as defined in Eqn. \((\ref{eq:Et_jo00aa})\)?  </li>
 <li>
-What is the predicted scaling of the error in the Chebyshev-Fourier representation scale with numerical resolution? Note that the predicted error scaling for \(E^s\), \(E^\theta\) and \(E^\zeta\) may not be standard, as various radial derivatives are taken to compute the components of \({\bf j}\). (See for example the discussion in Sec.IV.C in Hudson et al. (2011) <a class="el" href="citelist.html#CITEREF_y2011_hudson">[5]</a> , where the expected scaling of the error for a finite-element implementation is confirmed numerically.)  </li>
+What is the predicted scaling of the error in the Chebyshev-Fourier representation scale with numerical resolution? Note that the predicted error scaling for \(E^s\), \(E^\theta\) and \(E^\zeta\) may not be standard, as various radial derivatives are taken to compute the components of \({\bf j}\). (See for example the discussion in Sec.IV.C in Hudson et al. (2011) <b>[y2011_hudson]</b> , where the expected scaling of the error for a finite-element implementation is confirmed numerically.)  </li>
 <li>
 Instead of using Gaussian integration to compute the integral over \(s\), an adaptive quadrature algorithm may be preferable.  </li>
 </ul>
@@ -447,13 +447,13 @@ The following quantities are then computed on the regular angular grid <p class=
 <div class="dynheader">
 Here is the call graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="group__grp__diagnostics_ga6411205c36a7d50002d7f3fb3133c441_cgraph.svg" width="310" height="139"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
+<div class="center"><iframe scrolling="no" frameborder="0" src="group__grp__diagnostics_ga6411205c36a7d50002d7f3fb3133c441_cgraph.svg" width="292" height="139"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
 </div>
 </div>
 <div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="group__grp__diagnostics_ga6411205c36a7d50002d7f3fb3133c441_icgraph.svg" width="308" height="38"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
+<div class="center"><iframe scrolling="no" frameborder="0" src="group__grp__diagnostics_ga6411205c36a7d50002d7f3fb3133c441_icgraph.svg" width="290" height="38"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
 </div>
 </div>
 
@@ -492,20 +492,25 @@ The approximate rotational transform is determined, in <a class="el" href="group
 <p><b>format of output: Poincaré</b></p>
 <ul>
 <li>
-The Poincaré data is written to <code></code>.ext.poincare:xxxx , where <code>xxxx</code> is an integer indicating the volume. The format of this file is as follows: <div class="fragment"><div class="line"><span class="keyword">write</span>(svol,<span class="stringliteral">&#39;(i4.4)&#39;</span>)lvol <span class="comment">! lvol labels volume;</span></div>
+<p class="startli">The Poincaré data is written to <code></code>.ext.poincare:xxxx , where <code>xxxx</code> is an integer indicating the volume. The format of this file is as follows:</p>
+<div class="fragment"><div class="line"><span class="keyword">write</span>(svol,<span class="stringliteral">&#39;(i4.4)&#39;</span>)lvol <span class="comment">! lvol labels volume;</span></div>
 <div class="line"><span class="keyword">open</span>(lunit+<a class="code" href="namespaceallglobal.html#aca1163f9aab48251a99d00e63618cc39" title="MPI rank of current CPU.">myid</a>,file=<span class="stringliteral">&quot;.&quot;</span>//trim(ext)//<span class="stringliteral">&quot;.poincare.&quot;</span>//svol,status=<span class="stringliteral">&quot;unknown&quot;</span>,form=<span class="stringliteral">&quot;unformatted&quot;</span>)</div>
 <div class="line"><span class="keywordflow">do</span> until <span class="keyword">end </span>of file</div>
-<div class="line"> <span class="keyword">write</span>(lunit+<a class="code" href="namespaceallglobal.html#aca1163f9aab48251a99d00e63618cc39" title="MPI rank of current CPU.">myid</a>) nz, nppts                <span class="comment">! integers</span></div>
-<div class="line"> <span class="keyword">write</span>(lunit+<a class="code" href="namespaceallglobal.html#aca1163f9aab48251a99d00e63618cc39" title="MPI rank of current CPU.">myid</a>) <span class="keyword">data</span>(1:4,0:nz-1,1:nppts) <span class="comment">! doubles</span></div>
+<div class="line">  <span class="keyword">write</span>(lunit+<a class="code" href="namespaceallglobal.html#aca1163f9aab48251a99d00e63618cc39" title="MPI rank of current CPU.">myid</a>) nz, nppts                <span class="comment">! integers</span></div>
+<div class="line">  <span class="keyword">write</span>(lunit+<a class="code" href="namespaceallglobal.html#aca1163f9aab48251a99d00e63618cc39" title="MPI rank of current CPU.">myid</a>) <span class="keyword">data</span>(1:4,0:nz-1,1:nppts) <span class="comment">! doubles</span></div>
 <div class="line"><span class="keywordflow">enddo</span></div>
 <div class="line"><span class="keyword">close</span>(lunit+<a class="code" href="namespaceallglobal.html#aca1163f9aab48251a99d00e63618cc39" title="MPI rank of current CPU.">myid</a>)</div>
-</div><!-- fragment --> <pre class="fragment">   where &lt;ul&gt;
-   &lt;li&gt; \f$\theta \equiv\,\f$\c data(1,k,j) is the poloidal angle,    &lt;/li&gt;
-   &lt;li&gt; \f$ s     \equiv\,\f$\c data(2,k,j) is the radial coordinate, &lt;/li&gt;
-   &lt;li&gt; \f$ R     \equiv\,\f$\c data(3,k,j) is the cylindrical \f$R\f$,   &lt;/li&gt;
-   &lt;li&gt; \f$ Z     \equiv\,\f$\c data(4,k,j) is the cylindrical \f$Z\f$,   &lt;/li&gt;
-   &lt;/ul&gt;
-</pre> </li>
+</div><!-- fragment --><p class="endli"><code>where</code> </p><ul>
+<li>
+\(\theta \equiv\,\)<code>data(1,k,j)</code> is the poloidal angle,  </li>
+<li>
+\( s \equiv\,\)<code>data(2,k,j)</code> is the radial coordinate,  </li>
+<li>
+\( R \equiv\,\)<code>data(3,k,j)</code> is the cylindrical \(R\),  </li>
+<li>
+\( Z \equiv\,\)<code>data(4,k,j)</code> is the cylindrical \(Z\),  </li>
+</ul>
+</li>
 <li>
 The integer <code>k=0</code>,Nz-1 labels toroidal planes, so that \(\phi = ( 2 \pi / \texttt{Nfp}) ( k / \texttt{Nz})\), </li>
 <li>
@@ -533,13 +538,13 @@ The starting location for the fieldline integrations are equally spaced in the r
 <div class="dynheader">
 Here is the call graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="group__grp__diagnostics_gad67931244268a09bd077dae8910c7096_cgraph.svg" width="536" height="139"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
+<div class="center"><iframe scrolling="no" frameborder="0" src="group__grp__diagnostics_gad67931244268a09bd077dae8910c7096_cgraph.svg" width="507" height="139"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
 </div>
 </div>
 <div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="group__grp__diagnostics_gad67931244268a09bd077dae8910c7096_icgraph.svg" width="312" height="38"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
+<div class="center"><iframe scrolling="no" frameborder="0" src="group__grp__diagnostics_gad67931244268a09bd077dae8910c7096_icgraph.svg" width="294" height="38"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
 </div>
 </div>
 
@@ -637,13 +642,13 @@ The approximate rotational transform is determined by field line integration. Th
 <div class="dynheader">
 Here is the call graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="group__grp__diagnostics_ga831aed2458140e266ee4d37461dd5350_cgraph.svg" width="418" height="139"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
+<div class="center"><iframe scrolling="no" frameborder="0" src="group__grp__diagnostics_ga831aed2458140e266ee4d37461dd5350_cgraph.svg" width="395" height="139"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
 </div>
 </div>
 <div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="group__grp__diagnostics_ga831aed2458140e266ee4d37461dd5350_icgraph.svg" width="431" height="38"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
+<div class="center"><iframe scrolling="no" frameborder="0" src="group__grp__diagnostics_ga831aed2458140e266ee4d37461dd5350_icgraph.svg" width="406" height="38"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
 </div>
 </div>
 
@@ -705,7 +710,7 @@ This routine is a "copy" of co01aa(), which calculates the coordinate informatio
 <div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="group__grp__diagnostics_ga08ad6b6635a598c0d0578e42f46b63c5_icgraph.svg" width="543" height="38"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
+<div class="center"><iframe scrolling="no" frameborder="0" src="group__grp__diagnostics_ga08ad6b6635a598c0d0578e42f46b63c5_icgraph.svg" width="511" height="38"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
 </div>
 </div>
 

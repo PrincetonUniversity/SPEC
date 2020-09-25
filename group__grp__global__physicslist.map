@@ -1,4 +1,4 @@
 <map id="physicslist" name="physicslist">
-<area shape="rect" id="node1" title="The namelist physicslist controls the geometry, profiles, and numerical resolution." alt="" coords="204,13,295,38"/>
-<area shape="rect" id="node2" href="$group__grp__global.html" title="\definecolor{Orange}{rgb}{1.0,0.5,0.0} &#160;\definecolor{Cerulean}{rgb}{0.0,0.5,1.0}" alt="" coords="5,5,156,45"/>
+<area shape="rect" id="node1" title="The namelist physicslist controls the geometry, profiles, and numerical resolution." alt="" coords="188,13,271,38"/>
+<area shape="rect" id="node2" href="$group__grp__global.html" title="\definecolor{Orange}{rgb}{1.0,0.5,0.0} &#160;\definecolor{Cerulean}{rgb}{0.0,0.5,1.0}" alt="" coords="5,5,140,45"/>
 </map>
