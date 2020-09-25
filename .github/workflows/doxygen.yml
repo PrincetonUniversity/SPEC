@@ -23,8 +23,11 @@ jobs:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
     
+    # run doxygen
     - name: Doxygen Action (based on mattnotmitt/doxygen-action@v1.1.0)
-      uses: jonathanschilling/doxygen-action@v1.1.3
+      uses: jonathanschilling/doxygen-action@v1.1.4
+      with:
+        enable-latex: true
       
     - name: Copy Pdf
       working-directory: ${{ github.workspace }}
