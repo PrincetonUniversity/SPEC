@@ -208,13 +208,13 @@ class SPECNamelist(Namelist):
 
         self.write(filename, force=force)
 
-        if not quite:
+        if not quiet:
             print("SPEC is running...")
 
         run_result = subprocess.run(spec_command + " " + filename, shell=True)
 
         if run_result.returncode == 0:  # the run is successful
-            if not quite:
+            if not quiet:
                 print("SPEC runs successfully.")
             return SPECout(filename + ".h5")
         else:
