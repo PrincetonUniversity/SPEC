@@ -34,7 +34,7 @@ jobs:
       uses: xu-cheng/latex-action@v2
       working-directory: ${{ github.workspace }}/docs/latex
       with:
-        root_file: reman.tex
+        root_file: refman.tex
 
     - name: Copy Pdf
       working-directory: ${{ github.workspace }}
