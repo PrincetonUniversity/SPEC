@@ -23,23 +23,18 @@ jobs:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
     
-    # install perl and bibtex for the bibliography
-    - name: Install perl and bibtex
-      run: sudo apt-get install perl doxygen doxygen-latex graphviz
+    - name: Install doxygen and make
+      run: sudo apt-get install perl doxygen doxygen-latex graphviz build-essential
     
     - name: Doxygen Action (based on mattnotmitt/doxygen-action@v1.1.0)
       run: doxygen ./Doxyfile
     
     - name: Make Pdf
-      uses: xu-cheng/latex-action@v2
-      with:
-        working_directory: "./docs/latex"
-        root_file: refman.tex
+      run: cd ./docs/latex && make
 
     - name: Copy Pdf
       working-directory: ${{ github.workspace }}
-      run: |
-        sudo cp ./docs/latex/refman.pdf ./docs/html/SPEC_manual.pdf
+      run: cp ./docs/latex/refman.pdf ./docs/html/SPEC_manual.pdf
 
     - name: Deploy
       uses: peaceiris/actions-gh-pages@v3
