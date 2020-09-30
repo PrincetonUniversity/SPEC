@@ -147,7 +147,7 @@ ifeq ($(CC),intel_ipp)
  # intel/19.0.4 impi/2019.4 mkl/2019.4 hdf5-serial/1.8.21 fftw-mpi/3.3.8
  FC=mpiifort
  CFLAGS=-r8
- RFLAGS=-O0 -ip -no-prec-div -xHost -fPIC
+ RFLAGS=-O2 -ip -no-prec-div -xHost -fPIC
  DFLAGS=-traceback -D DEBUG
  LINKS=-L${MKLROOT}/lib/intel64 -lmkl_rt -lpthread -lm -ldl -Wl,-rpath -Wl,${MKLROOT}/lib/intel64
  LIBS=-I$(HDF5_HOME)/include
