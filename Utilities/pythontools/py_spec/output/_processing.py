@@ -299,6 +299,11 @@ def get_modB(self, Bcontrav, g):
     modB = np.sqrt(np.einsum("iabc,jiabc,jabc->abc", Bcontrav, g, Bcontrav))
     return modB
 
+def get_B_covariant(self, Bcontrav, g):
+    """Get covariant component of B"""
+    Bco = np.einsum("iabc,jiabc->jabc", Bcontrav, g)
+    return Bco    
+
 
 def _get_zernike(sarr, lrad, mpol):
     """
