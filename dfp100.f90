@@ -1,6 +1,5 @@
-!title (&ldquo;global&rdquo; dfp100) ! Computes global constraint and take care of MPI communications
-
-!latex \briefly{Split the work between MPI nodes and evaluate the global constraint}
+!> \file dfp100.f90
+!> \brief Split the work between MPI nodes and evaluate the global constraint
 
 !latex \calledby{\link{dforce}} \\
 
@@ -31,7 +30,12 @@
 !latex Not implemented for now.
 
 
-
+!> \brief Split the work between MPI nodes and evaluate the global constraint
+!>
+!> @param Ndofgl
+!> @param x
+!> @param Fvec
+!> @param LComputeDerivatives
 subroutine dfp100(Ndofgl, x, Fvec, LComputeDerivatives)
 
   use constants, only : zero, half, one, two, pi2, pi, mu0

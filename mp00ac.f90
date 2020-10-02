@@ -756,6 +756,25 @@ end subroutine mp00ac
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+!> \brief run GMRES
+!> 
+!> @param n
+!> @param nrestart
+!> @param mu
+!> @param vvol
+!> @param rhs
+!> @param sol
+!> @param ipar
+!> @param fpar
+!> @param wk
+!> @param nw
+!> @param guess
+!> @param a
+!> @param au
+!> @param jau
+!> @param ju
+!> @param iperm
+!> @param ierr
 subroutine rungmres(n,nrestart,mu,vvol,rhs,sol,ipar,fpar,wk,nw,guess,a,au,jau,ju,iperm,ierr)
   ! Driver subroutine for GMRES
   ! modified from riters.f from SPARSKIT v2.0 
@@ -825,6 +844,14 @@ subroutine rungmres(n,nrestart,mu,vvol,rhs,sol,ipar,fpar,wk,nw,guess,a,au,jau,ju
   return
 end subroutine rungmres
 
+!> \brief compute a.x by either by coumputing it directly, or using a matrix free method
+!> 
+!> @param n
+!> @param x
+!> @param ax
+!> @param a
+!> @param mu
+!> @param vvol
 subroutine matvec(n, x, ax, a, mu, vvol)
   ! compute a.x by either by coumputing it directly, 
   ! or using a matrix free method
@@ -854,6 +881,15 @@ subroutine matvec(n, x, ax, a, mu, vvol)
 
 end subroutine matvec
 
+!> \brief apply the preconditioner
+!> 
+!> @param n
+!> @param vecin
+!> @param vecout
+!> @param au
+!> @param jau
+!> @param ju
+!> @param iperm
 subroutine prec_solve(n,vecin,vecout,au,jau,ju,iperm)
   ! apply the preconditioner
   implicit none

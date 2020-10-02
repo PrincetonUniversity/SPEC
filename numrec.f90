@@ -43,6 +43,14 @@ end subroutine gi00ab
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+!> \brief convert m and n to index
+!> 
+!> @param Mpol
+!> @param Ntor
+!> @param Nfp
+!> @param mi
+!> @param ni
+!> @param idx
 subroutine getimn(Mpol, Ntor, Nfp, mi, ni, idx)
   ! convert m and n to index
   implicit none

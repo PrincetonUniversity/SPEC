@@ -1,9 +1,11 @@
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!> \file spsmat.f90
+!> \brief (build matrices) ! Constructs matrices for the precondtioner.
 
-!title (build matrices) ! Constructs matrices for the precondtioner.
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+!> \brief Constructs matrices for the precondtioner.
+!> 
+!> @param lvol
+!> @param mn
+!> @param lrad
 subroutine spsmat( lvol, mn, lrad )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -437,6 +439,17 @@ end subroutine spsmat
 
 ! some subroutines to help construct the sparse matrix
 
+!> \brief push a new element at the back of the queue
+!> 
+!> @param iq
+!> @param nq
+!> @param NN
+!> @param vA
+!> @param vD
+!> @param vjA
+!> @param qA
+!> @param qD
+!> @param qjA
 subroutine push_back(iq, nq, NN, vA, vD, vjA, qA, qD, qjA)
   ! push a new element at the back of the queue
   ! INPUTS:
@@ -465,6 +478,13 @@ subroutine push_back(iq, nq, NN, vA, vD, vjA, qA, qD, qjA)
   return
 end subroutine push_back
 
+!> \brief clean the queue
+!> 
+!> @param nq
+!> @param NN
+!> @param qA
+!> @param qD
+!> @param qjA
 subroutine clean_queue(nq, NN, qA, qD, qjA)
   ! clean the queue
   use constants, only : zero
@@ -482,6 +502,19 @@ subroutine clean_queue(nq, NN, qA, qD, qjA)
   return
 end subroutine clean_queue
 
+!> \brief add the content from the queue to the real matrices
+!> 
+!> @param nq
+!> @param NN
+!> @param qA
+!> @param qD
+!> @param qjA
+!> @param ns
+!> @param nrow
+!> @param dMAS
+!> @param dMDS
+!> @param jdMAS
+!> @param idMAS
 subroutine addline(nq, NN, qA, qD, qjA, ns, nrow, dMAS, dMDS, jdMAS, idMAS)
   ! add the content from the queue to the real matrices
   implicit none

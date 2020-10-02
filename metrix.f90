@@ -122,6 +122,12 @@ end subroutine metrix
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+!> \brief compute guvijsave
+!> 
+!> @param lquad
+!> @param vvol
+!> @param ideriv
+!> @param Lcurvature
 subroutine compute_guvijsave(lquad, vvol, ideriv, Lcurvature)
 
   use allglobal, only : gaussianabscissae, Ntz, mn, guvij, guvijsave, &

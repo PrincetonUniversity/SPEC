@@ -1,6 +1,5 @@
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!title (lbpol) ! Computes Btheta at the interface
+!> \file lbpol.f90
+!> \brief Computes Btheta at the interface
 
 !latex \briefly{Computes Btheta at the interface - used to compute the toroidal surface current}
 
@@ -25,6 +24,12 @@
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+!> \brief Computes Btheta at the interface
+!>
+!> @param lvol
+!> @param Bt00
+!> @param ideriv
+!> @param iocons
 subroutine lbpol(lvol, Bt00, ideriv, iocons)
 
   use constants, only : mu0, pi, pi2, two, one, half, zero

@@ -1,6 +1,5 @@
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!title (output) ! Writes all the output information to ext.h5.
+!> \file sphdf5.f90
+!> \brief (output) ! Writes all the output information to ext.h5.
 
 !latex \briefly{All the input and output information is contained in \type{ext.h5}.}
 !latex \calledby{\link{xspech}}
@@ -90,9 +89,8 @@ module sphdf5
 
 contains
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-!
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!> \brief initialize the interface to the HDF5 library and open the output file
+!>
 subroutine init_outfile
 
   LOCALS
@@ -120,7 +118,8 @@ subroutine init_outfile
 
 end subroutine init_outfile
 
-! mirror input variables into output file
+!> \brief mirror input variables into output file
+!>
 subroutine mirror_input_to_outfile
 
   use inputlist
@@ -372,7 +371,8 @@ subroutine mirror_input_to_outfile
 
 end subroutine mirror_input_to_outfile
 
-! prepare ``convergence evolution'' output
+!> \brief prepare convergence evolution output
+!>
 subroutine init_convergence_output
 
   use allglobal, only : mn, Mvol
@@ -474,7 +474,8 @@ subroutine init_convergence_output
 end subroutine init_convergence_output
 
 
-! was in global.f90/wrtend for wflag.eq.-1 previously
+!> \brief write convergence output (evolution of interface geometry, force, etc); was in global.f90/wrtend for wflag.eq.-1 previously
+!>
 subroutine write_convergence_output( nDcalls, ForceErr )
 
   use allglobal, only : myid, mn, Mvol, Energy, iRbc, iZbs, iRbs, iZbc
@@ -531,7 +532,7 @@ subroutine write_convergence_output( nDcalls, ForceErr )
 
 end subroutine write_convergence_output
 
-! previously the (wflag.eq.1) part of globals.f90/wrtend to write .ext.sp.grid;
+!> \brief write the magnetic field on a grid; previously the (wflag.eq.1) part of globals.f90/wrtend to write .ext.sp.grid;
 subroutine write_grid
 
   use constants
@@ -672,7 +673,9 @@ subroutine write_grid
 
 end subroutine write_grid
 
-! init field line tracing output group and create array datasets
+!> \brief init field line tracing output group and create array datasets
+!>
+!> @param[in] numTrajTotal total number of Poincare trajectories
 subroutine init_flt_output( numTrajTotal )
 
   use allglobal, only : Nz, Mvol
@@ -754,7 +757,11 @@ subroutine init_flt_output( numTrajTotal )
 
 end subroutine init_flt_output
 
-! write a hyperslab of Poincare data
+!> \brief write a hyperslab of Poincare data
+!>
+!> @param offset
+!> @param data
+!> @param success
 subroutine write_poincare( offset, data, success )
 
   use allglobal, only : Nz
@@ -800,7 +807,13 @@ subroutine write_poincare( offset, data, success )
 
 end subroutine write_poincare
 
-! write rotational transform output from field line following
+!> \brief write rotational transform output from field line following
+!>
+!> @param offset
+!> @param length
+!> @param lvol
+!> @param diotadxup
+!> @param fiota
 subroutine write_transform( offset, length, lvol, diotadxup, fiota )
 
   LOCALS
@@ -828,7 +841,8 @@ subroutine write_transform( offset, length, lvol, diotadxup, fiota )
 
 end subroutine write_transform
 
-! finalize Poincare output
+!> \brief finalize Poincare output
+!>
 subroutine finalize_flt_output
 
   LOCALS
@@ -868,7 +882,13 @@ subroutine finalize_flt_output
 
 end subroutine finalize_flt_output
 
-! write the magnetic vector potential Fourier harmonics to the output file group /vector_potential
+!> write the magnetic vector potential Fourier harmonics to the output file group /vector_potential
+!>
+!> @param sumLrad
+!> @param allAte
+!> @param allAze
+!> @param allAto
+!> @param allAzo
 subroutine write_vector_potential(sumLrad, allAte, allAze, allAto, allAzo)
 
   use allglobal, only : mn
@@ -895,9 +915,7 @@ subroutine write_vector_potential(sumLrad, allAte, allAze, allAto, allAzo)
 
 end subroutine write_vector_potential
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-! final output
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!> \brief final output
 subroutine hdfint
 
   use fileunits, only : ounit
@@ -1046,9 +1064,8 @@ subroutine hdfint
 
 end subroutine hdfint
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-!
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!> \brief Close all open HDF5 objects (we know of) and list any remaining still-open objects.
+!>
 subroutine finish_outfile
 ! Close all open HDF5 objects (we know of) and list any remaining still-open objects
 ! The goal should be to close all objects specifically!
