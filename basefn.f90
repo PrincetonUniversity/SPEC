@@ -1,11 +1,12 @@
+!> \file basefn.f90
+!> \brief Polynomials evaluation
+
+!> \brief Get the Chebyshev polynomials with zeroth, first derivatives
+!>
+!> @param[in] lss coordinate input lss
+!> @param[in] lrad radial resolution
+!> @param[out] cheby the value, first derivative of Chebyshev polynomial
 subroutine get_cheby(lss, lrad, cheby)
-  ! Get the Chebyshev polynomials with zeroth, first derivatives
-  ! Inputs:
-  ! lss - REAL, coordinate input lss
-  ! lrad - INTEGER, radial resolution
-  !
-  ! Returns:
-  ! cheby - REAL(0:Mrad,0:1), the value, first derivative of Chebyshev polynomial
 
   use constants, only : zero, one, two
 
@@ -36,14 +37,12 @@ subroutine get_cheby(lss, lrad, cheby)
   return
 end subroutine get_cheby
 
+!> \brief Get the Chebyshev polynomials with zeroth, first and second derivatives
+!>
+!> @param[in] lss coordinate input lss
+!> @param[in] lrad radial resolution
+!> @param[out] cheby the value, first and second derivative of Chebyshev polynomial
 subroutine get_cheby_d2(lss, lrad, cheby)
-  ! Get the Chebyshev polynomials with zeroth, first and second derivatives
-  ! Inputs:
-  ! lss - REAL, coordinate input lss
-  ! lrad - INTEGER, radial resolution
-  !
-  ! Returns:
-  ! cheby - REAL(0:lrad,0:2), the value, first and second derivative of Chebyshev polynomial
 
   use constants, only : zero, one, two
 
@@ -76,16 +75,13 @@ subroutine get_cheby_d2(lss, lrad, cheby)
   return
 end subroutine get_cheby_d2
 
-
+!> \brief Get the Zernike polynomials with zeroth, first derivatives
+!>
+!> @param[in] r coordinate input
+!> @param[in] lrad radial resolution
+!> @param[in] mpol poloidal resolution
+!> @param[out] zernike the value, first derivative of Zernike polynomial
 subroutine get_zernike(r, lrad, mpol, zernike)
-  ! Get the Zernike polynomials with zeroth, first derivatives
-  ! Inputs:
-  ! r - REAL, coordinate input r
-  ! lrad - INTEGER, radial resolution
-  ! mpol - INTEGER, poloidal resolution
-  !
-  ! Returns:
-  ! zernike - REAL(0:lrad,0:mpol,0:1), the value, first derivative of Zernike polynomial
 
   use constants, only : zero, one, two
 
@@ -145,16 +141,14 @@ subroutine get_zernike(r, lrad, mpol, zernike)
   end do
 end subroutine get_zernike
 
+!> \brief Get the Zernike polynomials with zeroth, first, second derivatives
+!>
+!> @param[in] r coordinate input
+!> @param[in] lrad radial resolution
+!> @param[in] mpol poloidal resolution
+!> @param[out] zernike the value, first/second derivative of Zernike polynomial
 subroutine get_zernike_d2(r, lrad, mpol, zernike)
-  ! Get the Zernike polynomials with zeroth, first, second derivatives
-  ! Inputs:
-  ! r - REAL, coordinate input r
-  ! lrad - INTEGER, radial resolution
-  ! mpol - INTEGER, poloidal resolution
-  !
-  ! Returns:
-  ! zernike - REAL(0:lrad,0:mpol,0:2), the value, first/second derivative of Zernike polynomial
-  
+
   use constants, only : zero, one, two
 
   implicit none
@@ -219,15 +213,13 @@ subroutine get_zernike_d2(r, lrad, mpol, zernike)
   end do
 end subroutine get_zernike_d2
 
+!> \brief Get the Zernike polynomials Z(n,m,r)/r^m
+!>
+!> @param[in] r coordinate input
+!> @param[in] lrad radial resolution
+!> @param[in] mpol poloidal resolution
+!> @param[out] zernike the value
 subroutine get_zernike_rm(r, lrad, mpol, zernike)
-  ! Get the Zernike polynomials Z(n,m,r)/r^m
-  ! Inputs:
-  ! r - REAL, coordinate input r
-  ! lrad - INTEGER, radial resolution
-  ! mpol - INTEGER, poloidal resolution
-  !
-  ! Returns:
-  ! zernike - REAL(0:lrad,0:mpol), the value
 
   use constants, only : zero, one, two
 
