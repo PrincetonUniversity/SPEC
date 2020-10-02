@@ -320,13 +320,13 @@ subroutine matrix( lvol, mn, lrad )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  use constants, only : zero, one
+  use constants, only : zero, one, two
   
   use numerical, only : small
   
   use fileunits, only : ounit
   
-  use inputlist, only : Wmacros, Wmatrix
+  use inputlist, only : Wmacros, Wmatrix, mpol
   
   use cputiming, only : Tmatrix
   
@@ -338,7 +338,7 @@ subroutine matrix( lvol, mn, lrad )
                         Ate, Ato, Aze, Azo, &
                         iVns, iBns, iVnc, iBnc, &
                         Lma, Lmb, Lmc, Lmd, Lme, Lmf, Lmg, Lmh, &
-                        Lcoordinatesingularity, TT, &
+                        Lcoordinatesingularity, TT, RTT, RTM, &
                         DToocc, DToocs, DToosc, DTooss, &
                         TTsscc, TTsscs, TTsssc, TTssss, &
                         TDstcc, TDstcs, TDstsc, TDstss, &
@@ -358,7 +358,7 @@ subroutine matrix( lvol, mn, lrad )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  INTEGER              :: NN, ii, jj, ll, kk, pp, mi, ni, mj, nj, mimj, minj, nimj, ninj, mjmi, mjni, njmi, njni, id, jd
+  INTEGER              :: NN, ii, jj, ll, kk, pp, ll1, pp1, mi, ni, mj, nj, mimj, minj, nimj, ninj, mjmi, mjni, njmi, njni, id, jd
   
   REAL                 :: Wtete, Wteto, Wtote, Wtoto
   REAL                 :: Wteze, Wtezo, Wtoze, Wtozo
@@ -370,6 +370,8 @@ subroutine matrix( lvol, mn, lrad )
   REAL                 :: Hzete, Hzeto, Hzote, Hzoto
   REAL                 :: Hzeze, Hzezo, Hzoze, Hzozo
   
+  REAL,allocatable     :: TTdata(:,:,:), TTMdata(:,:) ! queues to construct sparse matrices
+
   BEGIN(matrix)
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -387,13 +389,25 @@ subroutine matrix( lvol, mn, lrad )
   
   dMA(0:NN,0:NN) = zero
   dMD(0:NN,0:NN) = zero
-  dMB(0:NN,1: 2) = zero
-  dMG(0:NN     ) = zero
-  
+
+  SALLOCATE( TTdata, (0:lrad, 0:mpol, 0:1), zero)
+  SALLOCATE( TTMdata, (0:lrad, 0:mpol), zero)
+
+  ! fill in Zernike/Chebyshev polynomials depending on Lcooridnatesingularity
+  if (Lcoordinatesingularity) then
+    TTdata(0:lrad,0:mpol,0:1) = RTT(0:lrad,0:mpol,0:1,0)
+    TTMdata(0:lrad,0:mpol) = RTM(0:lrad,0:mpol)
+  else
+    do ii = 0, mpol
+      TTdata(0:lrad,ii,0:1) = TT(0:lrad,0:1,0)
+      TTMdata(0:lrad,ii) = TT(0:lrad,0,0)
+    enddo
+  endif
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   if( YESstellsym ) then
-   
+!$OMP PARALLEL DO PRIVATE(ii,jj,ll,pp,mi,ni,mj,nj,mimj,minj,nimj,ninj,ll1,pp1,Wtete,Wzete,Wteze,Wzeze,Htete,Hzete,Hteze,Hzeze,id,jd,kk) SHARED(lvol,lrad)  
    do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
     
     do jj = 1, mn ; mj = im(jj) ; nj = in(jj) ; mimj = mi * mj ; minj = mi * nj ; nimj = ni * mj ; ninj = ni * nj
@@ -402,14 +416,24 @@ subroutine matrix( lvol, mn, lrad )
       
       do pp = 0, lrad
        
-       Wtete = + 2 * ninj * TTssss(ll,pp,ii,jj) - 2 * ni      * TDszsc(ll,pp,ii,jj) - 2      * nj * TDszsc(pp,ll,jj,ii) + 2 * DDzzcc(ll,pp,ii,jj)
-       Wzete = + 2 * nimj * TTssss(ll,pp,ii,jj) + 2 * ni      * TDstsc(ll,pp,ii,jj) - 2      * mj * TDszsc(pp,ll,jj,ii) - 2 * DDtzcc(pp,ll,jj,ii)
-       Wteze = + 2 * minj * TTssss(ll,pp,ii,jj) + 2      * nj * TDstsc(pp,ll,jj,ii) - 2 * mi      * TDszsc(ll,pp,ii,jj) - 2 * DDtzcc(ll,pp,ii,jj)
-       Wzeze = + 2 * mimj * TTssss(ll,pp,ii,jj) + 2 * mi      * TDstsc(ll,pp,ii,jj) + 2      * mj * TDstsc(pp,ll,jj,ii) + 2 * DDttcc(ll,pp,ii,jj)
+       if (Lcoordinatesingularity) then
+        if (ll < mi .or. pp < mj) cycle ! rule out zero components of Zernike; 02 Jul 19
+        if (mod(ll+mi,2)+mod(pp+mj,2)>0) cycle ! rule out zero components of Zernike; 02 Jul 19
+        ll1 = (ll - mod(ll, 2)) / 2 ! shrinked dof for Zernike; 02 Jul 19
+        pp1 = (pp - mod(pp, 2)) / 2 ! shrinked dof for Zernike; 02 Jul 19
+       else
+        ll1 = ll
+        pp1 = pp
+       end if
+
+       Wtete = + 2 * ninj * TTssss(ll1,pp1,ii,jj) - 2 * ni      * TDszsc(ll1,pp1,ii,jj) - 2      * nj * TDszsc(pp1,ll1,jj,ii) + 2 * DDzzcc(ll1,pp1,ii,jj)
+       Wzete = + 2 * nimj * TTssss(ll1,pp1,ii,jj) + 2 * ni      * TDstsc(ll1,pp1,ii,jj) - 2      * mj * TDszsc(pp1,ll1,jj,ii) - 2 * DDtzcc(pp1,ll1,jj,ii)
+       Wteze = + 2 * minj * TTssss(ll1,pp1,ii,jj) + 2      * nj * TDstsc(pp1,ll1,jj,ii) - 2 * mi      * TDszsc(ll1,pp1,ii,jj) - 2 * DDtzcc(ll1,pp1,ii,jj)
+       Wzeze = + 2 * mimj * TTssss(ll1,pp1,ii,jj) + 2 * mi      * TDstsc(ll1,pp1,ii,jj) + 2      * mj * TDstsc(pp1,ll1,jj,ii) + 2 * DDttcc(ll1,pp1,ii,jj)
        
        Htete =   zero
-       Hzete = - DToocc(pp,ll,jj,ii) + DToocc(ll,pp,ii,jj)
-       Hteze = + DToocc(pp,ll,jj,ii) - DToocc(ll,pp,ii,jj)
+       Hzete = - DToocc(pp1,ll1,jj,ii) + DToocc(ll1,pp1,ii,jj)
+       Hteze = + DToocc(pp1,ll1,jj,ii) - DToocc(ll1,pp1,ii,jj)
        Hzeze =   zero 
        
        id = Ate(lvol,0,ii)%i(ll) ; jd = Ate(lvol,0,jj)%i(pp) ; dMA(id,jd) = Wtete ; dMD(id,jd) = Htete
@@ -429,37 +453,32 @@ subroutine matrix( lvol, mn, lrad )
     else                                            ; kk = 0
     endif
     
-    do ll = 0, lrad ! Chebyshev polynomial ;
-     
-     ;                  ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lma(lvol,  ii)       ; dMA(id,jd) = +      TT(ll, 0,0)
-     ;                  ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lmb(lvol,  ii)       ; dMA(id,jd) = +      TT(ll,kk,0) ! check coordinate singularity ;
-     if( ii.gt.1 ) then ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lme(lvol,  ii)       ; dMA(id,jd) = - ni * TT(ll, 1,0)
-      ;                 ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lme(lvol,  ii)       ; dMA(id,jd) = - mi * TT(ll, 1,0)
-     else               ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lmg(lvol,  ii)       ; dMA(id,jd) = +      TT(ll, 1,0)
-      ;                 ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lmh(lvol,  ii)       ; dMA(id,jd) = +      TT(ll, 1,0)
-     endif
-     
+    do ll = 0, lrad
+    ;                  ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lma(lvol,  ii)       ; dMA(id,jd) = +      TTMdata(ll, mi)
+    ;                  ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lmb(lvol,  ii)       ; dMA(id,jd) = +      TTdata(ll, mi,kk)
+    if( ii.gt.1 ) then ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lme(lvol,  ii)       ; dMA(id,jd) = - ni * TTdata(ll, mi, 1)
+      ;                 ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lme(lvol,  ii)       ; dMA(id,jd) = - mi * TTdata(ll, mi, 1)
+    else               ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lmg(lvol,  ii)       ; dMA(id,jd) = +      TTdata(ll, mi, 1)
+      ;                 ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lmh(lvol,  ii)       ; dMA(id,jd) = +      TTdata(ll, mi, 1)
+    endif
+    
     enddo ! end of do ll ;
     
-    do pp = 0, lrad     ; id = Lma(lvol,  ii)       ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(id,jd) = +      TT(pp, 0,0)
-     ;                  ; id = Lmb(lvol,  ii)       ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(id,jd) = +      TT(pp,kk,0) ! check coordinate singularity ;
-     if( ii.gt.1 ) then ; id = Lme(lvol,  ii)       ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(id,jd) = - ni * TT(pp, 1,0)
-      ;                 ; id = Lme(lvol,  ii)       ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(id,jd) = - mi * TT(pp, 1,0)
-     else               ; id = Lmg(lvol,  ii)       ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(id,jd) = +      TT(pp, 1,0)
-      ;                 ; id = Lmh(lvol,  ii)       ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(id,jd) = +      TT(pp, 1,0)
-     endif
+    do pp = 0, lrad     ; id = Lma(lvol,  ii)       ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(id,jd) = +      TTMdata(pp, mi)
+    ;                  ; id = Lmb(lvol,  ii)       ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(id,jd) = +      TTdata(pp, mi,kk)
+    if( ii.gt.1 ) then ; id = Lme(lvol,  ii)       ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(id,jd) = - ni * TTdata(pp, mi, 1)
+      ;                 ; id = Lme(lvol,  ii)       ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(id,jd) = - mi * TTdata(pp, mi, 1)
+    else               ; id = Lmg(lvol,  ii)       ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(id,jd) = +      TTdata(pp, mi, 1)
+      ;                 ; id = Lmh(lvol,  ii)       ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(id,jd) = +      TTdata(pp, mi, 1)
+    endif
     enddo ! end of do pp ;
-    
-    ;if( ii.gt.1 ) then ; id = Lme(lvol,  ii)       ;                           ; dMG(id   ) = - ( iVns(ii) + iBns(ii) )
-    ;else               ; id = Lmg(lvol,  ii)       ;                           ; dMB(id, 1) = -       one
-!   ;                   ; id = Lmh(lvol,  ii)       ;                           ; dMB(id, 2) = -       one ! to be deleted;
-    ;                   ; id = Lmh(lvol,  ii)       ;                           ; dMB(id, 2) = +       one ! changed sign;
-    ;endif
-    
+      
    enddo ! end of do ii ;
+!$OMP END PARALLEL DO
    
   else ! NOTstellsym ;
-   
+
+!$OMP PARALLEL DO PRIVATE(ii,jj,ll,pp,mi,ni,mj,nj,mjmi,mjni,njmi,njni,ll1,pp1,Wtete,Wzete,Wteze,Wzeze,Htete,Hzete,Hteze,Hzeze,Wteto,Wzeto,Wtezo,Wzezo,Hteto,Hzeto,Htezo,Hzezo,Wtote,Wzote,Wtoze,Wzoze,Htote,Hzote,Htoze,Hzoze,Wtoto,Wzoto,Wtozo,Wzozo,Htoto,Hzoto,Htozo,Hzozo,id,jd,kk) SHARED(lvol,lrad) 
    do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
     
     do jj = 1, mn ; mj = im(jj) ; nj = in(jj) ; mjmi = mi * mj ; mjni = ni * mj ; njmi = mi * nj ; njni = ni * nj
@@ -467,44 +486,54 @@ subroutine matrix( lvol, mn, lrad )
      do ll = 0, lrad
       
       do pp = 0, lrad
+
+       if (Lcoordinatesingularity) then
+        if (ll < mi .or. pp < mj) cycle ! rule out zero components of Zernike; 02 Jul 19
+        if (mod(ll+mi,2)+mod(pp+mj,2)>0) cycle ! rule out zero components of Zernike; 02 Jul 19
+        ll1 = (ll - mod(ll, 2)) / 2! shrinked dof for Zernike; 02 Jul 19
+        pp1 = (pp - mod(pp, 2)) / 2 ! shrinked dof for Zernike; 02 Jul 19
+       else
+        ll1 = ll
+        pp1 = pp
+       end if
        
-       Wtete = 2 * ( + njni * TTssss(pp,ll,jj,ii) - nj * TDszsc(pp,ll,jj,ii) - ni * TDszsc(ll,pp,ii,jj) + DDzzcc(pp,ll,jj,ii) )
-       Wtote = 2 * ( - njni * TTsscs(pp,ll,jj,ii) + nj * TDszcc(pp,ll,jj,ii) - ni * TDszss(ll,pp,ii,jj) + DDzzsc(pp,ll,jj,ii) )
-       Wzete = 2 * ( + mjni * TTssss(pp,ll,jj,ii) - mj * TDszsc(pp,ll,jj,ii) + ni * TDstsc(ll,pp,ii,jj) - DDtzcc(pp,ll,jj,ii) )
-       Wzote = 2 * ( - mjni * TTsscs(pp,ll,jj,ii) + mj * TDszcc(pp,ll,jj,ii) + ni * TDstss(ll,pp,ii,jj) - DDtzsc(pp,ll,jj,ii) )
+       Wtete = 2 * ( + njni * TTssss(pp1,ll1,jj,ii) - nj * TDszsc(pp1,ll1,jj,ii) - ni * TDszsc(ll1,pp1,ii,jj) + DDzzcc(pp1,ll1,jj,ii) )
+       Wtote = 2 * ( - njni * TTsscs(pp1,ll1,jj,ii) + nj * TDszcc(pp1,ll1,jj,ii) - ni * TDszss(ll1,pp1,ii,jj) + DDzzsc(pp1,ll1,jj,ii) )
+       Wzete = 2 * ( + mjni * TTssss(pp1,ll1,jj,ii) - mj * TDszsc(pp1,ll1,jj,ii) + ni * TDstsc(ll1,pp1,ii,jj) - DDtzcc(pp1,ll1,jj,ii) )
+       Wzote = 2 * ( - mjni * TTsscs(pp1,ll1,jj,ii) + mj * TDszcc(pp1,ll1,jj,ii) + ni * TDstss(ll1,pp1,ii,jj) - DDtzsc(pp1,ll1,jj,ii) )
        
-       Wteto = 2 * ( - njni * TTsssc(pp,ll,jj,ii) - nj * TDszss(pp,ll,jj,ii) + ni * TDszcc(ll,pp,ii,jj) + DDzzcs(pp,ll,jj,ii) )
-       Wtoto = 2 * ( + njni * TTsscc(pp,ll,jj,ii) + nj * TDszcs(pp,ll,jj,ii) + ni * TDszcs(ll,pp,ii,jj) + DDzzss(pp,ll,jj,ii) )
-       Wzeto = 2 * ( - mjni * TTsssc(pp,ll,jj,ii) - mj * TDszss(pp,ll,jj,ii) - ni * TDstcc(ll,pp,ii,jj) - DDtzcs(pp,ll,jj,ii) )
-       Wzoto = 2 * ( + mjni * TTsscc(pp,ll,jj,ii) + mj * TDszcs(pp,ll,jj,ii) - ni * TDstcs(ll,pp,ii,jj) - DDtzss(pp,ll,jj,ii) )
+       Wteto = 2 * ( - njni * TTsssc(pp1,ll1,jj,ii) - nj * TDszss(pp1,ll1,jj,ii) + ni * TDszcc(ll1,pp1,ii,jj) + DDzzcs(pp1,ll1,jj,ii) )
+       Wtoto = 2 * ( + njni * TTsscc(pp1,ll1,jj,ii) + nj * TDszcs(pp1,ll1,jj,ii) + ni * TDszcs(ll1,pp1,ii,jj) + DDzzss(pp1,ll1,jj,ii) )
+       Wzeto = 2 * ( - mjni * TTsssc(pp1,ll1,jj,ii) - mj * TDszss(pp1,ll1,jj,ii) - ni * TDstcc(ll1,pp1,ii,jj) - DDtzcs(pp1,ll1,jj,ii) )
+       Wzoto = 2 * ( + mjni * TTsscc(pp1,ll1,jj,ii) + mj * TDszcs(pp1,ll1,jj,ii) - ni * TDstcs(ll1,pp1,ii,jj) - DDtzss(pp1,ll1,jj,ii) )
        
-       Wteze = 2 * ( + njmi * TTssss(pp,ll,jj,ii) + nj * TDstsc(pp,ll,jj,ii) - mi * TDszsc(ll,pp,ii,jj) - DDtzcc(pp,ll,jj,ii) )
-       Wtoze = 2 * ( - njmi * TTsscs(pp,ll,jj,ii) - nj * TDstcc(pp,ll,jj,ii) - mi * TDszss(ll,pp,ii,jj) - DDtzsc(pp,ll,jj,ii) )
-       Wzeze = 2 * ( + mjmi * TTssss(pp,ll,jj,ii) + mj * TDstsc(pp,ll,jj,ii) + mi * TDstsc(ll,pp,ii,jj) + DDttcc(pp,ll,jj,ii) )
-       Wzoze = 2 * ( - mjmi * TTsscs(pp,ll,jj,ii) - mj * TDstcc(pp,ll,jj,ii) + mi * TDstss(ll,pp,ii,jj) + DDttsc(pp,ll,jj,ii) )
+       Wteze = 2 * ( + njmi * TTssss(pp1,ll1,jj,ii) + nj * TDstsc(pp1,ll1,jj,ii) - mi * TDszsc(ll1,pp1,ii,jj) - DDtzcc(pp1,ll1,jj,ii) )
+       Wtoze = 2 * ( - njmi * TTsscs(pp1,ll1,jj,ii) - nj * TDstcc(pp1,ll1,jj,ii) - mi * TDszss(ll1,pp1,ii,jj) - DDtzsc(pp1,ll1,jj,ii) )
+       Wzeze = 2 * ( + mjmi * TTssss(pp1,ll1,jj,ii) + mj * TDstsc(pp1,ll1,jj,ii) + mi * TDstsc(ll1,pp1,ii,jj) + DDttcc(pp1,ll1,jj,ii) )
+       Wzoze = 2 * ( - mjmi * TTsscs(pp1,ll1,jj,ii) - mj * TDstcc(pp1,ll1,jj,ii) + mi * TDstss(ll1,pp1,ii,jj) + DDttsc(pp1,ll1,jj,ii) )
        
-       Wtezo = 2 * ( - njmi * TTsssc(pp,ll,jj,ii) + nj * TDstss(pp,ll,jj,ii) + mi * TDszcc(ll,pp,ii,jj) - DDtzcs(pp,ll,jj,ii) )
-       Wtozo = 2 * ( + njmi * TTsscc(pp,ll,jj,ii) - nj * TDstcs(pp,ll,jj,ii) + mi * TDszcs(ll,pp,ii,jj) - DDtzss(pp,ll,jj,ii) )
-       Wzezo = 2 * ( - mjmi * TTsssc(pp,ll,jj,ii) + mj * TDstss(pp,ll,jj,ii) - mi * TDstcc(ll,pp,ii,jj) + DDttcs(pp,ll,jj,ii) )
-       Wzozo = 2 * ( + mjmi * TTsscc(pp,ll,jj,ii) - mj * TDstcs(pp,ll,jj,ii) - mi * TDstcs(ll,pp,ii,jj) + DDttss(pp,ll,jj,ii) )
+       Wtezo = 2 * ( - njmi * TTsssc(pp1,ll1,jj,ii) + nj * TDstss(pp1,ll1,jj,ii) + mi * TDszcc(ll1,pp1,ii,jj) - DDtzcs(pp1,ll1,jj,ii) )
+       Wtozo = 2 * ( + njmi * TTsscc(pp1,ll1,jj,ii) - nj * TDstcs(pp1,ll1,jj,ii) + mi * TDszcs(ll1,pp1,ii,jj) - DDtzss(pp1,ll1,jj,ii) )
+       Wzezo = 2 * ( - mjmi * TTsssc(pp1,ll1,jj,ii) + mj * TDstss(pp1,ll1,jj,ii) - mi * TDstcc(ll1,pp1,ii,jj) + DDttcs(pp1,ll1,jj,ii) )
+       Wzozo = 2 * ( + mjmi * TTsscc(pp1,ll1,jj,ii) - mj * TDstcs(pp1,ll1,jj,ii) - mi * TDstcs(ll1,pp1,ii,jj) + DDttss(pp1,ll1,jj,ii) )
        
        Htete =   zero
        Htote =   zero
-       Hzete = - DToocc(pp,ll,jj,ii) + DToocc(ll,pp,ii,jj)
-       Hzote = - DToosc(pp,ll,jj,ii) + DToocs(ll,pp,ii,jj)
+       Hzete = - DToocc(pp1,ll1,jj,ii) + DToocc(ll1,pp1,ii,jj)
+       Hzote = - DToosc(pp1,ll1,jj,ii) + DToocs(ll1,pp1,ii,jj)
        
        Hteto =   zero
        Htoto =   zero
-       Hzeto = - DToocs(pp,ll,jj,ii) + DToosc(ll,pp,ii,jj)
-       Hzoto = - DTooss(pp,ll,jj,ii) + DTooss(ll,pp,ii,jj)  
+       Hzeto = - DToocs(pp1,ll1,jj,ii) + DToosc(ll1,pp1,ii,jj)
+       Hzoto = - DTooss(pp1,ll1,jj,ii) + DTooss(ll1,pp1,ii,jj)  
        
-       Hteze = + DToocc(pp,ll,jj,ii) - DToocc(ll,pp,ii,jj)
-       Htoze = + DToosc(pp,ll,jj,ii) - DToocs(ll,pp,ii,jj)
+       Hteze = + DToocc(pp1,ll1,jj,ii) - DToocc(ll1,pp1,ii,jj)
+       Htoze = + DToosc(pp1,ll1,jj,ii) - DToocs(ll1,pp1,ii,jj)
        Hzeze =   zero 
        Hzoze =   zero
        
-       Htezo = + DToocs(pp,ll,jj,ii) - DToosc(ll,pp,ii,jj)
-       Htozo = + DTooss(pp,ll,jj,ii) - DTooss(ll,pp,ii,jj)
+       Htezo = + DToocs(pp1,ll1,jj,ii) - DToosc(ll1,pp1,ii,jj)
+       Htozo = + DTooss(pp1,ll1,jj,ii) - DTooss(ll1,pp1,ii,jj)
        Hzezo =   zero
        Hzozo =   zero
      
@@ -536,48 +565,47 @@ subroutine matrix( lvol, mn, lrad )
     if( Lcoordinatesingularity .and. ii.eq.1 ) then ; kk = 1
     else                                            ; kk = 0
     endif
-    
+
     do ll = 0, lrad ! Chebyshev polynomial ;
 
-     ;                  ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lma(lvol,ii)         ; dMA(id,jd) = +      TT(ll, 0,0)
-     ;                  ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lmb(lvol,ii)         ; dMA(id,jd) = +      TT(ll,kk,0)
-     if( ii.gt.1 ) then ; id = Ato(lvol,0,ii)%i(ll) ; jd = Lmc(lvol,ii)         ; dMA(id,jd) = +      TT(ll, 0,0)
-      ;                 ; id = Azo(lvol,0,ii)%i(ll) ; jd = Lmd(lvol,ii)         ; dMA(id,jd) = +      TT(ll, 0,0)
-      ;                 ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lme(lvol,ii)         ; dMA(id,jd) = - ni * TT(ll, 1,0)
-      ;                 ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lme(lvol,ii)         ; dMA(id,jd) = - mi * TT(ll, 1,0)
-      ;                 ; id = Ato(lvol,0,ii)%i(ll) ; jd = Lmf(lvol,ii)         ; dMA(id,jd) = + ni * TT(ll, 1,0)
-      ;                 ; id = Azo(lvol,0,ii)%i(ll) ; jd = Lmf(lvol,ii)         ; dMA(id,jd) = + mi * TT(ll, 1,0)
-     else               ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lmg(lvol,ii)         ; dMA(id,jd) = +      TT(ll, 1,0)
-      ;                 ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lmh(lvol,ii)         ; dMA(id,jd) = +      TT(ll, 1,0)
-     endif
-     
+    ;                  ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lma(lvol,ii)         ; dMA(id,jd) = TTMdata(ll, mi)
+    ;                  ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lmb(lvol,ii)         ; dMA(id,jd) = TTdata(ll, mi,kk)
+    if( ii.gt.1 ) then ; id = Ato(lvol,0,ii)%i(ll) ; jd = Lmc(lvol,ii)         ; dMA(id,jd) = TTMdata(ll, mi)
+      ;                 ; id = Azo(lvol,0,ii)%i(ll) ; jd = Lmd(lvol,ii)         ; dMA(id,jd) = TTdata(ll, mi,0)
+      ;                 ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lme(lvol,ii)         ; dMA(id,jd) = - ni * TTdata(ll, mi, 1)
+      ;                 ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lme(lvol,ii)         ; dMA(id,jd) = - mi * TTdata(ll, mi, 1)
+      ;                 ; id = Ato(lvol,0,ii)%i(ll) ; jd = Lmf(lvol,ii)         ; dMA(id,jd) = + ni * TTdata(ll, mi, 1)
+      ;                 ; id = Azo(lvol,0,ii)%i(ll) ; jd = Lmf(lvol,ii)         ; dMA(id,jd) = + mi * TTdata(ll, mi, 1)
+    else               ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lmg(lvol,ii)         ; dMA(id,jd) = +      TTdata(ll, mi, 1)
+      ;                 ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lmh(lvol,ii)         ; dMA(id,jd) = +      TTdata(ll, mi, 1)
+    endif
+    
     enddo ! end of do ll;
     
     do pp = 0, lrad
-     ;                  ; id = Lma(lvol,ii)         ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(id,jd) = +      TT(pp, 0,0)
-     ;                  ; id = Lmb(lvol,ii)         ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(id,jd) = +      TT(pp,kk,0)
-     if( ii.gt.1 ) then ; id = Lmc(lvol,ii)         ; jd = Ato(lvol,0,ii)%i(pp) ; dMA(id,jd) = +      TT(pp, 0,0)
-      ;                 ; id = Lmd(lvol,ii)         ; jd = Azo(lvol,0,ii)%i(pp) ; dMA(id,jd) = +      TT(pp, 0,0)
-      ;                 ; id = Lme(lvol,ii)         ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(id,jd) = - ni * TT(pp, 1,0)
-      ;                 ; id = Lme(lvol,ii)         ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(id,jd) = - mi * TT(pp, 1,0)
-      ;                 ; id = Lmf(lvol,ii)         ; jd = Ato(lvol,0,ii)%i(pp) ; dMA(id,jd) = + ni * TT(pp, 1,0)
-      ;                 ; id = Lmf(lvol,ii)         ; jd = Azo(lvol,0,ii)%i(pp) ; dMA(id,jd) = + mi * TT(pp, 1,0)
-     else               ; id = Lmg(lvol,ii)         ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(id,jd) = +      TT(pp, 1,0)
-      ;                 ; id = Lmh(lvol,ii)         ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(id,jd) = +      TT(pp, 1,0)
-     endif
+    ;                  ; id = Lma(lvol,ii)         ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(id,jd) = TTMdata(pp, mi)
+    ;                  ; id = Lmb(lvol,ii)         ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(id,jd) = TTdata(pp, mi,kk)
+    if( ii.gt.1 ) then ; id = Lmc(lvol,ii)         ; jd = Ato(lvol,0,ii)%i(pp) ; dMA(id,jd) = TTMdata(pp, mi)
+      ;                 ; id = Lmd(lvol,ii)         ; jd = Azo(lvol,0,ii)%i(pp) ; dMA(id,jd) = TTdata(pp, mi,0)
+      ;                 ; id = Lme(lvol,ii)         ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(id,jd) = - ni * TTdata(pp, mi, 1)
+      ;                 ; id = Lme(lvol,ii)         ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(id,jd) = - mi * TTdata(pp, mi, 1)
+      ;                 ; id = Lmf(lvol,ii)         ; jd = Ato(lvol,0,ii)%i(pp) ; dMA(id,jd) = + ni * TTdata(pp, mi, 1)
+      ;                 ; id = Lmf(lvol,ii)         ; jd = Azo(lvol,0,ii)%i(pp) ; dMA(id,jd) = + mi * TTdata(pp, mi, 1)
+    else               ; id = Lmg(lvol,ii)         ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(id,jd) = +      TTdata(pp, mi, 1)
+      ;                 ; id = Lmh(lvol,ii)         ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(id,jd) = +      TTdata(pp, mi, 1)
+    endif
     enddo ! end of do pp ;
     
-    ;if( ii.gt.1 ) then ; id = Lme(lvol,ii)         ;                           ; dMG(id   ) = - ( iVns(ii) + iBns(ii) )
-    ;                   ; id = Lmf(lvol,ii)         ;                           ; dMG(id   ) = - ( iVnc(ii) + iBnc(ii) )
-    ;else               ; id = Lmg(lvol,ii)         ;                           ; dMB(id, 1) = -       one
-!   ;                   ; id = Lmh(lvol,ii)         ;                           ; dMB(id, 2) = -       one ! to be deleted;
-    ;                   ; id = Lmh(lvol,ii)         ;                           ; dMB(id, 2) = +       one ! changed sign;
-    ;endif
-    
    enddo ! end of do ii ;
-   
+!$OMP END PARALLEL DO  
   endif ! end of if( YESstellsym ) ;
   
+  ! call subroutine matrixBG to construct dMB and dMG
+  WCALL( matrix, matrixBG, ( lvol, mn, lrad ) )
+
+  DALLOCATE( TTdata )
+  DALLOCATE( TTMdata )
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 #ifdef DEBUG
@@ -613,5 +641,55 @@ subroutine matrix( lvol, mn, lrad )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 end subroutine matrix
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+subroutine matrixBG( lvol, mn, lrad )
+  ! only compute the dMB and dMG matrix for matrix-free mode
+  use constants, only : zero, one
+  use allglobal, only : NAdof, im, in,&
+                        dMG, dMB, YESstellsym, &
+                        iVnc, iVns, iBnc, iBns, &
+                        Lme, Lmf, Lmg, Lmh
+  implicit none
+  INTEGER, intent(in)  :: lvol, mn, lrad
+
+  INTEGER :: NN, ii, id, mi, ni
+
+  NN = NAdof(lvol) ! shorthand;
+
+  dMB(0:NN,1: 2) = zero
+  dMG(0:NN     ) = zero
+
+  if( YESstellsym ) then
+ 
+   do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
+    
+    ;if( ii.gt.1 ) then ; id = Lme(lvol,  ii)       ;                           ; dMG(id   ) = - ( iVns(ii) + iBns(ii) )
+    ;else               ; id = Lmg(lvol,  ii)       ;                           ; dMB(id, 1) = -       one
+!   ;                   ; id = Lmh(lvol,  ii)       ;                           ; dMB(id, 2) = -       one ! to be deleted;
+    ;                   ; id = Lmh(lvol,  ii)       ;                           ; dMB(id, 2) = +       one ! changed sign;
+    ;endif
+ 
+   enddo ! end of do ii ;
+   
+  else ! NOTstellsym ;
+
+   do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
+   
+    ;if( ii.gt.1 ) then ; id = Lme(lvol,ii)         ;                           ; dMG(id   ) = - ( iVns(ii) + iBns(ii) )
+    ;                   ; id = Lmf(lvol,ii)         ;                           ; dMG(id   ) = - ( iVnc(ii) + iBnc(ii) )
+    ;else               ; id = Lmg(lvol,ii)         ;                           ; dMB(id, 1) = -       one
+!   ;                   ; id = Lmh(lvol,ii)         ;                           ; dMB(id, 2) = -       one ! to be deleted;
+    ;                   ; id = Lmh(lvol,ii)         ;                           ; dMB(id, 2) = +       one ! changed sign;
+    ;endif
+    
+   enddo ! end of do ii ;
+   
+  endif ! end of if( YESstellsym ) ;
+
+  return
+
+end subroutine matrixBG
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

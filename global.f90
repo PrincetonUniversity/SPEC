@@ -55,7 +55,7 @@ module constants
   REAL, parameter :: mu0        =   2.0E-07 * pi2
   REAL, parameter :: goldenmean =   1.618033988749895 ! golden mean = ( one + sqrt(five) ) / two ;
 
-  REAL, parameter :: version    =   2.1
+  REAL, parameter :: version    =   3.00
 
 end module constants
 
@@ -111,13 +111,14 @@ end module cputiming
 module typedefns
   
   type subgrid
-     REAL,    allocatable :: s(:)
-     INTEGER, allocatable :: i(:)
+    REAL,    allocatable :: s(:)
+    INTEGER, allocatable :: i(:)
   end type subgrid
 
-  type VarSizeMatrix
-        REAL, allocatable :: mat(:,:)
-  end type VarSizeMatrix
+  type MatrixLU
+    REAL, allocatable :: mat(:,:)
+    INTEGER, allocatable :: ipivot(:)
+  end type MatrixLU
 
 end module typedefns
 
@@ -140,8 +141,8 @@ module inputlist
   CHARACTER          :: ext*100
 
   INTEGER, parameter :: MNvol     = 256 !latex \item The maximum value of \inputvar{Nvol} is \verb+MNvol=256+.
-  INTEGER, parameter :: MMpol     =  32 !latex \item The maximum value of \inputvar{Mpol} is \verb+MNpol= 32+.
-  INTEGER, parameter :: MNtor     =  16 !latex \item The maximum value of \inputvar{Ntor} is \verb+MNtor= 16+.
+  INTEGER, parameter :: MMpol     =  64 !latex \item The maximum value of \inputvar{Mpol} is \verb+MNpol= 32+.
+  INTEGER, parameter :: MNtor     =  64 !latex \item The maximum value of \inputvar{Ntor} is \verb+MNtor= 32+.
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -203,8 +204,10 @@ module inputlist
   REAL         :: Vnc(-MNtor:MNtor,-MMpol:MMpol)  =  0.0 ! non-stellarator symmetric normal field at boundary; vacuum component;
   REAL         :: Bnc(-MNtor:MNtor,-MMpol:MMpol)  =  0.0 ! non-stellarator symmetric normal field at boundary; plasma component;
 
-  REAL         :: mupftol                    =  1.0e-16
+  REAL         :: mupftol                    =  1.0e-14
   INTEGER      :: mupfits                    =  8
+
+  INTEGER      :: Lreflect                   =  0
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -225,6 +228,8 @@ module inputlist
   REAL         :: iotatol     = -1.0
   INTEGER      :: Lextrap     =  0
   INTEGER      :: Mregular    = -1
+  INTEGER      :: Lrzaxis     = 1
+  INTEGER      :: Ntoraxis    = 3
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -234,6 +239,11 @@ module inputlist
   INTEGER      :: Linitgues  =  1
   INTEGER      :: Lposdef    =  0 ! redundant;
   REAL         :: maxrndgues =  1.0
+  INTEGER      :: Lmatsolver = 3
+  INTEGER      :: NiterGMRES = 200
+  REAL         :: epsGMRES = 1e-14
+  INTEGER      :: LGMRESprec = 1
+  REAL         :: epsILU = 1e-12
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -280,6 +290,8 @@ module inputlist
   INTEGER      :: Lperturbed       =     0   
   INTEGER      :: dpp              =    -1
   INTEGER      :: dqq              =    -1
+  INTEGER      :: Lerrortype       =     0
+  INTEGER      :: Ngrid            =    -1
   REAL         :: dRZ              =     1E-5    ! For finite difference estimate
   INTEGER      :: Lcheck           =     0
   LOGICAL      :: Ltiming          =  .false.
@@ -292,8 +304,6 @@ module inputlist
   
 ! DSCREENLIST ! define screenlist; this is expanded by Makefile; DO NOT REMOVE; each file compiled by Makefile has its own write flag;
   LOGICAL      :: Wbuild_vector_potential = .false.
-  LOGICAL      :: Wallocate_geometry_matrices = .false.
-  LOGICAL      :: Wdeallocate_geometry_matrices = .false.
   LOGICAL      :: Wreadin = .false.
   LOGICAL      :: Wwritin = .false. ! redundant; 
   LOGICAL      :: Wwrtend = .false.
@@ -433,7 +443,7 @@ module inputlist
                 !latex \bi
                 !latex \item only relevant if illogical input for \inputvar{ql} and \inputvar{qr} are provided;
                 !latex \ei
- mupftol     ,& !latex \item \inputvar{mupftol = 1.0e-16} : \verb!real! : accuracy to which $\mu$ and $\Delta\psi_p$ are required;
+ mupftol     ,& !latex \item \inputvar{mupftol = 1.0e-14} : \verb!real! : accuracy to which $\mu$ and $\Delta\psi_p$ are required;
                 !latex \bi
                 !latex \item only relevant if constraints on transform, enclosed currents etc. are to be satisfied iteratively, see \inputvar{Lconstraint};
                 !latex \ei
@@ -467,8 +477,8 @@ module inputlist
  Vns         ,& !latex \item \inputvar{Vns} : \verb!real(-MNtor:MNtor,-MMpol:MMpol)! : Fourier harmonics of vacuum normal field at boundary;
  Bns         ,& !latex \item \inputvar{Bns} : \verb!real(-MNtor:MNtor,-MMpol:MMpol)! : Fourier harmonics of plasma normal field at boundary;
  Vnc         ,& !latex \item \inputvar{Vnc} : \verb!real(-MNtor:MNtor,-MMpol:MMpol)! : Fourier harmonics of vacuum normal field at boundary;
- Bnc            !latex \item \inputvar{Bnc} : \verb!real(-MNtor:MNtor,-MMpol:MMpol)! : Fourier harmonics of plasma normal field at boundary;
-
+ Bnc         ,& !latex \item \inputvar{Bnc} : \verb!real(-MNtor:MNtor,-MMpol:MMpol)! : Fourier harmonics of plasma normal field at boundary;
+ Lreflect       !latex \item \inputvar{Lreflect = 0} : \verb!integer! : =1 reflect the upper and lower bound in slab, =0 do not reflect
 !latex \ei
 
 !latex \end{enumerate}
@@ -586,10 +596,17 @@ module inputlist
  iotatol     ,& !latex \item \inputvar{iotatol = -1.0 : real} : tolerance required for iterative construction of straight-fieldline angle;
                 !latex only relevant if \inputvar{Lsparse.ge.2};
  Lextrap     ,& !latex \item \inputvar{Lextrap = 0 : integer} : geometry of innermost interface is defined by extrapolation;
- Mregular       !latex \item \inputvar{Mregular = -1 : integer} : maximum regularization factor;                !latex \bi
+ Mregular    ,& !latex \item \inputvar{Mregular = -1 : integer} : maximum regularization factor;                !latex \bi
                 !latex \bi
                 !latex \item if \inputvar{Mregular.ge.2}, then \internal{regumm}$_i$ = \inputvar{Mregular} $/ 2 $ where \internal{m}$_i > $ \inputvar{Mregular}
                 !latex \ei
+ Lrzaxis     ,& !latex \item \inputvar{Lrzaxis = 1 : integer} : controls the guess of geometry axis in the innermost volume or initialization of interfaces
+                !latex \bi
+                !latex \item if \inputvar{iprecon = 1}, the centroid is used;
+                !latex \item if \inputvar{iprecon = 2}, the Jacobian $m=1$ harmonic elimination method is used; 
+                !latex \ei
+ Ntoraxis       !latex \item \inputvar{Ntoraxis = 3 : integer} : the number of $n$ harmonics used in the Jacobian $m=1$ harmonic elimination method;
+                !latex only relevant if \inputvar{Lrzaxis.ge.1};
 
 !latex \ei
 
@@ -642,6 +659,11 @@ module inputlist
                 !latex \item if \inputvar{Linitgues = 3}, the initial guess for the Beltrami field will be randomized with the maximum \inputvar{maxrndgues};
                 !latex \ei
  maxrndgues,&   !latex \item \inputvar{maxrndgues = 1.0} : real : the maximum random number of the Beltrami field if \inputvar{Linitgues = 3};
+ Lmatsolver,&!latex \item \inputvar{Lmatsolver = 3} : integer : 1 for LU factorization, 2 for GMRES, 3 for GMRES matrix-free
+ NiterGMRES,&   !latex \item \inputvar{LGMRESniter = 200} : integer : number of max iteration for GMRES
+ epsGMRES,&     !latex \item \inputvar{epsGMRES = 1e-14} : real : the precision of GMRES
+ LGMRESprec,&!latex \item \inputvar{LGMRESprec = 1} : integer : type of preconditioner for GMRES, 1 for ILU sparse matrix
+ epsILU,&       !latex \item \inputvar{epsILU = 1e-12} : real : the precision of incomplete LU factorization for preconditioning
  Lposdef        !latex \item\inputvar{Lposdef = 0 : integer} : redundant;
 !Nmaxexp        !l tex \item \inputvar{Nmaxexp = 32 : integer} : indicates maximum exponent used to precondition Beltrami linear system near singularity;
                 !l tex \bi
@@ -807,6 +829,8 @@ module inputlist
  Lperturbed ,&  !latex \item \inputvar{Lperturbed = 0} : integer : to compute linear, perturbed equilibrium;
  dpp        ,&  !latex \item \inputvar{dpp = 1} : integer : perturbed harmonic;
  dqq        ,&  !latex \item \inputvar{dqq = 1} : integer : perturbed harmonic;
+ Lerrortype ,&  !latex \item \inputvar{Lerrortype = 0} : integer : the type of error output for Lcheck=1
+ Ngrid      ,&  !latex \item \inputvar{Ngrid=-1} : integer : the number of points to output in the grid, -1 for Lrad(vvol)
  Lcheck     ,&  !latex \item \inputvar{Lcheck = 0} : integer : implement various checks;
                 !latex \bi
                 !latex \item if \inputvar{Lcheck = 0}, no additional check on the calculation is performed;
@@ -863,8 +887,6 @@ module inputlist
   namelist/screenlist/&
 ! NSCREENLIST ! namelist screenlist; this is expanded by Makefile; DO NOT REMOVE;
  Wbuild_vector_potential , &
- Wallocate_geometry_matrices , &
- Wdeallocate_geometry_matrices , &
  Wreadin , &  !latex \item Every subroutine, e.g. \type{xy00aa.h}, has its own write flag, \type{Wxy00aa}.
  Wwritin , & ! redundant; 
  Wwrtend , &
@@ -933,9 +955,13 @@ module allglobal
 
   LOGICAL              :: YESstellsym, NOTstellsym ! internal shorthand copies of Istellsym, which is an integer input; 
 
-  REAL   , allocatable :: cheby(:,:) ! local workspace;
+  LOGICAL              :: YESMatrixFree, NOTMatrixFree ! to use matrix-free method or not
+
+  REAL   , allocatable :: cheby(:,:), zernike(:,:,:) ! local workspace;
   
-  REAL   , allocatable :: TT(:,:,:) ! derivatives of Chebyshev polynomials at the inner and outer interfaces;
+  REAL   , allocatable :: TT(:,:,:), RTT(:,:,:,:) ! derivatives of Chebyshev and Zernike polynomials at the inner and outer interfaces;
+  REAL   , allocatable :: RTM(:,:) ! r^m term of Zernike polynomials at the origin
+  REAL   , allocatable :: ZernikeDof(:) ! Zernike degree of freedom for each m
 
   LOGICAL, allocatable :: ImagneticOK(:)   ! used to indicate if Beltrami fields have been correctly constructed;
 
@@ -977,6 +1003,8 @@ module allglobal
 
   INTEGER              :: mns ! enhanced resolution for straight field line transformation;
   INTEGER, allocatable :: ims(:), ins(:)
+
+  INTEGER              :: lMpol, lNtor, sMpol, sNtor
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1028,6 +1056,7 @@ module allglobal
 !latex \end{enumerate}
 
   REAL   , allocatable :: Rij(:,:,:), Zij(:,:,:), Xij(:,:,:), Yij(:,:,:), sg(:,:), guvij(:,:,:,:), gvuij(:,:,:) ! real-space; 10 Dec 15;
+  REAL   , allocatable :: guvijsave(:,:,:,:)
   
   INTEGER, allocatable :: ki(:,:), kijs(:,:,:), kija(:,:,:) ! identification of Fourier modes; 
 
@@ -1043,13 +1072,13 @@ module allglobal
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  REAL   , allocatable :: goomne(:), goomno(:) ! described in preset;
-  REAL   , allocatable :: gssmne(:), gssmno(:) ! described in preset;
-  REAL   , allocatable :: gstmne(:), gstmno(:) ! described in preset;
-  REAL   , allocatable :: gszmne(:), gszmno(:) ! described in preset;
-  REAL   , allocatable :: gttmne(:), gttmno(:) ! described in preset;
-  REAL   , allocatable :: gtzmne(:), gtzmno(:) ! described in preset;
-  REAL   , allocatable :: gzzmne(:), gzzmno(:) ! described in preset;
+  REAL   , allocatable :: goomne(:,:), goomno(:,:) ! described in preset;
+  REAL   , allocatable :: gssmne(:,:), gssmno(:,:) ! described in preset;
+  REAL   , allocatable :: gstmne(:,:), gstmno(:,:) ! described in preset;
+  REAL   , allocatable :: gszmne(:,:), gszmno(:,:) ! described in preset;
+  REAL   , allocatable :: gttmne(:,:), gttmno(:,:) ! described in preset;
+  REAL   , allocatable :: gtzmne(:,:), gtzmno(:,:) ! described in preset;
+  REAL   , allocatable :: gzzmne(:,:), gzzmno(:,:) ! described in preset;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1075,6 +1104,11 @@ module allglobal
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+  REAL,    allocatable :: Tsc(:,:), Tss(:,:), Dtc(:,:), Dts(:,:), Dzc(:,:), Dzs(:,:)
+  REAL,    allocatable :: Ttc(:,:), Tzc(:,:) ,Tts(:,:), Tzs(:,:)
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
   REAL,    allocatable :: dtflux(:), dpflux(:) ! \delta \psi_{toroidal} and \delta \psi_{poloidal} in each annulus;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -1090,6 +1124,7 @@ module allglobal
 !latex This depends on \inputvar{Mpol}, \inputvar{Ntor} and \inputvar{Lrad(vvol)}.
    
   INTEGER, allocatable :: NAdof(:) ! degrees of freedom in Beltrami fields in each annulus;
+  INTEGER, allocatable :: Nfielddof(:) ! degrees of freedom in Beltrami fields in each annulus, field only, no Lagrange multipliers;
 
 !latex \item The covariant components of the vector potential are written as
 !latex       \be            A_\t & = & \sum_i \sum_{l=0}^L \Ate{i,l} \; T_{l}(s) \cos\a_i + \sum_i \sum_{l=0}^L \Ato{i,l} \; T_{l}(s) \sin\a_i \\
@@ -1112,12 +1147,15 @@ module allglobal
   type(subgrid), allocatable :: Ato(:,:,:), Azo(:,:,:)
 
   INTEGER      , allocatable :: Lma(:,:), Lmb(:,:), Lmc(:,:), Lmd(:,:), Lme(:,:), Lmf(:,:), Lmg(:,:), Lmh(:,:)
+  REAL         , allocatable :: Lmavalue(:,:), Lmbvalue(:,:), Lmcvalue(:,:), Lmdvalue(:,:), Lmevalue(:,:), Lmfvalue(:,:)
+  REAL         , allocatable :: Lmgvalue(:,:), Lmhvalue(:,:)
 ! REAL         , allocatable :: Lto(    :), Lzo(    :)
 
 ! INTEGER      , allocatable :: Lmo(:,:), Lme(:,:) ! Lagrange multipliers for enforcing the boundary condition that B.n=0; 17 Dec 15;
   INTEGER      , allocatable :: Fso(:,:), Fse(:,:)
 
   LOGICAL                    :: Lcoordinatesingularity, Lplasmaregion, Lvacuumregion
+  LOGICAL                    :: Lsavedguvij        ! flag used in matrix free
   
   LOGICAL             :: Localconstraint
 
@@ -1138,15 +1176,24 @@ module allglobal
    
    REAL,   allocatable :: dMA(:,:), dMB(:,:)! dMC(:,:) ! energy and helicity matrices; quadratic forms; 
    REAL,   allocatable :: dMD(:,:)! dME(:,:)! dMF(:,:) ! energy and helicity matrices; quadratic forms; 
+
+   REAL,   allocatable :: dMAS(:), dMDS(:) ! sparse version of dMA and dMD, data
+   INTEGER,allocatable :: idMAS(:), jdMAS(:) ! sparse version of dMA and dMD, indices
+   INTEGER,allocatable :: NdMASmax(:), NdMAS(:) ! number of elements for sparse matrices
+
    REAL,   allocatable :: dMG(:  )
-   REAL,   allocatable :: solution(:,:) ! this is allocated in dforce; used in mp00ac and ma02aa; and is passed to packab; 
+
+   REAL,   allocatable :: solution(:,:) ! this is allocated in dforce; used in mp00ac and ma02aa; and is passed to packab;
+
+   REAL,   allocatable :: GMRESlastsolution(:,:,:) ! used to store the last solution for restarting GMRES
 
 !  REAL,   allocatable :: MBpsi(:), MEpsi(:) ! matrix vector products; 
    REAL,   allocatable :: MBpsi(:)           ! matrix vector products; 
 !  REAL                :: psiMCpsi, psiMFpsi
 !  REAL                ::           psiMFpsi
 
-   REAL,    allocatable :: BeltramiInverse(:,:)
+   LOGICAL             :: LILUprecond        ! whether to use ILU preconditioner for GMRES
+   REAL,   allocatable :: BeltramiInverse(:,:)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1176,6 +1223,15 @@ module allglobal
 !latex \end{enumerate}
 
   REAL,    allocatable ::  Btemn(:,:,:), Bzemn(:,:,:), Btomn(:,:,:), Bzomn(:,:,:) ! covariant components of the tangential field on interfaces;
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+!latex \subsubsection{\type{Bloweremn, Bloweromn} : covariant field for Hessian computation}
+!latex \begin{enumerate}
+!latex \item The covariant field:
+!latex \end{enumerate}
+
+  REAL,    allocatable ::  Bloweremn(:,:), Bloweromn(:,:)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1420,6 +1476,7 @@ INTEGER              :: tderiv    ! Derivative of Chebyshev polynomialc. 0: no d
                                   !                                      1: w.r.t radial coordinate s
 INTEGER              :: ii,  &    ! Loop index on Fourier harmonics
                         ll,  &    ! Loop index on radial resolution
+                        mi,  &    ! Poloidal mode number
                         lvol,&    ! Volume number
                         iocons    ! inner (0) or outer (1) side of the volume
 REAL                 :: mfactor   ! Regularization factor when LcoordinateSingularity
@@ -1433,145 +1490,27 @@ BEGIN(build_vector_potential)
   
   do ii = 1, mn ! loop over Fourier harmonics; 13 Sep 13;
    
-   if( Lcoordinatesingularity ) then ; mfactor = regumm(ii) * half ! only required at outer interface, where \bar s = 1; 15 Jan 15;
-   else                              ; mfactor = zero
-   endif
-   
-    do ll = 0, Lrad(lvol)
-      efmn(ii) = efmn(ii) +  Ate(lvol,aderiv,ii)%s(ll) * ( TT(ll,iocons,tderiv) + mfactor )
-      cfmn(ii) = cfmn(ii) +  Aze(lvol,aderiv,ii)%s(ll) * ( TT(ll,iocons,tderiv) + mfactor )
+   if( Lcoordinatesingularity ) then
+    mi = im(ii)
+    do ll = mi, Lrad(lvol),2 ! loop over Zernike polynomials; Lrad is the radial resolution; 01 Jul 19;
+      ;                      ; efmn(ii) = efmn(ii) +          Ate(lvol,aderiv,ii)%s(ll) * RTT(ll,mi,iocons,1) * half
+      ;                      ; cfmn(ii) = cfmn(ii) +          Aze(lvol,aderiv,ii)%s(ll) * RTT(ll,mi,iocons,1) * half
+      if( NOTstellsym ) then ; ofmn(ii) = ofmn(ii) +          Ato(lvol,aderiv,ii)%s(ll) * RTT(ll,mi,iocons,1) * half
+      ;                      ; sfmn(ii) = sfmn(ii) +          Azo(lvol,aderiv,ii)%s(ll) * RTT(ll,mi,iocons,1) * half
+      endif
     enddo ! end of do ll; 20 Feb 13;
-
-    if( NOTstellsym ) then
-      do ll = 0, Lrad(lvol)
-        ofmn(ii) = ofmn(ii) +  Ato(lvol,aderiv,ii)%s(ll) * ( TT(ll,iocons,tderiv) + mfactor )
-        sfmn(ii) = sfmn(ii) +  Azo(lvol,aderiv,ii)%s(ll) * ( TT(ll,iocons,tderiv) + mfactor )
-      enddo
-    endif
-    
+   else
+    do ll = 0, Lrad(lvol) ! loop over Chebyshev polynomials; Lrad is the radial resolution;
+      ;                      ; efmn(ii) = efmn(ii) +          Ate(lvol,aderiv,ii)%s(ll) * TT(ll,iocons,1) ! aderiv labels deriv. wrt mu, pflux; 
+      ;                      ; cfmn(ii) = cfmn(ii) +          Aze(lvol,aderiv,ii)%s(ll) * TT(ll,iocons,1)
+      if( NOTstellsym ) then ; ofmn(ii) = ofmn(ii) +          Ato(lvol,aderiv,ii)%s(ll) * TT(ll,iocons,1)
+      ;                     ; sfmn(ii) = sfmn(ii) +          Azo(lvol,aderiv,ii)%s(ll) * TT(ll,iocons,1)
+      endif
+    enddo ! end of do ll; 20 Feb 13;
+   end if ! Lcoordinatesingularity; 01 Jul 19;
   enddo ! end of do ii; 20 Feb 13;
 
 end subroutine build_vector_potential
-
-
-
-subroutine allocate_geometry_matrices(ll)
-
-! Allocate all geometry dependent matrices for a given ll
-
-  use constants, only: zero
-
-  use fileunits
-
-  use inputlist, only:  Wallocate_geometry_matrices, Wmacros
-
-  use cputiming
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  LOCALS
-
-  INTEGER         :: ll
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  BEGIN(allocate_geometry_matrices)
-
-  SALLOCATE( DToocc, (0:ll,0:ll,1:mn,1:mn), zero )
-  SALLOCATE( DToocs, (0:ll,0:ll,1:mn,1:mn), zero )
-  SALLOCATE( DToosc, (0:ll,0:ll,1:mn,1:mn), zero )
-  SALLOCATE( DTooss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-  SALLOCATE( TTsscc, (0:ll,0:ll,1:mn,1:mn), zero )
-  SALLOCATE( TTsscs, (0:ll,0:ll,1:mn,1:mn), zero )
-  SALLOCATE( TTsssc, (0:ll,0:ll,1:mn,1:mn), zero )
-  SALLOCATE( TTssss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-  SALLOCATE( TDstcc, (0:ll,0:ll,1:mn,1:mn), zero )
-  SALLOCATE( TDstcs, (0:ll,0:ll,1:mn,1:mn), zero )
-  SALLOCATE( TDstsc, (0:ll,0:ll,1:mn,1:mn), zero )
-  SALLOCATE( TDstss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-  SALLOCATE( TDszcc, (0:ll,0:ll,1:mn,1:mn), zero )
-  SALLOCATE( TDszcs, (0:ll,0:ll,1:mn,1:mn), zero )
-  SALLOCATE( TDszsc, (0:ll,0:ll,1:mn,1:mn), zero )
-  SALLOCATE( TDszss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-  SALLOCATE( DDttcc, (0:ll,0:ll,1:mn,1:mn), zero )
-  SALLOCATE( DDttcs, (0:ll,0:ll,1:mn,1:mn), zero )
-  SALLOCATE( DDttsc, (0:ll,0:ll,1:mn,1:mn), zero )
-  SALLOCATE( DDttss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-  SALLOCATE( DDtzcc, (0:ll,0:ll,1:mn,1:mn), zero )
-  SALLOCATE( DDtzcs, (0:ll,0:ll,1:mn,1:mn), zero )
-  SALLOCATE( DDtzsc, (0:ll,0:ll,1:mn,1:mn), zero )
-  SALLOCATE( DDtzss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-  SALLOCATE( DDzzcc, (0:ll,0:ll,1:mn,1:mn), zero )
-  SALLOCATE( DDzzcs, (0:ll,0:ll,1:mn,1:mn), zero )
-  SALLOCATE( DDzzsc, (0:ll,0:ll,1:mn,1:mn), zero )
-  SALLOCATE( DDzzss, (0:ll,0:ll,1:mn,1:mn), zero )
-
-
-end subroutine allocate_geometry_matrices
-
-
-subroutine deallocate_geometry_matrices()
-
-! Deallocate all geometry dependent matrices
-  use constants, only: zero
-
-  use fileunits
-
-  use inputlist, only:  Wdeallocate_geometry_matrices, Wmacros
-
-  use cputiming
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  LOCALS
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  BEGIN(deallocate_geometry_matrices)
-
-    DALLOCATE(DToocc)
-    DALLOCATE(DToocs)
-    DALLOCATE(DToosc)
-    DALLOCATE(DTooss)
-
-    DALLOCATE(TTsscc)
-    DALLOCATE(TTsscs)
-    DALLOCATE(TTsssc)
-    DALLOCATE(TTssss)
-
-    DALLOCATE(TDstcc)
-    DALLOCATE(TDstcs)
-    DALLOCATE(TDstsc)
-    DALLOCATE(TDstss)
-
-    DALLOCATE(TDszcc)
-    DALLOCATE(TDszcs)
-    DALLOCATE(TDszsc)
-    DALLOCATE(TDszss)
-
-    DALLOCATE(DDttcc)
-    DALLOCATE(DDttcs)
-    DALLOCATE(DDttsc)
-    DALLOCATE(DDttss)
-
-    DALLOCATE(DDtzcc)
-    DALLOCATE(DDtzcs)
-    DALLOCATE(DDtzsc)
-    DALLOCATE(DDtzss)
-
-    DALLOCATE(DDzzcc)
-    DALLOCATE(DDzzcs)
-    DALLOCATE(DDzzsc)
-    DALLOCATE(DDzzss)
-
-  end subroutine deallocate_geometry_matrices
-
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1598,7 +1537,7 @@ subroutine readin
   LOCALS
 
   LOGICAL              :: Lspexist, Lchangeangle
-  INTEGER              :: vvol, mm, nn, nb, imn, ix, ii, jj, ij, kk, mj, nj, mk, nk, ip, lMpol, lNtor, X02BBF, iargc, iarg, numargs, mi, ni, lvol, extlen, sppos
+  INTEGER              :: vvol, mm, nn, nb, imn, ix, ii, jj, ij, kk, mj, nj, mk, nk, ip, X02BBF, iargc, iarg, numargs, mi, ni, lvol, extlen, sppos
   REAL                 :: xx, toroidalflux, toroidalcurrent
   REAL,    allocatable :: RZRZ(:,:) ! local array used for reading interface Fourier harmonics from file;
   
@@ -1737,14 +1676,14 @@ subroutine readin
    
    write(ounit,'("readin : ", 10x ," : ")')
    
-   write(ounit,1010) cput-cpus, Igeometry, Istellsym
+   write(ounit,1010) cput-cpus, Igeometry, Istellsym, Lreflect
    write(ounit,1011)            Lfreebound, phiedge, curtor, curpol
    write(ounit,1012)            gamma
    write(ounit,1013)            Nfp, Nvol, Mvol, Mpol, Ntor
    write(ounit,1014)            pscale, Ladiabatic, Lconstraint, mupftol, mupfits
    write(ounit,1015)            Lrad(1:min(Mvol,32))
    
-1010 format("readin : ",f10.2," : Igeometry=",i3," ; Istellsym=",i3," ;")
+1010 format("readin : ",f10.2," : Igeometry=",i3," ; Istellsym=",i3," ; Lreflect="i3" ;")
 1011 format("readin : ", 10x ," : Lfreebound=",i3," ; phiedge="es23.15" ; curtor="es23.15" ; curpol="es23.15" ;")
 1012 format("readin : ", 10x ," : gamma="es23.15" ;")
 1013 format("readin : ", 10x ," : Nfp=",i3," ; Nvol=",i3," ; Mvol=",i3," ; Mpol=",i3," ; Ntor=",i3," ;")
@@ -1795,7 +1734,7 @@ subroutine readin
    
    FATAL( readin, tflux(1).lt.zero, enclosed toroidal flux cannot be zero )
    do vvol = 2, Mvol
-    FATAL( readin, tflux(vvol)-tflux(vvol-1).lt.small, toroidal flux is not monotonic )
+    !FATAL( readin, tflux(vvol)-tflux(vvol-1).lt.small, toroidal flux is not monotonic )
    enddo
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -1838,6 +1777,10 @@ subroutine readin
     FATAL( readin, Lrad(vvol ).lt.2, require Chebyshev resolution Lrad > 2 so that Lagrange constraints can be satisfied )
    enddo
    
+   if (Igeometry.ge.2 .and. Lrad(1).lt.Mpol) then
+     write(ounit,'("readin : ",f10.2," : Minimum Lrad(1) is Mpol, automatically adjusted it to Mpol+4")') cput-cpus
+     Lrad(1) = Mpol + 4
+   endif
    FATAL( readin, mupfits.le.0, must give ma01aa:hybrj a postive integer value for the maximum iterations = mupfits given on input )
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -1857,12 +1800,12 @@ subroutine readin
    write(ounit,1020) cput-cpus, Linitialize, LautoinitBn, Lzerovac, Ndiscrete
    write(ounit,1021)            Nquad, iMpol, iNtor
    write(ounit,1022)            Lsparse, Lsvdiota, imethod, iorder, iprecon, iotatol
-   write(ounit,1023)            Lextrap, Mregular
+   write(ounit,1023)            Lextrap, Mregular, Lrzaxis, Ntoraxis
    
 1020 format("readin : ",f10.2," : Linitialize=",i3," ;LautoinitBn=",i3," ; Lzerovac=",i2," ; Ndiscrete="i2" ;")
 1021 format("readin : ", 10x ," : Nquad="i4" ; iMpol="i4" ; iNtor="i4" ;")
 1022 format("readin : ", 10x ," : Lsparse="i2" ; Lsvdiota="i2" ; imethod="i2" ; iorder="i2" ; iprecon="i2" ; iotatol="es13.5" ;")
-1023 format("readin : ", 10x ," : Lextrap="i2" ; Mregular="i3" ;")
+1023 format("readin : ", 10x ," : Lextrap="i2" ; Mregular="i3" ; Lrzaxis="i2" ; Ntoraxis="i2" ;")
    
    FATAL( readin, Ndiscrete.le.0, error )
    
@@ -1883,12 +1826,22 @@ subroutine readin
    endif
    
    write(ounit,'("readin : ", 10x ," : ")')
+
+   if (LBeltrami .ne. 4 .and. Lmatsolver .ne.1) then
+    write(ounit,'("readin : ", 10x ," : ***Lmatsolver set to 1 for nonlinear solver***")')
+    Lmatsolver = 1
+   endif
    
-   write(ounit,1030) cput-cpus, LBeltrami, Linitgues
+   write(ounit,1030) cput-cpus, LBeltrami, Linitgues, Lmatsolver, LGMRESprec, NiterGMRES, epsGMRES, epsILU
    
-1030 format("readin : ",f10.2," : LBeltrami="i2" ; Linitgues="i2" ;")
+1030 format("readin : ",f10.2," : LBeltrami="i2" ; Linitgues="i2" ; Lmatsolver="i2" ; LGMRESprec="i2" ; NiterGMRES="i4" ; epsGMRES="es13.5" ; epsILU="es13.5" ;" )
    
    FATAL( readin, LBeltrami.lt.0 .or. LBeltrami.gt.7, error )
+   FATAL( readin, Lmatsolver.lt.0 .or. Lmatsolver.gt.3, error )
+   FATAL( readin, LGMRESprec.lt.0 .or. LGMRESprec.gt.1, error )
+   FATAL( readin, NiterGMRES.lt.0, error )
+   FATAL( readin, abs(epsGMRES).le.machprec , error )
+   FATAL( readin, abs(epsILU).le.machprec , error )
    
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
@@ -2016,6 +1969,7 @@ subroutine readin
   RlBCAST( oita       , MNvol  , 0 )
   RlBCAST( mupftol    ,       1, 0 )
   IlBCAST( mupfits    ,       1, 0 ) 
+  IlBCAST( Lreflect   ,       1, 0 ) 
   RlBCAST( rpol       ,       1, 0 )
   RlBCAST( rtor       ,       1, 0 )
 
@@ -2041,6 +1995,8 @@ subroutine readin
   RlBCAST( iotatol    , 1, 0 )
   IlBCAST( Lextrap    , 1, 0 )
   IlBCAST( Mregular   , 1, 0 )
+  IlBCAST( Lrzaxis    , 1, 0 )
+  IlBCAST( Ntoraxis   , 1, 0 )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -2076,9 +2032,14 @@ subroutine readin
   if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : broadcasting locallist       from ext.sp ;")') cput-cpus
   endif
   
-  IlBCAST( LBeltrami, 1, 0 )
-  IlBCAST( Linitgues, 1, 0 )
-  RlBCAST( maxrndgues, 1, 0)
+  IlBCAST( LBeltrami    , 1, 0 )
+  IlBCAST( Linitgues    , 1, 0 )
+  RlBCAST( maxrndgues   , 1, 0)
+  IlBCAST( Lmatsolver   , 1, 0 )
+  IlBCAST( NiterGMRES   , 1, 0 )
+  RlBCAST( epsGMRES     , 1, 0 )
+  IlBCAST( LGMRESprec   , 1, 0 )
+  RlBCAST( epsILU       , 1, 0 )
 ! IlBCAST( Lposdef  , 1, 0 ) ! redundant;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -2102,6 +2063,8 @@ subroutine readin
   IlBCAST( Lperturbed, 1      , 0 )
   IlBCAST( dpp       , 1      , 0 )
   IlBCAST( dqq       , 1      , 0 )
+  IlBCAST( Lerrortype, 1      , 0 )
+  IlBCAST( Ngrid     , 1      , 0 )
   RlBCAST( dRZ       , 1      , 0 )
   IlBCAST( Lcheck    , 1      , 0 )
   LlBCAST( Ltiming   , 1      , 0 )
@@ -2145,7 +2108,7 @@ subroutine readin
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  SALLOCATE( beltramierror,(1:Mvol,1:3), zero)  
+  SALLOCATE( beltramierror,(1:Mvol,1:9), zero)  
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -2211,18 +2174,18 @@ subroutine readin
   
 !latex \subsubsection{\type{mns}, \type{ims} and \type{ins} : Fourier mode identification for straight-fieldline angle}
 
-  lMpol = iMpol ; lNtor = iNtor
+  sMpol = iMpol ; sNtor = iNtor
 
-  if( iMpol.le.0 ) lMpol = Mpol - iMpol
-  if( iNtor.le.0 ) lNtor = Ntor - iNtor
-  if(  Ntor.eq.0 ) lNtor = 0
+  if( iMpol.le.0 ) sMpol = Mpol - iMpol
+  if( iNtor.le.0 ) sNtor = Ntor - iNtor
+  if(  Ntor.eq.0 ) sNtor = 0
   
-  mns = 1 + lNtor + lMpol * ( 2 * lNtor + 1 ) ! resolution of straight-field line transformation on interfaces; see tr00ab; soon to be redundant; 
+  mns = 1 + sNtor + sMpol * ( 2 * sNtor + 1 ) ! resolution of straight-field line transformation on interfaces; see tr00ab; soon to be redundant; 
 
   SALLOCATE( ims, (1:mns), 0 )
   SALLOCATE( ins, (1:mns), 0 )
 
-  call gi00ab( lMpol, lNtor, Nfp, mns, ims(1:mns), ins(1:mns) ) ! note that the field periodicity factor is included in ins;
+  call gi00ab( sMpol, sNtor, Nfp, mns, ims(1:mns), ins(1:mns) ) ! note that the field periodicity factor is included in ins;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -2480,6 +2443,15 @@ subroutine readin
    iRbs(1,0:Mvol) = zero ! Rbs_{m=0,n=0} is irrelevant;
   endif
 
+  if ( Igeometry.eq.1 .and. Lreflect.eq.1) then ! reflect upper and lower bound in slab, each take half the amplitude
+    iRbc(2:mn,Mvol) = iRbc(2:mn,Mvol) * half
+    iRbc(2:mn,0) = -iRbc(2:mn,Mvol) 
+   if( NOTstellsym ) then
+    iRbs(2:mn,Mvol) = iRbs(2:mn,Mvol) * half
+    iRbs(2:mn,0) = -iRbs(2:mn,Mvol)
+   endif
+  endif
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   Rscale = iRbc(1,Mvol) ! this will be used to normalize the geometrical degrees-of-freedom; 
@@ -2521,7 +2493,8 @@ subroutine wrtend
 
   LOCALS
   
-  INTEGER              :: vvol, imn, ii, mm, nn
+  INTEGER              :: vvol, imn, ii, jj, kk, jk, Lcurvature, mm, nn
+  REAL                 :: lss, teta, zeta, st(1:Node), Bst(1:Node), BR, BZ, BP
   
   BEGIN(wrtend)
 
@@ -2579,6 +2552,7 @@ subroutine wrtend
   write(iunit,'(" oita        = ",257es23.15)') oita(0:Mvol)
   write(iunit,'(" mupftol     = ",es23.15   )') mupftol
   write(iunit,'(" mupfits     = ",i9        )') mupfits
+  write(iunit,'(" Lreflect    = ",i9        )') Lreflect
   write(iunit,'(" rpol        = ",es23.15   )') rpol
   write(iunit,'(" rtor        = ",es23.15   )') rtor
 
@@ -2705,6 +2679,8 @@ subroutine wrtend
   write(iunit,'(" iotatol     = ",es23.15       )') iotatol
   write(iunit,'(" Lextrap     = ",i9            )') Lextrap
   write(iunit,'(" Mregular    = ",i9            )') Mregular
+  write(iunit,'(" Lrzaxis     = ",i9            )') Lrzaxis
+  write(iunit,'(" Ntoraxis    = ",i9            )') Ntoraxis
   write(iunit,'("/")')
 
   if( Wwrtend ) then ; cput = GETTIME ; write(ounit,'("wrtend : ",f10.2," : myid=",i3," ; writing locallist ;")') cput-cpus, myid
@@ -2713,6 +2689,12 @@ subroutine wrtend
   write(iunit,'("&locallist")')
   write(iunit,'(" LBeltrami   = ",i9            )') LBeltrami
   write(iunit,'(" Linitgues   = ",i9            )') Linitgues
+  write(iunit,'(" Lmatsolver  = ",i9            )') Lmatsolver
+  write(iunit,'(" NiterGMRES  = ",i9            )') NiterGMRES
+  write(iunit,'(" LGMRESprec  = ",i9            )') LGMRESprec
+  write(iunit,'(" epsGMRES    = ",es23.15       )') epsGMRES
+  write(iunit,'(" epsILU      = ",es23.15       )') epsILU
+
  !write(iunit,'(" Lposdef     = ",i9            )') Lposdef ! redundant;
  !write(iunit,'(" Nmaxexp     = ",i9            )') Nmaxexp
   write(iunit,'("/")')
@@ -2854,7 +2836,7 @@ module fftw_interface ! JAB; 25 Jul 17
   include 'fftw3.f03'
 
   TYPE(C_PTR)                            :: planf, planb
-  COMPLEX(C_DOUBLE_COMPLEX), allocatable :: cplxin(:,:), cplxout(:,:)
+  COMPLEX(C_DOUBLE_COMPLEX), allocatable :: cplxin(:,:,:), cplxout(:,:,:)
 
 end module fftw_interface
 

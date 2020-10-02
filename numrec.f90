@@ -85,6 +85,24 @@ end subroutine gi00ab
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+subroutine getimn(Mpol, Ntor, Nfp, mi, ni, idx)
+  ! convert m and n to index
+  implicit none
+  integer, intent(in) :: Mpol, Ntor, Nfp, mi, ni
+  integer, intent(out) :: idx
+
+  if (mi.gt.Mpol .or. mi.lt.0 .or. ni.gt.Ntor*Nfp .or. ni.lt.-Ntor*Nfp ) then
+    idx = 0
+  elseif (mi .eq. 0) then
+    idx = 1 + ni / Nfp
+  else
+    idx = 1 + Ntor + (2 * Ntor + 1) * (mi - 1) + (ni / Nfp + Ntor + 1)
+  end if
+
+end subroutine getimn
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
 !latex \subsection{\type{tfft}}
 
 !latex \begin{enumerate}
@@ -113,7 +131,9 @@ subroutine tfft( Nt, Nz, ijreal, ijimag, mn, im, in, efmn, ofmn, cfmn, sfmn, ifa
   use allglobal, only : pi2nfp
 
   use fftw_interface
-
+#ifdef OPENMP
+  use OMP_LIB
+#endif
   implicit none
 
   intrinsic aimag
@@ -122,27 +142,28 @@ subroutine tfft( Nt, Nz, ijreal, ijimag, mn, im, in, efmn, ofmn, cfmn, sfmn, ifa
   REAL    :: ijreal(1:Nt*Nz), ijimag(1:Nt*Nz), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn)
   
   LOGICAL :: Lcheck = .false.
-  INTEGER :: jj, kk
-  REAL    :: jireal(1:Nt*Nz), jiimag(1:Nt*Nz), arg, ca, sa
+  INTEGER :: jj, kk, ithread
+  !REAL    :: jireal(1:Nt*Nz), jiimag(1:Nt*Nz), arg, ca, sa
+  REAL    :: arg, ca, sa
   COMPLEX(C_DOUBLE_COMPLEX) :: z1, z2, z3
 
-  if( Lcheck ) then ; jireal = ijreal ; jiimag = ijimag
-  endif
+  GETTHREAD
+  !if( Lcheck ) then ; jireal = ijreal ; jiimag = ijimag
+  !endif
 
-  do jj = 1, Nz ; cplxin(:,jj) = CMPLX( ijreal((jj-1)*Nt+1:jj*Nt), ijimag((jj-1)*Nt+1:jj*Nt), KIND=C_DOUBLE_COMPLEX )
+  do jj = 1, Nz ; cplxin(:,jj,ithread) = CMPLX( ijreal((jj-1)*Nt+1:jj*Nt), ijimag((jj-1)*Nt+1:jj*Nt), KIND=C_DOUBLE_COMPLEX )
   enddo
    
-  call fftw_execute_dft( planf, cplxin, cplxout ) !Forward transform
-
+  call fftw_execute_dft( planf, cplxin(:,:,ithread), cplxout(:,:,ithread) ) !Forward transform
   Ntz = Nt * Nz
-  cplxout = cplxout / Ntz
-  cplxout(1,1) = half*cplxout(1,1)
+  cplxout(:,:,ithread) = cplxout(:,:,ithread) / Ntz
+  cplxout(1,1,ithread) = half*cplxout(1,1,ithread)
 
   do imn = 1, mn
    mm = im(imn);  nn = in(imn) / Nfp
 
-   z1 = cplxout(1 + MOD(Nt - mm, Nt), 1 + MOD(Nz + nn, Nz))
-   z2 = cplxout(1 +          mm,      1 + MOD(Nz - nn, Nz))
+   z1 = cplxout(1 + MOD(Nt - mm, Nt), 1 + MOD(Nz + nn, Nz),ithread)
+   z2 = cplxout(1 +          mm,      1 + MOD(Nz - nn, Nz),ithread)
 
    z3 = z1 + z2
    efmn(imn) =  real(z3);  cfmn(imn) = aimag(z3)
@@ -168,7 +189,7 @@ subroutine tfft( Nt, Nz, ijreal, ijimag, mn, im, in, efmn, ofmn, cfmn, sfmn, ifa
    enddo
   enddo
   
-  write(ounit,'("tfft   : ",10x," : Fourier reconstruction error =",2es15.5," ;")') sqrt(sum((ijreal-jireal)**2)/Ntz), sqrt(sum((ijimag-jiimag)**2)/Ntz)
+  !write(ounit,'("tfft   : ",10x," : Fourier reconstruction error =",2es15.5," ;")') sqrt(sum((ijreal-jireal)**2)/Ntz), sqrt(sum((ijimag-jiimag)**2)/Ntz)
 
   return
 
@@ -191,6 +212,10 @@ subroutine invfft( mn, im, in, efmn, ofmn, cfmn, sfmn, Nt, Nz, ijreal, ijimag )
   use constants, only : zero, two, half
   use inputlist, only : Nfp
   use fftw_interface
+#ifdef OPENMP
+  use OMP_LIB
+#endif
+
   implicit none
   
   INTEGER, intent(in)  :: mn, im(mn), in(mn)
@@ -198,25 +223,27 @@ subroutine invfft( mn, im, in, efmn, ofmn, cfmn, sfmn, Nt, Nz, ijreal, ijimag )
   INTEGER, intent(in)  :: Nt, Nz
   REAL   , intent(out) :: ijreal(Nt*Nz), ijimag(Nt*Nz) ! output real space;
   
-  INTEGER              :: imn, jj, mm, nn
+  INTEGER              :: imn, jj, mm, nn, ithread
 
-  cplxin = zero
+  GETTHREAD
+
+  cplxin(:,:,ithread) = zero
 
   !Copy real arrays to complex
   do imn = 1,mn ; mm = im(imn) ; nn = in(imn) / Nfp
-     cplxin(1 + MOD(Nt - mm, Nt), 1 + MOD(Nz + nn, Nz)) = &
+     cplxin(1 + MOD(Nt - mm, Nt), 1 + MOD(Nz + nn, Nz),ithread) = &
           half * CMPLX(efmn(imn) - sfmn(imn), cfmn(imn) + ofmn(imn), KIND=C_DOUBLE_COMPLEX)
-     cplxin(1 +          mm,      1 + MOD(Nz - nn, Nz)) = &
+     cplxin(1 +          mm,      1 + MOD(Nz - nn, Nz),ithread) = &
           half * CMPLX(efmn(imn) + sfmn(imn), cfmn(imn) - ofmn(imn), KIND=C_DOUBLE_COMPLEX)
   enddo
-  cplxin(1,1) = two*cplxin(1,1)
+  cplxin(1,1,ithread) = two*cplxin(1,1,ithread)
 
-  call fftw_execute_dft(planb, cplxin, cplxout) !Inverse transform
+  call fftw_execute_dft(planb, cplxin(:,:,ithread), cplxout(:,:,ithread)) !Inverse transform
 
   !Copy complex result back to real arrays
   do jj=1,Nz
-     ijreal((jj-1)*Nt+1:jj*Nt) =  real(cplxout(:,jj))
-     ijimag((jj-1)*Nt+1:jj*Nt) = aimag(cplxout(:,jj))
+     ijreal((jj-1)*Nt+1:jj*Nt) =  real(cplxout(:,jj,ithread))
+     ijimag((jj-1)*Nt+1:jj*Nt) = aimag(cplxout(:,jj,ithread))
   enddo
 
   return

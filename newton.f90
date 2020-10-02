@@ -92,9 +92,10 @@ subroutine newton( NGdof, position, ihybrd )
 
   INTEGER                :: irevcm, mode, Ldfjac, LR
   REAL                   :: xtol, epsfcn, factor
-  REAL                   :: diag(1:NGdof), RR(1:NGdof*(NGdof+1)/2), QTF(1:NGdof), workspace(1:NGdof,1:4)
+  REAL                   :: diag(1:NGdof), QTF(1:NGdof), workspace(1:NGdof,1:4)
 
-  REAL                   :: force(0:NGdof), fjac(1:NGdof,1:NGdof)
+  REAL                   :: force(0:NGdof)
+  REAL, allocatable      :: fjac(:,:), RR(:), work(:,:)
   
   INTEGER                :: ML, MU ! required for only Lc05ndf;
   
@@ -180,20 +181,23 @@ subroutine newton( NGdof, position, ihybrd )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+  SALLOCATE( fjac, (1:NGdof, 1:NGdof), zero)
+  SALLOCATE( RR, (1:NGdof*(NGdof+1)/2), zero)
+
   if( Lfindzero.eq.2 ) then
-   SALLOCATE( dFFdRZ, (1:LGdof,1:Mvol,0:1,1:LGdof,0:1), zero )
-   SALLOCATE( dBBdmp, (1:LGdof,1:Mvol,0:1,1:2), zero )
+    SALLOCATE( dFFdRZ, (1:LGdof,0:1,1:LGdof,0:1,1:Mvol), zero )
+    SALLOCATE( dBBdmp, (1:LGdof,1:Mvol,0:1,1:2), zero )
    if( LocalConstraint ) then
    	SALLOCATE( dmupfdx, (1:Mvol,    1:1,1:2,1:LGdof,0:1), zero )
    else
    	SALLOCATE( dmupfdx, (1:Mvol, 1:Mvol-1,1:2,1:LGdof,1), zero ) ! TODO change the format to put vvol in last index position...
    endif
 
-   SALLOCATE( hessian, (1:NGdof,1:NGdof), zero )
-   SALLOCATE( dessian, (1:NGdof,1:LGdof), zero )
-   Lhessianallocated = .true.
+    SALLOCATE( hessian, (1:NGdof,1:NGdof), zero )
+    SALLOCATE( dessian, (1:NGdof,1:LGdof), zero )
+    Lhessianallocated = .true.
   else
-   Lhessianallocated = .false.
+    Lhessianallocated = .false.
   endif
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -243,15 +247,20 @@ subroutine newton( NGdof, position, ihybrd )
    FATAL( newton, .not.Lhessianallocated, error )
 #endif
 
-   hessian(1:NGdof,1:NGdof) = zero
+   !hessian(1:NGdof,1:NGdof) = zero
+   SALLOCATE(work, (1:NGdof,1:NGdof), zero)! BLAS version; 19 Jul 2019
    ijdof = 0
    do idof = 1, NGdof
-    do jdof = idof, NGdof ; ijdof = ijdof + 1 ; hessian(idof,jdof) = RR(ijdof) ! un-pack R matrix;
+    !do jdof = idof, NGdof ; ijdof = ijdof + 1 ; hessian(idof,jdof) = RR(ijdof) ! un-pack R matrix; old version
+    do jdof = idof, NGdof ; ijdof = ijdof + 1 ; work(idof,jdof) = RR(ijdof) ! un-pack R matrix; BLAS version; 19 Jul 2019
     enddo
    enddo
 
 !  derivative matrix = Q R;
-   hessian(1:NGdof,1:NGdof) = matmul( fjac(1:NGdof,1:NGdof), hessian(1:NGdof,1:NGdof) ) 
+   !hessian(1:NGdof,1:NGdof) = matmul( fjac(1:NGdof,1:NGdof), hessian(1:NGdof,1:NGdof) )
+   call DGEMM('N','N',NGdof,NGdof,NGdof,one,fjac,NGdof,work,NGdof,zero,hessian,NGdof)     ! BLAS version; 19 Jul 2019
+
+   DALLOCATE(work)! BLAS version; 19 Jul 2019
    
    call writereadgf( 'W', NGdof, ireadhessian ) ! write derivative matrix to file;
 
@@ -270,7 +279,10 @@ subroutine newton( NGdof, position, ihybrd )
    DALLOCATE( dessian )
    Lhessianallocated = .false.
   endif
-  
+
+  DALLOCATE( fjac )
+  DALLOCATE( RR )
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   RETURN(newton)
   
@@ -457,8 +469,9 @@ subroutine fcn1( NGdof, xx, fvec, irevcm )
     
     pack = 'U' ! unpack geometrical degrees of freedom;
     LComputeAxis = .true.
+    LComputeDerivatives = .false.
     WCALL( newton, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), &
-                             iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, LComputeAxis ) )
+                             iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, LComputeDerivatives, LComputeAxis ) )
 
     if( myid.eq.0 ) then
      
@@ -582,8 +595,9 @@ subroutine fcn2( NGdof, xx, fvec, fjac, Ldfjac, irevcm )
     
     pack = 'U' ! unpack geometrical degrees of freedom;
     LComputeAxis = .true.
+    LComputeDerivatives = .false.
     WCALL( newton, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), &
-                             iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, LComputeAxis ) )
+                             iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, LComputeDerivatives, LComputeAxis ) )
     
     if( myid.eq.0 ) then
      

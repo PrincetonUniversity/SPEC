@@ -2,11 +2,11 @@
 
 ## Docker Containers
 
-Docker is a tool which helps us control our envirnment with code.
+Docker is a tool which helps us control our environment with code.
 A "container" is like a virtual machine, but lighter,
 because it shares some features with the host system.
 They also have a hashing scheme which allows re-use of filesystem "layers",
-if docker beleives it is safe to do so.  So for example,
+if docker believes it is safe to do so.  So for example,
 if you have 3 containers that you use for different projects and they all
 start with centos7 base, that will probably be cached only once.
 
@@ -41,7 +41,7 @@ RUN yum install gcc-gfortran openmpi openmpi-devel hdf5 hdf5-devel -y
 And from experience, we have more config to get openmpi working:
 
 ```
-# Complete the setup of openmpi, they used environmentmodules, blehgh
+# Complete the setup of openmpi, they used environment modules, blehgh
 ENV PATH="/usr/lib64/openmpi/bin:${PATH}"
 ENV LD_LIBRARY_PATH="/usr/lib64/openmpi/lib:${LD_LIBRARY_PATH}"
 ```

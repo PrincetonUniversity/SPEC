@@ -26,7 +26,7 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
   use inputlist, only : Wmacros, Whesian, ext, Igeometry, Nvol, pflux, helicity, mu, Lfreebound, &
                         LHevalues, LHevectors, LHmatrix, &
                         Lperturbed, dpp, dqq, &
-                        Lcheck
+                        Lcheck, Lfindzero
 
   use cputiming, only : Thesian
 
@@ -159,10 +159,11 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
        
        pack = 'P' !; position(0) = zero ! this is not used; 11 Aug 14;
        LComputeAxis = .true.
-       WCALL( hesian, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), &
-                                iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, LComputeAxis ) )
-       
        LComputeDerivatives = .false. !; position(0) = zero ! this is not used; 11 Aug 14;
+       WCALL( hesian, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), &
+                                iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, LComputeDerivatives, LComputeAxis ) )
+       
+       
        WCALL( hesian, dforce, ( NGdof, position(0:NGdof), gradient(0:NGdof), LComputeDerivatives, LComputeAxis ) ) ! re-calculate Beltrami fields;
        
        oldBB(1:Mvol,isymdiff) = lBBintegral(1:Mvol)
@@ -202,13 +203,13 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
   
   pack = 'P' !; position(0) = zero ! this is not used; 11 Aug 14;
   WCALL( hesian, packxi,( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), &
-                          iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, LComputeAxis ) )
+                          iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, LComputeDerivatives, LComputeAxis ) )
   
 #endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  SALLOCATE( dFFdRZ , (1:LGdof,1:Mvol,0:1,1:LGdof,0:1), zero )
+  SALLOCATE( dFFdRZ , (1:LGdof,0:1,1:LGdof,0:1,1:Mvol), zero )
   SALLOCATE( dBBdmp , (1:LGdof,1:Mvol,0:1,        1:2), zero )
 
 if( LocalConstraint ) then
@@ -366,8 +367,7 @@ endif
    enddo ! end of do vvol;
    
    pack = 'U' !; position(0) = zero ! this is not used; 11 Aug 14;
-   WCALL( hesian, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), &
-                            iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, LComputeAxis ) )
+   WCALL( hesian, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, .false., LComputeAxis ) )
    
    mu(1:Nvol) = lmu(1:Nvol) ; pflux(1:Nvol) = lpflux(1:Nvol) ; helicity(1:Nvol) = lhelicity(1:Nvol)
    
@@ -614,8 +614,7 @@ endif
     end select
     
     pack = 'U' ! unpack geometrical degrees-of-freedom; 13 Sep 13;
-    WCALL( hesian, packxi, ( NGdof,     solution(0:NGdof), Mvol, mn, dRbc(1:mn,0:Mvol), dZbs(1:mn,0:Mvol), &
-                             dRbs(1:mn,0:Mvol), dZbc(1:mn,0:Mvol), pack, LComputeAxis ) )
+    WCALL( hesian, packxi, ( NGdof,     solution(0:NGdof), Mvol, mn, dRbc(1:mn,0:Mvol), dZbs(1:mn,0:Mvol), dRbs(1:mn,0:Mvol), dZbc(1:mn,0:Mvol), pack, .false., LComputeAxis ) )
     
     dRbc(1:mn,Mvol) = perturbation(1:LGdof)
     

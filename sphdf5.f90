@@ -170,6 +170,8 @@ subroutine mirror_input_to_outfile
   H5DESCR_CDSET( /input/physics/Lrad, degree of radial Chebychev polynomials,                                                          __FILE__, __LINE__)
   HWRITEIV_LO( grpInputPhysics,         1, Lconstraint, (/ Lconstraint    /),                                                          __FILE__, __LINE__)
   H5DESCR_CDSET( /input/physics/Lconstraint, type of constraint to enforce,                                                            __FILE__, __LINE__)
+  HWRITEIV_LO( grpInputPhysics,         1, Lreflect,    (/ Lreflect       /),                                                          __FILE__, __LINE__)
+  H5DESCR_CDSET( /input/physics/Lreflect, whether to reflect the perturbation on both boundaries for slab geometry                     __FILE__, __LINE__)
   HWRITERV_LO( grpInputPhysics,      Mvol, tflux      ,     tflux(1:Mvol)   ,                                                          __FILE__, __LINE__)
   H5DESCR_CDSET( /input/physics/tflux, toroidal magnetic flux in volumes,                                                              __FILE__, __LINE__)
   HWRITERV_LO( grpInputPhysics,      Mvol, pflux      ,     pflux(1:Mvol)   ,                                                          __FILE__, __LINE__)
@@ -210,9 +212,9 @@ subroutine mirror_input_to_outfile
   H5DESCR_CDSET( /input/physics/rq, rq ?,                                                                                              __FILE__, __LINE__)
   HWRITERV_LO( grpInputPhysics,  (1+Nvol), oita       ,      oita(0:Nvol)   ,                                                          __FILE__, __LINE__)
   H5DESCR_CDSET( /input/physics/oita, rotational transform profile on outside of ideal interfaces,                                     __FILE__, __LINE__)
-  HWRITEIV_LO( grpInputPhysics,         1, rtor  , (/ rtor      /),                                                                    __FILE__, __LINE__)
+  HWRITERV_LO( grpInputPhysics,         1, rtor  , (/ rtor      /),                                                                    __FILE__, __LINE__)
   H5DESCR_CDSET( /input/physics/rpol, for aspect ratio in slab,                                                                        __FILE__, __LINE__)
-  HWRITEIV_LO( grpInputPhysics,         1, rpol  , (/ rpol      /),                                                                    __FILE__, __LINE__)
+  HWRITERV_LO( grpInputPhysics,         1, rpol  , (/ rpol      /),                                                                    __FILE__, __LINE__)
   H5DESCR_CDSET( /input/physics/rpol, for aspect ratio in slab,                                                                        __FILE__, __LINE__)
 
   HWRITERV_LO( grpInputPhysics,  (1+Ntor), Rac        ,       Rac(0:Ntor)   ,                                                          __FILE__, __LINE__)
@@ -279,6 +281,8 @@ subroutine mirror_input_to_outfile
   HWRITERV( grpInputNumerics,          1, iotatol            , (/ iotatol     /))
   HWRITEIV( grpInputNumerics,          1, Lextrap            , (/ Lextrap     /))
   HWRITEIV( grpInputNumerics,          1, Mregular           , (/ Mregular    /))
+  HWRITEIV( grpInputNumerics,          1, Lrzaxis            , (/ Lrzaxis     /))
+  HWRITEIV( grpInputNumerics,          1, Ntoraxis           , (/ Ntoraxis    /))
 
   HCLOSEGRP( grpInputNumerics, __FILE__, __LINE__)
 
@@ -293,6 +297,10 @@ subroutine mirror_input_to_outfile
   HWRITEIV( grpInputLocal,             1, Linitgues          , (/ Linitgues   /))
   HWRITEIV( grpInputLocal,             1, Lposdef            , (/ Lposdef     /)) ! redundant;
   HWRITERV( grpInputLocal,             1, maxrndgues         , (/ maxrndgues  /))
+  HWRITEIV( grpInputLocal,             1, Lmatsolver         , (/ Lmatsolver  /))
+  HWRITEIV( grpInputLocal,             1, LGMRESprec         , (/ LGMRESprec  /))
+  HWRITERV( grpInputLocal,             1, epsGMRES           , (/ epsGMRES    /))
+  HWRITERV( grpInputLocal,             1, epsILU             , (/ epsILU      /))
 
   HCLOSEGRP( grpInputLocal )
 
@@ -351,7 +359,9 @@ subroutine mirror_input_to_outfile
   HWRITEIV( grpInputDiagnostics,       1,  dqq               , (/ dqq            /))
   HWRITEIV( grpInputDiagnostics,       1,  Lcheck            , (/ Lcheck         /))
   HWRITELV( grpInputDiagnostics,       1,  Ltiming           , (/ Ltiming        /))
-  HWRITERV( grpInputDiagnostics,       1,  fudge             , (/ fudge          /))         ! redundant;
+  HWRITEIV( grpInputDiagnostics,       1,  Lerrortype        , (/ Lerrortype     /))
+  HWRITEIV( grpInputDiagnostics,       1,  Ngrid             , (/ Ngrid          /))
+  HWRITERV( grpInputDiagnostics,       1,  fudge             , (/ fudge          /))          ! redundant;
   HWRITERV( grpInputDiagnostics,       1,  scaling           , (/ scaling        /))          ! redundant;
 
   HCLOSEGRP( grpInputDiagnostics )
@@ -529,12 +539,12 @@ subroutine write_grid
   &                     Nt, Nz, Ntz, Mvol, pi2nfp, ivol, mn, Node, gBzeta, &
   &                     Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
   &                     Rij, Zij, sg
-  use inputlist, only : Lrad, Igeometry, Nvol
+  use inputlist, only : Lrad, Igeometry, Nvol, Ngrid, rtor, rpol
   use cputiming, only : Tsphdf5
 
   LOCALS
   integer(hid_t) :: grpGrid
-  integer :: sumLrad, alongLrad
+  integer :: sumLrad, alongLrad, Ngrid_local, Ngrid_sum
   INTEGER              :: vvol, ii, jj, kk, jk, Lcurvature
   REAL                 :: lss, teta, zeta, st(1:Node), Bst(1:Node)
   REAL   , allocatable :: Rij_grid(:,:), Zij_grid(:,:), sg_grid(:,:), ijreal_grid(:,:), ijimag_grid(:,:), jireal_grid(:,:)
@@ -554,7 +564,11 @@ subroutine write_grid
   HWRITERV( grpGrid,           1, pi2nfp           , (/ pi2nfp        /))
 
   ! combine all radial parts into one dimension as Lrad values can be different for different volumes
-  sumLrad = sum(Lrad(1:Mvol)+1)
+  if (Ngrid .lt. 0) then 
+    sumLrad = sum(Lrad(1:Mvol)+1)
+  else
+    sumLrad = (Ngrid + 1) * Mvol
+  endif
 
   SALLOCATE(    Rij_grid, (1:sumLrad, 1:Ntz), zero )
   SALLOCATE(    Zij_grid, (1:sumLrad, 1:Ntz), zero )
@@ -563,30 +577,67 @@ subroutine write_grid
   SALLOCATE( ijimag_grid, (1:sumLrad, 1:Ntz), zero )
   SALLOCATE( jireal_grid, (1:sumLrad, 1:Ntz), zero )
 
+  Ngrid_sum = 0
+
   do vvol = 1, Mvol ; ivol = vvol
    LREGION(vvol) ! sets Lcoordinatesingularity and Lplasmaregion ;
-   do ii = 0, Lrad(vvol) ! sub-grid;
-    lss = ii * two / Lrad(vvol) - one
+
+   if (Ngrid .lt. 0) then 
+    Ngrid_local = Lrad(vvol)  ! default
+   else
+    Ngrid_local = Ngrid
+   endif
+   if (Ngrid_local .eq. 0) cycle               ! nothing to output
+
+   do ii = 0, Ngrid_local ! sub-grid;
+    lss = ii * two / Ngrid_local - one
     if( Lcoordinatesingularity .and. ii.eq.0 ) then ; Lcurvature = 0 ! Jacobian is not defined;
     else                                            ; Lcurvature = 1 ! compute Jacobian       ;
     endif
+    
     WCALL( sphdf5, coords, ( vvol, lss, Lcurvature, Ntz, mn ) ) ! only Rij(0,:) and Zij(0,:) are required; Rmn & Zmn are available;
 
-    alongLrad = sum(Lrad(1:vvol-1)+1)+ii+1
+    alongLrad = Ngrid_sum+ii+1
 
     Rij_grid(alongLrad,1:Ntz) = Rij(1:Ntz,0,0)
     Zij_grid(alongLrad,1:Ntz) = Zij(1:Ntz,0,0)
     sg_grid (alongLrad,1:Ntz) =  sg(1:Ntz,0)
 
     if( Lcurvature.eq.1 ) then
-     do kk = 0, Nz-1 ; zeta = kk * pi2nfp / Nz
-      do jj = 0, Nt-1 ; teta = jj * pi2    / Nt ; jk = 1 + jj + kk*Nt ; st(1:2) = (/ lss, teta /)
-       WCALL( sphdf5, bfield, ( zeta, st(1:Node), Bst(1:Node) ) )
-       ijreal(jk) = ( Rij(jk,1,0) * Bst(1) + Rij(jk,2,0) * Bst(2) + Rij(jk,3,0) * one ) * gBzeta / sg(jk,0) ! BR;
-       ijimag(jk) = (                                                             one ) * gBzeta / sg(jk,0) ! Bp;
-       jireal(jk) = ( Zij(jk,1,0) * Bst(1) + Zij(jk,2,0) * Bst(2) + Zij(jk,3,0) * one ) * gBzeta / sg(jk,0) ! BZ;
+
+     select case (Igeometry)
+
+     case (3)
+      do kk = 0, Nz-1 ; zeta = kk * pi2nfp / Nz
+        do jj = 0, Nt-1 ; teta = jj * pi2    / Nt ; jk = 1 + jj + kk*Nt ; st(1:2) = (/ lss, teta /)
+        WCALL( sphdf5, bfield, ( zeta, st(1:Node), Bst(1:Node) ) )
+        ijreal(jk) = ( Rij(jk,1,0) * Bst(1) + Rij(jk,2,0) * Bst(2) + Rij(jk,3,0) * one ) * gBzeta / sg(jk,0) ! BR;
+        ijimag(jk) = (                                                             one ) * gBzeta / sg(jk,0) ! Bp;
+        jireal(jk) = ( Zij(jk,1,0) * Bst(1) + Zij(jk,2,0) * Bst(2) + Zij(jk,3,0) * one ) * gBzeta / sg(jk,0) ! BZ;
+        enddo
       enddo
-     enddo
+
+     case (1)
+      do kk = 0, Nz-1 ; zeta = kk * pi2nfp / Nz
+        do jj = 0, Nt-1 ; teta = jj * pi2    / Nt ; jk = 1 + jj + kk*Nt ; st(1:2) = (/ lss, teta /)
+        WCALL( sphdf5, bfield, ( zeta, st(1:Node), Bst(1:Node) ) )
+        ijreal(jk) = ( Rij(jk,1,0) * Bst(1) + Rij(jk,2,0) * Bst(2) + Rij(jk,3,0) * one ) * gBzeta / sg(jk,0) ! BR;
+        ijimag(jk) = (                                                            rpol ) * gBzeta / sg(jk,0) ! Bzeta;
+        jireal(jk) = (                      +        rtor * Bst(2)                     ) * gBzeta / sg(jk,0) ! Btheta;
+        enddo
+      enddo
+
+     case (2)
+      do kk = 0, Nz-1 ; zeta = kk * pi2nfp / Nz
+        do jj = 0, Nt-1 ; teta = jj * pi2    / Nt ; jk = 1 + jj + kk*Nt ; st(1:2) = (/ lss, teta /)
+        WCALL( sphdf5, bfield, ( zeta, st(1:Node), Bst(1:Node) ) )
+        ijreal(jk) = ( Rij(jk,1,0) * Bst(1) + Rij(jk,2,0) * Bst(2) + Rij(jk,3,0) * one ) * gBzeta / sg(jk,0) ! BR;
+        ijimag(jk) = (                                                             one ) * gBzeta / sg(jk,0) ! Bp;
+        jireal(jk) = (                                      Bst(2)                     ) * gBzeta / sg(jk,0) ! BZ;
+        enddo
+      enddo
+    
+     end select !Igeometry
     endif ! end of if( Lcurvature.eq.1 ) ;
 
    ijreal_grid(alongLrad,1:Ntz) = ijreal(1:Ntz)
@@ -594,6 +645,9 @@ subroutine write_grid
    jireal_grid(alongLrad,1:Ntz) = jireal(1:Ntz)
 
    enddo ! end of do ii;
+
+   Ngrid_sum = Ngrid_sum + Ngrid_local + 1 ! offset for storing data
+
   enddo ! end of do vvol;
 
   HWRITERA( grpGrid, sumLrad, Ntz, Rij,    Rij_grid )
@@ -916,7 +970,7 @@ subroutine hdfint
   ! the following quantites can be different from input value
   HWRITERV( grpOutput,   Mvol, adiabatic         , adiabatic(1:Nvol)   )
   HWRITERV( grpOutput,   Nvol, helicity          ,  helicity(1:Nvol)   )
-  HWRITERV( grpOutput, 1+Nvol, mu                ,        mu(1:Mvol)   )
+  HWRITERV( grpOutput,   Mvol, mu                ,        mu(1:Mvol)   )
   HWRITERV( grpOutput,   Mvol, tflux             ,     tflux(1:Mvol)   )
   HWRITERV( grpOutput,   Mvol, pflux             ,     pflux(1:Mvol)   )
 

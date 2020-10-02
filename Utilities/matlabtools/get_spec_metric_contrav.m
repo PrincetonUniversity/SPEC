@@ -1,14 +1,27 @@
-function gmatcon = get_spec_metric_contrav(gdata,lvol,sarr,tarr,zarr)
+function gmatcon = get_spec_metric_contrav(data,lvol,sarr,tarr,zarr)
  
- 
+% GET_SPEC_METRIC_CONTRAV( DATA, LVOL, SARR, TARR, ZARR )
+% =======================================================
+%
 % Calculates contravariant metric elements in volume number lvol
-% Note: Stellarator symmetry is assumed
-%   -gdata   must be produced by calling e.g. read_spec_grid(filename)
+%
+% INPUT
+% -----
+%   -data   must be produced by calling e.g. read_spec(filename)
 %   -lvol   volume number
 %   -sarr   is the array of values for the s-coordinate
 %   -tarr   is the array of values for the theta-coordinate
 %   -zarr   is the array of values for the zeta-coordinate
-%   written by J.Loizu (2017)
+%
+% OUTPUT
+% ------
+%   gmatcon{i}{j}(s,theta,zeta)
+%
+% Note: Stellarator symmetry is assumed
+%
+% written by J.Loizu (2017)
+
+
 
 % Auxiliary variables
 
@@ -18,7 +31,7 @@ nz      = length(zarr);
 
 % First get the covariant metric matrix
 
-gmatcov = get_spec_metric(gdata,lvol,sarr,tarr,zarr);
+gmatcov = get_spec_metric(data,lvol,sarr,tarr,zarr);
 
 % Allocate space for contravariant metric matrix
 

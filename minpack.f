@@ -1904,6 +1904,7 @@ c
 c     last card of subroutine r1updt.
 c
       end
+
       subroutine hybrd(fcn,n,x,fvec,xtol,maxfev,ml,mu,epsfcn,diag,
      *                 mode,factor,nprint,info,nfev,fjac,ldfjac,r,lr,
      *                 qtf,wa1,wa2,wa3,wa4)
@@ -2363,7 +2364,6 @@ c
 c     last card of subroutine hybrd.
 c
       end
-
 
       subroutine fdjac1(fcn,n,x,fvec,fjac,ldfjac,iflag,ml,mu,epsfcn,
      *                  wa1,wa2)

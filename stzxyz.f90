@@ -77,10 +77,10 @@ subroutine stzxyz( lvol , stz , RpZ )
     
     sbar = ( lss + one ) * half
     if( mi.eq.0 ) then
-     if( Igeometry.eq.2 ) then ; fj = sbar**half
-     else                      ; fj = sbar
+     if( Igeometry.eq.2 ) then ; fj = sbar
+     else                      ; fj = sbar**2
      endif
-    else                       ; fj = sbar**halfmm(ii)
+    else                       ; fj = sbar**im(ii)
     endif
     
     Remn = iRbc(ii,0) + ( iRbc(ii,1) - iRbc(ii,0) ) * fj

@@ -105,14 +105,14 @@ program xspech
 
   MPISTART ! It might be easy to read the source if this macro was removed; SRH: 27 Feb 18;
 
-! #ifdef DEBUG
+!#ifdef DEBUG
 !   iwait = 0; pid = getpid()
 !   status = hostnm( hostname )
 !   write(*,*) 'Process with PID: ', pid, 'ready to attach. Hostname: ', hostname
 !   do while( iwait .EQ. 0 )
 !     !wait for debugger
 !   enddo
-! #endif
+!#endif
   
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -227,7 +227,7 @@ program xspech
    pack = 'P'
    LComputeAxis = .true.
    WCALL( xspech, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), &
-                            iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, LComputeAxis ) )
+                            iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, .false., LComputeAxis ) )
 
   endif
   
@@ -293,7 +293,7 @@ program xspech
    pack = 'U' ! unpack geometrical degrees of freedom; 13 Sep 13;
    LComputeAxis = .true.
    WCALL( xspech, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), &
-                            iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, LComputeAxis ) )
+                            iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, .false., LComputeAxis ) )
 
   endif
 
@@ -752,7 +752,7 @@ program xspech
    RlBCAST( Btomn(1:mn,0:1,vvol), mn*2, llmodnp )
    RlBCAST( Bzomn(1:mn,0:1,vvol), mn*2, llmodnp )
 
-   RlBCAST( beltramierror(vvol,1:3), 3, llmodnp ) ! this is computed in jo00aa; 21 Aug 18;
+   RlBCAST( beltramierror(vvol,1:9), 9, llmodnp ) ! this is computed in jo00aa; 21 Aug 18;
    
   enddo ! end of do vvol = 1, Mvol; 01 Jul 14;
 

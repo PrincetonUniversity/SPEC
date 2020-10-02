@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 """
 @author: Caoxiang Zhu (czhu@ppp.gov)
-For any help, type ./compare_spec.py -h
+For any help, type ./test.py -h
 """
 import numpy as np
-from py_spec import SPEC
+from py_spec.output import SPECout
 import argparse
 
 # parse command line arguments
@@ -17,8 +17,8 @@ parser.add_argument("-t", "--tol", type=float, default=1E-12, help="difference t
 args = parser.parse_args()
 print('Compare SPEC outputs in {:s} and {:s} with tolerance {:12.5E}'.format(
         args.filename, args.reference, args.tol))
-data_A = SPEC(args.filename)
-data_B = SPEC(args.reference)
+data_A = SPECout(args.filename)
+data_B = SPECout(args.reference)
 tol = args.tol
 match = True
 
@@ -32,7 +32,7 @@ def compare(data, reference, localtol = tol, action='ERR'):
     """
     global match
     for key, value in vars(data).items():
-        if isinstance(value, SPEC):  # recurse data (csmiet: I'm not the biggest fan of this recursion...)
+        if isinstance(value, SPECout):  # recurse data (csmiet: I'm not the biggest fan of this recursion...)
             print('------------------')
             print('Elements in '+key)
             if key in ['poincare']:
@@ -44,10 +44,20 @@ def compare(data, reference, localtol = tol, action='ERR'):
             if key in ['filename', 'version', 'iterations']:  # not compare filename and version and iterations
                 continue
             else:
-                if key in ['volume', 'fiota']:  # skip certain problematic variables. NOT A GOOD IDEA TO CHANGE (might be revised)
+                if key in ['volume', 'fiota', 'Lmatsolver']:  # skip certain problematic variables. NOT A GOOD IDEA TO CHANGE (might be revised)
                     action = 'WARN'
-                diff = np.linalg.norm(np.abs(np.array(value) - np.array(reference.__dict__[key]))) \
-                        / np.size(np.array(value)) # divide by number of elements
+
+                diff = 0.0
+                if isinstance(value, list):  # compare each list
+                    for ii, item in enumerate(value):
+                        diff = np.max([diff, np.max(np.abs(np.array(item) - np.array(reference.__dict__[key][ii])))])
+                else:
+                    if np.shape(value) == np.shape(reference.__dict__[key]):
+                        diff = np.max(np.abs(np.array(value) - np.array(reference.__dict__[key])))
+                    else:
+                        match = False
+                        print('ERROR: '+key, ', dimensions mismatch: {} .ne. {}'.format(np.shape(value), np.shape(reference.__dict__[key])))
+                        next # there is no point in computing differences if not even the dimensions match, so skip to next variable here
                 unmatch = diff > localtol
                 if unmatch:
                     if action == 'ERR':

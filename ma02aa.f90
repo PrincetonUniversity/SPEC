@@ -29,11 +29,13 @@ subroutine ma02aa( lvol, NN )
   
   use allglobal, only : ncpu, myid, cpus, Mvol, mn, im, in, &
                         LBlinear, LBnewton, LBsequad, &
-                        dMA, dMB, dMD, solution, &
-                        MBpsi, &
+!                       dMA, dMB, dMC, dMD, dME, dMF, solution, &
+                        dMA, dMB,      dMD,           solution, &
+!                       MBpsi, MEpsi, psiMCpsi, psiMFpsi, &
+                        MBpsi,  Ate,                          &
                         ImagneticOK, &
                         lBBintegral, lABintegral, &
-                        ivol, &
+                        ivol, Nfielddof, &
                         dtflux, dpflux, &
                         xoffset, &
                         Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, LocalConstraint
@@ -69,7 +71,8 @@ subroutine ma02aa( lvol, NN )
   
 !required for hybrj1;
   INTEGER              :: ihybrj1, Ldfmuaa, lengthwork
-  REAL                 :: DFxi(0:NN,0:NN), work(1:(1+NN)*(1+NN+13)/2), NewtonError
+  REAL                 :: NewtonError
+  REAL   , allocatable :: DFxi(:,:), work(:)
   external             :: df00ab
   
 ! required for E04UFF;
@@ -277,6 +280,9 @@ subroutine ma02aa( lvol, NN )
    
    lastcpu = GETTIME
    
+   SALLOCATE(DFxi, (0:NN,0:NN), zero)
+   SALLOCATE(work, (1:(1+NN)*(1+NN+13)/2), zero)
+
    xi(0) = mu(lvol) ! initialize; helicity multiplier is treated as an independent degree-of-freedom;
    
    ideriv = 0 ; dpsi(1:2) = (/ dtflux(lvol), dpflux(lvol) /) ! these are also used below;
@@ -331,7 +337,7 @@ subroutine ma02aa( lvol, NN )
    xo(1:NN) = xi(1:NN) ! save original for comparison;
    packorunpack = 'P' ; ideriv = 0
    CALL( ma02aa, packab( packorunpack, lvol, NN, xi(1:NN), ideriv ) )
-   FATAL( ma02aa, sum(abs(xi(1:NN)-xo(1:NN)))/NN.gt.vsmall, un/packing routine is incorrect )
+   FATAL( ma02aa, sum(abs(xi(1:Nfielddof(lvol))-xo(1:Nfielddof(lvol))))/Nfielddof(lvol).gt.vsmall, un/packing routine is incorrect )
 #endif
    
 !if( NewtonError.lt.mupftol ) then
@@ -342,6 +348,9 @@ subroutine ma02aa( lvol, NN )
    lABintegral(lvol) = half * sum( xi(1:NN) * matmul( dMD(1:NN,1:NN), xi(1:NN) ) ) ! + sum( xi(1:NN) * MEpsi(1:NN) ) ! + psiMFpsi
    
    solution(1:NN,0) = xi(1:NN)
+
+   DALLOCATE( DFxi )
+   DALLOCATE( work )
    
   endif ! end of if( LBnewton ) then
   
@@ -491,7 +500,7 @@ subroutine ma02aa( lvol, NN )
      
     endif ! end of if( Lplasmaregion ) ;
         
-    helicity(lvol) = lABintegral(lvol) ! this was computed in mp00ac;
+    if (Lconstraint .ne. 2) helicity(lvol) = lABintegral(lvol) ! this was computed in mp00ac;
     
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

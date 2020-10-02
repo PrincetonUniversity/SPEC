@@ -1,11 +1,17 @@
 function data = read_spec(filename)
-  
+
+% 
+% READ_SPEC ( FILENAME )
+% ======================
+%
 % Reads the HDF5 output file produced by SPEC
 %
 % INPUT
+% -----
 % -  filename : path to the HDF5 output file (e.g. 'testcase.h5')
 %
 % OUTPUT
+% ------
 % -  data     : contains all data from the SPEC run, which can be fed into several routines for analyzing and plotting
 %
 % written by J.Schilling (2019)
@@ -75,7 +81,7 @@ cZ   = cell(Nvol, 1);
 
 % split into separate cells for nested volumes
 start=1;
-for i=1:Nvol
+for i=1:Mvol
   % vector potential
   cAte{i} = data.vector_potential.Ate(start:start+Lrad(i),:);
   cAto{i} = data.vector_potential.Ato(start:start+Lrad(i),:);

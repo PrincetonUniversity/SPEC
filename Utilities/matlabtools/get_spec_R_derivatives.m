@@ -1,41 +1,47 @@
 function [sarr, out] = get_spec_R_derivatives(data, vol, sarr, tarr, zarr, RorZ)
+
+%
+% GET_SPEC_R_DERIVATIVES( DATA, VOL, SARR, TARR, ZARR, RORZ )
+% ===========================================================
 %
 % Returns the derivatives of R corresponding to SPEC coordinate 
 % system. Stellarator symmetry assumed.
 %
 % INPUT
 % -----
-%	filename: 	SPEC hdf5 output filename
-%	vol:		Volume number
-%	sarr:       s-coordinate array, shape (ns, 1)
-%	tarr:		Theta angle array
-%	zarr:		Phi angle array
-%   RorZ:       Returns either R derivatives (='R') or Z derivatives (='Z')
+%  data: data produced via read_spec(filename)
+%  vol:  Volume number
+%  sarr: s-coordinate array, shape (ns, 1)
+%  tarr: Theta angle array
+%  zarr: Phi angle array
+%  RorZ: Returns either R derivatives (='R') or Z derivatives (='Z')
 %
 % OUTPUT
 % ------
-%	sarr:		s-coordinate array
-%	R:		4xlength(sarr) array containing R, dR / ds, 
-%			dR / dtheta and dR / dphi
+%  sarr: s-coordinate array
+%  R:    4xlength(sarr) array containing R, dR / ds, 
+%        dR / dtheta and dR / dphi
 %
 % Written by A.Baillod (2019)
 %
 
 
 % Load geometry
-mn     = data.mn;
-im     = double(data.im);
-in     = double(data.in);
-Rmn = data.Rbc;
-Zmn = data.Zbs;
+mn     = data.output.mn;
+im     = double(data.output.im);
+in     = double(data.output.in);
+Rmn    = data.output.Rbc(:,vol  );
+Rmn_p  = data.output.Rbc(:,vol+1);
+Zmn    = data.output.Zbs(:,vol  );
+Zmn_p  = data.output.Zbs(:,vol+1);
     
 % Allocate data for R and its derivative in s, theta and phi (4), for each
 % and for ns points 
 ns = length(sarr);
 nt = length(tarr);
 nz = length(zarr);
-Rarr = cell(1,4); 
-Zarr = cell(1,4);
+Rarr = cell(2); 
+Zarr = cell(2);
 
 for ii=1:4
    Rarr{ii} =  zeros(ns, nt, nz);
@@ -52,11 +58,11 @@ if RorZ=='R'
       for iz=1:nz
         cosa = cos(double(im(imn)*tarr(it) - in(imn)*zarr(iz)));
         sina = sin(double(im(imn)*tarr(it) - in(imn)*zarr(iz)));
-
-        Rarr{1}(:,it,iz) = Rarr{1}(:,it,iz) + ( Rmn(imn, vol  ) + (Rmn(imn, vol+1) - Rmn(imn, vol)) * factor{imn}{1})                   * cosa;
-        Rarr{2}(:,it,iz) = Rarr{2}(:,it,iz) + (                   (Rmn(imn, vol+1) - Rmn(imn, vol)) * factor{imn}{2})                   * cosa;
-        Rarr{3}(:,it,iz) = Rarr{3}(:,it,iz) - ( Rmn(imn, vol  ) + (Rmn(imn, vol+1) - Rmn(imn, vol)) * factor{imn}{1}) * double(im(imn)) * sina;
-        Rarr{4}(:,it,iz) = Rarr{4}(:,it,iz) + ( Rmn(imn, vol  ) + (Rmn(imn, vol+1) - Rmn(imn, vol)) * factor{imn}{1}) * double(in(imn)) * sina;
+       
+        Rarr{1}(:,it,iz) = Rarr{1}(:,it,iz) + ( Rmn(imn) + (Rmn_p(imn) - Rmn(imn)) .* factor{imn}{1})                   * cosa;
+        Rarr{2}(:,it,iz) = Rarr{2}(:,it,iz) + (            (Rmn_p(imn) - Rmn(imn)) .* factor{imn}{2})                   * cosa;
+        Rarr{3}(:,it,iz) = Rarr{3}(:,it,iz) - ( Rmn(imn) + (Rmn_p(imn) - Rmn(imn)) .* factor{imn}{1}) * double(im(imn)) * sina;
+        Rarr{4}(:,it,iz) = Rarr{4}(:,it,iz) + ( Rmn(imn) + (Rmn_p(imn) - Rmn(imn)) .* factor{imn}{1}) * double(in(imn)) * sina;
       end
     end
   end
@@ -69,10 +75,10 @@ elseif RorZ=='Z'
         cosa = cos(double(im(imn)*tarr(it) - in(imn)*zarr(iz)));
         sina = sin(double(im(imn)*tarr(it) - in(imn)*zarr(iz)));
 
-        Zarr{1}(:,it,iz) = Zarr{1}(:,it,iz) + ( Zmn(imn, vol  ) + (Zmn(imn, vol+1) - Zmn(imn, vol)) * factor{imn}{1})                  * sina;
-        Zarr{2}(:,it,iz) = Zarr{2}(:,it,iz) + (                   (Zmn(imn, vol+1) - Zmn(imn, vol)) * factor{imn}{2})                  * sina;
-        Zarr{3}(:,it,iz) = Zarr{3}(:,it,iz) + ( Zmn(imn, vol  ) + (Zmn(imn, vol+1) - Zmn(imn, vol)) * factor{imn}{1}) * double(im(imn))* cosa;
-        Zarr{4}(:,it,iz) = Zarr{4}(:,it,iz) - ( Zmn(imn, vol  ) + (Zmn(imn, vol+1) - Zmn(imn, vol)) * factor{imn}{1}) * double(in(imn))* cosa;
+        Zarr{1}(:,it,iz) = Zarr{1}(:,it,iz) + ( Zmn(imn) + (Zmn_p(imn) - Zmn(imn)) .* factor{imn}{1})                  * sina;
+        Zarr{2}(:,it,iz) = Zarr{2}(:,it,iz) + (            (Zmn_p(imn) - Zmn(imn)) .* factor{imn}{2})                  * sina;
+        Zarr{3}(:,it,iz) = Zarr{3}(:,it,iz) + ( Zmn(imn) + (Zmn_p(imn) - Zmn(imn)) .* factor{imn}{1}) * double(im(imn))* cosa;
+        Zarr{4}(:,it,iz) = Zarr{4}(:,it,iz) - ( Zmn(imn) + (Zmn_p(imn) - Zmn(imn)) .* factor{imn}{1}) * double(in(imn))* cosa;
       end
     end
   end    

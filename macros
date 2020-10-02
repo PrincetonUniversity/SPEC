@@ -25,13 +25,26 @@ m4_define(MPIFINALIZE,{! macro expansion of mpifinalize;
   ! macro expansion of mpifinalize; end;})m4_dnl can put comments here
 m4_define(LOCALS,{! macro expansion of locals;
 
-  use mpi
+#ifdef OPENMP
+  USE OMP_LIB
+#endif
   implicit none
-  
-  INTEGER   :: ierr, astat, ios
+  include "mpif.h"
+  INTEGER   :: ierr, astat, ios, nthreads, ithread
   REAL      :: cput, cpui, cpuo ! cpu time; cpu initial; cpu old; 31 Jan 13;
 
   ! macro expansion of locals; end;})m4_dnl ; can put comments here;
+
+m4_define(GETTHREAD,{! macro expansion of getthread;
+
+#ifdef OPENMP
+  ithread = omp_get_thread_num() + 1
+#else
+  ithread = 1
+#endif
+
+  ! macro expansion of getthread; end;})m4_dnl ; can put comments here;
+
 m4_define(SALLOCATE,{ ! macro expansion of sallocate = set allocate;
 ! allocate a variable of name _1 in the range _2 and set the value to _3
 
@@ -206,7 +219,7 @@ m4_define(RlBCAST,{! macro expansion of rlbcast;
 
   ! macro expansion of rlbcast; end;})m4_dnl can put comments here
 m4_define(ClBCAST,{! macro expansion of clbcast;
-! character MPI broadcast of _1; length is _2; what is _3 ?
+! character MPI broadcast of _1; length is _2; index is _3
   
 #ifdef DEBUG
 
@@ -1219,6 +1232,11 @@ m4_define(BEGIN,{! macro expansion of begin;
  !cpui = zero
   cpui = MPI_WTIME()
   cpuo = cpui
+#ifdef OPENMP
+  nthreads = omp_get_max_threads()
+#else
+  nthreads = 1
+#endif
 
 #ifdef DEBUG
 

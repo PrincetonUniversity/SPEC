@@ -161,7 +161,7 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, ifl
                         efmn, ofmn, cfmn, sfmn, evmn, odmn, comn, simn, &
                         Nt, Nz, &
                         Ate, Aze, Ato, Azo, &
-                        TT, &
+                        TT, RTT, &
                         sg, guvij, iRij, iZij, dRij, dZij, tRij, tZij, &
                         mmpp, &
                         Bemn, Bomn, Iomn, Iemn, Somn, Semn, &
@@ -177,7 +177,7 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, ifl
   REAL                 :: dAt(1:Ntz, -1:2), dAz(1:Ntz, -1:2), XX(1:Ntz), YY(1:Ntz), dRR(1:Ntz,-1:1), dZZ(1:Ntz,-1:1), DDl, MMl
 
   REAL                 :: IIl(1:Ntz), length(1:Ntz), dLL(1:Ntz)
-  INTEGER              :: Lcurvature, ii, jj, kk, ll, ifail, ivol, lnn, id!, oicons
+  INTEGER              :: Lcurvature, ii, jj, kk, ll, ifail, ivol, lnn, mi, id!, oicons
   REAL                 :: dBB(1:Ntz, -1:2), lss, mfactor
   
   REAL                 :: dAs(1:Ntz)!, dRdt(-1:1,0:1), dZdt(-1:1,0:1)

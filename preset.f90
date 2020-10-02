@@ -15,7 +15,7 @@ subroutine preset
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  use constants, only : zero, mu0
+  use constants, only : zero, one, mu0
   
   use numerical, only : sqrtmachprec, vsmall, small
   
@@ -34,7 +34,7 @@ subroutine preset
   LOCALS
   
   INTEGER   :: innout, idof, jk, ll, ii, ifail, ideriv, vvol, mi, ni, mj, nj, mk, nk, mimj, ninj, mkmj, nknj, jj, kk, lvol, mm, nn, imn
-  INTEGER   :: lquad, igauleg, maxIquad, Mrad, jquad, Lcurvature, iret, work1, work2
+  INTEGER   :: lquad, igauleg, maxIquad, Mrad, jquad, Lcurvature, zerdof, iret, work1, work2
   REAL      :: teta, zeta, arg, lss, cszeta(0:1), error
   LOGICAL   :: LComputeAxis
 
@@ -221,15 +221,16 @@ endif
 !latex \end{enumerate}
 
   SALLOCATE( TT, (0:Mrad,0:1,0:1), zero )
-  
-  do innout = 0, 1 ; lss = two * innout - one
+  SALLOCATE(RTT, (0:Lrad(1),0:Mpol,0:1,0:1), zero )
+  SALLOCATE(RTM, (0:Lrad(1),0:Mpol), zero )
    
-   do ll = 0, Mrad ; TT(ll,innout,0) = lss**(ll  )        
-    ;              ; TT(ll,innout,1) = lss**(ll+1) * ll**2 ! derivative; 26 Jan 16;
-   enddo
-   
-  enddo ! end of do innout = 0, 1 ;
-  
+  call get_cheby( -one, Mrad, TT(:,0,:))
+  call get_cheby( one , Mrad, TT(:,1,:))
+
+  call get_zernike( zero, Lrad(1), Mpol, RTT(:,:,0,:))
+  call get_zernike( one, Lrad(1), Mpol, RTT(:,:,1,:))
+  call get_zernike_rm(zero, Lrad(1), Mpol, RTM(:,:))
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 !latex \subsubsection{\type{ImagneticOK(1:Mvol)} : Beltrami/vacuum error flag;}
@@ -284,22 +285,6 @@ endif
 !latex       \newline then $k_i\equiv$ \type{ki(i,0)} is defined such that $\bar m_{k_i} = m_i$ and $\bar n_{k_i} = n_i$.
 !latex \end{enumerate}
 
-  SALLOCATE( ki, (1:mn,0:1), 0 )
-  
-  do ii = 1, mn  ; mi = im(ii)  ; ni = in(ii)
-   
-   do kk = 1, mne ; mk = ime(kk) ; nk = ine(kk)
-    
-    if( mk.eq. mi .and. nk.eq. ni ) then
-     if( mk.eq.0 .and. nk.eq.0 ) then ; ki(ii,0:1) = (/ kk, 1 /)
-     else                             ; ki(ii,0:1) = (/ kk, 2 /)
-     endif
-    endif
-    
-   enddo ! end of do kk = 1, mne ;
-   
-  enddo ! end of do ii ;
-
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !latex \subsubsection{\type{kija(1:mn,1:mn,0:1)}, \type{kijs(1:mn,1:mn,0:1)} : Fourier identification;}
@@ -321,57 +306,46 @@ endif
 !latex       Also, take care that the sign of the sine harmonics in the above expressions will change for these cases.
 !latex \end{enumerate}
 
+  SALLOCATE( ki, (1:mn,0:1), 0 )
   SALLOCATE( kija, (1:mn,1:mn,0:1), 0 )
-  
-  do ii = 1, mn  ; mi =  im(ii) ; ni =  in(ii)
-   
-   do jj = 1, mn  ; mj =  im(jj) ; nj =  in(jj) ; mimj = mi + mj ; ninj = ni + nj !   adding   ; 17 Dec 15;
-    
-    do kk = 1, mne ; mk = ime(kk) ; nk = ine(kk)
-     
-     if( mk.eq. mimj .and. nk.eq. ninj ) then
-      if( mk.eq.0 .and. nk.eq.0 ) then ; kija(ii,jj,0:1) = (/ kk ,   1 /)
-      else                             ; kija(ii,jj,0:1) = (/ kk ,   2 /)
-      endif
-     endif
-     
-    enddo ! end of do kk; 29 Jan 13;
-    
-   enddo ! end of do jj; 29 Jan 13;
-   
-  enddo ! end of do ii; 29 Jan 13;
-
-
   SALLOCATE( kijs, (1:mn,1:mn,0:1), 0 )
-  
+
   do ii = 1, mn  ; mi =  im(ii) ; ni =  in(ii)
    
-   do jj = 1, mn  ; mj =  im(jj) ; nj =  in(jj) ; mimj = mi - mj ; ninj = ni - nj ! subtracting; 17 Dec 15;
-    
-    do kk = 1, mne ; mk = ime(kk) ; nk = ine(kk)
-     
-     if( mimj.gt.0 .or. ( mimj.eq.0 .and. ninj.ge.0 ) ) then ! no re-definition required; 17 Dec 15;
-      
-      if( mk.eq. mimj .and. nk.eq. ninj ) then
-       if( mk.eq.0 .and. nk.eq.0 ) then ; kijs(ii,jj,0:1) = (/ kk ,   1 /)
-       else                             ; kijs(ii,jj,0:1) = (/ kk ,   2 /)
-       endif
+    call getimn(lMpol, lNtor, Nfp, mi, ni, kk)
+    if (kk.gt.0) then
+      if( mi.eq.0 .and. ni.eq.0 ) then ; ki(ii,0:1) = (/ kk, 1 /)
+      else                             ; ki(ii,0:1) = (/ kk, 2 /)
       endif
-      
-     else
-      
-      if( mk.eq.-mimj .and. nk.eq.-ninj ) then
-       ;                                ; kijs(ii,jj,0:1) = (/ kk , - 2 /) ! only the sine modes need the sign factor; 17 Dec 15;
+    endif
+
+    do jj = 1, mn  ; mj =  im(jj) ; nj =  in(jj) ; mimj = mi + mj ; ninj = ni + nj !   adding   ; 17 Dec 15;
+
+      call getimn(lMpol, lNtor, Nfp, mimj, ninj, kk)
+      if (kk.gt.0) then
+        if( mimj.eq.0 .and. ninj.eq.0 ) then ; kija(ii,jj,0:1) = (/ kk, 1 /)
+        else                                 ; kija(ii,jj,0:1) = (/ kk, 2 /)
+        endif
       endif
-      
-     endif
-     
-    enddo ! end of do kk; 29 Jan 13;
+      ;                                           ; mimj = mi - mj ; ninj = ni - nj ! subtracting; 17 Dec 15;
+
+      if( mimj.gt.0 .or. ( mimj.eq.0 .and. ninj.ge.0 ) ) then
+        call getimn(lMpol, lNtor, Nfp, mimj, ninj, kk)
+        if (kk.gt.0) then
+          if( mimj.eq.0 .and. ninj.eq.0 ) then ; kijs(ii,jj,0:1) = (/ kk, 1 /)
+          else                                 ; kijs(ii,jj,0:1) = (/ kk, 2 /)
+          endif
+        endif
+      else
+        call getimn(lMpol, lNtor, Nfp, -mimj, -ninj, kk)
+        if (kk.gt.0) then
+          ;                                    ; kijs(ii,jj,0:1) = (/ kk , - 2 /) ! only the sine modes need the sign factor; 17 Dec 15;
+        endif
+      endif
     
-   enddo ! end of do jj; 29 Jan 13;
+    enddo ! end of do jj; 29 Jan 13;
    
   enddo ! end of do ii; 29 Jan 13;
-
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !latex \subsubsection{\type{djkp};}
@@ -399,53 +373,40 @@ endif
   SALLOCATE( iotaksub, (1:mn,1:mns), 0 )
   SALLOCATE( iotaksgn, (1:mn,1:mns), 0 )
   SALLOCATE( iotakadd, (1:mn,1:mns), 0 )
-  
+
   do kk = 1, mn ; mk = im(kk) ; nk = in(kk)
    
+    call getimn(sMpol, sNtor, Nfp, mk, nk, ii)
+    if (ii.gt.0) iotakkii(kk) = ii
    
-   do ii = 1, mns ; mi = ims(ii) ; ni = ins(ii)
+    do jj = 1, mns ; mj = ims(jj) ; nj = ins(jj)
     
-    if( mk.eq.mi .and. nk.eq.ni ) iotakkii(kk) = ii
-    
-   enddo
-   
-   
-   do jj = 1, mns ; mj = ims(jj) ; nj = ins(jj)
-    
-    
-    mkmj = mk - mj ; nknj = nk - nj
-    
-    do ii = 1, mns ; mi = ims(ii) ; ni = ins(ii)
-     
-     if( mkmj.gt.0 .or. ( mkmj.eq.0 .and. nknj.ge.0 ) ) then
+      mkmj = mk - mj ; nknj = nk - nj
+
+      if( mkmj.gt.0 .or. ( mkmj.eq.0 .and. nknj.ge.0 ) ) then
+
+        call getimn(sMpol, sNtor, Nfp, mkmj, nknj, ii)
+        if (ii.gt.0) then ; iotaksub(kk,jj) = ii ; iotaksgn(kk,jj) =  1
+        endif
+
+      else
       
-      if( mi.eq. mkmj .and. ni.eq. nknj ) then ; iotaksub(kk,jj) = ii ; iotaksgn(kk,jj) =  1
+        call getimn(sMpol, sNtor, Nfp, -mkmj, -nknj, ii)
+        if (ii.gt.0) then ; iotaksub(kk,jj) = ii ; iotaksgn(kk,jj) =  -1
+        endif
+
       endif
-      
-     else
-      
-      if( mi.eq.-mkmj .and. ni.eq.-nknj ) then ; iotaksub(kk,jj) = ii ; iotaksgn(kk,jj) = -1
+    
+      mkmj = mk + mj ; nknj = nk + nj
+
+      call getimn(sMpol, sNtor, Nfp, mkmj, nknj, ii)
+      if (ii.gt.0) then ; iotakadd(kk,jj) = ii
       endif
-      
-     endif
-     
-    enddo ! end of do ii; 30 Jan 13;
     
-    
-    mkmj = mk + mj ; nknj = nk + nj
-    
-    do ii = 1, mns ; mi = ims(ii) ; ni = ins(ii)
-     
-     if( mi.eq. mkmj .and. ni.eq. nknj ) then ; iotakadd(kk,jj) = ii
-     endif
-     
-    enddo ! end of do ii; 29 Jan 13;
-    
-    
-   enddo ! end of do jj; 29 Jan 13;
-   
+    enddo ! end of do jj; 29 Jan 13;
    
   enddo ! end of do kk; 29 Jan 13;
+
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -470,6 +431,7 @@ endif
 !latex \end{enumerate}
 
   SALLOCATE( cheby, (0:Mrad,0:2), zero )
+  SALLOCATE( zernike, (0:Lrad(1), 0:Mpol, 0:2), zero )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -627,11 +589,14 @@ endif
 !latex \end{enumerate}
   
   SALLOCATE( NAdof, (1:Mvol          ), 0 ) ! Beltrami degrees-of-freedom in each annulus;
+  SALLOCATE( Nfielddof,(1:Mvol       ), 0 ) ! Beltrami degrees-of-freedom in each annulus, field only;
+  SALLOCATE( NdMASmax, (1:Mvol       ), 0 ) ! The maximum size of sparse matrix for GMRES preconditioning;
+  SALLOCATE( NdMAS   , (1:Mvol       ), 0 ) ! The actual size of sparse matrix for GMRES preconditioning;
   
-  NALLOCATE( Ate  , (1:Mvol,-1:2,1:mn)    ) ! recall that this is type:sub-grid; 31 Jan 13;
-  NALLOCATE( Aze  , (1:Mvol,-1:2,1:mn)    )
-  NALLOCATE( Ato  , (1:Mvol,-1:2,1:mn)    )
-  NALLOCATE( Azo  , (1:Mvol,-1:2,1:mn)    )
+  NALLOCATE( Ate  , (1:Mvol,-2:2,1:mn)    ) ! recall that this is type:sub-grid; 31 Jan 13;
+  NALLOCATE( Aze  , (1:Mvol,-2:2,1:mn)    ) ! -2 : for use of matrix-free solver ; -1 : for use of force gradient
+  NALLOCATE( Ato  , (1:Mvol,-2:2,1:mn)    ) !  0 : normal data
+  NALLOCATE( Azo  , (1:Mvol,-2:2,1:mn)    ) ! 1:2: use to compute derivative w.r.t. fluxes
   
   SALLOCATE( Fso  , (1:Mvol,     1:mn), 0 ) ! these will become redundant if/when Lagrange multipliers are used to enforce bounday constraints; 26 Jan 16;
   SALLOCATE( Fse  , (1:Mvol,     1:mn), 0 )
@@ -644,22 +609,94 @@ endif
   SALLOCATE( Lmf  , (1:Mvol,     1:mn), 0 ) ! only need Lmf(2:mn) ; only for NOTstellsym; 08 Feb 16;
   SALLOCATE( Lmg  , (1:Mvol,     1:mn), 0 ) ! only need Lmg(1   ) ;
   SALLOCATE( Lmh  , (1:Mvol,     1:mn), 0 ) ! only need Lmh(1   ) ;
+
+  SALLOCATE( Lmavalue, (1:Mvol,     1:mn), zero )
+  SALLOCATE( Lmbvalue, (1:Mvol,     1:mn), zero )
+  SALLOCATE( Lmcvalue, (1:Mvol,     1:mn), zero )
+  SALLOCATE( Lmdvalue, (1:Mvol,     1:mn), zero )
+  SALLOCATE( Lmevalue, (1:Mvol,     1:mn), zero )
+  SALLOCATE( Lmfvalue, (1:Mvol,     1:mn), zero )
+  SALLOCATE( Lmgvalue, (1:Mvol,     1:mn), zero )
+  SALLOCATE( Lmhvalue, (1:Mvol,     1:mn), zero )
   
   do vvol = 1, Mvol
    
    LREGION(vvol)
    
-   if( Lcoordinatesingularity ) then !                                     a    c      b        d      e      f      g   h
-    if( YESstellsym ) NAdof(vvol) = 2 * ( mn        ) * ( Lrad(vvol)+1 ) + mn        + Ntor+1        + mn-1        + 1 + 0
-    if( NOTstellsym ) NAdof(vvol) = 2 * ( mn + mn-1 ) * ( Lrad(vvol)+1 ) + mn + mn-1 + Ntor+1 + Ntor + mn-1 + mn-1 + 1 + 0
+   if( Lcoordinatesingularity ) then 
+    zerdof = 0                                       ! count Zernike degree of freedom 30 Jun 19
+    do ii = 2, Mpol                                  ! for m>1
+     do jj = ii, Lrad(vvol), 2
+      zerdof = zerdof + 2 * ntor + 1                 ! plus and minus sign for n>1, unique for n==0
+      if( NOTstellsym ) zerdof = zerdof + 2*ntor + 1 ! plus and minus sign for n
+     enddo
+    enddo
+    zerdof = zerdof * 2                              ! we have one for At and one for Az
+
+    do jj = 0, Lrad(vvol), 2                         ! for m==0
+     zerdof = zerdof + ntor + 1                      ! minus sign for n, Aze
+     if (jj .ge. 2) zerdof = zerdof + ntor + 1       ! minus sign for n, Ate, without l=0 due to recombination
+
+     if( NOTstellsym ) then
+      zerdof = zerdof + ntor                         ! sin component minus sign for n, Azo
+      if (jj .ge. 2) zerdof = zerdof + ntor          ! minus sign for n, Ato, without l=0 due to recombination
+     endif
+    enddo
+
+    if (Mpol .ge. 1) then ! for m==1
+      do jj = 1, Lrad(vvol), 2                         
+        zerdof = zerdof + 2 * ntor + 1                  ! minus and plus sign for n, Aze
+        if (jj .ge. 2) zerdof = zerdof + 2 * ntor + 1   ! minus sign for n, Ate, without l=0 due to recombination
+
+        if( NOTstellsym ) then
+          zerdof = zerdof + 2 * ntor + 1                 ! sin component minus and plus sign for n, Azo
+          if (jj .ge. 2) zerdof = zerdof + 2 * ntor + 1  ! minus and plus sign for n, Ato, without l=0 due to recombination
+        endif
+      enddo
+    endif
+
+    ! the degree of freedom in the Beltrami field without Lagrange multipliers
+    Nfielddof(vvol) = zerdof
+                                     !                                     a    c      b        d      e      f      g   h                                 
+    if( YESstellsym ) NAdof(vvol) = zerdof                               + mn        + Ntor+1        + mn-1        + 1 + 0
+    if( NOTstellsym ) NAdof(vvol) = zerdof                               + mn + mn-1 + Ntor+1 + Ntor + mn-1 + mn-1 + 1 + 0 ! this is broken at the moment
+
+    ! due to basis recombination, Lma will not have the m=0 and m=1 harmonics. We substract them now
+    ! m = 0
+    NAdof(vvol) = NAdof(vvol) - (ntor + 1)
+    if (NOTstellsym) NAdof(vvol) = NAdof(vvol) - ntor
+
+    ! m = 1
+    if (Mpol .ge. 1) then
+      NAdof(vvol) = NAdof(vvol) - (2 * ntor + 1)
+      if (NOTstellsym) NAdof(vvol) = NAdof(vvol) - (2 * ntor + 1)
+    endif
+
+    ! Guess the size of the sparse matrix ! 28 Jan 20
+    ! If an iterative method is used and requires an preconditioner, we need to construct it as a sparse matrix
+    if (Lmatsolver.ge.2 .and. LGMRESprec.gt.0) then
+      if( YESstellsym ) NdMASmax(vvol) = (2 * (Lrad(vvol)/2 + 1))**2 * mn + 2 * 2 * 5 * Lrad(vvol) * mn ! Ate, Aze
+      if( NOTstellsym ) NdMASmax(vvol) = (4 * (Lrad(vvol)/2 + 1))**2 * mn + 2 * 4 * 8 * Lrad(vvol) * mn ! Ate, Aze, Ato, Azo
+    end if
    else ! .not.Lcoordinatesingularity;                                     a    c      b        d      e      f      g   h
-    if( YESstellsym ) NAdof(vvol) = 2 * ( mn        ) * ( Lrad(vvol)+1 ) + mn        + mn            + mn-1        + 1 + 1  
-    if( NOTstellsym ) NAdof(vvol) = 2 * ( mn + mn-1 ) * ( Lrad(vvol)+1 ) + mn + mn-1 + mn     + mn-1 + mn-1 + mn-1 + 1 + 1
+    if( YESstellsym ) NAdof(vvol) = 2 * ( mn        ) * ( Lrad(vvol)    )                            + mn-1        + 1 + 1  
+    if( NOTstellsym ) NAdof(vvol) = 2 * ( mn + mn-1 ) * ( Lrad(vvol)    )                            + mn-1 + mn-1 + 1 + 1
+
+    ! dof for field variables only
+    if( YESstellsym ) Nfielddof(vvol) = 2 * ( mn        ) * ( Lrad(vvol)    )
+    if( NOTstellsym ) Nfielddof(vvol) = 2 * ( mn + mn-1 ) * ( Lrad(vvol)    )
+
+    ! Guess the size of the sparse matrix ! 28 Jan 20
+    ! If an iterative method is used and requires an preconditioner, we need to construct it as a sparse matrix
+    if (Lmatsolver.ge.2 .and. LGMRESprec.gt.0) then
+      if( YESstellsym ) NdMASmax(vvol) = (2 * (Lrad(vvol) + 1))**2 * mn + 2 * 2 * 5 * Lrad(vvol) * mn        ! Ate, Aze
+      if( NOTstellsym ) NdMASmax(vvol) = (4 * (Lrad(vvol) + 1))**2 * mn + 2 * 4 * 8 * Lrad(vvol) * mn        ! Ate, Aze, Ato, Azo
+    end if
    endif ! end of if( Lcoordinatesingularity );
-   
+
    do ii = 1, mn ! loop over Fourier harmonics;
     
-    do ideriv = -1, 2 ! loop over derivatives; 14 Jan 13;
+    do ideriv = -2, 2 ! loop over derivatives; 14 Jan 13;
      
      SALLOCATE( Ate(vvol,ideriv,ii)%s, (0:Lrad(vvol)), zero )
      SALLOCATE( Aze(vvol,ideriv,ii)%s, (0:Lrad(vvol)), zero )
@@ -682,11 +719,14 @@ endif
    case( 0 )    ; 
    case( 1 )    ; Ate(vvol,0,1)%s(0:1) = dtflux(vvol) * half ! this is an integrable approximation; NEEDS CHECKING; 26 Feb 13;
     ;           ; Aze(vvol,0,1)%s(0:1) = dpflux(vvol) * half ! this is an integrable approximation; NEEDS CHECKING; 26 Feb 13;
+    if (Lcoordinatesingularity) then
+    ;           ; Ate(vvol,0,1)%s(2) = dtflux(vvol) * half * half
+    endif
    case( 2 )    ;                                            ! will call ra00aa below to read initial vector potential from file;
    case( 3 )    ;                                            ! the initial guess will be randomized, maximum is maxrndgues; 5 Mar 19;
     do ii = 1, mn ! loop over Fourier harmonics;
     
-     do ideriv = -1, 2 ! loop over derivatives; 14 Jan 13;
+     do ideriv = -2, 2 ! loop over derivatives; 14 Jan 13;
 
       call random_number(Ate(vvol,ideriv,ii)%s)
       call random_number(Aze(vvol,ideriv,ii)%s)
@@ -712,24 +752,46 @@ endif
     do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
      
      do ll = 0, Lrad(vvol)
-      ;                                     ; idof = idof + 1 ; Ate(vvol,0,ii)%i(ll) = idof
-      ;                                     ; idof = idof + 1 ; Aze(vvol,0,ii)%i(ll) = idof
-      if( NOTstellsym .and. ii.gt.1 ) then  ; idof = idof + 1 ; Ato(vvol,0,ii)%i(ll) = idof
-       ;                                    ; idof = idof + 1 ; Azo(vvol,0,ii)%i(ll) = idof
+      ! Zernike is non zero only if ll>=mi and when they have the same parity
+      if (ll>=mi .and. mod(mi+ll,2)==0)then 
+      ! We use the basis combination for m=0 and 1. They don't have ll=0 component.
+      if (.not.((ll==0.and.mi==0).or.(ll==1.and.mi==1))) then 
+                                            ; idof = idof + 1 ; Ate(vvol,0,ii)%i(ll) = idof ! Zernike 30 Jun 19
       endif
+      ;                                     ; idof = idof + 1 ; Aze(vvol,0,ii)%i(ll) = idof
+      if( NOTstellsym .and. ii.gt.1 ) then  
+        if (.not.((ll==0.and.mi==0).or.(ll==1.and.mi==1))) then 
+                                            ; idof = idof + 1 ; Ato(vvol,0,ii)%i(ll) = idof ! Zernike 30 Jun 19
+        endif
+       ;                                    ; idof = idof + 1 ; Azo(vvol,0,ii)%i(ll) = idof
+      endif ! NOTstellsym
+      endif ! Zernike 
      enddo ! end of do ll; 17 Jan 13;
-     ;                                     ; idof = idof + 1 ; Lma(vvol,  ii)       = idof
+
+    enddo ! end of do ii
+
+    do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
+     ! Lma is for Ate boundary condition on axis. For m=0 and 1, the boundary condition has been satisfied by basis recombination, so they are excluded.
+     if ( mi.ne.0 .and. mi.ne.1     )  then ; idof = idof + 1 ; Lma(vvol,  ii)       = idof
+     endif
+     ! Lmb is for Aze boundary condition on axis. We only have that for m=0.
      if(  mi.eq.0                   ) then ; idof = idof + 1 ; Lmb(vvol,  ii)       = idof ! 18 May 16;
      endif
+     ! Lme is for B.n at the outer boundary cos component. We don't have it for m=n=0.
      if(  ii.gt.1                   ) then ; idof = idof + 1 ; Lme(vvol,  ii)       = idof
      endif
+     ! Lmg is for dtflux. We only have it for m=n=0.
      if(  ii.eq.1                   ) then ; idof = idof + 1 ; Lmg(vvol,  ii)       = idof
 !   ! ;                                    ; idof = idof + 1 ; Lmh(vvol,  ii)       = idof ! no constraint on poloidal flux in innermost volume; 11 Mar 16;
      endif
      if( NOTstellsym ) then
-     if(  ii.gt.1                   ) then ; idof = idof + 1 ; Lmc(vvol,  ii)       = idof ! 18 May 16;
-      ;                                    ; idof = idof + 1 ; Lmf(vvol,  ii)       = idof ! 18 May 16;
+      ! Lmc is for Ato boundary condition on axis. Same as Lma.
+      if(  mi.ne.0 .and. mi.ne.1    ) then ; idof = idof + 1 ; Lmc(vvol,  ii)       = idof ! 18 May 16;
+      endif
+      ! Lmf is for B.n at the outer boundary sin component. Same as Lme.
+      if(  ii.gt.1                  ) then ; idof = idof + 1 ; Lmf(vvol,  ii)       = idof ! 18 May 16;
      endif
+     ! Lmd is for Azo on axis. We only have it for m=0, but not m=n=0.
      if(  ii.gt.1 .and. mi.eq.0     ) then ; idof = idof + 1 ; Lmd(vvol,  ii)       = idof ! 18 May 16;
      endif
      endif ! end of if( NOTstellsym ) ; 19 Jul 16;
@@ -737,25 +799,33 @@ endif
     enddo ! end of do ii; 25 Jan 13;
     
     FATAL( preset, idof.ne.NAdof(vvol), need to count Beltrami degrees-of-freedom more carefully  for coordinate singularity )
-    
+    FATAL( preset, (idof+1)**2.ge.HUGE(idof)), NAdof too big, should be smaller than maximum of int32 type )
+
    else ! .not.Lcoordinatesingularity;
         
     do ii = 1, mn
-     do ll = 0, Lrad(vvol)                 ; idof = idof + 1 ; Ate(vvol,0,ii)%i(ll) = idof
+     ! We use basis recombination method to ensure the inner boundary has At=Az=0. Therefore they don't have ll=0 component.
+     do ll = 1, Lrad(vvol)                 ; idof = idof + 1 ; Ate(vvol,0,ii)%i(ll) = idof
       ;                                    ; idof = idof + 1 ; Aze(vvol,0,ii)%i(ll) = idof
       if( ii.gt.1 .and. NOTstellsym ) then ; idof = idof + 1 ; Ato(vvol,0,ii)%i(ll) = idof
        ;                                   ; idof = idof + 1 ; Azo(vvol,0,ii)%i(ll) = idof
       endif
      enddo ! end of do ll; 08 Feb 16;
-     ;                                     ; idof = idof + 1 ; Lma(vvol,  ii)       = idof
-     ;                                     ; idof = idof + 1 ; Lmb(vvol,  ii)       = idof
-     if(  ii.gt.1 .and. NOTstellsym ) then ; idof = idof + 1 ; Lmc(vvol,  ii)       = idof
-      ;                                    ; idof = idof + 1 ; Lmd(vvol,  ii)       = idof
-     endif
+    enddo
+
+    do ii = 1, mn
+     !;                                     ; idof = idof + 1 ; Lma(vvol,  ii)       = idof
+     !;                                     ; idof = idof + 1 ; Lmb(vvol,  ii)       = idof
+     !if(  ii.gt.1 .and. NOTstellsym ) then ; idof = idof + 1 ; Lmc(vvol,  ii)       = idof
+     !;                                     ; idof = idof + 1 ; Lmd(vvol,  ii)       = idof
+     !endif
+     ! Lme is for B.n at the outer boundary cos component. We don't have it for m=n=0.
      if(  ii.gt.1                   ) then ; idof = idof + 1 ; Lme(vvol,  ii)       = idof
      endif
+     ! Lmf is for B.n at the outer boundary sin component. Same as Lme
      if(  ii.gt.1 .and. NOTstellsym ) then ; idof = idof + 1 ; Lmf(vvol,  ii)       = idof
      endif
+     ! Lmg and Lmh are the dtflux and dpflux constraint. Only present for m=n=0
      if(  ii.eq.1                   ) then ; idof = idof + 1 ; Lmg(vvol,  ii)       = idof
       ;                                    ; idof = idof + 1 ; Lmh(vvol,  ii)       = idof
      endif
@@ -781,11 +851,22 @@ endif
    !endif
     
     FATAL( preset, idof.ne.NAdof(vvol), need to count degrees-of-freedom more carefully for new matrix )
-    
+    FATAL( preset, (idof+1)**2.ge.HUGE(idof)), NAdof too big, should be smaller than maximum of int32 type )
+
    endif ! end of if( Lcoordinatesingularity ) ; 
    
    FATAL( preset, idof.ne.NAdof(vvol), impossible logic )
    
+   do ii = 1, mn
+      do jj = 0, Lrad(vvol)
+        if (Ate(vvol,0,ii)%i(jj) == 0) Ate(vvol,0,ii)%s(jj) = zero
+        if (Aze(vvol,0,ii)%i(jj) == 0) Aze(vvol,0,ii)%s(jj) = zero
+        if (.not. YESstellsym) then
+          if (Ato(vvol,0,ii)%i(jj) == 0) Azo(vvol,0,ii)%s(jj) = zero
+          if (Azo(vvol,0,ii)%i(jj) == 0) Azo(vvol,0,ii)%s(jj) = zero
+        end if
+      end do !jj
+   end do !ii
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
   enddo ! end of do vvol = 1, Nvol loop;
@@ -834,16 +915,18 @@ endif
   SALLOCATE(   sg , (1:Ntz,0:3        ), zero )
   SALLOCATE( guvij, (1:Ntz,0:3,0:3,-1:3), zero ) ! need this on higher resolution grid for accurate Fourier decomposition;
   SALLOCATE( gvuij, (1:Ntz,0:3,0:3    ), zero ) ! need this on higher resolution grid for accurate Fourier decomposition; 10 Dec 15;
-  
-  SALLOCATE( dRadR, (1:mn,0:1,0:1,1:mn), zero ) ! calculated in rzaxis; 19 Sep 16;
-  SALLOCATE( dRadZ, (1:mn,0:1,0:1,1:mn), zero )
-  SALLOCATE( dZadR, (1:mn,0:1,0:1,1:mn), zero )
-  SALLOCATE( dZadZ, (1:mn,0:1,0:1,1:mn), zero )
 
-  SALLOCATE( dRodR, (1:Ntz,0:1,1:mn), zero ) ! calculated in rzaxis; 19 Sep 16;
-  SALLOCATE( dRodZ, (1:Ntz,0:1,1:mn), zero )
-  SALLOCATE( dZodR, (1:Ntz,0:1,1:mn), zero )
-  SALLOCATE( dZodZ, (1:Ntz,0:1,1:mn), zero )
+  if (Lfindzero .eq. 2) then
+    SALLOCATE( dRadR, (1:mn,0:1,0:1,1:mn), zero ) ! calculated in rzaxis; 19 Sep 16;
+    SALLOCATE( dRadZ, (1:mn,0:1,0:1,1:mn), zero )
+    SALLOCATE( dZadR, (1:mn,0:1,0:1,1:mn), zero )
+    SALLOCATE( dZadZ, (1:mn,0:1,0:1,1:mn), zero )
+
+    SALLOCATE( dRodR, (1:Ntz,0:1,1:mn), zero ) ! calculated in rzaxis; 19 Sep 16;
+    SALLOCATE( dRodZ, (1:Ntz,0:1,1:mn), zero )
+    SALLOCATE( dZodR, (1:Ntz,0:1,1:mn), zero )
+    SALLOCATE( dZodZ, (1:Ntz,0:1,1:mn), zero )
+  endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -869,20 +952,20 @@ endif
 !latex \item These are defined in \link{metrix}, and used in \link{ma00aa}.
 !latex \end{enumerate}
   
-  SALLOCATE( goomne, (0:mne), zero ) ! workspace for Fourier decomposition of metric terms;
-  SALLOCATE( goomno, (0:mne), zero )
-  SALLOCATE( gssmne, (0:mne), zero ) ! workspace for Fourier decomposition of metric terms;
-  SALLOCATE( gssmno, (0:mne), zero )
-  SALLOCATE( gstmne, (0:mne), zero ) ! workspace for Fourier decomposition of metric terms;
-  SALLOCATE( gstmno, (0:mne), zero )
-  SALLOCATE( gszmne, (0:mne), zero ) ! workspace for Fourier decomposition of metric terms;
-  SALLOCATE( gszmno, (0:mne), zero )
-  SALLOCATE( gttmne, (0:mne), zero ) ! workspace for Fourier decomposition of metric terms;
-  SALLOCATE( gttmno, (0:mne), zero )
-  SALLOCATE( gtzmne, (0:mne), zero ) ! workspace for Fourier decomposition of metric terms;
-  SALLOCATE( gtzmno, (0:mne), zero )
-  SALLOCATE( gzzmne, (0:mne), zero ) ! workspace for Fourier decomposition of metric terms;
-  SALLOCATE( gzzmno, (0:mne), zero )
+  SALLOCATE( goomne, (0:mne, maxIquad), zero ) ! workspace for Fourier decomposition of metric terms;
+  SALLOCATE( goomno, (0:mne, maxIquad), zero )
+  SALLOCATE( gssmne, (0:mne, maxIquad), zero ) ! workspace for Fourier decomposition of metric terms;
+  SALLOCATE( gssmno, (0:mne, maxIquad), zero )
+  SALLOCATE( gstmne, (0:mne, maxIquad), zero ) ! workspace for Fourier decomposition of metric terms;
+  SALLOCATE( gstmno, (0:mne, maxIquad), zero )
+  SALLOCATE( gszmne, (0:mne, maxIquad), zero ) ! workspace for Fourier decomposition of metric terms;
+  SALLOCATE( gszmno, (0:mne, maxIquad), zero )
+  SALLOCATE( gttmne, (0:mne, maxIquad), zero ) ! workspace for Fourier decomposition of metric terms;
+  SALLOCATE( gttmno, (0:mne, maxIquad), zero )
+  SALLOCATE( gtzmne, (0:mne, maxIquad), zero ) ! workspace for Fourier decomposition of metric terms;
+  SALLOCATE( gtzmno, (0:mne, maxIquad), zero )
+  SALLOCATE( gzzmne, (0:mne, maxIquad), zero ) ! workspace for Fourier decomposition of metric terms;
+  SALLOCATE( gzzmno, (0:mne, maxIquad), zero )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -896,12 +979,12 @@ endif
   SALLOCATE( kjreal, (1:Ntz), zero )
   SALLOCATE( kjimag, (1:Ntz), zero )
 
-  SALLOCATE( cplxin,  (1:Nt,1:Nz), zero )
-  SALLOCATE( cplxout, (1:Nt,1:Nz), zero )
+  SALLOCATE( cplxin,  (1:Nt,1:Nz,nthreads), zero )
+  SALLOCATE( cplxout, (1:Nt,1:Nz,nthreads), zero )
 
   ! Create and save optimal plans for forward and inverse 2D fast Fourier transforms with FFTW. -JAB; 25 Jul 2017
-  planf = fftw_plan_dft_2d( Nz, Nt, cplxin, cplxout, FFTW_FORWARD,  FFTW_MEASURE + FFTW_DESTROY_INPUT )
-  planb = fftw_plan_dft_2d( Nz, Nt, cplxin, cplxout, FFTW_BACKWARD, FFTW_MEASURE + FFTW_DESTROY_INPUT )
+  planf = fftw_plan_dft_2d( Nz, Nt, cplxin(:,:,1), cplxout(:,:,1), FFTW_FORWARD,  FFTW_MEASURE + FFTW_DESTROY_INPUT )
+  planb = fftw_plan_dft_2d( Nz, Nt, cplxin(:,:,1), cplxout(:,:,1), FFTW_BACKWARD, FFTW_MEASURE + FFTW_DESTROY_INPUT )
 
   SALLOCATE( efmn, (1:mne), zero ) ! Fourier harmonics workspace; 24 Apr 13;
   SALLOCATE( ofmn, (1:mne), zero )
@@ -933,18 +1016,18 @@ endif
   FATAL( preset, Nt.eq.0, illegal division )
 
   do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over Fourier harmonics;
-   
-   do kk = 0, Nz-1 ; zeta = kk * pi2nfp / Nz
-    do jj = 0, Nt-1 ; teta = jj * pi2    / Nt ; jk = 1 + jj + kk*Nt ; arg = mi * teta - ni * zeta 
-     gteta(jk) = teta
-     gzeta(jk) = zeta
-     cosi(jk,ii) = cos(arg)
-     sini(jk,ii) = sin(arg)
-    enddo
-   enddo
-   
-  enddo ! end of do ii; 13 May 13;
   
+  do kk = 0, Nz-1 ; zeta = kk * pi2nfp / Nz
+    do jj = 0, Nt-1 ; teta = jj * pi2    / Nt ; jk = 1 + jj + kk*Nt ; arg = mi * teta - ni * zeta 
+    gteta(jk) = teta
+    gzeta(jk) = zeta
+    cosi(jk,ii) = cos(arg)
+    sini(jk,ii) = sin(arg)
+    enddo
+  enddo
+  
+  enddo ! end of do ii; 13 May 13;
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 #ifdef DEBUG
@@ -1003,9 +1086,7 @@ endif
    case(   2 ) ; vvol = Mvol
    end select
 
-  LComputeAxis = .true.
-
-   WCALL( preset, rzaxis, ( Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), vvol, LComputeAxis ) ) ! set coordinate axis; 19 Jul 16;
+   WCALL( preset, rzaxis, ( Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), vvol, .false. ) ) ! set coordinate axis; 19 Jul 16;
 
   endif ! end of if( Igeometry.eq.3 ) then ; 19 Jul 16;
   
@@ -1216,6 +1297,29 @@ endif
   SALLOCATE( Bzemn, (1:mn,0:1,1:Mvol), zero )
   SALLOCATE( Btomn, (1:mn,0:1,1:Mvol), zero )
   SALLOCATE( Bzomn, (1:mn,0:1,1:Mvol), zero )
+
+  SALLOCATE( Bloweremn, (1:mn, 3), zero) ! these are declared in global, calculated in getbco, used in mtrxhs
+  SALLOCATE( Bloweromn, (1:mn, 3), zero)
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  ! Allocate matrix to store the last solution of GMRES as initialization
+  LILUprecond = .false.
+  if (Lmatsolver.eq.2 .or. Lmatsolver.eq.3) then ! use GMRES
+    SALLOCATE(GMRESlastsolution, (MAXVAL(NAdof),0:2,1:Mvol), zero )
+    GMRESlastsolution = zero
+    if (LGMRESprec .eq. 1) LILUprecond = .true.
+  endif
+  
+  if (Lmatsolver.eq.3) then
+    YESMatrixFree = .true.
+    NOTMatrixFree = .false.
+  else
+    YESMatrixFree = .false.
+    NOTMatrixFree = .true.
+  endif
+
+  !FATAL(preset, Lmatsolver.eq.3 .and. Lfindzero.eq.2, matrix free currently only support Lfindzero=0,1)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

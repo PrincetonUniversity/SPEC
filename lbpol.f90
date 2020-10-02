@@ -100,8 +100,8 @@ subroutine lbpol(lvol, Bt00, ideriv, iocons)
   if( ideriv.eq.-1 ) then
 
     ! Get derivatives of metric element
-    Lcurvature = 5
-    WCALL( lbpol, coords, (lvol, lss, Lcurvature, Ntz, mn ) ) ! get guvij over sg derivatives
+    Lcurvature = 3
+    WCALL( lbpol, coords, (lvol, lss, Lcurvature, Ntz, mn ) ) ! get sg times d/dx (g_mu,nu / sg)
 
     ! Compute vector potential without taking derivatives
     call build_vector_potential(lvol, iocons, 0, 1)
@@ -110,8 +110,8 @@ subroutine lbpol(lvol, Bt00, ideriv, iocons)
     call invfft( mn, im, in, efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt0(1:Ntz), dAz0(1:Ntz) ) ! get covariant component of dA without derivatives
 
 
-    Bt(1:Ntz) = Bt(1:Ntz) + ( - dAz0(1:Ntz ) * guvij(1:Ntz,2,2, 1) + dAt0(1:Ntz ) * guvij(1:Ntz,2,3, 1) ) ! Add metric derivatives
-    Bz(1:Ntz) = Bz(1:Ntz) + ( - dAz0(1:Ntz ) * guvij(1:Ntz,2,3, 1) + dAt0(1:Ntz ) * guvij(1:Ntz,3,3, 1) ) 
+    Bt(1:Ntz) = Bt(1:Ntz) + ( - dAz0(1:Ntz ) * guvij(1:Ntz,2,2, 1) + dAt0(1:Ntz ) * guvij(1:Ntz,2,3, 1) ) / sg(1:Ntz, 0) ! Add metric derivatives
+    Bz(1:Ntz) = Bz(1:Ntz) + ( - dAz0(1:Ntz ) * guvij(1:Ntz,2,3, 1) + dAt0(1:Ntz ) * guvij(1:Ntz,3,3, 1) ) / sg(1:Ntz, 0)
 
   endif
 
