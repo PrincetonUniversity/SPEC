@@ -5,6 +5,7 @@ var modules =
     [ "Parallelization", "group__grp__parallel.html", "group__grp__parallel" ],
     [ "Geometry", "group__grp__geometry.html", "group__grp__geometry" ],
     [ "Plasma Currents", "group__grp__currents.html", "group__grp__currents" ],
+    [ "\"global\" force", "group__grp__global__force.html", "group__grp__global__force" ],
     [ "Input namelists and global variables", "group__grp__global.html", "group__grp__global" ],
     [ "\"local\" force", "group__grp__local__force.html", "group__grp__local__force" ],
     [ "Integrals", "group__grp__integrals.html", "group__grp__integrals" ],
@@ -18,6 +19,7 @@ var modules =
     [ "Conjugate-Gradient method", "group__grp__conjugate__gradient.html", "group__grp__conjugate__gradient" ],
     [ "Initialization of the code", "group__grp__initialization.html", "group__grp__initialization" ],
     [ "Output file(s)", "group__grp__output.html", "group__grp__output" ],
+    [ "Coordinate axis", "group__grp__coord__axis.html", "group__grp__coord__axis" ],
     [ "Rotational Transform", "group__grp__transform.html", "group__grp__transform" ],
     [ "Plasma volume", "group__grp__volume.html", "group__grp__volume" ],
     [ "Smooth boundary", "group__grp__smooth__boundary.html", "group__grp__smooth__boundary" ]

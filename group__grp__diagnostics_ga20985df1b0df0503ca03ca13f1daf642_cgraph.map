@@ -1,0 +1,5 @@
+<map id="bfield" name="bfield">
+<area shape="rect" id="node1" title="Compute the magnetic field." alt="" coords="5,31,57,57"/>
+<area shape="rect" id="node2" href="$basefn_8f90.html#af6a4cad04c70bfb14fd18a3bfbc843a3" title="Get the Chebyshev polynomials with zeroth, first derivatives." alt="" coords="109,5,190,32"/>
+<area shape="rect" id="node3" href="$basefn_8f90.html#a38dc596fb909186b01dacc1feac03164" title="Get the Zernike polynomials with zeroth, first derivatives." alt="" coords="105,56,193,83"/>
+</map>

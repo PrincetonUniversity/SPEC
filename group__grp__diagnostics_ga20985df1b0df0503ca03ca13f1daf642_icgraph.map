@@ -1,8 +1,10 @@
 <map id="bfield" name="bfield">
-<area shape="rect" id="node1" title="Compute the magnetic field." alt="" coords="448,31,500,57"/>
-<area shape="rect" id="node2" href="$group__grp__diagnostics.html#ga6411205c36a7d50002d7f3fb3133c441" title="Measures error in Beltrami equation, ." alt="" coords="226,5,286,32"/>
-<area shape="rect" id="node5" href="$group__grp__diagnostics.html#ga831aed2458140e266ee4d37461dd5350" title="Constructs Poincaré plot and &quot;approximate&quot; rotational&#45;transform (for single field line)." alt="" coords="336,56,400,83"/>
-<area shape="rect" id="node3" href="$xspech_8f90.html#aea782eae089760a491c2c54f9903abcc" title="Main program of SPEC." alt="" coords="113,31,176,57"/>
-<area shape="rect" id="node4" href="$xspech_8f90.html#a537af4990058c0b0f2cd8b3669af204f" title="todo remark" alt="" coords="5,31,65,57"/>
-<area shape="rect" id="node6" href="$group__grp__diagnostics.html#gad67931244268a09bd077dae8910c7096" title="Constructs Poincaré plot and &quot;approximate&quot; rotational&#45;transform (driver)." alt="" coords="224,56,288,83"/>
+<area shape="rect" id="node1" title="Compute the magnetic field." alt="" coords="507,81,559,108"/>
+<area shape="rect" id="node2" href="$bfield_8f90.html#adc615fe98d38488525cbe807d008860a" title="compute the tangential magnetic field" alt="" coords="346,5,449,32"/>
+<area shape="rect" id="node3" href="$group__grp__diagnostics.html#ga6411205c36a7d50002d7f3fb3133c441" title="Measures error in Beltrami equation, ." alt="" coords="226,56,286,83"/>
+<area shape="rect" id="node6" href="$group__grp__diagnostics.html#ga831aed2458140e266ee4d37461dd5350" title="Constructs Poincaré plot and &quot;approximate&quot; rotational&#45;transform (for single field line)." alt="" coords="365,107,429,133"/>
+<area shape="rect" id="node8" href="$sphdf5_8f90.html#a17e65b951634f7098213fd071d905482" title="write the magnetic field on a grid; previously the (wflag.eq.1) part of globals.f90/wrtend to write ...." alt="" coords="336,157,459,184"/>
+<area shape="rect" id="node4" href="$xspech_8f90.html#aea782eae089760a491c2c54f9903abcc" title="Main program of SPEC." alt="" coords="113,81,176,108"/>
+<area shape="rect" id="node5" href="$xspech_8f90.html#a537af4990058c0b0f2cd8b3669af204f" title="todo remark" alt="" coords="5,81,65,108"/>
+<area shape="rect" id="node7" href="$group__grp__diagnostics.html#gad67931244268a09bd077dae8910c7096" title="Constructs Poincaré plot and &quot;approximate&quot; rotational&#45;transform (driver)." alt="" coords="224,107,288,133"/>
 </map>

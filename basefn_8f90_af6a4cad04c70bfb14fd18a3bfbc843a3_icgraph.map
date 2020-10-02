@@ -1,0 +1,36 @@
+<map id="get_cheby" name="get_cheby">
+<area shape="rect" id="node1" title="Get the Chebyshev polynomials with zeroth, first derivatives." alt="" coords="1711,300,1792,327"/>
+<area shape="rect" id="node2" href="$group__grp__diagnostics.html#ga20985df1b0df0503ca03ca13f1daf642" title="Compute the magnetic field." alt="" coords="587,409,639,436"/>
+<area shape="rect" id="node10" href="$intghs_8f90.html#a21d3b7106371783302e68297f7797e9f" title="Calculates volume integrals of Chebyshev polynomials and covariant field products." alt="" coords="1605,173,1663,200"/>
+<area shape="rect" id="node23" href="$group__grp__initialization.html#ga28628de0fdb3b3497668007d8d0643bd" title="Allocates and initializes internal arrays." alt="" coords="391,93,449,120"/>
+<area shape="rect" id="node33" href="$group__grp__integrals.html#ga400af9e33dd5465ff9a4bba9fbf91108" title="Calculates volume integrals of Chebyshev polynomials and metric element products." alt="" coords="1082,351,1150,377"/>
+<area shape="rect" id="node34" href="$spsint_8f90.html#a01df49c498752e8a4201cc6eb5e283af" title="Calculates volume integrals of Chebyshev&#45;polynomials and metric elements for preconditioner." alt="" coords="1496,300,1553,327"/>
+<area shape="rect" id="node3" href="$bfield_8f90.html#adc615fe98d38488525cbe807d008860a" title="compute the tangential magnetic field" alt="" coords="369,511,471,537"/>
+<area shape="rect" id="node4" href="$group__grp__diagnostics.html#ga6411205c36a7d50002d7f3fb3133c441" title="Measures error in Beltrami equation, ." alt="" coords="237,313,297,340"/>
+<area shape="rect" id="node7" href="$group__grp__diagnostics.html#ga831aed2458140e266ee4d37461dd5350" title="Constructs Poincaré plot and &quot;approximate&quot; rotational&#45;transform (for single field line)." alt="" coords="388,409,452,436"/>
+<area shape="rect" id="node9" href="$sphdf5_8f90.html#a17e65b951634f7098213fd071d905482" title="write the magnetic field on a grid; previously the (wflag.eq.1) part of globals.f90/wrtend to write ...." alt="" coords="359,460,481,487"/>
+<area shape="rect" id="node5" href="$xspech_8f90.html#aea782eae089760a491c2c54f9903abcc" title="Main program of SPEC." alt="" coords="113,257,176,284"/>
+<area shape="rect" id="node6" href="$xspech_8f90.html#a537af4990058c0b0f2cd8b3669af204f" title="todo remark" alt="" coords="5,257,65,284"/>
+<area shape="rect" id="node8" href="$group__grp__diagnostics.html#gad67931244268a09bd077dae8910c7096" title="Constructs Poincaré plot and &quot;approximate&quot; rotational&#45;transform (driver)." alt="" coords="235,373,299,400"/>
+<area shape="rect" id="node11" href="$dfp200_8f90.html#a5e56f1f4b1e6df11a9cffa6237c37469" title="This routine evaluates the value of the magnetic field once the interface is perturbed using matrix p..." alt="" coords="1039,67,1193,93"/>
+<area shape="rect" id="node26" href="$intghs_8f90.html#ae10091a51178071d12004da4952104d4" title="free workspace" alt="" coords="1028,168,1204,195"/>
+<area shape="rect" id="node28" href="$intghs_8f90.html#ae8299d4625cabd90eb1398fd2cd38089" title="init workspace" alt="" coords="1041,117,1191,144"/>
+<area shape="rect" id="node29" href="$mp00ac_8f90.html#ae9fe335bb4916face9f9d19ce8c0f5d7" title="compute a.x by either by coumputing it directly, or using a matrix free method" alt="" coords="1492,199,1557,225"/>
+<area shape="rect" id="node31" href="$group__grp__solver.html#ga6626839aff500f060beb5bce2b90c447" title="Solves Beltrami/vacuum (linear) system, given matrices.unpacking fluxes, helicity multiplier" alt="" coords="1252,219,1320,245"/>
+<area shape="rect" id="node12" href="$dfp200_8f90.html#a55ea75395f8c71731451e1add3720c7e" title="Given the field consistent with the constraints and the geometry, computes local quantites related to..." alt="" coords="919,67,980,93"/>
+<area shape="rect" id="node13" href="$group__grp__global__force.html#ga38c9d3c50bd043707fefa5137c9dbf44" title="Calculates , where &#160;and , and ." alt="" coords="778,308,837,335"/>
+<area shape="rect" id="node18" href="$dfp200_8f90.html#a6aca59cf350d7b1941f8389d50945a43" title="get LU Beltrami matrices" alt="" coords="529,105,696,132"/>
+<area shape="rect" id="node24" href="$dfp200_8f90.html#a9838f042d6611c01771ed68beb77fc6b" title="Evaluate the derivative of the square of the magnetic field modulus. Add spectral constraint derivati..." alt="" coords="758,43,857,69"/>
+<area shape="rect" id="node25" href="$dfp200_8f90.html#a73ddf39ecc5228201fb643779e17cd36" title="Evaluate mu and psip derivatives and store them in dmupfdx." alt="" coords="744,168,871,195"/>
+<area shape="rect" id="node14" href="$group__grp__force__driver.html#gabbc245b3884ee8d8d3e2a52f25149f78" title="fcn1" alt="" coords="589,511,636,537"/>
+<area shape="rect" id="node15" href="$group__grp__force__driver.html#gaec14f81fbdbedafbc4189489ec8ae178" title="Employs Newton method to find , where &#160;and &#160;is defined in dforce() ." alt="" coords="388,561,452,588"/>
+<area shape="rect" id="node16" href="$group__grp__force__driver.html#ga8ccd6c7d901872702521d0a0edf95412" title="fcn2" alt="" coords="121,561,168,588"/>
+<area shape="rect" id="node19" href="$group__grp__diagnostics.html#ga7401b50ec10c6598ee4a8112717a63ec" title="Computes eigenvalues and eigenvectors of derivative matrix, ." alt="" coords="237,131,297,157"/>
+<area shape="rect" id="node20" href="$group__grp__conjugate__gradient.html#ga4d8415226e62a9fdb42b0fd0b464251e" title="Returns the energy functional and it&#39;s derivatives with respect to geometry." alt="" coords="581,308,645,335"/>
+<area shape="rect" id="node22" href="$namespaceallglobal.html#ad32ae6194892fe7d876622a6455189e2" title="The master node reads the input namelist and sets various internal variables. The relevant quantities..." alt="" coords="557,156,668,183"/>
+<area shape="rect" id="node17" href="$group__grp__force__driver.html#ga382822b303cbf8c56d6f54dcb379caf2" title="read or write force&#45;derivative matrix" alt="" coords="224,499,311,525"/>
+<area shape="rect" id="node21" href="$group__grp__conjugate__gradient.html#ga25a3bae2ff2ee0469b045de0d033398b" title="Use preconditioned conjugate gradient method to find minimum of energy functional." alt="" coords="388,308,452,335"/>
+<area shape="rect" id="node27" href="$dfp100_8f90.html#a17a3ac15cc83994394f7b4cc05e5898e" title="Split the work between MPI nodes and evaluate the global constraint." alt="" coords="919,219,980,245"/>
+<area shape="rect" id="node30" href="$mp00ac_8f90.html#a304edac43f63d39dda4419b4d044eac5" title="run GMRES" alt="" coords="1368,199,1444,225"/>
+<area shape="rect" id="node32" href="$group__grp__solver__driver.html#gacad623d4c5c006e9ad10116372f92ad3" title="Constructs Beltrami field in given volume consistent with flux, helicity, rotational&#45;transform and/or..." alt="" coords="1082,219,1150,245"/>
+</map>

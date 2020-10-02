@@ -124,8 +124,8 @@ Functions/Subroutines</h2></td></tr>
 <tr class="memitem:ga02a336a22890e7ae5a5c2d525260666c"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__grp__numerics.html#ga02a336a22890e7ae5a5c2d525260666c">gi00ab</a> (Mpol, Ntor, Nfp, mn, im, in)</td></tr>
 <tr class="memdesc:ga02a336a22890e7ae5a5c2d525260666c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Assign Fourier mode labels.  <a href="group__grp__numerics.html#ga02a336a22890e7ae5a5c2d525260666c">More...</a><br /></td></tr>
 <tr class="separator:ga02a336a22890e7ae5a5c2d525260666c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad74184c181acd10cef74a2bd4f1c31a9"><td class="memItemLeft" align="right" valign="top"><a id="ad74184c181acd10cef74a2bd4f1c31a9"></a>
-subroutine&#160;</td><td class="memItemRight" valign="bottom"><b>getimn</b> (Mpol, Ntor, Nfp, mi, ni, idx)</td></tr>
+<tr class="memitem:ad74184c181acd10cef74a2bd4f1c31a9"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="numrec_8f90.html#ad74184c181acd10cef74a2bd4f1c31a9">getimn</a> (Mpol, Ntor, Nfp, mi, ni, idx)</td></tr>
+<tr class="memdesc:ad74184c181acd10cef74a2bd4f1c31a9"><td class="mdescLeft">&#160;</td><td class="mdescRight">convert m and n to index  <a href="numrec_8f90.html#ad74184c181acd10cef74a2bd4f1c31a9">More...</a><br /></td></tr>
 <tr class="separator:ad74184c181acd10cef74a2bd4f1c31a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga041138109a57e651c57117bb4180409e"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__grp__numerics.html#ga041138109a57e651c57117bb4180409e">tfft</a> (Nt, Nz, ijreal, ijimag, mn, im, in, efmn, ofmn, cfmn, sfmn, ifail)</td></tr>
 <tr class="memdesc:ga041138109a57e651c57117bb4180409e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Forward Fourier transform (fftw wrapper)  <a href="group__grp__numerics.html#ga041138109a57e651c57117bb4180409e">More...</a><br /></td></tr>
@@ -139,7 +139,81 @@ subroutine&#160;</td><td class="memItemRight" valign="bottom"><b>getimn</b> (Mpo
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Various miscellaneous "numerical" routines. </p>
-</div></div><!-- contents -->
+</div><h2 class="groupheader">Function/Subroutine Documentation</h2>
+<a id="ad74184c181acd10cef74a2bd4f1c31a9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad74184c181acd10cef74a2bd4f1c31a9">&#9670;&nbsp;</a></span>getimn()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">subroutine getimn </td>
+          <td>(</td>
+          <td class="paramtype">integer, intent(in)&#160;</td>
+          <td class="paramname"><em>Mpol</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">integer, intent(in)&#160;</td>
+          <td class="paramname"><em>Ntor</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">integer, intent(in)&#160;</td>
+          <td class="paramname"><em>Nfp</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">integer, intent(in)&#160;</td>
+          <td class="paramname"><em>mi</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">integer, intent(in)&#160;</td>
+          <td class="paramname"><em>ni</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">integer, intent(out)&#160;</td>
+          <td class="paramname"><em>idx</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>convert m and n to index </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">Mpol</td><td></td></tr>
+    <tr><td class="paramname">Ntor</td><td></td></tr>
+    <tr><td class="paramname">Nfp</td><td></td></tr>
+    <tr><td class="paramname">mi</td><td></td></tr>
+    <tr><td class="paramname">ni</td><td></td></tr>
+    <tr><td class="paramname">idx</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="reference">Referenced by <a class="el" href="group__grp__initialization.html#ga28628de0fdb3b3497668007d8d0643bd">preset()</a>.</p>
+<div class="dynheader">
+Here is the caller graph for this function:</div>
+<div class="dyncontent">
+<div class="center"><iframe scrolling="no" frameborder="0" src="numrec_8f90_ad74184c181acd10cef74a2bd4f1c31a9_icgraph.svg" width="506" height="63"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
+</div>
+</div>
+
+</div>
+</div>
+</div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->

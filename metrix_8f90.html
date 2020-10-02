@@ -124,13 +124,81 @@ Functions/Subroutines</h2></td></tr>
 <tr class="memitem:ga254ce8e645c4110d77e3b3dbc3a89885"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__grp__metrics.html#ga254ce8e645c4110d77e3b3dbc3a89885">metrix</a> (lquad, lvol)</td></tr>
 <tr class="memdesc:ga254ce8e645c4110d77e3b3dbc3a89885"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates the metric quantities, \(\sqrt g \, g^{\mu\nu}\), which are required for the energy and helicity integrals.  <a href="group__grp__metrics.html#ga254ce8e645c4110d77e3b3dbc3a89885">More...</a><br /></td></tr>
 <tr class="separator:ga254ce8e645c4110d77e3b3dbc3a89885"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a80c802cda076dd9e7031bc5f9098c175"><td class="memItemLeft" align="right" valign="top"><a id="a80c802cda076dd9e7031bc5f9098c175"></a>
-subroutine&#160;</td><td class="memItemRight" valign="bottom"><b>compute_guvijsave</b> (lquad, vvol, ideriv, Lcurvature)</td></tr>
+<tr class="memitem:a80c802cda076dd9e7031bc5f9098c175"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="metrix_8f90.html#a80c802cda076dd9e7031bc5f9098c175">compute_guvijsave</a> (lquad, vvol, ideriv, Lcurvature)</td></tr>
+<tr class="memdesc:a80c802cda076dd9e7031bc5f9098c175"><td class="mdescLeft">&#160;</td><td class="mdescRight">compute guvijsave  <a href="metrix_8f90.html#a80c802cda076dd9e7031bc5f9098c175">More...</a><br /></td></tr>
 <tr class="separator:a80c802cda076dd9e7031bc5f9098c175"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Calculates the metric quantities, \(\sqrt g \, g^{\mu\nu}\), which are required for the energy and helicity integrals. </p>
-</div></div><!-- contents -->
+</div><h2 class="groupheader">Function/Subroutine Documentation</h2>
+<a id="a80c802cda076dd9e7031bc5f9098c175"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a80c802cda076dd9e7031bc5f9098c175">&#9670;&nbsp;</a></span>compute_guvijsave()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">subroutine compute_guvijsave </td>
+          <td>(</td>
+          <td class="paramtype">integer, intent(in)&#160;</td>
+          <td class="paramname"><em>lquad</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">integer, intent(in)&#160;</td>
+          <td class="paramname"><em>vvol</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">integer, intent(in)&#160;</td>
+          <td class="paramname"><em>ideriv</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">integer, intent(in)&#160;</td>
+          <td class="paramname"><em>Lcurvature</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>compute guvijsave </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">lquad</td><td></td></tr>
+    <tr><td class="paramname">vvol</td><td></td></tr>
+    <tr><td class="paramname">ideriv</td><td></td></tr>
+    <tr><td class="paramname">Lcurvature</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="reference">References <a class="el" href="group__grp__geometry.html#gaaca20aa60eaf39055f3c9d5c02a24ac2">coords()</a>, <a class="el" href="group__grp__int__global.html#ga5df7a4938a44cb5b8dfaa2eed154c533">allglobal::gaussianabscissae</a>, <a class="el" href="group__grp__fourier__transform.html#ga0111c19dc8a8bbde00b38606f9df1c88">allglobal::guvij</a>, <a class="el" href="group__grp__fourier__transform.html#ga4932d9840a30ea565f54461f188bae5d">allglobal::guvijsave</a>, and <a class="el" href="group__grp__fourier__transform.html#ga4b1c60e25eab68b6372bf28f84aecc97">allglobal::sg</a>.</p>
+
+<p class="reference">Referenced by <a class="el" href="dfp100_8f90.html#a17a3ac15cc83994394f7b4cc05e5898e">dfp100()</a>, <a class="el" href="intghs_8f90.html#a21d3b7106371783302e68297f7797e9f">intghs()</a>, and <a class="el" href="group__grp__integrals.html#ga400af9e33dd5465ff9a4bba9fbf91108">ma00aa()</a>.</p>
+<div class="dynheader">
+Here is the call graph for this function:</div>
+<div class="dyncontent">
+<div class="center"><iframe scrolling="no" frameborder="0" src="metrix_8f90_a80c802cda076dd9e7031bc5f9098c175_cgraph.svg" width="367" height="88"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
+</div>
+</div>
+<div class="dynheader">
+Here is the caller graph for this function:</div>
+<div class="dyncontent">
+<div class="center"><iframe scrolling="no" frameborder="0" src="metrix_8f90_a80c802cda076dd9e7031bc5f9098c175_icgraph.svg" width="1791" height="927"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
+</div>
+</div>
+
+</div>
+</div>
+</div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->

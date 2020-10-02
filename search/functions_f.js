@@ -1,5 +1,6 @@
 var searchData=
 [
-  ['tfft_702',['tfft',['../group__grp__numerics.html#ga041138109a57e651c57117bb4180409e',1,'numrec.f90']]],
-  ['tr00ab_703',['tr00ab',['../group__grp__transform.html#ga0e0447653b8da82f06748dd8831bc337',1,'tr00ab.f90']]]
+  ['spsint_809',['spsint',['../spsint_8f90.html#a01df49c498752e8a4201cc6eb5e283af',1,'spsint.f90']]],
+  ['spsmat_810',['spsmat',['../spsmat_8f90.html#a4d521a46a64530ade50e6b79a33e1452',1,'spsmat.f90']]],
+  ['stzxyz_811',['stzxyz',['../group__grp__diagnostics.html#ga08ad6b6635a598c0d0578e42f46b63c5',1,'stzxyz.f90']]]
 ];

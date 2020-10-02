@@ -128,7 +128,7 @@ Collaboration diagram for globallist:</div>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="var-members"></a>
 Variables</h2></td></tr>
 <tr class="memitem:ga28b1d8d67e6902726c87fe0785c1634e"><td class="memItemLeft" align="right" valign="top">integer&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__grp__global__global.html#ga28b1d8d67e6902726c87fe0785c1634e">inputlist::lfindzero</a> = 0</td></tr>
-<tr class="memdesc:ga28b1d8d67e6902726c87fe0785c1634e"><td class="mdescLeft">&#160;</td><td class="mdescRight">use Newton methods to find zero of force-balance, which is computed by dforce()  <a href="group__grp__global__global.html#ga28b1d8d67e6902726c87fe0785c1634e">More...</a><br /></td></tr>
+<tr class="memdesc:ga28b1d8d67e6902726c87fe0785c1634e"><td class="mdescLeft">&#160;</td><td class="mdescRight">use Newton methods to find zero of force-balance, which is computed by <a class="el" href="group__grp__global__force.html#ga38c9d3c50bd043707fefa5137c9dbf44" title="Calculates , where  and , and .">dforce()</a>  <a href="group__grp__global__global.html#ga28b1d8d67e6902726c87fe0785c1634e">More...</a><br /></td></tr>
 <tr class="separator:ga28b1d8d67e6902726c87fe0785c1634e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gab8133b0a6c3db5ce271075e08bfa9eca"><td class="memItemLeft" align="right" valign="top">real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__grp__global__global.html#gab8133b0a6c3db5ce271075e08bfa9eca">inputlist::escale</a> = 0.0</td></tr>
 <tr class="memdesc:gab8133b0a6c3db5ce271075e08bfa9eca"><td class="mdescLeft">&#160;</td><td class="mdescRight">controls the weight factor, <code>BBweight</code>, in the force-imbalance harmonics  <a href="group__grp__global__global.html#gab8133b0a6c3db5ce271075e08bfa9eca">More...</a><br /></td></tr>
@@ -208,7 +208,7 @@ integer&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="g
 <p>The namelist <code>globallist</code> controls the search for global force-balance. </p>
 <p>Comments: </p><ul>
 <li>
-The "force" vector, \({\bf F}\), which is constructed in dforce(), is a combination of pressure-imbalance Fourier harmonics, <p class="formulaDsp">
+The "force" vector, \({\bf F}\), which is constructed in <a class="el" href="group__grp__global__force.html#ga38c9d3c50bd043707fefa5137c9dbf44" title="Calculates , where  and , and .">dforce()</a>, is a combination of pressure-imbalance Fourier harmonics, <p class="formulaDsp">
 \begin{eqnarray} F_{i,v} \equiv [[ p+B^2/2 ]]_{i,v} \times \exp\left[-\texttt{escale}(m_i^2+n_i^2) \right] \times \texttt{opsilon}, \label{eq:forcebalancemn_global} \end{eqnarray}
 </p>
  and spectral-condensation constraints, \(I_{i,v}\), and the "star-like" angle constraints, \(S_{i,v,}\), (see <a class="el" href="group__grp__local__force.html#ga7a5316b9e5eeb42811aa6bccd29a132f" title="Computes , and the spectral condensation constraints if required, on the interfaces,...">lforce()</a> for details) <p class="formulaDsp">
@@ -229,17 +229,17 @@ The "force" vector, \({\bf F}\), which is constructed in dforce(), is a combinat
       </table>
 </div><div class="memdoc">
 
-<p>use Newton methods to find zero of force-balance, which is computed by dforce() </p>
+<p>use Newton methods to find zero of force-balance, which is computed by <a class="el" href="group__grp__global__force.html#ga38c9d3c50bd043707fefa5137c9dbf44" title="Calculates , where  and , and .">dforce()</a> </p>
 <ul>
 <li>
-if <code>Lfindzero</code> = 0, then dforce() is called once to compute the Beltrami fields consistent with the given geometry and constraints  </li>
+if <code>Lfindzero</code> = 0, then <a class="el" href="group__grp__global__force.html#ga38c9d3c50bd043707fefa5137c9dbf44" title="Calculates , where  and , and .">dforce()</a> is called once to compute the Beltrami fields consistent with the given geometry and constraints  </li>
 <li>
-if <code>Lfindzero</code> = 1, then call <code>C05NDF</code> (uses function values only), which iteratively calls dforce()  </li>
+if <code>Lfindzero</code> = 1, then call <code>C05NDF</code> (uses function values only), which iteratively calls <a class="el" href="group__grp__global__force.html#ga38c9d3c50bd043707fefa5137c9dbf44" title="Calculates , where  and , and .">dforce()</a>  </li>
 <li>
-if <code>Lfindzero</code> = 2, then call <code>C05PDF</code> (uses derivative information), which iteratively calls dforce()  </li>
+if <code>Lfindzero</code> = 2, then call <code>C05PDF</code> (uses derivative information), which iteratively calls <a class="el" href="group__grp__global__force.html#ga38c9d3c50bd043707fefa5137c9dbf44" title="Calculates , where  and , and .">dforce()</a>  </li>
 </ul>
 
-<p class="reference">Referenced by <a class="el" href="group__grp__parallel.html#ga5d8e3412e023967dda67b02f358b754a">brcast()</a>, <a class="el" href="group__grp__diagnostics.html#ga7401b50ec10c6598ee4a8112717a63ec">hesian()</a>, <a class="el" href="group__grp__packing.html#ga094e630c02686dd178749eb1efbf13fb">packxi()</a>, <a class="el" href="group__grp__initialization.html#ga28628de0fdb3b3497668007d8d0643bd">preset()</a>, <a class="el" href="namespaceallglobal.html#ad32ae6194892fe7d876622a6455189e2">allglobal::readin()</a>, <a class="el" href="namespaceallglobal.html#a282c297c96abdab5e76b5ace440b09a8">allglobal::wrtend()</a>, and <a class="el" href="xspech_8f90.html#aea782eae089760a491c2c54f9903abcc">xspech()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="group__grp__parallel.html#ga5d8e3412e023967dda67b02f358b754a">brcast()</a>, <a class="el" href="dfp200_8f90.html#a55ea75395f8c71731451e1add3720c7e">dfp200()</a>, <a class="el" href="group__grp__diagnostics.html#ga7401b50ec10c6598ee4a8112717a63ec">hesian()</a>, <a class="el" href="sphdf5_8f90.html#afed4d951aec99f2ebeba68c465eb9861">sphdf5::mirror_input_to_outfile()</a>, <a class="el" href="group__grp__packing.html#ga094e630c02686dd178749eb1efbf13fb">packxi()</a>, <a class="el" href="group__grp__initialization.html#ga28628de0fdb3b3497668007d8d0643bd">preset()</a>, <a class="el" href="namespaceallglobal.html#ad32ae6194892fe7d876622a6455189e2">allglobal::readin()</a>, <a class="el" href="namespaceallglobal.html#a282c297c96abdab5e76b5ace440b09a8">allglobal::wrtend()</a>, and <a class="el" href="xspech_8f90.html#aea782eae089760a491c2c54f9903abcc">xspech()</a>.</p>
 
 </div>
 </div>
@@ -260,12 +260,12 @@ if <code>Lfindzero</code> = 2, then call <code>C05PDF</code> (uses derivative in
 <li>
 <code>BBweight(i)</code> \(\displaystyle \equiv \texttt{opsilon} \times \exp\left[-\texttt{escale} \times (m_i^2+n_i^2) \right]\)  </li>
 <li>
-defined in <a class="el" href="group__grp__initialization.html#ga28628de0fdb3b3497668007d8d0643bd" title="Allocates and initializes internal arrays.">preset()</a> ; used in dforce()  </li>
+defined in <a class="el" href="group__grp__initialization.html#ga28628de0fdb3b3497668007d8d0643bd" title="Allocates and initializes internal arrays.">preset()</a> ; used in <a class="el" href="group__grp__global__force.html#ga38c9d3c50bd043707fefa5137c9dbf44" title="Calculates , where  and , and .">dforce()</a>  </li>
 <li>
 also see Eqn. \((\ref{eq:forcebalancemn_global})\)  </li>
 </ul>
 
-<p class="reference">Referenced by <a class="el" href="group__grp__initialization.html#ga28628de0fdb3b3497668007d8d0643bd">preset()</a>, <a class="el" href="namespaceallglobal.html#ad32ae6194892fe7d876622a6455189e2">allglobal::readin()</a>, and <a class="el" href="namespaceallglobal.html#a282c297c96abdab5e76b5ace440b09a8">allglobal::wrtend()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="sphdf5_8f90.html#afed4d951aec99f2ebeba68c465eb9861">sphdf5::mirror_input_to_outfile()</a>, <a class="el" href="group__grp__initialization.html#ga28628de0fdb3b3497668007d8d0643bd">preset()</a>, <a class="el" href="namespaceallglobal.html#ad32ae6194892fe7d876622a6455189e2">allglobal::readin()</a>, and <a class="el" href="namespaceallglobal.html#a282c297c96abdab5e76b5ace440b09a8">allglobal::wrtend()</a>.</p>
 
 </div>
 </div>
@@ -284,10 +284,10 @@ also see Eqn. \((\ref{eq:forcebalancemn_global})\)  </li>
 <p>weighting of force-imbalance </p>
 <ul>
 <li>
-used in dforce(); also see Eqn. \((\ref{eq:forcebalancemn_global})\)  </li>
+used in <a class="el" href="group__grp__global__force.html#ga38c9d3c50bd043707fefa5137c9dbf44" title="Calculates , where  and , and .">dforce()</a>; also see Eqn. \((\ref{eq:forcebalancemn_global})\)  </li>
 </ul>
 
-<p class="reference">Referenced by <a class="el" href="group__grp__initialization.html#ga28628de0fdb3b3497668007d8d0643bd">preset()</a>, <a class="el" href="namespaceallglobal.html#ad32ae6194892fe7d876622a6455189e2">allglobal::readin()</a>, and <a class="el" href="namespaceallglobal.html#a282c297c96abdab5e76b5ace440b09a8">allglobal::wrtend()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="sphdf5_8f90.html#afed4d951aec99f2ebeba68c465eb9861">sphdf5::mirror_input_to_outfile()</a>, <a class="el" href="group__grp__initialization.html#ga28628de0fdb3b3497668007d8d0643bd">preset()</a>, <a class="el" href="namespaceallglobal.html#ad32ae6194892fe7d876622a6455189e2">allglobal::readin()</a>, and <a class="el" href="namespaceallglobal.html#a282c297c96abdab5e76b5ace440b09a8">allglobal::wrtend()</a>.</p>
 
 </div>
 </div>
@@ -313,7 +313,7 @@ the angle freedom is exploited to minimize \(\displaystyle \texttt{epsilon} \sum
 also see Eqn. \((\ref{eq:spectralbalancemn_global})\)  </li>
 </ul>
 
-<p class="reference">Referenced by <a class="el" href="group__grp__initialization.html#ga28628de0fdb3b3497668007d8d0643bd">preset()</a>, <a class="el" href="namespaceallglobal.html#ad32ae6194892fe7d876622a6455189e2">allglobal::readin()</a>, and <a class="el" href="namespaceallglobal.html#a282c297c96abdab5e76b5ace440b09a8">allglobal::wrtend()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="sphdf5_8f90.html#afed4d951aec99f2ebeba68c465eb9861">sphdf5::mirror_input_to_outfile()</a>, <a class="el" href="group__grp__initialization.html#ga28628de0fdb3b3497668007d8d0643bd">preset()</a>, <a class="el" href="namespaceallglobal.html#ad32ae6194892fe7d876622a6455189e2">allglobal::readin()</a>, and <a class="el" href="namespaceallglobal.html#a282c297c96abdab5e76b5ace440b09a8">allglobal::wrtend()</a>.</p>
 
 </div>
 </div>
@@ -332,10 +332,10 @@ also see Eqn. \((\ref{eq:spectralbalancemn_global})\)  </li>
 <p>weighting of spectral-width constraint </p>
 <ul>
 <li>
-used in dforce(); also see Eqn. \((\ref{eq:spectralbalancemn_global})\)  </li>
+used in <a class="el" href="group__grp__global__force.html#ga38c9d3c50bd043707fefa5137c9dbf44" title="Calculates , where  and , and .">dforce()</a>; also see Eqn. \((\ref{eq:spectralbalancemn_global})\)  </li>
 </ul>
 
-<p class="reference">Referenced by <a class="el" href="group__grp__conjugate__gradient.html#ga4d8415226e62a9fdb42b0fd0b464251e">pc00ab()</a>, <a class="el" href="namespaceallglobal.html#ad32ae6194892fe7d876622a6455189e2">allglobal::readin()</a>, and <a class="el" href="namespaceallglobal.html#a282c297c96abdab5e76b5ace440b09a8">allglobal::wrtend()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="group__grp__global__force.html#ga38c9d3c50bd043707fefa5137c9dbf44">dforce()</a>, <a class="el" href="dfp200_8f90.html#a55ea75395f8c71731451e1add3720c7e">dfp200()</a>, <a class="el" href="dfp200_8f90.html#a9838f042d6611c01771ed68beb77fc6b">evaluate_dbb()</a>, <a class="el" href="sphdf5_8f90.html#afed4d951aec99f2ebeba68c465eb9861">sphdf5::mirror_input_to_outfile()</a>, <a class="el" href="group__grp__conjugate__gradient.html#ga4d8415226e62a9fdb42b0fd0b464251e">pc00ab()</a>, <a class="el" href="namespaceallglobal.html#ad32ae6194892fe7d876622a6455189e2">allglobal::readin()</a>, and <a class="el" href="namespaceallglobal.html#a282c297c96abdab5e76b5ace440b09a8">allglobal::wrtend()</a>.</p>
 
 </div>
 </div>
@@ -361,7 +361,7 @@ if not, then the geometry of the interfaces is changed in order to bring the con
 to force execution of either <code>C05NDF</code> or <code>C05PDF</code>, regardless of the initial force imbalance, set <code>forcetol</code> &lt; 0  </li>
 </ul>
 
-<p class="reference">Referenced by <a class="el" href="group__grp__conjugate__gradient.html#ga25a3bae2ff2ee0469b045de0d033398b">pc00aa()</a>, <a class="el" href="group__grp__conjugate__gradient.html#ga4d8415226e62a9fdb42b0fd0b464251e">pc00ab()</a>, <a class="el" href="namespaceallglobal.html#ad32ae6194892fe7d876622a6455189e2">allglobal::readin()</a>, and <a class="el" href="namespaceallglobal.html#a282c297c96abdab5e76b5ace440b09a8">allglobal::wrtend()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="sphdf5_8f90.html#afed4d951aec99f2ebeba68c465eb9861">sphdf5::mirror_input_to_outfile()</a>, <a class="el" href="group__grp__conjugate__gradient.html#ga25a3bae2ff2ee0469b045de0d033398b">pc00aa()</a>, <a class="el" href="group__grp__conjugate__gradient.html#ga4d8415226e62a9fdb42b0fd0b464251e">pc00ab()</a>, <a class="el" href="namespaceallglobal.html#ad32ae6194892fe7d876622a6455189e2">allglobal::readin()</a>, and <a class="el" href="namespaceallglobal.html#a282c297c96abdab5e76b5ace440b09a8">allglobal::wrtend()</a>.</p>
 
 </div>
 </div>
@@ -385,7 +385,7 @@ used by both <code>C05NDF</code> and <code>C05PDF</code>; see the NAG documents 
 constraint <code>c05xtol</code> &gt; 0.0  </li>
 </ul>
 
-<p class="reference">Referenced by <a class="el" href="namespaceallglobal.html#ad32ae6194892fe7d876622a6455189e2">allglobal::readin()</a>, and <a class="el" href="namespaceallglobal.html#a282c297c96abdab5e76b5ace440b09a8">allglobal::wrtend()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="sphdf5_8f90.html#afed4d951aec99f2ebeba68c465eb9861">sphdf5::mirror_input_to_outfile()</a>, <a class="el" href="namespaceallglobal.html#ad32ae6194892fe7d876622a6455189e2">allglobal::readin()</a>, and <a class="el" href="namespaceallglobal.html#a282c297c96abdab5e76b5ace440b09a8">allglobal::wrtend()</a>.</p>
 
 </div>
 </div>
@@ -409,7 +409,7 @@ constraint <code>c05factor</code> &gt; 0.0  </li>
 only relevant if <code>Lfindzero</code> &gt; 0  </li>
 </ul>
 
-<p class="reference">Referenced by <a class="el" href="namespaceallglobal.html#ad32ae6194892fe7d876622a6455189e2">allglobal::readin()</a>, and <a class="el" href="namespaceallglobal.html#a282c297c96abdab5e76b5ace440b09a8">allglobal::wrtend()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="sphdf5_8f90.html#afed4d951aec99f2ebeba68c465eb9861">sphdf5::mirror_input_to_outfile()</a>, <a class="el" href="namespaceallglobal.html#ad32ae6194892fe7d876622a6455189e2">allglobal::readin()</a>, and <a class="el" href="namespaceallglobal.html#a282c297c96abdab5e76b5ace440b09a8">allglobal::wrtend()</a>.</p>
 
 </div>
 </div>
@@ -433,7 +433,7 @@ only used if <code>Lfindzero</code> = 2  </li>
 only used in <a class="el" href="group__grp__force__driver.html#gaec14f81fbdbedafbc4189489ec8ae178" title="Employs Newton method to find , where  and  is defined in dforce() .">newton()</a>  </li>
 </ul>
 
-<p class="reference">Referenced by <a class="el" href="namespaceallglobal.html#ad32ae6194892fe7d876622a6455189e2">allglobal::readin()</a>, and <a class="el" href="namespaceallglobal.html#a282c297c96abdab5e76b5ace440b09a8">allglobal::wrtend()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="sphdf5_8f90.html#afed4d951aec99f2ebeba68c465eb9861">sphdf5::mirror_input_to_outfile()</a>, <a class="el" href="namespaceallglobal.html#ad32ae6194892fe7d876622a6455189e2">allglobal::readin()</a>, and <a class="el" href="namespaceallglobal.html#a282c297c96abdab5e76b5ace440b09a8">allglobal::wrtend()</a>.</p>
 
 </div>
 </div>
@@ -457,7 +457,7 @@ only used if <code>Lfreebound</code> = 1  </li>
 only used in <a class="el" href="xspech_8f90.html#aea782eae089760a491c2c54f9903abcc" title="Main program of SPEC.">xspech()</a>  </li>
 </ul>
 
-<p class="reference">Referenced by <a class="el" href="namespaceallglobal.html#ad32ae6194892fe7d876622a6455189e2">allglobal::readin()</a>, <a class="el" href="namespaceallglobal.html#a282c297c96abdab5e76b5ace440b09a8">allglobal::wrtend()</a>, and <a class="el" href="xspech_8f90.html#aea782eae089760a491c2c54f9903abcc">xspech()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="sphdf5_8f90.html#afed4d951aec99f2ebeba68c465eb9861">sphdf5::mirror_input_to_outfile()</a>, <a class="el" href="namespaceallglobal.html#ad32ae6194892fe7d876622a6455189e2">allglobal::readin()</a>, <a class="el" href="namespaceallglobal.html#a282c297c96abdab5e76b5ace440b09a8">allglobal::wrtend()</a>, and <a class="el" href="xspech_8f90.html#aea782eae089760a491c2c54f9903abcc">xspech()</a>.</p>
 
 </div>
 </div>
@@ -481,7 +481,7 @@ only used if <code>Lfreebound</code> = 1  </li>
 only used in <a class="el" href="xspech_8f90.html#aea782eae089760a491c2c54f9903abcc" title="Main program of SPEC.">xspech()</a>  </li>
 </ul>
 
-<p class="reference">Referenced by <a class="el" href="namespaceallglobal.html#ad32ae6194892fe7d876622a6455189e2">allglobal::readin()</a>, <a class="el" href="namespaceallglobal.html#a282c297c96abdab5e76b5ace440b09a8">allglobal::wrtend()</a>, and <a class="el" href="xspech_8f90.html#aea782eae089760a491c2c54f9903abcc">xspech()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="sphdf5_8f90.html#afed4d951aec99f2ebeba68c465eb9861">sphdf5::mirror_input_to_outfile()</a>, <a class="el" href="namespaceallglobal.html#ad32ae6194892fe7d876622a6455189e2">allglobal::readin()</a>, <a class="el" href="namespaceallglobal.html#a282c297c96abdab5e76b5ace440b09a8">allglobal::wrtend()</a>, and <a class="el" href="xspech_8f90.html#aea782eae089760a491c2c54f9903abcc">xspech()</a>.</p>
 
 </div>
 </div>
@@ -510,7 +510,7 @@ only used if <code>Lfreebound</code> = 1  </li>
 only used in <a class="el" href="xspech_8f90.html#aea782eae089760a491c2c54f9903abcc" title="Main program of SPEC.">xspech()</a>  </li>
 </ul>
 
-<p class="reference">Referenced by <a class="el" href="namespaceallglobal.html#ad32ae6194892fe7d876622a6455189e2">allglobal::readin()</a>, <a class="el" href="namespaceallglobal.html#a282c297c96abdab5e76b5ace440b09a8">allglobal::wrtend()</a>, and <a class="el" href="xspech_8f90.html#aea782eae089760a491c2c54f9903abcc">xspech()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="sphdf5_8f90.html#afed4d951aec99f2ebeba68c465eb9861">sphdf5::mirror_input_to_outfile()</a>, <a class="el" href="namespaceallglobal.html#ad32ae6194892fe7d876622a6455189e2">allglobal::readin()</a>, <a class="el" href="namespaceallglobal.html#a282c297c96abdab5e76b5ace440b09a8">allglobal::wrtend()</a>, and <a class="el" href="xspech_8f90.html#aea782eae089760a491c2c54f9903abcc">xspech()</a>.</p>
 
 </div>
 </div>

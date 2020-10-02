@@ -124,19 +124,339 @@ Functions/Subroutines</h2></td></tr>
 <tr class="memitem:ga6626839aff500f060beb5bce2b90c447"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__grp__solver.html#ga6626839aff500f060beb5bce2b90c447">mp00ac</a> (Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag)</td></tr>
 <tr class="memdesc:ga6626839aff500f060beb5bce2b90c447"><td class="mdescLeft">&#160;</td><td class="mdescRight">Solves Beltrami/vacuum (linear) system, given matrices.<b>unpacking fluxes, helicity multiplier</b>  <a href="group__grp__solver.html#ga6626839aff500f060beb5bce2b90c447">More...</a><br /></td></tr>
 <tr class="separator:ga6626839aff500f060beb5bce2b90c447"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a304edac43f63d39dda4419b4d044eac5"><td class="memItemLeft" align="right" valign="top"><a id="a304edac43f63d39dda4419b4d044eac5"></a>
-subroutine&#160;</td><td class="memItemRight" valign="bottom"><b>rungmres</b> (n, nrestart, mu, vvol, rhs, sol, ipar, fpar, wk, nw, guess, a, au, jau, ju, iperm, ierr)</td></tr>
+<tr class="memitem:a304edac43f63d39dda4419b4d044eac5"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mp00ac_8f90.html#a304edac43f63d39dda4419b4d044eac5">rungmres</a> (n, nrestart, mu, vvol, rhs, sol, ipar, fpar, wk, nw, guess, a, au, jau, ju, iperm, ierr)</td></tr>
+<tr class="memdesc:a304edac43f63d39dda4419b4d044eac5"><td class="mdescLeft">&#160;</td><td class="mdescRight">run GMRES  <a href="mp00ac_8f90.html#a304edac43f63d39dda4419b4d044eac5">More...</a><br /></td></tr>
 <tr class="separator:a304edac43f63d39dda4419b4d044eac5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae9fe335bb4916face9f9d19ce8c0f5d7"><td class="memItemLeft" align="right" valign="top"><a id="ae9fe335bb4916face9f9d19ce8c0f5d7"></a>
-subroutine&#160;</td><td class="memItemRight" valign="bottom"><b>matvec</b> (n, x, ax, a, mu, vvol)</td></tr>
+<tr class="memitem:ae9fe335bb4916face9f9d19ce8c0f5d7"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mp00ac_8f90.html#ae9fe335bb4916face9f9d19ce8c0f5d7">matvec</a> (n, x, ax, a, mu, vvol)</td></tr>
+<tr class="memdesc:ae9fe335bb4916face9f9d19ce8c0f5d7"><td class="mdescLeft">&#160;</td><td class="mdescRight">compute a.x by either by coumputing it directly, or using a matrix free method  <a href="mp00ac_8f90.html#ae9fe335bb4916face9f9d19ce8c0f5d7">More...</a><br /></td></tr>
 <tr class="separator:ae9fe335bb4916face9f9d19ce8c0f5d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a76cda97bf815eb7f40cb76ad1719d809"><td class="memItemLeft" align="right" valign="top"><a id="a76cda97bf815eb7f40cb76ad1719d809"></a>
-subroutine&#160;</td><td class="memItemRight" valign="bottom"><b>prec_solve</b> (n, vecin, vecout, au, jau, ju, iperm)</td></tr>
+<tr class="memitem:a76cda97bf815eb7f40cb76ad1719d809"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mp00ac_8f90.html#a76cda97bf815eb7f40cb76ad1719d809">prec_solve</a> (n, vecin, vecout, au, jau, ju, iperm)</td></tr>
+<tr class="memdesc:a76cda97bf815eb7f40cb76ad1719d809"><td class="mdescLeft">&#160;</td><td class="mdescRight">apply the preconditioner  <a href="mp00ac_8f90.html#a76cda97bf815eb7f40cb76ad1719d809">More...</a><br /></td></tr>
 <tr class="separator:a76cda97bf815eb7f40cb76ad1719d809"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Solves Beltrami/vacuum (linear) system, given matrices. </p>
-</div></div><!-- contents -->
+</div><h2 class="groupheader">Function/Subroutine Documentation</h2>
+<a id="a304edac43f63d39dda4419b4d044eac5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a304edac43f63d39dda4419b4d044eac5">&#9670;&nbsp;</a></span>rungmres()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">subroutine rungmres </td>
+          <td>(</td>
+          <td class="paramtype">integer&#160;</td>
+          <td class="paramname"><em>n</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">integer&#160;</td>
+          <td class="paramname"><em>nrestart</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real&#160;</td>
+          <td class="paramname"><em>mu</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">integer&#160;</td>
+          <td class="paramname"><em>vvol</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real, dimension(1:n)&#160;</td>
+          <td class="paramname"><em>rhs</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real, dimension(1:n)&#160;</td>
+          <td class="paramname"><em>sol</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">integer, dimension(16)&#160;</td>
+          <td class="paramname"><em>ipar</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real, dimension(16)&#160;</td>
+          <td class="paramname"><em>fpar</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real, dimension(1:nw)&#160;</td>
+          <td class="paramname"><em>wk</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">integer&#160;</td>
+          <td class="paramname"><em>nw</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real, dimension(n)&#160;</td>
+          <td class="paramname"><em>guess</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real, dimension(*)&#160;</td>
+          <td class="paramname"><em>a</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real, dimension(*)&#160;</td>
+          <td class="paramname"><em>au</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">integer, dimension(*)&#160;</td>
+          <td class="paramname"><em>jau</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">integer, dimension(*)&#160;</td>
+          <td class="paramname"><em>ju</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">integer, dimension(*)&#160;</td>
+          <td class="paramname"><em>iperm</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">integer&#160;</td>
+          <td class="paramname"><em>ierr</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>run GMRES </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">n</td><td></td></tr>
+    <tr><td class="paramname">nrestart</td><td></td></tr>
+    <tr><td class="paramname">mu</td><td></td></tr>
+    <tr><td class="paramname">vvol</td><td></td></tr>
+    <tr><td class="paramname">rhs</td><td></td></tr>
+    <tr><td class="paramname">sol</td><td></td></tr>
+    <tr><td class="paramname">ipar</td><td></td></tr>
+    <tr><td class="paramname">fpar</td><td></td></tr>
+    <tr><td class="paramname">wk</td><td></td></tr>
+    <tr><td class="paramname">nw</td><td></td></tr>
+    <tr><td class="paramname">guess</td><td></td></tr>
+    <tr><td class="paramname">a</td><td></td></tr>
+    <tr><td class="paramname">au</td><td></td></tr>
+    <tr><td class="paramname">jau</td><td></td></tr>
+    <tr><td class="paramname">ju</td><td></td></tr>
+    <tr><td class="paramname">iperm</td><td></td></tr>
+    <tr><td class="paramname">ierr</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="reference">References <a class="el" href="group__grp__global__local.html#ga024734f6d8a768292605eb82319e1adb">inputlist::epsgmres</a>, <a class="el" href="group__grp__field__matrices.html#ga5b777b0f2fbf74746d4fcca8a4990925">allglobal::liluprecond</a>, <a class="el" href="mp00ac_8f90.html#ae9fe335bb4916face9f9d19ce8c0f5d7">matvec()</a>, <a class="el" href="group__grp__global__local.html#ga85d3de2d2b9c8063234ba8d6ba06a24e">inputlist::nitergmres</a>, <a class="el" href="namespaceconstants.html#ad5224c0b5e13bf12b18dafbb62ba4e8d">constants::one</a>, <a class="el" href="mp00ac_8f90.html#a76cda97bf815eb7f40cb76ad1719d809">prec_solve()</a>, and <a class="el" href="namespaceconstants.html#ab2b0340319f61089513f5dd1d3971a47">constants::zero</a>.</p>
+
+<p class="reference">Referenced by <a class="el" href="group__grp__solver.html#ga6626839aff500f060beb5bce2b90c447">mp00ac()</a>.</p>
+<div class="dynheader">
+Here is the call graph for this function:</div>
+<div class="dyncontent">
+<div class="center"><iframe scrolling="no" frameborder="0" src="mp00ac_8f90_a304edac43f63d39dda4419b4d044eac5_cgraph.svg" width="736" height="240"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
+</div>
+</div>
+<div class="dynheader">
+Here is the caller graph for this function:</div>
+<div class="dyncontent">
+<div class="center"><iframe scrolling="no" frameborder="0" src="mp00ac_8f90_a304edac43f63d39dda4419b4d044eac5_icgraph.svg" width="1282" height="574"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
+</div>
+</div>
+
+</div>
+</div>
+<a id="ae9fe335bb4916face9f9d19ce8c0f5d7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae9fe335bb4916face9f9d19ce8c0f5d7">&#9670;&nbsp;</a></span>matvec()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">subroutine matvec </td>
+          <td>(</td>
+          <td class="paramtype">integer, intent(in)&#160;</td>
+          <td class="paramname"><em>n</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real, dimension(1:n)&#160;</td>
+          <td class="paramname"><em>x</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real, dimension(1:n)&#160;</td>
+          <td class="paramname"><em>ax</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real, dimension(*)&#160;</td>
+          <td class="paramname"><em>a</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real&#160;</td>
+          <td class="paramname"><em>mu</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">integer, intent(in)&#160;</td>
+          <td class="paramname"><em>vvol</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>compute a.x by either by coumputing it directly, or using a matrix free method </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">n</td><td></td></tr>
+    <tr><td class="paramname">x</td><td></td></tr>
+    <tr><td class="paramname">ax</td><td></td></tr>
+    <tr><td class="paramname">a</td><td></td></tr>
+    <tr><td class="paramname">mu</td><td></td></tr>
+    <tr><td class="paramname">vvol</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="reference">References <a class="el" href="group__grp__field__matrices.html#gaebd4ae71765f8b5cc312e963a122140f">allglobal::dmd</a>, <a class="el" href="intghs_8f90.html#a21d3b7106371783302e68297f7797e9f">intghs()</a>, <a class="el" href="group__grp__int__global.html#gadd48d73d6a0417d9f1c05052570202cd">allglobal::iquad</a>, <a class="el" href="group__grp__global__physicslist.html#ga1509b6ce73e909b86beaf65c26527932">inputlist::lrad</a>, <a class="el" href="mtrxhs_8f90.html#a6c22bb4322fbcc29cb17dcc90b56eacd">mtrxhs()</a>, <a class="el" href="group__grp__global.html#ga728975a57403b2213b6cd5c3acec156e">allglobal::notmatrixfree</a>, <a class="el" href="namespaceconstants.html#ad5224c0b5e13bf12b18dafbb62ba4e8d">constants::one</a>, <a class="el" href="group__grp__packing.html#gaee2357e570aebf8559e169def6b619dd">packab()</a>, and <a class="el" href="namespaceconstants.html#ab2b0340319f61089513f5dd1d3971a47">constants::zero</a>.</p>
+
+<p class="reference">Referenced by <a class="el" href="mp00ac_8f90.html#a304edac43f63d39dda4419b4d044eac5">rungmres()</a>.</p>
+<div class="dynheader">
+Here is the call graph for this function:</div>
+<div class="dyncontent">
+<div class="center"><iframe scrolling="no" frameborder="0" src="mp00ac_8f90_ae9fe335bb4916face9f9d19ce8c0f5d7_cgraph.svg" width="592" height="240"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
+</div>
+</div>
+<div class="dynheader">
+Here is the caller graph for this function:</div>
+<div class="dyncontent">
+<div class="center"><iframe scrolling="no" frameborder="0" src="mp00ac_8f90_ae9fe335bb4916face9f9d19ce8c0f5d7_icgraph.svg" width="1395" height="574"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
+</div>
+</div>
+
+</div>
+</div>
+<a id="a76cda97bf815eb7f40cb76ad1719d809"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a76cda97bf815eb7f40cb76ad1719d809">&#9670;&nbsp;</a></span>prec_solve()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">subroutine prec_solve </td>
+          <td>(</td>
+          <td class="paramtype">integer&#160;</td>
+          <td class="paramname"><em>n</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real, dimension(*)&#160;</td>
+          <td class="paramname"><em>vecin</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real, dimension(*)&#160;</td>
+          <td class="paramname"><em>vecout</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real, dimension(*)&#160;</td>
+          <td class="paramname"><em>au</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">integer, dimension(*)&#160;</td>
+          <td class="paramname"><em>jau</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">integer, dimension(*)&#160;</td>
+          <td class="paramname"><em>ju</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">integer, dimension(*)&#160;</td>
+          <td class="paramname"><em>iperm</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>apply the preconditioner </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">n</td><td></td></tr>
+    <tr><td class="paramname">vecin</td><td></td></tr>
+    <tr><td class="paramname">vecout</td><td></td></tr>
+    <tr><td class="paramname">au</td><td></td></tr>
+    <tr><td class="paramname">jau</td><td></td></tr>
+    <tr><td class="paramname">ju</td><td></td></tr>
+    <tr><td class="paramname">iperm</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="reference">Referenced by <a class="el" href="mp00ac_8f90.html#a304edac43f63d39dda4419b4d044eac5">rungmres()</a>.</p>
+<div class="dynheader">
+Here is the caller graph for this function:</div>
+<div class="dyncontent">
+<div class="center"><iframe scrolling="no" frameborder="0" src="mp00ac_8f90_a76cda97bf815eb7f40cb76ad1719d809_icgraph.svg" width="1415" height="574"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
+</div>
+</div>
+
+</div>
+</div>
+</div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
