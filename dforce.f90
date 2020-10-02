@@ -90,11 +90,11 @@
 !> @param[out] force
 !> @param[in] LComputeDerivatives
 !> @param[inout] LComputeAxis
-#ifdef DEBUG
-recursive subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
-#else
-          subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
-#endif
+!#ifdef DEBUG
+!recursive subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
+!#else
+subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
+!#endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -397,7 +397,7 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives, LCompu
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-
+! ---------------
 ! CONSTRUCT FORCE
 ! ---------------
   
@@ -513,6 +513,7 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives, LCompu
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
+! -----------------
 ! CONSTRUCT HESSIAN
 ! -----------------
 
@@ -564,7 +565,7 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives, LCompu
 
               if( ii.eq.1 .and. irz.eq.1 .and. issym.eq.0 ) cycle ! no dependence on Zbs_{m=0,n=0};
               if( ii.eq.1 .and. irz.eq.0 .and. issym.eq.1 ) cycle ! no dependence on Rbs_{m=0,n=0};
-      
+
               idof = idof + 1 ! labels degree-of-freedom;
 
 #ifdef DEBUG
@@ -665,78 +666,76 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives, LCompu
 
                 enddo
 
-
-
               endif ! matches if( LocalConstraint );
 
-#ifdef DEBUG
-              if( Lcheck.eq.6 ) then
-                dBdX%L = .false.
-                SALLOCATE( oRbc, (1:mn,0:Mvol), iRbc(1:mn,0:Mvol) ) !save unperturbed geometry
-                SALLOCATE( oZbs, (1:mn,0:Mvol), iZbs(1:mn,0:Mvol) )
-                SALLOCATE( oRbs, (1:mn,0:Mvol), iRbs(1:mn,0:Mvol) )
-                SALLOCATE( oZbc, (1:mn,0:Mvol), iZbc(1:mn,0:Mvol) ) 
-                SALLOCATE( iforce,    (-2:2, 0:NGdof), zero)
-                SALLOCATE( iposition, (-2:2, 0:NGdof), zero)
-
-                lfactor = psifactor(ii,vvol)     ! this "pre-conditions" the geometrical degrees-of-freedom;
-                                
-                if( ncpu.eq.1) then
-
-                  do isymdiff = -2, 2 ! symmetric fourth-order, finite-difference used to approximate derivatives;
-                    if( isymdiff.eq.0 ) cycle
-
-                    iRbc(1:mn,0:Mvol) = oRbc(1:mn,0:Mvol)
-                    iZbs(1:mn,0:Mvol) = oZbs(1:mn,0:Mvol)
-                    iRbs(1:mn,0:Mvol) = oRbs(1:mn,0:Mvol)
-                    iZbc(1:mn,0:Mvol) = oZbc(1:mn,0:Mvol)
-
-                    ! Perturb geometry
-                    if( issym.eq.0 .and. irz.eq.0 ) then
-                      iRbc(ii,vvol) = iRbc(ii,vvol) + dRZ * isymdiff ! perturb geometry;
-                    else if( issym.eq.0 .and. irz.eq.1 ) then
-                      iZbs(ii,vvol) = iZbs(ii,vvol) + dRZ * isymdiff ! perturb geometry;
-                    else if( issym.eq.1 .and. irz.eq.0 ) then
-                      iRbs(ii,vvol) = iRbs(ii,vvol) + dRZ * isymdiff ! perturb geometry;
-                    else if( issym.eq.1 .and. irz.eq.1 ) then
-                      iZbc(ii,vvol) = iZbc(ii,vvol) + dRZ * isymdiff ! perturb geometry;
-                    endif
-
-                    packorunpack = 'P' ! pack geometrical degrees-of-freedom;
-                    LComputeAxis = .false.
-
-                    WCALL(dforce, packxi,( NGdof, iposition(isymdiff,0:NGdof), Mvol, mn,iRbc(1:mn,0:Mvol),iZbs(1:mn,0:Mvol),iRbs(1:mn,0:Mvol),&
-                                            iZbc(1:mn,0:Mvol),packorunpack, .false., LComputeAxis ) )
-                    WCALL(dforce, dforce,( NGdof, iposition(isymdiff,0:NGdof), iforce(isymdiff,0:NGdof), .false., LComputeAxis) )
-                    
-                  enddo
-
-                  iforce(0, 0:NGdof)               = ( - 1 * iforce(2,0:NGdof) &
-                                                      + 8 * iforce(1,0:NGdof) &
-                                                      - 8 * iforce(-1,0:NGdof) &
-                                                      + 1 * iforce(-2,0:NGdof))  / ( 12 * dRZ )
-                  tdof = (vvol-1) * LGdof + idof
-                  finitediff_hessian(1:NGdof, tdof) = iforce(0, 1:NGdof)* lfactor
-
-                  cput = GETTIME
-
-                  iRbc(1:mn,0:Mvol) = oRbc(1:mn,0:Mvol)
-                  iZbs(1:mn,0:Mvol) = oZbs(1:mn,0:Mvol)
-                  iRbs(1:mn,0:Mvol) = oRbs(1:mn,0:Mvol)
-                  iZbc(1:mn,0:Mvol) = oZbc(1:mn,0:Mvol)
-
-                endif
-
-                DALLOCATE(oRbc)
-                DALLOCATE(oZbs)
-                DALLOCATE(oRbs)
-                DALLOCATE(oZbc)
-                DALLOCATE(iforce)
-                DALLOCATE(iposition)
-
-
-              endif
-#endif
+!#ifdef DEBUG
+!              if( Lcheck.eq.6 ) then
+!                dBdX%L = .false.
+!                SALLOCATE( oRbc, (1:mn,0:Mvol), iRbc(1:mn,0:Mvol) ) !save unperturbed geometry
+!                SALLOCATE( oZbs, (1:mn,0:Mvol), iZbs(1:mn,0:Mvol) )
+!                SALLOCATE( oRbs, (1:mn,0:Mvol), iRbs(1:mn,0:Mvol) )
+!                SALLOCATE( oZbc, (1:mn,0:Mvol), iZbc(1:mn,0:Mvol) ) 
+!                SALLOCATE( iforce,    (-2:2, 0:NGdof), zero)
+!                SALLOCATE( iposition, (-2:2, 0:NGdof), zero)
+!
+!                lfactor = psifactor(ii,vvol)     ! this "pre-conditions" the geometrical degrees-of-freedom;
+!                                
+!                if( ncpu.eq.1) then
+!
+!                  do isymdiff = -2, 2 ! symmetric fourth-order, finite-difference used to approximate derivatives;
+!                    if( isymdiff.eq.0 ) cycle
+!
+!                    iRbc(1:mn,0:Mvol) = oRbc(1:mn,0:Mvol)
+!                    iZbs(1:mn,0:Mvol) = oZbs(1:mn,0:Mvol)
+!                    iRbs(1:mn,0:Mvol) = oRbs(1:mn,0:Mvol)
+!                    iZbc(1:mn,0:Mvol) = oZbc(1:mn,0:Mvol)
+!
+!                    ! Perturb geometry
+!                    if( issym.eq.0 .and. irz.eq.0 ) then
+!                      iRbc(ii,vvol) = iRbc(ii,vvol) + dRZ * isymdiff ! perturb geometry;
+!                    else if( issym.eq.0 .and. irz.eq.1 ) then
+!                      iZbs(ii,vvol) = iZbs(ii,vvol) + dRZ * isymdiff ! perturb geometry;
+!                    else if( issym.eq.1 .and. irz.eq.0 ) then
+!                      iRbs(ii,vvol) = iRbs(ii,vvol) + dRZ * isymdiff ! perturb geometry;
+!                    else if( issym.eq.1 .and. irz.eq.1 ) then
+!                      iZbc(ii,vvol) = iZbc(ii,vvol) + dRZ * isymdiff ! perturb geometry;
+!                    endif
+!
+!                    packorunpack = 'P' ! pack geometrical degrees-of-freedom;
+!                    LComputeAxis = .false.
+!
+!                    WCALL(dforce, packxi,( NGdof, iposition(isymdiff,0:NGdof), Mvol, mn,iRbc(1:mn,0:Mvol),iZbs(1:mn,0:Mvol),iRbs(1:mn,0:Mvol),&
+!                                            iZbc(1:mn,0:Mvol),packorunpack, .false., LComputeAxis ) )
+!                    WCALL(dforce, dforce,( NGdof, iposition(isymdiff,0:NGdof), iforce(isymdiff,0:NGdof), .false., LComputeAxis) )
+!                    
+!                  enddo
+!
+!                  iforce(0, 0:NGdof)              = ( - 1 * iforce( 2,0:NGdof) &
+!                                                      + 8 * iforce( 1,0:NGdof) &
+!                                                      - 8 * iforce(-1,0:NGdof) &
+!                                                      + 1 * iforce(-2,0:NGdof))  / ( 12 * dRZ )
+!                  tdof = (vvol-1) * LGdof + idof
+!                  finitediff_hessian(1:NGdof, tdof) = iforce(0, 1:NGdof)* lfactor
+!
+!                  cput = GETTIME
+!
+!                  iRbc(1:mn,0:Mvol) = oRbc(1:mn,0:Mvol)
+!                  iZbs(1:mn,0:Mvol) = oZbs(1:mn,0:Mvol)
+!                  iRbs(1:mn,0:Mvol) = oRbs(1:mn,0:Mvol)
+!                  iZbc(1:mn,0:Mvol) = oZbc(1:mn,0:Mvol)
+!
+!                endif
+!
+!                DALLOCATE(oRbc)
+!                DALLOCATE(oZbs)
+!                DALLOCATE(oRbs)
+!                DALLOCATE(oZbc)
+!                DALLOCATE(iforce)
+!                DALLOCATE(iposition)
+!
+!
+!              endif
+!#endif
             enddo ! matches do issym ;
 
           enddo ! matches do irz ;
@@ -752,51 +751,51 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives, LCompu
 
 
 
-#ifdef DEBUG
-
-! Print hessian and finite differences estimate (if single CPU). 
-    if( Lcheck.eq.6 ) then
-      if(myid.eq.0) then
-        open(10, file=trim(ext)//'.Lcheck6_output.txt', status='unknown')
-        write(ounit,'(A)') NEW_LINE('A')
-        do ii=1, NGdof
-          write(ounit,1345) myid, im(ii), in(ii), hessian(ii,:)
-          write(10   ,1347) hessian(ii,:)
-        enddo
-        close(10)
-        
-        write(ounit,'(A)') NEW_LINE('A')
-
-        open(10, file=trim(ext)//'.Lcheck6_output.FiniteDiff.txt', status='unknown')
-        if( ncpu.eq.1 ) then
-          do ii=1, NGdof
-            write(10   ,1347) hessian(ii,:)
-          enddo
-        endif
-        close(10)
-
-          
-        write(ounit,'(A)') NEW_LINE('A')
-
-        open(10, file=trim(ext)//'.Lcheck6_output.FiniteDiff.txt', status='unknown')
-        if( ncpu.eq.1 ) then
-            do ii=1, NGdof
-              write(10   ,1347) finitediff_hessian(ii,:)
-            enddo        
-            write(ounit,'(A)') NEW_LINE('A')
-        endif
-        close(10)
-
-1345       format("dforce: myid=",i3," ; (",i4,",",i4," ; Hessian            = ",512f16.10 "   ;")
-1346       format("dforce: myid=",i3," ; (",i4,",",i4," ; Finite differences = ",512f16.10 "   ;")
-1347       format(512F22.16, " ")
-
-      endif
-      DALLOCATE(finitediff_hessian)
-
-    FATAL(dforce, Lcheck.eq.6, Lcheck.eq.6 test has been completed. )
-    endif
-#endif
+!#ifdef DEBUG
+!
+!! Print hessian and finite differences estimate (if single CPU). 
+!    if( Lcheck.eq.6 ) then
+!      if(myid.eq.0) then
+!        open(10, file=trim(ext)//'.Lcheck6_output.txt', status='unknown')
+!        write(ounit,'(A)') NEW_LINE('A')
+!        do ii=1, NGdof
+!          write(ounit,1345) myid, im(ii), in(ii), hessian(ii,:)
+!          write(10   ,1347) hessian(ii,:)
+!        enddo
+!        close(10)
+!        
+!        write(ounit,'(A)') NEW_LINE('A')
+!
+!        open(10, file=trim(ext)//'.Lcheck6_output.FiniteDiff.txt', status='unknown')
+!        if( ncpu.eq.1 ) then
+!          do ii=1, NGdof
+!            write(10   ,1347) hessian(ii,:)
+!          enddo
+!        endif
+!        close(10)
+!
+!          
+!        write(ounit,'(A)') NEW_LINE('A')
+!
+!        open(10, file=trim(ext)//'.Lcheck6_output.FiniteDiff.txt', status='unknown')
+!        if( ncpu.eq.1 ) then
+!            do ii=1, NGdof
+!              write(10   ,1347) finitediff_hessian(ii,:)
+!            enddo        
+!            write(ounit,'(A)') NEW_LINE('A')
+!        endif
+!        close(10)
+!
+!1345       format("dforce: myid=",i3," ; (",i4,",",i4," ; Hessian            = ",512f16.10 "   ;")
+!1346       format("dforce: myid=",i3," ; (",i4,",",i4," ; Finite differences = ",512f16.10 "   ;")
+!1347       format(512F22.16, " ")
+!
+!      endif
+!      DALLOCATE(finitediff_hessian)
+!
+!    FATAL(dforce, Lcheck.eq.6, Lcheck.eq.6 test has been completed. )
+!    endif
+!#endif
 
   endif ! end of if( LcomputeDerivatives ) ;
 
@@ -805,7 +804,7 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives, LCompu
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   RETURN(dforce)
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
 end subroutine dforce
