@@ -181,8 +181,11 @@ subroutine bfield( zeta, st, Bst )
 
 end subroutine bfield
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+!> \brief compute the tangential magnetic field
+!>
+!> @param[in] zeta toroidal angle
+!> @param[in] st radial(s) and poloidal(theta) positions
+!> @param[out] Bst tangential magnetic field
 subroutine bfield_tangent( zeta, st, Bst ) 
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
