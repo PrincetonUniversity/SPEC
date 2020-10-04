@@ -27,11 +27,12 @@ More on this: https://docs.python.org/3/whatsnew/3.7.html
 @author: Jonathan Schilling (jonathan.schilling@ipp.mpg.de)
 """
 
-# framework for source code generation
+# interface definition framework for source code generation
 idfPath = "/data/jonathan/work/code/idf"
 import sys
 if not idfPath in sys.path:
     sys.path.insert(0, idfPath)
+
 try:
     import idf
 except ImportError:
@@ -271,9 +272,23 @@ input_physics_mu.setRank(1)
 input_physics_mu.setDefaultValue(0.0)
 input_physics_mu.setMaximumIndices([r"MNvol+1"])
 
-# TODO: Ivolume
-# TODO: Isurf
 
+input_physics_Ivolume = idf.Variable("Ivolume")
+input_physics_Ivolume.setDescription( r"Toroidal current constraint normalized by \f$\mu_0\f$ (\f$I_{volume} = \mu_0\cdot [A]\f$), in each volume. "+"\n"
+                                     +r"This is a cumulative quantity: \f$I_{\mathcal{V},i} = \int_0^{\psi_{t,i}} \mathbf{J}\cdot\mathbf{dS}\f$. "+"\n"
+                                     +r"Physically, it represents the sum of all non-pressure driven currents.")
+input_physics_Ivolume.setType("double")
+input_physics_Ivolume.setRank(1)
+input_physics_Ivolume.setDefaultValue(0.0)
+input_physics_Ivolume.setMaximumIndices([r"MNvol+1"])
+
+
+input_physics_Isurf = idf.Variable("Isurf")
+input_physics_Isurf.setDescription(r"Toroidal current normalized by \f$\mu_0\f$ at each interface (cumulative). This is the sum of all pressure driven currents.")
+input_physics_Isurf.setType("double")
+input_physics_Isurf.setRank(1)
+input_physics_Isurf.setDefaultValue(0.0)
+input_physics_Isurf.setMaximumIndices([r"MNvol+1"])
 
 
 input_physics_pl = idf.Variable("pl")
@@ -421,7 +436,12 @@ input_physics_rtor.setType("double")
 input_physics_rtor.setDefaultValue(1.0)
 input_physics_rtor.setUnit("m")
 
-# TODO: Lreflect
+
+input_physics_Lreflect = idf.Variable("Lreflect")
+input_physics_Lreflect.setDescription(r"=1 reflect the upper and lower bound in slab, =0 do not reflect")
+input_physics_Lreflect.setType("int")
+input_physics_Lreflect.setDefaultValue(0)
+
 
 input_physics_Rac = idf.Variable("Rac")
 input_physics_Rac.setDescription(r"    stellarator symmetric coordinate axis; R; cosine")
@@ -790,8 +810,22 @@ input_numeric_Mregular.setDescription({r"maximum regularization factor":
 input_numeric_Mregular.setType("int")
 input_numeric_Mregular.setDefaultValue(-1)
 
-# TODO: Lrzaxis
-# TODO: Ntoraxis
+
+input_numeric_Lrzaxis = idf.Variable("Lrzaxis")
+input_numeric_Lrzaxis.setDescription({r"controls the guess of geometry axis in the innermost volume or initialization of interfaces":
+                                      [r"if \c iprecon = 1, the centroid is used",
+                                       r"if \c iprecon = 2, the Jacobian \f$m=1\f$ harmonic elimination method is used"]
+                                      })
+input_numeric_Lrzaxis.setType("int")
+input_numeric_Lrzaxis.setDefaultValue(1)
+
+
+input_numeric_Ntoraxis = idf.Variable("Ntoraxis")
+input_numeric_Ntoraxis.setDescription( r"the number of \f$n\f$ harmonics used in the Jacobian \f$m=1\f$ harmonic elimination method;"+"\n"
+                                      +r"only relevant if \c Lrzaxis.ge.1 .")
+input_numeric_Ntoraxis.setType("int")
+input_numeric_Ntoraxis.setDefaultValue(3)
+
 
 vars_numericlist = [
         input_numeric_Linitialize,
@@ -872,11 +906,35 @@ input_local_maxrndgues.setDescription(r"the maximum random number of the Beltram
 input_local_maxrndgues.setType("double")
 input_local_maxrndgues.setDefaultValue(1.0)
 
-# TODO: Lmatsolver
-# TODO: NiterGMRES
-# TODO: epsGMRES
-# TODO: LGMRESprec
-# TODO: epsILU
+
+input_local_Lmatsolver = idf.Variable("Lmatsolver")
+input_local_Lmatsolver.setDescription(r"1 for LU factorization, 2 for GMRES, 3 for GMRES matrix-free")
+input_local_Lmatsolver.setType("int")
+input_local_Lmatsolver.setDefaultValue(3)
+
+
+input_local_NiterGMRES = idf.Variable("NiterGMRES")
+input_local_NiterGMRES.setDescription(r"number of max iteration for GMRES")
+input_local_NiterGMRES.setType("int")
+input_local_NiterGMRES.setDefaultValue(200)
+
+
+input_local_epsGMRES = idf.Variable("epsGMRES")
+input_local_epsGMRES.setDescription(r"the precision of GMRES")
+input_local_epsGMRES.setType("double")
+input_local_epsGMRES.setDefaultValue(1.0e-14)
+
+
+input_local_LGMRESprec = idf.Variable("LGMRESprec")
+input_local_LGMRESprec.setDescription(r"type of preconditioner for GMRES, 1 for ILU sparse matrix")
+input_local_LGMRESprec.setType("int")
+input_local_LGMRESprec.setDefaultValue(1)
+
+
+input_local_epsILU = idf.Variable("epsILU")
+input_local_epsILU.setDescription(r"the precision of incomplete LU factorization for preconditioning")
+input_local_epsILU.setType("double")
+input_local_epsILU.setDefaultValue(1.0e-12)
 
 
 vars_locallist = [
@@ -1134,7 +1192,12 @@ input_diagnostics_nPpts.setDescription({ r"number of toroidal transits used (per
 input_diagnostics_nPpts.setType("int")
 input_diagnostics_nPpts.setDefaultValue(0)
 
-# TODO: Ppts
+
+input_diagnostics_Ppts = idf.Variable("Ppts")
+input_diagnostics_Ppts.setDescription(r"stands for Poincare plot theta start. Chose at which angle (normalized over \f$\pi\f$) the Poincare field-line tracing start.")
+input_diagnostics_Ppts.setType("double")
+input_diagnostics_Ppts.setDefaultValue(0.0)
+
 
 input_diagnostics_nPtrj = idf.Variable("nPtrj")
 input_diagnostics_nPtrj.setDescription({r"number of trajectories in each annulus to be followed in constructing Poincaré plot":
@@ -1176,9 +1239,20 @@ input_diagnostics_dqq.setDescription(r"perturbed harmonic")
 input_diagnostics_dqq.setType("int")
 input_diagnostics_dqq.setDefaultValue(-1)
 
-# TODO: Lerrortype
-# TODO: Ngrid
-# TODO: dRZ
+input_diagnostics_Lerrortype = idf.Variable("Lerrortype")
+input_diagnostics_Lerrortype.setDescription(r"the type of error output for Lcheck=1")
+input_diagnostics_Lerrortype.setType("int")
+input_diagnostics_Lerrortype.setDefaultValue(0)
+
+input_diagnostics_Ngrid = idf.Variable("Ngrid")
+input_diagnostics_Ngrid.setDescription(r"the number of points to output in the grid, -1 for Lrad(vvol)")
+input_diagnostics_Ngrid.setType("int")
+input_diagnostics_Ngrid.setDefaultValue(-1)
+
+input_diagnostics_dRZ = idf.Variable("dRZ")
+input_diagnostics_dRZ.setDescription(r"difference in geometry for finite difference estimate (debug only)")
+input_diagnostics_dRZ.setType("double")
+input_diagnostics_dRZ.setDefaultValue(1.0e-5)
 
 input_diagnostics_Lcheck = idf.Variable("Lcheck")
 input_diagnostics_Lcheck.setDescription({r"implement various checks":
