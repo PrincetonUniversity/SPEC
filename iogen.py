@@ -32,7 +32,10 @@ idfPath = "/data/jonathan/work/code/idf"
 import sys
 if not idfPath in sys.path:
     sys.path.insert(0, idfPath)
-import idf
+try:
+    import idf
+except ImportError:
+    print("Error: 'idf' python package missing")
 
 # define the input quantities for SPEC
 
