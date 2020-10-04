@@ -5,8 +5,8 @@ This is the definition script which controls the generation of the input file
 and output file reading and writing routines for the SPEC MRxMHD
 equilibrium code.
 
-In the first part of this script, the input file format and the output file
-format are declared in an abstract way.
+In the first part of this script, the input file format
+and the output file format are declared in an abstract way.
 
 Based on these declarations, reading and writing routines in various
 programming languages are generated automagically.
@@ -14,7 +14,7 @@ The code generation functionality is encapsulated in the
 Interface Definition Framework, which can be found at:
 https://github.com/jonathanschilling/idf
 
-If you want to have an input or output idf.Variable added to SPEC, this script
+If you want to have an input or output variable added to SPEC, this script
 is the place to put it. Then run it, commit your changed source code to Git
 and compile SPEC again to use your changes.
 
@@ -28,13 +28,13 @@ More on this: https://docs.python.org/3/whatsnew/3.7.html
 """
 
 # interface definition framework for source code generation
-idfPath = "/data/jonathan/work/code/idf"
+idfPath = "/home/jonathan/work/code/idf"
 import sys
 if not idfPath in sys.path:
     sys.path.insert(0, idfPath)
 
 try:
-    import idf
+    from idf import idf
 except ImportError:
     print("Error: 'idf' python package missing")
 
@@ -46,13 +46,11 @@ MNvol.setType("int")
 MNvol.setDefaultValue(256)
 MNvol.setIsParameter(True)
 
-
 MMpol = idf.Variable("MMpol")
 MMpol.setDescription(r"maximum value of \c Mpol")
 MMpol.setType("int")
 MMpol.setDefaultValue(64)
 MMpol.setIsParameter(True)
-
 
 MNtor = idf.Variable("MNtor")
 MNtor.setDescription(r"maximum value of \c Ntor")
@@ -78,18 +76,15 @@ input_physics_Igeometry.setDescription({r"selects Cartesian, cylindrical or toro
 input_physics_Igeometry.setType("int")
 input_physics_Igeometry.setDefaultValue(3)
 
-
 input_physics_Istellsym = idf.Variable("Istellsym")
 input_physics_Istellsym.setDescription(r"stellarator symmetry is enforced if \c Istellsym=1")
 input_physics_Istellsym.setType("int")
 input_physics_Istellsym.setDefaultValue(1)
 
-
 input_physics_Lfreebound = idf.Variable("Lfreebound")
 input_physics_Lfreebound.setDescription(r"compute vacuum field surrounding plasma")
 input_physics_Lfreebound.setType("int")
 input_physics_Lfreebound.setDefaultValue(0)
-
 
 input_physics_phiedge = idf.Variable("phiedge")
 input_physics_phiedge.setDescription(r"total enclosed toroidal magnetic flux")
@@ -97,24 +92,20 @@ input_physics_phiedge.setType("double")
 input_physics_phiedge.setDefaultValue(1.0)
 input_physics_phiedge.setUnit("Vs")
 
-
 input_physics_curtor = idf.Variable("curtor")
 input_physics_curtor.setDescription(r"total enclosed (toroidal) plasma current")
 input_physics_curtor.setType("double")
 input_physics_curtor.setDefaultValue(0.0)
-
 
 input_physics_curpol = idf.Variable("curpol")
 input_physics_curpol.setDescription(r"total enclosed (poloidal) linking current")
 input_physics_curpol.setType("double")
 input_physics_curpol.setDefaultValue(0.0)
 
-
 input_physics_gamma = idf.Variable("gamma")
 input_physics_gamma.setDescription(r"adiabatic index; cannot set \f$|\gamma| = 1\f$")
 input_physics_gamma.setType("double")
 input_physics_gamma.setDefaultValue(0.0)
-
 
 input_physics_Nfp = idf.Variable("Nfp")
 input_physics_Nfp.setDescription({r"field periodicity":
@@ -124,7 +115,6 @@ input_physics_Nfp.setDescription({r"field periodicity":
 input_physics_Nfp.setType("int")
 input_physics_Nfp.setDefaultValue(1)
 
-
 input_physics_Nvol = idf.Variable("Nvol")
 input_physics_Nvol.setDescription({r"number of volumes":
                                    [r"each volume \f${\cal V}_l\f$ is bounded by the \f${\cal I}_{l-1}\f$ and \f${\cal I}_{l}\f$ interfaces",
@@ -133,7 +123,6 @@ input_physics_Nvol.setDescription({r"number of volumes":
                                    })
 input_physics_Nvol.setType("int")
 input_physics_Nvol.setDefaultValue(1)
-
 
 input_physics_Mpol = idf.Variable("Mpol")
 input_physics_Mpol.setDescription({r"number of poloidal Fourier harmonics":
@@ -147,7 +136,6 @@ input_physics_Mpol.setDescription({r"number of poloidal Fourier harmonics":
 input_physics_Mpol.setType("int")
 input_physics_Mpol.setDefaultValue(0)
 
-
 input_physics_Ntor = idf.Variable("Ntor")
 input_physics_Ntor.setDescription({r"number of toroidal Fourier harmonics":
                                    [ r"all Fourier representations of doubly-periodic functions are of the form"+"\n"
@@ -160,7 +148,6 @@ input_physics_Ntor.setDescription({r"number of toroidal Fourier harmonics":
 input_physics_Ntor.setType("int")
 input_physics_Ntor.setDefaultValue(0)
 
-
 input_physics_Lrad = idf.Variable("Lrad")
 input_physics_Lrad.setDescription({r"Chebyshev resolution in each volume":
                                    [r"constraint : \c Lrad(1:Mvol) >= 2"]
@@ -169,7 +156,6 @@ input_physics_Lrad.setType("int")
 input_physics_Lrad.setRank(1)
 input_physics_Lrad.setDefaultValue(4)
 input_physics_Lrad.setMaximumIndices([r"MNvol+1"])
-
 
 input_physics_Lconstraint = idf.Variable("Lconstraint")
 input_physics_Lconstraint.setDescription({r"selects constraints; primarily used in ma02aa() and mp00ac()":
@@ -189,7 +175,6 @@ input_physics_Lconstraint.setDescription({r"selects constraints; primarily used 
 input_physics_Lconstraint.setType("int")
 input_physics_Lconstraint.setDefaultValue(-1)
 
-
 input_physics_tflux = idf.Variable("tflux")
 input_physics_tflux.setDescription({r"toroidal flux, \f$\psi_t\f$, enclosed by each interface":
                                     [ r"For each of the plasma volumes, this is a constraint: \c tflux is *not* varied",
@@ -203,14 +188,12 @@ input_physics_tflux.setRank(1)
 input_physics_tflux.setDefaultValue(0.0)
 input_physics_tflux.setMaximumIndices([r"MNvol+1"])
 
-
 input_physics_pflux = idf.Variable("pflux")
 input_physics_pflux.setDescription(r"poloidal flux, \f$\psi_p\f$, enclosed by each interface")
 input_physics_pflux.setType("double")
 input_physics_pflux.setRank(1)
 input_physics_pflux.setDefaultValue(0.0)
 input_physics_pflux.setMaximumIndices([r"MNvol+1"])
-
 
 input_physics_helicity = idf.Variable("helicity")
 input_physics_helicity.setDescription({r"helicity, \f${\cal K}\f$, in each volume, \f${\cal V}_i\f$":
@@ -221,14 +204,12 @@ input_physics_helicity.setRank(1)
 input_physics_helicity.setDefaultValue(0.0)
 input_physics_helicity.setMaximumIndices([r"MNvol+1"])
 
-
 input_physics_pscale = idf.Variable("pscale")
 input_physics_pscale.setDescription({r"pressure scale factor":
                                      [r"the initial pressure profile is given by \c pscale  \f$*\f$ \c pressure"]
                                     })
 input_physics_pscale.setType("double")
 input_physics_pscale.setDefaultValue(0.0) #TODO maybe this should be 1.0?
-
 
 input_physics_pressure = idf.Variable("pressure")
 input_physics_pressure.setDescription({r"pressure in each volume":
@@ -243,7 +224,6 @@ input_physics_pressure.setRank(1)
 input_physics_pressure.setDefaultValue(0.0)
 input_physics_pressure.setMaximumIndices([r"MNvol+1"])
 
-
 input_physics_Ladiabatic = idf.Variable("Ladiabatic")
 input_physics_Ladiabatic.setDescription({r"logical flag":
                                          [r"If \c Ladiabatic==0, the adiabatic constants are determined by the initial pressure and volume.",
@@ -251,7 +231,6 @@ input_physics_Ladiabatic.setDescription({r"logical flag":
                                          })
 input_physics_Ladiabatic.setType("int")
 input_physics_Ladiabatic.setDefaultValue(0)
-
 
 input_physics_adiabatic = idf.Variable("adiabatic")
 input_physics_adiabatic.setDescription({r"adiabatic constants in each volume":
@@ -264,14 +243,12 @@ input_physics_adiabatic.setRank(1)
 input_physics_adiabatic.setDefaultValue(0.0)
 input_physics_adiabatic.setMaximumIndices([r"MNvol+1"])
 
-
 input_physics_mu = idf.Variable("mu")
 input_physics_mu.setDescription(r"helicity-multiplier, \f$\mu\f$, in each volume")
 input_physics_mu.setType("double")
 input_physics_mu.setRank(1)
 input_physics_mu.setDefaultValue(0.0)
 input_physics_mu.setMaximumIndices([r"MNvol+1"])
-
 
 input_physics_Ivolume = idf.Variable("Ivolume")
 input_physics_Ivolume.setDescription( r"Toroidal current constraint normalized by \f$\mu_0\f$ (\f$I_{volume} = \mu_0\cdot [A]\f$), in each volume. "+"\n"
@@ -282,14 +259,12 @@ input_physics_Ivolume.setRank(1)
 input_physics_Ivolume.setDefaultValue(0.0)
 input_physics_Ivolume.setMaximumIndices([r"MNvol+1"])
 
-
 input_physics_Isurf = idf.Variable("Isurf")
 input_physics_Isurf.setDescription(r"Toroidal current normalized by \f$\mu_0\f$ at each interface (cumulative). This is the sum of all pressure driven currents.")
 input_physics_Isurf.setType("double")
 input_physics_Isurf.setRank(1)
 input_physics_Isurf.setDefaultValue(0.0)
 input_physics_Isurf.setMaximumIndices([r"MNvol+1"])
-
 
 input_physics_pl = idf.Variable("pl")
 input_physics_pl.setDescription( r"\"inside\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+"\n"
@@ -301,7 +276,6 @@ input_physics_pl.setDefaultValue(0)
 input_physics_pl.setStartingIndices([r"0"])
 input_physics_pl.setMaximumIndices([r"MNvol"])
 
-
 input_physics_ql = idf.Variable("ql")
 input_physics_ql.setDescription( r"\"inside\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+"\n"
                                 +r"where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2 \f$."+"\n"
@@ -312,7 +286,6 @@ input_physics_ql.setDefaultValue(0)
 input_physics_ql.setStartingIndices([r"0"])
 input_physics_ql.setMaximumIndices([r"MNvol"])
 
-
 input_physics_pr = idf.Variable("pr")
 input_physics_pr.setDescription( r"\"inside\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+"\n"
                                 +r"where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2 \f$."+"\n"
@@ -322,7 +295,6 @@ input_physics_pr.setRank(1)
 input_physics_pr.setDefaultValue(0)
 input_physics_pr.setStartingIndices([r"0"])
 input_physics_pr.setMaximumIndices([r"MNvol"])
-
 
 input_physics_qr = idf.Variable("qr")
 input_physics_qr.setDescription( r"\"inside\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+"\n"
@@ -344,7 +316,6 @@ input_physics_iota.setDefaultValue(0.0)
 input_physics_iota.setStartingIndices([r"0"])
 input_physics_iota.setMaximumIndices([r"MNvol"])
 
-
 input_physics_lp = idf.Variable("lp")
 input_physics_lp.setDescription( r"\"outer\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+"\n"
                                 +r"where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2\f$."+"\n"
@@ -354,7 +325,6 @@ input_physics_lp.setRank(1)
 input_physics_lp.setDefaultValue(0)
 input_physics_lp.setStartingIndices([r"0"])
 input_physics_lp.setMaximumIndices([r"MNvol"])
-
 
 input_physics_lq = idf.Variable("lq")
 input_physics_lq.setDescription( r"\"outer\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+"\n"
@@ -366,7 +336,6 @@ input_physics_lq.setDefaultValue(0)
 input_physics_lq.setStartingIndices([r"0"])
 input_physics_lq.setMaximumIndices([r"MNvol"])
 
-
 input_physics_rp = idf.Variable("rp")
 input_physics_rp.setDescription( r"\"outer\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+"\n"
                                 +r"where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2\f$."+"\n"
@@ -376,7 +345,6 @@ input_physics_rp.setRank(1)
 input_physics_rp.setDefaultValue(0)
 input_physics_rp.setStartingIndices([r"0"])
 input_physics_rp.setMaximumIndices([r"MNvol"])
-
 
 input_physics_rq = idf.Variable("rq")
 input_physics_rq.setDescription( r"\"outer\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+"\n"
@@ -388,7 +356,6 @@ input_physics_rq.setDefaultValue(0)
 input_physics_rq.setStartingIndices([r"0"])
 input_physics_rq.setMaximumIndices([r"MNvol"])
 
-
 input_physics_oita = idf.Variable("oita")
 input_physics_oita.setDescription({r"rotational-transform, \f$\mbox{$\,\iota\!\!$-}\f$, on outer side of each interface":
                                    [r"only relevant if illogical input for \c ql and \c qr are provided"]
@@ -399,14 +366,12 @@ input_physics_oita.setDefaultValue(0.0)
 input_physics_oita.setStartingIndices([r"0"])
 input_physics_oita.setMaximumIndices([r"MNvol"])
 
-
 input_physics_mupftol = idf.Variable("mupftol")
 input_physics_mupftol.setDescription({r"accuracy to which \f$\mu\f$ and \f$\Delta\psi_p\f$ are required":
                                       [r"only relevant if constraints on transform, enclosed currents etc. are to be satisfied iteratively, see \c Lconstraint"]
                                       })
 input_physics_mupftol.setType("double")
 input_physics_mupftol.setDefaultValue(1.0e-16)
-
 
 input_physics_mupfits = idf.Variable("mupfits")
 input_physics_mupfits.setDescription({r"an upper limit on the transform/helicity constraint iterations":
@@ -415,7 +380,6 @@ input_physics_mupfits.setDescription({r"an upper limit on the transform/helicity
                                       })
 input_physics_mupfits.setType("int")
 input_physics_mupfits.setDefaultValue(8)
-
 
 input_physics_rpol = idf.Variable("rpol")
 input_physics_rpol.setDescription({r"poloidal extent of slab (effective radius)":
@@ -426,7 +390,6 @@ input_physics_rpol.setType("double")
 input_physics_rpol.setDefaultValue(1.0)
 input_physics_rpol.setUnit("m")
 
-
 input_physics_rtor = idf.Variable("rtor")
 input_physics_rtor.setDescription({r"toroidal extent of slab (effective radius)":
                                    [r"only relevant if \c Igeometry==1",
@@ -436,12 +399,10 @@ input_physics_rtor.setType("double")
 input_physics_rtor.setDefaultValue(1.0)
 input_physics_rtor.setUnit("m")
 
-
 input_physics_Lreflect = idf.Variable("Lreflect")
 input_physics_Lreflect.setDescription(r"=1 reflect the upper and lower bound in slab, =0 do not reflect")
 input_physics_Lreflect.setType("int")
 input_physics_Lreflect.setDefaultValue(0)
-
 
 input_physics_Rac = idf.Variable("Rac")
 input_physics_Rac.setDescription(r"    stellarator symmetric coordinate axis; R; cosine")
@@ -479,8 +440,6 @@ input_physics_Zac.setUnit("m")
 input_physics_Zac.setStartingIndices([r"0"])
 input_physics_Zac.setMaximumIndices([r"MNtor"])
 
-
-
 input_physics_Rbc = idf.Variable("Rbc")
 input_physics_Rbc.setDescription(r"    stellarator symmetric boundary components; R; cosine")
 input_physics_Rbc.setType("double")
@@ -516,8 +475,6 @@ input_physics_Zbc.setDefaultValue(0.0)
 input_physics_Zbc.setUnit("m")
 input_physics_Zbc.setStartingIndices([r"-MNtor", r"-MMpol"])
 input_physics_Zbc.setMaximumIndices([r"MNtor", r"MMpol"])
-
-
 
 input_physics_Rwc = idf.Variable("Rwc")
 input_physics_Rwc.setDescription(r"    stellarator symmetric boundary components of wall; R; cosine")
@@ -555,7 +512,6 @@ input_physics_Zwc.setUnit("m")
 input_physics_Zwc.setStartingIndices([r"-MNtor", r"-MMpol"])
 input_physics_Zwc.setMaximumIndices([r"MNtor", r"MMpol"])
 
-
 input_physics_Vns = idf.Variable("Vns")
 input_physics_Vns.setDescription(r"    stellarator symmetric normal field at boundary; vacuum component;   sine")
 input_physics_Vns.setType("double")
@@ -591,7 +547,6 @@ input_physics_Bnc.setDefaultValue(0.0)
 input_physics_Bnc.setUnit("T")
 input_physics_Bnc.setStartingIndices([r"-MNtor", r"-MMpol"])
 input_physics_Bnc.setMaximumIndices([r"MNtor", r"MMpol"])
-
 
 vars_physicslist = [
         input_physics_Igeometry,
@@ -645,7 +600,7 @@ vars_physicslist = [
 
 physicslist = idf.Namelist("physicslist")
 physicslist.setDescription(r"The namelist \c physicslist controls the geometry, profiles, and numerical resolution.")
-physicslist.addidf.Variables(vars_physicslist)
+physicslist.addVariables(vars_physicslist)
 
 ###############################################################################
 # numericlist 
@@ -673,7 +628,6 @@ input_numeric_Linitialize.setDescription({r"Used to initialize geometry using a 
 input_numeric_Linitialize.setType("int")
 input_numeric_Linitialize.setDefaultValue(0)
 
-
 input_numeric_LautoinitBn = idf.Variable("LautoinitBn")
 input_numeric_LautoinitBn.setDescription({r"Used to initialize \f$B_{ns}\f$ using an initial fixed-boundary calculation":
                                           [r"only relevant if \c Lfreebound=1",
@@ -682,7 +636,6 @@ input_numeric_LautoinitBn.setDescription({r"Used to initialize \f$B_{ns}\f$ usin
 input_numeric_LautoinitBn.setType("int")
 input_numeric_LautoinitBn.setDefaultValue(1)
 
-
 input_numeric_Lzerovac = idf.Variable("Lzerovac")
 input_numeric_Lzerovac.setDescription({r"Used to adjust vacuum field to cancel plasma field on computational boundary":
                                        [r"only relevant if \c Lfreebound=1"]
@@ -690,14 +643,12 @@ input_numeric_Lzerovac.setDescription({r"Used to adjust vacuum field to cancel p
 input_numeric_Lzerovac.setType("int")
 input_numeric_Lzerovac.setDefaultValue(0)
 
-
 input_numeric_Ndiscrete = idf.Variable("Ndiscrete")
 input_numeric_Ndiscrete.setDescription({r"resolution of the real space grid on which fast Fourier transforms are performed is given by \c Ndiscrete*Mpol*4":
                                         [r"constraint \c Ndiscrete>0"]
                                         })
 input_numeric_Ndiscrete.setType("int")
 input_numeric_Ndiscrete.setDefaultValue(2)
-
 
 input_numeric_Nquad = idf.Variable("Nquad")
 input_numeric_Nquad.setDescription({r"Resolution of the Gaussian quadrature":
@@ -708,7 +659,6 @@ input_numeric_Nquad.setDescription({r"Resolution of the Gaussian quadrature":
 input_numeric_Nquad.setType("int")
 input_numeric_Nquad.setDefaultValue(-1)
 
-
 input_numeric_iMpol = idf.Variable("iMpol")
 input_numeric_iMpol.setDescription({r"Fourier resolution of straight-fieldline angle on interfaces":
                                     [ r"the rotational-transform on the interfaces is determined by a transformation to the straight-fieldline angle,"+"\n"
@@ -717,7 +667,6 @@ input_numeric_iMpol.setDescription({r"Fourier resolution of straight-fieldline a
                                     })
 input_numeric_iMpol.setType("int")
 input_numeric_iMpol.setDefaultValue(-4)
-
 
 input_numeric_iNtor = idf.Variable("iNtor")
 input_numeric_iNtor.setDescription({r"Fourier resolution of straight-fieldline angle on interfaces":
@@ -728,7 +677,6 @@ input_numeric_iNtor.setDescription({r"Fourier resolution of straight-fieldline a
                                     })
 input_numeric_iNtor.setType("int")
 input_numeric_iNtor.setDefaultValue(-4)
-
 
 input_numeric_Lsparse = idf.Variable("Lsparse")
 input_numeric_Lsparse.setDescription({r"controls method used to solve for rotational-transform on interfaces":
@@ -743,7 +691,6 @@ input_numeric_Lsparse.setDescription({r"controls method used to solve for rotati
 input_numeric_Lsparse.setType("int")
 input_numeric_Lsparse.setDefaultValue(0)
 
-
 input_numeric_Lsvdiota = idf.Variable("Lsvdiota")
 input_numeric_Lsvdiota.setDescription({r"controls method used to solve for rotational-transform on interfaces":
                                        [r"if \c Lsvdiota=0, use standard linear solver to construct straight fieldline angle transformation",
@@ -752,7 +699,6 @@ input_numeric_Lsvdiota.setDescription({r"controls method used to solve for rotat
                                        })
 input_numeric_Lsvdiota.setType("int")
 input_numeric_Lsvdiota.setDefaultValue(0)
-
 
 input_numeric_imethod = idf.Variable("imethod")
 input_numeric_imethod.setDescription({ r"controls iterative solution to sparse matrix"+"\n"
@@ -765,7 +711,6 @@ input_numeric_imethod.setDescription({ r"controls iterative solution to sparse m
 input_numeric_imethod.setType("int")
 input_numeric_imethod.setDefaultValue(3)
 
-
 input_numeric_iorder = idf.Variable("iorder")
 input_numeric_iorder.setDescription({r"determines order of finite-difference approximation to the derivatives":
                                      [r"if \c iorder=2, second-order",
@@ -776,7 +721,6 @@ input_numeric_iorder.setDescription({r"determines order of finite-difference app
                                     })
 input_numeric_iorder.setType("int")
 input_numeric_iorder.setDefaultValue(2)
-
 
 input_numeric_iprecon = idf.Variable("iprecon")
 input_numeric_iprecon.setDescription({ r"controls iterative solution to sparse matrix arising in real-space transformation"+"\n"
@@ -789,19 +733,16 @@ input_numeric_iprecon.setDescription({ r"controls iterative solution to sparse m
 input_numeric_iprecon.setType("int")
 input_numeric_iprecon.setDefaultValue(0)
 
-
 input_numeric_iotatol = idf.Variable("iotatol")
 input_numeric_iotatol.setDescription({r"tolerance required for iterative construction of straight-fieldline angle":
                                       r"only relevant if \c Lsparse.ge.2"})
 input_numeric_iotatol.setType("double")
 input_numeric_iotatol.setDefaultValue(-1.0)
 
-
 input_numeric_Lextrap = idf.Variable("Lextrap")
 input_numeric_Lextrap.setDescription(r"geometry of innermost interface is defined by extrapolation")
 input_numeric_Lextrap.setType("int")
 input_numeric_Lextrap.setDefaultValue(0)
-
 
 input_numeric_Mregular = idf.Variable("Mregular")
 input_numeric_Mregular.setDescription({r"maximum regularization factor":
@@ -809,7 +750,6 @@ input_numeric_Mregular.setDescription({r"maximum regularization factor":
                                        })
 input_numeric_Mregular.setType("int")
 input_numeric_Mregular.setDefaultValue(-1)
-
 
 input_numeric_Lrzaxis = idf.Variable("Lrzaxis")
 input_numeric_Lrzaxis.setDescription({r"controls the guess of geometry axis in the innermost volume or initialization of interfaces":
@@ -819,13 +759,11 @@ input_numeric_Lrzaxis.setDescription({r"controls the guess of geometry axis in t
 input_numeric_Lrzaxis.setType("int")
 input_numeric_Lrzaxis.setDefaultValue(1)
 
-
 input_numeric_Ntoraxis = idf.Variable("Ntoraxis")
 input_numeric_Ntoraxis.setDescription( r"the number of \f$n\f$ harmonics used in the Jacobian \f$m=1\f$ harmonic elimination method;"+"\n"
                                       +r"only relevant if \c Lrzaxis.ge.1 .")
 input_numeric_Ntoraxis.setType("int")
 input_numeric_Ntoraxis.setDefaultValue(3)
-
 
 vars_numericlist = [
         input_numeric_Linitialize,
@@ -847,7 +785,7 @@ vars_numericlist = [
 
 numericlist = idf.Namelist("numericlist")
 numericlist.setDescription(r"The namelist \c numericlist controls internal resolution parameters that the user rarely needs to consider.")
-numericlist.addidf.Variables(vars_numericlist)
+numericlist.addVariables(vars_numericlist)
 
 ###############################################################################
 # locallist 
@@ -906,36 +844,30 @@ input_local_maxrndgues.setDescription(r"the maximum random number of the Beltram
 input_local_maxrndgues.setType("double")
 input_local_maxrndgues.setDefaultValue(1.0)
 
-
 input_local_Lmatsolver = idf.Variable("Lmatsolver")
 input_local_Lmatsolver.setDescription(r"1 for LU factorization, 2 for GMRES, 3 for GMRES matrix-free")
 input_local_Lmatsolver.setType("int")
 input_local_Lmatsolver.setDefaultValue(3)
-
 
 input_local_NiterGMRES = idf.Variable("NiterGMRES")
 input_local_NiterGMRES.setDescription(r"number of max iteration for GMRES")
 input_local_NiterGMRES.setType("int")
 input_local_NiterGMRES.setDefaultValue(200)
 
-
 input_local_epsGMRES = idf.Variable("epsGMRES")
 input_local_epsGMRES.setDescription(r"the precision of GMRES")
 input_local_epsGMRES.setType("double")
 input_local_epsGMRES.setDefaultValue(1.0e-14)
-
 
 input_local_LGMRESprec = idf.Variable("LGMRESprec")
 input_local_LGMRESprec.setDescription(r"type of preconditioner for GMRES, 1 for ILU sparse matrix")
 input_local_LGMRESprec.setType("int")
 input_local_LGMRESprec.setDefaultValue(1)
 
-
 input_local_epsILU = idf.Variable("epsILU")
 input_local_epsILU.setDescription(r"the precision of incomplete LU factorization for preconditioning")
 input_local_epsILU.setType("double")
 input_local_epsILU.setDefaultValue(1.0e-12)
-
 
 vars_locallist = [
         input_local_LBeltrami,
@@ -949,7 +881,7 @@ locallist.setDescription({r"The namelist \c locallist controls the construction 
                           [ r"The transformation to straight-fieldline coordinates is singular when the rotational-transform of the interfaces is rational;"+"\n"
                            +r"however, the rotational-transform is still well defined."]
                           })
-locallist.addidf.Variables(vars_locallist)
+locallist.addVariables(vars_locallist)
 
 ###############################################################################
 # globallist 
@@ -1115,7 +1047,6 @@ input_global_mcasingcal.setDescription(r'minimum number of calls to adaptive vir
 input_global_mcasingcal.setType("int")
 input_global_mcasingcal.setDefaultValue(8)
 
-
 vars_globallist = [
         input_global_Lfindzero,
         input_global_escale,
@@ -1153,7 +1084,7 @@ globallist.setDescription({r"The namelist \c globallist controls the search for 
                             +r"\label{eq:spectralbalancemn_global} \f}"+"\n"
                             +r"where \f$\psi_v\equiv\f$ normalized toroidal flux, \c tflux, and \f$\omega\equiv\f$ \c wpoloidal."]
                            })
-globallist.addidf.Variables(vars_globallist)
+globallist.addVariables(vars_globallist)
 
 ###############################################################################
 # diagnosticslist 
@@ -1192,12 +1123,10 @@ input_diagnostics_nPpts.setDescription({ r"number of toroidal transits used (per
 input_diagnostics_nPpts.setType("int")
 input_diagnostics_nPpts.setDefaultValue(0)
 
-
 input_diagnostics_Ppts = idf.Variable("Ppts")
 input_diagnostics_Ppts.setDescription(r"stands for Poincare plot theta start. Chose at which angle (normalized over \f$\pi\f$) the Poincare field-line tracing start.")
 input_diagnostics_Ppts.setType("double")
 input_diagnostics_Ppts.setDefaultValue(0.0)
-
 
 input_diagnostics_nPtrj = idf.Variable("nPtrj")
 input_diagnostics_nPtrj.setDescription({r"number of trajectories in each annulus to be followed in constructing Poincaré plot":
@@ -1302,7 +1231,6 @@ input_diagnostics_scaling.setDescription(r"redundant")
 input_diagnostics_scaling.setType("double")
 input_diagnostics_scaling.setDefaultValue(1.0)
 
-
 vars_diagnosticslist = [
         input_diagnostics_odetol,
         input_diagnostics_absreq,
@@ -1325,14 +1253,18 @@ vars_diagnosticslist = [
 
 diagnosticslist = idf.Namelist("diagnosticslist")
 diagnosticslist.setDescription(r"The namelist \c diagnosticslist controls post-processor diagnostics, such as Poincaré  plot resolution, etc.")
-diagnosticslist.addidf.Variables(vars_diagnosticslist)
+diagnosticslist.addVariables(vars_diagnosticslist)
 
 ###############################################################################
 # screenlist --> not in output file
 ###############################################################################
 
+
+#-----------------------------------------------------------------------------#
+
+
 ###############################################################################
-# TODO: output contents
+# output file contents
 ###############################################################################
 
 # TODO: version
@@ -1356,87 +1288,87 @@ diagnosticslist.addidf.Variables(vars_diagnosticslist)
 
 
 
-###############################################################################
-# generate Fortran declarations of the input quantities of SPEC
-###############################################################################
-from adf import indented, toDoc
-from genFortran import declareVariable, declareNamelist
+# ###############################################################################
+# # generate Fortran declarations of the input quantities of SPEC
+# ###############################################################################
+# from adf import indented, toDoc
+# from genFortran import declareVariable, declareNamelist
 
-# dry-run declaration to determine maximum declaration length for doc indentation
-maxLength = 0
-for var in vars_physicslist:
-    declLen = len(declareVariable(var, attachDescription=False))
-    if declLen>maxLength: maxLength = declLen
-for var in vars_numericlist:
-    declLen = len(declareVariable(var, attachDescription=False))
-    if declLen>maxLength: maxLength = declLen
-for var in vars_locallist:
-    declLen = len(declareVariable(var, attachDescription=False))
-    if declLen>maxLength: maxLength = declLen
-for var in vars_globallist:
-    declLen = len(declareVariable(var, attachDescription=False))
-    if declLen>maxLength: maxLength = declLen
-for var in vars_diagnosticslist:
-    declLen = len(declareVariable(var, attachDescription=False))
-    if declLen>maxLength: maxLength = declLen
+# # dry-run declaration to determine maximum declaration length for doc indentation
+# maxLength = 0
+# for var in vars_physicslist:
+#     declLen = len(declareVariable(var, attachDescription=False))
+#     if declLen>maxLength: maxLength = declLen
+# for var in vars_numericlist:
+#     declLen = len(declareVariable(var, attachDescription=False))
+#     if declLen>maxLength: maxLength = declLen
+# for var in vars_locallist:
+#     declLen = len(declareVariable(var, attachDescription=False))
+#     if declLen>maxLength: maxLength = declLen
+# for var in vars_globallist:
+#     declLen = len(declareVariable(var, attachDescription=False))
+#     if declLen>maxLength: maxLength = declLen
+# for var in vars_diagnosticslist:
+#     declLen = len(declareVariable(var, attachDescription=False))
+#     if declLen>maxLength: maxLength = declLen
 
-#print("maximum decl. length: "+str(maxLength))
+# #print("maximum decl. length: "+str(maxLength))
 
-module_inputlist = "implicit none\n"
+# module_inputlist = "implicit none\n"
 
-# parameters: maximum array dimensions
-for param in params_maxDims:
-    module_inputlist += declareVariable(param, refDeclLength=maxLength)+"\n"
+# # parameters: maximum array dimensions
+# for param in params_maxDims:
+#     module_inputlist += declareVariable(param, refDeclLength=maxLength)+"\n"
 
-module_inputlist += "\n"
+# module_inputlist += "\n"
 
-# input idf.Variables, i.e. namelist contents
-module_inputlist += r"""!> \addtogroup grp_global_physicslist physicslist
-!> \brief """+toDoc(physicslist.description)+r"""
-!> @{
-"""
-for var in physicslist.idf.Variables:
-    module_inputlist += declareVariable(var, refDeclLength=maxLength)+"\n"
-module_inputlist += "!> @}\n"
+# # input idf.Variables, i.e. namelist contents
+# module_inputlist += r"""!> \addtogroup grp_global_physicslist physicslist
+# !> \brief """+toDoc(physicslist.description)+r"""
+# !> @{
+# """
+# for var in physicslist.idf.Variables:
+#     module_inputlist += declareVariable(var, refDeclLength=maxLength)+"\n"
+# module_inputlist += "!> @}\n"
 
 
-for var in numericlist.idf.Variables:
-    module_inputlist += declareVariable(var, refDeclLength=maxLength)+"\n"
-module_inputlist += "\n"
-for var in locallist.idf.Variables:
-    module_inputlist += declareVariable(var, refDeclLength=maxLength)+"\n"
-module_inputlist += "\n"
-for var in globallist.idf.Variables:
-    module_inputlist += declareVariable(var, refDeclLength=maxLength)+"\n"
-module_inputlist += "\n"
-for var in diagnosticslist.idf.Variables:
-    module_inputlist += declareVariable(var, refDeclLength=maxLength)+"\n"
+# for var in numericlist.idf.Variables:
+#     module_inputlist += declareVariable(var, refDeclLength=maxLength)+"\n"
+# module_inputlist += "\n"
+# for var in locallist.idf.Variables:
+#     module_inputlist += declareVariable(var, refDeclLength=maxLength)+"\n"
+# module_inputlist += "\n"
+# for var in globallist.idf.Variables:
+#     module_inputlist += declareVariable(var, refDeclLength=maxLength)+"\n"
+# module_inputlist += "\n"
+# for var in diagnosticslist.idf.Variables:
+#     module_inputlist += declareVariable(var, refDeclLength=maxLength)+"\n"
 
-module_inputlist += "\n"
+# module_inputlist += "\n"
 
-# namelist declarations
-module_inputlist += declareNamelist(physicslist)+"\n"
-module_inputlist += "\n"
-module_inputlist += declareNamelist(numericlist)+"\n"
-module_inputlist += "\n"
-module_inputlist += declareNamelist(locallist)+"\n"
-module_inputlist += "\n"
-module_inputlist += declareNamelist(globallist)+"\n"
-module_inputlist += "\n"
-module_inputlist += declareNamelist(diagnosticslist)+"\n"
+# # namelist declarations
+# module_inputlist += declareNamelist(physicslist)+"\n"
+# module_inputlist += "\n"
+# module_inputlist += declareNamelist(numericlist)+"\n"
+# module_inputlist += "\n"
+# module_inputlist += declareNamelist(locallist)+"\n"
+# module_inputlist += "\n"
+# module_inputlist += declareNamelist(globallist)+"\n"
+# module_inputlist += "\n"
+# module_inputlist += declareNamelist(diagnosticslist)+"\n"
 
-with open("../inplst.f90", "w") as f:
+# with open("../inplst.f90", "w") as f:
     
-    f.write(r"""!> @file inplst.f90
-!> \brief Input namelists
-!> \addtogroup grp_global
-!> @{
-""")
+#     f.write(r"""!> @file inplst.f90
+# !> \brief Input namelists
+# !> \addtogroup grp_global
+# !> @{
+# """)
     
-    f.write(r"""module inputlist
-!> \brief Input namelists
-!> \addtogroup grp_global
-!> @{
-""")
-    f.write(indented(2, module_inputlist, " "))
-    f.write("end module inputlist\n")
+#     f.write(r"""module inputlist
+# !> \brief Input namelists
+# !> \addtogroup grp_global
+# !> @{
+# """)
+#     f.write(indented(2, module_inputlist, " "))
+#     f.write("end module inputlist\n")
