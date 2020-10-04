@@ -1,16 +1,23 @@
-function rzbdata = plot_spec_modB(fname,lvol,sarr,tarr,zarr,newfig)
+function rzbdata = plot_spec_modB(data,lvol,sarr,tarr,zarr,newfig)
 
+%
+% PLOT_SPEC_MODB( DATA, LVOL, SARR, TARR, ZARR, NEWFIG )
+% ======================================================
+%
 % Produces plot of |B| in (R,Z,zarr) cross-section(s)
 %
 % INPUT
-%   -fname   : path to the hdf5 output file (e.g. 'testcase.sp.h5')
+% -----
+%   -data    : data obtained via read_spec(filename)
 %   -lvol    : volume number
 %   -sarr    : is the array of values for the s-coordinate ('d' for default)
 %   -tarr    : is the array of values for the theta-coordinate ('d' for default)
 %   -zarr    : is the array of values for the zeta-coordinate ('d' for default)
-%   -newfig  : opens(=1) or not(=0) a new figure
+%   -newfig  : opens(=1) or not(=0) a new figure, or overwrite existing one
+%   (=2)
 %
 % OUTPUT
+% ------
 %   -rzbdata : cell structure with 3 arrays: R-data, Z-data, |B|-data
 %
 % written by J.Loizu (2016)
@@ -30,31 +37,50 @@ end
 rzbdata = cell(3);
 
 
-% Read vector potential
-
-fdata  = read_spec_field(fname);
-
 % Compute |B|
 
-modB   = get_spec_modB(fdata,lvol,sarr,tarr,zarr);
+modB   = get_spec_modB(data,lvol,sarr,tarr,zarr);
 
 % Compute function (R,Z)(s,theta,zeta)
 
-rzdata = get_spec_rzarr(fdata,lvol,sarr,tarr,zarr);
+rzdata = get_spec_rzarr(data,lvol,sarr,tarr,zarr);
 
 R = rzdata{1};   
 Z = rzdata{2};
 
 % Plot
 
+switch newfig
+    case 0
+        hold on
+    case 1
+        figure
+        hold on
+    case 2
+        hold off
+end
+
+Rtemp = R;
+Ztemp = Z;
+switch data.input.physics.Igeometry
+    case 1
+        R = tarr;
+        Z = Rtemp;
+    case 2
+        for it=1:length(tarr)
+            R(:,it,:) = Rtemp(:,it,:) .* cos(tarr(it));
+            Z(:,it,:) = Rtemp(:,it,:) .* sin(tarr(it));
+        end
+    case 3
+        R = Rtemp;
+        Z = Ztemp;
+end
+       
+
 for iz=1:length(zarr)
- if(newfig==1)
- figure
- end
- 
- hold on
  
  pcolor(R(:,:,iz),Z(:,:,iz),modB(:,:,iz)); shading interp; colorbar
+ hold on
 
  axis equal
  title('|B|');

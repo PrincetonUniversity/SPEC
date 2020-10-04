@@ -89,7 +89,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
                         glambda, & ! global lambda: initial guesses will be saved; 21 Apr 13;
                         Ntz, hNt, hNz, &
                         iotakkii, iotaksub, iotakadd, iotaksgn, &
-                        Ate, Aze, Ato, Azo, TT, &
+                        Ate, Aze, Ato, Azo, TT, RTT, &
                         Lcoordinatesingularity, Lvacuumregion, regumm
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -106,16 +106,16 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
 
   REAL                 :: lAte(0:mn,-1:2), lAze(0:mn,-1:2), lAto(0:mn,-1:2), lAzo(0:mn,-1:2)
 
-  REAL                 :: lBso(1:mn,-1:2), lBte(1:mn,-1:2), lBze(1:mn,-1:2)
-  REAL                 :: lBse(1:mn,-1:2), lBto(1:mn,-1:2), lBzo(1:mn,-1:2)
+!  REAL                 :: lBso(1:mn,-1:2), lBte(1:mn,-1:2), lBze(1:mn,-1:2)
+!  REAL                 :: lBse(1:mn,-1:2), lBto(1:mn,-1:2), lBzo(1:mn,-1:2)
 
-  REAL                 :: gvu(1:Nt*Nz,1:3,1:3) ! local workspace; 13 Sep 13;
+!  REAL                 :: gvu(1:Nt*Nz,1:3,1:3) ! local workspace; 13 Sep 13;
 
 ! required for Fourier routines;
   INTEGER              :: IA, if04aaf, idgesvx, ipiv(1:NN), iwork4(1:NN)
-  REAL                 :: dmatrix(1:NN,1:NN,-1:2), drhs(1:NN,-1:2), dlambda(1:NN,-1:2), FAA(1:NN,1:NN)
-  REAL                 :: omatrix(1:NN,1:NN)
-  REAL                 :: Rdgesvx(1:NN), Cdgesvx(1:NN), work4(1:4*NN), rcond, ferr, berr, ferr2(1:2), berr2(1:2)
+  REAL  , allocatable  :: dmatrix(:,:,:), omatrix(:,:), FAA(:,:)
+  REAL                 :: drhs(1:NN,-1:2), dlambda(1:NN,-1:2)
+  REAL                 :: Rdgesvx(1:NN), Cdgesvx(1:NN), work4(1:4*NN), rcond, ferr(1), berr(1), ferr2(1:2), berr2(1:2)
   CHARACTER            :: equed 
 
 ! required for real-space routines;
@@ -176,21 +176,31 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
     
     do ii = 1, mn ! loop over Fourier harmonics; 20 Apr 13;
      
-     if( Lcoordinatesingularity ) then ; mfactor = regumm(ii) * half ! include radial regularization factor near coordinate origin; 21 Apr 13;
-     else                              ; mfactor = zero
-     endif
-     
-     do ll = 0, Lrad(lvol) ! loop over Chebyshev polynomials; 20 Apr 13;
-      
-      ;lAte(ii,id) = lAte(ii,id) + Ate(lvol,id,ii)%s(ll) * ( TT(ll,innout,1) + mfactor ) ! compute radial derivative of vector potential; 20 Apr 13;
-      ;lAze(ii,id) = lAze(ii,id) - Aze(lvol,id,ii)%s(ll) * ( TT(ll,innout,1) + mfactor )
-      if( NOTstellsym ) then
-       lAto(ii,id) = lAto(ii,id) + Ato(lvol,id,ii)%s(ll) * ( TT(ll,innout,1) + mfactor )
-       lAzo(ii,id) = lAzo(ii,id) - Azo(lvol,id,ii)%s(ll) * ( TT(ll,innout,1) + mfactor )
-      endif
-      
-     enddo ! end of do ll; 30 Jan 13;
-     
+     mi = im(ii)
+
+     if (Lcoordinatesingularity) then
+      do ll = mi, Lrad(lvol), 2 ! loop over Zernike polynomials; 01 Jul 19;
+        
+        ;lAte(ii,id) = lAte(ii,id) + Ate(lvol,id,ii)%s(ll) * RTT(ll,mi,innout,1) * half
+        ;lAze(ii,id) = lAze(ii,id) - Aze(lvol,id,ii)%s(ll) * RTT(ll,mi,innout,1) * half
+        if( NOTstellsym ) then
+        lAto(ii,id) = lAto(ii,id) + Ato(lvol,id,ii)%s(ll) * RTT(ll,mi,innout,1) * half
+        lAzo(ii,id) = lAzo(ii,id) - Azo(lvol,id,ii)%s(ll) * RTT(ll,mi,innout,1) * half
+        endif
+        
+      enddo ! end of do ll; 30 Jan 13;
+     else
+      do ll = 0, Lrad(lvol) ! loop over Chebyshev polynomials; 20 Apr 13;
+        
+        ;lAte(ii,id) = lAte(ii,id) + Ate(lvol,id,ii)%s(ll) * TT(ll,innout,1) ! compute radial derivative of vector potential; 20 Apr 13;
+        ;lAze(ii,id) = lAze(ii,id) - Aze(lvol,id,ii)%s(ll) * TT(ll,innout,1)
+        if( NOTstellsym ) then
+        lAto(ii,id) = lAto(ii,id) + Ato(lvol,id,ii)%s(ll) * TT(ll,innout,1)
+        lAzo(ii,id) = lAzo(ii,id) - Azo(lvol,id,ii)%s(ll) * TT(ll,innout,1)
+        endif
+        
+      enddo ! end of do ll; 30 Jan 13;
+     end if ! Lcoordinatesingularity; 01 Jul 19;
     enddo ! end of do ii; 30 Jan 13; ! Fourier harmonics, and their derivatives, have been constructed; 20 Apr 13;
     
     if( Lsparse.gt.0 ) then ! will construct transformation to straight-field line angle in real space; 24 Apr 13;
@@ -203,6 +213,13 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
 ! construct real-space, real-space transformation matrix; 20 Apr 13;
+
+   if( Lsparse.eq.0 .or. Lsparse.eq.3 ) then
+    SALLOCATE( dmatrix, (1:NN,1:NN,-1:2), zero )
+    SALLOCATE( omatrix, (1:NN,1:NN), zero )
+    SALLOCATE( FAA, (1:NN,1:NN), zero )
+   endif
+
 
 #ifdef LSPARSE
    
@@ -260,7 +277,6 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
      SALLOCATE( wks1   , (1:Ndof            ), zero )
      SALLOCATE( wks2   , (1:Ndof            ), zero )
      SALLOCATE( AA     , (1:Ndof,1:Ndof     ), zero )
-     SALLOCATE( iwork  , (1:Ndof            ),   0  ) ! Missed originally; added by czhu on 2019/07/26;
     endif ! end of if( Lsparse.eq.1 ) ; 24 Apr 13;
     
 ! sparse arrays; ! all of these can be simply defined (1:Ntz) etc. . . . ; 24 Apr 13;
@@ -431,7 +447,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
      call F11ZAF( Ndof, inz(id), smatrix(1:inz(id),id), irow(1:inz(id),id), jcol(1:inz(id),id), duplicate, zeros, istr(1:Ndof+1), iwork(1:Ndof), if11zaf )
      
      cput = GETTIME
-     select case( if11zaf )                                                                     !1234567890123456789012
+     select case( if11zaf )                                                                  !1234567890123456789012
      case( 0 )    ; if( Wtr00ab ) write(ounit,1000) myid, lvol, innout, id, if11zaf, cput-lcpu, "success ;             "
      case( 1 )    ;               write(ounit,1000) myid, lvol, innout, id, if11zaf, cput-lcpu, "input error ;         "
      case( 2 )    ;               write(ounit,1000) myid, lvol, innout, id, if11zaf, cput-lcpu, "row or column error ; "
@@ -570,13 +586,13 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
     drhs(1:NN,-1:2) = zero
     
     dmatrix(1:NN,1:NN,-1:2) = zero ! initialize summation; 30 Jan 13;
-    
+
     do ideriv = -1, 2
-     
+
      if( iflag.eq. 1 .and. ideriv.ne.0 ) cycle ! derivatives                                                        not required; 20 Jun 14;
      if( iflag.eq. 2 .and. ideriv.lt.0 ) cycle ! derivatives wrt helicity multiplier and differential poloidal flux are required; 20 Jun 14;
      if( iflag.eq.-1 .and. ideriv.gt.0 ) cycle ! derivative  wrt geometry                                               required; 20 Jun 14;
-     
+!$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(kk,ii,jj,mj,nj) 
      do kk = 1, mn
       
       ii = iotakkii(kk)
@@ -603,12 +619,15 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
        if( ii.lt.1 ) cycle
        
 !      FATAL( tr00ab,ii.gt.NN .or. jj.gt.NN, illegal subscript ) ! THIS CAN BE DELETED EVENTUALLY; 02 Sep 14;
-       
-       ;dmatrix(ii      ,jj      ,ideriv) = dmatrix(ii      ,jj      ,ideriv) + ( - mj * lAze(kk,ideriv) + nj * lAte(kk,ideriv) ) * half
+!$OMP ATOMIC UPDATE       
+       dmatrix(ii      ,jj      ,ideriv) = dmatrix(ii      ,jj      ,ideriv) + ( - mj * lAze(kk,ideriv) + nj * lAte(kk,ideriv) ) * half
        if( NOTstellsym) then
         FATAL( tr00ab,ii+mns-1.lt.1 .or. ii+mns-1.gt.NN .or. jj+mns-1.lt.1 .or. jj+mns-1.gt.NN, illegal subscript ) ! THIS CAN BE DELETED EVENTUALLY;
+!$OMP ATOMIC UPDATE
         dmatrix(ii+mns-1,jj      ,ideriv) = dmatrix(ii+mns-1,jj      ,ideriv) + ( - mj * lAzo(kk,ideriv) + nj * lAto(kk,ideriv) ) * half
+!$OMP ATOMIC UPDATE
         dmatrix(ii      ,jj+mns-1,ideriv) = dmatrix(ii      ,jj+mns-1,ideriv) - ( + mj * lAzo(kk,ideriv) - nj * lAto(kk,ideriv) ) * half
+!$OMP ATOMIC UPDATE
         dmatrix(ii+mns-1,jj+mns-1,ideriv) = dmatrix(ii+mns-1,jj+mns-1,ideriv) + ( + mj * lAze(kk,ideriv) - nj * lAte(kk,ideriv) ) * half
        endif
 
@@ -622,25 +641,29 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
        if( ii.lt.1 ) cycle
 
        FATAL( tr00ab,ii.gt.NN .or. jj.gt.NN, illegal subscript ) ! THIS CAN BE DELETED EVENTUALLY; 02 Sep 14;
-
-       ;dmatrix(ii      ,jj      ,ideriv) = dmatrix(ii      ,jj      ,ideriv) + ( - mj * lAze(kk,ideriv) + nj * lAte(kk,ideriv) ) * half
+!$OMP ATOMIC UPDATE
+       dmatrix(ii      ,jj      ,ideriv) = dmatrix(ii      ,jj      ,ideriv) + ( - mj * lAze(kk,ideriv) + nj * lAte(kk,ideriv) ) * half
        if( NOTstellsym) then
         FATAL( tr00ab,ii+mns-1.lt.1 .or. ii+mns-1.gt.NN .or. jj+mns-1.lt.1 .or. jj+mns-1.gt.NN, illegal subscript ) ! THIS CAN BE DELETED EVENTUALLY;
+!$OMP ATOMIC UPDATE
         dmatrix(ii+mns-1,jj      ,ideriv) = dmatrix(ii+mns-1,jj      ,ideriv) + ( - mj * lAzo(kk,ideriv) + nj * lAto(kk,ideriv) ) * half * iotaksgn(kk,jj)
+!$OMP ATOMIC UPDATE
         dmatrix(ii      ,jj+mns-1,ideriv) = dmatrix(ii      ,jj+mns-1,ideriv) + ( + mj * lAzo(kk,ideriv) - nj * lAto(kk,ideriv) ) * half
+!$OMP ATOMIC UPDATE
         dmatrix(ii+mns-1,jj+mns-1,ideriv) = dmatrix(ii+mns-1,jj+mns-1,ideriv) - ( + mj * lAze(kk,ideriv) - nj * lAte(kk,ideriv) ) * half * iotaksgn(kk,jj)
        endif
 
       enddo ! end of do jj; 30 Jan 13;
 
      enddo ! end of do kk; 30 Jan 13;
-
+!$OMP END PARALLEL DO
     enddo ! end of ideriv; 30 Jan 13;
 
 
 ! FOURIER MATRICES HAVE BEEN CONSTRUCTED; SAVE UNPERTURBED MATRIX AND UNPERTURBED SOLUTION; FOR FUTURE USE; 20 Jun 14;
 
-    omatrix(1:NN,1:NN) = dmatrix(1:NN,1:NN,0) ! original "unperturbed" matrix; 30 Jan 13;
+    !omatrix(1:NN,1:NN) = dmatrix(1:NN,1:NN,0) ! original "unperturbed" matrix; 30 Jan 13;
+    call DCOPY(NN*NN, dmatrix(1,1,0), 1, omatrix(1,1), 1) ! BLAS version 21 Jul 19
     
     do jderiv = 0, 1
      
@@ -649,10 +672,15 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
      select case( jderiv )
      case( 0 ) ;!             drhs(1:NN, 0) = drhs(1:NN, 0) 
      case( 1 ) ;
-      if( iflag.eq. 2) then ; drhs(1:NN, 1) = drhs(1:NN, 1) - matmul( dmatrix(1:NN,1:NN, 1), dlambda(1:NN,0) ) ! derivative wrt helicity multiplier        ;
-       ;                    ; drhs(1:NN, 2) = drhs(1:NN, 2) - matmul( dmatrix(1:NN,1:NN, 2), dlambda(1:NN,0) ) ! derivative wrt differential poloidal flux ;
+      !if( iflag.eq. 2) then ; drhs(1:NN, 1) = drhs(1:NN, 1) - matmul( dmatrix(1:NN,1:NN, 1), dlambda(1:NN,0) ) ! derivative wrt helicity multiplier        ;
+      ! ;                    ; drhs(1:NN, 2) = drhs(1:NN, 2) - matmul( dmatrix(1:NN,1:NN, 2), dlambda(1:NN,0) ) ! derivative wrt differential poloidal flux ;
+      !endif
+      !if( iflag.eq.-1) then ; drhs(1:NN,-1) = drhs(1:NN,-1) - matmul( dmatrix(1:NN,1:NN,-1), dlambda(1:NN,0) ) ! derivative wrt geometry;
+      !endif
+      if( iflag.eq. 2) then ; call DGEMV('N',NN,NN,-one,dmatrix(1,1, 1),NN,dlambda(1,0),1,one,drhs(1, 1),1)     ! BLAS version 21 Jul 19
+       ;                    ; call DGEMV('N',NN,NN,-one,dmatrix(1,1, 2),NN,dlambda(1,0),1,one,drhs(1, 2),1)     ! BLAS version 21 Jul 19 
       endif
-      if( iflag.eq.-1) then ; drhs(1:NN,-1) = drhs(1:NN,-1) - matmul( dmatrix(1:NN,1:NN,-1), dlambda(1:NN,0) ) ! derivative wrt geometry;
+      if( iflag.eq.-1) then ; call DGEMV('N',NN,NN,-one,dmatrix(1,1,-1),NN,dlambda(1,0),1,one,drhs(1,-1),1)     ! BLAS version 21 Jul 19 
       endif
      case default
       FATAL( tr00ab, .true., invalid jderiv )
@@ -685,8 +713,9 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
         ;                     ; drhs(1:NN, 2) = zero         
        endif
        
-       dmatrix(1:NN,1:NN,0) = omatrix(1:NN,1:NN) ! original "unperturbed" matrix; 30 Jan 13;       
-    
+       !dmatrix(1:NN,1:NN,0) = omatrix(1:NN,1:NN) ! original "unperturbed" matrix; 30 Jan 13;
+       call DCOPY(NN*NN, omatrix(1,1), 1, dmatrix(1,1,0), 1) ! BLAS version 21 Jul 19 
+       
        call dgesvx( 'N', 'N', NN, MM, dmatrix(1:NN,1:NN,0), NN, FAA(1:NN,1:NN), NN, ipiv(1:NN),    &
                    equed, Rdgesvx(1:NN), Cdgesvx(1:NN), drhs(1:NN,1:MM), NN, dlambda(1:NN,1:MM),    & 
 	           NN, rcond, ferr2(1:MM), berr2(1:MM), work4(1:4*NN), iwork4(1:NN), idgesvx )
@@ -722,7 +751,9 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
       Liwork = max(1,11*NN+3*nlvl*NN)
       
       SALLOCATE( work, (1:Lwork), zero )
-      if (allocated(iwork)) deallocate(iwork)
+      if (allocated(iwork)) then 
+        DALLOCATE(iwork)
+      endif
       SALLOCATE( iwork, (1:Liwork), zero )
       
       select case( jderiv ) 
@@ -825,7 +856,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
   es18.10" ,"es18.10" ] ; err="es10.02" ;")
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-   
+
    if( Lsparse.eq.1 ) then
     DALLOCATE(rmatrix)
     DALLOCATE(rrhs)
@@ -846,6 +877,13 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
    endif
 
 #endif
+
+   if( Lsparse.eq.0 .or. Lsparse.eq.3 ) then
+     DALLOCATE( dmatrix )
+     DALLOCATE( omatrix )
+     DALLOCATE( FAA )
+   endif
+
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

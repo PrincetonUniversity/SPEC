@@ -1,22 +1,26 @@
-function modB = get_spec_modB(fdata,lvol,sarr,tarr,zarr)
+function modB = get_spec_modB(data,lvol,sarr,tarr,zarr)
  
- 
+% 
+% GET_SPEC_MODB( DATA, LVOL, SARR, TARR, ZARR )
+% =============================================
+%
 % Calculates mod(B) in volume lvol 
 %
 % INPUT
-%   -fdata  : must be produced by calling read_spec_field(filename)
+% -----
+%   -data  : must be produced by calling read_spec(filename)
 %   -lvol   : volume number
 %   -sarr   : is the array of values for the s-coordinate
 %   -tarr   : is the array of values for the theta-coordinate
 %   -zarr   : is the array of values for the zeta-coordinate
 %
 % OUTPUT
+% ------
 %   -modB   : array of |B| with size ns*nt*nz where ns=size(sarr), nt=size(tarr), nz=size(zarr)
 %
 % Note: Stellarator symmetry is assumed
 %
 % written by J.Loizu (2016)
-
 
 ns      = length(sarr);
 nt      = length(tarr);
@@ -27,19 +31,9 @@ modB    = zeros(ns,nt,nz); % allocate data for mod(B)
 
 % Calculate the magnetic field contravariant components
 
-if(fdata.Igeometry == 1)
-bvec = get_spec_magfield_slab(fdata,lvol,sarr,tarr,zarr); 
-else
-bvec = get_spec_magfield(fdata,lvol,sarr,tarr,zarr); 
-end
+bvec = get_spec_magfield(data,lvol,sarr,tarr,zarr); 
+gmat = get_spec_metric(data,lvol,sarr,tarr,zarr);
 
-% Calculate the metric matrix 
-
-if(fdata.Igeometry == 1)
-gmat = get_spec_metric_slab(fdata,lvol,sarr,tarr,zarr); 
-else
-gmat = get_spec_metric(fdata,lvol,sarr,tarr,zarr); 
-end
 
 % Calculate modB = sqrt(Bcontrav*gmat*Bcontrav)
 
@@ -63,7 +57,7 @@ for is=1:ns
    modB(is,it,iz) =  sqrt(( bs*(a0*bs+b0*bt+c0*bz)  ...
                            +bt*(d0*bs+e0*bt+f0*bz)  ...
                            +bz*(g0*bs+h0*bt+i0*bz)) ...
-                        );
+                          );
   end
  end
 end

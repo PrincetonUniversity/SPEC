@@ -20,7 +20,8 @@ dspec
 .project
 .cproject
 .pydevproject
-
+/.metadata/
+=
 # output files from example runs
 InputFiles/**/*.h5
 InputFiles/**/*.sp.end
@@ -33,4 +34,7 @@ InputFiles/**/*.sp.DF
 
 # python temp file
 *.pyc
-/.metadata/
+
+#jupyter
+.ipynb_checkpoint
+

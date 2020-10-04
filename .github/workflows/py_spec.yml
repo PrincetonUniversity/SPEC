@@ -1,0 +1,70 @@
+name: py_spec
+on:
+  push:
+    branches:
+      - pypi
+jobs:
+  py_sepc-build:
+    runs-on: ubuntu-latest
+    name: py_spec build
+    env:
+      PY_SPEC_DIR: ${{ github.workspace }}/Utilities/pythontools
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - name: Get pip cache dir
+      id: pip-cache
+      run: |
+        echo "::set-output name=dir::$(pip cache dir)"
+
+    - name: Cache pip
+      uses: actions/cache@v2
+      id: cache-pip
+      with:
+        # This path is specific to Ubuntu
+        path: ${{ steps.pip-cache.outputs.dir }}
+        # Look to see if there is a cache hit for the corresponding requirements file
+        key: ${{ runner.os }}-pip-${{ hashFiles('${{ env.PY_SPEC_DIR }}/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      working-directory: ${{ env.PY_SPEC_DIR }}
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install setuptools wheel twine      
+
+    - name: Build py_spec
+      working-directory: ${{ env.PY_SPEC_DIR }}
+      run: |
+        echo "install py_spec"
+        pip --version
+        pip install -e ${PY_SPEC_DIR}
+        python3 -c "from py_spec import *"
+
+    - name: Cache publish
+      uses: actions/cache@v2
+      id: cache-pypi
+      with:
+        # This path is specific to Ubuntu
+        path: ${PY_SPEC_DIR}/py_spec
+        # Look to see if there is a cache hit for the corresponding requirements file
+        key: ${{ runner.os }}-pypi-${{ hashFiles('${{ env.PY_SPEC_DIR }}/py_spec/__init__.py') }}
+        restore-keys: |
+          ${{ runner.os }}-pypi-
+
+    - name: publish to PYPI
+      working-directory: ${{ env.PY_SPEC_DIR }}
+      if: steps.cache-pypi.outputs.cache-hit != 'true'
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI }}
+      run: |
+        python setup.py sdist bdist_wheel
+        twine upload dist/*

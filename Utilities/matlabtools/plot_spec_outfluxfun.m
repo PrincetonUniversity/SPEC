@@ -1,10 +1,14 @@
-function plot_spec_outfluxfun(fdata,ns,nt,z0,ncont,newfig)
+function plot_spec_outfluxfun(data,ns,nt,z0,ncont,newfig)
 
- 
+%
+% PLOT_SPEC_OUTFLUXFUN( DATA, NS, NT, Z0, NCONT, NEWFIG )
+% =======================================================
+%
 % Plots iso-contours of Az on a given cross-section
 %
 % INPUT
-%   -fdata    : must be produced by calling read_spec_field(filename)
+% -----
+%   -data     : must be produced by calling read_spec(filename)
 %   -ns       : radial resolution for construction of Az
 %   -nt       : poloidal resolution for construction of Az
 %   -z0       : toroidal angle at which Az is evaluated
@@ -17,7 +21,7 @@ function plot_spec_outfluxfun(fdata,ns,nt,z0,ncont,newfig)
 % written by J.Loizu (2018)
 
 
-Nvol = fdata.Nvol;
+Nvol = data.input.physics.Nvol;
 
 lvol = Nvol+1;
 
@@ -25,9 +29,8 @@ sarr = linspace(-1,1,ns);
 
 tarr = linspace(0,2*pi,nt);
 
-acov = get_spec_vecpot(fdata,lvol,sarr,tarr,z0);
-
-rz   = get_spec_rzarr(fdata,lvol,sarr,tarr,z0);
+acov = get_spec_vecpot(data,lvol,sarr,tarr,z0);
+rz   = get_spec_rzarr( data,lvol,sarr,tarr,z0);
 
 ffun = -acov{2}; 
 

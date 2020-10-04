@@ -22,20 +22,22 @@
 !> <ul>
 !> <li> The Poincaré data is written to \c .ext.poincare:xxxx , where \c xxxx is an integer indicating the volume.
 !>       The format of this file is as follows:
-!> ```
-!>  write(svol,'(i4.4)')lvol ! lvol labels volume;
-!>  open(lunit+myid,file="."//trim(ext)//".poincare."//svol,status="unknown",form="unformatted")
-!>  do until end of file
+!>
+!>~~~~~~~~~~~~
+!> write(svol,'(i4.4)')lvol ! lvol labels volume;
+!> open(lunit+myid,file="."//trim(ext)//".poincare."//svol,status="unknown",form="unformatted")
+!> do until end of file
 !>   write(lunit+myid) Nz, nPpts                ! integers
 !>   write(lunit+myid) data(1:4,0:Nz-1,1:nPpts) ! doubles
-!>  enddo
-!>  close(lunit+myid)
-!> ```
-!>       where <ul>
-!>       <li> \f$\theta \equiv\,\f$\c data(1,k,j) is the poloidal angle,    </li>
-!>       <li> \f$ s     \equiv\,\f$\c data(2,k,j) is the radial coordinate, </li>
-!>       <li> \f$ R     \equiv\,\f$\c data(3,k,j) is the cylindrical \f$R\f$,   </li>
-!>       <li> \f$ Z     \equiv\,\f$\c data(4,k,j) is the cylindrical \f$Z\f$,   </li>
+!> enddo
+!> close(lunit+myid)
+!>~~~~~~~~~~~~
+!> `where`
+!>       <ul>
+!>       <li> \f$\theta \equiv\,\f$\c data(1,k,j) is the poloidal angle,      </li>
+!>       <li> \f$ s     \equiv\,\f$\c data(2,k,j) is the radial coordinate,   </li>
+!>       <li> \f$ R     \equiv\,\f$\c data(3,k,j) is the cylindrical \f$R\f$, </li>
+!>       <li> \f$ Z     \equiv\,\f$\c data(4,k,j) is the cylindrical \f$Z\f$, </li>
 !>       </ul>
 !> <li> The integer \c k=0,Nz-1 labels toroidal planes, so that \f$\phi = ( 2 \pi / \texttt{Nfp}) ( k / \texttt{Nz})\f$,
 !> <li> The integer \c j=1,nPpts labels toroidal iterations.
@@ -71,7 +73,7 @@ subroutine pp00aa
   
   use fileunits, only : ounit
   
-  use inputlist, only : Wmacros, Wpp00aa, Nvol, Lrad, ext, odetol, nPpts, nPtrj, Lconstraint, iota, oita, Igeometry
+  use inputlist, only : Wmacros, Wpp00aa, Nvol, Lrad, ext, odetol, nPpts, Ppts, nPtrj, Lconstraint, iota, oita, Igeometry
   
   use cputiming, only : Tpp00aa
   
@@ -142,12 +144,11 @@ subroutine pp00aa
       SALLOCATE(   data, (ioff:lnPtrj, 1:4,0:Nz-1,1:nPpts), zero ) ! for block writing to file (allows faster reading of output data files for post-processing plotting routines);
       SALLOCATE( utflag, (ioff:lnPtrj                    ),    0 ) ! error flag that indicates if fieldlines successfully followed; 22 Apr 13;
       SALLOCATE(  fiota, (ioff:lnPtrj, 1:2               ), zero ) ! will always need fiota(0,1:2);
-
+      
+!$OMP PARALLEL DO SHARED(lnPtrj,ioff,Wpp00aa,Nz,data,fiota,utflag,iota,oita,myid,vvol,cpus,Lconstraint,nPpts,ppts) PRIVATE(itrj,sti)
       do itrj = ioff, lnPtrj ! initialize Poincare plot with trajectories regularly spaced between interfaces along \t=0;
 
-        if( Lcoordinatesingularity ) then ; sti(1:2) = (/ - one + itrj**2 * two / lnPtrj**2, zero /) ! equal increments in rr = \sqrt(ss) ; 08 Feb 16;
-        else                              ; sti(1:2) = (/ - one + itrj    * two / lnPtrj   , zero /)
-        endif
+        ; sti(1:2) = (/ - one + itrj    * two / lnPtrj   , Ppts*pi /)
 
         if( itrj.eq.     0 ) sti(1) = - one ! avoid machine precision errors; 08 Feb 16;
         if( itrj.eq.lnPtrj ) sti(1) =   one ! avoid machine precision errors; 08 Feb 16;
@@ -166,6 +167,7 @@ subroutine pp00aa
         endif ! Wpp00aa
 
       enddo ! itrj = ioff, lnPtrj
+!$OMP END PARALLEL DO
 
       ! write(*,*) "CPU ",myid," finished field line tracing for volume ",vvol
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -190,9 +192,9 @@ subroutine pp00aa
 
         ! The rotational transform data is written at once for a volume
         if (vvol.gt.1) then
-          call write_transform( sum(numTrajs(1:vvol-1)), numTrajs(vvol), vvol, diotadxup(0:1,0,vvol), fiota(0:numTrajs(vvol),1:2) )
+          call write_transform( sum(numTrajs(1:vvol-1)), numTrajs(vvol), vvol, diotadxup(0:1,0,vvol), fiota(0:lnPtrj,1:2) )
         else
-          call write_transform( 0, numTrajs(1), 1, diotadxup(0:1,0,1), fiota(1:numTrajs(1),1:2) )
+          call write_transform( 0, numTrajs(1), 1, diotadxup(0:1,0,1), fiota(ioff:lnPtrj,1:2) )
         endif
 
         if (Mvol.gt.1 .and. ncpu.gt.1) then

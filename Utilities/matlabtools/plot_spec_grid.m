@@ -1,27 +1,39 @@
 function plot_spec_grid(data,nz0,newfig)
 
+% 
+% PLOT_SPEC_GRID( DATA, NZ0, NEWFIG )
+% ===================================
+%
 % Produces plot of coordinate surfaces
 %
 % INPUT
-%   -data     : must be produced by calling read_spec_grid(filename)
+% -----
+%   -data     : must be produced by calling read_spec(filename)
 %   -nz0      : toroidal plane number at which coordinates are shown (nz0=1 at toroidal angle phi=0)
-%   -newfig   : opens(=1) or not(=0) a new figure
+%   -newfig   : opens(=1) or not(=0) a new figure, or overwrite selected
+%   figure (=2)
 %
 %   written by J.Loizu (2015)
+%
 
-
-if(newfig==1)
-figure
+switch newfig
+    case 0
+        hold on
+    case 1
+        figure
+        hold on
+    case 2
+        hold off
 end
 
-nvol   = data.Mvol;
+nvol   = data.input.physics.Nvol+data.input.physics.Lfreebound;
 
-Lrad   = data.Lrad;
-Nt     = data.Nt;
-Nz     = data.Nz;
+Lrad   = data.input.physics.Lrad;
+Nt     = data.grid.Nt;
+Nz     = data.grid.Nz;
 
-Rij    = data.Rij;
-Zij    = data.Zij;
+Rij    = data.grid.Rij;
+Zij    = data.grid.Zij;
 
 ccol   = 'm';
 cthick = 12;
@@ -31,8 +43,11 @@ iz     = nz0-1;
 for i=1:nvol
   for l=1:Lrad(i)+1
 
-    Rc   =  Rij(i,1+Nt*iz:(iz+1)*Nt,l);
-    Zc   =  Zij(i,1+Nt*iz:(iz+1)*Nt,l);
+    R_tmp = Rij{i};
+    Z_tmp = Zij{i};
+      
+    Rc   =  R_tmp(1+Nt*iz:(iz+1)*Nt,l);
+    Zc   =  Z_tmp(1+Nt*iz:(iz+1)*Nt,l);
 
     scatter(Rc,Zc,cthick,'filled',ccol)
     axis equal

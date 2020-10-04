@@ -43,16 +43,18 @@
 !> <li> Lastly, the Fourier harmonics are constructed using an FFT after dividing in real space. </li>
 !> </ul>
 !>
-!> @param NGdof
+!> @param[in] NGdof
 !> @param position
-!> @param Mvol
-!> @param mn
+!> @param[in] Mvol
+!> @param[in] mn
 !> @param iRbc
 !> @param iZbs
 !> @param iRbs
 !> @param iZbc
 !> @param packorunpack
-subroutine packxi( NGdof, position, Mvol, mn, iRbc, iZbs, iRbs, iZbc, packorunpack )
+!> @param[in] LComputeDerivatives
+!> @param[in] LComputeAxis
+subroutine packxi( NGdof, position, Mvol, mn, iRbc, iZbs, iRbs, iZbc, packorunpack, LComputeDerivatives, LComputeAxis )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -75,7 +77,10 @@ subroutine packxi( NGdof, position, Mvol, mn, iRbc, iZbs, iRbs, iZbc, packorunpa
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   LOCALS
-  
+
+  LOGICAL, intent(in)    :: LComputeDerivatives ! indicates whether derivatives are to be calculated;
+  LOGICAL, intent(in)    :: LComputeAxis        ! if to recompute the axis
+
   INTEGER, intent(in)    :: NGdof, Mvol, mn
   REAL                   :: position(0:NGdof), iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol)
   CHARACTER              :: packorunpack
@@ -164,8 +169,10 @@ subroutine packxi( NGdof, position, Mvol, mn, iRbc, iZbs, iRbs, iZbc, packorunpa
 
    ivol = 1 ! take care with ivol: this variable name might be a global variable, but here it is local; 19 Jul 16; 
  
-   if( (Mvol .ne. 1) .and. (Lfindzero .ne. 0) ) then  
-    WCALL( packxi, rzaxis, ( Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), ivol ) ) ! set coordinate axis; 19 Jul 16; 
+   if( (Mvol .ne. 1) .and. (Lfindzero .ne. 0) ) then
+    if (LComputeAxis) then
+      WCALL( packxi, rzaxis, ( Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), ivol, LComputeDerivatives ) ) ! set coordinate axis; 19 Jul 16; 
+    endif
    endif
 
   end select

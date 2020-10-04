@@ -117,16 +117,17 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  use constants, only : zero, half, one, two, goldenmean
-  
-  use numerical, only : machprec, sqrtmachprec, small
+  use constants, only : zero, half, one
+
+  use numerical, only : small, machprec
   
   use fileunits, only : ounit
   
   use inputlist, only : Wmacros, Wmp00ac, Wtr00ab, Wcurent, Wma02aa, &
-                        mu, helicity, iota, oita, curtor, curpol, Lrad, &
+                        mu, helicity, iota, oita, curtor, curpol, Lrad, Ntor,&
                        !Lposdef, &
-                        Lconstraint, mupftol
+                        Lconstraint, mupftol, &
+                        Lmatsolver, NiterGMRES, epsGMRES, LGMRESprec, epsILU
   
   use cputiming, only : Tmp00ac
   
@@ -138,46 +139,68 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
                         NAdof, &
 !                       dMA, dMB, dMC, dMD, dME, dMF, dMG, &
                         dMA, dMB,      dMD,           dMG, &
-                        solution, &
+                        NdMASmax, NdMAS, dMAS, dMDS, idMAS, jdMAS, & ! preconditioning matrix
+                        solution, GMRESlastsolution, &
                         dtflux, dpflux, &
                         diotadxup, dItGpdxtp, &
                         lBBintegral, lABintegral, &
                         xoffset, &
                         ImagneticOK, &
-                        Ate, Aze, Ato, Azo, Mvol
+                        Ate, Aze, Ato, Azo, Mvol, Iquad, &
+                        LILUprecond, GMRESlastsolution, NOTMatrixFree
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   LOCALS
-  
+
   INTEGER, intent(in)  :: Ndof, Ldfjac
   REAL   , intent(in)  :: Xdof(1:Ndof)
   REAL                 :: Fdof(1:Ndof), Ddof(1:Ldfjac,1:Ndof)
   INTEGER              :: iflag 
   
   
-  INTEGER, parameter   :: NB = 3 ! optimal workspace block size for LAPACK:DSYSVX;
+  INTEGER, parameter   :: NB = 4 ! optimal workspace block size for LAPACK:DGECON;
   
-  INTEGER              :: lvol, NN, MM, ideriv, lmns, idsysvx(0:1), ii, jj, nnz, Lwork
+  INTEGER              :: lvol, NN, MM, ideriv, lmns, ii, jj, nnz, Lwork
+
+  INTEGER              :: idgetrf(0:1), idgetrs(0:1), idgerfs(0:1), idgecon(0:1)
   
-  REAL                 :: lmu, dpf, dtf, dpsi(1:2), tpsi(1:2), ppsi(1:2), lcpu
+  REAL                 :: lmu, dpf, dtf, dpsi(1:2), tpsi(1:2), ppsi(1:2), lcpu, test(2,2)
   
-  REAL                 :: rcond, ferr(2), berr(2), signfactor
+  REAL                 :: anorm, rcond, ferr(2), berr(2), signfactor
 
   CHARACTER            :: packorunpack
   
+  ! For direct LU decompose
   INTEGER, allocatable :: ipiv(:), Iwork(:)
 
-  REAL   , allocatable :: matrix(:,:), rhs(:,:)
+  REAL   , allocatable :: matrix(:,:), rhs(:,:), LU(:,:)
 
-  REAL   , allocatable :: RW(:), RD(:,:), LU(:,:)
+  REAL   , allocatable :: RW(:), RD(:,:)
+
+  REAL   , allocatable :: matrixC(:,:)
+
+! For GMRES + ILU
+  INTEGER, parameter   :: nrestart = 5 ! do GMRES restart after nrestart iterations 
+  INTEGER              :: maxfil   ! bandwidth for ILU subroutines, will be estimated
+
+  INTEGER              :: NS, itercount, Nbilut
+
+  REAL   , allocatable :: matrixS(:), bilut(:)
+  INTEGER, allocatable :: ibilut(:),  jbilut(:)
   
+  INTEGER, parameter   :: ipar_SIZE = 128
+  INTEGER              :: ipar(ipar_SIZE), iluierr, RCI_REQUEST, nw, t1, t2, t3
+  REAL                 :: fpar(ipar_SIZE), v1
+  REAL, allocatable    :: wk(:)
+  INTEGER,allocatable  :: jw(:), iperm(:)
+
   BEGIN(mp00ac)
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   lvol = ivol ! recall that ivol is global;
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 #ifdef DEBUG
@@ -209,7 +232,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
    
   endif ! end of if( Lplasmaregion ) ;
   
-  dpsi(1:2) = (/  dtf,  dpf /) ! enclosed toroidal fluxes and their derivatives;
+  dpsi(1:2) = (/  dtf,  dpf /) ! enclosed poloidal fluxes and their derivatives;
   tpsi(1:2) = (/  one, zero /) ! enclosed toroidal fluxes and their derivatives;
   ppsi(1:2) = (/ zero,  one /) ! enclosed toroidal fluxes and their derivatives;
   
@@ -222,36 +245,72 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   
   NN = NAdof(lvol) ! shorthand;
   
-  SALLOCATE( matrix, (1:NN,1:NN), zero )
   SALLOCATE( rhs   , (1:NN,0:2 ), zero )
+  if (NOTMatrixFree) then ! create the full size matrix
+    SALLOCATE( matrix, (1:NN,1:NN), zero )
+  else                    ! create a dummy variable
+    SALLOCATE( matrix, (1:1,1:1), zero )
+  endif
 
   solution(1:NN,-1:2) = zero ! this is a global array allocated in dforce;
-  
-  Lwork = NB*NN
 
-  SALLOCATE( RW,    (1:Lwork ),  zero )
-  SALLOCATE( RD,    (1:NN,0:2),  zero )
-  SALLOCATE( LU,    (1:NN,1:NN), zero )
-  SALLOCATE( ipiv,  (1:NN),         0 )
-  SALLOCATE( Iwork, (1:NN),         0 )
+  ! allocate work space
+  select case (Lmatsolver)
+  case (1) ! direct matrix solver
+    Lwork = NB*NN
 
+    SALLOCATE( RW,    (1:Lwork ),  zero )
+    SALLOCATE( RD,    (1:NN,0:2),  zero )
+    SALLOCATE( LU,    (1:NN,1:NN), zero )
+    SALLOCATE( ipiv,  (1:NN),         0 )
+    SALLOCATE( Iwork, (1:NN),         0 )
+  case (2:3) ! GMRES
+    if (LILUprecond) then
+      NS = NdMAS(lvol) ! shorthand
+      SALLOCATE( matrixS, (1:NS), zero )
+      
+      ! estimate bandwidth
+      if (Lcoordinatesingularity) then
+        maxfil = Lrad(lvol) + 10
+        if (NOTstellsym) maxfil = maxfil + Lrad(lvol) + 10 
+      else
+        maxfil = 2 * Lrad(lvol) + 10
+        if (NOTstellsym) maxfil = maxfil + 2 * Lrad(lvol) + 10
+      end if
+
+      Nbilut = (2*maxfil+2)*NN
+      SALLOCATE( bilut, (1:Nbilut), zero)
+      SALLOCATE( jbilut, (1:Nbilut), 0)
+      SALLOCATE( ibilut, (1:NN+1), 0)
+
+    endif
+    nw = (NN+3)*(nrestart+2) + (nrestart+1)*nrestart
+    SALLOCATE( wk, (1:nw), zero)
+    SALLOCATE( jw, (1:2*NN), 0)
+    SALLOCATE( iperm, (1:2*NN), 0)
+  end select
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  idsysvx(0:1) = 0 ! error flags;
+  idgetrf(0:1) = 0 ! error flags;
+  idgetrs(0:1) = 0 ! error flags;
+  idgerfs(0:1) = 0 ! error flags;
+  idgecon(0:1) = 0 ! error flags;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 ! ideriv labels derivative as follows:
 ! ideriv = 0 : compute Beltrami field; ideriv = 1 : compute d Beltrami field / d \mu           ; ideriv = 2 : compute d Beltrami field / d \Delta \psi_p ;
 ! ideriv = 0 : compute Vacuum   field; ideriv = 1 : compute d Vacuum   field / d \Delta \psi_t ; ideriv = 2 : compute d Vacuum   field / d \Delta \psi_p ;
-  
+    
   do ideriv = 0, 1 ! loop over derivatives;
    
    if( iflag.eq.1 .and. ideriv.eq.1 ) cycle ! only need to return function; recall the derivative estimate requires function evaluation;
    
    if( Lcoordinatesingularity ) then
     
-    ;matrix(1:NN,1:NN) = dMA(1:NN,1:NN) - lmu * dMD(1:NN,1:NN)
+    if (NOTMatrixFree) then
+      ;matrix(1:NN,1:NN) = dMA(1:NN,1:NN) - lmu * dMD(1:NN,1:NN)
+    endif
     
 !  !;select case( ideriv )
 !  !;case( 0 )    ; rhs(1:NN,0) = - matmul(  dMB(1:NN,1:2) - lmu  * dME(1:NN,1:2), dpsi(1:2) )
@@ -261,28 +320,47 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
     
     ;select case( ideriv )
     ;case( 0 )    ; rhs(1:NN,0) = - matmul(  dMB(1:NN,1:2)                       , dpsi(1:2) )
-    ;case( 1 )    ; rhs(1:NN,1) =                                                              - matmul( - one  * dMD(1:NN,1:NN), solution(1:NN,0) )
+    ;case( 1 )    ! construct dMD*solution
+    if (NOTMatrixFree) then
+    ; ;           ; rhs(1:NN,1) =                                                              - matmul( - one  * dMD(1:NN,1:NN), solution(1:NN,0) )
+    else ! Matrix free version
+    ; ;call intghs(Iquad(lvol), mn, lvol, Lrad(lvol), 0) ! compute the integrals of B_lower
+    ; ;call mtrxhs(lvol, mn, Lrad(lvol), wk(1:NN+1), wk(NN+2:2*NN+2), 0) ! construct a.x from the integral
+    ; ;           ; rhs(1:NN,1) = wk(NN+3:2*NN+2)
+    endif ! NOTMatrixFree
     ; ;           ; rhs(1:NN,2) = - matmul(  dMB(1:NN,1:2)                       , ppsi(1:2) )
     ;end select
     
    else ! .not.Lcoordinatesingularity; 
     
     if( Lplasmaregion ) then
-     
-     matrix(1:NN,1:NN) = dMA(1:NN,1:NN) - lmu * dMD(1:NN,1:NN)
-     
-     select case( ideriv )
-     case( 0 )    ; rhs(1:NN,0) = - matmul( dMB(1:NN,1:2 ), dpsi(1:2) )
-     case( 1 )    ; rhs(1:NN,1) =                                                              - matmul( - one * dMD(1:NN,1:NN), solution(1:NN,0) )
-      ;           ; rhs(1:NN,2) = - matmul( dMB(1:NN,1:2 ), ppsi(1:2) )
-     end select
+
+     if (NOTMatrixFree) then
+       matrix(1:NN,1:NN) = dMA(1:NN,1:NN) - lmu * dMD(1:NN,1:NN)
+     endif
+
+    ;select case( ideriv )
+    ;case( 0 )    ; rhs(1:NN,0) = - matmul(  dMB(1:NN,1:2)                       , dpsi(1:2) )
+    ;case( 1 )    ! construct dMD*solution
+    if (NOTMatrixFree) then
+    ; ;           ; rhs(1:NN,1) =                                                              - matmul( - one  * dMD(1:NN,1:NN), solution(1:NN,0) )
+    else ! Matrix free version
+    ; ;call intghs(Iquad(lvol), mn, lvol, Lrad(lvol), 0) ! compute the integrals of B_lower
+    ; ;call mtrxhs(lvol, mn, Lrad(lvol), wk(1:NN+1), wk(NN+2:2*NN+2), 0) ! construct a.x from the integral
+    ; ;           ; rhs(1:NN,1) = wk(NN+3:2*NN+2)
+    endif ! NOTMatrixFree
+    ; ;           ; rhs(1:NN,2) = - matmul(  dMB(1:NN,1:2)                       , ppsi(1:2) )
+    ;end select
      
     else ! Lvacuumregion ;
      
 #ifdef FORCEFREEVACUUM
      FATAL( mp00ac, .true., need to revise Beltrami matrices in vacuum region for arbitrary force-free field )
 #else
-     matrix(1:NN,1:NN) = dMA(1:NN,1:NN) ! - lmu * dMD(1:NN,1:NN) ;
+     
+     if (NOTMatrixFree) then
+       matrix(1:NN,1:NN) = dMA(1:NN,1:NN) ! - lmu * dMD(1:NN,1:NN) ;
+     endif
 
      select case( ideriv )
      case( 0 )    ; rhs(1:NN,0) = - dMG(1:NN) - matmul( dMB(1:NN,1:2), dpsi(1:2) ) ! perhaps there is an lmu term missing here;
@@ -295,57 +373,124 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 
    endif ! end of if( Lcoordinatesingularity ) ;
    
-   lcpu = GETTIME
-   
-   idsysvx(ideriv) = 1
-   
-   select case( ideriv )
-    
-   case( 0 ) ! ideriv=0;
-    
-    MM = 1
-    
-    call DSYSVX( 'N', 'U', NN, MM, matrix, NN, LU, NN, ipiv, rhs(:,0   ), NN, solution(1:NN,0   ), NN, RCOND, FERR, BERR, RW, Lwork, Iwork, idsysvx(ideriv) )
-    
-   case( 1 ) ! ideriv=1;
-    
-    MM = 2
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-    call DSYSVX( 'F', 'U', NN, MM, matrix, NN, LU, NN, ipiv, rhs(:,1:MM), NN, solution(1:NN,1:MM), NN, RCOND, FERR, BERR, RW, Lwork, Iwork, idsysvx(ideriv) )
+   select case( Lmatsolver )
 
-   end select ! ideriv;
-   
-   cput = GETTIME
-   
-   if(     idsysvx(ideriv) .eq. 0   ) then
-    if( Wmp00ac ) write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idsysvx", idsysvx(ideriv), "success ;         ", cput-lcpu	   
-   elseif( idsysvx(ideriv) .lt. 0   ) then
-    ;             write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idsysvx", idsysvx(ideriv), "input error ;     "
-   elseif( idsysvx(ideriv) .le. NN  ) then
-    ;             write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idsysvx", idsysvx(ideriv), "singular ;        "
-   elseif( idsysvx(ideriv) .eq. NN+1) then
-    ;             write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idsysvx", idsysvx(ideriv), "ill conditioned ; "
-   else
-    ;             write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idsysvx", idsysvx(ideriv), "invalid idsysvx ; "
-   endif
-   
-1010 format("mp00ac : ",f10.2," : myid=",i3," ; lvol=",i3," ; ideriv="i2" ; "a7"=",i3," ; "a34,:" time=",f10.2," ;")
-   
-   
-  enddo ! end of do ideriv;
+   case(1) ! Using direct matrix solver (LU factorization), must not be matrix free
+    
+    select case( ideriv )
+      
+    case( 0 ) ! ideriv=0;
+      
+      MM = 1
+      !LU = matrix
+      call DCOPY(NN*NN, matrix, 1, LU, 1) ! BLAS version
+      solution(1:NN,0   ) = rhs(:,0   )
+      call DGETRF(NN, NN, LU, NN, ipiv, idgetrf(ideriv) ) ! LU factorization
+
+      anorm=maxval(sum(abs(matrix),1))
+      call DGECON('I', NN, LU, NN, anorm, rcond, RW, Iwork, idgecon(ideriv)) ! estimate the condition number
+
+      call DGETRS('N', NN, MM, LU, NN, ipiv, solution(1:NN,0   ), NN, idgetrs(ideriv) ) ! sovle linear equation
+      call DGERFS('N', NN, MM, matrix, NN, LU, NN, ipiv, rhs(1,0), NN, solution(1,0), NN, FERR, BERR, RW, Iwork, idgerfs(ideriv)) ! refine the solution
+    case( 1 ) ! ideriv=1;
+      
+      MM = 2
+      solution(1:NN,1:MM) = rhs(:,1:MM)
+      call DGETRS( 'N', NN, MM, LU, NN, ipiv, solution(1:NN,1:MM), NN, idgetrs(ideriv) )
+      call DGERFS('N', NN, MM, matrix, NN, LU, NN, ipiv, rhs(1,1), NN, solution(1,1), NN, FERR, BERR, RW, Iwork, idgerfs(ideriv))
+
+    end select ! ideriv;
+    
+    cput = GETTIME
+
+    if(     idgetrf(ideriv) .eq. 0 .and. idgetrs(ideriv) .eq. 0 .and. idgerfs(ideriv) .eq. 0 .and. rcond .ge. machprec) then
+      if( Wmp00ac ) write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idgetrf idgetrs idgerfs", idgetrf(ideriv), idgetrs(ideriv), idgetrf(ideriv), "success ;         ", cput-lcpu	   
+    elseif( idgetrf(ideriv) .lt. 0 .or. idgetrs(ideriv) .lt. 0 .or. idgerfs(ideriv) .lt. 0   ) then
+      ;             write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idgetrf idgetrs idgerfs", idgetrf(ideriv), idgetrs(ideriv), idgetrf(ideriv), "input error ;     "
+    elseif( idgetrf(ideriv) .gt. 0 ) then
+      ;             write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idgetrf idgetrs idgerfs", idgetrf(ideriv), idgetrs(ideriv), idgetrf(ideriv), "singular ;        "
+    elseif( rcond .le. machprec) then
+      ;             write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idgetrf idgetrs idgerfs", idgetrf(ideriv), idgetrs(ideriv), idgetrf(ideriv), "ill conditioned ; "
+    else
+      ;             write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idgetrf idgetrs idgerfs", idgetrf(ideriv), idgetrs(ideriv), idgetrf(ideriv), "invalid error ; "
+    endif
+    
+  1010 format("mp00ac : ",f10.2," : myid=",i3," ; lvol=",i3," ; ideriv="i2" ; "a23"=",i3,' ',i3,' ',i3," ; "a34,:" time=",f10.2," ;")
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-! can compute the energy and helicity integrals; easiest to do this with solution in packed format;
-  
-   lBBintegral(lvol) = half * sum( solution(1:NN,0) * matmul( dMA(1:NN,1:NN), solution(1:NN,0) ) ) & 
-                     +        sum( solution(1:NN,0) * matmul( dMB(1:NN,1: 2),     dpsi(1: 2  ) ) ) !
-!                    + half * sum(     dpsi(1: 2  ) * matmul( dMC(1: 2,1: 2),     dpsi(1: 2  ) ) )
-  
-   lABintegral(lvol) = half * sum( solution(1:NN,0) * matmul( dMD(1:NN,1:NN), solution(1:NN,0) ) ) ! 
-!                    +        sum( solution(1:NN,0) * matmul( dME(1:NN,1: 2),     dpsi(1: 2  ) ) ) !
-!                    + half * sum(     dpsi(1: 2  ) * matmul( dMF(1: 2,1: 2),     dpsi(1: 2  ) ) )
 
+   case(2:3) ! Using GMRES, can be matrix free
+
+    select case (ideriv)
+
+    case (0) ! ideriv = 0
+
+      if (LILUprecond) then ! Using ILU preconditioner
+        matrixS(1:NS) = dMAS(1:NS) - lmu * dMDS(1:NS)  ! construct the sparse precondtioner matrix
+      end if ! if (LILUprecond)
+      
+      if (MAXVAL(abs(GMRESlastsolution(1:NN,0,lvol))) .le. small) then
+        GMRESlastsolution(1:NN,0,lvol) = zero
+      endif
+
+      if (LILUprecond) then
+      ! ILU factorization
+        call ilutp(NN,matrixS,jdMAS,idMAS,maxfil,epsILU,0.1,NN,bilut,jbilut,ibilut,Nbilut,wk,jw,iperm,iluierr)
+        FATAL(mp00ac, iluierr.ne.0, construction of preconditioner failed)
+      endif
+
+      call rungmres(NN,nrestart,lmu,lvol,rhs(1:NN,0),solution(1:NN,0),ipar,fpar,wk,nw,GMRESlastsolution(1:NN,0,lvol),matrix,bilut,jbilut,ibilut,iperm,ierr)
+      
+      if (ierr .gt. 0) then
+        ImagneticOK(lvol) = .true.
+        GMRESlastsolution(1:NN,0,lvol) = solution(1:NN,0)
+      elseif (ierr .eq. 0) then
+        solution(1:NN,0) = GMRESlastsolution(1:NN,0,lvol)
+      else
+        ImagneticOK(lvol) = .false.
+      endif 
+
+    case (1) ! ideriv = 1
+
+      do ii = 1, 2
+        if (MAXVAL(abs(GMRESlastsolution(1:NN,ii,lvol))) .le. small) then
+          GMRESlastsolution(1:NN,ii,lvol) = zero
+        endif
+
+        call rungmres(NN,nrestart,lmu,lvol,rhs(1:NN,ii),solution(1:NN,ii),ipar,fpar,wk,nw,GMRESlastsolution(1:NN,ii,lvol),matrix,bilut,jbilut,ibilut,iperm,ierr)
+
+        if (ierr .gt. 0) then
+          GMRESlastsolution(1:NN,ii,lvol) = solution(1:NN,ii)
+        elseif (ierr .eq. 0) then
+          solution(1:NN,0) = GMRESlastsolution(1:NN,ii,lvol)
+        else
+          exit
+        endif
+        
+      end do ! ii
+    end select ! ideriv
+
+    cput = GETTIME
+
+    if (ierr.ge.0) then
+      if( Wmp00ac ) write(ounit,1011) cput-cpus, myid, lvol, ideriv, ierr, " successful ; "
+    elseif (ierr.eq.-1) then
+        ;           write(ounit,1011) cput-cpus, myid, lvol, ideriv, ierr, " max niter, epsGMRES not reached ; "
+    elseif (ierr.eq.-2) then
+        ;           write(ounit,1011) cput-cpus, myid, lvol, ideriv, ierr, " more workspace needed ; "
+    elseif (ierr.eq.-3) then
+        ;           write(ounit,1011) cput-cpus, myid, lvol, ideriv, ierr, " solver internal break down ; "  
+    else
+        ;           write(ounit,1011) cput-cpus, myid, lvol, ideriv, ierr, " check iters.f for error code ; "
+    end if
+
+1011 format("mp00ac : ",f10.2," : myid=",i3," ; lvol=",i3," ; ideriv=",i2," ; GMRES ierr=",i4, " ; "a34" ")
+
+   end select ! Lmatsolver 
+
+  enddo ! end of do ideriv;
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   do ideriv = 0, 2
@@ -358,18 +503,53 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   enddo ! do ideriv = 0, 2;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+! can compute the energy and helicity integrals; easiest to do this with solution in packed format;
   
+  if (NOTMatrixFree) then
+
+   lBBintegral(lvol) = half * sum( solution(1:NN,0) * matmul( dMA(1:NN,1:NN), solution(1:NN,0) ) ) & 
+                     +        sum( solution(1:NN,0) * matmul( dMB(1:NN,1: 2),     dpsi(1: 2  ) ) ) !
+!                    + half * sum(     dpsi(1: 2  ) * matmul( dMC(1: 2,1: 2),     dpsi(1: 2  ) ) )
+  
+   lABintegral(lvol) = half * sum( solution(1:NN,0) * matmul( dMD(1:NN,1:NN), solution(1:NN,0) ) ) ! 
+!                    +        sum( solution(1:NN,0) * matmul( dME(1:NN,1: 2),     dpsi(1: 2  ) ) ) !
+!                    + half * sum(     dpsi(1: 2  ) * matmul( dMF(1: 2,1: 2),     dpsi(1: 2  ) ) )
+  else
+    call intghs(Iquad(lvol), mn, lvol, Lrad(lvol), 0) ! compute the integrals of B_lower
+    call mtrxhs(lvol, mn, Lrad(lvol), wk(1:NN+1), wk(NN+2:2*NN+2), 0) ! construct a.x from the integral
+
+    lBBintegral(lvol) = half * sum( solution(1:NN,0) * wk(2:NN+1) ) & 
+                      +        sum( solution(1:NN,0) * matmul( dMB(1:NN,1: 2),     dpsi(1: 2  ) ) ) !
+
+    lABintegral(lvol) = half * sum( solution(1:NN,0) * wk(NN+3:2*NN+2) )
+  endif
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!  
   DALLOCATE( matrix )
-  DALLOCATE( rhs    )  
-  DALLOCATE( RW )
-  DALLOCATE( RD )
-  DALLOCATE( LU )
-  DALLOCATE( ipiv )
-  DALLOCATE( Iwork )
+  DALLOCATE( rhs    )
+
+  select case (Lmatsolver)
+  case (1) ! LU
+      DALLOCATE( RW )
+      DALLOCATE( RD )
+      DALLOCATE( LU )
+      DALLOCATE( ipiv )
+      DALLOCATE( Iwork )
+  case (2:3) ! GMRES
+    if (LILUprecond) then
+      DALLOCATE( matrixS )
+      DALLOCATE( bilut )
+      DALLOCATE( jbilut )
+      DALLOCATE( ibilut )
+    endif
+    DALLOCATE( wk )
+    DALLOCATE( jw )
+    DALLOCATE( iperm )
+  end select    
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-  if( idsysvx(0).ne.0 .or. idsysvx(1).ne.0 ) then ! failed to construct Beltrami/vacuum field and/or derivatives;
+  idgetrf(0:1) = abs(idgetrf(0:1)) + abs(idgetrs(0:1)) + abs(idgerfs(0:1)) + abs(idgecon(0:1))
+  if( idgetrf(0).ne.0 .or. idgetrf(1).ne.0 ) then ! failed to construct Beltrami/vacuum field and/or derivatives;
    
    ImagneticOK(lvol) = .false. ! set error flag;
    
@@ -432,7 +612,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
     Ddof(1:Ndof,1:Ndof) = zero ! provide dummy intent out;   
     
    endif ! end of if( Lplasmaregion) ;
-   
+
   case(  0 ) ! Lconstraint= 0;
    
    if( Lplasmaregion ) then
@@ -456,7 +636,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
    endif ! end of if( Lplasmaregion) ;
    
   case(  1 ) ! Lconstraint= 1;
-   
+
    WCALL( mp00ac, tr00ab,( lvol, mn, lmns, Nt, Nz, iflag, diotadxup(0:1,-1:2,lvol) ) ) ! required for both plasma and vacuum region;
    
    if( Lplasmaregion ) then
@@ -487,7 +667,33 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 
   case(  2 )
 
-   FATAL( mp00ac, .true., where is helicity calculated )
+   if ( iflag.eq.1 ) Fdof(1     ) = lABintegral(lvol) - helicity(lvol)
+   if ( iflag.eq.2 ) Ddof(1   ,1) = half * sum( solution(1:NN,1) * matmul( dMD(1:NN,1:NN), solution(1:NN,0) ) ) &
+                                  + half * sum( solution(1:NN,0) * matmul( dMD(1:NN,1:NN), solution(1:NN,1) ) )
+
+  case(  3 )
+
+   if( Lplasmaregion ) then
+        
+    if( Wtr00ab ) then ! compute rotational transform only for diagnostic purposes;
+     WCALL( mp00ac, tr00ab, ( lvol, mn, lmns, Nt, Nz, iflag, diotadxup(0:1,-1:2,lvol) ) )
+    endif
+    
+    Fdof(1:Ndof       ) = zero ! provide dummy intent out; no iteration other mu and psip locally
+    Ddof(1:Ndof,1:Ndof) = zero ! provide dummy intent out;   
+    
+   else ! Lvacuumregion
+    
+    !WCALL( mp00ac, curent,( lvol, mn, Nt, Nz, iflag, dItGpdxtp(0:1,-1:2,lvol) ) )
+    
+    ! Iteration only on toroidal flux.
+    ! if( iflag.eq.1 ) Fdof(1:Ndof  ) = dItGpdxtp(1,0,lvol) - curpol
+    ! if( iflag.eq.2 ) Ddof(1:Ndof,1:Ndof) = dItGpdxtp(1,1,lvol) 
+    
+    Fdof(1:Ndof       ) = zero ! provide dummy intent out; no iteration other mu and psip locally
+    Ddof(1:Ndof,1:Ndof) = zero ! provide dummy intent out;
+    
+   endif ! end of if( Lplasmaregion) ;
 
   end select ! end of select case( Lconstraint ) ;
   
@@ -543,9 +749,162 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   RETURN(mp00ac)
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 end subroutine mp00ac
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+!> \brief run GMRES
+!> 
+!> @param n
+!> @param nrestart
+!> @param mu
+!> @param vvol
+!> @param rhs
+!> @param sol
+!> @param ipar
+!> @param fpar
+!> @param wk
+!> @param nw
+!> @param guess
+!> @param a
+!> @param au
+!> @param jau
+!> @param ju
+!> @param iperm
+!> @param ierr
+subroutine rungmres(n,nrestart,mu,vvol,rhs,sol,ipar,fpar,wk,nw,guess,a,au,jau,ju,iperm,ierr)
+  ! Driver subroutine for GMRES
+  ! modified from riters.f from SPARSKIT v2.0 
+  ! by ZSQ 02 Feb 2020
+  use constants, only : zero, one
+  use inputlist, only : NiterGMRES, epsGMRES
+  use allglobal, only : LILUprecond
+  use fileunits
+  implicit none
+  INTEGER  :: n, nrestart, nw, vvol, ju(*), jau(*), iperm(*)
+  INTEGER  :: ipar(16)
+  INTEGER  :: ierr
+  REAL     :: guess(n), au(*), mu
+  REAL     :: fpar(16), rhs(1:n), sol(1:n), wk(1:nw), a(*)
+
+  INTEGER :: i, its
+  REAL :: res, tmprhs(1:n)
+
+  its = 0
+  res = zero
+  wk = zero
+
+  ! setup solver parameters
+  ipar = 0
+  fpar = zero
+  wk = zero
+  if (LILUprecond) then
+    ipar(2) = 1 ! tell GMRES to use preconditioner
+  else
+    ipar(2) = 0 ! do not use preconditioner, not recommended
+  end if
+  ipar(3) = 2           ! stopping test type, see iters.f
+  ipar(4) = nw          ! length of work array
+  ipar(5) = nrestart    ! restart parameter, size of Krylov subspace
+  ipar(6) = NiterGMRES  ! maximum number of iteration
+  fpar(1) = epsGMRES    ! stop criterion, relative error
+  fpar(2) = epsGMRES    ! stop criterion, absolute error
+
+  sol(1:n) = guess(1:n)
+  tmprhs(1:n) = rhs(1:n) ! copy to a temp vector because it will be destroyed by gmres
+
+  ipar(1) = 999
+  do while (ipar(1) .gt. 0) ! main reversed communication loop
+
+    call gmres(n,tmprhs,sol,ipar,fpar,wk)
+    res = fpar(5) ! shorthand for resolution
+    its = ipar(7) ! shorthand for iteration number
+
+    if (ipar(1).eq.1) then ! compute A.x
+      ! we should compute wk(ipar(9) = matmul(matrix, wk(ipar(8)))
+      call matvec(n, wk(ipar(8)), wk(ipar(9)), a, mu, vvol)
+
+    else if (ipar(1).eq.3) then
+      ! apply the preconditioner
+      call prec_solve(n,wk(ipar(8)),wk(ipar(9)),au,jau,ju,iperm)
+
+    else if (ipar(1).lt.0) then 
+      ! error or max iter reached, exit
+      exit
+    endif
+  
+  end do ! end main loop
+
+  ierr = ipar(1)
+  if (ierr.eq.0) ierr = its
+
+  return
+end subroutine rungmres
+
+!> \brief compute a.x by either by coumputing it directly, or using a matrix free method
+!> 
+!> @param n
+!> @param x
+!> @param ax
+!> @param a
+!> @param mu
+!> @param vvol
+subroutine matvec(n, x, ax, a, mu, vvol)
+  ! compute a.x by either by coumputing it directly, 
+  ! or using a matrix free method
+  use constants, only : zero, one
+  use inputlist, only : Lrad
+  use allglobal, only : NOTMatrixFree, Iquad, mn, dmd
+  implicit none
+  INTEGER, intent(in) :: n, vvol
+  REAL                :: ax(1:n), x(1:n), a(*), mu
+  INTEGER             :: ideriv
+  REAL                :: dax(0:n), ddx(0:n), cput, lastcpu
+  CHARACTER           :: packorunpack
+
+  if (NOTMatrixFree) then ! if we have the matrix, then just multiply it to x
+    call DGEMV('N', n, n, one, dMD(1,1), n+1, x, 1, zero, ddx(1), 1)
+    call DGEMV('N', n, n, one, a, n, x, 1, zero, ax, 1)
+  else ! if we are matrix-free, then we construct a.x directly
+    ideriv = -2        ! this is used for matrix-free only
+    packorunpack = 'U'
+    call packab(packorunpack, vvol, n, x, ideriv)          ! unpack solution to construct a.x
+    call intghs(Iquad(vvol), mn, vvol, Lrad(vvol), ideriv) ! compute the integrals of B_lower
+    call mtrxhs(vvol, mn, Lrad(vvol), dax, ddx, ideriv)    ! construct a.x from the integral
+    ax = dax(1:n) - mu * ddx(1:n)                          ! put in the mu factor
+  endif
+
+  return
+
+end subroutine matvec
+
+!> \brief apply the preconditioner
+!> 
+!> @param n
+!> @param vecin
+!> @param vecout
+!> @param au
+!> @param jau
+!> @param ju
+!> @param iperm
+subroutine prec_solve(n,vecin,vecout,au,jau,ju,iperm)
+  ! apply the preconditioner
+  implicit none
+  INTEGER :: n, iperm(*), jau(*), ju(*)
+  REAL    :: vecin(*), au(*)
+  REAL    :: vecout(*)
+
+  INTEGER :: ii
+  REAL :: tempv(n)
+
+  call lusol(n,vecin,tempv,au,jau,ju) ! sparse LU solve
+  !  apply permutation
+  do ii = 1, n
+    vecout(ii) = tempv(iperm(ii+n))
+  enddo
+
+  return
+end subroutine prec_solve

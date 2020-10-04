@@ -12,9 +12,9 @@ subroutine ma02aa( lvol, NN )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  use constants, only : zero, half, one, two, ten, goldenmean
+  use constants, only : zero, half, one, ten
   
-  use numerical, only : sqrtmachprec, vsmall, small
+  use numerical, only : vsmall, small
 
   use fileunits, only : ounit
 
@@ -29,13 +29,13 @@ subroutine ma02aa( lvol, NN )
 !                       dMA, dMB, dMC, dMD, dME, dMF, solution, &
                         dMA, dMB,      dMD,           solution, &
 !                       MBpsi, MEpsi, psiMCpsi, psiMFpsi, &
-                        MBpsi,                            &
+                        MBpsi,  Ate,                          &
                         ImagneticOK, &
                         lBBintegral, lABintegral, &
-                        ivol, &
+                        ivol, Nfielddof, &
                         dtflux, dpflux, &
                         xoffset, &
-                        Lcoordinatesingularity, Lplasmaregion, Lvacuumregion
+                        Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, LocalConstraint
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -68,7 +68,8 @@ subroutine ma02aa( lvol, NN )
   
 !required for hybrj1;
   INTEGER              :: ihybrj1, Ldfmuaa, lengthwork
-  REAL                 :: DFxi(0:NN,0:NN), work(1:(1+NN)*(1+NN+13)/2), NewtonError
+  REAL                 :: NewtonError
+  REAL   , allocatable :: DFxi(:,:), work(:)
   external             :: df00ab
   
 ! required for E04UFF;
@@ -90,7 +91,7 @@ subroutine ma02aa( lvol, NN )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   ivol = lvol ! various subroutines (e.g. mp00ac, df00ab) that may be called below require volume identification, but the argument list is fixed by NAG;
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 !> **sequential quadratic programming**
@@ -100,7 +101,6 @@ subroutine ma02aa( lvol, NN )
 !> </ul>
 
   if( LBsequad ) then ! sequential quadratic programming (SQP); construct minimum energy with constrained helicity;
-   
    lastcpu = GETTIME
    
    NLinearConstraints = 0 ! no linear constraints;
@@ -117,7 +117,7 @@ subroutine ma02aa( lvol, NN )
    
    SALLOCATE( LowerBound, (1:NN+NLinearConstraints+NNonLinearConstraints), zero ) ! lower bounds on variables, linear constraints and non-linear constraints;
    SALLOCATE( UpperBound, (1:NN+NLinearConstraints+NNonLinearConstraints), zero ) ! upper bounds on variables, linear constraints and non-linear constraints;
-   
+
    LowerBound(                       1 : NN                                          ) = -1.0E+21       !   variable constraints; no constraint;
    UpperBound(                       1 : NN                                          ) = +1.0E+21       !
    LowerBound( NN+                   1 : NN+NLinearConstraints                       ) = -1.0E+21       !     linear constraints; no constraint;
@@ -140,10 +140,10 @@ subroutine ma02aa( lvol, NN )
    SALLOCATE( objectivegradient, (1:NN), zero ) ! derivatives of objective function;
    
    SALLOCATE( RS, (1:LDR,1:NN), zero )
-   
    ideriv = 0 ; dpsi(1:2) = (/ dtflux(lvol), dpflux(lvol) /) ! these are also used below;
    
    packorunpack = 'P'
+
    CALL( ma02aa, packab, ( packorunpack, lvol, NN, xi(1:NN), ideriv ) )
    
    SALLOCATE( NEEDC, (1:NNonLinearConstraints), 0 )
@@ -261,7 +261,6 @@ subroutine ma02aa( lvol, NN )
    lBBintegral(lvol) = half * sum( xi(1:NN) * matmul( dMA(1:NN,1:NN), xi(1:NN) ) ) + sum( xi(1:NN) * MBpsi(1:NN) ) ! + psiMCpsi
    lABintegral(lvol) = half * sum( xi(1:NN) * matmul( dMD(1:NN,1:NN), xi(1:NN) ) ) ! + sum( xi(1:NN) * MEpsi(1:NN) ) ! + psiMFpsi
    
-   
    solution(1:NN,0) = xi(1:NN)
    
    
@@ -278,6 +277,9 @@ subroutine ma02aa( lvol, NN )
    
    lastcpu = GETTIME
    
+   SALLOCATE(DFxi, (0:NN,0:NN), zero)
+   SALLOCATE(work, (1:(1+NN)*(1+NN+13)/2), zero)
+
    xi(0) = mu(lvol) ! initialize; helicity multiplier is treated as an independent degree-of-freedom;
    
    ideriv = 0 ; dpsi(1:2) = (/ dtflux(lvol), dpflux(lvol) /) ! these are also used below;
@@ -332,7 +334,7 @@ subroutine ma02aa( lvol, NN )
    xo(1:NN) = xi(1:NN) ! save original for comparison;
    packorunpack = 'P' ; ideriv = 0
    CALL( ma02aa, packab( packorunpack, lvol, NN, xi(1:NN), ideriv ) )
-   FATAL( ma02aa, sum(abs(xi(1:NN)-xo(1:NN)))/NN.gt.vsmall, un/packing routine is incorrect )
+   FATAL( ma02aa, sum(abs(xi(1:Nfielddof(lvol))-xo(1:Nfielddof(lvol))))/Nfielddof(lvol).gt.vsmall, un/packing routine is incorrect )
 #endif
    
 !if( NewtonError.lt.mupftol ) then
@@ -343,6 +345,9 @@ subroutine ma02aa( lvol, NN )
    lABintegral(lvol) = half * sum( xi(1:NN) * matmul( dMD(1:NN,1:NN), xi(1:NN) ) ) ! + sum( xi(1:NN) * MEpsi(1:NN) ) ! + psiMFpsi
    
    solution(1:NN,0) = xi(1:NN)
+
+   DALLOCATE( DFxi )
+   DALLOCATE( work )
    
   endif ! end of if( LBnewton ) then
   
@@ -410,10 +415,10 @@ subroutine ma02aa( lvol, NN )
 !>
 !> </ul>
   
+
   if( LBlinear ) then ! assume Beltrami field is parameterized by helicity multiplier (and poloidal flux);
    
    lastcpu = GETTIME
-   
    
    if( Lplasmaregion ) then
     
@@ -421,11 +426,17 @@ subroutine ma02aa( lvol, NN )
     
     select case( Lconstraint )
     case( -1 )    ;                                   ; Nxdof = 0 ! multiplier & poloidal flux NOT varied                               ;
-    case(  0 )    ;                                   ; Nxdof = 0 ! multiplier & poloidal flux NOT varied                               ;
+    ;             ; iflag = 1 !(we don't need derivatives)
+    case(  0 )    ;                                   ; Nxdof = 0 ! multiplier & poloidal flux NOT varied   
+    ;             ; iflag = 1 !(we don't need derivatives)                            ;
     case(  1 )    ; if( Lcoordinatesingularity ) then ; Nxdof = 1 ! multiplier                 IS  varied to match       outer transform;
      ;              else                              ; Nxdof = 2 ! multiplier & poloidal flux ARE varied to match inner/outer transform;
      ;              endif                                         
     case(  2 )    ;                                     Nxdof = 1 ! multiplier                 IS  varied to match             helicity ;
+    case(  3 )    ; if( Lcoordinatesingularity ) then ; Nxdof = 0 ! multiplier & poloidal flux NOT varied                               ;
+     ;              else                              ; Nxdof = 0 ! Global constraint, no dof locally
+     ;              endif
+     ;            ; iflag = 2 !(we still need derivatives)
     end select
     
    else ! Lvacuumregion ;
@@ -437,20 +448,22 @@ subroutine ma02aa( lvol, NN )
     case(  0 )    ;                                   ; Nxdof = 2 ! poloidal   & toroidal flux ARE varied to match linking current and plasma current      ;
     case(  1 )    ;                                   ; Nxdof = 2 ! poloidal   & toroidal flux ARE varied to match linking current and transform-constraint;
     case(  2 )    ;                                   ; Nxdof = 2 ! poloidal   & toroidal flux ARE varied to match linking current and plasma current      ;
+    case(  3 )    ;                                   ; Nxdof = 0 ! Fluxes are determined in dforce via a linear system
+                                                      ; iflag = 2
     end select
 
    endif ! end of if( Lplasmaregion) ;
    
-
    select case( Nxdof )
     
    case( 0   ) ! need only call mp00ac once, to calculate Beltrami field for given helicity multiplier and enclosed fluxes;
     
-    iflag = 1 ; Ndof = 1     ; Ldfjac = Ndof ; nfev = 1 ; njev = 0 ; ihybrj = 1;  ! provide dummy values for consistency;
+    ;         ; Ndof = 1     ; Ldfjac = Ndof ; nfev = 1 ; njev = 0 ; ihybrj = 1;  ! provide dummy values for consistency;
     
     WCALL( ma02aa, mp00ac, ( Ndof, Xdof(1:Ndof), Fdof(1:Ndof), Ddof(1:Ldfjac,1:Ndof), Ldfjac, iflag ) )
     
     helicity(lvol) = lABintegral(lvol) ! this was computed in mp00ac;
+
     
    case( 1:2 ) ! will iteratively call mp00ac, to calculate Beltrami field that satisfies constraints;
     
@@ -462,7 +475,7 @@ subroutine ma02aa( lvol, NN )
 
     WCALL( ma02aa, hybrj2, ( mp00ac, Ndof, Xdof(1:Ndof), Fdof(1:Ndof), Ddof(1:Ldfjac,1:Ndof), Ldfjac, tol, &
                              maxfev, diag(1:Ndof), mode, factor, nprint, ihybrj, nfev, njev, RR(1:LRR), LRR, QTF(1:Ndof), &
-			     WK(1:Ndof,1), WK(1:Ndof,2), WK(1:Ndof,3), WK(1:Ndof,4) ) )
+                 WK(1:Ndof,1), WK(1:Ndof,2), WK(1:Ndof,3), WK(1:Ndof,4) ) )
 
     if( Lplasmaregion ) then
      
@@ -484,12 +497,12 @@ subroutine ma02aa( lvol, NN )
      
     endif ! end of if( Lplasmaregion ) ;
         
-    helicity(lvol) = lABintegral(lvol) ! this was computed in mp00ac;
+    if (Lconstraint .ne. 2) helicity(lvol) = lABintegral(lvol) ! this was computed in mp00ac;
     
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-    if( Lconstraint.eq.1 .or. ( Lvacuumregion .and. Lconstraint.eq.0 ) ) then
-     
+    if( Lconstraint.eq.1 .or. Lconstraint.eq.3 .or. ( Lvacuumregion .and. Lconstraint.eq.0 ) ) then
+
      iflag = 2 ; Ldfjac = Ndof ! call mp00ac: tr00ab/curent to ensure the derivatives of B, transform, currents, wrt mu/dtflux & dpflux are calculated;
 
      WCALL( ma02aa, mp00ac, ( Ndof, Xdof(1:Ndof), Fdof(1:Ndof), Ddof(1:Ldfjac,1:Ndof), Ldfjac, iflag ) )
@@ -525,6 +538,8 @@ subroutine ma02aa( lvol, NN )
 
   endif ! end of if( LBlinear ) then;
   
+
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-
  
 !> **debugging: finite-difference confirmation of the derivatives of the rotational-transform**
@@ -560,7 +575,11 @@ subroutine ma02aa( lvol, NN )
      endif
     else ! Lvacuumregion;
      Xdof(1:2) = xoffset + (/ dtflux(lvol), dpflux(lvol) /) ! initial guess for degrees of freedom; offset from zero so that relative error is small;
+     if( LocalConstraint ) then
      ;                                 ; Ndof = 2
+     else
+     ;                                   ; Ndof = 1
+     endif
     endif ! end of if( Lplasmaregion) ;
     
     Ldfjac = Ndof ; dFdof(-1:1,-1:1,1:2) = zero

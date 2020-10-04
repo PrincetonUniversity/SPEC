@@ -35,7 +35,7 @@ subroutine volume( lvol, vflag )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  use constants, only : zero, half, one, two, third, quart, pi2 
+  use constants, only : zero, half, one, two, four, third, quart, pi2 
 
   use numerical, only : vsmall, small
 
@@ -47,9 +47,10 @@ subroutine volume( lvol, vflag )
 
   use allglobal, only : myid, cpus, &
                         YESstellsym, Mvol, &
-                        mn, im, in, iRbc, iZbs, iRbs, iZbc, &
+                        Ntz, mn, im, in, iRbc, iZbs, iRbs, iZbc, &
                         djkp, djkm, &
                         vvolume, dvolume, &
+                        Rij, Zij, cosi, sini, &
                         dBdX, &
                         pi2nfp, pi2pi2nfp, pi2pi2nfpquart
 
@@ -59,15 +60,15 @@ subroutine volume( lvol, vflag )
 
   INTEGER, intent(in) :: lvol
 
-  INTEGER             :: vflag
+  INTEGER             :: vflag, Lcurvature
 
   INTEGER             :: jvol, ii, jj, kk, mi, ni, mj, nj, mk, nk, innout
 
-  REAL                :: vol(0:1)
+  REAL                :: vol(0:1), vint(1:Ntz)
 
   REAL                :: Rei, Roi, Zei, Zoi, Rej, Roj, Zej, Zoj, Rek, Rok, Zek, Zok
 
-  REAL                :: AA, BB, CC, DD
+  REAL                :: AA, BB, CC, DD, lss
   
   BEGIN(volume)
 
@@ -183,7 +184,7 @@ subroutine volume( lvol, vflag )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
     
    case( 3 ) !> <li> \c Igeometry.eq.3 : toroidal : \f${\bf x}\cdot {\bf e}_\theta \times {\bf e}_\zeta  = R ( Z R_\theta - R Z_\theta ) \f$
-    
+             !>      This is computed by fast Fourier transform:
 !>                   \f{eqnarray}{ V & = & \frac{1}{3} \; \int_{0}^{2\pi}\!\!\!d\theta \int_{0}^{2\pi/N}\!\!\!\!\! d\zeta \; R \left( Z R_{\theta} - R Z_{\theta}  \right)              
 !>                                   \nonumber \\
 !>                                   & = & \frac{1}{3}  \; \sum_i \sum_j \sum_k R_{e,i} \left(Z_{e,j} R_{o,k} - R_{e,j} Z_{o,k} \right) (+m_k) 
@@ -235,66 +236,57 @@ subroutine volume( lvol, vflag )
 !>
 !> </ul>
 
-    do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ; Rei = iRbc(ii,jvol) ; Roi = iRbs(ii,jvol) ; Zei = iZbc(ii,jvol) ; Zoi = iZbs(ii,jvol)
-     do jj = 1, mn ; mj = im(jj) ; nj = in(jj) ; Rej = iRbc(jj,jvol) ; Roj = iRbs(jj,jvol) ; Zej = iZbc(jj,jvol) ; Zoj = iZbs(jj,jvol)
-      do kk = 1, mn ; mk = im(kk) ; nk = in(kk) ; Rek = iRbc(kk,jvol) ; Rok = iRbs(kk,jvol) ; Zek = iZbc(kk,jvol) ; Zok = iZbs(kk,jvol)
-       
-       
-       AA = Rei * ( Zej * Rok - Rej * Zok ) * (+mk)
-       BB = Rei * ( Zoj * Rek - Roj * Zek ) * (-mk)
-       CC = Roi * ( Zej * Rek - Rej * Zek ) * (-mk)
-       DD = Roi * ( Zoj * Rok - Roj * Zok ) * (+mk)
-       
-       if( mi+mj+mk.eq.0 .and. ni+nj+nk.eq.0 ) vol(innout) = vol(innout) + AA - BB - CC - DD
-       if( mi+mj-mk.eq.0 .and. ni+nj-nk.eq.0 ) vol(innout) = vol(innout) + AA + BB + CC - DD
-       if( mi-mj+mk.eq.0 .and. ni-nj+nk.eq.0 ) vol(innout) = vol(innout) + AA + BB - CC + DD
-       if( mi-mj-mk.eq.0 .and. ni-nj-nk.eq.0 ) vol(innout) = vol(innout) + AA - BB + CC + DD
-       
+    ! Replacing the trigonometric formula by fast Fourier transform ; 03 OCT 19
 
-       if( dBdX%L .and. dBdX%innout.eq.innout .and. dBdX%ii.eq.ii ) then ! compute derivative of volume;
-        
-        if( dBdX%irz.eq.0 ) then ! compute derivatives wrt R; 20 Jun 14;
-         
-         if( dBdX%issym.eq.0 ) then !     stellarator-symmetric harmonic; dV/dRei ; 13 Sep 13;
-          ;                                          ; AA = + Zej * Rok * mk - Rej * Zok * mk - Rej * Zok * mk 
-          ;                                          ; BB = - Zoj * Rek * mk + Roj * Zek * mk + Roj * Zek * mk
-          ;                                          ; CC = - Rok * Zej * mi
-          ;                                          ; DD = - Rek * Zoj * mi
-         else                                        ! non-stellarator-symmetric harmonic; dV/dRoi ; 13 Sep 13;
-          ;                                          ; AA = + Rek * Zej * mi                                   
-          ;                                          ; BB = + Rok * Zoj * mi
-          ;                                          ; CC = + Rej * Zek * mk - Zej * Rek * mk + Rej * Zek * mk
-          ;                                          ; DD = + Zoj * Rok * mk - Roj * Zok * mk - Roj * Zok * mk
-         endif                                       ! end of if( dBdX%issym.eq.0 ) ; 13 Sep 13;
-         
-        else ! matches if( dBdX%irz.eq.0 ) then; compute derivative wrt Z; 19 Sep 13;
-         
-         if( dBdX%issym.eq.0 ) then ! stellarator-symmetric harmonic; dV/dZoi ; 13 Sep 13;
-          ;                                          ; AA = - Rek * Rej * mi 
-          ;                                          ; BB = - Rok * Roj * mi
-          ;                                          ; CC = - Rej * Rek * mk
-          ;                                          ; DD = + Roj * Rok * mk
-         else                                        !                               ; dV/dZei ; 13 Sep 13;
-          ;                                          ; AA = + Rej * Rok * mk 
-          ;                                          ; BB = - Roj * Rek * mk
-          ;                                          ; CC = + Rok * Rej * mi
-          ;                                          ; DD = + Rek * Roj * mi
-         endif                                       ! end of if( dBdX%issym.eq.0 ) ; 13 Sep 13;
-         
-        endif ! end of if( dBdX%irz.eq.0 ) ; 13 Sep 13;
-        
-        if( mi+mj+mk.eq.0 .and. ni+nj+nk.eq.0 ) dvolume = dvolume + AA - BB - CC - DD
-        if( mi+mj-mk.eq.0 .and. ni+nj-nk.eq.0 ) dvolume = dvolume + AA + BB + CC - DD
-        if( mi-mj+mk.eq.0 .and. ni-nj+nk.eq.0 ) dvolume = dvolume + AA + BB - CC + DD
-        if( mi-mj-mk.eq.0 .and. ni-nj-nk.eq.0 ) dvolume = dvolume + AA - BB + CC + DD
-        
-       endif ! end of if( dBdX%L .and. dBdX%ii.eq.ii .and. dBdX%innout.eq.innout ) then; 20 Jun 14;
+    if (lvol.eq.1 .and. innout.eq.0) then
+      vol(1) = zero
+      dvolume = zero
+    else
 
+      Lcurvature = 1
 
-      enddo ! end of do kk; 13 Sep 13;
-     enddo ! end of do jj; 13 Sep 13;
-    enddo ! end of do ii; 13 Sep 13;
-    
+      lss = innout * two - one
+      WCALL( volume, coords, ( lvol, lss, Lcurvature, Ntz, mn ) ) 
+
+      vint = Rij(1:Ntz,0,0) * (Zij(1:Ntz,0,0)*Rij(1:Ntz,2,0) - Zij(1:Ntz,2,0)*Rij(1:Ntz,0,0))
+      vol(innout) = four * sum(vint) / float(Ntz)
+
+      if( dBdX%L .and. dBdX%innout.eq.innout  ) then ! compute derivative of volume;
+          
+        ii = dBdX%ii ! shorthand
+
+        if( dBdX%irz.eq.0 ) then ! compute derivatives wrt R;
+          
+          if( dBdX%issym.eq.0 ) then
+            vint = cosi(1:Ntz,ii) * (Zij(1:Ntz,0,0)*Rij(1:Ntz,2,0) - Zij(1:Ntz,2,0)*Rij(1:Ntz,0,0)) &
+                + Rij(1:Ntz,0,0) * (-im(ii) * Zij(1:Ntz,0,0)*sini(1:Ntz,ii)) &
+                + Rij(1:Ntz,0,0) * (-Zij(1:Ntz,2,0)*cosi(1:Ntz,ii))
+          else
+            vint = sini(1:Ntz,ii) * (Zij(1:Ntz,0,0)*Rij(1:Ntz,2,0) - Zij(1:Ntz,2,0)*Rij(1:Ntz,0,0)) &
+                + Rij(1:Ntz,0,0) * (+im(ii) * Zij(1:Ntz,0,0)*cosi(1:Ntz,ii)) &
+                + Rij(1:Ntz,0,0) * (-Zij(1:Ntz,2,0)*sini(1:Ntz,ii))
+          endif
+
+        else ! matches if( dBdX%irz.eq.0 ) then; compute derivative wrt Z;
+          
+          if( dBdX%issym.eq.0 ) then
+            vint = Rij(1:Ntz,0,0) * (sini(1:Ntz,ii)*Rij(1:Ntz,2,0)) & 
+                + Rij(1:Ntz,0,0) * (-im(ii)*cosi(1:Ntz,ii)*Rij(1:Ntz,0,0))
+          else
+            vint = Rij(1:Ntz,0,0) * (cosi(1:Ntz,ii)*Rij(1:Ntz,2,0)) & 
+                + Rij(1:Ntz,0,0) * (+im(ii)*sini(1:Ntz,ii)*Rij(1:Ntz,0,0))
+          endif
+
+        endif ! end of if( dBdX%irz.eq.0 )
+
+        dvolume = four * sum(vint) / float(Ntz)
+
+      else
+
+        dvolume = zero
+
+      endif  ! end of if( dBdX%L .and. dBdX%innout.eq.innout )
+    endif  ! lvol.eq.1 .and. innout.eq.0
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
    end select
