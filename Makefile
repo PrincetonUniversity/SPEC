@@ -71,11 +71,11 @@ ifeq ($(CC),gfortran_ubuntu)
  # sudo apt install liblapack-dev
  # sudo apt install m4
  # sudo apt install libfftw3-dev
- # sudo apt install libhdf5-openmpi-dev
+ # sudo apt install libhdf5-dev
  CFLAGS=-fdefault-real-8
  LINKS=-Wl,-rpath -Wl,/usr/lib/lapack -llapack -lblas
- LIBS=-I/usr/include/hdf5/openmpi
- LINKS+=-L/usr/lib/x86_64-linux-gnu/hdf5/openmpi -lhdf5_fortran -lhdf5 -lpthread -lz -lm
+ LIBS=-I/usr/include/hdf5/serial
+ LINKS+=-L/usr/lib/x86_64-linux-gnu/hdf5/serial -lhdf5_fortran -lhdf5 -lpthread -lz -lm
  LIBS+=-I/usr/include
  LINKS+=-lfftw3
  RFLAGS=-O2 -ffixed-line-length-none -ffree-line-length-none -fexternal-blas
