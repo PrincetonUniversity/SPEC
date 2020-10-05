@@ -157,7 +157,7 @@ input_physics_Lrad.setDescription({r"Chebyshev resolution in each volume":
 input_physics_Lrad.setType("int")
 input_physics_Lrad.setRank(1)
 input_physics_Lrad.setDefaultValue(4)
-input_physics_Lrad.setMaximumIndices([r"MNvol+1"])
+input_physics_Lrad.setMaximumIndices(["MNvol+1"])
 
 input_physics_Lconstraint = idf.Variable("Lconstraint")
 input_physics_Lconstraint.setDescription({r"selects constraints; primarily used in ma02aa() and mp00ac()":
@@ -185,26 +185,26 @@ input_physics_tflux.setDescription({r"toroidal flux, \f$\psi_t\f$, enclosed by e
                                      +r"so that \c tflux  is arbitrary up to a scale factor",
                                       r"\sa phiedge"]
                                     })
+input_physics_tflux.setUnit("Wb")
 input_physics_tflux.setType("double")
 input_physics_tflux.setRank(1)
 input_physics_tflux.setDefaultValue(0.0)
-input_physics_tflux.setMaximumIndices([r"MNvol+1"])
+input_physics_tflux.setMaximumIndices(["MNvol+1"])
 
 input_physics_pflux = idf.Variable("pflux")
 input_physics_pflux.setDescription(r"poloidal flux, \f$\psi_p\f$, enclosed by each interface")
+input_physics_pflux.setUnit("Wb")
 input_physics_pflux.setType("double")
 input_physics_pflux.setRank(1)
 input_physics_pflux.setDefaultValue(0.0)
-input_physics_pflux.setMaximumIndices([r"MNvol+1"])
+input_physics_pflux.setMaximumIndices(["MNvol+1"])
 
 input_physics_helicity = idf.Variable("helicity")
-input_physics_helicity.setDescription({r"helicity, \f${\cal K}\f$, in each volume, \f${\cal V}_i\f$":
-                                       [r"on exit, \c helicity  is set to the computed values of \f${\cal K} \equiv \int {\bf A}\cdot{\bf B}\;dv\f$"]
-                                       })
+input_physics_helicity.setDescription(r"helicity, \f${\cal K}\f$, in each volume, \f${\cal V}_i\f$")
 input_physics_helicity.setType("double")
 input_physics_helicity.setRank(1)
 input_physics_helicity.setDefaultValue(0.0)
-input_physics_helicity.setMaximumIndices([r"MNvol+1"])
+input_physics_helicity.setMaximumIndices(["MNvol+1"])
 
 input_physics_pscale = idf.Variable("pscale")
 input_physics_pscale.setDescription({r"pressure scale factor":
@@ -224,7 +224,7 @@ input_physics_pressure.setDescription({r"pressure in each volume":
 input_physics_pressure.setType("double")
 input_physics_pressure.setRank(1)
 input_physics_pressure.setDefaultValue(0.0)
-input_physics_pressure.setMaximumIndices([r"MNvol+1"])
+input_physics_pressure.setMaximumIndices(["MNvol+1"])
 
 input_physics_Ladiabatic = idf.Variable("Ladiabatic")
 input_physics_Ladiabatic.setDescription({r"logical flag":
@@ -243,14 +243,14 @@ input_physics_adiabatic.setDescription({r"adiabatic constants in each volume":
 input_physics_adiabatic.setType("double")
 input_physics_adiabatic.setRank(1)
 input_physics_adiabatic.setDefaultValue(0.0)
-input_physics_adiabatic.setMaximumIndices([r"MNvol+1"])
+input_physics_adiabatic.setMaximumIndices(["MNvol+1"])
 
 input_physics_mu = idf.Variable("mu")
 input_physics_mu.setDescription(r"helicity-multiplier, \f$\mu\f$, in each volume")
 input_physics_mu.setType("double")
 input_physics_mu.setRank(1)
 input_physics_mu.setDefaultValue(0.0)
-input_physics_mu.setMaximumIndices([r"MNvol+1"])
+input_physics_mu.setMaximumIndices(["MNvol+1"])
 
 input_physics_Ivolume = idf.Variable("Ivolume")
 input_physics_Ivolume.setDescription( r"Toroidal current constraint normalized by \f$\mu_0\f$ (\f$I_{volume} = \mu_0\cdot [A]\f$), in each volume. "+os.linesep
@@ -259,14 +259,14 @@ input_physics_Ivolume.setDescription( r"Toroidal current constraint normalized b
 input_physics_Ivolume.setType("double")
 input_physics_Ivolume.setRank(1)
 input_physics_Ivolume.setDefaultValue(0.0)
-input_physics_Ivolume.setMaximumIndices([r"MNvol+1"])
+input_physics_Ivolume.setMaximumIndices(["MNvol+1"])
 
 input_physics_Isurf = idf.Variable("Isurf")
 input_physics_Isurf.setDescription(r"Toroidal current normalized by \f$\mu_0\f$ at each interface (cumulative). This is the sum of all pressure driven currents.")
 input_physics_Isurf.setType("double")
 input_physics_Isurf.setRank(1)
 input_physics_Isurf.setDefaultValue(0.0)
-input_physics_Isurf.setMaximumIndices([r"MNvol+1"])
+input_physics_Isurf.setMaximumIndices(["MNvol+1"])
 
 input_physics_pl = idf.Variable("pl")
 input_physics_pl.setDescription( r"\"inside\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+os.linesep
@@ -276,7 +276,7 @@ input_physics_pl.setType("int")
 input_physics_pl.setRank(1)
 input_physics_pl.setDefaultValue(0)
 input_physics_pl.setStartingIndices([r"0"])
-input_physics_pl.setMaximumIndices([r"MNvol"])
+input_physics_pl.setMaximumIndices(["MNvol"])
 
 input_physics_ql = idf.Variable("ql")
 input_physics_ql.setDescription( r"\"inside\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+os.linesep
@@ -286,7 +286,7 @@ input_physics_ql.setType("int")
 input_physics_ql.setRank(1)
 input_physics_ql.setDefaultValue(0)
 input_physics_ql.setStartingIndices([r"0"])
-input_physics_ql.setMaximumIndices([r"MNvol"])
+input_physics_ql.setMaximumIndices(["MNvol"])
 
 input_physics_pr = idf.Variable("pr")
 input_physics_pr.setDescription( r"\"inside\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+os.linesep
@@ -296,7 +296,7 @@ input_physics_pr.setType("int")
 input_physics_pr.setRank(1)
 input_physics_pr.setDefaultValue(0)
 input_physics_pr.setStartingIndices([r"0"])
-input_physics_pr.setMaximumIndices([r"MNvol"])
+input_physics_pr.setMaximumIndices(["MNvol"])
 
 input_physics_qr = idf.Variable("qr")
 input_physics_qr.setDescription( r"\"inside\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+os.linesep
@@ -306,7 +306,7 @@ input_physics_qr.setType("int")
 input_physics_qr.setRank(1)
 input_physics_qr.setDefaultValue(0)
 input_physics_qr.setStartingIndices([r"0"])
-input_physics_qr.setMaximumIndices([r"MNvol"])
+input_physics_qr.setMaximumIndices(["MNvol"])
 
 input_physics_iota = idf.Variable("iota")
 input_physics_iota.setDescription({r"rotational-transform, \f$\mbox{$\,\iota\!\!$-}\f$, on inner side of each interface":
@@ -316,7 +316,7 @@ input_physics_iota.setType("double")
 input_physics_iota.setRank(1)
 input_physics_iota.setDefaultValue(0.0)
 input_physics_iota.setStartingIndices([r"0"])
-input_physics_iota.setMaximumIndices([r"MNvol"])
+input_physics_iota.setMaximumIndices(["MNvol"])
 
 input_physics_lp = idf.Variable("lp")
 input_physics_lp.setDescription( r"\"outer\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+os.linesep
@@ -326,7 +326,7 @@ input_physics_lp.setType("int")
 input_physics_lp.setRank(1)
 input_physics_lp.setDefaultValue(0)
 input_physics_lp.setStartingIndices([r"0"])
-input_physics_lp.setMaximumIndices([r"MNvol"])
+input_physics_lp.setMaximumIndices(["MNvol"])
 
 input_physics_lq = idf.Variable("lq")
 input_physics_lq.setDescription( r"\"outer\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+os.linesep
@@ -336,7 +336,7 @@ input_physics_lq.setType("int")
 input_physics_lq.setRank(1)
 input_physics_lq.setDefaultValue(0)
 input_physics_lq.setStartingIndices([r"0"])
-input_physics_lq.setMaximumIndices([r"MNvol"])
+input_physics_lq.setMaximumIndices(["MNvol"])
 
 input_physics_rp = idf.Variable("rp")
 input_physics_rp.setDescription( r"\"outer\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+os.linesep
@@ -346,7 +346,7 @@ input_physics_rp.setType("int")
 input_physics_rp.setRank(1)
 input_physics_rp.setDefaultValue(0)
 input_physics_rp.setStartingIndices([r"0"])
-input_physics_rp.setMaximumIndices([r"MNvol"])
+input_physics_rp.setMaximumIndices(["MNvol"])
 
 input_physics_rq = idf.Variable("rq")
 input_physics_rq.setDescription( r"\"outer\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+os.linesep
@@ -356,7 +356,7 @@ input_physics_rq.setType("int")
 input_physics_rq.setRank(1)
 input_physics_rq.setDefaultValue(0)
 input_physics_rq.setStartingIndices([r"0"])
-input_physics_rq.setMaximumIndices([r"MNvol"])
+input_physics_rq.setMaximumIndices(["MNvol"])
 
 input_physics_oita = idf.Variable("oita")
 input_physics_oita.setDescription({r"rotational-transform, \f$\mbox{$\,\iota\!\!$-}\f$, on outer side of each interface":
@@ -366,7 +366,7 @@ input_physics_oita.setType("double")
 input_physics_oita.setRank(1)
 input_physics_oita.setDefaultValue(0.0)
 input_physics_oita.setStartingIndices([r"0"])
-input_physics_oita.setMaximumIndices([r"MNvol"])
+input_physics_oita.setMaximumIndices(["MNvol"])
 
 input_physics_mupftol = idf.Variable("mupftol")
 input_physics_mupftol.setDescription({r"accuracy to which \f$\mu\f$ and \f$\Delta\psi_p\f$ are required":
@@ -413,7 +413,7 @@ input_physics_Rac.setRank(1)
 input_physics_Rac.setDefaultValue(0.0)
 input_physics_Rac.setUnit("m")
 input_physics_Rac.setStartingIndices([r"0"])
-input_physics_Rac.setMaximumIndices([r"MNtor"])
+input_physics_Rac.setMaximumIndices(["MNtor"])
 
 input_physics_Zas = idf.Variable("Zas")
 input_physics_Zas.setDescription(r"    stellarator symmetric coordinate axis; Z;   sine")
@@ -422,7 +422,7 @@ input_physics_Zas.setRank(1)
 input_physics_Zas.setDefaultValue(0.0)
 input_physics_Zas.setUnit("m")
 input_physics_Zas.setStartingIndices([r"0"])
-input_physics_Zas.setMaximumIndices([r"MNtor"])
+input_physics_Zas.setMaximumIndices(["MNtor"])
 
 input_physics_Ras = idf.Variable("Ras")
 input_physics_Ras.setDescription(r"non-stellarator symmetric coordinate axis; R;   sine")
@@ -431,7 +431,7 @@ input_physics_Ras.setRank(1)
 input_physics_Ras.setDefaultValue(0.0)
 input_physics_Ras.setUnit("m")
 input_physics_Ras.setStartingIndices([r"0"])
-input_physics_Ras.setMaximumIndices([r"MNtor"])
+input_physics_Ras.setMaximumIndices(["MNtor"])
 
 input_physics_Zac = idf.Variable("Zac")
 input_physics_Zac.setDescription(r"non-stellarator symmetric coordinate axis; Z; cosine")
@@ -440,7 +440,7 @@ input_physics_Zac.setRank(1)
 input_physics_Zac.setDefaultValue(0.0)
 input_physics_Zac.setUnit("m")
 input_physics_Zac.setStartingIndices([r"0"])
-input_physics_Zac.setMaximumIndices([r"MNtor"])
+input_physics_Zac.setMaximumIndices(["MNtor"])
 
 input_physics_Rbc = idf.Variable("Rbc")
 input_physics_Rbc.setDescription(r"    stellarator symmetric boundary components; R; cosine")
@@ -448,8 +448,8 @@ input_physics_Rbc.setType("double")
 input_physics_Rbc.setRank(2)
 input_physics_Rbc.setDefaultValue(0.0)
 input_physics_Rbc.setUnit("m")
-input_physics_Rbc.setStartingIndices([r"-MNtor", r"-MMpol"])
-input_physics_Rbc.setMaximumIndices([r"MNtor", r"MMpol"])
+input_physics_Rbc.setStartingIndices(["-MNtor", "-MMpol"])
+input_physics_Rbc.setMaximumIndices(["MNtor", "MMpol"])
 
 input_physics_Zbs = idf.Variable("Zbs")
 input_physics_Zbs.setDescription(r"    stellarator symmetric boundary components; Z;   sine")
@@ -457,8 +457,8 @@ input_physics_Zbs.setType("double")
 input_physics_Zbs.setRank(2)
 input_physics_Zbs.setDefaultValue(0.0)
 input_physics_Zbs.setUnit("m")
-input_physics_Zbs.setStartingIndices([r"-MNtor", r"-MMpol"])
-input_physics_Zbs.setMaximumIndices([r"MNtor", r"MMpol"])
+input_physics_Zbs.setStartingIndices(["-MNtor", "-MMpol"])
+input_physics_Zbs.setMaximumIndices(["MNtor", "MMpol"])
 
 input_physics_Rbs = idf.Variable("Rbs")
 input_physics_Rbs.setDescription(r"non-stellarator symmetric boundary components; R;   sine")
@@ -466,8 +466,8 @@ input_physics_Rbs.setType("double")
 input_physics_Rbs.setRank(2)
 input_physics_Rbs.setDefaultValue(0.0)
 input_physics_Rbs.setUnit("m")
-input_physics_Rbs.setStartingIndices([r"-MNtor", r"-MMpol"])
-input_physics_Rbs.setMaximumIndices([r"MNtor", r"MMpol"])
+input_physics_Rbs.setStartingIndices(["-MNtor", "-MMpol"])
+input_physics_Rbs.setMaximumIndices(["MNtor", "MMpol"])
 
 input_physics_Zbc = idf.Variable("Zbc")
 input_physics_Zbc.setDescription(r"non-stellarator symmetric boundary components; Z; cosine")
@@ -475,8 +475,8 @@ input_physics_Zbc.setType("double")
 input_physics_Zbc.setRank(2)
 input_physics_Zbc.setDefaultValue(0.0)
 input_physics_Zbc.setUnit("m")
-input_physics_Zbc.setStartingIndices([r"-MNtor", r"-MMpol"])
-input_physics_Zbc.setMaximumIndices([r"MNtor", r"MMpol"])
+input_physics_Zbc.setStartingIndices(["-MNtor", "-MMpol"])
+input_physics_Zbc.setMaximumIndices(["MNtor", "MMpol"])
 
 input_physics_Rwc = idf.Variable("Rwc")
 input_physics_Rwc.setDescription(r"    stellarator symmetric boundary components of wall; R; cosine")
@@ -484,8 +484,8 @@ input_physics_Rwc.setType("double")
 input_physics_Rwc.setRank(2)
 input_physics_Rwc.setDefaultValue(0.0)
 input_physics_Rwc.setUnit("m")
-input_physics_Rwc.setStartingIndices([r"-MNtor", r"-MMpol"])
-input_physics_Rwc.setMaximumIndices([r"MNtor", r"MMpol"])
+input_physics_Rwc.setStartingIndices(["-MNtor", "-MMpol"])
+input_physics_Rwc.setMaximumIndices(["MNtor", "MMpol"])
 
 input_physics_Zws = idf.Variable("Zws")
 input_physics_Zws.setDescription(r"    stellarator symmetric boundary components of wall; Z;   sine")
@@ -493,8 +493,8 @@ input_physics_Zws.setType("double")
 input_physics_Zws.setRank(2)
 input_physics_Zws.setDefaultValue(0.0)
 input_physics_Zws.setUnit("m")
-input_physics_Zws.setStartingIndices([r"-MNtor", r"-MMpol"])
-input_physics_Zws.setMaximumIndices([r"MNtor", r"MMpol"])
+input_physics_Zws.setStartingIndices(["-MNtor", "-MMpol"])
+input_physics_Zws.setMaximumIndices(["MNtor", "MMpol"])
 
 input_physics_Rws = idf.Variable("Rws")
 input_physics_Rws.setDescription(r"non-stellarator symmetric boundary components of wall; R;   sine")
@@ -502,8 +502,8 @@ input_physics_Rws.setType("double")
 input_physics_Rws.setRank(2)
 input_physics_Rws.setDefaultValue(0.0)
 input_physics_Rws.setUnit("m")
-input_physics_Rws.setStartingIndices([r"-MNtor", r"-MMpol"])
-input_physics_Rws.setMaximumIndices([r"MNtor", r"MMpol"])
+input_physics_Rws.setStartingIndices(["-MNtor", "-MMpol"])
+input_physics_Rws.setMaximumIndices(["MNtor", "MMpol"])
 
 input_physics_Zwc = idf.Variable("Zwc")
 input_physics_Zwc.setDescription(r"non-stellarator symmetric boundary components of wall; Z; cosine")
@@ -511,8 +511,8 @@ input_physics_Zwc.setType("double")
 input_physics_Zwc.setRank(2)
 input_physics_Zwc.setDefaultValue(0.0)
 input_physics_Zwc.setUnit("m")
-input_physics_Zwc.setStartingIndices([r"-MNtor", r"-MMpol"])
-input_physics_Zwc.setMaximumIndices([r"MNtor", r"MMpol"])
+input_physics_Zwc.setStartingIndices(["-MNtor", "-MMpol"])
+input_physics_Zwc.setMaximumIndices(["MNtor", "MMpol"])
 
 input_physics_Vns = idf.Variable("Vns")
 input_physics_Vns.setDescription(r"    stellarator symmetric normal field at boundary; vacuum component;   sine")
@@ -520,8 +520,8 @@ input_physics_Vns.setType("double")
 input_physics_Vns.setRank(2)
 input_physics_Vns.setDefaultValue(0.0)
 input_physics_Vns.setUnit("T")
-input_physics_Vns.setStartingIndices([r"-MNtor", r"-MMpol"])
-input_physics_Vns.setMaximumIndices([r"MNtor", r"MMpol"])
+input_physics_Vns.setStartingIndices(["-MNtor", "-MMpol"])
+input_physics_Vns.setMaximumIndices(["MNtor", "MMpol"])
 
 input_physics_Bns = idf.Variable("Bns")
 input_physics_Bns.setDescription(r"    stellarator symmetric normal field at boundary; plasma component;   sine")
@@ -529,8 +529,8 @@ input_physics_Bns.setType("double")
 input_physics_Bns.setRank(2)
 input_physics_Bns.setDefaultValue(0.0)
 input_physics_Bns.setUnit("T")
-input_physics_Bns.setStartingIndices([r"-MNtor", r"-MMpol"])
-input_physics_Bns.setMaximumIndices([r"MNtor", r"MMpol"])
+input_physics_Bns.setStartingIndices(["-MNtor", "-MMpol"])
+input_physics_Bns.setMaximumIndices(["MNtor", "MMpol"])
 
 input_physics_Vnc = idf.Variable("Vnc")
 input_physics_Vnc.setDescription(r"non-stellarator symmetric normal field at boundary; vacuum component; cosine")
@@ -538,8 +538,8 @@ input_physics_Vnc.setType("double")
 input_physics_Vnc.setRank(2)
 input_physics_Vnc.setDefaultValue(0.0)
 input_physics_Vnc.setUnit("T")
-input_physics_Vnc.setStartingIndices([r"-MNtor", r"-MMpol"])
-input_physics_Vnc.setMaximumIndices([r"MNtor", r"MMpol"])
+input_physics_Vnc.setStartingIndices(["-MNtor", "-MMpol"])
+input_physics_Vnc.setMaximumIndices(["MNtor", "MMpol"])
 
 input_physics_Bnc = idf.Variable("Bnc")
 input_physics_Bnc.setDescription(r"non-stellarator symmetric normal field at boundary; plasma component; cosine")
@@ -547,8 +547,8 @@ input_physics_Bnc.setType("double")
 input_physics_Bnc.setRank(2)
 input_physics_Bnc.setDefaultValue(0.0)
 input_physics_Bnc.setUnit("T")
-input_physics_Bnc.setStartingIndices([r"-MNtor", r"-MMpol"])
-input_physics_Bnc.setMaximumIndices([r"MNtor", r"MMpol"])
+input_physics_Bnc.setStartingIndices(["-MNtor", "-MMpol"])
+input_physics_Bnc.setMaximumIndices(["MNtor", "MMpol"])
 
 vars_physicslist = [
         input_physics_Igeometry,
@@ -1138,7 +1138,7 @@ input_diagnostics_nPtrj.setDescription({r"number of trajectories in each annulus
 input_diagnostics_nPtrj.setType("int")
 input_diagnostics_nPtrj.setRank(1)
 input_diagnostics_nPtrj.setDefaultValue(-1)
-input_diagnostics_nPtrj.setMaximumIndices([r"MNvol+1"])
+input_diagnostics_nPtrj.setMaximumIndices(["MNvol+1"])
 
 input_diagnostics_LHevalues = idf.Variable("LHevalues")
 input_diagnostics_LHevalues.setDescription(r"to compute eigenvalues of \f$\nabla {\bf F}\f$")
@@ -1296,32 +1296,32 @@ iterations_iRbc.setDescription(r"    stellarator symmetric interface components;
 iterations_iRbc.setType("double")
 iterations_iRbc.setUnit("m")
 iterations_iRbc.setRank(3)
-iterations_iRbc.setStartingIndices([r"-MNtor", r"-MMpol", r"1"])
-iterations_iRbc.setMaximumIndices([r"MNtor", r"MMpol", r"MNvol+1"])
+iterations_iRbc.setStartingIndices(["-MNtor", "-MMpol", "1"])
+iterations_iRbc.setMaximumIndices(["MNtor", "MMpol", "MNvol+1"])
 
 iterations_iZbs = idf.Variable("iZbs")
 iterations_iZbs.setDescription(r"    stellarator symmetric interface components; Z;   sine")
 iterations_iZbs.setType("double")
 iterations_iZbs.setUnit("m")
 iterations_iZbs.setRank(3)
-iterations_iZbs.setStartingIndices([r"-MNtor", r"-MMpol", r"1"])
-iterations_iZbs.setMaximumIndices([r"MNtor", r"MMpol", r"MNvol+1"])
+iterations_iZbs.setStartingIndices(["-MNtor", "-MMpol", "1"])
+iterations_iZbs.setMaximumIndices(["MNtor", "MMpol", "MNvol+1"])
 
 iterations_iRbs = idf.Variable("iRbs")
 iterations_iRbs.setDescription(r"non-stellarator symmetric interface components; R;   sine")
 iterations_iRbs.setType("double")
 iterations_iRbs.setUnit("m")
 iterations_iRbs.setRank(3)
-iterations_iRbs.setStartingIndices([r"-MNtor", r"-MMpol", r"1"])
-iterations_iRbs.setMaximumIndices([r"MNtor", r"MMpol", r"MNvol+1"])
+iterations_iRbs.setStartingIndices(["-MNtor", "-MMpol", "1"])
+iterations_iRbs.setMaximumIndices(["MNtor", "MMpol", "MNvol+1"])
 
 iterations_iZbc = idf.Variable("iZbc")
 iterations_iZbc.setDescription(r"non-stellarator symmetric interface components; Z; cosine")
 iterations_iZbc.setType("double")
 iterations_iZbc.setUnit("m")
 iterations_iZbc.setRank(3)
-iterations_iZbc.setStartingIndices([r"-MNtor", r"-MMpol", r"1"])
-iterations_iZbc.setMaximumIndices([r"MNtor", r"MMpol", r"MNvol+1"])
+iterations_iZbc.setStartingIndices(["-MNtor", "-MMpol", "1"])
+iterations_iZbc.setMaximumIndices(["MNtor", "MMpol", "MNvol+1"])
 
 # this one is a little bit special:
 # 1-dim array of a compound datatype, unlimited length (to allow convergence until eternity)
@@ -1338,41 +1338,41 @@ grid_Rij.setDescription(r"R positions at which the magnetic field is evaluated")
 grid_Rij.setType("double")
 grid_Rij.setUnit("m")
 grid_Rij.setRank(3)
-grid_Rij.setMaximumIndices([r"Mvol", r"Ngrid_local", r"Ntz"])
+grid_Rij.setMaximumIndices(["Mvol", "Ngrid_local", "Ntz"])
 
 grid_Zij = idf.Variable("Zij")
 grid_Zij.setDescription(r"Z positions at which the magnetic field is evaluated")
 grid_Zij.setType("double")
 grid_Zij.setUnit("m")
 grid_Zij.setRank(3)
-grid_Zij.setMaximumIndices([r"Mvol", r"Ngrid_local", r"Ntz"])
+grid_Zij.setMaximumIndices(["Mvol", "Ngrid_local", "Ntz"])
 
 grid_sg = idf.Variable("sg")
 grid_sg.setDescription(r"jacobian at positions at which the magnetic field is evaluated")
 grid_sg.setType("double")
 grid_sg.setRank(3)
-grid_sg.setMaximumIndices([r"Mvol", r"Ngrid_local", r"Ntz"])
+grid_sg.setMaximumIndices(["Mvol", "Ngrid_local", "Ntz"])
 
 grid_BR = idf.Variable("BR")
 grid_BR.setDescription(r"cylindrical R component of magnetic field")
 grid_BR.setType("double")
 grid_BR.setUnit("T")
 grid_BR.setRank(3)
-grid_BR.setMaximumIndices([r"Mvol", r"Ngrid_local", r"Ntz"])
+grid_BR.setMaximumIndices(["Mvol", "Ngrid_local", "Ntz"])
 
 grid_Bp = idf.Variable("Bp")
 grid_Bp.setDescription(r"cylindrical phi component of magnetic field")
 grid_Bp.setType("double")
 grid_Bp.setUnit("T")
 grid_Bp.setRank(3)
-grid_Bp.setMaximumIndices([r"Mvol", r"Ngrid_local", r"Ntz"])
+grid_Bp.setMaximumIndices(["Mvol", "Ngrid_local", "Ntz"])
 
 grid_BZ = idf.Variable("BZ")
 grid_BZ.setDescription(r"Z component of magnetic field")
 grid_BZ.setType("double")
 grid_BZ.setUnit("T")
 grid_BZ.setRank(3)
-grid_BZ.setMaximumIndices([r"Mvol", r"Ngrid_local", r"Ntz"])
+grid_BZ.setMaximumIndices(["Mvol", "Ngrid_local", "Ntz"])
 
 # grid group
 vars_grid = [grid_Rij,
@@ -1387,45 +1387,45 @@ poincare_t = idf.Variable("t")
 poincare_t.setDescription(r"theta positions of field-line tracing result")
 poincare_t.setType("double")
 poincare_t.setRank(3)
-poincare_t.setMaximumIndices([r"Nz", r"nPpts", r"numTrajTotal"])
+poincare_t.setMaximumIndices(["Nz", "nPpts", "numTrajTotal"])
 
 poincare_s = idf.Variable("s")
 poincare_s.setDescription(r"s positions of field-line tracing result")
 poincare_s.setType("double")
 poincare_s.setRank(3)
-poincare_s.setMaximumIndices([r"Nz", r"nPpts", r"numTrajTotal"])
+poincare_s.setMaximumIndices(["Nz", "nPpts", "numTrajTotal"])
 
 poincare_R = idf.Variable("R")
 poincare_R.setDescription(r"R positions of field-line tracing result")
 poincare_R.setType("double")
 poincare_R.setUnit("m")
 poincare_R.setRank(3)
-poincare_R.setMaximumIndices([r"Nz", r"nPpts", r"numTrajTotal"])
+poincare_R.setMaximumIndices(["Nz", "nPpts", "numTrajTotal"])
 
 poincare_Z = idf.Variable("Z")
 poincare_Z.setDescription(r"Z positions of field-line tracing result")
 poincare_Z.setType("double")
 poincare_Z.setUnit("m")
 poincare_Z.setRank(3)
-poincare_Z.setMaximumIndices([r"Nz", r"nPpts", r"numTrajTotal"])
+poincare_Z.setMaximumIndices(["Nz", "nPpts", "numTrajTotal"])
 
 poincare_success = idf.Variable("success")
 poincare_success.setDescription(r"flag to indicate if a given trajectory was successfully followed")
 poincare_success.setType("boolean")
 poincare_success.setRank(1)
-poincare_success.setMaximumIndices([r"numTrajTotal"])
+poincare_success.setMaximumIndices(["numTrajTotal"])
 
 poincare_diotadxup = idf.Variable("diotadxup")
 poincare_diotadxup.setDescription(r"measured rotational transform on inner/outer interfaces for each volume; d(transform)/dx")
 poincare_diotadxup.setType("double")
 poincare_diotadxup.setRank(2)
-poincare_diotadxup.setMaximumIndices([r"2", r"Mvol"])
+poincare_diotadxup.setMaximumIndices(["2", "Mvol"])
 
 poincare_fiota = idf.Variable("fiota")
 poincare_fiota.setDescription(r"rotational transform from field-line tracing")
 poincare_fiota.setType("double")
 poincare_fiota.setRank(2)
-poincare_fiota.setMaximumIndices([r"numTrajTotal", r"2"])
+poincare_fiota.setMaximumIndices(["numTrajTotal", "2"])
 
 vars_poincare = [poincare_t,
                  poincare_s,
@@ -1436,25 +1436,196 @@ vars_poincare = [poincare_t,
                  poincare_fiota]
 
 
+vector_potential_Ate = idf.Variable("Ate")
+vector_potential_Ate.setDescription(r"theta component of magnetic vector potential cosine Fourier harmonics; stellarator-symmetric")
+vector_potential_Ate.setType("double")
+vector_potential_Ate.setUnit("Tm")
+vector_potential_Ate.setRank(3)
+vector_potential_Ate.setMaximumIndices(["Mvol", "Lrad", "mn"])
+
+vector_potential_Aze = idf.Variable("Aze")
+vector_potential_Aze.setDescription(r"zeta component of magnetic vector potential cosine Fourier harmonics; stellarator-symmetric")
+vector_potential_Aze.setType("double")
+vector_potential_Aze.setUnit("Tm")
+vector_potential_Aze.setRank(3)
+vector_potential_Aze.setMaximumIndices(["Mvol", "Lrad", "mn"])
+
+vector_potential_Ato = idf.Variable("Ato")
+vector_potential_Ato.setDescription(r"theta component of magnetic vector potential sine Fourier harmonics; non-stellarator-symmetric")
+vector_potential_Ato.setType("double")
+vector_potential_Ato.setUnit("Tm")
+vector_potential_Ato.setRank(3)
+vector_potential_Ato.setMaximumIndices(["Mvol", "Lrad", "mn"])
+
+vector_potential_Azo = idf.Variable("Azo")
+vector_potential_Azo.setDescription(r"zeta component of magnetic vector potential sine Fourier harmonics; non-stellarator-symmetric")
+vector_potential_Azo.setType("double")
+vector_potential_Azo.setUnit("Tm")
+vector_potential_Azo.setRank(3)
+vector_potential_Azo.setMaximumIndices(["Mvol", "Lrad", "mn"])
+
+vars_vector_potential = [vector_potential_Ate,
+                         vector_potential_Aze,
+                         vector_potential_Ato,
+                         vector_potential_Azo]
+
+
+output_mn = idf.Variable("mn")
+output_mn.setDescription(r"number of combined polodial and toroidal Fourier harmonics")
+output_mn.setType("int")
+
+output_im = idf.Variable("im")
+output_im.setDescription(r"poloidal mode number array")
+output_im.setType("int")
+
+output_in = idf.Variable("in")
+output_in.setDescription(r"toroidal mode number array")
+output_in.setType("int")
+
+output_Mvol = idf.Variable("Mvol")
+output_Mvol.setDescription(r"number of interfaces")
+output_Mvol.setType("int")
+
+output_Rbc = idf.Variable("Rbc")
+output_Rbc.setDescription(r"stellarator symmetric boundary components; R; cosine")
+output_Rbc.setType("double")
+output_Rbc.setRank(2)
+output_Rbc.setStartingIndices(["1", "0"])
+output_Rbc.setMaximumIndices(["mn", "Mvol"])
+
+output_Zbs = idf.Variable("Zbs")
+output_Zbs.setDescription(r"stellarator symmetric boundary components; Z; sine")
+output_Zbs.setType("double")
+output_Zbs.setRank(2)
+output_Zbs.setStartingIndices(["1", "0"])
+output_Zbs.setMaximumIndices(["mn", "Mvol"])
+
+output_Rbs = idf.Variable("Rbs")
+output_Rbs.setDescription(r"non-stellarator symmetric boundary components; R; sine")
+output_Rbs.setType("double")
+output_Rbs.setRank(2)
+output_Rbs.setStartingIndices(["1", "0"])
+output_Rbs.setMaximumIndices(["mn", "Mvol"])
+
+output_Zbc = idf.Variable("Zbc")
+output_Zbc.setDescription(r"non-stellarator symmetric boundary components; Z; cosine")
+output_Zbc.setType("double")
+output_Zbc.setRank(2)
+output_Zbc.setStartingIndices(["1", "0"])
+output_Zbc.setMaximumIndices(["mn", "Mvol"])
+
+output_ForceErr = idf.Variable("ForceErr")
+output_ForceErr.setDescription(r"residual force on the ideal interfaces in the plasma")
+output_ForceErr.setType("double")
+
+output_Ivolume = idf.Variable("Ivolume")
+output_Ivolume.setDescription(r"Volume current at output (parallel, externally induced)")
+output_Ivolume.setType("double")
+output_Ivolume.setRank(1)
+output_Ivolume.setMaximumIndices(["Mvol"])
+
+output_IPDt = idf.Variable("IPDt")
+output_IPDt.setDescription(r"Surface current at output")
+output_IPDt.setType("double")
+output_IPDt.setRank(1)
+output_IPDt.setMaximumIndices(["Mvol"])
+
+output_adiabatic = idf.Variable("adiabatic")
+output_adiabatic.setDescription(r"adiabatic constants in each volume")
+output_adiabatic.setType("double")
+output_adiabatic.setRank(1)
+output_adiabatic.setMaximumIndices(["Nvol"])
+
+output_helicity = idf.Variable("helicity")
+output_helicity.setDescription(r"the computed values of \f${\cal K} \equiv \int {\bf A}\cdot{\bf B}\;dv\f$")
+output_helicity.setType("double")
+output_helicity.setRank(1)
+output_helicity.setMaximumIndices(["Nvol"])
+
+output_mu = idf.Variable("mu")
+output_mu.setDescription(r"helicity-multiplier, \f$\mu\f$, in each volume")
+output_mu.setType("double")
+output_mu.setRank(1)
+output_mu.setMaximumIndices(["Nvol"])
+
+output_tflux = idf.Variable("tflux")
+output_tflux.setDescription(r"toroidal flux, \f$\psi_t\f$, enclosed by each interface")
+output_tflux.setUnit("Wb")
+output_tflux.setType("double")
+output_tflux.setRank(1)
+output_tflux.setMaximumIndices(["Nvol"])
+
+output_pflux = idf.Variable("pflux")
+output_pflux.setDescription(r"poloidal flux, \f$\psi_p\f$, enclosed by each interface")
+output_pflux.setUnit("Wb")
+output_pflux.setType("double")
+output_pflux.setRank(1)
+output_pflux.setMaximumIndices(["Nvol"])
+
+output_volume = idf.Variable("volume")
+output_volume.setDescription(r"total volume = $\sum V_v$")
+output_volume.setType("double")
+output_volume.setRank(1)
+output_volume.setMaximumIndices(["Nvol"])
+
+
+output_Mrad = idf.Variable("Mrad")
+output_Mrad.setDescription(r"maximum radial (Chebyshev) resolution")
+output_Mrad.setType("int")
+
+output_TT = idf.Variable("TT")
+output_TT.setDescription(r"Chebyshev polynomials, $T_l$, and their derivatives, evaluated at $s=\pm 1$")
+output_TT.setType("double")
+output_TT.setRank(3)
+output_TT.setStartingIndices(["0", "0", "0"])
+output_TT.setMaximumIndices(["Mrad", "1", "1"])
+
+output_Btemn = idf.Variable("Btemn")
+output_Btemn.setDescription( r"cosine harmonics of the covariant poloidal field, "
+                            +r"i.e. $[[B_{\t,j}]]$ evaluated on the inner and outer interface in each volume")
+output_Btemn.setUnit("T")
+output_Btemn.setType("double")
+output_Btemn.setRank(3)
+output_Btemn.setStartingIndices(["1", "0", "1"])
+output_Btemn.setMaximumIndices(["mn", "1", "Mvol"])
+
+output_Bzemn = idf.Variable("Bzemn")
+output_Bzemn.setDescription( r"cosine harmonics of the covariant toroidal field, "
+                            +r"i.e. $[[B_{\z,j}]]$ evaluated on the inner and outer interface in each volume")
+output_Bzemn.setUnit("T")
+output_Bzemn.setType("double")
+output_Bzemn.setRank(3)
+output_Bzemn.setStartingIndices(["1", "0", "1"])
+output_Bzemn.setMaximumIndices(["mn", "1", "Mvol"])
+
+output_Btomn = idf.Variable("Btomn")
+output_Btomn.setDescription( r"the sine harmonics of the covariant poloidal field, "
+                            +r"i.e. $[[B_{\t,j}]]$ evaluated on the inner and outer interface in each volume")
+output_Btomn.setUnit("T")
+output_Btomn.setType("double")
+output_Btomn.setRank(3)
+output_Btomn.setStartingIndices(["1", "0", "1"])
+output_Btomn.setMaximumIndices(["mn", "1", "Mvol"])
+
+output_Bzomn = idf.Variable("Bzomn")
+output_Bzomn.setDescription( r"the sine harmonics of the covariant toroidal field, "
+                            +r"i.e. $[[B_{\z,j}]]$ evaluated on the inner and outer interface in each volume")
+output_Bzomn.setUnit("T")
+output_Bzomn.setType("double")
+output_Bzomn.setRank(3)
+output_Bzomn.setStartingIndices(["1", "0", "1"])
+output_Bzomn.setMaximumIndices(["mn", "1", "Mvol"])
+
+output_lmns = idf.Variable("lmns")
+output_lmns.setDescription(r"resolution of the straight-fieldline transformation")
+output_lmns.setType("int")
 
 
 
 
-# TODO: vector_potential
-# TODO: output
-
-
-
-
-
-
-
-
-
-
-
-
-
+#-----------------------------------------------------------------------------#
+# code generation starts here
+#-----------------------------------------------------------------------------#
 
 
 # ###############################################################################
