@@ -1292,7 +1292,7 @@ iterations_ForceErr.setDescription(r"residual force on the ideal interfaces in t
 iterations_ForceErr.setType("double")
 
 iterations_iRbc = idf.Variable("iRbc")
-iterations_iRbc.setDescription(r"    stellarator symmetric interface components; R; cosine")
+iterations_iRbc.setDescription(r"stellarator symmetric interface components; R; cosine")
 iterations_iRbc.setType("double")
 iterations_iRbc.setUnit("m")
 iterations_iRbc.setRank(3)
@@ -1300,7 +1300,7 @@ iterations_iRbc.setStartingIndices(["-MNtor", "-MMpol", "1"])
 iterations_iRbc.setMaximumIndices(["MNtor", "MMpol", "MNvol+1"])
 
 iterations_iZbs = idf.Variable("iZbs")
-iterations_iZbs.setDescription(r"    stellarator symmetric interface components; Z;   sine")
+iterations_iZbs.setDescription(r"stellarator symmetric interface components; Z;   sine")
 iterations_iZbs.setType("double")
 iterations_iZbs.setUnit("m")
 iterations_iZbs.setRank(3)
@@ -1382,7 +1382,6 @@ vars_grid = [grid_Rij,
         grid_Bp,
         grid_BZ]
 
-
 poincare_t = idf.Variable("t")
 poincare_t.setDescription(r"theta positions of field-line tracing result")
 poincare_t.setType("double")
@@ -1434,7 +1433,6 @@ vars_poincare = [poincare_t,
                  poincare_success,
                  poincare_diotadxup,
                  poincare_fiota]
-
 
 vector_potential_Ate = idf.Variable("Ate")
 vector_potential_Ate.setDescription(r"theta component of magnetic vector potential cosine Fourier harmonics; stellarator-symmetric")
@@ -1568,7 +1566,6 @@ output_volume.setType("double")
 output_volume.setRank(1)
 output_volume.setMaximumIndices(["Nvol"])
 
-
 output_Mrad = idf.Variable("Mrad")
 output_Mrad.setDescription(r"maximum radial (Chebyshev) resolution")
 output_Mrad.setType("int")
@@ -1620,6 +1617,30 @@ output_lmns = idf.Variable("lmns")
 output_lmns.setDescription(r"resolution of the straight-fieldline transformation")
 output_lmns.setType("int")
 
+vars_output = [output_mn,
+               output_im,
+               output_in,
+               output_Mvol,
+               output_Rbc,
+               output_Zbs,
+               output_Rbs,
+               output_Zbc,
+               output_ForceErr,
+               output_Ivolume,
+               output_IPDt,
+               output_adiabatic,
+               output_helicity,
+               output_mu,
+               output_tflux,
+               output_pflux,
+               output_volume,
+               output_Mrad,
+               output_TT,
+               output_Btemn,
+               output_Bzemn,
+               output_Btomn,
+               output_Bzomn,
+               output_lmns]
 
 
 
