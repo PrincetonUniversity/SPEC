@@ -439,7 +439,7 @@ subroutine init_convergence_output
   H5CALL( sphdf5, h5dcreate_f, (file_id, "iterations", iteration_dtype_id, iteration_dspace_id, &     ! create dataset with compound type
                   & iteration_dset_id, hdfier, crp_list) )
 
-  H5CALL( sphdf5, h5sclose_f, (iteration_dspace_id, hdfier) )                                          ! Terminate access to the data space (does not show up in obj_count below)
+  H5CALL( sphdf5, h5sclose_f, (iteration_dspace_id, hdfier) )                            ! Terminate access to the data space (does not show up in obj_count below)
                                                                                          ! --> only needed for creation of dataset
 
   ! Create memory types. We have to create a compound datatype
