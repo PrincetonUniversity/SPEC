@@ -27,8 +27,10 @@ More on this: https://docs.python.org/3/whatsnew/3.7.html
 @author: Jonathan Schilling (jonathan.schilling@ipp.mpg.de)
 """
 
+import os # linesep
+
 # interface definition framework for source code generation
-idfPath = "/home/jonathan/work/code/idf"
+idfPath = "/data/jonathan/work/code/idf"
 import sys
 if not idfPath in sys.path:
     sys.path.insert(0, idfPath)
@@ -126,11 +128,11 @@ input_physics_Nvol.setDefaultValue(1)
 
 input_physics_Mpol = idf.Variable("Mpol")
 input_physics_Mpol.setDescription({r"number of poloidal Fourier harmonics":
-                                   [ r"all Fourier representations of doubly-periodic functions are of the form"+"\n"
-                                    +r"\f{eqnarray}{ f(\theta,\zeta) & = & \sum_{n=0}^{\texttt{Ntor}} f_{0,n}\cos(-n \, \texttt{Nfp} \, \zeta)"+"\n"
-                                    +r"\sum_{m=1}^{\texttt{Mpol}}\sum_{n=\texttt{-Ntor}}^{\texttt{Ntor}} f_{m,n}\cos(m\theta-n \, \texttt{Nfp} \, \zeta),"+"\n"
-                                    +r"\f}"+"\n"
-                                    +r"Internally these \"double\" summations are written as a \"single\" summation,"+"\n"
+                                   [ r"all Fourier representations of doubly-periodic functions are of the form"+os.linesep
+                                    +r"\f{eqnarray}{ f(\theta,\zeta) & = & \sum_{n=0}^{\texttt{Ntor}} f_{0,n}\cos(-n \, \texttt{Nfp} \, \zeta)"+os.linesep
+                                    +r"\sum_{m=1}^{\texttt{Mpol}}\sum_{n=\texttt{-Ntor}}^{\texttt{Ntor}} f_{m,n}\cos(m\theta-n \, \texttt{Nfp} \, \zeta),"+os.linesep
+                                    +r"\f}"+os.linesep
+                                    +r"Internally these \"double\" summations are written as a \"single\" summation,"+os.linesep
                                     +r"e.g. \f$f(\theta,\zeta) = \sum_j f_j \cos(m_j\theta-n_j\zeta)\f$."]
                                    })
 input_physics_Mpol.setType("int")
@@ -138,11 +140,11 @@ input_physics_Mpol.setDefaultValue(0)
 
 input_physics_Ntor = idf.Variable("Ntor")
 input_physics_Ntor.setDescription({r"number of toroidal Fourier harmonics":
-                                   [ r"all Fourier representations of doubly-periodic functions are of the form"+"\n"
-                                    +r"\f{eqnarray}{ f(\theta,\zeta) & = & \sum_{n=0}^{\texttt{Ntor}} f_{0,n}\cos(-n \, \texttt{Nfp} \, \zeta)"+"\n"
-                                    +r"\sum_{m=1}^{\texttt{Mpol}}\sum_{n=\texttt{-Ntor}}^{\texttt{Ntor}} f_{m,n}\cos(m\theta-n \, \texttt{Nfp} \, \zeta),"+"\n"
-                                    +r"\f}"+"\n"
-                                    +r"Internally these \"double\" summations are written as a \"single\" summation,"+"\n"
+                                   [ r"all Fourier representations of doubly-periodic functions are of the form"+os.linesep
+                                    +r"\f{eqnarray}{ f(\theta,\zeta) & = & \sum_{n=0}^{\texttt{Ntor}} f_{0,n}\cos(-n \, \texttt{Nfp} \, \zeta)"+os.linesep
+                                    +r"\sum_{m=1}^{\texttt{Mpol}}\sum_{n=\texttt{-Ntor}}^{\texttt{Ntor}} f_{m,n}\cos(m\theta-n \, \texttt{Nfp} \, \zeta),"+os.linesep
+                                    +r"\f}"+os.linesep
+                                    +r"Internally these \"double\" summations are written as a \"single\" summation,"+os.linesep
                                     +r"e.g. \f$f(\theta,\zeta) = \sum_j f_j \cos(m_j\theta-n_j\zeta)\f$."]
                                    })
 input_physics_Ntor.setType("int")
@@ -150,7 +152,7 @@ input_physics_Ntor.setDefaultValue(0)
 
 input_physics_Lrad = idf.Variable("Lrad")
 input_physics_Lrad.setDescription({r"Chebyshev resolution in each volume":
-                                   [r"constraint : \c Lrad(1:Mvol) >= 2"]
+                                   [r"constraint: \c Lrad(1:Mvol) >= 2"]
                                    })
 input_physics_Lrad.setType("int")
 input_physics_Lrad.setRank(1)
@@ -159,16 +161,16 @@ input_physics_Lrad.setMaximumIndices([r"MNvol+1"])
 
 input_physics_Lconstraint = idf.Variable("Lconstraint")
 input_physics_Lconstraint.setDescription({r"selects constraints; primarily used in ma02aa() and mp00ac()":
-                                          [ r"if \c Lconstraint=-1, then in the plasma regions \f$\Delta\psi_t\f$, \f$\mu\f$ and \f$\Delta \psi_p\f$ are *not* varied"+"\n"
+                                          [ r"if \c Lconstraint=-1, then in the plasma regions \f$\Delta\psi_t\f$, \f$\mu\f$ and \f$\Delta \psi_p\f$ are *not* varied"+os.linesep
                                            +r"and in the vacuum region (only for free-boundary) \f$\Delta\psi_t\f$ and \f$\Delta \psi_p\f$ are *not* varied, and \f$\mu = 0\f$",
-                                            r"if \c Lconstraint=0, then in the plasma regions \f$\Delta\psi_t\f$, \f$\mu\f$ and \f$\Delta \psi_p\f$ are *not* varied"+"\n"
-                                           +r"and in the vacuum region (only for free-boundary) \f$\Delta\psi_t\f$ and \f$\Delta \psi_p\f$ are varied to match the"+"\n"
+                                            r"if \c Lconstraint=0, then in the plasma regions \f$\Delta\psi_t\f$, \f$\mu\f$ and \f$\Delta \psi_p\f$ are *not* varied"+os.linesep
+                                           +r"and in the vacuum region (only for free-boundary) \f$\Delta\psi_t\f$ and \f$\Delta \psi_p\f$ are varied to match the"+os.linesep
                                            +r"prescribed plasma current, \c curtor, and the \"linking\" current, \c curpol, and \f$\mu = 0\f$",
-                                            r"if \c Lconstraint=1, then in the plasma regions \f$\mu\f$ and \f$\Delta\psi_p\f$ are adjusted"+"\n"
-                                           +r"in order to satisfy the inner and outer interface transform constraints"+"\n"
-                                           +r"(except in the simple torus, where the enclosed poloidal flux is irrelevant,"+"\n"
-                                           +r"and only \f$\mu\f$ is varied to satisfy the outer interface transform constraint);"+"\n"
-                                           +r"and in the vacuum region \f$\Delta\psi_t\f$ and \f$\Delta \psi_p\f$ are varied to match the transform constraint on the boundary"+"\n"
+                                            r"if \c Lconstraint=1, then in the plasma regions \f$\mu\f$ and \f$\Delta\psi_p\f$ are adjusted"+os.linesep
+                                           +r"in order to satisfy the inner and outer interface transform constraints"+os.linesep
+                                           +r"(except in the simple torus, where the enclosed poloidal flux is irrelevant,"+os.linesep
+                                           +r"and only \f$\mu\f$ is varied to satisfy the outer interface transform constraint);"+os.linesep
+                                           +r"and in the vacuum region \f$\Delta\psi_t\f$ and \f$\Delta \psi_p\f$ are varied to match the transform constraint on the boundary"+os.linesep
                                            +r"and to obtain the prescribed linking current, \c curpol, and \f$\mu = 0\f$",
                                             r"\todo if \c Lconstraint=2, under reconstruction"]
                                           })
@@ -179,7 +181,7 @@ input_physics_tflux = idf.Variable("tflux")
 input_physics_tflux.setDescription({r"toroidal flux, \f$\psi_t\f$, enclosed by each interface":
                                     [ r"For each of the plasma volumes, this is a constraint: \c tflux is *not* varied",
                                       r"For the vacuum region (only if \c Lfreebound==1), \c tflux  may be allowed to vary to match constraints",
-                                      r"Note that \c tflux  will be normalized so that \c tflux(Nvol) = 1.0,"+"\n"
+                                      r"Note that \c tflux  will be normalized so that \c tflux(Nvol) = 1.0,"+os.linesep
                                      +r"so that \c tflux  is arbitrary up to a scale factor",
                                       r"\sa phiedge"]
                                     })
@@ -213,7 +215,7 @@ input_physics_pscale.setDefaultValue(0.0) #TODO maybe this should be 1.0?
 
 input_physics_pressure = idf.Variable("pressure")
 input_physics_pressure.setDescription({r"pressure in each volume":
-                                       [ r"The pressure is *not* held constant, but \f$p_l V_l^\gamma = P_l\f$ *is* held constant,"+"\n"
+                                       [ r"The pressure is *not* held constant, but \f$p_l V_l^\gamma = P_l\f$ *is* held constant,"+os.linesep
                                         +r"where \f$P_l\f$ is determined by the initial pressures and the initial volumes, \f$V_l\f$.",
                                          r"Note that if \c gamma==0.0, then \f$p_l \equiv P_l\f$.",
                                          r"On output, the pressure is given by \f$p_l = P_l/V_l^\gamma\f$, where \f$V_l\f$ is the final volume.",
@@ -251,8 +253,8 @@ input_physics_mu.setDefaultValue(0.0)
 input_physics_mu.setMaximumIndices([r"MNvol+1"])
 
 input_physics_Ivolume = idf.Variable("Ivolume")
-input_physics_Ivolume.setDescription( r"Toroidal current constraint normalized by \f$\mu_0\f$ (\f$I_{volume} = \mu_0\cdot [A]\f$), in each volume. "+"\n"
-                                     +r"This is a cumulative quantity: \f$I_{\mathcal{V},i} = \int_0^{\psi_{t,i}} \mathbf{J}\cdot\mathbf{dS}\f$. "+"\n"
+input_physics_Ivolume.setDescription( r"Toroidal current constraint normalized by \f$\mu_0\f$ (\f$I_{volume} = \mu_0\cdot [A]\f$), in each volume. "+os.linesep
+                                     +r"This is a cumulative quantity: \f$I_{\mathcal{V},i} = \int_0^{\psi_{t,i}} \mathbf{J}\cdot\mathbf{dS}\f$. "+os.linesep
                                      +r"Physically, it represents the sum of all non-pressure driven currents.")
 input_physics_Ivolume.setType("double")
 input_physics_Ivolume.setRank(1)
@@ -267,8 +269,8 @@ input_physics_Isurf.setDefaultValue(0.0)
 input_physics_Isurf.setMaximumIndices([r"MNvol+1"])
 
 input_physics_pl = idf.Variable("pl")
-input_physics_pl.setDescription( r"\"inside\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+"\n"
-                                +r"where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2 \f$."+"\n"
+input_physics_pl.setDescription( r"\"inside\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+os.linesep
+                                +r"where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2 \f$."+os.linesep
                                 +r"If both \f$q_l = 0\f$ *and* \f$q_r = 0\f$, then the (inside) interface rotational-transform is defined by \c iota .")
 input_physics_pl.setType("int")
 input_physics_pl.setRank(1)
@@ -277,8 +279,8 @@ input_physics_pl.setStartingIndices([r"0"])
 input_physics_pl.setMaximumIndices([r"MNvol"])
 
 input_physics_ql = idf.Variable("ql")
-input_physics_ql.setDescription( r"\"inside\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+"\n"
-                                +r"where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2 \f$."+"\n"
+input_physics_ql.setDescription( r"\"inside\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+os.linesep
+                                +r"where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2 \f$."+os.linesep
                                 +r"If both \f$q_l = 0\f$ *and* \f$q_r = 0\f$, then the (inside) interface rotational-transform is defined by \c iota .")
 input_physics_ql.setType("int")
 input_physics_ql.setRank(1)
@@ -287,8 +289,8 @@ input_physics_ql.setStartingIndices([r"0"])
 input_physics_ql.setMaximumIndices([r"MNvol"])
 
 input_physics_pr = idf.Variable("pr")
-input_physics_pr.setDescription( r"\"inside\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+"\n"
-                                +r"where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2 \f$."+"\n"
+input_physics_pr.setDescription( r"\"inside\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+os.linesep
+                                +r"where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2 \f$."+os.linesep
                                 +r"If both \f$q_l = 0\f$ *and* \f$q_r = 0\f$, then the (inside) interface rotational-transform is defined by \c iota .")
 input_physics_pr.setType("int")
 input_physics_pr.setRank(1)
@@ -297,8 +299,8 @@ input_physics_pr.setStartingIndices([r"0"])
 input_physics_pr.setMaximumIndices([r"MNvol"])
 
 input_physics_qr = idf.Variable("qr")
-input_physics_qr.setDescription( r"\"inside\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+"\n"
-                                +r"where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2 \f$."+"\n"
+input_physics_qr.setDescription( r"\"inside\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+os.linesep
+                                +r"where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2 \f$."+os.linesep
                                 +r"If both \f$q_l = 0\f$ *and* \f$q_r = 0\f$, then the (inside) interface rotational-transform is defined by \c iota .")
 input_physics_qr.setType("int")
 input_physics_qr.setRank(1)
@@ -317,8 +319,8 @@ input_physics_iota.setStartingIndices([r"0"])
 input_physics_iota.setMaximumIndices([r"MNvol"])
 
 input_physics_lp = idf.Variable("lp")
-input_physics_lp.setDescription( r"\"outer\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+"\n"
-                                +r"where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2\f$."+"\n"
+input_physics_lp.setDescription( r"\"outer\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+os.linesep
+                                +r"where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2\f$."+os.linesep
                                 +r"If both \f$q_l = 0\f$ *and* \f$q_r = 0\f$, then the (outer) interface rotational-transform is defined by \c oita .")
 input_physics_lp.setType("int")
 input_physics_lp.setRank(1)
@@ -327,8 +329,8 @@ input_physics_lp.setStartingIndices([r"0"])
 input_physics_lp.setMaximumIndices([r"MNvol"])
 
 input_physics_lq = idf.Variable("lq")
-input_physics_lq.setDescription( r"\"outer\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+"\n"
-                                +r"where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2\f$."+"\n"
+input_physics_lq.setDescription( r"\"outer\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+os.linesep
+                                +r"where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2\f$."+os.linesep
                                 +r"If both \f$q_l = 0\f$ *and* \f$q_r = 0\f$, then the (outer) interface rotational-transform is defined by \c oita .")
 input_physics_lq.setType("int")
 input_physics_lq.setRank(1)
@@ -337,8 +339,8 @@ input_physics_lq.setStartingIndices([r"0"])
 input_physics_lq.setMaximumIndices([r"MNvol"])
 
 input_physics_rp = idf.Variable("rp")
-input_physics_rp.setDescription( r"\"outer\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+"\n"
-                                +r"where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2\f$."+"\n"
+input_physics_rp.setDescription( r"\"outer\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+os.linesep
+                                +r"where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2\f$."+os.linesep
                                 +r"If both \f$q_l = 0\f$ *and* \f$q_r = 0\f$, then the (outer) interface rotational-transform is defined by \c oita .")
 input_physics_rp.setType("int")
 input_physics_rp.setRank(1)
@@ -347,8 +349,8 @@ input_physics_rp.setStartingIndices([r"0"])
 input_physics_rp.setMaximumIndices([r"MNvol"])
 
 input_physics_rq = idf.Variable("rq")
-input_physics_rq.setDescription( r"\"outer\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+"\n"
-                                +r"where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2\f$."+"\n"
+input_physics_rq.setDescription( r"\"outer\" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,"+os.linesep
+                                +r"where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2\f$."+os.linesep
                                 +r"If both \f$q_l = 0\f$ *and* \f$q_r = 0\f$, then the (outer) interface rotational-transform is defined by \c oita .")
 input_physics_rq.setType("int")
 input_physics_rq.setRank(1)
@@ -608,20 +610,20 @@ physicslist.addVariables(vars_physicslist)
 
 input_numeric_Linitialize = idf.Variable("Linitialize")
 input_numeric_Linitialize.setDescription({r"Used to initialize geometry using a regularization / extrapolation method":
-                                           [ r"if \c Linitialize = \f$-I\f$ , where \f$I\f$ is a positive integer,"+"\n"
+                                           [ r"if \c Linitialize = \f$-I\f$ , where \f$I\f$ is a positive integer,"+os.linesep
                                             +r"the geometry of the \f$i=1,N_V-I\f$ surfaces constructed by an extrapolation",
                                              r"if \c Linitialize=0, the geometry of the interior surfaces is provided after the namelists in the input file",
-                                             r"if \c Linitialize=1, the interior surfaces will be intialized as \f$R_{l,m,n} = R_{N,m,n} \psi_{t,l}^{m/2}\f$,"+"\n"
-                                            +r"where \f$R_{N,m,n}\f$ is the plasma boundary and \f$\psi_{t,l}\f$ is the given toroidal flux enclosed by the"+"\n"
-                                            +r"\f$l\f$-th interface, normalized to the total enclosed toroidal flux;"+"\n"
+                                             r"if \c Linitialize=1, the interior surfaces will be intialized as \f$R_{l,m,n} = R_{N,m,n} \psi_{t,l}^{m/2}\f$,"+os.linesep
+                                            +r"where \f$R_{N,m,n}\f$ is the plasma boundary and \f$\psi_{t,l}\f$ is the given toroidal flux enclosed by the"+os.linesep
+                                            +r"\f$l\f$-th interface, normalized to the total enclosed toroidal flux;"+os.linesep
                                             +r"a similar extrapolation is used for \f$Z_{l,m,n}\f$",
-                                             r"Note that the Fourier harmonics of the boundary is *always* given by the \c Rbc and \c Zbs"+"\n"
+                                             r"Note that the Fourier harmonics of the boundary is *always* given by the \c Rbc and \c Zbs"+os.linesep
                                             +r"given in \c physicslist.",
-                                             r"if \c Linitialize=2, the interior surfaces *and the plasma boundary* will be intialized"+"\n"
-                                            +r"as \f$R_{l,m,n} = R_{W,m,n} \psi_{t,l}^{m/2}\f$, where \f$R_{W,m,n}\f$ is the computational boundary"+"\n"
-                                            +r"and \f$\psi_{t,l}\f$ is the given toroidal flux enclosed by the \f$l\f$-th interface, normalized to the total enclosed toroidal flux;"+"\n"
+                                             r"if \c Linitialize=2, the interior surfaces *and the plasma boundary* will be intialized"+os.linesep
+                                            +r"as \f$R_{l,m,n} = R_{W,m,n} \psi_{t,l}^{m/2}\f$, where \f$R_{W,m,n}\f$ is the computational boundary"+os.linesep
+                                            +r"and \f$\psi_{t,l}\f$ is the given toroidal flux enclosed by the \f$l\f$-th interface, normalized to the total enclosed toroidal flux;"+os.linesep
                                             +r"a similar extrapolation is used for \f$Z_{l,m,n}\f$",
-                                             r"Note that, for free-boundary calculations, the Fourier harmonics of the computational boundary"+"\n"
+                                             r"Note that, for free-boundary calculations, the Fourier harmonics of the computational boundary"+os.linesep
                                             +r"are *always* given by the \c Rwc and \c Zws given in \c physicslist.",
                                              r"if \c Linitialize=1,2 , it is not required to provide the geometry of the interfaces after the namelists"]
                                           })
@@ -652,7 +654,7 @@ input_numeric_Ndiscrete.setDefaultValue(2)
 
 input_numeric_Nquad = idf.Variable("Nquad")
 input_numeric_Nquad.setDescription({r"Resolution of the Gaussian quadrature":
-                                    [ r"The resolution of the Gaussian quadrature, \f$\displaystyle \int \!\! f(s) ds = \sum_k \omega_k f(s_k)\f$,"+"\n"
+                                    [ r"The resolution of the Gaussian quadrature, \f$\displaystyle \int \!\! f(s) ds = \sum_k \omega_k f(s_k)\f$,"+os.linesep
                                      +r"in each volume is given by \c Iquad\f$_v\f$",
                                       r"\c Iquad\f$_v\f$ is set in preset()"]
                                     })
@@ -661,7 +663,7 @@ input_numeric_Nquad.setDefaultValue(-1)
 
 input_numeric_iMpol = idf.Variable("iMpol")
 input_numeric_iMpol.setDescription({r"Fourier resolution of straight-fieldline angle on interfaces":
-                                    [ r"the rotational-transform on the interfaces is determined by a transformation to the straight-fieldline angle,"+"\n"
+                                    [ r"the rotational-transform on the interfaces is determined by a transformation to the straight-fieldline angle,"+os.linesep
                                      +r"with poloidal resolution given by \c iMpol",
                                       r"if \c iMpol<=0, then \c iMpol = Mpol - iMpol"]
                                     })
@@ -670,7 +672,7 @@ input_numeric_iMpol.setDefaultValue(-4)
 
 input_numeric_iNtor = idf.Variable("iNtor")
 input_numeric_iNtor.setDescription({r"Fourier resolution of straight-fieldline angle on interfaces":
-                                    [ r"the rotational-transform on the interfaces is determined by a transformation to the straight-fieldline angle,"+"\n"
+                                    [ r"the rotational-transform on the interfaces is determined by a transformation to the straight-fieldline angle,"+os.linesep
                                      +r"with toroidal resolution given by \c iNtor",
                                       r"if \c iNtor<=0 then \c iNtor = Ntor - iNtor",
                                       r"if \c Ntor=0, then the toroidal resolution of the angle transformation is set \c lNtor=0"]
@@ -680,11 +682,11 @@ input_numeric_iNtor.setDefaultValue(-4)
 
 input_numeric_Lsparse = idf.Variable("Lsparse")
 input_numeric_Lsparse.setDescription({r"controls method used to solve for rotational-transform on interfaces":
-                                      [ r"if \c Lsparse=0, the transformation to the straight-fieldline angle is computed in Fourier space"+"\n"
+                                      [ r"if \c Lsparse=0, the transformation to the straight-fieldline angle is computed in Fourier space"+os.linesep
                                        +r"using a dense matrix solver, \c F04AAF",
-                                        r"if \c Lsparse=1, the transformation to the straight-fieldline angle is computed in real space"+"\n"
+                                        r"if \c Lsparse=1, the transformation to the straight-fieldline angle is computed in real space"+os.linesep
                                        +r"using a dense matrix solver, \c F04ATF",
-                                        r"if \c Lsparse=2, the transformation to the straight-fieldline angle is computed in real space"+"\n"
+                                        r"if \c Lsparse=2, the transformation to the straight-fieldline angle is computed in real space"+os.linesep
                                        +r"using a sparse matrix solver, \c F11DEF",
                                         r"if \c Lsparse=3, the different methods for constructing the straight-fieldline angle are compared"]
                                       })
@@ -701,7 +703,7 @@ input_numeric_Lsvdiota.setType("int")
 input_numeric_Lsvdiota.setDefaultValue(0)
 
 input_numeric_imethod = idf.Variable("imethod")
-input_numeric_imethod.setDescription({ r"controls iterative solution to sparse matrix"+"\n"
+input_numeric_imethod.setDescription({ r"controls iterative solution to sparse matrix"+os.linesep
                                       +r"arising in real-space transformation to the straight-fieldline angle":
                                        [r"if \c imethod=1, the method is \c RGMRES",
                                         r"if \c imethod=2, the method is \c CGS",
@@ -723,7 +725,7 @@ input_numeric_iorder.setType("int")
 input_numeric_iorder.setDefaultValue(2)
 
 input_numeric_iprecon = idf.Variable("iprecon")
-input_numeric_iprecon.setDescription({ r"controls iterative solution to sparse matrix arising in real-space transformation"+"\n"
+input_numeric_iprecon.setDescription({ r"controls iterative solution to sparse matrix arising in real-space transformation"+os.linesep
                                       +r"to the straight-fieldline angle":
                                        [r"if \c iprecon=0, the preconditioner is `N'",
                                         r"if \c iprecon=1, the preconditioner is `J'",
@@ -760,7 +762,7 @@ input_numeric_Lrzaxis.setType("int")
 input_numeric_Lrzaxis.setDefaultValue(1)
 
 input_numeric_Ntoraxis = idf.Variable("Ntoraxis")
-input_numeric_Ntoraxis.setDescription( r"the number of \f$n\f$ harmonics used in the Jacobian \f$m=1\f$ harmonic elimination method;"+"\n"
+input_numeric_Ntoraxis.setDescription( r"the number of \f$n\f$ harmonics used in the Jacobian \f$m=1\f$ harmonic elimination method;"+os.linesep
                                       +r"only relevant if \c Lrzaxis.ge.1 .")
 input_numeric_Ntoraxis.setType("int")
 input_numeric_Ntoraxis.setDefaultValue(3)
@@ -793,21 +795,21 @@ numericlist.addVariables(vars_numericlist)
 
 input_local_LBeltrami = idf.Variable("LBeltrami")
 input_local_LBeltrami.setDescription({r"Control flag for solution of Beltrami equation":
-                                      [ r"if \c LBeltrami = 1,3,5 or 7, (SQP) then the Beltrami field in each volume is constructed"+"\n"
-                                       +r"by minimizing the magnetic energy with the constraint of fixed helicity;"+"\n"
-                                       +r"this is achieved by using sequential quadratic programming as provided by \c E04UFF ."+"\n"
-                                       +r"This approach has the benefit (in theory) of robustly constructing minimum energy solutions"+"\n"
+                                      [ r"if \c LBeltrami = 1,3,5 or 7, (SQP) then the Beltrami field in each volume is constructed"+os.linesep
+                                       +r"by minimizing the magnetic energy with the constraint of fixed helicity;"+os.linesep
+                                       +r"this is achieved by using sequential quadratic programming as provided by \c E04UFF ."+os.linesep
+                                       +r"This approach has the benefit (in theory) of robustly constructing minimum energy solutions"+os.linesep
                                        +r"when multiple, i.e. bifurcated, solutions exist.",
-                                        r"if \c LBeltrami = 2,3,6 or 7, (Newton) then the Beltrami fields are constructed by employing a standard Newton method"+"\n"
-                                       +r"for locating an extremum of"+"\n"
-                                       +r"\f$F\equiv \int B^2 dv - \mu (\int {\bf A}\cdot{\bf B}dv-{\cal K})\f$,"+"\n"
-                                       +r"where \f$\mu\f$ is treated as an independent degree of freedom similar to the parameters describing the vector potential"+"\n"
-                                       +r"and \f${\cal K}\f$ is the required value of the helicity;"+"\n"
-                                       +r"this is the standard Lagrange multipler approach for locating the constrained minimum;"+"\n"
+                                        r"if \c LBeltrami = 2,3,6 or 7, (Newton) then the Beltrami fields are constructed by employing a standard Newton method"+os.linesep
+                                       +r"for locating an extremum of"+os.linesep
+                                       +r"\f$F\equiv \int B^2 dv - \mu (\int {\bf A}\cdot{\bf B}dv-{\cal K})\f$,"+os.linesep
+                                       +r"where \f$\mu\f$ is treated as an independent degree of freedom similar to the parameters describing the vector potential"+os.linesep
+                                       +r"and \f${\cal K}\f$ is the required value of the helicity;"+os.linesep
+                                       +r"this is the standard Lagrange multipler approach for locating the constrained minimum;"+os.linesep
                                        +r"this method cannot distinguish saddle-type extrema from minima, and which solution that will be obtained depends on the initial guess",
-                                        r"if \c LBeltrami = 4,5,6 or 7, (linear) it is assumed that the Beltrami fields are parameterized by \f$\mu\f$;"+"\n"
-                                       +r"in this case, it is only required to solve \f$\nabla \times {\bf B} = \mu {\bf B}\f$ which reduces to a system of linear equations;"+"\n"
-                                       +r"\f$\mu\f$ may or may not be adjusted iteratively, depending on \c Lconstraint,"+"\n"
+                                        r"if \c LBeltrami = 4,5,6 or 7, (linear) it is assumed that the Beltrami fields are parameterized by \f$\mu\f$;"+os.linesep
+                                       +r"in this case, it is only required to solve \f$\nabla \times {\bf B} = \mu {\bf B}\f$ which reduces to a system of linear equations;"+os.linesep
+                                       +r"\f$\mu\f$ may or may not be adjusted iteratively, depending on \c Lconstraint,"+os.linesep
                                        +r"to satisfy either rotational-transform or helicity constraints",
                                        {r"for flexibility and comparison, each of the above methods can be employed; for example:":
                                         [r"if \c LBeltrami=1 , only the SQP    method will be employed",
@@ -824,7 +826,7 @@ input_local_LBeltrami.setDefaultValue(4)
 
 input_local_Linitgues = idf.Variable("Linitgues")
 input_local_Linitgues.setDescription({r"controls how initial guess for Beltrami field is constructed":
-                                      [ r"only relevant for routines that require an initial guess for the Beltrami fields, such as the SQP and Newton methods,"+"\n"
+                                      [ r"only relevant for routines that require an initial guess for the Beltrami fields, such as the SQP and Newton methods,"+os.linesep
                                        +r"or the sparse linear solver",
                                         r"if \c Linitgues=0, the initial guess for the Beltrami field is trivial",
                                         r"if \c Linitgues=1, the initial guess for the Beltrami field is an integrable approximation",
@@ -878,7 +880,7 @@ vars_locallist = [
 
 locallist = idf.Namelist("locallist")
 locallist.setDescription({r"The namelist \c locallist controls the construction of the Beltrami fields in each volume.":
-                          [ r"The transformation to straight-fieldline coordinates is singular when the rotational-transform of the interfaces is rational;"+"\n"
+                          [ r"The transformation to straight-fieldline coordinates is singular when the rotational-transform of the interfaces is rational;"+os.linesep
                            +r"however, the rotational-transform is still well defined."]
                           })
 locallist.addVariables(vars_locallist)
@@ -889,7 +891,7 @@ locallist.addVariables(vars_locallist)
 
 input_global_Lfindzero = idf.Variable("Lfindzero")
 input_global_Lfindzero.setDescription({r"use Newton methods to find zero of force-balance, which is computed by dforce()":
-                                       [ r"if \c Lfindzero=0 , then dforce() is called once"+"\n"
+                                       [ r"if \c Lfindzero=0 , then dforce() is called once"+os.linesep
                                         +r"to compute the Beltrami fields consistent with the given geometry and constraints",
                                          r"if \c Lfindzero=1 , then call \c C05NDF (uses   function values only), which iteratively calls dforce()",
                                          r"if \c Lfindzero=2 , then call \c C05PDF (uses derivative information), which iteratively calls dforce()"]
@@ -916,7 +918,7 @@ input_global_opsilon.setDefaultValue(1.0)
 input_global_pcondense = idf.Variable("pcondense")
 input_global_pcondense.setDescription({r"spectral condensation parameter":
                                        [ r"used in preset() to define \c mmpp(i) \f$\equiv m_i^p\f$, where \f$p\equiv \f$ \c pcondense",
-                                         r"the angle freedom is exploited to minimize \f$\displaystyle \texttt{epsilon} \sum_{i} m_i^p (R_{i}^2+Z_{i}^2)\f$"+"\n"
+                                         r"the angle freedom is exploited to minimize \f$\displaystyle \texttt{epsilon} \sum_{i} m_i^p (R_{i}^2+Z_{i}^2)\f$"+os.linesep
                                         +r"with respect to tangential variations in the interface geometry",
                                          r"\sa Eqn.\f$(\ref{eq:spectralbalancemn_global})\f$"]
                                        })
@@ -944,11 +946,11 @@ input_global_upsilon.setDefaultValue(1.0)
 
 input_global_forcetol = idf.Variable("forcetol")
 input_global_forcetol.setDescription({r"required tolerance in force-balance error; only used as an initial check":
-                                      [ r"if the initially supplied interfaces are consistent with force-balance to within \c forcetol"+"\n"
+                                      [ r"if the initially supplied interfaces are consistent with force-balance to within \c forcetol"+os.linesep
                                        +r"then the geometry of the interfaces is not altered",
-                                        r"if not, then the geometry of the interfaces is changed in order to bring the configuration into force balance"+"\n"
+                                        r"if not, then the geometry of the interfaces is changed in order to bring the configuration into force balance"+os.linesep
                                        +r"so that the geometry of interfaces is within \c c05xtol, defined below, of the true solution",
-                                        r"to force execution of either \c C05NDF or \c C05PDF, regardless of the initial force imbalance,"+"\n"
+                                        r"to force execution of either \c C05NDF or \c C05PDF, regardless of the initial force imbalance,"+os.linesep
                                        +r"set \c forcetol<0"]
                                       })
 input_global_forcetol.setType("double")
@@ -1011,10 +1013,10 @@ input_global_gBntol.setDefaultValue(1.0e-6)
 
 input_global_gBnbld = idf.Variable("gBnbld")
 input_global_gBnbld.setDescription({r"normal blend":
-                                    [ r"The \"new\" magnetic field at the computational boundary produced by the plasma currents is updated using a Picard scheme:"+"\n"
-                                     +r"\f{eqnarray}{ ({\bf B}\cdot{\bf n})^{j+1} =    \texttt{gBnbld}  \times ({\bf B}\cdot{\bf n})^{j}"+"\n"
-                                     +r"                                          + (1-\texttt{gBnbld}) \times ({\bf B}\cdot{\bf n})^{*},"+"\n"
-                                     +r"\f}"+"\n"
+                                    [ r"The \"new\" magnetic field at the computational boundary produced by the plasma currents is updated using a Picard scheme:"+os.linesep
+                                     +r"\f{eqnarray}{ ({\bf B}\cdot{\bf n})^{j+1} =    \texttt{gBnbld}  \times ({\bf B}\cdot{\bf n})^{j}"+os.linesep
+                                     +r"                                          + (1-\texttt{gBnbld}) \times ({\bf B}\cdot{\bf n})^{*},"+os.linesep
+                                     +r"\f}"+os.linesep
                                      +r"where \f$j\f$ labels free-boundary iterations, and \f$({\bf B}\cdot{\bf n})^{*}\f$ is computed by virtual casing.",
                                       r"only used if \c Lfreebound=1",
                                       r"only used in xspech()"]
@@ -1075,13 +1077,13 @@ vars_globallist = [
 globallist = idf.Namelist("globallist")
 globallist.setDescription({r"The namelist \c globallist controls the search for global force-balance.": None,
                            r"Comments:":
-                           [ r'The "force" vector, \f${\bf F}\f$, which is constructed in dforce(), is a combination of pressure-imbalance Fourier harmonics,'+"\n"
-                            +r"\f{eqnarray}{ F_{i,v} \equiv [[ p+B^2/2 ]]_{i,v} \times \exp\left[-\texttt{escale}(m_i^2+n_i^2) \right] \times \texttt{opsilon},"+"\n"
-                            +r"\label{eq:forcebalancemn_global} \f}"+"\n"
-                            +r'and spectral-condensation constraints, \f$I_{i,v}\f$, and the "star-like" angle constraints, \f$S_{i,v,}\f$, (see lforce() for details)'+"\n"
-                            +r"\f{eqnarray}{ F_{i,v} \equiv \texttt{epsilon} \times I_{i,v}"+"\n"
-                            +r"                           + \texttt{upsilon} \times \left( \psi_v^\omega S_{i,v,1} - \psi_{v+1}^\omega S_{i,v+1,0} \right),"+"\n"
-                            +r"\label{eq:spectralbalancemn_global} \f}"+"\n"
+                           [ r'The "force" vector, \f${\bf F}\f$, which is constructed in dforce(), is a combination of pressure-imbalance Fourier harmonics,'+os.linesep
+                            +r"\f{eqnarray}{ F_{i,v} \equiv [[ p+B^2/2 ]]_{i,v} \times \exp\left[-\texttt{escale}(m_i^2+n_i^2) \right] \times \texttt{opsilon},"+os.linesep
+                            +r"\label{eq:forcebalancemn_global} \f}"+os.linesep
+                            +r'and spectral-condensation constraints, \f$I_{i,v}\f$, and the "star-like" angle constraints, \f$S_{i,v,}\f$, (see lforce() for details)'+os.linesep
+                            +r"\f{eqnarray}{ F_{i,v} \equiv \texttt{epsilon} \times I_{i,v}"+os.linesep
+                            +r"                           + \texttt{upsilon} \times \left( \psi_v^\omega S_{i,v,1} - \psi_{v+1}^\omega S_{i,v+1,0} \right),"+os.linesep
+                            +r"\label{eq:spectralbalancemn_global} \f}"+os.linesep
                             +r"where \f$\psi_v\equiv\f$ normalized toroidal flux, \c tflux, and \f$\omega\equiv\f$ \c wpoloidal."]
                            })
 globallist.addVariables(vars_globallist)
@@ -1116,7 +1118,7 @@ input_diagnostics_epsr.setType("double")
 input_diagnostics_epsr.setDefaultValue(1.0e-8)
 
 input_diagnostics_nPpts = idf.Variable("nPpts")
-input_diagnostics_nPpts.setDescription({ r"number of toroidal transits used (per trajectory) in following field lines"+"\n"
+input_diagnostics_nPpts.setDescription({ r"number of toroidal transits used (per trajectory) in following field lines"+os.linesep
                                         +r"for constructing Poincaré plots":
                                          [r"if \c nPpts<1, no Poincaré plot is constructed"]
                                          })
@@ -1130,7 +1132,7 @@ input_diagnostics_Ppts.setDefaultValue(0.0)
 
 input_diagnostics_nPtrj = idf.Variable("nPtrj")
 input_diagnostics_nPtrj.setDescription({r"number of trajectories in each annulus to be followed in constructing Poincaré plot":
-                                        [ r"if \c nPtrj(l)<0, then \c nPtrj(l) = Ni(l),"+"\n"
+                                        [ r"if \c nPtrj(l)<0, then \c nPtrj(l) = Ni(l),"+os.linesep
                                          +r"where \c Ni(l) is the grid resolution used to construct the Beltrami field in volume \f$l\f$"]
                                         })
 input_diagnostics_nPtrj.setType("int")
@@ -1187,27 +1189,27 @@ input_diagnostics_Lcheck = idf.Variable("Lcheck")
 input_diagnostics_Lcheck.setDescription({r"implement various checks":
                                          [ r"if \c Lcheck = 0, no additional check on the calculation is performed",
                                            r"if \c Lcheck = 1, the error in the current, i.e. \f$\nabla\times{\bf B}-\mu{\bf B}\f$ is computed as a post-diagnostic",
-                                          {r"if \c Lcheck = 2, the analytic derivatives of the interface transform w.r.t."+"\n"
+                                          {r"if \c Lcheck = 2, the analytic derivatives of the interface transform w.r.t."+os.linesep
                                           +r"the helicity multiplier, \f$\mu\f$, and the enclosed poloidal flux, \f$\Delta\psi_p\f$, are compared to a finite-difference estimate":
                                           [ r"only if \c Lconstraint=1",
                                             r"only for \c dspec executable, i.e. must compile with \c DFLAGS=\"-D DEBUG\""]},
-                                          {r"if \c Lcheck = 3, the analytic derivatives of the volume w.r.t. interface Fourier harmonic"+"\n"
+                                          {r"if \c Lcheck = 3, the analytic derivatives of the volume w.r.t. interface Fourier harmonic"+os.linesep
                                           +r"is compared to a finite-difference estimate":
                                           [ r"must set \c Lfindzero=2",
-                                            r"set \c forcetol sufficiently small and set \c LreadGF=F,"+"\n"
+                                            r"set \c forcetol sufficiently small and set \c LreadGF=F,"+os.linesep
                                            +r"so that the matrix of second derivatives is calculated",
                                             r"only for \c dspec executable, i.e. must compile with \c DFLAGS=\"-D DEBUG\""]},
-                                          {r"if \c Lcheck = 4, the analytic calculation of the derivatives of the magnetic field, \f$B^2\f$, at the interfaces"+"\n"
+                                          {r"if \c Lcheck = 4, the analytic calculation of the derivatives of the magnetic field, \f$B^2\f$, at the interfaces"+os.linesep
                                           +r"is compared to a finite-difference estimate":
                                           [ r"must set \c Lfindzero=2",
                                             r"set \c forcetol sufficiently small",
                                             r"set \c LreadGF=F",
                                             r"only for \c dspec executable, i.e. must compile with \c DFLAGS=\"-D DEBUG\""]},
-                                           r"if \c Lcheck = 5, the analytic calculation of the matrix of the derivatives of the force imbalance"+"\n"
+                                           r"if \c Lcheck = 5, the analytic calculation of the matrix of the derivatives of the force imbalance"+os.linesep
                                           +r"is compared to a finite-difference estimate",
                                           {r"if \c Lcheck = 6, the virtual casing calculation is compared to \c xdiagno (Lazerson 2013 \cite y2013_lazerson)":
                                            [ r"the input file for \c xdiagno is written by bnorml()",
-                                             r"this provides the Cartesian coordinates on the computational boundary where the virtual casing routine casing()"+"\n"
+                                             r"this provides the Cartesian coordinates on the computational boundary where the virtual casing routine casing()"+os.linesep
                                             +r"computes the magnetic field, with the values of the magnetic field being written to the screen for comparison",
                                              r"must set \c Freebound=1, \c Lfindzero>0, \c mfreeits!=0",
                                              r"\c xdiagno must be executed manually"]}
@@ -1264,13 +1266,180 @@ diagnosticslist.addVariables(vars_diagnosticslist)
 
 
 ###############################################################################
-# output file contents
+# output quantities; typically don't have a default value
 ###############################################################################
 
-# TODO: version
-# TODO: iterations
-# TODO: grid
-# TODO: poincare
+
+version = idf.Variable("version")
+version.setDescription(r"version of SPEC")
+version.setType("int")
+version.setRank(1)
+version.setMaximumIndices(["3"])
+version.setIsParameter(True)
+version.setDefaultValue([3,0,0])
+
+
+iterations_nDcalls = idf.Variable("nDcalls")
+iterations_nDcalls.setDescription(r"number of calls to something (?)")
+iterations_nDcalls.setType("int")
+
+iterations_Energy = idf.Variable("Energy")
+iterations_Energy.setDescription(r"MRxMHD energy in the full plasma")
+iterations_Energy.setType("double")
+
+iterations_ForceErr = idf.Variable("ForceErr")
+iterations_ForceErr.setDescription(r"residual force on the ideal interfaces in the plasma")
+iterations_ForceErr.setType("double")
+
+iterations_iRbc = idf.Variable("iRbc")
+iterations_iRbc.setDescription(r"    stellarator symmetric interface components; R; cosine")
+iterations_iRbc.setType("double")
+iterations_iRbc.setUnit("m")
+iterations_iRbc.setRank(3)
+iterations_iRbc.setStartingIndices([r"-MNtor", r"-MMpol", r"1"])
+iterations_iRbc.setMaximumIndices([r"MNtor", r"MMpol", r"MNvol+1"])
+
+iterations_iZbs = idf.Variable("iZbs")
+iterations_iZbs.setDescription(r"    stellarator symmetric interface components; Z;   sine")
+iterations_iZbs.setType("double")
+iterations_iZbs.setUnit("m")
+iterations_iZbs.setRank(3)
+iterations_iZbs.setStartingIndices([r"-MNtor", r"-MMpol", r"1"])
+iterations_iZbs.setMaximumIndices([r"MNtor", r"MMpol", r"MNvol+1"])
+
+iterations_iRbs = idf.Variable("iRbs")
+iterations_iRbs.setDescription(r"non-stellarator symmetric interface components; R;   sine")
+iterations_iRbs.setType("double")
+iterations_iRbs.setUnit("m")
+iterations_iRbs.setRank(3)
+iterations_iRbs.setStartingIndices([r"-MNtor", r"-MMpol", r"1"])
+iterations_iRbs.setMaximumIndices([r"MNtor", r"MMpol", r"MNvol+1"])
+
+iterations_iZbc = idf.Variable("iZbc")
+iterations_iZbc.setDescription(r"non-stellarator symmetric interface components; Z; cosine")
+iterations_iZbc.setType("double")
+iterations_iZbc.setUnit("m")
+iterations_iZbc.setRank(3)
+iterations_iZbc.setStartingIndices([r"-MNtor", r"-MMpol", r"1"])
+iterations_iZbc.setMaximumIndices([r"MNtor", r"MMpol", r"MNvol+1"])
+
+# this one is a little bit special:
+# 1-dim array of a compound datatype, unlimited length (to allow convergence until eternity)
+iterations = idf.Variable("iterations")
+iterations.setDescription(r"convergence log of force, energy and interface geometry")
+iterations.setType([iterations_nDcalls, iterations_Energy, iterations_ForceErr,
+                    iterations_iRbc, iterations_iZbs, iterations_iRbs, iterations_iZbc])
+iterations.setRank(1)
+iterations.setMaximumIndices(["UNLIMITED"])
+
+
+grid_Rij = idf.Variable("Rij")
+grid_Rij.setDescription(r"R positions at which the magnetic field is evaluated")
+grid_Rij.setType("double")
+grid_Rij.setUnit("m")
+grid_Rij.setRank(3)
+grid_Rij.setMaximumIndices([r"Mvol", r"Ngrid_local", r"Ntz"])
+
+grid_Zij = idf.Variable("Zij")
+grid_Zij.setDescription(r"Z positions at which the magnetic field is evaluated")
+grid_Zij.setType("double")
+grid_Zij.setUnit("m")
+grid_Zij.setRank(3)
+grid_Zij.setMaximumIndices([r"Mvol", r"Ngrid_local", r"Ntz"])
+
+grid_sg = idf.Variable("sg")
+grid_sg.setDescription(r"jacobian at positions at which the magnetic field is evaluated")
+grid_sg.setType("double")
+grid_sg.setRank(3)
+grid_sg.setMaximumIndices([r"Mvol", r"Ngrid_local", r"Ntz"])
+
+grid_BR = idf.Variable("BR")
+grid_BR.setDescription(r"cylindrical R component of magnetic field")
+grid_BR.setType("double")
+grid_BR.setUnit("T")
+grid_BR.setRank(3)
+grid_BR.setMaximumIndices([r"Mvol", r"Ngrid_local", r"Ntz"])
+
+grid_Bp = idf.Variable("Bp")
+grid_Bp.setDescription(r"cylindrical phi component of magnetic field")
+grid_Bp.setType("double")
+grid_Bp.setUnit("T")
+grid_Bp.setRank(3)
+grid_Bp.setMaximumIndices([r"Mvol", r"Ngrid_local", r"Ntz"])
+
+grid_BZ = idf.Variable("BZ")
+grid_BZ.setDescription(r"Z component of magnetic field")
+grid_BZ.setType("double")
+grid_BZ.setUnit("T")
+grid_BZ.setRank(3)
+grid_BZ.setMaximumIndices([r"Mvol", r"Ngrid_local", r"Ntz"])
+
+# grid group
+vars_grid = [grid_Rij,
+        grid_Zij,
+        grid_sg,
+        grid_BR,
+        grid_Bp,
+        grid_BZ]
+
+
+poincare_t = idf.Variable("t")
+poincare_t.setDescription(r"theta positions of field-line tracing result")
+poincare_t.setType("double")
+poincare_t.setRank(3)
+poincare_t.setMaximumIndices([r"Nz", r"nPpts", r"numTrajTotal"])
+
+poincare_s = idf.Variable("s")
+poincare_s.setDescription(r"s positions of field-line tracing result")
+poincare_s.setType("double")
+poincare_s.setRank(3)
+poincare_s.setMaximumIndices([r"Nz", r"nPpts", r"numTrajTotal"])
+
+poincare_R = idf.Variable("R")
+poincare_R.setDescription(r"R positions of field-line tracing result")
+poincare_R.setType("double")
+poincare_R.setUnit("m")
+poincare_R.setRank(3)
+poincare_R.setMaximumIndices([r"Nz", r"nPpts", r"numTrajTotal"])
+
+poincare_Z = idf.Variable("Z")
+poincare_Z.setDescription(r"Z positions of field-line tracing result")
+poincare_Z.setType("double")
+poincare_Z.setUnit("m")
+poincare_Z.setRank(3)
+poincare_Z.setMaximumIndices([r"Nz", r"nPpts", r"numTrajTotal"])
+
+poincare_success = idf.Variable("success")
+poincare_success.setDescription(r"flag to indicate if a given trajectory was successfully followed")
+poincare_success.setType("boolean")
+poincare_success.setRank(1)
+poincare_success.setMaximumIndices([r"numTrajTotal"])
+
+poincare_diotadxup = idf.Variable("diotadxup")
+poincare_diotadxup.setDescription(r"measured rotational transform on inner/outer interfaces for each volume; d(transform)/dx")
+poincare_diotadxup.setType("double")
+poincare_diotadxup.setRank(2)
+poincare_diotadxup.setMaximumIndices([r"2", r"Mvol"])
+
+poincare_fiota = idf.Variable("fiota")
+poincare_fiota.setDescription(r"rotational transform from field-line tracing")
+poincare_fiota.setType("double")
+poincare_fiota.setRank(2)
+poincare_fiota.setMaximumIndices([r"numTrajTotal", r"2"])
+
+vars_poincare = [poincare_t,
+                 poincare_s,
+                 poincare_R,
+                 poincare_Z,
+                 poincare_success,
+                 poincare_diotadxup,
+                 poincare_fiota]
+
+
+
+
+
+
 # TODO: vector_potential
 # TODO: output
 
@@ -1318,9 +1487,9 @@ diagnosticslist.addVariables(vars_diagnosticslist)
 
 # # parameters: maximum array dimensions
 # for param in params_maxDims:
-#     module_inputlist += declareVariable(param, refDeclLength=maxLength)+"\n"
+#     module_inputlist += declareVariable(param, refDeclLength=maxLength)+os.linesep
 
-# module_inputlist += "\n"
+# module_inputlist += os.linesep
 
 # # input idf.Variables, i.e. namelist contents
 # module_inputlist += r"""!> \addtogroup grp_global_physicslist physicslist
@@ -1328,34 +1497,34 @@ diagnosticslist.addVariables(vars_diagnosticslist)
 # !> @{
 # """
 # for var in physicslist.idf.Variables:
-#     module_inputlist += declareVariable(var, refDeclLength=maxLength)+"\n"
+#     module_inputlist += declareVariable(var, refDeclLength=maxLength)+os.linesep
 # module_inputlist += "!> @}\n"
 
 
 # for var in numericlist.idf.Variables:
-#     module_inputlist += declareVariable(var, refDeclLength=maxLength)+"\n"
-# module_inputlist += "\n"
+#     module_inputlist += declareVariable(var, refDeclLength=maxLength)+os.linesep
+# module_inputlist += os.linesep
 # for var in locallist.idf.Variables:
-#     module_inputlist += declareVariable(var, refDeclLength=maxLength)+"\n"
-# module_inputlist += "\n"
+#     module_inputlist += declareVariable(var, refDeclLength=maxLength)+os.linesep
+# module_inputlist += os.linesep
 # for var in globallist.idf.Variables:
-#     module_inputlist += declareVariable(var, refDeclLength=maxLength)+"\n"
-# module_inputlist += "\n"
+#     module_inputlist += declareVariable(var, refDeclLength=maxLength)+os.linesep
+# module_inputlist += os.linesep
 # for var in diagnosticslist.idf.Variables:
-#     module_inputlist += declareVariable(var, refDeclLength=maxLength)+"\n"
+#     module_inputlist += declareVariable(var, refDeclLength=maxLength)+os.linesep
 
-# module_inputlist += "\n"
+# module_inputlist += os.linesep
 
 # # namelist declarations
-# module_inputlist += declareNamelist(physicslist)+"\n"
-# module_inputlist += "\n"
-# module_inputlist += declareNamelist(numericlist)+"\n"
-# module_inputlist += "\n"
-# module_inputlist += declareNamelist(locallist)+"\n"
-# module_inputlist += "\n"
-# module_inputlist += declareNamelist(globallist)+"\n"
-# module_inputlist += "\n"
-# module_inputlist += declareNamelist(diagnosticslist)+"\n"
+# module_inputlist += declareNamelist(physicslist)+os.linesep
+# module_inputlist += os.linesep
+# module_inputlist += declareNamelist(numericlist)+os.linesep
+# module_inputlist += os.linesep
+# module_inputlist += declareNamelist(locallist)+os.linesep
+# module_inputlist += os.linesep
+# module_inputlist += declareNamelist(globallist)+os.linesep
+# module_inputlist += os.linesep
+# module_inputlist += declareNamelist(diagnosticslist)+os.linesep
 
 # with open("../inplst.f90", "w") as f:
     
