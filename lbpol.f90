@@ -35,14 +35,15 @@ subroutine lbpol(lvol, Bt00, ideriv, iocons)
   INTEGER, intent(in)    :: lvol        !< Volume index. \f$\text{lvol}\in\{1,\ldots,\text{Mvol}\} \f$
   INTEGER, intent(in)    :: iocons      !< \f$B_{\theta,e,0,0}\f$ is evaluated on the inner (iocons=0) or outer (iocons=1) volume boundary. \f$\text{iocons}\in\{0,1\} \f$
   REAL,    intent(inout) :: Bt00(1:Mvol, 0:1, -1:2) !< \f$B_{\theta,e,0,0}\f$, with indices Bt00( lvol, iocons, ideriv ).
-  INTEGER, intent(out)   :: Lcurvature  !< Input to coords(). Specify what geometrical quantity is returned.
-  INTEGER, intent(out)   :: ifail       !< Dummy variable used when tfft() is called.
-  REAL,    intent(out)   :: dAt(1:Ntz)  !< Poloidal vector potential \f$ A_\theta \f$, size 1:Ntz. If \f$ideriv\neq 0\f$, derivative of \f$ A_\theta \f$.
-  REAL,    intent(out)   :: dAz(1:Ntz)  !< Toroidal vector potential \f$ A_\phi   \f$, size 1:Ntz. If \f$ideriv\neq 0\f$, derivative of \f$ A_\phi \f$.
-  REAL,    intent(out)   :: Bt(1:Ntz)   !< Poloidal magnetic field \f$ B_\theta \f$, size 1:Ntz. If \f$ideriv\neq 0\f$, derivative of \f$ B_\theta \f$.
-  REAL,    intent(out)   :: Bz(1:Ntz)   !< Toroidal magnetic field \f$ B_\phi \f$, size 1:Ntz. If \f$ideriv\neq 0\f$, derivative of \f$ B_\phi \f$.
-  REAL,    intent(out)   :: dAt0(1:Ntz) !< Poloidal vector potential \f$ A_\theta \f$, size 1:Ntz. Only used if \f$ ideriv=-1 \f$.
-  REAL,    intent(out)   :: dAz0(1:Ntz) !< Toroidal vector potential \f$ A_\phi \f$, size 1:Ntz. Only used if \f$ ideriv=-1 \f$.
+  INTEGER   :: Lcurvature  !< Input to coords(). Specify what geometrical quantity is returned.
+  INTEGER   :: ifail       !< Dummy variable used when tfft() is called.
+  REAL      :: dAt(1:Ntz)  !< Poloidal vector potential \f$ A_\theta \f$, size 1:Ntz. If \f$ideriv\neq 0\f$, derivative of \f$ A_\theta \f$.
+  REAL      :: dAz(1:Ntz)  !< Toroidal vector potential \f$ A_\phi   \f$, size 1:Ntz. If \f$ideriv\neq 0\f$, derivative of \f$ A_\phi \f$.
+  REAL      :: Bt(1:Ntz)   !< Poloidal magnetic field \f$ B_\theta \f$, size 1:Ntz. If \f$ideriv\neq 0\f$, derivative of \f$ B_\theta \f$.
+  REAL      :: Bz(1:Ntz)   !< Toroidal magnetic field \f$ B_\phi \f$, size 1:Ntz. If \f$ideriv\neq 0\f$, derivative of \f$ B_\phi \f$.
+  REAL      :: dAt0(1:Ntz) !< Poloidal vector potential \f$ A_\theta \f$, size 1:Ntz. Only used if \f$ ideriv=-1 \f$.
+  REAL      :: dAz0(1:Ntz) !< Toroidal vector potential \f$ A_\phi \f$, size 1:Ntz. Only used if \f$ ideriv=-1 \f$.
+  REAL      :: lss         !< s-coordinate
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
