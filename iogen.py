@@ -1776,32 +1776,14 @@ def genFortranReadInputlistFromHDF5():
                 "! "+creation_tag+"\n")
         
         f.write("subroutine "+moduleName+"(filename)\n")
+        f.write("  use hdf5\n")
         f.write("  use inputlist\n")
         f.write("  use allglobal, only: version\n")
         f.write("  implicit none\n")
         f.write("  character, intent(in) :: filename*255\n")
+        f.write("  int(hid_t) :: file_id\n")
         
-        f.write(str(Fortran.readHdf5Group("input", input_namelists))+"\n")
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+        f.write(indented(2, Fortran.readHdf5Group("file_id", "input", input_namelists, 2, " "), " ")+"\n")
         
         f.write("end subroutine readin_h5\n")
 # end genFortranReadInputlistFromHDF5
