@@ -38,7 +38,6 @@ if not idfPath in sys.path:
 try:
     from idf import Variable, indented, toDoc, get_creation_tag, relname
     from idf import Fortran
-    from idf import Dataset, Group
 except ImportError:
     raise ImportError("'idf' python package missing")
 
