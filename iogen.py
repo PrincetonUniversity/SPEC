@@ -36,11 +36,20 @@ if not idfPath in sys.path:
     sys.path.insert(0, idfPath)
 
 try:
-    from idf import Variable, Namelist, indented, toDoc, get_creation_tag
-    from idf import Dataset, Group
+    from idf import Variable, indented, toDoc, get_creation_tag, relname
     from idf import Fortran
+    from idf import Dataset, Group
 except ImportError:
     raise ImportError("'idf' python package missing")
+
+# define the version of SPEC
+version = Variable("version")
+version.setDescription(r"version of SPEC")
+version.setType("int")
+version.setRank(1)
+version.setMaximumIndices(["3"])
+version.setIsParameter(True)
+version.setDefaultValue([3,0,0])
 
 # define the input quantities for SPEC
 
@@ -602,7 +611,7 @@ vars_physicslist = [
         input_physics_Bnc
         ]
 
-physicslist = Namelist("physicslist")
+physicslist = Fortran.Namelist("physicslist")
 physicslist.setDescription(r"The namelist \c physicslist controls the geometry, profiles, and numerical resolution.")
 physicslist.addVariables(vars_physicslist)
 
@@ -787,7 +796,7 @@ vars_numericlist = [
         input_numeric_Mregular
         ]
 
-numericlist = Namelist("numericlist")
+numericlist = Fortran.Namelist("numericlist")
 numericlist.setDescription(r"The namelist \c numericlist controls internal resolution parameters that the user rarely needs to consider.")
 numericlist.addVariables(vars_numericlist)
 
@@ -880,7 +889,7 @@ vars_locallist = [
         input_local_maxrndgues
         ]
 
-locallist = Namelist("locallist")
+locallist = Fortran.Namelist("locallist")
 locallist.setDescription({r"The namelist \c locallist controls the construction of the Beltrami fields in each volume.":
                           [ r"The transformation to straight-fieldline coordinates is singular when the rotational-transform of the interfaces is rational;"+os.linesep
                            +r"however, the rotational-transform is still well defined."]
@@ -1076,7 +1085,7 @@ vars_globallist = [
         input_global_mcasingcal
         ]
 
-globallist = Namelist("globallist")
+globallist = Fortran.Namelist("globallist")
 globallist.setDescription({r"The namelist \c globallist controls the search for global force-balance.": None,
                            r"Comments:":
                            [ r'The "force" vector, \f${\bf F}\f$, which is constructed in dforce(), is a combination of pressure-imbalance Fourier harmonics,'+os.linesep
@@ -1255,7 +1264,7 @@ vars_diagnosticslist = [
         input_diagnostics_scaling
         ]
 
-diagnosticslist = Namelist("diagnosticslist")
+diagnosticslist = Fortran.Namelist("diagnosticslist")
 diagnosticslist.setDescription(r"The namelist \c diagnosticslist controls post-processor diagnostics, such as Poincaré  plot resolution, etc.")
 diagnosticslist.addVariables(vars_diagnosticslist)
 
@@ -1263,7 +1272,26 @@ diagnosticslist.addVariables(vars_diagnosticslist)
 # screenlist --> not in output file
 ###############################################################################
 
+
+###############################################################################
+# initial guess for geometry of ideal interfaces
+###############################################################################
+
+# TODO
+
+
+
+
+
+
+
+
+
+
+
+###############################################################################
 # final list of input namelists for SPEC
+###############################################################################
 input_namelists = [physicslist,
                    numericlist,
                    locallist,
@@ -1275,15 +1303,6 @@ input_namelists = [physicslist,
 ###############################################################################
 # output quantities
 ###############################################################################
-
-version = Variable("version")
-version.setDescription(r"version of SPEC")
-version.setType("int")
-version.setRank(1)
-version.setMaximumIndices(["3"])
-version.setIsParameter(True)
-version.setDefaultValue([3,0,0])
-
 
 iterations_nDcalls = Variable("nDcalls")
 iterations_nDcalls.setDescription(r"number of calls to something (?)")
@@ -1654,7 +1673,7 @@ vars_output = [output_mn,
 print("definition done, now starting code generation")
 
 # functionality to be covered in the following languages:
-# Fortran, Python, Matlab, Java, C/C++
+# Fortran, Python, Matlab, Java, C, C++
 # 1.1 input variables declaration
 # 1.2  read input variables from namelist
 # 1.3 write input variables   to namelist
@@ -1666,8 +1685,6 @@ print("definition done, now starting code generation")
 
 # to be used in SPEC itself (all in Fortran):
 # 1.1: allglobal#inputlist
-# 1.2: readin()
-# 1.3: wrtend()
 # 1.4: readin_hdf5()
 # 1.5: mirror_input_to_outfile()
 # 2.1: allglobal
@@ -1693,14 +1710,9 @@ def genFortranDefInputlist():
     #print("maximum decl. length: "+str(maxLength))
     
     fortranFilename = os.path.join(".", moduleName+".f90")
-    print("creating Fortran reading module into '"+fortranFilename+"'")
+    print("creating Fortran inputlist definition into '"+fortranFilename+"'")
     
-    # get a concise relative path name to be put into the generated Fortran code
-    absFortranFilename = os.path.abspath(fortranFilename)
-    relative_path_to_this_file = os.path.relpath(__file__, os.path.split(absFortranFilename)[0])
-    if os.path.split(relative_path_to_this_file)[0]=='':
-        relative_path_to_this_file = os.path.join(".", relative_path_to_this_file)
-    
+    relative_path_to_this_file = relname(__file__, fortranFilename)
     with open(fortranFilename, "w") as f:
         f.write("! AUTO-GENERATED BY "+relative_path_to_this_file
                 +"; DO NOT COMMIT CHANGES TO THIS FILE !"+"\n"
@@ -1744,17 +1756,70 @@ def genFortranDefInputlist():
         
         f.write("!> @}\n")
         f.write("end module inputlist\n")
-    
 # end of genFortranDefInputlist
+
+###############################################################################
+# 1.4: generate Fortran routine to read input data from HDF5 file
+###############################################################################
+def genFortranReadInputlistFromHDF5():
     
+    creation_tag = get_creation_tag()
+    moduleName = "readin_h5"
     
+    fortranFilename = os.path.join(".", moduleName+".f90")
+    print("creating Fortran inputlist reading module (HDF5) into '"+fortranFilename+"'")
     
-    
-    
-    
-    
-    
-    
+    relative_path_to_this_file = relname(__file__, fortranFilename)
+    with open(fortranFilename, "w") as f:
+        f.write("! AUTO-GENERATED BY "+relative_path_to_this_file
+                +"; DO NOT COMMIT CHANGES TO THIS FILE !"+"\n"
+                "! "+creation_tag+"\n")
+        
+        f.write("subroutine "+moduleName+"(filename)\n")
+        f.write("  use inputlist\n")
+        f.write("  use allglobal, only: version\n")
+        f.write("  implicit none\n")
+        f.write("  character, intent(in) :: filename*255\n")
+        
+        f.write(str(Fortran.readHdf5Group("input", input_namelists))+"\n")
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        f.write("end subroutine readin_h5\n")
+# end genFortranReadInputlistFromHDF5
+
+
+
+
+
+
+
+
+
+
+
+
+###############################################################################
+# 2.2: generate Fortran routine to read output data from HDF5 file
+###############################################################################
     
 #     # begin code for root group (== enclosing class)
 #     with open(fortranFilename, "w") as f:
@@ -1834,3 +1899,4 @@ def genFortranDefInputlist():
 
 if __name__=="__main__":
     genFortranDefInputlist()
+    genFortranReadInputlistFromHDF5()
