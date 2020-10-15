@@ -30,15 +30,17 @@ More on this: https://docs.python.org/3/whatsnew/3.7.html
 import os # linesep
 
 # interface definition framework for source code generation
-idfPath = "/data/jonathan/work/code/idf"
+idfPath = "/home/jonathan/work/code/idf"
 import sys
 if not idfPath in sys.path:
     sys.path.insert(0, idfPath)
 
 try:
-    from idf import Variable, Namelist
+    from idf import Variable, Namelist, indented, toDoc, get_creation_tag
+    from idf import Dataset, Group
+    from idf import Fortran
 except ImportError:
-    print("Error: 'idf' python package missing")
+    raise ImportError("'idf' python package missing")
 
 # define the input quantities for SPEC
 
@@ -1676,93 +1678,159 @@ print("definition done, now starting code generation")
 # 1.1: generate Fortran declarations of the input quantities of SPEC
 ###############################################################################
 
-
-
-
-
-
-
-
-
-
-# from adf import indented, toDoc
-# from genFortran import declareVariable, declareNamelist
-
-# # dry-run declaration to determine maximum declaration length for doc indentation
-# maxLength = 0
-# for var in vars_physicslist:
-#     declLen = len(declareVariable(var, attachDescription=False))
-#     if declLen>maxLength: maxLength = declLen
-# for var in vars_numericlist:
-#     declLen = len(declareVariable(var, attachDescription=False))
-#     if declLen>maxLength: maxLength = declLen
-# for var in vars_locallist:
-#     declLen = len(declareVariable(var, attachDescription=False))
-#     if declLen>maxLength: maxLength = declLen
-# for var in vars_globallist:
-#     declLen = len(declareVariable(var, attachDescription=False))
-#     if declLen>maxLength: maxLength = declLen
-# for var in vars_diagnosticslist:
-#     declLen = len(declareVariable(var, attachDescription=False))
-#     if declLen>maxLength: maxLength = declLen
-
-# #print("maximum decl. length: "+str(maxLength))
-
-# module_inputlist = "implicit none\n"
-
-# # parameters: maximum array dimensions
-# for param in params_maxDims:
-#     module_inputlist += declareVariable(param, refDeclLength=maxLength)+os.linesep
-
-# module_inputlist += os.linesep
-
-# # input Variables, i.e. namelist contents
-# module_inputlist += r"""!> \addtogroup grp_global_physicslist physicslist
-# !> \brief """+toDoc(physicslist.description)+r"""
-# !> @{
-# """
-# for var in physicslist.Variables:
-#     module_inputlist += declareVariable(var, refDeclLength=maxLength)+os.linesep
-# module_inputlist += "!> @}\n"
-
-
-# for var in numericlist.Variables:
-#     module_inputlist += declareVariable(var, refDeclLength=maxLength)+os.linesep
-# module_inputlist += os.linesep
-# for var in locallist.Variables:
-#     module_inputlist += declareVariable(var, refDeclLength=maxLength)+os.linesep
-# module_inputlist += os.linesep
-# for var in globallist.Variables:
-#     module_inputlist += declareVariable(var, refDeclLength=maxLength)+os.linesep
-# module_inputlist += os.linesep
-# for var in diagnosticslist.Variables:
-#     module_inputlist += declareVariable(var, refDeclLength=maxLength)+os.linesep
-
-# module_inputlist += os.linesep
-
-# # namelist declarations
-# module_inputlist += declareNamelist(physicslist)+os.linesep
-# module_inputlist += os.linesep
-# module_inputlist += declareNamelist(numericlist)+os.linesep
-# module_inputlist += os.linesep
-# module_inputlist += declareNamelist(locallist)+os.linesep
-# module_inputlist += os.linesep
-# module_inputlist += declareNamelist(globallist)+os.linesep
-# module_inputlist += os.linesep
-# module_inputlist += declareNamelist(diagnosticslist)+os.linesep
-
-# with open("../inplst.f90", "w") as f:
+# actually generate Fortran module for reading SPEC output files
+def genFortranDefInputlist():
     
-#     f.write(r"""!> @file inplst.f90
-# !> \brief Input namelists
-# !> \addtogroup grp_global
-# !> @{
-# """)
+    creation_tag = get_creation_tag()
+    moduleName = "inputlist"
     
-#     f.write(r"""module inputlist
-# !> \brief Input namelists
-# !> \addtogroup grp_global
-# !> @{
-# """)
-#     f.write(indented(2, module_inputlist, " "))
-#     f.write("end module inputlist\n")
+    # dry-run declaration to determine maximum declaration length for doc indentation
+    maxLength = 0
+    for nml in input_namelists:
+        for var in nml.variables:
+            declLen = len(Fortran.declareVariable(var, attachDescription=False))
+            if declLen>maxLength: maxLength = declLen
+    #print("maximum decl. length: "+str(maxLength))
+    
+    fortranFilename = os.path.join(".", moduleName+".f90")
+    print("creating Fortran reading module into '"+fortranFilename+"'")
+    
+    # get a concise relative path name to be put into the generated Fortran code
+    absFortranFilename = os.path.abspath(fortranFilename)
+    relative_path_to_this_file = os.path.relpath(__file__, os.path.split(absFortranFilename)[0])
+    if os.path.split(relative_path_to_this_file)[0]=='':
+        relative_path_to_this_file = os.path.join(".", relative_path_to_this_file)
+    
+    with open(fortranFilename, "w") as f:
+        f.write("! AUTO-GENERATED BY "+relative_path_to_this_file
+                +"; DO NOT COMMIT CHANGES TO THIS FILE !"+"\n"
+                "! "+creation_tag+"\n")
+
+        f.write(r"!> @file "+moduleName+".f90"+r"""
+!> \brief Input namelists
+!> \addtogroup grp_global
+!> @{
+""")
+    
+        f.write(r"""module """+moduleName+r"""
+!> \brief Input namelists
+!> \addtogroup grp_global
+!> @{
+""")
+        
+        # parameters: maximum array dimensions
+        for param in params_maxDims:
+            f.write(Fortran.declareVariable(param, refDeclLength=maxLength)+"\n")
+
+        brief = r"\brief "
+
+        # input Variables, i.e. namelist contents
+        for nml in input_namelists:
+            
+            nml_desc_indented = indented(len(brief), toDoc(nml.description), " ")
+            commented_brief = Fortran.commentOut(brief+nml_desc_indented[len(brief):])
+            
+            f.write(r"!> \addtogroup grp_global_"+nml.name+" "+nml.name+"\n"
+                    +commented_brief+"\n"
+                    +"!> @{\n")
+                                           
+            for var in nml.variables:
+                f.write(Fortran.declareVariable(var, refDeclLength=maxLength)+"\n")
+            f.write("!> @}\n")
+    
+        # namelist declarations
+        for nml in input_namelists:
+            f.write(Fortran.declareNamelist(nml)+"\n\n")
+        
+        f.write("!> @}\n")
+        f.write("end module inputlist\n")
+    
+# end of genFortranDefInputlist
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+#     # begin code for root group (== enclosing class)
+#     with open(fortranFilename, "w") as f:
+    
+        
+        
+#         # custom datatypes come first
+#         for dtype in s.getDatatypes():
+#             f.write(Fortran.genType(dtype.name, dtype.items)+'\n')
+            
+#         # we need to reverse the definition order so that types which are used inside other types
+#         # are already defined when used
+#         reverse_groupStack =  []
+        
+#         groupStack = []
+#         groupStack.append(s.rootGroup)
+#         while len(groupStack)>0:
+#             currentGroup = groupStack[-1]
+#             groupStack = groupStack[:-1]
+            
+#             if type(currentGroup)==Group:
+#                 reverse_groupStack.append(currentGroup)
+        
+#             for item in currentGroup.items:
+#                 if type(item)==Group:
+#                     groupStack.append(item)
+        
+#         # iterate in reverse order over the discovered variables to generate type definitions in correct order
+#         for currentGroup in reverse_groupStack[::-1]:
+#             f.write(Fortran.genType(currentGroup.name, currentGroup.items)+'\n')
+        
+#         f.write("contains\n")
+        
+#         # initial code of loading routine
+#         Fortran.startLoader(f)
+        
+#         # loop over all variables again and put the loader code for each of them one after another
+#         for currentGroup in reverse_groupStack[::-1]:
+#             for item in currentGroup.items:
+#                 if type(item)==Dataset:
+#                     Fortran.loadItem(f, item)
+            
+#         # finalizing code of loading routine
+#         Fortran.endLoader(f)
+        
+#         # write the freeSpec subroutine to free the memory it occupied
+#         Fortran.startFree(f)
+        
+#         for currentGroup in reverse_groupStack[::-1]:
+#             for item in currentGroup.items:
+#                 if type(item)==Dataset:
+#                     Fortran.freeItem(f, item)
+        
+#         # finalizing code of freeing routine
+#         Fortran.endFree(f)
+        
+#         f.write("end module "+moduleName+"\n")
+    
+#         # write demo code
+#         #fortran_demoLoader(f)
+
+
+
+
+
+
+
+
+
+# # from adf import indented, toDoc
+# # from genFortran import declareVariable, declareNamelist
+
+
+
+
+
+
+if __name__=="__main__":
+    genFortranDefInputlist()
