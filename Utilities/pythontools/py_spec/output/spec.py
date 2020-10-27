@@ -53,6 +53,13 @@ class SPECout:
 
             # keep track of which file this object corresponds to
             self.filename = os.path.abspath(args[0])
+
+            # check version and print warning
+            try:
+                if _content['version'] < SPEC_MAJOR_VERSION:
+                    print("!!!Warning: this python package is used for SPEC!")
+            except KeyError:
+                print("!!!Warning: you might be not reading a SPEC HDF5 file!")
         elif isinstance(kwargs["content"], h5py.Group):
             _content = kwargs["content"]
 
@@ -171,9 +178,7 @@ class SPECout:
                 self.poincare.Z = self.poincare.Z[self.poincare.success == 1, :, :]
                 self.poincare.t = self.poincare.t[self.poincare.success == 1, :, :]
                 self.poincare.s = self.poincare.s[self.poincare.success == 1, :, :]
-            
-            if self.version > SPEC_MAJOR_VERSION:
-                print("Warning: this python package is used for SPEC!")
+                
         return
 
     # needed for iterating over the contents of the file
