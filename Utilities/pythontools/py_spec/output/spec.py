@@ -11,6 +11,7 @@ import h5py
 import numpy as np  # for isscalar
 import os  # for path.abspath
 import keyword  # for getting python keywords
+SPEC_MAJOR_VERSION = 3.00
 
 # reader class for Stepped Pressure Equilibrium Code output file
 # S. Hudson et al., Physics of Plasmas 19, 112502 (2012); doi: 10.1063/1.4765691
@@ -170,6 +171,9 @@ class SPECout:
                 self.poincare.Z = self.poincare.Z[self.poincare.success == 1, :, :]
                 self.poincare.t = self.poincare.t[self.poincare.success == 1, :, :]
                 self.poincare.s = self.poincare.s[self.poincare.success == 1, :, :]
+            
+            if self.version > SPEC_MAJOR_VERSION:
+                print("Warning: this python package is used for SPEC!")
         return
 
     # needed for iterating over the contents of the file
