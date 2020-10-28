@@ -27,6 +27,9 @@ InputFiles/**/*.sp.end
 InputFiles/**/*.sp.DF
 **/__pycache__
 
+# files in ci
+ci/
+
 # vim temprary files
 *.swo
 *.swp
