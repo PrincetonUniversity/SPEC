@@ -36,3 +36,6 @@ InputFiles/**/*.sp.DF
 
 #jupyter
 .ipynb_checkpoint
+
+#cmake build
+build/

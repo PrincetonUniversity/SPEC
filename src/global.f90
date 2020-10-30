@@ -98,6 +98,55 @@ end module fileunits
 
 module cputiming
 
+  REAL    :: Tmanual = 0.0, manualT = 0.0
+  REAL    :: Trzaxis = 0.0, rzaxisT = 0.0
+  REAL    :: Tpackxi = 0.0, packxiT = 0.0
+  REAL    :: Tvolume = 0.0, volumeT = 0.0
+  REAL    :: Tcoords = 0.0, coordsT = 0.0
+  REAL    :: Tbasefn = 0.0, basefnT = 0.0
+  REAL    :: Tmemory = 0.0, memoryT = 0.0
+  REAL    :: Tmetrix = 0.0, metrixT = 0.0
+  REAL    :: Tma00aa = 0.0, ma00aaT = 0.0
+  REAL    :: Tmatrix = 0.0, matrixT = 0.0
+  REAL    :: Tspsmat = 0.0, spsmatT = 0.0
+  REAL    :: Tspsint = 0.0, spsintT = 0.0
+  REAL    :: Tmp00ac = 0.0, mp00acT = 0.0
+  REAL    :: Tma02aa = 0.0, ma02aaT = 0.0
+  REAL    :: Tpackab = 0.0, packabT = 0.0
+  REAL    :: Ttr00ab = 0.0, tr00abT = 0.0
+  REAL    :: Tcurent = 0.0, curentT = 0.0
+  REAL    :: Tdf00ab = 0.0, df00abT = 0.0
+  REAL    :: Tlforce = 0.0, lforceT = 0.0
+  REAL    :: Tintghs = 0.0, intghsT = 0.0
+  REAL    :: Tmtrxhs = 0.0, mtrxhsT = 0.0
+  REAL    :: Tlbpol = 0.0, lbpolT = 0.0
+  REAL    :: Tbrcast = 0.0, brcastT = 0.0
+  REAL    :: Tdfp100 = 0.0, dfp100T = 0.0
+  REAL    :: Tdfp200 = 0.0, dfp200T = 0.0
+  REAL    :: Tdforce = 0.0, dforceT = 0.0
+  REAL    :: Tnewton = 0.0, newtonT = 0.0
+  REAL    :: Tcasing = 0.0, casingT = 0.0
+  REAL    :: Tbnorml = 0.0, bnormlT = 0.0
+  REAL    :: Tjo00aa = 0.0, jo00aaT = 0.0
+  REAL    :: Tpp00aa = 0.0, pp00aaT = 0.0
+  REAL    :: Tpp00ab = 0.0, pp00abT = 0.0
+  REAL    :: Tbfield = 0.0, bfieldT = 0.0
+  REAL    :: Tstzxyz = 0.0, stzxyzT = 0.0
+  REAL    :: Thesian = 0.0, hesianT = 0.0
+  REAL    :: Tra00aa = 0.0, ra00aaT = 0.0
+  REAL    :: Tnumrec = 0.0, numrecT = 0.0
+  REAL    :: Tdcuhre = 0.0, dcuhreT = 0.0
+  REAL    :: Tminpack = 0.0, minpackT = 0.0
+  REAL    :: Tiqpack = 0.0, iqpackT = 0.0
+  REAL    :: Trksuite = 0.0, rksuiteT = 0.0
+  REAL    :: Ti1mach = 0.0, i1machT = 0.0
+  REAL    :: Td1mach = 0.0, d1machT = 0.0
+  REAL    :: Tilut = 0.0, ilutT = 0.0
+  REAL    :: Titers = 0.0, itersT = 0.0
+  REAL    :: Tsphdf5 = 0.0, sphdf5T = 0.0
+  REAL    :: Tpreset = 0.0, presetT = 0.0
+  REAL    :: Tglobal = 0.0, globalT = 0.0
+  REAL    :: Txspech = 0.0, xspechT = 0.0
 ! CPUVARIABLE ! this is expanded by Makefile; do not remove;
 
   REAL :: Treadin = 0.0
@@ -302,6 +351,55 @@ module inputlist
 
 ! the following variables constitute the namelist/screenlist/; note that all variables in namelist need to be broadcasted in readin;
   
+  LOGICAL :: Wmanual = .false. 
+  LOGICAL :: Wrzaxis = .false. 
+  LOGICAL :: Wpackxi = .false. 
+  LOGICAL :: Wvolume = .false. 
+  LOGICAL :: Wcoords = .false. 
+  LOGICAL :: Wbasefn = .false. 
+  LOGICAL :: Wmemory = .false. 
+  LOGICAL :: Wmetrix = .false. 
+  LOGICAL :: Wma00aa = .false. 
+  LOGICAL :: Wmatrix = .false. 
+  LOGICAL :: Wspsmat = .false. 
+  LOGICAL :: Wspsint = .false. 
+  LOGICAL :: Wmp00ac = .false. 
+  LOGICAL :: Wma02aa = .false. 
+  LOGICAL :: Wpackab = .false. 
+  LOGICAL :: Wtr00ab = .false. 
+  LOGICAL :: Wcurent = .false. 
+  LOGICAL :: Wdf00ab = .false. 
+  LOGICAL :: Wlforce = .false. 
+  LOGICAL :: Wintghs = .false. 
+  LOGICAL :: Wmtrxhs = .false. 
+  LOGICAL :: Wlbpol = .false. 
+  LOGICAL :: Wbrcast = .false. 
+  LOGICAL :: Wdfp100 = .false. 
+  LOGICAL :: Wdfp200 = .false. 
+  LOGICAL :: Wdforce = .false. 
+  LOGICAL :: Wnewton = .false. 
+  LOGICAL :: Wcasing = .false. 
+  LOGICAL :: Wbnorml = .false. 
+  LOGICAL :: Wjo00aa = .false. 
+  LOGICAL :: Wpp00aa = .false. 
+  LOGICAL :: Wpp00ab = .false. 
+  LOGICAL :: Wbfield = .false. 
+  LOGICAL :: Wstzxyz = .false. 
+  LOGICAL :: Whesian = .false. 
+  LOGICAL :: Wra00aa = .false. 
+  LOGICAL :: Wnumrec = .false. 
+  LOGICAL :: Wdcuhre = .false. 
+  LOGICAL :: Wminpack = .false. 
+  LOGICAL :: Wiqpack = .false. 
+  LOGICAL :: Wrksuite = .false. 
+  LOGICAL :: Wi1mach = .false. 
+  LOGICAL :: Wd1mach = .false. 
+  LOGICAL :: Wilut = .false. 
+  LOGICAL :: Witers = .false. 
+  LOGICAL :: Wsphdf5 = .false. 
+  LOGICAL :: Wpreset = .false. 
+  LOGICAL :: Wglobal = .false. 
+  LOGICAL :: Wxspech = .false. 
 ! DSCREENLIST ! define screenlist; this is expanded by Makefile; DO NOT REMOVE; each file compiled by Makefile has its own write flag;
   LOGICAL      :: Wbuild_vector_potential = .false.
   LOGICAL      :: Wreadin = .false.
@@ -885,6 +983,55 @@ module inputlist
 !latex \type{namelist/screenlist/}
 
   namelist/screenlist/&
+  Wmanual , &
+  Wrzaxis , &
+  Wpackxi , &
+  Wvolume , &
+  Wcoords , &
+  Wbasefn , &
+  Wmemory , &
+  Wmetrix , &
+  Wma00aa , &
+  Wmatrix , &
+  Wspsmat , &
+  Wspsint , &
+  Wmp00ac , &
+  Wma02aa , &
+  Wpackab , &
+  Wtr00ab , &
+  Wcurent , &
+  Wdf00ab , &
+  Wlforce , &
+  Wintghs , &
+  Wmtrxhs , &
+  Wlbpol , &
+  Wbrcast , &
+  Wdfp100 , &
+  Wdfp200 , &
+  Wdforce , &
+  Wnewton , &
+  Wcasing , &
+  Wbnorml , &
+  Wjo00aa , &
+  Wpp00aa , &
+  Wpp00ab , &
+  Wbfield , &
+  Wstzxyz , &
+  Whesian , &
+  Wra00aa , &
+  Wnumrec , &
+  Wdcuhre , &
+  Wminpack , &
+  Wiqpack , &
+  Wrksuite , &
+  Wi1mach , &
+  Wd1mach , &
+  Wilut , &
+  Witers , &
+  Wsphdf5 , &
+  Wpreset , &
+  Wglobal , &
+  Wxspech , &
 ! NSCREENLIST ! namelist screenlist; this is expanded by Makefile; DO NOT REMOVE;
  Wbuild_vector_potential , &
  Wreadin , &  !latex \item Every subroutine, e.g. \type{xy00aa.h}, has its own write flag, \type{Wxy00aa}.
@@ -2076,6 +2223,55 @@ subroutine readin
   if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : broadcasting screenlist      from ext.sp ;")') cput-cpus
   endif
   
+  LlBCAST(Wmanual,1,0)
+  LlBCAST(Wrzaxis,1,0)
+  LlBCAST(Wpackxi,1,0)
+  LlBCAST(Wvolume,1,0)
+  LlBCAST(Wcoords,1,0)
+  LlBCAST(Wbasefn,1,0)
+  LlBCAST(Wmemory,1,0)
+  LlBCAST(Wmetrix,1,0)
+  LlBCAST(Wma00aa,1,0)
+  LlBCAST(Wmatrix,1,0)
+  LlBCAST(Wspsmat,1,0)
+  LlBCAST(Wspsint,1,0)
+  LlBCAST(Wmp00ac,1,0)
+  LlBCAST(Wma02aa,1,0)
+  LlBCAST(Wpackab,1,0)
+  LlBCAST(Wtr00ab,1,0)
+  LlBCAST(Wcurent,1,0)
+  LlBCAST(Wdf00ab,1,0)
+  LlBCAST(Wlforce,1,0)
+  LlBCAST(Wintghs,1,0)
+  LlBCAST(Wmtrxhs,1,0)
+  LlBCAST(Wlbpol,1,0)
+  LlBCAST(Wbrcast,1,0)
+  LlBCAST(Wdfp100,1,0)
+  LlBCAST(Wdfp200,1,0)
+  LlBCAST(Wdforce,1,0)
+  LlBCAST(Wnewton,1,0)
+  LlBCAST(Wcasing,1,0)
+  LlBCAST(Wbnorml,1,0)
+  LlBCAST(Wjo00aa,1,0)
+  LlBCAST(Wpp00aa,1,0)
+  LlBCAST(Wpp00ab,1,0)
+  LlBCAST(Wbfield,1,0)
+  LlBCAST(Wstzxyz,1,0)
+  LlBCAST(Whesian,1,0)
+  LlBCAST(Wra00aa,1,0)
+  LlBCAST(Wnumrec,1,0)
+  LlBCAST(Wdcuhre,1,0)
+  LlBCAST(Wminpack,1,0)
+  LlBCAST(Wiqpack,1,0)
+  LlBCAST(Wrksuite,1,0)
+  LlBCAST(Wi1mach,1,0)
+  LlBCAST(Wd1mach,1,0)
+  LlBCAST(Wilut,1,0)
+  LlBCAST(Witers,1,0)
+  LlBCAST(Wsphdf5,1,0)
+  LlBCAST(Wpreset,1,0)
+  LlBCAST(Wglobal,1,0)
+  LlBCAST(Wxspech,1,0)
 ! BSCREENLIST ! broadcast screenlist; this is expanded by Makefile; do not remove;
   LlBCAST( Wreadin, 1, 0 )
   LlBCAST( Wwritin, 1, 0 ) ! redundant; 
@@ -2751,6 +2947,55 @@ subroutine wrtend
   endif
   
   write(iunit,'("&screenlist")')
+  if( Wmanual ) write(iunit,'(" Wmanual = "L1)')Wmanual
+  if( Wrzaxis ) write(iunit,'(" Wrzaxis = "L1)')Wrzaxis
+  if( Wpackxi ) write(iunit,'(" Wpackxi = "L1)')Wpackxi
+  if( Wvolume ) write(iunit,'(" Wvolume = "L1)')Wvolume
+  if( Wcoords ) write(iunit,'(" Wcoords = "L1)')Wcoords
+  if( Wbasefn ) write(iunit,'(" Wbasefn = "L1)')Wbasefn
+  if( Wmemory ) write(iunit,'(" Wmemory = "L1)')Wmemory
+  if( Wmetrix ) write(iunit,'(" Wmetrix = "L1)')Wmetrix
+  if( Wma00aa ) write(iunit,'(" Wma00aa = "L1)')Wma00aa
+  if( Wmatrix ) write(iunit,'(" Wmatrix = "L1)')Wmatrix
+  if( Wspsmat ) write(iunit,'(" Wspsmat = "L1)')Wspsmat
+  if( Wspsint ) write(iunit,'(" Wspsint = "L1)')Wspsint
+  if( Wmp00ac ) write(iunit,'(" Wmp00ac = "L1)')Wmp00ac
+  if( Wma02aa ) write(iunit,'(" Wma02aa = "L1)')Wma02aa
+  if( Wpackab ) write(iunit,'(" Wpackab = "L1)')Wpackab
+  if( Wtr00ab ) write(iunit,'(" Wtr00ab = "L1)')Wtr00ab
+  if( Wcurent ) write(iunit,'(" Wcurent = "L1)')Wcurent
+  if( Wdf00ab ) write(iunit,'(" Wdf00ab = "L1)')Wdf00ab
+  if( Wlforce ) write(iunit,'(" Wlforce = "L1)')Wlforce
+  if( Wintghs ) write(iunit,'(" Wintghs = "L1)')Wintghs
+  if( Wmtrxhs ) write(iunit,'(" Wmtrxhs = "L1)')Wmtrxhs
+  if( Wlbpol ) write(iunit,'(" Wlbpol = "L1)')Wlbpol
+  if( Wbrcast ) write(iunit,'(" Wbrcast = "L1)')Wbrcast
+  if( Wdfp100 ) write(iunit,'(" Wdfp100 = "L1)')Wdfp100
+  if( Wdfp200 ) write(iunit,'(" Wdfp200 = "L1)')Wdfp200
+  if( Wdforce ) write(iunit,'(" Wdforce = "L1)')Wdforce
+  if( Wnewton ) write(iunit,'(" Wnewton = "L1)')Wnewton
+  if( Wcasing ) write(iunit,'(" Wcasing = "L1)')Wcasing
+  if( Wbnorml ) write(iunit,'(" Wbnorml = "L1)')Wbnorml
+  if( Wjo00aa ) write(iunit,'(" Wjo00aa = "L1)')Wjo00aa
+  if( Wpp00aa ) write(iunit,'(" Wpp00aa = "L1)')Wpp00aa
+  if( Wpp00ab ) write(iunit,'(" Wpp00ab = "L1)')Wpp00ab
+  if( Wbfield ) write(iunit,'(" Wbfield = "L1)')Wbfield
+  if( Wstzxyz ) write(iunit,'(" Wstzxyz = "L1)')Wstzxyz
+  if( Whesian ) write(iunit,'(" Whesian = "L1)')Whesian
+  if( Wra00aa ) write(iunit,'(" Wra00aa = "L1)')Wra00aa
+  if( Wnumrec ) write(iunit,'(" Wnumrec = "L1)')Wnumrec
+  if( Wdcuhre ) write(iunit,'(" Wdcuhre = "L1)')Wdcuhre
+  if( Wminpack ) write(iunit,'(" Wminpack = "L1)')Wminpack
+  if( Wiqpack ) write(iunit,'(" Wiqpack = "L1)')Wiqpack
+  if( Wrksuite ) write(iunit,'(" Wrksuite = "L1)')Wrksuite
+  if( Wi1mach ) write(iunit,'(" Wi1mach = "L1)')Wi1mach
+  if( Wd1mach ) write(iunit,'(" Wd1mach = "L1)')Wd1mach
+  if( Wilut ) write(iunit,'(" Wilut = "L1)')Wilut
+  if( Witers ) write(iunit,'(" Witers = "L1)')Witers
+  if( Wsphdf5 ) write(iunit,'(" Wsphdf5 = "L1)')Wsphdf5
+  if( Wpreset ) write(iunit,'(" Wpreset = "L1)')Wpreset
+  if( Wglobal ) write(iunit,'(" Wglobal = "L1)')Wglobal
+  if( Wxspech ) write(iunit,'(" Wxspech = "L1)')Wxspech
 ! WSCREENLIST ! write screenlist; this is expanded by Makefile ; do not remove;
   if( Wreadin           ) write(iunit,'(" Wreadin = ",L1                )') Wreadin
   if( Wwrtend           ) write(iunit,'(" Wwrtend = ",L1                )') Wwrtend
