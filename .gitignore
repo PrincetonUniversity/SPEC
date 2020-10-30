@@ -40,3 +40,6 @@ ci/
 
 #jupyter
 .ipynb_checkpoint
+
+#cmake build
+build/
