@@ -35,6 +35,8 @@ if (MPI_Fortran_FOUND)
 	endif ()
 endif ()
 
+find_program(AWK awk mawk gawk)
+
 # Find LAPACK
 # For LAPAPCK, it is suggested to use Intel MKL even for gcc compiler suite. To use Intel MKL, INTELMKL 
 # has to be defined as environment variable. If Intel compilers are loaded, MKLROOT is auto-populated. 
