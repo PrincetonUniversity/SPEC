@@ -140,6 +140,11 @@ add_library(spec
 #        ${f_src_files}
 #)
 target_compile_options(spec PUBLIC "-cpp")
+# For gfortran set the -ffree-line-length-none option
+target_compile_options(spec
+    PUBLIC $<$<Fortran_COMPILER_ID:GNU>:-ffree-line-length-none>
+)
+
 target_include_directories(spec PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 
 # Configure OpenMP
