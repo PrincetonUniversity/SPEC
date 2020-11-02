@@ -1,5 +1,6 @@
 #!/bin/sh
 
+VPATH=src
 ###############################################################################################################################################################
 
  afiles=manual rzaxis packxi volume coords basefn memory
@@ -24,7 +25,7 @@
  
 ###############################################################################################################################################################
  
- MACROS=macros
+ MACROS=src/macros
  
  CC=intel
  # if want to use gfortran; make CC=gfortran; otherwise using Intel
@@ -211,30 +212,32 @@ dspec: $(addsuffix _d.o,$(ALLFILES)) $(MACROS) Makefile
 
 ###############################################################################################################################################################
 
-global_r.o: %_r.o: global.f90 $(MACROS) 
-	@awk -v allfiles='$(ALLFILES)' 'BEGIN{nfiles=split(allfiles,files," ")} \
-	{if($$2=="CPUVARIABLE") {for (i=1;i<=nfiles;i++) print "  REAL    :: T"files[i]" = 0.0, "files[i]"T = 0.0"}}\
-	{if($$2=="DSCREENLIST") {for (i=1;i<=nfiles;i++) print "  LOGICAL :: W"files[i]" = .false. "}}\
-	{if($$2=="NSCREENLIST") {for (i=1;i<=nfiles;i++) print "  W"files[i]" , &"}}\
-	{if($$2=="BSCREENLIST") {for (i=1;i<=nfiles;i++) print "  LlBCAST(W"files[i]",1,0)"}}\
-	{if($$2=="WSCREENLIST") {s="'"'"'" ; d="'"\\\""'" ; for (i=1;i<=nfiles;i++) print "  if( W"files[i]" ) write(iunit,"s"("d" W"files[i]" = "d"L1)"s")W"files[i]}}\
-	{print}' global.f90 > mlobal.f90
-	m4 -P $(MACROS) mlobal.f90 > global_m.F90
-	@rm -f mlobal.f90
+global_r.o: %_r.o: src/global.f90 $(MACROS) 
+	#@awk -v allfiles='$(ALLFILES)' 'BEGIN{nfiles=split(allfiles,files," ")} \
+	#{if($$2=="CPUVARIABLE") {for (i=1;i<=nfiles;i++) print "  REAL    :: T"files[i]" = 0.0, "files[i]"T = 0.0"}}\
+	#{if($$2=="DSCREENLIST") {for (i=1;i<=nfiles;i++) print "  LOGICAL :: W"files[i]" = .false. "}}\
+	#{if($$2=="NSCREENLIST") {for (i=1;i<=nfiles;i++) print "  W"files[i]" , &"}}\
+	#{if($$2=="BSCREENLIST") {for (i=1;i<=nfiles;i++) print "  LlBCAST(W"files[i]",1,0)"}}\
+	#{if($$2=="WSCREENLIST") {s="'"'"'" ; d="'"\\\""'" ; for (i=1;i<=nfiles;i++) print "  if( W"files[i]" ) write(iunit,"s"("d" W"files[i]" = "d"L1)"s")W"files[i]}}\
+	#{print}' src/global.f90 > mlobal.f90
+	#m4 -P $(MACROS) mlobal.f90 > global_m.F90
+	#@rm -f mlobal.f90
+	m4 -P $(MACROS) src/global.f90 > global_m.F90
 	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o global_r.o -c global_m.F90 $(LIBS)
 	@wc -l -L -w global_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
-global_d.o: %_d.o: global.f90 $(MACROS) 
-	@awk -v allfiles='$(ALLFILES)' 'BEGIN{nfiles=split(allfiles,files," ")} \
-	{if($$2=="CPUVARIABLE") {for (i=1;i<=nfiles;i++) print "  REAL    :: T"files[i]" = 0.0, "files[i]"T = 0.0"}}\
-	{if($$2=="DSCREENLIST") {for (i=1;i<=nfiles;i++) print "  LOGICAL :: W"files[i]" = .false. "}}\
-	{if($$2=="NSCREENLIST") {for (i=1;i<=nfiles;i++) print "  W"files[i]" , &"}}\
-	{if($$2=="BSCREENLIST") {for (i=1;i<=nfiles;i++) print "  LlBCAST(W"files[i]",1,0)"}}\
-	{if($$2=="WSCREENLIST") {s="'"'"'" ; d="'"\\\""'" ; for (i=1;i<=nfiles;i++) print "  if( W"files[i]" ) write(iunit,"s"("d" W"files[i]" = "d"L1)"s")W"files[i]}}\
-	{print}' global.f90 > mlobal.f90
-	m4 -P $(MACROS) mlobal.f90 > global_m.F90
-	@rm -f mlobal.f90
+global_d.o: %_d.o: src/global.f90 $(MACROS) 
+	#@awk -v allfiles='$(ALLFILES)' 'BEGIN{nfiles=split(allfiles,files," ")} \
+	#{if($$2=="CPUVARIABLE") {for (i=1;i<=nfiles;i++) print "  REAL    :: T"files[i]" = 0.0, "files[i]"T = 0.0"}}\
+	#{if($$2=="DSCREENLIST") {for (i=1;i<=nfiles;i++) print "  LOGICAL :: W"files[i]" = .false. "}}\
+	#{if($$2=="NSCREENLIST") {for (i=1;i<=nfiles;i++) print "  W"files[i]" , &"}}\
+	#{if($$2=="BSCREENLIST") {for (i=1;i<=nfiles;i++) print "  LlBCAST(W"files[i]",1,0)"}}\
+	#{if($$2=="WSCREENLIST") {s="'"'"'" ; d="'"\\\""'" ; for (i=1;i<=nfiles;i++) print "  if( W"files[i]" ) write(iunit,"s"("d" W"files[i]" = "d"L1)"s")W"files[i]}}\
+	#{print}' src/global.f90 > mlobal.f90
+	#m4 -P $(MACROS) mlobal.f90 > global_m.F90
+	#@rm -f mlobal.f90
+	m4 -P $(MACROS) src/global.f90 > global_m.F90
 	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o global_d.o -c global_m.F90 $(LIBS)
 	@wc -l -L -w global_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
@@ -242,13 +245,13 @@ global_d.o: %_d.o: global.f90 $(MACROS)
 ###############################################################################################################################################################
 
 %_r.o: %.f 
-	$(FC) $(FLAGS)           $(RFLAGS) -o $*_r.o -c $*.f
-	@wc -l -L -w $*.f | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
+	$(FC) $(FLAGS)           $(RFLAGS) -o $*_r.o -c src/$*.f
+	@wc -l -L -w src/$*.f | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
 %_d.o: %.f 
-	$(FC) $(FLAGS)           $(DFLAGS) -o $*_d.o -c $*.f
-	@wc -l -L -w $*.f | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
+	$(FC) $(FLAGS)           $(DFLAGS) -o $*_d.o -c src/$*.f
+	@wc -l -L -w src/$*.f | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
 ###############################################################################################################################################################
@@ -264,7 +267,7 @@ $(DOBJS): %_d.o: %_m.F90 global_d.o  sphdf5_d.o $(MACROS)
 	@echo ''
 
 $(PREPROC): %_m.F90: %.f90 $(MACROS)
-	@awk -v file=$*.f90 '{ gsub("__LINE__", NR); gsub("__FILE__",file); print }' $*.f90 > $*_p.f90
+	@awk -v file=$*.f90 '{ gsub("__LINE__", NR); gsub("__FILE__",file); print }' src/$*.f90 > $*_p.f90
 	m4 -P $(MACROS) $*_p.f90 > $*_m.F90
 
 ###############################################################################################################################################################
@@ -272,7 +275,7 @@ $(PREPROC): %_m.F90: %.f90 $(MACROS)
 
 ###############################################################################################################################################################
 
-xspech_r.o: xspech.f90 global_r.o sphdf5_r.o $(addsuffix _r.o,$(files)) $(MACROS) 
+xspech_r.o: src/xspech.f90 global_r.o sphdf5_r.o $(addsuffix _r.o,$(files)) $(MACROS) 
 	@awk -v date='$(date)' -v pwd='$(PWD)' -v macros='$(MACROS)' -v fc='$(FC)' -v flags='$(FLAGS) $(CFLAGS) $(RFLAGS)' -v allfiles='$(ALLFILES)' \
 	'BEGIN{nfiles=split(allfiles,files," ")} \
 	{if($$2=="COMPILATION") {print "    write(ounit,*)\"      :  compiled  : date    = "date" ; \"" ; \
@@ -282,14 +285,14 @@ xspech_r.o: xspech.f90 global_r.o sphdf5_r.o $(addsuffix _r.o,$(files)) $(MACROS
 	                         print "    write(ounit,*)\"      :            : flags   = "flags" ; \"" }} \
 	 {if($$2=="SUMTIME") {for (i=1;i<=nfiles;i++) print "   SUMTIME("files[i]")"}}\
 	 {if($$2=="PRTTIME") {for (i=1;i<=nfiles;i++) print "   PRTTIME("files[i]")"}}\
-	 {print}' xspech.f90 > mspech.f90
+	 {print}' src/xspech.f90 > mspech.f90
 	m4 -P $(MACROS) mspech.f90 > xspech_m.F90
 	@rm -f mspech.f90
 	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o xspech_r.o -c xspech_m.F90 $(LIBS)
 	@wc -l -L -w xspech_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
-xspech_d.o: xspech.f90 global_d.o sphdf5_d.o $(addsuffix _d.o,$(files)) $(MACROS) 
+xspech_d.o: src/xspech.f90 global_d.o sphdf5_d.o $(addsuffix _d.o,$(files)) $(MACROS) 
 	@awk -v date='$(date)' -v pwd='$(PWD)' -v macros='$(MACROS)' -v fc='$(FC)' -v flags='$(FLAGS) $(CFLAGS) $(DFLAGS)' -v allfiles='$(ALLFILES)' \
 	'BEGIN{nfiles=split(allfiles,files," ")} \
 	{if($$2=="COMPILATION") {print "    write(ounit,*)\"      :  compiled  : date    = "date" ; \"" ; \
@@ -299,7 +302,7 @@ xspech_d.o: xspech.f90 global_d.o sphdf5_d.o $(addsuffix _d.o,$(files)) $(MACROS
 	                         print "    write(ounit,*)\"      :            : flags   = "flags" ; \"" }} \
 	 {if($$2=="SUMTIME") {for (i=1;i<=nfiles;i++) print "   SUMTIME("files[i]")"}}\
 	 {if($$2=="PRTTIME") {for (i=1;i<=nfiles;i++) print "   PRTTIME("files[i]")"}}\
-	 {print}' xspech.f90 > mspech.f90
+	 {print}' src/xspech.f90 > mspech.f90
 	m4 -P $(MACROS) mspech.f90 > xspech_m.F90
 	@rm -f mspech.f90
 	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o xspech_d.o -c xspech_m.F90 $(LIBS)
