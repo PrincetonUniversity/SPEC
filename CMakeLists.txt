@@ -10,29 +10,29 @@ find_package(OpenMP)
 # Find & Configure MPI
 # If using the compiler wrapper, there is no need to find the MPI libraries.
 get_filename_component (compiler ${CMAKE_Fortran_COMPILER} NAME)
+message(STATUS "compiler is ${compiler}")
 if (${compiler} STREQUAL mpiifort OR ${compiler} STREQUAL mpifort)
 else ()
 	find_package (MPI REQUIRED)
-endif ()
-
-if (MPI_Fortran_FOUND)
-	set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} ${MPI_Fortran_COMPILE_FLAGS}")
-	set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MPI_Fortran_LINK_FLAGS}")
-	include_directories (${MPI_Fortran_INCLUDE_PATH})
+    if (MPI_Fortran_FOUND)
+        set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} ${MPI_Fortran_COMPILE_FLAGS}")
+        set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MPI_Fortran_LINK_FLAGS}")
+        include_directories (${MPI_Fortran_INCLUDE_PATH})
 
 #  Some of the tests need to be oversubscribbed to run. There is a problem where
 #  depending on the current platform or implementation of MPI the oversubscribe
 #  flag changes. MPIEXEC may not write to stdout correctly. Add the ability to
 #  set this variable manually.
-	if (NOT DEFINED ${MPI_OVERSUBSCRIBE_FLAG}) 
-		execute_process(COMMAND ${MPIEXEC} --version OUTPUT_VARIABLE MPI_VERSION)
-		if (${MPI_VERSION} MATCHES "Open MPI" OR
-		    ${MPI_VERSION} MATCHES "OpenRTE"  OR
-		    ${MPI_VERSION} MATCHES "slurm"    OR
-		    ${MPI_VERSION} MATCHES "aprun")
-			set (MPI_OVERSUBSCRIBE_FLAG "--oversubscribe")
-	 	endif ()
-	endif ()
+        if (NOT DEFINED ${MPI_OVERSUBSCRIBE_FLAG}) 
+            execute_process(COMMAND ${MPIEXEC} --version OUTPUT_VARIABLE MPI_VERSION)
+            if (${MPI_VERSION} MATCHES "Open MPI" OR
+                ${MPI_VERSION} MATCHES "OpenRTE"  OR
+                ${MPI_VERSION} MATCHES "slurm"    OR
+                ${MPI_VERSION} MATCHES "aprun")
+                set (MPI_OVERSUBSCRIBE_FLAG "--oversubscribe")
+            endif ()
+        endif ()
+    endif ()
 endif ()
 
 find_program(AWK awk mawk gawk)
