@@ -24,11 +24,6 @@ ifeq ($(F90),gfortran)
     FCOMP    = $(FC) #gfortran
     LIBS     =
 	CFLAGS  := -fdefault-real-8 -fPIC
-	LINKS   := -L$(LAPACK_HOME) -llapack \
-			   -L$(HDF5_HOME)/lib -lhdf5hl_fortran -lhdf5 -lhdf5_fortran -lhdf5 -lpthread -lz -lm \
-			   -L$(FFTW_HOME)/lib -lfftw3 \
-			   -L$(OPENBLAS_HOME)/lib -lopenblas
-	LIBS    := -I$(HDF5_HOME)/include -I$(FFTW_HOME)/include
 endif
 
 ifeq ($(F90),ifort)
