@@ -138,7 +138,7 @@ module inputlist
 
 !SET MAXIMUM RESOLUTION;
 
-  CHARACTER(100)     :: ext
+  CHARACTER     :: ext*100
 
   INTEGER, parameter :: MNvol     = 256 !latex \item The maximum value of \inputvar{Nvol} is \verb+MNvol=256+.
   INTEGER, parameter :: MMpol     =  64 !latex \item The maximum value of \inputvar{Mpol} is \verb+MNpol= 32+.
