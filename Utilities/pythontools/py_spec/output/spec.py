@@ -56,7 +56,7 @@ class SPECout:
 
             # check version and print warning
             try:
-                if _content['version'] < SPEC_MAJOR_VERSION:
+                if _content['version'][()][0] < SPEC_MAJOR_VERSION:
                     print("!!!Warning: this python package is used for SPEC!")
             except KeyError:
                 print("!!!Warning: you might be not reading a SPEC HDF5 file!")
