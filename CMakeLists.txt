@@ -97,6 +97,9 @@ message(STATUS "HDF5 Fortran include directors : ${HDF5_Fortran_INCLUDE_DIRS}")
 #add_executable(xspec "")
 
 add_subdirectory(src)
+if(SKBUILD)
+    add_subdirectory("Utilities/python_wrapper")
+endif()
 
 #tartget_link_libraries(xspec spec_lib)
 # Add dependencies to other libraries
