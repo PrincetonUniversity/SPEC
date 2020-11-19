@@ -36,7 +36,7 @@
  # At PPPL, you can use the following commands
  # module use /p/focus/modules
  # module load spec
- CFLAGS=
+ CFLAGS=-r8
  RFLAGS=-mcmodel=large -O3 -m64 -unroll0 -fno-alias -ip -traceback
  DFLAGS=-O0 -g -traceback -check bounds -check format -check output_conversion -check pointers -check uninit -debug full -D DEBUG
  LIBS=-I${MKLROOT}/include/intel64/lp64 -I${MKLROOT}/include  # MKL include
@@ -56,7 +56,7 @@ ifeq ($(CC),gfortran)
  RFLAGS=-O3 -w -ffree-line-length-none -fexternal-blas # -fallow-argument-mismatch only used for GCC-10
  DFLAGS=-O0 -g -w -ffree-line-length-none -Wextra -Wtarget-lifetime -fbacktrace -fbounds-check -fexternal-blas \
      -fcheck=all -DDEBUG #-ffpe-trap=invalid,zero,overflow,underflow,inexact # for some reason this will cause crash
- CFLAGS=
+ CFLAGS=-fdefault-real-8
  LINKS=-L$(LAPACK_HOME) -llapack #-lgfortran
  LIBS=-I$(HDF5_HOME)/include
  LINKS+=-L$(HDF5_HOME)/lib -lhdf5hl_fortran -lhdf5 -lhdf5_fortran -lhdf5 -lpthread -lz -lm
@@ -73,7 +73,7 @@ ifeq ($(CC),gfortran_ubuntu)
  # sudo apt install m4
  # sudo apt install libfftw3-dev
  # sudo apt install libhdf5-openmpi-dev
- CFLAGS=
+ CFLAGS=-fdefault-real-8
  LINKS=-Wl,-rpath -Wl,/usr/lib/lapack -llapack -lblas
  LIBS=-I/usr/include/hdf5/openmpi
  LINKS+=-L/usr/lib/x86_64-linux-gnu/hdf5/openmpi -lhdf5_fortran -lhdf5 -lpthread -lz -lm
@@ -86,7 +86,7 @@ endif
 ifeq ($(CC),gfortran_arch)
  # configuration for Arch Linux
  FC=mpif90
- CFLAGS= -fallow-argument-mismatch
+ CFLAGS=-fdefault-real-8 -fallow-argument-mismatch
  LINKS=-llapack -lblas
  LIBS=
  LINKS+=-lhdf5_fortran -lhdf5 -lpthread -lz -lm
@@ -98,7 +98,7 @@ endif
 ifeq ($(CC),gfortran_mac)
  # works on Ksenia's laptop
  FC=mpif90
- CFLAGS=
+ CFLAGS=-fdefault-real-8
  LINKS=-L/usr/local/Cellar/lapack/3.8.0_1/lib -llapack -Wl,-rpath -Wl,/usr/local/Cellar/lapack/3.8.0_1/lib -lblas -L/usr/local/Cellar/openblas/0.3.7 -lgfortran -Wl,-rpath -Wl,/usr/local/Cellar/openblas/0.3.7/lib
  LIBS=-I/Applications/HDF_Group/HDF5/1.10.5/include/static
  LINKS+=-L/Applications/HDF_Group/HDF5/1.10.5/lib -lhdf5_f90cstub -lhdf5_fortran -lhdf5 -lpthread -lz -lm -Wl,-rpath -Wl,/Applications/HDF_Group/HDF5/1.10.5/lib
@@ -120,7 +120,7 @@ ifeq ($(CC),lff95)
 endif
 
 ifeq ($(CC),intel_spc)
- CFLAGS=
+ CFLAGS=-r8
  RFLAGS=-O2 -ip -no-prec-div -xHost -fPIC
  DFLAGS=-traceback -D DEBUG -g
  LINKS=-L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl
@@ -132,7 +132,7 @@ endif
 
 ifeq ($(CC),gfort_spc)
  FC=mpif90
- CFLAGS=
+ CFLAGS=-fdefault-real-8
  RFLAGS=-O2 -ffixed-line-length-none -ffree-line-length-none -fexternal-blas
  DFLAGS=-g -fbacktrace -fbounds-check -ffree-line-length-none -fexternal-blas -DDEBUG
  LINKS=-L/lib -lmkl_rt -lpthread -lm -ldl -Wl,-rpath
@@ -149,7 +149,7 @@ ifeq ($(CC),intel_ipp)
  # and on cobra with the following modules:
  # intel/19.0.4 impi/2019.4 mkl/2019.4 hdf5-serial/1.8.21 fftw-mpi/3.3.8
  FC=mpiifort
- CFLAGS=
+ CFLAGS=-r8
  RFLAGS=-O2 -ip -no-prec-div -xHost -fPIC
  DFLAGS=-traceback -D DEBUG
  LINKS=-L${MKLROOT}/lib/intel64 -lmkl_rt -lpthread -lm -ldl -Wl,-rpath -Wl,${MKLROOT}/lib/intel64
@@ -163,7 +163,7 @@ ifeq ($(CC),gfortran_ipp)
  # tested on draco with the following modules:
  # gcc/8 impi/2018.3 mkl/2018.3 hdf5-mpi/1.10.5 fftw-mpi/3.3.8
  FC=mpif90
- CFLAGS=
+ CFLAGS=-fdefault-real-8
  RFLAGS=-O2 -fPIC -ffree-line-length-none
  DFLAGS=-g -fbacktrace -fbounds-check -DDEBUG -ffree-line-length-none
  LINKS=-L${MKLROOT}/lib/intel64 -lmkl_rt -lpthread -lm -ldl -Wl,-rpath -Wl,${MKLROOT}/lib/intel64
@@ -181,7 +181,7 @@ ifeq ($(CC),intel_raijin)
  # module load openmpi
  # module load fftw3-mkl/2018.1.163
  # module load hdf5
- CFLAGS=
+ CFLAGS=-r8
  LINKS=-L${MKLROOT}/lib/intel64 -mkl=parallel -liomp5 
  LIBS=-I$(HDF5_BASE)/include
  LINKS+=-L$(HDF5_BASE)/lib -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lpthread -lz -lm
