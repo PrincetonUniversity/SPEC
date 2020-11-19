@@ -23,7 +23,7 @@ ifeq ($(F90),gfortran)
 	F90FLAGS = $(RFLAGS)
     FCOMP    = $(FC) #gfortran
     LIBS     =
-	CFLAGS  := -fdefault-real-8 -fPIC
+	CFLAGS  := -fPIC
 endif
 
 ifeq ($(F90),ifort)
