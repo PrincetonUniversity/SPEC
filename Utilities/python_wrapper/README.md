@@ -19,6 +19,9 @@ All the input variables and output quantities together with Fortran subroutines 
 Here are the modifications we have made in the original SPEC sources.
 
 1. global.f90: `CHARACTER :: ext*100` -> `CHARACTER(100)     :: ext`
+2. macros:
+   - `CHARACTER` replacement is commented
+   - REAL is now replaced with `real(8)`
 
 ## Compile
 To compile the python package, you should type
