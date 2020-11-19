@@ -72,7 +72,7 @@ set(unprocessed_src_files
     ra00aa.f90
     numrec.f90
     preset.f90
-    sphdf5.f90
+    #sphdf5.f90
     global.f90
     #${CMAKE_CURRENT_SOURCE_DIR}/xspech.f90
 ) # below assumes the .f files are double precision; the CFLAGS = -r8 option is not required;
@@ -89,6 +89,8 @@ set(f_src_files
 )
 
 preprocess_m4(srcs ${unprocessed_src_files})
+preprocess_m4(sphdf5_src sphdf5.f90)
+message(STATUS "sphdf5_src is ${sphdf5_src}")
 
 #set(srcs)
 #foreach(f ${unprocessed_src_files})
@@ -130,11 +132,12 @@ preprocess_m4(srcs ${unprocessed_src_files})
 #)
 #add_dependencies(spec m4_process)
 
-message(STATUS "srcs variable is ${srcs}")
 
 if(SKBUILD)
     set(fortran_src_files "${srcs}" PARENT_SCOPE)
 endif()
+list(APPEND srcs "${sphdf5_src}")
+message(STATUS "srcs variable is ${srcs}")
 
 add_library(spec 
         ${srcs} ${f_src_files}
@@ -149,7 +152,9 @@ target_compile_options(spec
     PUBLIC $<$<Fortran_COMPILER_ID:GNU>:-ffree-line-length-none>
 )
 
-target_include_directories(spec PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+set_target_properties (spec PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/spec)
+target_include_directories(spec PUBLIC ${CMAKE_Fortran_MODULE_DIRECTORY}/spec)
+#target_include_directories(spec PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 
 # Configure OpenMP
 target_link_libraries(spec PUBLIC OpenMP::OpenMP_Fortran)
@@ -215,6 +220,7 @@ target_include_directories(spec
 )
 if(SKBUILD)
     get_target_property(SPEC_LINK_LIB spec LINK_LIBRARIES)
+    list(REMOVE_ITEM SPEC_LINK_LIB "OpenMP::OpenMP_Fortran")
     message(STATUS "spec linked libraries are ${SPEC_LINK_LIB}")
     set(SPEC_LINK_LIB ${SPEC_LINK_LIB} PARENT_SCOPE)
 endif()

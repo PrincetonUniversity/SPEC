@@ -10,7 +10,7 @@ if(CMAKE_Fortran_COMPILER_ID STREQUAL Intel)
     set(FPP_COMPILE_FLAGS "")
 else()
 	set(FPP_COMPILER gfortran)
-    set(FPP_COMPILE_FLAGS "-E -cpp")
+    set(FPP_COMPILE_FLAGS -E -cpp)
 endif()
 
 get_directory_property(COMP_DEFS COMPILE_DEFINITIONS)
@@ -60,14 +60,8 @@ function(preprocess_fortran outvar)
     set(${outvar} "${srcs}" PARENT_SCOPE)
 endfunction()
 
-#set(fortran_src_files ${CMAKE_CURRENT_SOURCE_DIR}/fortran_src/runspec.f
-#                      ${CMAKE_CURRENT_SOURCE_DIR}/fortran_src/reinit.f90
-#                      ${CMAKE_CURRENT_SOURCE_DIR}/fortran_src/spec_input.f
-#                      ${CMAKE_CURRENT_SOURCE_DIR}/fortran_src/read_wout_mod.f90
-#)
-#fortran_src_files
 #message(STATUS "fortran_src_files is ${fortran_src_files}")
-#preprocess_fortran(fpp_files ${fortran_src_files})
+preprocess_fortran(fpp_files ${fortran_src_files})
 #message(STATUS "fpp_files is ${fpp_files}")
 
 # ----------------------------------------------------------------------------
@@ -75,9 +69,9 @@ endfunction()
 # NOTE: The files produced have no one->one relation with the source files.
 # NOTE: So giving the names of f90wrap_---.f90 files manually 
 #-----------------------------------------------------------------------------
-set(f90wrap_output_files ${CMAKE_CURRENT_BINARY_DIR}/f90wrap_gloabl.f90
-			             ${CMAKE_CURRENT_BINARY_DIR}/f90wrap_intghs.f90  
-						 ${CMAKE_CURRENT_BINARY_DIR}/f90wrap_newton.f90 
+set(f90wrap_output_files ${CMAKE_CURRENT_BINARY_DIR}/f90wrap_global_fpp.f90
+			             ${CMAKE_CURRENT_BINARY_DIR}/f90wrap_intghs_fpp.f90  
+						 ${CMAKE_CURRENT_BINARY_DIR}/f90wrap_newton_fpp.f90 
 						 ${CMAKE_CURRENT_BINARY_DIR}/f90wrap_toplevel.f90 
 )
 
@@ -85,11 +79,15 @@ set(kind_map_file ${CMAKE_CURRENT_SOURCE_DIR}/kind_map)
 set(python_mod_name spec)
 set(python_mod_file ${CMAKE_CURRENT_BINARY_DIR}/${python_mod_name}.py)
 
+add_custom_target(preprocessing ALL
+  DEPENDS ${fpp_files}
+)
+
 add_custom_command(OUTPUT ${python_mod_file} ${f90wrap_output_files}
-    COMMAND "${F90Wrap_EXECUTABLE}" -m "${python_mod_name}" ${fortran_src_files} -k "${kind_map_file}"
+    COMMAND "${F90Wrap_EXECUTABLE}" -m "${python_mod_name}" ${fpp_files} -k "${kind_map_file}"
     #IMPLICIT_DEPENDS Fortran ${fpp_files}
-    DEPENDS ${fortran_src_files} ${kind_map_file}
-    COMMENT "Executing F90Wrap for" ${fortran_src_files}
+    DEPENDS ${fpp_files} ${kind_map_file}
+    COMMENT "Executing F90Wrap for" ${fpp_files}
     VERBATIM
 )
 

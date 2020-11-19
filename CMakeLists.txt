@@ -90,7 +90,12 @@ message(STATUS "HDF5 libraries found: ${HDF5_FOUND}")
 message(STATUS "HDF5 C include directors : ${HDF5_C_INCLUDE_DIRS}")
 message(STATUS "HDF5 Fortran include directors : ${HDF5_Fortran_INCLUDE_DIRS}")
 
+# Direct the location of build files
+set (EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/build/bin)
+set (LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/build/lib)
 
+# Fortran specific things
+set (CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/build/modules)
 
 # Build SPEC
 #add_library(spec_lib "")
