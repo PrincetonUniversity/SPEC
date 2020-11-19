@@ -22,8 +22,6 @@ ifeq ($(F90),gfortran)
 	FPP_F90FLAGS = -x f95-cpp-input -fPIC
 	F90FLAGS = $(RFLAGS)
     FCOMP    = $(FC) #gfortran
-    LIBS     =
-	CFLAGS  := -fdefault-real-8
 	FLAGS    = -fPIC
 endif
 
@@ -33,7 +31,6 @@ ifeq ($(F90),ifort)
 	FPP_F90FLAGS = -x f95-cpp-input -fPIC
 	F90FLAGS = -fpscomp logicals -fPIC # use 1 and 0 for True and False
     FCOMP    = intelem # for f2py
-    LIBS =
 endif
 
 # CFLAGS := ${CFLAGS} -fPIC #     ==> universal for ifort, gfortran, pgi
@@ -108,13 +105,14 @@ $(LIBSRC_WRAP_FPP_FILES): %.fpp: ${SOURCES}/%_m.F90
 	${FPP} ${FPP_F90FLAGS} $<  -o $@
 
 $(LIB_NAME): 
-	make -C ${SOURCES} xspec CC=gfortran CFLAGS="${CFLAGS}"
+	make -C ${SOURCES} xspec CC=gfortran FLAGS="${FLAGS}"
 	cd ${SOURCES}; ${LIBTOOL} Utilities/python_wrapper/$@ $(addsuffix _r.o,$(ALLFILES))
 	ranlib $@
 
 _${PYTHON_MODN}.so: $(LIB_NAME) ${LIBSRC_WRAP_FPP_FILES} 
 	f90wrap -m ${PYTHON_MODN} ${LIBSRC_WRAP_FPP_FILES} -k ${KIND_MAP} -v
-	f2py-f90wrap --f90exec=${FC} --build-dir . -c -m _${PYTHON_MODN} -L. -l$(PYTHON_MODN) -I${SOURCES} ${LIBS} $(LINKS) f90wrap*.f90
+	f2py-f90wrap --f90exec=${FC} --build-dir . -c -m _${PYTHON_MODN} \
+	-L. -l$(PYTHON_MODN) -I${SOURCES} ${LIBS} $(LINKS) f90wrap*.f90
 
 compile_test:
 	@echo "SOURCES = ${SOURCES}"
