@@ -191,7 +191,6 @@ endif
 
 ifeq ($(OMP),yes)
  RFLAGS+=-DOPENMP -fopenmp
- LINKS+=-lgomp
 endif
 
 ###############################################################################################################################################################
@@ -206,10 +205,10 @@ endif
 ###############################################################################################################################################################
 
 xspec: $(addsuffix _r.o,$(ALLFILES)) $(MACROS) Makefile
-	$(FC) $(CFLAGS) $(RFLAGS) -o xspec $(addsuffix _r.o,$(ALLFILES)) $(LINKS) 
+	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o xspec $(addsuffix _r.o,$(ALLFILES)) $(LINKS) 
 
 dspec: $(addsuffix _d.o,$(ALLFILES)) $(MACROS) Makefile
-	$(FC) $(CFLAGS) $(DFLAGS) -o dspec $(addsuffix _d.o,$(ALLFILES)) $(LINKS) 
+	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o dspec $(addsuffix _d.o,$(ALLFILES)) $(LINKS) 
 
 ###############################################################################################################################################################
 
@@ -223,7 +222,7 @@ global_r.o: %_r.o: global.f90 $(MACROS)
 	{print}' global.f90 > mlobal.f90
 	m4 -P $(MACROS) mlobal.f90 > global_m.F90
 	@rm -f mlobal.f90
-	$(FC) $(CFLAGS) $(RFLAGS) -o global_r.o -c global_m.F90 $(LIBS)
+	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o global_r.o -c global_m.F90 $(LIBS)
 	@wc -l -L -w global_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
@@ -237,31 +236,31 @@ global_d.o: %_d.o: global.f90 $(MACROS)
 	{print}' global.f90 > mlobal.f90
 	m4 -P $(MACROS) mlobal.f90 > global_m.F90
 	@rm -f mlobal.f90
-	$(FC) $(CFLAGS) $(DFLAGS) -o global_d.o -c global_m.F90 $(LIBS)
+	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o global_d.o -c global_m.F90 $(LIBS)
 	@wc -l -L -w global_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
 ###############################################################################################################################################################
 
 %_r.o: %.f 
-	$(FC) $(CFLAGS) $(RFLAGS) -o $*_r.o -c $*.f
+	$(FC) $(FLAGS)           $(RFLAGS) -o $*_r.o -c $*.f
 	@wc -l -L -w $*.f | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
 %_d.o: %.f 
-	$(FC) $(CFLAGS) $(DFLAGS) -o $*_d.o -c $*.f
+	$(FC) $(FLAGS)           $(DFLAGS) -o $*_d.o -c $*.f
 	@wc -l -L -w $*.f | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
 ###############################################################################################################################################################
 
 $(ROBJS): %_r.o: %_m.F90 global_r.o sphdf5_r.o $(MACROS) 
-	$(FC) $(CFLAGS) $(RFLAGS) -o $*_r.o -c $*_m.F90 $(LIBS)
+	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o $*_r.o -c $*_m.F90 $(LIBS)
 	@wc -l -L -w $*_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
 $(DOBJS): %_d.o: %_m.F90 global_d.o  sphdf5_d.o $(MACROS) 
-	$(FC) $(CFLAGS) $(DFLAGS) -o $*_d.o -c $*_m.F90 $(LIBS)
+	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o $*_d.o -c $*_m.F90 $(LIBS)
 	@wc -l -L -w $*_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
@@ -275,7 +274,7 @@ $(PREPROC): %_m.F90: %.f90 $(MACROS)
 ###############################################################################################################################################################
 
 xspech_r.o: xspech.f90 global_r.o sphdf5_r.o $(addsuffix _r.o,$(files)) $(MACROS) 
-	@awk -v date='$(date)' -v pwd='$(PWD)' -v macros='$(MACROS)' -v fc='$(FC)' -v flags='$(CFLAGS) $(RFLAGS)' -v allfiles='$(ALLFILES)' \
+	@awk -v date='$(date)' -v pwd='$(PWD)' -v macros='$(MACROS)' -v fc='$(FC)' -v flags='$(FLAGS) $(CFLAGS) $(RFLAGS)' -v allfiles='$(ALLFILES)' \
 	'BEGIN{nfiles=split(allfiles,files," ")} \
 	{if($$2=="COMPILATION") {print "    write(ounit,*)\"      :  compiled  : date    = "date" ; \"" ; \
 	                         print "    write(ounit,*)\"      :            : srcdir  = "pwd" ; \"" ; \
@@ -287,12 +286,12 @@ xspech_r.o: xspech.f90 global_r.o sphdf5_r.o $(addsuffix _r.o,$(files)) $(MACROS
 	 {print}' xspech.f90 > mspech.f90
 	m4 -P $(MACROS) mspech.f90 > xspech_m.F90
 	@rm -f mspech.f90
-	$(FC) $(CFLAGS) $(RFLAGS) -o xspech_r.o -c xspech_m.F90 $(LIBS)
+	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o xspech_r.o -c xspech_m.F90 $(LIBS)
 	@wc -l -L -w xspech_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
 xspech_d.o: xspech.f90 global_d.o sphdf5_d.o $(addsuffix _d.o,$(files)) $(MACROS) 
-	@awk -v date='$(date)' -v pwd='$(PWD)' -v macros='$(MACROS)' -v fc='$(FC)' -v flags='$(CFLAGS) $(DFLAGS)' -v allfiles='$(ALLFILES)' \
+	@awk -v date='$(date)' -v pwd='$(PWD)' -v macros='$(MACROS)' -v fc='$(FC)' -v flags='$(FLAGS) $(CFLAGS) $(DFLAGS)' -v allfiles='$(ALLFILES)' \
 	'BEGIN{nfiles=split(allfiles,files," ")} \
 	{if($$2=="COMPILATION") {print "    write(ounit,*)\"      :  compiled  : date    = "date" ; \"" ; \
 	                         print "    write(ounit,*)\"      :            : srcdir  = "pwd" ; \"" ; \
@@ -304,7 +303,7 @@ xspech_d.o: xspech.f90 global_d.o sphdf5_d.o $(addsuffix _d.o,$(files)) $(MACROS
 	 {print}' xspech.f90 > mspech.f90
 	m4 -P $(MACROS) mspech.f90 > xspech_m.F90
 	@rm -f mspech.f90
-	$(FC) $(CFLAGS) $(DFLAGS) -o xspech_d.o -c xspech_m.F90 $(LIBS)
+	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o xspech_d.o -c xspech_m.F90 $(LIBS)
 	@wc -l -L -w xspech_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
