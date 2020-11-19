@@ -108,16 +108,12 @@ $(LIBSRC_WRAP_FPP_FILES): %.fpp: ${SOURCES}/%_m.F90
 
 $(LIB_NAME): 
 	make -C ${SOURCES} xspec CC=gfortran CFLAGS="${CFLAGS}"
-	cd ${SOURCES}; ${LIBTOOL} Utilities/python_wrapper/$@ $(ROBJS) global_r.o $(NUMOBJ)
+	cd ${SOURCES}; ${LIBTOOL} Utilities/python_wrapper/$@ $(ROBJS) $(NUMOBJ)
 	ranlib $@
 
-F90_FILES := f90wrap_global.f90  f90wrap_intghs.f90  f90wrap_newton.f90  f90wrap_toplevel.f90
-
-${F90_FILES} &: ${LIBSRC_WRAP_FPP_FILES} 
+_${PYTHON_MODN}.so: $(LIB_NAME) ${LIBSRC_WRAP_FPP_FILES} 
 	f90wrap -m ${PYTHON_MODN} ${LIBSRC_WRAP_FPP_FILES} -k ${KIND_MAP} -v
-
-_${PYTHON_MODN}.so: $(LIB_NAME) ${LIBSRC_WRAP_FPP_FILES} ${F90_FILES}
-	f2py-f90wrap --f90exec=${FC} --build-dir . -c -m _${PYTHON_MODN} ${F90_FILES} -I${SOURCES} ${LIBS} $(LINKS) -L. -l$(PYTHON_MODN) 
+	f2py-f90wrap --f90exec=${FC} --build-dir . -c -m _${PYTHON_MODN} -L. -l$(PYTHON_MODN) -I${SOURCES} ${LIBS} $(LINKS) f90wrap*.f90
 
 compile_test:
 	@echo "SOURCES = ${SOURCES}"
