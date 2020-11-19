@@ -16,7 +16,7 @@ if (sys.platform == "darwin"):
 from setuptools import find_packages
 from skbuild import setup
 
-with open('cmake_config_file.json') as fp:
+with open('cmake_config.json') as fp:
     d = json.load(fp)
 
 setup(
