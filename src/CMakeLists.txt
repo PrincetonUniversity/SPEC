@@ -132,6 +132,10 @@ preprocess_m4(srcs ${unprocessed_src_files})
 
 message(STATUS "srcs variable is ${srcs}")
 
+if(SKBUILD)
+    set(fortran_src_files "${srcs}" PARENT_SCOPE)
+endif()
+
 add_library(spec 
         ${srcs} ${f_src_files}
 )
@@ -154,6 +158,9 @@ target_compile_definitions(spec PUBLIC OPENMP)
 # Configure HDF5
 target_link_libraries(spec PUBLIC ${HDF5_Fortran_LIBRARIES} ${HDF5_C_LIBRARIES})
 target_include_directories(spec PUBLIC ${HDF5_C_INCLUDE_DIRS} ${HDF5_Fortran_INCLUDE_DIRS})
+if(SKBUILD)
+	set_target_properties(spec PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
 
 get_property(COMP_DEFS 
             TARGET spec
@@ -206,7 +213,8 @@ target_include_directories(spec
     PUBLIC 
         ${FFTW_INCLUDE_DIRS} ${LAPACK_INCLUDE_DIRS} ${BLAS_INCLUDE_DIRS}
 )
-#target_link_libraries(spec PUBLIC FFTW BLAS)
-#if(LAPACK_FOUND)
-#    target_link_libraries(spec PUBLIC LAPACK)
-#endif()
+if(SKBUILD)
+    get_target_property(SPEC_LINK_LIB spec LINK_LIBRARIES)
+    message(STATUS "spec linked libraries are ${SPEC_LINK_LIB}")
+    set(SPEC_LINK_LIB ${SPEC_LINK_LIB} PARENT_SCOPE)
+endif()
