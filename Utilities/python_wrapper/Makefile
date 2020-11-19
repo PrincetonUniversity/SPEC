@@ -23,7 +23,8 @@ ifeq ($(F90),gfortran)
 	F90FLAGS = $(RFLAGS)
     FCOMP    = $(FC) #gfortran
     LIBS     =
-	CFLAGS  := -fdefault-real-8 -fPIC
+	CFLAGS  := -fdefault-real-8
+	FLAGS    = -fPIC
 endif
 
 ifeq ($(F90),ifort)
@@ -120,6 +121,9 @@ compile_test:
 	@echo "FC = ${FC}"
 	@echo "LIBTOOL = ${LIBTOOL}"
 	@echo "LIBSRC_WRAP_SOURCES = ${LIBSRC_WRAP_SOURCES}"
+	@echo "CFLAGS = ${CFLAGS}"
+	@echo "RFLAGS = ${RFLAGS}"
+	@echo "FLAGS = ${FLAGS}"
 	@echo "LINKS = ${LINKS}"
 
 test:
