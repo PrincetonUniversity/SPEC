@@ -108,7 +108,7 @@ $(LIBSRC_WRAP_FPP_FILES): %.fpp: ${SOURCES}/%_m.F90
 
 $(LIB_NAME): 
 	make -C ${SOURCES} xspec CC=gfortran CFLAGS="${CFLAGS}"
-	cd ${SOURCES}; ${LIBTOOL} Utilities/python_wrapper/$@ $(ROBJS) $(NUMOBJ)
+	cd ${SOURCES}; ${LIBTOOL} Utilities/python_wrapper/$@ $(addsuffix _r.o,$(ALLFILES))
 	ranlib $@
 
 _${PYTHON_MODN}.so: $(LIB_NAME) ${LIBSRC_WRAP_FPP_FILES} 
@@ -123,4 +123,4 @@ compile_test:
 	@echo "LINKS = ${LINKS}"
 
 test:
-	@python -c "import spec; print('SPEC version: {:}'.format(spec.allglobal.version))"
+	@python -c "import spec; print('SPEC version: {:}'.format(spec.constants.version))"
