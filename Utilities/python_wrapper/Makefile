@@ -120,6 +120,8 @@ compile_test:
 	@echo "FC = ${FC}"
 	@echo "LIBTOOL = ${LIBTOOL}"
 	@echo "LIBSRC_WRAP_SOURCES = ${LIBSRC_WRAP_SOURCES}"
+	@echo "CFLAGS = ${CFLAGS}"
+	@echo "RFLAGS = ${RFLAGS}"
 	@echo "LINKS = ${LINKS}"
 
 test:
