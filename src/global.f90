@@ -55,7 +55,7 @@ module constants
   REAL, parameter :: mu0        =   2.0E-07 * pi2
   REAL, parameter :: goldenmean =   1.618033988749895 ! golden mean = ( one + sqrt(five) ) / two ;
 
-  REAL, parameter :: version    =   3.00
+  REAL, parameter :: version    =   3.01
 
 end module constants
 
@@ -187,7 +187,7 @@ module inputlist
 
 !SET MAXIMUM RESOLUTION;
 
-  CHARACTER          :: ext*100
+  CHARACTER(LEN=100) :: ext
 
   INTEGER, parameter :: MNvol     = 256 !latex \item The maximum value of \inputvar{Nvol} is \verb+MNvol=256+.
   INTEGER, parameter :: MMpol     =  64 !latex \item The maximum value of \inputvar{Mpol} is \verb+MNpol= 32+.

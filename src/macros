@@ -8,7 +8,7 @@ m4_changequote({,})m4_dnl ; can put comments here;
 m4_changecom(!)m4_dnl ; can put comments here;
 m4_define(INTEGER,integer)m4_dnl ; can put comments here;
 m4_define(REAL,real)m4_dnl ; can put comments here;
-m4_define(CHARACTER,character)m4_dnl ; can put comments here;
+!m4_define(CHARACTER,character)m4_dnl ; can put comments here;
 m4_define(GETTIME,MPI_WTIME())m4_dnl ; can put comments here;
 m4_define(MPISTART,{! macro expansion of mpistart;
 
