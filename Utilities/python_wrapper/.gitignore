@@ -8,3 +8,4 @@ src.*/
 __pycache__/
 spec.py
 libspec.a
+_skbuild/
