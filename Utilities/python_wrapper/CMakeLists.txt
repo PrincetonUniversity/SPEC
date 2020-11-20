@@ -9,7 +9,7 @@ if(CMAKE_Fortran_COMPILER_ID STREQUAL Intel)
 	set(FPP_COMPILER fpp)
     set(FPP_COMPILE_FLAGS "")
 else()
-	set(FPP_COMPILER gfortran)
+	set(FPP_COMPILER ${CMAKE_Fortran_COMPILER})
     set(FPP_COMPILE_FLAGS -E -cpp)
 endif()
 
