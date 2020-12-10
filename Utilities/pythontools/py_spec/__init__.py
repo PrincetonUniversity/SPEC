@@ -1,6 +1,6 @@
 # import of all SPEC-related python scripts.
-__version__ = '3.0.0'
+__version__ = "3.0.1"
 
-from . import ci
-from .input import SPECNamelist
-from .output import SPECout
+from .ci.test import compare
+from .input.spec_namelist import SPECNamelist
+from .output.spec import SPECout
