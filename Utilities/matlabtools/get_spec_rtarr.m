@@ -53,7 +53,7 @@ for j=1:mn
   for it=1:nt
      cosa = cos(im(j)*tarr(it)-in(j)*zarr0);
      sina = sin(im(j)*tarr(it)-in(j)*zarr0);
-     Rarr(:,it)  = Rarr(:,it) + (Rac(j) + fac{j}{1}.*(Rbc(j)-Rac(j)) )*cosa;
+     Rarr(:,it)  = Rarr(:,it) + (Rac(j) + fac{j}{1}'.*(Rbc(j)-Rac(j)) )*cosa;
      dRarr(:,it) = dRarr(:,it) + fac{j}{2}*(Rbc(j)-Rac(j))*cosa;
      Tarr(:,it)  = tarr(it);
   end

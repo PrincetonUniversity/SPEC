@@ -49,7 +49,7 @@ for ii=1:4
 end
 
 % Compute the regularisation factor
-factor = get_spec_regularisation_factor(data, vol, sarr, 'G');
+factor = get_spec_regularization_factor(data, vol, sarr, 'G');
                         
 % And R derivatives
 if RorZ=='R'
