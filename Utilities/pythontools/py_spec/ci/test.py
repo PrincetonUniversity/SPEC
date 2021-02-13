@@ -8,22 +8,13 @@ import numpy as np
 from py_spec.output import SPECout
 import argparse
 
-# parse command line arguments
 parser = argparse.ArgumentParser(description="Compare two SPEC HDF5 outputs")
 parser.add_argument("filename", type=str, help="file name to be compared")
 parser.add_argument("reference", type=str, help="reference data")
 parser.add_argument("-t", "--tol", type=float, default=1E-12, help="difference tolerance")
 
-args = parser.parse_args()
-print('Compare SPEC outputs in {:s} and {:s} with tolerance {:12.5E}'.format(
-        args.filename, args.reference, args.tol))
-data_A = SPECout(args.filename)
-data_B = SPECout(args.reference)
-tol = args.tol
-match = True
 
-
-def compare(data, reference, localtol = tol, action='ERR'):
+def compare(data, reference, localtol=1e-6, action='ERR'):
     """
     compare all items in data to items in reference with the same keys.
     Throws an error or prints a warning when there is a diference.
@@ -69,15 +60,24 @@ def compare(data, reference, localtol = tol, action='ERR'):
                     print('ok: ',key, 'element average difference = {}'.format(diff))
     return
 
+if __name__ == '__main__':
+# parse command line arguments
 
-compare(data_A, data_B, tol)
-print('===================')
-if match:
-    print('All the terms are within tolerance.')
-else:
-    print('Differences in some elements are larger than the tolerence.')
-    raise SystemExit('Differences in some elements are larger than the tolerence.')
+    args = parser.parse_args()
+    print('Compare SPEC outputs in {:s} and {:s} with tolerance {:12.5E}'.format(
+            args.filename, args.reference, args.tol))
+    data_A = SPECout(args.filename)
+    data_B = SPECout(args.reference)
+    tol = args.tol
+    match = True
 
+    compare(data_A, data_B, tol)
+    print('===================')
+    if match:
+        print('All the terms are within tolerance.')
+    else:
+        print('Differences in some elements are larger than the tolerence.')
+        raise SystemExit('Differences in some elements are larger than the tolerence.')
 
-exit
+    exit
 
