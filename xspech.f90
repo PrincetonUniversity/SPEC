@@ -33,29 +33,44 @@
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 program xspech
 
-  use allglobal, only: readin, read_command_args, MPI_COMM_SPEC
+  use allglobal, only: readin, read_command_args, MPI_COMM_SPEC, myid, ncpu, cpus, version
+  use fileunits, only: ounit
 
   LOCALS
 
   call MPI_INIT( ierr )
 
+  ! set default communicator to MPI_COMM_WORLD
   MPI_COMM_SPEC = MPI_COMM_WORLD
+
+  myid = 0 ; ncpu = 1
+  call MPI_COMM_RANK( MPI_COMM_SPEC, myid, ierr )
+  call MPI_COMM_SIZE( MPI_COMM_SPEC, ncpu, ierr )
+
+  ! set initial time; 04 Dec 14;
+  cpus = GETTIME
+  cpuo = cpus
+
+  ! print header: version of SPEC and compilation info
+  cput = GETTIME
+  if( myid.eq.0 ) then
+   write(ounit,'("xspech : ", 10x ," : version = "F5.2)') version
+! COMPILATION ! do not delete; this line is replaced (see Makefile) with a write statement identifying date, time, compilation flags, etc.;
+  endif
 
   ! read command-line arguments
   call read_command_args()
 
-
-  ! ---- new by jons -----
   ! initialize input arrays into a default state
   call initialize_inputs()
 
-  ! ---- end new by jons -----
+  cput = GETTIME
+  if( myid.eq.0 ) then
+   write(ounit,'("xspech : ", 10x ," : ")')
+   write(ounit,'("xspech : ",f10.2," : begin execution ; ncpu=",i3," ; calling global:readin ;")') cput-cpus, ncpu
+  endif
 
-
-
-  if (myid.eq.0) then
-    call readin() ! read & broadcast input namelist
-  end if
+  call readin() ! read & broadcast input namelist
   ! initialize; readin; default
 
 
@@ -86,7 +101,7 @@ subroutine spec
 
   use fileunits, only : ounit, lunit
 
-  use inputlist, only : Wmacros, Wxspech, ext, &
+  use inputlist, only : Wmacros, Wxspech, &
                         Nfp, Igeometry, Nvol, Lrad, &
                         tflux, pflux, phiedge, pressure, pscale, helicity, Ladiabatic, adiabatic, gamma, &
                         Rbc, Zbs, Rbs, Zbc, &
@@ -100,7 +115,7 @@ subroutine spec
 
   use cputiming, only : Txspech
 
-  use allglobal, only : readin, wrtend, ncpu, myid, cpus, &
+  use allglobal, only : readin, wrtend, ncpu, myid, cpus, ext, &
                         Mvol, &
                         YESstellsym, NOTstellsym, &
                         Iquad, &
@@ -151,9 +166,7 @@ subroutine spec
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  myid = 0 ; ncpu = 1
-  call MPI_COMM_RANK( MPI_COMM_SPEC, myid, ierr )
-  call MPI_COMM_SIZE( MPI_COMM_SPEC, ncpu, ierr )
+
 
 !#ifdef DEBUG
 !   iwait = 0; pid = getpid()
@@ -163,27 +176,6 @@ subroutine spec
 !     !wait for debugger
 !   enddo
 !#endif
-
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  if( myid.eq.0 ) then
-   write(ounit,'("xspech : ", 10x ," : version = "F5.2)') version
-! COMPILATION ! do not delete; this line is replaced (see Makefile) with a write statement identifying date, time, compilation flags, etc.;
-  endif
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  cpus = GETTIME ! set initial time; 04 Dec 14;
-
-  cpuo = cpus
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  if( myid.eq.0 ) then
-   write(ounit,'("xspech : ", 10x ," : ")')
-   write(ounit,'("xspech : ",f10.2," : begin execution ; ncpu=",i3," ; calling global:readin ;")') cpus-cpus, ncpu
-  endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -853,11 +845,11 @@ subroutine ending
 
   use fileunits, only : ounit
 
-  use inputlist, only : Wmacros, Wxspech, ext, Ltiming
+  use inputlist, only : Wmacros, Wxspech, Ltiming
 
   use cputiming
 
-  use allglobal, only : myid, cpus, mn, MPI_COMM_SPEC
+  use allglobal, only : myid, cpus, mn, MPI_COMM_SPEC, ext
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

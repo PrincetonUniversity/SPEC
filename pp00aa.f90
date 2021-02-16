@@ -10,11 +10,11 @@
 !latex \tableofcontents
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
 !latex \subsection{relevant input variables}
 
 !latex \begin{enumerate}
-!latex \item The resolution of \Poincare plot is controlled by 
+!latex \item The resolution of \Poincare plot is controlled by
 !latex       \begin{itemize}
 !latex       \item[i.] \inputvar{nPtraj} trajectories will be located in each volume;
 !latex       \item[ii.] \inputvar{nPpts} iterations per trajectory;
@@ -42,8 +42,8 @@
 !latex \end{verbatim}
 !latex       where \begin{itemize}
 !latex       \item[i.] $\t \equiv$ \type{data(1,k,j)} is the poloidal angle,
-!latex       \item[ii.] $\s \equiv$ \type{data(2,k,j)} is the radial coordinate, 
-!latex       \item[iii.] $ R \equiv$ \type{data(3,k,j)} is the cylindrical $R$, 
+!latex       \item[ii.] $\s \equiv$ \type{data(2,k,j)} is the radial coordinate,
+!latex       \item[iii.] $ R \equiv$ \type{data(3,k,j)} is the cylindrical $R$,
 !latex       \item[iv.]   $ Z \equiv$ \type{data(4,k,j)} is the cylindrical $Z$,
 !latex       \end{itemize}
 !latex \item The integer \type{k=0,Nz-1} labels toroidal planes, so that $\phi = ( 2 \pi / $\inputvar{Nfp}$ ) ( k / \type{Nz})$,
@@ -53,14 +53,14 @@
 !latex       This will be over-ruled by if \inputvar{nPtrj(lvol)}, given on input, is non-negative.
 !latex \item The starting location for the fieldline integrations are equally spaced in the radial coordinate $s_i=s_{l-1}+ i (s_{l}-s_{l-1})/N$ for $i=0,N$,
 !latex       along the line $\t=0$, $\z=0$.
-!latex \end{enumerate} 
-  
+!latex \end{enumerate}
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
 !latex \subsection{format of output: rotational-transform}
 
 !latex \begin{enumerate}
-  
+
 !latex \item The rotational-transform data is written to \type{.exttransform:xxxx}, where \type{xxxx} is an integer indicating the volume.
 !latex       The format of this file is as follows:
 !latex \begin{verbatim}
@@ -71,45 +71,45 @@
 !latex  close(lunit+myid)
 !latex \end{verbatim}
 !latex \end{enumerate}
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 subroutine pp00aa
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   use constants, only : zero, half, one, two, pi
-  
+
   use numerical, only :
-  
+
   use fileunits, only : ounit
-  
-  use inputlist, only : Wmacros, Wpp00aa, Nvol, Lrad, ext, odetol, nPpts, Ppts, nPtrj, Lconstraint, iota, oita, Igeometry
-  
+
+  use inputlist, only : Wmacros, Wpp00aa, Nvol, Lrad, odetol, nPpts, Ppts, nPtrj, Lconstraint, iota, oita, Igeometry
+
   use cputiming, only : Tpp00aa
-  
-  use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, &
+
+  use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, ext, &
                         Nz, pi2nfp, &
                         ivol, Mvol, &
                         Lcoordinatesingularity, &
                         diotadxup, Lplasmaregion, Lvacuumregion
 
   use sphdf5,    only : init_flt_output, write_poincare, write_transform, finalize_flt_output
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   LOCALS
-  
+
   INTEGER              :: lnPtrj, ioff, vvol, itrj, lvol
   INTEGER, allocatable :: utflag(:), numTrajs(:)
   REAL                 :: sti(1:2), ltransform(1:2)
   REAL, allocatable    :: data(:,:,:,:), fiota(:,:)
-  
+
   integer :: id, numTraj, recvId
   integer :: status(MPI_STATUS_SIZE)
 
   BEGIN(pp00aa)
-  
+
   ! count how many Poincare trajectories should be computed in total ; executed on each CPU
   allocate(numTrajs(1:Mvol))
   do vvol = 1, Mvol
@@ -155,7 +155,7 @@ subroutine pp00aa
       SALLOCATE(   data, (ioff:lnPtrj, 1:4,0:Nz-1,1:nPpts), zero ) ! for block writing to file (allows faster reading of output data files for post-processing plotting routines);
       SALLOCATE( utflag, (ioff:lnPtrj                    ),    0 ) ! error flag that indicates if fieldlines successfully followed; 22 Apr 13;
       SALLOCATE(  fiota, (ioff:lnPtrj, 1:2               ), zero ) ! will always need fiota(0,1:2);
-      
+
 !$OMP PARALLEL DO SHARED(lnPtrj,ioff,Wpp00aa,Nz,data,fiota,utflag,iota,oita,myid,vvol,cpus,Lconstraint,nPpts,ppts) PRIVATE(itrj,sti)
       do itrj = ioff, lnPtrj ! initialize Poincare plot with trajectories regularly spaced between interfaces along \t=0;
 
@@ -209,7 +209,7 @@ subroutine pp00aa
         endif
 
         if (Mvol.gt.1 .and. ncpu.gt.1) then
-          
+
          ! Gather data from all other parallelly running CPUs; there are min(ncpu-1, Mvol-vvol) of these in this iteration
          ! If we have so few CPUs that all of them need to perform multiple iteration over the set of volumes in batches of ncpu,
          ! there are a number ncpu-1 CPUs apart from the master who still have data that needs to be written before they can contine.
@@ -282,7 +282,7 @@ subroutine pp00aa
   endif
 
   RETURN(pp00aa)
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 1001 format("pp00aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; odetol=",es8.1," ; nPpts=",i8," ; lnPtrj=",i3," ;")

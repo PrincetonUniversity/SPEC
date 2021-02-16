@@ -55,6 +55,7 @@ module constants
   REAL, parameter :: mu0        =   2.0E-07 * pi2
   REAL, parameter :: goldenmean =   1.618033988749895 ! golden mean = ( one + sqrt(five) ) / two ;
 
+  ! version of SPEC
   REAL, parameter :: version    =   3.10
 
 end module constants
@@ -117,6 +118,8 @@ module fileunits
 
 end module fileunits
 
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
 module cputiming
 
 ! CPUVARIABLE ! this is expanded by Makefile; do not remove;
@@ -158,8 +161,6 @@ module inputlist
 !latex \item The input file, \verb+ext.sp+, where \verb+ext*100+ or \verb+ext.sp*100+ is given as command line input, contains the following namelists and interface geometry.
 
 !SET MAXIMUM RESOLUTION;
-
-  CHARACTER(LEN=100) :: ext
 
   INTEGER, parameter :: MNvol     = 256 !latex \item The maximum value of \inputvar{Nvol} is \verb+MNvol=256+.
   INTEGER, parameter :: MMpol     =  64 !latex \item The maximum value of \inputvar{Mpol} is \verb+MNpol= 32+.
@@ -1130,6 +1131,8 @@ module allglobal
   REAL                 :: pi2pi2nfpquart
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  CHARACTER(LEN=100)   :: ext ! extension of input filename, i.e., "G3V01L1Fi.001" for an input file G3V01L1Fi.001.sp
 
   REAL                 :: ForceErr, Energy
 
@@ -2610,41 +2613,45 @@ end subroutine readin
 
 !latex \end{enumerate}
 
+! read command-line arguments; in particular, determine input file (name or extension)
 subroutine read_command_args
 
   use fileunits, only: ounit
-  use inputlist, only: ext, Wreadin
+  use inputlist, only: Wreadin
 
   LOCALS
 
   LOGICAL              :: Lspexist
   INTEGER              :: iargc, iarg, numargs, extlen, sppos
 
-  CHARACTER            ::  arg*100
+  CHARACTER(len=100)   :: arg
 
-  call getarg( 1, ext )
-  extlen = len_trim(ext)
-  sppos = index(ext, ".sp", .true.) ! search for ".sp" from the back of ext
+  if (myid.eq.0) then
+
+  cput = GETTIME
+
+  call getarg( 1, arg )
+  extlen = len_trim(arg)
+  sppos = index(arg, ".sp", .true.) ! search for ".sp" from the back of ext
   if (sppos.eq.extlen-2) then       ! check if ext ends with ".sp";
-    ext = ext(1:extlen-3)           ! if this is the case, remove ".sp" from end of ext
+    arg = arg(1:extlen-3)           ! if this is the case, remove ".sp" from end of ext
   endif
+  ext = trim(arg)
 
-  if( trim(ext) .eq. "" .or. ext .eq. "-h" .or. ext .eq. "-help" ) then
-   ;write(ounit,'("readin : ", 10x ," : ")')
-   ;write(ounit,'("readin : ", 10x ," : file extension must be given as first command line argument ; extra command line options = -help -readin ;")')
+  if( ext .eq. "" .or. ext .eq. "-h" .or. ext .eq. "-help" ) then
+   ;write(ounit,'("rdcmdl : ", 10x ," : ")')
+   ;write(ounit,'("rdcmdl : ", 10x ," : file extension must be given as first command line argument ; extra command line options = -help -readin ;")')
    if( ext .eq. "-h" .or. ext .eq. "-help" ) then
-    write(ounit,'("readin : ", 10x ," : ")')
-    write(ounit,'("readin : ", 10x ," : the input file ext.sp must contain the input namelists; see global.pdf for description ;")')
+    write(ounit,'("rdcmdl : ", 10x ," : ")')
+    write(ounit,'("rdcmdl : ", 10x ," : the input file ext.sp must contain the input namelists; see global.pdf for description ;")')
    endif
-   FATAL( readin, .true., the input file does not exist) ! if not, abort;
+   FATAL( rdcmdl, .true., the input file does not exist) ! if not, abort;
   endif
 
-  write(ounit,'("readin : ", 10x ," : ")')
-  write(ounit,'("readin : ",f10.2," : ext = ",a100)') cput-cpus, ext
+  write(ounit,'("rdcmdl : ", 10x ," : ")')
+  write(ounit,'("rdcmdl : ",f10.2," : ext = ",a100)') cput-cpus, ext
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  write(ounit,'("readin : ", 10x ," : ")')
 
   numargs = iargc()
 
@@ -2653,16 +2660,18 @@ subroutine read_command_args
    do while ( iarg < numargs )
     iarg = iarg + 1 ; call getarg( iarg, arg)
     select case( arg )
-    case("-help","-h") ; write(ounit,'("readin : ",f10.2," : myid=",i3," : command line options = -readin ;")') cput-cpus, myid
+    case("-help","-h") ; write(ounit,'("rdcmdl : ",f10.2," : myid=",i3," : command line options = -readin ;")') cput-cpus, myid
     case("-readin"   ) ; Wreadin = .true.
     case("-p4pg"     ) ; iarg = iarg + 1 ; call getarg( iarg, arg) ! TODO: what is this?
     case("-p4wd"     ) ; iarg = iarg + 1 ; call getarg( iarg, arg) ! TODO: what is this?
-    case default       ; write(ounit,'("readin : ",f10.2," : myid=",i3," : argument not recognized ; arg = ",a100)') cput-cpus, myid, arg
+    case default       ; write(ounit,'("rdcmdl : ",f10.2," : myid=",i3," : argument not recognized ; arg = ",a100)') cput-cpus, myid, arg
     end select
    enddo
   endif
 
-  end subroutine read_command_args
+  end if ! check for myid.eq.0
+
+end subroutine read_command_args
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

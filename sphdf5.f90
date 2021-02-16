@@ -16,10 +16,10 @@
 
 module sphdf5
 
-  use inputlist , only : ext, Wsphdf5, Wmacros
+  use inputlist , only : Wsphdf5, Wmacros
   use fileunits , only : ounit
   use cputiming , only : Tsphdf5
-  use allglobal , only : myid, cpus, MPI_COMM_SPEC
+  use allglobal , only : myid, cpus, MPI_COMM_SPEC, ext
   use constants , only : version
   use hdf5
 
@@ -503,7 +503,7 @@ subroutine write_convergence_output( nDcalls, ForceErr )
   ! get dataspace slab corresponding to region which the iterations dataset was extended by
   H5CALL( sphdf5, h5dget_space_f, (iteration_dset_id, dataspace, hdfier), __FILE__, __LINE__) ! re-select dataspace to update size info in HDF5 lib
   H5CALL( sphdf5, h5sselect_hyperslab_f, (dataspace, H5S_SELECT_SET_F, old_data_dims, (/ INT(1, HSIZE_T) /), hdfier), __FILE__, __LINE__) ! newly appended slab is at old size and 1 long
-  
+
   if (myid.eq.0) then ! only one processor should actually write the data
 
     ! write next iteration object
@@ -564,7 +564,7 @@ subroutine write_grid
   HWRITERV( grpGrid,           1, pi2nfp           , (/ pi2nfp        /))
 
   ! combine all radial parts into one dimension as Lrad values can be different for different volumes
-  if (Ngrid .lt. 0) then 
+  if (Ngrid .lt. 0) then
     sumLrad = sum(Lrad(1:Mvol)+1)
   else
     sumLrad = (Ngrid + 1) * Mvol
@@ -582,7 +582,7 @@ subroutine write_grid
   do vvol = 1, Mvol ; ivol = vvol
    LREGION(vvol) ! sets Lcoordinatesingularity and Lplasmaregion ;
 
-   if (Ngrid .lt. 0) then 
+   if (Ngrid .lt. 0) then
     Ngrid_local = Lrad(vvol)  ! default
    else
     Ngrid_local = Ngrid
@@ -594,7 +594,7 @@ subroutine write_grid
     if( Lcoordinatesingularity .and. ii.eq.0 ) then ; Lcurvature = 0 ! Jacobian is not defined;
     else                                            ; Lcurvature = 1 ! compute Jacobian       ;
     endif
-    
+
     WCALL( sphdf5, coords, ( vvol, lss, Lcurvature, Ntz, mn ) ) ! only Rij(0,:) and Zij(0,:) are required; Rmn & Zmn are available;
 
     alongLrad = Ngrid_sum+ii+1
@@ -636,7 +636,7 @@ subroutine write_grid
         jireal(jk) = (                                      Bst(2)                     ) * gBzeta / sg(jk,0) ! BZ;
         enddo
       enddo
-    
+
      end select !Igeometry
     endif ! end of if( Lcurvature.eq.1 ) ;
 
@@ -655,8 +655,8 @@ subroutine write_grid
   HWRITERA( grpGrid, sumLrad, Ntz,  sg,     sg_grid )
   HWRITERA( grpGrid, sumLrad, Ntz,  BR, ijreal_grid )
   HWRITERA( grpGrid, sumLrad, Ntz,  Bp, ijimag_grid )
-  HWRITERA( grpGrid, sumLrad, Ntz,  BZ, jireal_grid )  
- 
+  HWRITERA( grpGrid, sumLrad, Ntz,  BZ, jireal_grid )
+
   DALLOCATE(    Rij_grid )
   DALLOCATE(    Zij_grid )
   DALLOCATE(     sg_grid )
