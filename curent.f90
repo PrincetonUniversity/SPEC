@@ -68,7 +68,7 @@ subroutine curent( lvol, mn, Nt, Nz, iflag, ldItGp )
 
   use cputiming, only : Tcurent
 
-  use allglobal, only : ncpu, cpus, myid, &
+  use allglobal, only : ncpu, cpus, myid, MPI_COMM_SPEC, &
                         Mvol, im, in, mne, ime, ine, &
                         YESstellsym, NOTstellsym, &
                         sg, guvij, &

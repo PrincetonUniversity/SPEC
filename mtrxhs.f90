@@ -18,7 +18,7 @@ subroutine mtrxhs( lvol, mn, lrad, resultA, resultD, idx )
   
   use cputiming, only : Tmtrxhs
   
-  use allglobal, only : ncpu, myid, cpus, &
+  use allglobal, only : ncpu, myid, cpus, MPI_COMM_SPEC, &
                         YESstellsym, NOTstellsym, &
                         im, in, &
                         NAdof, &

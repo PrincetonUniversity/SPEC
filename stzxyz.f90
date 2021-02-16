@@ -27,7 +27,7 @@ subroutine stzxyz( lvol , stz , RpZ )
   use fileunits, only : ounit
   use inputlist, only : Wstzxyz, Igeometry, Nvol, Ntor
   use cputiming, only : Tstzxyz
-  use allglobal, only : myid, cpus, mn, im, in, halfmm, &
+  use allglobal, only : myid, cpus, mn, im, in, halfmm, MPI_COMM_SPEC, &
                         iRbc, iZbs, iRbs, iZbc, &
                         Lcoordinatesingularity, &
                         NOTstellsym, &

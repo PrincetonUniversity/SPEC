@@ -83,7 +83,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   
   use cputiming, only : Tma00aa
   
-  use allglobal, only : myid, ncpu, cpus, &
+  use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, &
                         Mvol, im, in, mne, &
                         YESstellsym, NOTstellsym, &
                         gaussianweight, gaussianabscissae, &

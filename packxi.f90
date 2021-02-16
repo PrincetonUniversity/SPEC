@@ -82,7 +82,7 @@ subroutine packxi( NGdof, position, Mvol, mn, iRbc, iZbs, iRbs, iZbc, packorunpa
   
   use cputiming, only : Tpackxi
   
-  use allglobal, only : ncpu, myid, cpus, im, in, &
+  use allglobal, only : ncpu, myid, cpus, im, in, MPI_COMM_SPEC, &
                         YESstellsym, NOTstellsym, &
                         ajk, Nt, Nz, Ntz, iRij, iZij, tRij, tZij, &
                         ijreal, ijimag, jireal, jiimag, efmn, ofmn, cfmn, sfmn, evmn, odmn, comn, simn, &

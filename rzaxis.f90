@@ -88,7 +88,7 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
   
   use cputiming, only : Trzaxis
   
-  use allglobal, only : ncpu, myid, cpus, im, in, &
+  use allglobal, only : ncpu, myid, cpus, im, in, MPI_COMM_SPEC, &
                         ajk, Nt, Nz, Ntz, &
                         Rij, Zij, sg, cosi, sini, &
                         ijreal, ijimag, jireal, jiimag, jkreal, jkimag, kjreal, kjimag, &
