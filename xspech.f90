@@ -33,7 +33,8 @@
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 program xspech
 
-  use allglobal, only: readin, read_command_args, MPI_COMM_SPEC, myid, ncpu, cpus, version
+  use allglobal, only: readin, MPI_COMM_SPEC, myid, ncpu, cpus, version
+  use inputlist, only: initialize_inputs
   use fileunits, only: ounit
 
   LOCALS
@@ -90,6 +91,78 @@ end program xspech
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+!latex \subsubsection{input file extension $\equiv$ command line argument}
+
+!latex \begin{enumerate}
+!latex \item The input file name, \type{ext}, is given as the first command line input, and the input file itself is \verb!ext.sp!
+!latex \item Additional command line inputs recognized are:
+!latex \begin{enumerate}
+!latex \item \type{-help, -h} ; will give help information to user; under construction;
+!latex \item \type{-readin} ; will immediately set \type{Wreadin=T}; this may be over-ruled when \type{namelist/screenlist/} is read;
+!latex \end{enumerate}
+
+!latex \end{enumerate}
+
+! read command-line arguments; in particular, determine input file (name or extension)
+subroutine read_command_args
+
+  use fileunits, only: ounit
+  use inputlist, only: Wreadin
+  use allglobal, only: cpus, myid, ext, MPI_COMM_SPEC
+
+  LOCALS
+
+  LOGICAL              :: Lspexist
+  INTEGER              :: iargc, iarg, numargs, extlen, sppos
+
+  CHARACTER(len=100)   :: arg
+
+  if (myid.eq.0) then
+
+  cput = GETTIME
+
+  call getarg( 1, arg )
+  extlen = len_trim(arg)
+  sppos = index(arg, ".sp", .true.) ! search for ".sp" from the back of ext
+  if (sppos.eq.extlen-2) then       ! check if ext ends with ".sp";
+    arg = arg(1:extlen-3)           ! if this is the case, remove ".sp" from end of ext
+  endif
+  ext = trim(arg)
+
+  if( ext .eq. "" .or. ext .eq. "-h" .or. ext .eq. "-help" ) then
+   ;write(ounit,'("rdcmdl : ", 10x ," : ")')
+   ;write(ounit,'("rdcmdl : ", 10x ," : file extension must be given as first command line argument ; extra command line options = -help -readin ;")')
+   if( ext .eq. "-h" .or. ext .eq. "-help" ) then
+    write(ounit,'("rdcmdl : ", 10x ," : ")')
+    write(ounit,'("rdcmdl : ", 10x ," : the input file ext.sp must contain the input namelists; see global.pdf for description ;")')
+   endif
+   FATAL( rdcmdl, .true., the input file does not exist) ! if not, abort;
+  endif
+
+  write(ounit,'("rdcmdl : ", 10x ," : ")')
+  write(ounit,'("rdcmdl : ",f10.2," : ext = ",a100)') cput-cpus, ext
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  numargs = iargc()
+
+  if( numargs.gt.1 ) then
+   iarg = 1
+   do while ( iarg < numargs )
+    iarg = iarg + 1 ; call getarg( iarg, arg)
+    select case( arg )
+    case("-help","-h") ; write(ounit,'("rdcmdl : ",f10.2," : myid=",i3," : command line options = -readin ;")') cput-cpus, myid
+    case("-readin"   ) ; Wreadin = .true.
+    case("-p4pg"     ) ; iarg = iarg + 1 ; call getarg( iarg, arg) ! TODO: what is this?
+    case("-p4wd"     ) ; iarg = iarg + 1 ; call getarg( iarg, arg) ! TODO: what is this?
+    case default       ; write(ounit,'("rdcmdl : ",f10.2," : myid=",i3," : argument not recognized ; arg = ",a100)') cput-cpus, myid, arg
+    end select
+   enddo
+  endif
+
+  end if ! check for myid.eq.0
+
+end subroutine read_command_args
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -230,9 +303,10 @@ subroutine spec
 
   nfreeboundaryiterations = -1
 
-9000 nfreeboundaryiterations = nfreeboundaryiterations + 1 ! this is the free-boundary iteration loop; 08 Jun 16;
+! This is the free-boundary iteration loop (implemented using GOTO); 08 Jun 16;
+9000 nfreeboundaryiterations = nfreeboundaryiterations + 1
 
-  ! run fix_boundary for the first free_boundary iteration
+  ! run fix_boundary for the first free_boundary iteration if LautoinitBn was set to 1
   if (Lfreebound.eq.1 .and. LautoinitBn.eq.1) then
      if (nfreeboundaryiterations.eq.0) then  ! first iteration
         first_free_bound = .true.
@@ -325,6 +399,7 @@ subroutine spec
 
    if( Lfindzero.gt.0 ) then
 
+   ! This is the call to do one fixed-boundary iteration (by a Newton method).
     ifail = 1
     WCALL( xspech, newton, ( NGdof, position(0:NGdof), ifail ) )
 
@@ -441,7 +516,7 @@ subroutine spec
 !latex \subsection{free-boundary: re-computing normal field}
 
 !latex \begin{enumerate}
-!latex \item If \inputvar{Lfreebound.eq.1} and \inputvar{Lfindzero.gt.0} and\inputvar{mfreeits.ne.0},
+!latex \item If \inputvar{Lfreebound.eq.1} and \inputvar{Lfindzero.gt.0} and \inputvar{mfreeits.ne.0},
 !latex       then the magnetic field at the computational boundary produced by the plasma currents is computed using \link{bnorml}.
 !latex \item The ``new'' magnetic field at the computational boundary produced by the plasma currents is updated using a Picard scheme:
 !latex       \be \verb+Bns+_i^{j} = \lambda \, \verb+Bns+_i^{j-1} + (1-\lambda) \verb+Bns+_i, \label{eq:blending}

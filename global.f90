@@ -148,6 +148,8 @@ end module typedefns
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+! This is a pure data-container holding *all* input variables
+! required for a SPEC calculation.
 module inputlist
 
 !latex \subsection{input namelists}
@@ -343,7 +345,7 @@ module inputlist
 !latex       \bi
 !latex       \verb+namelist/physicslist/+
 
-  namelist/physicslist/&
+  namelist /physicslist/ &
  Igeometry   ,& !latex \item \inputvar{Igeometry = 3} : \verb!integer! : selects Cartesian, cylindrical or toroidal geometry;
                 !latex \bi
                 !latex \item[i.] \inputvar{Igeometry = 1} : Cartesian; geometry determined by $R$;
@@ -512,7 +514,7 @@ module inputlist
 !latex \bi
 !latex \type{namelist/numericlist/}
 
-  namelist/numericlist/&
+  namelist /numericlist/ &
  Linitialize ,& !latex \item \inputvar{Linitialize = 0 : integer} : to initialize geometry using a regularization / extrapolation method;
                 !latex \bi
                 !latex \item if \inputvar{Linitialize = -I}, where $I$ is a positive integer,
@@ -641,7 +643,7 @@ module inputlist
 !latex \bi
 !latex \type{namelist/locallist/}
 
-  namelist/locallist/&
+  namelist /locallist/ &
  LBeltrami,&    !latex \item\inputvar{LBeltrami = 4  integer}
                 !latex \bi
                 !latex \item if \inputvar{LBeltrami = 1,3,5 or 7}, (SQP) then the Beltrami field in each volume is constructed
@@ -710,7 +712,7 @@ module inputlist
 !latex \bi
 !latex \type{namelist/globallist/}
 
-  namelist/globallist/&
+  namelist /globallist/ &
  Lfindzero   ,& !latex \item \inputvar{Lfindzero = 0} : integer : use Newton methods to find zero of force-balance, which is computed by \link{dforce};
                 !latex \bi
                 !latex \item[o.] if \inputvar{Lfindzero = 0}, then \link{dforce} is called once
@@ -829,7 +831,7 @@ module inputlist
 !latex \bi
 !latex \type{namelist/diagnosticslist/}
 
-  namelist/diagnosticslist/&
+  namelist /diagnosticslist/ &
  odetol     ,&  !latex \item \inputvar{odetol = 1.0e-07} : real : o.d.e. integration tolerance for all field line tracing routines;
  absreq     ,&  !latex \item \inputvar{absreq = 1.0e-08} : real : redundant;
  relreq     ,&  !latex \item \inputvar{relreq = 1.0e-08} : real : redundant;
@@ -906,7 +908,7 @@ module inputlist
 !latex \bi
 !latex \type{namelist/screenlist/}
 
-  namelist/screenlist/&
+  namelist /screenlist/ &
 ! NSCREENLIST ! namelist screenlist; this is expanded by Makefile; DO NOT REMOVE;
  Wbuild_vector_potential , &
  Wreadin , &  !latex \item Every subroutine, e.g. \type{xy00aa.h}, has its own write flag, \type{Wxy00aa}.
@@ -945,9 +947,7 @@ module inputlist
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-end module inputlist
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  contains
 
 ! The task of this subroutine is to initialize *all* input variables
 ! to a default known state. A subsequent call to readin() can be used
@@ -959,8 +959,6 @@ end module inputlist
 ! Note that since the variables in screenlist are auto-generated,
 ! they do not appear here and also are not touched by this routine.
 subroutine initialize_inputs
-
-  use inputlist
 
   implicit none
 
@@ -1055,9 +1053,9 @@ subroutine initialize_inputs
   maxrndgues =  1.0
   Lmatsolver = 3
   NiterGMRES = 200
-  epsGMRES = 1e-14
+  epsGMRES   = 1e-14
   LGMRESprec = 1
-  epsILU = 1e-12
+  epsILU     = 1e-12
 
 ! globallist
 
@@ -1112,6 +1110,10 @@ end subroutine initialize_inputs
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+end module inputlist
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
 module allglobal
 
   use constants
@@ -1152,7 +1154,7 @@ module allglobal
 
   LOGICAL, allocatable :: ImagneticOK(:)   ! used to indicate if Beltrami fields have been correctly constructed;
 
-  LOGICAL           :: IconstraintOK         ! Used to break iteration loops of slaves in the global constraint minimization.
+  LOGICAL              :: IconstraintOK       ! Used to break iteration loops of slaves in the global constraint minimization.
 
   REAL   , allocatable :: beltramierror(:,:)  ! to store the integral of |curlB-mu*B| computed by jo00aa;
 
@@ -1653,25 +1655,24 @@ subroutine build_vector_potential(lvol, iocons, aderiv, tderiv)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-LOCALS
+  LOCALS
 
-INTEGER              :: aderiv    ! Derivative of A. -1: w.r.t geometrical degree of freedom
-                                  !                   0: no derivatives
-                                  !                   1: w.r.t mu
-                                  !                   2: w.r.t pflux
-INTEGER              :: tderiv    ! Derivative of Chebyshev polynomialc. 0: no derivatives
-                                  !                                      1: w.r.t radial coordinate s
-INTEGER              :: ii,  &    ! Loop index on Fourier harmonics
-                        ll,  &    ! Loop index on radial resolution
-                        mi,  &    ! Poloidal mode number
-                        lvol,&    ! Volume number
-                        iocons    ! inner (0) or outer (1) side of the volume
-REAL                 :: mfactor   ! Regularization factor when LcoordinateSingularity
+  INTEGER              :: aderiv    ! Derivative of A. -1: w.r.t geometrical degree of freedom
+                                    !                   0: no derivatives
+                                    !                   1: w.r.t mu
+                                    !                   2: w.r.t pflux
+  INTEGER              :: tderiv    ! Derivative of Chebyshev polynomialc. 0: no derivatives
+                                    !                                      1: w.r.t radial coordinate s
+  INTEGER              :: ii,  &    ! Loop index on Fourier harmonics
+                          ll,  &    ! Loop index on radial resolution
+                          mi,  &    ! Poloidal mode number
+                          lvol,&    ! Volume number
+                          iocons    ! inner (0) or outer (1) side of the volume
+  REAL                 :: mfactor   ! Regularization factor when LcoordinateSingularity
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-BEGIN(build_vector_potential)
-
+  BEGIN(build_vector_potential)
 
   efmn(1:mn) = zero ; sfmn(1:mn) = zero ; cfmn(1:mn) = zero ; ofmn(1:mn) = zero
 
@@ -1752,12 +1753,6 @@ subroutine readin
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-#ifdef CHECKNAG
-   call A00AAF() ! check NAG version;
-#endif
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
    call date_and_time( ldate, ltime )
 
    write(ounit,'("readin : ", 10x ," : ")')
@@ -1835,17 +1830,17 @@ subroutine readin
    endif
 #endif
 
-   FATAL( readin, Igeometry.lt.1 .or. Igeometry.gt.3, invalid geometry )
-   FATAL( readin, Nfp.le.0, invalid Nfp )
-   FATAL( readin, Mpol.lt.0 .or. Mpol.gt.MMpol, invalid poloidal resolution: may need to recompile with higher MMpol )
-   FATAL( readin, Ntor.lt.0 .or. Ntor.gt.MNtor, invalid toroidal resolution: may need to recompile with higher MNtor )
-   FATAL( readin, Nvol.lt.1 .or. Nvol.gt.MNvol, invalid Nvol: may need to recompile with higher MNvol )
-   FATAL( readin, mupftol.le.zero, mupftol is too small )
-   FATAL( readin, abs(one+gamma).lt.vsmall, 1+gamma appears in denominator in dforce ) ! Please check this; SRH: 27 Feb 18;
-   FATAL( readin, abs(one-gamma).lt.vsmall, 1-gamma appears in denominator in fu00aa ) ! Please check this; SRH: 27 Feb 18;
+   FATAL( readin, Igeometry.lt.1 .or. Igeometry.gt.3,      invalid geometry )
+   FATAL( readin, Nfp.le.0,                                invalid Nfp )
+   FATAL( readin, Mpol.lt.0 .or. Mpol.gt.MMpol,            invalid poloidal resolution: may need to recompile with higher MMpol )
+   FATAL( readin, Ntor.lt.0 .or. Ntor.gt.MNtor,            invalid toroidal resolution: may need to recompile with higher MNtor )
+   FATAL( readin, Nvol.lt.1 .or. Nvol.gt.MNvol,            invalid Nvol: may need to recompile with higher MNvol )
+   FATAL( readin, mupftol.le.zero,                         mupftol is too small )
+   FATAL( readin, abs(one+gamma).lt.vsmall,                1+gamma appears in denominator in dforce ) ! Please check this; SRH: 27 Feb 18;
+   FATAL( readin, abs(one-gamma).lt.vsmall,                1-gamma appears in denominator in fu00aa ) ! Please check this; SRH: 27 Feb 18;
    FATAL( readin, Lconstraint.lt.-1 .or. Lconstraint.gt.3, illegal Lconstraint )
-   FATAL( readin, Igeometry.eq.1 .and. rpol.lt.vsmall, poloidal extent of slab too small or negative )
-   FATAL( readin, Igeometry.eq.1 .and. rtor.lt.vsmall, toroidal extent of slab too small or negative )
+   FATAL( readin, Igeometry.eq.1 .and. rpol.lt.vsmall,     poloidal extent of slab too small or negative )
+   FATAL( readin, Igeometry.eq.1 .and. rtor.lt.vsmall,     toroidal extent of slab too small or negative )
 
    if( Istellsym.eq.1 ) then
     Rbs(-MNtor:MNtor,-MMpol:MMpol) = zero
@@ -2601,80 +2596,6 @@ end subroutine readin
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{input file extension $\equiv$ command line argument}
-
-!latex \begin{enumerate}
-!latex \item The input file name, \type{ext}, is given as the first command line input, and the input file itself is \verb!ext.sp!
-!latex \item Additional command line inputs recognized are:
-!latex \begin{enumerate}
-!latex \item \type{-help, -h} ; will give help information to user; under construction;
-!latex \item \type{-readin} ; will immediately set \type{Wreadin=T}; this may be over-ruled when \type{namelist/screenlist/} is read;
-!latex \end{enumerate}
-
-!latex \end{enumerate}
-
-! read command-line arguments; in particular, determine input file (name or extension)
-subroutine read_command_args
-
-  use fileunits, only: ounit
-  use inputlist, only: Wreadin
-
-  LOCALS
-
-  LOGICAL              :: Lspexist
-  INTEGER              :: iargc, iarg, numargs, extlen, sppos
-
-  CHARACTER(len=100)   :: arg
-
-  if (myid.eq.0) then
-
-  cput = GETTIME
-
-  call getarg( 1, arg )
-  extlen = len_trim(arg)
-  sppos = index(arg, ".sp", .true.) ! search for ".sp" from the back of ext
-  if (sppos.eq.extlen-2) then       ! check if ext ends with ".sp";
-    arg = arg(1:extlen-3)           ! if this is the case, remove ".sp" from end of ext
-  endif
-  ext = trim(arg)
-
-  if( ext .eq. "" .or. ext .eq. "-h" .or. ext .eq. "-help" ) then
-   ;write(ounit,'("rdcmdl : ", 10x ," : ")')
-   ;write(ounit,'("rdcmdl : ", 10x ," : file extension must be given as first command line argument ; extra command line options = -help -readin ;")')
-   if( ext .eq. "-h" .or. ext .eq. "-help" ) then
-    write(ounit,'("rdcmdl : ", 10x ," : ")')
-    write(ounit,'("rdcmdl : ", 10x ," : the input file ext.sp must contain the input namelists; see global.pdf for description ;")')
-   endif
-   FATAL( rdcmdl, .true., the input file does not exist) ! if not, abort;
-  endif
-
-  write(ounit,'("rdcmdl : ", 10x ," : ")')
-  write(ounit,'("rdcmdl : ",f10.2," : ext = ",a100)') cput-cpus, ext
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  numargs = iargc()
-
-  if( numargs.gt.1 ) then
-   iarg = 1
-   do while ( iarg < numargs )
-    iarg = iarg + 1 ; call getarg( iarg, arg)
-    select case( arg )
-    case("-help","-h") ; write(ounit,'("rdcmdl : ",f10.2," : myid=",i3," : command line options = -readin ;")') cput-cpus, myid
-    case("-readin"   ) ; Wreadin = .true.
-    case("-p4pg"     ) ; iarg = iarg + 1 ; call getarg( iarg, arg) ! TODO: what is this?
-    case("-p4wd"     ) ; iarg = iarg + 1 ; call getarg( iarg, arg) ! TODO: what is this?
-    case default       ; write(ounit,'("rdcmdl : ",f10.2," : myid=",i3," : argument not recognized ; arg = ",a100)') cput-cpus, myid, arg
-    end select
-   enddo
-  endif
-
-  end if ! check for myid.eq.0
-
-end subroutine read_command_args
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
 subroutine wrtend
 
 !latex \subsection{subroutine wrtend}
@@ -2969,6 +2890,7 @@ subroutine wrtend
   FATAL( wrtend, .not.allocated(iZbc), error )
 #endif
 
+  ! write initial guess of interface geometry
   do imn = 1, mn ; write(iunit,'(2i6,1024es23.15)') im(imn), in(imn)/Nfp, ( iRbc(imn,vvol), iZbs(imn,vvol), iRbs(imn,vvol), iZbc(imn,vvol), vvol = 1, Nvol )
   enddo
 
