@@ -52,7 +52,7 @@ subroutine ra00aa( writeorread )
   
   use cputiming, only : Tra00aa
   
-  use allglobal, only : myid, ncpu, cpus, Mvol, mn, im, in, Ate, Aze, Ato, Azo
+  use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, Mvol, mn, im, in, Ate, Aze, Ato, Azo
   
   use sphdf5,    only : write_vector_potential
 

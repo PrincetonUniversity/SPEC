@@ -936,8 +936,8 @@ module allglobal
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!``-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  INTEGER              :: myid, ncpu       ! mpi variables;
-  INTEGER           :: IsMyVolumeValue
+  INTEGER              :: myid, ncpu, MPI_COMM_SPEC       ! mpi variables;
+  INTEGER              :: IsMyVolumeValue
   REAL                 :: cpus             ! initial time;
 
   REAL                 :: pi2nfp           !       pi2/nfp     ; assigned in readin;
@@ -1580,61 +1580,7 @@ subroutine readin
    
    if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : reading ext from command line ;")') cput-cpus
    endif
-   
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{input file extension $\equiv$ command line argument}
-
-!latex \begin{enumerate}
-!latex \item The input file name, \type{ext}, is given as the first command line input, and the input file itself is \verb!ext.sp!
-!latex \item Additional command line inputs recognized are:
-!latex \begin{enumerate} 
-!latex \item \type{-help, -h} ; will give help information to user; under construction;
-!latex \item \type{-readin} ; will immediately set \type{Wreadin=T}; this may be over-ruled when \type{namelist/screenlist/} is read;
-!latex \end{enumerate}
-
-!latex \end{enumerate}
-
-   call getarg( 1, ext )
-   extlen = len_trim(ext)
-   sppos = index(ext, ".sp", .true.) ! search for ".sp" from the back of ext
-   if (sppos.eq.extlen-2) then       ! check if ext ends with ".sp";
-     ext = ext(1:extlen-3)           ! if this is the case, remove ".sp" from end of ext
-   endif
-
-   if( ext .eq. "" .or. ext.eq. " " .or. ext .eq. "-h" .or. ext .eq. "-help" ) then
-    ;write(ounit,'("readin : ", 10x ," : ")')
-    ;write(ounit,'("readin : ", 10x ," : file extension must be given as first command line argument ; extra command line options = -help -readin ;")')
-    if( ext .eq. "-h" .or. ext .eq. "-help" ) then
-     write(ounit,'("readin : ", 10x ," : ")')
-     write(ounit,'("readin : ", 10x ," : the input file ext.sp must contain the input namelists; see global.pdf for description ;")')
-    endif
-    FATAL( readin, .true., the input file does not exist) ! if not, abort;
-   endif
-   
-   write(ounit,'("readin : ", 10x ," : ")')
-   write(ounit,'("readin : ",f10.2," : ext = ",a100)') cput-cpus, ext
-   
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-   
-   write(ounit,'("readin : ", 10x ," : ")')
-   
-   numargs = iargc()
-   
-   if( numargs.gt.1 ) then
-    iarg = 1
-    do while ( iarg < numargs )
-     iarg = iarg + 1 ; call getarg( iarg, arg)
-     select case( arg )
-     case("-help","-h") ; write(ounit,'("readin : ",f10.2," : myid=",i3," : command line options = -readin ;")') cput-cpus, myid
-     case("-readin"   ) ; Wreadin = .true.
-     case("-p4pg"     ) ; iarg = iarg + 1 ; call getarg( iarg, arg)
-     case("-p4wd"     ) ; iarg = iarg + 1 ; call getarg( iarg, arg)
-     case default       ; write(ounit,'("readin : ",f10.2," : myid=",i3," : argument not recognized ; arg = ",a100)') cput-cpus, myid, arg
-     end select
-    enddo
-   endif
-      
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
    inquire( file=trim(ext)//".sp", exist=Lspexist ) ! check if file exists;
@@ -2467,6 +2413,72 @@ subroutine readin
 end subroutine readin
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+!latex \subsubsection{input file extension $\equiv$ command line argument}
+
+!latex \begin{enumerate}
+!latex \item The input file name, \type{ext}, is given as the first command line input, and the input file itself is \verb!ext.sp!
+!latex \item Additional command line inputs recognized are:
+!latex \begin{enumerate} 
+!latex \item \type{-help, -h} ; will give help information to user; under construction;
+!latex \item \type{-readin} ; will immediately set \type{Wreadin=T}; this may be over-ruled when \type{namelist/screenlist/} is read;
+!latex \end{enumerate}
+
+!latex \end{enumerate}
+
+subroutine read_command_args
+
+  use fileunits, only: ounit
+  use inputlist, only: ext, Wreadin
+
+  LOCALS
+
+  LOGICAL              :: Lspexist
+  INTEGER              :: iargc, iarg, numargs, extlen, sppos
+  
+  CHARACTER            ::  arg*100
+
+  call getarg( 1, ext )
+  extlen = len_trim(ext)
+  sppos = index(ext, ".sp", .true.) ! search for ".sp" from the back of ext
+  if (sppos.eq.extlen-2) then       ! check if ext ends with ".sp";
+    ext = ext(1:extlen-3)           ! if this is the case, remove ".sp" from end of ext
+  endif
+
+  if( ext .eq. "" .or. ext.eq. " " .or. ext .eq. "-h" .or. ext .eq. "-help" ) then
+   ;write(ounit,'("readin : ", 10x ," : ")')
+   ;write(ounit,'("readin : ", 10x ," : file extension must be given as first command line argument ; extra command line options = -help -readin ;")')
+   if( ext .eq. "-h" .or. ext .eq. "-help" ) then
+    write(ounit,'("readin : ", 10x ," : ")')
+    write(ounit,'("readin : ", 10x ," : the input file ext.sp must contain the input namelists; see global.pdf for description ;")')
+   endif
+   FATAL( readin, .true., the input file does not exist) ! if not, abort;
+  endif
+  
+  write(ounit,'("readin : ", 10x ," : ")')
+  write(ounit,'("readin : ",f10.2," : ext = ",a100)') cput-cpus, ext
+  
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+  write(ounit,'("readin : ", 10x ," : ")')
+  
+  numargs = iargc()
+  
+  if( numargs.gt.1 ) then
+   iarg = 1
+   do while ( iarg < numargs )
+    iarg = iarg + 1 ; call getarg( iarg, arg)
+    select case( arg )
+    case("-help","-h") ; write(ounit,'("readin : ",f10.2," : myid=",i3," : command line options = -readin ;")') cput-cpus, myid
+    case("-readin"   ) ; Wreadin = .true.
+    case("-p4pg"     ) ; iarg = iarg + 1 ; call getarg( iarg, arg)
+    case("-p4wd"     ) ; iarg = iarg + 1 ; call getarg( iarg, arg)
+    case default       ; write(ounit,'("readin : ",f10.2," : myid=",i3," : argument not recognized ; arg = ",a100)') cput-cpus, myid, arg
+    end select
+   enddo
+  endif
+
+  end subroutine read_command_args
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

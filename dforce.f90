@@ -117,7 +117,7 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives, LCompu
   
   use cputiming, only : Tdforce
   
-  use allglobal, only : ncpu, myid, cpus, &
+  use allglobal, only : ncpu, myid, cpus, MPI_COMM_SPEC, &
                         Mvol, NAdof, &
                         Iquad, &                  ! convenience; provided to ma00aa as argument to avoid allocations;
                         iRbc, iZbs, iRbs, iZbc, & ! Fourier harmonics of geometry; vector of independent variables, position, is "unpacked" into iRbc,iZbs;
@@ -803,7 +803,7 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives, LCompu
 
   endif ! end of if( LcomputeDerivatives ) ;
 
-!call MPI_BARRIER( MPI_COMM_WORLD, ierr )
+!call MPI_BARRIER( MPI_COMM_SPEC, ierr )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

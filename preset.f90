@@ -21,11 +21,11 @@ subroutine preset
   
   use fileunits, only : ounit
   
-  use inputlist! only :
+  use inputlist
   
   use cputiming, only : Tpreset
   
-  use allglobal! only :
+  use allglobal
   
   use fftw_interface
 

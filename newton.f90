@@ -64,7 +64,7 @@ subroutine newton( NGdof, position, ihybrd )
 
   use cputiming, only : Tnewton
 
-  use allglobal, only : myid, ncpu, cpus, &
+  use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, &
                         NOTstellsym, &
                         ForceErr, Energy, &
                         mn, im, in, iRbc, iZbs, iRbs, iZbc, Mvol, &
@@ -269,7 +269,7 @@ subroutine newton( NGdof, position, ihybrd )
   endif ! end of if( myid.eq.0 ) then;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-	call MPI_BARRIER( MPI_COMM_WORLD, ierr2)
+	call MPI_BARRIER( MPI_COMM_SPEC, ierr2)
 
   if( Lfindzero.eq.2 ) then 
    DALLOCATE( dFFdRZ )
@@ -307,7 +307,8 @@ subroutine writereadgf( readorwrite, NGdof , ireadhessian )
   
   use cputiming, only : Tnewton
   
-  use allglobal, only : myid, cpus, mn, im, in, hessian, Lhessianallocated
+  use allglobal, only : myid, cpus, MPI_COMM_SPEC, &
+                        mn, im, in, hessian, Lhessianallocated
   
   LOCALS
   
@@ -427,7 +428,7 @@ subroutine fcn1( NGdof, xx, fvec, irevcm )
 
   use cputiming, only : Tnewton
 
-  use allglobal, only : wrtend, myid, ncpu, cpus, &
+  use allglobal, only : wrtend, myid, ncpu, cpus, MPI_COMM_SPEC, &
                         NOTstellsym, &
                         ForceErr, Energy, &
                         mn, im, in, iRbc, iZbs, iRbs, iZbc, Mvol, &
@@ -553,7 +554,7 @@ subroutine fcn2( NGdof, xx, fvec, fjac, Ldfjac, irevcm )
 
   use cputiming, only : Tnewton
 
-  use allglobal, only : wrtend, myid, ncpu, cpus, &
+  use allglobal, only : wrtend, myid, ncpu, cpus, MPI_COMM_SPEC, &
                         NOTstellsym, &
                         ForceErr, Energy, &
                         mn, im, in, iRbc, iZbs, iRbs, iZbc, Mvol, &

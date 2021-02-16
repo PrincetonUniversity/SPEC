@@ -30,7 +30,7 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
 
   use cputiming, only : Thesian
 
-  use allglobal, only : ncpu, myid, cpus, &
+  use allglobal, only : ncpu, myid, cpus, MPI_COMM_SPEC, &
                         im, in, &
                         iRbc, iZbs, iRbs, iZbc, &
                         dRbc, dZbs, dRbs, dZbc, &

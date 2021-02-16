@@ -19,7 +19,7 @@ module sphdf5
   use inputlist , only : ext, Wsphdf5, Wmacros
   use fileunits , only : ounit
   use cputiming , only : Tsphdf5
-  use allglobal , only : myid, cpus
+  use allglobal , only : myid, cpus, MPI_COMM_SPEC
   use constants , only : version
   use hdf5
 

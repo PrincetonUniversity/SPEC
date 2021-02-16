@@ -89,7 +89,7 @@ subroutine bnorml( mn, Ntz, efmn, ofmn )
 
   use cputiming, only : Tbnorml
   
-  use allglobal, only : ncpu, myid, cpus, pi2nfp, Mvol, &
+  use allglobal, only : ncpu, myid, cpus, MPI_COMM_SPEC, pi2nfp, Mvol, &
                         Nt, Nz, &
                         Rij, Zij, guvij, sg, TT, &
                         NOTstellsym, Lcoordinatesingularity, &
@@ -441,7 +441,7 @@ REAL function vcintegrand( lteta, lzeta ) ! THIS ROUTINE IS NOT USED; differenti
   
   use cputiming, only : 
 
-  use allglobal, only : myid, ncpu, cpus, &
+  use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, &
                         Mvol, &
                         mn, im, in, &
                         iRbc, iZbs, iRbs, iZbc, &

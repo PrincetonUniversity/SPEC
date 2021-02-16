@@ -51,7 +51,7 @@ subroutine pp00ab( lvol, sti, Nz, nPpts, poincaredata, fittedtransform, utflag )
   
   use cputiming, only : Tpp00ab
   
-  use allglobal, only : myid, ncpu, cpus, pi2nfp, ivol, Mvol, Node
+  use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, pi2nfp, ivol, Mvol, Node
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   

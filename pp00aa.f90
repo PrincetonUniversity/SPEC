@@ -88,7 +88,7 @@ subroutine pp00aa
   
   use cputiming, only : Tpp00aa
   
-  use allglobal, only : myid, ncpu, cpus, &
+  use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, &
                         Nz, pi2nfp, &
                         ivol, Mvol, &
                         Lcoordinatesingularity, &
@@ -230,13 +230,13 @@ subroutine pp00aa
             allocate(  data(1:numTrajs(lvol),1:4,0:Nz-1,1:nPpts))
             allocate( fiota(1:numTrajs(lvol),1:2))
 
-            call MPI_Recv( utflag, numTrajs(lvol)           , MPI_INTEGER         , recvId, lvol, MPI_COMM_WORLD, status, ierr)
+            call MPI_Recv( utflag, numTrajs(lvol)           , MPI_INTEGER         , recvId, lvol, MPI_COMM_SPEC, status, ierr)
             !write(*,*) "CPU 0 got utflag vector from CPU ",recvId
 
-            call MPI_Recv(   data, numTrajs(lvol)*4*Nz*nPpts, MPI_DOUBLE_PRECISION, recvId, lvol, MPI_COMM_WORLD, status, ierr)
+            call MPI_Recv(   data, numTrajs(lvol)*4*Nz*nPpts, MPI_DOUBLE_PRECISION, recvId, lvol, MPI_COMM_SPEC, status, ierr)
             !write(*,*) "CPU 0 got the corresponding Poincare data from CPU ",recvId
 
-            call MPI_Recv(  fiota, numTrajs(lvol)*2         , MPI_DOUBLE_PRECISION, recvId, lvol, MPI_COMM_WORLD, status, ierr)
+            call MPI_Recv(  fiota, numTrajs(lvol)*2         , MPI_DOUBLE_PRECISION, recvId, lvol, MPI_COMM_SPEC, status, ierr)
 !            write(*,*) "CPU 0 got the iota profile from CPU ",recvId,": sarr: "
 !            write(*,*) fiota(:,1)
 
@@ -258,9 +258,9 @@ subroutine pp00aa
         endif
 
       else
-        call MPI_Send( utflag, numTrajs(vvol)           , MPI_INTEGER         , 0, vvol, MPI_COMM_WORLD, ierr) ! success flag vector
-        call MPI_Send(   data, numTrajs(vvol)*4*Nz*nPpts, MPI_DOUBLE_PRECISION, 0, vvol, MPI_COMM_WORLD, ierr) ! Poincare data
-        call MPI_Send(  fiota, numTrajs(vvol)*2         , MPI_DOUBLE_PRECISION, 0, vvol, MPI_COMM_WORLD, ierr) ! rotational transform profile from field line tracing
+        call MPI_Send( utflag, numTrajs(vvol)           , MPI_INTEGER         , 0, vvol, MPI_COMM_SPEC, ierr) ! success flag vector
+        call MPI_Send(   data, numTrajs(vvol)*4*Nz*nPpts, MPI_DOUBLE_PRECISION, 0, vvol, MPI_COMM_SPEC, ierr) ! Poincare data
+        call MPI_Send(  fiota, numTrajs(vvol)*2         , MPI_DOUBLE_PRECISION, 0, vvol, MPI_COMM_SPEC, ierr) ! rotational transform profile from field line tracing
         ! diotadxup should be available in the master already, since it is stored in global
       endif ! myid.eq.0
 

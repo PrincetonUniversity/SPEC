@@ -18,7 +18,7 @@ subroutine df00ab( pNN , xi , Fxi , DFxi , Ldfjac , iflag )
   use fileunits, only : ounit
   use inputlist, only : Wdf00ab, Nvol, helicity
   use cputiming
-  use allglobal, only : myid, cpus, &
+  use allglobal, only : myid, cpus, MPI_COMM_SPEC, &
                         dMA, dMD, & ! energy and helicity matrices; 26 Feb 13;
 !                       MBpsi, MEpsi, psiMCpsi, psiMFpsi, & ! pre-calculated matrix vector products; 26 Feb 13;
                         MBpsi,                            & ! pre-calculated matrix vector products; 26 Feb 13;

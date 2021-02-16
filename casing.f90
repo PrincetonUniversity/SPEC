@@ -100,7 +100,7 @@ subroutine casing( teta, zeta, gBn, icasing )
   
   use cputiming, only : Tcasing
   
-  use allglobal, only : myid, ncpu, cpus, globaljk, Dxyz, Nxyz
+  use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, globaljk, Dxyz, Nxyz
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -278,7 +278,8 @@ subroutine dvcfield( Ndim, tz, Nfun, vcintegrand ) ! differential virtual-casing
   
   use cputiming, only : 
 
-  use allglobal, only : myid, ncpu, cpus, pi2nfp, &
+  use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, &
+                        pi2nfp, &
                         Mvol, &
                         mn, im, in, &
                         iRbc, iZbs, iRbs, iZbc, &

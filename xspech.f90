@@ -30,9 +30,35 @@
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 program xspech
 
+  use allglobal, only: readin, read_command_args, MPI_COMM_SPEC
+
+  LOCALS
+
+  call MPI_INIT( ierr )
+
+  MPI_COMM_SPEC = MPI_COMM_WORLD
+
+  call read_command_args() ! read command-line arguments
+
+  call readin() ! read & broadcast input namelist
+  
+  call spec() ! main subroutine
+
+  call ending () ! print ending info
+
+  MPIFINALIZE
+
+  stop
+end program xspech
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+subroutine spec
 
   use constants, only : zero, one, pi2, mu0
 
@@ -76,7 +102,9 @@ program xspech
                         beltramierror, &
                         first_free_bound, &
                         dMA, dMB, dMD, dMG, MBpsi, solution, dtflux, IPDt, &
-                        version
+                        version, &
+                        MPI_COMM_SPEC
+                        
                         
    ! write _all_ output quantities into a _single_ HDF5 file
    use sphdf5,   only : init_outfile, &
@@ -103,7 +131,9 @@ program xspech
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  MPISTART ! It might be easy to read the source if this macro was removed; SRH: 27 Feb 18;
+  myid = 0 ; ncpu = 1
+  call MPI_COMM_RANK( MPI_COMM_SPEC, myid, ierr )
+  call MPI_COMM_SIZE( MPI_COMM_SPEC, ncpu, ierr )
 
 !#ifdef DEBUG
 !   iwait = 0; pid = getpid()
@@ -145,8 +175,6 @@ program xspech
 !latex \item Most internal variables, global memory etc., are allocated in \link{preset}.
 !latex \item All quantities in the input file are mirrored into the output file's group \type{input}.
 !latex \end{enumerate} 
-
-  WCALL( xspech, readin ) ! sets Rscale, Mvol; 03 Nov 16;
 
   WCALL( xspech, preset )
   
@@ -781,19 +809,9 @@ program xspech
   
 9999 continue
 
-  WCALL( xspech, ending )
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  ! MPIFINALIZE has to be called as the absolutely last statement in the code and therefore needs to be here;
-  ! otherwise, the second MPI_Wtime call in the WCALL macro is called after MPIFINALIZE and this leads to a MPI error!
-  MPIFINALIZE
-
-  stop
-  
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-end program xspech
+end subroutine spec
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -819,7 +837,7 @@ subroutine ending
 
   use cputiming
 
-  use allglobal, only : myid, cpus, mn
+  use allglobal, only : myid, cpus, mn, MPI_COMM_SPEC
   use sphdf5,    only : hdfint, finish_outfile
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -870,7 +888,7 @@ dcpu, Ttotal / (/ 1, 60, 3600 /), ecpu, 100*ecpu/dcpu
   WCALL( xspech, finish_outfile ) ! close HDF5 output file
 
   ! wait for writing to finish
-  call MPI_Barrier(MPI_COMM_WORLD, ierr)
+  call MPI_Barrier(MPI_COMM_SPEC, ierr)
   
 1000 format("ending : ",f10.2," : myid=",i3," ; completion ; time=",f10.2,"s = "f8.2"m = "f6.2"h = "f5.2"d ; date= "&
   a4"/"a2"/"a2" ; time= "a2":"a2":"a2" ; ext = "a60)

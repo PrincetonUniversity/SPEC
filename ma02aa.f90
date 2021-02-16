@@ -27,7 +27,8 @@ subroutine ma02aa( lvol, NN )
 
   use cputiming
   
-  use allglobal, only : ncpu, myid, cpus, Mvol, mn, im, in, &
+  use allglobal, only : ncpu, myid, cpus, MPI_COMM_SPEC, &
+                        Mvol, mn, im, in, &
                         LBlinear, LBnewton, LBsequad, &
 !                       dMA, dMB, dMC, dMD, dME, dMF, solution, &
                         dMA, dMB,      dMD,           solution, &

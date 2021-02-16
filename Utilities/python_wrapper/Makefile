@@ -61,7 +61,7 @@ LIB_NAME = lib$(PYTHON_MODN).a
 #=======================================================================
 
 # names (without suffix), f90 sources
-TMP_FILES := global ${SPECFILES}
+TMP_FILES := global ${SPECFILES} xspech
 TMP_FILES := $(filter-out sphdf5,$(TMP_FILES))
 LIBSRC_WRAP_SOURCES := $(TMP_FILES)
 

@@ -55,7 +55,7 @@ subroutine dfp200( LcomputeDerivatives, vvol)
   
   use cputiming, only : Tdfp200
   
-  use allglobal, only : ncpu, myid, cpus, &
+  use allglobal, only : ncpu, myid, cpus, MPI_COMM_SPEC,&
                         Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
                         Mvol, &
                         Iquad, &                  ! convenience; provided to ma00aa as argument to avoid allocations;
@@ -356,8 +356,8 @@ else ! CASE SEMI GLOBAL CONSTRAINT
             do vvol = 1, Mvol
                 NN = NAdof(vvol)
                 call WhichCpuID(vvol, cpu_id)
-                call MPI_BCAST( oBI(vvol)%mat(0:NN,0:NN), (NN+1)**2, MPI_DOUBLE_PRECISION, cpu_id , MPI_COMM_WORLD , ierr)
-                call MPI_BCAST( oBI(vvol)%ipivot(0:NN)  ,  NN+1    , MPI_INTEGER         , cpu_id , MPI_COMM_WORLD , ierr)
+                call MPI_BCAST( oBI(vvol)%mat(0:NN,0:NN), (NN+1)**2, MPI_DOUBLE_PRECISION, cpu_id , MPI_COMM_SPEC , ierr)
+                call MPI_BCAST( oBI(vvol)%ipivot(0:NN)  ,  NN+1    , MPI_INTEGER         , cpu_id , MPI_COMM_SPEC , ierr)
             enddo
         endif
 
@@ -463,8 +463,8 @@ else ! CASE SEMI GLOBAL CONSTRAINT
                                 tag  = 1 ! Tags for MPI communications
                                 tag2 = 2
 
-                                call MPI_RECV(Ate(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id1, tag , MPI_COMM_WORLD, stat, ierr)
-                                call MPI_RECV(Aze(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id1, tag2, MPI_COMM_WORLD, stat, ierr)
+                                call MPI_RECV(Ate(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id1, tag , MPI_COMM_SPEC, stat, ierr)
+                                call MPI_RECV(Aze(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id1, tag2, MPI_COMM_SPEC, stat, ierr)
                             enddo
 
                             ! Non-stellarator symmetric terms
@@ -473,8 +473,8 @@ else ! CASE SEMI GLOBAL CONSTRAINT
                                     tag  = 3
                                     tag2 = 4
 
-                                    call MPI_RECV(Ato(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id1, tag , MPI_COMM_WORLD, stat, ierr)
-                                    call MPI_RECV(Azo(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id1, tag2, MPI_COMM_WORLD, stat, ierr)
+                                    call MPI_RECV(Ato(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id1, tag , MPI_COMM_SPEC, stat, ierr)
+                                    call MPI_RECV(Azo(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id1, tag2, MPI_COMM_SPEC, stat, ierr)
                                 enddo
                             endif
 
@@ -483,8 +483,8 @@ else ! CASE SEMI GLOBAL CONSTRAINT
                                 tag  = 1
                                 tag2 = 2
 
-                                call MPI_SEND(Ate(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id , tag , MPI_COMM_WORLD, ierr)
-                                call MPI_SEND(Aze(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id , tag2, MPI_COMM_WORLD, ierr)
+                                call MPI_SEND(Ate(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id , tag , MPI_COMM_SPEC, ierr)
+                                call MPI_SEND(Aze(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id , tag2, MPI_COMM_SPEC, ierr)
                             enddo
 
                             if( NOTstellsym ) then
@@ -492,8 +492,8 @@ else ! CASE SEMI GLOBAL CONSTRAINT
                                     tag  = 3
                                     tag2 = 4
 
-                                    call MPI_SEND(Ato(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id , tag , MPI_COMM_WORLD, ierr)
-                                    call MPI_SEND(Azo(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id , tag2, MPI_COMM_WORLD, ierr)
+                                    call MPI_SEND(Ato(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id , tag , MPI_COMM_SPEC, ierr)
+                                    call MPI_SEND(Azo(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id , tag2, MPI_COMM_SPEC, ierr)
                                 enddo
                             endif
                         endif
@@ -552,11 +552,11 @@ else ! CASE SEMI GLOBAL CONSTRAINT
         call WhichCpuID(vvol, cpu_id)
 
         if( vvol.ne.Mvol ) then
-            call MPI_BCAST( dmupfdx(1:Mvol, vvol ,1:2, 1:LGdof,   1), Mvol*2*LGdof  , MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_WORLD, ierr )
+            call MPI_BCAST( dmupfdx(1:Mvol, vvol ,1:2, 1:LGdof,   1), Mvol*2*LGdof  , MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_SPEC, ierr )
         endif
     
-        call MPI_BCAST( dFFdRZ(1:LGdof, 0:1, 1:LGdof, 0:1, vvol), 2*2*(LGdof**2), MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_WORLD, ierr )
-        call MPI_BCAST( dBBdmp(1:LGdof, vvol ,0:1, 1:2         ), 2*2*LGdof, MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_WORLD, ierr )
+        call MPI_BCAST( dFFdRZ(1:LGdof, 0:1, 1:LGdof, 0:1, vvol), 2*2*(LGdof**2), MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_SPEC, ierr )
+        call MPI_BCAST( dBBdmp(1:LGdof, vvol ,0:1, 1:2         ), 2*2*LGdof, MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_SPEC, ierr )
     enddo
 
     endif ! End of if( LComputeDerivatives ) 
@@ -613,7 +613,7 @@ subroutine get_LU_beltrami_matrices(vvol, oBI, NN)
 
   use inputlist, only :   Wmacros, Wdfp200, Wdforce, Lrad, mu, Lconstraint
 
-  use allglobal, only :   ncpu, myid, cpus, &
+  use allglobal, only :   ncpu, myid, cpus, MPI_COMM_SPEC, &
                           Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
                           Nt, Nz, &
                           dBdX, &
@@ -720,7 +720,7 @@ subroutine get_perturbed_solution(vvol, oBI, NN)
 
   use inputlist, only :   Wmacros, Wdfp200, Lrad, mu, Lconstraint
 
-  use allglobal, only :   ncpu, myid, cpus, &
+  use allglobal, only :   ncpu, myid, cpus, MPI_COMM_SPEC, &
                           mn, Iquad, NAdof, &
                           dMA, dMB, dMD, dMG, solution, &
                           dtflux, dpflux, dBdX
@@ -799,7 +799,7 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 
     use inputlist, only :   Wmacros, Wdfp200, Lrad, mu, Lconstraint, Lcheck, Nvol, Igeometry, mupftol, Lfreebound, dRZ
 
-    use allglobal, only :   ncpu, myid, cpus, &
+    use allglobal, only :   ncpu, myid, cpus, MPI_COMM_SPEC, &
                             Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
                             Mvol, Iquad, NGdof, &
                             iRbc, iZbs, iRbs, iZbc, & ! Fourier harmonics of geometry; vector of independent variables, position, is "unpacked" into iRbc,iZbs;
@@ -1349,7 +1349,7 @@ subroutine evaluate_dBB(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, length,
   
   use cputiming, only : Tdfp200
   
-  use allglobal, only : ncpu, myid, cpus, &
+  use allglobal, only : ncpu, myid, cpus, MPI_COMM_SPEC, &
                         Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, LocalConstraint, &
                         Mvol, dpflux, &
                         iRbc, iZbs, iRbs, iZbc, & ! Fourier harmonics of geometry; vector of independent variables, position, is "unpacked" into iRbc,iZbs;
