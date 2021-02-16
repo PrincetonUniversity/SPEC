@@ -7,11 +7,15 @@ include ${SOURCES}/Makefile
 #                   define the compiler names
 #=======================================================================
 
+# was CC in main SPEC Makefile
+BUILD_ENV=gfortran_ubuntu
+
 CC       = gcc
 F90      = gfortran
 #F90      = ifort
 #F90      =  /opt/intel/composer_xe_2015.3.187/bin/intel64/ifort
-PYTHON   = python
+PYTHON   = python3
+
 
 #=======================================================================
 #                     additional flags
@@ -21,16 +25,15 @@ ifeq ($(F90),gfortran)
 	FPP      = $(FC) -E
 	FPP_F90FLAGS = -x f95-cpp-input -fPIC
 	F90FLAGS = $(RFLAGS)
-    FCOMP    = $(FC) #gfortran
+	FCOMP    = $(FC) #gfortran
 	FLAGS    = -fPIC
 endif
 
 ifeq ($(F90),ifort)
-
 	FPP      = gfortran -E # gfortran f90wrap temp files only. not compilation
 	FPP_F90FLAGS = -x f95-cpp-input -fPIC
 	F90FLAGS = -fpscomp logicals -fPIC # use 1 and 0 for True and False
-    FCOMP    = intelem # for f2py
+	FCOMP    = intelem # for f2py
 endif
 
 # CFLAGS := ${CFLAGS} -fPIC #     ==> universal for ifort, gfortran, pgi
@@ -104,18 +107,20 @@ f90wrap_clean:
 $(LIBSRC_WRAP_FPP_FILES): %.fpp: ${SOURCES}/%_m.F90
 	${FPP} ${FPP_F90FLAGS} $<  -o $@
 
-$(LIB_NAME): 
-	make -C ${SOURCES} xspec CC=gfortran FLAGS="${FLAGS}"
+$(LIB_NAME):
+	make -C ${SOURCES} xspec BUILD_ENV=$(BUILD_ENV) FLAGS="${FLAGS}"
 	cd ${SOURCES}; ${LIBTOOL} Utilities/python_wrapper/$@ $(addsuffix _r.o,$(ALLFILES))
 	ranlib $@
 
-_${PYTHON_MODN}.so: $(LIB_NAME) ${LIBSRC_WRAP_FPP_FILES} 
+_${PYTHON_MODN}.so: $(LIB_NAME) ${LIBSRC_WRAP_FPP_FILES}
 	f90wrap -m ${PYTHON_MODN} ${LIBSRC_WRAP_FPP_FILES} -k ${KIND_MAP} -v
-	f2py-f90wrap --f90exec=${FC} --build-dir . -c -m _${PYTHON_MODN} \
-	-L. -l$(PYTHON_MODN) -I${SOURCES} ${LIBS} $(LINKS) f90wrap*.f90
+	f2py-f90wrap --f90exec=${FC} --build-dir . \
+	  -L. -l$(PYTHON_MODN) -I${SOURCES} ${LIBS} $(LINKS) -c f90wrap_*.f90 -m _${PYTHON_MODN} 
 
 compile_test:
 	@echo "SOURCES = ${SOURCES}"
+	@echo "BUILD_ENV = ${BUILD_ENV}"
+	@echo "CC = ${CC}"
 	@echo "FC = ${FC}"
 	@echo "LIBTOOL = ${LIBTOOL}"
 	@echo "LIBSRC_WRAP_SOURCES = ${LIBSRC_WRAP_SOURCES}"
@@ -125,4 +130,4 @@ compile_test:
 	@echo "LINKS = ${LINKS}"
 
 test:
-	@python -c "import spec; print('SPEC version: {:}'.format(spec.constants.version))"
+	@${PYTHON} -c "import spec; print('SPEC version: {:}'.format(spec.constants.version))"
