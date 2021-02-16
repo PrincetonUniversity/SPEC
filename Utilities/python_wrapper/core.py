@@ -56,16 +56,36 @@ class SPEC(object):
         self.inputlist.ext = input_file[:-3]
         self.allglobal.mpi_comm_spec = self.comm
         self.initialized = False
+        # mute screen output if necessary
+        if not self.verbose:
+            self.fileunits.mute(1)
         return
 
-    def run(self):
+    def run(self, save=True):
         if not self.initialized:
-            self.readin()
+            self.read()
         self.lib.spec()
+        if save:
+            self.write()
         return
 
-    def readin(self):
+    def read(self, input_file=None):
+        if input_file is not None:
+            print("Read SPEC input namelist from {:}.sp".format(input_file))
+            self.inputlist.ext = input_file
         self.lib.allglobal.readin()
+        self.initialized = True
+        return
+
+    def write(self, output_file=None):
+        if output_file is not None:
+            print("Write SPEC output into {:d}.sp.h5".format(output_file))
+            ext = self.inputlist.ext  # save original ext value
+            self.inputlist.ext = output_file
+            self.lib.write_hdf5()
+            self.inputlist.ext = ext  # reset the ext value
+        else:
+            self.lib.write_hdf5()
         return
 
 
@@ -74,8 +94,11 @@ if __name__ == "__main__":
     if ".sp" in ext:
         ind = ext.index("sp")
         ext = ext[: ind - 1]
-    print("Begin to run SPEC from python with input file at ", ext + ".sp")
     comm = MPI.COMM_WORLD
+    rank = comm.rank
+    if rank == 0:
+        print("Begin to run SPEC from python with input file at ", ext + ".sp")
     test = SPEC(input_file=ext, comm=comm, verbose=True)
     test.run()
-    print("SPEC called from python finished!")
+    if rank == 0:
+        print("SPEC called from python finished!")

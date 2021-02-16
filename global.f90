@@ -55,7 +55,7 @@ module constants
   REAL, parameter :: mu0        =   2.0E-07 * pi2
   REAL, parameter :: goldenmean =   1.618033988749895 ! golden mean = ( one + sqrt(five) ) / two ;
 
-  REAL, parameter :: version    =   3.01
+  REAL, parameter :: version    =   3.10
 
 end module constants
 
@@ -93,6 +93,27 @@ module fileunits
   INTEGER :: lunit = 20 ! local unit; used in lunit+myid: pp00aa:.ext.poincare,.ext.transform; 
   INTEGER :: vunit = 15 ! for examination of adaptive quadrature; used in casing:.ext.vcint; 
  !INTEGER :: funit = 16 ! force iterations;
+
+  contains
+    subroutine mute(action)
+      implicit none 
+    
+      INTEGER,intent(in) :: action
+      INTEGER, parameter :: iopen = 1, iclose = 0, null = 37
+      INTEGER            :: ios
+      character(len=*), parameter :: nullfile="/dev/null"
+    
+      ! open a tmp file for screen output
+      if (action == iopen) then
+        ounit = null
+        open(ounit, file=nullfile, status="unknown", action="write", iostat=ios) ! create a scratch file?
+        if (ios.ne.0) print *, "something wrong with open a tmp file in focuspy.mute. IOSTAT=", ios 
+      else
+        close(ounit)
+        ounit = 6 ! recover to screen output
+      endif
+      return
+    end subroutine mute
 
 end module fileunits
 

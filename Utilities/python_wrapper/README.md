@@ -44,4 +44,12 @@ Or clean everything including SPEC objects by using
 make all_clean
 ```
 
+## Usage
+The main SPEC python class is in `core.py`.
+You can now use it directly via `mpiexec python core.py ext`, where `ext` is the SPEC extension.
+The more advanced way is to use it as an imported module.
+All the modules and subroutines that have been interfaced are now available in `SPEC.lib`.
+For convenience, the global modules can be directly accessed via `SPEC.allglobal`, `SPEC.inputlist`, etc.
+There is an example importing the SPEC python class and optimize the volume inside an interface at `example.py`
+
 *So far, I have only tested GCC compiler, while Intel compiler should also work after updates in the Makefile*

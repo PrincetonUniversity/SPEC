@@ -44,10 +44,13 @@ program xspech
   call read_command_args() ! read command-line arguments
 
   call readin() ! read & broadcast input namelist
+  ! initialize; readin; default
   
   call spec() ! main subroutine
 
-  call ending () ! print ending info
+  call ending() ! print ending info
+
+  call write_hdf5() ! write HDF5 output
 
   MPIFINALIZE
 
@@ -838,7 +841,6 @@ subroutine ending
   use cputiming
 
   use allglobal, only : myid, cpus, mn, MPI_COMM_SPEC
-  use sphdf5,    only : hdfint, finish_outfile
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -883,10 +885,6 @@ dcpu, Ttotal / (/ 1, 60, 3600 /), ecpu, 100*ecpu/dcpu
    write(ounit,'("ending : ", 10x ," : ")')
   endif ! end of if( myid.eq.0 ) ; 14 Jan 15;
 
-  WCALL( xspech, hdfint ) ! write final outputs to HDF5 file ! 18 Jul 14;
-
-  WCALL( xspech, finish_outfile ) ! close HDF5 output file
-
   ! wait for writing to finish
   call MPI_Barrier(MPI_COMM_SPEC, ierr)
   
@@ -894,5 +892,22 @@ dcpu, Ttotal / (/ 1, 60, 3600 /), ecpu, 100*ecpu/dcpu
   a4"/"a2"/"a2" ; time= "a2":"a2":"a2" ; ext = "a60)
 
 end subroutine ending
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+subroutine write_hdf5
+  use sphdf5,    only : hdfint, finish_outfile
+
+  LOCALS
+
+  call hdfint ! write final outputs to HDF5 file ! 18 Jul 14;
+
+  call finish_outfile ! close HDF5 output file
+
+  return
+
+  end subroutine write_hdf5
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
