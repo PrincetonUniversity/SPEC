@@ -229,7 +229,7 @@ subroutine dfp200( LcomputeDerivatives, vvol)
 
 
               ! Evaluate derivatives of B square 
-              call evaluate_dBB(vvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
+              call evaluate_dBB(vvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz, LcomputeDerivatives)
 
             enddo ! matches do innout;
           enddo ! matches do issym;
@@ -529,7 +529,7 @@ else ! CASE SEMI GLOBAL CONSTRAINT
                         LREGION(lvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
 
                         ! EVALUATE dBB
-                        call evaluate_dBB(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
+                        call evaluate_dBB(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz, LcomputeDerivatives)
 
                     enddo     ! matches do lvol = vvol, vvol+1 
 
@@ -1321,7 +1321,7 @@ end subroutine evaluate_dmupfdx
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 
-subroutine evaluate_dBB(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
+subroutine evaluate_dBB(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz, LcomputeDerivatives)
 
 ! Evaluate the derivative of the square of the magnetic field modulus. Add spectral constraint derivatives if
 ! required. 
@@ -1375,6 +1375,7 @@ subroutine evaluate_dBB(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, length,
  LOCALS
 !------
 
+LOGICAL, intent(in)     :: LComputeDerivatives
 INTEGER                 :: iocons, lvol, ideriv, id, iflag, Lcurvature, innout, issym, irz, ii, ifail, idoc, idof, Ntz
 REAL                    :: lss, DDl, MMl
 REAL                    :: dAt(1:Ntz,-1:2), dAz(1:Ntz,-1:2), XX(1:Ntz), YY(1:Ntz), dBB(1:Ntz,-1:2), dII(1:Ntz), dLL(1:Ntz)
@@ -1450,6 +1451,7 @@ do iocons = 0, 1
 ! dFFdRZ CONSTRUCTION
 ! ===================
 
+if( LcomputeDerivatives ) then
 ! B square contribution
 ! ---------------------
     ideriv = -1; iflag=0
@@ -1670,6 +1672,8 @@ do iocons = 0, 1
 #ifdef DEBUG
     FATAL( dfp200, idoc.ne.LGdof, counting error )
 #endif
+
+endif
      
 enddo ! end of do iocons;
 
