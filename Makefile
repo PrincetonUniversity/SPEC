@@ -2,6 +2,20 @@
 
 ###############################################################################################################################################################
 
+# This is the "classic" Makefile for SPEC.
+
+# The hierarchy among the source tree is roughly as follows:
+# 1. inputlist contains the input namelists for SPEC and a routine to initialize their default values.
+# 2. global    contains the global workspace ("state") of the SPEC computation as well as the readin() and preset() routines
+#                       required to initialize the workspace based on input variables.
+# 3. sphdf5    contains the HDF5 output file writing routines. It depends on global and inputlist and therefore needs to be separately listed.
+# 4. afiles ..
+#    .. ffiles contains the main physics wisdom of SPEC.
+# 5. sfiles    contains externally provided libraries, e.g. for quadrature, minimization, etc.
+# 6. xspech    contains the stand-alone main SPEC program.
+
+###############################################################################################################################################################
+
  # basis of SPEC: input variables, global workspace, HDF5 output file writing
  # these are split off since they require special treatment (needed by all others and/or special macros)
  BASEFILES=inputlist global
@@ -24,7 +38,7 @@
  # all of SPEC except BASEFILES
  SPECFILES=$(afiles) $(bfiles) $(cfiles) $(dfiles) $(efiles) $(ffiles)
 
- # all of "our" (vs. contributed) files needed for SPEC
+ # all of "our" (vs. contributed) files needed for the "core" of SPEC
  ALLSPEC=$(BASEFILES) $(IOFILES) $(SPECFILES)
 
  # *ALL* files needed for the main SPEC executable
@@ -395,21 +409,21 @@ show_makeflags:
 	@echo " "
 	@echo " "
 	@echo "Fortran preprocessing"
-	@echo "=============="
+	@echo "============================"
 	@echo "$(MACROS) $(ALLFILES)"
 	@echo " "
 	@echo "$(BUILD_ENV) compile"
-	@echo "==============="
+	@echo "============================="
 	@echo "$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS)"
 	@echo " "
 	@echo "$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS)"
 	@echo " "
 	@echo "Include libraries"
-	@echo "==============="
+	@echo "============================="
 	@echo "$(LIBS)"
 	@echo " "
 	@echo "LINKING FLAGS"
-	@echo "==============="
+	@echo "============================="
 	@echo "$(LINKS)"
 
 ###############################################################################################################################################################
