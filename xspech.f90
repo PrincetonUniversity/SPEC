@@ -67,18 +67,29 @@ program xspech
    write(ounit,'("xspech : ",f10.2," : begin execution ; ncpu=",i3," ; calling global:readin ;")') cput-cpus, ncpu
   endif
 
-  call readin() ! read & broadcast input namelist
-  ! initialize; readin; default
+
+
+
+  ! read & broadcast input namelist
+  call readin()
 
 
 
 
 
-  call spec() ! main subroutine
+  call spec() ! main subroutine: iterate until converged or #iterations exceeds limit
+
+
 
   call ending() ! print ending info
 
+
+
   call write_hdf5() ! write HDF5 output
+
+
+
+
 
   MPIFINALIZE
 

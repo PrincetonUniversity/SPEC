@@ -2,32 +2,49 @@
 
 ###############################################################################################################################################################
 
- afiles=manual rzaxis packxi volume coords basefn memory
+ # basis of SPEC: input variables, global workspace, HDF5 output file writing
+ # these are split off since they require special treatment (needed by all others and/or special macros)
+ BASEFILES=inputlist global
+ IOFILES=sphdf5
+
+ # (most of) physics part of SPEC
+ afiles=preset manual rzaxis packxi volume coords basefn memory
  bfiles=metrix ma00aa matrix spsmat spsint mp00ac ma02aa packab tr00ab curent df00ab lforce intghs mtrxhs lbpol
-#cfiles=bc00aa fc02aa jk03aa pc00aa pc00ab
  cfiles=brcast dfp100 dfp200 dforce newton
  dfiles=casing bnorml
  efiles=jo00aa pp00aa pp00ab bfield stzxyz
  ffiles=hesian ra00aa numrec
- sfiles=dcuhre minpack iqpack rksuite i1mach d1mach ilut iters # below assumes the .f files are double precision; the CFLAGS = -r8 option is not required;
+
+ # externally provided libraries
+ # below assumes the .f files are double precision; the CFLAGS = -r8 option is not required;
+ sfiles=dcuhre minpack iqpack rksuite i1mach d1mach ilut iters
 
 ###############################################################################################################################################################
 
- SPECFILES=sphdf5 preset $(afiles) $(bfiles) $(cfiles) $(dfiles) $(efiles) $(ffiles)
- ALLFILES=global $(SPECFILES) $(sfiles) xspech
-#F77FILES=$(sfiles:=.f)
- PREPROC=$(SPECFILES:=_m.F90) # preprocessed by m4
- RAWSOURCE=global $(SPECFILES) xspech # "raw" code, with macros not expanded yet
+ # all of SPEC except BASEFILES
+ SPECFILES=$(afiles) $(bfiles) $(cfiles) $(dfiles) $(efiles) $(ffiles)
+
+ # all of "our" (vs. contributed) files needed for SPEC
+ ALLSPEC=$(BASEFILES) $(IOFILES) $(SPECFILES)
+
+ # *ALL* files needed for the main SPEC executable
+ ALLFILES=$(sfiles) $(ALLSPEC) xspech
+
+ # to be preprocessed by m4
+ PREPROC=$(ALLSPEC:=_m.F90)
 
  ROBJS=$(SPECFILES:=_r.o)
  DOBJS=$(SPECFILES:=_d.o)
+
+ ROBJS_IO=$(IOFILES:=_r.o)
+ DOBJS_IO=$(IOFILES:=_d.o)
 
 ###############################################################################################################################################################
 
  MACROS=macros
 
- # if want to use gfortran: make BUILD_ENV=gfortran
- # otherwise using Intel
+ # if want to use gfortran: make BUILD_ENV=gfortran (x/d)spec
+ # default: use Intel compiler
  BUILD_ENV=intel
 
  # to enable OpenMP acceleration within volume, set OMP=yes, otherwise set OMP=no
@@ -225,28 +242,48 @@ endif
 
 ###############################################################################################################################################################
 
- WEBDIR=$(HOME)/w3_html
-
-###############################################################################################################################################################
-
  date:=$(shell date)
  text:=$(shell date +%F)
 
 ###############################################################################################################################################################
 
 xspec: $(addsuffix _r.o,$(ALLFILES)) $(MACROS) Makefile
-	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o xspec $(addsuffix _r.o,$(ALLFILES)) $(LINKS)
+	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) $(LINKS) $(addsuffix _r.o,$(ALLFILES)) -o xspec
 
 dspec: $(addsuffix _d.o,$(ALLFILES)) $(MACROS) Makefile
-	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o dspec $(addsuffix _d.o,$(ALLFILES)) $(LINKS)
+	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) $(LINKS) $(addsuffix _d.o,$(ALLFILES)) -o dspec
 
 ###############################################################################################################################################################
+# inputlist needs special handling: expansion of DSCREENLIST and NSCREENLIST using awk
 
-global_r.o: %_r.o: global.f90 $(MACROS)
+inputlist_r.o: %_r.o: inputlist.f90 $(MACROS)
 	@awk -v allfiles='$(ALLFILES)' 'BEGIN{nfiles=split(allfiles,files," ")} \
-	{if($$2=="CPUVARIABLE") {for (i=1;i<=nfiles;i++) print "  REAL    :: T"files[i]" = 0.0, "files[i]"T = 0.0"}}\
 	{if($$2=="DSCREENLIST") {for (i=1;i<=nfiles;i++) print "  LOGICAL :: W"files[i]" = .false. "}}\
 	{if($$2=="NSCREENLIST") {for (i=1;i<=nfiles;i++) print "  W"files[i]" , &"}}\
+	{print}' inputlist.f90 > mnputlist.f90
+	m4 -P $(MACROS) mnputlist.f90 > inputlist_m.F90
+	@rm -f mnputlist.f90
+	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o inputlist_r.o -c inputlist_m.F90 $(LIBS)
+	@wc -l -L -w inputlist_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
+	@echo ''
+
+inputlist_d.o: %_d.o: inputlist.f90 $(MACROS)
+	@awk -v allfiles='$(ALLFILES)' 'BEGIN{nfiles=split(allfiles,files," ")} \
+	{if($$2=="DSCREENLIST") {for (i=1;i<=nfiles;i++) print "  LOGICAL :: W"files[i]" = .false. "}}\
+	{if($$2=="NSCREENLIST") {for (i=1;i<=nfiles;i++) print "  W"files[i]" , &"}}\
+	{print}' inputlist.f90 > mnputlist.f90
+	m4 -P $(MACROS) mnputlist.f90 > inputlist_m.F90
+	@rm -f mnputlist.f90
+	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o inputlist_d.o -c inputlist_m.F90 $(LIBS)
+	@wc -l -L -w inputlist_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
+	@echo ''
+
+###############################################################################################################################################################
+# global needs special handling: expansion of CPUVARIABLE, BSCREENLIST and WSCREENLIST using awk
+
+global_r.o: %_r.o: inputlist_r.o global.f90 $(MACROS)
+	@awk -v allfiles='$(ALLFILES)' 'BEGIN{nfiles=split(allfiles,files," ")} \
+	{if($$2=="CPUVARIABLE") {for (i=1;i<=nfiles;i++) print "  REAL    :: T"files[i]" = 0.0, "files[i]"T = 0.0"}}\
 	{if($$2=="BSCREENLIST") {for (i=1;i<=nfiles;i++) print "  LlBCAST(W"files[i]",1,0)"}}\
 	{if($$2=="WSCREENLIST") {s="'"'"'" ; d="'"\\\""'" ; for (i=1;i<=nfiles;i++) print "  if( W"files[i]" ) write(iunit,"s"("d" W"files[i]" = "d"L1)"s")W"files[i]}}\
 	{print}' global.f90 > mlobal.f90
@@ -256,11 +293,9 @@ global_r.o: %_r.o: global.f90 $(MACROS)
 	@wc -l -L -w global_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
-global_d.o: %_d.o: global.f90 $(MACROS)
+global_d.o: %_d.o: inputlist_d.o global.f90 $(MACROS)
 	@awk -v allfiles='$(ALLFILES)' 'BEGIN{nfiles=split(allfiles,files," ")} \
 	{if($$2=="CPUVARIABLE") {for (i=1;i<=nfiles;i++) print "  REAL    :: T"files[i]" = 0.0, "files[i]"T = 0.0"}}\
-	{if($$2=="DSCREENLIST") {for (i=1;i<=nfiles;i++) print "  LOGICAL :: W"files[i]" = .false. "}}\
-	{if($$2=="NSCREENLIST") {for (i=1;i<=nfiles;i++) print "  W"files[i]" , &"}}\
 	{if($$2=="BSCREENLIST") {for (i=1;i<=nfiles;i++) print "  LlBCAST(W"files[i]",1,0)"}}\
 	{if($$2=="WSCREENLIST") {s="'"'"'" ; d="'"\\\""'" ; for (i=1;i<=nfiles;i++) print "  if( W"files[i]" ) write(iunit,"s"("d" W"files[i]" = "d"L1)"s")W"files[i]}}\
 	{print}' global.f90 > mlobal.f90
@@ -273,37 +308,46 @@ global_d.o: %_d.o: global.f90 $(MACROS)
 ###############################################################################################################################################################
 
 %_r.o: %.f
-	$(FC) $(FLAGS)           $(RFLAGS) -o $*_r.o -c $*.f
+	$(FC) $(FLAGS) $(RFLAGS) -o $*_r.o -c $*.f
 	@wc -l -L -w $*.f | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
 %_d.o: %.f
-	$(FC) $(FLAGS)           $(DFLAGS) -o $*_d.o -c $*.f
+	$(FC) $(FLAGS) $(DFLAGS) -o $*_d.o -c $*.f
 	@wc -l -L -w $*.f | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
 ###############################################################################################################################################################
-
-$(ROBJS): %_r.o: %_m.F90 global_r.o sphdf5_r.o $(MACROS)
-	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o $*_r.o -c $*_m.F90 $(LIBS)
-	@wc -l -L -w $*_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
-	@echo ''
-
-$(DOBJS): %_d.o: %_m.F90 global_d.o  sphdf5_d.o $(MACROS)
-	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o $*_d.o -c $*_m.F90 $(LIBS)
-	@wc -l -L -w $*_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
-	@echo ''
 
 $(PREPROC): %_m.F90: %.f90 $(MACROS)
 	@awk -v file=$*.f90 '{ gsub("__LINE__", NR); gsub("__FILE__",file); print }' $*.f90 > $*_p.f90
 	m4 -P $(MACROS) $*_p.f90 > $*_m.F90
 
+
+$(ROBJS_IO): %_r.o: %_m.F90 $(addsuffix _r.o,$(BASEFILES)) $(MACROS)
+	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o $*_r.o -c $*_m.F90 $(LIBS)
+	@wc -l -L -w $*_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
+	@echo ''
+
+$(DOBJS_IO): %_d.o: %_m.F90 $(addsuffix _d.o,$(BASEFILES)) $(MACROS)
+	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o $*_d.o -c $*_m.F90 $(LIBS)
+	@wc -l -L -w $*_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
+	@echo ''
+
+
+$(ROBJS): %_r.o: %_m.F90 $(addsuffix _r.o,$(BASEFILES)) $(addsuffix _r.o,$(IOFILES)) $(MACROS)
+	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o $*_r.o -c $*_m.F90 $(LIBS)
+	@wc -l -L -w $*_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
+	@echo ''
+
+$(DOBJS): %_d.o: %_m.F90 $(addsuffix _d.o,$(BASEFILES)) $(addsuffix _d.o,$(IOFILES)) $(MACROS)
+	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o $*_d.o -c $*_m.F90 $(LIBS)
+	@wc -l -L -w $*_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
+	@echo ''
+
 ###############################################################################################################################################################
 
-
-###############################################################################################################################################################
-
-xspech_r.o: xspech.f90 global_r.o sphdf5_r.o $(addsuffix _r.o,$(files)) $(MACROS)
+xspech_r.o: xspech.f90 $(addsuffix _r.o,$(ALLSPEC)) $(MACROS)
 	@awk -v date='$(date)' -v pwd='$(PWD)' -v macros='$(MACROS)' -v fc='$(FC)' -v flags='$(FLAGS) $(CFLAGS) $(RFLAGS)' -v allfiles='$(ALLFILES)' \
 	'BEGIN{nfiles=split(allfiles,files," ")} \
 	{if($$2=="COMPILATION") {print "    write(ounit,*)\"      :  compiled  : date    = "date" ; \"" ; \
@@ -320,7 +364,7 @@ xspech_r.o: xspech.f90 global_r.o sphdf5_r.o $(addsuffix _r.o,$(files)) $(MACROS
 	@wc -l -L -w xspech_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
-xspech_d.o: xspech.f90 global_d.o sphdf5_d.o $(addsuffix _d.o,$(files)) $(MACROS)
+xspech_d.o: xspech.f90 $(addsuffix _d.o,$(ALLSPEC)) $(MACROS)
 	@awk -v date='$(date)' -v pwd='$(PWD)' -v macros='$(MACROS)' -v fc='$(FC)' -v flags='$(FLAGS) $(CFLAGS) $(DFLAGS)' -v allfiles='$(ALLFILES)' \
 	'BEGIN{nfiles=split(allfiles,files," ")} \
 	{if($$2=="COMPILATION") {print "    write(ounit,*)\"      :  compiled  : date    = "date" ; \"" ; \
@@ -344,52 +388,6 @@ clean:
 
 ###############################################################################################################################################################
 
-./docs/%.pdf: %.f90 head.tex end.tex
-	#emacs -r -fn 7x14 -g 160x80+280 $*.f90
-	mkdir -p ./docs/
-	cd ./docs/ ; \
-	pwd ; \
-	ls --full-time ../$*.f90 | awk 'IFS=" " {print $$6 " " substr($$7,0,8);}' > .$*.date ; \
-	awk -v file=$* -v date=.$*.date 'BEGIN{getline cdate < date ; FS="!latex" ; print "\\input{../head} \\code{"file"}"} \
-	{if(NF>1) print $$2} \
-	END{print "\\hrule \\vspace{1mm} \\footnotesize $*.f90 last modified on "cdate";" ; print "\\input{../end}"}' ../$*_m.F90 > $*.tex ; \
-	latex $* ; latex $* ; latex $* ; dvips -P pdf -o $*.ps $*.dvi ; ps2pdf $*.ps ; \
-	rm -f $*.tex $*.aux $*.blg $*.log $*.ps
-
-###############################################################################################################################################################
-
-pdfs: $(addprefix ./docs/, $(addsuffix .pdf,$(RAWSOURCE))) head.html
-	mkdir -p ./docs/
-	cat head.html > ./docs/subroutines.html
-	for file in $(RAWSOURCE) ; do grep "!title" $${file}.f90 | cut -c 7- | \
-	                           awk -v file=$${file} -F!\
-	                            '{print "<tr><td><a href="file".pdf>"file"</a></td><td>"$$1"</td><td>"$$2"</td></tr>"}' \
-	                            >> ./docs/subroutines.html ; \
-	                          done
-	echo "</table></body></html>" >> ./docs/subroutines.html
-	@echo "Please view the pdfs in ./docs/ directory."
-
-publish: $(addprefix ./docs/, $(addsuffix .pdf,$(RAWSOURCE))) ./docs/subroutines.html
-# push local documentations online
-	git stash
-	git checkout gh-pages
-	git pull origin gh-pages
-	cp ./docs/* .
-	git add *.pdf
-	git add subroutines.html
-	git commit -am "update documentations"
-	git push origin gh-pages
-	@echo "--------------------------------------------------------------------"
-	@echo "Published the updated documentations."
-	@echo "You are now in gh-pages branch."
-	@echo "Please checkout back to your working branch by"
-	@echo "$  git checkout <master>"
-	@echo "If you have stashed local changes, you can recover them by "
-	@echo "$ git stash pop "
-	@echo "--------------------------------------------------------------------"
-
-###############################################################################################################################################################
-
 show_makeflags:
 	@echo " "
 	@echo " "
@@ -402,9 +400,9 @@ show_makeflags:
 	@echo " "
 	@echo "$(BUILD_ENV) compile"
 	@echo "==============="
-	@echo "$(FC) $(CFLAGS) $(RFLAGS)"
+	@echo "$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS)"
 	@echo " "
-	@echo "$(FC) $(CFLAGS) $(DFLAGS)"
+	@echo "$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS)"
 	@echo " "
 	@echo "Include libraries"
 	@echo "==============="
