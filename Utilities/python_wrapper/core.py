@@ -33,7 +33,7 @@ class SPEC(object):
         ):  # This causes problems if the filename starts with a drectory!
             input_file = input_file + ".sp"
         self.input_file = input_file
-        self.comm = comm.py2f()
+        self.comm = comm # py2f() is done when actually setting allglobal.mpi_comm_spec
         assert isinstance(verbose, bool), "verbose is either True or False."
         self.verbose = verbose
         # Fortran libaries accessed via self.lib
@@ -53,8 +53,10 @@ class SPEC(object):
             setattr(self, key, getattr(spec, key))
 
         # assign ext and comm
-        self.inputlist.ext = input_file[:-3]
-        self.allglobal.mpi_comm_spec = self.comm
+        self.allglobal.ext = input_file[:-3]
+        self.allglobal.mpi_comm_spec = self.comm.py2f()
+        self.allglobal.myid = self.comm.Get_rank()
+        self.allglobal.ncpu = self.comm.Get_size()
         self.initialized = False
         # mute screen output if necessary
         if not self.verbose:
@@ -70,10 +72,13 @@ class SPEC(object):
         return
 
     def read(self, input_file=None):
+        # initialize input quantities to a known state
+        self.inputlist.initialize_inputs()
+
         if input_file is not None:
             print("Read SPEC input namelist from {:}.sp".format(input_file))
-            self.inputlist.ext = input_file
-        self.lib.allglobal.readin()
+            self.allglobal.ext = input_file
+        self.allglobal.readin()
         self.initialized = True
         return
 
