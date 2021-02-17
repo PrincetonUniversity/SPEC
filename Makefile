@@ -2,8 +2,8 @@
 
 ###############################################################################################################################################################
 
- afiles=manual rzaxis packxi volume coords basefn memory
- bfiles=metrix ma00aa matrix spsmat spsint mp00ac ma02aa packab tr00ab curent df00ab lforce intghs mtrxhs lbpol
+ afiles=manual rzaxis packxi volume coords basefn memory 
+ bfiles=metrix ma00aa matrix spsmat spsint mp00ac ma02aa packab tr00ab curent df00ab lforce intghs mtrxhs lbpol fndiff
 #cfiles=bc00aa fc02aa jk03aa pc00aa pc00ab
  cfiles=brcast dfp100 dfp200 dforce newton 
  dfiles=casing bnorml 
