@@ -53,10 +53,8 @@ class SPEC(object):
             setattr(self, key, getattr(spec, key))
 
         # assign ext and comm
-        self.allglobal.ext = input_file[:-3]
-        self.allglobal.mpi_comm_spec = self.comm.py2f()
-        self.allglobal.myid = self.comm.Get_rank()
-        self.allglobal.ncpu = self.comm.Get_size()
+        self.allglobal.ext = input_file[:-3] # omit ".sp" at end
+        self.allglobal.set_mpi_comm(self.comm.py2f())
         self.initialized = False
         # mute screen output if necessary
         if not self.verbose:

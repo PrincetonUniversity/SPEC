@@ -33,7 +33,7 @@
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 program xspech
 
-  use allglobal, only: readin, MPI_COMM_SPEC, myid, ncpu, cpus, version
+  use allglobal, only: readin, set_mpi_comm, myid, ncpu, cpus, version
   use inputlist, only: initialize_inputs
   use fileunits, only: ounit
 
@@ -42,11 +42,7 @@ program xspech
   call MPI_INIT( ierr )
 
   ! set default communicator to MPI_COMM_WORLD
-  MPI_COMM_SPEC = MPI_COMM_WORLD
-
-  myid = 0 ; ncpu = 1
-  call MPI_COMM_RANK( MPI_COMM_SPEC, myid, ierr )
-  call MPI_COMM_SIZE( MPI_COMM_SPEC, ncpu, ierr )
+  call set_mpi_comm(MPI_COMM_WORLD)
 
   ! set initial time; 04 Dec 14;
   cpus = GETTIME

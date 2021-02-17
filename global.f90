@@ -1702,6 +1702,33 @@ end subroutine build_vector_potential
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+! Use this routine to run SPEC on a different MPI communicator.
+! It takes care to re-assign the rank and size information
+! that is used internally in SPEC.
+subroutine set_mpi_comm(comm)
+
+  implicit none
+
+  integer, intent(in) :: comm
+  integer             :: ierr
+
+  ! MPI_COMM_SPEC is the global variable for the SPEC communicator.
+  MPI_COMM_SPEC = comm
+
+  myid = 0 ; ncpu = 1
+
+  ierr=0
+  call MPI_COMM_RANK( MPI_COMM_SPEC, myid, ierr )
+  if (ierr.ne.0) write(*,*) "error in call to MPI_COMM_RANK"
+
+  ierr=0
+  call MPI_COMM_SIZE( MPI_COMM_SPEC, ncpu, ierr )
+  if (ierr.ne.0) write(*,*) "error in call to MPI_COMM_SIZE"
+
+end subroutine
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
 subroutine readin
 
 !latex \subsection{subroutine readin}
