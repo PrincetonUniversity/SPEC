@@ -27,8 +27,10 @@ function rtdata = get_spec_rtarr(data,lvol,sarr,tarr,zarr0)
 Rac     = data.output.Rbc(:,lvol);   % inner volume boundary harmonics
 Rbc     = data.output.Rbc(:,lvol+1); % outer volume boundary harmonics
 
-
+if(size(sarr,1)==1)
 sarr    = transpose(sarr);
+end
+
 ns      = length(sarr);
 nt      = length(tarr);
 sbar    = (sarr+1)/2;
@@ -53,7 +55,7 @@ for j=1:mn
   for it=1:nt
      cosa = cos(im(j)*tarr(it)-in(j)*zarr0);
      sina = sin(im(j)*tarr(it)-in(j)*zarr0);
-     Rarr(:,it)  = Rarr(:,it) + (Rac(j) + fac{j}{1}'.*(Rbc(j)-Rac(j)) )*cosa;
+     Rarr(:,it)  = Rarr(:,it) + (Rac(j) + fac{j}{1}.*(Rbc(j)-Rac(j)) )*cosa;
      dRarr(:,it) = dRarr(:,it) + fac{j}{2}*(Rbc(j)-Rac(j))*cosa;
      Tarr(:,it)  = tarr(it);
   end

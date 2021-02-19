@@ -19,7 +19,7 @@ function fac = get_spec_regularization_factor(data, lvol, sarr, ForG)
 %
 %
 
-sarr = transpose(sarr);
+%sarr = transpose(sarr);
 
 Igeometry= data.input.physics.Igeometry;
 mn      = data.output.mn;

@@ -28,7 +28,9 @@ Azo     = data.vector_potential.Azo{lvol};
 
 Lrad    = data.input.physics.Lrad(lvol);
 
+if(size(sarr,1)==1)
 sarr    = transpose(sarr);
+end
 ns      = length(sarr);
 nt      = length(tarr);
 nz      = length(zarr);
