@@ -26,7 +26,7 @@ VPATH=src
 ###############################################################################################################################################################
  
  MACROS=src/macros
- 
+ tmp = tmp 
  CC=intel
  # if want to use gfortran; make CC=gfortran; otherwise using Intel
  FC=mpif90
