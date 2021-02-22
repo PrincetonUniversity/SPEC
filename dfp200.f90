@@ -1451,7 +1451,6 @@ do iocons = 0, 1
 ! dFFdRZ CONSTRUCTION
 ! ===================
 
-if( LcomputeDerivatives ) then
 ! B square contribution
 ! ---------------------
     ideriv = -1; iflag=0
@@ -1672,8 +1671,6 @@ if( LcomputeDerivatives ) then
 #ifdef DEBUG
     FATAL( dfp200, idoc.ne.LGdof, counting error )
 #endif
-
-endif
      
 enddo ! end of do iocons;
 
