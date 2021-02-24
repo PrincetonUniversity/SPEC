@@ -24,7 +24,7 @@ setup(
     version="0.0.1",
     #license="MIT",
     packages=['spec'],
-    #package_dir={'': 'src'},
+    package_dir={'': 'Utilities/python_wrapper'},
     #py_modules=[splitext(basename(path))[0] for path in glob('src/vmec/*.py')],
     install_requires=['f90wrap == v0.2.3'],
     classifiers=[
@@ -35,5 +35,4 @@ setup(
         "Programming Language :: Python :: 3",
         "Topic :: MHD Equilibrium Solver"],
     cmake_args=d['cmake_args'],
-    cmake_source_dir="../.."
 )

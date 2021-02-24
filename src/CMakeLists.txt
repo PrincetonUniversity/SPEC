@@ -142,27 +142,35 @@ message(STATUS "srcs variable is ${srcs}")
 add_library(spec 
         ${srcs} ${f_src_files}
 )
-#target_sources(spec
-#    PUBLIC
-#        ${f_src_files}
-#)
+
 target_compile_options(spec PUBLIC "-cpp")
 # For gfortran set the -ffree-line-length-none option
 target_compile_options(spec
     PUBLIC $<$<Fortran_COMPILER_ID:GNU>:-ffree-line-length-none>
 )
 
-set_target_properties (spec PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/spec)
-target_include_directories(spec PUBLIC ${CMAKE_Fortran_MODULE_DIRECTORY}/spec)
-#target_include_directories(spec PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+set_target_properties (spec PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/spec_modules)
+target_include_directories(spec PUBLIC ${CMAKE_Fortran_MODULE_DIRECTORY}/spec_modules)
 
-# Configure OpenMP
+# Add OpenMP
 target_link_libraries(spec PUBLIC OpenMP::OpenMP_Fortran)
 target_compile_definitions(spec PUBLIC OPENMP)
 
-# Configure HDF5
+# Add HDF5
 target_link_libraries(spec PUBLIC ${HDF5_Fortran_LIBRARIES} ${HDF5_C_LIBRARIES})
 target_include_directories(spec PUBLIC ${HDF5_C_INCLUDE_DIRS} ${HDF5_Fortran_INCLUDE_DIRS})
+
+# Add FFTW, LAPACK and BLAS libraries.
+# MKL could be used for all the three
+target_link_libraries(spec 
+    PUBLIC 
+        ${FFTW_LIBRARIES} ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES}
+)
+target_include_directories(spec 
+    PUBLIC 
+        ${FFTW_INCLUDE_DIRS} ${LAPACK_INCLUDE_DIRS} ${BLAS_INCLUDE_DIRS}
+)
+
 if(SKBUILD)
 	set_target_properties(spec PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
@@ -175,7 +183,7 @@ get_property(COMP_DEFS
 set(ALLFILES  manual rzaxis packxi volume coords basefn memory metrix ma00aa matrix spsmat spsint mp00ac ma02aa packab tr00ab curent df00ab lforce intghs mtrxhs lbpol brcast dfp100 dfp200 dforce newton casing bnorml jo00aa pp00aa pp00ab bfield stzxyz hesian ra00aa numrec dcuhre minpack iqpack rksuite i1mach d1mach ilut iters sphdf5 preset global xspech)
 string(REPLACE ";" " " ALLFILES_STR "${ALLFILES}")
 
-# Build xspec executable
+# Build spec executable
 set(XSPEC_FILE "${CMAKE_CURRENT_SOURCE_DIR}/xspech.f90")
 set(XSPEC_AWK_FILE "${CMAKE_CURRENT_SOURCE_DIR}/mxspech.f90")
 
@@ -188,7 +196,8 @@ else()
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
     execute_process(
-        COMMAND /bin/sh -c "\"${AWK}\" -v date=\"${DATE}\" -v pwd=\"$ENV{PWD}\" -v macros=\"${MACROS}\" -v fc=\"${CMAKE_Fortran_COMPILER}\" -v flags=\"${COMP_DEFS}\" -v allfiles=\"${ALLFILES_STR}\" \
+        COMMAND /bin/sh -c "\"${AWK}\" -v date=\"${DATE}\" -v pwd=\"$ENV{PWD}\" -v macros=\"${MACROS}\" \
+            -v fc=\"${CMAKE_Fortran_COMPILER}\" -v flags=\"${COMP_DEFS}\" -v allfiles=\"${ALLFILES_STR}\" \
             'BEGIN{nfiles=split(allfiles,files,\" \")} \
              {if($2==\"COMPILATION\") { \
                    print \"    write(ounit,*)\\\"      :  compiled  : date    = \"date\" ; \\\"\" ; \
@@ -210,17 +219,11 @@ message(STATUS "XSPEC_OUT_FILE is ${XSPEC_OUT_FILE}")
 
 add_executable(xspec ${XSPEC_OUT_FILE})
 target_link_libraries(xspec PUBLIC spec)
-target_link_libraries(spec 
-    PUBLIC 
-        ${FFTW_LIBRARIES} ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES}
-)
-target_include_directories(spec 
-    PUBLIC 
-        ${FFTW_INCLUDE_DIRS} ${LAPACK_INCLUDE_DIRS} ${BLAS_INCLUDE_DIRS}
-)
-if(SKBUILD)
+
+# Get the spec library linker properties and pass them to python wrapper
+if(SKBUILD) 
     get_target_property(SPEC_LINK_LIB spec LINK_LIBRARIES)
     list(REMOVE_ITEM SPEC_LINK_LIB "OpenMP::OpenMP_Fortran")
-    message(STATUS "spec linked libraries are ${SPEC_LINK_LIB}")
+    #message(STATUS "spec linked libraries are ${SPEC_LINK_LIB}")
     set(SPEC_LINK_LIB ${SPEC_LINK_LIB} PARENT_SCOPE)
 endif()
