@@ -24,7 +24,7 @@ jobs:
           build-dir: ${{ runner.workspace }}/build
           build-type: Release
           # Extra options pass to cmake while configuring project
-          configure-options: -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_Fortran_COMPILER=mpifort -DBLA_VENDOR=OpenBLAS -DHDF5_NO_FIND_PACKAGE_CONFIG_FILE=TRUE -DHDF5_PREFER_PARALLEL=TRUE -GNinja -DCMAKE_INSTALL_PREFIX=${SPEC_PATH}/install 
+          configure-options: -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_Fortran_COMPILER=mpifort -DBLA_VENDOR=OpenBLAS -DHDF5_NO_FIND_PACKAGE_CONFIG_FILE=TRUE -DHDF5_PREFER_PARALLEL=TRUE -GNinja # -DCMAKE_INSTALL_PREFIX=${SPEC_PATH}/install 
           # install the build using cmake --install
           install-build: true
       #- name: compile_xspec
