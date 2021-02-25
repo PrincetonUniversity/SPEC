@@ -18,7 +18,7 @@ jobs:
         run: |
           pip3 install ninja cmake
           cd ${SPEC_PATH}
-          mkdir build
+          mkdir build install
           cd ${SPEC_PATH}/build
           cmake -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_Fortran_COMPILER=mpifort -DBLA_VENDOR=OpenBLAS -DHDF5_ROOT=/usr -DHDF5_NO_FIND_PACKAGE_CONFIG_FILE=TRUE -DHDF5_PREFER_PARALLEL=TRUE .. -GNinja --prefix=${SPEC_PATH}/install
           cmake --build .
