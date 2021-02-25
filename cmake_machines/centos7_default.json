@@ -4,7 +4,6 @@
     "-DCMAKE_CXX_COMPILER=mpicxx",
     "-DCMAKE_Fortran_COMPILER=mpifort",
     "-DBLA_VENDOR=OpenBLAS",
-    "-DHDF5_ROOT=/usr",
     "-DHDF5_NO_FIND_PACKAGE_CONFIG_FILE=TRUE",
     "-DHDF5_PREFER_PARALLEL=TRUE"]
 }
