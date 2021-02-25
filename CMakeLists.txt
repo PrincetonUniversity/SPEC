@@ -85,7 +85,7 @@ find_package(FFTW REQUIRED)
 # HDF5_NO_FIND_PACKAGE_CONFIG_FILE
 # Ex: For PPPL gcc suite of compilers, after loading HDF5, invoke cmake as 
 # cmake ... -DHDF5_ROOT=$HDF5_HOME -DHDF5_NO_FIND_PACKAGE_CONFIG_FILE=FALSE
-find_package(HDF5 COMPONENTS C Fortran REQUIRED)
+find_package(HDF5 COMPONENTS C Fortran HL REQUIRED)
 message(STATUS "HDF5 libraries found: ${HDF5_FOUND}")
 message(STATUS "HDF5 C include directors : ${HDF5_C_INCLUDE_DIRS}")
 message(STATUS "HDF5 Fortran include directors : ${HDF5_Fortran_INCLUDE_DIRS}")

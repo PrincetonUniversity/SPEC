@@ -139,7 +139,7 @@ endif()
 list(APPEND srcs "${sphdf5_src}")
 message(STATUS "srcs variable is ${srcs}")
 
-add_library(spec 
+add_library(spec SHARED
         ${srcs} ${f_src_files}
 )
 
