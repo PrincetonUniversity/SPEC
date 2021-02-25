@@ -134,9 +134,3 @@ FILE(WRITE ${PYINIT_FILE} ${PYINIT_STR})
 install(FILES ${python_mod_file} ${generated_module_file} ${PYINIT_FILE}
         DESTINATION Utilities/python_wrapper/spec  # Here spec is directory location
 )
-install(TARGETS xspec spec)
-#        LIBRARY DESTINATION ${CMAKE_INSTALL_DIR}/.
-#        RUNTIME DESTINATION bin
-#)
-
-

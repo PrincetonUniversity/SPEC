@@ -227,3 +227,5 @@ if(SKBUILD)
     #message(STATUS "spec linked libraries are ${SPEC_LINK_LIB}")
     set(SPEC_LINK_LIB ${SPEC_LINK_LIB} PARENT_SCOPE)
 endif()
+
+install(TARGETS xspec spec)
