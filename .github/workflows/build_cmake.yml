@@ -17,7 +17,7 @@ jobs:
       - name: compile_xspec
         run: |
           pip3 install ninja cmake
-          cp ${SPEC_PATH}/cmake_machines/centos_default.json ${SPEC_PATH}/cmake_config.json
+          cp ${SPEC_PATH}/cmake_machines/centos7_default.json ${SPEC_PATH}/cmake_config.json
           cd ${{ github.workspace }}/build
           cmake -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_Fortran_COMPILER=mpifort -DBLA_VENDOR=OpenBLAS -DHDF5_ROOT=/usr -DHDF5_NO_FIND_PACKAGE_CONFIG_FILE=TRUE -DHDF5_PREFER_PARALLEL=TRUE .. -GNinja --prefix=${SPEC_PATH}/install
           cmake --build .
