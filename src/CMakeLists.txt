@@ -143,10 +143,15 @@ add_library(spec
         ${srcs} ${f_src_files}
 )
 
-target_compile_options(spec PUBLIC "-cpp")
+#target_compile_options(spec PUBLIC "-cpp")
 # For gfortran set the -ffree-line-length-none option
 target_compile_options(spec
-    PUBLIC $<$<Fortran_COMPILER_ID:GNU>:-ffree-line-length-none>
+    PUBLIC 
+        "-cpp"
+        $<$<Fortran_COMPILER_ID:GNU>:-ffree-line-length-none>
+        $<$<Fortran_COMPILER_ID:GNU>:-fdefault-real-8>
+        $<$<Fortran_COMPILER_ID:GNU>:-fallow-argument-mismatch>
+        $<$<Fortran_COMPILER_ID:Intel>:-r8>
 )
 
 set_target_properties (spec PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/spec_modules)
@@ -171,9 +176,9 @@ target_include_directories(spec
         ${FFTW_INCLUDE_DIRS} ${LAPACK_INCLUDE_DIRS} ${BLAS_INCLUDE_DIRS}
 )
 
-if(SKBUILD)
-	set_target_properties(spec PROPERTIES POSITION_INDEPENDENT_CODE ON)
-endif()
+#if(SKBUILD)
+set_target_properties(spec PROPERTIES POSITION_INDEPENDENT_CODE ON)
+#endif()
 
 get_property(COMP_DEFS 
             TARGET spec
