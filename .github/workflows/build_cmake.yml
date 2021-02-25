@@ -1,4 +1,4 @@
-name: build-test
+name: build-cmake-test
 on: [push, pull_request]
 
 jobs:
@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@master
       - name: compile_xspec
         run: |
-          pip3 install ninja
+          pip3 install ninja cmake
           cd ${SPEC_PATH}
           mkdir build
           cd ${SPEC_PATH}/build
