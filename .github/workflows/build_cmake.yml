@@ -14,13 +14,26 @@ jobs:
     steps:
       - name: checkout sources
         uses: actions/checkout@master
-      - name: compile_xspec
+      - name: Install prereqs
         run: |
           pip3 install ninja cmake
-          cd ${SPEC_PATH}/build
-          cmake -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_Fortran_COMPILER=mpifort -DBLA_VENDOR=OpenBLAS -DHDF5_NO_FIND_PACKAGE_CONFIG_FILE=TRUE -DHDF5_PREFER_PARALLEL=TRUE .. -GNinja -DCMAKE_INSTALL_PREFIX=${SPEC_PATH}/install
-          cmake --build .
-          cmake --install .
+          yum install -y hdf5-static
+      - name: Build & Test
+        uses: ashutoshvarma/action-cmake-build@master
+        with:
+          build-dir: ${{ runner.workspace }}/build
+          build-type: Release
+          # Extra options pass to cmake while configuring project
+          configure-options: -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_Fortran_COMPILER=mpifort -DBLA_VENDOR=OpenBLAS -DHDF5_NO_FIND_PACKAGE_CONFIG_FILE=TRUE -DHDF5_PREFER_PARALLEL=TRUE -GNinja -DCMAKE_INSTALL_PREFIX=${SPEC_PATH}/install 
+          # install the build using cmake --install
+          install-build: true
+      #- name: compile_xspec
+      #  run: |
+      #    pip3 install ninja cmake
+      #    cd ${SPEC_PATH}/build
+      #    cmake -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_Fortran_COMPILER=mpifort -DBLA_VENDOR=OpenBLAS -DHDF5_NO_FIND_PACKAGE_CONFIG_FILE=TRUE -DHDF5_PREFER_PARALLEL=TRUE .. -GNinja -DCMAKE_INSTALL_PREFIX=${SPEC_PATH}/install
+      #    cmake --build .
+      #    cmake --install .
       - name: run_fast_cartesian
         run: |
           cd ${SPEC_PATH}/ci/G1V03L2Fi
@@ -50,6 +63,4 @@ jobs:
           cd ${SPEC_PATH}/ci/G3V08L3Fr
           mpiexec -n 3 --allow-run-as-root ${SPEC_PATH}/install/bin/xspec G3V08L3Fr.001.sp
           python3 -m py_spec.ci.test compare.h5 G3V08L3Fr.001.sp.h5 --tol 1e-10
-
-
 
