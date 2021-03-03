@@ -69,7 +69,7 @@ def plot_poincare(self, toroidalIdx=0, prange="full", ax=None, **kwargs):
     if self.input.physics.Igeometry == 1:
         plt.ylabel("R [m]", fontsize=20)
         plt.xlabel(r"$\theta$", fontsize=20)
-        plt.xlim([0, np.pi])
+        plt.xlim([0, 2*np.pi])
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
 
