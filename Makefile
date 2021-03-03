@@ -2,7 +2,7 @@
 
 ###############################################################################################################################################################
 
- afiles=manual rzaxis packxi volume coords basefn memory
+ afiles=manual rzaxis packxi volume coords basefn memory 
  bfiles=metrix ma00aa matrix spsmat spsint mp00ac ma02aa packab tr00ab curent df00ab lforce intghs mtrxhs lbpol
 #cfiles=bc00aa fc02aa jk03aa pc00aa pc00ab
  cfiles=brcast dfp100 dfp200 dforce newton 
@@ -149,7 +149,7 @@ ifeq ($(CC),intel_ipp)
  # intel/19.0.4 impi/2019.4 mkl/2019.4 hdf5-serial/1.8.21 fftw-mpi/3.3.8
  FC=mpiifort
  CFLAGS=-r8
- RFLAGS=-O0 -ip -no-prec-div -xHost -fPIC
+ RFLAGS=-O2 -ip -no-prec-div -xHost -fPIC
  DFLAGS=-traceback -D DEBUG
  LINKS=-L${MKLROOT}/lib/intel64 -lmkl_rt -lpthread -lm -ldl -Wl,-rpath -Wl,${MKLROOT}/lib/intel64
  LIBS=-I$(HDF5_HOME)/include

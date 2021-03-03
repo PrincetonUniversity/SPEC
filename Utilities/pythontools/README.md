@@ -16,7 +16,7 @@ pip install py_spec
 Or from the GitHub
 
 ```
-pip install git+https://github.com/PrincetonUniversity/SPEC/tree/master/Utilities/pythontools
+pip install git+https://github.com/PrincetonUniversity/SPEC.git#egg=SPEC&subdirectory=Utilities/pythontools
 ```
 
 You can also install it locally (`cd /path/to/SPEC/Utlities/pythontools/`).

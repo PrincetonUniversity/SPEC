@@ -7,6 +7,7 @@ RUN yum install gcc-gfortran openmpi openmpi-devel hdf5 hdf5-devel -y
 RUN yum install fftw3 fftw3-devel openblas openblas-devel -y
 RUN yum install blas blas-devel lapack lapack-devel -y
 RUN yum install -y python3 python3-devel
+RUN yum install -y cmake ninja-build
 RUN pip3 install h5py matplotlib f90nml
 
 # direct the existing makefile to the system install location

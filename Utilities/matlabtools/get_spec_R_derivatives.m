@@ -37,6 +37,9 @@ Zmn_p  = data.output.Zbs(:,vol+1);
     
 % Allocate data for R and its derivative in s, theta and phi (4), for each
 % and for ns points 
+if(size(sarr,1)==1)
+sarr    = transpose(sarr);
+end
 ns = length(sarr);
 nt = length(tarr);
 nz = length(zarr);
@@ -49,7 +52,7 @@ for ii=1:4
 end
 
 % Compute the regularisation factor
-factor = get_spec_regularisation_factor(data, vol, sarr, 'G');
+factor = get_spec_regularization_factor(data, vol, sarr, 'G');
                         
 % And R derivatives
 if RorZ=='R'
