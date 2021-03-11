@@ -93,6 +93,8 @@ subroutine newton( NGdof, position, ihybrd )
   INTEGER                :: irevcm, mode, Ldfjac, LR
   REAL                   :: xtol, epsfcn, factor
   REAL                   :: diag(1:NGdof), QTF(1:NGdof), workspace(1:NGdof,1:4)
+  INTEGER                :: cglim = 10, cgit
+  REAL                   :: cgwork(1:3*NGdof), cgstep = 0, cgtol  = 1e-9, cgnorm
 
   REAL                   :: force(0:NGdof)
   REAL, allocatable      :: fjac(:,:), RR(:), work(:,:)
@@ -106,7 +108,7 @@ subroutine newton( NGdof, position, ihybrd )
 
   INTEGER, parameter     :: maxfev = 5000 ! maximum calls per iteration;
 
-  external               :: fcn1, fcn2
+  external               :: fcn1, fcn2, fcnval, fcngrad, fcnboth, fcnpre
   
   BEGIN(newton)
   
@@ -184,7 +186,7 @@ subroutine newton( NGdof, position, ihybrd )
   SALLOCATE( fjac, (1:NGdof, 1:NGdof), zero)
   SALLOCATE( RR, (1:NGdof*(NGdof+1)/2), zero)
 
-  if( Lfindzero.eq.2 ) then
+  if( Lfindzero.eq.2 .or. Lfindzero.eq.3 ) then
     SALLOCATE( dFFdRZ, (1:LGdof,0:1,1:LGdof,0:1,1:Mvol), zero )
     SALLOCATE( dBBdmp, (1:LGdof,1:Mvol,0:1,1:2), zero )
    if( LocalConstraint ) then
@@ -215,7 +217,18 @@ subroutine newton( NGdof, position, ihybrd )
    WCALL( newton, hybrj, ( fcn2, NGdof, position(1:NGdof), force(1:NGdof), fjac(1:Ldfjac,1:NGdof), Ldfjac, &
           xtol, maxfev,                 diag(1:NGdof), mode, factor, nprint, ihybrd, nfev, njev, &
           RR(1:LR), LR, QTF(1:NGdof), workspace(1:NGdof,1), workspace(1:NGdof,2), workspace(1:NGdof,3), workspace(1:NGdof,4) ) )
-   
+
+  case( 3 ) ! use function values to find f(x)=0 using a conjugate gradient descent algorithm
+
+   write(*,*) "-------------------- Under construction --------------------"
+   WCALL(newton, fcndescent, (position(1:NGdof),NGdof))
+   WCALL( newton, hybrj, ( fcn2, NGdof, position(1:NGdof), force(1:NGdof), fjac(1:Ldfjac,1:NGdof), Ldfjac, &
+          xtol, maxfev,                 diag(1:NGdof), mode, factor, nprint, ihybrd, nfev, njev, &
+          RR(1:LR), LR, QTF(1:NGdof), workspace(1:NGdof,1), workspace(1:NGdof,2), workspace(1:NGdof,3), workspace(1:NGdof,4) ) )
+   !WCALL(newton, frcg, (position(1:NGdof),cgnorm,cgit,cgstep,cgtol,cglim,NGdof,NGdof,fcnval,fcngrad,fcnboth,fcnpre,cgwork(1:3*NGdof)))
+   !write(*,*) "-------------------- cgnorm = ", cgnorm, " , cgit = ", cgit
+   write(*,*) "-------------------- Under construction --------------------"
+  
   case default
    
    FATAL( newton, .true., value of Lfindzero not supported )
@@ -717,3 +730,258 @@ subroutine fcn2( NGdof, xx, fvec, fjac, Ldfjac, irevcm )
  end subroutine fcn2
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+function fcnval(xx)
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+  use constants, only : zero, one, two, ten
+
+  use numerical, only : sqrtmachprec
+
+  use fileunits, only : ounit
+
+  use inputlist, only : Wmacros, Wnewton, ext, &
+                        Igeometry, & ! only for screen output; 
+                        Nvol,                    &
+                        Lfindzero, forcetol, c05xmax, c05xtol, c05factor, LreadGF, &
+                        Lcheck
+
+  use cputiming, only : Tnewton
+
+  use allglobal, only : wrtend, myid, ncpu, cpus, &
+                        NOTstellsym, &
+                        ForceErr, Energy, &
+                        mn, im, in, iRbc, iZbs, iRbs, iZbc, Mvol, &
+                        BBe, IIo, BBo, IIe, &
+                        LGdof, dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated, &
+                        nfreeboundaryiterations, &
+                        NGdof
+  
+  use newtontime
+
+  use sphdf5, only : write_convergence_output
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  LOCALS
+
+  REAL                   :: fcnval 
+  REAL   , intent(in)    :: xx(1:NGdof)
+
+  REAL                   :: position(0:NGdof), force(0:NGdof)
+
+  LOGICAL                :: LComputeDerivatives, Lonlysolution, LComputeAxis
+  INTEGER                :: idof, jdof, ijdof, ireadhessian, igdof, lvol, ii, imn
+  CHARACTER              :: pack
+    
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  position = zero ; force = zero ; position(1:NGdof) = xx(1:NGdof)
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+    
+    LComputeDerivatives = .false.
+    LComputeAxis = .true.
+    WCALL( newton, dforce, ( NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives, LComputeAxis ) ) ! calculate the force-imbalance;
+
+    
+    fcnval = Energy
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+ end function fcnval
+
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+subroutine fcngrad(fgrad, xx)
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+  use constants, only : zero, one, two, ten
+
+  use numerical, only : sqrtmachprec
+
+  use fileunits, only : ounit
+
+  use inputlist, only : Wmacros, Wnewton, ext, &
+                        Igeometry, & ! only for screen output; 
+                        Nvol,                    &
+                        Lfindzero, forcetol, c05xmax, c05xtol, c05factor, LreadGF, &
+                        Lcheck
+
+  use cputiming, only : Tnewton
+
+  use allglobal, only : wrtend, myid, ncpu, cpus, &
+                        NOTstellsym, &
+                        ForceErr, Energy, &
+                        mn, im, in, iRbc, iZbs, iRbs, iZbc, Mvol, &
+                        BBe, IIo, BBo, IIe, &
+                        LGdof, dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated, &
+                        nfreeboundaryiterations, &
+                        NGdof
+  
+  use newtontime
+
+  use sphdf5, only : write_convergence_output
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  LOCALS
+
+  REAL   , intent(inout) :: fgrad(1:NGdof) 
+  REAL   , intent(in)    :: xx(1:NGdof)
+
+  REAL                   :: position(0:NGdof), force(0:NGdof)
+
+  LOGICAL                :: LComputeDerivatives, Lonlysolution, LComputeAxis
+  INTEGER                :: idof, jdof, ijdof, ireadhessian, igdof, lvol, ii, imn
+  CHARACTER              :: pack
+    
+  BEGIN(newton)
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  position = zero ; force = zero ; position(1:NGdof) = xx(1:NGdof)
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+    
+    LComputeDerivatives = .false.
+    LComputeAxis = .true.
+    WCALL( newton, dforce, ( NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives, LComputeAxis ) ) ! calculate the force-imbalance;
+
+    
+    fgrad(1:NGdof) = force(1:NGdof)
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+ RETURN(newton)
+
+ end subroutine fcngrad
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+subroutine fcnboth(fval, fgrad, xx)
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+  use constants, only : zero, one, two, ten
+
+  use numerical, only : sqrtmachprec
+
+  use fileunits, only : ounit
+
+  use inputlist, only : Wmacros, Wnewton, ext, &
+                        Igeometry, & ! only for screen output; 
+                        Nvol,                    &
+                        Lfindzero, forcetol, c05xmax, c05xtol, c05factor, LreadGF, &
+                        Lcheck
+
+  use cputiming, only : Tnewton
+
+  use allglobal, only : wrtend, myid, ncpu, cpus, &
+                        NOTstellsym, &
+                        ForceErr, Energy, &
+                        mn, im, in, iRbc, iZbs, iRbs, iZbc, Mvol, &
+                        BBe, IIo, BBo, IIe, &
+                        LGdof, dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated, &
+                        nfreeboundaryiterations, &
+                        NGdof
+  
+  use newtontime
+
+  use sphdf5, only : write_convergence_output
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  LOCALS
+ 
+  REAL   , intent(inout) :: fval, fgrad(1:NGdof) 
+  REAL   , intent(in)    :: xx(1:NGdof)
+
+  REAL                   :: position(0:NGdof), force(0:NGdof)
+
+  LOGICAL                :: LComputeDerivatives, Lonlysolution, LComputeAxis
+  INTEGER                :: idof, jdof, ijdof, ireadhessian, igdof, lvol, ii, imn
+  CHARACTER              :: pack
+    
+  BEGIN(newton)
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  position = zero ; force = zero ; position(1:NGdof) = xx(1:NGdof)
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+    
+    LComputeDerivatives = .false.
+    LComputeAxis = .true.
+    WCALL( newton, dforce, ( NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives, LComputeAxis ) ) ! calculate the force-imbalance;
+
+    fval           = Energy
+    fgrad(1:NGdof) = force(1:NGdof)
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+ RETURN(newton)
+
+end subroutine fcnboth
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+subroutine fcnpre(Y,Z)
+ 
+  REAL   , intent(inout) :: Y
+  REAL   , intent(in)    :: Z
+
+  BEGIN
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  Y = Z
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  RETURN
+
+ end subroutine fcnpre
+
+subroutine fcndescent(xx, NGdof)
+
+ use constants, only : zero, one
+
+ use allglobal, only  : ForceErr
+
+ INTEGER, INTENT(in)  :: NGdof
+ REAL , INTENT(inout) :: xx(1:NGdof)
+
+ REAL                 :: deltax=1.0E-5, ditmax = 20000, dtol = 3e-9 
+ REAL                 :: position(0:NGdof), force(0:NGdof)
+ INTEGER              :: it
+ LOGICAL              :: LComputeDerivatives, LComputeAxis
+
+ position = zero ; force = zero ; position(1:NGdof) = xx(1:NGdof) 
+
+ LComputeDerivatives = .false.; LComputeAxis = .true.
+
+ it = 0
+
+ do while(it < ditmax)
+ 
+  it = it + 1
+ 
+  call dforce(NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives, LComputeAxis)
+
+  position(1:NGdof) = position(1:NGdof) - deltax*force(1:NGdof)/ForceErr
+  
+  if(ForceErr<dtol) then
+   write(*,*) "FORCE BELOW TOLERANCE"
+   exit
+  endif
+
+  if(it .eq. ditmax) then
+   write(*,*) "EXCEEDED MAX NUMBER OF ITERATIONS, force = " , ForceErr
+  endif
+
+ enddo
+
+ xx = position(1:NGdof)
+
+ RETURN
+
+end subroutine
