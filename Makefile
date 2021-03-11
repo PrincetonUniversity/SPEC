@@ -5,11 +5,11 @@
  afiles=manual rzaxis packxi volume coords basefn memory
  bfiles=metrix ma00aa matrix spsmat spsint mp00ac ma02aa packab tr00ab curent df00ab lforce intghs mtrxhs lbpol
 #cfiles=bc00aa fc02aa jk03aa pc00aa pc00ab
- cfiles=brcast dfp100 dfp200 dforce newton 
+ cfiles=brcast dfp100 dfp200 dforce newton minimize 
  dfiles=casing bnorml 
  efiles=jo00aa pp00aa pp00ab bfield stzxyz
  ffiles=hesian ra00aa numrec
- sfiles=dcuhre minpack napack iqpack rksuite i1mach d1mach ilut iters # below assumes the .f files are double precision; the CFLAGS = -r8 option is not required;
+ sfiles=dcuhre minpack iqpack rksuite i1mach d1mach ilut iters # below assumes the .f files are double precision; the CFLAGS = -r8 option is not required;
 
 ###############################################################################################################################################################
 
