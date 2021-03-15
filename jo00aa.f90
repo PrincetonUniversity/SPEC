@@ -29,9 +29,9 @@
 !latex       \be
 !latex       B_\s & = & (\sqrt g B^\s) \, g_{\s\s} / \sqrt g + (\sqrt g B^\t) \, g_{\s\t} / \sqrt g + (\sqrt g B^\z) \, g_{\s\z} / \sqrt g, \\
 !latex       B_\t & = & (\sqrt g B^\s) \, g_{\s\t} / \sqrt g + (\sqrt g B^\t) \, g_{\t\t} / \sqrt g + (\sqrt g B^\z) \, g_{\t\z} / \sqrt g, \\
-!latex       B_\z & = & (\sqrt g B^\s) \, g_{\s\z} / \sqrt g + (\sqrt g B^\t) \, g_{\t\z} / \sqrt g + (\sqrt g B^\z) \, g_{\z\z} / \sqrt g. 
+!latex       B_\z & = & (\sqrt g B^\s) \, g_{\s\z} / \sqrt g + (\sqrt g B^\t) \, g_{\t\z} / \sqrt g + (\sqrt g B^\z) \, g_{\z\z} / \sqrt g.
 !latex       \ee
-!latex \end{enumerate} 
+!latex \end{enumerate}
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -39,18 +39,18 @@
 
 !latex \begin{enumerate}
 !latex \item The measures of the error are
-!latex       \be ||\left( {\bf j}-\mu {\bf B}\right)\cdot\nabla \s || &  \equiv  & 
+!latex       \be ||\left( {\bf j}-\mu {\bf B}\right)\cdot\nabla \s || &  \equiv  &
 !latex         \int \!\! ds \ooint \left| \sqrt g \, {\bf j}\cdot\nabla \s-\mu \; \sqrt g \, {\bf B} \cdot\nabla \s \right|, \label{eq:Es} \\
-!latex           ||\left( {\bf j}-\mu {\bf B}\right)\cdot\nabla \t || &  \equiv  & 
+!latex           ||\left( {\bf j}-\mu {\bf B}\right)\cdot\nabla \t || &  \equiv  &
 !latex         \int \!\! ds \ooint \left| \sqrt g \, {\bf j}\cdot\nabla \t-\mu \; \sqrt g \, {\bf B} \cdot\nabla \t \right|, \label{eq:Et} \\
-!latex           ||\left( {\bf j}-\mu {\bf B}\right)\cdot\nabla \z || &  \equiv  & 
-!latex         \int \!\! ds \ooint \left| \sqrt g \, {\bf j}\cdot\nabla \z-\mu \; \sqrt g \, {\bf B} \cdot\nabla \z \right|. \label{eq:Ez} 
+!latex           ||\left( {\bf j}-\mu {\bf B}\right)\cdot\nabla \z || &  \equiv  &
+!latex         \int \!\! ds \ooint \left| \sqrt g \, {\bf j}\cdot\nabla \z-\mu \; \sqrt g \, {\bf B} \cdot\nabla \z \right|. \label{eq:Ez}
 !latex       \ee
 !latex \end{enumerate}
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsection{details of the numerics} 
+!latex \subsection{details of the numerics}
 
 !latex \begin{enumerate}
 
@@ -64,11 +64,11 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
 
   use fileunits, only : ounit
 
-  use inputlist, only : Wmacros, Wjo00aa, ext, Nvol, Lrad, mu, mpol, Igeometry, Nfp, Lerrortype
+  use inputlist, only : Wmacros, Wjo00aa, Nvol, Lrad, mu, mpol, Igeometry, Nfp, Lerrortype
 
   use cputiming, only : Tjo00aa
 
-  use allglobal, only : myid, cpus, MPI_COMM_SPEC, ivol, &
+  use allglobal, only : myid, cpus, MPI_COMM_SPEC, ext, ivol, &
                         im, in, regumm, &
                         Mvol, &
                         cheby, zernike, &
@@ -83,44 +83,44 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   LOCALS
-  
+
   INTEGER, intent(in) :: lvol, Ntz, lquad, mn ! these are really global, but are included in argument list to remove allocations;
-  
+
   INTEGER             :: jquad, Lcurvature, ll, ii, jj, kk, uu, ideriv, twolquad, mm, jk
-  
+
   REAL                :: lss, sbar, sbarhim(0:2), gBu(1:Ntz,1:3,0:3), gJu(1:Ntz,1:3), jerror(1:3), jerrormax(1:3), intvol
   REAL                :: B_cartesian(1:Ntz,1:3), J_cartesian(1:Ntz,1:3)
-  
+
   REAL                :: Atemn(1:mn,0:2), Azemn(1:mn,0:2), Atomn(1:mn,0:2), Azomn(1:mn,0:2)
-  
+
   INTEGER             :: itype, icdgqf
   REAL                :: aa, bb, cc, dd, weight(1:lquad+1), abscis(1:lquad), workfield(1:2*lquad)
 
   REAL                :: zeta, teta, st(2), Bst(2)
-  
+
   BEGIN(jo00aa)
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
 #ifdef DEBUG
   FATAL( jo00aa, lquad.lt.1, invalid lquad supplied to jo00aa )
   FATAL( jo00aa, lvol.lt.1 .or. lvol.gt.Mvol, invalid interface label )
 #endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
 !latex \item The integration over $s$ is performed using Gaussian integration, e.g., $\ds \int \!\! f(s) ds \approx \sum_k \omega_k f(s_k)$;
 !latex       with the abscissae, $s_k$, and the weights, $\omega_k$, for $k=1,$ \internal{Iquad$_v$},
 !latex       determined by \verb+CDGQF+.
 !latex       The resolution, \type{N} $ \equiv $ \internal{Iquad$_v$}, is determined by \inputvar{Nquad} (see \link{global} and \link{preset}).
-!latex       A fatal error is enforced by \link{jo00aa} 
+!latex       A fatal error is enforced by \link{jo00aa}
 !latex       if \verb+CDGQF+ returns an \type{ifail} $\ne 0$.
-  
+
   itype = 1 ; aa = -one ; bb = +one ; cc = zero ; dd = zero ; twolquad = 2 * lquad
-  
+
   call CDGQF( lquad, abscis(1:lquad), weight(1:lquad), itype, aa, bb, twolquad, workfield(1:twolquad), icdgqf ) ! prepare Gaussian quadrature;
   weight(lquad+1) = zero
-  
+
 ! write(ounit,'("jo00aa :  WARNING ! : THE ERROR FLAGS RETURNED BY CDGQF SEEM DIFFERENT TO NAG:D01BCF (may be trivial, but please revise); 2018/01/10;")')
 
   cput= GETTIME
@@ -134,42 +134,42 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
   case( 6 )    ;                write(ounit,1000) cput-cpus, myid, lvol, icdgqf, "failed         ", abscis(1:lquad)
   case default ;                write(ounit,1000) cput-cpus, myid, lvol, icdgqf, "weird          ", abscis(1:lquad)
   end select
-  
+
   if( Wjo00aa )                 write(ounit,1001)                                                   weight(1:lquad)
-  
+
 1000 format("jo00aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; icdgqf=",i3," ; "a15" ;":" abscissae ="99f10.6)
 1001 format("jo00aa : ", 10x ," :       "3x"          "3x"            "3x"    "15x" ;":" weights   ="99f10.6)
-  
+
   FATAL( jo00aa, icdgqf.ne.0, failed to construct Gaussian integration abscisae and weights )
-   
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   jerror(1:3) = zero ; ideriv = 0 ! three components of the error in \curl B - mu B; initialize summation;
   jerrormax(1:3) = zero; intvol = zero
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-!latex \item Inside the Gaussian quadrature loop, i.e. for each $s_k$, 
-  
+
+!latex \item Inside the Gaussian quadrature loop, i.e. for each $s_k$,
+
 !latex \begin{enumerate}
-  
+
   do jquad = 1, lquad+1 ! loop over radial sub-sub-grid (numerical quadrature);
-   
+
    if (jquad.eq.lquad+1) then
     lss = one           ; sbar = one
    else
     lss = abscis(jquad) ; sbar = ( lss + one ) * half
    endif
-   
-!latex \item The metric elements, $g_{\mu,\nu} \equiv $ \type{gij(1:6,0,1:Ntz)}, and the Jacobian, $\sqrt g \equiv $ \type{sg(0,1:Ntz)}, 
+
+!latex \item The metric elements, $g_{\mu,\nu} \equiv $ \type{gij(1:6,0,1:Ntz)}, and the Jacobian, $\sqrt g \equiv $ \type{sg(0,1:Ntz)},
 !latex       are calculated on a regular angular grid, $(\t_i,\z_j)$, in \link{coords}.
-!latex       The derivatives $\partial_i g_{\mu,\nu} \equiv$ \type{gij(1:6,i,1:Ntz)} and $\partial_i \sqrt g \equiv $ \type{sg(i,1:Ntz)}, 
+!latex       The derivatives $\partial_i g_{\mu,\nu} \equiv$ \type{gij(1:6,i,1:Ntz)} and $\partial_i \sqrt g \equiv $ \type{sg(i,1:Ntz)},
 !latex       with respect to $ i \in \{ \s,\t,\z \}$ are also returned.
-   
+
    Lcurvature = 2
-   
+
    WCALL( jo00aa, coords, ( lvol, lss, Lcurvature, Ntz, mn ) ) ! returns coordinates, metrics, . . .
-   
+
    if (Lcoordinatesingularity) then ! Zernike 1 Jul 2019
      call get_zernike_d2(sbar, Lrad(lvol), mpol, zernike)
    else
@@ -185,17 +185,17 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
    Atomn(1:mn,0:2) = zero ! these are used below;
    Azomn(1:mn,0:2) = zero
    endif
-   
+
   !latex \item The Fourier components of the vector potential given in \Eqn{At} and \Eqn{Az}, and their first and second radial derivatives, are summed.
 
    if (Lcoordinatesingularity) then
     do ll = 0, Lrad(lvol) ! radial (Chebyshev) resolution of magnetic vector potential;
-    
+
       do ii = 1, mn  ! Fourier resolution of magnetic vector potential;
       mm = im(ii)
       if (ll < mm) cycle
       if (mod(ll+mm, 2) > 0) cycle
-      
+
       ;Atemn(ii,0) = Atemn(ii,0) + Ate(lvol,ideriv,ii)%s(ll) * zernike(ll,mm,0)
       ;Atemn(ii,1) = Atemn(ii,1) + Ate(lvol,ideriv,ii)%s(ll) * zernike(ll,mm,1) * half
       ;Atemn(ii,2) = Atemn(ii,2) + Ate(lvol,ideriv,ii)%s(ll) * zernike(ll,mm,2) * half * half
@@ -215,17 +215,17 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
         Azomn(ii,2) = Azomn(ii,2) + Azo(lvol,ideriv,ii)%s(ll) * zernike(ll,mm,2) * half * half
 
       endif ! end of if( NOTstellsym) ; 20 Jun 14;
-        
+
       enddo ! end of do ii;
-      
+
     enddo ! end of do ll;
 
    else
 
     do ll = 0, Lrad(lvol) ! radial (Chebyshev) resolution of magnetic vector potential;
-    
+
       do ii = 1, mn  ! Fourier resolution of magnetic vector potential;
-      
+
       ;Atemn(ii,0) = Atemn(ii,0) + Ate(lvol,ideriv,ii)%s(ll) * cheby(ll,0)
       ;Atemn(ii,1) = Atemn(ii,1) + Ate(lvol,ideriv,ii)%s(ll) * cheby(ll,1)
       ;Atemn(ii,2) = Atemn(ii,2) + Ate(lvol,ideriv,ii)%s(ll) * cheby(ll,2)
@@ -245,56 +245,56 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
         Azomn(ii,2) = Azomn(ii,2) + Azo(lvol,ideriv,ii)%s(ll) * cheby(ll,2)
 
       endif ! end of if( NOTstellsym) ; 20 Jun 14;
-        
+
       enddo ! end of do ii;
-      
+
     enddo ! end of do ll;
-   end if 
-!latex \item The quantities $\sqrt g B^\s$, $\sqrt g B^\t$ and $\sqrt g B^\z$, and their first and second derivatives with respect to $(\s,\t,\z)$, 
+   end if
+!latex \item The quantities $\sqrt g B^\s$, $\sqrt g B^\t$ and $\sqrt g B^\z$, and their first and second derivatives with respect to $(\s,\t,\z)$,
 !latex       are computed on the regular angular grid (using FFTs).
 
    ofmn(1:mn) = -          im(1:mn)*Azemn(1:mn,0) -          in(1:mn)*Atemn(1:mn,0)
    efmn(1:mn) = +          im(1:mn)*Azomn(1:mn,0) +          in(1:mn)*Atomn(1:mn,0)
    sfmn(1:mn) = -          im(1:mn)*Azemn(1:mn,1) -          in(1:mn)*Atemn(1:mn,1)
    cfmn(1:mn) = +          im(1:mn)*Azomn(1:mn,1) +          in(1:mn)*Atomn(1:mn,1)
-   
+
    call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, gBu(1:Ntz,1,0), gBu(1:Ntz,1,1) ) !  (gB^s)   , d(gB^s)/ds;
-   
+
    efmn(1:mn) = - im(1:mn)*im(1:mn)*Azemn(1:mn,0) - im(1:mn)*in(1:mn)*Atemn(1:mn,0)
    ofmn(1:mn) = - im(1:mn)*im(1:mn)*Azomn(1:mn,0) - im(1:mn)*in(1:mn)*Atomn(1:mn,0)
    cfmn(1:mn) = + in(1:mn)*im(1:mn)*Azemn(1:mn,0) + in(1:mn)*in(1:mn)*Atemn(1:mn,0)
    sfmn(1:mn) = + in(1:mn)*im(1:mn)*Azomn(1:mn,0) + in(1:mn)*in(1:mn)*Atomn(1:mn,0)
-   
+
    call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, gBu(1:Ntz,1,2), gBu(1:Ntz,1,3) ) ! d(gB^s)/dt, d(gB^s)/dz;
-   
+
    efmn(1:mn) =                                   -                   Azemn(1:mn,1)
    ofmn(1:mn) =                                   -                   Azomn(1:mn,1)
    cfmn(1:mn) =                                   -                   Azemn(1:mn,2)
    sfmn(1:mn) =                                   -                   Azomn(1:mn,2)
-   
+
    call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, gBu(1:Ntz,2,0), gBu(1:Ntz,2,1) ) !  (gB^t)   , d(gB^t)/ds;
 
    ofmn(1:mn) =                                   +          im(1:mn)*Azemn(1:mn,1)
    efmn(1:mn) =                                   -          im(1:mn)*Azomn(1:mn,1)
    sfmn(1:mn) =                                   -          in(1:mn)*Azemn(1:mn,1)
    cfmn(1:mn) =                                   +          in(1:mn)*Azomn(1:mn,1)
-   
+
    call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, gBu(1:Ntz,2,2), gBu(1:Ntz,2,3) ) ! d(gB^t)/dt, d(gB^t)/dz;
-   
+
    efmn(1:mn) = +                   Atemn(1:mn,1)
    ofmn(1:mn) = +                   Atomn(1:mn,1)
    cfmn(1:mn) = +                   Atemn(1:mn,2)
    sfmn(1:mn) = +                   Atomn(1:mn,2)
-   
+
    call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, gBu(1:Ntz,3,0), gBu(1:Ntz,3,1) ) !  (gB^z)   , d(gB^z)/ds;
 
    ofmn(1:mn) = -          im(1:mn)*Atemn(1:mn,1)
    efmn(1:mn) = +          im(1:mn)*Atomn(1:mn,1)
    sfmn(1:mn) = +          in(1:mn)*Atemn(1:mn,1)
    cfmn(1:mn) = -          in(1:mn)*Atomn(1:mn,1)
-   
+
    call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, gBu(1:Ntz,3,2), gBu(1:Ntz,3,3) ) ! d(gB^z)/dt, d(gB^z)/dz;
-     
+
 !latex \item The following quantities are then computed on the regular angular grid
 !latex       \be \sqrt g j^\s & = & \sum_u \left[
 !latex           \partial_\t (\sqrt g B^u) \; g_{u,\z} + (\sqrt g B^u) \; \partial_\t g_{u,\z} - (\sqrt g B^u) g_{u,\z} \; \partial_\t \sqrt g / \sqrt g
@@ -317,17 +317,17 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
 !latex       \ee
 
    do ii = 1, 3
-    
+
     select case( ii )
     case( 1 ) ; jj = 2 ; kk = 3
     case( 2 ) ; jj = 3 ; kk = 1
     case( 3 ) ; jj = 1 ; kk = 2
     end select
-    
+
     gJu(1:Ntz,ii) = zero
-    
+
     do uu = 1, 3 ! summation over uu;
-     
+
      gJu(1:Ntz,ii) = gJu(1:Ntz,ii) &
                    + ( gBu(1:Ntz,uu,jj) * guvij(1:Ntz,uu,kk, 0) &
                      + gBu(1:Ntz,uu, 0) * guvij(1:Ntz,uu,kk,jj) &
@@ -338,9 +338,9 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
                      - gBu(1:Ntz,uu, 0) * guvij(1:Ntz,uu,jj, 0) * sg(1:Ntz,kk) / sg(1:Ntz,0) &
                      )
     enddo ! end of do uu;
-     
+
     gJu(1:Ntz,ii) = gJu(1:Ntz,ii) / sg(1:Ntz,0)
-    
+
    enddo ! end of do ii;
 
    select case (Igeometry)
@@ -357,7 +357,7 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
    end select
 
 !latex \end{enumerate}
-    
+
 !latex \item The final calculation of the error, which is written to screen, is a sum over the angular grid:
 !latex       \be E^\s & \equiv & \frac{1}{N} \sum_k \omega_k \sum_{i,j} | \sqrt g j^\s - \mu \sqrt g B^\s |, \\
 !latex           E^\t & \equiv & \frac{1}{N} \sum_k \omega_k \sum_{i,j} | \sqrt g j^\t - \mu \sqrt g B^\t |, \\
@@ -376,12 +376,12 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
    endif
    intvol = intvol + weight(jquad) * sum(sg(1:Ntz,0))
   enddo ! end of do jquad;
-  
+
   beltramierror(lvol,1:3) = jerror(1:3) / Ntz  ! the 'tranditional' SPEC error
   jerror(1:3) = jerror(1:3) / intvol
   beltramierror(lvol,4:6) = jerror(1:3)        ! the volume average error
   beltramierror(lvol,7:9) = jerrormax(1:3)     ! the max error
-  
+
   if (Lerrortype.eq.1 .and. Igeometry .eq. 3) then
     cput = GETTIME ; write(ounit,1002) cput-cpus, myid, lvol, Lrad(lvol), jerror(1:3), cput-cpui ! write error to screen;
     ;              ; write(ounit,1003) cput-cpus, myid, lvol, Lrad(lvol), jerrormax(1:3), cput-cpui ! write error to screen;
@@ -391,8 +391,8 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
   endif
 
 !latex \item The error is stored into an array called \type{beltramierror} which is then written to the HDF5 file in \link{hdfint}.
-  
-   
+
+
 1002 format("jo00aa : ",f10.2," : myid=",i3," ; lvol =",i3," ; lrad =",i3," ; AVG E^\R="es23.15" , E^\Z="es23.15" , E^\phi="es23.15" ; time="f8.2"s ;")
 1003 format("jo00aa : ",f10.2," : myid=",i3," ; lvol =",i3," ; lrad =",i3," ; MAX E^\R="es23.15" , E^\Z="es23.15" , E^\phi="es23.15" ; time="f8.2"s ;")
 1004 format("jo00aa : ",f10.2," : myid=",i3," ; lvol =",i3," ; lrad =",i3," ; AVG E^\s="es23.15" , E^\t="es23.15" , E^\z="es23.15" ; time="f8.2"s ;")
@@ -406,22 +406,22 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
 
   do kk = 0, Nz-1 ; zeta = kk * pi2nfp / Nz
     do jj = 0, Nt-1 ; teta = jj * pi2    / Nt ; jk = 1 + jj + kk*Nt ; st(1:2) = (/ one, teta /)
-    
-    WCALL( jo00aa, bfield, ( zeta, st(1:Node), Bst(1:Node) ) ) 
+
+    WCALL( jo00aa, bfield, ( zeta, st(1:Node), Bst(1:Node) ) )
 
     jerror(2) = max(jerror(2), abs(Bst(1) * gBzeta))
-    
+
     enddo
   enddo
-  
+
   if (.not.Lcoordinatesingularity) then
     do kk = 0, Nz-1 ; zeta = kk * pi2nfp / Nz
       do jj = 0, Nt-1 ; teta = jj * pi2    / Nt ; jk = 1 + jj + kk*Nt ; st(1:2) = (/ -one, teta /)
-      
-      WCALL( jo00aa, bfield, ( zeta, st(1:Node), Bst(1:Node) ) ) 
+
+      WCALL( jo00aa, bfield, ( zeta, st(1:Node), Bst(1:Node) ) )
 
       jerror(1) = max(jerror(1), abs(Bst(1) * gBzeta))
-      
+
       enddo
     enddo
   endif
@@ -429,7 +429,7 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
 
   ! check fluxes
   Bst = zero
-  
+
   if (Lcoordinatesingularity) then
     do ll = 0, Lrad(lvol)
         Bst(1) = Bst(1) + Ate(lvol,0,1)%s(ll) * RTT(ll,0,1,0)
@@ -452,11 +452,11 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
 1007 format("jo00aa : ",f10.2," : myid=",i3," ; lvol =",i3," ; lrad =",i3," ; dtfluxERR   ="es23.15" , dpfluxERR="es23.15" ; time="f8.2"s ;")
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   RETURN(jo00aa)
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
 end subroutine jo00aa
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -467,12 +467,12 @@ end subroutine jo00aa
 
 !latex \begin{enumerate}
 !latex \item Is there a better definition and quantification of the error? For example, should we employ an error measure that is dimensionless?
-!latex \item If the coordinate singularity is in the domain, then $|\nabla\t|\rightarrow\infty$ at the coordinate origin. 
+!latex \item If the coordinate singularity is in the domain, then $|\nabla\t|\rightarrow\infty$ at the coordinate origin.
 !latex       What then happens to $||\left( {\bf j}-\mu {\bf B}\right)\cdot\nabla \t ||$ as defined in \Eqn{Et}?
 !latex \item What is the predicted scaling of the error in the Chebyshev-Fourier representation scale with numerical resolution?
-!latex       Note that the predicted error scaling for $E^\s$, $E^\t$ and $E^\z$ may not be standard, 
-!latex       as various radial derivatives are taken to compute the components of ${\bf j}$. 
-!latex       (See for example the discussion in Sec.IV.C in 
+!latex       Note that the predicted error scaling for $E^\s$, $E^\t$ and $E^\z$ may not be standard,
+!latex       as various radial derivatives are taken to compute the components of ${\bf j}$.
+!latex       (See for example the discussion in Sec.IV.C in
 !latex       [\doi{10.1063/1.4765691}{Hudson, Dewar {\em et al.}, Phys. Plasmas {\bf 19}, 112502 (2012)}],
 !latex       where the expected scaling of the error for a finite-element implementation is confirmed numerically.)
 !latex \item Instead of using Gaussian integration to compute the integral over $s$, an adaptive quadrature algorithm may be preferable.
