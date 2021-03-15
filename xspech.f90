@@ -742,7 +742,7 @@ end subroutine spec
 subroutine final_diagnostics
 
   use inputlist, only: nPtrj, nPpts, Igeometry, Lcheck, Nvol, odetol, &
-                       Isurf, Ivolume, mu
+                       Isurf, Ivolume, mu, Wmacros
   use fileunits, only: ounit
   use constants, only: zero
   use allglobal, only: pi2, myid, ncpu, MPI_COMM_SPEC, cpus, Mvol, Ntz, mn, &
