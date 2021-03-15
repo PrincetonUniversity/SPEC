@@ -6,8 +6,7 @@
 
 !latex \calledby{}
 
-!latex \calls{\link{global}:readin,
-!latex        \link{global}:wrtend,
+!latex \calls{\link{global}:wrtend,
 !latex        \link{preset},
 !latex        \link{packxi},
 !latex        \link{volume},
@@ -34,8 +33,8 @@
 program xspech
 
   use numerical
-  use allglobal, only: readin, set_mpi_comm, myid, ncpu, cpus, version, &
-                       wrtend
+  use allglobal, only: set_mpi_comm, myid, ncpu, cpus, version, &
+                       wrtend, read_inputlists_from_file, check_inputs, broadcast_inputs
   use inputlist, only: initialize_inputs
   use fileunits, only: ounit
   use sphdf5,    only: init_outfile, &
@@ -46,6 +45,9 @@ program xspech
   LOCALS
 
   CHARACTER            :: ldate*8, ltime*10, arg*100
+  REAL,    allocatable :: allRZRZ(:,:,:) ! local array used for reading interface Fourier harmonics from file;
+  integer, allocatable :: mmRZRZ(:), nnRZRZ(:)
+  integer              :: num_modes, idx_mode
 
   call MPI_INIT( ierr )
 
@@ -64,20 +66,15 @@ program xspech
     call date_and_time( ldate, ltime )
     write(ounit,'("xspech : ", 10x ," : ")')
     write(ounit,1000) cput-cpus, ldate(1:4), ldate(5:6), ldate(7:8), ltime(1:2), ltime(3:4), ltime(5:6), machprec, vsmall, small
-  endif
 
-  ! read command-line arguments
-  call read_command_args()
+    ! read command-line arguments
+    call read_command_args()
 
-  ! initialize input arrays into a default state
-  call initialize_inputs()
+    ! initialize input arrays into a default state
+    call initialize_inputs()
 
-  cput = GETTIME
-  if( myid.eq.0 ) then
-   write(ounit,'("xspech : ", 10x ," : ")')
-   write(ounit,'("xspech : ",f10.2," : begin execution ; ncpu=",i3," ; calling global:readin ;")') cput-cpus, ncpu
-  endif
-
+    write(ounit,'("xspech : ", 10x ," : ")')
+    write(ounit,'("xspech : ",f10.2," : begin execution ; ncpu=",i3," ; calling global:readin ;")') cput-cpus, ncpu
 
 !latex \subsection{reading input, allocating global variables}
 
@@ -89,10 +86,23 @@ program xspech
 !latex \end{enumerate}
 
   ! read & broadcast input namelist
-  call readin()
+
+   call read_inputlists_from_file(num_modes, mmRZRZ, nnRZRZ, allRZRZ)
+
+   call check_inputs
+
+  endif
+
+  ! broadcast input file contents
+  call broadcast_inputs
 
 
-  call preset
+  call preset(num_modes, mmRZRZ, nnRZRZ, allRZRZ)
+
+  if (myid.eq.0 .and. num_modes.gt.0) then
+    ! have been allocated in read_inputlists_from_file
+    deallocate(mmRZRZ, nnRZRZ, allRZRZ)
+  end if
 
 
 
@@ -252,7 +262,7 @@ subroutine spec
 
   use cputiming, only : Txspech
 
-  use allglobal, only : readin, wrtend, ncpu, myid, cpus, ext, &
+  use allglobal, only : wrtend, ncpu, myid, cpus, ext, &
                         Mvol, &
                         YESstellsym, NOTstellsym, &
                         Iquad, &
