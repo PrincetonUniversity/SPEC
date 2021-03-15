@@ -830,7 +830,7 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
     INTEGER, allocatable::  IPIV(:)
     REAL                ::  det, lfactor, Bt00(1:Mvol, 0:1, -1:2)
     REAL                ::  R(1:Nvol-1), C(1:Nvol-1), work(1:4*Nvol-4), ferr, berr, rcond, tmp(2:Nvol)
-    LOGICAL             ::  Lonlysolution, LcomputeDerivatives
+    LOGICAL             ::  Lonlysolution, LcomputeDerivatives, dfp100_logical
     REAL, allocatable   ::  dBdmpf(:,:), dBdx2(:)
 
 #ifdef DEBUG
@@ -1122,12 +1122,12 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 
                 SALLOCATE( Fvec, (1:Mvol-1), zero)
 
-                Ndofgl = 0; Fvec(1:Mvol-1) = 0; iflag = 0;
+                Ndofgl = 0; Fvec(1:Mvol-1) = 0; dfp100_logical = .FALSE.;
                 Xdof(1:Mvol-1) = dpflux(2:Mvol) + xoffset
                 
                 ! Solve for field
                 dBdX%L = .false. ! No need for derivatives in this context
-                WCALL(dfp200, dfp100, (Ndofgl, Xdof, Fvec, iflag) )
+                WCALL(dfp200, dfp100, (Ndofgl, Xdof, Fvec, dfp100_logical) )
 
                 DALLOCATE( Fvec )
 
@@ -1150,7 +1150,9 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
                 SALLOCATE(     Fvec, (1:Ndofgl), zero )
                 SALLOCATE(     IPIV, (1:Mvol-1), zero )
 
-                WCALL(dfp200, dfp100, (Ndofgl, Xdof(1:Mvol-1), Fvec(1:Ndofgl), 1))
+                dfp100_logical = .TRUE.
+
+                WCALL(dfp200, dfp100, (Ndofgl, Xdof(1:Mvol-1), Fvec(1:Ndofgl), dfp100_logical))
 
                 ! Only one cpu with this test - thus no need for broadcast
                 dpfluxout = Fvec

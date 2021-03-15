@@ -160,12 +160,12 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives, LCompu
 
   INTEGER              :: status(MPI_STATUS_SIZE), request_recv, request_send, cpu_send
   INTEGER              :: id
-  INTEGER              :: iflag, idgesv, Lwork
+  INTEGER              :: idgesv, Lwork
 
   CHARACTER            :: packorunpack 
   EXTERNAL             :: dfp100, dfp200
 
-  LOGICAL              :: LComputeAxis
+  LOGICAL              :: LComputeAxis, dfp100_logical
 
 #ifdef DEBUG
   INTEGER              :: isymdiff
@@ -219,12 +219,12 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives, LCompu
 
     SALLOCATE( Fvec, (1:Mvol-1), zero)
 
-    Ndofgl = 0; Fvec(1:Mvol-1) = 0; iflag = 0;
+    Ndofgl = 0; Fvec(1:Mvol-1) = 0; dfp100_logical = .FALSE.;
     Xdof(1:Mvol-1) = dpflux(2:Mvol) + xoffset
     
     ! Solve for field
 	  dBdX%L = LComputeDerivatives
-    WCALL(dforce, dfp100, (Ndofgl, Xdof, Fvec, iflag) )
+    WCALL(dforce, dfp100, (Ndofgl, Xdof, Fvec, dfp100_logical) )
 
     DALLOCATE( Fvec )
 
@@ -248,7 +248,9 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives, LCompu
 
     SALLOCATE( Fvec, (1:Ndofgl), zero )
 
-    WCALL(dforce, dfp100, (Ndofgl, Xdof(1:Mvol-1), Fvec(1:Ndofgl), 1))
+    dfp100_logical = .TRUE.
+
+    WCALL(dforce, dfp100, (Ndofgl, Xdof(1:Mvol-1), Fvec(1:Ndofgl), dfp100_logical))
 
     SALLOCATE(dpfluxout, (1:Ndofgl), zero )
     if ( myid .eq. 0 ) then 
