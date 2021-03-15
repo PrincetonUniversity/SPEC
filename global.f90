@@ -771,6 +771,58 @@ end subroutine
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 subroutine readin
 
 !latex \subsection{subroutine readin}
@@ -780,22 +832,18 @@ subroutine readin
 !latex \end{enumerate}
 
   use constants
-
   use numerical
-
   use fileunits
-
   use inputlist
-
   use cputiming
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   LOCALS
 
-  LOGICAL              :: Lspexist, Lchangeangle
-  INTEGER              :: vvol, mm, nn, nb, imn, ix, ii, jj, ij, kk, mj, nj, mk, nk, ip, X02BBF, iargc, iarg, numargs, mi, ni, lvol, extlen, sppos
-  REAL                 :: xx, toroidalflux, toroidalcurrent
+  LOGICAL              :: Lchangeangle
+  INTEGER              :: mm, nn, nb, imn, ix, ii, jj, ij, kk, mj, nj, mk, nk, ip, X02BBF, iargc, iarg, numargs, mi, ni, lvol
+  REAL                 :: xx
   REAL,    allocatable :: RZRZ(:,:) ! local array used for reading interface Fourier harmonics from file;
 
   BEGIN(readin)
@@ -810,450 +858,21 @@ subroutine readin
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-   inquire( file=trim(ext)//".sp", exist=Lspexist ) ! check if file exists;
-   FATAL( readin, .not.Lspexist, the input file does not exist ) ! if not, abort;
+   call read_inputlists_from_file
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-   open( iunit, file=trim(ext)//".sp", status="old")
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \subsubsection{reading \type{physicslist}}
-
-!latex \begin{enumerate}
-!latex \item The internal variable, \type{Mvol = Nvol + Lfreebound}, gives the number of computational domains.
-!latex \item The input value for the fluxes enclosed within each interface, \inputvar{tflux(1:Mvol)} and \inputvar{tflux(1:Mvol)}, are immediately normalized:
-!latex
-!latex       \inputvar{tflux(1:Mvol)} $\rightarrow$ \inputvar{tflux(1:Mvol)/tflux(Nvol)}.
-!latex
-!latex       \inputvar{pflux(1:Mvol)} $\rightarrow$ \inputvar{pflux(1:Mvol)/tflux(Nvol)}.
-!latex
-!latex       (The input $\Phi_{edge} \equiv $ \inputvar{phiedge} will provide the total toroidal flux; see \link{preset}.)
-!latex \item The input value for the toroidal current constraint (\inputvar{Isurf(1:Mvol)} and \inputvar{Ivolume(1:Mvol)}) are also immediately normalized, using \inputvar{curtor}.
-!latex
-!latex        $Ivolume \rightarrow Ivolume\cdot \frac{curtor}{\sum_i Isurf_i + Ivolume_i}$
-!latex
-!latex        $Isurf \rightarrow Isurf\cdot \frac{curtor}{\sum_i Isurf_i + Ivolume_i}$
-!latex \end{enumerate}
-
-   if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : reading physicslist     from ext.sp ;")') cput-cpus
-   endif
-
-   read(iunit,physicslist)
-
-   if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : read    physicslist     from ext.sp ;")') cput-cpus
-   endif
-
-   Mvol = Nvol + Lfreebound ! this is just for screen output and initial check; true assignment of Mvol appears outside if( myid.eq.0 ) then ;
-
-   write(ounit,'("readin : ", 10x ," : ")')
-
-   write(ounit,1010) cput-cpus, Igeometry, Istellsym, Lreflect
-   write(ounit,1011)            Lfreebound, phiedge, curtor, curpol
-   write(ounit,1012)            gamma
-   write(ounit,1013)            Nfp, Nvol, Mvol, Mpol, Ntor
-   write(ounit,1014)            pscale, Ladiabatic, Lconstraint, mupftol, mupfits
-   write(ounit,1015)            Lrad(1:min(Mvol,32))
-
-1010 format("readin : ",f10.2," : Igeometry=",i3," ; Istellsym=",i3," ; Lreflect="i3" ;")
-1011 format("readin : ", 10x ," : Lfreebound=",i3," ; phiedge="es23.15" ; curtor="es23.15" ; curpol="es23.15" ;")
-1012 format("readin : ", 10x ," : gamma="es23.15" ;")
-1013 format("readin : ", 10x ," : Nfp=",i3," ; Nvol=",i3," ; Mvol=",i3," ; Mpol=",i3," ; Ntor=",i3," ;")
-1014 format("readin : ", 10x ," : pscale="es13.5" ; Ladiabatic="i2" ; Lconstraint="i3" ; mupf: tol,its="es10.2" ,"i4" ;")
-1015 format("readin : ", 10x ," : Lrad = "257(i2,",",:))
-
-#ifdef DEBUG
-   if( Wreadin ) then
-    write(ounit,'("readin : ",f10.2," : tflux    ="257(es11.3" ,":))') cput-cpus, (    tflux(vvol), vvol = 1, Mvol )
-    write(ounit,'("readin : ",f10.2," : pflux    ="257(es11.3" ,":))') cput-cpus, (    pflux(vvol), vvol = 1, Mvol )
-    write(ounit,'("readin : ",f10.2," : helicity ="256(es11.3" ,":))') cput-cpus, ( helicity(vvol), vvol = 1, Nvol )
-    write(ounit,'("readin : ",f10.2," : pressure ="257(es11.3" ,":))') cput-cpus, ( pressure(vvol), vvol = 1, Mvol )
-    write(ounit,'("readin : ",f10.2," : mu       ="257(es11.3" ,":))') cput-cpus, (       mu(vvol), vvol = 1, Mvol )
-    write(ounit,'("readin : ",f10.2," : Ivolume  ="257(es11.3" ,":))') cput-cpus, (  Ivolume(vvol), vvol = 1, Mvol )
-    write(ounit,'("readin : ",f10.2," : Isurf    ="257(es11.3" ,":))') cput-cpus, (    Isurf(vvol), vvol = 1, Mvol )
-   endif
-#endif
-
-   FATAL( readin, Igeometry.lt.1 .or. Igeometry.gt.3,      invalid geometry )
-   FATAL( readin, Nfp.le.0,                                invalid Nfp )
-   FATAL( readin, Mpol.lt.0 .or. Mpol.gt.MMpol,            invalid poloidal resolution: may need to recompile with higher MMpol )
-   FATAL( readin, Ntor.lt.0 .or. Ntor.gt.MNtor,            invalid toroidal resolution: may need to recompile with higher MNtor )
-   FATAL( readin, Nvol.lt.1 .or. Nvol.gt.MNvol,            invalid Nvol: may need to recompile with higher MNvol )
-   FATAL( readin, mupftol.le.zero,                         mupftol is too small )
-   FATAL( readin, abs(one+gamma).lt.vsmall,                1+gamma appears in denominator in dforce ) ! Please check this; SRH: 27 Feb 18;
-   FATAL( readin, abs(one-gamma).lt.vsmall,                1-gamma appears in denominator in fu00aa ) ! Please check this; SRH: 27 Feb 18;
-   FATAL( readin, Lconstraint.lt.-1 .or. Lconstraint.gt.3, illegal Lconstraint )
-   FATAL( readin, Igeometry.eq.1 .and. rpol.lt.vsmall,     poloidal extent of slab too small or negative )
-   FATAL( readin, Igeometry.eq.1 .and. rtor.lt.vsmall,     toroidal extent of slab too small or negative )
-
-   if( Istellsym.eq.1 ) then
-    Rbs(-MNtor:MNtor,-MMpol:MMpol) = zero
-    Zbc(-MNtor:MNtor,-MMpol:MMpol) = zero
-    Rws(-MNtor:MNtor,-MMpol:MMpol) = zero
-    Zwc(-MNtor:MNtor,-MMpol:MMpol) = zero
-    Vnc(-MNtor:MNtor,-MMpol:MMpol) = zero
-    Bnc(-MNtor:MNtor,-MMpol:MMpol) = zero
-   endif
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-   FATAL( readin, abs(tflux(Nvol)).lt. vsmall, enclosed toroidal flux cannot be zero )
-
-   toroidalflux = tflux(Nvol) ! toroidal flux is a local variable; SRH: 27 Feb 18;
-
-   tflux(1:Mvol) = tflux(1:Mvol) / toroidalflux ! normalize toroidal flux;
-   pflux(1:Mvol) = pflux(1:Mvol) / toroidalflux ! normalize poloidal flux;
-
-   FATAL( readin, tflux(1).lt.zero, enclosed toroidal flux cannot be zero )
-   do vvol = 2, Mvol
-    !FATAL( readin, tflux(vvol)-tflux(vvol-1).lt.small, toroidal flux is not monotonic )
-   enddo
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-!latex \subsubsection{Current profiles normalization}
-!latex
-!latex In case of a free boundary calculation (\inputvar{Lfreebound}=1) and using a current constraint (\inputvar{Lconstraint}=3), the current profiles are
-!latex renormalized in order to match the linking current \inputvar{curtor}. More specifically,
-!latex \begin{align}
-!latex Isurf_i\ \rightarrow\ Isurf_i\cdot\frac{curtor}{\sum_{i=1}^{Mvol-1} Isurf_i+Ivol_i}
-!latex Ivol_i\ \rightarrow\ Ivol_i\cdot\frac{curtor}{\sum_{i=1}^{Mvol-1} Isurf_i+Ivol_i}.
-!latex \end{align}
-!latex Finally, the volume current in the vacuum region is set to $0$.
-
-    ! Current constraint normalization
-
-    if ((Lfreebound.EQ.1) .and. (Lconstraint.EQ.3)) then
-
-        Ivolume(Mvol) = Ivolume(Mvol-1) !Ensure vacuum in vacuum region
-
-        toroidalcurrent = Ivolume(Mvol) + sum(Isurf(1:Mvol-1))
-
-        if( curtor.NE.0 ) then
-            FATAL( readin, toroidalcurrent.EQ.0 , Incompatible current profiles and toroidal linking current)
-
-            Ivolume(1:Mvol) = Ivolume(1:Mvol) * curtor / toroidalcurrent
-            Isurf(1:Mvol-1) = Isurf(1:Mvol-1) * curtor / toroidalcurrent
-
-        else
-            FATAL( readin, toroidalcurrent.NE.0, Incompatible current profiles and toroidal linking current)
-
-            ! No rescaling if profiles have an overall zero toroidal current
-        endif
-    endif
-
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-
-   do vvol = 1, Mvol
-    FATAL( readin, Lrad(vvol ).lt.2, require Chebyshev resolution Lrad > 2 so that Lagrange constraints can be satisfied )
-   enddo
-
-   if (Igeometry.ge.2 .and. Lrad(1).lt.Mpol) then
-     write(ounit,'("readin : ",f10.2," : Minimum Lrad(1) is Mpol, automatically adjusted it to Mpol+4")') cput-cpus
-     Lrad(1) = Mpol + 4
-   endif
-   FATAL( readin, mupfits.le.0, must give ma01aa:hybrj a postive integer value for the maximum iterations = mupfits given on input )
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \subsubsection{reading \type{numericlist}}
-
-   if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : reading numericlist     from ext.sp ;")') cput-cpus
-   endif
-
-   read(iunit,numericlist)!,iostat=ios)
-
-   if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : read    numericlist     from ext.sp ;")') cput-cpus
-   endif
-
-   write(ounit,'("readin : ", 10x ," : ")')
-
-   write(ounit,1020) cput-cpus, Linitialize, LautoinitBn, Lzerovac, Ndiscrete
-   write(ounit,1021)            Nquad, iMpol, iNtor
-   write(ounit,1022)            Lsparse, Lsvdiota, imethod, iorder, iprecon, iotatol
-   write(ounit,1023)            Lextrap, Mregular, Lrzaxis, Ntoraxis
-
-1020 format("readin : ",f10.2," : Linitialize=",i3," ;LautoinitBn=",i3," ; Lzerovac=",i2," ; Ndiscrete="i2" ;")
-1021 format("readin : ", 10x ," : Nquad="i4" ; iMpol="i4" ; iNtor="i4" ;")
-1022 format("readin : ", 10x ," : Lsparse="i2" ; Lsvdiota="i2" ; imethod="i2" ; iorder="i2" ; iprecon="i2" ; iotatol="es13.5" ;")
-1023 format("readin : ", 10x ," : Lextrap="i2" ; Mregular="i3" ; Lrzaxis="i2" ; Ntoraxis="i2" ;")
-
-   FATAL( readin, Ndiscrete.le.0, error )
-
-  !FATAL(readin, Lfreebound.eq.1 .and. Lconstraint.gt.0 .and. Lsparse.eq.0, have not implemented dense Fourier angle transformation in vacuum region )
-
-   FATAL( readin, iotatol.gt.one, illegal value for sparse tolerance ) ! I think that the sparse iota solver is no longer implemented; SRH: 27 Feb 18;
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \subsubsection{reading \type{locallist}}
-
-   if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : reading locallist      from ext.sp ;")') cput-cpus
-   endif
-
-   read(iunit,locallist)!,iostat=ios)
-
-   if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : read    locallist      from ext.sp ;")') cput-cpus
-   endif
-
-   write(ounit,'("readin : ", 10x ," : ")')
-
-   if (LBeltrami .ne. 4 .and. Lmatsolver .ne.1) then
-    write(ounit,'("readin : ", 10x ," : ***Lmatsolver set to 1 for nonlinear solver***")')
-    Lmatsolver = 1
-   endif
-
-   write(ounit,1030) cput-cpus, LBeltrami, Linitgues, Lmatsolver, LGMRESprec, NiterGMRES, epsGMRES, epsILU
-
-1030 format("readin : ",f10.2," : LBeltrami="i2" ; Linitgues="i2" ; Lmatsolver="i2" ; LGMRESprec="i2" ; NiterGMRES="i4" ; epsGMRES="es13.5" ; epsILU="es13.5" ;" )
-
-   FATAL( readin, LBeltrami.lt.0 .or. LBeltrami.gt.7, error )
-   FATAL( readin, Lmatsolver.lt.0 .or. Lmatsolver.gt.3, error )
-   FATAL( readin, LGMRESprec.lt.0 .or. LGMRESprec.gt.1, error )
-   FATAL( readin, NiterGMRES.lt.0, error )
-   FATAL( readin, abs(epsGMRES).le.machprec , error )
-   FATAL( readin, abs(epsILU).le.machprec , error )
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \subsubsection{reading \type{globallist}}
-
-   if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : reading globallist   from ext.sp ;")') cput-cpus
-   endif
-
-   read(iunit,globallist)!,iostat=ios)
-
-   if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : read    globallist   from ext.sp ;")') cput-cpus
-   endif
-
-   write(ounit,'("readin : ", 10x ," : ")')
-
-   write(ounit,1040) cput-cpus, Lfindzero
-   write(ounit,1041)            escale, opsilon, pcondense, epsilon, wpoloidal, upsilon
-   write(ounit,1042)            forcetol, c05xmax, c05xtol, c05factor, LreadGF
-   write(ounit,1043)            mfreeits, gBntol, gBnbld
-   write(ounit,1044)            vcasingeps, vcasingtol, vcasingits, vcasingper
-
-1040 format("readin : ",f10.2," : Lfindzero="i2" ;")
-1041 format("readin : ", 10x ," : escale="es13.5" ; opsilon="es13.5" ; pcondense="f7.3" ; epsilon="es13.5" ; wpoloidal="f7.4" ; upsilon="es13.5" ;")
-1042 format("readin : ", 10x ," : forcetol="es13.5" ; c05xmax="es13.5" ; c05xtol="es13.5" ; c05factor="es13.5" ; LreadGF="L2" ; ")
-1043 format("readin : ", 10x ," : mfreeits="i4" ; gBntol="es13.5" ; gBnbld="es13.5" ;")
-1044 format("readin : ", 10x ," : vcasingeps="es13.5" ; vcasingtol="es13.5" ; vcasingits="i6" ; vcasingper="i6" ;")
-
-   FATAL( readin, escale      .lt.zero     , error )
-   FATAL( readin, pcondense   .lt.one      , error )
-   FATAL( readin, abs(c05xtol).le.machprec , error )
-   FATAL( readin, c05factor   .le.zero     , error )
-  !FATAL( readin, mfreeits    .lt.zero     , error )
-
-   FATAL( readin, Igeometry.eq.3 .and. pcondense.le.zero, pcondense must be positive )
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \subsubsection{reading \type{diagnosticslist}}
-
-   if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : reading diagnosticslist from ext.sp ;")') cput-cpus
-   endif
-
-   read(iunit,diagnosticslist)!,iostat=ios)
-
-   if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : read    diagnosticslist from ext.sp ;")') cput-cpus
-   endif
-
-   write(ounit,'("readin : ", 10x ," : ")')
-
-   write(ounit,1050) cput-cpus, odetol, nPpts
-   write(ounit,1051)            LHevalues, LHevectors, LHmatrix, Lperturbed, dpp, dqq, dRZ, Lcheck, Ltiming
-
-1050 format("readin : ",f10.2," : odetol="es10.2" ; nPpts="i6" ;")
-1051 format("readin : ", 10x ," : LHevalues="L2" ; LHevectors="L2" ; LHmatrix="L2" ; Lperturbed="i2" ; dpp="i3" ; dqq="i3" ; dRZ="es16.8" ; Lcheck="i3" ; Ltiming="L2" ;")
-
-   FATAL( readin, odetol.le.zero, input error )
-  !FATAL( readin, absreq.le.zero, input error )
-  !FATAL( readin, relreq.le.zero, input error )
-  !FATAL( readin, absacc.le.zero, input error )
-  !FATAL( readin, nPpts .lt.0   , input error )
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \subsubsection{reading \type{screenlist}}
-
-   if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : reading screenlist      from ext.sp ;")') cput-cpus
-   endif
-
-   read(iunit,screenlist)
-
-   if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : read    screenlist      from ext.sp ;")') cput-cpus
-   endif
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-   write(ounit,'("readin : ", 10x ," : ")')
+   call check_inputs
 
   endif ! end of if myid eq 0 loop;
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+
+
+
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 ! broadcast command line input
-
-  ClBCAST( ext        ,     100, 0 )
-
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-! broadcast namelist/physicslist/
-
-  if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : broadcasting physicslist     from ext.sp ;")') cput-cpus
-  endif
-
-  IlBCAST( Igeometry  ,       1, 0 )
-  IlBCAST( Istellsym  ,       1, 0 )
-  IlBCAST( Lfreebound ,       1, 0 )
-  RlBCAST( phiedge    ,       1, 0 )
-  RlBCAST( curtor     ,       1, 0 )
-  RlBCAST( curpol     ,       1, 0 )
-  RlBCAST( gamma      ,       1, 0 )
-  IlBCAST( Nfp        ,       1, 0 )
-  IlBCAST( Nvol       ,       1, 0 )
-  IlBCAST( Mpol       ,       1, 0 )
-  IlBCAST( Ntor       ,       1, 0 )
-  IlBCAST( Lrad       , MNvol+1, 0 )
-  RlBCAST( tflux      , MNvol+1, 0 )
-  RlBCAST( pflux      , MNvol+1, 0 )
-  RlBCAST( helicity   , MNvol  , 0 )
-  RlBCAST( pscale     ,       1, 0 )
-  RlBCAST( pressure   , MNvol+1, 0 )
-  IlBCAST( Ladiabatic ,       1, 0 )
-  RlBCAST( adiabatic  , MNvol+1, 0 )
-  RlBCAST( mu         , MNvol+1, 0 )
-  RlBCAST( Ivolume    , MNvol+1, 0 )
-  RlBCAST( Isurf      , MNvol+1, 0 )
-  IlBCAST( Lconstraint,       1, 0 )
-  IlBCAST( pl         , MNvol  , 0 )
-  IlBCAST( ql         , MNvol  , 0 )
-  IlBCAST( pr         , MNvol  , 0 )
-  IlBCAST( qr         , MNvol  , 0 )
-  RlBCAST( iota       , MNvol  , 0 )
-  IlBCAST( lp         , MNvol  , 0 )
-  IlBCAST( lq         , MNvol  , 0 )
-  IlBCAST( rp         , MNvol  , 0 )
-  IlBCAST( rq         , MNvol  , 0 )
-  RlBCAST( oita       , MNvol  , 0 )
-  RlBCAST( mupftol    ,       1, 0 )
-  IlBCAST( mupfits    ,       1, 0 )
-  IlBCAST( Lreflect   ,       1, 0 )
-  RlBCAST( rpol       ,       1, 0 )
-  RlBCAST( rtor       ,       1, 0 )
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-! broadcast namelist/numericlist/
-
-  if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : broadcasting numericlist     from ext.sp ;")') cput-cpus
-  endif
-
-  IlBCAST( Linitialize, 1, 0 )
-  IlBCAST( LautoinitBn, 1, 0 )
-  IlBCAST( Lzerovac   , 1, 0 )
-  IlBCAST( Ndiscrete  , 1, 0 )
-  IlBCAST( Nquad      , 1, 0 )
-  IlBCAST( iMpol      , 1, 0 )
-  IlBCAST( iNtor      , 1, 0 )
-  IlBCAST( Lsparse    , 1, 0 )
-  IlBCAST( Lsvdiota   , 1, 0 )
-  IlBCAST( imethod    , 1, 0 )
-  IlBCAST( iorder     , 1, 0 )
-  IlBCAST( iprecon    , 1, 0 )
-  RlBCAST( iotatol    , 1, 0 )
-  IlBCAST( Lextrap    , 1, 0 )
-  IlBCAST( Mregular   , 1, 0 )
-  IlBCAST( Lrzaxis    , 1, 0 )
-  IlBCAST( Ntoraxis   , 1, 0 )
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-! broadcast namelist/globallist/
-
-  if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : broadcasting globallist      from ext.sp ;")') cput-cpus
-  endif
-
-  IlBCAST( Lfindzero , 1 , 0 )
-  RlBCAST( escale    , 1 , 0 )
-  RlBCAST( opsilon   , 1 , 0 )
-  RlBCAST( pcondense , 1 , 0 )
-  RlBCAST( epsilon   , 1 , 0 )
-  RlBCAST( wpoloidal , 1 , 0 )
-  RlBCAST( upsilon   , 1 , 0 )
-  RlBCAST( forcetol  , 1 , 0 )
-  RlBCAST( c05xmax   , 1 , 0 )
-  RlBCAST( c05xtol   , 1 , 0 )
-  RlBCAST( c05factor , 1 , 0 )
-  LlBCAST( LreadGF   , 1 , 0 )
-  IlBCAST( mfreeits  , 1 , 0 )
-  RlBCAST( gBntol    , 1 , 0 )
-  RlBCAST( gBnbld    , 1 , 0 )
-  RlBCAST( vcasingeps, 1 , 0 )
-  RlBCAST( vcasingtol, 1 , 0 )
-  IlBCAST( vcasingits, 1 , 0 )
-  IlBCAST( vcasingper, 1 , 0 )
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-! broadcast namelist/locallist/
-
-  if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : broadcasting locallist       from ext.sp ;")') cput-cpus
-  endif
-
-  IlBCAST( LBeltrami    , 1, 0 )
-  IlBCAST( Linitgues    , 1, 0 )
-  RlBCAST( maxrndgues   , 1, 0)
-  IlBCAST( Lmatsolver   , 1, 0 )
-  IlBCAST( NiterGMRES   , 1, 0 )
-  RlBCAST( epsGMRES     , 1, 0 )
-  IlBCAST( LGMRESprec   , 1, 0 )
-  RlBCAST( epsILU       , 1, 0 )
-! IlBCAST( Lposdef  , 1, 0 ) ! redundant;
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-! broadcast namelist/diagnosticslist/
-
-  if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : broadcasting diagnosticslist from ext.sp ;")') cput-cpus
-  endif
-
-  RlBCAST( odetol    , 1      , 0 )
- !RlBCAST( absreq    , 1      , 0 )
- !RlBCAST( relreq    , 1      , 0 )
- !RlBCAST( absacc    , 1      , 0 )
- !RlBCAST( epsr      , 1      , 0 )
-  IlBCAST( nPpts     , 1      , 0 )
-  RlBCAST( Ppts      , 1      , 0 )
-  IlBCAST( nPtrj     , MNvol+1, 0 )
-  LlBCAST( LHevalues , 1      , 0 )
-  LlBCAST( LHevectors, 1      , 0 )
-  LlBCAST( LHmatrix  , 1      , 0 )
-  IlBCAST( Lperturbed, 1      , 0 )
-  IlBCAST( dpp       , 1      , 0 )
-  IlBCAST( dqq       , 1      , 0 )
-  IlBCAST( Lerrortype, 1      , 0 )
-  IlBCAST( Ngrid     , 1      , 0 )
-  RlBCAST( dRZ       , 1      , 0 )
-  IlBCAST( Lcheck    , 1      , 0 )
-  LlBCAST( Ltiming   , 1      , 0 )
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-! broadcast namelist/screenlist/
-
-  if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : broadcasting screenlist      from ext.sp ;")') cput-cpus
-  endif
-
-! BSCREENLIST ! broadcast screenlist; this is expanded by Makefile; do not remove;
-  LlBCAST( Wreadin, 1, 0 )
-  LlBCAST( Wwritin, 1, 0 ) ! redundant;
-  LlBCAST( Wwrtend, 1, 0 )
-  LlBCAST( Wmacros, 1, 0 )
+  call broadcast_inputs
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1638,6 +1257,58 @@ subroutine readin
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 end subroutine readin
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

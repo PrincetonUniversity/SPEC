@@ -34,9 +34,14 @@
 program xspech
 
   use numerical
-  use allglobal, only: readin, set_mpi_comm, myid, ncpu, cpus, version
+  use allglobal, only: readin, set_mpi_comm, myid, ncpu, cpus, version, &
+                       wrtend
   use inputlist, only: initialize_inputs
   use fileunits, only: ounit
+  use sphdf5,    only: init_outfile, &
+                       mirror_input_to_outfile, &
+                       init_convergence_output, &
+                       hdfint, finish_outfile
 
   LOCALS
 
@@ -74,26 +79,68 @@ program xspech
   endif
 
 
+!latex \subsection{reading input, allocating global variables}
 
+!latex \begin{enumerate}
+!latex \item The input namelists and geometry are read in via a call to \link{global}\verb+:readin+.
+!latex       A full description of the required input is given in \link{global}.
+!latex \item Most internal variables, global memory etc., are allocated in \link{preset}.
+!latex \item All quantities in the input file are mirrored into the output file's group \type{input}.
+!latex \end{enumerate}
 
   ! read & broadcast input namelist
   call readin()
 
 
+  call preset
 
 
 
-  call spec() ! main subroutine: iterate until converged or #iterations exceeds limit
 
 
 
-  call ending() ! print ending info
+  ! initialize HDF5 library and open output file ext.h5 for writing during execution
+  call init_outfile
+
+  ! mirror input file contents to output file
+  call mirror_input_to_outfile
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  if ( myid .eq. 0 ) then ! save restart file;
+    call wrtend ! write restart file ! 17 May 19
+  endif
+
+!latex \subsection{preparing output file group \type{iterations}}
+
+!latex \begin{enumerate}
+
+!latex \item The group \verb+iterations+ is created in the output file.
+!latex       This group contains the interface geometry at each iteration, which is useful for constructing movies illustrating the convergence.
+!latex       The data structure in use is an unlimited array of the following compound datatype:
+!latex \begin{verbatim} DATATYPE  H5T_COMPOUND {
+!latex       H5T_NATIVE_INTEGER "nDcalls";
+!latex       H5T_NATIVE_DOUBLE "Energy";
+!latex       H5T_NATIVE_DOUBLE "ForceErr";
+!latex       H5T_ARRAY { [Mvol+1][mn] H5T_NATIVE_DOUBLE } "iRbc";
+!latex       H5T_ARRAY { [Mvol+1][mn] H5T_NATIVE_DOUBLE } "iZbs";
+!latex       H5T_ARRAY { [Mvol+1][mn] H5T_NATIVE_DOUBLE } "iRbs";
+!latex       H5T_ARRAY { [Mvol+1][mn] H5T_NATIVE_DOUBLE } "iZbc";
+!latex } \end{verbatim}
+!latex \end{enumerate}
+
+  ! initialize convergence output arrays ! 17 May 19
+  call init_convergence_output
+
+  ! main subroutine: iterate until converged or #iterations exceeds limit
+  call spec()
+
+  ! print ending info
+  call ending()
 
 
-
-  call write_hdf5() ! write HDF5 output
-
-
+  call hdfint ! write final outputs to HDF5 file ! 18 Jul 14;
+  call finish_outfile ! close HDF5 output file
 
 
 
@@ -135,46 +182,47 @@ subroutine read_command_args
 
   if (myid.eq.0) then
 
-  cput = GETTIME
+    cput = GETTIME
 
-  call getarg( 1, arg )
-  extlen = len_trim(arg)
-  sppos = index(arg, ".sp", .true.) ! search for ".sp" from the back of ext
-  if (sppos.eq.extlen-2) then       ! check if ext ends with ".sp";
-    arg = arg(1:extlen-3)           ! if this is the case, remove ".sp" from end of ext
-  endif
-  ext = trim(arg)
+    ! first command-line argument is likely ext or ext.sp
+    call getarg( 1, arg )
+    extlen = len_trim(arg)
+    sppos = index(arg, ".sp", .true.) ! search for ".sp" from the back of ext
+    if (sppos.eq.extlen-2) then       ! check if ext ends with ".sp"
+      arg = arg(1:extlen-3)           ! if this is the case, remove ".sp" from end of ext
+    endif
+    ext = trim(arg)
 
-  if( ext .eq. "" .or. ext .eq. "-h" .or. ext .eq. "-help" ) then
-   ;write(ounit,'("rdcmdl : ", 10x ," : ")')
-   ;write(ounit,'("rdcmdl : ", 10x ," : file extension must be given as first command line argument ; extra command line options = -help -readin ;")')
-   if( ext .eq. "-h" .or. ext .eq. "-help" ) then
+    if( ext .eq. "" .or. ext .eq. "-h" .or. ext .eq. "-help" ) then
+     ;write(ounit,'("rdcmdl : ", 10x ," : ")')
+     ;write(ounit,'("rdcmdl : ", 10x ," : file extension must be given as first command line argument ; extra command line options = -help -readin ;")')
+     if( ext .eq. "-h" .or. ext .eq. "-help" ) then
+      write(ounit,'("rdcmdl : ", 10x ," : ")')
+      write(ounit,'("rdcmdl : ", 10x ," : the input file ext.sp must contain the input namelists; see global.pdf for description ;")')
+     endif
+     FATAL( rdcmdl, .true., the input file does not exist) ! if not, abort;
+    endif
+
     write(ounit,'("rdcmdl : ", 10x ," : ")')
-    write(ounit,'("rdcmdl : ", 10x ," : the input file ext.sp must contain the input namelists; see global.pdf for description ;")')
-   endif
-   FATAL( rdcmdl, .true., the input file does not exist) ! if not, abort;
-  endif
-
-  write(ounit,'("rdcmdl : ", 10x ," : ")')
-  write(ounit,'("rdcmdl : ",f10.2," : ext = ",a100)') cput-cpus, ext
+    write(ounit,'("rdcmdl : ",f10.2," : ext = ",a100)') cput-cpus, ext
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  numargs = iargc()
+    numargs = iargc()
 
-  if( numargs.gt.1 ) then
-   iarg = 1
-   do while ( iarg < numargs )
-    iarg = iarg + 1 ; call getarg( iarg, arg)
-    select case( arg )
-    case("-help","-h") ; write(ounit,'("rdcmdl : ",f10.2," : myid=",i3," : command line options = -readin ;")') cput-cpus, myid
-    case("-readin"   ) ; Wreadin = .true.
-    case("-p4pg"     ) ; iarg = iarg + 1 ; call getarg( iarg, arg) ! TODO: what is this?
-    case("-p4wd"     ) ; iarg = iarg + 1 ; call getarg( iarg, arg) ! TODO: what is this?
-    case default       ; write(ounit,'("rdcmdl : ",f10.2," : myid=",i3," : argument not recognized ; arg = ",a100)') cput-cpus, myid, arg
-    end select
-   enddo
-  endif
+    if( numargs.gt.1 ) then
+      iarg = 1
+      do while ( iarg < numargs )
+        iarg = iarg + 1 ; call getarg( iarg, arg)
+        select case( arg )
+        case("-help","-h") ; write(ounit,'("rdcmdl : ",f10.2," : myid=",i3," : command line options = -readin ;")') cput-cpus, myid
+        case("-readin"   ) ; Wreadin = .true.
+        case("-p4pg"     ) ; iarg = iarg + 1 ; call getarg( iarg, arg) ! TODO: what is this?
+        case("-p4wd"     ) ; iarg = iarg + 1 ; call getarg( iarg, arg) ! TODO: what is this?
+        case default       ; write(ounit,'("rdcmdl : ",f10.2," : myid=",i3," : argument not recognized ; arg = ",a100)') cput-cpus, myid, arg
+        end select
+      enddo
+    endif
 
   end if ! check for myid.eq.0
 
@@ -231,10 +279,7 @@ subroutine spec
 
 
    ! write _all_ output quantities into a _single_ HDF5 file
-   use sphdf5,   only : init_outfile, &
-                        mirror_input_to_outfile, &
-                        init_convergence_output, &
-                        write_grid
+   use sphdf5,   only : write_grid
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -267,47 +312,6 @@ subroutine spec
 !#endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \subsection{reading input, allocating global variables}
-
-!latex \begin{enumerate}
-!latex \item The input namelists and geometry are read in via a call to \link{global}\verb+:readin+.
-!latex       A full description of the required input is given in \link{global}.
-!latex \item Most internal variables, global memory etc., are allocated in \link{preset}.
-!latex \item All quantities in the input file are mirrored into the output file's group \type{input}.
-!latex \end{enumerate}
-
-  WCALL( xspech, preset )
-
-  WCALL( xspech, init_outfile ) ! initialize HDF5 library and open output file ext.h5 for writing during execution
-
-  WCALL( xspech, mirror_input_to_outfile ) ! mirror input file contents to output file
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  if ( myid .eq. 0 ) then ! save restart file;
-    WCALL( xspech, wrtend ) ! write restart file ! 17 May 19
-  endif
-
-!latex \subsection{preparing output file group \type{iterations}}
-
-!latex \begin{enumerate}
-
-!latex \item The group \verb+iterations+ is created in the output file.
-!latex       This group contains the interface geometry at each iteration, which is useful for constructing movies illustrating the convergence.
-!latex       The data structure in use is an unlimited array of the following compound datatype:
-!latex \begin{verbatim} DATATYPE  H5T_COMPOUND {
-!latex       H5T_NATIVE_INTEGER "nDcalls";
-!latex       H5T_NATIVE_DOUBLE "Energy";
-!latex       H5T_NATIVE_DOUBLE "ForceErr";
-!latex       H5T_ARRAY { [Mvol+1][mn] H5T_NATIVE_DOUBLE } "iRbc";
-!latex       H5T_ARRAY { [Mvol+1][mn] H5T_NATIVE_DOUBLE } "iZbs";
-!latex       H5T_ARRAY { [Mvol+1][mn] H5T_NATIVE_DOUBLE } "iRbs";
-!latex       H5T_ARRAY { [Mvol+1][mn] H5T_NATIVE_DOUBLE } "iZbc";
-!latex } \end{verbatim}
-!latex \end{enumerate}
-
-  WCALL( xspech, init_convergence_output ) ! initialize convergence output arrays ! 17 May 19
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -992,22 +996,5 @@ dcpu, Ttotal / (/ 1, 60, 3600 /), ecpu, 100*ecpu/dcpu
   a4"/"a2"/"a2" ; time= "a2":"a2":"a2" ; ext = "a60)
 
 end subroutine ending
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-subroutine write_hdf5
-  use sphdf5,    only : hdfint, finish_outfile
-
-  LOCALS
-
-  call hdfint ! write final outputs to HDF5 file ! 18 Jul 14;
-
-  call finish_outfile ! close HDF5 output file
-
-  return
-
-  end subroutine write_hdf5
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
