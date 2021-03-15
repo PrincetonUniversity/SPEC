@@ -1,5 +1,5 @@
 # import of all SPEC-related python scripts.
-__version__ = "3.0.1b"
+__version__ = "3.0.1c"
 
 from .ci import test
 from .input.spec_namelist import SPECNamelist
