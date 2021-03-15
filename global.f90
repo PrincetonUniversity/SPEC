@@ -833,9 +833,9 @@ subroutine readin
 
   use constants
   use numerical
-  use fileunits
   use inputlist
   use cputiming
+  use fileunits
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -844,7 +844,9 @@ subroutine readin
   LOGICAL              :: Lchangeangle
   INTEGER              :: mm, nn, nb, imn, ix, ii, jj, ij, kk, mj, nj, mk, nk, ip, X02BBF, iargc, iarg, numargs, mi, ni, lvol
   REAL                 :: xx
-  REAL,    allocatable :: RZRZ(:,:) ! local array used for reading interface Fourier harmonics from file;
+  REAL,    allocatable :: allRZRZ(:,:,:) ! local array used for reading interface Fourier harmonics from file;
+  integer, allocatable :: mmRZRZ(:), nnRZRZ(:)
+  integer :: num_modes, idx_mode
 
   BEGIN(readin)
 
@@ -856,7 +858,7 @@ subroutine readin
 
   if( myid.eq.0 ) then ! only the master node reads input file and sets secondary variables;
 
-   call read_inputlists_from_file
+   call read_inputlists_from_file(num_modes, mmRZRZ, nnRZRZ, allRZRZ)
 
    call check_inputs
 
@@ -1137,35 +1139,31 @@ subroutine readin
 
    case( :0 ) ! Linitialize=0 ; initial guess for geometry of the interior surfaces is given in the input file;
 
-    SALLOCATE( RZRZ, (1:4,1:Nvol), zero ) ! temp array for reading input;
-
     if( Lchangeangle ) then ; jj = -1  ! change sign of poloidal angle; Loizu Nov 18;
     else                    ; jj = +1
     endif
 
-    ios = 0 ! explicitly initialize io status at beginning
-    do ! will read in Fourier harmonics until the end of file is reached;
-
-     read(iunit,*,iostat=ios) mm, nn, RZRZ(1:4,1:Nvol)   !if change of angle applies, transformation assumes m>=0 and for m=0 only n>=0;
-     if( ios.ne.0 ) exit
+    do idx_mode=1, num_modes! will read in Fourier harmonics until the end of file is reached;
+     mm = mmRZRZ(idx_mode)
+     nn = nnRZRZ(idx_mode)
 
      do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over harmonics within range;
       if( mm.eq.0 .and. mi.eq.0 .and. nn*Nfp.eq.ni ) then
-       iRbc(ii,1:Nvol-1) = RZRZ(1,1:Nvol-1) ! select relevant harmonics;
-       iZbs(ii,1:Nvol-1) = RZRZ(2,1:Nvol-1) ! select relevant harmonics;
+       iRbc(ii,1:Nvol-1) = allRZRZ(1,1:Nvol-1, idx_mode) ! select relevant harmonics;
+       iZbs(ii,1:Nvol-1) = allRZRZ(2,1:Nvol-1, idx_mode) ! select relevant harmonics;
        if( NOTstellsym ) then
-        iRbs(ii,1:Nvol-1) = RZRZ(3,1:Nvol-1) ! select relevant harmonics;
-        iZbc(ii,1:Nvol-1) = RZRZ(4,1:Nvol-1) ! select relevant harmonics;
+        iRbs(ii,1:Nvol-1) = allRZRZ(3,1:Nvol-1, idx_mode) ! select relevant harmonics;
+        iZbc(ii,1:Nvol-1) = allRZRZ(4,1:Nvol-1, idx_mode) ! select relevant harmonics;
        else
         iRbs(ii,1:Nvol-1) = zero             ! select relevant harmonics;
         iZbc(ii,1:Nvol-1) = zero             ! select relevant harmonics;
        endif
       elseif( mm.eq.mi .and. nn*Nfp.eq.jj*ni ) then
-       iRbc(ii,1:Nvol-1) = RZRZ(1,1:Nvol-1) ! select relevant harmonics;
-       iZbs(ii,1:Nvol-1) = jj*RZRZ(2,1:Nvol-1) ! select relevant harmonics;
+       iRbc(ii,1:Nvol-1) = allRZRZ(1,1:Nvol-1, idx_mode) ! select relevant harmonics;
+       iZbs(ii,1:Nvol-1) = jj*allRZRZ(2,1:Nvol-1, idx_mode) ! select relevant harmonics;
        if( NOTstellsym ) then
-        iRbs(ii,1:Nvol-1) = jj*RZRZ(3,1:Nvol-1) ! select relevant harmonics;
-        iZbc(ii,1:Nvol-1) = RZRZ(4,1:Nvol-1) ! select relevant harmonics;
+        iRbs(ii,1:Nvol-1) = jj*allRZRZ(3,1:Nvol-1, idx_mode) ! select relevant harmonics;
+        iZbc(ii,1:Nvol-1) = allRZRZ(4,1:Nvol-1, idx_mode) ! select relevant harmonics;
        else
         iRbs(ii,1:Nvol-1) = zero             ! select relevant harmonics;
         iZbc(ii,1:Nvol-1) = zero             ! select relevant harmonics;
@@ -1175,7 +1173,8 @@ subroutine readin
 
     enddo ! end of do;
 
-    DALLOCATE(RZRZ)
+    ! have been allocated in read_inputlists_from_file
+    deallocate(mmRZRZ, nnRZRZ, allRZRZ)
 
    end select ! end select case( Linitialize );
 
@@ -1251,7 +1250,7 @@ subroutine readin
 end subroutine readin
 
 
-subroutine read_inputlists_from_file()
+subroutine read_inputlists_from_file(num_modes, mmRZRZ, nnRZRZ, allRZRZ)
 
    use constants
    use fileunits
@@ -1259,8 +1258,12 @@ subroutine read_inputlists_from_file()
 
    LOCALS
 
+   integer, intent(out) :: num_modes
+   integer, allocatable, intent(out) :: mmRZRZ(:), nnRZRZ(:)
+   REAL,    allocatable, intent(out) :: allRZRZ(:,:,:) ! local array used for reading interface Fourier harmonics from file;
+
    LOGICAL              :: Lspexist
-   integer :: filepos, num_modes, seek_status, cpfile, instat
+   integer :: filepos, seek_status, cpfile, instat, idx_mode
 
    INTEGER              :: mm, nn
    REAL,    allocatable :: RZRZ(:,:) ! local array used for reading interface Fourier harmonics from file;
@@ -1329,6 +1332,7 @@ subroutine read_inputlists_from_file()
    ! It remains to read the initial guess for the interface geometry,
    ! which follows after the namelists in the input file.
 
+   num_modes = 0
    if (Linitialize .le. 0) then
 
      SALLOCATE( RZRZ, (1:4,1:Nvol), zero ) ! temp array for reading input;
@@ -1336,7 +1340,6 @@ subroutine read_inputlists_from_file()
      ! determine how many modes are specified by reading them one
      call ftell(iunit, filepos)
 
-     num_modes = 0
 
      do ! will read in Fourier harmonics until the end of file is reached;
        read(iunit,*,iostat=instat) mm, nn, RZRZ(1:4,1:Nvol)   !if change of angle applies, transformation assumes m>=0 and for m=0 only n>=0;
@@ -1352,13 +1355,24 @@ subroutine read_inputlists_from_file()
      FATAL(inplst, seek_status.ne.0, failed to seek back to end of input namelists )
 
      ! now allocate arrays and read...
+     allocate(mmRZRZ(1:num_modes), nnRZRZ(1:num_modes), allRZRZ(1:4,1:Nvol,1:num_modes))
 
+     do idx_mode = 1, num_modes
+       read(iunit,*,iostat=instat) mmRZRZ(idx_mode), nnRZRZ(idx_mode), allRZRZ(1:4,1:Nvol, idx_mode)
+     enddo ! end of do;
+
+     ! rewind file to reset EOF flag
+     ! and seek back to (start of modes) == (end of input namelists)
+     rewind(iunit)
+     call fseek(iunit, filepos, 0, seek_status)
+     FATAL(inplst, seek_status.ne.0, failed to seek back to end of input namelists )
 
      ! no need for temporary RZRZ anymore
      DALLOCATE(RZRZ)
 
     end if ! Linitialize .le. 0
 
+    close(iunit)
 
 end subroutine ! read_inputlists_from_file
 
