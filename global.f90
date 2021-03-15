@@ -64,17 +64,20 @@ end module constants
 
 module numerical
 
+!latex \subsubsection{\type{machprec}, \type{vsmall}, \type{small}, \type{sqrtmachprec} : machine precision}
+
+!latex \begin{enumerate}
+!latex \item The machine precision was determined using the Fortran 90 intrinsic function EPSILON and the return value was put into the code statically.
+!latex \end{enumerate}
+
   implicit none
 
-  REAL            :: machprec, vsmall, small, sqrtmachprec ! these are assigned below in readin via a call to NAG routine;
+  REAL, parameter :: machprec = 1.11e-16 ! 0.5*epsilon(one) for 64 bit double precision
+  REAL, parameter :: vsmall = 100*machprec
+  REAL, parameter :: small = 10000*machprec
+  REAL, parameter :: sqrtmachprec = sqrt(machprec) ! these were previously assigned below in readin via a call to NAG routine;
   REAL, parameter :: logtolerance = 1.0e-32 ! this is used to avoid taking alog10(zero); see e.g. dforce;
 
-contains
-  REAL FUNCTION myprec() !Duplicates NAG routine X02AJF (machine precision) ! JAB; 27 Jul 17 ! I suggest that this be removed; SRH: 27 Feb 18;
-    implicit none
-    intrinsic EPSILON
-    myprec = 0.5*EPSILON(small)
-  END FUNCTION myprec
 end module numerical
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -800,17 +803,7 @@ subroutine readin
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\type{machprec}, \type{vsmall}, \type{small}, \type{sqrtmachprec} : machine precision}
-
-!latex \begin{enumerate}
-!latex \item The machine precision is determined using the Fortran 90 intrinsic function EPSILON.
-!latex \end{enumerate}
-
   cput = GETTIME
-
-  machprec = myprec() ! is this required? Why not just set real, parameter :: machprec = 1.0E-16 ? ; let's simplify the source; SRH: 27 Feb 18;
-
-  vsmall = 100*machprec ; small = 100*vsmall ; sqrtmachprec = sqrt(machprec) ! returns machine precision;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1480,7 +1473,7 @@ subroutine readin
 
      if( Lfreebound.eq.1 ) then
 
-      iRbc(ii,Mvol) = Rwc( nn, mm)                         ! computational boundary is ALWAYS given by namelist Rbc & Zbs;
+      iRbc(ii,Mvol) = Rwc( nn, mm)                         ! computational boundary is ALWAYS given by namelist Rwc & Zws;
       iZbs(ii,Mvol) = zero
       if( NOTstellsym ) then
       iRbs(ii,Mvol) = zero
@@ -1516,7 +1509,7 @@ subroutine readin
 
      if( Lfreebound.eq.1 ) then
 
-      iRbc(ii,Mvol) =   Rwc( kk, mm) + Rwc(-kk,-mm)        ! computational boundary is ALWAYS given by namelist Rbc & Zbs;
+      iRbc(ii,Mvol) =   Rwc( kk, mm) + Rwc(-kk,-mm)        ! computational boundary is ALWAYS given by namelist Rwc & Zws;
       iZbs(ii,Mvol) = ( Zws( kk, mm) - Zws(-kk,-mm) ) * jj
       if( NOTstellsym ) then
       iRbs(ii,Mvol) = ( Rws( kk, mm) - Rws(-kk,-mm) ) * jj
