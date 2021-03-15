@@ -33,11 +33,14 @@
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 program xspech
 
+  use numerical
   use allglobal, only: readin, set_mpi_comm, myid, ncpu, cpus, version
   use inputlist, only: initialize_inputs
   use fileunits, only: ounit
 
   LOCALS
+
+  CHARACTER            :: ldate*8, ltime*10, arg*100
 
   call MPI_INIT( ierr )
 
@@ -48,11 +51,14 @@ program xspech
   cpus = GETTIME
   cpuo = cpus
 
-  ! print header: version of SPEC and compilation info
+  ! print header: version of SPEC, compilation info, current date and time, machine precision
   cput = GETTIME
   if( myid.eq.0 ) then
-   write(ounit,'("xspech : ", 10x ," : version = "F5.2)') version
+    write(ounit,'("xspech : ", 10x ," : version = "F5.2)') version
 ! COMPILATION ! do not delete; this line is replaced (see Makefile) with a write statement identifying date, time, compilation flags, etc.;
+    call date_and_time( ldate, ltime )
+    write(ounit,'("xspech : ", 10x ," : ")')
+    write(ounit,1000) cput-cpus, ldate(1:4), ldate(5:6), ldate(7:8), ltime(1:2), ltime(3:4), ltime(5:6), machprec, vsmall, small
   endif
 
   ! read command-line arguments
@@ -94,6 +100,9 @@ program xspech
   MPIFINALIZE
 
   stop
+
+1000 format("xspech : ",f10.2," : date="a4"/"a2"/"a2" , "a2":"a2":"a2" ; machine precision="es9.2" ; vsmall="es9.2" ; small="es9.2" ;")
+
 end program xspech
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
