@@ -26,7 +26,7 @@ ifeq ($(F90),gfortran)
 	FPP_F90FLAGS = -x f95-cpp-input -fPIC
 	F90FLAGS = $(RFLAGS)
 	FCOMP    = $(FC) #gfortran
-	FLAGS    = -fPIC
+#	FLAGS    = -fPIC # moved to main Makefile to have to re-compile when build for python_wrapper
 endif
 
 ifeq ($(F90),ifort)
