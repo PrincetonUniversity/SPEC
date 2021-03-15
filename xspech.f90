@@ -33,14 +33,14 @@
 program xspech
 
   use numerical
-  use allglobal, only: set_mpi_comm, myid, ncpu, cpus, version, &
+  use allglobal, only: set_mpi_comm, myid, ncpu, cpus, version, MPI_COMM_SPEC, &
                        wrtend, read_inputlists_from_file, check_inputs, broadcast_inputs
   use inputlist, only: initialize_inputs
   use fileunits, only: ounit
   use sphdf5,    only: init_outfile, &
                        mirror_input_to_outfile, &
                        init_convergence_output, &
-                       hdfint, finish_outfile
+                       hdfint, finish_outfile, write_grid
 
   LOCALS
 
@@ -48,6 +48,12 @@ program xspech
   REAL,    allocatable :: allRZRZ(:,:,:) ! local array used for reading interface Fourier harmonics from file;
   integer, allocatable :: mmRZRZ(:), nnRZRZ(:)
   integer              :: num_modes, idx_mode
+
+#ifdef DEBUG
+  character(len=255)   :: hostname
+  integer              :: iwait, pid, status
+  INTEGER, external    :: getpid, hostnm
+#endif
 
   call MPI_INIT( ierr )
 
@@ -121,8 +127,20 @@ program xspech
   ! initialize convergence output arrays
   call init_convergence_output()
 
+!#ifdef DEBUG
+!   iwait = 0; pid = getpid()
+!   status = hostnm( hostname )
+!   write(*,*) 'Process with PID: ', pid, 'ready to attach. Hostname: ', hostname
+!   do while( iwait .EQ. 0 )
+!     !wait for debugger
+!   enddo
+!#endif
+
   ! MAIN SUBROUTINE: iterate until converged or #iterations exceeds limit
   call spec()
+
+  ! some final diagnostics: compute errors, Poincare plots, ....
+  call final_diagnostics()
 
   ! post-processing: magnetic field evaluated on a grid
   call write_grid()
@@ -235,6 +253,7 @@ end subroutine read_command_args
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+! This is the main "driver" for the physics part of SPEC.
 subroutine spec
 
   use constants, only : zero, one, pi2, mu0
@@ -260,13 +279,11 @@ subroutine spec
   use allglobal, only : wrtend, ncpu, myid, cpus, ext, &
                         Mvol, &
                         YESstellsym, NOTstellsym, &
-                        Iquad, &
                         mn, im, in, &
                         Ntz, &
                         LGdof, NGdof, &
                         iRbc, iZbs, iRbs, iZbc, &
                         BBe, IIo, BBo, IIe, &
-                        Btemn, Bzemn, Btomn, Bzomn, &
                         vvolume, &
                         Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
                         dtflux, dpflux, &
@@ -278,7 +295,7 @@ subroutine spec
                         nfreeboundaryiterations, &
                         beltramierror, &
                         first_free_bound, &
-                        dMA, dMB, dMD, dMG, MBpsi, solution, dtflux, IPDt, &
+                        dMA, dMB, dMD, dMG, MBpsi, solution, IPDt, &
                         version, &
                         MPI_COMM_SPEC
 
@@ -289,26 +306,14 @@ subroutine spec
   LOGICAL              :: LComputeDerivatives, LContinueFreeboundaryIterations, exist, LupdateBn, LComputeAxis
 
 ! INTEGER              :: nfreeboundaryiterations, imn, lmn, lNfp, lim, lin, ii, lvol ! 09 Mar 17;
-  INTEGER              :: imn, lmn, lNfp, lim, lin, ii, ideriv, stat, iocons, iwait, pid, status
-  INTEGER              :: vvol, llmodnp, ifail, wflag, iflag, vflag
-  REAL                 :: rflag, lastcpu, bnserr, lRwc, lRws, lZwc, lZws, lItor, lGpol, lgBc, lgBs, sumI
-  REAL,    allocatable :: position(:), gradient(:), Bt00(:,:,:)
-  CHARACTER            :: pack, hostname
+  INTEGER              :: imn, lmn, lNfp, lim, lin, ii, ideriv, stat
+  INTEGER              :: vvol, ifail, wflag, iflag, vflag
+  REAL                 :: rflag, lastcpu, bnserr, lRwc, lRws, lZwc, lZws, lItor, lGpol, lgBc, lgBs
+  REAL,    allocatable :: position(:), gradient(:)
+  CHARACTER            :: pack
   INTEGER              :: Lfindzero_old, mfreeits_old
   REAL                 :: gBnbld_old
   INTEGER              :: lnPtrj, numTrajTotal
-  INTEGER, external    :: getpid, hostnm
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!#ifdef DEBUG
-!   iwait = 0; pid = getpid()
-!   status = hostnm( hostname )
-!   write(*,*) 'Process with PID: ', pid, 'ready to attach. Hostname: ', hostname
-!   do while( iwait .EQ. 0 )
-!     !wait for debugger
-!   enddo
-!#endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -730,6 +735,32 @@ subroutine spec
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+end subroutine spec
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+subroutine final_diagnostics
+
+  use inputlist, only: nPtrj, nPpts, Igeometry, Lcheck, Nvol, odetol, &
+                       Isurf, Ivolume, mu
+  use fileunits, only: ounit
+  use constants, only: zero
+  use allglobal, only: pi2, myid, ncpu, MPI_COMM_SPEC, cpus, Mvol, Ntz, mn, &
+                       beltramierror, Lcoordinatesingularity, &
+                       Lplasmaregion, Lvacuumregion, &
+                       Btemn, Bzemn, Btomn, Bzomn, &
+                       efmn, ofmn, cfmn, sfmn, &
+                       IPDt, ImagneticOK, dtflux, Iquad
+
+
+  LOCALS
+
+  integer              :: iocons, llmodnp, vvol
+  real                 :: sumI
+  REAL,    allocatable :: Bt00(:,:,:)
+
+
+
 !  SALLOCATE( gradient, (0:NGdof), zero )
 !
 !  lastcpu = GETTIME
@@ -803,7 +834,7 @@ subroutine spec
     do iocons = 0, 1
 	  if( ( Lcoordinatesingularity .and. iocons.eq.0 ) .or. ( Lvacuumregion .and. iocons.eq.1 ) ) cycle
       ! Compute covariant magnetic field at interface
-      WCALL(xspech, lbpol, (vvol, Bt00(1:Mvol, 0:1, -1:2), 0, iocons) )
+      call lbpol(vvol, Bt00(1:Mvol, 0:1, -1:2), 0, iocons)
 
       ! Save covariant magnetic field at interface for output - computed in lbpol
       Btemn(1:mn, iocons, vvol) = efmn(1:mn)
@@ -856,14 +887,14 @@ subroutine spec
     !;WCALL( xspech, sc00aa, ( vvol, Ntz                  ) ) ! compute covariant field (singular currents);
 
     if( Lcheck.eq.1 ) then
-     WCALL( xspech, jo00aa, ( vvol, Ntz, Iquad(vvol), mn ) )
+     call jo00aa( vvol, Ntz, Iquad(vvol), mn )
     endif
 
    endif ! myid.eq.modulo(vvol-1,ncpu)
   enddo ! end of do vvol = 1, Mvol; ! end of parallel diagnostics loop; 03 Apr 13;
 
   if( nPpts .gt.0 ) then
-   WCALL( xspech, pp00aa ) ! do Poincare plots in all volumes; has its own paralellization over volumes internally
+    call pp00aa() ! do Poincare plots in all volumes; has its own paralellization over volumes internally
   endif
 
 1002 format("xspech : ",f10.2," :":" myid=",i3," ; vvol=",i3," ; IBeltrami="L2" ; construction of Beltrami field failed ;")
@@ -888,25 +919,12 @@ subroutine spec
 
   enddo ! end of do vvol = 1, Mvol; 01 Jul 14;
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-end subroutine spec
+end subroutine final_diagnostics
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \subsection{subroutine : ending}
-
-!latex \begin{enumerate}
-!latex \item Closes output files, writes screen summary.
-!latex \end{enumerate}
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+! Closes output files, writes screen summary.
 subroutine ending
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   use constants, only : zero
 

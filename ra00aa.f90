@@ -93,7 +93,7 @@ subroutine ra00aa( writeorread )
       FATAL( ra00aa, .not.allocated(Aze(vvol,ideriv,ii)%s), error )
       FATAL( ra00aa, .not.allocated(Ato(vvol,ideriv,ii)%s), error )
       FATAL( ra00aa, .not.allocated(Azo(vvol,ideriv,ii)%s), error )
-      FATAL( ra00aa, Lrad(vvol).le.0, error )
+      FATAL( ra00aa, Lrad(vvol).le.0, error ) ! TODO: probably not needed, since a lot other things do not work as well if Lrad is messed up
      enddo ! end of do ii;  6 Feb 13;
     enddo ! end of do vvol;  6 Feb 13;
    endif ! end of if( myid.eq.0 ) ;  6 Feb 13;
@@ -110,6 +110,10 @@ subroutine ra00aa( writeorread )
    ! collect data in 2D arrays which can be written more conveniently
    sumLrad = 1
    do vvol = 1, Mvol
+
+    ! TODO: MPI_allgather ????
+    ! or at least selective via IsMyVolume()
+
     do ii = 1, mn ! loop over Fourier harmonics;
      allAte(sumLrad:sumLrad+Lrad(vvol),ii) = Ate(vvol,ideriv,ii)%s(0:Lrad(vvol))
      allAze(sumLrad:sumLrad+Lrad(vvol),ii) = Aze(vvol,ideriv,ii)%s(0:Lrad(vvol))
