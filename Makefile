@@ -88,6 +88,7 @@ ifeq ($(BUILD_ENV),gfortran)
  # module use /p/focus/modules
  # module load spec/gcc
  FC=mpif90
+ FLAGS=-fPIC
  RFLAGS=-O3 -w -ffree-line-length-none -fexternal-blas # -fallow-argument-mismatch only used for GCC-10
  DFLAGS=-O0 -g -w -ffree-line-length-none -Wextra -Wtarget-lifetime -fbacktrace -fbounds-check -fexternal-blas \
      -fcheck=all -DDEBUG #-ffpe-trap=invalid,zero,overflow,underflow,inexact # for some reason this will cause crash
@@ -109,6 +110,7 @@ ifeq ($(BUILD_ENV),gfortran_ubuntu)
  # sudo apt install libfftw3-dev
  # sudo apt install libhdf5-dev
  FC=mpif90
+ FLAGS=-fPIC
  CFLAGS=-fdefault-real-8
  LINKS=-Wl,-rpath -Wl,/usr/lib/lapack -llapack -lblas
  LIBS=-I/usr/include/hdf5/serial
@@ -128,15 +130,13 @@ ifeq ($(BUILD_ENV),gfortran_debian)
  # sudo apt install libfftw3-dev
  # sudo apt install libhdf5-dev
  FC=mpif90
+ FLAGS=-fPIC
  CFLAGS=-fdefault-real-8
  RFLAGS=-O2 -ffixed-line-length-none -ffree-line-length-none -fexternal-blas
  DFLAGS=-g -fbacktrace -fbounds-check -ffree-line-length-none -fexternal-blas -DDEBUG
-
  LINKS=-llapack -lblas
-
  LIBS=-I/usr/include/hdf5/serial
  LINKS+=-L/usr/lib/x86_64-linux-gnu/hdf5/serial -lhdf5_fortran -lhdf5 -lpthread -lz -lm
-
  LIBS+=-I/usr/include
  LINKS+=-lfftw3
 endif
@@ -144,6 +144,7 @@ endif
 ifeq ($(BUILD_ENV),gfortran_arch)
  # configuration for Arch Linux
  FC=mpif90
+ FLAGS=-fPIC
  CFLAGS=-fdefault-real-8 -fallow-argument-mismatch
  LINKS=-llapack -lblas
  LIBS=
@@ -156,6 +157,7 @@ endif
 ifeq ($(BUILD_ENV),gfortran_mac)
  # works on Ksenia's laptop
  FC=mpif90
+ FLAGS=-fPIC
  CFLAGS=-fdefault-real-8
  LINKS=-L/usr/local/Cellar/lapack/3.8.0_1/lib -llapack -Wl,-rpath -Wl,/usr/local/Cellar/lapack/3.8.0_1/lib -lblas -L/usr/local/Cellar/openblas/0.3.7 -lgfortran -Wl,-rpath -Wl,/usr/local/Cellar/openblas/0.3.7/lib
  LIBS=-I/Applications/HDF_Group/HDF5/1.10.5/include/static
@@ -191,6 +193,7 @@ endif
 
 ifeq ($(BUILD_ENV),gfort_spc)
  FC=mpif90
+ FLAGS=-fPIC
  CFLAGS=-fdefault-real-8
  RFLAGS=-O2 -ffixed-line-length-none -ffree-line-length-none -fexternal-blas
  DFLAGS=-g -fbacktrace -fbounds-check -ffree-line-length-none -fexternal-blas -DDEBUG
@@ -222,6 +225,7 @@ ifeq ($(BUILD_ENV),gfortran_ipp)
  # tested on draco with the following modules:
  # gcc/8 impi/2018.3 mkl/2018.3 hdf5-mpi/1.10.5 fftw-mpi/3.3.8
  FC=mpif90
+ FLAGS=-fPIC
  CFLAGS=-fdefault-real-8
  RFLAGS=-O2 -fPIC -ffree-line-length-none
  DFLAGS=-g -fbacktrace -fbounds-check -DDEBUG -ffree-line-length-none
