@@ -61,6 +61,8 @@ program xspech
   ! print header: version of SPEC, compilation info, current date and time, machine precision
   cput = GETTIME
   if( myid.eq.0 ) then
+
+    ! screen output header
     write(ounit,'("xspech : ", 10x ," : version = "F5.2)') version
 ! COMPILATION ! do not delete; this line is replaced (see Makefile) with a write statement identifying date, time, compilation flags, etc.;
     call date_and_time( ldate, ltime )
@@ -85,18 +87,18 @@ program xspech
 !latex \item All quantities in the input file are mirrored into the output file's group \type{input}.
 !latex \end{enumerate}
 
-  ! read & broadcast input namelist
+    ! read input namelists
+    call read_inputlists_from_file(num_modes, mmRZRZ, nnRZRZ, allRZRZ)
 
-   call read_inputlists_from_file(num_modes, mmRZRZ, nnRZRZ, allRZRZ)
+    ! check that data from input file is within allowed ranges etc.
+    call check_inputs()
 
-   call check_inputs
-
-  endif
+  endif ! myid.eq.0
 
   ! broadcast input file contents
-  call broadcast_inputs
+  call broadcast_inputs()
 
-
+  ! initialize internal arrays based on data from input file
   call preset(num_modes, mmRZRZ, nnRZRZ, allRZRZ)
 
   if (myid.eq.0 .and. num_modes.gt.0) then
@@ -104,57 +106,50 @@ program xspech
     deallocate(mmRZRZ, nnRZRZ, allRZRZ)
   end if
 
-
-
-
-
-
   ! initialize HDF5 library and open output file ext.h5 for writing during execution
-  call init_outfile
+  call init_outfile()
 
   ! mirror input file contents to output file
-  call mirror_input_to_outfile
+  call mirror_input_to_outfile()
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   if ( myid .eq. 0 ) then ! save restart file;
-    call wrtend ! write restart file ! 17 May 19
+    call wrtend() ! write initial restart file
   endif
 
-!latex \subsection{preparing output file group \type{iterations}}
+  ! initialize convergence output arrays
+  call init_convergence_output()
 
-!latex \begin{enumerate}
-
-!latex \item The group \verb+iterations+ is created in the output file.
-!latex       This group contains the interface geometry at each iteration, which is useful for constructing movies illustrating the convergence.
-!latex       The data structure in use is an unlimited array of the following compound datatype:
-!latex \begin{verbatim} DATATYPE  H5T_COMPOUND {
-!latex       H5T_NATIVE_INTEGER "nDcalls";
-!latex       H5T_NATIVE_DOUBLE "Energy";
-!latex       H5T_NATIVE_DOUBLE "ForceErr";
-!latex       H5T_ARRAY { [Mvol+1][mn] H5T_NATIVE_DOUBLE } "iRbc";
-!latex       H5T_ARRAY { [Mvol+1][mn] H5T_NATIVE_DOUBLE } "iZbs";
-!latex       H5T_ARRAY { [Mvol+1][mn] H5T_NATIVE_DOUBLE } "iRbs";
-!latex       H5T_ARRAY { [Mvol+1][mn] H5T_NATIVE_DOUBLE } "iZbc";
-!latex } \end{verbatim}
-!latex \end{enumerate}
-
-  ! initialize convergence output arrays ! 17 May 19
-  call init_convergence_output
-
-  ! main subroutine: iterate until converged or #iterations exceeds limit
+  ! MAIN SUBROUTINE: iterate until converged or #iterations exceeds limit
   call spec()
+
+  ! post-processing: magnetic field evaluated on a grid
+  call write_grid()
+
+  if( myid.eq.0 ) then
+   call wrtend() ! write final restart file
+  endif
+
+  ! write final outputs to HDF5 file
+  call hdfint()
+
+  ! close HDF5 output file
+  call finish_outfile()
 
   ! print ending info
   call ending()
 
-
-  call hdfint ! write final outputs to HDF5 file ! 18 Jul 14;
-  call finish_outfile ! close HDF5 output file
-
-
+  ! wait for writing to finish
+  call MPI_Barrier(MPI_COMM_SPEC, ierr)
 
   MPIFINALIZE
+
+  if (myid.eq.0) then
+   cput = GETTIME
+   write(ounit,'("xspech : ", 10x ," :")')
+   write(ounit,'("xspech : ",f10.2," : myid=",i3," : time="f8.2"m = "f6.2"h = "f5.2"d ;")') cput-cpus, myid, (cput-cpus) / (/ 60, 60*60, 24*60*60 /)
+  endif
 
   stop
 
@@ -287,10 +282,6 @@ subroutine spec
                         version, &
                         MPI_COMM_SPEC
 
-
-   ! write _all_ output quantities into a _single_ HDF5 file
-   use sphdf5,   only : write_grid
-
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   LOCALS
@@ -310,8 +301,6 @@ subroutine spec
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-
-
 !#ifdef DEBUG
 !   iwait = 0; pid = getpid()
 !   status = hostnm( hostname )
@@ -320,8 +309,6 @@ subroutine spec
 !     !wait for debugger
 !   enddo
 !#endif
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -535,7 +522,7 @@ subroutine spec
   end select                                                ! 08 Feb 16;
 
   do vvol = 2, Mvol; tflux(vvol) = tflux(vvol-1) + dtflux(vvol) ! 01 Jul 14;
-   ;                  pflux(vvol) = pflux(vvol-1) + dpflux(vvol) ! 01 Jul 14;
+  ;                  pflux(vvol) = pflux(vvol-1) + dpflux(vvol) ! 01 Jul 14;
   enddo
 
   tflux(1:Mvol) = tflux(1:Mvol) * pi2 / phiedge ! this is the "inverse" operation defined in preset; 19 Jul 16;
@@ -788,22 +775,7 @@ subroutine spec
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  if( myid.eq.0 ) then ! this is just screen diagnostics; 20 Jun 14;
 
-   cput = GETTIME
-
-   if( nPpts.gt.0 ) then
-    write(ounit,'("xspech : ", 10x ," :")')
-    write(ounit,'("xspech : ",f10.2," : myid=",i3," ; Poincare plot ; odetol="es8.1" ; nPpts="i7" ;":" nPtrj="24(i5",")" ...")') &
-  cput-cpus, myid, odetol, nPpts, nPtrj(1:min(Mvol,24))
-   endif
-
-   if( Lcheck.eq.1 ) then
-    write(ounit,'("xspech : ", 10x ," :")')
-    write(ounit,'("xspech : ",f10.2," : myid=",i3," ; calling jo00aa; computing error in field ;")') cput-cpus, myid
-   endif
-
-  endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -855,6 +827,21 @@ subroutine spec
     sumI = Ivolume(vvol)                                    ! Sum over all volumes since this is how Ivolume is defined
   enddo
 
+  ! screen info about diagnostics; 20 Jun 14;
+  if (myid.eq.0) then
+   cput = GETTIME
+
+   if( nPpts.gt.0 ) then
+    write(ounit,'("xspech : ", 10x ," :")')
+    write(ounit,'("xspech : ",f10.2," : myid=",i3," ; Poincare plot ; odetol="es8.1" ; nPpts="i7" ;":" nPtrj="24(i5",")" ...")') &
+                 cput-cpus, myid, odetol, nPpts, nPtrj(1:min(Mvol,24))
+   endif
+
+   if( Lcheck.eq.1 ) then
+    write(ounit,'("xspech : ", 10x ," :")')
+    write(ounit,'("xspech : ",f10.2," : myid=",i3," ; calling jo00aa; computing error in field ;")') cput-cpus, myid
+   endif
+  endif
 
   do vvol = 1, Mvol
 
@@ -892,7 +879,7 @@ subroutine spec
    FATAL( xspech, .not.allocated(Bzomn), error )
 #endif
 
-   RlBCAST( Btemn(1:mn,0:1,vvol), mn*2, llmodnp ) ! this is computed in sc00aa; 07 Dec 16;
+   RlBCAST( Btemn(1:mn,0:1,vvol), mn*2, llmodnp ) ! this is computed in lbpol; 07 Dec 16;
    RlBCAST( Bzemn(1:mn,0:1,vvol), mn*2, llmodnp )
    RlBCAST( Btomn(1:mn,0:1,vvol), mn*2, llmodnp )
    RlBCAST( Bzomn(1:mn,0:1,vvol), mn*2, llmodnp )
@@ -900,31 +887,6 @@ subroutine spec
    RlBCAST( beltramierror(vvol,1:9), 9, llmodnp ) ! this is computed in jo00aa; 21 Aug 18;
 
   enddo ! end of do vvol = 1, Mvol; 01 Jul 14;
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \subsection{restart files}
-
-!latex \begin{enumerate}
-!latex \item \link{global}:\type{wrtend} is called to write the restart files.
-!latex \end{enumerate}
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  WCALL( xspech, write_grid ) ! write grid
-
-  if( myid.eq.0 ) then
-   WCALL( xspech, wrtend ) ! write restart file; save initial input;
-
-   cput = GETTIME
-   write(ounit,'("xspech : ", 10x ," :")')
-   write(ounit,'("xspech : ",f10.2," : myid=",i3," : time="f8.2"m = "f6.2"h = "f5.2"d ;")') cput-cpus, myid, (cput-cpus) / (/ 60, 60*60, 24*60*60 /)
-
-  endif
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-9999 continue
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -998,9 +960,6 @@ dcpu, Ttotal / (/ 1, 60, 3600 /), ecpu, 100*ecpu/dcpu
    write(ounit,1000) dcpu, myid, dcpu / (/ 1, 60, 60*60, 24*60*60 /), date(1:4), date(5:6), date(7:8), time(1:2), time(3:4), time(5:6), ext
    write(ounit,'("ending : ", 10x ," : ")')
   endif ! end of if( myid.eq.0 ) ; 14 Jan 15;
-
-  ! wait for writing to finish
-  call MPI_Barrier(MPI_COMM_SPEC, ierr)
 
 1000 format("ending : ",f10.2," : myid=",i3," ; completion ; time=",f10.2,"s = "f8.2"m = "f6.2"h = "f5.2"d ; date= "&
   a4"/"a2"/"a2" ; time= "a2":"a2":"a2" ; ext = "a60)
