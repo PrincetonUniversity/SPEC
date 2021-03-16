@@ -58,6 +58,9 @@ class SPEC(object):
          # py2f converts the Python object to the Fortran integer identifying an MPI communicator.
         self.allglobal.set_mpi_comm(self.comm.py2f())
 
+        # python wrapper does not need to write files along the run
+        self.allglobal.skip_write = True
+
         self.initialized = False
 
         # mute screen output if necessary
@@ -66,35 +69,43 @@ class SPEC(object):
             self.fileunits.mute(1)
         return
 
-    def run(self, save=True):
+    # def run(self, save=True):
+    def run(self):
         if not self.initialized:
             self.read()
         self.lib.spec()
-        if save:
-            self.write()
+        # if save:
+        #     self.write()
         return
 
     def read(self, input_file=None):
         # initialize input quantities to a known state
-        self.inputlist.initialize_inputs()
+        if self.comm.rank == 0:
+            self.inputlist.initialize_inputs()
 
-        if input_file is not None:
-            print("Read SPEC input namelist from {:}.sp".format(input_file))
-            self.allglobal.ext = input_file
-        self.allglobal.readin()
+            if input_file is not None:
+                print("Read SPEC input namelist from {:}.sp".format(input_file))
+                self.allglobal.ext = input_file
+
+            self.allglobal.read_inputlists_from_file()
+            self.allglobal.check_inputs()
+
+        self.allglobal.broadcast_inputs()
+        self.lib.preset()
+
         self.initialized = True
         return
 
-    def write(self, output_file=None):
-        if output_file is not None:
-            print("Write SPEC output into {:d}.sp.h5".format(output_file))
-            ext = self.inputlist.ext  # save original ext value
-            self.inputlist.ext = output_file
-            self.lib.write_hdf5()
-            self.inputlist.ext = ext  # reset the ext value
-        else:
-            self.lib.write_hdf5()
-        return
+    # def write(self, output_file=None):
+    #     if output_file is not None:
+    #         print("Write SPEC output into {:d}.sp.h5".format(output_file))
+    #         ext = self.inputlist.ext  # save original ext value
+    #         self.inputlist.ext = output_file
+    #         self.lib.write_hdf5()
+    #         self.inputlist.ext = ext  # reset the ext value
+    #     else:
+    #         self.lib.write_hdf5()
+    #     return
 
 
 if __name__ == "__main__":
