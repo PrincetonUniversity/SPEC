@@ -143,6 +143,7 @@ endif
 
 ifeq ($(BUILD_ENV),gfortran_arch)
  # configuration for Arch Linux
+ # traps for numerical errors: https://stackoverflow.com/a/29827243
  FC=mpif90
  FLAGS=-fPIC
  CFLAGS=-fdefault-real-8 -fallow-argument-mismatch
@@ -151,7 +152,7 @@ ifeq ($(BUILD_ENV),gfortran_arch)
  LINKS+=-lhdf5_fortran -lhdf5 -lpthread -lz -lm
  LINKS+=-lfftw3
  RFLAGS=-O3 -ffixed-line-length-none -ffree-line-length-none -fexternal-blas
- DFLAGS=-g -fbacktrace -fbounds-check -ffree-line-length-none -fexternal-blas -DDEBUG
+ DFLAGS=-g -fbacktrace -fbounds-check -ffree-line-length-none -fexternal-blas -DDEBUG -ffpe-trap=invalid,zero,overflow,underflow
 endif
 
 ifeq ($(BUILD_ENV),gfortran_mac)
