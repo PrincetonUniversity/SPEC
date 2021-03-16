@@ -325,6 +325,9 @@ subroutine writereadgf( readorwrite, NGdof , ireadhessian )
 
   case( 'W' ) ! will write derivative matrix to file;
 
+   ! reset I/O state
+   ios = 0
+
    open( dunit, file="."//trim(ext)//".sp.DF", status="replace", form="unformatted", iostat=ios ) ! save derivative matrix to file;
    FATAL( newton, ios.ne.0, error opening derivative matrix file )
 
