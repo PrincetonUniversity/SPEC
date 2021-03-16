@@ -11,7 +11,7 @@
 
 !latex \subsection{definition of internal variables}
 
-subroutine preset(num_modes, mmRZRZ, nnRZRZ, allRZRZ)
+subroutine preset
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -32,10 +32,6 @@ subroutine preset(num_modes, mmRZRZ, nnRZRZ, allRZRZ)
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   LOCALS
-
-  integer, intent(in) :: num_modes
-  integer, intent(in) :: mmRZRZ(1:num_modes), nnRZRZ(1:num_modes)
-  REAL,    intent(in) :: allRZRZ(1:4,1:Nvol,1:num_modes) ! local array used for reading interface Fourier harmonics from file;
 
   INTEGER   :: innout, idof, jk, ll, ii, ifail, ideriv, vvol, mi, ni, mj, nj, mk, nk, mimj, ninj, mkmj, nknj, jj, kk, lvol, mm, nn, imn
   INTEGER   :: lquad, igauleg, maxIquad, Mrad, jquad, Lcurvature, zerdof, iret, work1, work2
@@ -356,6 +352,9 @@ subroutine preset(num_modes, mmRZRZ, nnRZRZ, allRZRZ)
      enddo ! end of do ii;
 
     enddo ! end of do;
+
+    ! have been allocated in read_inputlists_from_file
+    deallocate(mmRZRZ, nnRZRZ, allRZRZ)
 
    end select ! end select case( Linitialize );
 
