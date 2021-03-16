@@ -542,11 +542,13 @@ if (Lconstraint.EQ.3) then
   end do
 
 #ifdef DEBUG
-  write(*,*) " "
-  write(ounit,'("preset : ", 10x ," : Ivolume = "257(es11.3",",:))') (Ivolume(vvol), vvol=1, Mvol)
-  write(ounit,'("preset : ", 10x ," : tflux   = "257(es11.3",",:))') (  tflux(vvol), vvol=1, Mvol)
-  write(ounit,'("preset : ", 10x ," : phiedge = "257(es11.3",",:))') phiedge
-  write(ounit,'("preset : ", 10x ," : mu      = "257(es11.3",",:))') (     mu(vvol), vvol=1, Mvol)
+  if (myid.eq.0) then
+    write(*,*) " "
+    write(ounit,'("preset : ", 10x ," : Ivolume = "257(es11.3",",:))') (Ivolume(vvol), vvol=1, Mvol)
+    write(ounit,'("preset : ", 10x ," : tflux   = "257(es11.3",",:))') (  tflux(vvol), vvol=1, Mvol)
+    write(ounit,'("preset : ", 10x ," : phiedge = "257(es11.3",",:))') phiedge
+    write(ounit,'("preset : ", 10x ," : mu      = "257(es11.3",",:))') (     mu(vvol), vvol=1, Mvol)
+  end if
 #endif
 endif
 
@@ -568,7 +570,9 @@ endif
   enddo
 
 #ifdef DEBUG
-  write(ounit,'("preset : ",10x," : sweight=",99(es12.5,",",:))') sweight(1:Mvol)
+  if (myid.eq.0) then
+    write(ounit,'("preset : ",10x," : sweight=",99(es12.5,",",:))') sweight(1:Mvol)
+  end if
 #endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -901,7 +905,7 @@ endif
 
   if (Lconstraint .eq. 2) then
     FATAL( preset, Lfreebound.eq.1, The combination of helicity constraint and free boundary is under construction )
-    if (Igeometry .eq. 3) then
+    if (Igeometry .eq. 3 .and. myid.eq.0) then
       write(ounit, *) 'WARNING: The Hessian matrix needs further review for Igeometry = 3'
       write(ounit, *) '         However, it can still serve the purpose of Lfindzero = 2'
     endif
