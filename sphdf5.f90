@@ -19,7 +19,7 @@ module sphdf5
   use inputlist , only : Wsphdf5, Wmacros
   use fileunits , only : ounit
   use cputiming , only : Tsphdf5
-  use allglobal , only : myid, cpus, MPI_COMM_SPEC, ext
+  use allglobal , only : myid, cpus, MPI_COMM_SPEC, ext, skip_write
   use constants , only : version
   use hdf5
 
@@ -101,7 +101,7 @@ subroutine init_outfile
 
   BEGIN( sphdf5 )
 
- if (myid.eq.0) then
+ if (myid.eq.0 .and. .not.skip_write) then
 
   ! initialize Fortran interface to the HDF5 library;
   H5CALL( sphdf5, h5open_f, (hdfier), __FILE__, __LINE__)
@@ -133,7 +133,7 @@ subroutine mirror_input_to_outfile
 
   BEGIN( sphdf5 )
 
- if (myid.eq.0) then
+ if (myid.eq.0 .and. .not.skip_write) then
 
   HDEFGRP( file_id, input, grpInput,                        __FILE__, __LINE__ )
   H5DESCR( grpInput, /input, group for mirrored input data, __FILE__, __LINE__ )
@@ -412,7 +412,7 @@ subroutine init_convergence_output
 
   BEGIN( sphdf5 )
 
- if (myid.eq.0) then
+ if (myid.eq.0 .and. .not.skip_write) then
 
   ! Set dataset transfer property to preserve partially initialized fields
   ! during write/read to/from dataset with compound datatype.
@@ -502,7 +502,7 @@ subroutine write_convergence_output( nDcalls, ForceErr )
 
   BEGIN(sphdf5)
 
- if (myid.eq.0) then
+ if (myid.eq.0 .and. .not.skip_write) then
 
   ! append updated values to "iterations" dataset
 
@@ -568,7 +568,7 @@ subroutine write_grid
 
   BEGIN(sphdf5)
 
- if (myid.eq.0) then
+ if (myid.eq.0 .and. .not.skip_write) then
 
   ijreal(1:Ntz) = zero ; ijimag(1:Ntz) = zero ; jireal(1:Ntz) = zero
 
@@ -702,7 +702,7 @@ subroutine init_flt_output( numTrajTotal )
 
   BEGIN( sphdf5 )
 
- if (myid.eq.0) then
+ if (myid.eq.0 .and. .not.skip_write) then
 
   ! create Poincare group in HDF5 file
   HDEFGRP( file_id, poincare, grpPoincare )
@@ -786,7 +786,7 @@ subroutine write_poincare( offset, data, success )
 
   BEGIN( sphdf5 )
 
- if (myid.eq.0) then
+ if (myid.eq.0 .and. .not.skip_write) then
 
   dims_singleTraj = (/ Nz, nPpts /)
   length          = (/ Nz, nPpts, 1 /)
@@ -826,7 +826,7 @@ subroutine write_transform( offset, length, lvol, diotadxup, fiota )
 
   BEGIN( sphdf5 )
 
- if (myid.eq.0) then
+ if (myid.eq.0 .and. .not.skip_write) then
 
   H5CALL( sphdf5, h5sselect_hyperslab_f, (filespace_diotadxup, H5S_SELECT_SET_F, int((/0,lvol-1/),HSSIZE_T), int((/2,1/),HSSIZE_T), hdfier), __FILE__, __LINE__ )
   H5CALL( sphdf5, h5dwrite_f, (dset_id_diotadxup, H5T_NATIVE_DOUBLE, diotadxup, int((/2,1/),HSSIZE_T), hdfier, &
@@ -852,7 +852,7 @@ subroutine finalize_flt_output
 
   BEGIN( sphdf5 )
 
- if (myid.eq.0) then
+ if (myid.eq.0 .and. .not.skip_write) then
 
   H5CALL( sphdf5, h5sclose_f, (filespace_t,         hdfier), __FILE__, __LINE__ ) ! close filespaces
   H5CALL( sphdf5, h5sclose_f, (filespace_s,         hdfier), __FILE__, __LINE__ )
@@ -897,7 +897,7 @@ subroutine write_vector_potential(sumLrad, allAte, allAze, allAto, allAzo)
 
   BEGIN( sphdf5 )
 
- if (myid.eq.0) then
+ if (myid.eq.0 .and. .not.skip_write) then
 
   HDEFGRP( file_id, vector_potential, grpVectorPotential )
 
@@ -943,7 +943,7 @@ subroutine hdfint
 
   BEGIN( sphdf5 )
 
- if (myid.eq.0) then
+ if (myid.eq.0 .and. .not.skip_write) then
 
   HDEFGRP( file_id, output, grpOutput )
 
@@ -1084,7 +1084,7 @@ subroutine finish_outfile
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   BEGIN( sphdf5 )
 
- if (myid.eq.0) then
+ if (myid.eq.0 .and. .not.skip_write) then
 
   ! close objects related to convergence output
   H5CALL( sphdf5, h5tclose_f, (dt_nDcalls_id, hdfier)    , __FILE__, __LINE__)
