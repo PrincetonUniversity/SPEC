@@ -174,6 +174,8 @@ module allglobal
   INTEGER              :: IsMyVolumeValue
   REAL                 :: cpus             ! initial time;
 
+  LOGICAL              :: skip_write = .false. ! flag to disable any HDF5-related calls
+
   REAL                 :: pi2nfp           !       pi2/nfp     ; assigned in readin;
   REAL                 :: pi2pi2nfp
   REAL                 :: pi2pi2nfphalf
@@ -272,6 +274,11 @@ module allglobal
 
   REAL,    allocatable :: lRbc(:)   , lZbs(:)     ! local workspace;
   REAL,    allocatable :: lRbs(:)   , lZbc(:)     ! local workspace;
+
+  ! local array used for reading interface Fourier harmonics from file;
+  INTEGER              :: num_modes
+  INTEGER, allocatable :: mmRZRZ(:), nnRZRZ(:)
+  REAL,    allocatable :: allRZRZ(:,:,:)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -771,17 +778,13 @@ end subroutine
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-subroutine read_inputlists_from_file(num_modes, mmRZRZ, nnRZRZ, allRZRZ)
+subroutine read_inputlists_from_file()
 
    use constants
    use fileunits
    use inputlist
 
    LOCALS
-
-   integer, intent(out) :: num_modes
-   integer, allocatable, intent(out) :: mmRZRZ(:), nnRZRZ(:)
-   REAL,    allocatable, intent(out) :: allRZRZ(:,:,:) ! local array used for reading interface Fourier harmonics from file;
 
    LOGICAL              :: Lspexist
    integer :: filepos, seek_status, cpfile, instat, idx_mode
@@ -856,37 +859,39 @@ subroutine read_inputlists_from_file(num_modes, mmRZRZ, nnRZRZ, allRZRZ)
    num_modes = 0
    if (Linitialize .le. 0) then
 
+     ! duplicate of checks required for below code
+     FATAL( readin, Nvol.lt.1 .or. Nvol.gt.MNvol,            invalid Nvol: may need to recompile with higher MNvol )
+
      SALLOCATE( RZRZ, (1:4,1:Nvol), zero ) ! temp array for reading input;
 
      ! determine how many modes are specified by reading them one
      call ftell(iunit, filepos)
-
 
      do ! will read in Fourier harmonics until the end of file is reached;
        read(iunit,*,iostat=instat) mm, nn, RZRZ(1:4,1:Nvol)   !if change of angle applies, transformation assumes m>=0 and for m=0 only n>=0;
        if( instat.ne.0 ) exit
 
        num_modes = num_modes + 1
-     enddo ! end of do;
+     enddo
 
      ! rewind file to reset EOF flag
      ! and seek back to (start of modes) == (end of input namelists)
      rewind(iunit)
      call fseek(iunit, filepos, 0, seek_status)
-     FATAL(inplst, seek_status.ne.0, failed to seek back to end of input namelists )
+     FATAL(inplst, seek_status.ne.0, failed to seek to end of input namelists )
 
      ! now allocate arrays and read...
      allocate(mmRZRZ(1:num_modes), nnRZRZ(1:num_modes), allRZRZ(1:4,1:Nvol,1:num_modes))
 
      do idx_mode = 1, num_modes
        read(iunit,*,iostat=instat) mmRZRZ(idx_mode), nnRZRZ(idx_mode), allRZRZ(1:4,1:Nvol, idx_mode)
-     enddo ! end of do;
+     enddo
 
      ! rewind file to reset EOF flag
      ! and seek back to (start of modes) == (end of input namelists)
      rewind(iunit)
      call fseek(iunit, filepos, 0, seek_status)
-     FATAL(inplst, seek_status.ne.0, failed to seek back to end of input namelists )
+     FATAL(inplst, seek_status.ne.0, failed to seek to end of input namelists )
 
      ! no need for temporary RZRZ anymore
      DALLOCATE(RZRZ)
@@ -1315,7 +1320,6 @@ subroutine broadcast_inputs
   LlBCAST( Wwritin, 1, 0 ) ! redundant;
   LlBCAST( Wwrtend, 1, 0 )
   LlBCAST( Wmacros, 1, 0 )
-
 
 end subroutine ! broadcast_inputs
 
