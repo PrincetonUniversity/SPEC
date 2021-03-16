@@ -34,7 +34,7 @@ program xspech
 
   use numerical
   use allglobal, only: set_mpi_comm, myid, ncpu, cpus, version, MPI_COMM_SPEC, &
-                       wrtend, read_inputlists_from_file, check_inputs, broadcast_inputs
+                       wrtend, read_inputlists_from_file, check_inputs, broadcast_inputs, skip_write
   use inputlist, only: initialize_inputs
   use fileunits, only: ounit
   use sphdf5,    only: init_outfile, &
@@ -45,9 +45,6 @@ program xspech
   LOCALS
 
   CHARACTER            :: ldate*8, ltime*10, arg*100
-  REAL,    allocatable :: allRZRZ(:,:,:) ! local array used for reading interface Fourier harmonics from file;
-  integer, allocatable :: mmRZRZ(:), nnRZRZ(:)
-  integer              :: num_modes, idx_mode
 
 #ifdef DEBUG
   character(len=255)   :: hostname
@@ -63,6 +60,9 @@ program xspech
   ! set initial time; 04 Dec 14;
   cpus = GETTIME
   cpuo = cpus
+
+  ! explicitly enable writing of HDF5 output file
+  skip_write = .false.
 
   ! print header: version of SPEC, compilation info, current date and time, machine precision
   cput = GETTIME
@@ -94,7 +94,7 @@ program xspech
 !latex \end{enumerate}
 
     ! read input namelists
-    call read_inputlists_from_file(num_modes, mmRZRZ, nnRZRZ, allRZRZ)
+    call read_inputlists_from_file()
 
     ! check that data from input file is within allowed ranges etc.
     call check_inputs()
@@ -105,12 +105,7 @@ program xspech
   call broadcast_inputs()
 
   ! initialize internal arrays based on data from input file
-  call preset(num_modes, mmRZRZ, nnRZRZ, allRZRZ)
-
-  if (myid.eq.0 .and. num_modes.gt.0) then
-    ! have been allocated in read_inputlists_from_file
-    deallocate(mmRZRZ, nnRZRZ, allRZRZ)
-  end if
+  call preset()
 
   ! initialize HDF5 library and open output file ext.h5 for writing during execution
   call init_outfile()
@@ -739,6 +734,14 @@ end subroutine spec
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+!latex \subsection{final diagnostics}
+
+!latex \begin{enumerate}
+!latex \item \link{sc00aa} is called to compute the covariant components of the magnetic field at the interfaces;
+!latex       these are related to the singular currents;
+!latex \item if \inputvar{Lcheck} $= 1$, \link{jo00aa} is called to compute the error in the Beltrami equation;
+!latex \item \link{pp00aa} is called to construct the \Poincare plot;
+!latex \end{enumerate}
 subroutine final_diagnostics
 
   use inputlist, only: nPtrj, nPpts, Igeometry, Lcheck, Nvol, odetol, &
@@ -802,25 +805,6 @@ subroutine final_diagnostics
 !
 !2000 format("finish : ",f10.2," : finished ",i3," ; ":"|f|="es12.5" ; ":"time=",f10.2,"s ;":" log"a5,:"="28f6.2" ...")
 !2001 format("finish : ", 10x ," :          ",3x," ; ":"    "  12x "   ":"     ", 10x ,"  ;":" log"a5,:"="28f6.2" ...")
-
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \subsection{final diagnostics}
-
-!latex \begin{enumerate}
-!latex \item \link{sc00aa} is called to compute the covariant components of the magnetic field at the interfaces;
-!latex       these are related to the singular currents;
-!latex \item if \inputvar{Lcheck} $= 1$, \link{jo00aa} is called to compute the error in the Beltrami equation;
-!latex \item \link{pp00aa} is called to construct the \Poincare plot;
-!latex \end{enumerate}
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
 
   !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 ! Computes the surface current at each interface for output
