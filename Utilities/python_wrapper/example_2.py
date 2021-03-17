@@ -47,14 +47,14 @@ for i in range(N):
     spec.run()
     
     energy = spec.allglobal.energy
-    print("resulting plasma energy: ",energy)
+    print("resulting magnetic energy: ",energy)
     plasmaEnergies.append(energy)
 
 
 plt.figure()
 plt.plot(centralPressures, plasmaEnergies)
 plt.xlabel("central pressure")
-plt.ylabel("plasma energy")
+plt.ylabel("magnetic energy")
 plt.grid(True)
 plt.tight_layout()
 
