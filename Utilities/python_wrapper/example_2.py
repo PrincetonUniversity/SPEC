@@ -36,7 +36,7 @@ N = 5
 scales = np.linspace(1.0, 2.0, N)
 
 centralPressures = []
-plasmaEnergies = []
+magneticEnergies = []
 
 for i in range(N):
     spec.inputlist.pressure[:Nvol] = np.multiply(scales[i], pressure)
@@ -48,11 +48,11 @@ for i in range(N):
     
     energy = spec.allglobal.energy
     print("resulting magnetic energy: ",energy)
-    plasmaEnergies.append(energy)
+    magneticEnergies.append(energy)
 
 
 plt.figure()
-plt.plot(centralPressures, plasmaEnergies)
+plt.plot(centralPressures, magneticEnergies)
 plt.xlabel("central pressure")
 plt.ylabel("magnetic energy")
 plt.grid(True)
