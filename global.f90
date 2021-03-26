@@ -1177,6 +1177,8 @@ module allglobal
    REAL,   allocatable :: dMA(:,:), dMB(:,:)! dMC(:,:) ! energy and helicity matrices; quadratic forms; 
    REAL,   allocatable :: dMD(:,:)! dME(:,:)! dMF(:,:) ! energy and helicity matrices; quadratic forms; 
 
+   REAL,   allocatable :: AdotX(:), DdotX(:)  ! storing the matrix-vector product
+
    REAL,   allocatable :: dMAS(:), dMDS(:) ! sparse version of dMA and dMD, data
    INTEGER,allocatable :: idMAS(:), jdMAS(:) ! sparse version of dMA and dMD, indices
    INTEGER,allocatable :: NdMASmax(:), NdMAS(:) ! number of elements for sparse matrices
