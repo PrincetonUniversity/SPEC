@@ -844,9 +844,9 @@ BEGIN(dforce)
   DALLOCATE(finitediff_estimate)
   endif
   
-RETURN(dforce)
 
 FATAL(fndiff, .true., Finite differences have been evaluated. )
 
+RETURN(dforce)
 
 end subroutine fndiff_dforce
