@@ -242,7 +242,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
 
     SALLOCATE( Fvec, (1:Ndofgl), zero )
 
-    dfp100_logical = .TRUE.
+    dfp100_logical = .FALSE.
 
     WCALL(dforce, dfp100, (Ndofgl, Xdof(1:Mvol-1), Fvec(1:Ndofgl), dfp100_logical))
 
