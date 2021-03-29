@@ -325,6 +325,15 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
         dZodZ(1:Ntz,1,ii) = dZodZ(1:Ntz,1,ii) / jiimag(1:Ntz)
 
 
+        call invfft( mn, im(1:mn), in(1:mn),-in(1:mn)*dRadR(1:mn,1,0,imn),+in(1:mn)*dRadR(1:mn,0,0,imn),-in(1:mn)*dRadR(1:mn,1,1,imn),+in(1:mn)*dRadR(1:mn,0,1,imn), &
+                      Nt, Nz, dRodR(1:Ntz,2,imn), dRodR(1:Ntz,3,imn) )
+        call invfft( mn, im(1:mn), in(1:mn),-in(1:mn)*dRadZ(1:mn,1,0,imn),+in(1:mn)*dRadZ(1:mn,0,0,imn),-in(1:mn)*dRadZ(1:mn,1,1,imn),+in(1:mn)*dRadZ(1:mn,0,1,imn), &
+                      Nt, Nz, dRodZ(1:Ntz,2,imn), dRodZ(1:Ntz,3,imn) )
+        call invfft( mn, im(1:mn), in(1:mn),-in(1:mn)*dZadR(1:mn,1,0,imn),+in(1:mn)*dZadR(1:mn,0,0,imn),-in(1:mn)*dZadR(1:mn,1,1,imn),+in(1:mn)*dZadR(1:mn,0,1,imn), &
+                      Nt, Nz, dZodR(1:Ntz,2,imn), dZodR(1:Ntz,3,imn) )
+        call invfft( mn, im(1:mn), in(1:mn),-in(1:mn)*dZadZ(1:mn,1,0,imn),+in(1:mn)*dZadZ(1:mn,0,0,imn),-in(1:mn)*dZadZ(1:mn,1,1,imn),+in(1:mn)*dZadZ(1:mn,0,1,imn), &
+                      Nt, Nz, dZodZ(1:Ntz,2,imn), dZodZ(1:Ntz,3,imn) )
+
       enddo ! end of do ii; 03 Nov 16;
     end if !if (LComputeDerivatives) then
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -717,13 +726,22 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
             end if ! YESstellsym
 
             call invfft( mn, im(1:mn), in(1:mn), dRadR(1:mn,0,0,imn), dRadR(1:mn,1,0,imn), dRadR(1:mn,0,1,imn), dRadR(1:mn,1,1,imn), &
-                         Nt, Nz, dRodR(1:Ntz,0,imn), dRodR(1:Ntz,1,imn) )
+                         Nt, Nz, dRodR(1:Ntz,2,imn), dRodR(1:Ntz,3,imn) )
             call invfft( mn, im(1:mn), in(1:mn), dRadZ(1:mn,0,0,imn), dRadZ(1:mn,1,0,imn), dRadZ(1:mn,0,1,imn), dRadZ(1:mn,1,1,imn), &
-                         Nt, Nz, dRodZ(1:Ntz,0,imn), dRodZ(1:Ntz,1,imn) )
+                         Nt, Nz, dRodZ(1:Ntz,2,imn), dRodZ(1:Ntz,3,imn) )
             call invfft( mn, im(1:mn), in(1:mn), dZadR(1:mn,0,0,imn), dZadR(1:mn,1,0,imn), dZadR(1:mn,0,1,imn), dZadR(1:mn,1,1,imn), &
-                         Nt, Nz, dZodR(1:Ntz,0,imn), dZodR(1:Ntz,1,imn) )
+                         Nt, Nz, dZodR(1:Ntz,2,imn), dZodR(1:Ntz,3,imn) )
             call invfft( mn, im(1:mn), in(1:mn), dZadZ(1:mn,0,0,imn), dZadZ(1:mn,1,0,imn), dZadZ(1:mn,0,1,imn), dZadZ(1:mn,1,1,imn), &
-                         Nt, Nz, dZodZ(1:Ntz,0,imn), dZodZ(1:Ntz,1,imn) )
+                         Nt, Nz, dZodZ(1:Ntz,2,imn), dZodZ(1:Ntz,3,imn) )
+
+            call invfft( mn, im(1:mn), in(1:mn),-in(1:mn)*dRadR(1:mn,1,0,imn),+in(1:mn)*dRadR(1:mn,0,0,imn),-in(1:mn)*dRadR(1:mn,1,1,imn),+in(1:mn)*dRadR(1:mn,0,1,imn), &
+                         Nt, Nz, dRodR(1:Ntz,2,imn), dRodR(1:Ntz,3,imn) )
+            call invfft( mn, im(1:mn), in(1:mn),-in(1:mn)*dRadZ(1:mn,1,0,imn),+in(1:mn)*dRadZ(1:mn,0,0,imn),-in(1:mn)*dRadZ(1:mn,1,1,imn),+in(1:mn)*dRadZ(1:mn,0,1,imn), &
+                         Nt, Nz, dRodZ(1:Ntz,2,imn), dRodZ(1:Ntz,3,imn) )
+            call invfft( mn, im(1:mn), in(1:mn),-in(1:mn)*dZadR(1:mn,1,0,imn),+in(1:mn)*dZadR(1:mn,0,0,imn),-in(1:mn)*dZadR(1:mn,1,1,imn),+in(1:mn)*dZadR(1:mn,0,1,imn), &
+                         Nt, Nz, dZodR(1:Ntz,2,imn), dZodR(1:Ntz,3,imn) )
+            call invfft( mn, im(1:mn), in(1:mn),-in(1:mn)*dZadZ(1:mn,1,0,imn),+in(1:mn)*dZadZ(1:mn,0,0,imn),-in(1:mn)*dZadZ(1:mn,1,1,imn),+in(1:mn)*dZadZ(1:mn,0,1,imn), &
+                         Nt, Nz, dZodZ(1:Ntz,2,imn), dZodZ(1:Ntz,3,imn) )
 
 !******* This part is used to benchmark the matrices perturbation result with finite difference *******
 #ifdef DEBUG
