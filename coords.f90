@@ -590,7 +590,7 @@ Nt, Nz, Rij(1:Ntz,3,3), Zij(1:Ntz,3,3) ) ! maps to real space;
           DRxij(1:Ntz,3) = (one-sbar**2) * dRodZ(1:Ntz,1-issym+2,ii)  ! dRx/dZ, zeta derivative
 
           DZxij(1:Ntz,0) = (one-sbar**2) * dZodZ(1:Ntz,1-issym,ii)    ! dZx/dZ
-          DRxij(1:Ntz,1) = - sbar  * dRodZ(1:Ntz,1-issym,ii)
+          DZxij(1:Ntz,1) = - sbar  * dZodZ(1:Ntz,1-issym,ii)
           DZxij(1:Ntz,2) = zero
           DZxij(1:Ntz,3) = (one-sbar**2) * dZodZ(1:Ntz,1-issym+2,ii)  ! dZx/dZ, zeta derivative
         endif
@@ -669,25 +669,44 @@ Nt, Nz, Rij(1:Ntz,3,3), Zij(1:Ntz,3,3) ) ! maps to real space;
     dguvij(1:Ntz,2,2) = dguvij(1:Ntz,2,2) + two * Dij(1:Ntz,0) * Rij(1:Ntz,0,0)
    !dguvij(1:Ntz,3,3) = additional term is unity;
 
-   case( 3 ) ! Lcurvature=3,4,5 ; Igeometry=3 ; toroidal; 04 Dec 14;
+    case( 3 ) ! Lcurvature=3,4,5 ; Igeometry=3 ; toroidal; 04 Dec 14;
 
-  !                  sg(1:Ntz,0) = Rij(1:Ntz,0,0) * ( Zij(1:Ntz,1,0)*Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Zij(1:Ntz,2,0) )
-      if( irz.eq.0 ) sg(1:Ntz,1) = (Dij(1:Ntz,0  )+ DRxij(1:Ntz, 0)) * ( Zij(1:Ntz,1,0)*Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Zij(1:Ntz,2,0) ) & 
-                                + Rij(1:Ntz,0,0) * ( Zij(1:Ntz,1,0)*Dij(1:Ntz,2  ) - (Dij(1:Ntz,1  )+DRxij(1:Ntz,1)) *Zij(1:Ntz,2,0) ) 
-      if( irz.eq.1 ) sg(1:Ntz,1) = Rij(1:Ntz,0,0) * ( (Dij(1:Ntz,1  )+DZxij(1:Ntz,1)) *Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Dij(1:Ntz,2  ) )
-
-      sg(1:Ntz,1) = sg(1:Ntz,1)
-      
-      do ii = 1, 3 ! careful: ii was used with a different definition above; 13 Sep 13;
-        do jj = ii, 3
-          if( irz.eq.0 ) dguvij(1:Ntz,ii,jj) = (Dij(1:Ntz,ii)+DRxij(1:Ntz,ii)) * Rij(1:Ntz,jj,0) + Rij(1:Ntz,ii,0) * (Dij(1:Ntz,jj)+DRxij(1:Ntz,jj)) &
-                                             + DZxij(1:Ntz,ii) * Zij(1:Ntz,jj,0) + Zij(1:Ntz,ii,0) * DZxij(1:Ntz,jj)
-          if( irz.eq.1 ) dguvij(1:Ntz,ii,jj) = (Dij(1:Ntz,ii)+DZxij(1:Ntz,ii)) * Zij(1:Ntz,jj,0) + Zij(1:Ntz,ii,0) * (Dij(1:Ntz,jj)+DZxij(1:Ntz,jj)) & 
-                                             + DRxij(1:Ntz,ii) * Rij(1:Ntz,jj,0) + Rij(1:Ntz,ii,0) * DRxij(1:Ntz,jj)
+      if (LcoordinateSingularity) then
+    !                  sg(1:Ntz,0) = Rij(1:Ntz,0,0) * ( Zij(1:Ntz,1,0)*Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Zij(1:Ntz,2,0) )
+        if( irz.eq.0 ) sg(1:Ntz,1) = (Dij(1:Ntz,0  )+ DRxij(1:Ntz, 0)) * ( Zij(1:Ntz,1,0)*Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Zij(1:Ntz,2,0) ) & 
+                                  + Rij(1:Ntz,0,0) * ( Zij(1:Ntz,1,0)*Dij(1:Ntz,2  ) - (Dij(1:Ntz,1  )+DRxij(1:Ntz,1)) *Zij(1:Ntz,2,0) ) &
+                                  + Rij(1:Ntz,0,0) * ( DZxij(1:Ntz,1)*Rij(1:Ntz,2,0) )
+        if( irz.eq.1 ) sg(1:Ntz,1) = DRxij(1:Ntz, 0) * ( Zij(1:Ntz,1,0)*Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Zij(1:Ntz,2,0) ) &
+                                  + Rij(1:Ntz,0,0) * ( (Dij(1:Ntz,1  )+DZxij(1:Ntz,1)) *Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Dij(1:Ntz,2  ) ) &
+                                  + Rij(1:Ntz,0,0) * (-DRxij(1:Ntz,1)*Zij(1:Ntz,2,0))
+        
+        do ii = 1, 3 ! careful: ii was used with a different definition above; 13 Sep 13;
+          do jj = ii, 3
+            if( irz.eq.0 ) dguvij(1:Ntz,ii,jj) = (Dij(1:Ntz,ii)+DRxij(1:Ntz,ii)) * Rij(1:Ntz,jj,0) + Rij(1:Ntz,ii,0) * (Dij(1:Ntz,jj)+DRxij(1:Ntz,jj)) &
+                                              + DZxij(1:Ntz,ii) * Zij(1:Ntz,jj,0) + Zij(1:Ntz,ii,0) * DZxij(1:Ntz,jj)
+            if( irz.eq.1 ) dguvij(1:Ntz,ii,jj) = (Dij(1:Ntz,ii)+DZxij(1:Ntz,ii)) * Zij(1:Ntz,jj,0) + Zij(1:Ntz,ii,0) * (Dij(1:Ntz,jj)+DZxij(1:Ntz,jj)) & 
+                                              + DRxij(1:Ntz,ii) * Rij(1:Ntz,jj,0) + Rij(1:Ntz,ii,0) * DRxij(1:Ntz,jj)
+          enddo
         enddo
-      enddo
-      
-      if( irz.eq.0 ) dguvij(1:Ntz,3,3) = dguvij(1:Ntz,3,3) + two * (Dij(1:Ntz,0)+DRxij(1:Ntz,0)) * Rij(1:Ntz,0,0)
+        
+        if( irz.eq.0 ) dguvij(1:Ntz,3,3) = dguvij(1:Ntz,3,3) + two * (Dij(1:Ntz,0)+DRxij(1:Ntz,0)) * Rij(1:Ntz,0,0)
+
+      else 
+
+        if( irz.eq.0 ) sg(1:Ntz,1) = Dij(1:Ntz,0  ) * ( Zij(1:Ntz,1,0)*Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Zij(1:Ntz,2,0) ) & 
+                                  + Rij(1:Ntz,0,0) * ( Zij(1:Ntz,1,0)*Dij(1:Ntz,2  ) - Dij(1:Ntz,1  )*Zij(1:Ntz,2,0) ) 
+        if( irz.eq.1 ) sg(1:Ntz,1) = Rij(1:Ntz,0,0) * ( Dij(1:Ntz,1  )*Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Dij(1:Ntz,2  ) )
+
+        
+        do ii = 1, 3 ! careful: ii was used with a different definition above; 13 Sep 13;
+          do jj = ii, 3
+            if( irz.eq.0 ) dguvij(1:Ntz,ii,jj) = Dij(1:Ntz,ii) * Rij(1:Ntz,jj,0) + Rij(1:Ntz,ii,0) * Dij(1:Ntz,jj)
+            if( irz.eq.1 ) dguvij(1:Ntz,ii,jj) = Dij(1:Ntz,ii) * Zij(1:Ntz,jj,0) + Zij(1:Ntz,ii,0) * Dij(1:Ntz,jj)
+          enddo
+        enddo
+        
+        if( irz.eq.0 ) dguvij(1:Ntz,3,3) = dguvij(1:Ntz,3,3) + two * Dij(1:Ntz,0) * Rij(1:Ntz,0,0)
+      endif
 
     case default
       
