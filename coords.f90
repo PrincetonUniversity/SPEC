@@ -171,8 +171,7 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
                         cosi, sini, &
                         sg, guvij, &
                         dBdX, &
-                        dRodR, dRodZ, dZodR, dZodZ, &
-                        dRadR, dRadZ, dZadR, dZadZ
+                        dRodR, dRodZ, dZodR, dZodZ
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -596,6 +595,8 @@ Nt, Nz, Rij(1:Ntz,3,3), Zij(1:Ntz,3,3) ) ! maps to real space;
         endif
       endif
     endif
+    !DRxij(:,:) = zero
+    !DZxij(:,:) = zero
     
    else ! matches if( Lcoordinatesingularity ) ; 10 Mar 13;
     
@@ -690,6 +691,7 @@ Nt, Nz, Rij(1:Ntz,3,3), Zij(1:Ntz,3,3) ) ! maps to real space;
         enddo
         
         if( irz.eq.0 ) dguvij(1:Ntz,3,3) = dguvij(1:Ntz,3,3) + two * (Dij(1:Ntz,0)+DRxij(1:Ntz,0)) * Rij(1:Ntz,0,0)
+        if( irz.eq.1 ) dguvij(1:Ntz,3,3) = dguvij(1:Ntz,3,3) + two * (DRxij(1:Ntz,0)) * Rij(1:Ntz,0,0)
 
       else 
 

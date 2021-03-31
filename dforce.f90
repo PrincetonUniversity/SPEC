@@ -781,7 +781,8 @@ BEGIN(dforce)
             endif
 
             packorunpack = 'P' ! pack geometrical degrees-of-freedom;
-            LComputeAxis = .false. ! keep axis fixed
+            !LComputeAxis = .false. ! keep axis fixed
+            LComputeAxis = .true.
 
             WCALL(dforce, packxi,( NGdof, iposition(isymdiff,0:NGdof), Mvol, mn,iRbc(1:mn,0:Mvol),iZbs(1:mn,0:Mvol),iRbs(1:mn,0:Mvol),&
                                    iZbc(1:mn,0:Mvol),packorunpack, .false., LComputeAxis ) )
@@ -816,7 +817,7 @@ BEGIN(dforce)
     open(10, file=trim(ext)//'.Lcheck6_output.txt', status='unknown')
     write(ounit,'(A)') NEW_LINE('A')
   
-    do ii=1, NGdof
+    do ii=1, SIZE(im)
       write(ounit,1345) myid, im(ii), in(ii), hessian(ii,:)
       write(10   ,1347) hessian(ii,:)
     enddo
@@ -826,8 +827,8 @@ BEGIN(dforce)
 
     ! Print finite differences
     open(10, file=trim(ext)//'.Lcheck6_output.FiniteDiff.txt', status='unknown')
-    do ii=1, NGdof
-      write(ounit,1347) myid, im(ii), in(ii), finitediff_estimate(ii,:)
+    do ii=1, SIZE(im)
+      write(ounit,1346) myid, im(ii), in(ii), finitediff_estimate(ii,:)
       write(10   ,1347) finitediff_estimate(ii,:)
     enddo        
     write(ounit,'(A)') NEW_LINE('A')
