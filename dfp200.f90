@@ -234,7 +234,7 @@ subroutine dfp200( LcomputeDerivatives, vvol)
 
 
               ! Evaluate derivatives of B square 
-              call evaluate_dBB(vvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
+              call evaluate_dBB(vvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz, LcomputeDerivatives)
 
             enddo ! matches do innout;
           enddo ! matches do issym;
@@ -534,7 +534,7 @@ else ! CASE SEMI GLOBAL CONSTRAINT
                         LREGION(lvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
 
                         ! EVALUATE dBB
-                        call evaluate_dBB(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
+                        call evaluate_dBB(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz, LcomputeDerivatives)
 
                     enddo     ! matches do lvol = vvol, vvol+1 
 
@@ -853,7 +853,7 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
     INTEGER, allocatable::  IPIV(:)
     REAL                ::  det, lfactor, Bt00(1:Mvol, 0:1, -1:2)
     REAL                ::  R(1:Nvol-1), C(1:Nvol-1), work(1:4*Nvol-4), ferr, berr, rcond, tmp(2:Nvol)
-    LOGICAL             ::  Lonlysolution, LcomputeDerivatives
+    LOGICAL             ::  Lonlysolution, LcomputeDerivatives, dfp100_logical
     REAL, allocatable   ::  dBdmpf(:,:), dBdx2(:)
 
 #ifdef DEBUG
@@ -1145,12 +1145,12 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 
                 SALLOCATE( Fvec, (1:Mvol-1), zero)
 
-                Ndofgl = 0; Fvec(1:Mvol-1) = 0; iflag = 0;
+                Ndofgl = 0; Fvec(1:Mvol-1) = 0; dfp100_logical = .FALSE.;
                 Xdof(1:Mvol-1) = dpflux(2:Mvol) + xoffset
                 
                 ! Solve for field
                 dBdX%L = .false. ! No need for derivatives in this context
-                WCALL(dfp200, dfp100, (Ndofgl, Xdof, Fvec, iflag) )
+                WCALL(dfp200, dfp100, (Ndofgl, Xdof, Fvec, dfp100_logical) )
 
                 DALLOCATE( Fvec )
 
@@ -1173,7 +1173,9 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
                 SALLOCATE(     Fvec, (1:Ndofgl), zero )
                 SALLOCATE(     IPIV, (1:Mvol-1), zero )
 
-                WCALL(dfp200, dfp100, (Ndofgl, Xdof(1:Mvol-1), Fvec(1:Ndofgl), 1))
+                dfp100_logical = .TRUE.
+
+                WCALL(dfp200, dfp100, (Ndofgl, Xdof(1:Mvol-1), Fvec(1:Ndofgl), dfp100_logical))
 
                 ! Only one cpu with this test - thus no need for broadcast
                 dpfluxout = Fvec
@@ -1361,7 +1363,8 @@ end subroutine evaluate_dmupfdx
 !> @param dLL
 !> @param dPP
 !> @param Ntz
-subroutine evaluate_dBB(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
+!> @param LcomputeDerivatives
+subroutine evaluate_dBB(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz, LcomputeDerivatives)
 
 ! Evaluate the derivative of the square of the magnetic field modulus. Add spectral constraint derivatives if
 ! required. 
@@ -1415,6 +1418,7 @@ subroutine evaluate_dBB(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, length,
  LOCALS
 !------
 
+LOGICAL, intent(in)     :: LComputeDerivatives
 INTEGER                 :: iocons, lvol, ideriv, id, iflag, Lcurvature, innout, issym, irz, ii, ifail, idoc, idof, Ntz
 REAL                    :: lss, DDl, MMl
 REAL                    :: dAt(1:Ntz,-1:2), dAz(1:Ntz,-1:2), XX(1:Ntz), YY(1:Ntz), dBB(1:Ntz,-1:2), dII(1:Ntz), dLL(1:Ntz)

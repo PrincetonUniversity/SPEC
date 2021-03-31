@@ -105,8 +105,13 @@ program xspech
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   if( myid.eq.0 ) then
+#ifdef OPENMP
+  nthreads = omp_get_max_threads()
+#else
+  nthreads = 1
+#endif
    write(ounit,'("xspech : ", 10x ," : ")')
-   write(ounit,'("xspech : ",f10.2," : begin execution ; ncpu=",i3," ; calling global:readin ;")') cpus-cpus, ncpu
+   write(ounit,'("xspech : ",f10.2," : begin execution ; ncpu=",i3," ; omp_threads=",i3,"; calling global:readin ;")') cpus-cpus, ncpu, nthreads
   endif
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

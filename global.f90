@@ -74,7 +74,7 @@ module constants
   REAL, parameter :: mu0        =   2.0E-07 * pi2       !< \f$4\pi\cdot10^{-7}\f$
   REAL, parameter :: goldenmean =   1.618033988749895   !< golden mean = \f$( 1 + \sqrt 5 ) / 2\f$ ;
 
-  REAL, parameter :: version    =   2.00  !< version of SPEC
+  REAL, parameter :: version    =   3.01  !< version of SPEC
 
 end module constants
 
@@ -1209,6 +1209,9 @@ module allglobal
 
    REAL,   allocatable :: dMG(:  ) !< what is this?
 
+   REAL,   allocatable :: AdotX(:) !< the matrix-vector product
+   REAL,   allocatable :: DdotX(:) !< the matrix-vector product
+
    REAL,   allocatable :: solution(:,:) !< this is allocated in dforce; used in mp00ac and ma02aa; and is passed to packab
 
    REAL,   allocatable :: GMRESlastsolution(:,:,:) !< used to store the last solution for restarting GMRES
@@ -1217,7 +1220,7 @@ module allglobal
 
    LOGICAL             :: LILUprecond        !< whether to use ILU preconditioner for GMRES
 
-   REAL,   allocatable :: BeltramiInverse(:,:) !< what is this?
+   REAL,   allocatable :: BeltramiInverse(:,:) !< Beltrami inverse matrix
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

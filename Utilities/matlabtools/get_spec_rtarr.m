@@ -27,8 +27,10 @@ function rtdata = get_spec_rtarr(data,lvol,sarr,tarr,zarr0)
 Rac     = data.output.Rbc(:,lvol);   % inner volume boundary harmonics
 Rbc     = data.output.Rbc(:,lvol+1); % outer volume boundary harmonics
 
-
+if(size(sarr,1)==1)
 sarr    = transpose(sarr);
+end
+
 ns      = length(sarr);
 nt      = length(tarr);
 sbar    = (sarr+1)/2;
