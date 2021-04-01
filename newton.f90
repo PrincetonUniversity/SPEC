@@ -93,8 +93,8 @@ subroutine newton( NGdof, position, ihybrd )
   INTEGER                :: irevcm, mode, Ldfjac, LR
   REAL                   :: xtol, epsfcn, factor
   REAL                   :: diag(1:NGdof), QTF(1:NGdof), workspace(1:NGdof,1:4)
-  REAL                   :: sdxtol=1e-6, sdgtol=1e-20, sdftol=1e-11
-  INTEGER                :: sditmax=1000, sdiprint=1, sdiflag=0
+  REAL                   :: sdxtol=1e-6, sdgtol=1e-20, sdftol=1e-16
+  INTEGER                :: sditmax=1000, sdiprint=2, sdiflag=0
 
 
   REAL                   :: force(0:NGdof)
@@ -186,7 +186,7 @@ subroutine newton( NGdof, position, ihybrd )
   SALLOCATE( fjac, (1:NGdof, 1:NGdof), zero)
   SALLOCATE( RR, (1:NGdof*(NGdof+1)/2), zero)
 
-  if( Lfindzero.eq.2 .or. Lfindzero.eq.3 ) then
+  if( Lfindzero.eq.2 .or. Lfindzero.eq.3 .or. Lfindzero.eq.4) then
     SALLOCATE( dFFdRZ, (1:LGdof,0:1,1:LGdof,0:1,1:Mvol), zero )
     SALLOCATE( dBBdmp, (1:LGdof,1:Mvol,0:1,1:2), zero )
    if( LocalConstraint ) then
@@ -221,9 +221,17 @@ subroutine newton( NGdof, position, ihybrd )
   case( 3 ) ! use function values to find f(x)=0 using a conjugate gradient descent algorithm
 
    write(*,*) "-------------------- Under construction --------------------"
+   WCALL(newton, fcndescent, (position(1:NGdof),NGdof))
+   WCALL( newton, hybrj, ( fcn2, NGdof, position(1:NGdof), force(1:NGdof), fjac(1:Ldfjac,1:NGdof), Ldfjac, &
+          xtol, maxfev,                 diag(1:NGdof), mode, factor, nprint, ihybrd, nfev, njev, &
+          RR(1:LR), LR, QTF(1:NGdof), workspace(1:NGdof,1), workspace(1:NGdof,2), workspace(1:NGdof,3), workspace(1:NGdof,4) ) )
+   write(*,*) "-------------------- Under construction --------------------"
+
+  case( 4 ) ! use function values to find f(x)=0 using a conjugate gradient descent algorithm
+
+   write(*,*) "-------------------- Under construction --------------------"
    WCALL(newton, steepest_descent, (NGdof,position(1:NGdof),Energy,sdxtol,sdgtol,sdftol,sditmax &
      ,sdiprint,sdiflag,fcnval,fcngrad))
-   !WCALL(newton, fcndescent, (position(1:NGdof),NGdof))
    WCALL( newton, hybrj, ( fcn2, NGdof, position(1:NGdof), force(1:NGdof), fjac(1:Ldfjac,1:NGdof), Ldfjac, &
           xtol, maxfev,                 diag(1:NGdof), mode, factor, nprint, ihybrd, nfev, njev, &
           RR(1:LR), LR, QTF(1:NGdof), workspace(1:NGdof,1), workspace(1:NGdof,2), workspace(1:NGdof,3), workspace(1:NGdof,4) ) )
@@ -743,9 +751,10 @@ function fcnval(n,xx)
 
   use inputlist, only : Wmacros, Wnewton, ext, &
                         Igeometry, & ! only for screen output; 
-                        Nvol,                    &
+                        Nvol,     &
                         Lfindzero, forcetol, c05xmax, c05xtol, c05factor, LreadGF, &
-                        Lcheck
+                        Lcheck, &
+                        Lconstraint, mu
 
   use cputiming, only : Tnewton
 
@@ -755,7 +764,8 @@ function fcnval(n,xx)
                         mn, im, in, iRbc, iZbs, iRbs, iZbc, Mvol, &
                         BBe, IIo, BBo, IIe, &
                         LGdof, dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated, &
-                        nfreeboundaryiterations
+                        nfreeboundaryiterations, &
+                        lABintegral
   
   use newtontime
 
@@ -786,8 +796,12 @@ function fcnval(n,xx)
     LComputeAxis = .true.
     WCALL( newton, dforce, ( n, position(0:n), force(0:n), LComputeDerivatives, LComputeAxis ) ) ! calculate the force-imbalance;
 
-    
+   ! if(Lconstraint.eq.0) then
+   !  fcnval = Energy - sum( mu(1:Nvol)*lABintegral(1:Nvol) )   
+   ! else
     fcnval = Energy
+   ! endif
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
  end function fcnval
@@ -867,7 +881,7 @@ subroutine fcndescent(xx, NGdof)
  INTEGER, INTENT(in)  :: NGdof
  REAL , INTENT(inout) :: xx(1:NGdof)
 
- REAL                 :: deltax=1.0E-5, ditmax = 20000, dtol = 3e-9 
+ REAL                 :: deltax=1.0E-5, ditmax = 20000, dtol = 1e-9 
  REAL                 :: position(0:NGdof), force(0:NGdof)
  INTEGER              :: it
  LOGICAL              :: LComputeDerivatives, LComputeAxis
