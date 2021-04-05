@@ -913,6 +913,4 @@ subroutine fcndescent(xx, NGdof)
 
  xx = position(1:NGdof)
 
- RETURN
-
 end subroutine
