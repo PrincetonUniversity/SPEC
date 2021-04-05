@@ -31,9 +31,9 @@ subroutine lbpol(lvol, Bt00, ideriv, iocons)
   LOCALS
 ! ------
   
-  INTEGER, intent(in)    :: ideriv      !< lbpol will return \f$B_{\theta,e,0,0}\f$ (0) or its derivative with respect to the geometry (-1), mu (1) or the poloidal flux (2). \f$\text{ideriv}\in\{-1,\ldots,2\} \f$
-  INTEGER, intent(in)    :: lvol        !< Volume index. \f$\text{lvol}\in\{1,\ldots,\text{Mvol}\} \f$
-  INTEGER, intent(in)    :: iocons      !< \f$B_{\theta,e,0,0}\f$ is evaluated on the inner (iocons=0) or outer (iocons=1) volume boundary. \f$\text{iocons}\in\{0,1\} \f$
+  INTEGER, intent(in)    :: ideriv      !< lbpol will return \f$B_{\theta,e,0,0}\f$ (0) or its derivative with respect to the geometry (-1), mu (1) or the poloidal flux (2). \f$\mbox{ideriv}\in\{-1,\ldots,2\} \f$
+  INTEGER, intent(in)    :: lvol        !< Volume index. \f$\mbox{lvol}\in\{1,\ldots,\mbox{Mvol}\} \f$
+  INTEGER, intent(in)    :: iocons      !< \f$B_{\theta,e,0,0}\f$ is evaluated on the inner (iocons=0) or outer (iocons=1) volume boundary. \f$\mbox{iocons}\in\{0,1\} \f$
   REAL,    intent(inout) :: Bt00(1:Mvol, 0:1, -1:2) !< \f$B_{\theta,e,0,0}\f$, with indices Bt00( lvol, iocons, ideriv ).
   INTEGER   :: Lcurvature  !< Input to coords(). Specify what geometrical quantity is returned.
   INTEGER   :: ifail       !< Dummy variable used when tfft() is called.
