@@ -109,7 +109,7 @@ end subroutine get_cheby_d2
 !> R_l^m(s) = \frac{2(l-1)(2l(l-2)s^2 -m^2 -l(l-2))R_{l-2}^m(s) - l (l+m-2) (l-m-2)R_{l-4}^m(s) }{(l+m)(l-m)(l-2)}
 !> \f}
 !>
-!> For \f$m=0\f$ and \f$m=1\f$, a basis recombination method is used by defining new radial basis functions as
+!> For \f$ m=0 \f$ and \f$ m=1 \f$, a basis recombination method is used by defining new radial basis functions as
 !> \f{eqnarray*}{
 !>    \hat{R}_{0}^{0} &= 1, &
 !>    \hat{R}^{0}_{l} &= \frac{1}{l+1}R^{0}_{l} - \frac{(-1)^{l/2}}{l+1}, 
