@@ -144,6 +144,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
                         NAdof, &
 !                       dMA, dMB, dMC, dMD, dME, dMF, dMG, &
                         dMA, dMB,      dMD,           dMG, &
+                        Adotx, Ddotx,&
                         NdMASmax, NdMAS, dMAS, dMDS, idMAS, jdMAS, & ! preconditioning matrix
                         solution, GMRESlastsolution, &
                         dtflux, dpflux, &
@@ -329,9 +330,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
     if (NOTMatrixFree) then
     ; ;           ; rhs(1:NN,1) =                                                              - matmul( - one  * dMD(1:NN,1:NN), solution(1:NN,0) )
     else ! Matrix free version
-    ; ;call intghs(Iquad(lvol), mn, lvol, Lrad(lvol), 0) ! compute the integrals of B_lower
-    ; ;call mtrxhs(lvol, mn, Lrad(lvol), wk(1:NN+1), wk(NN+2:2*NN+2), 0) ! construct a.x from the integral
-    ; ;           ; rhs(1:NN,1) = wk(NN+3:2*NN+2)
+    ; ;           ; rhs(1:NN,1) = Ddotx(1:NN)
     endif ! NOTMatrixFree
     ; ;           ; rhs(1:NN,2) = - matmul(  dMB(1:NN,1:2)                       , ppsi(1:2) )
     ;end select
@@ -350,9 +349,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
     if (NOTMatrixFree) then
     ; ;           ; rhs(1:NN,1) =                                                              - matmul( - one  * dMD(1:NN,1:NN), solution(1:NN,0) )
     else ! Matrix free version
-    ; ;call intghs(Iquad(lvol), mn, lvol, Lrad(lvol), 0) ! compute the integrals of B_lower
-    ; ;call mtrxhs(lvol, mn, Lrad(lvol), wk(1:NN+1), wk(NN+2:2*NN+2), 0) ! construct a.x from the integral
-    ; ;           ; rhs(1:NN,1) = wk(NN+3:2*NN+2)
+    ; ;           ; rhs(1:NN,1) = Ddotx(1:NN)
     endif ! NOTMatrixFree
     ; ;           ; rhs(1:NN,2) = - matmul(  dMB(1:NN,1:2)                       , ppsi(1:2) )
     ;end select
@@ -504,6 +501,11 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
    
    packorunpack = 'U'
    WCALL( mp00ac, packab, ( packorunpack, lvol, NN, solution(1:NN,ideriv), ideriv ) ) ! unpacking; this assigns oAt, oAz through common;
+
+   if (ideriv .eq. 0 .and. .not. NOTMatrixFree) then
+      call intghs(Iquad(lvol), mn, lvol, Lrad(lvol), 0) ! compute the integrals of B_lower
+      call mtrxhs(lvol, mn, Lrad(lvol), Adotx, Ddotx, 0) ! construct a.x from the integral
+   endif
    
   enddo ! do ideriv = 0, 2;
 
@@ -520,13 +522,11 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 !                    +        sum( solution(1:NN,0) * matmul( dME(1:NN,1: 2),     dpsi(1: 2  ) ) ) !
 !                    + half * sum(     dpsi(1: 2  ) * matmul( dMF(1: 2,1: 2),     dpsi(1: 2  ) ) )
   else
-    call intghs(Iquad(lvol), mn, lvol, Lrad(lvol), 0) ! compute the integrals of B_lower
-    call mtrxhs(lvol, mn, Lrad(lvol), wk(1:NN+1), wk(NN+2:2*NN+2), 0) ! construct a.x from the integral
 
-    lBBintegral(lvol) = half * sum( solution(1:NN,0) * wk(2:NN+1) ) & 
+    lBBintegral(lvol) = half * sum( solution(1:NN,0) * Adotx(1:NN) ) & 
                       +        sum( solution(1:NN,0) * matmul( dMB(1:NN,1: 2),     dpsi(1: 2  ) ) ) !
 
-    lABintegral(lvol) = half * sum( solution(1:NN,0) * wk(NN+3:2*NN+2) )
+    lABintegral(lvol) = half * sum( solution(1:NN,0) * Ddotx(1:NN) )
   endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!  
@@ -673,8 +673,15 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   case(  2 )
 
    if ( iflag.eq.1 ) Fdof(1     ) = lABintegral(lvol) - helicity(lvol)
-   if ( iflag.eq.2 ) Ddof(1   ,1) = half * sum( solution(1:NN,1) * matmul( dMD(1:NN,1:NN), solution(1:NN,0) ) ) &
-                                  + half * sum( solution(1:NN,0) * matmul( dMD(1:NN,1:NN), solution(1:NN,1) ) )
+   
+   if (NOTMatrixFree) then
+    if ( iflag.eq.2 ) Ddof(1   ,1) = half * sum( solution(1:NN,1) * matmul( dMD(1:NN,1:NN), solution(1:NN,0) ) ) &
+                                    + half * sum( solution(1:NN,0) * matmul( dMD(1:NN,1:NN), solution(1:NN,1) ) )
+   else
+    if ( iflag.eq.2 ) then
+      Ddof(1   ,1) = sum( solution(1:NN,1) * Ddotx(1:NN) )
+    endif
+   endif
 
   case(  3 )
 

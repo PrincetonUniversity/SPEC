@@ -70,11 +70,7 @@
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-#ifdef DEBUG
-recursive subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivatives )
-#else
 subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivatives )
-#endif
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -731,62 +727,9 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
 
 !******* This part is used to benchmark the matrices perturbation result with finite difference *******
 #ifdef DEBUG
-            if (Lcheck .eq. 8) then ! check the analytical derivative with the finite difference
-              threshold = 1e-8 ! print with difference between FD and analytical more than this threshold
-              dx = 1e-8 * jRbc(1,ivol)
-
-              newRbc = jRbc
-              newRbs = jRbs
-              newZbc = jZbc
-              newZbs = jZbs
-
-              if (irz .eq. 0 .and. issym .eq. 0) then
-                newRbc(imn, ivol) = jRbc(imn, ivol) + dx
-              else if (irz .eq. 1 .and. issym .eq. 0) then
-                newZbs(imn, ivol) = jZbs(imn, ivol) + dx
-              else if (irz .eq. 0 .and. issym .eq. 1) then
-                newRbs(imn, ivol) = jRbs(imn, ivol) + dx
-              else if (irz .eq. 1 .and. issym .eq. 1) then
-                newZbc(imn, ivol) = jZbc(imn, ivol) + dx
-              end if
-              
-              ! call the same subroutine recursively, but do not compute derivatives
-              call rzaxis( Mvol, mn, newRbc, newZbs, newRbs, newZbc, ivol, .false. )
-
-              ! compare the derivatives
-              do ii = 1, Ntoraxis+1
-                if (irz.eq.0) then
-                  if (abs((newRbc(ii,0) - jRbc(ii,jvol))/dx -  dRadR(ii,0,issym,imn))/jRbc(1,ivol) .ge. threshold) then
-                    write(ounit, *) 'dRc/dR: ii,m,n,issym', ii, im(imn), in(imn),issym, (newRbc(ii,0) - jRbc(ii,jvol))/dx, dRadR(ii,0,issym,imn), dx, newRbc(ii,0), jRbc(ii,jvol)
-                  endif
-                  if (abs((newZbs(ii,0) - jZbs(ii,jvol))/dx -  dZadR(ii,1,issym,imn))/jRbc(1,ivol) .ge. threshold) then
-                    write(ounit, *) 'dZs/dR: ii,m,n,issym', ii, im(imn), in(imn),issym, (newZbs(ii,0) - jZbs(ii,jvol))/dx, dZadR(ii,1,issym,imn), dx
-                  endif
-                  if (NOTstellsym) then
-                    if (abs((newRbs(ii,0) - jRbs(ii,jvol))/dx -  dRadR(ii,1,issym,imn))/jRbc(1,ivol) .ge. threshold) then
-                      write(ounit, *) 'dRs/dR: ii,m,n,issym', ii, im(imn), in(imn),issym, (newRbs(ii,0) - jRbs(ii,jvol))/dx, dRadR(ii,1,issym,imn), dx
-                    endif
-                    if (abs((newZbc(ii,0) - jZbc(ii,jvol))/dx -  dZadR(ii,0,issym,imn))/jRbc(1,ivol) .ge. threshold) then
-                      write(ounit, *) 'dZc/dR: ii,m,n,issym', ii, im(imn), in(imn),issym, (newZbc(ii,0) - jZbc(ii,jvol))/dx, dZadR(ii,0,issym,imn), dx
-                    endif
-                  endif
-                else if (irz.eq.1) then
-                  if (abs((newRbc(ii,0) - jRbc(ii,jvol))/dx -  dRadZ(ii,0,1-issym,imn))/jRbc(1,ivol) .ge. threshold) then
-                    write(ounit, *) 'dRc/dZ: ii,m,n,issym', ii, im(imn), in(imn),issym, (newRbc(ii,0) - jRbc(ii,jvol))/dx, dRadZ(ii,0,1-issym,imn), dx
-                  endif
-                  if (abs((newZbs(ii,0) - jZbs(ii,jvol))/dx -  dZadZ(ii,1,1-issym,imn))/jRbc(1,ivol) .ge. threshold) then
-                    write(ounit, *) 'dZs/dZ: ii,m,n,issym', ii, im(imn), in(imn),issym, (newZbs(ii,0) - jZbs(ii,jvol))/dx, dZadZ(ii,1,1-issym,imn), dx
-                  endif
-                  if (abs((newRbs(ii,0) - jRbs(ii,jvol))/dx -  dRadZ(ii,1,1-issym,imn))/jRbc(1,ivol) .ge. threshold) then
-                    write(ounit, *) 'dRs/dZ: ii,m,n,issym', ii, im(imn), in(imn),issym, (newRbs(ii,0) - jRbs(ii,jvol))/dx, dRadZ(ii,1,1-issym,imn), dx
-                  endif
-                  if (abs((newZbc(ii,0) - jZbc(ii,jvol))/dx -  dZadZ(ii,0,1-issym,imn))/jRbc(1,ivol) .ge. threshold) then
-                    write(ounit, *) 'dZc/dZ: ii,m,n,issym', ii, im(imn), in(imn),issym, (newZbc(ii,0) - jZbc(ii,jvol))/dx, dZadZ(ii,0,1-issym,imn), dx
-                  endif
-                endif
-              enddo
-
-            end if ! Lcheck .eq. 8
+if (Lcheck .eq. 8) then ! check the analytical derivative with the finite difference
+  call fndiff_rzaxis( Mvol, mn, ivol, jRbc, jRbs, jZbc, JZbs, imn, irz, issym )
+end if ! Lcheck .eq. 8
 #endif
 !******* END part used to benchmark the matrices perturbation result with finite difference *******
 
@@ -883,5 +826,94 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 end subroutine rzaxis
+
+subroutine fndiff_rzaxis( Mvol, mn, ivol, jRbc, jRbs, jZbc, JZbs, imn, irz, issym )
+
+  use constants, only : zero, one, half, two
+
+  use numerical, only : vsmall
+
+  use fileunits, only : ounit
+
+  use inputlist, only : Wrzaxis, Wmacros, Ntor, Ntoraxis
+
+  use cputiming, only : Trzaxis
+
+  use allglobal, only : ncpu, myid, cpus, im, in, &
+                        dRodR, dRodZ, dZodR, dZodZ, &
+                        dRadR, dRadZ, dZadR, dZadZ, &
+                        NOTstellsym
+
+LOCALS
+
+  INTEGER, intent(in)    :: Mvol, mn, ivol, imn, irz, issym
+  REAL, intent(in)       :: jRbc(1:mn,0:Mvol), jZbs(1:mn,0:Mvol), jRbs(1:mn,0:Mvol), jZbc(1:mn,0:Mvol)
+
+  INTEGER                :: jvol, ii
+  REAL                   :: dx, threshold ! used to check result with finite difference.
+  REAL                   :: newRbc(1:mn,0:Mvol), newZbs(1:mn,0:Mvol), newRbs(1:mn,0:Mvol), newZbc(1:mn,0:Mvol)
+
+BEGIN( rzaxis )
+
+  threshold = 1e-8 ! print with difference between FD and analytical more than this threshold
+  dx = 1e-8 * jRbc(1,ivol)
+  jvol = 0
+  Ntoraxis = min(Ntor,Ntoraxis)
+
+  newRbc = jRbc
+  newRbs = jRbs
+  newZbc = jZbc
+  newZbs = jZbs
+
+  if (irz .eq. 0 .and. issym .eq. 0) then
+    newRbc(imn, ivol) = jRbc(imn, ivol) + dx
+  else if (irz .eq. 1 .and. issym .eq. 0) then
+    newZbs(imn, ivol) = jZbs(imn, ivol) + dx
+  else if (irz .eq. 0 .and. issym .eq. 1) then
+    newRbs(imn, ivol) = jRbs(imn, ivol) + dx
+  else if (irz .eq. 1 .and. issym .eq. 1) then
+    newZbc(imn, ivol) = jZbc(imn, ivol) + dx
+  end if
+  
+  ! call the same subroutine recursively, but do not compute derivatives
+  call rzaxis( Mvol, mn, newRbc, newZbs, newRbs, newZbc, ivol, .false. )
+
+  ! compare the derivatives
+  do ii = 1, Ntoraxis+1
+    if (irz.eq.0) then
+      if (abs((newRbc(ii,0) - jRbc(ii,jvol))/dx -  dRadR(ii,0,issym,imn))/jRbc(1,ivol) .ge. threshold) then
+        write(ounit, *) 'dRc/dR: ii,m,n,issym', ii, im(imn), in(imn),issym, (newRbc(ii,0) - jRbc(ii,jvol))/dx, dRadR(ii,0,issym,imn), dx, newRbc(ii,0), jRbc(ii,jvol)
+      endif
+      if (abs((newZbs(ii,0) - jZbs(ii,jvol))/dx -  dZadR(ii,1,issym,imn))/jRbc(1,ivol) .ge. threshold) then
+        write(ounit, *) 'dZs/dR: ii,m,n,issym', ii, im(imn), in(imn),issym, (newZbs(ii,0) - jZbs(ii,jvol))/dx, dZadR(ii,1,issym,imn), dx
+      endif
+      if (NOTstellsym) then
+        if (abs((newRbs(ii,0) - jRbs(ii,jvol))/dx -  dRadR(ii,1,issym,imn))/jRbc(1,ivol) .ge. threshold) then
+          write(ounit, *) 'dRs/dR: ii,m,n,issym', ii, im(imn), in(imn),issym, (newRbs(ii,0) - jRbs(ii,jvol))/dx, dRadR(ii,1,issym,imn), dx
+        endif
+        if (abs((newZbc(ii,0) - jZbc(ii,jvol))/dx -  dZadR(ii,0,issym,imn))/jRbc(1,ivol) .ge. threshold) then
+          write(ounit, *) 'dZc/dR: ii,m,n,issym', ii, im(imn), in(imn),issym, (newZbc(ii,0) - jZbc(ii,jvol))/dx, dZadR(ii,0,issym,imn), dx
+        endif
+      endif
+    else if (irz.eq.1) then
+      if (abs((newRbc(ii,0) - jRbc(ii,jvol))/dx -  dRadZ(ii,0,1-issym,imn))/jRbc(1,ivol) .ge. threshold) then
+        write(ounit, *) 'dRc/dZ: ii,m,n,issym', ii, im(imn), in(imn),issym, (newRbc(ii,0) - jRbc(ii,jvol))/dx, dRadZ(ii,0,1-issym,imn), dx
+      endif
+      if (abs((newZbs(ii,0) - jZbs(ii,jvol))/dx -  dZadZ(ii,1,1-issym,imn))/jRbc(1,ivol) .ge. threshold) then
+        write(ounit, *) 'dZs/dZ: ii,m,n,issym', ii, im(imn), in(imn),issym, (newZbs(ii,0) - jZbs(ii,jvol))/dx, dZadZ(ii,1,1-issym,imn), dx
+      endif
+      if (abs((newRbs(ii,0) - jRbs(ii,jvol))/dx -  dRadZ(ii,1,1-issym,imn))/jRbc(1,ivol) .ge. threshold) then
+        write(ounit, *) 'dRs/dZ: ii,m,n,issym', ii, im(imn), in(imn),issym, (newRbs(ii,0) - jRbs(ii,jvol))/dx, dRadZ(ii,1,1-issym,imn), dx
+      endif
+      if (abs((newZbc(ii,0) - jZbc(ii,jvol))/dx -  dZadZ(ii,0,1-issym,imn))/jRbc(1,ivol) .ge. threshold) then
+        write(ounit, *) 'dZc/dZ: ii,m,n,issym', ii, im(imn), in(imn),issym, (newZbc(ii,0) - jZbc(ii,jvol))/dx, dZadZ(ii,0,1-issym,imn), dx
+      endif
+    endif
+  enddo
+
+
+RETURN( rzaxis )
+
+end subroutine fndiff_rzaxis
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
