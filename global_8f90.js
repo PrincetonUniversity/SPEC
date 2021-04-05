@@ -388,6 +388,8 @@ var global_8f90 =
     [ "ndmasmax", "global_8f90.html#ga77df4e865b15c5e97dc5c36806cf4268", null ],
     [ "ndmas", "global_8f90.html#ga8747722d43e2eb2ebf18db8897e7d280", null ],
     [ "dmg", "global_8f90.html#gabf45dbde867eb2274ba00f920094adc7", null ],
+    [ "adotx", "global_8f90.html#gabaa4df5889c3b35ef5ef226d761bd998", null ],
+    [ "ddotx", "global_8f90.html#ga73474059e48c853a59e14ad11d7af47b", null ],
     [ "solution", "global_8f90.html#ga8d8e425308b9103e03d3f17df8dac68a", null ],
     [ "gmreslastsolution", "global_8f90.html#gaad695d0d2e798647d6aec5cba452f0c3", null ],
     [ "mbpsi", "global_8f90.html#ga8eeebba442839ee1d13bf6a5748943c8", null ],

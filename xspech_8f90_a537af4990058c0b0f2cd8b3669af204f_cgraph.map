@@ -4,7 +4,7 @@
 <area shape="rect" id="node3" href="$group__grp__free-boundary.html#gac0a2cc2241947b27241bb8ef75c5e0ed" title="Computes &#160;on the computational boundary, ." alt="" coords="473,948,534,975"/>
 <area shape="rect" id="node7" href="$group__grp__global__force.html#ga38c9d3c50bd043707fefa5137c9dbf44" title="Calculates , where &#160;and , and ." alt="" coords="641,473,699,500"/>
 <area shape="rect" id="node15" href="$group__grp__volume.html#gae4c62d20b8fef07f4471b5b0889ab005" title="Computes volume of each region; and, if required, the derivatives of the volume with respect to the i..." alt="" coords="1163,745,1227,772"/>
-<area shape="rect" id="node22" href="$lbpol_8f90.html#a29ae6196c664f390d0e60ab7916c806b" title="Computes Btheta at the interface." alt="" coords="963,5,1013,32"/>
+<area shape="rect" id="node22" href="$lbpol_8f90.html#a29ae6196c664f390d0e60ab7916c806b" title=" " alt="" coords="963,5,1013,32"/>
 <area shape="rect" id="node29" href="$group__grp__packing.html#ga094e630c02686dd178749eb1efbf13fb" title="Packs, and unpacks, geometrical degrees of freedom; and sets coordinate axis." alt="" coords="785,796,844,823"/>
 <area shape="rect" id="node31" href="$group__grp__diagnostics.html#ga7401b50ec10c6598ee4a8112717a63ec" title="Computes eigenvalues and eigenvectors of derivative matrix, ." alt="" coords="226,796,286,823"/>
 <area shape="rect" id="node32" href="$group__grp__initialization.html#ga28628de0fdb3b3497668007d8d0643bd" title="Allocates and initializes internal arrays." alt="" coords="339,1201,397,1228"/>

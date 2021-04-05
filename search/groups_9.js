@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['numericlist_1340',['numericlist',['../group__grp__global__numerics.html',1,'']]]
+  ['metric_20quantities_1348',['Metric quantities',['../group__grp__metrics.html',1,'']]],
+  ['miscellaneous_1349',['Miscellaneous',['../group__grp__misc.html',1,'']]]
 ];

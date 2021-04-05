@@ -1,6 +1,8 @@
 var searchData=
 [
-  ['geometrical_20degrees_2dof_2dfreedom_3a_20lgdof_2c_20ngdof_1328',['Geometrical degrees-of-freedom: LGdof, NGdof',['../group__grp__geomdof.html',1,'']]],
-  ['geometry_1329',['Geometry',['../group__grp__geometry.html',1,'']]],
-  ['globallist_1330',['globallist',['../group__grp__global__global.html',1,'']]]
+  ['field_20matrices_3a_20dma_2c_20dmb_2c_20dmc_2c_20dmd_2c_20dme_2c_20dmf_1333',['Field matrices: dMA, dMB, dMC, dMD, dME, dMF',['../group__grp__field__matrices.html',1,'']]],
+  ['force_2ddriver_1334',['Force-driver',['../group__grp__force__driver.html',1,'']]],
+  ['fourier_20representation_1335',['Fourier representation',['../group__grp__fourier__repr.html',1,'']]],
+  ['fourier_20transforms_1336',['Fourier Transforms',['../group__grp__fourier__transform.html',1,'']]],
+  ['free_2dboundary_20computation_1337',['Free-Boundary Computation',['../group__grp__free-boundary.html',1,'']]]
 ];

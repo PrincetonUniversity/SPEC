@@ -3,9 +3,9 @@
 <area shape="rect" id="node2" href="$group__grp__free-boundary.html#gac0a2cc2241947b27241bb8ef75c5e0ed" title="Computes &#160;on the computational boundary, ." alt="" coords="590,1283,651,1309"/>
 <area shape="rect" id="node3" href="$group__grp__initialization.html#ga28628de0fdb3b3497668007d8d0643bd" title="Allocates and initializes internal arrays." alt="" coords="428,1181,487,1208"/>
 <area shape="rect" id="node7" href="$group__grp__currents.html#gacaf4411e0ba378631dcd2ccb3752e452" title="Computes the plasma current, , and the &quot;linking&quot; current, ." alt="" coords="1317,296,1375,323"/>
-<area shape="rect" id="node16" href="$dfp200_8f90.html#a9838f042d6611c01771ed68beb77fc6b" title="Evaluate the derivative of the square of the magnetic field modulus. Add spectral constraint derivati..." alt="" coords="251,448,350,475"/>
+<area shape="rect" id="node16" href="$dfp200_8f90.html#a7b64c7392b45d0042d8bd7379c0761a5" title="Evaluate the derivative of the square of the magnetic field modulus. Add spectral constraint derivati..." alt="" coords="251,448,350,475"/>
 <area shape="rect" id="node24" href="$intghs_8f90.html#a21d3b7106371783302e68297f7797e9f" title="Calculates volume integrals of Chebyshev polynomials and covariant field products." alt="" coords="1570,169,1627,196"/>
-<area shape="rect" id="node29" href="$lbpol_8f90.html#a29ae6196c664f390d0e60ab7916c806b" title="Computes Btheta at the interface." alt="" coords="1031,448,1081,475"/>
+<area shape="rect" id="node29" href="$lbpol_8f90.html#a29ae6196c664f390d0e60ab7916c806b" title=" " alt="" coords="1031,448,1081,475"/>
 <area shape="rect" id="node30" href="$group__grp__local__force.html#ga7a5316b9e5eeb42811aa6bccd29a132f" title="Computes , and the spectral condensation constraints if required, on the interfaces,..." alt="" coords="593,448,648,475"/>
 <area shape="rect" id="node31" href="$group__grp__metrics.html#ga254ce8e645c4110d77e3b3dbc3a89885" title="Calculates the metric quantities, , which are required for the energy and helicity integrals." alt="" coords="1570,397,1627,424"/>
 <area shape="rect" id="node33" href="$group__grp__coord__axis.html#ga564281be4d9806d0688a717314ad748f" title="The coordinate axis is assigned via a poloidal average over an arbitrary surface." alt="" coords="1029,904,1083,931"/>

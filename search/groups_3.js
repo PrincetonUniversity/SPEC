@@ -1,5 +1,6 @@
 var searchData=
 [
-  ['enhanced_20resolution_20for_20metric_20elements_1321',['Enhanced resolution for metric elements',['../group__grp__enh__res__metr.html',1,'']]],
-  ['enhanced_20resolution_20for_20transformation_20to_20straight_2dfield_20line_20angle_1322',['Enhanced resolution for transformation to straight-field line angle',['../group__grp__enh__res__sfl.html',1,'']]]
+  ['derivatives_20of_20multiplier_20and_20poloidal_20flux_20with_20respect_20to_20geometry_3a_20dmupfdx_1328',['Derivatives of multiplier and poloidal flux with respect to geometry: dmupfdx',['../group__grp__deriv__mul__polflux.html',1,'']]],
+  ['diagnostics_20to_20check_20the_20code_1329',['Diagnostics to check the code',['../group__grp__diagnostics.html',1,'']]],
+  ['diagnosticslist_1330',['diagnosticslist',['../group__grp__global__diagnostics.html',1,'']]]
 ];

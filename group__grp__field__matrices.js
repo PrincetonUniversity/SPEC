@@ -10,6 +10,8 @@ var group__grp__field__matrices =
     [ "ndmasmax", "group__grp__field__matrices.html#ga77df4e865b15c5e97dc5c36806cf4268", null ],
     [ "ndmas", "group__grp__field__matrices.html#ga8747722d43e2eb2ebf18db8897e7d280", null ],
     [ "dmg", "group__grp__field__matrices.html#gabf45dbde867eb2274ba00f920094adc7", null ],
+    [ "adotx", "group__grp__field__matrices.html#gabaa4df5889c3b35ef5ef226d761bd998", null ],
+    [ "ddotx", "group__grp__field__matrices.html#ga73474059e48c853a59e14ad11d7af47b", null ],
     [ "solution", "group__grp__field__matrices.html#ga8d8e425308b9103e03d3f17df8dac68a", null ],
     [ "gmreslastsolution", "group__grp__field__matrices.html#gaad695d0d2e798647d6aec5cba452f0c3", null ],
     [ "mbpsi", "group__grp__field__matrices.html#ga8eeebba442839ee1d13bf6a5748943c8", null ],

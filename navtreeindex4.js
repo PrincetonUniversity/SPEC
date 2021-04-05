@@ -1,5 +1,9 @@
 var NAVTREEINDEX4 =
 {
+"group__grp__trig.html#gab120e8ef003e765cdde4b784e4a03db0":[5,6,6,12,14],
+"group__grp__trig.html#gac2b8661b7c7860f6d418f3fc6fe0ea19":[5,6,6,12,6],
+"group__grp__trig.html#gad0048c4cd725ea874c726ef428218458":[5,6,6,12,8],
+"group__grp__trig.html#gae640389ea81a309bf445c81e68f3aa35":[5,6,6,12,12],
 "group__grp__trig.html#gafee457c753fee086820b1e59720605c3":[5,6,6,12,10],
 "group__grp__vecpot.html":[5,6,6,4],
 "group__grp__vecpot.html#ga008262a4b42434c119469f4d9f8686c4":[5,6,6,4,18],
@@ -66,8 +70,8 @@ var NAVTREEINDEX4 =
 "grp_documentation.html#sec_tridiagnonal":[2,2,8],
 "grp_documentation.html#sec_valgrind":[2,2,2],
 "hesian_8f90.html":[8,0,12],
-"index.html":[],
 "index.html":[0],
+"index.html":[],
 "intghs_8f90.html":[8,0,13],
 "intghs_8f90.html#a21d3b7106371783302e68297f7797e9f":[8,0,13,1],
 "intghs_8f90.html#ad655a541ea814d014a0cda075cc8fc89":[8,0,13,4],
@@ -98,7 +102,6 @@ var NAVTREEINDEX4 =
 "mp00ac_8f90.html#ae9fe335bb4916face9f9d19ce8c0f5d7":[8,0,23,2],
 "mtrxhs_8f90.html":[8,0,24],
 "mtrxhs_8f90.html#a6c22bb4322fbcc29cb17dcc90b56eacd":[8,0,24,0],
-"namespaceallglobal.html":[7,0,0],
 "namespacemembers.html":[6,0,0],
 "namespacemembers.html":[6,0],
 "namespacemembers_b.html":[6,0,1],
@@ -151,7 +154,6 @@ var NAVTREEINDEX4 =
 "namespacemembers_x.html":[6,0,22],
 "namespacemembers_y.html":[6,0,23],
 "namespacemembers_z.html":[6,0,24],
-"namespacetypedefns.html":[7,0,2],
 "namespacetypedefns.html#a04acecb3097625ace5b4d68fe905f0ee":[8,0,11,0,1],
 "namespacetypedefns.html#a616a0ae9df0b6d616e7cf3830f0af80e":[8,0,11,0,0],
 "namespacetypedefns.html#a7368b627f0706d92a8b71133a36d432b":[8,0,11,1,1],
@@ -174,6 +176,7 @@ var NAVTREEINDEX4 =
 "preset_8f90.html":[8,0,33],
 "ra00aa_8f90.html":[8,0,34],
 "rzaxis_8f90.html":[8,0,35],
+"rzaxis_8f90.html#a33f8f859c9ca8125070a357991b826a5":[8,0,35,1],
 "sphdf5_8f90.html":[8,0,36],
 "sphdf5_8f90.html#a0433087900600ccdd17875e8562621a9":[8,0,36,62],
 "sphdf5_8f90.html#a04cdba99067381030129162979f8d63c":[8,0,36,29],
@@ -246,8 +249,5 @@ var NAVTREEINDEX4 =
 "sphdf5_8f90.html#af83b972e01fc15bdc717069ea3cd392e":[8,0,36,24],
 "sphdf5_8f90.html#afed4d951aec99f2ebeba68c465eb9861":[8,0,36,1],
 "sphdf5_8f90.html#affd20b49a682785ec2fa48c81167607b":[8,0,36,57],
-"spsint_8f90.html":[8,0,37],
-"spsint_8f90.html#a01df49c498752e8a4201cc6eb5e283af":[8,0,37,0],
-"spsmat_8f90.html":[8,0,38],
-"spsmat_8f90.html#a029deb1b6e086ff346f36f5c61d0c1b2":[8,0,38,3]
+"spsint_8f90.html":[8,0,37]
 };

@@ -1,8 +1,18 @@
 var searchData=
 [
-  ['xij_662',['xij',['../group__grp__fourier__transform.html#ga1fc431a456fbb84dad0b1927ac748d0b',1,'allglobal']]],
-  ['xoffset_663',['xoffset',['../group__grp__fourier__repr.html#gaca726ec9efb9663d0b1d7d1e4bdb859f',1,'allglobal']]],
-  ['xpoly_664',['xpoly',['../wa00aa_8f90.html#a586dfa6251f2605646091e4145dbbe04',1,'laplaces']]],
-  ['xspech_665',['xspech',['../xspech_8f90.html#aea782eae089760a491c2c54f9903abcc',1,'xspech.f90']]],
-  ['xspech_2ef90_666',['xspech.f90',['../xspech_8f90.html',1,'']]]
+  ['wa00aa_652',['wa00aa',['../group__grp__smooth__boundary.html#ga5d58e428e5062d645244ff572b06e117',1,'wa00aa.f90']]],
+  ['wa00aa_2ef90_653',['wa00aa.f90',['../wa00aa_8f90.html',1,'']]],
+  ['wbuild_5fvector_5fpotential_654',['wbuild_vector_potential',['../group__grp__global__screenlist.html#ga8e95e900c56ec30deb8cfcf7f0160083',1,'inputlist']]],
+  ['whichcpuid_655',['whichcpuid',['../group__grp__global.html#gad2dbd21d0579d623a92119c5ab553c7c',1,'allglobal']]],
+  ['wmacros_656',['wmacros',['../group__grp__global__screenlist.html#gaef361ceee97e08e5f134227903265494',1,'inputlist']]],
+  ['wpoloidal_657',['wpoloidal',['../group__grp__global__global.html#gace3de832a0b5616ddc92f583510b2401',1,'inputlist']]],
+  ['wreadin_658',['wreadin',['../group__grp__global__screenlist.html#ga246925611ffa5d9a59489a1c0daf5473',1,'inputlist']]],
+  ['write_5fconvergence_5foutput_659',['write_convergence_output',['../sphdf5_8f90.html#ade76c03b9b11be2a12d3ddd32e77a6ae',1,'sphdf5']]],
+  ['write_5fgrid_660',['write_grid',['../sphdf5_8f90.html#a17e65b951634f7098213fd071d905482',1,'sphdf5']]],
+  ['write_5fpoincare_661',['write_poincare',['../sphdf5_8f90.html#a14195bd206b7f6a7f05d4d6fc4b50f42',1,'sphdf5']]],
+  ['write_5ftransform_662',['write_transform',['../sphdf5_8f90.html#a8f01c5e4a21c5af2c39620f24e598095',1,'sphdf5']]],
+  ['write_5fvector_5fpotential_663',['write_vector_potential',['../sphdf5_8f90.html#a2f9e9c50084175e5174b1e1070e24d73',1,'sphdf5']]],
+  ['writereadgf_664',['writereadgf',['../group__grp__force__driver.html#ga382822b303cbf8c56d6f54dcb379caf2',1,'newton.f90']]],
+  ['wrtend_665',['wrtend',['../namespaceallglobal.html#a282c297c96abdab5e76b5ace440b09a8',1,'allglobal']]],
+  ['wwrtend_666',['wwrtend',['../group__grp__global__screenlist.html#ga8156a661d36ddee0ffe887f8f6afd4c7',1,'inputlist']]]
 ];

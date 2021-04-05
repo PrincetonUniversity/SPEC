@@ -18,7 +18,7 @@
 <area shape="rect" id="node15" href="$intghs_8f90.html#ae10091a51178071d12004da4952104d4" title="free workspace" alt="" coords="761,995,937,1021"/>
 <area shape="rect" id="node19" href="$intghs_8f90.html#ae8299d4625cabd90eb1398fd2cd38089" title="init workspace" alt="" coords="774,1045,925,1072"/>
 <area shape="rect" id="node20" href="$namespaceallglobal.html#aea1f5a74462533337cb950b8d7486b25" title="Check if volume vvol is associated to the corresponding MPI node." alt="" coords="777,667,921,693"/>
-<area shape="rect" id="node21" href="$lbpol_8f90.html#a29ae6196c664f390d0e60ab7916c806b" title="Computes Btheta at the interface." alt="" coords="1465,1317,1514,1344"/>
+<area shape="rect" id="node21" href="$lbpol_8f90.html#a29ae6196c664f390d0e60ab7916c806b" title=" " alt="" coords="1465,1317,1514,1344"/>
 <area shape="rect" id="node24" href="$group__grp__solver__driver.html#gacad623d4c5c006e9ad10116372f92ad3" title="Constructs Beltrami field in given volume consistent with flux, helicity, rotational&#45;transform and/or..." alt="" coords="815,717,883,744"/>
 <area shape="rect" id="node34" href="$spsint_8f90.html#a01df49c498752e8a4201cc6eb5e283af" title="Calculates volume integrals of Chebyshev&#45;polynomials and metric elements for preconditioner." alt="" coords="1461,405,1518,432"/>
 <area shape="rect" id="node35" href="$spsmat_8f90.html#a4d521a46a64530ade50e6b79a33e1452" title="Constructs matrices for the precondtioner." alt="" coords="817,413,882,440"/>
@@ -40,7 +40,7 @@
 <area shape="rect" id="node36" href="$spsmat_8f90.html#a029deb1b6e086ff346f36f5c61d0c1b2" title="add the content from the queue to the real matrices" alt="" coords="1005,363,1068,389"/>
 <area shape="rect" id="node37" href="$spsmat_8f90.html#ab8d57e74b7461b1d2781c5d56dea6120" title="clean the queue" alt="" coords="989,413,1084,440"/>
 <area shape="rect" id="node38" href="$spsmat_8f90.html#a6c4c1ca7c194a5116f2d358c2065ce00" title="push a new element at the back of the queue" alt="" coords="994,312,1079,339"/>
-<area shape="rect" id="node41" href="$dfp200_8f90.html#a9838f042d6611c01771ed68beb77fc6b" title="Evaluate the derivative of the square of the magnetic field modulus. Add spectral constraint derivati..." alt="" coords="611,1467,709,1493"/>
+<area shape="rect" id="node41" href="$dfp200_8f90.html#a7b64c7392b45d0042d8bd7379c0761a5" title="Evaluate the derivative of the square of the magnetic field modulus. Add spectral constraint derivati..." alt="" coords="611,1467,709,1493"/>
 <area shape="rect" id="node42" href="$group__grp__local__force.html#ga7a5316b9e5eeb42811aa6bccd29a132f" title="Computes , and the spectral condensation constraints if required, on the interfaces,..." alt="" coords="1462,1431,1517,1457"/>
 <area shape="rect" id="node43" href="$dfp200_8f90.html#a73ddf39ecc5228201fb643779e17cd36" title="Evaluate mu and psip derivatives and store them in dmupfdx." alt="" coords="436,960,563,987"/>
 <area shape="rect" id="node44" href="$dfp200_8f90.html#a5e56f1f4b1e6df11a9cffa6237c37469" title="This routine evaluates the value of the magnetic field once the interface is perturbed using matrix p..." alt="" coords="1256,912,1409,939"/>

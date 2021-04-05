@@ -1,5 +1,8 @@
 var NAVTREEINDEX5 =
 {
+"spsint_8f90.html#a01df49c498752e8a4201cc6eb5e283af":[8,0,37,0],
+"spsmat_8f90.html":[8,0,38],
+"spsmat_8f90.html#a029deb1b6e086ff346f36f5c61d0c1b2":[8,0,38,3],
 "spsmat_8f90.html#a4d521a46a64530ade50e6b79a33e1452":[8,0,38,0],
 "spsmat_8f90.html#a6c4c1ca7c194a5116f2d358c2065ce00":[8,0,38,1],
 "spsmat_8f90.html#ab8d57e74b7461b1d2781c5d56dea6120":[8,0,38,2],

@@ -1,6 +1,8 @@
 var searchData=
 [
-  ['derivatives_20of_20multiplier_20and_20poloidal_20flux_20with_20respect_20to_20geometry_3a_20dmupfdx_1318',['Derivatives of multiplier and poloidal flux with respect to geometry: dmupfdx',['../group__grp__deriv__mul__polflux.html',1,'']]],
-  ['diagnostics_20to_20check_20the_20code_1319',['Diagnostics to check the code',['../group__grp__diagnostics.html',1,'']]],
-  ['diagnosticslist_1320',['diagnosticslist',['../group__grp__global__diagnostics.html',1,'']]]
+  ['conjugate_2dgradient_20method_1323',['Conjugate-Gradient method',['../group__grp__conjugate__gradient.html',1,'']]],
+  ['construction_20of_20_22force_22_1324',['Construction of &quot;force&quot;',['../group__grp__force__constr.html',1,'']]],
+  ['coordinate_20axis_1325',['Coordinate axis',['../group__grp__coord__axis.html',1,'']]],
+  ['covariant_20field_20for_20hessian_20computation_3a_20bloweremn_2c_20bloweromn_1326',['covariant field for Hessian computation: Bloweremn, Bloweromn',['../group__grp__covar__field__hessian.html',1,'']]],
+  ['covariant_20field_20on_20interfaces_3a_20btemn_2c_20bzemn_2c_20btomn_2c_20bzomn_1327',['Covariant field on interfaces: Btemn, Bzemn, Btomn, Bzomn',['../group__grp__covar__field__ifaces.html',1,'']]]
 ];

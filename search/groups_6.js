@@ -1,9 +1,6 @@
 var searchData=
 [
-  ['input_20namelists_20and_20global_20variables_1331',['Input namelists and global variables',['../group__grp__global.html',1,'']]],
-  ['interface_20geometry_3a_20irbc_2c_20izbs_20etc_2e_1332',['Interface geometry: iRbc, iZbs etc.',['../group__grp__iface__geom.html',1,'']]],
-  ['initialization_20of_20the_20code_1333',['Initialization of the code',['../group__grp__initialization.html',1,'']]],
-  ['internal_20global_20variables_1334',['Internal global variables',['../group__grp__int__global.html',1,'']]],
-  ['integrals_1335',['Integrals',['../group__grp__integrals.html',1,'']]],
-  ['internal_20variables_1336',['Internal Variables',['../group__grp__internal__vars.html',1,'']]]
+  ['geometrical_20degrees_2dof_2dfreedom_3a_20lgdof_2c_20ngdof_1338',['Geometrical degrees-of-freedom: LGdof, NGdof',['../group__grp__geomdof.html',1,'']]],
+  ['geometry_1339',['Geometry',['../group__grp__geometry.html',1,'']]],
+  ['globallist_1340',['globallist',['../group__grp__global__global.html',1,'']]]
 ];
