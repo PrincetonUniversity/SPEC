@@ -249,7 +249,8 @@ program xspech
 !latex \end{enumerate} 
 
   do vvol = 1, Mvol
-
+   
+   LREGION(vvol)
    vflag = 0
    WCALL( xspech, volume, ( vvol, vflag ) ) ! compute volume;
 
