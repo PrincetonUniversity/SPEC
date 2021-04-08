@@ -404,10 +404,10 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
   ;   force(0:NGdof) = zero
   
   if (Ldescent) then
-    ! descent method is used, construct force with the geometry factors
+    ! descent method is used
   
   else
-    ! Newton method is used, just compute the force without the geometry factors
+    ! Newton method is used
 
     do vvol = 1, Mvol-1
 

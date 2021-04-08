@@ -84,7 +84,7 @@ subroutine dfp200( LcomputeDerivatives, vvol)
                         lmns, &
                         mn, mne, &
                         dRodR, dRodZ, dZodR, dZodZ, &
-                        LocalConstraint, solution, &
+                        LocalConstraint, solution, Ldescent, &
                         IsMyVolume, IsMyVolumeValue, Btemn, WhichCpuID
 
   use typedefns
@@ -165,8 +165,14 @@ subroutine dfp200( LcomputeDerivatives, vvol)
         
       ideriv = 0 ; id = ideriv
       iflag = 0 ! XX & YY are returned by lforce; Bemn(1:mn,vvol,iocons), Iomn(1:mn,vvol) etc. are returned through global;
-      WCALL( dfp200, lforce, ( vvol, iocons, ideriv, Ntz, dBB(1:Ntz,id), XX(1:Ntz), YY(1:Ntz), length(1:Ntz), DDl, MMl, iflag ) )
-        
+      if (Ldescent) then
+        ! compute the descent force
+        !WCALL( dfp200, descent_lforce, ( vvol, iocons, Ntz, iflag ) )
+      else
+        ! compute the Newton's method force
+        WCALL( dfp200, lforce, ( vvol, iocons, ideriv, Ntz, dBB(1:Ntz,id), XX(1:Ntz), YY(1:Ntz), length(1:Ntz), DDl, MMl, iflag ) )
+      endif
+
     enddo ! end of do iocons = 0, 1;
     
     if( LcomputeDerivatives ) then ! compute inverse of Beltrami matrices;
