@@ -35,16 +35,16 @@
 <area shape="rect" id="node12" href="$group__grp__geometry.html#gaaca20aa60eaf39055f3c9d5c02a24ac2" title="Calculates coordinates, , and metrics, using FFTs." alt="" coords="1203,563,1264,589"/>
 <area shape="rect" id="node13" href="$group__grp__numerics.html#ga1fd52accb0646f535f9bcc46cf5a68f3" title="Inverse Fourier transform (fftw wrapper)" alt="" coords="1319,335,1369,361"/>
 <area shape="rect" id="node23" href="$basefn_8f90.html#af6a4cad04c70bfb14fd18a3bfbc843a3" title="Get the Chebyshev polynomials with zeroth, first derivatives." alt="" coords="1047,765,1128,792"/>
-<area shape="rect" id="node24" href="$basefn_8f90.html#a38dc596fb909186b01dacc1feac03164" title="Get the Zernike polynomials with zeroth, first derivatives." alt="" coords="1043,715,1131,741"/>
+<area shape="rect" id="node24" href="$basefn_8f90.html#a38dc596fb909186b01dacc1feac03164" title="Get the Zernike polynomials &#160;with zeroth, first derivatives." alt="" coords="1043,715,1131,741"/>
 <area shape="rect" id="node29" href="$group__grp__coord__axis.html#ga564281be4d9806d0688a717314ad748f" title="The coordinate axis is assigned via a poloidal average over an arbitrary surface." alt="" coords="853,461,907,488"/>
 <area shape="rect" id="node33" href="$group__grp__numerics.html#ga425e8f1cbf214a3231ab6c874d8fe4be" title="Gauss&#45;Legendre weights and abscissae." alt="" coords="365,715,425,741"/>
-<area shape="rect" id="node34" href="$basefn_8f90.html#a6076d695487184d58d30d73de2f6470f" title="Get the Zernike polynomials Z(n,m,r)/r^m." alt="" coords="340,765,451,792"/>
+<area shape="rect" id="node34" href="$basefn_8f90.html#a6076d695487184d58d30d73de2f6470f" title="Get the Zernike polynomials /r^m [0, 1]." alt="" coords="340,765,451,792"/>
 <area shape="rect" id="node35" href="$numrec_8f90.html#ad74184c181acd10cef74a2bd4f1c31a9" title="convert m and n to index" alt="" coords="365,816,426,843"/>
 <area shape="rect" id="node38" href="$group__grp__numerics.html#ga02a336a22890e7ae5a5c2d525260666c" title="Assign Fourier mode labels." alt="" coords="532,1019,592,1045"/>
 <area shape="rect" id="node39" href="$namespacenumerical.html#ac9cf42743694682672a82103c8ffedda" title="Duplicates NAG routine X02AJF (machine precision)" alt="" coords="499,968,625,995"/>
 <area shape="rect" id="node41" href="$group__grp__diagnostics.html#ga20985df1b0df0503ca03ca13f1daf642" title="Compute the magnetic field." alt="" coords="854,715,906,741"/>
-<area shape="rect" id="node42" href="$basefn_8f90.html#a8f42498fd0b4c464c8c2d3ce0e94c56a" title="Get the Chebyshev polynomials with zeroth, first and second derivatives." alt="" coords="829,107,931,133"/>
-<area shape="rect" id="node43" href="$basefn_8f90.html#a29cbf901a18ead65d0e3a51956a3f045" title="Get the Zernike polynomials with zeroth, first, second derivatives." alt="" coords="825,5,935,32"/>
+<area shape="rect" id="node42" href="$basefn_8f90.html#a8f42498fd0b4c464c8c2d3ce0e94c56a" title="Get the Chebyshev polynomials with zeroth, first and second derivatives The Chebyshev polynomial has ..." alt="" coords="829,107,931,133"/>
+<area shape="rect" id="node43" href="$basefn_8f90.html#a29cbf901a18ead65d0e3a51956a3f045" title="Get the Zernike polynomials &#160;with zeroth, first, second derivatives." alt="" coords="825,5,935,32"/>
 <area shape="rect" id="node45" href="$group__grp__force__driver.html#gabbc245b3884ee8d8d3e2a52f25149f78" title="fcn1" alt="" coords="372,1272,419,1299"/>
 <area shape="rect" id="node47" href="$group__grp__force__driver.html#ga8ccd6c7d901872702521d0a0edf95412" title="fcn2" alt="" coords="372,1323,419,1349"/>
 <area shape="rect" id="node48" href="$group__grp__force__driver.html#ga382822b303cbf8c56d6f54dcb379caf2" title="read or write force&#45;derivative matrix" alt="" coords="519,1424,605,1451"/>

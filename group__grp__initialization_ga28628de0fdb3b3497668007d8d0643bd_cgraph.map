@@ -6,8 +6,8 @@
 <area shape="rect" id="node7" href="$group__grp__numerics.html#ga1fd52accb0646f535f9bcc46cf5a68f3" title="Inverse Fourier transform (fftw wrapper)" alt="" coords="1735,1492,1785,1519"/>
 <area shape="rect" id="node9" href="$group__grp__numerics.html#ga425e8f1cbf214a3231ab6c874d8fe4be" title="Gauss&#45;Legendre weights and abscissae." alt="" coords="137,296,197,323"/>
 <area shape="rect" id="node10" href="$basefn_8f90.html#af6a4cad04c70bfb14fd18a3bfbc843a3" title="Get the Chebyshev polynomials with zeroth, first derivatives." alt="" coords="1463,693,1544,720"/>
-<area shape="rect" id="node11" href="$basefn_8f90.html#a38dc596fb909186b01dacc1feac03164" title="Get the Zernike polynomials with zeroth, first derivatives." alt="" coords="1459,757,1547,784"/>
-<area shape="rect" id="node12" href="$basefn_8f90.html#a6076d695487184d58d30d73de2f6470f" title="Get the Zernike polynomials Z(n,m,r)/r^m." alt="" coords="112,1669,223,1696"/>
+<area shape="rect" id="node11" href="$basefn_8f90.html#a38dc596fb909186b01dacc1feac03164" title="Get the Zernike polynomials &#160;with zeroth, first derivatives." alt="" coords="1459,757,1547,784"/>
+<area shape="rect" id="node12" href="$basefn_8f90.html#a6076d695487184d58d30d73de2f6470f" title="Get the Zernike polynomials /r^m [0, 1]." alt="" coords="112,1669,223,1696"/>
 <area shape="rect" id="node13" href="$numrec_8f90.html#ad74184c181acd10cef74a2bd4f1c31a9" title="convert m and n to index" alt="" coords="137,1720,198,1747"/>
 <area shape="rect" id="node14" href="$group__grp__build__matrices.html#ga1c52bb6dbffdb432550aae12b096080f" title="Constructs energy and helicity matrices that represent the Beltrami linear system...." alt="" coords="1039,347,1097,373"/>
 <area shape="rect" id="node15" href="$group__grp__output.html#ga08d6a254dbc3d9d40ff1cf0bdfdf2148" title="Writes vector potential to .ext.sp.A ." alt="" coords="137,1821,198,1848"/>

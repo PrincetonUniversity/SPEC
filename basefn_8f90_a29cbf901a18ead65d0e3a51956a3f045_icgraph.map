@@ -1,5 +1,5 @@
 <map id="get_zernike_d2" name="get_zernike_d2">
-<area shape="rect" id="node1" title="Get the Zernike polynomials with zeroth, first, second derivatives." alt="" coords="375,31,484,57"/>
+<area shape="rect" id="node1" title="Get the Zernike polynomials &#160;with zeroth, first, second derivatives." alt="" coords="375,31,484,57"/>
 <area shape="rect" id="node2" href="$bfield_8f90.html#adc615fe98d38488525cbe807d008860a" title="compute the tangential magnetic field" alt="" coords="224,5,327,32"/>
 <area shape="rect" id="node3" href="$group__grp__diagnostics.html#ga6411205c36a7d50002d7f3fb3133c441" title="Measures error in Beltrami equation, ." alt="" coords="245,56,305,83"/>
 <area shape="rect" id="node4" href="$xspech_8f90.html#aea782eae089760a491c2c54f9903abcc" title="Main program of SPEC." alt="" coords="113,56,176,83"/>
