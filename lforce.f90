@@ -278,7 +278,87 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, ifl
   if( iflag .eq. 1 ) goto 9999 ! iflag = 1 indicates the derivatives of the force are to be calculated; derivatives of magnetic field calculated above;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+!  ijreal(1:Ntz) contains the pressure + magnetic energy term;
+  
+#ifdef DEBUG
+  FATAL( lforce, iocons.lt.0 .or. iocons.gt.2, error )
+#endif
 
+  call spectral_force(lvol, iocons, Ntz, dLL, IIl, XX, YY, length, DDl, MMl)
+  
+  ;ifail = 0
+  ;call tfft( Nt, Nz, ijreal(1:Ntz), IIl(1:Ntz  ), & ! compute force-imbalance and spectral constraints;
+              mn, im(1:mn), in(1:mn), Bemn(1:mn,lvol,iocons), Bomn(1:mn,lvol,iocons), Iemn(1:mn,lvol       ), Iomn(1:mn,lvol       ), ifail )
+  
+  if( Igeometry.ge.3 ) then ! add minimal length constraint; 18 Jul 14;
+   
+   ifail = 0 ; ijimag(1:Ntz) = zero
+
+   call tfft( Nt, Nz, dLL(1:Ntz), ijimag(1:Ntz), &
+              mn, im(1:mn), in(1:mn), Semn(1:mn,lvol,iocons), Somn(1:mn,lvol,iocons), Pemn(1:mn,lvol,iocons), Pomn(1:mn,lvol,iocons), ifail )
+
+#ifdef DEBUG
+   if( Wlforce ) then
+    write(ounit,'("lforce : ", 10x ," : lvol=",i3," ; iocons="i2" ; Somn="999es13.5)') lvol, iocons, Somn(1:mn,lvol,iocons)
+    write(ounit,'("lforce : ", 10x ," : lvol=",i3," ; iocons="i2" ; Semn="999es13.5)') lvol, iocons, Semn(1:mn,lvol,iocons)
+   endif
+#endif
+   
+  endif ! end of if( Igeometry.eq.3 ) ; 01 Jul 14;
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  RETURN(lforce)
+  
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+   
+ end subroutine lforce
+ 
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+subroutine spectral_force(lvol, iocons, Ntz, dLL, IIl, XX, YY, length, DDl, MMl)
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+  use constants, only : zero, half, one, two
+  
+  use fileunits, only : ounit
+  
+  use inputlist, only : Wlforce, Igeometry, Nvol, Lrad, gamma, pscale, adiabatic, Lcheck
+  
+  use cputiming, only : Tlforce
+  
+  use allglobal, only : ncpu, myid, cpus, &
+                        Lcoordinatesingularity, Mvol, &
+                        iRbc, iZbs, iRbs, iZbc, &
+                        YESstellsym, NOTstellsym, &
+                        mn, im, in, regumm, &
+                        ijreal, ijimag, jireal, jiimag, &
+                        efmn, ofmn, cfmn, sfmn, evmn, odmn, comn, simn, &
+                        Nt, Nz, &
+                        Ate, Aze, Ato, Azo, &
+                        TT, RTT, &
+                        sg, guvij, iRij, iZij, dRij, dZij, tRij, tZij, &
+                        mmpp, &
+                        Bemn, Bomn, Iomn, Iemn, Somn, Semn, &
+                        Pomn, Pemn, &
+                        vvolume, & 
+                        build_vector_potential
+  
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+  INTEGER, intent(in)  :: lvol, iocons, ideriv, Ntz, iflag
+  REAL                 :: dAt(1:Ntz, -1:2), dAz(1:Ntz, -1:2), XX(1:Ntz), YY(1:Ntz), dRR(1:Ntz,-1:1), dZZ(1:Ntz,-1:1), DDl, MMl
+
+  REAL                 :: IIl(1:Ntz), length(1:Ntz), dLL(1:Ntz)
+  INTEGER              :: Lcurvature, ii, jj, kk, ll, ifail, ivol, lnn, mi, id!, oicons
+  REAL                 :: dBB(1:Ntz, -1:2), lss, mfactor
+  
+  REAL                 :: dAs(1:Ntz)!, dRdt(-1:1,0:1), dZdt(-1:1,0:1)
+  REAL                 :: lgvuij(1:Ntz,1:3,1:3) ! local workspace; 13 Sep 13;
+  
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+   
 ! compute spectral constraints;
   
   select case( Igeometry )
@@ -335,41 +415,5 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, ifl
   end select ! end of select case( Igeometry ) ; 08 Feb 16;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-!  ijreal(1:Ntz) contains the pressure + magnetic energy term;
-  
-#ifdef DEBUG
-  FATAL( lforce, iocons.lt.0 .or. iocons.gt.2, error )
-#endif
-  
-  ;ifail = 0
-  ;call tfft( Nt, Nz, ijreal(1:Ntz), IIl(1:Ntz  ), & ! compute force-imbalance and spectral constraints;
-              mn, im(1:mn), in(1:mn), Bemn(1:mn,lvol,iocons), Bomn(1:mn,lvol,iocons), Iemn(1:mn,lvol       ), Iomn(1:mn,lvol       ), ifail )
-  
-  if( Igeometry.ge.3 ) then ! add minimal length constraint; 18 Jul 14;
-   
-   ifail = 0 ; ijimag(1:Ntz) = zero
 
-   call tfft( Nt, Nz, dLL(1:Ntz), ijimag(1:Ntz), &
-              mn, im(1:mn), in(1:mn), Semn(1:mn,lvol,iocons), Somn(1:mn,lvol,iocons), Pemn(1:mn,lvol,iocons), Pomn(1:mn,lvol,iocons), ifail )
-
-#ifdef DEBUG
-   if( Wlforce ) then
-    write(ounit,'("lforce : ", 10x ," : lvol=",i3," ; iocons="i2" ; Somn="999es13.5)') lvol, iocons, Somn(1:mn,lvol,iocons)
-    write(ounit,'("lforce : ", 10x ," : lvol=",i3," ; iocons="i2" ; Semn="999es13.5)') lvol, iocons, Semn(1:mn,lvol,iocons)
-   endif
-#endif
-   
-  endif ! end of if( Igeometry.eq.3 ) ; 01 Jul 14;
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  RETURN(lforce)
-  
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-   
- end subroutine lforce
- 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+ end subroutine spectral_force

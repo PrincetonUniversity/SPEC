@@ -70,8 +70,9 @@ subroutine newton( NGdof, position, ihybrd )
                         mn, im, in, iRbc, iZbs, iRbs, iZbc, Mvol, &
                         BBe, IIo, BBo, IIe, &
                         LGdof, dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated , &
+                        Ldescent, &
                         nfreeboundaryiterations, &
-						LocalConstraint
+						            LocalConstraint
   
   use newtontime
 
@@ -186,7 +187,7 @@ subroutine newton( NGdof, position, ihybrd )
   SALLOCATE( fjac, (1:NGdof, 1:NGdof), zero)
   SALLOCATE( RR, (1:NGdof*(NGdof+1)/2), zero)
 
-  if( Lfindzero.eq.2 .or. Lfindzero.eq.3 .or. Lfindzero.eq.4) then
+  if( Lfindzero.eq.2) then
     SALLOCATE( dFFdRZ, (1:LGdof,0:1,1:LGdof,0:1,1:Mvol), zero )
     SALLOCATE( dBBdmp, (1:LGdof,1:Mvol,0:1,1:2), zero )
    if( LocalConstraint ) then
@@ -208,12 +209,14 @@ subroutine newton( NGdof, position, ihybrd )
    
   case( 1 ) ! use function values                               to find x st f(x)=0, where x is the geometry of the interfaces, and f is the force;
    
+   Ldescent = .FALSE.
    WCALL( newton, hybrd, ( fcn1, NGdof, position(1:NGdof), force(1:NGdof), &
           xtol, maxfev, ML, MU, epsfcn, diag(1:NGdof), mode, factor, nprint, ihybrd, nfev,       fjac(1:Ldfjac,1:NGdof), Ldfjac, &
           RR(1:LR), LR, QTF(1:NGdof), workspace(1:NGdof,1), workspace(1:NGdof,2), workspace(1:NGdof,3), workspace(1:NGdof,4) ) )
 
   case( 2 ) ! use function values and user-supplied derivatives to find x st f(x)=0, where x is the geometry of the interfaces, and f is the force;
    
+   Ldescent = .FALSE.
    WCALL( newton, hybrj, ( fcn2, NGdof, position(1:NGdof), force(1:NGdof), fjac(1:Ldfjac,1:NGdof), Ldfjac, &
           xtol, maxfev,                 diag(1:NGdof), mode, factor, nprint, ihybrd, nfev, njev, &
           RR(1:LR), LR, QTF(1:NGdof), workspace(1:NGdof,1), workspace(1:NGdof,2), workspace(1:NGdof,3), workspace(1:NGdof,4) ) )
@@ -221,20 +224,22 @@ subroutine newton( NGdof, position, ihybrd )
   case( 3 ) ! use function values to find f(x)=0 using a conjugate gradient descent algorithm
 
    write(*,*) "-------------------- Under construction --------------------"
+   Ldescent = .TRUE.
    WCALL(newton, fcndescent, (position(1:NGdof),NGdof))
-   WCALL( newton, hybrj, ( fcn2, NGdof, position(1:NGdof), force(1:NGdof), fjac(1:Ldfjac,1:NGdof), Ldfjac, &
-          xtol, maxfev,                 diag(1:NGdof), mode, factor, nprint, ihybrd, nfev, njev, &
-          RR(1:LR), LR, QTF(1:NGdof), workspace(1:NGdof,1), workspace(1:NGdof,2), workspace(1:NGdof,3), workspace(1:NGdof,4) ) )
+   !WCALL( newton, hybrj, ( fcn2, NGdof, position(1:NGdof), force(1:NGdof), fjac(1:Ldfjac,1:NGdof), Ldfjac, &
+   !       xtol, maxfev,                 diag(1:NGdof), mode, factor, nprint, ihybrd, nfev, njev, &
+   !       RR(1:LR), LR, QTF(1:NGdof), workspace(1:NGdof,1), workspace(1:NGdof,2), workspace(1:NGdof,3), workspace(1:NGdof,4) ) )
    write(*,*) "-------------------- Under construction --------------------"
 
   case( 4 ) ! use function values to find f(x)=0 using a conjugate gradient descent algorithm
 
    write(*,*) "-------------------- Under construction --------------------"
-   WCALL(newton, steepest_descent, (NGdof,position(1:NGdof),Energy,sdxtol,sdgtol,sdftol,sditmax &
-     ,sdiprint,sdiflag,fcnval,fcngrad))
-   WCALL( newton, hybrj, ( fcn2, NGdof, position(1:NGdof), force(1:NGdof), fjac(1:Ldfjac,1:NGdof), Ldfjac, &
-          xtol, maxfev,                 diag(1:NGdof), mode, factor, nprint, ihybrd, nfev, njev, &
-          RR(1:LR), LR, QTF(1:NGdof), workspace(1:NGdof,1), workspace(1:NGdof,2), workspace(1:NGdof,3), workspace(1:NGdof,4) ) )
+   Ldescent = .TRUE.
+   !WCALL(newton, steepest_descent, (NGdof,position(1:NGdof),Energy,sdxtol,sdgtol,sdftol,sditmax &
+   !  ,sdiprint,sdiflag,fcnval,fcngrad))
+   !WCALL( newton, hybrj, ( fcn2, NGdof, position(1:NGdof), force(1:NGdof), fjac(1:Ldfjac,1:NGdof), Ldfjac, &
+   !       xtol, maxfev,                 diag(1:NGdof), mode, factor, nprint, ihybrd, nfev, njev, &
+   !       RR(1:LR), LR, QTF(1:NGdof), workspace(1:NGdof,1), workspace(1:NGdof,2), workspace(1:NGdof,3), workspace(1:NGdof,4) ) )
    write(*,*) "-------------------- Under construction --------------------"
   
   case default

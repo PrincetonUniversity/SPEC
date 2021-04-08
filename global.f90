@@ -1404,6 +1404,8 @@ module allglobal
   REAL   , allocatable :: gaussianweight(:,:), gaussianabscissae(:,:)
   
   LOGICAL              :: LBlinear, LBnewton, LBsequad ! controls selection of Beltrami field solver; depends on LBeltrami;
+
+  LOGICAL              :: Ldescent ! if a descent method is used instead of Newton for global force convergence
   
   REAL                 :: oRZp(1:3) ! used in mg00aa to determine (\s,\t,\z) given (R,Z,p);
 

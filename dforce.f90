@@ -128,6 +128,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
                         diotadxup, dItGpdxtp, & ! only required for broadcasting
                         lBBintegral, &
                         dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated, &
+                        Ldescent, &
                         BBweight, & ! exponential weight on force-imbalance harmonics;
                         psifactor, &
                         LocalConstraint, xoffset, &
@@ -402,87 +403,94 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
   
   ;   force(0:NGdof) = zero
   
-  do vvol = 1, Mvol-1
+  if (Ldescent) then
+    ! descent method is used, construct force with the geometry factors
+  
+  else
+    ! Newton method is used, just compute the force without the geometry factors
 
-    LREGION(vvol)
-   
-    tdoc = (vvol-1) * LGdof 
-   
-    if( ImagneticOK(vvol) .and. ImagneticOK(vvol+1) ) then ! the magnetic fields in the volumes adjacent to this interface are valid;
+    do vvol = 1, Mvol-1
+
+      LREGION(vvol)
     
-      ;  idoc = 0           ! degree-of-constraint counter; set;
+      tdoc = (vvol-1) * LGdof 
+    
+      if( ImagneticOK(vvol) .and. ImagneticOK(vvol+1) ) then ! the magnetic fields in the volumes adjacent to this interface are valid;
       
-      if( Lextrap.eq.1 .and. vvol.eq.1 ) then ! to be made redundant;
-        FATAL( dforce, 2.gt.Mvol, psifactor needs attention )
-        ;force(tdoc+idoc+1:tdoc+idoc+mn) = position(1:mn) - ( iRbc(1:mn,2) / psifactor(1:mn,2) )
-      else
-        ;force(tdoc+idoc+1:tdoc+idoc+mn    ) = ( Bemn(1:mn    ,vvol+1,0) - Bemn(1:mn    ,vvol+0,1) ) * BBweight(1:mn) ! pressure imbalance;
-      endif
-      
-      ;  BBe(vvol) = max( sum( abs( force(tdoc+idoc+1:tdoc+idoc+mn  ) ) ) / (mn  ), logtolerance ) ! screen diagnostics;
-      
-      ;  idoc = idoc + mn   ! degree-of-constraint counter; increment;
-      
-      if( Igeometry.ge.3 ) then ! add spectral constraints;
-      
-        force(tdoc+idoc+1:tdoc+idoc+mn-1  ) = (                           Iomn(2:mn    ,vvol+0  ) ) * epsilon         & ! spectral constraints;
-                                            + (                         + Somn(2:mn    ,vvol+0,1) ) * sweight(vvol+0) & ! poloidal length constraint;
-                                            - ( Somn(2:mn    ,vvol+1,0)                           ) * sweight(vvol+1)
-            
-  !     if( Ntor.gt.0 ) then ! poloidal angle origin is not otherwise constrained ;
-  !      force(tdoc+idoc+1:tdoc+idoc+Ntor  ) = ( Pomn(2:Ntor+1,vvol+1,0) - Pomn(2:Ntor+1,vvol+0,1) ) * apsilon ! choice of spectral constraint can be enforced;
-  !     endif
-      
-        IIo(vvol) = max( sum( abs( force(tdoc+idoc+1:tdoc+idoc+mn-1) ) ) / (mn-1), logtolerance ) ! screen diagnostics;
-      
-        idoc = idoc + mn-1
-      
-      endif ! end of if( Igeometry.ge.3 ) ;
-      
-      if( NOTstellsym ) then
-      
-        force(tdoc+idoc+1:tdoc+idoc+mn-1  ) = ( Bomn(2:mn    ,vvol+1,0) - Bomn(2:mn    ,vvol+0,1) ) * BBweight(2:mn) ! pressure imbalance;
-      
-        BBo(vvol) = max( sum( abs( force(tdoc+idoc+1:tdoc+idoc+mn-1) ) ) / (mn-1), logtolerance ) ! screen diagnostics;
-      
-        idoc = idoc + mn-1 ! degree-of-constraint counter; increment;
-      
+        ;  idoc = 0           ! degree-of-constraint counter; set;
+        
+        if( Lextrap.eq.1 .and. vvol.eq.1 ) then ! to be made redundant;
+          FATAL( dforce, 2.gt.Mvol, psifactor needs attention )
+          ;force(tdoc+idoc+1:tdoc+idoc+mn) = position(1:mn) - ( iRbc(1:mn,2) / psifactor(1:mn,2) )
+        else
+          ;force(tdoc+idoc+1:tdoc+idoc+mn    ) = ( Bemn(1:mn    ,vvol+1,0) - Bemn(1:mn    ,vvol+0,1) ) * BBweight(1:mn) ! pressure imbalance;
+        endif
+        
+        ;  BBe(vvol) = max( sum( abs( force(tdoc+idoc+1:tdoc+idoc+mn  ) ) ) / (mn  ), logtolerance ) ! screen diagnostics;
+        
+        ;  idoc = idoc + mn   ! degree-of-constraint counter; increment;
+        
         if( Igeometry.ge.3 ) then ! add spectral constraints;
         
-          force(tdoc+idoc+1:tdoc+idoc+mn    ) = (                           Iemn(1:mn    ,vvol+0  ) ) * epsilon         & ! spectral constraints;
-                                              + (                         + Semn(1:mn    ,vvol+0,1) ) * sweight(vvol+0) & ! poloidal length constraint;
-                                              - ( Semn(1:mn    ,vvol+1,0)                           ) * sweight(vvol+1)
+          force(tdoc+idoc+1:tdoc+idoc+mn-1  ) = (                           Iomn(2:mn    ,vvol+0  ) ) * epsilon         & ! spectral constraints;
+                                              + (                         + Somn(2:mn    ,vvol+0,1) ) * sweight(vvol+0) & ! poloidal length constraint;
+                                              - ( Somn(2:mn    ,vvol+1,0)                           ) * sweight(vvol+1)
+              
+    !     if( Ntor.gt.0 ) then ! poloidal angle origin is not otherwise constrained ;
+    !      force(tdoc+idoc+1:tdoc+idoc+Ntor  ) = ( Pomn(2:Ntor+1,vvol+1,0) - Pomn(2:Ntor+1,vvol+0,1) ) * apsilon ! choice of spectral constraint can be enforced;
+    !     endif
         
-  !     if( Ntor.ge.0 ) then
-  !      force(tdoc+idoc+1:tdoc+idoc+Ntor+1) = ( Pemn(1:Ntor+1,vvol+1,0) - Pemn(1:Ntor+1,vvol+0,1) ) * apsilon ! choice of spectral constraint can be enforced;
-  !     endif
+          IIo(vvol) = max( sum( abs( force(tdoc+idoc+1:tdoc+idoc+mn-1) ) ) / (mn-1), logtolerance ) ! screen diagnostics;
         
-          IIe(vvol) = max( sum( abs( force(tdoc+idoc+1:tdoc+idoc+mn  ) ) ) / (mn  ), logtolerance ) ! screen diagnostics;
-        
-          idoc = idoc + mn   ! degree-of-constraint counter; increment;
+          idoc = idoc + mn-1
         
         endif ! end of if( Igeometry.ge.3 ) ;
-      
-      endif ! end of if( NOTstellsym ) ;
+        
+        if( NOTstellsym ) then
+        
+          force(tdoc+idoc+1:tdoc+idoc+mn-1  ) = ( Bomn(2:mn    ,vvol+1,0) - Bomn(2:mn    ,vvol+0,1) ) * BBweight(2:mn) ! pressure imbalance;
+        
+          BBo(vvol) = max( sum( abs( force(tdoc+idoc+1:tdoc+idoc+mn-1) ) ) / (mn-1), logtolerance ) ! screen diagnostics;
+        
+          idoc = idoc + mn-1 ! degree-of-constraint counter; increment;
+        
+          if( Igeometry.ge.3 ) then ! add spectral constraints;
+          
+            force(tdoc+idoc+1:tdoc+idoc+mn    ) = (                           Iemn(1:mn    ,vvol+0  ) ) * epsilon         & ! spectral constraints;
+                                                + (                         + Semn(1:mn    ,vvol+0,1) ) * sweight(vvol+0) & ! poloidal length constraint;
+                                                - ( Semn(1:mn    ,vvol+1,0)                           ) * sweight(vvol+1)
+          
+    !     if( Ntor.ge.0 ) then
+    !      force(tdoc+idoc+1:tdoc+idoc+Ntor+1) = ( Pemn(1:Ntor+1,vvol+1,0) - Pemn(1:Ntor+1,vvol+0,1) ) * apsilon ! choice of spectral constraint can be enforced;
+    !     endif
+          
+            IIe(vvol) = max( sum( abs( force(tdoc+idoc+1:tdoc+idoc+mn  ) ) ) / (mn  ), logtolerance ) ! screen diagnostics;
+          
+            idoc = idoc + mn   ! degree-of-constraint counter; increment;
+          
+          endif ! end of if( Igeometry.ge.3 ) ;
+        
+        endif ! end of if( NOTstellsym ) ;
       
 #ifdef DEBUG
       FATAL( dforce, idoc.ne.LGdof, counting error ) ! this has caught bugs;
 #endif
     
-    else ! matches if( ImagneticOK(vvol) .and. ImagneticOK(vvol+1) );
-    
-      ;                       ; BBe(vvol) = 9.9E+09
-      ;                       ; IIo(vvol) = 9.9E+09
-      if ( NOTstellsym ) then ; BBo(vvol) = 9.9E+09
-      ;                      ; IIe(vvol) = 9.9E+09
-      endif
+      else ! matches if( ImagneticOK(vvol) .and. ImagneticOK(vvol+1) );
       
-      ; force(tdoc+1:tdoc+LGdof) = 9.9E+09
+        ;                       ; BBe(vvol) = 9.9E+09
+        ;                       ; IIo(vvol) = 9.9E+09
+        if ( NOTstellsym ) then ; BBo(vvol) = 9.9E+09
+        ;                      ; IIe(vvol) = 9.9E+09
+        endif
+        
+        ; force(tdoc+1:tdoc+LGdof) = 9.9E+09
+      
+      endif ! end of if( ImagneticOK(vvol) .and. ImagneticOK(vvol+1) ) ;
     
-    endif ! end of if( ImagneticOK(vvol) .and. ImagneticOK(vvol+1) ) ;
-   
-  enddo ! end of do vvol;
+    enddo ! end of do vvol;
   
+  endif ! end of if (Ldescent)
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   if( NGdof.ne.0 ) then ; ForceErr = sqrt( sum( force(1:NGdof)*force(1:NGdof) ) / NGdof ) ! this includes spectral constraints;
