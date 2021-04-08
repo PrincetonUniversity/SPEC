@@ -111,10 +111,10 @@ end subroutine get_cheby_d2
 !>
 !> For \f$ m=0 \f$ and \f$ m=1 \f$, a basis recombination method is used by defining new radial basis functions as
 !> \f{eqnarray*}{
-!>    \hat{R}_{0}^{0} &= 1, &
+!>    \hat{R}_{0}^{0} &= 1, 
 !>    \hat{R}^{0}_{l} &= \frac{1}{l+1}R^{0}_{l} - \frac{(-1)^{l/2}}{l+1}, 
 !>    \\
-!>    \hat{R}_{1}^{1} &= s, &
+!>    \hat{R}_{1}^{1} &= s,
 !>    \hat{R}^{1}_{l} &= \frac{1}{l+1}R^{1}_{l} - \frac{(-1)^{(l-1)/2}}{2} s.
 !> \f}
 !> so that the basis scales as \f$s^{m+2}\f$ except for \f$\hat{R}_{0}^{0}\f$ and \f$\hat{R}_{1}^{1}\f$, which are excluded from the representation of \f${A}_{\theta,m,n}\f$.
