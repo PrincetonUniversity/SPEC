@@ -922,10 +922,10 @@ endif
     SALLOCATE( dZadR, (1:mn,0:1,0:1,1:mn), zero )
     SALLOCATE( dZadZ, (1:mn,0:1,0:1,1:mn), zero )
 
-    SALLOCATE( dRodR, (1:Ntz,0:1,1:mn), zero ) ! calculated in rzaxis; 19 Sep 16;
-    SALLOCATE( dRodZ, (1:Ntz,0:1,1:mn), zero )
-    SALLOCATE( dZodR, (1:Ntz,0:1,1:mn), zero )
-    SALLOCATE( dZodZ, (1:Ntz,0:1,1:mn), zero )
+    SALLOCATE( dRodR, (1:Ntz,0:3,1:mn), zero ) ! calculated in rzaxis; 19 Sep 16;
+    SALLOCATE( dRodZ, (1:Ntz,0:3,1:mn), zero )
+    SALLOCATE( dZodR, (1:Ntz,0:3,1:mn), zero )
+    SALLOCATE( dZodZ, (1:Ntz,0:3,1:mn), zero )
   endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
