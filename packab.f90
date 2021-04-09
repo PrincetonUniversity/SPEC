@@ -42,6 +42,7 @@ subroutine packab( packorunpack, lvol, NN, solution, ideriv )
 
   use allglobal, only : myid, ncpu, cpus, mn, im, in, Ate, Aze, Ato, Azo, YESstellsym, NOTstellsym, &
                         TT, YESMatrixFree, &
+                        Mvol, &
                         Lma, Lmb, Lmc, Lmd, Lme, Lmf, Lmg, Lmh, &
                         Lmavalue, Lmbvalue, Lmcvalue, Lmdvalue, Lmevalue, Lmfvalue, Lmgvalue, Lmhvalue
 
@@ -59,6 +60,8 @@ subroutine packab( packorunpack, lvol, NN, solution, ideriv )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
+  FATAL( packab, lvol.lt.1 .or. lvol.gt.Mvol, illegal volume label )
+
   llrad = Lrad(lvol) ! shorthand;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -73,27 +76,41 @@ subroutine packab( packorunpack, lvol, NN, solution, ideriv )
     
     if( YESstellsym ) then
      
+!     do ii = 1, mn
+!      do ll = 0, llrad
+!
+!       id = Ate(lvol,0,ii)%i(ll)
+!       write(ounit,'("packab : " 10x " : lvol ="i6", ii ="i6", ll ="i6", id ="i6" ;")') lvol, ii, ll, id
+!       FATAL( packab, id.lt.1 .or. id.gt.NN, unpacking illegal subscript Ate )
+!
+!       id = Aze(lvol,0,ii)%i(ll)
+!       write(ounit,'("packab : " 10x " : lvol ="i6", ii ="i6", ll ="i6", id ="i6" ;")') lvol, ii, ll, id
+!       FATAL( packab, id.lt.1 .or. id.gt.NN, unpacking illegal subscript Aze )
+!
+!      enddo
+!     enddo
+
      ;  ii = 1
-      do ll = 0, llrad ; id = Ate(lvol,0,ii)%i(ll) ; FATAL( packab, id.lt.1 .or. id.gt.NN, unpacking illegal subscript )
-       ;               ; id = Aze(lvol,0,ii)%i(ll) ; FATAL( packab, id.lt.1 .or. id.gt.NN, unpacking illegal subscript )
+      do ll = 0, llrad ; id = Ate(lvol,0,ii)%i(ll) ; FATAL( packab, id.lt.0 .or. id.gt.NN, unpacking illegal subscript )
+       ;               ; id = Aze(lvol,0,ii)%i(ll) ; FATAL( packab, id.lt.0 .or. id.gt.NN, unpacking illegal subscript )
       enddo ! end of do ll;
      do ii = 2, mn
-      do ll = 0, llrad ; id = Ate(lvol,0,ii)%i(ll) ; FATAL( packab, id.lt.1 .or. id.gt.NN, unpacking illegal subscript )
-       ;               ; id = Aze(lvol,0,ii)%i(ll) ; FATAL( packab, id.lt.1 .or. id.gt.NN, unpacking illegal subscript )
+      do ll = 0, llrad ; id = Ate(lvol,0,ii)%i(ll) ; FATAL( packab, id.lt.0 .or. id.gt.NN, unpacking illegal subscript )
+       ;               ; id = Aze(lvol,0,ii)%i(ll) ; FATAL( packab, id.lt.0 .or. id.gt.NN, unpacking illegal subscript )
       enddo ! end of do ll;
      enddo ! end of do ii;
       
     else ! NOTstellsym;
       
      ;  ii = 1
-      do ll = 0, llrad ; id = Ate(lvol,0,ii)%i(ll) ; FATAL( packab, id.lt.1 .or. id.gt.NN, unpacking illegal subscript )
-       ;               ; id = Aze(lvol,0,ii)%i(ll) ; FATAL( packab, id.lt.1 .or. id.gt.NN, unpacking illegal subscript )
+      do ll = 0, llrad ; id = Ate(lvol,0,ii)%i(ll) ; FATAL( packab, id.lt.0 .or. id.gt.NN, unpacking illegal subscript )
+       ;               ; id = Aze(lvol,0,ii)%i(ll) ; FATAL( packab, id.lt.0 .or. id.gt.NN, unpacking illegal subscript )
       enddo
      do ii = 2, mn
-      do ll = 0, llrad ; id = Ate(lvol,0,ii)%i(ll) ; FATAL( packab, id.lt.1 .or. id.gt.NN, unpacking illegal subscript )
-       ;               ; id = Aze(lvol,0,ii)%i(ll) ; FATAL( packab, id.lt.1 .or. id.gt.NN, unpacking illegal subscript )
-       ;               ; id = Ato(lvol,0,ii)%i(ll) ; FATAL( packab, id.lt.1 .or. id.gt.NN, unpacking illegal subscript )
-       ;               ; id = Azo(lvol,0,ii)%i(ll) ; FATAL( packab, id.lt.1 .or. id.gt.NN, unpacking illegal subscript )
+      do ll = 0, llrad ; id = Ate(lvol,0,ii)%i(ll) ; FATAL( packab, id.lt.0 .or. id.gt.NN, unpacking illegal subscript )
+       ;               ; id = Aze(lvol,0,ii)%i(ll) ; FATAL( packab, id.lt.0 .or. id.gt.NN, unpacking illegal subscript )
+       ;               ; id = Ato(lvol,0,ii)%i(ll) ; FATAL( packab, id.lt.0 .or. id.gt.NN, unpacking illegal subscript )
+       ;               ; id = Azo(lvol,0,ii)%i(ll) ; FATAL( packab, id.lt.0 .or. id.gt.NN, unpacking illegal subscript )
       enddo ! end of do ll;
      enddo ! end of do ii;
      

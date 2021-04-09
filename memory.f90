@@ -6,7 +6,7 @@ subroutine allocate_Beltrami_matrices(vvol, LcomputeDerivatives)
 
   use fileunits
 
-  use inputlist, only: Wmemory, Wmacros
+  use inputlist, only: Wmemory, Wmacros, Lvcvacuum
 
   use allglobal
 
@@ -34,6 +34,10 @@ subroutine allocate_Beltrami_matrices(vvol, LcomputeDerivatives)
   SALLOCATE( dMB, (0:NN,0: 2), zero )
   SALLOCATE( dMG, (0:NN     ), zero )  
 
+  if( Lvacuumregion .and. Lvcvacuum.eq.1 ) then
+  SALLOCATE( dVC, (0:NN,0:NN), zero ) ! 03/03/21 ;
+  endif
+
   SALLOCATE( solution, (1:NN,-1:2), zero ) ! this will contain the vector potential from the linear solver and its derivatives;
 
   SALLOCATE( MBpsi, (1:NN), zero )
@@ -55,7 +59,7 @@ subroutine deallocate_Beltrami_matrices(LcomputeDerivatives)
 
   use fileunits
 
-  use inputlist, only: Wmemory, Wmacros
+  use inputlist, only: Wmemory, Wmacros, Lvcvacuum
 
   use allglobal
 
@@ -78,7 +82,11 @@ subroutine deallocate_Beltrami_matrices(LcomputeDerivatives)
   DALLOCATE(dMB)
 
   DALLOCATE(dMG)
-   
+
+  if( Lvacuumregion .and. Lvcvacuum.eq.1 ) then
+  DALLOCATE(dVC) ! 03/03/21 ;
+  endif
+  
   DALLOCATE(solution)
    
   DALLOCATE(MBpsi)

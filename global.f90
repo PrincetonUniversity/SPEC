@@ -271,6 +271,9 @@ module inputlist
   INTEGER      :: vcasingits =   8
   INTEGER      :: vcasingper =   1
   INTEGER      :: mcasingcal =   8 ! redundant; 
+  INTEGER      :: Lvcvacuum  =   0 ! 03/03/21 ;
+  INTEGER      :: Cteta      = 128 ! 03/03/21 ;
+  INTEGER      :: Czeta      = 128 ! 03/03/21 ;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -781,7 +784,10 @@ module inputlist
  vcasingtol  ,& !latex \item \inputvar{vcasingtol = 1.0e-08} : real : accuracy on virtual casing integral; see \link{bnorml}, \link{casing};
  vcasingits  ,& !latex \item \inputvar{vcasingits = 8      } : integer : minimum number of calls to adaptive virtual casing routine; see \link{casing};
  vcasingper  ,& !latex \item \inputvar{vcasingper = 1      } : integer : periods of integragion  in adaptive virtual casing routine; see \link{casing};
- mcasingcal     !latex \item \inputvar{mcasingcal = 8      } : integer : minimum number of calls to adaptive virtual casing routine; see \link{casing};
+ mcasingcal  ,& !latex \item \inputvar{mcasingcal = 8      } : integer : minimum number of calls to adaptive virtual casing routine; see \link{casing};
+ Lvcvacuum   ,& !latex \item \inputvar{Lvcvacuum  = 0      } : integer : selects if virtual-casing self-consistent field is used;                      
+ Cteta       ,& !latex \item \inputvar{Cteta      = 8      } : integer : resolution of discretization of boundary for virtual casing; ! 03/03/21 ;
+ Czeta          !latex \item \inputvar{Czeta      = 8      } : integer : resolution of discretization of boundary for virtual casing; ! 03/03/21 ;
 !latex \ei
 
 !latex \item Comments:
@@ -1185,6 +1191,8 @@ module allglobal
 
    REAL,   allocatable :: dMG(:  )
 
+   REAL,   allocatable :: dVC(:,:) ! 03/03/21 ;
+
    REAL,   allocatable :: solution(:,:) ! this is allocated in dforce; used in mp00ac and ma02aa; and is passed to packab;
 
    REAL,   allocatable :: GMRESlastsolution(:,:,:) ! used to store the last solution for restarting GMRES
@@ -1434,6 +1442,9 @@ module allglobal
   REAL, allocatable    :: Dxyz(:,:) ! computational boundary; position       ; 
   REAL, allocatable    :: Nxyz(:,:) ! computational boundary; normal         ; 
   REAL, allocatable    :: Jxyz(:,:) ! plasma        boundary; surface current; 
+
+  INTEGER              :: Ctz ! 03/03/21 ;
+  REAL, allocatable    :: kjteta(:), kjzeta(:), kjicos(:,:), kjisin(:,:) ! trigonometric coefficients for high-resolution virtual-casing integral ; 03/03/21 ;
 
   REAL                 :: tetazeta(1:2)
 
@@ -1864,12 +1875,14 @@ subroutine readin
    write(ounit,1042)            forcetol, c05xmax, c05xtol, c05factor, LreadGF
    write(ounit,1043)            mfreeits, gBntol, gBnbld
    write(ounit,1044)            vcasingeps, vcasingtol, vcasingits, vcasingper
+   write(ounit,1045)            Lvcvacuum, Cteta, Czeta ! 03/03/21 ;
    
 1040 format("readin : ",f10.2," : Lfindzero="i2" ;")
 1041 format("readin : ", 10x ," : escale="es13.5" ; opsilon="es13.5" ; pcondense="f7.3" ; epsilon="es13.5" ; wpoloidal="f7.4" ; upsilon="es13.5" ;")
 1042 format("readin : ", 10x ," : forcetol="es13.5" ; c05xmax="es13.5" ; c05xtol="es13.5" ; c05factor="es13.5" ; LreadGF="L2" ; ")
 1043 format("readin : ", 10x ," : mfreeits="i4" ; gBntol="es13.5" ; gBnbld="es13.5" ;")
 1044 format("readin : ", 10x ," : vcasingeps="es13.5" ; vcasingtol="es13.5" ; vcasingits="i6" ; vcasingper="i6" ;")
+1045 format("readin : ", 10x ," : Lvcvacuum ="i2" ; Cteta="i6" ; Czeta="i6" ;") ! 03/03/21 ;
    
    FATAL( readin, escale      .lt.zero     , error )
    FATAL( readin, pcondense   .lt.one      , error )
@@ -2026,6 +2039,9 @@ subroutine readin
   RlBCAST( vcasingtol, 1 , 0 )
   IlBCAST( vcasingits, 1 , 0 )
   IlBCAST( vcasingper, 1 , 0 )
+  IlBCAST( Lvcvacuum , 1 , 0 )
+  IlBCAST( Cteta     , 1 , 0 )
+  IlBCAST( Czeta     , 1 , 0 )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -2724,6 +2740,9 @@ subroutine wrtend
   write(iunit,'(" vcasingtol  = ",es23.15       )') vcasingtol   
   write(iunit,'(" vcasingits  = ",i9            )') vcasingits   
   write(iunit,'(" vcasingper  = ",i9            )') vcasingper   
+  write(iunit,'(" Lvcvaccum   = ",i9            )') Lvcvacuum
+  write(iunit,'(" Cteta       = ",i9            )') Cteta
+  write(iunit,'(" Czeta       = ",i9            )') Czeta
   write(iunit,'("/")')
 
   if( Wwrtend ) then ; cput = GETTIME ; write(ounit,'("wrtend : ",f10.2," : myid=",i3," ; writing diagnosticslist ;")') cput-cpus, myid

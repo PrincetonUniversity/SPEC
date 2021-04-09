@@ -104,6 +104,7 @@ subroutine ma02aa( lvol, NN )
 !latex \end{enumerate}
 
   if( LBsequad ) then ! sequential quadratic programming (SQP); construct minimum energy with constrained helicity;
+
    lastcpu = GETTIME
    
    NLinearConstraints = 0 ! no linear constraints;
@@ -418,7 +419,6 @@ subroutine ma02aa( lvol, NN )
 
 !latex \end{enumerate}
   
-
   if( LBlinear ) then ! assume Beltrami field is parameterized by helicity multiplier (and poloidal flux);
    
    lastcpu = GETTIME
@@ -448,6 +448,7 @@ subroutine ma02aa( lvol, NN )
     
     select case( Lconstraint )
     case( -1 )    ;                                   ; Nxdof = 0 ! poloidal   & toroidal flux NOT varied to match linking current and plasma current;
+     ;                                                ; iflag = 1 ! derivative is not required; 03/03/21 ;
     case(  0 )    ;                                   ; Nxdof = 2 ! poloidal   & toroidal flux ARE varied to match linking current and plasma current;
     case(  1 )    ;                                   ; Nxdof = 2 ! poloidal   & toroidal flux ARE varied to match linking current and transform-constraint;
     case(  2 )    ;                                   ; Nxdof = 2 ! poloidal   & toroidal flux ARE varied to match linking current and plasma current;
@@ -463,10 +464,11 @@ subroutine ma02aa( lvol, NN )
     
     ;         ; Ndof = 1     ; Ldfjac = Ndof ; nfev = 1 ; njev = 0 ; ihybrj = 1;  ! provide dummy values for consistency;
     
+    FATAL( ma02aa, iflag.ne.1 .and. iflag.ne.2, invalid iflag in call to mp00ac Nxdof eq 0 )
+
     WCALL( ma02aa, mp00ac, ( Ndof, Xdof(1:Ndof), Fdof(1:Ndof), Ddof(1:Ldfjac,1:Ndof), Ldfjac, iflag ) )
     
     helicity(lvol) = lABintegral(lvol) ! this was computed in mp00ac;
-
     
    case( 1:2 ) ! will iteratively call mp00ac, to calculate Beltrami field that satisfies constraints;
     

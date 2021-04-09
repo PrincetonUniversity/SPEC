@@ -30,8 +30,6 @@
 !latex \subsection{Evaluation of constraint derivatives}
 !latex Not implemented for now.
 
-
-
 subroutine dfp100(Ndofgl, x, Fvec, LComputeDerivatives)
 
   use constants, only : zero, half, one, two, pi2, pi, mu0
@@ -77,8 +75,6 @@ subroutine dfp100(Ndofgl, x, Fvec, LComputeDerivatives)
   LOGICAL              :: LComputeDerivatives
   INTEGER              :: deriv, Lcurvature
 
-
-
   BEGIN(dfp100)
 
   dpflux(2:Mvol) = x - xoffset
@@ -88,7 +84,7 @@ subroutine dfp100(Ndofgl, x, Fvec, LComputeDerivatives)
 
     LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
     ImagneticOK(vvol) = .false.
-    !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
     ! Determines if this volume vvol should be computed by this thread.
     call IsMyVolume(vvol)
