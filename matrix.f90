@@ -320,13 +320,13 @@ subroutine matrix( lvol, mn, lrad )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  use constants, only : zero, one, two
+  use constants, only : zero, one, two, half, pi2
   
   use numerical, only : small
   
   use fileunits, only : ounit
   
-  use inputlist, only : Wmacros, Wmatrix, mpol
+  use inputlist, only : Wmacros, Wmatrix, mpol, Nvol, Lvcvacuum, Cteta, Czeta
   
   use cputiming, only : Tmatrix
   
@@ -335,6 +335,13 @@ subroutine matrix( lvol, mn, lrad )
                         im, in, &
                         NAdof, &
                         dMA, dMD, dMB, dMG, &
+                        Lvacuumregion, iRbc, iZbs, Dxyz, iZbs, dVC, &
+!                       VRij, VZij, Vsg, Vguvij, &
+                        Ctz, kjzeta, kjicos, kjisin, & ! 03/03/21 ;
+                        Dxyz, Nxyz, virtualcasingfactor, &
+                        Ctz, Ntz, Nt, Nz, Mvol, &
+!                       Ateij, Azeij, & ! 03/03/21 ;
+                        efmn, ofmn, cfmn, sfmn, & ! 03/03/21 ;
                         Ate, Ato, Aze, Azo, &
                         iVns, iBns, iVnc, iBnc, &
                         Lma, Lmb, Lmc, Lmd, Lme, Lmf, Lmg, Lmh, &
@@ -360,6 +367,8 @@ subroutine matrix( lvol, mn, lrad )
   
   INTEGER              :: NN, ii, jj, ll, kk, pp, ll1, pp1, mi, ni, mj, nj, mimj, minj, nimj, ninj, mjmi, mjni, njmi, njni, id, jd
   
+  INTEGER              :: jk, kj, ifail ! 03/03/21 ;
+
   REAL                 :: Wtete, Wteto, Wtote, Wtoto
   REAL                 :: Wteze, Wtezo, Wtoze, Wtozo
   REAL                 :: Wzete, Wzeto, Wzote, Wzoto
@@ -372,6 +381,12 @@ subroutine matrix( lvol, mn, lrad )
   
   REAL,allocatable     :: TTdata(:,:,:), TTMdata(:,:) ! queues to construct sparse matrices
 
+  REAL                 :: VRij(1:Ctz,0:3), VZij(1:Ctz,0:3), Vsg(1:Ctz), Vguvij(1:Ctz,1:3,1:3) ! 03/03/21 ;
+  REAL                 :: rx(1:Ctz), ry(1:Ctz), rz(1:Ctz), rrr(1:Ctz) ! 03/03/21 ;
+  REAL                 :: xtrr(1:Ctz,1:3), xzrr(1:Ctz,1:3), xtrrdotds(1:Ctz), xzrrdotds(1:Ctz) ! 03/03/21 ;
+  REAL                 :: Atejkj(1:Ntz,1:mn), Azejkj(1:Ntz,1:mn) ! 03/03/21 ;
+  REAL                 :: Ateij(1:mn,1:mn), Azeij(1:mn,1:mn)
+
   BEGIN(matrix)
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -381,6 +396,9 @@ subroutine matrix( lvol, mn, lrad )
   FATAL( matrix, .not.allocated(dMD), error )
   FATAL( matrix, .not.allocated(dMB), error )
   FATAL( matrix, .not.allocated(dMG), error )  
+  if( Lvacuumregion .and. Lvcvacuum.eq.1 ) then
+  FATAL( matrix, .not.allocated(dVC), error )  
+  endif
 #endif
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -389,6 +407,101 @@ subroutine matrix( lvol, mn, lrad )
   
   dMA(0:NN,0:NN) = zero
   dMD(0:NN,0:NN) = zero
+
+  if( Lvacuumregion .and. Lvcvacuum.eq.1 ) dVC(0:NN,0:NN) = zero
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+  if( Lvacuumregion .and. Lvcvacuum.eq.1 ) then ! 03/03/21 ;
+   
+   write(ounit,'("matrix : " 10x " : dBdX: L =",L2," ; vol =",i3," ; innout =",i2," ; ii =",i3," ; irz =",i2," ; issym =",i2," ;")') &
+                                     dBdX%L, dBdX%vol, dBdX%innout, dBdX%ii, dBdX%irz, dBdX%issym
+
+   pause
+
+   VRij(1:Ctz,0:3) = zero ! initialize summation ; 03/03/21 ;
+   VZij(1:Ctz,0:3) = zero
+   
+   do kk = 0, Czeta-1
+    do jj = 0, Cteta-1 ; kj = 1 + jj + kk * Cteta ! construct high-resolution plasma boundary (for virtual-casing integral) ; 03/03/21 ;
+     
+     do ii = 1, mn
+      VRij(kj,0) = VRij(kj,0) +   iRbc(ii,Nvol)                   * kjicos(kj,ii) 
+      VRij(kj,1) = VRij(kj,1) + ( iRbc(ii,Mvol) - iRbc(ii,Nvol) ) * kjicos(kj,ii) * half
+      VRij(kj,2) = VRij(kj,2) -   iRbc(ii,Nvol)                   * kjisin(kj,ii) * ( + im(ii) )
+      VRij(kj,3) = VRij(kj,3) -   iRbc(ii,Nvol)                   * kjisin(kj,ii) * ( - in(ii) )
+      VZij(kj,0) = VZij(kj,0) +   iZbs(ii,Nvol)                   * kjisin(kj,ii)
+      VZij(kj,1) = VZij(kj,1) + ( iZbs(ii,Mvol) - iZbs(ii,Nvol) ) * kjisin(kj,ii) * half
+      VZij(kj,2) = VZij(kj,2) +   iZbs(ii,Nvol)                   * kjicos(kj,ii) * ( + im(ii) )
+      VZij(kj,3) = VZij(kj,3) +   iZbs(ii,Nvol)                   * kjicos(kj,ii) * ( - in(ii) )
+     enddo
+     
+    enddo ! end of do kk ; 07/29/20;
+   enddo ! end of do jj ; 07/29/20;
+   
+   Vsg(1:Ctz) = VRij(1:Ctz,0) * ( VZij(1:Ctz,1)*VRij(1:Ctz,2) - VRij(1:Ctz,1)*VZij(1:Ctz,2) ) ; Vsg = one / Vsg
+   do ii = 1, 3
+    do jj = ii, 3 ; Vguvij(1:Ctz,ii,jj) = VRij(1:Ctz,ii) * VRij(1:Ctz,jj) + VZij(1:Ctz,ii) * VZij(1:Ctz,jj)
+    enddo
+   enddo
+   Vguvij(1:Ctz,3,3) = Vguvij(1:Ctz,3,3) + VRij(1:Ctz,0) * VRij(1:Ctz,0)
+   
+   do jk = 1, Ntz ! loop over plasma boundary (to construct Fourier harmonics of B_{plasma} \cdot {\bf n} ; 03/03/21 ;
+    
+    rx(1:Ctz) = Dxyz(1,jk) - VRij(1:Ctz,0) * cos(kjzeta(1:Ctz))
+    ry(1:Ctz) = Dxyz(2,jk) - VRij(1:Ctz,0) * sin(kjzeta(1:Ctz))
+    rz(1:Ctz) = Dxyz(3,jk) - VZij(1:Ctz,0)
+    
+    rrr(1:Ctz) = ( sqrt( rx(1:Ctz) * rx(1:Ctz) + ry(1:Ctz) * ry(1:Ctz) + rz(1:Ctz) * rz(1:Ctz) ) )**3 ; rrr(1:Ctz) = one / rrr(1:Ctz)
+    
+    xtrr(1:Ctz,1) = ( VRij(1:Ctz,2)*sin(kjzeta(1:Ctz))                                    ) * rz(1:Ctz) &
+                  - ( VZij(1:Ctz,2)                                                       ) * ry(1:Ctz)
+    xtrr(1:Ctz,2) = ( VZij(1:Ctz,2)                                                       ) * rx(1:Ctz) &
+                  - ( VRij(1:Ctz,2)*cos(kjzeta(1:Ctz))                                    ) * rz(1:Ctz)  
+    xtrr(1:Ctz,3) = ( VRij(1:Ctz,2)*cos(kjzeta(1:Ctz))                                    ) * ry(1:Ctz) &
+                  - ( VRij(1:Ctz,2)*sin(kjzeta(1:Ctz))                                    ) * rx(1:Ctz)
+  
+    xzrr(1:Ctz,1) = ( VRij(1:Ctz,3)*sin(kjzeta(1:Ctz)) + VRij(1:Ctz,0)*cos(kjzeta(1:Ctz)) ) * rz(1:Ctz) &
+                  - ( VZij(1:Ctz,3)                                                       ) * ry(1:Ctz)
+    xzrr(1:Ctz,2) = ( VZij(1:Ctz,3)                                                       ) * rx(1:Ctz) &
+                  - ( VRij(1:Ctz,3)*cos(kjzeta(1:Ctz)) - VRij(1:Ctz,0)*sin(kjzeta(1:Ctz)) ) * rz(1:Ctz)
+    xzrr(1:Ctz,3) = ( VRij(1:Ctz,3)*cos(kjzeta(1:Ctz)) - VRij(1:Ctz,0)*sin(kjzeta(1:Ctz)) ) * ry(1:Ctz) &
+                  - ( VRij(1:Ctz,3)*sin(kjzeta(1:Ctz)) + VRij(1:Ctz,0)*cos(kjzeta(1:Ctz)) ) * rx(1:Ctz)
+     
+    xtrrdotds(1:Ctz) = xtrr(1:Ctz,1) * Nxyz(1,jk) + xtrr(1:Ctz,2) * Nxyz(2,jk) + xtrr(1:Ctz,3) * Nxyz(3,jk)
+    xzrrdotds(1:Ctz) = xzrr(1:Ctz,1) * Nxyz(1,jk) + xzrr(1:Ctz,2) * Nxyz(2,jk) + xzrr(1:Ctz,3) * Nxyz(3,jk)
+    
+    do jj = 1, mn
+     Atejkj(jk,jj) = + sum( kjicos(1:Ctz,jj) * ( Vguvij(1:Ctz,3,3) * xtrrdotds(1:Ctz) - Vguvij(1:Ctz,2,3) * xzrrdotds(1:Ctz) ) * rrr(1:Ctz) * Vsg(1:Ctz) )
+     Azejkj(jk,jj) = - sum( kjicos(1:Ctz,jj) * ( Vguvij(1:Ctz,2,3) * xtrrdotds(1:Ctz) - Vguvij(1:Ctz,2,2) * xzrrdotds(1:Ctz) ) * rrr(1:Ctz) * Vsg(1:Ctz) )  
+    enddo ! end of do jj ; 07/29/20;
+    
+   enddo ! end of do jk ; 07/29/20;
+   
+   Atejkj(1:Ntz,1:mn) = Atejkj(1:Ntz,1:mn) * pi2 * pi2 * virtualcasingfactor / Ctz
+   Azejkj(1:Ntz,1:mn) = Azejkj(1:Ntz,1:mn) * pi2 * pi2 * virtualcasingfactor / Ctz
+   
+   do jj = 1, mn
+    call tfft( Nt, Nz, Atejkj(1:Ntz,jj), Azejkj(1:Ntz,jj), mn, im(1:mn), in(1:mn), efmn(1:mn), Ateij(1:mn,jj), cfmn(1:mn), Azeij(1:mn,jj), ifail )     
+   enddo
+   
+   do ii = 1, mn
+    
+    do ll = 0, lrad ! Chebyshev polynomial ;
+     
+     if( ii.gt.1 ) then ; id = Lme(lvol,  ii)
+      do jj = 1, mn     ; jd = Ate(lvol,0,jj)%i(ll) ; dVC(id,jd) = Ateij(ii,jj) * TT(ll,0,1)
+       ;                ; jd = Aze(lvol,0,jj)%i(ll) ; dVC(id,jd) = Azeij(ii,jj) * TT(ll,0,1)
+      enddo
+     endif
+     
+    enddo ! end of do ll ;
+    
+   enddo ! end of do ii ;
+    
+  endif ! end of if( Lvacuumregion .and. Lvcvacuum.eq.1 ) ! 03/03/21 ;
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   SALLOCATE( TTdata, (0:lrad, 0:mpol, 0:1), zero)
   SALLOCATE( TTMdata, (0:lrad, 0:mpol), zero)
@@ -454,25 +567,25 @@ subroutine matrix( lvol, mn, lrad )
     endif
     
     do ll = 0, lrad
-    ;                  ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lma(lvol,  ii)       ; dMA(id,jd) = +      TTMdata(ll, mi)
-    ;                  ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lmb(lvol,  ii)       ; dMA(id,jd) = +      TTdata(ll, mi,kk)
-    if( ii.gt.1 ) then ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lme(lvol,  ii)       ; dMA(id,jd) = - ni * TTdata(ll, mi, 1)
+     ;                  ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lma(lvol,  ii)       ; dMA(id,jd) = +      TTMdata(ll, mi)
+     ;                  ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lmb(lvol,  ii)       ; dMA(id,jd) = +      TTdata(ll, mi,kk)
+     if( ii.gt.1 ) then ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lme(lvol,  ii)       ; dMA(id,jd) = - ni * TTdata(ll, mi, 1)
       ;                 ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lme(lvol,  ii)       ; dMA(id,jd) = - mi * TTdata(ll, mi, 1)
-    else               ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lmg(lvol,  ii)       ; dMA(id,jd) = +      TTdata(ll, mi, 1)
+     else               ; id = Ate(lvol,0,ii)%i(ll) ; jd = Lmg(lvol,  ii)       ; dMA(id,jd) = +      TTdata(ll, mi, 1)
       ;                 ; id = Aze(lvol,0,ii)%i(ll) ; jd = Lmh(lvol,  ii)       ; dMA(id,jd) = +      TTdata(ll, mi, 1)
-    endif
-    
+     endif
+     
     enddo ! end of do ll ;
     
     do pp = 0, lrad     ; id = Lma(lvol,  ii)       ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(id,jd) = +      TTMdata(pp, mi)
-    ;                  ; id = Lmb(lvol,  ii)       ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(id,jd) = +      TTdata(pp, mi,kk)
-    if( ii.gt.1 ) then ; id = Lme(lvol,  ii)       ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(id,jd) = - ni * TTdata(pp, mi, 1)
+     ;                  ; id = Lmb(lvol,  ii)       ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(id,jd) = +      TTdata(pp, mi,kk)
+     if( ii.gt.1 ) then ; id = Lme(lvol,  ii)       ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(id,jd) = - ni * TTdata(pp, mi, 1)
       ;                 ; id = Lme(lvol,  ii)       ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(id,jd) = - mi * TTdata(pp, mi, 1)
-    else               ; id = Lmg(lvol,  ii)       ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(id,jd) = +      TTdata(pp, mi, 1)
+     else               ; id = Lmg(lvol,  ii)       ; jd = Ate(lvol,0,ii)%i(pp) ; dMA(id,jd) = +      TTdata(pp, mi, 1)
       ;                 ; id = Lmh(lvol,  ii)       ; jd = Aze(lvol,0,ii)%i(pp) ; dMA(id,jd) = +      TTdata(pp, mi, 1)
-    endif
+     endif
     enddo ! end of do pp ;
-      
+    
    enddo ! end of do ii ;
 !$OMP END PARALLEL DO
    
@@ -607,6 +720,10 @@ subroutine matrix( lvol, mn, lrad )
   DALLOCATE( TTMdata )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  if( Lvacuumregion .and. Lvcvacuum.eq.1 ) dMA(0:NN,0:NN) = dMA(0:NN,0:NN) - dVC(0:NN,0:NN) ! 03/03/21 ;
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 #ifdef DEBUG
   
@@ -644,51 +761,96 @@ end subroutine matrix
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
 subroutine matrixBG( lvol, mn, lrad )
+
   ! only compute the dMB and dMG matrix for matrix-free mode
+
   use constants, only : zero, one
-  use allglobal, only : NAdof, im, in,&
+
+  use fileunits, only : ounit
+
+  use inputlist, only : Wmatrix, Lvcvacuum
+
+  use cputiming, only : Tmatrix
+
+  use allglobal, only : myid, cpus, NAdof, im, in,&
                         dMG, dMB, YESstellsym, &
                         iVnc, iVns, iBnc, iBns, &
-                        Lme, Lmf, Lmg, Lmh
-  implicit none
+                        Lme, Lmf, Lmg, Lmh, &
+                        Lvacuumregion
+
+  LOCALS
+
   INTEGER, intent(in)  :: lvol, mn, lrad
 
   INTEGER :: NN, ii, id, mi, ni
 
-  NN = NAdof(lvol) ! shorthand;
+  BEGIN( matrix )
 
+  NN = NAdof(lvol) ! shorthand;
+  
   dMB(0:NN,1: 2) = zero
   dMG(0:NN     ) = zero
-
+  
   if( YESstellsym ) then
- 
-   do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
+   
+   select case( Lvcvacuum ) 
     
-    ;if( ii.gt.1 ) then ; id = Lme(lvol,  ii)       ;                           ; dMG(id   ) = - ( iVns(ii) + iBns(ii) )
-    ;else               ; id = Lmg(lvol,  ii)       ;                           ; dMB(id, 1) = -       one
-!   ;                   ; id = Lmh(lvol,  ii)       ;                           ; dMB(id, 2) = -       one ! to be deleted;
-    ;                   ; id = Lmh(lvol,  ii)       ;                           ; dMB(id, 2) = +       one ! changed sign;
-    ;endif
- 
-   enddo ! end of do ii ;
+   case( 1 ) ! Lvcvacuum.eq.1 ; 03/03/21 ;
+    
+    do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
+     
+     ;if( ii.gt.1 ) then ; id = Lme(lvol,  ii)       ;                           ; dMG(id   ) = - ( iVns(ii)            )
+     ;else               ; id = Lmg(lvol,  ii)       ;                           ; dMB(id, 1) = -       one
+!    ;                   ; id = Lmh(lvol,  ii)       ;                           ; dMB(id, 2) = -       one ! to be deleted;
+     ;                   ; id = Lmh(lvol,  ii)       ;                           ; dMB(id, 2) = +       one ! changed sign;
+     ;endif
+     
+    enddo ! end of do ii ;
+    
+   case default ! Lvcvacuum ; 03/03/21 ;
+    
+    do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
+     
+     ;if( ii.gt.1 ) then ; id = Lme(lvol,  ii)       ;                           ; dMG(id   ) = - ( iVns(ii) + iBns(ii) )
+     ;else               ; id = Lmg(lvol,  ii)       ;                           ; dMB(id, 1) = -       one
+!    ;                   ; id = Lmh(lvol,  ii)       ;                           ; dMB(id, 2) = -       one ! to be deleted;
+     ;                   ; id = Lmh(lvol,  ii)       ;                           ; dMB(id, 2) = +       one ! changed sign;
+     ;endif
+     
+    enddo ! end of do ii ;
+    
+   end select ! end of select case( Lvcvacuum ) ; 03/03/21 ;
    
   else ! NOTstellsym ;
-
-   do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
    
-    ;if( ii.gt.1 ) then ; id = Lme(lvol,ii)         ;                           ; dMG(id   ) = - ( iVns(ii) + iBns(ii) )
-    ;                   ; id = Lmf(lvol,ii)         ;                           ; dMG(id   ) = - ( iVnc(ii) + iBnc(ii) )
-    ;else               ; id = Lmg(lvol,ii)         ;                           ; dMB(id, 1) = -       one
-!   ;                   ; id = Lmh(lvol,ii)         ;                           ; dMB(id, 2) = -       one ! to be deleted;
-    ;                   ; id = Lmh(lvol,ii)         ;                           ; dMB(id, 2) = +       one ! changed sign;
-    ;endif
+   select case( Lvcvacuum ) 
     
-   enddo ! end of do ii ;
-   
-  endif ! end of if( YESstellsym ) ;
+   case( 1 ) ! Lvcvacuum.eq.1 ; 03/03/21 ;
+    
+    FATAL( matrix, .true., Lvcvacuum not implemented for non-stellarator-symmetry )
+    
+   case default ! Lvcvacuum ; 03/03/21 ;
+    
+    do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
+     
+     ;if( ii.gt.1 ) then ; id = Lme(lvol,ii)         ;                           ; dMG(id   ) = - ( iVns(ii) + iBns(ii) )
+     ;                   ; id = Lmf(lvol,ii)         ;                           ; dMG(id   ) = - ( iVnc(ii) + iBnc(ii) )
+     ;else               ; id = Lmg(lvol,ii)         ;                           ; dMB(id, 1) = -       one
+!    ;                   ; id = Lmh(lvol,ii)         ;                           ; dMB(id, 2) = -       one ! to be deleted;
+     ;                   ; id = Lmh(lvol,ii)         ;                           ; dMB(id, 2) = +       one ! changed sign;
+     ;endif
+    
+    enddo ! end of do ii ;
+    
+   end select ! end of select case( Lvcvacuum ) ; 03/03/21 ;
 
-  return
+   endif ! end of if( YESstellsym ) ;
+
+  RETURN( matrix )
 
 end subroutine matrixBG
 

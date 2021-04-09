@@ -632,6 +632,8 @@ subroutine get_LU_beltrami_matrices(vvol, oBI, NN)
   REAL                :: lastcpu
   REAL, allocatable   :: work(:)
 
+  BEGIN(dfp200)
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-
 
   lastcpu = GETTIME
@@ -701,6 +703,8 @@ subroutine get_LU_beltrami_matrices(vvol, oBI, NN)
 1011 format("dforce : ",f10.2," : myid=",i3," ; vvol=",i3," ; called DGETRI ; time=",f10.2,"s ; inverse of Beltrami matrix; idgetrf=",i2," ; ",a18)
 1010 format("dforce : ",f10.2," : myid=",i3," ; vvol=",i3," ; called DGETRF ; time=",f10.2,"s ; LU factorization of matrix; idgetrf=",i2," ; ",a18)
 
+  RETURN(dfp200)
+
 end subroutine get_LU_beltrami_matrices
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-
@@ -737,6 +741,8 @@ subroutine get_perturbed_solution(vvol, oBI, NN)
   REAL                    :: dpsi(1:2), work(1:NN+1), rhs(0:NN), dVA(0:NN), dVD(0:NN)
   CHARACTER               :: packorunpack
 
+  BEGIN(dfp200)
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-
     
   ll = Lrad(vvol)  ! Shorthand
@@ -765,6 +771,8 @@ subroutine get_perturbed_solution(vvol, oBI, NN)
   ! Unpack derivatives of solution
   packorunpack = 'U'
   WCALL( dfp200, packab,( packorunpack, vvol, NN,  solution(1:NN,-1), -1 ) ) ! derivatives placed in Ate(lvol,ideriv,1:mn)%s(0:Lrad),
+
+  RETURN(dfp200)
 
 end subroutine get_perturbed_solution
 
@@ -847,6 +855,7 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
     EXTERNAL            :: dfp100
 #endif
 
+  BEGIN(dfp200)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1315,6 +1324,9 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
     endif
 #endif
 
+
+  RETURN(dfp200)
+
 end subroutine evaluate_dmupfdx
 
 
@@ -1389,7 +1401,7 @@ CHARACTER               :: packorunpack
 #endif
 
 
-
+  BEGIN(dfp200)
 
 
 do iocons = 0, 1
@@ -1673,5 +1685,7 @@ do iocons = 0, 1
 #endif
      
 enddo ! end of do iocons;
+
+  RETURN(dfp200)
 
 end subroutine evaluate_dBB

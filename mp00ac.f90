@@ -834,14 +834,19 @@ subroutine matvec(n, x, ax, a, mu, vvol)
   ! compute a.x by either by coumputing it directly, 
   ! or using a matrix free method
   use constants, only : zero, one
-  use inputlist, only : Lrad
-  use allglobal, only : NOTMatrixFree, Iquad, mn, dmd
-  implicit none
+  use fileunits, only : ounit
+  use inputlist, only : Lrad, Wmp00ac
+  use cputiming, only : Tmp00ac
+  use allglobal, only : NOTMatrixFree, Iquad, mn, dmd, cpus, myid
+! implicit none
+  LOCALS
   INTEGER, intent(in) :: n, vvol
   REAL                :: ax(1:n), x(1:n), a(*), mu
   INTEGER             :: ideriv
-  REAL                :: dax(0:n), ddx(0:n), cput, lastcpu
+  REAL                :: dax(0:n), ddx(0:n), lastcpu
   CHARACTER           :: packorunpack
+
+  BEGIN(mp00ac) 
 
   if (NOTMatrixFree) then ! if we have the matrix, then just multiply it to x
     call DGEMV('N', n, n, one, dMD(1,1), n+1, x, 1, zero, ddx(1), 1)
@@ -849,7 +854,8 @@ subroutine matvec(n, x, ax, a, mu, vvol)
   else ! if we are matrix-free, then we construct a.x directly
     ideriv = -2        ! this is used for matrix-free only
     packorunpack = 'U'
-    call packab(packorunpack, vvol, n, x, ideriv)          ! unpack solution to construct a.x
+    WCALL(mp00ac, packab, (packorunpack, vvol, n, x, ideriv) )         ! unpack solution to construct a.x
+!   call packab(packorunpack, vvol, n, x, ideriv)          ! unpack solution to construct a.x
     call intghs(Iquad(vvol), mn, vvol, Lrad(vvol), ideriv) ! compute the integrals of B_lower
     call mtrxhs(vvol, mn, Lrad(vvol), dax, ddx, ideriv)    ! construct a.x from the integral
     ax = dax(1:n) - mu * ddx(1:n)                          ! put in the mu factor
