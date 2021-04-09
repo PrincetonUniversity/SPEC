@@ -2,6 +2,37 @@
 !> \brief (build matrices) ! Constructs matrices for the precondtioner.
 
 !> \brief Constructs matrices for the precondtioner.
+!>
+!> **Preconditioner**
+!>
+!> GMRES iteratively looks for \f$\mathbf{a}_n \f$ that minimises the residual 
+!> \f$\epsilon_{\text{GMRES}}=\|\hat{\mathcal{A}} \cdot \mathbf{a}_n -  \mathbf{b}\|\f$,
+!> where \f$\|.\|\f$ is the Euclidean norm.
+!> Instead of solving the original problem which is usually ill-conditioned,
+!> a left preconditioner matrix \f$\mathcal{M}\f$ is applied on both side of \f$\mathcal{A} \cdot \mathbf{a} = \mathbf{b}\f$
+!> so that the transformed problem is well conditioned.
+!> The convergence speed of (the preconditioned) GMRES depends highly on the quality of \f$\mathcal{M}\f$.
+!> A good preconditioner will require the matrix product \f$\mathcal{M}^{-1} \hat{\mathcal{A}}\f$ to be as close as possible to an identity matrix.
+!> Also, inverting the preconditioner \f$\mathcal{M}\f$ should be considerably cheaper than inverting \f$\hat{\mathcal{A}}\f$ itself.
+!>
+!> If the \f$i\f$-th and \f$j\f$-th unknowns in \f$\mathbf{a}\f$ correspond to \f$A_{\theta,m_i,n_i,l_i}\f$ and \f$A_{\theta,m_j,n_j,l_j}\f$, respectively,
+!> then the matrix element \f$\hat{\mathcal{A}}_{i,j}\f$ describes the coupling strength between harmonics \f$(m_i, n_i)\f$ and \f$(m_j, n_j)\f$.
+!> Noting that if the Fourier series of the boundary \f$R_{m,n}\f$ and \f$Z_{m,n}\f$ have spectral convergence,
+!> then the coupling terms between \f$A_{\theta,m_i,n_i,l_i}\f$ and \f$A_{\theta,m_j,n_j,l_j}\f$,
+!> formed by the \f$(|m_i-m_j|, |n_i-n_j|)\f$ harmonics of the coordinate metrics, 
+!> should also decay exponentially with \f$|m_i-m_j|\f$ and \f$|n_i-n_j|\f$ and are thus small compared to the ``diagonals'' \f$m_i=m_j\f$ and \f$n_i=n_j\f$.
+!> Therefore, we can construct \f$\mathcal{M}\f$ from the elements of \f$\hat{\mathcal{A}}\f$ by
+!> eliminating all the coupling terms with \f$m_i \neq m_j\f$ or \f$n_i \neq n_j\f$,
+!> and keeping the rest (``diagonals'' and terms related to Lagrange mulitpliers).
+!> Physically, the matrix \f$\mathcal{M}\f$ is equivalent to the \f$\hat{\mathcal{A}}\f$ matrix of 
+!> a tokamak with similar major radius and minor radius to the stellarator we are solving for.
+!> The preconditioning matrix \f$\mathcal{M}\f$ is sparse, with the number of nonzero elements \f$\sim O(MNL^2)\f$,
+!> while the total number of elements in \f$\mathcal{M}\f$ is \f$O(M^2 N^2 L^2)\f$.
+!> After the construction of \f$\mathcal{M}\f$, the approximate inverse \f$\mathcal{M}\f$ is computed by an incomplete LU factorisation.
+!>
+!> This subroutine constructs such a preconditioner matrix \f$\mathcal{M}\f$ and store it inside a sparse matrix.
+!> The matrix elements are the same as __matrix.f90__, however, only the aforementioned terms are kept.
+!> The sparse matrix uses the storage structure of __Compact Sparse Row (CSR)__.
 !> 
 !> @param lvol
 !> @param mn
