@@ -60,14 +60,14 @@
 !> **Fourier-Chebyshev representation**
 !>
 !> <ul>
-!> <li> The components of the vector potential, \f${\bf A}=A_\theta \nabla + A_\zeta \nabla \zeta eta\f$, are
+!> <li> The components of the vector potential, \f${\bf A}=A_\theta \nabla + A_\zeta \nabla \zeta \f$, are
 !>      \f{eqnarray}{
 !>        A_\theta(s,\theta,\zeta) &=& \sum_{i,l} {\color{red} A_{\theta,e,i,l}} \; {\overline T}_{l,i}(s) \cos\alpha_i + \sum_{i,l} {\color{Orange}  A_{\theta,o,i,l}} \; {\overline T}_{l,i}(s) \sin\alpha_i, \label{eq:At_matrix} \\
 !>        A_\zeta( s,\theta,\zeta) &=& \sum_{i,l} {\color{blue}A_{\zeta, e,i,l}} \; {\overline T}_{l,i}(s) \cos\alpha_i + \sum_{i,l} {\color{Cerulean}A_{\zeta ,o,i,l}} \; {\overline T}_{l,i}(s) \sin\alpha_i, \label{eq:Az_matrix}
 !>      \f}
-!>      where \f${\overline T}_{l,i}(s) \equiv \bar s^{m_i/2} \, T_l(s)\f$, \f$T_l(s)\f$ is the Chebyshev polynomial, and \f$\alpha_j \equiv m_j\theta-n_j\zeta\f$.
-!>      The regularity factor, \f$\bar s^{m_i/2}\f$, where \f$\bar s \equiv (1+s)/2\f$, is only included if there is a coordinate singularity in the domain
-!>      (i.e. only in the innermost volume, and only in cylindrical and toroidal geometry.) </li>
+!>      where \f${\overline T}_{l,i}(s) \f$ is the __recombined__ Chebyshev polynomial in a volume without an axis, or __modified__ Zernike polynomial in a volume with an axis
+!>      (i.e. only in the innermost volume, and only in cylindrical and toroidal geometry.) 
+!>      , and \f$\alpha_j \equiv m_j\theta-n_j\zeta\f$.</li>
 !> <li> The magnetic field, \f$\sqrt g \, {\bf B} = \sqrt g B^s {\bf e}_s + \sqrt g B^\theta {\bf e}_\theta + \sqrt g B^\zeta {\bf e}_\zeta\f$, is
 !>      \f{eqnarray}{
 !>        \begin{array}{ccccrcrcrcrcccccccccccccccccccccccccccccccccccccccccccccccccccc}
@@ -119,6 +119,9 @@
 !>       </ul>
 !> <li> In each plasma volume the boundary condition on the outer interface is \f$b=0\f$.
 !> <li> In the vacuum volume (only for free-boundary), we may set \f$\mu=0\f$.
+!> <li> __Note:__ in SPEC version >3.00, the basis recombination method is used to ensure the boundary condition on the inner side of an interface.
+!>      The lagrange multipliers \f$a_i, b_i, c_i, d_i\f$ are no longer used in volumes without a coordinate singularity.
+!>      In a volume with a coordinate singularity, they are used only\f$a_i, c_i\f$ with $m=0,1$ are excluded also due to Zernike basis recombination.
 !>
 !> </ul> 
 !>
