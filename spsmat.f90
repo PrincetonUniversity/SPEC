@@ -6,7 +6,7 @@
 !> **Preconditioner**
 !>
 !> GMRES iteratively looks for \f$\mathbf{a}_n \f$ that minimises the residual 
-!> \f$\epsilon_{\text{GMRES}}=\|\hat{\mathcal{A}} \cdot \mathbf{a}_n -  \mathbf{b}\|\f$,
+!> \f$\epsilon_{\mbox{GMRES}}=\|\hat{\mathcal{A}} \cdot \mathbf{a}_n -  \mathbf{b}\|\f$,
 !> where \f$\|.\|\f$ is the Euclidean norm.
 !> Instead of solving the original problem which is usually ill-conditioned,
 !> a left preconditioner matrix \f$\mathcal{M}\f$ is applied on both side of \f$\mathcal{A} \cdot \mathbf{a} = \mathbf{b}\f$
