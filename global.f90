@@ -1213,8 +1213,8 @@ module allglobal
 !latex \item The force vector is comprised of \type{Bomn} and \type{Iomn}.
 !latex \end{enumerate}
 
-  REAL,    allocatable ::  Bemn(:,:,:),  Iomn(:,:), Somn(:,:,:), Pomn(:,:,:)
-  REAL,    allocatable ::  Bomn(:,:,:),  Iemn(:,:), Semn(:,:,:), Pemn(:,:,:)
+  REAL,    allocatable ::  Bemn(:,:,:),  Iomn(:,:,:), Somn(:,:,:), Pomn(:,:,:)
+  REAL,    allocatable ::  Bomn(:,:,:),  Iemn(:,:,:), Semn(:,:,:), Pemn(:,:,:)
   REAL,    allocatable ::  BBe(:), IIo(:), BBo(:), IIe(:)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

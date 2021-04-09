@@ -1133,11 +1133,13 @@ endif
    do vvol = 1, Nvol
     do ii = 1, mn
      if( im(ii).eq.0 ) then ; psifactor(ii,vvol) = tflux(vvol)**(          +half) ! 28 Jan 15;
+                            ; inifactor(ii,vvol) = tflux(vvol)**(          +half) 
      else                   ; psifactor(ii,vvol) = tflux(vvol)**(halfmm(ii)-half) ! 28 Jan 15;
+                            ; inifactor(ii,vvol) = tflux(vvol)**(halfmm(ii)-half)
      endif
     enddo
    enddo
-   
+   psifactor(1:mn,1:Nvol) = one
   case( 3 ) 
    
    do vvol = 1, Nvol
@@ -1178,9 +1180,9 @@ endif
     FATAL( preset, Linitialize.ne.1, geometrical initialization under construction for cylindrical )
     
     do vvol = 1, Nvol-1
-     ;iRbc(1:mn,vvol) = iRbc(1:mn,Nvol) * psifactor(1:mn,vvol)
+     ;iRbc(1:mn,vvol) = iRbc(1:mn,Nvol) * inifactor(1:mn,vvol)
      if( NOTstellsym ) then
-      iRbs(2:mn,vvol) = iRbs(2:mn,Nvol) * psifactor(2:mn,vvol)
+      iRbs(2:mn,vvol) = iRbs(2:mn,Nvol) * inifactor(2:mn,vvol)
      endif
     enddo
     
@@ -1277,14 +1279,14 @@ endif
 
 ! Construction of ``force'';
 
-  SALLOCATE( Bemn, (1:mn,1:Mvol,0:1), zero )
-  SALLOCATE( Bomn, (1:mn,1:Mvol,0:1), zero )
-  SALLOCATE( Iomn, (1:mn,1:Mvol    ), zero )
-  SALLOCATE( Iemn, (1:mn,1:Mvol    ), zero )
-  SALLOCATE( Somn, (1:mn,1:Mvol,0:1), zero )
-  SALLOCATE( Semn, (1:mn,1:Mvol,0:1), zero )
-  SALLOCATE( Pomn, (1:mn,1:Mvol,0:2), zero )
-  SALLOCATE( Pemn, (1:mn,1:Mvol,0:2), zero )
+  SALLOCATE( Bemn, (1:mn,1:Mvol,0:3), zero )
+  SALLOCATE( Bomn, (1:mn,1:Mvol,0:3), zero )
+  SALLOCATE( Iomn, (1:mn,1:Mvol,0:3), zero )
+  SALLOCATE( Iemn, (1:mn,1:Mvol,0:3), zero )
+  SALLOCATE( Somn, (1:mn,1:Mvol,0:3), zero )
+  SALLOCATE( Semn, (1:mn,1:Mvol,0:3), zero )
+  SALLOCATE( Pomn, (1:mn,1:Mvol,0:3), zero )
+  SALLOCATE( Pemn, (1:mn,1:Mvol,0:3), zero )
 
   SALLOCATE( BBe , (1:Mvol-1), zero )
   SALLOCATE( IIo , (1:Mvol-1), zero )

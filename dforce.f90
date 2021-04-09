@@ -150,6 +150,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
   INTEGER              :: maxfev, ml, muhybr, mode, nprint, nfev, ldfjac, lr, Nbc, NN, cpu_id, ideriv
   REAL                 :: epsfcn, factor
   REAL                 :: Fdof(1:Mvol-1), Xdof(1:Mvol-1)
+  REAL                 :: ForceRc(1:mn, 1:Mvol-1), ForceRs(1:mn, 1:Mvol-1), ForceZc(1:mn, 1:Mvol-1), ForceZs(1:mn, 1:Mvol-1)    ! the force for descent method
   INTEGER              :: ipiv(1:Mvol)
   REAL, allocatable    :: fjac(:, :), r(:), Fvec(:), dpfluxout(:)
 
@@ -405,6 +406,68 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
   
   if (Ldescent) then
     ! descent method is used
+    ForceRc = 0
+    ForceZs = 0
+    ForceRs = 0
+    ForceZc = 0
+
+    do vvol = 1, Mvol-1
+
+      LREGION(vvol)
+
+      if( ImagneticOK(vvol) .and. ImagneticOK(vvol+1) ) then
+
+        ;ForceRc(1:mn, vvol) = ( Bemn(1:mn    ,vvol+1,0) - Bemn(1:mn    ,vvol+0,1) ) * BBweight(1:mn) ! pressure imbalance;
+
+        if (Igeometry .eq.3 ) then ! add the spectral constraint forces
+          ForceZs(2:mn, vvol) = ( Bomn(2:mn    ,vvol+1,2) - Bomn(2:mn    ,vvol+0,3) ) * BBweight(2:mn) ! pressure imbalance;
+
+          ForceRc(1:mn, vvol) =   (                           Iemn(1:mn    ,vvol+0,0) ) * epsilon         & ! spectral constraints;
+                                + (                         + Semn(1:mn    ,vvol+0,1) ) * sweight(vvol+0) & ! poloidal length constraint;
+                                - ( Semn(1:mn    ,vvol+1,0)                           ) * sweight(vvol+1)
+
+          ForceZs(2:mn, vvol) =   (                           Iomn(2:mn    ,vvol+0,3) ) * epsilon         & ! spectral constraints;
+                                + (                         + Somn(2:mn    ,vvol+0,4) ) * sweight(vvol+0) & ! poloidal length constraint;
+                                - ( Somn(2:mn    ,vvol+1,3)                           ) * sweight(vvol+1)
+
+          ;  BBe(vvol) = max( sum( abs( ForceRc(1:mn, vvol)  ) ) / (2*mn) + sum( abs( ForceZs(1:mn, vvol)  ) ) / (2*mn), logtolerance ) ! screen diagnostics;
+        
+        else 
+           ;  BBe(vvol) = max( sum( abs( ForceRc(1:mn, vvol)  ) ) / (mn) , logtolerance ) ! screen diagnostics;
+        endif
+
+        if (NOTstellsym) then
+          ;ForceRs(2:mn, vvol) = ( Bomn(2:mn    ,vvol+1,0) - Bomn(2:mn    ,vvol+0,1) ) * BBweight(2:mn) ! pressure imbalance;
+          
+          if (Igeometry .eq.3 ) then ! add the spectral constraint forces
+            ForceZc(1:mn, vvol) = ( Bemn(1:mn    ,vvol+1,2) - Bemn(1:mn    ,vvol+0,3) ) * BBweight(1:mn) ! pressure imbalance;
+
+            ForceRs(2:mn, vvol) =   (                           Iomn(2:mn    ,vvol+0,0) ) * epsilon         & ! spectral constraints;
+                                  + (                         + Somn(2:mn    ,vvol+0,1) ) * sweight(vvol+0) & ! poloidal length constraint;
+                                  - ( Somn(2:mn    ,vvol+1,0)                           ) * sweight(vvol+1)
+
+            ForceZc(1:mn, vvol) =   (                           Iemn(1:mn    ,vvol+0,3) ) * epsilon         & ! spectral constraints;
+                                  + (                         + Semn(1:mn    ,vvol+0,4) ) * sweight(vvol+0) & ! poloidal length constraint;
+                                  - ( Semn(1:mn    ,vvol+1,3)                           ) * sweight(vvol+1)
+
+            BBo(vvol) = max( sum( abs( ForceRs(1:mn, vvol)  ) ) / (2*mn) + sum( abs( ForceZc(1:mn, vvol)  ) ) / (2*mn), logtolerance ) ! screen diagnostics;
+
+          else
+            BBo(vvol) = max( sum( abs( ForceRs(1:mn, vvol)  ) ) / (mn) , logtolerance ) ! screen diagnostics;
+          endif
+
+        endif
+
+      else
+
+        FATAL( dforce, .true., construction of Beltrami field failed ) ! this has caught bugs;
+
+      endif
+
+      ! packing into force vector
+      call packxi_force( NGdof, force, Mvol, mn, ForceRc, ForceRs, ForceZc, ForceZs)
+
+    enddo
   
   else
     ! Newton method is used
@@ -423,16 +486,16 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
           FATAL( dforce, 2.gt.Mvol, psifactor needs attention )
           ;force(tdoc+idoc+1:tdoc+idoc+mn) = position(1:mn) - ( iRbc(1:mn,2) / psifactor(1:mn,2) )
         else
-          ;force(tdoc+idoc+1:tdoc+idoc+mn    ) = ( Bemn(1:mn    ,vvol+1,0) - Bemn(1:mn    ,vvol+0,1) ) * BBweight(1:mn) ! pressure imbalance;
+          ;force(tdoc+idoc+1:tdoc+idoc+mn    ) = ( Bemn(1:mn    ,vvol+1,0) - Bemn(1:mn    ,vvol+0,1) ) !* BBweight(1:mn) ! pressure imbalance;
         endif
-        
+
         ;  BBe(vvol) = max( sum( abs( force(tdoc+idoc+1:tdoc+idoc+mn  ) ) ) / (mn  ), logtolerance ) ! screen diagnostics;
         
         ;  idoc = idoc + mn   ! degree-of-constraint counter; increment;
         
         if( Igeometry.ge.3 ) then ! add spectral constraints;
         
-          force(tdoc+idoc+1:tdoc+idoc+mn-1  ) = (                           Iomn(2:mn    ,vvol+0  ) ) * epsilon         & ! spectral constraints;
+          force(tdoc+idoc+1:tdoc+idoc+mn-1  ) = (                           Iomn(2:mn    ,vvol+0,0) ) * epsilon         & ! spectral constraints;
                                               + (                         + Somn(2:mn    ,vvol+0,1) ) * sweight(vvol+0) & ! poloidal length constraint;
                                               - ( Somn(2:mn    ,vvol+1,0)                           ) * sweight(vvol+1)
               
@@ -456,7 +519,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
         
           if( Igeometry.ge.3 ) then ! add spectral constraints;
           
-            force(tdoc+idoc+1:tdoc+idoc+mn    ) = (                           Iemn(1:mn    ,vvol+0  ) ) * epsilon         & ! spectral constraints;
+            force(tdoc+idoc+1:tdoc+idoc+mn    ) = (                           Iemn(1:mn    ,vvol+0,0) ) * epsilon         & ! spectral constraints;
                                                 + (                         + Semn(1:mn    ,vvol+0,1) ) * sweight(vvol+0) & ! poloidal length constraint;
                                                 - ( Semn(1:mn    ,vvol+1,0)                           ) * sweight(vvol+1)
           
@@ -687,6 +750,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
   endif ! end of if( LcomputeDerivatives ) ;
 
 !call MPI_BARRIER( MPI_COMM_WORLD, ierr )
+!stop
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

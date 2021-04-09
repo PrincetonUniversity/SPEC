@@ -42,7 +42,7 @@ subroutine brcast( lvol )
                         diotadxup, dItGpdxtp, &
                         Ate, Aze, Ato, Azo, &
                         Bemn, Bomn, Iomn, Iemn, Somn, Semn, Pomn, Pemn, &
-                        ImagneticOK, &
+                        ImagneticOK, Ldescent, &
                        !dBBdRZ, dIIdRZ, &
                         Lhessianallocated, LGdof, dFFdRZ, dBBdmp, dmupfdx, &
                         lBBintegral, lABintegral, &
@@ -118,11 +118,17 @@ subroutine brcast( lvol )
   !     enddo
   ! enddo  
 
-
-  RlBCAST( Bemn(1:mn,lvol,0:1), 2*mn, llmodnp ) ! perhaps all these should be re-ordered; 18 Jul 14;
-  RlBCAST( Iomn(1:mn,lvol    ),   mn, llmodnp )
-  RlBCAST( Somn(1:mn,lvol,0:1), 2*mn, llmodnp )
-  RlBCAST( Pomn(1:mn,lvol,0:2), 3*mn, llmodnp ) ! 15 Sep 15;
+  if (Ldescent) then
+    RlBCAST( Bemn(1:mn,lvol,0:3), 4*mn, llmodnp ) ! perhaps all these should be re-ordered; 18 Jul 14;
+    RlBCAST( Iomn(1:mn,lvol,0:3), 4*mn, llmodnp )
+    RlBCAST( Somn(1:mn,lvol,0:3), 4*mn, llmodnp )
+    RlBCAST( Pomn(1:mn,lvol,0:3), 4*mn, llmodnp ) ! 15 Sep 15;
+  else
+    RlBCAST( Bemn(1:mn,lvol,0:1), 2*mn, llmodnp )
+    RlBCAST( Iomn(1:mn,lvol,0:0),   mn, llmodnp )
+    RlBCAST( Somn(1:mn,lvol,0:1), 2*mn, llmodnp )
+    RlBCAST( Pomn(1:mn,lvol,0:2), 3*mn, llmodnp )
+  endif
   
   if( NOTstellsym ) then
     ! do ideriv = 0, 2
@@ -132,10 +138,17 @@ subroutine brcast( lvol )
     !   enddo
     ! enddo
       
+    if (Ldescent) then
+      RlBCAST( Bomn(1:mn,lvol,0:3), 4*mn, llmodnp ) ! perhaps all these should be re-ordered; 18 Jul 14;
+      RlBCAST( Iemn(1:mn,lvol,0:3), 4*mn, llmodnp )
+      RlBCAST( Semn(1:mn,lvol,0:3), 4*mn, llmodnp )
+      RlBCAST( Pemn(1:mn,lvol,0:3), 4*mn, llmodnp ) ! 15 Sep 15;
+    else
       RlBCAST( Bomn(1:mn,lvol,0:1), 2*mn, llmodnp )
-      RlBCAST( Iemn(1:mn,lvol    ),   mn, llmodnp )
+      RlBCAST( Iemn(1:mn,lvol,0:0),   mn, llmodnp )
       RlBCAST( Semn(1:mn,lvol,0:1), 2*mn, llmodnp )
       RlBCAST( Pemn(1:mn,lvol,0:2), 3*mn, llmodnp )
+    endif
   endif ! end of if( NOTstellsym) ; 11 Aug 14;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

@@ -167,7 +167,7 @@ subroutine dfp200( LcomputeDerivatives, vvol)
       iflag = 0 ! XX & YY are returned by lforce; Bemn(1:mn,vvol,iocons), Iomn(1:mn,vvol) etc. are returned through global;
       if (Ldescent) then
         ! compute the descent force
-        !WCALL( dfp200, descent_lforce, ( vvol, iocons, Ntz, iflag ) )
+        WCALL( dfp200, descent_lforce, ( vvol, iocons, Ntz ) )
       else
         ! compute the Newton's method force
         WCALL( dfp200, lforce, ( vvol, iocons, ideriv, Ntz, dBB(1:Ntz,id), XX(1:Ntz), YY(1:Ntz), length(1:Ntz), DDl, MMl, iflag ) )

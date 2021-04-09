@@ -199,3 +199,91 @@ subroutine packxi( NGdof, position, Mvol, mn, iRbc, iZbs, iRbs, iZbc, packorunpa
 end subroutine packxi
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+subroutine packxi_force( NGdof, force, Mvol, mn, ForceRc, ForceRs, ForceZc, ForceZs)
+  
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+  use constants, only : zero
+  
+  use numerical, only :
+  
+  use fileunits, only : ounit
+  
+  use inputlist, only : Wpackxi, Igeometry, Ntor, Nvol, Lfindzero
+  
+  use cputiming, only : Tpackxi
+  
+  use allglobal, only : ncpu, myid, cpus, im, in, &
+                        YESstellsym, NOTstellsym, &
+                        ajk, Nt, Nz, Ntz, iRij, iZij, tRij, tZij, &
+                        ijreal, ijimag, jireal, jiimag, efmn, ofmn, cfmn, sfmn, evmn, odmn, comn, simn, &
+                        psifactor, Rscale 
+  
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+  LOCALS
+
+  INTEGER, intent(in)    :: NGdof, Mvol, mn
+  REAL                   :: force(0:NGdof)
+  REAL                   :: ForceRc(1:mn, 1:Mvol-1), ForceRs(1:mn, 1:Mvol-1), ForceZc(1:mn, 1:Mvol-1), ForceZs(1:mn, 1:Mvol-1)
+  
+  INTEGER                :: lvol, jj, kk, irz, issym, idof, ifail, ivol
+  
+  BEGIN(packxi)
+  
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+  idof = 0 ! initialize counter; 14 Jan 13;
+  
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+  do lvol = 1, Mvol-1 ! loop over internal interfaces;
+   
+   do jj = 1, mn ! loop over Fourier harmonics;
+    
+    do irz = 0, 1 ! loop over R & Z;
+     
+     if( Igeometry.lt.3 .and. irz.eq.1 ) cycle ! no dependence on Z; 14 Jan 13;
+     
+     do issym = 0, 1 ! loop over even & odd;
+      
+      if( YESstellsym .and. issym.eq.1 ) cycle
+      
+      if( issym.eq.0 .and. irz.eq.1 .and. jj.eq.1 ) cycle ! no dependence on Zbs_{0,0}; 14 Jan 13;
+      if( issym.eq.1 .and. irz.eq.0 .and. jj.eq.1 ) cycle ! no dependence on Rbs_{0,0}; 14 Jan 13;
+      
+      idof = idof + 1
+      
+#ifdef DEBUG
+      FATAL( packxi, idof.le.0 .or. idof.gt.NGdof, out of bounds )
+#endif
+       
+      if( irz.eq.0 .and. issym.eq.0 ) force(idof) = ForceRc(jj,lvol) * psifactor(jj,lvol)
+      if( irz.eq.1 .and. issym.eq.0 ) force(idof) = ForceZs(jj,lvol) * psifactor(jj,lvol)
+      if( irz.eq.0 .and. issym.eq.1 ) force(idof) = ForceRs(jj,lvol) * psifactor(jj,lvol)
+      if( irz.eq.1 .and. issym.eq.1 ) force(idof) = ForceZc(jj,lvol) * psifactor(jj,lvol)
+      
+     enddo ! end of do issym;
+     
+    enddo ! end of do irz;
+    
+   enddo ! end of do jj;
+   
+  enddo ! end of do lvol;
+   
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+#ifdef DEBUG
+  FATAL( packxi, idof.ne.NGdof, counting error )
+#endif
+  
+  RETURN(packxi)
+  
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+end subroutine packxi_force
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

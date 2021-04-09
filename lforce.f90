@@ -174,14 +174,11 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, ifl
   LOCALS
   
   INTEGER, intent(in)  :: lvol, iocons, ideriv, Ntz, iflag
-  REAL                 :: dAt(1:Ntz, -1:2), dAz(1:Ntz, -1:2), XX(1:Ntz), YY(1:Ntz), dRR(1:Ntz,-1:1), dZZ(1:Ntz,-1:1), DDl, MMl
+  REAL                 :: XX(1:Ntz), YY(1:Ntz), dRR(1:Ntz,-1:1), dZZ(1:Ntz,-1:1), DDl, MMl
 
   REAL                 :: IIl(1:Ntz), length(1:Ntz), dLL(1:Ntz)
   INTEGER              :: Lcurvature, ii, jj, kk, ll, ifail, ivol, lnn, mi, id!, oicons
-  REAL                 :: dBB(1:Ntz, -1:2), lss, mfactor
-  
-  REAL                 :: dAs(1:Ntz)!, dRdt(-1:1,0:1), dZdt(-1:1,0:1)
-  REAL                 :: lgvuij(1:Ntz,1:3,1:3) ! local workspace; 13 Sep 13;
+  REAL                 :: dBB(1:Ntz, -1:2)
   
   BEGIN(lforce)
   
@@ -192,6 +189,7 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, ifl
   FATAL( lforce, lvol.eq.1 .and. iocons.eq.0, illegal combination )
   FATAL( lforce, lvol.eq.Mvol .and. iocons.eq.1, illegal combination )
   FATAL( lforce, iflag.lt.0 .or. iflag.gt.1, illegal iflag )
+  FATAL( lforce, iocons.lt.0 .or. iocons.gt.2, error )
 #endif
  
   call mhd_lforce( lvol, iocons, ideriv, Ntz, dBB, iflag )
@@ -203,16 +201,12 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, ifl
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 !  ijreal(1:Ntz) contains the pressure + magnetic energy term;
-  
-#ifdef DEBUG
-  FATAL( lforce, iocons.lt.0 .or. iocons.gt.2, error )
-#endif
 
   call spectral_lforce(lvol, iocons, Ntz, dLL, IIl, XX, YY, length, DDl, MMl)
   
   ;ifail = 0
   ;call tfft( Nt, Nz, ijreal(1:Ntz), IIl(1:Ntz  ), & ! compute force-imbalance and spectral constraints;
-              mn, im(1:mn), in(1:mn), Bemn(1:mn,lvol,iocons), Bomn(1:mn,lvol,iocons), Iemn(1:mn,lvol       ), Iomn(1:mn,lvol       ), ifail )
+              mn, im(1:mn), in(1:mn), Bemn(1:mn,lvol,iocons), Bomn(1:mn,lvol,iocons), Iemn(1:mn,lvol,     0), Iomn(1:mn,lvol,     0), ifail )
   
   if( Igeometry.ge.3 ) then ! add minimal length constraint; 18 Jul 14;
    
@@ -240,6 +234,122 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, ifl
  
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+subroutine descent_lforce( lvol, iocons, Ntz )
+  
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+  use constants, only : zero, half, one, two
+  
+  use fileunits, only : ounit
+  
+  use inputlist, only : Wlforce, Igeometry, Nvol, Lrad, gamma, pscale, adiabatic, Lcheck
+  
+  use cputiming, only : Tlforce
+  
+  use allglobal, only : ncpu, myid, cpus, &
+                        Lcoordinatesingularity, Mvol, &
+                        iRbc, iZbs, iRbs, iZbc, &
+                        YESstellsym, NOTstellsym, &
+                        mn, im, in, regumm, &
+                        ijreal, ijimag, jireal, jiimag, &
+                        efmn, ofmn, cfmn, sfmn, evmn, odmn, comn, simn, &
+                        Nt, Nz, &
+                        Ate, Aze, Ato, Azo, &
+                        TT, RTT, &
+                        sg, guvij, iRij, iZij, dRij, dZij, tRij, tZij, Rij, Zij, &
+                        mmpp, &
+                        Bemn, Bomn, Iomn, Iemn, Somn, Semn, &
+                        Pomn, Pemn, &
+                        vvolume
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+  LOCALS
+  
+  INTEGER, intent(in)  :: lvol, iocons, Ntz
+  REAL                 :: XX(1:Ntz), YY(1:Ntz), dRR(1:Ntz,-1:1), dZZ(1:Ntz,-1:1), DDl, MMl
+  REAL                 :: dBBR(1:Ntz), dBBZ(1:Ntz)
+
+  REAL                 :: IIl(1:Ntz), length(1:Ntz), dLL(1:Ntz)
+  REAL                 :: dIIR(1:Ntz), dIIZ(1:Ntz), dLLR(1:Ntz), dLLZ(1:Ntz)
+  INTEGER              :: Lcurvature, ii, jj, kk, ll, ifail, ivol, lnn, mi, id!, oicons
+  REAL                 :: dBB(1:Ntz, -1:2)
+  INTEGER              :: ideriv, iflag
+  
+  BEGIN(lforce)
+  
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+#ifdef DEBUG
+  FATAL( lforce, lvol.lt.1 .or. lvol.gt.Mvol, illegal lvol )
+  FATAL( lforce, lvol.eq.1 .and. iocons.eq.0, illegal combination )
+  FATAL( lforce, lvol.eq.Mvol .and. iocons.eq.1, illegal combination )
+  FATAL( lforce, iocons.lt.0 .or. iocons.gt.2, error )
+#endif
+ 
+  iflag = 0
+  ideriv = 0
+
+  call mhd_lforce( lvol, iocons, ideriv, Ntz, dBB, iflag )
+  call spectral_lforce(lvol, iocons, Ntz, dLL, IIl, XX, YY, length, DDl, MMl)
+  
+  select case (Igeometry)
+
+  case (1) ! slab, only R, no spectral constraints
+
+    dBBR(1:Ntz) = ijreal(1:Ntz) 
+    dBBZ = 0
+    dIIR = 0
+    dIIZ = 0
+    dLLR = 0
+    dLLZ = 0
+
+  case (2) ! cylindrical, only R, no spectral constraints
+
+    dBBR(1:Ntz) = ijreal(1:Ntz) * Rij(1:Ntz,0,0)
+    dBBZ = 0
+    dIIR = 0
+    dIIZ = 0
+    dLLR = 0
+    dLLZ = 0
+
+  case (3) ! toroidal, both R and Z, with spectral constraints
+
+    dBBR(1:Ntz) = -ijreal(1:Ntz) * Zij(1:Ntz,2,0) * Rij(1:Ntz,0,0)
+    dBBZ(1:Ntz) =  ijreal(1:Ntz) * Rij(1:Ntz,2,0) * Rij(1:Ntz,0,0)
+    dIIR(1:Ntz) = IIl(1:Ntz) / DDl * Rij(1:Ntz,2,0) 
+    dIIZ(1:Ntz) = IIl(1:Ntz) / DDl * Zij(1:Ntz,2,0)
+    dLLR(1:Ntz) = dLL(1:Ntz) * Rij(1:Ntz,2,0)
+    dLLZ(1:Ntz) = dLL(1:Ntz) * Zij(1:Ntz,2,0)
+  
+  end select
+
+  ;ifail = 0
+  ;call tfft( Nt, Nz, dBBR(1:Ntz), dBBZ(1:Ntz  ), & ! compute force-imbalance and spectral constraints;
+              mn, im(1:mn), in(1:mn), Bemn(1:mn,lvol,iocons), Bomn(1:mn,lvol,iocons), Bemn(1:mn,lvol,iocons+2), Bomn(1:mn,lvol,iocons+2), ifail )
+  
+  if( Igeometry.ge.3 ) then ! add minimal length constraint; 18 Jul 14;
+   
+   ifail = 0 ; ijimag(1:Ntz) = zero
+
+  ;call tfft( Nt, Nz, dBBR(1:Ntz), dBBZ(1:Ntz  ), & ! compute force-imbalance and spectral constraints;
+              mn, im(1:mn), in(1:mn), Bemn(1:mn,lvol,iocons), Bomn(1:mn,lvol,iocons), Bemn(1:mn,lvol,iocons+2), Bomn(1:mn,lvol,iocons+2), ifail )
+  ;call tfft( Nt, Nz, dIIR(1:Ntz), dIIZ(1:Ntz  ), & ! compute force-imbalance and spectral constraints;
+              mn, im(1:mn), in(1:mn), Iemn(1:mn,lvol,     0), Iomn(1:mn,lvol,iocons), Iemn(1:mn,lvol,       2), Iomn(1:mn,lvol,       2), ifail )
+  ;call tfft( Nt, Nz, dLLR(1:Ntz), dLLZ(1:Ntz  ), & ! compute force-imbalance and spectral constraints;
+              mn, im(1:mn), in(1:mn), Semn(1:mn,lvol,iocons), Somn(1:mn,lvol,iocons), Semn(1:mn,lvol,iocons+2), Somn(1:mn,lvol,iocons+2), ifail )
+   
+  endif ! end of if( Igeometry.eq.3 ) ; 01 Jul 14;
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  RETURN(lforce)
+  
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+   
+end subroutine descent_lforce
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 subroutine mhd_lforce( lvol, iocons, ideriv, Ntz, dBB, iflag )
   

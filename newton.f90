@@ -94,8 +94,8 @@ subroutine newton( NGdof, position, ihybrd )
   INTEGER                :: irevcm, mode, Ldfjac, LR
   REAL                   :: xtol, epsfcn, factor
   REAL                   :: diag(1:NGdof), QTF(1:NGdof), workspace(1:NGdof,1:4)
-  REAL                   :: sdxtol=1e-6, sdgtol=1e-20, sdftol=1e-16
-  INTEGER                :: sditmax=1000, sdiprint=2, sdiflag=0
+  REAL                   :: sdxtol=1e-8, sdgtol=1e-20, sdftol=1e-16
+  INTEGER                :: sditmax=1000, sdiprint=0, sdiflag=0
 
 
   REAL                   :: force(0:NGdof)
@@ -235,8 +235,8 @@ subroutine newton( NGdof, position, ihybrd )
 
    write(*,*) "-------------------- Under construction --------------------"
    Ldescent = .TRUE.
-   !WCALL(newton, steepest_descent, (NGdof,position(1:NGdof),Energy,sdxtol,sdgtol,sdftol,sditmax &
-   !  ,sdiprint,sdiflag,fcnval,fcngrad))
+   WCALL(newton, frcg, (NGdof,position(1:NGdof),Energy,sdxtol,sdgtol,sdftol,sditmax &
+     ,sdiprint,sdiflag,fcnval,fcngrad))
    !WCALL( newton, hybrj, ( fcn2, NGdof, position(1:NGdof), force(1:NGdof), fjac(1:Ldfjac,1:NGdof), Ldfjac, &
    !       xtol, maxfev,                 diag(1:NGdof), mode, factor, nprint, ihybrd, nfev, njev, &
    !       RR(1:LR), LR, QTF(1:NGdof), workspace(1:NGdof,1), workspace(1:NGdof,2), workspace(1:NGdof,3), workspace(1:NGdof,4) ) )
@@ -871,6 +871,28 @@ function fcngrad(n, xx)
     
     fcngrad(1:n) = force(1:n)
 
+    if( myid.eq.0 ) then
+     
+     cput = GETTIME
+     
+     ; write(ounit,1000) cput-cpus, nFcalls, nDcalls, ForceErr, cput-lastcpu, "|BB|e", alog10(BBe(1:min(Mvol-1,28)))
+     if( Igeometry.ge.3 ) then ! include spectral constraints; 
+      ;write(ounit,1001)                                                                      "|II|o", alog10(IIo(1:min(Mvol-1,28)))
+     endif
+     if( NOTstellsym ) then
+      ;write(ounit,1001)                                                                      "|BB|o", alog10(BBo(1:min(Mvol-1,28)))
+      if( Igeometry.ge.3 ) then ! include spectral constraints; 
+       write(ounit,1001)                                                                      "|II|e", alog10(IIe(1:min(Mvol-1,28)))
+      endif
+     endif
+     lastcpu = GETTIME
+     
+     WCALL( newton, wrtend ) ! write restart file; save geometry to ext.end;
+
+    endif ! end of if( myid.eq.0 );
+
+1000 format("fcn1   : ",f10.2," : "i9,i3," ; ":"|f|="es12.5" ; ":"time=",f10.2,"s ;":" log"a5"="28f6.2" ...")
+1001 format("fcn1   : ", 10x ," : "9x,3x" ; ":"    "  12x "   ":"     ", 10x ,"  ;":" log"a5"="28f6.2" ...")
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
  end function fcngrad
