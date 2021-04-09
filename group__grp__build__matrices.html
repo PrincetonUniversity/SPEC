@@ -207,10 +207,10 @@ The toroidal and poloidal fluxes enclosed in each volume are determined using <p
 <p><b>Fourier-Chebyshev representation</b></p>
 <ul>
 <li>
-The components of the vector potential, \({\bf A}=A_\theta \nabla + A_\zeta \nabla \zeta eta\), are <p class="formulaDsp">
+The components of the vector potential, \({\bf A}=A_\theta \nabla + A_\zeta \nabla \zeta \), are <p class="formulaDsp">
 \begin{eqnarray} A_\theta(s,\theta,\zeta) &amp;=&amp; \sum_{i,l} {\color{red} A_{\theta,e,i,l}} \; {\overline T}_{l,i}(s) \cos\alpha_i + \sum_{i,l} {\color{Orange} A_{\theta,o,i,l}} \; {\overline T}_{l,i}(s) \sin\alpha_i, \label{eq:At_matrix} \\ A_\zeta( s,\theta,\zeta) &amp;=&amp; \sum_{i,l} {\color{blue}A_{\zeta, e,i,l}} \; {\overline T}_{l,i}(s) \cos\alpha_i + \sum_{i,l} {\color{Cerulean}A_{\zeta ,o,i,l}} \; {\overline T}_{l,i}(s) \sin\alpha_i, \label{eq:Az_matrix} \end{eqnarray}
 </p>
- where \({\overline T}_{l,i}(s) \equiv \bar s^{m_i/2} \, T_l(s)\), \(T_l(s)\) is the Chebyshev polynomial, and \(\alpha_j \equiv m_j\theta-n_j\zeta\). The regularity factor, \(\bar s^{m_i/2}\), where \(\bar s \equiv (1+s)/2\), is only included if there is a coordinate singularity in the domain (i.e. only in the innermost volume, and only in cylindrical and toroidal geometry.)  </li>
+ where \({\overline T}_{l,i}(s) \) is the <b>recombined</b> Chebyshev polynomial in a volume without an axis, or <b>modified</b> Zernike polynomial in a volume with an axis (i.e. only in the innermost volume, and only in cylindrical and toroidal geometry.) , and \(\alpha_j \equiv m_j\theta-n_j\zeta\). </li>
 <li>
 The magnetic field, \(\sqrt g \, {\bf B} = \sqrt g B^s {\bf e}_s + \sqrt g B^\theta {\bf e}_\theta + \sqrt g B^\zeta {\bf e}_\zeta\), is <p class="formulaDsp">
 \begin{eqnarray} \begin{array}{ccccrcrcrcrcccccccccccccccccccccccccccccccccccccccccccccccccccc} \sqrt g \, {\bf B} &amp; = &amp; {\bf e}_s &amp; \sum_{i,l} [ ( &amp; - m_i {\color{blue}A_{\zeta, e,i,l}} &amp; - &amp; n_i {\color{red} A_{\theta,e,i,l}} &amp; ) {\overline T}_{l,i} \sin\alpha_i + ( &amp; + m_i {\color{Cerulean}A_{\zeta ,o,i,l}} &amp; + &amp; n_i {\color{Orange} A_{\theta,o,i,l}} &amp; ) {\overline T}_{l,i} \cos\alpha_i ] \\ &amp; + &amp; {\bf e}_\theta &amp; \sum_{i,l} [ ( &amp; &amp; - &amp; {\color{blue}A_{\zeta, e,i,l}} &amp; ) {\overline T}_{l,i}^\prime \cos\alpha_i + ( &amp; &amp; - &amp; {\color{Cerulean}A_{\zeta ,o,i,l}} &amp; ) {\overline T}_{l,i}^\prime \sin\alpha_i ] \\ &amp; + &amp; {\bf e}_\zeta &amp; \sum_{i,l} [ ( &amp; {\color{red} A_{\theta,e,i,l}} &amp; &amp; &amp; ) {\overline T}_{l,i}^\prime \cos\alpha_i + ( &amp; {\color{Orange} A_{\theta,o,i,l}} &amp; &amp; &amp; ) {\overline T}_{l,i}^\prime \sin\alpha_i ] \end{array} \end{eqnarray}
@@ -243,7 +243,9 @@ The constrained energy functional in each volume depends on the vector potential
 <li>
 In each plasma volume the boundary condition on the outer interface is \(b=0\). </li>
 <li>
-<p class="startli">In the vacuum volume (only for free-boundary), we may set \(\mu=0\).</p>
+In the vacuum volume (only for free-boundary), we may set \(\mu=0\). </li>
+<li>
+<p class="startli"><b>Note:</b> in SPEC version &gt;3.00, the basis recombination method is used to ensure the boundary condition on the inner side of an interface. The lagrange multipliers \(a_i, b_i, c_i, d_i\) are no longer used in volumes without a coordinate singularity. In a volume with a coordinate singularity, they are used only \(a_i, c_i\) with $m=0,1$ are excluded also due to Zernike basis recombination.</p>
 <p class="endli"></p>
 </li>
 </ul>
