@@ -133,9 +133,8 @@ Functions/Subroutines</h2></td></tr>
 <tr class="memitem:a29cbf901a18ead65d0e3a51956a3f045"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="basefn_8f90.html#a29cbf901a18ead65d0e3a51956a3f045">get_zernike_d2</a> (r, lrad, mpol, zernike)</td></tr>
 <tr class="memdesc:a29cbf901a18ead65d0e3a51956a3f045"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the Zernike polynomials \(\hat{R}^{m}_{l}\) with zeroth, first, second derivatives.  <a href="basefn_8f90.html#a29cbf901a18ead65d0e3a51956a3f045">More...</a><br /></td></tr>
 <tr class="separator:a29cbf901a18ead65d0e3a51956a3f045"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6076d695487184d58d30d73de2f6470f"><td class="memItemLeft" align="right" valign="top"><a id="a6076d695487184d58d30d73de2f6470f"></a>
-subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="basefn_8f90.html#a6076d695487184d58d30d73de2f6470f">get_zernike_rm</a> (r, lrad, mpol, zernike)</td></tr>
-<tr class="memdesc:a6076d695487184d58d30d73de2f6470f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the Zernike polynomials \(\hat{R}^{m}_{l}\)/r^m \( See get_zernike for more detail. @param[in] r coordinate input, note that this is normalized to \)[0, 1]. <br /></td></tr>
+<tr class="memitem:a6076d695487184d58d30d73de2f6470f"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="basefn_8f90.html#a6076d695487184d58d30d73de2f6470f">get_zernike_rm</a> (r, lrad, mpol, zernike)</td></tr>
+<tr class="memdesc:a6076d695487184d58d30d73de2f6470f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the Zernike polynomials \(\hat{R}^{m}_{l}/r^m\).  <a href="basefn_8f90.html#a6076d695487184d58d30d73de2f6470f">More...</a><br /></td></tr>
 <tr class="separator:a6076d695487184d58d30d73de2f6470f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -399,6 +398,68 @@ Here is the caller graph for this function:</div>
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
 <div class="center"><iframe scrolling="no" frameborder="0" src="basefn_8f90_a29cbf901a18ead65d0e3a51956a3f045_icgraph.svg" width="490" height="88"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
+</div>
+</div>
+
+</div>
+</div>
+<a id="a6076d695487184d58d30d73de2f6470f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6076d695487184d58d30d73de2f6470f">&#9670;&nbsp;</a></span>get_zernike_rm()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">subroutine get_zernike_rm </td>
+          <td>(</td>
+          <td class="paramtype">real, intent(in)&#160;</td>
+          <td class="paramname"><em>r</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">integer, intent(in)&#160;</td>
+          <td class="paramname"><em>lrad</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">integer, intent(in)&#160;</td>
+          <td class="paramname"><em>mpol</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real, dimension(0:lrad,0:mpol), intent(inout)&#160;</td>
+          <td class="paramname"><em>zernike</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Get the Zernike polynomials \(\hat{R}^{m}_{l}/r^m\). </p>
+<p>See get_zernike for more detail.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">r</td><td>coordinate input, note that this is normalized to \([0, 1]\) </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">lrad</td><td>radial resolution </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">mpol</td><td>poloidal resolution </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">zernike</td><td>the value </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="reference">References <a class="el" href="namespaceconstants.html#ad5224c0b5e13bf12b18dafbb62ba4e8d">constants::one</a>, <a class="el" href="namespaceconstants.html#a77f9c93617de9c40ab41a50a157fb90d">constants::two</a>, and <a class="el" href="namespaceconstants.html#ab2b0340319f61089513f5dd1d3971a47">constants::zero</a>.</p>
+
+<p class="reference">Referenced by <a class="el" href="group__grp__initialization.html#ga28628de0fdb3b3497668007d8d0643bd">preset()</a>.</p>
+<div class="dynheader">
+Here is the caller graph for this function:</div>
+<div class="dyncontent">
+<div class="center"><iframe scrolling="no" frameborder="0" src="basefn_8f90_a6076d695487184d58d30d73de2f6470f_icgraph.svg" width="555" height="63"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
 </div>
 </div>
 

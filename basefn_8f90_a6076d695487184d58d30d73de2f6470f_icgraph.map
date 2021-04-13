@@ -1,0 +1,7 @@
+<map id="get_zernike_rm" name="get_zernike_rm">
+<area shape="rect" id="node1" title="Get the Zernike polynomials ." alt="" coords="439,31,549,57"/>
+<area shape="rect" id="node2" href="$group__grp__initialization.html#ga28628de0fdb3b3497668007d8d0643bd" title="Allocates and initializes internal arrays." alt="" coords="332,31,391,57"/>
+<area shape="rect" id="node3" href="$group__grp__diagnostics.html#ga7401b50ec10c6598ee4a8112717a63ec" title="Computes eigenvalues and eigenvectors of derivative matrix, ." alt="" coords="224,5,284,32"/>
+<area shape="rect" id="node4" href="$xspech_8f90.html#aea782eae089760a491c2c54f9903abcc" title="Main program of SPEC." alt="" coords="113,31,176,57"/>
+<area shape="rect" id="node5" href="$xspech_8f90.html#a537af4990058c0b0f2cd8b3669af204f" title="todo remark" alt="" coords="5,31,65,57"/>
+</map>
