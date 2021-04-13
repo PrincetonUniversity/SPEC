@@ -1,31 +1,35 @@
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!> \defgroup grp_packing "packing" of Beltrami field solution vector
+!>
+!> \latexonly
+!> \definecolor{Orange}{rgb}{1.0,0.5,0.0}
+!> \definecolor{Cerulean}{rgb}{0.0,0.5,1.0}
+!> \endlatexonly
+!>
+!> \file packab.f90
+!> \brief Packs, and unpacks, Beltrami field solution vector; \f${\bf a}\equiv\{A_{\theta,e,i,l}, A_{\zeta,e,i,l}, \mathrm{etc.}\}\f$.
 
-!title (&ldquo;packing&rdquo;) ! Packs, and unpacks, Beltrami field solution vector; ${\bf a}\equiv\{A_{\theta,e,i,l}, A_{\zeta,e,i,l}, etc.\}$.
-
-!latex \briefly{Packs and unpacks Beltrami field solution vector.}
-
-!latex \calledby{\link{dforce}, \link{ma02aa} and \link{mp00ac}}
-
-!latex \tableofcontents
-
-!latex \subsection{construction of ``vector'' of independent degrees of freedom}
-
-!latex \begin{enumerate}
-!latex \item Numerical routines for solving linear equations typically require the unknown, independent degrees of freedom
-!latex       to be ``packed'' into a vector, ${\bf x}$.
-!latex \item The magnetic field is defined by the independent degrees of freedom in
-!latex       the Chebyshev-Fourier representation of the vector potential, $\Ate{i,l}$ and $\Aze{i,l}$;
-!latex       and the non-stellarator-symmetric terms if relevant, $\Ato{i,l}$ and $\Azo{i,l}$;
-!latex       and the Lagrange multipliers, $a_i$, $b_i$, $c_i$, $d_i$, $e_i$, etc. as required to enforce the constraints:
-!latex       \be {\bf x} \equiv \{ \Ate{i,l},\Aze{i,l},\Ato{i,l},\Azo{i,l},a_i,b_i,c_i,d_i,e_i,f_i,g_1,h_1\}.
-!latex       \ee
-!latex \item The ``packing'' index is assigned in \link{preset}.
-!latex \end{enumerate}
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+!> \brief Packs and unpacks Beltrami field solution vector.
+!> \ingroup grp_packing
+!> 
+!> **construction of "vector" of independent degrees of freedom**
+!> 
+!> <ul>
+!> <li> Numerical routines for solving linear equations typically require the unknown, independent degrees of freedom
+!>      to be "packed" into a vector, \f${\bf x}\f$. </li>
+!> <li> The magnetic field is defined by the independent degrees of freedom in
+!>      the Chebyshev-Fourier representation of the vector potential, \f${\color{red} A_{\theta,e,i,l}}\f$ and \f${\color{blue}A_{\zeta, e,i,l}}\f$;
+!>      and the non-stellarator-symmetric terms if relevant, \f${\color{Orange}  A_{\theta,o,i,l}}\f$ and \f${\color{Cerulean}A_{\zeta ,o,i,l}}\f$;
+!>      and the Lagrange multipliers, \f$a_i\f$, \f$b_i\f$, \f$c_i\f$, \f$d_i\f$, \f$e_i\f$, etc. as required to enforce the constraints:
+!>      \f{eqnarray}{ {\bf x} \equiv \{ {\color{red} A_{\theta,e,i,l}},{\color{blue}A_{\zeta, e,i,l}},{\color{Orange}  A_{\theta,o,i,l}},{\color{Cerulean}A_{\zeta ,o,i,l}},a_i,b_i,c_i,d_i,e_i,f_i,g_1,h_1\}.
+!>      \f} </li>
+!> <li> The "packing" index is assigned in preset() . </li>
+!> </ul>
+!> 
+!> @param packorunpack
+!> @param lvol
+!> @param NN
+!> @param solution
+!> @param ideriv
 subroutine packab( packorunpack, lvol, NN, solution, ideriv )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

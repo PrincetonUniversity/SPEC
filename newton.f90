@@ -1,51 +1,51 @@
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!> \defgroup grp_force_driver Force-driver
 
-!title (force-driver) ! Solves ${\bf F}({\bf \xi})=0$, where ${\bf F} \equiv \{ [[p+B^2/2]]_{i,l}, I_{i,l} \}$ and ${\bf \xi} \equiv \{ R_{i,l},Z_{i,l} \}$.
+!> \file newton.f90
+!> \brief Employs Newton method to find \f${\bf F}({\bf x})=0\f$, where \f${\bf x}\equiv\{\mathrm{geometry}\}\f$ and \f${\bf F}\f$ is defined in dforce() .
 
-!latex \briefly{Employs Newton method to find ${\bf F}({\bf x})=0$, where ${\bf x}\equiv\{\mbox{\rm geometry}\}$ and ${\bf F}$ is defined in \link{dforce}.}
-
-!latex \calledby{\link{xspech}}
-!latex \calls{\link{dforce}, \link{packxi} and \link{global}:wrtend}
-
-!latex \tableofcontents
-
-!latex \subsubsection{iterative, reverse communication loop}
-
-!latex \begin{enumerate}
-!latex \item The iterative, Newton search to find ${\bf x} \equiv \{ \mbox{\rm geometry} \} \equiv \{ R_{i,l}, Z_{i,l} \}$ such that ${\bf F}({\bf x})=0$,
-!latex       where ${\bf F}$ and its derivatives, $\nabla_{{\bf x}} {\bf F}$, are calculated by \link{dforce}, is provided by either
-!latex \begin{itemize} 
-!latex \item[i.]  \nag{www.nag.co.uk/numeric/FL/manual19/pdf/C05/c05ndf_fl19.pdf}{C05NDF} if \inputvar{Lfindzero=1},
-!latex            which only uses function values; or
-!latex \item[ii.] \nag{www.nag.co.uk/numeric/FL/manual19/pdf/C05/c05pdf_fl19.pdf}{C05PDF} if \inputvar{Lfindzero=2}, 
-!latex            which uses user-provided derivatives.
-!latex \end{itemize}
-!latex \item The iterative search will terminate when the solution is within \inputvar{c05xtol} of the true solution (see NAG documentation).
-!latex \item The input variable \inputvar{c05factor} is provided to determine the initial step bound (see NAG documentation).
-!latex \end{enumerate}
-
-!latex \subsubsection{logic, writing/reading from file}
-
-!latex \begin{enumerate}
-!latex \item Before proceeding with iterative search, \link{dforce} is called to determine the magnitude of the initial force imbalance,
-!latex       and if this is less than \inputvar{forcetol} then the iterative search will not be performed.
-!latex \item As the iterations proceed, \link{global}:wrtend will be called to save itermediate information (also see \link{xspech}).
-!latex \item If the derivative matrix, $\nabla_{{\bf x}} {\bf F}$, is required, i.e. if \inputvar{Lfindzero=2}, and if \inputvar{LreadGF=.true.}
-!latex       then the derivative matrix will initially be read from \verb+.ext.sp.DF+, if it exists, or from \verb+.sp.DF+.
-!latex \item As the iterations proceed, the derivative matrix will be written to \verb+.ext.sp.DF+. 
-!latex \end{enumerate}
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+!> \brief timing of Newton iterations
 module newtontime 
   
-  INTEGER :: nFcalls, nDcalls
-  REAL    :: lastcpu
+  INTEGER :: nFcalls !< number of calls to get function   values (?)
+  INTEGER :: nDcalls !< number of calls to get derivative values (?)
+  REAL    :: lastcpu !< last CPU that called this (?)
   
 end module newtontime
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+!> \brief Employs Newton method to find \f${\bf F}({\bf x})=0\f$, where \f${\bf x}\equiv\{\mathrm{geometry}\}\f$ and \f${\bf F}\f$ is defined in dforce() .
+!> \ingroup grp_force_driver
+!>
+!> Solves \f${\bf F}({\bf \xi})=0\f$, where \f${\bf F} \equiv \{ [[p+B^2/2]]_{i,l}, I_{i,l} \}\f$ and \f${\bf \xi} \equiv \{ R_{i,l},Z_{i,l} \}\f$.
+!>
+!> **iterative, reverse communication loop**
+!>
+!> <ul>
+!> <li> The iterative, Newton search to find \f${\bf x} \equiv \{ \mathrm{geometry} \} \equiv \{ R_{i,l}, Z_{i,l} \}\f$ such that \f${\bf F}({\bf x})=0\f$,
+!>       where \f${\bf F}\f$ and its derivatives, \f$\nabla_{{\bf x}} {\bf F}\f$, are calculated by dforce() , is provided by either</li>
+!> <ul>
+!> <li> \c C05NDF if \c Lfindzero=1 ,
+!>      which only uses function values; or </li>
+!> <li> \c C05PDF if \c Lfindzero=2,
+!>      which uses user-provided derivatives. </li>
+!> </ul>
+!> <li> The iterative search will terminate when the solution is within \c c05xtol of the true solution (see NAG documentation). </li>
+!> <li> The input variable \c c05factor is provided to determine the initial step bound (see NAG documentation). </li>
+!> </ul>
+!>
+!> **logic, writing/reading from file**
+!>
+!> <ul>
+!> <li> Before proceeding with iterative search, dforce() is called to determine the magnitude of the initial force imbalance,
+!>       and if this is less than \c forcetol then the iterative search will not be performed. </li>
+!> <li> As the iterations proceed, wrtend() will be called to save itermediate information (also see xspech() ). </li>
+!> <li> If the derivative matrix, \f$\nabla_{{\bf x}} {\bf F}\f$, is required, i.e. if \c Lfindzero=2 , and if \c LreadGF=T
+!>       then the derivative matrix will initially be read from \c .ext.sp.DF , if it exists, or from \c .sp.DF . </li>
+!> <li> As the iterations proceed, the derivative matrix will be written to \c .ext.sp.DF . </li>
+!> </ul>
+!>
+!> @param[in]    NGdof
+!> @param[inout] position
+!> @param[out]   ihybrd
 subroutine newton( NGdof, position, ihybrd )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -293,8 +293,12 @@ end subroutine newton
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+!> \brief read or write force-derivative matrix
+!> \ingroup grp_force_driver
+!> 
+!> @param[in]  readorwrite
+!> @param[in]  NGdof
+!> @param[out] ireadhessian
 subroutine writereadgf( readorwrite, NGdof , ireadhessian )
   
   use constants, only : zero
@@ -407,8 +411,13 @@ end subroutine writereadgf
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+!> \brief fcn1
+!> \ingroup grp_force_driver
+!> 
+!> @param[in] NGdof
+!> @param[in] xx
+!> @param[out] fvec
+!> @param[in] irevcm
 subroutine fcn1( NGdof, xx, fvec, irevcm )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -533,8 +542,15 @@ subroutine fcn1( NGdof, xx, fvec, irevcm )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+!> \brief fcn2
+!> \ingroup grp_force_driver
+!> 
+!> @param[in]  NGdof
+!> @param[in]  xx
+!> @param[out] fvec
+!> @param[out] fjac
+!> @param[in]  Ldfjac
+!> @param[in]  irevcm
 subroutine fcn2( NGdof, xx, fvec, fjac, Ldfjac, irevcm )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

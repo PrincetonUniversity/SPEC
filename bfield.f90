@@ -1,39 +1,54 @@
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!> \defgroup grp_diagnostics Diagnostics to check the code
+!>
+!> \latexonly
+!> \definecolor{Orange}{rgb}{1.0,0.5,0.0}
+!> \definecolor{Cerulean}{rgb}{0.0,0.5,1.0}
+!> \endlatexonly
+!> 
+!> \file bfield.f90
+!> \brief Returns \f$\dot s \equiv B^s / B^\zeta\f$ and \f$\dot \theta \equiv B^\theta / B^\zeta\f$.
 
-!title (diagnostic) ! Returns the magnetic field field line equations, $d{\bf x}/d\phi = {\bf B}/B^\phi$.
-
-!latex \briefly{Returns $\dot \s \equiv B^\s / B^\z$ and $\dot \t \equiv B^\t / B^\z$.}
-
-!latex \calledby{\link{pp00ab}}
-!      \calls{}
-
-!latex \tableofcontents
-
-!latex \subsection{equations of field line flow} \begin{enumerate}
-
-!latex \item The equations for the fieldlines are normalized to the toroidal field, i.e. 
-!latex       \be \dot \s \equiv \frac{B^\s}{B^\z}, \qquad
-!latex           \dot \t \equiv \frac{B^\t}{B^\z}. \label{eq:stdot}
-!latex       \ee
-     
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \end{enumerate} \subsection{representation of magnetic field} \begin{enumerate}
-
-!latex \item \Ais
-!latex \item \Bis
-!latex \item In \Eqn{stdot}, the coordinate Jacobian, $\sqrt g$, cancels.
-!latex       No coordinate metric information is required to construct the fieldline equations from the magnetic vector potential.
-
-!latex \end{enumerate}
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-! IT IS REQUIRED TO SET IVOL THROUGH GLOBAL MEMORY BEFORE CALLING BF00AA;
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-subroutine bfield( zeta, st, Bst ) ! the format of this subroutine is constrained by the NAG ode integration routines. 
+!> \brief Compute the magnetic field.
+!> \ingroup grp_diagnostics
+!>
+!> Returns the magnetic field field line equations, \f$ d{\bf x}/d\phi = {\bf B}/B^\phi \f$ .
+!>
+!> **Equations of field line flow**
+!> <ul>
+!> <li> The equations for the fieldlines are normalized to the toroidal field, i.e. 
+!>       \f{equation}{ \dot s      \equiv \frac{B^s     }{B^\zeta}, \qquad
+!>                     \dot \theta \equiv \frac{B^\theta}{B^\zeta}. \label{eq:stdot_bfield} \f} </li>
+!> </ul>
+!>
+!> **Representation of magnetic field**
+!> <ul>
+!> <li> The components of the vector potential, \f${\bf A}=A_\theta \nabla + A_\zeta \nabla \zeta\f$, are
+!>      \f{eqnarray}{
+!>        A_\theta(s,\theta,\zeta) &=& \sum_{i,l} {\color{red}  A_{\theta,e,i,l}} \; {\overline T}_{l,i}(s) \cos\alpha_i + \sum_{i,l} {\color{Orange}  A_{\theta,o,i,l}} \; {\overline T}_{l,i}(s) \sin\alpha_i, \label{eq:At_bfield} \\
+!>        A_\zeta( s,\theta,\zeta) &=& \sum_{i,l} {\color{blue} A_{\zeta, e,i,l}} \; {\overline T}_{l,i}(s) \cos\alpha_i + \sum_{i,l} {\color{Cerulean}A_{\zeta ,o,i,l}} \; {\overline T}_{l,i}(s) \sin\alpha_i, \label{eq:Az_bfield}
+!>      \f}
+!>      where \f${\overline T}_{l,i}(s) \equiv \bar s^{m_i/2} \, T_l(s)\f$, \f$T_l(s)\f$ is the Chebyshev polynomial, and \f$\alpha_j \equiv m_j\theta-n_j\zeta\f$.
+!>      The regularity factor, \f$\bar s^{m_i/2}\f$, where \f$\bar s \equiv (1+s)/2\f$, is only included if there is a coordinate singularity in the domain
+!>      (i.e. only in the innermost volume, and only in cylindrical and toroidal geometry.) </li>
+!> <li> The magnetic field, \f$\sqrt g \, {\bf B} = \sqrt g B^s {\bf e}_s + \sqrt g B^\theta {\bf e}_\theta + \sqrt g B^\zeta {\bf e}_\zeta\f$, is
+!>      \f{eqnarray}{
+!>        \begin{array}{ccccrcrcrcrcccccccccccccccccccccccccccccccccccccccccccccccccccc}
+!>        \sqrt g \, {\bf B} & = & {\bf e}_s      & \sum_{i,l} [ ( & - m_i {\color{blue} A_{\zeta, e,i,l}} & - & n_i {\color{red}  A_{\theta,e,i,l}} & ) {\overline T}_{l,i}        \sin\alpha_i + ( & + m_i {\color{Cerulean}A_{\zeta ,o,i,l}} & + & n_i {\color{Orange}  A_{\theta,o,i,l}} & ) {\overline T}_{l,i}        \cos\alpha_i ] \\
+!>                           & + & {\bf e}_\theta & \sum_{i,l} [ ( &                                       & - &     {\color{blue} A_{\zeta, e,i,l}} & ) {\overline T}_{l,i}^\prime \cos\alpha_i + ( &                                          & - &     {\color{Cerulean}A_{\zeta ,o,i,l}} & ) {\overline T}_{l,i}^\prime \sin\alpha_i ] \\
+!>                           & + & {\bf e}_\zeta  & \sum_{i,l} [ ( &       {\color{red}  A_{\theta,e,i,l}} &   &                                     & ) {\overline T}_{l,i}^\prime \cos\alpha_i + ( &       {\color{Orange}  A_{\theta,o,i,l}} &   &                                        & ) {\overline T}_{l,i}^\prime \sin\alpha_i ]
+!>        \end{array}
+!>      \f}
+!> </li>
+!> <li> In Eqn.\f$(\ref{eq:stdot_bfield})\f$ , the coordinate Jacobian, \f$\sqrt g\f$, cancels.
+!>   No coordinate metric information is required to construct the fieldline equations from the magnetic vector potential. </li>
+!> </ul>
+!> IT IS REQUIRED TO SET IVOL THROUGH GLOBAL MEMORY BEFORE CALLING BFIELD.
+!>
+!> The format of this subroutine is constrained by the NAG ode integration routines.
+!> @param[in] zeta toroidal angle \f$ \zeta \f$
+!> @param[in] st radial coordinate \f$s\f$ and poloidal angle \f$\theta\f$
+!> @param[out] Bst tangential magnetic field directions \f$B_s, B_\theta\f$
+subroutine bfield( zeta, st, Bst )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -166,8 +181,11 @@ subroutine bfield( zeta, st, Bst ) ! the format of this subroutine is constraine
 
 end subroutine bfield
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+!> \brief compute the tangential magnetic field
+!>
+!> @param[in] zeta toroidal angle
+!> @param[in] st radial(s) and poloidal(theta) positions
+!> @param[out] Bst tangential magnetic field
 subroutine bfield_tangent( zeta, st, Bst ) 
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

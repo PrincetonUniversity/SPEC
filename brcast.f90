@@ -1,28 +1,20 @@
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!> \defgroup grp_parallel Parallelization
+!>
+!> \file brcast.f90
+!> \brief Broadcasts Beltrami fields, profiles, . . .
 
-!title (parallel) ! Broadcasts Beltrami fields, profiles, . . .
-
-!latex \briefly{Broadcast.}
-
-!latex \calledby{\link{dforce}}
-!l tex \calls{\link{}}
-
-!latex \tableofcontents
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \subsection{broadcasting}
-
-!latex \begin{enumerate}
-!latex \item The construction of the Beltrami fields are constructed on separate cpus.
-!latex \item All ``local'' information needs to be broadcast so that the ``global'' force vector, 
-!latex       \be {\bf F}_i \equiv [[p+B^2/2]]_i = (p+B^2/2)_{v,i} - (p+B^2/2)_{v-1,i}
-!latex       \ee
-!latex       can be constructed, and so that restart and output files can be saved to file.
-!latex \end{enumerate}
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+!> \ingroup grp_parallel
+!> \brief Broadcasts Beltrami fields, profiles, . . .
+!> 
+!> **broadcasting**
+!> <ul>
+!> <li> The construction of the Beltrami fields is distributed on separate cpus. </li>
+!> <li> All "local" information needs to be broadcast so that the "global" force vector, 
+!>       \f{eqnarray}{ {\bf F}_i \equiv [[p+B^2/2]]_i = (p+B^2/2)_{v,i} - (p+B^2/2)_{v-1,i}
+!>       \f}
+!>       can be constructed, and so that restart and output files can be saved to file. </li>
+!> </ul>
+!> @param[in] lvol index of nested volume
 subroutine brcast( lvol )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

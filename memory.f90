@@ -1,7 +1,13 @@
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-! memory management module
+!> \file memory.f90
+!> \brief memory management module
+
 ! by Zhisong Qu 07 JUL 20
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+!> \brief allocate Beltrami matrices
+!>
+!> @param vvol
+!> @param LcomputeDerivatives
 subroutine allocate_Beltrami_matrices(vvol, LcomputeDerivatives)
 
   use fileunits
@@ -51,6 +57,9 @@ end subroutine allocate_Beltrami_matrices
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+!> \brief deallocate Beltrami matrices
+!>
+!> @param LcomputeDerivatives
 subroutine deallocate_Beltrami_matrices(LcomputeDerivatives)
 
   use fileunits
@@ -96,6 +105,10 @@ end subroutine deallocate_Beltrami_matrices
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+!> \brief allocate geometry matrices
+!>
+!> @param vvol
+!> @param LcomputeDerivatives
 subroutine allocate_geometry_matrices(vvol, LcomputeDerivatives)
 
 ! Allocate all geometry dependent matrices for a given ll
@@ -206,6 +219,9 @@ end subroutine allocate_geometry_matrices
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+!> \brief deallocate geometry matrices
+!>
+!> @param LcomputeDerivatives
 subroutine deallocate_geometry_matrices(LcomputeDerivatives)
 
 ! Deallocate all geometry dependent matrices

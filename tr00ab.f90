@@ -1,72 +1,72 @@
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!> \defgroup grp_transform Rotational Transform
 
-!title (transform) ! Calculates transform, \( \iota \hspace{-0.35em}\)-\( = \dot \theta ( 1 + \lambda_\theta) + \lambda_\zeta \), given ${\bf B}|_{\cal I}$.
+!> \file tr00ab.f90
+!> \brief Calculates rotational transform given an arbitrary tangential field.
 
-!latex \briefly{Calculates rotational transform given an arbitrary tangential field.}
-
-!latex \calledby{\link{dforce} and \link{mp00ac}}
-!latex \calls{}
-
-!latex \tableofcontents
-
-!latex \subsubsection{constructing straight field line angle on interfaces} 
-
-!latex \begin{enumerate}
-!latex \item The algorithm stems from introducing a straight field line angle $\theta_s=\theta+\lambda(\theta,\zeta)$, where 
-!latex       \be \lambda=\sum_j \lambda_{o,j}\sin(m_j\theta-n_j\zeta) + \sum_j \lambda_{e,j}\cos(m_j\theta-n_j\zeta)
-!latex       \ee
-!latex       and insisting that
-!latex       \be
-!latex       \frac{{\bf B}\cdot \nabla \theta_s}{{\bf B}\cdot \nabla \zeta} = \dot \theta ( 1 + \lambda_\theta) + \lambda_\zeta = \iotabar,
-!latex       \ee
-!latex       where $\iotabar$ is a constant that is to be determined.
-!latex \item Writing $\dot \theta = - \partial_s A_\zeta / \partial_s A_\theta$, we have
-!latex       \be \label{eq:sfla} 
-!latex       \partial_s A_\theta \, \iotabar + \partial_s A_\zeta \, \lambda_\theta - \partial_s A_\theta \, \lambda_\zeta = - \partial_s A_\zeta
-!latex       \ee
-!latex \item Expanding this equation we obtain
-!latex       \be
-!latex         &   & \left( A_{\t,e,k}^\prime \cos\a_k + A_{\t,o,k}^\prime \sin\a_k\right) \, \iotabar \nonumber \\
-!latex         & + & \left( A_{\z,e,k}^\prime \cos\a_k + A_{\z,o,k}^\prime \sin\a_k\right) \, \left( +m_j \lambda_{o,j} \cos\a_j - m_j \lambda_{e,j} \sin\a_j 
-!latex               \right) \nonumber \\
-!latex         & - & \left( A_{\t,e,k}^\prime \cos\a_k + A_{\t,o,k}^\prime \sin\a_k\right) \, \left( -n_j \lambda_{o,j} \cos\a_j + n_j \lambda_{e,j} \sin\a_j 
-!latex               \right) \nonumber \\
-!latex       = & - & \left( A_{\z,e,k}^\prime \cos\a_k + A_{\z,o,k}^\prime \sin\a_k\right),
-!latex       \ee
-!latex       where summation over $k=1,$ \verb+mn+ and $j=2,$ \verb+mns+ is implied
-!latex \item After applying double angle formulae,
-!latex       \be
-!latex         &   & \left( A_{\t,e,k}^\prime \cos\a_k + A_{\t,o,k}^\prime \sin\a_k\right) \, \iotabar \nonumber \\
-!latex         & + & \lambda_{o,j} \left( + m_j A_{\z,e,k}^\prime + n_j A_{\t,e,k}^\prime \right) \left[ +\cos(\a_k+\a_j)+\cos(\a_k-\a_j)\right]/2 \nonumber \\
-!latex         & + & \lambda_{e,j} \left( - m_j A_{\z,e,k}^\prime - n_j A_{\t,e,k}^\prime \right) \left[ +\sin(\a_k+\a_j)-\sin(\a_k-\a_j)\right]/2 \nonumber \\
-!latex         & + & \lambda_{o,j} \left( + m_j A_{\z,o,k}^\prime + n_j A_{\t,o,k}^\prime \right) \left[ +\sin(\a_k+\a_j)+\sin(\a_k-\a_j)\right]/2 \nonumber \\
-!latex         & + & \lambda_{e,j} \left( - m_j A_{\z,o,k}^\prime - n_j A_{\t,o,k}^\prime \right) \left[ -\cos(\a_k+\a_j)+\cos(\a_k-\a_j)\right]/2 \nonumber \\
-!latex       = & - & \left( A_{\z,e,k}^\prime \cos\a_k + A_{\z,o,k}^\prime \sin\a_k\right),
-!latex       \ee
-!latex       and equating coefficients, an equation of the form ${\bf A} \cdot {\bf x} = {\bf b}$ is obtained, where
-!latex       \be {\bf x} = ( \underbrace{\iotabar}_{\verb!x[1]!} \; , \; 
-!latex                       \underbrace{\lambda_{o,2}, \lambda_{o,3},\dots}_{\verb!x[  2: N  ]!} \; , \;
-!latex                       \underbrace{\lambda_{e,2}, \lambda_{e,3},\dots}_{\verb!x[N+1:2N-1]!} \;
-!latex                      )^T.
-!latex       \ee
-!latex \end{enumerate} 
-
-!latex \subsubsection{alternative iterative method} 
-
-!latex \begin{enumerate}
-!latex \item Consider the equation $\dot \t ( 1 + \lambda_\t ) + \lambda_\z = \iotabar$, where $\lambda = \sum_j \lambda_j \sin\a_j$, given on a grid
-!latex       \be \dot \t_i + \dot \t_i \sum_j m_j \cos \alpha_{i,j} \lambda_j - \sum_j n_j \cos \alpha_{i,j} \lambda_j = \iotabar, 
-!latex       \ee
-!latex       where $i$ labels the grid point.
-!latex \item This is a matrix equation . . .
-!latex \end{enumerate}
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+!> \brief Calculates rotational transform given an arbitrary tangential field.
+!> \ingroup grp_transform
+!>
+!> Calculates transform, \f$ \iota \hspace{-0.35em}\)-\( = \dot \theta ( 1 + \lambda_\theta) + \lambda_\zeta \f$, given \f${\bf B}|_{\cal I}\f$.
+!>
+!> **constructing straight field line angle on interfaces**
+!>
+!> <ul>
+!> <li> The algorithm stems from introducing a straight field line angle \f$\theta_s=\theta+\lambda(\theta,\zeta)\f$, where 
+!>       \f{eqnarray}{ \lambda=\sum_j \lambda_{o,j}\sin(m_j\theta-n_j\zeta) + \sum_j \lambda_{e,j}\cos(m_j\theta-n_j\zeta)
+!>       \f}
+!>       and insisting that
+!>       \f{eqnarray}{
+!>       \frac{{\bf B}\cdot \nabla \theta_s}{{\bf B}\cdot \nabla \zeta} = \dot \theta ( 1 + \lambda_\theta) + \lambda_\zeta = {{\,\iota\!\!\!}-},
+!>       \f}
+!>       where \f${{\,\iota\!\!\!}-}\f$ is a constant that is to be determined. </li>
+!> <li> Writing \f$\dot \theta = - \partial_s A_\zeta / \partial_s A_\theta\f$, we have
+!>       \f{eqnarray}{ \label{eq:sfla_tr00ab} 
+!>       \partial_s A_\theta \, {{\,\iota\!\!\!}-} + \partial_s A_\zeta \, \lambda_\theta - \partial_s A_\theta \, \lambda_\zeta = - \partial_s A_\zeta
+!>       \f} </li>
+!> <li> Expanding this equation we obtain
+!>       \f{eqnarray}{
+!>         &   & \left( A_{\theta,e,k}^\prime \cos\alpha_k + A_{\theta,o,k}^\prime \sin\alpha_k\right) \, {{\,\iota\!\!\!}-} \nonumber \\
+!>         & + & \left( A_{\zeta ,e,k}^\prime \cos\alpha_k + A_{\zeta ,o,k}^\prime \sin\alpha_k\right) \, \left( +m_j \lambda_{o,j} \cos\alpha_j - m_j \lambda_{e,j} \sin\alpha_j 
+!>               \right) \nonumber \\
+!>         & - & \left( A_{\theta,e,k}^\prime \cos\alpha_k + A_{\theta,o,k}^\prime \sin\alpha_k\right) \, \left( -n_j \lambda_{o,j} \cos\alpha_j + n_j \lambda_{e,j} \sin\alpha_j 
+!>               \right) \nonumber \\
+!>       = & - & \left( A_{\zeta ,e,k}^\prime \cos\alpha_k + A_{\zeta ,o,k}^\prime \sin\alpha_k\right),
+!>       \f}
+!>       where summation over \f$k=1,\,\f$\c mn and \f$j=2,\,\f$\c mns is implied </li>
+!> <li> After applying double angle formulae,
+!>       \f{eqnarray}{
+!>         &   & \left( A_{\theta,e,k}^\prime \cos\alpha_k + A_{\theta,o,k}^\prime \sin\alpha_k\right) \, {{\,\iota\!\!\!}-} \nonumber \\
+!>         & + & \lambda_{o,j} \left( + m_j A_{\zeta,e,k}^\prime + n_j A_{\theta,e,k}^\prime \right) \left[ +\cos(\alpha_k+\alpha_j)+\cos(\alpha_k-\alpha_j)\right]/2 \nonumber \\
+!>         & + & \lambda_{e,j} \left( - m_j A_{\zeta,e,k}^\prime - n_j A_{\theta,e,k}^\prime \right) \left[ +\sin(\alpha_k+\alpha_j)-\sin(\alpha_k-\alpha_j)\right]/2 \nonumber \\
+!>         & + & \lambda_{o,j} \left( + m_j A_{\zeta,o,k}^\prime + n_j A_{\theta,o,k}^\prime \right) \left[ +\sin(\alpha_k+\alpha_j)+\sin(\alpha_k-\alpha_j)\right]/2 \nonumber \\
+!>         & + & \lambda_{e,j} \left( - m_j A_{\zeta,o,k}^\prime - n_j A_{\theta,o,k}^\prime \right) \left[ -\cos(\alpha_k+\alpha_j)+\cos(\alpha_k-\alpha_j)\right]/2 \nonumber \\
+!>       = & - & \left( A_{\zeta,e,k}^\prime \cos\alpha_k + A_{\zeta,o,k}^\prime \sin\alpha_k\right),
+!>       \f}
+!>       and equating coefficients, an equation of the form \f${\bf A} \cdot {\bf x} = {\bf b}\f$ is obtained, where
+!>       \f{eqnarray}{ {\bf x} = ( \underbrace{{{\,\iota\!\!\!}-}}_{\verb!x[1]!} \; , \; 
+!>                       \underbrace{\lambda_{o,2}, \lambda_{o,3},\dots}_{\verb!x[  2: N  ]!} \; , \;
+!>                       \underbrace{\lambda_{e,2}, \lambda_{e,3},\dots}_{\verb!x[N+1:2N-1]!} \;
+!>                      )^T.
+!>       \f} </li>
+!> </ul>
+!>
+!> **alternative iterative method**
+!>
+!> <ul>
+!> <li> Consider the equation \f$\dot \theta ( 1 + \lambda_\theta ) + \lambda_\zeta = {{\,\iota\!\!\!}-}\f$, where \f$\lambda = \sum_j \lambda_j \sin\alpha_j\f$, given on a grid
+!>       \f{eqnarray}{ \dot \theta_i + \dot \theta_i \sum_j m_j \cos \alpha_{i,j} \lambda_j - \sum_j n_j \cos \alpha_{i,j} \lambda_j = {{\,\iota\!\!\!}-}, 
+!>       \f}
+!>       where \f$i\f$ labels the grid point. </li>
+!> <li> This is a matrix equation... </li>
+!> </ul>
+!>
+!> @param lvol
+!> @param mn
+!> @param NN
+!> @param Nt
+!> @param Nz
+!> @param iflag
+!> @param ldiota
 subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-field line magnetic coordinates;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

@@ -1,4 +1,5 @@
-!title (&ldquo;global&rdquo; dfp200) ! Given the field consistent with the constraints and the geometry, computes local quantites related to the force evaluation.
+!> \file dfp200.f90
+!> \brief Given the field consistent with the constraints and the geometry, computes local quantites related to the force evaluation.
 
 !latex \briefly{Calculates ${ F_i}({\bf x})$, where ${\bf x} \equiv \{\mbox{\rm geometry}\} \equiv \{ R_{i,v}, Z_{i,v}\}$ 
 !latex          and ${ F_i}\equiv p_i+B_i^2/2 + \{\mbox{\rm spectral constraints}\} $, and $\nabla {\bf F_i}$.}
@@ -37,6 +38,10 @@
 !latex       \ee
 !latex \end{enumerate}
 
+!> \brief Given the field consistent with the constraints and the geometry, computes local quantites related to the force evaluation.
+!>
+!> @param LcomputeDerivatives
+!> @param vvol
 subroutine dfp200( LcomputeDerivatives, vvol)
 
   use constants, only : zero, half, one, two
@@ -592,6 +597,11 @@ end subroutine dfp200
 !                                                                LOCAL SUBROUTINES
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-
 
+!> \brief get LU Beltrami matrices
+!>
+!> @param vvol
+!> @param oBI
+!> @param NN
 subroutine get_LU_beltrami_matrices(vvol, oBI, NN)
 
 ! Evaluate the LU factorization of Beltrami matrices and store the original one in oBI.
@@ -705,6 +715,12 @@ end subroutine get_LU_beltrami_matrices
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-
 
+
+!> \brief This routine evaluates the value of the magnetic field once the interface is perturbed using matrix perturbation theory.
+!> 
+!> @param vvol
+!> @param oBI
+!> @param NN
 subroutine get_perturbed_solution(vvol, oBI, NN)
 
 ! This routine evaluates the value of the magnetic field once the interface is perturbed using matrix perturbation theory.
@@ -774,6 +790,13 @@ end subroutine get_perturbed_solution
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+!> \brief Evaluate mu and psip derivatives and store them in dmupfdx.
+!> 
+!> @param innout
+!> @param idof
+!> @param ii
+!> @param issym
+!> @param irz
 subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 
 ! Evaluate mu and psip derivatives and store them in dmupfdx.
@@ -1322,7 +1345,25 @@ end subroutine evaluate_dmupfdx
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-
+!> \brief Evaluate the derivative of the square of the magnetic field modulus. Add spectral constraint derivatives if required.
+!> 
+!> @param lvol
+!> @param idof
+!> @param innout
+!> @param issym
+!> @param irz
+!> @param ii
+!> @param dBB
+!> @param XX
+!> @param YY
+!> @param length
+!> @param dRR
+!> @param dZZ
+!> @param dII
+!> @param dLL
+!> @param dPP
+!> @param Ntz
+!> @param LcomputeDerivatives
 subroutine evaluate_dBB(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz, LcomputeDerivatives)
 
 ! Evaluate the derivative of the square of the magnetic field modulus. Add spectral constraint derivatives if

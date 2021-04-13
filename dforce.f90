@@ -1,97 +1,95 @@
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!> \defgroup grp_global_force "global" force
 
-!title (&ldquo;global&rdquo; force) ! Given &ldquo;position&rdquo;, ${\bf \xi}$, computes ${\bf F}({\bf \xi})$ and $\nabla_{\bf \xi}{\bf F}$.
+!> \file dforce.f90
+!> \brief Calculates \f${\bf F}({\bf x})\f$, where \f${\bf x} \equiv \{\mbox{geometry}\} \equiv \{ R_{i,v}, Z_{i,v}\}\f$ 
+!>        and \f${\bf F}\equiv[[p+B^2/2]] + \{\mbox{spectral constraints}\} \f$, and \f$\nabla {\bf F}\f$.
 
-!latex \briefly{Calculates ${\bf F}({\bf x})$, where ${\bf x} \equiv \{\mbox{\rm geometry}\} \equiv \{ R_{i,v}, Z_{i,v}\}$ 
-!latex          and ${\bf F}\equiv[[p+B^2/2]] + \{\mbox{\rm spectral constraints}\} $, and $\nabla {\bf F}$.}
-
-!latex \calledby{\link{hesian}, 
-!latex           \link{newton}, 
-!latex           \link{pc00aa}, 
-!latex           \link{pc00ab} and 
-!latex           \link{xspech}} \\
-
-!latex \calls{\link{packxi}, 
-!latex        \link{ma00aa}, 
-!latex        \link{matrix}, 
-!latex        \link{dfp100}, 
-!latex        \link{dfp200} and
-!latex        \link{brcast}}
-
-
-!latex \tableofcontents
-
-!latex \subsection{unpacking}
-
-!latex \begin{enumerate}
-
-!latex \item The geometrical degrees of freedom are represented as a vector, ${\bf x} \equiv \{ R_{i,v}, Z_{i,v}\}$, 
-!latex       where $i=1,$ \internal{mn} labels the Fourier harmonic and $v=1,$ \internal{Mvol}$-1$ is the interface label.
-!latex       This vector is ``unpacked'' using \link{packxi}.
-!latex       (Note that \link{packxi} also sets the coordinate axis, i.e. the $R_{i,0}$ and $Z_{i,0}$.)
-
-!latex \end{enumerate}
-
-!latex \subsection{Matrices computation}
-
-!latex \begin{enumerate}
-!latex       \item     the volume-integrated metric arrays, \internal{DToocc}, etc. are evaluated in each volume by calling \link{ma00aa};
-!latex       \item     the energy and helicity matrices, \internal{dMA(0:NN,0:NN)}, \internal{dMB(0:NN,0:2)}, etc. are evaluated in each 
-!latex                 volume by calling \link{matrix};
-!latex \end{enumerate}
-
-!latex \subsection{parallelization over volumes}
-
-!latex Two different cases emerge: either a local constraint or a global constraint is considered. This condition is determined by the 
-!latex flag \inputvar{LocalConstraint}.
-
-!latex \subsubsection{Local constraint}
-!latex In each volume, \internal{vvol = 1, Mvol}, 
-!latex       \begin{enumerate}
-!latex       \item The logical array \internal{ImagneticOK(vvol)} is set to \internal{.false.}
-!latex          \item The MPI node associated to the volume calls \link{dfp100}. This routine calls \link{ma02aa} (and might iterate on \link{mp00ac}) and computes the
-!latex                field solution in each volume consistent with the constraint.
-!latex         \item The MPI node associated to the volume calls \link{dfp200}. This computes $p+B^2/2$ (and the spectral constraints if required) at the interfaces in 
-!latex                each volumes, as well as the derivatives of the force-balance if \internal{LComputeDerivatives = 1};
-!latex       \end{enumerate}
-
-!latex \subsubsection{Global constraint}
-!latex The MPI node $0$ minimizes the constraint with HYBRID1 by iterating on \link{dfp100} until the field matches the constraint. Other MPI nodes enter
-!latex the subroutine loop\_dfp100. In loop\_dfp100, each MPI node
-!latex \begin{enumerate}
-!latex \item calls \link{dfp100}
-!latex \item solves the field in its associated volumes
-!latex \item communicates the field to the node $0$
-!latex \item repeats this loop until the node $0$ sends a flag \internal{iflag=5}.
-!latex \end{enumerate}
-
-!latex \subsection{broadcasting}
-
-!latex \begin{enumerate}
-!latex \item The required quantities are broadcast by \link{brcast}.
-!latex \end{enumerate}
-
-!latex \subsection{construction of force}
-
-!latex \begin{enumerate}
-!latex \item The force vector, ${\bf F}({\bf x})$, is a combination of the pressure-imbalance Fourier harmonics, $[[p+B^2/2]]_{i,v}$,
-!latex       where $i$ labels Fourier harmonic and $v$ is the interface label:
-!latex       \be F_{i,v} \equiv \left[ ( p_{v+1}+B^2_{i,v+1}/2 ) - ( p_v + B^2_{i,v}/2 ) \right] \times \internal{BBweight}_i,
-!latex       \ee
-!latex       where \internal{BBweight\_i} is defined in \link{preset};
-!latex       and the spectral condensation constraints, 
-!latex       \be F_{i,v} \equiv I_{i,v} \times \inputvar{epsilon} + S_{i,v,1} \times \internal{sweight}_v - S_{i,v+1,0} \times \internal{sweight}_{v+1},
-!latex       \ee
-!latex       where the spectral condensation constraints, $I_{i,v}$, and the ``star-like'' poloidal angle constraints, $S_{i,v,\pm 1}$,
-!latex       are calculated and defined in \link{lforce};
-!latex       and the \internal{sweight}$_v$ are defined in \link{preset}. All quantities local to a volume are computed in \link{dfp200},
-!latex          information is then broadcasted to the MPI node $0$ in \link{dforce} and the global force is evaluated.
-!latex \end{enumerate}
-
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!> \brief Calculates \f${\bf F}({\bf x})\f$, where \f${\bf x} \equiv \{\mbox{geometry}\} \equiv \{ R_{i,v}, Z_{i,v}\}\f$ 
+!>        and \f${\bf F}\equiv[[p+B^2/2]] + \{\mbox{spectral constraints}\} \f$, and \f$\nabla {\bf F}\f$.
+!> \ingroup grp_global_force
+!> 
+!> **unpacking**
+!>
+!> <ul>
+!> <li> The geometrical degrees of freedom are represented as a vector, \f${\bf x} \equiv \{ R_{i,v}, Z_{i,v}\}\f$, 
+!>       where \f$i=1,\f$ \c mn labels the Fourier harmonic and \f$v=1,\f$ \c Mvol\f$-1\f$ is the interface label.
+!>       This vector is "unpacked" using packxi().
+!>       (Note that packxi() also sets the coordinate axis, i.e. the \f$R_{i,0}\f$ and \f$Z_{i,0}\f$.) </li>
+!> </ul>
+!>
+!> **Matrices computation**
+!>
+!> <ul>
+!> <li> the volume-integrated metric arrays, \c DToocc, etc. are evaluated in each volume by calling ma00aa() </li>
+!> <li> the energy and helicity matrices, \c dMA(0:NN,0:NN), \c dMB(0:NN,0:2), etc. are evaluated in each volume by calling matrix() </li>
+!> </ul>
+!>
+!> **parallelization over volumes**
+!>
+!> Two different cases emerge: either a local constraint or a global constraint is considered.
+!> This condition is determined by the flag \c LocalConstraint.
+!>
+!> <ul>
+!> <li> Local constraint
+!>      <ul>
+!>      <li> In each volume, \c vvol=1,Mvol , 
+!>            <ul>
+!>            <li> the logical array \c ImagneticOK(vvol) is set to \c .false. </li>
+!>            <li> The MPI node associated to the volume calls dfp100().
+!>                 This routine calls ma02aa() (and might iterate on mp00ac()) and computes the
+!>                 field solution in each volume consistent with the constraint. </li>
+!>            <li> The MPI node associated to the volume calls dfp200().
+!>                 This computes \f$p+B^2/2\f$ (and the spectral constraints if required) at the interfaces in 
+!>                 each volumes, as well as the derivatives of the force-balance if \c LComputeDerivatives=1. </li>
+!>            </ul> </li>
+!>      <li> After the parallelization loop over the volumes, brcast() is called to broadcast the required information. </li>
+!>      </ul> </li>
+!> <li> Global constraint <br/>
+!>      The MPI node \f$0\f$ minimizes the constraint with HYBRID1() by iterating on dfp100() until the field matches the constraint.
+!>      Other MPI nodes enter the subroutine loop_dfp100(). In loop_dfp100(), each MPI node
+!>      <ul>
+!>      <li> calls dfp100(), </li>
+!>      <li> solves the field in its associated volumes, </li>
+!>      <li> communicates the field to the node \f$0\f$ and </li>
+!>      <li> repeats this loop until the node \f$0\f$ sends a flag \c iflag=5. </li>
+!>      </ul> </li>
+!> </ul>
+!> 
+!> **broadcasting**
+!>
+!> <ul>
+!> <li> The required quantities are broadcast by brcast(). </li>
+!> </ul>
+!>
+!> **construction of force**
+!>
+!> <ul>
+!> <li> The force vector, \f${\bf F}({\bf x})\f$, is a combination of the pressure-imbalance Fourier harmonics, \f$[[p+B^2/2]]_{i,v}\f$,
+!>       where \f$i\f$ labels Fourier harmonic and \f$v\f$ is the interface label:
+!>       \f{eqnarray}{ F_{i,v} \equiv \left[ ( p_{v+1}+B^2_{i,v+1}/2 ) - ( p_v + B^2_{i,v}/2 ) \right] \times \texttt{BBweight}_i,
+!>       \f}
+!>       where \c BBweight_i is defined in preset() ;
+!>       and the spectral condensation constraints, 
+!>       \f{eqnarray}{ F_{i,v} \equiv I_{i,v} \times \texttt{epsilon} + S_{i,v,1} \times \texttt{sweight}_v - S_{i,v+1,0} \times \texttt{sweight}_{v+1},
+!>       \f}
+!>       where the spectral condensation constraints, \f$I_{i,v}\f$, and the "star-like" poloidal angle constraints, \f$S_{i,v,\pm 1}\f$,
+!>       are calculated and defined in lforce() ;
+!>       and the \c sweight\f$_v\f$ are defined in preset(). All quantities local to a volume are computed in dfp200(),
+!>       information is then broadcasted to the MPI node \f$0\f$ in dforce() and the global force is evaluated. </li>
+!> </ul>
+!>
+!> **construct derivatives of matrix equation**
+!>
+!> <ul>
+!> <li> Matrix perturbation theory is used to compute the derivatives of the solution, i.e. the Beltrami fields, as the geometry of the 
+!>       interfaces changes: </li>
+!> </ul>
+!>
+!> @param[in] NGdof number of global degrees of freedom
+!> @param[in] position
+!> @param[out] force
+!> @param[in] LComputeDerivatives
+!> @param[inout] LComputeAxis
 subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -396,7 +394,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-
+! ---------------
 ! CONSTRUCT FORCE
 ! ---------------
   
@@ -512,6 +510,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
+! -----------------
 ! CONSTRUCT HESSIAN
 ! -----------------
 
@@ -557,7 +556,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
 
               if( ii.eq.1 .and. irz.eq.1 .and. issym.eq.0 ) cycle ! no dependence on Zbs_{m=0,n=0};
               if( ii.eq.1 .and. irz.eq.0 .and. issym.eq.1 ) cycle ! no dependence on Rbs_{m=0,n=0};
-      
+
               idof = idof + 1 ! labels degree-of-freedom;
 
 #ifdef DEBUG
