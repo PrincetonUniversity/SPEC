@@ -261,7 +261,7 @@ subroutine get_zernike_d2(r, lrad, mpol, zernike)
   end do
 end subroutine get_zernike_d2
 
-!> \brief Get the Zernike polynomials \f$\hat{R}^{m}_{l}\f$/r^m\f$
+!> \brief Get the Zernike polynomials \f$\hat{R}^{m}_{l}/r^m\f$
 !>
 !> See get_zernike for more detail.
 !>
