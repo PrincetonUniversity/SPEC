@@ -292,7 +292,7 @@ subroutine newton( NGdof, position, ihybrd )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 	call MPI_BARRIER( MPI_COMM_WORLD, ierr2)
 
-  if( Lfindzero.eq.2 ) then 
+  if( Lfindzero.eq.2 .or. Lfindzero.eq.3 .or. Lfindzero.eq.4) then 
    DALLOCATE( dFFdRZ )
    DALLOCATE( dBBdmp )
    DALLOCATE( dmupfdx )
