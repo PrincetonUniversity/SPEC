@@ -1017,7 +1017,7 @@ subroutine hdfint
 !latex                                           i.e. $[[B_{\z,j}]]$ evaluated on the inner and outer interface in each volume} \\
   HWRITERC( grpOutput, mn, 2, Mvol, Bzomn, Bzomn(1:mn,0:1,1:Mvol) )
 
-  if( Lwritedesc.gt.0) then
+  if( Lfindzero.eq.3 .and. Lwritedesc.gt.0) then
 
 !latex \type{fdesc(1:witdesc)}      & real    & \pb{mean force, ForceErr, during force-descent iterations} \\
   HWRITERV( grpOutput, witdesc, fdesc , fdesc(1:witdesc) )

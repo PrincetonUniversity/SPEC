@@ -1383,7 +1383,7 @@ endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  if(Lwritedesc.gt.0) then
+  if(Lfindzero.eq.3 .and. Lwritedesc.gt.0) then
     witdesc = maxitdesc/nwritedesc
     SALLOCATE( xdesc , (1:NGdof, 1:witdesc), zero ) ! geometry of interfaces during force-descent interations;
     SALLOCATE( fdesc , (1:witdesc), zero ) ! mean force imbalance during force-descent interations;
