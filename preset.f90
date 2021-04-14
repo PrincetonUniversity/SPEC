@@ -1383,6 +1383,17 @@ endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+  if(Lwritedesc.gt.0) then
+    witdesc = maxitdesc/nwritedesc
+    SALLOCATE( xdesc , (1:NGdof, 1:witdesc), zero ) ! geometry of interfaces during force-descent interations;
+    SALLOCATE( fdesc , (1:witdesc), zero ) ! mean force imbalance during force-descent interations;
+    SALLOCATE( edesc , (1:witdesc), zero ) ! total energy during force-descent interations;
+  endif
+
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+
   if( Lconstraint .EQ. 3) then
     Localconstraint = .false.
   else

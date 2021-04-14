@@ -333,6 +333,11 @@ subroutine mirror_input_to_outfile
   HWRITEIV( grpInputGlobal,            1,  vcasingits        , (/ vcasingits  /))
   HWRITEIV( grpInputGlobal,            1,  vcasingper        , (/ vcasingper  /))
   HWRITEIV( grpInputGlobal,            1,  mcasingcal        , (/ mcasingcal  /))  ! redundant;
+  HWRITERV( grpInputGlobal,            1,  dxdesc            , (/ dxdesc      /))
+  HWRITERV( grpInputGlobal,            1,  ftoldesc          , (/ ftoldesc    /))
+  HWRITEIV( grpInputGlobal,            1,  maxitdesc         , (/ maxitdesc   /))
+  HWRITEIV( grpInputGlobal,            1,  Lwritedesc        , (/ Lwritedesc  /))
+  HWRITEIV( grpInputGlobal,            1,  nwritedesc        , (/ nwritedesc  /))
 
   HCLOSEGRP( grpInputGlobal )
 
@@ -903,7 +908,7 @@ subroutine hdfint
   use fileunits, only : ounit
   use inputlist
   use allglobal, only : ncpu, cpus, &
-                        Mvol, ForceErr, &
+                        Mvol, ForceErr, Energy, &
                         mn, im, in, iRbc, iZbs, iRbs, iZbc, &
                         dRbc, dZbs, dRbs, dZbc, &
                         vvolume, dvolume, &
@@ -913,7 +918,8 @@ subroutine hdfint
                         lmns, &
                         TT, &
                         beltramierror, &
-                        IPDt
+                        IPDt, &
+                        witdesc, xdesc, fdesc, edesc, NGdof
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -962,6 +968,8 @@ subroutine hdfint
 !  HWRITERV( grpOutput, 1, forcetol, (/ forcetol /)) ! already in /input/global
 !latex \type{ForceErr}               & real    & \pb{force-balance error across interfaces} \\
   HWRITERV( grpOutput,  1, ForceErr, (/ ForceErr /))
+!latex \type{Energy}               & real    & \pb{final total energy} \\
+  HWRITERV( grpOutput,  1, Energy, (/ Energy /))
 !latex \type{Ivolume}                & real    & \pb{Volume current at output (parallel, externally induced)}
   HWRITERV( grpOutput, Mvol, Ivolume, Ivolume(1:Mvol))
 !latex \type{IPDt}                   & real    & \pb{Surface current at output}
@@ -1008,6 +1016,19 @@ subroutine hdfint
 !latex \type{Bzomn(1:mn,0:1,1:Mvol)} & real    & \pb{the sine harmonics of the covariant toroidal field, \\
 !latex                                           i.e. $[[B_{\z,j}]]$ evaluated on the inner and outer interface in each volume} \\
   HWRITERC( grpOutput, mn, 2, Mvol, Bzomn, Bzomn(1:mn,0:1,1:Mvol) )
+
+  if( Lwritedesc.gt.0) then
+
+!latex \type{fdesc(1:witdesc)}      & real    & \pb{mean force, ForceErr, during force-descent iterations} \\
+  HWRITERV( grpOutput, witdesc, fdesc , fdesc(1:witdesc) )
+!latex \type{edesc(1:witdesc)}      & real    & \pb{total energy during force-descent iterations} \\
+  HWRITERV( grpOutput, witdesc, edesc , edesc(1:witdesc) )
+  if(Lwritedesc.eq.2) then
+!latex \type{xdesc(1:NGdof,1:witdesc)}      & real    & \pb{geometry of interfaces during force-descent iterations} \\
+  HWRITERA( grpOutput, NGdof, witdesc, xdesc, xdesc(1:NGdof,1:witdesc) )
+  endif
+
+  endif
 
   if( Lperturbed.eq.1 ) then
 

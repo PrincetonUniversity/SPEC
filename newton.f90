@@ -218,7 +218,7 @@ subroutine newton( NGdof, position, ihybrd )
           xtol, maxfev,                 diag(1:NGdof), mode, factor, nprint, ihybrd, nfev, njev, &
           RR(1:LR), LR, QTF(1:NGdof), workspace(1:NGdof,1), workspace(1:NGdof,2), workspace(1:NGdof,3), workspace(1:NGdof,4) ) )
 
-  case( 3 ) ! use function values to find f(x)=0 using a conjugate gradient descent algorithm
+  case( 3 ) ! use only function values to find f(x)=0 by pushing the interfaces with f(x) (force-descent)
 
    write(*,*) "-------------------- Under construction --------------------"
    WCALL(newton, fcndescent, (position(1:NGdof),NGdof))
@@ -227,7 +227,7 @@ subroutine newton( NGdof, position, ihybrd )
           RR(1:LR), LR, QTF(1:NGdof), workspace(1:NGdof,1), workspace(1:NGdof,2), workspace(1:NGdof,3), workspace(1:NGdof,4) ) )
    write(*,*) "-------------------- Under construction --------------------"
 
-  case( 4 ) ! use function values to find f(x)=0 using a conjugate gradient descent algorithm
+  case( 4 ) ! use function values and user-supplied derivatives to find f(x)=0 using a gradient-based descent algorithm (energy-descent)
 
    write(*,*) "-------------------- Under construction --------------------"
    WCALL(newton, steepest_descent, (NGdof,position(1:NGdof),Energy,sdxtol,sdgtol,sdftol,sditmax &
@@ -874,16 +874,17 @@ function fcngrad(n, xx)
 
 subroutine fcndescent(xx, NGdof)
 
- use constants, only : zero, one
+ use constants, only  : zero, one
 
- use allglobal, only  : ForceErr
+ use allglobal, only  : ForceErr, Energy, xdesc, fdesc, edesc
+
+ use inputlist, only  : dxdesc, ftoldesc, maxitdesc, Lwritedesc, nwritedesc
 
  INTEGER, INTENT(in)  :: NGdof
  REAL , INTENT(inout) :: xx(1:NGdof)
 
- REAL                 :: deltax=1.0E-5, ditmax = 20000, dtol = 1e-9 
  REAL                 :: position(0:NGdof), force(0:NGdof)
- INTEGER              :: it
+ INTEGER              :: it, idesc
  LOGICAL              :: LComputeDerivatives, LComputeAxis
 
  position = zero ; force = zero ; position(1:NGdof) = xx(1:NGdof) 
@@ -892,20 +893,31 @@ subroutine fcndescent(xx, NGdof)
 
  it = 0
 
- do while(it < ditmax)
+ do while(it < maxitdesc)
  
   it = it + 1
  
   call dforce(NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives, LComputeAxis)
 
-  position(1:NGdof) = position(1:NGdof) - deltax*force(1:NGdof)/ForceErr
+  position(1:NGdof) = position(1:NGdof) - dxdesc*force(1:NGdof)/ForceErr
   
-  if(ForceErr<dtol) then
+  if(dble(it)/nwritedesc .eq. dble(it/nwritedesc) ) then
+    if(Lwritedesc.gt.0) then
+      idesc        = it/nwritedesc
+      fdesc(idesc) = ForceErr
+      edesc(idesc) = Energy
+      if(Lwritedesc.eq.2) then
+      xdesc(1:NGdof,idesc) = position(1:NGdof) 
+      endif
+    endif  
+  endif
+
+  if(ForceErr<ftoldesc) then
    write(*,*) "FORCE BELOW TOLERANCE"
    exit
   endif
 
-  if(it .eq. ditmax) then
+  if(it .eq. maxitdesc) then
    write(*,*) "EXCEEDED MAX NUMBER OF ITERATIONS, force = " , ForceErr
   endif
 
