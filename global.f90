@@ -74,7 +74,7 @@ module constants
   REAL, parameter :: mu0        =   2.0E-07 * pi2       !< \f$4\pi\cdot10^{-7}\f$
   REAL, parameter :: goldenmean =   1.618033988749895   !< golden mean = \f$( 1 + \sqrt 5 ) / 2\f$ ;
 
-  REAL, parameter :: version    =   3.01  !< version of SPEC
+  REAL, parameter :: version    =   3.11  !< version of SPEC
 
 end module constants
 
