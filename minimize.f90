@@ -417,8 +417,8 @@ subroutine quad_interpolate(ndim,x0,g,f,xtol,gtol,ftol,a,iprint &
   real(8),intent(in):: x0(ndim),xtol,gtol,ftol
   real(8),intent(out):: f,g(ndim),a
 
-  real(8),parameter:: STP0    = 1d-1
-  real(8),parameter:: STPMAX  = 1d+1
+  real(8),parameter:: STP0    = 1d-4
+  real(8),parameter:: STPMAX  = 1d-1
   real(8),parameter:: TINY    = 1d-15
   integer,parameter:: MAXITER = 100
 

@@ -110,7 +110,20 @@ subroutine newton( NGdof, position, ihybrd )
 
   INTEGER, parameter     :: maxfev = 5000 ! maximum calls per iteration;
 
-  external               :: fcn1, fcn2, fcnval, fcngrad   
+  external               :: fcn1, fcn2!, fcnval, fcngrad
+    interface
+    function fcnval(n,x)
+      integer,intent(in):: n
+      real(8),intent(in):: x(n)
+      real(8):: fcnval
+    end function fcnval
+    function fcngrad(n,x)
+      integer,intent(in):: n
+      real(8),intent(in):: x(n)
+      real(8):: fcngrad(n)
+    end function fcngrad
+  end interface
+
   BEGIN(newton)
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -225,7 +238,7 @@ subroutine newton( NGdof, position, ihybrd )
 
    write(*,*) "-------------------- Under construction --------------------"
    Ldescent = .TRUE.
-   WCALL(newton, fcndescent, (position(1:NGdof),NGdof))
+   !WCALL(newton, fcndescent, (position(1:NGdof),NGdof))
    !WCALL( newton, hybrj, ( fcn2, NGdof, position(1:NGdof), force(1:NGdof), fjac(1:Ldfjac,1:NGdof), Ldfjac, &
    !       xtol, maxfev,                 diag(1:NGdof), mode, factor, nprint, ihybrd, nfev, njev, &
    !       RR(1:LR), LR, QTF(1:NGdof), workspace(1:NGdof,1), workspace(1:NGdof,2), workspace(1:NGdof,3), workspace(1:NGdof,4) ) )
@@ -235,6 +248,25 @@ subroutine newton( NGdof, position, ihybrd )
 
    write(*,*) "-------------------- Under construction --------------------"
    Ldescent = .TRUE.
+!    rflag = 0.000001
+
+!    do ii = 1, NGdof
+!     iflag = ii
+!     position(iflag) = position(iflag) - rflag
+!     force(1) = fcnval(NGdof, position(1:NGdof))
+!     position(iflag) = position(iflag) + 2 * rflag
+!     force(2) = fcnval(NGdof, position(1:NGdof))
+!     position(iflag) = position(iflag) - rflag
+
+!     write(ounit,*) ii, (force(2)-force(1))/0.000002
+!      force(1:NGdof) = fcngrad(NGdof,position(1:NGdof))
+!      write(ounit,*)ii, force(ii)
+!  end do
+
+ 
+!     write(ounit,*) 'Energy', force(1)
+!     stop
+   !
    WCALL(newton, frcg, (NGdof,position(1:NGdof),Energy,sdxtol,sdgtol,sdftol,sditmax &
      ,sdiprint,sdiflag,fcnval,fcngrad))
    !WCALL( newton, hybrj, ( fcn2, NGdof, position(1:NGdof), force(1:NGdof), fjac(1:Ldfjac,1:NGdof), Ldfjac, &
@@ -744,7 +776,7 @@ subroutine fcn2( NGdof, xx, fvec, fjac, Ldfjac, irevcm )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-function fcnval(n,xx)
+REAL function fcnval(n,xx)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -780,7 +812,7 @@ function fcnval(n,xx)
 
   LOCALS
 
-  REAL                   :: fcnval 
+  !REAL                   :: fcnval 
   INTEGER, intent(in)    :: n
   REAL   , intent(in)    :: xx(1:n)
 
@@ -799,12 +831,14 @@ function fcnval(n,xx)
     
     LComputeDerivatives = .false.
     LComputeAxis = .true.
+    nFcalls = nFcalls + 1
     WCALL( newton, dforce, ( n, position(0:n), force(0:n), LComputeDerivatives, LComputeAxis ) ) ! calculate the force-imbalance;
 
    ! if(Lconstraint.eq.0) then
    !  fcnval = Energy - sum( mu(1:Nvol)*lABintegral(1:Nvol) )   
    ! else
     fcnval = Energy
+
    ! endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -838,7 +872,7 @@ function fcngrad(n, xx)
                         mn, im, in, iRbc, iZbs, iRbs, iZbc, Mvol, &
                         BBe, IIo, BBo, IIe, &
                         LGdof, dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated, &
-                        nfreeboundaryiterations
+                        nfreeboundaryiterations, pi2nfp, pi2
   
   use newtontime
 
@@ -867,9 +901,9 @@ function fcngrad(n, xx)
     LComputeDerivatives = .false.
     LComputeAxis = .true.
     WCALL( newton, dforce, ( n, position(0:n), force(0:n), LComputeDerivatives, LComputeAxis ) ) ! calculate the force-imbalance;
-
+    nDcalls = nDcalls + 1
     
-    fcngrad(1:n) = force(1:n)
+    fcngrad(1:n) = force(1:n) 
 
     if( myid.eq.0 ) then
      

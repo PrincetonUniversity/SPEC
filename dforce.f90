@@ -111,7 +111,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
   
   use cputiming, only : Tdforce
   
-  use allglobal, only : ncpu, myid, cpus, &
+  use allglobal, only : ncpu, myid, cpus, pi2, pi2nfp, &
                         Mvol, NAdof, &
                         Iquad, &                  ! convenience; provided to ma00aa as argument to avoid allocations;
                         iRbc, iZbs, iRbs, iZbc, & ! Fourier harmonics of geometry; vector of independent variables, position, is "unpacked" into iRbc,iZbs;
@@ -417,10 +417,10 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
 
       if( ImagneticOK(vvol) .and. ImagneticOK(vvol+1) ) then
 
-        ;ForceRc(1:mn, vvol) = ( Bemn(1:mn    ,vvol+1,0) - Bemn(1:mn    ,vvol+0,1) ) * BBweight(1:mn) ! pressure imbalance;
+        ;ForceRc(1:mn, vvol) = ( Bemn(1:mn    ,vvol+1,0) - Bemn(1:mn    ,vvol+0,1) ) * BBweight(1:mn) * pi2 * pi2nfp ! pressure imbalance;
 
         if (Igeometry .eq.3 ) then ! add the spectral constraint forces
-          ForceZs(2:mn, vvol) = ( Bomn(2:mn    ,vvol+1,2) - Bomn(2:mn    ,vvol+0,3) ) * BBweight(2:mn) ! pressure imbalance;
+          ForceZs(2:mn, vvol) = ( Bomn(2:mn    ,vvol+1,2) - Bomn(2:mn    ,vvol+0,3) ) * BBweight(2:mn) * pi2 * pi2nfp ! pressure imbalance;
 
           ForceRc(1:mn, vvol) =   (                           Iemn(1:mn    ,vvol+0,0) ) * epsilon         & ! spectral constraints;
                                 + (                         + Semn(1:mn    ,vvol+0,1) ) * sweight(vvol+0) & ! poloidal length constraint;
@@ -437,10 +437,10 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
         endif
 
         if (NOTstellsym) then
-          ;ForceRs(2:mn, vvol) = ( Bomn(2:mn    ,vvol+1,0) - Bomn(2:mn    ,vvol+0,1) ) * BBweight(2:mn) ! pressure imbalance;
+          ;ForceRs(2:mn, vvol) = ( Bomn(2:mn    ,vvol+1,0) - Bomn(2:mn    ,vvol+0,1) ) * BBweight(2:mn) * pi2 * pi2nfp ! pressure imbalance;
           
           if (Igeometry .eq.3 ) then ! add the spectral constraint forces
-            ForceZc(1:mn, vvol) = ( Bemn(1:mn    ,vvol+1,2) - Bemn(1:mn    ,vvol+0,3) ) * BBweight(1:mn) ! pressure imbalance;
+            ForceZc(1:mn, vvol) = ( Bemn(1:mn    ,vvol+1,2) - Bemn(1:mn    ,vvol+0,3) ) * BBweight(1:mn) * pi2 * pi2nfp ! pressure imbalance;
 
             ForceRs(2:mn, vvol) =   (                           Iomn(2:mn    ,vvol+0,0) ) * epsilon         & ! spectral constraints;
                                   + (                         + Somn(2:mn    ,vvol+0,1) ) * sweight(vvol+0) & ! poloidal length constraint;
@@ -486,7 +486,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
           FATAL( dforce, 2.gt.Mvol, psifactor needs attention )
           ;force(tdoc+idoc+1:tdoc+idoc+mn) = position(1:mn) - ( iRbc(1:mn,2) / psifactor(1:mn,2) )
         else
-          ;force(tdoc+idoc+1:tdoc+idoc+mn    ) = ( Bemn(1:mn    ,vvol+1,0) - Bemn(1:mn    ,vvol+0,1) ) !* BBweight(1:mn) ! pressure imbalance;
+          ;force(tdoc+idoc+1:tdoc+idoc+mn    ) = ( Bemn(1:mn    ,vvol+1,0) - Bemn(1:mn    ,vvol+0,1) ) * BBweight(1:mn) ! pressure imbalance;
         endif
 
         ;  BBe(vvol) = max( sum( abs( force(tdoc+idoc+1:tdoc+idoc+mn  ) ) ) / (mn  ), logtolerance ) ! screen diagnostics;
