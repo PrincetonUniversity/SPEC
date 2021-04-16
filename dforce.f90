@@ -411,6 +411,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
     ForceZs = 0
     ForceRs = 0
     ForceZc = 0
+    IIR = 0
+    IIZ = 0
 
     do vvol = 1, Mvol-1
 
@@ -438,7 +440,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
           IIo(vvol) = max( sum( abs( IIR    (1:mn      )  ) ) / (2*mn) + sum( abs( IIZ    (1:mn      )  ) ) / (2*mn), logtolerance )
 
           ForceRc(1:mn,vvol) = ForceRc(1:mn,vvol) + IIR(1:mn)
-          ForceZs(2:mn,vvol) = ForceZs(2:mn,vvol) + IIZ(1:mn)
+          ForceZs(2:mn,vvol) = ForceZs(2:mn,vvol) + IIZ(2:mn)
         else 
           BBe(vvol) = max( sum( abs( ForceRc(1:mn, vvol)  ) ) / (mn) , logtolerance ) ! screen diagnostics;
         endif

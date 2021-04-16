@@ -95,7 +95,7 @@ subroutine newton( NGdof, position, ihybrd )
   REAL                   :: xtol, epsfcn, factor
   REAL                   :: diag(1:NGdof), QTF(1:NGdof), workspace(1:NGdof,1:4)
   REAL                   :: sdxtol=1e-8, sdgtol=1e-20, sdftol=1e-16
-  INTEGER                :: sditmax=1000, sdiprint=0, sdiflag=0
+  INTEGER                :: sditmax=5, sdiprint=0, sdiflag=0
 
 
   REAL                   :: force(0:NGdof)
@@ -200,7 +200,7 @@ subroutine newton( NGdof, position, ihybrd )
   SALLOCATE( fjac, (1:NGdof, 1:NGdof), zero)
   SALLOCATE( RR, (1:NGdof*(NGdof+1)/2), zero)
 
-  if( Lfindzero.eq.2) then
+  if( Lfindzero.ge.2) then
     SALLOCATE( dFFdRZ, (1:LGdof,0:1,1:LGdof,0:1,1:Mvol), zero )
     SALLOCATE( dBBdmp, (1:LGdof,1:Mvol,0:1,1:2), zero )
    if( LocalConstraint ) then
@@ -248,7 +248,7 @@ subroutine newton( NGdof, position, ihybrd )
 
    write(*,*) "-------------------- Under construction --------------------"
    Ldescent = .TRUE.
-   rflag = 0.000001
+   !rflag = 0.000001
 
 !    do ii = 1, NGdof
 !     iflag = ii
@@ -269,9 +269,11 @@ subroutine newton( NGdof, position, ihybrd )
    !
    WCALL(newton, frcg, (NGdof,position(1:NGdof),Energy,sdxtol,sdgtol,sdftol,sditmax &
      ,sdiprint,sdiflag,fcnval,fcngrad))
-   !WCALL( newton, hybrj, ( fcn2, NGdof, position(1:NGdof), force(1:NGdof), fjac(1:Ldfjac,1:NGdof), Ldfjac, &
-   !       xtol, maxfev,                 diag(1:NGdof), mode, factor, nprint, ihybrd, nfev, njev, &
-   !       RR(1:LR), LR, QTF(1:NGdof), workspace(1:NGdof,1), workspace(1:NGdof,2), workspace(1:NGdof,3), workspace(1:NGdof,4) ) )
+
+   Ldescent = .FALSE.
+   WCALL( newton, hybrj, ( fcn2, NGdof, position(1:NGdof), force(1:NGdof), fjac(1:Ldfjac,1:NGdof), Ldfjac, &
+          xtol, maxfev,                 diag(1:NGdof), mode, factor, nprint, ihybrd, nfev, njev, &
+          RR(1:LR), LR, QTF(1:NGdof), workspace(1:NGdof,1), workspace(1:NGdof,2), workspace(1:NGdof,3), workspace(1:NGdof,4) ) )
    write(*,*) "-------------------- Under construction --------------------"
   
   case default
@@ -329,7 +331,7 @@ subroutine newton( NGdof, position, ihybrd )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 	call MPI_BARRIER( MPI_COMM_WORLD, ierr2)
 
-  if( Lfindzero.eq.2 ) then 
+  if( Lfindzero.ge.2 ) then 
    DALLOCATE( dFFdRZ )
    DALLOCATE( dBBdmp )
    DALLOCATE( dmupfdx )
@@ -920,7 +922,7 @@ function fcngrad(n, xx)
       endif
      endif
      lastcpu = GETTIME
-     
+     write(ounit,*) 'Energy', Energy
      WCALL( newton, wrtend ) ! write restart file; save geometry to ext.end;
 
     endif ! end of if( myid.eq.0 );
