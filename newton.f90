@@ -113,7 +113,6 @@ subroutine newton( NGdof, position, ihybrd )
   BEGIN(newton)
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
   if( Wnewton .and. myid.eq.0 ) then ! screen output; 
    cput = GETTIME
    write(ounit,'("newton : ", 10x ," : ")')
@@ -876,16 +875,19 @@ subroutine fcndescent(xx, NGdof)
 
  use constants, only  : zero, one
 
- use allglobal, only  : ForceErr, Energy, xdesc, fdesc, edesc
-
- use inputlist, only  : dxdesc, ftoldesc, maxitdesc, Lwritedesc, nwritedesc
+ use allglobal, only  : ForceErr, Energy, xdesc, fdesc, edesc, &
+                        iRbc, iRbs, iZbc, iZbs, mn, Mvol
+     
+ use inputlist, only  : Igeometry, &
+                        dxdesc, ftoldesc, maxitdesc, Lwritedesc, nwritedesc
 
  INTEGER, INTENT(in)  :: NGdof
  REAL , INTENT(inout) :: xx(1:NGdof)
 
  REAL                 :: position(0:NGdof), force(0:NGdof)
- INTEGER              :: it, idesc
+ INTEGER              :: it, idesc, lvol, idof
  LOGICAL              :: LComputeDerivatives, LComputeAxis
+ CHARACTER            :: pack
 
  position = zero ; force = zero ; position(1:NGdof) = xx(1:NGdof) 
 
@@ -907,7 +909,18 @@ subroutine fcndescent(xx, NGdof)
       fdesc(idesc) = ForceErr
       edesc(idesc) = Energy
       if(Lwritedesc.eq.2) then
-      xdesc(1:NGdof,idesc) = position(1:NGdof) 
+      if(Igeometry.eq.1) then
+       xdesc(1:NGdof,idesc) = position(1:NGdof) 
+      elseif(Igeometry.eq.2) then
+       pack = 'U' 
+       LComputeAxis = .true.
+       WCALL( newton, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, .false., LComputeAxis ) )
+       idof = 1
+       do lvol=1,Mvol-1 
+       xdesc(idof:idof+mn-1,idesc) = iRbc(1:mn,lvol)
+       idof = idof + mn
+       enddo
+      endif
       endif
     endif  
   endif
