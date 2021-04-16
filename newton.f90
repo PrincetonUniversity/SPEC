@@ -875,6 +875,10 @@ subroutine fcndescent(xx, NGdof)
 
  use constants, only  : zero, one
 
+ use fileunits, only : ounit
+
+ use cputiming
+
  use allglobal, only  : ForceErr, Energy, xdesc, fdesc, edesc, &
                         iRbc, iRbs, iZbc, iZbs, mn, Mvol
      
