@@ -123,33 +123,26 @@ subroutine brcast( lvol )
     RlBCAST( Iomn(1:mn,lvol,0:3), 4*mn, llmodnp )
     RlBCAST( Somn(1:mn,lvol,0:3), 4*mn, llmodnp )
     RlBCAST( Pomn(1:mn,lvol,0:3), 4*mn, llmodnp ) ! 15 Sep 15;
+
+    RlBCAST( Bomn(1:mn,lvol,0:3), 4*mn, llmodnp ) ! perhaps all these should be re-ordered; 18 Jul 14;
+    RlBCAST( Iemn(1:mn,lvol,0:3), 4*mn, llmodnp )
+    RlBCAST( Semn(1:mn,lvol,0:3), 4*mn, llmodnp )
+    RlBCAST( Pemn(1:mn,lvol,0:3), 4*mn, llmodnp ) ! 15 Sep 15;
   else
     RlBCAST( Bemn(1:mn,lvol,0:1), 2*mn, llmodnp )
     RlBCAST( Iomn(1:mn,lvol,0:0),   mn, llmodnp )
     RlBCAST( Somn(1:mn,lvol,0:1), 2*mn, llmodnp )
     RlBCAST( Pomn(1:mn,lvol,0:2), 3*mn, llmodnp )
-  endif
-  
-  if( NOTstellsym ) then
-    ! do ideriv = 0, 2
-    !   do ii = 1, mn    
-    !     RlBCAST( Ato(lvol,ideriv,ii)%s(0:Lrad(lvol)), Lrad(lvol)+1, llmodnp )
-    !     RlBCAST( Azo(lvol,ideriv,ii)%s(0:Lrad(lvol)), Lrad(lvol)+1, llmodnp )
-    !   enddo
-    ! enddo
-      
-    if (Ldescent) then
-      RlBCAST( Bomn(1:mn,lvol,0:3), 4*mn, llmodnp ) ! perhaps all these should be re-ordered; 18 Jul 14;
-      RlBCAST( Iemn(1:mn,lvol,0:3), 4*mn, llmodnp )
-      RlBCAST( Semn(1:mn,lvol,0:3), 4*mn, llmodnp )
-      RlBCAST( Pemn(1:mn,lvol,0:3), 4*mn, llmodnp ) ! 15 Sep 15;
-    else
+
+    if( NOTstellsym ) then
       RlBCAST( Bomn(1:mn,lvol,0:1), 2*mn, llmodnp )
       RlBCAST( Iemn(1:mn,lvol,0:0),   mn, llmodnp )
       RlBCAST( Semn(1:mn,lvol,0:1), 2*mn, llmodnp )
       RlBCAST( Pemn(1:mn,lvol,0:2), 3*mn, llmodnp )
-    endif
-  endif ! end of if( NOTstellsym) ; 11 Aug 14;
+    endif ! end of if( NOTstellsym) ; 11 Aug 14;
+  endif
+  
+
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
