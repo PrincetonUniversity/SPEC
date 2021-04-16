@@ -1139,7 +1139,7 @@ endif
      endif
     enddo
    enddo
-   psifactor(1:mn,1:Nvol) = one
+   !psifactor(1:mn,1:Nvol) = one
   case( 3 ) 
    
    do vvol = 1, Nvol
@@ -1151,7 +1151,7 @@ endif
      endif
     enddo
    enddo
-   
+   !psifactor(1:mn,1:Nvol) = one
   case default
    
    FATAL( readin, .true., invalid Igeometry for construction of psifactor )

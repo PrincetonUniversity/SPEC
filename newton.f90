@@ -248,7 +248,7 @@ subroutine newton( NGdof, position, ihybrd )
 
    write(*,*) "-------------------- Under construction --------------------"
    Ldescent = .TRUE.
-!    rflag = 0.000001
+   rflag = 0.000001
 
 !    do ii = 1, NGdof
 !     iflag = ii
@@ -258,9 +258,9 @@ subroutine newton( NGdof, position, ihybrd )
 !     force(2) = fcnval(NGdof, position(1:NGdof))
 !     position(iflag) = position(iflag) - rflag
 
-!     write(ounit,*) ii, (force(2)-force(1))/0.000002
+!     write(ounit,*) im(ii), in(ii), (force(2)-force(1))/0.000002
 !      force(1:NGdof) = fcngrad(NGdof,position(1:NGdof))
-!      write(ounit,*)ii, force(ii)
+!      write(ounit,*)im(ii), in(ii), force(ii)
 !  end do
 
  
