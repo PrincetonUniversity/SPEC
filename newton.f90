@@ -878,7 +878,7 @@ subroutine fcndescent(xx, NGdof)
  use allglobal, only  : ForceErr, Energy, xdesc, fdesc, edesc, &
                         iRbc, iRbs, iZbc, iZbs, mn, Mvol
      
- use inputlist, only  : Igeometry, &
+ use inputlist, only  : Igeometry, Wnewton, &
                         dxdesc, ftoldesc, maxitdesc, Lwritedesc, nwritedesc
 
  INTEGER, INTENT(in)  :: NGdof
