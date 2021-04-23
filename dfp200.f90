@@ -1460,7 +1460,7 @@ do iocons = 0, 1
     FATAL( dfp200, vvolume(lvol).lt.small, shall divide by vvolume(lvol)**(gamma+one) )
 
     ! Derivatives of force wrt geometry; In real space.
-    ijreal(1:Ntz) = - adiabatic(lvol) * pscale * gamma * dvolume / vvolume(lvol)**(gamma+one) + dBB(1:Ntz,-1) 
+    ijreal(1:Ntz) = - adiabatic(lvol) * pscale * gamma * dvolume / vvolume(lvol)**(gamma+one) + dBB(1:Ntz,-1)*Rij(1:Ntz,0,0) 
 
 
 
@@ -1638,7 +1638,7 @@ do iocons = 0, 1
     idoc = 0
   
     ! Plasma and magnetic pressure;
-    ;   dFFdRZ(idoc+1:idoc+mn    ,iocons,idof,innout,lvol) = + efmn(1:mn) * psifactor(ii,lvol-1+innout) * BBweight(1:mn)
+    ;   dFFdRZ(idoc+1:idoc+mn    ,iocons,idof,innout,lvol) = + efmn(1:mn) !* psifactor(ii,lvol-1+innout) * BBweight(1:mn)
     
     idoc = idoc + mn   ! even;
     if( Igeometry.ge.3 ) then ! Add spectral constraints;
