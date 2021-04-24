@@ -69,7 +69,7 @@ subroutine newton( NGdof, position, ihybrd )
                         ForceErr, Energy, &
                         mn, im, in, iRbc, iZbs, iRbs, iZbc, Mvol, &
                         BBe, IIo, BBo, IIe, &
-                        LGdof, dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated , &
+                        LGdof, dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated ,Lhessian2Dallocated, &
                         nfreeboundaryiterations, &
 						LocalConstraint
   
@@ -195,10 +195,13 @@ subroutine newton( NGdof, position, ihybrd )
 
     SALLOCATE( hessian, (1:NGdof,1:NGdof), zero )
     SALLOCATE( dessian, (1:NGdof,1:LGdof), zero )
+
     Lhessianallocated = .true.
   else
     Lhessianallocated = .false.
   endif
+  Lhessian2Dallocated = .false.
+
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
