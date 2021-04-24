@@ -1064,9 +1064,12 @@ module allglobal
 
   REAL   , allocatable :: efmn(:), ofmn(:), cfmn(:), sfmn(:) ! Fourier harmonics; dummy workspace;
   REAL   , allocatable :: evmn(:), odmn(:), comn(:), simn(:) ! Fourier harmonics; dummy workspace;
+  REAL   , allocatable :: hijmn(:)
 
   REAL   , allocatable :: ijreal(:), ijimag(:), jireal(:), jiimag(:)
   REAL   , allocatable :: jkreal(:), jkimag(:), kjreal(:), kjimag(:)
+  REAL   , allocatable :: hijreal(:),hijimag(:)
+
 
   REAL   , allocatable :: Bsupumn(:,:,:), Bsupvmn(:,:,:) ! 11 Oct 12; tangential field on interfaces; required for virtual casing construction of field;
 
@@ -1259,6 +1262,9 @@ module allglobal
   REAL,    allocatable :: dFFdRZ(:,:,:,:,:) ! derivatives of B^2 at the interfaces wrt geometry     ; 
   REAL,    allocatable :: dBBdmp(:,:,:,:  ) ! derivatives of B^2 at the interfaces wrt mu and dpflux; 
 
+  REAL,    allocatable :: HdFFdRZ(:,:,:,:,:) ! derivatives of B^2 at the interfaces wrt geometry     ; 
+
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !latex \subsubsection{\type{dmupfdx} : derivatives of multiplier and poloidal flux with respect to geometry}
@@ -1320,6 +1326,13 @@ module allglobal
   LOGICAL              :: Lhessianallocated
   REAL,    allocatable :: hessian(:,:)
   REAL,    allocatable :: dessian(:,:)
+  
+  LOGICAL              :: Lhessian2Dallocated
+  REAL,    allocatable :: hessian2D(:,:)
+  REAL,    allocatable :: dessian2D(:,:)
+
+
+
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
