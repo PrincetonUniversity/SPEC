@@ -95,7 +95,7 @@ subroutine newton( NGdof, position, ihybrd )
   REAL                   :: xtol, epsfcn, factor
   REAL                   :: diag(1:NGdof), QTF(1:NGdof), workspace(1:NGdof,1:4)
   REAL                   :: sdxtol=1e-8, sdgtol=1e-20, sdftol=1e-16
-  INTEGER                :: sditmax=5, sdiprint=0, sdiflag=0
+  INTEGER                :: sditmax=30, sdiprint=0, sdiflag=0
 
 
   REAL                   :: force(0:NGdof)
@@ -106,7 +106,7 @@ subroutine newton( NGdof, position, ihybrd )
   LOGICAL                :: Lexit = .true. ! perhaps this could be made user input;
   LOGICAL                :: LComputeAxis
 
-  INTEGER                :: nprint = 1, nfev, njev
+  INTEGER                :: nprint = 1, nfev, njev, niter
 
   INTEGER, parameter     :: maxfev = 5000 ! maximum calls per iteration;
 
@@ -233,12 +233,13 @@ subroutine newton( NGdof, position, ihybrd )
    WCALL( newton, hybrj, ( fcn2, NGdof, position(1:NGdof), force(1:NGdof), fjac(1:Ldfjac,1:NGdof), Ldfjac, &
           xtol, maxfev,                 diag(1:NGdof), mode, factor, nprint, ihybrd, nfev, njev, &
           RR(1:LR), LR, QTF(1:NGdof), workspace(1:NGdof,1), workspace(1:NGdof,2), workspace(1:NGdof,3), workspace(1:NGdof,4) ) )
+          write(ounit,*) 'Energy', Energy
 
   case( 3 ) ! use function values to find f(x)=0 using a conjugate gradient descent algorithm
 
    write(*,*) "-------------------- Under construction --------------------"
    Ldescent = .TRUE.
-   !WCALL(newton, fcndescent, (position(1:NGdof),NGdof))
+   WCALL(newton, fcndescent, (position(1:NGdof),NGdof))
    !WCALL( newton, hybrj, ( fcn2, NGdof, position(1:NGdof), force(1:NGdof), fjac(1:Ldfjac,1:NGdof), Ldfjac, &
    !       xtol, maxfev,                 diag(1:NGdof), mode, factor, nprint, ihybrd, nfev, njev, &
    !       RR(1:LR), LR, QTF(1:NGdof), workspace(1:NGdof,1), workspace(1:NGdof,2), workspace(1:NGdof,3), workspace(1:NGdof,4) ) )
@@ -248,32 +249,37 @@ subroutine newton( NGdof, position, ihybrd )
 
    write(*,*) "-------------------- Under construction --------------------"
    Ldescent = .TRUE.
-   !rflag = 0.000001
+!    rflag = 0.000001
 
 !    do ii = 1, NGdof
 !     iflag = ii
 !     position(iflag) = position(iflag) - rflag
-!     force(1) = fcnval(NGdof, position(1:NGdof))
+!      call fcnval(force(1), position(1:NGdof), NGdof)
 !     position(iflag) = position(iflag) + 2 * rflag
-!     force(2) = fcnval(NGdof, position(1:NGdof))
+!     call fcnval(force(2),  position(1:NGdof), NGdof)
 !     position(iflag) = position(iflag) - rflag
 
-!     write(ounit,*) im(ii), in(ii), (force(2)-force(1))/0.000002
-!      force(1:NGdof) = fcngrad(NGdof,position(1:NGdof))
-!      write(ounit,*)im(ii), in(ii), force(ii)
+!     write(ounit,*) ii, (force(2)-force(1))/0.000002
+!       call fcngrad(force(1:NGdof),position(1:NGdof), NGdof)
+!      write(ounit,*)ii, force(ii)
 !  end do
 
  
-!     write(ounit,*) 'Energy', force(1)
+!     write(ounit,*) 'Energy'
 !     stop
    !
-   WCALL(newton, frcg, (NGdof,position(1:NGdof),Energy,sdxtol,sdgtol,sdftol,sditmax &
-     ,sdiprint,sdiflag,fcnval,fcngrad))
+    WCALL(newton, steepest_descent, (NGdof,position(1:NGdof),Energy,sdxtol,sdgtol,sdftol,sditmax &
+      ,sdiprint,sdiflag,fcnval,fcngrad))
 
-   Ldescent = .FALSE.
-   WCALL( newton, hybrj, ( fcn2, NGdof, position(1:NGdof), force(1:NGdof), fjac(1:Ldfjac,1:NGdof), Ldfjac, &
-          xtol, maxfev,                 diag(1:NGdof), mode, factor, nprint, ihybrd, nfev, njev, &
-          RR(1:LR), LR, QTF(1:NGdof), workspace(1:NGdof,1), workspace(1:NGdof,2), workspace(1:NGdof,3), workspace(1:NGdof,4) ) )
+  !  Ldescent = .FALSE.
+  !  WCALL( newton, hybrj, ( fcn2, NGdof, position(1:NGdof), force(1:NGdof), fjac(1:Ldfjac,1:NGdof), Ldfjac, &
+  !         xtol, maxfev,                 diag(1:NGdof), mode, factor, nprint, ihybrd, nfev, njev, &
+  !         RR(1:LR), LR, QTF(1:NGdof), workspace(1:NGdof,1), workspace(1:NGdof,2), workspace(1:NGdof,3), workspace(1:NGdof,4) ) )
+
+    ! call cg_descent (1.d-8, position(1:NGdof), NGdof, fcnval, fcngrad, iflag, rflag, Energy, &
+    !                   niter, nfev, njev, workspace(1:NGdof,1), workspace(1:NGdof,2), workspace(1:NGdof,3), workspace(1:NGdof,4))
+    !                   write(ounit,*) workspace(1:NGdof,1)
+    !                   write(ounit,*) workspace(1:NGdof,2)
    write(*,*) "-------------------- Under construction --------------------"
   
   case default
@@ -779,7 +785,7 @@ subroutine fcn2( NGdof, xx, fvec, fjac, Ldfjac, irevcm )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 REAL function fcnval(n,xx)
-
+!subroutine fcnval (f, xx, n)
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   use constants, only : zero, one, two, ten
@@ -793,7 +799,7 @@ REAL function fcnval(n,xx)
                         Nvol,     &
                         Lfindzero, forcetol, c05xmax, c05xtol, c05factor, LreadGF, &
                         Lcheck, &
-                        Lconstraint, mu
+                        Lconstraint, mu, epsilon, opsilon
 
   use cputiming, only : Tnewton
 
@@ -804,7 +810,7 @@ REAL function fcnval(n,xx)
                         BBe, IIo, BBo, IIe, &
                         LGdof, dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated, &
                         nfreeboundaryiterations, &
-                        lABintegral
+                        lABintegral, lLLl, lMMl, sweight
   
   use newtontime
 
@@ -817,6 +823,7 @@ REAL function fcnval(n,xx)
   !REAL                   :: fcnval 
   INTEGER, intent(in)    :: n
   REAL   , intent(in)    :: xx(1:n)
+  !REAL   , intent(out)   :: f
 
   REAL                   :: position(0:n), force(0:n)
 
@@ -839,19 +846,20 @@ REAL function fcnval(n,xx)
    ! if(Lconstraint.eq.0) then
    !  fcnval = Energy - sum( mu(1:Nvol)*lABintegral(1:Nvol) )   
    ! else
-    fcnval = Energy
-
+    !fcnval = Energy
+    fcnval = opsilon * Energy !+ epsilon * sum(lMMl) !+ sum(lLLl * sweight)
+    !write(ounit,*) f
    ! endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
  end function fcnval
-
+ !end subroutine fcnval
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 function fcngrad(n, xx)
-
+!subroutine fcngrad (g, xx, n)
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   use constants, only : zero, one, two, ten
@@ -874,7 +882,8 @@ function fcngrad(n, xx)
                         mn, im, in, iRbc, iZbs, iRbs, iZbc, Mvol, &
                         BBe, IIo, BBo, IIe, &
                         LGdof, dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated, &
-                        nfreeboundaryiterations, pi2nfp, pi2
+                        nfreeboundaryiterations, pi2nfp, pi2, &
+                        lMMl, lLLl, sweight
   
   use newtontime
 
@@ -887,6 +896,7 @@ function fcngrad(n, xx)
   REAL                   :: fcngrad(1:n) 
   INTEGER, intent(in)    :: n
   REAL   , intent(in)    :: xx(1:n)
+  !REAL   , intent(out)   :: g(1:n)
 
   REAL                   :: position(0:n), force(0:n)
 
@@ -906,6 +916,8 @@ function fcngrad(n, xx)
     nDcalls = nDcalls + 1
     
     fcngrad(1:n) = force(1:n) 
+    !g(1:n) = force(1:n) 
+    !write(ounit,*) xx(n), force(n)
 
     if( myid.eq.0 ) then
      
@@ -922,7 +934,7 @@ function fcngrad(n, xx)
       endif
      endif
      lastcpu = GETTIME
-     write(ounit,*) 'Energy', Energy
+     write(ounit,*) 'Energy', Energy, sum(lMMl), sum(lLLl * sweight)
      WCALL( newton, wrtend ) ! write restart file; save geometry to ext.end;
 
     endif ! end of if( myid.eq.0 );
@@ -932,19 +944,29 @@ function fcngrad(n, xx)
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
  end function fcngrad
-
+ !end subroutine fcngrad
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 subroutine fcndescent(xx, NGdof)
 
  use constants, only : zero, one
 
- use allglobal, only  : ForceErr
+ use inputlist, only  : epsilon, Igeometry
+
+ use fileunits, only : ounit
+
+ use allglobal, only  : wrtend, ForceErr, lMMl, lLLl, Energy, sweight, myid, &
+                        BBe, BBo, IIe, IIo, NOTstellsym, ncpu, cpus, Mvol
+
+ use cputiming, only : Tnewton
+
+ use newtontime
+ LOCALS 
 
  INTEGER, INTENT(in)  :: NGdof
  REAL , INTENT(inout) :: xx(1:NGdof)
 
- REAL                 :: deltax=1.0E-5, ditmax = 20000, dtol = 1e-9 
+ REAL                 :: deltax=3.0E-4, ditmax = 20000, dtol = 1e-9 
  REAL                 :: position(0:NGdof), force(0:NGdof)
  INTEGER              :: it
  LOGICAL              :: LComputeDerivatives, LComputeAxis
@@ -961,8 +983,8 @@ subroutine fcndescent(xx, NGdof)
  
   call dforce(NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives, LComputeAxis)
 
-  position(1:NGdof) = position(1:NGdof) - deltax*force(1:NGdof)/ForceErr
-  
+  position(1:NGdof) = position(1:NGdof) - deltax*force(1:NGdof)!/ForceErr
+  if (myid .eq. 0) write(ounit,*) Energy,  epsilon *  sum(lMMl), sum(lLLl * sweight), sum(abs(force(1:NGdof))) / NGdof
   if(ForceErr<dtol) then
    write(*,*) "FORCE BELOW TOLERANCE"
    exit
@@ -972,8 +994,29 @@ subroutine fcndescent(xx, NGdof)
    write(*,*) "EXCEEDED MAX NUMBER OF ITERATIONS, force = " , ForceErr
   endif
 
+  if (myid .eq. 0) then
+    if (mod(it, 100) .eq. 0) then
+
+     cput = GETTIME
+     
+     ; write(ounit,1000) cput-cpus, it, 0, ForceErr, cput-lastcpu, "|BB|e", alog10(BBe(1:min(Mvol-1,28)))
+     if( Igeometry.ge.3 ) then ! include spectral constraints; 
+      ;write(ounit,1001)                                                                      "|II|o", alog10(IIo(1:min(Mvol-1,28)))
+     endif
+     if( NOTstellsym ) then
+      ;write(ounit,1001)                                                                      "|BB|o", alog10(BBo(1:min(Mvol-1,28)))
+      if( Igeometry.ge.3 ) then ! include spectral constraints; 
+       write(ounit,1001)                                                                      "|II|e", alog10(IIe(1:min(Mvol-1,28)))
+      endif
+     endif
+     lastcpu = GETTIME
+     WCALL( newton, wrtend ) ! write restart file; save geometry to ext.end;
+    endif
+  endif
  enddo
 
  xx = position(1:NGdof)
+1000 format("fcn1   : ",f10.2," : "i9,i3," ; ":"|f|="es12.5" ; ":"time=",f10.2,"s ;":" log"a5"="28f6.2" ...")
+1001 format("fcn1   : ", 10x ," : "9x,3x" ; ":"    "  12x "   ":"     ", 10x ,"  ;":" log"a5"="28f6.2" ...")
 
 end subroutine

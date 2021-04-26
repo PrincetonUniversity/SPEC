@@ -1381,6 +1381,9 @@ module allglobal
   REAL   , allocatable :: lBBintegral(:) ! B.B      integral;
   REAL   , allocatable :: lABintegral(:) ! A.B      integral;
 
+  REAL   , allocatable :: lMMl(:)        ! Spectral Width M
+  REAL   , allocatable :: lLLl(:)        ! Length width L
+
 ! REAL                 :: dBBintegral    ! B.B      integral; derivative wrt R, Z;
 
 ! REAL   , allocatable :: oBBintegral(:) ! B.B      integral; original; used to normalize; perhaps irrelevant;

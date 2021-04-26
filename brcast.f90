@@ -45,7 +45,7 @@ subroutine brcast( lvol )
                         ImagneticOK, Ldescent, &
                        !dBBdRZ, dIIdRZ, &
                         Lhessianallocated, LGdof, dFFdRZ, dBBdmp, dmupfdx, &
-                        lBBintegral, lABintegral, &
+                        lBBintegral, lABintegral, lMMl, lLLl, &
                         vvolume, &
                         NOTstellsym, LocalConstraint, &
 						IsMyVolume, IsMyVolumeValue
@@ -82,6 +82,8 @@ subroutine brcast( lvol )
   RlBCAST(     vvolume(lvol), 1, llmodnp )
   RlBCAST( lBBintegral(lvol), 1, llmodnp )
   RlBCAST( lABintegral(lvol), 1, llmodnp )
+  RlBCAST( lMMl(lvol), 1, llmodnp )
+  RlBCAST( lLLl(lvol), 1, llmodnp )
     
   RlBCAST( diotadxup(0:1,-1:2,lvol), 8, llmodnp )
   RlBCAST( dItGpdxtp(0:1,-1:2,lvol), 8, llmodnp )

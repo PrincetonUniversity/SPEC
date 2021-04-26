@@ -120,7 +120,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
                         YESstellsym, NOTstellsym, &
                         Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
                         mn, im, in, &
-                        dpflux, dtflux, sweight, &
+                        dpflux, dtflux, sweight, lMMl, lLLl, &
                         Bemn, Bomn, Iomn, Iemn, Somn, Semn, &
                         BBe, IIo, BBo, IIe, & ! these are just used for screen diagnostics;
                         LGdof, dBdX, &
@@ -194,7 +194,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
 #endif
    dBBdmp(1:LGdof,1:Mvol,0:1,1:2) = zero
   endif
-
+  lMMl = zero
+  lLLl = zero
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -426,15 +427,15 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
         if (Igeometry .eq. 3 ) then ! add the spectral constraint forces
           ForceZs(2:mn, vvol) = ( Bomn(2:mn    ,vvol+1,2) - Bomn(2:mn    ,vvol+0,3) ) * BBweight(2:mn) * pi2 * pi2nfp / two ! pressure imbalance;
 
-          IIR(1:mn) =           + (                           Iemn(1:mn    ,vvol+0,0) ) * epsilon        / two & ! spectral constraints;
-                                + (                         + Semn(1:mn    ,vvol+0,1) ) * sweight(vvol+0)/ two & ! poloidal length constraint;
-                                - ( Semn(1:mn    ,vvol+1,0)                           ) * sweight(vvol+1)/ two
+          IIR(1:mn) =           + (                           Iemn(1:mn    ,vvol+0,0) ) * epsilon         & ! spectral constraints;
+                                + (                         + Semn(1:mn    ,vvol+0,1) ) * sweight(vvol+0) & ! poloidal length constraint;
+                                - ( Semn(1:mn    ,vvol+1,0)                           ) * sweight(vvol+1)
 
-          IIR(1)    = IIR(1) * two
+          !IIR(1)    = IIR(1) * two
 
-          IIZ(2:mn) =           + (                           Iomn(2:mn    ,vvol+0,2) ) * epsilon        / two & ! spectral constraints;
-                                + (                         + Somn(2:mn    ,vvol+0,3) ) * sweight(vvol+0)/ two & ! poloidal length constraint;
-                                - ( Somn(2:mn    ,vvol+1,3)                           ) * sweight(vvol+1)/ two
+          IIZ(2:mn) =           + (                           Iomn(2:mn    ,vvol+0,2) ) * epsilon         & ! spectral constraints;
+                                + (                         + Somn(2:mn    ,vvol+0,3) ) * sweight(vvol+0) & ! poloidal length constraint;
+                                - ( Somn(2:mn    ,vvol+1,3)                           ) * sweight(vvol+1)
 
           BBe(vvol) = max( sum( abs( ForceRc(1:mn, vvol)  ) ) / (2*mn) + sum( abs( ForceZs(1:mn, vvol)  ) ) / (2*mn), logtolerance ) ! screen diagnostics;
           IIo(vvol) = max( sum( abs( IIR    (1:mn      )  ) ) / (2*mn) + sum( abs( IIZ    (1:mn      )  ) ) / (2*mn), logtolerance )
@@ -452,14 +453,14 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
             ForceZc(1:mn, vvol) = ( Bemn(1:mn    ,vvol+1,2) - Bemn(1:mn    ,vvol+0,3) ) * BBweight(1:mn) * pi2 * pi2nfp / two ! pressure imbalance;
 
             ForceRs(2:mn, vvol) = ForceRs(2:mn, vvol) &
-                                  + (                           Iomn(2:mn    ,vvol+0,0) ) * epsilon        / two & ! spectral constraints;
-                                  + (                         + Somn(2:mn    ,vvol+0,1) ) * sweight(vvol+0)/ two & ! poloidal length constraint;
-                                  - ( Somn(2:mn    ,vvol+1,0)                           ) * sweight(vvol+1)/ two
+                                  + (                           Iomn(2:mn    ,vvol+0,0) ) * epsilon         & ! spectral constraints;
+                                  + (                         + Somn(2:mn    ,vvol+0,1) ) * sweight(vvol+0) & ! poloidal length constraint;
+                                  - ( Somn(2:mn    ,vvol+1,0)                           ) * sweight(vvol+1)
 
             ForceZc(1:mn, vvol) = ForceZc(1:mn, vvol) &
-                                  + (                           Iemn(1:mn    ,vvol+0,2) ) * epsilon        / two & ! spectral constraints;
-                                  + (                         + Semn(1:mn    ,vvol+0,3) ) * sweight(vvol+0)/ two & ! poloidal length constraint;
-                                  - ( Semn(1:mn    ,vvol+1,2)                           ) * sweight(vvol+1)/ two
+                                  + (                           Iemn(1:mn    ,vvol+0,2) ) * epsilon         & ! spectral constraints;
+                                  + (                         + Semn(1:mn    ,vvol+0,3) ) * sweight(vvol+0) & ! poloidal length constraint;
+                                  - ( Semn(1:mn    ,vvol+1,2)                           ) * sweight(vvol+1)
 
             ForceZc(1,vvol) = ForceZc(1,vvol) * two
 

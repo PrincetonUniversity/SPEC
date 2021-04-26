@@ -1139,7 +1139,7 @@ endif
      endif
     enddo
    enddo
-   !psifactor(1:mn,1:Nvol) = one
+   if (Lfindzero .gt. 2) psifactor(1:mn,1:Nvol) = one
   case( 3 ) 
    
    do vvol = 1, Nvol
@@ -1151,7 +1151,7 @@ endif
      endif
     enddo
    enddo
-   !psifactor(1:mn,1:Nvol) = one
+    !if (Lfindzero .gt. 2) psifactor(1:mn,1:Nvol) = one 
   case default
    
    FATAL( readin, .true., invalid Igeometry for construction of psifactor )
@@ -1338,6 +1338,8 @@ endif
   SALLOCATE( vvolume    , (1:Mvol), zero ) ! volume integral of \sqrt g;
   SALLOCATE( lBBintegral, (1:Mvol), zero ) ! volume integral of B.B    ;
   SALLOCATE( lABintegral, (1:Mvol), zero ) ! volume integral of A.B    ;
+  SALLOCATE( lMMl       , (1:Mvol), zero ) ! Spectral width
+  SALLOCATE( lLLl       , (1:Mvol), zero ) ! Length width
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

@@ -234,7 +234,7 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, ifl
  
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-subroutine descent_lforce( lvol, iocons, Ntz )
+subroutine descent_lforce( lvol, iocons, Ntz, length, MMl )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -317,10 +317,10 @@ subroutine descent_lforce( lvol, iocons, Ntz )
 
     dBBR(1:Ntz) = -ijreal(1:Ntz) * Zij(1:Ntz,2,0) * Rij(1:Ntz,0,0)
     dBBZ(1:Ntz) =  ijreal(1:Ntz) * Rij(1:Ntz,2,0) * Rij(1:Ntz,0,0)
-    dIIR(1:Ntz) = IIl(1:Ntz) / DDl * Rij(1:Ntz,2,0) 
-    dIIZ(1:Ntz) = IIl(1:Ntz) / DDl * Zij(1:Ntz,2,0)
-    dLLR(1:Ntz) = dLL(1:Ntz) * Rij(1:Ntz,2,0)
-    dLLZ(1:Ntz) = dLL(1:Ntz) * Zij(1:Ntz,2,0)
+    dIIR(1:Ntz) = IIl(1:Ntz) * Rij(1:Ntz,2,0) 
+    dIIZ(1:Ntz) = IIl(1:Ntz) * Zij(1:Ntz,2,0)
+    dLLR(1:Ntz) = dLL(1:Ntz) * tRij(1:Ntz,lvol-1+iocons)
+    dLLZ(1:Ntz) = dLL(1:Ntz) * tZij(1:Ntz,lvol-1+iocons)
   
   end select
 
@@ -335,7 +335,7 @@ subroutine descent_lforce( lvol, iocons, Ntz )
   ;call tfft( Nt, Nz, dBBR(1:Ntz), dBBZ(1:Ntz  ), & ! compute force-imbalance and spectral constraints;
               mn, im(1:mn), in(1:mn), Bemn(1:mn,lvol,iocons), Bomn(1:mn,lvol,iocons), Bemn(1:mn,lvol,iocons+2), Bomn(1:mn,lvol,iocons+2), ifail )
   ;call tfft( Nt, Nz, dIIR(1:Ntz), dIIZ(1:Ntz  ), & ! compute force-imbalance and spectral constraints;
-              mn, im(1:mn), in(1:mn), Iemn(1:mn,lvol,     0), Iomn(1:mn,lvol,iocons), Iemn(1:mn,lvol,       2), Iomn(1:mn,lvol,       2), ifail )
+              mn, im(1:mn), in(1:mn), Iemn(1:mn,lvol,     0), Iomn(1:mn,lvol,     0), Iemn(1:mn,lvol,       2), Iomn(1:mn,lvol,       2), ifail )
   ;call tfft( Nt, Nz, dLLR(1:Ntz), dLLZ(1:Ntz  ), & ! compute force-imbalance and spectral constraints;
               mn, im(1:mn), in(1:mn), Semn(1:mn,lvol,iocons), Somn(1:mn,lvol,iocons), Semn(1:mn,lvol,iocons+2), Somn(1:mn,lvol,iocons+2), ifail )
    
@@ -553,6 +553,7 @@ subroutine spectral_lforce(lvol, iocons, Ntz, dLL, IIl, XX, YY, length, DDl, MMl
                  Nt, Nz, XX(1:Ntz), YY(1:Ntz) )
     
     if( YESstellsym ) then ; DDl = sum(              ( iRbc(1:mn,lvol)**2 + iZbs(1:mn,lvol)**2                                           ) )
+                           ; DDl = DDl + iRbc(1,lvol)**2
      ;                     ; MMl = sum( mmpp(1:mn) * ( iRbc(1:mn,lvol)**2 + iZbs(1:mn,lvol)**2                                           ) ) / DDl
     else                   ; DDl = sum(              ( iRbc(1:mn,lvol)**2 + iZbs(1:mn,lvol)**2 + iRbs(1:mn,lvol)**2 + iZbc(1:mn,lvol)**2 ) )
      ;                     ; MMl = sum( mmpp(1:mn) * ( iRbc(1:mn,lvol)**2 + iZbs(1:mn,lvol)**2 + iRbs(1:mn,lvol)**2 + iZbc(1:mn,lvol)**2 ) ) / DDl
