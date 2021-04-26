@@ -1,43 +1,47 @@
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!> \defgroup grp_output Output file(s)
 
-!title (output) ! Writes vector potential to .ext.sp.A .
+!> \file ra00aa.f90
+!> \brief Writes vector potential to \c .ext.sp.A .
 
-!latex \briefly{Writes vector potential to .ext.sp.A .}
-
-!latex \calledby{\link{preset} and \link{xspech}}
-!latex \calls{}
-
-!latex \tableofcontents
-
-!latex \subsection{representation of vector potential} \begin{enumerate}
-
-!latex \item \Ais
-
-!latex \end{enumerate} \subsection{file format} \begin{enumerate}
-
-!latex \item The format of the files containing the vector potential is as follows:
-
-!latex \begin{verbatim}
-!latex open(aunit, file="."//trim(ext)//".sp.A", status="replace", form="unformatted" )
-!latex write(aunit) Mvol, Mpol, Ntor, mn, Nfp ! integers;
-!latex write(aunit) im(1:mn) ! integers; poloidal modes;
-!latex write(aunit) in(1:mn) ! integers; toroidal modes;
-!latex do vvol = 1, Mvol ! integers; loop over volumes;
-!latex write(aunit) Lrad(vvol) ! integers; the radial resolution in each volume may be different;
-!latex do ii = 1, mn
-!latex write(aunit) Ate(vvol,ii)%s(0:Lrad(vvol)) ! reals;
-!latex write(aunit) Aze(vvol,ii)%s(0:Lrad(vvol)) ! reals;
-!latex write(aunit) Ato(vvol,ii)%s(0:Lrad(vvol)) ! reals;
-!latex write(aunit) Azo(vvol,ii)%s(0:Lrad(vvol)) ! reals;
-!latex enddo ! end of do ii;
-!latex enddo ! end of do vvol;
-!latex close(aunit)
-!latex \end{verbatim}
-
-!latex \end{enumerate}
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+!> \brief Writes vector potential to \c .ext.sp.A .
+!> \ingroup grp_output
+!>
+!> **representation of vector potential**
+!>
+!> <ul>
+!> <li> The components of the vector potential, \f${\bf A}=A_\theta \nabla + A_\zeta \nabla \zeta\f$, are
+!>      \f{eqnarray}{
+!>        A_\theta(s,\theta,\zeta) &=& \sum_{i,l} {\color{red}  A_{\theta,e,i,l}} \; {\overline T}_{l,i}(s) \cos\alpha_i + \sum_{i,l} {\color{Orange}  A_{\theta,o,i,l}} \; {\overline T}_{l,i}(s) \sin\alpha_i, \label{eq:At_ra00aa} \\
+!>        A_\zeta( s,\theta,\zeta) &=& \sum_{i,l} {\color{blue} A_{\zeta, e,i,l}} \; {\overline T}_{l,i}(s) \cos\alpha_i + \sum_{i,l} {\color{Cerulean}A_{\zeta ,o,i,l}} \; {\overline T}_{l,i}(s) \sin\alpha_i, \label{eq:Az_ra00aa}
+!>      \f}
+!>      where \f${\overline T}_{l,i}(s) \equiv \bar s^{m_i/2} \, T_l(s)\f$, \f$T_l(s)\f$ is the Chebyshev polynomial, and \f$\alpha_j \equiv m_j\theta-n_j\zeta\f$.
+!>      The regularity factor, \f$\bar s^{m_i/2}\f$, where \f$\bar s \equiv (1+s)/2\f$, is only included if there is a coordinate singularity in the domain
+!>      (i.e. only in the innermost volume, and only in cylindrical and toroidal geometry.) </li>
+!> </ul>
+!>
+!> **file format**
+!>
+!> <ul>
+!> <li> The format of the files containing the vector potential is as follows:
+!> ```
+!> open(aunit, file="."//trim(ext)//".sp.A", status="replace", form="unformatted" )
+!> write(aunit) Mvol, Mpol, Ntor, mn, Nfp ! integers;
+!> write(aunit) im(1:mn) ! integers; poloidal modes;
+!> write(aunit) in(1:mn) ! integers; toroidal modes;
+!> do vvol = 1, Mvol ! integers; loop over volumes;
+!> write(aunit) Lrad(vvol) ! integers; the radial resolution in each volume may be different;
+!> do ii = 1, mn
+!> write(aunit) Ate(vvol,ii)%s(0:Lrad(vvol)) ! reals;
+!> write(aunit) Aze(vvol,ii)%s(0:Lrad(vvol)) ! reals;
+!> write(aunit) Ato(vvol,ii)%s(0:Lrad(vvol)) ! reals;
+!> write(aunit) Azo(vvol,ii)%s(0:Lrad(vvol)) ! reals;
+!> enddo ! end of do ii;
+!> enddo ! end of do vvol;
+!> close(aunit)
+!> ```
+!> </ul>
+!>
+!> @param[in] writeorread 'W' to write the vector potential; 'R' to read it
 subroutine ra00aa( writeorread )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

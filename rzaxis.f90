@@ -1,76 +1,82 @@
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!> \defgroup grp_coord_axis Coordinate axis
 
-!title (coordinate axis) ! Specifies position of coordinate axis; ${\bf x}_a(\zeta) \equiv \int {\bf x}_1(\theta,\zeta) dl \, / \int dl$.
+!> \file rzaxis.f90
+!> \brief The coordinate axis is assigned via a poloidal average over an arbitrary surface.
 
-!latex \briefly{The coordinate axis is assigned via a poloidal average over an arbitrary surface.}
-
-!latex \calledby{\link{preset}, \link{packxi}}
-
-!latex \tableofcontents
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \subsection{coordinate axis}
-
-!latex \begin{enumerate}
-!latex \item The coordinate axis is {\em not} an independent degree-of-freedom of the geometry.
-!latex       It is constructed by extrapolating the geometry of a given interface, as determined by $i \equiv $ \internal{ivol} which is given on input,
-!latex       down to a line.
-!latex \item If the coordinate axis depends only on the {\em geometry} of the interface and not the angle parameterization,
-!latex       then the block tri-diagonal structure of the the force-derivative matrix is preserved.
-!latex \item Define the arc-length-weighted averages,
-!latex       \be R_0(\z) \equiv \frac{\ds \int_{0}^{2\pi} R_i(\t,\z) \, dl}{\ds \int_{0}^{2\pi} \!\!\!\! dl}, \qquad
-!latex           Z_0(\z) \equiv \frac{\ds \int_{0}^{2\pi} Z_i(\t,\z) \, dl}{\ds \int_{0}^{2\pi} \!\!\!\! dl},
-!latex       \ee
-!latex       where $dl \equiv \dot l \, d\t = \sqrt{ \partial_\t R_i(\t,\z)^2 + \partial_\t Z_i(\t,\z)^2 } \, d\t$.
-!latex \item (Note that if $\dot l$ does not depend on $\t$, i.e. if $\t$ is the equal arc-length angle, then the expressions simplify.
-!latex        This constraint is not enforced.)
-!latex \item The geometry of the coordinate axis thus constructed only depends on the geometry of the interface, i.e. 
-!latex       the angular parameterization of the interface is irrelevant.
-!latex \end{enumerate}
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \subsection{coordinate axis: derivatives}
-
-!latex \begin{enumerate}
-!latex \item The derivatives of the coordinate axis with respect to the Fourier harmonics of the given interface are given by
-!latex       \be
-!latex       \ds \frac{\partial R_0}{\partial R_{i,j}^c} & = & \ds \int \left( \cos\a_j \; \dot l
-!latex                                                     -       \Delta R_i R_{i,\t} \, m_j \sin\a_j / \; \dot l \right) d\t / L \\
-!latex       \ds \frac{\partial R_0}{\partial R_{i,j}^s} & = & \ds \int \left( \sin\a_j \; \dot l
-!latex                                                     +       \Delta R_i R_{i,\t} \, m_j \cos\a_j / \; \dot l \right) d\t / L \\
-!latex       \ds \frac{\partial R_0}{\partial Z_{i,j}^c} & = & \ds \int \left( \;\;\;\;\;\;\;\;\;\;\;\;\,
-!latex                                                     -       \Delta R_i Z_{i,\t} \, m_j \sin\a_j / \; \dot l \right) d\t / L \\
-!latex       \ds \frac{\partial R_0}{\partial Z_{i,j}^s} & = & \ds \int \left( \;\;\;\;\;\;\;\;\;\;\;\;\,                             
-!latex                                                     +       \Delta R_i Z_{i,\t} \, m_j \cos\a_j / \; \dot l \right) d\t / L \\ \nonumber \\
-!latex       \ds \frac{\partial Z_0}{\partial R_{i,j}^c} & = & \ds \int \left( \;\;\;\;\;\;\;\;\;\;\;\;\,                             
-!latex                                                     -       \Delta Z_i R_{i,\t} \, m_j \sin\a_j / \; \dot l \right) d\t / L \\
-!latex       \ds \frac{\partial Z_0}{\partial R_{i,j}^s} & = & \ds \int \left( \;\;\;\;\;\;\;\;\;\;\;\;                            
-!latex                                                     +       \Delta Z_i R_{i,\t} \, m_j \cos\a_j / \; \dot l \right) d\t / L \\
-!latex       \ds \frac{\partial Z_0}{\partial Z_{i,j}^c} & = & \ds \int \left( \cos\a_j \; \dot l
-!latex                                                     -       \Delta Z_i Z_{i,\t} \, m_j \sin\a_j / \; \dot l \right) d\t / L \\
-!latex       \ds \frac{\partial Z_0}{\partial Z_{i,j}^s} & = & \ds \int \left( \sin\a_j \; \dot l
-!latex                                                     +       \Delta Z_i Z_{i,\t} \, m_j \cos\a_j / \; \dot l \right) d\t / L
-!latex       \ee
-!latex       where $\ds L(\z) \equiv \int_{0}^{2\pi} \!\!\!\! dl$.
-!latex \end{enumerate}
-
-!latex \subsection{some numerical comments}
-
-!latex \begin{enumerate}
-!latex \item First, the differential poloidal length, $\dot l \equiv \sqrt{ R_\t^2 + Z_\t^2 }$, is computed in real space using 
-!latex       an inverse FFT from the Fourier harmonics of $R$ and $Z$.
-!latex \item Second, the Fourier harmonics of $dl$ are computed using an FFT.
-!latex       The integration over $\t$ to construct $L\equiv \int dl$ is now trivial: just multiply the $m=0$ harmonics of $dl$ by $2\pi$.
-!latex       The \internal{ajk(1:mn)} variable is used, and this is assigned in \link{global}.
-!latex \item Next, the weighted $R \, dl$ and $Z \, dl$ are computed in real space, and the poloidal integral is similarly taken.
-!latex \item Last, the Fourier harmonics are constructed using an FFT after dividing in real space.
-!latex \end{enumerate}
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+!> \brief The coordinate axis is assigned via a poloidal average over an arbitrary surface.
+!> \ingroup grp_coord_axis
+!> 
+!> Specifies position of coordinate axis; \f${\bf x}_a(\zeta) \equiv \int {\bf x}_1(\theta,\zeta) dl \, / \int dl\f$.
+!> 
+!> **coordinate axis**
+!>
+!> <ul>
+!> <li> The coordinate axis is _not_ an independent degree-of-freedom of the geometry.
+!>       It is constructed by extrapolating the geometry of a given interface, as determined by \f$i \equiv\,\f$\c ivol which is given on input,
+!>       down to a line.
+!> <li> If the coordinate axis depends only on the _geometry_ of the interface and not the angle parameterization,
+!>       then the block tri-diagonal structure of the the force-derivative matrix is preserved.
+!> <li> Define the arc-length-weighted averages,
+!>       \f{eqnarray}{ R_0(\zeta) \equiv \frac{\displaystyle \int_{0}^{2\pi} R_i(\theta,\zeta) \, dl}{\displaystyle \int_{0}^{2\pi} \!\!\!\! dl}, \qquad
+!>                     Z_0(\zeta) \equiv \frac{\displaystyle \int_{0}^{2\pi} Z_i(\theta,\zeta) \, dl}{\displaystyle \int_{0}^{2\pi} \!\!\!\! dl},
+!>       \f}
+!>       where \f$dl \equiv \dot l \, d\theta = \sqrt{ \partial_\theta R_i(\theta,\zeta)^2 + \partial_\theta Z_i(\theta,\zeta)^2 } \, d\theta\f$.
+!> <li> (Note that if \f$\dot l\f$ does not depend on \f$\theta\f$, i.e. if \f$\theta\f$ is the equal arc-length angle, then the expressions simplify.
+!>        This constraint is not enforced.)
+!> <li> The geometry of the coordinate axis thus constructed only depends on the geometry of the interface, i.e. 
+!>       the angular parameterization of the interface is irrelevant.
+!> </ul>
+!>
+!> **coordinate axis: derivatives**
+!>
+!> <ul>
+!> <li> The derivatives of the coordinate axis with respect to the Fourier harmonics of the given interface are given by
+!>       \f{eqnarray}{
+!>       \displaystyle \frac{\partial R_0}{\partial R_{i,j}^c} & = & \displaystyle \int \left( \cos\alpha_j \; \dot l
+!>                                                     -       \Delta R_i R_{i,\theta} \, m_j \sin\alpha_j / \; \dot l \right) d\theta / L \\
+!>       \displaystyle \frac{\partial R_0}{\partial R_{i,j}^s} & = & \displaystyle \int \left( \sin\alpha_j \; \dot l
+!>                                                     +       \Delta R_i R_{i,\theta} \, m_j \cos\alpha_j / \; \dot l \right) d\theta / L \\
+!>       \displaystyle \frac{\partial R_0}{\partial Z_{i,j}^c} & = & \displaystyle \int \left( \;\;\;\;\;\;\;\;\;\;\;\;\,
+!>                                                     -       \Delta R_i Z_{i,\theta} \, m_j \sin\alpha_j / \; \dot l \right) d\theta / L \\
+!>       \displaystyle \frac{\partial R_0}{\partial Z_{i,j}^s} & = & \displaystyle \int \left( \;\;\;\;\;\;\;\;\;\;\;\;\,                             
+!>                                                     +       \Delta R_i Z_{i,\theta} \, m_j \cos\alpha_j / \; \dot l \right) d\theta / L \\ \nonumber \\
+!>       \displaystyle \frac{\partial Z_0}{\partial R_{i,j}^c} & = & \displaystyle \int \left( \;\;\;\;\;\;\;\;\;\;\;\;\,                             
+!>                                                     -       \Delta Z_i R_{i,\theta} \, m_j \sin\alpha_j / \; \dot l \right) d\theta / L \\
+!>       \displaystyle \frac{\partial Z_0}{\partial R_{i,j}^s} & = & \displaystyle \int \left( \;\;\;\;\;\;\;\;\;\;\;\;                            
+!>                                                     +       \Delta Z_i R_{i,\theta} \, m_j \cos\alpha_j / \; \dot l \right) d\theta / L \\
+!>       \displaystyle \frac{\partial Z_0}{\partial Z_{i,j}^c} & = & \displaystyle \int \left( \cos\alpha_j \; \dot l
+!>                                                     -       \Delta Z_i Z_{i,\theta} \, m_j \sin\alpha_j / \; \dot l \right) d\theta / L \\
+!>       \displaystyle \frac{\partial Z_0}{\partial Z_{i,j}^s} & = & \displaystyle \int \left( \sin\alpha_j \; \dot l
+!>                                                     +       \Delta Z_i Z_{i,\theta} \, m_j \cos\alpha_j / \; \dot l \right) d\theta / L
+!>       \f}
+!>       where \f$\displaystyle L(\zeta) \equiv \int_{0}^{2\pi} \!\!\!\! dl\f$.
+!> </ul>
+!>
+!> **some numerical comments**
+!>
+!> <ul>
+!> <li> First, the differential poloidal length, \f$\dot l \equiv \sqrt{ R_\theta^2 + Z_\theta^2 }\f$, is computed in real space using 
+!>       an inverse FFT from the Fourier harmonics of \f$R\f$ and \f$Z\f$.
+!> <li> Second, the Fourier harmonics of \f$dl\f$ are computed using an FFT.
+!>       The integration over \f$\theta\f$ to construct \f$L\equiv \int dl\f$ is now trivial: just multiply the \f$m=0\f$ harmonics of \f$dl\f$ by \f$2\pi\f$.
+!>       The \c ajk(1:mn) variable is used, and this is assigned in readin() .
+!> <li> Next, the weighted \f$R \, dl\f$ and \f$Z \, dl\f$ are computed in real space, and the poloidal integral is similarly taken.
+!> <li> Last, the Fourier harmonics are constructed using an FFT after dividing in real space.
+!> </ul>
+!>
+!> @param[in]  Mvol
+!> @param[in]  mn
+!> @param      iRbc
+!> @param      iZbs
+!> @param      iRbs
+!> @param      iZbc
+!> @param[in]  ivol
+!> @param      LcomputeDerivatives
+!#ifdef DEBUG
+!recursive subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivatives )
+!#else
 subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivatives )
+!#endif
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -324,6 +330,25 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
         dZodZ(1:Ntz,0,ii) = dZodZ(1:Ntz,0,ii) / jiimag(1:Ntz) ! divide by length; 03 Nov 16;
         dZodZ(1:Ntz,1,ii) = dZodZ(1:Ntz,1,ii) / jiimag(1:Ntz)
 
+        imn = ii
+
+        call tfft( Nt, Nz, dRodR(1:Ntz,0,ii), dRodR(1:Ntz,1,ii), &
+          mn, im(1:mn), in(1:mn), dRadR(1:mn,0,0,ii), dRadR(1:mn,1,0,ii), dRadR(1:mn,0,1,ii), dRadR(1:mn,1,1,ii), ifail )
+        call tfft( Nt, Nz, dRodZ(1:Ntz,0,ii), dRodZ(1:Ntz,1,ii), &
+          mn, im(1:mn), in(1:mn), dRadZ(1:mn,0,0,ii), dRadZ(1:mn,1,0,ii), dRadZ(1:mn,0,1,ii), dRadZ(1:mn,1,1,ii), ifail )
+        call tfft( Nt, Nz, dZodR(1:Ntz,0,ii), dZodR(1:Ntz,1,ii), &
+          mn, im(1:mn), in(1:mn), dZadR(1:mn,0,0,ii), dZadR(1:mn,1,0,ii), dZadR(1:mn,0,1,ii), dZadR(1:mn,1,1,ii), ifail )
+        call tfft( Nt, Nz, dZodZ(1:Ntz,0,ii), dZodZ(1:Ntz,1,ii), &
+          mn, im(1:mn), in(1:mn), dZadZ(1:mn,0,0,ii), dZadZ(1:mn,1,0,ii), dZadZ(1:mn,0,1,ii), dZadZ(1:mn,1,1,ii), ifail )
+
+        call invfft( mn, im(1:mn), in(1:mn),-in(1:mn)*dRadR(1:mn,1,0,imn),+in(1:mn)*dRadR(1:mn,0,0,imn),-in(1:mn)*dRadR(1:mn,1,1,imn),+in(1:mn)*dRadR(1:mn,0,1,imn), &
+                      Nt, Nz, dRodR(1:Ntz,2,imn), dRodR(1:Ntz,3,imn) )
+        call invfft( mn, im(1:mn), in(1:mn),-in(1:mn)*dRadZ(1:mn,1,0,imn),+in(1:mn)*dRadZ(1:mn,0,0,imn),-in(1:mn)*dRadZ(1:mn,1,1,imn),+in(1:mn)*dRadZ(1:mn,0,1,imn), &
+                      Nt, Nz, dRodZ(1:Ntz,2,imn), dRodZ(1:Ntz,3,imn) )
+        call invfft( mn, im(1:mn), in(1:mn),-in(1:mn)*dZadR(1:mn,1,0,imn),+in(1:mn)*dZadR(1:mn,0,0,imn),-in(1:mn)*dZadR(1:mn,1,1,imn),+in(1:mn)*dZadR(1:mn,0,1,imn), &
+                      Nt, Nz, dZodR(1:Ntz,2,imn), dZodR(1:Ntz,3,imn) )
+        call invfft( mn, im(1:mn), in(1:mn),-in(1:mn)*dZadZ(1:mn,1,0,imn),+in(1:mn)*dZadZ(1:mn,0,0,imn),-in(1:mn)*dZadZ(1:mn,1,1,imn),+in(1:mn)*dZadZ(1:mn,0,1,imn), &
+                      Nt, Nz, dZodZ(1:Ntz,2,imn), dZodZ(1:Ntz,3,imn) )
 
       enddo ! end of do ii; 03 Nov 16;
     end if !if (LComputeDerivatives) then
@@ -723,7 +748,16 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
             call invfft( mn, im(1:mn), in(1:mn), dZadR(1:mn,0,0,imn), dZadR(1:mn,1,0,imn), dZadR(1:mn,0,1,imn), dZadR(1:mn,1,1,imn), &
                          Nt, Nz, dZodR(1:Ntz,0,imn), dZodR(1:Ntz,1,imn) )
             call invfft( mn, im(1:mn), in(1:mn), dZadZ(1:mn,0,0,imn), dZadZ(1:mn,1,0,imn), dZadZ(1:mn,0,1,imn), dZadZ(1:mn,1,1,imn), &
-                         Nt, Nz, dZodZ(1:Ntz,0,imn), dZodZ(1:Ntz,1,imn) )
+                         Nt, Nz, dZodZ(1:Ntz,2,imn), dZodZ(1:Ntz,1,imn) )
+
+            call invfft( mn, im(1:mn), in(1:mn),-in(1:mn)*dRadR(1:mn,1,0,imn),+in(1:mn)*dRadR(1:mn,0,0,imn),-in(1:mn)*dRadR(1:mn,1,1,imn),+in(1:mn)*dRadR(1:mn,0,1,imn), &
+                         Nt, Nz, dRodR(1:Ntz,2,imn), dRodR(1:Ntz,3,imn) )
+            call invfft( mn, im(1:mn), in(1:mn),-in(1:mn)*dRadZ(1:mn,1,0,imn),+in(1:mn)*dRadZ(1:mn,0,0,imn),-in(1:mn)*dRadZ(1:mn,1,1,imn),+in(1:mn)*dRadZ(1:mn,0,1,imn), &
+                         Nt, Nz, dRodZ(1:Ntz,2,imn), dRodZ(1:Ntz,3,imn) )
+            call invfft( mn, im(1:mn), in(1:mn),-in(1:mn)*dZadR(1:mn,1,0,imn),+in(1:mn)*dZadR(1:mn,0,0,imn),-in(1:mn)*dZadR(1:mn,1,1,imn),+in(1:mn)*dZadR(1:mn,0,1,imn), &
+                         Nt, Nz, dZodR(1:Ntz,2,imn), dZodR(1:Ntz,3,imn) )
+            call invfft( mn, im(1:mn), in(1:mn),-in(1:mn)*dZadZ(1:mn,1,0,imn),+in(1:mn)*dZadZ(1:mn,0,0,imn),-in(1:mn)*dZadZ(1:mn,1,1,imn),+in(1:mn)*dZadZ(1:mn,0,1,imn), &
+                         Nt, Nz, dZodZ(1:Ntz,2,imn), dZodZ(1:Ntz,3,imn) )
 
 !******* This part is used to benchmark the matrices perturbation result with finite difference *******
 #ifdef DEBUG

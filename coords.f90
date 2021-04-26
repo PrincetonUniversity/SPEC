@@ -1,153 +1,145 @@
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!> \defgroup grp_geometry Geometry
 
-!title (geometry) ! Calculates coordinates, ${\bf x}(s,\theta,\zeta) \equiv R \, {\bf e}_R + Z \, {\bf e}_Z$, and metrics, using FFTs.
+!> \file coords.f90
+!> \brief Calculates coordinates, \f${\bf x}(s,\theta,\zeta) \equiv R \, {\bf e}_R + Z \, {\bf e}_Z\f$, and metrics, using FFTs.
 
-!latex \briefly{Calculates coordinate transformation, and metric elements and curvatures if required, using FFTs.}
-
-!latex \calledby{\link{global}, \link{bnorml}, \link{lforce}, \link{dforce}, \link{curent}, \link{jo00aa}, \link{metrix}, \link{sc00aa}, \link{rzaxis}}
-!latex \calls{\link{}}
-
-!latex \tableofcontents
-
-!latex \subsection{coordinates} 
-
-!latex \begin{enumerate}
-
-!latex \item We work in coordinates, $(\s,\t,\z)$, which are be defined {\em inversely} via a transformation {\em to} Cartesian coordinates, $(x,y,z)$.
-
-!latex \item The toroidal angle, $\z$, is identical to the cylindrical angle, $\z\equiv\phi$.
-
-!latex \item The radial coordinate, $s$, is {\em not} a global variable: it only needs to be defined in each volume, and in each volume $\s \in [-1,1]$.
-
-!latex \item The choice of poloidal angle, $\t$, does not affect the following.
-
-!latex \end{enumerate} \subsection{geometry} \begin{enumerate}
-
-!latex \item The geometry of the ``ideal''-interfaces, ${\bf x}_v(\t,\z)$, is given by $R(\t,\z)$ and $Z(\t,\z)$ as follows:
-!latex       \begin{itemize}
-!latex       \item \verb+Igeometry=1+ : Cartesian
-!latex       \be {\bf x} & \equiv & r_{pol}\t \; {\bf \hat i} + r_{tor}\z \; {\bf \hat j}+ R \; {\bf \hat k}
-!latex       \ee
-!latex       where $r_{pol}$ and $r_{tor}$ are inputs and $r_{pol}=r_{tor}=1$ by default.
-!latex       \item \verb+Igeometry=2+ : Cylindrical
-!latex       \be {\bf x} & = & R \; \cos\t \; {\bf \hat i} + R \; \sin\t \; {\bf \hat j} + \z \; {\bf \hat k}
-!latex       \ee
-!latex       \item \verb+Igeometry=3+ : Toroidal
-!latex       \be {\bf x} & \equiv & R \; {\bf \hat r} + Z \; {\bf \hat k}
-!latex       \ee
-!latex       where ${\bf \hat r}\equiv \cos \phi \; {\bf \hat i} + \sin \phi \; {\bf \hat j}$ and
-!latex             ${\bf \hat \phi} \equiv - \sin \phi \; {\bf \hat i} + \cos \phi \; {\bf \hat j}$.
-!latex       \end{itemize}
-
-!latex \item The geometry of the ideal interfaces is given as Fourier summation: e.g., for stellarator-symmetry
-!latex       \be R_v(\t,\z) & \equiv & \sum_j R_{j,v} \cos\alpha_j, \\
-!latex           Z_v(\t,\z) & \equiv & \sum_j Z_{j,v} \sin\alpha_j,
-!latex       \ee
-!latex       where $\alpha_j \equiv m_j \t - n_j \z$.
-
-!latex \end{enumerate} \subsection{interpolation between interfaces} \begin{enumerate}
-
-!latex \item The ``coordinate'' functions, $R(\s,\t,\z)$ and $Z(\s,\t,\z)$, are constructed by radially interpolating the Fourier representations of the 
-!latex       ideal-interfaces.
-
-!latex \item The $v$-th volume is bounded by ${\bf x}_{v-1}$ and ${\bf x}_{v}$.
-
-!latex \item In each {\em annular} volume, the coordinates are constructed by linear interpolation:
-!latex       \be \begin{array}{cccccccccccccccccccccccccccc}
-!latex           R(\s,\t,\z) & \equiv & \ds \sum_j & \ds \left[ \; \frac{(1-s)}{2} \; R_{j,v-1} + \frac{(1+s)}{2} \; R_{j,v}\; \right] \; \cos\alpha_j,\\
-!latex           Z(\s,\t,\z) & \equiv & \ds \sum_j & \ds \left[ \; \frac{(1-s)}{2} \; Z_{j,v-1} + \frac{(1+s)}{2} \; Z_{j,v}\; \right] \; \sin\alpha_j,
-!latex           \end{array}
-!latex       \ee
-
-!latex \end{enumerate} \subsubsection{coordinate singularity: regularized extrapolation} \begin{enumerate}
-
-!latex \item For cylindrical or toroidal geometry, in the innermost, ``simple-torus'' volume, the coordinates are constructed by an interpolation that
-!latex       ``encourages'' the interpolated coordinate surfaces to not intersect.
-!latex \item Introduce $\bar s \equiv (s+1)/2$, so that in each volume $\bar s \in [0,1]$, then
-!latex       \be R_{j}(s) & = & R_{j,0} + (R_{j,1} - R_{j,0} ) f_j, \\
-!latex           Z_{j}(s) & = & Z_{j,0} + (Z_{j,1} - Z_{j,0} ) f_j,
-!latex       \ee
-!latex       where, in toroidal geometry, 
-!latex       \be
-!latex       f_j \equiv \left\{ 
-!latex       \begin{array}{llcccccccccccccc} \bar s^2      & , & \mbox{\rm for } m_j=0, \\
-!latex                                       \bar s^{m_j}& , & \mbox{\rm otherwise.} 
-!latex       \end{array}\right. 
-!latex       \ee
-
-!latex \item Note: The location of the coordinate axis, i.e. the $R_{j,0}$ and $Z_{j,0}$,
-!latex       is set in the coordinate ``packing'' and ``unpacking'' routine, \link{packxi}.
-
-!latex \end{enumerate} \subsection{Jacobian} \begin{enumerate}
-
-!latex \item The coordinate Jacobian (and some other metric information) is given by
-!latex       \begin{itemize}
-!latex       \item \verb+Igeometry=1+ : Cartesian
-!latex       \be {\bf e}_\theta \times {\bf e}_\zeta & = & -r_{tor}R_\t \; \hat {\bf i} -  r_{pol}R_\z \; \hat {\bf j} + r_{pol}r_{tor}\hat {\bf k} \\
-! latex           \boldxi \cdot {\bf e}_\theta \times {\bf e}_\zeta & =&  \delta R \\
-!latex           \sqrt g                                           & =&         R_s \ r_{pol} \ r_{tor}
-!latex       \ee
-!latex       \item \verb+Igeometry=2+ : Cylindrical
-!latex       \be {\bf e}_\theta \times {\bf e}_\zeta & = & 
-!latex       (R_\t \sin \t + R \cos\t ) \; {\bf \hat i} + (R    \sin \t - R_\t \cos\t ) \; {\bf \hat j} - R R_\z \; {\bf \hat k} \\
-! latex           \boldxi\cdot {\bf e}_\theta \times {\bf e}_\zeta & = & \delta R \; R \\
-!latex           \sqrt g                                          & = & R_s \; R
-!latex       \ee
-!latex       \item \verb+Igeometry=3+ : Toroidal
-!latex       \be {\bf e}_\theta \times {\bf e}_\zeta & = & 
-!latex       - R \, Z_\theta \, \hat r + (Z_\theta \,R_\zeta - R_\theta \,Z_\zeta) \hat \phi + R \,R_\theta \,\hat z\\
-! latex           \boldxi\cdot {\bf e}_\theta \times {\bf e}_\zeta & = & R ( \delta Z \; R_\t - \delta R \; Z_\t ) \\
-!latex           \sqrt g                                         & = & R ( Z_s      \; R_\t - R_s      \; Z_\t )
-!latex       \ee
-!latex       \end{itemize}
-
-!latex \end{enumerate} \subsubsection{cartesian metrics} \begin{enumerate}
-!latex \item The cartesian metrics are
-!latex       \be \begin{array}{cccccccccccccccccccccccccccccccccccccccccccccccc}
-!latex           g_{\s\s}  =  R_\s R_\s       ,&
-!latex           g_{\s\t}  =  R_\s R_\t       ,&
-!latex           g_{\s\z}  =  R_\s R_\z       ,&
-!latex           g_{\t\t}  =  R_\t R_\t + r_{pol}^2 ,&
-!latex           g_{\t\z}  =  R_\t R_\z       ,&
-!latex           g_{\z\z}  =  R_\z R_\z + r_{tor}^2
-!latex           \end{array}
-!latex       \ee
-
-!latex \end{enumerate} \subsubsection{cylindrical metrics} \begin{enumerate}
-!latex \item The cylindrical metrics are
-!latex       \be \begin{array}{cccccccccccccccccccccccccccccccccccccccccccccccc}
-!latex           g_{\s\s}  =  R_\s R_\s       ,&
-!latex           g_{\s\t}  =  R_\s R_\t       ,&
-!latex           g_{\s\z}  =  R_\s R_\z       ,&
-!latex           g_{\t\t}  =  R_\t R_\t + R^2 ,&
-!latex           g_{\t\z}  =  R_\t R_\z       ,&
-!latex           g_{\z\z}  =  R_\z R_\z + 1
-!latex           \end{array}
-!latex       \ee
-
-!latex \end{enumerate} \subsection{logical control} \begin{enumerate}
-!latex \item The logical control is provided by \type{Lcurvature} as follows:
-!latex       \bi
-!latex       \item[] \type{Lcurvature=0} : only the coordinate transformation is computed, i.e. only $R$ and $Z$ are calculated \\
-!latex                                     e.g. \link{global}
-!latex       \item[] \type{Lcurvature=1} : the Jacobian, $\sqrt g $, and ``lower'' metrics, $g_{\mu,\nu}$, are calculated \\
-!latex                                     e.g. \link{bnorml}, \link{lforce}, \link{curent}, \link{metrix}, \link{sc00aa}
-!latex       \item[] \type{Lcurvature=2} : the ``curvature'' terms are calculated, by which I mean the second derivatives of the position vector;
-!latex                                     this information is required for computing the current, ${\bf j}=\nabla\times\nabla\times{\bf A}$ \\
-!latex                                     e.g. \link{jo00aa}
-!latex       \item[] \type{Lcurvature=3} : the derivative of the $g_{\mu,\nu}/\sqrt g$ w.r.t. the interface boundary geometry is calculated \\
-!latex                                     e.g. \link{metrix}, \link{curent}
-!latex       \item[] \type{Lcurvature=4} : the derivative of the $g_{\mu,\nu}$ w.r.t. the interface boundary geometry is calculated \\
-!latex                                     e.g. \link{dforce}
-!latex       \item[] \type{Lcurvature=5} : the derivative of the $\sqrt g$ w.r.t. the interface boundary geometry is calculated \\
-!latex                                     e.g. \link{rzaxis}
-!latex       \ei
-!latex \end{enumerate}
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+!> \brief Calculates coordinates, \f${\bf x}(s,\theta,\zeta) \equiv R \, {\bf e}_R + Z \, {\bf e}_Z\f$, and metrics, using FFTs.
+!> \ingroup grp_geometry
+!>
+!> **Coordinates**
+!> <ul>
+!> <li>  We work in coordinates, \f$(s,\theta,\zeta)\f$, which are be defined _inversely_ via a transformation _to_ Cartesian coordinates, \f$(x,y,z)\f$. </li>
+!> <li>  The toroidal angle, \f$\zeta\f$, is identical to the cylindrical angle, \f$\zeta\equiv\phi\f$. </li>
+!> <li>  The radial coordinate, \f$s\f$, is _not_ a global variable: it only needs to be defined in each volume, and in each volume \f$s \in [-1,1]\f$. </li>
+!> <li>  The choice of poloidal angle, \f$\theta\f$, does not affect the following. </li>
+!> </ul>
+!>
+!> **Geometry**
+!> <ul>
+!> <li>  The geometry of the "ideal"-interfaces, \f${\bf x}_v(\theta,\zeta)\f$, is given by \f$R(\theta,\zeta)\f$ and \f$Z(\theta,\zeta)\f$ as follows:
+!>       <ul>
+!>       <li>  \c Igeometry=1 : Cartesian
+!>       \f{eqnarray}{ {\bf x} & \equiv & r_{pol}\theta \; {\bf \hat i} + r_{tor}\zeta \; {\bf \hat j}+ R \; {\bf \hat k}
+!>       \f}
+!>       where \f$r_{pol}\f$ and \f$r_{tor}\f$ are inputs and \f$r_{pol}=r_{tor}=1\f$ by default. </li>
+!>       <li>  \c Igeometry=2 : Cylindrical
+!>       \f{eqnarray}{ {\bf x} & = & R \; \cos\theta \; {\bf \hat i} + R \; \sin\theta \; {\bf \hat j} + \zeta \; {\bf \hat k}
+!>       \f} </li>
+!>       <li>  \c Igeometry=3 : Toroidal
+!>       \f{eqnarray}{ {\bf x} & \equiv & R \; {\bf \hat r} + Z \; {\bf \hat k}
+!>       \f}
+!>       where \f${\bf \hat    r} \equiv   \cos \phi \; {\bf \hat i} + \sin \phi \; {\bf \hat j}\f$ and
+!>             \f${\bf \hat \phi} \equiv - \sin \phi \; {\bf \hat i} + \cos \phi \; {\bf \hat j}\f$. </li>
+!>       </ul> </li>
+!>
+!> <li>  The geometry of the ideal interfaces is given as Fourier summation: e.g., for stellarator-symmetry
+!>       \f{eqnarray}{ R_v(\theta,\zeta) & \equiv & \sum_j R_{j,v} \cos\alpha_j, \\
+!>           Z_v(\theta,\zeta) & \equiv & \sum_j Z_{j,v} \sin\alpha_j,
+!>       \f}
+!>       where \f$\alpha_j \equiv m_j \theta - n_j \zeta\f$. </li>
+!>
+!> </ul> 
+!>       **interpolation between interfaces**
+!> <ul>
+!> <li>  The "coordinate" functions, \f$R(s,\theta,\zeta)\f$ and \f$Z(s,\theta,\zeta)\f$, are constructed by radially interpolating the Fourier representations of the 
+!>       ideal-interfaces. </li>
+!> <li>  The \f$v\f$-th volume is bounded by \f${\bf x}_{v-1}\f$ and \f${\bf x}_{v}\f$. </li>
+!> <li>  In each _annular_ volume, the coordinates are constructed by linear interpolation:
+!>       \f{eqnarray}{ \begin{array}{cccccccccccccccccccccccccccc}
+!>           R(s,\theta,\zeta) & \equiv & \displaystyle \sum_j & \displaystyle \left[ \; \frac{(1-s)}{2} \; R_{j,v-1} + \frac{(1+s)}{2} \; R_{j,v}\; \right] \; \cos\alpha_j,\\
+!>           Z(s,\theta,\zeta) & \equiv & \displaystyle \sum_j & \displaystyle \left[ \; \frac{(1-s)}{2} \; Z_{j,v-1} + \frac{(1+s)}{2} \; Z_{j,v}\; \right] \; \sin\alpha_j,
+!>           \end{array}
+!>       \f} </li>
+!> </ul> 
+!>       **coordinate singularity: regularized extrapolation**
+!> <ul>
+!>
+!> <li>  For cylindrical or toroidal geometry, in the innermost, "simple-torus" volume, the coordinates are constructed by an interpolation that
+!>       "encourages" the interpolated coordinate surfaces to not intersect. </li>
+!> <li>  Introduce \f$\bar s \equiv (s+1)/2\f$, so that in each volume \f$\bar s \in [0,1]\f$, then
+!>       \f{eqnarray}{ R_{j}(s) & = & R_{j,0} + (R_{j,1} - R_{j,0} ) f_j, \\
+!>           Z_{j}(s) & = & Z_{j,0} + (Z_{j,1} - Z_{j,0} ) f_j,
+!>       \f}
+!>       where, in toroidal geometry, 
+!>       \f{eqnarray}{
+!>       f_j \equiv \left\{ 
+!>       \begin{array}{llcccccccccccccc} \bar s       & , & \mbox{ for } m_j=0, \\
+!>                                       \bar s^{m_j} & , & \mbox{ otherwise.} 
+!>       \end{array}\right\}. 
+!>       \f} </li>
+!> <li>  Note: The location of the coordinate axis, i.e. the \f$R_{j,0}\f$ and \f$Z_{j,0}\f$,
+!>       is set in the coordinate "packing" and "unpacking" routine, packxi(). </li>
+!> </ul> 
+!>       **Jacobian**
+!> <ul>
+!> <li>  The coordinate Jacobian (and some other metric information) is given by
+!>       <ul>
+!>       <li> \c Igeometry=1 : Cartesian
+!>       \f{eqnarray}{     {\bf e}_\theta \times {\bf e}_\zeta & = & -r_{tor}R_\theta \; \hat {\bf i} -  r_{pol}R_\zeta \; \hat {\bf j} + r_{pol}r_{tor}\hat {\bf k} \\
+!>           \boldsymbol{\xi} \cdot {\bf e}_\theta \times {\bf e}_\zeta & = &  \delta R \\
+!>           \sqrt g                                           & = &         R_s \ r_{pol} \ r_{tor}
+!>       \f} </li>
+!>       <li>  \c Igeometry=2 : Cylindrical
+!>       \f{eqnarray}{    {\bf e}_\theta \times {\bf e}_\zeta & = & (R_\theta \sin \theta + R \cos\theta ) \; {\bf \hat i} + (R    \sin \theta - R_\theta \cos\theta ) \; {\bf \hat j} - R R_\zeta \; {\bf \hat k} \\
+!>           \boldsymbol{\xi}\cdot {\bf e}_\theta \times {\bf e}_\zeta & = & \delta R \; R \\
+!>           \sqrt g                                          & = & R_s \; R
+!>       \f} </li>
+!>       <li>  \c Igeometry=3 : Toroidal
+!>       \f{eqnarray}{    {\bf e}_\theta \times {\bf e}_\zeta & = & - R \, Z_\theta \, \hat r + (Z_\theta \,R_\zeta - R_\theta \,Z_\zeta) \hat \phi + R \,R_\theta \,\hat z\\
+!>           \boldsymbol{\xi}\cdot {\bf e}_\theta \times {\bf e}_\zeta & = & R ( \delta Z \; R_\theta - \delta R \; Z_\theta ) \\
+!>            \sqrt g                                         & = & R ( Z_s      \; R_\theta - R_s      \; Z_\theta )
+!>       \f} </li>
+!>       </ul> 
+!>       </li>
+!>
+!> </ul> 
+!>       **cartesian metrics**
+!> <ul>
+!> <li>  The cartesian metrics are
+!>       \f{eqnarray}{ \begin{array}{cccccccccccccccccccccccccccccccccccccccccccccccc}
+!>           g_{s     s     } =  R_s      R_s                  ,&
+!>           g_{s     \theta} =  R_s      R_\theta             ,&
+!>           g_{s     \zeta } =  R_s      R_\zeta              ,&
+!>           g_{\theta\theta} =  R_\theta R_\theta + r_{pol}^2 ,&
+!>           g_{\theta\zeta } =  R_\theta R_\zeta              ,&
+!>           g_{\zeta \zeta } =  R_\zeta  R_\zeta  + r_{tor}^2
+!>           \end{array}
+!>       \f} </li>
+!>
+!> </ul> 
+!>       **cylindrical metrics**
+!> <ul>
+!> <li>  The cylindrical metrics are
+!>       \f{eqnarray}{ \begin{array}{cccccccccccccccccccccccccccccccccccccccccccccccc}
+!>           g_{s     s     }  =  R_s      R_s            ,&
+!>           g_{s     \theta}  =  R_s      R_\theta       ,&
+!>           g_{s     \zeta }  =  R_s      R_\zeta        ,&
+!>           g_{\theta\theta}  =  R_\theta R_\theta + R^2 ,&
+!>           g_{\theta\zeta }  =  R_\theta R_\zeta        ,&
+!>           g_{\zeta \zeta }  =  R_\zeta  R_\zeta  + 1
+!>           \end{array}
+!>       \f} </li>
+!>
+!> </ul> 
+!>       **logical control**
+!> <ul>
+!> <li>  The logical control is provided by \c Lcurvature as follows:
+!>       <ul>
+!>       <li> \c Lcurvature=0 : only the coordinate transformation is computed, i.e. only \f$R\f$ and \f$Z\f$ are calculated,          e.g. global() </li>
+!>       <li> \c Lcurvature=1 : the Jacobian, \f$\sqrt g \f$, and "lower" metrics, \f$g_{\mu,\nu}\f$, are calculated ,                 e.g. bnorml(), lforce(), curent(), metrix(), sc00aa() </li>
+!>       <li> \c Lcurvature=2 : the "curvature" terms are calculated, by which I mean the second derivatives of the position vector;
+!>                              this information is required for computing the current, \f${\bf j}=\nabla\times\nabla\times{\bf A}\f$, e.g. jo00aa() </li>
+!>       <li> \c Lcurvature=3 : the derivative of the \f$g_{\mu,\nu}/\sqrt g\f$ w.r.t. the interface boundary geometry is calculated,  e.g. metrix(), curent() </li>
+!>       <li> \c Lcurvature=4 : the derivative of the \f$g_{\mu,\nu}\f$ w.r.t. the interface boundary geometry is calculated,          e.g. dforce() </li>
+!>       <li> \c Lcurvature=5 : the derivative of \f$\sqrt{g}\f$ w.r.t. the interface boundary geometry is calculated,                 e.g. rzaxis() </li>
+!>       </ul> </li>
+!> </ul>
+!>
+!> @param[in] lvol specified in which volume to compute coordinates
+!> @param[in] lss radial coordinate \f$s\f$
+!> @param[in] Lcurvature logical control flag
+!> @param[in] Ntz number of points in \f$\theta\f$ and \f$\zeta\f$
+!> @param[in] mn number of Fourier harmonics
 subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -170,7 +162,8 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
                         Rij, Zij, &
                         cosi, sini, &
                         sg, guvij, &
-                        dBdX
+                        dBdX, &
+                        dRodR, dRodZ, dZodR, dZodZ
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -182,7 +175,7 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
   INTEGER             :: ii, jj, kk, irz, innout, issym, signlss, mi, ni, imn
   REAL                :: Remn(1:mn,0:2), Zomn(1:mn,0:2), Romn(1:mn,0:2), Zemn(1:mn,0:2), alss, blss, sbar, sbarhim(1:mn), fj(1:mn,0:2)
   
-  REAL                :: Dij(1:Ntz,0:3), dguvij(1:Ntz,1:3,1:3)
+  REAL                :: Dij(1:Ntz,0:3), dguvij(1:Ntz,1:3,1:3), DRxij(1:Ntz,0:3), DZxij(1:Ntz,0:3)
   
   BEGIN(coords)
   
@@ -567,6 +560,35 @@ Nt, Nz, Rij(1:Ntz,3,3), Zij(1:Ntz,3,3) ) ! maps to real space;
      Dij(1:Ntz,3) = fj(ii,0) * cosi(1:Ntz,ii) * ( - in(ii) )
      
     endif ! if( ( irz.eq.0 .and. issym.eq.1 ) .or. ... ; 11 Aug 14;
+
+    if (Lcurvature .eq. 3 .or. Lcurvature .eq. 4) then
+      if (Igeometry .eq. 3) then
+        ! add the terms due to the moving coordinate axis
+        if ( irz.eq.0 ) then
+          DRxij(1:Ntz,0) = (one-sbar**2) * dRodR(1:Ntz,issym,ii)      ! dRx/dR
+          DRxij(1:Ntz,1) = - sbar * dRodR(1:Ntz,issym,ii)
+          DRxij(1:Ntz,2) = zero
+          DRxij(1:Ntz,3) = (one-sbar**2) * dRodR(1:Ntz,issym+2,ii)    ! dRx/dR, zeta derivative
+
+          DZxij(1:Ntz,0) = (one-sbar**2) * dZodR(1:Ntz,issym,ii)      ! dZx/dR
+          DZxij(1:Ntz,1) = - sbar * dZodR(1:Ntz,issym,ii)
+          DZxij(1:Ntz,2) = zero
+          DZxij(1:Ntz,3) = (one-sbar**2) * dZodR(1:Ntz,issym+2,ii)    ! dZx/dR, zeta derivative
+        else
+          DRxij(1:Ntz,0) = (one-sbar**2) * dRodZ(1:Ntz,1-issym,ii)    ! dRx/dZ
+          DRxij(1:Ntz,1) = - sbar  * dRodZ(1:Ntz,1-issym,ii)
+          DRxij(1:Ntz,2) = zero
+          DRxij(1:Ntz,3) = (one-sbar**2) * dRodZ(1:Ntz,1-issym+2,ii)  ! dRx/dZ, zeta derivative
+
+          DZxij(1:Ntz,0) = (one-sbar**2) * dZodZ(1:Ntz,1-issym,ii)    ! dZx/dZ
+          DZxij(1:Ntz,1) = - sbar  * dZodZ(1:Ntz,1-issym,ii)
+          DZxij(1:Ntz,2) = zero
+          DZxij(1:Ntz,3) = (one-sbar**2) * dZodZ(1:Ntz,1-issym+2,ii)  ! dZx/dZ, zeta derivative
+        endif
+      endif
+    endif
+    !DRxij(:,:) = zero
+    !DZxij(:,:) = zero
     
    else ! matches if( Lcoordinatesingularity ) ; 10 Mar 13;
     
@@ -640,23 +662,45 @@ Nt, Nz, Rij(1:Ntz,3,3), Zij(1:Ntz,3,3) ) ! maps to real space;
     dguvij(1:Ntz,2,2) = dguvij(1:Ntz,2,2) + two * Dij(1:Ntz,0) * Rij(1:Ntz,0,0)
    !dguvij(1:Ntz,3,3) = additional term is unity;
 
-   case( 3 ) ! Lcurvature=3,4,5 ; Igeometry=3 ; toroidal; 04 Dec 14;
+    case( 3 ) ! Lcurvature=3,4,5 ; Igeometry=3 ; toroidal; 04 Dec 14;
 
-  !                  sg(1:Ntz,0) = Rij(1:Ntz,0,0) * ( Zij(1:Ntz,1,0)*Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Zij(1:Ntz,2,0) )
-      if( irz.eq.0 ) sg(1:Ntz,1) = Dij(1:Ntz,0  ) * ( Zij(1:Ntz,1,0)*Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Zij(1:Ntz,2,0) ) & 
-                                + Rij(1:Ntz,0,0) * ( Zij(1:Ntz,1,0)*Dij(1:Ntz,2  ) - Dij(1:Ntz,1  )*Zij(1:Ntz,2,0) ) 
-      if( irz.eq.1 ) sg(1:Ntz,1) = Rij(1:Ntz,0,0) * ( Dij(1:Ntz,1  )*Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Dij(1:Ntz,2  ) )
-
-      sg(1:Ntz,1) = sg(1:Ntz,1)
-      
-      do ii = 1, 3 ! careful: ii was used with a different definition above; 13 Sep 13;
-        do jj = ii, 3
-          if( irz.eq.0 ) dguvij(1:Ntz,ii,jj) = Dij(1:Ntz,ii) * Rij(1:Ntz,jj,0) + Rij(1:Ntz,ii,0) * Dij(1:Ntz,jj)
-          if( irz.eq.1 ) dguvij(1:Ntz,ii,jj) = Dij(1:Ntz,ii) * Zij(1:Ntz,jj,0) + Zij(1:Ntz,ii,0) * Dij(1:Ntz,jj)
+      if (LcoordinateSingularity) then
+    !                  sg(1:Ntz,0) = Rij(1:Ntz,0,0) * ( Zij(1:Ntz,1,0)*Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Zij(1:Ntz,2,0) )
+        if( irz.eq.0 ) sg(1:Ntz,1) = (Dij(1:Ntz,0  )+ DRxij(1:Ntz, 0)) * ( Zij(1:Ntz,1,0)*Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Zij(1:Ntz,2,0) ) & 
+                                  + Rij(1:Ntz,0,0) * ( Zij(1:Ntz,1,0)*Dij(1:Ntz,2  ) - (Dij(1:Ntz,1  )+DRxij(1:Ntz,1)) *Zij(1:Ntz,2,0) ) &
+                                  + Rij(1:Ntz,0,0) * ( DZxij(1:Ntz,1)*Rij(1:Ntz,2,0) )
+        if( irz.eq.1 ) sg(1:Ntz,1) = DRxij(1:Ntz, 0) * ( Zij(1:Ntz,1,0)*Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Zij(1:Ntz,2,0) ) &
+                                  + Rij(1:Ntz,0,0) * ( (Dij(1:Ntz,1  )+DZxij(1:Ntz,1)) *Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Dij(1:Ntz,2  ) ) &
+                                  + Rij(1:Ntz,0,0) * (-DRxij(1:Ntz,1)*Zij(1:Ntz,2,0))
+        
+        do ii = 1, 3 ! careful: ii was used with a different definition above; 13 Sep 13;
+          do jj = ii, 3
+            if( irz.eq.0 ) dguvij(1:Ntz,ii,jj) = (Dij(1:Ntz,ii)+DRxij(1:Ntz,ii)) * Rij(1:Ntz,jj,0) + Rij(1:Ntz,ii,0) * (Dij(1:Ntz,jj)+DRxij(1:Ntz,jj)) &
+                                              + DZxij(1:Ntz,ii) * Zij(1:Ntz,jj,0) + Zij(1:Ntz,ii,0) * DZxij(1:Ntz,jj)
+            if( irz.eq.1 ) dguvij(1:Ntz,ii,jj) = (Dij(1:Ntz,ii)+DZxij(1:Ntz,ii)) * Zij(1:Ntz,jj,0) + Zij(1:Ntz,ii,0) * (Dij(1:Ntz,jj)+DZxij(1:Ntz,jj)) & 
+                                              + DRxij(1:Ntz,ii) * Rij(1:Ntz,jj,0) + Rij(1:Ntz,ii,0) * DRxij(1:Ntz,jj)
+          enddo
         enddo
-      enddo
-      
-      if( irz.eq.0 ) dguvij(1:Ntz,3,3) = dguvij(1:Ntz,3,3) + two * Dij(1:Ntz,0) * Rij(1:Ntz,0,0)
+        
+        if( irz.eq.0 ) dguvij(1:Ntz,3,3) = dguvij(1:Ntz,3,3) + two * (Dij(1:Ntz,0)+DRxij(1:Ntz,0)) * Rij(1:Ntz,0,0)
+        if( irz.eq.1 ) dguvij(1:Ntz,3,3) = dguvij(1:Ntz,3,3) + two * (DRxij(1:Ntz,0)) * Rij(1:Ntz,0,0)
+
+      else 
+
+        if( irz.eq.0 ) sg(1:Ntz,1) = Dij(1:Ntz,0  ) * ( Zij(1:Ntz,1,0)*Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Zij(1:Ntz,2,0) ) & 
+                                  + Rij(1:Ntz,0,0) * ( Zij(1:Ntz,1,0)*Dij(1:Ntz,2  ) - Dij(1:Ntz,1  )*Zij(1:Ntz,2,0) ) 
+        if( irz.eq.1 ) sg(1:Ntz,1) = Rij(1:Ntz,0,0) * ( Dij(1:Ntz,1  )*Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Dij(1:Ntz,2  ) )
+
+        
+        do ii = 1, 3 ! careful: ii was used with a different definition above; 13 Sep 13;
+          do jj = ii, 3
+            if( irz.eq.0 ) dguvij(1:Ntz,ii,jj) = Dij(1:Ntz,ii) * Rij(1:Ntz,jj,0) + Rij(1:Ntz,ii,0) * Dij(1:Ntz,jj)
+            if( irz.eq.1 ) dguvij(1:Ntz,ii,jj) = Dij(1:Ntz,ii) * Zij(1:Ntz,jj,0) + Zij(1:Ntz,ii,0) * Dij(1:Ntz,jj)
+          enddo
+        enddo
+        
+        if( irz.eq.0 ) dguvij(1:Ntz,3,3) = dguvij(1:Ntz,3,3) + two * Dij(1:Ntz,0) * Rij(1:Ntz,0,0)
+      endif
 
     case default
       

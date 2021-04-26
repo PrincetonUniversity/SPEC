@@ -1,16 +1,13 @@
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!> \defgroup grp_solver_driver Solver/Driver
 
-!title (solver/driver) ! Constructs Beltrami field in given volume consistent with constraints.
+!> \file ma02aa.f90
+!> \brief Constructs Beltrami field in given volume consistent with flux, helicity, rotational-transform and/or parallel-current constraints.
 
-!latex \briefly{Constructs Beltrami field in given volume consistent with flux, helicity, rotational-transform and/or parallel-current constraints.}
-
-!latex \calledby{\link{dforce}}
-!latex \calls{\link{packab}, \link{df00ab}, \link{mp00ac}}
-
-!latex \tableofcontents
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+!> \brief Constructs Beltrami field in given volume consistent with flux, helicity, rotational-transform and/or parallel-current constraints.
+!> \ingroup grp_solver_driver
+!> 
+!> @param[in] lvol index of nested volume for which to run this
+!> @param[in] NN   number of degrees of freedom in the (packed format) vector potential;
 subroutine ma02aa( lvol, NN )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -45,7 +42,7 @@ subroutine ma02aa( lvol, NN )
   
   LOCALS
   
-  INTEGER, intent(in)  :: lvol, NN ! NN is the number of degrees of freedom in the (packed format) vector potential;
+  INTEGER, intent(in)  :: lvol, NN
   
   
   INTEGER              :: ideriv
@@ -98,11 +95,11 @@ subroutine ma02aa( lvol, NN )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-!latex \subsection{seqeuntial quadratic programming}
-!latex \begin{enumerate}
-!latex \item Only relevant if \internal{LBsequad=T}. See \inputvar{LBeltrami} for details.
-!latex \item Documentation on the implementation of \nag{www.nag.co.uk/numeric/FL/manual19/pdf/E04/e04uff_fl19.pdf}{E04UFF} is under construction.
-!latex \end{enumerate}
+!> **sequential quadratic programming**
+!> <ul>
+!> <li> Only relevant if \c LBsequad=T . See \c LBeltrami for details. </li>
+!> <li> Documentation on the implementation of \c E04UFF is under construction. </li>
+!> </ul>
 
   if( LBsequad ) then ! sequential quadratic programming (SQP); construct minimum energy with constrained helicity;
    lastcpu = GETTIME
@@ -272,10 +269,10 @@ subroutine ma02aa( lvol, NN )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-!latex \subsection{Newton method}
-!latex \begin{enumerate}
-!latex \item Only relevant if \internal{LBnewton=T}. See \inputvar{LBeltrami} for details.
-!latex \end{enumerate}
+!> **Newton method**
+!> <ul>
+!> <li> Only relevant if \c LBnewton=T . See \c LBeltrami for details. </li>
+!> </ul>
 
   if( LBnewton ) then
    
@@ -357,67 +354,67 @@ subroutine ma02aa( lvol, NN )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-!latex \subsection{``linear'' method}
+!> **linear method**
 
-!latex \begin{enumerate}
-!latex \item Only relevant if \internal{LBlinear=T}. See \inputvar{LBeltrami} for details.
-!latex \item The quantity $\mu$ is {\em not} not treated as a ``magnetic'' degree-of-freedom
-!latex       equivalent to in the degrees-of-freedom in the magnetic vector potential
-!latex       (as it strictly should be, because it is a Lagrange multiplier introduced to enforce the helicity constraint).
-!latex \item In this case, the Beltrami equation, $\nabla \times {\bf B} = \mu {\bf B}$, is {\em linear} in the magnetic degrees-of-freedom.
-!latex \item The algorithm proceeds as follows:
-
-!latex \subsubsection{plasma volumes} 
-
-!latex \begin{enumerate}
-
-!latex \item In addition to the enclosed toroidal flux, $\Delta \psi_t$, which is held constant in the plasma volumes,
-!latex       the Beltrami field in a given volume is assumed to be parameterized by $\mu$ and $\Delta \psi_p$.
-!latex       (Note that $\Delta \psi_p$ is not defined in a torus.)
-!latex \item These are ``packed'' into an array, e.g. $\boldmu \equiv (\mu, \Delta\psi_p)^T$, so that standard library routines ,
-!latex       e.g. \nag{www.nag.co.uk/numeric/FL/manual19/pdf/C05/c05pcf_fl19.pdf}{C05PCF},
-!latex       can be used to (iteratively) find the appropriately-constrained Beltrami solution, i.e. ${\bf f}(\boldmu)=0$.
-!latex \item The function ${\bf f}(\boldmu)$, which is computed by \link{mp00ac}, is defined by the input parameter \inputvar{Lconstraint}:
-!latex \bi
-!latex \item[i.] If \inputvar{Lconstraint = -1, 0}, then $\boldmu$ is {\em not} varied and \internal{Nxdof=0}.
-!latex \item[ii.] If \inputvar{Lconstraint = 1},    then $\boldmu$ is           varied to satisfy the transform constraints;
-!latex            and \internal{Nxdof=1} in the simple torus and \internal{Nxdof=2} in the annular regions.
-!latex            (Note that in the ``simple-torus'' region, the enclosed poloidal flux $\Delta\psi_p$ is not well-defined, 
-!latex            and only $\mu=\boldmu_1$ is varied in order to satisfy the transform constraint on the ``outer'' interface of that volume.)
-!latex \item[iii.] If \inputvar{Lconstraint = 2}, then $\mu=\boldmu_1$ is           varied in order to satisfy the helicity constraint, 
-!latex             and $\Delta\psi_p=\boldmu_2$ is {\em not} varied, and \internal{Nxdof=1}.
-!latex             {\bf (under re-construction)}
-!latex \ei
-
-!latex \end{enumerate} 
-
-!latex \subsubsection{vacuum volume } 
-
-!latex \begin{enumerate}
-
-!latex \item In the vacuum, $\mu=0$, and the enclosed fluxes, $\Delta \psi_t$ and $\Delta \psi_p$, are considered to parameterize the family of solutions.
-!latex       (These quantities may not be well-defined if ${\bf B}\cdot{\bf n}\ne 0$ on the computational boundary.)
-!latex \item These are ``packed'' into an array, $\boldmu \equiv (\Delta\psi_t,\Delta\psi_p)^T$, so that, as above, standard routines can be used
-!latex       to iteratively find the appropriately constrained solution, i.e. ${\bf f}(\boldmu)=0$.
-!latex \item The function ${\bf f}(\boldmu)$, which is computed by \link{mp00ac}, is defined by the input parameter \inputvar{Lconstraint}:
-!latex \bi
-!latex \item[i.] If \inputvar{Lconstraint = -1}, then $\boldmu$ is {\em not} varied and \internal{Nxdof=0}.
-!latex \item[ii.] If \inputvar{Lconstraint = 0,2}, then $\boldmu$ is varied to satisfy the enclosed current constraints, and \internal{Nxdof=2}.
-!latex \item[iii.] If \inputvar{Lconstraint = 1}, then $\boldmu$ is varied to satisfy 
-!latex             the constraint on the transform on the inner boundary $\equiv$ plasma boundary and the ``linking'' current, and \internal{Nxdof=2}. 
-!latex \ei
-
-!latex \end{enumerate} 
-
-!latex \item The Beltrami fields, and the rotational-transform and helicity etc. as required to determine the function ${\bf f}(\boldmu)$
-!latex       are calculated in \link{mp00ac}.
-!latex \item This routine, \link{mp00ac}, is called iteratively if \inputvar{Nxdof > 1} via
-!latex       \nag{www.nag.co.uk/numeric/FL/manual19/pdf/C05/c05pcf_fl19.pdf}{C05PCF} to
-!latex       determine the appropriately constrained Beltrami field, ${\bf B}_{\boldmu}$, so that ${\bf f}(\boldmu)=0$.
-!latex \item The input variables \inputvar{mupftol} and \inputvar{mupfits} control the required accuracy and maximum number of iterations.
-!latex \item If \inputvar{Nxdof = 1}, then \link{mp00ac} is called only once to provide the Beltrami fields with the given value of $\boldmu$.
-
-!latex \end{enumerate}
+!> <ul>
+!> <li> Only relevant if \c LBlinear=T . See \c LBeltrami for details. </li>
+!> <li> The quantity \f$\mu\f$ is *not* not treated as a "magnetic" degree-of-freedom
+!>       equivalent to in the degrees-of-freedom in the magnetic vector potential
+!>       (as it strictly should be, because it is a Lagrange multiplier introduced to enforce the helicity constraint). </li>
+!> <li> In this case, the Beltrami equation, \f$\nabla \times {\bf B} = \mu {\bf B}\f$, is *linear* in the magnetic degrees-of-freedom. </li>
+!> <li> The algorithm proceeds as follows:
+!>
+!> **plasma volumes**
+!>
+!> <ul>
+!>
+!> <li> In addition to the enclosed toroidal flux, \f$\Delta \psi_t\f$, which is held constant in the plasma volumes,
+!>       the Beltrami field in a given volume is assumed to be parameterized by \f$\mu\f$ and \f$\Delta \psi_p\f$.
+!>       (Note that \f$\Delta \psi_p\f$ is not defined in a torus.) </li>
+!> <li> These are "packed" into an array, e.g. \f$\boldsymbol{\mu} \equiv (\mu, \Delta\psi_p)^T\f$, so that standard library routines ,
+!>       e.g. \c C05PCF, can be used to (iteratively) find the appropriately-constrained Beltrami solution, i.e. \f${\bf f}(\boldsymbol{\mu})=0\f$. </li>
+!> <li> The function \f${\bf f}(\boldsymbol{\mu})\f$, which is computed by mp00ac(), is defined by the input parameter \c Lconstraint:
+!> <ul>
+!> <li> If \c Lconstraint = -1, 0, then \f$\boldsymbol{\mu}\f$       is *not* varied and \c Nxdof=0. </li>
+!> <li> If \c Lconstraint =  1,    then \f$\boldsymbol{\mu}\f$       is       varied to satisfy the transform constraints;
+!>      and \c Nxdof=1 in the simple torus and \c Nxdof=2 in the annular regions.
+!>      (Note that in the "simple-torus" region, the enclosed poloidal flux \f$\Delta\psi_p\f$ is not well-defined, 
+!>      and only \f$\mu=\boldsymbol{\mu}_1\f$ is varied in order to satisfy the transform constraint on the "outer" interface of that volume.) </li>
+!> <li> \todo If \c Lconstraint =  2,    then \f$\mu=\boldsymbol{\mu}_1\f$ is       varied in order to satisfy the helicity constraint, 
+!>      and \f$\Delta\psi_p=\boldsymbol{\mu}_2\f$ is *not* varied, and \c Nxdof=1.
+!>      (under re-construction)
+!>
+!> </li>
+!> </ul> </li>
+!>
+!> </ul>
+!>
+!> **vacuum volume**
+!>
+!> <ul>
+!>
+!> <li> In the vacuum, \f$\mu=0\f$, and the enclosed fluxes, \f$\Delta \psi_t\f$ and \f$\Delta \psi_p\f$, are considered to parameterize the family of solutions.
+!>      (These quantities may not be well-defined if \f${\bf B}\cdot{\bf n}\ne 0\f$ on the computational boundary.) </li>
+!> <li> These are "packed" into an array, \f$\boldsymbol{\mu} \equiv (\Delta\psi_t,\Delta\psi_p)^T\f$, so that, as above, standard routines can be used
+!>      to iteratively find the appropriately constrained solution, i.e. \f${\bf f}(\boldsymbol{\mu})=0\f$. </li>
+!> <li> The function \f${\bf f}(\boldsymbol{\mu})\f$, which is computed by mp00ac(), is defined by the input parameter \c Lconstraint:
+!> <ul>
+!> <li> If \c Lconstraint = -1,   then \f$\boldsymbol{\mu}\f$ is *not* varied and \c Nxdof=0. </li>
+!> <li> If \c Lconstraint =  0,2, then \f$\boldsymbol{\mu}\f$ is varied to satisfy the enclosed current constraints, and \c Nxdof=2. </li>
+!> <li> If \c Lconstraint =  1,   then \f$\boldsymbol{\mu}\f$ is varied to satisfy 
+!>      the constraint on the transform on the inner boundary \f$\equiv\f$ plasma boundary and the "linking" current, and \c Nxdof=2.  </li>
+!> </ul> </li>
+!>
+!> </ul>  </li>
+!>
+!> <li> The Beltrami fields, and the rotational-transform and helicity etc. as required to determine the function \f${\bf f}(\boldsymbol{\mu})\f$
+!>      are calculated in mp00ac(). </li>
+!> <li> This routine, mp00ac(), is called iteratively if \c Nxdof>1 via
+!>      \c C05PCF to determine the appropriately constrained Beltrami field, \f${\bf B}_{\boldsymbol{\mu}}\f$, so that \f${\bf f}(\boldsymbol{\mu})=0\f$. </li>
+!> <li> The input variables \c mupftol and \c mupfits control the required accuracy and maximum number of iterations. </li>
+!> <li> If \c Nxdof=1, then mp00ac() is called only once to provide the Beltrami fields with the given value of \f$\boldsymbol{\mu}\f$. </li>
+!>
+!> </ul>
   
 
   if( LBlinear ) then ! assume Beltrami field is parameterized by helicity multiplier (and poloidal flux);
@@ -448,10 +445,10 @@ subroutine ma02aa( lvol, NN )
     Xdof(1:2) = xoffset + (/ dtflux(lvol), dpflux(lvol) /) ! initial guess for degrees of freedom; offset from zero so that relative error is small;
     
     select case( Lconstraint )
-    case( -1 )    ;                                   ; Nxdof = 0 ! poloidal   & toroidal flux NOT varied to match linking current and plasma current;
-    case(  0 )    ;                                   ; Nxdof = 2 ! poloidal   & toroidal flux ARE varied to match linking current and plasma current;
+    case( -1 )    ;                                   ; Nxdof = 0 ! poloidal   & toroidal flux NOT varied                                                  ;
+    case(  0 )    ;                                   ; Nxdof = 2 ! poloidal   & toroidal flux ARE varied to match linking current and plasma current      ;
     case(  1 )    ;                                   ; Nxdof = 2 ! poloidal   & toroidal flux ARE varied to match linking current and transform-constraint;
-    case(  2 )    ;                                   ; Nxdof = 2 ! poloidal   & toroidal flux ARE varied to match linking current and plasma current;
+    case(  2 )    ;                                   ; Nxdof = 2 ! poloidal   & toroidal flux ARE varied to match linking current and plasma current      ;
     case(  3 )    ;                                   ; Nxdof = 0 ! Fluxes are determined in dforce via a linear system
                                                       ; iflag = 2
     end select
@@ -546,22 +543,21 @@ subroutine ma02aa( lvol, NN )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-
  
-!latex \subsection{debugging: finite-difference confirmation of the derivatives of the rotational-transform}
-
-!latex \begin{enumerate}
-
-!latex \item Note that the rotational-transform (if required) is calculated by \link{tr00ab}, which is called by \link{mp00ac}.
-!latex \item If \inputvar{Lconstraint=1}, then \link{mp00ac} will ask \link{tr00ab} to compute the derivatives of the transform 
-!latex       with respect to variations in the helicity-multiplier, $\mu$, and the enclosed poloidal-flux, $\Delta\psi_p$, so that
-!latex       \nag{www.nag.co.uk/numeric/FL/manual19/pdf/C05/c05pcf_fl19.pdf}{C05PCF} may more efficiently find the solution.
-!latex \item The required derivatives are
-!latex       \be \frac{\partial \iotabar}{\partial \mu}\\
-!latex           \frac{\partial \iotabar}{\partial \Delta \psi_p}
-!latex       \ee
-!latex       to improve the efficiency of the iterative search.
-!latex       A finite difference estimate of these derivatives is available; need \type{DEBUG}, \inputvar{Lcheck=2} and \inputvar{Lconstraint=1}.
-
-!latex \end{enumerate}
+!> **debugging: finite-difference confirmation of the derivatives of the rotational-transform**
+!>
+!> <ul>
+!>
+!> <li> Note that the rotational-transform (if required) is calculated by tr00ab(), which is called by mp00ac(). </li>
+!> <li> If \c Lconstraint=1, then mp00ac() will ask tr00ab() to compute the derivatives of the transform 
+!>      with respect to variations in the helicity-multiplier, \f$\mu\f$, and the enclosed poloidal-flux, \f$\Delta\psi_p\f$, so that
+!>      \c C05PCF may more efficiently find the solution. </li>
+!> <li> The required derivatives are
+!>      \f{eqnarray}{ \frac{\partial {{\,\iota\!\!\!}-}}{\partial \mu}\\
+!>                    \frac{\partial {{\,\iota\!\!\!}-}}{\partial \Delta \psi_p}
+!>      \f}
+!>      to improve the efficiency of the iterative search.
+!>      A finite difference estimate of these derivatives is available; need \c DEBUG, \c Lcheck=2 and \c Lconstraint=1. </li>
+!> </ul>
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   

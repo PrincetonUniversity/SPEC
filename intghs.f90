@@ -1,6 +1,5 @@
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!title (integrals) ! Calculates volume integrals of Chebyshev-polynomials and covariant field for Hessian computation.
+!> \file intghs.f90
+!> \brief (integrals) ! Calculates volume integrals of Chebyshev-polynomials and covariant field for Hessian computation.
 
 !latex \briefly{Calculates volume integrals of Chebyshev polynomials and covariant field products.}
 
@@ -88,6 +87,13 @@ end module intghs_module
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+!> \brief Calculates volume integrals of Chebyshev polynomials and covariant field products.
+!>
+!> @param lquad
+!> @param mn
+!> @param lvol
+!> @param lrad
+!> @param idx
 subroutine intghs( lquad, mn, lvol, lrad, idx )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -324,6 +330,9 @@ end subroutine intghs
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+!> \brief init workspace
+!>
+!> @param lvol
 subroutine intghs_workspace_init(lvol)
 
   use constants, only : zero
@@ -362,6 +371,9 @@ subroutine intghs_workspace_init(lvol)
   
 end subroutine intghs_workspace_init
 
+!> \brief free workspace
+!>
+!> @param lvol
 subroutine intghs_workspace_destroy()
   
   use inputlist, only : Wmacros, Wintghs

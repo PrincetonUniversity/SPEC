@@ -1,119 +1,114 @@
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!> \defgroup grp_solver Solver for Beltrami (linear) system
 
-!title (solver) ! Solves Beltrami/vacuum (linear) system, given matrices.
+!> \file mp00ac.f90
+!> \brief Solves Beltrami/vacuum (linear) system, given matrices.
 
-!latex \briefly{Solves for magnetic vector potential given $\boldmu\equiv(\Delta\psi_t,\Delta\psi_p,\mu)^T$.}
-
-!latex \calledby{\link{ma02aa}}
-!latex \calls{\link{packab}, \link{curent} and \link{tr00ab}}
-
-!latex \tableofcontents
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \subsection{unpacking fluxes, helicity multiplier}
-
-!latex \begin{enumerate}
-!latex \item The vector of ``parameters'', $\boldmu$, is unpacked. (Recall that $\boldmu$ was ``packed'' in \link{ma02aa}.)
-!latex       In the following, $\boldpsi \equiv (\Delta \psi_t, \Delta \psi_p)^T$.
-!latex \end{enumerate}
-
-!latex \subsection{construction of linear system}
-
-!latex \begin{enumerate}
-!latex \item The equation $\nabla \times {\bf B} = \mu {\bf B}$ is cast as a matrix equation, \be {\cal M} \cdot {\bf a} = {\cal R},\ee
-!latex       where ${\bf a}$ represents the degrees-of-freedom in the magnetic vector potential, ${\bf a} \equiv \{ \Ate{i,l}, \Aze{i,l}, \dots \}$.
-!latex \item The matrix ${\cal M}$ is constructed from ${\cal A}\equiv$\internal{dMA} and ${\cal D}\equiv$\internal{dMD},
-!latex       which were constructed in \link{matrix}, according to 
-!latex       \be {\cal M} \equiv {\cal A} - \mu {\cal D}.
-!latex       \ee
-!latex       Note that in the vacuum region, $\mu=0$, so ${\cal M} $ reduces to ${\cal M} \equiv {\cal A}$.
-!latex \item The construction of the vector ${\cal R}$ is as follows:
-!latex       \bi \item [i.] if \internal{Lcoordinatesingularity=T}, then 
-!latex           \be {\cal R} \equiv - \left( {\cal B} - \mu {\cal E} \right) \cdot \boldpsi 
-!latex           \ee
-!latex           \item [ii.] if \internal{Lcoordinatesingularity=F} and \internal{Lplasmaregion=T}, then 
-!latex           \be {\cal R} \equiv - {\cal B} \cdot \boldpsi 
-!latex           \ee
-!latex           \item [iii.] if \internal{Lcoordinatesingularity=F} and \internal{Lvacuumregion=T}, then 
-!latex           \be {\cal R} \equiv - {\cal G} - {\cal B} \cdot \boldpsi
-!latex           \ee
-!latex       \ei 
-!latex       The quantities ${\cal B}\equiv$\internal{dMB}, ${\cal E}\equiv$\internal{dME} and ${\cal G}\equiv$\internal{dMG} are constructed in \link{matrix}.
-!latex \end{enumerate}
-
-!latex \subsection{solving linear system}
-
-!latex It is {\em not} assumed that the linear system is positive definite.
-!latex The \verb+LAPACK+ routine \verb+DSYSVX+ is used to solve the linear system.
-
-!latex \subsection{unpacking, . . .}
-
-!latex \begin{enumerate}
-!latex \item The magnetic degrees-of-freedom are unpacked by \link{packab}.
-!latex \item The error flag, \internal{ImagneticOK}, is set that indicates if the Beltrami fields were successfully constructed.
-!latex \end{enumerate}
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \subsection{construction of ``constraint'' function}
-
-!latex \begin{enumerate}
-
-!latex \item The construction of the function ${\bf f}(\boldmu)$ is required so that iterative methods can be used to construct the Beltrami field
-!latex       consistent with the required constraints (e.g. on the enclosed fluxes, helicity, rotational-transform,. . .).
-!latex       See \link{ma02aa} for additional details.
-
-!latex \subsubsection{plasma region}
-
-!latex \begin{enumerate}
-!latex \item For \type{Lcoordinatesingularity = T}, the returned function is:
-!latex \be {\bf f}(\mu,\Delta\psi_p) \equiv 
-!latex \left\{ \begin{array}{cccccccr}
-!latex (&                                   0&,&                                 0&)^T, & \mbox{\rm if \inputvar{Lconstraint}} &=& -1 \\
-!latex (&                                   0&,&                                 0&)^T, & \mbox{\rm if \inputvar{Lconstraint}} &=&  0 \\
-!latex (&\iotabar(+1)-\inputvar{iota(lvol  )}&,&                                 0&)^T, & \mbox{\rm if \inputvar{Lconstraint}} &=&  1 \\
-!latex (&                                   ?&,&                                 ?&)^T, & \mbox{\rm if \inputvar{Lconstraint}} &=&  2
-!latex           \end{array}\right.
-!latex \ee
-!latex \item For \type{Lcoordinatesingularity = F}, the returned function is:
-!latex \be {\bf f}(\mu,\Delta\psi_p) \equiv 
-!latex \left\{ \begin{array}{cccccccr}
-!latex (&                                   0&,&                                 0&)^T, & \mbox{\rm if \inputvar{Lconstraint}} &=& -1 \\
-!latex (&                                   0&,&                                 0&)^T, & \mbox{\rm if \inputvar{Lconstraint}} &=&  0 \\
-!latex (&\iotabar(-1)-\inputvar{oita(lvol-1)}&,&\iotabar(+1)-\inputvar{iota(lvol)}&)^T, & \mbox{\rm if \inputvar{Lconstraint}} &=&  1 \\
-!latex (&                                   ?&,&                                 ?&)^T, & \mbox{\rm if \inputvar{Lconstraint}} &=&  2
-!latex           \end{array}\right.
-!latex \ee
-!latex \end{enumerate}
-
-!latex \subsubsection{vacuum region}
-
-!latex \begin{enumerate}
-!latex \item For the vacuum region, the returned function is:
-!latex \be {\bf f}(\Delta\psi_t,\Delta\psi_p) \equiv 
-!latex \left\{ \begin{array}{cccccccr}
-!latex (&                                   0&,&                                 0&)^T, & \mbox{\rm if \inputvar{Lconstraint}} &=& -1 \\
-!latex (&           I-\inputvar{curtor}      &,&           G-\inputvar{curpol}    &)^T, & \mbox{\rm if \inputvar{Lconstraint}} &=&  0 \\
-!latex (&\iotabar(-1)-\inputvar{oita(lvol-1)}&,&           G-\inputvar{curpol}    &)^T, & \mbox{\rm if \inputvar{Lconstraint}} &=&  1 \\
-!latex (&                                   ?&,&                                 ?&)^T, & \mbox{\rm if \inputvar{Lconstraint}} &=&  2
-!latex           \end{array}\right.
-!latex \ee
-!latex \end{enumerate}
-
-!latex \item The rotational-transform, $\iotabar$, is computed by \link{tr00ab}; and the enclosed currents, $I$ and $G$, are computed by \link{curent}.
-
-!latex \end{enumerate}
-
-!latex \subsection{early termination}
-
-!latex \begin{enumerate}
-!latex \item If $|{\bf f}| < $ \inputvar{mupftol}, then early termination is enforced (i.e., \internal{iflag} is set to negative integer).
-!latex       (See \link{ma02aa} for details of how \link{mp00ac} is called iteratively.)
-!latex \end{enumerate}
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+!> \brief Solves Beltrami/vacuum (linear) system, given matrices.
+!> \ingroup grp_solver
+!> **unpacking fluxes, helicity multiplier**
+!> 
+!> <ul>
+!> <li> The vector of "parameters", \f$\boldsymbol{\mu}\f$, is unpacked. (Recall that \f$\boldsymbol{\mu}\f$ was "packed" in ma02aa() .)
+!>      In the following, \f$\boldsymbol{\psi} \equiv (\Delta \psi_t, \Delta \psi_p)^T\f$. </li>
+!> </ul>
+!> 
+!> **construction of linear system**
+!> 
+!> <ul>
+!> <li> The equation \f$\nabla \times {\bf B} = \mu {\bf B}\f$ is cast as a matrix equation, \f{eqnarray}{ {\cal M} \cdot {\bf a} = {\cal R},\f}
+!>       where \f${\bf a}\f$ represents the degrees-of-freedom in the magnetic vector potential, \f${\bf a} \equiv \{ {\color{red} {A_{\theta,e,i,l}}}, {\color{blue}{A_{\zeta, e,i,l}}}, \dots \}\f$. </li>
+!> <li> The matrix \f${\cal M}\f$ is constructed from \f${\cal A}\equiv\,\f$\c dMA and \f${\cal D}\equiv\,\f$\c dMD,
+!>       which were constructed in matrix() , according to 
+!>       \f{eqnarray}{ {\cal M} \equiv {\cal A} - \mu {\cal D}.
+!>       \f}
+!>       Note that in the vacuum region, \f$\mu=0\f$, so \f${\cal M}\f$ reduces to \f${\cal M} \equiv {\cal A}\f$. </li>
+!> <li> The construction of the vector \f${\cal R}\f$ is as follows:
+!>       <ul> <li> if \c Lcoordinatesingularity=T , then 
+!>            \f{eqnarray}{ {\cal R} \equiv - \left( {\cal B} - \mu {\cal E} \right) \cdot \boldsymbol{\psi} 
+!>            \f} </li>
+!>            <li> if \c Lcoordinatesingularity=F and \c Lplasmaregion=T , then 
+!>            \f{eqnarray}{ {\cal R} \equiv - {\cal B} \cdot \boldsymbol{\psi} 
+!>            \f} </li>
+!>            <li> if \c Lcoordinatesingularity=F and \c Lvacuumregion=T , then 
+!>            \f{eqnarray}{ {\cal R} \equiv - {\cal G} - {\cal B} \cdot \boldsymbol{\psi}
+!>            \f} </li>
+!>       </ul>
+!>       The quantities \f${\cal B}\equiv\,\f$\c dMB, \f${\cal E}\equiv\,\f$\c dME and \f${\cal G}\equiv\,\f$\c dMG are constructed in matrix() . </li>
+!> </ul>
+!> 
+!> **solving linear system**
+!> 
+!> It is _not_ assumed that the linear system is positive definite.
+!> The \c LAPACK routine \c DSYSVX is used to solve the linear system.
+!> 
+!> **unpacking, ...**
+!> 
+!> <ul>
+!> <li> The magnetic degrees-of-freedom are unpacked by packab() . </li>
+!> <li> The error flag, \c ImagneticOK , is set that indicates if the Beltrami fields were successfully constructed. </li>
+!> </ul>
+!>
+!> 
+!> **construction of "constraint" function**
+!> 
+!> <ul>
+!> <li> The construction of the function \f${\bf f}(\boldsymbol{\mu})\f$ is required so that iterative methods can be used to construct the Beltrami field
+!>       consistent with the required constraints (e.g. on the enclosed fluxes, helicity, rotational-transform, ...).
+!>       \see ma02aa() for additional details.
+!> 
+!> **plasma region**
+!> 
+!> <ul>
+!> <li> For \c Lcoordinatesingularity=T , the returned function is:
+!> \f{eqnarray}{ {\bf f}(\mu,\Delta\psi_p) \equiv 
+!> \left\{ \begin{array}{cccccccr}
+!> (&                                            0&,&                                 0&)^T, & \textrm{if }\texttt{Lconstraint} &=& -1 \\
+!> (&                                            0&,&                                 0&)^T, & \textrm{if }\texttt{Lconstraint} &=&  0 \\
+!> (&{{\,\iota\!\!\!}-}(+1)-\texttt{iota (lvol  )}&,&                                 0&)^T, & \textrm{if }\texttt{Lconstraint} &=&  1 \\
+!> (&                                            ?&,&                                 ?&)^T, & \textrm{if }\texttt{Lconstraint} &=&  2
+!>           \end{array}\right.
+!> \f} </li>
+!> <li> For \c Lcoordinatesingularity=F , the returned function is:
+!> \f{eqnarray}{ {\bf f}(\mu,\Delta\psi_p) \equiv 
+!> \left\{ \begin{array}{cccccccr}
+!> (&                                          0&,&                                         0&)^T, & \textrm{if }\texttt{Lconstraint} &=& -1 \\
+!> (&                                          0&,&                                         0&)^T, & \textrm{if }\texttt{Lconstraint} &=&  0 \\
+!> (&{{\,\iota\!\!\!}-}(-1)-\texttt{oita(lvol-1)}&,&{{\,\iota\!\!\!}-}(+1)-\texttt{iota(lvol)}&)^T, & \textrm{if }\texttt{Lconstraint} &=&  1 \\
+!> (&                                          ?&,&                                         ?&)^T, & \textrm{if }\texttt{Lconstraint} &=&  2
+!>           \end{array}\right.
+!> \f} </li>
+!> </ul>
+!> 
+!> **vacuum region**
+!> 
+!> <ul>
+!> <li> For the vacuum region, the returned function is:
+!> \f{eqnarray}{ {\bf f}(\Delta\psi_t,\Delta\psi_p) \equiv 
+!> \left\{ \begin{array}{cccccccr}
+!> (&                                           0&,&                               0&)^T, & \textrm{if }\texttt{Lconstraint} &=& -1 \\
+!> (&           I-\texttt{curtor}                &,&           G-\texttt{curpol}    &)^T, & \textrm{if }\texttt{Lconstraint} &=&  0 \\
+!> (&{{\,\iota\!\!\!}-}(-1)-\texttt{oita(lvol-1)}&,&           G-\texttt{curpol}    &)^T, & \textrm{if }\texttt{Lconstraint} &=&  1 \\
+!> (&                                           ?&,&                               ?&)^T, & \textrm{if }\texttt{Lconstraint} &=&  2
+!>           \end{array}\right.
+!> \f} </li>
+!> </ul> </li>
+!> 
+!> <li> The rotational-transform, \f${{\,\iota\!\!\!}-}\f$, is computed by tr00ab() ; and the enclosed currents, \f$I\f$ and \f$G\f$, are computed by curent() . </li>
+!> </ul>
+!> 
+!> **early termination**
+!> 
+!> <ul>
+!> <li> If \f$|{\bf f}| < \f$ \c mupftol , then early termination is enforced (i.e., \c iflag is set to a negative integer).
+!>       (See ma02aa() for details of how mp00ac() is called iteratively.) </li>
+!> </ul>
+!> 
+!> @param[in] Ndof
+!> @param[in] Xdof
+!> @param     Fdof
+!> @param     Ddof
+!> @param[in] Ldfjac
+!> @param     iflag  indicates whether (i) iflag=1: "function" values are required; or (ii) iflag=2: "derivative" values are required
 subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fixed by NAG; ma02aa calls mp00ac through C05PCF;
 
 ! if iflag.eq.0 : Xdof and Fdof are available for PRINTING ; Fdof MUST NOT BE CHANGED; Ddof MUST NOT BE CHANGED;
@@ -144,6 +139,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
                         NAdof, &
 !                       dMA, dMB, dMC, dMD, dME, dMF, dMG, &
                         dMA, dMB,      dMD,           dMG, &
+                        Adotx, Ddotx,&
                         NdMASmax, NdMAS, dMAS, dMDS, idMAS, jdMAS, & ! preconditioning matrix
                         solution, GMRESlastsolution, &
                         dtflux, dpflux, &
@@ -161,7 +157,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   INTEGER, intent(in)  :: Ndof, Ldfjac
   REAL   , intent(in)  :: Xdof(1:Ndof)
   REAL                 :: Fdof(1:Ndof), Ddof(1:Ldfjac,1:Ndof)
-  INTEGER              :: iflag ! indicates whether (i) iflag=1: ``function'' values are required; or (ii) iflag=2: ``derivative'' values are required;
+  INTEGER              :: iflag 
   
   
   INTEGER, parameter   :: NB = 4 ! optimal workspace block size for LAPACK:DGECON;
@@ -329,9 +325,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
     if (NOTMatrixFree) then
     ; ;           ; rhs(1:NN,1) =                                                              - matmul( - one  * dMD(1:NN,1:NN), solution(1:NN,0) )
     else ! Matrix free version
-    ; ;call intghs(Iquad(lvol), mn, lvol, Lrad(lvol), 0) ! compute the integrals of B_lower
-    ; ;call mtrxhs(lvol, mn, Lrad(lvol), wk(1:NN+1), wk(NN+2:2*NN+2), 0) ! construct a.x from the integral
-    ; ;           ; rhs(1:NN,1) = wk(NN+3:2*NN+2)
+    ; ;           ; rhs(1:NN,1) = Ddotx(1:NN)
     endif ! NOTMatrixFree
     ; ;           ; rhs(1:NN,2) = - matmul(  dMB(1:NN,1:2)                       , ppsi(1:2) )
     ;end select
@@ -350,9 +344,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
     if (NOTMatrixFree) then
     ; ;           ; rhs(1:NN,1) =                                                              - matmul( - one  * dMD(1:NN,1:NN), solution(1:NN,0) )
     else ! Matrix free version
-    ; ;call intghs(Iquad(lvol), mn, lvol, Lrad(lvol), 0) ! compute the integrals of B_lower
-    ; ;call mtrxhs(lvol, mn, Lrad(lvol), wk(1:NN+1), wk(NN+2:2*NN+2), 0) ! construct a.x from the integral
-    ; ;           ; rhs(1:NN,1) = wk(NN+3:2*NN+2)
+    ; ;           ; rhs(1:NN,1) = Ddotx(1:NN)
     endif ! NOTMatrixFree
     ; ;           ; rhs(1:NN,2) = - matmul(  dMB(1:NN,1:2)                       , ppsi(1:2) )
     ;end select
@@ -504,6 +496,11 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
    
    packorunpack = 'U'
    WCALL( mp00ac, packab, ( packorunpack, lvol, NN, solution(1:NN,ideriv), ideriv ) ) ! unpacking; this assigns oAt, oAz through common;
+
+   if (ideriv .eq. 0 .and. .not. NOTMatrixFree) then
+      call intghs(Iquad(lvol), mn, lvol, Lrad(lvol), 0) ! compute the integrals of B_lower
+      call mtrxhs(lvol, mn, Lrad(lvol), Adotx, Ddotx, 0) ! construct a.x from the integral
+   endif
    
   enddo ! do ideriv = 0, 2;
 
@@ -520,13 +517,11 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 !                    +        sum( solution(1:NN,0) * matmul( dME(1:NN,1: 2),     dpsi(1: 2  ) ) ) !
 !                    + half * sum(     dpsi(1: 2  ) * matmul( dMF(1: 2,1: 2),     dpsi(1: 2  ) ) )
   else
-    call intghs(Iquad(lvol), mn, lvol, Lrad(lvol), 0) ! compute the integrals of B_lower
-    call mtrxhs(lvol, mn, Lrad(lvol), wk(1:NN+1), wk(NN+2:2*NN+2), 0) ! construct a.x from the integral
 
-    lBBintegral(lvol) = half * sum( solution(1:NN,0) * wk(2:NN+1) ) & 
+    lBBintegral(lvol) = half * sum( solution(1:NN,0) * Adotx(1:NN) ) & 
                       +        sum( solution(1:NN,0) * matmul( dMB(1:NN,1: 2),     dpsi(1: 2  ) ) ) !
 
-    lABintegral(lvol) = half * sum( solution(1:NN,0) * wk(NN+3:2*NN+2) )
+    lABintegral(lvol) = half * sum( solution(1:NN,0) * Ddotx(1:NN) )
   endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!  
@@ -673,8 +668,15 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   case(  2 )
 
    if ( iflag.eq.1 ) Fdof(1     ) = lABintegral(lvol) - helicity(lvol)
-   if ( iflag.eq.2 ) Ddof(1   ,1) = half * sum( solution(1:NN,1) * matmul( dMD(1:NN,1:NN), solution(1:NN,0) ) ) &
-                                  + half * sum( solution(1:NN,0) * matmul( dMD(1:NN,1:NN), solution(1:NN,1) ) )
+   
+   if (NOTMatrixFree) then
+    if ( iflag.eq.2 ) Ddof(1   ,1) = half * sum( solution(1:NN,1) * matmul( dMD(1:NN,1:NN), solution(1:NN,0) ) ) &
+                                    + half * sum( solution(1:NN,0) * matmul( dMD(1:NN,1:NN), solution(1:NN,1) ) )
+   else
+    if ( iflag.eq.2 ) then
+      Ddof(1   ,1) = sum( solution(1:NN,1) * Ddotx(1:NN) )
+    endif
+   endif
 
   case(  3 )
 
@@ -761,6 +763,25 @@ end subroutine mp00ac
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+!> \brief run GMRES
+!> 
+!> @param n
+!> @param nrestart
+!> @param mu
+!> @param vvol
+!> @param rhs
+!> @param sol
+!> @param ipar
+!> @param fpar
+!> @param wk
+!> @param nw
+!> @param guess
+!> @param a
+!> @param au
+!> @param jau
+!> @param ju
+!> @param iperm
+!> @param ierr
 subroutine rungmres(n,nrestart,mu,vvol,rhs,sol,ipar,fpar,wk,nw,guess,a,au,jau,ju,iperm,ierr)
   ! Driver subroutine for GMRES
   ! modified from riters.f from SPARSKIT v2.0 
@@ -830,6 +851,14 @@ subroutine rungmres(n,nrestart,mu,vvol,rhs,sol,ipar,fpar,wk,nw,guess,a,au,jau,ju
   return
 end subroutine rungmres
 
+!> \brief compute a.x by either by coumputing it directly, or using a matrix free method
+!> 
+!> @param n
+!> @param x
+!> @param ax
+!> @param a
+!> @param mu
+!> @param vvol
 subroutine matvec(n, x, ax, a, mu, vvol)
   ! compute a.x by either by coumputing it directly, 
   ! or using a matrix free method
@@ -859,6 +888,15 @@ subroutine matvec(n, x, ax, a, mu, vvol)
 
 end subroutine matvec
 
+!> \brief apply the preconditioner
+!> 
+!> @param n
+!> @param vecin
+!> @param vecout
+!> @param au
+!> @param jau
+!> @param ju
+!> @param iperm
 subroutine prec_solve(n,vecin,vecout,au,jau,ju,iperm)
   ! apply the preconditioner
   implicit none

@@ -1,16 +1,16 @@
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!> \defgroup grp_initialization Initialization of the code
+!>
+!> \latexonly
+!> \definecolor{Orange}{rgb}{1.0,0.5,0.0}
+!> \definecolor{Cerulean}{rgb}{0.0,0.5,1.0}
+!> \endlatexonly
 
-!title (initialization) ! Allocates and initializes internal arrays.
+!> \file preset.f90
+!> \brief Allocates and initializes internal arrays.
 
-!latex \briefly{Allocates and initializes internal arrays.}
-
-!latex \calledby{\link{xspech}}
-!latex \calls{\link{ra00aa}}
-
-!latex \tableofcontents
-
-!latex \subsection{definition of internal variables}
-
+!> \brief Allocates and initializes internal arrays.
+!> \ingroup grp_initialization
+!>
 subroutine preset
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -441,12 +441,12 @@ subroutine preset
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\type{LGdof} and \type{NGdof} : number of geometrical degrees-of-freedom;}
-
-!latex \begin{enumerate}
-!latex \item \type{LGdof} $\equiv$ the number of degrees-of-freedom in the geometry (i.e. Fourier harmonics) of each interface;
-!latex \item \type{NGdof} $\equiv$ total number of degrees-of-freedom in geometry, i.e. of all interfaces;
-!latex \end{enumerate}
+!> **LGdof and NGdof : number of geometrical degrees-of-freedom**
+!>
+!> <ul>
+!> <li> \c LGdof \f$\equiv\f$ the number of degrees-of-freedom in the geometry (i.e. Fourier harmonics) of each interface </li>
+!> <li> \c NGdof \f$\equiv\f$ total number of degrees-of-freedom in geometry, i.e. of all interfaces </li>
+!> </ul>
 
 !                            Rbc  Zbs    Rbs    Zbc
   select case( Igeometry )
@@ -465,18 +465,18 @@ subroutine preset
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\inputvar{iota} and \inputvar{oita} : rotational transform on interfaces;}
-
-!latex \begin{enumerate}
-!latex \item The input variables \inputvar{iota} and \inputvar{oita} are the rotational transform
-!latex       on ``inner-side'' and on the ``outer-side'' of each interface;
-!latex \item These quantities are formally input
-!latex \item Note that if $q_l+\gamma q_r \ne 0$, then \inputvar{iota} is given by
-!latex       \be \iotabar \equiv \frac{p_l + \gamma p_r}{q_l + \gamma q_r},
-!latex       \ee
-!latex       where $p_l \equiv $\inputvar{pl}, $q_l \equiv $\inputvar{ql}, etc.;
-!latex       and similarly for \inputvar{oita}.
-!latex \end{enumerate}
+!> **iota and oita: rotational transform on interfaces**
+!>
+!> <ul>
+!> <li> The input variables \c iota and \c oita are the rotational transform
+!>       on "inner-side" and on the "outer-side" of each interface. </li>
+!> <li> These quantities are formally inputs. </li>
+!> <li> Note that if \f$q_l+\gamma q_r \ne 0\f$, then \c iota is given by
+!>       \f{eqnarray}{ {{\,\iota\!\!\!}-} \equiv \frac{p_l + \gamma p_r}{q_l + \gamma q_r},
+!>       \f}
+!>       where \f$p_l \equiv\,\f$\c pl, \f$q_l \equiv\,\f$\c ql , etc.;
+!>       and similarly for \c oita . </li>
+!> </ul>
 
   do vvol = 0, Nvol
 
@@ -497,16 +497,16 @@ subroutine preset
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\type{dtflux(1:Mvol)} and \type{dpflux(1:Mvol)} : enclosed fluxes;}
-
-!latex \begin{enumerate}
-!latex \item \type{dtflux} $\equiv \Delta \psi_{tor} / 2\pi$ and
-!latex       \type{dpflux} $\equiv \Delta \psi_{pol} / 2\pi$ in each volume.
-!latex \item (Note that the total toroidal flux enclosed by the plasma boundary is $\Phi_{edge} \equiv$ \inputvar{phiedge}.)
-!latex \item $\psi_{tor} \equiv$ \inputvar{tflux} and $\psi_{pol} \equiv$ \inputvar{pflux} are immediately normalized (in \link{global}) according to
-!latex       $\psi_{tor,i} \rightarrow \psi_{tor,i} / \psi_{0}$ and
-!latex       $\psi_{pol,i} \rightarrow \psi_{pol,i} / \psi_{0}$, where $\psi_{0} \equiv \psi_{tor,N}$ on input.
-!latex \end{enumerate}
+!> **dtflux(1:Mvol) and dpflux(1:Mvol): enclosed fluxes**
+!>
+!> <ul>
+!> <li> \c dtflux \f$\equiv \Delta \psi_{tor} / 2\pi\f$ and
+!>      \c dpflux \f$\equiv \Delta \psi_{pol} / 2\pi\f$ in each volume. </li>
+!> <li> Note that the total toroidal flux enclosed by the plasma boundary is \f$\Phi_{edge} \equiv\,\f$\c phiedge . </li>
+!> <li> \f$\psi_{tor} \equiv\,\f$\c tflux and \f$\psi_{pol} \equiv\,\f$\c pflux are immediately normalized (in readin() ) according to
+!>      \f$\psi_{tor,i} \rightarrow \psi_{tor,i} / \psi_{0}\f$ and
+!>      \f$\psi_{pol,i} \rightarrow \psi_{pol,i} / \psi_{0}\f$, where \f$\psi_{0} \equiv \psi_{tor,N}\f$ on input. </li>
+!> </ul>
 
   SALLOCATE( dtflux, (1:Mvol), zero )
   SALLOCATE( dpflux, (1:Mvol), zero )
@@ -554,15 +554,15 @@ endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\type{sweight(1:Mvol)} : star-like angle constraint weight;}
-
-!latex \begin{enumerate}
-!latex \item the ``star-like'' poloidal angle constraint weights (only required for toroidal geometry, i.e. \type{Igeometry=3}) are given by
-!latex       \be \type{sweight}_v \equiv \inputvar{upsilon} \times (l_v / N_{vol})^w,
-!latex       \ee
-!latex       where $l_v$ is the volume number,
-!latex       and $w \equiv $ \inputvar{wpoloidal}.
-!latex \end{enumerate}
+!> **sweight(1:Mvol): star-like angle constraint weight**
+!>
+!> <ul>
+!> <li> the "star-like" poloidal angle constraint weights (only required for toroidal geometry, i.e. \c Igeometry=3) are given by
+!>       \f{eqnarray}{ \texttt{sweight}_v \equiv \texttt{upsilon} \times (l_v / N_{vol})^w,
+!>       \f}
+!>       where \f$l_v\f$ is the volume number,
+!>       and \f$w \equiv\,\f$\c wpoloidal. </li>
+!> </ul>
 
   SALLOCATE( sweight, (1:Mvol), zero )
  !sweight(1:Mvol) = upsilon * tflux(1:Mvol)**wpoloidal ! toroidal flux in vacuum region is not constant; 11 July 18;
@@ -577,36 +577,36 @@ endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\type{TT(0:Mrad,0:1,0:1)} : Chebyshev polynomials at inner/outer interface;}
-
-!latex \begin{enumerate}
-!latex \item \type{TT(0:Lrad,0:1,0:1)} gives the Chebyshev polynomials, and their first derivative, evaluated at $s=-1$ and $s=+1$.
-!latex \item Precisely, \type{TT(l,i,d)} $\equiv T_l^{(d)}(s_i)$ for $s_0=-1$ and $s_1=+1$.
-!latex \item Note that $T_l^{(0)}(s)=s^l$ and $T_l^{(1)}(s)=s^{l+1} l^2$ for $s=\pm 1$.
-!latex \item Note that
-!latex       \be T_l(-1)        = \left\{ \begin{array}{ccccccccccccccc}+1,& \mbox{\rm if $l$ is even,} \\
-!latex                                                                  -1,& \mbox{\rm if $l$ is odd;}
-!latex                                    \end{array} \right. & \; \;&
-!latex           T_l(+1)        = \left\{ \begin{array}{ccccccccccccccc}+1,& \mbox{\rm if $l$ is even,} \\
-!latex                                                                  +1,& \mbox{\rm if $l$ is odd;}
-!latex                                    \end{array} \right. \\
-!latex           T_l^\prime(-1) = \left\{ \begin{array}{ccccccccccccccc}-l^2,& \mbox{\rm if $l$ is even,} \\
-!latex                                                                  +l^2,& \mbox{\rm if $l$ is odd;}
-!latex                                    \end{array} \right. &\; \;&
-!latex           T_l^\prime(+1) = \left\{ \begin{array}{ccccccccccccccc}+l^2,& \mbox{\rm if $l$ is even,} \\
-!latex                                                                  +l^2,& \mbox{\rm if $l$ is odd.}
-!latex                                     \end{array} \right.
-!latex       \ee
-!latex \item \type{TT(0:Mrad,0:1,0:1)} is used in routines that explicity require interface information, such as
-!latex       \begin{enumerate}
-!latex         \item the interface force-balance routine,                                \link{lforce};
-!latex         \item the virtual casing routine,                                         \link{casing};
-!latex         \item computing the rotational-transform on the interfaces,               \link{tr00ab};
-!latex         \item computing the covariant components of the interface magnetic field, \link{sc00aa};
-!latex         \item enforcing the constraints on the Beltrami fields,                   \link{matrix};
-!latex     and \item computing the enclosed currents of the vacuum field,                \link{curent}.
-!latex       \end{enumerate}
-!latex \end{enumerate}
+!> **TT(0:Mrad,0:1,0:1): Chebyshev polynomials at inner/outer interface**
+!>
+!> <ul>
+!> <li> \c TT(0:Lrad,0:1,0:1) gives the Chebyshev polynomials, and their first derivative, evaluated at \f$s=-1\f$ and \f$s=+1\f$. </li>
+!> <li> Precisely, \c TT(l,i,d) \f$\equiv T_l^{(d)}(s_i)\f$ for \f$s_0=-1\f$ and \f$s_1=+1\f$. </li>
+!> <li> Note that \f$T_l^{(0)}(s)=s^l\f$ and \f$T_l^{(1)}(s)=s^{l+1} l^2\f$ for \f$s=\pm 1\f$. </li>
+!> <li> Note that
+!>       \f{eqnarray}{ T_l(-1)        = \left\{ \begin{array}{ccccccccccccccc}+1,& \textrm{ if $l$ is even,} \\
+!>                                                                            -1,& \textrm{ if $l$ is odd;}
+!>                                              \end{array} \right. & \; \;&
+!>                     T_l(+1)        = \left\{ \begin{array}{ccccccccccccccc}+1,& \textrm{ if $l$ is even,} \\
+!>                                                                            +1,& \textrm{ if $l$ is odd;}
+!>                                              \end{array} \right. \\
+!>                     T_l^\prime(-1) = \left\{ \begin{array}{ccccccccccccccc}-l^2,& \textrm{ if $l$ is even,} \\
+!>                                                                            +l^2,& \textrm{ if $l$ is odd;}
+!>                                              \end{array} \right. &\; \;&
+!>                     T_l^\prime(+1) = \left\{ \begin{array}{ccccccccccccccc}+l^2,& \textrm{ if $l$ is even,} \\
+!>                                                                            +l^2,& \textrm{ if $l$ is odd.}
+!>                                               \end{array} \right.
+!>       \f} </li>
+!> <li> \c TT(0:Mrad,0:1,0:1) is used in routines that explicity require interface information, such as
+!>       <ul>
+!>         <li> the interface force-balance routine,                                lforce() </li>
+!>         <li> the virtual casing routine,                                         casing() </li>
+!>         <li> computing the rotational-transform on the interfaces,               tr00ab() </li>
+!>         <li> computing the covariant components of the interface magnetic field, sc00aa() </li>
+!>         <li> enforcing the constraints on the Beltrami fields,                   matrix() </li>
+!>     and <li> computing the enclosed currents of the vacuum field,                curent(). </li>
+!>       </ul> </li>
+!> </ul>
 
   SALLOCATE( TT, (0:Mrad,0:1,0:1), zero )
   SALLOCATE(RTT, (0:Lrad(1),0:Mpol,0:1,0:1), zero )
@@ -621,15 +621,15 @@ endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\type{ImagneticOK(1:Mvol)} : Beltrami/vacuum error flag;}
-
-!latex \begin{enumerate}
-!latex \item error flags that indicate if the magnetic field in each volume has been successfully constructed;
-!latex \item \type{ImagneticOK} is initialized to \type{.false.} in \link{dforce} before the Beltrami solver routines are called.
-!latex       If the construction of the Beltrami field is successful
-!latex       (in either \link{ma02aa} or \link{mp00ac})
-!latex       then \type{ImagneticOK} is set to \type{.true.}.
-!latex \end{enumerate}
+!> **ImagneticOK(1:Mvol): Beltrami/vacuum error flag**
+!>
+!> <ul>
+!> <li> error flags that indicate if the magnetic field in each volume has been successfully constructed </li>
+!> <li> \c ImagneticOK is initialized to \c .false. in dforce() before the Beltrami solver routines are called.
+!>       If the construction of the Beltrami field is successful
+!>       (in either ma02aa() or mp00ac() )
+!>       then \c ImagneticOK is set to \c .true. . </li>
+!> </ul>
 
   SALLOCATE( ImagneticOK, (1:Mvol), .false. )
 
@@ -644,55 +644,52 @@ endif
 !latex       then \type{ImagneticOK} is set to \type{.true.}.
 !latex \end{enumerate}
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \subsubsection{\type{Lhessianallocated};}
-
-!latex \begin{enumerate}
-!latex \item The internal logical variable, \type{Lhessianallocated}, indicates whether the ``Hessian'' matrix of second-partial derivatives
-!latex       (really, the first derivatives of the force-vector) has been allocated, or not!
-!latex \end{enumerate}
-
+!> **Lhessianallocated**
+!>
+!> <ul>
+!> <li> The internal logical variable, \c Lhessianallocated, indicates whether the ``Hessian'' matrix of second-partial derivatives
+!>       (really, the first derivatives of the force-vector) has been allocated, or not! </li>
+!> </ul>
   Lhessianallocated = .false.
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\type{ki(1:mn,0:1)} : Fourier identification;}
-
-!latex \begin{enumerate}
-!latex \item Consider the ``abbreviated'' representation for a double Fourier series,
-!latex       \be \sum_i f_i \cos(m_i \t - n_i \z) \equiv                         \sum_{n=      0  }^{     N_0} f_{0,n} \cos(    -n\z)
-!latex                                                   + \sum_{m=1}^{     M_0} \sum_{n=-     N_0}^{     N_0} f_{m,n} \cos( m\t-n\z),
-!latex       \ee
-!latex       and the same representation but with enhanced resolution,
-!latex       \be \sum_k \bar f_k \cos(\bar m_k \t - \bar n_k \z) \equiv                         \sum_{n=      0  }^{     N_1} f_{0,n} \cos(    -n\z)
-!latex                                                   + \sum_{m=1}^{     M_1} \sum_{n=-     N_1}^{     N_1} f_{m,n} \cos(m\t-n\z),
-!latex       \label{eq:enhancedFourierrepresentation}
-!latex       \ee
-!latex       with $M_1 \ge M_0$ and $N_1 \ge N_0$;
-!latex       \newline then $k_i\equiv$ \type{ki(i,0)} is defined such that $\bar m_{k_i} = m_i$ and $\bar n_{k_i} = n_i$.
-!latex \end{enumerate}
+!> **ki(1:mn,0:1): Fourier identification**
+!>
+!> <ul>
+!> <li> Consider the "abbreviated" representation for a double Fourier series,
+!>       \f{eqnarray}{ \sum_i      f_i \cos(     m_i \theta -      n_i \zeta) \equiv                         \sum_{n=      0  }^{     N_0} f_{0,n} \cos(       -n\zeta)
+!>                                                                                   + \sum_{m=1}^{     M_0} \sum_{n=-     N_0}^{     N_0} f_{m,n} \cos(m\theta-n\zeta),
+!>       \f}
+!>       and the same representation but with enhanced resolution,
+!>       \f{eqnarray}{ \sum_k \bar f_k \cos(\bar m_k \theta - \bar n_k \zeta) \equiv                         \sum_{n=      0  }^{     N_1} f_{0,n} \cos(       -n\zeta)
+!>                                                                                   + \sum_{m=1}^{     M_1} \sum_{n=-     N_1}^{     N_1} f_{m,n} \cos(m\theta-n\zeta),
+!>       \label{eq:enhancedFourierrepresentation_preset}
+!>       \f}
+!>       with \f$M_1 \ge M_0\f$ and \f$N_1 \ge N_0\f$;
+!>       then \f$k_i\equiv\,\f$\c ki(i,0) is defined such that \f$\bar m_{k_i} = m_i\f$ and \f$\bar n_{k_i} = n_i\f$. </li>
+!> </ul>
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\type{kija(1:mn,1:mn,0:1)}, \type{kijs(1:mn,1:mn,0:1)} : Fourier identification;}
-
-!latex \begin{enumerate}
-!latex \item Consider the following quantities, which are computed in \link{ma00aa},
-!latex       where $\bar g^{\mu\nu} = \sum_k \bar g^{\mu\nu}_k \cos \a_k$ for $\a_k \equiv m_k \t - n_k \z$,
-!latex       \be
-!latex       \ooint \bar g^{\mu\nu} \cos\a_i \; \cos\a_j & = & \frac{1}{2} \ooint \bar g^{\mu\nu} ( + \cos\a_{k_{ij+}} + \cos\a_{k_{ij-}} ), \\
-!latex       \ooint \bar g^{\mu\nu} \cos\a_i \; \sin\a_j & = & \frac{1}{2} \ooint \bar g^{\mu\nu} ( + \sin\a_{k_{ij+}} - \sin\a_{k_{ij-}} ), \\
-!latex       \ooint \bar g^{\mu\nu} \sin\a_i \; \cos\a_j & = & \frac{1}{2} \ooint \bar g^{\mu\nu} ( + \sin\a_{k_{ij+}} + \sin\a_{k_{ij-}} ), \\
-!latex       \ooint \bar g^{\mu\nu} \sin\a_i \; \sin\a_j & = & \frac{1}{2} \ooint \bar g^{\mu\nu} ( - \cos\a_{k_{ij+}} + \cos\a_{k_{ij-}} ),
-!latex       \ee
-!latex       where $(m_{k_{ij+}}, n_{k_{ij+}}) = (m_i + m_j, n_i + n_j)$ and $(m_{k_{ij-}}, n_{k_{ij-}}) = (m_i - m_j, n_i - n_j)$;
-!latex       \newline then \mbox{\type{kija(i,j,0)}$\equiv k_{ij+}$} and \mbox{\type{kijs(i,j,0)}$\equiv k_{ij-}$}.
-!latex \item Note that \Eqn{enhancedFourierrepresentation} does not include $m<0$; so,
-!latex       if $m_i - m_j < 0$ then $k_{ij-}$ is re-defined such that \mbox{$(m_{k_{ij-}}, n_{k_{ij-}})$} $=$ \mbox{$ (m_j - m_i, n_j - n_i)$}; and
-!latex       similarly for the case $m=0$ and $n<0$.
-!latex       Also, take care that the sign of the sine harmonics in the above expressions will change for these cases.
-!latex \end{enumerate}
+!> **kija(1:mn,1:mn,0:1), kijs(1:mn,1:mn,0:1): Fourier identification**
+!>
+!> <ul>
+!> <li> Consider the following quantities, which are computed in ma00aa(),
+!>       where \f$\bar g^{\mu\nu} = \sum_k \bar g^{\mu\nu}_k \cos \alpha_k\f$ for \f$\alpha_k \equiv m_k \theta - n_k \zeta\f$,
+!>       \f{eqnarray}{
+!>       \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \bar g^{\mu\nu} \cos\alpha_i \; \cos\alpha_j & = & \frac{1}{2} \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \bar g^{\mu\nu} ( + \cos\alpha_{k_{ij+}} + \cos\alpha_{k_{ij-}} ), \\
+!>       \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \bar g^{\mu\nu} \cos\alpha_i \; \sin\alpha_j & = & \frac{1}{2} \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \bar g^{\mu\nu} ( + \sin\alpha_{k_{ij+}} - \sin\alpha_{k_{ij-}} ), \\
+!>       \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \bar g^{\mu\nu} \sin\alpha_i \; \cos\alpha_j & = & \frac{1}{2} \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \bar g^{\mu\nu} ( + \sin\alpha_{k_{ij+}} + \sin\alpha_{k_{ij-}} ), \\
+!>       \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \bar g^{\mu\nu} \sin\alpha_i \; \sin\alpha_j & = & \frac{1}{2} \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \bar g^{\mu\nu} ( - \cos\alpha_{k_{ij+}} + \cos\alpha_{k_{ij-}} ),
+!>       \f}
+!>       where \f$(m_{k_{ij+}}, n_{k_{ij+}}) = (m_i + m_j, n_i + n_j)\f$ and \f$(m_{k_{ij-}}, n_{k_{ij-}}) = (m_i - m_j, n_i - n_j)\f$;
+!>       then \c kija(i,j,0) \f$\equiv k_{ij+}\f$ and \c kijs(i,j,0) \f$\equiv k_{ij-}\f$. </li>
+!> <li> Note that Eqn.\f$(\ref{eq:enhancedFourierrepresentation_preset})\f$ does not include \f$m<0\f$; so,
+!>       if \f$m_i - m_j < 0\f$ then \f$k_{ij-}\f$ is re-defined such that \f$(m_{k_{ij-}}, n_{k_{ij-}}) = (m_j - m_i, n_j - n_i)\f$; and
+!>       similarly for the case \f$m=0\f$ and \f$n<0\f$.
+!>       Also, take care that the sign of the sine harmonics in the above expressions will change for these cases. </li>
+!> </ul>
 
   SALLOCATE( ki, (1:mn,0:1), 0 )
   SALLOCATE( kija, (1:mn,1:mn,0:1), 0 )
@@ -736,7 +733,7 @@ endif
   enddo ! end of do ii; 29 Jan 13;
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\type{djkp};}
+!> **djkp**
 
   if( Igeometry.eq.2 ) then ! standard cylindrical; 04 Dec 14;
 
@@ -754,7 +751,7 @@ endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\type{iotakki};}
+!> **iotakki**
 
   SALLOCATE( iotakkii, (1:mn      ), 0 ) ! used to identify matrix elements in straight-field-line angle transformation;
 
@@ -798,6 +795,15 @@ endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+!> **cheby(0:Lrad,0:2): Chebyshev polynomial workspace**
+!>
+!> <ul>
+!> <li> \c cheby(0:Lrad,0:2) is global workspace for computing the Chebyshev polynomials, and their derivatives,
+!>       using the recurrence relations \f$T_0(s) = 1\f$, \f$T_1(s) = s\f$ and  \f$T_l(s) = 2 \, s \,T_{l-1}(s) - T_{l-2}(s)\f$. </li>
+!> <li> These are computed as required, i.e. for arbitrary \f$s\f$, in bfield(), jo00aa() and ma00aa(). </li>
+!> <li> Note that the quantities required for ma00aa() are for fixed \f$s\f$, and so these quantities should be precomputed. </li>
+!> </ul>
+
 ! Allocate space for the toroidal current array in each interface
 
   SALLOCATE( IPDt, (1:Mvol), zero)
@@ -807,41 +813,27 @@ endif
     SALLOCATE( IPDtDpf, (1:Mvol-1, 1:Mvol-1), zero)
   endif
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \subsubsection{\type{cheby(0:Lrad,0:2)} : Chebyshev polynomial workspace;}
-
-!latex \begin{enumerate}
-!latex \item \type{cheby(0:Lrad,0:2)} is global workspace for computing the Chebyshev polynomials, and their derivatives,
-!latex       using the recurrence relations $T_0(s) = 1$, $T_1(s) = s$ and  $T_l(s) = 2 \, s \,T_{l-1}(s) - T_{l-2}(s)$.
-!latex \item These are computed as required, i.e. for arbitrary $s$, in \link{bfield}, \link{jo00aa} and \link{ma00aa}.
-!latex \item (Note that the quantities required for \link{ma00aa} are for fixed $s$, and so these quantities should be precomputed.)
-!latex \end{enumerate}
-
   SALLOCATE( cheby, (0:Mrad,0:2), zero )
   SALLOCATE( zernike, (0:Lrad(1), 0:Mpol, 0:2), zero )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\type{Iquad}, \type{gaussianweight}, \type{gaussianabscissae} : Gaussian quadrature;}
-
-!latex \begin{enumerate}
-!latex \item The volume integrals are computed using a ``Fourier'' integration over the angles and by Gaussian quadrature over the radial,
-!latex       i.e. $\ds \int \!\! f(s) ds = \sum_k \omega_k f(s_k)$.
-!l tex \item The numerical resolution of the Gaussian quadrature is determined primarily by \inputvar{Nquad},
-!l tex       but \inputvar{Lrad$_v$} is also important
-!l tex       (as is \inputvar{Mpol} if the regularization factors are included in the vector potential -- only for the coordinate singularity).
-!latex \item The quadrature resolution in each volume is give by \internal{Iquad(1:Mvol)} which is determined as follows:
-!latex \bi
-!latex \item if \inputvar{Nquad.gt.0},                                 then \internal{Iquad(vvol) =              Nquad};
-!latex \item if \inputvar{Nquad.le.0 and .not.Lcoordinatesingularity}, then \internal{Iquad(vvol) = 2*Lrad(vvol)-Nquad};
-!latex \item if \inputvar{Nquad.le.0 and      Lcoordinatesingularity}, then \internal{Iquad(vvol) = 2*Lrad(vvol)-Nquad+Mpol};
-!latex \ei
-!latex \item The Gaussian weights and abscissae are given by \internal{gaussianweight(1:maxIquad,1:Mvol)} and \internal{gaussianabscissae(1:maxIquad,1:Mvol)},
-!latex       which are computed using modified Numerical Recipes routine gauleg.
-!latex \item \internal{Iquad$_v$} is passed through to \link{ma00aa} to compute the volume integrals of the metric elements;
-!latex       also see \link{jo00aa}, where \internal{Iquad$_v$} is used to compute the volume integrals of $||\nabla\times{\bf B} - \mu {\bf B}||$;
-!latex \end{enumerate}
+!> **Iquad, gaussianweight, gaussianabscissae: Gauss-Legendre quadrature**
+!>
+!> <ul>
+!> <li> The volume integrals are computed using a "Fourier" integration over the angles and by Gauss-Legendre quadrature over the radial,
+!>       i.e. \f$\displaystyle \int \!\! f(s) ds = \sum_k \omega_k f(s_k)\f$. </li>
+!> <li> The quadrature resolution in each volume is give by \c Iquad(1:Mvol) which is determined as follows:
+!> <ul>
+!> <li> if \c Nquad.gt.0                                    , then \c Iquad(vvol)=Nquad                   </li>
+!> <li> if \c Nquad.le.0 and \c .not.Lcoordinatesingularity , then \c Iquad(vvol)=2*Lrad(vvol)-Nquad      </li>
+!> <li> if \c Nquad.le.0 and      \c Lcoordinatesingularity , then \c Iquad(vvol)=2*Lrad(vvol)-Nquad+Mpol </li>
+!> </ul> </li>
+!> <li> The Gaussian weights and abscissae are given by \c gaussianweight(1:maxIquad,1:Mvol) and \c gaussianabscissae(1:maxIquad,1:Mvol),
+!>       which are computed using modified Numerical Recipes routine gauleg() . </li>
+!> <li> \c Iquad\f$_v\f$ is passed through to ma00aa() to compute the volume integrals of the metric elements;
+!>       also see jo00aa(), where \c Iquad\f$_v\f$ is used to compute the volume integrals of \f$||\nabla\times{\bf B} - \mu {\bf B}||\f$. </li>
+!> </ul>
 
   SALLOCATE( Iquad, (1:Mvol), 0 ) ! 16 Jan 13;
 
@@ -887,11 +879,11 @@ endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\type{LBsequad}, \type{LBnewton} and \type{LBlinear};}
-
-!latex \begin{enumerate}
-!latex \item \type{LBsequad}, \type{LBnewton} and \type{LBlinear} depend simply on \type{LBeltrami}, which is described in \link{global}.
-!latex \end{enumerate}
+!> **LBsequad, LBnewton and LBlinear**
+!>
+!> <ul>
+!> <li> \c LBsequad, \c LBnewton and \c LBlinear depend simply on \c LBeltrami , which is described in global.f90 . </li>
+!> </ul>
 
   LBsequad = .false.
   LBnewton = .false.
@@ -918,14 +910,14 @@ endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\type{BBweight(1:mn)} : weighting of force-imbalance harmonics;}
-
-!latex \begin{enumerate}
-!latex \item weight on force-imbalance harmonics;
-!latex       \be \type{BBweight}_i \equiv \inputvar{opsilon} \times \exp\left[ - \inputvar{escale} \times (m_i^2 + n_i^2) \right]
-!latex       \ee
-!latex \item this is only used in \link{dforce} in constructing the force-imbalance vector;
-!latex \end{enumerate}
+!> **BBweight(1:mn): weighting of force-imbalance harmonics**
+!>
+!> <ul>
+!> <li> weight on force-imbalance harmonics;
+!>       \f{eqnarray}{ \texttt{BBweight}_i \equiv \texttt{opsilon} \times \exp\left[ - \texttt{escale} \times (m_i^2 + n_i^2) \right]
+!>       \f} </li>
+!> <li> this is only used in dforce() in constructing the force-imbalance vector </li>
+!> </ul>
 
   SALLOCATE( BBweight, (1:mn), opsilon * exp( - escale * ( im(1:mn)**2 + (in(1:mn)/Nfp)**2 ) ) )
 
@@ -936,14 +928,14 @@ endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\type{mmpp(1:mn)} : spectral condensation weight factors;}
-
-!latex \begin{enumerate}
-!latex \item spectral condensation weight factors;
-!latex       \be \type{mmpp(i)} \equiv m_i^p,
-!latex       \ee
-!latex       where $p \equiv $ \inputvar{pcondense}.
-!latex \end{enumerate}
+!> **mmpp(1:mn): spectral condensation weight factors**
+!>
+!> <ul>
+!> <li> spectral condensation weight factors;
+!>       \f{eqnarray}{ \texttt{mmpp(i)} \equiv m_i^p,
+!>       \f}
+!>       where \f$p \equiv\,\f$\c pcondense . </li>
+!> </ul>
 
   SALLOCATE( mmpp, (1:mn), zero )
 
@@ -957,24 +949,33 @@ endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\type{NAdof}, \type{Ate}, \type{Aze}, \type{Ato} and \type{Azo} : degrees-of-freedom in magnetic vector potential;}
-
-!latex \begin{enumerate}
-!latex \item \type{NAdof(1:Mvol)} $\equiv$ total number of degrees-of-freedom in magnetic vector potential, including Lagrange multipliers, in each volume.
-!latex       This can de deduced from \link{matrix}.
-!latex \item \Ais
-!latex \item The Chebyshev-Fourier harmonics of the covariant components of the magnetic vector potential are kept in
-!latex       \\ $\Ate{v,j,l} \equiv $ \verb!Ate(v,0,j)%s(l)!,
-!latex       \\ $\Aze{v,j,l} \equiv $ \verb!Aze(v,0,j)%s(l)!,
-!latex       \\ $\Ato{v,j,l} \equiv $ \verb!Ato(v,0,j)%s(l)!, and
-!latex       \\ $\Azo{v,j,l} \equiv $ \verb!Azo(v,0,j)%s(l)!;
-!latex       \\ where $v=1,\type{Mvol}$ labels volume, $j=1,\type{mn}$ labels Fourier harmonic, and $l=0,$ \inputvar{Lrad}$(v)$ labels Chebyshev polynomial.
-!latex       (These arrays also contains derivative information.)
-!latex \item If \inputvar{Linitguess=1}, a guess for the initial state for the Beltrami fields is constructed.
-!latex       An initial state is required for iterative solvers of the Beltrami fields, see \inputvar{LBeltrami}.
-!latex \item If \inputvar{Linitguess=2}, the initial state for the Beltrami fields is read from file (see \link{ra00aa}).
-!latex       An initial state is required for iterative solvers of the Beltrami fields, see \inputvar{LBeltrami}.
-!latex \end{enumerate}
+!> **NAdof, Ate, Aze, Ato and Azo: degrees-of-freedom in magnetic vector potential**
+!>
+!> <ul>
+!> <li> \c NAdof(1:Mvol) \f$\equiv\f$ total number of degrees-of-freedom in magnetic vector potential, including Lagrange multipliers, in each volume.
+!>       This can de deduced from matrix(). </li>
+!> <li> The components of the vector potential, \f${\bf A}=A_\theta \nabla + A_\zeta \nabla \zeta\f$, are
+!>      \f{eqnarray}{
+!>        A_\theta(s,\theta,\zeta) &=& \sum_{i,l} {\color{red}  A_{\theta,e,i,l}} \; {\overline T}_{l,i}(s) \cos\alpha_i + \sum_{i,l} {\color{Orange}  A_{\theta,o,i,l}} \; {\overline T}_{l,i}(s) \sin\alpha_i, \label{eq:At_preset} \\
+!>        A_\zeta( s,\theta,\zeta) &=& \sum_{i,l} {\color{blue} A_{\zeta, e,i,l}} \; {\overline T}_{l,i}(s) \cos\alpha_i + \sum_{i,l} {\color{Cerulean}A_{\zeta ,o,i,l}} \; {\overline T}_{l,i}(s) \sin\alpha_i, \label{eq:Az_preset}
+!>      \f}
+!>      where \f${\overline T}_{l,i}(s) \equiv \bar s^{m_i/2} \, T_l(s)\f$, \f$T_l(s)\f$ is the Chebyshev polynomial, and \f$\alpha_j \equiv m_j\theta-n_j\zeta\f$.
+!>      The regularity factor, \f$\bar s^{m_i/2}\f$, where \f$\bar s \equiv (1+s)/2\f$, is only included if there is a coordinate singularity in the domain
+!>      (i.e. only in the innermost volume, and only in cylindrical and toroidal geometry.) </li>
+!> <li> The Chebyshev-Fourier harmonics of the covariant components of the magnetic vector potential are kept in
+!>      \f{eqnarray}{
+!>          {\color{red}     A_{\theta,e,i,l}} &\equiv& \texttt{Ate(v,0,j)}\%\texttt{s(l)} , \\
+!>          {\color{blue}    A_{\zeta, e,i,l}} &\equiv& \texttt{Aze(v,0,j)}\%\texttt{s(l)} , \\
+!>          {\color{Orange}  A_{\theta,o,i,l}} &\equiv& \texttt{Ato(v,0,j)}\%\texttt{s(l)} , \mathrm{and} \\
+!>          {\color{Cerulean}A_{\zeta ,o,i,l}} &\equiv& \texttt{Azo(v,0,j)}\%\texttt{s(l)} ;
+!>      \f}
+!>      where \f$v=1,\texttt{Mvol}\f$ labels volume, \f$j=1,\texttt{mn}\f$ labels Fourier harmonic, and \f$l=0,\,\f$\c Lrad \f$(v)\f$ labels Chebyshev polynomial.
+!>      (These arrays also contains derivative information.) </li>
+!> <li> If \c Linitguess=1 , a guess for the initial state for the Beltrami fields is constructed.
+!>      An initial state is required for iterative solvers of the Beltrami fields, see \c LBeltrami . </li>
+!> <li> If \c Linitguess=2 , the initial state for the Beltrami fields is read from file (see ra00aa() ).
+!>      An initial state is required for iterative solvers of the Beltrami fields, see \c LBeltrami . </li>
+!> </ul>
 
   SALLOCATE( NAdof, (1:Mvol          ), 0 ) ! Beltrami degrees-of-freedom in each annulus;
   SALLOCATE( Nfielddof,(1:Mvol       ), 0 ) ! Beltrami degrees-of-freedom in each annulus, field only;
@@ -1274,7 +1275,7 @@ endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\type{workspace};}
+!> **workspace**
 
 ! Fourier transforms;
 
@@ -1310,36 +1311,35 @@ endif
     SALLOCATE( dZadR, (1:mn,0:1,0:1,1:mn), zero )
     SALLOCATE( dZadZ, (1:mn,0:1,0:1,1:mn), zero )
 
-    SALLOCATE( dRodR, (1:Ntz,0:1,1:mn), zero ) ! calculated in rzaxis; 19 Sep 16;
-    SALLOCATE( dRodZ, (1:Ntz,0:1,1:mn), zero )
-    SALLOCATE( dZodR, (1:Ntz,0:1,1:mn), zero )
-    SALLOCATE( dZodZ, (1:Ntz,0:1,1:mn), zero )
+    SALLOCATE( dRodR, (1:Ntz,0:3,1:mn), zero ) ! calculated in rzaxis; 19 Sep 16;
+    SALLOCATE( dRodZ, (1:Ntz,0:3,1:mn), zero )
+    SALLOCATE( dZodR, (1:Ntz,0:3,1:mn), zero )
+    SALLOCATE( dZodZ, (1:Ntz,0:3,1:mn), zero )
   endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\type{goomne, goomno} : metric information}
-!latex \subsubsection{\type{gssmne, gssmno} : metric information}
-!latex \subsubsection{\type{gstmne, gstmno} : metric information}
-!latex \subsubsection{\type{gszmne, gszmno} : metric information}
-!latex \subsubsection{\type{gttmne, gttmno} : metric information}
-!latex \subsubsection{\type{gtzmne, gtzmno} : metric information}
-!latex \subsubsection{\type{gzzmne, gzzmno} : metric information}
-
-!latex \begin{enumerate}
-!latex \item The metric information are:
-!latex \bi
-!latex \item[ ] \type{goomne(0:mne)}, \type{goomno(0:mne)}
-!latex \item[ ] \type{gssmne(0:mne)}, \type{gssmno(0:mne)}
-!latex \item[ ] \type{gstmne(0:mne)}, \type{gstmno(0:mne)}
-!latex \item[ ] \type{gszmne(0:mne)}, \type{gszmno(0:mne)}
-!latex \item[ ] \type{gttmne(0:mne)}, \type{gttmno(0:mne)}
-!latex \item[ ] \type{gtzmne(0:mne)}, \type{gtzmno(0:mne)}
-!latex \item[ ] \type{gzzmne(0:mne)}, \type{gzzmno(0:mne)}
-!latex \ei
-!latex \item These are defined in \link{metrix}, and used in \link{ma00aa}.
-!latex \end{enumerate}
-
+!> **goomne, goomno: metric information**
+!> These are defined in metrix() , and used in ma00aa().
+!>
+!> **gssmne, gssmno: metric information**
+!> These are defined in metrix() , and used in ma00aa().
+!>
+!> **gstmne, gstmno: metric information**
+!> These are defined in metrix() , and used in ma00aa().
+!>
+!> **gszmne, gszmno: metric information**
+!> These are defined in metrix() , and used in ma00aa().
+!>
+!> **gttmne, gttmno: metric information**
+!> These are defined in metrix() , and used in ma00aa().
+!>
+!> **gtzmne, gtzmno: metric information**
+!> These are defined in metrix() , and used in ma00aa().
+!>
+!> **gzzmne, gzzmno: metric information**
+!> These are defined in metrix() , and used in ma00aa().
+!>
   SALLOCATE( goomne, (0:mne, maxIquad), zero ) ! workspace for Fourier decomposition of metric terms;
   SALLOCATE( goomno, (0:mne, maxIquad), zero )
   SALLOCATE( gssmne, (0:mne, maxIquad), zero ) ! workspace for Fourier decomposition of metric terms;
@@ -1385,14 +1385,14 @@ endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\type{cosi(1:Ntz,1:mn)} and \type{sini(1:Ntz,1:mn)};}
-
-!latex \begin{enumerate}
-!latex \item Trigonometric factors used in various Fast Fourier transforms, where
-!latex       \be \mbox{\type{cosi}}_{j,i} & = & \cos( m_i \t_j - n_i \z_j ), \\
-!latex           \mbox{\type{sini}}_{j,i} & = & \sin( m_i \t_j - n_i \z_j ).
-!latex       \ee
-!latex \end{enumerate}
+!> **cosi(1:Ntz,1:mn) and sini(1:Ntz,1:mn)**
+!>
+!> <ul>
+!> <li> Trigonometric factors used in various Fast Fourier transforms, where
+!>       \f{eqnarray}{ \texttt{cosi}_{j,i} & = & \cos( m_i \theta_j - n_i \zeta_j ), \\
+!>                     \texttt{sini}_{j,i} & = & \sin( m_i \theta_j - n_i \zeta_j ).
+!>       \f} </li>
+!> </ul>
 
   SALLOCATE( gteta, (1:Ntz), zero )
   SALLOCATE( gzeta, (1:Ntz), zero )
@@ -1480,29 +1480,25 @@ endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\type{psifactor(1:mn,1:Mvol)} : coordinate ``pre-conditioning'' factor;}
-
-!latex \begin{enumerate}
-
-!latex \item In toroidal geometry, the coordinate ``pre-conditioning'' factor is
-!latex       \be f_{j,v} \equiv \left\{
-!latex       \begin{array}{lcccccc}\psi_{t,v}^{0    }&,&\mbox{for $m_j=0$}, \\
-!latex                             \psi_{t,v}^{m_j/2}&,&\mbox{otherwise}.
-!latex       \end{array}\right.
-!latex       \ee
-!latex       where $\psi_{t,v} \equiv $ \type{tflux} is the (normalized?) toroidal flux enclosed by the $v$-th interface.
-
-!latex \item \type{psifactor} is used in \link{packxi}, \link{dforce} and \link{hesian}.
-
-!latex \item \type{inifactor} is similarly constructed, with
-!latex       \be f_{j,v} \equiv \left\{
-!latex       \begin{array}{lcccccc}\psi_{t,v}^{ 1 /2}&,&\mbox{for $m_j=0$}, \\
-!latex                             \psi_{t,v}^{m_j/2}&,&\mbox{otherwise}.
-!latex       \end{array}\right.
-!latex       \ee
-!latex       and used only for the initialization of the surfaces taking into account axis information if provided.
-
-!latex \end{enumerate}
+!> **psifactor(1:mn,1:Mvol): coordinate "pre-conditioning" factor**
+!>
+!> <ul>
+!> <li> In toroidal geometry, the coordinate "pre-conditioning" factor is
+!>       \f{eqnarray}{ f_{j,v} \equiv \left\{
+!>       \begin{array}{lcccccc}\psi_{t,v}^{0    }&,&\mbox{for $m_j=0$}, \\
+!>                             \psi_{t,v}^{m_j/2}&,&\mbox{otherwise}.
+!>       \end{array}\right.
+!>       \f}
+!>       where \f$\psi_{t,v} \equiv\,\f$\c tflux is the (normalized?) toroidal flux enclosed by the \f$v\f$-th interface. </li>
+!> <li> \c psifactor is used in packxi(), dforce() and hesian(). </li>
+!> <li> \c inifactor is similarly constructed, with
+!>       \f{eqnarray}{ f_{j,v} \equiv \left\{
+!>       \begin{array}{lcccccc}\psi_{t,v}^{ 1 /2}&,&\mbox{for $m_j=0$}, \\
+!>                             \psi_{t,v}^{m_j/2}&,&\mbox{otherwise}.
+!>       \end{array}\right.
+!>       \f}
+!>       and used only for the initialization of the surfaces taking into account axis information if provided. </li>
+!> </ul>
 
   SALLOCATE( psifactor, (1:mn,1:Mvol), zero )
   SALLOCATE( inifactor, (1:mn,1:Mvol), zero )
@@ -1613,48 +1609,48 @@ endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\type{Bsupumn} and \type{Bsupvmn}}
+!> **Bsupumn and Bsupvmn**
 
   SALLOCATE( Bsupumn, (1:Nvol,0:1,1:mn), zero ) ! Fourier components of {\bf B}\cdot\nabla \theta on boundary; required for virtual casing;
   SALLOCATE( Bsupvmn, (1:Nvol,0:1,1:mn), zero ) ! Fourier components of {\bf B}\cdot\nabla \zeta  on boundary;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\type{diotadxup} and \type{glambda} : transformation to straight fieldline angle;}
-
-!latex \begin{enumerate}
-!latex \item Given the Beltrami fields in any volume, the rotational-transform on the adjacent interfaces
-!latex       may be determined (in \link{tr00ab}) by constructing the straight fieldline angle on the interfaces.
-!latex \item The rotational transform on the inner or outer interface of a given volume depends on the magnetic field in that volume,
-!latex       i.e. $\iotabar_\pm = \iotabar({\bf B}_\pm)$,
-!latex       so that
-!latex       \be \delta \iotabar_\pm = \frac{\partial \iotabar_\pm}{\partial {\bf B}_\pm} \cdot \delta {\bf B_\pm}.
-!latex       \ee
-!latex \item The magnetic field depends on the Fourier harmonics of both the inner and outer interface geometry (represented here as $x_j$),
-!latex       the helicity multiplier, and the enclosed poloidal flux, i.e. ${\bf B_\pm} = {\bf B_\pm}(x_j, \mu, \Delta \psi_p)$, so that
-!latex       \be \delta {\bf B_\pm} = \frac{\partial {\bf B}_\pm}{\partial x_j          } \delta x_j
-!latex                              + \frac{\partial {\bf B}_\pm}{\partial \mu          } \delta \mu
-!latex                              + \frac{\partial {\bf B}_\pm}{\partial \Delta \psi_p} \delta \Delta \psi_p.
-!latex       \ee
-!latex \item The rotational-transforms, thus, can be considered to be functions of the geometry, the helicity-multiplier and the enclosed poloidal flux,
-!latex       $\iotabar_{\pm} = \iotabar_{\pm}(x_j,\mu,\Delta\psi_p)$.
-!latex \item The rotational-transform, and its derivatives, on the inner and outer interfaces of each volume is stored in
-!latex       \\ \type{diotadxup(0:1,-1:2,1:Mvol)}.
-!latex       The arguments label:
-!latex       \begin{enumerate}
-!latex       \item[i.] the first argument labels the inner or outer interface,
-!latex       \item[ii.] the the second labels derivative, with
-!latex       \begin{enumerate} \item[-1 :] indicating the derivative with respect to the interface geometry,
-!latex                                 i.e. $\ds \frac{\partial \iotabar_{\pm}}{\partial x_j}$,
-!latex                         \item[0 :] the rotational-transform itself,
-!latex                         \item[1,2 :] the derivatives with respec to $\mu$ and $\Delta \psi_p$,
-!latex                                 i.e. $\ds \frac{\partial \iotabar_{\pm}}{\partial \mu}$ and
-!latex                                      $\ds \frac{\partial \iotabar_{\pm}}{\partial \Delta \psi_p}$;
-!latex       \end{enumerate}
-!latex       \item[iii.] the third argument labels volume.
-!latex       \end{enumerate}
-!latex \item The values of \type{diotadxup} are assigned in \link{mp00aa} after calling \link{tr00ab}.
-!latex \end{enumerate}
+!> **diotadxup and glambda: transformation to straight fieldline angle**
+!>
+!> <ul>
+!> <li> Given the Beltrami fields in any volume, the rotational-transform on the adjacent interfaces
+!>       may be determined (in tr00ab()) by constructing the straight fieldline angle on the interfaces. </li>
+!> <li> The rotational transform on the inner or outer interface of a given volume depends on the magnetic field in that volume,
+!>       i.e. \f${{\,\iota\!\!\!}-}_\pm = {{\,\iota\!\!\!}-}({\bf B}_\pm)\f$,
+!>       so that
+!>       \f{eqnarray}{ \delta {{\,\iota\!\!\!}-}_\pm = \frac{\partial {{\,\iota\!\!\!}-}_\pm}{\partial {\bf B}_\pm} \cdot \delta {\bf B_\pm}.
+!>       \f} </li>
+!> <li> The magnetic field depends on the Fourier harmonics of both the inner and outer interface geometry (represented here as \f$x_j\f$),
+!>       the helicity multiplier, and the enclosed poloidal flux, i.e. \f${\bf B_\pm} = {\bf B_\pm}(x_j, \mu, \Delta \psi_p)\f$, so that
+!>       \f{eqnarray}{ \delta {\bf B_\pm} = \frac{\partial {\bf B}_\pm}{\partial x_j          } \delta x_j
+!>                                        + \frac{\partial {\bf B}_\pm}{\partial \mu          } \delta \mu
+!>                                        + \frac{\partial {\bf B}_\pm}{\partial \Delta \psi_p} \delta \Delta \psi_p.
+!>       \f} </li>
+!> <li> The rotational-transforms, thus, can be considered to be functions of the geometry, the helicity-multiplier and the enclosed poloidal flux,
+!>       \f${{\,\iota\!\!\!}-}_{\pm} = {{\,\iota\!\!\!}-}_{\pm}(x_j,\mu,\Delta\psi_p)\f$. </li>
+!> <li> The rotational-transform, and its derivatives, on the inner and outer interfaces of each volume is stored in
+!>       \c diotadxup(0:1,-1:2,1:Mvol) .
+!>       The indices label:
+!>       <ul>
+!>       <li> the first index labels the inner or outer interface, </li>
+!>       <li> the the second one labels derivative, with  </li>
+!>       <ul> <li>\c -1 : indicating the derivative with respect to the interface geometry,
+!>                                 i.e. \f$\displaystyle \frac{\partial {{\,\iota\!\!\!}-}_{\pm}}{\partial x_j}\f$, </li>
+!>            <li>\c 0 : the rotational-transform itself, </li>
+!>            <li>\c 1,2 : the derivatives with respec to \f$\mu\f$ and \f$\Delta \psi_p\f$,
+!>                    i.e. \f$\displaystyle \frac{\partial {{\,\iota\!\!\!}-}_{\pm}}{\partial \mu}\f$ and
+!>                         \f$\displaystyle \frac{\partial {{\,\iota\!\!\!}-}_{\pm}}{\partial \Delta \psi_p}\f$; </li>
+!>       </ul> </li>
+!>       <li>The third index labels volume. </li>
+!>       </ul> </li>
+!> <li> The values of \c diotadxup are assigned in mp00aa() after calling tr00ab(). </li>
+!> </ul>
 
   SALLOCATE( diotadxup, (0:1,-1:2,1:Mvol), zero ) ! measured rotational transform on inner/outer interfaces in each annulus;
   SALLOCATE( dItGpdxtp, (0:1,-1:2,1:Mvol), zero ) ! measured plasma and linking currents                                   ;
@@ -1691,7 +1687,17 @@ endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  ! Allocate matrix to store the last solution of GMRES as initialization
+!> **vvolume, lBBintegral and lABintegral**
+!>
+!> <ul>
+!> <li> volume integrals
+!>       \f{eqnarray}{ \texttt{vvolume(i)}     &=& \int_{{\cal V}_i}                       \, dv\\
+!>                     \texttt{lBBintegral(i)} &=& \int_{{\cal V}_i} {\bf B} \cdot {\bf B} \, dv\\
+!>                     \texttt{lABintegral(i)} &=& \int_{{\cal V}_i} {\bf A} \cdot {\bf B} \, dv
+!>       \f} </li>
+!> </ul>
+
+! Allocate matrix to store the last solution of GMRES as initialization
   LILUprecond = .false.
   if (Lmatsolver.eq.2 .or. Lmatsolver.eq.3) then ! use GMRES
     SALLOCATE(GMRESlastsolution, (MAXVAL(NAdof),0:2,1:Mvol), zero )
@@ -1706,20 +1712,6 @@ endif
     YESMatrixFree = .false.
     NOTMatrixFree = .true.
   endif
-
-  !FATAL(preset, Lmatsolver.eq.3 .and. Lfindzero.eq.2, matrix free currently only support Lfindzero=0,1)
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \subsubsection{\type{vvolume}, \type{lBBintegral} and \type{lABintegral};}
-
-!latex \begin{enumerate}
-!latex \item volume integrals
-!latex       \be \type{vvolume(i)}     &=& \int_{{\cal V}_i}                       \, dv\\
-!latex           \type{lBBintegral(i)} &=& \int_{{\cal V}_i} {\bf B} \cdot {\bf B} \, dv\\
-!latex           \type{lABintegral(i)} &=& \int_{{\cal V}_i} {\bf A} \cdot {\bf B} \, dv
-!latex       \ee
-!latex \end{enumerate}
 
   SALLOCATE( vvolume    , (1:Mvol), zero ) ! volume integral of \sqrt g;
   SALLOCATE( lBBintegral, (1:Mvol), zero ) ! volume integral of B.B    ;

@@ -1,11 +1,25 @@
+!> \file basefn.f90
+!> \brief Polynomials evaluation
+
+!> \brief Get the Chebyshev polynomials with zeroth, first derivatives
+!>
+!> The Chebyshev polynomial has been recombined and rescaled. 
+!> By doing so, the Chebyshev polynomial satisfy the zero Dirichlet boundary condition on the inner surface of the annulus with reduced ill-conditioning problem.
+!>
+!> Let \f$T_{l}\f$ be the Chebyshev polynomial of the first kind with degree \f$l\f$.
+!> This subroutine computes 
+!> \f[\bar{T}_0 = 1, \f] and 
+!> \f[\bar{T}_l = \frac{T_l - (-1)^{l}}{l+1} . \f]
+!>
+!> \f$ T_l \f$ are computed iteratively.
+!> \f[ T_0(s) = 1, \f]
+!> \f[ T_1(s) = s, \f]
+!> \f[ T_{l+1}(s) = 2 s T_l(s) - T_{l-1}(s). \f]
+!>
+!> @param[in] lss coordinate input lss
+!> @param[in] lrad radial resolution
+!> @param[out] cheby the value, first derivative of Chebyshev polynomial
 subroutine get_cheby(lss, lrad, cheby)
-  ! Get the Chebyshev polynomials with zeroth, first derivatives
-  ! Inputs:
-  ! lss - REAL, coordinate input lss
-  ! lrad - INTEGER, radial resolution
-  !
-  ! Returns:
-  ! cheby - REAL(0:Mrad,0:1), the value, first derivative of Chebyshev polynomial
 
   use constants, only : zero, one, two
 
@@ -36,14 +50,13 @@ subroutine get_cheby(lss, lrad, cheby)
   return
 end subroutine get_cheby
 
+!> \brief Get the Chebyshev polynomials with zeroth, first and second derivatives
+!> The Chebyshev polynomial has been recombined and rescaled. 
+!> See get_cheby for more detail.
+!> @param[in] lss coordinate input lss
+!> @param[in] lrad radial resolution
+!> @param[out] cheby the value, first and second derivative of Chebyshev polynomial
 subroutine get_cheby_d2(lss, lrad, cheby)
-  ! Get the Chebyshev polynomials with zeroth, first and second derivatives
-  ! Inputs:
-  ! lss - REAL, coordinate input lss
-  ! lrad - INTEGER, radial resolution
-  !
-  ! Returns:
-  ! cheby - REAL(0:lrad,0:2), the value, first and second derivative of Chebyshev polynomial
 
   use constants, only : zero, one, two
 
@@ -76,16 +89,45 @@ subroutine get_cheby_d2(lss, lrad, cheby)
   return
 end subroutine get_cheby_d2
 
-
+!> \brief Get the Zernike polynomials \f$\hat{R}^{m}_{l}\f$ with zeroth, first derivatives
+!>
+!> The original Zernike polynomial is defined by
+!> The Zernike polynomials take the form
+!> \f{eqnarray*}{
+!>    Z^{-m}_{l}(s,\theta) &= R^{m}_{l}(s) \sin m\theta,\\
+!>    Z^{m}_{l}(s,\theta) &= R^{m}_{l}(s) \cos m\theta,
+!> \f}
+!> where \f$R^{m}_{l}(s)\f$ is a \f$l\f$-th order polynomial given by
+!> \f{eqnarray*}{
+!>    R_l^m(s) = \sum^{\frac{l-m}{2}}_{k=0} \frac{(-1)^k (l-k)!}
+!>    {k!\left[\frac{1}{2}(l+m) - k \right]! \left[\frac{1}{2}(l-m) - k \right]!} s^{l-2k},
+!> \f}
+!> and is only non-zero for \f$l \ge m\f$ and even \f$l-m\f$.
+!> 
+!> In this subroutine, \f$R^{m}_{l}(s) \f$ is computed using the iterative relationship
+!> \f{eqnarray*}{
+!> R_l^m(s) = \frac{2(l-1)(2l(l-2)s^2 -m^2 -l(l-2))R_{l-2}^m(s) - l (l+m-2) (l-m-2)R_{l-4}^m(s) }{(l+m)(l-m)(l-2)}
+!> \f}
+!>
+!> For \f$ m=0 \f$ and \f$ m=1 \f$, a basis recombination method is used by defining new radial basis functions as
+!> \f{eqnarray*}{
+!>    \hat{R}_{0}^{0} &= 1, 
+!>    \hat{R}^{0}_{l} &= \frac{1}{l+1}R^{0}_{l} - \frac{(-1)^{l/2}}{l+1}, 
+!>    \\
+!>    \hat{R}_{1}^{1} &= s,
+!>    \hat{R}^{1}_{l} &= \frac{1}{l+1}R^{1}_{l} - \frac{(-1)^{(l-1)/2}}{2} s.
+!> \f}
+!> so that the basis scales as \f$s^{m+2}\f$ except for \f$\hat{R}_{0}^{0}\f$ and \f$\hat{R}_{1}^{1}\f$, which are excluded from the representation of \f${A}_{\theta,m,n}\f$.
+!> For \f$m\ge2\f$, the radial basis functions are only rescaled as 
+!> \f[
+!>   \hat{R}^{m}_{l} = \frac{1}{l+1}R^{m}_{l}.
+!> \f]
+!>
+!> @param[in] r coordinate input, note that this is normalized to \f$[0, 1]\f$
+!> @param[in] lrad radial resolution
+!> @param[in] mpol poloidal resolution
+!> @param[out] zernike the value, first derivative of Zernike polynomial
 subroutine get_zernike(r, lrad, mpol, zernike)
-  ! Get the Zernike polynomials with zeroth, first derivatives
-  ! Inputs:
-  ! r - REAL, coordinate input r
-  ! lrad - INTEGER, radial resolution
-  ! mpol - INTEGER, poloidal resolution
-  !
-  ! Returns:
-  ! zernike - REAL(0:lrad,0:mpol,0:1), the value, first derivative of Zernike polynomial
 
   use constants, only : zero, one, two
 
@@ -145,16 +187,16 @@ subroutine get_zernike(r, lrad, mpol, zernike)
   end do
 end subroutine get_zernike
 
+!> \brief Get the Zernike polynomials  \f$\hat{R}^{m}_{l}\f$ with zeroth, first, second derivatives
+!>
+!> See get_zernike for more detail.
+!>
+!> @param[in] r coordinate input, note that this is normalized to \f$[0, 1]\f$
+!> @param[in] lrad radial resolution
+!> @param[in] mpol poloidal resolution
+!> @param[out] zernike the value, first/second derivative of Zernike polynomial
 subroutine get_zernike_d2(r, lrad, mpol, zernike)
-  ! Get the Zernike polynomials with zeroth, first, second derivatives
-  ! Inputs:
-  ! r - REAL, coordinate input r
-  ! lrad - INTEGER, radial resolution
-  ! mpol - INTEGER, poloidal resolution
-  !
-  ! Returns:
-  ! zernike - REAL(0:lrad,0:mpol,0:2), the value, first/second derivative of Zernike polynomial
-  
+
   use constants, only : zero, one, two
 
   implicit none
@@ -219,15 +261,15 @@ subroutine get_zernike_d2(r, lrad, mpol, zernike)
   end do
 end subroutine get_zernike_d2
 
+!> \brief Get the Zernike polynomials \f$\hat{R}^{m}_{l}/r^m\f$
+!>
+!> See get_zernike for more detail.
+!>
+!> @param[in] r coordinate input, note that this is normalized to \f$[0, 1]\f$
+!> @param[in] lrad radial resolution
+!> @param[in] mpol poloidal resolution
+!> @param[out] zernike the value
 subroutine get_zernike_rm(r, lrad, mpol, zernike)
-  ! Get the Zernike polynomials Z(n,m,r)/r^m
-  ! Inputs:
-  ! r - REAL, coordinate input r
-  ! lrad - INTEGER, radial resolution
-  ! mpol - INTEGER, poloidal resolution
-  !
-  ! Returns:
-  ! zernike - REAL(0:lrad,0:mpol), the value
 
   use constants, only : zero, one, two
 

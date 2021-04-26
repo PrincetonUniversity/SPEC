@@ -1,36 +1,35 @@
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!> \defgroup grp_volume Plasma volume
 
-!title ! Calculates volume of each region; ${\cal V}_i \equiv \int dv$.
+!> \file volume.f90
+!> \brief Computes volume of each region; and, if required, the derivatives of the volume with respect to the interface geometry.
 
-!latex \briefly{Computes volume of each region; and, if required, the derivatives of the volume with respect to the interface geometry.}
-
-!latex \calledby{\link{dforce} and \link{xspech}}
-!latex \calls{\link{}}
-
-!latex \tableofcontents
-
-!latex \subsection{volume integral} \begin{enumerate}
-
-!latex \item The volume enclosed by the $v$-th interface is given by the integral
-!latex       \be V = \int_{{\cal V}} \; dv 
-!latex             = \frac{1}{3}\int_{{\cal V}} \; \nabla \cdot {\bf x} \; dv 
-!latex             = \frac{1}{3}\int_{{\cal S}} \; {\bf x} \cdot d{\bf s} 
-!latex             = \frac{1}{3}        \int_{0}^{2\pi} \!\! d\t \int_{0}^{2\pi/N} \!\! d\z \;\;\; 
-!latex                                        \left. {\bf x   } \cdot {\bf x_\t} \times {\bf x_\z} \right|^s
-!latex       \ee
-!latex       where we have used $\nabla \cdot {\bf x} = 3$, and have assumed that the domain is periodic in the angles.
-
-!latex \end{enumerate} \subsection{representation of surfaces} \begin{enumerate}
-
-!latex \item The coordinate functions are
-!latex       \be            R(\t,\z) & = & \sum_i R_{e,i} \; \cos\a_i + \sum_i R_{o,i} \; \sin\a_i \\
-!latex                      Z(\t,\z) & = & \sum_i Z_{e,i} \; \cos\a_i + \sum_i Z_{o,i} \; \sin\a_i,
-!latex       \ee
-!latex       where $\a_i \equiv m_i \t - n_i \z$.
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!> \brief Computes volume of each region; and, if required, the derivatives of the volume with respect to the interface geometry.
+!> \ingroup grp_volume
+!> 
+!> Calculates volume of each region; \f${\cal V}_i \equiv \int dv\f$.
+!>
+!> **volume integral**
+!> <ul>
+!> <li> The volume enclosed by the \f$v\f$-th interface is given by the integral
+!>       \f{eqnarray}{ V = \int_{{\cal V}} \; dv 
+!>            = \frac{1}{3}\int_{{\cal V}} \; \nabla \cdot {\bf x} \; dv 
+!>            = \frac{1}{3}\int_{{\cal S}} \; {\bf x} \cdot d{\bf s} 
+!>            = \frac{1}{3}        \int_{0}^{2\pi} \!\! d\theta \int_{0}^{2\pi/N} \!\! d\zeta \;\;\; 
+!>                                       \left. {\bf x   } \cdot {\bf x_\theta} \times {\bf x_\zeta} \right|^s
+!>       \f}
+!>       where we have used \f$\nabla \cdot {\bf x} = 3\f$, and have assumed that the domain is periodic in the angles. </li>
+!> </ul>
+!>
+!> **representation of surfaces**
+!> 
+!> <ul>
+!> <li> The coordinate functions are
+!>       \f{eqnarray}{ R(\theta,\zeta) & = & \sum_i R_{e,i} \; \cos\alpha_i + \sum_i R_{o,i} \; \sin\alpha_i \\
+!>                     Z(\theta,\zeta) & = & \sum_i Z_{e,i} \; \cos\alpha_i + \sum_i Z_{o,i} \; \sin\alpha_i,
+!>       \f}
+!>       where \f$\alpha_i \equiv m_i \theta - n_i \zeta\f$. </li>
+!> </ul>
+!>
 
 subroutine volume( lvol, vflag )
 
@@ -97,19 +96,19 @@ subroutine volume( lvol, vflag )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
-!latex \end{enumerate} \subsection{geometry} \begin{enumerate}
-   
-!latex \item The geometry is controlled by the input parameter \verb+Igeometry+ as follows: 
+!> **geometry**
+!> <ul>
+!> <li> The geometry is controlled by the input parameter \c Igeometry as follows: </li> 
    
    select case( Igeometry )
     
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
     
-   case( 1 ) !latex \item \verb+Igeometry.eq.1+ : Cartesian : $\sqrt g = R_s$
+   case( 1 ) !> <li> \c Igeometry.eq.1 : Cartesian : \f$\sqrt g = R_s\f$
     
-!latex       \be V & = & \int_{0}^{2\pi}\!\!\!d\t \int_{0}^{2\pi/N}\!\!\!\!\! d\z \; R \nonumber \\
-!latex             & = & 2\pi \; \frac{2\pi}{N} \; R_{e,1}
-!latex       \ee
+!>                   \f{eqnarray}{ V & = & \int_{0}^{2\pi}\!\!\!d\theta \int_{0}^{2\pi/N}\!\!\!\!\! d\zeta \; R \nonumber \\
+!>                                   & = & 2\pi \; \frac{2\pi}{N} \; R_{e,1}
+!>                   \f} </li>
     
     vol(innout) = iRbc(1,jvol) ! 20 Jun 14;
     
@@ -123,14 +122,14 @@ subroutine volume( lvol, vflag )
     
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
     
-   case( 2 ) !latex \item \verb+Igeometry.eq.2+ : cylindrical : $\sqrt g = R R_s = \frac{1}{2}\partial_s (R^2)$
+   case( 2 ) !> <li> \c Igeometry.eq.2 : cylindrical : \f$\sqrt g = R R_s = \frac{1}{2}\partial_s (R^2)\f$ 
     
-!latex       \be V & = & \frac{1}{2}\int_{0}^{2\pi}\!\!\!d\t \int_{0}^{2\pi/N}\!\!\!\!\! d\z \; R^2 \nonumber \\
-!latex             & = & \frac{1}{2} \; 2\pi \; \frac{2\pi}{N} \; \frac{1}{2} \; 
-!latex                   \sum_i\sum_j R_{e,i}R_{e,j}\left[\cos(\a_i-\a_j)+\cos(\a_i+\a_j)\right] \nonumber \\
-!latex             & + & \frac{1}{2} \; 2\pi \; \frac{2\pi}{N} \; \frac{1}{2} \;
-!latex                   \sum_i\sum_j R_{o,i}R_{o,j}\left[\cos(\a_i-\a_j)-\cos(\a_i+\a_j)\right]
-!latex       \ee
+!>                   \f{eqnarray}{ V & = & \frac{1}{2}\int_{0}^{2\pi}\!\!\!d\theta \int_{0}^{2\pi/N}\!\!\!\!\! d\zeta \; R^2 \nonumber \\
+!>                                   & = & \frac{1}{2} \; 2\pi \; \frac{2\pi}{N} \; \frac{1}{2} \; 
+!>                                         \sum_i\sum_j R_{e,i}R_{e,j}\left[\cos(\alpha_i-\alpha_j)+\cos(\alpha_i+\alpha_j)\right] \nonumber \\
+!>                                   & + & \frac{1}{2} \; 2\pi \; \frac{2\pi}{N} \; \frac{1}{2} \;
+!>                                         \sum_i\sum_j R_{o,i}R_{o,j}\left[\cos(\alpha_i-\alpha_j)-\cos(\alpha_i+\alpha_j)\right]
+!>                   \f} </li>
     
 #ifdef DEBUG
     FATAL( volume, dBdX%L .and. dBdX%irz.eq.1, volume does not depend on Z for cylindrical geometry )
@@ -184,11 +183,58 @@ subroutine volume( lvol, vflag )
     
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
     
-   case( 3 ) !latex \item \verb+Igeometry.eq.3+ : toroidal : ${\bf x}\cdot {\bf e}_\theta \times {\bf e}_\zeta  = R ( Z R_\t - R Z_\t )$
-    
-!latex       This is computed by fast Fourier transform
-    
-!latex \end{enumerate}
+   case( 3 ) !> <li> \c Igeometry.eq.3 : toroidal : \f${\bf x}\cdot {\bf e}_\theta \times {\bf e}_\zeta  = R ( Z R_\theta - R Z_\theta ) \f$
+             !>      This is computed by fast Fourier transform:
+!>                   \f{eqnarray}{ V & = & \frac{1}{3} \; \int_{0}^{2\pi}\!\!\!d\theta \int_{0}^{2\pi/N}\!\!\!\!\! d\zeta \; R \left( Z R_{\theta} - R Z_{\theta}  \right)              
+!>                                   \nonumber \\
+!>                                   & = & \frac{1}{3}  \; \sum_i \sum_j \sum_k R_{e,i} \left(Z_{e,j} R_{o,k} - R_{e,j} Z_{o,k} \right) (+m_k) 
+!>                                   \int \!\!\!\! \int \!\! d\theta d\zeta \; \cos\alpha_i \cos\alpha_j \cos\alpha_k \nonumber \\
+!>                                   & + & \frac{1}{3}  \; \sum_i \sum_j \sum_k R_{e,i} \left(Z_{o,j} R_{e,k} - R_{o,j} Z_{e,k} \right) (-m_k) 
+!>                                   \int \!\!\!\! \int \!\! d\theta d\zeta \; \cos\alpha_i \sin\alpha_j \sin\alpha_k \nonumber \\
+!>                                   & + & \frac{1}{3}  \; \sum_i \sum_j \sum_k R_{o,i} \left(Z_{e,j} R_{e,k} - R_{e,j} Z_{e,k} \right) (-m_k) 
+!>                                   \int \!\!\!\! \int \!\! d\theta d\zeta \; \sin\alpha_i \cos\alpha_j \sin\alpha_k \nonumber \\
+!>                                   & + & \frac{1}{3}  \; \sum_i \sum_j \sum_k R_{o,i} \left(Z_{o,j} R_{o,k} - R_{o,j} Z_{o,k} \right) (+m_k) 
+!>                                   \int \!\!\!\! \int \!\! d\theta d\zeta \; \sin\alpha_i \sin\alpha_j \cos\alpha_k
+!>                   \f} </li>
+!> 
+!> <li> (Recall that the integral over an odd function is zero, so various terms in the above expansion have been ignored.) </li>
+!> 
+!> <li> The trigonometric terms are
+!>       \f{eqnarray}{ \begin{array}{ccccccccccccccccccccccccccccccccccccccccccc}
+!>           4 \; \cos\alpha_i \cos\alpha_j \cos\alpha_k & \!\!\! = & \!\!\!
+!>       + \!\!\! & \cos(\alpha_i+\alpha_j+\alpha_k) & \!\!\! + \!\!\! & \cos(\alpha_i+\alpha_j-\alpha_k) & \!\!\! + \!\!\! & \cos(\alpha_i-\alpha_j+\alpha_k) & \!\!\! + \!\!\! & \cos(\alpha_i-\alpha_j-\alpha_k) \\
+!>           4 \; \cos\alpha_i \sin\alpha_j \sin\alpha_k & \!\!\! = & \!\!\!
+!>       - \!\!\! & \cos(\alpha_i+\alpha_j+\alpha_k) & \!\!\! + \!\!\! & \cos(\alpha_i+\alpha_j-\alpha_k) & \!\!\! + \!\!\! & \cos(\alpha_i-\alpha_j+\alpha_k) & \!\!\! - \!\!\! & \cos(\alpha_i-\alpha_j-\alpha_k) \\
+!>           4 \; \sin\alpha_i \cos\alpha_j \sin\alpha_k & \!\!\! = & \!\!\!
+!>       - \!\!\! & \cos(\alpha_i+\alpha_j+\alpha_k) & \!\!\! + \!\!\! & \cos(\alpha_i+\alpha_j-\alpha_k) & \!\!\! - \!\!\! & \cos(\alpha_i-\alpha_j+\alpha_k) & \!\!\! + \!\!\! & \cos(\alpha_i-\alpha_j-\alpha_k) \\
+!>           4 \; \sin\alpha_i \sin\alpha_j \cos\alpha_k & \!\!\! = & \!\!\!
+!>       - \!\!\! & \cos(\alpha_i+\alpha_j+\alpha_k) & \!\!\! - \!\!\! & \cos(\alpha_i+\alpha_j-\alpha_k) & \!\!\! + \!\!\! & \cos(\alpha_i-\alpha_j+\alpha_k) & \!\!\! + \!\!\! & \cos(\alpha_i-\alpha_j-\alpha_k)
+!>       \end{array}
+!>       \f} </li>
+!> 
+!> <li> The required derivatives are
+!>       \f{eqnarray}{ \begin{array}{cclccccccccccccccccccccccccccccccccccccccccccccccc}
+!>           3 \displaystyle \frac{\partial V}{\partial R_{e,i}} & = & \left( + Z_{e,j} R_{o,k} m_k - R_{e,j} Z_{o,k} m_k - R_{e,j} Z_{o.k} m_k \right) & 
+!>                                                           \displaystyle \int \!\!\!\! \int \!\! d\theta d\zeta \; \cos\alpha_i \cos\alpha_j \cos\alpha_k \\
+!>                                                     & + & \left( - Z_{o,j} R_{e,k} m_k + R_{o,j} Z_{e,k} m_k + R_{o,j} Z_{e,k} m_k \right) &
+!>                                                           \displaystyle \int \!\!\!\! \int \!\! d\theta d\zeta \; \cos\alpha_i \sin\alpha_j \sin\alpha_k \\
+!>                                                     & + & \left( - R_{o,k} Z_{e,j} m_i                                             \right) &
+!>                                                           \displaystyle \int \!\!\!\! \int \!\! d\theta d\zeta \; \sin\alpha_i \cos\alpha_j \sin\alpha_k \\
+!>                                                     & + & \left( - R_{e,k} Z_{o,j} m_i                                             \right) &
+!>                                                           \displaystyle \int \!\!\!\! \int \!\! d\theta d\zeta \; \sin\alpha_i \sin\alpha_j \cos\alpha_k
+!>       \end{array} \f}
+!>       \f{eqnarray}{ \begin{array}{cclccccccccccccccccccccccccccccccccccccccccccccccc}
+!>           3 \displaystyle \frac{\partial V}{\partial Z_{o,i}} & = & \left( - R_{e,k} R_{e,j} m_i                                             \right) & 
+!>                                                           \displaystyle \int \!\!\!\! \int \!\! d\theta d\zeta \; \cos\alpha_i \cos\alpha_j \cos\alpha_k \\
+!>                                                     & + & \left( - R_{o,k} R_{o,j} m_i                                             \right) &
+!>                                                           \displaystyle \int \!\!\!\! \int \!\! d\theta d\zeta \; \cos\alpha_i \sin\alpha_j \sin\alpha_k \\
+!>                                                     & + & \left( - R_{e,j} R_{e,k} m_k                                             \right) &
+!>                                                           \displaystyle \int \!\!\!\! \int \!\! d\theta d\zeta \; \sin\alpha_i \cos\alpha_j \sin\alpha_k \\
+!>                                                     & + & \left( + R_{o,j} R_{o,k} m_k                                             \right) &
+!>                                                           \displaystyle \int \!\!\!\! \int \!\! d\theta d\zeta \; \sin\alpha_i \sin\alpha_j \cos\alpha_k
+!>       \end{array} \f} </li>
+!>
+!> </ul>
 
     ! Replacing the trigonometric formula by fast Fourier transform ; 03 OCT 19
 
