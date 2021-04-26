@@ -28,7 +28,9 @@ Azo     = data.vector_potential.Azo{lvol};
 
 Lrad    = data.input.physics.Lrad(lvol);
 
+if(size(sarr,1)==1)
 sarr    = transpose(sarr);
+end
 ns      = length(sarr);
 nt      = length(tarr);
 nz      = length(zarr);
@@ -48,7 +50,7 @@ T = get_spec_polynomial_basis(data, lvol, sarr);
 
 % Construct regularization factors
 
-fac = get_spec_regularisation_factor(data, lvol, sarr, 'F');
+fac = get_spec_regularization_factor(data, lvol, sarr, 'F');
 
 % Construct vector potential covariant components
 

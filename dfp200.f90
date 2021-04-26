@@ -228,8 +228,8 @@ subroutine dfp200( LcomputeDerivatives, vvol)
               call evaluate_dmupfdx(innout, idof, ii, issym, irz)
 
 
-              ! Evaluate derivatives of B square
-              call evaluate_dBB(vvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
+              ! Evaluate derivatives of B square 
+              call evaluate_dBB(vvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz, LcomputeDerivatives)
 
             enddo ! matches do innout;
           enddo ! matches do issym;
@@ -529,7 +529,7 @@ else ! CASE SEMI GLOBAL CONSTRAINT
                         LREGION(lvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
 
                         ! EVALUATE dBB
-                        call evaluate_dBB(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
+                        call evaluate_dBB(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz, LcomputeDerivatives)
 
                     enddo     ! matches do lvol = vvol, vvol+1
 
@@ -1321,7 +1321,7 @@ end subroutine evaluate_dmupfdx
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 
-subroutine evaluate_dBB(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
+subroutine evaluate_dBB(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz, LcomputeDerivatives)
 
 ! Evaluate the derivative of the square of the magnetic field modulus. Add spectral constraint derivatives if
 ! required.
@@ -1375,21 +1375,18 @@ subroutine evaluate_dBB(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, length,
  LOCALS
 !------
 
+LOGICAL, intent(in)     :: LComputeDerivatives
 INTEGER                 :: iocons, lvol, ideriv, id, iflag, Lcurvature, innout, issym, irz, ii, ifail, idoc, idof, Ntz
 REAL                    :: lss, DDl, MMl
 REAL                    :: dAt(1:Ntz,-1:2), dAz(1:Ntz,-1:2), XX(1:Ntz), YY(1:Ntz), dBB(1:Ntz,-1:2), dII(1:Ntz), dLL(1:Ntz)
 REAL                    :: dPP(1:Ntz), length(1:Ntz), dRR(1:Ntz,-1:2), dZZ(1:Ntz,-1:2), constraint(1:Ntz)
 #ifdef DEBUG
-INTEGER					:: isymdiff, ll, NN, ndofgl, pvol
+INTEGER                 :: isymdiff, ll, NN, ndofgl, pvol
 REAL                    :: Fvec(1:Mvol-1), Xdof(1:Mvol-1)
-REAL,   allocatable 	:: oRbc(:,:), oZbs(:,:), oRbs(:,:), oZbc(:,:) ! original geometry;
-REAL,   allocatable 	:: idBB(:,:), iforce(:,:), iposition(:,:)
+REAL,   allocatable     :: oRbc(:,:), oZbs(:,:), oRbs(:,:), oZbc(:,:) ! original geometry;
+REAL,   allocatable     :: idBB(:,:), iforce(:,:), iposition(:,:)
 CHARACTER               :: packorunpack
 #endif
-
-
-
-
 
 do iocons = 0, 1
 
@@ -1674,3 +1671,4 @@ do iocons = 0, 1
 enddo ! end of do iocons;
 
 end subroutine evaluate_dBB
+
