@@ -566,7 +566,7 @@
 <!-- Node39 -->
 <g id="node39" class="node">
 <title>Node39</title>
-<g id="a_node39"><a xlink:href="group__grp__global.html#gad2dbd21d0579d623a92119c5ab553c7c" target="_top" xlink:title="Returns which MPI node is associated to a given volume.">
+<g id="a_node39"><a xlink:href="namespaceallglobal.html#ad2dbd21d0579d623a92119c5ab553c7c" target="_top" xlink:title="Returns which MPI node is associated to a given volume.">
 <polygon fill="white" stroke="black" points="582.5,-806.5 582.5,-825.5 687.5,-825.5 687.5,-806.5 582.5,-806.5"/>
 <text text-anchor="middle" x="635" y="-813.5" font-family="Helvetica,sans-Serif" font-size="10.00">allglobal::whichcpuid</text>
 </a>

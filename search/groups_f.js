@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['trigonometric_20factors_1365',['Trigonometric factors',['../group__grp__trig.html',1,'']]]
+  ['trigonometric_20factors_1357',['Trigonometric factors',['../group__grp__trig.html',1,'']]]
 ];

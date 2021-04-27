@@ -112,7 +112,7 @@ $(document).ready(function(){initNavTree('group__grp__iface__geom.html',''); ini
   <div class="summary">
 <a href="#var-members">Variables</a>  </div>
   <div class="headertitle">
-<div class="title">Interface geometry: iRbc, iZbs etc.<div class="ingroups"><a class="el" href="group__grp__global.html">Input namelists and global variables</a> &raquo; <a class="el" href="group__grp__internal__vars.html">Internal Variables</a></div></div>  </div>
+<div class="title">Interface geometry: iRbc, iZbs etc.<div class="ingroups"><a class="el" href="group__grp__internal__vars.html">Internal Variables</a></div></div>  </div>
 </div><!--header-->
 <div class="contents">
 
@@ -215,6 +215,18 @@ real, dimension(:), allocatable&#160;</td><td class="memItemRight" valign="botto
 real, dimension(:), allocatable&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__grp__iface__geom.html#gaabca2751b684811a6103c8a4cdd00f94">allglobal::lzbc</a></td></tr>
 <tr class="memdesc:gaabca2751b684811a6103c8a4cdd00f94"><td class="mdescLeft">&#160;</td><td class="mdescRight">local workspace <br /></td></tr>
 <tr class="separator:gaabca2751b684811a6103c8a4cdd00f94"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga9c47d69dd0ba7bc6ceb25339d8af4da1"><td class="memItemLeft" align="right" valign="top"><a id="ga9c47d69dd0ba7bc6ceb25339d8af4da1"></a>
+integer&#160;</td><td class="memItemRight" valign="bottom"><b>allglobal::num_modes</b></td></tr>
+<tr class="separator:ga9c47d69dd0ba7bc6ceb25339d8af4da1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaf3047f9efb8384c5edfd73740e63f272"><td class="memItemLeft" align="right" valign="top"><a id="gaf3047f9efb8384c5edfd73740e63f272"></a>
+integer, dimension(:), allocatable&#160;</td><td class="memItemRight" valign="bottom"><b>allglobal::mmrzrz</b></td></tr>
+<tr class="separator:gaf3047f9efb8384c5edfd73740e63f272"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga910f38385a06b035960f7e20a57e89b9"><td class="memItemLeft" align="right" valign="top"><a id="ga910f38385a06b035960f7e20a57e89b9"></a>
+integer, dimension(:), allocatable&#160;</td><td class="memItemRight" valign="bottom"><b>allglobal::nnrzrz</b></td></tr>
+<tr class="separator:ga910f38385a06b035960f7e20a57e89b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaf2f84ad194d1285f5edcf67ca14150fe"><td class="memItemLeft" align="right" valign="top"><a id="gaf2f84ad194d1285f5edcf67ca14150fe"></a>
+real, dimension(:,:,:), allocatable&#160;</td><td class="memItemRight" valign="bottom"><b>allglobal::allrzrz</b></td></tr>
+<tr class="separator:gaf2f84ad194d1285f5edcf67ca14150fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <p>The Fourier harmonics of the interfaces are contained in <code>iRbc(1:mn,0:Mvol)</code> and <code>iZbs(1:mn,0:Mvol)</code>, where <code>iRbc(l,j)</code>, <code>iZbs(l,j)</code> contains the Fourier harmonics, \(R_j\), \(Z_j\), of the \(l\)-th interface. </p>

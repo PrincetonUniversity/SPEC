@@ -1,10 +1,11 @@
 <map id="bfield" name="bfield">
-<area shape="rect" id="node1" title="Compute the magnetic field." alt="" coords="507,81,559,108"/>
-<area shape="rect" id="node2" href="$bfield_8f90.html#adc615fe98d38488525cbe807d008860a" title="compute the tangential magnetic field" alt="" coords="346,5,449,32"/>
-<area shape="rect" id="node3" href="$group__grp__diagnostics.html#ga6411205c36a7d50002d7f3fb3133c441" title="Measures error in Beltrami equation, ." alt="" coords="226,56,286,83"/>
-<area shape="rect" id="node6" href="$group__grp__diagnostics.html#ga831aed2458140e266ee4d37461dd5350" title="Constructs Poincaré plot and &quot;approximate&quot; rotational&#45;transform (for single field line)." alt="" coords="365,107,429,133"/>
-<area shape="rect" id="node8" href="$sphdf5_8f90.html#a17e65b951634f7098213fd071d905482" title="write the magnetic field on a grid; previously the (wflag.eq.1) part of globals.f90/wrtend to write ...." alt="" coords="336,157,459,184"/>
-<area shape="rect" id="node4" href="$xspech_8f90.html#aea782eae089760a491c2c54f9903abcc" title="Main program of SPEC." alt="" coords="113,81,176,108"/>
-<area shape="rect" id="node5" href="$xspech_8f90.html#a537af4990058c0b0f2cd8b3669af204f" title="todo remark" alt="" coords="5,81,65,108"/>
-<area shape="rect" id="node7" href="$group__grp__diagnostics.html#gad67931244268a09bd077dae8910c7096" title="Constructs Poincaré plot and &quot;approximate&quot; rotational&#45;transform (driver)." alt="" coords="224,107,288,133"/>
+<area shape="rect" id="node1" title="Compute the magnetic field." alt="" coords="560,81,612,108"/>
+<area shape="rect" id="node2" href="$bfield_8f90.html#adc615fe98d38488525cbe807d008860a" title="compute the tangential magnetic field" alt="" coords="399,5,502,32"/>
+<area shape="rect" id="node3" href="$group__grp__diagnostics.html#ga6411205c36a7d50002d7f3fb3133c441" title="Measures error in Beltrami equation, ." alt="" coords="279,56,339,83"/>
+<area shape="rect" id="node7" href="$group__grp__diagnostics.html#ga831aed2458140e266ee4d37461dd5350" title="Constructs Poincaré plot and &quot;approximate&quot; rotational&#45;transform (for single field line)." alt="" coords="419,107,483,133"/>
+<area shape="rect" id="node9" href="$sphdf5_8f90.html#a17e65b951634f7098213fd071d905482" title="write the magnetic field on a grid; previously the (wflag.eq.1) part of globals.f90/wrtend to write ...." alt="" coords="389,157,512,184"/>
+<area shape="rect" id="node4" href="$xspech_8f90.html#a48f45478dc2c9f70ea8aa1c60ad06503" title=" " alt="" coords="179,81,229,108"/>
+<area shape="rect" id="node5" href="$sphdf5_8f90.html#a0f962c09cd5d5eba99f1cba043cb3898" title="initialize the interface to the HDF5 library and open the output file" alt="" coords="5,31,131,57"/>
+<area shape="rect" id="node6" href="$xspech_8f90.html#aea782eae089760a491c2c54f9903abcc" title="Main program of SPEC." alt="" coords="37,81,99,108"/>
+<area shape="rect" id="node8" href="$group__grp__diagnostics.html#gad67931244268a09bd077dae8910c7096" title="Constructs Poincaré plot and &quot;approximate&quot; rotational&#45;transform (driver)." alt="" coords="277,107,341,133"/>
 </map>

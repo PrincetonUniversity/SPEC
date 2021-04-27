@@ -1,7 +1,5 @@
 var group__grp__fourier__repr =
 [
-    [ "Enhanced resolution for metric elements", "group__grp__enh__res__metr.html", "group__grp__enh__res__metr" ],
-    [ "Enhanced resolution for transformation to straight-field line angle", "group__grp__enh__res__sfl.html", "group__grp__enh__res__sfl" ],
     [ "mn", "group__grp__fourier__repr.html#ga3b3045dc5c13351cded37581bdfb3400", null ],
     [ "im", "group__grp__fourier__repr.html#gaeac30068003c58add7893688ea2e48aa", null ],
     [ "in", "group__grp__fourier__repr.html#gae946717d1654463c7cb4b1d7fd712f7d", null ],
@@ -11,10 +9,5 @@ var group__grp__fourier__repr =
     [ "psifactor", "group__grp__fourier__repr.html#ga88327909830819e416eccfce2bdc3ea6", null ],
     [ "inifactor", "group__grp__fourier__repr.html#gafa4fd3f31b31f3dd8e7a4a3b6b1f2559", null ],
     [ "bbweight", "group__grp__fourier__repr.html#gada0423027736fd1910f69e1ac748299d", null ],
-    [ "mmpp", "group__grp__fourier__repr.html#ga4d6db839ef2835ee34f9e87ae0fdf14a", null ],
-    [ "lmpol", "group__grp__fourier__repr.html#gaa5e841ebc6133253ba5e097554d704b6", null ],
-    [ "lntor", "group__grp__fourier__repr.html#ga18f9a2b83fb25b8bc7e0df7918054d28", null ],
-    [ "smpol", "group__grp__fourier__repr.html#ga64cb213f08c1ff9e4c563f0101473c8e", null ],
-    [ "sntor", "group__grp__fourier__repr.html#ga5d8e76e5915007156bfb7cf850ffe352", null ],
-    [ "xoffset", "group__grp__fourier__repr.html#gaca726ec9efb9663d0b1d7d1e4bdb859f", null ]
+    [ "mmpp", "group__grp__fourier__repr.html#ga4d6db839ef2835ee34f9e87ae0fdf14a", null ]
 ];

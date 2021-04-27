@@ -22,7 +22,7 @@
 <area shape="rect" id="node31" href="$group__grp__build__matrices.html#ga1c52bb6dbffdb432550aae12b096080f" title="Constructs energy and helicity matrices that represent the Beltrami linear system...." alt="" coords="783,935,841,961"/>
 <area shape="rect" id="node32" href="$spsint_8f90.html#a01df49c498752e8a4201cc6eb5e283af" title="Calculates volume integrals of Chebyshev&#45;polynomials and metric elements for preconditioner." alt="" coords="1423,351,1481,377"/>
 <area shape="rect" id="node33" href="$spsmat_8f90.html#a4d521a46a64530ade50e6b79a33e1452" title="Constructs matrices for the precondtioner." alt="" coords="779,428,845,455"/>
-<area shape="rect" id="node37" href="$group__grp__global.html#gad2dbd21d0579d623a92119c5ab553c7c" title="Returns which MPI node is associated to a given volume." alt="" coords="742,529,882,556"/>
+<area shape="rect" id="node37" href="$namespaceallglobal.html#ad2dbd21d0579d623a92119c5ab553c7c" title="Returns which MPI node is associated to a given volume." alt="" coords="742,529,882,556"/>
 <area shape="rect" id="node14" href="$intghs_8f90.html#a21d3b7106371783302e68297f7797e9f" title="Calculates volume integrals of Chebyshev polynomials and covariant field products." alt="" coords="1423,781,1481,808"/>
 <area shape="rect" id="node15" href="$basefn_8f90.html#af6a4cad04c70bfb14fd18a3bfbc843a3" title="Get the Chebyshev polynomials with zeroth, first derivatives." alt="" coords="1559,452,1640,479"/>
 <area shape="rect" id="node16" href="$basefn_8f90.html#a38dc596fb909186b01dacc1feac03164" title="Get the Zernike polynomials &#160;with zeroth, first derivatives." alt="" coords="1555,401,1643,428"/>

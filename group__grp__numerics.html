@@ -192,11 +192,11 @@ This routine assigns the Fourier mode labels that converts a double-sum into a s
  where \(N\equiv\,\)<code>Ntor</code> and \(M\equiv\,\)<code>Mpol</code> are given on input, and \(N_P \equiv\,\)<code>Nfp</code> is the field periodicity.  </li>
 </ul>
 
-<p class="reference">Referenced by <a class="el" href="namespaceallglobal.html#ad32ae6194892fe7d876622a6455189e2">allglobal::readin()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="group__grp__initialization.html#ga28628de0fdb3b3497668007d8d0643bd">preset()</a>.</p>
 <div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="group__grp__numerics_ga02a336a22890e7ae5a5c2d525260666c_icgraph.svg" width="663" height="114"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
+<div class="center"><iframe scrolling="no" frameborder="0" src="group__grp__numerics_ga02a336a22890e7ae5a5c2d525260666c_icgraph.svg" width="558" height="88"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
 </div>
 </div>
 
@@ -295,7 +295,7 @@ This constructs the "forward" Fourier transform.  </li>
 <li>
 Given a set of data, \((f_{i},g_{i})\) for \(i = 1, \dots N_\theta N_\zeta\), on a regular two-dimensional angle grid, where \(\theta_j = 2 \pi j / N_\theta\) for \(j = 0, N_\theta-1\), and \(\zeta_k = 2 \pi k / N_\zeta \) for \(k = 0, N_\zeta -1\). The "packing" is governed by \(i = 1 + j + k N_\theta\). The "discrete" resolution is \(N_\theta \equiv\,\)<code>Nt</code>, \(N_\zeta \equiv\,\)<code>Nz</code> and <code>Ntz</code> \(=\) <code>Nt</code> \(\times\) <code>Nz</code> , which are set in <a class="el" href="group__grp__initialization.html#ga28628de0fdb3b3497668007d8d0643bd" title="Allocates and initializes internal arrays.">preset()</a> .  </li>
 <li>
-The Fourier harmonics consistent with Eqn. \((\ref{eq:condensedFourierrepresentation_numrec})\) are constructed. The mode identification labels appearing in Eqn. \((\ref{eq:condensedFourierrepresentation_numrec})\) are \(m_j \equiv\,\)<code>im(j)</code> and \(n_j \equiv\,\)<code>in(j)</code> , which are set in <a class="el" href="namespaceallglobal.html#ad32ae6194892fe7d876622a6455189e2" title="The master node reads the input namelist and sets various internal variables. The relevant quantities...">readin()</a> via a call to <a class="el" href="group__grp__numerics.html#ga02a336a22890e7ae5a5c2d525260666c" title="Assign Fourier mode labels.">gi00ab()</a> .  </li>
+The Fourier harmonics consistent with Eqn. \((\ref{eq:condensedFourierrepresentation_numrec})\) are constructed. The mode identification labels appearing in Eqn. \((\ref{eq:condensedFourierrepresentation_numrec})\) are \(m_j \equiv\,\)<code>im(j)</code> and \(n_j \equiv\,\)<code>in(j)</code> , which are set in readin() via a call to <a class="el" href="group__grp__numerics.html#ga02a336a22890e7ae5a5c2d525260666c" title="Assign Fourier mode labels.">gi00ab()</a> .  </li>
 </ul>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -315,13 +315,13 @@ The Fourier harmonics consistent with Eqn. \((\ref{eq:condensedFourierrepresenta
   </dd>
 </dl>
 
-<p class="reference">References <a class="el" href="namespacefftw__interface.html#af1fd59b9635c6d02ebdacc3ab4000f8b">fftw_interface::cplxin</a>, <a class="el" href="namespacefftw__interface.html#a9bd3e703ef1e725f180d483425e38d98">fftw_interface::cplxout</a>, <a class="el" href="namespaceconstants.html#a28ec2b391ac319cee0f31bb295b89cc2">constants::half</a>, <a class="el" href="group__grp__global__physicslist.html#gae071c5738f7f7a6ada9d6b66676e37c7">inputlist::nfp</a>, <a class="el" href="namespacefileunits.html#a7463305b9ff5b4b659d87f6fa59f74a7">fileunits::ounit</a>, <a class="el" href="namespaceconstants.html#a4fad0dab629c84331119053f1ec1348d">constants::pi2</a>, <a class="el" href="group__grp__global.html#gaae9519af29ff59bac4ff2232d930f409">allglobal::pi2nfp</a>, <a class="el" href="namespacefftw__interface.html#acb169954c5640289df72bdfcda7c6c0f">fftw_interface::planf</a>, and <a class="el" href="namespaceconstants.html#ab2b0340319f61089513f5dd1d3971a47">constants::zero</a>.</p>
+<p class="reference">References <a class="el" href="namespacefftw__interface.html#af1fd59b9635c6d02ebdacc3ab4000f8b">fftw_interface::cplxin</a>, <a class="el" href="namespacefftw__interface.html#a9bd3e703ef1e725f180d483425e38d98">fftw_interface::cplxout</a>, <a class="el" href="namespaceconstants.html#a28ec2b391ac319cee0f31bb295b89cc2">constants::half</a>, <a class="el" href="group__grp__global__physicslist.html#gae071c5738f7f7a6ada9d6b66676e37c7">inputlist::nfp</a>, <a class="el" href="namespacefileunits.html#a7463305b9ff5b4b659d87f6fa59f74a7">fileunits::ounit</a>, <a class="el" href="namespaceconstants.html#a4fad0dab629c84331119053f1ec1348d">constants::pi2</a>, <a class="el" href="namespacefftw__interface.html#acb169954c5640289df72bdfcda7c6c0f">fftw_interface::planf</a>, and <a class="el" href="namespaceconstants.html#ab2b0340319f61089513f5dd1d3971a47">constants::zero</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="group__grp__free-boundary.html#gac0a2cc2241947b27241bb8ef75c5e0ed">bnorml()</a>, <a class="el" href="group__grp__currents.html#gacaf4411e0ba378631dcd2ccb3752e452">curent()</a>, <a class="el" href="dfp200_8f90.html#a7b64c7392b45d0042d8bd7379c0761a5">evaluate_dbb()</a>, <a class="el" href="intghs_8f90.html#a21d3b7106371783302e68297f7797e9f">intghs()</a>, <a class="el" href="lbpol_8f90.html#a29ae6196c664f390d0e60ab7916c806b">lbpol()</a>, <a class="el" href="group__grp__local__force.html#ga7a5316b9e5eeb42811aa6bccd29a132f">lforce()</a>, <a class="el" href="group__grp__metrics.html#ga254ce8e645c4110d77e3b3dbc3a89885">metrix()</a>, <a class="el" href="group__grp__initialization.html#ga28628de0fdb3b3497668007d8d0643bd">preset()</a>, <a class="el" href="group__grp__coord__axis.html#ga564281be4d9806d0688a717314ad748f">rzaxis()</a>, and <a class="el" href="group__grp__smooth__boundary.html#ga5d58e428e5062d645244ff572b06e117">wa00aa()</a>.</p>
 <div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="group__grp__numerics_ga041138109a57e651c57117bb4180409e_icgraph.svg" width="1724" height="1366"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
+<div class="center"><iframe scrolling="no" frameborder="0" src="group__grp__numerics_ga041138109a57e651c57117bb4180409e_icgraph.svg" width="1767" height="1240"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
 </div>
 </div>
 
@@ -437,7 +437,7 @@ This is the inverse routine to <a class="el" href="group__grp__numerics.html#ga0
 <div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="group__grp__numerics_ga1fd52accb0646f535f9bcc46cf5a68f3_icgraph.svg" width="2004" height="1696"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
+<div class="center"><iframe scrolling="no" frameborder="0" src="group__grp__numerics_ga1fd52accb0646f535f9bcc46cf5a68f3_icgraph.svg" width="1960" height="1494"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
 </div>
 </div>
 
@@ -504,7 +504,7 @@ From Numerical Recipes.  </li>
 <div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="group__grp__numerics_ga425e8f1cbf214a3231ab6c874d8fe4be_icgraph.svg" width="504" height="63"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
+<div class="center"><iframe scrolling="no" frameborder="0" src="group__grp__numerics_ga425e8f1cbf214a3231ab6c874d8fe4be_icgraph.svg" width="558" height="88"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
 </div>
 </div>
 

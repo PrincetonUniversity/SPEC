@@ -123,10 +123,6 @@ $(document).ready(function(){initNavTree('todo.html',''); initResizable(); });
 </dd>
 <dt>Subprogram <a class="el" href="group__grp__currents.html#gacaf4411e0ba378631dcd2ccb3752e452">curent</a>  (lvol, mn, Nt, Nz, iflag, ldItGp)</dt>
 <dd><a class="anchor" id="_todo000005"></a>Perhaps this can be proved analytically; in any case it should be confirmed numerically. </dd>
-<dt>Subprogram <a class="el" href="xspech_8f90.html#a537af4990058c0b0f2cd8b3669af204f">ending</a>  </dt>
-<dd><p class="startdd"><a class="anchor" id="_todo000013"></a>The following belongs to the docs of the program xspech, not to the <a class="el" href="xspech_8f90.html#a537af4990058c0b0f2cd8b3669af204f" title="todo remark">ending()</a> subroutine. If you know how to attach the docs to the program xspech, please fix this.</p>
-<p class="enddd"><a class="anchor" id="_todo000014"></a>If <code>Lminimize.eq.1</code> , call <a class="el" href="group__grp__conjugate__gradient.html#ga25a3bae2ff2ee0469b045de0d033398b" title="Use preconditioned conjugate gradient method to find minimum of energy functional.">pc00aa()</a> to find minimum of energy functional using quasi-Newton, preconditioned conjugate gradient method, <code>E04DGF</code>  </p>
-</dd>
 <dt>Subprogram <a class="el" href="group__grp__global__physicslist.html#gafa9685795dd6029e20fc50e564b78018">inputlist::lconstraint</a>  </dt>
 <dd><a class="anchor" id="_todo000006"></a>if <code>Lconstraint==2</code>, under reconstruction. </dd>
 <dt>Subprogram <a class="el" href="group__grp__global__screenlist.html#ga8e95e900c56ec30deb8cfcf7f0160083">inputlist::wbuild_vector_potential</a>  </dt>
@@ -139,6 +135,10 @@ $(document).ready(function(){initNavTree('todo.html',''); initResizable(); });
 <dd><a class="anchor" id="_todo000010"></a>Unfortunately, <code>E04DGF</code> seems to require approximately \(3 N\) function evaluations before proceeding to minimize the energy functional, where there are \(N\) degrees of freedom. I don't know how to turn this off! </dd>
 <dt>Subprogram <a class="el" href="group__grp__conjugate__gradient.html#ga4d8415226e62a9fdb42b0fd0b464251e">pc00ab</a>  (mode, NGdof, Position, Energy, Gradient, nstate, iuser, ruser)</dt>
 <dd><a class="anchor" id="_todo000011"></a>IT IS VERY LIKELY THAT FFTs WOULD BE FASTER!!! </dd>
+<dt>Subprogram <a class="el" href="xspech_8f90.html#aec8c366a4e6a6f1cc611939d5d6e5c2c">read_command_args</a>  </dt>
+<dd><a class="anchor" id="_todo000013"></a>The following belongs to the docs of the program xspech, not to the <a class="el" href="xspech_8f90.html#a537af4990058c0b0f2cd8b3669af204f" title="Closes output files, writes screen summary.">ending()</a> subroutine. If you know how to attach the docs to the program xspech, please fix this. </dd>
+<dt>Subprogram <a class="el" href="xspech_8f90.html#a48f45478dc2c9f70ea8aa1c60ad06503">spec</a>  </dt>
+<dd><a class="anchor" id="_todo000014"></a>If <code>Lminimize.eq.1</code> , call <a class="el" href="group__grp__conjugate__gradient.html#ga25a3bae2ff2ee0469b045de0d033398b" title="Use preconditioned conjugate gradient method to find minimum of energy functional.">pc00aa()</a> to find minimum of energy functional using quasi-Newton, preconditioned conjugate gradient method, <code>E04DGF</code>  </dd>
 <dt>Subprogram <a class="el" href="group__grp__diagnostics.html#ga08ad6b6635a598c0d0578e42f46b63c5">stzxyz</a>  (lvol, stz, RpZ)</dt>
 <dd><a class="anchor" id="_todo000012"></a>Please see co01aa() for documentation.</dd>
 </dl>

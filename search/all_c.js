@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['l_330',['l',['../group__grp__internal__vars.html#ga2a700fe2da9806cf80883a56b8406d18',1,'allglobal::derivative']]],
+  ['l_330',['l',['../namespacetypedefns.html#a968d40a375da4e1b7513d4547944e637',1,'typedefns::derivative']]],
   ['labintegral_331',['labintegral',['../group__grp__volints.html#ga10eefed7fa94d745bd1174f4f4ff77cd',1,'allglobal']]],
   ['ladiabatic_332',['ladiabatic',['../group__grp__global__physicslist.html#ga2a9aa5fda4787ae756c3216be559e743',1,'inputlist']]],
   ['lastcpu_333',['lastcpu',['../namespacenewtontime.html#ae4a249abee4ffba14ae7fc06de2f04b3',1,'newtontime']]],
@@ -48,8 +48,8 @@ var searchData=
   ['lmh_375',['lmh',['../group__grp__vecpot.html#gaf328dd4c449950abe5304244372b5100',1,'allglobal']]],
   ['lmhvalue_376',['lmhvalue',['../group__grp__vecpot.html#gabe2b9379ec4d071c989529e3e72d4cd9',1,'allglobal']]],
   ['lmns_377',['lmns',['../group__grp__field__matrices.html#ga9a50861390cbd5e6dab0378e56377d93',1,'allglobal']]],
-  ['lmpol_378',['lmpol',['../group__grp__fourier__repr.html#gaa5e841ebc6133253ba5e097554d704b6',1,'allglobal']]],
-  ['lntor_379',['lntor',['../group__grp__fourier__repr.html#ga18f9a2b83fb25b8bc7e0df7918054d28',1,'allglobal']]],
+  ['lmpol_378',['lmpol',['../namespaceallglobal.html#aa5e841ebc6133253ba5e097554d704b6',1,'allglobal']]],
+  ['lntor_379',['lntor',['../namespaceallglobal.html#a18f9a2b83fb25b8bc7e0df7918054d28',1,'allglobal']]],
   ['localconstraint_380',['localconstraint',['../group__grp__vecpot.html#ga141035c38dd079ea76b0ddd5df964de7',1,'allglobal']]],
   ['locallist_381',['locallist',['../group__grp__global__local.html',1,'']]],
   ['logtolerance_382',['logtolerance',['../namespacenumerical.html#a908d0d7739e83c52ceccf02036061290',1,'numerical']]],

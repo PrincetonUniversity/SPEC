@@ -1,7 +1,8 @@
 <map id="getimn" name="getimn">
-<area shape="rect" id="node1" title="convert m and n to index" alt="" coords="439,31,500,57"/>
-<area shape="rect" id="node2" href="$group__grp__initialization.html#ga28628de0fdb3b3497668007d8d0643bd" title="Allocates and initializes internal arrays." alt="" coords="332,31,391,57"/>
-<area shape="rect" id="node3" href="$group__grp__diagnostics.html#ga7401b50ec10c6598ee4a8112717a63ec" title="Computes eigenvalues and eigenvectors of derivative matrix, ." alt="" coords="224,5,284,32"/>
-<area shape="rect" id="node4" href="$xspech_8f90.html#aea782eae089760a491c2c54f9903abcc" title="Main program of SPEC." alt="" coords="113,31,176,57"/>
-<area shape="rect" id="node5" href="$xspech_8f90.html#a537af4990058c0b0f2cd8b3669af204f" title="todo remark" alt="" coords="5,31,65,57"/>
+<area shape="rect" id="node1" title="convert m and n to index" alt="" coords="492,56,553,83"/>
+<area shape="rect" id="node2" href="$group__grp__initialization.html#ga28628de0fdb3b3497668007d8d0643bd" title="Allocates and initializes internal arrays." alt="" coords="385,56,444,83"/>
+<area shape="rect" id="node3" href="$group__grp__diagnostics.html#ga7401b50ec10c6598ee4a8112717a63ec" title="Computes eigenvalues and eigenvectors of derivative matrix, ." alt="" coords="277,31,337,57"/>
+<area shape="rect" id="node6" href="$xspech_8f90.html#aea782eae089760a491c2c54f9903abcc" title="Main program of SPEC." alt="" coords="37,56,99,83"/>
+<area shape="rect" id="node4" href="$xspech_8f90.html#a48f45478dc2c9f70ea8aa1c60ad06503" title=" " alt="" coords="179,31,229,57"/>
+<area shape="rect" id="node5" href="$sphdf5_8f90.html#a0f962c09cd5d5eba99f1cba043cb3898" title="initialize the interface to the HDF5 library and open the output file" alt="" coords="5,5,131,32"/>
 </map>

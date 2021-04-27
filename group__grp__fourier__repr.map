@@ -1,6 +1,4 @@
 <map id="Fourier representation" name="Fourier representation">
-<area shape="rect" id="node1" href="$group__grp__enh__res__metr.html" title="Enhanced resolution is required for the metric elements, , which is given by mne, ime,..." alt="" coords="385,5,523,45"/>
-<area shape="rect" id="node2" href="$group__grp__enh__res__sfl.html" title="Enhanced resolution is required for the transformation to straight&#45;field line angle on the interfaces..." alt="" coords="371,70,537,125"/>
-<area shape="rect" id="node3" title=" " alt="" coords="176,49,323,74"/>
-<area shape="rect" id="node4" href="$group__grp__internal__vars.html" title=" " alt="" coords="5,49,128,74"/>
+<area shape="rect" id="node1" title=" " alt="" coords="176,5,323,31"/>
+<area shape="rect" id="node2" href="$group__grp__internal__vars.html" title=" " alt="" coords="5,5,128,31"/>
 </map>

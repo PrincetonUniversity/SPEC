@@ -22,7 +22,7 @@
 <area shape="rect" id="node24" href="$group__grp__solver__driver.html#gacad623d4c5c006e9ad10116372f92ad3" title="Constructs Beltrami field in given volume consistent with flux, helicity, rotational&#45;transform and/or..." alt="" coords="815,717,883,744"/>
 <area shape="rect" id="node34" href="$spsint_8f90.html#a01df49c498752e8a4201cc6eb5e283af" title="Calculates volume integrals of Chebyshev&#45;polynomials and metric elements for preconditioner." alt="" coords="1461,405,1518,432"/>
 <area shape="rect" id="node35" href="$spsmat_8f90.html#a4d521a46a64530ade50e6b79a33e1452" title="Constructs matrices for the precondtioner." alt="" coords="817,413,882,440"/>
-<area shape="rect" id="node39" href="$group__grp__global.html#gad2dbd21d0579d623a92119c5ab553c7c" title="Returns which MPI node is associated to a given volume." alt="" coords="779,616,919,643"/>
+<area shape="rect" id="node39" href="$namespaceallglobal.html#ad2dbd21d0579d623a92119c5ab553c7c" title="Returns which MPI node is associated to a given volume." alt="" coords="779,616,919,643"/>
 <area shape="rect" id="node8" href="$group__grp__geometry.html#gaaca20aa60eaf39055f3c9d5c02a24ac2" title="Calculates coordinates, , and metrics, using FFTs." alt="" coords="1752,1051,1813,1077"/>
 <area shape="rect" id="node9" href="$group__grp__numerics.html#ga1fd52accb0646f535f9bcc46cf5a68f3" title="Inverse Fourier transform (fftw wrapper)" alt="" coords="1868,1228,1919,1255"/>
 <area shape="rect" id="node12" href="$group__grp__numerics.html#ga041138109a57e651c57117bb4180409e" title="Forward Fourier transform (fftw wrapper)" alt="" coords="1617,1177,1656,1204"/>

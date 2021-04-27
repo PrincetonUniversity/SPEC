@@ -4,7 +4,7 @@ var searchData=
   ['bbe_19',['bbe',['../group__grp__force__constr.html#ga9ab71ed2b37abe0d8a4b90cb764ec6f6',1,'allglobal']]],
   ['bbo_20',['bbo',['../group__grp__force__constr.html#gaa486c2bfc2562cdfae6583ff3332994a',1,'allglobal']]],
   ['bbweight_21',['bbweight',['../group__grp__fourier__repr.html#gada0423027736fd1910f69e1ac748299d',1,'allglobal']]],
-  ['beltramierror_22',['beltramierror',['../group__grp__global.html#ga62b3d756309401ae5638d238084719ce',1,'allglobal']]],
+  ['beltramierror_22',['beltramierror',['../namespaceallglobal.html#a62b3d756309401ae5638d238084719ce',1,'allglobal']]],
   ['beltramiinverse_23',['beltramiinverse',['../group__grp__field__matrices.html#ga26debfb15a1c710b160b93145f342974',1,'allglobal']]],
   ['bemn_24',['bemn',['../group__grp__force__constr.html#ga468c455230178a907affbc00a564e4f1',1,'allglobal']]],
   ['bfield_25',['bfield',['../group__grp__diagnostics.html#ga20985df1b0df0503ca03ca13f1daf642',1,'bfield.f90']]],
@@ -22,11 +22,12 @@ var searchData=
   ['bomn_37',['bomn',['../group__grp__force__constr.html#ga73a86e10824f23ba83def102e7d4b0c0',1,'allglobal']]],
   ['brcast_38',['brcast',['../group__grp__parallel.html#ga5d8e3412e023967dda67b02f358b754a',1,'brcast.f90']]],
   ['brcast_2ef90_39',['brcast.f90',['../brcast_8f90.html',1,'']]],
-  ['bsupumn_40',['bsupumn',['../group__grp__fourier__transform.html#gac8cad9694df449349ce766eabd59216d',1,'allglobal']]],
-  ['bsupvmn_41',['bsupvmn',['../group__grp__fourier__transform.html#gad8cb45dc514217d16a651e85749c3185',1,'allglobal']]],
-  ['btemn_42',['btemn',['../group__grp__covar__field__ifaces.html#ga1f5ea9c38e55707a900ca335990b63f1',1,'allglobal']]],
-  ['btomn_43',['btomn',['../group__grp__covar__field__ifaces.html#ga81924a77513f01a3ab914cc6d87c9558',1,'allglobal']]],
-  ['build_20matrices_44',['Build matrices',['../group__grp__build__matrices.html',1,'']]],
-  ['bzemn_45',['bzemn',['../group__grp__covar__field__ifaces.html#ga01aa29d7089eccad444e36b93b3d0784',1,'allglobal']]],
-  ['bzomn_46',['bzomn',['../group__grp__covar__field__ifaces.html#ga2db512f2492084aac27af4378441be37',1,'allglobal']]]
+  ['broadcast_5finputs_40',['broadcast_inputs',['../namespaceallglobal.html#a50e99bda692e1d2e3fa68857b67db880',1,'allglobal']]],
+  ['bsupumn_41',['bsupumn',['../group__grp__fourier__transform.html#gac8cad9694df449349ce766eabd59216d',1,'allglobal']]],
+  ['bsupvmn_42',['bsupvmn',['../group__grp__fourier__transform.html#gad8cb45dc514217d16a651e85749c3185',1,'allglobal']]],
+  ['btemn_43',['btemn',['../group__grp__covar__field__ifaces.html#ga1f5ea9c38e55707a900ca335990b63f1',1,'allglobal']]],
+  ['btomn_44',['btomn',['../group__grp__covar__field__ifaces.html#ga81924a77513f01a3ab914cc6d87c9558',1,'allglobal']]],
+  ['build_20matrices_45',['Build matrices',['../group__grp__build__matrices.html',1,'']]],
+  ['bzemn_46',['bzemn',['../group__grp__covar__field__ifaces.html#ga01aa29d7089eccad444e36b93b3d0784',1,'allglobal']]],
+  ['bzomn_47',['bzomn',['../group__grp__covar__field__ifaces.html#ga2db512f2492084aac27af4378441be37',1,'allglobal']]]
 ];

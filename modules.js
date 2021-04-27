@@ -22,5 +22,8 @@ var modules =
     [ "Coordinate axis", "group__grp__coord__axis.html", "group__grp__coord__axis" ],
     [ "Rotational Transform", "group__grp__transform.html", "group__grp__transform" ],
     [ "Plasma volume", "group__grp__volume.html", "group__grp__volume" ],
-    [ "Smooth boundary", "group__grp__smooth__boundary.html", "group__grp__smooth__boundary" ]
+    [ "Smooth boundary", "group__grp__smooth__boundary.html", "group__grp__smooth__boundary" ],
+    [ "Enhanced resolution for metric elements", "group__grp__enh__res__metr.html", "group__grp__enh__res__metr" ],
+    [ "Enhanced resolution for transformation to straight-field line angle", "group__grp__enh__res__sfl.html", "group__grp__enh__res__sfl" ],
+    [ "Internal Variables", "group__grp__internal__vars.html", "group__grp__internal__vars" ]
 ];
