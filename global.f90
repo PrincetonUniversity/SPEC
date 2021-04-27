@@ -1264,6 +1264,12 @@ module allglobal
 
   REAL,    allocatable :: HdFFdRZ(:,:,:,:,:) ! derivatives of B^2 at the interfaces wrt geometry     ; 
 
+  REAL,    allocatable :: denergydrr(:,:,:,:,:)
+  REAL,    allocatable :: denergydrz(:,:,:,:,:)
+  REAL,    allocatable :: denergydzr(:,:,:,:,:)
+  REAL,    allocatable :: denergydzz(:,:,:,:,:)
+
+
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1330,6 +1336,10 @@ module allglobal
   LOGICAL              :: Lhessian2Dallocated
   REAL,    allocatable :: hessian2D(:,:)
   REAL,    allocatable :: dessian2D(:,:)
+
+  LOGICAL              :: Lhessian3Dallocated
+  REAL,    allocatable :: hessian3D(:,:)
+  REAL,    allocatable :: dessian3D(:,:)
 
 
 
