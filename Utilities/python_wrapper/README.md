@@ -3,12 +3,13 @@
 This is the python wrapper for SPEC using the package `f90wrap`.
 
 ## Prerequisites
-You have to install a customized version of `f90wrap` modified by Caoxiang Zhu.
+You have to install a customized version of `f90wrap` modified by Caoxiang Zhu and Jonathan Schilling.
 The modifications were made to address the bugs with derived arrays and Fortran variables conflicting with python keywords.
+It also fixes a problem with missing `setjmpvalue` variables due to changes in more recent numpy versions.
 
 To install the customized version, please do
 ```
-pip install -U git+https://github.com/zhucaoxiang/f90wrap
+pip install -U git+https://github.com/jonathanschilling/f90wrap
 ```
 
 ## Wrapped files
@@ -26,13 +27,13 @@ Here are the modifications we have made in the original SPEC sources.
 ## Compile
 To compile the python package, you should type
 ```
-make CC=gfortran all
+make BUILD_ENV=gfortran all
 ```
-The `CC=gfortran` part will be the same compiler option as you use to compile SPEC.
+The `BUILD_ENV=gfortran` part will be the same compiler option as you use to compile SPEC.
 
 You can check compiler options by using
 ```
-make CC=gfortran compile_test
+make BUILD_ENV=gfortran compile_test
 ```
 
 You can also clean the temporary files by using
@@ -50,6 +51,7 @@ You can now use it directly via `mpiexec python core.py ext`, where `ext` is the
 The more advanced way is to use it as an imported module.
 All the modules and subroutines that have been interfaced are now available in `SPEC.lib`.
 For convenience, the global modules can be directly accessed via `SPEC.allglobal`, `SPEC.inputlist`, etc.
-There is an example importing the SPEC python class and optimize the volume inside an interface at `example.py`
+There is an example importing the SPEC python class and optimize the volume inside an interface at `example.py`.
+A second example where the in-memory modification and reconvergence of SPEC is demonstrated can be found in `example2.py`.
 
 *So far, I have only tested GCC compiler, while Intel compiler should also work after updates in the Makefile*
