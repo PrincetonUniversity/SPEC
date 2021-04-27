@@ -543,15 +543,14 @@ if( LHmatrix .and. Lhessian3Dallocated .and. Igeometry.ge.3) then ! construct He
   
               do issym = 0, 1 ! stellarator symmetry;
   
-                !if( issym.eq.1 .and. YESstellsym ) cycle ! no dependence on the non-stellarator symmetric harmonics;
+                if( issym.eq.1 .and. YESstellsym ) cycle ! no dependence on the non-stellarator symmetric harmonics;
   
                 if( ii.eq.1 .and. irz.eq.1 .and. issym.eq.0 ) cycle ! no dependence on Zbs_{m=0,n=0};
                 if( ii.eq.1 .and. irz.eq.0 .and. issym.eq.1 ) cycle ! no dependence on Rbs_{m=0,n=0};
         
                 idof = idof + 1 ! labels degree-of-freedom;
 
-  
-                if( LocalConstraint) then
+                !if( LocalConstraint) then
 
                   idof=idof+1
    
@@ -564,8 +563,8 @@ if( LHmatrix .and. Lhessian3Dallocated .and. Igeometry.ge.3) then ! construct He
                     if ( vvol.gt.1 ) then
                        tdofr = (vvol-2) * LGdof + idofr ! labels degree-of-freedom in internal interface geometry   ;
                        tdofz = (vvol-2) * LGdof + idofz
-                       tdoc = (vvol-1) * LGdof        ! labels force-balance constraint across internal interfaces; !always fix
-                       idoc = 0                       ! local  force-balance constraint across internal interface ;
+                       tdoc = (vvol-1) * LGdof          ! labels force-balance constraint across internal interfaces; !always fix
+                       idoc = 0                         ! local  force-balance constraint across internal interface ;
                        if (irz .eq.0) then
                            hessian2D(tdoc+idoc+1:tdoc+idoc+LGdof,tdofr) = -denergydrr(idoc+1:idoc+LGdof ,vvol+0,1,idof,0) 
                        else
@@ -579,10 +578,12 @@ if( LHmatrix .and. Lhessian3Dallocated .and. Igeometry.ge.3) then ! construct He
                         ;idoc = 0 ! diagonal elements;
                        if (irz .eq. 0) then
                           ;hessian2D(tdoc+1:tdoc+LGdof,tdofr) = denergydrr(idoc+1:idoc+LGdof,vvol+1,0,idof,0) - denergydrr(idoc+1:idoc+LGdof,vvol+0,1,idof,1)! &
-                      else
+                          !write(ounit,*) im(ii), hessian2D(1,tdofr) !vvol, im(ii), in(ii), irz, issym, tdofr, tdofz 
+
+                        else
                           ;hessian2D(tdoc+1:tdoc+LGdof,tdofz+mn) = denergydzr(idoc+1:idoc+LGdof,vvol+1,0,idof,0) - denergydzr(idoc+1:idoc+LGdof,vvol+0,1,idof,1)
+
                       endif  
-                          !write(ounit,'("hesian3D : ",f10.2," : efcol1="f10.2")') cput-cpus, efcol1mn(1:mn)
 
         
                       if ( vvol.lt.Mvol-1 ) then
@@ -590,8 +591,8 @@ if( LHmatrix .and. Lhessian3Dallocated .and. Igeometry.ge.3) then ! construct He
                          tdofz = (vvol+0) * LGdof + idofz
                          tdoc = (vvol-1) * LGdof ! shorthand;
                          idoc = 0
-                               !  if    ( im(idof).le.0                     ) then ; hessian(tdoc+idof,tdof) = - one
-                                    !  else                                             ; hessian(tdoc+idof,tdof) = - one
+                               !  if    ( im(idof).le.0 ) then ; hessian(tdoc+idof,tdof) = - one
+                                    !  else                    ; hessian(tdoc+idof,tdof) = - one
                                   !  endif
                         if (irz.eq.0) then
                              hessian2D(tdoc+idoc+1:tdoc+idoc+LGdof,tdofr) = denergydrr(idoc+1:idoc+LGdof ,vvol+1,0,idof,1) 
@@ -609,13 +610,13 @@ if( LHmatrix .and. Lhessian3Dallocated .and. Igeometry.ge.3) then ! construct He
   
                   !endif ! end of if( vvol.lt.Mvol-1 ) ;
                       
-                else ! Global constraint
+                !else ! Global constraint
                 
                   ! In the general case of global constraint, there are no zero element in the hessian. We thus loop again on all volumes
 
-                  FATAL( dforce, .true., incorrect choice of Lconstraint in SPEC)
+                  !FATAL( dforce, .true., incorrect choice of Lconstraint in SPEC)
   
-                endif ! matches if( LocalConstraint );
+                !endif ! matches if( LocalConstraint );
 
               enddo ! matches do issym ;
   
