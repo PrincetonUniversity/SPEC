@@ -13,6 +13,7 @@ var files_dup =
     [ "dfp200.f90", "dfp200_8f90.html", "dfp200_8f90" ],
     [ "global.f90", "global_8f90.html", "global_8f90" ],
     [ "hesian.f90", "hesian_8f90.html", "hesian_8f90" ],
+    [ "inputlist.f90", "inputlist_8f90.html", "inputlist_8f90" ],
     [ "intghs.f90", "intghs_8f90.html", "intghs_8f90" ],
     [ "jo00aa.f90", "jo00aa_8f90.html", "jo00aa_8f90" ],
     [ "lbpol.f90", "lbpol_8f90.html", "lbpol_8f90" ],

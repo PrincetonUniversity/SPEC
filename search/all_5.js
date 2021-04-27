@@ -15,5 +15,5 @@ var searchData=
   ['evaluate_5fdbb_166',['evaluate_dbb',['../dfp200_8f90.html#a7b64c7392b45d0042d8bd7379c0761a5',1,'dfp200.f90']]],
   ['evaluate_5fdmupfdx_167',['evaluate_dmupfdx',['../dfp200_8f90.html#a73ddf39ecc5228201fb643779e17cd36',1,'dfp200.f90']]],
   ['evmn_168',['evmn',['../group__grp__fourier__transform.html#ga03a90b1d4526190ab22932237d612316',1,'allglobal']]],
-  ['exterior_169',['exterior',['../wa00aa_8f90.html#a1e8a7d93833e5c758b6f4c4bebaeafa5',1,'laplaces']]]
+  ['exterior_169',['exterior',['../namespacelaplaces.html#a1e8a7d93833e5c758b6f4c4bebaeafa5',1,'laplaces']]]
 ];

@@ -44,7 +44,7 @@ var searchData=
   ['dmds_119',['dmds',['../group__grp__field__matrices.html#ga9d6d1bb46ad2b66aee9289c507b60127',1,'allglobal']]],
   ['dmg_120',['dmg',['../group__grp__field__matrices.html#gabf45dbde867eb2274ba00f920094adc7',1,'allglobal']]],
   ['dmupfdx_121',['dmupfdx',['../group__grp__deriv__mul__polflux.html#gadbfeeb10efad1a2a84fe800073a0ba18',1,'allglobal']]],
-  ['dorm_122',['dorm',['../wa00aa_8f90.html#ae3724174f0711f8567725b2e18b844d3',1,'laplaces']]],
+  ['dorm_122',['dorm',['../namespacelaplaces.html#ae3724174f0711f8567725b2e18b844d3',1,'laplaces']]],
   ['dpflux_123',['dpflux',['../group__grp__chebychev__metric.html#ga4540124e238e2868f80f825ce7b20514',1,'allglobal']]],
   ['dpp_124',['dpp',['../group__grp__global__diagnostics.html#ga2ba67a016005a50d6b82280622de6261',1,'inputlist']]],
   ['dqq_125',['dqq',['../group__grp__global__diagnostics.html#gaa0f15308763e13b3a75afa1b64d63af0',1,'inputlist']]],

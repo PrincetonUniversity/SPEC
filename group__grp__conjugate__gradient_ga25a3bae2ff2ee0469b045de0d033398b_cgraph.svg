@@ -284,7 +284,7 @@
 <!-- Node22 -->
 <g id="node22" class="node">
 <title>Node22</title>
-<g id="a_node22"><a xlink:href="lbpol_8f90.html#a29ae6196c664f390d0e60ab7916c806b" target="_top" xlink:title=" ">
+<g id="a_node22"><a xlink:href="lbpol_8f90.html#a29ae6196c664f390d0e60ab7916c806b" target="_top" xlink:title="Computes &#160;at the interface.">
 <polygon fill="white" stroke="black" points="1131.5,-308.59 1131.5,-327.59 1168.5,-327.59 1168.5,-308.59 1131.5,-308.59"/>
 <text text-anchor="middle" x="1150" y="-315.59" font-family="Helvetica,sans-Serif" font-size="10.00">lbpol</text>
 </a>
@@ -344,7 +344,7 @@
 <!-- Node35 -->
 <g id="node35" class="node">
 <title>Node35</title>
-<g id="a_node35"><a xlink:href="spsint_8f90.html#a01df49c498752e8a4201cc6eb5e283af" target="_top" xlink:title="Calculates volume integrals of Chebyshev&#45;polynomials and metric elements for preconditioner.">
+<g id="a_node35"><a xlink:href="group__grp__integrals.html#ga01df49c498752e8a4201cc6eb5e283af" target="_top" xlink:title="Calculates volume integrals of Chebyshev&#45;polynomials and metric elements for preconditioner.">
 <polygon fill="white" stroke="black" points="1128.5,-992.59 1128.5,-1011.59 1171.5,-1011.59 1171.5,-992.59 1128.5,-992.59"/>
 <text text-anchor="middle" x="1150" y="-999.59" font-family="Helvetica,sans-Serif" font-size="10.00">spsint</text>
 </a>
@@ -359,7 +359,7 @@
 <!-- Node36 -->
 <g id="node36" class="node">
 <title>Node36</title>
-<g id="a_node36"><a xlink:href="spsmat_8f90.html#a4d521a46a64530ade50e6b79a33e1452" target="_top" xlink:title="Constructs matrices for the precondtioner.">
+<g id="a_node36"><a xlink:href="group__grp__build__matrices.html#ga4d521a46a64530ade50e6b79a33e1452" target="_top" xlink:title="Constructs matrices for the precondtioner.">
 <polygon fill="white" stroke="black" points="645.5,-650.59 645.5,-669.59 694.5,-669.59 694.5,-650.59 645.5,-650.59"/>
 <text text-anchor="middle" x="670" y="-657.59" font-family="Helvetica,sans-Serif" font-size="10.00">spsmat</text>
 </a>
@@ -638,7 +638,7 @@
 <!-- Node28 -->
 <g id="node28" class="node">
 <title>Node28</title>
-<g id="a_node28"><a xlink:href="mtrxhs_8f90.html#a6c22bb4322fbcc29cb17dcc90b56eacd" target="_top" xlink:title="Constructs matrices that represent the Beltrami linear system, matrix&#45;free.">
+<g id="a_node28"><a xlink:href="group__grp__build__matrices.html#ga6c22bb4322fbcc29cb17dcc90b56eacd" target="_top" xlink:title="Constructs matrices that represent the Beltrami linear system, matrix&#45;free.">
 <polygon fill="white" stroke="black" points="1127,-612.59 1127,-631.59 1173,-631.59 1173,-612.59 1127,-612.59"/>
 <text text-anchor="middle" x="1150" y="-619.59" font-family="Helvetica,sans-Serif" font-size="10.00">mtrxhs</text>
 </a>

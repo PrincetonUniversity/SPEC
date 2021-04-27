@@ -51,7 +51,7 @@
 <!-- Node11 -->
 <g id="node11" class="node">
 <title>Node11</title>
-<g id="a_node11"><a xlink:href="mtrxhs_8f90.html#a6c22bb4322fbcc29cb17dcc90b56eacd" target="_top" xlink:title="Constructs matrices that represent the Beltrami linear system, matrix&#45;free.">
+<g id="a_node11"><a xlink:href="group__grp__build__matrices.html#ga6c22bb4322fbcc29cb17dcc90b56eacd" target="_top" xlink:title="Constructs matrices that represent the Beltrami linear system, matrix&#45;free.">
 <polygon fill="white" stroke="black" points="281,-162.5 281,-181.5 327,-181.5 327,-162.5 281,-162.5"/>
 <text text-anchor="middle" x="304" y="-169.5" font-family="Helvetica,sans-Serif" font-size="10.00">mtrxhs</text>
 </a>

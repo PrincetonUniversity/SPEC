@@ -110,6 +110,7 @@ $(document).ready(function(){initNavTree('sphdf5_8f90.html',''); initResizable()
 
 <div class="header">
   <div class="summary">
+<a href="#namespaces">Modules</a> &#124;
 <a href="#func-members">Functions/Subroutines</a> &#124;
 <a href="#var-members">Variables</a>  </div>
   <div class="headertitle">
@@ -117,53 +118,59 @@ $(document).ready(function(){initNavTree('sphdf5_8f90.html',''); initResizable()
 </div><!--header-->
 <div class="contents">
 
-<p>(output) ! Writes all the output information to ext.h5.  
+<p>Writes all the output information to ext.h5.  
 <a href="#details">More...</a></p>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="namespaces"></a>
+Modules</h2></td></tr>
+<tr class="memitem:namespacesphdf5"><td class="memItemLeft" align="right" valign="top">module &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html">sphdf5</a></td></tr>
+<tr class="memdesc:namespacesphdf5"><td class="mdescLeft">&#160;</td><td class="mdescRight">writing the HDF5 output file <br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions/Subroutines</h2></td></tr>
 <tr class="memitem:a0f962c09cd5d5eba99f1cba043cb3898"><td class="memItemLeft" align="right" valign="top"><a id="a0f962c09cd5d5eba99f1cba043cb3898"></a>
-subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="sphdf5_8f90.html#a0f962c09cd5d5eba99f1cba043cb3898">sphdf5::init_outfile</a></td></tr>
+subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a0f962c09cd5d5eba99f1cba043cb3898">sphdf5::init_outfile</a></td></tr>
 <tr class="memdesc:a0f962c09cd5d5eba99f1cba043cb3898"><td class="mdescLeft">&#160;</td><td class="mdescRight">initialize the interface to the HDF5 library and open the output file <br /></td></tr>
 <tr class="separator:a0f962c09cd5d5eba99f1cba043cb3898"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afed4d951aec99f2ebeba68c465eb9861"><td class="memItemLeft" align="right" valign="top"><a id="afed4d951aec99f2ebeba68c465eb9861"></a>
-subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="sphdf5_8f90.html#afed4d951aec99f2ebeba68c465eb9861">sphdf5::mirror_input_to_outfile</a></td></tr>
+subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#afed4d951aec99f2ebeba68c465eb9861">sphdf5::mirror_input_to_outfile</a></td></tr>
 <tr class="memdesc:afed4d951aec99f2ebeba68c465eb9861"><td class="mdescLeft">&#160;</td><td class="mdescRight">mirror input variables into output file <br /></td></tr>
 <tr class="separator:afed4d951aec99f2ebeba68c465eb9861"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab348ec00943ff875a1ebb965fb98841e"><td class="memItemLeft" align="right" valign="top"><a id="ab348ec00943ff875a1ebb965fb98841e"></a>
-subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="sphdf5_8f90.html#ab348ec00943ff875a1ebb965fb98841e">sphdf5::init_convergence_output</a></td></tr>
+subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#ab348ec00943ff875a1ebb965fb98841e">sphdf5::init_convergence_output</a></td></tr>
 <tr class="memdesc:ab348ec00943ff875a1ebb965fb98841e"><td class="mdescLeft">&#160;</td><td class="mdescRight">prepare convergence evolution output <br /></td></tr>
 <tr class="separator:ab348ec00943ff875a1ebb965fb98841e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ade76c03b9b11be2a12d3ddd32e77a6ae"><td class="memItemLeft" align="right" valign="top"><a id="ade76c03b9b11be2a12d3ddd32e77a6ae"></a>
-subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="sphdf5_8f90.html#ade76c03b9b11be2a12d3ddd32e77a6ae">sphdf5::write_convergence_output</a> (nDcalls, ForceErr)</td></tr>
+subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#ade76c03b9b11be2a12d3ddd32e77a6ae">sphdf5::write_convergence_output</a> (nDcalls, ForceErr)</td></tr>
 <tr class="memdesc:ade76c03b9b11be2a12d3ddd32e77a6ae"><td class="mdescLeft">&#160;</td><td class="mdescRight">write convergence output (evolution of interface geometry, force, etc); was in <a class="el" href="global_8f90.html" title="Defines input namelists and global variables, and opens some output files.">global.f90</a>/wrtend for wflag.eq.-1 previously <br /></td></tr>
 <tr class="separator:ade76c03b9b11be2a12d3ddd32e77a6ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a17e65b951634f7098213fd071d905482"><td class="memItemLeft" align="right" valign="top"><a id="a17e65b951634f7098213fd071d905482"></a>
-subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="sphdf5_8f90.html#a17e65b951634f7098213fd071d905482">sphdf5::write_grid</a></td></tr>
+subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a17e65b951634f7098213fd071d905482">sphdf5::write_grid</a></td></tr>
 <tr class="memdesc:a17e65b951634f7098213fd071d905482"><td class="mdescLeft">&#160;</td><td class="mdescRight">write the magnetic field on a grid; previously the (wflag.eq.1) part of globals.f90/wrtend to write .ext.sp.grid; <br /></td></tr>
 <tr class="separator:a17e65b951634f7098213fd071d905482"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a47186186c9418cd913ee9c98b5668642"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="sphdf5_8f90.html#a47186186c9418cd913ee9c98b5668642">sphdf5::init_flt_output</a> (numTrajTotal)</td></tr>
-<tr class="memdesc:a47186186c9418cd913ee9c98b5668642"><td class="mdescLeft">&#160;</td><td class="mdescRight">init field line tracing output group and create array datasets  <a href="sphdf5_8f90.html#a47186186c9418cd913ee9c98b5668642">More...</a><br /></td></tr>
+<tr class="memitem:a47186186c9418cd913ee9c98b5668642"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a47186186c9418cd913ee9c98b5668642">sphdf5::init_flt_output</a> (numTrajTotal)</td></tr>
+<tr class="memdesc:a47186186c9418cd913ee9c98b5668642"><td class="mdescLeft">&#160;</td><td class="mdescRight">init field line tracing output group and create array datasets  <a href="namespacesphdf5.html#a47186186c9418cd913ee9c98b5668642">More...</a><br /></td></tr>
 <tr class="separator:a47186186c9418cd913ee9c98b5668642"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a14195bd206b7f6a7f05d4d6fc4b50f42"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="sphdf5_8f90.html#a14195bd206b7f6a7f05d4d6fc4b50f42">sphdf5::write_poincare</a> (offset, data, success)</td></tr>
-<tr class="memdesc:a14195bd206b7f6a7f05d4d6fc4b50f42"><td class="mdescLeft">&#160;</td><td class="mdescRight">write a hyperslab of Poincare data  <a href="sphdf5_8f90.html#a14195bd206b7f6a7f05d4d6fc4b50f42">More...</a><br /></td></tr>
+<tr class="memitem:a14195bd206b7f6a7f05d4d6fc4b50f42"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a14195bd206b7f6a7f05d4d6fc4b50f42">sphdf5::write_poincare</a> (offset, data, success)</td></tr>
+<tr class="memdesc:a14195bd206b7f6a7f05d4d6fc4b50f42"><td class="mdescLeft">&#160;</td><td class="mdescRight">write a hyperslab of Poincare data  <a href="namespacesphdf5.html#a14195bd206b7f6a7f05d4d6fc4b50f42">More...</a><br /></td></tr>
 <tr class="separator:a14195bd206b7f6a7f05d4d6fc4b50f42"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8f01c5e4a21c5af2c39620f24e598095"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="sphdf5_8f90.html#a8f01c5e4a21c5af2c39620f24e598095">sphdf5::write_transform</a> (offset, length, lvol, diotadxup, fiota)</td></tr>
-<tr class="memdesc:a8f01c5e4a21c5af2c39620f24e598095"><td class="mdescLeft">&#160;</td><td class="mdescRight">write rotational transform output from field line following  <a href="sphdf5_8f90.html#a8f01c5e4a21c5af2c39620f24e598095">More...</a><br /></td></tr>
+<tr class="memitem:a8f01c5e4a21c5af2c39620f24e598095"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a8f01c5e4a21c5af2c39620f24e598095">sphdf5::write_transform</a> (offset, length, lvol, diotadxup, fiota)</td></tr>
+<tr class="memdesc:a8f01c5e4a21c5af2c39620f24e598095"><td class="mdescLeft">&#160;</td><td class="mdescRight">write rotational transform output from field line following  <a href="namespacesphdf5.html#a8f01c5e4a21c5af2c39620f24e598095">More...</a><br /></td></tr>
 <tr class="separator:a8f01c5e4a21c5af2c39620f24e598095"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acd97a933d4239028dc8114b110655074"><td class="memItemLeft" align="right" valign="top"><a id="acd97a933d4239028dc8114b110655074"></a>
-subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="sphdf5_8f90.html#acd97a933d4239028dc8114b110655074">sphdf5::finalize_flt_output</a></td></tr>
+subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#acd97a933d4239028dc8114b110655074">sphdf5::finalize_flt_output</a></td></tr>
 <tr class="memdesc:acd97a933d4239028dc8114b110655074"><td class="mdescLeft">&#160;</td><td class="mdescRight">finalize Poincare output <br /></td></tr>
 <tr class="separator:acd97a933d4239028dc8114b110655074"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2f9e9c50084175e5174b1e1070e24d73"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="sphdf5_8f90.html#a2f9e9c50084175e5174b1e1070e24d73">sphdf5::write_vector_potential</a> (sumLrad, allAte, allAze, allAto, allAzo)</td></tr>
-<tr class="memdesc:a2f9e9c50084175e5174b1e1070e24d73"><td class="mdescLeft">&#160;</td><td class="mdescRight">write the magnetic vector potential Fourier harmonics to the output file group /vector_potential  <a href="sphdf5_8f90.html#a2f9e9c50084175e5174b1e1070e24d73">More...</a><br /></td></tr>
+<tr class="memitem:a2f9e9c50084175e5174b1e1070e24d73"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a2f9e9c50084175e5174b1e1070e24d73">sphdf5::write_vector_potential</a> (sumLrad, allAte, allAze, allAto, allAzo)</td></tr>
+<tr class="memdesc:a2f9e9c50084175e5174b1e1070e24d73"><td class="mdescLeft">&#160;</td><td class="mdescRight">write the magnetic vector potential Fourier harmonics to the output file group /vector_potential  <a href="namespacesphdf5.html#a2f9e9c50084175e5174b1e1070e24d73">More...</a><br /></td></tr>
 <tr class="separator:a2f9e9c50084175e5174b1e1070e24d73"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a593e99355c8ceabe56a566e9d468dbd9"><td class="memItemLeft" align="right" valign="top"><a id="a593e99355c8ceabe56a566e9d468dbd9"></a>
-subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="sphdf5_8f90.html#a593e99355c8ceabe56a566e9d468dbd9">sphdf5::hdfint</a></td></tr>
+subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a593e99355c8ceabe56a566e9d468dbd9">sphdf5::hdfint</a></td></tr>
 <tr class="memdesc:a593e99355c8ceabe56a566e9d468dbd9"><td class="mdescLeft">&#160;</td><td class="mdescRight">final output <br /></td></tr>
 <tr class="separator:a593e99355c8ceabe56a566e9d468dbd9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adb720ea6408b8f7681bfb7f86a4b86f2"><td class="memItemLeft" align="right" valign="top"><a id="adb720ea6408b8f7681bfb7f86a4b86f2"></a>
-subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="sphdf5_8f90.html#adb720ea6408b8f7681bfb7f86a4b86f2">sphdf5::finish_outfile</a></td></tr>
+subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#adb720ea6408b8f7681bfb7f86a4b86f2">sphdf5::finish_outfile</a></td></tr>
 <tr class="memdesc:adb720ea6408b8f7681bfb7f86a4b86f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Close all open HDF5 objects (we know of) and list any remaining still-open objects. <br /></td></tr>
 <tr class="separator:adb720ea6408b8f7681bfb7f86a4b86f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -348,201 +355,8 @@ character(len=:), allocatable&#160;</td><td class="memItemRight" valign="bottom"
 <tr class="separator:a50eb8663864d8413e9864e123545eb16"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>(output) ! Writes all the output information to ext.h5. </p>
-</div><h2 class="groupheader">Function/Subroutine Documentation</h2>
-<a id="a47186186c9418cd913ee9c98b5668642"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a47186186c9418cd913ee9c98b5668642">&#9670;&nbsp;</a></span>init_flt_output()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">subroutine sphdf5::init_flt_output </td>
-          <td>(</td>
-          <td class="paramtype">integer, intent(in)&#160;</td>
-          <td class="paramname"><em>numTrajTotal</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>init field line tracing output group and create array datasets </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">numTrajTotal</td><td>total number of Poincare trajectories </td></tr>
-  </table>
-  </dd>
-</dl>
-
-<p class="reference">References <a class="el" href="group__grp__global__diagnostics.html#ga1352151a16c55ca06c613474753e4acc">inputlist::nppts</a>, and <a class="el" href="group__grp__fourier__transform.html#gaa91566c55f28df38e46ffc19e60f766f">allglobal::nz</a>.</p>
-
-</div>
-</div>
-<a id="a14195bd206b7f6a7f05d4d6fc4b50f42"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a14195bd206b7f6a7f05d4d6fc4b50f42">&#9670;&nbsp;</a></span>write_poincare()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">subroutine sphdf5::write_poincare </td>
-          <td>(</td>
-          <td class="paramtype">integer, intent(in)&#160;</td>
-          <td class="paramname"><em>offset</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real, dimension(:,:,:), intent(in)&#160;</td>
-          <td class="paramname"><em>data</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">integer, dimension(:), intent(in)&#160;</td>
-          <td class="paramname"><em>success</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>write a hyperslab of Poincare data </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">offset</td><td></td></tr>
-    <tr><td class="paramname">data</td><td></td></tr>
-    <tr><td class="paramname">success</td><td></td></tr>
-  </table>
-  </dd>
-</dl>
-
-<p class="reference">References <a class="el" href="group__grp__global__diagnostics.html#ga1352151a16c55ca06c613474753e4acc">inputlist::nppts</a>, and <a class="el" href="group__grp__fourier__transform.html#gaa91566c55f28df38e46ffc19e60f766f">allglobal::nz</a>.</p>
-
-</div>
-</div>
-<a id="a8f01c5e4a21c5af2c39620f24e598095"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8f01c5e4a21c5af2c39620f24e598095">&#9670;&nbsp;</a></span>write_transform()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">subroutine sphdf5::write_transform </td>
-          <td>(</td>
-          <td class="paramtype">integer, intent(in)&#160;</td>
-          <td class="paramname"><em>offset</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">integer, intent(in)&#160;</td>
-          <td class="paramname"><em>length</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">integer, intent(in)&#160;</td>
-          <td class="paramname"><em>lvol</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real, dimension(:), intent(in)&#160;</td>
-          <td class="paramname"><em>diotadxup</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real, dimension(:,:), intent(in)&#160;</td>
-          <td class="paramname"><em>fiota</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>write rotational transform output from field line following </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">offset</td><td></td></tr>
-    <tr><td class="paramname">length</td><td></td></tr>
-    <tr><td class="paramname">lvol</td><td></td></tr>
-    <tr><td class="paramname">diotadxup</td><td></td></tr>
-    <tr><td class="paramname">fiota</td><td></td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="a2f9e9c50084175e5174b1e1070e24d73"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2f9e9c50084175e5174b1e1070e24d73">&#9670;&nbsp;</a></span>write_vector_potential()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">subroutine sphdf5::write_vector_potential </td>
-          <td>(</td>
-          <td class="paramtype">integer, intent(in)&#160;</td>
-          <td class="paramname"><em>sumLrad</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real, dimension(:,:), intent(in)&#160;</td>
-          <td class="paramname"><em>allAte</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real, dimension(:,:), intent(in)&#160;</td>
-          <td class="paramname"><em>allAze</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real, dimension(:,:), intent(in)&#160;</td>
-          <td class="paramname"><em>allAto</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real, dimension(:,:), intent(in)&#160;</td>
-          <td class="paramname"><em>allAzo</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>write the magnetic vector potential Fourier harmonics to the output file group /vector_potential </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">sumLrad</td><td></td></tr>
-    <tr><td class="paramname">allAte</td><td></td></tr>
-    <tr><td class="paramname">allAze</td><td></td></tr>
-    <tr><td class="paramname">allAto</td><td></td></tr>
-    <tr><td class="paramname">allAzo</td><td></td></tr>
-  </table>
-  </dd>
-</dl>
-
-<p class="reference">References <a class="el" href="group__grp__fourier__repr.html#ga3b3045dc5c13351cded37581bdfb3400">allglobal::mn</a>.</p>
-
-</div>
-</div>
-</div><!-- contents -->
+<div class="textblock"><p>Writes all the output information to ext.h5. </p>
+</div></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->

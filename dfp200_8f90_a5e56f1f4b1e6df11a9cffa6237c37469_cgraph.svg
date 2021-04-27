@@ -51,7 +51,7 @@
 <!-- Node29 -->
 <g id="node29" class="node">
 <title>Node29</title>
-<g id="a_node29"><a xlink:href="mtrxhs_8f90.html#a6c22bb4322fbcc29cb17dcc90b56eacd" target="_top" xlink:title="Constructs matrices that represent the Beltrami linear system, matrix&#45;free.">
+<g id="a_node29"><a xlink:href="group__grp__build__matrices.html#ga6c22bb4322fbcc29cb17dcc90b56eacd" target="_top" xlink:title="Constructs matrices that represent the Beltrami linear system, matrix&#45;free.">
 <polygon fill="white" stroke="black" points="1082,-388.5 1082,-407.5 1128,-407.5 1128,-388.5 1082,-388.5"/>
 <text text-anchor="middle" x="1105" y="-395.5" font-family="Helvetica,sans-Serif" font-size="10.00">mtrxhs</text>
 </a>
@@ -419,7 +419,7 @@
 <!-- Node23 -->
 <g id="node23" class="node">
 <title>Node23</title>
-<g id="a_node23"><a xlink:href="lbpol_8f90.html#a29ae6196c664f390d0e60ab7916c806b" target="_top" xlink:title=" ">
+<g id="a_node23"><a xlink:href="lbpol_8f90.html#a29ae6196c664f390d0e60ab7916c806b" target="_top" xlink:title="Computes &#160;at the interface.">
 <polygon fill="white" stroke="black" points="1086.5,-122.5 1086.5,-141.5 1123.5,-141.5 1123.5,-122.5 1086.5,-122.5"/>
 <text text-anchor="middle" x="1105" y="-129.5" font-family="Helvetica,sans-Serif" font-size="10.00">lbpol</text>
 </a>
@@ -596,7 +596,7 @@
 <!-- Node36 -->
 <g id="node36" class="node">
 <title>Node36</title>
-<g id="a_node36"><a xlink:href="spsint_8f90.html#a01df49c498752e8a4201cc6eb5e283af" target="_top" xlink:title="Calculates volume integrals of Chebyshev&#45;polynomials and metric elements for preconditioner.">
+<g id="a_node36"><a xlink:href="group__grp__integrals.html#ga01df49c498752e8a4201cc6eb5e283af" target="_top" xlink:title="Calculates volume integrals of Chebyshev&#45;polynomials and metric elements for preconditioner.">
 <polygon fill="white" stroke="black" points="1083.5,-806.5 1083.5,-825.5 1126.5,-825.5 1126.5,-806.5 1083.5,-806.5"/>
 <text text-anchor="middle" x="1105" y="-813.5" font-family="Helvetica,sans-Serif" font-size="10.00">spsint</text>
 </a>
@@ -611,7 +611,7 @@
 <!-- Node37 -->
 <g id="node37" class="node">
 <title>Node37</title>
-<g id="a_node37"><a xlink:href="spsmat_8f90.html#a4d521a46a64530ade50e6b79a33e1452" target="_top" xlink:title="Constructs matrices for the precondtioner.">
+<g id="a_node37"><a xlink:href="group__grp__build__matrices.html#ga4d521a46a64530ade50e6b79a33e1452" target="_top" xlink:title="Constructs matrices for the precondtioner.">
 <polygon fill="white" stroke="black" points="651.5,-496.5 651.5,-515.5 700.5,-515.5 700.5,-496.5 651.5,-496.5"/>
 <text text-anchor="middle" x="676" y="-503.5" font-family="Helvetica,sans-Serif" font-size="10.00">spsmat</text>
 </a>

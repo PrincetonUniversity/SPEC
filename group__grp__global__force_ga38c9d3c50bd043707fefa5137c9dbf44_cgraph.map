@@ -15,12 +15,12 @@
 <area shape="rect" id="node14" href="$intghs_8f90.html#ae10091a51178071d12004da4952104d4" title="free workspace" alt="" coords="549,941,725,968"/>
 <area shape="rect" id="node18" href="$intghs_8f90.html#ae8299d4625cabd90eb1398fd2cd38089" title="init workspace" alt="" coords="562,1124,713,1151"/>
 <area shape="rect" id="node19" href="$namespaceallglobal.html#aea1f5a74462533337cb950b8d7486b25" title="Check if volume vvol is associated to the corresponding MPI node." alt="" coords="565,485,709,512"/>
-<area shape="rect" id="node20" href="$lbpol_8f90.html#a29ae6196c664f390d0e60ab7916c806b" title=" " alt="" coords="1253,1347,1302,1373"/>
+<area shape="rect" id="node20" href="$lbpol_8f90.html#a29ae6196c664f390d0e60ab7916c806b" title="Computes &#160;at the interface." alt="" coords="1253,1347,1302,1373"/>
 <area shape="rect" id="node21" href="$group__grp__integrals.html#ga400af9e33dd5465ff9a4bba9fbf91108" title="Calculates volume integrals of Chebyshev polynomials and metric element products." alt="" coords="1087,789,1155,816"/>
 <area shape="rect" id="node23" href="$group__grp__solver__driver.html#gacad623d4c5c006e9ad10116372f92ad3" title="Constructs Beltrami field in given volume consistent with flux, helicity, rotational&#45;transform and/or..." alt="" coords="603,536,671,563"/>
 <area shape="rect" id="node32" href="$group__grp__build__matrices.html#ga1c52bb6dbffdb432550aae12b096080f" title="Constructs energy and helicity matrices that represent the Beltrami linear system...." alt="" coords="609,384,666,411"/>
-<area shape="rect" id="node33" href="$spsint_8f90.html#a01df49c498752e8a4201cc6eb5e283af" title="Calculates volume integrals of Chebyshev&#45;polynomials and metric elements for preconditioner." alt="" coords="1249,789,1306,816"/>
-<area shape="rect" id="node34" href="$spsmat_8f90.html#a4d521a46a64530ade50e6b79a33e1452" title="Constructs matrices for the precondtioner." alt="" coords="605,688,670,715"/>
+<area shape="rect" id="node33" href="$group__grp__integrals.html#ga01df49c498752e8a4201cc6eb5e283af" title="Calculates volume integrals of Chebyshev&#45;polynomials and metric elements for preconditioner." alt="" coords="1249,789,1306,816"/>
+<area shape="rect" id="node34" href="$group__grp__build__matrices.html#ga4d521a46a64530ade50e6b79a33e1452" title="Constructs matrices for the precondtioner." alt="" coords="605,688,670,715"/>
 <area shape="rect" id="node38" href="$namespaceallglobal.html#ad2dbd21d0579d623a92119c5ab553c7c" title="Returns which MPI node is associated to a given volume." alt="" coords="567,637,707,664"/>
 <area shape="rect" id="node7" href="$group__grp__geometry.html#gaaca20aa60eaf39055f3c9d5c02a24ac2" title="Calculates coordinates, , and metrics, using FFTs." alt="" coords="1540,1124,1601,1151"/>
 <area shape="rect" id="node8" href="$group__grp__numerics.html#ga1fd52accb0646f535f9bcc46cf5a68f3" title="Inverse Fourier transform (fftw wrapper)" alt="" coords="1656,1215,1707,1241"/>
@@ -31,7 +31,7 @@
 <area shape="rect" id="node22" href="$group__grp__metrics.html#ga254ce8e645c4110d77e3b3dbc3a89885" title="Calculates the metric quantities, , which are required for the energy and helicity integrals." alt="" coords="1249,1144,1306,1171"/>
 <area shape="rect" id="node24" href="$group__grp__integrals.html#ga6d086e8d1af527def50b653b86e8373a" title="Evaluates volume integrals, and their derivatives w.r.t. interface geometry, using &quot;packed&quot; format." alt="" coords="794,485,855,512"/>
 <area shape="rect" id="node25" href="$group__grp__solver.html#ga6626839aff500f060beb5bce2b90c447" title="Solves Beltrami/vacuum (linear) system, given matrices.unpacking fluxes, helicity multiplier" alt="" coords="791,536,859,563"/>
-<area shape="rect" id="node26" href="$mtrxhs_8f90.html#a6c22bb4322fbcc29cb17dcc90b56eacd" title="Constructs matrices that represent the Beltrami linear system, matrix&#45;free." alt="" coords="1247,480,1308,507"/>
+<area shape="rect" id="node26" href="$group__grp__build__matrices.html#ga6c22bb4322fbcc29cb17dcc90b56eacd" title="Constructs matrices that represent the Beltrami linear system, matrix&#45;free." alt="" coords="1247,480,1308,507"/>
 <area shape="rect" id="node28" href="$mp00ac_8f90.html#a304edac43f63d39dda4419b4d044eac5" title="run GMRES" alt="" coords="920,536,996,563"/>
 <area shape="rect" id="node31" href="$group__grp__transform.html#ga0e0447653b8da82f06748dd8831bc337" title="Calculates rotational transform given an arbitrary tangential field." alt="" coords="929,1245,987,1272"/>
 <area shape="rect" id="node29" href="$mp00ac_8f90.html#ae9fe335bb4916face9f9d19ce8c0f5d7" title="compute a.x by either by coumputing it directly, or using a matrix free method" alt="" coords="1088,531,1153,557"/>

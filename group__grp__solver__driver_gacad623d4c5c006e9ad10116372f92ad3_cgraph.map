@@ -5,7 +5,7 @@
 <area shape="rect" id="node14" href="$group__grp__packing.html#gaee2357e570aebf8559e169def6b619dd" title="Packs and unpacks Beltrami field solution vector." alt="" coords="495,360,559,387"/>
 <area shape="rect" id="node4" href="$group__grp__currents.html#gacaf4411e0ba378631dcd2ccb3752e452" title="Computes the plasma current, , and the &quot;linking&quot; current, ." alt="" coords="497,107,556,133"/>
 <area shape="rect" id="node9" href="$intghs_8f90.html#a21d3b7106371783302e68297f7797e9f" title="Calculates volume integrals of Chebyshev polynomials and covariant field products." alt="" coords="498,208,555,235"/>
-<area shape="rect" id="node13" href="$mtrxhs_8f90.html#a6c22bb4322fbcc29cb17dcc90b56eacd" title="Constructs matrices that represent the Beltrami linear system, matrix&#45;free." alt="" coords="496,259,557,285"/>
+<area shape="rect" id="node13" href="$group__grp__build__matrices.html#ga6c22bb4322fbcc29cb17dcc90b56eacd" title="Constructs matrices that represent the Beltrami linear system, matrix&#45;free." alt="" coords="496,259,557,285"/>
 <area shape="rect" id="node15" href="$mp00ac_8f90.html#a304edac43f63d39dda4419b4d044eac5" title="run GMRES" alt="" coords="237,259,313,285"/>
 <area shape="rect" id="node18" href="$group__grp__transform.html#ga0e0447653b8da82f06748dd8831bc337" title="Calculates rotational transform given an arbitrary tangential field." alt="" coords="791,5,849,32"/>
 <area shape="rect" id="node5" href="$group__grp__geometry.html#gaaca20aa60eaf39055f3c9d5c02a24ac2" title="Calculates coordinates, , and metrics, using FFTs." alt="" coords="789,259,851,285"/>

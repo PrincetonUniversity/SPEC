@@ -122,19 +122,11 @@ $(document).ready(function(){initNavTree('lbpol_8f90.html',''); initResizable();
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions/Subroutines</h2></td></tr>
 <tr class="memitem:a29ae6196c664f390d0e60ab7916c806b"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="lbpol_8f90.html#a29ae6196c664f390d0e60ab7916c806b">lbpol</a> (lvol, Bt00, ideriv, iocons)</td></tr>
+<tr class="memdesc:a29ae6196c664f390d0e60ab7916c806b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes \(B_{\theta,e,0,0}\) at the interface.  <a href="lbpol_8f90.html#a29ae6196c664f390d0e60ab7916c806b">More...</a><br /></td></tr>
 <tr class="separator:a29ae6196c664f390d0e60ab7916c806b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Computes \(B_{\theta,e,0,0}\) at the interface. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">lvol</td><td></td></tr>
-    <tr><td class="paramdir">[in,out]</td><td class="paramname">Bt00</td><td></td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">ideriv</td><td></td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">iocons</td><td></td></tr>
-  </table>
-  </dd>
-</dl>
 </div><h2 class="groupheader">Function/Subroutine Documentation</h2>
 <a id="a29ae6196c664f390d0e60ab7916c806b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a29ae6196c664f390d0e60ab7916c806b">&#9670;&nbsp;</a></span>lbpol()</h2>
@@ -173,11 +165,17 @@ Functions/Subroutines</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Computes \(B_{\theta,e,0,0}\) at the interface. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">ideriv</td><td>lbpol will return \(B_{\theta,e,0,0}\) (0) or its derivative with respect to the geometry (-1), mu (1) or the poloidal flux (2). \(\mbox{ideriv}\in\{-1,\ldots,2\} \)</td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">lvol</td><td>Volume index. \(\mbox{lvol}\in\{1,\ldots,\mbox{Mvol}\} \)</td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">iocons</td><td>\(B_{\theta,e,0,0}\) is evaluated on the inner (iocons=0) or outer (iocons=1) volume boundary. \(\mbox{iocons}\in\{0,1\} \)</td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">lvol</td><td></td></tr>
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">Bt00</td><td></td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">ideriv</td><td></td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">iocons</td><td></td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">ideriv</td><td>lbpol will return \(B_{\theta,e,0,0}\) (0) or its derivative with respect to the geometry (-1), mu (1) or the poloidal flux (2). \(\mbox{ideriv}\in\{-1,\ldots,2\} \) </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">lvol</td><td>Volume index. \(\mbox{lvol}\in\{1,\ldots,\mbox{Mvol}\} \) </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">iocons</td><td>\(B_{\theta,e,0,0}\) is evaluated on the inner (iocons=0) or outer (iocons=1) volume boundary. \(\mbox{iocons}\in\{0,1\} \) </td></tr>
     <tr><td class="paramdir">[in,out]</td><td class="paramname">bt00</td><td>\(B_{\theta,e,0,0}\), with indices Bt00( lvol, iocons, ideriv ). </td></tr>
   </table>
   </dd>
@@ -239,7 +237,7 @@ Here is the call graph for this function:</div>
 <div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="lbpol_8f90_a29ae6196c664f390d0e60ab7916c806b_icgraph.svg" width="978" height="582"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
+<div class="center"><iframe scrolling="no" frameborder="0" src="lbpol_8f90_a29ae6196c664f390d0e60ab7916c806b_icgraph.svg" width="978" height="583"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
 </div>
 </div>
 

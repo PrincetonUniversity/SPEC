@@ -9,7 +9,7 @@ var searchData=
   ['allglobal_9',['allglobal',['../namespaceallglobal.html',1,'']]],
   ['allocate_5fbeltrami_5fmatrices_10',['allocate_beltrami_matrices',['../memory_8f90.html#a8a98304f95fee4429a60a58050e999b8',1,'memory.f90']]],
   ['allocate_5fgeometry_5fmatrices_11',['allocate_geometry_matrices',['../memory_8f90.html#a91ea75b56a77c048841932a601482f78',1,'memory.f90']]],
-  ['alpha_12',['alpha',['../wa00aa_8f90.html#a4919ce9e7349195de3635d1e9ec3e88b',1,'laplaces']]],
+  ['alpha_12',['alpha',['../namespacelaplaces.html#a4919ce9e7349195de3635d1e9ec3e88b',1,'laplaces']]],
   ['ate_13',['ate',['../group__grp__vecpot.html#ga430fa6f9a3ebb7a56185b72b8ea1ff49',1,'allglobal']]],
   ['ato_14',['ato',['../group__grp__vecpot.html#gaefec3203c02505c73b48dbb1c7ba96c1',1,'allglobal']]],
   ['aunit_15',['aunit',['../namespacefileunits.html#ace695af9e73beb4e7f7abe2efe069ed1',1,'fileunits']]],

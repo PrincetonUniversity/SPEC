@@ -1,5 +1,5 @@
 <map id="xspech" name="xspech">
 <area shape="rect" id="node1" title="Main program of SPEC." alt="" coords="277,5,340,32"/>
 <area shape="rect" id="node2" href="$xspech_8f90.html#a48f45478dc2c9f70ea8aa1c60ad06503" title=" " alt="" coords="179,5,229,32"/>
-<area shape="rect" id="node3" href="$sphdf5_8f90.html#a0f962c09cd5d5eba99f1cba043cb3898" title="initialize the interface to the HDF5 library and open the output file" alt="" coords="5,5,131,32"/>
+<area shape="rect" id="node3" href="$namespacesphdf5.html#a0f962c09cd5d5eba99f1cba043cb3898" title="initialize the interface to the HDF5 library and open the output file" alt="" coords="5,31,131,57"/>
 </map>
