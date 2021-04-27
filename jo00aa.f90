@@ -1,4 +1,4 @@
-!> \file jo00aa.f90
+!> \file
 !> \brief Measures error in Beltrami equation, \f$\nabla \times {\bf B} - \mu {\bf B}\f$.
 
 !> \brief Measures error in Beltrami equation, \f$\nabla \times {\bf B} - \mu {\bf B}\f$.

@@ -1,4 +1,4 @@
-!> \file intghs.f90
+!> \file
 !> \brief Calculates volume integrals of Chebyshev-polynomials and covariant field for Hessian computation.
 
 !latex \briefly{Calculates volume integrals of Chebyshev polynomials and covariant field products.}

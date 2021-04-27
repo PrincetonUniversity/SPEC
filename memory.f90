@@ -1,8 +1,5 @@
-!> \file memory.f90
+!> \file
 !> \brief memory management module
-
-! by Zhisong Qu 07 JUL 20
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !> \brief allocate Beltrami matrices
 !>
@@ -38,7 +35,7 @@ subroutine allocate_Beltrami_matrices(vvol, LcomputeDerivatives)
 
   ! we will need the rest even with or without matrix-free
   SALLOCATE( dMB, (0:NN,0: 2), zero )
-  SALLOCATE( dMG, (0:NN     ), zero )  
+  SALLOCATE( dMG, (0:NN     ), zero )
 
   SALLOCATE( solution, (1:NN,-1:2), zero ) ! this will contain the vector potential from the linear solver and its derivatives;
 
@@ -87,11 +84,11 @@ subroutine deallocate_Beltrami_matrices(LcomputeDerivatives)
   DALLOCATE(dMB)
 
   DALLOCATE(dMG)
-   
+
   DALLOCATE(solution)
-   
+
   DALLOCATE(MBpsi)
-   
+
   if (LILUprecond) then
     DALLOCATE(dMAS)
     DALLOCATE(dMDS)
@@ -287,7 +284,7 @@ subroutine deallocate_geometry_matrices(LcomputeDerivatives)
     DALLOCATE(DDzzcs)
     DALLOCATE(DDzzsc)
     DALLOCATE(DDzzss)
-       
+
     DALLOCATE(Tsc)
     DALLOCATE(Dts)
     DALLOCATE(Dzs)

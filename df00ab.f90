@@ -1,9 +1,9 @@
-!> \file df00ab.f90
+!> \file
 !> \brief Evaluates volume integrals, and their derivatives w.r.t. interface geometry, using "packed" format.
 
 !> \brief Evaluates volume integrals, and their derivatives w.r.t. interface geometry, using "packed" format.
 !> \ingroup grp_integrals
-!> 
+!>
 !> @param[in] pNN
 !> @param[in] xi
 !> @param[out] Fxi
@@ -11,9 +11,9 @@
 !> @param[in] Ldfjac
 !> @param[in] iflag
 subroutine df00ab( pNN , xi , Fxi , DFxi , Ldfjac , iflag )
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   use constants, only : zero, half, one, two
   use numerical, only : small
   use fileunits, only : ounit
@@ -25,38 +25,38 @@ subroutine df00ab( pNN , xi , Fxi , DFxi , Ldfjac , iflag )
                         MBpsi,                            & ! pre-calculated matrix vector products; 26 Feb 13;
                         ivol
 
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   LOCALS
-  
+
   INTEGER, intent(in)  :: pNN, Ldfjac
   INTEGER, intent(in)  :: iflag
   REAL   , intent(in)  :: xi(0:pNN-1)
   REAL   , intent(out) :: Fxi(0:pNN-1), DFxi(0:Ldfjac-1,0:pNN-1)
-  
+
   INTEGER             :: NN
   REAL                :: lmu ! , dpsi(1:2)
-  
+
   BEGIN(df00ab)
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
 #ifdef DEBUG
 
   FATAL(df00ab, ivol.lt.1 .or. ivol.gt.Nvol, ivol invalid ) ! 26 Feb 13;
 
 #endif
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   NN = pNN-1 ; lmu = xi(0)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   select case( iflag ) ! F = B.B - mu ( A.B - helicity );
-   
-  case( 1 ) ! return d F; 
+
+  case( 1 ) ! return d F;
 
 ! !Fxi(   0) = - half * sum( xi(1:NN) * matmul( dMD(1:NN,1:NN), xi(1:NN) ) ) - sum( xi(1:NN) * MEpsi(1:NN) ) - psiMFpsi + helicity(ivol)
    Fxi(   0) = - half * sum( xi(1:NN) * matmul( dMD(1:NN,1:NN), xi(1:NN) ) )                                            + helicity(ivol)
@@ -78,13 +78,13 @@ subroutine df00ab( pNN , xi , Fxi , DFxi , Ldfjac , iflag )
    FATAL(df00ab, .true., supplied value of iflag is not supported )
 
   end select
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   RETURN(df00ab)
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
 end subroutine df00ab
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

@@ -1,6 +1,6 @@
 !> \defgroup grp_global_force "global" force
-
-!> \file dforce.f90
+!>
+!> \file
 !> \brief Calculates \f${\bf F}({\bf x})\f$, where \f${\bf x} \equiv \{\mbox{geometry}\} \equiv \{ R_{i,v}, Z_{i,v}\}\f$
 !>        and \f${\bf F}\equiv[[p+B^2/2]] + \{\mbox{spectral constraints}\} \f$, and \f$\nabla {\bf F}\f$.
 

@@ -4,8 +4,8 @@
 !> \definecolor{Orange}{rgb}{1.0,0.5,0.0}
 !> \definecolor{Cerulean}{rgb}{0.0,0.5,1.0}
 !> \endlatexonly
-
-!> \file preset.f90
+!>
+!> \file
 !> \brief Allocates and initializes internal arrays.
 
 !> \brief Allocates and initializes internal arrays.
