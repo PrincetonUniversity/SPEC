@@ -69,7 +69,7 @@ ifeq ($(BUILD_ENV),intel)
  # At PPPL, you can use the following commands
  # module use /p/focus/modules
  # module load spec
- FC=ifort
+ FC=mpifort
  CFLAGS=-r8
  RFLAGS=-mcmodel=large -O3 -m64 -unroll0 -fno-alias -ip -traceback
  DFLAGS=-O0 -g -traceback -check bounds -check format -check output_conversion -check pointers -check uninit -debug full -D DEBUG
@@ -89,7 +89,7 @@ ifeq ($(BUILD_ENV),gfortran)
  # module load spec/gcc
  FC=mpif90
  FLAGS=-fPIC
- RFLAGS=-O3 -w -ffree-line-length-none -fexternal-blas # -fallow-argument-mismatch only used for GCC-10
+ RFLAGS=-O3 -w -ffree-line-length-none -fexternal-blas # -fallow-argument-mismatch # only used for GCC-10
  DFLAGS=-O0 -g -w -ffree-line-length-none -Wextra -Wtarget-lifetime -fbacktrace -fbounds-check -fexternal-blas \
      -fcheck=all -DDEBUG #-ffpe-trap=invalid,zero,overflow,underflow,inexact # for some reason this will cause crash
  CFLAGS=-fdefault-real-8
