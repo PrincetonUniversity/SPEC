@@ -153,7 +153,7 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, ifl
   
   use cputiming, only : Tlforce
   
-  use allglobal, only : ncpu, myid, cpus, &
+  use allglobal, only : ncpu, myid, cpus, MPI_COMM_SPEC, &
                         Lcoordinatesingularity, Mvol, &
                         iRbc, iZbs, iRbs, iZbc, &
                         YESstellsym, NOTstellsym, &

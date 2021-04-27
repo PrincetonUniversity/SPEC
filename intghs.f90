@@ -119,7 +119,7 @@ subroutine intghs( lquad, mn, lvol, lrad, idx )
 
   use cputiming, only : Tintghs
 
-  use allglobal, only : myid, ncpu, cpus, &
+  use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, &
                         Mvol, im, in, mne, Ntz, Nt, Nz, &
                         YESstellsym, NOTstellsym, &
                         gaussianweight, gaussianabscissae, &
@@ -350,7 +350,7 @@ subroutine intghs_workspace_init(lvol)
   use inputlist, only : Mpol, Lrad, Wmacros, Wintghs
   use fileunits, only : ounit
   use cputiming, only : Tintghs
-  use allglobal, only : Ntz, mn, Iquad, myid, ncpu, cpus
+  use allglobal, only : Ntz, mn, Iquad, myid, ncpu, cpus, MPI_COMM_SPEC
   use intghs_module
 
   LOCALS
@@ -390,7 +390,7 @@ subroutine intghs_workspace_destroy()
   use inputlist, only : Wmacros, Wintghs
   use fileunits, only : ounit
   use cputiming, only : Tintghs
-  use allglobal, only : myid, ncpu, cpus
+  use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC
   use intghs_module
 
   LOCALS

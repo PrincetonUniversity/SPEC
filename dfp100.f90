@@ -47,7 +47,7 @@ subroutine dfp100(Ndofgl, x, Fvec, LComputeDerivatives)
 
   use cputiming, only : Tdfp100
 
-  use allglobal, only : ncpu, myid, cpus, &
+  use allglobal, only : ncpu, myid, cpus, MPI_COMM_SPEC, &
                         ImagneticOK, NAdof, mn, &
                         Mvol, Iquad, &
                         dBdX, &

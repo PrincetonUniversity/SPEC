@@ -44,7 +44,8 @@ subroutine packab( packorunpack, lvol, NN, solution, ideriv )
   
   use cputiming, only : Tpackab
 
-  use allglobal, only : myid, ncpu, cpus, mn, im, in, Ate, Aze, Ato, Azo, YESstellsym, NOTstellsym, &
+  use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, &
+                        mn, im, in, Ate, Aze, Ato, Azo, YESstellsym, NOTstellsym, &
                         TT, YESMatrixFree, &
                         Lma, Lmb, Lmc, Lmd, Lme, Lmf, Lmg, Lmh, &
                         Lmavalue, Lmbvalue, Lmcvalue, Lmdvalue, Lmevalue, Lmfvalue, Lmgvalue, Lmhvalue

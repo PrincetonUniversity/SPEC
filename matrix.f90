@@ -357,7 +357,7 @@ subroutine matrix( lvol, mn, lrad )
   
   use cputiming, only : Tmatrix
   
-  use allglobal, only : ncpu, myid, cpus, &
+  use allglobal, only : ncpu, myid, cpus, MPI_COMM_SPEC, &
                         YESstellsym, NOTstellsym, &
                         im, in, &
                         NAdof, &

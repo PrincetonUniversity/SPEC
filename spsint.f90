@@ -23,7 +23,7 @@ subroutine spsint( lquad, mn, lvol, lrad )
   
   use cputiming, only : Tspsint
   
-  use allglobal, only : myid, ncpu, cpus, &
+  use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, &
                         Mvol, im, in, mne, Ntz, &
                         YESstellsym, NOTstellsym, &
                         gaussianweight, gaussianabscissae, &

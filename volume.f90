@@ -45,7 +45,7 @@ subroutine volume( lvol, vflag )
 
   use cputiming
 
-  use allglobal, only : myid, cpus, &
+  use allglobal, only : myid, cpus, MPI_COMM_SPEC, &
                         YESstellsym, Mvol, &
                         Ntz, mn, im, in, iRbc, iZbs, iRbs, iZbc, &
                         djkp, djkm, &

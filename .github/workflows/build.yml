@@ -17,11 +17,11 @@ jobs:
       - name: compile_xspec
         run: |
           cd ${SPEC_PATH}
-          make -j CC=gfortran xspec
+          make -j BUILD_ENV=gfortran xspec
       - name: compile_dspec
         run: |
           cd ${SPEC_PATH}
-          make CC=gfortran dspec
+          make BUILD_ENV=gfortran dspec
       - name: run_fast_cartesian
         run: |
           cd ${SPEC_PATH}/ci/G1V03L2Fi

@@ -51,7 +51,7 @@ subroutine spsmat( lvol, mn, lrad )
   
   use cputiming, only : Tspsmat
   
-  use allglobal, only : ncpu, myid, cpus, &
+  use allglobal, only : ncpu, myid, cpus, MPI_COMM_SPEC, &
                         YESstellsym, NOTstellsym, &
                         im, in, &
                         NAdof, &

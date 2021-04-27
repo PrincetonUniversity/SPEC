@@ -15,10 +15,10 @@
 
 module sphdf5
 
-  use inputlist , only : ext, Wsphdf5, Wmacros
+  use inputlist , only : Wsphdf5, Wmacros
   use fileunits , only : ounit
   use cputiming , only : Tsphdf5
-  use allglobal , only : myid, cpus
+  use allglobal , only : myid, cpus, MPI_COMM_SPEC, ext, skip_write
   use constants , only : version
   use hdf5
 
@@ -99,7 +99,7 @@ subroutine init_outfile
 
   BEGIN( sphdf5 )
 
- if (myid.eq.0) then
+ if (myid.eq.0 .and. .not.skip_write) then
 
   ! initialize Fortran interface to the HDF5 library;
   H5CALL( sphdf5, h5open_f, (hdfier), __FILE__, __LINE__)
@@ -132,7 +132,7 @@ subroutine mirror_input_to_outfile
 
   BEGIN( sphdf5 )
 
- if (myid.eq.0) then
+ if (myid.eq.0 .and. .not.skip_write) then
 
   HDEFGRP( file_id, input, grpInput,                        __FILE__, __LINE__ )
   H5DESCR( grpInput, /input, group for mirrored input data, __FILE__, __LINE__ )
@@ -374,6 +374,23 @@ end subroutine mirror_input_to_outfile
 !> \brief prepare convergence evolution output
 !>
 subroutine init_convergence_output
+!latex \subsection{preparing output file group \type{iterations}}
+
+!latex \begin{enumerate}
+
+!latex \item The group \verb+iterations+ is created in the output file.
+!latex       This group contains the interface geometry at each iteration, which is useful for constructing movies illustrating the convergence.
+!latex       The data structure in use is an unlimited array of the following compound datatype:
+!latex \begin{verbatim} DATATYPE  H5T_COMPOUND {
+!latex       H5T_NATIVE_INTEGER "nDcalls";
+!latex       H5T_NATIVE_DOUBLE "Energy";
+!latex       H5T_NATIVE_DOUBLE "ForceErr";
+!latex       H5T_ARRAY { [Mvol+1][mn] H5T_NATIVE_DOUBLE } "iRbc";
+!latex       H5T_ARRAY { [Mvol+1][mn] H5T_NATIVE_DOUBLE } "iZbs";
+!latex       H5T_ARRAY { [Mvol+1][mn] H5T_NATIVE_DOUBLE } "iRbs";
+!latex       H5T_ARRAY { [Mvol+1][mn] H5T_NATIVE_DOUBLE } "iZbc";
+!latex } \end{verbatim}
+!latex \end{enumerate}
 
   use allglobal, only : mn, Mvol
 
@@ -395,7 +412,7 @@ subroutine init_convergence_output
 
   BEGIN( sphdf5 )
 
- if (myid.eq.0) then
+ if (myid.eq.0 .and. .not.skip_write) then
 
   ! Set dataset transfer property to preserve partially initialized fields
   ! during write/read to/from dataset with compound datatype.
@@ -486,7 +503,7 @@ subroutine write_convergence_output( nDcalls, ForceErr )
 
   BEGIN(sphdf5)
 
- if (myid.eq.0) then
+ if (myid.eq.0 .and. .not.skip_write) then
 
   ! append updated values to "iterations" dataset
 
@@ -504,7 +521,7 @@ subroutine write_convergence_output( nDcalls, ForceErr )
   ! get dataspace slab corresponding to region which the iterations dataset was extended by
   H5CALL( sphdf5, h5dget_space_f, (iteration_dset_id, dataspace, hdfier), __FILE__, __LINE__) ! re-select dataspace to update size info in HDF5 lib
   H5CALL( sphdf5, h5sselect_hyperslab_f, (dataspace, H5S_SELECT_SET_F, old_data_dims, (/ INT(1, HSIZE_T) /), hdfier), __FILE__, __LINE__) ! newly appended slab is at old size and 1 long
-  
+
   if (myid.eq.0) then ! only one processor should actually write the data
 
     ! write next iteration object
@@ -552,7 +569,7 @@ subroutine write_grid
 
   BEGIN(sphdf5)
 
- if (myid.eq.0) then
+ if (myid.eq.0 .and. .not.skip_write) then
 
   ijreal(1:Ntz) = zero ; ijimag(1:Ntz) = zero ; jireal(1:Ntz) = zero
 
@@ -565,7 +582,7 @@ subroutine write_grid
   HWRITERV( grpGrid,           1, pi2nfp           , (/ pi2nfp        /))
 
   ! combine all radial parts into one dimension as Lrad values can be different for different volumes
-  if (Ngrid .lt. 0) then 
+  if (Ngrid .lt. 0) then
     sumLrad = sum(Lrad(1:Mvol)+1)
   else
     sumLrad = (Ngrid + 1) * Mvol
@@ -583,7 +600,7 @@ subroutine write_grid
   do vvol = 1, Mvol ; ivol = vvol
    LREGION(vvol) ! sets Lcoordinatesingularity and Lplasmaregion ;
 
-   if (Ngrid .lt. 0) then 
+   if (Ngrid .lt. 0) then
     Ngrid_local = Lrad(vvol)  ! default
    else
     Ngrid_local = Ngrid
@@ -595,7 +612,7 @@ subroutine write_grid
     if( Lcoordinatesingularity .and. ii.eq.0 ) then ; Lcurvature = 0 ! Jacobian is not defined;
     else                                            ; Lcurvature = 1 ! compute Jacobian       ;
     endif
-    
+
     WCALL( sphdf5, coords, ( vvol, lss, Lcurvature, Ntz, mn ) ) ! only Rij(0,:) and Zij(0,:) are required; Rmn & Zmn are available;
 
     alongLrad = Ngrid_sum+ii+1
@@ -637,7 +654,7 @@ subroutine write_grid
         jireal(jk) = (                                      Bst(2)                     ) * gBzeta / sg(jk,0) ! BZ;
         enddo
       enddo
-    
+
      end select !Igeometry
     endif ! end of if( Lcurvature.eq.1 ) ;
 
@@ -656,8 +673,8 @@ subroutine write_grid
   HWRITERA( grpGrid, sumLrad, Ntz,  sg,     sg_grid )
   HWRITERA( grpGrid, sumLrad, Ntz,  BR, ijreal_grid )
   HWRITERA( grpGrid, sumLrad, Ntz,  Bp, ijimag_grid )
-  HWRITERA( grpGrid, sumLrad, Ntz,  BZ, jireal_grid )  
- 
+  HWRITERA( grpGrid, sumLrad, Ntz,  BZ, jireal_grid )
+
   DALLOCATE(    Rij_grid )
   DALLOCATE(    Zij_grid )
   DALLOCATE(     sg_grid )
@@ -688,7 +705,7 @@ subroutine init_flt_output( numTrajTotal )
 
   BEGIN( sphdf5 )
 
- if (myid.eq.0) then
+ if (myid.eq.0 .and. .not.skip_write) then
 
   ! create Poincare group in HDF5 file
   HDEFGRP( file_id, poincare, grpPoincare )
@@ -776,7 +793,7 @@ subroutine write_poincare( offset, data, success )
 
   BEGIN( sphdf5 )
 
- if (myid.eq.0) then
+ if (myid.eq.0 .and. .not.skip_write) then
 
   dims_singleTraj = (/ Nz, nPpts /)
   length          = (/ Nz, nPpts, 1 /)
@@ -822,7 +839,7 @@ subroutine write_transform( offset, length, lvol, diotadxup, fiota )
 
   BEGIN( sphdf5 )
 
- if (myid.eq.0) then
+ if (myid.eq.0 .and. .not.skip_write) then
 
   H5CALL( sphdf5, h5sselect_hyperslab_f, (filespace_diotadxup, H5S_SELECT_SET_F, int((/0,lvol-1/),HSSIZE_T), int((/2,1/),HSSIZE_T), hdfier), __FILE__, __LINE__ )
   H5CALL( sphdf5, h5dwrite_f, (dset_id_diotadxup, H5T_NATIVE_DOUBLE, diotadxup, int((/2,1/),HSSIZE_T), hdfier, &
@@ -849,7 +866,7 @@ subroutine finalize_flt_output
 
   BEGIN( sphdf5 )
 
- if (myid.eq.0) then
+ if (myid.eq.0 .and. .not.skip_write) then
 
   H5CALL( sphdf5, h5sclose_f, (filespace_t,         hdfier), __FILE__, __LINE__ ) ! close filespaces
   H5CALL( sphdf5, h5sclose_f, (filespace_s,         hdfier), __FILE__, __LINE__ )
@@ -900,7 +917,7 @@ subroutine write_vector_potential(sumLrad, allAte, allAze, allAto, allAzo)
 
   BEGIN( sphdf5 )
 
- if (myid.eq.0) then
+ if (myid.eq.0 .and. .not.skip_write) then
 
   HDEFGRP( file_id, vector_potential, grpVectorPotential )
 
@@ -944,7 +961,7 @@ subroutine hdfint
 
   BEGIN( sphdf5 )
 
- if (myid.eq.0) then
+ if (myid.eq.0 .and. .not.skip_write) then
 
   HDEFGRP( file_id, output, grpOutput )
 
@@ -1084,7 +1101,7 @@ subroutine finish_outfile
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   BEGIN( sphdf5 )
 
- if (myid.eq.0) then
+ if (myid.eq.0 .and. .not.skip_write) then
 
   ! close objects related to convergence output
   H5CALL( sphdf5, h5tclose_f, (dt_nDcalls_id, hdfier)    , __FILE__, __LINE__)

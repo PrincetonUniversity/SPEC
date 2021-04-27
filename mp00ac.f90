@@ -131,7 +131,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   
   use cputiming, only : Tmp00ac
   
-  use allglobal, only : myid, ncpu, cpus, ivol, &
+  use allglobal, only : myid, ncpu, cpus, ivol, MPI_COMM_SPEC, &
                         YESstellsym, NOTstellsym, &
                         Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
                         mn, im, in, mns, &

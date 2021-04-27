@@ -82,7 +82,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
 
   use cputiming, only : Ttr00ab
 
-  use allglobal, only : ncpu, cpus, myid, &
+  use allglobal, only : ncpu, cpus, myid, MPI_COMM_SPEC, &
                         pi2nfp, &
                         Mvol, im, in, mns, ims, ins, &
                         YESstellsym, NOTstellsym, &

@@ -62,7 +62,8 @@ subroutine bfield( zeta, st, Bst )
   
   use cputiming, only : Tbfield
   
-  use allglobal, only : myid, ncpu, cpus, mn, im, in, halfmm, regumm, &
+  use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, &
+                        mn, im, in, halfmm, regumm, &
                         ivol, gBzeta, Ate, Aze, Ato, Azo, &
                         NOTstellsym, &
                         Lcoordinatesingularity, Mvol, &
@@ -200,7 +201,8 @@ subroutine bfield_tangent( zeta, st, Bst )
   
   use cputiming, only : Tbfield
   
-  use allglobal, only : myid, ncpu, cpus, mn, im, in, halfmm, regumm, &
+  use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, &
+                        mn, im, in, halfmm, regumm, &
                         ivol, gBzeta, Ate, Aze, Ato, Azo, &
                         NOTstellsym, &
                         Lcoordinatesingularity, Mvol, &

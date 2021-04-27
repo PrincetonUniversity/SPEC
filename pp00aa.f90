@@ -7,7 +7,7 @@
 !> **relevant input variables**
 !>
 !> <ul>
-!> <li> The resolution of Poincaré plot is controlled by 
+!> <li> The resolution of Poincaré plot is controlled by
 !>       <ul>
 !>       <li> \c nPtraj trajectories will be located in each volume;
 !>       <li> \c nPpts  iterations per trajectory;
@@ -46,7 +46,7 @@
 !>       This will be over-ruled by if \c nPtrj(lvol) , given on input, is non-negative.
 !> <li> The starting location for the fieldline integrations are equally spaced in the radial coordinate \f$s_i=s_{l-1}+ i (s_{l}-s_{l-1})/N\f$ for \f$i=0,N\f$,
 !>       along the line \f$\theta=0\f$, \f$\zeta=0\f$.
-!> </ul> 
+!> </ul>
 !>
 !> **format of output: rotational-transform**
 !>
@@ -64,41 +64,41 @@
 !> </ul>
 !>
 subroutine pp00aa
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   use constants, only : zero, half, one, two, pi
-  
+
   use numerical, only :
-  
+
   use fileunits, only : ounit
-  
-  use inputlist, only : Wmacros, Wpp00aa, Nvol, Lrad, ext, odetol, nPpts, Ppts, nPtrj, Lconstraint, iota, oita, Igeometry
-  
+
+  use inputlist, only : Wmacros, Wpp00aa, Nvol, Lrad, odetol, nPpts, Ppts, nPtrj, Lconstraint, iota, oita, Igeometry
+
   use cputiming, only : Tpp00aa
-  
-  use allglobal, only : myid, ncpu, cpus, &
+
+  use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, ext, &
                         Nz, pi2nfp, &
                         ivol, Mvol, &
                         Lcoordinatesingularity, &
                         diotadxup, Lplasmaregion, Lvacuumregion
 
   use sphdf5,    only : init_flt_output, write_poincare, write_transform, finalize_flt_output
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   LOCALS
-  
+
   INTEGER              :: lnPtrj, ioff, vvol, itrj, lvol
   INTEGER, allocatable :: utflag(:), numTrajs(:)
   REAL                 :: sti(1:2), ltransform(1:2)
   REAL, allocatable    :: data(:,:,:,:), fiota(:,:)
-  
+
   integer :: id, numTraj, recvId
   integer :: status(MPI_STATUS_SIZE)
 
   BEGIN(pp00aa)
-  
+
   ! count how many Poincare trajectories should be computed in total ; executed on each CPU
   allocate(numTrajs(1:Mvol))
   do vvol = 1, Mvol
@@ -144,7 +144,7 @@ subroutine pp00aa
       SALLOCATE(   data, (ioff:lnPtrj, 1:4,0:Nz-1,1:nPpts), zero ) ! for block writing to file (allows faster reading of output data files for post-processing plotting routines);
       SALLOCATE( utflag, (ioff:lnPtrj                    ),    0 ) ! error flag that indicates if fieldlines successfully followed; 22 Apr 13;
       SALLOCATE(  fiota, (ioff:lnPtrj, 1:2               ), zero ) ! will always need fiota(0,1:2);
-      
+
 !$OMP PARALLEL DO SHARED(lnPtrj,ioff,Wpp00aa,Nz,data,fiota,utflag,iota,oita,myid,vvol,cpus,Lconstraint,nPpts,ppts) PRIVATE(itrj,sti)
       do itrj = ioff, lnPtrj ! initialize Poincare plot with trajectories regularly spaced between interfaces along \t=0;
 
@@ -172,6 +172,9 @@ subroutine pp00aa
       ! write(*,*) "CPU ",myid," finished field line tracing for volume ",vvol
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+      ! TODO: replace below logic with a single call to MPI_allgather into rank-0
+      ! and the write from there at once
+
       ! write data
       if (myid.eq.0) then
         !write(*,*) "CPU 0 writes its own Poincare data for numTrajs(",vvol,")=",numTrajs(vvol)
@@ -198,7 +201,7 @@ subroutine pp00aa
         endif
 
         if (Mvol.gt.1 .and. ncpu.gt.1) then
-          
+
          ! Gather data from all other parallelly running CPUs; there are min(ncpu-1, Mvol-vvol) of these in this iteration
          ! If we have so few CPUs that all of them need to perform multiple iteration over the set of volumes in batches of ncpu,
          ! there are a number ncpu-1 CPUs apart from the master who still have data that needs to be written before they can contine.
@@ -219,13 +222,13 @@ subroutine pp00aa
             allocate(  data(1:numTrajs(lvol),1:4,0:Nz-1,1:nPpts))
             allocate( fiota(1:numTrajs(lvol),1:2))
 
-            call MPI_Recv( utflag, numTrajs(lvol)           , MPI_INTEGER         , recvId, lvol, MPI_COMM_WORLD, status, ierr)
+            call MPI_Recv( utflag, numTrajs(lvol)           , MPI_INTEGER         , recvId, lvol, MPI_COMM_SPEC, status, ierr)
             !write(*,*) "CPU 0 got utflag vector from CPU ",recvId
 
-            call MPI_Recv(   data, numTrajs(lvol)*4*Nz*nPpts, MPI_DOUBLE_PRECISION, recvId, lvol, MPI_COMM_WORLD, status, ierr)
+            call MPI_Recv(   data, numTrajs(lvol)*4*Nz*nPpts, MPI_DOUBLE_PRECISION, recvId, lvol, MPI_COMM_SPEC, status, ierr)
             !write(*,*) "CPU 0 got the corresponding Poincare data from CPU ",recvId
 
-            call MPI_Recv(  fiota, numTrajs(lvol)*2         , MPI_DOUBLE_PRECISION, recvId, lvol, MPI_COMM_WORLD, status, ierr)
+            call MPI_Recv(  fiota, numTrajs(lvol)*2         , MPI_DOUBLE_PRECISION, recvId, lvol, MPI_COMM_SPEC, status, ierr)
 !            write(*,*) "CPU 0 got the iota profile from CPU ",recvId,": sarr: "
 !            write(*,*) fiota(:,1)
 
@@ -247,9 +250,9 @@ subroutine pp00aa
         endif
 
       else
-        call MPI_Send( utflag, numTrajs(vvol)           , MPI_INTEGER         , 0, vvol, MPI_COMM_WORLD, ierr) ! success flag vector
-        call MPI_Send(   data, numTrajs(vvol)*4*Nz*nPpts, MPI_DOUBLE_PRECISION, 0, vvol, MPI_COMM_WORLD, ierr) ! Poincare data
-        call MPI_Send(  fiota, numTrajs(vvol)*2         , MPI_DOUBLE_PRECISION, 0, vvol, MPI_COMM_WORLD, ierr) ! rotational transform profile from field line tracing
+        call MPI_Send( utflag, numTrajs(vvol)           , MPI_INTEGER         , 0, vvol, MPI_COMM_SPEC, ierr) ! success flag vector
+        call MPI_Send(   data, numTrajs(vvol)*4*Nz*nPpts, MPI_DOUBLE_PRECISION, 0, vvol, MPI_COMM_SPEC, ierr) ! Poincare data
+        call MPI_Send(  fiota, numTrajs(vvol)*2         , MPI_DOUBLE_PRECISION, 0, vvol, MPI_COMM_SPEC, ierr) ! rotational transform profile from field line tracing
         ! diotadxup should be available in the master already, since it is stored in global
       endif ! myid.eq.0
 
@@ -271,7 +274,7 @@ subroutine pp00aa
   endif
 
   RETURN(pp00aa)
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 1001 format("pp00aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; odetol=",es8.1," ; nPpts=",i8," ; lnPtrj=",i3," ;")

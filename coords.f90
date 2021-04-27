@@ -154,7 +154,7 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
   
   use cputiming, only : Tcoords
   
-  use allglobal, only : myid, cpus, pi2nfp, &
+  use allglobal, only : myid, cpus, pi2nfp, MPI_COMM_SPEC, &
                         Mvol, im, in, halfmm, &
                         iRbc, iZbs, iRbs, iZbc, &
                         NOTstellsym, Lcoordinatesingularity, &

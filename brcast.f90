@@ -30,7 +30,8 @@ subroutine brcast( lvol )
 
   use cputiming, only : Tbrcast
 
-  use allglobal, only : myid, cpus, ncpu, dtflux, dpflux, Ntz, mn, Mvol, &
+  use allglobal, only : myid, cpus, ncpu, MPI_COMM_SPEC, &
+                        dtflux, dpflux, Ntz, mn, Mvol, &
                         diotadxup, dItGpdxtp, &
                         Ate, Aze, Ato, Azo, &
                         Bemn, Bomn, Iomn, Iemn, Somn, Semn, Pomn, Pemn, &
