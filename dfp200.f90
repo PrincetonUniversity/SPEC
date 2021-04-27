@@ -2025,7 +2025,8 @@ do iocons = 0, 1
               ;idoc=idoc+mn
                      ;denergydrr(idoc+1:idoc+mn-1,lvol,iocons,idof,innout) = -sfmn(2:mn)*half ! 2 wrz
               ;idoc=idoc+mn-1
-          else
+          endif
+          if (irz.eq.0 .and. ii .gt.1) then
               ;idoc=0
                      ;denergydrr(idoc+1:idoc+mn ,lvol,iocons,idof,innout) = -efmn(1:mn) !1 wrr
               ;idoc=idoc+mn
@@ -2035,9 +2036,9 @@ do iocons = 0, 1
 
           if(irz.eq.1 .and. ii .gt.1) then
               ;idoc=0
-                     ;denergydzr(idoc+1:idoc+mn-1 ,lvol,iocons,idof,innout) =  evmn(1:mn) ! 3
+                     ;denergydzr(idoc+1:idoc+mn-1 ,lvol,iocons,idof,innout) =  evmn(1:mn) !wzr
               ;idoc=idoc+mn
-                      ;denergydzr(idoc+1:idoc+mn-1 ,lvol,iocons,idof,innout) =  simn(2:mn) ! 4
+                      ;denergydzr(idoc+1:idoc+mn-1 ,lvol,iocons,idof,innout) =  simn(2:mn) !wzz
               ;idoc=idoc+mn-1
           end if
 
