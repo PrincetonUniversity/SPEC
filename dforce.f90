@@ -133,8 +133,10 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives, LCompu
                         Ate, Aze, Ato, Azo, & ! only required for broadcasting
                         diotadxup, dItGpdxtp, & ! only required for broadcasting
                         lBBintegral, &
-                        dFFdRZ,HdFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated, &
+                        dFFdRZ,HdFFdRZ, dBBdmp, dmupfdx,&
+                        hessian, dessian, Lhessianallocated, &
                         hessian2D,dessian2D, Lhessian2Dallocated, &
+                        hessian3D,dessian3D,Lhessian3Dallocated, denergydrr, denergydrz,denergydzr,denergydzz, &
                         BBweight, & ! exponential weight on force-imbalance harmonics;
                         psifactor, &
                         LocalConstraint, xoffset, &
@@ -162,6 +164,7 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives, LCompu
   INTEGER              :: status(MPI_STATUS_SIZE), request_recv, request_send, cpu_send
   INTEGER              :: id
   INTEGER              :: iflag, idgesv, Lwork
+  INTEGER              :: idofr,idofz,tdofr,tdofz
 
   CHARACTER            :: packorunpack 
   EXTERNAL             :: dfp100, dfp200
@@ -517,8 +520,124 @@ recursive subroutine dforce( NGdof, position, force, LComputeDerivatives, LCompu
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+if( LHmatrix .and. Lhessian3Dallocated .and. Igeometry.ge.3) then ! construct Hessian3D;
+
+  if (LcomputeDerivatives ) then
+  
+      hessian2D(1:NGdof,1:NGdof) = zero 
+  
+      do vvol = 1, Mvol-1 ! loop over interior surfaces;
+  
+        if( ImagneticOK(vvol) .and. ImagneticOK(vvol+1) ) then ! the magnetic fields in the volumes adjacent to this interface are valid;
+  
+          idof = 0 ! labels degree-of-freedom = Fourier harmonic of surface geometry;
+          idofr=0
+          idofz=0
+  
+          do ii = 1, mn ! loop over degrees-of-freedom;
+  
+            do irz = 0, 1 ! Fourier harmonic of R, Fourier harmonic of Z;
+  
+              !if( irz.eq.1 .and. Igeometry.lt.3 ) cycle ! no dependence on Z;
+  
+              do issym = 0, 1 ! stellarator symmetry;
+  
+                !if( issym.eq.1 .and. YESstellsym ) cycle ! no dependence on the non-stellarator symmetric harmonics;
+  
+                if( ii.eq.1 .and. irz.eq.1 .and. issym.eq.0 ) cycle ! no dependence on Zbs_{m=0,n=0};
+                if( ii.eq.1 .and. irz.eq.0 .and. issym.eq.1 ) cycle ! no dependence on Rbs_{m=0,n=0};
+        
+                idof = idof + 1 ! labels degree-of-freedom;
+
+  
+                if( LocalConstraint) then
+
+                  idof=idof+1
+   
+                   if (irz.eq.0) then
+                       idofr = idofr + 1 ! labels degree-of-freedom;
+                   else
+                       idofz = idofz + 1
+                   endif
+                       ! use tdof for number of volume more than 2 
+                    if ( vvol.gt.1 ) then
+                       tdofr = (vvol-2) * LGdof + idofr ! labels degree-of-freedom in internal interface geometry   ;
+                       tdofz = (vvol-2) * LGdof + idofz
+                       tdoc = (vvol-1) * LGdof        ! labels force-balance constraint across internal interfaces; !always fix
+                       idoc = 0                       ! local  force-balance constraint across internal interface ;
+                       if (irz .eq.0) then
+                           hessian2D(tdoc+idoc+1:tdoc+idoc+LGdof,tdofr) = -denergydrr(idoc+1:idoc+LGdof ,vvol+0,1,idof,0) 
+                       else
+                           hessian2D(tdoc+idoc+1:tdoc+idoc+LGdof,tdofz+mn)= -denergydzr(idoc+1:idoc+LGdof,vvol+0,1,idof,0) 
+                       endif
+                     endif ! end of if( vvol.gt.1 ) ;
+
+                        ;tdofr = (vvol-1) * LGdof + idofr
+                        ;tdofz = (vvol-1) * LGdof + idofz
+                        ;tdoc = (vvol-1) * LGdof ! shorthand;
+                        ;idoc = 0 ! diagonal elements;
+                       if (irz .eq. 0) then
+                          ;hessian2D(tdoc+1:tdoc+LGdof,tdofr) = denergydrr(idoc+1:idoc+LGdof,vvol+1,0,idof,0) - denergydrr(idoc+1:idoc+LGdof,vvol+0,1,idof,1)! &
+                      else
+                          ;hessian2D(tdoc+1:tdoc+LGdof,tdofz+mn) = denergydzr(idoc+1:idoc+LGdof,vvol+1,0,idof,0) - denergydzr(idoc+1:idoc+LGdof,vvol+0,1,idof,1)
+                      endif  
+                          !write(ounit,'("hesian3D : ",f10.2," : efcol1="f10.2")') cput-cpus, efcol1mn(1:mn)
+
+        
+                      if ( vvol.lt.Mvol-1 ) then
+                         tdofr = (vvol+0) * LGdof + idofr
+                         tdofz = (vvol+0) * LGdof + idofz
+                         tdoc = (vvol-1) * LGdof ! shorthand;
+                         idoc = 0
+                               !  if    ( im(idof).le.0                     ) then ; hessian(tdoc+idof,tdof) = - one
+                                    !  else                                             ; hessian(tdoc+idof,tdof) = - one
+                                  !  endif
+                        if (irz.eq.0) then
+                             hessian2D(tdoc+idoc+1:tdoc+idoc+LGdof,tdofr) = denergydrr(idoc+1:idoc+LGdof ,vvol+1,0,idof,1) 
+                        else 
+                             hessian2D(tdoc+idoc+1:tdoc+idoc+LGdof,tdofz+mn) = denergydzr(idoc+1:idoc+LGdof ,vvol+1,0,idof,1) 
+                        endif ! end of if( vvol.lt.Mvol-1 ) ;
+                     endif        
+  
+                  ! Case of last interface in case of boundary variation ?
+                  !if( vvol.eq.Mvol-1 ) then
+                    !tdof = (vvol+0) * LGdof + idof
+                   ! tdoc = (vvol-1) * LGdof ! shorthand ;
+                    !idoc = 0
+                    !dessian3D(tdoc+idoc+1:tdoc+idoc+LGdof,idof) = HdFFdRZ(idoc+1:idoc+LGdof,0,idof,1,vvol+1)
+  
+                  !endif ! end of if( vvol.lt.Mvol-1 ) ;
+                      
+                else ! Global constraint
+                
+                  ! In the general case of global constraint, there are no zero element in the hessian. We thus loop again on all volumes
+
+                  FATAL( dforce, .true., incorrect choice of Lconstraint in SPEC)
+  
+                endif ! matches if( LocalConstraint );
+
+              enddo ! matches do issym ;
+  
+            enddo ! matches do irz ;
+          enddo ! matches do ii ;
+  
+        else ! matches if( ImagneticOK(vvol) .and. ImagneticOK(vvol+1) ) ; 
+  
+          FATAL( dforce, .true., need to provide suitable values for hessian2D in case of field failure )
+  
+        endif ! end of if( ImagneticOK(vvol) .and. ImagneticOK(vvol+1) ) ;
+  
+      enddo ! end of do vvol;
+   endif
+  
+endif ! end of if( LcomputeDerivatives ) ;
+
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
  
-if( LHmatrix .and. Lhessian2Dallocated) then ! construct Hessian2D;
+if( LHmatrix .and. Lhessian2Dallocated .and. Igeometry.eq.2) then ! construct Hessian2D;
 
   if (LcomputeDerivatives ) then
   
