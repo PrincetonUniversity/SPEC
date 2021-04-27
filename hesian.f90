@@ -38,7 +38,8 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
                         NOTstellsym, YESstellsym, Energy, &
                         dFFdRZ,HdFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated, psifactor, &
                         hessian2D,dessian2D,Lhessian2Dallocated, &
-						LocalConstraint
+                        Lhessian3Dallocated,denergydrr, denergydrz,denergydzr,denergydzz, &
+					            	LocalConstraint
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -210,9 +211,15 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
 #endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-  SALLOCATE( HdFFdRZ , (1:LGdof,0:1,1:LGdof,0:1,1:Mvol), zero )
+  if(LHmatrix .and. Igeometry.eq.2) then 
+      SALLOCATE( HdFFdRZ , (1:LGdof,0:1,1:LGdof,0:1,1:Mvol), zero )
+  endif
   SALLOCATE( dBBdmp , (1:LGdof,1:Mvol,0:1,        1:2), zero )
+  
+  SALLOCATE( denergydrr, (1:LGdof,1:Mvol,0:1,1:LGdof,0:1), zero)
+  SALLOCATE( denergydrz, (1:LGdof,1:Mvol,0:1,1:LGdof,0:1), zero)
+  SALLOCATE( denergydzr, (1:LGdof,1:Mvol,0:1,1:LGdof,0:1), zero)
+  SALLOCATE( denergydzz, (1:LGdof,1:Mvol,0:1,1:LGdof,0:1), zero)
 
 if( LocalConstraint ) then
   SALLOCATE( dmupfdx, (1:Mvol,    1:1, 1:2, 1:LGdof, 0:1), zero )
@@ -224,7 +231,7 @@ endif
   SALLOCATE( dessian2D, (1:NGdof,1:LGdof), zero ) ! part of hessian that depends on boundary variations; 18 Dec 14;
 
   !if (LHmatrix) then
-    Lhessian2Dallocated = .true.
+    Lhessian3Dallocated = .true.
   !else
    ! Lhessianallocated = .true.
   !endif
@@ -234,9 +241,9 @@ endif
   LComputeAxis = .false.
   WCALL( hesian, dforce, ( NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives, LComputeAxis) ) ! calculate force-imbalance & hessian;
   
-write(ounit,*) 1140
 
   ohessian(1:NGdof,1:NGdof) = hessian2D(1:NGdof,1:NGdof) ! internal copy; 22 Apr 15;
+
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -445,7 +452,7 @@ write(ounit,*) 1140
    if02ebf = 1 ; LDA = NGdof ; Lwork = 4*NGdof
    
    hessian2D(1:NGdof,1:NGdof) = ohessian(1:NGdof,1:NGdof)
-   
+
 !#ifdef NAG18
 !   call F02EBF( JOB, NGdof, hessian(1:LDA,1:NGdof), LDA, evalr(1:NGdof), evali(1:NGdof), &
 !                evecr(1:Ldvr,1:NGdof), Ldvr, eveci(1:Ldvi,1:NGdof), Ldvi, work(1:Lwork), Lwork, if02ebf )
@@ -680,14 +687,24 @@ write(ounit,*) 1140
   endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  DALLOCATE(HdFFdRZ)
+  if(LHmatrix .and. Igeometry.eq.2) then 
+     DALLOCATE(HdFFdRZ)
+  endif
+  
   DALLOCATE(dBBdmp)
   DALLOCATE(dmupfdx)
+  DALLOCATE(denergydrr)
+  DALLOCATE(denergydrz)
+  DALLOCATE(denergydzr)
+  DALLOCATE(denergydzz)
+  Lhessian3Dallocated=.false.
+
 
   DALLOCATE(hessian2D)
+  write(ounit,*) 5656
+
   DALLOCATE(dessian2D)
-  Lhessian2Dallocated=.false.
+
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
