@@ -69,13 +69,13 @@ ifeq ($(BUILD_ENV),intel)
  # At PPPL, you can use the following commands
  # module use /p/focus/modules
  # module load spec
- FC=mpifort
+ FC=mpif90
  CFLAGS=-r8
  RFLAGS=-mcmodel=large -O3 -m64 -unroll0 -fno-alias -ip -traceback
  DFLAGS=-O0 -g -traceback -check bounds -check format -check output_conversion -check pointers -check uninit -debug full -D DEBUG
  LIBS=-I${MKLROOT}/include/intel64/lp64 -I${MKLROOT}/include  # MKL include
  LIBS+=-I$(HDF5_HOME)/include # HDF5 include
- LINKS=-L$(HDF5_HOME)/lib -lhdf5_fortran -lhdf5 -lpthread -lz -lm # HDF5 link
+ LINKS=-L$(HDF5_HOME)/lib -lhdf5_fortran -lhdf5 # HDF5 link
  LIBS+=-I$(FFTW_HOME)/include # FFTW include
  LINKS+=-L$(FFTW_HOME)/lib -lfftw3 # FFTW link
  LINKS+=${MKLROOT}/lib/intel64/libmkl_blas95_lp64.a ${MKLROOT}/lib/intel64/libmkl_lapack95_lp64.a \
@@ -267,10 +267,10 @@ endif
 ###############################################################################################################################################################
 
 xspec: $(addsuffix _r.o,$(ALLFILES)) $(MACROS) Makefile
-	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) $(LINKS) $(addsuffix _r.o,$(ALLFILES)) -o xspec
+	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) $(addsuffix _r.o,$(ALLFILES)) -o xspec $(LINKS)
 
 dspec: $(addsuffix _d.o,$(ALLFILES)) $(MACROS) Makefile
-	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) $(LINKS) $(addsuffix _d.o,$(ALLFILES)) -o dspec
+	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) $(addsuffix _d.o,$(ALLFILES)) -o dspec $(LINKS)
 
 ###############################################################################################################################################################
 # inputlist needs special handling: expansion of DSCREENLIST and NSCREENLIST using awk
