@@ -75,7 +75,7 @@ ifeq ($(BUILD_ENV),intel)
  DFLAGS=-O0 -g -traceback -check bounds -check format -check output_conversion -check pointers -check uninit -debug full -D DEBUG
  LIBS=-I${MKLROOT}/include/intel64/lp64 -I${MKLROOT}/include  # MKL include
  LIBS+=-I$(HDF5_HOME)/include # HDF5 include
- LINKS=-L$(HDF5_HOME)/lib -lhdf5_fortran -lhdf5 # HDF5 link
+ LINKS=-L$(HDF5_HOME)/lib -lhdf5_fortran -lhdf5 -lhdf5hl_fortran # HDF5 link
  LIBS+=-I$(FFTW_HOME)/include # FFTW include
  LINKS+=-L$(FFTW_HOME)/lib -lfftw3 # FFTW link
  LINKS+=${MKLROOT}/lib/intel64/libmkl_blas95_lp64.a ${MKLROOT}/lib/intel64/libmkl_lapack95_lp64.a \
