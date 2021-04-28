@@ -551,8 +551,6 @@ if( LHmatrix .and. Lhessian3Dallocated .and. Igeometry.ge.3) then ! construct He
                 idof = idof + 1 ! labels degree-of-freedom;
 
                 !if( LocalConstraint) then
-
-                  idof=idof+1
    
                    if (irz.eq.0) then
                        idofr = idofr + 1 ! labels degree-of-freedom;
@@ -579,9 +577,9 @@ if( LHmatrix .and. Lhessian3Dallocated .and. Igeometry.ge.3) then ! construct He
                        if (irz .eq. 0) then
                           ;hessian2D(tdoc+1:tdoc+LGdof,tdofr) = denergydrr(idoc+1:idoc+LGdof,vvol+1,0,idof,0) - denergydrr(idoc+1:idoc+LGdof,vvol+0,1,idof,1)! &
                           !write(ounit,*) im(ii), hessian2D(1,tdofr) !vvol, im(ii), in(ii), irz, issym, tdofr, tdofz 
-
                         else
                           ;hessian2D(tdoc+1:tdoc+LGdof,tdofz+mn) = denergydzr(idoc+1:idoc+LGdof,vvol+1,0,idof,0) - denergydzr(idoc+1:idoc+LGdof,vvol+0,1,idof,1)
+                          !write(ounit,*) im(ii), hessian2D(1,tdofr) !vvol, im(ii), in(ii), irz, issym, tdofr, tdofz 
 
                       endif  
 
