@@ -181,7 +181,7 @@ ifeq ($(BUILD_ENV),lff95)
 endif
 
 ifeq ($(BUILD_ENV),intel_spc)
- FC=ifort
+ FC=mpif90
  CFLAGS=-r8
  RFLAGS=-O2 -ip -no-prec-div -xHost -fPIC
  DFLAGS=-traceback -D DEBUG -g
