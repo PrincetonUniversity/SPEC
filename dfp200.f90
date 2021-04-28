@@ -65,7 +65,7 @@ subroutine dfp200( LcomputeDerivatives, vvol)
                         mn, im, in, mns, Ntz, &
                         Ate, Aze, Ato, Azo, & ! only required for debugging;
                         ijreal, &
-                        hijreal,&
+                        fijreal,&
                         efmn, ofmn, cfmn, sfmn, &
                         evmn, odmn, comn, simn, &
                         Nt, Nz, &
@@ -251,7 +251,7 @@ subroutine dfp200( LcomputeDerivatives, vvol)
                 endif
 
                 !if (LHmatrix .and. Lhessian2Dallocated .and. Igeometry.eq.2) then
-                 !   call hessian_dFFdRZ(vvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
+                !    call hessian_dFFdRZ(vvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
                 !endif
 
             enddo ! matches do innout;
@@ -1738,7 +1738,7 @@ subroutine hessian_dFFdRZ(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, lengt
                         NOTstellsym, &
                         mn, im, in, mns, &
                         ijreal, &
-                        hijreal, hijmn,&
+                        !hijreal, hijmn,&
                         efmn, ofmn, cfmn, sfmn, &
                         evmn, odmn, comn, simn, &
                         Nt, Nz, &
@@ -1888,7 +1888,7 @@ subroutine hessian3D_dFFdRZ(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, len
                         NOTstellsym, &
                         mn, im, in, mns, &
                         ijreal, &
-                        hijreal, hijmn,&
+                        fijreal, &
                         efmn, ofmn, cfmn, sfmn, &
                         evmn, odmn, comn, simn, &
                         Nt, Nz, &
@@ -1934,16 +1934,17 @@ do iocons = 0, 1
 
 ! Evaluate B^2 (no derivatives)
 ! -----------------------------------
-    ideriv = 0; iflag=1
+    ideriv = 0; iflag=0
 
-    WCALL( dfp200, lforce, (lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, iflag) )
+    WCALL( dfp200, lforce, (lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl,iflag) )
+
 
 ! hessian_dFFdRZ CONSTRUCTION
 ! ===================
 
 ! B square contribution
 ! ---------------------
-    ideriv = -1; iflag=0
+    ideriv = -1; iflag=1
 
     WCALL( dfp200, lforce, (lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, iflag) )
 
@@ -1953,35 +1954,34 @@ do iocons = 0, 1
     ! Derivatives of force wrt geometry; In real space.
     ijreal(1:Ntz) = - adiabatic(lvol) * pscale * gamma * dvolume / vvolume(lvol)**(gamma+one) + dBB(1:Ntz,-1)
 
-       ! if(YESstellsym ) then
-       if( issym.eq.0 ) then
-            if( innout.eq.iocons ) then 
+        if(YESstellsym ) then
+       !if( issym.eq.0 ) then
 
-                 if(irz .eq. 0) then !derivative wrt Rbs of d/dr(dF)
-                     ddFcol1(1:Ntz) = ijreal(1:Ntz) * Zij(1:Ntz,2,0) * Rij(1:Ntz,0,0) & !Frr       d/dr(dw/dr)
-                                   +  (adiabatic(lvol) * pscale/vvolume(lvol)**gamma + dBB(1:Ntz,0)) * Zij(1:Ntz,2,0) * cosi(1:Ntz,ii)
+            if( irz.eq.0 ) then !derivative wrt Rbs of d/dr(dF)
 
-                     ddFcol2(1:Ntz) = ijreal(1:Ntz) * Rij(1:Ntz,0,0) * Rij(1:Ntz,2,0) &  !Fzr        d/dr(dw/dz)
-                                    + (adiabatic(lvol) * pscale/vvolume(lvol)**gamma + dBB(1:Ntz,0)) * Rij(1:Ntz,2,0) * cosi(1:Ntz,ii) &
-                                    + (adiabatic(lvol) * pscale/vvolume(lvol)**gamma + dBB(1:Ntz,0)) * Rij(1:Ntz,0,0) * sini(1:Ntz,ii) * (-im(ii))
+                 if(innout.eq.iocons) then
+                    ddFcol1(1:Ntz) = ijreal(1:Ntz) * Zij(1:Ntz,2,0) * Rij(1:Ntz,0,0) & !Frr       d/dr(dw/dr)
+                                   +  (dBB(1:Ntz,0)+adiabatic(lvol) * pscale/vvolume(lvol)**gamma ) * Zij(1:Ntz,2,0) * cosi(1:Ntz,ii)
+
+                    ddFcol2(1:Ntz) = ijreal(1:Ntz) * Rij(1:Ntz,0,0) * Rij(1:Ntz,2,0) &  !Fzr        d/dr(dw/dz)
+                                    + (dBB(1:Ntz,0) +adiabatic(lvol) * pscale/vvolume(lvol)**gamma )* Rij(1:Ntz,2,0) * cosi(1:Ntz,ii) &
+                                    + (dBB(1:Ntz,0) +adiabatic(lvol) * pscale/vvolume(lvol)**gamma )* Rij(1:Ntz,0,0) * sini(1:Ntz,ii) * (-im(ii))
                   else
-                     ddFcol3(1:Ntz) = ijreal(1:Ntz) * Rij(1:Ntz,0,0) * Zij(1:Ntz,2,0) &   !Frz      d/dz(dw/dr)
-                                  +(adiabatic(lvol) * pscale/vvolume(lvol)**gamma + dBB(1:Ntz,0)) * Rij(1:Ntz,0,0) * im(ii) *cosi(1:Ntz,ii)
-                
-                     ddFcol4(1:Ntz) =  ijreal(1:Ntz) * Rij(1:Ntz,0,0) * Rij(1:Ntz,2,0)  !Fzz    d/dz(dw/dz)
-                    !ddFcol1(1:Ntz) = ijreal(1:Ntz) * Zij(1:Ntz,2,0) * Rij(1:Ntz,0,0) !Frr       d/dr(dw/dr)
-                    !ddFcol2(1:Ntz) =  ijreal(1:Ntz) * Rij(1:Ntz,0,0) * Rij(1:Ntz,2,0) !Fzr        d/dr(dw/dz)
+
+                  ddFcol1(1:Ntz) = ijreal(1:Ntz) * Zij(1:Ntz,2,0) * Rij(1:Ntz,0,0) !Frr       d/dr(dw/dr)
+                  ddFcol2(1:Ntz) =  ijreal(1:Ntz) * Rij(1:Ntz,0,0) * Rij(1:Ntz,2,0) !Fzr        d/dr(dw/dz)
                  endif
             else !derivative wrt to Zbs of d/dz(dF)
-
-                  if(irz.eq.0) then                
-                      ddFcol1(1:Ntz) = ijreal(1:Ntz) * Zij(1:Ntz,2,0) * Rij(1:Ntz,0,0) !Frr       d/dr(dw/dr)
-                      ddFcol2(1:Ntz) =  ijreal(1:Ntz) * Rij(1:Ntz,0,0) * Rij(1:Ntz,2,0) !Fzr        d/dr(dw/dz)
-                 else 
-                      ddFcol3(1:Ntz) = ijreal(1:Ntz) * Rij(1:Ntz,0,0) * Zij(1:Ntz,2,0)  !Frz      d/dz(dw/dr)
-                      ddFcol4(1:Ntz) =  ijreal(1:Ntz) * Rij(1:Ntz,0,0) * Rij(1:Ntz,2,0)  !Fzz    d/dz(dw/dz)
-                 endif
-            endif
+                
+                if(innout.eq.iocons) then
+                   ddFcol3(1:Ntz) = ijreal(1:Ntz) * Rij(1:Ntz,0,0) * Zij(1:Ntz,2,0) &   !Frz      d/dz(dw/dr)
+                                  + (dBB(1:Ntz,0) +adiabatic(lvol) * pscale/vvolume(lvol)**gamma )* Rij(1:Ntz,0,0) * im(ii) *cosi(1:Ntz,ii)
+                   ddFcol4(1:Ntz) =  ijreal(1:Ntz) * Rij(1:Ntz,0,0) * Rij(1:Ntz,2,0)  !Fzz    d/dz(dw/dz)
+                else
+                   ddFcol3(1:Ntz) = ijreal(1:Ntz) * Rij(1:Ntz,0,0) * Zij(1:Ntz,2,0)  !Frz      d/dz(dw/dr)
+                    ddFcol4(1:Ntz) =  ijreal(1:Ntz) * Rij(1:Ntz,0,0) * Rij(1:Ntz,2,0)  !Fzz    d/dz(dw/dz)
+                endif
+           endif 
         else
               !   if( irz.eq.0 ) then
               !       ddFcol1(1:Ntz) = -ijreal(1:Ntz) * Zij(1:Ntz,2,0) * Rij(1:Ntz,0,0) & !Frr       d/dr(dw/dr)
@@ -2018,14 +2018,13 @@ do iocons = 0, 1
           !                                  mn, im(1:mn), in(1:mn),  efcol3mn(1:mn), ofcol3mn(1:mn), ofcol4mn(1:mn), efcol4mn(1:mn), ifail )
              !                          hessian3d= [1 2;3 4]
 
-
-          if (irz.eq.0 .and. ii.eq.1) then
-              ;idoc=0
-                     ;denergydrr(idoc+1:idoc+mn ,lvol,iocons,idof,innout) = -efmn(1:mn)*half !1 wrr
-              ;idoc=idoc+mn
-                     ;denergydrr(idoc+1:idoc+mn-1,lvol,iocons,idof,innout) = -sfmn(2:mn)*half ! 2 wrz
-              ;idoc=idoc+mn-1
-          endif
+           if (irz.eq.0 .and. ii.eq.1) then
+               ;idoc=0
+                      ;denergydrr(idoc+1:idoc+mn ,lvol,iocons,idof,innout) = -efmn(1:mn)*half !1 wrr
+               ;idoc=idoc+mn
+                      ;denergydrr(idoc+1:idoc+mn-1,lvol,iocons,idof,innout) = -sfmn(2:mn)*half ! 2 wrz
+               ;idoc=idoc+mn-1
+           endif
           if (irz.eq.0 .and. ii .gt.1) then
               ;idoc=0
                      ;denergydrr(idoc+1:idoc+mn ,lvol,iocons,idof,innout) = -efmn(1:mn) !1 wrr
@@ -2037,6 +2036,8 @@ do iocons = 0, 1
           if(irz.eq.1 .and. ii .gt.1) then
               ;idoc=0
                      ;denergydzr(idoc+1:idoc+mn-1 ,lvol,iocons,idof,innout) =  evmn(1:mn) !wzr
+                        !write(ounit,*) im(ii),in(ii), evmn(1:mn) !vvol, im(ii), in(ii), irz, issym, tdofr, tdofz 
+
               ;idoc=idoc+mn
                       ;denergydzr(idoc+1:idoc+mn-1 ,lvol,iocons,idof,innout) =  simn(2:mn) !wzz
               ;idoc=idoc+mn-1
@@ -2066,9 +2067,9 @@ do iocons = 0, 1
 
 ! Spectral condensation contribution
 ! ----------------------------------
-    dLL(1:Ntz) = zero ! either no spectral constraint, or not the appropriate interface;
-    dPP(1:Ntz) = zero ! either no spectral constraint, or not the appropriate interface;
-    dII(1:Ntz) = zero
+    dLL(1:Ntz) = zero !  no spectral constraint, or not the appropriate interface;
+    dPP(1:Ntz) = zero !  no spectral constraint, or not the appropriate interface;
+    dII(1:Ntz) = zero !  no angle/spectral width constraint
 
 #ifdef DEBUG
     FATAL( dfp200, idoc.ne.LGdof, counting error )
