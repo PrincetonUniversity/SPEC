@@ -59,11 +59,6 @@ program xspech
     write(ounit,'("xspech : ", 10x ," : ")')
     write(ounit,'("xspech : ",f10.2," : begin execution ; ncpu=",i3," ; calling global:readin ;")') cput-cpus, ncpu
 
-!> **todo remark**
-!>
-!> \todo The following belongs to the docs of the program xspech, not to the ending() subroutine.
-!>       If you know how to attach the docs to the program xspech, please fix this.
-!>
 !> **reading input, allocating global variables**
 !>
 !> <ul>
@@ -72,9 +67,6 @@ program xspech
 !> <li> Most internal variables, global memory etc., are allocated in preset() . </li>
 !> <li> All quantities in the input file are mirrored into the output file's group \c /input . </li>
 !> </ul>
-
-    print *, "before call to read_inp...; ext=",trim(ext)
-
     call read_inputlists_from_file()
 
     ! check that data from input file is within allowed ranges etc.
@@ -305,8 +297,6 @@ subroutine spec
   LOCALS
 
   LOGICAL              :: LComputeDerivatives, LContinueFreeboundaryIterations, exist, LupdateBn, LComputeAxis
-
-! INTEGER              :: nfreeboundaryiterations, imn, lmn, lNfp, lim, lin, ii, lvol ! 09 Mar 17;
   INTEGER              :: imn, lmn, lNfp, lim, lin, ii, ideriv, stat
   INTEGER              :: vvol, ifail, wflag, iflag, vflag
   REAL                 :: rflag, lastcpu, bnserr, lRwc, lRws, lZwc, lZws, lItor, lGpol, lgBc, lgBs
