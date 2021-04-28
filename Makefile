@@ -59,7 +59,7 @@
 
  # if want to use gfortran: make BUILD_ENV=gfortran (x/d)spec
  # default: use Intel compiler
- BUILD_ENV=intel
+ BUILD_ENV=?intel
 
  # to enable OpenMP acceleration within volume, set OMP=yes, otherwise set OMP=no
  OMP=yes
@@ -254,8 +254,26 @@ ifeq ($(BUILD_ENV),intel_raijin)
  DFLAGS=-check bounds -check format -check output_conversion -check pointers -check uninit -debug full -D DEBUG
 endif
 
+ifeq ($(BUILD_ENV),intel_stellar)
+ # PPPL stellar cluster intel compiler
+ # module use /home/caoxiang/module
+ # module load spec
+ FC=mpiifort
+ CFLAGS=-r8
+ RFLAGS=-O2 -ip -no-prec-div -xHost -fPIC
+ DFLAGS=-O0 -g -traceback -check bounds -check format -check output_conversion -check pointers -check uninit -debug full -D DEBUG
+ LIBS=-I${MKLROOT}/include/intel64/lp64  # MKL include
+ LIBS+=-I$(HDF5DIR)/include # HDF5 include
+ LINKS=-L$(HDF5DIR)/lib -lhdf5_fortran -lhdf5 # HDF5 link
+ LIBS+=-I$(FFTW3DIR)/include # FFTW include
+ LINKS+=-L$(FFTW3DIR)/lib -lfftw3 # FFTW link
+ LINKS+= ${MKLROOT}/lib/intel64/libmkl_blas95_lp64.a ${MKLROOT}/lib/intel64/libmkl_lapack95_lp64.a -L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl
+
+endif
+
 ifeq ($(OMP),yes)
  RFLAGS+=-DOPENMP -fopenmp
+ DFLAGS+=-DOPENMP -fopenmp
  LINKS+=-lgomp
 endif
 
