@@ -886,6 +886,8 @@ subroutine read_inputlists_from_file()
    use fileunits
    use inputlist
 
+   use ifport ! for fseek with Intel compiler
+
    LOCALS
 
    LOGICAL              :: Lspexist
@@ -967,7 +969,8 @@ subroutine read_inputlists_from_file()
      SALLOCATE( RZRZ, (1:4,1:Nvol), zero ) ! temp array for reading input;
 
      ! determine how many modes are specified by reading them once
-     call ftell(iunit, filepos)
+!     call ftell(iunit, filepos)
+     filepos = ftell(iunit)
 
      do ! will read in Fourier harmonics until the end of file is reached;
        read(iunit,*,iostat=instat) mm, nn, RZRZ(1:4,1:Nvol)   !if change of angle applies, transformation assumes m>=0 and for m=0 only n>=0;
@@ -979,7 +982,8 @@ subroutine read_inputlists_from_file()
      ! rewind file to reset EOF flag
      ! and seek back to (start of modes) == (end of input namelists)
      rewind(iunit)
-     call fseek(iunit, filepos, 0, seek_status)
+!     call fseek(iunit, filepos, 0, seek_status)
+     seek_status = fseek(iunit, filepos, 0)
      FATAL(inplst, seek_status.ne.0, failed to seek to end of input namelists )
 
      ! now allocate arrays and read...
@@ -992,7 +996,8 @@ subroutine read_inputlists_from_file()
      ! rewind file to reset EOF flag
      ! and seek back to (start of modes) == (end of input namelists)
      rewind(iunit)
-     call fseek(iunit, filepos, 0, seek_status)
+!     call fseek(iunit, filepos, 0, seek_status)
+     seek_status = fseek(iunit, filepos, 0)
      FATAL(inplst, seek_status.ne.0, failed to seek to end of input namelists )
 
      ! no need for temporary RZRZ anymore
