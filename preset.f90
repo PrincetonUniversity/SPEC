@@ -1134,12 +1134,12 @@ endif
     do ii = 1, mn
      if( im(ii).eq.0 ) then ; psifactor(ii,vvol) = tflux(vvol)**(          +half) ! 28 Jan 15;
                             ; inifactor(ii,vvol) = tflux(vvol)**(          +half) 
-     else                   ; psifactor(ii,vvol) = tflux(vvol)**(halfmm(ii)-half) ! 28 Jan 15;
+     else                   ; psifactor(ii,vvol) = tflux(vvol)**(           half) ! 28 Jan 15;
                             ; inifactor(ii,vvol) = tflux(vvol)**(halfmm(ii)-half)
      endif
     enddo
    enddo
-   if (Lfindzero .gt. 2) psifactor(1:mn,1:Nvol) = one
+   if (Lfindzero .gt. 2) psifactor(1:mn,1:Nvol) = one / psifactor
   case( 3 ) 
    
    do vvol = 1, Nvol
@@ -1151,7 +1151,7 @@ endif
      endif
     enddo
    enddo
-    !if (Lfindzero .gt. 2) psifactor(1:mn,1:Nvol) = one 
+    if (Lfindzero .gt. 2) psifactor(1:mn,1:Nvol) = one !/ psifactor
   case default
    
    FATAL( readin, .true., invalid Igeometry for construction of psifactor )

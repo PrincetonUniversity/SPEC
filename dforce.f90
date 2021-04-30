@@ -421,11 +421,11 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
 
       if( ImagneticOK(vvol) .and. ImagneticOK(vvol+1) ) then
 
-        ;ForceRc(1:mn, vvol) = ( Bemn(1:mn    ,vvol+1,0) - Bemn(1:mn    ,vvol+0,1) ) * BBweight(1:mn) * pi2 * pi2nfp / two ! pressure imbalance;
+        ;ForceRc(1:mn, vvol) = ( Bemn(1:mn    ,vvol+1,0) - Bemn(1:mn    ,vvol+0,1) ) * BBweight(1:mn)  / two ! pressure imbalance;
         ;ForceRc(1,vvol) = ForceRc(1,vvol) * two
         
         if (Igeometry .eq. 3 ) then ! add the spectral constraint forces
-          ForceZs(2:mn, vvol) = ( Bomn(2:mn    ,vvol+1,2) - Bomn(2:mn    ,vvol+0,3) ) * BBweight(2:mn) * pi2 * pi2nfp / two ! pressure imbalance;
+          ForceZs(2:mn, vvol) = ( Bomn(2:mn    ,vvol+1,2) - Bomn(2:mn    ,vvol+0,3) ) * BBweight(2:mn) / two ! pressure imbalance;
 
           IIR(1:mn) =           + (                           Iemn(1:mn    ,vvol+0,0) ) * epsilon         & ! spectral constraints;
                                 + (                         + Semn(1:mn    ,vvol+0,1) ) * sweight(vvol+0) & ! poloidal length constraint;
@@ -447,10 +447,10 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
         endif
 
         if (NOTstellsym) then
-          ;ForceRs(2:mn, vvol) = ( Bomn(2:mn    ,vvol+1,0) - Bomn(2:mn    ,vvol+0,1) ) * BBweight(2:mn) * pi2 * pi2nfp / two ! pressure imbalance;
+          ;ForceRs(2:mn, vvol) = ( Bomn(2:mn    ,vvol+1,0) - Bomn(2:mn    ,vvol+0,1) ) * BBweight(2:mn)  / two ! pressure imbalance;
           
           if (Igeometry .eq.3 ) then ! add the spectral constraint forces
-            ForceZc(1:mn, vvol) = ( Bemn(1:mn    ,vvol+1,2) - Bemn(1:mn    ,vvol+0,3) ) * BBweight(1:mn) * pi2 * pi2nfp / two ! pressure imbalance;
+            ForceZc(1:mn, vvol) = ( Bemn(1:mn    ,vvol+1,2) - Bemn(1:mn    ,vvol+0,3) ) * BBweight(1:mn) / two ! pressure imbalance;
 
             ForceRs(2:mn, vvol) = ForceRs(2:mn, vvol) &
                                   + (                           Iomn(2:mn    ,vvol+0,0) ) * epsilon         & ! spectral constraints;

@@ -95,7 +95,7 @@ subroutine newton( NGdof, position, ihybrd )
   REAL                   :: xtol, epsfcn, factor
   REAL                   :: diag(1:NGdof), QTF(1:NGdof), workspace(1:NGdof,1:4)
   REAL                   :: sdxtol=1e-8, sdgtol=1e-20, sdftol=1e-16
-  INTEGER                :: sditmax=30, sdiprint=0, sdiflag=0
+  INTEGER                :: sditmax=200, sdiprint=0, sdiflag=0
 
 
   REAL                   :: force(0:NGdof)
@@ -268,7 +268,7 @@ subroutine newton( NGdof, position, ihybrd )
 !     write(ounit,*) 'Energy'
 !     stop
    !
-    WCALL(newton, steepest_descent, (NGdof,position(1:NGdof),Energy,sdxtol,sdgtol,sdftol,sditmax &
+    WCALL(newton, frcg, (NGdof,position(1:NGdof),Energy,sdxtol,sdgtol,sdftol,sditmax &
       ,sdiprint,sdiflag,fcnval,fcngrad))
 
   !  Ldescent = .FALSE.
@@ -810,7 +810,7 @@ REAL function fcnval(n,xx)
                         BBe, IIo, BBo, IIe, &
                         LGdof, dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated, &
                         nfreeboundaryiterations, &
-                        lABintegral, lLLl, lMMl, sweight
+                        lABintegral, lLLl, lMMl, sweight, pi2, pi2nfp
   
   use newtontime
 
@@ -847,7 +847,7 @@ REAL function fcnval(n,xx)
    !  fcnval = Energy - sum( mu(1:Nvol)*lABintegral(1:Nvol) )   
    ! else
     !fcnval = Energy
-    fcnval = opsilon * Energy !+ epsilon * sum(lMMl) !+ sum(lLLl * sweight)
+    fcnval = opsilon * Energy / (pi2 * pi2nfp) !+ epsilon * sum(lMMl) !+ sum(lLLl * sweight)
     !write(ounit,*) f
    ! endif
 
@@ -966,9 +966,15 @@ subroutine fcndescent(xx, NGdof)
  INTEGER, INTENT(in)  :: NGdof
  REAL , INTENT(inout) :: xx(1:NGdof)
 
- REAL                 :: deltax=3.0E-4, ditmax = 20000, dtol = 1e-9 
+ REAL                 :: time_step=1.0E-3, ditmax = 25000, dtol = 1e-9 
+ INTEGER,parameter    :: ndamp=15
+
  REAL                 :: position(0:NGdof), force(0:NGdof)
  INTEGER              :: it
+
+ REAL                 :: otau(1:ndamp), xdot(1:NGdof)
+ REAL                 :: fsq, fsq1, otav, b1, fac, dtau
+
  LOGICAL              :: LComputeDerivatives, LComputeAxis
 
  position = zero ; force = zero ; position(1:NGdof) = xx(1:NGdof) 
@@ -976,6 +982,9 @@ subroutine fcndescent(xx, NGdof)
  LComputeDerivatives = .false.; LComputeAxis = .true.
 
  it = 0
+ otau(:ndamp) = 0.15/time_step
+ fsq = one
+ xdot = zero
 
  do while(it < ditmax)
  
@@ -983,8 +992,34 @@ subroutine fcndescent(xx, NGdof)
  
   call dforce(NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives, LComputeAxis)
 
-  position(1:NGdof) = position(1:NGdof) - deltax*force(1:NGdof)!/ForceErr
-  if (myid .eq. 0) write(ounit,*) Energy,  epsilon *  sum(lMMl), sum(lLLl * sweight), sum(abs(force(1:NGdof))) / NGdof
+  fsq1 = sum(force(1:NGdof)**2)
+
+  dtau = MIN(ABS(LOG(fsq1/fsq)), 0.15)
+
+  ! update backup copy of fsq1
+  fsq = fsq1
+
+  ! shift array for averaging to the left to make space at end for new entry
+  otau(1:ndamp-1) = otau(2:ndamp)
+  otau(ndamp) = dtau/time_step
+    
+  ! averaging over ndamp entries : 1/ndamp*sum(otau)
+  otav = SUM(otau(:ndamp))/ndamp
+
+  dtau = time_step*otav/2
+
+  b1  = one - dtau
+  fac = one/(one + dtau)
+
+!
+!     THIS IS THE TIME-STEP ALGORITHM. IT IS ESSENTIALLY A CONJUGATE
+!     GRADIENT METHOD, WITHOUT THE LINE SEARCHES (FLETCHER-REEVES),
+!     BASED ON A METHOD GIVEN BY P. GARABEDIAN
+!
+  xdot = fac*(b1*xdot - time_step*force(1:NGdof))                 ! update velocity
+  position(1:NGdof) = position(1:NGdof) + time_step*xdot          ! advance xc by velocity given in xcdot
+
+  if (myid .eq. 0) write(ounit,*) it, Energy,  epsilon *  sum(lMMl), sum(lLLl * sweight), sum(abs(force(1:NGdof))) / NGdof
   if(ForceErr<dtol) then
    write(*,*) "FORCE BELOW TOLERANCE"
    exit
@@ -995,7 +1030,7 @@ subroutine fcndescent(xx, NGdof)
   endif
 
   if (myid .eq. 0) then
-    if (mod(it, 100) .eq. 0) then
+    if (mod(it, 100) .eq. 1) then
 
      cput = GETTIME
      
