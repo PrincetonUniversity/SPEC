@@ -1019,7 +1019,6 @@ subroutine fcndescent(xx, NGdof)
   xdot = fac*(b1*xdot - time_step*force(1:NGdof))                 ! update velocity
   position(1:NGdof) = position(1:NGdof) + time_step*xdot          ! advance xc by velocity given in xcdot
 
-  if (myid .eq. 0) write(ounit,*) it, Energy,  epsilon *  sum(lMMl), sum(lLLl * sweight), sum(abs(force(1:NGdof))) / NGdof
   if(ForceErr<dtol) then
    write(*,*) "FORCE BELOW TOLERANCE"
    exit
@@ -1044,6 +1043,7 @@ subroutine fcndescent(xx, NGdof)
        write(ounit,1001)                                                                      "|II|e", alog10(IIe(1:min(Mvol-1,28)))
       endif
      endif
+     if (myid .eq. 0) write(ounit,*) 'Energy', Energy,  'SEnergy', epsilon *  sum(lMMl), 'Lenergy', sum(lLLl * sweight)
      lastcpu = GETTIME
      WCALL( newton, wrtend ) ! write restart file; save geometry to ext.end;
     endif
