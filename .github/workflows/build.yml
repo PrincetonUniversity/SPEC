@@ -22,6 +22,10 @@ jobs:
         run: |
           cd ${SPEC_PATH}
           make BUILD_ENV=gfortran dspec
+      - name: setup parallelism
+        run: |
+          export OMP_NUM_THREADS=1
+          echo OMP_NUM_THREADS=${OMP_NUM_THREADS}
       - name: run_fast_cartesian
         run: |
           cd ${SPEC_PATH}/ci/G1V03L2Fi

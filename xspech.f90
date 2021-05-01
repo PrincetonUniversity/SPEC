@@ -16,6 +16,7 @@ program xspech
                        mirror_input_to_outfile, &
                        init_convergence_output, &
                        hdfint, finish_outfile, write_grid
+  use cputiming, only: Txspech
 
   LOCALS
 
@@ -26,6 +27,8 @@ program xspech
   integer              :: iwait, pid, status
   INTEGER, external    :: getpid, hostnm
 #endif
+
+  BEGIN(xspech)
 
   call MPI_INIT( ierr )
 
@@ -50,6 +53,9 @@ program xspech
     write(ounit,'("xspech : ", 10x ," : ")')
     write(ounit,1000) cput-cpus, ldate(1:4), ldate(5:6), ldate(7:8), ltime(1:2), ltime(3:4), ltime(5:6), machprec, vsmall, small
 
+    write(ounit,'("xspech : ", 10x ," : ")')
+    write(ounit,'("xspech : ",f10.2," : parallelism : ncpu=",i3," ; nthreads=",i3," ;")') cput-cpus, ncpu, nthreads
+
     ! read command-line arguments
     call read_command_args()
 
@@ -57,7 +63,7 @@ program xspech
     call initialize_inputs()
 
     write(ounit,'("xspech : ", 10x ," : ")')
-    write(ounit,'("xspech : ",f10.2," : begin execution ; ncpu=",i3," ; calling global:readin ;")') cput-cpus, ncpu
+    write(ounit,'("xspech : ",f10.2," : begin execution ; calling global:readin ;")') cput-cpus
 
 !> **reading input, allocating global variables**
 !>
