@@ -1,17 +1,17 @@
 <map id="spec" name="spec">
-<area shape="rect" id="node1" title=" " alt="" coords="5,1895,56,1921"/>
+<area shape="rect" id="node1" title=" " alt="" coords="5,1828,56,1855"/>
 <area shape="rect" id="node2" href="$group__grp__free-boundary.html#gac0a2cc2241947b27241bb8ef75c5e0ed" title="Computes &#160;on the computational boundary, ." alt="" coords="1185,245,1247,272"/>
-<area shape="rect" id="node6" href="$group__grp__global__force.html#ga38c9d3c50bd043707fefa5137c9dbf44" title="Calculates , where &#160;and , and ." alt="" coords="488,1629,547,1656"/>
-<area shape="rect" id="node14" href="$group__grp__volume.html#gae4c62d20b8fef07f4471b5b0889ab005" title="Computes volume of each region; and, if required, the derivatives of the volume with respect to the i..." alt="" coords="2395,2303,2459,2329"/>
+<area shape="rect" id="node6" href="$group__grp__global__force.html#ga38c9d3c50bd043707fefa5137c9dbf44" title="Calculates , where &#160;and , and ." alt="" coords="488,1563,547,1589"/>
+<area shape="rect" id="node14" href="$group__grp__volume.html#gae4c62d20b8fef07f4471b5b0889ab005" title="Computes volume of each region; and, if required, the derivatives of the volume with respect to the i..." alt="" coords="2359,2303,2423,2329"/>
 <area shape="rect" id="node24" href="$lbpol_8f90.html#a29ae6196c664f390d0e60ab7916c806b" title="Computes &#160;at the interface." alt="" coords="1556,591,1605,617"/>
 <area shape="rect" id="node49" href="$group__grp__packing.html#ga094e630c02686dd178749eb1efbf13fb" title="Packs, and unpacks, geometrical degrees of freedom; and sets coordinate axis." alt="" coords="655,1181,713,1208"/>
-<area shape="rect" id="node51" href="$group__grp__diagnostics.html#ga7401b50ec10c6598ee4a8112717a63ec" title="Computes eigenvalues and eigenvectors of derivative matrix, ." alt="" coords="269,1317,329,1344"/>
+<area shape="rect" id="node51" href="$group__grp__diagnostics.html#ga7401b50ec10c6598ee4a8112717a63ec" title="Computes eigenvalues and eigenvectors of derivative matrix, ." alt="" coords="269,1347,329,1373"/>
 <area shape="rect" id="node57" href="$group__grp__output.html#ga08d6a254dbc3d9d40ff1cf0bdfdf2148" title="Writes vector potential to .ext.sp.A ." alt="" coords="1185,448,1247,475"/>
-<area shape="rect" id="node59" href="$group__grp__diagnostics.html#ga6411205c36a7d50002d7f3fb3133c441" title="Measures error in Beltrami equation, ." alt="" coords="1715,2044,1775,2071"/>
-<area shape="rect" id="node63" href="$group__grp__force__driver.html#gaec14f81fbdbedafbc4189489ec8ae178" title="Employs Newton method to find , where &#160;and &#160;is defined in dforce() ." alt="" coords="104,1832,168,1859"/>
-<area shape="rect" id="node66" href="$namespaceallglobal.html#a282c297c96abdab5e76b5ace440b09a8" title="The restart file is written." alt="" coords="460,1957,575,1984"/>
+<area shape="rect" id="node59" href="$group__grp__diagnostics.html#ga6411205c36a7d50002d7f3fb3133c441" title="Measures error in Beltrami equation, ." alt="" coords="1715,2048,1775,2075"/>
+<area shape="rect" id="node63" href="$group__grp__force__driver.html#gaec14f81fbdbedafbc4189489ec8ae178" title="Employs Newton method to find , where &#160;and &#160;is defined in dforce() ." alt="" coords="104,1765,168,1792"/>
+<area shape="rect" id="node66" href="$namespaceallglobal.html#a282c297c96abdab5e76b5ace440b09a8" title="The restart file is written." alt="" coords="460,1891,575,1917"/>
 <area shape="rect" id="node69" href="$group__grp__diagnostics.html#gad67931244268a09bd077dae8910c7096" title="Constructs Poincaré plot and &quot;approximate&quot; rotational&#45;transform (driver)." alt="" coords="1549,2657,1613,2684"/>
-<area shape="rect" id="node76" href="$xspech_8f90.html#aea782eae089760a491c2c54f9903abcc" title="Main program of SPEC." alt="" coords="105,2139,167,2165"/>
+<area shape="rect" id="node76" href="$xspech_8f90.html#aea782eae089760a491c2c54f9903abcc" title="Main program of SPEC." alt="" coords="105,2072,167,2099"/>
 <area shape="rect" id="node3" href="$group__grp__free-boundary.html#ga180576a10002ebf3840fce98d56316bb" title="Constructs the field created by the plasma currents, at an arbitrary, external location using virtual..." alt="" coords="1395,195,1455,221"/>
 <area shape="rect" id="node5" href="$group__grp__numerics.html#ga041138109a57e651c57117bb4180409e" title="Forward Fourier transform (fftw wrapper)" alt="" coords="2077,565,2116,592"/>
 <area shape="rect" id="node4" href="$group__grp__free-boundary.html#ga281c12a5de84fddd3db4383b0df8627f" title="Differential virtual casing integrand." alt="" coords="1547,245,1614,272"/>
@@ -34,8 +34,8 @@
 <area shape="rect" id="node37" href="$group__grp__integrals.html#ga01df49c498752e8a4201cc6eb5e283af" title="Calculates volume integrals of Chebyshev&#45;polynomials and metric elements for preconditioner." alt="" coords="1898,1771,1955,1797"/>
 <area shape="rect" id="node38" href="$group__grp__build__matrices.html#ga4d521a46a64530ade50e6b79a33e1452" title="Constructs matrices for the precondtioner." alt="" coords="1183,1821,1249,1848"/>
 <area shape="rect" id="node42" href="$namespaceallglobal.html#ad2dbd21d0579d623a92119c5ab553c7c" title="Returns which MPI node is associated to a given volume." alt="" coords="1146,2024,1286,2051"/>
-<area shape="rect" id="node12" href="$group__grp__geometry.html#gaaca20aa60eaf39055f3c9d5c02a24ac2" title="Calculates coordinates, , and metrics, using FFTs." alt="" coords="2249,1224,2310,1251"/>
-<area shape="rect" id="node13" href="$group__grp__numerics.html#ga1fd52accb0646f535f9bcc46cf5a68f3" title="Inverse Fourier transform (fftw wrapper)" alt="" coords="2401,920,2452,947"/>
+<area shape="rect" id="node12" href="$group__grp__geometry.html#gaaca20aa60eaf39055f3c9d5c02a24ac2" title="Calculates coordinates, , and metrics, using FFTs." alt="" coords="2231,1224,2292,1251"/>
+<area shape="rect" id="node13" href="$group__grp__numerics.html#ga1fd52accb0646f535f9bcc46cf5a68f3" title="Inverse Fourier transform (fftw wrapper)" alt="" coords="2365,920,2416,947"/>
 <area shape="rect" id="node19" href="$intghs_8f90.html#a21d3b7106371783302e68297f7797e9f" title="Calculates volume integrals of Chebyshev polynomials and covariant field products." alt="" coords="1898,1275,1955,1301"/>
 <area shape="rect" id="node20" href="$basefn_8f90.html#af6a4cad04c70bfb14fd18a3bfbc843a3" title="Get the Chebyshev polynomials with zeroth, first derivatives." alt="" coords="2056,1720,2137,1747"/>
 <area shape="rect" id="node21" href="$basefn_8f90.html#a38dc596fb909186b01dacc1feac03164" title="Get the Zernike polynomials &#160;with zeroth, first derivatives." alt="" coords="2053,1619,2141,1645"/>
@@ -65,24 +65,24 @@
 <area shape="rect" id="node60" href="$group__grp__diagnostics.html#ga20985df1b0df0503ca03ca13f1daf642" title="Compute the magnetic field." alt="" coords="1901,1923,1953,1949"/>
 <area shape="rect" id="node61" href="$basefn_8f90.html#a8f42498fd0b4c464c8c2d3ce0e94c56a" title="Get the Chebyshev polynomials with zeroth, first and second derivatives The Chebyshev polynomial has ..." alt="" coords="1875,2125,1978,2152"/>
 <area shape="rect" id="node62" href="$basefn_8f90.html#a29cbf901a18ead65d0e3a51956a3f045" title="Get the Zernike polynomials &#160;with zeroth, first, second derivatives." alt="" coords="1872,2075,1981,2101"/>
-<area shape="rect" id="node64" href="$group__grp__force__driver.html#gabbc245b3884ee8d8d3e2a52f25149f78" title="fcn1" alt="" coords="275,1680,322,1707"/>
-<area shape="rect" id="node67" href="$group__grp__force__driver.html#ga8ccd6c7d901872702521d0a0edf95412" title="fcn2" alt="" coords="275,1832,322,1859"/>
-<area shape="rect" id="node68" href="$group__grp__force__driver.html#ga382822b303cbf8c56d6f54dcb379caf2" title="read or write force&#45;derivative matrix" alt="" coords="474,1907,561,1933"/>
-<area shape="rect" id="node65" href="$namespacesphdf5.html#ade76c03b9b11be2a12d3ddd32e77a6ae" title="write convergence output (evolution of interface geometry, force, etc); was in global...." alt="" coords="429,1735,605,1777"/>
+<area shape="rect" id="node64" href="$group__grp__force__driver.html#gabbc245b3884ee8d8d3e2a52f25149f78" title="fcn1" alt="" coords="275,1613,322,1640"/>
+<area shape="rect" id="node67" href="$group__grp__force__driver.html#ga8ccd6c7d901872702521d0a0edf95412" title="fcn2" alt="" coords="275,1765,322,1792"/>
+<area shape="rect" id="node68" href="$group__grp__force__driver.html#ga382822b303cbf8c56d6f54dcb379caf2" title="read or write force&#45;derivative matrix" alt="" coords="474,1840,561,1867"/>
+<area shape="rect" id="node65" href="$namespacesphdf5.html#ade76c03b9b11be2a12d3ddd32e77a6ae" title="write convergence output (evolution of interface geometry, force, etc); was in global...." alt="" coords="429,1669,605,1710"/>
 <area shape="rect" id="node70" href="$namespacesphdf5.html#acd97a933d4239028dc8114b110655074" title="finalize Poincare output" alt="" coords="1684,2785,1807,2826"/>
 <area shape="rect" id="node71" href="$namespacesphdf5.html#a47186186c9418cd913ee9c98b5668642" title="init field line tracing output group and create array datasets" alt="" coords="1673,2632,1817,2659"/>
 <area shape="rect" id="node72" href="$group__grp__diagnostics.html#ga831aed2458140e266ee4d37461dd5350" title="Constructs Poincaré plot and &quot;approximate&quot; rotational&#45;transform (for single field line)." alt="" coords="1713,2581,1777,2608"/>
 <area shape="rect" id="node74" href="$namespacesphdf5.html#a14195bd206b7f6a7f05d4d6fc4b50f42" title="write a hyperslab of Poincare data" alt="" coords="1670,2683,1821,2709"/>
 <area shape="rect" id="node75" href="$namespacesphdf5.html#a8f01c5e4a21c5af2c39620f24e598095" title="write rotational transform output from field line following" alt="" coords="1667,2733,1824,2760"/>
-<area shape="rect" id="node73" href="$group__grp__diagnostics.html#ga08ad6b6635a598c0d0578e42f46b63c5" title="Calculates coordinates, , and metrics, at given ." alt="" coords="1898,2648,1955,2675"/>
-<area shape="rect" id="node77" href="$namespaceallglobal.html#a50e99bda692e1d2e3fa68857b67db880" title=" " alt="" coords="233,2161,365,2202"/>
-<area shape="rect" id="node78" href="$namespaceallglobal.html#a7824bc37519fe88336534ce90ab2af16" title=" " alt="" coords="223,1781,375,1808"/>
-<area shape="rect" id="node79" href="$xspech_8f90.html#a537af4990058c0b0f2cd8b3669af204f" title="Closes output files, writes screen summary." alt="" coords="269,2227,329,2253"/>
-<area shape="rect" id="node80" href="$namespacesphdf5.html#adb720ea6408b8f7681bfb7f86a4b86f2" title="Close all open HDF5 objects (we know of) and list any remaining still&#45;open objects." alt="" coords="229,2277,368,2304"/>
-<area shape="rect" id="node81" href="$namespacesphdf5.html#a593e99355c8ceabe56a566e9d468dbd9" title="final output" alt="" coords="797,2417,895,2444"/>
-<area shape="rect" id="node82" href="$namespacesphdf5.html#ab348ec00943ff875a1ebb965fb98841e" title="prepare convergence evolution output" alt="" coords="216,2379,381,2421"/>
-<area shape="rect" id="node83" href="$namespacesphdf5.html#a0f962c09cd5d5eba99f1cba043cb3898" title="initialize the interface to the HDF5 library and open the output file" alt="" coords="236,2496,361,2523"/>
-<area shape="rect" id="node84" href="$namespacesphdf5.html#afed4d951aec99f2ebeba68c465eb9861" title="mirror input variables into output file" alt="" coords="2212,2531,2347,2573"/>
-<area shape="rect" id="node85" href="$xspech_8f90.html#aec8c366a4e6a6f1cc611939d5d6e5c2c" title="todo remark" alt="" coords="227,2109,370,2136"/>
+<area shape="rect" id="node73" href="$group__grp__diagnostics.html#ga08ad6b6635a598c0d0578e42f46b63c5" title="Calculates coordinates, , and metrics, at given ." alt="" coords="1898,2632,1955,2659"/>
+<area shape="rect" id="node77" href="$namespaceallglobal.html#a50e99bda692e1d2e3fa68857b67db880" title=" " alt="" coords="233,2094,365,2135"/>
+<area shape="rect" id="node78" href="$namespaceallglobal.html#a7824bc37519fe88336534ce90ab2af16" title=" " alt="" coords="223,1715,375,1741"/>
+<area shape="rect" id="node79" href="$xspech_8f90.html#a537af4990058c0b0f2cd8b3669af204f" title="Closes output files, writes screen summary." alt="" coords="269,2160,329,2187"/>
+<area shape="rect" id="node80" href="$namespacesphdf5.html#adb720ea6408b8f7681bfb7f86a4b86f2" title="Close all open HDF5 objects (we know of) and list any remaining still&#45;open objects." alt="" coords="229,2211,368,2237"/>
+<area shape="rect" id="node81" href="$namespacesphdf5.html#a593e99355c8ceabe56a566e9d468dbd9" title="final output" alt="" coords="2212,2480,2311,2507"/>
+<area shape="rect" id="node82" href="$namespacesphdf5.html#ab348ec00943ff875a1ebb965fb98841e" title="prepare convergence evolution output" alt="" coords="216,2313,381,2354"/>
+<area shape="rect" id="node83" href="$namespacesphdf5.html#a0f962c09cd5d5eba99f1cba043cb3898" title="initialize the interface to the HDF5 library and open the output file" alt="" coords="236,2429,361,2456"/>
+<area shape="rect" id="node84" href="$namespacesphdf5.html#afed4d951aec99f2ebeba68c465eb9861" title="mirror input variables into output file" alt="" coords="779,2531,913,2573"/>
+<area shape="rect" id="node85" href="$xspech_8f90.html#aec8c366a4e6a6f1cc611939d5d6e5c2c" title="todo remark" alt="" coords="227,2043,370,2069"/>
 <area shape="rect" id="node86" href="$namespacesphdf5.html#a17e65b951634f7098213fd071d905482" title="write the magnetic field on a grid; previously the (wflag.eq.1) part of globals.f90/wrtend to write ...." alt="" coords="1684,1984,1807,2011"/>
 </map>
