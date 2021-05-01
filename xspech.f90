@@ -10,7 +10,7 @@ program xspech
   use allglobal, only: set_mpi_comm, myid, ncpu, cpus, version, MPI_COMM_SPEC, &
                        wrtend, read_inputlists_from_file, check_inputs, broadcast_inputs, skip_write, &
                        ext
-  use inputlist, only: initialize_inputs
+  use inputlist, only: initialize_inputs, Wxspech
   use fileunits, only: ounit
   use sphdf5,    only: init_outfile, &
                        mirror_input_to_outfile, &
