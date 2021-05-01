@@ -268,10 +268,10 @@ endif
 ###############################################################################################################################################################
 
 xspec: $(addsuffix _r.o,$(ALLFILES)) $(MACROS) Makefile
-	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) $(addsuffix _r.o,$(ALLFILES)) -o xspec $(LINKS)
+	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o xspec $(addsuffix _r.o,$(ALLFILES)) $(LINKS)
 
 dspec: $(addsuffix _d.o,$(ALLFILES)) $(MACROS) Makefile
-	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) $(addsuffix _d.o,$(ALLFILES)) -o dspec $(LINKS)
+	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o dspec $(addsuffix _d.o,$(ALLFILES)) $(LINKS)
 
 ###############################################################################################################################################################
 # inputlist needs special handling: expansion of DSCREENLIST and NSCREENLIST using awk
