@@ -1,3 +1,5 @@
+!> \file
+!> \brief Input namelists
 
 !> \brief Input namelists
 !> \addtogroup grp_global

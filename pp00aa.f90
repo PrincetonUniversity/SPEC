@@ -1,4 +1,4 @@
-!> \file pp00aa.f90
+!> \file
 !> \brief Constructs Poincaré plot and "approximate" rotational-transform (driver).
 
 !> \brief Constructs Poincaré plot and "approximate" rotational-transform (driver).

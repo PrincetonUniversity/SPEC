@@ -1,5 +1,5 @@
-!> \file sphdf5.f90
-!> \brief (output) ! Writes all the output information to ext.h5.
+!> \file
+!> \brief Writes all the output information to ext.h5.
 
 !latex \briefly{All the input and output information is contained in \type{ext.h5}.}
 !latex \calledby{\link{xspech}}
@@ -13,6 +13,8 @@
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+!> \brief writing the HDF5 output file
+!> \ingroup grp_output
 module sphdf5
 
   use inputlist , only : Wsphdf5, Wmacros

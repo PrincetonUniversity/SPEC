@@ -4,8 +4,8 @@
 !> \definecolor{Orange}{rgb}{1.0,0.5,0.0}
 !> \definecolor{Cerulean}{rgb}{0.0,0.5,1.0}
 !> \endlatexonly
-
-!> \file global.f90
+!>
+!> \file
 !> \brief Defines input namelists and global variables, and opens some output files.
 !>
 !> Note that all variables in namelist need to be broadcasted in readin.
@@ -30,8 +30,6 @@
 !> <li> An arbitrary selection of harmonics may be inluded in any order, but only those within the range specified by Mpol and Ntor will be used.
 !> <li> The geometry of *all* the interfaces, i.e. \f$l=0,N\f$, including the degenerate "coordinate-axis" interface, must be given.
 !> </ul>
-!>
-!>
 
 !> \ingroup grp_global
 !> \brief some constants used throughout the code

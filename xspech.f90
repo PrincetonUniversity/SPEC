@@ -1,4 +1,4 @@
-!> \file xspech.f90
+!> \file
 !> \brief Main program
 
 !> \brief Main program of SPEC

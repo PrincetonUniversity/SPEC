@@ -1,4 +1,4 @@
-!> \file dfp200.f90
+!> \file
 !> \brief Given the field consistent with the constraints and the geometry, computes local quantites related to the force evaluation.
 
 !latex \briefly{Calculates ${ F_i}({\bf x})$, where ${\bf x} \equiv \{\mbox{\rm geometry}\} \equiv \{ R_{i,v}, Z_{i,v}\}$
@@ -233,7 +233,7 @@ subroutine dfp200( LcomputeDerivatives, vvol)
               call evaluate_dmupfdx(innout, idof, ii, issym, irz)
 
 
-              ! Evaluate derivatives of B square 
+              ! Evaluate derivatives of B square
               call evaluate_dBB(vvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz, LcomputeDerivatives)
 
             enddo ! matches do innout;
@@ -717,7 +717,7 @@ end subroutine get_LU_beltrami_matrices
 
 
 !> \brief This routine evaluates the value of the magnetic field once the interface is perturbed using matrix perturbation theory.
-!> 
+!>
 !> @param vvol
 !> @param oBI
 !> @param NN
@@ -791,7 +791,7 @@ end subroutine get_perturbed_solution
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !> \brief Evaluate mu and psip derivatives and store them in dmupfdx.
-!> 
+!>
 !> @param innout
 !> @param idof
 !> @param ii
@@ -1346,7 +1346,7 @@ end subroutine evaluate_dmupfdx
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !> \brief Evaluate the derivative of the square of the magnetic field modulus. Add spectral constraint derivatives if required.
-!> 
+!>
 !> @param lvol
 !> @param idof
 !> @param innout

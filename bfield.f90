@@ -4,8 +4,8 @@
 !> \definecolor{Orange}{rgb}{1.0,0.5,0.0}
 !> \definecolor{Cerulean}{rgb}{0.0,0.5,1.0}
 !> \endlatexonly
-!> 
-!> \file bfield.f90
+!>
+!> \file
 !> \brief Returns \f$\dot s \equiv B^s / B^\zeta\f$ and \f$\dot \theta \equiv B^\theta / B^\zeta\f$.
 
 !> \brief Compute the magnetic field.
@@ -15,7 +15,7 @@
 !>
 !> **Equations of field line flow**
 !> <ul>
-!> <li> The equations for the fieldlines are normalized to the toroidal field, i.e. 
+!> <li> The equations for the fieldlines are normalized to the toroidal field, i.e.
 !>       \f{equation}{ \dot s      \equiv \frac{B^s     }{B^\zeta}, \qquad
 !>                     \dot \theta \equiv \frac{B^\theta}{B^\zeta}. \label{eq:stdot_bfield} \f} </li>
 !> </ul>
@@ -49,43 +49,43 @@
 !> @param[in] st radial coordinate \f$s\f$ and poloidal angle \f$\theta\f$
 !> @param[out] Bst tangential magnetic field directions \f$B_s, B_\theta\f$
 subroutine bfield( zeta, st, Bst )
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   use constants, only : zero, one, half, two
-  
+
   use numerical, only : vsmall, small
-  
+
   use fileunits, only : ounit
-  
+
   use inputlist, only : Wmacros, Wbfield, Lrad, Mpol
-  
+
   use cputiming, only : Tbfield
-  
+
   use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, &
                         mn, im, in, halfmm, regumm, &
                         ivol, gBzeta, Ate, Aze, Ato, Azo, &
                         NOTstellsym, &
                         Lcoordinatesingularity, Mvol, &
                         Node ! 17 Dec 15;
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   LOCALS
-  
+
   REAL, intent(in)   :: zeta,  st(1:Node)
   REAL, intent(out)  ::       Bst(1:Node)
-  
+
   INTEGER            :: lvol, ii, ll, mi, ni, ideriv
   REAL               :: teta, lss, sbar, sbarhm(0:1), arg, carg, sarg, dBu(1:3)
   REAL               :: cheby(0:Lrad(ivol),0:1), zernike(0:Lrad(1),0:Mpol,0:1)
-  
+
   REAL               :: TT(0:Lrad(ivol),0:1) ! this is almost identical to cheby; 17 Dec 15;
 
   BEGIN(bfield)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
 #ifdef DEBUG
   FATAL( bfield, ivol.lt.1 .or. ivol.gt.Mvol, invalid ivol )
 #endif
@@ -95,17 +95,17 @@ subroutine bfield( zeta, st, Bst )
   lvol = ivol ; ideriv = 0 ! the argument list of bfield is fixed by NAG requirements, but volume index is required below;
 
   Bst(1:Node) = (/ zero , zero /) ! set default intent out; this should cause a compilation error if Node.ne.2;
- 
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-  lss = st(1) ; teta = st(2) 
-  
+
+  lss = st(1) ; teta = st(2)
+
   if( abs(lss).gt.one ) goto 9999 ! out of domain;
-    
+
   if( Lcoordinatesingularity ) sbar = max( ( lss + one ) * half, small )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   if (Lcoordinatesingularity) then
     call get_zernike(sbar, Lrad(lvol), Mpol, zernike(:,:,0:1))
   else
@@ -115,13 +115,13 @@ subroutine bfield( zeta, st, Bst )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   dBu(1:3) = zero ! initialize summation;
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ; arg = mi * teta - ni * zeta ; carg = cos(arg) ; sarg = sin(arg) ! shorthand; 20 Apr 13;
-   
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-   
+
    if( Lcoordinatesingularity ) then ! regularization factor depends on mi; 17 Dec 15;
 
     FATAL( bfield, abs(sbar).lt.vsmall, need to avoid divide-by-zero )
@@ -137,7 +137,7 @@ subroutine bfield( zeta, st, Bst )
    endif ! end of if( Lcoordinatesingularity ) ; 16 Jan 15;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-   
+
    do ll = 0, Lrad(lvol) ! loop over Chebyshev summation; 20 Feb 13;
     ;dBu(1) = dBu(1) + ( - mi * Aze(lvol,ideriv,ii)%s(ll) - ni * Ate(lvol,ideriv,ii)%s(ll) ) * TT(ll,0) * sarg
     ;dBu(2) = dBu(2) + (                                  -      Aze(lvol,ideriv,ii)%s(ll) ) * TT(ll,1) * carg
@@ -148,17 +148,17 @@ subroutine bfield( zeta, st, Bst )
      dBu(3) = dBu(3) + (        Ato(lvol,ideriv,ii)%s(ll)                                  ) * TT(ll,1) * sarg
     endif
    enddo ! end of do ll; 10 Dec 15;
-   
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-   
+
   enddo ! end of do ii = 1, mn;
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   gBzeta = dBu(3) ! gBzeta is returned through global; 20 Apr 13;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   if( abs(gBzeta).lt.vsmall ) then
 
    cput = GETTIME
@@ -169,15 +169,15 @@ subroutine bfield( zeta, st, Bst )
    FATAL( bfield, abs(dBu(3)).lt.vsmall, field is not toroidal )
 
   endif
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   Bst(1:2) = dBu(1:2) / gBzeta ! normalize field line equations to toroidal field; 20 Apr 13;
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   RETURN(bfield)
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 end subroutine bfield
@@ -187,46 +187,46 @@ end subroutine bfield
 !> @param[in] zeta toroidal angle
 !> @param[in] st radial(s) and poloidal(theta) positions
 !> @param[out] Bst tangential magnetic field
-subroutine bfield_tangent( zeta, st, Bst ) 
-  
+subroutine bfield_tangent( zeta, st, Bst )
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   use constants, only : zero, one, half, two
-  
+
   use numerical, only : vsmall, small
-  
+
   use fileunits, only : ounit
-  
+
   use inputlist, only : Wmacros, Wbfield, Lrad, Mpol
-  
+
   use cputiming, only : Tbfield
-  
+
   use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, &
                         mn, im, in, halfmm, regumm, &
                         ivol, gBzeta, Ate, Aze, Ato, Azo, &
                         NOTstellsym, &
                         Lcoordinatesingularity, Mvol, &
                         Node ! 17 Dec 15;
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   LOCALS
-  
+
   REAL, intent(in)   :: zeta,  st(1:6)
   REAL, intent(out)  ::       Bst(1:6)
-  
+
   INTEGER            :: lvol, ii, ll, mi, ni, ideriv
   REAL               :: teta, lss, sbar, sbarhm(0:1), arg, carg, sarg, dBu(1:3,0:2)
   REAL               :: cheby(0:Lrad(ivol),0:2), zernike(0:Lrad(1),0:Mpol,0:2)
 
   REAL               :: M(2,2), deltax(2,2)
-  
+
   REAL               :: TT(0:Lrad(ivol),0:2) ! this is almost identical to cheby; 17 Dec 15;
 
   BEGIN(bfield)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
 #ifdef DEBUG
   FATAL( bfield, ivol.lt.1 .or. ivol.gt.Mvol, invalid ivol )
 #endif
@@ -236,21 +236,21 @@ subroutine bfield_tangent( zeta, st, Bst )
   lvol = ivol ; ideriv = 0 ! the argument list of bfield is fixed by NAG requirements, but volume index is required below;
 
   Bst = zero ! set default intent out; this should cause a compilation error if Node.ne.2;
- 
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   lss = st(1) ; teta = st(2) ;
-  
+
   ! the perturbation
   deltax(1:2,1) = st(3:4);
   deltax(1:2,2) = st(5:6);
-  
+
   if( abs(lss).gt.one ) goto 9999 ! out of domain;
-    
+
   if( Lcoordinatesingularity ) sbar = max( ( lss + one ) * half, small )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   if (Lcoordinatesingularity) then
     call get_zernike_d2(sbar, Lrad(lvol), Mpol, zernike(:,:,0:2))
   else
@@ -260,13 +260,13 @@ subroutine bfield_tangent( zeta, st, Bst )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   dBu(1:3,0:2) = zero ! initialize summation;
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ; arg = mi * teta - ni * zeta ; carg = cos(arg) ; sarg = sin(arg) ! shorthand; 20 Apr 13;
-   
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-   
+
    if( Lcoordinatesingularity ) then ! regularization factor depends on mi; 17 Dec 15;
 
     FATAL( bfield, abs(sbar).lt.vsmall, need to avoid divide-by-zero )
@@ -282,7 +282,7 @@ subroutine bfield_tangent( zeta, st, Bst )
    endif ! end of if( Lcoordinatesingularity ) ; 16 Jan 15;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-   
+
    do ll = 0, Lrad(lvol) ! loop over Chebyshev summation; 20 Feb 13;
     ! no derivative
     ;dBu(1,0) = dBu(1,0) + ( - mi * Aze(lvol,ideriv,ii)%s(ll) - ni * Ate(lvol,ideriv,ii)%s(ll) ) * TT(ll,0) * sarg
@@ -311,17 +311,17 @@ subroutine bfield_tangent( zeta, st, Bst )
      dBu(3,2) = dBu(3,2) + mi * (        Ato(lvol,ideriv,ii)%s(ll)                                  ) * TT(ll,1) * carg
     endif
    enddo ! end of do ll; 10 Dec 15;
-   
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-   
+
   enddo ! end of do ii = 1, mn;
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   gBzeta = dBu(3,0) ! gBzeta is returned through global; 20 Apr 13;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   if( abs(gBzeta).lt.vsmall ) then
 
    cput = GETTIME
@@ -332,7 +332,7 @@ subroutine bfield_tangent( zeta, st, Bst )
    FATAL( bfield, abs(gBzeta).lt.vsmall, field is not toroidal )
 
   endif
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   Bst(1:2) = dBu(1:2,0) / gBzeta ! normalize field line equations to toroidal field; 20 Apr 13;
@@ -352,7 +352,7 @@ subroutine bfield_tangent( zeta, st, Bst )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   RETURN(bfield)
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 end subroutine bfield_tangent

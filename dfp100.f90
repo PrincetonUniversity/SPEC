@@ -1,4 +1,4 @@
-!> \file dfp100.f90
+!> \file
 !> \brief Split the work between MPI nodes and evaluate the global constraint
 
 !latex \calledby{\link{dforce}} \\
@@ -13,7 +13,7 @@
 !latex In the case of a local constraint, each MPI node calls \link{ma02aa} to obtain the field consistent with the local constraint
 
 !latex \subsection{Global constraint}
-!latex In the case of a global constraint, 
+!latex In the case of a global constraint,
 
 !latex \begin{enumerate}
 !latex \item The MPI node $0$ broadcast the value of \internal{iflag}. \internal{iflag} is equal to $5$ if the constraint has been
@@ -131,7 +131,7 @@ subroutine dfp100(Ndofgl, x, Fvec, LComputeDerivatives)
     endif
 
     WCALL( dfp100, ma02aa, ( vvol, NN ) )
-    
+
     Lsavedguvij = .false.
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -144,7 +144,7 @@ subroutine dfp100(Ndofgl, x, Fvec, LComputeDerivatives)
     if( Lconstraint.EQ.3 ) then
       do iocons=0,1
         if( ( Lcoordinatesingularity .and. iocons.eq.0 ) .or. ( Lvacuumregion .and. iocons.eq.1 ) ) cycle
-            
+
         ideriv = 0
         WCALL( dfp100, lbpol, (vvol, Bt00(1:Mvol, 0:1, -1:2), ideriv, iocons) ) !Compute field at interface for global constraint
 
@@ -157,7 +157,7 @@ subroutine dfp100(Ndofgl, x, Fvec, LComputeDerivatives)
 #ifdef DEBUG
         FATAL( dfp100, vvol.ne.Mvol, Incorrect vvol in last volume)
 #endif
-          
+
         ideriv=1 ! derivatives of Btheta w.r.t tflux
         iocons=0 ! Only need inner side of volume derivatives
         WCALL( dfp100, lbpol, (Mvol, Bt00(1:Mvol, 0:1, -1:2), ideriv, iocons) )
@@ -179,7 +179,7 @@ subroutine dfp100(Ndofgl, x, Fvec, LComputeDerivatives)
 
         ! Compute IPDt on each interface.
         do vvol = 1, Mvol-1
-        
+
           ! --------------------------------------------------------------------------------------------------
           !                                                                     MPI COMMUNICATIONS
           call WhichCpuID(vvol  , cpu_send_one)
@@ -193,7 +193,7 @@ subroutine dfp100(Ndofgl, x, Fvec, LComputeDerivatives)
 
           ! Evaluate surface current
           IPDt(vvol) = pi2 * (Bt00(vvol+1, 0, 0) - Bt00(vvol, 1, 0))
-          
+
           ! their derivatives
           IPDtdPf(vvol,vvol) = pi2 * Bt00(vvol+1, 0, 2)
           if (vvol .ne. 1) IPDtdPf(vvol,vvol-1) = -pi2 * Bt00(vvol, 1, 2)
@@ -213,8 +213,8 @@ subroutine dfp100(Ndofgl, x, Fvec, LComputeDerivatives)
           RlBCAST( Bt00(Mvol, 0:1, 1), 2, cpu_send_one )
 
           ! Complete output: RHS
-          Fvec(Mvol    ) = ldItGp(1, 0) - curpol          
-          
+          Fvec(Mvol    ) = ldItGp(1, 0) - curpol
+
           ! Complete output: LHS
           IPDtdPf(Mvol-1, Mvol  ) = pi2 * Bt00(Mvol, 0, 1)
           IPDtdPf(Mvol  , Mvol-1) = ldItGp(1, 2)

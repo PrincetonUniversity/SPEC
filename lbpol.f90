@@ -1,6 +1,7 @@
-!> \file lbpol.f90
+!> \file
 !> \brief Computes \f$B_{\theta,e,0,0}\f$ at the interface
-!>
+
+!> \brief Computes \f$B_{\theta,e,0,0}\f$ at the interface
 !> @param[in] lvol
 !> @param[in, out] Bt00
 !> @param[in] ideriv
@@ -30,7 +31,7 @@ subroutine lbpol(lvol, Bt00, ideriv, iocons)
 
   LOCALS
 ! ------
-  
+
   INTEGER, intent(in)    :: ideriv      !< lbpol will return \f$B_{\theta,e,0,0}\f$ (0) or its derivative with respect to the geometry (-1), mu (1) or the poloidal flux (2). \f$\mbox{ideriv}\in\{-1,\ldots,2\} \f$
   INTEGER, intent(in)    :: lvol        !< Volume index. \f$\mbox{lvol}\in\{1,\ldots,\mbox{Mvol}\} \f$
   INTEGER, intent(in)    :: iocons      !< \f$B_{\theta,e,0,0}\f$ is evaluated on the inner (iocons=0) or outer (iocons=1) volume boundary. \f$\mbox{iocons}\in\{0,1\} \f$
@@ -48,7 +49,7 @@ subroutine lbpol(lvol, Bt00, ideriv, iocons)
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !> Computes \f$B_{\theta,e,0,0}\f$ at the volume interfaces. This is used by dfp100 to evaluate the toroidal current at the volume
-!> interfaces, and by dfp200 to construct the force gradient when the current constraint (Lconstraint=3) is used. This is also used 
+!> interfaces, and by dfp200 to construct the force gradient when the current constraint (Lconstraint=3) is used. This is also used
 !> by xspech to compute the toroidal current at the volume interfaces, written in the output.
 !> <ol>
 
@@ -56,21 +57,21 @@ subroutine lbpol(lvol, Bt00, ideriv, iocons)
 
 ! TODO: This subroutine is very similar to curent.f90 - maybe merge both in a single subroutine to simplify?
 
-  
+
 !> <li> Call coords() to compute the metric coefficients and the jacobian. </li>
   lss = two * iocons - one ! Build s coordinate
 
   Lcurvature = 1
   WCALL( lbpol, coords, (lvol, lss, Lcurvature, Ntz, mn ) )
- 
 
-!> <li> Build coefficients efmn, ofmn, cfmn, sfmn from the field vector potential Ate, Ato, 
+
+!> <li> Build coefficients efmn, ofmn, cfmn, sfmn from the field vector potential Ate, Ato,
 !>      Aze and Azo, and radial derivatives of the polynomial basis TT(ll,innout,1). These variables
 !>      are the derivatives with respect to s of the magnetic field vector potential in Fourier space.
 !>      If ideriv\f$\neq 0\f$, construct the relevant derivatives of the vector potential. </li>
   call build_vector_potential(lvol, iocons, ideriv, 1)
 
-!> <li> Take the inverse Fourier transform of efmn, ofmn, cfmn, sfmn. These are the covariant components of \f$\frac{\partial A}{\partial s}\f$, 
+!> <li> Take the inverse Fourier transform of efmn, ofmn, cfmn, sfmn. These are the covariant components of \f$\frac{\partial A}{\partial s}\f$,
 !>      <em>i.e.</em> the contravariant components of \f$\mathbf{B}\f$. </li>
   call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt(1:Ntz), dAz(1:Ntz) )
 
