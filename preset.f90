@@ -1150,8 +1150,11 @@ endif
                             ; inifactor(ii,vvol) = Rscale * tflux(vvol)**halfmm(ii) ! 17 Dec 18
      endif
     enddo
+    if (Lfindzero .gt. 2) then
+      psifactor(1:mn,vvol) = one /  tflux(vvol)**half
+    endif
    enddo
-    if (Lfindzero .gt. 2) psifactor(1:mn,1:Nvol) = one !/ psifactor
+    
   case default
    
    FATAL( readin, .true., invalid Igeometry for construction of psifactor )
