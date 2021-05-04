@@ -965,7 +965,7 @@ subroutine fcndescent(xx, NGdof)
  use newtontime
 
  use sphdf5, only : write_convergence_output
- 
+
  LOCALS 
 
  INTEGER, INTENT(in)  :: NGdof
@@ -1064,7 +1064,7 @@ subroutine fcndescent(xx, NGdof)
      lastcpu = GETTIME
      WCALL( newton, wrtend ) ! write restart file; save geometry to ext.end;
 
-     if (Lwritedesc) then
+     if (Lwritedesc .ge. 1) then
       WCALL( newton, write_convergence_output, ( nDcalls, ForceErr ) ) ! save iRbc, iZbs consistent with position;
      endif
 
