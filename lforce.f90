@@ -553,7 +553,7 @@ subroutine spectral_lforce(lvol, iocons, Ntz, dLL, IIl, XX, YY, length, DDl, MMl
                  Nt, Nz, XX(1:Ntz), YY(1:Ntz) )
     
     if( YESstellsym ) then ; DDl = sum(              ( iRbc(1:mn,lvol)**2 + iZbs(1:mn,lvol)**2                                           ) )
-                           ; DDl = DDl + iRbc(1,lvol)**2
+!                           ; DDl = DDl + iRbc(1,lvol)**2
      ;                     ; MMl = sum( mmpp(1:mn) * ( iRbc(1:mn,lvol)**2 + iZbs(1:mn,lvol)**2                                           ) ) / DDl
     else                   ; DDl = sum(              ( iRbc(1:mn,lvol)**2 + iZbs(1:mn,lvol)**2 + iRbs(1:mn,lvol)**2 + iZbc(1:mn,lvol)**2 ) )
      ;                     ; MMl = sum( mmpp(1:mn) * ( iRbc(1:mn,lvol)**2 + iZbs(1:mn,lvol)**2 + iRbs(1:mn,lvol)**2 + iZbc(1:mn,lvol)**2 ) ) / DDl
