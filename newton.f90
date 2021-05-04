@@ -127,7 +127,6 @@ subroutine newton( NGdof, position, ihybrd )
   BEGIN(newton)
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
   if( Wnewton .and. myid.eq.0 ) then ! screen output; 
    cput = GETTIME
    write(ounit,'("newton : ", 10x ," : ")')
@@ -235,7 +234,7 @@ subroutine newton( NGdof, position, ihybrd )
           RR(1:LR), LR, QTF(1:NGdof), workspace(1:NGdof,1), workspace(1:NGdof,2), workspace(1:NGdof,3), workspace(1:NGdof,4) ) )
           write(ounit,*) 'Energy', Energy
 
-  case( 3 ) ! use function values to find f(x)=0 using a conjugate gradient descent algorithm
+  case( 3 ) ! use only function values to find f(x)=0 by pushing the interfaces with f(x) (force-descent)
 
    write(*,*) "-------------------- Under construction --------------------"
    Ldescent = .TRUE.
@@ -245,7 +244,7 @@ subroutine newton( NGdof, position, ihybrd )
    !       RR(1:LR), LR, QTF(1:NGdof), workspace(1:NGdof,1), workspace(1:NGdof,2), workspace(1:NGdof,3), workspace(1:NGdof,4) ) )
    write(*,*) "-------------------- Under construction --------------------"
 
-  case( 4 ) ! use function values to find f(x)=0 using a conjugate gradient descent algorithm
+  case( 4 ) ! use function values and user-supplied derivatives to find f(x)=0 using a gradient-based descent algorithm (energy-descent)
 
    write(*,*) "-------------------- Under construction --------------------"
    Ldescent = .TRUE.
@@ -337,7 +336,7 @@ subroutine newton( NGdof, position, ihybrd )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 	call MPI_BARRIER( MPI_COMM_WORLD, ierr2)
 
-  if( Lfindzero.ge.2 ) then 
+  if( Lfindzero.eq.2) then 
    DALLOCATE( dFFdRZ )
    DALLOCATE( dBBdmp )
    DALLOCATE( dmupfdx )
@@ -949,9 +948,12 @@ function fcngrad(n, xx)
 
 subroutine fcndescent(xx, NGdof)
 
- use constants, only : zero, one
+ use constants, only  : zero, one
 
- use inputlist, only  : epsilon, Igeometry
+ use fileunits, only : ounit
+
+ use inputlist, only  : epsilon, Igeometry, Wnewton, &
+                        dxdesc, ftoldesc, maxitdesc, Lwritedesc, nwritedesc
 
  use fileunits, only : ounit
 
@@ -961,32 +963,40 @@ subroutine fcndescent(xx, NGdof)
  use cputiming, only : Tnewton
 
  use newtontime
+
+ use sphdf5, only : write_convergence_output
+ 
  LOCALS 
 
  INTEGER, INTENT(in)  :: NGdof
  REAL , INTENT(inout) :: xx(1:NGdof)
 
- REAL                 :: time_step=1.0E-3, ditmax = 25000, dtol = 1e-9 
+ REAL                 :: time_step=1.0E-3
  INTEGER,parameter    :: ndamp=15
 
  REAL                 :: position(0:NGdof), force(0:NGdof)
- INTEGER              :: it
 
  REAL                 :: otau(1:ndamp), xdot(1:NGdof)
  REAL                 :: fsq, fsq1, otav, b1, fac, dtau
 
+ INTEGER              :: it, idesc, lvol, idof
  LOGICAL              :: LComputeDerivatives, LComputeAxis
+ CHARACTER            :: pack
 
  position = zero ; force = zero ; position(1:NGdof) = xx(1:NGdof) 
 
  LComputeDerivatives = .false.; LComputeAxis = .true.
+
+ time_step = dxdesc
 
  it = 0
  otau(:ndamp) = 0.15/time_step
  fsq = one
  xdot = zero
 
- do while(it < ditmax)
+ ! The following time stepping algorithm is adapted from VMEC
+
+ do while(it < maxitdesc)
  
   it = it + 1
  
@@ -1011,25 +1021,26 @@ subroutine fcndescent(xx, NGdof)
   b1  = one - dtau
   fac = one/(one + dtau)
 
-!
 !     THIS IS THE TIME-STEP ALGORITHM. IT IS ESSENTIALLY A CONJUGATE
 !     GRADIENT METHOD, WITHOUT THE LINE SEARCHES (FLETCHER-REEVES),
 !     BASED ON A METHOD GIVEN BY P. GARABEDIAN
 !
+
   xdot = fac*(b1*xdot - time_step*force(1:NGdof))                 ! update velocity
   position(1:NGdof) = position(1:NGdof) + time_step*xdot          ! advance xc by velocity given in xcdot
 
-  if(ForceErr<dtol) then
+
+  if(ForceErr<ftoldesc .and. myid.eq.0 ) then
    write(*,*) "FORCE BELOW TOLERANCE"
    exit
   endif
 
-  if(it .eq. ditmax) then
-   write(*,*) "EXCEEDED MAX NUMBER OF ITERATIONS, force = " , ForceErr
+  if(it .eq. maxitdesc .and. myid.eq.0) then
+   write(*,*) "EXCEEDED MAX NUMBER OF ITERATIONS " , ForceErr
   endif
 
   if (myid .eq. 0) then
-    if (mod(it, 100) .eq. 1) then
+    if (mod(it, nwritedesc) .eq. 0) then
 
      cput = GETTIME
      
@@ -1043,15 +1054,28 @@ subroutine fcndescent(xx, NGdof)
        write(ounit,1001)                                                                      "|II|e", alog10(IIe(1:min(Mvol-1,28)))
       endif
      endif
-     if (myid .eq. 0) write(ounit,*) 'Energy', Energy,  'SEnergy', epsilon *  sum(lMMl), 'Lenergy', sum(lLLl * sweight)
+
+     if ( Igeometry .eq. 3) then
+      write(ounit,1002)  Energy,  epsilon *  sum(lMMl), sum(lLLl * sweight)
+     else
+      write(ounit,1003) Energy
+     endif
+
      lastcpu = GETTIME
      WCALL( newton, wrtend ) ! write restart file; save geometry to ext.end;
+
+     if (Lwritedesc) then
+      WCALL( newton, write_convergence_output, ( nDcalls, ForceErr ) ) ! save iRbc, iZbs consistent with position;
+     endif
+
     endif
   endif
  enddo
 
  xx = position(1:NGdof)
-1000 format("fcn1   : ",f10.2," : "i9,i3," ; ":"|f|="es12.5" ; ":"time=",f10.2,"s ;":" log"a5"="28f6.2" ...")
-1001 format("fcn1   : ", 10x ," : "9x,3x" ; ":"    "  12x "   ":"     ", 10x ,"  ;":" log"a5"="28f6.2" ...")
+1000 format("descnt : ",f10.2," : "i9,i3," ; ":"|f|="es12.5" ; ":"time=",f10.2,"s ;":" log"a5"="28f6.2" ...")
+1001 format("descnt : ", 10x ," : "9x,3x" ; ":"    "  12x "   ":"     ", 10x ,"  ;":" log"a5"="28f6.2" ...")
+1002 format("descnt :            : Energy ", es23.15, "  ;")
+1003 format("descnt :            : Energy ", es23.15, "  SEnergy  ", es23.15, "  LEnergy  ", es23.15)
 
 end subroutine

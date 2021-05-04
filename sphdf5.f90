@@ -333,6 +333,11 @@ subroutine mirror_input_to_outfile
   HWRITEIV( grpInputGlobal,            1,  vcasingits        , (/ vcasingits  /))
   HWRITEIV( grpInputGlobal,            1,  vcasingper        , (/ vcasingper  /))
   HWRITEIV( grpInputGlobal,            1,  mcasingcal        , (/ mcasingcal  /))  ! redundant;
+  HWRITERV( grpInputGlobal,            1,  dxdesc            , (/ dxdesc      /))
+  HWRITERV( grpInputGlobal,            1,  ftoldesc          , (/ ftoldesc    /))
+  HWRITEIV( grpInputGlobal,            1,  maxitdesc         , (/ maxitdesc   /))
+  HWRITEIV( grpInputGlobal,            1,  Lwritedesc        , (/ Lwritedesc  /))
+  HWRITEIV( grpInputGlobal,            1,  nwritedesc        , (/ nwritedesc  /))
 
   HCLOSEGRP( grpInputGlobal )
 
@@ -903,7 +908,7 @@ subroutine hdfint
   use fileunits, only : ounit
   use inputlist
   use allglobal, only : ncpu, cpus, &
-                        Mvol, ForceErr, &
+                        Mvol, ForceErr, Energy, &
                         mn, im, in, iRbc, iZbs, iRbs, iZbc, &
                         dRbc, dZbs, dRbs, dZbc, &
                         vvolume, dvolume, &
@@ -913,7 +918,7 @@ subroutine hdfint
                         lmns, &
                         TT, &
                         beltramierror, &
-                        IPDt
+                        IPDt, NGdof
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -962,6 +967,8 @@ subroutine hdfint
 !  HWRITERV( grpOutput, 1, forcetol, (/ forcetol /)) ! already in /input/global
 !latex \type{ForceErr}               & real    & \pb{force-balance error across interfaces} \\
   HWRITERV( grpOutput,  1, ForceErr, (/ ForceErr /))
+!latex \type{Energy}               & real    & \pb{final total energy} \\
+  HWRITERV( grpOutput,  1, Energy, (/ Energy /))
 !latex \type{Ivolume}                & real    & \pb{Volume current at output (parallel, externally induced)}
   HWRITERV( grpOutput, Mvol, Ivolume, Ivolume(1:Mvol))
 !latex \type{IPDt}                   & real    & \pb{Surface current at output}

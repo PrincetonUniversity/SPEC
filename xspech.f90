@@ -226,8 +226,8 @@ program xspech
 !latex \item If \internal{NGdof.gt.0}, where \internal{NGdof}$\equiv $ counts the geometrical degrees-of-freedom, i.e. the $R_{bc}$, $Z_{bs}$, etc.,
 !latex       then \link{packxi} is called to ``pack" the geometrical degrees-of-freedom into \internal{position(0:NGdof)}.
 !latex \end{enumerate} 
-
-  if( NGdof.gt.0 ) then ! pack geometry into vector; 14 Jan 13;
+  
+ if( NGdof.gt.0 ) then ! pack geometry into vector; 14 Jan 13;
 
    pack = 'P'
    LComputeAxis = .true.
@@ -235,7 +235,7 @@ program xspech
                             iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, .false., LComputeAxis ) )
 
   endif
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !latex \subsection{initialize adiabatic constants} 

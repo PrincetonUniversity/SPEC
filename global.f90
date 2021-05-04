@@ -270,7 +270,12 @@ module inputlist
   REAL         :: vcasingtol =   1.e-08
   INTEGER      :: vcasingits =   8
   INTEGER      :: vcasingper =   1
-  INTEGER      :: mcasingcal =   8 ! redundant; 
+  INTEGER      :: mcasingcal =   8 ! redundant;
+  REAL         :: dxdesc     =   1.0e-03
+  REAL         :: ftoldesc   =   1.0e-10
+  INTEGER      :: maxitdesc  =   15000
+  INTEGER      :: Lwritedesc =   1
+  INTEGER      :: nwritedesc =   100 
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -781,8 +786,28 @@ module inputlist
  vcasingtol  ,& !latex \item \inputvar{vcasingtol = 1.0e-08} : real : accuracy on virtual casing integral; see \link{bnorml}, \link{casing};
  vcasingits  ,& !latex \item \inputvar{vcasingits = 8      } : integer : minimum number of calls to adaptive virtual casing routine; see \link{casing};
  vcasingper  ,& !latex \item \inputvar{vcasingper = 1      } : integer : periods of integragion  in adaptive virtual casing routine; see \link{casing};
- mcasingcal     !latex \item \inputvar{mcasingcal = 8      } : integer : minimum number of calls to adaptive virtual casing routine; see \link{casing};
+ mcasingcal  ,& !latex \item \inputvar{mcasingcal = 8      } : integer : minimum number of calls to adaptive virtual casing routine; see \link{casing};
 !latex \ei
+ dxdesc      ,& !latex \item \inputvar{dxdesc = 1.0e-05} : real : reference step size for the force-descent;
+                !latex \bi
+                !latex \item[i.] only used if \inputvar{Lfindzero = 3}; 
+                !latex \ei
+ ftoldesc    ,& !latex \item \inputvar{ftoldesc = 1.0e-09} : real : force tolerance for the force-descent;
+                !latex \bi
+                !latex \item[i.] only used if \inputvar{Lfindzero = 3}; 
+                !latex \ei
+ maxitdesc   ,& !latex \item \inputvar{maxitdesc = 1000} : integer : maximum number of iterations for the force-descent;
+                !latex \bi
+                !latex \item[i.] only used if \inputvar{Lfindzero = 3}; 
+                !latex \ei
+ Lwritedesc  ,& !latex \item \inputvar{Lwritedesc = 0} : integer : ouput writing flag for the force-descent;
+                !latex \bi
+                !latex \item[i.] only used if \inputvar{Lfindzero = 3}; 
+                !latex \ei
+ nwritedesc     !latex \item \inputvar{nwritedesc = 1} : integer : output writing step for the force-descent;
+                !latex \bi
+                !latex \item[i.] only used if \inputvar{Lfindzero = 3} and \inputvar{Lwritedesc > 0}; 
+                !latex \ei
 
 !latex \item Comments:
 !latex \begin{enumerate}
@@ -1869,12 +1894,14 @@ subroutine readin
    write(ounit,1042)            forcetol, c05xmax, c05xtol, c05factor, LreadGF
    write(ounit,1043)            mfreeits, gBntol, gBnbld
    write(ounit,1044)            vcasingeps, vcasingtol, vcasingits, vcasingper
+   write(ounit,1045)            dxdesc, ftoldesc, maxitdesc, Lwritedesc, nwritedesc
    
 1040 format("readin : ",f10.2," : Lfindzero="i2" ;")
 1041 format("readin : ", 10x ," : escale="es13.5" ; opsilon="es13.5" ; pcondense="f7.3" ; epsilon="es13.5" ; wpoloidal="f7.4" ; upsilon="es13.5" ;")
 1042 format("readin : ", 10x ," : forcetol="es13.5" ; c05xmax="es13.5" ; c05xtol="es13.5" ; c05factor="es13.5" ; LreadGF="L2" ; ")
 1043 format("readin : ", 10x ," : mfreeits="i4" ; gBntol="es13.5" ; gBnbld="es13.5" ;")
 1044 format("readin : ", 10x ," : vcasingeps="es13.5" ; vcasingtol="es13.5" ; vcasingits="i6" ; vcasingper="i6" ;")
+1045 format("readin : ", 10x ," : dxdesc="es13.5" ; ftoldesc="es13.5" ; maxitdesc="i6" ; Lwritedesc="i2" ; nwritedesc="i4" ;")
    
    FATAL( readin, escale      .lt.zero     , error )
    FATAL( readin, pcondense   .lt.one      , error )
@@ -1883,7 +1910,9 @@ subroutine readin
   !FATAL( readin, mfreeits    .lt.zero     , error )
 
    FATAL( readin, Igeometry.eq.3 .and. pcondense.le.zero, pcondense must be positive )
-   
+   FATAL( readin, dxdesc.lt.zero, dxdesc must be positive)
+   FATAL( readin, nwritedesc.lt.one, nwritedesc must be equal or larger than one)
+ 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
 !latex \subsubsection{reading \type{diagnosticslist}}
@@ -2031,6 +2060,11 @@ subroutine readin
   RlBCAST( vcasingtol, 1 , 0 )
   IlBCAST( vcasingits, 1 , 0 )
   IlBCAST( vcasingper, 1 , 0 )
+  RlBCAST( dxdesc,     1 , 0 )
+  RlBCAST( ftoldesc,   1 , 0 )
+  IlBCAST( maxitdesc,  1 , 0 )
+  IlBCAST( Lwritedesc, 1 , 0 )
+  IlBCAST( nwritedesc, 1 , 0 )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -2728,7 +2762,12 @@ subroutine wrtend
   write(iunit,'(" vcasingeps  = ",es23.15       )') vcasingeps   
   write(iunit,'(" vcasingtol  = ",es23.15       )') vcasingtol   
   write(iunit,'(" vcasingits  = ",i9            )') vcasingits   
-  write(iunit,'(" vcasingper  = ",i9            )') vcasingper   
+  write(iunit,'(" vcasingper  = ",i9            )') vcasingper  
+  write(iunit,'(" dxdesc      = ",es23.15       )') dxdesc
+  write(iunit,'(" ftoldesc    = ",es23.15       )') ftoldesc
+  write(iunit,'(" maxitdesc   = ",i6            )') maxitdesc
+  write(iunit,'(" Lwritedesc  = ",i2            )') Lwritedesc
+  write(iunit,'(" nwritedesc  = ",i4            )') nwritedesc 
   write(iunit,'("/")')
 
   if( Wwrtend ) then ; cput = GETTIME ; write(ounit,'("wrtend : ",f10.2," : myid=",i3," ; writing diagnosticslist ;")') cput-cpus, myid
@@ -2752,6 +2791,7 @@ subroutine wrtend
   write(iunit,'(" dRZ         = ",es23.15       )') dRZ
   write(iunit,'(" Lcheck      = ",i9            )') Lcheck
   write(iunit,'(" Ltiming     = ",L9            )') Ltiming
+  write(iunit,'(" Ngrid       = ",i4            )') Ngrid 
   write(iunit,'("/")')
 
   if( Wwrtend ) then ; cput = GETTIME ; write(ounit,'("wrtend : ",f10.2," : myid=",i3," ; writing screenlist ;")') cput-cpus, myid
