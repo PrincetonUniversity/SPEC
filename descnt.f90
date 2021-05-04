@@ -399,7 +399,6 @@ function fcngrad(n, xx)
       endif
      endif
      lastcpu = GETTIME
-     write(ounit,*) 'Energy', Energy, sum(lMMl), sum(lLLl * sweight)
      WCALL( descnt, wrtend ) ! write restart file; save geometry to ext.end;
 
     endif ! end of if( myid.eq.0 );
