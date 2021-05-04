@@ -571,7 +571,7 @@ endif
 
 #ifdef DEBUG
   if (myid.eq.0) then
-    write(ounit,'("preset : ",10x," : sweight=",99(es12.5,",",:))') sweight(1:Mvol)
+    write(ounit,'("preset : ",10x," : sweight =",99(es12.5,",",:))') sweight(1:Mvol)
   end if
 #endif
 
