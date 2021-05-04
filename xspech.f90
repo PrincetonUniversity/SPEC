@@ -289,12 +289,16 @@ program xspech
    
   if( NGdof.gt.0 ) then
    
-   if( Lfindzero.gt.0 ) then
-
+   select case (Lfindzero)
+   case (1:2)
     ifail = 1
     WCALL( xspech, newton, ( NGdof, position(0:NGdof), ifail ) )
 
-   endif
+   case (3:4)
+
+    ifail = 1
+    WCALL( xspech, descnt, ( NGdof, position(0:NGdof), ifail ) )
+   end select
    
    pack = 'U' ! unpack geometrical degrees of freedom; 13 Sep 13;
    LComputeAxis = .true.
