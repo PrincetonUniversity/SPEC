@@ -58,9 +58,6 @@ class SPEC(object):
          # py2f converts the Python object to the Fortran integer identifying an MPI communicator.
         self.allglobal.set_mpi_comm(self.comm.py2f())
 
-        # python wrapper does not need to write files along the run
-        self.allglobal.skip_write = True
-
         self.initialized = False
 
         # mute screen output if necessary
@@ -70,12 +67,36 @@ class SPEC(object):
         return
 
     # def run(self, save=True):
-    def run(self):
+    def run(self,
+            save_output: bool = False):
+        """
+        Args:
+            save_output: Whether or not to save the hdf5 and restart files.
+        """
         if not self.initialized:
             self.read()
+
+        if save_output:
+            self.allglobal.skip_write = False
+            spec.sphdf5.init_outfile()
+            spec.sphdf5.mirror_input_to_outfile()
+            if self.comm.rank == 0:
+                spec.allglobal.wrtend()
+            spec.sphdf5.init_convergence_output()
+        else:
+            self.allglobal.skip_write = True
+            
         self.lib.spec()
-        # if save:
-        #     self.write()
+
+        if save_output:
+            spec.final_diagnostics()
+            spec.sphdf5.write_grid()
+            if self.comm.rank == 0:
+                spec.allglobal.wrtend()
+            spec.sphdf5.hdfint()
+            spec.sphdf5.finish_outfile()
+            spec.ending()
+            
         return
 
     def read(self, input_file=None):
@@ -95,17 +116,6 @@ class SPEC(object):
 
         self.initialized = True
         return
-
-    # def write(self, output_file=None):
-    #     if output_file is not None:
-    #         print("Write SPEC output into {:d}.sp.h5".format(output_file))
-    #         ext = self.inputlist.ext  # save original ext value
-    #         self.inputlist.ext = output_file
-    #         self.lib.write_hdf5()
-    #         self.inputlist.ext = ext  # reset the ext value
-    #     else:
-    #         self.lib.write_hdf5()
-    #     return
 
 
 if __name__ == "__main__":
