@@ -478,10 +478,10 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
 
       endif
 
-      ! packing into force vector
-      call packxi_force( NGdof, force, Mvol, mn, ForceRc, ForceRs, ForceZc, ForceZs)
-
     enddo
+    
+    ! packing into force vector
+    call packxi_force( NGdof, force, Mvol, mn, ForceRc, ForceRs, ForceZc, ForceZs)
   
   else
     ! Newton method is used

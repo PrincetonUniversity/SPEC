@@ -1138,8 +1138,11 @@ endif
                             ; inifactor(ii,vvol) = tflux(vvol)**(halfmm(ii)-half)
      endif
     enddo
+    if (Lfindzero .gt. 2) then
+      psifactor(1:mn,vvol) = one /  tflux(vvol)**half
+    endif
    enddo
-   if (Lfindzero .gt. 2) psifactor(1:mn,1:Nvol) = one 
+   
   case( 3 ) 
    
    do vvol = 1, Nvol
