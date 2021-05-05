@@ -611,13 +611,16 @@ c     argonne national laboratory. minpack project. march 1980.
 c     burton s. garbow, kenneth e. hillstrom, jorge j. more
 c
 c     **********
-      integer i,iflag,iter,j,jm1,l,ncfail,ncsuc,nslow1,nslow2
+      integer i,ii,jj,iflag,iter,j,jm1,l,ncfail,ncsuc,nslow1,nslow2
+      integer idgeqrf
       integer iwa(1)
       logical jeval,sing
       double precision actred,delta,epsmch,fnorm,fnorm1,one,pnorm,
      *                 prered,p1,p5,p001,p0001,ratio,sum,temp,xnorm,
      *                 zero
-      double precision dpmpar,enorm
+      double precision dpmpar,enorm, lastcpu, nowcpu
+      double precision, allocatable :: wk(:)
+      double precision :: reflectors(n), dummy(1)
       data one,p1,p5,p001,p0001,zero
      *     /1.0d0,1.0d-1,5.0d-1,1.0d-3,1.0d-4,0.0d0/
 c
@@ -672,7 +675,41 @@ c
 c
 c        compute the qr factorization of the jacobian.
 c
-         call qrfac(n,n,fjac,ldfjac,.false.,iwa,1,wa1,wa2,wa3)
+c         goto 400
+         iwa(1)=-1
+         idgeqrf = 0
+         call dgeqrf(n,n,fjac,ldfjac,wa1,wa2,iwa(1),idgeqrf)
+         iwa(1)=int(wa2(1))
+         allocate(wk(1:iwa(1)))
+c
+         call dgeqrf(n,n,fjac,ldfjac,reflectors,wk,iwa(1),idgeqrf)
+         deallocate(wk)
+c
+         do ii = 1, n
+            wa1(ii) = fjac(ii, ii)
+            fjac(ii, ii) = 1.0
+         end do
+c
+         do ii = 1, n-1
+            fjac(ii:,ii) = fjac(ii:,ii) * reflectors(ii)
+         enddo
+c         
+         wa3 = 0
+         do ii = 1, n
+            do jj = 1, ii-1
+                  wa3(ii) = wa3(ii) + fjac(jj,ii)**2
+            enddo
+            wa3(ii) = wa3(ii) + wa1(ii)**2
+         enddo
+c
+         wa3 = sqrt(wa3)
+c
+         fjac(n,n) = 2.0
+         wa1(n) = -wa1(n)
+         wa2 = wa3
+c
+c         
+c  400     call qrfac(n,n,fjac,ldfjac,.false.,iwa,1,wa1,wa2,wa3)
 c
 c        on the first iteration and if mode is 1, scale according
 c        to the norms of the columns of the initial jacobian.
@@ -732,7 +769,28 @@ c
 c
 c        accumulate the orthogonal factor in fjac.
 c
-         call qform(n,n,fjac,ldfjac,wa1)
+c        put the diag back
+c         goto 500
+         do ii = 1, n
+            fjac(ii,ii) = wa1(ii)
+         enddo
+         do ii = 1, n-1
+            fjac(ii:,ii) = fjac(ii:,ii) / reflectors(ii)
+         enddo
+c
+         ii=-1
+         idgeqrf = 0
+         call dorgqr(n,n,n,fjac,ldfjac,reflectors,dummy,ii,idgeqrf)
+c
+         ii=int(dummy(1))
+         allocate(wk(1:ii))
+         call dorgqr(n,n,n,fjac,ldfjac,reflectors,wk,ii,idgeqrf)
+         deallocate(wk)	
+c
+         fjac(:,n) = -fjac(:,n)
+c
+c   
+c  500   call qform(n,n,fjac,ldfjac,wa1)
 c
 c        rescale if necessary.
 c
