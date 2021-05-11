@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['yesstellsym_1423',['yesstellsym',['../namespaceallglobal.html#a1f4ddb89b3246fef8d73c88b730eda3a',1,'allglobal']]],
-  ['yij_1424',['yij',['../group__grp__fourier__transform.html#gae595c5f578c488e3442feafb1844ef23',1,'allglobal']]],
-  ['ypoly_1425',['ypoly',['../namespacelaplaces.html#a5f343f72906c60e7ff0c93e2b5aad94f',1,'laplaces']]]
+  ['yesstellsym_1427',['yesstellsym',['../namespaceallglobal.html#a1f4ddb89b3246fef8d73c88b730eda3a',1,'allglobal']]],
+  ['yij_1428',['yij',['../group__grp__fourier__transform.html#gae595c5f578c488e3442feafb1844ef23',1,'allglobal']]],
+  ['ypoly_1429',['ypoly',['../namespacelaplaces.html#a5f343f72906c60e7ff0c93e2b5aad94f',1,'laplaces']]]
 ];
