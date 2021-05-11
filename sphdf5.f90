@@ -390,7 +390,7 @@ end subroutine mirror_input_to_outfile
 !> <li> The group \c iterations is created in the output file.
 !>      This group contains the interface geometry at each iteration, which is useful for constructing movies illustrating the convergence.
 !>      The data structure in use is an unlimited array of the following compound datatype:
-!> ```
+!> ```C
 !> DATATYPE  H5T_COMPOUND {
 !>       H5T_NATIVE_INTEGER "nDcalls";
 !>       H5T_NATIVE_DOUBLE "Energy";
