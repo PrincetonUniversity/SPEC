@@ -122,459 +122,288 @@ $(document).ready(function(){initNavTree('namespacesphdf5.html',''); initResizab
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions/Subroutines</h2></td></tr>
-<tr class="memitem:a0f962c09cd5d5eba99f1cba043cb3898"><td class="memItemLeft" align="right" valign="top"><a id="a0f962c09cd5d5eba99f1cba043cb3898"></a>
-subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a0f962c09cd5d5eba99f1cba043cb3898">init_outfile</a></td></tr>
-<tr class="memdesc:a0f962c09cd5d5eba99f1cba043cb3898"><td class="mdescLeft">&#160;</td><td class="mdescRight">initialize the interface to the HDF5 library and open the output file <br /></td></tr>
-<tr class="separator:a0f962c09cd5d5eba99f1cba043cb3898"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afed4d951aec99f2ebeba68c465eb9861"><td class="memItemLeft" align="right" valign="top"><a id="afed4d951aec99f2ebeba68c465eb9861"></a>
-subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#afed4d951aec99f2ebeba68c465eb9861">mirror_input_to_outfile</a></td></tr>
-<tr class="memdesc:afed4d951aec99f2ebeba68c465eb9861"><td class="mdescLeft">&#160;</td><td class="mdescRight">mirror input variables into output file <br /></td></tr>
-<tr class="separator:afed4d951aec99f2ebeba68c465eb9861"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab348ec00943ff875a1ebb965fb98841e"><td class="memItemLeft" align="right" valign="top"><a id="ab348ec00943ff875a1ebb965fb98841e"></a>
-subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#ab348ec00943ff875a1ebb965fb98841e">init_convergence_output</a></td></tr>
-<tr class="memdesc:ab348ec00943ff875a1ebb965fb98841e"><td class="mdescLeft">&#160;</td><td class="mdescRight">prepare convergence evolution output <br /></td></tr>
-<tr class="separator:ab348ec00943ff875a1ebb965fb98841e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ade76c03b9b11be2a12d3ddd32e77a6ae"><td class="memItemLeft" align="right" valign="top"><a id="ade76c03b9b11be2a12d3ddd32e77a6ae"></a>
-subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#ade76c03b9b11be2a12d3ddd32e77a6ae">write_convergence_output</a> (nDcalls, ForceErr)</td></tr>
-<tr class="memdesc:ade76c03b9b11be2a12d3ddd32e77a6ae"><td class="mdescLeft">&#160;</td><td class="mdescRight">write convergence output (evolution of interface geometry, force, etc); was in <a class="el" href="global_8f90.html" title="Defines input namelists and global variables, and opens some output files.">global.f90</a>/wrtend for wflag.eq.-1 previously <br /></td></tr>
-<tr class="separator:ade76c03b9b11be2a12d3ddd32e77a6ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a17e65b951634f7098213fd071d905482"><td class="memItemLeft" align="right" valign="top"><a id="a17e65b951634f7098213fd071d905482"></a>
-subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a17e65b951634f7098213fd071d905482">write_grid</a></td></tr>
-<tr class="memdesc:a17e65b951634f7098213fd071d905482"><td class="mdescLeft">&#160;</td><td class="mdescRight">write the magnetic field on a grid; previously the (wflag.eq.1) part of globals.f90/wrtend to write .ext.sp.grid; <br /></td></tr>
-<tr class="separator:a17e65b951634f7098213fd071d905482"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a47186186c9418cd913ee9c98b5668642"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a47186186c9418cd913ee9c98b5668642">init_flt_output</a> (numTrajTotal)</td></tr>
-<tr class="memdesc:a47186186c9418cd913ee9c98b5668642"><td class="mdescLeft">&#160;</td><td class="mdescRight">init field line tracing output group and create array datasets  <a href="namespacesphdf5.html#a47186186c9418cd913ee9c98b5668642">More...</a><br /></td></tr>
-<tr class="separator:a47186186c9418cd913ee9c98b5668642"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a14195bd206b7f6a7f05d4d6fc4b50f42"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a14195bd206b7f6a7f05d4d6fc4b50f42">write_poincare</a> (offset, data, success)</td></tr>
-<tr class="memdesc:a14195bd206b7f6a7f05d4d6fc4b50f42"><td class="mdescLeft">&#160;</td><td class="mdescRight">write a hyperslab of Poincare data  <a href="namespacesphdf5.html#a14195bd206b7f6a7f05d4d6fc4b50f42">More...</a><br /></td></tr>
-<tr class="separator:a14195bd206b7f6a7f05d4d6fc4b50f42"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8f01c5e4a21c5af2c39620f24e598095"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a8f01c5e4a21c5af2c39620f24e598095">write_transform</a> (offset, length, lvol, diotadxup, fiota)</td></tr>
-<tr class="memdesc:a8f01c5e4a21c5af2c39620f24e598095"><td class="mdescLeft">&#160;</td><td class="mdescRight">write rotational transform output from field line following  <a href="namespacesphdf5.html#a8f01c5e4a21c5af2c39620f24e598095">More...</a><br /></td></tr>
-<tr class="separator:a8f01c5e4a21c5af2c39620f24e598095"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acd97a933d4239028dc8114b110655074"><td class="memItemLeft" align="right" valign="top"><a id="acd97a933d4239028dc8114b110655074"></a>
-subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#acd97a933d4239028dc8114b110655074">finalize_flt_output</a></td></tr>
-<tr class="memdesc:acd97a933d4239028dc8114b110655074"><td class="mdescLeft">&#160;</td><td class="mdescRight">finalize Poincare output <br /></td></tr>
-<tr class="separator:acd97a933d4239028dc8114b110655074"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2f9e9c50084175e5174b1e1070e24d73"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a2f9e9c50084175e5174b1e1070e24d73">write_vector_potential</a> (sumLrad, allAte, allAze, allAto, allAzo)</td></tr>
-<tr class="memdesc:a2f9e9c50084175e5174b1e1070e24d73"><td class="mdescLeft">&#160;</td><td class="mdescRight">write the magnetic vector potential Fourier harmonics to the output file group /vector_potential  <a href="namespacesphdf5.html#a2f9e9c50084175e5174b1e1070e24d73">More...</a><br /></td></tr>
-<tr class="separator:a2f9e9c50084175e5174b1e1070e24d73"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a593e99355c8ceabe56a566e9d468dbd9"><td class="memItemLeft" align="right" valign="top"><a id="a593e99355c8ceabe56a566e9d468dbd9"></a>
-subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a593e99355c8ceabe56a566e9d468dbd9">hdfint</a></td></tr>
-<tr class="memdesc:a593e99355c8ceabe56a566e9d468dbd9"><td class="mdescLeft">&#160;</td><td class="mdescRight">final output <br /></td></tr>
-<tr class="separator:a593e99355c8ceabe56a566e9d468dbd9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adb720ea6408b8f7681bfb7f86a4b86f2"><td class="memItemLeft" align="right" valign="top"><a id="adb720ea6408b8f7681bfb7f86a4b86f2"></a>
-subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#adb720ea6408b8f7681bfb7f86a4b86f2">finish_outfile</a></td></tr>
-<tr class="memdesc:adb720ea6408b8f7681bfb7f86a4b86f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Close all open HDF5 objects (we know of) and list any remaining still-open objects. <br /></td></tr>
-<tr class="separator:adb720ea6408b8f7681bfb7f86a4b86f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga0f962c09cd5d5eba99f1cba043cb3898"><td class="memItemLeft" align="right" valign="top">
+subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__grp__output.html#ga0f962c09cd5d5eba99f1cba043cb3898">init_outfile</a></td></tr>
+<tr class="memdesc:ga0f962c09cd5d5eba99f1cba043cb3898"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the interface to the HDF5 library and open the output file. <br /></td></tr>
+<tr class="separator:ga0f962c09cd5d5eba99f1cba043cb3898"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gafed4d951aec99f2ebeba68c465eb9861"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__grp__output.html#gafed4d951aec99f2ebeba68c465eb9861">mirror_input_to_outfile</a></td></tr>
+<tr class="memdesc:gafed4d951aec99f2ebeba68c465eb9861"><td class="mdescLeft">&#160;</td><td class="mdescRight">Mirror input variables into output file.  <a href="group__grp__output.html#gafed4d951aec99f2ebeba68c465eb9861">More...</a><br /></td></tr>
+<tr class="separator:gafed4d951aec99f2ebeba68c465eb9861"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gab348ec00943ff875a1ebb965fb98841e"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__grp__output.html#gab348ec00943ff875a1ebb965fb98841e">init_convergence_output</a></td></tr>
+<tr class="memdesc:gab348ec00943ff875a1ebb965fb98841e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Prepare convergence evolution output.  <a href="group__grp__output.html#gab348ec00943ff875a1ebb965fb98841e">More...</a><br /></td></tr>
+<tr class="separator:gab348ec00943ff875a1ebb965fb98841e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gade76c03b9b11be2a12d3ddd32e77a6ae"><td class="memItemLeft" align="right" valign="top">
+subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__grp__output.html#gade76c03b9b11be2a12d3ddd32e77a6ae">write_convergence_output</a> (nDcalls, ForceErr)</td></tr>
+<tr class="memdesc:gade76c03b9b11be2a12d3ddd32e77a6ae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write convergence output (evolution of interface geometry, force, etc). <br /></td></tr>
+<tr class="separator:gade76c03b9b11be2a12d3ddd32e77a6ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga17e65b951634f7098213fd071d905482"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__grp__output.html#ga17e65b951634f7098213fd071d905482">write_grid</a></td></tr>
+<tr class="memdesc:ga17e65b951634f7098213fd071d905482"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write the magnetic field on a grid.  <a href="group__grp__output.html#ga17e65b951634f7098213fd071d905482">More...</a><br /></td></tr>
+<tr class="separator:ga17e65b951634f7098213fd071d905482"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga47186186c9418cd913ee9c98b5668642"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__grp__output.html#ga47186186c9418cd913ee9c98b5668642">init_flt_output</a> (numTrajTotal)</td></tr>
+<tr class="memdesc:ga47186186c9418cd913ee9c98b5668642"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize field line tracing output group and create array datasets.  <a href="group__grp__output.html#ga47186186c9418cd913ee9c98b5668642">More...</a><br /></td></tr>
+<tr class="separator:ga47186186c9418cd913ee9c98b5668642"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga14195bd206b7f6a7f05d4d6fc4b50f42"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__grp__output.html#ga14195bd206b7f6a7f05d4d6fc4b50f42">write_poincare</a> (offset, data, success)</td></tr>
+<tr class="memdesc:ga14195bd206b7f6a7f05d4d6fc4b50f42"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write a hyperslab of Poincare data corresponding to the output of one parallel worker.  <a href="group__grp__output.html#ga14195bd206b7f6a7f05d4d6fc4b50f42">More...</a><br /></td></tr>
+<tr class="separator:ga14195bd206b7f6a7f05d4d6fc4b50f42"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga8f01c5e4a21c5af2c39620f24e598095"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__grp__output.html#ga8f01c5e4a21c5af2c39620f24e598095">write_transform</a> (offset, length, lvol, diotadxup, fiota)</td></tr>
+<tr class="memdesc:ga8f01c5e4a21c5af2c39620f24e598095"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write the rotational transform output from field line following.  <a href="group__grp__output.html#ga8f01c5e4a21c5af2c39620f24e598095">More...</a><br /></td></tr>
+<tr class="separator:ga8f01c5e4a21c5af2c39620f24e598095"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gacd97a933d4239028dc8114b110655074"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__grp__output.html#gacd97a933d4239028dc8114b110655074">finalize_flt_output</a></td></tr>
+<tr class="memdesc:gacd97a933d4239028dc8114b110655074"><td class="mdescLeft">&#160;</td><td class="mdescRight">Finalize Poincare output.  <a href="group__grp__output.html#gacd97a933d4239028dc8114b110655074">More...</a><br /></td></tr>
+<tr class="separator:gacd97a933d4239028dc8114b110655074"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga2f9e9c50084175e5174b1e1070e24d73"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__grp__output.html#ga2f9e9c50084175e5174b1e1070e24d73">write_vector_potential</a> (sumLrad, allAte, allAze, allAto, allAzo)</td></tr>
+<tr class="memdesc:ga2f9e9c50084175e5174b1e1070e24d73"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write the magnetic vector potential Fourier harmonics to the output file group <code>/vector_potential</code> .  <a href="group__grp__output.html#ga2f9e9c50084175e5174b1e1070e24d73">More...</a><br /></td></tr>
+<tr class="separator:ga2f9e9c50084175e5174b1e1070e24d73"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga593e99355c8ceabe56a566e9d468dbd9"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__grp__output.html#ga593e99355c8ceabe56a566e9d468dbd9">hdfint</a></td></tr>
+<tr class="memdesc:ga593e99355c8ceabe56a566e9d468dbd9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write the final state of the equilibrium to the output file.  <a href="group__grp__output.html#ga593e99355c8ceabe56a566e9d468dbd9">More...</a><br /></td></tr>
+<tr class="separator:ga593e99355c8ceabe56a566e9d468dbd9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gadb720ea6408b8f7681bfb7f86a4b86f2"><td class="memItemLeft" align="right" valign="top">
+subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__grp__output.html#gadb720ea6408b8f7681bfb7f86a4b86f2">finish_outfile</a></td></tr>
+<tr class="memdesc:gadb720ea6408b8f7681bfb7f86a4b86f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Close all open HDF5 objects (we know of) and list any remaining still-open objects. <br /></td></tr>
+<tr class="separator:gadb720ea6408b8f7681bfb7f86a4b86f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="var-members"></a>
 Variables</h2></td></tr>
 <tr class="memitem:a6e2ccffa75c68d7a9d7a82ed2c5f0951"><td class="memItemLeft" align="right" valign="top"><a id="a6e2ccffa75c68d7a9d7a82ed2c5f0951"></a>
-logical, parameter&#160;</td><td class="memItemRight" valign="bottom"><b>hdfdebug</b> = .false.</td></tr>
+logical, parameter&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a6e2ccffa75c68d7a9d7a82ed2c5f0951">hdfdebug</a> = .false.</td></tr>
+<tr class="memdesc:a6e2ccffa75c68d7a9d7a82ed2c5f0951"><td class="mdescLeft">&#160;</td><td class="mdescRight">global flag to enable verbal diarrhea commenting HDF5 operations <br /></td></tr>
 <tr class="separator:a6e2ccffa75c68d7a9d7a82ed2c5f0951"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5a3795f0b1af6123b5258ddbf2fb01ac"><td class="memItemLeft" align="right" valign="top"><a id="a5a3795f0b1af6123b5258ddbf2fb01ac"></a>
-integer, parameter&#160;</td><td class="memItemRight" valign="bottom"><b>internalhdf5msg</b> = 0</td></tr>
+integer, parameter&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a5a3795f0b1af6123b5258ddbf2fb01ac">internalhdf5msg</a> = 0</td></tr>
+<tr class="memdesc:a5a3795f0b1af6123b5258ddbf2fb01ac"><td class="mdescLeft">&#160;</td><td class="mdescRight">1: print internal HDF5 error messages; 0: only error messages from <a class="el" href="namespacesphdf5.html" title="writing the HDF5 output file">sphdf5</a> <br /></td></tr>
 <tr class="separator:a5a3795f0b1af6123b5258ddbf2fb01ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5d3c610c372abd4fd4d68576ef0d3726"><td class="memItemLeft" align="right" valign="top"><a id="a5d3c610c372abd4fd4d68576ef0d3726"></a>
-integer&#160;</td><td class="memItemRight" valign="bottom"><b>hdfier</b></td></tr>
+integer&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a5d3c610c372abd4fd4d68576ef0d3726">hdfier</a></td></tr>
+<tr class="memdesc:a5d3c610c372abd4fd4d68576ef0d3726"><td class="mdescLeft">&#160;</td><td class="mdescRight">error flag for HDF5 library <br /></td></tr>
 <tr class="separator:a5d3c610c372abd4fd4d68576ef0d3726"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab733596bbc4663c4a8e798a1014b9690"><td class="memItemLeft" align="right" valign="top"><a id="ab733596bbc4663c4a8e798a1014b9690"></a>
-integer&#160;</td><td class="memItemRight" valign="bottom"><b>rank</b></td></tr>
+integer&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#ab733596bbc4663c4a8e798a1014b9690">rank</a></td></tr>
+<tr class="memdesc:ab733596bbc4663c4a8e798a1014b9690"><td class="mdescLeft">&#160;</td><td class="mdescRight">rank of data to write using macros <br /></td></tr>
 <tr class="separator:ab733596bbc4663c4a8e798a1014b9690"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5ebb9276a31deb0bcbe482da78f4b5b2"><td class="memItemLeft" align="right" valign="top"><a id="a5ebb9276a31deb0bcbe482da78f4b5b2"></a>
-integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>file_id</b></td></tr>
+integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a5ebb9276a31deb0bcbe482da78f4b5b2">file_id</a></td></tr>
+<tr class="memdesc:a5ebb9276a31deb0bcbe482da78f4b5b2"><td class="mdescLeft">&#160;</td><td class="mdescRight">default file ID used in macros <br /></td></tr>
 <tr class="separator:a5ebb9276a31deb0bcbe482da78f4b5b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a887c481c60d6199148bc3fc7710677d2"><td class="memItemLeft" align="right" valign="top"><a id="a887c481c60d6199148bc3fc7710677d2"></a>
-integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>space_id</b></td></tr>
+integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a887c481c60d6199148bc3fc7710677d2">space_id</a></td></tr>
+<tr class="memdesc:a887c481c60d6199148bc3fc7710677d2"><td class="mdescLeft">&#160;</td><td class="mdescRight">default dataspace ID used in macros <br /></td></tr>
 <tr class="separator:a887c481c60d6199148bc3fc7710677d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7f355c960e65781116ec1c0ad7ccefe8"><td class="memItemLeft" align="right" valign="top"><a id="a7f355c960e65781116ec1c0ad7ccefe8"></a>
-integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>dset_id</b></td></tr>
+integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a7f355c960e65781116ec1c0ad7ccefe8">dset_id</a></td></tr>
+<tr class="memdesc:a7f355c960e65781116ec1c0ad7ccefe8"><td class="mdescLeft">&#160;</td><td class="mdescRight">default dataset ID used in macros <br /></td></tr>
 <tr class="separator:a7f355c960e65781116ec1c0ad7ccefe8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8ac6fa459921c7beeda4f78d9a211443"><td class="memItemLeft" align="right" valign="top"><a id="a8ac6fa459921c7beeda4f78d9a211443"></a>
-integer(hsize_t), dimension(1:1)&#160;</td><td class="memItemRight" valign="bottom"><b>onedims</b></td></tr>
+integer(hsize_t), dimension(1:1)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a8ac6fa459921c7beeda4f78d9a211443">onedims</a></td></tr>
+<tr class="memdesc:a8ac6fa459921c7beeda4f78d9a211443"><td class="mdescLeft">&#160;</td><td class="mdescRight">dimension specifier for one-dimensional data used in macros <br /></td></tr>
 <tr class="separator:a8ac6fa459921c7beeda4f78d9a211443"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a20ba1ddf00b55610e9671e5c5992f7a4"><td class="memItemLeft" align="right" valign="top"><a id="a20ba1ddf00b55610e9671e5c5992f7a4"></a>
-integer(hsize_t), dimension(1:2)&#160;</td><td class="memItemRight" valign="bottom"><b>twodims</b></td></tr>
+integer(hsize_t), dimension(1:2)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a20ba1ddf00b55610e9671e5c5992f7a4">twodims</a></td></tr>
+<tr class="memdesc:a20ba1ddf00b55610e9671e5c5992f7a4"><td class="mdescLeft">&#160;</td><td class="mdescRight">dimension specifier for two-dimensional data used in macros <br /></td></tr>
 <tr class="separator:a20ba1ddf00b55610e9671e5c5992f7a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0d486c7283d6a2dcb4ddc9c6c7d50bf7"><td class="memItemLeft" align="right" valign="top"><a id="a0d486c7283d6a2dcb4ddc9c6c7d50bf7"></a>
-integer(hsize_t), dimension(1:3)&#160;</td><td class="memItemRight" valign="bottom"><b>threedims</b></td></tr>
+integer(hsize_t), dimension(1:3)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a0d486c7283d6a2dcb4ddc9c6c7d50bf7">threedims</a></td></tr>
+<tr class="memdesc:a0d486c7283d6a2dcb4ddc9c6c7d50bf7"><td class="mdescLeft">&#160;</td><td class="mdescRight">dimension specifier for three-dimensional data used in macros <br /></td></tr>
 <tr class="separator:a0d486c7283d6a2dcb4ddc9c6c7d50bf7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a212aef8bc6ac554f1f8816361411bcbb"><td class="memItemLeft" align="right" valign="top"><a id="a212aef8bc6ac554f1f8816361411bcbb"></a>
-logical&#160;</td><td class="memItemRight" valign="bottom"><b>grp_exists</b></td></tr>
+logical&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a212aef8bc6ac554f1f8816361411bcbb">grp_exists</a></td></tr>
+<tr class="memdesc:a212aef8bc6ac554f1f8816361411bcbb"><td class="mdescLeft">&#160;</td><td class="mdescRight">flags used to signal if a group already exists <br /></td></tr>
 <tr class="separator:a212aef8bc6ac554f1f8816361411bcbb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a785772a5a2df7c5ffcf636a1327b7f02"><td class="memItemLeft" align="right" valign="top"><a id="a785772a5a2df7c5ffcf636a1327b7f02"></a>
-logical&#160;</td><td class="memItemRight" valign="bottom"><b>var_exists</b></td></tr>
+logical&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a785772a5a2df7c5ffcf636a1327b7f02">var_exists</a></td></tr>
+<tr class="memdesc:a785772a5a2df7c5ffcf636a1327b7f02"><td class="mdescLeft">&#160;</td><td class="mdescRight">flags used to signal if a variable already exists <br /></td></tr>
 <tr class="separator:a785772a5a2df7c5ffcf636a1327b7f02"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af83b972e01fc15bdc717069ea3cd392e"><td class="memItemLeft" align="right" valign="top"><a id="af83b972e01fc15bdc717069ea3cd392e"></a>
-integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>iteration_dset_id</b></td></tr>
+integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#af83b972e01fc15bdc717069ea3cd392e">iteration_dset_id</a></td></tr>
+<tr class="memdesc:af83b972e01fc15bdc717069ea3cd392e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dataset identifier for "iteration". <br /></td></tr>
 <tr class="separator:af83b972e01fc15bdc717069ea3cd392e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac2f8bfefd6a0cc6784262480418d6f2b"><td class="memItemLeft" align="right" valign="top"><a id="ac2f8bfefd6a0cc6784262480418d6f2b"></a>
-integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>dataspace</b></td></tr>
+integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#ac2f8bfefd6a0cc6784262480418d6f2b">dataspace</a></td></tr>
+<tr class="memdesc:ac2f8bfefd6a0cc6784262480418d6f2b"><td class="mdescLeft">&#160;</td><td class="mdescRight">dataspace for extension by 1 iteration object <br /></td></tr>
 <tr class="separator:ac2f8bfefd6a0cc6784262480418d6f2b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa96bc9bde78aefa532fbf91e95c552a4"><td class="memItemLeft" align="right" valign="top"><a id="aa96bc9bde78aefa532fbf91e95c552a4"></a>
-integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>memspace</b></td></tr>
+integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#aa96bc9bde78aefa532fbf91e95c552a4">memspace</a></td></tr>
+<tr class="memdesc:aa96bc9bde78aefa532fbf91e95c552a4"><td class="mdescLeft">&#160;</td><td class="mdescRight">memspace for extension by 1 iteration object <br /></td></tr>
 <tr class="separator:aa96bc9bde78aefa532fbf91e95c552a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9110951adf8bcaf9b10804ac513f87ca"><td class="memItemLeft" align="right" valign="top"><a id="a9110951adf8bcaf9b10804ac513f87ca"></a>
-integer(hsize_t), dimension(1)&#160;</td><td class="memItemRight" valign="bottom"><b>old_data_dims</b></td></tr>
+integer(hsize_t), dimension(1)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a9110951adf8bcaf9b10804ac513f87ca">old_data_dims</a></td></tr>
+<tr class="memdesc:a9110951adf8bcaf9b10804ac513f87ca"><td class="mdescLeft">&#160;</td><td class="mdescRight">current dimensions of "iterations" dataset <br /></td></tr>
 <tr class="separator:a9110951adf8bcaf9b10804ac513f87ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a28b56e748f3578456883f5ae382b7237"><td class="memItemLeft" align="right" valign="top"><a id="a28b56e748f3578456883f5ae382b7237"></a>
-integer(hsize_t), dimension(1)&#160;</td><td class="memItemRight" valign="bottom"><b>data_dims</b></td></tr>
+integer(hsize_t), dimension(1)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a28b56e748f3578456883f5ae382b7237">data_dims</a></td></tr>
+<tr class="memdesc:a28b56e748f3578456883f5ae382b7237"><td class="mdescLeft">&#160;</td><td class="mdescRight">new dimensions for "iterations" dataset <br /></td></tr>
 <tr class="separator:a28b56e748f3578456883f5ae382b7237"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a04cdba99067381030129162979f8d63c"><td class="memItemLeft" align="right" valign="top"><a id="a04cdba99067381030129162979f8d63c"></a>
-integer(hsize_t), dimension(1)&#160;</td><td class="memItemRight" valign="bottom"><b>max_dims</b></td></tr>
+integer(hsize_t), dimension(1)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a04cdba99067381030129162979f8d63c">max_dims</a></td></tr>
+<tr class="memdesc:a04cdba99067381030129162979f8d63c"><td class="mdescLeft">&#160;</td><td class="mdescRight">maximum dimensions for "iterations" dataset <br /></td></tr>
 <tr class="separator:a04cdba99067381030129162979f8d63c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab321e648ea08a1f2e76fc7f3303869d6"><td class="memItemLeft" align="right" valign="top"><a id="ab321e648ea08a1f2e76fc7f3303869d6"></a>
-integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>plist_id</b></td></tr>
+integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#ab321e648ea08a1f2e76fc7f3303869d6">plist_id</a></td></tr>
+<tr class="memdesc:ab321e648ea08a1f2e76fc7f3303869d6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Property list identifier used to activate dataset transfer property. <br /></td></tr>
 <tr class="separator:ab321e648ea08a1f2e76fc7f3303869d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6121cc9aa463a17d13ae4a92bc0d3f2d"><td class="memItemLeft" align="right" valign="top"><a id="a6121cc9aa463a17d13ae4a92bc0d3f2d"></a>
-integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>dt_ndcalls_id</b></td></tr>
+integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a6121cc9aa463a17d13ae4a92bc0d3f2d">dt_ndcalls_id</a></td></tr>
+<tr class="memdesc:a6121cc9aa463a17d13ae4a92bc0d3f2d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memory datatype identifier (for "nDcalls" dataset in "/grid") <br /></td></tr>
 <tr class="separator:a6121cc9aa463a17d13ae4a92bc0d3f2d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3bcbd1694c419de09006aea7083d2b14"><td class="memItemLeft" align="right" valign="top"><a id="a3bcbd1694c419de09006aea7083d2b14"></a>
-integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>dt_energy_id</b></td></tr>
+integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a3bcbd1694c419de09006aea7083d2b14">dt_energy_id</a></td></tr>
+<tr class="memdesc:a3bcbd1694c419de09006aea7083d2b14"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memory datatype identifier (for "Energy" dataset in "/grid") <br /></td></tr>
 <tr class="separator:a3bcbd1694c419de09006aea7083d2b14"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8de582a1dd644b759b95eb7421c92909"><td class="memItemLeft" align="right" valign="top"><a id="a8de582a1dd644b759b95eb7421c92909"></a>
-integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>dt_forceerr_id</b></td></tr>
+integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a8de582a1dd644b759b95eb7421c92909">dt_forceerr_id</a></td></tr>
+<tr class="memdesc:a8de582a1dd644b759b95eb7421c92909"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memory datatype identifier (for "ForceErr" dataset in "/grid") <br /></td></tr>
 <tr class="separator:a8de582a1dd644b759b95eb7421c92909"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aea8f8c1cd2822689519e2e9afea75d9b"><td class="memItemLeft" align="right" valign="top"><a id="aea8f8c1cd2822689519e2e9afea75d9b"></a>
-integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>dt_irbc_id</b></td></tr>
+integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#aea8f8c1cd2822689519e2e9afea75d9b">dt_irbc_id</a></td></tr>
+<tr class="memdesc:aea8f8c1cd2822689519e2e9afea75d9b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memory datatype identifier (for "iRbc" dataset in "/grid") <br /></td></tr>
 <tr class="separator:aea8f8c1cd2822689519e2e9afea75d9b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7ab23358d53bece2eae4a8f1f44ac3e9"><td class="memItemLeft" align="right" valign="top"><a id="a7ab23358d53bece2eae4a8f1f44ac3e9"></a>
-integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>dt_izbs_id</b></td></tr>
+integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a7ab23358d53bece2eae4a8f1f44ac3e9">dt_izbs_id</a></td></tr>
+<tr class="memdesc:a7ab23358d53bece2eae4a8f1f44ac3e9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memory datatype identifier (for "iZbs" dataset in "/grid") <br /></td></tr>
 <tr class="separator:a7ab23358d53bece2eae4a8f1f44ac3e9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a408867ce41bd3a4a323610d02fd3dc04"><td class="memItemLeft" align="right" valign="top"><a id="a408867ce41bd3a4a323610d02fd3dc04"></a>
-integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>dt_irbs_id</b></td></tr>
+integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a408867ce41bd3a4a323610d02fd3dc04">dt_irbs_id</a></td></tr>
+<tr class="memdesc:a408867ce41bd3a4a323610d02fd3dc04"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memory datatype identifier (for "iRbs" dataset in "/grid") <br /></td></tr>
 <tr class="separator:a408867ce41bd3a4a323610d02fd3dc04"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3295ae5329149280f51fc5a7f7758931"><td class="memItemLeft" align="right" valign="top"><a id="a3295ae5329149280f51fc5a7f7758931"></a>
-integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>dt_izbc_id</b></td></tr>
+integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a3295ae5329149280f51fc5a7f7758931">dt_izbc_id</a></td></tr>
+<tr class="memdesc:a3295ae5329149280f51fc5a7f7758931"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memory datatype identifier (for "iZbc" dataset in "/grid") <br /></td></tr>
 <tr class="separator:a3295ae5329149280f51fc5a7f7758931"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a32baad755745f450c2c0df28d93b214d"><td class="memItemLeft" align="right" valign="top"><a id="a32baad755745f450c2c0df28d93b214d"></a>
-integer, parameter&#160;</td><td class="memItemRight" valign="bottom"><b>rankp</b> =3</td></tr>
+integer, parameter&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a32baad755745f450c2c0df28d93b214d">rankp</a> =3</td></tr>
+<tr class="memdesc:a32baad755745f450c2c0df28d93b214d"><td class="mdescLeft">&#160;</td><td class="mdescRight">rank of Poincare data <br /></td></tr>
 <tr class="separator:a32baad755745f450c2c0df28d93b214d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0c62896edb439e7c04d414d94883a6c4"><td class="memItemLeft" align="right" valign="top"><a id="a0c62896edb439e7c04d414d94883a6c4"></a>
-integer, parameter&#160;</td><td class="memItemRight" valign="bottom"><b>rankt</b> =2</td></tr>
+integer, parameter&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a0c62896edb439e7c04d414d94883a6c4">rankt</a> =2</td></tr>
+<tr class="memdesc:a0c62896edb439e7c04d414d94883a6c4"><td class="mdescLeft">&#160;</td><td class="mdescRight">rank of rotational transform data <br /></td></tr>
 <tr class="separator:a0c62896edb439e7c04d414d94883a6c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8aa2c9b5d0238aaf1842bb115a72d5b4"><td class="memItemLeft" align="right" valign="top"><a id="a8aa2c9b5d0238aaf1842bb115a72d5b4"></a>
-integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>grppoincare</b></td></tr>
+integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a8aa2c9b5d0238aaf1842bb115a72d5b4">grppoincare</a></td></tr>
+<tr class="memdesc:a8aa2c9b5d0238aaf1842bb115a72d5b4"><td class="mdescLeft">&#160;</td><td class="mdescRight">group for Poincare data <br /></td></tr>
 <tr class="separator:a8aa2c9b5d0238aaf1842bb115a72d5b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a34c8921189a3a5764df31709ec0b2e9b"><td class="memItemLeft" align="right" valign="top"><a id="a34c8921189a3a5764df31709ec0b2e9b"></a>
-integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>dset_id_t</b></td></tr>
+integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a34c8921189a3a5764df31709ec0b2e9b">dset_id_t</a></td></tr>
+<tr class="memdesc:a34c8921189a3a5764df31709ec0b2e9b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dataset identifier for \(\theta\) coordinate of field line following. <br /></td></tr>
 <tr class="separator:a34c8921189a3a5764df31709ec0b2e9b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af735aa2479d9c22f989c26ae9563f32e"><td class="memItemLeft" align="right" valign="top"><a id="af735aa2479d9c22f989c26ae9563f32e"></a>
-integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>dset_id_s</b></td></tr>
+integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#af735aa2479d9c22f989c26ae9563f32e">dset_id_s</a></td></tr>
+<tr class="memdesc:af735aa2479d9c22f989c26ae9563f32e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dataset identifier for \(s\) coordinate of field line following. <br /></td></tr>
 <tr class="separator:af735aa2479d9c22f989c26ae9563f32e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa61c791364563059d731c7c20458f55f"><td class="memItemLeft" align="right" valign="top"><a id="aa61c791364563059d731c7c20458f55f"></a>
-integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>dset_id_r</b></td></tr>
+integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#aa61c791364563059d731c7c20458f55f">dset_id_r</a></td></tr>
+<tr class="memdesc:aa61c791364563059d731c7c20458f55f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dataset identifier for \(R\) coordinate of field line following. <br /></td></tr>
 <tr class="separator:aa61c791364563059d731c7c20458f55f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a27109e3805b8e5855c89caa32c20783f"><td class="memItemLeft" align="right" valign="top"><a id="a27109e3805b8e5855c89caa32c20783f"></a>
-integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>dset_id_z</b></td></tr>
+integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a27109e3805b8e5855c89caa32c20783f">dset_id_z</a></td></tr>
+<tr class="memdesc:a27109e3805b8e5855c89caa32c20783f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dataset identifier for \(Z\) coordinate of field line following. <br /></td></tr>
 <tr class="separator:a27109e3805b8e5855c89caa32c20783f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af2f4e7f97ed94439c472bad084d3b916"><td class="memItemLeft" align="right" valign="top"><a id="af2f4e7f97ed94439c472bad084d3b916"></a>
-integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>dset_id_success</b></td></tr>
+integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#af2f4e7f97ed94439c472bad084d3b916">dset_id_success</a></td></tr>
+<tr class="memdesc:af2f4e7f97ed94439c472bad084d3b916"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dataset identifier for success flag of trajectories to follow. <br /></td></tr>
 <tr class="separator:af2f4e7f97ed94439c472bad084d3b916"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a98d088d91590a7334ffbeb4b0167b0c6"><td class="memItemLeft" align="right" valign="top"><a id="a98d088d91590a7334ffbeb4b0167b0c6"></a>
-integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>filespace_t</b></td></tr>
+integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a98d088d91590a7334ffbeb4b0167b0c6">filespace_t</a></td></tr>
+<tr class="memdesc:a98d088d91590a7334ffbeb4b0167b0c6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dataspace identifier in file for \(\theta\) coordinate of field line following. <br /></td></tr>
 <tr class="separator:a98d088d91590a7334ffbeb4b0167b0c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab0a49bfbd7b84b0d427e9cacbf9c8533"><td class="memItemLeft" align="right" valign="top"><a id="ab0a49bfbd7b84b0d427e9cacbf9c8533"></a>
-integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>filespace_s</b></td></tr>
+integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#ab0a49bfbd7b84b0d427e9cacbf9c8533">filespace_s</a></td></tr>
+<tr class="memdesc:ab0a49bfbd7b84b0d427e9cacbf9c8533"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dataspace identifier in file for \(s\) coordinate of field line following. <br /></td></tr>
 <tr class="separator:ab0a49bfbd7b84b0d427e9cacbf9c8533"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac044da6c791e1cd46b1ff9ce13eaad13"><td class="memItemLeft" align="right" valign="top"><a id="ac044da6c791e1cd46b1ff9ce13eaad13"></a>
-integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>filespace_r</b></td></tr>
+integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#ac044da6c791e1cd46b1ff9ce13eaad13">filespace_r</a></td></tr>
+<tr class="memdesc:ac044da6c791e1cd46b1ff9ce13eaad13"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dataspace identifier in file for \(R\) coordinate of field line following. <br /></td></tr>
 <tr class="separator:ac044da6c791e1cd46b1ff9ce13eaad13"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8fe47791325a0b00c0d6d41baf30c9f0"><td class="memItemLeft" align="right" valign="top"><a id="a8fe47791325a0b00c0d6d41baf30c9f0"></a>
-integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>filespace_z</b></td></tr>
+integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a8fe47791325a0b00c0d6d41baf30c9f0">filespace_z</a></td></tr>
+<tr class="memdesc:a8fe47791325a0b00c0d6d41baf30c9f0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dataspace identifier in file for \(Z\) coordinate of field line following. <br /></td></tr>
 <tr class="separator:a8fe47791325a0b00c0d6d41baf30c9f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3a8e24b4cc609f7f5fb91d5e1e15973f"><td class="memItemLeft" align="right" valign="top"><a id="a3a8e24b4cc609f7f5fb91d5e1e15973f"></a>
-integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>filespace_success</b></td></tr>
+integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a3a8e24b4cc609f7f5fb91d5e1e15973f">filespace_success</a></td></tr>
+<tr class="memdesc:a3a8e24b4cc609f7f5fb91d5e1e15973f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dataspace identifier in file for success flag of trajectories to follow. <br /></td></tr>
 <tr class="separator:a3a8e24b4cc609f7f5fb91d5e1e15973f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9a625748fd5252893c741db036e2dff1"><td class="memItemLeft" align="right" valign="top"><a id="a9a625748fd5252893c741db036e2dff1"></a>
-integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>memspace_t</b></td></tr>
+integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a9a625748fd5252893c741db036e2dff1">memspace_t</a></td></tr>
+<tr class="memdesc:a9a625748fd5252893c741db036e2dff1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dataspace identifier in memory for \(\theta\) coordinate of field line following. <br /></td></tr>
 <tr class="separator:a9a625748fd5252893c741db036e2dff1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac7c0f9df7cd63c2091b214043d669dbd"><td class="memItemLeft" align="right" valign="top"><a id="ac7c0f9df7cd63c2091b214043d669dbd"></a>
-integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>memspace_s</b></td></tr>
+integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#ac7c0f9df7cd63c2091b214043d669dbd">memspace_s</a></td></tr>
+<tr class="memdesc:ac7c0f9df7cd63c2091b214043d669dbd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dataspace identifier in memory for \(s\) coordinate of field line following. <br /></td></tr>
 <tr class="separator:ac7c0f9df7cd63c2091b214043d669dbd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:add03fc963ec90d8c74df8ef0cea0451b"><td class="memItemLeft" align="right" valign="top"><a id="add03fc963ec90d8c74df8ef0cea0451b"></a>
-integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>memspace_r</b></td></tr>
+integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#add03fc963ec90d8c74df8ef0cea0451b">memspace_r</a></td></tr>
+<tr class="memdesc:add03fc963ec90d8c74df8ef0cea0451b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dataspace identifier in memory for \(R\) coordinate of field line following. <br /></td></tr>
 <tr class="separator:add03fc963ec90d8c74df8ef0cea0451b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acf75db08fd540b0523580522ea4c4eef"><td class="memItemLeft" align="right" valign="top"><a id="acf75db08fd540b0523580522ea4c4eef"></a>
-integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>memspace_z</b></td></tr>
+integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#acf75db08fd540b0523580522ea4c4eef">memspace_z</a></td></tr>
+<tr class="memdesc:acf75db08fd540b0523580522ea4c4eef"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dataspace identifier in memory for \(Z\) coordinate of field line following. <br /></td></tr>
 <tr class="separator:acf75db08fd540b0523580522ea4c4eef"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aead22bcfdccedc28232496c2fd5684a8"><td class="memItemLeft" align="right" valign="top"><a id="aead22bcfdccedc28232496c2fd5684a8"></a>
-integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>memspace_success</b></td></tr>
+integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#aead22bcfdccedc28232496c2fd5684a8">memspace_success</a></td></tr>
+<tr class="memdesc:aead22bcfdccedc28232496c2fd5684a8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dataspace identifier in memory for success flag of trajectories to follow. <br /></td></tr>
 <tr class="separator:aead22bcfdccedc28232496c2fd5684a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7d3acffac1aa1c086a71dac56b026ebc"><td class="memItemLeft" align="right" valign="top"><a id="a7d3acffac1aa1c086a71dac56b026ebc"></a>
-integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>grptransform</b></td></tr>
+integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a7d3acffac1aa1c086a71dac56b026ebc">grptransform</a></td></tr>
+<tr class="memdesc:a7d3acffac1aa1c086a71dac56b026ebc"><td class="mdescLeft">&#160;</td><td class="mdescRight">group for rotational transform data <br /></td></tr>
 <tr class="separator:a7d3acffac1aa1c086a71dac56b026ebc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:affd20b49a682785ec2fa48c81167607b"><td class="memItemLeft" align="right" valign="top"><a id="affd20b49a682785ec2fa48c81167607b"></a>
-integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>dset_id_diotadxup</b></td></tr>
+integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#affd20b49a682785ec2fa48c81167607b">dset_id_diotadxup</a></td></tr>
+<tr class="memdesc:affd20b49a682785ec2fa48c81167607b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dataset identifier for diotadxup (derivative of rotational transform ?) <br /></td></tr>
 <tr class="separator:affd20b49a682785ec2fa48c81167607b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a503f770bb162621cfa369922c04282e8"><td class="memItemLeft" align="right" valign="top"><a id="a503f770bb162621cfa369922c04282e8"></a>
-integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>dset_id_fiota</b></td></tr>
+integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a503f770bb162621cfa369922c04282e8">dset_id_fiota</a></td></tr>
+<tr class="memdesc:a503f770bb162621cfa369922c04282e8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dataset identifier for fiota ( rotational transform ?) <br /></td></tr>
 <tr class="separator:a503f770bb162621cfa369922c04282e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af5c1be99fcf8b487d6a44ad9efd17cd0"><td class="memItemLeft" align="right" valign="top"><a id="af5c1be99fcf8b487d6a44ad9efd17cd0"></a>
-integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>filespace_diotadxup</b></td></tr>
+integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#af5c1be99fcf8b487d6a44ad9efd17cd0">filespace_diotadxup</a></td></tr>
+<tr class="memdesc:af5c1be99fcf8b487d6a44ad9efd17cd0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dataspace identifier in file for diotadxup. <br /></td></tr>
 <tr class="separator:af5c1be99fcf8b487d6a44ad9efd17cd0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae0ae88a7655d16337c8eef62464538af"><td class="memItemLeft" align="right" valign="top"><a id="ae0ae88a7655d16337c8eef62464538af"></a>
-integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>filespace_fiota</b></td></tr>
+integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#ae0ae88a7655d16337c8eef62464538af">filespace_fiota</a></td></tr>
+<tr class="memdesc:ae0ae88a7655d16337c8eef62464538af"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dataspace identifier in file for fiota. <br /></td></tr>
 <tr class="separator:ae0ae88a7655d16337c8eef62464538af"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab0ebd0361b9856beacb3b5683c2f8c6e"><td class="memItemLeft" align="right" valign="top"><a id="ab0ebd0361b9856beacb3b5683c2f8c6e"></a>
-integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>memspace_diotadxup</b></td></tr>
+integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#ab0ebd0361b9856beacb3b5683c2f8c6e">memspace_diotadxup</a></td></tr>
+<tr class="memdesc:ab0ebd0361b9856beacb3b5683c2f8c6e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dataspace identifier in memory for diotadxup. <br /></td></tr>
 <tr class="separator:ab0ebd0361b9856beacb3b5683c2f8c6e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0433087900600ccdd17875e8562621a9"><td class="memItemLeft" align="right" valign="top"><a id="a0433087900600ccdd17875e8562621a9"></a>
-integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>memspace_fiota</b></td></tr>
+integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a0433087900600ccdd17875e8562621a9">memspace_fiota</a></td></tr>
+<tr class="memdesc:a0433087900600ccdd17875e8562621a9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dataspace identifier in memory for fiota. <br /></td></tr>
 <tr class="separator:a0433087900600ccdd17875e8562621a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af47346803d58b1efc14853d63395d633"><td class="memItemLeft" align="right" valign="top"><a id="af47346803d58b1efc14853d63395d633"></a>
-character(len=15), parameter&#160;</td><td class="memItemRight" valign="bottom"><b>aname</b> = &quot;description&quot;</td></tr>
+character(len=15), parameter&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#af47346803d58b1efc14853d63395d633">aname</a> = &quot;description&quot;</td></tr>
+<tr class="memdesc:af47346803d58b1efc14853d63395d633"><td class="mdescLeft">&#160;</td><td class="mdescRight">Attribute name for descriptive info. <br /></td></tr>
 <tr class="separator:af47346803d58b1efc14853d63395d633"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a618370143614330d1ec8f5f6c9ba4510"><td class="memItemLeft" align="right" valign="top"><a id="a618370143614330d1ec8f5f6c9ba4510"></a>
-integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>attr_id</b></td></tr>
+integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a618370143614330d1ec8f5f6c9ba4510">attr_id</a></td></tr>
+<tr class="memdesc:a618370143614330d1ec8f5f6c9ba4510"><td class="mdescLeft">&#160;</td><td class="mdescRight">Attribute identifier. <br /></td></tr>
 <tr class="separator:a618370143614330d1ec8f5f6c9ba4510"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae6a46c63c7c8131b6e054ef4195107ca"><td class="memItemLeft" align="right" valign="top"><a id="ae6a46c63c7c8131b6e054ef4195107ca"></a>
-integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>aspace_id</b></td></tr>
+integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#ae6a46c63c7c8131b6e054ef4195107ca">aspace_id</a></td></tr>
+<tr class="memdesc:ae6a46c63c7c8131b6e054ef4195107ca"><td class="mdescLeft">&#160;</td><td class="mdescRight">Attribute Dataspace identifier. <br /></td></tr>
 <tr class="separator:ae6a46c63c7c8131b6e054ef4195107ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a24a88255ab66f4eecfdfdf48de7696cd"><td class="memItemLeft" align="right" valign="top"><a id="a24a88255ab66f4eecfdfdf48de7696cd"></a>
-integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>atype_id</b></td></tr>
+integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a24a88255ab66f4eecfdfdf48de7696cd">atype_id</a></td></tr>
+<tr class="memdesc:a24a88255ab66f4eecfdfdf48de7696cd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Attribute Datatype identifier. <br /></td></tr>
 <tr class="separator:a24a88255ab66f4eecfdfdf48de7696cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a23fb8547b0ca23eaa17ae9f40c5ddcd8"><td class="memItemLeft" align="right" valign="top"><a id="a23fb8547b0ca23eaa17ae9f40c5ddcd8"></a>
-integer, parameter&#160;</td><td class="memItemRight" valign="bottom"><b>arank</b> = 1</td></tr>
+integer, parameter&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a23fb8547b0ca23eaa17ae9f40c5ddcd8">arank</a> = 1</td></tr>
+<tr class="memdesc:a23fb8547b0ca23eaa17ae9f40c5ddcd8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Attribure rank. <br /></td></tr>
 <tr class="separator:a23fb8547b0ca23eaa17ae9f40c5ddcd8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac5c238d16bfbfe7ede4845b8f99c12c6"><td class="memItemLeft" align="right" valign="top"><a id="ac5c238d16bfbfe7ede4845b8f99c12c6"></a>
-integer(hsize_t), dimension(arank)&#160;</td><td class="memItemRight" valign="bottom"><b>adims</b> = (/1/)</td></tr>
+integer(hsize_t), dimension(<a class="el" href="namespacesphdf5.html#a23fb8547b0ca23eaa17ae9f40c5ddcd8">arank</a>)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#ac5c238d16bfbfe7ede4845b8f99c12c6">adims</a> = (/1/)</td></tr>
+<tr class="memdesc:ac5c238d16bfbfe7ede4845b8f99c12c6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Attribute dimension. <br /></td></tr>
 <tr class="separator:ac5c238d16bfbfe7ede4845b8f99c12c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a75fd69ace5e850b8a1ebfa398aa4ddaf"><td class="memItemLeft" align="right" valign="top"><a id="a75fd69ace5e850b8a1ebfa398aa4ddaf"></a>
-integer(size_t)&#160;</td><td class="memItemRight" valign="bottom"><b>attrlen</b></td></tr>
+integer(size_t)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a75fd69ace5e850b8a1ebfa398aa4ddaf">attrlen</a></td></tr>
+<tr class="memdesc:a75fd69ace5e850b8a1ebfa398aa4ddaf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Length of the attribute string. <br /></td></tr>
 <tr class="separator:a75fd69ace5e850b8a1ebfa398aa4ddaf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a50eb8663864d8413e9864e123545eb16"><td class="memItemLeft" align="right" valign="top"><a id="a50eb8663864d8413e9864e123545eb16"></a>
-character(len=:), allocatable&#160;</td><td class="memItemRight" valign="bottom"><b>attr_data</b></td></tr>
+character(len=:), allocatable&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a50eb8663864d8413e9864e123545eb16">attr_data</a></td></tr>
+<tr class="memdesc:a50eb8663864d8413e9864e123545eb16"><td class="mdescLeft">&#160;</td><td class="mdescRight">Attribute data. <br /></td></tr>
 <tr class="separator:a50eb8663864d8413e9864e123545eb16"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>writing the HDF5 output file </p>
-</div><h2 class="groupheader">Function/Subroutine Documentation</h2>
-<a id="a47186186c9418cd913ee9c98b5668642"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a47186186c9418cd913ee9c98b5668642">&#9670;&nbsp;</a></span>init_flt_output()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">subroutine sphdf5::init_flt_output </td>
-          <td>(</td>
-          <td class="paramtype">integer, intent(in)&#160;</td>
-          <td class="paramname"><em>numTrajTotal</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>init field line tracing output group and create array datasets </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">numTrajTotal</td><td>total number of Poincare trajectories </td></tr>
-  </table>
-  </dd>
-</dl>
-
-<p class="reference">References <a class="el" href="group__grp__global__diagnostics.html#ga1352151a16c55ca06c613474753e4acc">inputlist::nppts</a>, and <a class="el" href="group__grp__fourier__transform.html#gaa91566c55f28df38e46ffc19e60f766f">allglobal::nz</a>.</p>
-
-<p class="reference">Referenced by <a class="el" href="group__grp__diagnostics.html#gad67931244268a09bd077dae8910c7096">pp00aa()</a>.</p>
-<div class="dynheader">
-Here is the caller graph for this function:</div>
-<div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="namespacesphdf5_a47186186c9418cd913ee9c98b5668642_icgraph.svg" width="650" height="100"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
-</div>
-</div>
-
-</div>
-</div>
-<a id="a14195bd206b7f6a7f05d4d6fc4b50f42"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a14195bd206b7f6a7f05d4d6fc4b50f42">&#9670;&nbsp;</a></span>write_poincare()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">subroutine sphdf5::write_poincare </td>
-          <td>(</td>
-          <td class="paramtype">integer, intent(in)&#160;</td>
-          <td class="paramname"><em>offset</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real, dimension(:,:,:), intent(in)&#160;</td>
-          <td class="paramname"><em>data</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">integer, dimension(:), intent(in)&#160;</td>
-          <td class="paramname"><em>success</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>write a hyperslab of Poincare data </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">offset</td><td></td></tr>
-    <tr><td class="paramname">data</td><td></td></tr>
-    <tr><td class="paramname">success</td><td></td></tr>
-  </table>
-  </dd>
-</dl>
-
-<p class="reference">References <a class="el" href="group__grp__global__diagnostics.html#ga1352151a16c55ca06c613474753e4acc">inputlist::nppts</a>, and <a class="el" href="group__grp__fourier__transform.html#gaa91566c55f28df38e46ffc19e60f766f">allglobal::nz</a>.</p>
-
-<p class="reference">Referenced by <a class="el" href="group__grp__diagnostics.html#gad67931244268a09bd077dae8910c7096">pp00aa()</a>.</p>
-<div class="dynheader">
-Here is the caller graph for this function:</div>
-<div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="namespacesphdf5_a14195bd206b7f6a7f05d4d6fc4b50f42_icgraph.svg" width="656" height="100"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
-</div>
-</div>
-
-</div>
-</div>
-<a id="a8f01c5e4a21c5af2c39620f24e598095"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8f01c5e4a21c5af2c39620f24e598095">&#9670;&nbsp;</a></span>write_transform()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">subroutine sphdf5::write_transform </td>
-          <td>(</td>
-          <td class="paramtype">integer, intent(in)&#160;</td>
-          <td class="paramname"><em>offset</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">integer, intent(in)&#160;</td>
-          <td class="paramname"><em>length</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">integer, intent(in)&#160;</td>
-          <td class="paramname"><em>lvol</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real, dimension(:), intent(in)&#160;</td>
-          <td class="paramname"><em>diotadxup</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real, dimension(:,:), intent(in)&#160;</td>
-          <td class="paramname"><em>fiota</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>write rotational transform output from field line following </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">offset</td><td></td></tr>
-    <tr><td class="paramname">length</td><td></td></tr>
-    <tr><td class="paramname">lvol</td><td></td></tr>
-    <tr><td class="paramname">diotadxup</td><td></td></tr>
-    <tr><td class="paramname">fiota</td><td></td></tr>
-  </table>
-  </dd>
-</dl>
-
-<p class="reference">Referenced by <a class="el" href="group__grp__diagnostics.html#gad67931244268a09bd077dae8910c7096">pp00aa()</a>.</p>
-<div class="dynheader">
-Here is the caller graph for this function:</div>
-<div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="namespacesphdf5_a8f01c5e4a21c5af2c39620f24e598095_icgraph.svg" width="663" height="100"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
-</div>
-</div>
-
-</div>
-</div>
-<a id="a2f9e9c50084175e5174b1e1070e24d73"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2f9e9c50084175e5174b1e1070e24d73">&#9670;&nbsp;</a></span>write_vector_potential()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">subroutine sphdf5::write_vector_potential </td>
-          <td>(</td>
-          <td class="paramtype">integer, intent(in)&#160;</td>
-          <td class="paramname"><em>sumLrad</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real, dimension(:,:), intent(in)&#160;</td>
-          <td class="paramname"><em>allAte</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real, dimension(:,:), intent(in)&#160;</td>
-          <td class="paramname"><em>allAze</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real, dimension(:,:), intent(in)&#160;</td>
-          <td class="paramname"><em>allAto</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real, dimension(:,:), intent(in)&#160;</td>
-          <td class="paramname"><em>allAzo</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>write the magnetic vector potential Fourier harmonics to the output file group /vector_potential </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">sumLrad</td><td></td></tr>
-    <tr><td class="paramname">allAte</td><td></td></tr>
-    <tr><td class="paramname">allAze</td><td></td></tr>
-    <tr><td class="paramname">allAto</td><td></td></tr>
-    <tr><td class="paramname">allAzo</td><td></td></tr>
-  </table>
-  </dd>
-</dl>
-
-<p class="reference">References <a class="el" href="group__grp__fourier__repr.html#ga3b3045dc5c13351cded37581bdfb3400">allglobal::mn</a>.</p>
-
-<p class="reference">Referenced by <a class="el" href="group__grp__output.html#ga08d6a254dbc3d9d40ff1cf0bdfdf2148">ra00aa()</a>.</p>
-<div class="dynheader">
-Here is the caller graph for this function:</div>
-<div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="namespacesphdf5_a2f9e9c50084175e5174b1e1070e24d73_icgraph.svg" width="856" height="131"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
-</div>
-</div>
-
-</div>
-</div>
-</div><!-- contents -->
+</div></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->

@@ -81,7 +81,7 @@
 <!-- Node50 -->
 <g id="node50" class="node">
 <title>Node50</title>
-<g id="a_node50"><a xlink:href="namespacesphdf5.html#ade76c03b9b11be2a12d3ddd32e77a6ae" target="_top" xlink:title="write convergence output (evolution of interface geometry, force, etc); was in global....">
+<g id="a_node50"><a xlink:href="group__grp__output.html#gade76c03b9b11be2a12d3ddd32e77a6ae" target="_top" xlink:title="Write convergence output (evolution of interface geometry, force, etc).">
 <polygon fill="white" stroke="black" points="256,-121 256,-151 388,-151 388,-121 256,-121"/>
 <text text-anchor="start" x="264" y="-139" font-family="Helvetica,sans-Serif" font-size="10.00">sphdf5::write_convergence</text>
 <text text-anchor="middle" x="322" y="-128" font-family="Helvetica,sans-Serif" font-size="10.00">_output</text>

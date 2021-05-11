@@ -8,8 +8,8 @@
 <area shape="rect" id="node15" href="$dfp200_8f90.html#a55ea75395f8c71731451e1add3720c7e" title="Given the field consistent with the constraints and the geometry, computes local quantites related to..." alt="" coords="381,245,443,272"/>
 <area shape="rect" id="node17" href="$dfp200_8f90.html#a73ddf39ecc5228201fb643779e17cd36" title="Evaluate mu and psip derivatives and store them in dmupfdx." alt="" coords="192,423,319,449"/>
 <area shape="rect" id="node29" href="$group__grp__integrals.html#ga400af9e33dd5465ff9a4bba9fbf91108" title="Calculates volume integrals of Chebyshev polynomials and metric element products." alt="" coords="1470,397,1538,424"/>
-<area shape="rect" id="node38" href="$namespacesphdf5.html#a593e99355c8ceabe56a566e9d468dbd9" title="final output" alt="" coords="1455,1461,1553,1488"/>
-<area shape="rect" id="node39" href="$namespacesphdf5.html#afed4d951aec99f2ebeba68c465eb9861" title="mirror input variables into output file" alt="" coords="1148,1513,1283,1554"/>
+<area shape="rect" id="node38" href="$group__grp__output.html#ga593e99355c8ceabe56a566e9d468dbd9" title="Write the final state of the equilibrium to the output file." alt="" coords="1455,1461,1553,1488"/>
+<area shape="rect" id="node39" href="$group__grp__output.html#gafed4d951aec99f2ebeba68c465eb9861" title="Mirror input variables into output file." alt="" coords="1148,1513,1283,1554"/>
 <area shape="rect" id="node40" href="$group__grp__diagnostics.html#ga831aed2458140e266ee4d37461dd5350" title="Constructs Poincaré plot and &quot;approximate&quot; rotational&#45;transform (for single field line)." alt="" coords="1896,1360,1960,1387"/>
 <area shape="rect" id="node3" href="$metrix_8f90.html#a80c802cda076dd9e7031bc5f9098c175" title="compute guvijsave" alt="" coords="1713,596,1848,623"/>
 <area shape="rect" id="node30" href="$group__grp__currents.html#gacaf4411e0ba378631dcd2ccb3752e452" title="Computes the plasma current, , and the &quot;linking&quot; current, ." alt="" coords="1339,701,1398,728"/>
@@ -18,7 +18,7 @@
 <area shape="rect" id="node33" href="$group__grp__local__force.html#ga7a5316b9e5eeb42811aa6bccd29a132f" title="Computes , and the spectral condensation constraints if required, on the interfaces,..." alt="" coords="548,43,603,69"/>
 <area shape="rect" id="node34" href="$group__grp__initialization.html#ga28628de0fdb3b3497668007d8d0643bd" title="Allocates and initializes internal arrays." alt="" coords="707,1208,766,1235"/>
 <area shape="rect" id="node35" href="$group__grp__coord__axis.html#ga564281be4d9806d0688a717314ad748f" title="The coordinate axis is assigned via a poloidal average over an arbitrary surface." alt="" coords="985,1005,1039,1032"/>
-<area shape="rect" id="node37" href="$namespacesphdf5.html#a17e65b951634f7098213fd071d905482" title="write the magnetic field on a grid; previously the (wflag.eq.1) part of globals.f90/wrtend to write ...." alt="" coords="1719,1259,1842,1285"/>
+<area shape="rect" id="node37" href="$group__grp__output.html#ga17e65b951634f7098213fd071d905482" title="Write the magnetic field on a grid." alt="" coords="1719,1259,1842,1285"/>
 <area shape="rect" id="node22" href="$intghs_8f90.html#a21d3b7106371783302e68297f7797e9f" title="Calculates volume integrals of Chebyshev polynomials and covariant field products." alt="" coords="1605,543,1662,569"/>
 <area shape="rect" id="node6" href="$namespaceallglobal.html#a7824bc37519fe88336534ce90ab2af16" title=" " alt="" coords="499,955,651,981"/>
 <area shape="rect" id="node10" href="$group__grp__force__driver.html#gabbc245b3884ee8d8d3e2a52f25149f78" title="fcn1" alt="" coords="552,853,599,880"/>
@@ -27,7 +27,7 @@
 <area shape="rect" id="node19" href="$group__grp__diagnostics.html#ga7401b50ec10c6598ee4a8112717a63ec" title="Computes eigenvalues and eigenvectors of derivative matrix, ." alt="" coords="545,1107,605,1133"/>
 <area shape="rect" id="node20" href="$group__grp__conjugate__gradient.html#ga4d8415226e62a9fdb42b0fd0b464251e" title="Returns the energy functional and it&#39;s derivatives with respect to geometry." alt="" coords="543,752,607,779"/>
 <area shape="rect" id="node7" href="$xspech_8f90.html#aea782eae089760a491c2c54f9903abcc" title="Main program of SPEC." alt="" coords="381,1411,443,1437"/>
-<area shape="rect" id="node9" href="$namespacesphdf5.html#a0f962c09cd5d5eba99f1cba043cb3898" title="initialize the interface to the HDF5 library and open the output file" alt="" coords="5,1233,131,1260"/>
+<area shape="rect" id="node9" href="$group__grp__output.html#ga0f962c09cd5d5eba99f1cba043cb3898" title="Initialize the interface to the HDF5 library and open the output file." alt="" coords="5,1233,131,1260"/>
 <area shape="rect" id="node13" href="$group__grp__force__driver.html#ga382822b303cbf8c56d6f54dcb379caf2" title="read or write force&#45;derivative matrix" alt="" coords="212,853,299,880"/>
 <area shape="rect" id="node16" href="$dfp200_8f90.html#a7b64c7392b45d0042d8bd7379c0761a5" title="Evaluate the derivative of the square of the magnetic field modulus. Add spectral constraint derivati..." alt="" coords="206,195,305,221"/>
 <area shape="rect" id="node18" href="$dfp200_8f90.html#a5e56f1f4b1e6df11a9cffa6237c37469" title="This routine evaluates the value of the magnetic field once the interface is perturbed using matrix p..." alt="" coords="179,245,332,272"/>

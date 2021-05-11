@@ -21,7 +21,7 @@
 <!-- Node2 -->
 <g id="node2" class="node">
 <title>Node2</title>
-<g id="a_node2"><a xlink:href="namespacesphdf5.html#acd97a933d4239028dc8114b110655074" target="_top" xlink:title="finalize Poincare output">
+<g id="a_node2"><a xlink:href="group__grp__output.html#gacd97a933d4239028dc8114b110655074" target="_top" xlink:title="Finalize Poincare output.">
 <polygon fill="white" stroke="black" points="97,-153 97,-183 189,-183 189,-153 97,-153"/>
 <text text-anchor="start" x="105" y="-171" font-family="Helvetica,sans-Serif" font-size="10.00">sphdf5::finalize_flt</text>
 <text text-anchor="middle" x="143" y="-160" font-family="Helvetica,sans-Serif" font-size="10.00">_output</text>
@@ -37,7 +37,7 @@
 <!-- Node3 -->
 <g id="node3" class="node">
 <title>Node3</title>
-<g id="a_node3"><a xlink:href="namespacesphdf5.html#a47186186c9418cd913ee9c98b5668642" target="_top" xlink:title="init field line tracing output group and create array datasets">
+<g id="a_node3"><a xlink:href="group__grp__output.html#ga47186186c9418cd913ee9c98b5668642" target="_top" xlink:title="Initialize field line tracing output group and create array datasets.">
 <polygon fill="white" stroke="black" points="89,-114.5 89,-133.5 197,-133.5 197,-114.5 89,-114.5"/>
 <text text-anchor="middle" x="143" y="-121.5" font-family="Helvetica,sans-Serif" font-size="10.00">sphdf5::init_flt_output</text>
 </a>
@@ -67,7 +67,7 @@
 <!-- Node12 -->
 <g id="node12" class="node">
 <title>Node12</title>
-<g id="a_node12"><a xlink:href="namespacesphdf5.html#a14195bd206b7f6a7f05d4d6fc4b50f42" target="_top" xlink:title="write a hyperslab of Poincare data">
+<g id="a_node12"><a xlink:href="group__grp__output.html#ga14195bd206b7f6a7f05d4d6fc4b50f42" target="_top" xlink:title="Write a hyperslab of Poincare data corresponding to the output of one parallel worker.">
 <polygon fill="white" stroke="black" points="86.5,-38.5 86.5,-57.5 199.5,-57.5 199.5,-38.5 86.5,-38.5"/>
 <text text-anchor="middle" x="143" y="-45.5" font-family="Helvetica,sans-Serif" font-size="10.00">sphdf5::write_poincare</text>
 </a>
@@ -82,7 +82,7 @@
 <!-- Node13 -->
 <g id="node13" class="node">
 <title>Node13</title>
-<g id="a_node13"><a xlink:href="namespacesphdf5.html#a8f01c5e4a21c5af2c39620f24e598095" target="_top" xlink:title="write rotational transform output from field line following">
+<g id="a_node13"><a xlink:href="group__grp__output.html#ga8f01c5e4a21c5af2c39620f24e598095" target="_top" xlink:title="Write the rotational transform output from field line following.">
 <polygon fill="white" stroke="black" points="84,-0.5 84,-19.5 202,-19.5 202,-0.5 84,-0.5"/>
 <text text-anchor="middle" x="143" y="-7.5" font-family="Helvetica,sans-Serif" font-size="10.00">sphdf5::write_transform</text>
 </a>

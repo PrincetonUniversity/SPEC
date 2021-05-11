@@ -141,7 +141,7 @@
 <!-- Node41 -->
 <g id="node41" class="node">
 <title>Node41</title>
-<g id="a_node41"><a xlink:href="namespacesphdf5.html#a17e65b951634f7098213fd071d905482" target="_top" xlink:title="write the magnetic field on a grid; previously the (wflag.eq.1) part of globals.f90/wrtend to write ....">
+<g id="a_node41"><a xlink:href="group__grp__output.html#ga17e65b951634f7098213fd071d905482" target="_top" xlink:title="Write the magnetic field on a grid.">
 <polygon fill="white" stroke="black" points="1093,-28.5 1093,-47.5 1185,-47.5 1185,-28.5 1093,-28.5"/>
 <text text-anchor="middle" x="1139" y="-35.5" font-family="Helvetica,sans-Serif" font-size="10.00">sphdf5::write_grid</text>
 </a>
@@ -378,7 +378,7 @@
 <!-- Node8 -->
 <g id="node8" class="node">
 <title>Node8</title>
-<g id="a_node8"><a xlink:href="namespacesphdf5.html#a0f962c09cd5d5eba99f1cba043cb3898" target="_top" xlink:title="initialize the interface to the HDF5 library and open the output file">
+<g id="a_node8"><a xlink:href="group__grp__output.html#ga0f962c09cd5d5eba99f1cba043cb3898" target="_top" xlink:title="Initialize the interface to the HDF5 library and open the output file.">
 <polygon fill="white" stroke="black" points="0,-200.5 0,-219.5 94,-219.5 94,-200.5 0,-200.5"/>
 <text text-anchor="middle" x="47" y="-207.5" font-family="Helvetica,sans-Serif" font-size="10.00">sphdf5::init_outfile</text>
 </a>
@@ -879,7 +879,7 @@
 <!-- Node37 -->
 <g id="node37" class="node">
 <title>Node37</title>
-<g id="a_node37"><a xlink:href="namespacesphdf5.html#a593e99355c8ceabe56a566e9d468dbd9" target="_top" xlink:title="final output">
+<g id="a_node37"><a xlink:href="group__grp__output.html#ga593e99355c8ceabe56a566e9d468dbd9" target="_top" xlink:title="Write the final state of the equilibrium to the output file.">
 <polygon fill="white" stroke="black" points="539.5,-192.5 539.5,-211.5 613.5,-211.5 613.5,-192.5 539.5,-192.5"/>
 <text text-anchor="middle" x="576.5" y="-199.5" font-family="Helvetica,sans-Serif" font-size="10.00">sphdf5::hdfint</text>
 </a>
@@ -894,7 +894,7 @@
 <!-- Node38 -->
 <g id="node38" class="node">
 <title>Node38</title>
-<g id="a_node38"><a xlink:href="namespacesphdf5.html#afed4d951aec99f2ebeba68c465eb9861" target="_top" xlink:title="mirror input variables into output file">
+<g id="a_node38"><a xlink:href="group__grp__output.html#gafed4d951aec99f2ebeba68c465eb9861" target="_top" xlink:title="Mirror input variables into output file.">
 <polygon fill="white" stroke="black" points="526,-105 526,-135 627,-135 627,-105 526,-105"/>
 <text text-anchor="start" x="534" y="-123" font-family="Helvetica,sans-Serif" font-size="10.00">sphdf5::mirror_input</text>
 <text text-anchor="middle" x="576.5" y="-112" font-family="Helvetica,sans-Serif" font-size="10.00">_to_outfile</text>

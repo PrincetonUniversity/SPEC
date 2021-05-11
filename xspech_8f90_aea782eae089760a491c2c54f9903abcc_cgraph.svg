@@ -67,7 +67,7 @@
 <!-- Node51 -->
 <g id="node51" class="node">
 <title>Node51</title>
-<g id="a_node51"><a xlink:href="namespacesphdf5.html#adb720ea6408b8f7681bfb7f86a4b86f2" target="_top" xlink:title="Close all open HDF5 objects (we know of) and list any remaining still&#45;open objects.">
+<g id="a_node51"><a xlink:href="group__grp__output.html#gadb720ea6408b8f7681bfb7f86a4b86f2" target="_top" xlink:title="Close all open HDF5 objects (we know of) and list any remaining still&#45;open objects.">
 <polygon fill="white" stroke="black" points="93,-1658 93,-1677 197,-1677 197,-1658 93,-1658"/>
 <text text-anchor="middle" x="145" y="-1665" font-family="Helvetica,sans-Serif" font-size="10.00">sphdf5::finish_outfile</text>
 </a>
@@ -82,7 +82,7 @@
 <!-- Node52 -->
 <g id="node52" class="node">
 <title>Node52</title>
-<g id="a_node52"><a xlink:href="namespacesphdf5.html#a593e99355c8ceabe56a566e9d468dbd9" target="_top" xlink:title="final output">
+<g id="a_node52"><a xlink:href="group__grp__output.html#ga593e99355c8ceabe56a566e9d468dbd9" target="_top" xlink:title="Write the final state of the equilibrium to the output file.">
 <polygon fill="white" stroke="black" points="393,-196 393,-215 467,-215 467,-196 393,-196"/>
 <text text-anchor="middle" x="430" y="-203" font-family="Helvetica,sans-Serif" font-size="10.00">sphdf5::hdfint</text>
 </a>
@@ -97,7 +97,7 @@
 <!-- Node53 -->
 <g id="node53" class="node">
 <title>Node53</title>
-<g id="a_node53"><a xlink:href="namespacesphdf5.html#ab348ec00943ff875a1ebb965fb98841e" target="_top" xlink:title="prepare convergence evolution output">
+<g id="a_node53"><a xlink:href="group__grp__output.html#gab348ec00943ff875a1ebb965fb98841e" target="_top" xlink:title="Prepare convergence evolution output.">
 <polygon fill="white" stroke="black" points="83,-1347.5 83,-1377.5 207,-1377.5 207,-1347.5 83,-1347.5"/>
 <text text-anchor="start" x="91" y="-1365.5" font-family="Helvetica,sans-Serif" font-size="10.00">sphdf5::init_convergence</text>
 <text text-anchor="middle" x="145" y="-1354.5" font-family="Helvetica,sans-Serif" font-size="10.00">_output</text>
@@ -113,7 +113,7 @@
 <!-- Node54 -->
 <g id="node54" class="node">
 <title>Node54</title>
-<g id="a_node54"><a xlink:href="namespacesphdf5.html#a0f962c09cd5d5eba99f1cba043cb3898" target="_top" xlink:title="initialize the interface to the HDF5 library and open the output file">
+<g id="a_node54"><a xlink:href="group__grp__output.html#ga0f962c09cd5d5eba99f1cba043cb3898" target="_top" xlink:title="Initialize the interface to the HDF5 library and open the output file.">
 <polygon fill="white" stroke="black" points="98,-1253 98,-1272 192,-1272 192,-1253 98,-1253"/>
 <text text-anchor="middle" x="145" y="-1260" font-family="Helvetica,sans-Serif" font-size="10.00">sphdf5::init_outfile</text>
 </a>
@@ -173,7 +173,7 @@
 <!-- Node84 -->
 <g id="node84" class="node">
 <title>Node84</title>
-<g id="a_node84"><a xlink:href="namespacesphdf5.html#afed4d951aec99f2ebeba68c465eb9861" target="_top" xlink:title="mirror input variables into output file">
+<g id="a_node84"><a xlink:href="group__grp__output.html#gafed4d951aec99f2ebeba68c465eb9861" target="_top" xlink:title="Mirror input variables into output file.">
 <polygon fill="white" stroke="black" points="1893,-0.5 1893,-30.5 1994,-30.5 1994,-0.5 1893,-0.5"/>
 <text text-anchor="start" x="1901" y="-18.5" font-family="Helvetica,sans-Serif" font-size="10.00">sphdf5::mirror_input</text>
 <text text-anchor="middle" x="1943.5" y="-7.5" font-family="Helvetica,sans-Serif" font-size="10.00">_to_outfile</text>
@@ -204,7 +204,7 @@
 <!-- Node86 -->
 <g id="node86" class="node">
 <title>Node86</title>
-<g id="a_node86"><a xlink:href="namespacesphdf5.html#a17e65b951634f7098213fd071d905482" target="_top" xlink:title="write the magnetic field on a grid; previously the (wflag.eq.1) part of globals.f90/wrtend to write ....">
+<g id="a_node86"><a xlink:href="group__grp__output.html#ga17e65b951634f7098213fd071d905482" target="_top" xlink:title="Write the magnetic field on a grid.">
 <polygon fill="white" stroke="black" points="1497,-126 1497,-145 1589,-145 1589,-126 1497,-126"/>
 <text text-anchor="middle" x="1543" y="-133" font-family="Helvetica,sans-Serif" font-size="10.00">sphdf5::write_grid</text>
 </a>
@@ -1607,7 +1607,7 @@
 <!-- Node66 -->
 <g id="node66" class="node">
 <title>Node66</title>
-<g id="a_node66"><a xlink:href="namespacesphdf5.html#a2f9e9c50084175e5174b1e1070e24d73" target="_top" xlink:title="write the magnetic vector potential Fourier harmonics to the output file group /vector_potential">
+<g id="a_node66"><a xlink:href="group__grp__output.html#ga2f9e9c50084175e5174b1e1070e24d73" target="_top" xlink:title="Write the magnetic vector potential Fourier harmonics to the output file group /vector_potential .">
 <polygon fill="white" stroke="black" points="1251,-1696.5 1251,-1726.5 1355,-1726.5 1355,-1696.5 1251,-1696.5"/>
 <text text-anchor="start" x="1259" y="-1714.5" font-family="Helvetica,sans-Serif" font-size="10.00">sphdf5::write_vector</text>
 <text text-anchor="middle" x="1303" y="-1703.5" font-family="Helvetica,sans-Serif" font-size="10.00">_potential</text>
@@ -1761,7 +1761,7 @@
 <!-- Node73 -->
 <g id="node73" class="node">
 <title>Node73</title>
-<g id="a_node73"><a xlink:href="namespacesphdf5.html#ade76c03b9b11be2a12d3ddd32e77a6ae" target="_top" xlink:title="write convergence output (evolution of interface geometry, force, etc); was in global....">
+<g id="a_node73"><a xlink:href="group__grp__output.html#gade76c03b9b11be2a12d3ddd32e77a6ae" target="_top" xlink:title="Write convergence output (evolution of interface geometry, force, etc).">
 <polygon fill="white" stroke="black" points="584,-1212.5 584,-1242.5 716,-1242.5 716,-1212.5 584,-1212.5"/>
 <text text-anchor="start" x="592" y="-1230.5" font-family="Helvetica,sans-Serif" font-size="10.00">sphdf5::write_convergence</text>
 <text text-anchor="middle" x="650" y="-1219.5" font-family="Helvetica,sans-Serif" font-size="10.00">_output</text>
@@ -1837,7 +1837,7 @@
 <!-- Node78 -->
 <g id="node78" class="node">
 <title>Node78</title>
-<g id="a_node78"><a xlink:href="namespacesphdf5.html#acd97a933d4239028dc8114b110655074" target="_top" xlink:title="finalize Poincare output">
+<g id="a_node78"><a xlink:href="group__grp__output.html#gacd97a933d4239028dc8114b110655074" target="_top" xlink:title="Finalize Poincare output.">
 <polygon fill="white" stroke="black" points="1497,-164.5 1497,-194.5 1589,-194.5 1589,-164.5 1497,-164.5"/>
 <text text-anchor="start" x="1505" y="-182.5" font-family="Helvetica,sans-Serif" font-size="10.00">sphdf5::finalize_flt</text>
 <text text-anchor="middle" x="1543" y="-171.5" font-family="Helvetica,sans-Serif" font-size="10.00">_output</text>
@@ -1853,7 +1853,7 @@
 <!-- Node79 -->
 <g id="node79" class="node">
 <title>Node79</title>
-<g id="a_node79"><a xlink:href="namespacesphdf5.html#a47186186c9418cd913ee9c98b5668642" target="_top" xlink:title="init field line tracing output group and create array datasets">
+<g id="a_node79"><a xlink:href="group__grp__output.html#ga47186186c9418cd913ee9c98b5668642" target="_top" xlink:title="Initialize field line tracing output group and create array datasets.">
 <polygon fill="white" stroke="black" points="1489,-328 1489,-347 1597,-347 1597,-328 1489,-328"/>
 <text text-anchor="middle" x="1543" y="-335" font-family="Helvetica,sans-Serif" font-size="10.00">sphdf5::init_flt_output</text>
 </a>
@@ -1883,7 +1883,7 @@
 <!-- Node82 -->
 <g id="node82" class="node">
 <title>Node82</title>
-<g id="a_node82"><a xlink:href="namespacesphdf5.html#a14195bd206b7f6a7f05d4d6fc4b50f42" target="_top" xlink:title="write a hyperslab of Poincare data">
+<g id="a_node82"><a xlink:href="group__grp__output.html#ga14195bd206b7f6a7f05d4d6fc4b50f42" target="_top" xlink:title="Write a hyperslab of Poincare data corresponding to the output of one parallel worker.">
 <polygon fill="white" stroke="black" points="1486.5,-290 1486.5,-309 1599.5,-309 1599.5,-290 1486.5,-290"/>
 <text text-anchor="middle" x="1543" y="-297" font-family="Helvetica,sans-Serif" font-size="10.00">sphdf5::write_poincare</text>
 </a>
@@ -1898,7 +1898,7 @@
 <!-- Node83 -->
 <g id="node83" class="node">
 <title>Node83</title>
-<g id="a_node83"><a xlink:href="namespacesphdf5.html#a8f01c5e4a21c5af2c39620f24e598095" target="_top" xlink:title="write rotational transform output from field line following">
+<g id="a_node83"><a xlink:href="group__grp__output.html#ga8f01c5e4a21c5af2c39620f24e598095" target="_top" xlink:title="Write the rotational transform output from field line following.">
 <polygon fill="white" stroke="black" points="1484,-252 1484,-271 1602,-271 1602,-252 1484,-252"/>
 <text text-anchor="middle" x="1543" y="-259" font-family="Helvetica,sans-Serif" font-size="10.00">sphdf5::write_transform</text>
 </a>

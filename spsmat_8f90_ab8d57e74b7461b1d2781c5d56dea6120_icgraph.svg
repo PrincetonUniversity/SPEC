@@ -228,7 +228,7 @@
 <!-- Node8 -->
 <g id="node8" class="node">
 <title>Node8</title>
-<g id="a_node8"><a xlink:href="namespacesphdf5.html#a0f962c09cd5d5eba99f1cba043cb3898" target="_top" xlink:title="initialize the interface to the HDF5 library and open the output file">
+<g id="a_node8"><a xlink:href="group__grp__output.html#ga0f962c09cd5d5eba99f1cba043cb3898" target="_top" xlink:title="Initialize the interface to the HDF5 library and open the output file.">
 <polygon fill="white" stroke="black" points="0,-285.5 0,-304.5 94,-304.5 94,-285.5 0,-285.5"/>
 <text text-anchor="middle" x="47" y="-292.5" font-family="Helvetica,sans-Serif" font-size="10.00">sphdf5::init_outfile</text>
 </a>

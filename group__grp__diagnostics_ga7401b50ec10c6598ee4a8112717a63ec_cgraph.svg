@@ -1292,7 +1292,7 @@
 <!-- Node57 -->
 <g id="node57" class="node">
 <title>Node57</title>
-<g id="a_node57"><a xlink:href="namespacesphdf5.html#a2f9e9c50084175e5174b1e1070e24d73" target="_top" xlink:title="write the magnetic vector potential Fourier harmonics to the output file group /vector_potential">
+<g id="a_node57"><a xlink:href="group__grp__output.html#ga2f9e9c50084175e5174b1e1070e24d73" target="_top" xlink:title="Write the magnetic vector potential Fourier harmonics to the output file group /vector_potential .">
 <polygon fill="white" stroke="black" points="1263,-0.5 1263,-30.5 1367,-30.5 1367,-0.5 1263,-0.5"/>
 <text text-anchor="start" x="1271" y="-18.5" font-family="Helvetica,sans-Serif" font-size="10.00">sphdf5::write_vector</text>
 <text text-anchor="middle" x="1315" y="-7.5" font-family="Helvetica,sans-Serif" font-size="10.00">_potential</text>

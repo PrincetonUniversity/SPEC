@@ -11,7 +11,7 @@
 <area shape="rect" id="node43" href="$group__grp__transform.html#ga0e0447653b8da82f06748dd8831bc337" title="Calculates rotational transform given an arbitrary tangential field." alt="" coords="1409,5,1467,32"/>
 <area shape="rect" id="node3" href="$metrix_8f90.html#a80c802cda076dd9e7031bc5f9098c175" title="compute guvijsave" alt="" coords="1744,601,1879,628"/>
 <area shape="rect" id="node37" href="$group__grp__volume.html#gae4c62d20b8fef07f4471b5b0889ab005" title="Computes volume of each region; and, if required, the derivatives of the volume with respect to the i..." alt="" coords="1286,816,1350,843"/>
-<area shape="rect" id="node42" href="$namespacesphdf5.html#a17e65b951634f7098213fd071d905482" title="write the magnetic field on a grid; previously the (wflag.eq.1) part of globals.f90/wrtend to write ...." alt="" coords="707,917,829,944"/>
+<area shape="rect" id="node42" href="$group__grp__output.html#ga17e65b951634f7098213fd071d905482" title="Write the magnetic field on a grid." alt="" coords="707,917,829,944"/>
 <area shape="rect" id="node4" href="$dfp100_8f90.html#a17a3ac15cc83994394f7b4cc05e5898e" title="Split the work between MPI nodes and evaluate the global constraint." alt="" coords="914,360,975,387"/>
 <area shape="rect" id="node29" href="$group__grp__integrals.html#ga400af9e33dd5465ff9a4bba9fbf91108" title="Calculates volume integrals of Chebyshev polynomials and metric element products." alt="" coords="1114,563,1182,589"/>
 <area shape="rect" id="node5" href="$group__grp__global__force.html#ga38c9d3c50bd043707fefa5137c9dbf44" title="Calculates , where &#160;and , and ." alt="" coords="739,1127,797,1153"/>
@@ -25,7 +25,7 @@
 <area shape="rect" id="node19" href="$group__grp__diagnostics.html#ga7401b50ec10c6598ee4a8112717a63ec" title="Computes eigenvalues and eigenvectors of derivative matrix, ." alt="" coords="545,1373,605,1400"/>
 <area shape="rect" id="node20" href="$group__grp__conjugate__gradient.html#ga4d8415226e62a9fdb42b0fd0b464251e" title="Returns the energy functional and it&#39;s derivatives with respect to geometry." alt="" coords="543,1171,607,1197"/>
 <area shape="rect" id="node7" href="$xspech_8f90.html#aea782eae089760a491c2c54f9903abcc" title="Main program of SPEC." alt="" coords="381,917,443,944"/>
-<area shape="rect" id="node9" href="$namespacesphdf5.html#a0f962c09cd5d5eba99f1cba043cb3898" title="initialize the interface to the HDF5 library and open the output file" alt="" coords="5,1057,131,1084"/>
+<area shape="rect" id="node9" href="$group__grp__output.html#ga0f962c09cd5d5eba99f1cba043cb3898" title="Initialize the interface to the HDF5 library and open the output file." alt="" coords="5,1057,131,1084"/>
 <area shape="rect" id="node13" href="$group__grp__force__driver.html#ga382822b303cbf8c56d6f54dcb379caf2" title="read or write force&#45;derivative matrix" alt="" coords="212,1525,299,1552"/>
 <area shape="rect" id="node15" href="$dfp200_8f90.html#a55ea75395f8c71731451e1add3720c7e" title="Given the field consistent with the constraints and the geometry, computes local quantites related to..." alt="" coords="381,512,443,539"/>
 <area shape="rect" id="node16" href="$dfp200_8f90.html#a7b64c7392b45d0042d8bd7379c0761a5" title="Evaluate the derivative of the square of the magnetic field modulus. Add spectral constraint derivati..." alt="" coords="206,537,305,564"/>
@@ -38,8 +38,8 @@
 <area shape="rect" id="node26" href="$mp00ac_8f90.html#a304edac43f63d39dda4419b4d044eac5" title="run GMRES" alt="" coords="1400,247,1476,273"/>
 <area shape="rect" id="node28" href="$group__grp__solver__driver.html#gacad623d4c5c006e9ad10116372f92ad3" title="Constructs Beltrami field in given volume consistent with flux, helicity, rotational&#45;transform and/or..." alt="" coords="1114,309,1182,336"/>
 <area shape="rect" id="node36" href="$group__grp__packing.html#ga094e630c02686dd178749eb1efbf13fb" title="Packs, and unpacks, geometrical degrees of freedom; and sets coordinate axis." alt="" coords="915,1399,974,1425"/>
-<area shape="rect" id="node38" href="$namespacesphdf5.html#a593e99355c8ceabe56a566e9d468dbd9" title="final output" alt="" coords="719,841,817,868"/>
-<area shape="rect" id="node39" href="$namespacesphdf5.html#afed4d951aec99f2ebeba68c465eb9861" title="mirror input variables into output file" alt="" coords="877,801,1012,842"/>
+<area shape="rect" id="node38" href="$group__grp__output.html#ga593e99355c8ceabe56a566e9d468dbd9" title="Write the final state of the equilibrium to the output file." alt="" coords="719,841,817,868"/>
+<area shape="rect" id="node39" href="$group__grp__output.html#gafed4d951aec99f2ebeba68c465eb9861" title="Mirror input variables into output file." alt="" coords="877,801,1012,842"/>
 <area shape="rect" id="node40" href="$group__grp__diagnostics.html#ga831aed2458140e266ee4d37461dd5350" title="Constructs Poincaré plot and &quot;approximate&quot; rotational&#45;transform (for single field line)." alt="" coords="1116,917,1180,944"/>
 <area shape="rect" id="node41" href="$group__grp__diagnostics.html#gad67931244268a09bd077dae8910c7096" title="Constructs Poincaré plot and &quot;approximate&quot; rotational&#45;transform (driver)." alt="" coords="736,968,800,995"/>
 </map>
