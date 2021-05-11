@@ -353,8 +353,8 @@ subroutine preset
 
     enddo ! end of do;
 
-    ! have been allocated in read_inputlists_from_file
-    deallocate(mmRZRZ, nnRZRZ, allRZRZ)
+    ! Typically these arrays have been allocated in read_inputlists_from_file
+    if(allocated(mmRZRZ)) deallocate(mmRZRZ, nnRZRZ, allRZRZ)
 
    end select ! end select case( Linitialize );
 
