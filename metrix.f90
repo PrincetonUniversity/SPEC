@@ -1,11 +1,11 @@
 !> \defgroup grp_metrics Metric quantities
 !>
-!> \file metrix.f90
+!> \file
 !> \brief Calculates the metric quantities, \f$\sqrt g \, g^{\mu\nu}\f$, which are required for the energy and helicity integrals.
 
 !> \brief Calculates the metric quantities, \f$\sqrt g \, g^{\mu\nu}\f$, which are required for the energy and helicity integrals.
 !> \ingroup grp_metrics
-!> 
+!>
 !> **metrics**
 !>
 !> <ul>
@@ -35,20 +35,20 @@
 !> <li> After constructing the required quantities in real space, FFTs provided the required Fourier harmonics, which are returned through global.f90 .
 !>      (The "extended" Fourier resolution is used.) </li>
 !> </ul>
-subroutine metrix( lquad, lvol ) 
-  
+subroutine metrix( lquad, lvol )
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   use constants, only : zero, one
-  
+
   use numerical, only : small
-  
+
   use fileunits, only : ounit
-  
+
   use inputlist, only : Wmetrix
-  
+
   use cputiming, only : Tmetrix
-  
+
   use allglobal, only : myid, ncpu, cpus, &
                         dBdX, &
                         mn, im, in, mne, ime, ine, &
@@ -64,30 +64,30 @@ subroutine metrix( lquad, lvol )
                         gtzmne, gtzmno, &
                         gzzmne, gzzmno, &
                         guvijsave
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   LOCALS
-  
+
   INTEGER, intent(in) :: lvol, lquad
-  
+
   INTEGER             :: Lcurvature, ifail, ideriv, jquad
-  
+
   BEGIN( metrix )
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-  do jquad = 1, lquad  
+
+  do jquad = 1, lquad
 
     gvuij(1:Ntz,0,0) =   one
-    
+
     gvuij(1:Ntz,1,1) =   guvijsave(1:Ntz,1,1,jquad)
     gvuij(1:Ntz,1,2) =   guvijsave(1:Ntz,1,2,jquad)
     gvuij(1:Ntz,1,3) =   guvijsave(1:Ntz,1,3,jquad)
     gvuij(1:Ntz,2,2) =   guvijsave(1:Ntz,2,2,jquad)
     gvuij(1:Ntz,2,3) =   guvijsave(1:Ntz,2,3,jquad)
     gvuij(1:Ntz,3,3) =   guvijsave(1:Ntz,3,3,jquad)
-  
+
     ifail = 0
     call tfft( Nt, Nz, gvuij(1:Ntz,0,0), ijreal(1:Ntz) , &
               mne, ime(1:mne), ine(1:mne), goomne(1:mne,jquad), goomno(1:mne,jquad), cfmn(1:mne)    , sfmn(1:mne)    , ifail )
@@ -110,20 +110,20 @@ subroutine metrix( lquad, lvol )
               mne, ime(1:mne), ine(1:mne), gtzmne(1:mne,jquad), gtzmno(1:mne,jquad), gzzmne(1:mne,jquad), gzzmno(1:mne,jquad), ifail )
     gtzmne(0,jquad) = zero ; gtzmno(0,jquad) = zero
     gzzmne(0,jquad) = zero ; gzzmno(0,jquad) = zero
-   
+
   enddo
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   RETURN( metrix )
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
 end subroutine metrix
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !> \brief compute guvijsave
-!> 
+!>
 !> @param lquad
 !> @param vvol
 !> @param ideriv

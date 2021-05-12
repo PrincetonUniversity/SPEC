@@ -1,6 +1,6 @@
 !> \defgroup grp_force_driver Force-driver
-
-!> \file newton.f90
+!>
+!> \file
 !> \brief Employs Newton method to find \f${\bf F}({\bf x})=0\f$, where \f${\bf x}\equiv\{\mathrm{geometry}\}\f$ and \f${\bf F}\f$ is defined in dforce() .
 
 !> \brief timing of Newton iterations

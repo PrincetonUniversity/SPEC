@@ -70,7 +70,7 @@ ifeq ($(BUILD_ENV),intel)
  # module use /p/focus/modules
  # module load spec
  FC=mpif90
- CFLAGS=-r8
+ CFLAGS=-r8 -DIFORT
  RFLAGS=-mcmodel=large -O3 -m64 -unroll0 -fno-alias -ip -traceback
  DFLAGS=-O0 -g -traceback -check bounds -check format -check output_conversion -check pointers -check uninit -debug full -D DEBUG
  LIBS=-I${MKLROOT}/include/intel64/lp64 -I${MKLROOT}/include  # MKL include
@@ -181,8 +181,8 @@ ifeq ($(BUILD_ENV),lff95)
 endif
 
 ifeq ($(BUILD_ENV),intel_spc)
- FC=ifort
- CFLAGS=-r8
+ FC=mpif90
+ CFLAGS=-r8 -DIFORT
  RFLAGS=-O2 -ip -no-prec-div -xHost -fPIC
  DFLAGS=-traceback -D DEBUG -g
  LINKS=-L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl
@@ -212,7 +212,7 @@ ifeq ($(BUILD_ENV),intel_ipp)
  # and on cobra with the following modules:
  # intel/19.0.4 impi/2019.4 mkl/2019.4 hdf5-serial/1.8.21 fftw-mpi/3.3.8
  FC=mpiifort
- CFLAGS=-r8
+ CFLAGS=-r8 -DIFORT
  RFLAGS=-O2 -ip -no-prec-div -xHost -fPIC
  DFLAGS=-traceback -D DEBUG
  LINKS=-L${MKLROOT}/lib/intel64 -lmkl_rt -lpthread -lm -ldl -Wl,-rpath -Wl,${MKLROOT}/lib/intel64
@@ -237,16 +237,14 @@ ifeq ($(BUILD_ENV),gfortran_ipp)
  LINKS+=-L$(FFTW_HOME)/lib -lfftw3 -Wl,-rpath -Wl,$(FFTW_HOME)/lib
 endif
 
-ifeq ($(BUILD_ENV),intel_raijin)
- # One needs to load the following modules
- # module load intel-fc/2018.1.163
- # module load intel-cc/2018.1.163
- # module load intel-mkl/2018.1.163
- # module load openmpi
- # module load fftw3-mkl/2018.1.163
- # module load hdf5
- FC=ifort
- CFLAGS=-r8
+ifeq ($(BUILD_ENV),intel_gadi)
+#module load intel-compiler/2019.3.199
+#module load intel-mkl/2019.3.199
+#module load openmpi/3.1.4
+#module load fftw3-mkl/2019.3.199
+#module load hdf5/1.10.5
+ FC=mpif90
+ CFLAGS=-r8 -DIFORT
  LINKS=-L${MKLROOT}/lib/intel64 -mkl=parallel -liomp5
  LIBS=-I$(HDF5_BASE)/include
  LINKS+=-L$(HDF5_BASE)/lib -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lpthread -lz -lm
@@ -285,10 +283,10 @@ endif
 ###############################################################################################################################################################
 
 xspec: $(addsuffix _r.o,$(ALLFILES)) $(MACROS) Makefile
-	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) $(addsuffix _r.o,$(ALLFILES)) -o xspec $(LINKS)
+	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o xspec $(addsuffix _r.o,$(ALLFILES)) $(LINKS)
 
 dspec: $(addsuffix _d.o,$(ALLFILES)) $(MACROS) Makefile
-	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) $(addsuffix _d.o,$(ALLFILES)) -o dspec $(LINKS)
+	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o dspec $(addsuffix _d.o,$(ALLFILES)) $(LINKS)
 
 ###############################################################################################################################################################
 # inputlist needs special handling: expansion of DSCREENLIST and NSCREENLIST using awk

@@ -1,4 +1,4 @@
-!> \file casing.f90
+!> \file
 !> \brief Constructs the field created by the plasma currents, at an arbitrary, external location using virtual casing.
 
 !> \brief Constructs the field created by the plasma currents, at an arbitrary, external location using virtual casing.

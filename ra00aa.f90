@@ -1,6 +1,6 @@
 !> \defgroup grp_output Output file(s)
-
-!> \file ra00aa.f90
+!>
+!> \file
 !> \brief Writes vector potential to \c .ext.sp.A .
 
 !> \brief Writes vector potential to \c .ext.sp.A .

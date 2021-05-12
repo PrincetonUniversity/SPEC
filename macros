@@ -91,6 +91,7 @@ m4_define(NALLOCATE,{! macro expansion of nallocate;
 
 #endif
 
+   if( allocated( $1 ) ) deallocate( $1 )
    allocate($1$2,stat=astat)
 
 #ifdef DEBUG

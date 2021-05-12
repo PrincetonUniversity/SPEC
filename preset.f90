@@ -4,8 +4,8 @@
 !> \definecolor{Orange}{rgb}{1.0,0.5,0.0}
 !> \definecolor{Cerulean}{rgb}{0.0,0.5,1.0}
 !> \endlatexonly
-
-!> \file preset.f90
+!>
+!> \file
 !> \brief Allocates and initializes internal arrays.
 
 !> \brief Allocates and initializes internal arrays.
@@ -353,8 +353,8 @@ subroutine preset
 
     enddo ! end of do;
 
-    ! have been allocated in read_inputlists_from_file
-    deallocate(mmRZRZ, nnRZRZ, allRZRZ)
+    ! Typically these arrays have been allocated in read_inputlists_from_file
+    if(allocated(mmRZRZ)) deallocate(mmRZRZ, nnRZRZ, allRZRZ)
 
    end select ! end select case( Linitialize );
 
@@ -571,7 +571,7 @@ endif
 
 #ifdef DEBUG
   if (myid.eq.0) then
-    write(ounit,'("preset : ",10x," : sweight=",99(es12.5,",",:))') sweight(1:Mvol)
+    write(ounit,'("preset : ",10x," : sweight =",99(es12.5,",",:))') sweight(1:Mvol)
   end if
 #endif
 

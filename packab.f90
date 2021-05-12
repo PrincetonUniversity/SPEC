@@ -5,14 +5,14 @@
 !> \definecolor{Cerulean}{rgb}{0.0,0.5,1.0}
 !> \endlatexonly
 !>
-!> \file packab.f90
+!> \file
 !> \brief Packs, and unpacks, Beltrami field solution vector; \f${\bf a}\equiv\{A_{\theta,e,i,l}, A_{\zeta,e,i,l}, \mathrm{etc.}\}\f$.
 
 !> \brief Packs and unpacks Beltrami field solution vector.
 !> \ingroup grp_packing
-!> 
+!>
 !> **construction of "vector" of independent degrees of freedom**
-!> 
+!>
 !> <ul>
 !> <li> Numerical routines for solving linear equations typically require the unknown, independent degrees of freedom
 !>      to be "packed" into a vector, \f${\bf x}\f$. </li>
@@ -24,7 +24,7 @@
 !>      \f} </li>
 !> <li> The "packing" index is assigned in preset() . </li>
 !> </ul>
-!> 
+!>
 !> @param packorunpack
 !> @param lvol
 !> @param NN
@@ -35,13 +35,13 @@ subroutine packab( packorunpack, lvol, NN, solution, ideriv )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   use constants, only : zero
-  
+
   use numerical, only : small
-  
+
   use fileunits, only : ounit
-  
+
   use inputlist, only : Wpackab, Lrad
-  
+
   use cputiming, only : Tpackab
 
   use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, &
@@ -53,31 +53,31 @@ subroutine packab( packorunpack, lvol, NN, solution, ideriv )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   LOCALS
-  
+
   CHARACTER, intent(in) :: packorunpack
   INTEGER  , intent(in) :: lvol, NN, ideriv
   REAL                  :: solution(1:NN)
-  
+
   INTEGER               :: ii, ll, id, llrad
-    
+
   BEGIN(packab)
-  
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-  llrad = Lrad(lvol) ! shorthand;
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  select case( packorunpack ) 
-   
+  llrad = Lrad(lvol) ! shorthand;
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  select case( packorunpack )
+
   case( 'U' )
-   
+
 #ifdef DEBUG
-   
+
    if( Wpackab ) then
-    
+
     if( YESstellsym ) then
-     
+
      ;  ii = 1
       do ll = 0, llrad ; id = Ate(lvol,0,ii)%i(ll) ; FATAL( packab, id.lt.1 .or. id.gt.NN, unpacking illegal subscript )
        ;               ; id = Aze(lvol,0,ii)%i(ll) ; FATAL( packab, id.lt.1 .or. id.gt.NN, unpacking illegal subscript )
@@ -87,9 +87,9 @@ subroutine packab( packorunpack, lvol, NN, solution, ideriv )
        ;               ; id = Aze(lvol,0,ii)%i(ll) ; FATAL( packab, id.lt.1 .or. id.gt.NN, unpacking illegal subscript )
       enddo ! end of do ll;
      enddo ! end of do ii;
-      
+
     else ! NOTstellsym;
-      
+
      ;  ii = 1
       do ll = 0, llrad ; id = Ate(lvol,0,ii)%i(ll) ; FATAL( packab, id.lt.1 .or. id.gt.NN, unpacking illegal subscript )
        ;               ; id = Aze(lvol,0,ii)%i(ll) ; FATAL( packab, id.lt.1 .or. id.gt.NN, unpacking illegal subscript )
@@ -101,15 +101,15 @@ subroutine packab( packorunpack, lvol, NN, solution, ideriv )
        ;               ; id = Azo(lvol,0,ii)%i(ll) ; FATAL( packab, id.lt.1 .or. id.gt.NN, unpacking illegal subscript )
       enddo ! end of do ll;
      enddo ! end of do ii;
-     
+
     endif ! end ofif( YESstellsym );
-     
+
    endif
 
 #endif
-    
+
    if( YESstellsym ) then
-    
+
     do ii = 1, mn
      do ll = 0, llrad ; id = Ate(lvol,0,ii)%i(ll) ;
        if (id/=0) then; Ate(lvol,ideriv,ii)%s(ll) = solution(id)
@@ -136,7 +136,7 @@ subroutine packab( packorunpack, lvol, NN, solution, ideriv )
         else           ; Lmbvalue(lvol,ii) = zero
         endif
 
-        if( ii.gt.1 ) then 
+        if( ii.gt.1 ) then
           ;                ; id = Lme(lvol,ii)
           if (id/=0) then; Lmevalue(lvol,ii) = solution(id)
           else           ; Lmevalue(lvol,ii) = zero
@@ -155,7 +155,7 @@ subroutine packab( packorunpack, lvol, NN, solution, ideriv )
       enddo ! ii
     endif ! YESMatrixFree
    else ! NOTstellsym;
-    
+
     ;  ii = 1
      do ll = 0, llrad ; id = Ate(lvol,0,ii)%i(ll) ;
        if (id/=0) then; Ate(lvol,ideriv,ii)%s(ll) = solution(id)
@@ -214,7 +214,7 @@ subroutine packab( packorunpack, lvol, NN, solution, ideriv )
           if (id/=0) then; Lmevalue(lvol,ii) = solution(id)
           else           ; Lmevalue(lvol,ii) = zero
           endif
-        
+
           ;                ; id = Lmf(lvol,ii)
           if (id/=0) then; Lmfvalue(lvol,ii) = solution(id)
           else           ; Lmfvalue(lvol,ii) = zero
@@ -233,11 +233,11 @@ subroutine packab( packorunpack, lvol, NN, solution, ideriv )
       enddo ! ii
     endif ! YESMatrixFree
    endif ! end of if( YESstellsym );
-   
+
   case( 'P' )
-   
+
 !   FATAL( packab, .true., a trivial revision of packab is required to remove the if from the loop )
-   
+
    solution = zero
 
    do ii = 1, mn
@@ -249,9 +249,9 @@ subroutine packab( packorunpack, lvol, NN, solution, ideriv )
      endif
     enddo ! end of do ll;
    enddo ! end of do ii;
-   
+
   end select ! end of select case( packorunpack );
-   
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 #ifdef DEBUG
@@ -265,13 +265,13 @@ subroutine packab( packorunpack, lvol, NN, solution, ideriv )
      write(ounit,1000) myid, lvol, im(ii), in(ii), "Aze", Aze(lvol,0,ii)%s(0:llrad)
      write(ounit,1000) myid, lvol, im(ii), in(ii), "Ato", Ato(lvol,0,ii)%s(0:llrad)
      write(ounit,1000) myid, lvol, im(ii), in(ii), "Azo", Azo(lvol,0,ii)%s(0:llrad)
-    enddo ! end of do ii; 
-    
+    enddo ! end of do ii;
+
     do ii = 1, mn
      write(ounit,1000) myid, lvol, im(ii), in(ii), "Ste", sum(Ate(lvol,0,ii)%s(0:llrad)*TT(0:llrad,0,0)), sum(Ate(lvol,0,ii)%s(0:llrad)*TT(0:llrad,1,0))
      write(ounit,1000) myid, lvol, im(ii), in(ii), "Sze", sum(Aze(lvol,0,ii)%s(0:llrad)*TT(0:llrad,0,0)), sum(Aze(lvol,0,ii)%s(0:llrad)*TT(0:llrad,1,0))
     enddo ! end of do ii;
-        
+
    endif ! end of if( ideriv.eq.0);
 
   endif ! end of if( Wpackab );
@@ -279,9 +279,9 @@ subroutine packab( packorunpack, lvol, NN, solution, ideriv )
 1000 format("packab : " 10x " : myid="i3" ; lvol="i3" ; ("i3" ,"i3" ) : "a3"=["999(es23.15","))
 
 #endif
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   RETURN(packab)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

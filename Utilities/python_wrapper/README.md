@@ -9,7 +9,7 @@ It also fixes a problem with missing `setjmpvalue` variables due to changes in m
 
 To install the customized version, please do
 ```
-pip install -U git+https://github.com/jonathanschilling/f90wrap
+pip install -U git+https://github.com/zhucaoxiang/f90wrap
 ```
 
 ## Wrapped files

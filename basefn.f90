@@ -1,14 +1,14 @@
-!> \file basefn.f90
+!> \file
 !> \brief Polynomials evaluation
 
 !> \brief Get the Chebyshev polynomials with zeroth, first derivatives
 !>
-!> The Chebyshev polynomial has been recombined and rescaled. 
+!> The Chebyshev polynomial has been recombined and rescaled.
 !> By doing so, the Chebyshev polynomial satisfy the zero Dirichlet boundary condition on the inner surface of the annulus with reduced ill-conditioning problem.
 !>
 !> Let \f$T_{l}\f$ be the Chebyshev polynomial of the first kind with degree \f$l\f$.
-!> This subroutine computes 
-!> \f[\bar{T}_0 = 1, \f] and 
+!> This subroutine computes
+!> \f[\bar{T}_0 = 1, \f] and
 !> \f[\bar{T}_l = \frac{T_l - (-1)^{l}}{l+1} . \f]
 !>
 !> \f$ T_l \f$ are computed iteratively.
@@ -51,7 +51,7 @@ subroutine get_cheby(lss, lrad, cheby)
 end subroutine get_cheby
 
 !> \brief Get the Chebyshev polynomials with zeroth, first and second derivatives
-!> The Chebyshev polynomial has been recombined and rescaled. 
+!> The Chebyshev polynomial has been recombined and rescaled.
 !> See get_cheby for more detail.
 !> @param[in] lss coordinate input lss
 !> @param[in] lrad radial resolution
@@ -72,11 +72,11 @@ subroutine get_cheby_d2(lss, lrad, cheby)
 
   ;                     ; cheby( 0,0:2) = (/ one, zero, zero /) ! T_0: Chebyshev initialization; function, 1st-derivative, 2nd-derivative;
   ;                     ; cheby( 1,0:2) = (/ lss,  one, zero /) ! T_1: Chebyshev initialization; function, 1st-derivative, 2nd-derivative;
-  do ll = 2, lrad       
+  do ll = 2, lrad
     cheby(ll,0:2) = (/ two * lss * cheby(ll-1,0)                                                         - cheby(ll-2,0) , &
                        two       * cheby(ll-1,0) + two * lss * cheby(ll-1,1)                             - cheby(ll-2,1) , &
                        two       * cheby(ll-1,1) + two       * cheby(ll-1,1) + two * lss * cheby(ll-1,2) - cheby(ll-2,2) /)
-  enddo 
+  enddo
 
   do ll = 1, lrad
     cheby(ll, 0) = cheby(ll, 0)  - (-1)**ll
@@ -103,7 +103,7 @@ end subroutine get_cheby_d2
 !>    {k!\left[\frac{1}{2}(l+m) - k \right]! \left[\frac{1}{2}(l-m) - k \right]!} s^{l-2k},
 !> \f}
 !> and is only non-zero for \f$l \ge m\f$ and even \f$l-m\f$.
-!> 
+!>
 !> In this subroutine, \f$R^{m}_{l}(s) \f$ is computed using the iterative relationship
 !> \f{eqnarray*}{
 !> R_l^m(s) = \frac{2(l-1)(2l(l-2)s^2 -m^2 -l(l-2))R_{l-2}^m(s) - l (l+m-2) (l-m-2)R_{l-4}^m(s) }{(l+m)(l-m)(l-2)}
@@ -111,14 +111,14 @@ end subroutine get_cheby_d2
 !>
 !> For \f$ m=0 \f$ and \f$ m=1 \f$, a basis recombination method is used by defining new radial basis functions as
 !> \f{eqnarray*}{
-!>    \hat{R}_{0}^{0} &= 1, 
-!>    \hat{R}^{0}_{l} &= \frac{1}{l+1}R^{0}_{l} - \frac{(-1)^{l/2}}{l+1}, 
+!>    \hat{R}_{0}^{0} &= 1,
+!>    \hat{R}^{0}_{l} &= \frac{1}{l+1}R^{0}_{l} - \frac{(-1)^{l/2}}{l+1},
 !>    \\
 !>    \hat{R}_{1}^{1} &= s,
 !>    \hat{R}^{1}_{l} &= \frac{1}{l+1}R^{1}_{l} - \frac{(-1)^{(l-1)/2}}{2} s.
 !> \f}
 !> so that the basis scales as \f$s^{m+2}\f$ except for \f$\hat{R}_{0}^{0}\f$ and \f$\hat{R}_{1}^{1}\f$, which are excluded from the representation of \f${A}_{\theta,m,n}\f$.
-!> For \f$m\ge2\f$, the radial basis functions are only rescaled as 
+!> For \f$m\ge2\f$, the radial basis functions are only rescaled as
 !> \f[
 !>   \hat{R}^{m}_{l} = \frac{1}{l+1}R^{m}_{l}.
 !> \f]
@@ -140,7 +140,7 @@ subroutine get_zernike(r, lrad, mpol, zernike)
   REAL ::    rm, rm1  ! r to the power of m'th and m-1'th
   REAL ::    factor1, factor2, factor3, factor4
   INTEGER :: m, n  ! Zernike R^m_n
-  
+
   rm = one  ! r to the power of m'th
   rm1 = zero ! r to the power of m-1'th
   zernike(:,:,:) = zero
@@ -208,7 +208,7 @@ subroutine get_zernike_d2(r, lrad, mpol, zernike)
   REAL ::    rm, rm1, rm2  ! r to the power of m'th, m-1'th and m-2'th
   REAL ::    factor1, factor2, factor3, factor4
   INTEGER :: m, n  ! Zernike R^m_n
-  
+
   rm = one  ! r to the power of m'th
   rm1 = zero ! r to the power of m-1'th
   rm2 = zero ! r to the power of m-2'th
@@ -221,8 +221,8 @@ subroutine get_zernike_d2(r, lrad, mpol, zernike)
 
     if (lrad >= m+2) then
       zernike(m+2,m,0) = real(m+2)*rm*r**2 - real(m+1)*rm
-      zernike(m+2,m,1) = real((m+2)**2)*rm*r - real((m+1)*m)*rm1 
-      zernike(m+2,m,2) = real((m+2)**2*(m+1))*rm - real((m+1)*m*(m-1))*rm2 
+      zernike(m+2,m,1) = real((m+2)**2)*rm*r - real((m+1)*m)*rm1
+      zernike(m+2,m,2) = real((m+2)**2*(m+1))*rm - real((m+1)*m*(m-1))*rm2
       !write(0, *) m+2, m, r, zernike(m+2,m,:)
     endif
 
