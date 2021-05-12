@@ -25,12 +25,13 @@ subroutine xspech
   use allglobal, only: set_mpi_comm, myid, ncpu, cpus, version, MPI_COMM_SPEC, &
                        wrtend, read_inputlists_from_file, check_inputs, broadcast_inputs, skip_write, &
                        ext
-  use inputlist, only: initialize_inputs
+  use inputlist, only: initialize_inputs, Wxspech
   use fileunits, only: ounit
   use sphdf5,    only: init_outfile, &
                        mirror_input_to_outfile, &
                        init_convergence_output, &
                        hdfint, finish_outfile, write_grid
+  use cputiming, only: Txspech
 
   LOCALS
 
@@ -43,6 +44,8 @@ subroutine xspech
 #endif
 
   call MPI_INIT( ierr )
+
+  BEGIN(xspech)
 
   ! set default communicator to MPI_COMM_WORLD
   call set_mpi_comm(MPI_COMM_WORLD)
@@ -65,6 +68,9 @@ subroutine xspech
     write(ounit,'("xspech : ", 10x ," : ")')
     write(ounit,1000) cput-cpus, ldate(1:4), ldate(5:6), ldate(7:8), ltime(1:2), ltime(3:4), ltime(5:6), machprec, vsmall, small
 
+    write(ounit,'("xspech : ", 10x ," : ")')
+    write(ounit,'("xspech : ",f10.2," : parallelism : ncpu=",i3," ; nthreads=",i3," ;")') cput-cpus, ncpu, nthreads
+
     ! read command-line arguments
     call read_command_args()
 
@@ -72,7 +78,7 @@ subroutine xspech
     call initialize_inputs()
 
     write(ounit,'("xspech : ", 10x ," : ")')
-    write(ounit,'("xspech : ",f10.2," : begin execution ; ncpu=",i3," ; calling global:readin ;")') cput-cpus, ncpu
+    write(ounit,'("xspech : ",f10.2," : begin execution ; calling global:readin ;")') cput-cpus
 
 !> **reading input, allocating global variables**
 !>
@@ -82,8 +88,6 @@ subroutine xspech
 !> <li> Most internal variables, global memory etc., are allocated in preset() . </li>
 !> <li> All quantities in the input file are mirrored into the output file's group \c /input . </li>
 !> </ul>
-    print *, "before call to read_inp...; ext=",trim(ext)
-
     call read_inputlists_from_file()
 
     ! check that data from input file is within allowed ranges etc.
@@ -170,13 +174,13 @@ subroutine xspech
   ! wait for writing to finish
   call MPI_Barrier(MPI_COMM_SPEC, ierr)
 
-  MPIFINALIZE
-
   if (myid.eq.0) then
    cput = GETTIME
    write(ounit,'("xspech : ", 10x ," :")')
    write(ounit,'("xspech : ",f10.2," : myid=",i3," : time="f8.2"m = "f6.2"h = "f5.2"d ;")') cput-cpus, myid, (cput-cpus) / (/ 60, 60*60, 24*60*60 /)
   endif
+
+  MPIFINALIZE
 
   stop
 
@@ -312,7 +316,6 @@ subroutine spec
   LOCALS
 
   LOGICAL              :: LComputeDerivatives, LContinueFreeboundaryIterations, exist, LupdateBn, LComputeAxis
-
   INTEGER              :: imn, lmn, lNfp, lim, lin, ii, ideriv, stat
   INTEGER              :: vvol, ifail, wflag, iflag, vflag
   REAL                 :: rflag, lastcpu, bnserr, lRwc, lRws, lZwc, lZws, lItor, lGpol, lgBc, lgBs
@@ -323,6 +326,8 @@ subroutine spec
   INTEGER              :: lnPtrj, numTrajTotal
 
   !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  cpuo = GETTIME
 
   FATAL( xspech, NGdof.lt.0, counting error )
 

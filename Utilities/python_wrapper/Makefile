@@ -64,7 +64,7 @@ LIB_NAME = lib$(PYTHON_MODN).a
 #=======================================================================
 
 # names (without suffix), f90 sources
-TMP_FILES := ${BASEFILES} ${SPECFILES} xspech
+TMP_FILES := ${ALLSPEC} xspech
 LIBSRC_WRAP_SOURCES := $(TMP_FILES)
 
 # file names

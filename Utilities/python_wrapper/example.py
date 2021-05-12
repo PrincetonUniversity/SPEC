@@ -19,6 +19,7 @@ fun.read()
 fun.inputlist.nppts = 0
 # main execution
 fun.run()
+#fun.run(save_output=True)
 
 # target volume
 target = 30.0

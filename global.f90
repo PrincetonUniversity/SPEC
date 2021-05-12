@@ -884,6 +884,10 @@ subroutine read_inputlists_from_file()
    use fileunits
    use inputlist
 
+#ifdef IFORT 
+   use ifport ! for fseek, ftell with Intel compiler
+#endif
+
    LOCALS
 
    LOGICAL              :: Lspexist
@@ -965,8 +969,11 @@ subroutine read_inputlists_from_file()
      SALLOCATE( RZRZ, (1:4,1:Nvol), zero ) ! temp array for reading input;
 
      ! determine how many modes are specified by reading them once
+#ifdef IFORT
+     filepos = ftell(iunit)
+#else
      call ftell(iunit, filepos)
-
+#endif     
      do ! will read in Fourier harmonics until the end of file is reached;
        read(iunit,*,iostat=instat) mm, nn, RZRZ(1:4,1:Nvol)   !if change of angle applies, transformation assumes m>=0 and for m=0 only n>=0;
        if( instat.ne.0 ) exit
@@ -975,9 +982,14 @@ subroutine read_inputlists_from_file()
      enddo
 
      ! rewind file to reset EOF flag
-     ! and seek back to (start of modes) == (end of input namelists)
      rewind(iunit)
+
+     ! seek back to (start of modes) == (end of input namelists)
+#ifdef IFORT
+     seek_status = fseek(iunit, filepos, 0)
+#else     
      call fseek(iunit, filepos, 0, seek_status)
+#endif
      FATAL(inplst, seek_status.ne.0, failed to seek to end of input namelists )
 
      ! now allocate arrays and read...
@@ -986,12 +998,6 @@ subroutine read_inputlists_from_file()
      do idx_mode = 1, num_modes
        read(iunit,*,iostat=instat) mmRZRZ(idx_mode), nnRZRZ(idx_mode), allRZRZ(1:4,1:Nvol, idx_mode)
      enddo
-
-     ! rewind file to reset EOF flag
-     ! and seek back to (start of modes) == (end of input namelists)
-     rewind(iunit)
-     call fseek(iunit, filepos, 0, seek_status)
-     FATAL(inplst, seek_status.ne.0, failed to seek to end of input namelists )
 
      ! no need for temporary RZRZ anymore
      DALLOCATE(RZRZ)
@@ -1010,15 +1016,20 @@ subroutine check_inputs()
    use constants
    use fileunits
    use inputlist
+   use cputiming, only: Treadin
 
    LOCALS
 
    INTEGER              :: vvol
    REAL                 :: xx, toroidalflux, toroidalcurrent
 
+   BEGIN(readin)
+
    Mvol = Nvol + Lfreebound ! this is just for screen output and initial check; true assignment of Mvol appears outside if( myid.eq.0 ) then ;
 
    write(ounit,'("readin : ", 10x ," : ")')
+
+   cput = GETTIME
 
    write(ounit,1010) cput-cpus, Igeometry, Istellsym, Lreflect
    write(ounit,1011)            Lfreebound, phiedge, curtor, curpol
@@ -1238,6 +1249,8 @@ subroutine check_inputs()
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
    write(ounit,'("readin : ", 10x ," : ")')
+
+   RETURN(readin)
 
 end subroutine ! check_inputs
 
