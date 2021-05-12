@@ -59,7 +59,7 @@
 
  # if want to use gfortran: make BUILD_ENV=gfortran (x/d)spec
  # default: use Intel compiler
- BUILD_ENV=?intel
+ BUILD_ENV?=intel
 
  # to enable OpenMP acceleration within volume, set OMP=yes, otherwise set OMP=no
  OMP=yes
