@@ -174,13 +174,13 @@ subroutine xspech
   ! wait for writing to finish
   call MPI_Barrier(MPI_COMM_SPEC, ierr)
 
-  MPIFINALIZE
-
   if (myid.eq.0) then
    cput = GETTIME
    write(ounit,'("xspech : ", 10x ," :")')
    write(ounit,'("xspech : ",f10.2," : myid=",i3," : time="f8.2"m = "f6.2"h = "f5.2"d ;")') cput-cpus, myid, (cput-cpus) / (/ 60, 60*60, 24*60*60 /)
   endif
+
+  MPIFINALIZE
 
   stop
 
