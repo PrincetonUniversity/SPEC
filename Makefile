@@ -257,8 +257,8 @@ ifeq ($(BUILD_ENV),intel_stellar)
  # module use /home/caoxiang/module
  # module load spec
  FC=mpiifort
- CFLAGS=-r8
- RFLAGS=-O2 -ip -no-prec-div -xHost -fPIC
+ CFLAGS=-r8 -DIFORT
+ RFLAGS=-mcmodel=large -O3 -m64 -unroll0 -fno-alias -ip -traceback -fPIC
  DFLAGS=-O0 -g -traceback -check bounds -check format -check output_conversion -check pointers -check uninit -debug full -D DEBUG
  LIBS=-I${MKLROOT}/include/intel64/lp64  # MKL include
  LIBS+=-I$(HDF5DIR)/include # HDF5 include
