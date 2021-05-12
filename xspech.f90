@@ -43,9 +43,9 @@ subroutine xspech
   INTEGER, external    :: getpid, hostnm
 #endif
 
-  BEGIN(xspech)
-
   call MPI_INIT( ierr )
+
+  BEGIN(xspech)
 
   ! set default communicator to MPI_COMM_WORLD
   call set_mpi_comm(MPI_COMM_WORLD)
