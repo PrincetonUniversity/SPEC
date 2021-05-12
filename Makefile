@@ -237,15 +237,13 @@ ifeq ($(BUILD_ENV),gfortran_ipp)
  LINKS+=-L$(FFTW_HOME)/lib -lfftw3 -Wl,-rpath -Wl,$(FFTW_HOME)/lib
 endif
 
-ifeq ($(BUILD_ENV),intel_raijin)
- # One needs to load the following modules
- # module load intel-fc/2018.1.163
- # module load intel-cc/2018.1.163
- # module load intel-mkl/2018.1.163
- # module load openmpi
- # module load fftw3-mkl/2018.1.163
- # module load hdf5
- FC=ifort
+ifeq ($(BUILD_ENV),intel_gadi)
+#module load intel-compiler/2019.3.199
+#module load intel-mkl/2019.3.199
+#module load openmpi/3.1.4
+#module load fftw3-mkl/2019.3.199
+#module load hdf5/1.10.5
+ FC=mpif90
  CFLAGS=-r8 -DIFORT
  LINKS=-L${MKLROOT}/lib/intel64 -mkl=parallel -liomp5
  LIBS=-I$(HDF5_BASE)/include
