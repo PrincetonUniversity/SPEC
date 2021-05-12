@@ -1,17 +1,12 @@
 !> \file
-!> \brief Writes all the output information to ext.h5.
-
-!latex \briefly{All the input and output information is contained in \type{ext.h5}.}
-!latex \calledby{\link{xspech}}
-!l tex \calls{\link{}}
-
-!latex \tableofcontents
-
-!latex \newcommand{\pb}[1]{\parbox[t]{13cm}{#1}}
-
-!latex \begin{enumerate}
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!> \brief Writes all the output information to \c ext.sp.h5.
+!>
+!> If the output file already exists, it will be deleted and replaced
+!> by an empty one, which gets filled in with the updated data.
+!> All calls to the HDF5 API are filtered to only happen from MPI rank-0
+!> to be able to use the serial HDF5 library.
+!> Parallel HDF5 was considered in the past, but abandoned due to very
+!> subtle and irreproducible errors.
 
 !> \brief writing the HDF5 output file
 !> \ingroup grp_output
@@ -26,78 +21,84 @@ module sphdf5
 
   implicit none
 
-  logical, parameter             :: hdfDebug = .false.                         ! global flag to enable verbal diarrhea commenting HDF5 operations
-  integer, parameter             :: internalHdf5Msg = 0                        ! 1: print internal HDF5 error messages; 0: only error messages from sphdf5
+  logical, parameter             :: hdfDebug = .false.  !< global flag to enable verbal diarrhea commenting HDF5 operations
+  integer, parameter             :: internalHdf5Msg = 0 !< 1: print internal HDF5 error messages; 0: only error messages from sphdf5
 
-  integer                        :: hdfier                                     ! error flag for HDF5 library
-  integer                        :: rank                                       ! rank of data to write using macros
-  integer(hid_t)                 :: file_id, space_id, dset_id                 ! default IDs used in macros
-  integer(hsize_t)               :: onedims(1:1), twodims(1:2), threedims(1:3) ! dimension specifiers used in macros
-  logical                        :: grp_exists, var_exists                     ! flags used to signal if a group or variable already exists
+  integer                        :: hdfier              !< error flag for HDF5 library
+  integer                        :: rank                !< rank of data to write using macros
+  integer(hid_t)                 :: file_id             !< default file ID used in macros
+  integer(hid_t)                 :: space_id            !< default dataspace ID used in macros
+  integer(hid_t)                 :: dset_id             !< default dataset ID used in macros
+  integer(hsize_t)               :: onedims(1:1)        !< dimension specifier for one-dimensional data used in macros
+  integer(hsize_t)               :: twodims(1:2)        !< dimension specifier for two-dimensional data used in macros
+  integer(hsize_t)               :: threedims(1:3)      !< dimension specifier for three-dimensional data used in macros
+  logical                        :: grp_exists          !< flags used to signal if a group already exists
+  logical                        :: var_exists          !< flags used to signal if a variable already exists
+
+  integer(hid_t)                 :: iteration_dset_id   !< Dataset identifier for "iteration"
+  integer(hid_t)                 :: dataspace           !< dataspace for extension by 1 iteration object
+  integer(hid_t)                 :: memspace            !< memspace for extension by 1 iteration object
+  integer(hsize_t), dimension(1) :: old_data_dims       !< current dimensions of "iterations" dataset
+  integer(hsize_t), dimension(1) :: data_dims           !< new dimensions for "iterations" dataset
+  integer(hsize_t), dimension(1) :: max_dims            !< maximum dimensions for "iterations" dataset
+  integer(hid_t)                 :: plist_id            !< Property list identifier used to activate dataset transfer property
+  integer(hid_t)                 :: dt_nDcalls_id       !< Memory datatype identifier (for "nDcalls"  dataset in "/grid")
+  integer(hid_t)                 :: dt_Energy_id        !< Memory datatype identifier (for "Energy"   dataset in "/grid")
+  integer(hid_t)                 :: dt_ForceErr_id      !< Memory datatype identifier (for "ForceErr" dataset in "/grid")
+  integer(hid_t)                 :: dt_iRbc_id          !< Memory datatype identifier (for "iRbc"     dataset in "/grid")
+  integer(hid_t)                 :: dt_iZbs_id          !< Memory datatype identifier (for "iZbs"     dataset in "/grid")
+  integer(hid_t)                 :: dt_iRbs_id          !< Memory datatype identifier (for "iRbs"     dataset in "/grid")
+  integer(hid_t)                 :: dt_iZbc_id          !< Memory datatype identifier (for "iZbc"     dataset in "/grid")
+
+  integer, parameter             :: rankP=3             !< rank of Poincare data
+  integer, parameter             :: rankT=2             !< rank of rotational transform data
+
+  integer(hid_t)                 :: grpPoincare         !< group for Poincare data
+  integer(HID_T)                 :: dset_id_t           !< Dataset identifier for \f$\theta\f$ coordinate of field line following
+  integer(HID_T)                 :: dset_id_s           !< Dataset identifier for \f$s\f$ coordinate of field line following
+  integer(HID_T)                 :: dset_id_R           !< Dataset identifier for \f$R\f$ coordinate of field line following
+  integer(HID_T)                 :: dset_id_Z           !< Dataset identifier for \f$Z\f$ coordinate of field line following
+  integer(HID_T)                 :: dset_id_success     !< Dataset identifier for success flag of trajectories to follow
+  integer(HID_T)                 :: filespace_t         !< Dataspace identifier in file for \f$\theta\f$ coordinate of field line following
+  integer(HID_T)                 :: filespace_s         !< Dataspace identifier in file for \f$s\f$ coordinate of field line following
+  integer(HID_T)                 :: filespace_R         !< Dataspace identifier in file for \f$R\f$ coordinate of field line following
+  integer(HID_T)                 :: filespace_Z         !< Dataspace identifier in file for \f$Z\f$ coordinate of field line following
+  integer(HID_T)                 :: filespace_success   !< Dataspace identifier in file for success flag of trajectories to follow
+  integer(HID_T)                 :: memspace_t          !< Dataspace identifier in memory for \f$\theta\f$ coordinate of field line following
+  integer(HID_T)                 :: memspace_s          !< Dataspace identifier in memory for \f$s\f$ coordinate of field line following
+  integer(HID_T)                 :: memspace_R          !< Dataspace identifier in memory for \f$R\f$ coordinate of field line following
+  integer(HID_T)                 :: memspace_Z          !< Dataspace identifier in memory for \f$Z\f$ coordinate of field line following
+  integer(HID_T)                 :: memspace_success    !< Dataspace identifier in memory for success flag of trajectories to follow
+
+  integer(hid_t)                 :: grpTransform        !< group for rotational transform data
+  integer(HID_T)                 :: dset_id_diotadxup   !< Dataset identifier for diotadxup (derivative of rotational transform ?)
+  integer(HID_T)                 :: dset_id_fiota       !< Dataset identifier for fiota     (              rotational transform ?)
+  integer(HID_T)                 :: filespace_diotadxup !< Dataspace identifier in file for diotadxup
+  integer(HID_T)                 :: filespace_fiota     !< Dataspace identifier in file for fiota
+  integer(HID_T)                 :: memspace_diotadxup  !< Dataspace identifier in memory for diotadxup
+  integer(HID_T)                 :: memspace_fiota      !< Dataspace identifier in memory for fiota
 
 
-  integer(hid_t)                 :: iteration_dset_id                          ! Dataset identifier for "iteration"
-  integer(hid_t)                 :: dataspace                                  ! dataspace for extension by 1 iteration object
-  integer(hid_t)                 :: memspace                                   ! memspace for extension by 1 iteration object
-  integer(hsize_t), dimension(1) :: old_data_dims, data_dims, max_dims
-  integer(hid_t)                 :: plist_id                                   ! Property list identifier used to activate dataset transfer property
-  integer(hid_t)                 :: dt_nDcalls_id                              ! Memory datatype identifier (for "nDcalls"  dataset in "/grid")
-  integer(hid_t)                 :: dt_Energy_id                               ! Memory datatype identifier (for "Energy"   dataset in "/grid")
-  integer(hid_t)                 :: dt_ForceErr_id                             ! Memory datatype identifier (for "ForceErr" dataset in "/grid")
-  integer(hid_t)                 :: dt_iRbc_id                                 ! Memory datatype identifier (for "iRbc"     dataset in "/grid")
-  integer(hid_t)                 :: dt_iZbs_id                                 ! Memory datatype identifier (for "iZbs"     dataset in "/grid")
-  integer(hid_t)                 :: dt_iRbs_id                                 ! Memory datatype identifier (for "iRbs"     dataset in "/grid")
-  integer(hid_t)                 :: dt_iZbc_id                                 ! Memory datatype identifier (for "iZbc"     dataset in "/grid")
+  character(LEN=15), parameter :: aname = "description"   !< Attribute name for descriptive info
 
-  integer, parameter             :: rankP=3, rankT=2                           ! rank of Poincare and transform data
+  integer(HID_T) :: attr_id       !< Attribute identifier
+  integer(HID_T) :: aspace_id     !< Attribute Dataspace identifier
+  integer(HID_T) :: atype_id      !< Attribute Datatype identifier
 
-  integer(hid_t)                 :: grpPoincare                                ! group for Poincare data
-  integer(HID_T)                 :: dset_id_t                                  ! Dataset identifier for \t coordinate of field line following
-  integer(HID_T)                 :: dset_id_s                                  ! Dataset identifier for  s coordinate of field line following
-  integer(HID_T)                 :: dset_id_R                                  ! Dataset identifier for  R coordinate of field line following
-  integer(HID_T)                 :: dset_id_Z                                  ! Dataset identifier for  Z coordinate of field line following
-  integer(HID_T)                 :: dset_id_success                            ! Dataset identifier for success flag of trajectories to follow
-  integer(HID_T)                 :: filespace_t                                ! Dataspace identifier in file
-  integer(HID_T)                 :: filespace_s                                ! Dataspace identifier in file
-  integer(HID_T)                 :: filespace_R                                ! Dataspace identifier in file
-  integer(HID_T)                 :: filespace_Z                                ! Dataspace identifier in file
-  integer(HID_T)                 :: filespace_success                          ! Dataspace identifier in file
-  integer(HID_T)                 :: memspace_t                                 ! Dataspace identifier in memory
-  integer(HID_T)                 :: memspace_s                                 ! Dataspace identifier in memory
-  integer(HID_T)                 :: memspace_R                                 ! Dataspace identifier in memory
-  integer(HID_T)                 :: memspace_Z                                 ! Dataspace identifier in memory
-  integer(HID_T)                 :: memspace_success                           ! Dataspace identifier in memory
+  integer, parameter     ::   arank = 1               !< Attribure rank
+  integer(HSIZE_T), dimension(arank) :: adims = (/1/) !< Attribute dimension
 
-  integer(hid_t)                 :: grpTransform                               ! group for rotational transform data
-  integer(HID_T)                 :: dset_id_diotadxup                          ! Dataset identifier for diotadxup (derivative of rotational transform ?)
-  integer(HID_T)                 :: dset_id_fiota                              ! Dataset identifier for fiota     (              rotational transform ?)
-  integer(HID_T)                 :: filespace_diotadxup                        ! Dataspace identifier in file
-  integer(HID_T)                 :: filespace_fiota                            ! Dataspace identifier in file
-  integer(HID_T)                 :: memspace_diotadxup                         ! Dataspace identifier in memory
-  integer(HID_T)                 :: memspace_fiota                             ! Dataspace identifier in memory
-
-
-  character(LEN=15), parameter :: aname = "description"   ! Attribute name
-
-  integer(HID_T) :: attr_id       ! Attribute identifier
-  integer(HID_T) :: aspace_id     ! Attribute Dataspace identifier
-  integer(HID_T) :: atype_id      ! Attribute Dataspace identifier
-
-  integer, parameter     ::   arank = 1               ! Attribure rank
-  integer(HSIZE_T), dimension(arank) :: adims = (/1/) ! Attribute dimension
-
-  integer(SIZE_T) :: attrlen    ! Length of the attribute string
-  character(len=:), allocatable ::  attr_data  ! Attribute data
+  integer(SIZE_T) :: attrlen    !< Length of the attribute string
+  character(len=:), allocatable ::  attr_data  !< Attribute data
 
 contains
 
-!> \brief initialize the interface to the HDF5 library and open the output file
+!> \brief Initialize the interface to the HDF5 library and open the output file.
+!> \ingroup grp_output
 !>
 subroutine init_outfile
 
   LOCALS
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   BEGIN( sphdf5 )
 
@@ -120,8 +121,12 @@ subroutine init_outfile
 
 end subroutine init_outfile
 
-!> \brief mirror input variables into output file
+!> \brief Mirror input variables into output file.
+!> \ingroup grp_output
 !>
+!> The goal of this routine is to have an exact copy of the input file contents
+!> that were used to parameterize a given SPEC run.
+!> This also serves to check after the run if SPEC correctly understood the text-based input file.
 subroutine mirror_input_to_outfile
 
   use inputlist
@@ -141,6 +146,11 @@ subroutine mirror_input_to_outfile
 
 ! the following variables constitute the namelist/physicslist/; note that all variables in namelist need to be broadcasted in readin;
 ! they go into ext.h5/input/physics
+
+  ! the calls used here work as follows:
+  ! step 1. HWRITEIV_LO e.g. write(s an) i(nteger) v(ariable) and l(eaves) o(pen) the dataset, so that in
+  ! step 2a. an attribute with descr(iptive) information can be attached to the dataset and finally, in
+  ! step 2b. the attribute is closed and also we c(lose the) d(ata)set.
 
   HDEFGRP( grpInput, physics, grpInputPhysics,                                                                                         __FILE__, __LINE__)
   H5DESCR( grpInputPhysics, /input/physics, physics inputs,                                                                            __FILE__, __LINE__)
@@ -373,44 +383,46 @@ subroutine mirror_input_to_outfile
 
 end subroutine mirror_input_to_outfile
 
-!> \brief prepare convergence evolution output
+!> \brief Prepare convergence evolution output.
+!> \ingroup grp_output
 !>
+!> <ul>
+!> <li> The group \c iterations is created in the output file.
+!>      This group contains the interface geometry at each iteration, which is useful for constructing movies illustrating the convergence.
+!>      The data structure in use is an unlimited array of the following compound datatype:
+!> ```C
+!> DATATYPE  H5T_COMPOUND {
+!>       H5T_NATIVE_INTEGER "nDcalls";
+!>       H5T_NATIVE_DOUBLE "Energy";
+!>       H5T_NATIVE_DOUBLE "ForceErr";
+!>       H5T_ARRAY { [Mvol+1][mn] H5T_NATIVE_DOUBLE } "iRbc";
+!>       H5T_ARRAY { [Mvol+1][mn] H5T_NATIVE_DOUBLE } "iZbs";
+!>       H5T_ARRAY { [Mvol+1][mn] H5T_NATIVE_DOUBLE } "iRbs";
+!>       H5T_ARRAY { [Mvol+1][mn] H5T_NATIVE_DOUBLE } "iZbc";
+!> }
+!> ```
+!> </li>
+!> </ul>
 subroutine init_convergence_output
-!latex \subsection{preparing output file group \type{iterations}}
-
-!latex \begin{enumerate}
-
-!latex \item The group \verb+iterations+ is created in the output file.
-!latex       This group contains the interface geometry at each iteration, which is useful for constructing movies illustrating the convergence.
-!latex       The data structure in use is an unlimited array of the following compound datatype:
-!latex \begin{verbatim} DATATYPE  H5T_COMPOUND {
-!latex       H5T_NATIVE_INTEGER "nDcalls";
-!latex       H5T_NATIVE_DOUBLE "Energy";
-!latex       H5T_NATIVE_DOUBLE "ForceErr";
-!latex       H5T_ARRAY { [Mvol+1][mn] H5T_NATIVE_DOUBLE } "iRbc";
-!latex       H5T_ARRAY { [Mvol+1][mn] H5T_NATIVE_DOUBLE } "iZbs";
-!latex       H5T_ARRAY { [Mvol+1][mn] H5T_NATIVE_DOUBLE } "iRbs";
-!latex       H5T_ARRAY { [Mvol+1][mn] H5T_NATIVE_DOUBLE } "iZbc";
-!latex } \end{verbatim}
-!latex \end{enumerate}
 
   use allglobal, only : mn, Mvol
 
   LOCALS
-  integer(hid_t)                    :: iteration_dspace_id                           ! dataspace for "iteration"
-  integer(hid_t)                    :: iteration_dtype_id                            ! Compound datatype for "iteration"
-  integer(hid_t)                    :: iRZbscArray_id                                ! Memory datatype identifier
-  integer(size_t)                   :: iteration_dtype_size                          ! Size of the "iteration" datatype
-  integer(size_t)                   :: type_size_i                                   ! Size of the integer datatype
-  integer(size_t)                   :: type_size_d                                   ! Size of the double precision datatype
-  integer(size_t)                   :: offset                                        ! Member's offset
-  integer(hid_t)                    :: crp_list                                      ! Dataset creation property identifier
-  integer, parameter                :: rank = 1                                      ! logging rank: convergence logging is one-dimensional
-  integer(hsize_t), dimension(rank) :: maxdims                                       ! convergence logging maximum dimensions => will be unlimited
-  integer(hsize_t), dimension(rank) :: dims = (/ 0 /)                                ! current convergence logging dimensions
-  integer(hsize_t), dimension(rank) :: dimsc = (/ 1 /)                               ! chunking length ???
-  integer(size_t)                   :: irbc_size_template                            ! size ofiRbc array in iterations logging
-  integer(size_t)                   :: irbc_size                                     ! size ofiRbc array in iterations logging
+
+  integer(hid_t)                    :: iteration_dspace_id  !< dataspace for "iteration"
+  integer(hid_t)                    :: iteration_dtype_id   !< Compound datatype for "iteration"
+  integer(hid_t)                    :: iRZbscArray_id       !< Memory datatype identifier
+  integer(size_t)                   :: iteration_dtype_size !< Size of the "iteration" datatype
+  integer(size_t)                   :: type_size_i          !< Size of the integer datatype
+  integer(size_t)                   :: type_size_d          !< Size of the double precision datatype
+  integer(size_t)                   :: offset               !< Member's offset
+  integer(hid_t)                    :: crp_list             !< Dataset creation property identifier
+  integer, parameter                :: rank = 1             !< logging rank: convergence logging is one-dimensional
+  integer(hsize_t), dimension(rank) :: maxdims              !< convergence logging maximum dimensions => will be unlimited
+  integer(hsize_t), dimension(rank) :: dims = (/ 0 /)       !< current convergence logging dimensions
+  integer(hsize_t), dimension(rank) :: dimsc = (/ 1 /)      !< chunking length ???
+  integer(size_t)                   :: irbc_size_template   !< size ofiRbc array in iterations logging
+  integer(size_t)                   :: irbc_size            !< size ofiRbc array in iterations logging
 
   BEGIN( sphdf5 )
 
@@ -422,10 +434,10 @@ subroutine init_convergence_output
 
   H5CALL( sphdf5, h5pset_preserve_f, (plist_id, .TRUE., hdfier) )
 
-  maxdims = (/ H5S_UNLIMITED_F /)                                                       ! unlimited array size: "converge" until you get bored
+  maxdims = (/ H5S_UNLIMITED_F /)                                                                      ! unlimited array size: "converge" until you get bored
   H5CALL( sphdf5, h5screate_simple_f, (rank, dims, iteration_dspace_id, hdfier, maxdims) )             ! Create the dataspace with zero initial size and allow it to grow
 
-  H5CALL( sphdf5, h5pcreate_f, (H5P_DATASET_CREATE_F, crp_list, hdfier) ) ! dataset creation property list with chunking
+  H5CALL( sphdf5, h5pcreate_f, (H5P_DATASET_CREATE_F, crp_list, hdfier) )                              ! dataset creation property list with chunking
 
   H5CALL( sphdf5, h5pset_chunk_f, (crp_list, rank, dimsc, hdfier) )
 
@@ -435,31 +447,31 @@ subroutine init_convergence_output
   H5CALL( sphdf5, h5tget_size_f, (iRZbscArray_id, irbc_size, hdfier) )
   H5CALL( sphdf5, h5tget_size_f, (H5T_NATIVE_INTEGER, type_size_i, hdfier) )                           ! size of an integer field
   H5CALL( sphdf5, h5tget_size_f, (H5T_NATIVE_DOUBLE,  type_size_d, hdfier) )                           ! size of a   double field
-  iteration_dtype_size = 2*type_size_i + 2*type_size_d + 4*irbc_size                     ! wflag, nDcalls, Energy, ForceErr, i{R,Z}b{c,s}
+  iteration_dtype_size = 2*type_size_i + 2*type_size_d + 4*irbc_size                                   ! wflag, nDcalls, Energy, ForceErr, i{R,Z}b{c,s}
 
   H5CALL( sphdf5, h5tcreate_f, (H5T_COMPOUND_F, iteration_dtype_size, iteration_dtype_id, hdfier) )    ! create compound datatype
 
-  offset = 0                                                                             ! offset for first field starts at 0
-  H5CALL( sphdf5, h5tinsert_f, (iteration_dtype_id, "nDcalls", offset, H5T_NATIVE_INTEGER, hdfier) )     ! insert "nDcalls" field in datatype
-  offset = offset + type_size_i                                                          ! increment offset by size of field
+  offset = 0                                                                                           ! offset for first field starts at 0
+  H5CALL( sphdf5, h5tinsert_f, (iteration_dtype_id, "nDcalls", offset, H5T_NATIVE_INTEGER, hdfier) )   ! insert "nDcalls" field in datatype
+  offset = offset + type_size_i                                                                        ! increment offset by size of field
   H5CALL( sphdf5, h5tinsert_f, (iteration_dtype_id, "Energy", offset, H5T_NATIVE_DOUBLE, hdfier) )     ! insert "Energy" field in datatype
-  offset = offset + type_size_d                                                          ! increment offset by size of field
-  H5CALL( sphdf5, h5tinsert_f, (iteration_dtype_id, "ForceErr", offset, H5T_NATIVE_DOUBLE, hdfier) )      ! insert "ForceErr" field in datatype
-  offset = offset + type_size_d                                                          ! increment offset by size of field
+  offset = offset + type_size_d                                                                        ! increment offset by size of field
+  H5CALL( sphdf5, h5tinsert_f, (iteration_dtype_id, "ForceErr", offset, H5T_NATIVE_DOUBLE, hdfier) )   ! insert "ForceErr" field in datatype
+  offset = offset + type_size_d                                                                        ! increment offset by size of field
   H5CALL( sphdf5, h5tinsert_f, (iteration_dtype_id, "iRbc", offset, iRZbscArray_id, hdfier) )          ! insert "iRbc" field in datatype
-  offset = offset + irbc_size                                                            ! increment offset by size of field
+  offset = offset + irbc_size                                                                          ! increment offset by size of field
   H5CALL( sphdf5, h5tinsert_f, (iteration_dtype_id, "iZbs", offset, iRZbscArray_id, hdfier) )          ! insert "iZbs" field in datatype
-  offset = offset + irbc_size                                                            ! increment offset by size of field
+  offset = offset + irbc_size                                                                          ! increment offset by size of field
   H5CALL( sphdf5, h5tinsert_f, (iteration_dtype_id, "iRbs", offset, iRZbscArray_id, hdfier) )          ! insert "iRbs" field in datatype
-  offset = offset + irbc_size                                                            ! increment offset by size of field
+  offset = offset + irbc_size                                                                          ! increment offset by size of field
   H5CALL( sphdf5, h5tinsert_f, (iteration_dtype_id, "iZbc", offset, iRZbscArray_id, hdfier) )          ! insert "iZbc" field in datatype
-  offset = offset + irbc_size                                                            ! increment offset by size of field
+  offset = offset + irbc_size                                                                          ! increment offset by size of field
 
-  H5CALL( sphdf5, h5dcreate_f, (file_id, "iterations", iteration_dtype_id, iteration_dspace_id, &     ! create dataset with compound type
+  H5CALL( sphdf5, h5dcreate_f, (file_id, "iterations", iteration_dtype_id, iteration_dspace_id, &      ! create dataset with compound type
                   & iteration_dset_id, hdfier, crp_list) )
 
   H5CALL( sphdf5, h5sclose_f, (iteration_dspace_id, hdfier) )                                          ! Terminate access to the data space (does not show up in obj_count below)
-                                                                                         ! --> only needed for creation of dataset
+                                                                                                       ! --> only needed for creation of dataset
 
   ! Create memory types. We have to create a compound datatype
   ! for each member we want to write.
@@ -485,7 +497,7 @@ subroutine init_convergence_output
   H5CALL( sphdf5, h5screate_simple_f, (rank, dims, memspace, hdfier) )
 
   H5CALL( sphdf5, h5pclose_f, (crp_list, hdfier) )
-  H5CALL( sphdf5, h5tclose_f, (iteration_dtype_id, hdfier) )                                           ! Terminate access to the datatype
+  H5CALL( sphdf5, h5tclose_f, (iteration_dtype_id, hdfier) )                                       ! Terminate access to the datatype
   H5CALL( sphdf5, h5tclose_f, (iRZbscArray_id, hdfier) )                                           ! Terminate access to the datatype
 
  endif ! myid.eq.0
@@ -493,7 +505,8 @@ subroutine init_convergence_output
 end subroutine init_convergence_output
 
 
-!> \brief write convergence output (evolution of interface geometry, force, etc); was in global.f90/wrtend for wflag.eq.-1 previously
+!> \brief Write convergence output (evolution of interface geometry, force, etc).
+!> \ingroup grp_output
 !>
 subroutine write_convergence_output( nDcalls, ForceErr )
 
@@ -521,27 +534,24 @@ subroutine write_convergence_output( nDcalls, ForceErr )
   H5CALL( sphdf5, h5dset_extent_f, (iteration_dset_id, data_dims, hdfier), __FILE__, __LINE__)
 
   ! get dataspace slab corresponding to region which the iterations dataset was extended by
-  H5CALL( sphdf5, h5dget_space_f, (iteration_dset_id, dataspace, hdfier), __FILE__, __LINE__) ! re-select dataspace to update size info in HDF5 lib
+  H5CALL( sphdf5, h5dget_space_f, (iteration_dset_id, dataspace, hdfier), __FILE__, __LINE__)                                             ! re-select dataspace to update size info in HDF5 lib
   H5CALL( sphdf5, h5sselect_hyperslab_f, (dataspace, H5S_SELECT_SET_F, old_data_dims, (/ INT(1, HSIZE_T) /), hdfier), __FILE__, __LINE__) ! newly appended slab is at old size and 1 long
 
-  if (myid.eq.0) then ! only one processor should actually write the data
-
-    ! write next iteration object
-    H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_nDcalls_id, nDcalls, INT((/1/), HSIZE_T), hdfier, &
-      & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id), __FILE__, __LINE__)
-    H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_Energy_id, Energy, INT((/1/), HSIZE_T), hdfier, &
-      & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id), __FILE__, __LINE__)
-    H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_ForceErr_id, ForceErr, INT((/1/), HSIZE_T), hdfier, &
-      & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id), __FILE__, __LINE__)
-    H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_iRbc_id, iRbc, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
-      & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id), __FILE__, __LINE__)
-    H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_iZbs_id, iZbs, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
-      & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id), __FILE__, __LINE__)
-    H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_iRbs_id, iRbs, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
-      & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id), __FILE__, __LINE__)
-    H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_iZbc_id, iZbc, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
-      & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id), __FILE__, __LINE__)
-  endif
+  ! write next iteration object
+  H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_nDcalls_id, nDcalls, INT((/1/), HSIZE_T), hdfier, &
+    & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id), __FILE__, __LINE__)
+  H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_Energy_id, Energy, INT((/1/), HSIZE_T), hdfier, &
+    & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id), __FILE__, __LINE__)
+  H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_ForceErr_id, ForceErr, INT((/1/), HSIZE_T), hdfier, &
+    & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id), __FILE__, __LINE__)
+  H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_iRbc_id, iRbc, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
+    & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id), __FILE__, __LINE__)
+  H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_iZbs_id, iZbs, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
+    & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id), __FILE__, __LINE__)
+  H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_iRbs_id, iRbs, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
+    & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id), __FILE__, __LINE__)
+  H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_iZbc_id, iZbc, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
+    & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id), __FILE__, __LINE__)
 
   ! dataspace to appended object should be closed now
   ! MAYBE we otherwise keep all the iterations in memory?
@@ -551,7 +561,13 @@ subroutine write_convergence_output( nDcalls, ForceErr )
 
 end subroutine write_convergence_output
 
-!> \brief write the magnetic field on a grid; previously the (wflag.eq.1) part of globals.f90/wrtend to write .ext.sp.grid;
+!> \brief Write the magnetic field on a grid.
+!> \ingroup grp_output
+!>
+!> The magnetic field is evaluated on a regular grid in \f$(s, \theta, \zeta)\f$
+!> and the corresponding cylindrical coordinates \f$(R,Z)\f$
+!> as well as the cylindrical components of the magnetic field \f$(B^R, B^\varphi, B^Z)\f$
+!> are written out.
 subroutine write_grid
 
   use constants
@@ -692,7 +708,14 @@ subroutine write_grid
 
 end subroutine write_grid
 
-!> \brief init field line tracing output group and create array datasets
+!> \brief Initialize field line tracing output group and create array datasets.
+!> \ingroup grp_output
+!>
+!> The field-line tracing diagnostic is parallelized over volumes,
+!> where all threads/ranks produce individual output.
+!> This is gathered in the output file, stacked over the radial dimension.
+!> The \c success flag signals if the integrator was successful in following
+!> the fieldline for the derired number of toroidal periods.
 !>
 !> @param[in] numTrajTotal total number of Poincare trajectories
 subroutine init_flt_output( numTrajTotal )
@@ -701,9 +724,9 @@ subroutine init_flt_output( numTrajTotal )
   use inputlist, only : nPpts
 
   LOCALS
-  integer, intent(in)               :: numTrajTotal                                  ! total number of trajectories
-  integer(HSIZE_T), dimension(rankP) :: dims_traj ! Dataset dimensions.
-  integer(HSIZE_T), dimension(rankP) :: length ! Dataset dimensions.
+  integer, intent(in)               :: numTrajTotal ! total number of trajectories
+  integer(HSIZE_T), dimension(rankP) :: dims_traj   ! Dataset dimensions.
+  integer(HSIZE_T), dimension(rankP) :: length      ! Dataset dimensions.
 
   BEGIN( sphdf5 )
 
@@ -776,11 +799,12 @@ subroutine init_flt_output( numTrajTotal )
 
 end subroutine init_flt_output
 
-!> \brief write a hyperslab of Poincare data
+!> \brief Write a hyperslab of Poincare data corresponding to the output of one parallel worker.
+!> \ingroup grp_output
 !>
-!> @param offset
-!> @param data
-!> @param success
+!> @param offset radial offset at which the data belongs
+!> @param data output from field-line tracing
+!> @param success flags to indicate if integrator was successful
 subroutine write_poincare( offset, data, success )
 
   use allglobal, only : Nz
@@ -826,13 +850,14 @@ subroutine write_poincare( offset, data, success )
 
 end subroutine write_poincare
 
-!> \brief write rotational transform output from field line following
+!> \brief Write the rotational transform output from field line following.
+!> \ingroup grp_output
 !>
-!> @param offset
-!> @param length
-!> @param lvol
-!> @param diotadxup
-!> @param fiota
+!> @param offset radial offset at which the data belongs
+!> @param length length of dataset to write
+!> @param lvol nested volume index
+!> @param diotadxup derivative of rotational transform (?)
+!> @param fiota rotational transform
 subroutine write_transform( offset, length, lvol, diotadxup, fiota )
 
   LOCALS
@@ -860,8 +885,12 @@ subroutine write_transform( offset, length, lvol, diotadxup, fiota )
 
 end subroutine write_transform
 
-!> \brief finalize Poincare output
+!> \brief Finalize Poincare output.
+!> \ingroup grp_output
 !>
+!> This closes the still-open datasets related to field-line tracing,
+!> which had to be kept open during the tracing to be able to write
+!> the outputs directly when a given worker thread is finished.
 subroutine finalize_flt_output
 
   LOCALS
@@ -870,7 +899,8 @@ subroutine finalize_flt_output
 
  if (myid.eq.0 .and. .not.skip_write) then
 
-  H5CALL( sphdf5, h5sclose_f, (filespace_t,         hdfier), __FILE__, __LINE__ ) ! close filespaces
+  ! close filespaces
+  H5CALL( sphdf5, h5sclose_f, (filespace_t,         hdfier), __FILE__, __LINE__ )
   H5CALL( sphdf5, h5sclose_f, (filespace_s,         hdfier), __FILE__, __LINE__ )
   H5CALL( sphdf5, h5sclose_f, (filespace_R,         hdfier), __FILE__, __LINE__ )
   H5CALL( sphdf5, h5sclose_f, (filespace_Z,         hdfier), __FILE__, __LINE__ )
@@ -878,7 +908,8 @@ subroutine finalize_flt_output
   H5CALL( sphdf5, h5sclose_f, (filespace_diotadxup, hdfier), __FILE__, __LINE__ )
   H5CALL( sphdf5, h5sclose_f, (filespace_fiota,     hdfier), __FILE__, __LINE__ )
 
-  H5CALL( sphdf5, h5sclose_f, (memspace_t,          hdfier), __FILE__, __LINE__ ) ! close dataspaces
+  ! close dataspaces
+  H5CALL( sphdf5, h5sclose_f, (memspace_t,          hdfier), __FILE__, __LINE__ )
   H5CALL( sphdf5, h5sclose_f, (memspace_s,          hdfier), __FILE__, __LINE__ )
   H5CALL( sphdf5, h5sclose_f, (memspace_R,          hdfier), __FILE__, __LINE__ )
   H5CALL( sphdf5, h5sclose_f, (memspace_Z,          hdfier), __FILE__, __LINE__ )
@@ -886,7 +917,8 @@ subroutine finalize_flt_output
   H5CALL( sphdf5, h5sclose_f, (memspace_diotadxup,  hdfier), __FILE__, __LINE__ )
   ! memspace_fiota is re-opened/closed in each iteration (see write_transform)
 
-  H5CALL( sphdf5, h5dclose_f, (dset_id_t,           hdfier), __FILE__, __LINE__ ) ! close datasets
+  ! close datasets
+  H5CALL( sphdf5, h5dclose_f, (dset_id_t,           hdfier), __FILE__, __LINE__ )
   H5CALL( sphdf5, h5dclose_f, (dset_id_s,           hdfier), __FILE__, __LINE__ )
   H5CALL( sphdf5, h5dclose_f, (dset_id_R,           hdfier), __FILE__, __LINE__ )
   H5CALL( sphdf5, h5dclose_f, (dset_id_Z,           hdfier), __FILE__, __LINE__ )
@@ -894,20 +926,27 @@ subroutine finalize_flt_output
   H5CALL( sphdf5, h5dclose_f, (dset_id_diotadxup,   hdfier), __FILE__, __LINE__ )
   H5CALL( sphdf5, h5dclose_f, (dset_id_fiota,       hdfier), __FILE__, __LINE__ )
 
-  HCLOSEGRP( grpPoincare  ) ! close groups
+  ! close groups
+  HCLOSEGRP( grpPoincare  )
   HCLOSEGRP( grpTransform )
 
  endif ! myid.eq.0
 
 end subroutine finalize_flt_output
 
-!> write the magnetic vector potential Fourier harmonics to the output file group /vector_potential
+!> \brief Write the magnetic vector potential Fourier harmonics to the output file group \c /vector_potential .
+!> \ingroup grp_output
 !>
-!> @param sumLrad
-!> @param allAte
-!> @param allAze
-!> @param allAto
-!> @param allAzo
+!> The data is stacked in the radial direction over \c Lrad ,
+!> since \c Lrad can be different in each volume, but HDF5 only supports
+!> rectangular arrays. So, one needs to split the \c sumLrad dimension
+!> into chunks given by the input \c Lrad array.
+!>
+!> @param sumLrad total sum over \c Lrad in all nested volumes
+!> @param allAte \f$A^{\theta}_\mathrm{even}\f$ for all nested volumes
+!> @param allAze \f$A^{\zeta}_\mathrm{even}\f$ for all nested volumes
+!> @param allAto \f$A^{\theta}_\mathrm{odd}\f$ for all nested volumes
+!> @param allAzo \f$A^{\zeta}_\mathrm{odd}\f$ for all nested volumes
 subroutine write_vector_potential(sumLrad, allAte, allAze, allAto, allAzo)
 
   use allglobal, only : mn
@@ -934,7 +973,9 @@ subroutine write_vector_potential(sumLrad, allAte, allAze, allAto, allAzo)
 
 end subroutine write_vector_potential
 
-!> \brief final output
+!> \brief Write the final state of the equilibrium to the output file.
+!> \ingroup grp_output
+!>
 subroutine hdfint
 
   use fileunits, only : ounit
@@ -951,8 +992,6 @@ subroutine hdfint
                         TT, &
                         beltramierror, &
                         IPDt
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   LOCALS
 
@@ -972,8 +1011,8 @@ subroutine hdfint
   HWRITERV( grpOutput,           mn,               Vnc,       iVnc(1:mn)   ) ! non-stellarator symmetric normal field at boundary; vacuum component;
   HWRITERV( grpOutput,           mn,               Bnc,       iBnc(1:mn)   ) ! non-stellarator symmetric normal field at boundary; plasma component;
 
-
-!latex \item In addition to the input variables, which are described in \link{global}, the following quantities are written to \type{ext.h5} :
+!> <ul>
+!> <li> In addition to the input variables, which are described in global(), the following quantities are written to \c ext.sp.h5 :
 !latex
 !latex \begin{tabular}{|l|l|l|} \hline
 
@@ -1063,44 +1102,34 @@ subroutine hdfint
   HWRITEIV( grpOutput, 1, lmns, (/ lmns /))
 
 !latex \hline \end{tabular}
+!> </li>
+!> <li> All quantities marked as real should be treated as double precision. </li>
+!> </ul>
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \item All quantities marked as real should be treated as double precision.
-
-!latex \end{enumerate}
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  !RETURN(hdfint)
   HCLOSEGRP( grpOutput )
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
  endif ! myid.eq.0
 
 end subroutine hdfint
 
 !> \brief Close all open HDF5 objects (we know of) and list any remaining still-open objects.
+!> \ingroup grp_output
 !>
 subroutine finish_outfile
 ! Close all open HDF5 objects (we know of) and list any remaining still-open objects
 ! The goal should be to close all objects specifically!
 
   LOCALS
-  integer(size_t)                :: obj_count                                  ! number of open HDF5 objects
-  integer(size_t)              :: num_objs   ! number of still-open objects
+  integer(size_t)                          :: obj_count                                  ! number of open HDF5 objects
+  integer(size_t)                          :: num_objs    ! number of still-open objects
   integer(hid_t),dimension(:),allocatable  :: obj_ids    ! still-open objects
-  integer                      :: iObj
-  integer(size_t) :: openLength
-  character(len=:),allocatable :: openName
-  integer(size_t),parameter :: dummySize=1
-  character(len=dummySize+1) :: dummyName
-  integer :: typeClass
+  integer                                  :: iObj
+  integer(size_t)                          :: openLength
+  character(len=:),allocatable             :: openName
+  integer(size_t),parameter                :: dummySize=1
+  character(len=dummySize+1)               :: dummyName
+  integer                                  :: typeClass
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   BEGIN( sphdf5 )
 
  if (myid.eq.0 .and. .not.skip_write) then
@@ -1113,13 +1142,14 @@ subroutine finish_outfile
   H5CALL( sphdf5, h5tclose_f, (dt_iZbs_id, hdfier)       , __FILE__, __LINE__)
   H5CALL( sphdf5, h5tclose_f, (dt_iRbs_id, hdfier)       , __FILE__, __LINE__)
   H5CALL( sphdf5, h5tclose_f, (dt_iZbc_id, hdfier)       , __FILE__, __LINE__)
-  H5CALL( sphdf5, h5dclose_f, (iteration_dset_id, hdfier), __FILE__, __LINE__)                                             ! End access to the dataset and release resources used by it.
-  H5CALL( sphdf5, h5pclose_f, (plist_id, hdfier)         , __FILE__, __LINE__)                                             ! close plist used for 'preserve' flag (does not show up in obj_count below)
+  H5CALL( sphdf5, h5dclose_f, (iteration_dset_id, hdfier), __FILE__, __LINE__) ! End access to the dataset and release resources used by it.
+  H5CALL( sphdf5, h5pclose_f, (plist_id, hdfier)         , __FILE__, __LINE__) ! close plist used for 'preserve' flag (does not show up in obj_count below)
 
   ! check whether we forgot to close some resources; only check for group, dataset and datatype (there is only one file and that should be still open...)
   H5CALL( sphdf5, h5fget_obj_count_f, (file_id, ior(H5F_OBJ_GROUP_F, ior(H5F_OBJ_DATASET_F, H5F_OBJ_DATATYPE_F)), obj_count, hdfier), __FILE__, __LINE__ )
-  if ((obj_count.gt.0).and.(myid.eq.0)) then
-    write(*,'("There are still ",i3," hdf5 objects open for myid=",i3)') obj_count,myid
+
+  if (obj_count.gt.0) then
+    write(*,'("There are still ",i3," hdf5 objects open")') obj_count
     allocate(obj_ids(1:obj_count))
 
     ! groups

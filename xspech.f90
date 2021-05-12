@@ -1,10 +1,25 @@
 !> \file
 !> \brief Main program
 
-!> \brief Main program of SPEC
+!> \brief Main program of SPEC.
 !>
+!> This only calls the xpech() subroutine to do a stand-alone SPEC run.
 !> @return none
-program xspech
+program spec_main
+  implicit none
+  call xspech
+end program spec_main
+
+!> \brief Main subroutine of SPEC.
+!>
+!> This orchestrates a stand-alone SPEC run:
+!> <ul>
+!> <li> read the input file </li>
+!> <li> solve the MRxMHD equilibrium (see spec() )</li>
+!> <li> run some diagnostics on the results </li>
+!> <li> write the output file(s) </li>
+!> </ul>
+subroutine xspech
 
   use numerical
   use allglobal, only: set_mpi_comm, myid, ncpu, cpus, version, MPI_COMM_SPEC, &
@@ -35,7 +50,7 @@ program xspech
   ! set default communicator to MPI_COMM_WORLD
   call set_mpi_comm(MPI_COMM_WORLD)
 
-  ! set initial time; 04 Dec 14;
+  ! set initial time
   cpus = GETTIME
   cpuo = cpus
 
@@ -139,7 +154,6 @@ program xspech
 
   if( myid.eq.0 ) then
 
-
 !> **restart files**
 !>
 !> <ul>
@@ -172,23 +186,19 @@ program xspech
 
 1000 format("xspech : ",f10.2," : date="a4"/"a2"/"a2" , "a2":"a2":"a2" ; machine precision="es9.2" ; vsmall="es9.2" ; small="es9.2" ;")
 
-end program xspech
+end subroutine xspech
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \subsubsection{input file extension $\equiv$ command line argument}
-
-!latex \begin{enumerate}
-!latex \item The input file name, \type{ext}, is given as the first command line input, and the input file itself is \verb!ext.sp!
-!latex \item Additional command line inputs recognized are:
-!latex \begin{enumerate}
-!latex \item \type{-help, -h} ; will give help information to user; under construction;
-!latex \item \type{-readin} ; will immediately set \type{Wreadin=T}; this may be over-ruled when \type{namelist/screenlist/} is read;
-!latex \end{enumerate}
-
-!latex \end{enumerate}
-
-! read command-line arguments; in particular, determine input file (name or extension)
+!> \brief Read command-line arguments; in particular, determine input file (name or extension).
+!>
+!> <ul>
+!> <li> The input file name, \c ext , is given as the first command line input, and the input file itself is then \c ext.sp .</li>
+!> <li> Alternatively, you can directly specify the input file itself as \c ext.sp .</li>
+!> <li> Additional command line inputs recognized are:
+!>      <ul>
+!>      <li> \c -help or \c -h will give help information to user </li>
+!>      <li> \c -readin will immediately set \c Wreadin=T ; this may be over-ruled when the namelist \c screenlist is read
+!>      </ul> </li>
+!> </ul>
 subroutine read_command_args
 
   use fileunits, only: ounit
@@ -250,9 +260,12 @@ subroutine read_command_args
 
 end subroutine read_command_args
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-! This is the main "driver" for the physics part of SPEC.
+!> \brief This is the main "driver" for the physics part of SPEC.
+!>
+!> Picard iterations are performed (if in free-boundary mode)
+!> and within each Picard iteration, the fixed-boundary problem
+!> is solved (also iteratively).
 subroutine spec
 
   use constants, only : zero, one, pi2, mu0
@@ -738,16 +751,14 @@ subroutine spec
 
 end subroutine spec
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \subsection{final diagnostics}
-
-!latex \begin{enumerate}
-!latex \item \link{sc00aa} is called to compute the covariant components of the magnetic field at the interfaces;
-!latex       these are related to the singular currents;
-!latex \item if \inputvar{Lcheck} $= 1$, \link{jo00aa} is called to compute the error in the Beltrami equation;
-!latex \item \link{pp00aa} is called to construct the \Poincare plot;
-!latex \end{enumerate}
+!> \brief Final diagnostics
+!>
+!> <ul>
+!> <li> sc00aa() is called to compute the covariant components of the magnetic field at the interfaces;
+!>      these are related to the singular currents </li>
+!> <li> if \c Lcheck=1 , jo00aa() is called to compute the error in the Beltrami equation </li>
+!> <li> pp00aa() is called to construct the Poincare plot by field-line following. </li>
+!> </ul>
 subroutine final_diagnostics
 
   use inputlist, only: nPtrj, nPpts, Igeometry, Lcheck, Nvol, odetol, &
@@ -973,4 +984,3 @@ dcpu, Ttotal / (/ 1, 60, 3600 /), ecpu, 100*ecpu/dcpu
 
 end subroutine ending
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
