@@ -10,18 +10,18 @@ coords.f90                               packab.f90
 curent.f90                               packxi.f90
 df00ab.f90                               pc00aa.f90
 dforce.f90 Antoine                       pc00ab.f90
-dfp100.f90 Antoine                       pp00aa.f90
-dfp200.f90 Antoine                       pp00ab.f90
+dfp100.f90 Antoine                       pp00aa.f90 Jonathan
+dfp200.f90 Antoine                       pp00ab.f90 Jonathan
 global.f90                               preset.f90
 hesian.f90 Arunav                        ra00aa.f90
 intghs.f90 Zhisong                       rzaxis.f90
-jo00aa.f90                               sphdf5.f90 Jonathan
+jo00aa.f90                               sphdf5.f90 done
 lbpol.f90                                spsint.f90
 lforce.f90                               spsmat.f90
 ma00aa.f90                               stzxyz.f90
 ma02aa.f90                               tr00ab.f90
 manual.f90                               volume.f90
 matrix.f90                               wa00aa.f90
-memory.f90                               xspech.f90 Jonathan
+memory.f90                               xspech.f90 done
 
-last change: 2021-04-27
+last change: 2021-05-11
