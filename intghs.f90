@@ -107,7 +107,7 @@ subroutine intghs( lquad, mn, lvol, lrad, idx )
                         YESstellsym, NOTstellsym, &
                         gaussianweight, gaussianabscissae, &
                         Tsc, Tss, Dtc, Dts, Dzc, Dzs, &
-                        Ttc, Tts, Tzc, Tzs, &
+                        Ttc, Ttsv, Tzc, Tzs, &
                         Lcoordinatesingularity, &
                         pi2pi2nfp, pi2pi2nfphalf, dBdX, &
                         Ntz, NOTstellsym, dBdX, Lsavedguvij, &
@@ -144,7 +144,7 @@ subroutine intghs( lquad, mn, lvol, lrad, idx )
     Dts = zero
     Dzs = zero
     if (.not.dBdX%L) then
-      Tts = zero
+      TTsv = zero
       Tzs = zero
     endif
     
@@ -282,7 +282,7 @@ do ii = 1, mn
       Tzc(ll1,ii) = (sum(wk%basis(ll, bid, 0, :) * wk%efmn(ii,:) * w) - sum(wk%basis(ll, bid, 1, :) * wk%ijreal(ii,:) * w) * dfactor) * ik
 
       if (NOTstellsym) then
-        Tts(ll1,ii) = (sum(wk%basis(ll, bid, 0, :) * wk%sfmn(ii,:) * w) + sum(wk%basis(ll, bid, 1, :) * wk%kjreal(ii,:) * w) * dfactor) * ik
+        TTsv(ll1,ii) = (sum(wk%basis(ll, bid, 0, :) * wk%sfmn(ii,:) * w) + sum(wk%basis(ll, bid, 1, :) * wk%kjreal(ii,:) * w) * dfactor) * ik
         Tzs(ll1,ii) = (sum(wk%basis(ll, bid, 0, :) * wk%ofmn(ii,:) * w) - sum(wk%basis(ll, bid, 1, :) * wk%jireal(ii,:) * w) * dfactor) * ik
       endif
 
@@ -308,7 +308,7 @@ do ii = 1, mn
     Dzs = Dzs * pi2pi2nfphalf
 
     if (.not.dBdX%L) then
-      Tts = Tts * pi2pi2nfphalf
+      TTsv = TTsv * pi2pi2nfphalf
       Tzs = Tzs * pi2pi2nfphalf
     endif
   
