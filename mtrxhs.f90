@@ -25,7 +25,7 @@ subroutine mtrxhs( lvol, mn, lrad, resultA, resultD, idx )
                         Ate, Ato, Aze, Azo, &
                         Lcoordinatesingularity, TT, RTT, RTM, &
                         Tss, Tsc, Dts, Dtc, Dzs, Dzc, &
-                        Ttc, Tts, Tzc, Tzs, &
+                        Ttc, Ttsv, Tzc, Tzs, &
                         dBdX, &
                         Lma, Lmb, Lmc, Lmd, Lme, Lmf, Lmg, Lmh, &
                         Lmavalue, Lmbvalue, Lmcvalue, Lmdvalue, &
@@ -158,7 +158,7 @@ subroutine mtrxhs( lvol, mn, lrad, resultA, resultD, idx )
 
         Hte = Ttc(ll1,ii)
         Hze = Tzc(ll1,ii)
-        Hto = Tts(ll1,ii)
+        Hto = Ttsv(ll1,ii)
         Hzo = Tzs(ll1,ii)
 
         id = Ate(lvol,0,ii)%i(ll) ; resultD(id) = Hte

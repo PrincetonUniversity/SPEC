@@ -5,7 +5,7 @@
  afiles=manual rzaxis packxi volume coords basefn memory 
  bfiles=metrix ma00aa matrix spsmat spsint mp00ac ma02aa packab tr00ab curent df00ab lforce intghs mtrxhs lbpol
 #cfiles=bc00aa fc02aa jk03aa pc00aa pc00ab
- cfiles=brcast dfp100 dfp200 dforce newton descnt minimize 
+ cfiles=brcast dfp100 dfp200 dforce newton descnt descnt_petsc minimize 
  dfiles=casing bnorml 
  efiles=jo00aa pp00aa pp00ab bfield stzxyz
  ffiles=hesian ra00aa numrec
@@ -29,9 +29,11 @@
  CC=intel
  # if want to use gfortran; make CC=gfortran; otherwise using Intel
  FC=mpif90
- OMP=yes
  # to enable OpenMP acceleration within volume, set OMP=yes, otherwise set OMP=no
- 
+ OMP=yes
+ # to use PETSC, set PETSC=yes, otherwise set PETSC=no
+ PETSC=yes
+
  # Intel Defaults
  # At PPPL, you can use the following commands
  # module use /p/focus/modules
@@ -47,6 +49,8 @@
  LINKS+=${MKLROOT}/lib/intel64/libmkl_blas95_lp64.a ${MKLROOT}/lib/intel64/libmkl_lapack95_lp64.a \
      -Wl,--start-group ${MKLROOT}/lib/intel64/libmkl_intel_lp64.a ${MKLROOT}/lib/intel64/libmkl_sequential.a \
      ${MKLROOT}/lib/intel64/libmkl_core.a -Wl,--end-group -lpthread -lm -ldl # MKL link
+ PETSClink=
+ PETSCinclude=
 
 
 ifeq ($(CC),gfortran)
@@ -186,10 +190,19 @@ ifeq ($(CC),intel_raijin)
  LINKS+=-L$(HDF5_BASE)/lib -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lpthread -lz -lm
  RFLAGS=-mcmodel=large -O3 -m64 -unroll0 -fno-alias -ip -traceback -fPIC
  DFLAGS=-check bounds -check format -check output_conversion -check pointers -check uninit -debug full -D DEBUG
+ PETSClink=-L$(PETSC_DIR)/lib -lpetsc
+ PETSCinclude=-I$(PETSC_DIR)/include
 endif
 
 ifeq ($(OMP),yes)
  RFLAGS+=-DOPENMP -fopenmp
+endif
+
+ifeq ($(PETSC),yes)
+ RFLAGS+=-DPETSC
+ DFLAGS+=-DPETSC
+ LINKS+=$(PETSClink)
+ LIBS+=$(PETSCinclude)
 endif
 
 ###############################################################################################################################################################

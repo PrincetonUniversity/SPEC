@@ -171,10 +171,6 @@ subroutine descnt( NGdof, position, ihybrd )
   irevcm = 0 ; ihybrd = 1 ! required for initial entry; herefater unchanged by user;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  SALLOCATE( fjac, (1:NGdof, 1:NGdof), zero)
-  SALLOCATE( RR, (1:NGdof*(NGdof+1)/2), zero)
-
   
   Lhessianallocated = .false.
   
@@ -235,10 +231,8 @@ subroutine descnt( NGdof, position, ihybrd )
   
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-	call MPI_BARRIER( MPI_COMM_WORLD, ierr2)
-
-  DALLOCATE( fjac )
-  DALLOCATE( RR )
+	
+  call MPI_BARRIER( MPI_COMM_WORLD, ierr2)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   RETURN(descnt)

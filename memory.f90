@@ -195,7 +195,7 @@ subroutine allocate_geometry_matrices(vvol, LcomputeDerivatives)
     SALLOCATE( Tsc, (0:lldof,1:mn), zero )
     SALLOCATE( Dts, (0:lldof,1:mn), zero )
     SALLOCATE( Dzs, (0:lldof,1:mn), zero )
-    SALLOCATE( Tts, (0:lldof,1:mn), zero )
+    SALLOCATE( Ttsv, (0:lldof,1:mn), zero )
     SALLOCATE( Tzs, (0:lldof,1:mn), zero )
 
   end if !NOTstellsym
@@ -275,7 +275,7 @@ subroutine deallocate_geometry_matrices(LcomputeDerivatives)
     DALLOCATE(Tsc)
     DALLOCATE(Dts)
     DALLOCATE(Dzs)
-    DALLOCATE(Tts)
+    DALLOCATE(TTsv)
     DALLOCATE(Tzs)
 
   endif

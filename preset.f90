@@ -916,7 +916,7 @@ endif
   SALLOCATE( guvij, (1:Ntz,0:3,0:3,-1:3), zero ) ! need this on higher resolution grid for accurate Fourier decomposition;
   SALLOCATE( gvuij, (1:Ntz,0:3,0:3    ), zero ) ! need this on higher resolution grid for accurate Fourier decomposition; 10 Dec 15;
 
-  if ((Lfindzero .ge. 2) .or. (Lcheck.eq.5 .or. LHevalues .or. LHevectors .or. LHmatrix .or. Lperturbed.eq.1)) then
+  if ((Lfindzero .ge. 2) .and. (Igeometry .eq. 3).or. (Lcheck.eq.5 .or. LHevalues .or. LHevectors .or. LHmatrix .or. Lperturbed.eq.1)) then
     SALLOCATE( dRadR, (1:mn,0:1,0:1,1:mn), zero ) ! calculated in rzaxis; 19 Sep 16;
     SALLOCATE( dRadZ, (1:mn,0:1,0:1,1:mn), zero )
     SALLOCATE( dZadR, (1:mn,0:1,0:1,1:mn), zero )
@@ -1139,7 +1139,7 @@ endif
      endif
     enddo
     if (Lfindzero .gt. 2) then
-      psifactor(1:mn,vvol) = one /  tflux(vvol)**half
+      !psifactor(1:mn,vvol) = one /  tflux(vvol)**half
     endif
    enddo
    
@@ -1154,7 +1154,7 @@ endif
      endif
     enddo
     if (Lfindzero .gt. 2) then
-      psifactor(1:mn,vvol) = one /  tflux(vvol)**half
+      !psifactor(1:mn,vvol) = one /  tflux(vvol)**half
     endif
    enddo
     

@@ -298,6 +298,15 @@ program xspech
 
     ifail = 1
     WCALL( xspech, descnt, ( NGdof, position(0:NGdof), ifail ) )
+
+   case (5)
+
+    ifail = 1
+    ! only compile if we have PETSC
+#ifdef PETSC
+    WCALL( xspech, descnt_petsc, ( NGdof, position(0:NGdof), ifail ) )
+#endif
+
    end select
    
    pack = 'U' ! unpack geometrical degrees of freedom; 13 Sep 13;

@@ -13,14 +13,28 @@ m4_define(GETTIME,MPI_WTIME())m4_dnl ; can put comments here;
 m4_define(MPISTART,{! macro expansion of mpistart;
 
   myid = 0 ; ncpu = 1
+
+#ifndef PETSC
   call MPI_INIT( ierr )
+#else
+  call PetscInitialize( PETSC_NULL_CHARACTER, ierr )
+  if (ierr .ne. 0) then
+    print*,'Unable to initialize PETSc'
+    stop
+  endif
+#endif
+
   call MPI_COMM_RANK( MPI_COMM_WORLD, myid, ierr )
   call MPI_COMM_SIZE( MPI_COMM_WORLD, ncpu, ierr )
 
   ! macro expansion of mpistart; end;})m4_dnl can put comments here
 m4_define(MPIFINALIZE,{! macro expansion of mpifinalize;
 
+#ifndef PETSC
    call MPI_FINALIZE(ierr)
+#else
+   call PetscFinalize(ierr)
+#endif
 
   ! macro expansion of mpifinalize; end;})m4_dnl can put comments here
 m4_define(LOCALS,{! macro expansion of locals;
@@ -28,8 +42,17 @@ m4_define(LOCALS,{! macro expansion of locals;
 #ifdef OPENMP
   USE OMP_LIB
 #endif
+
+#ifdef PETSC
+  use petsc
+#endif
+
   implicit none
+
+#ifndef PETSC
   include "mpif.h"
+#endif
+
   INTEGER   :: ierr, astat, ios, nthreads, ithread
   REAL      :: cput, cpui, cpuo ! cpu time; cpu initial; cpu old; 31 Jan 13;
 
