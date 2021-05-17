@@ -350,6 +350,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
             else ! Matrix free version
                 rhs(1:NN,1) = Ddotx(1:NN)
     !            rhs(1:NN,2) = - matmul( - one  * dMD(1:NN,1:NN),solution(1:NN,0) )
+            end if
       end select
     end if
     

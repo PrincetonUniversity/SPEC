@@ -125,13 +125,18 @@ subroutine curent( lvol, mn, Nt, Nz, iflag, ldItGp )
         call build_vector_potential(lvol, innout, ideriv, 0)
 
         do ii = 1, mn ! loop over Fourier harmonics; 17 May 21;
-            efmn(ii) = -im(ii)*efmn(ii) ! theta derivative of Aze
-            cfmn(ii) = -in(ii)*cfmn(ii) ! zeta  derivative of Ate
+            efmn(ii) = -in(ii)*efmn(ii) ! zeta  derivative of Ate
+            ofmn(ii) = -in(ii)*ofmn(ii) ! zeta  derivative of Ato
+            cfmn(ii) = -im(ii)*cfmn(ii) ! theta derivative of Aze
+            sfmn(ii) = -im(ii)*sfmn(ii) ! theta derivative of Azo
         enddo ! end of do ii; 
 
-        call invfft( mn, im(1:mn), in(1:mn), ofmn(1:mn), efmn(1:mn), -sfmn(1:mn), cfmn(1:mn), &
+        call invfft( mn, im(1:mn), in(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), efmn(1:mn), &
                 Nt, Nz, Bsups(1:Ntz,ideriv), Bsups_2(1:Ntz,ideriv))
         Bsups(1:Ntz,ideriv) = Bsups(1:Ntz,ideriv) + Bsups_2(1:ntz,ideriv)
+           print *,"Bsups:        ", Bsups(1,ideriv)
+           print *,"Bsupt:        ", Bsupt(1,ideriv)
+           print *,"Bsupz:        ", Bsupz(1,ideriv)
    else
         Bsups = zero
    end if

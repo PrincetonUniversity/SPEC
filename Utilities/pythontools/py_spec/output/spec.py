@@ -35,6 +35,8 @@ class SPECout:
         jacobian,
         metric,
         get_B,
+        get_s_der_B,
+        get_B_and_s_der,
         get_modB,
         get_B_covariant
     )

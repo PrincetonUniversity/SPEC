@@ -165,8 +165,29 @@ def metric(
     _, _, _, g = get_grid_and_jacobian_and_metric(self, lvol, sarr, tarr, zarr)
     return g
 
-
 def get_B(
+    self,
+    lvol=0,
+    jacobian=None,
+    sarr=np.linspace(0, 0, 1),
+    tarr=np.linspace(0, 0, 1),
+    zarr=np.linspace(0, 0, 1),
+):
+    Bcontra_and_s_der = get_B_and_s_der(self, lvol, jacobian, sarr, tarr, zarr)
+    return Bcontra_and_s_der[0:3]
+
+def get_s_der_B(
+    self,
+    lvol=0,
+    jacobian=None,
+    sarr=np.linspace(0, 0, 1),
+    tarr=np.linspace(0, 0, 1),
+    zarr=np.linspace(0, 0, 1),
+):
+    Bcontra_and_s_der = get_B_and_s_der(self, lvol, jacobian, sarr, tarr, zarr)
+    return Bcontra_and_s_der[3:6]
+
+def get_B_and_s_der(
     self,
     lvol=0,
     jacobian=None,
@@ -207,7 +228,7 @@ def get_B(
         # Zernike polynomial being used
         from ._processing import _get_zernike
 
-        zernike, dzernike = _get_zernike(sarr, Lrad, Mpol)
+        zernike, dzernike, d2zernike = _get_zernike(sarr, Lrad, Mpol)
 
         c = (
             im[nax, :, nax, nax] * Azo.T[:, :, nax, nax]
@@ -220,12 +241,14 @@ def get_B(
         ]
 
         Bs = np.sum(zernike[:, :, im, None, None] * c[None, :, :, :, :], axis=(1, 2))
+        dsBs = np.sum(dzernike[:, :, im, None, None] * c[None, :, :, :, :], axis=(1, 2))
 
         c1 = (
             Aze.T[:, :, nax, nax] * cosa[nax, :, :, :]
             + Azo.T[:, :, nax, nax] * sina[nax, :, :, :]
         )
         Bt = -np.sum(dzernike[:, :, im, None, None] * c1[None, :, :, :, :], axis=(1, 2))
+        dsBt = -np.sum(d2zernike[:, :, im, None, None] * c1[None, :, :, :, :], axis=(1, 2))
 
         c2 = (
             Ate.T[:, :, nax, nax] * cosa[nax, :, :, :]
@@ -233,6 +256,7 @@ def get_B(
         )
 
         Bz = np.sum(dzernike[:, :, im, None, None] * c2[None, :, :, :, :], axis=(1, 2))
+        dsBz = np.sum(dzernike[:, :, im, None, None] * c2[None, :, :, :, :], axis=(1, 2))
 
     else:
         # Chebyshev being used
@@ -262,6 +286,7 @@ def get_B(
         ]
 
         Bs = np.rollaxis(np.sum(Cheb.chebval(sarr, c), axis=0), 2)
+        dsBs = np.rollaxis(np.sum(Cheb.chebval(sarr, Cheb.chebder(c)), axis=0), 2)
 
         c1 = (
             Aze.T[:, :, nax, nax] * cosa[nax, :, :, :]
@@ -270,6 +295,13 @@ def get_B(
         Bt = -np.rollaxis(
             np.sum(
                 Cheb.chebval(sarr, Cheb.chebder(c1)),
+                axis=0,
+            ),
+            2,
+        )
+        dsBt = -np.rollaxis(
+            np.sum(
+                Cheb.chebval(sarr, Cheb.chebder(c1,m=2)),
                 axis=0,
             ),
             2,
@@ -286,9 +318,16 @@ def get_B(
             ),
             2,
         )
+        dsBz = np.rollaxis(
+            np.sum(
+                Cheb.chebval(sarr, Cheb.chebder(c2,m=2)),
+                axis=0,
+            ),
+            2,
+        )
 
-    Bcontrav = np.array([Bs, Bt, Bz]) / jacobian
-    return Bcontrav
+    Bcontrav_and_s_der = np.array([Bs, Bt, Bz, dsBs, dsBt, dsBz]) / jacobian
+    return Bcontrav_and_s_der
 
 
 # Bcontrav = get_B(s,lvol=lvol,jacobian=jacobian,sarr=sarr,tarr=tarr,zarr=zarr)
@@ -307,7 +346,7 @@ def get_B_covariant(self, Bcontrav, g):
 
 def _get_zernike(sarr, lrad, mpol):
     """
-    Get the value of the zernike polynomials and their derivatives
+    Get the value of the zernike polynomials, their first and second derivatives
     Adapted from basefn.f90
     """
 
@@ -319,16 +358,21 @@ def _get_zernike(sarr, lrad, mpol):
 
     zernike = np.zeros([ns, lrad + 1, mpol + 1], dtype=np.float64)
     dzernike = np.zeros_like(zernike)
+    d2zernike = np.zeros_like(zernike)
 
     for m in range(mpol + 1):
         if lrad >= m:
             zernike[:, m, m] = rm
             dzernike[:, m, m] = m * rm1
+            d2zernike[:, m, m] = m * (m-1) * rm1/r
 
         if lrad >= m + 2:
             zernike[:, m + 2, m] = float(m + 2) * rm * r ** 2 - float(m + 1) * rm
             dzernike[:, m + 2, m] = (
                 float(m + 2) ** 2 * rm * r - float((m + 1) * m) * rm1
+            )
+            d2zernike[:, m + 2, m] = (
+                float(m + 2) ** 2 * (m + 1) * rm - float((m + 1) * m * (m - 1)) * rm1 / r
             )
 
         for n in range(m + 4, lrad + 1, 2):
@@ -348,6 +392,13 @@ def _get_zernike(sarr, lrad, mpol):
                 + (factor2 * r ** 2 - factor3) * dzernike[:, n - 2, m]
                 - factor4 * dzernike[:, n - 4, m]
             )
+            d2zernike[:, n, m] = factor1 * (
+                2 * factor2 * zernike[:, n - 2, m]
+                + 2 * factor2 * r * dzernike[:, n - 2, m]
+                + (factor2 * 2 * r ) * dzernike[:, n - 2, m]
+                + (factor2 * r ** 2 - factor3) * d2zernike[:, n - 2, m]
+                - factor4 * d2zernike[:, n - 4, m]
+            )
 
         rm1 = rm
         rm = rm * r
@@ -363,12 +414,18 @@ def _get_zernike(sarr, lrad, mpol):
             dzernike[:, n, 1] = dzernike[:, n, 1] - (-1) ** ((n - 1) / 2) * float(
                 (n + 1) / 2
             )
+            d2zernike[:, n, 1] = d2zernike[:, n, 1] - (-1) ** ((n - 1) / 2) * float(
+                (n + 1) / 2 / r
+            )
+
 
     for m in range(mpol + 1):
         for n in range(m, lrad + 1, 2):
             zernike[:, n, m] = zernike[:, n, m] / float(n + 1)
             dzernike[:, n, m] = dzernike[:, n, m] / float(n + 1)
+            d2zernike[:, n, m] = d2zernike[:, n, m] / float(n + 1)
 
-    dzernike = dzernike * 0.5  # to account for the factor of half in sbar = (1+s)/2
+    dzernike  = dzernike  * 0.5  # to account for the factor of half in sbar = (1+s)/2
+    d2zernike = d2zernike * 0.25 # to account for the factor of half in sbar = (1+s)/2
 
-    return zernike, dzernike
+    return zernike, dzernike, d2zernike
