@@ -418,14 +418,19 @@ subroutine ma02aa( lvol, NN )
 
 
   if( LBlinear ) then ! assume Beltrami field is parameterized by helicity multiplier (and poloidal flux);
-
-   lastcpu = GETTIME
-
+   
+   lastcpu = GETTIME 
+   
    if( Lplasmaregion ) then
 
     Xdof(1:2) = xoffset + (/     mu(lvol), dpflux(lvol) /) ! initial guess for degrees of freedom; offset from zero so that relative error is small;
 
+    if (Lconstraint .eq. -2) then
+      Xdof(1:1) = xoffset + (/ dtflux(lvol) /)
+    end if
+    
     select case( Lconstraint )
+    case( -2 )    ;                                   ; Nxdof = 1 ! toroidal flux              IS  varied to match linking linking current; 
     case( -1 )    ;                                   ; Nxdof = 0 ! multiplier & poloidal flux NOT varied                               ;
     ;             ; iflag = 1 !(we don't need derivatives)
     case(  0 )    ;                                   ; Nxdof = 0 ! multiplier & poloidal flux NOT varied
@@ -480,12 +485,21 @@ subroutine ma02aa( lvol, NN )
 
     if( Lplasmaregion ) then
 
-     select case( ihybrj )
-     case( 0: ) ;     mu(lvol) = Xdof(1)      - xoffset
-      ;         ; dpflux(lvol) = Xdof(2)      - xoffset
-     case( :-1) ;      Xdof(1) = mu(lvol)     + xoffset ! mu    and dpflux have been updated in mp00ac; early termination;
-      ;         ;      Xdof(2) = dpflux(lvol) + xoffset ! mu    and dpflux have been updated in mp00ac; early termination;
-     end select
+     if (Lconstraint .eq. -2) then
+       if (ihybrj .le. -1) then
+         Xdof(1) = dtflux(lvol) + xoffset
+       elseif (ihybrj .ge. 0) then
+         dtflux(lvol) = Xdof(1)  - xoffset
+       end if
+       print *,"dtflux(lvol): ", dtflux(lvol)
+     else
+       select case( ihybrj )
+       case( 0: ) ;     mu(lvol) = Xdof(1)      - xoffset
+        ;         ; dpflux(lvol) = Xdof(2)      - xoffset
+       case( :-1) ;      Xdof(1) = mu(lvol)     + xoffset ! mu    and dpflux have been updated in mp00ac; early termination;
+        ;         ;      Xdof(2) = dpflux(lvol) + xoffset ! mu    and dpflux have been updated in mp00ac; early termination;
+       end select
+     end if
 
     else ! Lvacuumregion;
 
@@ -502,8 +516,8 @@ subroutine ma02aa( lvol, NN )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-    if( Lconstraint.eq.1 .or. Lconstraint.eq.3 .or. ( Lvacuumregion .and. Lconstraint.eq.0 ) ) then
-
+    if( Lconstraint.eq.1 .or. Lconstraint.eq.3 .or. ( Lvacuumregion .and. Lconstraint.eq.0 ) .or. Lconstraint.eq.-2) then
+     
      iflag = 2 ; Ldfjac = Ndof ! call mp00ac: tr00ab/curent to ensure the derivatives of B, transform, currents, wrt mu/dtflux & dpflux are calculated;
 
      WCALL( ma02aa, mp00ac, ( Ndof, Xdof(1:Ndof), Fdof(1:Ndof), Ddof(1:Ldfjac,1:Ndof), Ldfjac, iflag ) )
@@ -538,6 +552,12 @@ subroutine ma02aa( lvol, NN )
    end select
 
   endif ! end of if( LBlinear ) then;
+
+  print *,"End of ma02aa.f90- dtflux(lvol): ", dtflux(lvol)
+  
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-
+ 
+!latex \subsection{debugging: finite-difference confirmation of the derivatives of the rotational-transform}
 
 
 

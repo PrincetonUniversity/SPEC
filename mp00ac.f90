@@ -218,6 +218,16 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
    else                 ; dpf  = dpflux(lvol)
    endif
 
+   ! only poloidal flux is modified
+   if (Lconstraint .eq. -2) then
+     lmu = mu(lvol)
+     dpf = dpflux(lvol)
+     dtf = Xdof(1) - xoffset
+     print *,"dtf: ", dtf
+     print *,"dpf: ", dpf
+     print *,"lmu: ", lmu
+   end if
+   
   else ! Lvacuumregion;
 
 #ifdef FORCEFREEVACUUM
@@ -330,7 +340,20 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
     ; ;           ; rhs(1:NN,2) = - matmul(  dMB(1:NN,1:2)                       , ppsi(1:2) )
     ;end select
 
-   else ! .not.Lcoordinatesingularity;
+    if (Lconstraint .eq. -2) then
+      select case(ideriv)
+        case (0)
+                rhs(1:NN,0) = - dMG(1:NN) - matmul(  dMB(1:NN,1:2), dpsi(1:2) )
+        case (1)
+            if (NOTMatrixFree) then
+                rhs(1:NN,1) =             - matmul( dMB(1:NN,1:2), tpsi(1:2) ) 
+            else ! Matrix free version
+                rhs(1:NN,1) = Ddotx(1:NN)
+    !            rhs(1:NN,2) = - matmul( - one  * dMD(1:NN,1:NN),solution(1:NN,0) )
+      end select
+    end if
+    
+   else ! .not.Lcoordinatesingularity; 
 
     if( Lplasmaregion ) then
 
@@ -582,9 +605,24 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 !#endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+  select case( Lconstraint ) 
 
-  select case( Lconstraint )
+  case( -2 ) ! Lconstraint=-2
 
+   WCALL( mp00ac, curent,( lvol, mn, Nt, Nz, iflag, dItGpdxtp(0:1,-1:2,lvol)) )
+
+   ! Constraint on curpol only
+    if( iflag.eq.1 ) Fdof(1  ) = dItGpdxtp(1,0,lvol) - curpol
+   ! Derivative w.r.t. toroidal flux only
+    if( iflag.eq.2 ) Ddof(1,1) = dItGpdxtp(1,1,lvol) 
+    if (iflag .eq. 1) then
+      print *,"curtor (computed): ", dItGpdxtp(0,0,lvol)
+      print *,"curpol (computed): ", dItGpdxtp(1,0,lvol)
+      print *,"curpol (requested): ", curpol
+      print *,"Fdof: ", Fdof(1)
+    end if
+ 
   case( -1 ) ! Lconstraint=-1;
 
    if( Lplasmaregion ) then
@@ -738,14 +776,20 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   if( iflag.eq.1 ) then ! only in this case is Fdof defined;
 
    if( sum( abs( Fdof(1:Ndof) ) ) / Ndof .lt. mupftol ) then ! satisfactory;
-
-    if ( Lplasmaregion ) then ; mu(lvol) = lmu  ;                    ; dpflux(lvol) = dpf
+    
+    if ( Lplasmaregion .and. Lconstraint .ne. 2) then ; mu(lvol) = lmu  ;                    ; dpflux(lvol) = dpf
 #ifdef FORCEFREEVACUUM
     else                      ; mu(lvol) = lmu  ; dtflux(lvol) = dtf ; dpflux(lvol) = dpf
 #else
     else                      ; mu(lvol) = zero ; dtflux(lvol) = dtf ; dpflux(lvol) = dpf
 #endif
     endif
+
+    if ( Lconstraint .eq. -2) then
+        !mu(lvol) = lmu
+        dtflux(lvol) = dtf
+        print *,"mu(lvol): ", mu(lvol)
+    end if
 
     iflag = -2 ! return "acceptance" flag through to ma02aa via ifail; early termination;
 

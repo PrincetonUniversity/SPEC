@@ -830,18 +830,26 @@ subroutine build_vector_potential(lvol, iocons, aderiv, tderiv)
    if( Lcoordinatesingularity ) then
     mi = im(ii)
     do ll = mi, Lrad(lvol),2 ! loop over Zernike polynomials; Lrad is the radial resolution; 01 Jul 19;
-      ;                      ; efmn(ii) = efmn(ii) +          Ate(lvol,aderiv,ii)%s(ll) * RTT(ll,mi,iocons,1) * half
-      ;                      ; cfmn(ii) = cfmn(ii) +          Aze(lvol,aderiv,ii)%s(ll) * RTT(ll,mi,iocons,1) * half
-      if( NOTstellsym ) then ; ofmn(ii) = ofmn(ii) +          Ato(lvol,aderiv,ii)%s(ll) * RTT(ll,mi,iocons,1) * half
-      ;                      ; sfmn(ii) = sfmn(ii) +          Azo(lvol,aderiv,ii)%s(ll) * RTT(ll,mi,iocons,1) * half
+      if( tderiv .eq. 1) then
+        ;                      ; efmn(ii) = efmn(ii) +          Ate(lvol,aderiv,ii)%s(ll) * RTT(ll,mi,iocons,1) * half
+        ;                      ; cfmn(ii) = cfmn(ii) +          Aze(lvol,aderiv,ii)%s(ll) * RTT(ll,mi,iocons,1) * half
+        if( NOTstellsym ) then ; ofmn(ii) = ofmn(ii) +          Ato(lvol,aderiv,ii)%s(ll) * RTT(ll,mi,iocons,1) * half
+        ;                      ; sfmn(ii) = sfmn(ii) +          Azo(lvol,aderiv,ii)%s(ll) * RTT(ll,mi,iocons,1) * half
+        endif
+      else
+        ;                      ; efmn(ii) = efmn(ii) +          Ate(lvol,aderiv,ii)%s(ll) * RTT(ll,mi,iocons,0)
+        ;                      ; cfmn(ii) = cfmn(ii) +          Aze(lvol,aderiv,ii)%s(ll) * RTT(ll,mi,iocons,0)
+        if( NOTstellsym ) then ; ofmn(ii) = ofmn(ii) +          Ato(lvol,aderiv,ii)%s(ll) * RTT(ll,mi,iocons,0)
+        ;                      ; sfmn(ii) = sfmn(ii) +          Azo(lvol,aderiv,ii)%s(ll) * RTT(ll,mi,iocons,0)
+        endif
       endif
     enddo ! end of do ll; 20 Feb 13;
    else
     do ll = 0, Lrad(lvol) ! loop over Chebyshev polynomials; Lrad is the radial resolution;
-      ;                      ; efmn(ii) = efmn(ii) +          Ate(lvol,aderiv,ii)%s(ll) * TT(ll,iocons,1) ! aderiv labels deriv. wrt mu, pflux;
-      ;                      ; cfmn(ii) = cfmn(ii) +          Aze(lvol,aderiv,ii)%s(ll) * TT(ll,iocons,1)
-      if( NOTstellsym ) then ; ofmn(ii) = ofmn(ii) +          Ato(lvol,aderiv,ii)%s(ll) * TT(ll,iocons,1)
-      ;                     ; sfmn(ii) = sfmn(ii) +          Azo(lvol,aderiv,ii)%s(ll) * TT(ll,iocons,1)
+      ;                      ; efmn(ii) = efmn(ii) +          Ate(lvol,aderiv,ii)%s(ll) * TT(ll,iocons,tderiv) ! aderiv labels deriv. wrt mu, pflux;
+      ;                      ; cfmn(ii) = cfmn(ii) +          Aze(lvol,aderiv,ii)%s(ll) * TT(ll,iocons,tderiv)
+      if( NOTstellsym ) then ; ofmn(ii) = ofmn(ii) +          Ato(lvol,aderiv,ii)%s(ll) * TT(ll,iocons,tderiv)
+      ;                      ; sfmn(ii) = sfmn(ii) +          Azo(lvol,aderiv,ii)%s(ll) * TT(ll,iocons,tderiv)
       endif
     enddo ! end of do ll; 20 Feb 13;
    end if ! Lcoordinatesingularity; 01 Jul 19;
@@ -1065,7 +1073,7 @@ subroutine check_inputs()
    FATAL( readin, mupftol.le.zero, mupftol is too small )
    FATAL( readin, abs(one+gamma).lt.vsmall, 1+gamma appears in denominator in dforce ) !< \todo Please check this; SRH: 27 Feb 18;
    FATAL( readin, abs(one-gamma).lt.vsmall, 1-gamma appears in denominator in fu00aa ) !< \todo Please check this; SRH: 27 Feb 18;
-   FATAL( readin, Lconstraint.lt.-1 .or. Lconstraint.gt.3, illegal Lconstraint )
+   FATAL( readin, Lconstraint.lt.-2 .or. Lconstraint.gt.3, illegal Lconstraint )
    FATAL( readin, Igeometry.eq.1 .and. rpol.lt.vsmall, poloidal extent of slab too small or negative )
    FATAL( readin, Igeometry.eq.1 .and. rtor.lt.vsmall, toroidal extent of slab too small or negative )
 
@@ -1418,6 +1426,336 @@ subroutine broadcast_inputs
   LlBCAST( Wreadin, 1, 0 )
   LlBCAST( Wwrtend, 1, 0 )
   LlBCAST( Wmacros, 1, 0 )
+!TODO<<<<<<< HEAD
+!=======
+!  
+!!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!  
+!! set internal parameters that depend on physicslist;
+!  
+!!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!
+!  select case( Istellsym )
+!  case( 0 )    ; YESstellsym = .false. ; NOTstellsym = .true.
+!  case( 1 )    ; YESstellsym = .true.  ; NOTstellsym = .false.
+!  case default ;
+!   FATAL( readin, .true., illegal Istellsym )
+!  end select
+!
+!!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!  
+!!latex \subsubsection{\type{Mvol} : total number of volumes}
+!!latex \begin{enumerate}
+!!latex \item The number of plasma volumes is \internal{Mvol}=\inputvar{Nvol}+\inputvar{Lfreebound};
+!!latex \end{enumerate}
+!
+!  FATAL( readin, Lfreebound.lt.0 .or. Lfreebound.gt.1, illegal Lfreebound )
+!
+!  Mvol = Nvol + Lfreebound
+!
+!!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!
+!  SALLOCATE( beltramierror,(1:Mvol,1:3), zero)  
+!
+!!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!  
+!!latex \subsubsection{\type{mn}, \type{im(1:mn)} and \type{in(1:mn)} : Fourier mode identification}
+!!latex \begin{enumerate}
+!!latex \item The Fourier description of even periodic functions is 
+!!latex       \be f(\t,\z) = \sum_{n=0}^{N} f_{0,n} \cos(-n\z) + \sum_{m=1}^{M}\sum_{n=-N}^{N} f_{m,n} \cos(m\t-n\z),
+!!latex       \ee
+!!latex       where the resolution is given on input, $M\equiv $ \inputvar{ Mpol} and $N\equiv $ \inputvar{ Ntor}.
+!!latex \item For convenience, the Fourier summations are written as
+!!latex       \be f(\s,\t,\z) &=& \sum_j f_j(s) \cos( m_j \t - n_j \z ),
+!!latex       \ee
+!!latex       for $j=1,$ \type{mn}, where \type{mn}$ = N + 1 +  M  ( 2 N + 1 )$.
+!!latex \item The integer arrays \type{im(1:mn)} and \type{in(1:mn)} contain the $m_j$ and $n_j$.
+!!latex \item The array \type{in} includes the \type{Nfp} factor.
+!!latex \end{enumerate}
+!  
+!  mn = 1 + Ntor +  Mpol * ( 2 *  Ntor + 1 ) ! Fourier resolution of interface geometry & vector potential;
+!  
+!  SALLOCATE( im, (1:mn), 0 )
+!  SALLOCATE( in, (1:mn), 0 )
+!  
+!  call gi00ab(  Mpol,  Ntor, Nfp, mn, im(1:mn), in(1:mn) ) ! this sets the im and in mode identification arrays;
+!  
+!!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!  
+!!latex \subsubsection{\type{halfmm(1:mn}, regumm(1:mn) : regularization factor}
+!!latex \begin{enumerate}
+!!latex \item The ``regularization'' factor, \type{halfmm(1:mn)} = \type{im(1:mn)} * \type{half}, is real.
+!!latex \item This is used in \link{lforce}, \link{bfield}, \link{stzxyz}, \link{coords}, \link{jo00aa}, \link{ma00aa}, \link{sc00aa} and \link{tr00ab}.
+!!latex \end{enumerate}
+!  
+!  SALLOCATE( halfmm, (1:mn), im(1:mn) * half )
+!  SALLOCATE( regumm, (1:mn), im(1:mn) * half )
+!  
+!  if( Mregular.ge.2 ) then
+!
+!   where( im.gt.Mregular ) regumm = Mregular * half
+!
+!  endif
+!  
+!! if( myid.eq.0 ) write(ounit,'("global : " 10x " : "i3") im ="i3" , halfmm ="f5.1" , regum ="f5.1" ;")') ( ii, im(ii), halfmm(ii), regumm(ii), ii = 1, mn )
+!  
+!!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!  
+!!latex \subsubsection{\type{ime} and \type{ine} : extended resolution Fourier mode identification}
+!!latex \begin{enumerate}
+!!latex \item The ``extended'' Fourier resolution is defined by \internal{lMpol} $ = 4 $ \inputvar{Mpol}, \internal{lNtor} $ = 4 $\inputvar{Ntor}.
+!!latex \end{enumerate}
+!
+!! lMpol =   Mpol ; lNtor =   Ntor ! no    enhanced resolution for metrics; 
+!! lMpol = 2*Mpol ; lNtor = 2*Ntor !       enhanced resolution for metrics;
+!  lMpol = 4*Mpol ; lNtor = 4*Ntor ! extra-enhanced resolution for metrics; 
+!  
+!  mne = 1 + lNtor + lMpol * ( 2 * lNtor + 1 ) ! resolution of metrics; enhanced resolution; see metrix;
+!
+!  SALLOCATE( ime, (1:mne), 0 )
+!  SALLOCATE( ine, (1:mne), 0 )
+!
+!  call gi00ab( lMpol, lNtor, Nfp, mne, ime(1:mne), ine(1:mne) )
+!
+!!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!  
+!!latex \subsubsection{\type{mns}, \type{ims} and \type{ins} : Fourier mode identification for straight-fieldline angle}
+!
+!  lMpol = iMpol ; lNtor = iNtor
+!
+!  if( iMpol.le.0 ) lMpol = Mpol - iMpol
+!  if( iNtor.le.0 ) lNtor = Ntor - iNtor
+!  if(  Ntor.eq.0 ) lNtor = 0
+!  
+!  mns = 1 + lNtor + lMpol * ( 2 * lNtor + 1 ) ! resolution of straight-field line transformation on interfaces; see tr00ab; soon to be redundant; 
+!
+!  SALLOCATE( ims, (1:mns), 0 )
+!  SALLOCATE( ins, (1:mns), 0 )
+!
+!  call gi00ab( lMpol, lNtor, Nfp, mns, ims(1:mns), ins(1:mns) ) ! note that the field periodicity factor is included in ins;
+!  
+!!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!
+!! set internal parameters that depend on numericlist;
+!  
+!!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!
+!! set internal parameters that depend on locallist;
+!
+!!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!  
+!! set internal parameters that depend on globallist;
+!  
+!!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!  
+!! set internal parameters that depend on diagnosticslist;
+!  
+!  if( Lcheck.eq.5 ) then ; forcetol = 1.0e+12 ; nPpts = 0 ! will check Hessian using finite-differences; 
+!  endif
+!  
+!!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!  
+!!latex \subsubsection{\type{iRbc(1:mn,0:Mvol}, \type{iZbs(1:mn,0:Mvol}, \type{iRbs(1:mn,0:Mvol} and \type{iZbc(1:mn,0:Mvol} : geometry}
+!  
+!!latex \begin{enumerate}
+!!latex \item \type{iRbc}, \type{iZbs}, \type{iRbs} and \type{iZbc} : Fourier harmonics of interface geometry;
+!!latex \item \type{iVns}, \type{iVnc}, \type{iBns} and \type{iBns} : Fourier harmonics of normal field at computational boundary;
+!!latex \end{enumerate}
+!
+!  SALLOCATE( iRbc, (1:mn,0:Mvol), zero ) ! interface Fourier harmonics;
+!  SALLOCATE( iZbs, (1:mn,0:Mvol), zero )
+!  SALLOCATE( iRbs, (1:mn,0:Mvol), zero )
+!  SALLOCATE( iZbc, (1:mn,0:Mvol), zero )
+!  
+!  if( Lperturbed.eq.1 ) then
+!  SALLOCATE( dRbc, (1:mn,0:Mvol), zero ) ! interface Fourier harmonics;
+!  SALLOCATE( dZbs, (1:mn,0:Mvol), zero )
+!  SALLOCATE( dRbs, (1:mn,0:Mvol), zero )
+!  SALLOCATE( dZbc, (1:mn,0:Mvol), zero )
+!  endif
+!  
+!!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!
+!  SALLOCATE( iVns, (1:mn), zero )
+!  SALLOCATE( iBns, (1:mn), zero )
+!  SALLOCATE( iVnc, (1:mn), zero )
+!  SALLOCATE( iBnc, (1:mn), zero )
+!  
+! !SALLOCATE( lRbc, (1:mn), zero ) ! not used; SRH: 27 Feb 18;
+! !SALLOCATE( lZbs, (1:mn), zero )
+! !SALLOCATE( lRbs, (1:mn), zero )
+! !SALLOCATE( lZbc, (1:mn), zero )
+!  
+!!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!  
+!!latex \subsubsection{\type{ajk} : construction of coordinate axis}
+!
+!!latex \begin{enumerate}
+!!latex \item This is only used in \link{rzaxis} to perform the poloidal integration and is defined quite simply: \newline
+!!latex       \internal{ajk[i]} $\equiv 2\pi$ if $m_i =   0$, and \newline
+!!latex       \internal{ajk[i]} $\equiv 0   $ if $m_i \ne 0$.
+!!latex \end{enumerate}
+!
+!  SALLOCATE( ajk, (1:mn), zero ) ! this must be allocated & assigned now, as it is used in readin; primarily used in packxi; 02 Jan 15;
+!
+!  do kk = 1, mn ; mk = im(kk) ; nk = in(kk)
+!   
+!   if( mk.eq.0 ) ajk(kk) = pi2
+!
+!  enddo ! end of do kk; 
+!  
+!!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!  
+!  if( myid.eq.0 ) then ! read plasma boundary & computational boundary; initialize interface geometry;
+!
+!   if( Igeometry.eq.3 .and. Rbc(0,+1)+Rbc(0,-1).gt.zero .and. Zbs(0,+1)-Zbs(0,-1).gt.zero ) then ; Lchangeangle = .true.
+!   else                                                                                          ; Lchangeangle = .false.
+!   endif
+!
+!   if( Lchangeangle ) write(ounit,'("readin : " 10x " : CHANGING ANGLE ;")')
+!
+!   do ii = 1, mn ; mm = im(ii) ; nn = in(ii) / Nfp ! set plasma boundary, computational boundary; 29 Apr 15;
+!    
+!    if( Lchangeangle ) then ; jj = -1 ; kk = -nn ! change sign of poloidal angle; 
+!    else                    ; jj = +1 ; kk = +nn
+!    endif
+!    
+!    if( mm.eq.0 .and. nn.eq.0 ) then
+!     
+!     ;iRbc(ii,Nvol) = Rbc( nn, mm)                         ! plasma        boundary is ALWAYS given by namelist Rbc & Zbs;
+!     ;iZbs(ii,Nvol) = zero
+!      if( NOTstellsym ) then
+!     ;iRbs(ii,Nvol) = zero
+!     ;iZbc(ii,Nvol) = Zbc( nn, mm)
+!      else
+!     ;iRbs(ii,Nvol) = zero
+!     ;iZbc(ii,Nvol) = zero
+!      endif
+!     
+!     if( Lfreebound.eq.1 ) then
+!
+!      iRbc(ii,Mvol) = Rwc( nn, mm)                         ! computational boundary is ALWAYS given by namelist Rbc & Zbs;
+!      iZbs(ii,Mvol) = zero
+!      if( NOTstellsym ) then
+!      iRbs(ii,Mvol) = zero
+!      iZbc(ii,Mvol) = Zwc( nn, mm)      
+!      else 
+!      iRbs(ii,Mvol) = zero
+!      iZbc(ii,Mvol) = zero
+!      endif
+!
+!      iVns(ii     ) = zero
+!      iBns(ii     ) = zero
+!      if( NOTstellsym ) then
+!      iVnc(ii     ) = Vnc( nn, mm)                         ! I guess that this must be zero, because \div B = 0 ; 
+!      iBnc(ii     ) = Bnc( nn, mm)                         ! I guess that this must be zero, because \div B = 0 ; 
+!      else
+!      iVnc(ii     ) = zero
+!      iBnc(ii     ) = zero
+!      endif
+!
+!     endif ! end of if( Lfreebound.eq.1 ) ; 
+!     
+!    else ! if( mm.eq.0 .and. nn.eq.0 ) then ; matches 
+!     
+!     ;iRbc(ii,Nvol) =   Rbc( kk, mm) + Rbc(-kk,-mm)        ! plasma        boundary is ALWAYS given by namelist Rbc & Zbs;
+!     ;iZbs(ii,Nvol) = ( Zbs( kk, mm) - Zbs(-kk,-mm) ) * jj 
+!      if( NOTstellsym ) then
+!     ;iRbs(ii,Nvol) = ( Rbs( kk, mm) - Rbs(-kk,-mm) ) * jj
+!     ;iZbc(ii,Nvol) =   Zbc( kk, mm) + Zbc(-kk,-mm)
+!      else
+!     ;iRbs(ii,Nvol) =   zero
+!     ;iZbc(ii,Nvol) =   zero
+!      endif
+!     
+!     if( Lfreebound.eq.1 ) then
+!
+!      iRbc(ii,Mvol) =   Rwc( kk, mm) + Rwc(-kk,-mm)        ! computational boundary is ALWAYS given by namelist Rbc & Zbs;
+!      iZbs(ii,Mvol) = ( Zws( kk, mm) - Zws(-kk,-mm) ) * jj
+!      if( NOTstellsym ) then
+!      iRbs(ii,Mvol) = ( Rws( kk, mm) - Rws(-kk,-mm) ) * jj
+!      iZbc(ii,Mvol) =   Zwc( kk, mm) + Zwc(-kk,-mm)
+!      else
+!      iRbs(ii,Mvol) =   zero
+!      iZbc(ii,Mvol) =   zero
+!      endif
+!
+!     endif ! matches if( Lfreebound.eq.1 ) ;
+!
+!      iVns(ii     ) = ( Vns( kk, mm) - Vns(-kk,-mm) ) * jj
+!      iBns(ii     ) = ( Bns( kk, mm) - Bns(-kk,-mm) ) * jj
+!      if( NOTstellsym ) then
+!      iVnc(ii     ) =   Vnc( kk, mm) + Vnc(-kk,-mm)
+!      iBnc(ii     ) =   Bnc( kk, mm) + Bnc(-kk,-mm)
+!      else
+!      iVnc(ii     ) =   zero
+!      iBnc(ii     ) =   zero
+!      endif
+!
+!    endif ! end of if( mm.eq.0 .and. nn.eq.0 ) ; 
+! 
+!   enddo ! end of do ii = 1, mn;
+!
+!     
+!   select case( Linitialize ) ! 24 Oct 12;
+!    
+!   case( :0 ) ! Linitialize=0 ; initial guess for geometry of the interior surfaces is given in the input file;
+!    
+!    SALLOCATE( RZRZ, (1:4,1:Nvol), zero ) ! temp array for reading input;
+!
+!    if( Lchangeangle ) then ; jj = -1  ! change sign of poloidal angle; Loizu Nov 18;
+!    else                    ; jj = +1
+!    endif
+!    
+!    do ! will read in Fourier harmonics until the end of file is reached;
+!     
+!     read(iunit,*,iostat=ios) mm, nn, RZRZ(1:4,1:Nvol)   !if change of angle applies, transformation assumes m>=0 and for m=0 only n>=0;
+!     if( ios.ne.0 ) exit
+!     
+!     do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over harmonics within range;
+!      if( mm.eq.0 .and. mi.eq.0 .and. nn*Nfp.eq.ni ) then
+!       iRbc(ii,1:Nvol-1) = RZRZ(1,1:Nvol-1) ! select relevant harmonics;
+!       iZbs(ii,1:Nvol-1) = RZRZ(2,1:Nvol-1) ! select relevant harmonics;
+!       if( NOTstellsym ) then
+!        iRbs(ii,1:Nvol-1) = RZRZ(3,1:Nvol-1) ! select relevant harmonics;
+!        iZbc(ii,1:Nvol-1) = RZRZ(4,1:Nvol-1) ! select relevant harmonics;
+!       else
+!        iRbs(ii,1:Nvol-1) = zero             ! select relevant harmonics;
+!        iZbc(ii,1:Nvol-1) = zero             ! select relevant harmonics;
+!       endif
+!      elseif( mm.eq.mi .and. nn*Nfp.eq.jj*ni ) then
+!       iRbc(ii,1:Nvol-1) = RZRZ(1,1:Nvol-1) ! select relevant harmonics;
+!       iZbs(ii,1:Nvol-1) = jj*RZRZ(2,1:Nvol-1) ! select relevant harmonics;
+!       if( NOTstellsym ) then
+!        iRbs(ii,1:Nvol-1) = jj*RZRZ(3,1:Nvol-1) ! select relevant harmonics;
+!        iZbc(ii,1:Nvol-1) = RZRZ(4,1:Nvol-1) ! select relevant harmonics;
+!       else
+!        iRbs(ii,1:Nvol-1) = zero             ! select relevant harmonics;
+!        iZbc(ii,1:Nvol-1) = zero             ! select relevant harmonics;
+!       endif
+!      endif
+!     enddo ! end of do ii;
+!     
+!    enddo ! end of do;
+!    
+!    DALLOCATE(RZRZ)
+!    
+!   end select ! end select case( Linitialize ); 
+!   
+!   if( Igeometry.eq.3 ) then
+!    if( Rac(0).gt.zero ) then ! user has supplied logically possible coordinate axis;
+!     iRbc(1:Ntor+1,0) = Rac(0:Ntor)
+!     iZbs(1:Ntor+1,0) = Zas(0:Ntor)
+!     iRbs(1:Ntor+1,0) = Ras(0:Ntor)
+!     iZbc(1:Ntor+1,0) = Zac(0:Ntor)
+!    else ! see preset for poloidal-average specification of coordinate axis and geometrical initialization; 
+!    endif ! end of if( Igeometry.eq.3 ) then ; 
+!   endif
+!
+!  endif ! end of if myid.eq.0 loop; only the master will read the input file; all variables need to be broadcast;
+!  
+!!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!>>>>>>> origin/Lconstraint_-2
 
 end subroutine ! broadcast_inputs
 
