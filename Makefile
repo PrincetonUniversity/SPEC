@@ -156,6 +156,26 @@ ifeq ($(BUILD_ENV),gfortran_arch)
  DFLAGS=-g -fbacktrace -fbounds-check -ffree-line-length-none -fexternal-blas -DDEBUG -ffpe-trap=invalid,zero,overflow,underflow
 endif
 
+ifeq ($(BUILD_ENV),gfortran_centos)
+ # configuration for CentOS Linux
+ OPENMPI_LIB=/usr/lib64/openmpi/lib
+ OPENMPI_INC=/usr/lib64/gfortran/modules/openmpi
+ FC=mpif90
+ FLAGS=-fPIC
+ RFLAGS=-O2 -ffixed-line-length-none -ffree-line-length-none -fexternal-blas # -fallow-argument-mismatch # only used for GCC-10
+ DFLAGS=-O0 -g -w -ffree-line-length-none -Wextra -Wtarget-lifetime -fbacktrace -fbounds-check -fexternal-blas \
+     -fcheck=all -DDEBUG #-ffpe-trap=invalid,zero,overflow,underflow,inexact # for some reason this will cause crash
+ CFLAGS=-fdefault-real-8
+ LINKS=-L/opt/OpenBLAS/lib -lopenblas #-lblas #-lgfortran
+ LIBS=-I$(OPENMPI_INC)
+ LINKS+=-L$(OPENMPI_LIB) -lhdf5hl_fortran -lhdf5 -lhdf5_fortran -lhdf5 -lpthread -lz -lm
+ LIBS+=-I/usr/lib64/gfortran/modules/
+ LIBS+=-I/usr/include
+ LINKS+=-lfftw3
+ LINKS+=
+endif
+
+
 ifeq ($(BUILD_ENV),gfortran_mac)
  # works on Ksenia's laptop
  FC=mpif90
@@ -298,8 +318,9 @@ inputlist_r.o: %_r.o: src/inputlist.f90 $(MACROS)
 	#{if($$2=="DSCREENLIST") {for (i=1;i<=nfiles;i++) print "  LOGICAL :: W"files[i]" = .false. "}}\
 	#{if($$2=="NSCREENLIST") {for (i=1;i<=nfiles;i++) print "  W"files[i]" , &"}}\
 	#{print}' inputlist.f90 > mnputlist.f90
-	m4 -P $(MACROS) mnputlist.f90 > inputlist_m.F90
-	@rm -f mnputlist.f90
+	#m4 -P $(MACROS) mnputlist.f90 > inputlist_m.F90
+	#@rm -f mnputlist.f90
+	m4 -P $(MACROS) src/inputlist.f90 > inputlist_m.F90
 	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o inputlist_r.o -c inputlist_m.F90 $(LIBS)
 	@wc -l -L -w inputlist_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
@@ -309,8 +330,9 @@ inputlist_d.o: %_d.o: src/inputlist.f90 $(MACROS)
 	#{if($$2=="DSCREENLIST") {for (i=1;i<=nfiles;i++) print "  LOGICAL :: W"files[i]" = .false. "}}\
 	#{if($$2=="NSCREENLIST") {for (i=1;i<=nfiles;i++) print "  W"files[i]" , &"}}\
 	#{print}' inputlist.f90 > mnputlist.f90
-	m4 -P $(MACROS) mnputlist.f90 > inputlist_m.F90
-	@rm -f mnputlist.f90
+	#m4 -P $(MACROS) mnputlist.f90 > inputlist_m.F90
+	#@rm -f mnputlist.f90
+	m4 -P $(MACROS) src/inputlist.f90 > inputlist_m.F90
 	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o inputlist_d.o -c inputlist_m.F90 $(LIBS)
 	@wc -l -L -w inputlist_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
