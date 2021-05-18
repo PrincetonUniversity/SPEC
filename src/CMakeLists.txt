@@ -74,6 +74,7 @@ set(unprocessed_src_files
     preset.f90
     #sphdf5.f90
     global.f90
+    inputlist.f90
     #${CMAKE_CURRENT_SOURCE_DIR}/xspech.f90
 ) # below assumes the .f files are double precision; the CFLAGS = -r8 option is not required;
 
