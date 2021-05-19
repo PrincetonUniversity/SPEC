@@ -151,7 +151,8 @@ target_compile_options(spec
         "-cpp"
         $<$<Fortran_COMPILER_ID:GNU>:-ffree-line-length-none>
         $<$<Fortran_COMPILER_ID:GNU>:-fdefault-real-8>
-        $<$<Fortran_COMPILER_ID:GNU>:-std=legacy>
+        $<$<Fortran_COMPILER_ID:GNU>:-fbounds-check>
+        #$<$<Fortran_COMPILER_ID:GNU>:-std=legacy>
         $<$<Fortran_COMPILER_ID:GNU>:-fexternal-blas>
         $<$<Fortran_COMPILER_ID:Intel>:-r8>
 )
@@ -162,6 +163,7 @@ target_include_directories(spec PUBLIC ${CMAKE_Fortran_MODULE_DIRECTORY}/spec_mo
 # Add OpenMP
 target_link_libraries(spec PUBLIC OpenMP::OpenMP_Fortran)
 target_compile_definitions(spec PUBLIC OPENMP)
+target_compile_options(spec PUBLIC -fopenmp)
 
 # Add HDF5
 target_link_libraries(spec PUBLIC ${HDF5_Fortran_LIBRARIES} ${HDF5_C_LIBRARIES})
@@ -226,6 +228,18 @@ message(STATUS "XSPEC_OUT_FILE is ${XSPEC_OUT_FILE}")
 
 add_executable(xspec ${XSPEC_OUT_FILE})
 target_link_libraries(xspec PUBLIC spec)
+set_target_properties(xspec PROPERTIES POSITION_INDEPENDENT_CODE ON)
+#target_compile_options(xspec
+#    PUBLIC 
+#        "-cpp"
+#        $<$<Fortran_COMPILER_ID:GNU>:-ffree-line-length-none>
+#        $<$<Fortran_COMPILER_ID:GNU>:-ffixed-line-length-none>
+#        $<$<Fortran_COMPILER_ID:GNU>:-fdefault-real-8>
+#        $<$<Fortran_COMPILER_ID:GNU>:-fbounds-check>
+#        #$<$<Fortran_COMPILER_ID:GNU>:-std=legacy>
+#        $<$<Fortran_COMPILER_ID:GNU>:-fexternal-blas>
+#        $<$<Fortran_COMPILER_ID:Intel>:-r8>
+#)
 
 # Get the spec library linker properties and pass them to python wrapper
 if(SKBUILD) 
