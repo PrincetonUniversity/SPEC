@@ -47,7 +47,7 @@ find_program(AWK awk mawk gawk)
 set(BLA_VENDOR Intel10_64lp CACHE STRING 
     "Define BLAS vendor. Some of the popular options are OpenBLAS Apple Generic")
 find_package (BLAS REQUIRED)
-if (NOT ${BLA_VENDOR} MATCHES "^Intel")
+if (NOT ${BLA_VENDOR} MATCHES "^Intel" AND NOT ${BLA_VENDOR} MATCHES "^OpenBLAS")
     find_package (LAPACK REQUIRED)
 endif()
 
