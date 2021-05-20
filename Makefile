@@ -385,7 +385,7 @@ global_d.o: %_d.o: inputlist_d.o src/global.f90 $(MACROS)
 ###############################################################################################################################################################
 
 $(PREPROC): %_m.F90: %.f90 $(MACROS)
-	@awk -v file=$*.f90 '{ gsub("__LINE__", NR); gsub("__FILE__",file); print }' $*.f90 > $*_p.f90
+	@awk -v file=$*.f90 '{ gsub("__LINE__", NR); gsub("__FILE__",file); print }' src/$*.f90 > $*_p.f90
 	m4 -P $(MACROS) $*_p.f90 > $*_m.F90
 
 
@@ -399,9 +399,6 @@ $(DOBJS_IO): %_d.o: %_m.F90 $(addsuffix _d.o,$(BASEFILES)) $(MACROS)
 	@wc -l -L -w $*_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
-$(PREPROC): %_m.F90: %.f90 $(MACROS)
-	@awk -v file=$*.f90 '{ gsub("__LINE__", NR); gsub("__FILE__",file); print }' src/$*.f90 > $*_p.f90
-	m4 -P $(MACROS) $*_p.f90 > $*_m.F90
 
 $(ROBJS): %_r.o: %_m.F90 $(addsuffix _r.o,$(BASEFILES)) $(addsuffix _r.o,$(IOFILES)) $(MACROS)
 	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o $*_r.o -c $*_m.F90 $(LIBS)
