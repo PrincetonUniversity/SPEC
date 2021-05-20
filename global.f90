@@ -276,6 +276,7 @@ module inputlist
   INTEGER      :: maxitdesc  =   15000
   INTEGER      :: Lwritedesc =   1
   INTEGER      :: nwritedesc =   100 
+  INTEGER      :: Manderson  =   1
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -804,10 +805,15 @@ module inputlist
                 !latex \bi
                 !latex \item[i.] only used if \inputvar{Lfindzero = 3}; 
                 !latex \ei
- nwritedesc     !latex \item \inputvar{nwritedesc = 1} : integer : output writing step for the force-descent;
+ nwritedesc  ,& !latex \item \inputvar{nwritedesc = 1} : integer : output writing step for the force-descent;
                 !latex \bi
                 !latex \item[i.] only used if \inputvar{Lfindzero = 3} and \inputvar{Lwritedesc > 0}; 
                 !latex \ei
+ Manderson      !latex \item \inputvar{Manderson = 1} : integer : number of previous steps considered in Anderson acceleration;
+                !latex \bi
+                !latex \item[i.] only used if \inputvar{Lfindzero = 4}; 
+                !latex \ei
+
 
 !latex \item Comments:
 !latex \begin{enumerate}
@@ -1894,14 +1900,14 @@ subroutine readin
    write(ounit,1042)            forcetol, c05xmax, c05xtol, c05factor, LreadGF
    write(ounit,1043)            mfreeits, gBntol, gBnbld
    write(ounit,1044)            vcasingeps, vcasingtol, vcasingits, vcasingper
-   write(ounit,1045)            dxdesc, ftoldesc, maxitdesc, Lwritedesc, nwritedesc
+   write(ounit,1045)            dxdesc, ftoldesc, maxitdesc, Lwritedesc, nwritedesc, Manderson
    
 1040 format("readin : ",f10.2," : Lfindzero="i2" ;")
 1041 format("readin : ", 10x ," : escale="es13.5" ; opsilon="es13.5" ; pcondense="f7.3" ; epsilon="es13.5" ; wpoloidal="f7.4" ; upsilon="es13.5" ;")
 1042 format("readin : ", 10x ," : forcetol="es13.5" ; c05xmax="es13.5" ; c05xtol="es13.5" ; c05factor="es13.5" ; LreadGF="L2" ; ")
 1043 format("readin : ", 10x ," : mfreeits="i4" ; gBntol="es13.5" ; gBnbld="es13.5" ;")
 1044 format("readin : ", 10x ," : vcasingeps="es13.5" ; vcasingtol="es13.5" ; vcasingits="i6" ; vcasingper="i6" ;")
-1045 format("readin : ", 10x ," : dxdesc="es13.5" ; ftoldesc="es13.5" ; maxitdesc="i6" ; Lwritedesc="i2" ; nwritedesc="i4" ;")
+1045 format("readin : ", 10x ," : dxdesc="es13.5" ; ftoldesc="es13.5" ; maxitdesc="i6" ; Lwritedesc="i2" ; nwritedesc="i4" ; Manderson="i2" ;")
    
    FATAL( readin, escale      .lt.zero     , error )
    FATAL( readin, pcondense   .lt.one      , error )
@@ -1910,8 +1916,9 @@ subroutine readin
   !FATAL( readin, mfreeits    .lt.zero     , error )
 
    FATAL( readin, Igeometry.eq.3 .and. pcondense.le.zero, pcondense must be positive )
-   FATAL( readin, dxdesc.lt.zero, dxdesc must be positive)
-   FATAL( readin, nwritedesc.lt.one, nwritedesc must be equal or larger than one)
+   FATAL( readin, dxdesc.lt.zero, dxdesc must be positive )
+   FATAL( readin, nwritedesc.lt.one, nwritedesc must be equal or larger than one )
+   FATAL( readin, Manderson.lt.one, Manderson must be at least one )
  
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    
@@ -2065,6 +2072,7 @@ subroutine readin
   IlBCAST( maxitdesc,  1 , 0 )
   IlBCAST( Lwritedesc, 1 , 0 )
   IlBCAST( nwritedesc, 1 , 0 )
+  IlBCAST( Manderson,  1 , 0 )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -2768,6 +2776,7 @@ subroutine wrtend
   write(iunit,'(" maxitdesc   = ",i6            )') maxitdesc
   write(iunit,'(" Lwritedesc  = ",i2            )') Lwritedesc
   write(iunit,'(" nwritedesc  = ",i4            )') nwritedesc 
+  write(iunit,'(" Manderson   = ",i2            )') Manderson
   write(iunit,'("/")')
 
   if( Wwrtend ) then ; cput = GETTIME ; write(ounit,'("wrtend : ",f10.2," : myid=",i3," ; writing diagnosticslist ;")') cput-cpus, myid

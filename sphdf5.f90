@@ -338,6 +338,7 @@ subroutine mirror_input_to_outfile
   HWRITEIV( grpInputGlobal,            1,  maxitdesc         , (/ maxitdesc   /))
   HWRITEIV( grpInputGlobal,            1,  Lwritedesc        , (/ Lwritedesc  /))
   HWRITEIV( grpInputGlobal,            1,  nwritedesc        , (/ nwritedesc  /))
+  HWRITEIV( grpInputGlobal,            1,  Manderson         , (/ Manderson   /))
 
   HCLOSEGRP( grpInputGlobal )
 

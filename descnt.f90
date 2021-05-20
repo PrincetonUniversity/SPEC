@@ -526,7 +526,7 @@ subroutine fcnanderson(xx, NGdof)
  use fileunits, only : ounit
 
  use inputlist, only  : epsilon, Igeometry, Wdescnt, &
-                        dxdesc, ftoldesc, maxitdesc, Lwritedesc, nwritedesc
+                        dxdesc, ftoldesc, maxitdesc, Lwritedesc, nwritedesc, Manderson
 
  use fileunits, only : ounit
 
