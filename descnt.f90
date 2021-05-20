@@ -182,49 +182,21 @@ subroutine descnt( NGdof, position, ihybrd )
   
   select case( Lfindzero )
 
-  case( 3 ) ! use only function values to find f(x)=0 by pushing the interfaces with f(x) (force-descent)
+  case( 3 ) ! use only function values to find f(x)=0 by pushing the interfaces with f(x) (force-descent) using VMEC's alogrithm
 
    write(*,*) "-------------------- Under construction --------------------"
+
    WCALL(descnt, fcndescent, (position(1:NGdof),NGdof))
-   !WCALL( newton, hybrj, ( fcn2, NGdof, position(1:NGdof), force(1:NGdof), fjac(1:Ldfjac,1:NGdof), Ldfjac, &
-   !       xtol, maxfev,                 diag(1:NGdof), mode, factor, nprint, ihybrd, nfev, njev, &
-   !       RR(1:LR), LR, QTF(1:NGdof), workspace(1:NGdof,1), workspace(1:NGdof,2), workspace(1:NGdof,3), workspace(1:NGdof,4) ) )
-   write(*,*) "-------------------- Under construction --------------------"
-
-  case( 4 ) ! use function values and user-supplied derivatives to find f(x)=0 using a gradient-based descent algorithm (energy-descent)
 
    write(*,*) "-------------------- Under construction --------------------"
-!    rflag = 0.000001
 
-!    do ii = 1, NGdof
-!     iflag = ii
-!     position(iflag) = position(iflag) - rflag
-!      call fcnval(force(1), position(1:NGdof), NGdof)
-!     position(iflag) = position(iflag) + 2 * rflag
-!     call fcnval(force(2),  position(1:NGdof), NGdof)
-!     position(iflag) = position(iflag) - rflag
+  case( 4 ) ! use function values to find f(x)=0 by pushing the interfaces with f(x) (force-descent) using Anderson acceleration
 
-!     write(ounit,*) ii, (force(2)-force(1))/0.000002
-!       call fcngrad(force(1:NGdof),position(1:NGdof), NGdof)
-!      write(ounit,*)ii, force(ii)
-!  end do
+   write(*,*) "-------------------- Under construction --------------------"
+!    WCALL(descnt, frcg, (NGdof,position(1:NGdof),Energy,sdxtol,sdgtol,sdftol,sditmax &
+!      ,sdiprint,sdiflag,fcnval,fcngrad))
+   WCALL(descnt, fcnanderson, (position(1:NGdof),NGdof))
 
- 
-!     write(ounit,*) 'Energy'
-!     stop
-   !
-    WCALL(descnt, frcg, (NGdof,position(1:NGdof),Energy,sdxtol,sdgtol,sdftol,sditmax &
-      ,sdiprint,sdiflag,fcnval,fcngrad))
-
-  !  Ldescent = .FALSE.
-  !  WCALL( newton, hybrj, ( fcn2, NGdof, position(1:NGdof), force(1:NGdof), fjac(1:Ldfjac,1:NGdof), Ldfjac, &
-  !         xtol, maxfev,                 diag(1:NGdof), mode, factor, nprint, ihybrd, nfev, njev, &
-  !         RR(1:LR), LR, QTF(1:NGdof), workspace(1:NGdof,1), workspace(1:NGdof,2), workspace(1:NGdof,3), workspace(1:NGdof,4) ) )
-
-    ! call cg_descent (1.d-8, position(1:NGdof), NGdof, fcnval, fcngrad, iflag, rflag, Energy, &
-    !                   niter, nfev, njev, workspace(1:NGdof,1), workspace(1:NGdof,2), workspace(1:NGdof,3), workspace(1:NGdof,4))
-    !                   write(ounit,*) workspace(1:NGdof,1)
-    !                   write(ounit,*) workspace(1:NGdof,2)
    write(*,*) "-------------------- Under construction --------------------"
   
   case default
@@ -494,6 +466,103 @@ subroutine fcndescent(xx, NGdof)
   xdot = fac*(b1*xdot - time_step*force(1:NGdof))                 ! update velocity
   position(1:NGdof) = position(1:NGdof) + time_step*xdot          ! advance xc by velocity given in xcdot
 
+
+  if(ForceErr<ftoldesc .and. myid.eq.0 ) then
+   write(*,*) "FORCE BELOW TOLERANCE"
+   exit
+  endif
+
+  if(it .eq. maxitdesc .and. myid.eq.0) then
+   write(*,*) "EXCEEDED MAX NUMBER OF ITERATIONS " , ForceErr
+  endif
+
+  if (myid .eq. 0) then
+    if (mod(it, nwritedesc) .eq. 0) then
+
+     cput = GETTIME
+     
+     ; write(ounit,1000) cput-cpus, it, 0, ForceErr, cput-lastcpu, "|BB|e", alog10(BBe(1:min(Mvol-1,28)))
+     if( Igeometry.ge.3 ) then ! include spectral constraints; 
+      ;write(ounit,1001)                                                                      "|II|o", alog10(IIo(1:min(Mvol-1,28)))
+     endif
+     if( NOTstellsym ) then
+      ;write(ounit,1001)                                                                      "|BB|o", alog10(BBo(1:min(Mvol-1,28)))
+      if( Igeometry.ge.3 ) then ! include spectral constraints; 
+       write(ounit,1001)                                                                      "|II|e", alog10(IIe(1:min(Mvol-1,28)))
+      endif
+     endif
+
+     if ( Igeometry .eq. 3) then
+      write(ounit,1003)  Energy,  epsilon *  sum(lMMl), sum(lLLl * sweight)
+     else
+      write(ounit,1002) Energy
+     endif
+
+     lastcpu = GETTIME
+     WCALL( descnt, wrtend ) ! write restart file; save geometry to ext.end;
+
+     if (Lwritedesc .ge. 1) then
+      WCALL( descnt, write_convergence_output, ( nDcalls, ForceErr ) ) ! save iRbc, iZbs consistent with position;
+     endif
+
+    endif
+  endif
+ enddo
+
+ xx = position(1:NGdof)
+1000 format("descnt : ",f10.2," : "i9,i3," ; ":"|f|="es12.5" ; ":"time=",f10.2,"s ;":" log"a5"="28f6.2" ...")
+1001 format("descnt : ", 10x ," : "9x,3x" ; ":"    "  12x "   ":"     ", 10x ,"  ;":" log"a5"="28f6.2" ...")
+1002 format("descnt :            : Energy ", es23.15, "  ;")
+1003 format("descnt :            : Energy ", es23.15, "  SEnergy  ", es23.15, "  LEnergy  ", es23.15)
+
+end subroutine
+
+!-----------------------------------
+
+subroutine fcnanderson(xx, NGdof)
+
+ use constants, only  : zero, one
+
+ use fileunits, only : ounit
+
+ use inputlist, only  : epsilon, Igeometry, Wdescnt, &
+                        dxdesc, ftoldesc, maxitdesc, Lwritedesc, nwritedesc
+
+ use fileunits, only : ounit
+
+ use allglobal, only  : wrtend, ForceErr, lMMl, lLLl, Energy, sweight, myid, &
+                        BBe, BBo, IIe, IIo, NOTstellsym, ncpu, cpus, Mvol
+
+ use cputiming, only : Tdescnt
+
+ use descnttime
+
+ use sphdf5, only : write_convergence_output
+
+ LOCALS 
+
+ INTEGER, INTENT(in)  :: NGdof
+ REAL , INTENT(inout) :: xx(1:NGdof)
+
+ REAL                 :: position(0:NGdof), force(0:NGdof)
+
+ INTEGER              :: it, idesc, lvol, idof
+ LOGICAL              :: LComputeDerivatives, LComputeAxis
+ CHARACTER            :: pack
+
+ position = zero ; force = zero ; position(1:NGdof) = xx(1:NGdof) 
+
+ LComputeDerivatives = .false.; LComputeAxis = .true.
+
+ it = 0
+
+ do while(it < maxitdesc)
+ 
+  it = it + 1
+ 
+  call dforce(NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives, LComputeAxis)
+
+  position(1:NGdof) = position(1:NGdof) - dxdesc*force(1:NGdof)/ForceErr          
 
   if(ForceErr<ftoldesc .and. myid.eq.0 ) then
    write(*,*) "FORCE BELOW TOLERANCE"
