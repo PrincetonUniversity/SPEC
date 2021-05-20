@@ -546,11 +546,27 @@ subroutine fcnanderson(xx, NGdof)
 
  REAL                 :: position(0:NGdof), force(0:NGdof)
 
- INTEGER              :: it, idesc, lvol, idof
+ REAL                 :: W(1:Manderson+1,1:Manderson)
+ REAL                 :: G(1:NGdof,1:Manderson+1), Gbar(1:NGdof,1:Manderson)
+ REAL                 :: Q(1:NGdof,1:NGdof), R(1:NGdof,1:Manderson)
+ REAL                 :: alpha(1:Manderson+1), alphabar(1:Manderson)
+ REAL                 :: posref(1:NGdof,1:Manderson), mQg(1:NGdof)
+
+ REAL, ALLOCATABLE    :: Wo(:,:), Go(:,:), Gbaro(:,:), Ro(:,:)
+ REAL, ALLOCATABLE    :: alphao(:), alphabaro(:), posrefo(:,:)
+
+ INTEGER              :: it, idesc, lvol, idof, j
  LOGICAL              :: LComputeDerivatives, LComputeAxis
  CHARACTER            :: pack
 
  position = zero ; force = zero ; position(1:NGdof) = xx(1:NGdof) 
+
+ W = zero; W(1,1) = -1; W(Manderson+1,Manderson)=1;
+
+ do j=2,Manderson
+  W(j,j)   = -1
+  W(j,j-1) =  1
+ enddo 
 
  LComputeDerivatives = .false.; LComputeAxis = .true.
 
@@ -559,6 +575,21 @@ subroutine fcnanderson(xx, NGdof)
  do while(it < maxitdesc)
  
   it = it + 1
+
+  if(it < Manderson) then
+   SALLOCATE( Wo,        (1:it+1, 1:it),    zero)
+   SALLOCATE( Go,        (1:NGdof, 1:it+1), zero)
+   SALLOCATE( Gbaro,     (1:NGdof, 1:it),   zero)
+   SALLOCATE( Ro,        (1:NGdof, 1:it),   zero)
+   SALLOCATE( alphao,    (1:it+1),          zero)
+   SALLOCATE( alphabaro, (1:it),            zero)
+   SALLOCATE( posrefo,   (1:NGdof, 1:it),   zero)
+   Wo = zero; Wo(1,1) = -1; W(it+1,it)=1;
+   do j=2,it
+    Wo(j,j)   = -1
+    Wo(j,j-1) =  1
+   enddo
+  endif
  
   call dforce(NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives, LComputeAxis)
 
@@ -604,6 +635,17 @@ subroutine fcnanderson(xx, NGdof)
 
     endif
   endif
+
+  if(it < Manderson) then
+   DALLOCATE( Wo )
+   DALLOCATE( Go )
+   DALLOCATE( Gbaro )
+   DALLOCATE( Ro )
+   DALLOCATE( alphao )
+   DALLOCATE( alphabaro )
+   DALLOCATE( posrefo )
+  endif
+
  enddo
 
  xx = position(1:NGdof)
