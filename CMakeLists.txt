@@ -7,6 +7,19 @@ set(CMAKE_VERBOSE_MAKEFILE ON CACHE BOOL "ON")
 # Find OpenMP
 find_package(OpenMP)
 
+# Find Threads
+set (THREADS_PREFER_PTHREAD_FLAG ON) # Prefer pthreads
+find_package(Threads)
+
+# Find libm
+set(POW_LIBS "")
+include(CheckLibraryExists)
+check_library_exists(m pow "" LIBM)
+if(LIBM)
+    list(APPEND POW_LIBS "m")
+endif()
+
+
 # Find & Configure MPI
 # If using the compiler wrapper, there is no need to find the MPI libraries.
 get_filename_component (compiler ${CMAKE_Fortran_COMPILER} NAME)

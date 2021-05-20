@@ -90,7 +90,23 @@ set(f_src_files
 )
 
 preprocess_m4(srcs ${unprocessed_src_files})
-preprocess_m4(sphdf5_src sphdf5.f90)
+
+set(SPHDF5_FILE "${CMAKE_CURRENT_SOURCE_DIR}/sphdf5.f90")
+set(SPHDF5_AWK_FILE "${CMAKE_CURRENT_SOURCE_DIR}/msphdf5.f90")
+message(STATUS "sphdf5_FILE is ${SPHDF5_FILE}")
+if(AWK MATCHES ".+-NOTFOUND")
+    message(FATAL_ERROR "FATAL: awk (and mawk and gawk) could not be found (${AWK}).")
+else()
+    execute_process(
+        COMMAND /bin/sh -c "\"${AWK}\" -v file=sphdf5.f90  \
+             '{ gsub(\"__LINE__\", NR); gsub(\"__FILE__\",file); print }'  \
+             \"${SPHDF5_FILE}\"" 
+        RESULT_VARIABLE AWK_EXITCODE
+        OUTPUT_FILE "${SPHDF5_AWK_FILE}"
+        )
+    message(STATUS "Exit code from awk: ${AWK_EXITCODE}")
+endif()
+preprocess_m4(sphdf5_src ${SPHDF5_AWK_FILE})
 message(STATUS "sphdf5_src is ${sphdf5_src}")
 
 #set(srcs)
@@ -134,10 +150,10 @@ message(STATUS "sphdf5_src is ${sphdf5_src}")
 #add_dependencies(spec m4_process)
 
 
+list(APPEND srcs "${sphdf5_src}")
 if(SKBUILD)
     set(fortran_src_files "${srcs}" PARENT_SCOPE)
 endif()
-list(APPEND srcs "${sphdf5_src}")
 message(STATUS "srcs variable is ${srcs}")
 
 add_library(spec 
@@ -161,9 +177,19 @@ set_target_properties (spec PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_Fortran_
 target_include_directories(spec PUBLIC ${CMAKE_Fortran_MODULE_DIRECTORY}/spec_modules)
 
 # Add OpenMP
-target_link_libraries(spec PUBLIC OpenMP::OpenMP_Fortran)
-target_compile_definitions(spec PUBLIC OPENMP)
-target_compile_options(spec PUBLIC -fopenmp)
+if(OpenMP_Fortran_FOUND)
+    target_link_libraries(spec PUBLIC OpenMP::OpenMP_Fortran)
+    target_compile_definitions(spec PUBLIC OPENMP)
+endif()
+#target_compile_options(spec PUBLIC -fopenmp)
+
+# Add threads
+target_link_libraries(spec PUBLIC ${CMAKE_THREAD_LIBS_INIT})
+# Alternatively
+#target_link_libraries(spec PUBLIC Threads::Threads)
+
+# Add libm
+target_link_libraries(spec PUBLIC ${POW_LIBS})
 
 # Add HDF5
 target_link_libraries(spec PUBLIC ${HDF5_Fortran_LIBRARIES} ${HDF5_C_LIBRARIES})
@@ -186,7 +212,7 @@ set_target_properties(spec PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 get_property(COMP_DEFS 
             TARGET spec
-            PROPERTY COMPILE_FLAGS
+            PROPERTY COMPILE_OPTIONS
 )
 
 set(ALLFILES  manual rzaxis packxi volume coords basefn memory metrix ma00aa matrix spsmat spsint mp00ac ma02aa packab tr00ab curent df00ab lforce intghs mtrxhs lbpol brcast dfp100 dfp200 dforce newton casing bnorml jo00aa pp00aa pp00ab bfield stzxyz hesian ra00aa numrec dcuhre minpack iqpack rksuite i1mach d1mach ilut iters sphdf5 preset global xspech)
@@ -242,6 +268,10 @@ set_target_properties(xspec PROPERTIES POSITION_INDEPENDENT_CODE ON)
 #)
 
 # Get the spec library linker properties and pass them to python wrapper
+get_target_property(SPEC_LINK_LIB spec LINK_LIBRARIES)
+message(STATUS "spec linked libraries are ${SPEC_LINK_LIB}")
+get_target_property(SPEC_COMPILE_OPTIONS spec COMPILE_OPTIONS)
+message(STATUS "spec compile options are are ${SPEC_COMPILE_OPTIONS}")
 if(SKBUILD) 
     get_target_property(SPEC_LINK_LIB spec LINK_LIBRARIES)
     list(REMOVE_ITEM SPEC_LINK_LIB "OpenMP::OpenMP_Fortran")
