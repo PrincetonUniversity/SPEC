@@ -599,13 +599,13 @@ subroutine fcnanderson(xx, NGdof)
    SALLOCATE( alphao,    (1:it+1),          zero)
    SALLOCATE( alphabaro, (1:it),            zero)
    alphao(1:it)=zero; alphao(it+1)=1;
-   Wo = zero; Wo(1,1) = -1; W(it+1,it)=1;
+   Wo = zero; Wo(1,1) = -1; Wo(it+1,it)=1;
    do j=2,it
     Wo(j,j)   = -1
     Wo(j,j-1) =  1
    enddo
   endif
- 
+  
   call dforce(NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives, LComputeAxis)
 
   posref(1:NGdof,1:Manderson) = posref(1:NGdof,2:Manderson+1)
@@ -640,8 +640,19 @@ subroutine fcnanderson(xx, NGdof)
    call dorgqr(NGdof,NGdof,Manderson,Q,ldgbar,reflectors,wk,ii,idgeqrf)
    deallocate(wk)
    !end of QR decomposition
-   minusQg(1:NGdof) = -matmul(transpose(Q(1:NGdof,1:NGdof)),G(1:NGdof,Manderson+1))
-   position(1:NGdof)           = matmul(posref(1:NGdof,1:Manderson+1),alpha(1:Manderson+1)) 
+   !solve linear system for alphabar
+   minusQg(1:NGdof)    = -matmul(transpose(Q(1:NGdof,1:NGdof)),G(1:NGdof,Manderson+1))
+   alphabar(Manderson) = minusQg(Manderson)/R(Manderson,Manderson)
+   do j=Manderson-1,1,-1
+   alphabar(j) = (minusQg(j)-dot_product(R(j,j+1:Manderson),alphabar(j+1:Manderson)))/R(j,j)
+   enddo
+   !solve for alpha
+   alpha(1:Manderson+1)        = matmul(W(1:Manderson+1,1:Manderson),alphabar(1:Manderson))
+   alpha(Manderson+1)          = alpha(Manderson+1) + 1
+   !update position according to anderson's rule
+   do j=1,NGdof 
+   position(j)           = dot_product(posref(j,1:Manderson+1),alpha(1:Manderson+1))
+   enddo 
   else
    Go(1:NGdof,1:it+1)  = G(1:NGdof,Manderson+1-it:Manderson+1)  
    Gbaro(1:NGdof,1:it) = matmul(Go(1:NGdof,1:it+1),Wo(1:it+1,1:it))
@@ -665,8 +676,19 @@ subroutine fcnanderson(xx, NGdof)
    call dorgqr(NGdof,NGdof,it,Q,ldgbar,reflectors,wk,ii,idgeqrf)
    deallocate(wk)
    !end of QR decomposition
-   minusQg(1:NGdof) = -matmul(transpose(Q(1:NGdof,1:NGdof)),Go(1:NGdof,it+1))
-   position(1:NGdof)   = matmul(posref(1:NGdof,Manderson+1-it:Manderson+1),alphao(1:it+1))
+   !solve linear system for alphabaro
+   minusQg(1:NGdof)    = -matmul(transpose(Q(1:NGdof,1:NGdof)),Go(1:NGdof,it+1))
+   alphabaro(it)       = minusQg(it)/Ro(it,it)
+   do j=it-1,1,-1
+   alphabaro(j) = (minusQg(j)-dot_product(Ro(j,j+1:it),alphabaro(j+1:it)))/Ro(j,j)
+   enddo
+   !solve for alphao
+   alphao(1:it+1)   = matmul(Wo(1:it+1,1:it),alphabaro(1:it))
+   alphao(it+1) = alphao(it+1)+1
+   !update position according to anderson's rule
+   do j=1,NGdof
+   position(j)           = dot_product(posref(j,Manderson+1-it:Manderson+1),alphao(1:it+1))
+   enddo 
   endif
 
   if(ForceErr<ftoldesc .and. myid.eq.0 ) then
