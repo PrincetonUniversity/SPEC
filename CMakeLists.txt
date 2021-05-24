@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15.0)
+cmake_minimum_required(VERSION 3.20.0)
 
 project(spec LANGUAGES C Fortran)
 
@@ -65,33 +65,37 @@ if (NOT ${BLA_VENDOR} MATCHES "^Intel" AND NOT ${BLA_VENDOR} MATCHES "^OpenBLAS"
 endif()
 
 # Find FFTW3.
-# We are using findfftw module from github/egpbos. 
-# PPPL provides fftwconfig.cmake. We could try that first in future
+# Intel oneAPI has FFT3 available as part of MKL. Just linking against MKL gives FFTW functionality.
+if (NOT ${BLA_VENDOR} MATCHES "^Intel")
+    # For standard FFTW library
+    # We are using findfftw module from github/egpbos. 
+    # PPPL provides fftwconfig.cmake. We could try that first in future
 
-# To guide cmake to the location of FFT, set FFTW_ROOT to the path of FFTW
-# Ex: For PPPL gcc suite of compilers, 
-# We are using FFTW find module from github.com/egpbos
-# 
-configure_file(downloadFindFFTW.cmake.in findFFTW-download/CMakeLists.txt)
-execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
-    RESULT_VARIABLE result
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/findFFTW-download )
-if(result)
-    message(FATAL_ERROR "CMake step for findFFTW failed: ${result}")
-else()
-    message("CMake step for findFFTW completed (${result}).")
+    # To guide cmake to the location of FFT, set FFTW_ROOT to the path of FFTW
+    # Ex: For PPPL gcc suite of compilers, 
+    # We are using FFTW find module from github.com/egpbos
+    # 
+    configure_file(downloadFindFFTW.cmake.in findFFTW-download/CMakeLists.txt)
+    execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
+        RESULT_VARIABLE result
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/findFFTW-download )
+    if(result)
+        message(FATAL_ERROR "CMake step for findFFTW failed: ${result}")
+    else()
+        message("CMake step for findFFTW completed (${result}).")
+    endif()
+    execute_process(COMMAND ${CMAKE_COMMAND} --build .
+        RESULT_VARIABLE result
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/findFFTW-download )
+    if(result)
+        message(FATAL_ERROR "Build step for findFFTW failed: ${result}")
+    endif()
+
+    set(findFFTW_DIR ${CMAKE_CURRENT_BINARY_DIR}/findFFTW-src)
+    set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${findFFTW_DIR}")
+
+    find_package(FFTW REQUIRED)
 endif()
-execute_process(COMMAND ${CMAKE_COMMAND} --build .
-    RESULT_VARIABLE result
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/findFFTW-download )
-if(result)
-    message(FATAL_ERROR "Build step for findFFTW failed: ${result}")
-endif()
-
-set(findFFTW_DIR ${CMAKE_CURRENT_BINARY_DIR}/findFFTW-src)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${findFFTW_DIR}")
-
-find_package(FFTW REQUIRED)
 
 # Find HDF5
 # To guide cmake finding HDF5 set HDF5_ROOT. If no cmake configuration file is available, also set
