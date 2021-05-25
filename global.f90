@@ -1918,7 +1918,6 @@ subroutine readin
    FATAL( readin, Igeometry.eq.3 .and. pcondense.le.zero, pcondense must be positive )
    FATAL( readin, dxdesc.lt.zero, dxdesc must be positive )
    FATAL( readin, nwritedesc.lt.one, nwritedesc must be equal or larger than one )
-   FATAL( readin, Manderson.lt.one, Manderson must be at least one )
  
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    

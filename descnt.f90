@@ -562,8 +562,69 @@ subroutine fcnanderson(xx, NGdof)
  LOGICAL              :: LComputeDerivatives, LComputeAxis
  CHARACTER            :: pack
 
+ LComputeDerivatives = .false.; LComputeAxis = .true.
+
  position = zero ; force = zero ; position(1:NGdof) = xx(1:NGdof) 
  
+ !check if force-descent is run with brute force or with anderson acceleration
+
+ if(Manderson .le. 0) then 
+! ----- RUN WITHOUT ANDERSON ACCELERATION -----
+
+ it = 0
+
+ do while(it < maxitdesc)
+
+  it = it + 1
+ 
+  call dforce(NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives, LComputeAxis)
+
+  position(1:NGdof) = position(1:NGdof) - dxdesc*force(1:NGdof)/ForceErr
+
+  if(ForceErr<ftoldesc .and. myid.eq.0 ) then
+   write(*,*) "FORCE BELOW TOLERANCE"
+   exit
+  endif
+
+  if(it .eq. maxitdesc .and. myid.eq.0) then
+   write(*,*) "EXCEEDED MAX NUMBER OF ITERATIONS " , ForceErr
+  endif
+  
+  if (myid .eq. 0) then
+  if (mod(it, nwritedesc) .eq. 0) then
+    cput = GETTIME
+
+    ; write(ounit,1000) cput-cpus, it, 0, ForceErr, cput-lastcpu, "|BB|e", alog10(BBe(1:min(Mvol-1,28)))
+    if( Igeometry.ge.3 ) then ! include spectral constraints; 
+    ;write(ounit,1001)                                                                      "|II|o", alog10(IIo(1:min(Mvol-1,28)))
+    endif
+    if( NOTstellsym ) then
+     ;write(ounit,1001)                                                                      "|BB|o", alog10(BBo(1:min(Mvol-1,28)))
+     if( Igeometry.ge.3 ) then ! include spectral constraints; 
+      write(ounit,1001)                                                                      "|II|e", alog10(IIe(1:min(Mvol-1,28)))
+     endif
+    endif
+
+    if ( Igeometry .eq. 3) then
+     write(ounit,1003)  Energy,  epsilon *  sum(lMMl), sum(lLLl * sweight)
+    else
+     write(ounit,1002) Energy
+    endif
+
+    lastcpu = GETTIME
+    WCALL( descnt, wrtend ) ! write restart file; save geometry to ext.end;
+
+    if (Lwritedesc .ge. 1) then
+     WCALL( descnt, write_convergence_output, ( nDcalls, ForceErr ) ) ! save iRbc, iZbs consistent with position;
+    endif
+
+   endif
+ endif
+ enddo
+
+ else
+ ! ----- RUN WITH ANDERSON ACCELERATION -----
+
  posref = zero; G = zero; ldgbar = NGdof
 
  alpha(1:Manderson)=zero; alpha(Manderson+1)=1;
@@ -574,8 +635,6 @@ subroutine fcnanderson(xx, NGdof)
   W(j,j)   = -1
   W(j,j-1) =  1
  enddo  
-
- LComputeDerivatives = .false.; LComputeAxis = .true.
 
  call dforce(NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives, LComputeAxis)
 
@@ -742,6 +801,8 @@ subroutine fcnanderson(xx, NGdof)
   endif
 
  enddo
+
+ endif !end of if(Manderson .le. 0)
 
  xx = position(1:NGdof)
 1000 format("descnt : ",f10.2," : "i9,i3," ; ":"|f|="es12.5" ; ":"time=",f10.2,"s ;":" log"a5"="28f6.2" ...")
