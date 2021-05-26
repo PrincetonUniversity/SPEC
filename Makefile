@@ -181,15 +181,16 @@ ifeq ($(BUILD_ENV),lff95)
 endif
 
 ifeq ($(BUILD_ENV),intel_spc)
- FC=ifort
- CFLAGS=-r8
+ FC=mpif90
+ FFTW_DIR=/usr/local/fftw3
+ CFLAGS=-r8 -DIFORT
  RFLAGS=-O2 -ip -no-prec-div -xHost -fPIC
  DFLAGS=-traceback -D DEBUG -g
  LINKS=-L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl
  LIBS=-I$(FFTW_DIR)/include
  LINKS+=-L$(FFTW_DIR)/lib -lfftw3
- LIBS+=-I$(HDF5_HOME)/include
- LINKS+=-L$(HDF5_HOME)/lib -lhdf5_fortran -lhdf5 -lpthread -lz -lm -Wl,-rpath -Wl,$(HDF5_HOME)/lib
+ LIBS+=-I$(HDF5_serial)/include
+ LINKS+=-L$(HDF5_serial)/lib -lhdf5_fortran -lhdf5 -lpthread -lz -lm -Wl,-rpath -Wl,$(HDF5_serial)/lib
 endif
 
 ifeq ($(BUILD_ENV),gfort_spc)
