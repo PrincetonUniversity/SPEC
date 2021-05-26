@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.20.0)
 project(spec LANGUAGES C Fortran)
 
 set(CMAKE_VERBOSE_MAKEFILE ON CACHE BOOL "ON")
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # Find OpenMP
 find_package(OpenMP)
@@ -57,9 +58,10 @@ find_program(AWK awk mawk gawk)
 # Ex: For PPPL gcc suite of compilers, after loading gcc, on command line set MKLROOT as
 # "export MKLROOT=/usr/pppl/intel/2020.u1/compilers_and_libraries_2020/linux/mkl"
 # If Intel MKL is not desired, change BLA_VENDOR variabale during configuration
-set(BLA_VENDOR Intel10_64lp CACHE STRING 
-    "Define BLAS vendor. Some of the popular options are OpenBLAS Apple Generic")
+#set(BLA_VENDOR Intel10_64lp CACHE STRING 
+#    "Define BLAS vendor. Some of the popular options are OpenBLAS Apple Generic")
 find_package (BLAS REQUIRED)
+message(STATUS "BLAS vendor is ${BLA_VENDOR}")
 if (NOT ${BLA_VENDOR} MATCHES "^Intel" AND NOT ${BLA_VENDOR} MATCHES "^OpenBLAS")
     find_package (LAPACK REQUIRED)
 endif()
@@ -95,6 +97,8 @@ if (NOT ${BLA_VENDOR} MATCHES "^Intel")
     set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${findFFTW_DIR}")
 
     find_package(FFTW REQUIRED)
+else()   # Not required for OneAPI, but for older  versions
+    set(FFTW_INCLUDE_DIRS $ENV{MKLROOT}/include/fftw)
 endif()
 
 # Find HDF5

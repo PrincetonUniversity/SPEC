@@ -191,7 +191,7 @@ endif()
 target_link_libraries(spec PUBLIC ${POW_LIBS})
 
 # Add HDF5
-target_link_libraries(spec PUBLIC ${HDF5_Fortran_LIBRARIES} ${HDF5_C_LIBRARIES} ${HDF5_Fortran_HL_LIBRARIES})
+target_link_libraries(spec PUBLIC ${HDF5_Fortran_HL_LIBRARIES} ${HDF5_Fortran_LIBRARIES} ${HDF5_C_LIBRARIES} )
 target_include_directories(spec PUBLIC ${HDF5_C_INCLUDE_DIRS} ${HDF5_Fortran_INCLUDE_DIRS})
 #target_include_directories(spec PUBLIC ${HDF5_INCLUDE_DIRS})
 #target_link_libraries(spec PUBLIC hdf5::hdf5 hdf5::hdf5_fortran hdf5::hdf5_hl_fortran)
@@ -208,7 +208,7 @@ target_include_directories(spec
 )
 
 #if(SKBUILD)
-set_target_properties(spec PROPERTIES POSITION_INDEPENDENT_CODE ON)
+#set_target_properties(spec PROPERTIES POSITION_INDEPENDENT_CODE ON)
 #endif()
 
 get_property(COMP_DEFS 
