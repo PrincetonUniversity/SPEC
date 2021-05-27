@@ -39,6 +39,7 @@
 !> enddo ! end of do vvol;
 !> close(aunit)
 !> ```
+!> </li>
 !> </ul>
 !>
 !> @param[in] writeorread 'W' to write the vector potential; 'R' to read it

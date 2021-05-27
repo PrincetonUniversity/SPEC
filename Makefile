@@ -59,7 +59,7 @@
 
  # if want to use gfortran: make BUILD_ENV=gfortran (x/d)spec
  # default: use Intel compiler
- BUILD_ENV=intel
+ BUILD_ENV?=intel
 
  # to enable OpenMP acceleration within volume, set OMP=yes, otherwise set OMP=no
  OMP=yes
@@ -69,13 +69,13 @@ ifeq ($(BUILD_ENV),intel)
  # At PPPL, you can use the following commands
  # module use /p/focus/modules
  # module load spec
- FC=mpifort
- CFLAGS=-r8
+ FC=mpif90
+ CFLAGS=-r8 -DIFORT
  RFLAGS=-mcmodel=large -O3 -m64 -unroll0 -fno-alias -ip -traceback
  DFLAGS=-O0 -g -traceback -check bounds -check format -check output_conversion -check pointers -check uninit -debug full -D DEBUG
  LIBS=-I${MKLROOT}/include/intel64/lp64 -I${MKLROOT}/include  # MKL include
  LIBS+=-I$(HDF5_HOME)/include # HDF5 include
- LINKS=-L$(HDF5_HOME)/lib -lhdf5_fortran -lhdf5 -lpthread -lz -lm # HDF5 link
+ LINKS=-L$(HDF5_HOME)/lib -lhdf5_fortran -lhdf5 -lhdf5hl_fortran # HDF5 link
  LIBS+=-I$(FFTW_HOME)/include # FFTW include
  LINKS+=-L$(FFTW_HOME)/lib -lfftw3 # FFTW link
  LINKS+=${MKLROOT}/lib/intel64/libmkl_blas95_lp64.a ${MKLROOT}/lib/intel64/libmkl_lapack95_lp64.a \
@@ -193,7 +193,7 @@ ifeq ($(BUILD_ENV),intel_spc)
  LINKS+=-L$(HDF5_serial)/lib -lhdf5_fortran -lhdf5 -lpthread -lz -lm -Wl,-rpath -Wl,$(HDF5_serial)/lib
 endif
 
-ifeq ($(BUILD_ENV),gfort_spc)
+ifeq ($(BUILD_ENV),gfort_spc) # deprecated
  FC=mpif90
  FLAGS=-fPIC
  CFLAGS=-fdefault-real-8
@@ -213,7 +213,7 @@ ifeq ($(BUILD_ENV),intel_ipp)
  # and on cobra with the following modules:
  # intel/19.0.4 impi/2019.4 mkl/2019.4 hdf5-serial/1.8.21 fftw-mpi/3.3.8
  FC=mpiifort
- CFLAGS=-r8
+ CFLAGS=-r8 -DIFORT
  RFLAGS=-O2 -ip -no-prec-div -xHost -fPIC
  DFLAGS=-traceback -D DEBUG
  LINKS=-L${MKLROOT}/lib/intel64 -lmkl_rt -lpthread -lm -ldl -Wl,-rpath -Wl,${MKLROOT}/lib/intel64
@@ -238,16 +238,14 @@ ifeq ($(BUILD_ENV),gfortran_ipp)
  LINKS+=-L$(FFTW_HOME)/lib -lfftw3 -Wl,-rpath -Wl,$(FFTW_HOME)/lib
 endif
 
-ifeq ($(BUILD_ENV),intel_raijin)
- # One needs to load the following modules
- # module load intel-fc/2018.1.163
- # module load intel-cc/2018.1.163
- # module load intel-mkl/2018.1.163
- # module load openmpi
- # module load fftw3-mkl/2018.1.163
- # module load hdf5
- FC=ifort
- CFLAGS=-r8
+ifeq ($(BUILD_ENV),intel_gadi)
+#module load intel-compiler/2019.3.199
+#module load intel-mkl/2019.3.199
+#module load openmpi/3.1.4
+#module load fftw3-mkl/2019.3.199
+#module load hdf5/1.10.5
+ FC=mpif90
+ CFLAGS=-r8 -DIFORT
  LINKS=-L${MKLROOT}/lib/intel64 -mkl=parallel -liomp5
  LIBS=-I$(HDF5_BASE)/include
  LINKS+=-L$(HDF5_BASE)/lib -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lpthread -lz -lm
@@ -255,8 +253,26 @@ ifeq ($(BUILD_ENV),intel_raijin)
  DFLAGS=-check bounds -check format -check output_conversion -check pointers -check uninit -debug full -D DEBUG
 endif
 
+ifeq ($(BUILD_ENV),intel_stellar)
+ # PPPL stellar cluster intel compiler
+ # module use /home/caoxiang/module
+ # module load spec
+ FC=mpiifort
+ CFLAGS=-r8 -DIFORT
+ RFLAGS=-mcmodel=large -O3 -m64 -unroll0 -fno-alias -ip -traceback -fPIC
+ DFLAGS=-O0 -g -traceback -check bounds -check format -check output_conversion -check pointers -check uninit -debug full -D DEBUG
+ LIBS=-I${MKLROOT}/include/intel64/lp64  # MKL include
+ LIBS+=-I$(HDF5DIR)/include # HDF5 include
+ LINKS=-L$(HDF5DIR)/lib -lhdf5_fortran -lhdf5 # HDF5 link
+ LIBS+=-I$(FFTW3DIR)/include # FFTW include
+ LINKS+=-L$(FFTW3DIR)/lib -lfftw3 # FFTW link
+ LINKS+= ${MKLROOT}/lib/intel64/libmkl_blas95_lp64.a ${MKLROOT}/lib/intel64/libmkl_lapack95_lp64.a -L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl
+
+endif
+
 ifeq ($(OMP),yes)
  RFLAGS+=-DOPENMP -fopenmp
+ DFLAGS+=-DOPENMP -fopenmp
  LINKS+=-lgomp
 endif
 
@@ -404,7 +420,7 @@ xspech_d.o: xspech.f90 $(addsuffix _d.o,$(ALLSPEC)) $(MACROS)
 ###############################################################################################################################################################
 
 clean:
-	rm -f *.o *.mod *_p.f90 *_m.F90 .*.h *.pdf *.dvi *.out *.bbl *.toc .*.date ; rm -rf ./docs/
+	rm -f *.o *.mod *_p.f90 *_m.F90 .*.h *.pdf *.dvi *.out *.bbl *.toc .*.date ; rm -rf ./docs/html ./docs/latex
 
 ###############################################################################################################################################################
 
