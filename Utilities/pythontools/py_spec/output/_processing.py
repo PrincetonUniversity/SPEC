@@ -1,4 +1,5 @@
 import numpy as np
+from numba import jit
 
 
 def get_grid_and_jacobian_and_metric(
@@ -322,6 +323,7 @@ def get_B_covariant(self, Bcontrav, g):
     return Bco    
 
 
+@jit(nopython=True)
 def _get_zernike(sarr, lrad, mpol):
     """
     Get the value of the zernike polynomials, their first and second derivatives
@@ -335,7 +337,7 @@ def _get_zernike(sarr, lrad, mpol):
     rm1 = np.zeros_like(r)  # r to the power of m-1'th
     rm2 = np.zeros_like(r)  # r to the power of m-2'th
 
-    zernike = np.zeros([ns, lrad + 1, mpol + 1], dtype=np.float64)
+    zernike = np.zeros(shape=(ns, lrad + 1, mpol + 1), dtype=np.float64)
     dzernike = np.zeros_like(zernike)
     d2zernike = np.zeros_like(zernike)
 
