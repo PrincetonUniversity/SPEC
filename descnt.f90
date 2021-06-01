@@ -548,24 +548,27 @@ subroutine fcnanderson(xx, NGdof)
 
  REAL                 :: W(1:Manderson+1,1:Manderson)
  REAL                 :: G(1:NGdof,1:Manderson+1), Gbar(1:NGdof,1:Manderson)
- REAL                 :: Q(1:NGdof,1:NGdof), R(1:NGdof,1:Manderson)
+ REAL                 :: Q(1:NGdof,1:NGdof), R(1:Manderson,1:Manderson)
  REAL                 :: alpha(1:Manderson+1), alphabar(1:Manderson)
  REAL                 :: posref(1:NGdof,1:Manderson+1), minusQg(1:NGdof)
- REAL                 :: reflectors(1:NGdof), wa1(1:NGdof), wa2(1:NGdof), dummy(1)
+ REAL                 :: reflectors(1:min(NGdof,Manderson)), dummy(1)
+ REAL                 :: Sval(1:min(NGdof,Manderson)), Bm(1:max(NGdof,Manderson))
 
  REAL, ALLOCATABLE    :: Wo(:,:), Go(:,:), Gbaro(:,:), Ro(:,:)
+ REAL, ALLOCATABLE    :: Svalo(:), Bmo(:)
  REAL, ALLOCATABLE    :: alphao(:), alphabaro(:)
  REAL, ALLOCATABLE    :: wk(:)
 
- INTEGER              :: it, idesc, lvol, idof, j
- INTEGER              :: idgeqrf, iwa(1), ldgbar, ii
+ INTEGER              :: it, idesc, lvol, idof, j, ii
+ INTEGER              :: idginfo, iwa(1), grank, ldb
+ REAL                 :: grcond
  LOGICAL              :: LComputeDerivatives, LComputeAxis
  CHARACTER            :: pack
 
  LComputeDerivatives = .false.; LComputeAxis = .true.
 
  position = zero ; force = zero ; position(1:NGdof) = xx(1:NGdof) 
- 
+  
  !check if force-descent is run with brute force or with anderson acceleration
 
  if(Manderson .le. 0) then 
@@ -579,7 +582,7 @@ subroutine fcnanderson(xx, NGdof)
  
   call dforce(NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives, LComputeAxis)
 
-  position(1:NGdof) = position(1:NGdof) - dxdesc*force(1:NGdof)/ForceErr
+  position(1:NGdof) = position(1:NGdof) - dxdesc*force(1:NGdof)!/ForceErr
 
   if(ForceErr<ftoldesc .and. myid.eq.0 ) then
    write(*,*) "FORCE BELOW TOLERANCE"
@@ -625,11 +628,11 @@ subroutine fcnanderson(xx, NGdof)
  else
  ! ----- RUN WITH ANDERSON ACCELERATION -----
 
- posref = zero; G = zero; ldgbar = NGdof
+ posref = zero; G = zero; grcond = 1.0E-08; 
 
- alpha(1:Manderson)=zero; alpha(Manderson+1)=1;
+ alpha(1:Manderson) = zero; alpha(Manderson+1) = 1; alphabar = zero;
 
- W = zero; W(1,1) = -1; W(Manderson+1,Manderson)=1;
+ W = zero; W(1,1) = -1; W(Manderson+1,Manderson) = 1;
 
  do j=2,Manderson
   W(j,j)   = -1
@@ -637,8 +640,8 @@ subroutine fcnanderson(xx, NGdof)
  enddo  
 
  call dforce(NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives, LComputeAxis)
-
- posref(1:NGdof,Manderson+1) = position(1:NGdof) - dxdesc*force(1:NGdof)/ForceErr
+ 
+ posref(1:NGdof,Manderson+1) = position(1:NGdof) - dxdesc*force(1:NGdof)!/ForceErr
 
  G(1:NGdof,Manderson+1)      = posref(1:NGdof,Manderson+1) - position(1:NGdof)
  
@@ -655,6 +658,8 @@ subroutine fcnanderson(xx, NGdof)
    SALLOCATE( Go,        (1:NGdof, 1:it+1), zero)
    SALLOCATE( Gbaro,     (1:NGdof, 1:it),   zero)
    SALLOCATE( Ro,        (1:NGdof, 1:it),   zero)
+   SALLOCATE( Bmo,       (1:max(NGdof,it)), zero)
+   SALLOCATE( Svalo,     (1:min(NGdof,it)), zero)
    SALLOCATE( alphao,    (1:it+1),          zero)
    SALLOCATE( alphabaro, (1:it),            zero)
    alphao(1:it)=zero; alphao(it+1)=1;
@@ -666,88 +671,110 @@ subroutine fcnanderson(xx, NGdof)
   endif
   
   call dforce(NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives, LComputeAxis)
-
+  
   posref(1:NGdof,1:Manderson) = posref(1:NGdof,2:Manderson+1)
 
-  posref(1:NGdof,Manderson+1) = posref(1:NGdof,Manderson) - dxdesc*force(1:NGdof)/ForceErr
+  posref(1:NGdof,Manderson+1) = posref(1:NGdof,Manderson) - dxdesc*force(1:NGdof)!/ForceErr
 
   G(1:NGdof,1:Manderson)      = G(1:NGdof,2:Manderson+1)
 
   G(1:NGdof,Manderson+1)      = posref(1:NGdof,Manderson+1) - position(1:NGdof)
 
-  Gbar(1:NGdof,1:Manderson)   = matmul(G(1:NGdof,1:Manderson+1),W(1:Manderson+1,1:Manderson))
-
   if(it >= Manderson) then
    Gbar(1:NGdof,1:Manderson)   = matmul(G(1:NGdof,1:Manderson+1),W(1:Manderson+1,1:Manderson))
-   !QR-decomposition of Gbar
-   iwa(1)=-1; idgeqrf = 0
-   call dgeqrf(NGdof,Manderson,Gbar,ldgbar,wa1,wa2,iwa(1),idgeqrf)
-   iwa(1)=int(wa2(1)); allocate(wk(1:iwa(1)))
-   call dgeqrf(NGdof,Manderson,Gbar,ldgbar,reflectors,wk,iwa(1),idgeqrf)
+   !solve least square linear problem for alphabar 
+   Bm(1:NGdof) = G(1:NGdof,Manderson+1)
+   iwa(1)=-1; idginfo = 0;  ldb = max(NGdof,Manderson);
+   call dgelss(NGdof,Manderson,1,-Gbar,NGdof,Bm,ldb,Sval,grcond,grank,dummy,iwa(1),idginfo)    
+   iwa(1)=int(dummy(1)); allocate(wk(1:iwa(1)))
+   call dgelss(NGdof,Manderson,1,-Gbar,NGdof,Bm,ldb,Sval,grcond,grank,wk,iwa(1),idginfo)  
    deallocate(wk)
-   R(1:NGdof,1:Manderson) = zero
-   do j=1,Manderson
-    R(j,j:Manderson) = Gbar(j,j:Manderson) 
-   enddo
-   Q(1:NGdof,1:NGdof)      = zero
-   do j=1,Manderson
-    Q(1:NGdof,j) = Gbar(1:NGdof,j)    
-   enddo
-   ii=-1; idgeqrf = 0
-   call dorgqr(NGdof,NGdof,Manderson,Q,ldgbar,reflectors,dummy,ii,idgeqrf) 
-   ii=int(dummy(1)); allocate(wk(1:ii))
-   call dorgqr(NGdof,NGdof,Manderson,Q,ldgbar,reflectors,wk,ii,idgeqrf)
-   deallocate(wk)
-   !end of QR decomposition
+   alphabar(1:Manderson) = Bm(1:Manderson)
+   !RQ-decomposition of GbarT
+   !iwa(1)=-1; idgeqrf = 0
+   !call dgerqf(Manderson,NGdof,GbarT,ldgbar,reflectors,dummy,iwa(1),idgeqrf)
+   !iwa(1)=int(dummy(1)); allocate(wk(1:iwa(1)))
+   !call dgerqf(Manderson,NGdof,GbarT,ldgbar,reflectors,wk,iwa(1),idgeqrf)
+   !deallocate(wk)
+   !R(1:Manderson,1:Manderson) = zero
+   !need to fill R coefficients depending on wether M>N or M<N
+   !if(Manderson .le. NGdof) then
+   ! R(1:Manderson,1:Manderson) = GbarT(1:Manderson,NGdof-Manderson+1:NGdof)
+   !else
+   !endif
+   !do j=1,Manderson
+   ! R(j,j:Manderson) = Gbar(j,j:Manderson) 
+   !enddo
+   !need to construct the Q matrix
+   !Q(1:NGdof,1:NGdof)      = zero
+   !mQ                      = min(Manderson, NGdof)
+   !do j=1,mQ
+   ! Q(1:NGdof,j) = Gbar(1:NGdof,j)    
+   !enddo
+   !ii=-1; idgeqrf = 0
+   !call dorgqr(NGdof,NGdof,mQ,Q,ldgbar,reflectors,dummy,ii,idgeqrf)
+   !ii=int(dummy(1)); allocate(wk(1:ii))
+   !call dorgqr(NGdof,NGdof,mQ,Q,ldgbar,reflectors,wk,ii,idgeqrf)
+   !deallocate(wk)
+   !end of RQ-decomposition
    !solve linear system for alphabar
-   minusQg(1:NGdof)    = -matmul(transpose(Q(1:NGdof,1:NGdof)),G(1:NGdof,Manderson+1))
-   alphabar(Manderson) = minusQg(Manderson)/R(Manderson,Manderson)
-   do j=Manderson-1,1,-1
-   alphabar(j) = (minusQg(j)-dot_product(R(j,j+1:Manderson),alphabar(j+1:Manderson)))/R(j,j)
-   enddo
+   !minusQg(1:NGdof)    = -matmul(transpose(Q(1:NGdof,1:NGdof)),G(1:NGdof,Manderson+1))
+   !alphabar(Manderson) = minusQg(mQ)/R(mQ,Manderson) ! DON'T UNDERSTAND HOW THIS WORKS...
+   !do j=Manderson-1,Manderson-mQ,-1
+   ! alphabar(j) = (minusQg(j)-dot_product(R(j,j+1:mQ),alphabar(j+1:mQ)))/R(j,j)
+   !enddo
    !solve for alpha
    alpha(1:Manderson+1)        = matmul(W(1:Manderson+1,1:Manderson),alphabar(1:Manderson))
    alpha(Manderson+1)          = alpha(Manderson+1) + 1
+   write(*,*) "alpha's: ", alpha
    !update position according to anderson's rule
    do j=1,NGdof 
-   position(j)           = dot_product(posref(j,1:Manderson+1),alpha(1:Manderson+1))
+    position(j)           = dot_product(posref(j,1:Manderson+1),alpha(1:Manderson+1))
    enddo 
   else
    Go(1:NGdof,1:it+1)  = G(1:NGdof,Manderson+1-it:Manderson+1)  
    Gbaro(1:NGdof,1:it) = matmul(Go(1:NGdof,1:it+1),Wo(1:it+1,1:it))
+   !solve least square linear problem for alphabar 
+   Bmo(1:NGdof) = Go(1:NGdof,it+1)
+   iwa(1)=-1; idginfo = 0;  ldb = max(NGdof,it);
+   call dgelss(NGdof,it,1,-Gbaro,NGdof,Bmo,ldb,Svalo,grcond,grank,dummy,iwa(1),idginfo)
+   iwa(1)=int(dummy(1)); allocate(wk(1:iwa(1)))
+   call dgelss(NGdof,it,1,-Gbaro,NGdof,Bmo,ldb,Svalo,grcond,grank,wk,iwa(1),idginfo)
+   deallocate(wk)
+   alphabaro(1:it) = Bmo(1:it)
    !QR-decomposition of Gbaro
-   iwa(1)=-1; idgeqrf = 0
-   call dgeqrf(NGdof,it,Gbaro,ldgbar,wa1,wa2,iwa(1),idgeqrf)
-   iwa(1)=int(wa2(1)); allocate(wk(1:iwa(1)))
-   call dgeqrf(NGdof,it,Gbaro,ldgbar,reflectors,wk,iwa(1),idgeqrf)
-   deallocate(wk)
-   Ro(1:NGdof,1:it) = zero
-   do j=1,it
-    Ro(j,j:it) = Gbaro(j,j:it)
-   enddo
-   Q(1:NGdof,1:NGdof)      = zero
-   do j=1,it
-    Q(1:NGdof,j) = Gbaro(1:NGdof,j)
-   enddo
-   ii=-1; idgeqrf = 0
-   call dorgqr(NGdof,NGdof,it,Q,ldgbar,reflectors,dummy,ii,idgeqrf)
-   ii=int(dummy(1)); allocate(wk(1:ii))
-   call dorgqr(NGdof,NGdof,it,Q,ldgbar,reflectors,wk,ii,idgeqrf)
-   deallocate(wk)
+   !iwa(1)=-1; idgeqrf = 0
+   !call dgeqrf(NGdof,it,Gbaro,ldgbar,wa1,wa2,iwa(1),idgeqrf)
+   !iwa(1)=int(wa2(1)); allocate(wk(1:iwa(1)))
+   !call dgeqrf(NGdof,it,Gbaro,ldgbar,reflectors,wk,iwa(1),idgeqrf)
+   !deallocate(wk)
+   !Ro(1:NGdof,1:it) = zero
+   !do j=1,it
+   ! Ro(j,j:it) = Gbaro(j,j:it)
+   !enddo
+   !Q(1:NGdof,1:NGdof)      = zero
+   !do j=1,it
+   ! Q(1:NGdof,j) = Gbaro(1:NGdof,j)
+   !enddo
+   !ii=-1; idgeqrf = 0
+   !call dorgqr(NGdof,NGdof,it,Q,ldgbar,reflectors,dummy,ii,idgeqrf)
+   !ii=int(dummy(1)); allocate(wk(1:ii))
+   !call dorgqr(NGdof,NGdof,it,Q,ldgbar,reflectors,wk,ii,idgeqrf)
+   !deallocate(wk)
    !end of QR decomposition
    !solve linear system for alphabaro
-   minusQg(1:NGdof)    = -matmul(transpose(Q(1:NGdof,1:NGdof)),Go(1:NGdof,it+1))
-   alphabaro(it)       = minusQg(it)/Ro(it,it)
-   do j=it-1,1,-1
-   alphabaro(j) = (minusQg(j)-dot_product(Ro(j,j+1:it),alphabaro(j+1:it)))/Ro(j,j)
-   enddo
+   !minusQg(1:NGdof)    = -matmul(transpose(Q(1:NGdof,1:NGdof)),Go(1:NGdof,it+1))
+   !alphabaro(it)       = minusQg(it)/Ro(it,it)
+   !do j=it-1,1,-1
+   !alphabaro(j) = (minusQg(j)-dot_product(Ro(j,j+1:it),alphabaro(j+1:it)))/Ro(j,j)
+   !enddo
    !solve for alphao
    alphao(1:it+1)   = matmul(Wo(1:it+1,1:it),alphabaro(1:it))
    alphao(it+1) = alphao(it+1)+1
    !update position according to anderson's rule
    do j=1,NGdof
    position(j)           = dot_product(posref(j,Manderson+1-it:Manderson+1),alphao(1:it+1))
-   enddo 
+   enddo
   endif
 
   if(ForceErr<ftoldesc .and. myid.eq.0 ) then
@@ -796,6 +823,8 @@ subroutine fcnanderson(xx, NGdof)
    DALLOCATE( Go )
    DALLOCATE( Gbaro )
    DALLOCATE( Ro )
+   DALLOCATE( Bmo )
+   DALLOCATE( Svalo )
    DALLOCATE( alphao )
    DALLOCATE( alphabaro )
   endif
