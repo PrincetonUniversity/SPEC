@@ -884,7 +884,7 @@ subroutine read_inputlists_from_file()
    use fileunits
    use inputlist
 
-#ifdef IFORT 
+#ifdef IFORT
    use ifport ! for fseek, ftell with Intel compiler
 #endif
 
@@ -970,10 +970,10 @@ subroutine read_inputlists_from_file()
 
      ! determine how many modes are specified by reading them once
 #ifdef IFORT
-     filepos = ftell(iunit)
+     filepos = ftell(iunit)+1
 #else
      call ftell(iunit, filepos)
-#endif     
+#endif
      do ! will read in Fourier harmonics until the end of file is reached;
        read(iunit,*,iostat=instat) mm, nn, RZRZ(1:4,1:Nvol)   !if change of angle applies, transformation assumes m>=0 and for m=0 only n>=0;
        if( instat.ne.0 ) exit
@@ -987,7 +987,7 @@ subroutine read_inputlists_from_file()
      ! seek back to (start of modes) == (end of input namelists)
 #ifdef IFORT
      seek_status = fseek(iunit, filepos, 0)
-#else     
+#else
      call fseek(iunit, filepos, 0, seek_status)
 #endif
      FATAL(inplst, seek_status.ne.0, failed to seek to end of input namelists )
