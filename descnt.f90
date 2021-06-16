@@ -552,10 +552,10 @@ subroutine fcnanderson(xx, NGdof)
  REAL                 :: alpha(1:Manderson+1), alphabar(1:Manderson)
  REAL                 :: posref(1:NGdof,1:Manderson+1), minusQg(1:NGdof)
  REAL                 :: reflectors(1:min(NGdof,Manderson)), dummy(1)
- REAL                 :: Sval(1:min(NGdof,Manderson)), Bm(1:max(NGdof,Manderson))
+ REAL                 :: Sval(1:min(NGdof,Manderson)), Am(1:NGdof,1:Manderson), Bm(1:max(NGdof,Manderson))
 
  REAL, ALLOCATABLE    :: Wo(:,:), Go(:,:), Gbaro(:,:), Ro(:,:)
- REAL, ALLOCATABLE    :: Svalo(:), Bmo(:)
+ REAL, ALLOCATABLE    :: Svalo(:), Amo(:,:), Bmo(:)
  REAL, ALLOCATABLE    :: alphao(:), alphabaro(:)
  REAL, ALLOCATABLE    :: wk(:)
 
@@ -628,7 +628,7 @@ subroutine fcnanderson(xx, NGdof)
  else
  ! ----- RUN WITH ANDERSON ACCELERATION -----
 
- posref = zero; G = zero; grcond = 1.0E-08; 
+ posref = zero; G = zero; grcond = 1.0E-15; 
 
  alpha(1:Manderson) = zero; alpha(Manderson+1) = 1; alphabar = zero;
 
@@ -658,6 +658,7 @@ subroutine fcnanderson(xx, NGdof)
    SALLOCATE( Go,        (1:NGdof, 1:it+1), zero)
    SALLOCATE( Gbaro,     (1:NGdof, 1:it),   zero)
    SALLOCATE( Ro,        (1:NGdof, 1:it),   zero)
+   SALLOCATE( Amo,       (1:NGdof, 1:it),   zero)
    SALLOCATE( Bmo,       (1:max(NGdof,it)), zero)
    SALLOCATE( Svalo,     (1:min(NGdof,it)), zero)
    SALLOCATE( alphao,    (1:it+1),          zero)
@@ -682,12 +683,13 @@ subroutine fcnanderson(xx, NGdof)
 
   if(it >= Manderson) then
    Gbar(1:NGdof,1:Manderson)   = matmul(G(1:NGdof,1:Manderson+1),W(1:Manderson+1,1:Manderson))
-   !solve least square linear problem for alphabar 
-   Bm(1:NGdof) = G(1:NGdof,Manderson+1)
+   !solve least square linear problem for alphabar
+   Am(1:NGdof,1:Manderson) = Gbar(1:NGdof,1:Manderson)  
+   Bm(1:NGdof)             = -G(1:NGdof,Manderson+1)
    iwa(1)=-1; idginfo = 0;  ldb = max(NGdof,Manderson);
-   call dgelss(NGdof,Manderson,1,-Gbar,NGdof,Bm,ldb,Sval,grcond,grank,dummy,iwa(1),idginfo)    
+   call dgelss(NGdof,Manderson,1,Am,NGdof,Bm,ldb,Sval,grcond,grank,dummy,iwa(1),idginfo)    
    iwa(1)=int(dummy(1)); allocate(wk(1:iwa(1)))
-   call dgelss(NGdof,Manderson,1,-Gbar,NGdof,Bm,ldb,Sval,grcond,grank,wk,iwa(1),idginfo)  
+   call dgelss(NGdof,Manderson,1,Am,NGdof,Bm,ldb,Sval,grcond,grank,wk,iwa(1),idginfo)  
    deallocate(wk)
    alphabar(1:Manderson) = Bm(1:Manderson)
    !RQ-decomposition of GbarT
@@ -726,7 +728,6 @@ subroutine fcnanderson(xx, NGdof)
    !solve for alpha
    alpha(1:Manderson+1)        = matmul(W(1:Manderson+1,1:Manderson),alphabar(1:Manderson))
    alpha(Manderson+1)          = alpha(Manderson+1) + 1
-   write(*,*) "alpha's: ", alpha
    !update position according to anderson's rule
    do j=1,NGdof 
     position(j)           = dot_product(posref(j,1:Manderson+1),alpha(1:Manderson+1))
@@ -734,12 +735,13 @@ subroutine fcnanderson(xx, NGdof)
   else
    Go(1:NGdof,1:it+1)  = G(1:NGdof,Manderson+1-it:Manderson+1)  
    Gbaro(1:NGdof,1:it) = matmul(Go(1:NGdof,1:it+1),Wo(1:it+1,1:it))
-   !solve least square linear problem for alphabar 
-   Bmo(1:NGdof) = Go(1:NGdof,it+1)
+   !solve least square linear problem for alphabar
+   Amo(1:NGdof,1:it) = Gbaro(1:NGdof,1:it) 
+   Bmo(1:NGdof)      = -Go(1:NGdof,it+1)
    iwa(1)=-1; idginfo = 0;  ldb = max(NGdof,it);
-   call dgelss(NGdof,it,1,-Gbaro,NGdof,Bmo,ldb,Svalo,grcond,grank,dummy,iwa(1),idginfo)
+   call dgelss(NGdof,it,1,Amo,NGdof,Bmo,ldb,Svalo,grcond,grank,dummy,iwa(1),idginfo)
    iwa(1)=int(dummy(1)); allocate(wk(1:iwa(1)))
-   call dgelss(NGdof,it,1,-Gbaro,NGdof,Bmo,ldb,Svalo,grcond,grank,wk,iwa(1),idginfo)
+   call dgelss(NGdof,it,1,Amo,NGdof,Bmo,ldb,Svalo,grcond,grank,wk,iwa(1),idginfo)
    deallocate(wk)
    alphabaro(1:it) = Bmo(1:it)
    !QR-decomposition of Gbaro
