@@ -1,9 +1,15 @@
-function plot_spec_pressure(data, newfig)
+function plot_spec_pressure(data, norm, newfig)
 
+%
+% PLOT_SPEC_PRESSURE( DATA, NEWFIG )
+% ==================================
+%
 % Plots stepped-pressure profile versus normalized toroidal flux used in SPEC
 %
 % INPUT
+% -----
 %   -data   : data obtained from read_spec(fname)
+%   -norm   : (0) plot p, (1) plot p / p0
 %   -newfig : open a new figue (=1), plots on an existing one (=0) or overwrite last plot (=2)
 %
 % written by J.Loizu (2018)
@@ -11,6 +17,12 @@ function plot_spec_pressure(data, newfig)
 
 
 pvol = data.input.physics.pressure * data.input.physics.pscale;
+
+if norm
+    pvol = pvol / pvol(1);
+end
+
+
 pmax = max(pvol);
 pmin = min(pvol);
 
@@ -66,12 +78,18 @@ if Nvol>1
     plot(x,y,'b')
 end
     
-ylabel('p')
-xlabel('\Psi / \Psi_{edge}')
+if( norm )
+    ylabel('$p / p_0$', 'Interpreter', 'latex')
+    ylabel('$p$', 'Interpreter', 'latex')
+end
+xlabel('$\Psi / \Psi_{edge}$', 'Interpreter', 'latex')
 
 if (pmin~=0 || pmax~=0)
     ylim([0.9*pmin, 1.1*pmax]);
 end
 
+set(gcf, 'Color', 'w')
+set(gcf,'Position',[200 200 900 700])
+set(gca,'FontSize',18)
 
 

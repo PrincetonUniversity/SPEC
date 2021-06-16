@@ -1,10 +1,15 @@
 function write_spec_input_L3(template, inputname, Nvol, Lfreebound, tfl, phit_edge, ...
                              pflux, Ivol, Isurf, curtor, pressure, lrad, nptr, Linitialize)
 
+% 
+% WRITE_SPEC_INPUT_L3( TEMPLATE, INPUTNAME, NVOL, LFREEBOUND, TFL, PHIT_EDGE, ... )
+% =================================================================================
+%
 % Writes spec input file from template with constraints corresponding to 
 % Lconstraint=1 (tfl,iota,oita)
 %
 % INPUT
+% -----
 %   -template   : template input file name with .sp format 
 %   -inputname  : new input file name with .sp format
 %   -Nvol       : number of volume

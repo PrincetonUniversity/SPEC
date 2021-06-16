@@ -1,4 +1,8 @@
 function plot_spec_Bfield(data, component, theta, phi, nr, newfig)
+
+%
+% PLOT_SPEC_BFIELD( DATA, COMPONENT, THETA, PHI, NR, NEWFIG )
+% ===========================================================
 %
 % Plot SPEC magnetic field solution
 %
@@ -26,9 +30,7 @@ function plot_spec_Bfield(data, component, theta, phi, nr, newfig)
             hold off;
     end
     
-    fdata = fdata_from_data(data);
-    
-    [r_end, z_end] = get_spec_radius(data, theta, phi, fdata.Nvol);
+    [r_end, z_end] = get_spec_radius(data, theta, phi, data.output.Mvol);
     [r_start, z_start] = get_spec_radius(data, theta, phi, 0);
     a = sqrt((r_end-r_start)^2 + (z_end-z_start)^2);
     

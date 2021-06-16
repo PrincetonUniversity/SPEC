@@ -1,11 +1,17 @@
 function data = read_spec(filename)
-  
+
+% 
+% READ_SPEC ( FILENAME )
+% ======================
+%
 % Reads the HDF5 output file produced by SPEC
 %
 % INPUT
+% -----
 % -  filename : path to the HDF5 output file (e.g. 'testcase.h5')
 %
 % OUTPUT
+% ------
 % -  data     : contains all data from the SPEC run, which can be fed into several routines for analyzing and plotting
 %
 % written by J.Schilling (2019)

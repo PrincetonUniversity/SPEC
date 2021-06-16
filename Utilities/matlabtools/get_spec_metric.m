@@ -1,16 +1,21 @@
 function gmat = get_spec_metric(data,lvol,sarr,tarr,zarr)
  
- 
+%
+% GET_SPEC_METRIC( DATA, LVOL, SARR, TARR, ZARR )
+% ===============================================
+%
 % Calculates covariant metric elements of the coordinates in volume number lvol
 %
 % INPUT
-%   -data   : must be produced by calling e.g. read_spec_grid(filename)
+% -----
+%   -data   : must be produced by calling e.g. read_spec(filename)
 %   -lvol   : volume number
 %   -sarr   : is the array of values for the s-coordinate
 %   -tarr   : is the array of values for the theta-coordinate
 %   -zarr   : is the array of values for the zeta-coordinate
 %
 % OUTPUT
+% ------
 %   -gmat   : 3x3 matrix of metric coefficients 
 %
 % Note: Stellarator symmetry is assumed
@@ -31,15 +36,14 @@ for k=1:3
  end
 end
 
-
-% Construct regularization (for lvol=1) factors and their derivatives
+% Get R and Z and their derivatives
 
 [out, Rarr] = get_spec_R_derivatives(data,lvol,sarr,tarr,zarr,'R');
 [out, Zarr] = get_spec_R_derivatives(data,lvol,sarr,tarr,zarr,'Z');
 
 % Construct metric elements
 
-switch data.Igeometry
+switch data.input.physics.Igeometry
     case 1
         gmat{1}{1} = Rarr{2}.^2;                    
         gmat{2}{2} = 1 + Rarr{3}.^2;                

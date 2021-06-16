@@ -1,5 +1,9 @@
 function [psi_coord, I_vol] = get_spec_volume_current(data, cumul)
 
+%
+% GET_SPEC_VOLUME_CURRENT( DATA, CUMUL )
+% ======================================
+%
 % Returns the toroidal current flowing in each volume, normalized by mu_0
 %
 % INPUT
@@ -16,8 +20,7 @@ function [psi_coord, I_vol] = get_spec_volume_current(data, cumul)
 
 
 % Data loading
-fdata = fdata_from_data(data);      % Read data
-Nvol = fdata.Nvol;                      % Total number of volumes
+Nvol = data.input.physics.Nvol;                      % Total number of volumes
 
 % Data processing
 
@@ -25,10 +28,10 @@ Nvol = fdata.Nvol;                      % Total number of volumes
 psi_coord = zeros(1, Nvol);             % Allocate memory
 I_vol = zeros(1, Nvol);
 
-mu = fdata.mu;
-tflux = fdata.tflux;
+mu = data.output.mu;
+tflux = data.output.tflux;
 sumI = 0;
-phiedge = fdata.phiedge;
+phiedge = data.input.physics.phiedge;
     
 for ivol=1:Nvol
 

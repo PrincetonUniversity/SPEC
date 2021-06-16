@@ -1,5 +1,9 @@
 function plot_spec_surfcurent(data, ns, nt, zeta, newfig)
- 
+
+%
+% PLOT_SPEC_SURFCURRENT( DATA, NS, NT, ZETA, NEWFIG )
+% ===================================================
+%
 % Plot pressure-driven currents located at each volume interface
 %
 % INPUT
@@ -16,7 +20,7 @@ function plot_spec_surfcurent(data, ns, nt, zeta, newfig)
 
 [tflux, IPDt] = get_spec_surface_current(data, ns, nt, zeta);
 
-Nvol = data.input.physics.Mvol;
+Nvol = data.input.physics.Nvol + data.input.physics.Lfreebound;
 
 switch newfig
     case 0

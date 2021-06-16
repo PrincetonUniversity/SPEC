@@ -1,15 +1,17 @@
-function vcov = contra2cov(fdata, vol, vcontrav, s, theta, phi, norm)
+function vcov = contra2cov(data, vol, vcontrav, s, theta, phi, norm)
 
+%
+% CONTRA2COV( DATA, VOL, VCONTRAV, S, THETA, PHI, NORM )
+% ======================================================
 %
 % Transform a contravariant vector to a covariant one in any geometry
 %
 % INPUT
 % -----
-%   fdata:      via fdata_from_data(data)
+%   data:       via read_spec(filename)
 %   vol:        volume
+%   vcontrav:   structure containing contravariant components as a function of r, size = 3xlength(r)
 %   s:          radial coordinate
-%   vcontrav:   contravariant vector as a function of r, size = 3xlength(r)
-%   ns:         number of point in each volume for interpolation
 %   theta:      theta angle
 %   phi:        phi angle
 %   norm:       use the unitary (canonical) basis (=1) or the general 
@@ -20,12 +22,12 @@ function vcov = contra2cov(fdata, vol, vcontrav, s, theta, phi, norm)
 %   vcov:       covariant vector as a function v
 
 % Read geometry
-G = fdata.Igeometry;
+G = data.input.physics.Igeometry;
 
 
 % Get R derivatives
-[s, R] = get_spec_R_derivatives(fdata, vol, s, theta, phi, 'R');
-[s, Z] = get_spec_R_derivatives(fdata, vol, s, theta, phi, 'Z');
+[s, R] = get_spec_R_derivatives(data, vol, s, theta, phi, 'R');
+[s, Z] = get_spec_R_derivatives(data, vol, s, theta, phi, 'Z');
 
 
 nt = length(theta);
@@ -33,7 +35,7 @@ np = length(phi);
 ns = length(s);
 
 % transform in covariant basis    
-g = get_spec_metric(fdata, vol, s, theta, phi);
+g = get_spec_metric(data, vol, s, theta, phi);
         
 switch G
     case 1

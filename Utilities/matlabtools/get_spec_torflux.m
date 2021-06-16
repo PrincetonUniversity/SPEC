@@ -1,10 +1,15 @@
-function psitor = get_spec_torflux(fdata,lvol,zeta,start,send,ns,nt)
+function psitor = get_spec_torflux(data,lvol,zeta,start,send,ns,nt)
 
+%
+% GET_SPEC_TORFLUX( DATA, LVOL, ZETA, START, SEND, NS, NT )
+% =========================================================
+%
 % Computes total enclosed toroidal flux in the poloidal cross-section defined by zeta,
 % inside the volume number lvol and across the radial extension defined by start and send
 %
 % INPUT
-%   -fdata   : must be produced by calling read_spec_field(filename)
+% -----
+%   -data   : must be produced by calling read_spec(filename)
 %   -lvol    : volume number
 %   -zeta    : toroidal angle at which the flux is calculated
 %   -start   : first point in the radial direction (e.g. start=-1)
@@ -13,6 +18,7 @@ function psitor = get_spec_torflux(fdata,lvol,zeta,start,send,ns,nt)
 %   -nt      : poloidal resolution (e.g. 64)
 %
 % OUPUT
+% -----
 %   -psitor  : total enclosed toroidal flux
 %
 %   written by J.Loizu (2016)
@@ -35,8 +41,8 @@ if(ds==0 || dth==0)
  
 else
 
-Bcontrav = get_spec_magfield(fdata,lvol,sarr,tarr,zeta);
-jac      = get_spec_jacobian(fdata,lvol,sarr,tarr,zeta);
+Bcontrav = get_spec_magfield(data,lvol,sarr,tarr,zeta);
+jac      = get_spec_jacobian(data,lvol,sarr,tarr,zeta);
   
 
  % Compute surface integral

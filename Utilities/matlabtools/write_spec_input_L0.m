@@ -1,8 +1,13 @@
 function write_spec_input_L0(template,inputname,Nvol,phiedge,tfl,pfl,mu,pre,lrad,nptr)
 
+% 
+% WRITE_SPEC_INPUT_L0( TEMPLATE, INPUTNAME, NVOL, PHIEDGE, TFL, PFL, MU, PRE, LRAD, NPTR )
+% ========================================================================================
+%
 % Writes spec input file from template with constraints corresponding to Lconstraint=0 (tfl,pfl,mu)
 %
 % INPUT
+% -----
 %   -template   : template input file name with .sp format 
 %   -inputname  : new input file name with .sp format
 %   -Nvol       : number of volumes

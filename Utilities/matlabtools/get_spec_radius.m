@@ -1,4 +1,9 @@
 function [r_out, z_out] = get_spec_radius(data, theta, zeta, vol)
+
+%
+% GET_SPEC_RADIUS( DATA, THETA, ZETA, VOL )
+% =========================================
+%
 % Return the radial position of a KAM surface for a given theta, zeta and
 % Nvol
 %
@@ -20,8 +25,8 @@ mn     = data.output.mn;
 im     = data.output.im;
 in     = data.output.in;
 Rmn    = data.output.Rbc;
-Zmn = data.output.Zbs;
-G = data.input.physics.Igeometry;
+Zmn    = data.output.Zbs;
+G      = data.input.physics.Igeometry;
 
 
 switch G

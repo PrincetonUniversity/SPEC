@@ -1,10 +1,15 @@
-function plot_spec_kam(data,zetaov2pi,newfig)
+function plot_spec_kam(data, nz0, newfig)
 
+%
+% PLOT_SPEC_KAM( DATA, NZ0, NEWFIG )
+% ========================================
+%
 % Produces a "Poincare plot" of the KAM surfaces.
 %
 % INPUT
+% -----
 %   -data       : obtained from read_spec(fname)
-%   -zetaov2pi  : shows the toroidal plane at zeta=2*pi*(zetaov2pi)
+%   -nz0        : show the toroidal plane number nz0
 %   -newfig     : opens(=1) or not(=0) a new figure, or overplots(=2) on existing figure
 %
 %   written by J.Loizu (2016)
@@ -12,6 +17,10 @@ function plot_spec_kam(data,zetaov2pi,newfig)
 %   modified by A. Baillod (06.2019)
 %   modified by J.Loizu (01.2020)
 
+Np = double(data.input.physics.Nfp);
+%Nplan = double(size(data.poincare.R,2));   % # of toroidal planes
+%zetaov2pi = (nz0-1) / (Np * Nplan);
+zetaov2pi = 0;
 
 Nvol            = double(data.input.physics.Nvol);
 mn              = data.output.mn;
