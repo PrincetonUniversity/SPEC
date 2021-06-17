@@ -181,6 +181,7 @@ module cputiming
   REAL    :: Tpreset = 0.0, presetT = 0.0
   REAL    :: Tglobal = 0.0, globalT = 0.0
   REAL    :: Txspech = 0.0, xspechT = 0.0
+  REAL    :: Tinputlist = 0.0, inputlistT = 0.0
 
   REAL :: Treadin = 0.0
 !  REAL :: Twritin = 0.0 ! redundant; 
