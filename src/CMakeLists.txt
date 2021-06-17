@@ -177,6 +177,11 @@ target_compile_options(spec
 set_target_properties (spec PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/spec_modules)
 target_include_directories(spec PUBLIC ${CMAKE_Fortran_MODULE_DIRECTORY}/spec_modules)
 
+# If using MPI library, link against it
+if(MPI_Fortran_FOUND)
+    target_link_libraries(spec PUBLIC MPI::MPI_Fortran)
+endif()
+
 # Add OpenMP
 if(OpenMP_Fortran_FOUND)
     target_link_libraries(spec PUBLIC OpenMP::OpenMP_Fortran)
@@ -189,10 +194,11 @@ endif()
 #target_link_libraries(spec PUBLIC Threads::Threads)
 
 # Add libm
-target_link_libraries(spec PUBLIC ${POW_LIBS})
+# target_link_libraries(spec PUBLIC ${POW_LIBS})
 
 # Add HDF5
-target_link_libraries(spec PUBLIC ${HDF5_Fortran_HL_LIBRARIES} ${HDF5_Fortran_LIBRARIES} ${HDF5_C_LIBRARIES} )
+#target_link_libraries(spec PUBLIC ${HDF5_Fortran_HL_LIBRARIES} ${HDF5_Fortran_LIBRARIES} ${HDF5_C_LIBRARIES} )
+target_link_libraries(spec PUBLIC ${HDF5_Fortran_LIBRARIES} ${HDF5_C_LIBRARIES} )
 target_include_directories(spec PUBLIC ${HDF5_C_INCLUDE_DIRS} ${HDF5_Fortran_INCLUDE_DIRS})
 #target_include_directories(spec PUBLIC ${HDF5_INCLUDE_DIRS})
 #target_link_libraries(spec PUBLIC hdf5::hdf5 hdf5::hdf5_fortran hdf5::hdf5_hl_fortran)
