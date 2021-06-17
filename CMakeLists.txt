@@ -58,7 +58,6 @@ find_program(AWK awk mawk gawk)
 # Ex: For PPPL gcc suite of compilers, after loading gcc, on command line set MKLROOT as
 # "export MKLROOT=/usr/pppl/intel/2020.u1/compilers_and_libraries_2020/linux/mkl"
 # If Intel MKL is not desired, change BLA_VENDOR variabale during configuration
-=======
 #set(BLA_VENDOR Intel10_64lp CACHE STRING 
 #    "Define BLAS vendor. Some of the popular options are Intel10_64lp OpenBLAS Apple Generic")
 find_package (BLAS REQUIRED)
