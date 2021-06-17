@@ -1,89 +1,82 @@
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!> \defgroup grp_integrals Integrals
+!>
+!> \file
+!> \brief Calculates volume integrals of Chebyshev polynomials and metric element products.
 
-!title (integrals) ! Calculates volume integrals of Chebyshev-polynomials and metric elements.
-
-!latex \briefly{Calculates volume integrals of Chebyshev polynomials and metric element products.}
-
-!latex \calledby{\link{dforce}}
-!latex \calls{\link{metrix}}
-
-!latex \tableofcontents
-
-!l tex \newcommand{\bT}[1]{{\overline T}_{#1}}
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \subsection{chebyshev-metric information}
-
-!latex \begin{enumerate}
-
-!latex \item The following quantities are calculated:
-
-!latex       \be \verb+DToocc(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}' \; \bT{p,j}  \; \ooint \cos\a_i \cos\a_j                  \\
-!latex           \verb+DToocs(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}' \; \bT{p,j}  \; \ooint \cos\a_i \sin\a_j                  \\
-!latex           \verb+DToosc(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}' \; \bT{p,j}  \; \ooint \sin\a_i \cos\a_j                  \\
-!latex           \verb+DTooss(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}' \; \bT{p,j}  \; \ooint \sin\a_i \sin\a_j                  
-!latex       \ee
-
-!latex       \be \verb+TTsscc(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}  \; \bT{p,j}  \; \ooint \cos\a_i \cos\a_j \; \bar g_{\s\s} \\
-!latex           \verb+TTsscs(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}  \; \bT{p,j}  \; \ooint \cos\a_i \sin\a_j \; \bar g_{\s\s} \\
-!latex           \verb+TTsssc(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}  \; \bT{p,j}  \; \ooint \sin\a_i \cos\a_j \; \bar g_{\s\s} \\
-!latex           \verb+TTssss(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}  \; \bT{p,j}  \; \ooint \sin\a_i \sin\a_j \; \bar g_{\s\s}
-!latex       \ee
-
-!latex       \be \verb+TDstcc(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}  \; \bT{p,j}' \; \ooint \cos\a_i \cos\a_j \; \bar g_{\s\t} \\
-!latex           \verb+TDstcs(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}  \; \bT{p,j}' \; \ooint \cos\a_i \sin\a_j \; \bar g_{\s\t} \\
-!latex           \verb+TDstsc(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}  \; \bT{p,j}' \; \ooint \sin\a_i \cos\a_j \; \bar g_{\s\t} \\
-!latex           \verb+TDstss(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}  \; \bT{p,j}' \; \ooint \sin\a_i \sin\a_j \; \bar g_{\s\t}
-!latex       \ee
-
-!latex       \be \verb+TDstcc(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}  \; \bT{p,j}' \; \ooint \cos\a_i \cos\a_j \; \bar g_{\s\z} \\
-!latex           \verb+TDstcs(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}  \; \bT{p,j}' \; \ooint \cos\a_i \sin\a_j \; \bar g_{\s\z} \\
-!latex           \verb+TDstsc(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}  \; \bT{p,j}' \; \ooint \sin\a_i \cos\a_j \; \bar g_{\s\z} \\
-!latex           \verb+TDstss(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}  \; \bT{p,j}' \; \ooint \sin\a_i \sin\a_j \; \bar g_{\s\z}
-!latex       \ee
-
-!latex       \be \verb+DDstcc(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}' \; \bT{p,j}' \; \ooint \cos\a_i \cos\a_j \; \bar g_{\t\t} \\
-!latex           \verb+DDstcs(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}' \; \bT{p,j}' \; \ooint \cos\a_i \sin\a_j \; \bar g_{\t\t} \\
-!latex           \verb+DDstsc(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}' \; \bT{p,j}' \; \ooint \sin\a_i \cos\a_j \; \bar g_{\t\t} \\
-!latex           \verb+DDstss(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}' \; \bT{p,j}' \; \ooint \sin\a_i \sin\a_j \; \bar g_{\t\t}
-!latex       \ee
-
-!latex       \be \verb+DDstcc(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}' \; \bT{p,j}' \; \ooint \cos\a_i \cos\a_j \; \bar g_{\t\z} \\
-!latex           \verb+DDstcs(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}' \; \bT{p,j}' \; \ooint \cos\a_i \sin\a_j \; \bar g_{\t\z} \\
-!latex           \verb+DDstsc(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}' \; \bT{p,j}' \; \ooint \sin\a_i \cos\a_j \; \bar g_{\t\z} \\
-!latex           \verb+DDstss(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}' \; \bT{p,j}' \; \ooint \sin\a_i \sin\a_j \; \bar g_{\t\z}
-!latex       \ee
-
-!latex       \be \verb+DDstcc(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}' \; \bT{p,j}' \; \ooint \cos\a_i \cos\a_j \; \bar g_{\z\z} \\
-!latex           \verb+DDstcs(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}' \; \bT{p,j}' \; \ooint \cos\a_i \sin\a_j \; \bar g_{\z\z} \\
-!latex           \verb+DDstsc(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}' \; \bT{p,j}' \; \ooint \sin\a_i \cos\a_j \; \bar g_{\z\z} \\
-!latex           \verb+DDstss(l,p,i,j)+ & \equiv & \int ds \; \bT{l,i}' \; \bT{p,j}' \; \ooint \sin\a_i \sin\a_j \; \bar g_{\z\z}
-!latex       \ee
-
-!latex       where $\bT{l,i}\equiv T_l \, \bar s^{m_i/2}$ if the domain includes the coordinate singularity, and $\bT{l,i}\equiv T_l$ if not;
-!latex       and $\bar g_{\mu\nu} \equiv g_{\mu\nu} / \sqrt g$.
-
-!latex \item The double-angle formulae are used to reduce the above expressions to the Fourier harmonics of $\bar g_{\mu\nu}$:
-!latex       see \internal{kija} and \internal{kijs}, which are defined in \link{preset}.
-
-!latex \end{enumerate}
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+!> \brief Calculates volume integrals of Chebyshev polynomials and metric element products.
+!> \ingroup grp_integrals
+!>
+!> **Chebyshev-metric information**
+!> <ul>
+!> <li> The following quantities are calculated:
+!>
+!>       \f{eqnarray}{ \verb+DToocc(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}^\prime \; {\overline T}_{p,j}        \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \cos\alpha_i \cos\alpha_j                  \\
+!>                     \verb+DToocs(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}^\prime \; {\overline T}_{p,j}        \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \cos\alpha_i \sin\alpha_j                  \\
+!>                     \verb+DToosc(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}^\prime \; {\overline T}_{p,j}        \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \sin\alpha_i \cos\alpha_j                  \\
+!>                     \verb+DTooss(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}^\prime \; {\overline T}_{p,j}        \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \sin\alpha_i \sin\alpha_j
+!>       \f}
+!>
+!>       \f{eqnarray}{ \verb+TTsscc(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}        \; {\overline T}_{p,j}        \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \cos\alpha_i \cos\alpha_j \; \bar g_{ss} \\
+!>                     \verb+TTsscs(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}        \; {\overline T}_{p,j}        \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \cos\alpha_i \sin\alpha_j \; \bar g_{ss} \\
+!>                     \verb+TTsssc(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}        \; {\overline T}_{p,j}        \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \sin\alpha_i \cos\alpha_j \; \bar g_{ss} \\
+!>                     \verb+TTssss(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}        \; {\overline T}_{p,j}        \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \sin\alpha_i \sin\alpha_j \; \bar g_{ss}
+!>       \f}
+!>
+!>       \f{eqnarray}{ \verb+TDstcc(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}        \; {\overline T}_{p,j}^\prime \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \cos\alpha_i \cos\alpha_j \; \bar g_{s\theta} \\
+!>                     \verb+TDstcs(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}        \; {\overline T}_{p,j}^\prime \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \cos\alpha_i \sin\alpha_j \; \bar g_{s\theta} \\
+!>                     \verb+TDstsc(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}        \; {\overline T}_{p,j}^\prime \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \sin\alpha_i \cos\alpha_j \; \bar g_{s\theta} \\
+!>                     \verb+TDstss(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}        \; {\overline T}_{p,j}^\prime \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \sin\alpha_i \sin\alpha_j \; \bar g_{s\theta}
+!>       \f}
+!>
+!>       \f{eqnarray}{ \verb+TDstcc(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}        \; {\overline T}_{p,j}^\prime \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \cos\alpha_i \cos\alpha_j \; \bar g_{s\zeta} \\
+!>                     \verb+TDstcs(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}        \; {\overline T}_{p,j}^\prime \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \cos\alpha_i \sin\alpha_j \; \bar g_{s\zeta} \\
+!>                     \verb+TDstsc(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}        \; {\overline T}_{p,j}^\prime \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \sin\alpha_i \cos\alpha_j \; \bar g_{s\zeta} \\
+!>                     \verb+TDstss(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}        \; {\overline T}_{p,j}^\prime \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \sin\alpha_i \sin\alpha_j \; \bar g_{s\zeta}
+!>       \f}
+!>
+!>       \f{eqnarray}{ \verb+DDstcc(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}^\prime \; {\overline T}_{p,j}^\prime \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \cos\alpha_i \cos\alpha_j \; \bar g_{\theta\theta} \\
+!>                     \verb+DDstcs(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}^\prime \; {\overline T}_{p,j}^\prime \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \cos\alpha_i \sin\alpha_j \; \bar g_{\theta\theta} \\
+!>                     \verb+DDstsc(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}^\prime \; {\overline T}_{p,j}^\prime \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \sin\alpha_i \cos\alpha_j \; \bar g_{\theta\theta} \\
+!>                     \verb+DDstss(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}^\prime \; {\overline T}_{p,j}^\prime \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \sin\alpha_i \sin\alpha_j \; \bar g_{\theta\theta}
+!>       \f}
+!>
+!>       \f{eqnarray}{ \verb+DDstcc(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}^\prime \; {\overline T}_{p,j}^\prime \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \cos\alpha_i \cos\alpha_j \; \bar g_{\theta\zeta} \\
+!>                     \verb+DDstcs(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}^\prime \; {\overline T}_{p,j}^\prime \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \cos\alpha_i \sin\alpha_j \; \bar g_{\theta\zeta} \\
+!>                     \verb+DDstsc(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}^\prime \; {\overline T}_{p,j}^\prime \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \sin\alpha_i \cos\alpha_j \; \bar g_{\theta\zeta} \\
+!>                     \verb+DDstss(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}^\prime \; {\overline T}_{p,j}^\prime \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \sin\alpha_i \sin\alpha_j \; \bar g_{\theta\zeta}
+!>       \f}
+!>
+!>       \f{eqnarray}{ \verb+DDstcc(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}^\prime \; {\overline T}_{p,j}^\prime \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \cos\alpha_i \cos\alpha_j \; \bar g_{\zeta\zeta} \\
+!>                     \verb+DDstcs(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}^\prime \; {\overline T}_{p,j}^\prime \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \cos\alpha_i \sin\alpha_j \; \bar g_{\zeta\zeta} \\
+!>                     \verb+DDstsc(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}^\prime \; {\overline T}_{p,j}^\prime \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \sin\alpha_i \cos\alpha_j \; \bar g_{\zeta\zeta} \\
+!>                     \verb+DDstss(l,p,i,j)+ & \equiv & \int ds \; {\overline T}_{l,i}^\prime \; {\overline T}_{p,j}^\prime \; \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \sin\alpha_i \sin\alpha_j \; \bar g_{\zeta\zeta}
+!>       \f}
+!>
+!>       where \f${\overline T}_{l,i}\equiv T_l \, \bar s^{m_i/2}\f$ if the domain includes the coordinate singularity, and \f${\overline T}_{l,i}\equiv T_l\f$ if not;
+!>       and \f$\bar g_{\mu\nu} \equiv g_{\mu\nu} / \sqrt g\f$. </li>
+!>
+!> <li> The double-angle formulae are used to reduce the above expressions to the Fourier harmonics of \f$\bar g_{\mu\nu}\f$:
+!>       see \c kija and \c kijs, which are defined in preset.f90 . </li>
+!>
+!> </ul>
+!>
+!> @param[in] lquad degree of quadrature
+!> @param[in] mn    number of Fourier harmonics
+!> @param[in] lvol  index of nested volume
+!> @param[in] lrad  order of Chebychev polynomials
 subroutine ma00aa( lquad, mn, lvol, lrad )
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   use constants, only : zero, half, one, two, pi, pi2
-  
+
   use fileunits, only : ounit
-  
+
   use inputlist, only : mpol, Wma00aa, Wmacros
-  
+
   use cputiming, only : Tma00aa
-  
-  use allglobal, only : myid, ncpu, cpus, &
+
+  use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, &
                         Mvol, im, in, mne, &
                         YESstellsym, NOTstellsym, &
                         gaussianweight, gaussianabscissae, &
@@ -105,18 +98,18 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
                         Lcoordinatesingularity, regumm, &
                         pi2pi2nfp, pi2pi2nfphalf, Lsavedguvij, &
                         dBdX
-                        
-  
+
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   LOCALS
-  
+
   INTEGER, intent(in) :: lquad, mn, lvol, lrad
-  
-  INTEGER             :: jquad, ll, pp, ll1, pp1, uv, ii, jj, io, mn2, lp2, mn2_max, lp2_max, nele 
-  
+
+  INTEGER             :: jquad, ll, pp, ll1, pp1, uv, ii, jj, io, mn2, lp2, mn2_max, lp2_max, nele
+
   INTEGER             :: kk, kd, kka, kks, kda, kds, Lcurvature, ideriv
-  
+
   REAL                :: lss, jthweight, fee, feo, foe, foo, Tl, Dl, Tp, Dp, TlTp, TlDp, DlTp, DlDp, ikda, ikds, imn2, ilrad, lssm
 
   REAL                :: foocc, foocs, foosc, fooss
@@ -127,20 +120,20 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
   REAL                :: ftzcc, ftzcs, ftzsc, ftzss
   REAL                :: fzzcc, fzzcs, fzzsc, fzzss
 
-  
+
   REAL                :: sbar
   REAL, allocatable   :: basis(:,:,:,:)
-  
+
   BEGIN( ma00aa )
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
 #ifdef DEBUG
   FATAL( ma00aa, lvol.lt.1 .or. lvol.gt.Mvol, illegal volume label )
 #endif
-    
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   mn2_max = mn*mn
   lp2_max = (lrad+1)*(lrad+1)
   imn2    =  one/real(mn)
@@ -183,7 +176,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
     DDzzsc = zero
     DDzzss = zero
   endif !NOTstellsym
-  
+
   SALLOCATE(basis, (0:lrad,0:mpol,0:1,lquad), zero)
 
   if( dBdX%L ) then ; Lcurvature = 3 ; ideriv = 1
@@ -212,12 +205,12 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
     jj = (mn2-ii) / mn + 1
 
     do jquad = 1, lquad ! Gaussian quadrature loop;
-    
+
       lss = gaussianabscissae(jquad,lvol) ; jthweight = gaussianweight(jquad,lvol)
       sbar = (lss + one) * half
-      
-      kks = kijs(ii,jj,0) !; kds = kijs(ii,jj,1) 
-      kka = kija(ii,jj,0) !; kda = kija(ii,jj,1) 
+
+      kks = kijs(ii,jj,0) !; kds = kijs(ii,jj,1)
+      kka = kija(ii,jj,0) !; kda = kija(ii,jj,1)
       ikds = jthweight / kijs(ii,jj,1)
       ikda = jthweight / kija(ii,jj,1)
 
@@ -259,7 +252,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
         fzzss = ( + gzzmne(kks,jquad) * abs(ikds) - gzzmne(kka,jquad) * abs(ikda) )
       end if !NOTstellsym
 
-      do lp2 = 1, lp2_max 
+      do lp2 = 1, lp2_max
         ll = mod(lp2-1,lrad+1)
         pp = (lp2-ll-1)/(lrad+1)
 
@@ -275,10 +268,10 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
 
           Tl = basis(ll, im(ii), 0, jquad)         ! use Zernike polynomials 29 Jun 19;
           Dl = basis(ll, im(ii), 1, jquad) * half  ! use Zernike polynomials 29 Jun 19;
-            
+
           Tp = basis(pp, im(jj), 0, jquad)         ! use Zernike polynomials 29 Jun 19;
           Dp = basis(pp, im(jj), 1, jquad) * half  ! use Zernike polynomials 29 Jun 19;
-        
+
         else
 
           ll1 = ll
@@ -286,7 +279,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
 
           Tl = basis(ll, 0, 0, jquad)
           Dl = basis(ll, 0, 1, jquad)
-            
+
           Tp = basis(pp, 0, 0, jquad)
           Dp = basis(pp, 0, 1, jquad)
 
@@ -295,7 +288,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
         TlTp = Tl * Tp
         TlDp = Tl * Dp
         DlTp = Dl * Tp
-        DlDp = Dl * Dp 
+        DlDp = Dl * Dp
 
         DToocc( ll1, pp1, ii, jj ) = DToocc( ll1, pp1, ii, jj ) + DlTp * foocc
         TTssss( ll1, pp1, ii, jj ) = TTssss( ll1, pp1, ii, jj ) + TlTp * fssss
@@ -340,9 +333,9 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
           DDzzsc( ll1, pp1, ii, jj ) = DDzzsc( ll1, pp1, ii, jj ) + DlDp * fzzsc
           DDzzss( ll1, pp1, ii, jj ) = DDzzss( ll1, pp1, ii, jj ) + DlDp * fzzss
         end if !NOTstellsym
-       
+
       enddo ! end of do lp2; 08 Feb 16;
-     
+
     enddo ! end of do jquad
 
   enddo ! end of do mn
@@ -350,7 +343,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   DALLOCATE(basis)
- 
+
   DToocc = DToocc * pi2pi2nfphalf
   TTssss = TTssss * pi2pi2nfphalf
   TDstsc = TDstsc * pi2pi2nfphalf
@@ -389,13 +382,13 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
     DDzzss = DDzzss * pi2pi2nfphalf
 
   end if !NOTstellsym
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   RETURN( ma00aa )
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
 end subroutine ma00aa
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

@@ -1,4 +1,6 @@
-# SPEC code
+# The Stepped Pressure Equilibrium Code
+
+A PDF version of this manual is available: [SPEC_manual.pdf](https://princetonuniversity.github.io/SPEC/SPEC_manual.pdf)
 
 - [Github pages](https://princetonuniversity.github.io/SPEC/)
 - [Subroutine documentations](https://princetonuniversity.github.io/SPEC/subroutines.html)

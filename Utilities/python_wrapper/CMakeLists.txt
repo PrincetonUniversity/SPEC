@@ -117,7 +117,7 @@ add_custom_command(
         -c 
         #${SCALAPACK_LIB} ${NETCDF_F} ${NETCDF_C}
         ${f90wrap_output_files} 
-        -I${CMAKE_BINARY_DIR}/build/modules/spec
+        -I${CMAKE_BINARY_DIR}/build/modules/spec_modules
 		--verbose
         ${CMAKE_BINARY_DIR}/build/lib/libspec.a  
         ${SPEC_LINK_LIB}
@@ -134,7 +134,7 @@ FILE(WRITE ${PYINIT_FILE} ${PYINIT_STR})
 install(FILES ${python_mod_file} ${generated_module_file} ${PYINIT_FILE}
         DESTINATION spec  # Here spec is directory location
 )
-install(TARGETS xspec spec)
+#install(TARGETS xspec spec)
 #        LIBRARY DESTINATION ${CMAKE_INSTALL_DIR}/.
 #        RUNTIME DESTINATION bin
 #)

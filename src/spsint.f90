@@ -1,25 +1,30 @@
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!> \file
+!> \brief Calculates volume integrals of Chebyshev-polynomials and metric elements for preconditioner.
 
-!title (integrals) ! Calculates volume integrals of Chebyshev-polynomials and metric elements for preconditioner.
-
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+!> \brief Calculates volume integrals of Chebyshev-polynomials and metric elements for preconditioner.
+!> \ingroup grp_integrals
+!>
+!> Computes the integrals needed for spsmat.f90. Same as ma00aa.f90, but only compute the relevant terms that are non-zero.
+!>
+!> @param lquad
+!> @param mn
+!> @param lvol
+!> @param lrad
 subroutine spsint( lquad, mn, lvol, lrad )
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   use constants, only : zero, half, one, two, pi, pi2
-  
+
   use numerical, only : vsmall, small, sqrtmachprec
-  
+
   use fileunits, only : ounit
-  
+
   use inputlist, only : mpol, Wspsint, Wmacros
-  
+
   use cputiming, only : Tspsint
-  
-  use allglobal, only : myid, ncpu, cpus, &
+
+  use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, &
                         Mvol, im, in, mne, Ntz, &
                         YESstellsym, NOTstellsym, &
                         gaussianweight, gaussianabscissae, &
@@ -34,18 +39,18 @@ subroutine spsint( lquad, mn, lvol, lrad )
                         Lcoordinatesingularity, regumm, &
                         pi2pi2nfp, pi2pi2nfphalf, &
                         guvijsave
-                        
-  
+
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   LOCALS
-  
+
   INTEGER, intent(in) :: lquad, mn, lvol, lrad
-  
+
   INTEGER             :: jquad, ll, pp, ll1, pp1, uv, ii, jj, io, mn2, lp2, mn2_max, lp2_max, nele, mi
-  
+
   INTEGER             :: kk, kd, kka, kks, kda, kds
-  
+
   REAL                :: lss, jthweight, fee, feo, foe, foo, Tl, Dl, Tp, Dp, TlTp, TlDp, DlTp, DlDp, ikda, ikds, imn2, ilrad, lssm
 
   REAL                :: foocc, fooss
@@ -57,14 +62,14 @@ subroutine spsint( lquad, mn, lvol, lrad )
   REAL                :: fzzcc, fzzss
 
   REAL                :: goomne, gssmne, gstmne, gszmne, gttmne, gtzmne, gzzmne
-  
+
   REAL                :: sbar
 
   REAL, allocatable   :: basis(:,:,:,:)
-  
+
   BEGIN( spsint )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   mn2_max = mn*mn
   lp2_max = (lrad+1)*(lrad+1)
   imn2    =  one/real(mn)
@@ -99,22 +104,22 @@ subroutine spsint( lquad, mn, lvol, lrad )
     endif
   enddo
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-   
+
 !$OMP PARALLEL DO PRIVATE(TlTp,TlDp,DlTp,DlDp,Tl,Dl,Tp,Dp,ll1,pp1,ll,pp,lss,jthweight,sbar,goomne,gssmne,gstmne,gszmne,gttmne,gtzmne,gzzmne,foocc,fooss,fsscc,fssss,fstcc,fstss,fszcc,fszss,fttcc,fttss,ftzcc,ftzss,fzzcc,fzzss) SHARED(lquad,lp2_max,lrad,basis)
   do jquad = 1, lquad ! Gaussian quadrature loop;
-    
+
     lss = gaussianabscissae(jquad,lvol) ; jthweight = gaussianweight(jquad,lvol)
 
     ! compute metric
 
-    goomne = one                                        
+    goomne = one
     gssmne = SUM(guvijsave(1:Ntz,1,1,jquad)) / real(Ntz)
     gstmne = SUM(guvijsave(1:Ntz,1,2,jquad)) / real(Ntz)
     gszmne = SUM(guvijsave(1:Ntz,1,3,jquad)) / real(Ntz)
     gttmne = SUM(guvijsave(1:Ntz,2,2,jquad)) / real(Ntz)
     gtzmne = SUM(guvijsave(1:Ntz,2,3,jquad)) / real(Ntz)
     gzzmne = SUM(guvijsave(1:Ntz,3,3,jquad)) / real(Ntz)
- 
+
     foocc = goomne * jthweight
     fssss = gssmne * jthweight
     fttcc = gttmne * jthweight
@@ -136,7 +141,7 @@ subroutine spsint( lquad, mn, lvol, lrad )
 
     do mi = 0, mpol
 
-      do lp2 = 1, lp2_max 
+      do lp2 = 1, lp2_max
         ll = mod(lp2-1,lrad+1)
         pp = (lp2-ll-1)/(lrad+1)
 
@@ -162,7 +167,7 @@ subroutine spsint( lquad, mn, lvol, lrad )
 
           ll1 = ll
           pp1 = pp
-          
+
           Tl = basis(ll, 0, 0, jquad) ! Cheby
           Dl = basis(ll, 0, 1, jquad) ! Cheby
 
@@ -205,17 +210,17 @@ subroutine spsint( lquad, mn, lvol, lrad )
 !$OMP ATOMIC UPDATE
           DDzzss( ll1, pp1, mi+1, 1 ) = DDzzss( ll1, pp1, mi+1, 1 ) + DlDp * fzzss
         end if !NOTstellsym
-       
+
       enddo ! end of do lp2; 08 Feb 16;
-     
+
     enddo ! end of do mi
- 
+
   enddo ! end of do jquad; ! 16 Jan 13;
 !$OMP END PARALLEL DO
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   nele = SIZE(TTssss)
- 
+
   call DSCAL(nele, pi2pi2nfphalf, DToocc, 1)
   call DSCAL(nele, pi2pi2nfphalf, TTssss, 1)
   call DSCAL(nele, pi2pi2nfphalf, DDttcc, 1)
@@ -238,11 +243,11 @@ subroutine spsint( lquad, mn, lvol, lrad )
 
   DALLOCATE(basis)
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   RETURN( spsint )
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
 end subroutine spsint
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

@@ -7,11 +7,15 @@ include ${SOURCES}/Makefile
 #                   define the compiler names
 #=======================================================================
 
+# was CC in main SPEC Makefile
+BUILD_ENV=gfortran_ubuntu
+
 CC       = gcc
 F90      = gfortran
 #F90      = ifort
 #F90      =  /opt/intel/composer_xe_2015.3.187/bin/intel64/ifort
-PYTHON   = python
+PYTHON   = python3
+
 
 #=======================================================================
 #                     additional flags
@@ -21,18 +25,15 @@ ifeq ($(F90),gfortran)
 	FPP      = $(FC) -E
 	FPP_F90FLAGS = -x f95-cpp-input -fPIC
 	F90FLAGS = $(RFLAGS)
-    FCOMP    = $(FC) #gfortran
-    LIBS     =
-	CFLAGS  := -fdefault-real-8 -fPIC
+	FCOMP    = $(FC) #gfortran
+#	FLAGS    = -fPIC # moved to main Makefile to have to re-compile when build for python_wrapper
 endif
 
 ifeq ($(F90),ifort)
-
 	FPP      = gfortran -E # gfortran f90wrap temp files only. not compilation
 	FPP_F90FLAGS = -x f95-cpp-input -fPIC
 	F90FLAGS = -fpscomp logicals -fPIC # use 1 and 0 for True and False
-    FCOMP    = intelem # for f2py
-    LIBS =
+	FCOMP    = intelem # for f2py
 endif
 
 # CFLAGS := ${CFLAGS} -fPIC #     ==> universal for ifort, gfortran, pgi
@@ -63,8 +64,7 @@ LIB_NAME = lib$(PYTHON_MODN).a
 #=======================================================================
 
 # names (without suffix), f90 sources
-TMP_FILES := global ${SPECFILES}
-TMP_FILES := $(filter-out sphdf5,$(TMP_FILES))
+TMP_FILES := ${ALLSPEC} xspech
 LIBSRC_WRAP_SOURCES := $(TMP_FILES)
 
 # file names
@@ -106,25 +106,27 @@ f90wrap_clean:
 $(LIBSRC_WRAP_FPP_FILES): %.fpp: ${SOURCES}/%_m.F90
 	${FPP} ${FPP_F90FLAGS} $<  -o $@
 
-$(LIB_NAME): 
-	make -C ${SOURCES} xspec CC=gfortran CFLAGS="${CFLAGS}"
-	cd ${SOURCES}; ${LIBTOOL} Utilities/python_wrapper/$@ $(ROBJS) global_r.o $(NUMOBJ)
+$(LIB_NAME):
+	make -C ${SOURCES} BUILD_ENV=$(BUILD_ENV) FLAGS="${FLAGS}" xspec
+	cd ${SOURCES}; ${LIBTOOL} Utilities/python_wrapper/$@ $(addsuffix _r.o,$(ALLFILES))
 	ranlib $@
 
-F90_FILES := f90wrap_global.f90  f90wrap_intghs.f90  f90wrap_newton.f90  f90wrap_toplevel.f90
-
-${F90_FILES} &: ${LIBSRC_WRAP_FPP_FILES} 
+_${PYTHON_MODN}.so: $(LIB_NAME) ${LIBSRC_WRAP_FPP_FILES}
 	f90wrap -m ${PYTHON_MODN} ${LIBSRC_WRAP_FPP_FILES} -k ${KIND_MAP} -v
-
-_${PYTHON_MODN}.so: $(LIB_NAME) ${LIBSRC_WRAP_FPP_FILES} ${F90_FILES}
-	f2py-f90wrap --f90exec=${FC} --build-dir . -c -m _${PYTHON_MODN} ${F90_FILES} -I${SOURCES} ${LIBS} $(LINKS) -L. -l$(PYTHON_MODN) 
+	f2py-f90wrap --f90exec=${FC} --build-dir . -L. -l$(PYTHON_MODN) -I${SOURCES} ${LIBS} $(LINKS) -c f90wrap_*.f90 -m _${PYTHON_MODN}
 
 compile_test:
+	make -C ${SOURCES} BUILD_ENV=$(BUILD_ENV) FLAGS="${FLAGS}" show_makeflags
 	@echo "SOURCES = ${SOURCES}"
+	@echo "BUILD_ENV = ${BUILD_ENV}"
+	@echo "CC = ${CC}"
 	@echo "FC = ${FC}"
 	@echo "LIBTOOL = ${LIBTOOL}"
 	@echo "LIBSRC_WRAP_SOURCES = ${LIBSRC_WRAP_SOURCES}"
+	@echo "CFLAGS = ${CFLAGS}"
+	@echo "RFLAGS = ${RFLAGS}"
+	@echo "FLAGS = ${FLAGS}"
 	@echo "LINKS = ${LINKS}"
 
 test:
-	@python -c "import spec; print('SPEC version: {:}'.format(spec.allglobal.version))"
+	@${PYTHON} -c "import spec; print('SPEC version: {:}'.format(spec.constants.version))"

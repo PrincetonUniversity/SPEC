@@ -7,7 +7,7 @@
 m4_changequote({,})m4_dnl ; can put comments here;
 m4_changecom(!)m4_dnl ; can put comments here;
 m4_define(INTEGER,integer)m4_dnl ; can put comments here;
-m4_define(REAL,real)m4_dnl ; can put comments here;
+m4_define(REAL,real(8))m4_dnl ; can put comments here;
 !m4_define(CHARACTER,character)m4_dnl ; can put comments here;
 m4_define(GETTIME,MPI_WTIME())m4_dnl ; can put comments here;
 m4_define(MPISTART,{! macro expansion of mpistart;
@@ -28,8 +28,8 @@ m4_define(LOCALS,{! macro expansion of locals;
 #ifdef OPENMP
   USE OMP_LIB
 #endif
+  use mpi
   implicit none
-  include "mpif.h"
   INTEGER   :: ierr, astat, ios, nthreads, ithread
   REAL      :: cput, cpui, cpuo ! cpu time; cpu initial; cpu old; 31 Jan 13;
 
@@ -52,11 +52,13 @@ m4_define(SALLOCATE,{ ! macro expansion of sallocate = set allocate;
    if( allocated( $1 ) ) then
     cput = MPI_WTIME()
     write(6,'("macros : ",f10.2," : myid=",i3," ; $1 already allocated ;")') cput-cpus, myid
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop      'macros : 0123456789 : myid=    ; $1 already allocated ;'
    endif
    if( Wmacros ) write(ounit,'("macros : ", 10x ," : myid=",i3," ; allocating $1 ;")') myid
 #endif
+
+   if( allocated( $1 ) ) deallocate( $1 )
 
    allocate( $1$2, stat=astat )
 
@@ -64,7 +66,7 @@ m4_define(SALLOCATE,{ ! macro expansion of sallocate = set allocate;
    if( astat.ne.0 ) then
     cput = MPI_WTIME()
     write(6,'("macros : ",f10.2," : myid=",i3," ; error allocating $1 ;")') cput-cpus, myid
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop 'error allocating $1'
    endif
    if( Wmacros ) write(ounit,'("macros : ", 10x ," : myid=",i3," ; allocated  $1 ;")') myid
@@ -81,7 +83,7 @@ m4_define(NALLOCATE,{! macro expansion of nallocate;
    if( allocated($1) ) then
     cput = MPI_WTIME()
     write(6,'("macros : ",f10.2," : myid=",i3," ; $1 already allocated ;")') cput-cpus, myid
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop '$1 allocated'
    endif
 
@@ -89,6 +91,7 @@ m4_define(NALLOCATE,{! macro expansion of nallocate;
 
 #endif
 
+   if( allocated( $1 ) ) deallocate( $1 )
    allocate($1$2,stat=astat)
 
 #ifdef DEBUG
@@ -96,7 +99,7 @@ m4_define(NALLOCATE,{! macro expansion of nallocate;
    if( astat.ne.0 ) then
     cput = MPI_WTIME()
     write(6,'("macros : ",f10.2," : myid=",i3," ; error allocating $1 ;")') cput-cpus, myid
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop 'error allocating $1'
    endif
 
@@ -112,7 +115,7 @@ m4_define(DALLOCATE,{! macro expansion of dallocate;
    if( .not.allocated($1) ) then
     cput = MPI_WTIME()
     write(6,'("macros : ",f10.2," : myid=",i3," ; $1 not allocated ;")') cput-cpus, myid
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop '$1 allocated'
    endif
 
@@ -127,7 +130,7 @@ m4_define(DALLOCATE,{! macro expansion of dallocate;
    if( astat.ne.0 ) then
     cput = MPI_WTIME()
     write(6,'("macros : ",f10.2," : myid=",i3," ; error de-allocating $1 ;")') cput-cpus, myid
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop 'error allocating $1'
 
    endif
@@ -141,7 +144,7 @@ m4_define(FATAL,{! macro expansion of fatal;
 ! called from within _1; check logical expression in _2 and exit with reason _3 if the expression _2 is true
    if( $2 ) then
      write(6,'("$1 :      fatal : myid=",i3," ; $2 ; $3;")') myid
-     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
      stop "$1 : $2 : $3 ;"
     endif
 
@@ -153,7 +156,7 @@ m4_define(LlBCAST,{! macro expansion of llbcast;
 
    if( $2.lt.0 ) then
     write(6,'("       : ",10x," ; myid=",i3," ; error broadcasting $1 ;")') myid
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop
    endif
 
@@ -161,7 +164,7 @@ m4_define(LlBCAST,{! macro expansion of llbcast;
 
 #endif
 
-   call MPI_BCAST($1,$2,MPI_LOGICAL,$3,MPI_COMM_WORLD,ierr)
+   call MPI_BCAST($1,$2,MPI_LOGICAL,$3,MPI_COMM_SPEC,ierr)
 
 #ifdef DEBUG
 
@@ -177,7 +180,7 @@ m4_define(IlBCAST,{! macro expansion of ilbcast;
 
    if( $2.lt.0 ) then
     write(6,'("       : "10x" ; myid=",i3," ; error broadcasting $1 ;")') myid
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop
    endif
 
@@ -185,7 +188,7 @@ m4_define(IlBCAST,{! macro expansion of ilbcast;
 
 #endif
   
-   call MPI_BCAST( $1, $2, MPI_INTEGER, $3, MPI_COMM_WORLD, ierr )
+   call MPI_BCAST( $1, $2, MPI_INTEGER, $3, MPI_COMM_SPEC, ierr )
 
 #ifdef DEBUG
 
@@ -201,7 +204,7 @@ m4_define(RlBCAST,{! macro expansion of rlbcast;
 
    if( $2.lt.0 ) then
     write(6,'("       : "10x" ; myid=",i3," ; error broadcasting $1 ;")')myid
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop
    endif
 
@@ -209,7 +212,7 @@ m4_define(RlBCAST,{! macro expansion of rlbcast;
 
 #endif
   
-   call MPI_BCAST($1,$2,MPI_DOUBLE_PRECISION,$3,MPI_COMM_WORLD,ierr)
+   call MPI_BCAST($1,$2,MPI_DOUBLE_PRECISION,$3,MPI_COMM_SPEC,ierr)
 
 #ifdef DEBUG
 
@@ -225,7 +228,7 @@ m4_define(ClBCAST,{! macro expansion of clbcast;
 
    if( $2.lt.0 ) then
     write(6,'("       : "10x" ; myid=",i3," ; lvol=",i3," ; error broadcasting $1 ;")') myid, $3+1
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop
    endif
 
@@ -233,7 +236,7 @@ m4_define(ClBCAST,{! macro expansion of clbcast;
 
 #endif
   
-   call MPI_BCAST($1,$2,MPI_CHARACTER,$3,MPI_COMM_WORLD,ierr)
+   call MPI_BCAST($1,$2,MPI_CHARACTER,$3,MPI_COMM_SPEC,ierr)
 
 #ifdef DEBUG
 
@@ -290,7 +293,7 @@ m4_define(HDEFGRP,{! macro expansion of hdefgrp;
    call h5gcreate_f($1, "$2", $3, hdfier)
    if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5gcreate_f from hdefgrp at $4:$5 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5gcreate_f from hdefgrp at $4:$5 ;"
    endif
   else
@@ -298,7 +301,7 @@ m4_define(HDEFGRP,{! macro expansion of hdefgrp;
    call h5gopen_f($1, "$2", $3, hdfier)
    if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5gopen_f from hdefgrp at $4:$5 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5gopen_f from hdefgrp at $4:$5 ;"
    endif
   endif
@@ -310,7 +313,7 @@ m4_define(HCLOSEGRP,{! macro expansion of hclosegrp;
   call h5gclose_f($1, hdfier)
   if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5gclose_f from hclosegrp at $4:$5 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5gclose_f from hclosegrp at $4:$5 ;"
   endif
 
@@ -325,56 +328,56 @@ m4_define(H5DESCR,{! macro expansion of h5descr;
   call h5screate_simple_f(arank, adims, aspace_id, hdfier) ! Create scalar data space for the attribute.
   if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5screate_simple_f from h5descr at $4:$5 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5screate_simple_f from h5descr at $4:$5 ;"
   endif
   
   call h5tcopy_f(H5T_NATIVE_CHARACTER, atype_id, hdfier)   ! Create datatype for the attribute.
   if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5tcopy_f from h5descr at $4:$5 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5tcopy_f from h5descr at $4:$5 ;"
   endif
   
   call h5tset_size_f(atype_id, attrlen, hdfier)            ! Create datatype for the attribute.
   if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5tset_size_f from h5descr at $4:$5 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5tset_size_f from h5descr at $4:$5 ;"
   endif
   
   call h5acreate_f($1, aname, atype_id, aspace_id, attr_id, hdfier) ! create descriptive attribute
   if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5acreate_f from h5descr at $4:$5 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5acreate_f from h5descr at $4:$5 ;"
   endif
   
   call h5awrite_f(attr_id, atype_id, attr_data, adims, hdfier) ! Write the attribute data.
   if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5awrite_f from h5descr at $4:$5 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5awrite_f from h5descr at $4:$5 ;"
   endif
   
   call h5aclose_f(attr_id, hdfier) ! Close the attribute.
   if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5aclose_f from h5descr at $4:$5 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5aclose_f from h5descr at $4:$5 ;"
   endif
   
   call h5tclose_f(atype_id, hdfier) ! Close the attribute datatype.
   if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5tclose_f from h5descr at $4:$5 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5tclose_f from h5descr at $4:$5 ;"
   endif
   
   call h5sclose_f(aspace_id, hdfier) ! Terminate access to the data space.
   if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5sclose_f from h5descr at $4:$5 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5sclose_f from h5descr at $4:$5 ;"
   endif
   
@@ -390,7 +393,7 @@ m4_define(H5DESCR,{! macro expansion of h5descr;
   call h5screate_simple_f(arank, adims, aspace_id, hdfier)
   if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5screate_simple_f from h5descr_cdset at $3:$4 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5screate_simple_f from h5descr_cdset at $3:$4 ;"
   endif
   
@@ -398,14 +401,14 @@ m4_define(H5DESCR,{! macro expansion of h5descr;
   call h5tcopy_f(H5T_NATIVE_CHARACTER, atype_id, hdfier)
   if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5tcopy_f from h5descr_cdset at $3:$4 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5tcopy_f from h5descr_cdset at $3:$4 ;"
   endif
   
   call h5tset_size_f(atype_id, attrlen, hdfier)
   if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5tset_size_f from h5descr_cdset at $3:$4 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5tset_size_f from h5descr_cdset at $3:$4 ;"
   endif
   
@@ -413,7 +416,7 @@ m4_define(H5DESCR,{! macro expansion of h5descr;
   call h5acreate_f(dset_id, aname, atype_id, aspace_id, attr_id, hdfier)
   if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5acreate_f from h5descr_cdset at $3:$4 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5acreate_f from h5descr_cdset at $3:$4 ;"
   endif
   
@@ -421,7 +424,7 @@ m4_define(H5DESCR,{! macro expansion of h5descr;
   call h5awrite_f(attr_id, atype_id, attr_data, adims, hdfier)
   if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5awrite_f from h5descr_cdset at $3:$4 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5awrite_f from h5descr_cdset at $3:$4 ;"
   endif
   
@@ -429,7 +432,7 @@ m4_define(H5DESCR,{! macro expansion of h5descr;
   call h5aclose_f(attr_id, hdfier)
   if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5aclose_f from h5descr_cdset at $3:$4 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5aclose_f from h5descr_cdset at $3:$4 ;"
   endif
   
@@ -437,7 +440,7 @@ m4_define(H5DESCR,{! macro expansion of h5descr;
   call h5tclose_f(atype_id, hdfier)
   if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5tclose_f from h5descr_cdset at $3:$4 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5tclose_f from h5descr_cdset at $3:$4 ;"
   endif
   
@@ -445,14 +448,14 @@ m4_define(H5DESCR,{! macro expansion of h5descr;
   call h5sclose_f(aspace_id, hdfier)
   if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5sclose_f from h5descr_cdset at $3:$4 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5sclose_f from h5descr_cdset at $3:$4 ;"
   endif
   
   call h5dclose_f(dset_id, hdfier)    ! terminate dataset;
   if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5dclose_f from h5descr_cdset at $3:$4 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5dclose_f from h5descr_cdset at $3:$4 ;"
   endif
 
@@ -477,7 +480,7 @@ m4_define(HWRITELV,{! macro expansion of hwritelv;
    call h5screate_simple_f( rank, onedims, space_id, hdfier )
    if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5screate_simple_f from hwritelv at $5:$6 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5screate_simple_f from hwritelv at $5:$6 ;"
    endif
 
@@ -485,7 +488,7 @@ m4_define(HWRITELV,{! macro expansion of hwritelv;
    call h5eset_auto_f(0, hdfier)
    if( hdfier.ne.0 ) then
      write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hwritelv at $5:$6 ;")')
-     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
      stop "sphdf5 : error calling h5eset_auto_f from hwritelv at $5:$6 ;"
    endif
    
@@ -505,7 +508,7 @@ m4_define(HWRITELV,{! macro expansion of hwritelv;
    call h5eset_auto_f(internalHdf5Msg, hdfier)
    if( hdfier.ne.0 ) then
      write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hwritelv at $5:$6 ;")')
-     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
      stop "sphdf5 : error calling h5eset_auto_f from hwritelv at $5:$6 ;"
    endif
    
@@ -514,7 +517,7 @@ m4_define(HWRITELV,{! macro expansion of hwritelv;
     call h5dcreate_f( $1, "$3", H5T_NATIVE_INTEGER, space_id, dset_id, hdfier )
     if( hdfier.ne.0 ) then
      write(6,'("sphdf5 : "10x" : error calling h5dcreate_f from hwritelv at $5:$6 ;")')
-     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
      stop "sphdf5 : error calling h5dcreate_f from hwritelv at $5:$6 ;"
     endif
    endif
@@ -522,14 +525,14 @@ m4_define(HWRITELV,{! macro expansion of hwritelv;
    call h5dwrite_f( dset_id, H5T_NATIVE_INTEGER, merge(1,0,$4) , onedims, hdfier )
    if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5dwrite_f from hwritelv at $5:$6 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5dwrite_f from hwritelv at $5:$6 ;"
    endif
    
    call h5dclose_f(dset_id, hdfier)    ! terminate dataset;
    if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5dclose_f from hwritelv at $5:$6 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5dclose_f from hwritelv at $5:$6 ;"
    endif
 
@@ -557,7 +560,7 @@ m4_define(HWRITELV_LO,{! macro expansion of hwritelv_lo;
    call h5screate_simple_f( rank, onedims, space_id, hdfier )
    if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5screate_simple_f from hwritelv_lo at $5:$6 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5screate_simple_f from hwritelv_lo at $5:$6 ;"
    endif
 
@@ -565,7 +568,7 @@ m4_define(HWRITELV_LO,{! macro expansion of hwritelv_lo;
    call h5eset_auto_f(0, hdfier)
    if( hdfier.ne.0 ) then
      write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hwritelv_lo at $5:$6 ;")')
-     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
      stop "sphdf5 : error calling h5eset_auto_f from hwritelv_lo at $5:$6 ;"
    endif
    
@@ -585,7 +588,7 @@ m4_define(HWRITELV_LO,{! macro expansion of hwritelv_lo;
    call h5eset_auto_f(internalHdf5Msg, hdfier)
    if( hdfier.ne.0 ) then
      write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hwritelv_lo at $5:$6 ;")')
-     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
      stop "sphdf5 : error calling h5eset_auto_f from hwritelv_lo at $5:$6 ;"
    endif
    
@@ -594,7 +597,7 @@ m4_define(HWRITELV_LO,{! macro expansion of hwritelv_lo;
     call h5dcreate_f( $1, "$3", H5T_NATIVE_INTEGER, space_id, dset_id, hdfier )
     if( hdfier.ne.0 ) then
      write(6,'("sphdf5 : "10x" : error calling h5dcreate_f from hwritelv_lo at $5:$6 ;")')
-     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
      stop "sphdf5 : error calling h5dcreate_f from hwritelv_lo at $5:$6 ;"
     endif
    endif
@@ -602,7 +605,7 @@ m4_define(HWRITELV_LO,{! macro expansion of hwritelv_lo;
    call h5dwrite_f( dset_id, H5T_NATIVE_INTEGER, merge(1,0,$4) , onedims, hdfier )
    if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5dwrite_f from hwritelv_lo at $5:$6 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5dwrite_f from hwritelv_lo at $5:$6 ;"
    endif
    
@@ -629,7 +632,7 @@ m4_define(HWRITEIV,{! macro expansion of hwriteiv;
    call h5screate_simple_f( rank, onedims, space_id, hdfier )
    if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5screate_simple_f from hwriteiv at $5:$6 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5screate_simple_f from hwriteiv at $5:$6 ;"
    endif
 
@@ -637,7 +640,7 @@ m4_define(HWRITEIV,{! macro expansion of hwriteiv;
    call h5eset_auto_f(0, hdfier)
    if( hdfier.ne.0 ) then
      write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hwriteiv at $5:$6 ;")')
-     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
      stop "sphdf5 : error calling h5eset_auto_f from hwriteiv at $5:$6 ;"
    endif
    
@@ -657,7 +660,7 @@ m4_define(HWRITEIV,{! macro expansion of hwriteiv;
    call h5eset_auto_f(internalHdf5Msg, hdfier)
    if( hdfier.ne.0 ) then
      write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hwriteiv at $5:$6 ;")')
-     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
      stop "sphdf5 : error calling h5eset_auto_f from hwriteiv at $5:$6 ;"
    endif
    
@@ -666,7 +669,7 @@ m4_define(HWRITEIV,{! macro expansion of hwriteiv;
     call h5dcreate_f( $1, "$3", H5T_NATIVE_INTEGER, space_id, dset_id, hdfier )
     if( hdfier.ne.0 ) then
      write(6,'("sphdf5 : "10x" : error calling h5dcreate_f from hwriteiv at $5:$6 ;")')
-     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
      stop "sphdf5 : error calling h5dcreate_f from hwriteiv at $5:$6 ;"
     endif
    endif
@@ -674,14 +677,14 @@ m4_define(HWRITEIV,{! macro expansion of hwriteiv;
    call h5dwrite_f( dset_id, H5T_NATIVE_INTEGER, $4, onedims, hdfier )
    if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5dwrite_f from hwriteiv at $5:$6 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5dwrite_f from hwriteiv at $5:$6 ;"
    endif
 
    call h5dclose_f(dset_id, hdfier)    ! terminate dataset;
    if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5dclose_f from hwriteiv at $5:$6 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5dclose_f from hwriteiv at $5:$6 ;"
    endif
 
@@ -709,7 +712,7 @@ m4_define(HWRITEIV_LO,{! macro expansion of hwriteiv_lo;
    call h5screate_simple_f( rank, onedims, space_id, hdfier )
    if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5screate_simple_f from hwriteiv_lo at $5:$6 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5screate_simple_f from hwriteiv_lo at $5:$6 ;"
    endif
 
@@ -717,7 +720,7 @@ m4_define(HWRITEIV_LO,{! macro expansion of hwriteiv_lo;
    call h5eset_auto_f(0, hdfier)
    if( hdfier.ne.0 ) then
      write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hwriteiv_lo at $5:$6 ;")')
-     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
      stop "sphdf5 : error calling h5eset_auto_f from hwriteiv_lo at $5:$6 ;"
    endif
    
@@ -737,7 +740,7 @@ m4_define(HWRITEIV_LO,{! macro expansion of hwriteiv_lo;
    call h5eset_auto_f(internalHdf5Msg, hdfier)
    if( hdfier.ne.0 ) then
      write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hwriteiv_lo at $5:$6 ;")')
-     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
      stop "sphdf5 : error calling h5eset_auto_f from hwriteiv_lo at $5:$6 ;"
    endif
    
@@ -746,7 +749,7 @@ m4_define(HWRITEIV_LO,{! macro expansion of hwriteiv_lo;
     call h5dcreate_f( $1, "$3", H5T_NATIVE_INTEGER, space_id, dset_id, hdfier )
     if( hdfier.ne.0 ) then
      write(6,'("sphdf5 : "10x" : error calling h5dcreate_f from hwriteiv_lo at $5:$6 ;")')
-     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
      stop "sphdf5 : error calling h5dcreate_f from hwriteiv_lo at $5:$6 ;"
     endif
    endif
@@ -754,7 +757,7 @@ m4_define(HWRITEIV_LO,{! macro expansion of hwriteiv_lo;
    call h5dwrite_f( dset_id, H5T_NATIVE_INTEGER, $4, onedims, hdfier )
    if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5dwrite_f from hwriteiv_lo at $5:$6 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5dwrite_f from hwriteiv_lo at $5:$6 ;"
    endif
 
@@ -781,7 +784,7 @@ m4_define(HWRITERV,{! macro expansion of hwriterv;
    call h5screate_simple_f( rank, onedims, space_id, hdfier )
    if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5screate_simple_f from hwriterv at $5:$6 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5screate_simple_f from hwriterv at $5:$6 ;"
    endif
 
@@ -789,7 +792,7 @@ m4_define(HWRITERV,{! macro expansion of hwriterv;
    call h5eset_auto_f(0, hdfier)
    if( hdfier.ne.0 ) then
      write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hwriterv at $5:$6 ;")')
-     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
      stop "sphdf5 : error calling h5eset_auto_f from hwriterv at $5:$6 ;"
    endif
    
@@ -809,7 +812,7 @@ m4_define(HWRITERV,{! macro expansion of hwriterv;
    call h5eset_auto_f(internalHdf5Msg, hdfier)
    if( hdfier.ne.0 ) then
      write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hwriterv at $5:$6 ;")')
-     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
      stop "sphdf5 : error calling h5eset_auto_f from hwriterv at $5:$6 ;"
    endif
    
@@ -818,7 +821,7 @@ m4_define(HWRITERV,{! macro expansion of hwriterv;
     call h5dcreate_f( $1, "$3", H5T_NATIVE_DOUBLE, space_id, dset_id, hdfier )
     if( hdfier.ne.0 ) then
      write(6,'("sphdf5 : "10x" : error calling h5dcreate_f from hwriterv at $5:$6 ;")')
-     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
      stop "sphdf5 : error calling h5dcreate_f from hwriterv at $5:$6 ;"
     endif
    endif
@@ -826,14 +829,14 @@ m4_define(HWRITERV,{! macro expansion of hwriterv;
    call h5dwrite_f( dset_id, H5T_NATIVE_DOUBLE, $4, onedims, hdfier )
    if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5dwrite_f from hwriterv at $5:$6 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5dwrite_f from hwriterv at $5:$6 ;"
    endif
  
    call h5dclose_f(dset_id, hdfier)    ! terminate dataset;
    if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5dclose_f from hwriterv at $5:$6 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5dclose_f from hwriterv at $5:$6 ;"
    endif
 
@@ -861,7 +864,7 @@ m4_define(HWRITERV_LO,{! macro expansion of hwriterv_lo;
    call h5screate_simple_f( rank, onedims, space_id, hdfier )
    if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5screate_simple_f from hwriterv_lo at $5:$6 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5screate_simple_f from hwriterv_lo at $5:$6 ;"
    endif
 
@@ -869,7 +872,7 @@ m4_define(HWRITERV_LO,{! macro expansion of hwriterv_lo;
    call h5eset_auto_f(0, hdfier)
    if( hdfier.ne.0 ) then
      write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hwriterv_lo at $5:$6 ;")')
-     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
      stop "sphdf5 : error calling h5eset_auto_f from hwriterv_lo at $5:$6 ;"
    endif
    
@@ -889,7 +892,7 @@ m4_define(HWRITERV_LO,{! macro expansion of hwriterv_lo;
    call h5eset_auto_f(internalHdf5Msg, hdfier)
    if( hdfier.ne.0 ) then
      write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hwriterv_lo at $5:$6 ;")')
-     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
      stop "sphdf5 : error calling h5eset_auto_f from hwriterv_lo at $5:$6 ;"
    endif
    
@@ -898,7 +901,7 @@ m4_define(HWRITERV_LO,{! macro expansion of hwriterv_lo;
     call h5dcreate_f( $1, "$3", H5T_NATIVE_DOUBLE, space_id, dset_id, hdfier )
     if( hdfier.ne.0 ) then
      write(6,'("sphdf5 : "10x" : error calling h5dcreate_f from hwriterv_lo at $5:$6 ;")')
-     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
      stop "sphdf5 : error calling h5dcreate_f from hwriterv_lo at $5:$6 ;"
     endif
    endif
@@ -906,7 +909,7 @@ m4_define(HWRITERV_LO,{! macro expansion of hwriterv_lo;
    call h5dwrite_f( dset_id, H5T_NATIVE_DOUBLE, $4, onedims, hdfier )
    if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5dwrite_f from hwriterv_lo at $5:$6 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5dwrite_f from hwriterv_lo at $5:$6 ;"
    endif
 
@@ -932,7 +935,7 @@ m4_define(HWRITERA,{! macro expansion of hwritea;
    call h5screate_simple_f( rank, twodims, space_id, hdfier )
    if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5screate_simple_f from hwritera at $6:$7 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5screate_simple_f from hwritera at $6:$7 ;"
    endif
 
@@ -940,7 +943,7 @@ m4_define(HWRITERA,{! macro expansion of hwritea;
    call h5eset_auto_f(0, hdfier)
    if( hdfier.ne.0 ) then
      write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hwritera at $6:$7 ;")')
-     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
      stop "sphdf5 : error calling h5eset_auto_f from hwritera at $6:$7 ;"
    endif
    
@@ -960,7 +963,7 @@ m4_define(HWRITERA,{! macro expansion of hwritea;
    call h5eset_auto_f(internalHdf5Msg, hdfier)
    if( hdfier.ne.0 ) then
      write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hwritera at $6:$7 ;")')
-     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
      stop "sphdf5 : error calling h5eset_auto_f from hwritera at $6:$7 ;"
    endif
    
@@ -969,7 +972,7 @@ m4_define(HWRITERA,{! macro expansion of hwritea;
     call h5dcreate_f( $1, "$4", H5T_NATIVE_DOUBLE, space_id, dset_id, hdfier )
     if( hdfier.ne.0 ) then
      write(6,'("sphdf5 : "10x" : error calling h5dcreate_f from hwritera at $6:$7 ;")')
-     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
      stop "sphdf5 : error calling h5dcreate_f from hwritera at $6:$7 ;"
     endif
    endif
@@ -977,14 +980,14 @@ m4_define(HWRITERA,{! macro expansion of hwritea;
    call h5dwrite_f( dset_id, H5T_NATIVE_DOUBLE, $5, twodims, hdfier )
    if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5dwrite_f from hwritera at $6:$7 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5dwrite_f from hwritera at $6:$7 ;"
    endif
  
    call h5dclose_f(dset_id, hdfier)    ! terminate dataset;
    if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5dclose_f from hwritera at $6:$7 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5dclose_f from hwritera at $6:$7 ;"
    endif
 
@@ -1011,7 +1014,7 @@ m4_define(HWRITERA_LO,{! macro expansion of hwritea_lo;
    call h5screate_simple_f( rank, twodims, space_id, hdfier )
    if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5screate_simple_f from hwritera_lo at $6:$7 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5screate_simple_f from hwritera_lo at $6:$7 ;"
    endif
 
@@ -1019,7 +1022,7 @@ m4_define(HWRITERA_LO,{! macro expansion of hwritea_lo;
    call h5eset_auto_f(0, hdfier)
    if( hdfier.ne.0 ) then
      write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hwritera_lo at $6:$7 ;")')
-     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
      stop "sphdf5 : error calling h5eset_auto_f from hwritera_lo at $6:$7 ;"
    endif
    
@@ -1039,7 +1042,7 @@ m4_define(HWRITERA_LO,{! macro expansion of hwritea_lo;
    call h5eset_auto_f(internalHdf5Msg, hdfier)
    if( hdfier.ne.0 ) then
      write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hwritera_lo at $6:$7 ;")')
-     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
      stop "sphdf5 : error calling h5eset_auto_f from hwritera_lo at $6:$7 ;"
    endif
    
@@ -1048,7 +1051,7 @@ m4_define(HWRITERA_LO,{! macro expansion of hwritea_lo;
     call h5dcreate_f( $1, "$4", H5T_NATIVE_DOUBLE, space_id, dset_id, hdfier )
     if( hdfier.ne.0 ) then
      write(6,'("sphdf5 : "10x" : error calling h5dcreate_f from hwritera_lo at $6:$7 ;")')
-     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
      stop "sphdf5 : error calling h5dcreate_f from hwritera_lo at $6:$7 ;"
     endif
    endif
@@ -1056,7 +1059,7 @@ m4_define(HWRITERA_LO,{! macro expansion of hwritea_lo;
    call h5dwrite_f( dset_id, H5T_NATIVE_DOUBLE, $5, twodims, hdfier )
    if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5dwrite_f from hwritera_lo at $6:$7 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5dwrite_f from hwritera_lo at $6:$7 ;"
    endif
  
@@ -1082,7 +1085,7 @@ m4_define(HWRITERC,{! macro expansion of hwriterc;
    call h5screate_simple_f( rank, threedims, space_id, hdfier )
    if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5screate_simple_f from hwriterc at $7:$8 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5screate_simple_f from hwriterc at $7:$8 ;"
    endif
   
@@ -1090,7 +1093,7 @@ m4_define(HWRITERC,{! macro expansion of hwriterc;
    call h5eset_auto_f(0, hdfier)
    if( hdfier.ne.0 ) then
      write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hwriterc at $7:$8 ;")')
-     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
      stop "sphdf5 : error calling h5eset_auto_f from hwriterc at $7:$8 ;"
    endif
    
@@ -1110,7 +1113,7 @@ m4_define(HWRITERC,{! macro expansion of hwriterc;
    call h5eset_auto_f(internalHdf5Msg, hdfier)
    if( hdfier.ne.0 ) then
      write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hwriterc at $7:$8 ;")')
-     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
      stop "sphdf5 : error calling h5eset_auto_f from hwriterc at $7:$8 ;"
    endif
    
@@ -1119,7 +1122,7 @@ m4_define(HWRITERC,{! macro expansion of hwriterc;
     call h5dcreate_f( $1, "$5", H5T_NATIVE_DOUBLE, space_id, dset_id, hdfier )
     if( hdfier.ne.0 ) then
      write(6,'("sphdf5 : "10x" : error calling h5dcreate_f from hwriterc at $7:$8 ;")')
-     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
      stop "sphdf5 : error calling h5dcreate_f from hwriterc at $7:$8 ;"
     endif
    endif
@@ -1127,14 +1130,14 @@ m4_define(HWRITERC,{! macro expansion of hwriterc;
    call h5dwrite_f( dset_id, H5T_NATIVE_DOUBLE, $6, threedims, hdfier )
    if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5dwrite_f from hwriterc at $7:$8 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5dwrite_f from hwriterc at $7:$8 ;"
    endif
    
    call h5dclose_f(dset_id, hdfier)    ! terminate dataset;
    if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5dclose_f from hwriterc at $7:$8 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5dclose_f from hwriterc at $7:$8 ;"
    endif
 
@@ -1161,7 +1164,7 @@ m4_define(HWRITERC_LO,{! macro expansion of hwriterc_lo;
    call h5screate_simple_f( rank, threedims, space_id, hdfier )
    if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5screate_simple_f from hwriterc_lo at $7:$8 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5screate_simple_f from hwriterc_lo at $7:$8 ;"
    endif
   
@@ -1169,7 +1172,7 @@ m4_define(HWRITERC_LO,{! macro expansion of hwriterc_lo;
    call h5eset_auto_f(0, hdfier)
    if( hdfier.ne.0 ) then
      write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hwriterc_lo at $7:$8 ;")')
-     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
      stop "sphdf5 : error calling h5eset_auto_f from hwriterc_lo at $7:$8 ;"
    endif
    
@@ -1189,7 +1192,7 @@ m4_define(HWRITERC_LO,{! macro expansion of hwriterc_lo;
    call h5eset_auto_f(internalHdf5Msg, hdfier)
    if( hdfier.ne.0 ) then
      write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hwriterc_lo at $7:$8 ;")')
-     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
      stop "sphdf5 : error calling h5eset_auto_f from hwriterc_lo at $7:$8 ;"
    endif
    
@@ -1198,7 +1201,7 @@ m4_define(HWRITERC_LO,{! macro expansion of hwriterc_lo;
     call h5dcreate_f( $1, "$5", H5T_NATIVE_DOUBLE, space_id, dset_id, hdfier )
     if( hdfier.ne.0 ) then
      write(6,'("sphdf5 : "10x" : error calling h5dcreate_f from hwriterc_lo at $7:$8 ;")')
-     call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
      stop "sphdf5 : error calling h5dcreate_f from hwriterc_lo at $7:$8 ;"
     endif
    endif
@@ -1206,7 +1209,7 @@ m4_define(HWRITERC_LO,{! macro expansion of hwriterc_lo;
    call h5dwrite_f( dset_id, H5T_NATIVE_DOUBLE, $6, threedims, hdfier )
    if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling h5dwrite_f from hwriterc_lo at $7:$8 ;")')
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling h5dwrite_f from hwriterc_lo at $7:$8 ;"
    endif
 
@@ -1221,7 +1224,7 @@ m4_define(H5CALL,{! macro expansion of h5call;
    call $2$3
    if( hdfier.ne.0 ) then
     write(6,'("sphdf5 : "10x" : error calling $2 in process ",i3," from h5call at $4:$5;")') myid
-    call MPI_ABORT( MPI_COMM_WORLD, 1, ierr )
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
     stop "sphdf5 : error calling $2 from h5call at $4:$5 ;"
    endif
 
@@ -1282,7 +1285,7 @@ m4_define(SUMTIME,{! macro expansion of sumtime;
    if( Wmacros ) write(ounit,'("       : ", 10x ," : calling mpi_reduce : $1 ;")')
 #endif
 
-   call MPI_REDUCE(T$1, $1T, 1, MPI_DOUBLE_PRECISION, MPI_SUM, 0, MPI_COMM_WORLD, ierr )
+   call MPI_REDUCE(T$1, $1T, 1, MPI_DOUBLE_PRECISION, MPI_SUM, 0, MPI_COMM_SPEC, ierr )
 
 #ifdef DEBUG
    if( Wmacros ) write(ounit,'("       : ", 10x ," : called  mpi_reduce : $1 ;")')

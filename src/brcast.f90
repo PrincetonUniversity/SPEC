@@ -1,32 +1,24 @@
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!> \defgroup grp_parallel Parallelization
+!>
+!> \file
+!> \brief Broadcasts Beltrami fields, profiles, . . .
 
-!title (parallel) ! Broadcasts Beltrami fields, profiles, . . .
-
-!latex \briefly{Broadcast.}
-
-!latex \calledby{\link{dforce}}
-!l tex \calls{\link{}}
-
-!latex \tableofcontents
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \subsection{broadcasting}
-
-!latex \begin{enumerate}
-!latex \item The construction of the Beltrami fields are constructed on separate cpus.
-!latex \item All ``local'' information needs to be broadcast so that the ``global'' force vector, 
-!latex       \be {\bf F}_i \equiv [[p+B^2/2]]_i = (p+B^2/2)_{v,i} - (p+B^2/2)_{v-1,i}
-!latex       \ee
-!latex       can be constructed, and so that restart and output files can be saved to file.
-!latex \end{enumerate}
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+!> \ingroup grp_parallel
+!> \brief Broadcasts Beltrami fields, profiles, . . .
+!>
+!> **broadcasting**
+!> <ul>
+!> <li> The construction of the Beltrami fields is distributed on separate cpus. </li>
+!> <li> All "local" information needs to be broadcast so that the "global" force vector,
+!>       \f{eqnarray}{ {\bf F}_i \equiv [[p+B^2/2]]_i = (p+B^2/2)_{v,i} - (p+B^2/2)_{v-1,i}
+!>       \f}
+!>       can be constructed, and so that restart and output files can be saved to file. </li>
+!> </ul>
+!> @param[in] lvol index of nested volume
 subroutine brcast( lvol )
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   use constants, only : zero
 
   use numerical, only :
@@ -38,7 +30,8 @@ subroutine brcast( lvol )
 
   use cputiming, only : Tbrcast
 
-  use allglobal, only : myid, cpus, ncpu, dtflux, dpflux, Ntz, mn, Mvol, &
+  use allglobal, only : myid, cpus, ncpu, MPI_COMM_SPEC, &
+                        dtflux, dpflux, Ntz, mn, Mvol, &
                         diotadxup, dItGpdxtp, &
                         Ate, Aze, Ato, Azo, &
                         Bemn, Bomn, Iomn, Iemn, Somn, Semn, Pomn, Pemn, &
@@ -49,21 +42,21 @@ subroutine brcast( lvol )
                         vvolume, &
                         NOTstellsym, LocalConstraint, &
 						IsMyVolume, IsMyVolumeValue
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   LOCALS
 
   INTEGER, intent(in) :: lvol
-  
+
   INTEGER             :: llmodnp, io, iRZl, ii, ideriv, Nbc
-  
+
   BEGIN(brcast)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
 ! recall this routine is inside do vvol = 1, Mvol loop; see dforce;
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   FATAL( brcast, lvol.le.0 .or. lvol.gt.Mvol, error )
@@ -78,60 +71,60 @@ subroutine brcast( lvol )
   RlBCAST( dtflux(lvol), 1, llmodnp )
   RlBCAST( dpflux(lvol), 1, llmodnp )
   RlBCAST( helicity(lvol), 1, llmodnp)
-  
+
   RlBCAST(     vvolume(lvol), 1, llmodnp )
   RlBCAST( lBBintegral(lvol), 1, llmodnp )
   RlBCAST( lABintegral(lvol), 1, llmodnp )
-    
+
   RlBCAST( diotadxup(0:1,-1:2,lvol), 8, llmodnp )
   RlBCAST( dItGpdxtp(0:1,-1:2,lvol), 8, llmodnp )
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   if( Lhessianallocated ) then
-   
-   
+
+
    if( LocalConstraint ) then
  	  Nbc =             LGdof*       2*  LGdof*  2
  	  RlBCAST( dFFdRZ(1:LGdof,0:1,1:LGdof,0:1,lvol), Nbc, llmodnp )
 
-	  Nbc =             LGdof*       2*  2                
+	  Nbc =             LGdof*       2*  2
 	  RlBCAST( dBBdmp(1:LGdof,lvol,0:1,1:2), Nbc, llmodnp )
 
 	  Nbc =                   2*  LGdof*  2
 	  RlBCAST( dmupfdx(lvol,1:1   ,1:2,1:LGdof,0:1), Nbc, llmodnp ) ! why is this broadcast; 02 Sep 14;
    endif
 
-   
+
   endif ! end of if( Lhessianallocated ) ; 12 Sep 16;
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   LlBCAST( ImagneticOK(lvol), 1, llmodnp )
-  
+
   ! Commented - broadcasted in dfp200
   ! do ideriv = 0, 2
   ! 	if( (ideriv.ne.0) .and. (Lconstraint.ne.3) ) cycle
-  !     do ii = 1, mn  
+  !     do ii = 1, mn
   !       RlBCAST( Ate(lvol,ideriv,ii)%s(0:Lrad(lvol)), Lrad(lvol)+1, llmodnp )
   !       RlBCAST( Aze(lvol,ideriv,ii)%s(0:Lrad(lvol)), Lrad(lvol)+1, llmodnp )
   !     enddo
-  ! enddo  
+  ! enddo
 
 
   RlBCAST( Bemn(1:mn,lvol,0:1), 2*mn, llmodnp ) ! perhaps all these should be re-ordered; 18 Jul 14;
   RlBCAST( Iomn(1:mn,lvol    ),   mn, llmodnp )
   RlBCAST( Somn(1:mn,lvol,0:1), 2*mn, llmodnp )
   RlBCAST( Pomn(1:mn,lvol,0:2), 3*mn, llmodnp ) ! 15 Sep 15;
-  
+
   if( NOTstellsym ) then
     ! do ideriv = 0, 2
-    !   do ii = 1, mn    
+    !   do ii = 1, mn
     !     RlBCAST( Ato(lvol,ideriv,ii)%s(0:Lrad(lvol)), Lrad(lvol)+1, llmodnp )
     !     RlBCAST( Azo(lvol,ideriv,ii)%s(0:Lrad(lvol)), Lrad(lvol)+1, llmodnp )
     !   enddo
     ! enddo
-      
+
       RlBCAST( Bomn(1:mn,lvol,0:1), 2*mn, llmodnp )
       RlBCAST( Iemn(1:mn,lvol    ),   mn, llmodnp )
       RlBCAST( Semn(1:mn,lvol,0:1), 2*mn, llmodnp )
@@ -151,7 +144,7 @@ subroutine brcast( lvol )
   RETURN(brcast)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
 end subroutine brcast
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

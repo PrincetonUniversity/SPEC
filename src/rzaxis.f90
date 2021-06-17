@@ -1,94 +1,96 @@
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!> \defgroup grp_coord_axis Coordinate axis
+!>
+!> \file
+!> \brief The coordinate axis is assigned via a poloidal average over an arbitrary surface.
 
-!title (coordinate axis) ! Specifies position of coordinate axis; ${\bf x}_a(\zeta) \equiv \int {\bf x}_1(\theta,\zeta) dl \, / \int dl$.
-
-!latex \briefly{The coordinate axis is assigned via a poloidal average over an arbitrary surface.}
-
-!latex \calledby{\link{preset}, \link{packxi}}
-
-!latex \tableofcontents
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \subsection{coordinate axis}
-
-!latex \begin{enumerate}
-!latex \item The coordinate axis is {\em not} an independent degree-of-freedom of the geometry.
-!latex       It is constructed by extrapolating the geometry of a given interface, as determined by $i \equiv $ \internal{ivol} which is given on input,
-!latex       down to a line.
-!latex \item If the coordinate axis depends only on the {\em geometry} of the interface and not the angle parameterization,
-!latex       then the block tri-diagonal structure of the the force-derivative matrix is preserved.
-!latex \item Define the arc-length-weighted averages,
-!latex       \be R_0(\z) \equiv \frac{\ds \int_{0}^{2\pi} R_i(\t,\z) \, dl}{\ds \int_{0}^{2\pi} \!\!\!\! dl}, \qquad
-!latex           Z_0(\z) \equiv \frac{\ds \int_{0}^{2\pi} Z_i(\t,\z) \, dl}{\ds \int_{0}^{2\pi} \!\!\!\! dl},
-!latex       \ee
-!latex       where $dl \equiv \dot l \, d\t = \sqrt{ \partial_\t R_i(\t,\z)^2 + \partial_\t Z_i(\t,\z)^2 } \, d\t$.
-!latex \item (Note that if $\dot l$ does not depend on $\t$, i.e. if $\t$ is the equal arc-length angle, then the expressions simplify.
-!latex        This constraint is not enforced.)
-!latex \item The geometry of the coordinate axis thus constructed only depends on the geometry of the interface, i.e. 
-!latex       the angular parameterization of the interface is irrelevant.
-!latex \end{enumerate}
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \subsection{coordinate axis: derivatives}
-
-!latex \begin{enumerate}
-!latex \item The derivatives of the coordinate axis with respect to the Fourier harmonics of the given interface are given by
-!latex       \be
-!latex       \ds \frac{\partial R_0}{\partial R_{i,j}^c} & = & \ds \int \left( \cos\a_j \; \dot l
-!latex                                                     -       \Delta R_i R_{i,\t} \, m_j \sin\a_j / \; \dot l \right) d\t / L \\
-!latex       \ds \frac{\partial R_0}{\partial R_{i,j}^s} & = & \ds \int \left( \sin\a_j \; \dot l
-!latex                                                     +       \Delta R_i R_{i,\t} \, m_j \cos\a_j / \; \dot l \right) d\t / L \\
-!latex       \ds \frac{\partial R_0}{\partial Z_{i,j}^c} & = & \ds \int \left( \;\;\;\;\;\;\;\;\;\;\;\;\,
-!latex                                                     -       \Delta R_i Z_{i,\t} \, m_j \sin\a_j / \; \dot l \right) d\t / L \\
-!latex       \ds \frac{\partial R_0}{\partial Z_{i,j}^s} & = & \ds \int \left( \;\;\;\;\;\;\;\;\;\;\;\;\,                             
-!latex                                                     +       \Delta R_i Z_{i,\t} \, m_j \cos\a_j / \; \dot l \right) d\t / L \\ \nonumber \\
-!latex       \ds \frac{\partial Z_0}{\partial R_{i,j}^c} & = & \ds \int \left( \;\;\;\;\;\;\;\;\;\;\;\;\,                             
-!latex                                                     -       \Delta Z_i R_{i,\t} \, m_j \sin\a_j / \; \dot l \right) d\t / L \\
-!latex       \ds \frac{\partial Z_0}{\partial R_{i,j}^s} & = & \ds \int \left( \;\;\;\;\;\;\;\;\;\;\;\;                            
-!latex                                                     +       \Delta Z_i R_{i,\t} \, m_j \cos\a_j / \; \dot l \right) d\t / L \\
-!latex       \ds \frac{\partial Z_0}{\partial Z_{i,j}^c} & = & \ds \int \left( \cos\a_j \; \dot l
-!latex                                                     -       \Delta Z_i Z_{i,\t} \, m_j \sin\a_j / \; \dot l \right) d\t / L \\
-!latex       \ds \frac{\partial Z_0}{\partial Z_{i,j}^s} & = & \ds \int \left( \sin\a_j \; \dot l
-!latex                                                     +       \Delta Z_i Z_{i,\t} \, m_j \cos\a_j / \; \dot l \right) d\t / L
-!latex       \ee
-!latex       where $\ds L(\z) \equiv \int_{0}^{2\pi} \!\!\!\! dl$.
-!latex \end{enumerate}
-
-!latex \subsection{some numerical comments}
-
-!latex \begin{enumerate}
-!latex \item First, the differential poloidal length, $\dot l \equiv \sqrt{ R_\t^2 + Z_\t^2 }$, is computed in real space using 
-!latex       an inverse FFT from the Fourier harmonics of $R$ and $Z$.
-!latex \item Second, the Fourier harmonics of $dl$ are computed using an FFT.
-!latex       The integration over $\t$ to construct $L\equiv \int dl$ is now trivial: just multiply the $m=0$ harmonics of $dl$ by $2\pi$.
-!latex       The \internal{ajk(1:mn)} variable is used, and this is assigned in \link{global}.
-!latex \item Next, the weighted $R \, dl$ and $Z \, dl$ are computed in real space, and the poloidal integral is similarly taken.
-!latex \item Last, the Fourier harmonics are constructed using an FFT after dividing in real space.
-!latex \end{enumerate}
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-#ifdef DEBUG
-recursive subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivatives )
-#else
+!> \brief The coordinate axis is assigned via a poloidal average over an arbitrary surface.
+!> \ingroup grp_coord_axis
+!>
+!> Specifies position of coordinate axis; \f${\bf x}_a(\zeta) \equiv \int {\bf x}_1(\theta,\zeta) dl \, / \int dl\f$.
+!>
+!> **coordinate axis**
+!>
+!> <ul>
+!> <li> The coordinate axis is _not_ an independent degree-of-freedom of the geometry.
+!>       It is constructed by extrapolating the geometry of a given interface, as determined by \f$i \equiv\,\f$\c ivol which is given on input,
+!>       down to a line.
+!> <li> If the coordinate axis depends only on the _geometry_ of the interface and not the angle parameterization,
+!>       then the block tri-diagonal structure of the the force-derivative matrix is preserved.
+!> <li> Define the arc-length-weighted averages,
+!>       \f{eqnarray}{ R_0(\zeta) \equiv \frac{\displaystyle \int_{0}^{2\pi} R_i(\theta,\zeta) \, dl}{\displaystyle \int_{0}^{2\pi} \!\!\!\! dl}, \qquad
+!>                     Z_0(\zeta) \equiv \frac{\displaystyle \int_{0}^{2\pi} Z_i(\theta,\zeta) \, dl}{\displaystyle \int_{0}^{2\pi} \!\!\!\! dl},
+!>       \f}
+!>       where \f$dl \equiv \dot l \, d\theta = \sqrt{ \partial_\theta R_i(\theta,\zeta)^2 + \partial_\theta Z_i(\theta,\zeta)^2 } \, d\theta\f$.
+!> <li> (Note that if \f$\dot l\f$ does not depend on \f$\theta\f$, i.e. if \f$\theta\f$ is the equal arc-length angle, then the expressions simplify.
+!>        This constraint is not enforced.)
+!> <li> The geometry of the coordinate axis thus constructed only depends on the geometry of the interface, i.e.
+!>       the angular parameterization of the interface is irrelevant.
+!> </ul>
+!>
+!> **coordinate axis: derivatives**
+!>
+!> <ul>
+!> <li> The derivatives of the coordinate axis with respect to the Fourier harmonics of the given interface are given by
+!>       \f{eqnarray}{
+!>       \displaystyle \frac{\partial R_0}{\partial R_{i,j}^c} & = & \displaystyle \int \left( \cos\alpha_j \; \dot l
+!>                                                     -       \Delta R_i R_{i,\theta} \, m_j \sin\alpha_j / \; \dot l \right) d\theta / L \\
+!>       \displaystyle \frac{\partial R_0}{\partial R_{i,j}^s} & = & \displaystyle \int \left( \sin\alpha_j \; \dot l
+!>                                                     +       \Delta R_i R_{i,\theta} \, m_j \cos\alpha_j / \; \dot l \right) d\theta / L \\
+!>       \displaystyle \frac{\partial R_0}{\partial Z_{i,j}^c} & = & \displaystyle \int \left( \;\;\;\;\;\;\;\;\;\;\;\;\,
+!>                                                     -       \Delta R_i Z_{i,\theta} \, m_j \sin\alpha_j / \; \dot l \right) d\theta / L \\
+!>       \displaystyle \frac{\partial R_0}{\partial Z_{i,j}^s} & = & \displaystyle \int \left( \;\;\;\;\;\;\;\;\;\;\;\;\,
+!>                                                     +       \Delta R_i Z_{i,\theta} \, m_j \cos\alpha_j / \; \dot l \right) d\theta / L \\ \nonumber \\
+!>       \displaystyle \frac{\partial Z_0}{\partial R_{i,j}^c} & = & \displaystyle \int \left( \;\;\;\;\;\;\;\;\;\;\;\;\,
+!>                                                     -       \Delta Z_i R_{i,\theta} \, m_j \sin\alpha_j / \; \dot l \right) d\theta / L \\
+!>       \displaystyle \frac{\partial Z_0}{\partial R_{i,j}^s} & = & \displaystyle \int \left( \;\;\;\;\;\;\;\;\;\;\;\;
+!>                                                     +       \Delta Z_i R_{i,\theta} \, m_j \cos\alpha_j / \; \dot l \right) d\theta / L \\
+!>       \displaystyle \frac{\partial Z_0}{\partial Z_{i,j}^c} & = & \displaystyle \int \left( \cos\alpha_j \; \dot l
+!>                                                     -       \Delta Z_i Z_{i,\theta} \, m_j \sin\alpha_j / \; \dot l \right) d\theta / L \\
+!>       \displaystyle \frac{\partial Z_0}{\partial Z_{i,j}^s} & = & \displaystyle \int \left( \sin\alpha_j \; \dot l
+!>                                                     +       \Delta Z_i Z_{i,\theta} \, m_j \cos\alpha_j / \; \dot l \right) d\theta / L
+!>       \f}
+!>       where \f$\displaystyle L(\zeta) \equiv \int_{0}^{2\pi} \!\!\!\! dl\f$.
+!> </ul>
+!>
+!> **some numerical comments**
+!>
+!> <ul>
+!> <li> First, the differential poloidal length, \f$\dot l \equiv \sqrt{ R_\theta^2 + Z_\theta^2 }\f$, is computed in real space using
+!>       an inverse FFT from the Fourier harmonics of \f$R\f$ and \f$Z\f$.
+!> <li> Second, the Fourier harmonics of \f$dl\f$ are computed using an FFT.
+!>       The integration over \f$\theta\f$ to construct \f$L\equiv \int dl\f$ is now trivial: just multiply the \f$m=0\f$ harmonics of \f$dl\f$ by \f$2\pi\f$.
+!>       The \c ajk(1:mn) variable is used, and this is assigned in readin() .
+!> <li> Next, the weighted \f$R \, dl\f$ and \f$Z \, dl\f$ are computed in real space, and the poloidal integral is similarly taken.
+!> <li> Last, the Fourier harmonics are constructed using an FFT after dividing in real space.
+!> </ul>
+!>
+!> @param[in]  Mvol
+!> @param[in]  mn
+!> @param      iRbc
+!> @param      iZbs
+!> @param      iRbs
+!> @param      iZbc
+!> @param[in]  ivol
+!> @param      LcomputeDerivatives
+!#ifdef DEBUG
+!recursive subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivatives )
+!#else
 subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivatives )
-#endif
-  
+!#endif
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   use constants, only : zero, one, half, two
-  
+
   use numerical, only : vsmall
-  
+
   use fileunits, only : ounit
-  
+
   use inputlist, only : Wrzaxis, Igeometry, Ntor, Lcheck, Wmacros, Lreflect, Ntoraxis, Lrzaxis
-  
+
   use cputiming, only : Trzaxis
-  
-  use allglobal, only : ncpu, myid, cpus, im, in, &
+
+  use allglobal, only : ncpu, myid, cpus, im, in, MPI_COMM_SPEC, &
                         ajk, Nt, Nz, Ntz, &
                         Rij, Zij, sg, cosi, sini, &
                         ijreal, ijimag, jireal, jiimag, jkreal, jkimag, kjreal, kjimag, &
@@ -98,11 +100,11 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
                         dRadR, dRadZ, dZadR, dZadZ, &
                         iRbc, iZbs, iRbs, iZbc, &
                         dBdX
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   LOCALS
-  
+
   LOGICAL, intent(in)  :: LComputeDerivatives ! indicates whether derivatives are to be calculated;
 
   INTEGER, intent(in)    :: Mvol, mn, ivol
@@ -129,48 +131,48 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
 #endif
 
   BEGIN(rzaxis)
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 #ifdef DEBUG
   FATAL( rzaxis, ivol.gt.Mvol, perhaps illegal combination Linitialize=2 and Lfreebound=0 )
 #endif
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  jvol = 0 ! this identifies the "surface" in which the poloidal averaged harmonics will be placed; 19 Jul 16; 
+  jvol = 0 ! this identifies the "surface" in which the poloidal averaged harmonics will be placed; 19 Jul 16;
 
   Ntoraxis = min(Ntor,Ntoraxis)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  select case( Igeometry ) 
-   
+  select case( Igeometry )
+
   case( 1:2 )
-   
+
    inRbc(1:mn,jvol) = zero
    inRbs(1:mn,jvol) = zero
 
    if ( Igeometry.eq.1 .and. Lreflect.eq.1) then ! reflect upper and lower bound in slab, each take half the amplitude
-    inRbc(2:mn,0) = -inRbc(2:mn,Mvol) 
+    inRbc(2:mn,0) = -inRbc(2:mn,Mvol)
    if( NOTstellsym ) then
     inRbs(2:mn,0) = -inRbs(2:mn,Mvol)
     endif
    endif
-   
+
   case(   3 )
-   
+
    if (Lrzaxis .eq. 1) then ! use centroid method
 
     call invfft( mn, im(1:mn), in(1:mn), im(1:mn) * inRbs(1:mn,ivol), - im(1:mn) * inRbc(1:mn,ivol), &
                                           im(1:mn) * inZbs(1:mn,ivol), - im(1:mn) * inZbc(1:mn,ivol), &
                   Nt, Nz, jkreal(1:Ntz), jkimag(1:Ntz) ) ! R_\t, Z_\t; 03 Nov 16;
-  
+
     ijreal(1:Ntz) = sqrt( jkreal(1:Ntz)**2 + jkimag(1:Ntz)**2 ) ! dl ; 11 Aug 14;
     ijimag(1:Ntz) = zero
 
     jireal(1:Ntz) = ijreal(1:Ntz) ! dl ; 19 Sep 16;
-    
+
     ifail = 0
     call tfft( Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz), &
                 mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), ifail ) ! Fourier harmonics of differential poloidal length; 11 Mar 16;
@@ -179,20 +181,20 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
     ofmn(1:mn) = ofmn(1:mn) * ajk(1:mn)
     cfmn(1:mn) = zero
     sfmn(1:mn) = zero
-        
+
     call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), & ! map length = "integrated dl" back to real space; 19 Sep 16;
                   Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz) )
-      
+
     jiimag(1:Ntz) = ijreal(1:Ntz) !  L ; 19 Sep 16;
 
 
     call invfft( mn, im(1:mn), in(1:mn),            inRbc(1:mn,ivol),              inRbs(1:mn,ivol), &
                                                     inZbc(1:mn,ivol),              inZbs(1:mn,ivol), &
                   Nt, Nz, kjreal(1:Ntz), kjimag(1:Ntz) ) ! R, Z; 03 Nov 16;
-    
+
     ijreal(1:Ntz) = kjreal(1:Ntz) * jireal(1:Ntz) ! R dl;
     ijimag(1:Ntz) = kjimag(1:Ntz) * jireal(1:Ntz) ! Z dl;
-    
+
     ifail = 0
     call tfft( Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz), &
                 mn, im(1:mn), in(1:mn), evmn(1:mn), odmn(1:mn), comn(1:mn), simn(1:mn), ifail ) ! Fourier harmonics of weighted R & Z; 11 Mar 16;
@@ -201,20 +203,20 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
     odmn(1:mn) = odmn(1:mn) * ajk(1:mn)
     comn(1:mn) = comn(1:mn) * ajk(1:mn) ! poloidal integration of Z dl; 19 Sep 16;
     simn(1:mn) = simn(1:mn) * ajk(1:mn)
-    
+
     call invfft( mn, im(1:mn), in(1:mn), evmn(1:mn), odmn(1:mn), comn(1:mn), simn(1:mn), &
                   Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz) )
-  
+
     ijreal(1:Ntz) = ijreal(1:Ntz) / jiimag(1:Ntz) ! Ro; 19 Sep 16;
     ijimag(1:Ntz) = ijimag(1:Ntz) / jiimag(1:Ntz) ! Zo; 19 Sep 16;
-    
+
     kjreal(1:Ntz) = kjreal(1:Ntz) - ijreal(1:Ntz) ! \Delta R = R_1 - R_0 ; 03 Nov 16;
     kjimag(1:Ntz) = kjimag(1:Ntz) - ijimag(1:Ntz) ! \Delta R = Z_1 - Z_0 ; 03 Nov 16;
 
     ifail = 0
     call tfft( Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz), &
                 mn, im(1:mn), in(1:mn), inRbc(1:mn,jvol), inRbs(1:mn,jvol), inZbc(1:mn,jvol), inZbs(1:mn,jvol), ifail )
-    
+
 #ifdef DEBUG
     if( Wrzaxis ) then
       cput = GETTIME
@@ -251,10 +253,10 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
 
       do ii = 1, mn
 
-        
+
         dRodR(1:Ntz,0,ii) = cosi(1:Ntz,ii) * jireal(1:Ntz) - kjreal(1:Ntz) * jkreal(1:Ntz) * im(ii) * sini(1:Ntz,ii) / jireal(1:Ntz) ! dRodRjc;
         dRodR(1:Ntz,1,ii) = sini(1:Ntz,ii) * jireal(1:Ntz) + kjreal(1:Ntz) * jkreal(1:Ntz) * im(ii) * cosi(1:Ntz,ii) / jireal(1:Ntz) ! dRodRjs;
-        
+
         ifail = 0
         call tfft( Nt, Nz, dRodR(1:Ntz,0,ii), dRodR(1:Ntz,1,ii), &
                   mn, im(1:mn), in(1:mn), dRadR(1:mn,0,0,ii), dRadR(1:mn,1,0,ii), dRadR(1:mn,0,1,ii), dRadR(1:mn,1,1,ii), ifail )
@@ -328,12 +330,31 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
         dZodZ(1:Ntz,0,ii) = dZodZ(1:Ntz,0,ii) / jiimag(1:Ntz) ! divide by length; 03 Nov 16;
         dZodZ(1:Ntz,1,ii) = dZodZ(1:Ntz,1,ii) / jiimag(1:Ntz)
 
+        imn = ii
+
+        call tfft( Nt, Nz, dRodR(1:Ntz,0,ii), dRodR(1:Ntz,1,ii), &
+          mn, im(1:mn), in(1:mn), dRadR(1:mn,0,0,ii), dRadR(1:mn,1,0,ii), dRadR(1:mn,0,1,ii), dRadR(1:mn,1,1,ii), ifail )
+        call tfft( Nt, Nz, dRodZ(1:Ntz,0,ii), dRodZ(1:Ntz,1,ii), &
+          mn, im(1:mn), in(1:mn), dRadZ(1:mn,0,0,ii), dRadZ(1:mn,1,0,ii), dRadZ(1:mn,0,1,ii), dRadZ(1:mn,1,1,ii), ifail )
+        call tfft( Nt, Nz, dZodR(1:Ntz,0,ii), dZodR(1:Ntz,1,ii), &
+          mn, im(1:mn), in(1:mn), dZadR(1:mn,0,0,ii), dZadR(1:mn,1,0,ii), dZadR(1:mn,0,1,ii), dZadR(1:mn,1,1,ii), ifail )
+        call tfft( Nt, Nz, dZodZ(1:Ntz,0,ii), dZodZ(1:Ntz,1,ii), &
+          mn, im(1:mn), in(1:mn), dZadZ(1:mn,0,0,ii), dZadZ(1:mn,1,0,ii), dZadZ(1:mn,0,1,ii), dZadZ(1:mn,1,1,ii), ifail )
+
+        call invfft( mn, im(1:mn), in(1:mn),-in(1:mn)*dRadR(1:mn,1,0,imn),+in(1:mn)*dRadR(1:mn,0,0,imn),-in(1:mn)*dRadR(1:mn,1,1,imn),+in(1:mn)*dRadR(1:mn,0,1,imn), &
+                      Nt, Nz, dRodR(1:Ntz,2,imn), dRodR(1:Ntz,3,imn) )
+        call invfft( mn, im(1:mn), in(1:mn),-in(1:mn)*dRadZ(1:mn,1,0,imn),+in(1:mn)*dRadZ(1:mn,0,0,imn),-in(1:mn)*dRadZ(1:mn,1,1,imn),+in(1:mn)*dRadZ(1:mn,0,1,imn), &
+                      Nt, Nz, dRodZ(1:Ntz,2,imn), dRodZ(1:Ntz,3,imn) )
+        call invfft( mn, im(1:mn), in(1:mn),-in(1:mn)*dZadR(1:mn,1,0,imn),+in(1:mn)*dZadR(1:mn,0,0,imn),-in(1:mn)*dZadR(1:mn,1,1,imn),+in(1:mn)*dZadR(1:mn,0,1,imn), &
+                      Nt, Nz, dZodR(1:Ntz,2,imn), dZodR(1:Ntz,3,imn) )
+        call invfft( mn, im(1:mn), in(1:mn),-in(1:mn)*dZadZ(1:mn,1,0,imn),+in(1:mn)*dZadZ(1:mn,0,0,imn),-in(1:mn)*dZadZ(1:mn,1,1,imn),+in(1:mn)*dZadZ(1:mn,0,1,imn), &
+                      Nt, Nz, dZodZ(1:Ntz,2,imn), dZodZ(1:Ntz,3,imn) )
 
       enddo ! end of do ii; 03 Nov 16;
     end if !if (LComputeDerivatives) then
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
    else if ( Lrzaxis .eq. 2) then ! use Jacobian m=1 harmonic elimination method
-    
+
     ! We need to back up a few things before we proceed.
     ! The complication is, iRbc and inRbc could refer to the same thing, due to the way rzaxis is used.
     ! Once iRbc is changed, inRbc could also change, so we should seperate them as two variables.
@@ -405,7 +426,7 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
     end if !if (YESstellsym)
 
     if (YESstellsym) then
-      
+
       do ii = -Ntoraxis, Ntoraxis
         do jj = 1, Ntoraxis
 
@@ -426,7 +447,7 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
           end if ! if (ii+jj .le. Ntor)
 
         end do ! jj
-        
+
         ! the DR0 term
         id = 2 * (Ntor + 1) + ii
         jacmat(ii+Ntoraxis+1, 1) = - two * jZbs(id,ivol)
@@ -434,7 +455,7 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
       end do ! ii
 
     else ! for NOTstellsym
-      
+
       do ii = -Ntoraxis, Ntoraxis
         do jj = 1, Ntoraxis
 
@@ -449,7 +470,7 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
             jacmat(ii+idJc, jj+idRs) = jacmat(ii+idJc, jj+idRs) - jZbc(id,ivol)
             ! the DZsn' term
             jacmat(ii+idJc, jj+idZc) = jacmat(ii+idJc, jj+idZc) + jRbs(id,ivol)
-            
+
             ! for J sin terms
             ! the DRcn' term
             jacmat(ii+idJs, jj+idRc) = jacmat(ii+idJs, jj+idRc) + jZbc(id,ivol)
@@ -459,7 +480,7 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
             jacmat(ii+idJs, jj+idRs) = jacmat(ii+idJs, jj+idRs) - jZbs(id,ivol)
             ! the DZsn' term
             jacmat(ii+idJs, jj+idZc) = jacmat(ii+idJs, jj+idZc) - jRbc(id,ivol)
-              
+
           end if ! if (ii-jj .ge. -Ntor)
 
           if (ii+jj .le. Ntor) then
@@ -474,7 +495,7 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
             jacmat(ii+idJc, jj+idRs) = jacmat(ii+idJc, jj+idRs) + jZbc(id,ivol)
             ! the DZsn' term
             jacmat(ii+idJc, jj+idZc) = jacmat(ii+idJc, jj+idZc) + jRbs(id,ivol)
-            
+
             ! for J sin terms
             ! the DRcn' term
             jacmat(ii+idJs, jj+idRc) = jacmat(ii+idJs, jj+idRc) + jZbc(id,ivol)
@@ -487,7 +508,7 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
           end if ! if (ii+jj .le. Ntor)
 
         end do ! jj
-        
+
         ! the DR0 term
         id = 2 * (Ntor + 1) + ii
         ! for J cos terms
@@ -546,7 +567,7 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
       SALLOCATE( djacmat, (1:Njac, 1:Njac), zero )
 
       dBdX%L = .true. ! will need derivatives;
-    
+
       do imn = 1, mn ! loop over deformations in Fourier harmonics; inside do vvol;
         dBdX%ii = imn ! controls construction of derivatives in subroutines called below;
         do irz = 0, 1 ! loop over deformations in R and Z; inside do imn;
@@ -557,7 +578,7 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
             dBdX%issym = issym ! controls construction of derivatives;
 
             ! clean up for every new loop
-            djacmat = zero 
+            djacmat = zero
             djacrhs = zero
 
             Lcoordinatesingularity = .true.
@@ -580,10 +601,10 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
               djacrhs(2*Ntoraxis+2:Njac) = -jacbases(2*(Ntor+1)-Ntoraxis:2*(Ntor+1)+Ntoraxis)
             end if !if (YESstellsym)
 
-            if (im(imn).eq.1) then ! djacmat for m=1 terms 
+            if (im(imn).eq.1) then ! djacmat for m=1 terms
 
               if (YESstellsym) then
-                
+
                 do ii = -Ntoraxis, Ntoraxis
                   do jj = 1, Ntoraxis
 
@@ -604,7 +625,7 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
                     end if ! if (ii+jj .le. Ntor)
 
                   end do ! jj
-                  
+
                   ! the DR0 term
                   id = 2 * (Ntor + 1) + ii
                   if (id .eq. imn .and. irz .eq. 1) djacmat(ii+Ntoraxis+1, 1) = - two
@@ -625,7 +646,7 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
                       if (id.eq.imn .and. irz.eq.1 .and. issym.eq.1) djacmat(ii+idJc, jj+idRs) = djacmat(ii+idJc, jj+idRs) - one
                       ! the DZsn' term
                       if (id.eq.imn .and. irz.eq.0 .and. issym.eq.1) djacmat(ii+idJc, jj+idZc) = djacmat(ii+idJc, jj+idZc) + one
-                      
+
                       ! for J sin terms
                       ! the DRcn' term
                       if (id.eq.imn .and. irz.eq.1 .and. issym.eq.1) djacmat(ii+idJs, jj+idRc) = djacmat(ii+idJs, jj+idRc) + one
@@ -649,7 +670,7 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
                       if (id.eq.imn .and. irz.eq.1 .and. issym.eq.1) djacmat(ii+idJc, jj+idRs) = djacmat(ii+idJc, jj+idRs) + one
                       ! the DZsn' term
                       if (id.eq.imn .and. irz.eq.0 .and. issym.eq.1) djacmat(ii+idJc, jj+idZc) = djacmat(ii+idJc, jj+idZc) + one
-                      
+
                       ! for J sin terms
                       ! the DRcn' term
                       if (id.eq.imn .and. irz.eq.1 .and. issym.eq.1) djacmat(ii+idJs, jj+idRc) = djacmat(ii+idJs, jj+idRc) + one
@@ -663,18 +684,18 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
                     end if ! if (ii+jj .le. Ntor)
 
                   end do ! jj
-                  
+
                   ! the DR0 term
                   id = 2 * (Ntor + 1) + ii
                   ! for J cos terms
                   if (id.eq.imn .and. irz.eq.1 .and. issym.eq.0) djacmat(ii+idJc, idRc) = - two
                   if (id.eq.imn .and. irz.eq.0 .and. issym.eq.1) djacmat(ii+idJc, idZc) = + two
                   ! for J sin terms
-                  if (id.eq.imn .and. irz.eq.1 .and. issym.eq.1) djacmat(ii+idJs, idRc) = + two 
+                  if (id.eq.imn .and. irz.eq.1 .and. issym.eq.1) djacmat(ii+idJs, idRc) = + two
                   if (id.eq.imn .and. irz.eq.0 .and. issym.eq.0) djacmat(ii+idJs, idZc) = - two
 
                 end do ! ii
-                        
+
               endif ! if (YESstellsym)
 
               djacmat = djacmat * half ! because we are using (1+s)/2 instead of s
@@ -708,7 +729,7 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
                 if (im(imn).eq.0) then ! addtional one
                   dRadR(imn,issym,issym,imn) = dRadR(imn,issym,issym,imn) + one
                 end if
-                
+
               else
                 dRadZ(1:Ntoraxis+1,0,1-issym,imn) = -djacrhs(idRc:idRc+Ntoraxis)
                 dZadZ(2:Ntoraxis+1,1,1-issym,imn) = -djacrhs(idZs+1:idZs+Ntoraxis)
@@ -727,77 +748,33 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
             call invfft( mn, im(1:mn), in(1:mn), dZadR(1:mn,0,0,imn), dZadR(1:mn,1,0,imn), dZadR(1:mn,0,1,imn), dZadR(1:mn,1,1,imn), &
                          Nt, Nz, dZodR(1:Ntz,0,imn), dZodR(1:Ntz,1,imn) )
             call invfft( mn, im(1:mn), in(1:mn), dZadZ(1:mn,0,0,imn), dZadZ(1:mn,1,0,imn), dZadZ(1:mn,0,1,imn), dZadZ(1:mn,1,1,imn), &
-                         Nt, Nz, dZodZ(1:Ntz,0,imn), dZodZ(1:Ntz,1,imn) )
+                         Nt, Nz, dZodZ(1:Ntz,2,imn), dZodZ(1:Ntz,1,imn) )
+
+            call invfft( mn, im(1:mn), in(1:mn),-in(1:mn)*dRadR(1:mn,1,0,imn),+in(1:mn)*dRadR(1:mn,0,0,imn),-in(1:mn)*dRadR(1:mn,1,1,imn),+in(1:mn)*dRadR(1:mn,0,1,imn), &
+                         Nt, Nz, dRodR(1:Ntz,2,imn), dRodR(1:Ntz,3,imn) )
+            call invfft( mn, im(1:mn), in(1:mn),-in(1:mn)*dRadZ(1:mn,1,0,imn),+in(1:mn)*dRadZ(1:mn,0,0,imn),-in(1:mn)*dRadZ(1:mn,1,1,imn),+in(1:mn)*dRadZ(1:mn,0,1,imn), &
+                         Nt, Nz, dRodZ(1:Ntz,2,imn), dRodZ(1:Ntz,3,imn) )
+            call invfft( mn, im(1:mn), in(1:mn),-in(1:mn)*dZadR(1:mn,1,0,imn),+in(1:mn)*dZadR(1:mn,0,0,imn),-in(1:mn)*dZadR(1:mn,1,1,imn),+in(1:mn)*dZadR(1:mn,0,1,imn), &
+                         Nt, Nz, dZodR(1:Ntz,2,imn), dZodR(1:Ntz,3,imn) )
+            call invfft( mn, im(1:mn), in(1:mn),-in(1:mn)*dZadZ(1:mn,1,0,imn),+in(1:mn)*dZadZ(1:mn,0,0,imn),-in(1:mn)*dZadZ(1:mn,1,1,imn),+in(1:mn)*dZadZ(1:mn,0,1,imn), &
+                         Nt, Nz, dZodZ(1:Ntz,2,imn), dZodZ(1:Ntz,3,imn) )
 
 !******* This part is used to benchmark the matrices perturbation result with finite difference *******
 #ifdef DEBUG
-            if (Lcheck .eq. 8) then ! check the analytical derivative with the finite difference
-              threshold = 1e-8 ! print with difference between FD and analytical more than this threshold
-              dx = 1e-8 * jRbc(1,ivol)
-
-              newRbc = jRbc
-              newRbs = jRbs
-              newZbc = jZbc
-              newZbs = jZbs
-
-              if (irz .eq. 0 .and. issym .eq. 0) then
-                newRbc(imn, ivol) = jRbc(imn, ivol) + dx
-              else if (irz .eq. 1 .and. issym .eq. 0) then
-                newZbs(imn, ivol) = jZbs(imn, ivol) + dx
-              else if (irz .eq. 0 .and. issym .eq. 1) then
-                newRbs(imn, ivol) = jRbs(imn, ivol) + dx
-              else if (irz .eq. 1 .and. issym .eq. 1) then
-                newZbc(imn, ivol) = jZbc(imn, ivol) + dx
-              end if
-              
-              ! call the same subroutine recursively, but do not compute derivatives
-              call rzaxis( Mvol, mn, newRbc, newZbs, newRbs, newZbc, ivol, .false. )
-
-              ! compare the derivatives
-              do ii = 1, Ntoraxis+1
-                if (irz.eq.0) then
-                  if (abs((newRbc(ii,0) - jRbc(ii,jvol))/dx -  dRadR(ii,0,issym,imn))/jRbc(1,ivol) .ge. threshold) then
-                    write(ounit, *) 'dRc/dR: ii,m,n,issym', ii, im(imn), in(imn),issym, (newRbc(ii,0) - jRbc(ii,jvol))/dx, dRadR(ii,0,issym,imn), dx, newRbc(ii,0), jRbc(ii,jvol)
-                  endif
-                  if (abs((newZbs(ii,0) - jZbs(ii,jvol))/dx -  dZadR(ii,1,issym,imn))/jRbc(1,ivol) .ge. threshold) then
-                    write(ounit, *) 'dZs/dR: ii,m,n,issym', ii, im(imn), in(imn),issym, (newZbs(ii,0) - jZbs(ii,jvol))/dx, dZadR(ii,1,issym,imn), dx
-                  endif
-                  if (NOTstellsym) then
-                    if (abs((newRbs(ii,0) - jRbs(ii,jvol))/dx -  dRadR(ii,1,issym,imn))/jRbc(1,ivol) .ge. threshold) then
-                      write(ounit, *) 'dRs/dR: ii,m,n,issym', ii, im(imn), in(imn),issym, (newRbs(ii,0) - jRbs(ii,jvol))/dx, dRadR(ii,1,issym,imn), dx
-                    endif
-                    if (abs((newZbc(ii,0) - jZbc(ii,jvol))/dx -  dZadR(ii,0,issym,imn))/jRbc(1,ivol) .ge. threshold) then
-                      write(ounit, *) 'dZc/dR: ii,m,n,issym', ii, im(imn), in(imn),issym, (newZbc(ii,0) - jZbc(ii,jvol))/dx, dZadR(ii,0,issym,imn), dx
-                    endif
-                  endif
-                else if (irz.eq.1) then
-                  if (abs((newRbc(ii,0) - jRbc(ii,jvol))/dx -  dRadZ(ii,0,1-issym,imn))/jRbc(1,ivol) .ge. threshold) then
-                    write(ounit, *) 'dRc/dZ: ii,m,n,issym', ii, im(imn), in(imn),issym, (newRbc(ii,0) - jRbc(ii,jvol))/dx, dRadZ(ii,0,1-issym,imn), dx
-                  endif
-                  if (abs((newZbs(ii,0) - jZbs(ii,jvol))/dx -  dZadZ(ii,1,1-issym,imn))/jRbc(1,ivol) .ge. threshold) then
-                    write(ounit, *) 'dZs/dZ: ii,m,n,issym', ii, im(imn), in(imn),issym, (newZbs(ii,0) - jZbs(ii,jvol))/dx, dZadZ(ii,1,1-issym,imn), dx
-                  endif
-                  if (abs((newRbs(ii,0) - jRbs(ii,jvol))/dx -  dRadZ(ii,1,1-issym,imn))/jRbc(1,ivol) .ge. threshold) then
-                    write(ounit, *) 'dRs/dZ: ii,m,n,issym', ii, im(imn), in(imn),issym, (newRbs(ii,0) - jRbs(ii,jvol))/dx, dRadZ(ii,1,1-issym,imn), dx
-                  endif
-                  if (abs((newZbc(ii,0) - jZbc(ii,jvol))/dx -  dZadZ(ii,0,1-issym,imn))/jRbc(1,ivol) .ge. threshold) then
-                    write(ounit, *) 'dZc/dZ: ii,m,n,issym', ii, im(imn), in(imn),issym, (newZbc(ii,0) - jZbc(ii,jvol))/dx, dZadZ(ii,0,1-issym,imn), dx
-                  endif
-                endif
-              enddo
-
-            end if ! Lcheck .eq. 8
+if (Lcheck .eq. 8) then ! check the analytical derivative with the finite difference
+  call fndiff_rzaxis( Mvol, mn, ivol, jRbc, jRbs, jZbc, JZbs, imn, irz, issym )
+end if ! Lcheck .eq. 8
 #endif
 !******* END part used to benchmark the matrices perturbation result with finite difference *******
 
           end do ! issym
         end do ! irz
       end do ! imn = 1, mn
-      
+
       ! deallocate the matrices
       DALLOCATE( djacrhs )
       DALLOCATE( djacmat )
-      
+
       dBdX%L = .FALSE.
 
     end if ! if (LcomputeDerivatives)
@@ -815,7 +792,7 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
         iRbs(2:Ntoraxis+1,0) = -solution(2*Ntoraxis+2:3*Ntoraxis+1) + iRbs(2:Ntoraxis+1,0)
         iZbc(1:Ntoraxis+1,0) = -solution(3*Ntoraxis+2:4*Ntoraxis+2) + iZbc(1:Ntoraxis+1,0)
       endif
-        
+
       WCALL( rzaxis, coords, (1, one, Lcurvature, Ntz, mn ))
       jacbase = sg(1:Ntz,0) / Rij(1:Ntz,0,0)  ! extract the baseline 2D jacobian
 
@@ -867,7 +844,7 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
     DALLOCATE( LU )
     DALLOCATE( solution )
     DALLOCATE( ipiv )
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
    end if ! end of forking based on Lrzaxis ; 10 Jan 20
@@ -875,13 +852,102 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   end select ! end of select case( Igeometry ) ; 08 Feb 16;
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   RETURN(rzaxis)
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
 end subroutine rzaxis
+
+subroutine fndiff_rzaxis( Mvol, mn, ivol, jRbc, jRbs, jZbc, JZbs, imn, irz, issym )
+
+  use constants, only : zero, one, half, two
+
+  use numerical, only : vsmall
+
+  use fileunits, only : ounit
+
+  use inputlist, only : Wrzaxis, Wmacros, Ntor, Ntoraxis
+
+  use cputiming, only : Trzaxis
+
+  use allglobal, only : ncpu, myid, cpus, im, in, &
+                        dRodR, dRodZ, dZodR, dZodZ, &
+                        dRadR, dRadZ, dZadR, dZadZ, &
+                        NOTstellsym
+
+LOCALS
+
+  INTEGER, intent(in)    :: Mvol, mn, ivol, imn, irz, issym
+  REAL, intent(in)       :: jRbc(1:mn,0:Mvol), jZbs(1:mn,0:Mvol), jRbs(1:mn,0:Mvol), jZbc(1:mn,0:Mvol)
+
+  INTEGER                :: jvol, ii
+  REAL                   :: dx, threshold ! used to check result with finite difference.
+  REAL                   :: newRbc(1:mn,0:Mvol), newZbs(1:mn,0:Mvol), newRbs(1:mn,0:Mvol), newZbc(1:mn,0:Mvol)
+
+BEGIN( rzaxis )
+
+  threshold = 1e-8 ! print with difference between FD and analytical more than this threshold
+  dx = 1e-8 * jRbc(1,ivol)
+  jvol = 0
+  Ntoraxis = min(Ntor,Ntoraxis)
+
+  newRbc = jRbc
+  newRbs = jRbs
+  newZbc = jZbc
+  newZbs = jZbs
+
+  if (irz .eq. 0 .and. issym .eq. 0) then
+    newRbc(imn, ivol) = jRbc(imn, ivol) + dx
+  else if (irz .eq. 1 .and. issym .eq. 0) then
+    newZbs(imn, ivol) = jZbs(imn, ivol) + dx
+  else if (irz .eq. 0 .and. issym .eq. 1) then
+    newRbs(imn, ivol) = jRbs(imn, ivol) + dx
+  else if (irz .eq. 1 .and. issym .eq. 1) then
+    newZbc(imn, ivol) = jZbc(imn, ivol) + dx
+  end if
+
+  ! call the same subroutine recursively, but do not compute derivatives
+  call rzaxis( Mvol, mn, newRbc, newZbs, newRbs, newZbc, ivol, .false. )
+
+  ! compare the derivatives
+  do ii = 1, Ntoraxis+1
+    if (irz.eq.0) then
+      if (abs((newRbc(ii,0) - jRbc(ii,jvol))/dx -  dRadR(ii,0,issym,imn))/jRbc(1,ivol) .ge. threshold) then
+        write(ounit, *) 'dRc/dR: ii,m,n,issym', ii, im(imn), in(imn),issym, (newRbc(ii,0) - jRbc(ii,jvol))/dx, dRadR(ii,0,issym,imn), dx, newRbc(ii,0), jRbc(ii,jvol)
+      endif
+      if (abs((newZbs(ii,0) - jZbs(ii,jvol))/dx -  dZadR(ii,1,issym,imn))/jRbc(1,ivol) .ge. threshold) then
+        write(ounit, *) 'dZs/dR: ii,m,n,issym', ii, im(imn), in(imn),issym, (newZbs(ii,0) - jZbs(ii,jvol))/dx, dZadR(ii,1,issym,imn), dx
+      endif
+      if (NOTstellsym) then
+        if (abs((newRbs(ii,0) - jRbs(ii,jvol))/dx -  dRadR(ii,1,issym,imn))/jRbc(1,ivol) .ge. threshold) then
+          write(ounit, *) 'dRs/dR: ii,m,n,issym', ii, im(imn), in(imn),issym, (newRbs(ii,0) - jRbs(ii,jvol))/dx, dRadR(ii,1,issym,imn), dx
+        endif
+        if (abs((newZbc(ii,0) - jZbc(ii,jvol))/dx -  dZadR(ii,0,issym,imn))/jRbc(1,ivol) .ge. threshold) then
+          write(ounit, *) 'dZc/dR: ii,m,n,issym', ii, im(imn), in(imn),issym, (newZbc(ii,0) - jZbc(ii,jvol))/dx, dZadR(ii,0,issym,imn), dx
+        endif
+      endif
+    else if (irz.eq.1) then
+      if (abs((newRbc(ii,0) - jRbc(ii,jvol))/dx -  dRadZ(ii,0,1-issym,imn))/jRbc(1,ivol) .ge. threshold) then
+        write(ounit, *) 'dRc/dZ: ii,m,n,issym', ii, im(imn), in(imn),issym, (newRbc(ii,0) - jRbc(ii,jvol))/dx, dRadZ(ii,0,1-issym,imn), dx
+      endif
+      if (abs((newZbs(ii,0) - jZbs(ii,jvol))/dx -  dZadZ(ii,1,1-issym,imn))/jRbc(1,ivol) .ge. threshold) then
+        write(ounit, *) 'dZs/dZ: ii,m,n,issym', ii, im(imn), in(imn),issym, (newZbs(ii,0) - jZbs(ii,jvol))/dx, dZadZ(ii,1,1-issym,imn), dx
+      endif
+      if (abs((newRbs(ii,0) - jRbs(ii,jvol))/dx -  dRadZ(ii,1,1-issym,imn))/jRbc(1,ivol) .ge. threshold) then
+        write(ounit, *) 'dRs/dZ: ii,m,n,issym', ii, im(imn), in(imn),issym, (newRbs(ii,0) - jRbs(ii,jvol))/dx, dRadZ(ii,1,1-issym,imn), dx
+      endif
+      if (abs((newZbc(ii,0) - jZbc(ii,jvol))/dx -  dZadZ(ii,0,1-issym,imn))/jRbc(1,ivol) .ge. threshold) then
+        write(ounit, *) 'dZc/dZ: ii,m,n,issym', ii, im(imn), in(imn),issym, (newZbc(ii,0) - jZbc(ii,jvol))/dx, dZadZ(ii,0,1-issym,imn), dx
+      endif
+    endif
+  enddo
+
+
+RETURN( rzaxis )
+
+end subroutine fndiff_rzaxis
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

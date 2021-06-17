@@ -8,7 +8,8 @@ xspec
 dspec
 
 # pdfs related
-/docs/
+/docs/html/*
+/docs/latex/*
 *.pdf
 *.dvi
 *.toc

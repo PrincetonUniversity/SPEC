@@ -1,62 +1,54 @@
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!> \defgroup grp_metrics Metric quantities
+!>
+!> \file
+!> \brief Calculates the metric quantities, \f$\sqrt g \, g^{\mu\nu}\f$, which are required for the energy and helicity integrals.
 
-!title (metrics) ! Calculates the metric quantities, $\sqrt g \, g^{\mu\nu}$, which are required for the energy and helicity integrals.
-
-!latex \briefly{Calculates the metric quantities required for volume integrals.}
-
-!latex \calledby{\link{ma00aa}}
-!latex \calls{\link{coords}}
-
-!latex \tableofcontents
-
-!latex \subsection{metrics}
-
-!latex \begin{enumerate}
-!latex \item The Jacobian, $\sqrt g$, and the `lower' metric elements, $g_{\mu\nu}$, are calculated by \link{coords},
-!latex       and are provided on a regular grid in `real-space', i.e. $(\t,\z)$, at a given radial location, i.e. where $s$ is input.
-!latex \end{enumerate}
-
-!latex \subsection{plasma region}
-
-!latex \begin{enumerate}
-!latex \item In the plasma region, the required terms are $\bar g_{\mu\nu} \equiv g_{\mu\nu}/\sqrt g$.
-
-!latex       \be \begin{array}{ccccccccccccccccccccccccc}
-!latex       \sqrt g \; g^{\s\s} & = & \left( g_{\t\t} g_{\z\z} - g_{\t\z} g_{\t\z} \right) / \sqrt g \\
-!latex       \sqrt g \; g^{\s\t} & = & \left( g_{\t\z} g_{\s\z} - g_{\s\t} g_{\z\z} \right) / \sqrt g \\
-!latex       \sqrt g \; g^{\s\z} & = & \left( g_{\s\t} g_{\t\z} - g_{\t\t} g_{\s\z} \right) / \sqrt g \\
-!latex       \sqrt g \; g^{\t\t} & = & \left( g_{\z\z} g_{\s\s} - g_{\s\z} g_{\s\z} \right) / \sqrt g \\
-!latex       \sqrt g \; g^{\t\z} & = & \left( g_{\s\z} g_{\s\t} - g_{\t\z} g_{\s\s} \right) / \sqrt g \\
-!latex       \sqrt g \; g^{\z\z} & = & \left( g_{\s\s} g_{\t\t} - g_{\s\t} g_{\s\t} \right) / \sqrt g
-!latex       \end{array}
-!latex       \ee
-!latex \end{enumerate}
-
-!latex \subsection{FFTs}
-
-!latex \begin{enumerate}
-!latex \item After constructing the required quantities in real space, FFTs provided the required Fourier harmonics, which are returned through global.
-!latex       (The ``extended'' Fourier resolution is used.)
-!latex \end{enumerate}
+!> \brief Calculates the metric quantities, \f$\sqrt g \, g^{\mu\nu}\f$, which are required for the energy and helicity integrals.
+!> \ingroup grp_metrics
+!>
+!> **metrics**
+!>
+!> <ul>
+!> <li> The Jacobian, \f$\sqrt g\f$, and the "lower" metric elements, \f$g_{\mu\nu}\f$, are calculated by coords(),
+!>      and are provided on a regular grid in "real-space", i.e. \f$(\theta,\zeta)\f$, at a given radial location, i.e. where \f$s\f$ is input. </li>
+!> </ul>
+!>
+!> **plasma region**
+!>
+!> <ul>
+!> <li>  In the plasma region, the required terms are \f$\bar g_{\mu\nu} \equiv g_{\mu\nu}/\sqrt g\f$.
+!>
+!>       \f{eqnarray}{ \begin{array}{ccccccccccccccccccccccccc}
+!>       \sqrt g \; g^{s     s     } & = & \left( g_{\theta\theta} g_{\zeta \zeta } - g_{\theta\zeta } g_{\theta\zeta } \right) / \sqrt g \\
+!>       \sqrt g \; g^{s     \theta} & = & \left( g_{\theta\zeta } g_{s     \zeta } - g_{s     \theta} g_{\zeta \zeta } \right) / \sqrt g \\
+!>       \sqrt g \; g^{s     \zeta } & = & \left( g_{s     \theta} g_{\theta\zeta } - g_{\theta\theta} g_{s     \zeta } \right) / \sqrt g \\
+!>       \sqrt g \; g^{\theta\theta} & = & \left( g_{\zeta \zeta } g_{s     s     } - g_{s     \zeta } g_{s     \zeta } \right) / \sqrt g \\
+!>       \sqrt g \; g^{\theta\zeta } & = & \left( g_{s     \zeta } g_{s     \theta} - g_{\theta\zeta } g_{s     s     } \right) / \sqrt g \\
+!>       \sqrt g \; g^{\zeta \zeta } & = & \left( g_{s     s     } g_{\theta\theta} - g_{s     \theta} g_{s     \theta} \right) / \sqrt g
+!>       \end{array}
+!>       \f} </li>
+!> </ul>
+!>
+!> **FFTs**
+!>
+!> <ul>
+!> <li> After constructing the required quantities in real space, FFTs provided the required Fourier harmonics, which are returned through global.f90 .
+!>      (The "extended" Fourier resolution is used.) </li>
+!> </ul>
+subroutine metrix( lquad, lvol )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-subroutine metrix( lquad, lvol ) 
-  
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
   use constants, only : zero, one
-  
+
   use numerical, only : small
-  
+
   use fileunits, only : ounit
-  
+
   use inputlist, only : Wmetrix
-  
+
   use cputiming, only : Tmetrix
-  
+
   use allglobal, only : myid, ncpu, cpus, &
                         dBdX, &
                         mn, im, in, mne, ime, ine, &
@@ -72,30 +64,30 @@ subroutine metrix( lquad, lvol )
                         gtzmne, gtzmno, &
                         gzzmne, gzzmno, &
                         guvijsave
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   LOCALS
-  
+
   INTEGER, intent(in) :: lvol, lquad
-  
+
   INTEGER             :: Lcurvature, ifail, ideriv, jquad
-  
+
   BEGIN( metrix )
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-  do jquad = 1, lquad  
+
+  do jquad = 1, lquad
 
     gvuij(1:Ntz,0,0) =   one
-    
+
     gvuij(1:Ntz,1,1) =   guvijsave(1:Ntz,1,1,jquad)
     gvuij(1:Ntz,1,2) =   guvijsave(1:Ntz,1,2,jquad)
     gvuij(1:Ntz,1,3) =   guvijsave(1:Ntz,1,3,jquad)
     gvuij(1:Ntz,2,2) =   guvijsave(1:Ntz,2,2,jquad)
     gvuij(1:Ntz,2,3) =   guvijsave(1:Ntz,2,3,jquad)
     gvuij(1:Ntz,3,3) =   guvijsave(1:Ntz,3,3,jquad)
-  
+
     ifail = 0
     call tfft( Nt, Nz, gvuij(1:Ntz,0,0), ijreal(1:Ntz) , &
               mne, ime(1:mne), ine(1:mne), goomne(1:mne,jquad), goomno(1:mne,jquad), cfmn(1:mne)    , sfmn(1:mne)    , ifail )
@@ -118,18 +110,24 @@ subroutine metrix( lquad, lvol )
               mne, ime(1:mne), ine(1:mne), gtzmne(1:mne,jquad), gtzmno(1:mne,jquad), gzzmne(1:mne,jquad), gzzmno(1:mne,jquad), ifail )
     gtzmne(0,jquad) = zero ; gtzmno(0,jquad) = zero
     gzzmne(0,jquad) = zero ; gzzmno(0,jquad) = zero
-   
+
   enddo
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   RETURN( metrix )
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
 end subroutine metrix
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+!> \brief compute guvijsave
+!>
+!> @param lquad
+!> @param vvol
+!> @param ideriv
+!> @param Lcurvature
 subroutine compute_guvijsave(lquad, vvol, ideriv, Lcurvature)
 
   use allglobal, only : gaussianabscissae, Ntz, mn, guvij, guvijsave, &

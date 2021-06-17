@@ -1,7 +1,10 @@
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-! memory management module
-! by Zhisong Qu 07 JUL 20
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!> \file
+!> \brief memory management module
+
+!> \brief allocate Beltrami matrices
+!>
+!> @param vvol
+!> @param LcomputeDerivatives
 subroutine allocate_Beltrami_matrices(vvol, LcomputeDerivatives)
 
   use fileunits
@@ -25,11 +28,14 @@ subroutine allocate_Beltrami_matrices(vvol, LcomputeDerivatives)
   if (NOTMatrixFree .or. LcomputeDerivatives) then
       SALLOCATE( dMA, (0:NN,0:NN), zero ) ! required for both plasma region and vacuum region;
       SALLOCATE( dMD, (0:NN,0:NN), zero )
+  else
+      SALLOCATE( Adotx, (0:NN), zero)
+      SALLOCATE( Ddotx, (0:NN), zero)
   endif
 
   ! we will need the rest even with or without matrix-free
   SALLOCATE( dMB, (0:NN,0: 2), zero )
-  SALLOCATE( dMG, (0:NN     ), zero )  
+  SALLOCATE( dMG, (0:NN     ), zero )
 
   SALLOCATE( solution, (1:NN,-1:2), zero ) ! this will contain the vector potential from the linear solver and its derivatives;
 
@@ -48,6 +54,9 @@ end subroutine allocate_Beltrami_matrices
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+!> \brief deallocate Beltrami matrices
+!>
+!> @param LcomputeDerivatives
 subroutine deallocate_Beltrami_matrices(LcomputeDerivatives)
 
   use fileunits
@@ -67,16 +76,19 @@ subroutine deallocate_Beltrami_matrices(LcomputeDerivatives)
   if (NOTMatrixFree .or. LcomputeDerivatives) then
     DALLOCATE(dMA)
     DALLOCATE(dMD)
+  else
+    DALLOCATE(Adotx)
+    DALLOCATE(Ddotx)
   endif
 
   DALLOCATE(dMB)
 
   DALLOCATE(dMG)
-   
+
   DALLOCATE(solution)
-   
+
   DALLOCATE(MBpsi)
-   
+
   if (LILUprecond) then
     DALLOCATE(dMAS)
     DALLOCATE(dMDS)
@@ -90,6 +102,10 @@ end subroutine deallocate_Beltrami_matrices
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+!> \brief allocate geometry matrices
+!>
+!> @param vvol
+!> @param LcomputeDerivatives
 subroutine allocate_geometry_matrices(vvol, LcomputeDerivatives)
 
 ! Allocate all geometry dependent matrices for a given ll
@@ -200,6 +216,9 @@ end subroutine allocate_geometry_matrices
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+!> \brief deallocate geometry matrices
+!>
+!> @param LcomputeDerivatives
 subroutine deallocate_geometry_matrices(LcomputeDerivatives)
 
 ! Deallocate all geometry dependent matrices
@@ -265,7 +284,7 @@ subroutine deallocate_geometry_matrices(LcomputeDerivatives)
     DALLOCATE(DDzzcs)
     DALLOCATE(DDzzsc)
     DALLOCATE(DDzzss)
-       
+
     DALLOCATE(Tsc)
     DALLOCATE(Dts)
     DALLOCATE(Dzs)

@@ -1,115 +1,104 @@
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!> \file
+!> \brief Constructs Poincaré plot and "approximate" rotational-transform (driver).
 
-!title (diagnostic) ! Constructs Poincar&eacute; plot and &ldquo;approximate&rdquo; rotational-transform (driver).
-
-!latex \briefly{Constructs \Poincare plot and ``approximate" rotational-transform (driver).}
-
-!latex \calledby{\link{xspech}}
-!latex \calls{\link{pp00ab}}
-
-!latex \tableofcontents
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-!latex \subsection{relevant input variables}
-
-!latex \begin{enumerate}
-!latex \item The resolution of \Poincare plot is controlled by 
-!latex       \begin{itemize}
-!latex       \item[i.] \inputvar{nPtraj} trajectories will be located in each volume;
-!latex       \item[ii.] \inputvar{nPpts} iterations per trajectory;
-!latex       \item[iii.] \inputvar{odetol} o.d.e. integration tolerance;
-!latex       \end{itemize}
-!latex \item The magnetic field is given by \link{bfield}.
-!latex \item The approximate rotational transform is determined, in \link{pp00ab}, by fieldline integration.
-!latex  \end{enumerate}
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \subsection{format of output: \Poincare}
-
-!latex \begin{enumerate}
-!latex \item The \Poincare data is written to \type{.ext.poincare:xxxx}, where \type{xxxx} is an integer indicating the volume.
-!latex       The format of this file is as follows:
-!latex \begin{verbatim}
-!latex  write(svol,'(i4.4)')lvol ! lvol labels volume;
-!latex  open(lunit+myid,file="."//trim(ext)//".poincare."//svol,status="unknown",form="unformatted")
-!latex  do until end of file
-!latex   write(lunit+myid) Nz, nPpts                ! integers
-!latex   write(lunit+myid) data(1:4,0:Nz-1,1:nPpts) ! doubles
-!latex  enddo
-!latex  close(lunit+myid)
-!latex \end{verbatim}
-!latex       where \begin{itemize}
-!latex       \item[i.] $\t \equiv$ \type{data(1,k,j)} is the poloidal angle,
-!latex       \item[ii.] $\s \equiv$ \type{data(2,k,j)} is the radial coordinate, 
-!latex       \item[iii.] $ R \equiv$ \type{data(3,k,j)} is the cylindrical $R$, 
-!latex       \item[iv.]   $ Z \equiv$ \type{data(4,k,j)} is the cylindrical $Z$,
-!latex       \end{itemize}
-!latex \item The integer \type{k=0,Nz-1} labels toroidal planes, so that $\phi = ( 2 \pi / $\inputvar{Nfp}$ ) ( k / \type{Nz})$,
-!latex \item The integer \type{j=1,}\inputvar{nPpts} labels toroidal iterations.
-!latex \item Usually (if no fieldline integration errors are encountered) the number of fieldlines followed in volume \type{lvol}
-!latex       is given by $N+1$, where the radial resolution, $N\equiv$\type{Ni(lvol)}, is given on input.
-!latex       This will be over-ruled by if \inputvar{nPtrj(lvol)}, given on input, is non-negative.
-!latex \item The starting location for the fieldline integrations are equally spaced in the radial coordinate $s_i=s_{l-1}+ i (s_{l}-s_{l-1})/N$ for $i=0,N$,
-!latex       along the line $\t=0$, $\z=0$.
-!latex \end{enumerate} 
-  
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
-!latex \subsection{format of output: rotational-transform}
-
-!latex \begin{enumerate}
-  
-!latex \item The rotational-transform data is written to \type{.exttransform:xxxx}, where \type{xxxx} is an integer indicating the volume.
-!latex       The format of this file is as follows:
-!latex \begin{verbatim}
-!latex  open(lunit+myid,file="."//trim(ext)//".sp.t."//svol,status="unknown",form="unformatted")
-!latex  write(lunit+myid) lnPtrj-ioff+1                                      ! integer
-!latex  write(lunit+myid) diotadxup(0:1,0,lvol)                              ! doubles
-!latex  write(lunit+myid) ( fiota(itrj,1:2), itrj = ioff, lnPtrj ) ! doubles
-!latex  close(lunit+myid)
-!latex \end{verbatim}
-!latex \end{enumerate}
-  
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+!> \brief Constructs Poincaré plot and "approximate" rotational-transform (driver).
+!> \ingroup grp_diagnostics
+!>
+!> **relevant input variables**
+!>
+!> <ul>
+!> <li> The resolution of Poincaré plot is controlled by
+!>       <ul>
+!>       <li> \c nPtraj trajectories will be located in each volume;
+!>       <li> \c nPpts  iterations per trajectory;
+!>       <li> \c odetol o.d.e. integration tolerance;
+!>       </ul> </li>
+!> <li> The magnetic field is given by bfield() . </li>
+!> <li> The approximate rotational transform is determined, in pp00ab() , by fieldline integration. </li>
+!> </ul>
+!>
+!> **format of output: Poincaré**
+!>
+!> <ul>
+!> <li> The Poincaré data is written to \c .ext.poincare:xxxx , where \c xxxx is an integer indicating the volume.
+!>       The format of this file is as follows:
+!>
+!>~~~~~~~~~~~~
+!> write(svol,'(i4.4)')lvol ! lvol labels volume;
+!> open(lunit+myid,file="."//trim(ext)//".poincare."//svol,status="unknown",form="unformatted")
+!> do until end of file
+!>   write(lunit+myid) Nz, nPpts                ! integers
+!>   write(lunit+myid) data(1:4,0:Nz-1,1:nPpts) ! doubles
+!> enddo
+!> close(lunit+myid)
+!>~~~~~~~~~~~~
+!> `where`
+!>       <ul>
+!>       <li> \f$\theta \equiv\,\f$\c data(1,k,j) is the poloidal angle,      </li>
+!>       <li> \f$ s     \equiv\,\f$\c data(2,k,j) is the radial coordinate,   </li>
+!>       <li> \f$ R     \equiv\,\f$\c data(3,k,j) is the cylindrical \f$R\f$, </li>
+!>       <li> \f$ Z     \equiv\,\f$\c data(4,k,j) is the cylindrical \f$Z\f$, </li>
+!>       </ul>
+!> <li> The integer \c k=0,Nz-1 labels toroidal planes, so that \f$\phi = ( 2 \pi / \texttt{Nfp}) ( k / \texttt{Nz})\f$,
+!> <li> The integer \c j=1,nPpts labels toroidal iterations.
+!> <li> Usually (if no fieldline integration errors are encountered) the number of fieldlines followed in volume \c lvol
+!>       is given by \f$N+1\f$, where the radial resolution, \f$N\equiv\,\f$\c Ni(lvol) , is given on input.
+!>       This will be over-ruled by if \c nPtrj(lvol) , given on input, is non-negative.
+!> <li> The starting location for the fieldline integrations are equally spaced in the radial coordinate \f$s_i=s_{l-1}+ i (s_{l}-s_{l-1})/N\f$ for \f$i=0,N\f$,
+!>       along the line \f$\theta=0\f$, \f$\zeta=0\f$.
+!> </ul>
+!>
+!> **format of output: rotational-transform**
+!>
+!> <ul>
+!>
+!> <li> The rotational-transform data is written to \c .ext.transform:xxxx , where \c xxxx is an integer indicating the volume.
+!>       The format of this file is as follows:
+!> ```
+!>  open(lunit+myid,file="."//trim(ext)//".sp.t."//svol,status="unknown",form="unformatted")
+!>  write(lunit+myid) lnPtrj-ioff+1                                      ! integer
+!>  write(lunit+myid) diotadxup(0:1,0,lvol)                              ! doubles
+!>  write(lunit+myid) ( fiota(itrj,1:2), itrj = ioff, lnPtrj ) ! doubles
+!>  close(lunit+myid)
+!> ```
+!> </ul>
+!>
 subroutine pp00aa
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   use constants, only : zero, half, one, two, pi
-  
+
   use numerical, only :
-  
+
   use fileunits, only : ounit
-  
-  use inputlist, only : Wmacros, Wpp00aa, Nvol, Lrad, ext, odetol, nPpts, Ppts, nPtrj, Lconstraint, iota, oita, Igeometry
-  
+
+  use inputlist, only : Wmacros, Wpp00aa, Nvol, Lrad, odetol, nPpts, Ppts, nPtrj, Lconstraint, iota, oita, Igeometry
+
   use cputiming, only : Tpp00aa
-  
-  use allglobal, only : myid, ncpu, cpus, &
+
+  use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, ext, &
                         Nz, pi2nfp, &
                         ivol, Mvol, &
                         Lcoordinatesingularity, &
                         diotadxup, Lplasmaregion, Lvacuumregion
 
   use sphdf5,    only : init_flt_output, write_poincare, write_transform, finalize_flt_output
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   LOCALS
-  
+
   INTEGER              :: lnPtrj, ioff, vvol, itrj, lvol
   INTEGER, allocatable :: utflag(:), numTrajs(:)
   REAL                 :: sti(1:2), ltransform(1:2)
   REAL, allocatable    :: data(:,:,:,:), fiota(:,:)
-  
+
   integer :: id, numTraj, recvId
   integer :: status(MPI_STATUS_SIZE)
 
   BEGIN(pp00aa)
-  
+
   ! count how many Poincare trajectories should be computed in total ; executed on each CPU
   allocate(numTrajs(1:Mvol))
   do vvol = 1, Mvol
@@ -155,7 +144,7 @@ subroutine pp00aa
       SALLOCATE(   data, (ioff:lnPtrj, 1:4,0:Nz-1,1:nPpts), zero ) ! for block writing to file (allows faster reading of output data files for post-processing plotting routines);
       SALLOCATE( utflag, (ioff:lnPtrj                    ),    0 ) ! error flag that indicates if fieldlines successfully followed; 22 Apr 13;
       SALLOCATE(  fiota, (ioff:lnPtrj, 1:2               ), zero ) ! will always need fiota(0,1:2);
-      
+
 !$OMP PARALLEL DO SHARED(lnPtrj,ioff,Wpp00aa,Nz,data,fiota,utflag,iota,oita,myid,vvol,cpus,Lconstraint,nPpts,ppts) PRIVATE(itrj,sti)
       do itrj = ioff, lnPtrj ! initialize Poincare plot with trajectories regularly spaced between interfaces along \t=0;
 
@@ -183,6 +172,9 @@ subroutine pp00aa
       ! write(*,*) "CPU ",myid," finished field line tracing for volume ",vvol
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+      ! TODO: replace below logic with a single call to MPI_allgather into rank-0
+      ! and the write from there at once
+
       ! write data
       if (myid.eq.0) then
         !write(*,*) "CPU 0 writes its own Poincare data for numTrajs(",vvol,")=",numTrajs(vvol)
@@ -209,7 +201,7 @@ subroutine pp00aa
         endif
 
         if (Mvol.gt.1 .and. ncpu.gt.1) then
-          
+
          ! Gather data from all other parallelly running CPUs; there are min(ncpu-1, Mvol-vvol) of these in this iteration
          ! If we have so few CPUs that all of them need to perform multiple iteration over the set of volumes in batches of ncpu,
          ! there are a number ncpu-1 CPUs apart from the master who still have data that needs to be written before they can contine.
@@ -230,13 +222,13 @@ subroutine pp00aa
             allocate(  data(1:numTrajs(lvol),1:4,0:Nz-1,1:nPpts))
             allocate( fiota(1:numTrajs(lvol),1:2))
 
-            call MPI_Recv( utflag, numTrajs(lvol)           , MPI_INTEGER         , recvId, lvol, MPI_COMM_WORLD, status, ierr)
+            call MPI_Recv( utflag, numTrajs(lvol)           , MPI_INTEGER         , recvId, lvol, MPI_COMM_SPEC, status, ierr)
             !write(*,*) "CPU 0 got utflag vector from CPU ",recvId
 
-            call MPI_Recv(   data, numTrajs(lvol)*4*Nz*nPpts, MPI_DOUBLE_PRECISION, recvId, lvol, MPI_COMM_WORLD, status, ierr)
+            call MPI_Recv(   data, numTrajs(lvol)*4*Nz*nPpts, MPI_DOUBLE_PRECISION, recvId, lvol, MPI_COMM_SPEC, status, ierr)
             !write(*,*) "CPU 0 got the corresponding Poincare data from CPU ",recvId
 
-            call MPI_Recv(  fiota, numTrajs(lvol)*2         , MPI_DOUBLE_PRECISION, recvId, lvol, MPI_COMM_WORLD, status, ierr)
+            call MPI_Recv(  fiota, numTrajs(lvol)*2         , MPI_DOUBLE_PRECISION, recvId, lvol, MPI_COMM_SPEC, status, ierr)
 !            write(*,*) "CPU 0 got the iota profile from CPU ",recvId,": sarr: "
 !            write(*,*) fiota(:,1)
 
@@ -258,9 +250,9 @@ subroutine pp00aa
         endif
 
       else
-        call MPI_Send( utflag, numTrajs(vvol)           , MPI_INTEGER         , 0, vvol, MPI_COMM_WORLD, ierr) ! success flag vector
-        call MPI_Send(   data, numTrajs(vvol)*4*Nz*nPpts, MPI_DOUBLE_PRECISION, 0, vvol, MPI_COMM_WORLD, ierr) ! Poincare data
-        call MPI_Send(  fiota, numTrajs(vvol)*2         , MPI_DOUBLE_PRECISION, 0, vvol, MPI_COMM_WORLD, ierr) ! rotational transform profile from field line tracing
+        call MPI_Send( utflag, numTrajs(vvol)           , MPI_INTEGER         , 0, vvol, MPI_COMM_SPEC, ierr) ! success flag vector
+        call MPI_Send(   data, numTrajs(vvol)*4*Nz*nPpts, MPI_DOUBLE_PRECISION, 0, vvol, MPI_COMM_SPEC, ierr) ! Poincare data
+        call MPI_Send(  fiota, numTrajs(vvol)*2         , MPI_DOUBLE_PRECISION, 0, vvol, MPI_COMM_SPEC, ierr) ! rotational transform profile from field line tracing
         ! diotadxup should be available in the master already, since it is stored in global
       endif ! myid.eq.0
 
@@ -282,7 +274,7 @@ subroutine pp00aa
   endif
 
   RETURN(pp00aa)
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 1001 format("pp00aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; odetol=",es8.1," ; nPpts=",i8," ; lnPtrj=",i3," ;")

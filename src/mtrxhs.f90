@@ -1,24 +1,30 @@
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!> \file
+!> \brief Constructs matrices that represent the Beltrami linear system, matrix-free.
 
-!title (build matrices) ! Constructs matrices that represent the Beltrami linear system, matrix-free.
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+!> \brief Constructs matrices that represent the Beltrami linear system, matrix-free.
+!> \ingroup grp_build_matrices
+!>
+!> @param lvol
+!> @param mn
+!> @param lrad
+!> @param resultA
+!> @param resultD
+!> @param idx
 subroutine mtrxhs( lvol, mn, lrad, resultA, resultD, idx )
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   use constants, only : zero, one, two, half
-  
+
   use numerical, only : small
-  
+
   use fileunits, only : ounit
-  
+
   use inputlist, only : Wmacros, Wmtrxhs, Mpol
-  
+
   use cputiming, only : Tmtrxhs
-  
-  use allglobal, only : ncpu, myid, cpus, &
+
+  use allglobal, only : ncpu, myid, cpus, MPI_COMM_SPEC, &
                         YESstellsym, NOTstellsym, &
                         im, in, &
                         NAdof, &
@@ -31,32 +37,32 @@ subroutine mtrxhs( lvol, mn, lrad, resultA, resultD, idx )
                         Lmavalue, Lmbvalue, Lmcvalue, Lmdvalue, &
                         Lmevalue, Lmfvalue, Lmgvalue, Lmhvalue, &
                         TT, RTT, RTM
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   LOCALS
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   INTEGER, intent(in)  :: lvol, mn, lrad, idx
 
   REAL, intent(out) :: resultA(0:NAdof(lvol)), resultD(0:NAdof(lvol))
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   INTEGER              :: NN, ii, ll, jj, ll1, mi, ni, id, jd, kk
-  
+
   REAL                 :: Wte, Wto, Wze, Wzo, Hte, Hto, Hze, Hzo
 
   REAL, allocatable    :: TTdata(:,:,:), TTMdata(:,:)
-  
-  
+
+
   BEGIN(mtrxhs)
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   NN = NAdof(lvol) ! shorthand;
-  
+
   ! making use of only the zeroth component of dMA
   resultA(0:NN) = zero
   resultD(0:NN) = zero
@@ -74,23 +80,23 @@ subroutine mtrxhs( lvol, mn, lrad, resultA, resultD, idx )
       TTMdata(0:lrad,ii) = TT(0:lrad,0,0)
     enddo
   endif
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   if( YESstellsym ) then
 !$OMP PARALLEL DO PRIVATE(ii,mi,ni,ll,ll1,kk,Wte,Wze,Hte,Hze,id,jd) SHARED(mn,lrad,resultA,resultD,TTMdata,TTdata)
     do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
-    
+
       do ll = 0, lrad
-       
+
         if (Lcoordinatesingularity) then
           if (ll < mi) cycle ! rule out zero components of Zernike;
-          if (mod(ll+mi,2) > 0) cycle ! rule out zero components of Zernike; 
+          if (mod(ll+mi,2) > 0) cycle ! rule out zero components of Zernike;
           ll1 = (ll - mod(ll, 2)) / 2 ! shrinked dof for Zernike; 02 Jul 19
         else
           ll1 = ll
         end if
-        
+
         Wte = -two * ni * Tss(ll1,ii) + two * Dzc(ll1,ii)
         Wze = -two * mi * Tss(ll1,ii) - two * Dtc(ll1,ii)
 
@@ -103,7 +109,7 @@ subroutine mtrxhs( lvol, mn, lrad, resultA, resultD, idx )
 
         id = Ate(lvol,0,ii)%i(ll) ; resultD(id) = Hte
         id = Aze(lvol,0,ii)%i(ll) ; resultD(id) = Hze
-        
+
         if( Lcoordinatesingularity .and. ii.eq.1 ) then ; kk = 1
         else                                            ; kk = 0
         endif
@@ -126,24 +132,24 @@ subroutine mtrxhs( lvol, mn, lrad, resultA, resultD, idx )
         endif
 
       enddo ! end of do ll ;
-      
+
     enddo ! end of do ii ;
 !$OMP END PARALLEL DO
 
   else ! NOTstellsym ;
 !$OMP PARALLEL DO PRIVATE(ii,mi,ni,ll,ll1,kk,Wte,Wze,Wzo,Wto,Hte,Hze,Hto,Hzo,id,jd) SHARED(mn,lrad,resultA,resultD,TTMdata,TTdata)
     do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
-    
+
       do ll = 0, lrad
-       
+
         if (Lcoordinatesingularity) then
           if (ll < mi) cycle ! rule out zero components of Zernike;
-          if (mod(ll+mi,2) > 0) cycle ! rule out zero components of Zernike; 
+          if (mod(ll+mi,2) > 0) cycle ! rule out zero components of Zernike;
           ll1 = (ll - mod(ll, 2)) / 2 ! shrinked dof for Zernike; 02 Jul 19
         else
           ll1 = ll
         end if
-        
+
         Wte = -two * ni * Tss(ll1,ii) + two * Dzc(ll1,ii)
         Wze = -two * mi * Tss(ll1,ii) - two * Dtc(ll1,ii)
         Wto = +two * ni * Tsc(ll1,ii) + two * Dzs(ll1,ii)
@@ -165,7 +171,7 @@ subroutine mtrxhs( lvol, mn, lrad, resultA, resultD, idx )
         id = Aze(lvol,0,ii)%i(ll) ; resultD(id) = Hze
         id = Ato(lvol,0,ii)%i(ll) ; resultD(id) = Hto
         id = Azo(lvol,0,ii)%i(ll) ; resultD(id) = Hzo
-        
+
         if( Lcoordinatesingularity .and. ii.eq.1 ) then ; kk = 1
         else                                            ; kk = 0
         endif
@@ -196,16 +202,16 @@ subroutine mtrxhs( lvol, mn, lrad, resultA, resultD, idx )
         endif
 
       enddo ! end of do ll ;
-      
+
     enddo ! end of do ii ;
 !$OMP END PARALLEL DO
   endif ! end of if( YESstellsym ) ;
 
   DALLOCATE( TTdata )
   DALLOCATE( TTMdata )
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  
+
   RETURN(mtrxhs)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

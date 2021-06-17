@@ -44,6 +44,7 @@ def plot_kam_surface(self, ns=[], ntheta=1000, zeta=0.0, ax=None, **kwargs):
             else:
                 _surf.plot(zeta=zeta, **kwargs)
             surfs.append(_surf)
+        plt.axis("equal")
         return surfs
     elif Igeometry == 2:
         for i in ns:
@@ -57,6 +58,7 @@ def plot_kam_surface(self, ns=[], ntheta=1000, zeta=0.0, ax=None, **kwargs):
                 _r, _z = _surf.rz(_theta, np.ones_like(_theta) * zeta)
                 plt.scatter(_r * np.cos(_theta), _r * np.sin(_theta), **kwargs)
             surfs.append(_surf)
+        plt.axis("equal")
         return surfs
     elif Igeometry == 1:
         for i in ns:
