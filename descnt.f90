@@ -126,7 +126,9 @@ subroutine descnt( NGdof, position, ihybrd )
 
   BEGIN(descnt)
   
+  if(Lfindzero.eq.3) then
   Ldescent = .TRUE.
+  endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -591,6 +593,7 @@ subroutine fcnanderson(xx, NGdof)
 
   if(it .eq. maxitdesc .and. myid.eq.0) then
    write(*,*) "EXCEEDED MAX NUMBER OF ITERATIONS " , ForceErr
+   exit
   endif
   
   if (myid .eq. 0) then
@@ -628,7 +631,7 @@ subroutine fcnanderson(xx, NGdof)
  else
  ! ----- RUN WITH ANDERSON ACCELERATION -----
 
- posref = zero; G = zero; grcond = 1.0E-15; 
+ posref = zero; G = zero; grcond = 1.0E-8; 
 
  alpha(1:Manderson) = zero; alpha(Manderson+1) = 1; alphabar = zero;
 
@@ -640,7 +643,7 @@ subroutine fcnanderson(xx, NGdof)
  enddo  
 
  call dforce(NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives, LComputeAxis)
- 
+  
  posref(1:NGdof,Manderson+1) = position(1:NGdof) - dxdesc*force(1:NGdof)!/ForceErr
 
  G(1:NGdof,Manderson+1)      = posref(1:NGdof,Manderson+1) - position(1:NGdof)
@@ -675,12 +678,12 @@ subroutine fcnanderson(xx, NGdof)
   
   posref(1:NGdof,1:Manderson) = posref(1:NGdof,2:Manderson+1)
 
-  posref(1:NGdof,Manderson+1) = posref(1:NGdof,Manderson) - dxdesc*force(1:NGdof)!/ForceErr
+  posref(1:NGdof,Manderson+1) = position(1:NGdof) - dxdesc*force(1:NGdof)!/ForceErr
 
   G(1:NGdof,1:Manderson)      = G(1:NGdof,2:Manderson+1)
 
   G(1:NGdof,Manderson+1)      = posref(1:NGdof,Manderson+1) - position(1:NGdof)
-
+ 
   if(it >= Manderson) then
    Gbar(1:NGdof,1:Manderson)   = matmul(G(1:NGdof,1:Manderson+1),W(1:Manderson+1,1:Manderson))
    !solve least square linear problem for alphabar
@@ -780,12 +783,13 @@ subroutine fcnanderson(xx, NGdof)
   endif
 
   if(ForceErr<ftoldesc .and. myid.eq.0 ) then
-   write(*,*) "FORCE BELOW TOLERANCE"
+   write(*,*) "FORCE BELOW TOLERANCE after ", it, " iterations"
    exit
   endif
 
   if(it .eq. maxitdesc .and. myid.eq.0) then
-   write(*,*) "EXCEEDED MAX NUMBER OF ITERATIONS " , ForceErr
+   write(*,*) "EXCEEDED MAX NUMBER OF ITERATIONS, Force = " , ForceErr
+   exit
   endif
 
   if (myid .eq. 0) then

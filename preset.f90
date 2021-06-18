@@ -54,7 +54,16 @@ subroutine preset
   Mrad  = maxval( Lrad(1:Mvol) )
 
   if( myid.eq.0 ) write(ounit,'("preset : ",10x," : myid=",i3," ; Mrad=",i3," : Lrad=",257(i3,",",:))') myid, Mrad, Lrad(1:Mvol)
-  
+
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+! This needs to be generalized, it is clumsy at the moment (under construction)
+
+  if(Lfindzero.eq.4) then
+   Ldescent          = .false.
+  endif 
+ 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 !latex \subsubsection{\type{LGdof} and \type{NGdof} : number of geometrical degrees-of-freedom;}
@@ -264,9 +273,9 @@ endif
 !latex \item The internal logical variable, \type{Lhessianallocated}, indicates whether the ``Hessian'' matrix of second-partial derivatives
 !latex       (really, the first derivatives of the force-vector) has been allocated, or not!
 !latex \end{enumerate}
-  
+   
   Lhessianallocated = .false.
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 !latex \subsubsection{\type{ki(1:mn,0:1)} : Fourier identification;}
@@ -1139,6 +1148,7 @@ endif
      endif
     enddo
     if (Lfindzero .gt. 2) then
+      !psifactor(1:mn,vvol) = one
       psifactor(1:mn,vvol) = one /  tflux(vvol)**half
     endif
    enddo
