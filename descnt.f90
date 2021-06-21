@@ -126,10 +126,6 @@ subroutine descnt( NGdof, position, ihybrd )
 
   BEGIN(descnt)
   
-  if(Lfindzero.eq.3) then
-  Ldescent = .TRUE.
-  endif
-
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   nFcalls = 0 ; nDcalls= 0 ! counters;
@@ -830,6 +826,7 @@ subroutine fcnanderson(xx, NGdof)
    DALLOCATE( Gbaro )
    DALLOCATE( Ro )
    DALLOCATE( Bmo )
+   DALLOCATE( Amo )
    DALLOCATE( Svalo )
    DALLOCATE( alphao )
    DALLOCATE( alphabaro )
