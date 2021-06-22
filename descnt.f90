@@ -125,7 +125,9 @@ subroutine descnt( NGdof, position, ihybrd )
   end interface
 
   BEGIN(descnt)
-  
+ 
+  Ldescent = .TRUE.
+ 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   nFcalls = 0 ; nDcalls= 0 ! counters;
