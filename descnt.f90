@@ -177,6 +177,20 @@ subroutine descnt( NGdof, position, ihybrd )
 
   
   Lhessianallocated = .false.
+
+if(Lfindzero.eq.3) then
+    SALLOCATE( dFFdRZ, (1:LGdof,0:1,1:LGdof,0:1,1:Mvol), zero )
+    SALLOCATE( dBBdmp, (1:LGdof,1:Mvol,0:1,1:2), zero )
+   if( LocalConstraint ) then
+        SALLOCATE( dmupfdx, (1:Mvol,    1:1,1:2,1:LGdof,0:1), zero )
+   else
+        SALLOCATE( dmupfdx, (1:Mvol, 1:Mvol-1,1:2,1:LGdof,1), zero ) ! TODO change the format to put vvol in last index position...
+   endif
+    SALLOCATE( hessian, (1:NGdof,1:NGdof), zero )
+    SALLOCATE( dessian, (1:NGdof,1:LGdof), zero )
+    Lhessianallocated = .true.
+endif
+
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -205,13 +219,24 @@ subroutine descnt( NGdof, position, ihybrd )
    
   end select
   
-  
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 	call MPI_BARRIER( MPI_COMM_WORLD, ierr2)
 
   DALLOCATE( fjac )
   DALLOCATE( RR )
 
+if(Lfindzero.eq.3) then
+    DALLOCATE( dFFdRZ )
+    DALLOCATE( dBBdmp )
+   if( LocalConstraint ) then
+        DALLOCATE( dmupfdx )
+   else   
+        DALLOCATE( dmupfdx )
+   endif
+    DALLOCATE( hessian )
+    DALLOCATE( dessian )
+    Lhessianallocated = .false.
+endif
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   RETURN(descnt)
   
@@ -395,7 +420,8 @@ subroutine fcndescent(xx, NGdof)
  use fileunits, only : ounit
 
  use allglobal, only  : wrtend, ForceErr, lMMl, lLLl, Energy, sweight, myid, &
-                        BBe, BBo, IIe, IIo, NOTstellsym, ncpu, cpus, Mvol
+                        BBe, BBo, IIe, IIo, NOTstellsym, ncpu, cpus, Mvol, &
+                        hessian
 
  use cputiming, only : Tdescnt
 
@@ -411,7 +437,7 @@ subroutine fcndescent(xx, NGdof)
  REAL                 :: time_step=1.0E-3
  INTEGER,parameter    :: ndamp=15
 
- REAL                 :: position(0:NGdof), force(0:NGdof)
+ REAL                 :: position(0:NGdof), force(0:NGdof), precond(1:NGdof)
 
  REAL                 :: otau(1:ndamp), xdot(1:NGdof)
  REAL                 :: fsq, fsq1, otav, b1, fac, dtau
@@ -420,7 +446,7 @@ subroutine fcndescent(xx, NGdof)
  LOGICAL              :: LComputeDerivatives, LComputeAxis
  CHARACTER            :: pack
 
- position = zero ; force = zero ; position(1:NGdof) = xx(1:NGdof) 
+ position = zero ; force = zero ; position(1:NGdof) = xx(1:NGdof); precond(1:NGdof) = one 
 
  LComputeDerivatives = .false.; LComputeAxis = .true.
 
@@ -437,7 +463,17 @@ subroutine fcndescent(xx, NGdof)
  
   it = it + 1
  
+  if(it.eq.1) then
+   LComputeDerivatives = .true.
+  else
+   LComputeDerivatives = .false.
+  endif
+
   call dforce(NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives, LComputeAxis)
+   
+  do idof=1,NGdof
+  precond(idof) = 1/ABS(hessian(idof,idof))
+  enddo
 
   fsq1 = sum(force(1:NGdof)**2)
 
@@ -463,12 +499,14 @@ subroutine fcndescent(xx, NGdof)
 !     BASED ON A METHOD GIVEN BY P. GARABEDIAN
 !
 
-  xdot = fac*(b1*xdot - time_step*force(1:NGdof))                 ! update velocity
+  xdot = fac*(b1*xdot - time_step*precond(1:NGdof)*force(1:NGdof))                 ! update velocity
   position(1:NGdof) = position(1:NGdof) + time_step*xdot          ! advance xc by velocity given in xcdot
 
 
-  if(ForceErr<ftoldesc .and. myid.eq.0 ) then
-   write(*,*) "FORCE BELOW TOLERANCE"
+  if(ForceErr<ftoldesc) then
+   if(myid.eq.0) then
+    write(*,*) "FORCE BELOW TOLERANCE"
+   endif
    exit
   endif
 
@@ -508,8 +546,9 @@ subroutine fcndescent(xx, NGdof)
     endif
   endif
  enddo
-
+ 
  xx = position(1:NGdof)
+
 1000 format("descnt : ",f10.2," : "i9,i3," ; ":"|f|="es12.5" ; ":"time=",f10.2,"s ;":" log"a5"="28f6.2" ...")
 1001 format("descnt : ", 10x ," : "9x,3x" ; ":"    "  12x "   ":"     ", 10x ,"  ;":" log"a5"="28f6.2" ...")
 1002 format("descnt :            : Energy ", es23.15, "  ;")
@@ -526,7 +565,8 @@ subroutine fcnanderson(xx, NGdof)
  use fileunits, only : ounit
 
  use inputlist, only  : epsilon, Igeometry, Wdescnt, &
-                        dxdesc, ftoldesc, maxitdesc, Lwritedesc, nwritedesc, Manderson
+                        dxdesc, ftoldesc, maxitdesc, Lwritedesc, nwritedesc, Manderson, &
+                        Wmacros
 
  use fileunits, only : ounit
 
@@ -593,7 +633,6 @@ subroutine fcnanderson(xx, NGdof)
 
   if(it .eq. maxitdesc .and. myid.eq.0) then
    write(*,*) "EXCEEDED MAX NUMBER OF ITERATIONS " , ForceErr
-   exit
   endif
   
   if (myid .eq. 0) then
@@ -784,14 +823,13 @@ subroutine fcnanderson(xx, NGdof)
 
   if(ForceErr<ftoldesc) then
    if(myid.eq.0) then
-    write(*,*) "FORCE BELOW TOLERANCE after ", it, " iterations"
+    write(*,*) "FORCE BELOW TOLERANCE"
    endif
    exit
   endif
 
   if(it .eq. maxitdesc .and. myid.eq.0) then
    write(*,*) "EXCEEDED MAX NUMBER OF ITERATIONS, Force = " , ForceErr
-   exit
   endif
 
   if (myid .eq. 0) then
