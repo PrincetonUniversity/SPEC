@@ -584,8 +584,10 @@ subroutine fcnanderson(xx, NGdof)
 
   position(1:NGdof) = position(1:NGdof) - dxdesc*force(1:NGdof)!/ForceErr
 
-  if(ForceErr<ftoldesc .and. myid.eq.0 ) then
-   write(*,*) "FORCE BELOW TOLERANCE"
+  if(ForceErr<ftoldesc) then
+   if(myid.eq.0) then
+    write(*,*) "FORCE BELOW TOLERANCE"
+   endif
    exit
   endif
 
@@ -780,8 +782,10 @@ subroutine fcnanderson(xx, NGdof)
    enddo
   endif
 
-  if(ForceErr<ftoldesc .and. myid.eq.0 ) then
-   write(*,*) "FORCE BELOW TOLERANCE after ", it, " iterations"
+  if(ForceErr<ftoldesc) then
+   if(myid.eq.0) then
+    write(*,*) "FORCE BELOW TOLERANCE after ", it, " iterations"
+   endif
    exit
   endif
 
