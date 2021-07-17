@@ -174,8 +174,8 @@ def get_B(
     tarr=np.linspace(0, 0, 1),
     zarr=np.linspace(0, 0, 1),
 ):
-    Bcontra_and_s_der = get_B_and_s_der(self, lvol, jacobian, sarr, tarr, zarr)
-    return Bcontra_and_s_der[0:3]
+    Bcontra_and_der = get_B_and_der(self, lvol, jacobian, sarr, tarr, zarr)
+    return Bcontra_and_der[0:3]
 
 def get_s_der_B(
     self,
@@ -185,10 +185,33 @@ def get_s_der_B(
     tarr=np.linspace(0, 0, 1),
     zarr=np.linspace(0, 0, 1),
 ):
-    Bcontra_and_s_der = get_B_and_s_der(self, lvol, jacobian, sarr, tarr, zarr)
-    return Bcontra_and_s_der[3:6]
+    Bcontra_and_der = get_B_and_der(self, lvol, jacobian, sarr, tarr, zarr)
+    return Bcontra_and_der[3:6]
 
-def get_B_and_s_der(
+def get_t_der_B(
+    self,
+    lvol=0,
+    jacobian=None,
+    sarr=np.linspace(1, 1, 1),
+    tarr=np.linspace(0, 0, 1),
+    zarr=np.linspace(0, 0, 1),
+):
+    Bcontra_and_der = get_B_and_der(self, lvol, jacobian, sarr, tarr, zarr)
+    return Bcontra_and_der[6:9]
+
+def get_z_der_B(
+    self,
+    lvol=0,
+    jacobian=None,
+    sarr=np.linspace(1, 1, 1),
+    tarr=np.linspace(0, 0, 1),
+    zarr=np.linspace(0, 0, 1),
+):
+    Bcontra_and_der = get_B_and_der(self, lvol, jacobian, sarr, tarr, zarr)
+    return Bcontra_and_der[9:12]
+
+
+def get_B_and_der(
     self,
     lvol=0,
     jacobian=None,
@@ -226,46 +249,10 @@ def get_B_and_s_der(
 
     LZernike = self.input.physics.Igeometry > 1 and lvol == 0
 
-    if LZernike:
-        # Zernike polynomial being used
-        from ._processing import _get_zernike
-
-        zernike, dzernike, d2zernike = _get_zernike(sbar, Lrad, Mpol)
-
-        c = (
-            im[nax, :, nax, nax] * Azo.T[:, :, nax, nax]
-            + in_[nax, :, nax, nax] * Ato.T[:, :, nax, nax]
-        ) * cosa[nax, :, :, :] - (
-            im[nax, :, nax, nax] * Aze.T[:, :, nax, nax]
-            + in_[nax, :, nax, nax] * Ate.T[:, :, nax, nax]
-        ) * sina[
-            nax, :, :, :
-        ]
-
-        Bs   = np.sum( zernike[:, :, im, None, None] * c[None, :, :, :, :], axis=(1, 2))
-        dsBs = np.sum(dzernike[:, :, im, None, None] * c[None, :, :, :, :], axis=(1, 2))
-
-        c1 = (
-              Aze.T[:, :, nax, nax] * cosa[nax, :, :, :]
-            + Azo.T[:, :, nax, nax] * sina[nax, :, :, :]
-        )
-        Bt   = -np.sum( dzernike[:, :, im, None, None] * c1[None, :, :, :, :], axis=(1, 2))
-        dsBt = -np.sum(d2zernike[:, :, im, None, None] * c1[None, :, :, :, :], axis=(1, 2))
-
-        c2 = (
-              Ate.T[:, :, nax, nax] * cosa[nax, :, :, :]
-            + Ato.T[:, :, nax, nax] * sina[nax, :, :, :]
-        )
-
-        Bz   = np.sum( dzernike[:, :, im, None, None] * c2[None, :, :, :, :], axis=(1, 2))
-        dsBz = np.sum(d2zernike[:, :, im, None, None] * c2[None, :, :, :, :], axis=(1, 2))
-
-    else:
-        # Chebyshev being used
-        import numpy.polynomial.chebyshev as Cheb
-
-        lcoeff = np.arange(0, Lrad + 1) + 1
+    if not LZernike:
         # make basis recombination for cheb
+        lcoeff = np.arange(0, Lrad + 1) + 1
+
         Ate = Ate / lcoeff[None, :]
         Aze = Aze / lcoeff[None, :]
         Ato = Ato / lcoeff[None, :]
@@ -276,37 +263,100 @@ def get_B_and_s_der(
         Ato[:, 0] = np.sum(Ato * (-1.0) ** lcoeff[None, :], 1)
         Azo[:, 0] = np.sum(Azo * (-1.0) ** lcoeff[None, :], 1)
 
-        # Ch ,mn,t ,z
-        c = (
-            im[nax, :, nax, nax] * Azo.T[:, :, nax, nax]
-            + in_[nax, :, nax, nax] * Ato.T[:, :, nax, nax]
-        ) * cosa[nax, :, :, :] - (
-            im[nax, :, nax, nax] * Aze.T[:, :, nax, nax]
-            + in_[nax, :, nax, nax] * Ate.T[:, :, nax, nax]
-        ) * sina[
-            nax, :, :, :
-        ]
+
+    c = (
+          im[nax, :, nax, nax]  * Azo.T[:, :, nax, nax]
+        + in_[nax, :, nax, nax] * Ato.T[:, :, nax, nax]
+    ) * cosa[nax, :, :, :] - (
+          im[nax, :, nax, nax]  * Aze.T[:, :, nax, nax]
+        + in_[nax, :, nax, nax] * Ate.T[:, :, nax, nax]
+    ) * sina[nax, :, :, :]
+    
+    ct = im[nax, :, nax, nax] * ( - (
+          im[nax, :, nax, nax]  * Azo.T[:, :, nax, nax]
+        + in_[nax, :, nax, nax] * Ato.T[:, :, nax, nax]
+    ) * sina[nax, :, :, :] - (
+          im[nax, :, nax, nax]  * Aze.T[:, :, nax, nax]
+        + in_[nax, :, nax, nax] * Ate.T[:, :, nax, nax]
+    ) * cosa[nax, :, :, :] )
+
+    cz = in_[nax, :, nax, nax] * ( (
+          im[nax, :, nax, nax]  * Azo.T[:, :, nax, nax]
+        + in_[nax, :, nax, nax] * Ato.T[:, :, nax, nax]
+    ) * sina[nax, :, :, :] + (
+          im[nax, :, nax, nax]  * Aze.T[:, :, nax, nax]
+        + in_[nax, :, nax, nax] * Ate.T[:, :, nax, nax]
+    ) * cosa[nax, :, :, :] )
+
+
+    c1 = (
+          Aze.T[:, :, nax, nax] * cosa[nax, :, :, :]
+        + Azo.T[:, :, nax, nax] * sina[nax, :, :, :])
+    
+    c1t = im[nax, :, nax, nax] * (
+        - Aze.T[:, :, nax, nax] * sina[nax, :, :, :]
+        + Azo.T[:, :, nax, nax] * cosa[nax, :, :, :])
+
+    c1z = in_[nax, :, nax, nax] * (
+        + Aze.T[:, :, nax, nax] * sina[nax, :, :, :]
+        - Azo.T[:, :, nax, nax] * cosa[nax, :, :, :])
+
+
+    c2 = (
+          Ate.T[:, :, nax, nax] * cosa[nax, :, :, :]
+        + Ato.T[:, :, nax, nax] * sina[nax, :, :, :])
+
+    c2t = im[nax, :, nax, nax] * (
+        - Ate.T[:, :, nax, nax] * sina[nax, :, :, :]
+        + Ato.T[:, :, nax, nax] * cosa[nax, :, :, :])
+
+    c2z = in_[nax, :, nax, nax] * (
+        + Ate.T[:, :, nax, nax] * sina[nax, :, :, :]
+        - Ato.T[:, :, nax, nax] * cosa[nax, :, :, :])
+        
+
+    if LZernike:
+        # Zernike polynomial being used
+        from ._processing import _get_zernike
+
+        zernike, dzernike, d2zernike = _get_zernike(sbar, Lrad, Mpol)
+
+        Bs   = np.sum( zernike[:, :, im, None, None] * c[None, :, :, :, :],  axis=(1, 2))
+        dsBs = np.sum(dzernike[:, :, im, None, None] * c[None, :, :, :, :],  axis=(1, 2))
+        dtBs = np.sum( zernike[:, :, im, None, None] * ct[None, :, :, :, :], axis=(1, 2))
+        dzBs = np.sum( zernike[:, :, im, None, None] * cz[None, :, :, :, :], axis=(1, 2))
+
+        Bt   = -np.sum( dzernike[:, :, im, None, None] * c1[None, :, :, :, :],  axis=(1, 2))
+        dsBt = -np.sum(d2zernike[:, :, im, None, None] * c1[None, :, :, :, :],  axis=(1, 2))
+        dtBt = -np.sum( dzernike[:, :, im, None, None] * c1t[None, :, :, :, :], axis=(1, 2))
+        dzBt = -np.sum( dzernike[:, :, im, None, None] * c1z[None, :, :, :, :], axis=(1, 2))
+
+        Bz   = np.sum( dzernike[:, :, im, None, None] * c2[None, :, :, :, :],  axis=(1, 2))
+        dsBz = np.sum(d2zernike[:, :, im, None, None] * c2[None, :, :, :, :],  axis=(1, 2))
+        dtBz = np.sum( dzernike[:, :, im, None, None] * c2t[None, :, :, :, :], axis=(1, 2))
+        dzBz = np.sum( dzernike[:, :, im, None, None] * c2z[None, :, :, :, :], axis=(1, 2))
+
+    else:
+        # Chebyshev being used
+        import numpy.polynomial.chebyshev as Cheb
 
         Bs   = np.rollaxis(np.sum(Cheb.chebval(sarr, c),               axis=0), 2)
         dsBs = np.rollaxis(np.sum(Cheb.chebval(sarr, Cheb.chebder(c)), axis=0), 2)
+        dtBs = np.rollaxis(np.sum(Cheb.chebval(sarr, ct),              axis=0), 2)
+        dzBs = np.rollaxis(np.sum(Cheb.chebval(sarr, cz),              axis=0), 2)
 
-        c1 = (
-              Aze.T[:, :, nax, nax] * cosa[nax, :, :, :]
-            + Azo.T[:, :, nax, nax] * sina[nax, :, :, :]
-        )
-        Bt   = -np.rollaxis(np.sum(Cheb.chebval(sarr, Cheb.chebder(c1)),     axis=0),2)
-        dsBt = -np.rollaxis(np.sum(Cheb.chebval(sarr, Cheb.chebder(c1,m=2)), axis=0),2)
+        Bt   = -np.rollaxis(np.sum(Cheb.chebval(sarr, Cheb.chebder(c1)),      axis=0),2)
+        dsBt = -np.rollaxis(np.sum(Cheb.chebval(sarr, Cheb.chebder(c1,m=2)),  axis=0),2)
+        dtBt = -np.rollaxis(np.sum(Cheb.chebval(sarr, Cheb.chebder(c1t)),     axis=0),2)
+        dzBt = -np.rollaxis(np.sum(Cheb.chebval(sarr, Cheb.chebder(c1z)),     axis=0),2)
 
-        c2 = (
-              Ate.T[:, :, nax, nax] * cosa[nax, :, :, :]
-            + Ato.T[:, :, nax, nax] * sina[nax, :, :, :]
-        )
-        Bz   = np.rollaxis(np.sum(Cheb.chebval(sarr, Cheb.chebder(c2)),     axis=0),2)
-        dsBz = np.rollaxis(np.sum(Cheb.chebval(sarr, Cheb.chebder(c2,m=2)), axis=0),2)
-        
+        Bz   = np.rollaxis(np.sum(Cheb.chebval(sarr, Cheb.chebder(c2)),      axis=0),2)
+        dsBz = np.rollaxis(np.sum(Cheb.chebval(sarr, Cheb.chebder(c2,m=2)),  axis=0),2)
+        dtBz = np.rollaxis(np.sum(Cheb.chebval(sarr, Cheb.chebder(c2t)),     axis=0),2)
+        dzBz = np.rollaxis(np.sum(Cheb.chebval(sarr, Cheb.chebder(c2z)),     axis=0),2)
 
-    Bcontrav_and_s_der = np.array([Bs, Bt, Bz, dsBs, dsBt, dsBz]) / jacobian
-    return Bcontrav_and_s_der
+    Bcontrav_and_der = np.array([Bs, Bt, Bz, dsBs, dsBt, dsBz, dtBs, dtBt, dtBz, dzBs, dzBt, dzBz]) / jacobian
+    return Bcontrav_and_der
 
 
 # Bcontrav = get_B(s,lvol=lvol,jacobian=jacobian,sarr=sarr,tarr=tarr,zarr=zarr)
@@ -323,7 +373,7 @@ def get_B_covariant(self, Bcontrav, g):
     return Bco    
 
 
-@jit(nopython=True)
+#@jit(nopython=True)
 def _get_zernike(sarr, lrad, mpol):
     """
     Get the value of the zernike polynomials, their first and second derivatives

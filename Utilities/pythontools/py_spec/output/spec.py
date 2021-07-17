@@ -36,7 +36,9 @@ class SPECout:
         metric,
         get_B,
         get_s_der_B,
-        get_B_and_s_der,
+        get_t_der_B,
+        get_z_der_B,
+        get_B_and_der,
         get_modB,
         get_B_covariant
     )
