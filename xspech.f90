@@ -934,18 +934,13 @@ subroutine ending
 
   use cputiming
 
-  use allglobal, only : myid, cpus, mn, MPI_COMM_SPEC, ext, mmRZRZ, nnRZRZ, allRZRZ
-
+  use allglobal, only : myid, cpus, mn, MPI_COMM_SPEC, ext
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   LOCALS
 
   REAL      :: Ttotal, dcpu, ecpu
   CHARACTER :: date*8, time*10
-
-! Need to deallocate if not done before.
-! This are the only variables not allocated in preset()...
-  if(allocated(mmRZRZ)) deallocate(mmRZRZ, nnRZRZ, allRZRZ)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
