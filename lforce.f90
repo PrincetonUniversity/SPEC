@@ -157,7 +157,7 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, ifl
                         Lcoordinatesingularity, Mvol, &
                         iRbc, iZbs, iRbs, iZbc, &
                         YESstellsym, NOTstellsym, &
-                        mn, im, in, regumm, &
+                        mn, im, in, &
                         ijreal, ijimag, jireal, jiimag, &
                         efmn, ofmn, cfmn, sfmn, evmn, odmn, comn, simn, &
                         Nt, Nz, &

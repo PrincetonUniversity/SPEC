@@ -57,7 +57,7 @@ subroutine preset
   case( 0 )    ; YESstellsym = .false. ; NOTstellsym = .true.
   case( 1 )    ; YESstellsym = .true.  ; NOTstellsym = .false.
   case default ;
-   FATAL( readin, .true., illegal Istellsym )
+   FATAL( preset, .true., illegal Istellsym )
   end select
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -67,7 +67,7 @@ subroutine preset
 !latex \item The number of plasma volumes is \internal{Mvol}=\inputvar{Nvol}+\inputvar{Lfreebound};
 !latex \end{enumerate}
 
-  FATAL( readin, Lfreebound.lt.0 .or. Lfreebound.gt.1, illegal Lfreebound )
+  FATAL( preset, Lfreebound.lt.0 .or. Lfreebound.gt.1, illegal Lfreebound )
 
   Mvol = Nvol + Lfreebound
 
@@ -76,6 +76,26 @@ subroutine preset
   SALLOCATE( beltramierror,(1:Mvol,1:9), zero)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+! Check boundary representation and set truncation
+
+  if( NOTstellsym .and. Lboundary.eq.1 ) then
+    FATAL( preset, .true., Henneberg representation only implemented for stellarator symmetric configurations )
+  endif
+
+  if( Igeometry.ne.3 .and. Lboundary.eq.1 ) then
+    FATAL( preset, .true., Henneberg representation only valid in toroidal geometry )
+  endif
+
+  if( Lboundary==0 ) then
+    twoalpha = 0.0
+  endif
+
+  MpolRZ = Mpol
+  NtorRZ = Ntor + twoalpha
+
+  MpolF  = Mpol + 1
+  NtorF  = Ntor
+
 
 !latex \subsubsection{\type{mn}, \type{im(1:mn)} and \type{in(1:mn)} : Fourier mode identification}
 !latex \begin{enumerate}
@@ -91,27 +111,46 @@ subroutine preset
 !latex \item The array \type{in} includes the \type{Nfp} factor.
 !latex \end{enumerate}
 
-  mn = 1 + Ntor +  Mpol * ( 2 *  Ntor + 1 ) ! Fourier resolution of interface geometry & vector potential;
+  mn   = 1 + Ntor   +  Mpol   * ( 2 *  Ntor   + 1 ) ! Fourier resolution of interface geometry & vector potential;
+  mnRZ = 1 + NtorRZ +  MpolRZ * ( 2 *  NtorRZ + 1 ) ! Fourier resolution of interface geometry & vector potential;
+  mnf  = 1 + NtorF  +  MpolF  * ( 2 *  NtorF  + 1 ) ! Fourier resolution of interface geometry & vector potential;
 
-  SALLOCATE( im, (1:mn), 0 )
-  SALLOCATE( in, (1:mn), 0 )
+  SALLOCATE( im  , (1:mn  ), 0 )
+  SALLOCATE( in  , (1:mn  ), 0 )
+  SALLOCATE( imRZ, (1:mnRZ), 0 )
+  SALLOCATE( inRZ, (1:mnRZ), 0 )
+  SALLOCATE( imf , (1:mnf ), 0 )
+  SALLOCATE( inf , (1:mnf ), 0 )
 
-  call gi00ab(  Mpol,  Ntor, Nfp, mn, im(1:mn), in(1:mn) ) ! this sets the im and in mode identification arrays;
+  call gi00ab(  Mpol,  Ntor, Nfp, mn  , im(1:mn  ), in(1:mn  ) ) ! this sets the im and in mode identification arrays;
+  call gi00ab(  Mpol,  Ntor, Nfp, mnRZ, imRZ(1:mnRZ), inRZ(1:mnRZ) ) ! this sets the im and in mode identification arrays;
+  call gi00ab(  Mpol,  Ntor, Nfp, mnf , imf(1:mnf ), inf(1:mnf ) ) ! this sets the im and in mode identification arrays;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !latex \subsubsection{\type{halfmm(1:mn}, regumm(1:mn) : regularization factor}
 !latex \begin{enumerate}
 !latex \item The ``regularization'' factor, \type{halfmm(1:mn)} = \type{im(1:mn)} * \type{half}, is real.
-!latex \item This is used in \link{lforce}, \link{bfield}, \link{stzxyz}, \link{coords}, \link{jo00aa}, \link{ma00aa}, \link{sc00aa} and \link{tr00ab}.
 !latex \end{enumerate}
 
-  SALLOCATE( halfmm, (1:mn), im(1:mn) * half )
-  SALLOCATE( regumm, (1:mn), im(1:mn) * half )
+  if( Lboundary.eq.0 ) then ! RZ representation and interpolation
+    SALLOCATE( halfmm, (1:mnRZ), imRZ(1:mnRZ) * half )
+    SALLOCATE( regumm, (1:mnRZ), imRZ(1:mnRZ) * half )
+  else ! Henneberg representation
+    SALLOCATE( halfmm, (1:mn), im(1:mn) * half )
+    SALLOCATE( regumm, (1:mn), im(1:mn) * half )
+  endif
+
 
   if( Mregular.ge.2 ) then
 
-   where( im.gt.Mregular ) regumm = Mregular * half
+
+   if( Lboundary.eq.0 ) then
+    where( imRZ.gt.Mregular ) regumm = Mregular * half
+   else
+    where( im.gt.Mregular ) regumm = Mregular * half
+   endif
+
 
   endif
 
@@ -126,7 +165,7 @@ subroutine preset
 
 ! lMpol =   Mpol ; lNtor =   Ntor ! no    enhanced resolution for metrics;
 ! lMpol = 2*Mpol ; lNtor = 2*Ntor !       enhanced resolution for metrics;
-  lMpol = 4*Mpol ; lNtor = 4*Ntor ! extra-enhanced resolution for metrics;
+  lMpol = 4*Mpolf ; lNtor = 4*Ntorf ! extra-enhanced resolution for metrics;
 
   mne = 1 + lNtor + lMpol * ( 2 * lNtor + 1 ) ! resolution of metrics; enhanced resolution; see metrix;
 
@@ -141,8 +180,8 @@ subroutine preset
 
   sMpol = iMpol ; sNtor = iNtor
 
-  if( iMpol.le.0 ) sMpol = Mpol - iMpol
-  if( iNtor.le.0 ) sNtor = Ntor - iNtor
+  if( iMpol.le.0 ) sMpol = Mpolf - iMpol
+  if( iNtor.le.0 ) sNtor = Ntorf - iNtor
   if(  Ntor.eq.0 ) sNtor = 0
 
   mns = 1 + sNtor + sMpol * ( 2 * sNtor + 1 ) ! resolution of straight-field line transformation on interfaces; see tr00ab; soon to be redundant;
@@ -180,24 +219,30 @@ subroutine preset
 !latex \item \type{iVns}, \type{iVnc}, \type{iBns} and \type{iBns} : Fourier harmonics of normal field at computational boundary;
 !latex \end{enumerate}
 
-  SALLOCATE( iRbc, (1:mn,0:Mvol), zero ) ! interface Fourier harmonics;
-  SALLOCATE( iZbs, (1:mn,0:Mvol), zero )
-  SALLOCATE( iRbs, (1:mn,0:Mvol), zero )
-  SALLOCATE( iZbc, (1:mn,0:Mvol), zero )
+  SALLOCATE( iRbc, (1:mnRZ,0:Mvol), zero ) ! interface Fourier harmonics;
+  SALLOCATE( iZbs, (1:mnRZ,0:Mvol), zero )
+  SALLOCATE( iRbs, (1:mnRZ,0:Mvol), zero )
+  SALLOCATE( iZbc, (1:mnRZ,0:Mvol), zero )
+
+  if( Lboundary.eq.1 ) then
+    SALLOCATE( irhoc, (1:mn  , 0:Mvol), zero )
+    SALLOCATE( ibc   , (0:Ntor, 0:Mvol), zero )
+  endif
+
 
   if( Lperturbed.eq.1 ) then
-  SALLOCATE( dRbc, (1:mn,0:Mvol), zero ) ! interface Fourier harmonics;
-  SALLOCATE( dZbs, (1:mn,0:Mvol), zero )
-  SALLOCATE( dRbs, (1:mn,0:Mvol), zero )
-  SALLOCATE( dZbc, (1:mn,0:Mvol), zero )
+  SALLOCATE( dRbc, (1:mnRZ,0:Mvol), zero ) ! interface Fourier harmonics;
+  SALLOCATE( dZbs, (1:mnRZ,0:Mvol), zero )
+  SALLOCATE( dRbs, (1:mnRZ,0:Mvol), zero )
+  SALLOCATE( dZbc, (1:mnRZ,0:Mvol), zero )
   endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  SALLOCATE( iVns, (1:mn), zero )
-  SALLOCATE( iBns, (1:mn), zero )
-  SALLOCATE( iVnc, (1:mn), zero )
-  SALLOCATE( iBnc, (1:mn), zero )
+  SALLOCATE( iVns, (1:mnf), zero )
+  SALLOCATE( iBns, (1:mnf), zero )
+  SALLOCATE( iVnc, (1:mnf), zero )
+  SALLOCATE( iBnc, (1:mnf), zero )
 
  !SALLOCATE( lRbc, (1:mn), zero ) ! not used; SRH: 27 Feb 18;
  !SALLOCATE( lZbs, (1:mn), zero )
@@ -214,9 +259,9 @@ subroutine preset
 !latex       \internal{ajk[i]} $\equiv 0   $ if $m_i \ne 0$.
 !latex \end{enumerate}
 
-  SALLOCATE( ajk, (1:mn), zero ) ! this must be allocated & assigned now, as it is used in readin; primarily used in packxi; 02 Jan 15;
+  SALLOCATE( ajk, (1:mnRZ), zero ) ! this must be allocated & assigned now, as it is used in readin; primarily used in packxi; 02 Jan 15;
 
-  do kk = 1, mn ; mk = im(kk) ; nk = in(kk)
+  do kk = 1, mnRZ ; mk = imRZ(kk) ; nk = inRZ(kk)
 
    if( mk.eq.0 ) ajk(kk) = pi2
 
@@ -224,200 +269,264 @@ subroutine preset
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  if( myid.eq.0 ) then ! read plasma boundary & computational boundary; initialize interface geometry;
-
-   if( Igeometry.eq.3 .and. Rbc(0,+1)+Rbc(0,-1).gt.zero .and. Zbs(0,+1)-Zbs(0,-1).gt.zero ) then ; Lchangeangle = .true.
-   else                                                                                          ; Lchangeangle = .false.
-   endif
-
-   if( Lchangeangle ) write(ounit,'("readin : " 10x " : CHANGING ANGLE ;")')
-
-   do ii = 1, mn ; mm = im(ii) ; nn = in(ii) / Nfp ! set plasma boundary, computational boundary; 29 Apr 15;
-
-    if( Lchangeangle ) then ; jj = -1 ; kk = -nn ! change sign of poloidal angle;
-    else                    ; jj = +1 ; kk = +nn
+  ! Read boundary harmonics
+  if( Lboundary.ne.0 ) then
+    if( myid.eq.0 ) then ! read plasma boundary & computational boundary; initialize interface geometry;
+    
+    ! Read Henneberg's representation harmonics and change angle if necessary
+    Rbc(0, 1) = half*( rhomn(0, 1) + rhomn(twoalpha, 1) ) + 1.0/4.0 * (two*bn(0) - bn(-twoalpha) - bn(twoalpha))
+    Zbc(0, 1) = half*( rhomn(0, 1) - rhomn(twoalpha, 1) ) + 1.0/4.0 * (two*bn(0) + bn(-twoalpha) + bn(twoalpha))
+    Rbc(0,-1) = half*( rhomn(0,-1) + rhomn(twoalpha,-1) )
+    Zbc(0,-1) = half*( rhomn(0,-1) - rhomn(twoalpha,-1) )
+    if( Igeometry.eq.3 .and. Rbc(0,+1)+Rbc(0,-1).gt.zero .and. Zbs(0,+1)-Zbs(0,-1).gt.zero ) then ; Lchangeangle = .true.
+    else                                                                                          ; Lchangeangle = .false.
     endif
 
-    if( mm.eq.0 .and. nn.eq.0 ) then
+    if( Lchangeangle ) FATAL( preset, .true., Need to change angle - not implemented with Henneberg representation)
 
-     ;iRbc(ii,Nvol) = Rbc( nn, mm)                         ! plasma        boundary is ALWAYS given by namelist Rbc & Zbs;
-     ;iZbs(ii,Nvol) = zero
-      if( NOTstellsym ) then
-     ;iRbs(ii,Nvol) = zero
-     ;iZbc(ii,Nvol) = Zbc( nn, mm)
-      else
-     ;iRbs(ii,Nvol) = zero
-     ;iZbc(ii,Nvol) = zero
+    do ii = 1, mn; mm=im(ii); nn=in(ii) / Nfp
+      irhoc( ii, Nvol ) = rhomn( nn, mm )
+    enddo ! do ii=1,mn
+
+    do nn = 0, Ntor
+      ibc( nn, Nvol ) = bn( nn )
+    enddo
+
+
+    ! Interpolate initial guess
+    select case( Linitialize )
+      case( :0 ) ! Linitialize=0 ; initial guess for geometry of the interior surfaces is given in the input file;
+        
+        do idx_mode=1, num_modes! will read in Fourier harmonics until the end of file is reached;
+          mm = mmRZRZ(idx_mode)
+          nn = nnRZRZ(idx_mode)
+  
+          do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over harmonics within range;
+            if( mm.eq.0 .and. mi.eq.0 .and. nn*Nfp.eq.ni ) then
+            iRbc(ii,1:Nvol-1) = allRZRZ(1,1:Nvol-1, idx_mode) ! select relevant harmonics;
+            iZbs(ii,1:Nvol-1) = allRZRZ(2,1:Nvol-1, idx_mode) ! select relevant harmonics;
+            if( NOTstellsym ) then
+              iRbs(ii,1:Nvol-1) = allRZRZ(3,1:Nvol-1, idx_mode) ! select relevant harmonics;
+              iZbc(ii,1:Nvol-1) = allRZRZ(4,1:Nvol-1, idx_mode) ! select relevant harmonics;
+            else
+              iRbs(ii,1:Nvol-1) = zero             ! select relevant harmonics;
+              iZbc(ii,1:Nvol-1) = zero             ! select relevant harmonics;
+            endif
+            elseif( mm.eq.mi .and. nn*Nfp.eq.jj*ni ) then
+            iRbc(ii,1:Nvol-1) = allRZRZ(1,1:Nvol-1, idx_mode) ! select relevant harmonics;
+            iZbs(ii,1:Nvol-1) = jj*allRZRZ(2,1:Nvol-1, idx_mode) ! select relevant harmonics;
+            if( NOTstellsym ) then
+              iRbs(ii,1:Nvol-1) = jj*allRZRZ(3,1:Nvol-1, idx_mode) ! select relevant harmonics;
+              iZbc(ii,1:Nvol-1) = allRZRZ(4,1:Nvol-1, idx_mode) ! select relevant harmonics;
+            else
+              iRbs(ii,1:Nvol-1) = zero             ! select relevant harmonics;
+              iZbc(ii,1:Nvol-1) = zero             ! select relevant harmonics;
+            endif
+            endif
+          enddo ! end of do ii;
+
+
+
+      end select
+
+
+    endif !end of if(myid.eq.0)
+
+  else 
+    if( myid.eq.0 ) then ! read plasma boundary & computational boundary; initialize interface geometry;
+      if( Igeometry.eq.3 .and. Rbc(0,+1)+Rbc(0,-1).gt.zero .and. Zbs(0,+1)-Zbs(0,-1).gt.zero ) then ; Lchangeangle = .true.
+      else                                                                                          ; Lchangeangle = .false.
       endif
 
-     if( Lfreebound.eq.1 ) then
+      if( Lchangeangle ) write(ounit,'("readin : " 10x " : CHANGING ANGLE ;")')
 
-      iRbc(ii,Mvol) = Rwc( nn, mm)                         ! computational boundary is ALWAYS given by namelist Rwc & Zws;
-      iZbs(ii,Mvol) = zero
-      if( NOTstellsym ) then
-      iRbs(ii,Mvol) = zero
-      iZbc(ii,Mvol) = Zwc( nn, mm)
-      else
-      iRbs(ii,Mvol) = zero
-      iZbc(ii,Mvol) = zero
-      endif
+      do ii = 1, mnRZ ; mm = imRZ(ii) ; nn = inRZ(ii) / Nfp ! set plasma boundary, computational boundary; 29 Apr 15;
 
-      iVns(ii     ) = zero
-      iBns(ii     ) = zero
-      if( NOTstellsym ) then
-      iVnc(ii     ) = Vnc( nn, mm)                         ! I guess that this must be zero, because \div B = 0 ;
-      iBnc(ii     ) = Bnc( nn, mm)                         ! I guess that this must be zero, because \div B = 0 ;
-      else
-      iVnc(ii     ) = zero
-      iBnc(ii     ) = zero
-      endif
+        if( Lchangeangle ) then ; jj = -1 ; kk = -nn ! change sign of poloidal angle;
+        else                    ; jj = +1 ; kk = +nn
+        endif
 
-     endif ! end of if( Lfreebound.eq.1 ) ;
+        if( mm.eq.0 .and. nn.eq.0 ) then
 
-    else ! if( mm.eq.0 .and. nn.eq.0 ) then ; matches
+        ;iRbc(ii,Nvol) = Rbc( nn, mm)                         ! plasma        boundary is ALWAYS given by namelist Rbc & Zbs;
+        ;iZbs(ii,Nvol) = zero
+          if( NOTstellsym ) then
+        ;iRbs(ii,Nvol) = zero
+        ;iZbc(ii,Nvol) = Zbc( nn, mm)
+          else
+        ;iRbs(ii,Nvol) = zero
+        ;iZbc(ii,Nvol) = zero
+          endif
 
-     ;iRbc(ii,Nvol) =   Rbc( kk, mm) + Rbc(-kk,-mm)        ! plasma        boundary is ALWAYS given by namelist Rbc & Zbs;
-     ;iZbs(ii,Nvol) = ( Zbs( kk, mm) - Zbs(-kk,-mm) ) * jj
-      if( NOTstellsym ) then
-     ;iRbs(ii,Nvol) = ( Rbs( kk, mm) - Rbs(-kk,-mm) ) * jj
-     ;iZbc(ii,Nvol) =   Zbc( kk, mm) + Zbc(-kk,-mm)
-      else
-     ;iRbs(ii,Nvol) =   zero
-     ;iZbc(ii,Nvol) =   zero
-      endif
+        if( Lfreebound.eq.1 ) then
 
-     if( Lfreebound.eq.1 ) then
+          iRbc(ii,Mvol) = Rwc( nn, mm)                         ! computational boundary is ALWAYS given by namelist Rwc & Zws;
+          iZbs(ii,Mvol) = zero
+          if( NOTstellsym ) then
+          iRbs(ii,Mvol) = zero
+          iZbc(ii,Mvol) = Zwc( nn, mm)
+          else
+          iRbs(ii,Mvol) = zero
+          iZbc(ii,Mvol) = zero
+          endif
 
-      iRbc(ii,Mvol) =   Rwc( kk, mm) + Rwc(-kk,-mm)        ! computational boundary is ALWAYS given by namelist Rwc & Zws;
-      iZbs(ii,Mvol) = ( Zws( kk, mm) - Zws(-kk,-mm) ) * jj
-      if( NOTstellsym ) then
-      iRbs(ii,Mvol) = ( Rws( kk, mm) - Rws(-kk,-mm) ) * jj
-      iZbc(ii,Mvol) =   Zwc( kk, mm) + Zwc(-kk,-mm)
-      else
-      iRbs(ii,Mvol) =   zero
-      iZbc(ii,Mvol) =   zero
-      endif
+          iVns(ii     ) = zero
+          iBns(ii     ) = zero
+          if( NOTstellsym ) then
+          iVnc(ii     ) = Vnc( nn, mm)                         ! I guess that this must be zero, because \div B = 0 ;
+          iBnc(ii     ) = Bnc( nn, mm)                         ! I guess that this must be zero, because \div B = 0 ;
+          else
+          iVnc(ii     ) = zero
+          iBnc(ii     ) = zero
+          endif
 
-      iVns(ii     ) = ( Vns( kk, mm) - Vns(-kk,-mm) ) * jj
-      iBns(ii     ) = ( Bns( kk, mm) - Bns(-kk,-mm) ) * jj
-      if( NOTstellsym ) then
-      iVnc(ii     ) =   Vnc( kk, mm) + Vnc(-kk,-mm)
-      iBnc(ii     ) =   Bnc( kk, mm) + Bnc(-kk,-mm)
-      else
-      iVnc(ii     ) =   zero
-      iBnc(ii     ) =   zero
-      endif
+        endif ! end of if( Lfreebound.eq.1 ) ;
 
-     endif ! matches if( Lfreebound.eq.1 ) ;
+        else ! if( mm.eq.0 .and. nn.eq.0 ) then ; matches
 
-    endif ! end of if( mm.eq.0 .and. nn.eq.0 ) ;
+        ;iRbc(ii,Nvol) =   Rbc( kk, mm) + Rbc(-kk,-mm)        ! plasma        boundary is ALWAYS given by namelist Rbc & Zbs;
+        ;iZbs(ii,Nvol) = ( Zbs( kk, mm) - Zbs(-kk,-mm) ) * jj
+          if( NOTstellsym ) then
+        ;iRbs(ii,Nvol) = ( Rbs( kk, mm) - Rbs(-kk,-mm) ) * jj
+        ;iZbc(ii,Nvol) =   Zbc( kk, mm) + Zbc(-kk,-mm)
+          else
+        ;iRbs(ii,Nvol) =   zero
+        ;iZbc(ii,Nvol) =   zero
+          endif
 
-   enddo ! end of do ii = 1, mn;
+        if( Lfreebound.eq.1 ) then
+
+          iRbc(ii,Mvol) =   Rwc( kk, mm) + Rwc(-kk,-mm)        ! computational boundary is ALWAYS given by namelist Rwc & Zws;
+          iZbs(ii,Mvol) = ( Zws( kk, mm) - Zws(-kk,-mm) ) * jj
+          if( NOTstellsym ) then
+          iRbs(ii,Mvol) = ( Rws( kk, mm) - Rws(-kk,-mm) ) * jj
+          iZbc(ii,Mvol) =   Zwc( kk, mm) + Zwc(-kk,-mm)
+          else
+          iRbs(ii,Mvol) =   zero
+          iZbc(ii,Mvol) =   zero
+          endif
+
+          iVns(ii     ) = ( Vns( kk, mm) - Vns(-kk,-mm) ) * jj
+          iBns(ii     ) = ( Bns( kk, mm) - Bns(-kk,-mm) ) * jj
+          if( NOTstellsym ) then
+          iVnc(ii     ) =   Vnc( kk, mm) + Vnc(-kk,-mm)
+          iBnc(ii     ) =   Bnc( kk, mm) + Bnc(-kk,-mm)
+          else
+          iVnc(ii     ) =   zero
+          iBnc(ii     ) =   zero
+          endif
+
+        endif ! matches if( Lfreebound.eq.1 ) ;
+
+        endif ! end of if( mm.eq.0 .and. nn.eq.0 ) ;
+
+      enddo ! end of do ii = 1, mn;
 
 
-   select case( Linitialize ) ! 24 Oct 12;
+      select case( Linitialize ) ! 24 Oct 12;
 
-   case( :0 ) ! Linitialize=0 ; initial guess for geometry of the interior surfaces is given in the input file;
+      case( :0 ) ! Linitialize=0 ; initial guess for geometry of the interior surfaces is given in the input file;
 
-    if( Lchangeangle ) then ; jj = -1  ! change sign of poloidal angle; Loizu Nov 18;
-    else                    ; jj = +1
-    endif
+        if( Lchangeangle ) then ; jj = -1  ! change sign of poloidal angle; Loizu Nov 18;
+        else                    ; jj = +1
+        endif
 
-    do idx_mode=1, num_modes! will read in Fourier harmonics until the end of file is reached;
-     mm = mmRZRZ(idx_mode)
-     nn = nnRZRZ(idx_mode)
+        do idx_mode=1, num_modes! will read in Fourier harmonics until the end of file is reached;
+        mm = mmRZRZ(idx_mode)
+        nn = nnRZRZ(idx_mode)
 
-     do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over harmonics within range;
-      if( mm.eq.0 .and. mi.eq.0 .and. nn*Nfp.eq.ni ) then
-       iRbc(ii,1:Nvol-1) = allRZRZ(1,1:Nvol-1, idx_mode) ! select relevant harmonics;
-       iZbs(ii,1:Nvol-1) = allRZRZ(2,1:Nvol-1, idx_mode) ! select relevant harmonics;
-       if( NOTstellsym ) then
-        iRbs(ii,1:Nvol-1) = allRZRZ(3,1:Nvol-1, idx_mode) ! select relevant harmonics;
-        iZbc(ii,1:Nvol-1) = allRZRZ(4,1:Nvol-1, idx_mode) ! select relevant harmonics;
-       else
-        iRbs(ii,1:Nvol-1) = zero             ! select relevant harmonics;
-        iZbc(ii,1:Nvol-1) = zero             ! select relevant harmonics;
-       endif
-      elseif( mm.eq.mi .and. nn*Nfp.eq.jj*ni ) then
-       iRbc(ii,1:Nvol-1) = allRZRZ(1,1:Nvol-1, idx_mode) ! select relevant harmonics;
-       iZbs(ii,1:Nvol-1) = jj*allRZRZ(2,1:Nvol-1, idx_mode) ! select relevant harmonics;
-       if( NOTstellsym ) then
-        iRbs(ii,1:Nvol-1) = jj*allRZRZ(3,1:Nvol-1, idx_mode) ! select relevant harmonics;
-        iZbc(ii,1:Nvol-1) = allRZRZ(4,1:Nvol-1, idx_mode) ! select relevant harmonics;
-       else
-        iRbs(ii,1:Nvol-1) = zero             ! select relevant harmonics;
-        iZbc(ii,1:Nvol-1) = zero             ! select relevant harmonics;
-       endif
-      endif
-     enddo ! end of do ii;
+        do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over harmonics within range;
+          if( mm.eq.0 .and. mi.eq.0 .and. nn*Nfp.eq.ni ) then
+          iRbc(ii,1:Nvol-1) = allRZRZ(1,1:Nvol-1, idx_mode) ! select relevant harmonics;
+          iZbs(ii,1:Nvol-1) = allRZRZ(2,1:Nvol-1, idx_mode) ! select relevant harmonics;
+          if( NOTstellsym ) then
+            iRbs(ii,1:Nvol-1) = allRZRZ(3,1:Nvol-1, idx_mode) ! select relevant harmonics;
+            iZbc(ii,1:Nvol-1) = allRZRZ(4,1:Nvol-1, idx_mode) ! select relevant harmonics;
+          else
+            iRbs(ii,1:Nvol-1) = zero             ! select relevant harmonics;
+            iZbc(ii,1:Nvol-1) = zero             ! select relevant harmonics;
+          endif
+          elseif( mm.eq.mi .and. nn*Nfp.eq.jj*ni ) then
+          iRbc(ii,1:Nvol-1) = allRZRZ(1,1:Nvol-1, idx_mode) ! select relevant harmonics;
+          iZbs(ii,1:Nvol-1) = jj*allRZRZ(2,1:Nvol-1, idx_mode) ! select relevant harmonics;
+          if( NOTstellsym ) then
+            iRbs(ii,1:Nvol-1) = jj*allRZRZ(3,1:Nvol-1, idx_mode) ! select relevant harmonics;
+            iZbc(ii,1:Nvol-1) = allRZRZ(4,1:Nvol-1, idx_mode) ! select relevant harmonics;
+          else
+            iRbs(ii,1:Nvol-1) = zero             ! select relevant harmonics;
+            iZbc(ii,1:Nvol-1) = zero             ! select relevant harmonics;
+          endif
+          endif
+        enddo ! end of do ii;
 
-    enddo ! end of do;
+        enddo ! end of do;
 
-   end select ! end select case( Linitialize );
+      end select ! end select case( Linitialize );
 
-   if( Igeometry.eq.3 ) then
-    if( Rac(0).gt.zero ) then ! user has supplied logically possible coordinate axis;
-     iRbc(1:Ntor+1,0) = Rac(0:Ntor)
-     iZbs(1:Ntor+1,0) = Zas(0:Ntor)
-     iRbs(1:Ntor+1,0) = Ras(0:Ntor)
-     iZbc(1:Ntor+1,0) = Zac(0:Ntor)
-    else ! see preset for poloidal-average specification of coordinate axis and geometrical initialization;
-    endif ! end of if( Igeometry.eq.3 ) then ;
-   endif
+      if( Igeometry.eq.3 ) then
+        if( Rac(0).gt.zero ) then ! user has supplied logically possible coordinate axis;
+        iRbc(1:Ntor+1,0) = Rac(0:Ntor)
+        iZbs(1:Ntor+1,0) = Zas(0:Ntor)
+        iRbs(1:Ntor+1,0) = Ras(0:Ntor)
+        iZbc(1:Ntor+1,0) = Zac(0:Ntor)
+        else ! see preset for poloidal-average specification of coordinate axis and geometrical initialization;
+      endif ! end of if( Igeometry.eq.3 ) then ;
+    endif ! Lchangeangle
 
-  endif ! end of if myid.eq.0 loop; only the master will read the input file; all variables need to be broadcast;
+    
+    endif ! end of if myid.eq.0 loop; only the master will read the input file; all variables need to be broadcast;
+  endif ! end of if( Lboundary.eq.1 )
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  ; RlBCAST( iRbc(1:mn,0:Mvol), (Mvol+1)*mn, 0 )
+  ; RlBCAST( iRbc(1:mnRZ,0:Mvol), (Mvol+1)*mnRZ, 0 )
   if( Igeometry.eq.3 ) then
-   ;RlBCAST( iZbs(1:mn,0:Mvol), (Mvol+1)*mn, 0 ) ! only required for ii > 1 ;
+  ;RlBCAST( iZbs(1:mnRZ,0:Mvol), (Mvol+1)*mnRZ, 0 ) ! only required for ii > 1 ;
   endif
   if( NOTstellsym ) then
-   ;RlBCAST( iRbs(1:mn,0:Mvol), (Mvol+1)*mn, 0 ) ! only required for ii > 1 ;
-   if( Igeometry.eq.3 ) then
-    RlBCAST( iZbc(1:mn,0:Mvol), (Mvol+1)*mn, 0 )
-   endif
+  ;RlBCAST( iRbs(1:mnRZ,0:Mvol), (Mvol+1)*mnRZ, 0 ) ! only required for ii > 1 ;
+  if( Igeometry.eq.3 ) then
+    RlBCAST( iZbc(1:mnRZ,0:Mvol), (Mvol+1)*mnRZ, 0 )
+  endif
   endif
 
   if( Lfreebound.eq.1 ) then
-   ;RlBCAST( iVns(1:mn), mn, 0 ) ! only required for ii > 1 ;
-   ;RlBCAST( iBns(1:mn), mn, 0 ) ! only required for ii > 1 ;
-   if( NOTstellsym ) then
-    RlBCAST( iVnc(1:mn), mn, 0 )
-    RlBCAST( iBnc(1:mn), mn, 0 )
-   endif
+  ;RlBCAST( iVns(1:mnf), mnf, 0 ) ! only required for ii > 1 ;
+  ;RlBCAST( iBns(1:mnf), mnf, 0 ) ! only required for ii > 1 ;
+  if( NOTstellsym ) then
+    RlBCAST( iVnc(1:mnf), mnf, 0 )
+    RlBCAST( iBnc(1:mnf), mnf, 0 )
+  endif
   endif
 
   if( Igeometry.eq.1 .or. Igeometry.eq.2 ) then
-   ;iRbc(1:mn,0) = zero ! innermost volume must be trivial; this is used in volume; innermost interface is coordinate axis;
-   if( NOTstellsym ) then
-    iRbs(1:mn,0) = zero ! innermost volume must be trivial; this is used in volume;
-   endif
+  ;iRbc(1:mnRZ,0) = zero ! innermost volume must be trivial; this is used in volume; innermost interface is coordinate axis;
+  if( NOTstellsym ) then
+    iRbs(1:mnRZ,0) = zero ! innermost volume must be trivial; this is used in volume;
+  endif
   endif
 
   if( Igeometry.eq.3 ) then
-   iZbs(1,0:Mvol) = zero ! Zbs_{m=0,n=0} is irrelevant;
+  iZbs(1,0:Mvol) = zero ! Zbs_{m=0,n=0} is irrelevant;
   endif
   if( NOTstellsym) then
-   iRbs(1,0:Mvol) = zero ! Rbs_{m=0,n=0} is irrelevant;
+  iRbs(1,0:Mvol) = zero ! Rbs_{m=0,n=0} is irrelevant;
   endif
 
   if ( Igeometry.eq.1 .and. Lreflect.eq.1) then ! reflect upper and lower bound in slab, each take half the amplitude
-    iRbc(2:mn,Mvol) = iRbc(2:mn,Mvol) * half
-    iRbc(2:mn,0) = -iRbc(2:mn,Mvol)
-   if( NOTstellsym ) then
-    iRbs(2:mn,Mvol) = iRbs(2:mn,Mvol) * half
-    iRbs(2:mn,0) = -iRbs(2:mn,Mvol)
-   endif
+    iRbc(2:mnRZ,Mvol) = iRbc(2:mnRZ,Mvol) * half
+    iRbc(2:mnRZ,0) = -iRbc(2:mnRZ,Mvol)
+  if( NOTstellsym ) then
+    iRbs(2:mnRZ,Mvol) = iRbs(2:mnRZ,Mvol) * half
+    iRbs(2:mnRZ,0) = -iRbs(2:mnRZ,Mvol)
+  endif
   endif
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  Rscale = iRbc(1,Mvol) ! this will be used to normalize the geometrical degrees-of-freedom;
+    Rscale = iRbc(1,Mvol) ! this will be used to normalize the geometrical degrees-of-freedom;
 
-  if( myid.eq.0 ) write(ounit,'("readin : ", 10x ," : myid=",i3," ; Rscale=",es22.15," ;")') myid, Rscale
-
+    if( myid.eq.0 ) write(ounit,'("readin : ", 10x ," : myid=",i3," ; Rscale=",es22.15," ;")') myid, Rscale
 
 
 
@@ -437,6 +546,8 @@ subroutine preset
   if( myid.eq.0 ) write(ounit,'("preset : ",10x," : myid=",i3," ; Mrad=",i3," : Lrad=",257(i3,",",:))') myid, Mrad, Lrad(1:Mvol)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+! TODO continue...
 
 !> **LGdof and NGdof : number of geometrical degrees-of-freedom**
 !>

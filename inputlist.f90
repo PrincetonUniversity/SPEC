@@ -34,6 +34,7 @@ module inputlist
                                                          !< <li> all Fourier representations are of the form \f$\cos(m\theta-n N \zeta)\f$, \f$\sin(m\theta-n N \zeta)\f$, where \f$N\equiv\f$\c Nfp </li>
                                                          !< <li> constraint: \c Nfp >= 1 </li>
                                                          !< </ul>
+  INTEGER      :: twoalpha                   =  1        !< Rotation rate of coordinates. Only used if Lboundary=1
   INTEGER      :: Nvol                       =  1        !< number of volumes
                                                          !< <ul>
                                                          !< <li> each volume \f${\cal V}_l\f$ is bounded by the \f${\cal I}_{l-1}\f$ and \f${\cal I}_{l}\f$ interfaces </li>
@@ -75,15 +76,18 @@ module inputlist
                                                          !<      and only \f$\mu\f$ is varied to satisfy the outer interface transform constraint);
                                                          !<      and in the vacuum region \f$\Delta\psi_t\f$ and \f$\Delta \psi_p\f$ are varied to match the transform constraint on the boundary
                                                          !<      and to obtain the prescribed linking current, \c curpol, and \f$\mu = 0\f$. </li>
-                                                         !< <li> \todo if \c Lconstraint==2, under reconstruction.
-                                                         !<
-                                                         !< </li>
+                                                         !< <li> \todo if \c Lconstraint==2, under reconstruction. </li>
                                                          !< <li> if \c Lconstraint.eq.3 , then the \f$\mu\f$ and \f$\psi_p\f$ variables are adjusted
                                                          !<      in order to satisfy the volume and surface toroidal current computed with lbpol()
                                                          !<      (excepted in the inner most volume, where the volume current is irrelevant).
                                                          !<      Not implemented yet in free boundary.</li>
                                                          !< </ul>
-  REAL         ::     tflux(1:MNvol+1)       =  0.0      !< toroidal flux, \f$\psi_t\f$, enclosed by each interface
+  INTEGER  ::     Lboundary              =  0.0          !< Select boundary representation
+                                                         !< <ul>
+                                                         !< <li> if \c Lboundary==0, VMEC-like representation is used, with Fourier series \f$R_{mn},\ Z_{mn}\f$. </li>
+                                                         !< <li> if \c Lboundary==1, Henneberg representation is used, with Fourier series \f$\rho_{mn},\ b_n\f$. </li>
+                                                         !< </ul>
+  REAL         :: tflux(1:MNvol+1)       =  0.0          !< toroidal flux, \f$\psi_t\f$, enclosed by each interface
                                                          !< <ul>
                                                          !< <li> For each of the plasma volumes, this is a constraint: \c tflux is *not* varied </li>
                                                          !< <li> For the vacuum region (only if \c Lfreebound==1), \c tflux  may be allowed to vary to match constraints </li>
@@ -194,6 +198,9 @@ module inputlist
   REAL         :: Zbs(-MNtor:MNtor,-MMpol:MMpol)  =  0.0 !<     stellarator symmetric boundary components;
   REAL         :: Rbs(-MNtor:MNtor,-MMpol:MMpol)  =  0.0 !< non-stellarator symmetric boundary components;
   REAL         :: Zbc(-MNtor:MNtor,-MMpol:MMpol)  =  0.0 !< non-stellarator symmetric boundary components;
+
+  REAL         :: rhomn(-MNtor:MNtor,-MMpol:MMpol)  =  0.0 !<   boundary, only used if Lboundary = 1
+  REAL         :: bn( -MNtor:MNtor )                     =  0.0 !<   boundary, only used if Lboundary = 1
 
   REAL         :: Rwc(-MNtor:MNtor,-MMpol:MMpol)  =  0.0 !<     stellarator symmetric boundary components of wall;
   REAL         :: Zws(-MNtor:MNtor,-MMpol:MMpol)  =  0.0 !<     stellarator symmetric boundary components of wall;
@@ -562,11 +569,13 @@ module inputlist
  curpol      ,&
  gamma       ,&
  Nfp         ,&
+ twoalpha    ,&
  Nvol        ,&
  Mpol        ,&
  Ntor        ,&
  Lrad        ,&
  Lconstraint ,&
+ Lboundary   ,&
  tflux       ,&
  pflux       ,&
  helicity    ,&
@@ -719,11 +728,13 @@ subroutine initialize_inputs
   curpol                     =  0.0
   gamma                      =  0.0
   Nfp                        =  1
+  twoalpha                   =  1
   Nvol                       =  1
   Mpol                       =  0
   Ntor                       =  0
   Lrad(1:MNvol+1)            =  4
   Lconstraint                = -1
+  Lboundary                  =  0
   tflux(1:MNvol+1)           =  0.0
       pflux(1:MNvol+1)       =  0.0
    helicity(1:MNvol)         =  0.0

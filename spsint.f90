@@ -36,7 +36,7 @@ subroutine spsint( lquad, mn, lvol, lrad )
                         DDtzcc, DDtzcs, DDtzsc, DDtzss, &
                         DDzzcc, DDzzcs, DDzzsc, DDzzss, &
                         ki, kija, kijs, &
-                        Lcoordinatesingularity, regumm, &
+                        Lcoordinatesingularity, &
                         pi2pi2nfp, pi2pi2nfphalf, &
                         guvijsave
 

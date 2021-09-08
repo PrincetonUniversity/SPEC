@@ -201,6 +201,8 @@ module allglobal
   REAL   , allocatable :: IPDt(:), IPDtDpf(:,:)  !< Toroidal pressure-driven current
 
   INTEGER              :: Mvol
+  INTEGER              :: MpolRZ, NtorRZ
+  INTEGER              :: MpolF, NtorF
 
   LOGICAL              :: YESstellsym !< internal shorthand copies of Istellsym, which is an integer input;
   LOGICAL              :: NOTstellsym !< internal shorthand copies of Istellsym, which is an integer input;
@@ -261,9 +263,15 @@ module allglobal
 !>
 !> \addtogroup grp_fourier_repr Fourier representation
 !> @{
-  INTEGER              :: mn    !< total number of Fourier harmonics for coordinates/fields; calculated from Mpol, Ntor in readin()
-  INTEGER, allocatable :: im(:) !< poloidal mode numbers for Fourier representation
-  INTEGER, allocatable :: in(:) !< toroidal mode numbers for Fourier representation
+  INTEGER              :: mn   !< total number of Fourier harmonics for coordinates RHO / Bn; calculated from Mpol, Ntor in readin()
+  INTEGER              :: mnRZ !< total number of Fourier harmonics for coordinates R / z; calculated from Mpol, Ntor in readin()
+  INTEGER              :: mnf  !< total number of Fourier harmonics for fields and force balance; calculated from Mpol, Ntor in readin()
+  INTEGER, allocatable :: im(:)   !< poloidal mode numbers for Fourier representation of rho, bn
+  INTEGER, allocatable :: in(:)   !< toroidal mode numbers for Fourier representation of rho, bn
+  INTEGER, allocatable :: imRZ(:) !< poloidal mode numbers for Fourier representation of R, Z
+  INTEGER, allocatable :: inRZ(:) !< toroidal mode numbers for Fourier representation of R, Z
+  INTEGER, allocatable :: imf(:)  !< poloidal mode numbers for Fourier representation of field and force
+  INTEGER, allocatable :: inf(:)  !< toroidal mode numbers for Fourier representation of field and force
 
   REAL,    allocatable :: halfmm(:) !< I saw this already somewhere...
   REAL,    allocatable :: regumm(:) !< I saw this already somewhere...
@@ -287,6 +295,9 @@ module allglobal
   REAL,    allocatable :: iZbs(:,:) !<   sine Z harmonics of interface surface geometry;     stellarator symmetric
   REAL,    allocatable :: iRbs(:,:) !<   sine R harmonics of interface surface geometry; non-stellarator symmetric
   REAL,    allocatable :: iZbc(:,:) !< cosine Z harmonics of interface surface geometry; non-stellarator symmetric
+
+  REAL,    allocatable :: irhoc(:,:)  !< rhomn harmonics of interface surface geometry, using Henneberg's representation
+  REAL,    allocatable :: ibc(:,:)     !< bn    harmonics of interface surface geometry, using Henneberg's representation
 
   REAL,    allocatable :: dRbc(:,:) !< cosine R harmonics of interface surface geometry;     stellarator symmetric; linear deformation
   REAL,    allocatable :: dZbs(:,:) !<   sine Z harmonics of interface surface geometry;     stellarator symmetric; linear deformation
@@ -1282,6 +1293,7 @@ subroutine broadcast_inputs
   RlBCAST( curpol     ,       1, 0 )
   RlBCAST( gamma      ,       1, 0 )
   IlBCAST( Nfp        ,       1, 0 )
+  IlBCAST( twoalpha   ,       1, 0 )
   IlBCAST( Nvol       ,       1, 0 )
   IlBCAST( Mpol       ,       1, 0 )
   IlBCAST( Ntor       ,       1, 0 )
@@ -1297,6 +1309,7 @@ subroutine broadcast_inputs
   RlBCAST( Ivolume    , MNvol+1, 0 )
   RlBCAST( Isurf      , MNvol+1, 0 )
   IlBCAST( Lconstraint,       1, 0 )
+  IlBCAST( Lboundary  ,       1, 0 )
   IlBCAST( pl         , MNvol  , 0 )
   IlBCAST( ql         , MNvol  , 0 )
   IlBCAST( pr         , MNvol  , 0 )

@@ -90,8 +90,8 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
                         Ntz, hNt, hNz, &
                         iotakkii, iotaksub, iotakadd, iotaksgn, &
                         Ate, Aze, Ato, Azo, TT, RTT, &
-                        Lcoordinatesingularity, Lvacuumregion, regumm
-
+                        Lcoordinatesingularity, Lvacuumregion
+                        
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   LOCALS

@@ -80,7 +80,7 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
   use cputiming, only : Tjo00aa
 
   use allglobal, only : myid, cpus, MPI_COMM_SPEC, ext, ivol, &
-                        im, in, regumm, &
+                        im, in, &
                         Mvol, &
                         cheby, zernike, &
                         Ate, Aze, Ato, Azo, &

@@ -17,7 +17,6 @@ subroutine lbpol(lvol, Bt00, ideriv, iocons)
                         Ntz, Lcoordinatesingularity, &
                         efmn, ofmn, cfmn, sfmn, evmn, odmn, comn, simn, &
                         Nt, Nz, &
-                        regumm, &
                         cpus, myid, dBdX, &
                         build_vector_potential
 

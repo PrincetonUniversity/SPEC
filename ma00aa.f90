@@ -95,7 +95,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
                         gttmne, gttmno, &
                         gtzmne, gtzmno, &
                         gzzmne, gzzmno, &
-                        Lcoordinatesingularity, regumm, &
+                        Lcoordinatesingularity, &
                         pi2pi2nfp, pi2pi2nfphalf, Lsavedguvij, &
                         dBdX
 
