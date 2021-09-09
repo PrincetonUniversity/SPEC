@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def get_grid_and_jacobian_and_metric(
     self,
     lvol=0,
@@ -164,6 +165,7 @@ def metric(
     _, _, _, g = get_grid_and_jacobian_and_metric(self, lvol, sarr, tarr, zarr)
     return g
 
+
 def get_B(
     self,
     lvol=0,
@@ -175,6 +177,7 @@ def get_B(
     Bcontra_and_der = get_B_and_der(self, lvol, jacobian, sarr, tarr, zarr)
     return Bcontra_and_der[0:3]
 
+
 def get_s_der_B(
     self,
     lvol=0,
@@ -185,6 +188,7 @@ def get_s_der_B(
 ):
     Bcontra_and_der = get_B_and_der(self, lvol, jacobian, sarr, tarr, zarr)
     return Bcontra_and_der[3:6]
+
 
 def get_t_der_B(
     self,
