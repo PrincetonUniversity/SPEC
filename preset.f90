@@ -53,7 +53,6 @@ subroutine preset
 ! set internal parameters that depend on physicslist;
 
 
-
   select case( Istellsym )
   case( 0 )    ; YESstellsym = .false. ; NOTstellsym = .true.
   case( 1 )    ; YESstellsym = .true.  ; NOTstellsym = .false.

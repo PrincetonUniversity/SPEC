@@ -418,9 +418,9 @@ subroutine ma02aa( lvol, NN )
 
 
   if( LBlinear ) then ! assume Beltrami field is parameterized by helicity multiplier (and poloidal flux);
-   
-   lastcpu = GETTIME 
-   
+
+   lastcpu = GETTIME
+
    if( Lplasmaregion ) then
 
     Xdof(1:2) = xoffset + (/     mu(lvol), dpflux(lvol) /) ! initial guess for degrees of freedom; offset from zero so that relative error is small;
