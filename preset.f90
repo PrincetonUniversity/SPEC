@@ -23,6 +23,8 @@ subroutine preset
 
   use inputlist
 
+  use bndRep
+
   use cputiming, only : Tpreset
 
   use allglobal
@@ -90,41 +92,8 @@ subroutine preset
     twoalpha = 0.0
   endif
 
-  MpolRZ = Mpol
-  NtorRZ = Ntor + twoalpha
+  call initialize_mapping()
 
-  MpolF  = Mpol + 1
-  NtorF  = Ntor
-
-
-!latex \subsubsection{\type{mn}, \type{im(1:mn)} and \type{in(1:mn)} : Fourier mode identification}
-!latex \begin{enumerate}
-!latex \item The Fourier description of even periodic functions is
-!latex       \be f(\t,\z) = \sum_{n=0}^{N} f_{0,n} \cos(-n\z) + \sum_{m=1}^{M}\sum_{n=-N}^{N} f_{m,n} \cos(m\t-n\z),
-!latex       \ee
-!latex       where the resolution is given on input, $M\equiv $ \inputvar{ Mpol} and $N\equiv $ \inputvar{ Ntor}.
-!latex \item For convenience, the Fourier summations are written as
-!latex       \be f(\s,\t,\z) &=& \sum_j f_j(s) \cos( m_j \t - n_j \z ),
-!latex       \ee
-!latex       for $j=1,$ \type{mn}, where \type{mn}$ = N + 1 +  M  ( 2 N + 1 )$.
-!latex \item The integer arrays \type{im(1:mn)} and \type{in(1:mn)} contain the $m_j$ and $n_j$.
-!latex \item The array \type{in} includes the \type{Nfp} factor.
-!latex \end{enumerate}
-
-  mn   = 1 + Ntor   +  Mpol   * ( 2 *  Ntor   + 1 ) ! Fourier resolution of interface geometry & vector potential;
-  mnRZ = 1 + NtorRZ +  MpolRZ * ( 2 *  NtorRZ + 1 ) ! Fourier resolution of interface geometry & vector potential;
-  mnf  = 1 + NtorF  +  MpolF  * ( 2 *  NtorF  + 1 ) ! Fourier resolution of interface geometry & vector potential;
-
-  SALLOCATE( im  , (1:mn  ), 0 )
-  SALLOCATE( in  , (1:mn  ), 0 )
-  SALLOCATE( imRZ, (1:mnRZ), 0 )
-  SALLOCATE( inRZ, (1:mnRZ), 0 )
-  SALLOCATE( imf , (1:mnf ), 0 )
-  SALLOCATE( inf , (1:mnf ), 0 )
-
-  call gi00ab(  Mpol,  Ntor, Nfp, mn  , im(1:mn  ), in(1:mn  ) ) ! this sets the im and in mode identification arrays;
-  call gi00ab(  Mpol,  Ntor, Nfp, mnRZ, imRZ(1:mnRZ), inRZ(1:mnRZ) ) ! this sets the im and in mode identification arrays;
-  call gi00ab(  Mpol,  Ntor, Nfp, mnf , imf(1:mnf ), inf(1:mnf ) ) ! this sets the im and in mode identification arrays;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -165,7 +134,7 @@ subroutine preset
 
 ! lMpol =   Mpol ; lNtor =   Ntor ! no    enhanced resolution for metrics;
 ! lMpol = 2*Mpol ; lNtor = 2*Ntor !       enhanced resolution for metrics;
-  lMpol = 4*Mpolf ; lNtor = 4*Ntorf ! extra-enhanced resolution for metrics;
+  lMpol = 4*MpolF ; lNtor = 4*NtorF ! extra-enhanced resolution for metrics;
 
   mne = 1 + lNtor + lMpol * ( 2 * lNtor + 1 ) ! resolution of metrics; enhanced resolution; see metrix;
 
@@ -180,8 +149,8 @@ subroutine preset
 
   sMpol = iMpol ; sNtor = iNtor
 
-  if( iMpol.le.0 ) sMpol = Mpolf - iMpol
-  if( iNtor.le.0 ) sNtor = Ntorf - iNtor
+  if( iMpol.le.0 ) sMpol = MpolF - iMpol
+  if( iNtor.le.0 ) sNtor = NtorF - iNtor
   if(  Ntor.eq.0 ) sNtor = 0
 
   mns = 1 + sNtor + sMpol * ( 2 * sNtor + 1 ) ! resolution of straight-field line transformation on interfaces; see tr00ab; soon to be redundant;
@@ -225,8 +194,8 @@ subroutine preset
   SALLOCATE( iZbc, (1:mnRZ,0:Mvol), zero )
 
   if( Lboundary.eq.1 ) then
-    SALLOCATE( irhoc, (1:mn  , 0:Mvol), zero )
-    SALLOCATE( ibc   , (0:Ntor, 0:Mvol), zero )
+    SALLOCATE( irhoc , (1:mn  , 1:Mvol), zero )
+    SALLOCATE( ibc   , (0:Ntor, 1:Mvol), zero )
   endif
 
 
@@ -282,7 +251,9 @@ subroutine preset
     else                                                                                          ; Lchangeangle = .false.
     endif
 
-    if( Lchangeangle ) FATAL( preset, .true., Need to change angle - not implemented with Henneberg representation)
+    if( Lchangeangle ) then
+      FATAL( preset, .true., Need to change angle - not implemented with Henneberg representation)
+    endif
 
     do ii = 1, mn; mm=im(ii); nn=in(ii) / Nfp
       irhoc( ii, Nvol ) = rhomn( nn, mm )
@@ -303,34 +274,26 @@ subroutine preset
   
           do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over harmonics within range;
             if( mm.eq.0 .and. mi.eq.0 .and. nn*Nfp.eq.ni ) then
-            iRbc(ii,1:Nvol-1) = allRZRZ(1,1:Nvol-1, idx_mode) ! select relevant harmonics;
-            iZbs(ii,1:Nvol-1) = allRZRZ(2,1:Nvol-1, idx_mode) ! select relevant harmonics;
-            if( NOTstellsym ) then
-              iRbs(ii,1:Nvol-1) = allRZRZ(3,1:Nvol-1, idx_mode) ! select relevant harmonics;
-              iZbc(ii,1:Nvol-1) = allRZRZ(4,1:Nvol-1, idx_mode) ! select relevant harmonics;
-            else
-              iRbs(ii,1:Nvol-1) = zero             ! select relevant harmonics;
-              iZbc(ii,1:Nvol-1) = zero             ! select relevant harmonics;
-            endif
+              irhoc(ii,1:Nvol-1) = allRZRZ(1,1:Nvol-1, idx_mode) ! select relevant harmonics;
+              ibc(  ii,1:Nvol-1) = allRZRZ(2,1:Nvol-1, idx_mode) ! select relevant harmonics;
+
             elseif( mm.eq.mi .and. nn*Nfp.eq.jj*ni ) then
-            iRbc(ii,1:Nvol-1) = allRZRZ(1,1:Nvol-1, idx_mode) ! select relevant harmonics;
-            iZbs(ii,1:Nvol-1) = jj*allRZRZ(2,1:Nvol-1, idx_mode) ! select relevant harmonics;
-            if( NOTstellsym ) then
-              iRbs(ii,1:Nvol-1) = jj*allRZRZ(3,1:Nvol-1, idx_mode) ! select relevant harmonics;
-              iZbc(ii,1:Nvol-1) = allRZRZ(4,1:Nvol-1, idx_mode) ! select relevant harmonics;
-            else
-              iRbs(ii,1:Nvol-1) = zero             ! select relevant harmonics;
-              iZbc(ii,1:Nvol-1) = zero             ! select relevant harmonics;
-            endif
+              irhoc(ii,1:Nvol-1) = allRZRZ(1,1:Nvol-1, idx_mode) ! select relevant harmonics;
             endif
           enddo ! end of do ii;
-
-
-
+        enddo
       end select
-
-
     endif !end of if(myid.eq.0)
+
+
+    if( Lfreebound.eq.1 ) then
+      ! TODO: FREE BOUNDARY STUFF
+    endif
+
+    ! Now map to iRbc, iZbs...
+
+
+
 
   else 
     if( myid.eq.0 ) then ! read plasma boundary & computational boundary; initialize interface geometry;
@@ -348,75 +311,75 @@ subroutine preset
 
         if( mm.eq.0 .and. nn.eq.0 ) then
 
-        ;iRbc(ii,Nvol) = Rbc( nn, mm)                         ! plasma        boundary is ALWAYS given by namelist Rbc & Zbs;
-        ;iZbs(ii,Nvol) = zero
-          if( NOTstellsym ) then
-        ;iRbs(ii,Nvol) = zero
-        ;iZbc(ii,Nvol) = Zbc( nn, mm)
-          else
-        ;iRbs(ii,Nvol) = zero
-        ;iZbc(ii,Nvol) = zero
-          endif
+          ;iRbc(ii,Nvol) = Rbc( nn, mm)                         ! plasma        boundary is ALWAYS given by namelist Rbc & Zbs;
+          ;iZbs(ii,Nvol) = zero
+            if( NOTstellsym ) then
+          ;iRbs(ii,Nvol) = zero
+          ;iZbc(ii,Nvol) = Zbc( nn, mm)
+            else
+          ;iRbs(ii,Nvol) = zero
+          ;iZbc(ii,Nvol) = zero
+            endif
 
-        if( Lfreebound.eq.1 ) then
+          if( Lfreebound.eq.1 ) then
 
-          iRbc(ii,Mvol) = Rwc( nn, mm)                         ! computational boundary is ALWAYS given by namelist Rwc & Zws;
-          iZbs(ii,Mvol) = zero
-          if( NOTstellsym ) then
-          iRbs(ii,Mvol) = zero
-          iZbc(ii,Mvol) = Zwc( nn, mm)
-          else
-          iRbs(ii,Mvol) = zero
-          iZbc(ii,Mvol) = zero
-          endif
+            iRbc(ii,Mvol) = Rwc( nn, mm)                         ! computational boundary is ALWAYS given by namelist Rwc & Zws;
+            iZbs(ii,Mvol) = zero
+            if( NOTstellsym ) then
+            iRbs(ii,Mvol) = zero
+            iZbc(ii,Mvol) = Zwc( nn, mm)
+            else
+            iRbs(ii,Mvol) = zero
+            iZbc(ii,Mvol) = zero
+            endif
 
-          iVns(ii     ) = zero
-          iBns(ii     ) = zero
-          if( NOTstellsym ) then
-          iVnc(ii     ) = Vnc( nn, mm)                         ! I guess that this must be zero, because \div B = 0 ;
-          iBnc(ii     ) = Bnc( nn, mm)                         ! I guess that this must be zero, because \div B = 0 ;
-          else
-          iVnc(ii     ) = zero
-          iBnc(ii     ) = zero
-          endif
+            iVns(ii     ) = zero
+            iBns(ii     ) = zero
+            if( NOTstellsym ) then
+            iVnc(ii     ) = Vnc( nn, mm)                         ! I guess that this must be zero, because \div B = 0 ;
+            iBnc(ii     ) = Bnc( nn, mm)                         ! I guess that this must be zero, because \div B = 0 ;
+            else
+            iVnc(ii     ) = zero
+            iBnc(ii     ) = zero
+            endif
 
-        endif ! end of if( Lfreebound.eq.1 ) ;
+          endif ! end of if( Lfreebound.eq.1 ) ;
 
         else ! if( mm.eq.0 .and. nn.eq.0 ) then ; matches
 
-        ;iRbc(ii,Nvol) =   Rbc( kk, mm) + Rbc(-kk,-mm)        ! plasma        boundary is ALWAYS given by namelist Rbc & Zbs;
-        ;iZbs(ii,Nvol) = ( Zbs( kk, mm) - Zbs(-kk,-mm) ) * jj
-          if( NOTstellsym ) then
-        ;iRbs(ii,Nvol) = ( Rbs( kk, mm) - Rbs(-kk,-mm) ) * jj
-        ;iZbc(ii,Nvol) =   Zbc( kk, mm) + Zbc(-kk,-mm)
-          else
-        ;iRbs(ii,Nvol) =   zero
-        ;iZbc(ii,Nvol) =   zero
-          endif
+          ;iRbc(ii,Nvol) =   Rbc( kk, mm) + Rbc(-kk,-mm)        ! plasma        boundary is ALWAYS given by namelist Rbc & Zbs;
+          ;iZbs(ii,Nvol) = ( Zbs( kk, mm) - Zbs(-kk,-mm) ) * jj
+            if( NOTstellsym ) then
+          ;iRbs(ii,Nvol) = ( Rbs( kk, mm) - Rbs(-kk,-mm) ) * jj
+          ;iZbc(ii,Nvol) =   Zbc( kk, mm) + Zbc(-kk,-mm)
+            else
+          ;iRbs(ii,Nvol) =   zero
+          ;iZbc(ii,Nvol) =   zero
+            endif
 
-        if( Lfreebound.eq.1 ) then
+          if( Lfreebound.eq.1 ) then
 
-          iRbc(ii,Mvol) =   Rwc( kk, mm) + Rwc(-kk,-mm)        ! computational boundary is ALWAYS given by namelist Rwc & Zws;
-          iZbs(ii,Mvol) = ( Zws( kk, mm) - Zws(-kk,-mm) ) * jj
-          if( NOTstellsym ) then
-          iRbs(ii,Mvol) = ( Rws( kk, mm) - Rws(-kk,-mm) ) * jj
-          iZbc(ii,Mvol) =   Zwc( kk, mm) + Zwc(-kk,-mm)
-          else
-          iRbs(ii,Mvol) =   zero
-          iZbc(ii,Mvol) =   zero
-          endif
+            iRbc(ii,Mvol) =   Rwc( kk, mm) + Rwc(-kk,-mm)        ! computational boundary is ALWAYS given by namelist Rwc & Zws;
+            iZbs(ii,Mvol) = ( Zws( kk, mm) - Zws(-kk,-mm) ) * jj
+            if( NOTstellsym ) then
+            iRbs(ii,Mvol) = ( Rws( kk, mm) - Rws(-kk,-mm) ) * jj
+            iZbc(ii,Mvol) =   Zwc( kk, mm) + Zwc(-kk,-mm)
+            else
+            iRbs(ii,Mvol) =   zero
+            iZbc(ii,Mvol) =   zero
+            endif
 
-          iVns(ii     ) = ( Vns( kk, mm) - Vns(-kk,-mm) ) * jj
-          iBns(ii     ) = ( Bns( kk, mm) - Bns(-kk,-mm) ) * jj
-          if( NOTstellsym ) then
-          iVnc(ii     ) =   Vnc( kk, mm) + Vnc(-kk,-mm)
-          iBnc(ii     ) =   Bnc( kk, mm) + Bnc(-kk,-mm)
-          else
-          iVnc(ii     ) =   zero
-          iBnc(ii     ) =   zero
-          endif
+            iVns(ii     ) = ( Vns( kk, mm) - Vns(-kk,-mm) ) * jj
+            iBns(ii     ) = ( Bns( kk, mm) - Bns(-kk,-mm) ) * jj
+            if( NOTstellsym ) then
+            iVnc(ii     ) =   Vnc( kk, mm) + Vnc(-kk,-mm)
+            iBnc(ii     ) =   Bnc( kk, mm) + Bnc(-kk,-mm)
+            else
+            iVnc(ii     ) =   zero
+            iBnc(ii     ) =   zero
+            endif
 
-        endif ! matches if( Lfreebound.eq.1 ) ;
+          endif ! matches if( Lfreebound.eq.1 ) ;
 
         endif ! end of if( mm.eq.0 .and. nn.eq.0 ) ;
 
@@ -463,64 +426,76 @@ subroutine preset
 
       end select ! end select case( Linitialize );
 
-      if( Igeometry.eq.3 ) then
-        if( Rac(0).gt.zero ) then ! user has supplied logically possible coordinate axis;
+    endif ! end of if myid.eq.0 loop; only the master will read the input file; all variables need to be broadcast;
+  endif ! end of if( Lboundary.eq.1 )
+
+  if( myid.eq.0 ) then
+    if( Igeometry.eq.3 ) then
+      if( Rac(0).gt.zero ) then ! user has supplied logically possible coordinate axis;
         iRbc(1:Ntor+1,0) = Rac(0:Ntor)
         iZbs(1:Ntor+1,0) = Zas(0:Ntor)
         iRbs(1:Ntor+1,0) = Ras(0:Ntor)
         iZbc(1:Ntor+1,0) = Zac(0:Ntor)
-        else ! see preset for poloidal-average specification of coordinate axis and geometrical initialization;
+      else ! see preset for poloidal-average specification of coordinate axis and geometrical initialization;
       endif ! end of if( Igeometry.eq.3 ) then ;
-    endif ! Lchangeangle
-
-    
-    endif ! end of if myid.eq.0 loop; only the master will read the input file; all variables need to be broadcast;
-  endif ! end of if( Lboundary.eq.1 )
+    endif 
+  endif
 
   !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  ; RlBCAST( iRbc(1:mnRZ,0:Mvol), (Mvol+1)*mnRZ, 0 )
-  if( Igeometry.eq.3 ) then
-  ;RlBCAST( iZbs(1:mnRZ,0:Mvol), (Mvol+1)*mnRZ, 0 ) ! only required for ii > 1 ;
-  endif
-  if( NOTstellsym ) then
-  ;RlBCAST( iRbs(1:mnRZ,0:Mvol), (Mvol+1)*mnRZ, 0 ) ! only required for ii > 1 ;
-  if( Igeometry.eq.3 ) then
-    RlBCAST( iZbc(1:mnRZ,0:Mvol), (Mvol+1)*mnRZ, 0 )
-  endif
-  endif
+  if( Lboundary.eq.1 ) then
+    RlBCAST( irhoc(1:mn, 1:Mvol), mn*Mvol, 0 )
+    RlBCAST( ibc(0:Ntor, 1:Mvol), (Ntor+1)*Mvol, 0 )
 
-  if( Lfreebound.eq.1 ) then
-  ;RlBCAST( iVns(1:mnf), mnf, 0 ) ! only required for ii > 1 ;
-  ;RlBCAST( iBns(1:mnf), mnf, 0 ) ! only required for ii > 1 ;
-  if( NOTstellsym ) then
-    RlBCAST( iVnc(1:mnf), mnf, 0 )
-    RlBCAST( iBnc(1:mnf), mnf, 0 )
-  endif
-  endif
+    if( Lfreebound.eq.1 ) then
+      ! TODO: FREE BOUNDARY STUFF
+    endif
 
-  if( Igeometry.eq.1 .or. Igeometry.eq.2 ) then
-  ;iRbc(1:mnRZ,0) = zero ! innermost volume must be trivial; this is used in volume; innermost interface is coordinate axis;
-  if( NOTstellsym ) then
-    iRbs(1:mnRZ,0) = zero ! innermost volume must be trivial; this is used in volume;
-  endif
-  endif
+  else
+    ; RlBCAST( iRbc(1:mnRZ,0:Mvol), (Mvol+1)*mnRZ, 0 )
+    if( Igeometry.eq.3 ) then
+      ;RlBCAST( iZbs(1:mnRZ,0:Mvol), (Mvol+1)*mnRZ, 0 ) ! only required for ii > 1 ;
+    endif
+    if( NOTstellsym ) then
+      ;RlBCAST( iRbs(1:mnRZ,0:Mvol), (Mvol+1)*mnRZ, 0 ) ! only required for ii > 1 ;
+      if( Igeometry.eq.3 ) then
+        RlBCAST( iZbc(1:mnRZ,0:Mvol), (Mvol+1)*mnRZ, 0 )
+      endif
+    endif
 
-  if( Igeometry.eq.3 ) then
-  iZbs(1,0:Mvol) = zero ! Zbs_{m=0,n=0} is irrelevant;
-  endif
-  if( NOTstellsym) then
-  iRbs(1,0:Mvol) = zero ! Rbs_{m=0,n=0} is irrelevant;
-  endif
+    if( Lfreebound.eq.1 ) then
+      ;RlBCAST( iVns(1:mnf), mnf, 0 ) ! only required for ii > 1 ;
+      ;RlBCAST( iBns(1:mnf), mnf, 0 ) ! only required for ii > 1 ;
+      if( NOTstellsym ) then
+        RlBCAST( iVnc(1:mnf), mnf, 0 )
+        RlBCAST( iBnc(1:mnf), mnf, 0 )
+      endif
+    endif
 
-  if ( Igeometry.eq.1 .and. Lreflect.eq.1) then ! reflect upper and lower bound in slab, each take half the amplitude
-    iRbc(2:mnRZ,Mvol) = iRbc(2:mnRZ,Mvol) * half
-    iRbc(2:mnRZ,0) = -iRbc(2:mnRZ,Mvol)
-  if( NOTstellsym ) then
-    iRbs(2:mnRZ,Mvol) = iRbs(2:mnRZ,Mvol) * half
-    iRbs(2:mnRZ,0) = -iRbs(2:mnRZ,Mvol)
-  endif
-  endif
+    if( Igeometry.eq.1 .or. Igeometry.eq.2 ) then
+      ;iRbc(1:mnRZ,0) = zero ! innermost volume must be trivial; this is used in volume; innermost interface is coordinate axis;
+      if( NOTstellsym ) then
+        iRbs(1:mnRZ,0) = zero ! innermost volume must be trivial; this is used in volume;
+      endif
+    endif
+
+    if( Igeometry.eq.3 ) then
+      iZbs(1,0:Mvol) = zero ! Zbs_{m=0,n=0} is irrelevant;
+    endif
+    if( NOTstellsym) then
+      iRbs(1,0:Mvol) = zero ! Rbs_{m=0,n=0} is irrelevant;
+    endif
+
+    if ( Igeometry.eq.1 .and. Lreflect.eq.1) then ! reflect upper and lower bound in slab, each take half the amplitude
+      iRbc(2:mnRZ,Mvol) = iRbc(2:mnRZ,Mvol) * half
+      iRbc(2:mnRZ,0) = -iRbc(2:mnRZ,Mvol)
+    if( NOTstellsym ) then
+      iRbs(2:mnRZ,Mvol) = iRbs(2:mnRZ,Mvol) * half
+      iRbs(2:mnRZ,0) = -iRbs(2:mnRZ,Mvol)
+    endif
+    endif
+
+  endif ! end if( Lboundary.eq.1 )
 
   !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

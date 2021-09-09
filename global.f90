@@ -165,6 +165,9 @@ module typedefns
 
 end module typedefns
 
+
+
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !> \brief global variable storage used as "workspace" throughout the code
@@ -201,8 +204,6 @@ module allglobal
   REAL   , allocatable :: IPDt(:), IPDtDpf(:,:)  !< Toroidal pressure-driven current
 
   INTEGER              :: Mvol
-  INTEGER              :: MpolRZ, NtorRZ
-  INTEGER              :: MpolF, NtorF
 
   LOGICAL              :: YESstellsym !< internal shorthand copies of Istellsym, which is an integer input;
   LOGICAL              :: NOTstellsym !< internal shorthand copies of Istellsym, which is an integer input;
