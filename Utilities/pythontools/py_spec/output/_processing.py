@@ -1,6 +1,4 @@
 import numpy as np
-from numba import jit
-
 
 def get_grid_and_jacobian_and_metric(
     self,
@@ -227,6 +225,7 @@ def get_B_and_der(
 
     # Lrad = s.input.physics.Lrad[lvol]
 
+
     Ate = self.vector_potential.Ate[lvol]
     Aze = self.vector_potential.Aze[lvol]
     Ato = self.vector_potential.Ato[lvol]
@@ -263,7 +262,6 @@ def get_B_and_der(
         Ato[:, 0] = np.sum(Ato * (-1.0) ** lcoeff[None, :], 1)
         Azo[:, 0] = np.sum(Azo * (-1.0) ** lcoeff[None, :], 1)
 
-
     c = (
           im[nax, :, nax, nax]  * Azo.T[:, :, nax, nax]
         + in_[nax, :, nax, nax] * Ato.T[:, :, nax, nax]
@@ -271,7 +269,7 @@ def get_B_and_der(
           im[nax, :, nax, nax]  * Aze.T[:, :, nax, nax]
         + in_[nax, :, nax, nax] * Ate.T[:, :, nax, nax]
     ) * sina[nax, :, :, :]
-    
+
     ct = im[nax, :, nax, nax] * ( - (
           im[nax, :, nax, nax]  * Azo.T[:, :, nax, nax]
         + in_[nax, :, nax, nax] * Ato.T[:, :, nax, nax]
@@ -313,7 +311,7 @@ def get_B_and_der(
     c2z = in_[nax, :, nax, nax] * (
         + Ate.T[:, :, nax, nax] * sina[nax, :, :, :]
         - Ato.T[:, :, nax, nax] * cosa[nax, :, :, :])
-        
+
 
     if LZernike:
         # Zernike polynomial being used
@@ -355,11 +353,9 @@ def get_B_and_der(
         dtBz = np.rollaxis(np.sum(Cheb.chebval(sarr, Cheb.chebder(c2t)),     axis=0),2)
         dzBz = np.rollaxis(np.sum(Cheb.chebval(sarr, Cheb.chebder(c2z)),     axis=0),2)
 
+
     Bcontrav_and_der = np.array([Bs, Bt, Bz, dsBs, dsBt, dsBz, dtBs, dtBt, dtBz, dzBs, dzBt, dzBz]) / jacobian
     return Bcontrav_and_der
-
-
-# Bcontrav = get_B(s,lvol=lvol,jacobian=jacobian,sarr=sarr,tarr=tarr,zarr=zarr)
 
 
 def get_modB(self, Bcontrav, g):
@@ -373,7 +369,6 @@ def get_B_covariant(self, Bcontrav, g):
     return Bco    
 
 
-#@jit(nopython=True)
 def _get_zernike(sarr, lrad, mpol):
     """
     Get the value of the zernike polynomials, their first and second derivatives
