@@ -8,7 +8,7 @@ import sys
 import os
 import logging
 from mpi4py import MPI
-import spec
+import .spec as spec
 
 logger = logging.getLogger("[{}]".format(MPI.COMM_WORLD.Get_rank()) + __name__)
 
