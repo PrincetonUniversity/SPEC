@@ -3,8 +3,7 @@
     "-DCMAKE_C_COMPILER=mpicc",
     "-DCMAKE_CXX_COMPILER=mpicxx",
     "-DCMAKE_Fortran_COMPILER=mpifort",
-    "-DBLA_VENDOR=Intel10_64lp",
-    "-DHDF5_ROOT=/usr",
-    "-DHDF5_NO_FIND_PACKAGE_CONFIG_FILE=TRUE",
+    "-DBLA_VENDOR=OpenBLAS",
+    "-DHDF5_ROOT=~/opt/miniconda3/envs/simsopt/",
     "-DHDF5_PREFER_PARALLEL=TRUE"]
 }
