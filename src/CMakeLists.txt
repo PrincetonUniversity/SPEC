@@ -157,8 +157,20 @@ if(SKBUILD)
 endif()
 message(STATUS "srcs variable is ${srcs}")
 
+add_library(spec3p OBJECT ${f_src_files})
+target_compile_options(spec3p
+    PRIVATE 
+        "-cpp"
+        $<$<Fortran_COMPILER_ID:GNU>:-ffree-line-length-none>
+        # $<$<Fortran_COMPILER_ID:GNU>:-fdefault-real-8>
+        $<$<Fortran_COMPILER_ID:GNU>:-fbounds-check>
+        # $<$<Fortran_COMPILER_ID:GNU>:-std=legacy>
+        $<$<Fortran_COMPILER_ID:GNU>:-fexternal-blas>
+        # $<$<Fortran_COMPILER_ID:Intel>:-r8>
+)
+
 add_library(spec 
-        ${srcs} ${f_src_files}
+        ${srcs} "$<TARGET_OBJECTS:spec3p>"
 )
 
 
