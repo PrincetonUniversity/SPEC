@@ -1046,6 +1046,8 @@ subroutine read_inputlists_from_file()
      FATAL(inplst, seek_status.ne.0, failed to seek to end of input namelists )
 
      ! now allocate arrays and read...
+     ! Need to free memory, in case preset() called multiple times via python wrappers
+     if(allocated(mmRZRZ)) deallocate(mmRZRZ, nnRZRZ, allRZRZ)
      allocate(mmRZRZ(1:num_modes), nnRZRZ(1:num_modes), allRZRZ(1:4,1:Nvol,1:num_modes))
 
      do idx_mode = 1, num_modes
