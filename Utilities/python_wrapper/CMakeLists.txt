@@ -69,10 +69,12 @@ preprocess_fortran(fpp_files ${fortran_src_files})
 # NOTE: The files produced have no one->one relation with the source files.
 # NOTE: So giving the names of f90wrap_---.f90 files manually 
 #-----------------------------------------------------------------------------
-set(f90wrap_output_files ${CMAKE_CURRENT_BINARY_DIR}/f90wrap_global_fpp.f90
-			             ${CMAKE_CURRENT_BINARY_DIR}/f90wrap_intghs_fpp.f90  
-						 ${CMAKE_CURRENT_BINARY_DIR}/f90wrap_newton_fpp.f90 
-						 ${CMAKE_CURRENT_BINARY_DIR}/f90wrap_toplevel.f90 
+set(f90wrap_output_files ${CMAKE_CURRENT_BINARY_DIR}/f90wrap_global_m_fpp.f90
+                         ${CMAKE_CURRENT_BINARY_DIR}/f90wrap_inputlist_m_fpp.f90
+                         ${CMAKE_CURRENT_BINARY_DIR}/f90wrap_intghs_m_fpp.f90
+                         ${CMAKE_CURRENT_BINARY_DIR}/f90wrap_msphdf5_m_fpp.f90
+                         ${CMAKE_CURRENT_BINARY_DIR}/f90wrap_newton_m_fpp.f90
+                         ${CMAKE_CURRENT_BINARY_DIR}/f90wrap_toplevel.f90
 )
 
 set(kind_map_file ${CMAKE_CURRENT_SOURCE_DIR}/kind_map)
