@@ -199,6 +199,8 @@ endif()
 if(OpenMP_Fortran_FOUND)
     target_link_libraries(spec PUBLIC OpenMP::OpenMP_Fortran)
     target_compile_definitions(spec PUBLIC OPENMP)
+    target_link_libraries(spec3p PUBLIC OpenMP::OpenMP_Fortran)
+    target_compile_definitions(spec3p PUBLIC OPENMP)
 endif()
 
 # Add threads
