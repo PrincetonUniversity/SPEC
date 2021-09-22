@@ -165,6 +165,50 @@ target_compile_options(spec3p
         # $<$<Fortran_COMPILER_ID:Intel>:-r8>
 )
 
+set(ALLFILES  manual rzaxis packxi volume coords basefn memory metrix ma00aa matrix spsmat spsint mp00ac ma02aa packab tr00ab curent df00ab lforce intghs mtrxhs lbpol brcast dfp100 dfp200 dforce newton casing bnorml jo00aa pp00aa pp00ab bfield stzxyz hesian ra00aa numrec dcuhre minpack iqpack rksuite i1mach d1mach ilut iters sphdf5 preset global xspech)
+string(REPLACE ";" " " ALLFILES_STR "${ALLFILES}")
+
+# Build spec executable
+set(XSPEC_FILE "${CMAKE_CURRENT_SOURCE_DIR}/xspech.f90")
+set(XSPEC_AWK_FILE "${CMAKE_CURRENT_SOURCE_DIR}/mxspech.f90")
+
+if(AWK MATCHES ".+-NOTFOUND")
+    message(FATAL_ERROR "FATAL: awk (and mawk and gawk) could not be found (${AWK}).")
+else()
+    execute_process(
+        COMMAND bash -c "date"
+        OUTPUT_VARIABLE DATE
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    execute_process(
+        COMMAND /bin/sh -c "\"${AWK}\" -v date=\"${DATE}\" -v pwd=\"$ENV{PWD}\" -v macros=\"${MACROS}\" \
+            -v fc=\"${CMAKE_Fortran_COMPILER}\" -v flags=\"${COMP_DEFS}\" -v allfiles=\"${ALLFILES_STR}\" \
+            'BEGIN{nfiles=split(allfiles,files,\" \")} \
+             {if($2==\"COMPILATION\") { \
+                   print \"    write(ounit,*)\\\"      :  compiled  : date    = \"date\" ; \\\"\" ; \
+                   print \"    write(ounit,*)\\\"      :            : srcdir  = \"pwd\" ; \\\"\" ; \
+                   print \"    write(ounit,*)\\\"      :            : macros  = \"macros\" ; \\\"\" ; \
+                   print \"    write(ounit,*)\\\"      :            : fc      = \"fc\" ; \\\"\" ; \
+                   print \"    write(ounit,*)\\\"      :            : flags   = \"flags\" ; \\\"\" }} \
+             {if($2==\"SUMTIME\") {for (i=1;i<=nfiles;i++) print \"   SUMTIME(\"files[i]\")\"}}\
+             {if($2==\"PRTTIME\") {for (i=1;i<=nfiles;i++) print \"   PRTTIME(\"files[i]\")\"}}\
+             {print}' \"${XSPEC_FILE}\"" 
+        RESULT_VARIABLE AWK_EXITCODE
+        OUTPUT_FILE "${XSPEC_AWK_FILE}"
+        )
+    message(STATUS "Exit code from awk: ${AWK_EXITCODE}")
+endif()
+
+preprocess_m4(XSPEC_OUT_FILE ${XSPEC_AWK_FILE})
+message(STATUS "XSPEC_OUT_FILE is ${XSPEC_OUT_FILE}")
+
+list(APPEND srcs "${XSPEC_OUT_FILE}")
+if(SKBUILD)
+    set(fortran_src_files "${srcs}" PARENT_SCOPE)
+endif()
+message(STATUS "srcs variable is ${srcs}")
+
+
 add_library(spec 
         ${srcs} "$<TARGET_OBJECTS:spec3p>"
 )
@@ -234,47 +278,6 @@ get_property(COMP_DEFS
             PROPERTY COMPILE_OPTIONS
 )
 
-set(ALLFILES  manual rzaxis packxi volume coords basefn memory metrix ma00aa matrix spsmat spsint mp00ac ma02aa packab tr00ab curent df00ab lforce intghs mtrxhs lbpol brcast dfp100 dfp200 dforce newton casing bnorml jo00aa pp00aa pp00ab bfield stzxyz hesian ra00aa numrec dcuhre minpack iqpack rksuite i1mach d1mach ilut iters sphdf5 preset global xspech)
-string(REPLACE ";" " " ALLFILES_STR "${ALLFILES}")
-
-# Build spec executable
-set(XSPEC_FILE "${CMAKE_CURRENT_SOURCE_DIR}/xspech.f90")
-set(XSPEC_AWK_FILE "${CMAKE_CURRENT_SOURCE_DIR}/mxspech.f90")
-
-if(AWK MATCHES ".+-NOTFOUND")
-    message(FATAL_ERROR "FATAL: awk (and mawk and gawk) could not be found (${AWK}).")
-else()
-    execute_process(
-        COMMAND bash -c "date"
-        OUTPUT_VARIABLE DATE
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-    execute_process(
-        COMMAND /bin/sh -c "\"${AWK}\" -v date=\"${DATE}\" -v pwd=\"$ENV{PWD}\" -v macros=\"${MACROS}\" \
-            -v fc=\"${CMAKE_Fortran_COMPILER}\" -v flags=\"${COMP_DEFS}\" -v allfiles=\"${ALLFILES_STR}\" \
-            'BEGIN{nfiles=split(allfiles,files,\" \")} \
-             {if($2==\"COMPILATION\") { \
-                   print \"    write(ounit,*)\\\"      :  compiled  : date    = \"date\" ; \\\"\" ; \
-                   print \"    write(ounit,*)\\\"      :            : srcdir  = \"pwd\" ; \\\"\" ; \
-                   print \"    write(ounit,*)\\\"      :            : macros  = \"macros\" ; \\\"\" ; \
-                   print \"    write(ounit,*)\\\"      :            : fc      = \"fc\" ; \\\"\" ; \
-                   print \"    write(ounit,*)\\\"      :            : flags   = \"flags\" ; \\\"\" }} \
-             {if($2==\"SUMTIME\") {for (i=1;i<=nfiles;i++) print \"   SUMTIME(\"files[i]\")\"}}\
-             {if($2==\"PRTTIME\") {for (i=1;i<=nfiles;i++) print \"   PRTTIME(\"files[i]\")\"}}\
-             {print}' \"${XSPEC_FILE}\"" 
-        RESULT_VARIABLE AWK_EXITCODE
-        OUTPUT_FILE "${XSPEC_AWK_FILE}"
-        )
-    message(STATUS "Exit code from awk: ${AWK_EXITCODE}")
-endif()
-
-preprocess_m4(XSPEC_OUT_FILE ${XSPEC_AWK_FILE})
-message(STATUS "XSPEC_OUT_FILE is ${XSPEC_OUT_FILE}")
-
-add_executable(xspec ${XSPEC_OUT_FILE})
-target_link_libraries(xspec PUBLIC spec)
-set_target_properties(xspec PROPERTIES POSITION_INDEPENDENT_CODE ON)
-
 # Get the spec library linker properties and pass them to python wrapper
 get_target_property(SPEC_LINK_LIB spec LINK_LIBRARIES)
 message(STATUS "spec linked libraries are ${SPEC_LINK_LIB}")
@@ -288,10 +291,10 @@ if(SKBUILD)
 endif()
 
 
-list(APPEND srcs "${XSPEC_OUT_FILE}")
-if(SKBUILD)
-    set(fortran_src_files "${srcs}" PARENT_SCOPE)
-endif()
-message(STATUS "srcs variable is ${srcs}")
+
+
+add_executable(xspec ${XSPEC_OUT_FILE})
+target_link_libraries(xspec PUBLIC spec)
+set_target_properties(xspec PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 install(TARGETS xspec spec)

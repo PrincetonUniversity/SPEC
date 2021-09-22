@@ -93,9 +93,9 @@ add_custom_command(OUTPUT ${python_mod_file} ${f90wrap_output_files}
     VERBATIM
 )
 
-add_custom_target("${python_mod_name}_pymod"
-  DEPENDS ${python_mod_file} ${f90wrap_output_files} 
-)
+#add_custom_target("${python_mod_name}_pymod"
+#  DEPENDS ${python_mod_file} ${f90wrap_output_files} 
+#)
 
 set(f2py_module_name "_${python_mod_name}")
 set(generated_module_file ${CMAKE_CURRENT_BINARY_DIR}/${f2py_module_name}${PYTHON_EXTENSION_MODULE_SUFFIX})
