@@ -152,10 +152,6 @@ message(STATUS "sphdf5_src is ${sphdf5_src}")
 
 
 list(APPEND srcs "${sphdf5_src}")
-if(SKBUILD)
-    set(fortran_src_files "${srcs}" PARENT_SCOPE)
-endif()
-message(STATUS "srcs variable is ${srcs}")
 
 add_library(spec3p OBJECT ${f_src_files})
 target_compile_options(spec3p
@@ -290,5 +286,12 @@ if(SKBUILD)
     #message(STATUS "spec linked libraries are ${SPEC_LINK_LIB}")
     set(SPEC_LINK_LIB ${SPEC_LINK_LIB} PARENT_SCOPE)
 endif()
+
+
+list(APPEND srcs "${XSPEC_OUT_FILE}")
+if(SKBUILD)
+    set(fortran_src_files "${srcs}" PARENT_SCOPE)
+endif()
+message(STATUS "srcs variable is ${srcs}")
 
 install(TARGETS xspec spec)

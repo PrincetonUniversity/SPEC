@@ -130,12 +130,17 @@ add_custom_command(
     COMMAND_EXPAND_LISTS
 )
 
-set(PYINIT_STR "import sys\nimport os.path\nsys.path.append(os.path.dirname(__file__))\n\nfrom .spec import *\n")
-set(PYINIT_FILE ${CMAKE_CURRENT_BINARY_DIR}/__init__.py)
-FILE(WRITE ${PYINIT_FILE} ${PYINIT_STR})
-install(FILES ${python_mod_file} ${generated_module_file} ${PYINIT_FILE}
-        DESTINATION spec  # Here spec is directory location
+python_extension_module(${generated_module_file})
+install(FILES ${python_mod_file} ${generated_module_file} #${CMAKE_CURRENT_SOURCE_DIR}/__init__.py
+        DESTINATION Utilities/python_wrapper/spec
 )
+
+#set(PYINIT_STR "import sys\nimport os.path\nsys.path.append(os.path.dirname(__file__))\n\nfrom .spec import *\n")
+#set(PYINIT_FILE ${CMAKE_CURRENT_BINARY_DIR}/__init__.py)
+#FILE(WRITE ${PYINIT_FILE} ${PYINIT_STR})
+#install(FILES ${python_mod_file} ${generated_module_file} ${PYINIT_FILE}
+#        DESTINATION spec  # Here spec is directory location
+#)
 #install(TARGETS xspec spec)
 #        LIBRARY DESTINATION ${CMAKE_INSTALL_DIR}/.
 #        RUNTIME DESTINATION bin
