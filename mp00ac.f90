@@ -223,9 +223,6 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
      lmu = mu(lvol)
      dpf = dpflux(lvol)
      dtf = Xdof(1) - xoffset
-     print *,"dtf: ", dtf
-     print *,"dpf: ", dpf
-     print *,"lmu: ", lmu
    end if
    
   else ! Lvacuumregion;
@@ -617,12 +614,6 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
     if( iflag.eq.1 ) Fdof(1  ) = dItGpdxtp(1,0,lvol) - curpol
    ! Derivative w.r.t. toroidal flux only
     if( iflag.eq.2 ) Ddof(1,1) = dItGpdxtp(1,1,lvol) 
-    if (iflag .eq. 1) then
-      print *,"curtor (computed): ", dItGpdxtp(0,0,lvol)
-      print *,"curpol (computed): ", dItGpdxtp(1,0,lvol)
-      print *,"curpol (requested): ", curpol
-      print *,"Fdof: ", Fdof(1)
-    end if
  
   case( -1 ) ! Lconstraint=-1;
 
@@ -789,7 +780,6 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
     if ( Lconstraint .eq. -2) then
         !mu(lvol) = lmu
         dtflux(lvol) = dtf
-        print *,"mu(lvol): ", mu(lvol)
     end if
 
     iflag = -2 ! return "acceptance" flag through to ma02aa via ifail; early termination;

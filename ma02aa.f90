@@ -491,7 +491,6 @@ subroutine ma02aa( lvol, NN )
        elseif (ihybrj .ge. 0) then
          dtflux(lvol) = Xdof(1)  - xoffset
        end if
-       print *,"dtflux(lvol): ", dtflux(lvol)
      else
        select case( ihybrj )
        case( 0: ) ;     mu(lvol) = Xdof(1)      - xoffset
@@ -553,8 +552,6 @@ subroutine ma02aa( lvol, NN )
 
   endif ! end of if( LBlinear ) then;
 
-  print *,"End of ma02aa.f90- dtflux(lvol): ", dtflux(lvol)
-  
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-
  
 !latex \subsection{debugging: finite-difference confirmation of the derivatives of the rotational-transform}
