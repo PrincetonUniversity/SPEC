@@ -16,5 +16,5 @@ var group__grp__internal__vars =
     [ "Volume integrals: lBBintegral, lABintegral", "group__grp__volints.html", "group__grp__volints" ],
     [ "Internal global variables", "group__grp__int__global.html", "group__grp__int__global" ],
     [ "Miscellaneous", "group__grp__misc.html", "group__grp__misc" ],
-    [ "dbdx", "group__grp__internal__vars.html#ga82860515fc41c25b7e0d1b88505b6592", null ]
+    [ "allglobal::dbdx", "group__grp__internal__vars.html#ga82860515fc41c25b7e0d1b88505b6592", null ]
 ];

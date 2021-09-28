@@ -1,4 +1,4 @@
 <map id="Interface geometry: iRbc, iZbs etc." name="Interface geometry: iRbc, iZbs etc.">
-<area shape="rect" id="node1" href="$group__grp__internal__vars.html" title=" " alt="" coords="5,13,128,38"/>
-<area shape="rect" id="node2" title="The Fourier harmonics of the interfaces are contained in iRbc(1:mn,0:Mvol) and iZbs(1:mn,..." alt="" coords="176,5,305,45"/>
+<area shape="rect" id="node1" title="The Fourier harmonics of the interfaces are contained in iRbc(1:mn,0:Mvol) and iZbs(1:mn,..." alt="" coords="176,5,305,45"/>
+<area shape="rect" id="node2" href="$group__grp__internal__vars.html" title=" " alt="" coords="5,13,128,38"/>
 </map>

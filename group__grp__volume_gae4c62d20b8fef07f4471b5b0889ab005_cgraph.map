@@ -1,5 +1,5 @@
 <map id="volume" name="volume">
-<area shape="rect" id="node1" title="Computes volume of each region; and, if required, the derivatives of the volume with respect to the i..." alt="" coords="5,5,69,32"/>
-<area shape="rect" id="node2" href="$group__grp__geometry.html#gaaca20aa60eaf39055f3c9d5c02a24ac2" title="Calculates coordinates, , and metrics, using FFTs." alt="" coords="117,5,179,32"/>
-<area shape="rect" id="node3" href="$group__grp__numerics.html#ga1fd52accb0646f535f9bcc46cf5a68f3" title="Inverse Fourier transform (fftw wrapper)" alt="" coords="227,5,277,32"/>
+<area shape="rect" id="node1" title="Computes volume of each region; and, if required, the derivatives of the volume with respect to the i..." alt="" coords="5,29,69,56"/>
+<area shape="rect" id="node2" href="$group__grp__geometry.html#gaaca20aa60eaf39055f3c9d5c02a24ac2" title="Calculates coordinates, , and metrics, using FFTs." alt="" coords="117,29,179,56"/>
+<area shape="rect" id="node3" href="$group__grp__numerics.html#ga1fd52accb0646f535f9bcc46cf5a68f3" title="Inverse Fourier transform (fftw wrapper)" alt="" coords="227,29,277,56"/>
 </map>

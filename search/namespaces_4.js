@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['newtontime_757',['newtontime',['../namespacenewtontime.html',1,'']]],
-  ['numerical_758',['numerical',['../namespacenumerical.html',1,'']]]
+  ['newtontime_0',['newtontime',['../namespacenewtontime.html',1,'']]],
+  ['numerical_1',['numerical',['../namespacenumerical.html',1,'']]]
 ];

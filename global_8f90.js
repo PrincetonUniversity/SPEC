@@ -1,14 +1,11 @@
 var global_8f90 =
 [
-    [ "subgrid", "namespacetypedefns.html#structtypedefns_1_1subgrid", [
+    [ "typedefns::subgrid", "namespacetypedefns.html#structtypedefns_1_1subgrid", [
       [ "s", "namespacetypedefns.html#a616a0ae9df0b6d616e7cf3830f0af80e", null ],
       [ "i", "namespacetypedefns.html#a04acecb3097625ace5b4d68fe905f0ee", null ]
     ] ],
-    [ "matrixlu", "namespacetypedefns.html#structtypedefns_1_1matrixlu", [
-      [ "mat", "namespacetypedefns.html#a98e82548150c77de4c83ec0371948d7e", null ],
-      [ "ipivot", "namespacetypedefns.html#a7368b627f0706d92a8b71133a36d432b", null ]
-    ] ],
-    [ "derivative", "namespacetypedefns.html#structtypedefns_1_1derivative", [
+    [ "typedefns::matrixlu", "namespacetypedefns.html#structtypedefns_1_1matrixlu", null ],
+    [ "typedefns::derivative", "namespacetypedefns.html#structtypedefns_1_1derivative", [
       [ "l", "namespacetypedefns.html#a968d40a375da4e1b7513d4547944e637", null ],
       [ "vol", "namespacetypedefns.html#a8e51a5c89c49341981e6d5bff967b553", null ],
       [ "innout", "namespacetypedefns.html#adb72b59cc843840092f3011f6ec08c30", null ],
@@ -16,10 +13,6 @@ var global_8f90 =
       [ "irz", "namespacetypedefns.html#abb44019e82a09aaedcad11b2ebb3ca77", null ],
       [ "issym", "namespacetypedefns.html#a40fa71d627f8ee5976227b40929316ba", null ]
     ] ],
-    [ "mute", "global_8f90.html#ac0b85034c4b1e504e97df241bcb7afb7", null ],
-    [ "build_vector_potential", "global_8f90.html#ac3db969f9996d9e7f1eb8e73c26119b7", null ],
-    [ "set_mpi_comm", "global_8f90.html#afa27b2cdec8a3a25eb2fea9fe095fb82", null ],
-    [ "read_inputlists_from_file", "global_8f90.html#abc5957c7626d933f50b357aa38756b7d", null ],
     [ "check_inputs", "global_8f90.html#a7824bc37519fe88336534ce90ab2af16", null ],
     [ "broadcast_inputs", "global_8f90.html#a50e99bda692e1d2e3fa68857b67db880", null ],
     [ "wrtend", "global_8f90.html#a282c297c96abdab5e76b5ace440b09a8", null ],
@@ -71,20 +64,11 @@ var global_8f90 =
     [ "ismyvolumevalue", "global_8f90.html#a8c51adb4a77729ad6f26206da69fc105", null ],
     [ "cpus", "global_8f90.html#afae71b580d9f9c71a6796207a5411959", null ],
     [ "mpi_comm_spec", "global_8f90.html#a2382df770fc57cc53ed68c6e1ac23819", null ],
-    [ "skip_write", "global_8f90.html#ae902fa945085419dc4aa8fe707279004", null ],
-    [ "pi2nfp", "global_8f90.html#aae9519af29ff59bac4ff2232d930f409", null ],
-    [ "pi2pi2nfp", "global_8f90.html#a6d9b2610dd89ff8f880a2b6de8647fdd", null ],
-    [ "pi2pi2nfphalf", "global_8f90.html#af2b8953b7dd5987371e6c670b7c02279", null ],
-    [ "pi2pi2nfpquart", "global_8f90.html#acacf877c62676fd29731fb14b461efed", null ],
-    [ "ext", "global_8f90.html#a251942aa6241755b299b8956b7108f1d", null ],
     [ "forceerr", "global_8f90.html#a553a5d9f7253b80750db5131b7e5ffef", null ],
     [ "energy", "global_8f90.html#a07f3f4df2aaac1b26a68b04a2c4464d6", null ],
-    [ "ipdt", "global_8f90.html#a0bec2266926282aea386d6d3720e185d", null ],
     [ "ipdtdpf", "global_8f90.html#a9c552589fff9f20f26fc79be2e3dab38", null ],
-    [ "mvol", "global_8f90.html#aa2a4850f9468d817a673c1ef7f718849", null ],
     [ "yesstellsym", "global_8f90.html#a1f4ddb89b3246fef8d73c88b730eda3a", null ],
     [ "notstellsym", "global_8f90.html#a6993aa662f74b327357896c7d9c81f4b", null ],
-    [ "yesmatrixfree", "global_8f90.html#a183041cba1d3340297d780aafce31606", null ],
     [ "notmatrixfree", "global_8f90.html#a728975a57403b2213b6cd5c3acec156e", null ],
     [ "cheby", "global_8f90.html#af5daebb2639dc4779db3802916a61e9b", null ],
     [ "zernike", "global_8f90.html#a8217255d24aeb350f2254ab0cb2545bb", null ],
@@ -138,10 +122,6 @@ var global_8f90 =
     [ "lzbs", "global_8f90.html#ga15b234457f842881dcf03b095bc8d396", null ],
     [ "lrbs", "global_8f90.html#ga52bc44234d8044ead526a811dfbddd8b", null ],
     [ "lzbc", "global_8f90.html#gaabca2751b684811a6103c8a4cdd00f94", null ],
-    [ "num_modes", "global_8f90.html#ga9c47d69dd0ba7bc6ceb25339d8af4da1", null ],
-    [ "mmrzrz", "global_8f90.html#gaf3047f9efb8384c5edfd73740e63f272", null ],
-    [ "nnrzrz", "global_8f90.html#ga910f38385a06b035960f7e20a57e89b9", null ],
-    [ "allrzrz", "global_8f90.html#gaf2f84ad194d1285f5edcf67ca14150fe", null ],
     [ "nt", "global_8f90.html#ga2a7d2dbc4637d792e1eeabcd4ee5564e", null ],
     [ "nz", "global_8f90.html#gaa91566c55f28df38e46ffc19e60f766f", null ],
     [ "ntz", "global_8f90.html#ga369408d2dce5e4b64b7bf73699367b32", null ],

@@ -1,6 +1,5 @@
 var inputlist_8f90 =
 [
-    [ "initialize_inputs", "inputlist_8f90.html#ga413451343db13aed3f2587c2d5197e39", null ],
     [ "mnvol", "inputlist_8f90.html#ga04cf679d6c45c88672062c93b45f9804", null ],
     [ "mmpol", "inputlist_8f90.html#ga892498a2fe64e10de1d268fa8fe9a49a", null ],
     [ "mntor", "inputlist_8f90.html#ga937c7b7adc15e28d03bcb767f7d62d53", null ],

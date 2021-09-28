@@ -6,7 +6,12 @@ var group__grp__global =
     [ "globallist", "group__grp__global__global.html", "group__grp__global__global" ],
     [ "diagnosticslist", "group__grp__global__diagnostics.html", "group__grp__global__diagnostics" ],
     [ "screenlist", "group__grp__global__screenlist.html", "group__grp__global__screenlist" ],
-    [ "mnvol", "group__grp__global.html#ga04cf679d6c45c88672062c93b45f9804", null ],
-    [ "mmpol", "group__grp__global.html#ga892498a2fe64e10de1d268fa8fe9a49a", null ],
-    [ "mntor", "group__grp__global.html#ga937c7b7adc15e28d03bcb767f7d62d53", null ]
+    [ "constants", "namespaceconstants.html", null ],
+    [ "numerical", "namespacenumerical.html", null ],
+    [ "fileunits", "namespacefileunits.html", null ],
+    [ "cputiming", "namespacecputiming.html", null ],
+    [ "typedefns", "namespacetypedefns.html", null ],
+    [ "inputlist::mnvol", "group__grp__global.html#ga04cf679d6c45c88672062c93b45f9804", null ],
+    [ "inputlist::mmpol", "group__grp__global.html#ga892498a2fe64e10de1d268fa8fe9a49a", null ],
+    [ "inputlist::mntor", "group__grp__global.html#ga937c7b7adc15e28d03bcb767f7d62d53", null ]
 ];
