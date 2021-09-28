@@ -62,6 +62,7 @@
 !> <li> For \c Lcoordinatesingularity=T , the returned function is:
 !> \f{eqnarray}{ {\bf f}(\mu,\Delta\psi_p) \equiv
 !> \left\{ \begin{array}{cccccccr}
+!> (&                                            0&,&                                 ?&)^T, & \textrm{if }\texttt{Lconstraint} &=& -2 \\
 !> (&                                            0&,&                                 0&)^T, & \textrm{if }\texttt{Lconstraint} &=& -1 \\
 !> (&                                            0&,&                                 0&)^T, & \textrm{if }\texttt{Lconstraint} &=&  0 \\
 !> (&{{\,\iota\!\!\!}-}(+1)-\texttt{iota (lvol  )}&,&                                 0&)^T, & \textrm{if }\texttt{Lconstraint} &=&  1 \\

@@ -399,6 +399,7 @@ subroutine ma02aa( lvol, NN )
 !>      to iteratively find the appropriately constrained solution, i.e. \f${\bf f}(\boldsymbol{\mu})=0\f$. </li>
 !> <li> The function \f${\bf f}(\boldsymbol{\mu})\f$, which is computed by mp00ac(), is defined by the input parameter \c Lconstraint:
 !> <ul>
+!> <li> If \c Lconstraint = -2,   then \f$\boldsymbol{\mu}\f$ is *not* varied and \c Nxdof=0. </li>
 !> <li> If \c Lconstraint = -1,   then \f$\boldsymbol{\mu}\f$ is *not* varied and \c Nxdof=0. </li>
 !> <li> If \c Lconstraint =  0,2, then \f$\boldsymbol{\mu}\f$ is varied to satisfy the enclosed current constraints, and \c Nxdof=2. </li>
 !> <li> If \c Lconstraint =  1,   then \f$\boldsymbol{\mu}\f$ is varied to satisfy
@@ -430,7 +431,7 @@ subroutine ma02aa( lvol, NN )
     end if
     
     select case( Lconstraint )
-    case( -2 )    ;                                   ; Nxdof = 1 ! toroidal flux              IS  varied to match linking linking current; 
+    case( -2 )    ;                                   ; Nxdof = 1 ! toroidal flux              IS  varied to match linking current; 
     case( -1 )    ;                                   ; Nxdof = 0 ! multiplier & poloidal flux NOT varied                               ;
     ;             ; iflag = 1 !(we don't need derivatives)
     case(  0 )    ;                                   ; Nxdof = 0 ! multiplier & poloidal flux NOT varied
