@@ -1,6 +1,0 @@
-<map id="compute_guvijsave" name="compute_guvijsave">
-<area shape="rect" id="node1" title="compute guvijsave" alt="" coords="5,80,140,107"/>
-<area shape="rect" id="node2" href="$group__grp__geometry.html#gaaca20aa60eaf39055f3c9d5c02a24ac2" title="Calculates coordinates, , and metrics, using FFTs." alt="" coords="188,80,249,107"/>
-<area shape="rect" id="node3" href="$group__grp__numerics.html#ga1fd52accb0646f535f9bcc46cf5a68f3" title="Inverse Fourier transform (fftw wrapper)" alt="" coords="304,5,355,32"/>
-<area shape="rect" id="node4" href="$group__grp__volume.html#gae4c62d20b8fef07f4471b5b0889ab005" title="Computes volume of each region; and, if required, the derivatives of the volume with respect to the i..." alt="" coords="297,80,361,107"/>
-</map>

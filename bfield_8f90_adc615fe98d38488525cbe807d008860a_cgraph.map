@@ -1,8 +1,0 @@
-<map id="bfield_tangent" name="bfield_tangent">
-<area shape="rect" id="node1" title="compute the tangential magnetic field" alt="" coords="5,81,108,108"/>
-<area shape="rect" id="node2" href="$group__grp__diagnostics.html#ga20985df1b0df0503ca03ca13f1daf642" title="Compute the magnetic field." alt="" coords="185,31,237,57"/>
-<area shape="rect" id="node5" href="$basefn_8f90.html#a8f42498fd0b4c464c8c2d3ce0e94c56a" title="Get the Chebyshev polynomials with zeroth, first and second derivatives The Chebyshev polynomial has ..." alt="" coords="159,81,262,108"/>
-<area shape="rect" id="node6" href="$basefn_8f90.html#a29cbf901a18ead65d0e3a51956a3f045" title="Get the Zernike polynomials &#160;with zeroth, first, second derivatives." alt="" coords="156,132,265,159"/>
-<area shape="rect" id="node3" href="$basefn_8f90.html#af6a4cad04c70bfb14fd18a3bfbc843a3" title="Get the Chebyshev polynomials with zeroth, first derivatives." alt="" coords="317,5,398,32"/>
-<area shape="rect" id="node4" href="$basefn_8f90.html#a38dc596fb909186b01dacc1feac03164" title="Get the Zernike polynomials &#160;with zeroth, first derivatives." alt="" coords="313,56,401,83"/>
-</map>

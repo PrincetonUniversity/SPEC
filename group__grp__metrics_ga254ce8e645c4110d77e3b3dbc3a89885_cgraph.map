@@ -1,4 +1,0 @@
-<map id="metrix" name="metrix">
-<area shape="rect" id="node1" title="Calculates the metric quantities, , which are required for the energy and helicity integrals." alt="" coords="5,29,63,56"/>
-<area shape="rect" id="node2" href="$group__grp__numerics.html#ga041138109a57e651c57117bb4180409e" title="Forward Fourier transform (fftw wrapper)" alt="" coords="111,29,149,56"/>
-</map>

@@ -1,5 +1,0 @@
-<map id="wa00aa" name="wa00aa">
-<area shape="rect" id="node1" title="Constructs smooth approximation to wall." alt="" coords="5,56,72,83"/>
-<area shape="rect" id="node2" href="$group__grp__numerics.html#ga041138109a57e651c57117bb4180409e" title="Forward Fourier transform (fftw wrapper)" alt="" coords="143,5,182,32"/>
-<area shape="rect" id="node3" href="$group__grp__smooth__boundary.html#gaea7690bb953a85a409946f2c6ad6a640" title="Compute vacuum magnetic scalar potential (?)" alt="" coords="120,56,205,83"/>
-</map>
