@@ -236,7 +236,7 @@ if(MPI_Fortran_FOUND)
 endif()
 
 # Add OpenMP
-if(OpenMP_Fortran_FOUND)
+if(OpenMP_Fortran_FOUND AND NOT SKBUILD)
     target_link_libraries(spec PUBLIC OpenMP::OpenMP_Fortran)
     target_compile_definitions(spec PUBLIC OPENMP)
     target_link_libraries(spec3p PUBLIC OpenMP::OpenMP_Fortran)
@@ -285,8 +285,6 @@ get_target_property(SPEC_COMPILE_OPTIONS spec COMPILE_OPTIONS)
 message(STATUS "spec compile options are are ${SPEC_COMPILE_OPTIONS}")
 if(SKBUILD) 
     get_target_property(SPEC_LINK_LIB spec LINK_LIBRARIES)
-    list(REMOVE_ITEM SPEC_LINK_LIB "OpenMP::OpenMP_Fortran")
-    #message(STATUS "spec linked libraries are ${SPEC_LINK_LIB}")
     set(SPEC_LINK_LIB ${SPEC_LINK_LIB} PARENT_SCOPE)
 endif()
 

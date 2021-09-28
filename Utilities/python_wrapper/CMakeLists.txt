@@ -120,6 +120,7 @@ add_custom_command(
         #${SCALAPACK_LIB} ${NETCDF_F} ${NETCDF_C}
         ${f90wrap_output_files} 
         -I${CMAKE_BINARY_DIR}/build/modules/spec_modules
+        -I${HDF5_Fortran_INCLUDE_DIRS}
 		--verbose
         ${CMAKE_BINARY_DIR}/build/lib/libspec.a  
         ${SPEC_LINK_LIB}

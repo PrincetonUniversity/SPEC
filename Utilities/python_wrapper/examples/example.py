@@ -7,7 +7,7 @@ from mpi4py import MPI
 # sys.path.append("./SPEC/Utilities/python_wrapper/")
 from spec.core import SPEC
 
-ext = "../../InputFiles/TestCases/G3V01L0Fi.001.sp"
+ext = "../../../InputFiles/TestCases/G3V01L0Fi.001.sp"
 # ext = "G3V01L0Fi.001.sp"
 
 comm = MPI.COMM_WORLD

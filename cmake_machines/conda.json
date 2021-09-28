@@ -4,6 +4,6 @@
     "-DCMAKE_CXX_COMPILER=mpicxx",
     "-DCMAKE_Fortran_COMPILER=mpifort",
     "-DBLA_VENDOR=OpenBLAS",
-    "-DHDF5_ROOT=/usr/lib/x86_64-linux-gnu/hdf5/serial",
-    "-DHDF5_PREFER_PARALLEL=False"]
+    "-DHDF5_ROOT=~/opt/miniconda3/envs/simsopt/",
+    "-DHDF5_PREFER_PARALLEL=TRUE"]
 }
