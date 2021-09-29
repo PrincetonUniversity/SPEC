@@ -62,7 +62,7 @@
 !> <li> For \c Lcoordinatesingularity=T , the returned function is:
 !> \f{eqnarray}{ {\bf f}(\mu,\Delta\psi_p) \equiv
 !> \left\{ \begin{array}{cccccccr}
-!> (&                                            0&,&                                 ?&)^T, & \textrm{if }\texttt{Lconstraint} &=& -2 \\
+!> (&                                            0&,&                                 0&)^T, & \textrm{if }\texttt{Lconstraint} &=& -2 \\
 !> (&                                            0&,&                                 0&)^T, & \textrm{if }\texttt{Lconstraint} &=& -1 \\
 !> (&                                            0&,&                                 0&)^T, & \textrm{if }\texttt{Lconstraint} &=&  0 \\
 !> (&{{\,\iota\!\!\!}-}(+1)-\texttt{iota (lvol  )}&,&                                 0&)^T, & \textrm{if }\texttt{Lconstraint} &=&  1 \\
@@ -219,7 +219,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
    else                 ; dpf  = dpflux(lvol)
    endif
 
-   ! only poloidal flux is modified
+   ! only toroidal flux is modified
    if (Lconstraint .eq. -2) then
      lmu = mu(lvol)
      dpf = dpflux(lvol)

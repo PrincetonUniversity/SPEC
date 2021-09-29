@@ -368,7 +368,7 @@ subroutine ma02aa( lvol, NN )
 !>
 !> <ul>
 !>
-!> <li> In addition to the enclosed toroidal flux, \f$\Delta \psi_t\f$, which is held constant in the plasma volumes,
+!> <li> In addition to the enclosed toroidal flux, \f$\Delta \psi_t\f$, which is held constant in the plasma volumes (\c Lconstraint != -2),
 !>       the Beltrami field in a given volume is assumed to be parameterized by \f$\mu\f$ and \f$\Delta \psi_p\f$.
 !>       (Note that \f$\Delta \psi_p\f$ is not defined in a torus.) </li>
 !> <li> These are "packed" into an array, e.g. \f$\boldsymbol{\mu} \equiv (\mu, \Delta\psi_p)^T\f$, so that standard library routines ,
@@ -383,6 +383,7 @@ subroutine ma02aa( lvol, NN )
 !> <li> \todo If \c Lconstraint =  2,    then \f$\mu=\boldsymbol{\mu}_1\f$ is       varied in order to satisfy the helicity constraint,
 !>      and \f$\Delta\psi_p=\boldsymbol{\mu}_2\f$ is *not* varied, and \c Nxdof=1.
 !>      (under re-construction)
+!> <li> If \c Lconstraint = -2,    then \f$\boldsymbol{\mu}\f$       is *not* varied, but \f$\Delta \psi_t\f$ is, and \c Nxdof=1. Only for single-volume calculations. </li>
 !>
 !> </li>
 !> </ul> </li>
@@ -399,7 +400,6 @@ subroutine ma02aa( lvol, NN )
 !>      to iteratively find the appropriately constrained solution, i.e. \f${\bf f}(\boldsymbol{\mu})=0\f$. </li>
 !> <li> The function \f${\bf f}(\boldsymbol{\mu})\f$, which is computed by mp00ac(), is defined by the input parameter \c Lconstraint:
 !> <ul>
-!> <li> If \c Lconstraint = -2,   then \f$\boldsymbol{\mu}\f$ is *not* varied and \c Nxdof=0. </li>
 !> <li> If \c Lconstraint = -1,   then \f$\boldsymbol{\mu}\f$ is *not* varied and \c Nxdof=0. </li>
 !> <li> If \c Lconstraint =  0,2, then \f$\boldsymbol{\mu}\f$ is varied to satisfy the enclosed current constraints, and \c Nxdof=2. </li>
 !> <li> If \c Lconstraint =  1,   then \f$\boldsymbol{\mu}\f$ is varied to satisfy
