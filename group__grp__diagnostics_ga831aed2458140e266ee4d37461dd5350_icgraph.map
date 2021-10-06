@@ -1,0 +1,9 @@
+<map id="pp00ab" name="pp00ab">
+<area shape="rect" id="node1" title="Constructs Poincaré plot and &quot;approximate&quot; rotational&#45;transform (for single field line)." alt="" coords="701,31,765,57"/>
+<area shape="rect" id="node2" href="$group__grp__diagnostics.html#gad67931244268a09bd077dae8910c7096" title="Constructs Poincaré plot and &quot;approximate&quot; rotational&#45;transform (driver)." alt="" coords="589,31,653,57"/>
+<area shape="rect" id="node3" href="$xspech_8f90.html#a1451823a7b97101a797de616250752c1" title="Final diagnostics." alt="" coords="423,31,541,57"/>
+<area shape="rect" id="node4" href="$xspech_8f90.html#a9fdc71dffd7c61ee4588a3f80d3ab9ce" title="Main subroutine of SPEC." alt="" coords="312,31,375,57"/>
+<area shape="rect" id="node5" href="$xspech_8f90.html#a48f45478dc2c9f70ea8aa1c60ad06503" title="This is the main &quot;driver&quot; for the physics part of SPEC." alt="" coords="196,5,247,32"/>
+<area shape="rect" id="node7" href="$xspech_8f90.html#a95271e8805067f801b5d4e524d6901d4" title="Main program of SPEC." alt="" coords="179,56,264,83"/>
+<area shape="rect" id="node6" href="$group__grp__output.html#ga0f962c09cd5d5eba99f1cba043cb3898" title="Initialize the interface to the HDF5 library and open the output file." alt="" coords="5,56,131,83"/>
+</map>

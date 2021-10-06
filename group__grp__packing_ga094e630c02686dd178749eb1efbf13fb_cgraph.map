@@ -1,0 +1,6 @@
+<map id="packxi" name="packxi">
+<area shape="rect" id="node1" title="Packs, and unpacks, geometrical degrees of freedom; and sets coordinate axis." alt="" coords="5,5,64,32"/>
+<area shape="rect" id="node2" href="$group__grp__coord__axis.html#ga564281be4d9806d0688a717314ad748f" title="The coordinate axis is assigned via a poloidal average over an arbitrary surface." alt="" coords="112,5,167,32"/>
+<area shape="rect" id="node3" href="$group__grp__geometry.html#gaaca20aa60eaf39055f3c9d5c02a24ac2" title="Calculates coordinates, , and metrics, using FFTs." alt="" coords="215,5,276,32"/>
+<area shape="rect" id="node4" href="$group__grp__volume.html#gae4c62d20b8fef07f4471b5b0889ab005" title="Computes volume of each region; and, if required, the derivatives of the volume with respect to the i..." alt="" coords="324,5,388,32"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="lforce" name="lforce">
+<area shape="rect" id="node1" title="Computes , and the spectral condensation constraints if required, on the interfaces,..." alt="" coords="5,5,60,32"/>
+<area shape="rect" id="node2" href="$group__grp__geometry.html#gaaca20aa60eaf39055f3c9d5c02a24ac2" title="Calculates coordinates, , and metrics, using FFTs." alt="" coords="108,5,169,32"/>
+<area shape="rect" id="node3" href="$group__grp__volume.html#gae4c62d20b8fef07f4471b5b0889ab005" title="Computes volume of each region; and, if required, the derivatives of the volume with respect to the i..." alt="" coords="217,5,281,32"/>
+</map>

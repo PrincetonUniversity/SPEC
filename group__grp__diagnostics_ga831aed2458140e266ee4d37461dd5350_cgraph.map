@@ -1,0 +1,9 @@
+<map id="pp00ab" name="pp00ab">
+<area shape="rect" id="node1" title="Constructs Poincaré plot and &quot;approximate&quot; rotational&#45;transform (for single field line)." alt="" coords="5,81,69,108"/>
+<area shape="rect" id="node2" href="$group__grp__diagnostics.html#ga20985df1b0df0503ca03ca13f1daf642" title="Compute the magnetic field." alt="" coords="123,31,175,57"/>
+<area shape="rect" id="node5" href="$group__grp__diagnostics.html#ga08ad6b6635a598c0d0578e42f46b63c5" title="Calculates coordinates, , and metrics, at given ." alt="" coords="121,81,178,108"/>
+<area shape="rect" id="node6" href="$group__grp__volume.html#gae4c62d20b8fef07f4471b5b0889ab005" title="Computes volume of each region; and, if required, the derivatives of the volume with respect to the i..." alt="" coords="117,132,181,159"/>
+<area shape="rect" id="node3" href="$basefn_8f90.html#af6a4cad04c70bfb14fd18a3bfbc843a3" title="Get the Chebyshev polynomials with zeroth, first derivatives." alt="" coords="233,5,314,32"/>
+<area shape="rect" id="node4" href="$basefn_8f90.html#a38dc596fb909186b01dacc1feac03164" title="Get the Zernike polynomials &#160;with zeroth, first derivatives." alt="" coords="229,56,317,83"/>
+<area shape="rect" id="node7" href="$group__grp__geometry.html#gaaca20aa60eaf39055f3c9d5c02a24ac2" title="Calculates coordinates, , and metrics, using FFTs." alt="" coords="243,132,304,159"/>
+</map>

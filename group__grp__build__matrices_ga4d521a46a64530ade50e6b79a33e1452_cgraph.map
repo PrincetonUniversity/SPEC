@@ -1,0 +1,6 @@
+<map id="spsmat" name="spsmat">
+<area shape="rect" id="node1" title="Constructs matrices for the precondtioner." alt="" coords="5,56,71,83"/>
+<area shape="rect" id="node2" href="$spsmat_8f90.html#a029deb1b6e086ff346f36f5c61d0c1b2" title="add the content from the queue to the real matrices" alt="" coords="135,5,197,32"/>
+<area shape="rect" id="node3" href="$spsmat_8f90.html#ab8d57e74b7461b1d2781c5d56dea6120" title="clean the queue" alt="" coords="119,56,213,83"/>
+<area shape="rect" id="node4" href="$spsmat_8f90.html#a6c4c1ca7c194a5116f2d358c2065ce00" title="push a new element at the back of the queue" alt="" coords="123,107,209,133"/>
+</map>

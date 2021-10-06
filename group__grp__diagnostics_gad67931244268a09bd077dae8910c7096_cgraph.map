@@ -1,0 +1,14 @@
+<map id="pp00aa" name="pp00aa">
+<area shape="rect" id="node1" title="Constructs Poincaré plot and &quot;approximate&quot; rotational&#45;transform (driver)." alt="" coords="5,122,69,149"/>
+<area shape="rect" id="node2" href="$group__grp__output.html#gacd97a933d4239028dc8114b110655074" title="Finalize Poincare output." alt="" coords="135,5,257,47"/>
+<area shape="rect" id="node3" href="$group__grp__output.html#ga47186186c9418cd913ee9c98b5668642" title="Initialize field line tracing output group and create array datasets." alt="" coords="124,71,268,98"/>
+<area shape="rect" id="node4" href="$group__grp__diagnostics.html#ga831aed2458140e266ee4d37461dd5350" title="Constructs Poincaré plot and &quot;approximate&quot; rotational&#45;transform (for single field line)." alt="" coords="164,122,228,149"/>
+<area shape="rect" id="node11" href="$group__grp__output.html#ga14195bd206b7f6a7f05d4d6fc4b50f42" title="Write a hyperslab of Poincare data corresponding to the output of one parallel worker." alt="" coords="121,173,271,199"/>
+<area shape="rect" id="node12" href="$group__grp__output.html#ga8f01c5e4a21c5af2c39620f24e598095" title="Write the rotational transform output from field line following." alt="" coords="117,223,275,250"/>
+<area shape="rect" id="node5" href="$group__grp__diagnostics.html#ga20985df1b0df0503ca03ca13f1daf642" title="Compute the magnetic field." alt="" coords="329,71,381,98"/>
+<area shape="rect" id="node8" href="$group__grp__diagnostics.html#ga08ad6b6635a598c0d0578e42f46b63c5" title="Calculates coordinates, , and metrics, at given ." alt="" coords="326,122,383,149"/>
+<area shape="rect" id="node9" href="$group__grp__volume.html#gae4c62d20b8fef07f4471b5b0889ab005" title="Computes volume of each region; and, if required, the derivatives of the volume with respect to the i..." alt="" coords="323,173,387,199"/>
+<area shape="rect" id="node6" href="$basefn_8f90.html#af6a4cad04c70bfb14fd18a3bfbc843a3" title="Get the Chebyshev polynomials with zeroth, first derivatives." alt="" coords="438,46,519,73"/>
+<area shape="rect" id="node7" href="$basefn_8f90.html#a38dc596fb909186b01dacc1feac03164" title="Get the Zernike polynomials &#160;with zeroth, first derivatives." alt="" coords="435,97,523,123"/>
+<area shape="rect" id="node10" href="$group__grp__geometry.html#gaaca20aa60eaf39055f3c9d5c02a24ac2" title="Calculates coordinates, , and metrics, using FFTs." alt="" coords="448,173,509,199"/>
+</map>

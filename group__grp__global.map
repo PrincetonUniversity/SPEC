@@ -1,0 +1,9 @@
+<map id="Input namelists and global variables" name="Input namelists and global variables">
+<area shape="rect" id="node1" href="$group__grp__global__screenlist.html" title="The namelist screenlist controls screen output. Every subroutine, e.g. xy00aa.h, has its own write fl..." alt="" coords="201,5,280,31"/>
+<area shape="rect" id="node2" href="$group__grp__global__numerics.html" title="The namelist numericlist controls internal resolution parameters that the user rarely needs to consid..." alt="" coords="198,55,283,80"/>
+<area shape="rect" id="node3" href="$group__grp__global__local.html" title="The namelist locallist controls the construction of the Beltrami fields in each volume." alt="" coords="207,104,274,129"/>
+<area shape="rect" id="node4" href="$group__grp__global__physicslist.html" title="The namelist physicslist controls the geometry, profiles, and numerical resolution." alt="" coords="199,153,282,179"/>
+<area shape="rect" id="node5" href="$group__grp__global__global.html" title="The namelist globallist controls the search for global force&#45;balance." alt="" coords="204,203,277,228"/>
+<area shape="rect" id="node6" title="\definecolor{Orange}{rgb}{1.0,0.5,0.0} &#160;\definecolor{Cerulean}{rgb}{0.0,0.5,1.0}" alt="" coords="5,122,140,162"/>
+<area shape="rect" id="node7" href="$group__grp__global__diagnostics.html" title="The namelist diagnosticslist controls post&#45;processor diagnostics, such as Poincaré plot resolution,..." alt="" coords="188,252,293,277"/>
+</map>
