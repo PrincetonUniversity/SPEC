@@ -224,7 +224,14 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
    if (Lconstraint .eq. -2) then
      lmu = mu(lvol)
      dpf = dpflux(lvol)
-     dtf = Xdof(1) - xoffset
+     if (lvol .eq. 1) then
+        dtf = Xdof(1) - xoffset
+     else
+        dtf = dtflux(lvol)
+     endif
+     print *,"dtf: ", dtf
+     print *,"dpf: ", dpf
+     print *,"lmu: ", lmu
    end if
    
   else ! Lvacuumregion;
@@ -613,7 +620,12 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
    WCALL( mp00ac, curent,( lvol, mn, Nt, Nz, iflag, dItGpdxtp(0:1,-1:2,lvol)) )
 
    ! Constraint on curpol only
-    if( iflag.eq.1 ) Fdof(1  ) = dItGpdxtp(1,0,lvol) - curpol
+!    if( iflag.eq.1 ) Fdof(1  ) = dItGpdxtp(1,0,lvol) - curpol
+!TODO
+    if( iflag.eq.1 ) then
+      Fdof(1  ) = dItGpdxtp(1,0,lvol) - curpol
+      print *, "curpol (actual): ", dItGpdxtp(1,0,lvol), ", curpol (target): ", curpol
+    endif
    ! Derivative w.r.t. toroidal flux only
     if( iflag.eq.2 ) Ddof(1,1) = dItGpdxtp(1,1,lvol) 
  

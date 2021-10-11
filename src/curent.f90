@@ -63,7 +63,7 @@ subroutine curent( lvol, mn, Nt, Nz, iflag, ldItGp )
 
   use fileunits, only : ounit
 
-  use inputlist, only : Wmacros, Wcurent, Lrad, Lbdybnzero
+  use inputlist, only : Wmacros, Wcurent, Lrad, Lconstraint, Lbdybnzero
 
   use cputiming, only : Tcurent
 
@@ -105,7 +105,7 @@ subroutine curent( lvol, mn, Nt, Nz, iflag, ldItGp )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  if (.not. Lbdybnzero) then
+  if (Lconstraint .eq. -2) then
     innout = 1.0
     lss = 1.0
   end if
