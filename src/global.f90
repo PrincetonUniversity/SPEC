@@ -1094,14 +1094,14 @@ subroutine check_inputs()
 
    cput = GETTIME
 
-   write(ounit,1010) cput-cpus, Igeometry, Istellsym, Lreflect
+   write(ounit,1010) cput-cpus, Igeometry, Istellsym, Lreflect, Lbdybnzero
    write(ounit,1011)            Lfreebound, phiedge, curtor, curpol
    write(ounit,1012)            gamma
    write(ounit,1013)            Nfp, Nvol, Mvol, Mpol, Ntor
    write(ounit,1014)            pscale, Ladiabatic, Lconstraint, mupftol, mupfits
    write(ounit,1015)            Lrad(1:min(Mvol,32))
 
-1010 format("readin : ",f10.2," : Igeometry=",i3," ; Istellsym=",i3," ; Lreflect="i3" ;")
+1010 format("readin : ",f10.2," : Igeometry=",i3," ; Istellsym=",i3," ; Lreflect="i3" ; Lbdybnzero="L2" ;")
 1011 format("readin : ", 10x ," : Lfreebound=",i3," ; phiedge="es23.15" ; curtor="es23.15" ; curpol="es23.15" ;")
 1012 format("readin : ", 10x ," : gamma="es23.15" ;")
 1013 format("readin : ", 10x ," : Nfp=",i3," ; Nvol=",i3," ; Mvol=",i3," ; Mpol=",i3," ; Ntor=",i3," ;")
@@ -1129,7 +1129,7 @@ subroutine check_inputs()
    FATAL( readin, abs(one+gamma).lt.vsmall, 1+gamma appears in denominator in dforce ) !< \todo Please check this; SRH: 27 Feb 18;
    FATAL( readin, abs(one-gamma).lt.vsmall, 1-gamma appears in denominator in fu00aa ) !< \todo Please check this; SRH: 27 Feb 18;
    FATAL( readin, Lconstraint.lt.-2 .or. Lconstraint.gt.3, illegal Lconstraint )
-   FATAL( readin, Lconstraint.eq.-2 .and. Nvol.ne.1, Lconstraint -2 only for single volume calculation )
+   FATAL( readin, .not. Lbdybnzero .and. Lfreebound.eq.1, Lbdybnzero=.false only for fixed-boundary calculation )
    FATAL( readin, Igeometry.eq.1 .and. rpol.lt.vsmall, poloidal extent of slab too small or negative )
    FATAL( readin, Igeometry.eq.1 .and. rtor.lt.vsmall, toroidal extent of slab too small or negative )
 
