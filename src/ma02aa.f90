@@ -375,6 +375,7 @@ subroutine ma02aa( lvol, NN )
 !>       e.g. \c C05PCF, can be used to (iteratively) find the appropriately-constrained Beltrami solution, i.e. \f${\bf f}(\boldsymbol{\mu})=0\f$. </li>
 !> <li> The function \f${\bf f}(\boldsymbol{\mu})\f$, which is computed by mp00ac(), is defined by the input parameter \c Lconstraint:
 !> <ul>
+!> <li> If \c Lconstraint = -2,    then \f$\boldsymbol{\mu}\f$       is *not* varied, but \f$\Delta \psi_t\f$ is, and \c Nxdof=1. </li>
 !> <li> If \c Lconstraint = -1, 0, then \f$\boldsymbol{\mu}\f$       is *not* varied and \c Nxdof=0. </li>
 !> <li> If \c Lconstraint =  1,    then \f$\boldsymbol{\mu}\f$       is       varied to satisfy the transform constraints;
 !>      and \c Nxdof=1 in the simple torus and \c Nxdof=2 in the annular regions.
@@ -382,8 +383,7 @@ subroutine ma02aa( lvol, NN )
 !>      and only \f$\mu=\boldsymbol{\mu}_1\f$ is varied in order to satisfy the transform constraint on the "outer" interface of that volume.) </li>
 !> <li> \todo If \c Lconstraint =  2,    then \f$\mu=\boldsymbol{\mu}_1\f$ is       varied in order to satisfy the helicity constraint,
 !>      and \f$\Delta\psi_p=\boldsymbol{\mu}_2\f$ is *not* varied, and \c Nxdof=1.
-!>      (under re-construction)
-!> <li> If \c Lconstraint = -2,    then \f$\boldsymbol{\mu}\f$       is *not* varied, but \f$\Delta \psi_t\f$ is, and \c Nxdof=1. Only for single-volume calculations. </li>
+!>      (under re-construction) </li>
 !>
 !> </li>
 !> </ul> </li>

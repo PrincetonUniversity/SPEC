@@ -300,6 +300,8 @@ subroutine preset
 
      endif ! matches if( Lfreebound.eq.1 ) ;
 
+     if( Lfreebound.eq.1 .or. .not. Lbdybnzero) then
+
       iVns(ii     ) = ( Vns( kk, mm) - Vns(-kk,-mm) ) * jj
       iBns(ii     ) = ( Bns( kk, mm) - Bns(-kk,-mm) ) * jj
       if( NOTstellsym ) then
@@ -309,6 +311,8 @@ subroutine preset
       iVnc(ii     ) =   zero
       iBnc(ii     ) =   zero
       endif
+
+     endif ! matches if( Lfreebound.eq.1 .or. .not. Lbdybnzero) ;
 
     endif ! end of if( mm.eq.0 .and. nn.eq.0 ) ;
 
