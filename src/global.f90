@@ -1129,8 +1129,8 @@ subroutine check_inputs()
    FATAL( readin, abs(one+gamma).lt.vsmall, 1+gamma appears in denominator in dforce ) !< \todo Please check this; SRH: 27 Feb 18;
    FATAL( readin, abs(one-gamma).lt.vsmall, 1-gamma appears in denominator in fu00aa ) !< \todo Please check this; SRH: 27 Feb 18;
    FATAL( readin, Lconstraint.lt.-2 .or. Lconstraint.gt.3, illegal Lconstraint )
-   FATAL( readin, .not. Lbdybnzero .and. Lfreebound.eq.1, Lbdybnzero=.false only for fixed-boundary calculation )
-!   FATAL( readin, .not. Lbdybnzero .and. Nvol.ne.1, Lbdybnzero=.false only for single-volume calculation )
+   FATAL( readin, Lconstraint.eq.-2 .and. Nvol.ne.1, Lconstraint=-2 only for single-volume calculation )
+   FATAL( readin, .not. Lbdybnzero .and. (Lconstraint.ne.-2 .or. Lfreebound.eq.1) , Lbdybnzero=.false only for fixed-boundary calculation with Lconstraint=-2 )
    FATAL( readin, Igeometry.eq.1 .and. rpol.lt.vsmall, poloidal extent of slab too small or negative )
    FATAL( readin, Igeometry.eq.1 .and. rtor.lt.vsmall, toroidal extent of slab too small or negative )
 

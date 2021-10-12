@@ -368,7 +368,7 @@ subroutine ma02aa( lvol, NN )
 !>
 !> <ul>
 !>
-!> <li> In addition to the enclosed toroidal flux, \f$\Delta \psi_t\f$, which is held constant in the plasma volumes (\c Lconstraint != -2),
+!> <li> In addition to the enclosed toroidal flux, \f$\Delta \psi_t\f$, which is held constant in the plasma volumes (for \c Lconstraint != -2),
 !>       the Beltrami field in a given volume is assumed to be parameterized by \f$\mu\f$ and \f$\Delta \psi_p\f$.
 !>       (Note that \f$\Delta \psi_p\f$ is not defined in a torus.) </li>
 !> <li> These are "packed" into an array, e.g. \f$\boldsymbol{\mu} \equiv (\mu, \Delta\psi_p)^T\f$, so that standard library routines ,

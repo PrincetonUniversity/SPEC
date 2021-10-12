@@ -185,7 +185,7 @@ module inputlist
                                                          !< <li> toroidal size is \f$L = 2\pi*\f$\c rtor </li>
                                                          !< </ul>
   INTEGER      :: Lreflect                   =  0        !< =1 reflect the upper and lower bound in slab, =0 do not reflect
-  LOGICAL      :: Lbdybnzero                 =  .true.   !< =.true. assume Bsups=0 on boundary (single-volume calculation), =.false. obtain Bsups from Vns and Vnc input
+  LOGICAL      :: Lbdybnzero                 =  .true.   !< for fixed-boundary, =.true. assume Bsups=0 on boundary, =.false. obtain Bsups from Vns and Vnc input (currently only for Lconstraint=-2)
 
   REAL         :: Rac(     0:MNtor        )  =  0.0      !<     stellarator symmetric coordinate axis;
   REAL         :: Zas(     0:MNtor        )  =  0.0      !<     stellarator symmetric coordinate axis;
