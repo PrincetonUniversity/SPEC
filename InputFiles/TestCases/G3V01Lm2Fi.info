@@ -1,0 +1,1 @@
+test case to verify Lconstraint=-2 (vary toroidal flux to satisfy poloidal linking current constraint) and Lbdybnzero=.false. (non-zero value of Bn on boundary of fixed-boundary calculation).
