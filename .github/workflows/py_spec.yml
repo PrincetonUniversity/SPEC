@@ -9,37 +9,14 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-#    - name: Setup Python
-#      uses: actions/setup-python@v2
-#      with:
-#        python-version: '3.x'
-
     # Python3 should be pre-installed on 'ubuntu-latest'
     - name: Python version info
       run: |
         python3 --version
         pip3 --version
 
-#    - name: Get pip cache dir
-#      id: pip-cache
-#      run: |
-#        pip cache dir
-#        echo "::set-output name=dir::$(pip cache dir)"
-
-#    - name: Cache pip
-#      uses: actions/cache@v2
-#      id: cache-pip
-#      with:
-#        # This path is specific to Ubuntu
-#        path: ${{ steps.pip-cache.outputs.dir }}
-#        # Look to see if there is a cache hit for the corresponding requirements file
-#        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-#        restore-keys: |
-#          ${{ runner.os }}-pip-
-
     - name: Install dependencies
       working-directory: ${{ env.PY_SPEC_DIR }}
-#       python -m pip install --upgrade pip
       run: |
         pip3 install -r requirements.txt
         pip3 install setuptools wheel twine      
@@ -47,29 +24,15 @@ jobs:
     - name: Build py_spec
       working-directory: ${{ env.PY_SPEC_DIR }}
       run: |
-        echo "install py_spec"
         pip3 install -e ${PY_SPEC_DIR}
         python3 -c "from py_spec import *"
 
-#    - name: Cache publish
-#      uses: actions/cache@v2
-#      if: github.ref == 'refs/heads/master'
-#      id: cache-pypi
-#      with:
-#        # This path is specific to Ubuntu
-#        path: ${PY_SPEC_DIR}/py_spec
-#        # Look to see if there is a cache hit for the corresponding requirements file
-#        key: ${{ runner.os }}-pypi-${{ hashFiles('**/py_spec/__init__.py') }}
-#        restore-keys: |
-#          ${{ runner.os }}-pypi-
-
     - name: publish to PYPI
       working-directory: ${{ env.PY_SPEC_DIR }}
-#      if: steps.cache-pypi.outputs.cache-hit != 'true' && github.ref == 'refs/heads/master'
       if: github.ref == 'refs/heads/master'
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI }}
       run: |
         python setup.py sdist bdist_wheel
-        twine upload dist/*
+        twine upload --skip-existing dist/*
