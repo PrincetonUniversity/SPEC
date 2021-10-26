@@ -1526,7 +1526,56 @@ subroutine broadcast_inputs
   if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : broadcasting screenlist      from ext.sp ;")') cput-cpus
   endif
 
-! BSCREENLIST ! broadcast screenlist; this is expanded by Makefile; do not remove;
+  LlBCAST( Wmanual ,1,0)
+  LlBCAST( Wrzaxis ,1,0)
+  LlBCAST( Wpackxi ,1,0)
+  LlBCAST( Wvolume ,1,0)
+  LlBCAST( Wcoords ,1,0)
+  LlBCAST( Wbasefn ,1,0)
+  LlBCAST( Wmemory ,1,0)
+  LlBCAST( Wmetrix ,1,0)
+  LlBCAST( Wma00aa ,1,0)
+  LlBCAST( Wmatrix ,1,0)
+  LlBCAST( Wspsmat ,1,0)
+  LlBCAST( Wspsint ,1,0)
+  LlBCAST( Wmp00ac ,1,0)
+  LlBCAST( Wma02aa ,1,0)
+  LlBCAST( Wpackab ,1,0)
+  LlBCAST( Wtr00ab ,1,0)
+  LlBCAST( Wcurent ,1,0)
+  LlBCAST( Wdf00ab ,1,0)
+  LlBCAST( Wlforce ,1,0)
+  LlBCAST( Wintghs ,1,0)
+  LlBCAST( Wmtrxhs ,1,0)
+  LlBCAST( Wlbpol  ,1,0)
+  LlBCAST( Wbrcast ,1,0)
+  LlBCAST( Wdfp100 ,1,0)
+  LlBCAST( Wdfp200 ,1,0)
+  LlBCAST( Wdforce ,1,0)
+  LlBCAST( Wnewton ,1,0)
+  LlBCAST( Wcasing ,1,0)
+  LlBCAST( Wbnorml ,1,0)
+  LlBCAST( Wjo00aa ,1,0)
+  LlBCAST( Wpp00aa ,1,0)
+  LlBCAST( Wpp00ab ,1,0)
+  LlBCAST( Wbfield ,1,0)
+  LlBCAST( Wstzxyz ,1,0)
+  LlBCAST( Whesian ,1,0)
+  LlBCAST( Wra00aa ,1,0)
+  LlBCAST( Wnumrec ,1,0)
+  LlBCAST( Wdcuhre ,1,0)
+  LlBCAST( Wminpack,1,0)
+  LlBCAST( Wiqpack ,1,0)
+  LlBCAST( Wrksuite,1,0)
+  LlBCAST( Wi1mach ,1,0)
+  LlBCAST( Wd1mach ,1,0)
+  LlBCAST( Wilut   ,1,0)
+  LlBCAST( Witers  ,1,0)
+  LlBCAST( Wsphdf5 ,1,0)
+  LlBCAST( Wpreset ,1,0)
+  LlBCAST( Wglobal ,1,0)
+  LlBCAST( Wxspech ,1,0)
+  LlBCAST( Wbuild_vector_potential, 1, 0 )
   LlBCAST( Wreadin, 1, 0 )
   LlBCAST( Wwrtend, 1, 0 )
   LlBCAST( Wmacros, 1, 0 )
@@ -1826,7 +1875,57 @@ subroutine wrtend
   endif
 
   write(iunit,'("&screenlist")')
-! WSCREENLIST ! write screenlist; this is expanded by Makefile ; do not remove;
+  if( Wmanual           ) write(iunit,'(" Wmanual = ",L1                )') Wmanual
+  if( Wrzaxis           ) write(iunit,'(" Wrzaxis = ",L1                )') Wrzaxis
+  if( Wpackxi           ) write(iunit,'(" Wpackxi = ",L1                )') Wpackxi
+  if( Wvolume           ) write(iunit,'(" Wvolume = ",L1                )') Wvolume
+  if( Wcoords           ) write(iunit,'(" Wcoords = ",L1                )') Wcoords
+  if( Wbasefn           ) write(iunit,'(" Wbasefn = ",L1                )') Wbasefn
+  if( Wmemory           ) write(iunit,'(" Wmemory = ",L1                )') Wmemory
+  if( Wmetrix           ) write(iunit,'(" Wmetrix = ",L1                )') Wmetrix
+  if( Wma00aa           ) write(iunit,'(" Wma00aa = ",L1                )') Wma00aa
+  if( Wmatrix           ) write(iunit,'(" Wmatrix = ",L1                )') Wmatrix
+  if( Wspsmat           ) write(iunit,'(" Wspsmat = ",L1                )') Wspsmat
+  if( Wspsint           ) write(iunit,'(" Wspsint = ",L1                )') Wspsint
+  if( Wmp00ac           ) write(iunit,'(" Wmp00ac = ",L1                )') Wmp00ac
+  if( Wma02aa           ) write(iunit,'(" Wma02aa = ",L1                )') Wma02aa
+  if( Wpackab           ) write(iunit,'(" Wpackab = ",L1                )') Wpackab
+  if( Wtr00ab           ) write(iunit,'(" Wtr00ab = ",L1                )') Wtr00ab
+  if( Wcurent           ) write(iunit,'(" Wcurent = ",L1                )') Wcurent
+  if( Wdf00ab           ) write(iunit,'(" Wdf00ab = ",L1                )') Wdf00ab
+  if( Wlforce           ) write(iunit,'(" Wlforce = ",L1                )') Wlforce
+  if( Wintghs           ) write(iunit,'(" Wintghs = ",L1                )') Wintghs
+  if( Wmtrxhs           ) write(iunit,'(" Wmtrxhs = ",L1                )') Wmtrxhs
+  if( Wlbpol            ) write(iunit,'(" Wlbpol  = ",L1                )') Wlbpol
+  if( Wbrcast           ) write(iunit,'(" Wbrcast = ",L1                )') Wbrcast
+  if( Wdfp100           ) write(iunit,'(" Wdfp100 = ",L1                )') Wdfp100
+  if( Wdfp200           ) write(iunit,'(" Wdfp200 = ",L1                )') Wdfp200
+  if( Wdforce           ) write(iunit,'(" Wdforce = ",L1                )') Wdforce
+  if( Wnewton           ) write(iunit,'(" Wnewton = ",L1                )') Wnewton
+  if( Wcasing           ) write(iunit,'(" Wcasing = ",L1                )') Wcasing
+  if( Wbnorml           ) write(iunit,'(" Wbnorml = ",L1                )') Wbnorml
+  if( Wjo00aa           ) write(iunit,'(" Wjo00aa = ",L1                )') Wjo00aa
+  if( Wpp00aa           ) write(iunit,'(" Wpp00aa = ",L1                )') Wpp00aa
+  if( Wpp00ab           ) write(iunit,'(" Wpp00ab = ",L1                )') Wpp00ab
+  if( Wbfield           ) write(iunit,'(" Wbfield = ",L1                )') Wbfield
+  if( Wstzxyz           ) write(iunit,'(" Wstzxyz = ",L1                )') Wstzxyz
+  if( Whesian           ) write(iunit,'(" Whesian = ",L1                )') Whesian
+  if( Wra00aa           ) write(iunit,'(" Wra00aa = ",L1                )') Wra00aa
+  if( Wnumrec           ) write(iunit,'(" Wnumrec = ",L1                )') Wnumrec
+  if( Wdcuhre           ) write(iunit,'(" Wdcuhre = ",L1                )') Wdcuhre
+  if( Wminpack          ) write(iunit,'(" Wminpack= ",L1                )') Wminpack
+  if( Wiqpack           ) write(iunit,'(" Wiqpack = ",L1                )') Wiqpack
+  if( Wrksuite          ) write(iunit,'(" Wrksuite= ",L1                )') Wrksuite
+  if( Wi1mach           ) write(iunit,'(" Wi1mach = ",L1                )') Wi1mach
+  if( Wd1mach           ) write(iunit,'(" Wd1mach = ",L1                )') Wd1mach
+  if( Wilut             ) write(iunit,'(" Wilut   = ",L1                )') Wilut
+  if( Witers            ) write(iunit,'(" Witers  = ",L1                )') Witers
+  if( Wsphdf5           ) write(iunit,'(" Wsphdf5 = ",L1                )') Wsphdf5
+  if( Wpreset           ) write(iunit,'(" Wpreset = ",L1                )') Wpreset
+  if( Wglobal           ) write(iunit,'(" Wglobal = ",L1                )') Wglobal
+  if( Wxspech           ) write(iunit,'(" Wxspech = ",L1                )') Wxspech
+  if( Wbuild_vector_potential) write(iunit,'(" Wbuild_vector_potential = ",L1 )') Wbuild_vector_potential
+
   if( Wreadin           ) write(iunit,'(" Wreadin = ",L1                )') Wreadin
   if( Wwrtend           ) write(iunit,'(" Wwrtend = ",L1                )') Wwrtend
   if( Wmacros           ) write(iunit,'(" Wmacros = ",L1                )') Wmacros

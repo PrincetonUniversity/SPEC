@@ -314,24 +314,12 @@ dspec: $(addsuffix _d.o,$(ALLFILES)) $(MACROS) Makefile
 # inputlist needs special handling: expansion of DSCREENLIST and NSCREENLIST using awk
 
 inputlist_r.o: %_r.o: src/inputlist.f90 $(MACROS)
-	#@awk -v allfiles='$(ALLFILES)' 'BEGIN{nfiles=split(allfiles,files," ")} \
-	#{if($$2=="DSCREENLIST") {for (i=1;i<=nfiles;i++) print "  LOGICAL :: W"files[i]" = .false. "}}\
-	#{if($$2=="NSCREENLIST") {for (i=1;i<=nfiles;i++) print "  W"files[i]" , &"}}\
-	#{print}' inputlist.f90 > mnputlist.f90
-	#m4 -P $(MACROS) mnputlist.f90 > inputlist_m.F90
-	#@rm -f mnputlist.f90
 	m4 -P $(MACROS) src/inputlist.f90 > inputlist_m.F90
 	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o inputlist_r.o -c inputlist_m.F90 $(LIBS)
 	@wc -l -L -w inputlist_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
 inputlist_d.o: %_d.o: src/inputlist.f90 $(MACROS)
-	#@awk -v allfiles='$(ALLFILES)' 'BEGIN{nfiles=split(allfiles,files," ")} \
-	#{if($$2=="DSCREENLIST") {for (i=1;i<=nfiles;i++) print "  LOGICAL :: W"files[i]" = .false. "}}\
-	#{if($$2=="NSCREENLIST") {for (i=1;i<=nfiles;i++) print "  W"files[i]" , &"}}\
-	#{print}' inputlist.f90 > mnputlist.f90
-	#m4 -P $(MACROS) mnputlist.f90 > inputlist_m.F90
-	#@rm -f mnputlist.f90
 	m4 -P $(MACROS) src/inputlist.f90 > inputlist_m.F90
 	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o inputlist_d.o -c inputlist_m.F90 $(LIBS)
 	@wc -l -L -w inputlist_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
@@ -341,30 +329,12 @@ inputlist_d.o: %_d.o: src/inputlist.f90 $(MACROS)
 # global needs special handling: expansion of CPUVARIABLE, BSCREENLIST and WSCREENLIST using awk
 
 global_r.o: %_r.o: inputlist_r.o src/global.f90 $(MACROS) 
-	#@awk -v allfiles='$(ALLFILES)' 'BEGIN{nfiles=split(allfiles,files," ")} \
-	#{if($$2=="CPUVARIABLE") {for (i=1;i<=nfiles;i++) print "  REAL    :: T"files[i]" = 0.0, "files[i]"T = 0.0"}}\
-	#{if($$2=="DSCREENLIST") {for (i=1;i<=nfiles;i++) print "  LOGICAL :: W"files[i]" = .false. "}}\
-	#{if($$2=="NSCREENLIST") {for (i=1;i<=nfiles;i++) print "  W"files[i]" , &"}}\
-	#{if($$2=="BSCREENLIST") {for (i=1;i<=nfiles;i++) print "  LlBCAST(W"files[i]",1,0)"}}\
-	#{if($$2=="WSCREENLIST") {s="'"'"'" ; d="'"\\\""'" ; for (i=1;i<=nfiles;i++) print "  if( W"files[i]" ) write(iunit,"s"("d" W"files[i]" = "d"L1)"s")W"files[i]}}\
-	#{print}' src/global.f90 > mlobal.f90
-	#m4 -P $(MACROS) mlobal.f90 > global_m.F90
-	#@rm -f mlobal.f90
 	m4 -P $(MACROS) src/global.f90 > global_m.F90
 	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o global_r.o -c global_m.F90 $(LIBS)
 	@wc -l -L -w global_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
 global_d.o: %_d.o: inputlist_d.o src/global.f90 $(MACROS) 
-	#@awk -v allfiles='$(ALLFILES)' 'BEGIN{nfiles=split(allfiles,files," ")} \
-	#{if($$2=="CPUVARIABLE") {for (i=1;i<=nfiles;i++) print "  REAL    :: T"files[i]" = 0.0, "files[i]"T = 0.0"}}\
-	#{if($$2=="DSCREENLIST") {for (i=1;i<=nfiles;i++) print "  LOGICAL :: W"files[i]" = .false. "}}\
-	#{if($$2=="NSCREENLIST") {for (i=1;i<=nfiles;i++) print "  W"files[i]" , &"}}\
-	#{if($$2=="BSCREENLIST") {for (i=1;i<=nfiles;i++) print "  LlBCAST(W"files[i]",1,0)"}}\
-	#{if($$2=="WSCREENLIST") {s="'"'"'" ; d="'"\\\""'" ; for (i=1;i<=nfiles;i++) print "  if( W"files[i]" ) write(iunit,"s"("d" W"files[i]" = "d"L1)"s")W"files[i]}}\
-	#{print}' src/global.f90 > mlobal.f90
-	#m4 -P $(MACROS) mlobal.f90 > global_m.F90
-	#@rm -f mlobal.f90
 	m4 -P $(MACROS) src/global.f90 > global_m.F90
 	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o global_d.o -c global_m.F90 $(LIBS)
 	@wc -l -L -w global_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
