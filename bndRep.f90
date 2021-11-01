@@ -188,7 +188,7 @@ module bndRep
         SALLOCATE( A, (1:nel_m1_i,1:nel_m1_j), zero )  
         SALLOCATE( B, (1:nel_m1_i           ), zero )    
   
-        A = Mat1
+        call DCOPY(nel_m1_i*nel_m1_j, Mat1, 1, A, 1)
         call pack_rhomn_bn( rhomn(1:mn_rho), bn(0:Ntor) )
         TRANS = 'N'
         NRHS = 1
@@ -200,16 +200,16 @@ module bndRep
         SALLOCATE( WORK, (1:1), zero )
         call DGELS( TRANS, nel_m1_i, nel_m1_j, NRHS, A, LDA, B, LDB, WORK, LWORK, INFO )
   
-        select case( LWORK )
+        select case( INFO )
         case( 0 )
           LWORK = WORK(1)
           DALLOCATE( WORK )
   
         case( :-1)
-          FATAL( global, .true., Illegal value in DGELS )
+          FATAL( bndRep, .true., Illegal value in DGELS )
   
         case(1: )
-          FATAL( global, .true., Rank zero for backward mapping )
+          FATAL( bndRep, .true., Rank zero for backward mapping )
   
         end select
   
@@ -220,55 +220,56 @@ module bndRep
         SALLOCATE( WORK, (1:LWORK), zero )
         LDA = nel_m1_i
         LDB = nel_m1_i
-        A = Mat1
+        call DCOPY( nel_m1_i*nel_m1_j, Mat1, 1, A, 1)
         B(1:nel_m1_i) = LHS1(1:nel_m1_i)
         call DGELS( TRANS, nel_m1_i, nel_m1_j, NRHS, A, LDA, B, LDB, WORK, LWORK, INFO )
         
-        select case( LWORK )
+        select case( INFO )
         case( 0 )
           RHS1(1:nel_m1_j) = B(1:nel_m1_j)
   
         case( :-1)
-          FATAL( global, .true., Illegal value in DGELS )
+          FATAL( bndRep, .true., Illegal value in DGELS )
   
         case(1: )
-          FATAL( global, .true., Rank zero for backward mapping )
+          FATAL( bndRep, .true., Rank zero for backward mapping )
   
         end select
         
+        DALLOCATE( A )
+        DALLOCATE( B )
 
         
         ! Now solve second system
-        DALLOCATE( A )
-        DALLOCATE( B )
-        SALLOCATE( A, (1:nel_m2_i,1:nel_m2_j), zero )
-        SALLOCATE( B, (1:nel_m2_i), zero )
-        A = Mat2
-        LDA = nel_m2_i
-        LDB = nel_m2_i
-        B(1:nel_m2_i) = LHS2(1:nel_m2_i)
-        call DGELS( TRANS, nel_m2_i, nel_m2_j, NRHS, A, LDA, B, LDB, WORK, LWORK, INFO )
-        select case( LWORK )
-        case( 0 )
-          RHS2(1:nel_m2_j) = B(1:nel_m2_j)
-  
-        case( :-1)
-          FATAL( global, .true., Illegal value in DGELS )
-  
-        case(1: )
-          FATAL( global, .true., Rank zero for backward mapping )
-  
-        end select
+        if( Mpol>1 ) then 
+          SALLOCATE( A, (1:nel_m2_i,1:nel_m2_j), zero )
+          SALLOCATE( B, (1:nel_m2_i), zero )
+          call DCOPY( nel_m2_i*nel_m2_j, Mat2, 1, A, 1 )
+          LDA = nel_m2_i
+          LDB = nel_m2_i
+          B(1:nel_m2_i) = LHS2(1:nel_m2_i)
+          call DGELS( TRANS, nel_m2_i, nel_m2_j, NRHS, A, LDA, B, LDB, WORK, LWORK, INFO )
+          select case( INFO )
+          case( 0 )
+            RHS2(1:nel_m2_j) = B(1:nel_m2_j)
+    
+          case( :-1)
+            FATAL( bndRep, .true., Illegal value in DGELS )
+    
+          case(1: )
+            FATAL( bndRep, .true., Rank zero for backward mapping )
+    
+          end select
+          DALLOCATE( A )
+          DALLOCATE( B )
+        endif
+
+        DALLOCATE( WORK )
 
         ! Unpack RHS1, RHS2 and store in rhomn, bn.
         call unpack_rhomn_bn( rhomn, bn )
 
-
-        DALLOCATE( WORK )
-        DALLOCATE( A )
-        DALLOCATE( B )
-  
-  
+ 
       end subroutine backwardMap
   
   
