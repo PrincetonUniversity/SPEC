@@ -90,7 +90,7 @@ subroutine pc00ab( mode, NGdof, Position, Energy, Gradient, nstate, iuser, ruser
 
   use cputiming, only : Tpc00ab
 
-  use allglobal, only : writin, myid, cpus, YESstellsym, mn, lBBintegral, dBBdRZ, dIIdRZ, ForceErr
+  use allglobal, only : writin, myid, cpus, YESstellsym, mn_field, lBBintegral, dBBdRZ, dIIdRZ, ForceErr
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -145,7 +145,7 @@ subroutine pc00ab( mode, NGdof, Position, Energy, Gradient, nstate, iuser, ruser
 
     localdof = 0
 
-    do ii = 1, mn !; mi = im(ii) ; ni = in(ii) ! loop over Fourier harmonics; 26 Feb 13;
+    do ii = 1, mn_field !; mi = im(ii) ; ni = in(ii) ! loop over Fourier harmonics; 26 Feb 13;
 
      do irz = 0, 1
 

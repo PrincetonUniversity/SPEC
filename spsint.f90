@@ -10,7 +10,7 @@
 !> @param mn
 !> @param lvol
 !> @param lrad
-subroutine spsint( lquad, mn, lvol, lrad )
+subroutine spsint( lquad, mn_field, lvol, lrad )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -20,12 +20,14 @@ subroutine spsint( lquad, mn, lvol, lrad )
 
   use fileunits, only : ounit
 
-  use inputlist, only : mpol, Wspsint, Wmacros
+  use inputlist, only : Wspsint, Wmacros
 
   use cputiming, only : Tspsint
 
+  use bndRep,    only : mpol_field
+
   use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, &
-                        Mvol, im, in, mne, Ntz, &
+                        Mvol, im_field, in_field, mne, Ntz, &
                         YESstellsym, NOTstellsym, &
                         gaussianweight, gaussianabscissae, &
                         DToocc, DToocs, DToosc, DTooss, &
@@ -45,7 +47,7 @@ subroutine spsint( lquad, mn, lvol, lrad )
 
   LOCALS
 
-  INTEGER, intent(in) :: lquad, mn, lvol, lrad
+  INTEGER, intent(in) :: lquad, mn_field, lvol, lrad
 
   INTEGER             :: jquad, ll, pp, ll1, pp1, uv, ii, jj, io, mn2, lp2, mn2_max, lp2_max, nele, mi
 
@@ -70,9 +72,9 @@ subroutine spsint( lquad, mn, lvol, lrad )
   BEGIN( spsint )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  mn2_max = mn*mn
+  mn2_max = mn_field*mn_field
   lp2_max = (lrad+1)*(lrad+1)
-  imn2    =  one/real(mn)
+  imn2    =  one/real(mn_field)
   ilrad = one/real(lrad+1)
 
   DToocc = zero
@@ -93,12 +95,12 @@ subroutine spsint( lquad, mn, lvol, lrad )
     DDzzss = zero
   endif !NOTstellsym
 
-  SALLOCATE(basis,     (0:lrad,0:mpol,0:1,lquad), zero)
+  SALLOCATE(basis,     (0:lrad,0:mpol_field,0:1,lquad), zero)
   do jquad = 1, lquad
     lss = gaussianabscissae(jquad,lvol) ; jthweight = gaussianweight(jquad,lvol)
     sbar = (lss + one) * half
     if (Lcoordinatesingularity) then
-      call get_zernike(sbar, lrad, mpol, basis(:,:,0:1,jquad)) ! use Zernike polynomials 29 Jun 19;
+      call get_zernike(sbar, lrad, mpol_field, basis(:,:,0:1,jquad)) ! use Zernike polynomials 29 Jun 19;
     else
       call get_cheby(lss, lrad, basis(:,0,0:1,jquad))
     endif
@@ -139,7 +141,7 @@ subroutine spsint( lquad, mn, lvol, lrad )
       fzzss = gzzmne * jthweight
     end if !NOTstellsym
 
-    do mi = 0, mpol
+    do mi = 0, mpol_field
 
       do lp2 = 1, lp2_max
         ll = mod(lp2-1,lrad+1)

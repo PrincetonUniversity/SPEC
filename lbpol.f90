@@ -12,7 +12,7 @@ subroutine lbpol(lvol, Bt00, ideriv, iocons)
 
   use allglobal, only : Ate, Aze, Ato, Azo, TT, &
                         YESstellsym, NOTstellsym, &
-                        im, in, mne, ime, ine, Mvol, mn, &
+                        im_field, in_field, mne, ime, ine, Mvol, mn_field, &
                         sg, guvij, &
                         Ntz, Lcoordinatesingularity, &
                         efmn, ofmn, cfmn, sfmn, evmn, odmn, comn, simn, &
@@ -61,7 +61,7 @@ subroutine lbpol(lvol, Bt00, ideriv, iocons)
   lss = two * iocons - one ! Build s coordinate
 
   Lcurvature = 1
-  WCALL( lbpol, coords, (lvol, lss, Lcurvature, Ntz, mn ) )
+  WCALL( lbpol, coords, (lvol, lss, Lcurvature, Ntz, mn_field ) )
 
 
 !> <li> Build coefficients efmn, ofmn, cfmn, sfmn from the field vector potential Ate, Ato,
@@ -72,7 +72,7 @@ subroutine lbpol(lvol, Bt00, ideriv, iocons)
 
 !> <li> Take the inverse Fourier transform of efmn, ofmn, cfmn, sfmn. These are the covariant components of \f$\frac{\partial A}{\partial s}\f$,
 !>      <em>i.e.</em> the contravariant components of \f$\mathbf{B}\f$. </li>
-  call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt(1:Ntz), dAz(1:Ntz) )
+  call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), efmn(1:mn_field), ofmn(1:mn_field), cfmn(1:mn_field), sfmn(1:mn_field), Nt, Nz, dAt(1:Ntz), dAz(1:Ntz) )
 
 !> <li> Build covariant components of the field using the metric coefficients guvij and the jacobian sg. </li>
   Bt(1:Ntz) = ( - dAz(1:Ntz ) * guvij(1:Ntz,2,2, 0) + dAt(1:Ntz ) * guvij(1:Ntz,2,3, 0) )/ sg(1:Ntz,0)
@@ -85,11 +85,11 @@ subroutine lbpol(lvol, Bt00, ideriv, iocons)
 !> <ol>
 !> <li> Get derivatives of metric element by calling coords() </li>
     Lcurvature = 3
-    WCALL( lbpol, coords, (lvol, lss, Lcurvature, Ntz, mn ) ) ! get sg times d/dx (g_mu,nu / sg)
+    WCALL( lbpol, coords, (lvol, lss, Lcurvature, Ntz, mn_field ) ) ! get sg times d/dx (g_mu,nu / sg)
 
 !> <li> Compute vector potential without taking any derivatives </li>
     call build_vector_potential(lvol, iocons, 0, 1)
-    call invfft( mn, im, in, efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt0(1:Ntz), dAz0(1:Ntz) ) ! get covariant component of dA without derivatives
+    call invfft( mn_field, im_field, in_field, efmn(1:mn_field), ofmn(1:mn_field), cfmn(1:mn_field), sfmn(1:mn_field), Nt, Nz, dAt0(1:Ntz), dAz0(1:Ntz) ) ! get covariant component of dA without derivatives
 
 !> <li> Add to \f$\frac{\partial B_\theta}{\partial x_i}\f$ the contributions from \f$ \frac{\partial}{\partial x_i} \frac{g_{\mu\nu}}{\sqrt{g}} \f$
     Bt(1:Ntz) = Bt(1:Ntz) + ( - dAz0(1:Ntz ) * guvij(1:Ntz,2,2, 1) + dAt0(1:Ntz ) * guvij(1:Ntz,2,3, 1) ) / sg(1:Ntz, 0)
@@ -100,7 +100,7 @@ subroutine lbpol(lvol, Bt00, ideriv, iocons)
 
 !> <li> Fourier transform the field and store it in the variables efmn, ofmn, cfmn and sfmn. </li>
   ifail = 0
-  call tfft( Nt, Nz, Bt(1:Ntz), Bz(1:Ntz), mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), ifail )
+  call tfft( Nt, Nz, Bt(1:Ntz), Bz(1:Ntz), mn_field, im_field(1:mn_field), in_field(1:mn_field), efmn(1:mn_field), ofmn(1:mn_field), cfmn(1:mn_field), sfmn(1:mn_field), ifail )
 
 !> <li> Save first even fourier mode into Bt00( lvol, iocons, ideriv ) </li>
   Bt00(lvol, iocons, ideriv) = efmn(1)

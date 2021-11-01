@@ -277,7 +277,7 @@ subroutine dvcfield( Ndim, tz, Nfun, vcintegrand ) ! differential virtual-casing
   use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, &
                         pi2nfp, &
                         Mvol, &
-                        mn, im, in, &
+                        mn_field, im_field, in_field, &
                         iRbc, iZbs, iRbs, iZbc, &
                         Ate, Aze, Ato, Azo, &
                         TT, &
@@ -323,7 +323,7 @@ subroutine dvcfield( Ndim, tz, Nfun, vcintegrand ) ! differential virtual-casing
 
    if( YESstellsym ) then
 
-    do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over Fourier modes; construct surface current; slow transform required as position is arbitrary;
+    do ii = 1, mn_field ; mi = im_field(ii) ; ni = in_field(ii) ! loop over Fourier modes; construct surface current; slow transform required as position is arbitrary;
 
      arg = mi * teta - ni * zeta ; carg = cos(arg) ; sarg = sin(arg)
 
@@ -342,11 +342,11 @@ subroutine dvcfield( Ndim, tz, Nfun, vcintegrand ) ! differential virtual-casing
       gBuz = gBuz + ( Ate(Mvol,ideriv,ii)%s(ll) * carg                                    ) * TT(ll,0,1)
      enddo
 
-    enddo ! end of do ii = 1, mn ;
+    enddo ! end of do ii = 1, mn_field ;
 
    else ! NOTstellsym ; 08 Feb 16;
 
-    do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over Fourier modes; construct surface current; slow transform required as position is arbitrary;
+    do ii = 1, mn_field ; mi = im_field(ii) ; ni = in_field(ii) ! loop over Fourier modes; construct surface current; slow transform required as position is arbitrary;
 
      arg = mi * teta - ni * zeta ; carg = cos(arg) ; sarg = sin(arg)
 
@@ -365,7 +365,7 @@ subroutine dvcfield( Ndim, tz, Nfun, vcintegrand ) ! differential virtual-casing
       gBuz = gBuz + ( Ate(Mvol,ideriv,ii)%s(ll) * carg + Ato(Mvol,ideriv,ii)%s(ll) * sarg ) * TT(ll,0,1)
      enddo
 
-    enddo ! end of do ii = 1, mn ;
+    enddo ! end of do ii = 1, mn_field ;
 
    endif ! end of if( YESstellsym ) ; 08 Feb 16;
 
@@ -377,7 +377,7 @@ subroutine dvcfield( Ndim, tz, Nfun, vcintegrand ) ! differential virtual-casing
 
    if( YESstellsym ) then
 
-    do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over Fourier modes; construct surface current; slow transform required as position is arbitrary;
+    do ii = 1, mn_field ; mi = im_field(ii) ; ni = in_field(ii) ! loop over Fourier modes; construct surface current; slow transform required as position is arbitrary;
 
      arg = mi * teta - ni * zeta ; carg = cos(arg) ; sarg = sin(arg)
      dR(0) = dR(0) +          (                   iRbc(ii,Nvol) ) * carg
@@ -402,11 +402,11 @@ subroutine dvcfield( Ndim, tz, Nfun, vcintegrand ) ! differential virtual-casing
         enddo
      endif
 
-    enddo ! end of do ii = 1, mn ;
+    enddo ! end of do ii = 1, mn_field ;
 
    else ! NOTstellsym ; 08 Feb 16;
 
-    do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over Fourier modes; construct surface current; slow transform required as position is arbitrary;
+    do ii = 1, mn_field ; mi = im_field(ii) ; ni = in_field(ii) ! loop over Fourier modes; construct surface current; slow transform required as position is arbitrary;
 
      arg = mi * teta - ni * zeta ; carg = cos(arg) ; sarg = sin(arg)
 
@@ -432,7 +432,7 @@ subroutine dvcfield( Ndim, tz, Nfun, vcintegrand ) ! differential virtual-casing
         enddo
      endif
 
-    enddo ! end of do ii = 1, mn ;
+    enddo ! end of do ii = 1, mn_field ;
 
    endif ! end of if( YESstellsym ) ; 08 Feb 16;
 

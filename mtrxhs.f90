@@ -5,12 +5,12 @@
 !> \ingroup grp_build_matrices
 !>
 !> @param lvol
-!> @param mn
+!> @param mn_field
 !> @param lrad
 !> @param resultA
 !> @param resultD
 !> @param idx
-subroutine mtrxhs( lvol, mn, lrad, resultA, resultD, idx )
+subroutine mtrxhs( lvol, mn_field, lrad, resultA, resultD, idx )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -20,13 +20,15 @@ subroutine mtrxhs( lvol, mn, lrad, resultA, resultD, idx )
 
   use fileunits, only : ounit
 
-  use inputlist, only : Wmacros, Wmtrxhs, Mpol
+  use inputlist, only : Wmacros, Wmtrxhs
+
+  use bndRep,    only : Mpol_field
 
   use cputiming, only : Tmtrxhs
 
   use allglobal, only : ncpu, myid, cpus, MPI_COMM_SPEC, &
                         YESstellsym, NOTstellsym, &
-                        im, in, &
+                        im_field, in_field, &
                         NAdof, &
                         Ate, Ato, Aze, Azo, &
                         Lcoordinatesingularity, TT, RTT, RTM, &
@@ -44,7 +46,7 @@ subroutine mtrxhs( lvol, mn, lrad, resultA, resultD, idx )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  INTEGER, intent(in)  :: lvol, mn, lrad, idx
+  INTEGER, intent(in)  :: lvol, mn_field, lrad, idx
 
   REAL, intent(out) :: resultA(0:NAdof(lvol)), resultD(0:NAdof(lvol))
 
@@ -67,15 +69,15 @@ subroutine mtrxhs( lvol, mn, lrad, resultA, resultD, idx )
   resultA(0:NN) = zero
   resultD(0:NN) = zero
 
-  SALLOCATE( TTdata, (0:lrad, 0:mpol, 0:1), zero)
-  SALLOCATE( TTMdata, (0:lrad, 0:mpol), zero)
+  SALLOCATE( TTdata, (0:lrad, 0:mpol_field, 0:1), zero)
+  SALLOCATE( TTMdata, (0:lrad, 0:mpol_field), zero)
 
   ! fill in Zernike/Chebyshev polynomials depending on Lcooridnatesingularity
   if (Lcoordinatesingularity) then
-    TTdata(0:lrad,0:mpol,0:1) = RTT(0:lrad,0:mpol,0:1,0)
-    TTMdata(0:lrad,0:mpol) = RTM(0:lrad,0:mpol)
+    TTdata(0:lrad,0:mpol_field,0:1) = RTT(0:lrad,0:mpol_field,0:1,0)
+    TTMdata(0:lrad,0:mpol_field) = RTM(0:lrad,0:mpol_field)
   else
-    do ii = 0, mpol
+    do ii = 0, mpol_field
       TTdata(0:lrad,ii,0:1) = TT(0:lrad,0:1,0)
       TTMdata(0:lrad,ii) = TT(0:lrad,0,0)
     enddo
@@ -84,8 +86,8 @@ subroutine mtrxhs( lvol, mn, lrad, resultA, resultD, idx )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   if( YESstellsym ) then
-!$OMP PARALLEL DO PRIVATE(ii,mi,ni,ll,ll1,kk,Wte,Wze,Hte,Hze,id,jd) SHARED(mn,lrad,resultA,resultD,TTMdata,TTdata)
-    do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
+!$OMP PARALLEL DO PRIVATE(ii,mi,ni,ll,ll1,kk,Wte,Wze,Hte,Hze,id,jd) SHARED(mn_field,lrad,resultA,resultD,TTMdata,TTdata)
+    do ii = 1, mn_field ; mi = im_field(ii) ; ni = in_field(ii)
 
       do ll = 0, lrad
 
@@ -137,8 +139,8 @@ subroutine mtrxhs( lvol, mn, lrad, resultA, resultD, idx )
 !$OMP END PARALLEL DO
 
   else ! NOTstellsym ;
-!$OMP PARALLEL DO PRIVATE(ii,mi,ni,ll,ll1,kk,Wte,Wze,Wzo,Wto,Hte,Hze,Hto,Hzo,id,jd) SHARED(mn,lrad,resultA,resultD,TTMdata,TTdata)
-    do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
+!$OMP PARALLEL DO PRIVATE(ii,mi,ni,ll,ll1,kk,Wte,Wze,Wzo,Wto,Hte,Hze,Hto,Hzo,id,jd) SHARED(mn_field,lrad,resultA,resultD,TTMdata,TTdata)
+    do ii = 1, mn_field ; mi = im_field(ii) ; ni = in_field(ii)
 
       do ll = 0, lrad
 

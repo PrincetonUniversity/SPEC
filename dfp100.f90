@@ -48,7 +48,7 @@ subroutine dfp100(Ndofgl, x, Fvec, LComputeDerivatives)
   use cputiming, only : Tdfp100
 
   use allglobal, only : ncpu, myid, cpus, MPI_COMM_SPEC, &
-                        ImagneticOK, NAdof, mn, &
+                        ImagneticOK, NAdof, mn_field, &
                         Mvol, Iquad, &
                         dBdX, &
                         Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, Localconstraint, &
@@ -118,16 +118,16 @@ subroutine dfp100(Ndofgl, x, Fvec, LComputeDerivatives)
 
   ! we need to construct the preconditioner if needed
     if (LILUprecond) then
-      WCALL( dfp100, spsint, ( Iquad(vvol), mn, vvol, ll ) )
-      WCALL( dfp100, spsmat, ( vvol, mn, ll) )
+      WCALL( dfp100, spsint, ( Iquad(vvol), mn_field, vvol, ll ) )
+      WCALL( dfp100, spsmat, ( vvol, mn_field, ll) )
     endif
 
     if (NOTMatrixFree) then ! construct Beltrami matrix
-      WCALL( dfp100, ma00aa, ( Iquad(vvol), mn, vvol, ll ) ) ! compute volume integrals of metric elements;
-      WCALL( dfp100, matrix, ( vvol, mn, ll ) )
+      WCALL( dfp100, ma00aa, ( Iquad(vvol), mn_field, vvol, ll ) ) ! compute volume integrals of metric elements;
+      WCALL( dfp100, matrix, ( vvol, mn_field, ll ) )
     else ! matrix free, so construct something else
       ! we will still need to construct the dMB and dMG matrix
-      WCALL( dfp100, matrixBG, ( vvol, mn, ll ) )
+      WCALL( dfp100, matrixBG, ( vvol, mn_field, ll ) )
     endif
 
     WCALL( dfp100, ma02aa, ( vvol, NN ) )
@@ -163,7 +163,7 @@ subroutine dfp100(Ndofgl, x, Fvec, LComputeDerivatives)
         WCALL( dfp100, lbpol, (Mvol, Bt00(1:Mvol, 0:1, -1:2), ideriv, iocons) )
 
         iflag=2 ! derivatives of poloidal linking current w.r.t geometry not required
-        WCALL( dfp100, curent, (Mvol, mn, Nt, Nz, iflag, ldItGp(0:1,-1:2) ) )
+        WCALL( dfp100, curent, (Mvol, mn_field, Nt, Nz, iflag, ldItGp(0:1,-1:2) ) )
       endif
     endif
   enddo

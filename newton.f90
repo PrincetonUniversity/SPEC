@@ -67,7 +67,9 @@ subroutine newton( NGdof, position, ihybrd )
   use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, ext, &
                         NOTstellsym, &
                         ForceErr, Energy, &
-                        mn, im, in, iRbc, iZbs, iRbs, iZbc, Mvol, &
+                        mn_field, im_field, in_field, iRbc, iZbs, iRbs, iZbc, Mvol, &
+                        mn_force, im_force, in_force, &
+                        mn_rho, im_rho, in_rho, &
                         BBe, IIo, BBo, IIe, &
                         LGdof, dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated , &
                         nfreeboundaryiterations, &
@@ -305,12 +307,14 @@ subroutine writereadgf( readorwrite, NGdof , ireadhessian )
 
   use fileunits, only : ounit, dunit
 
-  use inputlist, only : Wnewton, Igeometry, Istellsym, Lfreebound, Nvol, Mpol, Ntor
+  use inputlist, only : Wnewton, Igeometry, Istellsym, Lfreebound, Nvol
+  
+  use bndRep,    only : Mpol_field, Ntor_field
 
   use cputiming, only : Tnewton
 
   use allglobal, only : myid, cpus, MPI_COMM_SPEC, ext, &
-                        mn, im, in, hessian, Lhessianallocated
+                        mn_field, im_field, in_field, hessian, Lhessianallocated
 
   LOCALS
 
@@ -335,8 +339,8 @@ subroutine writereadgf( readorwrite, NGdof , ireadhessian )
    open( dunit, file="."//trim(ext)//".sp.DF", status="replace", form="unformatted", iostat=ios ) ! save derivative matrix to file;
    FATAL( newton, ios.ne.0, error opening derivative matrix file )
 
-   write( dunit, iostat=ios ) Igeometry, Istellsym, Lfreebound, Nvol, Mpol, Ntor, NGdof ! enable resolution consistency check;
-   FATAL( newton, ios.ne.0, error writing Nvol, Mpol, Ntor, NGdof )
+   write( dunit, iostat=ios ) Igeometry, Istellsym, Lfreebound, Nvol, Mpol_field, Ntor_field, NGdof ! enable resolution consistency check;
+   FATAL( newton, ios.ne.0, error writing Nvol, Mpol_field, Ntor_field, NGdof )
 
    write( dunit, iostat=ios ) hessian(1:NGdof,1:NGdof)
    FATAL( newton, ios.ne.0, error writing hessian to file )
@@ -380,9 +384,9 @@ subroutine writereadgf( readorwrite, NGdof , ireadhessian )
    endif
    if( lNvol      .ne.Nvol       ) then ; write(ounit,2000) cput-cpus, myid, "inconsistent Nvol             :", lNvol      , Nvol       ; goto 9998
    endif
-   if( lMpol      .ne.Mpol       ) then ; write(ounit,2000) cput-cpus, myid, "inconsistent Mpol             :", lMpol      , Mpol       ; goto 9998
+   if( lMpol      .ne.Mpol_field ) then ; write(ounit,2000) cput-cpus, myid, "inconsistent Mpol             :", lMpol      , Mpol_field ; goto 9998
    endif
-   if( lNtor      .ne.Ntor       ) then ; write(ounit,2000) cput-cpus, myid, "inconsistent Ntor             :", lNtor      , Ntor       ; goto 9998
+   if( lNtor      .ne.Ntor_field ) then ; write(ounit,2000) cput-cpus, myid, "inconsistent Ntor             :", lNtor      , Ntor_field ; goto 9998
    endif
    if( lNGdof     .ne.NGdof      ) then ; write(ounit,2000) cput-cpus, myid, "inconsistent NGdof            :", lNGdof     , NGdof      ; goto 9998
    endif
@@ -441,7 +445,7 @@ subroutine fcn1( NGdof, xx, fvec, irevcm )
   use allglobal, only : wrtend, myid, ncpu, cpus, MPI_COMM_SPEC, ext, &
                         NOTstellsym, &
                         ForceErr, Energy, &
-                        mn, im, in, iRbc, iZbs, iRbs, iZbc, Mvol, &
+                        mn_field, im_field, in_field, iRbc, iZbs, iRbs, iZbc, Mvol, &
                         BBe, IIo, BBo, IIe, &
                         LGdof, dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated, &
                         nfreeboundaryiterations
@@ -481,8 +485,8 @@ subroutine fcn1( NGdof, xx, fvec, irevcm )
     pack = 'U' ! unpack geometrical degrees of freedom;
     LComputeAxis = .true.
     LComputeDerivatives = .false.
-    WCALL( newton, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), &
-                             iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, LComputeDerivatives, LComputeAxis ) )
+    WCALL( newton, packxi, ( NGdof, position(0:NGdof), Mvol, mn_field, iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), &
+                             iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), pack, LComputeDerivatives, LComputeAxis ) )
 
     if( myid.eq.0 ) then
 
@@ -574,7 +578,7 @@ subroutine fcn2( NGdof, xx, fvec, fjac, Ldfjac, irevcm )
   use allglobal, only : wrtend, myid, ncpu, cpus, MPI_COMM_SPEC, ext, &
                         NOTstellsym, &
                         ForceErr, Energy, &
-                        mn, im, in, iRbc, iZbs, iRbs, iZbc, Mvol, &
+                        mn_field, im_field, in_field, iRbc, iZbs, iRbs, iZbc, Mvol, &
                         BBe, IIo, BBo, IIe, &
                         LGdof, dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated, &
                         nfreeboundaryiterations
@@ -614,8 +618,8 @@ subroutine fcn2( NGdof, xx, fvec, fjac, Ldfjac, irevcm )
     pack = 'U' ! unpack geometrical degrees of freedom;
     LComputeAxis = .true.
     LComputeDerivatives = .false.
-    WCALL( newton, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), &
-                             iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, LComputeDerivatives, LComputeAxis ) )
+    WCALL( newton, packxi, ( NGdof, position(0:NGdof), Mvol, mn_field, iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), &
+                             iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), pack, LComputeDerivatives, LComputeAxis ) )
 
     if( myid.eq.0 ) then
 

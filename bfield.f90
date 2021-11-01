@@ -58,12 +58,14 @@ subroutine bfield( zeta, st, Bst )
 
   use fileunits, only : ounit
 
-  use inputlist, only : Wmacros, Wbfield, Lrad, Mpol
+  use inputlist, only : Wmacros, Wbfield, Lrad
+
+  use bndRep, only    : Mpol_field
 
   use cputiming, only : Tbfield
 
   use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, &
-                        mn, im, in, &
+                        mn_field, im_field, in_field, &
                         ivol, gBzeta, Ate, Aze, Ato, Azo, &
                         NOTstellsym, &
                         Lcoordinatesingularity, Mvol, &
@@ -78,7 +80,7 @@ subroutine bfield( zeta, st, Bst )
 
   INTEGER            :: lvol, ii, ll, mi, ni, ideriv
   REAL               :: teta, lss, sbar, sbarhm(0:1), arg, carg, sarg, dBu(1:3)
-  REAL               :: cheby(0:Lrad(ivol),0:1), zernike(0:Lrad(1),0:Mpol,0:1)
+  REAL               :: cheby(0:Lrad(ivol),0:1), zernike(0:Lrad(1),0:Mpol_field,0:1)
 
   REAL               :: TT(0:Lrad(ivol),0:1) ! this is almost identical to cheby; 17 Dec 15;
 
@@ -107,7 +109,7 @@ subroutine bfield( zeta, st, Bst )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   if (Lcoordinatesingularity) then
-    call get_zernike(sbar, Lrad(lvol), Mpol, zernike(:,:,0:1))
+    call get_zernike(sbar, Lrad(lvol), Mpol_field, zernike(:,:,0:1))
   else
     call get_cheby(lss, Lrad(lvol), cheby(0:Lrad(lvol),0:1))
   end if
@@ -118,7 +120,7 @@ subroutine bfield( zeta, st, Bst )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ; arg = mi * teta - ni * zeta ; carg = cos(arg) ; sarg = sin(arg) ! shorthand; 20 Apr 13;
+  do ii = 1, mn_field ; mi = im_field(ii) ; ni = in_field(ii) ; arg = mi * teta - ni * zeta ; carg = cos(arg) ; sarg = sin(arg) ! shorthand; 20 Apr 13;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -151,7 +153,7 @@ subroutine bfield( zeta, st, Bst )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  enddo ! end of do ii = 1, mn;
+  enddo ! end of do ii = 1, mn_field;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -197,12 +199,14 @@ subroutine bfield_tangent( zeta, st, Bst )
 
   use fileunits, only : ounit
 
-  use inputlist, only : Wmacros, Wbfield, Lrad, Mpol
+  use inputlist, only : Wmacros, Wbfield, Lrad
+
+  use bndRep, only    : Mpol_field
 
   use cputiming, only : Tbfield
 
   use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, &
-                        mn, im, in, &
+                        mn_field, im_field, in_field, &
                         ivol, gBzeta, Ate, Aze, Ato, Azo, &
                         NOTstellsym, &
                         Lcoordinatesingularity, Mvol, &
@@ -217,7 +221,7 @@ subroutine bfield_tangent( zeta, st, Bst )
 
   INTEGER            :: lvol, ii, ll, mi, ni, ideriv
   REAL               :: teta, lss, sbar, sbarhm(0:1), arg, carg, sarg, dBu(1:3,0:2)
-  REAL               :: cheby(0:Lrad(ivol),0:2), zernike(0:Lrad(1),0:Mpol,0:2)
+  REAL               :: cheby(0:Lrad(ivol),0:2), zernike(0:Lrad(1),0:Mpol_field,0:2)
 
   REAL               :: M(2,2), deltax(2,2)
 
@@ -252,7 +256,7 @@ subroutine bfield_tangent( zeta, st, Bst )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   if (Lcoordinatesingularity) then
-    call get_zernike_d2(sbar, Lrad(lvol), Mpol, zernike(:,:,0:2))
+    call get_zernike_d2(sbar, Lrad(lvol), Mpol_field, zernike(:,:,0:2))
   else
     call get_cheby_d2(lss, Lrad(lvol), cheby(0:Lrad(lvol),0:2))
   end if
@@ -263,7 +267,7 @@ subroutine bfield_tangent( zeta, st, Bst )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ; arg = mi * teta - ni * zeta ; carg = cos(arg) ; sarg = sin(arg) ! shorthand; 20 Apr 13;
+  do ii = 1, mn_field ; mi = im_field(ii) ; ni = in_field(ii) ; arg = mi * teta - ni * zeta ; carg = cos(arg) ; sarg = sin(arg) ! shorthand; 20 Apr 13;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -314,7 +318,7 @@ subroutine bfield_tangent( zeta, st, Bst )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  enddo ! end of do ii = 1, mn;
+  enddo ! end of do ii = 1, mn_field;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

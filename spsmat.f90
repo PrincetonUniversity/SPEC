@@ -38,7 +38,7 @@
 !> @param lvol
 !> @param mn
 !> @param lrad
-subroutine spsmat( lvol, mn, lrad )
+subroutine spsmat( lvol, mn_field, lrad )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -50,11 +50,13 @@ subroutine spsmat( lvol, mn, lrad )
 
   use inputlist, only : Wmacros, Wspsmat, mpol
 
+  use bndRep,    only : mpol_field
+
   use cputiming, only : Tspsmat
 
   use allglobal, only : ncpu, myid, cpus, MPI_COMM_SPEC, &
                         YESstellsym, NOTstellsym, &
-                        im, in, &
+                        im_field, in_field, &
                         NAdof, &
                         dMA, dMD, dMB, dMG, &
                         LILUprecond, NdMASmax, NdMAS, dMAS, dMDS, idMAS, jdMAS, & ! preconditioning matrix
@@ -76,7 +78,7 @@ subroutine spsmat( lvol, mn, lrad )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  INTEGER, intent(in)  :: lvol, mn, lrad
+  INTEGER, intent(in)  :: lvol, mn_field, lrad
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -116,15 +118,15 @@ subroutine spsmat( lvol, mn, lrad )
   SALLOCATE( dMDSqueue, (1:nmaxqueue, 4), zero)
   SALLOCATE( jdMASqueue, (1:nmaxqueue, 4), zero)
 
-  SALLOCATE( TTdata, (0:lrad, 0:mpol, 0:1), zero)
-  SALLOCATE( TTMdata, (0:lrad, 0:mpol), zero)
+  SALLOCATE( TTdata, (0:lrad, 0:mpol_field, 0:1), zero)
+  SALLOCATE( TTMdata, (0:lrad, 0:mpol_field), zero)
 
   ! fill in Zernike/Chebyshev polynomials depending on Lcooridnatesingularity
   if (Lcoordinatesingularity) then
-    TTdata(0:lrad,0:mpol,0:1) = RTT(0:lrad,0:mpol,0:1,0)
-    TTMdata(0:lrad,0:mpol) = RTM(0:lrad,0:mpol)
+    TTdata(0:lrad,0:mpol_field,0:1) = RTT(0:lrad,0:mpol_field,0:1,0)
+    TTMdata(0:lrad,0:mpol_field) = RTM(0:lrad,0:mpol_field)
   else
-    do ii = 0, mpol
+    do ii = 0, mpol_field
       TTdata(0:lrad,ii,0:1) = TT(0:lrad,0:1,0)
       TTMdata(0:lrad,ii) = TT(0:lrad,0,0)
     enddo
@@ -134,9 +136,9 @@ subroutine spsmat( lvol, mn, lrad )
 
   if( YESstellsym ) then
 
-    do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
+    do ii = 1, mn_field ; mi = im_field(ii) ; ni = in_field(ii)
 
-      jj = ii ; mj = im(jj) ; nj = in(jj) ; mimj = mi * mj ; minj = mi * nj ; nimj = ni * mj ; ninj = ni * nj
+      jj = ii ; mj = im_field(jj) ; nj = in_field(jj) ; mimj = mi * mj ; minj = mi * nj ; nimj = ni * mj ; ninj = ni * nj
 
       if (Lcoordinatesingularity) then
         idx = mi + 1
@@ -220,9 +222,9 @@ subroutine spsmat( lvol, mn, lrad )
 
   else ! NOTstellsym
 
-    do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
+    do ii = 1, mn_field ; mi = im_field(ii) ; ni = in_field(ii)
 
-      jj = ii ; mj = im(jj) ; nj = in(jj) ; mjmi = mi * mj ; mjni = ni * mj ; njmi = mi * nj ; njni = ni * nj;
+      jj = ii ; mj = im_field(jj) ; nj = in_field(jj) ; mjmi = mi * mj ; mjni = ni * mj ; njmi = mi * nj ; njni = ni * nj;
                                           ; mimj = mi * mj ; minj = mi * nj ; nimj = ni * mj ; ninj = ni * nj;
 
       if (Lcoordinatesingularity) then
@@ -385,7 +387,7 @@ subroutine spsmat( lvol, mn, lrad )
 
   ! deal with rest of the columes
 
-  do ii = 1, mn; mi = im(ii) ; ni = in(ii)
+  do ii = 1, mn_field; mi = im_field(ii) ; ni = in_field(ii)
 
     if( Lcoordinatesingularity .and. ii.eq.1 ) then ; kk = 1
     else                                            ; kk = 0

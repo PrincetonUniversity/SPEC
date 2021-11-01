@@ -31,7 +31,7 @@ subroutine brcast( lvol )
   use cputiming, only : Tbrcast
 
   use allglobal, only : myid, cpus, ncpu, MPI_COMM_SPEC, &
-                        dtflux, dpflux, Ntz, mn, Mvol, &
+                        dtflux, dpflux, Ntz, mn_force, Mvol, &
                         diotadxup, dItGpdxtp, &
                         Ate, Aze, Ato, Azo, &
                         Bemn, Bomn, Iomn, Iemn, Somn, Semn, Pomn, Pemn, &
@@ -112,10 +112,10 @@ subroutine brcast( lvol )
   ! enddo
 
 
-  RlBCAST( Bemn(1:mn,lvol,0:1), 2*mn, llmodnp ) ! perhaps all these should be re-ordered; 18 Jul 14;
-  RlBCAST( Iomn(1:mn,lvol    ),   mn, llmodnp )
-  RlBCAST( Somn(1:mn,lvol,0:1), 2*mn, llmodnp )
-  RlBCAST( Pomn(1:mn,lvol,0:2), 3*mn, llmodnp ) ! 15 Sep 15;
+  RlBCAST( Bemn(1:mn_force,lvol,0:1), 2*mn_force, llmodnp ) ! perhaps all these should be re-ordered; 18 Jul 14;
+  RlBCAST( Iomn(1:mn_force,lvol    ),   mn_force, llmodnp )
+  RlBCAST( Somn(1:mn_force,lvol,0:1), 2*mn_force, llmodnp )
+  RlBCAST( Pomn(1:mn_force,lvol,0:2), 3*mn_force, llmodnp ) ! 15 Sep 15;
 
   if( NOTstellsym ) then
     ! do ideriv = 0, 2
@@ -125,10 +125,10 @@ subroutine brcast( lvol )
     !   enddo
     ! enddo
 
-      RlBCAST( Bomn(1:mn,lvol,0:1), 2*mn, llmodnp )
-      RlBCAST( Iemn(1:mn,lvol    ),   mn, llmodnp )
-      RlBCAST( Semn(1:mn,lvol,0:1), 2*mn, llmodnp )
-      RlBCAST( Pemn(1:mn,lvol,0:2), 3*mn, llmodnp )
+      RlBCAST( Bomn(1:mn_force,lvol,0:1), 2*mn_force, llmodnp )
+      RlBCAST( Iemn(1:mn_force,lvol    ),   mn_force, llmodnp )
+      RlBCAST( Semn(1:mn_force,lvol,0:1), 2*mn_force, llmodnp )
+      RlBCAST( Pemn(1:mn_force,lvol,0:2), 3*mn_force, llmodnp )
   endif ! end of if( NOTstellsym) ; 11 Aug 14;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

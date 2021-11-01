@@ -64,7 +64,7 @@
 !> @param[in] mn    number of Fourier harmonics
 !> @param[in] lvol  index of nested volume
 !> @param[in] lrad  order of Chebychev polynomials
-subroutine ma00aa( lquad, mn, lvol, lrad )
+subroutine ma00aa( lquad, mn_field, lvol, lrad )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -72,12 +72,14 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
 
   use fileunits, only : ounit
 
-  use inputlist, only : mpol, Wma00aa, Wmacros
+  use inputlist, only : Wma00aa, Wmacros
+
+  use bndRep,    only : Mpol_field
 
   use cputiming, only : Tma00aa
 
   use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, &
-                        Mvol, im, in, mne, &
+                        Mvol, im_field, in_field, mne, &
                         YESstellsym, NOTstellsym, &
                         gaussianweight, gaussianabscissae, &
                         DToocc, DToocs, DToosc, DTooss, &
@@ -104,7 +106,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
 
   LOCALS
 
-  INTEGER, intent(in) :: lquad, mn, lvol, lrad
+  INTEGER, intent(in) :: lquad, mn_field, lvol, lrad
 
   INTEGER             :: jquad, ll, pp, ll1, pp1, uv, ii, jj, io, mn2, lp2, mn2_max, lp2_max, nele
 
@@ -134,9 +136,9 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  mn2_max = mn*mn
+  mn2_max = mn_field*mn_field
   lp2_max = (lrad+1)*(lrad+1)
-  imn2    =  one/real(mn)
+  imn2    =  one/real(mn_field)
   ilrad = one/real(lrad+1)
 
   DToocc = zero
@@ -177,7 +179,7 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
     DDzzss = zero
   endif !NOTstellsym
 
-  SALLOCATE(basis, (0:lrad,0:mpol,0:1,lquad), zero)
+  SALLOCATE(basis, (0:lrad,0:mpol_field,0:1,lquad), zero)
 
   if( dBdX%L ) then ; Lcurvature = 3 ; ideriv = 1
   else              ; Lcurvature = 1 ; ideriv = 0
@@ -192,17 +194,17 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
     lss = gaussianabscissae(jquad,lvol) ; jthweight = gaussianweight(jquad,lvol)
     sbar = (lss + one) * half
     if (Lcoordinatesingularity) then
-      call get_zernike(sbar, lrad, mpol, basis(:,:,0:1,jquad)) ! use Zernike polynomials 29 Jun 19;
+      call get_zernike(sbar, lrad, mpol_field, basis(:,:,0:1,jquad)) ! use Zernike polynomials 29 Jun 19;
     else
       call get_cheby(lss, lrad, basis(:,0,0:1,jquad))
     endif
   enddo
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-!$OMP PARALLEL DO SHARED(lquad,lrad,lvol,mn,basis,mn2_max,lp2_max) PRIVATE(jquad,lss,jthweight,sbar,mn2,ii,jj,kka,kks,ikds,ikda,lp2,ll,pp,ll1,pp1,Tl,Tp,Dl,Dp,TlTP,Tldp,DlTp,DlDp,foocc,fssss,fstsc,fszsc,fttcc,ftzcc,fzzcc,foocs,foosc,fooss,fsscc,fsscs,fsssc,fstcc,fstcs,fstss,fszcc,fszcs,fszss,fttcs,fttsc,fttss,ftzcs,ftzsc,ftzss,fzzcs,fzzsc,fzzss)
+!$OMP PARALLEL DO SHARED(lquad,lrad,lvol,mn_field,basis,mn2_max,lp2_max) PRIVATE(jquad,lss,jthweight,sbar,mn2,ii,jj,kka,kks,ikds,ikda,lp2,ll,pp,ll1,pp1,Tl,Tp,Dl,Dp,TlTP,Tldp,DlTp,DlDp,foocc,fssss,fstsc,fszsc,fttcc,ftzcc,fzzcc,foocs,foosc,fooss,fsscc,fsscs,fsssc,fstcc,fstcs,fstss,fszcc,fszcs,fszss,fttcs,fttsc,fttss,ftzcs,ftzsc,ftzss,fzzcs,fzzsc,fzzss)
   do mn2 = 1, mn2_max
-    ii = mod(mn2-1,mn)+1
-    jj = (mn2-ii) / mn + 1
+    ii = mod(mn2-1,mn_field)+1
+    jj = (mn2-ii) / mn_field + 1
 
     do jquad = 1, lquad ! Gaussian quadrature loop;
 
@@ -261,16 +263,16 @@ subroutine ma00aa( lquad, mn, lvol, lrad )
           ll1 = (ll - mod(ll,2))/2 ! shrinked dof for Zernike; 02 Jul 19
           pp1 = (pp - mod(pp,2))/2 ! shrinked dof for Zernike; 02 Jul 19
 
-          if (ll < im(ii)) cycle ! zernike only non-zero for ll>=ii
-          if (pp < im(jj)) cycle ! zernike only non-zero for pp>=jj
-          if (mod(ll+im(ii),2)/=0) cycle ! zernike only non-zero if ll and ii have the same parity
-          if (mod(pp+im(jj),2)/=0) cycle ! zernike only non-zero if pp and jj have the same parity
+          if (ll < im_field(ii)) cycle ! zernike only non-zero for ll>=ii
+          if (pp < im_field(jj)) cycle ! zernike only non-zero for pp>=jj
+          if (mod(ll+im_field(ii),2)/=0) cycle ! zernike only non-zero if ll and ii have the same parity
+          if (mod(pp+im_field(jj),2)/=0) cycle ! zernike only non-zero if pp and jj have the same parity
 
-          Tl = basis(ll, im(ii), 0, jquad)         ! use Zernike polynomials 29 Jun 19;
-          Dl = basis(ll, im(ii), 1, jquad) * half  ! use Zernike polynomials 29 Jun 19;
+          Tl = basis(ll, im_field(ii), 0, jquad)         ! use Zernike polynomials 29 Jun 19;
+          Dl = basis(ll, im_field(ii), 1, jquad) * half  ! use Zernike polynomials 29 Jun 19;
 
-          Tp = basis(pp, im(jj), 0, jquad)         ! use Zernike polynomials 29 Jun 19;
-          Dp = basis(pp, im(jj), 1, jquad) * half  ! use Zernike polynomials 29 Jun 19;
+          Tp = basis(pp, im_field(jj), 0, jquad)         ! use Zernike polynomials 29 Jun 19;
+          Dp = basis(pp, im_field(jj), 1, jquad) * half  ! use Zernike polynomials 29 Jun 19;
 
         else
 

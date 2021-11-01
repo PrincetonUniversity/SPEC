@@ -117,7 +117,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
                         Energy, ForceErr, &
                         YESstellsym, NOTstellsym, &
                         Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
-                        mn, im, in, &
+                        mn_field, im_field, in_field, &
+                        mn_force, im_force, in_force, &
                         dpflux, dtflux, sweight, &
                         Bemn, Bomn, Iomn, Iemn, Somn, Semn, &
                         BBe, IIo, BBo, IIe, & ! these are just used for screen diagnostics;
@@ -179,8 +180,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
   LComputeAxis = .true.
 #endif
 
-  WCALL( dforce, packxi,( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), &
-                          iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), packorunpack, LcomputeDerivatives, LComputeAxis ) )
+  WCALL( dforce, packxi,( NGdof, position(0:NGdof), Mvol, mn_field, iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), &
+                          iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), packorunpack, LcomputeDerivatives, LComputeAxis ) )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -332,7 +333,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
 
     do ideriv=0,2
       if( (.not.LcomputeDerivatives) .and. (ideriv.ne.0) ) cycle
-      do ii = 1, mn
+      do ii = 1, mn_field
         RlBCAST( Ate(vvol,ideriv,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
         RlBCAST( Aze(vvol,ideriv,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
       enddo
@@ -342,7 +343,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
     if( NOTstellsym ) then
       do ideriv=0,2
       if( (.not.LcomputeDerivatives) .and. (ideriv.ne.0) ) cycle
-        do ii = 1, mn
+        do ii = 1, mn_field
               RlBCAST( Ato(vvol,ideriv,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
               RlBCAST( Azo(vvol,ideriv,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
         enddo
@@ -409,52 +410,54 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
 
       if( Lextrap.eq.1 .and. vvol.eq.1 ) then ! to be made redundant;
         FATAL( dforce, 2.gt.Mvol, psifactor needs attention )
-        ;force(tdoc+idoc+1:tdoc+idoc+mn) = position(1:mn) - ( iRbc(1:mn,2) / psifactor(1:mn,2) )
+        !TODO: mn_field or mn_force? what is this?
+        ;force(tdoc+idoc+1:tdoc+idoc+mn_field)     = position(1:mn_field) - ( iRbc(1:mn_field,2) / psifactor(1:mn_field,2) )
+        force(tdoc+idoc+mn_field+1:tdoc+idoc+mn_force) = zero
       else
-        ;force(tdoc+idoc+1:tdoc+idoc+mn    ) = ( Bemn(1:mn    ,vvol+1,0) - Bemn(1:mn    ,vvol+0,1) ) * BBweight(1:mn) ! pressure imbalance;
+        ;force(tdoc+idoc+1:tdoc+idoc+mn_force    ) = ( Bemn(1:mn_force    ,vvol+1,0) - Bemn(1:mn_force    ,vvol+0,1) ) * BBweight(1:mn_force) ! pressure imbalance;
       endif
 
-      ;  BBe(vvol) = max( sum( abs( force(tdoc+idoc+1:tdoc+idoc+mn  ) ) ) / (mn  ), logtolerance ) ! screen diagnostics;
+      ;  BBe(vvol) = max( sum( abs( force(tdoc+idoc+1:tdoc+idoc+mn_force  ) ) ) / (mn_force  ), logtolerance ) ! screen diagnostics;
 
-      ;  idoc = idoc + mn   ! degree-of-constraint counter; increment;
+      ;  idoc = idoc + mn_force   ! degree-of-constraint counter; increment;
 
       if( Igeometry.ge.3 ) then ! add spectral constraints;
 
-        force(tdoc+idoc+1:tdoc+idoc+mn-1  ) = (                           Iomn(2:mn    ,vvol+0  ) ) * epsilon         & ! spectral constraints;
-                                            + (                         + Somn(2:mn    ,vvol+0,1) ) * sweight(vvol+0) & ! poloidal length constraint;
-                                            - ( Somn(2:mn    ,vvol+1,0)                           ) * sweight(vvol+1)
+        force(tdoc+idoc+1:tdoc+idoc+mn_force-1  ) = (                                 Iomn(2:mn_force, vvol+0  ) ) * epsilon         & ! spectral constraints;
+                                                  + (                               + Somn(2:mn_force, vvol+0,1) ) * sweight(vvol+0) & ! poloidal length constraint;
+                                                  - ( Somn(2:mn_force    ,vvol+1,0)                              ) * sweight(vvol+1)
 
   !     if( Ntor.gt.0 ) then ! poloidal angle origin is not otherwise constrained ;
   !      force(tdoc+idoc+1:tdoc+idoc+Ntor  ) = ( Pomn(2:Ntor+1,vvol+1,0) - Pomn(2:Ntor+1,vvol+0,1) ) * apsilon ! choice of spectral constraint can be enforced;
   !     endif
 
-        IIo(vvol) = max( sum( abs( force(tdoc+idoc+1:tdoc+idoc+mn-1) ) ) / (mn-1), logtolerance ) ! screen diagnostics;
+        IIo(vvol) = max( sum( abs( force(tdoc+idoc+1:tdoc+idoc+mn_force-1) ) ) / (mn_force-1), logtolerance ) ! screen diagnostics;
 
-        idoc = idoc + mn-1
+        idoc = idoc + mn_force-1
 
       endif ! end of if( Igeometry.ge.3 ) ;
 
       if( NOTstellsym ) then
 
-        force(tdoc+idoc+1:tdoc+idoc+mn-1  ) = ( Bomn(2:mn    ,vvol+1,0) - Bomn(2:mn    ,vvol+0,1) ) * BBweight(2:mn) ! pressure imbalance;
+        force(tdoc+idoc+1:tdoc+idoc+mn_force-1  ) = ( Bomn(2:mn_force    ,vvol+1,0) - Bomn(2:mn_force    ,vvol+0,1) ) * BBweight(2:mn_force) ! pressure imbalance;
 
-        BBo(vvol) = max( sum( abs( force(tdoc+idoc+1:tdoc+idoc+mn-1) ) ) / (mn-1), logtolerance ) ! screen diagnostics;
+        BBo(vvol) = max( sum( abs( force(tdoc+idoc+1:tdoc+idoc+mn_force-1) ) ) / (mn_force-1), logtolerance ) ! screen diagnostics;
 
-        idoc = idoc + mn-1 ! degree-of-constraint counter; increment;
+        idoc = idoc + mn_force-1 ! degree-of-constraint counter; increment;
 
         if( Igeometry.ge.3 ) then ! add spectral constraints;
-
-          force(tdoc+idoc+1:tdoc+idoc+mn    ) = (                           Iemn(1:mn    ,vvol+0  ) ) * epsilon         & ! spectral constraints;
-                                              + (                         + Semn(1:mn    ,vvol+0,1) ) * sweight(vvol+0) & ! poloidal length constraint;
-                                              - ( Semn(1:mn    ,vvol+1,0)                           ) * sweight(vvol+1)
+ 
+          force(tdoc+idoc+1:tdoc+idoc+mn_force    ) = (                              Iemn(1:mn_force, vvol+0  ) ) * epsilon         & ! spectral constraints;
+                                                    + (                            + Semn(1:mn_force, vvol+0,1) ) * sweight(vvol+0) & ! poloidal length constraint;
+                                                    - ( Semn(1:mn_force, vvol+1,0)                              ) * sweight(vvol+1)
 
   !     if( Ntor.ge.0 ) then
   !      force(tdoc+idoc+1:tdoc+idoc+Ntor+1) = ( Pemn(1:Ntor+1,vvol+1,0) - Pemn(1:Ntor+1,vvol+0,1) ) * apsilon ! choice of spectral constraint can be enforced;
   !     endif
 
-          IIe(vvol) = max( sum( abs( force(tdoc+idoc+1:tdoc+idoc+mn  ) ) ) / (mn  ), logtolerance ) ! screen diagnostics;
+          IIe(vvol) = max( sum( abs( force(tdoc+idoc+1:tdoc+idoc+mn_force  ) ) ) / (mn_force  ), logtolerance ) ! screen diagnostics;
 
-          idoc = idoc + mn   ! degree-of-constraint counter; increment;
+          idoc = idoc + mn_force   ! degree-of-constraint counter; increment;
 
         endif ! end of if( Igeometry.ge.3 ) ;
 
@@ -529,7 +532,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
         if( idof.gt.LGdof ) write(ounit,1000) myid, vvol, -1, -1, -1, idof, LGdof ! can be deleted;
 #endif
 
-        do ii = 1, mn ! loop over degrees-of-freedom;
+        do ii = 1, mn_force ! loop over degrees-of-freedom;
 
 #ifdef DEBUG
           if( idof.gt.LGdof ) write(ounit,1000) myid, vvol, ii, -1, -1, idof, LGdof ! can be deleted;
@@ -601,7 +604,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
                   tdoc = (vvol-1) * LGdof ! shorthand;
                   idoc = 0
                   if( Lextrap.eq.1 .and. vvol.eq.1 ) then
-                    if    ( im(idof).le.0                     ) then ; hessian(tdoc+idof,tdof) = - one
+                    if    ( im_field(idof).le.0                     ) then ; hessian(tdoc+idof,tdof) = - one
                     else                                             ; hessian(tdoc+idof,tdof) = - one
                     endif
                   else
@@ -698,7 +701,8 @@ use inputlist, only: Wmacros, Wdforce, &
 use cputiming, only: Tdforce
 
 use allglobal, only: ncpu, myid, cpus, MPI_COMM_SPEC, &
-                     Mvol, mn, im, in, &
+                     Mvol, mn_force, im_force, in_force, &
+                     mn_field, im_field, in_field, &
                      iRbc, iZbs, iRbs, iZbc, &
                      LGdof, psifactor, dBdX, &
                      YESstellsym, NOTstellsym, &
@@ -728,10 +732,10 @@ BEGIN(dforce)
   SALLOCATE( finitediff_estimate, (1:NGdof, 1:NGdof), zero )
 
   dBdX%L = .false.
-  SALLOCATE( oRbc, (1:mn,0:Mvol), iRbc(1:mn,0:Mvol) ) !save unperturbed geometry
-  SALLOCATE( oZbs, (1:mn,0:Mvol), iZbs(1:mn,0:Mvol) )
-  SALLOCATE( oRbs, (1:mn,0:Mvol), iRbs(1:mn,0:Mvol) )
-  SALLOCATE( oZbc, (1:mn,0:Mvol), iZbc(1:mn,0:Mvol) )
+  SALLOCATE( oRbc, (1:mn_field,0:Mvol), iRbc(1:mn_field,0:Mvol) ) !save unperturbed geometry
+  SALLOCATE( oZbs, (1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol) )
+  SALLOCATE( oRbs, (1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol) )
+  SALLOCATE( oZbc, (1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol) )
   SALLOCATE( iforce,  (-2:2, 0:NGdof), zero)
   SALLOCATE( iposition, (-2:2, 0:NGdof), zero)
 
@@ -739,7 +743,7 @@ BEGIN(dforce)
   do vvol = 1, Mvol-1 ! loop over interior surfaces;
     idof = 0
 
-    do ii = 1, mn ! Loop over Fourier modes
+    do ii = 1, mn_field ! Loop over Fourier modes
 
       lfactor = psifactor(ii,vvol)   ! this "pre-conditions" the geometrical degrees-of-freedom;
 
@@ -761,10 +765,10 @@ BEGIN(dforce)
             if( isymdiff.eq.0 ) cycle
 
             ! Reset initial geometry
-            iRbc(1:mn,0:Mvol) = oRbc(1:mn,0:Mvol)
-            iZbs(1:mn,0:Mvol) = oZbs(1:mn,0:Mvol)
-            iRbs(1:mn,0:Mvol) = oRbs(1:mn,0:Mvol)
-            iZbc(1:mn,0:Mvol) = oZbc(1:mn,0:Mvol)
+            iRbc(1:mn_field,0:Mvol) = oRbc(1:mn_field,0:Mvol)
+            iZbs(1:mn_field,0:Mvol) = oZbs(1:mn_field,0:Mvol)
+            iRbs(1:mn_field,0:Mvol) = oRbs(1:mn_field,0:Mvol)
+            iZbc(1:mn_field,0:Mvol) = oZbc(1:mn_field,0:Mvol)
 
             ! Perturb geometry
             if( issym.eq.0 .and. irz.eq.0 ) then
@@ -781,8 +785,9 @@ BEGIN(dforce)
             !LComputeAxis = .false. ! keep axis fixed
             LComputeAxis = .true.
 
-            WCALL(dforce, packxi,( NGdof, iposition(isymdiff,0:NGdof), Mvol, mn,iRbc(1:mn,0:Mvol),iZbs(1:mn,0:Mvol),iRbs(1:mn,0:Mvol),&
-                                   iZbc(1:mn,0:Mvol),packorunpack, .false., LComputeAxis ) )
+            WCALL(dforce, packxi,( NGdof, iposition(isymdiff,0:NGdof), Mvol, mn_field, iRbc(1:mn_field,0:Mvol),&
+                                   iZbs(1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol), &
+                                   iZbc(1:mn_field,0:Mvol), packorunpack, .false., LComputeAxis ) )
             WCALL(dforce, dforce,( NGdof, iposition(isymdiff,0:NGdof), iforce(isymdiff,0:NGdof), .false., LComputeAxis) )
           enddo
 
@@ -814,8 +819,8 @@ BEGIN(dforce)
     open(10, file=trim(ext)//'.Lcheck6_output.txt', status='unknown')
     write(ounit,'(A)') NEW_LINE('A')
 
-    do ii=1, SIZE(im)
-      write(ounit,1345) myid, im(ii), in(ii), hessian(ii,:)
+    do ii=1, SIZE(im_field)
+      write(ounit,1345) myid, im_field(ii), in_field(ii), hessian(ii,:)
       write(10   ,1347) hessian(ii,:)
     enddo
     close(10)
@@ -824,8 +829,8 @@ BEGIN(dforce)
 
     ! Print finite differences
     open(10, file=trim(ext)//'.Lcheck6_output.FiniteDiff.txt', status='unknown')
-    do ii=1, SIZE(im)
-      write(ounit,1346) myid, im(ii), in(ii), finitediff_estimate(ii,:)
+    do ii=1, SIZE(im_field)
+      write(ounit,1346) myid, im_field(ii), in_field(ii), finitediff_estimate(ii,:)
       write(10   ,1347) finitediff_estimate(ii,:)
     enddo
     write(ounit,'(A)') NEW_LINE('A')

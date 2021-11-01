@@ -101,11 +101,11 @@ end module intghs_module
 !> \brief Calculates volume integrals of Chebyshev polynomials and covariant field products.
 !>
 !> @param lquad
-!> @param mn
+!> @param mn_field
 !> @param lvol
 !> @param lrad
 !> @param idx
-subroutine intghs( lquad, mn, lvol, lrad, idx )
+subroutine intghs( lquad, mn_field, lvol, lrad, idx )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -115,12 +115,14 @@ subroutine intghs( lquad, mn, lvol, lrad, idx )
 
   use fileunits, only : ounit
 
-  use inputlist, only : mpol, Wintghs, Wmacros
+  use inputlist, only : Wintghs, Wmacros
+
+  use bndRep,    only : Mpol_field
 
   use cputiming, only : Tintghs
 
   use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, &
-                        Mvol, im, in, mne, Ntz, Nt, Nz, &
+                        Mvol, im_field, in_field, mne, Ntz, Nt, Nz, &
                         YESstellsym, NOTstellsym, &
                         gaussianweight, gaussianabscissae, &
                         Tsc, Tss, Dtc, Dts, Dzc, Dzs, &
@@ -136,7 +138,7 @@ subroutine intghs( lquad, mn, lvol, lrad, idx )
 
   LOCALS
 
-  INTEGER, intent(in) :: lquad, mn, lvol, lrad, idx
+  INTEGER, intent(in) :: lquad, mn_field, lvol, lrad, idx
 
   INTEGER             :: jquad, ll, pp, ll1, pp1, uv, ii, jj, io, mn2, lp2, mn2_max, lp2_max, nele, ideriv, ifail, Lcurvature
   INTEGER             :: mi, ni, bid
@@ -179,7 +181,7 @@ subroutine intghs( lquad, mn, lvol, lrad, idx )
     lss = gaussianabscissae(jquad,lvol) ; jthweight = gaussianweight(jquad,lvol)
     sbar = (lss + one) * half
     if (Lcoordinatesingularity) then
-      call get_zernike(sbar, lrad, mpol, wk%basis(:,:,0:1,jquad)) ! use Zernike polynomials 29 Jun 19;
+      call get_zernike(sbar, lrad, mpol_field, wk%basis(:,:,0:1,jquad)) ! use Zernike polynomials 29 Jun 19;
     else
       call get_cheby(lss, lrad, wk%basis(:,0,0:1,jquad))
     endif
@@ -193,7 +195,7 @@ subroutine intghs( lquad, mn, lvol, lrad, idx )
   wk%gBupper = zero; wk%Blower = zero;
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!$OMP PARALLEL DO PRIVATE(jquad,ll1,lss,sbar,Tl,Dl,ii,jj,ll,mi,ni,ik) SHARED(lquad,mn,lvol,lrad,idx)
+!$OMP PARALLEL DO PRIVATE(jquad,ll1,lss,sbar,Tl,Dl,ii,jj,ll,mi,ni,ik) SHARED(lquad,mn_field,lvol,lrad,idx)
   do jquad = 1, lquad
 
     ! A_t  : wk%ijreal, wk%jireal
@@ -202,7 +204,7 @@ subroutine intghs( lquad, mn, lvol, lrad, idx )
     ! gB^t : wk%cfmn, wk%sfmn
     ! gB^z : wk%efmn, wk%ofmn
 
-    do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over Fourier harmonics;
+    do ii = 1, mn_field ; mi = im_field(ii) ; ni = in_field(ii) ! loop over Fourier harmonics;
 
       if (Lcoordinatesingularity) then
         do ll = mi, lrad, 2 ! loop over Zernike polynomials; Lrad is the radial resolution;
@@ -239,8 +241,8 @@ subroutine intghs( lquad, mn, lvol, lrad, idx )
       end if ! Lcoordinatesingularity; 01 Jul 19
     enddo ! end of do ii; 20 Feb 13;
 
-    call invfft( mn, im, in, wk%efmn(1:mn,jquad), wk%ofmn(1:mn,jquad), wk%cfmn(1:mn,jquad), wk%sfmn(1:mn,jquad), Nt, Nz, wk%gBupper(1:Ntz,3,jquad), wk%gBupper(1:Ntz,2,jquad) )
-    call invfft( mn, im, in, wk%evmn(1:mn,jquad), wk%odmn(1:mn,jquad), wk%cfmn(1:mn,jquad), wk%sfmn(1:mn,jquad), Nt, Nz, wk%gBupper(1:Ntz,1,jquad), wk%gBupper(1:Ntz,2,jquad) )
+    call invfft( mn_field, im_field, in_field, wk%efmn(1:mn_field,jquad), wk%ofmn(1:mn_field,jquad), wk%cfmn(1:mn_field,jquad), wk%sfmn(1:mn_field,jquad), Nt, Nz, wk%gBupper(1:Ntz,3,jquad), wk%gBupper(1:Ntz,2,jquad) )
+    call invfft( mn_field, im_field, in_field, wk%evmn(1:mn_field,jquad), wk%odmn(1:mn_field,jquad), wk%cfmn(1:mn_field,jquad), wk%sfmn(1:mn_field,jquad), Nt, Nz, wk%gBupper(1:Ntz,1,jquad), wk%gBupper(1:Ntz,2,jquad) )
 
     do ii = 1, 3
       do jj = 1, 3
@@ -253,9 +255,13 @@ subroutine intghs( lquad, mn, lvol, lrad, idx )
     ifail = 0
 
     call tfft( Nt, Nz, wk%Blower(1:Ntz,2,jquad), wk%Blower(1:Ntz,3,jquad), &
-               mn, im(1:mn), in(1:mn), wk%Bloweremn(1:mn,2,jquad), wk%Bloweromn(1:mn,2,jquad), wk%Bloweremn(1:mn,3,jquad), wk%Bloweromn(1:mn,3,jquad), ifail )
+               mn_field, im_field(1:mn_field), in_field(1:mn_field), &
+               wk%Bloweremn(1:mn_field,2,jquad), wk%Bloweromn(1:mn_field,2,jquad), &
+               wk%Bloweremn(1:mn_field,3,jquad), wk%Bloweromn(1:mn_field,3,jquad), ifail )
     call tfft( Nt, Nz, wk%Blower(1:Ntz,1,jquad), wk%Blower(1:Ntz,3,jquad), &
-               mn, im(1:mn), in(1:mn), wk%Bloweromn(1:mn,1,jquad), wk%Bloweremn(1:mn,1,jquad), wk%Bloweremn(1:mn,3,jquad), wk%Bloweromn(1:mn,3,jquad), ifail )
+               mn_field, im_field(1:mn_field), in_field(1:mn_field), &
+               wk%Bloweromn(1:mn_field,1,jquad), wk%Bloweremn(1:mn_field,1,jquad), &
+               wk%Bloweremn(1:mn_field,3,jquad), wk%Bloweromn(1:mn_field,3,jquad), ifail )
     wk%Bloweremn(1,1  ,jquad) = zero
     wk%Bloweromn(1,2:3,jquad) = zero
 
@@ -264,8 +270,8 @@ subroutine intghs( lquad, mn, lvol, lrad, idx )
 
 w(1:lquad) = gaussianweight(1:lquad,lvol)
 
-!$OMP PARALLEL DO SHARED(mn,lrad,w) PRIVATE(ii,ik,ll,ll1,bid,dfactor)
-do ii = 1, mn
+!$OMP PARALLEL DO SHARED(mn_field,lrad,w) PRIVATE(ii,ik,ll,ll1,bid,dfactor)
+do ii = 1, mn_field
 
   if (ii==1) then ;ik = two
   else            ;ik = one
@@ -274,9 +280,9 @@ do ii = 1, mn
     do ll = 0, lrad
 
       if (Lcoordinatesingularity) then
-        if (ll.lt.im(ii) .or. mod(ll+im(ii),2).ne.0) cycle
+        if (ll.lt.im_field(ii) .or. mod(ll+im_field(ii),2).ne.0) cycle
         ll1 = (ll - mod(ll,2))/2 ! shrinked dof for Zernike; 02 Jul 19
-        bid = im(ii)
+        bid = im_field(ii)
         dfactor = half
       else
         ll1 = ll
@@ -347,10 +353,11 @@ end subroutine intghs
 subroutine intghs_workspace_init(lvol)
 
   use constants, only : zero
-  use inputlist, only : Mpol, Lrad, Wmacros, Wintghs
+  use inputlist, only : Lrad, Wmacros, Wintghs
+  use bndRep,    only : Mpol_field
   use fileunits, only : ounit
   use cputiming, only : Tintghs
-  use allglobal, only : Ntz, mn, Iquad, myid, ncpu, cpus, MPI_COMM_SPEC
+  use allglobal, only : Ntz, mn_field, Iquad, myid, ncpu, cpus, MPI_COMM_SPEC
   use intghs_module
 
   LOCALS
@@ -364,19 +371,19 @@ subroutine intghs_workspace_init(lvol)
 
   SALLOCATE(wk%gBupper,   (1:Ntz,3,lquad), zero)
   SALLOCATE(wk%Blower,    (1:Ntz,3,lquad), zero)
-  SALLOCATE(wk%Bloweremn, (1:mn,3,lquad), zero)
-  SALLOCATE(wk%Bloweromn, (1:mn,3,lquad), zero)
-  SALLOCATE(wk%efmn,      (1:mn,lquad), zero)
-  SALLOCATE(wk%ofmn,      (1:mn,lquad), zero)
-  SALLOCATE(wk%evmn,      (1:mn,lquad), zero)
-  SALLOCATE(wk%odmn,      (1:mn,lquad), zero)
-  SALLOCATE(wk%cfmn,      (1:mn,lquad), zero)
-  SALLOCATE(wk%sfmn,      (1:mn,lquad), zero)
-  SALLOCATE(wk%ijreal,    (1:mn,lquad), zero)
-  SALLOCATE(wk%jkreal,    (1:mn,lquad), zero)
-  SALLOCATE(wk%jireal,    (1:mn,lquad), zero)
-  SALLOCATE(wk%kjreal,    (1:mn,lquad), zero)
-  SALLOCATE(wk%basis,     (0:Lrad(lvol),0:mpol,0:1, lquad), zero)
+  SALLOCATE(wk%Bloweremn, (1:mn_field,3,lquad), zero)
+  SALLOCATE(wk%Bloweromn, (1:mn_field,3,lquad), zero)
+  SALLOCATE(wk%efmn,      (1:mn_field,lquad), zero)
+  SALLOCATE(wk%ofmn,      (1:mn_field,lquad), zero)
+  SALLOCATE(wk%evmn,      (1:mn_field,lquad), zero)
+  SALLOCATE(wk%odmn,      (1:mn_field,lquad), zero)
+  SALLOCATE(wk%cfmn,      (1:mn_field,lquad), zero)
+  SALLOCATE(wk%sfmn,      (1:mn_field,lquad), zero)
+  SALLOCATE(wk%ijreal,    (1:mn_field,lquad), zero)
+  SALLOCATE(wk%jkreal,    (1:mn_field,lquad), zero)
+  SALLOCATE(wk%jireal,    (1:mn_field,lquad), zero)
+  SALLOCATE(wk%kjreal,    (1:mn_field,lquad), zero)
+  SALLOCATE(wk%basis,     (0:Lrad(lvol),0:mpol_field,0:1, lquad), zero)
 
   RETURN(intghs)
 

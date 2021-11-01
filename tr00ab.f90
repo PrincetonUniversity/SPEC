@@ -67,7 +67,7 @@
 !> @param Nz
 !> @param iflag
 !> @param ldiota
-subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-field line magnetic coordinates;
+subroutine tr00ab( lvol, mn_field, NN, Nt, Nz, iflag, ldiota ) ! construct straight-field line magnetic coordinates;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -84,7 +84,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
 
   use allglobal, only : ncpu, cpus, myid, MPI_COMM_SPEC, &
                         pi2nfp, &
-                        Mvol, im, in, mns, ims, ins, &
+                        Mvol, im_field, in_field, mns, ims, ins, &
                         YESstellsym, NOTstellsym, &
                         glambda, & ! global lambda: initial guesses will be saved; 21 Apr 13;
                         Ntz, hNt, hNz, &
@@ -96,7 +96,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
 
   LOCALS
 
-  INTEGER, intent(in)  :: lvol, mn, NN, Nt, Nz, iflag
+  INTEGER, intent(in)  :: lvol, mn_field, NN, Nt, Nz, iflag
 
   REAL, intent(inout)  :: ldiota(0:1,-1:2)
 
@@ -104,7 +104,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
 
   REAL                 :: lcpu, mfactor, lss, Dteta, Dzeta, rfac, tol, rnorm, omega, diotaerror!, sparsedenseerror
 
-  REAL                 :: lAte(0:mn,-1:2), lAze(0:mn,-1:2), lAto(0:mn,-1:2), lAzo(0:mn,-1:2)
+  REAL                 :: lAte(0:mn_field,-1:2), lAze(0:mn_field,-1:2), lAto(0:mn_field,-1:2), lAzo(0:mn_field,-1:2)
 
 !  REAL                 :: lBso(1:mn,-1:2), lBte(1:mn,-1:2), lBze(1:mn,-1:2)
 !  REAL                 :: lBse(1:mn,-1:2), lBto(1:mn,-1:2), lBzo(1:mn,-1:2)
@@ -161,11 +161,11 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-   lAte(0:mn,-1:2) = zero ! radial derivatives of vector potential evaluated at interfaces; 20 Apr 13;
-   lAze(0:mn,-1:2) = zero
+   lAte(0:mn_field,-1:2) = zero ! radial derivatives of vector potential evaluated at interfaces; 20 Apr 13;
+   lAze(0:mn_field,-1:2) = zero
 !  if( NOTstellsym ) then ! the non-stellarator-symmetric harmonics need to be set to zero in any case; 20 Apr 13;
-   lAto(0:mn,-1:2) = zero
-   lAzo(0:mn,-1:2) = zero
+   lAto(0:mn_field,-1:2) = zero
+   lAzo(0:mn_field,-1:2) = zero
 !  endif
 
    do ideriv = -1, 2 ; id = ideriv ! labels derivative of magnetic field wrt enclosed fluxes; 20 Apr 13;
@@ -174,9 +174,9 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
     if( iflag.eq. 2 .and. ideriv.lt.0 ) cycle ! derivatives of transform wrt geometry                                           is  not required; 20 Jun 14;
     if( iflag.eq.-1 .and. ideriv.gt.0 ) cycle ! derivatives of transform wrt helicity multiplier and differential poloidal flux are not required; 20 Jun 14;
 
-    do ii = 1, mn ! loop over Fourier harmonics; 20 Apr 13;
+    do ii = 1, mn_field ! loop over Fourier harmonics; 20 Apr 13;
 
-     mi = im(ii)
+     mi = im_field(ii)
 
      if (Lcoordinatesingularity) then
       do ll = mi, Lrad(lvol), 2 ! loop over Zernike polynomials; 01 Jul 19;
@@ -204,7 +204,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
     enddo ! end of do ii; 30 Jan 13; ! Fourier harmonics, and their derivatives, have been constructed; 20 Apr 13;
 
     if( Lsparse.gt.0 ) then ! will construct transformation to straight-field line angle in real space; 24 Apr 13;
-     call invfft( mn, im(1:mn), in(1:mn), lAte(1:mn,id), lAto(1:mn,id), lAze(1:mn,id), lAzo(1:mn,id), &
+     call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), lAte(1:mn_field,id), lAto(1:mn_field,id), lAze(1:mn_field,id), lAzo(1:mn_field,id), &
                   Nt, Nz, Bsupz(1:Ntz,id), Bsupt(1:Ntz,id) ) ! map to real space;
     endif
 
@@ -593,7 +593,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
      if( iflag.eq. 2 .and. ideriv.lt.0 ) cycle ! derivatives wrt helicity multiplier and differential poloidal flux are required; 20 Jun 14;
      if( iflag.eq.-1 .and. ideriv.gt.0 ) cycle ! derivative  wrt geometry                                               required; 20 Jun 14;
 !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(kk,ii,jj,mj,nj)
-     do kk = 1, mn
+     do kk = 1, mn_field
 
       ii = iotakkii(kk)
 

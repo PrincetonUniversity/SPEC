@@ -75,7 +75,7 @@
 !> @param[in] Ntz total number of grid points in \f$\theta\f$ and \f$zeta\f$
 !> @param[out] efmn even Fourier coefficients
 !> @param[out] ofmn odd Fouier coefficients
-subroutine bnorml( mn, Ntz, efmn, ofmn )
+subroutine bnorml( mn_field, Ntz, efmn, ofmn )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -93,7 +93,7 @@ subroutine bnorml( mn, Ntz, efmn, ofmn )
                         Nt, Nz, &
                         Rij, Zij, guvij, sg, TT, &
                         NOTstellsym, Lcoordinatesingularity, &
-                        im, in, Ate, Aze, Ato, Azo, &
+                        im_field, in_field, Ate, Aze, Ato, Azo, &
                         Nt, Nz, cfmn, sfmn, &
                         ijreal, ijimag, jireal, jiimag, &
                         globaljk, tetazeta, virtualcasingfactor, gteta, gzeta, Dxyz, Nxyz
@@ -102,8 +102,8 @@ subroutine bnorml( mn, Ntz, efmn, ofmn )
 
   LOCALS
 
-  INTEGER, intent(in)  :: mn, Ntz
-  REAL   , intent(out) :: efmn(1:mn), ofmn(1:mn)
+  INTEGER, intent(in)  :: mn_field, Ntz
+  REAL   , intent(out) :: efmn(1:mn_field), ofmn(1:mn_field)
 
   INTEGER              :: lvol, Lcurvature, Lparallel, ii, jj, kk, jk, ll, kkmodnp, jkmodnp, ifail, id01daf, nvccalls, icasing, ideriv
   REAL                 :: lss, zeta, teta, cszeta(0:1), tetalow, tetaupp, absacc, gBn
@@ -241,7 +241,8 @@ subroutine bnorml( mn, Ntz, efmn, ofmn )
   ijimag(1:Ntz) = zero
 
   call tfft( Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz), &
-             mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), ifail ) ! Fourier decompose normal field;
+             mn_field, im_field(1:mn_field), in_field(1:mn_field), &
+             efmn(1:mn_field), ofmn(1:mn_field), cfmn(1:mn_field), sfmn(1:mn_field), ifail ) ! Fourier decompose normal field;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

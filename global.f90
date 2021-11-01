@@ -264,15 +264,15 @@ module allglobal
 !>
 !> \addtogroup grp_fourier_repr Fourier representation
 !> @{
-  INTEGER              :: mn   !< total number of Fourier harmonics for coordinates RHO / Bn; calculated from Mpol, Ntor in readin()
-  INTEGER              :: mnRZ !< total number of Fourier harmonics for coordinates R / z; calculated from Mpol, Ntor in readin()
-  INTEGER              :: mnf  !< total number of Fourier harmonics for fields and force balance; calculated from Mpol, Ntor in readin()
-  INTEGER, allocatable :: im(:)   !< poloidal mode numbers for Fourier representation of rho, bn
-  INTEGER, allocatable :: in(:)   !< toroidal mode numbers for Fourier representation of rho, bn
-  INTEGER, allocatable :: imRZ(:) !< poloidal mode numbers for Fourier representation of R, Z
-  INTEGER, allocatable :: inRZ(:) !< toroidal mode numbers for Fourier representation of R, Z
-  INTEGER, allocatable :: imf(:)  !< poloidal mode numbers for Fourier representation of field and force
-  INTEGER, allocatable :: inf(:)  !< toroidal mode numbers for Fourier representation of field and force
+  INTEGER              :: mn_field  !< total number of Fourier harmonics for coordinates Rmn, Zmn and field (Ate, Aze, Azo, Ato)
+  INTEGER              :: mn_rho    !< total number of Fourier harmonics for coordinates rhomn
+  INTEGER              :: mn_force  !< total number of Fourier harmonics for force
+  INTEGER, allocatable :: im_field(:)   !< poloidal mode numbers for Fourier representation of Ate, Azo, ...
+  INTEGER, allocatable :: in_field(:)   !< toroidal mode numbers for Fourier representation of Ate, Azo, ...
+  INTEGER, allocatable :: im_rho(:)    !< poloidal mode numbers for Fourier representation of rhomn
+  INTEGER, allocatable :: in_rho(:)    !< toroidal mode numbers for Fourier representation of rhomn
+  INTEGER, allocatable :: im_force(:)  !< poloidal mode numbers for Fourier representation of force
+  INTEGER, allocatable :: in_force(:)  !< toroidal mode numbers for Fourier representation of force
 
   REAL,    allocatable :: halfmm(:) !< I saw this already somewhere...
   REAL,    allocatable :: regumm(:) !< I saw this already somewhere...
@@ -299,6 +299,8 @@ module allglobal
 
   REAL,    allocatable :: irhoc(:,:)  !< rhomn harmonics of interface surface geometry, using Henneberg's representation
   REAL,    allocatable :: ibc(:,:)     !< bn    harmonics of interface surface geometry, using Henneberg's representation
+  REAL,    allocatable :: iR0c(:,:)
+  REAL,    allocatable :: iZ0s(:,:)
 
   REAL,    allocatable :: dRbc(:,:) !< cosine R harmonics of interface surface geometry;     stellarator symmetric; linear deformation
   REAL,    allocatable :: dZbs(:,:) !<   sine Z harmonics of interface surface geometry;     stellarator symmetric; linear deformation
@@ -509,8 +511,8 @@ module allglobal
   REAL         , allocatable :: Lmgvalue(:,:) !< what is this?
   REAL         , allocatable :: Lmhvalue(:,:) !< what is this?
 
-  INTEGER      , allocatable :: Fso(:,:) !< what is this?
-  INTEGER      , allocatable :: Fse(:,:) !< what is this?
+!  INTEGER      , allocatable :: Fso(:,:) !< what is this?
+!  INTEGER      , allocatable :: Fse(:,:) !< what is this?
 
   LOGICAL                    :: Lcoordinatesingularity !< set by \c LREGION macro; true if inside the innermost volume
   LOGICAL                    :: Lplasmaregion          !< set by \c LREGION macro; true if inside the plasma region
@@ -835,12 +837,12 @@ subroutine build_vector_potential(lvol, iocons, aderiv, tderiv)
 
   BEGIN(build_vector_potential)
 
-  efmn(1:mn) = zero ; sfmn(1:mn) = zero ; cfmn(1:mn) = zero ; ofmn(1:mn) = zero
+  efmn(1:mn_field) = zero ; sfmn(1:mn_field) = zero ; cfmn(1:mn_field) = zero ; ofmn(1:mn_field) = zero
 
-  do ii = 1, mn ! loop over Fourier harmonics; 13 Sep 13;
+  do ii = 1, mn_field ! loop over Fourier harmonics; 13 Sep 13;
 
    if( Lcoordinatesingularity ) then
-    mi = im(ii)
+    mi = im_field(ii)
     do ll = mi, Lrad(lvol),2 ! loop over Zernike polynomials; Lrad is the radial resolution; 01 Jul 19;
       ;                      ; efmn(ii) = efmn(ii) +          Ate(lvol,aderiv,ii)%s(ll) * RTT(ll,mi,iocons,1) * half
       ;                      ; cfmn(ii) = cfmn(ii) +          Aze(lvol,aderiv,ii)%s(ll) * RTT(ll,mi,iocons,1) * half
@@ -853,7 +855,7 @@ subroutine build_vector_potential(lvol, iocons, aderiv, tderiv)
       ;                      ; efmn(ii) = efmn(ii) +          Ate(lvol,aderiv,ii)%s(ll) * TT(ll,iocons,1) ! aderiv labels deriv. wrt mu, pflux;
       ;                      ; cfmn(ii) = cfmn(ii) +          Aze(lvol,aderiv,ii)%s(ll) * TT(ll,iocons,1)
       if( NOTstellsym ) then ; ofmn(ii) = ofmn(ii) +          Ato(lvol,aderiv,ii)%s(ll) * TT(ll,iocons,1)
-      ;                     ; sfmn(ii) = sfmn(ii) +          Azo(lvol,aderiv,ii)%s(ll) * TT(ll,iocons,1)
+      ;                      ; sfmn(ii) = sfmn(ii) +          Azo(lvol,aderiv,ii)%s(ll) * TT(ll,iocons,1)
       endif
     enddo ! end of do ll; 20 Feb 13;
    end if ! Lcoordinatesingularity; 01 Jul 19;
@@ -1536,11 +1538,12 @@ subroutine wrtend
   write(iunit,'(" rtor        = ",es23.15   )') rtor
 
   if( Lfreebound.eq.1 .or. Zbs(0,1).gt.zero ) then
-   do ii = 1, mn ; mm = im(ii) ; nn = in(ii) / Nfp ; Rbc(nn,mm) = iRbc(ii,Nvol) ; Zbs(nn,mm) = iZbs(ii,Nvol) ; Vns(nn,mm) = iVns(ii) ; Bns(nn,mm) = iBns(ii)
-                                                   ; Rbs(nn,mm) = iRbs(ii,Nvol) ; Zbc(nn,mm) = iZbc(ii,Nvol) ; Vnc(nn,mm) = iVnc(ii) ; Bnc(nn,mm) = iBnc(ii)
-                                                   ; Rwc(nn,mm) = iRbc(ii,Mvol) ; Zws(nn,mm) = iZbs(ii,Mvol)
-                                                   ; Rws(nn,mm) = iRbs(ii,Mvol) ; Zwc(nn,mm) = iZbc(ii,Mvol)
-   enddo ! end of do ii = 1, mn;
+   do ii = 1, mn_field ; mm = im_field(ii) ; nn = in_field(ii) / Nfp 
+      Rbc(nn,mm) = iRbc(ii,Nvol) ; Zbs(nn,mm) = iZbs(ii,Nvol) ; Vns(nn,mm) = iVns(ii) ; Bns(nn,mm) = iBns(ii)
+      Rbs(nn,mm) = iRbs(ii,Nvol) ; Zbc(nn,mm) = iZbc(ii,Nvol) ; Vnc(nn,mm) = iVnc(ii) ; Bnc(nn,mm) = iBnc(ii)
+      Rwc(nn,mm) = iRbc(ii,Mvol) ; Zws(nn,mm) = iZbs(ii,Mvol)
+      Rws(nn,mm) = iRbs(ii,Mvol) ; Zwc(nn,mm) = iZbc(ii,Mvol)
+   enddo ! end of do ii = 1, mn_field;
   endif ! end of if( Lfreebound.eq.1 .or. . . . ) ;
 
   !write(iunit,'(" Rac         = ",99es23.15)') Rac(0:Ntor)
@@ -1744,7 +1747,7 @@ subroutine wrtend
 #endif
 
   ! write initial guess of interface geometry
-  do imn = 1, mn ; write(iunit,'(2i6,1024es23.15)') im(imn), in(imn)/Nfp, ( iRbc(imn,vvol), iZbs(imn,vvol), iRbs(imn,vvol), iZbc(imn,vvol), vvol = 1, Nvol )
+  do imn = 1, mn_field ; write(iunit,'(2i6,1024es23.15)') im_field(imn), in_field(imn)/Nfp, ( iRbc(imn,vvol), iZbs(imn,vvol), iRbs(imn,vvol), iZbc(imn,vvol), vvol = 1, Nvol )
   enddo
 
   close(iunit)

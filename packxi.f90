@@ -46,7 +46,7 @@
 !> @param[in] NGdof
 !> @param position
 !> @param[in] Mvol
-!> @param[in] mn
+!> @param[in] mn_field
 !> @param iRbc
 !> @param iZbs
 !> @param iRbs
@@ -54,7 +54,7 @@
 !> @param packorunpack
 !> @param[in] LComputeDerivatives
 !> @param[in] LComputeAxis
-subroutine packxi( NGdof, position, Mvol, mn, iRbc, iZbs, iRbs, iZbc, packorunpack, LComputeDerivatives, LComputeAxis )
+subroutine packxi( NGdof, position, Mvol, mn_field, iRbc, iZbs, iRbs, iZbc, packorunpack, LComputeDerivatives, LComputeAxis )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -68,7 +68,7 @@ subroutine packxi( NGdof, position, Mvol, mn, iRbc, iZbs, iRbs, iZbc, packorunpa
 
   use cputiming, only : Tpackxi
 
-  use allglobal, only : ncpu, myid, cpus, im, in, MPI_COMM_SPEC, &
+  use allglobal, only : ncpu, myid, cpus, im_field, in_field, MPI_COMM_SPEC, &
                         YESstellsym, NOTstellsym, &
                         ajk, Nt, Nz, Ntz, iRij, iZij, tRij, tZij, &
                         ijreal, ijimag, jireal, jiimag, efmn, ofmn, cfmn, sfmn, evmn, odmn, comn, simn, &
@@ -81,8 +81,8 @@ subroutine packxi( NGdof, position, Mvol, mn, iRbc, iZbs, iRbs, iZbc, packorunpa
   LOGICAL, intent(in)    :: LComputeDerivatives ! indicates whether derivatives are to be calculated;
   LOGICAL, intent(in)    :: LComputeAxis        ! if to recompute the axis
 
-  INTEGER, intent(in)    :: NGdof, Mvol, mn
-  REAL                   :: position(0:NGdof), iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol)
+  INTEGER, intent(in)    :: NGdof, Mvol, mn_field
+  REAL                   :: position(0:NGdof), iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol)
   CHARACTER              :: packorunpack
 
   INTEGER                :: lvol, jj, kk, irz, issym, idof, ifail, ivol
@@ -97,7 +97,7 @@ subroutine packxi( NGdof, position, Mvol, mn, iRbc, iZbs, iRbs, iZbc, packorunpa
 
   do lvol = 1, Mvol-1 ! loop over internal interfaces;
 
-   do jj = 1, mn ! loop over Fourier harmonics;
+   do jj = 1, mn_field ! loop over Fourier harmonics;
 
     do irz = 0, 1 ! loop over R & Z;
 
@@ -152,8 +152,8 @@ subroutine packxi( NGdof, position, Mvol, mn, iRbc, iZbs, iRbs, iZbc, packorunpa
 
   if( YESstellsym ) then ! iRbc(    ,0:Mvol) = zero
    ;                     ; iZbs(1   ,0:Mvol) = zero
-   ;                     ; iRbs(1:mn,0:Mvol) = zero
-   ;                     ; iZbc(1:mn,0:Mvol) = zero
+   ;                     ; iRbs(1:mn_field,0:Mvol) = zero
+   ;                     ; iZbc(1:mn_field,0:Mvol) = zero
   else                   ! iRbc(    ,0:Mvol) = zero
    ;                     ; iZbs(1   ,0:Mvol) = zero
    ;                     ; iRbs(1   ,0:Mvol) = zero
@@ -171,7 +171,7 @@ subroutine packxi( NGdof, position, Mvol, mn, iRbc, iZbs, iRbs, iZbc, packorunpa
 
    if( (Mvol .ne. 1) .and. (Lfindzero .ne. 0) ) then
     if (LComputeAxis) then
-      WCALL( packxi, rzaxis, ( Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), ivol, LComputeDerivatives ) ) ! set coordinate axis; 19 Jul 16;
+      WCALL( packxi, rzaxis, ( Mvol, mn_field, iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), ivol, LComputeDerivatives ) ) ! set coordinate axis; 19 Jul 16;
     endif
    endif
 

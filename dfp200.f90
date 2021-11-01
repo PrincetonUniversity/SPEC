@@ -50,7 +50,7 @@ subroutine dfp200( LcomputeDerivatives, vvol)
 
   use fileunits, only : ounit
 
-  use inputlist, only : Wmacros, Wdfp200, Nvol, Mpol, Ntor, Lrad, tflux, Igeometry, &
+  use inputlist, only : Wmacros, Wdfp200, Nvol, Lrad, tflux, Igeometry, &
                         gamma, adiabatic, pscale, mu, &
                         epsilon, &
                         Lfindzero, &
@@ -67,7 +67,8 @@ subroutine dfp200( LcomputeDerivatives, vvol)
                         iRbc, iZbs, iRbs, iZbc, & ! Fourier harmonics of geometry; vector of independent variables, position, is "unpacked" into iRbc,iZbs;
                         NAdof, &
                         YESstellsym, NOTstellsym, &
-                        mn, im, in, mns, Ntz, &
+                        mn_field, im_field, in_field, mns, Ntz, &
+                        mn_force, im_force, in_force, &
                         Ate, Aze, Ato, Azo, & ! only required for debugging;
                         ijreal, &
                         efmn, ofmn, cfmn, sfmn, &
@@ -87,7 +88,7 @@ subroutine dfp200( LcomputeDerivatives, vvol)
                         BBweight, & ! exponential weight on force-imbalance harmonics;
                         psifactor, &
                         lmns, &
-                        mn, mne, &
+                        mne, &
                         dRodR, dRodZ, dZodR, dZodZ, &
                         LocalConstraint, solution, &
                         IsMyVolume, IsMyVolumeValue, Btemn, WhichCpuID
@@ -197,7 +198,7 @@ subroutine dfp200( LcomputeDerivatives, vvol)
       dBdX%L = .true. ! will need derivatives;
       idof = 0 ! labels degree of freedom; local to interface;
 
-      do ii = 1, mn ! loop over deformations in Fourier harmonics; inside do vvol;
+      do ii = 1, mn_field ! loop over deformations in Fourier harmonics; inside do vvol;
 
         dBdX%ii = ii ! controls construction of derivatives in subroutines called below;
         do irz = 0, 1 ! loop over deformations in R and Z; inside do vvol; inside do ii;
@@ -299,7 +300,7 @@ else ! CASE SEMI GLOBAL CONSTRAINT
         ! calculated below
         if( Lfreebound.eq.1 ) then
             do ideriv = 0, 2
-                do ii = 1, mn
+                do ii = 1, mn_field
 
                     call WhichCpuID(Mvol, cpu_id)
 
@@ -401,7 +402,7 @@ else ! CASE SEMI GLOBAL CONSTRAINT
             dBdX%vol = vvol     ! Perturbed interface
             idof = 0 ! labels degree of freedom of interface vvol
 
-            do ii = 1, mn ! loop over deformations in Fourier harmonics; inside do vvol;
+            do ii = 1, mn_field ! loop over deformations in Fourier harmonics; inside do vvol;
             dBdX%ii = ii ! controls construction of derivatives in subroutines called below;
 
             do irz = 0, 1 ! loop over deformations in R and Z; inside do vvol; inside do ii;
@@ -464,7 +465,7 @@ else ! CASE SEMI GLOBAL CONSTRAINT
                     ! Gather everything in inner volume
                     if( ncpu.gt. 1) then
                         if( LinnerVolume ) then
-                            do jj = 1, mn
+                            do jj = 1, mn_field
                                 tag  = 1 ! Tags for MPI communications
                                 tag2 = 2
 
@@ -474,7 +475,7 @@ else ! CASE SEMI GLOBAL CONSTRAINT
 
                             ! Non-stellarator symmetric terms
                             if( NOTstellsym ) then
-                                do jj = 1, mn
+                                do jj = 1, mn_field
                                     tag  = 3
                                     tag2 = 4
 
@@ -484,7 +485,7 @@ else ! CASE SEMI GLOBAL CONSTRAINT
                             endif
 
                         else
-                            do jj = 1, mn
+                            do jj = 1, mn_field
                                 tag  = 1
                                 tag2 = 2
 
@@ -493,7 +494,7 @@ else ! CASE SEMI GLOBAL CONSTRAINT
                             enddo
 
                             if( NOTstellsym ) then
-                                do jj = 1, mn
+                                do jj = 1, mn_field
                                     tag  = 3
                                     tag2 = 4
 
@@ -628,7 +629,7 @@ subroutine get_LU_beltrami_matrices(vvol, oBI, NN)
                           Nt, Nz, &
                           dBdX, &
                           dMA, dMB, dMD, dMG, &
-                          mn, mne, Iquad, solution, Lsavedguvij
+                          mn_field, mne, Iquad, solution, Lsavedguvij
 
   use typedefns
 
@@ -653,8 +654,8 @@ subroutine get_LU_beltrami_matrices(vvol, oBI, NN)
 
   Lsavedguvij = .false.
 
-  WCALL( dfp200, ma00aa, (Iquad(vvol), mn, vvol, ll) )
-  WCALL( dfp200, matrix, (vvol, mn, ll) )
+  WCALL( dfp200, ma00aa, (Iquad(vvol), mn_field, vvol, ll) )
+  WCALL( dfp200, matrix, (vvol, mn_field, ll) )
 
   lastcpu = GETTIME
 
@@ -737,7 +738,7 @@ subroutine get_perturbed_solution(vvol, oBI, NN)
   use inputlist, only :   Wmacros, Wdfp200, Lrad, mu, Lconstraint
 
   use allglobal, only :   ncpu, myid, cpus, MPI_COMM_SPEC, &
-                          mn, Iquad, NAdof, &
+                          mn_field, Iquad, NAdof, &
                           dMA, dMB, dMD, dMG, solution, &
                           dtflux, dpflux, dBdX
 
@@ -760,9 +761,9 @@ subroutine get_perturbed_solution(vvol, oBI, NN)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  WCALL( dfp200, intghs, ( Iquad(vvol), mn, vvol, ll, 0 ) )
+  WCALL( dfp200, intghs, ( Iquad(vvol), mn_field, vvol, ll, 0 ) )
 
-  WCALL( dfp200, mtrxhs, ( vvol, mn, ll, dVA, dVD, 0) )
+  WCALL( dfp200, mtrxhs, ( vvol, mn_field, ll, dVA, dVD, 0) )
 
   rhs(0)    = zero
   rhs(1:NN) = -dVA(1:NN)
@@ -827,7 +828,7 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
                             Mvol, Iquad, NGdof, &
                             iRbc, iZbs, iRbs, iZbc, & ! Fourier harmonics of geometry; vector of independent variables, position, is "unpacked" into iRbc,iZbs;
                             NAdof, &
-                            mn, im, in, mns, &
+                            mn_field, im_field, in_field, mns, &
                             Ate, Aze, Ato, Azo, &     ! only required for debugging;
                             Nt, Nz, dBdX, &
                             dtflux, dpflux, sweight, &
@@ -835,7 +836,7 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
                             diotadxup, dItGpdxtp, dmupfdx, &
                             psifactor, &
                             lmns, &
-                            mn, mne, &
+                            mne, &
                             LocalConstraint, &
                             vvolume, dvolume, &
                             IsMyVolume, IsMyVolumeValue, &
@@ -859,7 +860,7 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 #ifdef DEBUG
     INTEGER             :: isymdiff, lr, ml, mode
     INTEGER             :: jj, tdoc, idoc, tdof, jdof, imn, Ndofgl
-    REAL                :: dvol(-1:+1), evolume, imupf_global(1:Mvol,1:2,-2:2), imupf_local(1:2,-2:2), factor, Btemn_debug(1:mn, 0:1, 1:Mvol, -1:2)
+    REAL                :: dvol(-1:+1), evolume, imupf_global(1:Mvol,1:2,-2:2), imupf_local(1:2,-2:2), factor, Btemn_debug(1:mn_field, 0:1, 1:Mvol, -1:2)
     REAL                :: position(0:NGdof), force(0:NGdof)
     REAL                :: Fdof(1:Mvol-1), Xdof(1:Mvol-1)
     REAL, allocatable   :: fjac(:, :), r_deb(:), Fvec(:), dpfluxout(:)
@@ -888,10 +889,10 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 ! Store initial arrays for debug purposes.
 
     if( Lcheck.eq.3 .or. Lcheck.eq.4 ) then ! will check volume derivatives;
-        SALLOCATE( oRbc, (1:mn,0:Mvol), iRbc(1:mn,0:Mvol) )
-        SALLOCATE( oZbs, (1:mn,0:Mvol), iZbs(1:mn,0:Mvol) )
-        SALLOCATE( oRbs, (1:mn,0:Mvol), iRbs(1:mn,0:Mvol) )
-        SALLOCATE( oZbc, (1:mn,0:Mvol), iZbc(1:mn,0:Mvol) )
+        SALLOCATE( oRbc, (1:mn_field,0:Mvol), iRbc(1:mn_field,0:Mvol) )
+        SALLOCATE( oZbs, (1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol) )
+        SALLOCATE( oRbs, (1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol) )
+        SALLOCATE( oZbc, (1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol) )
     endif ! end of if( Lcheck.eq.3 .or. Lcheck.eq.4 ) ;
 
 #endif
@@ -998,7 +999,7 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
                 ! compute d(Itor,Gpol)/dpsip and d(Itor,Gpol)/dpsit
                 ! TODO: this should already be evaluated in mp00ac...
                 ! TODO: THIS COULD BE MOVED OUTSIDE THE LOOPS
-                iflag =  2 ; WCALL( dfp200, curent, ( Mvol, mn, Nt, Nz, iflag, dItGpdxtp(0:1,-1:2,Mvol) ) )
+                iflag =  2 ; WCALL( dfp200, curent, ( Mvol, mn_field, Nt, Nz, iflag, dItGpdxtp(0:1,-1:2,Mvol) ) )
 
                 dBdmpf(Mvol-1, Mvol  ) =  Bt00(Mvol, 0, 1)         !dBdpsit
                 dBdmpf(Mvol  , Mvol-1) =  dItGpdxtp( 1, 2, Mvol)    !dIpdpsip
@@ -1006,7 +1007,7 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 
                 ! compute d(Itor,Gpol)/dx
                 if( vvol.eq.Mvol-1 ) then ! Plasma interface is perturbed
-                    iflag = -1 ; WCALL( dfp200, curent, ( Mvol, mn, Nt, Nz, iflag, dItGpdxtp(0:1,-1:2,Mvol) ) )
+                    iflag = -1 ; WCALL( dfp200, curent, ( Mvol, mn_field, Nt, Nz, iflag, dItGpdxtp(0:1,-1:2,Mvol) ) )
                     dBdx2( Mvol ) = -dItGpdxtp( 1,-1, Mvol)    !-dIpdxj
                 else ! Inner interface is perturbed
                     dBdx2( Mvol ) = zero
@@ -1041,11 +1042,11 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
     else ! LocalConstraint
 
         if( Lconstraint.eq.1 ) then
-            iflag = -1 ; WCALL( dfp200, tr00ab, ( vvol, mn, lmns, Nt, Nz, iflag, diotadxup(0:1,-1:2,vvol) ) ) ! compute d(transform)/dx;
+            iflag = -1 ; WCALL( dfp200, tr00ab, ( vvol, mn_field, lmns, Nt, Nz, iflag, diotadxup(0:1,-1:2,vvol) ) ) ! compute d(transform)/dx;
         endif
 
         if( Lvacuumregion .and. Lconstraint.ge.0 ) then
-            iflag = -1 ; WCALL( dfp200, curent, ( vvol, mn,       Nt, Nz, iflag, dItGpdxtp(0:1,-1:2,vvol) ) ) ! compute d(Itor,Gpol)/dx;
+            iflag = -1 ; WCALL( dfp200, curent, ( vvol, mn_field,       Nt, Nz, iflag, dItGpdxtp(0:1,-1:2,vvol) ) ) ! compute d(Itor,Gpol)/dx;
         endif
 
         dmupfdx(vvol,1,1,idof,innout) = zero        ! Prepare array
@@ -1122,10 +1123,10 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 
             if( isymdiff.eq.0 ) cycle
 
-            iRbc(1:mn,0:Mvol) = oRbc(1:mn,0:Mvol)
-            iZbs(1:mn,0:Mvol) = oZbs(1:mn,0:Mvol)
-            iRbs(1:mn,0:Mvol) = oRbs(1:mn,0:Mvol)
-            iZbc(1:mn,0:Mvol) = oZbc(1:mn,0:Mvol)
+            iRbc(1:mn_field,0:Mvol) = oRbc(1:mn_field,0:Mvol)
+            iZbs(1:mn_field,0:Mvol) = oZbs(1:mn_field,0:Mvol)
+            iRbs(1:mn_field,0:Mvol) = oRbs(1:mn_field,0:Mvol)
+            iZbc(1:mn_field,0:Mvol) = oZbc(1:mn_field,0:Mvol)
 
             if( LocalConstraint ) then
                 if( issym.eq.0 .and. irz.eq.0 ) iRbc(ii,vvol-1+innout) = iRbc(ii,vvol-1+innout) + dRZ * isymdiff ! perturb geometry;
@@ -1243,19 +1244,19 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
         if( LocalConstraint ) then
             !ifail = 0 ; call dlasrt( 'D', NN,  solution(vvol)%mat(1:NN,-1), ifail ) ! sorting screen output; this corrupts;
             !ifail = 0 ; call dlasrt( 'D', NN, isolution(1:NN, 0), ifail ) ! sorting screen output; this corrupts;
-            write(ounit,3003) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, innout, "finite-diff", imupf_local(1:2,0)
-            write(ounit,3003) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, innout, "analytic   ", dmupfdx(vvol,1,1:2,idof,innout) / lfactor
+            write(ounit,3003) cput-cpus, myid, vvol, im_field(ii), in_field(ii), irz, issym, innout, "finite-diff", imupf_local(1:2,0)
+            write(ounit,3003) cput-cpus, myid, vvol, im_field(ii), in_field(ii), irz, issym, innout, "analytic   ", dmupfdx(vvol,1,1:2,idof,innout) / lfactor
         else
             if( Lplasmaregion ) then
-                write(ounit,3004) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, 1, "dmu finite-diff", imupf_global(1:Mvol,1,0)
-                write(ounit,3004) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, 1, "dmu analytic   ", dmupfdx(1:Mvol,vvol,1,idof,1) / lfactor
+                write(ounit,3004) cput-cpus, myid, vvol, im_field(ii), in_field(ii), irz, issym, 1, "dmu finite-diff", imupf_global(1:Mvol,1,0)
+                write(ounit,3004) cput-cpus, myid, vvol, im_field(ii), in_field(ii), irz, issym, 1, "dmu analytic   ", dmupfdx(1:Mvol,vvol,1,idof,1) / lfactor
             else ! vacuum
-                write(ounit,3004) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, 1, "dtflux finite-diff", imupf_global(1:Mvol,1,0)
-                write(ounit,3004) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, 1, "dtflux analytic   ", dmupfdx(1:Mvol,vvol,1,idof,1) / lfactor
+                write(ounit,3004) cput-cpus, myid, vvol, im_field(ii), in_field(ii), irz, issym, 1, "dtflux finite-diff", imupf_global(1:Mvol,1,0)
+                write(ounit,3004) cput-cpus, myid, vvol, im_field(ii), in_field(ii), irz, issym, 1, "dtflux analytic   ", dmupfdx(1:Mvol,vvol,1,idof,1) / lfactor
             endif
 
-            write(ounit,3004) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, 1, "dpflux finite-diff", imupf_global(1:Mvol,2,0)
-            write(ounit,3004) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, 1, "dpflux analytic   ", dmupfdx(1:Mvol,vvol,2,idof,1) / lfactor
+            write(ounit,3004) cput-cpus, myid, vvol, im_field(ii), in_field(ii), irz, issym, 1, "dpflux finite-diff", imupf_global(1:Mvol,2,0)
+            write(ounit,3004) cput-cpus, myid, vvol, im_field(ii), in_field(ii), irz, issym, 1, "dpflux analytic   ", dmupfdx(1:Mvol,vvol,2,idof,1) / lfactor
         endif
 
 3003    format("dfp200 : ",f10.2," : ",:,"myid=",i3," ; vvol=",i2," ; (",i2,",",i3," ) ; irz=",i1," ; issym=",i1," ; innout=",i1," ; ",a18," : dmupf=",8f11.05" ;")
@@ -1265,10 +1266,10 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
         ! Re-evaluate unperturbed solution
         dBdX%L = .true.
 
-        iRbc(1:mn,0:Mvol) = oRbc(1:mn,0:Mvol)
-        iZbs(1:mn,0:Mvol) = oZbs(1:mn,0:Mvol)
-        iRbs(1:mn,0:Mvol) = oRbs(1:mn,0:Mvol)
-        iZbc(1:mn,0:Mvol) = oZbc(1:mn,0:Mvol)
+        iRbc(1:mn_field,0:Mvol) = oRbc(1:mn_field,0:Mvol)
+        iZbs(1:mn_field,0:Mvol) = oZbs(1:mn_field,0:Mvol)
+        iRbs(1:mn_field,0:Mvol) = oRbs(1:mn_field,0:Mvol)
+        iZbc(1:mn_field,0:Mvol) = oZbc(1:mn_field,0:Mvol)
 
 
     endif ! end of if( Lcheck.eq.4 ) ;
@@ -1286,7 +1287,7 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
         dvol(0) = dvolume
 
         cput = GETTIME
-        write(ounit,1001) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, innout, "analytic", dvolume
+        write(ounit,1001) cput-cpus, myid, vvol, im_field(ii), in_field(ii), irz, issym, innout, "analytic", dvolume
 
         1001     format("dfp200 : ",f10.2," : myid=",i3," ; vvol=",i3," ; (",i3," ,",i3,") ; irz=",i2," ; issym=",i2," ; innout=",i2,&
         " : ",a8," ; dvolume=",f23.15," ;",:," error=",es13.5," ;")
@@ -1313,14 +1314,14 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
         evolume = abs( ( dvol(+1)-dvol(-1) ) / dRZ - dvol(0) ) ! error in finite-difference calculation and analytic derivative;
 
         cput = GETTIME
-        write(ounit,1001) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, innout, "finite-d", ( dvol(+1)-dvol(-1) ) / dRZ, evolume
+        write(ounit,1001) cput-cpus, myid, vvol, im_field(ii), in_field(ii), irz, issym, innout, "finite-d", ( dvol(+1)-dvol(-1) ) / dRZ, evolume
 
         FATAL( dfp200, evolume.gt.dRZ, unacceptable error in volume derivative )
 
-        iRbc(1:mn,0:Mvol) = oRbc(1:mn,0:Mvol)
-        iZbs(1:mn,0:Mvol) = oZbs(1:mn,0:Mvol)
-        iRbs(1:mn,0:Mvol) = oRbs(1:mn,0:Mvol)
-        iZbc(1:mn,0:Mvol) = oZbc(1:mn,0:Mvol)
+        iRbc(1:mn_field,0:Mvol) = oRbc(1:mn_field,0:Mvol)
+        iZbs(1:mn_field,0:Mvol) = oZbs(1:mn_field,0:Mvol)
+        iRbs(1:mn_field,0:Mvol) = oRbs(1:mn_field,0:Mvol)
+        iZbc(1:mn_field,0:Mvol) = oZbc(1:mn_field,0:Mvol)
 
         dBdX%L = .true.
 
@@ -1397,7 +1398,8 @@ subroutine evaluate_dBB(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, length,
                         Mvol, dpflux, &
                         iRbc, iZbs, iRbs, iZbc, & ! Fourier harmonics of geometry; vector of independent variables, position, is "unpacked" into iRbc,iZbs;
                         NOTstellsym, &
-                        mn, im, in, mns, &
+                        mn_field, im_field, in_field, mns, &
+                        mn_force, im_force, in_force, mns, &
                         ijreal, &
                         efmn, ofmn, cfmn, sfmn, &
                         evmn, odmn, comn, simn, &
@@ -1411,7 +1413,7 @@ subroutine evaluate_dBB(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, length,
                         dFFdRZ, dBBdmp, &
                         BBweight, & ! exponential weight on force-imbalance harmonics;
                         psifactor, &
-                        mn, Iquad, &
+                        Iquad, &
                         dRodR, dRodZ, dZodR, dZodZ, dBdX, &
                         xoffset
 
@@ -1451,11 +1453,11 @@ do iocons = 0, 1
         enddo
 
         call tfft(    Nt, Nz, dBB(1:Ntz,1), dBB(1:Ntz,2), & ! derivatives of B^2 wrt mu and dpflux;
-                    mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), ifail )
+                    mn_force, im_force(1:mn_force), in_force(1:mn_force), efmn(1:mn_force), ofmn(1:mn_force), cfmn(1:mn_force), sfmn(1:mn_force), ifail )
         idoc = 0
-        dBBdmp(idoc+1:idoc+mn  ,lvol,iocons,1) = efmn(1:mn) * BBweight(1:mn) ! pressure;
-        dBBdmp(idoc+1:idoc+mn  ,lvol,iocons,2) = cfmn(1:mn) * BBweight(1:mn) ! pressure;
-        idoc = idoc + mn   ! even;
+        dBBdmp(idoc+1:idoc+mn_force  ,lvol,iocons,1) = efmn(1:mn_force) * BBweight(1:mn_force) ! pressure;
+        dBBdmp(idoc+1:idoc+mn_force  ,lvol,iocons,2) = cfmn(1:mn_force) * BBweight(1:mn_force) ! pressure;
+        idoc = idoc + mn_force   ! even;
 
         ! Add spectral constraints; spectral constraints do not depend on mu or dpflux; thus add nothing
         ! Commented - kept for understanding
@@ -1464,9 +1466,9 @@ do iocons = 0, 1
         !endif ! end of if( Igeometry.ge.3) ;
 
         if( NOTstellsym ) then
-            dBBdmp(idoc+1:idoc+mn-1,lvol,iocons,1) = ofmn(2:mn) * BBweight(2:mn) ! pressure;
-            dBBdmp(idoc+1:idoc+mn-1,lvol,iocons,2) = sfmn(2:mn) * BBweight(2:mn) ! pressure;
-            idoc = idoc + mn-1 ! oddd;
+            dBBdmp(idoc+1:idoc+mn_force-1,lvol,iocons,1) = ofmn(2:mn_force) * BBweight(2:mn_force) ! pressure;
+            dBBdmp(idoc+1:idoc+mn_force-1,lvol,iocons,2) = sfmn(2:mn_force) * BBweight(2:mn_force) ! pressure;
+            idoc = idoc + mn_force-1 ! oddd;
 
             ! Add spectral constraints; spectral constraints do not depend on mu or dpflux; thus add nothing
             ! Commented - kept for understanding
@@ -1520,21 +1522,21 @@ do iocons = 0, 1
 
             if( issym.eq.0 ) then ! take derivatives wrt Rbc and Zbs;
                 if( irz.eq.0 ) then ! take derivative wrt Rbc;
-                    dII(1:Ntz) = - im(ii) * sini(1:Ntz,ii) * ( XX(1:Ntz) - MMl * iRij(1:Ntz,lvol) ) &
+                    dII(1:Ntz) = - im_field(ii) * sini(1:Ntz,ii) * ( XX(1:Ntz) - MMl * iRij(1:Ntz,lvol) ) &
                     - two * ( mmpp(ii) - MMl ) * iRbc(ii,lvol) * ( Rij(1:Ntz,2,0) * iRij(1:Ntz,lvol) + Zij(1:Ntz,2,0) * iZij(1:Ntz,lvol) ) / DDl &
                     + Rij(1:Ntz,2,0) * ( mmpp(ii) - MMl ) * cosi(1:Ntz,ii)
                 else ! take derivative wrt Zbs;
-                    dII(1:Ntz) = + im(ii) * cosi(1:Ntz,ii) * ( YY(1:Ntz) - MMl * iZij(1:Ntz,lvol) ) &
+                    dII(1:Ntz) = + im_field(ii) * cosi(1:Ntz,ii) * ( YY(1:Ntz) - MMl * iZij(1:Ntz,lvol) ) &
                     - two * ( mmpp(ii) - MMl ) * iZbs(ii,lvol) * ( Rij(1:Ntz,2,0) * iRij(1:Ntz,lvol) + Zij(1:Ntz,2,0) * iZij(1:Ntz,lvol) ) / DDl &
                     + Zij(1:Ntz,2,0) * ( mmpp(ii) - MMl ) * sini(1:Ntz,ii)
                 endif ! end of if( irz.eq.0 ) ;
             else                  ! take derivatives wrt Rbs and Zbc;
                 if( irz.eq.0 ) then
-                    dII(1:Ntz) = + im(ii) * cosi(1:Ntz,ii) * ( XX(1:Ntz) - MMl * iRij(1:Ntz,lvol) ) &
+                    dII(1:Ntz) = + im_field(ii) * cosi(1:Ntz,ii) * ( XX(1:Ntz) - MMl * iRij(1:Ntz,lvol) ) &
                     - two * ( mmpp(ii) - MMl ) * iRbs(ii,lvol) * ( Rij(1:Ntz,2,0) * iRij(1:Ntz,lvol) + Zij(1:Ntz,2,0) * iZij(1:Ntz,lvol) ) / DDl &
                     + Rij(1:Ntz,2,0) * ( mmpp(ii) - MMl ) * sini(1:Ntz,ii)
                 else
-                    dII(1:Ntz) = - im(ii) * sini(1:Ntz,ii) * ( YY(1:Ntz) - MMl * iZij(1:Ntz,lvol) ) &
+                    dII(1:Ntz) = - im_field(ii) * sini(1:Ntz,ii) * ( YY(1:Ntz) - MMl * iZij(1:Ntz,lvol) ) &
                     - two * ( mmpp(ii) - MMl ) * iZbc(ii,lvol) * ( Rij(1:Ntz,2,0) * iRij(1:Ntz,lvol) + Zij(1:Ntz,2,0) * iZij(1:Ntz,lvol) ) / DDl &
                     + Zij(1:Ntz,2,0) * ( mmpp(ii) - MMl ) * cosi(1:Ntz,ii)
                 endif !matches ( irz.eq.0 )
@@ -1553,15 +1555,15 @@ do iocons = 0, 1
             if( innout.eq.0 ) then ! derivative wrt inner boundary coefficient;
                 !write(ounit,'("dfp200 : " 10x " : A ; lvol="i3" ; iocons="i2" ; innout="i2" ;")') lvol, iocons, innout
                 if( issym.eq.0 ) then ! take derivatives wrt Rbc and Zbs;
-                    if( irz.eq.0 ) then ; dLL(1:Ntz) = + ( - cosi(1:Ntz,ii) * tRij(1:Ntz,lvol-1) - dRij(1:Ntz,lvol) * im(ii) * sini(1:Ntz,ii) ) / length(1:Ntz) &
+                    if( irz.eq.0 ) then ; dLL(1:Ntz) = + ( - cosi(1:Ntz,ii) * tRij(1:Ntz,lvol-1) - dRij(1:Ntz,lvol) * im_field(ii) * sini(1:Ntz,ii) ) / length(1:Ntz) &
                                                                         + constraint(1:Ntz) * dRij(1:Ntz,lvol) * cosi(1:Ntz,ii) / length(1:Ntz) / length(1:Ntz)
-                    else                ; dLL(1:Ntz) = + ( - sini(1:Ntz,ii) * tZij(1:Ntz,lvol-1) + dZij(1:Ntz,lvol) * im(ii) * cosi(1:Ntz,ii) ) / length(1:Ntz) &
+                    else                ; dLL(1:Ntz) = + ( - sini(1:Ntz,ii) * tZij(1:Ntz,lvol-1) + dZij(1:Ntz,lvol) * im_field(ii) * cosi(1:Ntz,ii) ) / length(1:Ntz) &
                                                                         + constraint(1:Ntz) * dZij(1:Ntz,lvol) * sini(1:Ntz,ii) / length(1:Ntz) / length(1:Ntz)
                     endif
                 else ! if issym.eq.1 ; take derivatives wrt Rbs and Zbc;
-                    if( irz.eq.0 ) then ; dLL(1:Ntz) = + ( - sini(1:Ntz,ii) * tRij(1:Ntz,lvol-1) + dRij(1:Ntz,lvol) * im(ii) * cosi(1:Ntz,ii) ) / length(1:Ntz) &
+                    if( irz.eq.0 ) then ; dLL(1:Ntz) = + ( - sini(1:Ntz,ii) * tRij(1:Ntz,lvol-1) + dRij(1:Ntz,lvol) * im_field(ii) * cosi(1:Ntz,ii) ) / length(1:Ntz) &
                                                                         + constraint(1:Ntz) * dRij(1:Ntz,lvol) * sini(1:Ntz,ii) / length(1:Ntz) / length(1:Ntz)
-                    else                ; dLL(1:Ntz) = + ( - cosi(1:Ntz,ii) * tZij(1:Ntz,lvol-1) - dZij(1:Ntz,lvol) * im(ii) * sini(1:Ntz,ii) ) / length(1:Ntz) &
+                    else                ; dLL(1:Ntz) = + ( - cosi(1:Ntz,ii) * tZij(1:Ntz,lvol-1) - dZij(1:Ntz,lvol) * im_field(ii) * sini(1:Ntz,ii) ) / length(1:Ntz) &
                                                                         + constraint(1:Ntz) * dZij(1:Ntz,lvol) * cosi(1:Ntz,ii) / length(1:Ntz) / length(1:Ntz)
                     endif
                 endif
@@ -1615,13 +1617,13 @@ do iocons = 0, 1
                     !write(ounit,'("dfp200 : " 10x " : dZodZ(1: ,1,"i2")=",99es11.3)') ii, dZodZ(1:20,1,ii)
                     if( issym.eq.0 ) then ! take derivatives wrt Rbc and Zbs;
                         if( irz.eq.0 ) then ; dLL(1:Ntz) = ( &   ! d/dRbc ;
-                                                            + ( cosi(1:Ntz,ii) - dRodR(1:Ntz,0,ii) ) * tRij(1:Ntz,lvol) - dRij(1:Ntz,lvol) * im(ii) * sini(1:Ntz,ii) &
+                                                            + ( cosi(1:Ntz,ii) - dRodR(1:Ntz,0,ii) ) * tRij(1:Ntz,lvol) - dRij(1:Ntz,lvol) * im_field(ii) * sini(1:Ntz,ii) &
                                                             + (                - dZodR(1:Ntz,0,ii) ) * tZij(1:Ntz,lvol) &
                                                             - constraint(1:Ntz) &
                                                             * ( dRij(1:Ntz,lvol) * ( cosi(1:Ntz,ii) - dRodR(1:Ntz,0,ii) )   &
                                                             + dZij(1:Ntz,lvol) * (                - dZodR(1:Ntz,0,ii) ) ) / length(1:Ntz) ) / length(1:Ntz)
                         else                ; dLL(1:Ntz) = ( &   ! d/dZbs ;
-                                                            + (                - dRodZ(1:Ntz,1,ii) ) * tRij(1:Ntz,lvol) + dZij(1:Ntz,lvol) * im(ii) * cosi(1:Ntz,ii) &
+                                                            + (                - dRodZ(1:Ntz,1,ii) ) * tRij(1:Ntz,lvol) + dZij(1:Ntz,lvol) * im_field(ii) * cosi(1:Ntz,ii) &
                                                             + ( sini(1:Ntz,ii) - dZodZ(1:Ntz,1,ii) ) * tZij(1:Ntz,lvol) &
                                                             - constraint(1:Ntz) &
                                                             * ( dRij(1:Ntz,lvol) * (                - dRodZ(1:Ntz,1,ii) )   &
@@ -1629,13 +1631,13 @@ do iocons = 0, 1
                         endif ! end of if( irz.eq.0 ) ;
                     else
                         if( irz.eq.0 ) then ; dLL(1:Ntz) =    ( &   ! d/dRbs ;
-                                                            + ( sini(1:Ntz,ii) - dRodR(1:Ntz,1,ii) ) * tRij(1:Ntz,lvol) + dRij(1:Ntz,lvol) * im(ii) * cosi(1:Ntz,ii)     &
+                                                            + ( sini(1:Ntz,ii) - dRodR(1:Ntz,1,ii) ) * tRij(1:Ntz,lvol) + dRij(1:Ntz,lvol) * im_field(ii) * cosi(1:Ntz,ii)     &
                                                             + (                - dZodR(1:Ntz,1,ii) ) * tZij(1:Ntz,lvol)                                                 &
                                                             - constraint(1:Ntz)                                                                                         &
                                                             * (   dRij(1:Ntz,lvol) * ( sini(1:Ntz,ii)   - dRodR(1:Ntz,1,ii) )                                              &
                                                                 + dZij(1:Ntz,lvol) * (                  - dZodR(1:Ntz,1,ii) ) ) / length(1:Ntz) ) / length(1:Ntz)
                         else                ; dLL(1:Ntz) =     ( &   ! d/dZbs ;
-                                                            + (                - dRodZ(1:Ntz,0,ii) ) * tRij(1:Ntz,lvol) - dZij(1:Ntz,lvol) * im(ii) * sini(1:Ntz,ii) &
+                                                            + (                - dRodZ(1:Ntz,0,ii) ) * tRij(1:Ntz,lvol) - dZij(1:Ntz,lvol) * im_field(ii) * sini(1:Ntz,ii) &
                                                             + ( cosi(1:Ntz,ii) - dZodZ(1:Ntz,0,ii) ) * tZij(1:Ntz,lvol) &
                                                             - constraint(1:Ntz) &
                                                             * ( dRij(1:Ntz,lvol) * (                - dRodZ(1:Ntz,0,ii) )   &
@@ -1644,15 +1646,15 @@ do iocons = 0, 1
                     endif
                 else
                     if( issym.eq.0 ) then ! take derivatives wrt Rbc and Zbs;
-                        if( irz.eq.0 ) then ; dLL(1:Ntz) = + ( + cosi(1:Ntz,ii) * tRij(1:Ntz,lvol  ) - dRij(1:Ntz,lvol) * im(ii) * sini(1:Ntz,ii) ) / length(1:Ntz) &
+                        if( irz.eq.0 ) then ; dLL(1:Ntz) = + ( + cosi(1:Ntz,ii) * tRij(1:Ntz,lvol  ) - dRij(1:Ntz,lvol) * im_field(ii) * sini(1:Ntz,ii) ) / length(1:Ntz) &
                                                                             - constraint(1:Ntz) * dRij(1:Ntz,lvol) * cosi(1:Ntz,ii) / length(1:Ntz) / length(1:Ntz)
-                        else                ; dLL(1:Ntz) = + ( + sini(1:Ntz,ii) * tZij(1:Ntz,lvol  ) + dZij(1:Ntz,lvol) * im(ii) * cosi(1:Ntz,ii) ) / length(1:Ntz) &
+                        else                ; dLL(1:Ntz) = + ( + sini(1:Ntz,ii) * tZij(1:Ntz,lvol  ) + dZij(1:Ntz,lvol) * im_field(ii) * cosi(1:Ntz,ii) ) / length(1:Ntz) &
                                                                             - constraint(1:Ntz) * dZij(1:Ntz,lvol) * sini(1:Ntz,ii) / length(1:Ntz) / length(1:Ntz)
                         endif
                     else                  ! take derivatives wrt Rbs and Zbc;
-                        if( irz.eq.0 ) then ; dLL(1:Ntz) = + ( + sini(1:Ntz,ii) * tRij(1:Ntz,lvol  ) + dRij(1:Ntz,lvol) * im(ii) * cosi(1:Ntz,ii) ) / length(1:Ntz) &
+                        if( irz.eq.0 ) then ; dLL(1:Ntz) = + ( + sini(1:Ntz,ii) * tRij(1:Ntz,lvol  ) + dRij(1:Ntz,lvol) * im_field(ii) * cosi(1:Ntz,ii) ) / length(1:Ntz) &
                                                                             - constraint(1:Ntz) * dRij(1:Ntz,lvol) * sini(1:Ntz,ii) / length(1:Ntz) / length(1:Ntz)
-                        else                ; dLL(1:Ntz) = + ( + cosi(1:Ntz,ii) * tZij(1:Ntz,lvol  ) - dZij(1:Ntz,lvol) * im(ii) * sini(1:Ntz,ii) ) / length(1:Ntz) &
+                        else                ; dLL(1:Ntz) = + ( + cosi(1:Ntz,ii) * tZij(1:Ntz,lvol  ) - dZij(1:Ntz,lvol) * im_field(ii) * sini(1:Ntz,ii) ) / length(1:Ntz) &
                                                                             - constraint(1:Ntz) * dZij(1:Ntz,lvol) * cosi(1:Ntz,ii) / length(1:Ntz) / length(1:Ntz)
                         endif ! end of if( irz.eq.0 ) ;
                     endif ! end of if( issym.eq.0 ) ;
@@ -1665,11 +1667,13 @@ do iocons = 0, 1
 
     ! Map to Fourier space
     call tfft(  Nt, Nz, ijreal(1:Ntz), dII(1:Ntz), & ! recall that ijreal contains derivatives of pressure term;
-                mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), ifail )
+                mn_force, im_force(1:mn_force), in_force(1:mn_force), &
+                efmn(1:mn_force), ofmn(1:mn_force), cfmn(1:mn_force), sfmn(1:mn_force), ifail )
 
 
     call tfft(  Nt, Nz, dPP(1:Ntz)   , dLL(1:Ntz), &
-                mn, im(1:mn), in(1:mn), evmn(1:mn), odmn(1:mn), comn(1:mn), simn(1:mn), ifail ) ! evmn and odmn are available as workspace;
+                mn_force, im_force(1:mn_force), in_force(1:mn_force), &
+                evmn(1:mn_force), odmn(1:mn_force), comn(1:mn_force), simn(1:mn_force), ifail ) ! evmn and odmn are available as workspace;
 
 
     FATAL( dfp200, lvol-1+innout.gt.Mvol, psifactor needs attention )
@@ -1678,31 +1682,31 @@ do iocons = 0, 1
     idoc = 0
 
     ! Plasma and magnetic pressure;
-    ;   dFFdRZ(idoc+1:idoc+mn    ,iocons,idof,innout,lvol) = + efmn(1:mn) * psifactor(ii,lvol-1+innout) * BBweight(1:mn)
+    ;   dFFdRZ(idoc+1:idoc+mn_force    ,iocons,idof,innout,lvol) = + efmn(1:mn_force) * psifactor(ii,lvol-1+innout) * BBweight(1:mn_force)
 
-    idoc = idoc + mn   ! even;
+    idoc = idoc + mn_force   ! even;
     if( Igeometry.ge.3 ) then ! Add spectral constraints;
-        dFFdRZ(idoc+1:idoc+mn-1  ,iocons,idof,innout,lvol) = - sfmn(2:mn) * psifactor(ii,lvol-1+innout) * epsilon       & ! spectral condensation;
-                                                             - simn(2:mn) * psifactor(ii,lvol-1+innout) * sweight(lvol)   ! poloidal length constraint;
+        dFFdRZ(idoc+1:idoc+mn_force-1  ,iocons,idof,innout,lvol) = - sfmn(2:mn_force) * psifactor(ii,lvol-1+innout) * epsilon       & ! spectral condensation;
+                                                                   - simn(2:mn_force) * psifactor(ii,lvol-1+innout) * sweight(lvol)   ! poloidal length constraint;
     ! if( Ntor.gt.0 ) then
     !  dFFdRZ(idoc+1:idoc+Ntor  ,iocons,idof,innout,lvol) = + odmn(2:Ntor+1) * psifactor(ii,lvol-1+innout) * apsilon
     ! endif
-      idoc = idoc + mn-1 ! odd;
+      idoc = idoc + mn_force-1 ! odd;
     endif ! end of if( Igeometry.ge.3) ;
 
     if( NOTstellsym ) then ! Construct non-stellarator symmetric terms
 
     ! Plasma and magnetic pressure;
-    ;       dFFdRZ(idoc+1:idoc+mn-1  ,iocons,idof,innout,lvol) = + ofmn(2:mn) * psifactor(ii,lvol-1+innout) * BBweight(2:mn)
+    ;       dFFdRZ(idoc+1:idoc+mn_force-1  ,iocons,idof,innout,lvol) = + ofmn(2:mn_force) * psifactor(ii,lvol-1+innout) * BBweight(2:mn_force)
 
-        idoc = idoc + mn-1 ! odd;
+        idoc = idoc + mn_force-1 ! odd;
         if( Igeometry.ge.3 ) then ! Add spectral constraints;
-            dFFdRZ(idoc+1:idoc+mn    ,iocons,idof,innout,lvol) = - cfmn(1:mn) * psifactor(ii,lvol-1+innout) * epsilon       & ! spectral condensation;
-                                                                 - comn(1:mn) * psifactor(ii,lvol-1+innout) * sweight(lvol)   ! poloidal length constraint;
+            dFFdRZ(idoc+1:idoc+mn_force    ,iocons,idof,innout,lvol) = - cfmn(1:mn_force) * psifactor(ii,lvol-1+innout) * epsilon       & ! spectral condensation;
+                                                                 - comn(1:mn_force) * psifactor(ii,lvol-1+innout) * sweight(lvol)   ! poloidal length constraint;
             !if( Ntor.ge.0 ) then
                 ! dFFdRZ(idoc+1:idoc+Ntor+1,iocons,idof,innout,lvol) = + evmn(1:Ntor+1) * psifactor(ii,lvol-1+innout) * apsilon ! poloidal origin      ;
             !endif
-            idoc = idoc + mn   ! even;
+            idoc = idoc + mn_force   ! even;
         endif ! end of if( Igeometry.ge.3) ;
 
     endif ! end of if( NOTstellsym) ;

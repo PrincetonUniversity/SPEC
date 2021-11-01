@@ -291,7 +291,7 @@ subroutine spec
   use allglobal, only : wrtend, ncpu, myid, cpus, ext, &
                         Mvol, &
                         YESstellsym, NOTstellsym, &
-                        mn, im, in, &
+                        mn_field, im_field, in_field, &
                         Ntz, &
                         LGdof, NGdof, &
                         iRbc, iZbs, iRbs, iZbc, &
@@ -374,8 +374,8 @@ subroutine spec
 
    pack = 'P'
    LComputeAxis = .true.
-   WCALL( xspech, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), &
-                            iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, .false., LComputeAxis ) )
+   WCALL( xspech, packxi, ( NGdof, position(0:NGdof), Mvol, mn_field, iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), &
+                            iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), pack, .false., LComputeAxis ) )
 
   endif
 
@@ -444,8 +444,8 @@ subroutine spec
 
    pack = 'U' ! unpack geometrical degrees of freedom; 13 Sep 13;
    LComputeAxis = .true.
-   WCALL( xspech, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), &
-                            iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, .false., LComputeAxis ) )
+   WCALL( xspech, packxi, ( NGdof, position(0:NGdof), Mvol, mn_field, iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), &
+                            iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), pack, .false., LComputeAxis ) )
 
   endif
 
@@ -530,7 +530,7 @@ subroutine spec
     write(ounit,'("xspech : ",f10.2," : myid=",i3," ; calling hesian ; see .ext.hessian.myid ;")') cput-cpus, myid
    endif
 
-   WCALL( xspech, hesian, ( NGdof, position(0:NGdof), Mvol, mn, LGdof ) )
+   WCALL( xspech, hesian, ( NGdof, position(0:NGdof), Mvol, mn_field, LGdof ) )
 
   endif ! end of if( Lcheck.eq.5 ) ; 01 Jul 14;
 
@@ -604,17 +604,17 @@ subroutine spec
 
    lastcpu = GETTIME
 
-   WCALL( xspech, bnorml, ( mn, Ntz, efmn(1:mn), ofmn(1:mn) ) ) ! compute normal field etc. on computational boundary;
+   WCALL( xspech, bnorml, ( mn_field, Ntz, efmn(1:mn_field), ofmn(1:mn_field) ) ) ! compute normal field etc. on computational boundary;
 
    !FATAL( xspech, mn-1.le.0, divide by zero )
 
-   if(mn.eq.1) then
+   if(mn_field.eq.1) then
      if( YESstellsym ) bnserr = 0.0 !TODO: NOT SURE, this should test if bns is actually 0
-     if( NOTstellsym ) bnserr = sum( abs( iBnc(1:mn) - efmn(1:mn) ) ) / (mn  )
+     if( NOTstellsym ) bnserr = sum( abs( iBnc(1:mn_field) - efmn(1:mn_field) ) ) / (mn_field  )
    else
-     if( YESstellsym ) bnserr = sum( abs( iBns(2:mn) - ofmn(2:mn) ) ) / (mn-1)
-     if( NOTstellsym ) bnserr = sum( abs( iBns(2:mn) - ofmn(2:mn) ) ) / (mn-1) &
-                              + sum( abs( iBnc(1:mn) - efmn(1:mn) ) ) / (mn  )
+     if( YESstellsym ) bnserr = sum( abs( iBns(2:mn_field) - ofmn(2:mn_field) ) ) / (mn_field-1)
+     if( NOTstellsym ) bnserr = sum( abs( iBns(2:mn_field) - ofmn(2:mn_field) ) ) / (mn_field-1) &
+                              + sum( abs( iBnc(1:mn_field) - efmn(1:mn_field) ) ) / (mn_field  )
    endif
 
 
@@ -631,8 +631,8 @@ subroutine spec
 
      if( myid.eq.0 ) then ! only myid = 0 reads in the vacuum field; 04 Jan 17;
 
-      ;                    iBns(2:mn) = iVns(2:mn) - iBns(2:mn) ! temporary storage of the total field; 07 Dec 16;
-      if( NOTstellsym)     iBnc(1:mn) = iVnc(1:mn) - iBnc(1:mn)
+      ;                    iBns(2:mn_field) = iVns(2:mn_field) - iBns(2:mn_field) ! temporary storage of the total field; 07 Dec 16;
+      if( NOTstellsym)     iBnc(1:mn_field) = iVnc(1:mn_field) - iBnc(1:mn_field)
 
       open(lunit, file = trim(ext)//".Vn", status="old" )
       read(lunit,*) lmn, lNfp
@@ -640,8 +640,8 @@ subroutine spec
       read(lunit,*) lmn, lNfp, lItor, lGpol
       do imn = 1, lmn
        read(lunit,*) lim, lin, lgBc, lgBs
-       do ii = 1, mn
-        if( lim.eq.im(ii) .and. lin*lNfp.eq.in(ii) ) then
+       do ii = 1, mn_field
+        if( lim.eq.im_field(ii) .and. lin*lNfp.eq.in_field(ii) ) then
          ;                 iVns(ii) = lgBs
          if( NOTstellsym ) iVnc(ii) = lgBc
         endif
@@ -651,31 +651,31 @@ subroutine spec
 
      endif ! end of if( myid.eq.0 ) ; 07 Dec 16;
 
-     ;RlBCAST( iVns(1:mn), mn, 0 ) ! only required for ii > 1 ;
+     ;RlBCAST( iVns(1:mn_field), mn_field, 0 ) ! only required for ii > 1 ;
      if( NOTstellsym ) then
-      RlBCAST( iVnc(1:mn), mn, 0 )
+      RlBCAST( iVnc(1:mn_field), mn_field, 0 )
      endif
 
-     ;                    iBns(2:mn) = - iBns(2:mn) - iVns(2:mn) ! updated vacuum field ; 24 Nov 16;
-     if( NOTstellsym)     iBnc(1:mn) = - iBnc(1:mn) - iVnc(1:mn)
+     ;                    iBns(2:mn_field) = - iBns(2:mn_field) - iVns(2:mn_field) ! updated vacuum field ; 24 Nov 16;
+     if( NOTstellsym)     iBnc(1:mn_field) = - iBnc(1:mn_field) - iVnc(1:mn_field)
 
      if( myid.eq.0 ) then
-     write(ounit,'("xspech : " 10x " : oBns=[",999(es11.03,","))') iBns(1:mn) ! 17 Jan 17;
-     write(ounit,'("xspech : " 10x " : nBns=[",999(es11.03,","))') ofmn(1:mn) ! 17 Jan 17;
+     write(ounit,'("xspech : " 10x " : oBns=[",999(es11.03,","))') iBns(1:mn_field) ! 17 Jan 17;
+     write(ounit,'("xspech : " 10x " : nBns=[",999(es11.03,","))') ofmn(1:mn_field) ! 17 Jan 17;
      if( NOTstellsym ) then
-     write(ounit,'("xspech : " 10x " : oBnc=[",999(es11.03,","))') iBnc(1:mn) ! 17 Jan 17;
-     write(ounit,'("xspech : " 10x " : nBnc=[",999(es11.03,","))') efmn(1:mn) ! 17 Jan 17;
+     write(ounit,'("xspech : " 10x " : oBnc=[",999(es11.03,","))') iBnc(1:mn_field) ! 17 Jan 17;
+     write(ounit,'("xspech : " 10x " : nBnc=[",999(es11.03,","))') efmn(1:mn_field) ! 17 Jan 17;
      endif
      endif
 
     case( -1  ) ! mfreeits = -1 ; shall set vacuum normal field at computational boundary ; 24 Nov 16;
 
-     ;                    iVns(2:mn) = iVns(2:mn) - iBns(2:mn)                                 ! total   normal field              ; 24 Nov 16;
-     if( NOTstellsym)     iVnc(1:mn) = iVnc(1:mn) - iBnc(1:mn)
-     ;                    iBns(2:mn) =                                              ofmn(2:mn) ! updated normal field due to plasma; 24 Nov 16;
-     if( NOTstellsym)     iBnc(1:mn) =                                              efmn(1:mn)
-     ;                    iVns(2:mn) = iVns(2:mn) + iBns(2:mn)                                 ! updated vacuum field              ; 24 Nov 16;
-     if( NOTstellsym)     iVnc(1:mn) = iVnc(1:mn) + iBnc(1:mn)
+     ;                    iVns(2:mn_field) = iVns(2:mn_field) - iBns(2:mn_field)                                 ! total   normal field              ; 24 Nov 16;
+     if( NOTstellsym)     iVnc(1:mn_field) = iVnc(1:mn_field) - iBnc(1:mn_field)
+     ;                    iBns(2:mn_field) =                                              ofmn(2:mn_field) ! updated normal field due to plasma; 24 Nov 16;
+     if( NOTstellsym)     iBnc(1:mn_field) =                                              efmn(1:mn_field)
+     ;                    iVns(2:mn_field) = iVns(2:mn_field) + iBns(2:mn_field)                                 ! updated vacuum field              ; 24 Nov 16;
+     if( NOTstellsym)     iVnc(1:mn_field) = iVnc(1:mn_field) + iBnc(1:mn_field)
 
     case(  0  ) ! mfreeits =  0 ; 09 Mar 17;
 
@@ -687,16 +687,16 @@ subroutine spec
 
      case( 0 ) ! Lzerovac = 0 ; 09 Mar 17;
 
-      ;                iBns(2:mn) = gBnbld * iBns(2:mn) + ( one - gBnbld ) * ofmn(2:mn)
-      if( NOTstellsym) iBnc(1:mn) = gBnbld * iBnc(1:mn) + ( one - gBnbld ) * efmn(1:mn)
+      ;                iBns(2:mn_field) = gBnbld * iBns(2:mn_field) + ( one - gBnbld ) * ofmn(2:mn_field)
+      if( NOTstellsym) iBnc(1:mn_field) = gBnbld * iBnc(1:mn_field) + ( one - gBnbld ) * efmn(1:mn_field)
 
      case( 1 ) ! Lzerovac = 1 ; 09 Mar 17;
 
-      ;                iBns(2:mn) =                                          ofmn(2:mn) ! no blend; 27 Feb 17;
-      if( NOTstellsym) iBnc(1:mn) =                                          efmn(1:mn)
+      ;                iBns(2:mn_field) =                                          ofmn(2:mn_field) ! no blend; 27 Feb 17;
+      if( NOTstellsym) iBnc(1:mn_field) =                                          efmn(1:mn_field)
 
-      ;                iVns(2:mn) =        + iBns(2:mn) ! update vacuum field to cancel plasma field on computational boundary; 27 Feb 17;
-      if( NOTstellsym) iVnc(1:mn) =        + iBnc(1:mn)
+      ;                iVns(2:mn_field) =        + iBns(2:mn_field) ! update vacuum field to cancel plasma field on computational boundary; 27 Feb 17;
+      if( NOTstellsym) iVnc(1:mn_field) =        + iBnc(1:mn_field)
 
      case default ! Lzerovac; 09 Mar 17;
 
@@ -765,7 +765,7 @@ subroutine final_diagnostics
                        Isurf, Ivolume, mu, Wmacros
   use fileunits, only: ounit
   use constants, only: zero
-  use allglobal, only: pi2, myid, ncpu, MPI_COMM_SPEC, cpus, Mvol, Ntz, mn, &
+  use allglobal, only: pi2, myid, ncpu, MPI_COMM_SPEC, cpus, Mvol, Ntz, mn_field, &
                        beltramierror, Lcoordinatesingularity, &
                        Lplasmaregion, Lvacuumregion, &
                        Btemn, Bzemn, Btomn, Bzomn, &
@@ -838,10 +838,10 @@ subroutine final_diagnostics
       call lbpol(vvol, Bt00(1:Mvol, 0:1, -1:2), 0, iocons)
 
       ! Save covariant magnetic field at interface for output - computed in lbpol
-      Btemn(1:mn, iocons, vvol) = efmn(1:mn)
-      Btomn(1:mn, iocons, vvol) = ofmn(1:mn)
-      Bzemn(1:mn, iocons, vvol) = cfmn(1:mn)
-      Bzomn(1:mn, iocons, vvol) = sfmn(1:mn)
+      Btemn(1:mn_field, iocons, vvol) = efmn(1:mn_field)
+      Btomn(1:mn_field, iocons, vvol) = ofmn(1:mn_field)
+      Bzemn(1:mn_field, iocons, vvol) = cfmn(1:mn_field)
+      Bzomn(1:mn_field, iocons, vvol) = sfmn(1:mn_field)
     enddo
   enddo
 
@@ -888,7 +888,7 @@ subroutine final_diagnostics
     !;WCALL( xspech, sc00aa, ( vvol, Ntz                  ) ) ! compute covariant field (singular currents);
 
     if( Lcheck.eq.1 ) then
-     call jo00aa( vvol, Ntz, Iquad(vvol), mn )
+     call jo00aa( vvol, Ntz, Iquad(vvol), mn_field )
     endif
 
    endif ! myid.eq.modulo(vvol-1,ncpu)
@@ -911,10 +911,10 @@ subroutine final_diagnostics
    FATAL( xspech, .not.allocated(Bzomn), error )
 #endif
 
-   RlBCAST( Btemn(1:mn,0:1,vvol), mn*2, llmodnp ) ! this is computed in lbpol; 07 Dec 16;
-   RlBCAST( Bzemn(1:mn,0:1,vvol), mn*2, llmodnp )
-   RlBCAST( Btomn(1:mn,0:1,vvol), mn*2, llmodnp )
-   RlBCAST( Bzomn(1:mn,0:1,vvol), mn*2, llmodnp )
+   RlBCAST( Btemn(1:mn_field,0:1,vvol), mn_field*2, llmodnp ) ! this is computed in lbpol; 07 Dec 16;
+   RlBCAST( Bzemn(1:mn_field,0:1,vvol), mn_field*2, llmodnp )
+   RlBCAST( Btomn(1:mn_field,0:1,vvol), mn_field*2, llmodnp )
+   RlBCAST( Bzomn(1:mn_field,0:1,vvol), mn_field*2, llmodnp )
 
    RlBCAST( beltramierror(vvol,1:9), 9, llmodnp ) ! this is computed in jo00aa; 21 Aug 18;
 
@@ -934,7 +934,7 @@ subroutine ending
 
   use cputiming
 
-  use allglobal, only : myid, cpus, mn, MPI_COMM_SPEC, ext
+  use allglobal, only : myid, cpus, mn_field, MPI_COMM_SPEC, ext
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   LOCALS

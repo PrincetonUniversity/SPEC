@@ -134,7 +134,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   use allglobal, only : myid, ncpu, cpus, ivol, MPI_COMM_SPEC, &
                         YESstellsym, NOTstellsym, &
                         Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
-                        mn, im, in, mns, &
+                        mn_field, im_field, in_field, mns, &
                         Nt, Nz, & ! only required to pass through as arguments to tr00ab;
                         NAdof, &
 !                       dMA, dMB, dMC, dMD, dME, dMF, dMG, &
@@ -498,8 +498,8 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
    WCALL( mp00ac, packab, ( packorunpack, lvol, NN, solution(1:NN,ideriv), ideriv ) ) ! unpacking; this assigns oAt, oAz through common;
 
    if (ideriv .eq. 0 .and. .not. NOTMatrixFree) then
-      call intghs(Iquad(lvol), mn, lvol, Lrad(lvol), 0) ! compute the integrals of B_lower
-      call mtrxhs(lvol, mn, Lrad(lvol), Adotx, Ddotx, 0) ! construct a.x from the integral
+      call intghs(Iquad(lvol), mn_field, lvol, Lrad(lvol), 0) ! compute the integrals of B_lower
+      call mtrxhs(lvol, mn_field, Lrad(lvol), Adotx, Ddotx, 0) ! construct a.x from the integral
    endif
 
   enddo ! do ideriv = 0, 2;
@@ -590,7 +590,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
    if( Lplasmaregion ) then
 
     if( Wtr00ab ) then ! compute rotational transform only for diagnostic purposes;
-     WCALL( mp00ac, tr00ab, ( lvol, mn, lmns, Nt, Nz, iflag, diotadxup(0:1,-1:2,lvol) ) )
+     WCALL( mp00ac, tr00ab, ( lvol, mn_field, lmns, Nt, Nz, iflag, diotadxup(0:1,-1:2,lvol) ) )
     endif
 
     Fdof(1:Ndof       ) = zero ! provide dummy intent out; Lconstraint=-1 indicates no iterations over mu   , dpflux are required;
@@ -599,11 +599,11 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
    else ! Lvacuumregion
 
     if( Wtr00ab ) then ! compute rotational transform only for diagnostic purposes;
-     WCALL( mp00ac, tr00ab, ( lvol, mn, lmns, Nt, Nz, iflag, diotadxup(0:1,-1:2,lvol) ) )
+     WCALL( mp00ac, tr00ab, ( lvol, mn_field, lmns, Nt, Nz, iflag, diotadxup(0:1,-1:2,lvol) ) )
     endif
 
     if( Wcurent ) then ! compute enclosed currents    only for diagnostic purposes;
-     WCALL( mp00ac, curent,( lvol, mn, Nt, Nz, iflag, dItGpdxtp(0:1,-1:2,lvol) ) )
+     WCALL( mp00ac, curent,( lvol, mn_field, Nt, Nz, iflag, dItGpdxtp(0:1,-1:2,lvol) ) )
      curtor = dItGpdxtp(0,0,lvol) ! icurrent(0) ! update input variables;
      curpol = dItGpdxtp(1,0,lvol) ! gcurrent(0)
     endif
@@ -618,7 +618,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
    if( Lplasmaregion ) then
 
     if( Wtr00ab ) then ! compute rotational transform only for diagnostic purposes;
-     WCALL( mp00ac, tr00ab, ( lvol, mn, lmns, Nt, Nz, iflag, diotadxup(0:1,-1:2,lvol) ) )
+     WCALL( mp00ac, tr00ab, ( lvol, mn_field, lmns, Nt, Nz, iflag, diotadxup(0:1,-1:2,lvol) ) )
     endif
 
     Fdof(1:Ndof       ) = zero ! provide dummy intent out; Lconstraint= 0 indicates no iterations over mu, dpflux are required;
@@ -626,7 +626,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 
    else ! Lvacuumregion
 
-    WCALL( mp00ac, curent,( lvol, mn, Nt, Nz, iflag, dItGpdxtp(0:1,-1:2,lvol) ) )
+    WCALL( mp00ac, curent,( lvol, mn_field, Nt, Nz, iflag, dItGpdxtp(0:1,-1:2,lvol) ) )
 
     if( iflag.eq.1 ) Fdof(1:2  ) = (/ dItGpdxtp(0,0,lvol) - curtor, dItGpdxtp(1,0,lvol) - curpol /)
     if( iflag.eq.2 ) Ddof(1:2,1) = (/ dItGpdxtp(0,1,lvol)         , dItGpdxtp(1,1,lvol)          /)
@@ -637,7 +637,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 
   case(  1 ) ! Lconstraint= 1;
 
-   WCALL( mp00ac, tr00ab,( lvol, mn, lmns, Nt, Nz, iflag, diotadxup(0:1,-1:2,lvol) ) ) ! required for both plasma and vacuum region;
+   WCALL( mp00ac, tr00ab,( lvol, mn_field, lmns, Nt, Nz, iflag, diotadxup(0:1,-1:2,lvol) ) ) ! required for both plasma and vacuum region;
 
    if( Lplasmaregion ) then
 
@@ -654,7 +654,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 
    else ! Lvacuumregion
 
-    WCALL( mp00ac, curent, ( lvol, mn,     Nt, Nz, iflag, dItGpdxtp(0:1,-1:2,lvol) ) )
+    WCALL( mp00ac, curent, ( lvol, mn_field,     Nt, Nz, iflag, dItGpdxtp(0:1,-1:2,lvol) ) )
 
     curtor = dItGpdxtp(0,0,lvol) ! update input variables; 08 Jun 16;
    !curpol = dItGpdxtp(1,0,lvol)
@@ -683,7 +683,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
    if( Lplasmaregion ) then
 
     if( Wtr00ab ) then ! compute rotational transform only for diagnostic purposes;
-     WCALL( mp00ac, tr00ab, ( lvol, mn, lmns, Nt, Nz, iflag, diotadxup(0:1,-1:2,lvol) ) )
+     WCALL( mp00ac, tr00ab, ( lvol, mn_field, lmns, Nt, Nz, iflag, diotadxup(0:1,-1:2,lvol) ) )
     endif
 
     Fdof(1:Ndof       ) = zero ! provide dummy intent out; no iteration other mu and psip locally
@@ -864,7 +864,7 @@ subroutine matvec(n, x, ax, a, mu, vvol)
   ! or using a matrix free method
   use constants, only : zero, one
   use inputlist, only : Lrad
-  use allglobal, only : NOTMatrixFree, Iquad, mn, dmd
+  use allglobal, only : NOTMatrixFree, Iquad, mn_field, dmd
   implicit none
   INTEGER, intent(in) :: n, vvol
   REAL                :: ax(1:n), x(1:n), a(*), mu
@@ -879,8 +879,8 @@ subroutine matvec(n, x, ax, a, mu, vvol)
     ideriv = -2        ! this is used for matrix-free only
     packorunpack = 'U'
     call packab(packorunpack, vvol, n, x, ideriv)          ! unpack solution to construct a.x
-    call intghs(Iquad(vvol), mn, vvol, Lrad(vvol), ideriv) ! compute the integrals of B_lower
-    call mtrxhs(vvol, mn, Lrad(vvol), dax, ddx, ideriv)    ! construct a.x from the integral
+    call intghs(Iquad(vvol), mn_field, vvol, Lrad(vvol), ideriv) ! compute the integrals of B_lower
+    call mtrxhs(vvol, mn_field, Lrad(vvol), dax, ddx, ideriv)    ! construct a.x from the integral
     ax = dax(1:n) - mu * ddx(1:n)                          ! put in the mu factor
   endif
 

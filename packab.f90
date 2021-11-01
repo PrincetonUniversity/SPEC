@@ -45,7 +45,7 @@ subroutine packab( packorunpack, lvol, NN, solution, ideriv )
   use cputiming, only : Tpackab
 
   use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, &
-                        mn, im, in, Ate, Aze, Ato, Azo, YESstellsym, NOTstellsym, &
+                        mn_field, im_field, in_field, Ate, Aze, Ato, Azo, YESstellsym, NOTstellsym, &
                         TT, YESMatrixFree, &
                         Lma, Lmb, Lmc, Lmd, Lme, Lmf, Lmg, Lmh, &
                         Lmavalue, Lmbvalue, Lmcvalue, Lmdvalue, Lmevalue, Lmfvalue, Lmgvalue, Lmhvalue
@@ -82,7 +82,7 @@ subroutine packab( packorunpack, lvol, NN, solution, ideriv )
       do ll = 0, llrad ; id = Ate(lvol,0,ii)%i(ll) ; FATAL( packab, id.lt.1 .or. id.gt.NN, unpacking illegal subscript )
        ;               ; id = Aze(lvol,0,ii)%i(ll) ; FATAL( packab, id.lt.1 .or. id.gt.NN, unpacking illegal subscript )
       enddo ! end of do ll;
-     do ii = 2, mn
+     do ii = 2, mn_field
       do ll = 0, llrad ; id = Ate(lvol,0,ii)%i(ll) ; FATAL( packab, id.lt.1 .or. id.gt.NN, unpacking illegal subscript )
        ;               ; id = Aze(lvol,0,ii)%i(ll) ; FATAL( packab, id.lt.1 .or. id.gt.NN, unpacking illegal subscript )
       enddo ! end of do ll;
@@ -94,7 +94,7 @@ subroutine packab( packorunpack, lvol, NN, solution, ideriv )
       do ll = 0, llrad ; id = Ate(lvol,0,ii)%i(ll) ; FATAL( packab, id.lt.1 .or. id.gt.NN, unpacking illegal subscript )
        ;               ; id = Aze(lvol,0,ii)%i(ll) ; FATAL( packab, id.lt.1 .or. id.gt.NN, unpacking illegal subscript )
       enddo
-     do ii = 2, mn
+     do ii = 2, mn_field
       do ll = 0, llrad ; id = Ate(lvol,0,ii)%i(ll) ; FATAL( packab, id.lt.1 .or. id.gt.NN, unpacking illegal subscript )
        ;               ; id = Aze(lvol,0,ii)%i(ll) ; FATAL( packab, id.lt.1 .or. id.gt.NN, unpacking illegal subscript )
        ;               ; id = Ato(lvol,0,ii)%i(ll) ; FATAL( packab, id.lt.1 .or. id.gt.NN, unpacking illegal subscript )
@@ -110,7 +110,7 @@ subroutine packab( packorunpack, lvol, NN, solution, ideriv )
 
    if( YESstellsym ) then
 
-    do ii = 1, mn
+    do ii = 1, mn_field
      do ll = 0, llrad ; id = Ate(lvol,0,ii)%i(ll) ;
        if (id/=0) then; Ate(lvol,ideriv,ii)%s(ll) = solution(id)
        else           ; Ate(lvol,ideriv,ii)%s(ll) = zero
@@ -125,7 +125,7 @@ subroutine packab( packorunpack, lvol, NN, solution, ideriv )
     enddo ! end of do ii;
 
     if (YESMatrixFree) then
-      do ii = 1, mn
+      do ii = 1, mn_field
         ;                  ; id = Lma(lvol,ii)
         if (id/=0) then; Lmavalue(lvol,ii) = solution(id)
         else           ; Lmavalue(lvol,ii) = zero
@@ -168,7 +168,7 @@ subroutine packab( packorunpack, lvol, NN, solution, ideriv )
       ;               ;                           ; Ato(lvol,ideriv,ii)%s(ll) = zero         ! sin( m \t - n \z ) = 0 for (m,n)=(0,0);
       ;               ;                           ; Azo(lvol,ideriv,ii)%s(ll) = zero         ! sin( m \t - n \z ) = 0 for (m,n)=(0,0);
      enddo
-    do ii = 2, mn
+    do ii = 2, mn_field
      do ll = 0, llrad ; id = Ate(lvol,0,ii)%i(ll) ;
        if (id/=0) then; Ate(lvol,ideriv,ii)%s(ll) = solution(id)
        else           ; Ate(lvol,ideriv,ii)%s(ll) = zero
@@ -189,7 +189,7 @@ subroutine packab( packorunpack, lvol, NN, solution, ideriv )
     enddo ! end of do ii;
 
     if (YESMatrixFree) then
-      do ii = 1, mn
+      do ii = 1, mn_field
         ;                  ; id = Lma(lvol,ii)
         if (id/=0) then; Lmavalue(lvol,ii) = solution(id)
         else           ; Lmavalue(lvol,ii) = zero
@@ -240,7 +240,7 @@ subroutine packab( packorunpack, lvol, NN, solution, ideriv )
 
    solution = zero
 
-   do ii = 1, mn
+   do ii = 1, mn_field
     do ll = 0, llrad
      ;                                    ; id = Ate(lvol,0,ii)%i(ll) ; if (id/=0) solution(id) = Ate(lvol,ideriv,ii)%s(ll)
      ;                                    ; id = Aze(lvol,0,ii)%i(ll) ; if (id/=0) solution(id) = Aze(lvol,ideriv,ii)%s(ll)
@@ -260,16 +260,16 @@ subroutine packab( packorunpack, lvol, NN, solution, ideriv )
 
    if( ideriv.eq.0 ) then
 
-    do ii = 1, mn
-     write(ounit,1000) myid, lvol, im(ii), in(ii), "Ate", Ate(lvol,0,ii)%s(0:llrad)
-     write(ounit,1000) myid, lvol, im(ii), in(ii), "Aze", Aze(lvol,0,ii)%s(0:llrad)
-     write(ounit,1000) myid, lvol, im(ii), in(ii), "Ato", Ato(lvol,0,ii)%s(0:llrad)
-     write(ounit,1000) myid, lvol, im(ii), in(ii), "Azo", Azo(lvol,0,ii)%s(0:llrad)
+    do ii = 1, mn_field
+     write(ounit,1000) myid, lvol, im_field(ii), in_field(ii), "Ate", Ate(lvol,0,ii)%s(0:llrad)
+     write(ounit,1000) myid, lvol, im_field(ii), in_field(ii), "Aze", Aze(lvol,0,ii)%s(0:llrad)
+     write(ounit,1000) myid, lvol, im_field(ii), in_field(ii), "Ato", Ato(lvol,0,ii)%s(0:llrad)
+     write(ounit,1000) myid, lvol, im_field(ii), in_field(ii), "Azo", Azo(lvol,0,ii)%s(0:llrad)
     enddo ! end of do ii;
 
-    do ii = 1, mn
-     write(ounit,1000) myid, lvol, im(ii), in(ii), "Ste", sum(Ate(lvol,0,ii)%s(0:llrad)*TT(0:llrad,0,0)), sum(Ate(lvol,0,ii)%s(0:llrad)*TT(0:llrad,1,0))
-     write(ounit,1000) myid, lvol, im(ii), in(ii), "Sze", sum(Aze(lvol,0,ii)%s(0:llrad)*TT(0:llrad,0,0)), sum(Aze(lvol,0,ii)%s(0:llrad)*TT(0:llrad,1,0))
+    do ii = 1, mn_field
+     write(ounit,1000) myid, lvol, im_field(ii), in_field(ii), "Ste", sum(Ate(lvol,0,ii)%s(0:llrad)*TT(0:llrad,0,0)), sum(Ate(lvol,0,ii)%s(0:llrad)*TT(0:llrad,1,0))
+     write(ounit,1000) myid, lvol, im_field(ii), in_field(ii), "Sze", sum(Aze(lvol,0,ii)%s(0:llrad)*TT(0:llrad,0,0)), sum(Aze(lvol,0,ii)%s(0:llrad)*TT(0:llrad,1,0))
     enddo ! end of do ii;
 
    endif ! end of if( ideriv.eq.0);

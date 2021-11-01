@@ -139,8 +139,8 @@
 !> @param[in] lss radial coordinate \f$s\f$
 !> @param[in] Lcurvature logical control flag
 !> @param[in] Ntz number of points in \f$\theta\f$ and \f$\zeta\f$
-!> @param[in] mn number of Fourier harmonics
-subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
+!> @param[in] mn_field number of Fourier harmonics
+subroutine coords( lvol, lss, Lcurvature, Ntz, mn_field )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -155,7 +155,7 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
   use cputiming, only : Tcoords
 
   use allglobal, only : myid, cpus, pi2nfp, MPI_COMM_SPEC, &
-                        Mvol, im, in, &
+                        Mvol, im_field, in_field, &
                         iRbc, iZbs, iRbs, iZbc, &
                         NOTstellsym, Lcoordinatesingularity, &
                         Nt, Nz, &
@@ -169,11 +169,11 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
 
   LOCALS
 
-  INTEGER, intent(in) :: lvol, Lcurvature, Ntz, mn
+  INTEGER, intent(in) :: lvol, Lcurvature, Ntz, mn_field
   REAL   , intent(in) :: lss
 
-  INTEGER             :: ii, jj, kk, irz, innout, issym, signlss, mi, ni, imn
-  REAL                :: Remn(1:mn,0:2), Zomn(1:mn,0:2), Romn(1:mn,0:2), Zemn(1:mn,0:2), alss, blss, sbar, sbarhim(1:mn), fj(1:mn,0:2)
+  INTEGER             :: ii, jj, kk, irz, innout, issym, signlss, mi, ni, imn_field
+  REAL                :: Remn(1:mn_field,0:2), Zomn(1:mn_field,0:2), Romn(1:mn_field,0:2), Zemn(1:mn_field,0:2), alss, blss, sbar, sbarhim(1:mn_field), fj(1:mn_field,0:2)
 
   REAL                :: Dij(1:Ntz,0:3), dguvij(1:Ntz,1:3,1:3), DRxij(1:Ntz,0:3), DZxij(1:Ntz,0:3)
 
@@ -194,10 +194,10 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  Remn(1:mn,0:2) = zero ! interpolated coordinate harmonics; 6 Feb 13;
-  Zomn(1:mn,0:2) = zero
-  Romn(1:mn,0:2) = zero
-  Zemn(1:mn,0:2) = zero
+  Remn(1:mn_field,0:2) = zero ! interpolated coordinate harmonics; 6 Feb 13;
+  Zomn(1:mn_field,0:2) = zero
+  Romn(1:mn_field,0:2) = zero
+  Zemn(1:mn_field,0:2) = zero
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -210,21 +210,21 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
 #endif
    select case( Igeometry )
    case( 2   )  ; fj(     1:Ntor+1,0) = sbar                    ! these are the mj.eq.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
-   ;            ; fj(Ntor+2:mn    ,0) = sbar**(im(Ntor+2:mn)+1) ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+   ;            ; fj(Ntor+2:mn_field    ,0) = sbar**(im_field(Ntor+2:mn_field)+1) ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
    case( 3   )  ; fj(     1:Ntor+1,0) = sbar**2                 ! switch to sbar=r; 29 Jun 19
-   ;            ; fj(Ntor+2:mn    ,0) = sbar**im(Ntor+2:mn)     ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+   ;            ; fj(Ntor+2:mn_field    ,0) = sbar**im_field(Ntor+2:mn_field)     ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
    case default ; FATAL( coords, .true., invalid Igeometry for Lcoordinatesingularity=T )
    end select
 
 
-   Remn(1:mn,0) = iRbc(1:mn,0) + ( iRbc(1:mn,1) - iRbc(1:mn,0) ) * fj(1:mn,0)
+   Remn(1:mn_field,0) = iRbc(1:mn_field,0) + ( iRbc(1:mn_field,1) - iRbc(1:mn_field,0) ) * fj(1:mn_field,0)
    if( NOTstellsym ) then
-   Romn(1:mn,0) = iRbs(1:mn,0) + ( iRbs(1:mn,1) - iRbs(1:mn,0) ) * fj(1:mn,0)
+   Romn(1:mn_field,0) = iRbs(1:mn_field,0) + ( iRbs(1:mn_field,1) - iRbs(1:mn_field,0) ) * fj(1:mn_field,0)
    endif
    if( Igeometry.eq.3 ) then
-   Zomn(1:mn,0) = iZbs(1:mn,0) + ( iZbs(1:mn,1) - iZbs(1:mn,0) ) * fj(1:mn,0)
+   Zomn(1:mn_field,0) = iZbs(1:mn_field,0) + ( iZbs(1:mn_field,1) - iZbs(1:mn_field,0) ) * fj(1:mn_field,0)
    if( NOTstellsym ) then
-   Zemn(1:mn,0) = iZbc(1:mn,0) + ( iZbc(1:mn,1) - iZbc(1:mn,0) ) * fj(1:mn,0)
+   Zemn(1:mn_field,0) = iZbc(1:mn_field,0) + ( iZbc(1:mn_field,1) - iZbc(1:mn_field,0) ) * fj(1:mn_field,0)
    endif
    endif
 
@@ -232,20 +232,20 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
 
    alss = half * ( one - lss ) ; blss = half * ( one + lss )
 
-   Remn(1:mn,0) = alss * iRbc(1:mn,lvol-1) + blss * iRbc(1:mn,lvol)
+   Remn(1:mn_field,0) = alss * iRbc(1:mn_field,lvol-1) + blss * iRbc(1:mn_field,lvol)
    if( NOTstellsym ) then
-   Romn(1:mn,0) = alss * iRbs(1:mn,lvol-1) + blss * iRbs(1:mn,lvol)
+   Romn(1:mn_field,0) = alss * iRbs(1:mn_field,lvol-1) + blss * iRbs(1:mn_field,lvol)
    endif
    if( Igeometry.eq.3 ) then
-   Zomn(1:mn,0) = alss * iZbs(1:mn,lvol-1) + blss * iZbs(1:mn,lvol)
+   Zomn(1:mn_field,0) = alss * iZbs(1:mn_field,lvol-1) + blss * iZbs(1:mn_field,lvol)
    if( NOTstellsym ) then
-   Zemn(1:mn,0) = alss * iZbc(1:mn,lvol-1) + blss * iZbc(1:mn,lvol)
+   Zemn(1:mn_field,0) = alss * iZbc(1:mn_field,lvol-1) + blss * iZbc(1:mn_field,lvol)
    endif
    endif ! end of if( Igeometry.eq.3 ) ; 01 Feb 13;
 
   endif ! end of if( Lcoordinatesingularity ); 01 Feb 13;
 
-  call invfft( mn, im(1:mn), in(1:mn), Remn(1:mn,0), Romn(1:mn,0), Zemn(1:mn,0), Zomn(1:mn,0), &
+  call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), Remn(1:mn_field,0), Romn(1:mn_field,0), Zemn(1:mn_field,0), Zomn(1:mn_field,0), &
                Nt, Nz, Rij(1:Ntz,0,0), Zij(1:Ntz,0,0) ) ! maps to real space;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -261,48 +261,48 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
 #endif
    select case( Igeometry )
    case( 2   )  ; fj(     1:Ntor+1,1) = half                                                  ! these are the mj.eq.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
-   ;            ; fj(Ntor+2:mn    ,1) = half*(im(Ntor+2:mn)+one) * fj(Ntor+2:mn    ,0) / sbar ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+   ;            ; fj(Ntor+2:mn_field    ,1) = half*(im_field(Ntor+2:mn_field)+one) * fj(Ntor+2:mn_field    ,0) / sbar ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
    case( 3   )  ; fj(     1:Ntor+1,1) = sbar                                                  ! these are the mj.eq.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
-   ;            ; fj(Ntor+2:mn    ,1) = half * im(Ntor+2:mn) * fj(Ntor+2:mn    ,0) / sbar     ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+   ;            ; fj(Ntor+2:mn_field    ,1) = half * im_field(Ntor+2:mn_field) * fj(Ntor+2:mn_field    ,0) / sbar     ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
    case default ; FATAL( coords, .true., invalid Igeometry for Lcoordinatesingularity=T and Lcurvature.ne.0 )
    end select
 
-   Remn(1:mn,1) =                       ( iRbc(1:mn,1) - iRbc(1:mn,0) ) * fj(1:mn,1)
+   Remn(1:mn_field,1) =                       ( iRbc(1:mn_field,1) - iRbc(1:mn_field,0) ) * fj(1:mn_field,1)
    if( NOTstellsym ) then
-   Romn(1:mn,1) =                       ( iRbs(1:mn,1) - iRbs(1:mn,0) ) * fj(1:mn,1)
+   Romn(1:mn_field,1) =                       ( iRbs(1:mn_field,1) - iRbs(1:mn_field,0) ) * fj(1:mn_field,1)
    endif
    if( Igeometry.eq.3 ) then
-   Zomn(1:mn,1) =                       ( iZbs(1:mn,1) - iZbs(1:mn,0) ) * fj(1:mn,1)
+   Zomn(1:mn_field,1) =                       ( iZbs(1:mn_field,1) - iZbs(1:mn_field,0) ) * fj(1:mn_field,1)
    if( NOTstellsym ) then
-   Zemn(1:mn,1) =                       ( iZbc(1:mn,1) - iZbc(1:mn,0) ) * fj(1:mn,1)
+   Zemn(1:mn_field,1) =                       ( iZbc(1:mn_field,1) - iZbc(1:mn_field,0) ) * fj(1:mn_field,1)
    endif
    endif
 
   else ! matches if( Lcoordinatesingularity ) ; 22 Apr 13;
 
-   Remn(1:mn,1) = (      - iRbc(1:mn,lvol-1) +        iRbc(1:mn,lvol) ) * half
+   Remn(1:mn_field,1) = (      - iRbc(1:mn_field,lvol-1) +        iRbc(1:mn_field,lvol) ) * half
    if( NOTstellsym ) then
-   Romn(1:mn,1) = (      - iRbs(1:mn,lvol-1) +        iRbs(1:mn,lvol) ) * half
+   Romn(1:mn_field,1) = (      - iRbs(1:mn_field,lvol-1) +        iRbs(1:mn_field,lvol) ) * half
    endif
    if( Igeometry.eq.3 ) then
-   Zomn(1:mn,1) = (      - iZbs(1:mn,lvol-1) +        iZbs(1:mn,lvol) ) * half
+   Zomn(1:mn_field,1) = (      - iZbs(1:mn_field,lvol-1) +        iZbs(1:mn_field,lvol) ) * half
    if( NOTstellsym ) then
-   Zemn(1:mn,1) = (      - iZbc(1:mn,lvol-1) +        iZbc(1:mn,lvol) ) * half
+   Zemn(1:mn_field,1) = (      - iZbc(1:mn_field,lvol-1) +        iZbc(1:mn_field,lvol) ) * half
    endif
    endif ! end of if( Igeometry.eq.3 ) ; 01 Feb 13;
 
   endif ! end of if( Lcoordinatesingularity ); 01 Feb 13;
 
   ! Derivative w.r.t s
-  call invfft( mn, im(1:mn), in(1:mn),           Remn(1:mn,1),           Romn(1:mn,1),           Zemn(1:mn,1),           Zomn(1:mn,1), &
+  call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field),           Remn(1:mn_field,1),           Romn(1:mn_field,1),           Zemn(1:mn_field,1),           Zomn(1:mn_field,1), &
                Nt, Nz, Rij(1:Ntz,1,0), Zij(1:Ntz,1,0) ) ! maps to real space;
 
   ! Derivative w.r.t theta
-  call invfft( mn, im(1:mn), in(1:mn),  im(1:mn)*Romn(1:mn,0), -im(1:mn)*Remn(1:mn,0),  im(1:mn)*Zomn(1:mn,0), -im(1:mn)*Zemn(1:mn,0), &
+  call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field),  im_field(1:mn_field)*Romn(1:mn_field,0), -im_field(1:mn_field)*Remn(1:mn_field,0),  im_field(1:mn_field)*Zomn(1:mn_field,0), -im_field(1:mn_field)*Zemn(1:mn_field,0), &
                Nt, Nz, Rij(1:Ntz,2,0), Zij(1:Ntz,2,0) ) ! maps to real space;
 
   ! Derivative w.r.t zeta
-  call invfft( mn, im(1:mn), in(1:mn), -in(1:mn)*Romn(1:mn,0),  in(1:mn)*Remn(1:mn,0), -in(1:mn)*Zomn(1:mn,0),  in(1:mn)*Zemn(1:mn,0), &
+  call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), -in_field(1:mn_field)*Romn(1:mn_field,0),  in_field(1:mn_field)*Remn(1:mn_field,0), -in_field(1:mn_field)*Zomn(1:mn_field,0),  in_field(1:mn_field)*Zemn(1:mn_field,0), &
                Nt, Nz, Rij(1:Ntz,3,0), Zij(1:Ntz,3,0) ) ! maps to real space;
 
 
@@ -396,61 +396,61 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
 #endif
     select case( Igeometry )
     case( 2 )    ; fj(     1:Ntor+1,2) = zero                                                            ! these are the mj.eq.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
-     ;           ; fj(Ntor+2:mn    ,2) = half * ( im(Ntor+2:mn)       ) * fj(Ntor+2:mn    ,1) / sbar     ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+     ;           ; fj(Ntor+2:mn_field    ,2) = half * ( im_field(Ntor+2:mn_field)       ) * fj(Ntor+2:mn_field    ,1) / sbar     ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
     case( 3 )    ; fj(     1:Ntor+1,2) = half                                                            ! these are the mj.eq.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
-     ;           ; fj(Ntor+2:mn    ,2) = half * ( im(Ntor+2:mn) - one ) * fj(Ntor+2:mn    ,1) / sbar     ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+     ;           ; fj(Ntor+2:mn_field    ,2) = half * ( im_field(Ntor+2:mn_field) - one ) * fj(Ntor+2:mn_field    ,1) / sbar     ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
     case default ;
      ;           ; FATAL( coords, .true., invalid Igeometry for Lcoordinatesingularity=T and Lcurvature=2 )
     end select   ;
 
-    Remn(1:mn,2) =                       ( iRbc(1:mn,1) - iRbc(1:mn,0) ) * fj(1:mn,2)
+    Remn(1:mn_field,2) =                       ( iRbc(1:mn_field,1) - iRbc(1:mn_field,0) ) * fj(1:mn_field,2)
     if( NOTstellsym ) then
-    Romn(1:mn,2) =                       ( iRbs(1:mn,1) - iRbs(1:mn,0) ) * fj(1:mn,2)
+    Romn(1:mn_field,2) =                       ( iRbs(1:mn_field,1) - iRbs(1:mn_field,0) ) * fj(1:mn_field,2)
     endif
     if( Igeometry.eq.3 ) then
-    Zomn(1:mn,2) =                       ( iZbs(1:mn,1) - iZbs(1:mn,0) ) * fj(1:mn,2)
+    Zomn(1:mn_field,2) =                       ( iZbs(1:mn_field,1) - iZbs(1:mn_field,0) ) * fj(1:mn_field,2)
     if( NOTstellsym ) then
-    Zemn(1:mn,2) =                       ( iZbc(1:mn,1) - iZbc(1:mn,0) ) * fj(1:mn,2)
+    Zemn(1:mn_field,2) =                       ( iZbc(1:mn_field,1) - iZbc(1:mn_field,0) ) * fj(1:mn_field,2)
     endif
     endif
 
    else ! if( .not.Lcoordinatesingularity ) ;
 
-    Remn(1:mn,2) = zero
+    Remn(1:mn_field,2) = zero
     if( NOTstellsym ) then
-    Romn(1:mn,2) = zero
+    Romn(1:mn_field,2) = zero
     endif
     if( Igeometry.eq.3 ) then
-    Zomn(1:mn,2) = zero
+    Zomn(1:mn_field,2) = zero
     if( NOTstellsym ) then
-    Zemn(1:mn,2) = zero
+    Zemn(1:mn_field,2) = zero
     endif
     endif ! end of if( Igeometry.eq.3 ) ; 01 Feb 13;
 
    endif ! end of if( Lcoordinatesingularity ); 01 Feb 13;
 
-   call invfft( mn, im(1:mn), in(1:mn),&
-                   Remn(1:mn,2),                   Romn(1:mn,2),                   Zemn(1:mn,2),                   Zomn(1:mn,2), &
+   call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field),&
+                   Remn(1:mn_field,2),                   Romn(1:mn_field,2),                   Zemn(1:mn_field,2),                   Zomn(1:mn_field,2), &
                 Nt, Nz, Rij(1:Ntz,1,1), Zij(1:Ntz,1,1) ) ! maps to real space;
 
-   call invfft( mn, im(1:mn), in(1:mn),&
-+         im(1:mn)*Romn(1:mn,1),         -im(1:mn)*Remn(1:mn,1),          im(1:mn)*Zomn(1:mn,1),         -im(1:mn)*Zemn(1:mn,1), &
+   call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field),&
++         im_field(1:mn_field)*Romn(1:mn_field,1),         -im_field(1:mn_field)*Remn(1:mn_field,1),          im_field(1:mn_field)*Zomn(1:mn_field,1),         -im_field(1:mn_field)*Zemn(1:mn_field,1), &
 Nt, Nz, Rij(1:Ntz,1,2), Zij(1:Ntz,1,2) ) ! maps to real space;
 
-   call invfft( mn, im(1:mn), in(1:mn),&
--         in(1:mn)*Romn(1:mn,1),          in(1:mn)*Remn(1:mn,1),         -in(1:mn)*Zomn(1:mn,1),          in(1:mn)*Zemn(1:mn,1), &
+   call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field),&
+-         in_field(1:mn_field)*Romn(1:mn_field,1),          in_field(1:mn_field)*Remn(1:mn_field,1),         -in_field(1:mn_field)*Zomn(1:mn_field,1),          in_field(1:mn_field)*Zemn(1:mn_field,1), &
 Nt, Nz, Rij(1:Ntz,1,3), Zij(1:Ntz,1,3) ) ! maps to real space;
 
-   call invfft( mn, im(1:mn), in(1:mn),&
--im(1:mn)*im(1:mn)*Remn(1:mn,0),-im(1:mn)*im(1:mn)*Romn(1:mn,0),-im(1:mn)*im(1:mn)*Zemn(1:mn,0),-im(1:mn)*im(1:mn)*Zomn(1:mn,0), &
+   call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field),&
+-im_field(1:mn_field)*im_field(1:mn_field)*Remn(1:mn_field,0),-im_field(1:mn_field)*im_field(1:mn_field)*Romn(1:mn_field,0),-im_field(1:mn_field)*im_field(1:mn_field)*Zemn(1:mn_field,0),-im_field(1:mn_field)*im_field(1:mn_field)*Zomn(1:mn_field,0), &
 Nt, Nz, Rij(1:Ntz,2,2), Zij(1:Ntz,2,2) ) ! maps to real space;
 
-   call invfft( mn, im(1:mn), in(1:mn),&
-+im(1:mn)*in(1:mn)*Remn(1:mn,0), im(1:mn)*in(1:mn)*Romn(1:mn,0), im(1:mn)*in(1:mn)*Zemn(1:mn,0), im(1:mn)*in(1:mn)*Zomn(1:mn,0), &
+   call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field),&
++im_field(1:mn_field)*in_field(1:mn_field)*Remn(1:mn_field,0), im_field(1:mn_field)*in_field(1:mn_field)*Romn(1:mn_field,0), im_field(1:mn_field)*in_field(1:mn_field)*Zemn(1:mn_field,0), im_field(1:mn_field)*in_field(1:mn_field)*Zomn(1:mn_field,0), &
 Nt, Nz, Rij(1:Ntz,2,3), Zij(1:Ntz,2,3) ) ! maps to real space;
 
-   call invfft( mn, im(1:mn), in(1:mn),&
--in(1:mn)*in(1:mn)*Remn(1:mn,0),-in(1:mn)*in(1:mn)*Romn(1:mn,0),-in(1:mn)*in(1:mn)*Zemn(1:mn,0),-in(1:mn)*in(1:mn)*Zomn(1:mn,0), &
+   call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field),&
+-in_field(1:mn_field)*in_field(1:mn_field)*Remn(1:mn_field,0),-in_field(1:mn_field)*in_field(1:mn_field)*Romn(1:mn_field,0),-in_field(1:mn_field)*in_field(1:mn_field)*Zemn(1:mn_field,0),-in_field(1:mn_field)*in_field(1:mn_field)*Zomn(1:mn_field,0), &
 Nt, Nz, Rij(1:Ntz,3,3), Zij(1:Ntz,3,3) ) ! maps to real space;
 
 
@@ -549,15 +549,15 @@ Nt, Nz, Rij(1:Ntz,3,3), Zij(1:Ntz,3,3) ) ! maps to real space;
 
      Dij(1:Ntz,0) = fj(ii,0) * cosi(1:Ntz,ii)
      Dij(1:Ntz,1) = fj(ii,1) * cosi(1:Ntz,ii)
-     Dij(1:Ntz,2) = fj(ii,0) * sini(1:Ntz,ii) * ( - im(ii) )
-     Dij(1:Ntz,3) = fj(ii,0) * sini(1:Ntz,ii) * ( + in(ii) )
+     Dij(1:Ntz,2) = fj(ii,0) * sini(1:Ntz,ii) * ( - im_field(ii) )
+     Dij(1:Ntz,3) = fj(ii,0) * sini(1:Ntz,ii) * ( + in_field(ii) )
 
     else                                                                            !   sine harmonics; 13 Sep 13;
 
      Dij(1:Ntz,0) = fj(ii,0) * sini(1:Ntz,ii)
      Dij(1:Ntz,1) = fj(ii,1) * sini(1:Ntz,ii)
-     Dij(1:Ntz,2) = fj(ii,0) * cosi(1:Ntz,ii) * ( + im(ii) )
-     Dij(1:Ntz,3) = fj(ii,0) * cosi(1:Ntz,ii) * ( - in(ii) )
+     Dij(1:Ntz,2) = fj(ii,0) * cosi(1:Ntz,ii) * ( + im_field(ii) )
+     Dij(1:Ntz,3) = fj(ii,0) * cosi(1:Ntz,ii) * ( - in_field(ii) )
 
     endif ! if( ( irz.eq.0 .and. issym.eq.1 ) .or. ... ; 11 Aug 14;
 
@@ -598,13 +598,13 @@ Nt, Nz, Rij(1:Ntz,3,3), Zij(1:Ntz,3,3) ) ! maps to real space;
     if( ( irz.eq.0 .and. issym.eq.0 ) .or. ( irz.eq.1 .and. issym.eq.1 ) ) then ! cosine; 02 Sep 14;
      Dij(1:Ntz,0) = ( one + signlss * lss ) * half * cosi(1:Ntz,ii)
      Dij(1:Ntz,1) = (       signlss       ) * half * cosi(1:Ntz,ii)
-     Dij(1:Ntz,2) = ( one + signlss * lss ) * half * sini(1:Ntz,ii) * ( - im(ii) )
-     Dij(1:Ntz,3) = ( one + signlss * lss ) * half * sini(1:Ntz,ii) * ( + in(ii) )
+     Dij(1:Ntz,2) = ( one + signlss * lss ) * half * sini(1:Ntz,ii) * ( - im_field(ii) )
+     Dij(1:Ntz,3) = ( one + signlss * lss ) * half * sini(1:Ntz,ii) * ( + in_field(ii) )
     else                                                                        !   sine; 02 Sep 14;
      Dij(1:Ntz,0) = ( one + signlss * lss ) * half * sini(1:Ntz,ii)
      Dij(1:Ntz,1) = (       signlss       ) * half * sini(1:Ntz,ii)
-     Dij(1:Ntz,2) = ( one + signlss * lss ) * half * cosi(1:Ntz,ii) * ( + im(ii) )
-     Dij(1:Ntz,3) = ( one + signlss * lss ) * half * cosi(1:Ntz,ii) * ( - in(ii) )
+     Dij(1:Ntz,2) = ( one + signlss * lss ) * half * cosi(1:Ntz,ii) * ( + im_field(ii) )
+     Dij(1:Ntz,3) = ( one + signlss * lss ) * half * cosi(1:Ntz,ii) * ( - in_field(ii) )
     endif
 
    endif ! end of if( Lcoordinatesingularity ) ;  7 Mar 13;

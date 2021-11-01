@@ -102,25 +102,12 @@ subroutine preset
 !latex \item The ``regularization'' factor, \type{halfmm(1:mn)} = \type{im(1:mn)} * \type{half}, is real.
 !latex \end{enumerate}
 
-  if( Lboundary.eq.0 ) then ! RZ representation and interpolation
-    SALLOCATE( halfmm, (1:mnRZ), imRZ(1:mnRZ) * half )
-    SALLOCATE( regumm, (1:mnRZ), imRZ(1:mnRZ) * half )
-  else ! Henneberg representation
-    SALLOCATE( halfmm, (1:mn), im(1:mn) * half )
-    SALLOCATE( regumm, (1:mn), im(1:mn) * half )
-  endif
+  SALLOCATE( halfmm, (1:mn_field), im_field(1:mn_field) * half )
+  SALLOCATE( regumm, (1:mn_field), im_field(1:mn_field) * half )
 
 
   if( Mregular.ge.2 ) then
-
-
-   if( Lboundary.eq.0 ) then
-    where( imRZ.gt.Mregular ) regumm = Mregular * half
-   else
-    where( im.gt.Mregular ) regumm = Mregular * half
-   endif
-
-
+    where( im_field.gt.Mregular ) regumm = Mregular * half
   endif
 
 ! if( myid.eq.0 ) write(ounit,'("global : " 10x " : "i3") im ="i3" , halfmm ="f5.1" , regum ="f5.1" ;")') ( ii, im(ii), halfmm(ii), regumm(ii), ii = 1, mn )
@@ -134,14 +121,14 @@ subroutine preset
 
 ! lMpol =   Mpol ; lNtor =   Ntor ! no    enhanced resolution for metrics;
 ! lMpol = 2*Mpol ; lNtor = 2*Ntor !       enhanced resolution for metrics;
-  lMpol = 4*MpolF ; lNtor = 4*NtorF ! extra-enhanced resolution for metrics;
+  lMpol = 4*Mpol_field ; lNtor = 4*Ntor_field ! extra-enhanced resolution for metrics;
 
   mne = 1 + lNtor + lMpol * ( 2 * lNtor + 1 ) ! resolution of metrics; enhanced resolution; see metrix;
 
   SALLOCATE( ime, (1:mne), 0 )
   SALLOCATE( ine, (1:mne), 0 )
 
-  call gi00ab( lMpol, lNtor, Nfp, mne, ime(1:mne), ine(1:mne) )
+  call gi00ab( lMpol, lNtor, Nfp, mne, ime(1:mne), ine(1:mne), .true. )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -149,8 +136,8 @@ subroutine preset
 
   sMpol = iMpol ; sNtor = iNtor
 
-  if( iMpol.le.0 ) sMpol = MpolF - iMpol
-  if( iNtor.le.0 ) sNtor = NtorF - iNtor
+  if( iMpol.le.0 ) sMpol = Mpol_field - iMpol
+  if( iNtor.le.0 ) sNtor = Ntor_field - iNtor
   if(  Ntor.eq.0 ) sNtor = 0
 
   mns = 1 + sNtor + sMpol * ( 2 * sNtor + 1 ) ! resolution of straight-field line transformation on interfaces; see tr00ab; soon to be redundant;
@@ -158,7 +145,7 @@ subroutine preset
   SALLOCATE( ims, (1:mns), 0 )
   SALLOCATE( ins, (1:mns), 0 )
 
-  call gi00ab( sMpol, sNtor, Nfp, mns, ims(1:mns), ins(1:mns) ) ! note that the field periodicity factor is included in ins;
+  call gi00ab( sMpol, sNtor, Nfp, mns, ims(1:mns), ins(1:mns), .true. ) ! note that the field periodicity factor is included in ins;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -188,30 +175,32 @@ subroutine preset
 !latex \item \type{iVns}, \type{iVnc}, \type{iBns} and \type{iBns} : Fourier harmonics of normal field at computational boundary;
 !latex \end{enumerate}
 
-  SALLOCATE( iRbc, (1:mnRZ,0:Mvol), zero ) ! interface Fourier harmonics;
-  SALLOCATE( iZbs, (1:mnRZ,0:Mvol), zero )
-  SALLOCATE( iRbs, (1:mnRZ,0:Mvol), zero )
-  SALLOCATE( iZbc, (1:mnRZ,0:Mvol), zero )
+  SALLOCATE( iRbc, (1:mn_field,0:Mvol), zero ) ! interface Fourier harmonics;
+  SALLOCATE( iZbs, (1:mn_field,0:Mvol), zero )
+  SALLOCATE( iRbs, (1:mn_field,0:Mvol), zero )
+  SALLOCATE( iZbc, (1:mn_field,0:Mvol), zero )
 
   if( Lboundary.eq.1 ) then
-    SALLOCATE( irhoc , (1:mn  , 1:Mvol), zero )
+    SALLOCATE( irhoc , (1:mn_rho, 1:Mvol), zero )
     SALLOCATE( ibc   , (0:Ntor, 1:Mvol), zero )
+    SALLOCATE( iR0c  , (0:Ntor, 1:Mvol), zero )
+    SALLOCATE( iZ0s  , (0:Ntor, 1:Mvol), zero )
   endif
 
 
   if( Lperturbed.eq.1 ) then
-  SALLOCATE( dRbc, (1:mnRZ,0:Mvol), zero ) ! interface Fourier harmonics;
-  SALLOCATE( dZbs, (1:mnRZ,0:Mvol), zero )
-  SALLOCATE( dRbs, (1:mnRZ,0:Mvol), zero )
-  SALLOCATE( dZbc, (1:mnRZ,0:Mvol), zero )
+  SALLOCATE( dRbc, (1:mn_field,0:Mvol), zero ) ! interface Fourier harmonics;
+  SALLOCATE( dZbs, (1:mn_field,0:Mvol), zero )
+  SALLOCATE( dRbs, (1:mn_field,0:Mvol), zero )
+  SALLOCATE( dZbc, (1:mn_field,0:Mvol), zero )
   endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  SALLOCATE( iVns, (1:mnf), zero )
-  SALLOCATE( iBns, (1:mnf), zero )
-  SALLOCATE( iVnc, (1:mnf), zero )
-  SALLOCATE( iBnc, (1:mnf), zero )
+  SALLOCATE( iVns, (1:mn_field), zero )
+  SALLOCATE( iBns, (1:mn_field), zero )
+  SALLOCATE( iVnc, (1:mn_field), zero )
+  SALLOCATE( iBnc, (1:mn_field), zero )
 
  !SALLOCATE( lRbc, (1:mn), zero ) ! not used; SRH: 27 Feb 18;
  !SALLOCATE( lZbs, (1:mn), zero )
@@ -228,9 +217,9 @@ subroutine preset
 !latex       \internal{ajk[i]} $\equiv 0   $ if $m_i \ne 0$.
 !latex \end{enumerate}
 
-  SALLOCATE( ajk, (1:mnRZ), zero ) ! this must be allocated & assigned now, as it is used in readin; primarily used in packxi; 02 Jan 15;
+  SALLOCATE( ajk, (1:mn_field), zero ) ! this must be allocated & assigned now, as it is used in readin; primarily used in packxi; 02 Jan 15;
 
-  do kk = 1, mnRZ ; mk = imRZ(kk) ; nk = inRZ(kk)
+  do kk = 1, mn_field ; mk = im_field(kk) ; nk = in_field(kk)
 
    if( mk.eq.0 ) ajk(kk) = pi2
 
@@ -239,14 +228,14 @@ subroutine preset
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   ! Read boundary harmonics
-  if( Lboundary.ne.0 ) then
+  if( Lboundary.EQ.1 ) then
     if( myid.eq.0 ) then ! read plasma boundary & computational boundary; initialize interface geometry;
     
     ! Read Henneberg's representation harmonics and change angle if necessary
     Rbc(0, 1) = half*( rhomn(0, 1) + rhomn(twoalpha, 1) ) + 1.0/4.0 * (two*bn(0) - bn(-twoalpha) - bn(twoalpha))
-    Zbc(0, 1) = half*( rhomn(0, 1) - rhomn(twoalpha, 1) ) + 1.0/4.0 * (two*bn(0) + bn(-twoalpha) + bn(twoalpha))
+    Zbs(0, 1) = half*( rhomn(0, 1) - rhomn(twoalpha, 1) ) + 1.0/4.0 * (two*bn(0) + bn(-twoalpha) + bn(twoalpha))
     Rbc(0,-1) = half*( rhomn(0,-1) + rhomn(twoalpha,-1) )
-    Zbc(0,-1) = half*( rhomn(0,-1) - rhomn(twoalpha,-1) )
+    Zbs(0,-1) = half*( rhomn(0,-1) - rhomn(twoalpha,-1) )
     if( Igeometry.eq.3 .and. Rbc(0,+1)+Rbc(0,-1).gt.zero .and. Zbs(0,+1)-Zbs(0,-1).gt.zero ) then ; Lchangeangle = .true.
     else                                                                                          ; Lchangeangle = .false.
     endif
@@ -255,43 +244,40 @@ subroutine preset
       FATAL( preset, .true., Need to change angle - not implemented with Henneberg representation)
     endif
 
-    do ii = 1, mn; mm=im(ii); nn=in(ii) / Nfp
+    do ii = 1, mn_rho; mm=im_rho(ii); nn=in_rho(ii) / Nfp
       irhoc( ii, Nvol ) = rhomn( nn, mm )
     enddo ! do ii=1,mn
 
     do nn = 0, Ntor
-      ibc( nn, Nvol ) = bn( nn )
+      ibc( nn, Nvol  ) = bn( nn )
+      iR0c( nn, Nvol ) = R0c( nn )
+      iZ0s( nn, Nvol ) = Z0s( nn )
     enddo
 
 
-    ! Interpolate initial guess
-    select case( Linitialize )
-      case( :0 ) ! Linitialize=0 ; initial guess for geometry of the interior surfaces is given in the input file;
-        
-        do idx_mode=1, num_modes! will read in Fourier harmonics until the end of file is reached;
-          mm = mmRZRZ(idx_mode)
-          nn = nnRZRZ(idx_mode)
-  
-          do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over harmonics within range;
-            if( mm.eq.0 .and. mi.eq.0 .and. nn*Nfp.eq.ni ) then
-              irhoc(ii,1:Nvol-1) = allRZRZ(1,1:Nvol-1, idx_mode) ! select relevant harmonics;
-              ibc(  ii,1:Nvol-1) = allRZRZ(2,1:Nvol-1, idx_mode) ! select relevant harmonics;
+    if( Mvol.gt.1 ) then 
+      ! Read initial guess
+      select case( Linitialize )
+        case( :0 ) ! Linitialize=0 ; initial guess for geometry of the interior surfaces is given in the input file;
+          FATAL( preset, .true., Linitialize=0 not implemented for Lboundary=1 )
 
-            elseif( mm.eq.mi .and. nn*Nfp.eq.jj*ni ) then
-              irhoc(ii,1:Nvol-1) = allRZRZ(1,1:Nvol-1, idx_mode) ! select relevant harmonics;
-            endif
-          enddo ! end of do ii;
-        enddo
+        case( 1 )
+          ! No need to interpolate if Linitialize=1. Instead, map to Rmn, Zmn and then interpolate before map back.
+          ! The interpolation of Rbc, Zbs is done further in preset.f90, then it mapped back to rhomn, bn, etc...
+      
       end select
+    endif!Nvol.gt.1
     endif !end of if(myid.eq.0)
+
+
+    ! Map to Rmn, Zmn 
+    call forwardMap( irhoc(1:mn_rho,Nvol), ibc(0:Ntor,Nvol), iR0c(0:Ntor,Nvol), iZ0s(1:Ntor,Nvol), iRbc(1:mn_field,Nvol), iZbs(1:mn_field,Nvol) )
 
 
     if( Lfreebound.eq.1 ) then
       ! TODO: FREE BOUNDARY STUFF
+      FATAL( preset, .true., Lboundary=1 incompatible with free-boundary yet)
     endif
-
-    ! Now map to iRbc, iZbs...
-
 
 
 
@@ -303,7 +289,7 @@ subroutine preset
 
       if( Lchangeangle ) write(ounit,'("readin : " 10x " : CHANGING ANGLE ;")')
 
-      do ii = 1, mnRZ ; mm = imRZ(ii) ; nn = inRZ(ii) / Nfp ! set plasma boundary, computational boundary; 29 Apr 15;
+      do ii = 1, mn_field ; mm = im_field(ii) ; nn = in_field(ii) / Nfp ! set plasma boundary, computational boundary; 29 Apr 15;
 
         if( Lchangeangle ) then ; jj = -1 ; kk = -nn ! change sign of poloidal angle;
         else                    ; jj = +1 ; kk = +nn
@@ -398,7 +384,7 @@ subroutine preset
         mm = mmRZRZ(idx_mode)
         nn = nnRZRZ(idx_mode)
 
-        do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over harmonics within range;
+        do ii = 1, mn_field ; mi = im_field(ii) ; ni = in_field(ii) ! loop over harmonics within range;
           if( mm.eq.0 .and. mi.eq.0 .and. nn*Nfp.eq.ni ) then
           iRbc(ii,1:Nvol-1) = allRZRZ(1,1:Nvol-1, idx_mode) ! select relevant harmonics;
           iZbs(ii,1:Nvol-1) = allRZRZ(2,1:Nvol-1, idx_mode) ! select relevant harmonics;
@@ -410,11 +396,11 @@ subroutine preset
             iZbc(ii,1:Nvol-1) = zero             ! select relevant harmonics;
           endif
           elseif( mm.eq.mi .and. nn*Nfp.eq.jj*ni ) then
-          iRbc(ii,1:Nvol-1) = allRZRZ(1,1:Nvol-1, idx_mode) ! select relevant harmonics;
+          iRbc(ii,1:Nvol-1) =    allRZRZ(1,1:Nvol-1, idx_mode) ! select relevant harmonics;
           iZbs(ii,1:Nvol-1) = jj*allRZRZ(2,1:Nvol-1, idx_mode) ! select relevant harmonics;
           if( NOTstellsym ) then
             iRbs(ii,1:Nvol-1) = jj*allRZRZ(3,1:Nvol-1, idx_mode) ! select relevant harmonics;
-            iZbc(ii,1:Nvol-1) = allRZRZ(4,1:Nvol-1, idx_mode) ! select relevant harmonics;
+            iZbc(ii,1:Nvol-1) =    allRZRZ(4,1:Nvol-1, idx_mode) ! select relevant harmonics;
           else
             iRbs(ii,1:Nvol-1) = zero             ! select relevant harmonics;
             iZbc(ii,1:Nvol-1) = zero             ! select relevant harmonics;
@@ -443,59 +429,61 @@ subroutine preset
 
   !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+  ! Broadcast rhomn, bn, r0n, Z0n only in case of Lboundary.eq.1
   if( Lboundary.eq.1 ) then
-    RlBCAST( irhoc(1:mn, 1:Mvol), mn*Mvol, 0 )
-    RlBCAST( ibc(0:Ntor, 1:Mvol), (Ntor+1)*Mvol, 0 )
+    RlBCAST( irhoc(1:mn_rho, 1:Mvol),  mn_rho *Mvol, 0 )
+    RlBCAST( ibc(  0:Ntor  , 1:Mvol), (Ntor+1)*Mvol, 0 )
+    RlBCAST( iR0c( 0:Ntor  , 1:Mvol), (Ntor+1)*Mvol, 0 )
+    RlBCAST( iZ0s( 0:Ntor  , 1:Mvol), (Ntor+1)*Mvol, 0 )
 
     if( Lfreebound.eq.1 ) then
       ! TODO: FREE BOUNDARY STUFF
     endif
+  endif ! Lboundary.eq.1
 
-  else
-    ; RlBCAST( iRbc(1:mnRZ,0:Mvol), (Mvol+1)*mnRZ, 0 )
+  ! Broadcast Rmn, Zmn
+  ; RlBCAST( iRbc(1:mn_field,0:Mvol), (Mvol+1)*mn_field, 0 )
+  if( Igeometry.eq.3 ) then
+    ;RlBCAST( iZbs(1:mn_field,0:Mvol), (Mvol+1)*mn_field, 0 ) ! only required for ii > 1 ;
+  endif
+  if( NOTstellsym ) then
+    ;RlBCAST( iRbs(1:mn_field,0:Mvol), (Mvol+1)*mn_field, 0 ) ! only required for ii > 1 ;
     if( Igeometry.eq.3 ) then
-      ;RlBCAST( iZbs(1:mnRZ,0:Mvol), (Mvol+1)*mnRZ, 0 ) ! only required for ii > 1 ;
+      RlBCAST( iZbc(1:mn_field,0:Mvol), (Mvol+1)*mn_field, 0 )
     endif
+  endif
+
+  if( Lfreebound.eq.1 ) then
+    ;RlBCAST( iVns(1:mn_force), mn_force, 0 ) ! only required for ii > 1 ;
+    ;RlBCAST( iBns(1:mn_force), mn_force, 0 ) ! only required for ii > 1 ;
     if( NOTstellsym ) then
-      ;RlBCAST( iRbs(1:mnRZ,0:Mvol), (Mvol+1)*mnRZ, 0 ) ! only required for ii > 1 ;
-      if( Igeometry.eq.3 ) then
-        RlBCAST( iZbc(1:mnRZ,0:Mvol), (Mvol+1)*mnRZ, 0 )
-      endif
+      RlBCAST( iVnc(1:mn_force), mn_force, 0 )
+      RlBCAST( iBnc(1:mn_force), mn_force, 0 )
     endif
+  endif
 
-    if( Lfreebound.eq.1 ) then
-      ;RlBCAST( iVns(1:mnf), mnf, 0 ) ! only required for ii > 1 ;
-      ;RlBCAST( iBns(1:mnf), mnf, 0 ) ! only required for ii > 1 ;
-      if( NOTstellsym ) then
-        RlBCAST( iVnc(1:mnf), mnf, 0 )
-        RlBCAST( iBnc(1:mnf), mnf, 0 )
-      endif
-    endif
-
-    if( Igeometry.eq.1 .or. Igeometry.eq.2 ) then
-      ;iRbc(1:mnRZ,0) = zero ! innermost volume must be trivial; this is used in volume; innermost interface is coordinate axis;
-      if( NOTstellsym ) then
-        iRbs(1:mnRZ,0) = zero ! innermost volume must be trivial; this is used in volume;
-      endif
-    endif
-
-    if( Igeometry.eq.3 ) then
-      iZbs(1,0:Mvol) = zero ! Zbs_{m=0,n=0} is irrelevant;
-    endif
-    if( NOTstellsym) then
-      iRbs(1,0:Mvol) = zero ! Rbs_{m=0,n=0} is irrelevant;
-    endif
-
-    if ( Igeometry.eq.1 .and. Lreflect.eq.1) then ! reflect upper and lower bound in slab, each take half the amplitude
-      iRbc(2:mnRZ,Mvol) = iRbc(2:mnRZ,Mvol) * half
-      iRbc(2:mnRZ,0) = -iRbc(2:mnRZ,Mvol)
+  if( Igeometry.eq.1 .or. Igeometry.eq.2 ) then
+    ;iRbc(1:mn_field,0) = zero ! innermost volume must be trivial; this is used in volume; innermost interface is coordinate axis;
     if( NOTstellsym ) then
-      iRbs(2:mnRZ,Mvol) = iRbs(2:mnRZ,Mvol) * half
-      iRbs(2:mnRZ,0) = -iRbs(2:mnRZ,Mvol)
+      iRbs(1:mn_field,0) = zero ! innermost volume must be trivial; this is used in volume;
     endif
-    endif
+  endif
 
-  endif ! end if( Lboundary.eq.1 )
+  if( Igeometry.eq.3 ) then
+    iZbs(1,0:Mvol) = zero ! Zbs_{m=0,n=0} is irrelevant;
+  endif
+  if( NOTstellsym) then
+    iRbs(1,0:Mvol) = zero ! Rbs_{m=0,n=0} is irrelevant;
+  endif
+
+  if ( Igeometry.eq.1 .and. Lreflect.eq.1) then ! reflect upper and lower bound in slab, each take half the amplitude
+    iRbc(2:mn_field,Mvol) =  iRbc(2:mn_field,Mvol) * half
+    iRbc(2:mn_field,0)    = -iRbc(2:mn_field,Mvol)
+  if( NOTstellsym ) then
+    iRbs(2:mn_field,Mvol) =  iRbs(2:mn_field,Mvol) * half
+    iRbs(2:mn_field,0)    = -iRbs(2:mn_field,Mvol)
+  endif
+  endif
 
   !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -532,14 +520,28 @@ subroutine preset
 !> </ul>
 
 !                            Rbc  Zbs    Rbs    Zbc
-  select case( Igeometry )
-  case( 1:2)
-   if( YESstellsym ) LGdof = mn
-   if( NOTstellsym ) LGdof = mn        + mn-1
-  case(   3)
-   if( YESstellsym ) LGdof = mn + mn-1
-   if( NOTstellsym ) LGdof = mn + mn-1 + mn-1 + mn
-  end select
+  if( Lboundary.eq.0 ) then
+    select case( Igeometry )
+    case( 1:2)
+    if( YESstellsym ) LGdof = mn_field
+    if( NOTstellsym ) LGdof = mn_field        + mn_field-1
+    case(   3)
+    if( YESstellsym ) LGdof = mn_field + mn_field-1
+    if( NOTstellsym ) LGdof = mn_field + mn_field-1 + mn_field-1 + mn_field
+    end select
+  else if( Lboundary.eq.1 ) then
+    select case( Igeometry )
+    case( 1:2 )
+      FATAL( preset.f90, .true., Igeometry need to be 3 when Lboundary is 1 )
+    case(  3  )
+!                               rhomn    bn, R0c, Z0s   - Z0s(0)
+      if( YESstellsym ) LGdof = mn_rho + 3 * (Ntor + 1) - 1
+      if( NOTstellsym ) then
+        FATAL( preset.f90, .true., Non stellarator symmetry not implemented with Lboundary is 1 )
+      endif
+    end select
+  endif
+
 
   NGdof = ( Mvol-1 ) * LGdof
 
@@ -692,15 +694,15 @@ endif
 !> </ul>
 
   SALLOCATE( TT, (0:Mrad,0:1,0:1), zero )
-  SALLOCATE(RTT, (0:Lrad(1),0:Mpol,0:1,0:1), zero )
-  SALLOCATE(RTM, (0:Lrad(1),0:Mpol), zero )
+  SALLOCATE(RTT, (0:Lrad(1),0:Mpol_field,0:1,0:1), zero )
+  SALLOCATE(RTM, (0:Lrad(1),0:Mpol_field), zero )
 
   call get_cheby( -one, Mrad, TT(:,0,:))
   call get_cheby( one , Mrad, TT(:,1,:))
 
-  call get_zernike( zero, Lrad(1), Mpol, RTT(:,:,0,:))
-  call get_zernike( one, Lrad(1), Mpol, RTT(:,:,1,:))
-  call get_zernike_rm(zero, Lrad(1), Mpol, RTM(:,:))
+  call get_zernike(   zero, Lrad(1), Mpol_field, RTT(:,:,0,:))
+  call get_zernike(   one , Lrad(1), Mpol_field, RTT(:,:,1,:))
+  call get_zernike_rm(zero, Lrad(1), Mpol_field, RTM(:,:)    )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -774,11 +776,11 @@ endif
 !>       Also, take care that the sign of the sine harmonics in the above expressions will change for these cases. </li>
 !> </ul>
 
-  SALLOCATE( ki, (1:mn,0:1), 0 )
-  SALLOCATE( kija, (1:mn,1:mn,0:1), 0 )
-  SALLOCATE( kijs, (1:mn,1:mn,0:1), 0 )
+  SALLOCATE( ki, (1:mn_field,0:1), 0 )
+  SALLOCATE( kija, (1:mn_field,1:mn_field,0:1), 0 )
+  SALLOCATE( kijs, (1:mn_field,1:mn_field,0:1), 0 )
 
-  do ii = 1, mn  ; mi =  im(ii) ; ni =  in(ii)
+  do ii = 1, mn_field  ; mi =  im_field(ii) ; ni =  in_field(ii)
 
     call getimn(lMpol, lNtor, Nfp, mi, ni, kk)
     if (kk.gt.0) then
@@ -787,7 +789,7 @@ endif
       endif
     endif
 
-    do jj = 1, mn  ; mj =  im(jj) ; nj =  in(jj) ; mimj = mi + mj ; ninj = ni + nj !   adding   ; 17 Dec 15;
+    do jj = 1, mn_field  ; mj =  im_field(jj) ; nj =  in_field(jj) ; mimj = mi + mj ; ninj = ni + nj !   adding   ; 17 Dec 15;
 
       call getimn(lMpol, lNtor, Nfp, mimj, ninj, kk)
       if (kk.gt.0) then
@@ -820,11 +822,11 @@ endif
 
   if( Igeometry.eq.2 ) then ! standard cylindrical; 04 Dec 14;
 
-   SALLOCATE( djkp, (1:mn,1:mn), 0 ) ! only used in volume; trigonometric identities; 04 Dec 14;
-   SALLOCATE( djkm, (1:mn,1:mn), 0 ) ! only used in volume; trigonometric identities; 04 Dec 14;
+   SALLOCATE( djkp, (1:mn_field,1:mn_field), 0 ) ! only used in volume; trigonometric identities; 04 Dec 14;
+   SALLOCATE( djkm, (1:mn_field,1:mn_field), 0 ) ! only used in volume; trigonometric identities; 04 Dec 14;
 
-   do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
-    do jj = 1, mn ; mj = im(jj) ; nj = in(jj)
+   do ii = 1, mn_field ; mi = im_field(ii) ; ni = in_field(ii)
+    do jj = 1, mn_field ; mj = im_field(jj) ; nj = in_field(jj)
      if( mi-mj.eq.0 .and. ni-nj.eq.0 ) djkp(ii,jj) = 1
      if( mi+mj.eq.0 .and. ni+nj.eq.0 ) djkm(ii,jj) = 1
     enddo
@@ -836,13 +838,13 @@ endif
 
 !> **iotakki**
 
-  SALLOCATE( iotakkii, (1:mn      ), 0 ) ! used to identify matrix elements in straight-field-line angle transformation;
+  SALLOCATE( iotakkii, (1:mn_field      ), 0 ) ! used to identify matrix elements in straight-field-line angle transformation;
 
-  SALLOCATE( iotaksub, (1:mn,1:mns), 0 )
-  SALLOCATE( iotaksgn, (1:mn,1:mns), 0 )
-  SALLOCATE( iotakadd, (1:mn,1:mns), 0 )
+  SALLOCATE( iotaksub, (1:mn_field,1:mns), 0 )
+  SALLOCATE( iotaksgn, (1:mn_field,1:mns), 0 )
+  SALLOCATE( iotakadd, (1:mn_field,1:mns), 0 )
 
-  do kk = 1, mn ; mk = im(kk) ; nk = in(kk)
+  do kk = 1, mn_field ; mk = im_field(kk) ; nk = in_field(kk)
 
     call getimn(sMpol, sNtor, Nfp, mk, nk, ii)
     if (ii.gt.0) iotakkii(kk) = ii
@@ -897,7 +899,7 @@ endif
   endif
 
   SALLOCATE( cheby, (0:Mrad,0:2), zero )
-  SALLOCATE( zernike, (0:Lrad(1), 0:Mpol, 0:2), zero )
+  SALLOCATE( zernike, (0:Lrad(1), 0:Mpol_field, 0:2), zero )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -926,8 +928,8 @@ endif
 
    if( Nquad.gt.0 ) then ;            Iquad(vvol) =                         Nquad
    else
-    if(      Lcoordinatesingularity ) Iquad(vvol) = Mpol + 2 * Lrad(vvol) - Nquad ! NEED TO REVISE REGULARIZATION FACTORS; 26 Feb 13;
-    if( .not.Lcoordinatesingularity ) Iquad(vvol) =        2 * Lrad(vvol) - Nquad
+    if(      Lcoordinatesingularity ) Iquad(vvol) = Mpol_field + 2 * Lrad(vvol) - Nquad ! NEED TO REVISE REGULARIZATION FACTORS; 26 Feb 13;
+    if( .not.Lcoordinatesingularity ) Iquad(vvol) =              2 * Lrad(vvol) - Nquad
    endif
 
   enddo ! end of do vvol; 18 Feb 13;
@@ -1002,10 +1004,10 @@ endif
 !> <li> this is only used in dforce() in constructing the force-imbalance vector </li>
 !> </ul>
 
-  SALLOCATE( BBweight, (1:mn), opsilon * exp( - escale * ( im(1:mn)**2 + (in(1:mn)/Nfp)**2 ) ) )
+  SALLOCATE( BBweight, (1:mn_force), opsilon * exp( - escale * ( im_force(1:mn_force)**2 + (in_force(1:mn_force)/Nfp)**2 ) ) )
 
   if( myid.eq.0 .and. escale.gt.small ) then
-   do ii = 1, mn ; write(ounit,'("preset : " 10x " : myid="i3" ; ("i3","i3") : BBweight="es13.5" ;")') myid, im(ii), in(ii)/Nfp, BBweight(ii)
+   do ii = 1, mn_force ; write(ounit,'("preset : " 10x " : myid="i3" ; ("i3","i3") : BBweight="es13.5" ;")') myid, im_force(ii), in_force(ii)/Nfp, BBweight(ii)
    enddo
   endif
 
@@ -1020,9 +1022,9 @@ endif
 !>       where \f$p \equiv\,\f$\c pcondense . </li>
 !> </ul>
 
-  SALLOCATE( mmpp, (1:mn), zero )
+  SALLOCATE( mmpp, (1:mn_field), zero )
 
-  do ii = 1, mn ; mi = im(ii)
+  do ii = 1, mn_field ; mi = im_field(ii)
 
    if( mi.eq.0 ) then ; mmpp(ii) = zero
    else               ; mmpp(ii) = mi**pcondense
@@ -1065,31 +1067,31 @@ endif
   SALLOCATE( NdMASmax, (1:Mvol       ), 0 ) ! The maximum size of sparse matrix for GMRES preconditioning;
   SALLOCATE( NdMAS   , (1:Mvol       ), 0 ) ! The actual size of sparse matrix for GMRES preconditioning;
 
-  NALLOCATE( Ate  , (1:Mvol,-2:2,1:mn)    ) ! recall that this is type:sub-grid; 31 Jan 13;
-  NALLOCATE( Aze  , (1:Mvol,-2:2,1:mn)    ) ! -2 : for use of matrix-free solver ; -1 : for use of force gradient
-  NALLOCATE( Ato  , (1:Mvol,-2:2,1:mn)    ) !  0 : normal data
-  NALLOCATE( Azo  , (1:Mvol,-2:2,1:mn)    ) ! 1:2: use to compute derivative w.r.t. fluxes
+  NALLOCATE( Ate  , (1:Mvol,-2:2,1:mn_field)    ) ! recall that this is type:sub-grid; 31 Jan 13;
+  NALLOCATE( Aze  , (1:Mvol,-2:2,1:mn_field)    ) ! -2 : for use of matrix-free solver ; -1 : for use of force gradient
+  NALLOCATE( Ato  , (1:Mvol,-2:2,1:mn_field)    ) !  0 : normal data
+  NALLOCATE( Azo  , (1:Mvol,-2:2,1:mn_field)    ) ! 1:2: use to compute derivative w.r.t. fluxes
 
-  SALLOCATE( Fso  , (1:Mvol,     1:mn), 0 ) ! these will become redundant if/when Lagrange multipliers are used to enforce bounday constraints; 26 Jan 16;
-  SALLOCATE( Fse  , (1:Mvol,     1:mn), 0 )
+!  SALLOCATE( Fso  , (1:Mvol,     1:mn_field), 0 ) ! these will become redundant if/when Lagrange multipliers are used to enforce bounday constraints; 26 Jan 16;
+!  SALLOCATE( Fse  , (1:Mvol,     1:mn_field), 0 )
 
-  SALLOCATE( Lma  , (1:Mvol,     1:mn), 0 ) ! degree of freedom index; for Lagrange multiplier; 08 Feb 16;
-  SALLOCATE( Lmb  , (1:Mvol,     1:mn), 0 )
-  SALLOCATE( Lmc  , (1:Mvol,     1:mn), 0 ) ! only need Lmc(2:mn) ; only for NOTstellsym; 08 Feb 16;
-  SALLOCATE( Lmd  , (1:Mvol,     1:mn), 0 ) ! only need Lmd(2:mn) ; only for NOTstellsym; 08 Feb 16;
-  SALLOCATE( Lme  , (1:Mvol,     1:mn), 0 ) ! only need Lme(2:mn) ;
-  SALLOCATE( Lmf  , (1:Mvol,     1:mn), 0 ) ! only need Lmf(2:mn) ; only for NOTstellsym; 08 Feb 16;
-  SALLOCATE( Lmg  , (1:Mvol,     1:mn), 0 ) ! only need Lmg(1   ) ;
-  SALLOCATE( Lmh  , (1:Mvol,     1:mn), 0 ) ! only need Lmh(1   ) ;
+  SALLOCATE( Lma  , (1:Mvol,     1:mn_field), 0 ) ! degree of freedom index; for Lagrange multiplier; 08 Feb 16;
+  SALLOCATE( Lmb  , (1:Mvol,     1:mn_field), 0 )
+  SALLOCATE( Lmc  , (1:Mvol,     1:mn_field), 0 ) ! only need Lmc(2:mn) ; only for NOTstellsym; 08 Feb 16;
+  SALLOCATE( Lmd  , (1:Mvol,     1:mn_field), 0 ) ! only need Lmd(2:mn) ; only for NOTstellsym; 08 Feb 16;
+  SALLOCATE( Lme  , (1:Mvol,     1:mn_field), 0 ) ! only need Lme(2:mn) ;
+  SALLOCATE( Lmf  , (1:Mvol,     1:mn_field), 0 ) ! only need Lmf(2:mn) ; only for NOTstellsym; 08 Feb 16;
+  SALLOCATE( Lmg  , (1:Mvol,     1:mn_field), 0 ) ! only need Lmg(1   ) ;
+  SALLOCATE( Lmh  , (1:Mvol,     1:mn_field), 0 ) ! only need Lmh(1   ) ;
 
-  SALLOCATE( Lmavalue, (1:Mvol,     1:mn), zero )
-  SALLOCATE( Lmbvalue, (1:Mvol,     1:mn), zero )
-  SALLOCATE( Lmcvalue, (1:Mvol,     1:mn), zero )
-  SALLOCATE( Lmdvalue, (1:Mvol,     1:mn), zero )
-  SALLOCATE( Lmevalue, (1:Mvol,     1:mn), zero )
-  SALLOCATE( Lmfvalue, (1:Mvol,     1:mn), zero )
-  SALLOCATE( Lmgvalue, (1:Mvol,     1:mn), zero )
-  SALLOCATE( Lmhvalue, (1:Mvol,     1:mn), zero )
+  SALLOCATE( Lmavalue, (1:Mvol,     1:mn_field), zero )
+  SALLOCATE( Lmbvalue, (1:Mvol,     1:mn_field), zero )
+  SALLOCATE( Lmcvalue, (1:Mvol,     1:mn_field), zero )
+  SALLOCATE( Lmdvalue, (1:Mvol,     1:mn_field), zero )
+  SALLOCATE( Lmevalue, (1:Mvol,     1:mn_field), zero )
+  SALLOCATE( Lmfvalue, (1:Mvol,     1:mn_field), zero )
+  SALLOCATE( Lmgvalue, (1:Mvol,     1:mn_field), zero )
+  SALLOCATE( Lmhvalue, (1:Mvol,     1:mn_field), zero )
 
   do vvol = 1, Mvol
 
@@ -1097,7 +1099,7 @@ endif
 
    if( Lcoordinatesingularity ) then
     zerdof = 0                                       ! count Zernike degree of freedom 30 Jun 19
-    do ii = 2, Mpol                                  ! for m>1
+    do ii = 2, Mpol_field                            ! for m>1
      do jj = ii, Lrad(vvol), 2
       zerdof = zerdof + 2 * ntor + 1                 ! plus and minus sign for n>1, unique for n==0
       if( NOTstellsym ) zerdof = zerdof + 2*ntor + 1 ! plus and minus sign for n
@@ -1115,7 +1117,7 @@ endif
      endif
     enddo
 
-    if (Mpol .ge. 1) then ! for m==1
+    if (Mpol_field .ge. 1) then ! for m==1
       do jj = 1, Lrad(vvol), 2
         zerdof = zerdof + 2 * ntor + 1                  ! minus and plus sign for n, Aze
         if (jj .ge. 2) zerdof = zerdof + 2 * ntor + 1   ! minus sign for n, Ate, without l=0 due to recombination
@@ -1130,8 +1132,8 @@ endif
     ! the degree of freedom in the Beltrami field without Lagrange multipliers
     Nfielddof(vvol) = zerdof
                                      !                                     a    c      b        d      e      f      g   h
-    if( YESstellsym ) NAdof(vvol) = zerdof                               + mn        + Ntor+1        + mn-1        + 1 + 0
-    if( NOTstellsym ) NAdof(vvol) = zerdof                               + mn + mn-1 + Ntor+1 + Ntor + mn-1 + mn-1 + 1 + 0 ! this is broken at the moment
+    if( YESstellsym ) NAdof(vvol) = zerdof                               + mn_field        + Ntor_field+1        + mn_field-1        + 1 + 0
+    if( NOTstellsym ) NAdof(vvol) = zerdof                               + mn_field + mn_field-1 + Ntor_field+1 + Ntor_field + mn_field-1 + mn_field-1 + 1 + 0 ! this is broken at the moment
 
     ! due to basis recombination, Lma will not have the m=0 and m=1 harmonics. We substract them now
     ! m = 0
@@ -1139,7 +1141,7 @@ endif
     if (NOTstellsym) NAdof(vvol) = NAdof(vvol) - ntor
 
     ! m = 1
-    if (Mpol .ge. 1) then
+    if (Mpol_field .ge. 1) then
       NAdof(vvol) = NAdof(vvol) - (2 * ntor + 1)
       if (NOTstellsym) NAdof(vvol) = NAdof(vvol) - (2 * ntor + 1)
     endif
@@ -1147,26 +1149,26 @@ endif
     ! Guess the size of the sparse matrix ! 28 Jan 20
     ! If an iterative method is used and requires an preconditioner, we need to construct it as a sparse matrix
     if (Lmatsolver.ge.2 .and. LGMRESprec.gt.0) then
-      if( YESstellsym ) NdMASmax(vvol) = (2 * (Lrad(vvol)/2 + 1))**2 * mn + 2 * 2 * 5 * Lrad(vvol) * mn ! Ate, Aze
-      if( NOTstellsym ) NdMASmax(vvol) = (4 * (Lrad(vvol)/2 + 1))**2 * mn + 2 * 4 * 8 * Lrad(vvol) * mn ! Ate, Aze, Ato, Azo
+      if( YESstellsym ) NdMASmax(vvol) = (2 * (Lrad(vvol)/2 + 1))**2 * mn_field + 2 * 2 * 5 * Lrad(vvol) * mn_field ! Ate, Aze
+      if( NOTstellsym ) NdMASmax(vvol) = (4 * (Lrad(vvol)/2 + 1))**2 * mn_field + 2 * 4 * 8 * Lrad(vvol) * mn_field ! Ate, Aze, Ato, Azo
     end if
    else ! .not.Lcoordinatesingularity;                                     a    c      b        d      e      f      g   h
-    if( YESstellsym ) NAdof(vvol) = 2 * ( mn        ) * ( Lrad(vvol)    )                            + mn-1        + 1 + 1
-    if( NOTstellsym ) NAdof(vvol) = 2 * ( mn + mn-1 ) * ( Lrad(vvol)    )                            + mn-1 + mn-1 + 1 + 1
+    if( YESstellsym ) NAdof(vvol) = 2 * ( mn_field        ) * ( Lrad(vvol)    )                                  + mn_field-1        + 1 + 1
+    if( NOTstellsym ) NAdof(vvol) = 2 * ( mn_field + mn_field-1 ) * ( Lrad(vvol)    )                            + mn_field-1 + mn_field-1 + 1 + 1
 
     ! dof for field variables only
-    if( YESstellsym ) Nfielddof(vvol) = 2 * ( mn        ) * ( Lrad(vvol)    )
-    if( NOTstellsym ) Nfielddof(vvol) = 2 * ( mn + mn-1 ) * ( Lrad(vvol)    )
+    if( YESstellsym ) Nfielddof(vvol) = 2 * ( mn_field              ) * ( Lrad(vvol)    )
+    if( NOTstellsym ) Nfielddof(vvol) = 2 * ( mn_field + mn_field-1 ) * ( Lrad(vvol)    )
 
     ! Guess the size of the sparse matrix ! 28 Jan 20
     ! If an iterative method is used and requires an preconditioner, we need to construct it as a sparse matrix
     if (Lmatsolver.ge.2 .and. LGMRESprec.gt.0) then
-      if( YESstellsym ) NdMASmax(vvol) = (2 * (Lrad(vvol) + 1))**2 * mn + 2 * 2 * 5 * Lrad(vvol) * mn        ! Ate, Aze
-      if( NOTstellsym ) NdMASmax(vvol) = (4 * (Lrad(vvol) + 1))**2 * mn + 2 * 4 * 8 * Lrad(vvol) * mn        ! Ate, Aze, Ato, Azo
+      if( YESstellsym ) NdMASmax(vvol) = (2 * (Lrad(vvol) + 1))**2 * mn_field + 2 * 2 * 5 * Lrad(vvol) * mn_field        ! Ate, Aze
+      if( NOTstellsym ) NdMASmax(vvol) = (4 * (Lrad(vvol) + 1))**2 * mn_field + 2 * 4 * 8 * Lrad(vvol) * mn_field        ! Ate, Aze, Ato, Azo
     end if
    endif ! end of if( Lcoordinatesingularity );
 
-   do ii = 1, mn ! loop over Fourier harmonics;
+   do ii = 1, mn_field ! loop over Fourier harmonics;
 
     do ideriv = -2, 2 ! loop over derivatives; 14 Jan 13;
 
@@ -1196,7 +1198,7 @@ endif
     endif
    case( 2 )    ;                                            ! will call ra00aa below to read initial vector potential from file;
    case( 3 )    ;                                            ! the initial guess will be randomized, maximum is maxrndgues; 5 Mar 19;
-    do ii = 1, mn ! loop over Fourier harmonics;
+    do ii = 1, mn_field ! loop over Fourier harmonics;
 
      do ideriv = -2, 2 ! loop over derivatives; 14 Jan 13;
 
@@ -1221,7 +1223,7 @@ endif
 
    if( Lcoordinatesingularity ) then
 
-    do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
+    do ii = 1, mn_field ; mi = im_field(ii) ; ni = in_field(ii)
 
      do ll = 0, Lrad(vvol)
       ! Zernike is non zero only if ll>=mi and when they have the same parity
@@ -1242,7 +1244,7 @@ endif
 
     enddo ! end of do ii
 
-    do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
+    do ii = 1, mn_field ; mi = im_field(ii) ; ni = in_field(ii)
      ! Lma is for Ate boundary condition on axis. For m=0 and 1, the boundary condition has been satisfied by basis recombination, so they are excluded.
      if ( mi.ne.0 .and. mi.ne.1     )  then ; idof = idof + 1 ; Lma(vvol,  ii)       = idof
      endif
@@ -1270,12 +1272,15 @@ endif
 
     enddo ! end of do ii; 25 Jan 13;
 
-    FATAL( preset, idof.ne.NAdof(vvol), need to count Beltrami degrees-of-freedom more carefully  for coordinate singularity )
-    FATAL( preset, (idof+1)**2.ge.HUGE(idof)), NAdof too big, should be smaller than maximum of int32 type )
+    ! This is not true using Henneberg's representation - Fourier truncation is different.
+    if( Lboundary.eq. 0 ) then
+      FATAL( preset, idof.ne.NAdof(vvol), need to count Beltrami degrees-of-freedom more carefully  for coordinate singularity )
+      FATAL( preset, (idof+1)**2.ge.HUGE(idof)), NAdof too big, should be smaller than maximum of int32 type )
+    endif
 
    else ! .not.Lcoordinatesingularity;
 
-    do ii = 1, mn
+    do ii = 1, mn_field
      ! We use basis recombination method to ensure the inner boundary has At=Az=0. Therefore they don't have ll=0 component.
      do ll = 1, Lrad(vvol)                 ; idof = idof + 1 ; Ate(vvol,0,ii)%i(ll) = idof
       ;                                    ; idof = idof + 1 ; Aze(vvol,0,ii)%i(ll) = idof
@@ -1285,7 +1290,7 @@ endif
      enddo ! end of do ll; 08 Feb 16;
     enddo
 
-    do ii = 1, mn
+    do ii = 1, mn_field
      !;                                     ; idof = idof + 1 ; Lma(vvol,  ii)       = idof
      !;                                     ; idof = idof + 1 ; Lmb(vvol,  ii)       = idof
      !if(  ii.gt.1 .and. NOTstellsym ) then ; idof = idof + 1 ; Lmc(vvol,  ii)       = idof
@@ -1322,14 +1327,17 @@ endif
    ! enddo
    !endif
 
-    FATAL( preset, idof.ne.NAdof(vvol), need to count degrees-of-freedom more carefully for new matrix )
-    FATAL( preset, (idof+1)**2.ge.HUGE(idof)), NAdof too big, should be smaller than maximum of int32 type )
-
+    if( Lboundary.eq.0 ) then
+      FATAL( preset, idof.ne.NAdof(vvol), need to count degrees-of-freedom more carefully for new matrix )
+      FATAL( preset, (idof+1)**2.ge.HUGE(idof)), NAdof too big, should be smaller than maximum of int32 type )
+    endif
    endif ! end of if( Lcoordinatesingularity ) ;
 
-   FATAL( preset, idof.ne.NAdof(vvol), impossible logic )
+   if( Lboundary.eq.0 ) then
+    FATAL( preset, idof.ne.NAdof(vvol), impossible logic )
+   endif
 
-   do ii = 1, mn
+   do ii = 1, mn_field
       do jj = 0, Lrad(vvol)
         if (Ate(vvol,0,ii)%i(jj) == 0) Ate(vvol,0,ii)%s(jj) = zero
         if (Aze(vvol,0,ii)%i(jj) == 0) Aze(vvol,0,ii)%s(jj) = zero
@@ -1353,7 +1361,7 @@ endif
   if( myid.eq.0 ) then ! 17 Oct 12;
    cput = GETTIME
    write(ounit,'("preset : ", 10x ," : ")')
-   write(ounit,'("preset : ",f10.2," : Nquad="i4" ; mn="i5" ; NGdof="i6" ; NAdof="16(i6",")" ...")') cput-cpus, Nquad, mn, NGdof, NAdof(1:min(Mvol,16))
+   write(ounit,'("preset : ",f10.2," : Nquad="i4" ; mn_field="i5" ; NGdof="i6" ; NAdof="16(i6",")" ...")') cput-cpus, Nquad, mn_field, NGdof, NAdof(1:min(Mvol,16))
   endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -1362,7 +1370,7 @@ endif
 
 ! Fourier transforms;
 
-  Nt = max( Ndiscrete*4*Mpol, 1 ) ; Nz = max( Ndiscrete*4*Ntor, 1 ) ; Ntz = Nt*Nz ; soNtz = one / sqrt( one*Ntz ) ! exaggerated discrete resolution;
+  Nt = max( Ndiscrete*4*Mpol_field, 1 ) ; Nz = max( Ndiscrete*4*Ntor, 1 ) ; Ntz = Nt*Nz ; soNtz = one / sqrt( one*Ntz ) ! exaggerated discrete resolution;
 
   ;                  ; hNt = Nt / 2
   if( Nz.gt.1 ) then ; hNz = Nz / 2
@@ -1389,15 +1397,15 @@ endif
   SALLOCATE( gvuij, (1:Ntz,0:3,0:3    ), zero ) ! need this on higher resolution grid for accurate Fourier decomposition; 10 Dec 15;
 
   if ((Lfindzero .eq. 2) .or. (Lcheck.eq.5 .or. LHevalues .or. LHevectors .or. LHmatrix .or. Lperturbed.eq.1)) then
-    SALLOCATE( dRadR, (1:mn,0:1,0:1,1:mn), zero ) ! calculated in rzaxis; 19 Sep 16;
-    SALLOCATE( dRadZ, (1:mn,0:1,0:1,1:mn), zero )
-    SALLOCATE( dZadR, (1:mn,0:1,0:1,1:mn), zero )
-    SALLOCATE( dZadZ, (1:mn,0:1,0:1,1:mn), zero )
+    SALLOCATE( dRadR, (1:mn_field,0:1,0:1,1:mn_field), zero ) ! calculated in rzaxis; 19 Sep 16;
+    SALLOCATE( dRadZ, (1:mn_field,0:1,0:1,1:mn_field), zero )
+    SALLOCATE( dZadR, (1:mn_field,0:1,0:1,1:mn_field), zero )
+    SALLOCATE( dZadZ, (1:mn_field,0:1,0:1,1:mn_field), zero )
 
-    SALLOCATE( dRodR, (1:Ntz,0:3,1:mn), zero ) ! calculated in rzaxis; 19 Sep 16;
-    SALLOCATE( dRodZ, (1:Ntz,0:3,1:mn), zero )
-    SALLOCATE( dZodR, (1:Ntz,0:3,1:mn), zero )
-    SALLOCATE( dZodZ, (1:Ntz,0:3,1:mn), zero )
+    SALLOCATE( dRodR, (1:Ntz,0:3,1:mn_field), zero ) ! calculated in rzaxis; 19 Sep 16;
+    SALLOCATE( dRodZ, (1:Ntz,0:3,1:mn_field), zero )
+    SALLOCATE( dZodR, (1:Ntz,0:3,1:mn_field), zero )
+    SALLOCATE( dZodZ, (1:Ntz,0:3,1:mn_field), zero )
   endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -1480,13 +1488,13 @@ endif
   SALLOCATE( gteta, (1:Ntz), zero )
   SALLOCATE( gzeta, (1:Ntz), zero )
 
-  SALLOCATE( cosi, (1:Ntz,1:mn), zero )
-  SALLOCATE( sini, (1:Ntz,1:mn), zero )
+  SALLOCATE( cosi, (1:Ntz,1:mn_field), zero )
+  SALLOCATE( sini, (1:Ntz,1:mn_field), zero )
 
   FATAL( preset, Nz.eq.0, illegal division )
   FATAL( preset, Nt.eq.0, illegal division )
 
-  do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over Fourier harmonics;
+  do ii = 1, mn_field ; mi = im_field(ii) ; ni = in_field(ii) ! loop over Fourier harmonics;
 
   do kk = 0, Nz-1 ; zeta = kk * pi2nfp / Nz
     do jj = 0, Nt-1 ; teta = jj * pi2    / Nt ; jk = 1 + jj + kk*Nt ; arg = mi * teta - ni * zeta
@@ -1507,7 +1515,7 @@ endif
 
    write(ounit,'("preset : ",10x," : checking FFT and inverse FFT ;")')
 
-   do imn = 1, mn ; mm = im(imn) ; nn = in(imn) ! in should include the Nfp factor; SRH: 27 Feb 18;
+   do imn = 1, mn_field ; mm = im_field(imn) ; nn = in_field(imn) ! in should include the Nfp factor; SRH: 27 Feb 18;
 
     ijreal(1:Ntz) = zero ; ijimag(1:Ntz) = zero
 
@@ -1523,18 +1531,18 @@ endif
 
     jkreal = ijreal ; jkimag = ijimag
 
-    ifail = 0 !                                                              even        odd         cos         sin
-    call tfft( Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz), mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), ifail )
+    ifail = 0 !                                                                                             even              odd               cos                sin
+    call tfft( Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz), mn_field, im_field(1:mn_field), in_field(1:mn_field), efmn(1:mn_field), ofmn(1:mn_field), cfmn(1:mn_field), sfmn(1:mn_field), ifail )
 
-    do ii = 1, mn
+    do ii = 1, mn_field
 
-     if( abs(efmn(ii))+abs(ofmn(ii))+abs(cfmn(ii))+abs(sfmn(ii)).gt.small ) write(ounit,2000) mm, nn, im(ii), in(ii), efmn(ii), ofmn(ii), cfmn(ii), sfmn(ii)
+     if( abs(efmn(ii))+abs(ofmn(ii))+abs(cfmn(ii))+abs(sfmn(ii)).gt.small ) write(ounit,2000) mm, nn, im_field(ii), in_field(ii), efmn(ii), ofmn(ii), cfmn(ii), sfmn(ii)
 
 2000 format("preset : ",10x," : (",i3,",",i3," ) = (",i3,",",i3," ) : "2f15.5" ; "2f15.5" ;")
 
     enddo ! end of do ii; SRH: 27 Feb 18;
 
-    call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, jireal(1:Ntz), jiimag(1:Ntz) )
+    call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), efmn(1:mn_field), ofmn(1:mn_field), cfmn(1:mn_field), sfmn(1:mn_field), Nt, Nz, jireal(1:Ntz), jiimag(1:Ntz) )
 
     error = ( sum((jkreal(1:Ntz)-jireal(1:Ntz))**2) + sum((jkimag(1:Ntz)-jiimag(1:Ntz))**2) ) / Ntz
 
@@ -1557,7 +1565,7 @@ endif
    case(   2 ) ; vvol = Mvol
    end select
 
-   WCALL( preset, rzaxis, ( Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), vvol, .false. ) ) ! set coordinate axis; 19 Jul 16;
+   WCALL( preset, rzaxis, ( Mvol, mn_field, iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), vvol, .false. ) ) ! set coordinate axis; 19 Jul 16;
 
   endif ! end of if( Igeometry.eq.3 ) then ; 19 Jul 16;
 
@@ -1583,23 +1591,23 @@ endif
 !>       and used only for the initialization of the surfaces taking into account axis information if provided. </li>
 !> </ul>
 
-  SALLOCATE( psifactor, (1:mn,1:Mvol), zero )
-  SALLOCATE( inifactor, (1:mn,1:Mvol), zero )
+  SALLOCATE( psifactor, (1:mn_field,1:Mvol), zero )
+  SALLOCATE( inifactor, (1:mn_field,1:Mvol), zero )
 
-  psifactor(1:mn,1:Mvol) = one
-  inifactor(1:mn,1:Mvol) = one
+  psifactor(1:mn_field,1:Mvol) = one
+  inifactor(1:mn_field,1:Mvol) = one
 
   select case( Igeometry )
 
   case( 1 )
 
-   psifactor(1:mn,1:Nvol) = one
+   psifactor(1:mn_field,1:Nvol) = one
 
   case( 2 )
 
    do vvol = 1, Nvol
-    do ii = 1, mn
-     if( im(ii).eq.0 ) then ; psifactor(ii,vvol) = tflux(vvol)**(          +half) ! 28 Jan 15;
+    do ii = 1, mn_field
+     if( im_field(ii).eq.0 ) then ; psifactor(ii,vvol) = tflux(vvol)**(          +half) ! 28 Jan 15;
      else                   ; psifactor(ii,vvol) = tflux(vvol)**(halfmm(ii)-half) ! 28 Jan 15;
      endif
     enddo
@@ -1608,8 +1616,8 @@ endif
   case( 3 )
 
    do vvol = 1, Nvol
-    do ii = 1, mn
-     if( im(ii).eq.0 ) then ; psifactor(ii,vvol) = Rscale * tflux(vvol)**zero       ! 08 Feb 16;
+    do ii = 1, mn_field
+     if( im_field(ii).eq.0 ) then ; psifactor(ii,vvol) = Rscale * tflux(vvol)**zero       ! 08 Feb 16;
                             ; inifactor(ii,vvol) = Rscale * tflux(vvol)**half       ! 17 Dec 18;
      else                   ; psifactor(ii,vvol) = Rscale * tflux(vvol)**halfmm(ii) ! 29 Apr 15;
                             ; inifactor(ii,vvol) = Rscale * tflux(vvol)**halfmm(ii) ! 17 Dec 18
@@ -1634,9 +1642,9 @@ endif
    !FATAL( preset, Linitialize.ne.1, geometrical initialization under construction for Cartesian ) ! 14 Apr 17;
 
     do vvol = 1, Nvol
-     ;iRbc(1:mn,vvol) = iRbc(1:mn,Mvol) * tflux(vvol) / tflux(Mvol) ! 14 Apr 17;
+     ;iRbc(1:mn_field,vvol) = iRbc(1:mn_field,Mvol) * tflux(vvol) / tflux(Mvol) ! 14 Apr 17;
      if( NOTstellsym ) then
-      iRbs(2:mn,vvol) = iRbs(2:mn,Mvol) * tflux(vvol) / tflux(Mvol) ! 14 Apr 17;
+      iRbs(2:mn_field,vvol) = iRbs(2:mn_field,Mvol) * tflux(vvol) / tflux(Mvol) ! 14 Apr 17;
      endif
     enddo
 
@@ -1645,9 +1653,9 @@ endif
     FATAL( preset, Linitialize.ne.1, geometrical initialization under construction for cylindrical )
 
     do vvol = 1, Nvol-1
-     ;iRbc(1:mn,vvol) = iRbc(1:mn,Nvol) * psifactor(1:mn,vvol)
+     ;iRbc(1:mn_field,vvol) = iRbc(1:mn_field,Nvol) * psifactor(1:mn_field,vvol)
      if( NOTstellsym ) then
-      iRbs(2:mn,vvol) = iRbs(2:mn,Nvol) * psifactor(2:mn,vvol)
+      iRbs(2:mn_field,vvol) = iRbs(2:mn_field,Nvol) * psifactor(2:mn_field,vvol)
      endif
     enddo
 
@@ -1669,11 +1677,11 @@ endif
 !    enddo
 !
     do vvol = 1, lvol-1
-     ;iRbc(1:mn,vvol) = iRbc(1:mn,0) + ( iRbc(1:mn,lvol) - iRbc(1:mn,0) ) * ( inifactor(1:mn,vvol) / Rscale ) / tflux(lvol)**halfmm(1:mn)
-     ;iZbs(2:mn,vvol) = iZbs(2:mn,0) + ( iZbs(2:mn,lvol) - iZbs(2:mn,0) ) * ( inifactor(2:mn,vvol) / Rscale ) / tflux(lvol)**halfmm(2:mn)
+     ;iRbc(1:mn_field,vvol) = iRbc(1:mn_field,0) + ( iRbc(1:mn_field,lvol) - iRbc(1:mn_field,0) ) * ( inifactor(1:mn_field,vvol) / Rscale ) / tflux(lvol)**halfmm(1:mn_field)
+     ;iZbs(2:mn_field,vvol) = iZbs(2:mn_field,0) + ( iZbs(2:mn_field,lvol) - iZbs(2:mn_field,0) ) * ( inifactor(2:mn_field,vvol) / Rscale ) / tflux(lvol)**halfmm(2:mn_field)
      if( NOTstellsym ) then
-      iRbs(2:mn,vvol) = iRbs(2:mn,0) + ( iRbs(2:mn,lvol) - iRbs(2:mn,0) ) * ( inifactor(2:mn,vvol) / Rscale ) / tflux(lvol)**halfmm(2:mn)
-      iZbc(1:mn,vvol) = iZbc(1:mn,0) + ( iZbc(1:mn,lvol) - iZbc(1:mn,0) ) * ( inifactor(1:mn,vvol) / Rscale ) / tflux(lvol)**halfmm(1:mn)
+      iRbs(2:mn_field,vvol) = iRbs(2:mn_field,0) + ( iRbs(2:mn_field,lvol) - iRbs(2:mn_field,0) ) * ( inifactor(2:mn_field,vvol) / Rscale ) / tflux(lvol)**halfmm(2:mn_field)
+      iZbc(1:mn_field,vvol) = iZbc(1:mn_field,0) + ( iZbc(1:mn_field,lvol) - iZbc(1:mn_field,0) ) * ( inifactor(1:mn_field,vvol) / Rscale ) / tflux(lvol)**halfmm(1:mn_field)
      endif
     enddo
 
@@ -1688,14 +1696,28 @@ endif
 
    end select ! matches select case( Igeometry ); 19 Jul 16;
 
+
+  if( Lboundary.eq.1 ) then
+    ! Then map back to rhomn, bn, ...
+    ! The mapping is ensured to be bijective because the Rmn, Zmn where built from rhomn, bn of the boundary
+
+    do vvol=1, Nvol-1
+      
+      call backwardMap( iRbc(1:mn_field,vvol), iZbs(1:mn_field,vvol), irhoc(1:mn_rho,vvol), ibc(0:Ntor,vvol), iR0c(0:Ntor,vvol), iZ0s(1:Ntor,vvol) )
+
+    enddo !vvol=1:Nvol-1
+
+  endif ! Lboundary.eq.1
+
+
   endif ! matches if( Linitialize.ne.0 ) then; 19 Jul 16;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !> **Bsupumn and Bsupvmn**
 
-  SALLOCATE( Bsupumn, (1:Nvol,0:1,1:mn), zero ) ! Fourier components of {\bf B}\cdot\nabla \theta on boundary; required for virtual casing;
-  SALLOCATE( Bsupvmn, (1:Nvol,0:1,1:mn), zero ) ! Fourier components of {\bf B}\cdot\nabla \zeta  on boundary;
+  SALLOCATE( Bsupumn, (1:Nvol,0:1,1:mn_field), zero ) ! Fourier components of {\bf B}\cdot\nabla \theta on boundary; required for virtual casing;
+  SALLOCATE( Bsupvmn, (1:Nvol,0:1,1:mn_field), zero ) ! Fourier components of {\bf B}\cdot\nabla \zeta  on boundary;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1744,14 +1766,14 @@ endif
 
 ! Construction of ``force'';
 
-  SALLOCATE( Bemn, (1:mn,1:Mvol,0:1), zero )
-  SALLOCATE( Bomn, (1:mn,1:Mvol,0:1), zero )
-  SALLOCATE( Iomn, (1:mn,1:Mvol    ), zero )
-  SALLOCATE( Iemn, (1:mn,1:Mvol    ), zero )
-  SALLOCATE( Somn, (1:mn,1:Mvol,0:1), zero )
-  SALLOCATE( Semn, (1:mn,1:Mvol,0:1), zero )
-  SALLOCATE( Pomn, (1:mn,1:Mvol,0:2), zero )
-  SALLOCATE( Pemn, (1:mn,1:Mvol,0:2), zero )
+  SALLOCATE( Bemn, (1:mn_force,1:Mvol,0:1), zero )
+  SALLOCATE( Bomn, (1:mn_force,1:Mvol,0:1), zero )
+  SALLOCATE( Iomn, (1:mn_force,1:Mvol    ), zero )
+  SALLOCATE( Iemn, (1:mn_force,1:Mvol    ), zero )
+  SALLOCATE( Somn, (1:mn_force,1:Mvol,0:1), zero )
+  SALLOCATE( Semn, (1:mn_force,1:Mvol,0:1), zero )
+  SALLOCATE( Pomn, (1:mn_force,1:Mvol,0:2), zero )
+  SALLOCATE( Pemn, (1:mn_force,1:Mvol,0:2), zero )
 
   SALLOCATE( BBe , (1:Mvol-1), zero )
   SALLOCATE( IIo , (1:Mvol-1), zero )
@@ -1760,13 +1782,13 @@ endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  SALLOCATE( Btemn, (1:mn,0:1,1:Mvol), zero ) ! these are declared in global, calculated in sc00aa, broadcast in xspech, and written to file in hdfint;
-  SALLOCATE( Bzemn, (1:mn,0:1,1:Mvol), zero )
-  SALLOCATE( Btomn, (1:mn,0:1,1:Mvol), zero )
-  SALLOCATE( Bzomn, (1:mn,0:1,1:Mvol), zero )
+  SALLOCATE( Btemn, (1:mn_field,0:1,1:Mvol), zero ) ! these are declared in global, calculated in sc00aa, broadcast in xspech, and written to file in hdfint;
+  SALLOCATE( Bzemn, (1:mn_field,0:1,1:Mvol), zero )
+  SALLOCATE( Btomn, (1:mn_field,0:1,1:Mvol), zero )
+  SALLOCATE( Bzomn, (1:mn_field,0:1,1:Mvol), zero )
 
-  SALLOCATE( Bloweremn, (1:mn, 3), zero) ! these are declared in global, calculated in getbco, used in mtrxhs
-  SALLOCATE( Bloweromn, (1:mn, 3), zero)
+  SALLOCATE( Bloweremn, (1:mn_field, 3), zero) ! these are declared in global, calculated in getbco, used in mtrxhs
+  SALLOCATE( Bloweromn, (1:mn_field, 3), zero)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1816,7 +1838,7 @@ endif
 
     lvol = Mvol ; lss = one ; Lcurvature = 1 ; Lcoordinatesingularity = .false. ! will only require normal field on outer interface = computational boundary;
 
-    WCALL( preset, coords,( lvol, lss, Lcurvature, Ntz, mn ) ) ! will need Rij, Zij; THE COMPUTATIONAL BOUNDARY DOES NOT CHANGE;
+    WCALL( preset, coords,( lvol, lss, Lcurvature, Ntz, mn_field ) ) ! will need Rij, Zij; THE COMPUTATIONAL BOUNDARY DOES NOT CHANGE;
 
     do kk = 0, Nz-1 ; zeta = kk * pi2nfp / Nz
 

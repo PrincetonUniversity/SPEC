@@ -51,7 +51,7 @@ subroutine metrix( lquad, lvol )
 
   use allglobal, only : myid, ncpu, cpus, &
                         dBdX, &
-                        mn, im, in, mne, ime, ine, &
+                        mn_field, im_field, in_field, mne, ime, ine, &
                         Nt, Nz, Ntz, efmn, ofmn, cfmn, sfmn, &   ! 10 Dec 15;
                         ijreal, &                                ! workspace;
                         sg, guvij, &                             ! calculated in coords;
@@ -130,7 +130,7 @@ end subroutine metrix
 !> @param Lcurvature
 subroutine compute_guvijsave(lquad, vvol, ideriv, Lcurvature)
 
-  use allglobal, only : gaussianabscissae, Ntz, mn, guvij, guvijsave, &
+  use allglobal, only : gaussianabscissae, Ntz, mn_field, guvij, guvijsave, &
                         sg
 
   implicit none
@@ -142,7 +142,7 @@ subroutine compute_guvijsave(lquad, vvol, ideriv, Lcurvature)
   ! we need to compute guvij and save it in guvijsave
   do jquad = 1, lquad
     lss = gaussianabscissae(jquad,vvol)
-    call coords( vvol, lss, Lcurvature, Ntz, mn )
+    call coords( vvol, lss, Lcurvature, Ntz, mn_field )
     guvijsave(1:Ntz,1:3,1:3,jquad) = guvij(1:Ntz,1:3,1:3,ideriv)
     do ii = 1, 3
       do jj = 1, 3

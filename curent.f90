@@ -53,7 +53,7 @@
 !> @param[in] Nz number of grid points along \f$\zeta\f$
 !> @param[in] iflag some integer flag
 !> @param[out] ldItGp plasma and linking current
-subroutine curent( lvol, mn, Nt, Nz, iflag, ldItGp )
+subroutine curent( lvol, mn_field, Nt, Nz, iflag, ldItGp )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -68,7 +68,7 @@ subroutine curent( lvol, mn, Nt, Nz, iflag, ldItGp )
   use cputiming, only : Tcurent
 
   use allglobal, only : ncpu, cpus, myid, MPI_COMM_SPEC, &
-                        Mvol, im, in, mne, ime, ine, &
+                        Mvol, im_field, in_field, mne, ime, ine, &
                         YESstellsym, NOTstellsym, &
                         sg, guvij, &
                         Ntz, ijreal, ijimag, jireal, jiimag, &
@@ -80,7 +80,7 @@ subroutine curent( lvol, mn, Nt, Nz, iflag, ldItGp )
 
   LOCALS
 
-  INTEGER, intent(in)  :: lvol, mn, Nt, Nz, iflag
+  INTEGER, intent(in)  :: lvol, mn_field, Nt, Nz, iflag
   REAL   , intent(out) :: ldItGp(0:1,-1:2)
 
   INTEGER              :: innout, ideriv, ii, ll, Lcurvature, ifail
@@ -113,7 +113,7 @@ subroutine curent( lvol, mn, Nt, Nz, iflag, ldItGp )
 
    call build_vector_potential(lvol, innout, ideriv, 1)
 
-   call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), &
+   call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), efmn(1:mn_field), ofmn(1:mn_field), cfmn(1:mn_field), sfmn(1:mn_field), &
                 Nt, Nz, Bsupz(1:Ntz,ideriv), Bsupt(1:Ntz,ideriv) ) ! map to real space;
 
   enddo ! end of do ideriv; 31 Jan 13;
@@ -126,7 +126,7 @@ subroutine curent( lvol, mn, Nt, Nz, iflag, ldItGp )
   case(  2 ) ; Lcurvature = 1
   end select
 
-  WCALL( curent, coords,( lvol, lss, Lcurvature, Ntz, mn ) ) ! get "lower" metric elements evaluated on innout interface;
+  WCALL( curent, coords,( lvol, lss, Lcurvature, Ntz, mn_field ) ) ! get "lower" metric elements evaluated on innout interface;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

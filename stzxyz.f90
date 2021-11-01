@@ -25,7 +25,7 @@ subroutine stzxyz( lvol , stz , RpZ )
   use fileunits, only : ounit
   use inputlist, only : Wstzxyz, Igeometry, Nvol, Ntor
   use cputiming, only : Tstzxyz
-  use allglobal, only : myid, cpus, mn, im, in, MPI_COMM_SPEC, &
+  use allglobal, only : myid, cpus, mn_field, im_field, in_field, MPI_COMM_SPEC, &
                         iRbc, iZbs, iRbs, iZbc, &
                         Lcoordinatesingularity, &
                         NOTstellsym, &
@@ -62,7 +62,7 @@ subroutine stzxyz( lvol , stz , RpZ )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ; arg = mi * stz(2) - ni * phi ; carg = cos(arg) ; sarg = sin(arg) ! Fourier sum; 17 Dec 15;
+  do ii = 1, mn_field ; mi = im_field(ii) ; ni = in_field(ii) ; arg = mi * stz(2) - ni * phi ; carg = cos(arg) ; sarg = sin(arg) ! Fourier sum; 17 Dec 15;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -78,7 +78,7 @@ subroutine stzxyz( lvol , stz , RpZ )
      if( Igeometry.eq.2 ) then ; fj = sbar
      else                      ; fj = sbar**2
      endif
-    else                       ; fj = sbar**im(ii)
+    else                       ; fj = sbar**im_field(ii)
     endif
 
     Remn = iRbc(ii,0) + ( iRbc(ii,1) - iRbc(ii,0) ) * fj

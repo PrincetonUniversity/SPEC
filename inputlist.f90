@@ -566,6 +566,8 @@ module inputlist
  Igeometry   ,&
  Istellsym   ,&
  Lfreebound  ,&
+ Lboundary   ,&
+ twoalpha    ,&
  phiedge     ,&
  curtor      ,&
  curpol      ,&
@@ -611,6 +613,10 @@ module inputlist
  Zbs         ,&
  Rbs         ,&
  Zbc         ,&
+ rhomn       ,&
+ bn          ,&
+ R0c         ,&
+ Z0s         ,&
  Rwc         ,&
  Zws         ,&
  Rws         ,&

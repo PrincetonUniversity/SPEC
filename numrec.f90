@@ -13,22 +13,25 @@
 !> \f}
 !> where \f$N\equiv\,\f$\c Ntor and \f$M\equiv\,\f$\c Mpol are given on input, and \f$N_P \equiv\,\f$\c Nfp is the field periodicity. </li>
 !> </ul>
-subroutine gi00ab( Mpol, Ntor, Nfp, mn, im, in )
+subroutine gi00ab( Mpol, Ntor, Nfp, mn, im, in, Lmpolzero )
 
   implicit none
 
   INTEGER, intent(in)  :: Mpol, Ntor, Nfp, mn
   INTEGER, intent(out) :: im(mn), in(mn)
+  LOGICAL, intent(in)  :: Lmpolzero
 
   INTEGER              :: imn, mm, nn
 
   imn = 0
 
+  if( Lmpolzero ) then
   ;  mm = 0
   ;do nn = 0, Ntor
   ; imn = imn+1 ; im(imn) = mm ; in(imn) = nn*Nfp
   ;enddo
   ;
+  endif
 
   do mm = 1, Mpol
    do nn = -Ntor, Ntor

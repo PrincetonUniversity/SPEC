@@ -66,8 +66,8 @@
 !> @param[in] lvol  in which volume should the Beltrami error be computed
 !> @param[in] Ntz   number of grid points in \f$\theta\f$ and \f$\zeta\f$
 !> @param[in] lquad degree of Gaussian quadrature
-!> @param[in] mn    number of Fourier harmonics
-subroutine jo00aa( lvol, Ntz, lquad, mn )
+!> @param[in] mn_field  number of Fourier harmonics
+subroutine jo00aa( lvol, Ntz, lquad, mn_field )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -75,12 +75,14 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
 
   use fileunits, only : ounit
 
-  use inputlist, only : Wmacros, Wjo00aa, Nvol, Lrad, mu, mpol, Igeometry, Nfp, Lerrortype
+  use inputlist, only : Wmacros, Wjo00aa, Nvol, Lrad, mu, Igeometry, Nfp, Lerrortype
+
+  use bndRep,    only : Mpol_field
 
   use cputiming, only : Tjo00aa
 
   use allglobal, only : myid, cpus, MPI_COMM_SPEC, ext, ivol, &
-                        im, in, &
+                        im_field, in_field, &
                         Mvol, &
                         cheby, zernike, &
                         Ate, Aze, Ato, Azo, &
@@ -96,14 +98,14 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
   LOCALS
 
 !                        these are really global, but are included in argument list to remove allocations
-  INTEGER, intent(in) :: lvol, Ntz, lquad, mn
+  INTEGER, intent(in) :: lvol, Ntz, lquad, mn_field
 
   INTEGER             :: jquad, Lcurvature, ll, ii, jj, kk, uu, ideriv, twolquad, mm, jk
 
   REAL                :: lss, sbar, sbarhim(0:2), gBu(1:Ntz,1:3,0:3), gJu(1:Ntz,1:3), jerror(1:3), jerrormax(1:3), intvol
   REAL                :: B_cartesian(1:Ntz,1:3), J_cartesian(1:Ntz,1:3)
 
-  REAL                :: Atemn(1:mn,0:2), Azemn(1:mn,0:2), Atomn(1:mn,0:2), Azomn(1:mn,0:2)
+  REAL                :: Atemn(1:mn_field,0:2), Azemn(1:mn_field,0:2), Atomn(1:mn_field,0:2), Azomn(1:mn_field,0:2)
 
   INTEGER             :: itype, icdgqf
   REAL                :: aa, bb, cc, dd, weight(1:lquad+1), abscis(1:lquad), workfield(1:2*lquad)
@@ -178,22 +180,22 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
 
    Lcurvature = 2
 
-   WCALL( jo00aa, coords, ( lvol, lss, Lcurvature, Ntz, mn ) ) ! returns coordinates, metrics, . . .
+   WCALL( jo00aa, coords, ( lvol, lss, Lcurvature, Ntz, mn_field ) ) ! returns coordinates, metrics, . . .
 
    if (Lcoordinatesingularity) then ! Zernike 1 Jul 2019
-     call get_zernike_d2(sbar, Lrad(lvol), mpol, zernike)
+     call get_zernike_d2(sbar, Lrad(lvol), mpol_field, zernike)
    else
      call get_cheby_d2(lss, Lrad(lvol), cheby(0:Lrad(lvol),0:2))
    endif
 
-   Atemn(1:mn,0:2) = zero ! initialize summation over Chebyshev/Zernike polynomials;
-   Azemn(1:mn,0:2) = zero
+   Atemn(1:mn_field,0:2) = zero ! initialize summation over Chebyshev/Zernike polynomials;
+   Azemn(1:mn_field,0:2) = zero
    if( NOTstellsym ) then
-   Atomn(1:mn,0:2) = zero
-   Azomn(1:mn,0:2) = zero
+   Atomn(1:mn_field,0:2) = zero
+   Azomn(1:mn_field,0:2) = zero
    else
-   Atomn(1:mn,0:2) = zero ! these are used below;
-   Azomn(1:mn,0:2) = zero
+   Atomn(1:mn_field,0:2) = zero ! these are used below;
+   Azomn(1:mn_field,0:2) = zero
    endif
 
 !>       <li>  The Fourier components of the vector potential given in Eqn.\f$(\ref{eq:At_jo00aa})\f$ and Eqn.\f$(\ref{eq:Az_jo00aa})\f$, and their first and second radial derivatives, are summed. </li>
@@ -201,8 +203,8 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
    if (Lcoordinatesingularity) then
     do ll = 0, Lrad(lvol) ! radial (Chebyshev) resolution of magnetic vector potential;
 
-      do ii = 1, mn  ! Fourier resolution of magnetic vector potential;
-      mm = im(ii)
+      do ii = 1, mn_field  ! Fourier resolution of magnetic vector potential;
+      mm = im_field(ii)
       if (ll < mm) cycle
       if (mod(ll+mm, 2) > 0) cycle
 
@@ -237,7 +239,7 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
 !>       <li>  The quantities \f$\sqrt g B^s\f$, \f$\sqrt g B^\theta\f$ and \f$\sqrt g B^\zeta\f$, and their first and second derivatives with respect to \f$(s,\theta,\zeta)\f$,
 !>             are computed on the regular angular grid (using FFTs). </li>
 
-      do ii = 1, mn  ! Fourier resolution of magnetic vector potential;
+      do ii = 1, mn_field  ! Fourier resolution of magnetic vector potential;
 
       ;Atemn(ii,0) = Atemn(ii,0) + Ate(lvol,ideriv,ii)%s(ll) * cheby(ll,0)
       ;Atemn(ii,1) = Atemn(ii,1) + Ate(lvol,ideriv,ii)%s(ll) * cheby(ll,1)
@@ -264,47 +266,47 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
     enddo ! end of do ll;
    end if
 
-   ofmn(1:mn) = -          im(1:mn)*Azemn(1:mn,0) -          in(1:mn)*Atemn(1:mn,0)
-   efmn(1:mn) = +          im(1:mn)*Azomn(1:mn,0) +          in(1:mn)*Atomn(1:mn,0)
-   sfmn(1:mn) = -          im(1:mn)*Azemn(1:mn,1) -          in(1:mn)*Atemn(1:mn,1)
-   cfmn(1:mn) = +          im(1:mn)*Azomn(1:mn,1) +          in(1:mn)*Atomn(1:mn,1)
+   ofmn(1:mn_field) = -          im_field(1:mn_field)*Azemn(1:mn_field,0) -          in_field(1:mn_field)*Atemn(1:mn_field,0)
+   efmn(1:mn_field) = +          im_field(1:mn_field)*Azomn(1:mn_field,0) +          in_field(1:mn_field)*Atomn(1:mn_field,0)
+   sfmn(1:mn_field) = -          im_field(1:mn_field)*Azemn(1:mn_field,1) -          in_field(1:mn_field)*Atemn(1:mn_field,1)
+   cfmn(1:mn_field) = +          im_field(1:mn_field)*Azomn(1:mn_field,1) +          in_field(1:mn_field)*Atomn(1:mn_field,1)
 
-   call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, gBu(1:Ntz,1,0), gBu(1:Ntz,1,1) ) !  (gB^s)   , d(gB^s)/ds;
+   call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), efmn(1:mn_field), ofmn(1:mn_field), cfmn(1:mn_field), sfmn(1:mn_field), Nt, Nz, gBu(1:Ntz,1,0), gBu(1:Ntz,1,1) ) !  (gB^s)   , d(gB^s)/ds;
 
-   efmn(1:mn) = - im(1:mn)*im(1:mn)*Azemn(1:mn,0) - im(1:mn)*in(1:mn)*Atemn(1:mn,0)
-   ofmn(1:mn) = - im(1:mn)*im(1:mn)*Azomn(1:mn,0) - im(1:mn)*in(1:mn)*Atomn(1:mn,0)
-   cfmn(1:mn) = + in(1:mn)*im(1:mn)*Azemn(1:mn,0) + in(1:mn)*in(1:mn)*Atemn(1:mn,0)
-   sfmn(1:mn) = + in(1:mn)*im(1:mn)*Azomn(1:mn,0) + in(1:mn)*in(1:mn)*Atomn(1:mn,0)
+   efmn(1:mn_field) = - im_field(1:mn_field)*im_field(1:mn_field)*Azemn(1:mn_field,0) - im_field(1:mn_field)*in_field(1:mn_field)*Atemn(1:mn_field,0)
+   ofmn(1:mn_field) = - im_field(1:mn_field)*im_field(1:mn_field)*Azomn(1:mn_field,0) - im_field(1:mn_field)*in_field(1:mn_field)*Atomn(1:mn_field,0)
+   cfmn(1:mn_field) = + in_field(1:mn_field)*im_field(1:mn_field)*Azemn(1:mn_field,0) + in_field(1:mn_field)*in_field(1:mn_field)*Atemn(1:mn_field,0)
+   sfmn(1:mn_field) = + in_field(1:mn_field)*im_field(1:mn_field)*Azomn(1:mn_field,0) + in_field(1:mn_field)*in_field(1:mn_field)*Atomn(1:mn_field,0)
 
-   call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, gBu(1:Ntz,1,2), gBu(1:Ntz,1,3) ) ! d(gB^s)/dt, d(gB^s)/dz;
+   call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), efmn(1:mn_field), ofmn(1:mn_field), cfmn(1:mn_field), sfmn(1:mn_field), Nt, Nz, gBu(1:Ntz,1,2), gBu(1:Ntz,1,3) ) ! d(gB^s)/dt, d(gB^s)/dz;
 
-   efmn(1:mn) =                                   -                   Azemn(1:mn,1)
-   ofmn(1:mn) =                                   -                   Azomn(1:mn,1)
-   cfmn(1:mn) =                                   -                   Azemn(1:mn,2)
-   sfmn(1:mn) =                                   -                   Azomn(1:mn,2)
+   efmn(1:mn_field) =                                   -                   Azemn(1:mn_field,1)
+   ofmn(1:mn_field) =                                   -                   Azomn(1:mn_field,1)
+   cfmn(1:mn_field) =                                   -                   Azemn(1:mn_field,2)
+   sfmn(1:mn_field) =                                   -                   Azomn(1:mn_field,2)
 
-   call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, gBu(1:Ntz,2,0), gBu(1:Ntz,2,1) ) !  (gB^t)   , d(gB^t)/ds;
+   call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), efmn(1:mn_field), ofmn(1:mn_field), cfmn(1:mn_field), sfmn(1:mn_field), Nt, Nz, gBu(1:Ntz,2,0), gBu(1:Ntz,2,1) ) !  (gB^t)   , d(gB^t)/ds;
 
-   ofmn(1:mn) =                                   +          im(1:mn)*Azemn(1:mn,1)
-   efmn(1:mn) =                                   -          im(1:mn)*Azomn(1:mn,1)
-   sfmn(1:mn) =                                   -          in(1:mn)*Azemn(1:mn,1)
-   cfmn(1:mn) =                                   +          in(1:mn)*Azomn(1:mn,1)
+   ofmn(1:mn_field) =                                   +          im_field(1:mn_field)*Azemn(1:mn_field,1)
+   efmn(1:mn_field) =                                   -          im_field(1:mn_field)*Azomn(1:mn_field,1)
+   sfmn(1:mn_field) =                                   -          in_field(1:mn_field)*Azemn(1:mn_field,1)
+   cfmn(1:mn_field) =                                   +          in_field(1:mn_field)*Azomn(1:mn_field,1)
 
-   call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, gBu(1:Ntz,2,2), gBu(1:Ntz,2,3) ) ! d(gB^t)/dt, d(gB^t)/dz;
+   call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), efmn(1:mn_field), ofmn(1:mn_field), cfmn(1:mn_field), sfmn(1:mn_field), Nt, Nz, gBu(1:Ntz,2,2), gBu(1:Ntz,2,3) ) ! d(gB^t)/dt, d(gB^t)/dz;
 
-   efmn(1:mn) = +                   Atemn(1:mn,1)
-   ofmn(1:mn) = +                   Atomn(1:mn,1)
-   cfmn(1:mn) = +                   Atemn(1:mn,2)
-   sfmn(1:mn) = +                   Atomn(1:mn,2)
+   efmn(1:mn_field) = +                   Atemn(1:mn_field,1)
+   ofmn(1:mn_field) = +                   Atomn(1:mn_field,1)
+   cfmn(1:mn_field) = +                   Atemn(1:mn_field,2)
+   sfmn(1:mn_field) = +                   Atomn(1:mn_field,2)
 
-   call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, gBu(1:Ntz,3,0), gBu(1:Ntz,3,1) ) !  (gB^z)   , d(gB^z)/ds;
+   call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), efmn(1:mn_field), ofmn(1:mn_field), cfmn(1:mn_field), sfmn(1:mn_field), Nt, Nz, gBu(1:Ntz,3,0), gBu(1:Ntz,3,1) ) !  (gB^z)   , d(gB^z)/ds;
 
-   ofmn(1:mn) = -          im(1:mn)*Atemn(1:mn,1)
-   efmn(1:mn) = +          im(1:mn)*Atomn(1:mn,1)
-   sfmn(1:mn) = +          in(1:mn)*Atemn(1:mn,1)
-   cfmn(1:mn) = -          in(1:mn)*Atomn(1:mn,1)
+   ofmn(1:mn_field) = -          im_field(1:mn_field)*Atemn(1:mn_field,1)
+   efmn(1:mn_field) = +          im_field(1:mn_field)*Atomn(1:mn_field,1)
+   sfmn(1:mn_field) = +          in_field(1:mn_field)*Atemn(1:mn_field,1)
+   cfmn(1:mn_field) = -          in_field(1:mn_field)*Atomn(1:mn_field,1)
 
-   call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, gBu(1:Ntz,3,2), gBu(1:Ntz,3,3) ) ! d(gB^z)/dt, d(gB^z)/dz;
+   call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), efmn(1:mn_field), ofmn(1:mn_field), cfmn(1:mn_field), sfmn(1:mn_field), Nt, Nz, gBu(1:Ntz,3,2), gBu(1:Ntz,3,3) ) ! d(gB^z)/dt, d(gB^z)/dz;
 
 !>       <li>  The following quantities are then computed on the regular angular grid
 !>             \f{eqnarray}{ \sqrt g j^s      & = & \sum_u \left[

@@ -157,7 +157,8 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, ifl
                         Lcoordinatesingularity, Mvol, &
                         iRbc, iZbs, iRbs, iZbc, &
                         YESstellsym, NOTstellsym, &
-                        mn, im, in, &
+                        mn_field, im_field, in_field, &
+                        mn_force, im_force, in_force, &
                         ijreal, ijimag, jireal, jiimag, &
                         efmn, ofmn, cfmn, sfmn, evmn, odmn, comn, simn, &
                         Nt, Nz, &
@@ -208,7 +209,7 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, ifl
 
   Lcurvature = 1
 
-  WCALL( lforce, coords, ( lvol, lss, Lcurvature, Ntz, mn ) ) ! get coordinates and derivatives wrt Rj, Zj, at specific radial location;
+  WCALL( lforce, coords, ( lvol, lss, Lcurvature, Ntz, mn_field ) ) ! get coordinates and derivatives wrt Rj, Zj, at specific radial location;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -225,7 +226,7 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, ifl
   call build_vector_potential(lvol, iocons,      0,      1)
 
   ! Map to real space
-  call invfft( mn, im, in, efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt(1:Ntz, 0), dAz(1:Ntz, 0) )
+  call invfft( mn_field, im_field, in_field, efmn(1:mn_field), ofmn(1:mn_field), cfmn(1:mn_field), sfmn(1:mn_field), Nt, Nz, dAt(1:Ntz, 0), dAz(1:Ntz, 0) )
 
   id = ideriv
   if( id.eq.0 ) then
@@ -238,7 +239,7 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, ifl
     ! Compute covariant vector potential. Stored in efmn, ofmn, cfmn, sfmn.
     call build_vector_potential(lvol, iocons, id, 1)
     ! Map to real space
-    call invfft( mn, im, in, efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt(1:Ntz, id), dAz(1:Ntz, id) )
+    call invfft( mn_field, im_field, in_field, efmn(1:mn_field), ofmn(1:mn_field), cfmn(1:mn_field), sfmn(1:mn_field), Nt, Nz, dAt(1:Ntz, id), dAz(1:Ntz, id) )
 
     dBB(1:Ntz,id) = half * (        dAz(1:Ntz,id)*dAz(1:Ntz, 0)*guvij(1:Ntz,2,2,0) &
                             - two * dAz(1:Ntz,id)*dAt(1:Ntz, 0)*guvij(1:Ntz,2,3,0) &
@@ -252,7 +253,7 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, ifl
   if( ideriv.eq.-1 ) then
     ! Get coordinate metrics and their derivatives wrt Rj, Zj on interface;
     lss = two * iocons - one ; Lcurvature = 4
-    WCALL( lforce, coords, ( lvol, lss, Lcurvature, Ntz, mn ) )
+    WCALL( lforce, coords, ( lvol, lss, Lcurvature, Ntz, mn_field ) )
 
     dBB(1:Ntz,id) = dBB(1:Ntz, id) + &
                     half * (        dAz(1:Ntz, 0)*dAz(1:Ntz, 0)*guvij(1:Ntz,2,2,1) &
@@ -290,13 +291,15 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, ifl
 
    do ivol = 0, 1
 
-    call invfft( mn, im(1:mn), in(1:mn),            iRbc(1:mn ,lvol-1+ivol),              iRbs(1:mn ,lvol-1+ivol), &
-                                                    iZbc(1:mn ,lvol-1+ivol),              iZbs(1:mn ,lvol-1+ivol), &
-                                         Nt, Nz,    iRij(1:Ntz,lvol-1+ivol),              iZij(1:Ntz,lvol-1+ivol)   )
+    call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), &
+                                        iRbc(1:mn_field ,lvol-1+ivol),                          iRbs(1:mn_field ,lvol-1+ivol), &
+                                        iZbc(1:mn_field ,lvol-1+ivol),                          iZbs(1:mn_field ,lvol-1+ivol), &
+                 Nt, Nz, iRij(1:Ntz,lvol-1+ivol), iZij(1:Ntz,lvol-1+ivol)   )
 
-    call invfft( mn, im(1:mn), in(1:mn), im(1:mn) * iRbs(1:mn ,lvol-1+ivol), - im(1:mn) * iRbc(1:mn ,lvol-1+ivol), &
-                                         im(1:mn) * iZbs(1:mn ,lvol-1+ivol), - im(1:mn) * iZbc(1:mn ,lvol-1+ivol), &
-                                         Nt, Nz,    tRij(1:Ntz,lvol-1+ivol),              tZij(1:Ntz,lvol-1+ivol) )
+    call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), &
+                 im_field(1:mn_field) * iRbs(1:mn_field ,lvol-1+ivol), - im_field(1:mn_field) * iRbc(1:mn_field ,lvol-1+ivol), &
+                 im_field(1:mn_field) * iZbs(1:mn_field ,lvol-1+ivol), - im_field(1:mn_field) * iZbc(1:mn_field ,lvol-1+ivol), &
+                 Nt, Nz, tRij(1:Ntz,lvol-1+ivol), tZij(1:Ntz,lvol-1+ivol) )
    enddo ! end of do ivol = 0, 1 ; 18 Jul 14;
 
    dRij(1:Ntz,lvol) = iRij(1:Ntz,lvol) - iRij(1:Ntz,lvol-1)
@@ -307,21 +310,22 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, ifl
    dLL(1:Ntz) = ( dRij(1:Ntz,lvol) * tRij(1:Ntz,lvol-1+iocons) + dZij(1:Ntz,lvol) * tZij(1:Ntz,lvol-1+iocons) ) / length(1:Ntz)
 
    if( iocons.eq.1 ) then ! include spectral condensation constraints; local to interface, i.e. no tri-diagonal structure;
-    ;                      ; efmn(1:mn) = ( mmpp(1:mn)            ) * iRbc(1:mn,lvol)
-    ;                      ; sfmn(1:mn) = ( mmpp(1:mn)            ) * iZbs(1:mn,lvol)
-    if( NOTstellsym ) then ; ofmn(1:mn) = ( mmpp(1:mn)            ) * iRbs(1:mn,lvol)
-     ;                     ; cfmn(1:mn) = ( mmpp(1:mn)            ) * iZbc(1:mn,lvol)
-    else                   ; ofmn(1:mn) = zero
-     ;                     ; cfmn(1:mn) = zero
+    ;                      ; efmn(1:mn_field) = ( mmpp(1:mn_field)            ) * iRbc(1:mn_field,lvol)
+    ;                      ; sfmn(1:mn_field) = ( mmpp(1:mn_field)            ) * iZbs(1:mn_field,lvol)
+    if( NOTstellsym ) then ; ofmn(1:mn_field) = ( mmpp(1:mn_field)            ) * iRbs(1:mn_field,lvol)
+     ;                     ; cfmn(1:mn_field) = ( mmpp(1:mn_field)            ) * iZbc(1:mn_field,lvol)
+    else                   ; ofmn(1:mn_field) = zero
+     ;                     ; cfmn(1:mn_field) = zero
     endif ! end of if( NOTstellsym ) ; 20 Feb 13;
 
-    call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), &
+    call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), efmn(1:mn_field), &
+                 ofmn(1:mn_field), cfmn(1:mn_field), sfmn(1:mn_field), &
                  Nt, Nz, XX(1:Ntz), YY(1:Ntz) )
 
-    if( YESstellsym ) then ; DDl = sum(              ( iRbc(1:mn,lvol)**2 + iZbs(1:mn,lvol)**2                                           ) )
-     ;                     ; MMl = sum( mmpp(1:mn) * ( iRbc(1:mn,lvol)**2 + iZbs(1:mn,lvol)**2                                           ) ) / DDl
-    else                   ; DDl = sum(              ( iRbc(1:mn,lvol)**2 + iZbs(1:mn,lvol)**2 + iRbs(1:mn,lvol)**2 + iZbc(1:mn,lvol)**2 ) )
-     ;                     ; MMl = sum( mmpp(1:mn) * ( iRbc(1:mn,lvol)**2 + iZbs(1:mn,lvol)**2 + iRbs(1:mn,lvol)**2 + iZbc(1:mn,lvol)**2 ) ) / DDl
+    if( YESstellsym ) then ; DDl = sum(                    ( iRbc(1:mn_field,lvol)**2 + iZbs(1:mn_field,lvol)**2                                           ) )
+     ;                     ; MMl = sum( mmpp(1:mn_field) * ( iRbc(1:mn_field,lvol)**2 + iZbs(1:mn_field,lvol)**2                                           ) ) / DDl
+    else                   ; DDl = sum(                    ( iRbc(1:mn_field,lvol)**2 + iZbs(1:mn_field,lvol)**2 + iRbs(1:mn_field,lvol)**2 + iZbc(1:mn_field,lvol)**2 ) )
+     ;                     ; MMl = sum( mmpp(1:mn_field) * ( iRbc(1:mn_field,lvol)**2 + iZbs(1:mn_field,lvol)**2 + iRbs(1:mn_field,lvol)**2 + iZbc(1:mn_field,lvol)**2 ) ) / DDl
     endif
 
     IIl(1:Ntz) = tRij(1:Ntz,lvol) * ( XX(1:Ntz) - MMl * iRij(1:Ntz,lvol) ) &
@@ -347,19 +351,20 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, ifl
 
   ;ifail = 0
   ;call tfft( Nt, Nz, ijreal(1:Ntz), IIl(1:Ntz  ), & ! compute force-imbalance and spectral constraints;
-              mn, im(1:mn), in(1:mn), Bemn(1:mn,lvol,iocons), Bomn(1:mn,lvol,iocons), Iemn(1:mn,lvol       ), Iomn(1:mn,lvol       ), ifail )
+              mn_force, im_force(1:mn_force), in_force(1:mn_force), &
+              Bemn(1:mn_force,lvol,iocons), Bomn(1:mn_force,lvol,iocons), Iemn(1:mn_force,lvol       ), Iomn(1:mn_force,lvol       ), ifail )
 
   if( Igeometry.ge.3 ) then ! add minimal length constraint; 18 Jul 14;
 
    ifail = 0 ; ijimag(1:Ntz) = zero
 
    call tfft( Nt, Nz, dLL(1:Ntz), ijimag(1:Ntz), &
-              mn, im(1:mn), in(1:mn), Semn(1:mn,lvol,iocons), Somn(1:mn,lvol,iocons), Pemn(1:mn,lvol,iocons), Pomn(1:mn,lvol,iocons), ifail )
+              mn_force, im_force(1:mn_force), in_force(1:mn_force), Semn(1:mn_force,lvol,iocons), Somn(1:mn_force,lvol,iocons), Pemn(1:mn_force,lvol,iocons), Pomn(1:mn_force,lvol,iocons), ifail )
 
 #ifdef DEBUG
    if( Wlforce ) then
-    write(ounit,'("lforce : ", 10x ," : lvol=",i3," ; iocons="i2" ; Somn="999es13.5)') lvol, iocons, Somn(1:mn,lvol,iocons)
-    write(ounit,'("lforce : ", 10x ," : lvol=",i3," ; iocons="i2" ; Semn="999es13.5)') lvol, iocons, Semn(1:mn,lvol,iocons)
+    write(ounit,'("lforce : ", 10x ," : lvol=",i3," ; iocons="i2" ; Somn="999es13.5)') lvol, iocons, Somn(1:mn_force,lvol,iocons)
+    write(ounit,'("lforce : ", 10x ," : lvol=",i3," ; iocons="i2" ; Semn="999es13.5)') lvol, iocons, Semn(1:mn_force,lvol,iocons)
    endif
 #endif
 

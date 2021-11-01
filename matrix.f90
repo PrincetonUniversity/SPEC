@@ -343,7 +343,7 @@
 !> @param[in] lvol
 !> @param[in] mn
 !> @param[in] lrad
-subroutine matrix( lvol, mn, lrad )
+subroutine matrix( lvol, mn_field, lrad )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -353,13 +353,15 @@ subroutine matrix( lvol, mn, lrad )
 
   use fileunits, only : ounit
 
-  use inputlist, only : Wmacros, Wmatrix, mpol
+  use inputlist, only : Wmacros, Wmatrix
+
+  use bndRep,    only : Mpol_field
 
   use cputiming, only : Tmatrix
 
   use allglobal, only : ncpu, myid, cpus, MPI_COMM_SPEC, &
                         YESstellsym, NOTstellsym, &
-                        im, in, &
+                        im_field, in_field, &
                         NAdof, &
                         dMA, dMD, dMB, dMG, &
                         Ate, Ato, Aze, Azo, &
@@ -381,7 +383,7 @@ subroutine matrix( lvol, mn, lrad )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  INTEGER, intent(in)  :: lvol, mn, lrad
+  INTEGER, intent(in)  :: lvol, mn_field, lrad
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -417,15 +419,15 @@ subroutine matrix( lvol, mn, lrad )
   dMA(0:NN,0:NN) = zero
   dMD(0:NN,0:NN) = zero
 
-  SALLOCATE( TTdata, (0:lrad, 0:mpol, 0:1), zero)
-  SALLOCATE( TTMdata, (0:lrad, 0:mpol), zero)
+  SALLOCATE( TTdata, (0:lrad, 0:mpol_field, 0:1), zero)
+  SALLOCATE( TTMdata, (0:lrad, 0:mpol_field), zero)
 
   ! fill in Zernike/Chebyshev polynomials depending on Lcooridnatesingularity
   if (Lcoordinatesingularity) then
-    TTdata(0:lrad,0:mpol,0:1) = RTT(0:lrad,0:mpol,0:1,0)
-    TTMdata(0:lrad,0:mpol) = RTM(0:lrad,0:mpol)
+    TTdata(0:lrad,0:mpol_field,0:1) = RTT(0:lrad,0:mpol_field,0:1,0)
+    TTMdata(0:lrad,0:mpol_field) = RTM(0:lrad,0:mpol_field)
   else
-    do ii = 0, mpol
+    do ii = 0, mpol_field
       TTdata(0:lrad,ii,0:1) = TT(0:lrad,0:1,0)
       TTMdata(0:lrad,ii) = TT(0:lrad,0,0)
     enddo
@@ -435,9 +437,9 @@ subroutine matrix( lvol, mn, lrad )
 
   if( YESstellsym ) then
 !$OMP PARALLEL DO PRIVATE(ii,jj,ll,pp,mi,ni,mj,nj,mimj,minj,nimj,ninj,ll1,pp1,Wtete,Wzete,Wteze,Wzeze,Htete,Hzete,Hteze,Hzeze,id,jd,kk) SHARED(lvol,lrad)
-   do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
+   do ii = 1, mn_field ; mi = im_field(ii) ; ni = in_field(ii)
 
-    do jj = 1, mn ; mj = im(jj) ; nj = in(jj) ; mimj = mi * mj ; minj = mi * nj ; nimj = ni * mj ; ninj = ni * nj
+    do jj = 1, mn_field ; mj = im_field(jj) ; nj = in_field(jj) ; mimj = mi * mj ; minj = mi * nj ; nimj = ni * mj ; ninj = ni * nj
 
      do ll = 0, lrad
 
@@ -506,9 +508,9 @@ subroutine matrix( lvol, mn, lrad )
   else ! NOTstellsym ;
 
 !$OMP PARALLEL DO PRIVATE(ii,jj,ll,pp,mi,ni,mj,nj,mjmi,mjni,njmi,njni,ll1,pp1,Wtete,Wzete,Wteze,Wzeze,Htete,Hzete,Hteze,Hzeze,Wteto,Wzeto,Wtezo,Wzezo,Hteto,Hzeto,Htezo,Hzezo,Wtote,Wzote,Wtoze,Wzoze,Htote,Hzote,Htoze,Hzoze,Wtoto,Wzoto,Wtozo,Wzozo,Htoto,Hzoto,Htozo,Hzozo,id,jd,kk) SHARED(lvol,lrad)
-   do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
+   do ii = 1, mn_field ; mi = im_field(ii) ; ni = in_field(ii)
 
-    do jj = 1, mn ; mj = im(jj) ; nj = in(jj) ; mjmi = mi * mj ; mjni = ni * mj ; njmi = mi * nj ; njni = ni * nj
+    do jj = 1, mn_field ; mj = im_field(jj) ; nj = in_field(jj) ; mjmi = mi * mj ; mjni = ni * mj ; njmi = mi * nj ; njni = ni * nj
 
      do ll = 0, lrad
 
@@ -628,7 +630,7 @@ subroutine matrix( lvol, mn, lrad )
   endif ! end of if( YESstellsym ) ;
 
   ! call subroutine matrixBG to construct dMB and dMG
-  WCALL( matrix, matrixBG, ( lvol, mn, lrad ) )
+  WCALL( matrix, matrixBG, ( lvol, mn_field, lrad ) )
 
   DALLOCATE( TTdata )
   DALLOCATE( TTMdata )
@@ -671,15 +673,15 @@ end subroutine matrix
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-subroutine matrixBG( lvol, mn, lrad )
+subroutine matrixBG( lvol, mn_field, lrad )
   ! only compute the dMB and dMG matrix for matrix-free mode
   use constants, only : zero, one
-  use allglobal, only : NAdof, im, in,&
+  use allglobal, only : NAdof, im_field, in_field, &
                         dMG, dMB, YESstellsym, &
                         iVnc, iVns, iBnc, iBns, &
                         Lme, Lmf, Lmg, Lmh
   implicit none
-  INTEGER, intent(in)  :: lvol, mn, lrad
+  INTEGER, intent(in)  :: lvol, mn_field, lrad
 
   INTEGER :: NN, ii, id, mi, ni
 
@@ -690,7 +692,7 @@ subroutine matrixBG( lvol, mn, lrad )
 
   if( YESstellsym ) then
 
-   do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
+   do ii = 1, mn_field ; mi = im_field(ii) ; ni = in_field(ii)
 
     ;if( ii.gt.1 ) then ; id = Lme(lvol,  ii)       ;                           ; dMG(id   ) = - ( iVns(ii) + iBns(ii) )
     ;else               ; id = Lmg(lvol,  ii)       ;                           ; dMB(id, 1) = -       one
@@ -702,7 +704,7 @@ subroutine matrixBG( lvol, mn, lrad )
 
   else ! NOTstellsym ;
 
-   do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
+   do ii = 1, mn_field ; mi = im_field(ii) ; ni = in_field(ii)
 
     ;if( ii.gt.1 ) then ; id = Lme(lvol,ii)         ;                           ; dMG(id   ) = - ( iVns(ii) + iBns(ii) )
     ;                   ; id = Lmf(lvol,ii)         ;                           ; dMG(id   ) = - ( iVnc(ii) + iBnc(ii) )

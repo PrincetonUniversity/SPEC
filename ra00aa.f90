@@ -57,7 +57,7 @@ subroutine ra00aa( writeorread )
 
   use cputiming, only : Tra00aa
 
-  use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, ext, Mvol, mn, im, in, Ate, Aze, Ato, Azo
+  use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, ext, Mvol, mn_field, im_field, in_field, Ate, Aze, Ato, Azo
 
   use sphdf5,    only : write_vector_potential
 
@@ -93,7 +93,7 @@ subroutine ra00aa( writeorread )
    ! check if all data to be written is allocated properly
    if( myid.eq.0 ) then
     do vvol = 1, Mvol
-     do ii = 1, mn ! loop over Fourier harmonics;
+     do ii = 1, mn_field ! loop over Fourier harmonics;
       FATAL( ra00aa, .not.allocated(Ate(vvol,ideriv,ii)%s), error )
       FATAL( ra00aa, .not.allocated(Aze(vvol,ideriv,ii)%s), error )
       FATAL( ra00aa, .not.allocated(Ato(vvol,ideriv,ii)%s), error )
@@ -107,10 +107,10 @@ subroutine ra00aa( writeorread )
    ! determine total radial dimension: sum(Lrad(1:Mvol)+1)
    sumLrad = sum(Lrad(1:Mvol)+1)
 
-   allocate(allAte(1:sumLrad,1:mn))
-   allocate(allAze(1:sumLrad,1:mn))
-   allocate(allAto(1:sumLrad,1:mn))
-   allocate(allAzo(1:sumLrad,1:mn))
+   allocate(allAte(1:sumLrad,1:mn_field))
+   allocate(allAze(1:sumLrad,1:mn_field))
+   allocate(allAto(1:sumLrad,1:mn_field))
+   allocate(allAzo(1:sumLrad,1:mn_field))
 
    ! collect data in 2D arrays which can be written more conveniently
    sumLrad = 1
@@ -119,7 +119,7 @@ subroutine ra00aa( writeorread )
     ! TODO: MPI_allgather ????
     ! or at least selective via IsMyVolume()
 
-    do ii = 1, mn ! loop over Fourier harmonics;
+    do ii = 1, mn_field ! loop over Fourier harmonics;
      allAte(sumLrad:sumLrad+Lrad(vvol),ii) = Ate(vvol,ideriv,ii)%s(0:Lrad(vvol))
      allAze(sumLrad:sumLrad+Lrad(vvol),ii) = Aze(vvol,ideriv,ii)%s(0:Lrad(vvol))
      allAto(sumLrad:sumLrad+Lrad(vvol),ii) = Ato(vvol,ideriv,ii)%s(0:Lrad(vvol))
@@ -194,8 +194,8 @@ subroutine ra00aa( writeorread )
       read(aunit,iostat=ios) oldAto(0:oldLrad)
       read(aunit,iostat=ios) oldAzo(0:oldLrad)
 
-      do ii = 1, mn ! compare Fourier harmonic with old; 26 Feb 13;
-       if( im(ii).eq.oldim(jj) .and. in(ii).eq.oldin(jj) ) then ; Ate(vvol,ideriv,ii)%s(0:minLrad) = oldAte(0:minLrad)
+      do ii = 1, mn_field ! compare Fourier harmonic with old; 26 Feb 13;
+       if( im_field(ii).eq.oldim(jj) .and. in_field(ii).eq.oldin(jj) ) then ; Ate(vvol,ideriv,ii)%s(0:minLrad) = oldAte(0:minLrad)
         ;                                                       ; Aze(vvol,ideriv,ii)%s(0:minLrad) = oldAze(0:minLrad)
         ;                                                       ; Ato(vvol,ideriv,ii)%s(0:minLrad) = oldAto(0:minLrad)
         ;                                                       ; Azo(vvol,ideriv,ii)%s(0:minLrad) = oldAzo(0:minLrad)
@@ -226,12 +226,12 @@ subroutine ra00aa( writeorread )
 
     llmodnp = 0 ! this node contains the information that is to be broadcast; 26 Feb 13;
 
-    do ii = 1, mn
+    do ii = 1, mn_field
      RlBCAST( Ate(vvol,ideriv,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, llmodnp )
      RlBCAST( Aze(vvol,ideriv,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, llmodnp )
     enddo
    !if( NOTstellsym ) then
-    do ii = 1, mn
+    do ii = 1, mn_field
      RlBCAST( Ato(vvol,ideriv,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, llmodnp )
      RlBCAST( Azo(vvol,ideriv,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, llmodnp )
     enddo

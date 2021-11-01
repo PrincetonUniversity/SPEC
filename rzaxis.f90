@@ -59,13 +59,13 @@
 !>       an inverse FFT from the Fourier harmonics of \f$R\f$ and \f$Z\f$.
 !> <li> Second, the Fourier harmonics of \f$dl\f$ are computed using an FFT.
 !>       The integration over \f$\theta\f$ to construct \f$L\equiv \int dl\f$ is now trivial: just multiply the \f$m=0\f$ harmonics of \f$dl\f$ by \f$2\pi\f$.
-!>       The \c ajk(1:mn) variable is used, and this is assigned in readin() .
+!>       The \c ajk(1:mn_field) variable is used, and this is assigned in readin_field() .
 !> <li> Next, the weighted \f$R \, dl\f$ and \f$Z \, dl\f$ are computed in real space, and the poloidal integral is similarly taken.
 !> <li> Last, the Fourier harmonics are constructed using an FFT after dividing in real space.
 !> </ul>
 !>
 !> @param[in]  Mvol
-!> @param[in]  mn
+!> @param[in]  mn_field
 !> @param      iRbc
 !> @param      iZbs
 !> @param      iRbs
@@ -73,9 +73,9 @@
 !> @param[in]  ivol
 !> @param      LcomputeDerivatives
 !#ifdef DEBUG
-!recursive subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivatives )
+!recursive subroutine rzaxis( Mvol, mn_field, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivatives )
 !#else
-subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivatives )
+subroutine rzaxis( Mvol, mn_field, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivatives )
 !#endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -90,7 +90,7 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
 
   use cputiming, only : Trzaxis
 
-  use allglobal, only : ncpu, myid, cpus, im, in, MPI_COMM_SPEC, &
+  use allglobal, only : ncpu, myid, cpus, im_field, in_field, MPI_COMM_SPEC, &
                         ajk, Nt, Nz, Ntz, &
                         Rij, Zij, sg, cosi, sini, &
                         ijreal, ijimag, jireal, jiimag, jkreal, jkimag, kjreal, kjimag, &
@@ -107,15 +107,15 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
 
   LOGICAL, intent(in)  :: LComputeDerivatives ! indicates whether derivatives are to be calculated;
 
-  INTEGER, intent(in)    :: Mvol, mn, ivol
-  REAL                   :: inRbc(1:mn,0:Mvol), inZbs(1:mn,0:Mvol), inRbs(1:mn,0:Mvol), inZbc(1:mn,0:Mvol)
-  REAL                   :: jRbc(1:mn,0:Mvol), jZbs(1:mn,0:Mvol), jRbs(1:mn,0:Mvol), jZbc(1:mn,0:Mvol)
-  REAL                   :: tmpRbc(1:mn,0:Mvol), tmpZbs(1:mn,0:Mvol), tmpRbs(1:mn,0:Mvol), tmpZbc(1:mn,0:Mvol) ! use as temp matrices to store iRbc etc
+  INTEGER, intent(in)    :: Mvol, mn_field, ivol
+  REAL                   :: inRbc(1:mn_field,0:Mvol), inZbs(1:mn_field,0:Mvol), inRbs(1:mn_field,0:Mvol), inZbc(1:mn_field,0:Mvol)
+  REAL                   :: jRbc(1:mn_field,0:Mvol), jZbs(1:mn_field,0:Mvol), jRbs(1:mn_field,0:Mvol), jZbc(1:mn_field,0:Mvol)
+  REAL                   :: tmpRbc(1:mn_field,0:Mvol), tmpZbs(1:mn_field,0:Mvol), tmpRbs(1:mn_field,0:Mvol), tmpZbc(1:mn_field,0:Mvol) ! use as temp matrices to store iRbc etc
 
-  REAL                   :: jacbase(1:Ntz), jacbasec(1:mn), jacbases(1:mn) ! the 2D Jacobian and its Fourier
-  REAL                   :: junkc(1:mn), junks(1:mn) ! these are junk matrices used for fft
+  REAL                   :: jacbase(1:Ntz), jacbasec(1:mn_field), jacbases(1:mn_field) ! the 2D Jacobian and its Fourier
+  REAL                   :: junkc(1:mn_field), junks(1:mn_field) ! these are junk matrices used for fft
 
-  INTEGER                :: jvol, ii, ifail, jj, id, issym, irz, imn
+  INTEGER                :: jvol, ii, ifail, jj, id, issym, irz, imn_field
   INTEGER                :: idJc, idJs, idRc, idRs, idZc, idZs
 
   INTEGER                :: Lcurvature
@@ -127,7 +127,7 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
 #ifdef DEBUG
   ! Debug variables
   REAL                   :: dx, threshold ! used to check result with finite difference.
-  REAL                   :: newRbc(1:mn,0:Mvol), newZbs(1:mn,0:Mvol), newRbs(1:mn,0:Mvol), newZbc(1:mn,0:Mvol)
+  REAL                   :: newRbc(1:mn_field,0:Mvol), newZbs(1:mn_field,0:Mvol), newRbs(1:mn_field,0:Mvol), newZbc(1:mn_field,0:Mvol)
 #endif
 
   BEGIN(rzaxis)
@@ -150,13 +150,13 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
 
   case( 1:2 )
 
-   inRbc(1:mn,jvol) = zero
-   inRbs(1:mn,jvol) = zero
+   inRbc(1:mn_field,jvol) = zero
+   inRbs(1:mn_field,jvol) = zero
 
    if ( Igeometry.eq.1 .and. Lreflect.eq.1) then ! reflect upper and lower bound in slab, each take half the amplitude
-    inRbc(2:mn,0) = -inRbc(2:mn,Mvol)
+    inRbc(2:mn_field,0) = -inRbc(2:mn_field,Mvol)
    if( NOTstellsym ) then
-    inRbs(2:mn,0) = -inRbs(2:mn,Mvol)
+    inRbs(2:mn_field,0) = -inRbs(2:mn_field,Mvol)
     endif
    endif
 
@@ -164,8 +164,8 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
 
    if (Lrzaxis .eq. 1) then ! use centroid method
 
-    call invfft( mn, im(1:mn), in(1:mn), im(1:mn) * inRbs(1:mn,ivol), - im(1:mn) * inRbc(1:mn,ivol), &
-                                          im(1:mn) * inZbs(1:mn,ivol), - im(1:mn) * inZbc(1:mn,ivol), &
+    call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), im_field(1:mn_field) * inRbs(1:mn_field,ivol), - im_field(1:mn_field) * inRbc(1:mn_field,ivol), &
+                                          im_field(1:mn_field) * inZbs(1:mn_field,ivol), - im_field(1:mn_field) * inZbc(1:mn_field,ivol), &
                   Nt, Nz, jkreal(1:Ntz), jkimag(1:Ntz) ) ! R_\t, Z_\t; 03 Nov 16;
 
     ijreal(1:Ntz) = sqrt( jkreal(1:Ntz)**2 + jkimag(1:Ntz)**2 ) ! dl ; 11 Aug 14;
@@ -175,21 +175,21 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
 
     ifail = 0
     call tfft( Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz), &
-                mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), ifail ) ! Fourier harmonics of differential poloidal length; 11 Mar 16;
+                mn_field, im_field(1:mn_field), in_field(1:mn_field), efmn(1:mn_field), ofmn(1:mn_field), cfmn(1:mn_field), sfmn(1:mn_field), ifail ) ! Fourier harmonics of differential poloidal length; 11 Mar 16;
 
-    efmn(1:mn) = efmn(1:mn) * ajk(1:mn) ! poloidal integration of length; only take m=0 harmonics; 11 Aug 14;
-    ofmn(1:mn) = ofmn(1:mn) * ajk(1:mn)
-    cfmn(1:mn) = zero
-    sfmn(1:mn) = zero
+    efmn(1:mn_field) = efmn(1:mn_field) * ajk(1:mn_field) ! poloidal integration of length; only take m=0 harmonics; 11 Aug 14;
+    ofmn(1:mn_field) = ofmn(1:mn_field) * ajk(1:mn_field)
+    cfmn(1:mn_field) = zero
+    sfmn(1:mn_field) = zero
 
-    call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), & ! map length = "integrated dl" back to real space; 19 Sep 16;
+    call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), efmn(1:mn_field), ofmn(1:mn_field), cfmn(1:mn_field), sfmn(1:mn_field), & ! map length = "integrated dl" back to real space; 19 Sep 16;
                   Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz) )
 
     jiimag(1:Ntz) = ijreal(1:Ntz) !  L ; 19 Sep 16;
 
 
-    call invfft( mn, im(1:mn), in(1:mn),            inRbc(1:mn,ivol),              inRbs(1:mn,ivol), &
-                                                    inZbc(1:mn,ivol),              inZbs(1:mn,ivol), &
+    call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field),            inRbc(1:mn_field,ivol),              inRbs(1:mn_field,ivol), &
+                                                    inZbc(1:mn_field,ivol),              inZbs(1:mn_field,ivol), &
                   Nt, Nz, kjreal(1:Ntz), kjimag(1:Ntz) ) ! R, Z; 03 Nov 16;
 
     ijreal(1:Ntz) = kjreal(1:Ntz) * jireal(1:Ntz) ! R dl;
@@ -197,14 +197,14 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
 
     ifail = 0
     call tfft( Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz), &
-                mn, im(1:mn), in(1:mn), evmn(1:mn), odmn(1:mn), comn(1:mn), simn(1:mn), ifail ) ! Fourier harmonics of weighted R & Z; 11 Mar 16;
+                mn_field, im_field(1:mn_field), in_field(1:mn_field), evmn(1:mn_field), odmn(1:mn_field), comn(1:mn_field), simn(1:mn_field), ifail ) ! Fourier harmonics of weighted R & Z; 11 Mar 16;
 
-    evmn(1:mn) = evmn(1:mn) * ajk(1:mn) ! poloidal integration of R dl; 19 Sep 16;
-    odmn(1:mn) = odmn(1:mn) * ajk(1:mn)
-    comn(1:mn) = comn(1:mn) * ajk(1:mn) ! poloidal integration of Z dl; 19 Sep 16;
-    simn(1:mn) = simn(1:mn) * ajk(1:mn)
+    evmn(1:mn_field) = evmn(1:mn_field) * ajk(1:mn_field) ! poloidal integration of R dl; 19 Sep 16;
+    odmn(1:mn_field) = odmn(1:mn_field) * ajk(1:mn_field)
+    comn(1:mn_field) = comn(1:mn_field) * ajk(1:mn_field) ! poloidal integration of Z dl; 19 Sep 16;
+    simn(1:mn_field) = simn(1:mn_field) * ajk(1:mn_field)
 
-    call invfft( mn, im(1:mn), in(1:mn), evmn(1:mn), odmn(1:mn), comn(1:mn), simn(1:mn), &
+    call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), evmn(1:mn_field), odmn(1:mn_field), comn(1:mn_field), simn(1:mn_field), &
                   Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz) )
 
     ijreal(1:Ntz) = ijreal(1:Ntz) / jiimag(1:Ntz) ! Ro; 19 Sep 16;
@@ -215,7 +215,7 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
 
     ifail = 0
     call tfft( Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz), &
-                mn, im(1:mn), in(1:mn), inRbc(1:mn,jvol), inRbs(1:mn,jvol), inZbc(1:mn,jvol), inZbs(1:mn,jvol), ifail )
+                mn_field, im_field(1:mn_field), in_field(1:mn_field), inRbc(1:mn_field,jvol), inRbs(1:mn_field,jvol), inZbc(1:mn_field,jvol), inZbs(1:mn_field,jvol), ifail )
 
 #ifdef DEBUG
     if( Wrzaxis ) then
@@ -251,41 +251,41 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
     if (LComputeDerivatives) then
     ! compute derivatives of axis; 03 Nov 16;
 
-      do ii = 1, mn
+      do ii = 1, mn_field
 
 
-        dRodR(1:Ntz,0,ii) = cosi(1:Ntz,ii) * jireal(1:Ntz) - kjreal(1:Ntz) * jkreal(1:Ntz) * im(ii) * sini(1:Ntz,ii) / jireal(1:Ntz) ! dRodRjc;
-        dRodR(1:Ntz,1,ii) = sini(1:Ntz,ii) * jireal(1:Ntz) + kjreal(1:Ntz) * jkreal(1:Ntz) * im(ii) * cosi(1:Ntz,ii) / jireal(1:Ntz) ! dRodRjs;
+        dRodR(1:Ntz,0,ii) = cosi(1:Ntz,ii) * jireal(1:Ntz) - kjreal(1:Ntz) * jkreal(1:Ntz) * im_field(ii) * sini(1:Ntz,ii) / jireal(1:Ntz) ! dRodRjc;
+        dRodR(1:Ntz,1,ii) = sini(1:Ntz,ii) * jireal(1:Ntz) + kjreal(1:Ntz) * jkreal(1:Ntz) * im_field(ii) * cosi(1:Ntz,ii) / jireal(1:Ntz) ! dRodRjs;
 
         ifail = 0
         call tfft( Nt, Nz, dRodR(1:Ntz,0,ii), dRodR(1:Ntz,1,ii), &
-                  mn, im(1:mn), in(1:mn), dRadR(1:mn,0,0,ii), dRadR(1:mn,1,0,ii), dRadR(1:mn,0,1,ii), dRadR(1:mn,1,1,ii), ifail )
+                  mn_field, im_field(1:mn_field), in_field(1:mn_field), dRadR(1:mn_field,0,0,ii), dRadR(1:mn_field,1,0,ii), dRadR(1:mn_field,0,1,ii), dRadR(1:mn_field,1,1,ii), ifail )
 
-        dRadR(1:mn,0,0,ii) = dRadR(1:mn,0,0,ii) * ajk(1:mn) ! poloidal integration; 03 Nov 16;
-        dRadR(1:mn,1,0,ii) = dRadR(1:mn,1,0,ii) * ajk(1:mn)
-        dRadR(1:mn,0,1,ii) = dRadR(1:mn,0,1,ii) * ajk(1:mn)
-        dRadR(1:mn,1,1,ii) = dRadR(1:mn,1,1,ii) * ajk(1:mn)
+        dRadR(1:mn_field,0,0,ii) = dRadR(1:mn_field,0,0,ii) * ajk(1:mn_field) ! poloidal integration; 03 Nov 16;
+        dRadR(1:mn_field,1,0,ii) = dRadR(1:mn_field,1,0,ii) * ajk(1:mn_field)
+        dRadR(1:mn_field,0,1,ii) = dRadR(1:mn_field,0,1,ii) * ajk(1:mn_field)
+        dRadR(1:mn_field,1,1,ii) = dRadR(1:mn_field,1,1,ii) * ajk(1:mn_field)
 
-        call invfft( mn, im(1:mn), in(1:mn), dRadR(1:mn,0,0,ii), dRadR(1:mn,1,0,ii), dRadR(1:mn,0,1,ii), dRadR(1:mn,1,1,ii), &
+        call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), dRadR(1:mn_field,0,0,ii), dRadR(1:mn_field,1,0,ii), dRadR(1:mn_field,0,1,ii), dRadR(1:mn_field,1,1,ii), &
                     Nt, Nz, dRodR(1:Ntz,0,ii), dRodR(1:Ntz,1,ii) ) ! R, Z; 03 Nov 16;
 
         dRodR(1:Ntz,0,ii) = dRodR(1:Ntz,0,ii) / jiimag(1:Ntz) ! divide by length; 03 Nov 16;
         dRodR(1:Ntz,1,ii) = dRodR(1:Ntz,1,ii) / jiimag(1:Ntz)
 
 
-        dRodZ(1:Ntz,0,ii) =                                - kjreal(1:Ntz) * jkimag(1:Ntz) * im(ii) * sini(1:Ntz,ii) / jireal(1:Ntz) ! dRodZjc;
-        dRodZ(1:Ntz,1,ii) =                                + kjreal(1:Ntz) * jkimag(1:Ntz) * im(ii) * cosi(1:Ntz,ii) / jireal(1:Ntz) ! dRodZjs;
+        dRodZ(1:Ntz,0,ii) =                                - kjreal(1:Ntz) * jkimag(1:Ntz) * im_field(ii) * sini(1:Ntz,ii) / jireal(1:Ntz) ! dRodZjc;
+        dRodZ(1:Ntz,1,ii) =                                + kjreal(1:Ntz) * jkimag(1:Ntz) * im_field(ii) * cosi(1:Ntz,ii) / jireal(1:Ntz) ! dRodZjs;
 
         ifail = 0
         call tfft( Nt, Nz, dRodZ(1:Ntz,0,ii), dRodZ(1:Ntz,1,ii), &
-                  mn, im(1:mn), in(1:mn), dRadZ(1:mn,0,0,ii), dRadZ(1:mn,1,0,ii), dRadZ(1:mn,0,1,ii), dRadZ(1:mn,1,1,ii), ifail )
+                  mn_field, im_field(1:mn_field), in_field(1:mn_field), dRadZ(1:mn_field,0,0,ii), dRadZ(1:mn_field,1,0,ii), dRadZ(1:mn_field,0,1,ii), dRadZ(1:mn_field,1,1,ii), ifail )
 
-        dRadZ(1:mn,0,0,ii) = dRadZ(1:mn,0,0,ii) * ajk(1:mn) ! poloidal integration; 03 Nov 16;
-        dRadZ(1:mn,1,0,ii) = dRadZ(1:mn,1,0,ii) * ajk(1:mn)
-        dRadZ(1:mn,0,1,ii) = dRadZ(1:mn,0,1,ii) * ajk(1:mn)
-        dRadZ(1:mn,1,1,ii) = dRadZ(1:mn,1,1,ii) * ajk(1:mn)
+        dRadZ(1:mn_field,0,0,ii) = dRadZ(1:mn_field,0,0,ii) * ajk(1:mn_field) ! poloidal integration; 03 Nov 16;
+        dRadZ(1:mn_field,1,0,ii) = dRadZ(1:mn_field,1,0,ii) * ajk(1:mn_field)
+        dRadZ(1:mn_field,0,1,ii) = dRadZ(1:mn_field,0,1,ii) * ajk(1:mn_field)
+        dRadZ(1:mn_field,1,1,ii) = dRadZ(1:mn_field,1,1,ii) * ajk(1:mn_field)
 
-        call invfft( mn, im(1:mn), in(1:mn), dRadZ(1:mn,0,0,ii), dRadZ(1:mn,1,0,ii), dRadZ(1:mn,0,1,ii), dRadZ(1:mn,1,1,ii), &
+        call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), dRadZ(1:mn_field,0,0,ii), dRadZ(1:mn_field,1,0,ii), dRadZ(1:mn_field,0,1,ii), dRadZ(1:mn_field,1,1,ii), &
                     Nt, Nz, dRodZ(1:Ntz,0,ii), dRodZ(1:Ntz,1,ii) ) ! R, Z; 03 Nov 16;
 
         dRodZ(1:Ntz,0,ii) = dRodZ(1:Ntz,0,ii) / jiimag(1:Ntz) ! divide by length; 03 Nov 16;
@@ -293,62 +293,62 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
 
 
 
-        dZodR(1:Ntz,0,ii) =                                - kjimag(1:Ntz) * jkreal(1:Ntz) * im(ii) * sini(1:Ntz,ii) / jireal(1:Ntz) ! dZodRjc;
-        dZodR(1:Ntz,1,ii) =                                + kjimag(1:Ntz) * jkreal(1:Ntz) * im(ii) * cosi(1:Ntz,ii) / jireal(1:Ntz) ! dZodRjs;
+        dZodR(1:Ntz,0,ii) =                                - kjimag(1:Ntz) * jkreal(1:Ntz) * im_field(ii) * sini(1:Ntz,ii) / jireal(1:Ntz) ! dZodRjc;
+        dZodR(1:Ntz,1,ii) =                                + kjimag(1:Ntz) * jkreal(1:Ntz) * im_field(ii) * cosi(1:Ntz,ii) / jireal(1:Ntz) ! dZodRjs;
 
         ifail = 0
         call tfft( Nt, Nz, dZodR(1:Ntz,0,ii), dZodR(1:Ntz,1,ii), &
-                  mn, im(1:mn), in(1:mn), dZadR(1:mn,0,0,ii), dZadR(1:mn,1,0,ii), dZadR(1:mn,0,1,ii), dZadR(1:mn,1,1,ii), ifail )
+                  mn_field, im_field(1:mn_field), in_field(1:mn_field), dZadR(1:mn_field,0,0,ii), dZadR(1:mn_field,1,0,ii), dZadR(1:mn_field,0,1,ii), dZadR(1:mn_field,1,1,ii), ifail )
 
-        dZadR(1:mn,0,0,ii) = dZadR(1:mn,0,0,ii) * ajk(1:mn) ! poloidal integration; 03 Nov 16;
-        dZadR(1:mn,1,0,ii) = dZadR(1:mn,1,0,ii) * ajk(1:mn)
-        dZadR(1:mn,0,1,ii) = dZadR(1:mn,0,1,ii) * ajk(1:mn)
-        dZadR(1:mn,1,1,ii) = dZadR(1:mn,1,1,ii) * ajk(1:mn)
+        dZadR(1:mn_field,0,0,ii) = dZadR(1:mn_field,0,0,ii) * ajk(1:mn_field) ! poloidal integration; 03 Nov 16;
+        dZadR(1:mn_field,1,0,ii) = dZadR(1:mn_field,1,0,ii) * ajk(1:mn_field)
+        dZadR(1:mn_field,0,1,ii) = dZadR(1:mn_field,0,1,ii) * ajk(1:mn_field)
+        dZadR(1:mn_field,1,1,ii) = dZadR(1:mn_field,1,1,ii) * ajk(1:mn_field)
 
-        call invfft( mn, im(1:mn), in(1:mn), dZadR(1:mn,0,0,ii), dZadR(1:mn,1,0,ii), dZadR(1:mn,0,1,ii), dZadR(1:mn,1,1,ii), &
+        call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), dZadR(1:mn_field,0,0,ii), dZadR(1:mn_field,1,0,ii), dZadR(1:mn_field,0,1,ii), dZadR(1:mn_field,1,1,ii), &
                     Nt, Nz, dZodR(1:Ntz,0,ii), dZodR(1:Ntz,1,ii) ) ! R, Z; 03 Nov 16;
 
         dZodR(1:Ntz,0,ii) = dZodR(1:Ntz,0,ii) / jiimag(1:Ntz) ! divide by length; 03 Nov 16;
         dZodR(1:Ntz,1,ii) = dZodR(1:Ntz,1,ii) / jiimag(1:Ntz)
 
 
-        dZodZ(1:Ntz,0,ii) = cosi(1:Ntz,ii) * jireal(1:Ntz) - kjimag(1:Ntz) * jkimag(1:Ntz) * im(ii) * sini(1:Ntz,ii) / jireal(1:Ntz) ! dZodZjc;
-        dZodZ(1:Ntz,1,ii) = sini(1:Ntz,ii) * jireal(1:Ntz) + kjimag(1:Ntz) * jkimag(1:Ntz) * im(ii) * cosi(1:Ntz,ii) / jireal(1:Ntz) ! dZodZjs;
+        dZodZ(1:Ntz,0,ii) = cosi(1:Ntz,ii) * jireal(1:Ntz) - kjimag(1:Ntz) * jkimag(1:Ntz) * im_field(ii) * sini(1:Ntz,ii) / jireal(1:Ntz) ! dZodZjc;
+        dZodZ(1:Ntz,1,ii) = sini(1:Ntz,ii) * jireal(1:Ntz) + kjimag(1:Ntz) * jkimag(1:Ntz) * im_field(ii) * cosi(1:Ntz,ii) / jireal(1:Ntz) ! dZodZjs;
 
         ifail = 0
         call tfft( Nt, Nz, dZodZ(1:Ntz,0,ii), dZodZ(1:Ntz,1,ii), &
-                  mn, im(1:mn), in(1:mn), dZadZ(1:mn,0,0,ii), dZadZ(1:mn,1,0,ii), dZadZ(1:mn,0,1,ii), dZadZ(1:mn,1,1,ii), ifail )
+                  mn_field, im_field(1:mn_field), in_field(1:mn_field), dZadZ(1:mn_field,0,0,ii), dZadZ(1:mn_field,1,0,ii), dZadZ(1:mn_field,0,1,ii), dZadZ(1:mn_field,1,1,ii), ifail )
 
-        dZadZ(1:mn,0,0,ii) = dZadZ(1:mn,0,0,ii) * ajk(1:mn) ! poloidal integration; 03 Nov 16;
-        dZadZ(1:mn,1,0,ii) = dZadZ(1:mn,1,0,ii) * ajk(1:mn)
-        dZadZ(1:mn,0,1,ii) = dZadZ(1:mn,0,1,ii) * ajk(1:mn)
-        dZadZ(1:mn,1,1,ii) = dZadZ(1:mn,1,1,ii) * ajk(1:mn)
+        dZadZ(1:mn_field,0,0,ii) = dZadZ(1:mn_field,0,0,ii) * ajk(1:mn_field) ! poloidal integration; 03 Nov 16;
+        dZadZ(1:mn_field,1,0,ii) = dZadZ(1:mn_field,1,0,ii) * ajk(1:mn_field)
+        dZadZ(1:mn_field,0,1,ii) = dZadZ(1:mn_field,0,1,ii) * ajk(1:mn_field)
+        dZadZ(1:mn_field,1,1,ii) = dZadZ(1:mn_field,1,1,ii) * ajk(1:mn_field)
 
-        call invfft( mn, im(1:mn), in(1:mn), dZadZ(1:mn,0,0,ii), dZadZ(1:mn,1,0,ii), dZadZ(1:mn,0,1,ii), dZadZ(1:mn,1,1,ii), &
+        call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), dZadZ(1:mn_field,0,0,ii), dZadZ(1:mn_field,1,0,ii), dZadZ(1:mn_field,0,1,ii), dZadZ(1:mn_field,1,1,ii), &
                     Nt, Nz, dZodZ(1:Ntz,0,ii), dZodZ(1:Ntz,1,ii) ) ! R, Z; 03 Nov 16;
 
         dZodZ(1:Ntz,0,ii) = dZodZ(1:Ntz,0,ii) / jiimag(1:Ntz) ! divide by length; 03 Nov 16;
         dZodZ(1:Ntz,1,ii) = dZodZ(1:Ntz,1,ii) / jiimag(1:Ntz)
 
-        imn = ii
+        imn_field = ii
 
         call tfft( Nt, Nz, dRodR(1:Ntz,0,ii), dRodR(1:Ntz,1,ii), &
-          mn, im(1:mn), in(1:mn), dRadR(1:mn,0,0,ii), dRadR(1:mn,1,0,ii), dRadR(1:mn,0,1,ii), dRadR(1:mn,1,1,ii), ifail )
+          mn_field, im_field(1:mn_field), in_field(1:mn_field), dRadR(1:mn_field,0,0,ii), dRadR(1:mn_field,1,0,ii), dRadR(1:mn_field,0,1,ii), dRadR(1:mn_field,1,1,ii), ifail )
         call tfft( Nt, Nz, dRodZ(1:Ntz,0,ii), dRodZ(1:Ntz,1,ii), &
-          mn, im(1:mn), in(1:mn), dRadZ(1:mn,0,0,ii), dRadZ(1:mn,1,0,ii), dRadZ(1:mn,0,1,ii), dRadZ(1:mn,1,1,ii), ifail )
+          mn_field, im_field(1:mn_field), in_field(1:mn_field), dRadZ(1:mn_field,0,0,ii), dRadZ(1:mn_field,1,0,ii), dRadZ(1:mn_field,0,1,ii), dRadZ(1:mn_field,1,1,ii), ifail )
         call tfft( Nt, Nz, dZodR(1:Ntz,0,ii), dZodR(1:Ntz,1,ii), &
-          mn, im(1:mn), in(1:mn), dZadR(1:mn,0,0,ii), dZadR(1:mn,1,0,ii), dZadR(1:mn,0,1,ii), dZadR(1:mn,1,1,ii), ifail )
+          mn_field, im_field(1:mn_field), in_field(1:mn_field), dZadR(1:mn_field,0,0,ii), dZadR(1:mn_field,1,0,ii), dZadR(1:mn_field,0,1,ii), dZadR(1:mn_field,1,1,ii), ifail )
         call tfft( Nt, Nz, dZodZ(1:Ntz,0,ii), dZodZ(1:Ntz,1,ii), &
-          mn, im(1:mn), in(1:mn), dZadZ(1:mn,0,0,ii), dZadZ(1:mn,1,0,ii), dZadZ(1:mn,0,1,ii), dZadZ(1:mn,1,1,ii), ifail )
+          mn_field, im_field(1:mn_field), in_field(1:mn_field), dZadZ(1:mn_field,0,0,ii), dZadZ(1:mn_field,1,0,ii), dZadZ(1:mn_field,0,1,ii), dZadZ(1:mn_field,1,1,ii), ifail )
 
-        call invfft( mn, im(1:mn), in(1:mn),-in(1:mn)*dRadR(1:mn,1,0,imn),+in(1:mn)*dRadR(1:mn,0,0,imn),-in(1:mn)*dRadR(1:mn,1,1,imn),+in(1:mn)*dRadR(1:mn,0,1,imn), &
-                      Nt, Nz, dRodR(1:Ntz,2,imn), dRodR(1:Ntz,3,imn) )
-        call invfft( mn, im(1:mn), in(1:mn),-in(1:mn)*dRadZ(1:mn,1,0,imn),+in(1:mn)*dRadZ(1:mn,0,0,imn),-in(1:mn)*dRadZ(1:mn,1,1,imn),+in(1:mn)*dRadZ(1:mn,0,1,imn), &
-                      Nt, Nz, dRodZ(1:Ntz,2,imn), dRodZ(1:Ntz,3,imn) )
-        call invfft( mn, im(1:mn), in(1:mn),-in(1:mn)*dZadR(1:mn,1,0,imn),+in(1:mn)*dZadR(1:mn,0,0,imn),-in(1:mn)*dZadR(1:mn,1,1,imn),+in(1:mn)*dZadR(1:mn,0,1,imn), &
-                      Nt, Nz, dZodR(1:Ntz,2,imn), dZodR(1:Ntz,3,imn) )
-        call invfft( mn, im(1:mn), in(1:mn),-in(1:mn)*dZadZ(1:mn,1,0,imn),+in(1:mn)*dZadZ(1:mn,0,0,imn),-in(1:mn)*dZadZ(1:mn,1,1,imn),+in(1:mn)*dZadZ(1:mn,0,1,imn), &
-                      Nt, Nz, dZodZ(1:Ntz,2,imn), dZodZ(1:Ntz,3,imn) )
+        call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field),-in_field(1:mn_field)*dRadR(1:mn_field,1,0,imn_field),+in_field(1:mn_field)*dRadR(1:mn_field,0,0,imn_field),-in_field(1:mn_field)*dRadR(1:mn_field,1,1,imn_field),+in_field(1:mn_field)*dRadR(1:mn_field,0,1,imn_field), &
+                      Nt, Nz, dRodR(1:Ntz,2,imn_field), dRodR(1:Ntz,3,imn_field) )
+        call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field),-in_field(1:mn_field)*dRadZ(1:mn_field,1,0,imn_field),+in_field(1:mn_field)*dRadZ(1:mn_field,0,0,imn_field),-in_field(1:mn_field)*dRadZ(1:mn_field,1,1,imn_field),+in_field(1:mn_field)*dRadZ(1:mn_field,0,1,imn_field), &
+                      Nt, Nz, dRodZ(1:Ntz,2,imn_field), dRodZ(1:Ntz,3,imn_field) )
+        call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field),-in_field(1:mn_field)*dZadR(1:mn_field,1,0,imn_field),+in_field(1:mn_field)*dZadR(1:mn_field,0,0,imn_field),-in_field(1:mn_field)*dZadR(1:mn_field,1,1,imn_field),+in_field(1:mn_field)*dZadR(1:mn_field,0,1,imn_field), &
+                      Nt, Nz, dZodR(1:Ntz,2,imn_field), dZodR(1:Ntz,3,imn_field) )
+        call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field),-in_field(1:mn_field)*dZadZ(1:mn_field,1,0,imn_field),+in_field(1:mn_field)*dZadZ(1:mn_field,0,0,imn_field),-in_field(1:mn_field)*dZadZ(1:mn_field,1,1,imn_field),+in_field(1:mn_field)*dZadZ(1:mn_field,0,1,imn_field), &
+                      Nt, Nz, dZodZ(1:Ntz,2,imn_field), dZodZ(1:Ntz,3,imn_field) )
 
       enddo ! end of do ii; 03 Nov 16;
     end if !if (LComputeDerivatives) then
@@ -383,15 +383,15 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
     SALLOCATE( ipiv, (1:Njac), 0)
 
     ! replace iRbc to use subroutine coords
-    iRbc(1:mn,1) = jRbc(1:mn, ivol)
-    iZbs(1:mn,1) = jZbs(1:mn, ivol)
-    iRbs(1:mn,1) = jRbs(1:mn, ivol)
-    iZbc(1:mn,1) = jZbc(1:mn, ivol)
+    iRbc(1:mn_field,1) = jRbc(1:mn_field, ivol)
+    iZbs(1:mn_field,1) = jZbs(1:mn_field, ivol)
+    iRbs(1:mn_field,1) = jRbs(1:mn_field, ivol)
+    iZbc(1:mn_field,1) = jZbc(1:mn_field, ivol)
 
-    iRbc(1:mn,0) = zero
-    iZbs(1:mn,0) = zero
-    iRbs(1:mn,0) = zero
-    iZbc(1:mn,0) = zero
+    iRbc(1:mn_field,0) = zero
+    iZbs(1:mn_field,0) = zero
+    iRbs(1:mn_field,0) = zero
+    iZbc(1:mn_field,0) = zero
 
     iRbc(1:Ntor+1,0) = jRbc(1:Ntor+1, ivol)
     iZbs(1:Ntor+1,0) = jZbs(1:Ntor+1, ivol)
@@ -410,12 +410,12 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
     idRs = 2 * Ntoraxis + 1
     idZc = 3 * Ntoraxis + 2
 
-    WCALL( rzaxis, coords, (1, one, Lcurvature, Ntz, mn ))
+    WCALL( rzaxis, coords, (1, one, Lcurvature, Ntz, mn_field ))
 
     jacbase = sg(1:Ntz,0) / Rij(1:Ntz,0,0)  ! extract the baseline 2D jacobian, note the definition here does not have the R factor
 
     call tfft( Nt, Nz, jacbase, Rij, &
-               mn, im(1:mn), in(1:mn), jacbasec(1:mn), jacbases(1:mn), junkc(1:mn), junks(1:mn), ifail )
+               mn_field, im_field(1:mn_field), in_field(1:mn_field), jacbasec(1:mn_field), jacbases(1:mn_field), junkc(1:mn_field), junks(1:mn_field), ifail )
 
     ! fill in the right hand side with m=1 terms of Jacobian
     if (YESstellsym) then
@@ -568,13 +568,13 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
 
       dBdX%L = .true. ! will need derivatives;
 
-      do imn = 1, mn ! loop over deformations in Fourier harmonics; inside do vvol;
-        dBdX%ii = imn ! controls construction of derivatives in subroutines called below;
-        do irz = 0, 1 ! loop over deformations in R and Z; inside do imn;
+      do imn_field = 1, mn_field ! loop over deformations in Fourier harmonics; inside do vvol;
+        dBdX%ii = imn_field ! controls construction of derivatives in subroutines called below;
+        do irz = 0, 1 ! loop over deformations in R and Z; inside do imn_field;
           dBdX%irz = irz ! controls construction of derivatives;
           do issym = 0, 1 ! loop over stellarator and non-stellarator symmetric terms;
             if( issym.eq.1 .and. YESstellsym ) cycle ! no dependence on non-stellarator symmetric harmonics;
-            if( imn.eq.1 .and. irz.ne.issym) cycle ! no m=n=0 sin terms
+            if( imn_field.eq.1 .and. irz.ne.issym) cycle ! no m=n=0 sin terms
             dBdX%issym = issym ! controls construction of derivatives;
 
             ! clean up for every new loop
@@ -584,15 +584,15 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
             Lcoordinatesingularity = .true.
             Lcurvature = 5 ! specially designed to drive subroutine "coords" to compute 2D jacobian derivative w.r.t. interface
 
-            if (im(imn).eq.0) then ! the jacobian on the RHS does not depend on m=0 terms
+            if (im_field(imn_field).eq.0) then ! the jacobian on the RHS does not depend on m=0 terms
               jacbase = zero
             else
-              WCALL( rzaxis, coords, (1, one, Lcurvature, Ntz, mn )) ! the derivative of Jabobian w.r.t. geometry is computed by coords
+              WCALL( rzaxis, coords, (1, one, Lcurvature, Ntz, mn_field )) ! the derivative of Jabobian w.r.t. geometry is computed by coords
               jacbase = sg(1:Ntz,1)
             end if
 
             call tfft( Nt, Nz, jacbase, Rij, &
-                       mn, im(1:mn), in(1:mn), jacbasec(1:mn), jacbases(1:mn), junkc(1:mn), junks(1:mn), ifail )
+                       mn_field, im_field(1:mn_field), in_field(1:mn_field), jacbasec(1:mn_field), jacbases(1:mn_field), junkc(1:mn_field), junks(1:mn_field), ifail )
 
             if (YESstellsym) then
               djacrhs = -jacbasec(2*(Ntor+1)-Ntoraxis:2*(Ntor+1)+Ntoraxis)
@@ -601,7 +601,7 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
               djacrhs(2*Ntoraxis+2:Njac) = -jacbases(2*(Ntor+1)-Ntoraxis:2*(Ntor+1)+Ntoraxis)
             end if !if (YESstellsym)
 
-            if (im(imn).eq.1) then ! djacmat for m=1 terms
+            if (im_field(imn_field).eq.1) then ! djacmat for m=1 terms
 
               if (YESstellsym) then
 
@@ -611,24 +611,24 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
                     if (ii-jj .ge. -Ntor) then
                       id = 2 * (Ntor + 1) + ii - jj
                       ! the DRcn' term
-                      if (id .eq. imn .and. irz .eq. 1) djacmat(ii+Ntoraxis+1, jj+1) = djacmat(ii+Ntoraxis+1, jj+1) - one
+                      if (id .eq. imn_field .and. irz .eq. 1) djacmat(ii+Ntoraxis+1, jj+1) = djacmat(ii+Ntoraxis+1, jj+1) - one
                       ! the DZsn' term
-                      if (id .eq. imn .and. irz .eq. 0) djacmat(ii+Ntoraxis+1, Ntoraxis+1+jj) = djacmat(ii+Ntoraxis+1, Ntoraxis+1+jj) + one
+                      if (id .eq. imn_field .and. irz .eq. 0) djacmat(ii+Ntoraxis+1, Ntoraxis+1+jj) = djacmat(ii+Ntoraxis+1, Ntoraxis+1+jj) + one
                     end if ! if (ii-jj .ge. -Ntor)
 
                     if (ii+jj .le. Ntor) then
                       id = 2 * (Ntor + 1) + ii + jj
                       ! the DRcn' term
-                      if (id .eq. imn .and. irz .eq. 1) djacmat(ii+Ntoraxis+1, jj+1) = djacmat(ii+Ntoraxis+1, jj+1) - one
+                      if (id .eq. imn_field .and. irz .eq. 1) djacmat(ii+Ntoraxis+1, jj+1) = djacmat(ii+Ntoraxis+1, jj+1) - one
                       ! the DZsn' term
-                      if (id .eq. imn .and. irz .eq. 0) djacmat(ii+Ntoraxis+1, Ntoraxis+1+jj) = djacmat(ii+Ntoraxis+1, Ntoraxis+1+jj) - one
+                      if (id .eq. imn_field .and. irz .eq. 0) djacmat(ii+Ntoraxis+1, Ntoraxis+1+jj) = djacmat(ii+Ntoraxis+1, Ntoraxis+1+jj) - one
                     end if ! if (ii+jj .le. Ntor)
 
                   end do ! jj
 
                   ! the DR0 term
                   id = 2 * (Ntor + 1) + ii
-                  if (id .eq. imn .and. irz .eq. 1) djacmat(ii+Ntoraxis+1, 1) = - two
+                  if (id .eq. imn_field .and. irz .eq. 1) djacmat(ii+Ntoraxis+1, 1) = - two
 
                 end do ! ii
               else ! if (YESstellsym)
@@ -639,23 +639,23 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
                       id = 2 * (Ntor + 1) + ii - jj
                       ! for J cos terms
                       ! the DRcn' term
-                      if (id.eq.imn .and. irz.eq.1 .and. issym.eq.0) djacmat(ii+idJc, jj+idRc) = djacmat(ii+idJc, jj+idRc) - one
+                      if (id.eq.imn_field .and. irz.eq.1 .and. issym.eq.0) djacmat(ii+idJc, jj+idRc) = djacmat(ii+idJc, jj+idRc) - one
                       ! the DZsn' term
-                      if (id.eq.imn .and. irz.eq.0 .and. issym.eq.0) djacmat(ii+idJc, jj+idZs) = djacmat(ii+idJc, jj+idZs) + one
+                      if (id.eq.imn_field .and. irz.eq.0 .and. issym.eq.0) djacmat(ii+idJc, jj+idZs) = djacmat(ii+idJc, jj+idZs) + one
                       ! the DRsn' term
-                      if (id.eq.imn .and. irz.eq.1 .and. issym.eq.1) djacmat(ii+idJc, jj+idRs) = djacmat(ii+idJc, jj+idRs) - one
+                      if (id.eq.imn_field .and. irz.eq.1 .and. issym.eq.1) djacmat(ii+idJc, jj+idRs) = djacmat(ii+idJc, jj+idRs) - one
                       ! the DZsn' term
-                      if (id.eq.imn .and. irz.eq.0 .and. issym.eq.1) djacmat(ii+idJc, jj+idZc) = djacmat(ii+idJc, jj+idZc) + one
+                      if (id.eq.imn_field .and. irz.eq.0 .and. issym.eq.1) djacmat(ii+idJc, jj+idZc) = djacmat(ii+idJc, jj+idZc) + one
 
                       ! for J sin terms
                       ! the DRcn' term
-                      if (id.eq.imn .and. irz.eq.1 .and. issym.eq.1) djacmat(ii+idJs, jj+idRc) = djacmat(ii+idJs, jj+idRc) + one
+                      if (id.eq.imn_field .and. irz.eq.1 .and. issym.eq.1) djacmat(ii+idJs, jj+idRc) = djacmat(ii+idJs, jj+idRc) + one
                       ! the DZsn' term
-                      if (id.eq.imn .and. irz.eq.0 .and. issym.eq.1) djacmat(ii+idJs, jj+idZs) = djacmat(ii+idJs, jj+idZs) + one
+                      if (id.eq.imn_field .and. irz.eq.0 .and. issym.eq.1) djacmat(ii+idJs, jj+idZs) = djacmat(ii+idJs, jj+idZs) + one
                       ! the DRsn' term
-                      if (id.eq.imn .and. irz.eq.1 .and. issym.eq.0) djacmat(ii+idJs, jj+idRs) = djacmat(ii+idJs, jj+idRs) - one
+                      if (id.eq.imn_field .and. irz.eq.1 .and. issym.eq.0) djacmat(ii+idJs, jj+idRs) = djacmat(ii+idJs, jj+idRs) - one
                       ! the DZsn' term
-                      if (id.eq.imn .and. irz.eq.0 .and. issym.eq.0) djacmat(ii+idJs, jj+idZc) = djacmat(ii+idJs, jj+idZc) - one
+                      if (id.eq.imn_field .and. irz.eq.0 .and. issym.eq.0) djacmat(ii+idJs, jj+idZc) = djacmat(ii+idJs, jj+idZc) - one
 
                     end if ! if (ii-jj .ge. -Ntor)
 
@@ -663,23 +663,23 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
                       id = 2 * (Ntor + 1) + ii + jj
                       ! for J cos terms
                       ! the DRcn' term
-                      if (id.eq.imn .and. irz.eq.1 .and. issym.eq.0) djacmat(ii+idJc, jj+idRc) = djacmat(ii+idJc, jj+idRc) - one
+                      if (id.eq.imn_field .and. irz.eq.1 .and. issym.eq.0) djacmat(ii+idJc, jj+idRc) = djacmat(ii+idJc, jj+idRc) - one
                       ! the DZsn' term
-                      if (id.eq.imn .and. irz.eq.0 .and. issym.eq.0) djacmat(ii+idJc, jj+idZs) = djacmat(ii+idJc, jj+idZs) - one
+                      if (id.eq.imn_field .and. irz.eq.0 .and. issym.eq.0) djacmat(ii+idJc, jj+idZs) = djacmat(ii+idJc, jj+idZs) - one
                       ! the DRsn' term
-                      if (id.eq.imn .and. irz.eq.1 .and. issym.eq.1) djacmat(ii+idJc, jj+idRs) = djacmat(ii+idJc, jj+idRs) + one
+                      if (id.eq.imn_field .and. irz.eq.1 .and. issym.eq.1) djacmat(ii+idJc, jj+idRs) = djacmat(ii+idJc, jj+idRs) + one
                       ! the DZsn' term
-                      if (id.eq.imn .and. irz.eq.0 .and. issym.eq.1) djacmat(ii+idJc, jj+idZc) = djacmat(ii+idJc, jj+idZc) + one
+                      if (id.eq.imn_field .and. irz.eq.0 .and. issym.eq.1) djacmat(ii+idJc, jj+idZc) = djacmat(ii+idJc, jj+idZc) + one
 
                       ! for J sin terms
                       ! the DRcn' term
-                      if (id.eq.imn .and. irz.eq.1 .and. issym.eq.1) djacmat(ii+idJs, jj+idRc) = djacmat(ii+idJs, jj+idRc) + one
+                      if (id.eq.imn_field .and. irz.eq.1 .and. issym.eq.1) djacmat(ii+idJs, jj+idRc) = djacmat(ii+idJs, jj+idRc) + one
                       ! the DZsn' term
-                      if (id.eq.imn .and. irz.eq.0 .and. issym.eq.1) djacmat(ii+idJs, jj+idZs) = djacmat(ii+idJs, jj+idZs) - one
+                      if (id.eq.imn_field .and. irz.eq.0 .and. issym.eq.1) djacmat(ii+idJs, jj+idZs) = djacmat(ii+idJs, jj+idZs) - one
                       ! the DRsn' term
-                      if (id.eq.imn .and. irz.eq.1 .and. issym.eq.0) djacmat(ii+idJs, jj+idRs) = djacmat(ii+idJs, jj+idRs) + one
+                      if (id.eq.imn_field .and. irz.eq.1 .and. issym.eq.0) djacmat(ii+idJs, jj+idRs) = djacmat(ii+idJs, jj+idRs) + one
                       ! the DZsn' term
-                      if (id.eq.imn .and. irz.eq.0 .and. issym.eq.0) djacmat(ii+idJs, jj+idZc) = djacmat(ii+idJs, jj+idZc) - one
+                      if (id.eq.imn_field .and. irz.eq.0 .and. issym.eq.0) djacmat(ii+idJs, jj+idZc) = djacmat(ii+idJs, jj+idZc) - one
 
                     end if ! if (ii+jj .le. Ntor)
 
@@ -688,11 +688,11 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
                   ! the DR0 term
                   id = 2 * (Ntor + 1) + ii
                   ! for J cos terms
-                  if (id.eq.imn .and. irz.eq.1 .and. issym.eq.0) djacmat(ii+idJc, idRc) = - two
-                  if (id.eq.imn .and. irz.eq.0 .and. issym.eq.1) djacmat(ii+idJc, idZc) = + two
+                  if (id.eq.imn_field .and. irz.eq.1 .and. issym.eq.0) djacmat(ii+idJc, idRc) = - two
+                  if (id.eq.imn_field .and. irz.eq.0 .and. issym.eq.1) djacmat(ii+idJc, idZc) = + two
                   ! for J sin terms
-                  if (id.eq.imn .and. irz.eq.1 .and. issym.eq.1) djacmat(ii+idJs, idRc) = + two
-                  if (id.eq.imn .and. irz.eq.0 .and. issym.eq.0) djacmat(ii+idJs, idZc) = - two
+                  if (id.eq.imn_field .and. irz.eq.1 .and. issym.eq.1) djacmat(ii+idJs, idRc) = + two
+                  if (id.eq.imn_field .and. irz.eq.0 .and. issym.eq.0) djacmat(ii+idJs, idZc) = - two
 
                 end do ! ii
 
@@ -702,74 +702,74 @@ subroutine rzaxis( Mvol, mn, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDerivativ
 
               ! use matrix perturbation theory to compute the analytical derivatives
               djacrhs = djacrhs - matmul(djacmat, solution)
-            endif ! im(imn).eq.1
+            endif ! im_field(imn_field).eq.1
 
             call DGETRS('N', Njac, 1, LU, Njac, ipiv, djacrhs, Njac, idgetrs ) ! solve linear equation
 
             if (YESstellsym) then
               if (irz .eq. 0) then
-                dRadR(1:Ntoraxis+1,0,0,imn) = -djacrhs(1:Ntoraxis+1)
-                dZadR(2:Ntoraxis+1,1,0,imn) = -djacrhs(Ntoraxis+2:Njac)
-                if (im(imn).eq.0) then ! addtional one
-                  dRadR(imn,0,0,imn) = dRadR(imn,0,0,imn) + one
+                dRadR(1:Ntoraxis+1,0,0,imn_field) = -djacrhs(1:Ntoraxis+1)
+                dZadR(2:Ntoraxis+1,1,0,imn_field) = -djacrhs(Ntoraxis+2:Njac)
+                if (im_field(imn_field).eq.0) then ! addtional one
+                  dRadR(imn_field,0,0,imn_field) = dRadR(imn_field,0,0,imn_field) + one
                 end if
               else
-                dRadZ(1:Ntoraxis+1,0,1,imn) = -djacrhs(1:Ntoraxis+1)
-                dZadZ(2:Ntoraxis+1,1,1,imn) = -djacrhs(Ntoraxis+2:Njac)
-                if (im(imn).eq.0) then ! addtional one
-                  dZadZ(imn,1,1,imn) = dZadZ(imn,1,1,imn) + one
+                dRadZ(1:Ntoraxis+1,0,1,imn_field) = -djacrhs(1:Ntoraxis+1)
+                dZadZ(2:Ntoraxis+1,1,1,imn_field) = -djacrhs(Ntoraxis+2:Njac)
+                if (im_field(imn_field).eq.0) then ! addtional one
+                  dZadZ(imn_field,1,1,imn_field) = dZadZ(imn_field,1,1,imn_field) + one
                 end if
               end if
             else
               if (irz .eq. 0) then
-                dRadR(1:Ntoraxis+1,0,issym,imn) = -djacrhs(idRc:idRc+Ntoraxis)
-                dZadR(2:Ntoraxis+1,1,issym,imn) = -djacrhs(idZs+1:idZs+Ntoraxis)
-                dRadR(2:Ntoraxis+1,1,issym,imn) = -djacrhs(idRs+1:idRs+Ntoraxis)
-                dZadR(1:Ntoraxis+1,0,issym,imn) = -djacrhs(idZc:idZc+Ntoraxis)
-                if (im(imn).eq.0) then ! addtional one
-                  dRadR(imn,issym,issym,imn) = dRadR(imn,issym,issym,imn) + one
+                dRadR(1:Ntoraxis+1,0,issym,imn_field) = -djacrhs(idRc:idRc+Ntoraxis)
+                dZadR(2:Ntoraxis+1,1,issym,imn_field) = -djacrhs(idZs+1:idZs+Ntoraxis)
+                dRadR(2:Ntoraxis+1,1,issym,imn_field) = -djacrhs(idRs+1:idRs+Ntoraxis)
+                dZadR(1:Ntoraxis+1,0,issym,imn_field) = -djacrhs(idZc:idZc+Ntoraxis)
+                if (im_field(imn_field).eq.0) then ! addtional one
+                  dRadR(imn_field,issym,issym,imn_field) = dRadR(imn_field,issym,issym,imn_field) + one
                 end if
 
               else
-                dRadZ(1:Ntoraxis+1,0,1-issym,imn) = -djacrhs(idRc:idRc+Ntoraxis)
-                dZadZ(2:Ntoraxis+1,1,1-issym,imn) = -djacrhs(idZs+1:idZs+Ntoraxis)
-                dRadZ(2:Ntoraxis+1,1,1-issym,imn) = -djacrhs(idRs+1:idRs+Ntoraxis)
-                dZadZ(1:Ntoraxis+1,0,1-issym,imn) = -djacrhs(idZc:idZc+Ntoraxis)
-                if (im(imn).eq.0) then ! addtional one
-                  dZadZ(imn,1-issym,1-issym,imn) = dZadZ(imn,1-issym,1-issym,imn) + one
+                dRadZ(1:Ntoraxis+1,0,1-issym,imn_field) = -djacrhs(idRc:idRc+Ntoraxis)
+                dZadZ(2:Ntoraxis+1,1,1-issym,imn_field) = -djacrhs(idZs+1:idZs+Ntoraxis)
+                dRadZ(2:Ntoraxis+1,1,1-issym,imn_field) = -djacrhs(idRs+1:idRs+Ntoraxis)
+                dZadZ(1:Ntoraxis+1,0,1-issym,imn_field) = -djacrhs(idZc:idZc+Ntoraxis)
+                if (im_field(imn_field).eq.0) then ! addtional one
+                  dZadZ(imn_field,1-issym,1-issym,imn_field) = dZadZ(imn_field,1-issym,1-issym,imn_field) + one
                 end if
               end if
             end if ! YESstellsym
 
-            call invfft( mn, im(1:mn), in(1:mn), dRadR(1:mn,0,0,imn), dRadR(1:mn,1,0,imn), dRadR(1:mn,0,1,imn), dRadR(1:mn,1,1,imn), &
-                         Nt, Nz, dRodR(1:Ntz,0,imn), dRodR(1:Ntz,1,imn) )
-            call invfft( mn, im(1:mn), in(1:mn), dRadZ(1:mn,0,0,imn), dRadZ(1:mn,1,0,imn), dRadZ(1:mn,0,1,imn), dRadZ(1:mn,1,1,imn), &
-                         Nt, Nz, dRodZ(1:Ntz,0,imn), dRodZ(1:Ntz,1,imn) )
-            call invfft( mn, im(1:mn), in(1:mn), dZadR(1:mn,0,0,imn), dZadR(1:mn,1,0,imn), dZadR(1:mn,0,1,imn), dZadR(1:mn,1,1,imn), &
-                         Nt, Nz, dZodR(1:Ntz,0,imn), dZodR(1:Ntz,1,imn) )
-            call invfft( mn, im(1:mn), in(1:mn), dZadZ(1:mn,0,0,imn), dZadZ(1:mn,1,0,imn), dZadZ(1:mn,0,1,imn), dZadZ(1:mn,1,1,imn), &
-                         Nt, Nz, dZodZ(1:Ntz,2,imn), dZodZ(1:Ntz,1,imn) )
+            call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), dRadR(1:mn_field,0,0,imn_field), dRadR(1:mn_field,1,0,imn_field), dRadR(1:mn_field,0,1,imn_field), dRadR(1:mn_field,1,1,imn_field), &
+                         Nt, Nz, dRodR(1:Ntz,0,imn_field), dRodR(1:Ntz,1,imn_field) )
+            call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), dRadZ(1:mn_field,0,0,imn_field), dRadZ(1:mn_field,1,0,imn_field), dRadZ(1:mn_field,0,1,imn_field), dRadZ(1:mn_field,1,1,imn_field), &
+                         Nt, Nz, dRodZ(1:Ntz,0,imn_field), dRodZ(1:Ntz,1,imn_field) )
+            call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), dZadR(1:mn_field,0,0,imn_field), dZadR(1:mn_field,1,0,imn_field), dZadR(1:mn_field,0,1,imn_field), dZadR(1:mn_field,1,1,imn_field), &
+                         Nt, Nz, dZodR(1:Ntz,0,imn_field), dZodR(1:Ntz,1,imn_field) )
+            call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), dZadZ(1:mn_field,0,0,imn_field), dZadZ(1:mn_field,1,0,imn_field), dZadZ(1:mn_field,0,1,imn_field), dZadZ(1:mn_field,1,1,imn_field), &
+                         Nt, Nz, dZodZ(1:Ntz,2,imn_field), dZodZ(1:Ntz,1,imn_field) )
 
-            call invfft( mn, im(1:mn), in(1:mn),-in(1:mn)*dRadR(1:mn,1,0,imn),+in(1:mn)*dRadR(1:mn,0,0,imn),-in(1:mn)*dRadR(1:mn,1,1,imn),+in(1:mn)*dRadR(1:mn,0,1,imn), &
-                         Nt, Nz, dRodR(1:Ntz,2,imn), dRodR(1:Ntz,3,imn) )
-            call invfft( mn, im(1:mn), in(1:mn),-in(1:mn)*dRadZ(1:mn,1,0,imn),+in(1:mn)*dRadZ(1:mn,0,0,imn),-in(1:mn)*dRadZ(1:mn,1,1,imn),+in(1:mn)*dRadZ(1:mn,0,1,imn), &
-                         Nt, Nz, dRodZ(1:Ntz,2,imn), dRodZ(1:Ntz,3,imn) )
-            call invfft( mn, im(1:mn), in(1:mn),-in(1:mn)*dZadR(1:mn,1,0,imn),+in(1:mn)*dZadR(1:mn,0,0,imn),-in(1:mn)*dZadR(1:mn,1,1,imn),+in(1:mn)*dZadR(1:mn,0,1,imn), &
-                         Nt, Nz, dZodR(1:Ntz,2,imn), dZodR(1:Ntz,3,imn) )
-            call invfft( mn, im(1:mn), in(1:mn),-in(1:mn)*dZadZ(1:mn,1,0,imn),+in(1:mn)*dZadZ(1:mn,0,0,imn),-in(1:mn)*dZadZ(1:mn,1,1,imn),+in(1:mn)*dZadZ(1:mn,0,1,imn), &
-                         Nt, Nz, dZodZ(1:Ntz,2,imn), dZodZ(1:Ntz,3,imn) )
+            call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field),-in_field(1:mn_field)*dRadR(1:mn_field,1,0,imn_field),+in_field(1:mn_field)*dRadR(1:mn_field,0,0,imn_field),-in_field(1:mn_field)*dRadR(1:mn_field,1,1,imn_field),+in_field(1:mn_field)*dRadR(1:mn_field,0,1,imn_field), &
+                         Nt, Nz, dRodR(1:Ntz,2,imn_field), dRodR(1:Ntz,3,imn_field) )
+            call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field),-in_field(1:mn_field)*dRadZ(1:mn_field,1,0,imn_field),+in_field(1:mn_field)*dRadZ(1:mn_field,0,0,imn_field),-in_field(1:mn_field)*dRadZ(1:mn_field,1,1,imn_field),+in_field(1:mn_field)*dRadZ(1:mn_field,0,1,imn_field), &
+                         Nt, Nz, dRodZ(1:Ntz,2,imn_field), dRodZ(1:Ntz,3,imn_field) )
+            call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field),-in_field(1:mn_field)*dZadR(1:mn_field,1,0,imn_field),+in_field(1:mn_field)*dZadR(1:mn_field,0,0,imn_field),-in_field(1:mn_field)*dZadR(1:mn_field,1,1,imn_field),+in_field(1:mn_field)*dZadR(1:mn_field,0,1,imn_field), &
+                         Nt, Nz, dZodR(1:Ntz,2,imn_field), dZodR(1:Ntz,3,imn_field) )
+            call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field),-in_field(1:mn_field)*dZadZ(1:mn_field,1,0,imn_field),+in_field(1:mn_field)*dZadZ(1:mn_field,0,0,imn_field),-in_field(1:mn_field)*dZadZ(1:mn_field,1,1,imn_field),+in_field(1:mn_field)*dZadZ(1:mn_field,0,1,imn_field), &
+                         Nt, Nz, dZodZ(1:Ntz,2,imn_field), dZodZ(1:Ntz,3,imn_field) )
 
 !******* This part is used to benchmark the matrices perturbation result with finite difference *******
 #ifdef DEBUG
 if (Lcheck .eq. 8) then ! check the analytical derivative with the finite difference
-  call fndiff_rzaxis( Mvol, mn, ivol, jRbc, jRbs, jZbc, JZbs, imn, irz, issym )
+  call fndiff_rzaxis( Mvol, mn_field, ivol, jRbc, jRbs, jZbc, JZbs, imn_field, irz, issym )
 end if ! Lcheck .eq. 8
 #endif
 !******* END part used to benchmark the matrices perturbation result with finite difference *******
 
           end do ! issym
         end do ! irz
-      end do ! imn = 1, mn
+      end do ! imn_field = 1, mn_field
 
       ! deallocate the matrices
       DALLOCATE( djacrhs )
@@ -793,11 +793,11 @@ end if ! Lcheck .eq. 8
         iZbc(1:Ntoraxis+1,0) = -solution(3*Ntoraxis+2:4*Ntoraxis+2) + iZbc(1:Ntoraxis+1,0)
       endif
 
-      WCALL( rzaxis, coords, (1, one, Lcurvature, Ntz, mn ))
+      WCALL( rzaxis, coords, (1, one, Lcurvature, Ntz, mn_field ))
       jacbase = sg(1:Ntz,0) / Rij(1:Ntz,0,0)  ! extract the baseline 2D jacobian
 
       call tfft( Nt, Nz, jacbase, Rij, &
-                mn, im(1:mn), in(1:mn), jacbasec(1:mn), jacbases(1:mn), junkc(1:mn), junks(1:mn), ifail )
+                mn_field, im_field(1:mn_field), in_field(1:mn_field), jacbasec(1:mn_field), jacbases(1:mn_field), junkc(1:mn_field), junks(1:mn_field), ifail )
 
       ! fill in the right hand side with m=1 terms of Jacobian
       jacrhs(1:2*Ntoraxis+1) = -jacbasec(2*(Ntor+1)-Ntoraxis:2*(Ntor+1)+Ntoraxis)
@@ -861,7 +861,7 @@ end if ! Lcheck .eq. 8
 
 end subroutine rzaxis
 
-subroutine fndiff_rzaxis( Mvol, mn, ivol, jRbc, jRbs, jZbc, JZbs, imn, irz, issym )
+subroutine fndiff_rzaxis( Mvol, mn_field, ivol, jRbc, jRbs, jZbc, JZbs, imn_field, irz, issym )
 
   use constants, only : zero, one, half, two
 
@@ -873,21 +873,21 @@ subroutine fndiff_rzaxis( Mvol, mn, ivol, jRbc, jRbs, jZbc, JZbs, imn, irz, issy
 
   use cputiming, only : Trzaxis
 
-  use allglobal, only : ncpu, myid, cpus, im, in, &
+  use allglobal, only : ncpu, myid, cpus, im_field, in_field, &
                         dRodR, dRodZ, dZodR, dZodZ, &
                         dRadR, dRadZ, dZadR, dZadZ, &
                         NOTstellsym
 
 LOCALS
 
-  INTEGER, intent(in)    :: Mvol, mn, ivol, imn, irz, issym
-  REAL, intent(in)       :: jRbc(1:mn,0:Mvol), jZbs(1:mn,0:Mvol), jRbs(1:mn,0:Mvol), jZbc(1:mn,0:Mvol)
+  INTEGER, intent(in)    :: Mvol, mn_field, ivol, imn_field, irz, issym
+  REAL, intent(in)       :: jRbc(1:mn_field,0:Mvol), jZbs(1:mn_field,0:Mvol), jRbs(1:mn_field,0:Mvol), jZbc(1:mn_field,0:Mvol)
 
   INTEGER                :: jvol, ii
   REAL                   :: dx, threshold ! used to check result with finite difference.
-  REAL                   :: newRbc(1:mn,0:Mvol), newZbs(1:mn,0:Mvol), newRbs(1:mn,0:Mvol), newZbc(1:mn,0:Mvol)
+  REAL                   :: newRbc(1:mn_field,0:Mvol), newZbs(1:mn_field,0:Mvol), newRbs(1:mn_field,0:Mvol), newZbc(1:mn_field,0:Mvol)
 
-BEGIN( rzaxis )
+  BEGIN( rzaxis )
 
   threshold = 1e-8 ! print with difference between FD and analytical more than this threshold
   dx = 1e-8 * jRbc(1,ivol)
@@ -900,47 +900,47 @@ BEGIN( rzaxis )
   newZbs = jZbs
 
   if (irz .eq. 0 .and. issym .eq. 0) then
-    newRbc(imn, ivol) = jRbc(imn, ivol) + dx
+    newRbc(imn_field, ivol) = jRbc(imn_field, ivol) + dx
   else if (irz .eq. 1 .and. issym .eq. 0) then
-    newZbs(imn, ivol) = jZbs(imn, ivol) + dx
+    newZbs(imn_field, ivol) = jZbs(imn_field, ivol) + dx
   else if (irz .eq. 0 .and. issym .eq. 1) then
-    newRbs(imn, ivol) = jRbs(imn, ivol) + dx
+    newRbs(imn_field, ivol) = jRbs(imn_field, ivol) + dx
   else if (irz .eq. 1 .and. issym .eq. 1) then
-    newZbc(imn, ivol) = jZbc(imn, ivol) + dx
+    newZbc(imn_field, ivol) = jZbc(imn_field, ivol) + dx
   end if
 
   ! call the same subroutine recursively, but do not compute derivatives
-  call rzaxis( Mvol, mn, newRbc, newZbs, newRbs, newZbc, ivol, .false. )
+  call rzaxis( Mvol, mn_field, newRbc, newZbs, newRbs, newZbc, ivol, .false. )
 
   ! compare the derivatives
   do ii = 1, Ntoraxis+1
     if (irz.eq.0) then
-      if (abs((newRbc(ii,0) - jRbc(ii,jvol))/dx -  dRadR(ii,0,issym,imn))/jRbc(1,ivol) .ge. threshold) then
-        write(ounit, *) 'dRc/dR: ii,m,n,issym', ii, im(imn), in(imn),issym, (newRbc(ii,0) - jRbc(ii,jvol))/dx, dRadR(ii,0,issym,imn), dx, newRbc(ii,0), jRbc(ii,jvol)
+      if (abs((newRbc(ii,0) - jRbc(ii,jvol))/dx -  dRadR(ii,0,issym,imn_field))/jRbc(1,ivol) .ge. threshold) then
+        write(ounit, *) 'dRc/dR: ii,m,n,issym', ii, im_field(imn_field), in_field(imn_field),issym, (newRbc(ii,0) - jRbc(ii,jvol))/dx, dRadR(ii,0,issym,imn_field), dx, newRbc(ii,0), jRbc(ii,jvol)
       endif
-      if (abs((newZbs(ii,0) - jZbs(ii,jvol))/dx -  dZadR(ii,1,issym,imn))/jRbc(1,ivol) .ge. threshold) then
-        write(ounit, *) 'dZs/dR: ii,m,n,issym', ii, im(imn), in(imn),issym, (newZbs(ii,0) - jZbs(ii,jvol))/dx, dZadR(ii,1,issym,imn), dx
+      if (abs((newZbs(ii,0) - jZbs(ii,jvol))/dx -  dZadR(ii,1,issym,imn_field))/jRbc(1,ivol) .ge. threshold) then
+        write(ounit, *) 'dZs/dR: ii,m,n,issym', ii, im_field(imn_field), in_field(imn_field),issym, (newZbs(ii,0) - jZbs(ii,jvol))/dx, dZadR(ii,1,issym,imn_field), dx
       endif
       if (NOTstellsym) then
-        if (abs((newRbs(ii,0) - jRbs(ii,jvol))/dx -  dRadR(ii,1,issym,imn))/jRbc(1,ivol) .ge. threshold) then
-          write(ounit, *) 'dRs/dR: ii,m,n,issym', ii, im(imn), in(imn),issym, (newRbs(ii,0) - jRbs(ii,jvol))/dx, dRadR(ii,1,issym,imn), dx
+        if (abs((newRbs(ii,0) - jRbs(ii,jvol))/dx -  dRadR(ii,1,issym,imn_field))/jRbc(1,ivol) .ge. threshold) then
+          write(ounit, *) 'dRs/dR: ii,m,n,issym', ii, im_field(imn_field), in_field(imn_field),issym, (newRbs(ii,0) - jRbs(ii,jvol))/dx, dRadR(ii,1,issym,imn_field), dx
         endif
-        if (abs((newZbc(ii,0) - jZbc(ii,jvol))/dx -  dZadR(ii,0,issym,imn))/jRbc(1,ivol) .ge. threshold) then
-          write(ounit, *) 'dZc/dR: ii,m,n,issym', ii, im(imn), in(imn),issym, (newZbc(ii,0) - jZbc(ii,jvol))/dx, dZadR(ii,0,issym,imn), dx
+        if (abs((newZbc(ii,0) - jZbc(ii,jvol))/dx -  dZadR(ii,0,issym,imn_field))/jRbc(1,ivol) .ge. threshold) then
+          write(ounit, *) 'dZc/dR: ii,m,n,issym', ii, im_field(imn_field), in_field(imn_field),issym, (newZbc(ii,0) - jZbc(ii,jvol))/dx, dZadR(ii,0,issym,imn_field), dx
         endif
       endif
     else if (irz.eq.1) then
-      if (abs((newRbc(ii,0) - jRbc(ii,jvol))/dx -  dRadZ(ii,0,1-issym,imn))/jRbc(1,ivol) .ge. threshold) then
-        write(ounit, *) 'dRc/dZ: ii,m,n,issym', ii, im(imn), in(imn),issym, (newRbc(ii,0) - jRbc(ii,jvol))/dx, dRadZ(ii,0,1-issym,imn), dx
+      if (abs((newRbc(ii,0) - jRbc(ii,jvol))/dx -  dRadZ(ii,0,1-issym,imn_field))/jRbc(1,ivol) .ge. threshold) then
+        write(ounit, *) 'dRc/dZ: ii,m,n,issym', ii, im_field(imn_field), in_field(imn_field),issym, (newRbc(ii,0) - jRbc(ii,jvol))/dx, dRadZ(ii,0,1-issym,imn_field), dx
       endif
-      if (abs((newZbs(ii,0) - jZbs(ii,jvol))/dx -  dZadZ(ii,1,1-issym,imn))/jRbc(1,ivol) .ge. threshold) then
-        write(ounit, *) 'dZs/dZ: ii,m,n,issym', ii, im(imn), in(imn),issym, (newZbs(ii,0) - jZbs(ii,jvol))/dx, dZadZ(ii,1,1-issym,imn), dx
+      if (abs((newZbs(ii,0) - jZbs(ii,jvol))/dx -  dZadZ(ii,1,1-issym,imn_field))/jRbc(1,ivol) .ge. threshold) then
+        write(ounit, *) 'dZs/dZ: ii,m,n,issym', ii, im_field(imn_field), in_field(imn_field),issym, (newZbs(ii,0) - jZbs(ii,jvol))/dx, dZadZ(ii,1,1-issym,imn_field), dx
       endif
-      if (abs((newRbs(ii,0) - jRbs(ii,jvol))/dx -  dRadZ(ii,1,1-issym,imn))/jRbc(1,ivol) .ge. threshold) then
-        write(ounit, *) 'dRs/dZ: ii,m,n,issym', ii, im(imn), in(imn),issym, (newRbs(ii,0) - jRbs(ii,jvol))/dx, dRadZ(ii,1,1-issym,imn), dx
+      if (abs((newRbs(ii,0) - jRbs(ii,jvol))/dx -  dRadZ(ii,1,1-issym,imn_field))/jRbc(1,ivol) .ge. threshold) then
+        write(ounit, *) 'dRs/dZ: ii,m,n,issym', ii, im_field(imn_field), in_field(imn_field),issym, (newRbs(ii,0) - jRbs(ii,jvol))/dx, dRadZ(ii,1,1-issym,imn_field), dx
       endif
-      if (abs((newZbc(ii,0) - jZbc(ii,jvol))/dx -  dZadZ(ii,0,1-issym,imn))/jRbc(1,ivol) .ge. threshold) then
-        write(ounit, *) 'dZc/dZ: ii,m,n,issym', ii, im(imn), in(imn),issym, (newZbc(ii,0) - jZbc(ii,jvol))/dx, dZadZ(ii,0,1-issym,imn), dx
+      if (abs((newZbc(ii,0) - jZbc(ii,jvol))/dx -  dZadZ(ii,0,1-issym,imn_field))/jRbc(1,ivol) .ge. threshold) then
+        write(ounit, *) 'dZc/dZ: ii,m,n,issym', ii, im_field(imn_field), in_field(imn_field),issym, (newZbc(ii,0) - jZbc(ii,jvol))/dx, dZadZ(ii,0,1-issym,imn_field), dx
       endif
     endif
   enddo

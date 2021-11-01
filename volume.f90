@@ -47,7 +47,7 @@ subroutine volume( lvol, vflag )
 
   use allglobal, only : myid, cpus, MPI_COMM_SPEC, &
                         YESstellsym, Mvol, &
-                        Ntz, mn, im, in, iRbc, iZbs, iRbs, iZbc, &
+                        Ntz, mn_field, im_field, in_field, iRbc, iZbs, iRbs, iZbc, &
                         djkp, djkm, &
                         vvolume, dvolume, &
                         Rij, Zij, cosi, sini, &
@@ -137,9 +137,9 @@ subroutine volume( lvol, vflag )
 
     if( YESstellsym ) then
 
-     do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
+     do ii = 1, mn_field ; mi = im_field(ii) ; ni = in_field(ii)
 
-      do jj = 1, mn ; mj = im(jj) ; nj = in(jj)
+      do jj = 1, mn_field ; mj = im_field(jj) ; nj = in_field(jj)
 
        vol(innout) = vol(innout) + iRbc(ii,jvol) * iRbc(jj,jvol) * ( djkp(ii,jj) + djkm(ii,jj) )
 
@@ -156,8 +156,8 @@ subroutine volume( lvol, vflag )
 
     else ! NOTstellsym;
 
-     do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
-      do jj = 1, mn ; mj = im(jj) ; nj = in(jj)
+     do ii = 1, mn_field ; mi = im_field(ii) ; ni = in_field(ii)
+      do jj = 1, mn_field ; mj = im_field(jj) ; nj = in_field(jj)
 
        vol(innout) = vol(innout) + iRbc(ii,jvol) * iRbc(jj,jvol) * ( djkp(ii,jj) + djkm(ii,jj) ) &
                                  + iRbs(ii,jvol) * iRbs(jj,jvol) * ( djkp(ii,jj) - djkm(ii,jj) )
@@ -246,7 +246,7 @@ subroutine volume( lvol, vflag )
       Lcurvature = 1
 
       lss = innout * two - one
-      WCALL( volume, coords, ( lvol, lss, Lcurvature, Ntz, mn ) )
+      WCALL( volume, coords, ( lvol, lss, Lcurvature, Ntz, mn_field ) )
 
       vint = Rij(1:Ntz,0,0) * (Zij(1:Ntz,0,0)*Rij(1:Ntz,2,0) - Zij(1:Ntz,2,0)*Rij(1:Ntz,0,0))
       vol(innout) = four * sum(vint) / float(Ntz)
@@ -259,11 +259,11 @@ subroutine volume( lvol, vflag )
 
           if( dBdX%issym.eq.0 ) then
             vint = cosi(1:Ntz,ii) * (Zij(1:Ntz,0,0)*Rij(1:Ntz,2,0) - Zij(1:Ntz,2,0)*Rij(1:Ntz,0,0)) &
-                + Rij(1:Ntz,0,0) * (-im(ii) * Zij(1:Ntz,0,0)*sini(1:Ntz,ii)) &
+                + Rij(1:Ntz,0,0) * (-im_field(ii) * Zij(1:Ntz,0,0)*sini(1:Ntz,ii)) &
                 + Rij(1:Ntz,0,0) * (-Zij(1:Ntz,2,0)*cosi(1:Ntz,ii))
           else
             vint = sini(1:Ntz,ii) * (Zij(1:Ntz,0,0)*Rij(1:Ntz,2,0) - Zij(1:Ntz,2,0)*Rij(1:Ntz,0,0)) &
-                + Rij(1:Ntz,0,0) * (+im(ii) * Zij(1:Ntz,0,0)*cosi(1:Ntz,ii)) &
+                + Rij(1:Ntz,0,0) * (+im_field(ii) * Zij(1:Ntz,0,0)*cosi(1:Ntz,ii)) &
                 + Rij(1:Ntz,0,0) * (-Zij(1:Ntz,2,0)*sini(1:Ntz,ii))
           endif
 
@@ -271,10 +271,10 @@ subroutine volume( lvol, vflag )
 
           if( dBdX%issym.eq.0 ) then
             vint = Rij(1:Ntz,0,0) * (sini(1:Ntz,ii)*Rij(1:Ntz,2,0)) &
-                + Rij(1:Ntz,0,0) * (-im(ii)*cosi(1:Ntz,ii)*Rij(1:Ntz,0,0))
+                + Rij(1:Ntz,0,0) * (-im_field(ii)*cosi(1:Ntz,ii)*Rij(1:Ntz,0,0))
           else
             vint = Rij(1:Ntz,0,0) * (cosi(1:Ntz,ii)*Rij(1:Ntz,2,0)) &
-                + Rij(1:Ntz,0,0) * (+im(ii)*sini(1:Ntz,ii)*Rij(1:Ntz,0,0))
+                + Rij(1:Ntz,0,0) * (+im_field(ii)*sini(1:Ntz,ii)*Rij(1:Ntz,0,0))
           endif
 
         endif ! end of if( dBdX%irz.eq.0 )

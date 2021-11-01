@@ -62,7 +62,7 @@ subroutine wa00aa( iwa00aa )
 
   use allglobal, only : ncpu, myid, cpus, &
                         Mvol, &
-                        mn, im, in, iRbc, iZbs, iRbs, iZbc, &
+                        mn_field, im_field, in_field, iRbc, iZbs, iRbs, iZbc, &
                         Nt, Nz, Ntz, Rij, Zij, &
                         Lcoordinatesingularity, &
                         YESstellsym
@@ -99,7 +99,7 @@ subroutine wa00aa( iwa00aa )
 
   lss = one ; Lcurvature = 0 ; Lcoordinatesingularity = .false.
 
-  WCALL( wa00aa, co01aa, ( Nvol, lss, Lcurvature, Ntz, mn ) ) ! get plasma boundary, which serves as inner boundary; 10 Apr 13;
+  WCALL( wa00aa, co01aa, ( Nvol, lss, Lcurvature, Ntz, mn_field ) ) ! get plasma boundary, which serves as inner boundary; 10 Apr 13;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -275,9 +275,9 @@ subroutine wa00aa( iwa00aa )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   call tfft( Nt, Nz, Rij(1:Ntz,0,0), Zij(1:Ntz,0,0), &
-             mn, im(1:mn), in(1:mn), iRbc(1:mn,Mvol), iRbs(1:mn,Mvol), iZbc(1:mn,Mvol), iZbs(1:mn,Mvol), ifail )
+             mn_field, im_field(1:mn_field), in_field(1:mn_field), iRbc(1:mn_field,Mvol), iRbs(1:mn_field,Mvol), iZbc(1:mn_field,Mvol), iZbs(1:mn_field,Mvol), ifail )
 
-  if( YESstellsym ) then ; iRbs(1:mn,Mvol)= zero ; iZbc(1:mn,Mvol) = zero
+  if( YESstellsym ) then ; iRbs(1:mn_field,Mvol)= zero ; iZbc(1:mn_field,Mvol) = zero
   endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

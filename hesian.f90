@@ -9,7 +9,7 @@
 !> @param[in] Mvol total number of volumes in computation
 !> @param[in] mn number of Fourier harmonics
 !> @param[in] LGdof what is this?
-subroutine hesian( NGdof, position, Mvol, mn, LGdof )
+subroutine hesian( NGdof, position, Mvol, mn_field, LGdof )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -27,7 +27,7 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
   use cputiming, only : Thesian
 
   use allglobal, only : ncpu, myid, cpus, MPI_COMM_SPEC, ext, &
-                        im, in, &
+                        im_field, in_field, &
                         iRbc, iZbs, iRbs, iZbc, &
                         dRbc, dZbs, dRbs, dZbc, &
                         lBBintegral, dBBdRZ, &
@@ -39,7 +39,7 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
 
   LOCALS
 
-  INTEGER, intent(in) :: NGdof, Mvol, mn, LGdof
+  INTEGER, intent(in) :: NGdof, Mvol, mn_field, LGdof
   REAL                :: position(0:NGdof) !< internal geometrical degrees of freedom;
 
   LOGICAL             :: LComputeDerivatives, LComputeAxis
@@ -53,7 +53,7 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
 
   REAL                :: oldBB(1:Mvol,-2:2), oBBdRZ(1:Mvol,0:1,1:LGdof), ohessian(1:NGdof,1:NGdof)
 
-  REAL                :: oRbc(1:mn,0:Mvol), oZbs(1:mn,0:Mvol), oRbs(1:mn,0:Mvol), oZbc(1:mn,0:Mvol), determinant
+  REAL                :: oRbc(1:mn_field,0:Mvol), oZbs(1:mn_field,0:Mvol), oRbs(1:mn_field,0:Mvol), oZbc(1:mn_field,0:Mvol), determinant
 
   CHARACTER           :: pack
 
@@ -106,10 +106,10 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
 
   oBBdRZ(1:Mvol,0:1,1:LGdof) = dBBdRZ(1:Mvol,0:1,1:LGdof)
 
-  oRbc(1:mn,0:Mvol) = iRbc(1:mn,0:Mvol)
-  oZbs(1:mn,0:Mvol) = iZbs(1:mn,0:Mvol)
-  oRbs(1:mn,0:Mvol) = iRbs(1:mn,0:Mvol)
-  oZbc(1:mn,0:Mvol) = iZbc(1:mn,0:Mvol)
+  oRbc(1:mn_field,0:Mvol) = iRbc(1:mn_field,0:Mvol)
+  oZbs(1:mn_field,0:Mvol) = iZbs(1:mn_field,0:Mvol)
+  oRbs(1:mn_field,0:Mvol) = iRbs(1:mn_field,0:Mvol)
+  oZbc(1:mn_field,0:Mvol) = iZbc(1:mn_field,0:Mvol)
 
   FATAL( hesian, Lfreebound.eq.1, this routine needs attention )
 
@@ -119,7 +119,7 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
 
    idof = 0
 
-   do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over Fourier harmonics; 26 Feb 13;
+   do ii = 1, mn_field ; mi = im_field(ii) ; ni = in_field(ii) ! loop over Fourier harmonics; 26 Feb 13;
 
     do irz = 0, 1 ! loop over coordinate functions; 26 Feb 13;
 
@@ -132,10 +132,10 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
       if( ii.eq.1 .and. irz.eq.1 .and. issym.eq.0 ) cycle ! no dependence on Zbs_{m=0,n=0}; 26 Feb 13;
       if( ii.eq.1 .and. irz.eq.0 .and. issym.eq.1 ) cycle ! no dependence on Rbs_{m=0,n=0}; 26 Feb 13;
 
-      iRbc(1:mn,0:Mvol) = oRbc(1:mn,0:Mvol)
-      iZbs(1:mn,0:Mvol) = oZbs(1:mn,0:Mvol)
-      iRbs(1:mn,0:Mvol) = oRbs(1:mn,0:Mvol)
-      iZbc(1:mn,0:Mvol) = oZbc(1:mn,0:Mvol)
+      iRbc(1:mn_field,0:Mvol) = oRbc(1:mn_field,0:Mvol)
+      iZbs(1:mn_field,0:Mvol) = oZbs(1:mn_field,0:Mvol)
+      iRbs(1:mn_field,0:Mvol) = oRbs(1:mn_field,0:Mvol)
+      iZbc(1:mn_field,0:Mvol) = oZbc(1:mn_field,0:Mvol)
 
       idof = idof + 1 ! labels degree of freedom; 26 Feb 13;
 
@@ -156,8 +156,8 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
        pack = 'P' !; position(0) = zero ! this is not used; 11 Aug 14;
        LComputeAxis = .true.
        LComputeDerivatives = .false. !; position(0) = zero ! this is not used; 11 Aug 14;
-       WCALL( hesian, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), &
-                                iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, LComputeDerivatives, LComputeAxis ) )
+       WCALL( hesian, packxi, ( NGdof, position(0:NGdof), Mvol, mn_field, iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), &
+                                iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), pack, LComputeDerivatives, LComputeAxis ) )
 
 
        WCALL( hesian, dforce, ( NGdof, position(0:NGdof), gradient(0:NGdof), LComputeDerivatives, LComputeAxis ) ) ! re-calculate Beltrami fields;
@@ -192,14 +192,14 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
 
   enddo ! end of do vvol; 26 Feb 13;
 
-  iRbc(1:mn,0:Mvol) = oRbc(1:mn,0:Mvol)
-  iZbs(1:mn,0:Mvol) = oZbs(1:mn,0:Mvol)
-  iRbs(1:mn,0:Mvol) = oRbs(1:mn,0:Mvol)
-  iZbc(1:mn,0:Mvol) = oZbc(1:mn,0:Mvol)
+  iRbc(1:mn_field,0:Mvol) = oRbc(1:mn_field,0:Mvol)
+  iZbs(1:mn_field,0:Mvol) = oZbs(1:mn_field,0:Mvol)
+  iRbs(1:mn_field,0:Mvol) = oRbs(1:mn_field,0:Mvol)
+  iZbc(1:mn_field,0:Mvol) = oZbc(1:mn_field,0:Mvol)
 
   pack = 'P' !; position(0) = zero ! this is not used; 11 Aug 14;
-  WCALL( hesian, packxi,( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), &
-                          iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, LComputeDerivatives, LComputeAxis ) )
+  WCALL( hesian, packxi,( NGdof, position(0:NGdof), Mvol, mn_field, iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), &
+                          iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), pack, LComputeDerivatives, LComputeAxis ) )
 
 #endif
 
@@ -257,7 +257,7 @@ endif
 !   write(lunit+myid,'("hesian : ",f10.2," : myid=",i3," ; vvol=",i3," ; dRZ=",es9.1," ;")') cput-cpus, myid, vvol, dRZ
 !   write(lunit+myid,'("hesian : ", 10x ," : ")')
 
-    do ii = 1, mn ! loop over Fourier harmonics degrees of freedom;
+    do ii = 1, mn_field ! loop over Fourier harmonics degrees of freedom;
 
      do irz = 0, 1 ! loop over R,Z degrees of freedom;
 
@@ -292,7 +292,7 @@ endif
 
        do jvol = 1, Mvol-1
 
-        do jj = 1, mn
+        do jj = 1, mn_field
 
          do jrz = 0, 1 ! loop over R,Z degrees of freedom;
 
@@ -316,8 +316,8 @@ endif
 
            if( abs(hessian(tdoc,tdof)).gt.1.0e-05 .or. abs(df(tdoc)).gt.1.0e-05 .or. error.gt.dRZ ) then ! write to screen; 20 Jan 15;
             write(ounit     ,1001) cput-cpus, myid, &
-          vvol, im(ii), in(ii), irz, issym, tdof, &
-          jvol, im(jj), in(jj), jrz, jssym, tdoc, &
+          vvol, im_field(ii), in_field(ii), irz, issym, tdof, &
+          jvol, im_field(jj), in_field(jj), jrz, jssym, tdoc, &
           df(tdoc), tdoc, tdof, hessian(tdoc,tdof), error
            endif
 
@@ -362,7 +362,9 @@ endif
    enddo ! end of do vvol;
 
    pack = 'U' !; position(0) = zero ! this is not used; 11 Aug 14;
-   WCALL( hesian, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, .false., LComputeAxis ) )
+   WCALL( hesian, packxi, ( NGdof, position(0:NGdof), Mvol, mn_field, iRbc(1:mn_field,0:Mvol), &
+                            iZbs(1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), &
+                            pack, .false., LComputeAxis ) )
 
    mu(1:Nvol) = lmu(1:Nvol) ; pflux(1:Nvol) = lpflux(1:Nvol) ; helicity(1:Nvol) = lhelicity(1:Nvol)
 
@@ -497,7 +499,7 @@ endif
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
    do lvol = 1, Mvol-1
-    do ii = 1, mn ; evecr(ii+(lvol-1)*mn,1:NGdof) = evecr(ii+(lvol-1)*mn,1:NGdof) * psifactor(ii,lvol) ! geometrical regularization;
+    do ii = 1, mn_field ; evecr(ii+(lvol-1)*mn_field,1:NGdof) = evecr(ii+(lvol-1)*mn_field,1:NGdof) * psifactor(ii,lvol) ! geometrical regularization;
     enddo
    enddo
 
@@ -510,8 +512,8 @@ endif
      do iev = 1, NGdof ! loop over all eigenvalues; 04 Dec 14;
       if( evalr(iev).lt.zero ) then ! only show unstable eigenvalues; 04 Dec 14;
        write(ounit,'("hesian : ",f10.2," : evalr="es13.5" ; ")') cput-cpus, evalr(iev)
-       write(ounit,'("hesian : ",es10.3," : "999(" ("i3","i3")":))') evalr(iev), (/ ( im(ii), in(ii), ii = 1, mn ) /)
-       do lvol = 1, Mvol-1 ; write(ounit,'("hesian : ",i10   " : "999es10.2)') lvol, evecr(1+mn*(lvol-1):mn+mn*(lvol-1),iev)
+       write(ounit,'("hesian : ",es10.3," : "999(" ("i3","i3")":))') evalr(iev), (/ ( im_field(ii), in_field(ii), ii = 1, mn_field ) /)
+       do lvol = 1, Mvol-1 ; write(ounit,'("hesian : ",i10   " : "999es10.2)') lvol, evecr(1+mn_field*(lvol-1):mn_field+mn_field*(lvol-1),iev)
        enddo
       endif
      enddo
@@ -579,8 +581,8 @@ endif
 
    FATAL( hesian, Igeometry.gt.2 .or. NOTstellsym, only for stellarator-symmetric cylindrical )
 
-   do ii = 1, mn
-    if( im(ii).eq.dqq .and. in(ii).eq.dpp ) perturbation(ii) = one ! impose arbitrary perturbation; 18 Dec 14;
+   do ii = 1, mn_field
+    if( im_field(ii).eq.dqq .and. in_field(ii).eq.dpp ) perturbation(ii) = one ! impose arbitrary perturbation; 18 Dec 14;
    enddo
 
 ! the   above   will be replaced when perturbation is supplied as input; 18 Dec 14;
@@ -608,22 +610,24 @@ endif
     end select
 
     pack = 'U' ! unpack geometrical degrees-of-freedom; 13 Sep 13;
-    WCALL( hesian, packxi, ( NGdof,     solution(0:NGdof), Mvol, mn, dRbc(1:mn,0:Mvol), dZbs(1:mn,0:Mvol), dRbs(1:mn,0:Mvol), dZbc(1:mn,0:Mvol), pack, .false., LComputeAxis ) )
+    WCALL( hesian, packxi, ( NGdof,     solution(0:NGdof), Mvol, mn_field, &
+                             dRbc(1:mn_field,0:Mvol), dZbs(1:mn_field,0:Mvol), &
+                             dRbs(1:mn_field,0:Mvol), dZbc(1:mn_field,0:Mvol), pack, .false., LComputeAxis ) )
 
-    dRbc(1:mn,Mvol) = perturbation(1:LGdof)
+    dRbc(1:mn_field,Mvol) = perturbation(1:LGdof)
 
     if( Igeometry.gt.1 ) then ! include regularization factor; 18 Dec 14;
      do lvol = 1, Mvol-1
-      do ii = 1, mn ; solution(ii+(lvol-1)*LGdof) = solution(ii+(lvol-1)*LGdof) * psifactor(ii,lvol) ! unpack; 29 Apr 15;
+      do ii = 1, mn_field ; solution(ii+(lvol-1)*LGdof) = solution(ii+(lvol-1)*LGdof) * psifactor(ii,lvol) ! unpack; 29 Apr 15;
       enddo
      enddo
     endif
 
     if( Whesian ) then ! screen output; 18 Dec 14;
-     ;                   ; write(ounit,'("hesian : " 10x " : "3x" m="999( i09   ))') im(1:mn)
-     ;                   ; write(ounit,'("hesian : " 10x " : "3x" n="999( i09   ))') in(1:mn)
+     ;                   ; write(ounit,'("hesian : " 10x " : "3x" m="999( i09   ))') im_field(1:mn_field)
+     ;                   ; write(ounit,'("hesian : " 10x " : "3x" n="999( i09   ))') in_field(1:mn_field)
      do lvol = 1, Mvol-1
-      ;                  ; write(ounit,'("hesian : " 10x " : "i3" d="999( f09.05))') lvol, ( solution((lvol-1)*LGdof+ii), ii = 1, mn )
+      ;                  ; write(ounit,'("hesian : " 10x " : "i3" d="999( f09.05))') lvol, ( solution((lvol-1)*LGdof+ii), ii = 1, mn_field )
      enddo;              ; write(ounit,'("hesian : " 10x " : "3x" d="999( f09.05))')         perturbation(1:LGdof)
     endif ! end of if( Whesian ) then; 18 Dec 14;
 

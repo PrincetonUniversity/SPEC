@@ -36,9 +36,9 @@
 !> @param[in]    NGdof
 !> @param[inout] position
 !> @param[in]    Nvol
-!> @param[in]    mn
+!> @param[in]    mn_field
 !> @param        ie04dgf
-subroutine pc00aa( NGdof, position, Nvol, mn, ie04dgf ) ! argument list is optional;
+subroutine pc00aa( NGdof, position, Nvol, mn_field, ie04dgf ) ! argument list is optional;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -58,7 +58,7 @@ subroutine pc00aa( NGdof, position, Nvol, mn, ie04dgf ) ! argument list is optio
 
   LOCALS
 
-  INTEGER, intent(in)    :: Nvol, mn, NGdof
+  INTEGER, intent(in)    :: Nvol, mn_field, NGdof
   REAL   , intent(inout) :: position(0:NGdof)
   INTEGER                :: ie04dgf
 

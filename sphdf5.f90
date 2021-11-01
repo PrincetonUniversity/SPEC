@@ -405,7 +405,7 @@ end subroutine mirror_input_to_outfile
 !> </ul>
 subroutine init_convergence_output
 
-  use allglobal, only : mn, Mvol
+  use allglobal, only : mn_field, Mvol
 
   LOCALS
 
@@ -443,7 +443,7 @@ subroutine init_convergence_output
 
   ! declare "iteration" compound datatype
   ! declare array parts
-  H5CALL( sphdf5, h5tarray_create_f, (H5T_NATIVE_DOUBLE, 2, int((/mn, Mvol+1/),hsize_t), iRZbscArray_id, hdfier) ) ! create array datatypes for i{R,Z}b{c,s}
+  H5CALL( sphdf5, h5tarray_create_f, (H5T_NATIVE_DOUBLE, 2, int((/mn_field, Mvol+1/),hsize_t), iRZbscArray_id, hdfier) ) ! create array datatypes for i{R,Z}b{c,s}
   H5CALL( sphdf5, h5tget_size_f, (iRZbscArray_id, irbc_size, hdfier) )
   H5CALL( sphdf5, h5tget_size_f, (H5T_NATIVE_INTEGER, type_size_i, hdfier) )                           ! size of an integer field
   H5CALL( sphdf5, h5tget_size_f, (H5T_NATIVE_DOUBLE,  type_size_d, hdfier) )                           ! size of a   double field
@@ -510,7 +510,7 @@ end subroutine init_convergence_output
 !>
 subroutine write_convergence_output( nDcalls, ForceErr )
 
-  use allglobal, only : myid, mn, Mvol, Energy, iRbc, iZbs, iRbs, iZbc
+  use allglobal, only : myid, mn_field, Mvol, Energy, iRbc, iZbs, iRbs, iZbc
 
   LOCALS
   INTEGER, intent(in)  :: nDcalls
@@ -544,13 +544,13 @@ subroutine write_convergence_output( nDcalls, ForceErr )
     & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id), __FILE__, __LINE__)
   H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_ForceErr_id, ForceErr, INT((/1/), HSIZE_T), hdfier, &
     & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id), __FILE__, __LINE__)
-  H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_iRbc_id, iRbc, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
+  H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_iRbc_id, iRbc, INT((/mn_field,Mvol+1/), HSIZE_T), hdfier, &
     & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id), __FILE__, __LINE__)
-  H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_iZbs_id, iZbs, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
+  H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_iZbs_id, iZbs, INT((/mn_field,Mvol+1/), HSIZE_T), hdfier, &
     & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id), __FILE__, __LINE__)
-  H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_iRbs_id, iRbs, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
+  H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_iRbs_id, iRbs, INT((/mn_field,Mvol+1/), HSIZE_T), hdfier, &
     & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id), __FILE__, __LINE__)
-  H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_iZbc_id, iZbc, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
+  H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_iZbc_id, iZbc, INT((/mn_field,Mvol+1/), HSIZE_T), hdfier, &
     & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id), __FILE__, __LINE__)
 
   ! dataspace to appended object should be closed now
@@ -572,7 +572,7 @@ subroutine write_grid
 
   use constants
   use allglobal, only : myid, ijreal, ijimag, jireal, &
-  &                     Nt, Nz, Ntz, Mvol, pi2nfp, ivol, mn, Node, gBzeta, &
+  &                     Nt, Nz, Ntz, Mvol, pi2nfp, ivol, mn_field, Node, gBzeta, &
   &                     Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
   &                     Rij, Zij, sg
   use inputlist, only : Lrad, Igeometry, Nvol, Ngrid, rtor, rpol
@@ -631,7 +631,7 @@ subroutine write_grid
     else                                            ; Lcurvature = 1 ! compute Jacobian       ;
     endif
 
-    WCALL( sphdf5, coords, ( vvol, lss, Lcurvature, Ntz, mn ) ) ! only Rij(0,:) and Zij(0,:) are required; Rmn & Zmn are available;
+    WCALL( sphdf5, coords, ( vvol, lss, Lcurvature, Ntz, mn_field ) ) ! only Rij(0,:) and Zij(0,:) are required; Rmn & Zmn are available;
 
     alongLrad = Ngrid_sum+ii+1
 
@@ -949,7 +949,7 @@ end subroutine finalize_flt_output
 !> @param allAzo \f$A^{\zeta}_\mathrm{odd}\f$ for all nested volumes
 subroutine write_vector_potential(sumLrad, allAte, allAze, allAto, allAzo)
 
-  use allglobal, only : mn
+  use allglobal, only : mn_field
 
   LOCALS
   integer, intent(in) :: sumLrad
@@ -962,10 +962,10 @@ subroutine write_vector_potential(sumLrad, allAte, allAze, allAto, allAzo)
 
   HDEFGRP( file_id, vector_potential, grpVectorPotential )
 
-  HWRITERA( grpVectorPotential, sumLrad, mn, Ate, allAte(1:sumLrad,1:mn) )
-  HWRITERA( grpVectorPotential, sumLrad, mn, Aze, allAze(1:sumLrad,1:mn) )
-  HWRITERA( grpVectorPotential, sumLrad, mn, Ato, allAto(1:sumLrad,1:mn) )
-  HWRITERA( grpVectorPotential, sumLrad, mn, Azo, allAzo(1:sumLrad,1:mn) )
+  HWRITERA( grpVectorPotential, sumLrad, mn_field, Ate, allAte(1:sumLrad,1:mn_field) )
+  HWRITERA( grpVectorPotential, sumLrad, mn_field, Aze, allAze(1:sumLrad,1:mn_field) )
+  HWRITERA( grpVectorPotential, sumLrad, mn_field, Ato, allAto(1:sumLrad,1:mn_field) )
+  HWRITERA( grpVectorPotential, sumLrad, mn_field, Azo, allAzo(1:sumLrad,1:mn_field) )
 
   HCLOSEGRP( grpVectorPotential )
 
@@ -982,7 +982,8 @@ subroutine hdfint
   use inputlist
   use allglobal, only : ncpu, cpus, &
                         Mvol, ForceErr, &
-                        mn, im, in, iRbc, iZbs, iRbs, iZbc, &
+                        mn_field, im_field, in_field, iRbc, iZbs, iRbs, iZbc, &
+                        mn_rho, im_rho, in_rho, mn_force, im_force, in_force, &
                         dRbc, dZbs, dRbs, dZbc, &
                         vvolume, dvolume, &
                         Bsupumn, Bsupvmn, &
@@ -1006,10 +1007,10 @@ subroutine hdfint
 
   HDEFGRP( file_id, output, grpOutput )
 
-  HWRITERV( grpOutput,           mn,               Vns,       iVns(1:mn)   ) !     stellarator symmetric normal field at boundary; vacuum component;
-  HWRITERV( grpOutput,           mn,               Bns,       iBns(1:mn)   ) !     stellarator symmetric normal field at boundary; plasma component;
-  HWRITERV( grpOutput,           mn,               Vnc,       iVnc(1:mn)   ) ! non-stellarator symmetric normal field at boundary; vacuum component;
-  HWRITERV( grpOutput,           mn,               Bnc,       iBnc(1:mn)   ) ! non-stellarator symmetric normal field at boundary; plasma component;
+  HWRITERV( grpOutput,           mn_field,               Vns,       iVns(1:mn_field)   ) !     stellarator symmetric normal field at boundary; vacuum component;
+  HWRITERV( grpOutput,           mn_field,               Bns,       iBns(1:mn_field)   ) !     stellarator symmetric normal field at boundary; plasma component;
+  HWRITERV( grpOutput,           mn_field,               Vnc,       iVnc(1:mn_field)   ) ! non-stellarator symmetric normal field at boundary; vacuum component;
+  HWRITERV( grpOutput,           mn_field,               Bnc,       iBnc(1:mn_field)   ) ! non-stellarator symmetric normal field at boundary; plasma component;
 
 !> <ul>
 !> <li> In addition to the input variables, which are described in global(), the following quantities are written to \c ext.sp.h5 :
@@ -1018,22 +1019,34 @@ subroutine hdfint
 
 !latex \type{variable}               & type    & \pb{description} \\ \hline
 
-!latex \type{mn}                     & integer & \pb{number of Fourier modes} \\
-  HWRITEIV( grpOutput,  1, mn, (/ mn /)  )
-!latex \type{im(1:mn)}               & integer & \pb{poloidal mode numbers} \\
-  HWRITEIV( grpOutput, mn, im, im(1:mn) )
-!latex \type{in(1:mn)}               & integer & \pb{toroidal mode numbers} \\
-  HWRITEIV( grpOutput, mn, in, in(1:mn) )
+!latex \type{mn\_field}               & integer & \pb{number of Fourier modes of RZ and vector potential} \\
+  HWRITEIV( grpOutput,  1, mn, (/ mn_field /)  )
+!latex \type{im\_field(1:mn\_field)}               & integer & \pb{poloidal mode numbers of RZ and vector potential} \\
+  HWRITEIV( grpOutput, mn_field, im, im_field(1:mn_field) )
+!latex \type{in\_field(1:mn\_field)}               & integer & \pb{toroidal mode numbers of RZ and vector potential} \\
+  HWRITEIV( grpOutput, mn_field, in, in_field(1:mn_field) )
+!latex \type{mn\_rho}                     & integer & \pb{number of Fourier modes of rhomn, henneberg representation} \\
+  HWRITEIV( grpOutput,  1, mn_rho, (/ mn_rho /)  )
+!latex \type{im\_rho(1:mn\_rho)}               & integer & \pb{poloidal mode numbers  of rhomn, henneberg representation} \\
+  HWRITEIV( grpOutput, mn_rho, im_rho, im_rho(1:mn_rho) )
+!latex \type{in\_rho(1:mn\_rho)}               & integer & \pb{toroidal mode numbers  of rhomn, henneberg representation} \\
+  HWRITEIV( grpOutput, mn_rho, in_rho, in_rho(1:mn_rho) )
+!latex \type{mn\_force}                     & integer & \pb{number of Fourier modes of force (B square)} \\
+  HWRITEIV( grpOutput,  1, mn_force, (/ mn_force /)  )
+!latex \type{im\_force(1:mn\_force)}               & integer & \pb{poloidal mode numbers of force (B square)} \\
+  HWRITEIV( grpOutput, mn_force, im_force, im_force(1:mn_force) )
+!latex \type{in(1:mn\_force)}               & integer & \pb{toroidal mode number of force (B square)s} \\
+  HWRITEIV( grpOutput, mn_force, in_force, in_force(1:mn_force) )
 !latex \type{Mvol}                   & integer & \pb{number of interfaces = number of volumes} \\
   HWRITEIV( grpOutput,  1, Mvol, (/ Mvol /))
-!latex \type{iRbc(1:mn,0:Mvol)}      & real    & \pb{Fourier harmonics, $R_{m,n}$, of interfaces} \\
-  HWRITERA( grpOutput, mn, (Mvol+1), Rbc, iRbc(1:mn,0:Mvol) )
-!latex \type{iZbs(1:mn,0:Mvol)}      & real    & \pb{Fourier harmonics, $Z_{m,n}$, of interfaces} \\
-  HWRITERA( grpOutput, mn, (Mvol+1), Zbs, iZbs(1:mn,0:Mvol) )
-!latex \type{iRbs(1:mn,0:Mvol)}      & real    & \pb{Fourier harmonics, $R_{m,n}$, of interfaces} \\
-  HWRITERA( grpOutput, mn, (Mvol+1), Rbs, iRbs(1:mn,0:Mvol) )
-!latex \type{iZbc(1:mn,0:Mvol)}      & real    & \pb{Fourier harmonics, $Z_{m,n}$, of interfaces} \\
-  HWRITERA( grpOutput, mn, (Mvol+1), Zbc, iZbc(1:mn,0:Mvol) )
+!latex \type{iRbc(1:mn_field,0:Mvol)}      & real    & \pb{Fourier harmonics, $R_{m,n}$, of interfaces} \\
+  HWRITERA( grpOutput, mn_field, (Mvol+1), Rbc, iRbc(1:mn_field,0:Mvol) )
+!latex \type{iZbs(1:mn_field,0:Mvol)}      & real    & \pb{Fourier harmonics, $Z_{m,n}$, of interfaces} \\
+  HWRITERA( grpOutput, mn_field, (Mvol+1), Zbs, iZbs(1:mn_field,0:Mvol) )
+!latex \type{iRbs(1:mn_field,0:Mvol)}      & real    & \pb{Fourier harmonics, $R_{m,n}$, of interfaces} \\
+  HWRITERA( grpOutput, mn_field, (Mvol+1), Rbs, iRbs(1:mn_field,0:Mvol) )
+!latex \type{iZbc(1:mn_field,0:Mvol)}      & real    & \pb{Fourier harmonics, $Z_{m,n}$, of interfaces} \\
+  HWRITERA( grpOutput, mn_field, (Mvol+1), Zbc, iZbc(1:mn_field,0:Mvol) )
 !l tex \type{forcetol}               & real    & \pb{force-balance error across interfaces} \\
 !  HWRITERV( grpOutput, 1, forcetol, (/ forcetol /)) ! already in /input/global
 !latex \type{ForceErr}               & real    & \pb{force-balance error across interfaces} \\
@@ -1072,29 +1085,29 @@ subroutine hdfint
   HWRITEIV( grpOutput, 1, Mrad, (/ Mrad /))
 !latex \type{TT(0:Mrad,0:1,0:1)}     & real    & \pb{the Chebyshev polynomials, $T_l$, and their derivatives, evaluated at $s=\pm 1$} \\
   HWRITERC( grpOutput, (Mrad+1), 2, 2, TT, TT(0:Mrad,0:1,0:1) )
-!latex \type{Btemn(1:mn,0:1,1:Mvol)} & real    & \pb{the cosine harmonics of the covariant poloidal field, \\
+!latex \type{Btemn(1:mn_field,0:1,1:Mvol)} & real    & \pb{the cosine harmonics of the covariant poloidal field, \\
 !latex                                           i.e. $[[B_{\t,j}]]$ evaluated on the inner and outer interface in each volume} \\
-  HWRITERC( grpOutput, mn, 2, Mvol, Btemn, Btemn(1:mn,0:1,1:Mvol) )
-!latex \type{Bzemn(1:mn,0:1,1:Mvol)} & real    & \pb{the cosine harmonics of the covariant toroidal field, \\
+  HWRITERC( grpOutput, mn_field, 2, Mvol, Btemn, Btemn(1:mn_field,0:1,1:Mvol) )
+!latex \type{Bzemn(1:mn_field,0:1,1:Mvol)} & real    & \pb{the cosine harmonics of the covariant toroidal field, \\
 !latex                                           i.e. $[[B_{\z,j}]]$ evaluated on the inner and outer interface in each volume} \\
-  HWRITERC( grpOutput, mn, 2, Mvol, Bzemn, Bzemn(1:mn,0:1,1:Mvol) )
-!latex \type{Btomn(1:mn,0:1,1:Mvol)} & real    & \pb{the sine harmonics of the covariant poloidal field, \\
+  HWRITERC( grpOutput, mn_field, 2, Mvol, Bzemn, Bzemn(1:mn_field,0:1,1:Mvol) )
+!latex \type{Btomn(1:mn_field,0:1,1:Mvol)} & real    & \pb{the sine harmonics of the covariant poloidal field, \\
 !latex                                           i.e. $[[B_{\t,j}]]$ evaluated on the inner and outer interface in each volume} \\
-  HWRITERC( grpOutput, mn, 2, Mvol, Btomn, Btomn(1:mn,0:1,1:Mvol) )
-!latex \type{Bzomn(1:mn,0:1,1:Mvol)} & real    & \pb{the sine harmonics of the covariant toroidal field, \\
+  HWRITERC( grpOutput, mn_field, 2, Mvol, Btomn, Btomn(1:mn_field,0:1,1:Mvol) )
+!latex \type{Bzomn(1:mn_field,0:1,1:Mvol)} & real    & \pb{the sine harmonics of the covariant toroidal field, \\
 !latex                                           i.e. $[[B_{\z,j}]]$ evaluated on the inner and outer interface in each volume} \\
-  HWRITERC( grpOutput, mn, 2, Mvol, Bzomn, Bzomn(1:mn,0:1,1:Mvol) )
+  HWRITERC( grpOutput, mn_field, 2, Mvol, Bzomn, Bzomn(1:mn_field,0:1,1:Mvol) )
 
   if( Lperturbed.eq.1 ) then
 
-!latex \type{dRbc(1:mn,0:Nvol)}      & real    & \pb{Fourier harmonics, $R_{j}$, of interfaces; linearly perturbed solution} \\
-  HWRITERA( grpOutput, mn, (Nvol+1), dRbc, dRbc(1:mn,0:Nvol) )
-!latex \type{dZbs(1:mn,0:Nvol)}      & real    & \pb{Fourier harmonics, $Z_{j}$, of interfaces; linearly perturbed solution} \\
-  HWRITERA( grpOutput, mn, (Nvol+1), dZbs, dZbs(1:mn,0:Nvol) )
-!latex \type{dRbs(1:mn,0:Nvol)}      & real    & \pb{Fourier harmonics, $R_{j}$, of interfaces; linearly perturbed solution} \\
-  HWRITERA( grpOutput, mn, (Nvol+1), dRbs, dRbs(1:mn,0:Nvol) )
-!latex \type{dZbc(1:mn,0:Nvol)}      & real    & \pb{Fourier harmonics, $Z_{j}$, of interfaces; linearly perturbed solution} \\
-  HWRITERA( grpOutput, mn, (Nvol+1), dZbc, dZbc(1:mn,0:Nvol) )
+!latex \type{dRbc(1:mn_field,0:Nvol)}      & real    & \pb{Fourier harmonics, $R_{j}$, of interfaces; linearly perturbed solution} \\
+  HWRITERA( grpOutput, mn_field, (Nvol+1), dRbc, dRbc(1:mn_field,0:Nvol) )
+!latex \type{dZbs(1:mn_field,0:Nvol)}      & real    & \pb{Fourier harmonics, $Z_{j}$, of interfaces; linearly perturbed solution} \\
+  HWRITERA( grpOutput, mn_field, (Nvol+1), dZbs, dZbs(1:mn_field,0:Nvol) )
+!latex \type{dRbs(1:mn_field,0:Nvol)}      & real    & \pb{Fourier harmonics, $R_{j}$, of interfaces; linearly perturbed solution} \\
+  HWRITERA( grpOutput, mn_field, (Nvol+1), dRbs, dRbs(1:mn_field,0:Nvol) )
+!latex \type{dZbc(1:mn_field,0:Nvol)}      & real    & \pb{Fourier harmonics, $Z_{j}$, of interfaces; linearly perturbed solution} \\
+  HWRITERA( grpOutput, mn_field, (Nvol+1), dZbc, dZbc(1:mn_field,0:Nvol) )
 
   endif
 

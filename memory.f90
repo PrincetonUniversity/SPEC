@@ -114,7 +114,9 @@ subroutine allocate_geometry_matrices(vvol, LcomputeDerivatives)
 
   use fileunits
 
-  use inputlist, only:  Wmemory, Wmacros, Mpol, Lrad
+  use inputlist, only:  Wmemory, Wmacros, Lrad
+
+  use bndRep,    only: Mpol_field
 
   use allglobal
 
@@ -138,12 +140,12 @@ subroutine allocate_geometry_matrices(vvol, LcomputeDerivatives)
     lldof = (Lrad(vvol) - mod(Lrad(vvol),2)) / 2
     if (YESMatrixFree .and. .not. LcomputeDerivatives) then
       ! we only need a reduced number of terms to be computed for the preconditioner
-      iidof = Mpol + 1
+      iidof = Mpol_field + 1
       jjdof = 1
     else
       ! we need full-size matrices
-      iidof = mn
-      jjdof = mn
+      iidof = mn_field
+      jjdof = mn_field
     endif
   else
     lldof = Lrad(vvol)
@@ -151,8 +153,8 @@ subroutine allocate_geometry_matrices(vvol, LcomputeDerivatives)
       iidof = 1
       jjdof = 1
     else
-      iidof = mn
-      jjdof = mn
+      iidof = mn_field
+      jjdof = mn_field
     endif
   end if
 
@@ -166,11 +168,11 @@ subroutine allocate_geometry_matrices(vvol, LcomputeDerivatives)
   SALLOCATE( DDtzcc, (0:lldof,0:lldof,1:iidof,1:jjdof), zero )
   SALLOCATE( DDzzcc, (0:lldof,0:lldof,1:iidof,1:jjdof), zero )
 
-  SALLOCATE( Tss, (0:lldof,1:mn), zero )
-  SALLOCATE( Dtc, (0:lldof,1:mn), zero )
-  SALLOCATE( Dzc, (0:lldof,1:mn), zero )
-  SALLOCATE( Ttc, (0:lldof,1:mn), zero )
-  SALLOCATE( Tzc, (0:lldof,1:mn), zero )
+  SALLOCATE( Tss, (0:lldof,1:mn_field), zero )
+  SALLOCATE( Dtc, (0:lldof,1:mn_field), zero )
+  SALLOCATE( Dzc, (0:lldof,1:mn_field), zero )
+  SALLOCATE( Ttc, (0:lldof,1:mn_field), zero )
+  SALLOCATE( Tzc, (0:lldof,1:mn_field), zero )
 
   if (NOTstellsym) then
 
@@ -202,11 +204,11 @@ subroutine allocate_geometry_matrices(vvol, LcomputeDerivatives)
     SALLOCATE( DDzzsc, (0:lldof,0:lldof,1:iidof,1:jjdof), zero )
     SALLOCATE( DDzzss, (0:lldof,0:lldof,1:iidof,1:jjdof), zero )
 
-    SALLOCATE( Tsc, (0:lldof,1:mn), zero )
-    SALLOCATE( Dts, (0:lldof,1:mn), zero )
-    SALLOCATE( Dzs, (0:lldof,1:mn), zero )
-    SALLOCATE( Tts, (0:lldof,1:mn), zero )
-    SALLOCATE( Tzs, (0:lldof,1:mn), zero )
+    SALLOCATE( Tsc, (0:lldof,1:mn_field), zero )
+    SALLOCATE( Dts, (0:lldof,1:mn_field), zero )
+    SALLOCATE( Dzs, (0:lldof,1:mn_field), zero )
+    SALLOCATE( Tts, (0:lldof,1:mn_field), zero )
+    SALLOCATE( Tzs, (0:lldof,1:mn_field), zero )
 
   end if !NOTstellsym
 
