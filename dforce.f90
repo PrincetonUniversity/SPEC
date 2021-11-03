@@ -105,7 +105,8 @@ subroutine dforce( NGdof_field, position, force, LComputeDerivatives, LComputeAx
                         Lconstraint, Lcheck, dRZ, &
                         Lextrap, &
                         mupftol, &
-                        Lfreebound
+                        Lfreebound, &
+                        Lboundary
 
   use cputiming, only : Tdforce
 
@@ -421,7 +422,7 @@ subroutine dforce( NGdof_field, position, force, LComputeDerivatives, LComputeAx
 
       ;  idoc = idoc + mn_force   ! degree-of-constraint counter; increment;
 
-      if( Igeometry.ge.3 ) then ! add spectral constraints;
+      if( Igeometry.ge.3 .and. Lboundary.eq.0 ) then ! add spectral constraints;
 
         force(tdoc+idoc+1:tdoc+idoc+mn_force-1  ) = (                                 Iomn(2:mn_force, vvol+0  ) ) * epsilon         & ! spectral constraints;
                                                   + (                               + Somn(2:mn_force, vvol+0,1) ) * sweight(vvol+0) & ! poloidal length constraint;
@@ -445,7 +446,7 @@ subroutine dforce( NGdof_field, position, force, LComputeDerivatives, LComputeAx
 
         idoc = idoc + mn_force-1 ! degree-of-constraint counter; increment;
 
-        if( Igeometry.ge.3 ) then ! add spectral constraints;
+        if( Igeometry.ge.3 .and. Lboundary.eq.0 ) then ! add spectral constraints;
  
           force(tdoc+idoc+1:tdoc+idoc+mn_force    ) = (                              Iemn(1:mn_force, vvol+0  ) ) * epsilon         & ! spectral constraints;
                                                     + (                            + Semn(1:mn_force, vvol+0,1) ) * sweight(vvol+0) & ! poloidal length constraint;
@@ -472,7 +473,7 @@ subroutine dforce( NGdof_field, position, force, LComputeDerivatives, LComputeAx
       ;                       ; BBe(vvol) = 9.9E+09
       ;                       ; IIo(vvol) = 9.9E+09
       if ( NOTstellsym ) then ; BBo(vvol) = 9.9E+09
-      ;                      ; IIe(vvol) = 9.9E+09
+      ;                       ; IIe(vvol) = 9.9E+09
       endif
 
       ; force(tdoc+1:tdoc+LGdof_force) = 9.9E+09

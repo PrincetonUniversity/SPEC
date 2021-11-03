@@ -310,7 +310,7 @@ module bndRep
 
         ! Build RHS
         RHS1(        1:2*Ntor+1 ) = rho_work(1,-Ntor:Ntor)
-        RHS1( 2*Ntor+2:3*Ntor+3 ) = bn(0:Ntor)
+        RHS1( 2*Ntor+2:3*Ntor+2 ) = bn(0:Ntor)
 
         ii=0
         do mm=2,Mpol
@@ -341,7 +341,7 @@ module bndRep
   
         ! Unpack RHS into a format (m,n)
         rho_work( 1, -Ntor:Ntor ) = RHS1(        1:2*Ntor+1 )
-        bn( 0:Ntor )              = RHS1( 2*Ntor+2:3*Ntor+3 )
+        bn( 0:Ntor )              = RHS1( 2*Ntor+2:3*Ntor+2 )
   
         ii=0
         do mm=2,Mpol

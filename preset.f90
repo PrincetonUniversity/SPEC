@@ -520,6 +520,7 @@ subroutine preset
 !> </ul>
 
 !                            Rbc  Zbs    Rbs    Zbc
+
   select case( Igeometry )
   case( 1:2)
   if( YESstellsym ) LGdof_field = mn_field
@@ -529,23 +530,27 @@ subroutine preset
   if( NOTstellsym ) LGdof_field = mn_field + mn_field-1 + mn_field-1 + mn_field
   end select
 
-  select case( Igeometry )
-  case( 1:2 )
-    if( Lboundary.eq. 0 ) then
-      LGdof_force = LGdof_field
-      LGdof_bnd = LGdof_field
-    else
+
+  if( Lboundary.eq.0 ) then 
+
+    LGdof_force = LGdof_field
+    LGdof_bnd = LGdof_field
+
+  else 
+    select case( Igeometry )
+    case( 1:2 )
       FATAL( preset, .true., Igeometry 1 and 2 incompatible with Lboundary 1)
-    endif
-  case(  3  )
-!                               rhomn    bn, R0c, Z0s   - Z0s(0)
-    if( YESstellsym ) then
-      LGdof_bnd = mn_rho + 3 * (Ntor + 1) - 1
-      LGdof_force = mn_force
-    elseif( NOTstellsym ) then
-      FATAL( preset.f90, .true., Non stellarator symmetry not implemented with Lboundary is 1 )
-    endif
-  end select
+
+    case(  3  )
+  !                               rhomn    bn, R0c, Z0s   - Z0s(0)
+      if( YESstellsym ) then
+        LGdof_bnd = mn_rho + 3 * (Ntor + 1) - 1
+        LGdof_force = mn_force
+      elseif( NOTstellsym ) then
+        FATAL( preset.f90, .true., Non stellarator symmetry not implemented with Lboundary is 1 )
+      endif
+    end select
+  endif
 
   NGdof_field = ( Mvol-1 ) * LGdof_field
   NGdof_bnd = ( Mvol-1 ) * LGdof_bnd
