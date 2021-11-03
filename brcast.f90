@@ -37,7 +37,7 @@ subroutine brcast( lvol )
                         Bemn, Bomn, Iomn, Iemn, Somn, Semn, Pomn, Pemn, &
                         ImagneticOK, &
                        !dBBdRZ, dIIdRZ, &
-                        Lhessianallocated, LGdof, dFFdRZ, dBBdmp, dmupfdx, &
+                        Lhessianallocated, LGdof_field, dFFdRZ, dBBdmp, dmupfdx, &
                         lBBintegral, lABintegral, &
                         vvolume, &
                         NOTstellsym, LocalConstraint, &
@@ -85,14 +85,14 @@ subroutine brcast( lvol )
 
 
    if( LocalConstraint ) then
- 	  Nbc =             LGdof*       2*  LGdof*  2
- 	  RlBCAST( dFFdRZ(1:LGdof,0:1,1:LGdof,0:1,lvol), Nbc, llmodnp )
+ 	  Nbc =             LGdof_field*       2*  LGdof_field*  2
+ 	  RlBCAST( dFFdRZ(1:LGdof_field,0:1,1:LGdof_field,0:1,lvol), Nbc, llmodnp )
 
-	  Nbc =             LGdof*       2*  2
-	  RlBCAST( dBBdmp(1:LGdof,lvol,0:1,1:2), Nbc, llmodnp )
+	  Nbc =             LGdof_field*       2*  2
+	  RlBCAST( dBBdmp(1:LGdof_field,lvol,0:1,1:2), Nbc, llmodnp )
 
-	  Nbc =                   2*  LGdof*  2
-	  RlBCAST( dmupfdx(lvol,1:1   ,1:2,1:LGdof,0:1), Nbc, llmodnp ) ! why is this broadcast; 02 Sep 14;
+	  Nbc =                   2*  LGdof_field*  2
+	  RlBCAST( dmupfdx(lvol,1:1   ,1:2,1:LGdof_field,0:1), Nbc, llmodnp ) ! why is this broadcast; 02 Sep 14;
    endif
 
 

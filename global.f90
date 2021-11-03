@@ -615,8 +615,12 @@ module allglobal
 !> \addtogroup grp_geomdof Geometrical degrees-of-freedom: LGdof, NGdof
 !> The geometrical degrees-of-freedom
 !> @{
-  INTEGER              :: LGdof !<       geometrical degrees of freedom associated with each interface
-  INTEGER              :: NGdof !< total geometrical degrees of freedom
+  INTEGER              :: LGdof_bnd !<       geometrical degrees of freedom associated with each interface
+  INTEGER              :: NGdof_bnd !< total geometrical degrees of freedom
+  INTEGER              :: LGdof_field !<       magnetic field degrees of freedom
+  INTEGER              :: NGdof_field !< total magnetic field degrees of freedom
+  INTEGER              :: LGdof_force !<       force degrees of freedom
+  INTEGER              :: NGdof_force !< total force degrees of freedom
 !> @}
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -640,7 +644,7 @@ module allglobal
 !> <ul>
 !> <li> The information in \c dmupfdx describes how the helicity multiplier, \f$\mu\f$, and the enclosed poloidal flux, \f$\Delta \psi_p\f$,
 !>      must vary as the geometry is varied in order to satisfy the interface transform constraint. </li>
-!> <li> The internal variable \c dmupfdx(1:Mvol,1:2,1:LGdof,0:1) is allocated/deallocated in newton(), and hesian() if selected. </li>
+!> <li> The internal variable \c dmupfdx(1:Mvol,1:2,1:LGdof_field,0:1) is allocated/deallocated in newton(), and hesian() if selected. </li>
 !> <li> The magnetic field depends on the Fourier harmonics of both the inner and outer interface geometry (represented here as \f$x_j\f$),
 !>      the helicity multiplier, and the enclosed poloidal flux, i.e. \f${\bf B_\pm} = {\bf B_\pm}(x_j, \mu, \Delta \psi_p)\f$, so that
 !>      \f{eqnarray}{ \delta {\bf B_\pm} = \frac{\partial {\bf B}_\pm}{\partial x_j          } \delta x_j

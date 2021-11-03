@@ -85,12 +85,12 @@
 !>       interfaces changes: </li>
 !> </ul>
 !>
-!> @param[in] NGdof number of global degrees of freedom
+!> @param[in] NGdof_field number of global degrees of freedom
 !> @param[in] position
 !> @param[out] force
 !> @param[in] LComputeDerivatives
 !> @param[inout] LComputeAxis
-subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
+subroutine dforce( NGdof_field, position, force, LComputeDerivatives, LComputeAxis)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -122,7 +122,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
                         dpflux, dtflux, sweight, &
                         Bemn, Bomn, Iomn, Iemn, Somn, Semn, &
                         BBe, IIo, BBo, IIe, & ! these are just used for screen diagnostics;
-                        LGdof, dBdX, &
+                        LGdof_field, LGdof_force, NGdof_force, dBdX, &
                         Ate, Aze, Ato, Azo, & ! only required for broadcasting
                         diotadxup, dItGpdxtp, & ! only required for broadcasting
                         lBBintegral, &
@@ -140,9 +140,9 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
 
   INTEGER, parameter   :: NB = 3 ! optimal workspace block size for LAPACK:DSYSVX;
 
-  INTEGER, intent(in)  :: NGdof               ! dimensions;
-  REAL,    intent(in)  :: position(0:NGdof)   ! degrees-of-freedom = internal geometry;
-  REAL,    intent(out) :: force(0:NGdof)      ! force;
+  INTEGER, intent(in)  :: NGdof_field               ! dimensions;
+  REAL,    intent(in)  :: position(0:NGdof_field)   ! degrees-of-freedom = internal geometry;
+  REAL,    intent(out) :: force(0:NGdof_force)      ! force;
   LOGICAL, intent(in)  :: LComputeDerivatives ! indicates whether derivatives are to be calculated;
 
   INTEGER              :: vvol, innout, ii, jj, irz, issym, iocons, tdoc, idoc, idof, tdof, jdof, ivol, imn, ll, ihybrd1, lwa, Ndofgl, llmodnp
@@ -180,7 +180,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
   LComputeAxis = .true.
 #endif
 
-  WCALL( dforce, packxi,( NGdof, position(0:NGdof), Mvol, mn_field, iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), &
+  WCALL( dforce, packxi,( NGdof_field, position(0:NGdof_field), Mvol, mn_field, iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), &
                           iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), packorunpack, LcomputeDerivatives, LComputeAxis ) )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -189,7 +189,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
 #ifdef DEBUG
    FATAL( dforce, .not.allocated(dBBdmp), do not pass go )
 #endif
-   dBBdmp(1:LGdof,1:Mvol,0:1,1:2) = zero
+   dBBdmp(1:LGdof_force,1:Mvol,0:1,1:2) = zero
   endif
 
 
@@ -396,13 +396,13 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
 ! CONSTRUCT FORCE
 ! ---------------
 
-  ;   force(0:NGdof) = zero
+  ;   force(0:NGdof_force) = zero
 
   do vvol = 1, Mvol-1
 
     LREGION(vvol)
 
-    tdoc = (vvol-1) * LGdof
+    tdoc = (vvol-1) * LGdof_force
 
     if( ImagneticOK(vvol) .and. ImagneticOK(vvol+1) ) then ! the magnetic fields in the volumes adjacent to this interface are valid;
 
@@ -464,7 +464,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
       endif ! end of if( NOTstellsym ) ;
 
 #ifdef DEBUG
-      FATAL( dforce, idoc.ne.LGdof, counting error ) ! this has caught bugs;
+      FATAL( dforce, idoc.ne.LGdof_force, counting error ) ! this has caught bugs;
 #endif
 
     else ! matches if( ImagneticOK(vvol) .and. ImagneticOK(vvol+1) );
@@ -475,7 +475,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
       ;                      ; IIe(vvol) = 9.9E+09
       endif
 
-      ; force(tdoc+1:tdoc+LGdof) = 9.9E+09
+      ; force(tdoc+1:tdoc+LGdof_force) = 9.9E+09
 
     endif ! end of if( ImagneticOK(vvol) .and. ImagneticOK(vvol+1) ) ;
 
@@ -483,7 +483,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  if( NGdof.ne.0 ) then ; ForceErr = sqrt( sum( force(1:NGdof)*force(1:NGdof) ) / NGdof ) ! this includes spectral constraints;
+  if( NGdof_force.ne.0 ) then ; ForceErr = sqrt( sum( force(1:NGdof_force)*force(1:NGdof_force) ) / NGdof_force ) ! this includes spectral constraints;
   else                  ; ForceErr = zero
   endif
 
@@ -520,7 +520,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
     FATAL( dforce, .not.Lhessianallocated, need to allocate hessian )
 #endif
 
-    hessian(1:NGdof,1:NGdof) = zero
+    hessian(1:NGdof_force,1:NGdof_field) = zero
 
     do vvol = 1, Mvol-1 ! loop over interior surfaces;
 
@@ -529,19 +529,19 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
         idof = 0 ! labels degree-of-freedom = Fourier harmonic of surface geometry;
 
 #ifdef DEBUG
-        if( idof.gt.LGdof ) write(ounit,1000) myid, vvol, -1, -1, -1, idof, LGdof ! can be deleted;
+        if( idof.gt.LGdof_field ) write(ounit,1000) myid, vvol, -1, -1, -1, idof, LGdof_field ! can be deleted;
 #endif
 
         do ii = 1, mn_force ! loop over degrees-of-freedom;
 
 #ifdef DEBUG
-          if( idof.gt.LGdof ) write(ounit,1000) myid, vvol, ii, -1, -1, idof, LGdof ! can be deleted;
+          if( idof.gt.LGdof_field ) write(ounit,1000) myid, vvol, ii, -1, -1, idof, LGdof_field ! can be deleted;
 #endif
 
           do irz = 0, 1 ! Fourier harmonic of R, Fourier harmonic of Z;
 
 #ifdef DEBUG
-            if( idof.gt.LGdof ) write(ounit,1000) myid, vvol, ii, irz, -1, idof, LGdof ! can be deleted;
+            if( idof.gt.LGdof_field ) write(ounit,1000) myid, vvol, ii, irz, -1, idof, LGdof_field ! can be deleted;
 #endif
 
             if( irz.eq.1 .and. Igeometry.lt.3 ) cycle ! no dependence on Z;
@@ -549,7 +549,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
             do issym = 0, 1 ! stellarator symmetry;
 
 #ifdef DEBUG
-              if( idof.gt.LGdof ) write(ounit,1000) myid, vvol, ii, irz, issym, idof, LGdof ! can be deleted;
+              if( idof.gt.LGdof_field ) write(ounit,1000) myid, vvol, ii, irz, issym, idof, LGdof_field ! can be deleted;
 #endif
 
               if( issym.eq.1 .and. YESstellsym ) cycle ! no dependence on the non-stellarator symmetric harmonics;
@@ -560,59 +560,59 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
               idof = idof + 1 ! labels degree-of-freedom;
 
 #ifdef DEBUG
-              if( idof.gt.LGdof ) write(ounit,1000) myid, vvol, ii, irz, issym, idof, LGdof ! can be deleted;
-1000 format("hforce : " 10x " : myid=",i3," ; vvol=",i3," ; ii= ",i3," ; irz="i3" ; issym="i3" ; idof="i3" ; LGdof="i3" ;")
-                FATAL( hforce, idof.gt.LGdof, illegal degree-of-freedom index constructing hessian ) ! can be deleted;
+              if( idof.gt.LGdof_field ) write(ounit,1000) myid, vvol, ii, irz, issym, idof, LGdof_field ! can be deleted;
+1000 format("hforce : " 10x " : myid=",i3," ; vvol=",i3," ; ii= ",i3," ; irz="i3" ; issym="i3" ; idof="i3" ; LGdof_field="i3" ;")
+                FATAL( hforce, idof.gt.LGdof_field, illegal degree-of-freedom index constructing hessian ) ! can be deleted;
 #endif
 
               if( LocalConstraint ) then
                 ! Derivative with respect to previous interface
                 if( vvol.gt.1 ) then
-                  tdof = (vvol-2) * LGdof + idof ! labels degree-of-freedom in internal interface geometry   ;
-                  tdoc = (vvol-1) * LGdof        ! labels force-balance constraint across internal interfaces;
-                  idoc = 0                       ! local  force-balance constraint across internal interface ;
-                  hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof) =                                           - dFFdRZ(idoc+1:idoc+LGdof,1,idof,0,vvol+0)
+                  tdof = (vvol-2) * LGdof_field + idof ! labels degree-of-freedom in internal interface geometry   ;
+                  tdoc = (vvol-1) * LGdof_force      ! labels force-balance constraint across internal interfaces;
+                  idoc = 0                           ! local  force-balance constraint across internal interface ;
+                  hessian(tdoc+idoc+1:tdoc+idoc+LGdof_force,tdof) =                                           - dFFdRZ(idoc+1:idoc+LGdof_force,1,idof,0,vvol+0)
                   if( Lconstraint.eq.1 ) then ! this is a little clumsy; could include Lfreebound or something . . . ;
-                    hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof) =  hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof)                     &
-                                                                - dBBdmp(idoc+1:idoc+LGdof,vvol+0,1,1) * dmupfdx(vvol,1,1,idof,0) &
-                                                                - dBBdmp(idoc+1:idoc+LGdof,vvol+0,1,2) * dmupfdx(vvol,1,2,idof,0)
+                    hessian(tdoc+idoc+1:tdoc+idoc+LGdof_force,tdof) =  hessian(tdoc+idoc+1:tdoc+idoc+LGdof_force,tdof)                     &
+                                                                - dBBdmp(idoc+1:idoc+LGdof_force,vvol+0,1,1) * dmupfdx(vvol,1,1,idof,0) &
+                                                                - dBBdmp(idoc+1:idoc+LGdof_force,vvol+0,1,2) * dmupfdx(vvol,1,2,idof,0)
                   endif ! end of if( Lconstraint.eq.1 ) ;
                 endif ! end of if( vvol.gt.1 ) ;
 
                 ! Derivative with respect to current interface
-                ;tdof = (vvol-1) * LGdof + idof
-                ;tdoc = (vvol-1) * LGdof ! shorthand;
+                ;tdof = (vvol-1) * LGdof_field + idof
+                ;tdoc = (vvol-1) * LGdof_force ! shorthand;
                 ;idoc = 0
 
                 if( Lextrap.eq.1 .and. vvol.eq.1 ) then
                     ;hessian(tdoc+idof                  ,tdof) = one ! diagonal elements;
                 else
-                    ;hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof) = dFFdRZ(idoc+1:idoc+LGdof,0,idof,0,vvol+1) - dFFdRZ(idoc+1:idoc+LGdof,1,idof,1,vvol+0)
+                    ;hessian(tdoc+idoc+1:tdoc+idoc+LGdof_force,tdof) = dFFdRZ(idoc+1:idoc+LGdof_force,0,idof,0,vvol+1) - dFFdRZ(idoc+1:idoc+LGdof_force,1,idof,1,vvol+0)
                     if( Lconstraint.eq.1 ) then ! this is a little clumsy;
-                        hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof) =  hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof)                       &
-                                                                    + dBBdmp(idoc+1:idoc+LGdof,vvol+1,0,1) * dmupfdx(vvol+1,1,1,idof,0) &
-                                                                    + dBBdmp(idoc+1:idoc+LGdof,vvol+1,0,2) * dmupfdx(vvol+1,1,2,idof,0) &
-                                                                    - dBBdmp(idoc+1:idoc+LGdof,vvol+0,1,1) * dmupfdx(vvol+0,1,1,idof,1) &
-                                                                    - dBBdmp(idoc+1:idoc+LGdof,vvol+0,1,2) * dmupfdx(vvol+0,1,2,idof,1)
+                        hessian(tdoc+idoc+1:tdoc+idoc+LGdof_force,tdof) =  hessian(tdoc+idoc+1:tdoc+idoc+LGdof_force,tdof)                       &
+                                                                    + dBBdmp(idoc+1:idoc+LGdof_force,vvol+1,0,1) * dmupfdx(vvol+1,1,1,idof,0) &
+                                                                    + dBBdmp(idoc+1:idoc+LGdof_force,vvol+1,0,2) * dmupfdx(vvol+1,1,2,idof,0) &
+                                                                    - dBBdmp(idoc+1:idoc+LGdof_force,vvol+0,1,1) * dmupfdx(vvol+0,1,1,idof,1) &
+                                                                    - dBBdmp(idoc+1:idoc+LGdof_force,vvol+0,1,2) * dmupfdx(vvol+0,1,2,idof,1)
                     endif ! end of if( Lconstraint.eq.1 );
                 endif ! end of if( Lextrap.eq.1 .and. vvol.eq.1 )
 
 
                 ! Derivative with respect to next interface
                 if( vvol.lt.Mvol-1 ) then
-                  tdof = (vvol+0) * LGdof + idof
-                  tdoc = (vvol-1) * LGdof ! shorthand;
+                  tdof = (vvol+0) * LGdof_field + idof
+                  tdoc = (vvol-1) * LGdof_force ! shorthand;
                   idoc = 0
                   if( Lextrap.eq.1 .and. vvol.eq.1 ) then
                     if    ( im_field(idof).le.0                     ) then ; hessian(tdoc+idof,tdof) = - one
                     else                                             ; hessian(tdoc+idof,tdof) = - one
                     endif
                   else
-                    hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof) = dFFdRZ(idoc+1:idoc+LGdof,0,idof,1,vvol+1)
+                    hessian(tdoc+idoc+1:tdoc+idoc+LGdof_force,tdof) = dFFdRZ(idoc+1:idoc+LGdof_force,0,idof,1,vvol+1)
                     if( Lconstraint.eq.1 ) then ! this is a little clumsy;
-                      hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof) =  hessian(tdoc+idoc+1:tdoc+idoc+LGdof,tdof)                       &
-                                                                  + dBBdmp(idoc+1:idoc+LGdof,vvol+1,0,1) * dmupfdx(vvol+1,1,1,idof,1) &
-                                                                  + dBBdmp(idoc+1:idoc+LGdof,vvol+1,0,2) * dmupfdx(vvol+1,1,2,idof,1)
+                      hessian(tdoc+idoc+1:tdoc+idoc+LGdof_force,tdof) =  hessian(tdoc+idoc+1:tdoc+idoc+LGdof_force,tdof)                       &
+                                                                  + dBBdmp(idoc+1:idoc+LGdof_force,vvol+1,0,1) * dmupfdx(vvol+1,1,1,idof,1) &
+                                                                  + dBBdmp(idoc+1:idoc+LGdof_force,vvol+1,0,2) * dmupfdx(vvol+1,1,2,idof,1)
                     endif ! end of if( Lconstraint.eq.1 ) then;
                   endif
                 endif ! end of if( vvol.lt.Mvol-1 ) ;
@@ -620,14 +620,14 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
 
                 ! Case of last interface in case of boundary variation ?
                 if( vvol.eq.Mvol-1 ) then
-                  !tdof = (vvol+0) * LGdof + idof
-                  tdoc = (vvol-1) * LGdof ! shorthand ;
+                  !tdof = (vvol+0) * LGdof_force + idof
+                  tdoc = (vvol-1) * LGdof_force ! shorthand ;
                   idoc = 0
-                  dessian(tdoc+idoc+1:tdoc+idoc+LGdof,idof) = dFFdRZ(idoc+1:idoc+LGdof,0,idof,1,vvol+1)
+                  dessian(tdoc+idoc+1:tdoc+idoc+LGdof_force,idof) = dFFdRZ(idoc+1:idoc+LGdof_force,0,idof,1,vvol+1)
                   if( Lconstraint.eq.1 ) then ! this is a little clumsy;
-                    dessian(tdoc+idoc+1:tdoc+idoc+LGdof,idof) =  dessian(tdoc+idoc+1:tdoc+idoc+LGdof,idof)                       &
-                                                                + dBBdmp(idoc+1:idoc+LGdof,vvol+1,0,1) * dmupfdx(vvol+1,1,1,idof,1) &
-                                                                + dBBdmp(idoc+1:idoc+LGdof,vvol+1,0,2) * dmupfdx(vvol+1,1,2,idof,1)
+                    dessian(tdoc+idoc+1:tdoc+idoc+LGdof_force,idof) =  dessian(tdoc+idoc+1:tdoc+idoc+LGdof_force,idof)                       &
+                                                                + dBBdmp(idoc+1:idoc+LGdof_force,vvol+1,0,1) * dmupfdx(vvol+1,1,1,idof,1) &
+                                                                + dBBdmp(idoc+1:idoc+LGdof_force,vvol+1,0,2) * dmupfdx(vvol+1,1,2,idof,1)
                   endif ! end of if( Lconstraint.eq.1 ) then;
 
                 endif ! end of if( vvol.lt.Mvol-1 ) ;
@@ -637,23 +637,23 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
                 ! In the general case of global constraint, there are no zero element in the hessian. We thus loop again on all volumes
 
                 do ivol = 1, Mvol-1
-                  tdoc = (ivol-1) * LGdof ! shorthand ;
-                  tdof = (vvol-1) * LGdof + idof
+                  tdoc = (ivol-1) * LGdof_force ! shorthand ;
+                  tdof = (vvol-1) * LGdof_field + idof
 
                   if( ivol.eq.vvol-1 ) then
-                    hessian(tdoc+1:tdoc+LGdof,tdof) =  dFFdRZ(1:LGdof,0,idof,1,ivol+1)
+                    hessian(tdoc+1:tdoc+LGdof_force,tdof) =  dFFdRZ(1:LGdof_force,0,idof,1,ivol+1)
                   elseif( ivol.eq.vvol ) then
-                    hessian(tdoc+1:tdoc+LGdof,tdof) =  dFFdRZ(1:LGdof,0,idof,0,ivol+1) - dFFdRZ(1:LGdof,1,idof,1,ivol)
+                    hessian(tdoc+1:tdoc+LGdof_force,tdof) =  dFFdRZ(1:LGdof_force,0,idof,0,ivol+1) - dFFdRZ(1:LGdof_force,1,idof,1,ivol)
                   elseif( ivol.eq.vvol+1 ) then
-                    hessian(tdoc+1:tdoc+LGdof,tdof) =                                  - dFFdRZ(1:LGdof,1,idof,0,ivol)
+                    hessian(tdoc+1:tdoc+LGdof_force,tdof) =                                  - dFFdRZ(1:LGdof_force,1,idof,0,ivol)
                   endif
 
 
-                  hessian(tdoc+1:tdoc+LGdof,tdof) = hessian(tdoc+1:tdoc+LGdof,tdof)                              &
-                                                    + dBBdmp(1:LGdof,ivol+1,0,1) * dmupfdx(ivol+1,vvol,1,idof,1) &
-                                                    + dBBdmp(1:LGdof,ivol+1,0,2) * dmupfdx(ivol+1,vvol,2,idof,1) &
-                                                    - dBBdmp(1:LGdof,ivol+0,1,1) * dmupfdx(ivol+0,vvol,1,idof,1) &
-                                                    - dBBdmp(1:LGdof,ivol+0,1,2) * dmupfdx(ivol+0,vvol,2,idof,1)
+                  hessian(tdoc+1:tdoc+LGdof_force,tdof) = hessian(tdoc+1:tdoc+LGdof_force,tdof)                              &
+                                                    + dBBdmp(1:LGdof_force,ivol+1,0,1) * dmupfdx(ivol+1,vvol,1,idof,1) &
+                                                    + dBBdmp(1:LGdof_force,ivol+1,0,2) * dmupfdx(ivol+1,vvol,2,idof,1) &
+                                                    - dBBdmp(1:LGdof_force,ivol+0,1,1) * dmupfdx(ivol+0,vvol,1,idof,1) &
+                                                    - dBBdmp(1:LGdof_force,ivol+0,1,2) * dmupfdx(ivol+0,vvol,2,idof,1)
 
                 enddo
               endif ! matches if( LocalConstraint );
@@ -671,7 +671,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
     ! Evaluate force gradient
 #ifdef DEBUG
     if( Lcheck.eq.6 ) then
-       WCALL(dforce, fndiff_dforce, ( NGdof ) )
+       WCALL(dforce, fndiff_dforce, ( NGdof_force, NGdof_field ) )
     endif
 #endif
 
@@ -688,7 +688,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
 end subroutine dforce
 
 
-subroutine fndiff_dforce( NGdof )
+subroutine fndiff_dforce( NGdof_force, NGdof_field )
 
 use constants, only: zero, one, half, two
 
@@ -704,13 +704,13 @@ use allglobal, only: ncpu, myid, cpus, MPI_COMM_SPEC, &
                      Mvol, mn_force, im_force, in_force, &
                      mn_field, im_field, in_field, &
                      iRbc, iZbs, iRbs, iZbc, &
-                     LGdof, psifactor, dBdX, &
+                     LGdof_force, psifactor, dBdX, &
                      YESstellsym, NOTstellsym, &
                      hessian, ext
 
 LOCALS
 
-INTEGER, intent(in) :: NGdof
+INTEGER, intent(in) :: NGdof_force, NGdof_field
 
 INTEGER             :: vvol, idof, ii, irz, issym, isymdiff ! loop indices
 INTEGER             :: tdof ! hessian index
@@ -729,15 +729,15 @@ BEGIN(dforce)
 
   if( ncpu.eq.1) then
 
-  SALLOCATE( finitediff_estimate, (1:NGdof, 1:NGdof), zero )
+  SALLOCATE( finitediff_estimate, (1:NGdof_force, 1:NGdof_field), zero )
 
   dBdX%L = .false.
   SALLOCATE( oRbc, (1:mn_field,0:Mvol), iRbc(1:mn_field,0:Mvol) ) !save unperturbed geometry
   SALLOCATE( oZbs, (1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol) )
   SALLOCATE( oRbs, (1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol) )
   SALLOCATE( oZbc, (1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol) )
-  SALLOCATE( iforce,  (-2:2, 0:NGdof), zero)
-  SALLOCATE( iposition, (-2:2, 0:NGdof), zero)
+  SALLOCATE( iforce,  (-2:2, 0:NGdof_force), zero)
+  SALLOCATE( iposition, (-2:2, 0:NGdof_field), zero)
 
 
   do vvol = 1, Mvol-1 ! loop over interior surfaces;
@@ -785,20 +785,20 @@ BEGIN(dforce)
             !LComputeAxis = .false. ! keep axis fixed
             LComputeAxis = .true.
 
-            WCALL(dforce, packxi,( NGdof, iposition(isymdiff,0:NGdof), Mvol, mn_field, iRbc(1:mn_field,0:Mvol),&
+            WCALL(dforce, packxi,( NGdof_field, iposition(isymdiff,0:NGdof_field), Mvol, mn_field, iRbc(1:mn_field,0:Mvol),&
                                    iZbs(1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol), &
                                    iZbc(1:mn_field,0:Mvol), packorunpack, .false., LComputeAxis ) )
-            WCALL(dforce, dforce,( NGdof, iposition(isymdiff,0:NGdof), iforce(isymdiff,0:NGdof), .false., LComputeAxis) )
+            WCALL(dforce, dforce,( NGdof_field, iposition(isymdiff,0:NGdof_field), iforce(isymdiff,0:NGdof_force), .false., LComputeAxis) )
           enddo
 
           ! Fourth order centered finite difference scheme
-          iforce(0, 0:NGdof)  = ( - 1 * iforce( 2,0:NGdof) &
-                                  + 8 * iforce( 1,0:NGdof) &
-                                  - 8 * iforce(-1,0:NGdof) &
-                                  + 1 * iforce(-2,0:NGdof))  / ( 12 * dRZ )
+          iforce(0, 0:NGdof_force)  = ( - 1 * iforce( 2,0:NGdof_force) &
+                                  + 8 * iforce( 1,0:NGdof_force) &
+                                  - 8 * iforce(-1,0:NGdof_force) &
+                                  + 1 * iforce(-2,0:NGdof_force))  / ( 12 * dRZ )
 
-          tdof = (vvol-1) * LGdof + idof
-          finitediff_estimate(1:NGdof, tdof) = iforce(0, 1:NGdof)* lfactor
+          tdof = (vvol-1) * LGdof_force + idof
+          finitediff_estimate(1:NGdof_force, tdof) = iforce(0, 1:NGdof_force)* lfactor
 
         enddo !issym
       enddo !irz

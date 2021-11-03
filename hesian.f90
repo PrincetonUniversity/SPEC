@@ -8,7 +8,7 @@
 !> @param[inout] position internal geometrical degrees of freedom
 !> @param[in] Mvol total number of volumes in computation
 !> @param[in] mn number of Fourier harmonics
-!> @param[in] LGdof what is this?
+!> @param[in] number of degrees of freedom
 subroutine hesian( NGdof, position, Mvol, mn_field, LGdof )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

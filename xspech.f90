@@ -293,7 +293,7 @@ subroutine spec
                         YESstellsym, NOTstellsym, &
                         mn_field, im_field, in_field, &
                         Ntz, &
-                        LGdof, NGdof, &
+                        LGdof_force, NGdof_force, LGdof_field, NGdof_field, &
                         iRbc, iZbs, iRbs, iZbc, &
                         BBe, IIo, BBo, IIe, &
                         vvolume, &
@@ -329,9 +329,9 @@ subroutine spec
 
   cpuo = GETTIME
 
-  FATAL( xspech, NGdof.lt.0, counting error )
+  FATAL( xspech, NGdof_field.lt.0, counting error )
 
-  SALLOCATE( position, (0:NGdof), zero ) ! position ; NGdof = #geometrical degrees-of-freedom was computed in preset;
+  SALLOCATE( position, (0:NGdof_field), zero ) ! position ; NGdof_field = #geometrical degrees-of-freedom was computed in preset;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -366,15 +366,15 @@ subroutine spec
 !> **packing geometrical degrees-of-freedom into vector**
 !>
 !> <ul>
-!> <li> If \c NGdof.gt.0 , where \c NGdof counts the geometrical degrees-of-freedom, i.e. the \f$R_{bc}\f$, \f$Z_{bs}\f$, etc.,
-!>       then packxi() is called to "pack" the geometrical degrees-of-freedom into \c position(0:NGdof) . </li>
+!> <li> If \c NGdof_field.gt.0 , where \c NGdof_field counts the geometrical degrees-of-freedom, i.e. the \f$R_{bc}\f$, \f$Z_{bs}\f$, etc.,
+!>       then packxi() is called to "pack" the geometrical degrees-of-freedom into \c position(0:NGdof_field) . </li>
 !> </ul>
 
-  if( NGdof.gt.0 ) then ! pack geometry into vector; 14 Jan 13;
+  if( NGdof_field.gt.0 ) then ! pack geometry into vector; 14 Jan 13;
 
    pack = 'P'
    LComputeAxis = .true.
-   WCALL( xspech, packxi, ( NGdof, position(0:NGdof), Mvol, mn_field, iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), &
+   WCALL( xspech, packxi, ( NGdof_field, position(0:NGdof_field), Mvol, mn_field, iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), &
                             iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), pack, .false., LComputeAxis ) )
 
   endif
@@ -414,7 +414,7 @@ subroutine spec
 !> **solving force-balance**
 !>
 !> <ul>
-!> <li> If there are geometrical degress of freedom, i.e. if \c NGdof.gt.0 , then
+!> <li> If there are geometrical degress of freedom, i.e. if \c NGdof_field.gt.0 , then
 !>      <ul>
 !>      <li> \todo If \c Lminimize.eq.1 , call pc00aa() to find minimum of energy functional
 !>              using quasi-Newton, preconditioned conjugate gradient method, \c E04DGF
@@ -428,23 +428,23 @@ subroutine spec
 !
 !     ifail = 1 ! this is probably not required; 26 Feb 13;
 !
-!     WCALL(xspech,pc00aa,( NGdof, position(1:NGdof), Mvol, mn, ifail ))
+!     WCALL(xspech,pc00aa,( NGdof_field, position(1:NGdof_field), Mvol, mn, ifail ))
 !
 !    endif
 
-  if( NGdof.gt.0 ) then
+  if( NGdof_field.gt.0 ) then
 
    if( Lfindzero.gt.0 ) then
 
    ! This is the call to do one fixed-boundary iteration (by a Newton method).
     ifail = 1
-    WCALL( xspech, newton, ( NGdof, position(0:NGdof), ifail ) )
+    WCALL( xspech, newton, ( NGdof_field, position(0:NGdof_field), ifail ) )
 
    endif
 
    pack = 'U' ! unpack geometrical degrees of freedom; 13 Sep 13;
    LComputeAxis = .true.
-   WCALL( xspech, packxi, ( NGdof, position(0:NGdof), Mvol, mn_field, iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), &
+   WCALL( xspech, packxi, ( NGdof_field, position(0:NGdof_field), Mvol, mn_field, iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), &
                             iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), pack, .false., LComputeAxis ) )
 
   endif
@@ -475,7 +475,7 @@ subroutine spec
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  SALLOCATE( gradient, (0:NGdof), zero )
+  SALLOCATE( gradient, (0:NGdof_field), zero )
 
   lastcpu = GETTIME
 
@@ -484,7 +484,7 @@ subroutine spec
 ! vvol = Mvol ; ideriv = 0 ; ii = 1
 ! write(ounit,'("xspech : ", 10x ," : sum(Ate(",i3,",",i2,",",i2,")%s) =",99es23.15)') vvol, ideriv, ii, sum(Ate(vvol,ideriv,ii)%s(0:Lrad(vvol)))
 
-  WCALL( xspech, dforce, ( NGdof, position(0:NGdof), gradient(0:NGdof), LComputeDerivatives, LComputeAxis) ) ! (re-)calculate Beltrami fields;
+  WCALL( xspech, dforce, ( NGdof_field, position(0:NGdof_field), gradient(0:NGdof_field), LComputeDerivatives, LComputeAxis) ) ! (re-)calculate Beltrami fields;
 
   DALLOCATE(gradient)
 
@@ -530,7 +530,7 @@ subroutine spec
     write(ounit,'("xspech : ",f10.2," : myid=",i3," ; calling hesian ; see .ext.hessian.myid ;")') cput-cpus, myid
    endif
 
-   WCALL( xspech, hesian, ( NGdof, position(0:NGdof), Mvol, mn_field, LGdof ) )
+   WCALL( xspech, hesian, ( NGdof_field, position(0:NGdof_field), Mvol, mn_field, LGdof_field ) )
 
   endif ! end of if( Lcheck.eq.5 ) ; 01 Jul 14;
 
@@ -781,13 +781,13 @@ subroutine final_diagnostics
 
 
 
-!  SALLOCATE( gradient, (0:NGdof), zero )
+!  SALLOCATE( gradient, (0:NGdof_field), zero )
 !
 !  lastcpu = GETTIME
 !
 !  LComputeDerivatives = .false.
 !
-!  WCALL( xspech, dforce, ( NGdof, position(0:NGdof), gradient(0:NGdof), LComputeDerivatives ) ) ! (re-)calculate Beltrami fields;
+!  WCALL( xspech, dforce, ( NGdof_field, position(0:NGdof_field), gradient(0:NGdof_field), LComputeDerivatives ) ) ! (re-)calculate Beltrami fields;
 !
 !  DALLOCATE(gradient)
 !

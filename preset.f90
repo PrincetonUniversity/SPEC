@@ -520,32 +520,38 @@ subroutine preset
 !> </ul>
 
 !                            Rbc  Zbs    Rbs    Zbc
-  if( Lboundary.eq.0 ) then
-    select case( Igeometry )
-    case( 1:2)
-    if( YESstellsym ) LGdof = mn_field
-    if( NOTstellsym ) LGdof = mn_field        + mn_field-1
-    case(   3)
-    if( YESstellsym ) LGdof = mn_field + mn_field-1
-    if( NOTstellsym ) LGdof = mn_field + mn_field-1 + mn_field-1 + mn_field
-    end select
-  else if( Lboundary.eq.1 ) then
-    select case( Igeometry )
-    case( 1:2 )
-      FATAL( preset.f90, .true., Igeometry need to be 3 when Lboundary is 1 )
-    case(  3  )
+  select case( Igeometry )
+  case( 1:2)
+  if( YESstellsym ) LGdof_field = mn_field
+  if( NOTstellsym ) LGdof_field = mn_field        + mn_field-1
+  case(   3)
+  if( YESstellsym ) LGdof_field = mn_field + mn_field-1
+  if( NOTstellsym ) LGdof_field = mn_field + mn_field-1 + mn_field-1 + mn_field
+  end select
+
+  select case( Igeometry )
+  case( 1:2 )
+    if( Lboundary.eq. 0 ) then
+      LGdof_force = LGdof_field
+      LGdof_bnd = LGdof_field
+    else
+      FATAL( preset, .true., Igeometry 1 and 2 incompatible with Lboundary 1)
+    endif
+  case(  3  )
 !                               rhomn    bn, R0c, Z0s   - Z0s(0)
-      if( YESstellsym ) LGdof = mn_rho + 3 * (Ntor + 1) - 1
-      if( NOTstellsym ) then
-        FATAL( preset.f90, .true., Non stellarator symmetry not implemented with Lboundary is 1 )
-      endif
-    end select
-  endif
+    if( YESstellsym ) then
+      LGdof_bnd = mn_rho + 3 * (Ntor + 1) - 1
+      LGdof_force = mn_force
+    elseif( NOTstellsym ) then
+      FATAL( preset.f90, .true., Non stellarator symmetry not implemented with Lboundary is 1 )
+    endif
+  end select
 
+  NGdof_field = ( Mvol-1 ) * LGdof_field
+  NGdof_bnd = ( Mvol-1 ) * LGdof_bnd
+  NGdof_force = ( Mvol-1 ) * LGdof_force
 
-  NGdof = ( Mvol-1 ) * LGdof
-
-  if( Wpreset ) then ; cput = GETTIME ; write(ounit,'("preset : ",f10.2," : myid=",i3," ; NGdof=",i9," ;")') cput-cpus, myid, NGdof
+  if( Wpreset ) then ; cput = GETTIME ; write(ounit,'("preset : ",f10.2," : myid=",i3," ; NGdof_field=",i9," ;")') cput-cpus, myid, NGdof_field
   endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -1361,7 +1367,7 @@ endif
   if( myid.eq.0 ) then ! 17 Oct 12;
    cput = GETTIME
    write(ounit,'("preset : ", 10x ," : ")')
-   write(ounit,'("preset : ",f10.2," : Nquad="i4" ; mn_field="i5" ; NGdof="i6" ; NAdof="16(i6",")" ...")') cput-cpus, Nquad, mn_field, NGdof, NAdof(1:min(Mvol,16))
+   write(ounit,'("preset : ",f10.2," : Nquad="i4" ; mn_field="i5" ; NGdof_field="i6" ; NAdof="16(i6",")" ...")') cput-cpus, Nquad, mn_field, NGdof_field, NAdof(1:min(Mvol,16))
   endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

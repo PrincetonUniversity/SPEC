@@ -33,12 +33,12 @@
 !> </li>
 !> </ul>
 !>
-!> @param[in]    NGdof
+!> @param[in]    NGdof_field
 !> @param[inout] position
 !> @param[in]    Nvol
 !> @param[in]    mn_field
 !> @param        ie04dgf
-subroutine pc00aa( NGdof, position, Nvol, mn_field, ie04dgf ) ! argument list is optional;
+subroutine pc00aa( NGdof_field, position, Nvol, mn_field, ie04dgf ) ! argument list is optional;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -58,13 +58,13 @@ subroutine pc00aa( NGdof, position, Nvol, mn_field, ie04dgf ) ! argument list is
 
   LOCALS
 
-  INTEGER, intent(in)    :: Nvol, mn_field, NGdof
-  REAL   , intent(inout) :: position(0:NGdof)
+  INTEGER, intent(in)    :: Nvol, mn_field, NGdof_field
+  REAL   , intent(inout) :: position(0:NGdof_field)
   INTEGER                :: ie04dgf
 
   LOGICAL                :: LComputeDerivatives!, Lexit = .true.
-  INTEGER                :: niterations, Iwork(1:NGdof+1), iuser(1:2)
-  REAL                   :: lEnergy, Gradient(0:NGdof), work(1:13*NGdof), ruser(1:1)
+  INTEGER                :: niterations, Iwork(1:NGdof_field+1), iuser(1:2)
+  REAL                   :: lEnergy, Gradient(0:NGdof_field), work(1:13*NGdof_field), ruser(1:1)
   CHARACTER              :: smaxstep*34
 
   external               :: pc00ab
@@ -76,10 +76,10 @@ subroutine pc00aa( NGdof, position, Nvol, mn_field, ie04dgf ) ! argument list is
   if( myid.eq.0 ) then
    cput = GETTIME
    write(ounit,'("pc00aa : ", 10x ," : ")')
-   write(ounit,1000) cput-cpus, myid, NGdof, maxstep, maxiter, verify
+   write(ounit,1000) cput-cpus, myid, NGdof_field, maxstep, maxiter, verify
   endif
 
-1000 format("pc00aa : ",f10.2," : myid=",i3," ; calling E04DGF : NGdof="i6" ; maxstep="es10.2" ; maxiter="i9" ; verify=",i3," ;")
+1000 format("pc00aa : ",f10.2," : myid=",i3," ; calling E04DGF : NGdof_field="i6" ; maxstep="es10.2" ; maxiter="i9" ; verify=",i3," ;")
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -91,7 +91,7 @@ subroutine pc00aa( NGdof, position, Nvol, mn_field, ie04dgf ) ! argument list is
 !  if( Lexit ) then
 !
 !   LComputeDerivatives= .false.
-!   WCALL(pc00aa,dforce,( NGdof, position(0:NGdof), Gradient(0:NGdof), LComputeDerivatives ))
+!   WCALL(pc00aa,dforce,( NGdof_field, position(0:NGdof_field), Gradient(0:NGdof_field), LComputeDerivatives ))
 !
 !   if( myid.eq.0 ) then
 !    cput = GETTIME
@@ -131,8 +131,8 @@ subroutine pc00aa( NGdof, position, Nvol, mn_field, ie04dgf ) ! argument list is
 
   ie04dgf = 1
 
-  call E04DGF( NGdof, pc00ab, niterations, lEnergy, Gradient(1:NGdof), position(1:NGdof), &
-               Iwork(1:NGdof+1), work(1:13*NGdof), iuser(1:2), ruser(1:1), ie04dgf )
+  call E04DGF( NGdof_field, pc00ab, niterations, lEnergy, Gradient(1:NGdof_field), position(1:NGdof_field), &
+               Iwork(1:NGdof_field+1), work(1:13*NGdof_field), iuser(1:2), ruser(1:1), ie04dgf )
 
   cput = GETTIME
 

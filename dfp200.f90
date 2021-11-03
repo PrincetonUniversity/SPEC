@@ -80,7 +80,7 @@ subroutine dfp200( LcomputeDerivatives, vvol)
                         mmpp, &
                         dMA, dMB, dMD, dMG, &
                         Bemn, Bomn, Iomn, Iemn, Somn, Semn, &
-                        LGdof, &
+                        LGdof_field, LGdof_force, &
                         vvolume, dvolume, &
                         Rij, Zij, sg, guvij, iRij, iZij, dRij, dZij, tRij, tZij, & ! Jacobian and metrics; computed in coords;
                         diotadxup, dItGpdxtp, &
@@ -216,7 +216,7 @@ subroutine dfp200( LcomputeDerivatives, vvol)
             idof = idof + 1 ! this labels the degree-of-freedom that the derivative is taken with respect to; this is outside do innout;
 
 #ifdef DEBUG
-            FATAL( dfp200, idof.gt.LGdof, illegal degree-of-freedom index constructing derivatives ) ! this can be deleted;
+            FATAL( dfp200, idof.gt.LGdof_field, illegal degree-of-freedom index constructing derivatives ) ! this can be deleted;
 #endif
 
             do innout = 0, 1 ! loop over deformations to inner and outer interface; inside do vvol; inside do ii; inside do irz;
@@ -417,7 +417,7 @@ else ! CASE SEMI GLOBAL CONSTRAINT
 
                     idof = idof + 1 ! this labels the degree-of-freedom that the derivative is taken with respect to; this is outside do innout;
 #ifdef DEBUG
-                    FATAL( dfp200, idof.gt.LGdof, illegal degree-of-freedom index constructing derivatives ) ! this can be deleted;
+                    FATAL( dfp200, idof.gt.LGdof_field, illegal degree-of-freedom index constructing derivatives ) ! this can be deleted;
 #endif
 
 
@@ -558,11 +558,11 @@ else ! CASE SEMI GLOBAL CONSTRAINT
         call WhichCpuID(vvol, cpu_id)
 
         if( vvol.ne.Mvol ) then
-            call MPI_BCAST( dmupfdx(1:Mvol, vvol ,1:2, 1:LGdof,   1), Mvol*2*LGdof  , MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_SPEC, ierr )
+            call MPI_BCAST( dmupfdx(1:Mvol, vvol ,1:2, 1:LGdof_field,   1), Mvol*2*LGdof_field  , MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_SPEC, ierr )
         endif
 
-        call MPI_BCAST( dFFdRZ(1:LGdof, 0:1, 1:LGdof, 0:1, vvol), 2*2*(LGdof**2), MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_SPEC, ierr )
-        call MPI_BCAST( dBBdmp(1:LGdof, vvol ,0:1, 1:2         ), 2*2*LGdof, MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_SPEC, ierr )
+        call MPI_BCAST( dFFdRZ(1:LGdof_force, 0:1, 1:LGdof_field, 0:1, vvol), 2*2*(LGdof_force*LGdof_field), MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_SPEC, ierr )
+        call MPI_BCAST( dBBdmp(1:LGdof_force, vvol ,0:1, 1:2         ), 2*2*LGdof_force, MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_SPEC, ierr )
     enddo
 
     endif ! End of if( LComputeDerivatives )
@@ -825,7 +825,7 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 
     use allglobal, only :   ncpu, myid, cpus, MPI_COMM_SPEC, &
                             Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
-                            Mvol, Iquad, NGdof, &
+                            Mvol, Iquad, NGdof_field, &
                             iRbc, iZbs, iRbs, iZbc, & ! Fourier harmonics of geometry; vector of independent variables, position, is "unpacked" into iRbc,iZbs;
                             NAdof, &
                             mn_field, im_field, in_field, mns, &
@@ -861,7 +861,7 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
     INTEGER             :: isymdiff, lr, ml, mode
     INTEGER             :: jj, tdoc, idoc, tdof, jdof, imn, Ndofgl
     REAL                :: dvol(-1:+1), evolume, imupf_global(1:Mvol,1:2,-2:2), imupf_local(1:2,-2:2), factor, Btemn_debug(1:mn_field, 0:1, 1:Mvol, -1:2)
-    REAL                :: position(0:NGdof), force(0:NGdof)
+    REAL                :: position(0:NGdof_field), force(0:NGdof_field)
     REAL                :: Fdof(1:Mvol-1), Xdof(1:Mvol-1)
     REAL, allocatable   :: fjac(:, :), r_deb(:), Fvec(:), dpfluxout(:)
     REAL, allocatable   :: oRbc(:,:), oZbs(:,:), oRbs(:,:), oZbc(:,:) ! original geometry;
@@ -1407,7 +1407,7 @@ subroutine evaluate_dBB(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, length,
                         cosi, sini, & ! FFT workspace
                         sweight, &
                         mmpp, &
-                        LGdof, NGdof, NAdof, &
+                        LGdof_force, NGdof_force, NAdof, &
                         vvolume, dvolume, &
                         Rij, Zij, sg, guvij, iRij, iZij, dRij, dZij, tRij, tZij, & ! Jacobian and metrics; computed in coords;
                         dFFdRZ, dBBdmp, &
@@ -1712,7 +1712,7 @@ do iocons = 0, 1
     endif ! end of if( NOTstellsym) ;
 
 #ifdef DEBUG
-    FATAL( dfp200, idoc.ne.LGdof, counting error )
+    FATAL( dfp200, idoc.ne.LGdof_force, counting error )
 #endif
 
 enddo ! end of do iocons;

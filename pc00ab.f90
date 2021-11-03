@@ -78,7 +78,7 @@
 !> </li>
 !> </ul>
 !>
-subroutine pc00ab( mode, NGdof, Position, Energy, Gradient, nstate, iuser, ruser ) ! argument fixed by NAG; see pc00aa;
+subroutine pc00ab( mode, NGdof_field, Position, Energy, Gradient, nstate, iuser, ruser ) ! argument fixed by NAG; see pc00aa;
 
   use constants, only : zero, half, one
 
@@ -90,18 +90,18 @@ subroutine pc00ab( mode, NGdof, Position, Energy, Gradient, nstate, iuser, ruser
 
   use cputiming, only : Tpc00ab
 
-  use allglobal, only : writin, myid, cpus, YESstellsym, mn_field, lBBintegral, dBBdRZ, dIIdRZ, ForceErr
+  use allglobal, only : writin, myid, cpus, YESstellsym, mn_field, lBBintegral, dBBdRZ, dIIdRZ, ForceErr, NGdof_force
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   LOCALS
 
-  INTEGER :: mode, NGdof, nstate, iuser(1:2)
-  REAL    :: Position(1:NGdof), Energy, Gradient(1:NGdof), ruser(1:1)
+  INTEGER :: mode, NGdof_field, nstate, iuser(1:2)
+  REAL    :: Position(1:NGdof_field), Energy, Gradient(1:NGdof_field), ruser(1:1)
 
   LOGICAL :: LComputeDerivatives, LComputeAxis
   INTEGER :: ii, vvol, irz, issym, totaldof, localdof, wflag, iflag!, mi, ni !idof, imn, irz, totaldof, localdof, jj, kk, ll, mi, ni, mj, nj, mk, nk, ml, nl, mjmk
-  REAL    :: force(0:NGdof), gradienterror, rflag
+  REAL    :: force(0:NGdof_force), gradienterror, rflag
 
   BEGIN(pc00ab)
 
@@ -113,7 +113,7 @@ subroutine pc00ab( mode, NGdof, Position, Energy, Gradient, nstate, iuser, ruser
 
   LComputeDerivatives = .false.
   LComputeAxis = .true.
-  WCALL(pc00ab,dforce,( NGdof, Position(1:NGdof), force(0:NGdof), LComputeDerivatives, LComputeAxis ))
+  WCALL(pc00ab,dforce,( NGdof, Position(1:NGdof_field), force(0:NGdof_force), LComputeDerivatives, LComputeAxis ))
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -174,9 +174,9 @@ subroutine pc00ab( mode, NGdof, Position, Energy, Gradient, nstate, iuser, ruser
 
    enddo ! end of do vvol; 26 Feb 13;
 
-   FATAL(pc00ab, totaldof.ne.NGdof, counting error )
+   FATAL(pc00ab, totaldof.ne.NGdof_field, counting error )
 
-   gradienterror = sum( abs( Gradient(1:NGdof) ) ) / NGdof ! only used for screen output; 26 Feb 13;
+   gradienterror = sum( abs( Gradient(1:NGdof_field) ) ) / NGdof_field ! only used for screen output; 26 Feb 13;
 
    wflag = 1 ; iflag = 0 ; rflag = gradienterror
    WCALL(pc00ab,writin,( wflag, iflag, rflag)) ! write restart file etc.;
@@ -210,7 +210,7 @@ subroutine pc00ab( mode, NGdof, Position, Energy, Gradient, nstate, iuser, ruser
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   Energy                      = Energy                      / ruser(1) ! normalize to initial energy; 26 Feb 13;
-  Gradient(1:NGdof) = Gradient(1:NGdof) / ruser(1)
+  Gradient(1:NGdof_field) = Gradient(1:NGdof_field) / ruser(1)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

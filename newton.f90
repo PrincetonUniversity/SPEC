@@ -71,7 +71,8 @@ subroutine newton( NGdof, position, ihybrd )
                         mn_force, im_force, in_force, &
                         mn_rho, im_rho, in_rho, &
                         BBe, IIo, BBo, IIe, &
-                        LGdof, dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated , &
+                        LGdof_force, LGdof_field, NGdof_force, NGdof_field, &
+                        dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated , &
                         nfreeboundaryiterations, &
                         LocalConstraint
 
@@ -90,7 +91,7 @@ subroutine newton( NGdof, position, ihybrd )
   REAL                   :: rflag
   CHARACTER              :: pack
 
-  INTEGER                :: irevcm, mode, Ldfjac, LR
+  INTEGER                :: irevcm, mode, Ldfjac, LR, LGdof
   REAL                   :: xtol, epsfcn, factor
   REAL                   :: diag(1:NGdof), QTF(1:NGdof), workspace(1:NGdof,1:4)
 
@@ -111,6 +112,8 @@ subroutine newton( NGdof, position, ihybrd )
   BEGIN(newton)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  LGdof = LGdof_field
 
   if( Wnewton .and. myid.eq.0 ) then ! screen output;
    cput = GETTIME
@@ -185,16 +188,16 @@ subroutine newton( NGdof, position, ihybrd )
   SALLOCATE( RR, (1:NGdof*(NGdof+1)/2), zero)
 
   if( Lfindzero.eq.2 ) then
-    SALLOCATE( dFFdRZ, (1:LGdof,0:1,1:LGdof,0:1,1:Mvol), zero )
-    SALLOCATE( dBBdmp, (1:LGdof,1:Mvol,0:1,1:2), zero )
+    SALLOCATE( dFFdRZ, (1:LGdof_force,0:1,1:LGdof_field,0:1,1:Mvol), zero )
+    SALLOCATE( dBBdmp, (1:LGdof_force,1:Mvol,0:1,1:2), zero )
    if( LocalConstraint ) then
-   	SALLOCATE( dmupfdx, (1:Mvol,    1:1,1:2,1:LGdof,0:1), zero )
+   	SALLOCATE( dmupfdx, (1:Mvol,    1:1,1:2,1:LGdof_field,0:1), zero )
    else
-   	SALLOCATE( dmupfdx, (1:Mvol, 1:Mvol-1,1:2,1:LGdof,1), zero ) ! TODO change the format to put vvol in last index position...
+   	SALLOCATE( dmupfdx, (1:Mvol, 1:Mvol-1,1:2,1:LGdof_field,1), zero ) ! TODO change the format to put vvol in last index position...
    endif
 
-    SALLOCATE( hessian, (1:NGdof,1:NGdof), zero )
-    SALLOCATE( dessian, (1:NGdof,1:LGdof), zero )
+    SALLOCATE( hessian, (1:NGdof_force,1:NGdof_field), zero )
+    SALLOCATE( dessian, (1:NGdof_force,1:LGdof_field), zero )
     Lhessianallocated = .true.
   else
     Lhessianallocated = .false.
@@ -447,7 +450,7 @@ subroutine fcn1( NGdof, xx, fvec, irevcm )
                         ForceErr, Energy, &
                         mn_field, im_field, in_field, iRbc, iZbs, iRbs, iZbc, Mvol, &
                         BBe, IIo, BBo, IIe, &
-                        LGdof, dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated, &
+                        dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated, &
                         nfreeboundaryiterations
 
   use newtontime
@@ -580,7 +583,7 @@ subroutine fcn2( NGdof, xx, fvec, fjac, Ldfjac, irevcm )
                         ForceErr, Energy, &
                         mn_field, im_field, in_field, iRbc, iZbs, iRbs, iZbc, Mvol, &
                         BBe, IIo, BBo, IIe, &
-                        LGdof, dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated, &
+                        dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated, &
                         nfreeboundaryiterations
 
   use newtontime

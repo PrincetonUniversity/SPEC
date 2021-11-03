@@ -43,7 +43,7 @@
 !> <li> Lastly, the Fourier harmonics are constructed using an FFT after dividing in real space. </li>
 !> </ul>
 !>
-!> @param[in] NGdof
+!> @param[in] NGdof_field
 !> @param position
 !> @param[in] Mvol
 !> @param[in] mn_field
@@ -54,7 +54,7 @@
 !> @param packorunpack
 !> @param[in] LComputeDerivatives
 !> @param[in] LComputeAxis
-subroutine packxi( NGdof, position, Mvol, mn_field, iRbc, iZbs, iRbs, iZbc, packorunpack, LComputeDerivatives, LComputeAxis )
+subroutine packxi( NGdof_field, position, Mvol, mn_field, iRbc, iZbs, iRbs, iZbc, packorunpack, LComputeDerivatives, LComputeAxis )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -81,8 +81,8 @@ subroutine packxi( NGdof, position, Mvol, mn_field, iRbc, iZbs, iRbs, iZbc, pack
   LOGICAL, intent(in)    :: LComputeDerivatives ! indicates whether derivatives are to be calculated;
   LOGICAL, intent(in)    :: LComputeAxis        ! if to recompute the axis
 
-  INTEGER, intent(in)    :: NGdof, Mvol, mn_field
-  REAL                   :: position(0:NGdof), iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol)
+  INTEGER, intent(in)    :: NGdof_field, Mvol, mn_field
+  REAL                   :: position(0:NGdof_field), iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol)
   CHARACTER              :: packorunpack
 
   INTEGER                :: lvol, jj, kk, irz, issym, idof, ifail, ivol
@@ -113,7 +113,7 @@ subroutine packxi( NGdof, position, Mvol, mn_field, iRbc, iZbs, iRbs, iZbc, pack
       idof = idof + 1
 
 #ifdef DEBUG
-      FATAL( packxi, idof.le.0 .or. idof.gt.NGdof, out of bounds )
+      FATAL( packxi, idof.le.0 .or. idof.gt.NGdof_field, out of bounds )
 #endif
 
       select case( packorunpack )
@@ -145,7 +145,7 @@ subroutine packxi( NGdof, position, Mvol, mn_field, iRbc, iZbs, iRbs, iZbc, pack
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 #ifdef DEBUG
-  FATAL( packxi, idof.ne.NGdof, counting error )
+  FATAL( packxi, idof.ne.NGdof_field, counting error )
 #endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
