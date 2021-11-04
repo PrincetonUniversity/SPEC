@@ -294,7 +294,7 @@ subroutine spec
                         YESstellsym, NOTstellsym, &
                         mn_field, im_field, in_field, &
                         Ntz, &
-                        LGdof_force, NGdof_force, LGdof_field, NGdof_field, &
+                        LGdof_force, NGdof_force, LGdof_field, NGdof_field, NGdof_bnd, &
                         iRbc, iZbs, iRbs, iZbc, &
                         BBe, IIo, BBo, IIe, &
                         vvolume, &
@@ -312,6 +312,9 @@ subroutine spec
                         version, &
                         MPI_COMM_SPEC
 
+
+  use bndRep,    only : pack_henneberg
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   LOCALS
@@ -320,7 +323,7 @@ subroutine spec
   INTEGER              :: imn, lmn, lNfp, lim, lin, ii, ideriv, stat
   INTEGER              :: vvol, ifail, wflag, iflag, vflag
   REAL                 :: rflag, lastcpu, bnserr, lRwc, lRws, lZwc, lZws, lItor, lGpol, lgBc, lgBs
-  REAL,    allocatable :: position(:), gradient(:)
+  REAL,    allocatable :: position(:), gradient(:), bndDofs(:)
   CHARACTER            :: pack
   INTEGER              :: Lfindzero_old, mfreeits_old
   REAL                 :: gBnbld_old
@@ -332,7 +335,8 @@ subroutine spec
 
   FATAL( xspech, NGdof_field.lt.0, counting error )
 
-  SALLOCATE( position, (0:NGdof_field), zero ) ! position ; NGdof_field = #geometrical degrees-of-freedom was computed in preset;
+  SALLOCATE( position, (0:NGdof_field), zero ) ! position ; NGdof_field = #Rmn,Zmn degrees-of-freedom was computed in preset;
+  SALLOCATE( bndDofs, (0:NGdof_bnd), zero ) ! position ; NGdof_field = #Boundary representation degrees-of-freedom was computed in preset;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -373,10 +377,11 @@ subroutine spec
 
   if( NGdof_field.gt.0 ) then ! pack geometry into vector; 14 Jan 13;
 
-   pack = 'P'
-   LComputeAxis = .true.
-   WCALL( xspech, packxi, ( NGdof_field, position(0:NGdof_field), Mvol, mn_field, iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), &
-                            iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), pack, .false., LComputeAxis ) )
+    ! Rmn, Zmn have been constructed with initial guess in preset. Pack them into position array...
+    pack = 'P'
+    LComputeAxis = .true.
+    WCALL( xspech, packxi, ( NGdof_field, position(0:NGdof_field), Mvol, mn_field, iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), &
+                              iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), pack, .false., LComputeAxis ) )
 
   endif
 
@@ -437,18 +442,35 @@ subroutine spec
 
    if( Lfindzero.gt.0 ) then
 
-   ! This is the call to do one fixed-boundary iteration (by a Newton method).
+    ! Pack all geometrical degrees of freedom into bndDofs.
+    ! if Lboundary.eq.0, this is the Rmn, Zmn harmonics,
+    ! if Lboundary.eq.1, this is the rhomn, bn, R0n, Z0n harmonics.
+    if( Lboundary.eq.0 ) then
+      bndDofs(0:NGdof_bnd) = position(0:NGdof_bnd)
+    else
+      pack = 'H'
+      WCALL( xspech, pack_henneberg, (pack, position(0:NGdof_field), bndDofs(0:NGdof_bnd) ) )
+    endif !Lboundary
+
+    ! This is the call to do one fixed-boundary iteration (by a Newton method).
     ifail = 1
-    WCALL( xspech, newton, ( NGdof_field, position(0:NGdof_field), ifail ) )
+    WCALL( xspech, newton, ( NGdof_bnd, bndDofs(0:NGdof_bnd), ifail ) )
 
-   endif
+    ! Put everything back into position array (Rmn, Zmn harmonics)
+    if( Lboundary.eq.0 ) then
+      position(0:NGdof_bnd) = bndDofs(0:NGdof_bnd)
+    else
+      pack = 'R'
+      WCALL( xspech, pack_henneberg, (pack, position(0:NGdof_field), bndDofs(0:NGdof_bnd) ) )
+    endif !Lboundary
 
-   pack = 'U' ! unpack geometrical degrees of freedom; 13 Sep 13;
-   LComputeAxis = .true.
-   WCALL( xspech, packxi, ( NGdof_field, position(0:NGdof_field), Mvol, mn_field, iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), &
-                            iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), pack, .false., LComputeAxis ) )
+    pack = 'U' ! unpack geometrical degrees of freedom; 13 Sep 13;
+    LComputeAxis = .true.
+    WCALL( xspech, packxi, ( NGdof_field, position(0:NGdof_field), Mvol, mn_field, iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), &
+                              iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), pack, .false., LComputeAxis ) )
 
-  endif
+   endif!Lfindzero
+  endif !NGdof_field
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

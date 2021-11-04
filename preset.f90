@@ -184,7 +184,7 @@ subroutine preset
     SALLOCATE( irhoc , (1:mn_rho, 1:Mvol), zero )
     SALLOCATE( ibc   , (0:Ntor, 1:Mvol), zero )
     SALLOCATE( iR0c  , (0:Ntor, 1:Mvol), zero )
-    SALLOCATE( iZ0s  , (0:Ntor, 1:Mvol), zero )
+    SALLOCATE( iZ0s  , (1:Ntor, 1:Mvol), zero )
   endif
 
 
@@ -251,7 +251,10 @@ subroutine preset
     do nn = 0, Ntor
       ibc( nn, Nvol  ) = bn( nn )
       iR0c( nn, Nvol ) = R0c( nn )
-      iZ0s( nn, Nvol ) = Z0s( nn )
+
+      if( nn.ne.0 ) then
+        iZ0s( nn, Nvol ) = Z0s( nn )
+      endif
     enddo
 
 
@@ -434,7 +437,7 @@ subroutine preset
     RlBCAST( irhoc(1:mn_rho, 1:Mvol),  mn_rho *Mvol, 0 )
     RlBCAST( ibc(  0:Ntor  , 1:Mvol), (Ntor+1)*Mvol, 0 )
     RlBCAST( iR0c( 0:Ntor  , 1:Mvol), (Ntor+1)*Mvol, 0 )
-    RlBCAST( iZ0s( 0:Ntor  , 1:Mvol), (Ntor+1)*Mvol, 0 )
+    RlBCAST( iZ0s( 1:Ntor  , 1:Mvol), (Ntor  )*Mvol, 0 )
 
     if( Lfreebound.eq.1 ) then
       ! TODO: FREE BOUNDARY STUFF
@@ -555,6 +558,8 @@ subroutine preset
   NGdof_field = ( Mvol-1 ) * LGdof_field
   NGdof_bnd = ( Mvol-1 ) * LGdof_bnd
   NGdof_force = ( Mvol-1 ) * LGdof_force
+
+  FATAL( preset, NGdof_bnd.NE.NGdof_force, Number of geometrical dofs are not equal to number of force dofs.)
 
   if( Wpreset ) then ; cput = GETTIME ; write(ounit,'("preset : ",f10.2," : myid=",i3," ; NGdof_field=",i9," ;")') cput-cpus, myid, NGdof_field
   endif
@@ -1112,30 +1117,30 @@ endif
     zerdof = 0                                       ! count Zernike degree of freedom 30 Jun 19
     do ii = 2, Mpol_field                            ! for m>1
      do jj = ii, Lrad(vvol), 2
-      zerdof = zerdof + 2 * ntor + 1                 ! plus and minus sign for n>1, unique for n==0
-      if( NOTstellsym ) zerdof = zerdof + 2*ntor + 1 ! plus and minus sign for n
+      zerdof = zerdof + 2 * ntor_field + 1                 ! plus and minus sign for n>1, unique for n==0
+      if( NOTstellsym ) zerdof = zerdof + 2*ntor_field + 1 ! plus and minus sign for n
      enddo
     enddo
     zerdof = zerdof * 2                              ! we have one for At and one for Az
 
     do jj = 0, Lrad(vvol), 2                         ! for m==0
-     zerdof = zerdof + ntor + 1                      ! minus sign for n, Aze
-     if (jj .ge. 2) zerdof = zerdof + ntor + 1       ! minus sign for n, Ate, without l=0 due to recombination
+     zerdof = zerdof + ntor_field + 1                      ! minus sign for n, Aze
+     if (jj .ge. 2) zerdof = zerdof + ntor_field + 1       ! minus sign for n, Ate, without l=0 due to recombination
 
      if( NOTstellsym ) then
-      zerdof = zerdof + ntor                         ! sin component minus sign for n, Azo
-      if (jj .ge. 2) zerdof = zerdof + ntor          ! minus sign for n, Ato, without l=0 due to recombination
+      zerdof = zerdof + ntor_field                         ! sin component minus sign for n, Azo
+      if (jj .ge. 2) zerdof = zerdof + ntor_field          ! minus sign for n, Ato, without l=0 due to recombination
      endif
     enddo
 
     if (Mpol_field .ge. 1) then ! for m==1
       do jj = 1, Lrad(vvol), 2
-        zerdof = zerdof + 2 * ntor + 1                  ! minus and plus sign for n, Aze
-        if (jj .ge. 2) zerdof = zerdof + 2 * ntor + 1   ! minus sign for n, Ate, without l=0 due to recombination
+        zerdof = zerdof + 2 * ntor_field + 1                  ! minus and plus sign for n, Aze
+        if (jj .ge. 2) zerdof = zerdof + 2 * ntor_field + 1   ! minus sign for n, Ate, without l=0 due to recombination
 
         if( NOTstellsym ) then
-          zerdof = zerdof + 2 * ntor + 1                 ! sin component minus and plus sign for n, Azo
-          if (jj .ge. 2) zerdof = zerdof + 2 * ntor + 1  ! minus and plus sign for n, Ato, without l=0 due to recombination
+          zerdof = zerdof + 2 * ntor_field + 1                 ! sin component minus and plus sign for n, Azo
+          if (jj .ge. 2) zerdof = zerdof + 2 * ntor_field + 1  ! minus and plus sign for n, Ato, without l=0 due to recombination
         endif
       enddo
     endif
@@ -1143,18 +1148,18 @@ endif
     ! the degree of freedom in the Beltrami field without Lagrange multipliers
     Nfielddof(vvol) = zerdof
                                      !                                     a    c      b        d      e      f      g   h
-    if( YESstellsym ) NAdof(vvol) = zerdof                               + mn_field        + Ntor_field+1        + mn_field-1        + 1 + 0
+    if( YESstellsym ) NAdof(vvol) = zerdof                               + mn_field        + ntor_field+1        + mn_field-1        + 1 + 0
     if( NOTstellsym ) NAdof(vvol) = zerdof                               + mn_field + mn_field-1 + Ntor_field+1 + Ntor_field + mn_field-1 + mn_field-1 + 1 + 0 ! this is broken at the moment
 
     ! due to basis recombination, Lma will not have the m=0 and m=1 harmonics. We substract them now
     ! m = 0
-    NAdof(vvol) = NAdof(vvol) - (ntor + 1)
-    if (NOTstellsym) NAdof(vvol) = NAdof(vvol) - ntor
+    NAdof(vvol) = NAdof(vvol) - (ntor_field + 1)
+    if (NOTstellsym) NAdof(vvol) = NAdof(vvol) - ntor_field
 
     ! m = 1
     if (Mpol_field .ge. 1) then
-      NAdof(vvol) = NAdof(vvol) - (2 * ntor + 1)
-      if (NOTstellsym) NAdof(vvol) = NAdof(vvol) - (2 * ntor + 1)
+      NAdof(vvol) = NAdof(vvol) - (2 * ntor_field + 1)
+      if (NOTstellsym) NAdof(vvol) = NAdof(vvol) - (2 * ntor_field + 1)
     endif
 
     ! Guess the size of the sparse matrix ! 28 Jan 20
@@ -1381,7 +1386,7 @@ endif
 
 ! Fourier transforms;
 
-  Nt = max( Ndiscrete*4*Mpol_field, 1 ) ; Nz = max( Ndiscrete*4*Ntor, 1 ) ; Ntz = Nt*Nz ; soNtz = one / sqrt( one*Ntz ) ! exaggerated discrete resolution;
+  Nt = max( Ndiscrete*4*Mpol_field, 1 ) ; Nz = max( Ndiscrete*4*ntor_field, 1 ) ; Ntz = Nt*Nz ; soNtz = one / sqrt( one*Ntz ) ! exaggerated discrete resolution;
 
   ;                  ; hNt = Nt / 2
   if( Nz.gt.1 ) then ; hNz = Nz / 2

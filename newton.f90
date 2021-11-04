@@ -44,9 +44,9 @@ end module newtontime
 !> </ul>
 !>
 !> @param[in]    NGdof
-!> @param[inout] position
+!> @param[inout] bndDofs
 !> @param[out]   ihybrd
-subroutine newton( NGdof, position, ihybrd )
+subroutine newton( NGdof_bnd, bndDofs, ihybrd )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -60,7 +60,7 @@ subroutine newton( NGdof, position, ihybrd )
                         Igeometry, & ! only for screen output;
                         Nvol,                    &
                         Lfindzero, forcetol, c05xmax, c05xtol, c05factor, LreadGF, &
-                        Lcheck
+                        Lcheck, Lboundary
 
   use cputiming, only : Tnewton
 
@@ -76,14 +76,16 @@ subroutine newton( NGdof, position, ihybrd )
                         nfreeboundaryiterations, &
                         LocalConstraint
 
+  use bndRep, only    : pack_henneberg
+
   use newtontime
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   LOCALS
 
-  INTEGER, intent(in)    :: NGdof
-  REAL   , intent(inout) :: position(0:NGdof)
+  INTEGER, intent(in)    :: NGdof_bnd
+  REAL   , intent(inout) :: bndDofs(0:NGdof_bnd)
   INTEGER, intent(out)   :: ihybrd
 
   LOGICAL                :: LComputeDerivatives
@@ -91,11 +93,11 @@ subroutine newton( NGdof, position, ihybrd )
   REAL                   :: rflag
   CHARACTER              :: pack
 
-  INTEGER                :: irevcm, mode, Ldfjac, LR, LGdof
+  INTEGER                :: irevcm, mode, Ldfjac, LR
   REAL                   :: xtol, epsfcn, factor
-  REAL                   :: diag(1:NGdof), QTF(1:NGdof), workspace(1:NGdof,1:4)
+  REAL                   :: diag(1:NGdof_bnd), QTF(1:NGdof_bnd), workspace(1:NGdof_bnd,1:4)
 
-  REAL                   :: force(0:NGdof)
+  REAL                   :: force(0:NGdof_bnd), position(0:NGdof_field)
   REAL, allocatable      :: fjac(:,:), RR(:), work(:,:)
 
   INTEGER                :: ML, MU ! required for only Lc05ndf;
@@ -113,30 +115,30 @@ subroutine newton( NGdof, position, ihybrd )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  LGdof = LGdof_field
+  FATAL( newton, NGdof_bnd.NE.NGdof_force, Invalid number of dofs )
 
   if( Wnewton .and. myid.eq.0 ) then ! screen output;
    cput = GETTIME
    write(ounit,'("newton : ", 10x ," : ")')
-   write(ounit,'("newton : ",f10.2," : Lfindzero="i2" ; forcetol="es13.5" ; c05xtol="es13.5" ; c05factor="es13.5" ; LreadGF="L2" ; NGdof="i6" ;")')&
-                           cput-cpus,  Lfindzero,       forcetol,           c05xtol,           c05factor,           LreadGF,       NGdof
+   write(ounit,'("newton : ",f10.2," : Lfindzero="i2" ; forcetol="es13.5" ; c05xtol="es13.5" ; c05factor="es13.5" ; LreadGF="L2" ; NGdof_bnd="i6" ;")')&
+                           cput-cpus,  Lfindzero,       forcetol,           c05xtol,           c05factor,           LreadGF,       NGdof_bnd
    write(ounit,'("newton : ", 10x ," : ")')
   endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  if( c05xtol.gt.zero ) then ; xtol =          c05xtol                                          ! tolerance in position;
-  else                       ; xtol = max( abs(c05xtol), c05xmax/two**nfreeboundaryiterations ) ! tolerance in position;
+  if( c05xtol.gt.zero ) then ; xtol =          c05xtol                                          ! tolerance in bndDofs;
+  else                       ; xtol = max( abs(c05xtol), c05xmax/two**nfreeboundaryiterations ) ! tolerance in bndDofs;
   endif
 
-  Ldfjac = NGdof ; LR = NGdof * (NGdof+1) / 2 ! supplied to NAG;
+  Ldfjac = NGdof_bnd ; LR = NGdof_bnd * (NGdof_bnd+1) / 2 ! supplied to NAG;
 
-  mode = 0 ; diag(1:NGdof) = one ! if mode=2, multiplicative scale factors need to be provided in diag; if mode=0, factors computed internally;
+  mode = 0 ; diag(1:NGdof_bnd) = one ! if mode=2, multiplicative scale factors need to be provided in diag; if mode=0, factors computed internally;
 
   factor = c05factor ! used to determine initial step bound; supplied to NAG;
 
   select case( Lfindzero )
-  case( 1 )    ; ML = NGdof-1 ; MU = NGdof-1 ; epsfcn = sqrtmachprec ! only required for C05NDF; supplied to NAG;
+  case( 1 )    ; ML = NGdof_bnd-1 ; MU = NGdof_bnd-1 ; epsfcn = sqrtmachprec ! only required for C05NDF; supplied to NAG;
   case( 2 )    ;
   end select
 
@@ -150,19 +152,26 @@ subroutine newton( NGdof, position, ihybrd )
 
   if( Lexit ) then ! will call initial force, and if ForceErr.lt.forcetol will immediately exit;
 
-   LComputeDerivatives= .false.
-   LComputeAxis = .true.
-   WCALL( newton, dforce, ( NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives, LComputeAxis) ) ! calculate the force-imbalance;
+    if( Lboundary.eq.0 ) then
+      position(0:NGdof_bnd) = bndDofs(0:NGdof_bnd)
+    else
+      pack = 'R'
+      WCALL( newton, pack_henneberg, (pack, position(0:NGdof_field), bndDofs(0:NGdof_bnd) ) )
+    endif !Lboundary
+
+    LComputeDerivatives= .false.
+    LComputeAxis = .true.
+    WCALL( newton, dforce, ( NGdof_field, position(0:NGdof_field), force(0:NGdof_force), LComputeDerivatives, LComputeAxis) ) ! calculate the force-imbalance;
 
    if( myid.eq.0 ) then ! screen output;
     cput = GETTIME
     ; write(ounit,1000) cput-cpus, nFcalls, nDcalls, ForceErr,  cput-lastcpu, "|BB|e", alog10(BBe(1:min(Mvol-1,28)))
-    if( Igeometry.ge.3 ) then ! include spectral constraints;
+    if( Igeometry.ge.3 .and. Lboundary.eq.0 ) then ! include spectral constraints;
      ;write(ounit,1001)                                                                       "|II|o", alog10(IIo(1:min(Mvol-1,28)))
     endif
     if( NOTstellsym ) then
      ;write(ounit,1001)                                                                       "|BB|o", alog10(BBo(1:min(Mvol-1,28)))
-     if( Igeometry.ge.3 ) then ! include spectral constraints;
+     if( Igeometry.ge.3 .and. Lboundary.eq.0 ) then ! include spectral constraints;
       write(ounit,1001)                                                                       "|II|e", alog10(IIe(1:min(Mvol-1,28)))
      endif
     endif
@@ -184,8 +193,8 @@ subroutine newton( NGdof, position, ihybrd )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  SALLOCATE( fjac, (1:NGdof, 1:NGdof), zero)
-  SALLOCATE( RR, (1:NGdof*(NGdof+1)/2), zero)
+  SALLOCATE( fjac, (1:NGdof_bnd, 1:NGdof_bnd), zero)
+  SALLOCATE( RR, (1:NGdof_bnd*(NGdof_bnd+1)/2), zero)
 
   if( Lfindzero.eq.2 ) then
     SALLOCATE( dFFdRZ, (1:LGdof_force,0:1,1:LGdof_field,0:1,1:Mvol), zero )
@@ -193,7 +202,7 @@ subroutine newton( NGdof, position, ihybrd )
    if( LocalConstraint ) then
    	SALLOCATE( dmupfdx, (1:Mvol,    1:1,1:2,1:LGdof_field,0:1), zero )
    else
-   	SALLOCATE( dmupfdx, (1:Mvol, 1:Mvol-1,1:2,1:LGdof_field,1), zero ) ! TODO change the format to put vvol in last index position...
+   	SALLOCATE( dmupfdx, (1:Mvol, 1:Mvol-1,1:2,1:LGdof_field,1), zero ) ! TODO change the format to put vvol in last index bndDofs...
    endif
 
     SALLOCATE( hessian, (1:NGdof_force,1:NGdof_field), zero )
@@ -209,15 +218,20 @@ subroutine newton( NGdof, position, ihybrd )
 
   case( 1 ) ! use function values                               to find x st f(x)=0, where x is the geometry of the interfaces, and f is the force;
 
-   WCALL( newton, hybrd, ( fcn1, NGdof, position(1:NGdof), force(1:NGdof), &
-          xtol, maxfev, ML, MU, epsfcn, diag(1:NGdof), mode, factor, nprint, ihybrd, nfev,       fjac(1:Ldfjac,1:NGdof), Ldfjac, &
-          RR(1:LR), LR, QTF(1:NGdof), workspace(1:NGdof,1), workspace(1:NGdof,2), workspace(1:NGdof,3), workspace(1:NGdof,4) ) )
+   WCALL( newton, hybrd, ( fcn1, NGdof_bnd, bndDofs(1:NGdof_bnd), force(1:NGdof_force), &
+          xtol, maxfev, ML, MU, epsfcn, diag(1:NGdof_force), mode, factor, nprint, ihybrd, nfev, &
+          fjac(1:Ldfjac,1:NGdof_force), Ldfjac, &
+          RR(1:LR), LR, QTF(1:NGdof_force), workspace(1:NGdof_force,1), &
+          workspace(1:NGdof_force,2), workspace(1:NGdof_force,3), workspace(1:NGdof_force,4) ) )
+
 
   case( 2 ) ! use function values and user-supplied derivatives to find x st f(x)=0, where x is the geometry of the interfaces, and f is the force;
 
-   WCALL( newton, hybrj, ( fcn2, NGdof, position(1:NGdof), force(1:NGdof), fjac(1:Ldfjac,1:NGdof), Ldfjac, &
-          xtol, maxfev,                 diag(1:NGdof), mode, factor, nprint, ihybrd, nfev, njev, &
-          RR(1:LR), LR, QTF(1:NGdof), workspace(1:NGdof,1), workspace(1:NGdof,2), workspace(1:NGdof,3), workspace(1:NGdof,4) ) )
+   WCALL( newton, hybrj, ( fcn2, NGdof_bnd, bndDofs(1:NGdof_bnd), force(1:NGdof_force), &
+          fjac(1:Ldfjac,1:NGdof_force), Ldfjac, &
+          xtol, maxfev, diag(1:NGdof_force), mode, factor, nprint, ihybrd, nfev, njev, &
+          RR(1:LR), LR, QTF(1:NGdof_force), workspace(1:NGdof_force,1), &
+          workspace(1:NGdof_force,2), workspace(1:NGdof_force,3), workspace(1:NGdof_force,4) ) )
 
   case default
 
@@ -250,22 +264,22 @@ subroutine newton( NGdof, position, ihybrd )
    FATAL( newton, .not.Lhessianallocated, error )
 #endif
 
-   !hessian(1:NGdof,1:NGdof) = zero
-   SALLOCATE(work, (1:NGdof,1:NGdof), zero)! BLAS version; 19 Jul 2019
+   !hessian(1:NGdof_bnd,1:NGdof_bnd) = zero
+   SALLOCATE(work, (1:NGdof_bnd,1:NGdof_bnd), zero)! BLAS version; 19 Jul 2019
    ijdof = 0
-   do idof = 1, NGdof
-    !do jdof = idof, NGdof ; ijdof = ijdof + 1 ; hessian(idof,jdof) = RR(ijdof) ! un-pack R matrix; old version
-    do jdof = idof, NGdof ; ijdof = ijdof + 1 ; work(idof,jdof) = RR(ijdof) ! un-pack R matrix; BLAS version; 19 Jul 2019
+   do idof = 1, NGdof_bnd
+    !do jdof = idof, NGdof_bnd ; ijdof = ijdof + 1 ; hessian(idof,jdof) = RR(ijdof) ! un-pack R matrix; old version
+    do jdof = idof, NGdof_bnd ; ijdof = ijdof + 1 ; work(idof,jdof) = RR(ijdof) ! un-pack R matrix; BLAS version; 19 Jul 2019
     enddo
    enddo
 
 !  derivative matrix = Q R;
-   !hessian(1:NGdof,1:NGdof) = matmul( fjac(1:NGdof,1:NGdof), hessian(1:NGdof,1:NGdof) )
-   call DGEMM('N','N',NGdof,NGdof,NGdof,one,fjac,NGdof,work,NGdof,zero,hessian,NGdof)     ! BLAS version; 19 Jul 2019
+   !hessian(1:NGdof_bnd,1:NGdof_bnd) = matmul( fjac(1:NGdof_bnd,1:NGdof_bnd), hessian(1:NGdof_bnd,1:NGdof_bnd) )
+   call DGEMM('N','N',NGdof_bnd,NGdof_bnd,NGdof_bnd,one,fjac,NGdof_bnd,work,NGdof_bnd,zero,hessian,NGdof_bnd)     ! BLAS version; 19 Jul 2019
 
    DALLOCATE(work)! BLAS version; 19 Jul 2019
 
-   call writereadgf( 'W', NGdof, ireadhessian ) ! write derivative matrix to file;
+   call writereadgf( 'W', NGdof_bnd, ireadhessian ) ! write derivative matrix to file;
 
    if( Wnewton ) write(ounit,'("newton : ", 10x ," : saved  derivative matrix to file ;")')
 
@@ -300,9 +314,9 @@ end subroutine newton
 !> \ingroup grp_force_driver
 !>
 !> @param[in]  readorwrite
-!> @param[in]  NGdof
+!> @param[in]  NGdof_bnd
 !> @param[out] ireadhessian
-subroutine writereadgf( readorwrite, NGdof , ireadhessian )
+subroutine writereadgf( readorwrite, NGdof_bnd , ireadhessian )
 
   use constants, only : zero
 
@@ -312,18 +326,19 @@ subroutine writereadgf( readorwrite, NGdof , ireadhessian )
 
   use inputlist, only : Wnewton, Igeometry, Istellsym, Lfreebound, Nvol
   
-  use bndRep,    only : Mpol_field, Ntor_field
+  use bndRep,    only : Mpol_field, Ntor_field, pack_henneberg
 
   use cputiming, only : Tnewton
 
   use allglobal, only : myid, cpus, MPI_COMM_SPEC, ext, &
-                        mn_field, im_field, in_field, hessian, Lhessianallocated
+                        mn_field, im_field, in_field, hessian, Lhessianallocated, &
+                        NGdof_force
 
   LOCALS
 
   CHARACTER, intent(in) :: readorwrite
   LOGICAL               :: exist
-  INTEGER, intent(in)   :: NGdof
+  INTEGER, intent(in)   :: NGdof_bnd
   INTEGER, intent(out)  :: ireadhessian
 
   INTEGER               :: lIgeometry, lIstellsym, lLfreebound, lNvol, lMpol, lNtor, lNGdof
@@ -342,10 +357,10 @@ subroutine writereadgf( readorwrite, NGdof , ireadhessian )
    open( dunit, file="."//trim(ext)//".sp.DF", status="replace", form="unformatted", iostat=ios ) ! save derivative matrix to file;
    FATAL( newton, ios.ne.0, error opening derivative matrix file )
 
-   write( dunit, iostat=ios ) Igeometry, Istellsym, Lfreebound, Nvol, Mpol_field, Ntor_field, NGdof ! enable resolution consistency check;
-   FATAL( newton, ios.ne.0, error writing Nvol, Mpol_field, Ntor_field, NGdof )
+   write( dunit, iostat=ios ) Igeometry, Istellsym, Lfreebound, Nvol, Mpol_field, Ntor_field, NGdof_bnd ! enable resolution consistency check;
+   FATAL( newton, ios.ne.0, error writing Nvol, Mpol_field, Ntor_field, NGdof_bnd )
 
-   write( dunit, iostat=ios ) hessian(1:NGdof,1:NGdof)
+   write( dunit, iostat=ios ) hessian(1:NGdof_bnd,1:NGdof_bnd)
    FATAL( newton, ios.ne.0, error writing hessian to file )
 
    close( dunit, iostat=ios )
@@ -391,10 +406,10 @@ subroutine writereadgf( readorwrite, NGdof , ireadhessian )
    endif
    if( lNtor      .ne.Ntor_field ) then ; write(ounit,2000) cput-cpus, myid, "inconsistent Ntor             :", lNtor      , Ntor_field ; goto 9998
    endif
-   if( lNGdof     .ne.NGdof      ) then ; write(ounit,2000) cput-cpus, myid, "inconsistent NGdof            :", lNGdof     , NGdof      ; goto 9998
+   if( lNGdof     .ne.NGdof_bnd      ) then ; write(ounit,2000) cput-cpus, myid, "inconsistent NGdof_bnd            :", lNGdof     , NGdof_bnd      ; goto 9998
    endif
 
-   read( dunit, iostat=ios ) hessian(1:NGdof,1:NGdof)
+   read( dunit, iostat=ios ) hessian(1:NGdof_force,1:NGdof_bnd)
 !                                                             01234567890123456789012345678901
    if( ios .ne. 0 ) then ; write(ounit,2000) cput-cpus, myid, "error reading .DF ;            " ; goto 9998
    endif
@@ -423,11 +438,11 @@ end subroutine writereadgf
 !> \brief fcn1
 !> \ingroup grp_force_driver
 !>
-!> @param[in] NGdof
+!> @param[in] NGdof_bnd
 !> @param[in] xx
 !> @param[out] fvec
 !> @param[in] irevcm
-subroutine fcn1( NGdof, xx, fvec, irevcm )
+subroutine fcn1( NGdof_bnd, xx, fvec, irevcm )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -440,6 +455,7 @@ subroutine fcn1( NGdof, xx, fvec, irevcm )
   use inputlist, only : Wmacros, Wnewton, &
                         Igeometry, & ! only for screen output;
                         Nvol,                    &
+                        Lboundary, &
                         Lfindzero, forcetol, c05xmax, c05xtol, c05factor, LreadGF, &
                         Lcheck
 
@@ -449,9 +465,12 @@ subroutine fcn1( NGdof, xx, fvec, irevcm )
                         NOTstellsym, &
                         ForceErr, Energy, &
                         mn_field, im_field, in_field, iRbc, iZbs, iRbs, iZbc, Mvol, &
+                        NGdof_force, NGdof_field, &
                         BBe, IIo, BBo, IIe, &
                         dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated, &
                         nfreeboundaryiterations
+
+  use bndRep,    only : pack_henneberg
 
   use newtontime
 
@@ -461,11 +480,11 @@ subroutine fcn1( NGdof, xx, fvec, irevcm )
 
   LOCALS
 
-  INTEGER, intent(in)    :: NGdof, irevcm
-  REAL   , intent(in)    :: xx(1:NGdof)
-  REAL   , intent(out)   :: fvec(1:NGdof)
+  INTEGER, intent(in)    :: NGdof_bnd, irevcm
+  REAL   , intent(in)    :: xx(1:NGdof_bnd)
+  REAL   , intent(out)   :: fvec(1:NGdof_bnd)
 
-  REAL                   :: position(0:NGdof), force(0:NGdof)
+  REAL                   :: bndDofs(0:NGdof_bnd), force(0:NGdof_force), position(0:NGdof_field)
 
   LOGICAL                :: LComputeDerivatives, Lonlysolution, LComputeAxis
   INTEGER                :: idof, jdof, ijdof, ireadhessian, igdof, lvol, ii, imn
@@ -475,7 +494,7 @@ subroutine fcn1( NGdof, xx, fvec, irevcm )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  position = zero ; force = zero ; position(1:NGdof) = xx(1:NGdof)
+  bndDofs = zero ; force = zero ; bndDofs(1:NGdof_bnd) = xx(1:NGdof_bnd)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -483,12 +502,20 @@ subroutine fcn1( NGdof, xx, fvec, irevcm )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-   case( 0 ) ! indicates start of new iteration; no action is required; position and force available for printing; force must not be changed;
+   case( 0 ) ! indicates start of new iteration; no action is required; bndDofs and force available for printing; force must not be changed;
+
+
+    if( Lboundary.eq.0 ) then
+      position(0:NGdof_bnd) = bndDofs(0:NGdof_bnd)
+    else
+      pack = 'R'
+      WCALL( newton, pack_henneberg, (pack, position(0:NGdof_field), bndDofs(0:NGdof_bnd) ) )
+    endif
 
     pack = 'U' ! unpack geometrical degrees of freedom;
     LComputeAxis = .true.
     LComputeDerivatives = .false.
-    WCALL( newton, packxi, ( NGdof, position(0:NGdof), Mvol, mn_field, iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), &
+    WCALL( newton, packxi, ( NGdof_field, position(0:NGdof_field), Mvol, mn_field, iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), &
                              iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), pack, LComputeDerivatives, LComputeAxis ) )
 
     if( myid.eq.0 ) then
@@ -496,12 +523,12 @@ subroutine fcn1( NGdof, xx, fvec, irevcm )
      cput = GETTIME
 
      ; write(ounit,1000) cput-cpus, nFcalls, nDcalls, ForceErr, cput-lastcpu, "|BB|e", alog10(BBe(1:min(Mvol-1,28)))
-     if( Igeometry.ge.3 ) then ! include spectral constraints;
+     if( Igeometry.ge.3 .and. Lboundary.eq.0  ) then ! include spectral constraints;
       ;write(ounit,1001)                                                                      "|II|o", alog10(IIo(1:min(Mvol-1,28)))
      endif
      if( NOTstellsym ) then
       ;write(ounit,1001)                                                                      "|BB|o", alog10(BBo(1:min(Mvol-1,28)))
-      if( Igeometry.ge.3 ) then ! include spectral constraints;
+      if( Igeometry.ge.3 .and. Lboundary.eq.0 ) then ! include spectral constraints;
        write(ounit,1001)                                                                      "|II|e", alog10(IIe(1:min(Mvol-1,28)))
       endif
      endif
@@ -511,7 +538,7 @@ subroutine fcn1( NGdof, xx, fvec, irevcm )
 
     endif ! end of if( myid.eq.0 );
 
-    WCALL( newton, write_convergence_output, ( nDcalls, ForceErr ) ) ! save iRbc, iZbs consistent with position;
+    WCALL( newton, write_convergence_output, ( nDcalls, ForceErr ) ) ! save iRbc, iZbs consistent with bndDofs;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -519,11 +546,19 @@ subroutine fcn1( NGdof, xx, fvec, irevcm )
 
     nFcalls = nFcalls + 1
 
+    ! Generate position arraz from geometrical dofs.
+    if( Lboundary.eq.0 ) then
+      position(0:NGdof_bnd) = bndDofs(0:NGdof_bnd)
+    else
+      pack = 'R'
+      WCALL( newton, pack_henneberg, (pack, position(0:NGdof_field), bndDofs(0:NGdof_bnd) ) )
+    endif
+
     LComputeDerivatives = .false.
     LComputeAxis = .true.
-    WCALL( newton, dforce, ( NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives, LComputeAxis ) ) ! calculate the force-imbalance;
+    WCALL( newton, dforce, ( NGdof_field, position(0:NGdof_field), force(0:NGdof_force), LComputeDerivatives, LComputeAxis ) ) ! calculate the force-imbalance;
 
-    fvec(1:NGdof) = force(1:NGdof)
+    fvec(1:NGdof_force) = force(1:NGdof_force)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -554,13 +589,13 @@ subroutine fcn1( NGdof, xx, fvec, irevcm )
 !> \brief fcn2
 !> \ingroup grp_force_driver
 !>
-!> @param[in]  NGdof
+!> @param[in]  NGdof_bnd
 !> @param[in]  xx
 !> @param[out] fvec
 !> @param[out] fjac
 !> @param[in]  Ldfjac
 !> @param[in]  irevcm
-subroutine fcn2( NGdof, xx, fvec, fjac, Ldfjac, irevcm )
+subroutine fcn2( NGdof_bnd, xx, fvec, fjac, Ldfjac, irevcm )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -574,7 +609,8 @@ subroutine fcn2( NGdof, xx, fvec, fjac, Ldfjac, irevcm )
                         Igeometry, & ! only for screen output;
                         Nvol,                    &
                         Lfindzero, forcetol, c05xmax, c05xtol, c05factor, LreadGF, &
-                        Lcheck
+                        Lcheck, &
+                        Lboundary
 
   use cputiming, only : Tnewton
 
@@ -582,6 +618,7 @@ subroutine fcn2( NGdof, xx, fvec, fjac, Ldfjac, irevcm )
                         NOTstellsym, &
                         ForceErr, Energy, &
                         mn_field, im_field, in_field, iRbc, iZbs, iRbs, iZbc, Mvol, &
+                        NGdof_force, NGdof_field, &
                         BBe, IIo, BBo, IIe, &
                         dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated, &
                         nfreeboundaryiterations
@@ -590,15 +627,17 @@ subroutine fcn2( NGdof, xx, fvec, fjac, Ldfjac, irevcm )
 
   use sphdf5, only: write_convergence_output
 
+  use bndRep, only    : pack_henneberg
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   LOCALS
 
-  INTEGER, intent(in)    :: NGdof, Ldfjac, irevcm
-  REAL   , intent(in)    :: xx(1:NGdof)
-  REAL   , intent(out)   :: fvec(1:NGdof), fjac(1:Ldfjac,1:NGdof)
+  INTEGER, intent(in)    :: NGdof_bnd, Ldfjac, irevcm
+  REAL   , intent(in)    :: xx(1:NGdof_bnd)
+  REAL   , intent(out)   :: fvec(1:NGdof_force), fjac(1:Ldfjac,1:NGdof_force)
 
-  REAL                   :: position(0:NGdof), force(0:NGdof)
+  REAL                   :: bndDofs(0:NGdof_bnd), force(0:NGdof_force), position(0:NGdof_field)
 
   LOGICAL                :: LComputeDerivatives, Lonlysolution, LComputeAxis
   INTEGER                :: idof, jdof, ijdof, ireadhessian, igdof, lvol, ii, imn
@@ -608,7 +647,7 @@ subroutine fcn2( NGdof, xx, fvec, fjac, Ldfjac, irevcm )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  position = zero ; force = zero ; position(1:NGdof) = xx(1:NGdof)  ! assign position to xx;
+  bndDofs = zero ; force = zero ; bndDofs(1:NGdof_bnd) = xx(1:NGdof_bnd)  ! assign bndDofs to xx;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -616,25 +655,32 @@ subroutine fcn2( NGdof, xx, fvec, fjac, Ldfjac, irevcm )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-   case( 0 ) ! indicates start of new iteration; no action is required; position and force available for printing; force must not be changed;
+   case( 0 ) ! indicates start of new iteration; no action is required; bndDofs and force available for printing; force must not be changed;
 
+    if( Lboundary.eq.0 ) then
+      position(0:NGdof_bnd) = bndDofs(0:NGdof_bnd)
+    else
+      pack = 'R'
+      WCALL( newton, pack_henneberg, (pack, position(0:NGdof_field), bndDofs(0:NGdof_bnd) ) )
+    endif !Lboundary
+    
     pack = 'U' ! unpack geometrical degrees of freedom;
     LComputeAxis = .true.
     LComputeDerivatives = .false.
-    WCALL( newton, packxi, ( NGdof, position(0:NGdof), Mvol, mn_field, iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), &
-                             iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), pack, LComputeDerivatives, LComputeAxis ) )
+    WCALL( newton, packxi, ( NGdof_field, position(0:NGdof_field), Mvol, mn_field, iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), &
+                             iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), pack, LComputeDerivatives, LComputeAxis ) )    
 
     if( myid.eq.0 ) then
 
      cput = GETTIME
 
      ; write(ounit,1000) cput-cpus, nFcalls, nDcalls, ForceErr, cput-lastcpu, "|BB|e", alog10(BBe(1:min(Mvol-1,28)))
-     if( Igeometry.ge.3 ) then ! include spectral constraints;
+     if( Igeometry.ge.3  .and. Lboundary.eq.0 ) then ! include spectral constraints;
       ;write(ounit,1001)                                                                      "|II|o", alog10(IIo(1:min(Mvol-1,28)))
      endif
      if( NOTstellsym ) then
       ;write(ounit,1001)                                                                      "|BB|o", alog10(BBo(1:min(Mvol-1,28)))
-      if( Igeometry.ge.3 ) then ! include spectral constraints;
+      if( Igeometry.ge.3  .and. Lboundary.eq.0 ) then ! include spectral constraints;
        write(ounit,1001)                                                                      "|II|e", alog10(IIe(1:min(Mvol-1,28)))
       endif
      endif
@@ -644,19 +690,26 @@ subroutine fcn2( NGdof, xx, fvec, fjac, Ldfjac, irevcm )
 
     endif ! end of if( myid.eq.0 );
 
-    WCALL( newton, write_convergence_output, ( nDcalls, ForceErr ) ) ! save iRbc, iZbs consistent with position;
+    WCALL( newton, write_convergence_output, ( nDcalls, ForceErr ) ) ! save iRbc, iZbs consistent with bndDofs;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
    case( 1 ) ! before re-entry to C05NDF / C05PDF, force must contain the function values;
 
+    if( Lboundary.eq.0 ) then
+      position(0:NGdof_bnd) = bndDofs(0:NGdof_bnd)
+    else
+      pack = 'R'
+      WCALL( newton, pack_henneberg, (pack, position(0:NGdof_field), bndDofs(0:NGdof_bnd) ) )
+    endif !Lboundary
+
     nFcalls = nFcalls + 1
 
     LComputeDerivatives = .false.
     LComputeAxis = .true.
-    WCALL( newton, dforce, ( NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives, LComputeAxis ) ) ! calculate the force-imbalance;
+    WCALL( newton, dforce, ( NGdof_field, position(0:NGdof_field), force(0:NGdof_force), LComputeDerivatives, LComputeAxis ) ) ! calculate the force-imbalance;
 
-    fvec(1:NGdof) = force(1:NGdof)
+    fvec(1:NGdof_force) = force(1:NGdof_force)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -670,12 +723,12 @@ subroutine fcn2( NGdof, xx, fvec, fjac, Ldfjac, irevcm )
 
     if( LreadGF .and. nDcalls.eq.1 ) then ! this is the first iteration; will check to see if derivative matrix already exists in file .DF;
 
-     if( myid.eq.0 ) call writereadgf( 'R', NGdof, ireadhessian ) ! reads derivatives matrix from file;
+     if( myid.eq.0 ) call writereadgf( 'R', NGdof_bnd, ireadhessian ) ! reads derivatives matrix from file;
 
      IlBCAST( ireadhessian, 1, 0 )
 
      if( ireadhessian.eq.1 ) then ! derivative matrix has been read from file;
-      RlBCAST( hessian(1:NGdof,1:NGdof), NGdof*NGdof, 0 )
+      RlBCAST( hessian(1:NGdof_force,1:NGdof_bnd), NGdof_force*NGdof_bnd, 0 )
      endif
 
     else ! matches if( LreadGF .and. nDcalls.eq.1 ) then;
@@ -686,19 +739,27 @@ subroutine fcn2( NGdof, xx, fvec, fjac, Ldfjac, irevcm )
 
     if( ireadhessian.eq.0 ) then
 
-     LComputeDerivatives = .true.
-     LComputeAxis = .true.
-     WCALL( newton, dforce, ( NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives, LComputeAxis ) ) ! calculate the force-imbalance;
+      if( Lboundary.eq.0 ) then
+        position(0:NGdof_bnd) = bndDofs(0:NGdof_bnd)
+      else
+        pack = 'R'
+        WCALL( newton, pack_henneberg, (pack, position(0:NGdof_field), bndDofs(0:NGdof_bnd) ) )
+      endif !Lboundary
+     
+
+      LComputeDerivatives = .true.
+      LComputeAxis = .true.
+      WCALL( newton, dforce, ( NGdof_field, position(0:NGdof_field), force(0:NGdof_force), LComputeDerivatives, LComputeAxis ) ) ! calculate the force-imbalance;
 
 #ifdef DEBUG
-     FATAL( newton, Lcheck.eq.4, derivatives of Beltrami field have been computed )
+      FATAL( newton, Lcheck.eq.4, derivatives of Beltrami field have been computed )
 #endif
 
     endif
 
-    fjac(1:NGdof,1:NGdof) = hessian(1:NGdof,1:NGdof) ! derivative matrix is passed through global; CAN SAVE MEMORY;
+    fjac(1:NGdof_force,1:NGdof_bnd) = hessian(1:NGdof_force,1:NGdof_bnd) ! derivative matrix is passed through global; CAN SAVE MEMORY;
 
-    if( myid.eq.0 ) call writereadgf( 'W', NGdof, ireadhessian ) ! will always save derivative matrix;
+    if( myid.eq.0 ) call writereadgf( 'W', NGdof_bnd, ireadhessian ) ! will always save derivative matrix;
 
 #ifdef DEBUG
 

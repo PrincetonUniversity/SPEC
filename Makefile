@@ -22,7 +22,7 @@
  IOFILES=sphdf5
 
  # (most of) physics part of SPEC
- afiles=bndRep preset manual rzaxis packxi volume coords basefn memory
+ afiles=packxi bndRep preset manual rzaxis volume coords basefn memory
  bfiles=metrix ma00aa matrix spsmat spsint mp00ac ma02aa packab tr00ab curent df00ab lforce intghs mtrxhs lbpol
  cfiles=brcast dfp100 dfp200 dforce newton
  dfiles=casing bnorml

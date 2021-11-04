@@ -111,8 +111,8 @@ module bndRep
 
         ! INPUTS
         REAL, intent(in) :: R0c(0:Ntor), Z0s(1:Ntor)
+        REAL, intent(in) :: rhomn(1:mn_rho), bn(0:Ntor)
         REAL, intent(out):: Rmn(1:mn_field), Zmn(1:mn_field)
-        REAL             :: rhomn(1:mn_rho), bn(0:Ntor)
 
 
         ! m=0 modes, from R0c and Z0c
@@ -120,9 +120,8 @@ module bndRep
           mm=im_field(ii)
           nn=in_field(ii) / Nfp
 
-          if( mm.ne.0 ) then 
-            cycle
-          endif
+          if( mm.ne.0    .or. nn.lt.0    ) cycle
+          if( mm.gt.Mpol .or. nn.gt.Ntor ) cycle
 
           Rmn(ii) = R0c(nn)
 
@@ -160,8 +159,8 @@ module bndRep
 
         ! INPUTS
         REAL, intent(in)  :: Rmn(1:mn_field), Zmn(1:mn_field)
-        REAL, intent(out) :: rhomn(1:mn_rho), bn(0:Ntor)
-        REAL, intent(out) :: R0c(0:Ntor), Z0s(1:Ntor)
+        REAL, intent(inout) :: rhomn(1:mn_rho), bn(0:Ntor)
+        REAL, intent(inout) :: R0c(0:Ntor), Z0s(1:Ntor)
 
         ! LOCAL VARIABLES
         CHARACTER :: TRANS
@@ -172,14 +171,14 @@ module bndRep
         ! m=0 modes - set R0c and Z0s
         do ii=1,mn_field
           mm = im_field(ii)
-          nn = im_field(ii) / Nfp
+          nn = in_field(ii) / Nfp
 
-          if( mm.ne.0 ) then 
-            cycle
-          endif
+
+          if( mm.ne.0    .or. nn.lt.0    ) cycle ! Only interested in m=0, n>=0 modes
+          if( mm.gt.Mpol .or. nn.gt.Ntor ) cycle ! other elements are zeros by construction. otherwise seg fault.
 
           R0c(nn) = Rmn(ii)
-          if( nn.ne. 0 ) then
+          if( nn.ne.0 ) then
             Z0s(nn) = Zmn(ii)
           endif
         enddo
@@ -271,6 +270,125 @@ module bndRep
 
  
       end subroutine backwardMap
+
+
+      subroutine pack_henneberg( pack, position, bndDofs )
+
+        use constants, only: zero
+        use inputlist, only: Wmacros, Mpol, Ntor, twoalpha, Nfp
+        use fileunits, only: ounit, lunit
+        use allglobal, only: myid, im_rho, in_rho, im_field, in_field, mn_rho, mn_field, &
+                             MPI_COMM_SPEC, cpus, Mvol, &
+                             NGdof_field, NGdof_bnd
+
+        LOCALS
+
+        ! --------------------------------------------------------------
+        ! Local Variables
+
+        CHARACTER, INTENT(IN)  :: pack
+        CHARACTER              :: packorunpack ! Either 'RZ_to_H' or 'H_to_RZ'
+        LOGICAL                :: LComputeDerivatives, LComputeAxis
+        INTEGER                :: lvol, jj, idof
+        REAL                   :: position( 0:NGdof_field )
+        REAL                   :: bndDofs( 0:NGdof_bnd )
+        REAL                   :: iRbc(1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol)
+        REAL                   :: irhoc(1:mn_rho,1:Mvol), ibc(0:Ntor,1:Mvol), iR0c(0:Ntor,1:Mvol), iZ0s(1:Ntor,1:Mvol)
+
+        ! --------------------------------------------------------------
+        ! Subroutine core
+
+        select case( pack )
+        case( 'H' )
+
+          ! First unpack position in Rmn, Zmn
+          packorunpack = 'U'
+          LComputeDerivatives = .FALSE.
+          LComputeAxis = .True.
+          call packxi( NGdof_field, position, Mvol, mn_field, iRbc, iZbs, iRbs, iZbc, &
+                       packorunpack, LComputeDerivatives, LComputeAxis )
+
+          ! Then map to rhomn, bn, R0n, Z0n
+          do lvol=1,Mvol-1
+            call backwardMap( iRbc(1:mn_field,lvol), iZbs(1:mn_field,lvol), &
+                              irhoc(1:mn_rho,lvol), ibc(0:Ntor, lvol), &
+                              iR0c(0:Ntor, lvol), iZ0s(1:Ntor, lvol) )      
+          enddo
+
+          ! Finally construct the array bndDofs
+          idof = 0
+          do lvol=1,Mvol-1
+            do jj=1,mn_rho
+              idof = idof + 1
+              bndDofs(idof) = irhoc(jj,lvol)
+
+            enddo
+
+            do jj=0,Ntor
+              idof = idof+1
+              bndDofs(idof) = ibc(jj, lvol)
+
+              idof = idof+1
+              bndDofs(idof) = iR0c(jj, lvol)
+
+              if( jj.ne.0 ) then
+                idof = idof+1
+                bndDofs(idof) = iZ0s(jj, lvol)
+              endif
+            enddo
+          enddo !lvol
+
+#ifdef DEBUG
+          FATAL( bndRep, idof.le.0 .or. idof.gt.NGdof_bnd, out of bounds )
+#endif
+
+        case( 'R' )
+
+          ! First unpack the array bndDofs
+          idof = 0
+          do lvol=1,Mvol-1
+            do jj=1,mn_rho
+
+              idof = idof+1
+              irhoc(jj,lvol) = bndDofs(idof)
+            enddo
+
+            do jj=0,Ntor
+              idof = idof+1
+              ibc(jj, lvol) = bndDofs(idof)
+
+              idof = idof+1
+              iR0c(jj, lvol) = bndDofs(idof)
+
+              if( jj.ne.0 ) then 
+                idof = idof+1
+                iZ0s(jj, lvol) = bndDofs(idof)
+              endif
+            enddo
+          enddo !lvol
+
+#ifdef DEBUG
+          FATAL( bndRep, idof.le.0 .or. idof.gt.NGdof_bnd, out of bounds )
+#endif
+
+        ! Then map rhomn, bn, R0n, Z0n to Rmn, Zmn
+          do lvol=1,Mvol-1
+            call forwardMap( irhoc(1:mn_rho, lvol), ibc(0:Ntor, lvol), &
+                            iR0c(0:Ntor, lvol), iZ0s(1:Ntor, lvol), &
+                            iRbc(1:mn_field, lvol), iZbs(1:mn_field, lvol) )
+          enddo
+
+          ! Finally, build position array
+          packorunpack = 'P'
+          LcomputeDerivatives = 'F'
+          LComputeAxis = 'F'
+          call packxi( NGdof_field, position, Mvol, mn_field, iRbc, iZbs, iRbs, iZbc, &
+                      packorunpack, LComputeDerivatives, LComputeAxis )
+
+
+        end select 
+
+      end subroutine pack_henneberg
   
   
     ! ------------------------------------------------------------------
@@ -287,8 +405,8 @@ module bndRep
 
         LOCALS
 
-        REAL  :: rhomn( 1:mn_rho )
-        REAL  :: bn( 0:Ntor )
+        REAL, intent(in)  :: rhomn( 1:mn_rho )
+        REAL, intent(in)  :: bn( 0:Ntor )
 
         REAL  :: rho_work(1:Mpol,-Ntor:Ntor)
 
@@ -302,8 +420,10 @@ module bndRep
           mm = im_rho(ii)
           nn = in_rho(ii) / Nfp
 
+#ifdef DEBUG
           FATAL( bndRep, (mm.lt.1        ).or.(mm.gt.Mpol    ), Error in resolution )
           FATAL( bndRep, (nn/Nfp.lt.-Ntor).or.(nn/Nfp.gt.Ntor), Error in resolution )
+#endif
 
           rho_work(mm,nn) = rhomn( ii )
         enddo

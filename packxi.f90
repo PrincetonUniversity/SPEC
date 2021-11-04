@@ -94,7 +94,6 @@ subroutine packxi( NGdof_field, position, Mvol, mn_field, iRbc, iZbs, iRbs, iZbc
   idof = 0 ! initialize counter; 14 Jan 13;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
   do lvol = 1, Mvol-1 ! loop over internal interfaces;
 
    do jj = 1, mn_field ! loop over Fourier harmonics;
