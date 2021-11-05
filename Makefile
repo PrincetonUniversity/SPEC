@@ -291,6 +291,24 @@ ifeq ($(BUILD_ENV),intel_stellar)
 
 endif
 
+
+
+ifeq ($(BUILD_ENV),intel_marconi)
+ # Added by Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
+ FC=mpiifort
+ CFLAGS=-r8
+ RFLAGS=-mcmodel=large -O3 -m64 -unroll0 -fno-alias -ip -traceback
+ DFLAGS=-O0 -g -traceback -check bounds -check format -check output_conversion -check pointers -check uninit -debug full -D DEBUG
+ LIBS=-I${MKLROOT}/include/intel64/lp64 -I${MKLROOT}/include  # MKL include
+ LIBS+=-I$(HDF5_HOME)/include # HDF5 include
+ LINKS=-L$(HDF5_HOME)/lib -lhdf5_fortran -lhdf5 -lpthread -lz -lm # HDF5 link
+ LIBS+=-I$(FFTW_HOME)/include # FFTW include
+ LINKS+=-L$(FFTW_HOME)/lib -lfftw3 # FFTW link
+ LINKS+=${MKLROOT}/lib/intel64/libmkl_blas95_lp64.a ${MKLROOT}/lib/intel64/libmkl_lapack95_lp64.a \
+     -Wl,--start-group ${MKLROOT}/lib/intel64/libmkl_intel_lp64.a ${MKLROOT}/lib/intel64/libmkl_sequential.a \
+     ${MKLROOT}/lib/intel64/libmkl_core.a -Wl,--end-group -lpthread -lm -ldl # MKL link
+endif
+
 ifeq ($(OMP),yes)
  RFLAGS+=-DOPENMP -fopenmp
  DFLAGS+=-DOPENMP -fopenmp
