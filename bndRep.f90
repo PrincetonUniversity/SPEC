@@ -179,7 +179,7 @@ module bndRep
 
           R0c(nn) = Rmn(ii)
           if( nn.ne.0 ) then
-            Z0s(nn) = Zmn(ii)
+            Z0s(nn) =-Zmn(ii)
           endif
         enddo
 
@@ -304,7 +304,7 @@ module bndRep
           ! First unpack position in Rmn, Zmn
           packorunpack = 'U'
           LComputeDerivatives = .FALSE.
-          LComputeAxis = .True.
+          LComputeAxis = .FALSE.
           call packxi( NGdof_field, position, Mvol, mn_field, iRbc, iZbs, iRbs, iZbc, &
                        packorunpack, LComputeDerivatives, LComputeAxis )
 
@@ -380,8 +380,8 @@ module bndRep
 
           ! Finally, build position array
           packorunpack = 'P'
-          LcomputeDerivatives = 'F'
-          LComputeAxis = 'F'
+          LcomputeDerivatives = .FALSE.
+          LComputeAxis = .FALSE.
           call packxi( NGdof_field, position, Mvol, mn_field, iRbc, iZbs, iRbs, iZbc, &
                       packorunpack, LComputeDerivatives, LComputeAxis )
 

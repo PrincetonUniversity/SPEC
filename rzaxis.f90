@@ -101,6 +101,8 @@ subroutine rzaxis( Mvol, mn_field, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDer
                         iRbc, iZbs, iRbs, iZbc, &
                         dBdX
 
+  use bndRep, only    : Ntor_field
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   LOCALS
@@ -142,7 +144,7 @@ subroutine rzaxis( Mvol, mn_field, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDer
 
   jvol = 0 ! this identifies the "surface" in which the poloidal averaged harmonics will be placed; 19 Jul 16;
 
-  Ntoraxis = min(Ntor,Ntoraxis)
+  Ntoraxis = min(Ntor_field,Ntoraxis)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -430,16 +432,16 @@ subroutine rzaxis( Mvol, mn_field, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDer
       do ii = -Ntoraxis, Ntoraxis
         do jj = 1, Ntoraxis
 
-          if (ii-jj .ge. -Ntor) then
-            id = 2 * (Ntor + 1) + ii - jj
+          if (ii-jj .ge. -Ntor_field) then
+            id = 2 * (Ntor_field + 1) + ii - jj
             ! the DRcn' term
             jacmat(ii+Ntoraxis+1, jj+1) = jacmat(ii+Ntoraxis+1, jj+1) - jZbs(id,ivol)
             ! the DZsn' term
             jacmat(ii+Ntoraxis+1, Ntoraxis+1+jj) = jacmat(ii+Ntoraxis+1, Ntoraxis+1+jj) + jRbc(id,ivol)
-          end if ! if (ii-jj .ge. -Ntor)
+          end if ! if (ii-jj .ge. -Ntor_field)
 
-          if (ii+jj .le. Ntor) then
-            id = 2 * (Ntor + 1) + ii + jj
+          if (ii+jj .le. Ntor_field) then
+            id = 2 * (Ntor_field + 1) + ii + jj
             ! the DRcn' term
             jacmat(ii+Ntoraxis+1, jj+1) = jacmat(ii+Ntoraxis+1, jj+1) - jZbs(id,ivol)
             ! the DZsn' term
@@ -449,7 +451,7 @@ subroutine rzaxis( Mvol, mn_field, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDer
         end do ! jj
 
         ! the DR0 term
-        id = 2 * (Ntor + 1) + ii
+        id = 2 * (Ntor_field + 1) + ii
         jacmat(ii+Ntoraxis+1, 1) = - two * jZbs(id,ivol)
 
       end do ! ii
@@ -459,8 +461,8 @@ subroutine rzaxis( Mvol, mn_field, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDer
       do ii = -Ntoraxis, Ntoraxis
         do jj = 1, Ntoraxis
 
-          if (ii-jj .ge. -Ntor) then
-            id = 2 * (Ntor + 1) + ii - jj
+          if (ii-jj .ge. -Ntor_field) then
+            id = 2 * (Ntor_field + 1) + ii - jj
             ! for J cos terms
             ! the DRcn' term
             jacmat(ii+idJc, jj+idRc) = jacmat(ii+idJc, jj+idRc) - jZbs(id,ivol)
@@ -481,10 +483,10 @@ subroutine rzaxis( Mvol, mn_field, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDer
             ! the DZsn' term
             jacmat(ii+idJs, jj+idZc) = jacmat(ii+idJs, jj+idZc) - jRbc(id,ivol)
 
-          end if ! if (ii-jj .ge. -Ntor)
+          end if ! if (ii-jj .ge. -Ntor_field)
 
-          if (ii+jj .le. Ntor) then
-            id = 2 * (Ntor + 1) + ii + jj
+          if (ii+jj .le. Ntor_field) then
+            id = 2 * (Ntor_field + 1) + ii + jj
 
             ! for J cos terms
             ! the DRcn' term
@@ -505,12 +507,12 @@ subroutine rzaxis( Mvol, mn_field, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDer
             jacmat(ii+idJs, jj+idRs) = jacmat(ii+idJs, jj+idRs) + jZbs(id,ivol)
             ! the DZsn' term
             jacmat(ii+idJs, jj+idZc) = jacmat(ii+idJs, jj+idZc) - jRbc(id,ivol)
-          end if ! if (ii+jj .le. Ntor)
+          end if ! if (ii+jj .le. Ntor_field)
 
         end do ! jj
 
         ! the DR0 term
-        id = 2 * (Ntor + 1) + ii
+        id = 2 * (Ntor_field + 1) + ii
         ! for J cos terms
         jacmat(ii+idJc, idRc) = - two * jZbs(id,ivol)
         jacmat(ii+idJc, idZc) = + two * jRbs(id,ivol)
@@ -540,13 +542,13 @@ subroutine rzaxis( Mvol, mn_field, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDer
     if (LComputeDerivatives) then
       ! copy the data to jRbc etc
 
-      jRbc(1:Ntor+1,jvol) = zero
-      jZbs(2:Ntor+1,jvol) = zero
+      jRbc(1:Ntor_field+1,jvol) = zero
+      jZbs(2:Ntor_field+1,jvol) = zero
       jRbc(1:Ntoraxis+1,jvol) = jRbc(1:Ntoraxis+1,ivol) - solution(1:Ntoraxis+1)
       jZbs(2:Ntoraxis+1 ,jvol) = jZbs(2:Ntoraxis+1,ivol) - solution(Ntoraxis+2:2*Ntoraxis+1)
       if (NOTstellsym) then
-        jRbs(2:Ntor+1,jvol) = zero
-        jZbc(1:Ntor+1,jvol) = zero
+        jRbs(2:Ntor_field+1,jvol) = zero
+        jZbc(1:Ntor_field+1,jvol) = zero
         jRbs(2:Ntoraxis+1,jvol) = jRbs(2:Ntoraxis+1,ivol) - solution(idRs+1:idRs+Ntoraxis)
         jZbc(1:Ntoraxis+1 ,jvol) = jZbc(1:Ntoraxis+1,ivol) - solution(idZc:idZc+Ntoraxis)
       endif ! NOTstellsym
@@ -595,10 +597,10 @@ subroutine rzaxis( Mvol, mn_field, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDer
                        mn_field, im_field(1:mn_field), in_field(1:mn_field), jacbasec(1:mn_field), jacbases(1:mn_field), junkc(1:mn_field), junks(1:mn_field), ifail )
 
             if (YESstellsym) then
-              djacrhs = -jacbasec(2*(Ntor+1)-Ntoraxis:2*(Ntor+1)+Ntoraxis)
+              djacrhs = -jacbasec(2*(Ntor_field+1)-Ntoraxis:2*(Ntor_field+1)+Ntoraxis)
             else
-              djacrhs(1:2*Ntoraxis+1) = -jacbasec(2*(Ntor+1)-Ntoraxis:2*(Ntor+1)+Ntoraxis)
-              djacrhs(2*Ntoraxis+2:Njac) = -jacbases(2*(Ntor+1)-Ntoraxis:2*(Ntor+1)+Ntoraxis)
+              djacrhs(1:2*Ntoraxis+1) = -jacbasec(2*(Ntor_field+1)-Ntoraxis:2*(Ntor_field+1)+Ntoraxis)
+              djacrhs(2*Ntoraxis+2:Njac) = -jacbases(2*(Ntor_field+1)-Ntoraxis:2*(Ntor_field+1)+Ntoraxis)
             end if !if (YESstellsym)
 
             if (im_field(imn_field).eq.1) then ! djacmat for m=1 terms
@@ -608,26 +610,26 @@ subroutine rzaxis( Mvol, mn_field, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDer
                 do ii = -Ntoraxis, Ntoraxis
                   do jj = 1, Ntoraxis
 
-                    if (ii-jj .ge. -Ntor) then
-                      id = 2 * (Ntor + 1) + ii - jj
+                    if (ii-jj .ge. -Ntor_field) then
+                      id = 2 * (Ntor_field + 1) + ii - jj
                       ! the DRcn' term
                       if (id .eq. imn_field .and. irz .eq. 1) djacmat(ii+Ntoraxis+1, jj+1) = djacmat(ii+Ntoraxis+1, jj+1) - one
                       ! the DZsn' term
                       if (id .eq. imn_field .and. irz .eq. 0) djacmat(ii+Ntoraxis+1, Ntoraxis+1+jj) = djacmat(ii+Ntoraxis+1, Ntoraxis+1+jj) + one
-                    end if ! if (ii-jj .ge. -Ntor)
+                    end if ! if (ii-jj .ge. -Ntor_field)
 
-                    if (ii+jj .le. Ntor) then
-                      id = 2 * (Ntor + 1) + ii + jj
+                    if (ii+jj .le. Ntor_field) then
+                      id = 2 * (Ntor_field + 1) + ii + jj
                       ! the DRcn' term
                       if (id .eq. imn_field .and. irz .eq. 1) djacmat(ii+Ntoraxis+1, jj+1) = djacmat(ii+Ntoraxis+1, jj+1) - one
                       ! the DZsn' term
                       if (id .eq. imn_field .and. irz .eq. 0) djacmat(ii+Ntoraxis+1, Ntoraxis+1+jj) = djacmat(ii+Ntoraxis+1, Ntoraxis+1+jj) - one
-                    end if ! if (ii+jj .le. Ntor)
+                    end if ! if (ii+jj .le. Ntor_field)
 
                   end do ! jj
 
                   ! the DR0 term
-                  id = 2 * (Ntor + 1) + ii
+                  id = 2 * (Ntor_field + 1) + ii
                   if (id .eq. imn_field .and. irz .eq. 1) djacmat(ii+Ntoraxis+1, 1) = - two
 
                 end do ! ii
@@ -635,8 +637,8 @@ subroutine rzaxis( Mvol, mn_field, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDer
                 do ii = -Ntoraxis, Ntoraxis
                   do jj = 1, Ntoraxis
 
-                    if (ii-jj .ge. -Ntor) then
-                      id = 2 * (Ntor + 1) + ii - jj
+                    if (ii-jj .ge. -Ntor_field) then
+                      id = 2 * (Ntor_field + 1) + ii - jj
                       ! for J cos terms
                       ! the DRcn' term
                       if (id.eq.imn_field .and. irz.eq.1 .and. issym.eq.0) djacmat(ii+idJc, jj+idRc) = djacmat(ii+idJc, jj+idRc) - one
@@ -657,10 +659,10 @@ subroutine rzaxis( Mvol, mn_field, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDer
                       ! the DZsn' term
                       if (id.eq.imn_field .and. irz.eq.0 .and. issym.eq.0) djacmat(ii+idJs, jj+idZc) = djacmat(ii+idJs, jj+idZc) - one
 
-                    end if ! if (ii-jj .ge. -Ntor)
+                    end if ! if (ii-jj .ge. -Ntor_field)
 
-                    if (ii+jj .le. Ntor) then
-                      id = 2 * (Ntor + 1) + ii + jj
+                    if (ii+jj .le. Ntor_field) then
+                      id = 2 * (Ntor_field + 1) + ii + jj
                       ! for J cos terms
                       ! the DRcn' term
                       if (id.eq.imn_field .and. irz.eq.1 .and. issym.eq.0) djacmat(ii+idJc, jj+idRc) = djacmat(ii+idJc, jj+idRc) - one
@@ -681,12 +683,12 @@ subroutine rzaxis( Mvol, mn_field, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDer
                       ! the DZsn' term
                       if (id.eq.imn_field .and. irz.eq.0 .and. issym.eq.0) djacmat(ii+idJs, jj+idZc) = djacmat(ii+idJs, jj+idZc) - one
 
-                    end if ! if (ii+jj .le. Ntor)
+                    end if ! if (ii+jj .le. Ntor_field)
 
                   end do ! jj
 
                   ! the DR0 term
-                  id = 2 * (Ntor + 1) + ii
+                  id = 2 * (Ntor_field + 1) + ii
                   ! for J cos terms
                   if (id.eq.imn_field .and. irz.eq.1 .and. issym.eq.0) djacmat(ii+idJc, idRc) = - two
                   if (id.eq.imn_field .and. irz.eq.0 .and. issym.eq.1) djacmat(ii+idJc, idZc) = + two
@@ -800,9 +802,9 @@ end if ! Lcheck .eq. 8
                 mn_field, im_field(1:mn_field), in_field(1:mn_field), jacbasec(1:mn_field), jacbases(1:mn_field), junkc(1:mn_field), junks(1:mn_field), ifail )
 
       ! fill in the right hand side with m=1 terms of Jacobian
-      jacrhs(1:2*Ntoraxis+1) = -jacbasec(2*(Ntor+1)-Ntoraxis:2*(Ntor+1)+Ntoraxis)
+      jacrhs(1:2*Ntoraxis+1) = -jacbasec(2*(Ntor_field+1)-Ntoraxis:2*(Ntor_field+1)+Ntoraxis)
       if (NOTstellsym) then
-        jacrhs(2*Ntoraxis+2:4*Ntoraxis+2) = -jacbases(2*(Ntor+1)-Ntoraxis:2*(Ntor+1)+Ntoraxis)
+        jacrhs(2*Ntoraxis+2:4*Ntoraxis+2) = -jacbases(2*(Ntor_field+1)-Ntoraxis:2*(Ntor_field+1)+Ntoraxis)
       endif
 
       do ii = 1, Njac
@@ -878,6 +880,8 @@ subroutine fndiff_rzaxis( Mvol, mn_field, ivol, jRbc, jRbs, jZbc, JZbs, imn_fiel
                         dRadR, dRadZ, dZadR, dZadZ, &
                         NOTstellsym
 
+  use bndRep,    only : Ntor_field
+
 LOCALS
 
   INTEGER, intent(in)    :: Mvol, mn_field, ivol, imn_field, irz, issym
@@ -892,7 +896,7 @@ LOCALS
   threshold = 1e-8 ! print with difference between FD and analytical more than this threshold
   dx = 1e-8 * jRbc(1,ivol)
   jvol = 0
-  Ntoraxis = min(Ntor,Ntoraxis)
+  Ntoraxis = min(Ntor_field,Ntoraxis)
 
   newRbc = jRbc
   newRbs = jRbs

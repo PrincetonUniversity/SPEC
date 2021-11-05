@@ -176,10 +176,7 @@ subroutine dforce( NGdof_field, position, force, LComputeDerivatives, LComputeAx
 ! Unpack position to generate arrays iRbc, iZbs, IRbs, iZbc.
 
   packorunpack = 'U' ! unpack geometrical degrees-of-freedom;
-
-#ifndef DEBUG
   LComputeAxis = .true.
-#endif
 
   WCALL( dforce, packxi,( NGdof_field, position(0:NGdof_field), Mvol, mn_field, iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), &
                           iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), packorunpack, LcomputeDerivatives, LComputeAxis ) )
