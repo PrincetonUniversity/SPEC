@@ -1386,7 +1386,7 @@ endif
 
 ! Fourier transforms;
 
-  Nt = max( Ndiscrete*4*Mpol_field, 1 ) ; Nz = max( Ndiscrete*4*ntor_field, 1 ) ; Ntz = Nt*Nz ; soNtz = one / sqrt( one*Ntz ) ! exaggerated discrete resolution;
+  Nt = max( Ndiscrete*4*Mpol_force, 1 ) ; Nz = max( Ndiscrete*4*ntor_field, 1 ) ; Ntz = Nt*Nz ; soNtz = one / sqrt( one*Ntz ) ! exaggerated discrete resolution;
 
   ;                  ; hNt = Nt / 2
   if( Nz.gt.1 ) then ; hNz = Nz / 2

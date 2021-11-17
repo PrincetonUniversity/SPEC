@@ -529,12 +529,12 @@ subroutine spec
   if( myid.eq.0 ) then
    cput = GETTIME
    write(ounit,1000) cput-cpus, nfreeboundaryiterations,          ForceErr,  cput-lastcpu, "|BB|e", alog10(BBe(1:min(Mvol-1,28)))
-   if( Igeometry.ge.3 ) then ! include spectral constraints; 04 Dec 14;
+   if( Igeometry.ge.3 .and. Lboundary.eq.0 ) then ! include spectral constraints; 04 Dec 14;
    write(ounit,1001)                                                                       "|II|o", alog10(IIo(1:min(Mvol-1,28)))
    endif
    if( NOTstellsym ) then
    write(ounit,1001)                                                                       "|BB|o", alog10(BBo(1:min(Mvol-1,28)))
-   if( Igeometry.ge.3 ) then ! include spectral constraints; 04 Dec 14;
+   if( Igeometry.ge.3 .and. Lboundary.eq.0  ) then ! include spectral constraints; 04 Dec 14;
    write(ounit,1001)                                                                       "|II|e", alog10(IIe(1:min(Mvol-1,28)))
    endif
    endif

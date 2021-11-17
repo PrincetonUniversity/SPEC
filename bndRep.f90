@@ -202,7 +202,6 @@ module bndRep
         select case( INFO )
         case( 0 )
           LWORK = WORK(1)
-          DALLOCATE( WORK )
   
         case( :-1)
           FATAL( bndRep, .true., Illegal value in DGELS )
@@ -211,6 +210,7 @@ module bndRep
           FATAL( bndRep, .true., Rank zero for backward mapping )
   
         end select
+        DALLOCATE( WORK )
   
   
         ! Now solve linear system
@@ -237,15 +237,37 @@ module bndRep
         
         DALLOCATE( A )
         DALLOCATE( B )
+        DALLOCATE( WORK )
 
         
         ! Now solve second system
-        if( Mpol>1 ) then 
-          SALLOCATE( A, (1:nel_m2_i,1:nel_m2_j), zero )
-          SALLOCATE( B, (1:nel_m2_i), zero )
-          call DCOPY( nel_m2_i*nel_m2_j, Mat2, 1, A, 1 )
+        if( Mpol>1 ) then
+          ! First figure out optimal block size - see dgels documentation 
+          LWORK = -1
           LDA = nel_m2_i
           LDB = nel_m2_i
+          SALLOCATE( A, (1:nel_m2_i,1:nel_m2_j), zero )
+          SALLOCATE( B, (1:nel_m2_i), zero )
+          SALLOCATE( WORK, (1:1), zero )
+          call DGELS( TRANS, nel_m2_i, nel_m2_j, NRHS, A, LDA, B, LDB, WORK, LWORK, INFO )
+
+  
+          select case( INFO )
+          case( 0 )
+            LWORK = WORK(1)
+    
+          case( :-1)
+            FATAL( bndRep, .true., Illegal value in DGELS )
+    
+          case(1: )
+            FATAL( bndRep, .true., Rank zero for backward mapping )
+    
+          end select
+          DALLOCATE( WORK )
+
+          ! Then solve system
+          SALLOCATE( WORK, (1:LWORK), zero )
+          call DCOPY( nel_m2_i*nel_m2_j, Mat2, 1, A, 1 )
           B(1:nel_m2_i) = LHS2(1:nel_m2_i)
           call DGELS( TRANS, nel_m2_i, nel_m2_j, NRHS, A, LDA, B, LDB, WORK, LWORK, INFO )
           select case( INFO )
@@ -261,9 +283,9 @@ module bndRep
           end select
           DALLOCATE( A )
           DALLOCATE( B )
+          DALLOCATE( WORK )
         endif
 
-        DALLOCATE( WORK )
 
         ! Unpack RHS1, RHS2 and store in rhomn, bn.
         call unpack_rhomn_bn( rhomn, bn )
