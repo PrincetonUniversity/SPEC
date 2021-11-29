@@ -1,0 +1,1308 @@
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+! this file, ext_m.F90, has been constructed by macro expansion; see ext.f90 for source;
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+m4_changequote({,})m4_dnl ; can put comments here;
+m4_changecom(!)m4_dnl ; can put comments here;
+m4_define(INTEGER,integer)m4_dnl ; can put comments here;
+m4_define(REAL,real(8))m4_dnl ; can put comments here;
+!m4_define(CHARACTER,character)m4_dnl ; can put comments here;
+m4_define(GETTIME,MPI_WTIME())m4_dnl ; can put comments here;
+m4_define(MPISTART,{! macro expansion of mpistart;
+
+  myid = 0 ; ncpu = 1
+  call MPI_INIT( ierr )
+  call MPI_COMM_RANK( MPI_COMM_WORLD, myid, ierr )
+  call MPI_COMM_SIZE( MPI_COMM_WORLD, ncpu, ierr )
+
+  ! macro expansion of mpistart; end;})m4_dnl can put comments here
+m4_define(MPIFINALIZE,{! macro expansion of mpifinalize;
+
+   call MPI_FINALIZE(ierr)
+
+  ! macro expansion of mpifinalize; end;})m4_dnl can put comments here
+m4_define(LOCALS,{! macro expansion of locals;
+
+#ifdef OPENMP
+  USE OMP_LIB
+#endif
+  use mpi
+  implicit none
+  INTEGER   :: ierr, astat, ios, nthreads, ithread
+  REAL      :: cput, cpui, cpuo ! cpu time; cpu initial; cpu old; 31 Jan 13;
+
+  ! macro expansion of locals; end;})m4_dnl ; can put comments here;
+
+m4_define(GETTHREAD,{! macro expansion of getthread;
+
+#ifdef OPENMP
+  ithread = omp_get_thread_num() + 1
+#else
+  ithread = 1
+#endif
+
+  ! macro expansion of getthread; end;})m4_dnl ; can put comments here;
+
+m4_define(SALLOCATE,{ ! macro expansion of sallocate = set allocate;
+! allocate a variable of name _1 in the range _2 and set the value to _3
+
+#ifdef DEBUG
+   if( allocated( $1 ) ) then
+    cput = MPI_WTIME()
+    write(6,'("macros : ",f10.2," : myid=",i3," ; $1 already allocated ;")') cput-cpus, myid
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop      'macros : 0123456789 : myid=    ; $1 already allocated ;'
+   endif
+   if( Wmacros ) write(ounit,'("macros : ", 10x ," : myid=",i3," ; allocating $1 ;")') myid
+#endif
+
+   if( allocated( $1 ) ) deallocate( $1 )
+
+   allocate( $1$2, stat=astat )
+
+#ifdef DEBUG
+   if( astat.ne.0 ) then
+    cput = MPI_WTIME()
+    write(6,'("macros : ",f10.2," : myid=",i3," ; error allocating $1 ;")') cput-cpus, myid
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop 'error allocating $1'
+   endif
+   if( Wmacros ) write(ounit,'("macros : ", 10x ," : myid=",i3," ; allocated  $1 ;")') myid
+#endif
+
+   $1$2 = $3
+
+  ! macro expansion of sallocate; end;})m4_dnl ; can put comments here;
+m4_define(NALLOCATE,{! macro expansion of nallocate;
+! allocate a variable of name _1 in the range _2
+
+#ifdef DEBUG
+
+   if( allocated($1) ) then
+    cput = MPI_WTIME()
+    write(6,'("macros : ",f10.2," : myid=",i3," ; $1 already allocated ;")') cput-cpus, myid
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop '$1 allocated'
+   endif
+
+   if( Wmacros ) write(ounit,'("macros : ", 10x ," : myid=",i3," ; allocating $1 ;")') myid
+
+#endif
+
+   if( allocated( $1 ) ) deallocate( $1 )
+   allocate($1$2,stat=astat)
+
+#ifdef DEBUG
+
+   if( astat.ne.0 ) then
+    cput = MPI_WTIME()
+    write(6,'("macros : ",f10.2," : myid=",i3," ; error allocating $1 ;")') cput-cpus, myid
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop 'error allocating $1'
+   endif
+
+   if( Wmacros ) write(ounit,'("macros : ", 10x ," : myid=",i3," ; allocated  $1 ;")') myid
+
+#endif
+
+  ! macro expansion of nallocate; end;})m4_dnl ; can put comments here;
+m4_define(DALLOCATE,{! macro expansion of dallocate;
+! deallocate _1
+#ifdef DEBUG
+
+   if( .not.allocated($1) ) then
+    cput = MPI_WTIME()
+    write(6,'("macros : ",f10.2," : myid=",i3," ; $1 not allocated ;")') cput-cpus, myid
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop '$1 allocated'
+   endif
+
+   if( Wmacros ) write(ounit,'("macros : ", 10x ," : myid=",i3," ; de-allocating $1 ;")') myid
+
+#endif
+
+   deallocate($1,stat=astat)
+
+#ifdef DEBUG
+
+   if( astat.ne.0 ) then
+    cput = MPI_WTIME()
+    write(6,'("macros : ",f10.2," : myid=",i3," ; error de-allocating $1 ;")') cput-cpus, myid
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop 'error allocating $1'
+
+   endif
+
+   if( Wmacros ) write(ounit,'("macros : ", 10x ," : myid=",i3," ; de-allocated  $1 ;")') myid
+
+#endif
+
+  ! macro expansion of dallocate; end;})m4_dnl ; can put comments here;
+m4_define(FATAL,{! macro expansion of fatal;
+! called from within _1; check logical expression in _2 and exit with reason _3 if the expression _2 is true
+   if( $2 ) then
+     write(6,'("$1 :      fatal : myid=",i3," ; $2 ; $3;")') myid
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+     stop "$1 : $2 : $3 ;"
+    endif
+
+  ! macro expansion of fatal; end;})m4_dnl ; can put comments here;
+m4_define(LlBCAST,{! macro expansion of llbcast;
+! logical MPI broadcast of _1; length is _2; what is _3 ?
+
+#ifdef DEBUG 
+
+   if( $2.lt.0 ) then
+    write(6,'("       : ",10x," ; myid=",i3," ; error broadcasting $1 ;")') myid
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop
+   endif
+
+   if( Wmacros ) write(6,'("       : ",10x," ; myid=",i3," ; lvol=",i3," ; broadcasting $1 ;")') myid, $3+1
+
+#endif
+
+   call MPI_BCAST($1,$2,MPI_LOGICAL,$3,MPI_COMM_SPEC,ierr)
+
+#ifdef DEBUG
+
+   if( Wmacros ) write(6,'("       : ",10x," ; myid=",i3," ; lvol=",i3," ; broadcasted  $1 ;")') myid, $3+1
+
+#endif
+
+  ! macro expansion of llbcast; end;})m4_dnl can put comments here
+m4_define(IlBCAST,{! macro expansion of ilbcast;
+! integer MPI broadcast of _1; length is _2; what is _3 ?
+
+#ifdef DEBUG   
+
+   if( $2.lt.0 ) then
+    write(6,'("       : "10x" ; myid=",i3," ; error broadcasting $1 ;")') myid
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop
+   endif
+
+   if( Wmacros ) write(6,'("       : "10x" ; myid=",i3," ; lvol=",i3," ; broadcasting $1 ;")') myid, $3
+
+#endif
+  
+   call MPI_BCAST( $1, $2, MPI_INTEGER, $3, MPI_COMM_SPEC, ierr )
+
+#ifdef DEBUG
+
+   if( Wmacros ) write(6,'("       : "10x" ; myid=",i3," ; lvol=",i3," ; broadcasted  $1 ;")') myid, $3
+
+#endif
+
+  ! macro expansion of ilbcast; end;})m4_dnl can put comments here
+m4_define(RlBCAST,{! macro expansion of rlbcast;
+! real MPI broadcast of _1; length is _2; _3 is radial volume which is worked on
+
+#ifdef DEBUG
+
+   if( $2.lt.0 ) then
+    write(6,'("       : "10x" ; myid=",i3," ; error broadcasting $1 ;")')myid
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop
+   endif
+
+   if( Wmacros ) write(6,'("       : "10x" ; myid=",i3," ; lvol=",i3," ; broadcasting $1 ;")') myid, $3+1
+
+#endif
+  
+   call MPI_BCAST($1,$2,MPI_DOUBLE_PRECISION,$3,MPI_COMM_SPEC,ierr)
+
+#ifdef DEBUG
+
+   if( Wmacros ) write(6,'("       : "10x" ; myid=",i3," ; lvol=",i3," ; broadcasted  $1 ;")') myid, $3+1
+
+#endif
+
+  ! macro expansion of rlbcast; end;})m4_dnl can put comments here
+m4_define(ClBCAST,{! macro expansion of clbcast;
+! character MPI broadcast of _1; length is _2; index is _3
+  
+#ifdef DEBUG
+
+   if( $2.lt.0 ) then
+    write(6,'("       : "10x" ; myid=",i3," ; lvol=",i3," ; error broadcasting $1 ;")') myid, $3+1
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop
+   endif
+
+   if( Wmacros ) write(6,'("       : "10x" ; myid=",i3," ; lvol=",i3," ; broadcasting $1 ;")') myid, $3+1
+
+#endif
+  
+   call MPI_BCAST($1,$2,MPI_CHARACTER,$3,MPI_COMM_SPEC,ierr)
+
+#ifdef DEBUG
+
+   if( Wmacros ) write(6,'("       : "10x" ; myid=",i3," ; lvol=",i3," ; broadcasted  $1 ;")') myid, $3+1
+
+#endif
+
+  ! macro expansion of clbcast; end;})m4_dnl can put comments here
+m4_define(CALL,{! macro expansion of call;
+! call _2 with arguments _3 from within _1
+
+   cput = MPI_WTIME()
+   T$1 = T$1 + ( cput-cpuo ) 
+
+   call $2$3
+
+  !cpuo = zero
+   cpuo = MPI_WTIME()
+
+  ! macro expansion of call; end;})m4_dnl ; can put comments here;
+m4_define(WCALL,{! macro expansion of wcall;
+! call _2 with arguments _3 from within _1 and write wall time needed for call to screen
+
+   cput = MPI_WTIME()
+   T$1 = T$1 + ( cput-cpuo ) 
+
+#ifdef DEBUG
+   if( W$1 ) then
+    cput = MPI_WTIME()
+    write(ounit,'("$1 : ",f10.2," : myid=",i3," ; calling $2 ;")') cput-cpus, myid
+   endif
+#endif
+
+   call $2$3
+
+#ifdef DEBUG
+   if( W$1 ) then
+    cput = MPI_WTIME()
+    write(ounit,'("$1 : ",f10.2," : myid=",i3," ; called  $2 ;")') cput-cpus, myid
+   endif
+#endif
+
+  !cpuo = zero
+   cpuo = MPI_WTIME()
+
+  ! macro expansion of wcall; end;})m4_dnl ; can put comments here;
+m4_define(HDEFGRP,{! macro expansion of hdefgrp;
+! define a HDF5 group in _1 with name _2 and save reference into hid_t _3; _4 and _5 should be __FILE__ and __LINE__
+
+  call h5lexists_f($1, "$2", grp_exists, hdfier)
+  
+  if (.not.grp_exists) then
+   ! if group does not exist, create it
+   call h5gcreate_f($1, "$2", $3, hdfier)
+   if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5gcreate_f from hdefgrp at $4:$5 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5gcreate_f from hdefgrp at $4:$5 ;"
+   endif
+  else
+   ! if the group already exists, open it
+   call h5gopen_f($1, "$2", $3, hdfier)
+   if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5gopen_f from hdefgrp at $4:$5 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5gopen_f from hdefgrp at $4:$5 ;"
+   endif
+  endif
+
+  ! macro expansion of hdefgrp; end;})m4_dnl ; can put comments here;
+m4_define(HCLOSEGRP,{! macro expansion of hclosegrp;
+! close a HDF5 group given in _1
+
+  call h5gclose_f($1, hdfier)
+  if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5gclose_f from hclosegrp at $4:$5 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5gclose_f from hclosegrp at $4:$5 ;"
+  endif
+
+  ! macro expansion of hclosegrp; end;})m4_dnl ; can put comments here;
+m4_define(H5DESCR,{! macro expansion of h5descr;
+! describe an already-open HDF5 object given in _1 at location _2 with text given in _3 and leave it open; _4 and _5 should be __FILE__ and __LINE__
+! also write a LaTeX comment on that output object
+!latex \item{\verb+$2+} $3
+  attr_data = "$3"
+  attrlen=len(attr_data)
+  
+  call h5screate_simple_f(arank, adims, aspace_id, hdfier) ! Create scalar data space for the attribute.
+  if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5screate_simple_f from h5descr at $4:$5 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5screate_simple_f from h5descr at $4:$5 ;"
+  endif
+  
+  call h5tcopy_f(H5T_NATIVE_CHARACTER, atype_id, hdfier)   ! Create datatype for the attribute.
+  if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5tcopy_f from h5descr at $4:$5 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5tcopy_f from h5descr at $4:$5 ;"
+  endif
+  
+  call h5tset_size_f(atype_id, attrlen, hdfier)            ! Create datatype for the attribute.
+  if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5tset_size_f from h5descr at $4:$5 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5tset_size_f from h5descr at $4:$5 ;"
+  endif
+  
+  call h5acreate_f($1, aname, atype_id, aspace_id, attr_id, hdfier) ! create descriptive attribute
+  if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5acreate_f from h5descr at $4:$5 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5acreate_f from h5descr at $4:$5 ;"
+  endif
+  
+  call h5awrite_f(attr_id, atype_id, attr_data, adims, hdfier) ! Write the attribute data.
+  if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5awrite_f from h5descr at $4:$5 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5awrite_f from h5descr at $4:$5 ;"
+  endif
+  
+  call h5aclose_f(attr_id, hdfier) ! Close the attribute.
+  if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5aclose_f from h5descr at $4:$5 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5aclose_f from h5descr at $4:$5 ;"
+  endif
+  
+  call h5tclose_f(atype_id, hdfier) ! Close the attribute datatype.
+  if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5tclose_f from h5descr at $4:$5 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5tclose_f from h5descr at $4:$5 ;"
+  endif
+  
+  call h5sclose_f(aspace_id, hdfier) ! Terminate access to the data space.
+  if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5sclose_f from h5descr at $4:$5 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5sclose_f from h5descr at $4:$5 ;"
+  endif
+  
+  ! macro expansion of h5descr; end;})m4_dnl ; can put comments here;
+  m4_define(H5DESCR_CDSET,{! macro expansion of h5descr_cdset;
+! describe an already-open HDF5 dataset identified by dset_id at location _1 with text given in _2 and close it at the end; _3 and _4 should be __FILE__ and __LINE__
+! also write a LaTeX comment on that output object
+!latex \item{\verb+$1+} $2
+  attr_data = "$2"
+  attrlen=len(attr_data)
+
+  ! Create scalar data space for the attribute.
+  call h5screate_simple_f(arank, adims, aspace_id, hdfier)
+  if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5screate_simple_f from h5descr_cdset at $3:$4 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5screate_simple_f from h5descr_cdset at $3:$4 ;"
+  endif
+  
+  ! Create datatype for the attribute.
+  call h5tcopy_f(H5T_NATIVE_CHARACTER, atype_id, hdfier)
+  if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5tcopy_f from h5descr_cdset at $3:$4 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5tcopy_f from h5descr_cdset at $3:$4 ;"
+  endif
+  
+  call h5tset_size_f(atype_id, attrlen, hdfier)
+  if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5tset_size_f from h5descr_cdset at $3:$4 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5tset_size_f from h5descr_cdset at $3:$4 ;"
+  endif
+  
+  ! create descriptive attribute
+  call h5acreate_f(dset_id, aname, atype_id, aspace_id, attr_id, hdfier)
+  if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5acreate_f from h5descr_cdset at $3:$4 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5acreate_f from h5descr_cdset at $3:$4 ;"
+  endif
+  
+  ! Write the attribute data.
+  call h5awrite_f(attr_id, atype_id, attr_data, adims, hdfier)
+  if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5awrite_f from h5descr_cdset at $3:$4 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5awrite_f from h5descr_cdset at $3:$4 ;"
+  endif
+  
+  ! Close the attribute.
+  call h5aclose_f(attr_id, hdfier)
+  if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5aclose_f from h5descr_cdset at $3:$4 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5aclose_f from h5descr_cdset at $3:$4 ;"
+  endif
+  
+  ! Close the attribute datatype.
+  call h5tclose_f(atype_id, hdfier)
+  if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5tclose_f from h5descr_cdset at $3:$4 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5tclose_f from h5descr_cdset at $3:$4 ;"
+  endif
+  
+  ! Terminate access to the data space.
+  call h5sclose_f(aspace_id, hdfier)
+  if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5sclose_f from h5descr_cdset at $3:$4 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5sclose_f from h5descr_cdset at $3:$4 ;"
+  endif
+  
+  call h5dclose_f(dset_id, hdfier)    ! terminate dataset;
+  if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5dclose_f from h5descr_cdset at $3:$4 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5dclose_f from h5descr_cdset at $3:$4 ;"
+  endif
+
+  ! macro expansion of h5descr_cdset; end;})m4_dnl ; can put comments here;
+m4_define(HWRITELV,{! macro expansion of hwritelv;
+! write logical variable _4 (scalar (_2=1) or rank-1 (_2=length)) into a dataset named _3 into group _1; _5 and _6 should be __FILE__ and __LINE__
+! example: hwritelv( grpInputGlobal, 1, LreadGF, (/ LreadGF /) ) ! scalar
+! example: hwritelv( grpInput, 5, success, success(1:5) ) ! rank-1
+
+#ifdef DEBUG
+  if( Wmacros ) write(ounit,'("macros : ", 10x ," : myid=",i3," ; writing $3 ;")') myid
+#endif
+
+  rank = 1 ; onedims(1) = $2
+
+  if( $2.le.0 ) then
+
+   write(6,'("sphdf5 : "10x" : error calling hwriteiv ; $3 : $2.le.0 at $5:$6 ;")')
+
+  else
+
+   call h5screate_simple_f( rank, onedims, space_id, hdfier )
+   if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5screate_simple_f from hwritelv at $5:$6 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5screate_simple_f from hwritelv at $5:$6 ;"
+   endif
+
+   ! temporarily disable error printing to not confuse users
+   call h5eset_auto_f(0, hdfier)
+   if( hdfier.ne.0 ) then
+     write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hwritelv at $5:$6 ;")')
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+     stop "sphdf5 : error calling h5eset_auto_f from hwritelv at $5:$6 ;"
+   endif
+   
+   ! check if dataset can be opened
+   call h5dopen_f($1, "$3", dset_id, hdfier)
+   if (hdfier.lt.0) then
+    var_exists = .false.
+    if (hdfDebug .and. myid.eq.0) then ; write(*,*) "dataset $3 does not exist yet, creating it"
+    endif
+   else
+    var_exists = .true.
+    if (hdfDebug .and. myid.eq.0) then ; write(*,*) "dataset $3 exists already, opening it"
+    endif
+   endif
+   
+   ! re-establish previous state of error printing to be sensitive to "real" errors
+   call h5eset_auto_f(internalHdf5Msg, hdfier)
+   if( hdfier.ne.0 ) then
+     write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hwritelv at $5:$6 ;")')
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+     stop "sphdf5 : error calling h5eset_auto_f from hwritelv at $5:$6 ;"
+   endif
+   
+   ! if the dataset does not exist already, create it. Otherwise, it should be open already
+   if (.not.var_exists) then
+    call h5dcreate_f( $1, "$3", H5T_NATIVE_INTEGER, space_id, dset_id, hdfier )
+    if( hdfier.ne.0 ) then
+     write(6,'("sphdf5 : "10x" : error calling h5dcreate_f from hwritelv at $5:$6 ;")')
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+     stop "sphdf5 : error calling h5dcreate_f from hwritelv at $5:$6 ;"
+    endif
+   endif
+
+   call h5dwrite_f( dset_id, H5T_NATIVE_INTEGER, merge(1,0,$4) , onedims, hdfier )
+   if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5dwrite_f from hwritelv at $5:$6 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5dwrite_f from hwritelv at $5:$6 ;"
+   endif
+   
+   call h5dclose_f(dset_id, hdfier)    ! terminate dataset;
+   if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5dclose_f from hwritelv at $5:$6 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5dclose_f from hwritelv at $5:$6 ;"
+   endif
+
+  endif
+
+  ! macro expansion of hwritelv; end;})m4_dnl ; can put comments here;
+m4_define(HWRITELV_LO,{! macro expansion of hwritelv_lo;
+! write logical variable _4 (scalar (_2=1) or rank-1 (_2=length)) into a dataset named _3 into group _1 and leave dataset open for e.g. adding an attribute; _5 and _6 should be __FILE__ and __LINE__
+! example: hwritelv_lo( grpInputGlobal, 1, LreadGF, (/ LreadGF /) ) ! scalar
+! example: hwritelv_lo( grpInput, 5, success, success(1:5) ) ! rank-1
+! and close it using h5descr_cdset( /input/global/LreadGF, reading flag for GF )
+
+#ifdef DEBUG
+  if( Wmacros ) write(ounit,'("macros : ", 10x ," : myid=",i3," ; writing $3 ;")') myid
+#endif
+
+  rank = 1 ; onedims(1) = $2
+
+  if( $2.le.0 ) then
+
+   write(6,'("sphdf5 : "10x" : error calling hwriteiv ; $3 : $2.le.0 at $5:$6 ;")')
+
+  else
+
+   call h5screate_simple_f( rank, onedims, space_id, hdfier )
+   if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5screate_simple_f from hwritelv_lo at $5:$6 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5screate_simple_f from hwritelv_lo at $5:$6 ;"
+   endif
+
+   ! temporarily disable error printing to not confuse users
+   call h5eset_auto_f(0, hdfier)
+   if( hdfier.ne.0 ) then
+     write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hwritelv_lo at $5:$6 ;")')
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+     stop "sphdf5 : error calling h5eset_auto_f from hwritelv_lo at $5:$6 ;"
+   endif
+   
+   ! check if dataset can be opened
+   call h5dopen_f($1, "$3", dset_id, hdfier)
+   if (hdfier.lt.0) then
+    var_exists = .false.
+    if (hdfDebug .and. myid.eq.0) then ; write(*,*) "dataset $3 does not exist yet, creating it"
+    endif
+   else
+    var_exists = .true.
+    if (hdfDebug .and. myid.eq.0) then ; write(*,*) "dataset $3 exists already, opening it"
+    endif
+   endif
+   
+   ! re-establish previous state of error printing to be sensitive to "real" errors
+   call h5eset_auto_f(internalHdf5Msg, hdfier)
+   if( hdfier.ne.0 ) then
+     write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hwritelv_lo at $5:$6 ;")')
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+     stop "sphdf5 : error calling h5eset_auto_f from hwritelv_lo at $5:$6 ;"
+   endif
+   
+   ! if the dataset does not exist already, create it. Otherwise, it should be open already
+   if (.not.var_exists) then
+    call h5dcreate_f( $1, "$3", H5T_NATIVE_INTEGER, space_id, dset_id, hdfier )
+    if( hdfier.ne.0 ) then
+     write(6,'("sphdf5 : "10x" : error calling h5dcreate_f from hwritelv_lo at $5:$6 ;")')
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+     stop "sphdf5 : error calling h5dcreate_f from hwritelv_lo at $5:$6 ;"
+    endif
+   endif
+
+   call h5dwrite_f( dset_id, H5T_NATIVE_INTEGER, merge(1,0,$4) , onedims, hdfier )
+   if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5dwrite_f from hwritelv_lo at $5:$6 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5dwrite_f from hwritelv_lo at $5:$6 ;"
+   endif
+   
+  endif
+
+  ! macro expansion of hwritelv_lo; end;})m4_dnl ; can put comments here;
+m4_define(HWRITEIV,{! macro expansion of hwriteiv;
+! write integer variable _4 (scalar (_2=1) or rank-1 (_2=length)) into a dataset named _3 into group _1; _5 and _6 should be __FILE__ and __LINE__
+! example: hwriteiv( grpInputPhysics,    1, Igeometry, (/ Igeometry /) ) ! scalar
+! example: hwriteiv( grpInputPhysics, Mvol,      Lrad,  Lrad(1:Mvol)   ) ! rank-1
+
+#ifdef DEBUG
+  if( Wmacros ) write(ounit,'("macros : ", 10x ," : myid=",i3," ; writing $3 ;")') myid
+#endif
+
+  rank = 1 ; onedims(1) = $2
+
+  if( $2.le.0 ) then
+
+   write(6,'("sphdf5 : "10x" : error calling hwriteiv ; $3 : $2.le.0 at $5:$6 ;")')
+
+  else
+
+   call h5screate_simple_f( rank, onedims, space_id, hdfier )
+   if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5screate_simple_f from hwriteiv at $5:$6 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5screate_simple_f from hwriteiv at $5:$6 ;"
+   endif
+
+   ! temporarily disable error printing to not confuse users
+   call h5eset_auto_f(0, hdfier)
+   if( hdfier.ne.0 ) then
+     write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hwriteiv at $5:$6 ;")')
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+     stop "sphdf5 : error calling h5eset_auto_f from hwriteiv at $5:$6 ;"
+   endif
+   
+   ! check if dataset can be opened
+   call h5dopen_f($1, "$3", dset_id, hdfier)
+   if (hdfier.lt.0) then
+    var_exists = .false.
+    if (hdfDebug .and. myid.eq.0) then ; write(*,*) "dataset $3 does not exist yet, creating it"
+    endif
+   else
+    var_exists = .true.
+    if (hdfDebug .and. myid.eq.0) then ; write(*,*) "dataset $3 exists already, opening it"
+    endif
+   endif
+   
+   ! re-establish previous state of error printing to be sensitive to "real" errors
+   call h5eset_auto_f(internalHdf5Msg, hdfier)
+   if( hdfier.ne.0 ) then
+     write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hwriteiv at $5:$6 ;")')
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+     stop "sphdf5 : error calling h5eset_auto_f from hwriteiv at $5:$6 ;"
+   endif
+   
+   ! if the dataset does not exist already, create it. Otherwise, it should be open already
+   if (.not.var_exists) then
+    call h5dcreate_f( $1, "$3", H5T_NATIVE_INTEGER, space_id, dset_id, hdfier )
+    if( hdfier.ne.0 ) then
+     write(6,'("sphdf5 : "10x" : error calling h5dcreate_f from hwriteiv at $5:$6 ;")')
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+     stop "sphdf5 : error calling h5dcreate_f from hwriteiv at $5:$6 ;"
+    endif
+   endif
+
+   call h5dwrite_f( dset_id, H5T_NATIVE_INTEGER, $4, onedims, hdfier )
+   if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5dwrite_f from hwriteiv at $5:$6 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5dwrite_f from hwriteiv at $5:$6 ;"
+   endif
+
+   call h5dclose_f(dset_id, hdfier)    ! terminate dataset;
+   if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5dclose_f from hwriteiv at $5:$6 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5dclose_f from hwriteiv at $5:$6 ;"
+   endif
+
+  endif
+
+  ! macro expansion of hwriteiv; end;})m4_dnl ; can put comments here;
+m4_define(HWRITEIV_LO,{! macro expansion of hwriteiv_lo;
+! write integer variable _4 (scalar (_2=1) or rank-1 (_2=length)) into a dataset named _3 into group _1 and leave the dataset open for e.g. adding and attribute
+! example: hwriteiv( grpInputPhysics,    1, Igeometry, (/ Igeometry /) ) ! scalar
+! example: hwriteiv( grpInputPhysics, Mvol,      Lrad,  Lrad(1:Mvol)   ) ! rank-1
+! and close it using h5descr_cdset( /input/physics/Igeometry, geometry identifier )
+
+#ifdef DEBUG
+  if( Wmacros ) write(ounit,'("macros : ", 10x ," : myid=",i3," ; writing $3 ;")') myid
+#endif
+
+  rank = 1 ; onedims(1) = $2
+
+  if( $2.le.0 ) then
+
+   write(6,'("sphdf5 : "10x" : error calling hwriteiv_lo ; $3 : $2.le.0 at $5:$6 ;")')
+
+  else
+
+   call h5screate_simple_f( rank, onedims, space_id, hdfier )
+   if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5screate_simple_f from hwriteiv_lo at $5:$6 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5screate_simple_f from hwriteiv_lo at $5:$6 ;"
+   endif
+
+   ! temporarily disable error printing to not confuse users
+   call h5eset_auto_f(0, hdfier)
+   if( hdfier.ne.0 ) then
+     write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hwriteiv_lo at $5:$6 ;")')
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+     stop "sphdf5 : error calling h5eset_auto_f from hwriteiv_lo at $5:$6 ;"
+   endif
+   
+   ! check if dataset can be opened
+   call h5dopen_f($1, "$3", dset_id, hdfier)
+   if (hdfier.lt.0) then
+    var_exists = .false.
+    if (hdfDebug .and. myid.eq.0) then ; write(*,*) "dataset $3 does not exist yet, creating it"
+    endif
+   else
+    var_exists = .true.
+    if (hdfDebug .and. myid.eq.0) then ; write(*,*) "dataset $3 exists already, opening it"
+    endif
+   endif
+   
+   ! re-establish previous state of error printing to be sensitive to "real" errors
+   call h5eset_auto_f(internalHdf5Msg, hdfier)
+   if( hdfier.ne.0 ) then
+     write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hwriteiv_lo at $5:$6 ;")')
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+     stop "sphdf5 : error calling h5eset_auto_f from hwriteiv_lo at $5:$6 ;"
+   endif
+   
+   ! if the dataset does not exist already, create it. Otherwise, it should be open already
+   if (.not.var_exists) then
+    call h5dcreate_f( $1, "$3", H5T_NATIVE_INTEGER, space_id, dset_id, hdfier )
+    if( hdfier.ne.0 ) then
+     write(6,'("sphdf5 : "10x" : error calling h5dcreate_f from hwriteiv_lo at $5:$6 ;")')
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+     stop "sphdf5 : error calling h5dcreate_f from hwriteiv_lo at $5:$6 ;"
+    endif
+   endif
+
+   call h5dwrite_f( dset_id, H5T_NATIVE_INTEGER, $4, onedims, hdfier )
+   if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5dwrite_f from hwriteiv_lo at $5:$6 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5dwrite_f from hwriteiv_lo at $5:$6 ;"
+   endif
+
+  endif
+
+  ! macro expansion of hwriteiv_lo; end;})m4_dnl ; can put comments here;
+m4_define(HWRITERV,{! macro expansion of hwriterv;
+! write real variable _4 (scalar (_2=1) or rank-1 (_2=length)) into a dataset named _3 into group _1; _5 and _6 should be __LINE__ and __FILE__
+! example: hwriterv( grpInputPhysics,    1, phiedge, (/ phiedge /) ) ! scalar
+! example: hwriterv( grpInputPhysics, Mvol,   tflux, tflux(1:Mvol) ) ! rank-1
+
+#ifdef DEBUG
+  if( Wmacros ) write(ounit,'("macros : ", 10x ," : myid=",i3," ; writing $3 ;")') myid
+#endif
+
+  rank = 1 ; onedims(1) = $2
+
+  if( $2.le.0 ) then
+
+   write(6,'("sphdf5 : "10x" : error calling hwriterv ; $3 : $2.le.0 at $5:$6 ;")')
+
+  else
+
+   call h5screate_simple_f( rank, onedims, space_id, hdfier )
+   if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5screate_simple_f from hwriterv at $5:$6 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5screate_simple_f from hwriterv at $5:$6 ;"
+   endif
+
+   ! temporarily disable error printing to not confuse users
+   call h5eset_auto_f(0, hdfier)
+   if( hdfier.ne.0 ) then
+     write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hwriterv at $5:$6 ;")')
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+     stop "sphdf5 : error calling h5eset_auto_f from hwriterv at $5:$6 ;"
+   endif
+   
+   ! check if dataset can be opened
+   call h5dopen_f($1, "$3", dset_id, hdfier)
+   if (hdfier.lt.0) then
+    var_exists = .false.
+    if (hdfDebug .and. myid.eq.0) then ; write(*,*) "dataset $3 does not exist yet, creating it"
+    endif
+   else
+    var_exists = .true.
+    if (hdfDebug .and. myid.eq.0) then ; write(*,*) "dataset $3 exists already, opening it"
+    endif
+   endif
+   
+   ! re-establish previous state of error printing to be sensitive to "real" errors
+   call h5eset_auto_f(internalHdf5Msg, hdfier)
+   if( hdfier.ne.0 ) then
+     write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hwriterv at $5:$6 ;")')
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+     stop "sphdf5 : error calling h5eset_auto_f from hwriterv at $5:$6 ;"
+   endif
+   
+   ! if the dataset does not exist already, create it. Otherwise, it should be open already
+   if (.not.var_exists) then
+    call h5dcreate_f( $1, "$3", H5T_NATIVE_DOUBLE, space_id, dset_id, hdfier )
+    if( hdfier.ne.0 ) then
+     write(6,'("sphdf5 : "10x" : error calling h5dcreate_f from hwriterv at $5:$6 ;")')
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+     stop "sphdf5 : error calling h5dcreate_f from hwriterv at $5:$6 ;"
+    endif
+   endif
+
+   call h5dwrite_f( dset_id, H5T_NATIVE_DOUBLE, $4, onedims, hdfier )
+   if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5dwrite_f from hwriterv at $5:$6 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5dwrite_f from hwriterv at $5:$6 ;"
+   endif
+ 
+   call h5dclose_f(dset_id, hdfier)    ! terminate dataset;
+   if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5dclose_f from hwriterv at $5:$6 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5dclose_f from hwriterv at $5:$6 ;"
+   endif
+
+  endif
+
+  ! macro expansion of hwriterv; end;})m4_dnl ; can put comments here;
+m4_define(HWRITERV_LO,{! macro expansion of hwriterv_lo;
+! write real variable _4 (scalar (_2=1) or rank-1 (_2=length)) into a dataset named _3 into group _1 and leave it open, e.g. for adding an attribute; _5 and _6 should be __FILE__ and __LINE__
+! example: hwriterv( grpInputPhysics,    1, phiedge, (/ phiedge /) ) ! scalar
+! example: hwriterv( grpInputPhysics, Mvol,   tflux, tflux(1:Mvol) ) ! rank-1
+! and close it with h5descr_cdset( /input/physics/phiedge, total enclosed toroidal flux )
+
+#ifdef DEBUG
+  if( Wmacros ) write(ounit,'("macros : ", 10x ," : myid=",i3," ; writing $3 ;")') myid
+#endif
+
+  rank = 1 ; onedims(1) = $2
+
+  if( $2.le.0 ) then
+
+   write(6,'("sphdf5 : "10x" : error calling hwriterv ; $3 : $2.le.0 at $5:$6 ;")')
+
+  else
+
+   call h5screate_simple_f( rank, onedims, space_id, hdfier )
+   if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5screate_simple_f from hwriterv_lo at $5:$6 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5screate_simple_f from hwriterv_lo at $5:$6 ;"
+   endif
+
+   ! temporarily disable error printing to not confuse users
+   call h5eset_auto_f(0, hdfier)
+   if( hdfier.ne.0 ) then
+     write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hwriterv_lo at $5:$6 ;")')
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+     stop "sphdf5 : error calling h5eset_auto_f from hwriterv_lo at $5:$6 ;"
+   endif
+   
+   ! check if dataset can be opened
+   call h5dopen_f($1, "$3", dset_id, hdfier)
+   if (hdfier.lt.0) then
+    var_exists = .false.
+    if (hdfDebug .and. myid.eq.0) then ; write(*,*) "dataset $3 does not exist yet, creating it"
+    endif
+   else
+    var_exists = .true.
+    if (hdfDebug .and. myid.eq.0) then ; write(*,*) "dataset $3 exists already, opening it"
+    endif
+   endif
+   
+   ! re-establish previous state of error printing to be sensitive to "real" errors
+   call h5eset_auto_f(internalHdf5Msg, hdfier)
+   if( hdfier.ne.0 ) then
+     write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hwriterv_lo at $5:$6 ;")')
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+     stop "sphdf5 : error calling h5eset_auto_f from hwriterv_lo at $5:$6 ;"
+   endif
+   
+   ! if the dataset does not exist already, create it. Otherwise, it should be open already
+   if (.not.var_exists) then
+    call h5dcreate_f( $1, "$3", H5T_NATIVE_DOUBLE, space_id, dset_id, hdfier )
+    if( hdfier.ne.0 ) then
+     write(6,'("sphdf5 : "10x" : error calling h5dcreate_f from hwriterv_lo at $5:$6 ;")')
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+     stop "sphdf5 : error calling h5dcreate_f from hwriterv_lo at $5:$6 ;"
+    endif
+   endif
+
+   call h5dwrite_f( dset_id, H5T_NATIVE_DOUBLE, $4, onedims, hdfier )
+   if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5dwrite_f from hwriterv_lo at $5:$6 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5dwrite_f from hwriterv_lo at $5:$6 ;"
+   endif
+
+  endif
+
+  ! macro expansion of hwriterv_lo; end;})m4_dnl ; can put comments here;
+m4_define(HWRITERA,{! macro expansion of hwritea;
+! write real array _5 (_2 rows, _3 columns) into a dataset named _4 into group _1; _6 and _7 should be __FILE__ and __LINE__
+! example: hwritera( grpInputPhysics, (2*Ntor+1), (2*Mpol+1), Rbc, Rbc(-Ntor:Ntor,-Mpol:Mpol) )
+
+#ifdef DEBUG
+  if( Wmacros ) write(ounit,'("macros : ", 10x ," : myid=",i3," ; writing $4 ;")') myid
+#endif
+
+  rank = 2 ; twodims(1:2) = (/ $2, $3 /)
+
+  if( $2.le.0 .or. $3.le.0 ) then
+
+   write(6,'("sphdf5 : "10x" : error calling hwritera ; $4 : $2.le.0 .or. $3.le.0 at $6:$7 ;")')
+
+  else
+
+   call h5screate_simple_f( rank, twodims, space_id, hdfier )
+   if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5screate_simple_f from hwritera at $6:$7 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5screate_simple_f from hwritera at $6:$7 ;"
+   endif
+
+   ! temporarily disable error printing to not confuse users
+   call h5eset_auto_f(0, hdfier)
+   if( hdfier.ne.0 ) then
+     write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hwritera at $6:$7 ;")')
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+     stop "sphdf5 : error calling h5eset_auto_f from hwritera at $6:$7 ;"
+   endif
+   
+   ! check if dataset can be opened
+   call h5dopen_f($1, "$4", dset_id, hdfier)
+   if (hdfier.lt.0) then
+    var_exists = .false.
+    if (hdfDebug .and. myid.eq.0) then ; write(*,*) "dataset $4 does not exist yet, creating it"
+    endif
+   else
+    var_exists = .true.
+    if (hdfDebug .and. myid.eq.0) then ; write(*,*) "dataset $4 exists already, opening it"
+    endif
+   endif
+   
+   ! re-establish previous state of error printing to be sensitive to "real" errors
+   call h5eset_auto_f(internalHdf5Msg, hdfier)
+   if( hdfier.ne.0 ) then
+     write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hwritera at $6:$7 ;")')
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+     stop "sphdf5 : error calling h5eset_auto_f from hwritera at $6:$7 ;"
+   endif
+   
+   ! if the dataset does not exist already, create it. Otherwise, it should be open already
+   if (.not.var_exists) then
+    call h5dcreate_f( $1, "$4", H5T_NATIVE_DOUBLE, space_id, dset_id, hdfier )
+    if( hdfier.ne.0 ) then
+     write(6,'("sphdf5 : "10x" : error calling h5dcreate_f from hwritera at $6:$7 ;")')
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+     stop "sphdf5 : error calling h5dcreate_f from hwritera at $6:$7 ;"
+    endif
+   endif
+
+   call h5dwrite_f( dset_id, H5T_NATIVE_DOUBLE, $5, twodims, hdfier )
+   if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5dwrite_f from hwritera at $6:$7 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5dwrite_f from hwritera at $6:$7 ;"
+   endif
+ 
+   call h5dclose_f(dset_id, hdfier)    ! terminate dataset;
+   if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5dclose_f from hwritera at $6:$7 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5dclose_f from hwritera at $6:$7 ;"
+   endif
+
+  endif
+
+  ! macro expansion of hwritea; end;})m4_dnl ; can put comments here;
+m4_define(HWRITERA_LO,{! macro expansion of hwritea_lo;
+! write real array _5 (_2 rows, _3 columns) into a dataset named _4 into group _1 and leave it open, e.g. for adding an attribute; _6 and _7 should be __FILE__ and __LINE__
+! example: hwritera( grpInputPhysics, (2*Ntor+1), (2*Mpol+1), Rbc, Rbc(-Ntor:Ntor,-Mpol:Mpol) )
+! and close it then via h5descr_cdset( /input/physics/Rbc, boundary R cosine Fourier coefficients )
+
+#ifdef DEBUG
+  if( Wmacros ) write(ounit,'("macros : ", 10x ," : myid=",i3," ; writing $4 ;")') myid
+#endif
+
+  rank = 2 ; twodims(1:2) = (/ $2, $3 /)
+
+  if( $2.le.0 .or. $3.le.0 ) then
+
+   write(6,'("sphdf5 : "10x" : error calling hwritera ; $4 : $2.le.0 .or. $3.le.0 at $6:$7 ;")')
+
+  else
+
+   call h5screate_simple_f( rank, twodims, space_id, hdfier )
+   if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5screate_simple_f from hwritera_lo at $6:$7 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5screate_simple_f from hwritera_lo at $6:$7 ;"
+   endif
+
+   ! temporarily disable error printing to not confuse users
+   call h5eset_auto_f(0, hdfier)
+   if( hdfier.ne.0 ) then
+     write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hwritera_lo at $6:$7 ;")')
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+     stop "sphdf5 : error calling h5eset_auto_f from hwritera_lo at $6:$7 ;"
+   endif
+   
+   ! check if dataset can be opened
+   call h5dopen_f($1, "$4", dset_id, hdfier)
+   if (hdfier.lt.0) then
+    var_exists = .false.
+    if (hdfDebug .and. myid.eq.0) then ; write(*,*) "dataset $4 does not exist yet, creating it"
+    endif
+   else
+    var_exists = .true.
+    if (hdfDebug .and. myid.eq.0) then ; write(*,*) "dataset $4 exists already, opening it"
+    endif
+   endif
+   
+   ! re-establish previous state of error printing to be sensitive to "real" errors
+   call h5eset_auto_f(internalHdf5Msg, hdfier)
+   if( hdfier.ne.0 ) then
+     write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hwritera_lo at $6:$7 ;")')
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+     stop "sphdf5 : error calling h5eset_auto_f from hwritera_lo at $6:$7 ;"
+   endif
+   
+   ! if the dataset does not exist already, create it. Otherwise, it should be open already
+   if (.not.var_exists) then
+    call h5dcreate_f( $1, "$4", H5T_NATIVE_DOUBLE, space_id, dset_id, hdfier )
+    if( hdfier.ne.0 ) then
+     write(6,'("sphdf5 : "10x" : error calling h5dcreate_f from hwritera_lo at $6:$7 ;")')
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+     stop "sphdf5 : error calling h5dcreate_f from hwritera_lo at $6:$7 ;"
+    endif
+   endif
+
+   call h5dwrite_f( dset_id, H5T_NATIVE_DOUBLE, $5, twodims, hdfier )
+   if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5dwrite_f from hwritera_lo at $6:$7 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5dwrite_f from hwritera_lo at $6:$7 ;"
+   endif
+ 
+  endif
+
+  ! macro expansion of hwritea_lo; end;})m4_dnl ; can put comments here;
+m4_define(HWRITERC,{! macro expansion of hwriterc;
+! write real cube _6 (_2 rows, _3 columns, _4 pages) into a dataset named _5 into group _1; _7 and _8 should containt __FILE__ and __LINE__
+! example: hwriterc( grpOutput, (Mrad+1), 2, 2, TT, TT(0:Mrad,0:1,0:1) )
+
+#ifdef DEBUG
+  if( Wmacros ) write(ounit,'("macros : ", 10x ," : myid=",i3," ; writing $5 ;")') myid
+#endif
+
+  rank = 3 ; threedims(1:3) = (/ $2, $3, $4 /)
+
+  if( $2.le.0 .or. $3.le.0 .or. $4.le.0 ) then
+
+   write(6,'("sphdf5 : "10x" : error calling hwriterc ; $5 : $2.le.0 .or. $3.le.0 .or. $4.le.0 at $7:$8 ;")')
+
+  else
+
+   call h5screate_simple_f( rank, threedims, space_id, hdfier )
+   if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5screate_simple_f from hwriterc at $7:$8 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5screate_simple_f from hwriterc at $7:$8 ;"
+   endif
+  
+   ! temporarily disable error printing to not confuse users
+   call h5eset_auto_f(0, hdfier)
+   if( hdfier.ne.0 ) then
+     write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hwriterc at $7:$8 ;")')
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+     stop "sphdf5 : error calling h5eset_auto_f from hwriterc at $7:$8 ;"
+   endif
+   
+   ! check if dataset can be opened
+   call h5dopen_f($1, "$5", dset_id, hdfier)
+   if (hdfier.lt.0) then
+    var_exists = .false.
+    if (hdfDebug .and. myid.eq.0) then ; write(*,*) "dataset $5 does not exist yet, creating it"
+    endif
+   else
+    var_exists = .true.
+    if (hdfDebug .and. myid.eq.0) then ; write(*,*) "dataset $5 exists already, opening it"
+    endif
+   endif
+   
+   ! re-establish previous state of error printing to be sensitive to "real" errors
+   call h5eset_auto_f(internalHdf5Msg, hdfier)
+   if( hdfier.ne.0 ) then
+     write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hwriterc at $7:$8 ;")')
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+     stop "sphdf5 : error calling h5eset_auto_f from hwriterc at $7:$8 ;"
+   endif
+   
+   ! if the dataset does not exist already, create it. Otherwise, it should be open already
+   if (.not.var_exists) then
+    call h5dcreate_f( $1, "$5", H5T_NATIVE_DOUBLE, space_id, dset_id, hdfier )
+    if( hdfier.ne.0 ) then
+     write(6,'("sphdf5 : "10x" : error calling h5dcreate_f from hwriterc at $7:$8 ;")')
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+     stop "sphdf5 : error calling h5dcreate_f from hwriterc at $7:$8 ;"
+    endif
+   endif
+
+   call h5dwrite_f( dset_id, H5T_NATIVE_DOUBLE, $6, threedims, hdfier )
+   if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5dwrite_f from hwriterc at $7:$8 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5dwrite_f from hwriterc at $7:$8 ;"
+   endif
+   
+   call h5dclose_f(dset_id, hdfier)    ! terminate dataset;
+   if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5dclose_f from hwriterc at $7:$8 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5dclose_f from hwriterc at $7:$8 ;"
+   endif
+
+  endif
+
+  ! macro expansion of hwriterc; end;})m4_dnl ; can put comments here;
+m4_define(HWRITERC_LO,{! macro expansion of hwriterc_lo;
+! write real cube _6 (_2 rows, _3 columns, _4 pages) into a dataset named _5 into group _1 and leave open for e.g. adding an attribute; _7 and _8 should be __FILE__ and __LINE__
+! example: hwriterc( grpOutput, (Mrad+1), 2, 2, TT, TT(0:Mrad,0:1,0:1) )
+! and close it with h5descr_cdset( /output/TT, something abbreviated by TT )
+
+#ifdef DEBUG
+  if( Wmacros ) write(ounit,'("macros : ", 10x ," : myid=",i3," ; writing $5 ;")') myid
+#endif
+
+  rank = 3 ; threedims(1:3) = (/ $2, $3, $4 /)
+
+  if( $2.le.0 .or. $3.le.0 .or. $4.le.0 ) then
+
+   write(6,'("sphdf5 : "10x" : error calling hwriterc ; $5 : $2.le.0 .or. $3.le.0 .or. $4.le.0 at $7:$8 ;")')
+
+  else
+
+   call h5screate_simple_f( rank, threedims, space_id, hdfier )
+   if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5screate_simple_f from hwriterc_lo at $7:$8 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5screate_simple_f from hwriterc_lo at $7:$8 ;"
+   endif
+  
+   ! temporarily disable error printing to not confuse users
+   call h5eset_auto_f(0, hdfier)
+   if( hdfier.ne.0 ) then
+     write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hwriterc_lo at $7:$8 ;")')
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+     stop "sphdf5 : error calling h5eset_auto_f from hwriterc_lo at $7:$8 ;"
+   endif
+   
+   ! check if dataset can be opened
+   call h5dopen_f($1, "$5", dset_id, hdfier)
+   if (hdfier.lt.0) then
+    var_exists = .false.
+    if (hdfDebug .and. myid.eq.0) then ; write(*,*) "dataset $5 does not exist yet, creating it"
+    endif
+   else
+    var_exists = .true.
+    if (hdfDebug .and. myid.eq.0) then ; write(*,*) "dataset $5 exists already, opening it"
+    endif
+   endif
+   
+   ! re-establish previous state of error printing to be sensitive to "real" errors
+   call h5eset_auto_f(internalHdf5Msg, hdfier)
+   if( hdfier.ne.0 ) then
+     write(6,'("sphdf5 : "10x" : error calling h5eset_auto_f from hwriterc_lo at $7:$8 ;")')
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+     stop "sphdf5 : error calling h5eset_auto_f from hwriterc_lo at $7:$8 ;"
+   endif
+   
+   ! if the dataset does not exist already, create it. Otherwise, it should be open already
+   if (.not.var_exists) then
+    call h5dcreate_f( $1, "$5", H5T_NATIVE_DOUBLE, space_id, dset_id, hdfier )
+    if( hdfier.ne.0 ) then
+     write(6,'("sphdf5 : "10x" : error calling h5dcreate_f from hwriterc_lo at $7:$8 ;")')
+     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+     stop "sphdf5 : error calling h5dcreate_f from hwriterc_lo at $7:$8 ;"
+    endif
+   endif
+
+   call h5dwrite_f( dset_id, H5T_NATIVE_DOUBLE, $6, threedims, hdfier )
+   if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling h5dwrite_f from hwriterc_lo at $7:$8 ;")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5dwrite_f from hwriterc_lo at $7:$8 ;"
+   endif
+
+  endif
+
+  ! macro expansion of hwriterc_lo; end;})m4_dnl ; can put comments here;
+m4_define(H5CALL,{! macro expansion of h5call;
+! wrapper for HDF5 API calls which checks the hdfier error flag after each call
+! and interrupts execution of the program right away if anything goes wrong
+! call _2 with arguments _3 from within _1 and write wall time needed for call to screen; _4 and _5 should be __FILE__ and __LINE__
+
+   call $2$3
+   if( hdfier.ne.0 ) then
+    write(6,'("sphdf5 : "10x" : error calling $2 in process ",i3," from h5call at $4:$5;")') myid
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling $2 from h5call at $4:$5 ;"
+   endif
+
+  ! macro expansion of h5call; end;})m4_dnl ; can put comments here;
+m4_define(BEGIN,{! macro expansion of begin;
+! comment the start of a subroutine to screen output
+
+ !cpui = zero
+  cpui = MPI_WTIME()
+  cpuo = cpui
+#ifdef OPENMP
+  nthreads = omp_get_max_threads()
+#else
+  nthreads = 1
+#endif
+
+#ifdef DEBUG
+
+  if( W$1 ) write(ounit,'("$1 : ",f10.2," : myid=",i3," ; start  ;")') cpui-cpus, myid
+
+#endif
+
+  ! macro expansion of begin; end;})m4_dnl ; can put comments here;
+m4_define(LREGION,{! macro expansion of lregion;
+! given annulus number _1, set Lcoordinatesingularity, Lplasmaregion and Lvacuumregion accordingly
+
+   if( Igeometry.eq.1 .or. $1.gt.1 ) then ; Lcoordinatesingularity = .false.
+   else                                   ; Lcoordinatesingularity = .true.
+   endif
+  
+   if( $1.le.Nvol ) then ; Lplasmaregion = .true.
+   else                  ; Lplasmaregion = .false.
+   endif
+
+   Lvacuumregion = .not.Lplasmaregion
+
+  ! macro expansion of lregion; end;})m4_dnl ; can put comments here;
+m4_define(RETURN,{! macro expansion of return;
+! comment the end of a subroutine to screen output
+
+9999 continue
+
+  cput = MPI_WTIME()
+  T$1 = T$1 + ( cput-cpuo )
+
+#ifdef DEBUG
+
+  if( W$1 ) write(ounit,'("$1 : ",f10.2," : myid=",i3," ; finish ; time=",f10.2," ;")') cput-cpus, myid, cput-cpui
+
+#endif
+
+  return
+
+  ! macro expansion of return; end;})m4_dnl ; can put comments here;
+m4_define(SUMTIME,{! macro expansion of sumtime;
+
+#ifdef DEBUG
+   if( Wmacros ) write(ounit,'("       : ", 10x ," : calling mpi_reduce : $1 ;")')
+#endif
+
+   call MPI_REDUCE(T$1, $1T, 1, MPI_DOUBLE_PRECISION, MPI_SUM, 0, MPI_COMM_SPEC, ierr )
+
+#ifdef DEBUG
+   if( Wmacros ) write(ounit,'("       : ", 10x ," : called  mpi_reduce : $1 ;")')
+#endif
+
+  ! macro expansion of sumtime; end;})m4_dnl ; can put comments here;
+m4_define(PRTTIME,{! macro expansion of prttime;
+
+   write(ounit,'("finish : ",f10.2," : time spent in $1 =",f10.2," ;")') cput-cpus, $1T ; Ttotal = Ttotal + $1T
+
+  ! macro expansion of prttime; end;})m4_dnl ; can put comments here;
+
+m4_define(TMPOUT,{ !Temperarily output a message to help debugging
+  if( myid .eq. 0) write(ounit,*) "### DEBUG : $1 = ", $1
+})m4_dnl
+
+
+m4_define(MPIOUT,{ !Temperarily output a message to help debugging
+  write(ounit,*) "*** DEBUG : myid = ", myid, " ; $1 = ", $1
+})m4_dnl

@@ -8,7 +8,8 @@ xspec
 dspec
 
 # pdfs related
-/docs/
+/docs/html/*
+/docs/latex/*
 *.pdf
 *.dvi
 *.toc
@@ -39,3 +40,13 @@ ci/
 
 #jupyter
 .ipynb_checkpoint
+
+#cmake build
+build/
+
+#python build
+_skbuild/
+
+# Temp fortran files
+src/mxspech.f90
+src/msphdf5.f90
