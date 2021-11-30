@@ -247,7 +247,7 @@ subroutine descent_lforce( lvol, iocons, Ntz, length, MMl )
   
   use cputiming, only : Tlforce
   
-  use allglobal, only : ncpu, myid, cpus, &
+  use allglobal, only : ncpu, myid, cpus, MPI_COMM_SPEC, &
                         Lcoordinatesingularity, Mvol, &
                         iRbc, iZbs, iRbs, iZbc, &
                         YESstellsym, NOTstellsym, &
@@ -364,7 +364,7 @@ subroutine mhd_lforce( lvol, iocons, ideriv, Ntz, dBB, iflag )
   
   use cputiming, only : Tlforce
   
-  use allglobal, only : ncpu, myid, cpus, &
+  use allglobal, only : ncpu, myid, cpus, MPI_COMM_SPEC,&
                         Lcoordinatesingularity, Mvol, &
                         iRbc, iZbs, iRbs, iZbc, &
                         YESstellsym, NOTstellsym, &
@@ -484,7 +484,7 @@ subroutine spectral_lforce(lvol, iocons, Ntz, dLL, IIl, XX, YY, length, DDl, MMl
   
   use cputiming, only : Tlforce
   
-  use allglobal, only : ncpu, myid, cpus, &
+  use allglobal, only : ncpu, myid, cpus, MPI_COMM_SPEC, &
                         Lcoordinatesingularity, Mvol, &
                         iRbc, iZbs, iRbs, iZbc, &
                         YESstellsym, NOTstellsym, &

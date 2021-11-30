@@ -41,6 +41,8 @@ set(unprocessed_src_files
     volume.f90
     coords.f90
     basefn.f90
+    descnt.f90
+    minimize.f90
     memory.f90
     metrix.f90
     ma00aa.f90

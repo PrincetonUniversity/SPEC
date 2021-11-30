@@ -265,7 +265,7 @@ REAL function fcnval(n,xx)
 
   use cputiming, only : Tdescnt
 
-  use allglobal, only : wrtend, myid, ncpu, cpus, &
+  use allglobal, only : wrtend, myid, ncpu, cpus, MPI_COMM_SPEC,&
                         NOTstellsym, &
                         ForceErr, Energy, &
                         mn, im, in, iRbc, iZbs, iRbs, iZbc, Mvol, &
@@ -338,7 +338,7 @@ function fcngrad(n, xx)
 
   use cputiming, only : Tdescnt
 
-  use allglobal, only : wrtend, myid, ncpu, cpus, &
+  use allglobal, only : wrtend, myid, ncpu, cpus, MPI_COMM_SPEC, &
                         NOTstellsym, &
                         ForceErr, Energy, &
                         mn, im, in, iRbc, iZbs, iRbs, iZbc, Mvol, &
@@ -420,7 +420,7 @@ subroutine fcndescent(xx, NGdof)
 
  use fileunits, only : ounit
 
- use allglobal, only  : wrtend, ForceErr, lMMl, lLLl, Energy, sweight, myid, &
+ use allglobal, only  : wrtend, ForceErr, lMMl, lLLl, Energy, sweight, myid, MPI_COMM_SPEC,&
                         BBe, BBo, IIe, IIo, NOTstellsym, ncpu, cpus, Mvol, &
                         hessian
 
@@ -571,7 +571,7 @@ subroutine fcnanderson(xx, NGdof)
 
  use fileunits, only : ounit
 
- use allglobal, only  : wrtend, ForceErr, lMMl, lLLl, Energy, sweight, myid, &
+ use allglobal, only  : wrtend, ForceErr, lMMl, lLLl, Energy, sweight, myid, MPI_COMM_SPEC, &
                         BBe, BBo, IIe, IIo, NOTstellsym, ncpu, cpus, Mvol
 
  use cputiming, only : Tdescnt
