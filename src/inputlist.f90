@@ -719,6 +719,7 @@ module inputlist
  vcasingits  ,&
  vcasingper  ,&
  mcasingcal  ,&
+ dxdesc      ,&
  ftoldesc    ,& 
  maxitdesc   ,& 
  Lwritedesc  ,& 
