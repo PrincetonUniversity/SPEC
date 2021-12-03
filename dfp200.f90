@@ -65,7 +65,7 @@ subroutine dfp200( LcomputeDerivatives, vvol)
                         mn, im, in, mns, Ntz, &
                         Ate, Aze, Ato, Azo, & ! only required for debugging;
                         ijreal, &
-                        fijreal,&
+                        !fijreal,&
                         efmn, ofmn, cfmn, sfmn, &
                         evmn, odmn, comn, simn, &
                         Nt, Nz, &
@@ -79,7 +79,7 @@ subroutine dfp200( LcomputeDerivatives, vvol)
                         vvolume, dvolume, &
                         Rij, Zij, sg, guvij, iRij, iZij, dRij, dZij, tRij, tZij, & ! Jacobian and metrics; computed in coords;
                         diotadxup, dItGpdxtp, &
-                        dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated,Lhessian2Dallocated,Lhessian3Dallocated, &
+                        dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated,Lhessian2Dallocated,Lhessian3Dallocated,denergydrr,denergydzr, &
                         BBweight, & ! exponential weight on force-imbalance harmonics;
                         psifactor, &
                         lmns, &
@@ -553,6 +553,10 @@ else ! CASE SEMI GLOBAL CONSTRAINT
 
                         ! EVALUATE dBB
                         call evaluate_dBB(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
+                        
+                        if (LHmatrix .and. Lhessian3Dallocated .and. Igeometry.ge.3) then
+                            call hessian3D_dFFdRZ(vvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
+                        endif
 
                     enddo     ! matches do lvol = vvol, vvol+1 
 
@@ -581,6 +585,18 @@ else ! CASE SEMI GLOBAL CONSTRAINT
         call MPI_BCAST( dFFdRZ(1:LGdof, 0:1, 1:LGdof, 0:1, vvol), 2*2*(LGdof**2), MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_WORLD, ierr )
         call MPI_BCAST( dBBdmp(1:LGdof, vvol ,0:1, 1:2         ), 2*2*LGdof, MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_WORLD, ierr )
     enddo
+
+     !We need to broadcast the vectors, denergydrr and denergydzr.
+
+    if (LHmatrix .and. Lhessian3Dallocated) then
+        do vvol = 1, Mvol
+            call WhichCpuID(vvol, cpu_id)
+
+            call MPI_BCAST( denergydrr(1:LGdof, vvol, 0:1, 1:LGdof, 0:1), 2*2*(LGdof**2), MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_WORLD, ierr )
+            call MPI_BCAST( denergydzr(1:LGdof, vvol, 0:1, 1:LGdof, 0:1), 2*2*(LGdof**2), MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_WORLD, ierr )
+            call MPI_BCAST( dBBdmp(1:LGdof, vvol ,0:1, 1:2         ), 2*2*LGdof, MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_WORLD, ierr )
+        enddo
+    endif
 
     endif ! End of if( LComputeDerivatives ) 
 
@@ -1888,7 +1904,7 @@ subroutine hessian3D_dFFdRZ(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, len
                         NOTstellsym, &
                         mn, im, in, mns, &
                         ijreal, &
-                        fijreal, &
+                        !fijreal, &
                         efmn, ofmn, cfmn, sfmn, &
                         evmn, odmn, comn, simn, &
                         Nt, Nz, &
@@ -2025,7 +2041,7 @@ do iocons = 0, 1
                       ;denergydrr(idoc+1:idoc+mn-1,lvol,iocons,idof,innout) = -sfmn(2:mn)*half ! 2 wrz
                ;idoc=idoc+mn-1
            endif
-          if (irz.eq.0 .and. ii .gt.1) then
+          if (irz.eq.0 .and. ii.gt.1) then
               ;idoc=0
                      ;denergydrr(idoc+1:idoc+mn ,lvol,iocons,idof,innout) = -efmn(1:mn) !1 wrr
               ;idoc=idoc+mn
@@ -2033,15 +2049,14 @@ do iocons = 0, 1
               ;idoc=idoc+mn-1
             endif
 
-          if(irz.eq.1 .and. ii .gt.1) then
+          if(irz.eq.1 .and. ii.gt.1) then
               ;idoc=0
                      ;denergydzr(idoc+1:idoc+mn-1 ,lvol,iocons,idof,innout) =  evmn(1:mn) !wzr
                         !write(ounit,*) im(ii),in(ii), evmn(1:mn) !vvol, im(ii), in(ii), irz, issym, tdofr, tdofz 
-
               ;idoc=idoc+mn
                       ;denergydzr(idoc+1:idoc+mn-1 ,lvol,iocons,idof,innout) =  simn(2:mn) !wzz
               ;idoc=idoc+mn-1
-          end if
+          endif
 
 
           !if (NOTstellsym) then
