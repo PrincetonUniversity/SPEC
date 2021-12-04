@@ -688,9 +688,9 @@ endif
   DALLOCATE(dBBdmp)
   DALLOCATE(dmupfdx)
   DALLOCATE(denergydrr)
-  DALLOCATE(denergydrz)
+  !DALLOCATE(denergydrz)
   DALLOCATE(denergydzr)
-  DALLOCATE(denergydzz)
+  !DALLOCATE(denergydzz)
   Lhessian3Dallocated=.false.
 
 
