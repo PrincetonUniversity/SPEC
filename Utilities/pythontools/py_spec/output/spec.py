@@ -11,6 +11,7 @@ import h5py
 import numpy as np  # for isscalar
 import os  # for path.abspath
 import keyword  # for getting python keywords
+SPEC_MAJOR_VERSION = 3.00
 
 # reader class for Stepped Pressure Equilibrium Code output file
 # S. Hudson et al., Physics of Plasmas 19, 112502 (2012); doi: 10.1063/1.4765691
@@ -35,6 +36,7 @@ class SPECout:
         metric,
         get_B,
         get_modB,
+        get_B_covariant
     )
     from ._plot_modB import plot_modB
     from ._plot_iota import plot_iota
@@ -51,6 +53,13 @@ class SPECout:
 
             # keep track of which file this object corresponds to
             self.filename = os.path.abspath(args[0])
+
+            # check version and print warning
+            try:
+                if _content['version'][()][0] < SPEC_MAJOR_VERSION:
+                    print("!!!Warning: this python package is used for SPEC!")
+            except KeyError:
+                print("!!!Warning: you might be not reading a SPEC HDF5 file!")
         elif isinstance(kwargs["content"], h5py.Group):
             _content = kwargs["content"]
 
@@ -169,6 +178,7 @@ class SPECout:
                 self.poincare.Z = self.poincare.Z[self.poincare.success == 1, :, :]
                 self.poincare.t = self.poincare.t[self.poincare.success == 1, :, :]
                 self.poincare.s = self.poincare.s[self.poincare.success == 1, :, :]
+                
         return
 
     # needed for iterating over the contents of the file

@@ -190,13 +190,14 @@ class SPECNamelist(Namelist):
             # write the interface guess
             self._write_interface_guess(file_object)
 
-    def run(self, spec_command="./xspec", filename="spec.sp", force=False):
+    def run(self, spec_command="./xspec", filename="spec.sp", force=False, quiet=False):
         """Run SPEC on the current namelist and obtain its output
         parameters:
             spec_command -- the command to call SPEC, usually it looks like '/path/to/spec/xspec'
                             or 'mpirun -np (ncpus) /path/to/spec/xspec', with (ncpus) replaced by the number of cpus
             filename -- write this namelist to the temporary file 'filename' in current folder
             force -- if file exists, force overwrite or not
+            quiet -- True if you want some more screen output
 
         Returns:
             result -- after running SPEC, read the output hdf5 with py_spec and return the SPEC object
@@ -207,12 +208,14 @@ class SPECNamelist(Namelist):
 
         self.write(filename, force=force)
 
-        print("SPEC is running...")
+        if not quiet:
+            print("SPEC is running...")
 
         run_result = subprocess.run(spec_command + " " + filename, shell=True)
 
         if run_result.returncode == 0:  # the run is successful
-            print("SPEC runs successfully.")
+            if not quiet:
+                print("SPEC runs successfully.")
             return SPECout(filename + ".h5")
         else:
             print("SPEC runs unsuccessfully, check terminal output.")
@@ -519,7 +522,7 @@ class SPECNamelist(Namelist):
 
         for key in dir(spec_hdf5_subgroup):
             # add to the namelist if it is not starting with '_' (internal python functions)
-            if not key.startswith("_") and not key.startswith("inventory"):
+            if not key.startswith("_") and not(key in self._not_to_dump_list):
                 if key in self.boundary_keys:
                     # take care of all the boundary inputs
                     data = getattr(spec_hdf5_subgroup, key)
@@ -646,6 +649,7 @@ class SPECNamelist(Namelist):
         ]:
             self[key] = Namelist()
 
+        self._not_to_dump_list = dir(spec_hdf5)
         with spec_hdf5.input as i:
             self._dump_to_namelist(i.physics, self["physicslist"])
             self._dump_to_namelist(i.numerics, self["numericlist"])
@@ -672,7 +676,7 @@ class SPECNamelist(Namelist):
             # 2. replace the boundary
             for ii in range(spec_hdf5.output.mn):
                 mm = o.im[ii]
-                nn = int((o.in1[ii]) / p.Nfp) + self._Ntor
+                nn = int((o.in_[ii]) / p.Nfp) + self._Ntor
                 self["physicslist"]["Rbc"][mm][nn] = o.Rbc[p.Nvol, ii]
                 self["physicslist"]["Zbs"][mm][nn] = o.Zbs[p.Nvol, ii]
                 self["physicslist"]["Rbs"][mm][nn] = o.Rbs[p.Nvol, ii]
@@ -697,7 +701,7 @@ class SPECNamelist(Namelist):
             self.interface_guess = dict()
             for ii in range(o.mn):
                 m = o.im[ii]
-                n = int(o.in1[ii] / p.Nfp)
+                n = int(o.in_[ii] / p.Nfp)
                 self.interface_guess[(m, n)] = dict()
                 self.interface_guess[(m, n)]["Rbc"] = o.Rbc[1:, ii]
                 self.interface_guess[(m, n)]["Zbs"] = o.Zbs[1:, ii]
