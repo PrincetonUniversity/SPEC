@@ -1,42 +1,44 @@
-SOURCES = ../../
+SOURCES = ../..
 
 # include the original Makefile
-include ${SOURCES}/Makefile
+include ${SOURCES}/SPECfile
 
 #=======================================================================
 #                   define the compiler names
 #=======================================================================
 
-# was CC in main SPEC Makefile
-BUILD_ENV=gfortran_ubuntu
-
 CC       = gcc
+
+# Fortran compiler
 F90      = gfortran
 #F90      = ifort
 #F90      =  /opt/intel/composer_xe_2015.3.187/bin/intel64/ifort
-PYTHON   = python3
 
+PYTHON   = python3
 
 #=======================================================================
 #                     additional flags
 #=======================================================================
 
 ifeq ($(F90),gfortran)
-	FPP      = $(FC) -E
+	FPP      = $(F90) -E
 	FPP_F90FLAGS = -x f95-cpp-input -fPIC
 	F90FLAGS = $(RFLAGS)
-	FCOMP    = $(FC) #gfortran
-#	FLAGS    = -fPIC # moved to main Makefile to have to re-compile when build for python_wrapper
+	FCOMP    = $(F90)
 endif
 
 ifeq ($(F90),ifort)
-	FPP      = gfortran -E # gfortran f90wrap temp files only. not compilation
-	FPP_F90FLAGS = -x f95-cpp-input -fPIC
-	F90FLAGS = -fpscomp logicals -fPIC # use 1 and 0 for True and False
-	FCOMP    = intelem # for f2py
-endif
+	# gfortran f90wrap temp files only. not compilation
+	FPP      = gfortran -E
 
-# CFLAGS := ${CFLAGS} -fPIC #     ==> universal for ifort, gfortran, pgi
+	FPP_F90FLAGS = -x f95-cpp-input -fPIC
+
+	# use 1 and 0 for True and False
+	F90FLAGS = -fpscomp logicals -fPIC
+
+	# for f2py
+	FCOMP    = intelem
+endif
 
 #=======================================================================
 #=======================================================================
@@ -107,16 +109,18 @@ $(LIBSRC_WRAP_FPP_FILES): %.fpp: ${SOURCES}/%_m.F90
 	${FPP} ${FPP_F90FLAGS} $<  -o $@
 
 $(LIB_NAME):
-	make -C ${SOURCES} BUILD_ENV=$(BUILD_ENV) FLAGS="${FLAGS}" xspec
+	echo "Make xspec..."
+	make -C ${SOURCES} BUILD_ENV=$(BUILD_ENV) xspec
 	cd ${SOURCES}; ${LIBTOOL} Utilities/python_wrapper/$@ $(addsuffix _r.o,$(ALLFILES))
 	ranlib $@
 
 _${PYTHON_MODN}.so: $(LIB_NAME) ${LIBSRC_WRAP_FPP_FILES}
 	f90wrap -m ${PYTHON_MODN} ${LIBSRC_WRAP_FPP_FILES} -k ${KIND_MAP} -v
-	f2py-f90wrap --f90exec=${FC} --build-dir . -L. -l$(PYTHON_MODN) -I${SOURCES} ${LIBS} $(LINKS) -c f90wrap_*.f90 -m _${PYTHON_MODN}
+	mv ${PYTHON_MODN}.py spec/
+	f2py-f90wrap --f90exec=${FC} --build-dir . ${LINKS} -L. -l$(PYTHON_MODN) -I${SOURCES} ${LIBS} $(LINKS) -c f90wrap_*.f90 -m _${PYTHON_MODN}
 
 compile_test:
-	make -C ${SOURCES} BUILD_ENV=$(BUILD_ENV) FLAGS="${FLAGS}" show_makeflags
+	make -C ${SOURCES} BUILD_ENV=$(BUILD_ENV) show_makeflags
 	@echo "SOURCES = ${SOURCES}"
 	@echo "BUILD_ENV = ${BUILD_ENV}"
 	@echo "CC = ${CC}"
