@@ -173,6 +173,8 @@ subroutine dforce( NGdof_field, position, force, LComputeDerivatives, LComputeAx
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+! write(ounit,'("dforce: position = ",999f25.12)') position(0:NGdof_field)
+
 ! Unpack position to generate arrays iRbc, iZbs, IRbs, iZbc.
 
   packorunpack = 'U' ! unpack geometrical degrees-of-freedom;

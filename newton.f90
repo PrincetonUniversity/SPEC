@@ -97,7 +97,8 @@ subroutine newton( NGdof_bnd, bndDofs, ihybrd )
   REAL                   :: xtol, epsfcn, factor
   REAL                   :: diag(1:NGdof_bnd), QTF(1:NGdof_bnd), workspace(1:NGdof_bnd,1:4)
 
-  REAL                   :: force(0:NGdof_bnd), position(0:NGdof_field)
+  REAL                   :: force(0:NGdof_bnd)
+  REAL                   :: position(0:NGdof_field)
   REAL, allocatable      :: fjac(:,:), RR(:), work(:,:)
 
   INTEGER                :: ML, MU ! required for only Lc05ndf;
@@ -152,7 +153,12 @@ subroutine newton( NGdof_bnd, bndDofs, ihybrd )
 
   if( Lexit ) then ! will call initial force, and if ForceErr.lt.forcetol will immediately exit;
 
+    !write(ounit,'("newton: salut!")')
+
     if( Lboundary.eq.0 ) then
+#ifdef DEBUG
+      FATAL( newton, NGdof_field.ne.NGdof_bnd, Incorrect number of dofs in boundary )
+#endif
       position(0:NGdof_bnd) = bndDofs(0:NGdof_bnd)
     else
       pack = 'R'
@@ -161,7 +167,14 @@ subroutine newton( NGdof_bnd, bndDofs, ihybrd )
 
     LComputeDerivatives= .false.
     LComputeAxis = .true.
+
+    !write(ounit,'("newton: position = ",999f25.12)') position(0:NGdof_field)
+
+    !write(ounit,'("newton: ForceErr = ", f25.12)') ForceErr
     WCALL( newton, dforce, ( NGdof_field, position(0:NGdof_field), force(0:NGdof_force), LComputeDerivatives, LComputeAxis) ) ! calculate the force-imbalance;
+    !write(ounit,'("newton: ForceErr = ", f25.12)') ForceErr
+
+
 
    if( myid.eq.0 ) then ! screen output;
     cput = GETTIME
@@ -461,7 +474,7 @@ subroutine fcn1( NGdof_bnd, xx, fvec, irevcm )
 
   use cputiming, only : Tnewton
 
-  use allglobal, only : wrtend, myid, ncpu, cpus, MPI_COMM_SPEC, ext, &
+  use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, ext, &
                         NOTstellsym, &
                         ForceErr, Energy, &
                         mn_field, im_field, in_field, iRbc, iZbs, iRbs, iZbc, Mvol, &
@@ -506,6 +519,9 @@ subroutine fcn1( NGdof_bnd, xx, fvec, irevcm )
 
 
     if( Lboundary.eq.0 ) then
+#ifdef DEBUG
+      FATAL( newton, NGdof_field.ne.NGdof_bnd, Incorrect number of dofs in boundary )
+#endif
       position(0:NGdof_bnd) = bndDofs(0:NGdof_bnd)
     else
       pack = 'R'
@@ -548,6 +564,9 @@ subroutine fcn1( NGdof_bnd, xx, fvec, irevcm )
 
     ! Generate position arraz from geometrical dofs.
     if( Lboundary.eq.0 ) then
+#ifdef DEBUG
+      FATAL( newton, NGdof_field.ne.NGdof_bnd, Incorrect number of dofs in boundary )
+#endif
       position(0:NGdof_bnd) = bndDofs(0:NGdof_bnd)
     else
       pack = 'R'
@@ -614,7 +633,7 @@ subroutine fcn2( NGdof_bnd, xx, fvec, fjac, Ldfjac, irevcm )
 
   use cputiming, only : Tnewton
 
-  use allglobal, only : wrtend, myid, ncpu, cpus, MPI_COMM_SPEC, ext, &
+  use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, ext, &
                         NOTstellsym, &
                         ForceErr, Energy, &
                         mn_field, im_field, in_field, iRbc, iZbs, iRbs, iZbc, Mvol, &
@@ -658,6 +677,9 @@ subroutine fcn2( NGdof_bnd, xx, fvec, fjac, Ldfjac, irevcm )
    case( 0 ) ! indicates start of new iteration; no action is required; bndDofs and force available for printing; force must not be changed;
 
     if( Lboundary.eq.0 ) then
+#ifdef DEBUG
+      FATAL( newton, NGdof_field.ne.NGdof_bnd, Incorrect number of dofs in boundary )
+#endif
       position(0:NGdof_bnd) = bndDofs(0:NGdof_bnd)
     else
       pack = 'R'
@@ -697,6 +719,9 @@ subroutine fcn2( NGdof_bnd, xx, fvec, fjac, Ldfjac, irevcm )
    case( 1 ) ! before re-entry to C05NDF / C05PDF, force must contain the function values;
 
     if( Lboundary.eq.0 ) then
+#ifdef DEBUG
+      FATAL( newton, NGdof_field.ne.NGdof_bnd, Incorrect number of dofs in boundary )
+#endif
       position(0:NGdof_bnd) = bndDofs(0:NGdof_bnd)
     else
       pack = 'R'
@@ -740,6 +765,9 @@ subroutine fcn2( NGdof_bnd, xx, fvec, fjac, Ldfjac, irevcm )
     if( ireadhessian.eq.0 ) then
 
       if( Lboundary.eq.0 ) then
+#ifdef DEBUG
+        FATAL( newton, NGdof_field.ne.NGdof_bnd, Incorrect number of dofs in boundary )
+#endif
         position(0:NGdof_bnd) = bndDofs(0:NGdof_bnd)
       else
         pack = 'R'

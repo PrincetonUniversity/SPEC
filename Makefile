@@ -22,7 +22,7 @@
  IOFILES=sphdf5
 
  # (most of) physics part of SPEC
- afiles=packxi bndRep preset manual rzaxis volume coords basefn memory
+ afiles=packxi bndRep wrtend preset manual rzaxis volume coords basefn memory
  bfiles=metrix ma00aa matrix spsmat spsint mp00ac ma02aa packab tr00ab curent df00ab lforce intghs mtrxhs lbpol
  cfiles=brcast dfp100 dfp200 dforce newton
  dfiles=casing bnorml
@@ -185,7 +185,7 @@ ifeq ($(BUILD_ENV),intel_spc)
  FFTW_DIR=/usr/local/fftw3
  CFLAGS=-r8 -DIFORT
  RFLAGS=-O2 -ip -no-prec-div -xHost -fPIC
- DFLAGS=-traceback -D DEBUG -g
+ DFLAGS=-traceback -debug extended -g -check bounds
  LINKS=-L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl
  LIBS=-I$(FFTW_DIR)/include
  LINKS+=-L$(FFTW_DIR)/lib -lfftw3

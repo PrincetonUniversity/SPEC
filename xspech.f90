@@ -23,7 +23,7 @@ subroutine xspech
 
   use numerical
   use allglobal, only: set_mpi_comm, myid, ncpu, cpus, version, MPI_COMM_SPEC, &
-                       wrtend, read_inputlists_from_file, check_inputs, broadcast_inputs, skip_write, &
+                       read_inputlists_from_file, check_inputs, broadcast_inputs, skip_write, &
                        ext
   use inputlist, only: initialize_inputs, Wxspech
   use fileunits, only: ounit
@@ -289,7 +289,7 @@ subroutine spec
 
   use cputiming, only : Txspech
 
-  use allglobal, only : wrtend, ncpu, myid, cpus, ext, &
+  use allglobal, only : ncpu, myid, cpus, ext, &
                         Mvol, &
                         YESstellsym, NOTstellsym, &
                         mn_field, im_field, in_field, &
@@ -446,6 +446,10 @@ subroutine spec
     ! if Lboundary.eq.0, this is the Rmn, Zmn harmonics,
     ! if Lboundary.eq.1, this is the rhomn, bn, R0n, Z0n harmonics.
     if( Lboundary.eq.0 ) then
+#ifdef DEBUG
+      FATAL(xspech, NGdof_field.ne.NGdof_bnd, Incorrect number of dofs in boundary )
+#endif
+
       bndDofs(0:NGdof_bnd) = position(0:NGdof_bnd)
     else
       pack = 'H'
@@ -458,6 +462,9 @@ subroutine spec
 
     ! Put everything back into position array (Rmn, Zmn harmonics)
     if( Lboundary.eq.0 ) then
+#ifdef DEBUG
+      FATAL(xspech, NGdof_field.ne.NGdof_bnd, Incorrect number of dofs in boundary )
+#endif
       position(0:NGdof_bnd) = bndDofs(0:NGdof_bnd)
     else
       pack = 'R'

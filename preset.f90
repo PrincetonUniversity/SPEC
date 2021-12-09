@@ -36,7 +36,7 @@ subroutine preset
   LOCALS
 
   INTEGER   :: innout, idof, jk, ll, ii, ifail, ideriv, vvol, mi, ni, mj, nj, mk, nk, mimj, ninj, mkmj, nknj, jj, kk, lvol, mm, nn, imn
-  INTEGER   :: lquad, igauleg, maxIquad, Mrad, jquad, Lcurvature, zerdof, iret, work1, work2
+  INTEGER   :: lquad, igauleg, maxIquad, Mrad, jquad, Lcurvature, zerdof, iret, work1, work2, ind
   REAL      :: teta, zeta, arg, lss, cszeta(0:1), error
   LOGICAL   :: LComputeAxis
 
@@ -184,7 +184,7 @@ subroutine preset
     SALLOCATE( irhoc , (1:mn_rho, 1:Mvol), zero )
     SALLOCATE( ibc   , (0:Ntor, 1:Mvol), zero )
     SALLOCATE( iR0c  , (0:Ntor, 1:Mvol), zero )
-    SALLOCATE( iZ0s  , (1:Ntor, 1:Mvol), zero )
+    SALLOCATE( iZ0s  , (0:Ntor, 1:Mvol), zero )
   endif
 
 
@@ -257,12 +257,44 @@ subroutine preset
       endif
     enddo
 
+    iZ0s( 0, Nvol ) = zero
+
 
     if( Mvol.gt.1 ) then 
       ! Read initial guess
       select case( Linitialize )
         case( :0 ) ! Linitialize=0 ; initial guess for geometry of the interior surfaces is given in the input file;
-          FATAL( preset, .true., Linitialize=0 not implemented for Lboundary=1 )
+          
+          do idx_mode=1, num_modes
+            mm = mmRZRZ(idx_mode)
+            nn = nnRZRZ(idx_mode)
+
+            if( mm.eq.0 ) then ! rn, zn, bn
+
+              if( nn.ge.0 ) then
+                ibc(  nn, 1:Nvol-1 ) = allRZRZ( 1, 1:Nvol-1, idx_mode )   
+                iR0c( nn, 1:Nvol-1 ) = allRZRZ( 2, 1:Nvol-1, idx_mode )   
+                iZ0s( nn, 1:Nvol-1 ) = allRZRZ( 3, 1:Nvol-1, idx_mode )
+              endif
+
+
+            else !rhomn
+              ! find index
+              ind = 0
+              do ii=1, mn_rho
+                if ( (im_rho(ii).eq.mm) .and. (in_rho(ii)/nfp.eq.nn)) then
+                  ind = ii
+                  exit
+                endif
+              enddo
+
+              irhoc(ind,1:Nvol-1) = allRZRZ( 4, 1:Nvol-1, idx_mode )
+
+            endif
+          enddo
+
+
+
 
         case( 1 )
           ! No need to interpolate if Linitialize=1. Instead, map to Rmn, Zmn and then interpolate before map back.
@@ -274,6 +306,13 @@ subroutine preset
 
 
     ! Map to Rmn, Zmn 
+    if( Linitialize.eq.0 ) then
+      do vvol=1,Nvol-1
+        call forwardMap( irhoc(1:mn_rho,vvol), ibc(0:Ntor,vvol), iR0c(0:Ntor,vvol), iZ0s(1:Ntor,vvol), iRbc(1:mn_field,vvol), iZbs(1:mn_field,vvol) )
+      enddo !vvol
+    endif !Linitialize
+
+
     call forwardMap( irhoc(1:mn_rho,Nvol), ibc(0:Ntor,Nvol), iR0c(0:Ntor,Nvol), iZ0s(1:Ntor,Nvol), iRbc(1:mn_field,Nvol), iZbs(1:mn_field,Nvol) )
 
 
@@ -437,7 +476,7 @@ subroutine preset
     RlBCAST( irhoc(1:mn_rho, 1:Mvol),  mn_rho *Mvol, 0 )
     RlBCAST( ibc(  0:Ntor  , 1:Mvol), (Ntor+1)*Mvol, 0 )
     RlBCAST( iR0c( 0:Ntor  , 1:Mvol), (Ntor+1)*Mvol, 0 )
-    RlBCAST( iZ0s( 1:Ntor  , 1:Mvol), (Ntor  )*Mvol, 0 )
+    RlBCAST( iZ0s( 0:Ntor  , 1:Mvol), (Ntor+1)*Mvol, 0 )
 
     if( Lfreebound.eq.1 ) then
       ! TODO: FREE BOUNDARY STUFF
@@ -512,8 +551,6 @@ subroutine preset
   if( myid.eq.0 ) write(ounit,'("preset : ",10x," : myid=",i3," ; Mrad=",i3," : Lrad=",257(i3,",",:))') myid, Mrad, Lrad(1:Mvol)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-! TODO continue...
 
 !> **LGdof and NGdof : number of geometrical degrees-of-freedom**
 !>
@@ -1712,21 +1749,21 @@ endif
 
    end select ! matches select case( Igeometry ); 19 Jul 16;
 
+    if( Lboundary.eq.1 ) then
+      ! Then map back to rhomn, bn, ...
+      ! The mapping is ensured to be bijective because the Rmn, Zmn where built from rhomn, bn of the boundary
 
-  if( Lboundary.eq.1 ) then
-    ! Then map back to rhomn, bn, ...
-    ! The mapping is ensured to be bijective because the Rmn, Zmn where built from rhomn, bn of the boundary
+      do vvol=1, Nvol-1
+        
+        call backwardMap( iRbc(1:mn_field,vvol), iZbs(1:mn_field,vvol), irhoc(1:mn_rho,vvol), ibc(0:Ntor,vvol), iR0c(0:Ntor,vvol), iZ0s(1:Ntor,vvol) )
 
-    do vvol=1, Nvol-1
-      
-      call backwardMap( iRbc(1:mn_field,vvol), iZbs(1:mn_field,vvol), irhoc(1:mn_rho,vvol), ibc(0:Ntor,vvol), iR0c(0:Ntor,vvol), iZ0s(1:Ntor,vvol) )
+      enddo !vvol=1:Nvol-1
 
-    enddo !vvol=1:Nvol-1
-
-  endif ! Lboundary.eq.1
-
+    endif ! Lboundary.eq.1
 
   endif ! matches if( Linitialize.ne.0 ) then; 19 Jul 16;
+
+
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

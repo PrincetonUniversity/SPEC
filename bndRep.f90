@@ -102,6 +102,7 @@ module bndRep
   
       subroutine forwardMap( rhomn, bn, R0c, Z0s, Rmn, Zmn )
   
+        use constants, only: zero
         use inputlist, only: Wmacros, Mpol, Ntor, twoalpha, Nfp
         use fileunits, only: ounit, lunit
         use allglobal, only: myid, im_rho, in_rho, im_field, in_field, mn_rho, mn_field, &
@@ -114,18 +115,20 @@ module bndRep
         REAL, intent(in) :: rhomn(1:mn_rho), bn(0:Ntor)
         REAL, intent(out):: Rmn(1:mn_field), Zmn(1:mn_field)
 
-
         ! m=0 modes, from R0c and Z0c
         do ii=1,mn_field
           mm=im_field(ii)
           nn=in_field(ii) / Nfp
 
           if( mm.ne.0    .or. nn.lt.0    ) cycle
-          if( mm.gt.Mpol .or. nn.gt.Ntor ) cycle
 
-          Rmn(ii) = R0c(nn)
+          if( nn.gt.Ntor ) then
+            Rmn(ii) = zero
+          else
+            Rmn(ii) = R0c(nn)
+          endif
 
-          if( nn.eq.0 ) then
+          if( (nn.eq.0) .or. (nn.gt.Ntor) ) then
             Zmn(ii) = 0.0
           else
             Zmn(ii) =-Z0s(nn)
@@ -139,9 +142,11 @@ module bndRep
         ! m>1 modes
         if( Mpol_field.gt.1 ) then
           LHS2 = MATMUL( Mat2, RHS2 )
-        endif
+        endif        
   
-        call unpack_rmn_zmn( Rmn, Zmn )
+        call unpack_rmn_zmn( Rmn(1:mn_field), Zmn(1:mn_field) )
+
+        
   
       end subroutine forwardMap
   
@@ -158,7 +163,7 @@ module bndRep
         LOCALS
 
         ! INPUTS
-        REAL, intent(in)  :: Rmn(1:mn_field), Zmn(1:mn_field)
+        REAL, intent(in)    :: Rmn(1:mn_field), Zmn(1:mn_field)
         REAL, intent(inout) :: rhomn(1:mn_rho), bn(0:Ntor)
         REAL, intent(inout) :: R0c(0:Ntor), Z0s(1:Ntor)
 
@@ -311,7 +316,7 @@ module bndRep
         CHARACTER, INTENT(IN)  :: pack
         CHARACTER              :: packorunpack ! Either 'RZ_to_H' or 'H_to_RZ'
         LOGICAL                :: LComputeDerivatives, LComputeAxis
-        INTEGER                :: lvol, jj, idof
+        INTEGER                :: lvol, idof
         REAL                   :: position( 0:NGdof_field )
         REAL                   :: bndDofs( 0:NGdof_bnd )
         REAL                   :: iRbc(1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol)
@@ -327,7 +332,8 @@ module bndRep
           packorunpack = 'U'
           LComputeDerivatives = .FALSE.
           LComputeAxis = .FALSE.
-          call packxi( NGdof_field, position, Mvol, mn_field, iRbc, iZbs, iRbs, iZbc, &
+          call packxi( NGdof_field, position( 0:NGdof_field ), Mvol, mn_field, & 
+                       iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), &
                        packorunpack, LComputeDerivatives, LComputeAxis )
 
           ! Then map to rhomn, bn, R0n, Z0n
@@ -342,6 +348,10 @@ module bndRep
           do lvol=1,Mvol-1
             do jj=1,mn_rho
               idof = idof + 1
+#ifdef DEBUG
+              FATAL( bndRep, idof.le.0 .or. idof.gt.NGdof_bnd, out of bounds )
+#endif
+
               bndDofs(idof) = irhoc(jj,lvol)
 
             enddo
@@ -355,14 +365,14 @@ module bndRep
 
               if( jj.ne.0 ) then
                 idof = idof+1
+#ifdef DEBUG
+                FATAL( bndRep, idof.le.0 .or. idof.gt.NGdof_bnd, out of bounds )
+#endif
                 bndDofs(idof) = iZ0s(jj, lvol)
               endif
             enddo
           enddo !lvol
 
-#ifdef DEBUG
-          FATAL( bndRep, idof.le.0 .or. idof.gt.NGdof_bnd, out of bounds )
-#endif
 
         case( 'R' )
 
@@ -372,40 +382,48 @@ module bndRep
             do jj=1,mn_rho
 
               idof = idof+1
+#ifdef DEBUG
+              FATAL( bndRep, idof.le.0 .or. idof.gt.NGdof_bnd, out of bounds )
+#endif
+
               irhoc(jj,lvol) = bndDofs(idof)
             enddo
 
             do jj=0,Ntor
               idof = idof+1
               ibc(jj, lvol) = bndDofs(idof)
-
+              
               idof = idof+1
               iR0c(jj, lvol) = bndDofs(idof)
 
-              if( jj.ne.0 ) then 
+              if( jj.gt.0 ) then 
                 idof = idof+1
+#ifdef DEBUG
+                FATAL( bndRep, idof.le.0 .or. idof.gt.NGdof_bnd, out of bounds )
+#endif
                 iZ0s(jj, lvol) = bndDofs(idof)
               endif
             enddo
           enddo !lvol
 
-#ifdef DEBUG
-          FATAL( bndRep, idof.le.0 .or. idof.gt.NGdof_bnd, out of bounds )
-#endif
+          FATAL( bndRep, idof.ne.NGdof_bnd, incorrect number of dofs. )
 
+          
         ! Then map rhomn, bn, R0n, Z0n to Rmn, Zmn
           do lvol=1,Mvol-1
             call forwardMap( irhoc(1:mn_rho, lvol), ibc(0:Ntor, lvol), &
                             iR0c(0:Ntor, lvol), iZ0s(1:Ntor, lvol), &
                             iRbc(1:mn_field, lvol), iZbs(1:mn_field, lvol) )
           enddo
+        
 
           ! Finally, build position array
           packorunpack = 'P'
           LcomputeDerivatives = .FALSE.
           LComputeAxis = .FALSE.
-          call packxi( NGdof_field, position, Mvol, mn_field, iRbc, iZbs, iRbs, iZbc, &
-                      packorunpack, LComputeDerivatives, LComputeAxis )
+          call packxi( NGdof_field, position( 0:NGdof_field ), Mvol, mn_field, &
+                       iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), &
+                       packorunpack, LComputeDerivatives, LComputeAxis )
 
 
         end select 
@@ -596,7 +614,7 @@ module bndRep
   
           enddo
         enddo
-  
+
         ! Build output one-dimensional array
         do ii=1,mn_field
           mm=im_field(ii)
