@@ -1,8 +1,6 @@
 import numpy as np
 import gc
 
-from numba import jit
-
 def get_grid_and_jacobian_and_metric(
     self,
     lvol=0,
