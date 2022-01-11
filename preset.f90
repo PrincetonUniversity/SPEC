@@ -38,7 +38,7 @@ subroutine preset
   INTEGER   :: innout, idof, jk, ll, ii, ifail, ideriv, vvol, mi, ni, mj, nj, mk, nk, mimj, ninj, mkmj, nknj, jj, kk, lvol, mm, nn, imn
   INTEGER   :: lquad, igauleg, maxIquad, Mrad, jquad, Lcurvature, zerdof, iret, work1, work2, ind
   REAL      :: teta, zeta, arg, lss, cszeta(0:1), error
-  LOGICAL   :: LComputeAxis
+  LOGICAL   :: LComputeAxis, Linterpolate
 
   LOGICAL              :: Lchangeangle
   INTEGER              :: nb, ix, ij, ip, idx_mode
@@ -240,8 +240,8 @@ subroutine preset
     else                                                                                          ; Lchangeangle = .false.
     endif
 
-    if( Lchangeangle ) then
-      FATAL( preset, .true., Need to change angle - not implemented with Henneberg representation)
+    if( Lchangeangle .and. Linitialize.eq.1 ) then
+      FATAL( preset, .true., Cannot interpolate initial guess if angle has to be changed. )
     endif
 
     do ii = 1, mn_rho; mm=im_rho(ii); nn=in_rho(ii) / Nfp
@@ -307,13 +307,18 @@ subroutine preset
 
     ! Map to Rmn, Zmn 
     if( Linitialize.eq.0 ) then
+      Linterpolate = .false.
       do vvol=1,Nvol-1
-        call forwardMap( irhoc(1:mn_rho,vvol), ibc(0:Ntor,vvol), iR0c(0:Ntor,vvol), iZ0s(1:Ntor,vvol), iRbc(1:mn_field,vvol), iZbs(1:mn_field,vvol) )
+        call forwardMap( irhoc(1:mn_rho,vvol), ibc(0:Ntor,vvol), iR0c(0:Ntor,vvol), iZ0s(1:Ntor,vvol), iRbc(1:mn_field,vvol), iZbs(1:mn_field,vvol), Linterpolate )
       enddo !vvol
+
+    else
+      ! We don't want to change angle for the interpolation of the initial guess. This will be done in a second time.
+      Linterpolate = .true.
+
     endif !Linitialize
-
-
-    call forwardMap( irhoc(1:mn_rho,Nvol), ibc(0:Ntor,Nvol), iR0c(0:Ntor,Nvol), iZ0s(1:Ntor,Nvol), iRbc(1:mn_field,Nvol), iZbs(1:mn_field,Nvol) )
+    
+    call forwardMap( irhoc(1:mn_rho,Nvol), ibc(0:Ntor,Nvol), iR0c(0:Ntor,Nvol), iZ0s(1:Ntor,Nvol), iRbc(1:mn_field,Nvol), iZbs(1:mn_field,Nvol), Linterpolate )
 
 
     if( Lfreebound.eq.1 ) then
@@ -1747,8 +1752,6 @@ endif
 !    endif
 !   enddo
 
-   end select ! matches select case( Igeometry ); 19 Jul 16;
-
     if( Lboundary.eq.1 ) then
       ! Then map back to rhomn, bn, ...
       ! The mapping is ensured to be bijective because the Rmn, Zmn where built from rhomn, bn of the boundary
@@ -1759,7 +1762,15 @@ endif
 
       enddo !vvol=1:Nvol-1
 
+      ! Now map back to Rmn, Zmn, but change angle.
+      Linterpolate = .true.
+      do vvol=1,Nvol
+        call forwardMap( irhoc(1:mn_rho,Nvol), ibc(0:Ntor,Nvol), iR0c(0:Ntor,Nvol), iZ0s(1:Ntor,Nvol), iRbc(1:mn_field,Nvol), iZbs(1:mn_field,Nvol), Linterpolate )
+      enddo
+
     endif ! Lboundary.eq.1
+
+   end select ! matches select case( Igeometry ); 19 Jul 16;
 
   endif ! matches if( Linitialize.ne.0 ) then; 19 Jul 16;
 

@@ -100,7 +100,7 @@ module bndRep
   
   
   
-      subroutine forwardMap( rhomn, bn, R0c, Z0s, Rmn, Zmn )
+      subroutine forwardMap( rhomn, bn, R0c, Z0s, Rmn, Zmn, Linterpolate )
   
         use constants, only: zero
         use inputlist, only: Wmacros, Mpol, Ntor, twoalpha, Nfp
@@ -114,6 +114,7 @@ module bndRep
         REAL, intent(in) :: R0c(0:Ntor), Z0s(1:Ntor)
         REAL, intent(in) :: rhomn(1:mn_rho), bn(0:Ntor)
         REAL, intent(out):: Rmn(1:mn_field), Zmn(1:mn_field)
+        LOGICAL, intent(in) :: Linterpolate
 
         ! m=0 modes, from R0c and Z0c
         do ii=1,mn_field
@@ -144,7 +145,7 @@ module bndRep
           LHS2 = MATMUL( Mat2, RHS2 )
         endif        
   
-        call unpack_rmn_zmn( Rmn(1:mn_field), Zmn(1:mn_field) )
+        call unpack_rmn_zmn( Rmn(1:mn_field), Zmn(1:mn_field), Linterpolate )
 
         
   
@@ -315,7 +316,7 @@ module bndRep
 
         CHARACTER, INTENT(IN)  :: pack
         CHARACTER              :: packorunpack ! Either 'RZ_to_H' or 'H_to_RZ'
-        LOGICAL                :: LComputeDerivatives, LComputeAxis
+        LOGICAL                :: LComputeDerivatives, LComputeAxis, Linterpolate
         INTEGER                :: lvol, idof
         REAL                   :: position( 0:NGdof_field )
         REAL                   :: bndDofs( 0:NGdof_bnd )
@@ -410,10 +411,11 @@ module bndRep
 
           
         ! Then map rhomn, bn, R0n, Z0n to Rmn, Zmn
+          Linterpolate = .false.
           do lvol=1,Mvol-1
             call forwardMap( irhoc(1:mn_rho, lvol), ibc(0:Ntor, lvol), &
                             iR0c(0:Ntor, lvol), iZ0s(1:Ntor, lvol), &
-                            iRbc(1:mn_field, lvol), iZbs(1:mn_field, lvol) )
+                            iRbc(1:mn_field, lvol), iZbs(1:mn_field, lvol), Linterpolate )
           enddo
         
 
@@ -576,8 +578,8 @@ module bndRep
   
       end subroutine pack_rmn_zmn
   
-      ! This routine pack LHS1, LHS2 into rmn, zmn
-      subroutine unpack_rmn_zmn( rmn, zmn )
+      ! This routine pack LHS1, LHS2 into rmn, zmn, and change the angle if necessary.
+      subroutine unpack_rmn_zmn( rmn, zmn, Linterpolate )
         use constants, only: zero
         use inputlist, only: Wmacros, Mpol, Ntor, twoalpha, Nfp
         use fileunits, only: ounit, lunit
@@ -586,11 +588,14 @@ module bndRep
   
         LOCALS
 
-        REAL, INTENT(OUT) :: rmn(1:mn_field)
-        REAL, INTENT(OUT) :: zmn(1:mn_field)
+        REAL, INTENT(OUT)   :: rmn(1:mn_field)
+        REAL, INTENT(OUT)   :: zmn(1:mn_field)
 
-        REAL              :: rmn_work(1:Mpol_field, -Ntor_field:Ntor_field)
-        REAL              :: zmn_work(1:Mpol_field, -Ntor_field:Ntor_field)
+        REAL                :: rmn_work(1:Mpol_field, -Ntor_field:Ntor_field)
+        REAL                :: zmn_work(1:Mpol_field, -Ntor_field:Ntor_field)
+
+        LOGICAL             :: Lchangeangle
+        LOGICAL, INTENT(IN) :: Linterpolate
 
         ! Ensure work variable are set to zero
         rmn_work(1:Mpol_field,-Ntor_field:Ntor_field) = zero
@@ -615,17 +620,35 @@ module bndRep
           enddo
         enddo
 
-        ! Build output one-dimensional array
-        do ii=1,mn_field
-          mm=im_field(ii)
-          nn=in_field(ii) / Nfp
+        ! Check for changing angle
+        if( rmn_work(1,0).gt.0 .and. zmn_work(1,0).gt.0 ) then ; Lchangeangle=.true.
+        else                                                   ; Lchangeangle=.false.
+        endif
 
-          if( mm.eq.0 ) cycle ! These modes already filled by R0c, Z0s in forwardMap
+        if( Lchangeangle .and. .not.Linterpolate ) then
+          do ii=1,mn_field
+            mm=im_field(ii)
+            nn=in_field(ii) / Nfp
 
-          rmn(ii) = rmn_work(mm,nn)
-          zmn(ii) = zmn_work(mm,nn)
-        enddo
-  
+            if( mm.eq.0 ) cycle ! These modes already filled in forwardMap
+
+            rmn(ii) =  rmn_work(mm,-nn)
+            zmn(ii) = -zmn_work(mm,-nn)
+          enddo
+
+        else
+
+          ! Build output one-dimensional array
+          do ii=1,mn_field
+            mm=im_field(ii)
+            nn=in_field(ii) / Nfp
+
+            if( mm.eq.0 ) cycle ! These modes already filled by R0c, Z0s in forwardMap
+
+            rmn(ii) = rmn_work(mm,nn)
+            zmn(ii) = zmn_work(mm,nn)
+          enddo
+        endif
   
       end subroutine unpack_rmn_zmn
   
