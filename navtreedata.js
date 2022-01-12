@@ -25,6 +25,7 @@
 var NAVTREE =
 [
   [ "SPEC", "index.html", [
+    [ "The Stepped Pressure Equilibrium Code", "index.html", null ],
     [ "Todo List", "todo.html", null ],
     [ "Bibliography", "citelist.html", null ],
     [ "Modules", "modules.html", "modules" ],
@@ -56,8 +57,8 @@ var NAVTREEINDEX =
 "global_8f90.html#ga2a7d2dbc4637d792e1eeabcd4ee5564e",
 "group__grp__chebychev__metric.html#ga7008def1a0b65dbd0f55c147183e313a",
 "group__grp__global__local.html#gaac24dc13bce0966f21f862e555337e42",
-"inputlist_8f90.html#ga10b2732b4273e84e78e7768d965e7436",
-"namespacetypedefns.html#a616a0ae9df0b6d616e7cf3830f0af80e"
+"inputlist_8f90.html#ga0c5b84ea6b75639af1fb025f40431982",
+"namespacetypedefns.html#a46811cab893e847ead38d9906ff192c2"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';
