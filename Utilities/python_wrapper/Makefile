@@ -11,8 +11,7 @@ CC       = gcc
 
 # Fortran compiler
 F90      = gfortran
-#F90      = ifort
-#F90      =  /opt/intel/composer_xe_2015.3.187/bin/intel64/ifort
+#F90      = ifort # use this if you are using Intel compiler
 
 PYTHON   = python3
 
@@ -21,23 +20,14 @@ PYTHON   = python3
 #=======================================================================
 
 ifeq ($(F90),gfortran)
-	FPP      = $(F90) -E
-	FPP_F90FLAGS = -x f95-cpp-input -fPIC
-	F90FLAGS = $(RFLAGS)
-	FCOMP    = $(F90)
+  FPP      = $(F90) -E
+  FPP_F90FLAGS = -x f95-cpp-input -fPIC	
 endif
 
 ifeq ($(F90),ifort)
-	# gfortran f90wrap temp files only. not compilation
-	FPP      = gfortran -E
-
-	FPP_F90FLAGS = -x f95-cpp-input -fPIC
-
-	# use 1 and 0 for True and False
-	F90FLAGS = -fpscomp logicals -fPIC
-
-	# for f2py
-	FCOMP    = intelem
+  # gfortran f90wrap temp files only. not compilation
+  FPP      = gfortran -E
+  FPP_F90FLAGS = -x f95-cpp-input -fPIC
 endif
 
 #=======================================================================
