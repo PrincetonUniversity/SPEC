@@ -1,6 +1,6 @@
 import os.path
-print(__file__)
-print(os.path.dirname(__file__))
+#print(__file__)
+#print(os.path.dirname(__file__))
 path_to_spec_f90wrapped = os.path.dirname(__file__)
 
 import sys
