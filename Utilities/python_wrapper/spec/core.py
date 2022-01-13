@@ -1,6 +1,7 @@
 """
 SPEC python wrapper
 Author: Caoxiang Zhu (caoxiangzhu@gmail.com)
+        Jonatahn Schilling (jonathan.schilling@mail.de)
 """
 from __future__ import print_function, absolute_import, division
 import numpy as np
@@ -8,10 +9,10 @@ import sys
 import os
 import logging
 from mpi4py import MPI
-import spec.spec as spec
+
+import spec_f90wrapped as spec_lib
 
 logger = logging.getLogger("[{}]".format(MPI.COMM_WORLD.Get_rank()) + __name__)
-
 
 class SPEC(object):
     def __init__(self, input_file="", verbose=False, comm=MPI.COMM_WORLD, **kwargs):
@@ -37,7 +38,7 @@ class SPEC(object):
         assert isinstance(verbose, bool), "verbose is either True or False."
         self.verbose = verbose
         # Fortran libaries accessed via self.lib
-        self.lib = spec
+        self.lib = spec_lib
 
         # wrap around modules
         modules = [
@@ -50,7 +51,7 @@ class SPEC(object):
             "allglobal",
         ]
         for key in modules:
-            setattr(self, key, getattr(spec, key))
+            setattr(self, key, getattr(self.lib, key))
 
         # assign ext and set MPI communicator
         self.allglobal.ext = input_file[:-3] # omit ".sp" at end
@@ -78,25 +79,25 @@ class SPEC(object):
 
         if save_output:
             self.allglobal.skip_write = False
-            spec.sphdf5.init_outfile()
-            spec.sphdf5.mirror_input_to_outfile()
+            self.lib.sphdf5.init_outfile()
+            self.lib.sphdf5.mirror_input_to_outfile()
             if self.comm.rank == 0:
-                spec.allglobal.wrtend()
-            spec.sphdf5.init_convergence_output()
+                self.lib.allglobal.wrtend()
+            self.lib.sphdf5.init_convergence_output()
         else:
             self.allglobal.skip_write = True
-            
+
         self.lib.spec()
 
         if save_output:
-            spec.final_diagnostics()
-            spec.sphdf5.write_grid()
+            self.lib.final_diagnostics()
+            self.lib.sphdf5.write_grid()
             if self.comm.rank == 0:
-                spec.allglobal.wrtend()
-            spec.sphdf5.hdfint()
-            spec.sphdf5.finish_outfile()
-            spec.ending()
-            
+                self.lib.allglobal.wrtend()
+            self.lib.sphdf5.hdfint()
+            self.lib.sphdf5.finish_outfile()
+            self.lib.ending()
+
         return
 
     def read(self, input_file=None):
@@ -119,6 +120,12 @@ class SPEC(object):
 
 
 if __name__ == "__main__":
+
+    if len(sys.argv) < 2:
+        # no command line arguments given
+        print("usage: "+sys.argv[0]+" input_to_SPEC.sp")
+        exit()
+
     ext = sys.argv[1]
     if ".sp" in ext:
         ind = ext.index("sp")

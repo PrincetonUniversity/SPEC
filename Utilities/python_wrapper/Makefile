@@ -55,7 +55,7 @@ endif
 # PROJECT CONFIG, do not put spaced behind the variables
 # ======================================================================
 # Python module name
-PYTHON_MODN = spec
+PYTHON_MODN = spec_f90wrapped
 # mapping between Fortran and C types
 KIND_MAP = kind_map
 # static library name
@@ -118,6 +118,7 @@ _${PYTHON_MODN}.so: $(LIB_NAME) ${LIBSRC_WRAP_FPP_FILES}
 	f90wrap -m ${PYTHON_MODN} ${LIBSRC_WRAP_FPP_FILES} -k ${KIND_MAP} -v
 	mv ${PYTHON_MODN}.py spec/
 	f2py-f90wrap --f90exec=${FC} --build-dir . ${LINKS} -L. -l$(PYTHON_MODN) -I${SOURCES} ${LIBS} $(LINKS) -c f90wrap_*.f90 -m _${PYTHON_MODN}
+	mv _${PYTHON_MODN}*.so spec/
 
 compile_test:
 	make -C ${SOURCES} BUILD_ENV=$(BUILD_ENV) show_makeflags
@@ -133,4 +134,4 @@ compile_test:
 	@echo "LINKS = ${LINKS}"
 
 test:
-	@${PYTHON} -c "import spec; print('SPEC version: {:}'.format(spec.constants.version))"
+	@${PYTHON} -c "from spec import spec; print('SPEC version: {:}'.format(spec.constants.version))"
