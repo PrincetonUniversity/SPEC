@@ -4,9 +4,12 @@
 # This is the "classic" Makefile for SPEC. #
 ############################################
 
+# The files that make up SPEC are registered in SPECfile
+# and machine-specific build options (linker flags etc.)
+# are defined there as well.
 include SPECfile
 
-# to be preprocessed by m4
+# files to be preprocessed by m4
 PREPROC=$(ALLSPEC:=_m.F90)
 
 ROBJS=$(SPECFILES:=_r.o)
@@ -54,13 +57,13 @@ inputlist_d.o: %_d.o: src/inputlist.f90 $(MACROS)
 ###############################################################################################################################################################
 # global needs special handling: expansion of CPUVARIABLE, BSCREENLIST and WSCREENLIST using awk (not anymore !!!)
 
-global_r.o: %_r.o: inputlist_r.o src/global.f90 $(MACROS) 
+global_r.o: %_r.o: inputlist_r.o src/global.f90 $(MACROS)
 	m4 -P $(MACROS) src/global.f90 > global_m.F90
 	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o global_r.o -c global_m.F90 $(LIBS)
 	@wc -l -L -w global_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
-global_d.o: %_d.o: inputlist_d.o src/global.f90 $(MACROS) 
+global_d.o: %_d.o: inputlist_d.o src/global.f90 $(MACROS)
 	m4 -P $(MACROS) src/global.f90 > global_m.F90
 	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o global_d.o -c global_m.F90 $(LIBS)
 	@wc -l -L -w global_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
@@ -68,12 +71,12 @@ global_d.o: %_d.o: inputlist_d.o src/global.f90 $(MACROS)
 
 ###############################################################################################################################################################
 
-%_r.o: src/%.f 
+%_r.o: src/%.f
 	$(FC) $(FLAGS) $(RFLAGS) -o $*_r.o -c src/$*.f
 	@wc -l -L -w src/$*.f | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
-%_d.o: src/%.f 
+%_d.o: src/%.f
 	$(FC) $(FLAGS) $(DFLAGS) -o $*_d.o -c src/$*.f
 	@wc -l -L -w src/$*.f | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
@@ -108,7 +111,7 @@ $(DOBJS): %_d.o: %_m.F90 $(addsuffix _d.o,$(BASEFILES)) $(addsuffix _d.o,$(IOFIL
 
 ###############################################################################################################################################################
 
-xspech_r.o: src/xspech.f90 global_r.o sphdf5_r.o $(addsuffix _r.o,$(files)) $(MACROS) 
+xspech_r.o: src/xspech.f90 global_r.o sphdf5_r.o $(addsuffix _r.o,$(files)) $(MACROS)
 	@awk -v date='$(date)' -v pwd='$(PWD)' -v macros='$(MACROS)' -v fc='$(FC)' -v flags='$(FLAGS) $(CFLAGS) $(RFLAGS)' -v allfiles='$(ALLFILES)' \
 	'BEGIN{nfiles=split(allfiles,files," ")} \
 	{if($$2=="COMPILATION") {print "    write(ounit,*)\"      :  compiled  : date    = "date" ; \"" ; \
@@ -125,7 +128,7 @@ xspech_r.o: src/xspech.f90 global_r.o sphdf5_r.o $(addsuffix _r.o,$(files)) $(MA
 	@wc -l -L -w xspech_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
-xspech_d.o: src/xspech.f90 global_d.o sphdf5_d.o $(addsuffix _d.o,$(files)) $(MACROS) 
+xspech_d.o: src/xspech.f90 global_d.o sphdf5_d.o $(addsuffix _d.o,$(files)) $(MACROS)
 	@awk -v date='$(date)' -v pwd='$(PWD)' -v macros='$(MACROS)' -v fc='$(FC)' -v flags='$(FLAGS) $(CFLAGS) $(DFLAGS)' -v allfiles='$(ALLFILES)' \
 	'BEGIN{nfiles=split(allfiles,files," ")} \
 	{if($$2=="COMPILATION") {print "    write(ounit,*)\"      :  compiled  : date    = "date" ; \"" ; \
