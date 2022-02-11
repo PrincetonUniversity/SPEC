@@ -120,7 +120,7 @@ module bndRep
         ! INPUTS
         REAL, intent(in) :: R0c(0:Ntor), Z0s(1:Ntor)
         REAL, intent(in) :: rhomn(1:mn_rho), bn(0:Ntor)
-        REAL, intent(out):: Rmn(1:mn_field), Zmn(1:mn_field)
+        REAL             :: Rmn(1:mn_field), Zmn(1:mn_field)
         INTEGER          :: ind
 
         ! m=0 modes, from R0c and Z0c
@@ -181,14 +181,19 @@ module bndRep
         REAL, intent(inout) :: rhomn(1:mn_rho), bn(0:Ntor)
         REAL, intent(inout) :: R0c(0:Ntor), Z0s(1:Ntor)
 
+        REAL                :: Rwork(1:mn_field), Zwork(1:mn_field)
+
         ! LOCAL VARIABLES
         CHARACTER :: TRANS
         REAL, allocatable :: A(:,:), WORK(:), B(:)
         INTEGER :: NRHS, LDA, LDB, LWORK, INFO
 
         ! First, change angle if necessary.
+        Rwork = Rmn
+        Zwork = Zmn
+
         if( Lchangeangle ) then
-          call change_angle( Rmn(1:mn_field), Zmn(1:mn_field) )
+          call change_angle( Rwork(1:mn_field), Zwork(1:mn_field) )
         endif
   
         ! m=0 modes - set R0c and Z0s
@@ -200,9 +205,9 @@ module bndRep
           if( mm.ne.0    .or. nn.lt.0    ) cycle ! Only interested in m=0, n>=0 modes
           if( mm.gt.Mpol .or. nn.gt.Ntor ) cycle ! other elements are zeros by construction. otherwise seg fault.
 
-          R0c(nn) = Rmn(ii)
+          R0c(nn) = Rwork(ii)
           if( nn.ne.0 ) then
-            Z0s(nn) =-Zmn(ii)
+            Z0s(nn) =-Zwork(ii)
           endif
         enddo
 
@@ -237,7 +242,7 @@ module bndRep
   
   
         ! Now solve linear system
-        call pack_rmn_zmn( rmn, zmn )
+        call pack_rmn_zmn( Rwork, Zwork )
 
         SALLOCATE( WORK, (1:LWORK), zero )
         LDA = nel_m1_i
