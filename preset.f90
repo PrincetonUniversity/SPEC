@@ -38,7 +38,7 @@ subroutine preset
   INTEGER   :: innout, idof, jk, ll, ii, ifail, ideriv, vvol, mi, ni, mj, nj, mk, nk, mimj, ninj, mkmj, nknj, jj, kk, lvol, mm, nn, imn
   INTEGER   :: lquad, igauleg, maxIquad, Mrad, jquad, Lcurvature, zerdof, iret, work1, work2, ind
   REAL      :: teta, zeta, arg, lss, cszeta(0:1), error
-  LOGICAL   :: LComputeAxis, Linterpolate
+  LOGICAL   :: LComputeAxis, Lhennangle
 
   LOGICAL              :: Lchangeangle
   INTEGER              :: nb, ix, ij, ip, idx_mode
@@ -88,11 +88,31 @@ subroutine preset
     FATAL( preset, .true., Henneberg representation only valid in toroidal geometry )
   endif
 
-  if( Lboundary==0 ) then
+  if( Lboundary.eq.0 ) then
     twoalpha = 0.0
   endif
 
-  call initialize_mapping()
+  Lhennangle = .false.
+  if( Lboundary.eq.1 ) then
+    if( twoalpha.eq.0 ) then
+      Rbc(0, 1) = half*( rhomn(0, 1) + rhomn(twoalpha, 1) )
+      Zbs(0, 1) = half*( rhomn(0, 1) - rhomn(twoalpha, 1) ) + bn(0)
+      Rbc(0,-1) = half*( rhomn(0,-1) + rhomn(twoalpha,-1) )
+      Zbs(0,-1) = half*( rhomn(0,-1) - rhomn(twoalpha,-1) )
+    else
+      Rbc(0, 1) = half*( rhomn(0, 1) + rhomn(twoalpha, 1) ) + 1.0/4.0 * (two*bn(0) - bn(twoalpha))
+      Zbs(0, 1) = half*( rhomn(0, 1) - rhomn(twoalpha, 1) ) + 1.0/4.0 * (two*bn(0) + bn(twoalpha))
+      Rbc(0,-1) = half*( rhomn(0,-1) + rhomn(twoalpha,-1) )
+      Zbs(0,-1) = half*( rhomn(0,-1) - rhomn(twoalpha,-1) )
+    endif
+
+    if( Rbc(0,+1)+Rbc(0,-1).gt.zero .and. Zbs(0,+1)-Zbs(0,-1).gt.zero ) then; Lhennangle = .true.
+    else                                                                    ; Lhennangle = .false.
+    endif
+
+  endif
+
+  call initialize_mapping( Lhennangle )
 
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -231,18 +251,13 @@ subroutine preset
   if( Lboundary.EQ.1 ) then
     if( myid.eq.0 ) then ! read plasma boundary & computational boundary; initialize interface geometry;
     
-    ! Read Henneberg's representation harmonics and change angle if necessary
-    Rbc(0, 1) = half*( rhomn(0, 1) + rhomn(twoalpha, 1) ) + 1.0/4.0 * (two*bn(0) - bn(-twoalpha) - bn(twoalpha))
-    Zbs(0, 1) = half*( rhomn(0, 1) - rhomn(twoalpha, 1) ) + 1.0/4.0 * (two*bn(0) + bn(-twoalpha) + bn(twoalpha))
-    Rbc(0,-1) = half*( rhomn(0,-1) + rhomn(twoalpha,-1) )
-    Zbs(0,-1) = half*( rhomn(0,-1) - rhomn(twoalpha,-1) )
     if( Igeometry.eq.3 .and. Rbc(0,+1)+Rbc(0,-1).gt.zero .and. Zbs(0,+1)-Zbs(0,-1).gt.zero ) then ; Lchangeangle = .true.
     else                                                                                          ; Lchangeangle = .false.
     endif
 
-    if( Lchangeangle .and. Linitialize.eq.1 ) then
-      FATAL( preset, .true., Cannot interpolate initial guess if angle has to be changed. )
-    endif
+    !if( Lchangeangle .and. Linitialize.eq.1 ) then
+    !  FATAL( preset, .true., Cannot interpolate initial guess if angle has to be changed. )
+    !endif
 
     do ii = 1, mn_rho; mm=im_rho(ii); nn=in_rho(ii) / Nfp
       irhoc( ii, Nvol ) = rhomn( nn, mm )
@@ -293,9 +308,6 @@ subroutine preset
             endif
           enddo
 
-
-
-
         case( 1 )
           ! No need to interpolate if Linitialize=1. Instead, map to Rmn, Zmn and then interpolate before map back.
           ! The interpolation of Rbc, Zbs is done further in preset.f90, then it mapped back to rhomn, bn, etc...
@@ -307,19 +319,12 @@ subroutine preset
 
     ! Map to Rmn, Zmn 
     if( Linitialize.eq.0 ) then
-      Linterpolate = .false.
       do vvol=1,Nvol-1
-        call forwardMap( irhoc(1:mn_rho,vvol), ibc(0:Ntor,vvol), iR0c(0:Ntor,vvol), iZ0s(1:Ntor,vvol), iRbc(1:mn_field,vvol), iZbs(1:mn_field,vvol), Linterpolate )
+        call forwardMap( irhoc(1:mn_rho,vvol), ibc(0:Ntor,vvol), iR0c(0:Ntor,vvol), iZ0s(1:Ntor,vvol), iRbc(1:mn_field,vvol), iZbs(1:mn_field,vvol) )
       enddo !vvol
-
-    else
-      ! We don't want to change angle for the interpolation of the initial guess. This will be done in a second time.
-      Linterpolate = .true.
-
     endif !Linitialize
     
-    call forwardMap( irhoc(1:mn_rho,Nvol), ibc(0:Ntor,Nvol), iR0c(0:Ntor,Nvol), iZ0s(1:Ntor,Nvol), iRbc(1:mn_field,Nvol), iZbs(1:mn_field,Nvol), Linterpolate )
-
+    call forwardMap( irhoc(1:mn_rho,Nvol), ibc(0:Ntor,Nvol), iR0c(0:Ntor,Nvol), iZ0s(1:Ntor,Nvol), iRbc(1:mn_field,Nvol), iZbs(1:mn_field,Nvol) )
 
     if( Lfreebound.eq.1 ) then
       ! TODO: FREE BOUNDARY STUFF
@@ -1763,9 +1768,8 @@ endif
       enddo !vvol=1:Nvol-1
 
       ! Now map back to Rmn, Zmn, but change angle.
-      Linterpolate = .true.
       do vvol=1,Nvol
-        call forwardMap( irhoc(1:mn_rho,Nvol), ibc(0:Ntor,Nvol), iR0c(0:Ntor,Nvol), iZ0s(1:Ntor,Nvol), iRbc(1:mn_field,Nvol), iZbs(1:mn_field,Nvol), Linterpolate )
+        call forwardMap( irhoc(1:mn_rho,Nvol), ibc(0:Ntor,Nvol), iR0c(0:Ntor,Nvol), iZ0s(1:Ntor,Nvol), iRbc(1:mn_field,Nvol), iZbs(1:mn_field,Nvol) )
       enddo
 
     endif ! Lboundary.eq.1

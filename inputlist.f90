@@ -199,10 +199,10 @@ module inputlist
   REAL         :: Rbs(-MNtor:MNtor,-MMpol:MMpol)  =  0.0 !< non-stellarator symmetric boundary components;
   REAL         :: Zbc(-MNtor:MNtor,-MMpol:MMpol)  =  0.0 !< non-stellarator symmetric boundary components;
 
-  REAL         :: R0c(-MNtor:MNtor) = 0.0
-  REAL         :: Z0s(-MNtor:MNtor) = 0.0
+  REAL         :: R0c(0:MNtor) = 0.0
+  REAL         :: Z0s(0:MNtor) = 0.0
   REAL         :: rhomn(-MNtor:MNtor,-MMpol:MMpol)  =  0.0 !<   boundary, only used if Lboundary = 1
-  REAL         :: bn( -MNtor:MNtor )                =  0.0 !<   boundary, only used if Lboundary = 1
+  REAL         :: bn( 0:MNtor )                =  0.0 !<   boundary, only used if Lboundary = 1
 
   REAL         :: Rwc(-MNtor:MNtor,-MMpol:MMpol)  =  0.0 !<     stellarator symmetric boundary components of wall;
   REAL         :: Zws(-MNtor:MNtor,-MMpol:MMpol)  =  0.0 !<     stellarator symmetric boundary components of wall;

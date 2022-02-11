@@ -5,6 +5,7 @@ module bndRep
     INTEGER              :: Mpol_field, Ntor_field, Mpol_force, Ntor_force 
     INTEGER              :: ii, jj, mm, nn, jjmin, jjmax, irz ! Loop indices used in subroutines
     INTEGER              :: nel_m1_i, nel_m1_j, nel_m2_i, nel_m2_j ! dimension of matrices
+    LOGICAL              :: Lchangeangle
     REAL   , allocatable :: Mat1(:,:), Mat2(:,:), RHS1(:), RHS2(:), LHS1(:), LHS2(:)   !< MAPPING MATRIX, TIMES FOUR
   
     !------- public / private statement ----------
@@ -15,6 +16,7 @@ module bndRep
     PRIVATE :: build_mapping_matrices ! only used in forwardMap and backwardMap subroutines.
     PRIVATE :: pack_rhomn_bn, unpack_rhomn_bn, pack_rmn_zmn, unpack_rmn_zmn ! specific for this module
     PRIVATE :: RHS1, RHS2, LHS1, LHS2
+    PRIVATE :: Lchangeangle
   
     contains
   
@@ -22,7 +24,7 @@ module bndRep
   
     ! ------------------------------------------------------------------
     !                     PUBLIC SUBROUTINES
-      subroutine initialize_mapping()
+      subroutine initialize_mapping( Langle )
         ! In this subroutine we compute the mapping matrix, and allocate necessary memory
         ! This should only be called once at the beginning of preset.
   
@@ -34,6 +36,11 @@ module bndRep
                              MPI_COMM_SPEC, cpus
 
         LOCALS
+
+        LOGICAL, INTENT(IN):: Langle
+
+
+        Lchangeangle = Langle
 
         ! If RZ representation, truncation is the same for all quantities.
         if( Lboundary.eq.0 ) then  
@@ -100,7 +107,7 @@ module bndRep
   
   
   
-      subroutine forwardMap( rhomn, bn, R0c, Z0s, Rmn, Zmn, Linterpolate )
+      subroutine forwardMap( rhomn, bn, R0c, Z0s, Rmn, Zmn )
   
         use constants, only: zero
         use inputlist, only: Wmacros, Mpol, Ntor, twoalpha, Nfp
@@ -114,7 +121,7 @@ module bndRep
         REAL, intent(in) :: R0c(0:Ntor), Z0s(1:Ntor)
         REAL, intent(in) :: rhomn(1:mn_rho), bn(0:Ntor)
         REAL, intent(out):: Rmn(1:mn_field), Zmn(1:mn_field)
-        LOGICAL, intent(in) :: Linterpolate
+        INTEGER          :: ind
 
         ! m=0 modes, from R0c and Z0c
         do ii=1,mn_field
@@ -145,9 +152,15 @@ module bndRep
           LHS2 = MATMUL( Mat2, RHS2 )
         endif        
   
-        call unpack_rmn_zmn( Rmn(1:mn_field), Zmn(1:mn_field), Linterpolate )
+        call unpack_rmn_zmn( Rmn(1:mn_field), Zmn(1:mn_field) )
 
-        
+
+        ! Change angle
+        call find_index_field(  1, 0, ind )
+
+        if( Lchangeangle ) then
+          call change_angle( Rmn(1:mn_field), Zmn(1:mn_field) )
+        endif
   
       end subroutine forwardMap
   
@@ -173,6 +186,10 @@ module bndRep
         REAL, allocatable :: A(:,:), WORK(:), B(:)
         INTEGER :: NRHS, LDA, LDB, LWORK, INFO
 
+        ! First, change angle if necessary.
+        if( Lchangeangle ) then
+          call change_angle( Rmn(1:mn_field), Zmn(1:mn_field) )
+        endif
   
         ! m=0 modes - set R0c and Z0s
         do ii=1,mn_field
@@ -316,7 +333,7 @@ module bndRep
 
         CHARACTER, INTENT(IN)  :: pack
         CHARACTER              :: packorunpack ! Either 'RZ_to_H' or 'H_to_RZ'
-        LOGICAL                :: LComputeDerivatives, LComputeAxis, Linterpolate
+        LOGICAL                :: LComputeDerivatives, LComputeAxis, work
         INTEGER                :: lvol, idof
         REAL                   :: position( 0:NGdof_field )
         REAL                   :: bndDofs( 0:NGdof_bnd )
@@ -411,11 +428,17 @@ module bndRep
 
           
         ! Then map rhomn, bn, R0n, Z0n to Rmn, Zmn
-          Linterpolate = .false.
           do lvol=1,Mvol-1
             call forwardMap( irhoc(1:mn_rho, lvol), ibc(0:Ntor, lvol), &
                             iR0c(0:Ntor, lvol), iZ0s(1:Ntor, lvol), &
-                            iRbc(1:mn_field, lvol), iZbs(1:mn_field, lvol), Linterpolate )
+                            iRbc(1:mn_field, lvol), iZbs(1:mn_field, lvol) )
+
+#ifdef DEBUG
+            if( work ) then
+              write(ounit,'("Changing angle in pack_henneberg for lvol=", i3 ,)')
+            endif
+#endif
+
           enddo
         
 
@@ -578,8 +601,8 @@ module bndRep
   
       end subroutine pack_rmn_zmn
   
-      ! This routine pack LHS1, LHS2 into rmn, zmn, and change the angle if necessary.
-      subroutine unpack_rmn_zmn( rmn, zmn, Linterpolate )
+      ! This routine pack LHS1, LHS2 into rmn, zmn.
+      subroutine unpack_rmn_zmn( rmn, zmn )
         use constants, only: zero
         use inputlist, only: Wmacros, Mpol, Ntor, twoalpha, Nfp
         use fileunits, only: ounit, lunit
@@ -595,7 +618,6 @@ module bndRep
         REAL                :: zmn_work(1:Mpol_field, -Ntor_field:Ntor_field)
 
         LOGICAL             :: Lchangeangle
-        LOGICAL, INTENT(IN) :: Linterpolate
 
         ! Ensure work variable are set to zero
         rmn_work(1:Mpol_field,-Ntor_field:Ntor_field) = zero
@@ -620,23 +642,23 @@ module bndRep
           enddo
         enddo
 
-        ! Check for changing angle
-        if( rmn_work(1,0).gt.0 .and. zmn_work(1,0).gt.0 ) then ; Lchangeangle=.true.
-        else                                                   ; Lchangeangle=.false.
-        endif
+        ! ! Check for changing angle
+        ! if( rmn_work(1,0).gt.0 .and. zmn_work(1,0).gt.0 ) then ; Lchangeangle=.true.
+        ! else                                                   ; Lchangeangle=.false.
+        ! endif
 
-        if( Lchangeangle .and. .not.Linterpolate ) then
-          do ii=1,mn_field
-            mm=im_field(ii)
-            nn=in_field(ii) / Nfp
+        ! if( Lchangeangle ) then
+        !   do ii=1,mn_field
+        !     mm=im_field(ii)
+        !     nn=in_field(ii) / Nfp
 
-            if( mm.eq.0 ) cycle ! These modes already filled in forwardMap
+        !     if( mm.eq.0 ) cycle ! These modes already filled in forwardMap
 
-            rmn(ii) =  rmn_work(mm,-nn)
-            zmn(ii) = -zmn_work(mm,-nn)
-          enddo
+        !     rmn(ii) =  rmn_work(mm,-nn)
+        !     zmn(ii) = -zmn_work(mm,-nn)
+        !   enddo
 
-        else
+        ! else
 
           ! Build output one-dimensional array
           do ii=1,mn_field
@@ -648,7 +670,7 @@ module bndRep
             rmn(ii) = rmn_work(mm,nn)
             zmn(ii) = zmn_work(mm,nn)
           enddo
-        endif
+        ! endif
   
       end subroutine unpack_rmn_zmn
   
@@ -748,6 +770,68 @@ module bndRep
   
   
       end subroutine build_mapping_matrices
+
+      subroutine change_angle( Rmn, Zmn )
+        use constants, only: zero
+        use inputlist, only: Wmacros, Mpol, Ntor, twoalpha, Nfp
+        use fileunits, only: ounit, lunit
+        use allglobal, only: myid, im_rho, in_rho, im_field, in_field, mn_field, mn_rho, mn_rho, &
+                             MPI_COMM_SPEC, cpus
+  
+        LOCALS
+
+        REAL               :: Rmn(1:mn_field), Zmn(1:mn_field)
+        REAL               :: Rmn_tmp(1:mn_field), Zmn_tmp(1:mn_field), mode_r, mode_z
+        INTEGER            :: ind
+
+        Rmn_tmp = (/ zero /)
+        Zmn_tmp = (/ zero /)
+
+        do ii = 1, mn_field
+          mm = im_field(ii)
+          nn = in_field(ii)
+
+          if( mm.eq.0 ) then
+            Rmn_tmp(ii) = Rmn(ii)
+            Zmn_tmp(ii) = Zmn(ii)
+          else ! ( mm.eq.0 )
+
+            call find_index_field( mm, -nn, ind )
+            if( ind.eq.-1 ) then ! mode not found, fill with zero
+              Rmn_tmp(ii) = zero
+              Zmn_tmp(ii) = zero
+            else
+              Rmn_tmp(ii) =  Rmn( ind )
+              Zmn_tmp(ii) = -Zmn( ind ) 
+            endif
+
+          endif
+
+        enddo ! ii=1, mn_field
+
+        Rmn(1:mn_field) = Rmn_tmp(1:mn_field)
+        Zmn(1:mn_field) = Zmn_tmp(1:mn_field)
+
+      end subroutine change_angle
+
+      subroutine find_index_field( m_search, n_search, ind )
+        use inputlist, only: Wmacros
+        use fileunits, only: ounit, lunit
+        use allglobal, only: mn_field, im_field, in_field
+
+        LOCALS
+
+        INTEGER, INTENT(IN) :: m_search, n_search
+        INTEGER, INTENT(OUT):: ind
+
+        do ind = 1, mn_field
+          if( im_field(ind).eq.m_search .and. in_field(ind).eq.n_search ) then
+            return
+          endif
+        enddo
+
+        ind = -1
+      end subroutine find_index_field
   
   
   end module bndRep
