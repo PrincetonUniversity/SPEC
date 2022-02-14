@@ -79,7 +79,7 @@ set(f90wrap_output_files ${CMAKE_CURRENT_BINARY_DIR}/f90wrap_global_m_fpp.f90
 
 set(kind_map_file ${CMAKE_CURRENT_SOURCE_DIR}/kind_map)
 set(python_mod_name spec)
-set(python_mod_file ${CMAKE_CURRENT_BINARY_DIR}/${python_mod_name}.py)
+set(python_mod_file ${CMAKE_CURRENT_BINARY_DIR}/${python_mod_name}_f90wrapped.py)
 
 add_custom_target(preprocessing ALL
   DEPENDS ${fpp_files}
