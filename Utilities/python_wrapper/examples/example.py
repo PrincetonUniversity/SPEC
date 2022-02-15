@@ -5,9 +5,9 @@ from mpi4py import MPI
 # you can also use sys.path.append
 # import sys
 # sys.path.append("./SPEC/Utilities/python_wrapper/")
-from core import SPEC
+from spec.core import SPEC
 
-ext = "../../InputFiles/TestCases/G3V01L0Fi.001.sp"
+ext = "../../../InputFiles/TestCases/G3V01L0Fi.001.sp"
 # ext = "G3V01L0Fi.001.sp"
 
 comm = MPI.COMM_WORLD

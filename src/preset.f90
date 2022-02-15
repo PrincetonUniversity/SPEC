@@ -353,9 +353,6 @@ subroutine preset
 
     enddo ! end of do;
 
-    ! Typically these arrays have been allocated in read_inputlists_from_file
-    if(allocated(mmRZRZ)) deallocate(mmRZRZ, nnRZRZ, allRZRZ)
-
    end select ! end select case( Linitialize );
 
    if( Igeometry.eq.3 ) then
