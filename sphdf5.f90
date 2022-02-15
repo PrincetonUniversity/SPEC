@@ -42,13 +42,13 @@ module sphdf5
   integer(hsize_t), dimension(1) :: data_dims           !< new dimensions for "iterations" dataset
   integer(hsize_t), dimension(1) :: max_dims            !< maximum dimensions for "iterations" dataset
   integer(hid_t)                 :: plist_id            !< Property list identifier used to activate dataset transfer property
-  integer(hid_t)                 :: dt_nDcalls_id       !< Memory datatype identifier (for "nDcalls"  dataset in "/grid")
-  integer(hid_t)                 :: dt_Energy_id        !< Memory datatype identifier (for "Energy"   dataset in "/grid")
-  integer(hid_t)                 :: dt_ForceErr_id      !< Memory datatype identifier (for "ForceErr" dataset in "/grid")
-  integer(hid_t)                 :: dt_iRbc_id          !< Memory datatype identifier (for "iRbc"     dataset in "/grid")
-  integer(hid_t)                 :: dt_iZbs_id          !< Memory datatype identifier (for "iZbs"     dataset in "/grid")
-  integer(hid_t)                 :: dt_iRbs_id          !< Memory datatype identifier (for "iRbs"     dataset in "/grid")
-  integer(hid_t)                 :: dt_iZbc_id          !< Memory datatype identifier (for "iZbc"     dataset in "/grid")
+  integer(hid_t)                 :: dt_nDcalls_id       !< Memory datatype identifier (for "nDcalls"  dataset in "/iterations")
+  integer(hid_t)                 :: dt_Energy_id        !< Memory datatype identifier (for "Energy"   dataset in "/iterations")
+  integer(hid_t)                 :: dt_ForceErr_id      !< Memory datatype identifier (for "ForceErr" dataset in "/iterations")
+  integer(hid_t)                 :: dt_iRbc_id          !< Memory datatype identifier (for "iRbc"     dataset in "/iterations")
+  integer(hid_t)                 :: dt_iZbs_id          !< Memory datatype identifier (for "iZbs"     dataset in "/iterations")
+  integer(hid_t)                 :: dt_iRbs_id          !< Memory datatype identifier (for "iRbs"     dataset in "/iterations")
+  integer(hid_t)                 :: dt_iZbc_id          !< Memory datatype identifier (for "iZbc"     dataset in "/iterations")
 
   integer, parameter             :: rankP=3             !< rank of Poincare data
   integer, parameter             :: rankT=2             !< rank of rotational transform data
