@@ -25,6 +25,6 @@ jobs:
         cd dist
         pip3 install -U *.whl
         
-    -name: Test if installation is ok
-     run: |
-       python3 -c "import spec; print('success')"
+    - name: Test if installation is ok
+      run: |
+        python3 -c "import spec; print('success')"
