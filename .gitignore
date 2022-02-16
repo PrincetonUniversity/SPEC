@@ -2,6 +2,7 @@
 # python_wrapper
 Utilities/python_wrapper/spec.egg-info
 dist
+.eggs
 
 *.o
 *.mod
