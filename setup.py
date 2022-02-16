@@ -26,7 +26,7 @@ setup(
     packages=['spec'],
     package_dir={'': 'Utilities/python_wrapper'},
     #py_modules=[splitext(basename(path))[0] for path in glob('src/vmec/*.py')],
-    install_requires=['f90wrap == v0.2.3'],
+    install_requires=['f90wrap == v0.2.3', 'skbuild'],
     classifiers=[
         "Development Status :: 1 - Alpha",
         "Intended Audience :: Nuclear Fusion Community",
