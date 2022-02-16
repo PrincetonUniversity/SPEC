@@ -9,8 +9,8 @@ import sys
 import os
 import logging
 from mpi4py import MPI
+import spec.spec_f90wrapped as spec_lib
 
-import spec_f90wrapped as spec_lib
 
 logger = logging.getLogger("[{}]".format(MPI.COMM_WORLD.Get_rank()) + __name__)
 

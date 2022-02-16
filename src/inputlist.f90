@@ -546,60 +546,59 @@ module inputlist
 !> \brief The namelist \c screenlist controls screen output.
 !> Every subroutine, e.g. \c xy00aa.h, has its own write flag, \c Wxy00aa.
 !> @{
-  LOGICAL :: Wmanual = .false. 
-  LOGICAL :: Wrzaxis = .false. 
-  LOGICAL :: Wpackxi = .false. 
-  LOGICAL :: Wvolume = .false. 
-  LOGICAL :: Wcoords = .false. 
-  LOGICAL :: Wbasefn = .false. 
-  LOGICAL :: Wmemory = .false. 
-  LOGICAL :: Wmetrix = .false. 
-  LOGICAL :: Wma00aa = .false. 
-  LOGICAL :: Wmatrix = .false. 
-  LOGICAL :: Wspsmat = .false. 
-  LOGICAL :: Wspsint = .false. 
-  LOGICAL :: Wmp00ac = .false. 
-  LOGICAL :: Wma02aa = .false. 
-  LOGICAL :: Wpackab = .false. 
-  LOGICAL :: Wtr00ab = .false. 
-  LOGICAL :: Wcurent = .false. 
-  LOGICAL :: Wdf00ab = .false. 
-  LOGICAL :: Wlforce = .false. 
-  LOGICAL :: Wintghs = .false. 
-  LOGICAL :: Wmtrxhs = .false. 
-  LOGICAL :: Wlbpol = .false. 
-  LOGICAL :: Wbrcast = .false. 
-  LOGICAL :: Wdfp100 = .false. 
-  LOGICAL :: Wdfp200 = .false. 
-  LOGICAL :: Wdforce = .false. 
-  LOGICAL :: Wnewton = .false. 
-  LOGICAL :: Wcasing = .false. 
-  LOGICAL :: Wbnorml = .false. 
-  LOGICAL :: Wjo00aa = .false. 
-  LOGICAL :: Wpp00aa = .false. 
-  LOGICAL :: Wpp00ab = .false. 
-  LOGICAL :: Wbfield = .false. 
-  LOGICAL :: Wstzxyz = .false. 
-  LOGICAL :: Whesian = .false. 
-  LOGICAL :: Wra00aa = .false. 
-  LOGICAL :: Wnumrec = .false. 
-  LOGICAL :: Wdcuhre = .false. 
-  LOGICAL :: Wminpack = .false. 
-  LOGICAL :: Wiqpack = .false. 
-  LOGICAL :: Wrksuite = .false. 
-  LOGICAL :: Wi1mach = .false. 
-  LOGICAL :: Wd1mach = .false. 
-  LOGICAL :: Wilut = .false. 
-  LOGICAL :: Witers = .false. 
-  LOGICAL :: Wsphdf5 = .false. 
-  LOGICAL :: Wpreset = .false. 
-  LOGICAL :: Wglobal = .false. 
-  LOGICAL :: Wxspech = .false. 
-! DSCREENLIST !< define screenlist; this is expanded by Makefile; DO NOT REMOVE; each file compiled by Makefile has its own write flag;
-  LOGICAL      :: Wbuild_vector_potential = .false. !< \todo: what is this?
-  LOGICAL      :: Wreadin = .false. !< write screen output of readin()
-  LOGICAL      :: Wwrtend = .false. !< write screen output of wrtend()
-  LOGICAL      :: Wmacros = .false. !< write screen output from expanded macros
+  LOGICAL :: Wmanual  = .false.
+  LOGICAL :: Wrzaxis  = .false.
+  LOGICAL :: Wpackxi  = .false.
+  LOGICAL :: Wvolume  = .false.
+  LOGICAL :: Wcoords  = .false.
+  LOGICAL :: Wbasefn  = .false.
+  LOGICAL :: Wmemory  = .false.
+  LOGICAL :: Wmetrix  = .false.
+  LOGICAL :: Wma00aa  = .false.
+  LOGICAL :: Wmatrix  = .false.
+  LOGICAL :: Wspsmat  = .false.
+  LOGICAL :: Wspsint  = .false.
+  LOGICAL :: Wmp00ac  = .false.
+  LOGICAL :: Wma02aa  = .false.
+  LOGICAL :: Wpackab  = .false.
+  LOGICAL :: Wtr00ab  = .false.
+  LOGICAL :: Wcurent  = .false.
+  LOGICAL :: Wdf00ab  = .false.
+  LOGICAL :: Wlforce  = .false.
+  LOGICAL :: Wintghs  = .false.
+  LOGICAL :: Wmtrxhs  = .false.
+  LOGICAL :: Wlbpol   = .false.
+  LOGICAL :: Wbrcast  = .false.
+  LOGICAL :: Wdfp100  = .false.
+  LOGICAL :: Wdfp200  = .false.
+  LOGICAL :: Wdforce  = .false.
+  LOGICAL :: Wnewton  = .false.
+  LOGICAL :: Wcasing  = .false.
+  LOGICAL :: Wbnorml  = .false.
+  LOGICAL :: Wjo00aa  = .false.
+  LOGICAL :: Wpp00aa  = .false.
+  LOGICAL :: Wpp00ab  = .false.
+  LOGICAL :: Wbfield  = .false.
+  LOGICAL :: Wstzxyz  = .false.
+  LOGICAL :: Whesian  = .false.
+  LOGICAL :: Wra00aa  = .false.
+  LOGICAL :: Wnumrec  = .false.
+  LOGICAL :: Wdcuhre  = .false.
+  LOGICAL :: Wminpack = .false.
+  LOGICAL :: Wiqpack  = .false.
+  LOGICAL :: Wrksuite = .false.
+  LOGICAL :: Wi1mach  = .false.
+  LOGICAL :: Wd1mach  = .false.
+  LOGICAL :: Wilut    = .false.
+  LOGICAL :: Witers   = .false.
+  LOGICAL :: Wsphdf5  = .false.
+  LOGICAL :: Wpreset  = .false.
+  LOGICAL :: Wglobal  = .false.
+  LOGICAL :: Wxspech  = .false.
+  LOGICAL :: Wbuild_vector_potential = .false. !< \todo: what is this?
+  LOGICAL :: Wreadin  = .false. !< write screen output of readin()
+  LOGICAL :: Wwrtend  = .false. !< write screen output of wrtend()
+  LOGICAL :: Wmacros  = .false. !< write screen output from expanded macros
 !> @}
 
   namelist/physicslist/&
@@ -737,7 +736,55 @@ module inputlist
  scaling
 
   namelist/screenlist/&
-! NSCREENLIST ! namelist screenlist; this is expanded by Makefile; DO NOT REMOVE;
+ Wmanual , &
+ Wrzaxis , &
+ Wpackxi , &
+ Wvolume , &
+ Wcoords , &
+ Wbasefn , &
+ Wmemory , &
+ Wmetrix , &
+ Wma00aa , &
+ Wmatrix , &
+ Wspsmat , &
+ Wspsint , &
+ Wmp00ac , &
+ Wma02aa , &
+ Wpackab , &
+ Wtr00ab , &
+ Wcurent , &
+ Wdf00ab , &
+ Wlforce , &
+ Wintghs , &
+ Wmtrxhs , &
+ Wlbpol  , &
+ Wbrcast , &
+ Wdfp100 , &
+ Wdfp200 , &
+ Wdforce , &
+ Wnewton , &
+ Wcasing , &
+ Wbnorml , &
+ Wjo00aa , &
+ Wpp00aa , &
+ Wpp00ab , &
+ Wbfield , &
+ Wstzxyz , &
+ Whesian , &
+ Wra00aa , &
+ Wnumrec , &
+ Wdcuhre , &
+ Wminpack, &
+ Wiqpack , &
+ Wrksuite, &
+ Wi1mach , &
+ Wd1mach , &
+ Wilut   , &
+ Witers  , &
+ Wsphdf5 , &
+ Wpreset , &
+ Wglobal , &
+ Wxspech , &
  Wbuild_vector_potential , &
  Wreadin , &
  Wwrtend , &
