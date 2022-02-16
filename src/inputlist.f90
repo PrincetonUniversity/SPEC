@@ -597,10 +597,10 @@ module inputlist
   LOGICAL :: Wpreset  = .false.
   LOGICAL :: Wglobal  = .false.
   LOGICAL :: Wxspech  = .false.
-  LOGICAL      :: Wbuild_vector_potential = .false. !< \todo: what is this?
-  LOGICAL      :: Wreadin = .false. !< write screen output of readin()
-  LOGICAL      :: Wwrtend = .false. !< write screen output of wrtend()
-  LOGICAL      :: Wmacros = .false. !< write screen output from expanded macros
+  LOGICAL :: Wbuild_vector_potential = .false. !< \todo: what is this?
+  LOGICAL :: Wreadin  = .false. !< write screen output of readin()
+  LOGICAL :: Wwrtend  = .false. !< write screen output of wrtend()
+  LOGICAL :: Wmacros  = .false. !< write screen output from expanded macros
 !> @}
 
   namelist/physicslist/&
@@ -739,55 +739,55 @@ module inputlist
  scaling
 
   namelist/screenlist/&
- Wmanual  , &
- Wrzaxis  , &
- Wpackxi  , &
- Wvolume  , &
- Wcoords  , &
- Wbasefn  , &
- Wmemory  , &
- Wmetrix  , &
- Wma00aa  , &
- Wmatrix  , &
- Wspsmat  , &
- Wspsint  , &
- Wmp00ac  , &
- Wma02aa  , &
- Wpackab  , &
- Wtr00ab  , &
- Wcurent  , &
- Wdf00ab  , &
- Wlforce  , &
- Wintghs  , &
- Wmtrxhs  , &
- Wlbpol   , &
- Wbrcast  , &
- Wdfp100  , &
- Wdfp200  , &
- Wdforce  , &
- Wnewton  , &
- Wcasing  , &
- Wbnorml  , &
- Wjo00aa  , &
- Wpp00aa  , &
- Wpp00ab  , &
- Wbfield  , &
- Wstzxyz  , &
- Whesian  , &
- Wra00aa  , &
- Wnumrec  , &
- Wdcuhre  , &
- Wminpack , &
- Wiqpack  , &
- Wrksuite , &
- Wi1mach  , &
- Wd1mach  , &
- Wilut    , &
- Witers   , &
- Wsphdf5  , &
- Wpreset  , &
- Wglobal  , &
- Wxspech  , &
+ Wmanual , &
+ Wrzaxis , &
+ Wpackxi , &
+ Wvolume , &
+ Wcoords , &
+ Wbasefn , &
+ Wmemory , &
+ Wmetrix , &
+ Wma00aa , &
+ Wmatrix , &
+ Wspsmat , &
+ Wspsint , &
+ Wmp00ac , &
+ Wma02aa , &
+ Wpackab , &
+ Wtr00ab , &
+ Wcurent , &
+ Wdf00ab , &
+ Wlforce , &
+ Wintghs , &
+ Wmtrxhs , &
+ Wlbpol  , &
+ Wbrcast , &
+ Wdfp100 , &
+ Wdfp200 , &
+ Wdforce , &
+ Wnewton , &
+ Wcasing , &
+ Wbnorml , &
+ Wjo00aa , &
+ Wpp00aa , &
+ Wpp00ab , &
+ Wbfield , &
+ Wstzxyz , &
+ Whesian , &
+ Wra00aa , &
+ Wnumrec , &
+ Wdcuhre , &
+ Wminpack, &
+ Wiqpack , &
+ Wrksuite, &
+ Wi1mach , &
+ Wd1mach , &
+ Wilut   , &
+ Witers  , &
+ Wsphdf5 , &
+ Wpreset , &
+ Wglobal , &
+ Wxspech , &
  Wbuild_vector_potential , &
  Wreadin , &
  Wwrtend , &
