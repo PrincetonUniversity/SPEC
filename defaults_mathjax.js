@@ -4,13 +4,13 @@ window.MathJax = {
     load: ['[tex]/color', '[tex]/cancel']
   },
   tex: {
-      tags: "ams",
+      tags: 'ams',
       packages: {'[+]': ['noerrors'],
                  '[+]': ['color'],
                  '[+]': ['verb'],
                  '[+]': ['cancel']
       }
-      macros: { bm: ["{\\boldsymbol #1}",1]
+      macros: { bm: ['{\\boldsymbol #1}',1]
       }
   }
 };
