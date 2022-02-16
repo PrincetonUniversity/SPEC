@@ -1,0 +1,30 @@
+name: python_wrapper
+on: [push, pull_request]
+jobs:
+  python_wrapper-build:
+    runs-on: ubuntu-latest
+    name: python_wrapper build
+    
+    steps:
+    - uses: actions/checkout@v2
+
+    # Python3 should be pre-installed on 'ubuntu-latest'
+    - name: Python version info
+      run: |
+        python3 --version
+        pip3 --version
+
+    - name: Install dependencies
+      run: |
+        pip3 install numpy f90nml scikit-build cmake ninja
+        pip3 install -U git+https://github.com/zhucaoxiang/f90wrap
+
+    - name: Build python_wrapper
+      run: |
+        python3 setup.py bdist_wheel
+        cd dist
+        pip3 install -U *.whl
+        
+    -name: Test if installation is ok
+     run: |
+       python3 -c "import spec; print('success')"
