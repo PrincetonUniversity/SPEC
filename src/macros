@@ -31,7 +31,7 @@ m4_define(LOCALS,{! macro expansion of locals;
   use mpi
   implicit none
   INTEGER   :: ierr, astat, ios, nthreads, ithread
-  REAL      :: cput, cpui, cpuo ! cpu time; cpu initial; cpu old; 31 Jan 13;
+  REAL      :: cput, cpui, cpuo=0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
 
   ! macro expansion of locals; end;})m4_dnl ; can put comments here;
 
