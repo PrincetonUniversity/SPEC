@@ -1,4 +1,3 @@
-<script>
 window.MathJax = {
   loader: {
     load: ['[tex]/color', '[tex]/cancel']
@@ -14,5 +13,3 @@ window.MathJax = {
       }
   }
 };
-</script>
-<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" id="MathJax-script"></script>
