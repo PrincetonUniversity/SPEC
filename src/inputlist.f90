@@ -10,8 +10,8 @@ module inputlist
 
   ! The following parameters set the maximum allowed resolution:
   INTEGER, parameter :: MNvol     = 256 !< The maximum value of \c Nvol is \c MNvol=256.
-  INTEGER, parameter :: MMpol     =  64 !< The maximum value of \c Mpol is \c MNpol=64.
-  INTEGER, parameter :: MNtor     =  64 !< The maximum value of \c Ntor is \c MNtor=64.
+  INTEGER, parameter :: MMpol     = 128 !< The maximum value of \c Mpol is \c MNpol=64.
+  INTEGER, parameter :: MNtor     = 128 !< The maximum value of \c Ntor is \c MNtor=64.
 
 !> \addtogroup grp_global_physicslist physicslist
 !> \brief The namelist \c physicslist controls the geometry, profiles, and numerical resolution.
@@ -958,3 +958,4 @@ end subroutine initialize_inputs
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 end module inputlist
+!> @}
