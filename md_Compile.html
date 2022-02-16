@@ -131,7 +131,10 @@ Installation with CMake</h1>
 </div><!-- fragment --><h2><a class="anchor" id="autotoc_md3"></a>
 Stand-alone Executable Compiling</h2>
 <p >Compiling SPEC requires MPI, HDF5, and numerical libraries such as BLAS, LAPACK, FFTW. For numerical libraries, you could use system supplied libraries or you could use intel math kernel library (MKL).</p>
-<h3><a class="anchor" id="autotoc_md4"></a>
+<p >Machine-specific settings when building the python wrapper are put into separate <code>json</code> files in the <code>cmake_machines</code> directory. For building the regular SPEC executable, the default settings should work.</p>
+<p >In order to select a machine-specific settings file, create a soft link to the indented file in <code>cmake_machines</code>:</p>
+<div class="fragment"><div class="line">ln -sf cmake_machines/gfortran_ubuntu.json cmake_config.json</div>
+</div><!-- fragment --><h3><a class="anchor" id="autotoc_md4"></a>
 CentOS</h3>
 <p >Here instructions are given for CentOS 7</p>
 <h4><a class="anchor" id="autotoc_md5"></a>
