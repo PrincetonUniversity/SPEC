@@ -1,45 +1,45 @@
 <map id="evaluate_dbb" name="evaluate_dbb">
-<area shape="rect" id="node1" title="Evaluate the derivative of the square of the magnetic field modulus. Add spectral constraint derivati..." alt="" coords="5,752,104,779"/>
-<area shape="rect" id="node2" href="$dfp200_8f90.html#a55ea75395f8c71731451e1add3720c7e" title="Given the field consistent with the constraints and the geometry, computes local quantites related to..." alt="" coords="152,752,213,779"/>
-<area shape="rect" id="node43" href="$group__grp__local__force.html#ga7a5316b9e5eeb42811aa6bccd29a132f" title="Computes , and the spectral condensation constraints if required, on the interfaces,..." alt="" coords="317,1323,372,1349"/>
-<area shape="rect" id="node3" href="$memory_8f90.html#a8a98304f95fee4429a60a58050e999b8" title="allocate Beltrami matrices" alt="" coords="763,387,941,413"/>
-<area shape="rect" id="node4" href="$memory_8f90.html#a91ea75b56a77c048841932a601482f78" title="allocate geometry matrices" alt="" coords="760,488,944,515"/>
-<area shape="rect" id="node5" href="$memory_8f90.html#a4591e03fce625b2a91ab6d970a3a1ede" title="deallocate Beltrami matrices" alt="" coords="785,191,919,233"/>
-<area shape="rect" id="node6" href="$memory_8f90.html#a7b3f3dc45c42c50c1db3cc7e354031a2" title="deallocate geometry matrices" alt="" coords="781,257,923,298"/>
-<area shape="rect" id="node7" href="$dfp200_8f90.html#a73ddf39ecc5228201fb643779e17cd36" title="Evaluate mu and psip derivatives and store them in dmupfdx." alt="" coords="476,459,603,485"/>
-<area shape="rect" id="node10" href="$group__grp__volume.html#gae4c62d20b8fef07f4471b5b0889ab005" title="Computes volume of each region; and, if required, the derivatives of the volume with respect to the i..." alt="" coords="1868,1221,1932,1248"/>
-<area shape="rect" id="node13" href="$intghs_8f90.html#ae10091a51178071d12004da4952104d4" title="free workspace" alt="" coords="764,539,940,565"/>
-<area shape="rect" id="node17" href="$intghs_8f90.html#ae8299d4625cabd90eb1398fd2cd38089" title="init workspace" alt="" coords="777,589,927,616"/>
-<area shape="rect" id="node25" href="$group__grp__packing.html#gaee2357e570aebf8559e169def6b619dd" title="Packs and unpacks Beltrami field solution vector." alt="" coords="1462,981,1526,1008"/>
-<area shape="rect" id="node37" href="$dfp200_8f90.html#a6aca59cf350d7b1941f8389d50945a43" title="get LU Beltrami matrices" alt="" coords="261,1221,428,1248"/>
-<area shape="rect" id="node42" href="$dfp200_8f90.html#a5e56f1f4b1e6df11a9cffa6237c37469" title="This routine evaluates the value of the magnetic field once the interface is perturbed using matrix p..." alt="" coords="1259,1007,1412,1033"/>
-<area shape="rect" id="node8" href="$group__grp__currents.html#gacaf4411e0ba378631dcd2ccb3752e452" title="Computes the plasma current, , and the &quot;linking&quot; current, ." alt="" coords="1143,500,1202,527"/>
-<area shape="rect" id="node11" href="$dfp100_8f90.html#a17a3ac15cc83994394f7b4cc05e5898e" title="Split the work between MPI nodes and evaluate the global constraint." alt="" coords="651,803,712,829"/>
-<area shape="rect" id="node29" href="$group__grp__transform.html#ga0e0447653b8da82f06748dd8831bc337" title="Calculates rotational transform given an arbitrary tangential field." alt="" coords="1143,652,1202,679"/>
-<area shape="rect" id="node9" href="$group__grp__geometry.html#gaaca20aa60eaf39055f3c9d5c02a24ac2" title="Calculates coordinates, , and metrics, using FFTs." alt="" coords="1759,1221,1820,1248"/>
-<area shape="rect" id="node12" href="$metrix_8f90.html#a80c802cda076dd9e7031bc5f9098c175" title="compute guvijsave" alt="" coords="1576,1171,1711,1197"/>
-<area shape="rect" id="node18" href="$namespaceallglobal.html#aea1f5a74462533337cb950b8d7486b25" title="Check if volume vvol is associated to the corresponding MPI node." alt="" coords="780,893,924,920"/>
-<area shape="rect" id="node19" href="$group__grp__integrals.html#ga400af9e33dd5465ff9a4bba9fbf91108" title="Calculates volume integrals of Chebyshev polynomials and metric element products." alt="" coords="1460,1221,1528,1248"/>
-<area shape="rect" id="node21" href="$group__grp__solver__driver.html#gacad623d4c5c006e9ad10116372f92ad3" title="Constructs Beltrami field in given volume consistent with flux, helicity, rotational&#45;transform and/or..." alt="" coords="818,741,886,768"/>
-<area shape="rect" id="node30" href="$group__grp__build__matrices.html#ga1c52bb6dbffdb432550aae12b096080f" title="Constructs energy and helicity matrices that represent the Beltrami linear system...." alt="" coords="823,1171,881,1197"/>
-<area shape="rect" id="node31" href="$group__grp__integrals.html#ga01df49c498752e8a4201cc6eb5e283af" title="Calculates volume integrals of Chebyshev&#45;polynomials and metric elements for preconditioner." alt="" coords="1465,728,1523,755"/>
-<area shape="rect" id="node32" href="$group__grp__build__matrices.html#ga4d521a46a64530ade50e6b79a33e1452" title="Constructs matrices for the precondtioner." alt="" coords="819,843,885,869"/>
-<area shape="rect" id="node36" href="$namespaceallglobal.html#ad2dbd21d0579d623a92119c5ab553c7c" title="Returns which MPI node is associated to a given volume." alt="" coords="782,792,922,819"/>
-<area shape="rect" id="node14" href="$intghs_8f90.html#a21d3b7106371783302e68297f7797e9f" title="Calculates volume integrals of Chebyshev polynomials and covariant field products." alt="" coords="1465,779,1523,805"/>
-<area shape="rect" id="node15" href="$basefn_8f90.html#af6a4cad04c70bfb14fd18a3bfbc843a3" title="Get the Chebyshev polynomials with zeroth, first derivatives." alt="" coords="1603,753,1684,780"/>
-<area shape="rect" id="node16" href="$basefn_8f90.html#a38dc596fb909186b01dacc1feac03164" title="Get the Zernike polynomials &#160;with zeroth, first derivatives." alt="" coords="1599,804,1687,831"/>
-<area shape="rect" id="node20" href="$group__grp__metrics.html#ga254ce8e645c4110d77e3b3dbc3a89885" title="Calculates the metric quantities, , which are required for the energy and helicity integrals." alt="" coords="1615,1221,1672,1248"/>
-<area shape="rect" id="node22" href="$group__grp__integrals.html#ga6d086e8d1af527def50b653b86e8373a" title="Evaluates volume integrals, and their derivatives w.r.t. interface geometry, using &quot;packed&quot; format." alt="" coords="1009,741,1070,768"/>
-<area shape="rect" id="node23" href="$group__grp__solver.html#ga6626839aff500f060beb5bce2b90c447" title="Solves Beltrami/vacuum (linear) system, given matrices.unpacking fluxes, helicity multiplier" alt="" coords="1005,691,1073,717"/>
-<area shape="rect" id="node24" href="$group__grp__build__matrices.html#ga6c22bb4322fbcc29cb17dcc90b56eacd" title="Constructs matrices that represent the Beltrami linear system, matrix&#45;free." alt="" coords="1463,829,1525,856"/>
-<area shape="rect" id="node26" href="$mp00ac_8f90.html#a304edac43f63d39dda4419b4d044eac5" title="run GMRES" alt="" coords="1135,804,1211,831"/>
-<area shape="rect" id="node27" href="$mp00ac_8f90.html#ae9fe335bb4916face9f9d19ce8c0f5d7" title="compute a.x by either by coumputing it directly, or using a matrix free method" alt="" coords="1303,804,1368,831"/>
-<area shape="rect" id="node28" href="$mp00ac_8f90.html#a76cda97bf815eb7f40cb76ad1719d809" title="apply the preconditioner" alt="" coords="1293,855,1378,881"/>
-<area shape="rect" id="node33" href="$spsmat_8f90.html#a029deb1b6e086ff346f36f5c61d0c1b2" title="add the content from the queue to the real matrices" alt="" coords="1008,843,1071,869"/>
-<area shape="rect" id="node34" href="$spsmat_8f90.html#ab8d57e74b7461b1d2781c5d56dea6120" title="clean the queue" alt="" coords="992,893,1087,920"/>
-<area shape="rect" id="node35" href="$spsmat_8f90.html#a6c4c1ca7c194a5116f2d358c2065ce00" title="push a new element at the back of the queue" alt="" coords="997,944,1082,971"/>
-<area shape="rect" id="node38" href="$group__grp__global__force.html#ga38c9d3c50bd043707fefa5137c9dbf44" title="Calculates , where &#160;and , and ." alt="" coords="510,1272,569,1299"/>
-<area shape="rect" id="node39" href="$group__grp__parallel.html#ga5d8e3412e023967dda67b02f358b754a" title="Broadcasts Beltrami fields, profiles, . . ." alt="" coords="652,1373,711,1400"/>
-<area shape="rect" id="node40" href="$group__grp__packing.html#ga094e630c02686dd178749eb1efbf13fb" title="Packs, and unpacks, geometrical degrees of freedom; and sets coordinate axis." alt="" coords="652,1323,711,1349"/>
-<area shape="rect" id="node41" href="$group__grp__coord__axis.html#ga564281be4d9806d0688a717314ad748f" title="The coordinate axis is assigned via a poloidal average over an arbitrary surface." alt="" coords="1145,1373,1200,1400"/>
+<area shape="rect" id="node1" title="Evaluate the derivative of the square of the magnetic field modulus. Add spectral constraint derivati..." alt="" coords="5,713,104,740"/>
+<area shape="rect" id="node2" href="$dfp200_8f90.html#a55ea75395f8c71731451e1add3720c7e" title="Given the field consistent with the constraints and the geometry, computes local quantites related to..." alt="" coords="152,713,213,740"/>
+<area shape="rect" id="node43" href="$group__grp__local__force.html#ga7a5316b9e5eeb42811aa6bccd29a132f" title="Computes , and the spectral condensation constraints if required, on the interfaces,..." alt="" coords="317,29,372,56"/>
+<area shape="rect" id="node3" href="$memory_8f90.html#a8a98304f95fee4429a60a58050e999b8" title="allocate Beltrami matrices" alt="" coords="763,257,941,284"/>
+<area shape="rect" id="node4" href="$memory_8f90.html#a91ea75b56a77c048841932a601482f78" title="allocate geometry matrices" alt="" coords="760,352,944,379"/>
+<area shape="rect" id="node5" href="$memory_8f90.html#a4591e03fce625b2a91ab6d970a3a1ede" title="deallocate Beltrami matrices" alt="" coords="785,403,919,445"/>
+<area shape="rect" id="node6" href="$memory_8f90.html#a7b3f3dc45c42c50c1db3cc7e354031a2" title="deallocate geometry matrices" alt="" coords="781,469,923,510"/>
+<area shape="rect" id="node7" href="$dfp200_8f90.html#a73ddf39ecc5228201fb643779e17cd36" title="Evaluate mu and psip derivatives and store them in dmupfdx." alt="" coords="476,612,603,639"/>
+<area shape="rect" id="node10" href="$group__grp__volume.html#gae4c62d20b8fef07f4471b5b0889ab005" title="Computes volume of each region; and, if required, the derivatives of the volume with respect to the i..." alt="" coords="1868,636,1932,663"/>
+<area shape="rect" id="node13" href="$intghs_8f90.html#ae10091a51178071d12004da4952104d4" title="free workspace" alt="" coords="764,839,940,865"/>
+<area shape="rect" id="node17" href="$intghs_8f90.html#ae8299d4625cabd90eb1398fd2cd38089" title="init workspace" alt="" coords="777,636,927,663"/>
+<area shape="rect" id="node18" href="$namespaceallglobal.html#aea1f5a74462533337cb950b8d7486b25" title="Check if volume vvol is associated to the corresponding MPI node." alt="" coords="780,1167,924,1193"/>
+<area shape="rect" id="node25" href="$group__grp__packing.html#gaee2357e570aebf8559e169def6b619dd" title="Packs and unpacks Beltrami field solution vector." alt="" coords="1462,1192,1526,1219"/>
+<area shape="rect" id="node36" href="$namespaceallglobal.html#ad2dbd21d0579d623a92119c5ab553c7c" title="Returns which MPI node is associated to a given volume." alt="" coords="782,1393,922,1420"/>
+<area shape="rect" id="node37" href="$dfp200_8f90.html#a6aca59cf350d7b1941f8389d50945a43" title="get LU Beltrami matrices" alt="" coords="261,1141,428,1168"/>
+<area shape="rect" id="node42" href="$dfp200_8f90.html#a5e56f1f4b1e6df11a9cffa6237c37469" title="This routine evaluates the value of the magnetic field once the interface is perturbed using matrix p..." alt="" coords="1259,1116,1412,1143"/>
+<area shape="rect" id="node8" href="$group__grp__currents.html#gacaf4411e0ba378631dcd2ccb3752e452" title="Computes the plasma current, , and the &quot;linking&quot; current, ." alt="" coords="1143,636,1202,663"/>
+<area shape="rect" id="node11" href="$dfp100_8f90.html#a17a3ac15cc83994394f7b4cc05e5898e" title="Split the work between MPI nodes and evaluate the global constraint." alt="" coords="651,839,712,865"/>
+<area shape="rect" id="node29" href="$group__grp__transform.html#ga0e0447653b8da82f06748dd8831bc337" title="Calculates rotational transform given an arbitrary tangential field." alt="" coords="1143,761,1202,788"/>
+<area shape="rect" id="node9" href="$group__grp__geometry.html#gaaca20aa60eaf39055f3c9d5c02a24ac2" title="Calculates coordinates, , and metrics, using FFTs." alt="" coords="1759,636,1820,663"/>
+<area shape="rect" id="node12" href="$metrix_8f90.html#a80c802cda076dd9e7031bc5f9098c175" title="compute guvijsave" alt="" coords="1576,1141,1711,1168"/>
+<area shape="rect" id="node19" href="$group__grp__integrals.html#ga400af9e33dd5465ff9a4bba9fbf91108" title="Calculates volume integrals of Chebyshev polynomials and metric element products." alt="" coords="1460,1368,1528,1395"/>
+<area shape="rect" id="node21" href="$group__grp__solver__driver.html#gacad623d4c5c006e9ad10116372f92ad3" title="Constructs Beltrami field in given volume consistent with flux, helicity, rotational&#45;transform and/or..." alt="" coords="818,1015,886,1041"/>
+<area shape="rect" id="node30" href="$group__grp__build__matrices.html#ga1c52bb6dbffdb432550aae12b096080f" title="Constructs energy and helicity matrices that represent the Beltrami linear system...." alt="" coords="823,1241,881,1268"/>
+<area shape="rect" id="node31" href="$group__grp__integrals.html#ga01df49c498752e8a4201cc6eb5e283af" title="Calculates volume integrals of Chebyshev&#45;polynomials and metric elements for preconditioner." alt="" coords="1465,903,1523,929"/>
+<area shape="rect" id="node32" href="$group__grp__build__matrices.html#ga4d521a46a64530ade50e6b79a33e1452" title="Constructs matrices for the precondtioner." alt="" coords="819,927,885,953"/>
+<area shape="rect" id="node14" href="$intghs_8f90.html#a21d3b7106371783302e68297f7797e9f" title="Calculates volume integrals of Chebyshev polynomials and covariant field products." alt="" coords="1465,977,1523,1004"/>
+<area shape="rect" id="node15" href="$basefn_8f90.html#af6a4cad04c70bfb14fd18a3bfbc843a3" title="Get the Chebyshev polynomials with zeroth, first derivatives." alt="" coords="1603,952,1684,979"/>
+<area shape="rect" id="node16" href="$basefn_8f90.html#a38dc596fb909186b01dacc1feac03164" title="Get the Zernike polynomials &#160;with zeroth, first derivatives." alt="" coords="1599,1003,1687,1029"/>
+<area shape="rect" id="node20" href="$group__grp__metrics.html#ga254ce8e645c4110d77e3b3dbc3a89885" title="Calculates the metric quantities, , which are required for the energy and helicity integrals." alt="" coords="1615,1368,1672,1395"/>
+<area shape="rect" id="node22" href="$group__grp__integrals.html#ga6d086e8d1af527def50b653b86e8373a" title="Evaluates volume integrals, and their derivatives w.r.t. interface geometry, using &quot;packed&quot; format." alt="" coords="1009,1140,1070,1167"/>
+<area shape="rect" id="node23" href="$group__grp__solver.html#ga6626839aff500f060beb5bce2b90c447" title="Solves Beltrami/vacuum (linear) system, given matrices.unpacking fluxes, helicity multiplier" alt="" coords="1005,1065,1073,1092"/>
+<area shape="rect" id="node24" href="$group__grp__build__matrices.html#ga6c22bb4322fbcc29cb17dcc90b56eacd" title="Constructs matrices that represent the Beltrami linear system, matrix&#45;free." alt="" coords="1463,1052,1525,1079"/>
+<area shape="rect" id="node26" href="$mp00ac_8f90.html#a304edac43f63d39dda4419b4d044eac5" title="run GMRES" alt="" coords="1135,1041,1211,1068"/>
+<area shape="rect" id="node27" href="$mp00ac_8f90.html#ae9fe335bb4916face9f9d19ce8c0f5d7" title="compute a.x by either by coumputing it directly, or using a matrix free method" alt="" coords="1303,1015,1368,1041"/>
+<area shape="rect" id="node28" href="$mp00ac_8f90.html#a76cda97bf815eb7f40cb76ad1719d809" title="apply the preconditioner" alt="" coords="1293,1065,1378,1092"/>
+<area shape="rect" id="node33" href="$spsmat_8f90.html#a029deb1b6e086ff346f36f5c61d0c1b2" title="add the content from the queue to the real matrices" alt="" coords="1008,940,1071,967"/>
+<area shape="rect" id="node34" href="$spsmat_8f90.html#ab8d57e74b7461b1d2781c5d56dea6120" title="clean the queue" alt="" coords="992,991,1087,1017"/>
+<area shape="rect" id="node35" href="$spsmat_8f90.html#a6c4c1ca7c194a5116f2d358c2065ce00" title="push a new element at the back of the queue" alt="" coords="997,889,1082,916"/>
+<area shape="rect" id="node38" href="$group__grp__global__force.html#ga38c9d3c50bd043707fefa5137c9dbf44" title="Calculates , where &#160;and , and ." alt="" coords="510,1141,569,1168"/>
+<area shape="rect" id="node39" href="$group__grp__parallel.html#ga5d8e3412e023967dda67b02f358b754a" title="Broadcasts Beltrami fields, profiles, . . ." alt="" coords="652,1116,711,1143"/>
+<area shape="rect" id="node40" href="$group__grp__packing.html#ga094e630c02686dd178749eb1efbf13fb" title="Packs, and unpacks, geometrical degrees of freedom; and sets coordinate axis." alt="" coords="652,1241,711,1268"/>
+<area shape="rect" id="node41" href="$group__grp__coord__axis.html#ga564281be4d9806d0688a717314ad748f" title="The coordinate axis is assigned via a poloidal average over an arbitrary surface." alt="" coords="1145,1519,1200,1545"/>
 </map>

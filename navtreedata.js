@@ -39,10 +39,12 @@ var NAVTREE =
           [ "Dependencies", "md_Compile.html#autotoc_md9", null ]
         ] ],
         [ "Stellar cluster at PPPL", "md_Compile.html#autotoc_md10", [
-          [ "Python wrapper", "md_Compile.html#autotoc_md11", null ],
-          [ "SPEC executable.", "md_Compile.html#autotoc_md13", null ]
+          [ "Python wrapper", "md_Compile.html#autotoc_md11", null ]
         ] ],
-        [ "Mac", "md_Compile.html#autotoc_md14", null ]
+        [ "iv. anaconda3/2021.5.", "md_Compile.html#autotoc_md12", [
+          [ "SPEC executable.", "md_Compile.html#autotoc_md14", null ]
+        ] ],
+        [ "Mac", "md_Compile.html#autotoc_md15", null ]
       ] ]
     ] ],
     [ "Todo List", "todo.html", null ],
@@ -73,11 +75,9 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "annotated.html",
-"global_8f90.html#ga2a7d2dbc4637d792e1eeabcd4ee5564e",
-"group__grp__chebychev__metric.html#ga7008def1a0b65dbd0f55c147183e313a",
-"group__grp__global__local.html#gaac24dc13bce0966f21f862e555337e42",
-"inputlist_8f90.html#ga0c5b84ea6b75639af1fb025f40431982",
-"namespacemembers_vars_r.html"
+"group__grp__fourier__transform.html#ga374fee9c03e6c2b938299934decdcd55",
+"group__grp__output.html#ga2f9e9c50084175e5174b1e1070e24d73",
+"sphdf5_8f90.html#ac2f8bfefd6a0cc6784262480418d6f2b"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

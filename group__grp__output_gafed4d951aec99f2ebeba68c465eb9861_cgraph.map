@@ -1,5 +1,5 @@
 <map id="sphdf5::mirror_input_to_outfile" name="sphdf5::mirror_input_to_outfile">
-<area shape="rect" id="node1" title="Mirror input variables into output file." alt="" coords="5,5,140,47"/>
-<area shape="rect" id="node2" href="$group__grp__volume.html#gae4c62d20b8fef07f4471b5b0889ab005" title="Computes volume of each region; and, if required, the derivatives of the volume with respect to the i..." alt="" coords="188,13,252,39"/>
-<area shape="rect" id="node3" href="$group__grp__geometry.html#gaaca20aa60eaf39055f3c9d5c02a24ac2" title="Calculates coordinates, , and metrics, using FFTs." alt="" coords="300,13,361,39"/>
+<area shape="rect" id="node1" title="Mirror input variables into output file." alt="" coords="5,22,140,63"/>
+<area shape="rect" id="node2" href="$group__grp__volume.html#gae4c62d20b8fef07f4471b5b0889ab005" title="Computes volume of each region; and, if required, the derivatives of the volume with respect to the i..." alt="" coords="188,29,252,56"/>
+<area shape="rect" id="node3" href="$group__grp__geometry.html#gaaca20aa60eaf39055f3c9d5c02a24ac2" title="Calculates coordinates, , and metrics, using FFTs." alt="" coords="300,29,361,56"/>
 </map>
