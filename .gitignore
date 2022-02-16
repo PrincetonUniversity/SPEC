@@ -1,4 +1,8 @@
 
+# python_wrapper
+Utilities/python_wrapper/spec.egg-info
+dist
+
 *.o
 *.mod
 *_p.f90
