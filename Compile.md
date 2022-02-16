@@ -17,6 +17,14 @@ cd <SPEC_ROOT>
 
 Compiling SPEC requires MPI, HDF5, and numerical libraries such as BLAS, LAPACK, FFTW. For numerical libraries, you could use system supplied libraries or you could use intel math kernel library (MKL).
 
+Machine-specific settings when building the python wrapper are put into separate `json` files in the `cmake_machines` directory.
+For building the regular SPEC executable, the default settings should work.
+
+In order to select a machine-specific settings file, create a soft link to the indented file in `cmake_machines`:
+
+```bash
+ln -sf cmake_machines/gfortran_ubuntu.json cmake_config.json
+```
 
 ###  CentOS
 Here instructions are given for CentOS 7
