@@ -1646,7 +1646,7 @@ MATHJAX_RELPATH        = https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.0.0/
 # MATHJAX_EXTENSIONS = TeX/AMSmath TeX/AMSsymbols
 # This tag requires that the tag USE_MATHJAX is set to YES.
 
-MATHJAX_EXTENSIONS     = TeX/AMSmath
+MATHJAX_EXTENSIONS     = amssymb amsmath
 
 # The MATHJAX_CODEFILE tag can be used to specify a file with javascript pieces
 # of code that will be used on startup of the MathJax code. See the MathJax site
@@ -1822,7 +1822,8 @@ PAPER_TYPE             = a4
 # This tag requires that the tag GENERATE_LATEX is set to YES.
 
 EXTRA_PACKAGES         = cancel \
-                         bm
+                         bm \
+                         amsmath amssymb
 
 # The LATEX_HEADER tag can be used to specify a personal LaTeX header for the
 # generated LaTeX document. The header should contain everything until the first
