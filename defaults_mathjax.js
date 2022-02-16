@@ -9,7 +9,7 @@ window.MathJax = {
                  '[+]': ['color'],
                  '[+]': ['verb'],
                  '[+]': ['cancel']
-      }
+      },
       macros: { bm: ['{\\boldsymbol #1}',1]
       }
   }
