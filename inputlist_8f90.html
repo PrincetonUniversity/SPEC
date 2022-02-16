@@ -21,7 +21,6 @@
     extensions: ["tex2jax.js", "amsmath.js", "amssymb.js"],
     jax: ["input/TeX","output/HTML-CSS"],
 });
-// <script type="text/x-mathjax-config">
 window.MathJax = {
   loader: {
     load: ['[tex]/color', '[tex]/cancel']
@@ -37,16 +36,13 @@ window.MathJax = {
       }
   }
 };
+// https://docs.mathjax.org/en/latest/web/configuration.html#configuring-and-loading-in-one-script
 (function () {
   var script = document.createElement('script');
   script.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js';
   script.async = true;
   document.head.appendChild(script);
 })();
-// </script>
-// <script type="text/javascript"
-//         src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
-// </script>
 </script>
 <script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
@@ -141,11 +137,11 @@ integer, parameter&#160;</td><td class="memItemRight" valign="bottom"><a class="
 <tr class="memdesc:ga04cf679d6c45c88672062c93b45f9804"><td class="mdescLeft">&#160;</td><td class="mdescRight">The maximum value of <code>Nvol</code> is <code>MNvol=256</code>. <br /></td></tr>
 <tr class="separator:ga04cf679d6c45c88672062c93b45f9804"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga892498a2fe64e10de1d268fa8fe9a49a"><td class="memItemLeft" align="right" valign="top">
-integer, parameter&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__grp__global.html#ga892498a2fe64e10de1d268fa8fe9a49a">inputlist::mmpol</a> = 64</td></tr>
+integer, parameter&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__grp__global.html#ga892498a2fe64e10de1d268fa8fe9a49a">inputlist::mmpol</a> = 128</td></tr>
 <tr class="memdesc:ga892498a2fe64e10de1d268fa8fe9a49a"><td class="mdescLeft">&#160;</td><td class="mdescRight">The maximum value of <code>Mpol</code> is <code>MNpol=64</code>. <br /></td></tr>
 <tr class="separator:ga892498a2fe64e10de1d268fa8fe9a49a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga937c7b7adc15e28d03bcb767f7d62d53"><td class="memItemLeft" align="right" valign="top">
-integer, parameter&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__grp__global.html#ga937c7b7adc15e28d03bcb767f7d62d53">inputlist::mntor</a> = 64</td></tr>
+integer, parameter&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__grp__global.html#ga937c7b7adc15e28d03bcb767f7d62d53">inputlist::mntor</a> = 128</td></tr>
 <tr class="memdesc:ga937c7b7adc15e28d03bcb767f7d62d53"><td class="mdescLeft">&#160;</td><td class="mdescRight">The maximum value of <code>Ntor</code> is <code>MNtor=64</code>. <br /></td></tr>
 <tr class="separator:ga937c7b7adc15e28d03bcb767f7d62d53"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gaa6dcbfd2f5cb5f23f4bc567fb13ae0e2"><td class="memItemLeft" align="right" valign="top">integer&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__grp__global__physicslist.html#gaa6dcbfd2f5cb5f23f4bc567fb13ae0e2">inputlist::igeometry</a> = 3</td></tr>
