@@ -16,14 +16,16 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip3 install numpy f90nml scikit-build cmake ninja
-        pip3 install -U git+https://github.com/zhucaoxiang/f90wrap
+        apt update
+        apt install gfortran mpi-default-bin mpi-default-dev libhdf5-fortran-102 libhdf5-dev libfftw3-bin libfftw3-dev libopenblas0-openmp libopenblas-dev cmake ninja-build
+        pip3 install numpy f90nml scikit-build
+        pip3 install git+https://github.com/zhucaoxiang/f90wrap
 
     - name: Build python_wrapper
       run: |
         python3 setup.py bdist_wheel
         cd dist
-        pip3 install -U *.whl
+        pip3 install *.whl
         
     - name: Test if installation is ok
       run: |
