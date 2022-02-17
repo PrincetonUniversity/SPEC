@@ -1,7 +1,7 @@
 
 
 # create conda environment for SPEC
-#conda env create -f spec_conda_env.yml
+conda env create -f spec_conda_env.yml
 
 # make sure environment variables get managed correctly
 pushd ~/anaconda3/envs/spec_env
