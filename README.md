@@ -9,4 +9,5 @@ A BibTex file is available: [spec_refs.bib](https://raw.githubusercontent.com/Pr
 * An overview of the algorithm is given in a [Flow Chart](http://w3.pppl.gov/~shudson/Spec/SpecFlowchart.pdf).
 * Please direct questions/suggestions to [Stuart Hudson](mailto:shudson@pppl.gov?subject=spec).
 * Online documentation for SPEC is available on [Github pages](https://princetonuniversity.github.io/SPEC/).  
-  A PDF version of this manual is available: [SPEC_manual.pdf](https://princetonuniversity.github.io/SPEC/SPEC_manual.pdf)
+  A PDF version of this manual is available in [SPEC_manual.pdf](https://princetonuniversity.github.io/SPEC/SPEC_manual.pdf).
+* Instructions for compiling and testing SPEC are in [Compile.md](https://github.com/PrincetonUniversity/SPEC/blob/master/Compile.md).
