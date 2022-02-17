@@ -116,12 +116,14 @@ add_custom_command(
         --build-dir ${CMAKE_CURRENT_BINARY_DIR} 
         --f90exec=${CMAKE_Fortran_COMPILER}
         --f77exec=${CMAKE_Fortran_COMPILER}
+        --f90flags="-fopenmp"
+        -lgomp
         -c 
         #${SCALAPACK_LIB} ${NETCDF_F} ${NETCDF_C}
         ${f90wrap_output_files} 
         -I${CMAKE_BINARY_DIR}/build/modules/spec_modules
         -I${HDF5_Fortran_INCLUDE_DIRS}
-		--verbose
+	--verbose
         ${CMAKE_BINARY_DIR}/build/lib/libspec.a  
         ${SPEC_LINK_LIB}
     #IMPLICIT_DEPENDS Fortran ${f90wrap_output_files}
