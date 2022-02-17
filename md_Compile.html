@@ -123,60 +123,247 @@ $(document).ready(function(){initNavTree('md_Compile.html',''); initResizable();
   <div class="headertitle"><div class="title">Compilation hints for SPEC </div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p >In order to run SPEC, you need a copy of the HDF5 libraries installed which has both the Fortran interface and the parallel (MPI I/O) enabled.</p>
+<div class="textblock"><p >This document tries to summarize the steps necessary to setup SPEC on your machine. Two approaches are discussed. The first one is the CMake setup. The second one is the more classical <code>Makefile</code> setup.</p>
 <h1><a class="anchor" id="autotoc_md2"></a>
-Installation with CMake</h1>
-<p >Using cmake, SPEC can be built as a stand-alone executable or as a python extension, where SPEC can be run directly from python, with all variables passed directly in memory.</p>
-<p >Download the package from git. And change to the root directory of SPEC source code by running </p><div class="fragment"><div class="line">cd &lt;SPEC_ROOT&gt;</div>
-</div><!-- fragment --><h2><a class="anchor" id="autotoc_md3"></a>
-Stand-alone Executable Compiling</h2>
-<p >Compiling SPEC requires MPI, HDF5, and numerical libraries such as BLAS, LAPACK, FFTW. For numerical libraries, you could use system supplied libraries or you could use intel math kernel library (MKL).</p>
-<p >Machine-specific settings when building the python wrapper are put into separate <code>json</code> files in the <code>cmake_machines</code> directory. For building the regular SPEC executable, the default settings should work.</p>
-<p >In order to select a machine-specific settings file, create a soft link to the indented file in <code>cmake_machines</code>:</p>
-<div class="fragment"><div class="line">ln -sf cmake_machines/gfortran_ubuntu.json cmake_config.json</div>
-</div><!-- fragment --><h3><a class="anchor" id="autotoc_md4"></a>
-CentOS</h3>
-<p >Here instructions are given for CentOS 7</p>
-<h4><a class="anchor" id="autotoc_md5"></a>
-Dependencies</h4>
-<p >Install OpenBLAS, FFTW3, and hdf5 using the command </p><div class="fragment"><div class="line">yum install -y  gcc-gfortran openmpi openmpi-devel hdf5 hdf5-devel fftw3 fftw3-devel openblas openblas-devel python3 python3-devel cmake ninja-build</div>
-</div><!-- fragment --><p> If you don't have the latest version of cmake avaialable on your system, you can create a python virtual environment (<a href="https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/">instructions are here</a>), activate it, and then install cmake in that virtual environment using pip </p><div class="fragment"><div class="line">pip install cmake ninja</div>
-</div><!-- fragment --><h4><a class="anchor" id="autotoc_md6"></a>
-Configure</h4>
-<p >When using cmake to build SPEC, the first step is to configure compilers and the locations of libraries. Cmake can detect compilers and libraries at standard locations easily but needs hand-holding when the required libraries are non-standard locations.</p>
-<p >The following command was used to configure cmake build setup for SPEC on Centos </p><div class="fragment"><div class="line">cmake -S. -Bbuild -GNinja -DCMAKE_Fortran_COMPILER=mpifort -DBLA_VENDOR=OpenBLAS -DHDF5_NO_FIND_PACKAGE_CONFIG_FILE=TRUE -DHDF5_PREFER_PARALLEL=TRUE -DCMAKE_INSTALL_PREFIX=${SPEC_ROOT}/install --trace-source=CMakeLists.txt 2&gt;&amp;1 | tee log</div>
-</div><!-- fragment --><p> There are few points to note on the above command</p><ul>
-<li>All the build related files will be in build folder.</li>
-<li>Ninja build system is used. If your system doesn't have ninja installed, remove the -G option. The default is the standard <code>make</code> tool.</li>
-<li>We ae using OpenBLAS for BLAS and LAPACK and MPI fortran compiler</li>
-<li>Since most of the libraries are in standard location, we don't have to specify them. We are giving couple of options related to HDF5 libraries.</li>
-<li>The installation path is install subfolder location within SPEC folder.</li>
-<li>We are interested in a verbose output and also want to store the output in <code>log</code> file.</li>
+CMake and Anaconda</h1>
+<p >The Anaconda system provides an ecosystem of compilers, precompiled libraries and python packages ready to be used. The main goal is to decouple the conda environment from the host system, so that you can use modern software and tools also on machines with outdated local software.</p>
+<p >This guide was written while testing the commands on a Debian 9 x86_64 Linux system. This should be deemed old enough to demonstrate the weirdest errors if something is not under control, hence facilitating the correctness of these instructions.</p>
+<h2><a class="anchor" id="autotoc_md3"></a>
+Install Anaconda</h2>
+<p >The Anaconda installer is available from <a href="https://www.anaconda.com/products/individual">the Anaconda website</a>. At the time of writing, the URL to the actual file is: <a href="https://repo.anaconda.com/archive/Anaconda3-2021.11-Linux-x86_64.sh">https://repo.anaconda.com/archive/Anaconda3-2021.11-Linux-x86_64.sh</a></p>
+<p >Go into folder where the anaconda installer will be downloaded to and download the Anaconda installer:</p>
+<div class="fragment"><div class="line">cd ~/Downloads</div>
+<div class="line">wget https://repo.anaconda.com/archive/Anaconda3-2021.11-Linux-x86_64.sh</div>
+</div><!-- fragment --><p >Launch the Anaconda installer:</p>
+<div class="fragment"><div class="line">bash Anaconda3-2021.11-Linux-x86_64.sh</div>
+</div><!-- fragment --><ul>
+<li>press ENTER to contine</li>
+<li>Accept License Agreement: <code>yes</code></li>
+<li>Confirm the default installation location (here: <code>/home/IPP-HGW/jons/anaconda3</code> == <code>~/anaconda3</code>)</li>
+<li>Allow the installer to run <code>conda init</code>: <code>yes</code></li>
 </ul>
-<h4><a class="anchor" id="autotoc_md7"></a>
-Build</h4>
-<p >After successful completion of cmake configuration step, building is trivial </p><div class="fragment"><div class="line">cmake --build build</div>
-<div class="line">````</div>
-<div class="line">#### Install</div>
-<div class="line">The last step is to install the executable by running</div>
+<p >At this point, the Anaconda installer will modify your <code>~/.bashrc</code>. In order to make these changes take effect, you can logout and log back in, close and re-open your Terminal window or do:</p>
+<div class="fragment"><div class="line">source ~/.bashrc</div>
+</div><!-- fragment --><p >Disable the activation of the Anaconda base environment on login:</p>
+<div class="fragment"><div class="line">conda config --set auto_activate_base False</div>
+</div><!-- fragment --><p >Anaconda works in so-called virtual environments, where environment variables get managed by Anaconda to setup paths to compilers, libraries and include directories semi-automagically.</p>
+<p >For SPEC, it is suggested to create a new conda environment. A setup script to perform these actions is provided in the SPEC repository. Thus, we need to clone the SPEC repository now.</p>
+<h2><a class="anchor" id="autotoc_md4"></a>
+Clone the SPEC repository</h2>
+<p >In this guide, we assume that your copy of SPEC will be located at <code>~/SPEC</code>.</p>
+<p >If you want to upload your changes to the SPEC repository, you should setup your SSH key in your GitHub Settings and use the following URL for the repository instead: <code>git@github.com:PrincetonUniversity/SPEC.git</code></p>
+<p >Clone the repository from GitHub into a folder <code>SPEC</code> in your home directory::</p>
+<div class="fragment"><div class="line">cd ~</div>
+<div class="line">git clone https://github.com/PrincetonUniversity/SPEC.git</div>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md5"></a>
+Setup a Conda Environment for SPEC</h2>
+<p >The conda environment setup needed to compile and run SPEC is in <code>setup_conda.sh</code>. This scripts takes a specification of the conda packages to install from <code>spec_conda_env.yml</code> and created a conda environment called <code>spec_env</code>. Also, two scripts are created in <code>etc/conda/activate.d</code> and <code>etc/conda/deactivate.d</code> of the <code>spec_env</code> environment to mask the system's <code>LD_LIBRARY_PATH</code> when entering the conda environment and to restore it to its previous value when leaving the <code>spec_env</code> environment. Also, the environment variable <code>FFTW_ROOT</code> is set to the conda environment to tell SPEC to use the conda-provided version of FFTW.</p>
+<p >Change into the freshly-cloned SPEC repository and run this script:</p>
+<div class="fragment"><div class="line">cd ~/SPEC</div>
+<div class="line">./setup_conda.sh</div>
+</div><!-- fragment --><p >This might take a while, but at the end you should end up with a message similar to this:</p>
+<div class="fragment"><div class="line">... lots of stuff above here ...</div>
+<div class="line">done</div>
+<div class="line">#</div>
+<div class="line"># To activate this environment, use</div>
+<div class="line">#</div>
+<div class="line">#     $ conda activate spec_env</div>
+<div class="line">#</div>
+<div class="line"># To deactivate an active environment, use</div>
+<div class="line">#</div>
+<div class="line">#     $ conda deactivate</div>
+<div class="line"> </div>
+<div class="line">~/anaconda3/envs/spec_env ~/SPEC</div>
+<div class="line">~/SPEC</div>
+</div><!-- fragment --><p >Activate the conda environment for SPEC:</p>
+<div class="fragment"><div class="line">conda activate spec_env</div>
+</div><!-- fragment --><p >A forked version of <code>f90wrap</code> is required to build the SPEC Python wrapper (for now). Install that next (inside the <code>spec_env</code> conda environment !!!):</p>
+<div class="fragment"><div class="line">pip install -U git+https://github.com/zhucaoxiang/f90wrap</div>
+</div><!-- fragment --><p >The CMake setup is controlled via the <code>setup.py</code> Python script from the SPEC repository. It parses the <code>CMAKE_ARGS</code> environment variable provided by conda.</p>
+<p >Additional machine-dependent CMake options are loaded from <code>cmake_config.json</code>. This is a soft-link to a file in <code>cmake_machines</code>. Anaconda provides all libraries required to build SPEC, but we still need to make sure that the <code>cmake_config.json</code> link points to <code>cmake_machines/conda_debian.json</code>. Note that <code>conda.json</code> in <code>cmake_machines</code> is outdated, as it includes machine-dependent options (<code>-DHDF5_ROOT=~/opt/miniconda3/envs/simsopt/</code>).</p>
+<p >Now force the <code>cmake_config.json</code> link to point to the correct file:</p>
+<div class="fragment"><div class="line">ln -sf cmake_machines/conda_debian.json cmake_config.json</div>
+</div><!-- fragment --><p >This concludes the preliminary setup steps and we can progress by starting the build process:</p>
+<div class="fragment"><div class="line">python setup.py bdist_wheel</div>
+</div><!-- fragment --><p >This step also takes quite a while. At the end, the SPEC python package (<code>spec-0.0.1-cp310-cp310-linux_x86_64.whl</code> or similar) should be available in <code>dist</code>.</p>
+<p >Install it now:</p>
+<div class="fragment"><div class="line">pip install dist/*.whl</div>
+</div><!-- fragment --><p >Note that the Python package you just installed also contains the regular stand-alone SPEC executable <code>xspec</code>, which gets installed into <code>bin/xspec</code> of your conda environment. Verify this by calling <code>which xspec</code>. You should get a message similar to:</p>
+<div class="fragment"><div class="line">/home/IPP-HGW/jons/anaconda3/envs/spec_env/bin/xspec</div>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md6"></a>
+Testing your SPEC installation</h2>
+<p >First, verify that the stand-alone executable is usable. A few test cases are provided in <code>InputFiles/TestCases</code>.</p>
+<p >Create a new directory for SPEC runs and change into it</p>
+<div class="fragment"><div class="line">mkdir ~/SPEC_runs</div>
+<div class="line">cd ~/SPEC_runs</div>
+</div><!-- fragment --><p >Copy a demo input file into the current working directory:</p>
+<div class="fragment"><div class="line">cp ~/SPEC/InputFiles/TestCases/G3V01L0Fi.001.sp .</div>
+</div><!-- fragment --><p >Call SPEC with an input file (<code>*.sp</code>) as argument on the command line:</p>
+<div class="fragment"><div class="line">xspec G3V01L0Fi.001.sp</div>
+</div><!-- fragment --><p >You should see the screen output of the SPEC run. Among the last lines should be something similar to this:</p>
+<div class="fragment"><div class="line">ending :       0.88 : myid=  0 ; completion ; time=      0.88s =     0.01m =   0.00h =  0.00d ; date= 2022/02/17 ; time= 17:35:33 ; ext = G1V02L0Fi.001                                               </div>
+<div class="line">ending :            : </div>
+<div class="line">xspech :            :</div>
+<div class="line">xspech :       0.88 : myid=  0 : time=    0.01m =   0.00h =  0.00d ;</div>
+</div><!-- fragment --><p >This indicates that the stand-alone executable is usable.</p>
+<p >Next, the python wrapper is tested.</p>
+<ol type="1">
+<li><p class="startli">Check that the SPEC version can be found:</p>
+<div class="fragment"><div class="line">python -c &quot;from spec import spec_f90wrapped as spec; print(&#39;SPEC version: {:}&#39;.format(spec.constants.version))&quot;</div>
+</div><!-- fragment --><p class="startli">This should print a message like "SPEC version: 3.1" on the screen.</p>
+</li>
+<li><p class="startli">Check that the Python wrapper can be used as a stand-alone code:</p>
+<div class="fragment"><div class="line">    OMP_NUM_THREADS=1 python ~/SPEC/Utilities/python_wrapper/spec/core.py G3V01L0Fi.001.sp</div>
+<div class="line">    ```</div>
+<div class="line">    </div>
+<div class="line">    This should conclude with the message `SPEC called from python finished!`.</div>
+<div class="line">    </div>
+<div class="line">3. Run the optimization example code:</div>
+<div class="line">    </div>
+<div class="line">    ```bash</div>
+<div class="line">    OMP_NUM_THREADS=1 python ~/SPEC/Utilities/python_wrapper/examples/example.py</div>
+<div class="line">    ```</div>
+<div class="line">    </div>
+<div class="line">    This should run a basic optimization problem,</div>
+<div class="line">    where the SPEC inputs are controlled via `scipy.optimize`.</div>
+<div class="line">    </div>
+<div class="line">4. Run the interactive re-convergence example code:</div>
+<div class="line">    </div>
+<div class="line">    ```bash</div>
+<div class="line">    OMP_NUM_THREADS=1 python ~/SPEC/Utilities/python_wrapper/examples/example_2.py</div>
+<div class="line">    ```</div>
+<div class="line">    </div>
+<div class="line">    This should compute a SPEC equilibrium, then change the central pressure,</div>
+<div class="line">    re-converge SPEC, etc. for a set of five values of the central pressure</div>
+<div class="line">    in a two-volume classical Stellarator case.</div>
+<div class="line">    After the pressure scan with re-convergence,</div>
+<div class="line">    a plot of the MHD energy vs. the central pressure is shown.</div>
+<div class="line"> </div>
+<div class="line"> </div>
+<div class="line"> </div>
+<div class="line"> </div>
+<div class="line"> </div>
+<div class="line"> </div>
+<div class="line"> </div>
+<div class="line"> </div>
+<div class="line"> </div>
+<div class="line"> </div>
+<div class="line"> </div>
+<div class="line"> </div>
+<div class="line"> </div>
+<div class="line"> </div>
+<div class="line"> </div>
+<div class="line"> </div>
+<div class="line"> </div>
+<div class="line"> </div>
+<div class="line"> </div>
+<div class="line"> </div>
+<div class="line"> </div>
+<div class="line"> </div>
+<div class="line"> </div>
+<div class="line"> </div>
+<div class="line"> </div>
+<div class="line"> </div>
+<div class="line"> </div>
+<div class="line"> </div>
+<div class="line"> </div>
+<div class="line"> </div>
+<div class="line"> </div>
+<div class="line"> </div>
+<div class="line"> </div>
+<div class="line"> </div>
+<div class="line"> </div>
+<div class="line"> </div>
+<div class="line"> </div>
+<div class="line"> </div>
+<div class="line"> </div>
+<div class="line"># BELOW INSTRUCTIONS ARE OUTDATED</div>
+<div class="line"> </div>
+<div class="line"># BELOW INSTRUCTIONS ARE OUTDATED</div>
+<div class="line"> </div>
+<div class="line"># BELOW INSTRUCTIONS ARE OUTDATED</div>
+<div class="line"> </div>
+<div class="line"> </div>
+<div class="line"> </div>
+<div class="line">In order to run SPEC, you need a copy of the HDF5 libraries installed, which has the Fortran interface enabled.</div>
+<div class="line"> </div>
+<div class="line">## Installation with CMake</div>
+<div class="line"> </div>
+<div class="line">Using CMake, SPEC can be built as a stand-alone executable and as a python extension,</div>
+<div class="line">where SPEC can be run directly from python, with all variables passed directly in memory.</div>
+<div class="line"> </div>
+<div class="line"> </div>
+<div class="line">Download the package from git. And change to the root directory of SPEC source code by running</div>
 <div class="line">```bash</div>
-<div class="line">cmake --install build</div>
+<div class="line">cd &lt;SPEC_ROOT&gt;</div>
+<div class="line">```</div>
+<div class="line"> </div>
+<div class="line">## Stand-alone Executable Compiling</div>
+<div class="line"> </div>
+<div class="line">Compiling SPEC requires MPI, HDF5, and numerical libraries such as BLAS, LAPACK, FFTW. For numerical libraries, you could use system supplied libraries or you could use intel math kernel library (MKL).</div>
+<div class="line"> </div>
+<div class="line">Machine-specific settings when building the python wrapper are put into separate `json` files in the `cmake_machines` directory.</div>
+<div class="line">For building the regular SPEC executable, the default settings should work.</div>
+<div class="line"> </div>
+<div class="line">In order to select a machine-specific settings file, create a soft link to the indented file in `cmake_machines`:</div>
+<div class="line"> </div>
+<div class="line">```bash</div>
+<div class="line">ln -sf cmake_machines/gfortran_ubuntu.json cmake_config.json</div>
+<div class="line">```</div>
+<div class="line"> </div>
+<div class="line">###  CentOS</div>
+<div class="line">Here instructions are given for CentOS 7</div>
+<div class="line"> </div>
+<div class="line">#### Dependencies</div>
+<div class="line">Install OpenBLAS, FFTW3, and hdf5 using the command</div>
+<div class="line">```bash</div>
+<div class="line">yum install -y  gcc-gfortran openmpi openmpi-devel hdf5 hdf5-devel fftw3 fftw3-devel openblas openblas-devel python3 python3-devel cmake ninja-build</div>
+<div class="line">```</div>
+<div class="line">If you don&#39;t have the latest version of cmake avaialable on your system, you can create a python virtual environment ([instructions are here](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/)), activate it, and then install cmake in that virtual environment using pip</div>
+<div class="line">```bash</div>
+<div class="line">pip install cmake ninja</div>
+<div class="line">```</div>
+<div class="line"> </div>
+<div class="line">#### Configure</div>
+<div class="line">When using cmake to build SPEC, the first step is to configure compilers and the locations of libraries. Cmake can detect compilers and libraries at standard locations easily but needs hand-holding when the required libraries are non-standard locations.</div>
+<div class="line"> </div>
+<div class="line">The following command was used to configure cmake build setup for SPEC on Centos</div>
+<div class="line">```bash</div>
+<div class="line">cmake -S. -Bbuild -GNinja -DCMAKE_Fortran_COMPILER=mpifort -DBLA_VENDOR=OpenBLAS -DHDF5_NO_FIND_PACKAGE_CONFIG_FILE=TRUE -DHDF5_PREFER_PARALLEL=TRUE -DCMAKE_INSTALL_PREFIX=${SPEC_ROOT}/install --trace-source=CMakeLists.txt 2&gt;&amp;1 | tee log</div>
+<div class="line">```</div>
+<div class="line">There are few points to note on the above command</div>
+<div class="line">  - All the build related files will be in build folder.</div>
+<div class="line">  - Ninja build system is used. If your system doesn&#39;t have ninja installed, remove the -G option. The default is the standard `make` tool. </div>
+<div class="line">  - We ae using OpenBLAS for BLAS and LAPACK and MPI fortran compiler</div>
+<div class="line">  - Since most of the libraries are in standard location, we don&#39;t have to specify them. We are giving couple of options related to HDF5 libraries.</div>
+<div class="line">  - The installation path is install subfolder location within SPEC folder.</div>
+<div class="line">  - We are interested in a verbose output and also want to store the output in `log` file. </div>
+<div class="line"> </div>
+<div class="line">#### Build</div>
+<div class="line">After successful completion of cmake configuration step, building is trivial</div>
+<div class="line">```bash</div>
+<div class="line">cmake --build build</div>
+</div><!-- fragment --> </li>
+</ol>
+<h3><a class="anchor" id="autotoc_md7"></a>
+Install</h3>
+<p >The last step is to install the executable by running </p><div class="fragment"><div class="line">cmake --install build</div>
 </div><!-- fragment --><p >That's it! If all the above steps completed without errors, you have the SPEC executable <code>xspec</code> installed at <code>install/bin</code> folder</p>
-<h2><a class="anchor" id="autotoc_md8"></a>
-Python Extension Compiling</h2>
+<h1><a class="anchor" id="autotoc_md8"></a>
+Python Extension Compiling</h1>
 <p >Building the SPEC python extension will also build the SPEC executable. In the SPEC root folder, edit the <code>cmake_config.json</code> as necessary for your system. Few example <code>.json</code> files are provided in the <code>cmake_machines</code> folder.</p>
-<h3><a class="anchor" id="autotoc_md9"></a>
-Dependencies</h3>
+<h2><a class="anchor" id="autotoc_md9"></a>
+Dependencies</h2>
 <p >It is strongly suggested to use a python virtual environment either conda or python venv. After virtual environment is installed and activated, install the python related dependencies. Please note that these are in addition to the dependencies listed earlier in stand-alone installation steps. If you are using conda virtual environment try installing the dependencies using <code>conda install</code> command </p><div class="fragment"><div class="line">conda  install -n &lt;your_venv&gt; numpy f90nml scikit-build cmake ninja</div>
 </div><!-- fragment --><p >If you are using venv virtual environment, run </p><div class="fragment"><div class="line">pip install numpy f90nml scikit-build cmake ninja</div>
 </div><!-- fragment --><p> Now install f90wrap. Please keep in mind that numpy has to be installed before installing f90wrap. </p><div class="fragment"><div class="line">pip install -U git+https://github.com/zhucaoxiang/f90wrap</div>
 </div><!-- fragment --><p >Now install the SPEC extension by running the setup.py script present in the SPEC root folder. </p><div class="fragment"><div class="line">python setup.py bdist_wheel; cd dist/;  pip install *.whl</div>
 </div><!-- fragment --><p> in succession. At this point, you should be able to import the <code>spec</code> module in python. To test this, you can try the following command from the shell: </p><div class="fragment"><div class="line">python -c &quot;import spec; print(&#39;success&#39;)&quot;</div>
 </div><!-- fragment --><p >If you want editable install, run </p><div class="fragment"><div class="line">python setup.py develop </div>
-</div><!-- fragment --><h2><a class="anchor" id="autotoc_md10"></a>
-Stellar cluster at PPPL</h2>
-<h3><a class="anchor" id="autotoc_md11"></a>
-Python wrapper</h3>
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md10"></a>
+Stellar cluster at PPPL</h1>
+<h2><a class="anchor" id="autotoc_md11"></a>
+Python wrapper</h2>
 <p >Below are the steps to build python wrappers for SPEC on stellar.</p>
 <ol type="1">
 <li>Needed modules are <blockquote class="doxtable">
@@ -184,8 +371,8 @@ Python wrapper</h3>
 </blockquote>
 </li>
 </ol>
-<h2><a class="anchor" id="autotoc_md12"></a>
-iv. anaconda3/2021.5.</h2>
+<h1><a class="anchor" id="autotoc_md12"></a>
+iv. anaconda3/2021.5.</h1>
 <p ><b>Note</b> </p>
 <p >FFTW is supplied as part of Intel MKL and we just need to link against MKL.</p>
 <hr  />
@@ -218,8 +405,8 @@ iv. anaconda3/2021.5.</h2>
 </div><!-- fragment --> or <div class="fragment"><div class="line">conda install mpi4py</div>
 </div><!-- fragment --></li>
 </ol>
-<h3><a class="anchor" id="autotoc_md14"></a>
-SPEC executable.</h3>
+<h2><a class="anchor" id="autotoc_md14"></a>
+SPEC executable.</h2>
 <p >The python wrapper builds spec executable but it gets installed at an obscure location. If you mainly want SPEC executable <code>xspec</code>, the steps are similar.</p><ol type="1">
 <li>Load the required modules. Refer to the first step in the python wrapper instructions.</li>
 <li>Clone the SPEC repo and make SPEC as working directory. Refer to the 5th step above.</li>
@@ -233,8 +420,8 @@ SPEC executable.</h3>
 <li>Install the SPEC executable by running <div class="fragment"><div class="line">cmake --install build</div>
 </div><!-- fragment --> SPEC library gets installed <code>&lt;SPEC_install_location&gt;/lib</code> and SPEC executable get installed at <code>&lt;SPEC_install_location&gt;/bin</code></li>
 </ol>
-<h2><a class="anchor" id="autotoc_md15"></a>
-Mac</h2>
+<h1><a class="anchor" id="autotoc_md15"></a>
+Mac</h1>
 <p >Here is how to build the HDF5 library :</p><ol type="1">
 <li>download <code>hdf5-1.10.5.tar.gz</code> from <a href="https://www.hdfgroup.org/downloads/hdf5/source-code/">https://www.hdfgroup.org/downloads/hdf5/source-code/</a></li>
 <li>extract: <code>tar xzf hdf5-1.10.5.tar.gz</code></li>

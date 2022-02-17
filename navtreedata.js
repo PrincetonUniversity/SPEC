@@ -27,25 +27,24 @@ var NAVTREE =
   [ "SPEC", "index.html", [
     [ "The Stepped Pressure Equilibrium Code", "index.html", null ],
     [ "Compilation hints for SPEC", "md_Compile.html", [
-      [ "Installation with CMake", "md_Compile.html#autotoc_md2", [
-        [ "Stand-alone Executable Compiling", "md_Compile.html#autotoc_md3", [
-          [ "CentOS", "md_Compile.html#autotoc_md4", [
-            [ "Dependencies", "md_Compile.html#autotoc_md5", null ],
-            [ "Configure", "md_Compile.html#autotoc_md6", null ],
-            [ "Build", "md_Compile.html#autotoc_md7", null ]
-          ] ]
-        ] ],
-        [ "Python Extension Compiling", "md_Compile.html#autotoc_md8", [
-          [ "Dependencies", "md_Compile.html#autotoc_md9", null ]
-        ] ],
-        [ "Stellar cluster at PPPL", "md_Compile.html#autotoc_md10", [
-          [ "Python wrapper", "md_Compile.html#autotoc_md11", null ]
-        ] ],
-        [ "iv. anaconda3/2021.5.", "md_Compile.html#autotoc_md12", [
-          [ "SPEC executable.", "md_Compile.html#autotoc_md14", null ]
-        ] ],
-        [ "Mac", "md_Compile.html#autotoc_md15", null ]
-      ] ]
+      [ "CMake and Anaconda", "md_Compile.html#autotoc_md2", [
+        [ "Install Anaconda", "md_Compile.html#autotoc_md3", null ],
+        [ "Clone the SPEC repository", "md_Compile.html#autotoc_md4", null ],
+        [ "Setup a Conda Environment for SPEC", "md_Compile.html#autotoc_md5", null ],
+        [ "Testing your SPEC installation", "md_Compile.html#autotoc_md6", [
+          [ "Install", "md_Compile.html#autotoc_md7", null ]
+        ] ]
+      ] ],
+      [ "Python Extension Compiling", "md_Compile.html#autotoc_md8", [
+        [ "Dependencies", "md_Compile.html#autotoc_md9", null ]
+      ] ],
+      [ "Stellar cluster at PPPL", "md_Compile.html#autotoc_md10", [
+        [ "Python wrapper", "md_Compile.html#autotoc_md11", null ]
+      ] ],
+      [ "iv. anaconda3/2021.5.", "md_Compile.html#autotoc_md12", [
+        [ "SPEC executable.", "md_Compile.html#autotoc_md14", null ]
+      ] ],
+      [ "Mac", "md_Compile.html#autotoc_md15", null ]
     ] ],
     [ "Todo List", "todo.html", null ],
     [ "Bibliography", "citelist.html", null ],
