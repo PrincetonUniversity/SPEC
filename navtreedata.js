@@ -31,29 +31,30 @@ var NAVTREE =
         [ "Install Anaconda", "md_Compile.html#autotoc_md3", null ],
         [ "Clone the SPEC repository", "md_Compile.html#autotoc_md4", null ],
         [ "Setup a Conda Environment for SPEC", "md_Compile.html#autotoc_md5", null ],
-        [ "Testing your SPEC installation", "md_Compile.html#autotoc_md6", null ]
+        [ "Testing your SPEC installation", "md_Compile.html#autotoc_md6", null ],
+        [ "Acknowledgements", "md_Compile.html#autotoc_md7", null ]
       ] ],
-      [ "BELOW INSTRUCTIONS ARE OUTDATED", "md_Compile.html#autotoc_md7", null ],
       [ "BELOW INSTRUCTIONS ARE OUTDATED", "md_Compile.html#autotoc_md8", null ],
-      [ "BELOW INSTRUCTIONS ARE OUTDATED", "md_Compile.html#autotoc_md9", [
-        [ "Installation with CMake", "md_Compile.html#autotoc_md10", null ],
-        [ "Stand-alone Executable Compiling", "md_Compile.html#autotoc_md11", [
-          [ "CentOS", "md_Compile.html#autotoc_md12", [
-            [ "Dependencies", "md_Compile.html#autotoc_md13", null ],
-            [ "Configure", "md_Compile.html#autotoc_md14", null ],
-            [ "Build", "md_Compile.html#autotoc_md15", null ]
+      [ "BELOW INSTRUCTIONS ARE OUTDATED", "md_Compile.html#autotoc_md9", null ],
+      [ "BELOW INSTRUCTIONS ARE OUTDATED", "md_Compile.html#autotoc_md10", [
+        [ "Installation with CMake", "md_Compile.html#autotoc_md11", null ],
+        [ "Stand-alone Executable Compiling", "md_Compile.html#autotoc_md12", [
+          [ "CentOS", "md_Compile.html#autotoc_md13", [
+            [ "Dependencies", "md_Compile.html#autotoc_md14", null ],
+            [ "Configure", "md_Compile.html#autotoc_md15", null ],
+            [ "Build", "md_Compile.html#autotoc_md16", null ]
           ] ]
         ] ],
-        [ "Python Extension Compiling", "md_Compile.html#autotoc_md16", [
-          [ "Dependencies", "md_Compile.html#autotoc_md17", null ]
+        [ "Python Extension Compiling", "md_Compile.html#autotoc_md17", [
+          [ "Dependencies", "md_Compile.html#autotoc_md18", null ]
         ] ],
-        [ "Stellar cluster at PPPL", "md_Compile.html#autotoc_md18", [
-          [ "Python wrapper", "md_Compile.html#autotoc_md19", null ]
+        [ "Stellar cluster at PPPL", "md_Compile.html#autotoc_md19", [
+          [ "Python wrapper", "md_Compile.html#autotoc_md20", null ]
         ] ],
-        [ "iv. anaconda3/2021.5.", "md_Compile.html#autotoc_md20", [
-          [ "SPEC executable.", "md_Compile.html#autotoc_md22", null ]
+        [ "iv. anaconda3/2021.5.", "md_Compile.html#autotoc_md21", [
+          [ "SPEC executable.", "md_Compile.html#autotoc_md23", null ]
         ] ],
-        [ "Mac", "md_Compile.html#autotoc_md23", null ]
+        [ "Mac", "md_Compile.html#autotoc_md24", null ]
       ] ]
     ] ],
     [ "Todo List", "todo.html", null ],
@@ -86,7 +87,7 @@ var NAVTREEINDEX =
 "annotated.html",
 "group__grp__fourier__transform.html#ga374fee9c03e6c2b938299934decdcd55",
 "group__grp__output.html#ga2f9e9c50084175e5174b1e1070e24d73",
-"sphdf5_8f90.html#a9a625748fd5252893c741db036e2dff1"
+"sphdf5_8f90.html#a98d088d91590a7334ffbeb4b0167b0c6"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';
