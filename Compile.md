@@ -1,12 +1,296 @@
 # Compilation hints for SPEC
 
-In order to run SPEC, you need a copy of the HDF5 libraries installed which has
-both the Fortran interface and the parallel (MPI I/O) enabled.
+This document tries to summarize the steps necessary to setup SPEC on your machine.
+Two approaches are discussed.
+The first one is the CMake setup.
+The second one is the more classical `Makefile` setup.
 
-# Installation with CMake
+## CMake and Anaconda
 
-Using cmake, SPEC can be built as a stand-alone executable or as a python extension,
+The Anaconda system provides an ecosystem of compilers, precompiled libraries and python packages ready to be used.
+The main goal is to decouple the conda environment from the host system,
+so that you can use modern software and tools also on machines with outdated local software.
+
+This guide was written while testing the commands on a Debian 9 x86_64 Linux system.
+This should be deemed old enough to demonstrate the weirdest errors if something is not under control,
+hence facilitating the correctness of these instructions.
+
+### Install Anaconda
+The Anaconda installer is available from [the Anaconda website](https://www.anaconda.com/products/individual).
+At the time of writing, the URL to the actual file is: https://repo.anaconda.com/archive/Anaconda3-2021.11-Linux-x86_64.sh
+
+Go into folder where the anaconda installer will be downloaded to
+and download the Anaconda installer:
+
+```bash
+cd ~/Downloads
+wget https://repo.anaconda.com/archive/Anaconda3-2021.11-Linux-x86_64.sh
+```
+
+Launch the Anaconda installer:
+
+```bash
+bash Anaconda3-2021.11-Linux-x86_64.sh
+```
+
+ * press ENTER to contine
+ * Accept License Agreement: `yes`
+ * Confirm the default installation location (here: `/home/IPP-HGW/jons/anaconda3` == `~/anaconda3`)
+ * Allow the installer to run `conda init`: `yes`
+
+At this point, the Anaconda installer will modify your `~/.bashrc`.
+In order to make these changes take effect, you can logout and log back in,
+close and re-open your Terminal window or do:
+
+```bash
+source ~/.bashrc
+```
+
+Disable the activation of the Anaconda base environment on login:
+
+```bash
+conda config --set auto_activate_base False
+```
+
+Anaconda works in so-called virtual environments, where environment variables get managed by Anaconda
+to setup paths to compilers, libraries and include directories semi-automagically.
+
+For SPEC, it is suggested to create a new conda environment.
+A setup script to perform these actions is provided in the SPEC repository.
+Thus, we need to clone the SPEC repository now.
+
+### Clone the SPEC repository
+
+In this guide, we assume that your copy of SPEC will be located at `~/SPEC`.
+
+If you want to upload your changes to the SPEC repository,
+you should setup your SSH key in your GitHub Settings and use the following
+URL for the repository instead: `git@github.com:PrincetonUniversity/SPEC.git`
+
+Clone the repository from GitHub into a folder `SPEC` in your home directory::
+
+```bash
+cd ~
+git clone https://github.com/PrincetonUniversity/SPEC.git
+```
+
+### Setup a Conda Environment for SPEC
+
+The conda environment setup needed to compile and run SPEC is in `setup_conda.sh`.
+This scripts takes a specification of the conda packages to install from `spec_conda_env.yml`
+and created a conda environment called `spec_env`.
+Also, two scripts are created in `etc/conda/activate.d` and `etc/conda/deactivate.d`
+of the `spec_env` environment to mask the system's `LD_LIBRARY_PATH`
+when entering the conda environment and to restore it to its previous value
+when leaving the `spec_env` environment.
+Also, the environment variable `FFTW_ROOT` is set to the conda environment
+to tell SPEC to use the conda-provided version of FFTW.
+
+Change into the freshly-cloned SPEC repository and run this script:
+
+```bash
+cd ~/SPEC
+./setup_conda.sh
+```
+
+This might take a while, but at the end you should end up with a message similar to this:
+
+```
+... lots of stuff above here ...
+done
+#
+# To activate this environment, use
+#
+#     $ conda activate spec_env
+#
+# To deactivate an active environment, use
+#
+#     $ conda deactivate
+
+~/anaconda3/envs/spec_env ~/SPEC
+~/SPEC
+```
+
+Activate the conda environment for SPEC:
+
+```bash
+conda activate spec_env
+```
+
+A forked version of `f90wrap` is required to build the SPEC Python wrapper (for now).
+Install that next (inside the `spec_env` conda environment !!!):
+
+```bash
+pip install -U git+https://github.com/zhucaoxiang/f90wrap
+```
+
+The CMake setup is controlled via the `setup.py` Python script from the SPEC repository.
+It parses the `CMAKE_ARGS` environment variable provided by conda.
+
+Additional machine-dependent CMake options are loaded from `cmake_config.json`.
+This is a soft-link to a file in `cmake_machines`.
+Anaconda provides all libraries required to build SPEC,
+but we still need to make sure that the `cmake_config.json` link points to 
+`cmake_machines/conda_debian.json`.
+Note that `conda.json` in `cmake_machines` is outdated, as it includes machine-dependent options (`-DHDF5_ROOT=~/opt/miniconda3/envs/simsopt/`).
+
+Now force the `cmake_config.json` link to point to the correct file:
+
+```bash
+ln -sf cmake_machines/conda_debian.json cmake_config.json
+```
+
+This concludes the preliminary setup steps and we can progress by starting the build process:
+
+```bash
+python setup.py bdist_wheel
+```
+
+This step also takes quite a while.
+At the end, the SPEC python package (`spec-0.0.1-cp310-cp310-linux_x86_64.whl` or similar) should be available in `dist`.
+
+Install it now:
+
+```bash
+pip install dist/*.whl
+```
+
+Note that the Python package you just installed also contains the regular stand-alone SPEC executable `xspec`,
+which gets installed into `bin/xspec` of your conda environment.
+Verify this by calling `which xspec`.
+You should get a message similar to:
+
+```
+/home/IPP-HGW/jons/anaconda3/envs/spec_env/bin/xspec
+```
+
+### Testing your SPEC installation
+
+First, verify that the stand-alone executable is usable.
+A few test cases are provided in `InputFiles/TestCases`.
+
+Create a new directory for SPEC runs and change into it
+
+```bash
+mkdir ~/SPEC_runs
+cd ~/SPEC_runs
+```
+
+Copy a demo input file into the current working directory:
+
+```bash
+cp ~/SPEC/InputFiles/TestCases/G3V01L0Fi.001.sp .
+```
+
+Call SPEC with an input file (`*.sp`) as argument on the command line:
+
+```bash
+xspec G3V01L0Fi.001.sp
+```
+
+You should see the screen output of the SPEC run.
+Among the last lines should be something similar to this:
+
+```
+ending :       0.88 : myid=  0 ; completion ; time=      0.88s =     0.01m =   0.00h =  0.00d ; date= 2022/02/17 ; time= 17:35:33 ; ext = G1V02L0Fi.001                                               
+ending :            : 
+xspech :            :
+xspech :       0.88 : myid=  0 : time=    0.01m =   0.00h =  0.00d ;
+```
+
+This indicates that the stand-alone executable is usable.
+
+Next, the python wrapper is tested.
+
+1. Check that the SPEC version can be found:
+    
+    ```bash
+    python -c "from spec import spec_f90wrapped as spec; print('SPEC version: {:}'.format(spec.constants.version))"
+    ```
+    
+    This should print a message like "SPEC version: 3.1" on the screen.
+2. Check that the Python wrapper can be used as a stand-alone code:
+    
+    ````bash
+    OMP_NUM_THREADS=1 python ~/SPEC/Utilities/python_wrapper/spec/core.py G3V01L0Fi.001.sp
+    ```
+    
+    This should conclude with the message `SPEC called from python finished!`.
+    
+3. Run the optimization example code:
+    
+    ```bash
+    OMP_NUM_THREADS=1 python ~/SPEC/Utilities/python_wrapper/examples/example.py
+    ```
+    
+    This should run a basic optimization problem,
+    where the SPEC inputs are controlled via `scipy.optimize`.
+    
+4. Run the interactive re-convergence example code:
+    
+    ```bash
+    OMP_NUM_THREADS=1 python ~/SPEC/Utilities/python_wrapper/examples/example_2.py
+    ```
+    
+    This should compute a SPEC equilibrium, then change the central pressure,
+    re-converge SPEC, etc. for a set of five values of the central pressure
+    in a two-volume classical Stellarator case.
+    After the pressure scan with re-convergence,
+    a plot of the MHD energy vs. the central pressure is shown.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# BELOW INSTRUCTIONS ARE OUTDATED
+
+# BELOW INSTRUCTIONS ARE OUTDATED
+
+# BELOW INSTRUCTIONS ARE OUTDATED
+
+
+
+In order to run SPEC, you need a copy of the HDF5 libraries installed, which has the Fortran interface enabled.
+
+## Installation with CMake
+
+Using CMake, SPEC can be built as a stand-alone executable and as a python extension,
 where SPEC can be run directly from python, with all variables passed directly in memory.
+
 
 Download the package from git. And change to the root directory of SPEC source code by running
 ```bash
