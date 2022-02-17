@@ -996,7 +996,8 @@ subroutine hdfint
                         lmns, &
                         TT, &
                         beltramierror, &
-                        IPDt
+                        IPDt, &
+                        irhoc, ibc, iR0c, iZ0s
 
   LOCALS
 
@@ -1029,12 +1030,6 @@ subroutine hdfint
   HWRITEIV( grpOutput, mn_field, im, im_field(1:mn_field) )
 !latex \type{in\_field(1:mn\_field)}               & integer & \pb{toroidal mode numbers of RZ and vector potential} \\
   HWRITEIV( grpOutput, mn_field, in, in_field(1:mn_field) )
-!latex \type{mn\_rho}                     & integer & \pb{number of Fourier modes of rhomn, henneberg representation} \\
-  HWRITEIV( grpOutput,  1, mn_rho, (/ mn_rho /)  )
-!latex \type{im\_rho(1:mn\_rho)}               & integer & \pb{poloidal mode numbers  of rhomn, henneberg representation} \\
-  HWRITEIV( grpOutput, mn_rho, im_rho, im_rho(1:mn_rho) )
-!latex \type{in\_rho(1:mn\_rho)}               & integer & \pb{toroidal mode numbers  of rhomn, henneberg representation} \\
-  HWRITEIV( grpOutput, mn_rho, in_rho, in_rho(1:mn_rho) )
 !latex \type{mn\_force}                     & integer & \pb{number of Fourier modes of force (B square)} \\
   HWRITEIV( grpOutput,  1, mn_force, (/ mn_force /)  )
 !latex \type{im\_force(1:mn\_force)}               & integer & \pb{poloidal mode numbers of force (B square)} \\
@@ -1051,6 +1046,22 @@ subroutine hdfint
   HWRITERA( grpOutput, mn_field, (Mvol+1), Rbs, iRbs(1:mn_field,0:Mvol) )
 !latex \type{iZbc(1:mn_field,0:Mvol)}      & real    & \pb{Fourier harmonics, $Z_{m,n}$, of interfaces} \\
   HWRITERA( grpOutput, mn_field, (Mvol+1), Zbc, iZbc(1:mn_field,0:Mvol) )
+  if( Lboundary.eq.1 ) then
+!latex \type{mn\_rho}                     & integer & \pb{number of Fourier modes of rhomn, henneberg representation} \\
+  HWRITEIV( grpOutput,  1, mn_rho, (/ mn_rho /)  )
+!latex \type{im\_rho(1:mn\_rho)}               & integer & \pb{poloidal mode numbers  of rhomn, henneberg representation} \\
+  HWRITEIV( grpOutput, mn_rho, im_rho, im_rho(1:mn_rho) )
+!latex \type{in\_rho(1:mn\_rho)}               & integer & \pb{toroidal mode numbers  of rhomn, henneberg representation} \\
+  HWRITEIV( grpOutput, mn_rho, in_rho, in_rho(1:mn_rho) )
+!latex \type{irhoc(1:mn_rho,1:Mvol)}      & real    & \pb{Fourier harmonics, $\rho_{m,n}$, of interfaces using Henneberg's representation} \\
+  HWRITERA( grpOutput, mn_rho  , Mvol, rhoc, irhoc(1:mn_field,1:Mvol) )
+!latex \type{ibc(0:Ntor,1:Mvol)}      & real    & \pb{Fourier harmonics, $b_n$, of interfaces using Henneberg's representation} \\
+  HWRITERA( grpOutput, (Ntor+1), Mvol, bn, ibc(0:Ntor,1:Mvol) )
+!latex \type{iR0c(0:Ntor,1:Mvol)}      & real    & \pb{Fourier harmonics, $R_{0n}$, of interfaces using Henneberg's representation} \\
+  HWRITERA( grpOutput, (Ntor+1), Mvol, rn, iR0c(0:Ntor,1:Mvol) )
+!latex \type{iZ0s(0:Ntor,1:Mvol)}      & real    & \pb{Fourier harmonics, $Z_{0n}$, of interfaces using Henneberg's representation} \\
+  HWRITERA( grpOutput, (Ntor+1), Mvol, zn, iZ0s(0:Ntor,1:Mvol) )
+  endif
 !l tex \type{forcetol}               & real    & \pb{force-balance error across interfaces} \\
 !  HWRITERV( grpOutput, 1, forcetol, (/ forcetol /)) ! already in /input/global
 !latex \type{ForceErr}               & real    & \pb{force-balance error across interfaces} \\
