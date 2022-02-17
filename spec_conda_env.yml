@@ -15,4 +15,5 @@ dependencies:
   - openmp
   - openblas
   - matplotlib
+  - scipy
 
