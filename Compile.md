@@ -209,9 +209,10 @@ Next, the python wrapper is tested.
     ```
     
     This should print a message like "SPEC version: 3.1" on the screen.
+    
 2. Check that the Python wrapper can be used as a stand-alone code:
     
-    ````bash
+    ```bash
     OMP_NUM_THREADS=1 python ~/SPEC/Utilities/python_wrapper/spec/core.py G3V01L0Fi.001.sp
     ```
     
