@@ -239,6 +239,20 @@ Next, the python wrapper is tested.
     After the pressure scan with re-convergence,
     a plot of the MHD energy vs. the central pressure is shown.
 
+### Acknowledgements
+Here are a few links that proved useful in setting this up:
+* https://docs.anaconda.com/anaconda/install/linux/
+* https://www.anaconda.com/products/individual
+* https://www.rosehosting.com/blog/how-to-install-anaconda-python-on-debian-9/
+* https://github.com/RcppCore/Rcpp/issues/770#issuecomment-346716808
+* https://computing.docs.ligo.org/conda/compiling/
+* https://stackoverflow.com/a/64253999
+* https://stackoverflow.com/a/46833531
+* https://stackoverflow.com/a/49238956
+* https://conda.io/projects/conda-build/en/latest/resources/use-shared-libraries.html
+
+
+
 
 
 
