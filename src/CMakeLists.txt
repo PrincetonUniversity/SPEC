@@ -236,7 +236,7 @@ if(MPI_Fortran_FOUND AND NOT SKBUILD)
 endif()
 
 # Add OpenMP
-if(OpenMP_Fortran_FOUND AND NOT SKBUILD)
+if (OpenMP_Fortran_FOUND AND NOT SKBUILD)
     target_link_libraries(spec PUBLIC OpenMP::OpenMP_Fortran)
     target_compile_definitions(spec PUBLIC OPENMP)
     target_link_libraries(spec3p PUBLIC OpenMP::OpenMP_Fortran)
@@ -282,14 +282,16 @@ get_property(COMP_DEFS
 get_target_property(SPEC_LINK_LIB spec LINK_LIBRARIES)
 message(STATUS "spec linked libraries are ${SPEC_LINK_LIB}")
 get_target_property(SPEC_COMPILE_OPTIONS spec COMPILE_OPTIONS)
-message(STATUS "spec compile options are are ${SPEC_COMPILE_OPTIONS}")
+message(STATUS "spec compile options are ${SPEC_COMPILE_OPTIONS}")
+get_target_property(SPEC_COMPILE_DEFS spec COMPILE_DEFINITIONS)
+message(STATUS "spec compile definitions are ${SPEC_COMPILE_DEFS}")
+
+# export linker flags for spec to parent scope
+# for re-use when building python wrapper
 if(SKBUILD) 
-    get_target_property(SPEC_LINK_LIB spec LINK_LIBRARIES)
+#    get_target_property(SPEC_LINK_LIB spec LINK_LIBRARIES) # redundant from debug out above
     set(SPEC_LINK_LIB ${SPEC_LINK_LIB} PARENT_SCOPE)
 endif()
-
-
-
 
 add_executable(xspec ${XSPEC_OUT_FILE})
 target_link_libraries(xspec PUBLIC spec)
