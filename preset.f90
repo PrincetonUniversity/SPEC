@@ -1619,21 +1619,6 @@ endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  if( Igeometry.eq.3 .and. iRbc(1,0).lt.small ) then ! have not yet assigned coordinate axis; see global;readin for user-supplied Rac, Zas, etc. ; 19 Jul 16;
-
-   select case( Linitialize )
-   case( :-1 ) ; vvol = Nvol + Linitialize
-   case(   0 ) ; vvol =    1 ! this is really a dummy; no interpolation of interface geometry is required; packxi calls rzaxis with lvol=1; 19 Jul 16;
-   case(   1 ) ; vvol = Nvol
-   case(   2 ) ; vvol = Mvol
-   end select
-
-   WCALL( preset, rzaxis, ( Mvol, mn_field, iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), vvol, .false. ) ) ! set coordinate axis; 19 Jul 16;
-
-  endif ! end of if( Igeometry.eq.3 ) then ; 19 Jul 16;
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
 !> **psifactor(1:mn,1:Mvol): coordinate "pre-conditioning" factor**
 !>
 !> <ul>
@@ -1777,6 +1762,21 @@ endif
    end select ! matches select case( Igeometry ); 19 Jul 16;
 
   endif ! matches if( Linitialize.ne.0 ) then; 19 Jul 16;
+
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  if( Igeometry.eq.3 .and. iRbc(1,0).lt.small ) then ! have not yet assigned coordinate axis; see global;readin for user-supplied Rac, Zas, etc. ; 19 Jul 16;
+
+   select case( Linitialize )
+   case( :-1 ) ; vvol = Nvol + Linitialize
+   case(   0 ) ; vvol =    1 ! this is really a dummy; no interpolation of interface geometry is required; packxi calls rzaxis with lvol=1; 19 Jul 16;
+   case(   1 ) ; vvol = Nvol
+   case(   2 ) ; vvol = Mvol
+   end select
+
+   WCALL( preset, rzaxis, ( Mvol, mn_field, iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), vvol, .false. ) ) ! set coordinate axis; 19 Jul 16;
+
+  endif ! end of if( Igeometry.eq.3 ) then ; 19 Jul 16;
 
 
 
