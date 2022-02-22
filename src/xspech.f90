@@ -762,7 +762,7 @@ end subroutine spec
 subroutine final_diagnostics
 
   use inputlist, only: nPtrj, nPpts, Igeometry, Lcheck, Nvol, odetol, &
-                       Isurf, Ivolume, mu, Wmacros
+                       Isurf, Ivolume, mu, Wmacros, Ltransform
   use fileunits, only: ounit
   use constants, only: zero
   use allglobal, only: pi2, myid, ncpu, MPI_COMM_SPEC, cpus, Mvol, Ntz, mn, &
@@ -770,14 +770,15 @@ subroutine final_diagnostics
                        Lplasmaregion, Lvacuumregion, &
                        Btemn, Bzemn, Btomn, Bzomn, &
                        efmn, ofmn, cfmn, sfmn, &
-                       IPDt, ImagneticOK, dtflux, Iquad
+                       IPDt, ImagneticOK, dtflux, Iquad, lmns, Nt, Nz, diotadxup
 
 
   LOCALS
 
-  integer              :: iocons, llmodnp, vvol
+  integer              :: iocons, llmodnp, vvol, iflag
   real                 :: sumI
   REAL,    allocatable :: Bt00(:,:,:)
+  REAL                 :: work(0:1,-1:2) 
 
 
 
@@ -822,6 +823,16 @@ subroutine final_diagnostics
 !
 !2000 format("finish : ",f10.2," : finished ",i3," ; ":"|f|="es12.5" ; ":"time=",f10.2,"s ;":" log"a5,:"="28f6.2" ...")
 !2001 format("finish : ", 10x ," :          ",3x," ; ":"    "  12x "   ":"     ", 10x ,"  ;":" log"a5,:"="28f6.2" ...")
+
+
+! Evaluate rotational transform and straight field line coordinate transformation
+if( Ltransform ) then
+  iflag = 1
+  do vvol = 1, Mvol
+    call tr00ab( vvol, mn, lmns, Nt, Nz, iflag, diotadxup(0:1,-1:2, vvol) ) ! stores lambda in a global variable.
+  enddo
+endif
+
 
   !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 ! Computes the surface current at each interface for output
