@@ -609,7 +609,9 @@ module allglobal
 
   REAL   , allocatable :: glambda(:,:,:,:) !< save initial guesses for iterative calculation of rotational-transform
 
-  INTEGER              :: lmns !< what is this?
+  INTEGER              :: lmns !< number of independent degrees of freedom in angle transformation;
+
+  REAL,    allocatable :: dlambdaout(:,:,:)
 !> @}
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
