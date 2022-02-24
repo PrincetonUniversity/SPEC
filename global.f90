@@ -1087,6 +1087,8 @@ subroutine check_inputs()
    endif
 #endif
 
+   FATAL( readin, Istellsym.ne.0 .and. Istellsym.ne.1, illegal Istellsym )
+   FATAL( readin, Lfreebound.lt.0 .or. Lfreebound.gt.1, illegal Lfreebound )
    FATAL( readin, Igeometry.lt.1 .or. Igeometry.gt.3, invalid geometry )
    FATAL( readin, Nfp.le.0, invalid Nfp )
    FATAL( readin, Mpol.lt.0 .or. Mpol.gt.MMpol, invalid poloidal resolution: may need to recompile with higher MMpol )
@@ -1098,6 +1100,12 @@ subroutine check_inputs()
    FATAL( readin, Lconstraint.lt.-1 .or. Lconstraint.gt.3, illegal Lconstraint )
    FATAL( readin, Igeometry.eq.1 .and. rpol.lt.vsmall, poloidal extent of slab too small or negative )
    FATAL( readin, Igeometry.eq.1 .and. rtor.lt.vsmall, toroidal extent of slab too small or negative )
+
+   FATAL( preset, Lfreebound.eq.1 .and. Lconstraint.eq.2, The combination of helicity constraint and free boundary is under construction )
+
+   FATAL( readin, NOTstellsym .and. Lboundary.eq.1    , Henneberg representation only implemented for stellarator symmetric configurations )
+   FATAL( readin, Igeometry.ne.3 .and. Lboundary.eq.1 , Henneberg representation only valid in toroidal geometry )
+   FATAL( readin, Lboundary.eq.1 .and. Lfreebound.eq.1, Henneberg representation is as of yet only available in fixed-boundary )
 
    if( Istellsym.eq.1 ) then
     Rbs(-MNtor:MNtor,-MMpol:MMpol) = zero

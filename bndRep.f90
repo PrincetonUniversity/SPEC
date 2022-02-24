@@ -105,6 +105,19 @@ module bndRep
   
       end subroutine initialize_mapping
   
+
+      subroutine change_mapping_angle( Langle )
+
+        use fileunits, only: ounit, lunit
+
+        LOCALS
+
+        LOGICAL, INTENT(IN):: Langle
+
+        Lchangeangle = Langle
+
+
+      end subroutine change_mapping_angle
   
   
       subroutine forwardMap( rhomn, bn, R0c, Z0s, Rmn, Zmn )

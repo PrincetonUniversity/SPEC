@@ -35,9 +35,9 @@ subroutine preset
 
   LOCALS
 
-  INTEGER   :: innout, idof, jk, ll, ii, ifail, ideriv, vvol, mi, ni, mj, nj, mk, nk, mimj, ninj, mkmj, nknj, jj, kk, lvol, mm, nn, imn
+  INTEGER   :: innout, idof, jk, ll, ii, ifail, ideriv, vvol, mi, ni, mj, nj, mk, nk, mimj, ninj, mkmj, nknj, jj, kk, lvol, mm, nn, imn, jmn
   INTEGER   :: lquad, igauleg, maxIquad, Mrad, jquad, Lcurvature, zerdof, iret, work1, work2, ind
-  REAL      :: teta, zeta, arg, lss, cszeta(0:1), error
+  REAL      :: teta, zeta, arg, lss, cszeta(0:1), error, work
   LOGICAL   :: LComputeAxis, Lhennangle
 
   LOGICAL              :: Lchangeangle
@@ -56,428 +56,84 @@ subroutine preset
 
 
   select case( Istellsym )
-  case( 0 )    ; YESstellsym = .false. ; NOTstellsym = .true.
-  case( 1 )    ; YESstellsym = .true.  ; NOTstellsym = .false.
-  case default ;
-   FATAL( preset, .true., illegal Istellsym )
+    case( 0 )    ; YESstellsym = .false. ; NOTstellsym = .true.
+    case( 1 )    ; YESstellsym = .true.  ; NOTstellsym = .false.
   end select
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  call set_global_variables()
 
-!latex \subsubsection{\type{Mvol} : total number of volumes}
-!latex \begin{enumerate}
-!latex \item The number of plasma volumes is \internal{Mvol}=\inputvar{Nvol}+\inputvar{Lfreebound};
-!latex \end{enumerate}
+  call read_input_geometry()
 
-  FATAL( preset, Lfreebound.lt.0 .or. Lfreebound.gt.1, illegal Lfreebound )
-
-  Mvol = Nvol + Lfreebound
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  SALLOCATE( beltramierror,(1:Mvol,1:9), zero)
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-! Check boundary representation and set truncation
-
-  if( NOTstellsym .and. Lboundary.eq.1 ) then
-    FATAL( preset, .true., Henneberg representation only implemented for stellarator symmetric configurations )
-  endif
-
-  if( Igeometry.ne.3 .and. Lboundary.eq.1 ) then
-    FATAL( preset, .true., Henneberg representation only valid in toroidal geometry )
-  endif
-
-  if( Lboundary.eq.0 ) then
-    twoalpha = 0.0
-  endif
-
-  Lhennangle = .false.
-  if( Lboundary.eq.1 ) then
-    if( twoalpha.eq.0 ) then
-      Rbc(0, 1) = half*( rhomn(0, 1) + rhomn(twoalpha, 1) )
-      Zbs(0, 1) = half*( rhomn(0, 1) - rhomn(twoalpha, 1) ) + bn(0)
-      Rbc(0,-1) = half*( rhomn(0,-1) + rhomn(twoalpha,-1) )
-      Zbs(0,-1) = half*( rhomn(0,-1) - rhomn(twoalpha,-1) )
-    else
-      Rbc(0, 1) = half*( rhomn(0, 1) + rhomn(twoalpha, 1) ) + 1.0/4.0 * (two*bn(0) - bn(twoalpha))
-      Zbs(0, 1) = half*( rhomn(0, 1) - rhomn(twoalpha, 1) ) + 1.0/4.0 * (two*bn(0) + bn(twoalpha))
-      Rbc(0,-1) = half*( rhomn(0,-1) + rhomn(twoalpha,-1) )
-      Zbs(0,-1) = half*( rhomn(0,-1) - rhomn(twoalpha,-1) )
-    endif
-
-    if( Rbc(0,+1)+Rbc(0,-1).gt.zero .and. Zbs(0,+1)-Zbs(0,-1).gt.zero ) then; Lhennangle = .true.
-    else                                                                    ; Lhennangle = .false.
-    endif
-
-  endif
-
-  call initialize_mapping( Lhennangle )
+  call prepare_initial_guess()
 
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!latex \subsubsection{\type{halfmm(1:mn}, regumm(1:mn) : regularization factor}
-!latex \begin{enumerate}
-!latex \item The ``regularization'' factor, \type{halfmm(1:mn)} = \type{im(1:mn)} * \type{half}, is real.
-!latex \end{enumerate}
-
-  SALLOCATE( halfmm, (1:mn_field), im_field(1:mn_field) * half )
-  SALLOCATE( regumm, (1:mn_field), im_field(1:mn_field) * half )
-
-
-  if( Mregular.ge.2 ) then
-    where( im_field.gt.Mregular ) regumm = Mregular * half
-  endif
-
-! if( myid.eq.0 ) write(ounit,'("global : " 10x " : "i3") im ="i3" , halfmm ="f5.1" , regum ="f5.1" ;")') ( ii, im(ii), halfmm(ii), regumm(ii), ii = 1, mn )
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \subsubsection{\type{ime} and \type{ine} : extended resolution Fourier mode identification}
-!latex \begin{enumerate}
-!latex \item The ``extended'' Fourier resolution is defined by \internal{lMpol} $ = 4 $ \inputvar{Mpol}, \internal{lNtor} $ = 4 $\inputvar{Ntor}.
-!latex \end{enumerate}
-
-! lMpol =   Mpol ; lNtor =   Ntor ! no    enhanced resolution for metrics;
-! lMpol = 2*Mpol ; lNtor = 2*Ntor !       enhanced resolution for metrics;
-  lMpol = 4*Mpol_field ; lNtor = 4*Ntor_field ! extra-enhanced resolution for metrics;
-
-  mne = 1 + lNtor + lMpol * ( 2 * lNtor + 1 ) ! resolution of metrics; enhanced resolution; see metrix;
-
-  SALLOCATE( ime, (1:mne), 0 )
-  SALLOCATE( ine, (1:mne), 0 )
-
-  call gi00ab( lMpol, lNtor, Nfp, mne, ime(1:mne), ine(1:mne), .true. )
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \subsubsection{\type{mns}, \type{ims} and \type{ins} : Fourier mode identification for straight-fieldline angle}
-
-  sMpol = iMpol ; sNtor = iNtor
-
-  if( iMpol.le.0 ) sMpol = Mpol_field - iMpol
-  if( iNtor.le.0 ) sNtor = Ntor_field - iNtor
-  if(  Ntor.eq.0 ) sNtor = 0
-
-  mns = 1 + sNtor + sMpol * ( 2 * sNtor + 1 ) ! resolution of straight-field line transformation on interfaces; see tr00ab; soon to be redundant;
-
-  SALLOCATE( ims, (1:mns), 0 )
-  SALLOCATE( ins, (1:mns), 0 )
-
-  call gi00ab( sMpol, sNtor, Nfp, mns, ims(1:mns), ins(1:mns), .true. ) ! note that the field periodicity factor is included in ins;
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-! set internal parameters that depend on numericlist;
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-! set internal parameters that depend on locallist;
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-! set internal parameters that depend on globallist;
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-! set internal parameters that depend on diagnosticslist;
-
-  if( Lcheck.eq.5 ) then ; forcetol = 1.0e+12 ; nPpts = 0 ! will check Hessian using finite-differences;
-  endif
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \subsubsection{\type{iRbc(1:mn,0:Mvol}, \type{iZbs(1:mn,0:Mvol}, \type{iRbs(1:mn,0:Mvol} and \type{iZbc(1:mn,0:Mvol} : geometry}
-
-!latex \begin{enumerate}
-!latex \item \type{iRbc}, \type{iZbs}, \type{iRbs} and \type{iZbc} : Fourier harmonics of interface geometry;
-!latex \item \type{iVns}, \type{iVnc}, \type{iBns} and \type{iBns} : Fourier harmonics of normal field at computational boundary;
-!latex \end{enumerate}
-
-  SALLOCATE( iRbc, (1:mn_field,0:Mvol), zero ) ! interface Fourier harmonics;
-  SALLOCATE( iZbs, (1:mn_field,0:Mvol), zero )
-  SALLOCATE( iRbs, (1:mn_field,0:Mvol), zero )
-  SALLOCATE( iZbc, (1:mn_field,0:Mvol), zero )
-
-  if( Lboundary.eq.1 ) then
-    SALLOCATE( irhoc , (1:mn_rho, 1:Mvol), zero )
-    SALLOCATE( ibc   , (0:Ntor, 1:Mvol), zero )
-    SALLOCATE( iR0c  , (0:Ntor, 1:Mvol), zero )
-    SALLOCATE( iZ0s  , (0:Ntor, 1:Mvol), zero )
-  endif
-
-
-  if( Lperturbed.eq.1 ) then
-  SALLOCATE( dRbc, (1:mn_field,0:Mvol), zero ) ! interface Fourier harmonics;
-  SALLOCATE( dZbs, (1:mn_field,0:Mvol), zero )
-  SALLOCATE( dRbs, (1:mn_field,0:Mvol), zero )
-  SALLOCATE( dZbc, (1:mn_field,0:Mvol), zero )
-  endif
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  SALLOCATE( iVns, (1:mn_field), zero )
-  SALLOCATE( iBns, (1:mn_field), zero )
-  SALLOCATE( iVnc, (1:mn_field), zero )
-  SALLOCATE( iBnc, (1:mn_field), zero )
-
- !SALLOCATE( lRbc, (1:mn), zero ) ! not used; SRH: 27 Feb 18;
- !SALLOCATE( lZbs, (1:mn), zero )
- !SALLOCATE( lRbs, (1:mn), zero )
- !SALLOCATE( lZbc, (1:mn), zero )
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \subsubsection{\type{ajk} : construction of coordinate axis}
-
-!latex \begin{enumerate}
-!latex \item This is only used in \link{rzaxis} to perform the poloidal integration and is defined quite simply: \newline
-!latex       \internal{ajk[i]} $\equiv 2\pi$ if $m_i =   0$, and \newline
-!latex       \internal{ajk[i]} $\equiv 0   $ if $m_i \ne 0$.
-!latex \end{enumerate}
-
-  SALLOCATE( ajk, (1:mn_field), zero ) ! this must be allocated & assigned now, as it is used in readin; primarily used in packxi; 02 Jan 15;
-
-  do kk = 1, mn_field ; mk = im_field(kk) ; nk = in_field(kk)
-
-   if( mk.eq.0 ) ajk(kk) = pi2
-
-  enddo ! end of do kk;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   ! Read boundary harmonics
   if( Lboundary.EQ.1 ) then
-    if( myid.eq.0 ) then ! read plasma boundary & computational boundary; initialize interface geometry;
     
-    if( Igeometry.eq.3 .and. Rbc(0,+1)+Rbc(0,-1).gt.zero .and. Zbs(0,+1)-Zbs(0,-1).gt.zero ) then ; Lchangeangle = .true.
-    else                                                                                          ; Lchangeangle = .false.
-    endif
-
-    !if( Lchangeangle .and. Linitialize.eq.1 ) then
-    !  FATAL( preset, .true., Cannot interpolate initial guess if angle has to be changed. )
-    !endif
-
-    do ii = 1, mn_rho; mm=im_rho(ii); nn=in_rho(ii) / Nfp
-      irhoc( ii, Nvol ) = rhomn( nn, mm )
-    enddo ! do ii=1,mn
-
-    do nn = 0, Ntor
-      ibc( nn, Nvol  ) = bn( nn )
-      iR0c( nn, Nvol ) = R0c( nn )
-
-      if( nn.ne.0 ) then
-        iZ0s( nn, Nvol ) = Z0s( nn )
-      endif
-    enddo
-
-    iZ0s( 0, Nvol ) = zero
-
-
-    if( Mvol.gt.1 ) then 
-      ! Read initial guess
-      select case( Linitialize )
-        case( :0 ) ! Linitialize=0 ; initial guess for geometry of the interior surfaces is given in the input file;
-          
-          do idx_mode=1, num_modes
-            mm = mmRZRZ(idx_mode)
-            nn = nnRZRZ(idx_mode)
-
-            if( mm.eq.0 ) then ! rn, zn, bn
-
-              if( nn.ge.0 ) then
-                ibc(  nn, 1:Nvol-1 ) = allRZRZ( 1, 1:Nvol-1, idx_mode )   
-                iR0c( nn, 1:Nvol-1 ) = allRZRZ( 2, 1:Nvol-1, idx_mode )   
-                iZ0s( nn, 1:Nvol-1 ) = allRZRZ( 3, 1:Nvol-1, idx_mode )
-              endif
-
-
-            else !rhomn
-              ! find index
-              ind = 0
-              do ii=1, mn_rho
-                if ( (im_rho(ii).eq.mm) .and. (in_rho(ii)/nfp.eq.nn)) then
-                  ind = ii
-                  exit
-                endif
-              enddo
-
-              irhoc(ind,1:Nvol-1) = allRZRZ( 4, 1:Nvol-1, idx_mode )
-
-            endif
-          enddo
-
-        case( 1 )
-          ! No need to interpolate if Linitialize=1. Instead, map to Rmn, Zmn and then interpolate before map back.
-          ! The interpolation of Rbc, Zbs is done further in preset.f90, then it mapped back to rhomn, bn, etc...
-      
-      end select
-    endif!Nvol.gt.1
-    endif !end of if(myid.eq.0)
 
 
     ! Map to Rmn, Zmn 
-    if( Linitialize.eq.0 ) then
-      do vvol=1,Nvol-1
-        call forwardMap( irhoc(1:mn_rho,vvol), ibc(0:Ntor,vvol), iR0c(0:Ntor,vvol), iZ0s(1:Ntor,vvol), iRbc(1:mn_field,vvol), iZbs(1:mn_field,vvol) )
-      enddo !vvol
-    endif !Linitialize
-    
-    call forwardMap( irhoc(1:mn_rho,Nvol), ibc(0:Ntor,Nvol), iR0c(0:Ntor,Nvol), iZ0s(1:Ntor,Nvol), iRbc(1:mn_field,Nvol), iZbs(1:mn_field,Nvol) )
-
-    if( Lfreebound.eq.1 ) then
-      ! TODO: FREE BOUNDARY STUFF
-      FATAL( preset, .true., Lboundary=1 incompatible with free-boundary yet)
+    if( Lfreebound.eq.0 ) then
+        ! Map plasma boundary
+        call forwardMap( irhoc(1:mn_rho,Nvol), ibc(0:Ntor,Nvol), iR0c(0:Ntor,Nvol), iZ0s(1:Ntor,Nvol), iRbc(1:mn_field,Nvol), iZbs(1:mn_field,Nvol) )
+    else
     endif
 
-
-
-  else 
-    if( myid.eq.0 ) then ! read plasma boundary & computational boundary; initialize interface geometry;
-      if( Igeometry.eq.3 .and. Rbc(0,+1)+Rbc(0,-1).gt.zero .and. Zbs(0,+1)-Zbs(0,-1).gt.zero ) then ; Lchangeangle = .true.
-      else                                                                                          ; Lchangeangle = .false.
-      endif
-
-      if( Lchangeangle ) write(ounit,'("readin : " 10x " : CHANGING ANGLE ;")')
-
-      do ii = 1, mn_field ; mm = im_field(ii) ; nn = in_field(ii) / Nfp ! set plasma boundary, computational boundary; 29 Apr 15;
-
-        if( Lchangeangle ) then ; jj = -1 ; kk = -nn ! change sign of poloidal angle;
-        else                    ; jj = +1 ; kk = +nn
-        endif
-
-        if( mm.eq.0 .and. nn.eq.0 ) then
-
-          ;iRbc(ii,Nvol) = Rbc( nn, mm)                         ! plasma        boundary is ALWAYS given by namelist Rbc & Zbs;
-          ;iZbs(ii,Nvol) = zero
-            if( NOTstellsym ) then
-          ;iRbs(ii,Nvol) = zero
-          ;iZbc(ii,Nvol) = Zbc( nn, mm)
-            else
-          ;iRbs(ii,Nvol) = zero
-          ;iZbc(ii,Nvol) = zero
-            endif
-
-          if( Lfreebound.eq.1 ) then
-
-            iRbc(ii,Mvol) = Rwc( nn, mm)                         ! computational boundary is ALWAYS given by namelist Rwc & Zws;
-            iZbs(ii,Mvol) = zero
-            if( NOTstellsym ) then
-            iRbs(ii,Mvol) = zero
-            iZbc(ii,Mvol) = Zwc( nn, mm)
-            else
-            iRbs(ii,Mvol) = zero
-            iZbc(ii,Mvol) = zero
-            endif
-
-            iVns(ii     ) = zero
-            iBns(ii     ) = zero
-            if( NOTstellsym ) then
-            iVnc(ii     ) = Vnc( nn, mm)                         ! I guess that this must be zero, because \div B = 0 ;
-            iBnc(ii     ) = Bnc( nn, mm)                         ! I guess that this must be zero, because \div B = 0 ;
-            else
-            iVnc(ii     ) = zero
-            iBnc(ii     ) = zero
-            endif
-
-          endif ! end of if( Lfreebound.eq.1 ) ;
-
-        else ! if( mm.eq.0 .and. nn.eq.0 ) then ; matches
-
-          ;iRbc(ii,Nvol) =   Rbc( kk, mm) + Rbc(-kk,-mm)        ! plasma        boundary is ALWAYS given by namelist Rbc & Zbs;
-          ;iZbs(ii,Nvol) = ( Zbs( kk, mm) - Zbs(-kk,-mm) ) * jj
-            if( NOTstellsym ) then
-          ;iRbs(ii,Nvol) = ( Rbs( kk, mm) - Rbs(-kk,-mm) ) * jj
-          ;iZbc(ii,Nvol) =   Zbc( kk, mm) + Zbc(-kk,-mm)
-            else
-          ;iRbs(ii,Nvol) =   zero
-          ;iZbc(ii,Nvol) =   zero
-            endif
-
-          if( Lfreebound.eq.1 ) then
-
-            iRbc(ii,Mvol) =   Rwc( kk, mm) + Rwc(-kk,-mm)        ! computational boundary is ALWAYS given by namelist Rwc & Zws;
-            iZbs(ii,Mvol) = ( Zws( kk, mm) - Zws(-kk,-mm) ) * jj
-            if( NOTstellsym ) then
-            iRbs(ii,Mvol) = ( Rws( kk, mm) - Rws(-kk,-mm) ) * jj
-            iZbc(ii,Mvol) =   Zwc( kk, mm) + Zwc(-kk,-mm)
-            else
-            iRbs(ii,Mvol) =   zero
-            iZbc(ii,Mvol) =   zero
-            endif
-
-            iVns(ii     ) = ( Vns( kk, mm) - Vns(-kk,-mm) ) * jj
-            iBns(ii     ) = ( Bns( kk, mm) - Bns(-kk,-mm) ) * jj
-            if( NOTstellsym ) then
-            iVnc(ii     ) =   Vnc( kk, mm) + Vnc(-kk,-mm)
-            iBnc(ii     ) =   Bnc( kk, mm) + Bnc(-kk,-mm)
-            else
-            iVnc(ii     ) =   zero
-            iBnc(ii     ) =   zero
-            endif
-
-          endif ! matches if( Lfreebound.eq.1 ) ;
-
-        endif ! end of if( mm.eq.0 .and. nn.eq.0 ) ;
-
-      enddo ! end of do ii = 1, mn;
-
-
-      select case( Linitialize ) ! 24 Oct 12;
-
-      case( :0 ) ! Linitialize=0 ; initial guess for geometry of the interior surfaces is given in the input file;
-
-        if( Lchangeangle ) then ; jj = -1  ! change sign of poloidal angle; Loizu Nov 18;
-        else                    ; jj = +1
-        endif
-
-        do idx_mode=1, num_modes! will read in Fourier harmonics until the end of file is reached;
-        mm = mmRZRZ(idx_mode)
-        nn = nnRZRZ(idx_mode)
-
-        do ii = 1, mn_field ; mi = im_field(ii) ; ni = in_field(ii) ! loop over harmonics within range;
-          if( mm.eq.0 .and. mi.eq.0 .and. nn*Nfp.eq.ni ) then
-          iRbc(ii,1:Nvol-1) = allRZRZ(1,1:Nvol-1, idx_mode) ! select relevant harmonics;
-          iZbs(ii,1:Nvol-1) = allRZRZ(2,1:Nvol-1, idx_mode) ! select relevant harmonics;
-          if( NOTstellsym ) then
-            iRbs(ii,1:Nvol-1) = allRZRZ(3,1:Nvol-1, idx_mode) ! select relevant harmonics;
-            iZbc(ii,1:Nvol-1) = allRZRZ(4,1:Nvol-1, idx_mode) ! select relevant harmonics;
-          else
-            iRbs(ii,1:Nvol-1) = zero             ! select relevant harmonics;
-            iZbc(ii,1:Nvol-1) = zero             ! select relevant harmonics;
-          endif
-          elseif( mm.eq.mi .and. nn*Nfp.eq.jj*ni ) then
-          iRbc(ii,1:Nvol-1) =    allRZRZ(1,1:Nvol-1, idx_mode) ! select relevant harmonics;
-          iZbs(ii,1:Nvol-1) = jj*allRZRZ(2,1:Nvol-1, idx_mode) ! select relevant harmonics;
-          if( NOTstellsym ) then
-            iRbs(ii,1:Nvol-1) = jj*allRZRZ(3,1:Nvol-1, idx_mode) ! select relevant harmonics;
-            iZbc(ii,1:Nvol-1) =    allRZRZ(4,1:Nvol-1, idx_mode) ! select relevant harmonics;
-          else
-            iRbs(ii,1:Nvol-1) = zero             ! select relevant harmonics;
-            iZbc(ii,1:Nvol-1) = zero             ! select relevant harmonics;
-          endif
-          endif
-        enddo ! end of do ii;
-
-        enddo ! end of do;
-
-      end select ! end select case( Linitialize );
-
-    endif ! end of if myid.eq.0 loop; only the master will read the input file; all variables need to be broadcast;
-  endif ! end of if( Lboundary.eq.1 )
-
-  if( myid.eq.0 ) then
-    if( Igeometry.eq.3 ) then
+    ! Now check sign of jacobian
+    ! First evaluate axis position if not provided as input
+    if( myid.eq.0 ) then
       if( Rac(0).gt.zero ) then ! user has supplied logically possible coordinate axis;
         iRbc(1:Ntor+1,0) = Rac(0:Ntor)
         iZbs(1:Ntor+1,0) = Zas(0:Ntor)
         iRbs(1:Ntor+1,0) = Ras(0:Ntor)
         iZbc(1:Ntor+1,0) = Zac(0:Ntor)
       else ! see preset for poloidal-average specification of coordinate axis and geometrical initialization;
-      endif ! end of if( Igeometry.eq.3 ) then ;
+        WCALL( preset, rzaxis, ( Mvol, mn_field, iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), Mvol, .false. ) )
+      endif
     endif 
-  endif
+  
+    ! Now evaluate the sign of the jacobian at s=1, theta=0, phi = 0
+    work = 0
+    do imn = 1, mn_field
+      do jmn = 1, mn_field
+        if( (im_field(imn).eq.0) .or. (im_field(imn).eq.1) ) then
+          work = work - (iRbc(imn,Nvol)-iRbc(imn,0)) * (iZbs(jmn,Nvol)-iZbs(jmn,0)) * half
+        else
+          work = work - (iRbc(imn,Nvol)-iRbc(imn,0)) * (iZbs(jmn,Nvol)-iZbs(jmn,0)) * im_field(imn) * half
+        endif
+      enddo
+    enddo
+
+    ! If Jacobian is negative, flip angle
+    if( abs(work).lt.vsmall ) then
+        FATAL( preset, .true., Jacobian is zero )
+    elseif( work.lt.zero ) then
+        Lhennangle = .true.
+        call initialize_mapping( Lhennangle )
+        if( Lfreebound.eq.0 ) then
+            ! Map plasma boundary
+            call forwardMap( irhoc(1:mn_rho,Nvol), ibc(0:Ntor,Nvol), iR0c(0:Ntor,Nvol), iZ0s(1:Ntor,Nvol), iRbc(1:mn_field,Nvol), iZbs(1:mn_field,Nvol) )
+        else
+        endif
+    endif
+
+    ! And now map initial guess
+    if( Linitialize.eq.0 ) then
+      do vvol=1,Nvol-1
+        call forwardMap( irhoc(1:mn_rho,vvol), ibc(0:Ntor,vvol), iR0c(0:Ntor,vvol), iZ0s(1:Ntor,vvol), iRbc(1:mn_field,vvol), iZbs(1:mn_field,vvol) )
+      enddo !vvol
+    endif !Linitialize
+    
+  else 
+    
+  endif ! end of if( Lboundary.eq.1 )
+
+
+
 
   !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -514,455 +170,11 @@ subroutine preset
     endif
   endif
 
-  if( Igeometry.eq.1 .or. Igeometry.eq.2 ) then
-    ;iRbc(1:mn_field,0) = zero ! innermost volume must be trivial; this is used in volume; innermost interface is coordinate axis;
-    if( NOTstellsym ) then
-      iRbs(1:mn_field,0) = zero ! innermost volume must be trivial; this is used in volume;
-    endif
-  endif
 
-  if( Igeometry.eq.3 ) then
-    iZbs(1,0:Mvol) = zero ! Zbs_{m=0,n=0} is irrelevant;
-  endif
-  if( NOTstellsym) then
-    iRbs(1,0:Mvol) = zero ! Rbs_{m=0,n=0} is irrelevant;
-  endif
-
-  if ( Igeometry.eq.1 .and. Lreflect.eq.1) then ! reflect upper and lower bound in slab, each take half the amplitude
-    iRbc(2:mn_field,Mvol) =  iRbc(2:mn_field,Mvol) * half
-    iRbc(2:mn_field,0)    = -iRbc(2:mn_field,Mvol)
-  if( NOTstellsym ) then
-    iRbs(2:mn_field,Mvol) =  iRbs(2:mn_field,Mvol) * half
-    iRbs(2:mn_field,0)    = -iRbs(2:mn_field,Mvol)
-  endif
-  endif
-
-  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-    Rscale = iRbc(1,Mvol) ! this will be used to normalize the geometrical degrees-of-freedom;
-
-    if( myid.eq.0 ) write(ounit,'("readin : ", 10x ," : myid=",i3," ; Rscale=",es22.15," ;")') myid, Rscale
-
-
-
-  call random_seed()
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
- !FATAL( preset, Nfp.eq.0, illegal division ) ! this was checked in global: readin; SRH: 27 Feb 18;
-
-  pi2nfp         = pi2 / Nfp
-
-  pi2pi2nfp      = pi2 * pi2nfp
-  pi2pi2nfphalf  = pi2 * pi2nfp * half
-  pi2pi2nfpquart = pi2 * pi2nfp * quart
-
-  Mrad  = maxval( Lrad(1:Mvol) )
-
-  if( myid.eq.0 ) write(ounit,'("preset : ",10x," : myid=",i3," ; Mrad=",i3," : Lrad=",257(i3,",",:))') myid, Mrad, Lrad(1:Mvol)
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!> **LGdof and NGdof : number of geometrical degrees-of-freedom**
-!>
-!> <ul>
-!> <li> \c LGdof \f$\equiv\f$ the number of degrees-of-freedom in the geometry (i.e. Fourier harmonics) of each interface </li>
-!> <li> \c NGdof \f$\equiv\f$ total number of degrees-of-freedom in geometry, i.e. of all interfaces </li>
-!> </ul>
-
-!                            Rbc  Zbs    Rbs    Zbc
-
-  select case( Igeometry )
-  case( 1:2)
-  if( YESstellsym ) LGdof_field = mn_field
-  if( NOTstellsym ) LGdof_field = mn_field        + mn_field-1
-  case(   3)
-  if( YESstellsym ) LGdof_field = mn_field + mn_field-1
-  if( NOTstellsym ) LGdof_field = mn_field + mn_field-1 + mn_field-1 + mn_field
-  end select
-
-
-  if( Lboundary.eq.0 ) then 
-
-    LGdof_force = LGdof_field
-    LGdof_bnd = LGdof_field
-
-  else 
-    select case( Igeometry )
-    case( 1:2 )
-      FATAL( preset, .true., Igeometry 1 and 2 incompatible with Lboundary 1)
-
-    case(  3  )
-  !                               rhomn    bn, R0c, Z0s   - Z0s(0)
-      if( YESstellsym ) then
-        LGdof_bnd = mn_rho + 3 * (Ntor + 1) - 1
-        LGdof_force = mn_force
-      elseif( NOTstellsym ) then
-        FATAL( preset.f90, .true., Non stellarator symmetry not implemented with Lboundary is 1 )
-      endif
-    end select
-  endif
-
-  NGdof_field = ( Mvol-1 ) * LGdof_field
-  NGdof_bnd = ( Mvol-1 ) * LGdof_bnd
-  NGdof_force = ( Mvol-1 ) * LGdof_force
-
-  FATAL( preset, NGdof_bnd.NE.NGdof_force, Number of geometrical dofs are not equal to number of force dofs.)
-
-  if( Wpreset ) then ; cput = GETTIME ; write(ounit,'("preset : ",f10.2," : myid=",i3," ; NGdof_field=",i9," ;")') cput-cpus, myid, NGdof_field
-  endif
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!> **iota and oita: rotational transform on interfaces**
-!>
-!> <ul>
-!> <li> The input variables \c iota and \c oita are the rotational transform
-!>       on "inner-side" and on the "outer-side" of each interface. </li>
-!> <li> These quantities are formally inputs. </li>
-!> <li> Note that if \f$q_l+\gamma q_r \ne 0\f$, then \c iota is given by
-!>       \f{eqnarray}{ {{\,\iota\!\!\!}-} \equiv \frac{p_l + \gamma p_r}{q_l + \gamma q_r},
-!>       \f}
-!>       where \f$p_l \equiv\,\f$\c pl, \f$q_l \equiv\,\f$\c ql , etc.;
-!>       and similarly for \c oita . </li>
-!> </ul>
-
-  do vvol = 0, Nvol
-
-   if( ql(vvol).eq.0 .and. qr(vvol).eq.0 ) then ; iota(vvol) = iota(vvol)
-   else                                         ; iota(vvol) = ( pl(vvol) + goldenmean * pr(vvol) ) / ( ql(vvol) + goldenmean * qr(vvol) )
-   endif
-
-   if( lq(vvol).eq.0 .and. rq(vvol).eq.0 ) then ; oita(vvol) = oita(vvol)
-   else                                         ; oita(vvol) = ( lp(vvol) + goldenmean * rp(vvol) ) / ( lq(vvol) + goldenmean * rq(vvol) )
-   endif
-
-   if( Wpreset .and. myid.eq.0 ) write(ounit,1002) vvol, pl(vvol), ql(vvol), pr(vvol), qr(vvol), iota(vvol), lp(vvol), lq(vvol), rp(vvol), rq(vvol), oita(vvol)
-
-1002 format("preset : ",10x," :      ",3x," ; transform : ",i3," : (",i3," /",i3," ) * (",i3," /",i3," ) = ",f18.15," ; ",&
-                                                                  "(",i3," /",i3," ) * (",i3," /",i3," ) = ",f18.15," ; ")
-
-  enddo
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!> **dtflux(1:Mvol) and dpflux(1:Mvol): enclosed fluxes**
-!>
-!> <ul>
-!> <li> \c dtflux \f$\equiv \Delta \psi_{tor} / 2\pi\f$ and
-!>      \c dpflux \f$\equiv \Delta \psi_{pol} / 2\pi\f$ in each volume. </li>
-!> <li> Note that the total toroidal flux enclosed by the plasma boundary is \f$\Phi_{edge} \equiv\,\f$\c phiedge . </li>
-!> <li> \f$\psi_{tor} \equiv\,\f$\c tflux and \f$\psi_{pol} \equiv\,\f$\c pflux are immediately normalized (in readin() ) according to
-!>      \f$\psi_{tor,i} \rightarrow \psi_{tor,i} / \psi_{0}\f$ and
-!>      \f$\psi_{pol,i} \rightarrow \psi_{pol,i} / \psi_{0}\f$, where \f$\psi_{0} \equiv \psi_{tor,N}\f$ on input. </li>
-!> </ul>
-
-  SALLOCATE( dtflux, (1:Mvol), zero )
-  SALLOCATE( dpflux, (1:Mvol), zero )
-
-  select case( Igeometry )
-  case( 1   ) ; dtflux(1) = tflux(1) ; dpflux(1) = pflux(1) ! Cartesian              ; this is the "inverse" operation defined in xspech; 09 Mar 17;
-  case( 2:3 ) ; dtflux(1) = tflux(1) ; dpflux(1) = zero     ! cylindrical or toroidal;
-  end select
-
-  dtflux(2:Mvol) = tflux(2:Mvol) - tflux(1:Mvol-1)
-  dpflux(2:Mvol) = pflux(2:Mvol) - pflux(1:Mvol-1)
-
-  dtflux(1:Mvol) = dtflux(1:Mvol) * phiedge / pi2
-  dpflux(1:Mvol) = dpflux(1:Mvol) * phiedge / pi2
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \subsubsection{\type{mu(1:Mvol)} evaluation of \inputvar{mu} from \inputvar{Ivolume};}
-!latex Only used when $Lconstraint = 3$. The coefficients \inputvar{mu} are evaluated as
-!latex \begin{equation}
-!latex \mu_1 = \mu_0 \frac{I_{volume}(1)}{\psi_{t,1}}
-!latex \end{equation}
-!latex \begin{equation}
-!latex \mu_n = \mu_0 \frac{I_{volume}(n) - I_{volume}(n-1)}{\psi_{t,n}-\psi_{t,n-1}},\qquad \forall\ n>1;
-!latex \end{equation}
-
-if (Lconstraint.EQ.3) then
-
-  mu(1) = Ivolume(1) / (tflux(1) * phiedge)
-
-  do vvol = 2, Mvol
-    mu(vvol) = (Ivolume(vvol) - Ivolume(vvol-1)) / ((tflux(vvol) - tflux(vvol-1)) * phiedge)
-  end do
-
-#ifdef DEBUG
-  if (myid.eq.0) then
-    write(*,*) " "
-    write(ounit,'("preset : ", 10x ," : Ivolume = "257(es11.3",",:))') (Ivolume(vvol), vvol=1, Mvol)
-    write(ounit,'("preset : ", 10x ," : tflux   = "257(es11.3",",:))') (  tflux(vvol), vvol=1, Mvol)
-    write(ounit,'("preset : ", 10x ," : phiedge = "257(es11.3",",:))') phiedge
-    write(ounit,'("preset : ", 10x ," : mu      = "257(es11.3",",:))') (     mu(vvol), vvol=1, Mvol)
-  end if
-#endif
-endif
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!> **sweight(1:Mvol): star-like angle constraint weight**
-!>
-!> <ul>
-!> <li> the "star-like" poloidal angle constraint weights (only required for toroidal geometry, i.e. \c Igeometry=3) are given by
-!>       \f{eqnarray}{ \texttt{sweight}_v \equiv \texttt{upsilon} \times (l_v / N_{vol})^w,
-!>       \f}
-!>       where \f$l_v\f$ is the volume number,
-!>       and \f$w \equiv\,\f$\c wpoloidal. </li>
-!> </ul>
-
-  SALLOCATE( sweight, (1:Mvol), zero )
- !sweight(1:Mvol) = upsilon * tflux(1:Mvol)**wpoloidal ! toroidal flux in vacuum region is not constant; 11 July 18;
-  do vvol = 1, Mvol ; sweight(vvol) = upsilon * (vvol*one/Nvol)**wpoloidal ! 11 July 18;
-  enddo
-
-#ifdef DEBUG
-  if (myid.eq.0) then
-    write(ounit,'("preset : ",10x," : sweight =",99(es12.5,",",:))') sweight(1:Mvol)
-  end if
-#endif
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!> **TT(0:Mrad,0:1,0:1): Chebyshev polynomials at inner/outer interface**
-!>
-!> <ul>
-!> <li> \c TT(0:Lrad,0:1,0:1) gives the Chebyshev polynomials, and their first derivative, evaluated at \f$s=-1\f$ and \f$s=+1\f$. </li>
-!> <li> Precisely, \c TT(l,i,d) \f$\equiv T_l^{(d)}(s_i)\f$ for \f$s_0=-1\f$ and \f$s_1=+1\f$. </li>
-!> <li> Note that \f$T_l^{(0)}(s)=s^l\f$ and \f$T_l^{(1)}(s)=s^{l+1} l^2\f$ for \f$s=\pm 1\f$. </li>
-!> <li> Note that
-!>       \f{eqnarray}{ T_l(-1)        = \left\{ \begin{array}{ccccccccccccccc}+1,& \textrm{ if $l$ is even,} \\
-!>                                                                            -1,& \textrm{ if $l$ is odd;}
-!>                                              \end{array} \right. & \; \;&
-!>                     T_l(+1)        = \left\{ \begin{array}{ccccccccccccccc}+1,& \textrm{ if $l$ is even,} \\
-!>                                                                            +1,& \textrm{ if $l$ is odd;}
-!>                                              \end{array} \right. \\
-!>                     T_l^\prime(-1) = \left\{ \begin{array}{ccccccccccccccc}-l^2,& \textrm{ if $l$ is even,} \\
-!>                                                                            +l^2,& \textrm{ if $l$ is odd;}
-!>                                              \end{array} \right. &\; \;&
-!>                     T_l^\prime(+1) = \left\{ \begin{array}{ccccccccccccccc}+l^2,& \textrm{ if $l$ is even,} \\
-!>                                                                            +l^2,& \textrm{ if $l$ is odd.}
-!>                                               \end{array} \right.
-!>       \f} </li>
-!> <li> \c TT(0:Mrad,0:1,0:1) is used in routines that explicity require interface information, such as
-!>       <ul>
-!>         <li> the interface force-balance routine,                                lforce() </li>
-!>         <li> the virtual casing routine,                                         casing() </li>
-!>         <li> computing the rotational-transform on the interfaces,               tr00ab() </li>
-!>         <li> computing the covariant components of the interface magnetic field, sc00aa() </li>
-!>         <li> enforcing the constraints on the Beltrami fields,                   matrix() </li>
-!>     and <li> computing the enclosed currents of the vacuum field,                curent(). </li>
-!>       </ul> </li>
-!> </ul>
-
-  SALLOCATE( TT, (0:Mrad,0:1,0:1), zero )
-  SALLOCATE(RTT, (0:Lrad(1),0:Mpol_field,0:1,0:1), zero )
-  SALLOCATE(RTM, (0:Lrad(1),0:Mpol_field), zero )
-
-  call get_cheby( -one, Mrad, TT(:,0,:))
-  call get_cheby( one , Mrad, TT(:,1,:))
-
-  call get_zernike(   zero, Lrad(1), Mpol_field, RTT(:,:,0,:))
-  call get_zernike(   one , Lrad(1), Mpol_field, RTT(:,:,1,:))
-  call get_zernike_rm(zero, Lrad(1), Mpol_field, RTM(:,:)    )
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!> **ImagneticOK(1:Mvol): Beltrami/vacuum error flag**
-!>
-!> <ul>
-!> <li> error flags that indicate if the magnetic field in each volume has been successfully constructed </li>
-!> <li> \c ImagneticOK is initialized to \c .false. in dforce() before the Beltrami solver routines are called.
-!>       If the construction of the Beltrami field is successful
-!>       (in either ma02aa() or mp00ac() )
-!>       then \c ImagneticOK is set to \c .true. . </li>
-!> </ul>
-
-  SALLOCATE( ImagneticOK, (1:Mvol), .false. )
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!latex \subsubsection{\type{IconstraintOK} : Global constraint flag;}
-
-!latex \begin{enumerate}
-!latex \item error flags that indicate if solution found is consistent with the global constraint
-!latex \item \type{ImagneticOK} is initialized to \type{.false.}
-!latex       If the construction the difference between the evaluated global constraint and in the input is small enough,
-!latex       then \type{ImagneticOK} is set to \type{.true.}.
-!latex \end{enumerate}
-
-!> **Lhessianallocated**
-!>
-!> <ul>
-!> <li> The internal logical variable, \c Lhessianallocated, indicates whether the ``Hessian'' matrix of second-partial derivatives
-!>       (really, the first derivatives of the force-vector) has been allocated, or not! </li>
-!> </ul>
-  Lhessianallocated = .false.
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!> **ki(1:mn,0:1): Fourier identification**
-!>
-!> <ul>
-!> <li> Consider the "abbreviated" representation for a double Fourier series,
-!>       \f{eqnarray}{ \sum_i      f_i \cos(     m_i \theta -      n_i \zeta) \equiv                         \sum_{n=      0  }^{     N_0} f_{0,n} \cos(       -n\zeta)
-!>                                                                                   + \sum_{m=1}^{     M_0} \sum_{n=-     N_0}^{     N_0} f_{m,n} \cos(m\theta-n\zeta),
-!>       \f}
-!>       and the same representation but with enhanced resolution,
-!>       \f{eqnarray}{ \sum_k \bar f_k \cos(\bar m_k \theta - \bar n_k \zeta) \equiv                         \sum_{n=      0  }^{     N_1} f_{0,n} \cos(       -n\zeta)
-!>                                                                                   + \sum_{m=1}^{     M_1} \sum_{n=-     N_1}^{     N_1} f_{m,n} \cos(m\theta-n\zeta),
-!>       \label{eq:enhancedFourierrepresentation_preset}
-!>       \f}
-!>       with \f$M_1 \ge M_0\f$ and \f$N_1 \ge N_0\f$;
-!>       then \f$k_i\equiv\,\f$\c ki(i,0) is defined such that \f$\bar m_{k_i} = m_i\f$ and \f$\bar n_{k_i} = n_i\f$. </li>
-!> </ul>
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!> **kija(1:mn,1:mn,0:1), kijs(1:mn,1:mn,0:1): Fourier identification**
-!>
-!> <ul>
-!> <li> Consider the following quantities, which are computed in ma00aa(),
-!>       where \f$\bar g^{\mu\nu} = \sum_k \bar g^{\mu\nu}_k \cos \alpha_k\f$ for \f$\alpha_k \equiv m_k \theta - n_k \zeta\f$,
-!>       \f{eqnarray}{
-!>       \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \bar g^{\mu\nu} \cos\alpha_i \; \cos\alpha_j & = & \frac{1}{2} \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \bar g^{\mu\nu} ( + \cos\alpha_{k_{ij+}} + \cos\alpha_{k_{ij-}} ), \\
-!>       \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \bar g^{\mu\nu} \cos\alpha_i \; \sin\alpha_j & = & \frac{1}{2} \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \bar g^{\mu\nu} ( + \sin\alpha_{k_{ij+}} - \sin\alpha_{k_{ij-}} ), \\
-!>       \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \bar g^{\mu\nu} \sin\alpha_i \; \cos\alpha_j & = & \frac{1}{2} \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \bar g^{\mu\nu} ( + \sin\alpha_{k_{ij+}} + \sin\alpha_{k_{ij-}} ), \\
-!>       \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \bar g^{\mu\nu} \sin\alpha_i \; \sin\alpha_j & = & \frac{1}{2} \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \bar g^{\mu\nu} ( - \cos\alpha_{k_{ij+}} + \cos\alpha_{k_{ij-}} ),
-!>       \f}
-!>       where \f$(m_{k_{ij+}}, n_{k_{ij+}}) = (m_i + m_j, n_i + n_j)\f$ and \f$(m_{k_{ij-}}, n_{k_{ij-}}) = (m_i - m_j, n_i - n_j)\f$;
-!>       then \c kija(i,j,0) \f$\equiv k_{ij+}\f$ and \c kijs(i,j,0) \f$\equiv k_{ij-}\f$. </li>
-!> <li> Note that Eqn.\f$(\ref{eq:enhancedFourierrepresentation_preset})\f$ does not include \f$m<0\f$; so,
-!>       if \f$m_i - m_j < 0\f$ then \f$k_{ij-}\f$ is re-defined such that \f$(m_{k_{ij-}}, n_{k_{ij-}}) = (m_j - m_i, n_j - n_i)\f$; and
-!>       similarly for the case \f$m=0\f$ and \f$n<0\f$.
-!>       Also, take care that the sign of the sine harmonics in the above expressions will change for these cases. </li>
-!> </ul>
-
-  SALLOCATE( ki, (1:mn_field,0:1), 0 )
-  SALLOCATE( kija, (1:mn_field,1:mn_field,0:1), 0 )
-  SALLOCATE( kijs, (1:mn_field,1:mn_field,0:1), 0 )
-
-  do ii = 1, mn_field  ; mi =  im_field(ii) ; ni =  in_field(ii)
-
-    call getimn(lMpol, lNtor, Nfp, mi, ni, kk)
-    if (kk.gt.0) then
-      if( mi.eq.0 .and. ni.eq.0 ) then ; ki(ii,0:1) = (/ kk, 1 /)
-      else                             ; ki(ii,0:1) = (/ kk, 2 /)
-      endif
-    endif
-
-    do jj = 1, mn_field  ; mj =  im_field(jj) ; nj =  in_field(jj) ; mimj = mi + mj ; ninj = ni + nj !   adding   ; 17 Dec 15;
-
-      call getimn(lMpol, lNtor, Nfp, mimj, ninj, kk)
-      if (kk.gt.0) then
-        if( mimj.eq.0 .and. ninj.eq.0 ) then ; kija(ii,jj,0:1) = (/ kk, 1 /)
-        else                                 ; kija(ii,jj,0:1) = (/ kk, 2 /)
-        endif
-      endif
-      ;                                           ; mimj = mi - mj ; ninj = ni - nj ! subtracting; 17 Dec 15;
-
-      if( mimj.gt.0 .or. ( mimj.eq.0 .and. ninj.ge.0 ) ) then
-        call getimn(lMpol, lNtor, Nfp, mimj, ninj, kk)
-        if (kk.gt.0) then
-          if( mimj.eq.0 .and. ninj.eq.0 ) then ; kijs(ii,jj,0:1) = (/ kk, 1 /)
-          else                                 ; kijs(ii,jj,0:1) = (/ kk, 2 /)
-          endif
-        endif
-      else
-        call getimn(lMpol, lNtor, Nfp, -mimj, -ninj, kk)
-        if (kk.gt.0) then
-          ;                                    ; kijs(ii,jj,0:1) = (/ kk , - 2 /) ! only the sine modes need the sign factor; 17 Dec 15;
-        endif
-      endif
-
-    enddo ! end of do jj; 29 Jan 13;
-
-  enddo ! end of do ii; 29 Jan 13;
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!> **djkp**
-
-  if( Igeometry.eq.2 ) then ! standard cylindrical; 04 Dec 14;
-
-   SALLOCATE( djkp, (1:mn_field,1:mn_field), 0 ) ! only used in volume; trigonometric identities; 04 Dec 14;
-   SALLOCATE( djkm, (1:mn_field,1:mn_field), 0 ) ! only used in volume; trigonometric identities; 04 Dec 14;
-
-   do ii = 1, mn_field ; mi = im_field(ii) ; ni = in_field(ii)
-    do jj = 1, mn_field ; mj = im_field(jj) ; nj = in_field(jj)
-     if( mi-mj.eq.0 .and. ni-nj.eq.0 ) djkp(ii,jj) = 1
-     if( mi+mj.eq.0 .and. ni+nj.eq.0 ) djkm(ii,jj) = 1
-    enddo
-   enddo
-
-  endif ! end of if( Igeometry.eq.2 ) ; 04 Dec 14;
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!> **iotakki**
-
-  SALLOCATE( iotakkii, (1:mn_field      ), 0 ) ! used to identify matrix elements in straight-field-line angle transformation;
-
-  SALLOCATE( iotaksub, (1:mn_field,1:mns), 0 )
-  SALLOCATE( iotaksgn, (1:mn_field,1:mns), 0 )
-  SALLOCATE( iotakadd, (1:mn_field,1:mns), 0 )
-
-  do kk = 1, mn_field ; mk = im_field(kk) ; nk = in_field(kk)
-
-    call getimn(sMpol, sNtor, Nfp, mk, nk, ii)
-    if (ii.gt.0) iotakkii(kk) = ii
-
-    do jj = 1, mns ; mj = ims(jj) ; nj = ins(jj)
-
-      mkmj = mk - mj ; nknj = nk - nj
-
-      if( mkmj.gt.0 .or. ( mkmj.eq.0 .and. nknj.ge.0 ) ) then
-
-        call getimn(sMpol, sNtor, Nfp, mkmj, nknj, ii)
-        if (ii.gt.0) then ; iotaksub(kk,jj) = ii ; iotaksgn(kk,jj) =  1
-        endif
-
-      else
-
-        call getimn(sMpol, sNtor, Nfp, -mkmj, -nknj, ii)
-        if (ii.gt.0) then ; iotaksub(kk,jj) = ii ; iotaksgn(kk,jj) =  -1
-        endif
-
-      endif
-
-      mkmj = mk + mj ; nknj = nk + nj
-
-      call getimn(sMpol, sNtor, Nfp, mkmj, nknj, ii)
-      if (ii.gt.0) then ; iotakadd(kk,jj) = ii
-      endif
-
-    enddo ! end of do jj; 29 Jan 13;
-
-  enddo ! end of do kk; 29 Jan 13;
 
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!> **cheby(0:Lrad,0:2): Chebyshev polynomial workspace**
-!>
-!> <ul>
-!> <li> \c cheby(0:Lrad,0:2) is global workspace for computing the Chebyshev polynomials, and their derivatives,
-!>       using the recurrence relations \f$T_0(s) = 1\f$, \f$T_1(s) = s\f$ and  \f$T_l(s) = 2 \, s \,T_{l-1}(s) - T_{l-2}(s)\f$. </li>
-!> <li> These are computed as required, i.e. for arbitrary \f$s\f$, in bfield(), jo00aa() and ma00aa(). </li>
-!> <li> Note that the quantities required for ma00aa() are for fixed \f$s\f$, and so these quantities should be precomputed. </li>
-!> </ul>
-
-! Allocate space for the toroidal current array in each interface
-
-  SALLOCATE( IPDt, (1:Mvol), zero)
-  if( Lfreebound.eq.1 ) then
-    SALLOCATE( IPDtDpf, (1:Mvol  , 1:Mvol  ), zero)
-  else
-    SALLOCATE( IPDtDpf, (1:Mvol-1, 1:Mvol-1), zero)
-  endif
-
-  SALLOCATE( cheby, (0:Mrad,0:2), zero )
-  SALLOCATE( zernike, (0:Lrad(1), 0:Mpol_field, 0:2), zero )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1044,7 +256,6 @@ endif
   if (LBnewton .or. LBsequad) Lconstraint = 2
 
   if (Lconstraint .eq. 2) then
-    FATAL( preset, Lfreebound.eq.1, The combination of helicity constraint and free boundary is under construction )
     if (Igeometry .eq. 3 .and. myid.eq.0) then
       write(ounit, *) 'WARNING: The Hessian matrix needs further review for Igeometry = 3'
       write(ounit, *) '         However, it can still serve the purpose of Lfindzero = 2'
@@ -1056,44 +267,6 @@ endif
    write(ounit,'("preset : ",f10.2," : LBsequad="L2" , LBnewton="L2" , LBlinear="L2" ;")')cput-cpus, LBsequad, LBnewton, LBlinear
   endif
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!> **BBweight(1:mn): weighting of force-imbalance harmonics**
-!>
-!> <ul>
-!> <li> weight on force-imbalance harmonics;
-!>       \f{eqnarray}{ \texttt{BBweight}_i \equiv \texttt{opsilon} \times \exp\left[ - \texttt{escale} \times (m_i^2 + n_i^2) \right]
-!>       \f} </li>
-!> <li> this is only used in dforce() in constructing the force-imbalance vector </li>
-!> </ul>
-
-  SALLOCATE( BBweight, (1:mn_force), opsilon * exp( - escale * ( im_force(1:mn_force)**2 + (in_force(1:mn_force)/Nfp)**2 ) ) )
-
-  if( myid.eq.0 .and. escale.gt.small ) then
-   do ii = 1, mn_force ; write(ounit,'("preset : " 10x " : myid="i3" ; ("i3","i3") : BBweight="es13.5" ;")') myid, im_force(ii), in_force(ii)/Nfp, BBweight(ii)
-   enddo
-  endif
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-!> **mmpp(1:mn): spectral condensation weight factors**
-!>
-!> <ul>
-!> <li> spectral condensation weight factors;
-!>       \f{eqnarray}{ \texttt{mmpp(i)} \equiv m_i^p,
-!>       \f}
-!>       where \f$p \equiv\,\f$\c pcondense . </li>
-!> </ul>
-
-  SALLOCATE( mmpp, (1:mn_field), zero )
-
-  do ii = 1, mn_field ; mi = im_field(ii)
-
-   if( mi.eq.0 ) then ; mmpp(ii) = zero
-   else               ; mmpp(ii) = mi**pcondense
-   endif ! end of if( mi.eq.0 ) ; 11 Aug 14;
-
-  enddo ! end of do ii; 08 Nov 13;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1435,6 +608,9 @@ endif
 
   Nt = max( Ndiscrete*4*Mpol_force, 1 ) ; Nz = max( Ndiscrete*4*ntor_field, 1 ) ; Ntz = Nt*Nz ; soNtz = one / sqrt( one*Ntz ) ! exaggerated discrete resolution;
 
+  FATAL( preset, Nz.eq.0, illegal division )
+  FATAL( preset, Nt.eq.0, illegal division )
+
   ;                  ; hNt = Nt / 2
   if( Nz.gt.1 ) then ; hNz = Nz / 2
   else               ; hNz = 0
@@ -1553,9 +729,6 @@ endif
 
   SALLOCATE( cosi, (1:Ntz,1:mn_field), zero )
   SALLOCATE( sini, (1:Ntz,1:mn_field), zero )
-
-  FATAL( preset, Nz.eq.0, illegal division )
-  FATAL( preset, Nt.eq.0, illegal division )
 
   do ii = 1, mn_field ; mi = im_field(ii) ; ni = in_field(ii) ! loop over Fourier harmonics;
 
@@ -1686,9 +859,6 @@ endif
    select case( Igeometry )
 
    case( 1 ) ! Cartesian; 29 Apr 14;
-
-   !FATAL( preset, Linitialize.ne.1, geometrical initialization under construction for Cartesian ) ! 14 Apr 17;
-
     do vvol = 1, Nvol
      ;iRbc(1:mn_field,vvol) = iRbc(1:mn_field,Mvol) * tflux(vvol) / tflux(Mvol) ! 14 Apr 17;
      if( NOTstellsym ) then
@@ -1948,4 +1118,829 @@ endif
 
 end subroutine preset
 
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+subroutine set_global_variables()
+
+  use constants, only : zero, one, mu0
+  use numerical, only : sqrtmachprec, vsmall, small
+  use fileunits, only : ounit
+  use inputlist
+  use cputiming, only : Tpreset
+  use allglobal
+
+  !-------------------------------------------------------------------
+
+  LOCALS
+
+  !-------------------------------------------------------------------
+
+  ! set up Henneberg's mapping
+  if( Lboundary.eq.0 ) then
+    twoalpha = 0.0
+  endif
+
+  Lhennangle = .false.
+  call initialize_mapping( Lhennangle )
+
+  !latex \subsubsection{\type{Mvol} : total number of volumes}
+  !latex \begin{enumerate}
+  !latex \item The number of plasma volumes is \internal{Mvol}=\inputvar{Nvol}+\inputvar{Lfreebound};
+  !latex \end{enumerate}
+  Mvol = Nvol + Lfreebound
+
+  !latex \subsubsection{\type{halfmm(1:mn}, regumm(1:mn) : regularization factor}
+  !latex \begin{enumerate}
+  !latex \item The ``regularization'' factor, \type{halfmm(1:mn)} = \type{im(1:mn)} * \type{half}, is real.
+  !latex \end{enumerate}
+  SALLOCATE( halfmm, (1:mn_field), im_field(1:mn_field) * half ) ! half the poloidal mode number
+  SALLOCATE( regumm, (1:mn_field), im_field(1:mn_field) * half ) ! regularization factor
+
+  if( Mregular.ge.2 ) then
+    where( im_field.gt.Mregular ) regumm = Mregular * half
+  endif
+
+  !latex \subsubsection{\type{ime} and \type{ine} : extended resolution Fourier mode identification}
+  !latex \begin{enumerate}
+  !latex \item The ``extended'' Fourier resolution is defined by \internal{lMpol} $ = 4 $ \inputvar{Mpol}, \internal{lNtor} $ = 4 $\inputvar{Ntor}.
+  !latex \end{enumerate}
+  lMpol = 4 * Mpol_field ; ! enhanced poloidal resolution for metrics
+  lNtor = 4*Ntor_field     ! enhanced toroidal resolution for metrics;
+  mne   = 1 + lNtor + lMpol * ( 2 * lNtor + 1 ) ! resolution of metrics; enhanced resolution; see metrix;
+
+  SALLOCATE( ime, (1:mne), 0 )
+  SALLOCATE( ine, (1:mne), 0 )
+
+  call gi00ab( lMpol, lNtor, Nfp, mne, ime(1:mne), ine(1:mne), .true. )
+
+  !latex \subsubsection{\type{mns}, \type{ims} and \type{ins} : Fourier mode identification for straight-fieldline angle}
+  sMpol = iMpol 
+  sNtor = iNtor
+  if( iMpol.le.0 ) sMpol = Mpol_field - iMpol
+  if( iNtor.le.0 ) sNtor = Ntor_field - iNtor
+  if(  Ntor.eq.0 ) sNtor = 0
+  mns = 1 + sNtor + sMpol * ( 2 * sNtor + 1 ) ! resolution of straight-field line transformation on interfaces; see tr00ab; soon to be redundant;
+
+  SALLOCATE( ims, (1:mns), 0 )
+  SALLOCATE( ins, (1:mns), 0 )
+
+  call gi00ab( sMpol, sNtor, Nfp, mns, ims(1:mns), ins(1:mns), .true. ) ! note that the field periodicity factor is included in ins;
+
+
+  !latex \subsection{\type{beltramierror(1:Mvol,1:9)}: error on magnetic field}
+  SALLOCATE( beltramierror,(1:Mvol,1:9), zero)
+
+
+  !latex \subsubsection{\type{iRbc(1:mn,0:Mvol}, \type{iZbs(1:mn,0:Mvol}, \type{iRbs(1:mn,0:Mvol} and \type{iZbc(1:mn,0:Mvol} : geometry}
+  !latex \begin{enumerate}
+  !latex \item \type{iRbc}, \type{iZbs}, \type{iRbs} and \type{iZbc} : Fourier harmonics of interface geometry;
+  !latex \item \type{iVns}, \type{iVnc}, \type{iBns} and \type{iBns} : Fourier harmonics of normal field at computational boundary;
+  !latex \end{enumerate}
+  SALLOCATE( iRbc, (1:mn_field,0:Mvol), zero ) ! interface Fourier harmonics;
+  SALLOCATE( iZbs, (1:mn_field,0:Mvol), zero )
+  SALLOCATE( iRbs, (1:mn_field,0:Mvol), zero )
+  SALLOCATE( iZbc, (1:mn_field,0:Mvol), zero )
+
+  if( Lboundary.eq.1 ) then
+    SALLOCATE( irhoc , (1:mn_rho, 1:Mvol), zero )
+    SALLOCATE( ibc   , (0:Ntor, 1:Mvol), zero )
+    SALLOCATE( iR0c  , (0:Ntor, 1:Mvol), zero )
+    SALLOCATE( iZ0s  , (0:Ntor, 1:Mvol), zero )
+  endif
+
+
+  if( Lperturbed.eq.1 ) then
+    SALLOCATE( dRbc, (1:mn_field,0:Mvol), zero ) ! interface Fourier harmonics;
+    SALLOCATE( dZbs, (1:mn_field,0:Mvol), zero )
+    SALLOCATE( dRbs, (1:mn_field,0:Mvol), zero )
+    SALLOCATE( dZbc, (1:mn_field,0:Mvol), zero )
+  endif
+
+  if( Lfreebound.eq.1 ) then
+    SALLOCATE( iVns, (1:mn_field), zero )
+    SALLOCATE( iBns, (1:mn_field), zero )
+    SALLOCATE( iVnc, (1:mn_field), zero )
+    SALLOCATE( iBnc, (1:mn_field), zero )
+  endif
+
+
+  !latex \subsubsection{\type{ajk} : construction of coordinate axis}
+
+  !latex \begin{enumerate}
+  !latex \item This is only used in \link{rzaxis} to perform the poloidal integration and is defined quite simply: \newline
+  !latex       \internal{ajk[i]} $\equiv 2\pi$ if $m_i =   0$, and \newline
+  !latex       \internal{ajk[i]} $\equiv 0   $ if $m_i \ne 0$.
+  !latex \end{enumerate}
+  if( Lrzaxis.eq.1 ) then !Only used by the centroid method
+    SALLOCATE( ajk, (1:mn_field), zero ) ! this must be allocated & assigned now, as it is used in readin; primarily used in packxi
+
+    do kk = 1, mn_field ; mk = im_field(kk) ; nk = in_field(kk)
+      if( mk.eq.0 ) then
+        ajk(kk) = pi2
+      endif
+    enddo ! end of do kk;
+  endif
+
+
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  Rscale = iRbc(1,Mvol) ! this will be used to normalize the geometrical degrees-of-freedom;
+
+  if( myid.eq.0 ) write(ounit,'("readin : ", 10x ," : myid=",i3," ; Rscale=",es22.15," ;")') myid, Rscale
+
+  call random_seed()
+  
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  pi2nfp         = pi2 / Nfp
+  pi2pi2nfp      = pi2 * pi2nfp
+  pi2pi2nfphalf  = pi2 * pi2nfp * half
+  pi2pi2nfpquart = pi2 * pi2nfp * quart
+
+  Mrad  = maxval( Lrad(1:Mvol) )
+  if( myid.eq.0 ) write(ounit,'("preset : ",10x," : myid=",i3," ; Mrad=",i3," : Lrad=",257(i3,",",:))') myid, Mrad, Lrad(1:Mvol)
+
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  !> **LGdof and NGdof : number of geometrical degrees-of-freedom**
+  !>
+  !> <ul>
+  !> <li> \c LGdof \f$\equiv\f$ the number of degrees-of-freedom in the geometry (i.e. Fourier harmonics) of each interface </li>
+  !> <li> \c NGdof \f$\equiv\f$ total number of degrees-of-freedom in geometry, i.e. of all interfaces </li>
+  !> </ul>
+
+  select case( Igeometry )
+  case( 1:2)
+    if( YESstellsym ) LGdof_field = mn_field
+    if( NOTstellsym ) LGdof_field = mn_field        + mn_field-1
+  case(   3)
+    if( YESstellsym ) LGdof_field = mn_field + mn_field-1
+    if( NOTstellsym ) LGdof_field = mn_field + mn_field-1 + mn_field-1 + mn_field
+  end select
+
+  if( Lboundary.eq.0 ) then 
+    LGdof_force = LGdof_field
+    LGdof_bnd = LGdof_field
+
+  else   !                  
+    ! In global, it is ensured that this is a toroidal geometry, where stell. sym. is assumed.
+    LGdof_bnd = mn_rho + 3 * (Ntor + 1) - 1
+    LGdof_force = mn_force
+  endif
+
+  NGdof_field = ( Mvol-1 ) * LGdof_field
+  NGdof_bnd   = ( Mvol-1 ) * LGdof_bnd
+  NGdof_force = ( Mvol-1 ) * LGdof_force
+
+  FATAL( preset, NGdof_bnd.NE.NGdof_force, Number of geometrical dofs are not equal to number of force dofs.)
+
+  if( Wpreset ) then ; cput = GETTIME ; write(ounit,'("preset : ",f10.2," : myid=",i3," ; NGdof_field=",i9," ;")') cput-cpus, myid, NGdof_field
+  endif
+
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  !> **iota and oita: rotational transform on interfaces**
+  !>
+  !> <ul>
+  !> <li> The input variables \c iota and \c oita are the rotational transform
+  !>       on "inner-side" and on the "outer-side" of each interface. </li>
+  !> <li> These quantities are formally inputs. </li>
+  !> <li> Note that if \f$q_l+\gamma q_r \ne 0\f$, then \c iota is given by
+  !>       \f{eqnarray}{ {{\,\iota\!\!\!}-} \equiv \frac{p_l + \gamma p_r}{q_l + \gamma q_r},
+  !>       \f}
+  !>       where \f$p_l \equiv\,\f$\c pl, \f$q_l \equiv\,\f$\c ql , etc.;
+  !>       and similarly for \c oita . </li>
+  !> </ul>
+
+  if( Lcontraint.eq.1 ) then
+    do vvol = 0, Nvol
+      if( ql(vvol).eq.0 .and. qr(vvol).eq.0 ) then ; iota(vvol) = iota(vvol)
+      else                                         ; iota(vvol) = ( pl(vvol) + goldenmean * pr(vvol) ) / ( ql(vvol) + goldenmean * qr(vvol) )
+      endif
+
+      if( lq(vvol).eq.0 .and. rq(vvol).eq.0 ) then ; oita(vvol) = oita(vvol)
+      else                                         ; oita(vvol) = ( lp(vvol) + goldenmean * rp(vvol) ) / ( lq(vvol) + goldenmean * rq(vvol) )
+      endif
+
+      if( Wpreset .and. myid.eq.0 ) write(ounit,1002) vvol, pl(vvol), ql(vvol), pr(vvol), qr(vvol), iota(vvol), lp(vvol), lq(vvol), rp(vvol), rq(vvol), oita(vvol)
+
+1002 format("preset : ",10x," :      ",3x," ; transform : ",i3," : (",i3," /",i3," ) * (",i3," /",i3," ) = ",f18.15," ; ",&
+                                                                  "(",i3," /",i3," ) * (",i3," /",i3," ) = ",f18.15," ; ")
+
+    enddo
+  endif
+
+
+    !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+    !> **dtflux(1:Mvol) and dpflux(1:Mvol): enclosed fluxes**
+    !>
+    !> <ul>
+    !> <li> \c dtflux \f$\equiv \Delta \psi_{tor} / 2\pi\f$ and
+    !>      \c dpflux \f$\equiv \Delta \psi_{pol} / 2\pi\f$ in each volume. </li>
+    !> <li> Note that the total toroidal flux enclosed by the plasma boundary is \f$\Phi_{edge} \equiv\,\f$\c phiedge . </li>
+    !> <li> \f$\psi_{tor} \equiv\,\f$\c tflux and \f$\psi_{pol} \equiv\,\f$\c pflux are immediately normalized (in readin() ) according to
+    !>      \f$\psi_{tor,i} \rightarrow \psi_{tor,i} / \psi_{0}\f$ and
+    !>      \f$\psi_{pol,i} \rightarrow \psi_{pol,i} / \psi_{0}\f$, where \f$\psi_{0} \equiv \psi_{tor,N}\f$ on input. </li>
+    !> </ul>
+
+    SALLOCATE( dtflux, (1:Mvol), zero )
+    SALLOCATE( dpflux, (1:Mvol), zero )
+  
+    select case( Igeometry )
+    case( 1   ) ; dtflux(1) = tflux(1) ; dpflux(1) = pflux(1) ! Cartesian              ; this is the "inverse" operation defined in xspech; 09 Mar 17;
+    case( 2:3 ) ; dtflux(1) = tflux(1) ; dpflux(1) = zero     ! cylindrical or toroidal;
+    end select
+  
+    dtflux(2:Mvol) = tflux(2:Mvol) - tflux(1:Mvol-1)
+    dpflux(2:Mvol) = pflux(2:Mvol) - pflux(1:Mvol-1)
+  
+    dtflux(1:Mvol) = dtflux(1:Mvol) * phiedge / pi2
+    dpflux(1:Mvol) = dpflux(1:Mvol) * phiedge / pi2
+  
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+  !latex \subsubsection{\type{mu(1:Mvol)} evaluation of \inputvar{mu} from \inputvar{Ivolume};}
+  !latex Only used when $Lconstraint = 3$. The coefficients \inputvar{mu} are evaluated as
+  !latex \begin{equation}
+  !latex \mu_1 = \mu_0 \frac{I_{volume}(1)}{\psi_{t,1}}
+  !latex \end{equation}
+  !latex \begin{equation}
+  !latex \mu_n = \mu_0 \frac{I_{volume}(n) - I_{volume}(n-1)}{\psi_{t,n}-\psi_{t,n-1}},\qquad \forall\ n>1;
+  !latex \end{equation}
+  
+  if (Lconstraint.EQ.3) then
+  
+    mu(1) = Ivolume(1) / (tflux(1) * phiedge)
+  
+    do vvol = 2, Mvol
+      mu(vvol) = (Ivolume(vvol) - Ivolume(vvol-1)) / ((tflux(vvol) - tflux(vvol-1)) * phiedge)
+    enddo
+  
+#ifdef DEBUG
+    if (myid.eq.0) then
+      write(*,*) " "
+      write(ounit,'("preset : ", 10x ," : Ivolume = "257(es11.3",",:))') (Ivolume(vvol), vvol=1, Mvol)
+      write(ounit,'("preset : ", 10x ," : tflux   = "257(es11.3",",:))') (  tflux(vvol), vvol=1, Mvol)
+      write(ounit,'("preset : ", 10x ," : phiedge = "257(es11.3",",:))') phiedge
+      write(ounit,'("preset : ", 10x ," : mu      = "257(es11.3",",:))') (     mu(vvol), vvol=1, Mvol)
+    endif
+#endif
+  endif
+  
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  ! ANGLE CONSTRAINT AND SPECTRAL CONDENSATION RELATED WEIGHTS
+  ! ----------------------------------------------------------
+
+  !> **BBweight(1:mn): weighting of force-imbalance harmonics**
+  !>
+  !> <ul>
+  !> <li> weight on force-imbalance harmonics;
+  !>       \f{eqnarray}{ \texttt{BBweight}_i \equiv \texttt{opsilon} \times \exp\left[ - \texttt{escale} \times (m_i^2 + n_i^2) \right]
+  !>       \f} </li>
+  !> <li> this is only used in dforce() in constructing the force-imbalance vector </li>
+  !> </ul>
+
+  SALLOCATE( BBweight, (1:mn_force), opsilon * exp( - escale * ( im_force(1:mn_force)**2 + (in_force(1:mn_force)/Nfp)**2 ) ) )
+
+  if( myid.eq.0 .and. escale.gt.small ) then
+   do ii = 1, mn_force ; write(ounit,'("preset : " 10x " : myid="i3" ; ("i3","i3") : BBweight="es13.5" ;")') myid, im_force(ii), in_force(ii)/Nfp, BBweight(ii)
+   enddo
+  endif
+
+  !> **mmpp(1:mn): spectral condensation weight factors**
+  !>
+  !> <ul>
+  !> <li> spectral condensation weight factors;
+  !>       \f{eqnarray}{ \texttt{mmpp(i)} \equiv m_i^p,
+  !>       \f}
+  !>       where \f$p \equiv\,\f$\c pcondense . </li>
+  !> </ul>
+  if( Lboundary.eq.0 ) then
+    SALLOCATE( mmpp, (1:mn_field), zero )
+
+    do ii = 1, mn_field ; mi = im_field(ii)
+
+    if( mi.eq.0 ) then ; mmpp(ii) = zero
+    else               ; mmpp(ii) = mi**pcondense
+    endif ! end of if( mi.eq.0 ) ; 11 Aug 14;
+
+    enddo ! end of do ii; 08 Nov 13;
+  endif
+
+  !> **sweight(1:Mvol): star-like angle constraint weight**
+  !>
+  !> <ul>
+  !> <li> the "star-like" poloidal angle constraint weights (only required for toroidal geometry, i.e. \c Igeometry=3) are given by
+  !>       \f{eqnarray}{ \texttt{sweight}_v \equiv \texttt{upsilon} \times (l_v / N_{vol})^w,
+  !>       \f}
+  !>       where \f$l_v\f$ is the volume number,
+  !>       and \f$w \equiv\,\f$\c wpoloidal. </li>
+  !> </ul>
+  if( Lboundary.eq.0 ) then
+    SALLOCATE( sweight, (1:Mvol), zero )
+    do vvol = 1, Mvol ; sweight(vvol) = upsilon * (vvol*one/Nvol)**wpoloidal ! 11 July 18;
+    enddo
+  
+#ifdef DEBUG
+    if (myid.eq.0) then
+      write(ounit,'("preset : ",10x," : sweight =",99(es12.5,",",:))') sweight(1:Mvol)
+    endif
+#endif
+  endif
+  
+  
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+  !> **TT(0:Mrad,0:1,0:1): Chebyshev polynomials at inner/outer interface**
+  !>
+  !> <ul>
+  !> <li> \c TT(0:Lrad,0:1,0:1) gives the Chebyshev polynomials, and their first derivative, evaluated at \f$s=-1\f$ and \f$s=+1\f$. </li>
+  !> <li> Precisely, \c TT(l,i,d) \f$\equiv T_l^{(d)}(s_i)\f$ for \f$s_0=-1\f$ and \f$s_1=+1\f$. </li>
+  !> <li> Note that \f$T_l^{(0)}(s)=s^l\f$ and \f$T_l^{(1)}(s)=s^{l+1} l^2\f$ for \f$s=\pm 1\f$. </li>
+  !> <li> Note that
+  !>       \f{eqnarray}{ T_l(-1)        = \left\{ \begin{array}{ccccccccccccccc}+1,& \textrm{ if $l$ is even,} \\
+  !>                                                                            -1,& \textrm{ if $l$ is odd;}
+  !>                                              \end{array} \right. & \; \;&
+  !>                     T_l(+1)        = \left\{ \begin{array}{ccccccccccccccc}+1,& \textrm{ if $l$ is even,} \\
+  !>                                                                            +1,& \textrm{ if $l$ is odd;}
+  !>                                              \end{array} \right. \\
+  !>                     T_l^\prime(-1) = \left\{ \begin{array}{ccccccccccccccc}-l^2,& \textrm{ if $l$ is even,} \\
+  !>                                                                            +l^2,& \textrm{ if $l$ is odd;}
+  !>                                              \end{array} \right. &\; \;&
+  !>                     T_l^\prime(+1) = \left\{ \begin{array}{ccccccccccccccc}+l^2,& \textrm{ if $l$ is even,} \\
+  !>                                                                            +l^2,& \textrm{ if $l$ is odd.}
+  !>                                               \end{array} \right.
+  !>       \f} </li>
+  !> <li> \c TT(0:Mrad,0:1,0:1) is used in routines that explicity require interface information, such as
+  !>       <ul>
+  !>         <li> the interface force-balance routine,                                lforce() </li>
+  !>         <li> the virtual casing routine,                                         casing() </li>
+  !>         <li> computing the rotational-transform on the interfaces,               tr00ab() </li>
+  !>         <li> computing the covariant components of the interface magnetic field, sc00aa() </li>
+  !>         <li> enforcing the constraints on the Beltrami fields,                   matrix() </li>
+  !>     and <li> computing the enclosed currents of the vacuum field,                curent(). </li>
+  !>       </ul> </li>
+  !> </ul>
+  
+  SALLOCATE( TT, (0:Mrad,0:1,0:1), zero )
+  SALLOCATE(RTT, (0:Lrad(1),0:Mpol_field,0:1,0:1), zero )
+  SALLOCATE(RTM, (0:Lrad(1),0:Mpol_field), zero )
+
+  call get_cheby( -one, Mrad, TT(:,0,:))
+  call get_cheby( one , Mrad, TT(:,1,:))
+
+  call get_zernike(   zero, Lrad(1), Mpol_field, RTT(:,:,0,:))
+  call get_zernike(   one , Lrad(1), Mpol_field, RTT(:,:,1,:))
+  call get_zernike_rm(zero, Lrad(1), Mpol_field, RTM(:,:)    )
+  
+
+  !> **cheby(0:Lrad,0:2): Chebyshev polynomial workspace**
+  !>
+  !> <ul>
+  !> <li> \c cheby(0:Lrad,0:2) is global workspace for computing the Chebyshev polynomials, and their derivatives,
+  !>       using the recurrence relations \f$T_0(s) = 1\f$, \f$T_1(s) = s\f$ and  \f$T_l(s) = 2 \, s \,T_{l-1}(s) - T_{l-2}(s)\f$. </li>
+  !> <li> These are computed as required, i.e. for arbitrary \f$s\f$, in bfield(), jo00aa() and ma00aa(). </li>
+  !> <li> Note that the quantities required for ma00aa() are for fixed \f$s\f$, and so these quantities should be precomputed. </li>
+  !> </ul>
+
+  ! TODO: Why redifine cheby and zernike, we already have in TT, RTT and RTM?
+  SALLOCATE( cheby, (0:Mrad,0:2), zero )
+  SALLOCATE( zernike, (0:Lrad(1), 0:Mpol_field, 0:2), zero )
+
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+  !> **ImagneticOK(1:Mvol): Beltrami/vacuum error flag**
+  !>
+  !> <ul>
+  !> <li> error flags that indicate if the magnetic field in each volume has been successfully constructed </li>
+  !> <li> \c ImagneticOK is initialized to \c .false. in dforce() before the Beltrami solver routines are called.
+  !>       If the construction of the Beltrami field is successful
+  !>       (in either ma02aa() or mp00ac() )
+  !>       then \c ImagneticOK is set to \c .true. . </li>
+  !> </ul>
+  
+    SALLOCATE( ImagneticOK, (1:Mvol), .false. )
+
+
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+
+  !> **Lhessianallocated**
+  !>
+  !> <ul>
+  !> <li> The internal logical variable, \c Lhessianallocated, indicates whether the ``Hessian'' matrix of second-partial derivatives
+  !>       (really, the first derivatives of the force-vector) has been allocated, or not! </li>
+  !> </ul>
+  Lhessianallocated = .false.
+
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+  !> **ki(1:mn,0:1): Fourier identification**
+  !>
+  !> <ul>
+  !> <li> Consider the "abbreviated" representation for a double Fourier series,
+  !>       \f{eqnarray}{ \sum_i      f_i \cos(     m_i \theta -      n_i \zeta) \equiv                         \sum_{n=      0  }^{     N_0} f_{0,n} \cos(       -n\zeta)
+  !>                                                                                   + \sum_{m=1}^{     M_0} \sum_{n=-     N_0}^{     N_0} f_{m,n} \cos(m\theta-n\zeta),
+  !>       \f}
+  !>       and the same representation but with enhanced resolution,
+  !>       \f{eqnarray}{ \sum_k \bar f_k \cos(\bar m_k \theta - \bar n_k \zeta) \equiv                         \sum_{n=      0  }^{     N_1} f_{0,n} \cos(       -n\zeta)
+  !>                                                                                   + \sum_{m=1}^{     M_1} \sum_{n=-     N_1}^{     N_1} f_{m,n} \cos(m\theta-n\zeta),
+  !>       \label{eq:enhancedFourierrepresentation_preset}
+  !>       \f}
+  !>       with \f$M_1 \ge M_0\f$ and \f$N_1 \ge N_0\f$;
+  !>       then \f$k_i\equiv\,\f$\c ki(i,0) is defined such that \f$\bar m_{k_i} = m_i\f$ and \f$\bar n_{k_i} = n_i\f$. </li>
+  !> </ul>
+  
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+  !> **kija(1:mn,1:mn,0:1), kijs(1:mn,1:mn,0:1): Fourier identification**
+  !>
+  !> <ul>
+  !> <li> Consider the following quantities, which are computed in ma00aa(),
+  !>       where \f$\bar g^{\mu\nu} = \sum_k \bar g^{\mu\nu}_k \cos \alpha_k\f$ for \f$\alpha_k \equiv m_k \theta - n_k \zeta\f$,
+  !>       \f{eqnarray}{
+  !>       \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \bar g^{\mu\nu} \cos\alpha_i \; \cos\alpha_j & = & \frac{1}{2} \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \bar g^{\mu\nu} ( + \cos\alpha_{k_{ij+}} + \cos\alpha_{k_{ij-}} ), \\
+  !>       \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \bar g^{\mu\nu} \cos\alpha_i \; \sin\alpha_j & = & \frac{1}{2} \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \bar g^{\mu\nu} ( + \sin\alpha_{k_{ij+}} - \sin\alpha_{k_{ij-}} ), \\
+  !>       \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \bar g^{\mu\nu} \sin\alpha_i \; \cos\alpha_j & = & \frac{1}{2} \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \bar g^{\mu\nu} ( + \sin\alpha_{k_{ij+}} + \sin\alpha_{k_{ij-}} ), \\
+  !>       \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \bar g^{\mu\nu} \sin\alpha_i \; \sin\alpha_j & = & \frac{1}{2} \oint\!\!\!\oint \!d\theta d\zeta \,\,\, \bar g^{\mu\nu} ( - \cos\alpha_{k_{ij+}} + \cos\alpha_{k_{ij-}} ),
+  !>       \f}
+  !>       where \f$(m_{k_{ij+}}, n_{k_{ij+}}) = (m_i + m_j, n_i + n_j)\f$ and \f$(m_{k_{ij-}}, n_{k_{ij-}}) = (m_i - m_j, n_i - n_j)\f$;
+  !>       then \c kija(i,j,0) \f$\equiv k_{ij+}\f$ and \c kijs(i,j,0) \f$\equiv k_{ij-}\f$. </li>
+  !> <li> Note that Eqn.\f$(\ref{eq:enhancedFourierrepresentation_preset})\f$ does not include \f$m<0\f$; so,
+  !>       if \f$m_i - m_j < 0\f$ then \f$k_{ij-}\f$ is re-defined such that \f$(m_{k_{ij-}}, n_{k_{ij-}}) = (m_j - m_i, n_j - n_i)\f$; and
+  !>       similarly for the case \f$m=0\f$ and \f$n<0\f$.
+  !>       Also, take care that the sign of the sine harmonics in the above expressions will change for these cases. </li>
+  !> </ul>
+  
+  SALLOCATE( ki, (1:mn_field,0:1), 0 )
+  SALLOCATE( kija, (1:mn_field,1:mn_field,0:1), 0 )
+  SALLOCATE( kijs, (1:mn_field,1:mn_field,0:1), 0 )
+
+  do ii = 1, mn_field  ; mi =  im_field(ii) ; ni =  in_field(ii)
+
+    call getimn(lMpol, lNtor, Nfp, mi, ni, kk)
+    if (kk.gt.0) then
+      if( mi.eq.0 .and. ni.eq.0 ) then ; ki(ii,0:1) = (/ kk, 1 /)
+      else                             ; ki(ii,0:1) = (/ kk, 2 /)
+      endif
+    endif
+
+    do jj = 1, mn_field  ; mj =  im_field(jj) ; nj =  in_field(jj) ; mimj = mi + mj ; ninj = ni + nj !   adding   ; 17 Dec 15;
+
+      call getimn(lMpol, lNtor, Nfp, mimj, ninj, kk)
+      if (kk.gt.0) then
+        if( mimj.eq.0 .and. ninj.eq.0 ) then ; kija(ii,jj,0:1) = (/ kk, 1 /)
+        else                                 ; kija(ii,jj,0:1) = (/ kk, 2 /)
+        endif
+      endif
+      ;                                           ; mimj = mi - mj ; ninj = ni - nj ! subtracting; 17 Dec 15;
+
+      if( mimj.gt.0 .or. ( mimj.eq.0 .and. ninj.ge.0 ) ) then
+        call getimn(lMpol, lNtor, Nfp, mimj, ninj, kk)
+        if (kk.gt.0) then
+          if( mimj.eq.0 .and. ninj.eq.0 ) then ; kijs(ii,jj,0:1) = (/ kk, 1 /)
+          else                                 ; kijs(ii,jj,0:1) = (/ kk, 2 /)
+          endif
+        endif
+      else
+        call getimn(lMpol, lNtor, Nfp, -mimj, -ninj, kk)
+        if (kk.gt.0) then
+          ;                                    ; kijs(ii,jj,0:1) = (/ kk , - 2 /) ! only the sine modes need the sign factor; 17 Dec 15;
+        endif
+      endif
+
+    enddo ! end of do jj; 29 Jan 13;
+
+  enddo ! end of do ii; 29 Jan 13;
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+  !> **djkp**
+  if( Igeometry.eq.2 ) then ! standard cylindrical; 04 Dec 14;
+
+    SALLOCATE( djkp, (1:mn_field,1:mn_field), 0 ) ! only used in volume; trigonometric identities; 04 Dec 14;
+    SALLOCATE( djkm, (1:mn_field,1:mn_field), 0 ) ! only used in volume; trigonometric identities; 04 Dec 14;
+
+    do ii = 1, mn_field ; mi = im_field(ii) ; ni = in_field(ii)
+    do jj = 1, mn_field ; mj = im_field(jj) ; nj = in_field(jj)
+      if( mi-mj.eq.0 .and. ni-nj.eq.0 ) djkp(ii,jj) = 1
+      if( mi+mj.eq.0 .and. ni+nj.eq.0 ) djkm(ii,jj) = 1
+    enddo
+    enddo
+
+  endif ! end of if( Igeometry.eq.2 ) ; 04 Dec 14;
+  
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+  !> **iotakki**
+
+  SALLOCATE( iotakkii, (1:mn_field      ), 0 ) ! used to identify matrix elements in straight-field-line angle transformation;
+  SALLOCATE( iotaksub, (1:mn_field,1:mns), 0 )
+  SALLOCATE( iotaksgn, (1:mn_field,1:mns), 0 )
+  SALLOCATE( iotakadd, (1:mn_field,1:mns), 0 )
+
+  do kk = 1, mn_field ; mk = im_field(kk) ; nk = in_field(kk)
+    call getimn(sMpol, sNtor, Nfp, mk, nk, ii)
+    if (ii.gt.0) iotakkii(kk) = ii
+
+    do jj = 1, mns ; mj = ims(jj) ; nj = ins(jj)
+      mkmj = mk - mj ; nknj = nk - nj
+
+      if( mkmj.gt.0 .or. ( mkmj.eq.0 .and. nknj.ge.0 ) ) then
+        call getimn(sMpol, sNtor, Nfp, mkmj, nknj, ii)
+        if (ii.gt.0) then ; iotaksub(kk,jj) = ii ; iotaksgn(kk,jj) =  1
+        endif
+
+      else
+        call getimn(sMpol, sNtor, Nfp, -mkmj, -nknj, ii)
+        if (ii.gt.0) then ; iotaksub(kk,jj) = ii ; iotaksgn(kk,jj) =  -1
+        endif
+
+      endif
+
+      mkmj = mk + mj ; nknj = nk + nj
+
+      call getimn(sMpol, sNtor, Nfp, mkmj, nknj, ii)
+      if (ii.gt.0) then ; iotakadd(kk,jj) = ii
+      endif
+
+    enddo ! end of do jj; 29 Jan 13;
+
+  enddo ! end of do kk; 29 Jan 13;
+    
+
+  !----------------------------------------------------------------------------------------------------------------------------------------
+  ! Allocate space for the toroidal current array in each interface
+  SALLOCATE( IPDt, (1:Mvol), zero)
+  if( Lfreebound.eq.1 ) then
+    SALLOCATE( IPDtDpf, (1:Mvol  , 1:Mvol  ), zero)
+  else
+    SALLOCATE( IPDtDpf, (1:Mvol-1, 1:Mvol-1), zero)
+  endif
+
+
+
+
+  !----------------------------------------------------------------------------------------------------------------------------------------
+  ! Now modify some input parameters in case we perform some checks. This is not used in "regular" spec.
+
+  if( Lcheck.eq.5 ) then ! will check Hessian using finite-differences;
+    forcetol = 1.0e+12 ; 
+    nPpts    = 0 
+  endif
+end subroutine set_global_variables
+
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+subroutine read_input_geometry()
+
+  use inputlist, only : Lboundary, Rac, Ras, Zas, Zac, &
+                        Ntor
+
+  use allglobal, only : NOTstellsym, &
+                        iRbc, iZbs, iZbc, iRbs
+
+  LOCALS
+  !----------------------------------------------------------------------------------------------------------------------------------------
+
+  ! First read input, call specific routine depending on boundary representation
+  if( myid.eq.0 ) then
+    if( Lboundary.eq.0 ) then
+      call read_hudson_input_geometry()
+    else
+      call read_henneberg_input_geometry()
+    endif
+    ! Read axis if harmonics are provided by user. Otherwise these will be evaluated in rzaxis
+    if( Igeometry.eq.3 .and. Rac(0).gt.zero ) then
+      iRbc(1:Ntor+1,0) = Rac(0:Ntor)
+      iZbs(1:Ntor+1,0) = Zas(0:Ntor)
+      if( NOTstellsym ) then
+        iRbs(1:Ntor+1,0) = Ras(0:Ntor)
+        iZbc(1:Ntor+1,0) = Zac(0:Ntor)
+      endif
+    endif !Igeometry.eq.3 .and. Rac(0).gt.zero
+  endif
+
+  ! In case of Henneberg representation, need to check the angle now.
+  ! TODO: TO COMPLETE
+
+
+  ! Some additional constraints in case of slab or cylindrical geometries...
+  if( Igeometry.eq.1 .or. Igeometry.eq.2 ) then
+    ;iRbc(1:mn_field,0) = zero ! innermost volume must be trivial; this is used in volume; innermost interface is coordinate axis;
+    if( NOTstellsym ) then
+      iRbs(1:mn_field,0) = zero ! innermost volume must be trivial; this is used in volume;
+    endif
+  endif
+
+  if( Igeometry.eq.3 ) then
+    iZbs(1,0:Mvol) = zero ! Zbs_{m=0,n=0} is irrelevant;
+  endif
+  if( NOTstellsym) then
+    iRbs(1,0:Mvol) = zero ! Rbs_{m=0,n=0} is irrelevant;
+  endif
+
+  if ( Igeometry.eq.1 .and. Lreflect.eq.1) then ! reflect upper and lower bound in slab, each take half the amplitude
+    iRbc(2:mn_field,Mvol) =  iRbc(2:mn_field,Mvol) * half
+    iRbc(2:mn_field,0)    = -iRbc(2:mn_field,Mvol)
+    if( NOTstellsym ) then
+      iRbs(2:mn_field,Mvol) =  iRbs(2:mn_field,Mvol) * half
+      iRbs(2:mn_field,0)    = -iRbs(2:mn_field,Mvol)
+    endif
+  endif
+
+end subroutine read_input_geometry
+
+
+subroutine read_hudson_input_geometry()
+  ! From the input list, build the arrays iRbc, iZbs, iRbs, iZbc. Changes the poloidal angle if necessary!
+  ! Read initial guess as well if provided
+
+  use inputlist
+  use allglobal
+
+  LOCALS
+  !----------------------------------------------------------------------------------------------------------------------------------------
+
+  if( Igeometry.eq.3 .and. Rbc(0,+1)+Rbc(0,-1).gt.zero .and. Zbs(0,+1)-Zbs(0,-1).gt.zero ) then ; Lchangeangle = .true.
+  else                                                                                          ; Lchangeangle = .false.
+  endif
+
+  if( Lchangeangle ) write(ounit,'("readin : " 10x " : CHANGING ANGLE ;")')
+
+  do ii = 1, mn_field ; mm = im_field(ii) ; nn = in_field(ii) / Nfp ! set plasma boundary, computational boundary; 29 Apr 15;
+
+    if( Lchangeangle ) then ; jj = -1 ; kk = -nn ! change sign of poloidal angle;
+    else                    ; jj = +1 ; kk = +nn
+    endif
+
+    if( mm.eq.0 .and. nn.eq.0 ) then
+      ;iRbc(ii,Nvol) = Rbc( nn, mm)                         ! plasma        boundary is ALWAYS given by namelist Rbc & Zbs;
+      ;iZbs(ii,Nvol) = zero
+      if( NOTstellsym ) then
+        ;iRbs(ii,Nvol) = zero
+        ;iZbc(ii,Nvol) = Zbc( nn, mm)
+      else
+        ;iRbs(ii,Nvol) = zero
+        ;iZbc(ii,Nvol) = zero
+      endif
+
+      if( Lfreebound.eq.1 ) then
+        iRbc(ii,Mvol) = Rwc( nn, mm)                         ! computational boundary is ALWAYS given by namelist Rwc & Zws;
+        iZbs(ii,Mvol) = zero
+        if( NOTstellsym ) then
+          iRbs(ii,Mvol) = zero
+          iZbc(ii,Mvol) = Zwc( nn, mm)
+        else
+          iRbs(ii,Mvol) = zero
+          iZbc(ii,Mvol) = zero
+        endif
+
+        iVns(ii     ) = zero
+        iBns(ii     ) = zero
+        if( NOTstellsym ) then
+          iVnc(ii     ) = Vnc( nn, mm)                         ! I guess that this must be zero, because \div B = 0 ;
+          iBnc(ii     ) = Bnc( nn, mm)                         ! I guess that this must be zero, because \div B = 0 ;
+        else
+          iVnc(ii     ) = zero
+          iBnc(ii     ) = zero
+        endif
+      endif ! end of if( Lfreebound.eq.1 ) ;
+
+    else ! if( mm.eq.0 .and. nn.eq.0 ) then ; matches
+      ;iRbc(ii,Nvol) =   Rbc( kk, mm) + Rbc(-kk,-mm)        ! plasma        boundary is ALWAYS given by namelist Rbc & Zbs;
+      ;iZbs(ii,Nvol) = ( Zbs( kk, mm) - Zbs(-kk,-mm) ) * jj
+      if( NOTstellsym ) then
+        ;iRbs(ii,Nvol) = ( Rbs( kk, mm) - Rbs(-kk,-mm) ) * jj
+        ;iZbc(ii,Nvol) =   Zbc( kk, mm) + Zbc(-kk,-mm)
+      else
+        ;iRbs(ii,Nvol) =   zero
+        ;iZbc(ii,Nvol) =   zero
+      endif
+
+      if( Lfreebound.eq.1 ) then
+        iRbc(ii,Mvol) =   Rwc( kk, mm) + Rwc(-kk,-mm)        ! computational boundary is ALWAYS given by namelist Rwc & Zws;
+        iZbs(ii,Mvol) = ( Zws( kk, mm) - Zws(-kk,-mm) ) * jj
+        if( NOTstellsym ) then
+          iRbs(ii,Mvol) = ( Rws( kk, mm) - Rws(-kk,-mm) ) * jj
+          iZbc(ii,Mvol) =   Zwc( kk, mm) + Zwc(-kk,-mm)
+        else
+          iRbs(ii,Mvol) =   zero
+          iZbc(ii,Mvol) =   zero
+        endif
+
+        iVns(ii     ) = ( Vns( kk, mm) - Vns(-kk,-mm) ) * jj
+        iBns(ii     ) = ( Bns( kk, mm) - Bns(-kk,-mm) ) * jj
+        if( NOTstellsym ) then
+          iVnc(ii     ) =   Vnc( kk, mm) + Vnc(-kk,-mm)
+          iBnc(ii     ) =   Bnc( kk, mm) + Bnc(-kk,-mm)
+        else
+          iVnc(ii     ) =   zero
+          iBnc(ii     ) =   zero
+        endif
+      endif ! matches if( Lfreebound.eq.1 ) ;
+    endif ! end of if( mm.eq.0 .and. nn.eq.0 ) ;
+  enddo ! end of do ii = 1, mn;
+
+
+  select case( Linitialize ) ! 24 Oct 12;
+
+  case( :0 ) ! Linitialize=0 ; initial guess for geometry of the interior surfaces is given in the input file;
+    if( Lchangeangle ) then ; jj = -1  ! change sign of poloidal angle; Loizu Nov 18;
+    else                    ; jj = +1
+    endif
+
+    do idx_mode=1, num_modes! will read in Fourier harmonics until the end of file is reached;
+      mm = mmRZRZ(idx_mode)
+      nn = nnRZRZ(idx_mode)
+      do ii = 1, mn_field ; mi = im_field(ii) ; ni = in_field(ii) ! loop over harmonics within range;
+        if( mm.eq.0 .and. mi.eq.0 .and. nn*Nfp.eq.ni ) then
+          iRbc(ii,1:Nvol-1) = allRZRZ(1,1:Nvol-1, idx_mode) ! select relevant harmonics;
+          iZbs(ii,1:Nvol-1) = allRZRZ(2,1:Nvol-1, idx_mode) ! select relevant harmonics;
+          if( NOTstellsym ) then
+            iRbs(ii,1:Nvol-1) = allRZRZ(3,1:Nvol-1, idx_mode) ! select relevant harmonics;
+            iZbc(ii,1:Nvol-1) = allRZRZ(4,1:Nvol-1, idx_mode) ! select relevant harmonics;
+          else
+            iRbs(ii,1:Nvol-1) = zero             ! select relevant harmonics;
+            iZbc(ii,1:Nvol-1) = zero             ! select relevant harmonics;
+          endif
+        
+        elseif( mm.eq.mi .and. nn*Nfp.eq.jj*ni ) then
+          iRbc(ii,1:Nvol-1) =    allRZRZ(1,1:Nvol-1, idx_mode) ! select relevant harmonics;
+          iZbs(ii,1:Nvol-1) = jj*allRZRZ(2,1:Nvol-1, idx_mode) ! select relevant harmonics;
+          if( NOTstellsym ) then
+            iRbs(ii,1:Nvol-1) = jj*allRZRZ(3,1:Nvol-1, idx_mode) ! select relevant harmonics;
+            iZbc(ii,1:Nvol-1) =    allRZRZ(4,1:Nvol-1, idx_mode) ! select relevant harmonics;
+          else
+            iRbs(ii,1:Nvol-1) = zero             ! select relevant harmonics;
+            iZbc(ii,1:Nvol-1) = zero             ! select relevant harmonics;
+          endif
+        endif
+      enddo ! end of do ii;
+    enddo ! end of do;
+  end select ! end select case( Linitialize );
+
+end subroutine read_hudson_input_geometry
+
+
+
+subroutine read_henneberg_input_geometry()
+
+  use inputlist
+  use allglobal
+
+  LOCALS
+
+    ! Read rhomn harmonics, store in irhoc
+    do ii = 1, mn_rho
+      mm=im_rho(ii)
+      nn=in_rho(ii) / Nfp
+      irhoc( ii, Nvol ) = rhomn( nn, mm )
+    enddo ! do ii=1,mn
+
+    ! Read bn. rn, zn harmonics, store in ibc, iR0c, iZ0s respectively.
+    do nn = 0, Ntor
+      ibc( nn, Nvol  ) = bn( nn )
+      iR0c( nn, Nvol ) = R0c( nn )
+      if( nn.ne.0 ) then
+        iZ0s( nn, Nvol ) = Z0s( nn )
+      endif
+    enddo
+
+    ! rn(m=0,n=0) is always equal to zero (irrelevant)
+    iZ0s( 0, Nvol ) = zero
+
+
+    if( Mvol.gt.1 .and. Linitialize.eq.0 ) then !initial guess for geometry of the interior surfaces is given in the input file;
+      do idx_mode=1, num_modes
+        mm = mmRZRZ(idx_mode)
+        nn = nnRZRZ(idx_mode)
+
+        if( mm.eq.0 ) then ! rn, zn, bn
+          if( nn.ge.0 ) then
+            ibc(  nn, 1:Nvol-1 ) = allRZRZ( 1, 1:Nvol-1, idx_mode )   
+            iR0c( nn, 1:Nvol-1 ) = allRZRZ( 2, 1:Nvol-1, idx_mode )   
+            iZ0s( nn, 1:Nvol-1 ) = allRZRZ( 3, 1:Nvol-1, idx_mode )
+          endif
+
+        else !rhomn
+          ! find index
+          ind = 0
+          do ii=1, mn_rho
+            if ( (im_rho(ii).eq.mm) .and. (in_rho(ii)/nfp.eq.nn)) then
+              ind = ii
+              exit
+            endif
+          enddo
+
+          irhoc(ind,1:Nvol-1) = allRZRZ( 4, 1:Nvol-1, idx_mode )
+        endif !mm.eq.0
+      enddo !idx_mode
+    endif!Nvol.gt.1 .and. Linitialize.eq.0
+end subroutine read_henneberg_input_geometry
+
+
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+subroutine prepare_initial_guess()
+
+end subroutine prepare_initial_guess
