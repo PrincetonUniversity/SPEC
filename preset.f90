@@ -1677,7 +1677,7 @@ subroutine read_hudson_input_geometry( Lchangeangle )
   enddo ! end of do ii = 1, mn;
 
   ! Read axis if harmonics are provided by user. Otherwise these will be evaluated in rzaxis
-  if( Igeometry.eq.1 .and. Rac(0).gt.zero ) then
+  if( Igeometry.ne.1 .and. Rac(0).gt.zero ) then
     iRbc(1:Ntor+1,0) = Rac(0:Ntor)
     iZbs(1:Ntor+1,0) = Zas(0:Ntor)
     if( NOTstellsym ) then
@@ -1796,7 +1796,7 @@ subroutine read_henneberg_input_geometry()
   endif
 
   ! Read axis if harmonics are provided by user. Otherwise these will be evaluated in rzaxis
-  if( Igeometry.eq.1 .and. Rac(0).gt.zero ) then
+  if( Igeometry.ne.1 .and. Rac(0).gt.zero ) then
     iRbc(1:Ntor+1,0) = Rac(0:Ntor)
     iZbs(1:Ntor+1,0) = Zas(0:Ntor)
     if( NOTstellsym ) then
