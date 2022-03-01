@@ -101,6 +101,7 @@ subroutine xspech
   ! initialize internal arrays based on data from input file
   call preset()
 
+
   ! initialize HDF5 library and open output file ext.h5 for writing during execution
   call init_outfile()
 
@@ -385,6 +386,7 @@ subroutine spec
 
   endif
 
+  
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !> **initialize adiabatic constants**
@@ -451,6 +453,7 @@ subroutine spec
 #endif
 
       bndDofs(0:NGdof_bnd) = position(0:NGdof_bnd)
+
     else
       pack = 'H'
       WCALL( xspech, pack_henneberg, (pack, position(0:NGdof_field), bndDofs(0:NGdof_bnd) ) )
@@ -753,6 +756,7 @@ subroutine spec
 1004 format("xspech : "f10.2" : nfreeboundaryiterations = "i6" / "i6.5" ; gBntol ="es8.1" ; bnserr =",es12.5," ; bnorml time ="f10.2"s ;")
 
   endif ! end of if( LupdateBn ) ;
+
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

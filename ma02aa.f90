@@ -102,6 +102,8 @@ subroutine ma02aa( lvol, NN )
 !> </ul>
 
   if( LBsequad ) then ! sequential quadratic programming (SQP); construct minimum energy with constrained helicity;
+   
+   
    lastcpu = GETTIME
 
    NLinearConstraints = 0 ! no linear constraints;
@@ -419,6 +421,7 @@ subroutine ma02aa( lvol, NN )
 
   if( LBlinear ) then ! assume Beltrami field is parameterized by helicity multiplier (and poloidal flux);
 
+
    lastcpu = GETTIME
 
    if( Lplasmaregion ) then
@@ -497,6 +500,7 @@ subroutine ma02aa( lvol, NN )
      end select
 
     endif ! end of if( Lplasmaregion ) ;
+
 
     if (Lconstraint .ne. 2) helicity(lvol) = lABintegral(lvol) ! this was computed in mp00ac;
 

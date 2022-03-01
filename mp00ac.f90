@@ -256,6 +256,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   solution(1:NN,-1:2) = zero ! this is a global array allocated in dforce;
 
   ! allocate work space
+
   select case (Lmatsolver)
   case (1) ! direct matrix solver
     Lwork = NB*NN

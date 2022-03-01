@@ -676,6 +676,7 @@ end subroutine matrix
 subroutine matrixBG( lvol, mn_field, lrad )
   ! only compute the dMB and dMG matrix for matrix-free mode
   use constants, only : zero, one
+  use inputlist, only : Lfreebound
   use allglobal, only : NAdof, im_field, in_field, &
                         dMG, dMB, YESstellsym, &
                         iVnc, iVns, iBnc, iBns, &
@@ -692,28 +693,39 @@ subroutine matrixBG( lvol, mn_field, lrad )
 
   if( YESstellsym ) then
 
-   do ii = 1, mn_field ; mi = im_field(ii) ; ni = in_field(ii)
+    ii=1 
+    mi = im_field(ii)
+    ni = in_field(ii)
 
-    ;if( ii.gt.1 ) then ; id = Lme(lvol,  ii)       ;                           ; dMG(id   ) = - ( iVns(ii) + iBns(ii) )
-    ;else               ; id = Lmg(lvol,  ii)       ;                           ; dMB(id, 1) = -       one
-!   ;                   ; id = Lmh(lvol,  ii)       ;                           ; dMB(id, 2) = -       one ! to be deleted;
-    ;                   ; id = Lmh(lvol,  ii)       ;                           ; dMB(id, 2) = +       one ! changed sign;
-    ;endif
+    id = Lmg(lvol,  ii)       ;                           ; dMB(id, 1) = -       one
+!   id = Lmh(lvol,  ii)       ;                           ; dMB(id, 2) = -       one ! to be deleted;
+    id = Lmh(lvol,  ii)       ;                           ; dMB(id, 2) = +       one ! changed sign;
 
-   enddo ! end of do ii ;
+    if( Lfreebound.eq.1 ) then
+      do ii = 2, mn_field 
+        mi = im_field(ii) ; 
+        ni = in_field(ii)
+        id = Lme(lvol,  ii)    ;                          ; dMG(id   ) = - ( iVns(ii) + iBns(ii) )
+      enddo ! end of do ii ;
+    endif
 
   else ! NOTstellsym ;
 
-   do ii = 1, mn_field ; mi = im_field(ii) ; ni = in_field(ii)
+    ii = 1
+    mi = im_field(ii) ; ni = in_field(ii)
 
-    ;if( ii.gt.1 ) then ; id = Lme(lvol,ii)         ;                           ; dMG(id   ) = - ( iVns(ii) + iBns(ii) )
-    ;                   ; id = Lmf(lvol,ii)         ;                           ; dMG(id   ) = - ( iVnc(ii) + iBnc(ii) )
-    ;else               ; id = Lmg(lvol,ii)         ;                           ; dMB(id, 1) = -       one
-!   ;                   ; id = Lmh(lvol,ii)         ;                           ; dMB(id, 2) = -       one ! to be deleted;
-    ;                   ; id = Lmh(lvol,ii)         ;                           ; dMB(id, 2) = +       one ! changed sign;
-    ;endif
+    id = Lmg(lvol,ii)         ;                           ; dMB(id, 1) = -       one
+!   id = Lmh(lvol,ii)         ;                           ; dMB(id, 2) = -       one ! to be deleted;
+    id = Lmh(lvol,ii)         ;                           ; dMB(id, 2) = +       one ! changed sign;
 
-   enddo ! end of do ii ;
+    if( Lfreebound.eq.1 ) then
+      do ii = 2, mn_field ; 
+        mi = im_field(ii) ; 
+        ni = in_field(ii)
+        id = Lme(lvol,ii)         ;                           ; dMG(id   ) = - ( iVns(ii) + iBns(ii) )
+        id = Lmf(lvol,ii)         ;                           ; dMG(id   ) = - ( iVnc(ii) + iBnc(ii) )
+      enddo
+    endif
 
   endif ! end of if( YESstellsym ) ;
 

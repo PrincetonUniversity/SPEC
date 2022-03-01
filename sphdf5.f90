@@ -1012,11 +1012,12 @@ subroutine hdfint
 
   HDEFGRP( file_id, output, grpOutput )
 
-  HWRITERV( grpOutput,           mn_field,               Vns,       iVns(1:mn_field)   ) !     stellarator symmetric normal field at boundary; vacuum component;
-  HWRITERV( grpOutput,           mn_field,               Bns,       iBns(1:mn_field)   ) !     stellarator symmetric normal field at boundary; plasma component;
-  HWRITERV( grpOutput,           mn_field,               Vnc,       iVnc(1:mn_field)   ) ! non-stellarator symmetric normal field at boundary; vacuum component;
-  HWRITERV( grpOutput,           mn_field,               Bnc,       iBnc(1:mn_field)   ) ! non-stellarator symmetric normal field at boundary; plasma component;
-
+  if( Lfreebound.eq.1 ) then
+    HWRITERV( grpOutput,           mn_field,               Vns,       iVns(1:mn_field)   ) !     stellarator symmetric normal field at boundary; vacuum component;
+    HWRITERV( grpOutput,           mn_field,               Bns,       iBns(1:mn_field)   ) !     stellarator symmetric normal field at boundary; plasma component;
+    HWRITERV( grpOutput,           mn_field,               Vnc,       iVnc(1:mn_field)   ) ! non-stellarator symmetric normal field at boundary; vacuum component;
+    HWRITERV( grpOutput,           mn_field,               Bnc,       iBnc(1:mn_field)   ) ! non-stellarator symmetric normal field at boundary; plasma component;
+  endif
 !> <ul>
 !> <li> In addition to the input variables, which are described in global(), the following quantities are written to \c ext.sp.h5 :
 !latex

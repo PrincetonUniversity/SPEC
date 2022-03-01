@@ -118,6 +118,8 @@ subroutine newton( NGdof_bnd, bndDofs, ihybrd )
 
   FATAL( newton, NGdof_bnd.NE.NGdof_force, Invalid number of dofs )
 
+
+
   if( Wnewton .and. myid.eq.0 ) then ! screen output;
    cput = GETTIME
    write(ounit,'("newton : ", 10x ," : ")')
@@ -170,9 +172,11 @@ subroutine newton( NGdof_bnd, bndDofs, ihybrd )
 
     !write(ounit,'("newton: position = ",999f25.12)') position(0:NGdof_field)
 
+
     !write(ounit,'("newton: ForceErr = ", f25.12)') ForceErr
     WCALL( newton, dforce, ( NGdof_field, position(0:NGdof_field), force(0:NGdof_force), LComputeDerivatives, LComputeAxis) ) ! calculate the force-imbalance;
     !write(ounit,'("newton: ForceErr = ", f25.12)') ForceErr
+
 
 
 
