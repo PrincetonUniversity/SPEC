@@ -1055,7 +1055,7 @@ subroutine hdfint
 !latex \type{in\_rho(1:mn\_rho)}               & integer & \pb{toroidal mode numbers  of rhomn, henneberg representation} \\
   HWRITEIV( grpOutput, mn_rho, in_rho, in_rho(1:mn_rho) )
 !latex \type{irhoc(1:mn_rho,1:Mvol)}      & real    & \pb{Fourier harmonics, $\rho_{m,n}$, of interfaces using Henneberg's representation} \\
-  HWRITERA( grpOutput, mn_rho  , Mvol, rhoc, irhoc(1:mn_field,1:Mvol) )
+  HWRITERA( grpOutput, mn_rho  , Mvol, rhoc, irhoc(1:mn_rho,1:Mvol) )
 !latex \type{ibc(0:Ntor,1:Mvol)}      & real    & \pb{Fourier harmonics, $b_n$, of interfaces using Henneberg's representation} \\
   HWRITERA( grpOutput, (Ntor+1), Mvol, bn, ibc(0:Ntor,1:Mvol) )
 !latex \type{iR0c(0:Ntor,1:Mvol)}      & real    & \pb{Fourier harmonics, $R_{0n}$, of interfaces using Henneberg's representation} \\

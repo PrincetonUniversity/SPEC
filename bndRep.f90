@@ -802,8 +802,8 @@ module bndRep
         REAL               :: Rmn_tmp(1:mn_field), Zmn_tmp(1:mn_field), mode_r, mode_z
         INTEGER            :: ind
 
-        Rmn_tmp = (/ zero /)
-        Zmn_tmp = (/ zero /)
+        Rmn_tmp = zero
+        Zmn_tmp = zero
 
         do ii = 1, mn_field
           mm = im_field(ii)
