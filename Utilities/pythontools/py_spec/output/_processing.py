@@ -520,7 +520,7 @@ def get_B(
                 [[dBsds, dBtds, dBzds], [dBsdt, dBtdt, dBzdt], [dBsdz, dBtdz, dBzdz]]
             )
             / jacobian
-            - Bcontrav[nax, :] * djacobian[:, nax] / jacobian ** 2
+            - djacobian[:, nax, :] * Bcontrav[nax, :] / jacobian
         )
         return Bcontrav, dBcontrav
     else:
