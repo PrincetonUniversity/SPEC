@@ -34,7 +34,6 @@ def plot_iota(self, xaxis="R", yaxis="i", ax=None, **kwargs):
     else:
         raise ValueError("xaxis should be one of ['R', 's'].")
 
-    dots = ax.scatter(xdata, ydata, **kwargs)
 
     if yaxis == "i":
         ylabel = r"$\iota$"
@@ -43,6 +42,8 @@ def plot_iota(self, xaxis="R", yaxis="i", ax=None, **kwargs):
         ylabel = r"q"
     else:
         raise ValueError("yaxis should be one of ['i', 'q'].")
+
+    dots = ax.scatter(xdata, ydata, **kwargs)
 
     plt.xlabel(xlabel, fontsize=20)
     plt.ylabel(ylabel, fontsize=20)

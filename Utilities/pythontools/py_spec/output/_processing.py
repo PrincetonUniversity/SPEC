@@ -7,17 +7,17 @@ def get_grid_and_jacobian_and_metric(
     sarr=np.linspace(1, 1, 1),
     tarr=np.linspace(0, 0, 1),
     zarr=np.linspace(0, 0, 1),
+    derivative=False,
 ):
-    """[summary]
+    """!Compute the metric and Jacobian on a given grid
 
-    Args:
-        lvol (int, optional): [description]. Defaults to 0.
-        sarr ([type], optional): [description]. Defaults to np.linspace(1,1,1).
-        tarr ([type], optional): [description]. Defaults to np.linspace(0,0,1).
-        zarr ([type], optional): [description]. Defaults to np.linspace(0,0,1).
+    @param lvol (int, optional): The SPEC volume of interest, starting from 0. Defaults to 0.
+    @param sarr (1D numpy array, optional): The s grid. Defaults to np.linspace(1,1,1).
+    @param tarr (1D numpy array, optional): The \f$\theta\f$ grid. Defaults to np.linspace(0,0,1).
+    @param zarr (1D numpy array, optional): The \f$\zeta\f$ grid. Defaults to np.linspace(0,0,1).
+    @param derivative (bool, optional): If the derivatives of jacobian and \f$g_{ij}\f$ is needed.
 
-    Returns:
-        [type]: [description]
+    @returns Rarr0, Zarr0, jacobian, g, [djacobian, dg]: \f$R, Z, J, g_{ij}\f$. If derivative==True also return the derivative of \f$J, g_{ij}\f$.
     """
     Rac, Rbc = self.output.Rbc[lvol : lvol + 2]
     Zas, Zbs = self.output.Zbs[lvol : lvol + 2]
@@ -35,23 +35,33 @@ def get_grid_and_jacobian_and_metric(
 
     if Igeometry == 1:
         for j in range(mn):
-            fac.append([sbar, 0.5 * np.ones(sarr.size)])
+            fac.append([sbar, 0.5 * np.ones(sarr.size), np.zeros(sarr.size)])
     elif Igeometry == 2:
         for j in range(mn):
             if lvol > 0 or im[j] == 0:
-                fac.append([sbar, 0.5 * np.ones(sarr.size)])
+                fac.append([sbar, 0.5 * np.ones(sarr.size), np.zeros(sarr.size)])
             else:
                 fac.append(
-                    [sbar ** (im[j] + 1.0), (im[j] + 1.0) / 2.0 * sbar ** (im[j])]
+                    [
+                        sbar ** (im[j] + 1.0),
+                        (im[j] + 1.0) / 2.0 * sbar ** (im[j]),
+                        (im[j] + 1.0) * (im[j]) / 4.0 * sbar ** (im[j] - 1),
+                    ]
                 )
     elif Igeometry == 3:
         for j in range(mn):
             if lvol == 0 and im[j] == 0:
-                fac.append([sbar ** 2, sbar])
+                fac.append([sbar ** 2, sbar, 0.5 * np.ones(sarr.size)])
             elif lvol == 0 and im[j] > 0:
-                fac.append([sbar ** im[j], (im[j] / 2.0) * sbar ** (im[j] - 1.0)])
+                fac.append(
+                    [
+                        sbar ** im[j],
+                        (im[j] / 2.0) * sbar ** (im[j] - 1.0),
+                        (im[j] * (im[j] - 1) / 4.0) * sbar ** (im[j] - 2.0),
+                    ]
+                )
             else:
-                fac.append([sbar, 0.5 * np.ones(sarr.size)])
+                fac.append([sbar, 0.5 * np.ones(sarr.size), np.zeros(sarr.size)])
 
     fac = np.array(fac)
 
@@ -59,11 +69,10 @@ def get_grid_and_jacobian_and_metric(
     ang_arg = im[:, nax, nax] * tarr[nax, :, nax] - in_[:, nax, nax] * zarr[nax, nax, :]
     cos = np.cos(ang_arg)
     sin = np.sin(ang_arg)
-    dR1 = Rac[:, nax] + fac[:, 0, :] * (Rbc[:, nax] - Rac[:, nax])
-    dZ1 = Zas[:, nax] + fac[:, 0, :] * (Zbs[:, nax] - Zas[:, nax])
 
+    # We need R for all possible Igeometry
+    dR1 = Rac[:, nax] + fac[:, 0, :] * (Rbc[:, nax] - Rac[:, nax])
     Rarr0 = np.sum(dR1[:, :, nax, nax] * cos[:, nax, :, :], axis=0)
-    Zarr0 = np.sum(dZ1[:, :, nax, nax] * sin[:, nax, :, :], axis=0)
 
     Rarr1 = np.sum(
         fac[:, 1, :, nax, nax]
@@ -71,63 +80,186 @@ def get_grid_and_jacobian_and_metric(
         * cos[:, nax, :, :],
         axis=0,
     )
-    Zarr1 = np.sum(
-        fac[:, 1, :, nax, nax]
-        * (Zbs[:, nax, nax, nax] - Zas[:, nax, nax, nax])
-        * sin[:, nax, :, :],
-        axis=0,
-    )
-
     Rarr2 = np.sum(
         -im[:, nax, nax, nax] * dR1[:, :, nax, nax] * sin[:, nax, :, :], axis=0
     )
-    Zarr2 = np.sum(
-        im[:, nax, nax, nax] * dZ1[:, :, nax, nax] * cos[:, nax, :, :], axis=0
-    )
-
     Rarr3 = np.sum(
         in_[:, nax, nax, nax] * dR1[:, :, nax, nax] * sin[:, nax, :, :], axis=0
     )
-    Zarr3 = np.sum(
-        -in_[:, nax, nax, nax] * dZ1[:, :, nax, nax] * cos[:, nax, :, :], axis=0
-    )
+
+    Rarr = np.array([Rarr1, Rarr2, Rarr3])
+
+    # We only need Z for Igeometry=3
+    if Igeometry == 3:
+        dZ1 = Zas[:, nax] + fac[:, 0, :] * (Zbs[:, nax] - Zas[:, nax])
+        Zarr0 = np.sum(dZ1[:, :, nax, nax] * sin[:, nax, :, :], axis=0)
+
+        Zarr1 = np.sum(
+            fac[:, 1, :, nax, nax]
+            * (Zbs[:, nax, nax, nax] - Zas[:, nax, nax, nax])
+            * sin[:, nax, :, :],
+            axis=0,
+        )
+        Zarr2 = np.sum(
+            im[:, nax, nax, nax] * dZ1[:, :, nax, nax] * cos[:, nax, :, :], axis=0
+        )
+        Zarr3 = np.sum(
+            -in_[:, nax, nax, nax] * dZ1[:, :, nax, nax] * cos[:, nax, :, :], axis=0
+        )
+
+        Zarr = np.array([Zarr1, Zarr2, Zarr3])
+    else:
+        Zarr0 = None
+
+    # If the derivative of g and jacobian is needed
+    if derivative:
+        Rarr11 = np.sum(
+            fac[:, 2, :, nax, nax]
+            * (Rbc[:, nax, nax, nax] - Rac[:, nax, nax, nax])
+            * cos[:, nax, :, :],
+            axis=0,
+        )
+        Rarr12 = np.sum(
+            -im[:, nax, nax, nax]
+            * fac[:, 1, :, nax, nax]
+            * (Rbc[:, nax, nax, nax] - Rac[:, nax, nax, nax])
+            * sin[:, nax, :, :],
+            axis=0,
+        )
+        Rarr13 = np.sum(
+            in_[:, nax, nax, nax]
+            * fac[:, 1, :, nax, nax]
+            * (Rbc[:, nax, nax, nax] - Rac[:, nax, nax, nax])
+            * sin[:, nax, :, :],
+            axis=0,
+        )
+        Rarr22 = np.sum(
+            -im[:, nax, nax, nax] ** 2 * dR1[:, :, nax, nax] * cos[:, nax, :, :], axis=0
+        )
+        Rarr23 = np.sum(
+            im[:, nax, nax, nax]
+            * in_[:, nax, nax, nax]
+            * dR1[:, :, nax, nax]
+            * cos[:, nax, :, :],
+            axis=0,
+        )
+        Rarr33 = np.sum(
+            -in_[:, nax, nax, nax] ** 2 * dR1[:, :, nax, nax] * cos[:, nax, :, :],
+            axis=0,
+        )
+
+        dRarr = np.array(
+            [
+                [Rarr11, Rarr12, Rarr13],
+                [Rarr12, Rarr22, Rarr23],
+                [Rarr13, Rarr23, Rarr33],
+            ]
+        )
+
+        if Igeometry == 3:
+            Zarr11 = np.sum(
+                fac[:, 2, :, nax, nax]
+                * (Zbs[:, nax, nax, nax] - Zas[:, nax, nax, nax])
+                * sin[:, nax, :, :],
+                axis=0,
+            )
+            Zarr12 = np.sum(
+                im[:, nax, nax, nax]
+                * fac[:, 1, :, nax, nax]
+                * (Zbs[:, nax, nax, nax] - Zas[:, nax, nax, nax])
+                * cos[:, nax, :, :],
+                axis=0,
+            )
+            Zarr13 = np.sum(
+                -in_[:, nax, nax, nax]
+                * fac[:, 1, :, nax, nax]
+                * (Zbs[:, nax, nax, nax] - Zas[:, nax, nax, nax])
+                * cos[:, nax, :, :],
+                axis=0,
+            )
+            Zarr22 = np.sum(
+                -im[:, nax, nax, nax] ** 2 * dZ1[:, :, nax, nax] * sin[:, nax, :, :],
+                axis=0,
+            )
+            Zarr23 = np.sum(
+                im[:, nax, nax, nax]
+                * in_[:, nax, nax, nax]
+                * dZ1[:, :, nax, nax]
+                * sin[:, nax, :, :],
+                axis=0,
+            )
+            Zarr33 = np.sum(
+                -in_[:, nax, nax, nax] ** 2 * dZ1[:, :, nax, nax] * sin[:, nax, :, :],
+                axis=0,
+            )
+
+            dZarr = np.array(
+                [
+                    [Zarr11, Zarr12, Zarr13],
+                    [Zarr12, Zarr22, Zarr23],
+                    [Zarr13, Zarr23, Zarr33],
+                ]
+            )
 
     if Igeometry == 1:
         jacobian = Rarr1 * rpol * rtor
-        g11 = Rarr1 ** 2
-        g22 = rpol ** 2 + Rarr2 ** 2
-        g33 = rtor ** 2 + Rarr3 ** 2
-        g12 = Rarr1 * Rarr2
-        g13 = Rarr1 * Rarr3
-        g23 = Rarr2 * Rarr3
+
+        g = Rarr[:, nax, :] * Rarr[nax, :, :]
+        # g22
+        g[1, 1, :] += rpol ** 2
+        # g33
+        g[2, 2, :] += rtor ** 2
+
+        if derivative:
+            djacobian = dRarr[0, :] * rpol * rtor
+            dg = (
+                dRarr[:, :, nax, :] * Rarr[nax, nax, :, :]
+                + dRarr[:, nax, :, :] * Rarr[nax, :, nax, :]
+            )
 
     if Igeometry == 2:
         jacobian = Rarr1 * Rarr0
-        g11 = Rarr1 ** 2
-        g22 = Rarr2 ** 2 + Rarr0 ** 2
-        g33 = Rarr3 ** 2 + 1.0
-        g12 = Rarr1 * Rarr2
-        g13 = Rarr1 * Rarr3
-        g23 = Rarr2 * Rarr3
+
+        g = Rarr[:, nax, :] * Rarr[nax, :, :]
+        # g22
+        g[1, 1, :] += Rarr0 ** 2
+        # g33
+        g[2, 2, :] += 1.0
+
+        if derivative:
+            djacobian = dRarr[0, :] * Rarr0[nax, :] + Rarr1[nax, :] * Rarr
+            dg = (
+                dRarr[:, :, nax, :] * Rarr[nax, nax, :, :]
+                + dRarr[:, nax, :, :] * Rarr[nax, :, nax, :]
+            )
+            dg[:, 1, 1, :] += 2.0 * Rarr * Rarr0[nax, :]
+
     elif Igeometry == 3:
         jacobian = Rarr0 * (Rarr2 * Zarr1 - Rarr1 * Zarr2)  # from matlab
 
-        g11 = Rarr1 ** 2 + Zarr1 ** 2
-        # gss
-        g22 = Rarr2 ** 2 + Zarr2 ** 2
-        # gtt
-        g33 = Rarr0 ** 2 + Rarr3 ** 2 + Zarr3 ** 2
-        # gzz
-        g12 = Rarr1 * Rarr2 + Zarr1 * Zarr2
-        # gst
-        g13 = Rarr1 * Rarr3 + Zarr1 * Zarr3
-        # gsz
-        g23 = Rarr2 * Rarr3 + Zarr2 * Zarr3
-        # gtz
+        g = Rarr[:, nax, :] * Rarr[nax, :, :] + Zarr[:, nax, :] * Zarr[nax, :, :]
+        g[2, 2, :] += Rarr0 ** 2
 
-    g = np.array([[g11, g12, g13], [g12, g22, g23], [g13, g23, g33]])
+        if derivative:
+            djacobian = (
+                Rarr * (Rarr2 * Zarr1 - Rarr1 * Zarr2)[nax, :]
+                + Rarr0[nax, :]
+                * (dRarr[1, :] * Zarr1[nax, :] - dRarr[0, :] * Zarr2[nax, :])
+                + Rarr0[nax, :]
+                * (Rarr2[nax, :] * dZarr[0, :] - Rarr1[nax, :] * dZarr[1, :])
+            )
+            dg = (
+                dRarr[:, :, nax, :] * Rarr[nax, nax, :, :]
+                + dRarr[:, nax, :, :] * Rarr[nax, :, nax, :]
+                + dZarr[:, :, nax, :] * Zarr[nax, nax, :, :]
+                + dZarr[:, nax, :, :] * Zarr[nax, :, nax, :]
+            )
+            dg[:, 2, 2, :] += 2 * Rarr0[nax, :] * Rarr
 
-    return Rarr0, Zarr0, jacobian, g
+    if derivative:
+        return Rarr0, Zarr0, jacobian, g, djacobian, dg
+    else:
+        return Rarr0, Zarr0, jacobian, g
 
 
 def grid(
@@ -173,12 +305,20 @@ def get_B(
     sarr=np.linspace(0, 0, 1),
     tarr=np.linspace(0, 0, 1),
     zarr=np.linspace(0, 0, 1),
+    derivative=False,
+    djacobian=None,
 ):
 
-    if jacobian is None:
-        R, Z, jacobian, g = get_grid_and_jacobian_and_metric(
-            self, lvol=lvol, sarr=sarr, tarr=tarr, zarr=zarr
-        )
+    if not derivative:
+        if jacobian is None:
+            R, Z, jacobian, g = get_grid_and_jacobian_and_metric(
+                self, lvol=lvol, sarr=sarr, tarr=tarr, zarr=zarr, derivative=derivative
+            )
+    else:
+        if jacobian is None or djacobian is None:
+            R, Z, jacobian, g, djacobian, _ = get_grid_and_jacobian_and_metric(
+                self, lvol=lvol, sarr=sarr, tarr=tarr, zarr=zarr, derivative=derivative
+            )
 
     # Lrad = s.input.physics.Lrad[lvol]
     Ate = self.vector_potential.Ate[lvol]
@@ -207,7 +347,10 @@ def get_B(
         # Zernike polynomial being used
         from ._processing import _get_zernike
 
-        zernike, dzernike = _get_zernike(sarr, Lrad, Mpol)
+        if derivative:
+            zernike, dzernike, ddzernike = _get_zernike(sarr, Lrad, Mpol, True)
+        else:
+            zernike, dzernike = _get_zernike(sarr, Lrad, Mpol, False)
 
         c = (
             im[nax, :, nax, nax] * Azo.T[:, :, nax, nax]
@@ -287,25 +430,125 @@ def get_B(
             2,
         )
 
+        if derivative:
+            dBsds = np.rollaxis(np.sum(Cheb.chebval(sarr, Cheb.chebder(c)), axis=0), 2)
+            dBtds = -np.rollaxis(
+                np.sum(
+                    Cheb.chebval(sarr, Cheb.chebder(c1, 2)),
+                    axis=0,
+                ),
+                2,
+            )
+            dBzds = np.rollaxis(
+                np.sum(
+                    Cheb.chebval(sarr, Cheb.chebder(c2, 2)),
+                    axis=0,
+                ),
+                2,
+            )
+
+            c3 = (
+                -im[nax, :, nax, nax] ** 2 * Azo.T[:, :, nax, nax]
+                - in_[nax, :, nax, nax] * im[nax, :, nax, nax] * Ato.T[:, :, nax, nax]
+            ) * sina[nax, :, :, :] - (
+                im[nax, :, nax, nax] ** 2 * Aze.T[:, :, nax, nax]
+                + in_[nax, :, nax, nax] * im[nax, :, nax, nax] * Ate.T[:, :, nax, nax]
+            ) * cosa[
+                nax, :, :, :
+            ]
+            dBsdt = np.rollaxis(np.sum(Cheb.chebval(sarr, c3), axis=0), 2)
+            c3 = (
+                im[nax, :, nax, nax] * in_[nax, :, nax, nax] * Azo.T[:, :, nax, nax]
+                + in_[nax, :, nax, nax] ** 2 * Ato.T[:, :, nax, nax]
+            ) * sina[nax, :, :, :] - (
+                -im[nax, :, nax, nax] * in_[nax, :, nax, nax] * Aze.T[:, :, nax, nax]
+                - in_[nax, :, nax, nax] ** 2 * Ate.T[:, :, nax, nax]
+            ) * cosa[
+                nax, :, :, :
+            ]
+            dBsdz = np.rollaxis(np.sum(Cheb.chebval(sarr, c3), axis=0), 2)
+            c3 = (
+                -im[nax, :, nax, nax] * Aze.T[:, :, nax, nax] * sina[nax, :, :, :]
+                + im[nax, :, nax, nax] * Azo.T[:, :, nax, nax] * cosa[nax, :, :, :]
+            )
+            dBtdt = -np.rollaxis(
+                np.sum(
+                    Cheb.chebval(sarr, Cheb.chebder(c3)),
+                    axis=0,
+                ),
+                2,
+            )
+            c3 = (
+                in_[nax, :, nax, nax] * Aze.T[:, :, nax, nax] * sina[nax, :, :, :]
+                - in_[nax, :, nax, nax] * Azo.T[:, :, nax, nax] * cosa[nax, :, :, :]
+            )
+            dBtdz = -np.rollaxis(
+                np.sum(
+                    Cheb.chebval(sarr, Cheb.chebder(c3)),
+                    axis=0,
+                ),
+                2,
+            )
+            c3 = (
+                -im[nax, :, nax, nax] * Ate.T[:, :, nax, nax] * sina[nax, :, :, :]
+                + im[nax, :, nax, nax] * Ato.T[:, :, nax, nax] * cosa[nax, :, :, :]
+            )
+            dBzdt = np.rollaxis(
+                np.sum(
+                    Cheb.chebval(sarr, Cheb.chebder(c3)),
+                    axis=0,
+                ),
+                2,
+            )
+            c3 = (
+                in_[nax, :, nax, nax] * Ate.T[:, :, nax, nax] * sina[nax, :, :, :]
+                - in_[nax, :, nax, nax] * Ato.T[:, :, nax, nax] * cosa[nax, :, :, :]
+            )
+            dBzdz = np.rollaxis(
+                np.sum(
+                    Cheb.chebval(sarr, Cheb.chebder(c3)),
+                    axis=0,
+                ),
+                2,
+            )
+
     Bcontrav = np.array([Bs, Bt, Bz]) / jacobian
-    return Bcontrav
+
+    if derivative:
+        dBcontrav = (
+            np.array(
+                [[dBsds, dBtds, dBzds], [dBsdt, dBtdt, dBzdt], [dBsdz, dBtdz, dBzdz]]
+            )
+            / jacobian
+            - Bcontrav[nax, :] * djacobian[:, nax] / jacobian ** 2
+        )
+        return Bcontrav, dBcontrav
+    else:
+        return Bcontrav
 
 
 # Bcontrav = get_B(s,lvol=lvol,jacobian=jacobian,sarr=sarr,tarr=tarr,zarr=zarr)
 
 
-def get_modB(self, Bcontrav, g):
+def get_modB(self, Bcontrav, g, derivative=False, dBcontrav=None, dg=None):
     """Input - Bcontrav has to come from get_B function"""
     modB = np.sqrt(np.einsum("iabc,jiabc,jabc->abc", Bcontrav, g, Bcontrav))
-    return modB
+    if not derivative:
+        return modB
+    else:
+        dmodB2 = 2 * np.einsum(
+            "kiabc,jiabc,jabc->kabc", dBcontrav, g, Bcontrav
+        ) + np.einsum("iabc,kjiabc,jabc->kabc", Bcontrav, dg, Bcontrav)
+        return modB, dmodB2
 
-def get_B_covariant(self, Bcontrav, g):
+
+def get_B_covariant(self, Bcontrav, g, derivative=False):
     """Get covariant component of B"""
     Bco = np.einsum("iabc,jiabc->jabc", Bcontrav, g)
-    return Bco    
+    return Bco
 
 
-def _get_zernike(sarr, lrad, mpol):
+def _get_zernike(sarr, lrad, mpol, second_deriv=False):
     """
     Get the value of the zernike polynomials and their derivatives
     Adapted from basefn.f90
