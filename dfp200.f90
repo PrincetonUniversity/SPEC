@@ -1389,7 +1389,7 @@ subroutine evaluate_dBB(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, length,
 
   use inputlist, only : Wmacros, Wdfp200, Ntor, Igeometry, Lconstraint, &
                         gamma, adiabatic, pscale, Lcheck, dRZ, Nvol, &
-                        epsilon, Lrad
+                        epsilon, Lrad, Lboundary
 
   use cputiming, only : Tdfp200
 
@@ -1512,7 +1512,7 @@ do iocons = 0, 1
     dLL(1:Ntz) = zero ! either no spectral constraint, or not the appropriate interface;
     dPP(1:Ntz) = zero ! either no spectral constraint, or not the appropriate interface;
 
-    if( Igeometry.ge.3 ) then ! spectral constraints are only required in toroidal or extended-cylindrical geometry;
+    if( Igeometry.ge.3 .and. Lboundary.eq.0 ) then ! spectral constraints are only required in toroidal or extended-cylindrical geometry;
 
         if( innout.eq.1 .and. iocons.eq.1 ) then ! include derivatives of spectral constraints;
 
@@ -1685,7 +1685,7 @@ do iocons = 0, 1
     ;   dFFdRZ(idoc+1:idoc+mn_force    ,iocons,idof,innout,lvol) = + efmn(1:mn_force) * psifactor(ii,lvol-1+innout) * BBweight(1:mn_force)
 
     idoc = idoc + mn_force   ! even;
-    if( Igeometry.ge.3 ) then ! Add spectral constraints;
+    if( Igeometry.ge.3 .and. Lboundary.eq.0 ) then ! Add spectral constraints;
         dFFdRZ(idoc+1:idoc+mn_force-1  ,iocons,idof,innout,lvol) = - sfmn(2:mn_force) * psifactor(ii,lvol-1+innout) * epsilon       & ! spectral condensation;
                                                                    - simn(2:mn_force) * psifactor(ii,lvol-1+innout) * sweight(lvol)   ! poloidal length constraint;
     ! if( Ntor.gt.0 ) then
@@ -1697,10 +1697,10 @@ do iocons = 0, 1
     if( NOTstellsym ) then ! Construct non-stellarator symmetric terms
 
     ! Plasma and magnetic pressure;
-    ;       dFFdRZ(idoc+1:idoc+mn_force-1  ,iocons,idof,innout,lvol) = + ofmn(2:mn_force) * psifactor(ii,lvol-1+innout) * BBweight(2:mn_force)
+    dFFdRZ(idoc+1:idoc+mn_force-1  ,iocons,idof,innout,lvol) = + ofmn(2:mn_force) * psifactor(ii,lvol-1+innout) * BBweight(2:mn_force)
 
         idoc = idoc + mn_force-1 ! odd;
-        if( Igeometry.ge.3 ) then ! Add spectral constraints;
+        if( Igeometry.ge.3 .and. Lboundary.eq.0 ) then ! Add spectral constraints;
             dFFdRZ(idoc+1:idoc+mn_force    ,iocons,idof,innout,lvol) = - cfmn(1:mn_force) * psifactor(ii,lvol-1+innout) * epsilon       & ! spectral condensation;
                                                                  - comn(1:mn_force) * psifactor(ii,lvol-1+innout) * sweight(lvol)   ! poloidal length constraint;
             !if( Ntor.ge.0 ) then
@@ -1708,7 +1708,6 @@ do iocons = 0, 1
             !endif
             idoc = idoc + mn_force   ! even;
         endif ! end of if( Igeometry.ge.3) ;
-
     endif ! end of if( NOTstellsym) ;
 
 #ifdef DEBUG

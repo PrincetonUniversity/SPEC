@@ -239,6 +239,15 @@ subroutine set_global_variables()
   endif
 
   !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!> **Force gradient transformation**
+  if( Mvol.gt.1 .and. Lboundary.eq.1 .and. Lfindzero.eq.2 ) then
+
+    WCALL( preset, initialize_force_gradient_transformation, (NGdof_field, NGdof_bnd) )
+
+  endif
+
+
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !> **iota and oita: rotational transform on interfaces**
 !>
@@ -1485,7 +1494,8 @@ subroutine read_input_geometry()
                         Igeometry, &
                         Lconstraint, &
                         Lreflect, &
-                        Lfreebound
+                        Lfreebound, &
+                        Wpreset, Wmacros
 
   use allglobal
 
@@ -1843,6 +1853,11 @@ subroutine read_henneberg_input_geometry()
           irhoc(ind,1:Nvol-1) = allRZRZ( 4, 1:Nvol-1, idx_mode )
         endif !mm.eq.0
       enddo !idx_mode
+
+      do lvol=1,Nvol-1
+        call forwardMap( irhoc(1:mn_rho,lvol), ibc(0:Ntor,lvol), iR0c(0:Ntor,lvol), iZ0s(1:Ntor,lvol), iRbc(1:mn_field,lvol), iZbs(1:mn_field,lvol) )
+      enddo
+
     case( 1 ) ! interpolate
       ! Interpolate the Rmn, Zmn
       call interpolate_initial_guess()

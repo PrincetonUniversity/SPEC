@@ -6,7 +6,7 @@ module bndRep
     INTEGER              :: ii, jj, mm, nn, jjmin, jjmax, irz ! Loop indices used in subroutines
     INTEGER              :: nel_m1_i, nel_m1_j, nel_m2_i, nel_m2_j ! dimension of matrices
     LOGICAL              :: Lchangeangle
-    REAL   , allocatable :: Mat1(:,:), Mat2(:,:), RHS1(:), RHS2(:), LHS1(:), LHS2(:)   !< MAPPING MATRIX, TIMES FOUR
+    REAL   , allocatable :: Mat1(:,:), Mat2(:,:), dRZdhenn(:,:), RHS1(:), RHS2(:), LHS1(:), LHS2(:)   !< MAPPING MATRIX, TIMES FOUR
   
     !------- public / private statement ----------
   
@@ -28,6 +28,7 @@ module bndRep
         ! In this subroutine we compute the mapping matrix, and allocate necessary memory
         ! This should only be called once at the beginning of preset.
   
+        use constants, only: zero
         use inputlist, only: Wmacros, Mpol, Ntor, twoalpha, Nfp, Lboundary
         use fileunits, only: ounit, lunit
         use allglobal, only: myid, mn_field, im_field, in_field, &
@@ -169,14 +170,13 @@ module bndRep
 
 
         ! Change angle
-        call find_index_field(  1, 0, ind )
+        call find_index(  mn_field, im_field, in_field, 1, 0, ind )
 
         if( Lchangeangle ) then
           call change_angle( Rmn(1:mn_field), Zmn(1:mn_field) )
         endif
   
       end subroutine forwardMap
-  
   
   
       subroutine backwardMap( Rmn, Zmn, rhomn, bn, R0c, Z0s )
@@ -334,6 +334,155 @@ module bndRep
  
       end subroutine backwardMap
 
+      subroutine initialize_force_gradient_transformation( iisize, jjsize )
+
+        use constants, only: zero, one, quart, half
+        use fileunits, only: ounit, lunit
+        use inputlist, only: Igeometry, Nfp, twoalpha, Wmacros, Ntor
+        use allglobal, only: YESstellsym, Mvol, LGdof_field, LGdof_bnd, &
+                             im_rho, in_rho, mn_rho, &
+                             im_field, in_field, mn_field, &
+                             MPI_COMM_SPEC, cpus, myid
+
+        LOCALS
+
+        INTEGER, INTENT(IN) :: iisize, jjsize
+        INTEGER             :: vvol                 ! volume index
+        INTEGER             :: ii                   ! Fourier harmonics of field and hudson representation index
+        INTEGER             :: irz                  ! 0: Rmn harmonics, 1: Zmn harmonics
+        INTEGER             :: issym                ! 0: stellarator symmetric terms, 1: non-stellarator symmetric terms
+        INTEGER             :: idof                 ! degree of freedom on the interface, hudson representation
+        INTEGER             :: jdof                 ! degree of freedom on the interface, henneberg representation
+        INTEGER             :: tdof                 ! global geometrical degree of freedom, hudson representation
+        INTEGER             :: udof                 ! global geometrical degree of freedom, henneberg representation
+        INTEGER             :: mm, nn, sgn_delta_twoalpha  ! poloidal, toroidal mode number
+
+
+        ! --------------------------------------------------------------------------------------
+
+        ! Allocate memory
+        SALLOCATE( dRZdhenn, (1:iisize, 1:jjsize), zero )
+
+        ! Build matrix
+        do vvol = 1, Mvol-1 ! loop over interior surfaces;
+          idof = 0
+      
+          do ii = 1, mn_field ! Loop over Fourier modes
+      
+            do irz = 0, 1 ! loop over R or Z coordinate
+      
+              if( irz.eq.1 .and. Igeometry.lt.3 ) cycle
+
+              mm = im_field( ii )
+              nn = in_field( ii ) / Nfp
+
+              if( irz.eq.0 ) then
+                sgn_delta_twoalpha = -1
+              else
+                sgn_delta_twoalpha =  1
+              endif
+      
+              do issym = 0, 1 ! stellarator symmetry;
+      
+                if( issym.eq.1 .and. YESstellsym ) cycle ! no dependence on the non-stellarator symmetric harmonics;
+      
+                if( ii.eq.1 .and. irz.eq.1 .and. issym.eq.0 ) cycle ! no dependence on Zbs_{m=0,n=0};
+                if( ii.eq.1 .and. irz.eq.0 .and. issym.eq.1 ) cycle ! no dependence on Rbs_{m=0,n=0};
+      
+
+                idof = idof + 1 ! labels degree-of-freedom;
+                tdof = (vvol-1) * LGdof_field + idof
+
+                ! dR / drn
+                if( irz.eq.0 .and. mm.eq.0 .and. nn.ge.0 .and. nn.le.Ntor ) then
+                  if( nn.eq.0 ) then
+                    jdof = mn_rho + 2
+                  else
+                    jdof = mn_rho + 3*nn + 1
+                  endif
+#ifdef DEBUG
+                  FATAL( bndRep, jdof.gt.LGdof_bnd .or. jdof.lt.1, Index is out of bound 001 )
+#endif
+
+                  udof = (vvol-1) * LGdof_bnd + jdof
+
+                  dRZdhenn( tdof, udof ) = one
+                endif
+
+                ! dZ / dn
+                if( irz.eq.1 .and. mm.eq.0 .and. nn.ge.0 .and. nn.le.Ntor  ) then
+                  if( nn.ne.0 ) then
+                    jdof = mn_rho + 3*nn + 2
+                  endif
+#ifdef DEBUG
+                  FATAL( bndRep, jdof.gt.LGdof_bnd .or. jdof.lt.1, Index is out of bound 002 )
+#endif      
+                  udof = (vvol-1) * LGdof_bnd + jdof
+
+                  dRZdhenn( tdof, udof ) = -one
+                endif
+
+                ! dR / dbn    and     dZ / dbn
+                if( mm.eq.1 ) then                     
+                  if( nn.ge.-Ntor .and. nn.le.-1 ) then
+                    jdof = mn_rho - 3*nn
+                    udof = (vvol-1) * LGdof_bnd + jdof                  
+                    dRZdhenn( tdof, udof ) = dRZdhenn( tdof, udof ) + quart
+                  elseif( nn.ge.1 .and. nn.le.Ntor) then
+                    jdof = mn_rho + 3*nn
+                    udof = (vvol-1) * LGdof_bnd + jdof                  
+                    dRZdhenn( tdof, udof ) = dRZdhenn( tdof, udof ) + quart
+                  elseif( nn.eq. 0) then
+                    jdof = mn_rho + 1
+                    udof = (vvol-1) * LGdof_bnd + jdof                  
+                    dRZdhenn( tdof, udof ) = dRZdhenn( tdof, udof ) + half
+                  endif
+
+                  if( nn-twoalpha.gt.0 .and. nn-twoalpha.le.Ntor ) then
+                    jdof = mn_rho + 3*( nn-twoalpha )
+                    udof = (vvol-1) * LGdof_bnd + jdof                  
+                    dRZdhenn( tdof, udof ) = dRZdhenn( tdof, udof ) + sgn_delta_twoalpha * quart
+                  elseif( nn-twoalpha.eq.0 ) then
+                    jdof = mn_rho + 1
+                    udof = (vvol-1) * LGdof_bnd + jdof                  
+                    dRZdhenn( tdof, udof ) = dRZdhenn( tdof, udof ) + sgn_delta_twoalpha * quart
+                  endif
+
+                  if(-nn+twoalpha.gt.0 .and. -nn+twoalpha.le.Ntor ) then
+                    jdof = mn_rho + 3*(-nn+twoalpha)
+                    udof = (vvol-1) * LGdof_bnd + jdof                  
+                    dRZdhenn( tdof, udof ) = dRZdhenn( tdof, udof ) + sgn_delta_twoalpha * quart
+                  elseif(-nn+twoalpha.eq.0 ) then
+                    jdof = mn_rho + 1
+                    udof = (vvol-1) * LGdof_bnd + jdof                  
+                    dRZdhenn( tdof, udof ) = dRZdhenn( tdof, udof ) + sgn_delta_twoalpha * quart
+                  endif
+                endif
+
+
+                ! dR / drhomn     and     dZ / drhomn
+                if( mm.ne.0 ) then
+                  call find_index(  mn_rho, im_rho, in_rho / Nfp, mm, -nn, jdof )
+                  if( jdof.gt.0 ) then
+                    udof = (vvol-1) * LGdof_bnd + jdof                  
+                    dRZdhenn( tdof, udof ) = half
+                  endif
+
+
+                  call find_index(  mn_rho, im_rho, in_rho / Nfp, mm, -nn+twoalpha, jdof )
+                  if( jdof.gt.0 ) then
+                    udof = (vvol-1) * LGdof_bnd + jdof                  
+                    dRZdhenn( tdof, udof ) = dRZdhenn( tdof, udof ) - sgn_delta_twoalpha * half
+                  endif
+                endif
+              enddo !issym
+            enddo !irz
+          enddo !ii
+        enddo !vvol
+
+
+      end subroutine initialize_force_gradient_transformation
+
 
       subroutine pack_henneberg( pack, position, bndDofs )
 
@@ -362,7 +511,7 @@ module bndRep
         ! Subroutine core
 
         select case( pack )
-        case( 'H' )
+        case( 'H' ) ! from packed hudson to henneberg
 
           ! First unpack position in Rmn, Zmn
           packorunpack = 'U'
@@ -410,7 +559,7 @@ module bndRep
           enddo !lvol
 
 
-        case( 'R' )
+        case( 'R' ) ! from packed henneberg ot packed hudson
 
           ! First unpack the array bndDofs
           idof = 0
@@ -450,12 +599,6 @@ module bndRep
             call forwardMap( irhoc(1:mn_rho, lvol), ibc(0:Ntor, lvol), &
                             iR0c(0:Ntor, lvol), iZ0s(1:Ntor, lvol), &
                             iRbc(1:mn_field, lvol), iZbs(1:mn_field, lvol) )
-
-#ifdef DEBUG
-            if( work ) then
-              write(ounit,'("Changing angle in pack_henneberg for lvol=", i3 ,)')
-            endif
-#endif
 
           enddo
         
@@ -814,7 +957,7 @@ module bndRep
             Zmn_tmp(ii) = Zmn(ii)
           else ! ( mm.eq.0 )
 
-            call find_index_field( mm, -nn, ind )
+            call find_index( mn_field, im_field, in_field, mm, -nn, ind )
             if( ind.eq.-1 ) then ! mode not found, fill with zero
               Rmn_tmp(ii) = zero
               Zmn_tmp(ii) = zero
@@ -832,24 +975,24 @@ module bndRep
 
       end subroutine change_angle
 
-      subroutine find_index_field( m_search, n_search, ind )
+      subroutine find_index( mn, im_array, in_array, m_search, n_search, ind )
         use inputlist, only: Wmacros
         use fileunits, only: ounit, lunit
-        use allglobal, only: mn_field, im_field, in_field
+        use allglobal, only: mn_field
 
         LOCALS
 
-        INTEGER, INTENT(IN) :: m_search, n_search
+        INTEGER, INTENT(IN) :: m_search, n_search, mn, im_array(1:mn), in_array(1:mn)
         INTEGER, INTENT(OUT):: ind
 
-        do ind = 1, mn_field
-          if( im_field(ind).eq.m_search .and. in_field(ind).eq.n_search ) then
+        do ind = 1, mn
+          if( im_array(ind).eq.m_search .and. in_array(ind).eq.n_search ) then
             return
           endif
         enddo
 
         ind = -1
-      end subroutine find_index_field
+      end subroutine find_index
   
   
   end module bndRep

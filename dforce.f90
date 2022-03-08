@@ -135,6 +135,8 @@ subroutine dforce( NGdof_field, position, force, LComputeDerivatives, LComputeAx
                         IsMyVolume, IsMyVolumeValue, WhichCpuID, &
                         ext ! For outputing Lcheck = 6 test
 
+  use bndRep, only    : dRZdhenn
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   LOCALS
@@ -151,7 +153,7 @@ subroutine dforce( NGdof_field, position, force, LComputeDerivatives, LComputeAx
   REAL                 :: epsfcn, factor
   REAL                 :: Fdof(1:Mvol-1), Xdof(1:Mvol-1)
   INTEGER              :: ipiv(1:Mvol)
-  REAL, allocatable    :: fjac(:, :), r(:), Fvec(:), dpfluxout(:)
+  REAL, allocatable    :: fjac(:, :), r(:), Fvec(:), dpfluxout(:), dforcedRZ(:,:)
 
   INTEGER              :: status(MPI_STATUS_SIZE), request_recv, request_send, cpu_send
   INTEGER              :: id
@@ -371,12 +373,14 @@ subroutine dforce( NGdof_field, position, force, LComputeDerivatives, LComputeAx
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 ! Broadcast information to all CPUs
+if( ncpu.gt.1 ) then
   do vvol = 1, Mvol
 
     LREGION( vvol )
     WCALL( dforce, brcast, ( vvol ) )
 
   enddo
+endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -520,7 +524,13 @@ subroutine dforce( NGdof_field, position, force, LComputeDerivatives, LComputeAx
     FATAL( dforce, .not.Lhessianallocated, need to allocate hessian )
 #endif
 
-    hessian(1:NGdof_force,1:NGdof_field) = zero
+    if( Lboundary.eq.0 ) then
+      FATAL( dforce, NGdof_field.ne.NGdof_force )
+      SALLOCATE( dforcedRZ, (1:NGdof_force, 1:NGdof_force), zero )
+    else
+      SALLOCATE( dforcedRZ, (1:NGdof_force, 1:NGdof_field), zero )
+    endif
+    hessian(1:NGdof_force,1:NGdof_force) = zero
 
     do vvol = 1, Mvol-1 ! loop over interior surfaces;
 
@@ -528,29 +538,12 @@ subroutine dforce( NGdof_field, position, force, LComputeDerivatives, LComputeAx
 
         idof = 0 ! labels degree-of-freedom = Fourier harmonic of surface geometry;
 
-#ifdef DEBUG
-        if( idof.gt.LGdof_field ) write(ounit,1000) myid, vvol, -1, -1, -1, idof, LGdof_field ! can be deleted;
-#endif
-
-        do ii = 1, mn_force ! loop over degrees-of-freedom;
-
-#ifdef DEBUG
-          if( idof.gt.LGdof_field ) write(ounit,1000) myid, vvol, ii, -1, -1, idof, LGdof_field ! can be deleted;
-#endif
-
+        do ii = 1, mn_field ! loop over degrees-of-freedom;
           do irz = 0, 1 ! Fourier harmonic of R, Fourier harmonic of Z;
-
-#ifdef DEBUG
-            if( idof.gt.LGdof_field ) write(ounit,1000) myid, vvol, ii, irz, -1, idof, LGdof_field ! can be deleted;
-#endif
 
             if( irz.eq.1 .and. Igeometry.lt.3 ) cycle ! no dependence on Z;
 
             do issym = 0, 1 ! stellarator symmetry;
-
-#ifdef DEBUG
-              if( idof.gt.LGdof_field ) write(ounit,1000) myid, vvol, ii, irz, issym, idof, LGdof_field ! can be deleted;
-#endif
 
               if( issym.eq.1 .and. YESstellsym ) cycle ! no dependence on the non-stellarator symmetric harmonics;
 
@@ -561,8 +554,7 @@ subroutine dforce( NGdof_field, position, force, LComputeDerivatives, LComputeAx
 
 #ifdef DEBUG
               if( idof.gt.LGdof_field ) write(ounit,1000) myid, vvol, ii, irz, issym, idof, LGdof_field ! can be deleted;
-1000 format("hforce : " 10x " : myid=",i3," ; vvol=",i3," ; ii= ",i3," ; irz="i3" ; issym="i3" ; idof="i3" ; LGdof_field="i3" ;")
-                FATAL( hforce, idof.gt.LGdof_field, illegal degree-of-freedom index constructing hessian ) ! can be deleted;
+1000 format("hforce : " 10x " : myid=",i3," ; vvol=",i3," ; ii= ",i3," ; irz="i3" ; issym="i3" ; idof="i3" ; LGdof="i3" ;")
 #endif
 
               if( LocalConstraint ) then
@@ -571,11 +563,11 @@ subroutine dforce( NGdof_field, position, force, LComputeDerivatives, LComputeAx
                   tdof = (vvol-2) * LGdof_field + idof ! labels degree-of-freedom in internal interface geometry   ;
                   tdoc = (vvol-1) * LGdof_force      ! labels force-balance constraint across internal interfaces;
                   idoc = 0                           ! local  force-balance constraint across internal interface ;
-                  hessian(tdoc+idoc+1:tdoc+idoc+LGdof_force,tdof) =                                           - dFFdRZ(idoc+1:idoc+LGdof_force,1,idof,0,vvol+0)
+                  dforcedRZ(tdoc+idoc+1:tdoc+idoc+LGdof_force,tdof) =   - dFFdRZ(idoc+1:idoc+LGdof_force,1,idof,0,vvol+0)
                   if( Lconstraint.eq.1 ) then ! this is a little clumsy; could include Lfreebound or something . . . ;
-                    hessian(tdoc+idoc+1:tdoc+idoc+LGdof_force,tdof) =  hessian(tdoc+idoc+1:tdoc+idoc+LGdof_force,tdof)                     &
-                                                                - dBBdmp(idoc+1:idoc+LGdof_force,vvol+0,1,1) * dmupfdx(vvol,1,1,idof,0) &
-                                                                - dBBdmp(idoc+1:idoc+LGdof_force,vvol+0,1,2) * dmupfdx(vvol,1,2,idof,0)
+                    dforcedRZ(tdoc+idoc+1:tdoc+idoc+LGdof_force,tdof) =   dforcedRZ(tdoc+idoc+1:tdoc+idoc+LGdof_force,tdof)                     &
+                                                                        - dBBdmp(idoc+1:idoc+LGdof_force,vvol+0,1,1) * dmupfdx(vvol,1,1,idof,0) &
+                                                                        - dBBdmp(idoc+1:idoc+LGdof_force,vvol+0,1,2) * dmupfdx(vvol,1,2,idof,0)
                   endif ! end of if( Lconstraint.eq.1 ) ;
                 endif ! end of if( vvol.gt.1 ) ;
 
@@ -585,11 +577,11 @@ subroutine dforce( NGdof_field, position, force, LComputeDerivatives, LComputeAx
                 ;idoc = 0
 
                 if( Lextrap.eq.1 .and. vvol.eq.1 ) then
-                    ;hessian(tdoc+idof                  ,tdof) = one ! diagonal elements;
+                    ;dforcedRZ(tdoc+idof                  ,tdof) = one ! diagonal elements;
                 else
-                    ;hessian(tdoc+idoc+1:tdoc+idoc+LGdof_force,tdof) = dFFdRZ(idoc+1:idoc+LGdof_force,0,idof,0,vvol+1) - dFFdRZ(idoc+1:idoc+LGdof_force,1,idof,1,vvol+0)
+                    ;dforcedRZ(tdoc+idoc+1:tdoc+idoc+LGdof_force,tdof) = dFFdRZ(idoc+1:idoc+LGdof_force,0,idof,0,vvol+1) - dFFdRZ(idoc+1:idoc+LGdof_force,1,idof,1,vvol+0)
                     if( Lconstraint.eq.1 ) then ! this is a little clumsy;
-                        hessian(tdoc+idoc+1:tdoc+idoc+LGdof_force,tdof) =  hessian(tdoc+idoc+1:tdoc+idoc+LGdof_force,tdof)                       &
+                        dforcedRZ(tdoc+idoc+1:tdoc+idoc+LGdof_force,tdof) =  dforcedRZ(tdoc+idoc+1:tdoc+idoc+LGdof_force,tdof)                       &
                                                                     + dBBdmp(idoc+1:idoc+LGdof_force,vvol+1,0,1) * dmupfdx(vvol+1,1,1,idof,0) &
                                                                     + dBBdmp(idoc+1:idoc+LGdof_force,vvol+1,0,2) * dmupfdx(vvol+1,1,2,idof,0) &
                                                                     - dBBdmp(idoc+1:idoc+LGdof_force,vvol+0,1,1) * dmupfdx(vvol+0,1,1,idof,1) &
@@ -604,13 +596,13 @@ subroutine dforce( NGdof_field, position, force, LComputeDerivatives, LComputeAx
                   tdoc = (vvol-1) * LGdof_force ! shorthand;
                   idoc = 0
                   if( Lextrap.eq.1 .and. vvol.eq.1 ) then
-                    if    ( im_field(idof).le.0                     ) then ; hessian(tdoc+idof,tdof) = - one
-                    else                                             ; hessian(tdoc+idof,tdof) = - one
+                    if    ( im_field(idof).le.0                     ) then ; dforcedRZ(tdoc+idof,tdof) = - one
+                    else                                             ; dforcedRZ(tdoc+idof,tdof) = - one
                     endif
                   else
-                    hessian(tdoc+idoc+1:tdoc+idoc+LGdof_force,tdof) = dFFdRZ(idoc+1:idoc+LGdof_force,0,idof,1,vvol+1)
+                    dforcedRZ(tdoc+idoc+1:tdoc+idoc+LGdof_force,tdof) = dFFdRZ(idoc+1:idoc+LGdof_force,0,idof,1,vvol+1)
                     if( Lconstraint.eq.1 ) then ! this is a little clumsy;
-                      hessian(tdoc+idoc+1:tdoc+idoc+LGdof_force,tdof) =  hessian(tdoc+idoc+1:tdoc+idoc+LGdof_force,tdof)                       &
+                      dforcedRZ(tdoc+idoc+1:tdoc+idoc+LGdof_force,tdof) =  dforcedRZ(tdoc+idoc+1:tdoc+idoc+LGdof_force,tdof)                       &
                                                                   + dBBdmp(idoc+1:idoc+LGdof_force,vvol+1,0,1) * dmupfdx(vvol+1,1,1,idof,1) &
                                                                   + dBBdmp(idoc+1:idoc+LGdof_force,vvol+1,0,2) * dmupfdx(vvol+1,1,2,idof,1)
                     endif ! end of if( Lconstraint.eq.1 ) then;
@@ -634,22 +626,22 @@ subroutine dforce( NGdof_field, position, force, LComputeDerivatives, LComputeAx
 
               else ! Global constraint
 
-                ! In the general case of global constraint, there are no zero element in the hessian. We thus loop again on all volumes
+                ! In the general case of global constraint, there are no zero element in the dforcedRZ. We thus loop again on all volumes
 
                 do ivol = 1, Mvol-1
                   tdoc = (ivol-1) * LGdof_force ! shorthand ;
                   tdof = (vvol-1) * LGdof_field + idof
 
                   if( ivol.eq.vvol-1 ) then
-                    hessian(tdoc+1:tdoc+LGdof_force,tdof) =  dFFdRZ(1:LGdof_force,0,idof,1,ivol+1)
+                    dforcedRZ(tdoc+1:tdoc+LGdof_force,tdof) =  dFFdRZ(1:LGdof_force,0,idof,1,ivol+1)
                   elseif( ivol.eq.vvol ) then
-                    hessian(tdoc+1:tdoc+LGdof_force,tdof) =  dFFdRZ(1:LGdof_force,0,idof,0,ivol+1) - dFFdRZ(1:LGdof_force,1,idof,1,ivol)
+                    dforcedRZ(tdoc+1:tdoc+LGdof_force,tdof) =  dFFdRZ(1:LGdof_force,0,idof,0,ivol+1) - dFFdRZ(1:LGdof_force,1,idof,1,ivol)
                   elseif( ivol.eq.vvol+1 ) then
-                    hessian(tdoc+1:tdoc+LGdof_force,tdof) =                                  - dFFdRZ(1:LGdof_force,1,idof,0,ivol)
+                    dforcedRZ(tdoc+1:tdoc+LGdof_force,tdof) =                                  - dFFdRZ(1:LGdof_force,1,idof,0,ivol)
                   endif
 
 
-                  hessian(tdoc+1:tdoc+LGdof_force,tdof) = hessian(tdoc+1:tdoc+LGdof_force,tdof)                              &
+                  dforcedRZ(tdoc+1:tdoc+LGdof_force,tdof) = dforcedRZ(tdoc+1:tdoc+LGdof_force,tdof)                              &
                                                     + dBBdmp(1:LGdof_force,ivol+1,0,1) * dmupfdx(ivol+1,vvol,1,idof,1) &
                                                     + dBBdmp(1:LGdof_force,ivol+1,0,2) * dmupfdx(ivol+1,vvol,2,idof,1) &
                                                     - dBBdmp(1:LGdof_force,ivol+0,1,1) * dmupfdx(ivol+0,vvol,1,idof,1) &
@@ -663,10 +655,16 @@ subroutine dforce( NGdof_field, position, force, LComputeDerivatives, LComputeAx
 
       else ! matches if( ImagneticOK(vvol) .and. ImagneticOK(vvol+1) ) ;
 
-        FATAL( dforce, .true., need to provide suitable values for hessian in case of field failure )
+        FATAL( dforce, .true., need to provide suitable values for dforcedRZ in case of field failure )
 
       endif ! end of if( ImagneticOK(vvol) .and. ImagneticOK(vvol+1) ) ;
     enddo ! end of do vvol;
+
+    if( Lboundary.eq.0 ) then
+      hessian( 1:NGdof_force, 1:NGdof_force ) =         dforcedRZ( 1:NGdof_force, 1:NGdof_force )
+    else
+      hessian( 1:NGdof_force, 1:NGdof_force ) = MATMUL( dforcedRZ( 1:NGdof_force, 1:NGdof_field ), dRZdhenn( 1:NGdof_field, 1:NGdof_force ) )
+    endif
 
     ! Evaluate force gradient
 #ifdef DEBUG
@@ -674,6 +672,8 @@ subroutine dforce( NGdof_field, position, force, LComputeDerivatives, LComputeAx
        WCALL(dforce, fndiff_dforce, ( NGdof_force, NGdof_field ) )
     endif
 #endif
+
+    DALLOCATE( dforcedRZ )
 
   endif ! end of if( LcomputeDerivatives ) ;
 
@@ -696,23 +696,29 @@ use fileunits, only: ounit
 
 use inputlist, only: Wmacros, Wdforce, &
                      Igeometry, &
-                     dRZ, Lcheck
+                     dRZ, Lcheck, &
+                     Lboundary, Ntor
 
 use cputiming, only: Tdforce
 
 use allglobal, only: ncpu, myid, cpus, MPI_COMM_SPEC, &
                      Mvol, mn_force, im_force, in_force, &
                      mn_field, im_field, in_field, &
+                     mn_rho, im_rho, in_rho, &
                      iRbc, iZbs, iRbs, iZbc, &
-                     LGdof_force, psifactor, dBdX, &
+                     LGdof_force, LGdof_field, psifactor, dBdX, &
                      YESstellsym, NOTstellsym, &
-                     hessian, ext
+                     hessian, ext, &
+                     irhoc, iR0c, iZ0s, ibc
+
+
+use bndRep, only: forwardMap                    
 
 LOCALS
 
 INTEGER, intent(in) :: NGdof_force, NGdof_field
 
-INTEGER             :: vvol, idof, ii, irz, issym, isymdiff ! loop indices
+INTEGER             :: vvol, lvol, idof, ii, irz, issym, isymdiff, nn ! loop indices
 INTEGER             :: tdof ! hessian index
 
 REAL                :: lfactor
@@ -720,6 +726,7 @@ CHARACTER           :: packorunpack
 LOGICAL             :: LComputeAxis
 
 REAL, allocatable   :: oRbc(:,:), oZbs(:,:), oRbs(:,:), oZbc(:,:) ! used to store original geometry;
+REAL, allocatable   :: orhoc(:,:), obc(:,:), oR0c(:,:), oZ0s(:,:)
 REAL, allocatable   :: iposition(:,:), iforce(:,:) ! perturbed interfaces position and force
 REAL, allocatable   :: finitediff_estimate(:,:)  ! store finite differences
 
@@ -729,89 +736,209 @@ BEGIN(dforce)
 
   if( ncpu.eq.1) then
 
-  SALLOCATE( finitediff_estimate, (1:NGdof_force, 1:NGdof_field), zero )
+  SALLOCATE( finitediff_estimate, (1:NGdof_force, 1:NGdof_force), zero )
 
   dBdX%L = .false.
-  SALLOCATE( oRbc, (1:mn_field,0:Mvol), iRbc(1:mn_field,0:Mvol) ) !save unperturbed geometry
-  SALLOCATE( oZbs, (1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol) )
-  SALLOCATE( oRbs, (1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol) )
-  SALLOCATE( oZbc, (1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol) )
-  SALLOCATE( iforce,  (-2:2, 0:NGdof_force), zero)
-  SALLOCATE( iposition, (-2:2, 0:NGdof_field), zero)
+  if( Lboundary.eq.0 ) then
+    SALLOCATE( oRbc, (1:mn_field,0:Mvol), iRbc(1:mn_field,0:Mvol) ) !save unperturbed geometry
+    SALLOCATE( oZbs, (1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol) )
+    SALLOCATE( oRbs, (1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol) )
+    SALLOCATE( oZbc, (1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol) )
+    SALLOCATE( iforce,  (-2:2, 0:NGdof_force), zero)
+    SALLOCATE( iposition, (-2:2, 0:NGdof_field), zero)
 
 
-  do vvol = 1, Mvol-1 ! loop over interior surfaces;
-    idof = 0
+    do vvol = 1, Mvol-1 ! loop over interior surfaces;
+      idof = 0
 
-    do ii = 1, mn_field ! Loop over Fourier modes
+      do ii = 1, mn_field ! Loop over Fourier modes
 
-      lfactor = psifactor(ii,vvol)   ! this "pre-conditions" the geometrical degrees-of-freedom;
+        lfactor = psifactor(ii,vvol)   ! this "pre-conditions" the geometrical degrees-of-freedom;
+        do irz = 0, 1 ! loop over R or Z coordinate
 
-      do irz = 0, 1 ! loop over R or Z coordinate
+          if( irz.eq.1 .and. Igeometry.lt.3 ) cycle
 
-        if( irz.eq.1 .and. Igeometry.lt.3 ) cycle
+          do issym = 0, 1 ! stellarator symmetry;
 
-        do issym = 0, 1 ! stellarator symmetry;
+            if( issym.eq.1 .and. YESstellsym ) cycle ! no dependence on the non-stellarator symmetric harmonics;
 
-          if( issym.eq.1 .and. YESstellsym ) cycle ! no dependence on the non-stellarator symmetric harmonics;
+            if( ii.eq.1 .and. irz.eq.1 .and. issym.eq.0 ) cycle ! no dependence on Zbs_{m=0,n=0};
+            if( ii.eq.1 .and. irz.eq.0 .and. issym.eq.1 ) cycle ! no dependence on Rbs_{m=0,n=0};
 
-          if( ii.eq.1 .and. irz.eq.1 .and. issym.eq.0 ) cycle ! no dependence on Zbs_{m=0,n=0};
-          if( ii.eq.1 .and. irz.eq.0 .and. issym.eq.1 ) cycle ! no dependence on Rbs_{m=0,n=0};
+            idof = idof + 1 ! labels degree-of-freedom;
 
-          idof = idof + 1 ! labels degree-of-freedom;
+            do isymdiff = -2, 2 ! symmetric fourth-order, finite-difference used to approximate derivatives;
 
-          do isymdiff = -2, 2 ! symmetric fourth-order, finite-difference used to approximate derivatives;
+              if( isymdiff.eq.0 ) cycle
 
-            if( isymdiff.eq.0 ) cycle
+              ! Reset initial geometry
+              iRbc(1:mn_field,0:Mvol) = oRbc(1:mn_field,0:Mvol)
+              iZbs(1:mn_field,0:Mvol) = oZbs(1:mn_field,0:Mvol)
+              iRbs(1:mn_field,0:Mvol) = oRbs(1:mn_field,0:Mvol)
+              iZbc(1:mn_field,0:Mvol) = oZbc(1:mn_field,0:Mvol)
 
-            ! Reset initial geometry
-            iRbc(1:mn_field,0:Mvol) = oRbc(1:mn_field,0:Mvol)
-            iZbs(1:mn_field,0:Mvol) = oZbs(1:mn_field,0:Mvol)
-            iRbs(1:mn_field,0:Mvol) = oRbs(1:mn_field,0:Mvol)
-            iZbc(1:mn_field,0:Mvol) = oZbc(1:mn_field,0:Mvol)
+              ! Perturb geometry
+              if( issym.eq.0 .and. irz.eq.0 ) then
+                iRbc(ii,vvol) = iRbc(ii,vvol) + dRZ * isymdiff ! perturb geometry;
+              else if( issym.eq.0 .and. irz.eq.1 ) then
+                iZbs(ii,vvol) = iZbs(ii,vvol) + dRZ * isymdiff ! perturb geometry;
+              else if( issym.eq.1 .and. irz.eq.0 ) then
+                iRbs(ii,vvol) = iRbs(ii,vvol) + dRZ * isymdiff ! perturb geometry;
+              else if( issym.eq.1 .and. irz.eq.1 ) then
+                iZbc(ii,vvol) = iZbc(ii,vvol) + dRZ * isymdiff ! perturb geometry;
+              endif
 
-            ! Perturb geometry
-            if( issym.eq.0 .and. irz.eq.0 ) then
-              iRbc(ii,vvol) = iRbc(ii,vvol) + dRZ * isymdiff ! perturb geometry;
-            else if( issym.eq.0 .and. irz.eq.1 ) then
-              iZbs(ii,vvol) = iZbs(ii,vvol) + dRZ * isymdiff ! perturb geometry;
-            else if( issym.eq.1 .and. irz.eq.0 ) then
-              iRbs(ii,vvol) = iRbs(ii,vvol) + dRZ * isymdiff ! perturb geometry;
-            else if( issym.eq.1 .and. irz.eq.1 ) then
-              iZbc(ii,vvol) = iZbc(ii,vvol) + dRZ * isymdiff ! perturb geometry;
-            endif
+              packorunpack = 'P' ! pack geometrical degrees-of-freedom;
+              !LComputeAxis = .false. ! keep axis fixed
+              LComputeAxis = .true.
 
-            packorunpack = 'P' ! pack geometrical degrees-of-freedom;
-            !LComputeAxis = .false. ! keep axis fixed
-            LComputeAxis = .true.
+              WCALL(dforce, packxi,( NGdof_field, iposition(isymdiff,0:NGdof_field), Mvol, mn_field, iRbc(1:mn_field,0:Mvol),&
+                                    iZbs(1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol), &
+                                    iZbc(1:mn_field,0:Mvol), packorunpack, .false., LComputeAxis ) )
+              WCALL(dforce, dforce,( NGdof_field, iposition(isymdiff,0:NGdof_field), iforce(isymdiff,0:NGdof_force), .false., LComputeAxis) )
+            enddo
 
-            WCALL(dforce, packxi,( NGdof_field, iposition(isymdiff,0:NGdof_field), Mvol, mn_field, iRbc(1:mn_field,0:Mvol),&
-                                   iZbs(1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol), &
-                                   iZbc(1:mn_field,0:Mvol), packorunpack, .false., LComputeAxis ) )
-            WCALL(dforce, dforce,( NGdof_field, iposition(isymdiff,0:NGdof_field), iforce(isymdiff,0:NGdof_force), .false., LComputeAxis) )
+            ! Fourth order centered finite difference scheme
+            iforce(0, 0:NGdof_force)  = ( - 1 * iforce( 2,0:NGdof_force) &
+                                    + 8 * iforce( 1,0:NGdof_force) &
+                                    - 8 * iforce(-1,0:NGdof_force) &
+                                    + 1 * iforce(-2,0:NGdof_force))  / ( 12 * dRZ )
+
+            tdof = (vvol-1) * LGdof_field + idof
+            finitediff_estimate(1:NGdof_force, tdof) = iforce(0, 1:NGdof_force)* lfactor
+
+          enddo !issym
+        enddo !irz
+      enddo !ii
+    enddo !vvol
+
+    DALLOCATE(iforce)
+    DALLOCATE(iposition)
+    DALLOCATE(oZbc)
+    DALLOCATE(oRbs)
+    DALLOCATE(oZbs)
+    DALLOCATE(oRbc)
+
+  else ! Lboundary.eq.1
+
+    ! First save the initial geometry
+    SALLOCATE( orhoc, (1:mn_rho, 1:Mvol), irhoc(1:mn_rho, 1:Mvol) )
+    SALLOCATE( obc , (0:Ntor, 1:Mvol), ibc( 0:Ntor, 1:Mvol ) )
+    SALLOCATE( oR0c, (0:Ntor, 1:Mvol), iR0c( 0:Ntor, 1:Mvol ) )
+    SALLOCATE( oZ0s, (0:Ntor, 1:Mvol), iZ0s( 0:Ntor, 1:Mvol ) )
+    SALLOCATE( iforce,  (-2:2, 0:NGdof_force), zero)
+    SALLOCATE( iposition, (-2:2, 0:NGdof_field), zero)
+
+
+    do vvol=1, Mvol-1
+
+      ! Set local dof counter to zero 
+      idof = 0
+
+      ! First rhomn harmonics
+      do ii = 1, mn_rho
+        idof = idof + 1
+
+        do isymdiff = -2,2 
+          ! Reset geometry
+          irhoc( 1:mn_rho, 1:Mvol ) = orhoc( 1:mn_rho, 1:Mvol )
+          ibc( 0:Ntor, 1:Mvol ) = obc(0:Ntor, 1:Mvol)
+          iR0c( 0:Ntor, 1:Mvol ) = oR0c(0:Ntor, 1:Mvol)
+          iZ0s( 0:Ntor, 1:Mvol ) = oZ0s(0:Ntor, 1:Mvol)
+
+          ! Apply perturbation
+          irhoc( ii, vvol ) = irhoc( ii, vvol ) + dRZ * isymdiff
+
+          ! Map to Rmn...
+          do lvol=1, Mvol
+            WCALL( dforce, forwardMap, (irhoc(1:mn_rho, lvol), ibc(0:Ntor, lvol), &
+                                        iR0c(0:Ntor, lvol), iZ0s(1:Ntor, lvol), &
+                                        iRbc(1:mn_field, lvol), iZbs(1:mn_field, lvol)) )
           enddo
 
+          ! Pack to dofs
+          packorunpack = 'P' ! pack geometrical degrees-of-freedom;
+          LComputeAxis = .false. ! keep axis fixed
+
+          WCALL(dforce, packxi,( NGdof_field, iposition(isymdiff,0:NGdof_field), Mvol, mn_field, iRbc(1:mn_field,0:Mvol),&
+                                iZbs(1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), packorunpack, .false., LComputeAxis ) )
+          WCALL(dforce, dforce,( NGdof_field, iposition(isymdiff,0:NGdof_field), iforce(isymdiff,0:NGdof_force), .false., LComputeAxis) )
+
+        enddo ! isymdiff
+        
+        ! Fourth order centered finite difference scheme
+        iforce(0, 0:NGdof_force)  = ( - 1 * iforce( 2,0:NGdof_force) &
+                                      + 8 * iforce( 1,0:NGdof_force) &
+                                      - 8 * iforce(-1,0:NGdof_force) &
+                                      + 1 * iforce(-2,0:NGdof_force))  / ( 12 * dRZ )
+
+        tdof = (vvol-1) * LGdof_field + idof
+        finitediff_estimate(1:NGdof_force, tdof) = iforce(0, 1:NGdof_force) 
+      enddo ! ii
+
+      ! Then rn, zn and bn harmonics
+      do nn = 0, Ntor
+        do irz=0,2
+          if( irz.eq.2 .and. nn.eq.0 ) cycle
+
+          idof = idof + 1
+          do isymdiff = -2,2 
+            ! Reset geometry
+            irhoc( 1:mn_rho, 1:Mvol ) = orhoc( 1:mn_rho, 1:Mvol )
+            ibc( 0:Ntor, 1:Mvol ) = obc(0:Ntor, 1:Mvol)
+            iR0c( 0:Ntor, 1:Mvol ) = oR0c(0:Ntor, 1:Mvol)
+            iZ0s( 0:Ntor, 1:Mvol ) = oZ0s(0:Ntor, 1:Mvol)
+  
+            ! Apply perturbation
+            select case( irz )
+            case( 0 )
+              ibc( nn, vvol ) = ibc( nn, vvol ) + dRZ * isymdiff
+            case( 1 )
+              iR0c( nn, vvol ) = iR0c( nn, vvol ) + dRZ * isymdiff
+            case( 2 )
+              iZ0s( nn, vvol ) = iZ0s( nn, vvol ) + dRZ * isymdiff
+            end select
+  
+            ! Map to Rmn...
+            do lvol=1, Mvol
+              WCALL( dforce, forwardMap, (irhoc(1:mn_rho, lvol), ibc(0:Ntor, lvol), &
+                                          iR0c(0:Ntor, lvol), iZ0s(1:Ntor, lvol), &
+                                          iRbc(1:mn_field, lvol), iZbs(1:mn_field, lvol)) )
+            enddo
+  
+            ! Pack to dofs
+            packorunpack = 'P' ! pack geometrical degrees-of-freedom;
+            LComputeAxis = .false. ! keep axis fixed
+  
+            WCALL(dforce, packxi,( NGdof_field, iposition(isymdiff,0:NGdof_field), Mvol, mn_field, iRbc(1:mn_field,0:Mvol),&
+                                  iZbs(1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), packorunpack, .false., LComputeAxis ) )
+            WCALL(dforce, dforce,( NGdof_field, iposition(isymdiff,0:NGdof_field), iforce(isymdiff,0:NGdof_force), .false., LComputeAxis) )
+  
+          enddo ! isymdiff
+          
           ! Fourth order centered finite difference scheme
           iforce(0, 0:NGdof_force)  = ( - 1 * iforce( 2,0:NGdof_force) &
-                                  + 8 * iforce( 1,0:NGdof_force) &
-                                  - 8 * iforce(-1,0:NGdof_force) &
-                                  + 1 * iforce(-2,0:NGdof_force))  / ( 12 * dRZ )
+                                        + 8 * iforce( 1,0:NGdof_force) &
+                                        - 8 * iforce(-1,0:NGdof_force) &
+                                        + 1 * iforce(-2,0:NGdof_force))  / ( 12 * dRZ )
+  
+          tdof = (vvol-1) * LGdof_field + idof
+          finitediff_estimate(1:NGdof_force, tdof) = iforce(0, 1:NGdof_force)
 
-          tdof = (vvol-1) * LGdof_force + idof
-          finitediff_estimate(1:NGdof_force, tdof) = iforce(0, 1:NGdof_force)* lfactor
-
-        enddo !issym
-      enddo !irz
-    enddo !ii
-  enddo !vvol
+        enddo
+      enddo
+    enddo ! vvol
 
 
-  DALLOCATE(iforce)
-  DALLOCATE(iposition)
-  DALLOCATE(oZbc)
-  DALLOCATE(oRbs)
-  DALLOCATE(oZbs)
-  DALLOCATE(oRbc)
+    DALLOCATE( orhoc )
+    DALLOCATE( obc )
+    DALLOCATE( oR0c )
+    DALLOCATE( oZ0s )
+    DALLOCATE( iposition )
+    DALLOCATE( iforce )
+
+  endif
+
 
   ! Print in file for diagnostics
   if(myid.eq.0) then
@@ -819,7 +946,7 @@ BEGIN(dforce)
     open(10, file=trim(ext)//'.Lcheck6_output.txt', status='unknown')
     write(ounit,'(A)') NEW_LINE('A')
 
-    do ii=1, SIZE(im_field)
+    do ii=1, mn_field
       write(ounit,1345) myid, im_field(ii), in_field(ii), hessian(ii,:)
       write(10   ,1347) hessian(ii,:)
     enddo
@@ -829,7 +956,7 @@ BEGIN(dforce)
 
     ! Print finite differences
     open(10, file=trim(ext)//'.Lcheck6_output.FiniteDiff.txt', status='unknown')
-    do ii=1, SIZE(im_field)
+    do ii=1, mn_field
       write(ounit,1346) myid, im_field(ii), in_field(ii), finitediff_estimate(ii,:)
       write(10   ,1347) finitediff_estimate(ii,:)
     enddo

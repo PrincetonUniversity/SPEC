@@ -222,8 +222,10 @@ subroutine newton( NGdof_bnd, bndDofs, ihybrd )
    	SALLOCATE( dmupfdx, (1:Mvol, 1:Mvol-1,1:2,1:LGdof_field,1), zero ) ! TODO change the format to put vvol in last index bndDofs...
    endif
 
-    SALLOCATE( hessian, (1:NGdof_force,1:NGdof_field), zero )
-    SALLOCATE( dessian, (1:NGdof_force,1:LGdof_field), zero )
+    FATAL( newton, NGdof_bnd.ne.NGdof_force, illdefined Newton problem )
+
+    SALLOCATE( hessian, (1:NGdof_force,1:NGdof_force), zero )
+    SALLOCATE( dessian, (1:NGdof_force,1:LGdof_force), zero )
     Lhessianallocated = .true.
   else
     Lhessianallocated = .false.
