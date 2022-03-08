@@ -983,6 +983,7 @@ subroutine hdfint
   use allglobal, only : ncpu, cpus, &
                         Mvol, ForceErr, &
                         mn, im, in, iRbc, iZbs, iRbs, iZbc, &
+                        mns, ims, ins, &
                         dRbc, dZbs, dRbs, dZbc, &
                         vvolume, dvolume, &
                         Bsupumn, Bsupvmn, &
@@ -1024,6 +1025,12 @@ subroutine hdfint
   HWRITEIV( grpOutput, mn, im, im(1:mn) )
 !latex \type{in(1:mn)}               & integer & \pb{toroidal mode numbers} \\
   HWRITEIV( grpOutput, mn, in, in(1:mn) )
+!latex \type{mns}                     & integer & \pb{number of Fourier modes} \\
+  HWRITEIV( grpOutput,  1, mns, (/ mns /)  )
+!latex \type{ims(1:mns)}               & integer & \pb{poloidal mode numbers} \\
+  HWRITEIV( grpOutput, mns, ims, ims(1:mns) )
+!latex \type{ins(1:mns)}               & integer & \pb{toroidal mode numbers} \\
+  HWRITEIV( grpOutput, mns, ins, ins(1:mns) )
 !latex \type{Mvol}                   & integer & \pb{number of interfaces = number of volumes} \\
   HWRITEIV( grpOutput,  1, Mvol, (/ Mvol /))
 !latex \type{iRbc(1:mn,0:Mvol)}      & real    & \pb{Fourier harmonics, $R_{m,n}$, of interfaces} \\
