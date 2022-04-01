@@ -76,7 +76,7 @@ subroutine newton( NGdof_bnd, bndDofs, ihybrd )
                         nfreeboundaryiterations, &
                         LocalConstraint
 
-  use bndRep, only    : pack_henneberg
+  use bndRep, only    : pack_henneberg_to_hudson, pack_hudson_to_henneberg
 
   use newtontime
 
@@ -164,7 +164,7 @@ subroutine newton( NGdof_bnd, bndDofs, ihybrd )
       position(0:NGdof_bnd) = bndDofs(0:NGdof_bnd)
     else
       pack = 'R'
-      WCALL( newton, pack_henneberg, (pack, position(0:NGdof_field), bndDofs(0:NGdof_bnd) ) )
+      WCALL( newton, pack_henneberg_to_hudson, (position(0:NGdof_field), bndDofs(0:NGdof_bnd) ) )
     endif !Lboundary
 
     LComputeDerivatives= .false.
@@ -219,13 +219,14 @@ subroutine newton( NGdof_bnd, bndDofs, ihybrd )
    if( LocalConstraint ) then
    	SALLOCATE( dmupfdx, (1:Mvol,    1:1,1:2,1:LGdof_field,0:1), zero )
    else
-   	SALLOCATE( dmupfdx, (1:Mvol, 1:Mvol-1,1:2,1:LGdof_field,1), zero ) ! TODO change the format to put vvol in last index bndDofs...
+    ! TODO change the format to put vvol in last index bndDofs...
+   	SALLOCATE( dmupfdx, (1:Mvol, 1:Mvol-1,1:2,1:LGdof_field,1), zero ) 
    endif
 
     FATAL( newton, NGdof_bnd.ne.NGdof_force, illdefined Newton problem )
 
     SALLOCATE( hessian, (1:NGdof_force,1:NGdof_force), zero )
-    SALLOCATE( dessian, (1:NGdof_force,1:LGdof_force), zero )
+    SALLOCATE( dessian, (1:NGdof_force,1:NGdof_force), zero )
     Lhessianallocated = .true.
   else
     Lhessianallocated = .false.
@@ -345,7 +346,7 @@ subroutine writereadgf( readorwrite, NGdof_bnd , ireadhessian )
 
   use inputlist, only : Wnewton, Igeometry, Istellsym, Lfreebound, Nvol
   
-  use bndRep,    only : Mpol_field, Ntor_field, pack_henneberg
+  use bndRep,    only : Mpol_field, Ntor_field, pack_henneberg_to_hudson, pack_hudson_to_henneberg
 
   use cputiming, only : Tnewton
 
@@ -489,7 +490,7 @@ subroutine fcn1( NGdof_bnd, xx, fvec, irevcm )
                         dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated, &
                         nfreeboundaryiterations
 
-  use bndRep,    only : pack_henneberg
+  use bndRep,    only : pack_henneberg_to_hudson, pack_hudson_to_henneberg
 
   use newtontime
 
@@ -517,22 +518,23 @@ subroutine fcn1( NGdof_bnd, xx, fvec, irevcm )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+! Generate position arraz from geometrical dofs.
+  if( Lboundary.eq.0 ) then
+#ifdef DEBUG
+    FATAL( newton, NGdof_field.ne.NGdof_bnd, Incorrect number of dofs in boundary )
+#endif
+    position(0:NGdof_bnd) = bndDofs(0:NGdof_bnd)
+  else
+    pack = 'R'
+    WCALL( newton, pack_henneberg_to_hudson, (position(0:NGdof_field), bndDofs(0:NGdof_bnd) ) )
+  endif
+
+
   select case ( irevcm )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
    case( 0 ) ! indicates start of new iteration; no action is required; bndDofs and force available for printing; force must not be changed;
-
-
-    if( Lboundary.eq.0 ) then
-#ifdef DEBUG
-      FATAL( newton, NGdof_field.ne.NGdof_bnd, Incorrect number of dofs in boundary )
-#endif
-      position(0:NGdof_bnd) = bndDofs(0:NGdof_bnd)
-    else
-      pack = 'R'
-      WCALL( newton, pack_henneberg, (pack, position(0:NGdof_field), bndDofs(0:NGdof_bnd) ) )
-    endif
 
     pack = 'U' ! unpack geometrical degrees of freedom;
     LComputeAxis = .true.
@@ -567,17 +569,6 @@ subroutine fcn1( NGdof_bnd, xx, fvec, irevcm )
    case( 1:2 ) ! before re-entry to C05NDF / C05PDF, force must contain the function values;
 
     nFcalls = nFcalls + 1
-
-    ! Generate position arraz from geometrical dofs.
-    if( Lboundary.eq.0 ) then
-#ifdef DEBUG
-      FATAL( newton, NGdof_field.ne.NGdof_bnd, Incorrect number of dofs in boundary )
-#endif
-      position(0:NGdof_bnd) = bndDofs(0:NGdof_bnd)
-    else
-      pack = 'R'
-      WCALL( newton, pack_henneberg, (pack, position(0:NGdof_field), bndDofs(0:NGdof_bnd) ) )
-    endif
 
     LComputeDerivatives = .false.
     LComputeAxis = .true.
@@ -652,7 +643,7 @@ subroutine fcn2( NGdof_bnd, xx, fvec, fjac, Ldfjac, irevcm )
 
   use sphdf5, only: write_convergence_output
 
-  use bndRep, only    : pack_henneberg
+  use bndRep, only    : pack_henneberg_to_hudson
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -676,21 +667,22 @@ subroutine fcn2( NGdof_bnd, xx, fvec, fjac, Ldfjac, irevcm )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+  if( Lboundary.eq.0 ) then
+#ifdef DEBUG
+    FATAL( newton, NGdof_field.ne.NGdof_bnd, Incorrect number of dofs in boundary )
+#endif
+    position(0:NGdof_bnd) = bndDofs(0:NGdof_bnd)
+  else
+    pack = 'R'
+    WCALL( newton, pack_henneberg_to_hudson, (position(0:NGdof_field), bndDofs(0:NGdof_bnd) ) )
+  endif !Lboundary
+
+
   select case ( irevcm )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
    case( 0 ) ! indicates start of new iteration; no action is required; bndDofs and force available for printing; force must not be changed;
-
-    if( Lboundary.eq.0 ) then
-#ifdef DEBUG
-      FATAL( newton, NGdof_field.ne.NGdof_bnd, Incorrect number of dofs in boundary )
-#endif
-      position(0:NGdof_bnd) = bndDofs(0:NGdof_bnd)
-    else
-      pack = 'R'
-      WCALL( newton, pack_henneberg, (pack, position(0:NGdof_field), bndDofs(0:NGdof_bnd) ) )
-    endif !Lboundary
     
     pack = 'U' ! unpack geometrical degrees of freedom;
     LComputeAxis = .true.
@@ -723,16 +715,6 @@ subroutine fcn2( NGdof_bnd, xx, fvec, fjac, Ldfjac, irevcm )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
    case( 1 ) ! before re-entry to C05NDF / C05PDF, force must contain the function values;
-
-    if( Lboundary.eq.0 ) then
-#ifdef DEBUG
-      FATAL( newton, NGdof_field.ne.NGdof_bnd, Incorrect number of dofs in boundary )
-#endif
-      position(0:NGdof_bnd) = bndDofs(0:NGdof_bnd)
-    else
-      pack = 'R'
-      WCALL( newton, pack_henneberg, (pack, position(0:NGdof_field), bndDofs(0:NGdof_bnd) ) )
-    endif !Lboundary
 
     nFcalls = nFcalls + 1
 
@@ -769,17 +751,6 @@ subroutine fcn2( NGdof_bnd, xx, fvec, fjac, Ldfjac, irevcm )
     endif ! end of if( LreadGF .and. nDcalls.eq.1 ) then;
 
     if( ireadhessian.eq.0 ) then
-
-      if( Lboundary.eq.0 ) then
-#ifdef DEBUG
-        FATAL( newton, NGdof_field.ne.NGdof_bnd, Incorrect number of dofs in boundary )
-#endif
-        position(0:NGdof_bnd) = bndDofs(0:NGdof_bnd)
-      else
-        pack = 'R'
-        WCALL( newton, pack_henneberg, (pack, position(0:NGdof_field), bndDofs(0:NGdof_bnd) ) )
-      endif !Lboundary
-     
 
       LComputeDerivatives = .true.
       LComputeAxis = .true.

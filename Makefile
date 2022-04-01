@@ -184,7 +184,7 @@ ifeq ($(BUILD_ENV),intel_spc)
  FC=mpif90
  FFTW_DIR=/usr/local/fftw3
  CFLAGS=-r8 -DIFORT
- RFLAGS=-O0 -ip -no-prec-div -xHost -fPIC
+ RFLAGS=-O2 -ip -no-prec-div -xHost -fPIC
  DFLAGS=-traceback -debug extended -g -check bounds -DDEBUG
  LINKS=-L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl
  LIBS=-I$(FFTW_DIR)/include

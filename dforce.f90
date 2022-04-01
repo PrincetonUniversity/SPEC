@@ -153,7 +153,7 @@ subroutine dforce( NGdof_field, position, force, LComputeDerivatives, LComputeAx
   REAL                 :: epsfcn, factor
   REAL                 :: Fdof(1:Mvol-1), Xdof(1:Mvol-1)
   INTEGER              :: ipiv(1:Mvol)
-  REAL, allocatable    :: fjac(:, :), r(:), Fvec(:), dpfluxout(:), dforcedRZ(:,:)
+  REAL, allocatable    :: fjac(:, :), r(:), Fvec(:), dpfluxout(:), dforcedRZ(:,:), ddforcedRZ(:,:)
 
   INTEGER              :: status(MPI_STATUS_SIZE), request_recv, request_send, cpu_send
   INTEGER              :: id
@@ -527,8 +527,10 @@ endif
     if( Lboundary.eq.0 ) then
       FATAL( dforce, NGdof_field.ne.NGdof_force )
       SALLOCATE( dforcedRZ, (1:NGdof_force, 1:NGdof_force), zero )
+      SALLOCATE(ddforcedRZ, (1:NGdof_force, 1:NGdof_force), zero )
     else
       SALLOCATE( dforcedRZ, (1:NGdof_force, 1:NGdof_field), zero )
+      SALLOCATE(ddforcedRZ, (1:NGdof_force, 1:NGdof_field), zero )
     endif
     hessian(1:NGdof_force,1:NGdof_force) = zero
 
@@ -615,9 +617,9 @@ endif
                   !tdof = (vvol+0) * LGdof_force + idof
                   tdoc = (vvol-1) * LGdof_force ! shorthand ;
                   idoc = 0
-                  dessian(tdoc+idoc+1:tdoc+idoc+LGdof_force,idof) = dFFdRZ(idoc+1:idoc+LGdof_force,0,idof,1,vvol+1)
+                  ddforcedRZ(tdoc+idoc+1:tdoc+idoc+LGdof_force,idof) = dFFdRZ(idoc+1:idoc+LGdof_force,0,idof,1,vvol+1)
                   if( Lconstraint.eq.1 ) then ! this is a little clumsy;
-                    dessian(tdoc+idoc+1:tdoc+idoc+LGdof_force,idof) =  dessian(tdoc+idoc+1:tdoc+idoc+LGdof_force,idof)                       &
+                    ddforcedRZ(tdoc+idoc+1:tdoc+idoc+LGdof_force,idof) =  ddforcedRZ(tdoc+idoc+1:tdoc+idoc+LGdof_force,idof)                       &
                                                                 + dBBdmp(idoc+1:idoc+LGdof_force,vvol+1,0,1) * dmupfdx(vvol+1,1,1,idof,1) &
                                                                 + dBBdmp(idoc+1:idoc+LGdof_force,vvol+1,0,2) * dmupfdx(vvol+1,1,2,idof,1)
                   endif ! end of if( Lconstraint.eq.1 ) then;
@@ -662,8 +664,10 @@ endif
 
     if( Lboundary.eq.0 ) then
       hessian( 1:NGdof_force, 1:NGdof_force ) =         dforcedRZ( 1:NGdof_force, 1:NGdof_force )
+      dessian( 1:NGdof_force, 1:NGdof_force ) =        ddforcedRZ( 1:NGdof_force, 1:NGdof_force )
     else
       hessian( 1:NGdof_force, 1:NGdof_force ) = MATMUL( dforcedRZ( 1:NGdof_force, 1:NGdof_field ), dRZdhenn( 1:NGdof_field, 1:NGdof_force ) )
+      dessian( 1:NGdof_force, 1:NGdof_force ) = MATMUL(ddforcedRZ( 1:NGdof_force, 1:NGdof_field ), dRZdhenn( 1:NGdof_field, 1:NGdof_force ) )
     endif
 
     ! Evaluate force gradient
@@ -673,7 +677,8 @@ endif
     endif
 #endif
 
-    DALLOCATE( dforcedRZ )
+DALLOCATE( dforcedRZ )
+DALLOCATE(ddforcedRZ )
 
   endif ! end of if( LcomputeDerivatives ) ;
 
@@ -687,7 +692,11 @@ endif
 
 end subroutine dforce
 
-
+!> \brief finite difference test of the force gradient
+!> \ingroup grp_force_driver
+!>
+!> @param[in] NGdof_force
+!> @param[in] NGdof_field
 subroutine fndiff_dforce( NGdof_force, NGdof_field )
 
 use constants, only: zero, one, half, two
@@ -709,26 +718,41 @@ use allglobal, only: ncpu, myid, cpus, MPI_COMM_SPEC, &
                      LGdof_force, LGdof_field, psifactor, dBdX, &
                      YESstellsym, NOTstellsym, &
                      hessian, ext, &
-                     irhoc, iR0c, iZ0s, ibc
+                     irhoc, iR0c, iZ0s, ibc, Rscale
 
 
-use bndRep, only: forwardMap                    
+use bndRep, only: forwardMap, precond_rho, precond_b              
 
 LOCALS
 
-INTEGER, intent(in) :: NGdof_force, NGdof_field
+INTEGER, intent(in) :: NGdof_force !< first dimension of the force gradient
+INTEGER, intent(in) :: NGdof_field !< second dimension of the force gradient
 
-INTEGER             :: vvol, lvol, idof, ii, irz, issym, isymdiff, nn ! loop indices
-INTEGER             :: tdof ! hessian index
+INTEGER             :: vvol !< Loop index on perturbed interfaces
+INTEGER             :: lvol !< Loop index on interfaces for forward mapping 
+INTEGER             :: idof !< Interface degree of freedom index
+INTEGER             :: ii   !< Loop index on Fourier modes
+INTEGER             :: irz  !< Loop index on variable (R or Z) or (b, r or z)
+INTEGER             :: issym !< Loop index on non-stellarator symmetric terms
+INTEGER             :: isymdiff !< Loop index for finite difference perturbations
+INTEGER             :: nn !< Loop index on toroidal mode number
+INTEGER             :: tdof !< Global boundary dof index
 
-REAL                :: lfactor
-CHARACTER           :: packorunpack
-LOGICAL             :: LComputeAxis
+REAL                :: lfactor !< Normalization factor
+CHARACTER           :: packorunpack !< Input to packxi
+LOGICAL             :: LComputeAxis !< Set if axis has to be reevaluated
 
-REAL, allocatable   :: oRbc(:,:), oZbs(:,:), oRbs(:,:), oZbc(:,:) ! used to store original geometry;
-REAL, allocatable   :: orhoc(:,:), obc(:,:), oR0c(:,:), oZ0s(:,:)
-REAL, allocatable   :: iposition(:,:), iforce(:,:) ! perturbed interfaces position and force
-REAL, allocatable   :: finitediff_estimate(:,:)  ! store finite differences
+REAL, allocatable   :: oRbc(:,:) !< Unperturbed geometry, Even R-modes. Used if Lboundary=0
+REAL, allocatable   :: oZbs(:,:) !< Unperturbed geometry, Odd Z-modes. Used if Lboundary=0
+REAL, allocatable   :: oRbs(:,:) !< Unperturbed geometry, Odd R-modes. Used if Lboundary=0
+REAL, allocatable   :: oZbc(:,:) !< Unperturbed geometry, Even Z-modes. Used if Lboundary=0
+REAL, allocatable   :: orhoc(:,:) !< Unperturbed geometry, \f$\rho\f$ modes. Used if Lboundary=1
+REAL, allocatable   :: obc(:,:) !< Unperturbed geometry, \f$b\f$ modes. Used if Lboundary=1
+REAL, allocatable   :: oR0c(:,:) !< Unperturbed geometry, \f$r_n\f$ modes. Used if Lboundary=1
+REAL, allocatable   :: oZ0s(:,:) !< Unperturbed geoemtry, \f$z_n\f$ modes. Used if Lboundary=1
+REAL, allocatable   :: iposition(:,:) !< Perturbed, packed geometry. Input to dforce
+REAL, allocatable   :: iforce(:,:) !< Perturbed force
+REAL, allocatable   :: finitediff_estimate(:,:)  ! Finite difference force gradient
 
 BEGIN(dforce)
 
@@ -805,7 +829,7 @@ BEGIN(dforce)
                                     + 1 * iforce(-2,0:NGdof_force))  / ( 12 * dRZ )
 
             tdof = (vvol-1) * LGdof_field + idof
-            finitediff_estimate(1:NGdof_force, tdof) = iforce(0, 1:NGdof_force)* lfactor
+            finitediff_estimate(1:NGdof_force, tdof) = iforce(0, 1:NGdof_force) * lfactor
 
           enddo !issym
         enddo !irz
@@ -873,7 +897,8 @@ BEGIN(dforce)
                                       + 1 * iforce(-2,0:NGdof_force))  / ( 12 * dRZ )
 
         tdof = (vvol-1) * LGdof_field + idof
-        finitediff_estimate(1:NGdof_force, tdof) = iforce(0, 1:NGdof_force) 
+
+        finitediff_estimate(1:NGdof_force, tdof) = iforce(0, 1:NGdof_force) * precond_rho( ii, vvol )
       enddo ! ii
 
       ! Then rn, zn and bn harmonics
@@ -923,7 +948,15 @@ BEGIN(dforce)
                                         + 1 * iforce(-2,0:NGdof_force))  / ( 12 * dRZ )
   
           tdof = (vvol-1) * LGdof_field + idof
-          finitediff_estimate(1:NGdof_force, tdof) = iforce(0, 1:NGdof_force)
+
+          select case( irz )
+          case( 0 ) ! bn modes
+            finitediff_estimate(1:NGdof_force, tdof) = iforce(0, 1:NGdof_force) * precond_b( vvol )
+          case( 1 ) ! rn modes
+            finitediff_estimate(1:NGdof_force, tdof) = iforce(0, 1:NGdof_force) * Rscale
+          case( 2 ) ! zn modes
+            finitediff_estimate(1:NGdof_force, tdof) = iforce(0, 1:NGdof_force) * Rscale
+          end select
 
         enddo
       enddo
@@ -946,8 +979,8 @@ BEGIN(dforce)
     open(10, file=trim(ext)//'.Lcheck6_output.txt', status='unknown')
     write(ounit,'(A)') NEW_LINE('A')
 
-    do ii=1, mn_field
-      write(ounit,1345) myid, im_field(ii), in_field(ii), hessian(ii,:)
+    do ii=1, mn_force
+      write(ounit,1345) myid, im_force(ii), in_force(ii), hessian(ii,:)
       write(10   ,1347) hessian(ii,:)
     enddo
     close(10)
@@ -956,8 +989,8 @@ BEGIN(dforce)
 
     ! Print finite differences
     open(10, file=trim(ext)//'.Lcheck6_output.FiniteDiff.txt', status='unknown')
-    do ii=1, mn_field
-      write(ounit,1346) myid, im_field(ii), in_field(ii), finitediff_estimate(ii,:)
+    do ii=1, mn_force
+      write(ounit,1346) myid, im_force(ii), in_force(ii), finitediff_estimate(ii,:)
       write(10   ,1347) finitediff_estimate(ii,:)
     enddo
     write(ounit,'(A)') NEW_LINE('A')

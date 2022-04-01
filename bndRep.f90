@@ -3,16 +3,17 @@ module bndRep
     PUBLIC ! everything is public, excepted stated otherwise.
   
     INTEGER              :: Mpol_field, Ntor_field, Mpol_force, Ntor_force 
-    INTEGER              :: ii, jj, mm, nn, jjmin, jjmax, irz ! Loop indices used in subroutines
     INTEGER              :: nel_m1_i, nel_m1_j, nel_m2_i, nel_m2_j ! dimension of matrices
     LOGICAL              :: Lchangeangle
-    REAL   , allocatable :: Mat1(:,:), Mat2(:,:), dRZdhenn(:,:), RHS1(:), RHS2(:), LHS1(:), LHS2(:)   !< MAPPING MATRIX, TIMES FOUR
-  
+    REAL   , allocatable :: Mat1(:,:), Mat2(:,:)                !< MAPPING MATRIX, TIMES FOUR
+    REAL   , allocatable :: RHS1(:), RHS2(:), LHS1(:), LHS2(:)  !< Right hand side and Left and side of linear systems
+    REAL   , allocatable :: dRZdhenn(:,:)                       !< Derivatives of R,Z_mn w.r.t r,z,b_n and rho_mn
+    REAL   , allocatable :: precond_rho(:,:), precond_b(:)      !< Similar to psifactor for Rmn, Zmn for rhomn
+
     !------- public / private statement ----------
   
     PRIVATE :: Mat1, Mat2
     PRIVATE :: nel_m1_i, nel_m1_j, nel_m2_i, nel_m2_j
-    PRIVATE :: ii, jj, mm, nn, jjmin, jjmax, irz
     PRIVATE :: build_mapping_matrices ! only used in forwardMap and backwardMap subroutines.
     PRIVATE :: pack_rhomn_bn, unpack_rhomn_bn, pack_rmn_zmn, unpack_rmn_zmn ! specific for this module
     PRIVATE :: RHS1, RHS2, LHS1, LHS2
@@ -28,17 +29,19 @@ module bndRep
         ! In this subroutine we compute the mapping matrix, and allocate necessary memory
         ! This should only be called once at the beginning of preset.
   
-        use constants, only: zero
-        use inputlist, only: Wmacros, Mpol, Ntor, twoalpha, Nfp, Lboundary
+        use constants, only: zero, half
+        use inputlist, only: Wmacros, Mpol, Ntor, twoalpha, Nfp, Lboundary, tflux
         use fileunits, only: ounit, lunit
         use allglobal, only: myid, mn_field, im_field, in_field, &
                              mn_rho, im_rho, in_rho, &
                              mn_force, im_force, in_force, &
-                             MPI_COMM_SPEC, cpus
+                             MPI_COMM_SPEC, cpus, &
+                             Rscale, Mvol
 
         LOCALS
 
         LOGICAL, INTENT(IN):: Langle
+        INTEGER            :: vvol, ii
 
 
         Lchangeangle = Langle
@@ -57,6 +60,9 @@ module bndRep
     
           Mpol_force  = Mpol + 1
           Ntor_force  = Ntor
+          
+        else 
+          FATAL( bndRep, .true., Invalid Lboundary )
 
         endif
 
@@ -79,12 +85,12 @@ module bndRep
         !latex \item The array \type{in} includes the \type{Nfp} factor.
         !latex \end{enumerate}
         
-        SALLOCATE( im_field  , (1:mn_field  ), 0 )
-        SALLOCATE( in_field  , (1:mn_field  ), 0 )
-        SALLOCATE( im_rho    , (1:mn_rho    ), 0 )
-        SALLOCATE( in_rho    , (1:mn_rho    ), 0 )
-        SALLOCATE( im_force  , (1:mn_force  ), 0 )
-        SALLOCATE( in_force  , (1:mn_force  ), 0 )
+        SALLOCATE( im_field  , (1:mn_field  ), zero )
+        SALLOCATE( in_field  , (1:mn_field  ), zero )
+        SALLOCATE( im_rho    , (1:mn_rho    ), zero )
+        SALLOCATE( in_rho    , (1:mn_rho    ), zero )
+        SALLOCATE( im_force  , (1:mn_force  ), zero )
+        SALLOCATE( in_force  , (1:mn_force  ), zero )
       
         call gi00ab(  Mpol_field,  Ntor_field, Nfp, mn_field, im_field(1:mn_field), in_field(1:mn_field), .true.  ) ! this sets the im and in mode identification arrays;
         call gi00ab(  Mpol_force,  Ntor_force, Nfp, mn_force, im_force(1:mn_force), in_force(1:mn_force), .true.  ) ! this sets the im and in mode identification arrays;
@@ -92,17 +98,29 @@ module bndRep
   
         nel_m1_i = 2*(2*Ntor_field+1)
         nel_m1_j = 3*Ntor+2
-        SALLOCATE( Mat1, (1:nel_m1_i,1:nel_m1_j), 0 )
-        SALLOCATE( RHS1, (1:nel_m1_j), 0 )
-        SALLOCATE( LHS1, (1:nel_m1_i), 0 )
+        SALLOCATE( Mat1, (1:nel_m1_i,1:nel_m1_j), zero )
+        SALLOCATE( RHS1, (1:nel_m1_j           ), zero )
+        SALLOCATE( LHS1, (1:nel_m1_i           ), zero )
   
         nel_m2_i = 2*(Mpol_field-1)*(2*Ntor_field+1)
         nel_m2_j = (Mpol-1)*(2*Ntor+1)
-        SALLOCATE( Mat2, (1:nel_m2_i,1:nel_m2_j), 0 )
-        SALLOCATE( RHS2, (1:nel_m2_j), 0 )
-        SALLOCATE( LHS2, (1:nel_m2_i), 0 )
+        SALLOCATE( Mat2, (1:nel_m2_i,1:nel_m2_j), zero )
+        SALLOCATE( RHS2, (1:nel_m2_j           ), zero )
+        SALLOCATE( LHS2, (1:nel_m2_i           ), zero )
 
         call build_mapping_matrices()
+
+        SALLOCATE( precond_rho, (1:mn_rho, 1:Mvol), zero )
+        do vvol = 1, Mvol
+          do ii = 1, mn_rho
+            precond_rho( ii, vvol ) = Rscale * tflux(vvol)**(im_rho(ii) * half) 
+          enddo
+        enddo
+
+        SALLOCATE( precond_b, (1:Mvol), zero )
+        do vvol = 1, Mvol
+          precond_b( vvol ) = Rscale * tflux(vvol)**half
+        enddo
   
       end subroutine initialize_mapping
   
@@ -135,7 +153,7 @@ module bndRep
         REAL, intent(in) :: R0c(0:Ntor), Z0s(1:Ntor)
         REAL, intent(in) :: rhomn(1:mn_rho), bn(0:Ntor)
         REAL             :: Rmn(1:mn_field), Zmn(1:mn_field)
-        INTEGER          :: ind
+        INTEGER          :: ii, mm, nn
 
         ! m=0 modes, from R0c and Z0c
         do ii=1,mn_field
@@ -151,7 +169,7 @@ module bndRep
           endif
 
           if( (nn.eq.0) .or. (nn.gt.Ntor) ) then
-            Zmn(ii) = 0.0
+            Zmn(ii) = zero
           else
             Zmn(ii) =-Z0s(nn)
           endif
@@ -170,8 +188,6 @@ module bndRep
 
 
         ! Change angle
-        call find_index(  mn_field, im_field, in_field, 1, 0, ind )
-
         if( Lchangeangle ) then
           call change_angle( Rmn(1:mn_field), Zmn(1:mn_field) )
         endif
@@ -194,12 +210,13 @@ module bndRep
         REAL, intent(inout) :: rhomn(1:mn_rho), bn(0:Ntor)
         REAL, intent(inout) :: R0c(0:Ntor), Z0s(1:Ntor)
 
-        REAL                :: Rwork(1:mn_field), Zwork(1:mn_field)
 
         ! LOCAL VARIABLES
-        CHARACTER :: TRANS
-        REAL, allocatable :: A(:,:), WORK(:), B(:)
-        INTEGER :: NRHS, LDA, LDB, LWORK, INFO
+        CHARACTER           :: TRANS
+        REAL                :: Rwork(1:mn_field), Zwork(1:mn_field)
+        INTEGER             :: ii, mm, nn
+        REAL, allocatable   :: A(:,:), WORK(:), B(:)
+        INTEGER             :: NRHS, LDA, LDB, LWORK, INFO
 
         ! First, change angle if necessary.
         Rwork = Rmn
@@ -338,11 +355,12 @@ module bndRep
 
         use constants, only: zero, one, quart, half
         use fileunits, only: ounit, lunit
-        use inputlist, only: Igeometry, Nfp, twoalpha, Wmacros, Ntor
+        use inputlist, only: Igeometry, Nfp, twoalpha, Wmacros, Ntor, Lcheck
         use allglobal, only: YESstellsym, Mvol, LGdof_field, LGdof_bnd, &
                              im_rho, in_rho, mn_rho, &
                              im_field, in_field, mn_field, &
-                             MPI_COMM_SPEC, cpus, myid
+                             MPI_COMM_SPEC, cpus, myid, &
+                             Rscale
 
         LOCALS
 
@@ -355,10 +373,18 @@ module bndRep
         INTEGER             :: jdof                 ! degree of freedom on the interface, henneberg representation
         INTEGER             :: tdof                 ! global geometrical degree of freedom, hudson representation
         INTEGER             :: udof                 ! global geometrical degree of freedom, henneberg representation
-        INTEGER             :: mm, nn, sgn_delta_twoalpha  ! poloidal, toroidal mode number
+        INTEGER             :: mm, nn               ! poloidal, toroidal mode number
+        INTEGER             :: sgn_delta_twoalpha   ! Sign dependence of some terms.. + or -1
 
 
         ! --------------------------------------------------------------------------------------
+
+        if( Lcheck.eq.62 ) then
+          precond_rho( 1:mn_rho, 1:Mvol ) = one
+          precond_b( 1:Mvol ) = one
+          Rscale = 1
+        endif
+
 
         ! Allocate memory
         SALLOCATE( dRZdhenn, (1:iisize, 1:jjsize), zero )
@@ -406,7 +432,7 @@ module bndRep
 
                   udof = (vvol-1) * LGdof_bnd + jdof
 
-                  dRZdhenn( tdof, udof ) = one
+                  dRZdhenn( tdof, udof ) = one * Rscale
                 endif
 
                 ! dZ / dn
@@ -419,7 +445,7 @@ module bndRep
 #endif      
                   udof = (vvol-1) * LGdof_bnd + jdof
 
-                  dRZdhenn( tdof, udof ) = -one
+                  dRZdhenn( tdof, udof ) = -one * Rscale
                 endif
 
                 ! dR / dbn    and     dZ / dbn
@@ -427,35 +453,35 @@ module bndRep
                   if( nn.ge.-Ntor .and. nn.le.-1 ) then
                     jdof = mn_rho - 3*nn
                     udof = (vvol-1) * LGdof_bnd + jdof                  
-                    dRZdhenn( tdof, udof ) = dRZdhenn( tdof, udof ) + quart
+                    dRZdhenn( tdof, udof ) = dRZdhenn( tdof, udof ) + quart * precond_b( vvol )
                   elseif( nn.ge.1 .and. nn.le.Ntor) then
                     jdof = mn_rho + 3*nn
                     udof = (vvol-1) * LGdof_bnd + jdof                  
-                    dRZdhenn( tdof, udof ) = dRZdhenn( tdof, udof ) + quart
+                    dRZdhenn( tdof, udof ) = dRZdhenn( tdof, udof ) + quart * precond_b( vvol )
                   elseif( nn.eq. 0) then
                     jdof = mn_rho + 1
                     udof = (vvol-1) * LGdof_bnd + jdof                  
-                    dRZdhenn( tdof, udof ) = dRZdhenn( tdof, udof ) + half
+                    dRZdhenn( tdof, udof ) = dRZdhenn( tdof, udof ) + half * precond_b( vvol )
                   endif
 
                   if( nn-twoalpha.gt.0 .and. nn-twoalpha.le.Ntor ) then
                     jdof = mn_rho + 3*( nn-twoalpha )
                     udof = (vvol-1) * LGdof_bnd + jdof                  
-                    dRZdhenn( tdof, udof ) = dRZdhenn( tdof, udof ) + sgn_delta_twoalpha * quart
+                    dRZdhenn( tdof, udof ) = dRZdhenn( tdof, udof ) + sgn_delta_twoalpha * quart * precond_b( vvol )
                   elseif( nn-twoalpha.eq.0 ) then
                     jdof = mn_rho + 1
                     udof = (vvol-1) * LGdof_bnd + jdof                  
-                    dRZdhenn( tdof, udof ) = dRZdhenn( tdof, udof ) + sgn_delta_twoalpha * quart
+                    dRZdhenn( tdof, udof ) = dRZdhenn( tdof, udof ) + sgn_delta_twoalpha * quart * precond_b( vvol )
                   endif
 
                   if(-nn+twoalpha.gt.0 .and. -nn+twoalpha.le.Ntor ) then
                     jdof = mn_rho + 3*(-nn+twoalpha)
                     udof = (vvol-1) * LGdof_bnd + jdof                  
-                    dRZdhenn( tdof, udof ) = dRZdhenn( tdof, udof ) + sgn_delta_twoalpha * quart
+                    dRZdhenn( tdof, udof ) = dRZdhenn( tdof, udof ) + sgn_delta_twoalpha * quart * precond_b( vvol )
                   elseif(-nn+twoalpha.eq.0 ) then
                     jdof = mn_rho + 1
                     udof = (vvol-1) * LGdof_bnd + jdof                  
-                    dRZdhenn( tdof, udof ) = dRZdhenn( tdof, udof ) + sgn_delta_twoalpha * quart
+                    dRZdhenn( tdof, udof ) = dRZdhenn( tdof, udof ) + sgn_delta_twoalpha * quart * precond_b( vvol )
                   endif
                 endif
 
@@ -465,14 +491,14 @@ module bndRep
                   call find_index(  mn_rho, im_rho, in_rho / Nfp, mm, -nn, jdof )
                   if( jdof.gt.0 ) then
                     udof = (vvol-1) * LGdof_bnd + jdof                  
-                    dRZdhenn( tdof, udof ) = half
+                    dRZdhenn( tdof, udof ) = half * precond_rho( jdof, vvol )
                   endif
 
 
                   call find_index(  mn_rho, im_rho, in_rho / Nfp, mm, -nn+twoalpha, jdof )
                   if( jdof.gt.0 ) then
                     udof = (vvol-1) * LGdof_bnd + jdof                  
-                    dRZdhenn( tdof, udof ) = dRZdhenn( tdof, udof ) - sgn_delta_twoalpha * half
+                    dRZdhenn( tdof, udof ) = dRZdhenn( tdof, udof ) - sgn_delta_twoalpha * half * precond_rho( jdof, vvol )
                   endif
                 endif
               enddo !issym
@@ -483,140 +509,169 @@ module bndRep
 
       end subroutine initialize_force_gradient_transformation
 
-
-      subroutine pack_henneberg( pack, position, bndDofs )
+      subroutine pack_henneberg_to_hudson( position, bndDofs )
 
         use constants, only: zero
         use inputlist, only: Wmacros, Mpol, Ntor, twoalpha, Nfp
         use fileunits, only: ounit, lunit
         use allglobal, only: myid, im_rho, in_rho, im_field, in_field, mn_rho, mn_field, &
                              MPI_COMM_SPEC, cpus, Mvol, &
-                             NGdof_field, NGdof_bnd
+                             NGdof_field, NGdof_bnd, &
+                             Rscale
 
         LOCALS
 
         ! --------------------------------------------------------------
         ! Local Variables
 
-        CHARACTER, INTENT(IN)  :: pack
+        REAL, INTENT(OUT)      :: position( 0:NGdof_field )
+        REAL, INTENT(IN)       :: bndDofs( 0:NGdof_bnd )
         CHARACTER              :: packorunpack ! Either 'RZ_to_H' or 'H_to_RZ'
         LOGICAL                :: LComputeDerivatives, LComputeAxis, work
-        INTEGER                :: lvol, idof
-        REAL                   :: position( 0:NGdof_field )
-        REAL                   :: bndDofs( 0:NGdof_bnd )
+        INTEGER                :: lvol, idof, jj
         REAL                   :: iRbc(1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol)
         REAL                   :: irhoc(1:mn_rho,1:Mvol), ibc(0:Ntor,1:Mvol), iR0c(0:Ntor,1:Mvol), iZ0s(1:Ntor,1:Mvol)
 
-        ! --------------------------------------------------------------
-        ! Subroutine core
+        ! First unpack the array bndDofs
+        idof = 0
+        do lvol=1,Mvol-1
+          do jj=1,mn_rho
 
-        select case( pack )
-        case( 'H' ) ! from packed hudson to henneberg
+            idof = idof+1
+#ifdef DEBUG
+            FATAL( bndRep, idof.le.0 .or. idof.gt.NGdof_bnd, out of bounds )
+#endif
 
-          ! First unpack position in Rmn, Zmn
-          packorunpack = 'U'
-          LComputeDerivatives = .FALSE.
-          LComputeAxis = .FALSE.
-          call packxi( NGdof_field, position( 0:NGdof_field ), Mvol, mn_field, & 
-                       iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), &
-                       packorunpack, LComputeDerivatives, LComputeAxis )
-
-          ! Then map to rhomn, bn, R0n, Z0n
-          do lvol=1,Mvol-1
-            call backwardMap( iRbc(1:mn_field,lvol), iZbs(1:mn_field,lvol), &
-                              irhoc(1:mn_rho,lvol), ibc(0:Ntor, lvol), &
-                              iR0c(0:Ntor, lvol), iZ0s(1:Ntor, lvol) )      
+            irhoc(jj,lvol) = bndDofs(idof) * precond_rho( jj, lvol )
           enddo
 
-          ! Finally construct the array bndDofs
-          idof = 0
-          do lvol=1,Mvol-1
-            do jj=1,mn_rho
-              idof = idof + 1
-#ifdef DEBUG
-              FATAL( bndRep, idof.le.0 .or. idof.gt.NGdof_bnd, out of bounds )
-#endif
+          do jj=0,Ntor
+            idof = idof+1
+            ibc(jj, lvol) = bndDofs(idof) * precond_b( lvol )
+            
+            idof = idof+1
+            iR0c(jj, lvol) = bndDofs(idof) * Rscale
 
-              bndDofs(idof) = irhoc(jj,lvol)
-
-            enddo
-
-            do jj=0,Ntor
-              idof = idof+1
-              bndDofs(idof) = ibc(jj, lvol)
-
-              idof = idof+1
-              bndDofs(idof) = iR0c(jj, lvol)
-
-              if( jj.ne.0 ) then
-                idof = idof+1
-#ifdef DEBUG
-                FATAL( bndRep, idof.le.0 .or. idof.gt.NGdof_bnd, out of bounds )
-#endif
-                bndDofs(idof) = iZ0s(jj, lvol)
-              endif
-            enddo
-          enddo !lvol
-
-
-        case( 'R' ) ! from packed henneberg ot packed hudson
-
-          ! First unpack the array bndDofs
-          idof = 0
-          do lvol=1,Mvol-1
-            do jj=1,mn_rho
-
+            if( jj.gt.0 ) then 
               idof = idof+1
 #ifdef DEBUG
               FATAL( bndRep, idof.le.0 .or. idof.gt.NGdof_bnd, out of bounds )
 #endif
-
-              irhoc(jj,lvol) = bndDofs(idof)
-            enddo
-
-            do jj=0,Ntor
-              idof = idof+1
-              ibc(jj, lvol) = bndDofs(idof)
-              
-              idof = idof+1
-              iR0c(jj, lvol) = bndDofs(idof)
-
-              if( jj.gt.0 ) then 
-                idof = idof+1
-#ifdef DEBUG
-                FATAL( bndRep, idof.le.0 .or. idof.gt.NGdof_bnd, out of bounds )
-#endif
-                iZ0s(jj, lvol) = bndDofs(idof)
-              endif
-            enddo
-          enddo !lvol
-
-          FATAL( bndRep, idof.ne.NGdof_bnd, incorrect number of dofs. )
-
-          
-        ! Then map rhomn, bn, R0n, Z0n to Rmn, Zmn
-          do lvol=1,Mvol-1
-            call forwardMap( irhoc(1:mn_rho, lvol), ibc(0:Ntor, lvol), &
-                            iR0c(0:Ntor, lvol), iZ0s(1:Ntor, lvol), &
-                            iRbc(1:mn_field, lvol), iZbs(1:mn_field, lvol) )
-
+              iZ0s(jj, lvol) = bndDofs(idof) * Rscale
+            endif
           enddo
+        enddo !lvol
+
+        FATAL( bndRep, idof.ne.NGdof_bnd, incorrect number of dofs. )
+
         
+      ! Then map rhomn, bn, R0n, Z0n to Rmn, Zmn
+        do lvol=1,Mvol-1
+          call forwardMap( irhoc(1:mn_rho, lvol), ibc(0:Ntor, lvol), &
+                          iR0c(0:Ntor, lvol), iZ0s(1:Ntor, lvol), &
+                          iRbc(1:mn_field, lvol), iZbs(1:mn_field, lvol) )
 
-          ! Finally, build position array
-          packorunpack = 'P'
-          LcomputeDerivatives = .FALSE.
-          LComputeAxis = .FALSE.
-          call packxi( NGdof_field, position( 0:NGdof_field ), Mvol, mn_field, &
-                       iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), &
-                       packorunpack, LComputeDerivatives, LComputeAxis )
+        enddo
+      
+
+        ! Finally, build position array
+        packorunpack = 'P'
+        LcomputeDerivatives = .FALSE.
+        LComputeAxis = .FALSE.
+        call packxi( NGdof_field, position( 0:NGdof_field ), Mvol, mn_field, &
+                     iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol), &
+                     iZbc(1:mn_field,0:Mvol), packorunpack, LComputeDerivatives, LComputeAxis )
+
+      end subroutine pack_henneberg_to_hudson
 
 
-        end select 
+      
 
-      end subroutine pack_henneberg
+      subroutine pack_hudson_to_henneberg( position, bndDofs )
+
+        use constants, only: zero
+        use inputlist, only: Wmacros, Mpol, Ntor, twoalpha, Nfp
+        use fileunits, only: ounit, lunit
+        use allglobal, only: myid, im_rho, in_rho, im_field, in_field, mn_rho, mn_field, &
+                             MPI_COMM_SPEC, cpus, Mvol, &
+                             NGdof_field, NGdof_bnd, &
+                             Rscale
+
+        LOCALS
+
+        ! --------------------------------------------------------------
+        ! Local Variables
+
+        REAL, INTENT(IN)       :: position( 0:NGdof_field )
+        REAL, INTENT(OUT)      :: bndDofs( 0:NGdof_bnd )
+        CHARACTER              :: packorunpack ! Either 'RZ_to_H' or 'H_to_RZ'
+        LOGICAL                :: LComputeDerivatives, LComputeAxis, work
+        INTEGER                :: lvol, idof, jj
+        REAL                   :: iRbc(1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol)
+        REAL                   :: irhoc(1:mn_rho,1:Mvol), ibc(0:Ntor,1:Mvol), iR0c(0:Ntor,1:Mvol), iZ0s(1:Ntor,1:Mvol)
+          
+        
+        
+        ! First unpack position in Rmn, Zmn
+        packorunpack = 'U'
+        LComputeDerivatives = .FALSE.
+        LComputeAxis = .FALSE.
+        call packxi( NGdof_field, position( 0:NGdof_field ), Mvol, mn_field, & 
+                     iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol), &
+                     iZbc(1:mn_field,0:Mvol), packorunpack, LComputeDerivatives, LComputeAxis )
+
+        ! Then map to rhomn, bn, R0n, Z0n
+        do lvol=1,Mvol-1
+          call backwardMap( iRbc(1:mn_field,lvol), iZbs(1:mn_field,lvol), &
+                            irhoc(1:mn_rho,lvol), ibc(0:Ntor, lvol), &
+                            iR0c(0:Ntor, lvol), iZ0s(1:Ntor, lvol) )      
+        enddo
+
+        ! Finally construct the array bndDofs
+        idof = 0
+        do lvol=1,Mvol-1
+          do jj=1,mn_rho
+            idof = idof + 1
+#ifdef DEBUG
+            FATAL( bndRep, idof.le.0 .or. idof.gt.NGdof_bnd, out of bounds )
+#endif
+
+            bndDofs(idof) = irhoc(jj,lvol) / precond_rho( jj, lvol )
+
+          enddo
+
+          do jj=0,Ntor
+            idof = idof+1
+            bndDofs(idof) = ibc(jj, lvol) / precond_b( lvol )
+
+            idof = idof+1
+            bndDofs(idof) = iR0c(jj, lvol) / Rscale
+
+            if( jj.ne.0 ) then
+              idof = idof+1
+#ifdef DEBUG
+              FATAL( bndRep, idof.le.0 .or. idof.gt.NGdof_bnd, out of bounds )
+#endif
+              bndDofs(idof) = iZ0s(jj, lvol) / Rscale
+            endif
+          enddo
+        enddo !lvol
+      end subroutine pack_hudson_to_henneberg
   
   
+
+
+
+
+
+
+
+
+
+
+
+
+
     ! ------------------------------------------------------------------
     !                     PRIVATE SUBROUTINES
   
@@ -635,6 +690,8 @@ module bndRep
         REAL, intent(in)  :: bn( 0:Ntor )
 
         REAL  :: rho_work(1:Mpol,-Ntor:Ntor)
+
+        INTEGER :: ii, mm, nn
 
         ! ---------------------------------------------------------------
   
@@ -681,6 +738,8 @@ module bndRep
         REAL, INTENT(OUT) :: bn(0:Ntor)
 
         REAL              :: rho_work(1:Mpol,-Ntor:Ntor)
+
+        INTEGER           :: ii, jj, mm, nn
   
         ! Ensure working variables are set to zero
         rho_work(1:Mpol,-Ntor:Ntor) = zero
@@ -689,10 +748,10 @@ module bndRep
         rho_work( 1, -Ntor:Ntor ) = RHS1(        1:2*Ntor+1 )
         bn( 0:Ntor )              = RHS1( 2*Ntor+2:3*Ntor+2 )
   
-        ii=0
+        jj=0
         do mm=2,Mpol
-          rho_work( mm, -Ntor:Ntor ) = RHS2( ii+1:ii+2*Ntor+1 )
-          ii = ii+2*Ntor+1
+          rho_work( mm, -Ntor:Ntor ) = RHS2( jj+1:jj+2*Ntor+1 )
+          jj = jj+2*Ntor+1
         enddo
 
         ! Build output as a single array
@@ -724,6 +783,7 @@ module bndRep
 
         REAL              :: rmn_work(0:Mpol_field,-Ntor_field:Ntor_field)
         REAL              :: zmn_work(0:Mpol_field,-Ntor_field:Ntor_field)
+        INTEGER           :: ii, jj, irz, mm, nn
 
         ! Ensure work variables are set to zero
         rmn_work(1:Mpol_field,-Ntor_field:Ntor_field) = zero
@@ -744,17 +804,17 @@ module bndRep
         LHS1(1:2*Ntor_field+1) = rmn_work(1, -Ntor_field:Ntor_field)
         LHS1(2*Ntor_field+2:2*(2*Ntor_field+1)) = zmn_work(1, -Ntor_field:Ntor_field)
   
-        ii=0
+        jj=0
         do irz=0,1
           do mm=2,Mpol_field
   
             if( irz==0 ) then
-              LHS2( ii+1: ii+2*Ntor_field+1 ) = rmn_work(mm,-Ntor_field:Ntor_field)
+              LHS2( jj+1: jj+2*Ntor_field+1 ) = rmn_work(mm,-Ntor_field:Ntor_field)
             else
-              LHS2( ii+1: ii+2*Ntor_field+1 ) = zmn_work(mm,-Ntor_field:Ntor_field)
+              LHS2( jj+1: jj+2*Ntor_field+1 ) = zmn_work(mm,-Ntor_field:Ntor_field)
             endif
   
-            ii = ii+2*Ntor_field+1
+            jj = jj+2*Ntor_field+1
   
           enddo
         enddo
@@ -778,6 +838,8 @@ module bndRep
         REAL                :: rmn_work(1:Mpol_field, -Ntor_field:Ntor_field)
         REAL                :: zmn_work(1:Mpol_field, -Ntor_field:Ntor_field)
 
+        INTEGER             :: ii, jj, irz, mm, nn
+
         LOGICAL             :: Lchangeangle
 
         ! Ensure work variable are set to zero
@@ -788,17 +850,17 @@ module bndRep
         rmn_work(1, -Ntor_field:Ntor_field) = LHS1(1:2*Ntor_field+1)
         zmn_work(1, -Ntor_field:Ntor_field) = LHS1(2*Ntor_field+2:2*(2*Ntor_field+1))
   
-        ii=0
+        jj=0
         do irz=0,1
           do mm=2,Mpol_field
   
             if( irz==0 ) then
-              rmn_work(mm,-Ntor_field:Ntor_field) = LHS2( ii+1: ii+2*Ntor_field+1 )
+              rmn_work(mm,-Ntor_field:Ntor_field) = LHS2( jj+1: jj+2*Ntor_field+1 )
             else
-              zmn_work(mm,-Ntor_field:Ntor_field) = LHS2( ii+1: ii+2*Ntor_field+1 )
+              zmn_work(mm,-Ntor_field:Ntor_field) = LHS2( jj+1: jj+2*Ntor_field+1 )
             endif
   
-            ii = ii+2*Ntor_field+1
+            jj = jj+2*Ntor_field+1
   
           enddo
         enddo
@@ -836,12 +898,15 @@ module bndRep
       end subroutine unpack_rmn_zmn
   
       subroutine build_mapping_matrices()
+        use constants, only: four
         use inputlist, only: Wmacros, Mpol, Ntor, twoalpha, Nfp
         use fileunits, only: ounit, lunit
         use allglobal, only: myid, im_rho, in_rho, im_field, in_field, mn_rho, mn_rho, &
                              MPI_COMM_SPEC, cpus
   
         LOCALS
+
+        INTEGER :: jjmin, jjmax, nn, jj, ii, mm
 
         ! Mat1 - mapping matrix for m=1 modes
         do nn = -Ntor_field,Ntor_field
@@ -853,14 +918,14 @@ module bndRep
           ! jj: corresponding column index
           jj = Ntor-nn+1
           if( (jj.le.2*Ntor+1) .and. (jj.gt.0) ) then !Check that indices don't overflow in over elements
-            Mat1(              ii, jj ) = Mat1(              ii, jj ) + 2 ! Rmn elements
+            Mat1(                  ii, jj ) = Mat1(                  ii, jj ) + 2 ! Rmn elements
             Mat1( 2*Ntor_field+1 + ii, jj ) = Mat1( 2*Ntor_field+1 + ii, jj ) + 2 ! Zmn  elements
           endif
   
           ! jj: corresponding column index
           jj = Ntor-nn+twoalpha+1
           if( (jj.le.2*Ntor+1) .and. (jj.gt.0) ) then !Check that indices don't overflow in over elements
-            Mat1(              ii, jj ) = Mat1(              ii, jj ) + 2 ! Rmn elements
+            Mat1(                  ii, jj ) = Mat1(                  ii, jj ) + 2 ! Rmn elements
             Mat1( 2*Ntor_field+1 + ii, jj ) = Mat1( 2*Ntor_field+1 + ii, jj ) - 2 ! Zmn  elements
           endif
   
@@ -868,28 +933,28 @@ module bndRep
           ! b n
           jj =  nn + 1;
           if( (jj.le.Ntor+1) .and. (jj.gt.0) ) then
-              Mat1(           ii, 2*Ntor+1+jj) = Mat1(           ii, 2*Ntor+1+jj) + 1;
+              Mat1(               ii, 2*Ntor+1+jj) = Mat1(               ii, 2*Ntor+1+jj) + 1;
               Mat1(2*Ntor_field+1+ii, 2*Ntor+1+jj) = Mat1(2*Ntor_field+1+ii, 2*Ntor+1+jj) + 1;
           endif
   
           ! b -n
           jj = -nn + 1;
           if( (jj.le.Ntor+1) .and. (jj.gt.0) ) then
-              Mat1(           ii, 2*Ntor+1+jj) = Mat1(           ii, 2*Ntor+1+jj) + 1;
+              Mat1(               ii, 2*Ntor+1+jj) = Mat1(               ii, 2*Ntor+1+jj) + 1;
               Mat1(2*Ntor_field+1+ii, 2*Ntor+1+jj) = Mat1(2*Ntor_field+1+ii, 2*Ntor+1+jj) + 1;
           endif
   
           ! b n- 2 alpha
           jj =  nn - twoalpha + 1;
           if( (jj.le.Ntor+1) .and. (jj.gt.0) ) then
-              Mat1(           ii, 2*Ntor+1+jj) = Mat1(           ii, 2*Ntor+1+jj) - 1;
+              Mat1(               ii, 2*Ntor+1+jj) = Mat1(               ii, 2*Ntor+1+jj) - 1;
               Mat1(2*Ntor_field+1+ii, 2*Ntor+1+jj) = Mat1(2*Ntor_field+1+ii, 2*Ntor+1+jj) + 1;
           endif
   
           ! b -n + 2 alpha
           jj = -nn + twoalpha + 1;
           if( (jj.le.Ntor+1) .and. (jj.gt.0) ) then
-              Mat1(           ii, 2*Ntor+1+jj) = Mat1(           ii, 2*Ntor+1+jj) - 1;
+              Mat1(               ii, 2*Ntor+1+jj) = Mat1(               ii, 2*Ntor+1+jj) - 1;
               Mat1(2*Ntor_field+1+ii, 2*Ntor+1+jj) = Mat1(2*Ntor_field+1+ii, 2*Ntor+1+jj) + 1;
           endif
         end do
@@ -903,22 +968,22 @@ module bndRep
             do nn=-Ntor_field,Ntor_field
   
               ii =    (mm-2)*(2*Ntor_field +1) + Ntor_field + nn + 1;
-              jjmin = (mm-2)*(2*Ntor   +1)               + 1;
-              jjmax = (mm-2)*(2*Ntor   +1) + 2*Ntor      + 1;
+              jjmin = (mm-2)*(2*Ntor   +1)                       + 1;
+              jjmax = (mm-2)*(2*Ntor   +1)    + 2*Ntor           + 1;
   
-              jj =    (mm-2)*(2*Ntor   +1) + Ntor   - nn + 1;
+              jj =    (mm-2)*(2*Ntor   +1)    +   Ntor      - nn + 1;
               ! rho m -n
               if ((jj.ge.jjmin) .and. (jj.le.jjmax)) then
-                  Mat2(                         ii, jj ) =  Mat2(                         ii, jj ) + 2; ! For Rmn equation
+                  Mat2(                             ii, jj ) =  Mat2(                             ii, jj ) + 2; ! For Rmn equation
                   Mat2( (Mpol-1)*(2*Ntor_field+1) + ii, jj ) =  Mat2( (Mpol-1)*(2*Ntor_field+1) + ii, jj ) + 2; ! For Zmn equation
               endif
   
   
               ! rho m -n+2alpha
-              jj =    (mm-2)*(2*Ntor   +1) + Ntor    - nn + twoalpha + 1;
+              jj =    (mm-2)*(2*Ntor   +1)     +  Ntor      - nn + twoalpha + 1;
               if ((jj.ge.jjmin) .and. (jj.le.jjmax)) then
   
-                  Mat2(                         ii, jj ) = Mat2(                         ii, jj ) + 2; ! For Rmn equation
+                  Mat2(                             ii, jj ) = Mat2(                             ii, jj ) + 2; ! For Rmn equation
                   Mat2( (Mpol-1)*(2*Ntor_field+1) + ii, jj ) = Mat2( (Mpol-1)*(2*Ntor_field+1) + ii, jj ) - 2; ! For Zmn equation
               endif
   
@@ -926,8 +991,8 @@ module bndRep
           enddo
         endif
 
-        Mat1 = Mat1 / 4.0
-        Mat2 = Mat2 / 4.0
+        Mat1 = Mat1 / four
+        Mat2 = Mat2 / four
   
   
       end subroutine build_mapping_matrices
@@ -943,7 +1008,7 @@ module bndRep
 
         REAL               :: Rmn(1:mn_field), Zmn(1:mn_field)
         REAL               :: Rmn_tmp(1:mn_field), Zmn_tmp(1:mn_field), mode_r, mode_z
-        INTEGER            :: ind
+        INTEGER            :: ind, ii, mm, nn
 
         Rmn_tmp = zero
         Zmn_tmp = zero

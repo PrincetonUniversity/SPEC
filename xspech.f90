@@ -314,7 +314,7 @@ subroutine spec
                         MPI_COMM_SPEC
 
 
-  use bndRep,    only : pack_henneberg
+  use bndRep,    only : pack_henneberg_to_hudson, pack_hudson_to_henneberg
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -456,7 +456,7 @@ subroutine spec
 
     else
       pack = 'H'
-      WCALL( xspech, pack_henneberg, (pack, position(0:NGdof_field), bndDofs(0:NGdof_bnd) ) )
+      WCALL( xspech, pack_hudson_to_henneberg, (position(0:NGdof_field), bndDofs(0:NGdof_bnd) ) )
     endif !Lboundary
 
     ! This is the call to do one fixed-boundary iteration (by a Newton method).
@@ -471,7 +471,7 @@ subroutine spec
       position(0:NGdof_bnd) = bndDofs(0:NGdof_bnd)
     else
       pack = 'R'
-      WCALL( xspech, pack_henneberg, (pack, position(0:NGdof_field), bndDofs(0:NGdof_bnd) ) )
+      WCALL( xspech, pack_henneberg_to_hudson, (position(0:NGdof_field), bndDofs(0:NGdof_bnd) ) )
     endif !Lboundary
 
     pack = 'U' ! unpack geometrical degrees of freedom; 13 Sep 13;

@@ -83,6 +83,16 @@ subroutine set_global_variables()
     NOTstellsym = .false.
   end select
 
+  ! Set Rscale, used for normalizing the geometrical degrees-of-freedom;
+  if( Lfreebound.eq.0 ) then 
+    if( Lboundary.eq.0 ) then
+      Rscale = Rbc(0,0) 
+    else
+      Rscale = R0c(0)
+    endif !Lboundary
+  else
+    Rscale = Rwc(0,0)
+  endif
 
   ! set up Henneberg's mapping
   if( Lboundary.eq.0 ) then
@@ -1389,15 +1399,6 @@ subroutine set_global_variables()
 
   !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  if( Lfreebound.eq.0 ) then 
-    if( Lboundary.eq.0 ) then
-      Rscale = Rbc(0,0) ! this will be used to normalize the geometrical degrees-of-freedom;
-    else
-      Rscale = R0c(0)
-    endif !Lboundary
-  else
-    Rscale = Rwc(0,0)
-  endif
 
   if( myid.eq.0 ) write(ounit,'("preset : ", 10x ," : myid=",i3," ; Rscale=",es22.15," ;")') myid, Rscale
 
@@ -1438,7 +1439,7 @@ subroutine set_global_variables()
   do vvol = 1, Nvol
     do ii = 1, mn_field
     if( im_field(ii).eq.0 ) then ; psifactor(ii,vvol) = tflux(vvol)**(          +half) ! 28 Jan 15;
-    else                   ; psifactor(ii,vvol) = tflux(vvol)**(halfmm(ii)-half) ! 28 Jan 15;
+    else                         ; psifactor(ii,vvol) = tflux(vvol)**(halfmm(ii)-half) ! 28 Jan 15;
     endif
     enddo
   enddo
@@ -1447,9 +1448,9 @@ subroutine set_global_variables()
   do vvol = 1, Nvol
     do ii = 1, mn_field
     if( im_field(ii).eq.0 ) then ; psifactor(ii,vvol) = Rscale * tflux(vvol)**zero       ! 08 Feb 16;
-                                  ; inifactor(ii,vvol) = Rscale * tflux(vvol)**half       ! 17 Dec 18;
+                                 ; inifactor(ii,vvol) = Rscale * tflux(vvol)**half       ! 17 Dec 18;
     else                         ; psifactor(ii,vvol) = Rscale * tflux(vvol)**halfmm(ii) ! 29 Apr 15;
-                                  ; inifactor(ii,vvol) = Rscale * tflux(vvol)**halfmm(ii) ! 17 Dec 18
+                                 ; inifactor(ii,vvol) = Rscale * tflux(vvol)**halfmm(ii) ! 17 Dec 18
     endif
     enddo
   enddo
