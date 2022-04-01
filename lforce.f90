@@ -149,7 +149,8 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, ifl
 
   use fileunits, only : ounit
 
-  use inputlist, only : Wlforce, Igeometry, Nvol, Lrad, gamma, pscale, adiabatic, Lcheck
+  use inputlist, only : Wlforce, Igeometry, Nvol, Lrad, gamma, pscale, &
+                        adiabatic, Lcheck, Lboundary
 
   use cputiming, only : Tlforce
 
@@ -259,7 +260,7 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, ifl
                     half * (        dAz(1:Ntz, 0)*dAz(1:Ntz, 0)*guvij(1:Ntz,2,2,1) &
                             - two * dAz(1:Ntz, 0)*dAt(1:Ntz, 0)*guvij(1:Ntz,2,3,1) &
                             +       dAt(1:Ntz, 0)*dAt(1:Ntz, 0)*guvij(1:Ntz,3,3,1)  ) / sg(1:Ntz,0)**2 &
-                    - dBB(1:Ntz,0) * two * sg(1:Ntz,1) / sg(1:Ntz,0)
+                  - dBB(1:Ntz,0) * two * sg(1:Ntz,1) / sg(1:Ntz,0)
   endif
 
   ijreal(1:Ntz) = adiabatic(lvol) * pscale / vvolume(lvol)**gamma + dBB(1:Ntz, 0) ! p + B^2/2; 13 Sep 13;
@@ -282,7 +283,7 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, ifl
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 ! compute spectral constraints;
-
+if( Lboundary.eq.0 ) then
   select case( Igeometry )
 
   case( 1:2 ) ; dLL(1:Ntz) = zero ! placeholder; 08 Feb 16;
@@ -339,6 +340,12 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, ifl
 
   end select ! end of select case( Igeometry ) ; 08 Feb 16;
 
+else !Lboundary.eq.1 - no spectral constraints, angle is fixed.
+  IIL(1:Ntz) = zero
+  dLL(1:Ntz) = zero
+
+endif !Lboundary.eq.0
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -354,7 +361,7 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, ifl
               mn_force, im_force(1:mn_force), in_force(1:mn_force), &
               Bemn(1:mn_force,lvol,iocons), Bomn(1:mn_force,lvol,iocons), Iemn(1:mn_force,lvol       ), Iomn(1:mn_force,lvol       ), ifail )
 
-  if( Igeometry.ge.3 ) then ! add minimal length constraint; 18 Jul 14;
+  if( Igeometry.ge.3 .and. Lboundary.eq.0 ) then ! add minimal length constraint; 18 Jul 14;
 
    ifail = 0 ; ijimag(1:Ntz) = zero
 

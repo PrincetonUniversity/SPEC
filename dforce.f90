@@ -89,7 +89,7 @@
 !> @param[in] position
 !> @param[out] force
 !> @param[in] LComputeDerivatives
-!> @param[inout] LComputeAxis
+!> @param[in] LComputeAxis
 subroutine dforce( NGdof_field, position, force, LComputeDerivatives, LComputeAxis)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -141,14 +141,22 @@ subroutine dforce( NGdof_field, position, force, LComputeDerivatives, LComputeAx
 
   LOCALS
 
-  INTEGER, parameter   :: NB = 3 ! optimal workspace block size for LAPACK:DSYSVX;
+  INTEGER, parameter   :: NB = 3 !< optimal workspace block size for LAPACK:DSYSVX;
 
-  INTEGER, intent(in)  :: NGdof_field               ! dimensions;
-  REAL,    intent(in)  :: position(0:NGdof_field)   ! degrees-of-freedom = internal geometry;
-  REAL,    intent(out) :: force(0:NGdof_force)      ! force;
-  LOGICAL, intent(in)  :: LComputeDerivatives ! indicates whether derivatives are to be calculated;
+  INTEGER, intent(in)  :: NGdof_field               !< Total number of Rmn, Zmn
+  REAL,    intent(in)  :: position(0:NGdof_field)   !< Degrees-of-freedom = internal geometry;
+  REAL,    intent(out) :: force(0:NGdof_force)      !< Force;
+  LOGICAL, intent(in)  :: LComputeDerivatives       !< Indicates whether derivatives are to be calculated;
+  LOGICAL, intent(in)  :: LComputeAxis              !< Indicates whether the coordinate axis has to be re-evaluated 
 
-  INTEGER              :: vvol, innout, ii, jj, irz, issym, iocons, tdoc, idoc, idof, tdof, jdof, ivol, imn, ll, ihybrd1, lwa, Ndofgl, llmodnp
+  INTEGER              :: vvol                      !< Loop index over volumes
+  INTEGER              :: innout                    !< Loop index over inner (0) / outer (1) side of interfaces 
+  INTEGER              :: ii                        !< Loop index on Fourier modes
+  INTEGER              :: jj                        !< Loop index on Fourier modes
+  INTEGER              :: irz                       !< Loop index on R (0) or Z (1) modes
+  INTEGER              :: issym                     !< Loop index on stellarator symmetric (0) and non-symmetric (1) terms
+  INTEGER              :: iocons                    !< Loop index on inner / outer side of interfaces ?
+  INTEGER              :: tdoc, idoc, idof, tdof, jdof, ivol, imn, ll, ihybrd1, lwa, Ndofgl, llmodnp
   INTEGER              :: maxfev, ml, muhybr, mode, nprint, nfev, ldfjac, lr, Nbc, NN, cpu_id, ideriv
   REAL                 :: epsfcn, factor
   REAL                 :: Fdof(1:Mvol-1), Xdof(1:Mvol-1)
@@ -162,14 +170,7 @@ subroutine dforce( NGdof_field, position, force, LComputeDerivatives, LComputeAx
   CHARACTER            :: packorunpack
   EXTERNAL             :: dfp100, dfp200
 
-  LOGICAL              :: LComputeAxis, dfp100_logical
-
-#ifdef DEBUG
-  INTEGER              :: isymdiff
-  REAL                 :: dvol(-1:+1), evolume, imupf(1:2,-2:2), lfactor
-  REAL,    allocatable :: isolution(:,:)
-  REAL,   allocatable :: oRbc(:,:), oZbs(:,:), oRbs(:,:), oZbc(:,:), iforce(:,:), iposition(:,:), finitediff_hessian(:,:) ! original geometry;
-#endif
+  LOGICAL              :: dfp100_logical
 
   BEGIN(dforce)
 
@@ -180,8 +181,6 @@ subroutine dforce( NGdof_field, position, force, LComputeDerivatives, LComputeAx
 ! Unpack position to generate arrays iRbc, iZbs, IRbs, iZbc.
 
   packorunpack = 'U' ! unpack geometrical degrees-of-freedom;
-  LComputeAxis = .true.
-
   WCALL( dforce, packxi,( NGdof_field, position(0:NGdof_field), Mvol, mn_field, iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), &
                           iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), packorunpack, LcomputeDerivatives, LComputeAxis ) )
 

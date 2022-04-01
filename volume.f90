@@ -239,7 +239,7 @@ subroutine volume( lvol, vflag )
     ! Replacing the trigonometric formula by fast Fourier transform ; 03 OCT 19
 
     if (lvol.eq.1 .and. innout.eq.0) then
-      vol(1) = zero
+      vol(0) = zero
       dvolume = zero
     else
 
@@ -280,10 +280,6 @@ subroutine volume( lvol, vflag )
         endif ! end of if( dBdX%irz.eq.0 )
 
         dvolume = four * sum(vint) / float(Ntz)
-
-      else
-
-        dvolume = zero
 
       endif  ! end of if( dBdX%L .and. dBdX%innout.eq.innout )
     endif  ! lvol.eq.1 .and. innout.eq.0

@@ -1278,6 +1278,7 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
     vflag = 1 ! this flag instructs volume to continue even if the volume is invalid;
+    dBdX%L = .true.
     WCALL( dfp200, volume, ( vvol, vflag ) ) ! compute derivative of volume; wrt to harmonic described by dBdX structure;
 
 #ifdef DEBUG
@@ -1452,31 +1453,20 @@ do iocons = 0, 1
             WCALL(dfp200, lforce, (lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, iflag) )
         enddo
 
-        call tfft(    Nt, Nz, dBB(1:Ntz,1), dBB(1:Ntz,2), & ! derivatives of B^2 wrt mu and dpflux;
-                    mn_force, im_force(1:mn_force), in_force(1:mn_force), efmn(1:mn_force), ofmn(1:mn_force), cfmn(1:mn_force), sfmn(1:mn_force), ifail )
+        call tfft( Nt, Nz, dBB(1:Ntz,1), dBB(1:Ntz,2), & ! derivatives of B^2 wrt mu and dpflux;
+                   mn_force, im_force(1:mn_force), in_force(1:mn_force), efmn(1:mn_force), ofmn(1:mn_force), cfmn(1:mn_force), sfmn(1:mn_force), ifail )
         idoc = 0
         dBBdmp(idoc+1:idoc+mn_force  ,lvol,iocons,1) = efmn(1:mn_force) * BBweight(1:mn_force) ! pressure;
         dBBdmp(idoc+1:idoc+mn_force  ,lvol,iocons,2) = cfmn(1:mn_force) * BBweight(1:mn_force) ! pressure;
         idoc = idoc + mn_force   ! even;
 
-        ! Add spectral constraints; spectral constraints do not depend on mu or dpflux; thus add nothing
-        ! Commented - kept for understanding
-        !if( Igeometry.ge.3 ) then
-        !    idoc = idoc + mn-1 ! oddd;
-        !endif ! end of if( Igeometry.ge.3) ;
-
         if( NOTstellsym ) then
             dBBdmp(idoc+1:idoc+mn_force-1,lvol,iocons,1) = ofmn(2:mn_force) * BBweight(2:mn_force) ! pressure;
             dBBdmp(idoc+1:idoc+mn_force-1,lvol,iocons,2) = sfmn(2:mn_force) * BBweight(2:mn_force) ! pressure;
-            idoc = idoc + mn_force-1 ! oddd;
-
-            ! Add spectral constraints; spectral constraints do not depend on mu or dpflux; thus add nothing
-            ! Commented - kept for understanding
-            !if( Igeometry.ge.3 ) then
-            !    idoc = idoc + mn   ! even;
-            !endif ! end of if( Igeometry.ge.3) ;
-
+            idoc = idoc + mn_force-1 ! odd;
         endif ! end of if( NOTstellsym) ;
+
+        ! Spectral constraints ? I guess these are zero ?
 
     endif ! end of if( Lconstraint.eq.1 .OR. Lconstraint.eq.3 ) ;
 
@@ -1505,10 +1495,10 @@ do iocons = 0, 1
     ijreal(1:Ntz) = - adiabatic(lvol) * pscale * gamma * dvolume / vvolume(lvol)**(gamma+one) + dBB(1:Ntz,-1)
 
 
-
 ! Spectral condensation contribution
 ! ----------------------------------
 
+    dII(1:Ntz) = zero ! either no spectral constraint, or not the appropriate interface;
     dLL(1:Ntz) = zero ! either no spectral constraint, or not the appropriate interface;
     dPP(1:Ntz) = zero ! either no spectral constraint, or not the appropriate interface;
 
@@ -1663,18 +1653,16 @@ do iocons = 0, 1
 
         endif ! end of if( iocons.eq.0 ) ;
 
-    endif ! end of if( Igeometry.ge.3 ) ;
+        call tfft(  Nt, Nz, dPP(1:Ntz)   , dLL(1:Ntz), &
+                    mn_force, im_force(1:mn_force), in_force(1:mn_force), &
+                    evmn(1:mn_force), odmn(1:mn_force), comn(1:mn_force), simn(1:mn_force), ifail ) ! evmn and odmn are available as workspace;
+
+    endif ! end of if( Igeometry.ge.3 .and. Lboundary.eq.0 ) ;
 
     ! Map to Fourier space
     call tfft(  Nt, Nz, ijreal(1:Ntz), dII(1:Ntz), & ! recall that ijreal contains derivatives of pressure term;
                 mn_force, im_force(1:mn_force), in_force(1:mn_force), &
                 efmn(1:mn_force), ofmn(1:mn_force), cfmn(1:mn_force), sfmn(1:mn_force), ifail )
-
-
-    call tfft(  Nt, Nz, dPP(1:Ntz)   , dLL(1:Ntz), &
-                mn_force, im_force(1:mn_force), in_force(1:mn_force), &
-                evmn(1:mn_force), odmn(1:mn_force), comn(1:mn_force), simn(1:mn_force), ifail ) ! evmn and odmn are available as workspace;
-
 
     FATAL( dfp200, lvol-1+innout.gt.Mvol, psifactor needs attention )
 
@@ -1682,7 +1670,7 @@ do iocons = 0, 1
     idoc = 0
 
     ! Plasma and magnetic pressure;
-    ;   dFFdRZ(idoc+1:idoc+mn_force    ,iocons,idof,innout,lvol) = + efmn(1:mn_force) * psifactor(ii,lvol-1+innout) * BBweight(1:mn_force)
+    dFFdRZ(idoc+1:idoc+mn_force    ,iocons,idof,innout,lvol) = + efmn(1:mn_force) * psifactor(ii,lvol-1+innout) * BBweight(1:mn_force)
 
     idoc = idoc + mn_force   ! even;
     if( Igeometry.ge.3 .and. Lboundary.eq.0 ) then ! Add spectral constraints;

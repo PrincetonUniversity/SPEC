@@ -169,17 +169,9 @@ subroutine newton( NGdof_bnd, bndDofs, ihybrd )
 
     LComputeDerivatives= .false.
     LComputeAxis = .true.
-
-    !write(ounit,'("newton: position = ",999f25.12)') position(0:NGdof_field)
-
-
-    !write(ounit,'("newton: ForceErr = ", f25.12)') ForceErr
     WCALL( newton, dforce, ( NGdof_field, position(0:NGdof_field), force(0:NGdof_force), LComputeDerivatives, LComputeAxis) ) ! calculate the force-imbalance;
-    !write(ounit,'("newton: ForceErr = ", f25.12)') ForceErr
-
-
-
-
+    
+    
    if( myid.eq.0 ) then ! screen output;
     cput = GETTIME
     ; write(ounit,1000) cput-cpus, nFcalls, nDcalls, ForceErr,  cput-lastcpu, "|BB|e", alog10(BBe(1:min(Mvol-1,28)))

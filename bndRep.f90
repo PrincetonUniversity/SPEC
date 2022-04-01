@@ -1,3 +1,5 @@
+!> \defgroup grp_fourier_mapping
+
 module bndRep
     implicit none  
     PUBLIC ! everything is public, excepted stated otherwise.
@@ -25,104 +27,122 @@ module bndRep
   
     ! ------------------------------------------------------------------
     !                     PUBLIC SUBROUTINES
-      subroutine initialize_mapping( Langle )
-        ! In this subroutine we compute the mapping matrix, and allocate necessary memory
-        ! This should only be called once at the beginning of preset.
-  
-        use constants, only: zero, half
-        use inputlist, only: Wmacros, Mpol, Ntor, twoalpha, Nfp, Lboundary, tflux
-        use fileunits, only: ounit, lunit
-        use allglobal, only: myid, mn_field, im_field, in_field, &
-                             mn_rho, im_rho, in_rho, &
-                             mn_force, im_force, in_force, &
-                             MPI_COMM_SPEC, cpus, &
-                             Rscale, Mvol
-
-        LOCALS
-
-        LOGICAL, INTENT(IN):: Langle
-        INTEGER            :: vvol, ii
-
-
-        Lchangeangle = Langle
-
-        ! If RZ representation, truncation is the same for all quantities.
-        if( Lboundary.eq.0 ) then  
-          Mpol_field = Mpol
-          Ntor_field = Ntor
     
-          Mpol_force  = Mpol
-          Ntor_force  = Ntor
+    !> \brief Initialize mapping matrices, and set truncation values
+    !> \ingroup grp_fourier_mapping
+    !>
+    !> @param[in] Langle
+    subroutine initialize_mapping( Langle )
+      ! In this subroutine we compute the mapping matrix, and allocate necessary memory
+      ! This should only be called once at the beginning of preset.
 
-        elseif( Lboundary.eq.1 ) then
-          Mpol_field = Mpol
-          Ntor_field = Ntor + abs(twoalpha)
-    
-          Mpol_force  = Mpol + 1
-          Ntor_force  = Ntor
-          
-        else 
-          FATAL( bndRep, .true., Invalid Lboundary )
+      use constants, only: zero, half
+      use inputlist, only: Wmacros, Mpol, Ntor, twoalpha, Nfp, Lboundary, tflux
+      use fileunits, only: ounit, lunit
+      use allglobal, only: myid, mn_field, im_field, in_field, &
+                            mn_rho, im_rho, in_rho, &
+                            mn_force, im_force, in_force, &
+                            MPI_COMM_SPEC, cpus, &
+                            Rscale, Mvol
 
-        endif
+      LOCALS
 
+      LOGICAL, INTENT(IN):: Langle !< Input; used to determine if angle has to be reversed
+      INTEGER            :: vvol   !< Loop index on volumes
+      INTEGER            :: ii     !< Loop index on Fourier modes \f$\rho_{mn}\f$
+
+
+      Lchangeangle = Langle
+
+      !> <ul> Define Fourier series truncation
+      !> <li> If \c Lboundary=0 (Hudson representation), all physics quantities
+      !>      are truncated at \c Mpol and \c Ntor
+      !> <li> If \c Lboundary=1 (Henneberg representation), the truncation has
+      !>      to be selected carefully so that the number of boundary dofs is 
+      !>      equal to the number of force harmonics. We set truncation as follows:
+      !>      <ul>
+      !>      <li> \f$\rho_{mn},\ b_n,\ r_n,\ z_n\f$ at \c Mpol and \c Ntor (input)
+      !>      <li> The \f$(R_{mn},Z_{mn})\f$ harmonics, as well as all \c Ate, \c Ato, \c Aze and \c Azo at
+      !>           \f$Mpol_{field} = Mpol\f$ and  \f$Ntor_{field} = Ntor+2|\alpha|\f$
+      !>      <li> The force at \f$Mpol_{force}=Mpol+1\f$, \f$Ntor_{force}=Ntor\f$
+      !>      </ul>
+      !> </ul>
+      if( Lboundary.eq.0 ) then  
+        Mpol_field = Mpol
+        Ntor_field = Ntor
   
-        mn_field = 1 + Ntor_field +  Mpol_field  * ( 2 *  Ntor_field  + 1 ) ! Fourier resolution of interface geometry & vector potential;
-        mn_rho   =                   Mpol        * ( 2 *  Ntor        + 1 )
-        mn_force = 1 + Ntor_force +  Mpol_force  * ( 2 *  Ntor_force  + 1 ) ! Fourier resolution of interface geometry & vector potential;
+        Mpol_force  = Mpol
+        Ntor_force  = Ntor
+
+      elseif( Lboundary.eq.1 ) then
+        Mpol_field = Mpol
+        Ntor_field = Ntor + abs(twoalpha)
   
-        !latex \subsubsection{\type{mn}, \type{im(1:mn)} and \type{in(1:mn)} : Fourier mode identification}
-        !latex \begin{enumerate}
-        !latex \item The Fourier description of even periodic functions is
-        !latex       \be f(\t,\z) = \sum_{n=0}^{N} f_{0,n} \cos(-n\z) + \sum_{m=1}^{M}\sum_{n=-N}^{N} f_{m,n} \cos(m\t-n\z),
-        !latex       \ee
-        !latex       where the resolution is given on input, $M\equiv $ \inputvar{ Mpol} and $N\equiv $ \inputvar{ Ntor}.
-        !latex \item For convenience, the Fourier summations are written as
-        !latex       \be f(\s,\t,\z) &=& \sum_j f_j(s) \cos( m_j \t - n_j \z ),
-        !latex       \ee
-        !latex       for $j=1,$ \type{mn}, where \type{mn}$ = N + 1 +  M  ( 2 N + 1 )$.
-        !latex \item The integer arrays \type{im(1:mn)} and \type{in(1:mn)} contain the $m_j$ and $n_j$.
-        !latex \item The array \type{in} includes the \type{Nfp} factor.
-        !latex \end{enumerate}
+        Mpol_force  = Mpol + 1
+        Ntor_force  = Ntor
         
-        SALLOCATE( im_field  , (1:mn_field  ), zero )
-        SALLOCATE( in_field  , (1:mn_field  ), zero )
-        SALLOCATE( im_rho    , (1:mn_rho    ), zero )
-        SALLOCATE( in_rho    , (1:mn_rho    ), zero )
-        SALLOCATE( im_force  , (1:mn_force  ), zero )
-        SALLOCATE( in_force  , (1:mn_force  ), zero )
+      else 
+        FATAL( bndRep, .true., Invalid Lboundary )
+
+      endif
+
+
+      mn_field = 1 + Ntor_field +  Mpol_field  * ( 2 *  Ntor_field  + 1 ) ! Fourier resolution of interface geometry & vector potential;
+      mn_rho   =                   Mpol        * ( 2 *  Ntor        + 1 )
+      mn_force = 1 + Ntor_force +  Mpol_force  * ( 2 *  Ntor_force  + 1 ) ! Fourier resolution of interface geometry & vector potential;
+
+      !latex \subsubsection{\type{mn}, \type{im(1:mn)} and \type{in(1:mn)} : Fourier mode identification}
+      !latex \begin{enumerate}
+      !latex \item The Fourier description of even periodic functions is
+      !latex       \be f(\t,\z) = \sum_{n=0}^{N} f_{0,n} \cos(-n\z) + \sum_{m=1}^{M}\sum_{n=-N}^{N} f_{m,n} \cos(m\t-n\z),
+      !latex       \ee
+      !latex       where the resolution is given on input, $M\equiv $ \inputvar{ Mpol} and $N\equiv $ \inputvar{ Ntor}.
+      !latex \item For convenience, the Fourier summations are written as
+      !latex       \be f(\s,\t,\z) &=& \sum_j f_j(s) \cos( m_j \t - n_j \z ),
+      !latex       \ee
+      !latex       for $j=1,$ \type{mn}, where \type{mn}$ = N + 1 +  M  ( 2 N + 1 )$.
+      !latex \item The integer arrays \type{im(1:mn)} and \type{in(1:mn)} contain the $m_j$ and $n_j$.
+      !latex \item The array \type{in} includes the \type{Nfp} factor.
+      !latex \end{enumerate}
       
-        call gi00ab(  Mpol_field,  Ntor_field, Nfp, mn_field, im_field(1:mn_field), in_field(1:mn_field), .true.  ) ! this sets the im and in mode identification arrays;
-        call gi00ab(  Mpol_force,  Ntor_force, Nfp, mn_force, im_force(1:mn_force), in_force(1:mn_force), .true.  ) ! this sets the im and in mode identification arrays;
-        call gi00ab(  Mpol      ,  Ntor      , Nfp, mn_rho  , im_rho(  1:mn_rho  ), in_rho(  1:mn_rho  ), .false. ) ! this sets the im and in mode identification arrays;
-  
-        nel_m1_i = 2*(2*Ntor_field+1)
-        nel_m1_j = 3*Ntor+2
-        SALLOCATE( Mat1, (1:nel_m1_i,1:nel_m1_j), zero )
-        SALLOCATE( RHS1, (1:nel_m1_j           ), zero )
-        SALLOCATE( LHS1, (1:nel_m1_i           ), zero )
-  
-        nel_m2_i = 2*(Mpol_field-1)*(2*Ntor_field+1)
-        nel_m2_j = (Mpol-1)*(2*Ntor+1)
-        SALLOCATE( Mat2, (1:nel_m2_i,1:nel_m2_j), zero )
-        SALLOCATE( RHS2, (1:nel_m2_j           ), zero )
-        SALLOCATE( LHS2, (1:nel_m2_i           ), zero )
+      SALLOCATE( im_field  , (1:mn_field  ), zero )
+      SALLOCATE( in_field  , (1:mn_field  ), zero )
+      SALLOCATE( im_rho    , (1:mn_rho    ), zero )
+      SALLOCATE( in_rho    , (1:mn_rho    ), zero )
+      SALLOCATE( im_force  , (1:mn_force  ), zero )
+      SALLOCATE( in_force  , (1:mn_force  ), zero )
+    
+      call gi00ab(  Mpol_field,  Ntor_field, Nfp, mn_field, im_field(1:mn_field), in_field(1:mn_field), .true.  ) ! this sets the im and in mode identification arrays;
+      call gi00ab(  Mpol_force,  Ntor_force, Nfp, mn_force, im_force(1:mn_force), in_force(1:mn_force), .true.  ) ! this sets the im and in mode identification arrays;
+      call gi00ab(  Mpol      ,  Ntor      , Nfp, mn_rho  , im_rho(  1:mn_rho  ), in_rho(  1:mn_rho  ), .false. ) ! this sets the im and in mode identification arrays;
 
-        call build_mapping_matrices()
+      nel_m1_i = 2*(2*Ntor_field+1)
+      nel_m1_j = 3*Ntor+2
+      SALLOCATE( Mat1, (1:nel_m1_i,1:nel_m1_j), zero )
+      SALLOCATE( RHS1, (1:nel_m1_j           ), zero )
+      SALLOCATE( LHS1, (1:nel_m1_i           ), zero )
 
-        SALLOCATE( precond_rho, (1:mn_rho, 1:Mvol), zero )
-        do vvol = 1, Mvol
-          do ii = 1, mn_rho
-            precond_rho( ii, vvol ) = Rscale * tflux(vvol)**(im_rho(ii) * half) 
-          enddo
+      nel_m2_i = 2*(Mpol_field-1)*(2*Ntor_field+1)
+      nel_m2_j = (Mpol-1)*(2*Ntor+1)
+      SALLOCATE( Mat2, (1:nel_m2_i,1:nel_m2_j), zero )
+      SALLOCATE( RHS2, (1:nel_m2_j           ), zero )
+      SALLOCATE( LHS2, (1:nel_m2_i           ), zero )
+
+      call build_mapping_matrices()
+
+      SALLOCATE( precond_rho, (1:mn_rho, 1:Mvol), zero )
+      do vvol = 1, Mvol
+        do ii = 1, mn_rho
+          precond_rho( ii, vvol ) = Rscale * tflux(vvol)**(im_rho(ii) * half) 
         enddo
+      enddo
 
-        SALLOCATE( precond_b, (1:Mvol), zero )
-        do vvol = 1, Mvol
-          precond_b( vvol ) = Rscale * tflux(vvol)**half
-        enddo
-  
-      end subroutine initialize_mapping
+      SALLOCATE( precond_b, (1:Mvol), zero )
+      do vvol = 1, Mvol
+        precond_b( vvol ) = Rscale * tflux(vvol)**half
+      enddo
+
+    end subroutine initialize_mapping
   
 
       subroutine change_mapping_angle( Langle )
