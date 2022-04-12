@@ -36,7 +36,7 @@ module bndRep
       ! In this subroutine we compute the mapping matrix, and allocate necessary memory
       ! This should only be called once at the beginning of preset.
 
-      use constants, only: zero, half
+      use constants, only: zero, half, one
       use inputlist, only: Wmacros, Mpol, Ntor, twoalpha, Nfp, Lboundary, tflux
       use fileunits, only: ounit, lunit
       use allglobal, only: myid, mn_field, im_field, in_field, &
@@ -130,16 +130,16 @@ module bndRep
 
       call build_mapping_matrices()
 
-      SALLOCATE( precond_rho, (1:mn_rho, 1:Mvol), zero )
+      SALLOCATE( precond_rho, (1:mn_rho, 1:Mvol), one )
       do vvol = 1, Mvol
         do ii = 1, mn_rho
-          precond_rho( ii, vvol ) = Rscale * tflux(vvol)**(im_rho(ii) * half) 
+          !precond_rho( ii, vvol ) = Rscale * tflux(vvol)**(im_rho(ii) * half) 
         enddo
       enddo
 
-      SALLOCATE( precond_b, (1:Mvol), zero )
+      SALLOCATE( precond_b, (1:Mvol), one )
       do vvol = 1, Mvol
-        precond_b( vvol ) = Rscale * tflux(vvol)**half
+        !precond_b( vvol ) = Rscale * tflux(vvol)**half
       enddo
 
     end subroutine initialize_mapping

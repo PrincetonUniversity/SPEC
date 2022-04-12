@@ -94,6 +94,8 @@ subroutine set_global_variables()
     Rscale = Rwc(0,0)
   endif
 
+  Rscale = one
+
   ! set up Henneberg's mapping
   if( Lboundary.eq.0 ) then
     twoalpha = 0.0
@@ -1415,7 +1417,8 @@ subroutine set_global_variables()
 !>       \end{array}\right.
 !>       \f}
 !>       where \f$\psi_{t,v} \equiv\,\f$\c tflux is the (normalized?) toroidal flux enclosed by the \f$v\f$-th interface. </li>
-!> <li> \c psifactor is used in packxi(), dforce() and hesian(). </li>
+!> <li> If \c Lboundary equals 1 (Henneberg's representation), then psifactor=1.
+!> <li> \c psifactor is used in packxi(), dforce(), dfp200() and hesian(). </li>
 !> <li> \c inifactor is similarly constructed, with
 !>       \f{eqnarray}{ f_{j,v} \equiv \left\{
 !>       \begin{array}{lcccccc}\psi_{t,v}^{ 1 /2}&,&\mbox{for $m_j=0$}, \\
@@ -1445,20 +1448,34 @@ subroutine set_global_variables()
   enddo
 
   case( 3 )
-  do vvol = 1, Nvol
-    do ii = 1, mn_field
-    if( im_field(ii).eq.0 ) then ; psifactor(ii,vvol) = Rscale * tflux(vvol)**zero       ! 08 Feb 16;
-                                 ; inifactor(ii,vvol) = Rscale * tflux(vvol)**half       ! 17 Dec 18;
-    else                         ; psifactor(ii,vvol) = Rscale * tflux(vvol)**halfmm(ii) ! 29 Apr 15;
-                                 ; inifactor(ii,vvol) = Rscale * tflux(vvol)**halfmm(ii) ! 17 Dec 18
+    if( Lboundary.eq.0 ) then ! Otherwise leave inifactor = 1
+      do vvol = 1, Nvol
+        do ii = 1, mn_field
+        if( im_field(ii).eq.0 ) then
+          psifactor(ii,vvol) = Rscale * tflux(vvol)**zero       ! 08 Feb 16;
+        else
+          psifactor(ii,vvol) = Rscale * tflux(vvol)**halfmm(ii) ! 29 Apr 15;
+        endif
+        enddo
+      enddo
     endif
-    enddo
-  enddo
 
   case default
   FATAL( readin, .true., invalid Igeometry for construction of psifactor )
 
   end select
+
+  if( Igeometry.eq.3 ) then 
+    do vvol = 1, Nvol
+      do ii = 1, mn_field
+      if( im_field(ii).eq.0 ) then
+        inifactor(ii,vvol) = Rscale * tflux(vvol)**half       ! 17 Dec 18;
+      else
+        inifactor(ii,vvol) = Rscale * tflux(vvol)**halfmm(ii) ! 17 Dec 18
+      endif
+      enddo
+    enddo
+  endif
 
   !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

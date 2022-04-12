@@ -1114,6 +1114,7 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
         dBdX%L = .false.
 
         if( LocalConstraint ) then
+            Lcomputederivatives = .False.
             WCALL(dfp200, deallocate_geometry_matrices, (LcomputeDerivatives))
             WCALL(dfp200, deallocate_Beltrami_matrices, (LcomputeDerivatives))
             WCALL(dfp200, intghs_workspace_destroy, ()))
@@ -1127,6 +1128,7 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
             iZbs(1:mn_field,0:Mvol) = oZbs(1:mn_field,0:Mvol)
             iRbs(1:mn_field,0:Mvol) = oRbs(1:mn_field,0:Mvol)
             iZbc(1:mn_field,0:Mvol) = oZbc(1:mn_field,0:Mvol)
+            
 
             if( LocalConstraint ) then
                 if( issym.eq.0 .and. irz.eq.0 ) iRbc(ii,vvol-1+innout) = iRbc(ii,vvol-1+innout) + dRZ * isymdiff ! perturb geometry;
@@ -1138,6 +1140,10 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
                 if( issym.eq.0 .and. irz.eq.1 ) iZbs(ii,vvol) = iZbs(ii,vvol) + dRZ * isymdiff ! perturb geometry;
                 if( issym.eq.1 .and. irz.eq.0 ) iRbs(ii,vvol) = iRbs(ii,vvol) + dRZ * isymdiff ! perturb geometry;
                 if( issym.eq.1 .and. irz.eq.1 ) iZbc(ii,vvol) = iZbc(ii,vvol) + dRZ * isymdiff ! perturb geometry;
+            endif
+            
+            if( im_field(ii).eq.0 ) then
+                WCALL( dfp200, rzaxis, ( Mvol, mn_field, iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), vvol, LComputeDerivatives ) ) ! set coordinate axis; 19 Jul 16;            endif
             endif
 
             ! Solve Beltrami equation consistently with constraints
@@ -1221,6 +1227,7 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 
         if( LocalConstraint ) then
             ! reallocate matrices for next iteration
+            LcomputeDerivatives = .FALSE.
             WCALL(dfp200, intghs_workspace_init, (vvol))
             WCALL(dfp200, allocate_Beltrami_matrices, (vvol,LcomputeDerivatives))
             WCALL(dfp200, allocate_geometry_matrices, (vvol,LcomputeDerivatives))
