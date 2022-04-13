@@ -36,7 +36,8 @@ class SPECout:
         metric,
         get_B,
         get_modB,
-        get_B_covariant
+        get_B_covariant,
+        test_derivatives
     )
     from ._plot_modB import plot_modB
     from ._plot_iota import plot_iota
