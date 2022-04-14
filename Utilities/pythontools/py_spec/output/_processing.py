@@ -219,6 +219,12 @@ def get_grid_and_jacobian_and_metric(
             )
             dg[:, 2, 2, :] += 2 * Rarr0[nax, :] * Rarr
 
+    # moving axis - move dofs of coordinates to the front
+    g = np.moveaxis(g, (0,1), (-2,-1))
+    if derivative:
+        djacobian = np.moveaxis(djacobian, 0, -1)
+        dg = np.moveaxis(dg, (0,1,2), (-3,-2,-1))
+
     if derivative:
         return Rarr0, Zarr0, jacobian, g, djacobian, dg
     else:
@@ -326,34 +332,29 @@ def get_B(
     else:
         B, dBdX = eq.dBdX_many(sarr, tarr, zarr, input1D=input1D)
 
-    # roll the axes
-    B = np.moveaxis(B, -1, 0)
-    if derivative:
-        dBdX = np.moveaxis(dBdX, (-2, -1), (0, 1))
-
-    Bcontrav = B / jacobian
+    Bcontrav = B / jacobian[...,nax]
 
     if derivative:
-        dBcontrav = dBdX / jacobian - djacobian[:, nax, :] * Bcontrav[nax, :] / jacobian
+        dBcontrav = dBdX / jacobian[...,nax,nax] - djacobian[..., :, nax] * Bcontrav[..., nax, :] / jacobian[...,nax,nax]
         return Bcontrav, dBcontrav
     else:
         return Bcontrav
 
 def get_modB(self, Bcontrav, g, derivative=False, dBcontrav=None, dg=None):
     """Input - Bcontrav has to come from get_B function"""
-    modB = np.sqrt(np.einsum("i...,ji...,j...->...", Bcontrav, g, Bcontrav))
+    modB = np.sqrt(np.einsum("...i,...ji,...j->...", Bcontrav, g, Bcontrav))
     if not derivative:
         return modB
     else:
         dmodB2 = 2 * np.einsum(
-            "ki...,ji...,j...->k...", dBcontrav, g, Bcontrav
-        ) + np.einsum("i...,kji...,j...->k...", Bcontrav, dg, Bcontrav)
+            "...ki,...ji,...j->...k", dBcontrav, g, Bcontrav
+        ) + np.einsum("...i,...kji,...j->...k", Bcontrav, dg, Bcontrav)
         return modB, dmodB2
 
 
 def get_B_covariant(self, Bcontrav, g, derivative=False):
     """Get covariant component of B"""
-    Bco = np.einsum("i...,ji...->j...", Bcontrav, g)
+    Bco = np.einsum("...i,...ji->...j", Bcontrav, g)
     return Bco
 
 def test_derivatives(self, lvol=0, s=0.3, t=0.4, z=0.5, delta=1e-6, tol=1e-6):
@@ -367,82 +368,14 @@ def test_derivatives(self, lvol=0, s=0.3, t=0.4, z=0.5, delta=1e-6, tol=1e-6):
     modB1, dB2 = self.get_modB(Bcontra, g, True, dBcontra, dg)
 
     print('Differences in dBcontra')
-    print((Bcontra[:,1,0,0] - Bcontra[:,0,0,0])/ds/2 - dBcontra[0,:,0,0,0])
-    print((Bcontra[:,0,1,0] - Bcontra[:,0,0,0])/ds/2- dBcontra[1,:,0,0,0])
-    print((Bcontra[:,0,0,1] - Bcontra[:,0,0,0])/ds/2 - dBcontra[2,:,0,0,0])
+    print((Bcontra[1,0,0,:] - Bcontra[0,0,0,:])/ds/2 - dBcontra[0,0,0,0,:])
+    print((Bcontra[0,1,0,:] - Bcontra[0,0,0,:])/ds/2 - dBcontra[0,0,0,1,:])
+    print((Bcontra[0,0,1,:] - Bcontra[0,0,0,:])/ds/2 - dBcontra[0,0,0,2,:])
     print('Differences in Jacobian')
-    print(np.array([j[1,0,0] - j[0,0,0], j[0,1,0] - j[0,0,0], j[0,0,1] - j[0,0,0]])/ds/2- dj[:,0,0,0])
+    print(np.array([j[1,0,0] - j[0,0,0], j[0,1,0] - j[0,0,0], j[0,0,1] - j[0,0,0]])/ds/2- dj[0,0,0,:])
     print('Differences in B**2')
-    print(np.array([B2[1,0,0] - B2[0,0,0], B2[0,1,0] - B2[0,0,0], B2[0,0,1] - B2[0,0,0]])/ds/2- dB2[:,0,0,0])
+    print(np.array([B2[1,0,0] - B2[0,0,0], B2[0,1,0] - B2[0,0,0], B2[0,0,1] - B2[0,0,0]])/ds/2- dB2[0,0,0,:])
     print('Differences in g')
-    print((g[:,:,1,0,0] - g[:,:,0,0,0])/ds/2-dg[0,:,:,0,0,0])
-    print((g[:,:,0,1,0] - g[:,:,0,0,0])/ds/2-dg[1,:,:,0,0,0])
-    print((g[:,:,0,0,1] - g[:,:,0,0,0])/ds/2-dg[2,:,:,0,0,0])
-
-def _get_zernike(sarr, lrad, mpol, second_deriv=False):
-    """
-    Get the value of the zernike polynomials and their derivatives
-    Adapted from basefn.f90
-    """
-
-    ns = sarr.size
-
-    r = (sarr + 1.0) / 2
-    rm = np.ones_like(r)  # r to the power of m'th
-    rm1 = np.zeros_like(r)  # r to the power of m-1'th
-
-    zernike = np.zeros([ns, lrad + 1, mpol + 1], dtype=np.float64)
-    dzernike = np.zeros_like(zernike)
-
-    for m in range(mpol + 1):
-        if lrad >= m:
-            zernike[:, m, m] = rm
-            dzernike[:, m, m] = m * rm1
-
-        if lrad >= m + 2:
-            zernike[:, m + 2, m] = float(m + 2) * rm * r ** 2 - float(m + 1) * rm
-            dzernike[:, m + 2, m] = (
-                float(m + 2) ** 2 * rm * r - float((m + 1) * m) * rm1
-            )
-
-        for n in range(m + 4, lrad + 1, 2):
-            factor1 = float(n) / float(n ** 2 - m ** 2)
-            factor2 = float(4 * (n - 1))
-            factor3 = float((n - 2 + m) ** 2) / float(n - 2) + float(
-                (n - m) ** 2
-            ) / float(n)
-            factor4 = float((n - 2) ** 2 - m ** 2) / float(n - 2)
-
-            zernike[:, n, m] = factor1 * (
-                (factor2 * r ** 2 - factor3) * zernike[:, n - 2, m]
-                - factor4 * zernike[:, n - 4, m]
-            )
-            dzernike[:, n, m] = factor1 * (
-                2 * factor2 * r * zernike[:, n - 2, m]
-                + (factor2 * r ** 2 - factor3) * dzernike[:, n - 2, m]
-                - factor4 * dzernike[:, n - 4, m]
-            )
-
-        rm1 = rm
-        rm = rm * r
-
-    for n in range(2, lrad + 1, 2):
-        zernike[:, n, 0] = zernike[:, n, 0] - (-1) ** (n / 2)
-
-    if mpol >= 1:
-        for n in range(3, lrad + 1, 2):
-            zernike[:, n, 1] = (
-                zernike[:, n, 1] - (-1) ** ((n - 1) / 2) * float((n + 1) / 2) * r
-            )
-            dzernike[:, n, 1] = dzernike[:, n, 1] - (-1) ** ((n - 1) / 2) * float(
-                (n + 1) / 2
-            )
-
-    for m in range(mpol + 1):
-        for n in range(m, lrad + 1, 2):
-            zernike[:, n, m] = zernike[:, n, m] / float(n + 1)
-            dzernike[:, n, m] = dzernike[:, n, m] / float(n + 1)
-
-    dzernike = dzernike * 0.5  # to account for the factor of half in sbar = (1+s)/2
-
-    return zernike, dzernike
+    print((g[1,0,0,:,:] - g[0,0,0,:,:])/ds/2-dg[0,0,0,0,:,:])
+    print((g[0,1,0,:,:] - g[0,0,0,:,:])/ds/2-dg[0,0,0,1,:,:])
+    print((g[0,0,1,:,:] - g[0,0,0,:,:])/ds/2-dg[0,0,0,2,:,:])
