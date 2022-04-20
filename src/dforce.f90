@@ -814,8 +814,8 @@ BEGIN(dforce)
     open(10, file=trim(ext)//'.Lcheck6_output.txt', status='unknown')
     write(ounit,'(A)') NEW_LINE('A')
 
-    do ii=1, SIZE(im)
-      write(ounit,1345) myid, im(ii), in(ii), hessian(ii,:)
+    do ii=1, NGdof
+      write(ounit,1345) myid, hessian(ii,:)
       write(10   ,1347) hessian(ii,:)
     enddo
     close(10)
@@ -824,8 +824,8 @@ BEGIN(dforce)
 
     ! Print finite differences
     open(10, file=trim(ext)//'.Lcheck6_output.FiniteDiff.txt', status='unknown')
-    do ii=1, SIZE(im)
-      write(ounit,1346) myid, im(ii), in(ii), finitediff_estimate(ii,:)
+    do ii=1, NGdof
+      write(ounit,1346) myid, finitediff_estimate(ii,:)
       write(10   ,1347) finitediff_estimate(ii,:)
     enddo
     write(ounit,'(A)') NEW_LINE('A')
