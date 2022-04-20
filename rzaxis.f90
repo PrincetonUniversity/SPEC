@@ -101,7 +101,7 @@ subroutine rzaxis( Mvol, mn_field, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDer
                         iRbc, iZbs, iRbs, iZbc, &
                         dBdX
 
-  use bndRep, only    : Ntor_field
+  use bndRep, only    : Ntor_field, Ntor_max
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -144,7 +144,7 @@ subroutine rzaxis( Mvol, mn_field, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDer
 
   jvol = 0 ! this identifies the "surface" in which the poloidal averaged harmonics will be placed; 19 Jul 16;
 
-  Ntoraxis = min(Ntor_field,Ntoraxis)
+  Ntoraxis = min(Ntor_max,Ntoraxis)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -395,10 +395,10 @@ subroutine rzaxis( Mvol, mn_field, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDer
     iRbs(1:mn_field,0) = zero
     iZbc(1:mn_field,0) = zero
 
-    iRbc(1:Ntor+1,0) = jRbc(1:Ntor+1, ivol)
-    iZbs(1:Ntor+1,0) = jZbs(1:Ntor+1, ivol)
-    iRbs(1:Ntor+1,0) = jRbs(1:Ntor+1, ivol)
-    iZbc(1:Ntor+1,0) = jZbc(1:Ntor+1, ivol)
+    iRbc(1:Ntor_field+1,0) = jRbc(1:Ntor_field+1, ivol)
+    iZbs(1:Ntor_field+1,0) = jZbs(1:Ntor_field+1, ivol)
+    iRbs(1:Ntor_field+1,0) = jRbs(1:Ntor_field+1, ivol)
+    iZbc(1:Ntor_field+1,0) = jZbc(1:Ntor_field+1, ivol)
 
     Lcoordinatesingularity = .true.
     Lcurvature = 1
@@ -421,10 +421,10 @@ subroutine rzaxis( Mvol, mn_field, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDer
 
     ! fill in the right hand side with m=1 terms of Jacobian
     if (YESstellsym) then
-      jacrhs = -jacbasec(2*(Ntor+1)-Ntoraxis:2*(Ntor+1)+Ntoraxis)
+      jacrhs = -jacbasec(2*(Ntor_field+1)-Ntoraxis:2*(Ntor_field+1)+Ntoraxis)
     else
-      jacrhs(1:2*Ntoraxis+1) = -jacbasec(2*(Ntor+1)-Ntoraxis:2*(Ntor+1)+Ntoraxis)
-      jacrhs(2*Ntoraxis+2:Njac) = -jacbases(2*(Ntor+1)-Ntoraxis:2*(Ntor+1)+Ntoraxis)
+      jacrhs(1:2*Ntoraxis+1) = -jacbasec(2*(Ntor_field+1)-Ntoraxis:2*(Ntor_field+1)+Ntoraxis)
+      jacrhs(2*Ntoraxis+2:Njac) = -jacbases(2*(Ntor_field+1)-Ntoraxis:2*(Ntor_field+1)+Ntoraxis)
     end if !if (YESstellsym)
 
     if (YESstellsym) then
@@ -446,7 +446,7 @@ subroutine rzaxis( Mvol, mn_field, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDer
             jacmat(ii+Ntoraxis+1, jj+1) = jacmat(ii+Ntoraxis+1, jj+1) - jZbs(id,ivol)
             ! the DZsn' term
             jacmat(ii+Ntoraxis+1, Ntoraxis+1+jj) = jacmat(ii+Ntoraxis+1, Ntoraxis+1+jj) - jRbc(id,ivol)
-          end if ! if (ii+jj .le. Ntor)
+          end if ! if (ii+jj .le. Ntor_field)
 
         end do ! jj
 
