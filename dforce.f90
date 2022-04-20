@@ -123,7 +123,7 @@ subroutine dforce( NGdof_field, position, force, LComputeDerivatives, LComputeAx
                         dpflux, dtflux, sweight, &
                         Bemn, Bomn, Iomn, Iemn, Somn, Semn, &
                         BBe, IIo, BBo, IIe, & ! these are just used for screen diagnostics;
-                        LGdof_field, LGdof_force, NGdof_force, dBdX, &
+                        LGdof_field, LGdof_force, NGdof_force, NGdof_bnd, dBdX, &
                         Ate, Aze, Ato, Azo, & ! only required for broadcasting
                         diotadxup, dItGpdxtp, & ! only required for broadcasting
                         lBBintegral, &
@@ -133,7 +133,8 @@ subroutine dforce( NGdof_field, position, force, LComputeDerivatives, LComputeAx
                         LocalConstraint, xoffset, &
                         solution, IPdtdPf, &
                         IsMyVolume, IsMyVolumeValue, WhichCpuID, &
-                        ext ! For outputing Lcheck = 6 test
+                        ext, & ! For outputing Lcheck = 6 test
+                        Ntz
 
   use bndRep, only    : dRZdhenn
 
@@ -183,6 +184,7 @@ subroutine dforce( NGdof_field, position, force, LComputeDerivatives, LComputeAx
   packorunpack = 'U' ! unpack geometrical degrees-of-freedom;
   WCALL( dforce, packxi,( NGdof_field, position(0:NGdof_field), Mvol, mn_field, iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), &
                           iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), packorunpack, LcomputeDerivatives, LComputeAxis ) )
+
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -665,8 +667,8 @@ endif
       hessian( 1:NGdof_force, 1:NGdof_force ) =         dforcedRZ( 1:NGdof_force, 1:NGdof_force )
       dessian( 1:NGdof_force, 1:NGdof_force ) =        ddforcedRZ( 1:NGdof_force, 1:NGdof_force )
     else
-      hessian( 1:NGdof_force, 1:NGdof_force ) = MATMUL( dforcedRZ( 1:NGdof_force, 1:NGdof_field ), dRZdhenn( 1:NGdof_field, 1:NGdof_force ) )
-      dessian( 1:NGdof_force, 1:NGdof_force ) = MATMUL(ddforcedRZ( 1:NGdof_force, 1:NGdof_field ), dRZdhenn( 1:NGdof_field, 1:NGdof_force ) )
+      hessian( 1:NGdof_force, 1:NGdof_force ) = MATMUL( dforcedRZ( 1:NGdof_force, 1:NGdof_field ), dRZdhenn( 1:NGdof_field, 1:NGdof_bnd ) )
+      dessian( 1:NGdof_force, 1:NGdof_force ) = MATMUL(ddforcedRZ( 1:NGdof_force, 1:NGdof_field ), dRZdhenn( 1:NGdof_field, 1:NGdof_bnd ) )
     endif
 
     ! Evaluate force gradient
@@ -675,7 +677,7 @@ endif
        WCALL(dforce, fndiff_dforce, ( NGdof_force, NGdof_field, dforcedRZ ) )
     endif
 
-    if( Lcheck.eq.8 ) then
+    if( Lcheck.eq.10 ) then
       open(10, file=trim(ext)//'.dforcedRZ.txt', status='unknown')
       write(ounit,'(A)') NEW_LINE('A')
 
@@ -835,12 +837,14 @@ BEGIN(dforce)
               endif
 
               packorunpack = 'P' ! pack geometrical degrees-of-freedom;
-              LComputeAxis = .false. ! keep axis fixed
-              !LComputeAxis = .true.
+              !LComputeAxis = .false. ! keep axis fixed
+              LComputeAxis = .true.
 
               WCALL(dforce, packxi,( NGdof_field, iposition(isymdiff,0:NGdof_field), Mvol, mn_field, iRbc(1:mn_field,0:Mvol),&
                                     iZbs(1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol), &
                                     iZbc(1:mn_field,0:Mvol), packorunpack, .false., LComputeAxis ) )
+
+
               WCALL(dforce, dforce,( NGdof_field, iposition(isymdiff,0:NGdof_field), iforce(isymdiff,0:NGdof_force), .false., LComputeAxis) )
             enddo
 
@@ -888,9 +892,9 @@ BEGIN(dforce)
       write(ounit,'(A)') NEW_LINE('A')
       close(10)
 
-1345 format("dforce: myid=",i3,"  ; Hessian            = ",512f16.10 "   ;")
-1346 format("dforce: myid=",i3,"  ; Finite differences = ",512f16.10 "   ;")
-1347 format(512F22.16, " ")
+1345 format("dforce: myid=",i3,"  ; Hessian            = ",512f16.8 "   ;")
+1346 format("dforce: myid=",i3,"  ; Finite differences = ",512f16.8 "   ;")
+1347 format(512F28.16, " ")
 
     endif ! myid.eq.0
 
@@ -923,11 +927,14 @@ BEGIN(dforce)
         idof = idof + 1
 
         do isymdiff = -2,2 
+
+          if( isymdiff.eq.0 ) cycle
+
           ! Reset geometry
           irhoc( 1:mn_rho, 1:Mvol ) = orhoc( 1:mn_rho, 1:Mvol )
-          ibc( 0:Ntor, 1:Mvol ) = obc(0:Ntor, 1:Mvol)
-          iR0c( 0:Ntor, 1:Mvol ) = oR0c(0:Ntor, 1:Mvol)
-          iZ0s( 0:Ntor, 1:Mvol ) = oZ0s(0:Ntor, 1:Mvol)
+          ibc( 0:Ntor, 1:Mvol )     = obc(0:Ntor, 1:Mvol)
+          iR0c( 0:Ntor, 1:Mvol )    = oR0c(0:Ntor, 1:Mvol)
+          iZ0s( 0:Ntor, 1:Mvol )    = oZ0s(0:Ntor, 1:Mvol)
 
           ! Apply perturbation
           irhoc( ii, vvol ) = irhoc( ii, vvol ) + dRZ * isymdiff
@@ -941,7 +948,7 @@ BEGIN(dforce)
 
           ! Pack to dofs
           packorunpack = 'P' ! pack geometrical degrees-of-freedom;
-          LComputeAxis = .false. ! keep axis fixed
+          LComputeAxis = .true. ! keep axis fixed
 
           WCALL(dforce, packxi,( NGdof_field, iposition(isymdiff,0:NGdof_field), Mvol, mn_field, iRbc(1:mn_field,0:Mvol),&
                                 iZbs(1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), packorunpack, .false., LComputeAxis ) )
@@ -976,7 +983,7 @@ BEGIN(dforce)
             ! Apply perturbation
             select case( irz )
             case( 0 )
-              ibc( nn, vvol ) = ibc( nn, vvol ) + dRZ * isymdiff
+              ibc(  nn, vvol ) = ibc(  nn, vvol ) + dRZ * isymdiff
             case( 1 )
               iR0c( nn, vvol ) = iR0c( nn, vvol ) + dRZ * isymdiff
             case( 2 )
@@ -993,12 +1000,12 @@ BEGIN(dforce)
             ! Pack to dofs
             packorunpack = 'P' ! pack geometrical degrees-of-freedom;
 
-            ! if( irz.ne.0 .and. vvol.eq.1 ) then
-            !   LComputeAxis = .true.
+            ! if( irz.eq.0 .and. vvol.eq.1 ) then
+            !   LComputeAxis = .false.
             ! else
-            !   LComputeAxis = .false. ! keep axis fixed
+            !   LComputeAxis = .true. ! keep axis fixed
             ! endif
-            LComputeAxis = .false.
+            LComputeAxis = .true.
 
             WCALL(dforce, packxi,( NGdof_field, iposition(isymdiff,0:NGdof_field), Mvol, mn_field, iRbc(1:mn_field,0:Mvol),&
                                   iZbs(1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), packorunpack, .false., LComputeAxis ) )

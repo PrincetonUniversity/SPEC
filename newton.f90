@@ -116,7 +116,7 @@ subroutine newton( NGdof_bnd, bndDofs, ihybrd )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  FATAL( newton, NGdof_bnd.NE.NGdof_force, Invalid number of dofs )
+  !FATAL( newton, NGdof_bnd.NE.NGdof_force, Invalid number of dofs )
 
 
 
@@ -215,7 +215,7 @@ subroutine newton( NGdof_bnd, bndDofs, ihybrd )
    	SALLOCATE( dmupfdx, (1:Mvol, 1:Mvol-1,1:2,1:LGdof_field,1), zero ) 
    endif
 
-    FATAL( newton, NGdof_bnd.ne.NGdof_force, illdefined Newton problem )
+    !FATAL( newton, NGdof_bnd.ne.NGdof_force, illdefined Newton problem )
 
     SALLOCATE( hessian, (1:NGdof_force,1:NGdof_force), zero )
     SALLOCATE( dessian, (1:NGdof_force,1:NGdof_force), zero )

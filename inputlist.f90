@@ -248,7 +248,7 @@ module inputlist
                                      !< </ul>
   INTEGER      :: Ndiscrete   =  2   !< resolution of the real space grid on which fast Fourier transforms are performed is given by \c Ndiscrete*Mpol*4
                                      !< <ul>
-                                     !< <li> constraint \c Ndiscrete>0 </li>
+                                     !< <li> constraint \c Ndiscrete>1 </li>
                                      !< </ul>
   INTEGER      :: Nquad       = -1   !< Resolution of the Gaussian quadrature
                                      !< <ul>

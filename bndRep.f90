@@ -4,7 +4,7 @@ module bndRep
     implicit none  
     PUBLIC ! everything is public, excepted stated otherwise.
   
-    INTEGER              :: Mpol_field, Ntor_field, Mpol_force, Ntor_force 
+    INTEGER              :: Mpol_field, Ntor_field, Mpol_force, Ntor_force, Mpol_max, Ntor_max
     INTEGER              :: nel_m1_i, nel_m1_j, nel_m2_i, nel_m2_j ! dimension of matrices
     LOGICAL              :: Lchangeangle
     REAL   , allocatable :: Mat1(:,:), Mat2(:,:)                !< MAPPING MATRIX, TIMES FOUR
@@ -40,10 +40,11 @@ module bndRep
       use inputlist, only: Wmacros, Mpol, Ntor, twoalpha, Nfp, Lboundary, tflux
       use fileunits, only: ounit, lunit
       use allglobal, only: myid, mn_field, im_field, in_field, &
-                            mn_rho, im_rho, in_rho, &
-                            mn_force, im_force, in_force, &
-                            MPI_COMM_SPEC, cpus, &
-                            Rscale, Mvol
+                           mn_rho, im_rho, in_rho, &
+                           mn_force, im_force, in_force, &
+                           mn_max, im_max, in_max, &
+                           MPI_COMM_SPEC, cpus, &
+                           Rscale, Mvol
 
       LOCALS
 
@@ -71,15 +72,25 @@ module bndRep
         Mpol_field = Mpol
         Ntor_field = Ntor
   
-        Mpol_force  = Mpol
-        Ntor_force  = Ntor
+        Mpol_force = Mpol
+        Ntor_force = Ntor
+
+        Mpol_max   = Mpol
+        Ntor_max   = Ntor
 
       elseif( Lboundary.eq.1 ) then
         Mpol_field = Mpol
         Ntor_field = Ntor + abs(twoalpha)
+        !Ntor_field = Ntor
   
-        Mpol_force  = Mpol + 1
-        Ntor_force  = Ntor
+        Mpol_force = Mpol + 1
+        Ntor_force = Ntor
+        !Mpol_force = Mpol
+
+        Mpol_max   = max( Mpol, Mpol_field, Mpol_force )
+        Ntor_max   = max( Ntor, Ntor_field, Ntor_force )
+        !Mpol_max = Mpol_field
+        !Ntor_max = Ntor_field
         
       else 
         FATAL( bndRep, .true., Invalid Lboundary )
@@ -90,6 +101,7 @@ module bndRep
       mn_field = 1 + Ntor_field +  Mpol_field  * ( 2 *  Ntor_field  + 1 ) ! Fourier resolution of interface geometry & vector potential;
       mn_rho   =                   Mpol        * ( 2 *  Ntor        + 1 )
       mn_force = 1 + Ntor_force +  Mpol_force  * ( 2 *  Ntor_force  + 1 ) ! Fourier resolution of interface geometry & vector potential;
+      mn_max   = 1 + Ntor_max   +  Mpol_max    * ( 2 *  Ntor_max    + 1 ) ! Fourier resolution of interface geometry & vector potential;
 
       !latex \subsubsection{\type{mn}, \type{im(1:mn)} and \type{in(1:mn)} : Fourier mode identification}
       !latex \begin{enumerate}
@@ -111,10 +123,13 @@ module bndRep
       SALLOCATE( in_rho    , (1:mn_rho    ), zero )
       SALLOCATE( im_force  , (1:mn_force  ), zero )
       SALLOCATE( in_force  , (1:mn_force  ), zero )
+      SALLOCATE( im_max    , (1:mn_max    ), zero )
+      SALLOCATE( in_max    , (1:mn_max    ), zero )
     
       call gi00ab(  Mpol_field,  Ntor_field, Nfp, mn_field, im_field(1:mn_field), in_field(1:mn_field), .true.  ) ! this sets the im and in mode identification arrays;
       call gi00ab(  Mpol_force,  Ntor_force, Nfp, mn_force, im_force(1:mn_force), in_force(1:mn_force), .true.  ) ! this sets the im and in mode identification arrays;
       call gi00ab(  Mpol      ,  Ntor      , Nfp, mn_rho  , im_rho(  1:mn_rho  ), in_rho(  1:mn_rho  ), .false. ) ! this sets the im and in mode identification arrays;
+      call gi00ab(  Mpol_max  ,  Ntor_max  , Nfp, mn_max  , im_max(  1:mn_max  ), in_max(  1:mn_max  ), .false. ) ! this sets the im and in mode identification arrays;
 
       nel_m1_i = 2*(2*Ntor_field+1)
       nel_m1_j = 3*Ntor+2
@@ -380,7 +395,8 @@ module bndRep
                              im_rho, in_rho, mn_rho, &
                              im_field, in_field, mn_field, &
                              MPI_COMM_SPEC, cpus, myid, &
-                             Rscale
+                             Rscale, &
+                             ext, NGdof_bnd, NGdof_field !Only for debug purposes.
 
         LOCALS
 
@@ -395,7 +411,15 @@ module bndRep
         INTEGER             :: udof                 ! global geometrical degree of freedom, henneberg representation
         INTEGER             :: mm, nn               ! poloidal, toroidal mode number
         INTEGER             :: sgn_delta_twoalpha   ! Sign dependence of some terms.. + or -1
+        INTEGER             :: kk, ll               ! Set to -1 if Lchangeangle is set to true
 
+#ifdef DEBUG
+        REAL                :: orhoc(1:mn_rho, 1:Mvol), obc(0:Ntor, 1:Mvol), orn(0:Ntor, 1:Mvol), ozn(0:Ntor, 1:Mvol)
+        REAL                :: oRbc(1:mn_field, 0:Mvol), oZbs(1:mn_field, 0:Mvol), oRbs(1:mn_field, 0:Mvol), oZbc(1:mn_field, 0:Mvol)
+        REAL                :: iposition(0:NGdof_field)
+        REAL                :: dRZdhenn_debug( 1:NGdof_field, 1:NGdof_bnd )
+        INTEGER             :: jj
+#endif
 
         ! --------------------------------------------------------------------------------------
 
@@ -403,6 +427,12 @@ module bndRep
           precond_rho( 1:mn_rho, 1:Mvol ) = one
           precond_b( 1:Mvol ) = one
           Rscale = 1
+        endif
+
+        if( Lchangeangle ) then 
+          kk = -1
+        else
+          kk = +1
         endif
 
 
@@ -422,10 +452,12 @@ module bndRep
               mm = im_field( ii )
               nn = in_field( ii ) / Nfp
 
+              ll = 1
               if( irz.eq.0 ) then
                 sgn_delta_twoalpha = -1
               else
                 sgn_delta_twoalpha =  1
+                if( Lchangeangle ) ll = -1
               endif
       
               do issym = 0, 1 ! stellarator symmetry;
@@ -470,61 +502,194 @@ module bndRep
 
                 ! dR / dbn    and     dZ / dbn
                 if( mm.eq.1 ) then                     
-                  if( nn.ge.-Ntor .and. nn.le.-1 ) then
-                    jdof = mn_rho - 3*nn
+                  if( kk*nn.ge.-Ntor .and. kk*nn.le.-1 ) then
+                    jdof = mn_rho - 3*nn*kk
                     udof = (vvol-1) * LGdof_bnd + jdof                  
-                    dRZdhenn( tdof, udof ) = dRZdhenn( tdof, udof ) + quart * precond_b( vvol )
-                  elseif( nn.ge.1 .and. nn.le.Ntor) then
-                    jdof = mn_rho + 3*nn
+                    dRZdhenn( tdof, udof ) = dRZdhenn( tdof, udof ) + quart * precond_b( vvol ) * ll
+                  elseif( kk*nn.ge.1 .and. kk*nn.le.Ntor) then
+                    jdof = mn_rho + 3*nn*kk
                     udof = (vvol-1) * LGdof_bnd + jdof                  
-                    dRZdhenn( tdof, udof ) = dRZdhenn( tdof, udof ) + quart * precond_b( vvol )
-                  elseif( nn.eq. 0) then
+                    dRZdhenn( tdof, udof ) = dRZdhenn( tdof, udof ) + quart * precond_b( vvol ) * ll
+                  elseif( kk*nn.eq. 0) then
                     jdof = mn_rho + 1
                     udof = (vvol-1) * LGdof_bnd + jdof                  
-                    dRZdhenn( tdof, udof ) = dRZdhenn( tdof, udof ) + half * precond_b( vvol )
+                    dRZdhenn( tdof, udof ) = dRZdhenn( tdof, udof ) + half * precond_b( vvol ) * ll
                   endif
 
-                  if( nn-twoalpha.gt.0 .and. nn-twoalpha.le.Ntor ) then
-                    jdof = mn_rho + 3*( nn-twoalpha )
+                  if( kk*nn-twoalpha.gt.0 .and. kk*nn-twoalpha.le.Ntor ) then
+                    jdof = mn_rho + 3*( kk*nn-twoalpha )
                     udof = (vvol-1) * LGdof_bnd + jdof                  
-                    dRZdhenn( tdof, udof ) = dRZdhenn( tdof, udof ) + sgn_delta_twoalpha * quart * precond_b( vvol )
-                  elseif( nn-twoalpha.eq.0 ) then
+                    dRZdhenn( tdof, udof ) = dRZdhenn( tdof, udof ) + sgn_delta_twoalpha * quart * precond_b( vvol ) * ll
+                  elseif( kk*nn-twoalpha.eq.0 ) then
                     jdof = mn_rho + 1
                     udof = (vvol-1) * LGdof_bnd + jdof                  
-                    dRZdhenn( tdof, udof ) = dRZdhenn( tdof, udof ) + sgn_delta_twoalpha * quart * precond_b( vvol )
+                    dRZdhenn( tdof, udof ) = dRZdhenn( tdof, udof ) + sgn_delta_twoalpha * quart * precond_b( vvol ) * ll
                   endif
 
-                  if(-nn+twoalpha.gt.0 .and. -nn+twoalpha.le.Ntor ) then
-                    jdof = mn_rho + 3*(-nn+twoalpha)
+                  if(-kk*nn+twoalpha.gt.0 .and. -kk*nn+twoalpha.le.Ntor ) then
+                    jdof = mn_rho + 3*(-kk*nn+twoalpha)
                     udof = (vvol-1) * LGdof_bnd + jdof                  
-                    dRZdhenn( tdof, udof ) = dRZdhenn( tdof, udof ) + sgn_delta_twoalpha * quart * precond_b( vvol )
-                  elseif(-nn+twoalpha.eq.0 ) then
+                    dRZdhenn( tdof, udof ) = dRZdhenn( tdof, udof ) + sgn_delta_twoalpha * quart * precond_b( vvol ) * ll
+                  elseif(-kk*nn+twoalpha.eq.0 ) then
                     jdof = mn_rho + 1
                     udof = (vvol-1) * LGdof_bnd + jdof                  
-                    dRZdhenn( tdof, udof ) = dRZdhenn( tdof, udof ) + sgn_delta_twoalpha * quart * precond_b( vvol )
+                    dRZdhenn( tdof, udof ) = dRZdhenn( tdof, udof ) + sgn_delta_twoalpha * quart * precond_b( vvol ) * ll
                   endif
                 endif
 
 
                 ! dR / drhomn     and     dZ / drhomn
                 if( mm.ne.0 ) then
-                  call find_index(  mn_rho, im_rho, in_rho / Nfp, mm, -nn, jdof )
+                  call find_index(  mn_rho, im_rho, in_rho / Nfp, mm, -kk*nn, jdof )
                   if( jdof.gt.0 ) then
                     udof = (vvol-1) * LGdof_bnd + jdof                  
-                    dRZdhenn( tdof, udof ) = half * precond_rho( jdof, vvol )
+                    dRZdhenn( tdof, udof ) = half * precond_rho( jdof, vvol ) * ll
                   endif
 
 
-                  call find_index(  mn_rho, im_rho, in_rho / Nfp, mm, -nn+twoalpha, jdof )
+                  call find_index(  mn_rho, im_rho, in_rho / Nfp, mm, -kk*nn+twoalpha, jdof )
                   if( jdof.gt.0 ) then
                     udof = (vvol-1) * LGdof_bnd + jdof                  
-                    dRZdhenn( tdof, udof ) = dRZdhenn( tdof, udof ) - sgn_delta_twoalpha * half * precond_rho( jdof, vvol )
+                    dRZdhenn( tdof, udof ) = dRZdhenn( tdof, udof ) - sgn_delta_twoalpha * half * precond_rho( jdof, vvol ) * ll
                   endif
                 endif
               enddo !issym
             enddo !irz
           enddo !ii
         enddo !vvol
+
+#ifdef DEBUG
+
+        if( Lcheck.eq.9 ) then
+          idof = 0
+          do vvol=1,Mvol-1
+            do jj=1,mn_rho
+              idof = idof+1
+
+              orhoc(1:mn_rho, 1:Mvol)  = zero
+              obc(0:Ntor, 1:Mvol)      = zero
+              orn(0:Ntor, 1:Mvol)      = zero
+              ozn(0:Ntor, 1:Mvol)      = zero
+              oRbc(1:mn_field, 0:Mvol) = zero
+              oZbs(1:mn_field, 0:Mvol) = zero
+              oRbs(1:mn_field, 0:Mvol) = zero
+              oZbc(1:mn_field, 0:Mvol) = zero
+  
+              ! Take derivative of mapping matrix equation
+              orhoc(jj,vvol)           = precond_rho( jj, vvol )
+              call forwardMap( orhoc(1:mn_rho, vvol), obc(0:Ntor, vvol), orn(0:Ntor, vvol), &
+                               ozn(1:Ntor, vvol), oRbc(1:mn_field, vvol), oZbs(1:mn_field, vvol))
+
+              ! Pack in dofs
+              call packxi( NGdof_field, iposition(0:NGdof_field), Mvol, mn_field, &
+                           oRbc(1:mn_field, 0:Mvol), oZbs(1:mn_field, 0:Mvol), &
+                           oRbs(1:mn_field, 0:Mvol), oZbc(1:mn_field, 0:Mvol), &
+                           'P', .false., .false. )
+              
+              ! Store derivatives
+              dRZdhenn_debug( 1:NGdof_field, idof ) = iposition( 1:NGdof_field )
+
+            enddo
+  
+            do jj=0,Ntor
+              ! --- derivatives w.r.t b_n
+              idof = idof+1
+              orhoc(1:mn_rho, 1:Mvol)  = zero
+              obc(0:Ntor, 1:Mvol)      = zero
+              orn(0:Ntor, 1:Mvol)      = zero
+              ozn(0:Ntor, 1:Mvol)      = zero
+              oRbc(1:mn_field, 0:Mvol) = zero
+              oZbs(1:mn_field, 0:Mvol) = zero
+              oRbs(1:mn_field, 0:Mvol) = zero
+              oZbc(1:mn_field, 0:Mvol) = zero
+
+              ! Take derivative of mapping matrix equation
+              obc(jj, vvol) = precond_b( vvol )
+              call forwardMap( orhoc(1:mn_rho, vvol), obc(0:Ntor, vvol), orn(0:Ntor, vvol), &
+                               ozn(1:Ntor, vvol), oRbc(1:mn_field, vvol), oZbs(1:mn_field, vvol))
+
+              ! Pack in dofs
+              call packxi(  NGdof_field, iposition(0:NGdof_field), Mvol, mn_field, &
+                            oRbc(1:mn_field, 0:Mvol), oZbs(1:mn_field, 0:Mvol), &
+                            oRbs(1:mn_field, 0:Mvol), oZbc(1:mn_field, 0:Mvol), &
+                            'P', .false., .false. )
+              ! Store derivatives
+              dRZdhenn_debug( 1:NGdof_field, idof ) = iposition( 1:NGdof_field )
+
+
+              ! --- derivatives w.r.t r_n
+              idof = idof+1
+              orhoc(1:mn_rho, 1:Mvol)  = zero
+              obc(0:Ntor, 1:Mvol)      = zero
+              orn(0:Ntor, 1:Mvol)      = zero
+              ozn(0:Ntor, 1:Mvol)      = zero
+              oRbc(1:mn_field, 0:Mvol) = zero
+              oZbs(1:mn_field, 0:Mvol) = zero
+              oRbs(1:mn_field, 0:Mvol) = zero
+              oZbc(1:mn_field, 0:Mvol) = zero
+  
+              ! Take derivative of mapping matrix equation
+              orn(jj, vvol) = Rscale
+              call forwardMap( orhoc(1:mn_rho, vvol), obc(0:Ntor, vvol), orn(0:Ntor, vvol), &
+                               ozn(1:Ntor, vvol), oRbc(1:mn_field, vvol), oZbs(1:mn_field, vvol))
+
+              ! Pack in dofs
+              call packxi(  NGdof_field, iposition(0:NGdof_field), Mvol, mn_field, &
+                            oRbc(1:mn_field, 0:Mvol), oZbs(1:mn_field, 0:Mvol), &
+                            oRbs(1:mn_field, 0:Mvol), oZbc(1:mn_field, 0:Mvol), &
+                            'P', .false., .false. )
+
+              ! Store derivatives
+              dRZdhenn_debug( 1:NGdof_field, idof ) = iposition( 1:NGdof_field )
+
+
+              ! --- derivatives w.r.t r_n
+              if( jj.gt.0 ) then 
+                idof = idof+1
+                orhoc(1:mn_rho, 1:Mvol)  = zero
+                obc(0:Ntor, 1:Mvol)      = zero
+                orn(0:Ntor, 1:Mvol)      = zero
+                ozn(0:Ntor, 1:Mvol)      = zero
+                oRbc(1:mn_field, 0:Mvol) = zero
+                oZbs(1:mn_field, 0:Mvol) = zero
+                oRbs(1:mn_field, 0:Mvol) = zero
+                oZbc(1:mn_field, 0:Mvol) = zero
+
+                ! Take derivative of mapping matrix equation
+                ozn(jj, vvol) = Rscale
+                call forwardMap( orhoc(1:mn_rho, vvol), obc(0:Ntor, vvol), orn(0:Ntor, vvol), &
+                                 ozn(1:Ntor, vvol), oRbc(1:mn_field, vvol), oZbs(1:mn_field, vvol))
+  
+                ! Pack in dofs
+                call packxi(  NGdof_field, iposition(0:NGdof_field), Mvol, mn_field, &
+                              oRbc(1:mn_field, 0:Mvol), oZbs(1:mn_field, 0:Mvol), &
+                              oRbs(1:mn_field, 0:Mvol), oZbc(1:mn_field, 0:Mvol), &
+                              'P', .false., .false. )
+                              
+                ! Store derivatives
+                dRZdhenn_debug( 1:NGdof_field, idof ) = iposition( 1:NGdof_field )  
+              endif
+            enddo
+          enddo !vvol
+
+          open(10, file=trim(ext)//'.dRZdhenn.txt', status='unknown')
+          do ii=1,NGdof_field
+            write(10, 2801) dRZdhenn( ii, : )
+          enddo
+          close(10)
+
+          open(10, file=trim(ext)//'.dRZdhenn_debug.txt', status='unknown')
+          do ii=1,NGdof_field
+            write(10, 2801) dRZdhenn_debug( ii, : )
+          enddo
+          close(10)
+
+2801  format(512F22.16, " ")
+
+          FATAL( bndRep, .true., End of Lcheck.eq.9 )
+
+        endif
+#endif
 
 
       end subroutine initialize_force_gradient_transformation
@@ -987,6 +1152,8 @@ module bndRep
           do mm=2,Mpol_field
             do nn=-Ntor_field,Ntor_field
   
+              if( mm.gt.Mpol ) cycle
+
               ii =    (mm-2)*(2*Ntor_field +1) + Ntor_field + nn + 1;
               jjmin = (mm-2)*(2*Ntor   +1)                       + 1;
               jjmax = (mm-2)*(2*Ntor   +1)    + 2*Ntor           + 1;

@@ -41,6 +41,14 @@ subroutine preset
 
   call read_input_geometry()
 
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!> **Force gradient transformation**
+  if( Mvol.gt.1 .and. Lboundary.eq.1 .and. Lfindzero.eq.2 ) then
+
+    WCALL( preset, initialize_force_gradient_transformation, (NGdof_field, NGdof_bnd) )
+
+  endif
+
   RETURN(preset)
 
 end subroutine preset
@@ -93,8 +101,6 @@ subroutine set_global_variables()
   else
     Rscale = Rwc(0,0)
   endif
-
-  Rscale = one
 
   ! set up Henneberg's mapping
   if( Lboundary.eq.0 ) then
@@ -249,15 +255,6 @@ subroutine set_global_variables()
 
   if( Wpreset ) then ; cput = GETTIME ; write(ounit,'("preset : ",f10.2," : myid=",i3," ; NGdof_field=",i9," ;")') cput-cpus, myid, NGdof_field
   endif
-
-  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-!> **Force gradient transformation**
-  if( Mvol.gt.1 .and. Lboundary.eq.1 .and. Lfindzero.eq.2 ) then
-
-    WCALL( preset, initialize_force_gradient_transformation, (NGdof_field, NGdof_bnd) )
-
-  endif
-
 
   !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1852,7 +1849,7 @@ subroutine read_henneberg_input_geometry()
         nn = nnRZRZ(idx_mode)
 
         if( mm.eq.0 ) then ! rn, zn, bn
-          if( nn.ge.0 ) then
+          if( nn.ge.0 .and. nn.le.Ntor ) then
             ibc(  nn, 1:Nvol-1 ) = allRZRZ( 1, 1:Nvol-1, idx_mode )   
             iR0c( nn, 1:Nvol-1 ) = allRZRZ( 2, 1:Nvol-1, idx_mode )   
             iZ0s( nn, 1:Nvol-1 ) = allRZRZ( 3, 1:Nvol-1, idx_mode )
@@ -1868,7 +1865,9 @@ subroutine read_henneberg_input_geometry()
             endif
           enddo
 
-          irhoc(ind,1:Nvol-1) = allRZRZ( 4, 1:Nvol-1, idx_mode )
+          if( ind.gt.0 ) then
+            irhoc(ind,1:Nvol-1) = allRZRZ( 4, 1:Nvol-1, idx_mode )
+          endif
         endif !mm.eq.0
       enddo !idx_mode
 

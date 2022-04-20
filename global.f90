@@ -266,12 +266,15 @@ module allglobal
   INTEGER              :: mn_field  !< total number of Fourier harmonics for coordinates Rmn, Zmn and field (Ate, Aze, Azo, Ato)
   INTEGER              :: mn_rho    !< total number of Fourier harmonics for coordinates rhomn
   INTEGER              :: mn_force  !< total number of Fourier harmonics for force
+  INTEGER              :: mn_max    !< total number of Fourier harmonics, full resolution
   INTEGER, allocatable :: im_field(:)   !< poloidal mode numbers for Fourier representation of Ate, Azo, ...
   INTEGER, allocatable :: in_field(:)   !< toroidal mode numbers for Fourier representation of Ate, Azo, ...
   INTEGER, allocatable :: im_rho(:)    !< poloidal mode numbers for Fourier representation of rhomn
   INTEGER, allocatable :: in_rho(:)    !< toroidal mode numbers for Fourier representation of rhomn
   INTEGER, allocatable :: im_force(:)  !< poloidal mode numbers for Fourier representation of force
   INTEGER, allocatable :: in_force(:)  !< toroidal mode numbers for Fourier representation of force
+  INTEGER, allocatable :: im_max(:)    !< poloidal mode numbers for Fourier representation, full resolution
+  INTEGER, allocatable :: in_max(:)    !< toroidal mode numbers for Fourier representation, full resolution
 
   REAL,    allocatable :: halfmm(:) !< I saw this already somewhere...
   REAL,    allocatable :: regumm(:) !< I saw this already somewhere...
@@ -1207,7 +1210,7 @@ subroutine check_inputs()
 1022 format("readin : ", 10x ," : Lsparse="i2" ; Lsvdiota="i2" ; imethod="i2" ; iorder="i2" ; iprecon="i2" ; iotatol="es13.5" ;")
 1023 format("readin : ", 10x ," : Lextrap="i2" ; Mregular="i3" ; Lrzaxis="i2" ; Ntoraxis="i2" ;")
 
-   FATAL( readin, Ndiscrete.le.0, error )
+   FATAL( readin, Ndiscrete.le.1, error: Ndiscrete>1 )
 
   !FATAL(readin, Lfreebound.eq.1 .and. Lconstraint.gt.0 .and. Lsparse.eq.0, have not implemented dense Fourier angle transformation in vacuum region )
 
