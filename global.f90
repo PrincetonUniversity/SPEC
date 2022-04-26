@@ -220,6 +220,8 @@ module allglobal
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+  INTEGER              :: nDcalls !< Total number of calls to dforce
+
 !> \addtogroup grp_enh_res_metr Enhanced resolution for metric elements
 !> Enhanced resolution is required for the metric elements, \f$g_{ij}/\sqrt g\f$, which is given by mne, ime, and ine.
 !> The Fourier resolution here is determined by \c lMpol=2*Mpol  and \c lNtor=2*Ntor.

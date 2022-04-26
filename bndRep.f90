@@ -87,10 +87,10 @@ module bndRep
         Ntor_force = Ntor
         !Mpol_force = Mpol
 
-        Mpol_max   = max( Mpol, Mpol_field, Mpol_force )
-        Ntor_max   = max( Ntor, Ntor_field, Ntor_force )
-        !Mpol_max = Mpol_field
-        !Ntor_max = Ntor_field
+        !Mpol_max   = max( Mpol, Mpol_field, Mpol_force )
+        !Ntor_max   = max( Ntor, Ntor_field, Ntor_force )
+        Mpol_max = Mpol_field
+        Ntor_max = Ntor_field
         
       else 
         FATAL( bndRep, .true., Invalid Lboundary )

@@ -86,7 +86,8 @@ subroutine rzaxis( Mvol, mn_field, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDer
 
   use fileunits, only : ounit
 
-  use inputlist, only : Wrzaxis, Igeometry, Ntor, Lcheck, Wmacros, Lreflect, Ntoraxis, Lrzaxis
+  use inputlist, only : Wrzaxis, Igeometry, Ntor, Lcheck, Wmacros, Lreflect, Ntoraxis, & 
+                        Lrzaxis, Lboundary
 
   use cputiming, only : Trzaxis
 
@@ -101,7 +102,7 @@ subroutine rzaxis( Mvol, mn_field, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDer
                         iRbc, iZbs, iRbs, iZbc, &
                         dBdX
 
-  use bndRep, only    : Ntor_field, Ntor_max
+  use bndRep, only    : Ntor_field
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -144,7 +145,7 @@ subroutine rzaxis( Mvol, mn_field, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDer
 
   jvol = 0 ! this identifies the "surface" in which the poloidal averaged harmonics will be placed; 19 Jul 16;
 
-  Ntoraxis = min(Ntor_max,Ntoraxis)
+  Ntoraxis = min(Ntor_field,Ntoraxis)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -223,19 +224,19 @@ subroutine rzaxis( Mvol, mn_field, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDer
     if( Wrzaxis ) then
       cput = GETTIME
       write(ounit,'("rzaxis : ", 10x ," : ")')
-      write(ounit,'("rzaxis : ",f10.2," : myid=",i3," ; inner : Rbc=[",    999(es23.15," ,"))') cput-cpus, myid, inRbc(1:Ntor+1,ivol)
-      write(ounit,'("rzaxis : ",f10.2," : myid=",i3," ; axis  : Rbc=[",    999(es23.15," ,"))') cput-cpus, myid, inRbc(1:Ntor+1,jvol)
+      write(ounit,'("rzaxis : ",f10.2," : myid=",i3," ; inner : Rbc=[",    999(es23.15," ,"))') cput-cpus, myid, inRbc(1:Ntor_field+1,ivol)
+      write(ounit,'("rzaxis : ",f10.2," : myid=",i3," ; axis  : Rbc=[",    999(es23.15," ,"))') cput-cpus, myid, inRbc(1:Ntor_field+1,jvol)
       if( Ntor.gt.0 ) then
-      write(ounit,'("rzaxis : ",f10.2," : myid=",i3," ; inner : Zbs=[",25x,998(es23.15," ,"))') cput-cpus, myid, inZbs(2:Ntor+1,ivol)
-      write(ounit,'("rzaxis : ",f10.2," : myid=",i3," ; axis  : Zbs=[",25x,998(es23.15," ,"))') cput-cpus, myid, inZbs(2:Ntor+1,jvol)
+      write(ounit,'("rzaxis : ",f10.2," : myid=",i3," ; inner : Zbs=[",25x,998(es23.15," ,"))') cput-cpus, myid, inZbs(2:Ntor_field+1,ivol)
+      write(ounit,'("rzaxis : ",f10.2," : myid=",i3," ; axis  : Zbs=[",25x,998(es23.15," ,"))') cput-cpus, myid, inZbs(2:Ntor_field+1,jvol)
       endif
       if( NOTstellsym ) then
       if( Ntor.gt.0 ) then
-      write(ounit,'("rzaxis : ",f10.2," : myid=",i3," ; inner : Rbs=[",25x,998(es23.15," ,"))') cput-cpus, myid, inRbs(2:Ntor+1,ivol)
-      write(ounit,'("rzaxis : ",f10.2," : myid=",i3," ; axis  : Rbs=[",25x,998(es23.15," ,"))') cput-cpus, myid, inRbs(2:Ntor+1,jvol)
+      write(ounit,'("rzaxis : ",f10.2," : myid=",i3," ; inner : Rbs=[",25x,998(es23.15," ,"))') cput-cpus, myid, inRbs(2:Ntor_field+1,ivol)
+      write(ounit,'("rzaxis : ",f10.2," : myid=",i3," ; axis  : Rbs=[",25x,998(es23.15," ,"))') cput-cpus, myid, inRbs(2:Ntor_field+1,jvol)
       endif
-      write(ounit,'("rzaxis : ",f10.2," : myid=",i3," ; inner : Zbc=[",    999(es23.15," ,"))') cput-cpus, myid, inZbc(1:Ntor+1,ivol)
-      write(ounit,'("rzaxis : ",f10.2," : myid=",i3," ; axis  : Zbc=[",    999(es23.15," ,"))') cput-cpus, myid, inZbc(1:Ntor+1,jvol)
+      write(ounit,'("rzaxis : ",f10.2," : myid=",i3," ; inner : Zbc=[",    999(es23.15," ,"))') cput-cpus, myid, inZbc(1:Ntor_field+1,ivol)
+      write(ounit,'("rzaxis : ",f10.2," : myid=",i3," ; axis  : Zbc=[",    999(es23.15," ,"))') cput-cpus, myid, inZbc(1:Ntor_field+1,jvol)
       endif
     endif
 #endif
@@ -250,7 +251,7 @@ subroutine rzaxis( Mvol, mn_field, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDer
 #endif
 
   !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-    if (LComputeDerivatives) then
+    if (LComputeDerivatives ) then
     ! compute derivatives of axis; 03 Nov 16;
 
       do ii = 1, mn_field
@@ -564,6 +565,7 @@ subroutine rzaxis( Mvol, mn_field, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDer
       dZadR = zero
       dZadZ = zero
 
+      if( .false. ) then
       ! allocate the temp matrices
       SALLOCATE( djacrhs, (1:Njac), zero )
       SALLOCATE( djacmat, (1:Njac, 1:Njac), zero )
@@ -776,6 +778,7 @@ end if ! Lcheck .eq. 8
       ! deallocate the matrices
       DALLOCATE( djacrhs )
       DALLOCATE( djacmat )
+    endif
 
       dBdX%L = .FALSE.
 

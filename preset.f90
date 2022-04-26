@@ -110,6 +110,9 @@ subroutine set_global_variables()
   Lhennangle = .false.
   call initialize_mapping( Lhennangle )
 
+!latex \subsubsection{\type{nDcalls} : total number of calls to dforce }
+  nDcalls = 0
+
 !latex \subsubsection{\type{Mvol} : total number of volumes}
 !latex \begin{enumerate}
 !latex \item The number of plasma volumes is \internal{Mvol}=\inputvar{Nvol}+\inputvar{Lfreebound};
@@ -201,7 +204,7 @@ subroutine set_global_variables()
   if( Lrzaxis.eq.1 ) then !Only used by the centroid method
     SALLOCATE( ajk, (1:mn_field), zero ) ! this must be allocated & assigned now, as it is used in readin; primarily used in packxi
 
-    do kk = 1, mn_field ; mk = im_field(kk) ; nk = in_field(kk)
+    do kk = 1, mn_field ; mk = im_field(kk)
       if( mk.eq.0 ) then
         ajk(kk) = pi2
       endif

@@ -90,7 +90,7 @@
 !> @param[out] force
 !> @param[in] LComputeDerivatives
 !> @param[in] LComputeAxis
-subroutine dforce( NGdof_field, position, force, LComputeDerivatives, LComputeAxis)
+subroutine dforce( NGdof_field, position, force, LComputeDerivatives, LComputeAxis )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -134,9 +134,11 @@ subroutine dforce( NGdof_field, position, force, LComputeDerivatives, LComputeAx
                         solution, IPdtdPf, &
                         IsMyVolume, IsMyVolumeValue, WhichCpuID, &
                         ext, & ! For outputing Lcheck = 6 test
-                        Ntz
+                        Ntz, nDcalls
 
   use bndRep, only    : dRZdhenn
+
+  use sphdf5, only : write_convergence_output
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -144,11 +146,11 @@ subroutine dforce( NGdof_field, position, force, LComputeDerivatives, LComputeAx
 
   INTEGER, parameter   :: NB = 3 !< optimal workspace block size for LAPACK:DSYSVX;
 
-  INTEGER, intent(in)  :: NGdof_field               !< Total number of Rmn, Zmn
-  REAL,    intent(in)  :: position(0:NGdof_field)   !< Degrees-of-freedom = internal geometry;
-  REAL,    intent(out) :: force(0:NGdof_force)      !< Force;
-  LOGICAL, intent(in)  :: LComputeDerivatives       !< Indicates whether derivatives are to be calculated;
-  LOGICAL, intent(in)  :: LComputeAxis              !< Indicates whether the coordinate axis has to be re-evaluated 
+  INTEGER, intent(in)    :: NGdof_field               !< Total number of Rmn, Zmn
+  REAL,    intent(in)    :: position(0:NGdof_field)   !< Degrees-of-freedom = internal geometry;
+  REAL,    intent(out)   :: force(0:NGdof_force)      !< Force;
+  LOGICAL, intent(in)    :: LComputeDerivatives       !< Indicates whether derivatives are to be calculated;
+  LOGICAL, intent(in)    :: LComputeAxis              !< Indicates whether the coordinate axis has to be re-evaluated 
 
   INTEGER              :: vvol                      !< Loop index over volumes
   INTEGER              :: innout                    !< Loop index over inner (0) / outer (1) side of interfaces 
@@ -178,6 +180,8 @@ subroutine dforce( NGdof_field, position, force, LComputeDerivatives, LComputeAx
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 ! write(ounit,'("dforce: position = ",999f25.12)') position(0:NGdof_field)
+
+  nDcalls = nDcalls + 1
 
 ! Unpack position to generate arrays iRbc, iZbs, IRbs, iZbc.
 
@@ -707,6 +711,9 @@ DALLOCATE(ddforcedRZ )
 
   !call MPI_BARRIER( MPI_COMM_WORLD, ierr )
 
+
+  WCALL( dforce, write_convergence_output, ( nDcalls, ForceErr ) ) ! save iRbc, iZbs consistent with bndDofs;
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   RETURN(dforce)
@@ -741,7 +748,7 @@ use allglobal, only: ncpu, myid, cpus, MPI_COMM_SPEC, &
                      LGdof_force, LGdof_field, LGdof_bnd, psifactor, dBdX, &
                      YESstellsym, NOTstellsym, &
                      hessian, ext, &
-                     irhoc, iR0c, iZ0s, ibc, Rscale
+                     irhoc, iR0c, iZ0s, ibc, Rscale, nDcalls
 
 
 use bndRep, only: forwardMap, precond_rho, precond_b              
@@ -837,15 +844,16 @@ BEGIN(dforce)
               endif
 
               packorunpack = 'P' ! pack geometrical degrees-of-freedom;
-              !LComputeAxis = .false. ! keep axis fixed
-              LComputeAxis = .true.
+              LComputeAxis = .true. ! keep axis fixed
+              !LComputeAxis = .true.
 
               WCALL(dforce, packxi,( NGdof_field, iposition(isymdiff,0:NGdof_field), Mvol, mn_field, iRbc(1:mn_field,0:Mvol),&
                                     iZbs(1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol), &
                                     iZbc(1:mn_field,0:Mvol), packorunpack, .false., LComputeAxis ) )
 
 
-              WCALL(dforce, dforce,( NGdof_field, iposition(isymdiff,0:NGdof_field), iforce(isymdiff,0:NGdof_force), .false., LComputeAxis) )
+              WCALL(dforce, dforce,( NGdof_field, iposition(isymdiff,0:NGdof_field), iforce(isymdiff,0:NGdof_force), .false., &
+                                     LComputeAxis, nDcalls) )
             enddo
 
             ! Fourth order centered finite difference scheme
@@ -948,11 +956,11 @@ BEGIN(dforce)
 
           ! Pack to dofs
           packorunpack = 'P' ! pack geometrical degrees-of-freedom;
-          LComputeAxis = .true. ! keep axis fixed
+          LComputeAxis = .true. 
 
           WCALL(dforce, packxi,( NGdof_field, iposition(isymdiff,0:NGdof_field), Mvol, mn_field, iRbc(1:mn_field,0:Mvol),&
                                 iZbs(1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), packorunpack, .false., LComputeAxis ) )
-          WCALL(dforce, dforce,( NGdof_field, iposition(isymdiff,0:NGdof_field), iforce(isymdiff,0:NGdof_force), .false., LComputeAxis) )
+          WCALL(dforce, dforce,( NGdof_field, iposition(isymdiff,0:NGdof_field), iforce(isymdiff,0:NGdof_force), .false., LComputeAxis, nDcalls) )
 
         enddo ! isymdiff
         
@@ -1009,7 +1017,7 @@ BEGIN(dforce)
 
             WCALL(dforce, packxi,( NGdof_field, iposition(isymdiff,0:NGdof_field), Mvol, mn_field, iRbc(1:mn_field,0:Mvol),&
                                   iZbs(1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), packorunpack, .false., LComputeAxis ) )
-            WCALL(dforce, dforce,( NGdof_field, iposition(isymdiff,0:NGdof_field), iforce(isymdiff,0:NGdof_force), .false., LComputeAxis) )
+            WCALL(dforce, dforce,( NGdof_field, iposition(isymdiff,0:NGdof_field), iforce(isymdiff,0:NGdof_force), .false., LComputeAxis, nDcalls) )
   
           enddo ! isymdiff
           

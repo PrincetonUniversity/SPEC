@@ -7,7 +7,6 @@
 module newtontime
 
   INTEGER :: nFcalls !< number of calls to get function   values (?)
-  INTEGER :: nDcalls !< number of calls to get derivative values (?)
   REAL    :: lastcpu !< last CPU that called this (?)
 
 end module newtontime
@@ -74,7 +73,7 @@ subroutine newton( NGdof_bnd, bndDofs, ihybrd )
                         LGdof_force, LGdof_field, NGdof_force, NGdof_field, &
                         dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated , &
                         nfreeboundaryiterations, &
-                        LocalConstraint
+                        LocalConstraint, nDcalls
 
   use bndRep, only    : pack_henneberg_to_hudson, pack_hudson_to_henneberg
 
@@ -480,7 +479,7 @@ subroutine fcn1( NGdof_bnd, xx, fvec, irevcm )
                         NGdof_force, NGdof_field, &
                         BBe, IIo, BBo, IIe, &
                         dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated, &
-                        nfreeboundaryiterations
+                        nfreeboundaryiterations, nDcalls
 
   use bndRep,    only : pack_henneberg_to_hudson, pack_hudson_to_henneberg
 
@@ -554,7 +553,7 @@ subroutine fcn1( NGdof_bnd, xx, fvec, irevcm )
 
     endif ! end of if( myid.eq.0 );
 
-    WCALL( newton, write_convergence_output, ( nDcalls, ForceErr ) ) ! save iRbc, iZbs consistent with bndDofs;
+    !WCALL( newton, write_convergence_output, ( nDcalls, ForceErr ) ) ! save iRbc, iZbs consistent with bndDofs;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -629,7 +628,7 @@ subroutine fcn2( NGdof_bnd, xx, fvec, fjac, Ldfjac, irevcm )
                         NGdof_force, NGdof_field, &
                         BBe, IIo, BBo, IIe, &
                         dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated, &
-                        nfreeboundaryiterations
+                        nfreeboundaryiterations, nDcalls
 
   use newtontime
 
@@ -702,7 +701,7 @@ subroutine fcn2( NGdof_bnd, xx, fvec, fjac, Ldfjac, irevcm )
 
     endif ! end of if( myid.eq.0 );
 
-    WCALL( newton, write_convergence_output, ( nDcalls, ForceErr ) ) ! save iRbc, iZbs consistent with bndDofs;
+    !WCALL( newton, write_convergence_output, ( nDcalls, ForceErr ) ) ! save iRbc, iZbs consistent with bndDofs;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

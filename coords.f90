@@ -150,7 +150,7 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn_field )
 
   use fileunits, only : ounit
 
-  use inputlist, only : Wcoords, Igeometry, Ntor, rpol, rtor
+  use inputlist, only : Wcoords, Igeometry, Ntor, rpol, rtor, Lboundary
 
   use cputiming, only : Tcoords
 
@@ -587,8 +587,11 @@ Nt, Nz, Rij(1:Ntz,3,3), Zij(1:Ntz,3,3) ) ! maps to real space;
         endif
       endif
     endif
-    !DRxij(:,:) = zero
-    !DZxij(:,:) = zero
+
+    ! if( Lboundary.eq.1 ) then
+    !   DRxij(:,:) = zero
+    !   DZxij(:,:) = zero
+    ! endif
 
    else ! matches if( Lcoordinatesingularity ) ; 10 Mar 13;
 
@@ -664,7 +667,7 @@ Nt, Nz, Rij(1:Ntz,3,3), Zij(1:Ntz,3,3) ) ! maps to real space;
 
     case( 3 ) ! Lcurvature=3,4,5 ; Igeometry=3 ; toroidal; 04 Dec 14;
 
-      if (LcoordinateSingularity) then
+      if (LcoordinateSingularity ) then
     !                  sg(1:Ntz,0) = Rij(1:Ntz,0,0) * ( Zij(1:Ntz,1,0)*Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Zij(1:Ntz,2,0) )
         if( irz.eq.0 ) sg(1:Ntz,1) = (Dij(1:Ntz,0  )+ DRxij(1:Ntz, 0)) * ( Zij(1:Ntz,1,0)*Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Zij(1:Ntz,2,0) ) &
                                   + Rij(1:Ntz,0,0) * ( Zij(1:Ntz,1,0)*Dij(1:Ntz,2  ) - (Dij(1:Ntz,1  )+DRxij(1:Ntz,1)) *Zij(1:Ntz,2,0) ) &
