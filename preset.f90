@@ -110,6 +110,9 @@ subroutine set_global_variables()
   Lhennangle = .false.
   call initialize_mapping( Lhennangle )
 
+
+  nDcalls = 0
+
 !latex \subsubsection{\type{Mvol} : total number of volumes}
 !latex \begin{enumerate}
 !latex \item The number of plasma volumes is \internal{Mvol}=\inputvar{Nvol}+\inputvar{Lfreebound};

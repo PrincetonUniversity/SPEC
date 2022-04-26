@@ -134,9 +134,11 @@ subroutine dforce( NGdof_field, position, force, LComputeDerivatives, LComputeAx
                         solution, IPdtdPf, &
                         IsMyVolume, IsMyVolumeValue, WhichCpuID, &
                         ext, & ! For outputing Lcheck = 6 test
-                        Ntz
+                        Ntz, nDcalls
 
   use bndRep, only    : dRZdhenn
+
+  use sphdf5, only    : write_convergence_output
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -178,6 +180,7 @@ subroutine dforce( NGdof_field, position, force, LComputeDerivatives, LComputeAx
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 ! write(ounit,'("dforce: position = ",999f25.12)') position(0:NGdof_field)
+
 
 ! Unpack position to generate arrays iRbc, iZbs, IRbs, iZbc.
 
@@ -707,6 +710,9 @@ DALLOCATE(ddforcedRZ )
 
   !call MPI_BARRIER( MPI_COMM_WORLD, ierr )
 
+  nDcalls = nDcalls + 1
+
+  WCALL( dforce, write_convergence_output, ( nDcalls, ForceErr ) ) ! save iRbc, iZbs consistent with bndDofs;
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   RETURN(dforce)

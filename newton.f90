@@ -7,7 +7,6 @@
 module newtontime
 
   INTEGER :: nFcalls !< number of calls to get function   values (?)
-  INTEGER :: nDcalls !< number of calls to get derivative values (?)
   REAL    :: lastcpu !< last CPU that called this (?)
 
 end module newtontime
@@ -74,7 +73,7 @@ subroutine newton( NGdof_bnd, bndDofs, ihybrd )
                         LGdof_force, LGdof_field, NGdof_force, NGdof_field, &
                         dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated , &
                         nfreeboundaryiterations, &
-                        LocalConstraint
+                        LocalConstraint, nDcalls
 
   use bndRep, only    : pack_henneberg_to_hudson, pack_hudson_to_henneberg
 
@@ -116,7 +115,7 @@ subroutine newton( NGdof_bnd, bndDofs, ihybrd )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  !FATAL( newton, NGdof_bnd.NE.NGdof_force, Invalid number of dofs )
+  FATAL( newton, NGdof_bnd.NE.NGdof_force, Invalid number of dofs )
 
 
 
@@ -147,7 +146,7 @@ subroutine newton( NGdof_bnd, bndDofs, ihybrd )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  nFcalls = 0 ; nDcalls= 0 ! counters;
+  nFcalls = 0 ;! counters;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -215,7 +214,7 @@ subroutine newton( NGdof_bnd, bndDofs, ihybrd )
    	SALLOCATE( dmupfdx, (1:Mvol, 1:Mvol-1,1:2,1:LGdof_field,1), zero ) 
    endif
 
-    !FATAL( newton, NGdof_bnd.ne.NGdof_force, illdefined Newton problem )
+    FATAL( newton, NGdof_bnd.ne.NGdof_force, illdefined Newton problem )
 
     SALLOCATE( hessian, (1:NGdof_force,1:NGdof_force), zero )
     SALLOCATE( dessian, (1:NGdof_force,1:NGdof_force), zero )
@@ -480,7 +479,7 @@ subroutine fcn1( NGdof_bnd, xx, fvec, irevcm )
                         NGdof_force, NGdof_field, &
                         BBe, IIo, BBo, IIe, &
                         dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated, &
-                        nfreeboundaryiterations
+                        nfreeboundaryiterations, nDcalls
 
   use bndRep,    only : pack_henneberg_to_hudson, pack_hudson_to_henneberg
 
@@ -553,8 +552,6 @@ subroutine fcn1( NGdof_bnd, xx, fvec, irevcm )
      WCALL( newton, wrtend ) ! write restart file; save geometry to ext.end;
 
     endif ! end of if( myid.eq.0 );
-
-    WCALL( newton, write_convergence_output, ( nDcalls, ForceErr ) ) ! save iRbc, iZbs consistent with bndDofs;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -629,7 +626,7 @@ subroutine fcn2( NGdof_bnd, xx, fvec, fjac, Ldfjac, irevcm )
                         NGdof_force, NGdof_field, &
                         BBe, IIo, BBo, IIe, &
                         dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated, &
-                        nfreeboundaryiterations
+                        nfreeboundaryiterations, nDcalls
 
   use newtontime
 
@@ -702,7 +699,6 @@ subroutine fcn2( NGdof_bnd, xx, fvec, fjac, Ldfjac, irevcm )
 
     endif ! end of if( myid.eq.0 );
 
-    WCALL( newton, write_convergence_output, ( nDcalls, ForceErr ) ) ! save iRbc, iZbs consistent with bndDofs;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -724,7 +720,6 @@ subroutine fcn2( NGdof_bnd, xx, fvec, fjac, Ldfjac, irevcm )
     FATAL( newton, .not.Lhessianallocated, need to allocate hessian )
 #endif
 
-    nDcalls = nDcalls + 1
 
     if( LreadGF .and. nDcalls.eq.1 ) then ! this is the first iteration; will check to see if derivative matrix already exists in file .DF;
 
