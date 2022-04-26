@@ -254,7 +254,7 @@ subroutine set_global_variables()
   NGdof_bnd   = ( Mvol-1 ) * LGdof_bnd
   NGdof_force = ( Mvol-1 ) * LGdof_force
 
-  FATAL( preset, NGdof_bnd.NE.NGdof_force, Number of geometrical dofs are not equal to number of force dofs.)
+  !FATAL( preset, NGdof_bnd.NE.NGdof_force, Number of geometrical dofs are not equal to number of force dofs.)
 
   if( Wpreset ) then ; cput = GETTIME ; write(ounit,'("preset : ",f10.2," : myid=",i3," ; NGdof_field=",i9," ;")') cput-cpus, myid, NGdof_field
   endif
