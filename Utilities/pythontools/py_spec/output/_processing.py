@@ -24,9 +24,9 @@ def get_grid_and_jacobian_and_metric(
     sym = self.input.physics.Istellsym == 1
 
     Rac, Rbc = self.output.Rbc[lvol : lvol + 2]
-    Ras, Rbs = self.output.Rbc[lvol : lvol + 2]
+    Ras, Rbs = self.output.Rbs[lvol : lvol + 2]
     Zas, Zbs = self.output.Zbs[lvol : lvol + 2]
-    Zac, Zbc = self.output.Rbc[lvol : lvol + 2]
+    Zac, Zbc = self.output.Zbc[lvol : lvol + 2]
 
     mn = Rac.size  # s.output.mn
     im = self.output.im
@@ -290,6 +290,7 @@ def get_B(
     """!Compute the contravariant components of the magnetic field \f$(B^s, B^\theta, B^\zeta)\f$
 
     @param lvol (int, optional): The SPEC volume of interest, starting from 0. Defaults to 0.
+    @param jacobian(numpy array, optional): if jacobian is already computed, provide it here
     @param sarr (1D numpy array, optional): The s grid. Defaults to np.linspace(1,1,1).
     @param tarr (1D numpy array, optional): The \f$\theta\f$ grid. Defaults to np.linspace(0,0,1).
     @param zarr (1D numpy array, optional): The \f$\zeta\f$ grid. Defaults to np.linspace(0,0,1).
