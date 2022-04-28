@@ -255,8 +255,8 @@ subroutine set_global_variables()
   NGdof_force = ( Mvol-1 ) * LGdof_force
 
   !FATAL( preset, NGdof_bnd.NE.NGdof_force, Number of geometrical dofs are not equal to number of force dofs.)
-  FATAL( preset, Mpol_field.NE.Mpol_force, Poloidal Fourier resolution does not agree.)
-  FATAL( preset, Ntor_field.NE.Ntor_force, Toroidal Fourier resolution does not agree.)
+  !FATAL( preset, Mpol_field.NE.Mpol_force, Poloidal Fourier resolution does not agree.)
+  !FATAL( preset, Ntor_field.NE.Ntor_force, Toroidal Fourier resolution does not agree.)
 
   if( Wpreset ) then ; cput = GETTIME ; write(ounit,'("preset : ",f10.2," : myid=",i3," ; NGdof_field=",i9," ;")') cput-cpus, myid, NGdof_field
   endif
@@ -1102,10 +1102,10 @@ subroutine set_global_variables()
     SALLOCATE( dZadR, (1:mn_field,0:1,0:1,1:mn_field), zero )
     SALLOCATE( dZadZ, (1:mn_field,0:1,0:1,1:mn_field), zero )
 
-    SALLOCATE( dRodR, (1:Ntz,0:3,1:mn_field), zero ) ! calculated in rzaxis; 19 Sep 16;
-    SALLOCATE( dRodZ, (1:Ntz,0:3,1:mn_field), zero )
-    SALLOCATE( dZodR, (1:Ntz,0:3,1:mn_field), zero )
-    SALLOCATE( dZodZ, (1:Ntz,0:3,1:mn_field), zero )
+    SALLOCATE( dRodR, (1:Ntz,0:5,1:mn_field), zero ) ! calculated in rzaxis; 19 Sep 16;
+    SALLOCATE( dRodZ, (1:Ntz,0:5,1:mn_field), zero )
+    SALLOCATE( dZodR, (1:Ntz,0:5,1:mn_field), zero )
+    SALLOCATE( dZodZ, (1:Ntz,0:5,1:mn_field), zero )
   endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -1827,22 +1827,31 @@ subroutine read_henneberg_input_geometry()
 
   ! Read axis if harmonics are provided by user. Otherwise these will be evaluated in rzaxis
   if( Igeometry.ne.1 .and. Rac(0).gt.zero ) then
-    iRbc(1:Ntor+1,0) = Rac(0:Ntor)
-    iZbs(1:Ntor+1,0) = Zas(0:Ntor)
+
+
+    iRbc(1:Ntor_field+1,0) = Rac(0:Ntor_field)
+    iZbs(1:Ntor_field+1,0) = Zas(0:Ntor_field)
     if( NOTstellsym ) then
-      iRbs(1:Ntor+1,0) = Ras(0:Ntor)
-      iZbc(1:Ntor+1,0) = Zac(0:Ntor)
+      iRbs(1:Ntor_field+1,0) = Ras(0:Ntor_field)
+      iZbc(1:Ntor_field+1,0) = Zac(0:Ntor_field)
     endif
   else 
 
-    select case( Linitialize )
-    case( :-1 ) ; lvol = Nvol + Linitialize
-    case(   0 ) ; lvol =    1 ! this is really a dummy; no interpolation of interface geometry is required; packxi calls rzaxis with lvol=1; 19 Jul 16;
-    case(   1 ) ; lvol = Nvol
-    case(   2 ) ; lvol = Mvol
-    end select
+    if( Lrzaxis.eq.3 ) then
 
-    WCALL( preset, rzaxis, ( Mvol, mn_field, iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), lvol, .false. ) )
+      iRbc(1:Ntor+1, 0) = iR0c( 0:Ntor, Nvol )
+      iZbs(2:Ntor+1, 0) = iZbs( 1:Ntor, Nvol )
+
+    else
+      select case( Linitialize )
+      case( :-1 ) ; lvol = Nvol + Linitialize
+      case(   0 ) ; lvol =    1 ! this is really a dummy; no interpolation of interface geometry is required; packxi calls rzaxis with lvol=1; 19 Jul 16;
+      case(   1 ) ; lvol = Nvol
+      case(   2 ) ; lvol = Mvol
+      end select
+
+      WCALL( preset, rzaxis, ( Mvol, mn_field, iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), lvol, .false. ) )
+    endif
   endif !Rac(0).gt.zero
 
   ! Set up the initial guess

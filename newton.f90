@@ -73,7 +73,7 @@ subroutine newton( NGdof_bnd, bndDofs, ihybrd )
                         LGdof_force, LGdof_field, NGdof_force, NGdof_field, &
                         dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated , &
                         nfreeboundaryiterations, &
-                        LocalConstraint, nDcalls
+                        LocalConstraint, nDcalls, NGdof_force
 
   use bndRep, only    : pack_henneberg_to_hudson, pack_hudson_to_henneberg
 
@@ -94,9 +94,9 @@ subroutine newton( NGdof_bnd, bndDofs, ihybrd )
 
   INTEGER                :: irevcm, mode, Ldfjac, LR
   REAL                   :: xtol, epsfcn, factor
-  REAL                   :: diag(1:NGdof_bnd), QTF(1:NGdof_bnd), workspace(1:NGdof_bnd,1:4)
+  REAL                   :: diag(1:NGdof_force), QTF(1:NGdof_force), workspace(1:NGdof_force,1:4)
 
-  REAL                   :: force(0:NGdof_bnd)
+  REAL                   :: force(0:NGdof_force)
   REAL                   :: position(0:NGdof_field)
   REAL, allocatable      :: fjac(:,:), RR(:), work(:,:)
 
@@ -133,14 +133,14 @@ subroutine newton( NGdof_bnd, bndDofs, ihybrd )
   else                       ; xtol = max( abs(c05xtol), c05xmax/two**nfreeboundaryiterations ) ! tolerance in bndDofs;
   endif
 
-  Ldfjac = NGdof_bnd ; LR = NGdof_bnd * (NGdof_bnd+1) / 2 ! supplied to NAG;
+  Ldfjac = NGdof_force ; LR = NGdof_force * (NGdof_force+1) / 2 ! supplied to NAG;
 
-  mode = 0 ; diag(1:NGdof_bnd) = one ! if mode=2, multiplicative scale factors need to be provided in diag; if mode=0, factors computed internally;
+  mode = 0 ; diag(1:NGdof_force) = one ! if mode=2, multiplicative scale factors need to be provided in diag; if mode=0, factors computed internally;
 
   factor = c05factor ! used to determine initial step bound; supplied to NAG;
 
   select case( Lfindzero )
-  case( 1 )    ; ML = NGdof_bnd-1 ; MU = NGdof_bnd-1 ; epsfcn = sqrtmachprec ! only required for C05NDF; supplied to NAG;
+  case( 1 )    ; ML = NGdof_force-1 ; MU = NGdof_force-1 ; epsfcn = sqrtmachprec ! only required for C05NDF; supplied to NAG;
   case( 2 )    ;
   end select
 
@@ -201,7 +201,7 @@ subroutine newton( NGdof_bnd, bndDofs, ihybrd )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  SALLOCATE( fjac, (1:NGdof_bnd, 1:NGdof_bnd), zero)
+  SALLOCATE( fjac, (1:NGdof_force, 1:NGdof_force), zero)
   SALLOCATE( RR, (1:NGdof_bnd*(NGdof_bnd+1)/2), zero)
 
   if( Lfindzero.eq.2 ) then

@@ -844,8 +844,7 @@ BEGIN(dforce)
               endif
 
               packorunpack = 'P' ! pack geometrical degrees-of-freedom;
-              LComputeAxis = .true. ! keep axis fixed
-              !LComputeAxis = .true.
+              LComputeAxis = .true.
 
               WCALL(dforce, packxi,( NGdof_field, iposition(isymdiff,0:NGdof_field), Mvol, mn_field, iRbc(1:mn_field,0:Mvol),&
                                     iZbs(1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol), &

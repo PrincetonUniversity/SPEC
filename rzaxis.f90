@@ -344,14 +344,23 @@ subroutine rzaxis( Mvol, mn_field, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDer
         call tfft( Nt, Nz, dZodZ(1:Ntz,0,ii), dZodZ(1:Ntz,1,ii), &
           mn_field, im_field(1:mn_field), in_field(1:mn_field), dZadZ(1:mn_field,0,0,ii), dZadZ(1:mn_field,1,0,ii), dZadZ(1:mn_field,0,1,ii), dZadZ(1:mn_field,1,1,ii), ifail )
 
+        call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), im_field(1:mn_field)*dRadR(1:mn_field,1,0,ii),-im_field(1:mn_field)*dRadR(1:mn_field,0,0,ii),im_field(1:mn_field)*dRadR(1:mn_field,1,1,ii),-im_field(1:mn_field)*dRadR(1:mn_field,0,1,ii), &
+                  Nt, Nz, dRodR(1:Ntz,2,ii), dRodR(1:Ntz,3,ii) )
+        call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), im_field(1:mn_field)*dRadZ(1:mn_field,1,0,ii),-im_field(1:mn_field)*dRadZ(1:mn_field,0,0,ii),im_field(1:mn_field)*dRadZ(1:mn_field,1,1,ii),-im_field(1:mn_field)*dRadZ(1:mn_field,0,1,ii), &
+                  Nt, Nz, dRodZ(1:Ntz,2,ii), dRodZ(1:Ntz,3,ii) )
+        call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), im_field(1:mn_field)*dZadR(1:mn_field,1,0,ii),-im_field(1:mn_field)*dZadR(1:mn_field,0,0,ii),im_field(1:mn_field)*dZadR(1:mn_field,1,1,ii),-im_field(1:mn_field)*dZadR(1:mn_field,0,1,ii), &
+                  Nt, Nz, dZodR(1:Ntz,2,ii), dZodR(1:Ntz,3,ii) )
+        call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), im_field(1:mn_field)*dZadZ(1:mn_field,1,0,ii),-im_field(1:mn_field)*dZadZ(1:mn_field,0,0,ii),im_field(1:mn_field)*dZadZ(1:mn_field,1,1,ii),-im_field(1:mn_field)*dZadZ(1:mn_field,0,1,ii), &
+                  Nt, Nz, dZodZ(1:Ntz,2,ii), dZodZ(1:Ntz,3,ii) )
+
         call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field),-in_field(1:mn_field)*dRadR(1:mn_field,1,0,imn_field),+in_field(1:mn_field)*dRadR(1:mn_field,0,0,imn_field),-in_field(1:mn_field)*dRadR(1:mn_field,1,1,imn_field),+in_field(1:mn_field)*dRadR(1:mn_field,0,1,imn_field), &
-                      Nt, Nz, dRodR(1:Ntz,2,imn_field), dRodR(1:Ntz,3,imn_field) )
+                      Nt, Nz, dRodR(1:Ntz,4,imn_field), dRodR(1:Ntz,5,imn_field) )
         call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field),-in_field(1:mn_field)*dRadZ(1:mn_field,1,0,imn_field),+in_field(1:mn_field)*dRadZ(1:mn_field,0,0,imn_field),-in_field(1:mn_field)*dRadZ(1:mn_field,1,1,imn_field),+in_field(1:mn_field)*dRadZ(1:mn_field,0,1,imn_field), &
-                      Nt, Nz, dRodZ(1:Ntz,2,imn_field), dRodZ(1:Ntz,3,imn_field) )
+                      Nt, Nz, dRodZ(1:Ntz,4,imn_field), dRodZ(1:Ntz,5,imn_field) )
         call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field),-in_field(1:mn_field)*dZadR(1:mn_field,1,0,imn_field),+in_field(1:mn_field)*dZadR(1:mn_field,0,0,imn_field),-in_field(1:mn_field)*dZadR(1:mn_field,1,1,imn_field),+in_field(1:mn_field)*dZadR(1:mn_field,0,1,imn_field), &
-                      Nt, Nz, dZodR(1:Ntz,2,imn_field), dZodR(1:Ntz,3,imn_field) )
+                      Nt, Nz, dZodR(1:Ntz,4,imn_field), dZodR(1:Ntz,5,imn_field) )
         call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field),-in_field(1:mn_field)*dZadZ(1:mn_field,1,0,imn_field),+in_field(1:mn_field)*dZadZ(1:mn_field,0,0,imn_field),-in_field(1:mn_field)*dZadZ(1:mn_field,1,1,imn_field),+in_field(1:mn_field)*dZadZ(1:mn_field,0,1,imn_field), &
-                      Nt, Nz, dZodZ(1:Ntz,2,imn_field), dZodZ(1:Ntz,3,imn_field) )
+                      Nt, Nz, dZodZ(1:Ntz,4,imn_field), dZodZ(1:Ntz,5,imn_field) )
 
       enddo ! end of do ii; 03 Nov 16;
     end if !if (LComputeDerivatives) then
@@ -834,7 +843,7 @@ end if ! Lcheck .eq. 8
     inZbc(:,jvol) = zero
 
     inRbc(1:Ntoraxis+1,jvol) = inRbc(1:Ntoraxis+1,ivol) - solution(idRc:idRc+Ntoraxis)
-    inZbs(2:Ntoraxis+1 ,jvol) = inZbs(2:Ntoraxis+1,ivol) - solution(idZs+1:idZs+Ntoraxis)
+    inZbs(2:Ntoraxis+1,jvol) = inZbs(2:Ntoraxis+1,ivol) - solution(idZs+1:idZs+Ntoraxis)
     if (YESstellsym) then
       inRbs(1:Ntoraxis+1,jvol) = zero
       inZbc(2:Ntoraxis+1,jvol) = zero
@@ -851,6 +860,96 @@ end if ! Lcheck .eq. 8
     DALLOCATE( ipiv )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  elseif( Lrzaxis.eq.3 ) then
+
+    inRbc(:,0) = zero
+    inRbs(:,0) = zero
+    inZbc(:,0) = zero
+    inZbs(:,0) = zero
+
+    inRbc(1:Ntor_field+1, 0) = inRbc(1:Ntor_field+1, 1)
+    inZbs(2:Ntor_field+1, 0) = inZbs(2:Ntor_field+1, 1)
+
+    if( NOTstellsym ) then
+      inRbs(2:Ntor_field+1, 0) = inRbs(2:Ntor_field+1, 1)
+      inZbc(1:Ntor_field+1, 0) = inZbc(1:Ntor_field+1, 1)
+    endif
+
+    if( LcomputeDerivatives ) then 
+
+      dRadR( :, :, :, : ) = zero
+      dRadZ( :, :, :, : ) = zero
+      dZadR( :, :, :, : ) = zero
+      dZadZ( :, :, :, : ) = zero
+
+      do ii=1,mn_field
+        if( im_field(ii).ne.0 ) cycle
+
+        dRadR( ii, 0, 0, ii ) = one  ! dRe0n / dRe0n
+        if( in_field(ii).ne.0 ) then
+          dZadZ( ii, 1, 1, ii ) = one
+        endif
+
+        if( NOTstellsym ) then
+          dZadZ( ii, 0, 0, ii ) = one
+          if( in_field(ii).ne.0 ) then
+            dRadR( ii, 1, 1, ii ) = one
+          endif
+        endif
+
+
+        call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), dRadR(1:mn_field,0,0,ii), dRadR(1:mn_field,1,0,ii), dRadR(1:mn_field,0,1,ii), dRadR(1:mn_field,1,1,ii), &
+                    Nt, Nz, dRodR(1:Ntz,0,ii), dRodR(1:Ntz,1,ii) ) ! R, Z; 03 Nov 16;
+        call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), dRadZ(1:mn_field,0,0,ii), dRadZ(1:mn_field,1,0,ii), dRadZ(1:mn_field,0,1,ii), dRadZ(1:mn_field,1,1,ii), &
+                    Nt, Nz, dRodZ(1:Ntz,0,ii), dRodZ(1:Ntz,1,ii) ) ! R, Z; 03 Nov 16;
+        call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), dZadR(1:mn_field,0,0,ii), dZadR(1:mn_field,1,0,ii), dZadR(1:mn_field,0,1,ii), dZadR(1:mn_field,1,1,ii), &
+                    Nt, Nz, dZodR(1:Ntz,0,ii), dZodR(1:Ntz,1,ii) ) ! R, Z; 03 Nov 16;
+        call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), dZadZ(1:mn_field,0,0,ii), dZadZ(1:mn_field,1,0,ii), dZadZ(1:mn_field,0,1,ii), dZadZ(1:mn_field,1,1,ii), &
+                    Nt, Nz, dZodZ(1:Ntz,0,ii), dZodZ(1:Ntz,1,ii) ) ! R, Z; 03 Nov 16;
+
+        call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), im_field(1:mn_field)*dRadR(1:mn_field,1,0,ii),-im_field(1:mn_field)*dRadR(1:mn_field,0,0,ii),im_field(1:mn_field)*dRadR(1:mn_field,1,1,ii),-im_field(1:mn_field)*dRadR(1:mn_field,0,1,ii), &
+                     Nt, Nz, dRodR(1:Ntz,2,ii), dRodR(1:Ntz,3,ii) )
+        call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), im_field(1:mn_field)*dRadZ(1:mn_field,1,0,ii),-im_field(1:mn_field)*dRadZ(1:mn_field,0,0,ii),im_field(1:mn_field)*dRadZ(1:mn_field,1,1,ii),-im_field(1:mn_field)*dRadZ(1:mn_field,0,1,ii), &
+                     Nt, Nz, dRodZ(1:Ntz,2,ii), dRodZ(1:Ntz,3,ii) )
+        call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), im_field(1:mn_field)*dZadR(1:mn_field,1,0,ii),-im_field(1:mn_field)*dZadR(1:mn_field,0,0,ii),im_field(1:mn_field)*dZadR(1:mn_field,1,1,ii),-im_field(1:mn_field)*dZadR(1:mn_field,0,1,ii), &
+                     Nt, Nz, dZodR(1:Ntz,2,ii), dZodR(1:Ntz,3,ii) )
+        call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), im_field(1:mn_field)*dZadZ(1:mn_field,1,0,ii),-im_field(1:mn_field)*dZadZ(1:mn_field,0,0,ii),im_field(1:mn_field)*dZadZ(1:mn_field,1,1,ii),-im_field(1:mn_field)*dZadZ(1:mn_field,0,1,ii), &
+                     Nt, Nz, dZodZ(1:Ntz,2,ii), dZodZ(1:Ntz,3,ii) )
+
+        call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field),-in_field(1:mn_field)*dRadR(1:mn_field,1,0,ii),+in_field(1:mn_field)*dRadR(1:mn_field,0,0,ii),-in_field(1:mn_field)*dRadR(1:mn_field,1,1,ii),+in_field(1:mn_field)*dRadR(1:mn_field,0,1,ii), &
+                     Nt, Nz, dRodR(1:Ntz,4,ii), dRodR(1:Ntz,5,ii) )
+        call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field),-in_field(1:mn_field)*dRadZ(1:mn_field,1,0,ii),+in_field(1:mn_field)*dRadZ(1:mn_field,0,0,ii),-in_field(1:mn_field)*dRadZ(1:mn_field,1,1,ii),+in_field(1:mn_field)*dRadZ(1:mn_field,0,1,ii), &
+                     Nt, Nz, dRodZ(1:Ntz,4,ii), dRodZ(1:Ntz,5,ii) )
+        call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field),-in_field(1:mn_field)*dZadR(1:mn_field,1,0,ii),+in_field(1:mn_field)*dZadR(1:mn_field,0,0,ii),-in_field(1:mn_field)*dZadR(1:mn_field,1,1,ii),+in_field(1:mn_field)*dZadR(1:mn_field,0,1,ii), &
+                     Nt, Nz, dZodR(1:Ntz,4,ii), dZodR(1:Ntz,5,ii) )
+        call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field),-in_field(1:mn_field)*dZadZ(1:mn_field,1,0,ii),+in_field(1:mn_field)*dZadZ(1:mn_field,0,0,ii),-in_field(1:mn_field)*dZadZ(1:mn_field,1,1,ii),+in_field(1:mn_field)*dZadZ(1:mn_field,0,1,ii), &
+                     Nt, Nz, dZodZ(1:Ntz,4,ii), dZodZ(1:Ntz,5,ii) )
+      enddo
+
+
+
+!******* This part is used to benchmark the matrices perturbation result with finite difference *******
+#ifdef DEBUG
+if (Lcheck .eq. 8) then ! check the analytical derivative with the finite difference
+  do imn_field=1,mn_field
+    do irz=0,1
+      do issym=0,1
+        if( issym.eq.1 .and. YESstellsym ) cycle ! no dependence on non-stellarator symmetric harmonics;
+        if( imn_field.eq.1 .and. irz.ne.issym) cycle ! no m=n=0 sin terms
+        
+        call fndiff_rzaxis( Mvol, mn_field, ivol, iRbc, iRbs, iZbc, iZbs, imn_field, irz, issym )
+      enddo
+    enddo
+  enddo
+
+  FATAL( rzaxis, .true., finite difference check of axis is over )
+end if ! Lcheck .eq. 8
+#endif
+!******* END part used to benchmark the matrices perturbation result with finite difference *******
+
+    endif
+
 
    end if ! end of forking based on Lrzaxis ; 10 Jan 20
 
@@ -874,7 +973,7 @@ subroutine fndiff_rzaxis( Mvol, mn_field, ivol, jRbc, jRbs, jZbc, JZbs, imn_fiel
 
   use fileunits, only : ounit
 
-  use inputlist, only : Wrzaxis, Wmacros, Ntor, Ntoraxis
+  use inputlist, only : Wrzaxis, Wmacros, Ntor, Ntoraxis, dRZ
 
   use cputiming, only : Trzaxis
 
@@ -897,7 +996,8 @@ LOCALS
   BEGIN( rzaxis )
 
   threshold = 1e-8 ! print with difference between FD and analytical more than this threshold
-  dx = 1e-8 * jRbc(1,ivol)
+  ! dx = 1e-8 * jRbc(1,ivol)
+  dx = dRZ
   jvol = 0
   Ntoraxis = min(Ntor_field,Ntoraxis)
 
@@ -923,7 +1023,7 @@ LOCALS
   do ii = 1, Ntoraxis+1
     if (irz.eq.0) then
       if (abs((newRbc(ii,0) - jRbc(ii,jvol))/dx -  dRadR(ii,0,issym,imn_field))/jRbc(1,ivol) .ge. threshold) then
-        write(ounit, *) 'dRc/dR: ii,m,n,issym', ii, im_field(imn_field), in_field(imn_field),issym, (newRbc(ii,0) - jRbc(ii,jvol))/dx, dRadR(ii,0,issym,imn_field), dx, newRbc(ii,0), jRbc(ii,jvol)
+        write(ounit, *) 'dRc/dR: ii,m,n,issym', ii, im_field(imn_field), in_field(imn_field),issym, (newRbc(ii,0) - jRbc(ii,jvol))/dx, dRadR(ii,0,issym,imn_field), dx
       endif
       if (abs((newZbs(ii,0) - jZbs(ii,jvol))/dx -  dZadR(ii,1,issym,imn_field))/jRbc(1,ivol) .ge. threshold) then
         write(ounit, *) 'dZs/dR: ii,m,n,issym', ii, im_field(imn_field), in_field(imn_field),issym, (newZbs(ii,0) - jZbs(ii,jvol))/dx, dZadR(ii,1,issym,imn_field), dx

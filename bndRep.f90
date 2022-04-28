@@ -79,11 +79,13 @@ module bndRep
         Ntor_max   = Ntor
 
       elseif( Lboundary.eq.1 ) then
-        Mpol_field = Mpol + 1
+        !Mpol_field = Mpol + 1
+        Mpol_field = Mpol
         Ntor_field = Ntor + abs(twoalpha)
   
         Mpol_force = Mpol + 1
-        Ntor_force = Ntor + abs(twoalpha)
+        !Ntor_force = Ntor + abs(twoalpha)
+        Ntor_force = Ntor
 
         Mpol_max = Mpol_field
         Ntor_max = Ntor_field
