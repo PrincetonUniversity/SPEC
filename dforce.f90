@@ -751,7 +751,7 @@ use allglobal, only: ncpu, myid, cpus, MPI_COMM_SPEC, &
                      irhoc, iR0c, iZ0s, ibc, Rscale, nDcalls
 
 
-use bndRep, only: forwardMap, precond_rho, precond_b              
+use bndRep, only: forwardMap, precond_rho, precond_b, Ntor_field         
 
 LOCALS
 
@@ -1052,7 +1052,7 @@ BEGIN(dforce)
     ! Print in file for diagnostics
     if(myid.eq.0) then
       ! Print hessian
-      open(10, file=trim(ext)//'.Lcheck6_output.txt', status='unknown')
+      open(10, file=trim(ext)//'.Lcheck7_output.txt', status='unknown')
       write(ounit,'(A)') NEW_LINE('A')
 
       do ii=1, mn_force
@@ -1064,7 +1064,7 @@ BEGIN(dforce)
       write(ounit,'(A)') NEW_LINE('A')
 
       ! Print finite differences
-      open(10, file=trim(ext)//'.Lcheck6_output.FiniteDiff.txt', status='unknown')
+      open(10, file=trim(ext)//'.Lcheck7_output.FiniteDiff.txt', status='unknown')
       do ii=1, mn_force
         write(ounit,2346) myid, im_force(ii), in_force(ii), finitediff_estimate(ii,:)
         write(10   ,2347) finitediff_estimate(ii,:)

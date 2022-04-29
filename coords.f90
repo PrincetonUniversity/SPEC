@@ -150,7 +150,7 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn_field )
 
   use fileunits, only : ounit
 
-  use inputlist, only : Wcoords, Igeometry, Ntor, rpol, rtor, Lboundary
+  use inputlist, only : Wcoords, Igeometry, rpol, rtor, Lboundary
 
   use cputiming, only : Tcoords
 
@@ -164,6 +164,8 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn_field )
                         sg, guvij, &
                         dBdX, &
                         dRodR, dRodZ, dZodR, dZodZ
+
+  use bndRep,    only : Ntor_field
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -209,10 +211,10 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn_field )
    FATAL( coords, sbar.lt.zero .or. sbar.gt.one, invalid sbar )
 #endif
    select case( Igeometry )
-   case( 2   )  ; fj(     1:Ntor+1,0) = sbar                    ! these are the mj.eq.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
-   ;            ; fj(Ntor+2:mn_field    ,0) = sbar**(im_field(Ntor+2:mn_field)+1) ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
-   case( 3   )  ; fj(     1:Ntor+1,0) = sbar**2                 ! switch to sbar=r; 29 Jun 19
-   ;            ; fj(Ntor+2:mn_field    ,0) = sbar**im_field(Ntor+2:mn_field)     ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+   case( 2   )  ; fj(     1:Ntor_field+1,0) = sbar                    ! these are the mj.eq.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+   ;            ; fj(Ntor_field+2:mn_field    ,0) = sbar**(im_field(Ntor_field+2:mn_field)+1) ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+   case( 3   )  ; fj(     1:Ntor_field+1,0) = sbar**2                 ! switch to sbar=r; 29 Jun 19
+   ;            ; fj(Ntor_field+2:mn_field    ,0) = sbar**im_field(Ntor_field+2:mn_field)     ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
    case default ; FATAL( coords, .true., invalid Igeometry for Lcoordinatesingularity=T )
    end select
 
@@ -260,10 +262,10 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn_field )
    FATAL( coords, sbar.lt.small, small denominator )
 #endif
    select case( Igeometry )
-   case( 2   )  ; fj(     1:Ntor+1   ,1) = half                                                  ! these are the mj.eq.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
-   ;            ; fj(Ntor+2:mn_field ,1) = half*(im_field(Ntor+2:mn_field)+one) * fj(Ntor+2:mn_field    ,0) / sbar ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
-   case( 3   )  ; fj(     1:Ntor+1   ,1) = sbar                                                  ! these are the mj.eq.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
-   ;            ; fj(Ntor+2:mn_field ,1) = half* im_field(Ntor+2:mn_field)      * fj(Ntor+2:mn_field    ,0) / sbar     ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+   case( 2   )  ; fj(     1:Ntor_field+1   ,1) = half                                                  ! these are the mj.eq.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+   ;            ; fj(Ntor_field+2:mn_field ,1) = half*(im_field(Ntor_field+2:mn_field)+one) * fj(Ntor_field+2:mn_field    ,0) / sbar ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+   case( 3   )  ; fj(     1:Ntor_field+1   ,1) = sbar                                                  ! these are the mj.eq.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+   ;            ; fj(Ntor_field+2:mn_field ,1) = half* im_field(Ntor_field+2:mn_field)      * fj(Ntor_field+2:mn_field    ,0) / sbar     ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
    case default ; FATAL( coords, .true., invalid Igeometry for Lcoordinatesingularity=T and Lcurvature.ne.0 )
    end select
 
@@ -395,10 +397,10 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn_field )
     FATAL( coords, sbar.lt.small, small denominator )
 #endif
     select case( Igeometry )
-    case( 2 )    ; fj(     1:Ntor+1  , 2) = zero                                                            ! these are the mj.eq.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
-     ;           ; fj(Ntor+2:mn_field, 2) = half * ( im_field(Ntor+2:mn_field)       ) * fj(Ntor+2:mn_field    ,1) / sbar     ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
-    case( 3 )    ; fj(     1:Ntor+1  , 2) = half                                                            ! these are the mj.eq.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
-     ;           ; fj(Ntor+2:mn_field, 2) = half * ( im_field(Ntor+2:mn_field) - one ) * fj(Ntor+2:mn_field    ,1) / sbar     ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+    case( 2 )    ; fj(     1:Ntor_field+1  , 2) = zero                                                            ! these are the mj.eq.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+     ;           ; fj(Ntor_field+2:mn_field, 2) = half * ( im_field(Ntor_field+2:mn_field)       ) * fj(Ntor_field+2:mn_field    ,1) / sbar     ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+    case( 3 )    ; fj(     1:Ntor_field+1  , 2) = half                                                            ! these are the mj.eq.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+     ;           ; fj(Ntor_field+2:mn_field, 2) = half * ( im_field(Ntor_field+2:mn_field) - one ) * fj(Ntor_field+2:mn_field    ,1) / sbar     ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
     case default ;
      ;           ; FATAL( coords, .true., invalid Igeometry for Lcoordinatesingularity=T and Lcurvature=2 )
     end select   ;

@@ -763,14 +763,23 @@ subroutine rzaxis( Mvol, mn_field, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDer
             call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), dZadZ(1:mn_field,0,0,imn_field), dZadZ(1:mn_field,1,0,imn_field), dZadZ(1:mn_field,0,1,imn_field), dZadZ(1:mn_field,1,1,imn_field), &
                          Nt, Nz, dZodZ(1:Ntz,2,imn_field), dZodZ(1:Ntz,1,imn_field) )
 
+            call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), im_field(1:mn_field)*dRadR(1:mn_field,1,0,imn_field),-im_field(1:mn_field)*dRadR(1:mn_field,0,0,imn_field),im_field(1:mn_field)*dRadR(1:mn_field,1,1,imn_field),-im_field(1:mn_field)*dRadR(1:mn_field,0,1,imn_field), &
+                        Nt, Nz, dRodR(1:Ntz,2,imn_field), dRodR(1:Ntz,3,imn_field) )
+            call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), im_field(1:mn_field)*dRadZ(1:mn_field,1,0,imn_field),-im_field(1:mn_field)*dRadZ(1:mn_field,0,0,imn_field),im_field(1:mn_field)*dRadZ(1:mn_field,1,1,imn_field),-im_field(1:mn_field)*dRadZ(1:mn_field,0,1,imn_field), &
+                        Nt, Nz, dRodZ(1:Ntz,2,imn_field), dRodZ(1:Ntz,3,imn_field) )
+            call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), im_field(1:mn_field)*dZadR(1:mn_field,1,0,imn_field),-im_field(1:mn_field)*dZadR(1:mn_field,0,0,imn_field),im_field(1:mn_field)*dZadR(1:mn_field,1,1,imn_field),-im_field(1:mn_field)*dZadR(1:mn_field,0,1,imn_field), &
+                        Nt, Nz, dZodR(1:Ntz,2,imn_field), dZodR(1:Ntz,3,imn_field) )
+            call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), im_field(1:mn_field)*dZadZ(1:mn_field,1,0,imn_field),-im_field(1:mn_field)*dZadZ(1:mn_field,0,0,imn_field),im_field(1:mn_field)*dZadZ(1:mn_field,1,1,imn_field),-im_field(1:mn_field)*dZadZ(1:mn_field,0,1,imn_field), &
+                        Nt, Nz, dZodZ(1:Ntz,2,imn_field), dZodZ(1:Ntz,3,imn_field) )
+
             call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field),-in_field(1:mn_field)*dRadR(1:mn_field,1,0,imn_field),+in_field(1:mn_field)*dRadR(1:mn_field,0,0,imn_field),-in_field(1:mn_field)*dRadR(1:mn_field,1,1,imn_field),+in_field(1:mn_field)*dRadR(1:mn_field,0,1,imn_field), &
-                         Nt, Nz, dRodR(1:Ntz,2,imn_field), dRodR(1:Ntz,3,imn_field) )
+                         Nt, Nz, dRodR(1:Ntz,4,imn_field), dRodR(1:Ntz,5,imn_field) )
             call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field),-in_field(1:mn_field)*dRadZ(1:mn_field,1,0,imn_field),+in_field(1:mn_field)*dRadZ(1:mn_field,0,0,imn_field),-in_field(1:mn_field)*dRadZ(1:mn_field,1,1,imn_field),+in_field(1:mn_field)*dRadZ(1:mn_field,0,1,imn_field), &
-                         Nt, Nz, dRodZ(1:Ntz,2,imn_field), dRodZ(1:Ntz,3,imn_field) )
+                         Nt, Nz, dRodZ(1:Ntz,4,imn_field), dRodZ(1:Ntz,5,imn_field) )
             call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field),-in_field(1:mn_field)*dZadR(1:mn_field,1,0,imn_field),+in_field(1:mn_field)*dZadR(1:mn_field,0,0,imn_field),-in_field(1:mn_field)*dZadR(1:mn_field,1,1,imn_field),+in_field(1:mn_field)*dZadR(1:mn_field,0,1,imn_field), &
-                         Nt, Nz, dZodR(1:Ntz,2,imn_field), dZodR(1:Ntz,3,imn_field) )
+                         Nt, Nz, dZodR(1:Ntz,4,imn_field), dZodR(1:Ntz,5,imn_field) )
             call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field),-in_field(1:mn_field)*dZadZ(1:mn_field,1,0,imn_field),+in_field(1:mn_field)*dZadZ(1:mn_field,0,0,imn_field),-in_field(1:mn_field)*dZadZ(1:mn_field,1,1,imn_field),+in_field(1:mn_field)*dZadZ(1:mn_field,0,1,imn_field), &
-                         Nt, Nz, dZodZ(1:Ntz,2,imn_field), dZodZ(1:Ntz,3,imn_field) )
+                         Nt, Nz, dZodZ(1:Ntz,4,imn_field), dZodZ(1:Ntz,5,imn_field) )
 
 !******* This part is used to benchmark the matrices perturbation result with finite difference *******
 #ifdef DEBUG

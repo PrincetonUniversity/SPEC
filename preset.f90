@@ -134,8 +134,8 @@ subroutine set_global_variables()
 !latex \begin{enumerate}
 !latex \item The ``extended'' Fourier resolution is defined by \internal{lMpol} $ = 4 $ \inputvar{Mpol}, \internal{lNtor} $ = 4 $\inputvar{Ntor}.
 !latex \end{enumerate}
-  lMpol = 4 * Mpol_field ; ! enhanced poloidal resolution for metrics
-  lNtor = 4*Ntor_field     ! enhanced toroidal resolution for metrics;
+  lMpol = 4 * Mpol_max ; ! enhanced poloidal resolution for metrics
+  lNtor = 4 * Ntor_max     ! enhanced toroidal resolution for metrics;
   mne   = 1 + lNtor + lMpol * ( 2 * lNtor + 1 ) ! resolution of metrics; enhanced resolution; see metrix;
 
   SALLOCATE( ime, (1:mne), 0 )
@@ -1067,7 +1067,7 @@ subroutine set_global_variables()
 
 ! Fourier transforms;
 
-  Nt = max( Ndiscrete*4*Mpol_force, 1 ) ; Nz = max( Ndiscrete*4*ntor_field, 1 ) ; Ntz = Nt*Nz ; soNtz = one / sqrt( one*Ntz ) ! exaggerated discrete resolution;
+  Nt = max( Ndiscrete*4*Mpol_max, 1 ) ; Nz = max( Ndiscrete*4*ntor_max, 1 ) ; Ntz = Nt*Nz ; soNtz = one / sqrt( one*Ntz ) ! exaggerated discrete resolution;
 
   FATAL( preset, Nz.eq.0, illegal division )
   FATAL( preset, Nt.eq.0, illegal division )
