@@ -1,4 +1,4 @@
-function plot_spec_current_profile( data, newfig )
+function plot_spec_current_profile( data, iflag, newfig, varargin )
 %
 % PLOT_SPEC_CURRENT_PROFILE( DATA, NEWFIG )
 % =========================================
@@ -9,19 +9,38 @@ function plot_spec_current_profile( data, newfig )
 % INPUTS
 % ------
 %   * data: SPEC output data obtained with read_spec(filename)
+%   * iflag: (0) plots Ivolume
+%            (1) plots Isurf
+%            (2) plots both
 %   * newfig: (0) plot on current figure
 %             (1) open a new figure
 %             (2) Erase current figure and use it
 %
 % Written by A. Baillod (2020)
 %
+    l = length(varargin);
+    if mod(l,2)~=0
+        error('Invalid number of argument')
+    end
+
+    opt.LineWidth = 2;
+    opt.Color = 'r';
+    opt.Marker = 'none';
+    opt.MarkerSize = 8;
+    opt.LineStyle = '-';
+    for ii=1:l/2
+        field = varargin{2*ii-1};
+        value = varargin{2*ii  };
+
+        opt.(field) = value;
+    end
 
 
   switch newfig
       case 0 
           hold on
       case 1 
-          figure('Position', [200 200 900 700])
+          figure('Position', [200 200 900 700],'Color','w')
           hold on
       case 2
           hold off
@@ -66,19 +85,27 @@ function plot_spec_current_profile( data, newfig )
           tflux = get_spec_torflux(data,lvol,0,-1,sval(k),ns,nt);
           psitor(k) = cumflux + tflux;
           
-          Iphi(k) = cumcur + mu(lvol) * tflux;
+          if iflag==0 || iflag==2
+            Iphi(k) = cumcur + mu(lvol) * tflux;
+          else
+            Iphi(k) = cumcur;
+          end
       end
       cumflux = psitor(k);
       kstart  = kstart+nptrj(lvol);
       %cumcur  = Iphi(k);
       
-      cumcur = Iphi(k) + data.output.IPDt(lvol); % add surface current
+      if iflag==1 || iflag==2
+        cumcur = Iphi(k) + data.output.IPDt(lvol); % add surface current
+      else
+        cumcur = Iphi(k);
+      end
   end
   
   phiedge=psitor(end);
   
   
-  plot( sqrt(psitor / phiedge), Iphi, 'LineWidth', 3 )
+  plot( sqrt(psitor / phiedge), Iphi, 'LineWidth', opt.LineWidth, 'Color', opt.Color, 'Marker', opt.Marker, 'LineStyle', opt.LineStyle )
   xlabel('$(\Psi_t / \Psi_{edge})^{1/2}$', 'Interpreter', 'latex')
   ylabel('$\mu_0I_\phi$[Tm]', 'Interpreter', 'latex')
   set(gca, 'FontSize', 18)

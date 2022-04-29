@@ -1,4 +1,4 @@
-function plot_spec_kam(data, nz0, newfig)
+function plot_spec_kam(data, nz0, newfig, varargin)
 
 %
 % PLOT_SPEC_KAM( DATA, NZ0, NEWFIG )
@@ -16,11 +16,25 @@ function plot_spec_kam(data, nz0, newfig)
 %   upgraded by J.Loizu (07.2017)
 %   modified by A. Baillod (06.2019)
 %   modified by J.Loizu (01.2020)
+l = length(varargin);
+if mod(l,2)~=0
+    error('Invalid number of argument')
+end
+
+opt.InterfaceColor = 'r';
+for ii=1:l/2
+    field = varargin{2*ii-1};
+    value = varargin{2*ii  };
+    
+    opt.(field)=value;
+end
 
 Np = double(data.input.physics.Nfp);
-%Nplan = double(size(data.poincare.R,2));   % # of toroidal planes
-%zetaov2pi = (nz0-1) / (Np * Nplan);
-zetaov2pi = 0;
+Ndiscrete = double(data.input.numerics.Ndiscrete);
+Ntor = double(max(abs(data.output.in)));
+Nplan = max(Ndiscrete*4*Ntor, 1)
+zetaov2pi = (nz0-1) / (Nplan);
+%zetaov2pi = 0;
 
 Nvol            = double(data.input.physics.Nvol);
 mn              = data.output.mn;
@@ -93,8 +107,9 @@ switch newfig
         hold off
 end
 
+
 for i=1:size(X,1)
- scatter(X(i,:),Y(i,:),3,'filled','r')
+ scatter(X(i,:),Y(i,:),3,'filled','MarkerFaceColor',opt.InterfaceColor,'MarkerEdgeColor',opt.InterfaceColor)
  hold on
 end
 

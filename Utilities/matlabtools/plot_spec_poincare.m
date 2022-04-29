@@ -1,4 +1,4 @@
-function phi = plot_spec_poincare(data,nz0,arr,newfig)
+function phi = plot_spec_poincare(data,nz0,arr,newfig,varargin)
 
 %
 % PLOT_SPEC_POINCARE( DATA, NZ0, NFP, ARR, NEWFIG )
@@ -18,6 +18,20 @@ function phi = plot_spec_poincare(data,nz0,arr,newfig)
 % written by J.Loizu (2015)
 % modified by A.Baillod (2019)
 % modified by J.Loizu (2020)
+
+opt.BoundaryColor = 'r';
+opt.CBColor = 'k';
+opt.step = 1;
+
+ll = length(varargin);
+if mod(ll,2)~=0
+    error('Invalid number of arguments')
+end
+
+for ii=1:ll/2
+    opt.(varargin{2*ii-1}) = varargin{2*ii};
+end
+stp = opt.step;
 
 nfp = data.input.physics.Nfp;
 
@@ -50,10 +64,10 @@ nz
 disp(' ');
 
 
-rmax   = max(max(max(data.poincare.R)));
-rmin   = min(min(min(data.poincare.R)));
-zmax   = max(max(max(data.poincare.Z)));
-zmin   = min(min(min(data.poincare.Z)));
+rmax   = max(max(max(data.poincare.R(:,nz0,:))));
+rmin   = min(min(min(data.poincare.R(:,nz0,:))));
+zmax   = max(max(max(data.poincare.Z(:,nz0,:))));
+zmin   = min(min(min(data.poincare.Z(:,nz0,:))));
 
 switch data.input.physics.Igeometry
     case 1
@@ -67,18 +81,20 @@ switch data.input.physics.Igeometry
         ymin = -1.1*rmax;
         ymax =  1.1*rmax;
     case 3
-        xmin =  0.9*rmin;
-        xmax =  1.1*rmax;
-        ymin =  1.1*zmin;
-        ymax =  1.1*zmax;
+        xmin =  0.99*rmin;
+        xmax =  1.01*rmax;
+        dz = zmax-zmin;
+        ymin =  zmin - 0.05*dz;
+        ymax =  zmax + 0.05*dz;
 end
 
 
 nth    = 5096;  %ploting options for the boundary
-bcol   = 'r';
+bcol   = opt.BoundaryColor;
 bthick = 3;
+lthick = 1;
 if(data.input.physics.Lfreebound==1)
-bcol   = 'k';
+bcol   = opt.CBColor;
 bthick = 1;
 end
 
@@ -94,7 +110,7 @@ switch newfig
     case 0
         hold on
     case 1
-        figure
+        figure('Color','w','Position',[200 200 900 700])
         hold on
     case 2
         hold off
@@ -118,21 +134,21 @@ switch nz0
            R    = squeeze(data.poincare.R(:,j,:));
            T    = rpol*mod(squeeze(data.poincare.t(:,j,:)),2*pi);
            for i=arr       %for each field line trajectory
-               scatter(T(i,:),R(i,:),10,'.k')
+               scatter(T(i,:),R(i,:),lthick,'.k')
                hold on
            end
        case 2  
            R    = squeeze(data.poincare.R(:,j,:));
            T    = squeeze(data.poincare.t(:,j,:));
            for i=arr       %for each field line trajectory
-               scatter(R(i,:).*cos(T(i,:)),R(i,:).*sin(T(i,:)),10,'.k')
+               scatter(R(i,:).*cos(T(i,:)),R(i,:).*sin(T(i,:)),lthick,'.k')
                hold on;
            end
        case 3
            R = squeeze(data.poincare.R(:,j,:));
            Z = squeeze(data.poincare.Z(:,j,:));
            for i=arr     %for each field line trajectory
-            scatter(R(i,:),Z(i,:),10,'.k')
+            scatter(R(i,:),Z(i,:),lthick,'.k')
             hold on;
            end
        otherwise
@@ -190,8 +206,8 @@ switch nz0
    ylabel('R','FontSize',12)
   end
 
-  xlim([xmin xmax])
-  ylim([ymin ymax])
+%   xlim([xmin xmax])
+%   ylim([ymin ymax])
 
  end
 
@@ -199,22 +215,22 @@ switch nz0
        
    switch data.input.physics.Igeometry
        case 1
-           R    = squeeze(data.poincare.R(:,nz0,:));
-           T    = rpol*mod(squeeze(data.poincare.t(:,nz0,:)),2*pi);
+           R    = squeeze(data.poincare.R(:,nz0,1:stp:end));
+           T    = rpol*mod(squeeze(data.poincare.t(:,nz0,1:stp:end)),2*pi);
            for i=arr       %for each field line trajectory
                scatter(T(i,:),R(i,:),10,'.k')
                hold on
            end
        case 2  
-           R    = squeeze(data.poincare.R(:,nz0,:));
-           T    = squeeze(data.poincare.t(:,nz0,:));
+           R    = squeeze(data.poincare.R(:,nz0,1:stp:end));
+           T    = squeeze(data.poincare.t(:,nz0,1:stp:end));
            for i=arr       %for each field line trajectory
                scatter(R(i,:).*cos(T(i,:)),R(i,:).*sin(T(i,:)),10,'.k')
                hold on;
            end
        case 3
-           R = squeeze(data.poincare.R(:,nz0,:));
-           Z = squeeze(data.poincare.Z(:,nz0,:));
+           R = squeeze(data.poincare.R(:,nz0,1:stp:end));
+           Z = squeeze(data.poincare.Z(:,nz0,1:stp:end));
            for i=arr     %for each field line trajectory
             scatter(R(i,:),Z(i,:),10,'.k')
             hold on;
@@ -261,7 +277,7 @@ switch nz0
   end  
 
   if data.input.physics.Igeometry ~= 1
-   scatter(Rb,Zb,bthick,'*',bcol)
+   scatter(Rb,Zb,bthick,'*','MarkerFaceColor',bcol,'MarkerEdgeColor',bcol)
    hold on
    set(gca,'FontSize',12)
    axis equal
@@ -276,8 +292,10 @@ switch nz0
    ylabel('R','FontSize',12)
   end
 
-  xlim([xmin xmax])
-  ylim([ymin ymax])
+%   xlim([xmin xmax])
+%   ylim([ymin ymax])
+  
+  set(gca,'FontSize',18)
 
 end
 

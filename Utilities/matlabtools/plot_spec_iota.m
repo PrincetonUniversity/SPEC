@@ -1,4 +1,4 @@
-function out = plot_spec_iota(data,iorq,xaxis,newfig)
+function out = plot_spec_iota(data,iorq,xaxis,newfig,varargin)
 
 %
 % PLOT_SPEC_IOTA( DATA, IORQ, XAXIS, NEWFIG )
@@ -26,8 +26,26 @@ function out = plot_spec_iota(data,iorq,xaxis,newfig)
 % modified by A.Baillod (01.2019)
 % modified by J.Loizu (01.2020)
 
+l = length(varargin);
+if mod(l,2)~=0
+    error('Invalid number of argument')
+end
+
+opt.LineWidth = 2;
+opt.Color = 'r';
+opt.Marker = '*';
+opt.MarkerSize = 8;
+opt.LineStyle = 'none';
+for ii=1:l/2
+    field = varargin{2*ii-1};
+    value = varargin{2*ii  };
+    
+    opt.(field) = value;
+end
+
+
 if(newfig==1)
-    figure
+    figure('Position', [200 200 900 700], 'Color', 'w')
     hold on;
 elseif newfig==0
     hold on;
@@ -47,14 +65,18 @@ nsucctrj = length(data.poincare.R(:,1,1)); % number of successfully followed tra
 
 switch xaxis
  case 's'
-  plot(data.transform.fiota(1:nsucctrj,1),F(1:nsucctrj),'*','MarkerSize',8,'LineWidth',2)
+  plot(data.transform.fiota(1:nsucctrj,1),F(1:nsucctrj),'Marker',opt.Marker,...
+      'MarkerSize',opt.MarkerSize,'LineWidth',opt.LineWidth,'MarkerEdgeColor',...
+      opt.Color,'LineStyle',opt.LineStyle,'Color',opt.Color)
   ylabel(Flabel)
   out    = cell(2);
   out{1} = data.transform.fiota(:,1); 
   out{2} = F;
 
  case 'R'
-  plot(transpose(data.poincare.R(:,1,1)),F(1:nsucctrj),'*','MarkerSize',8,'LineWidth',2)
+  plot(transpose(data.poincare.R(:,1,1)),F(1:nsucctrj),'Marker',opt.Marker,...
+      'MarkerSize',opt.MarkerSize,'LineWidth',opt.LineWidth,'MarkerEdgeColor',...
+      opt.Color,'LineStyle',opt.LineStyle,'Color',opt.Color)
   ylabel(Flabel)
   out = cell(2);
   out{1} = data.poincare.R(:,1,1);            
@@ -104,7 +126,9 @@ switch xaxis
       kstart  = kstart+nptrj(lvol);
   end
     
-  plot(psitor/phiedge,F(1:nsucctrj),'*','MarkerSize',8,'LineWidth',2)
+  plot(psitor/phiedge,F(1:nsucctrj),'Marker',opt.Marker,'MarkerSize',opt.MarkerSize,...
+      'LineWidth',opt.LineWidth,'MarkerEdgeColor',opt.Color,...
+      'LineStyle',opt.LineStyle,'Color',opt.Color)
   ylabel(Flabel)
   xlabel('\Psi / \Psi_{edge}')
   
@@ -157,7 +181,9 @@ case 'r'
    
 %  phiedge = data.input.physics.phiedge;
 
-  plot(sqrt(psitor/phiedge),F(1:nsucctrj),'*','MarkerSize',8,'LineWidth',2)
+  plot(sqrt(psitor/phiedge),F(1:nsucctrj),'Marker',opt.Marker,'MarkerSize',...
+      opt.MarkerSize,'LineWidth',opt.LineWidth,'MarkerEdgeColor',...
+      opt.Color,'LineStyle',opt.LineStyle,'Color',opt.Color)
   ylabel(Flabel)
   xlabel('(\Psi / \Psi_{edge})^{1/2}')
   
@@ -166,3 +192,5 @@ case 'r'
   out{2} = F(1:nsucctrj);
   
 end
+
+set(gca,'FontSize',18)
