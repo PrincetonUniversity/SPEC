@@ -91,16 +91,21 @@ subroutine set_global_variables()
     NOTstellsym = .false.
   end select
 
-  ! Set Rscale, used for normalizing the geometrical degrees-of-freedom;
-  if( Lfreebound.eq.0 ) then 
-    if( Lboundary.eq.0 ) then
-      Rscale = Rbc(0,0) 
+  if( myid.eq.0 ) then
+    ! Set Rscale, used for normalizing the geometrical degrees-of-freedom;
+    if( Lfreebound.eq.0 ) then 
+      if( Lboundary.eq.0 ) then
+        Rscale = Rbc(0,0) 
+      else
+        Rscale = R0c(0)
+      endif !Lboundary
     else
-      Rscale = R0c(0)
-    endif !Lboundary
-  else
-    Rscale = Rwc(0,0)
+      Rscale = Rwc(0,0)
+    endif
   endif
+
+  RlBCAST( Rscale, 1, 0 )
+
 
   ! set up Henneberg's mapping
   if( Lboundary.eq.0 ) then
@@ -110,7 +115,7 @@ subroutine set_global_variables()
   Lhennangle = .false.
   call initialize_mapping( Lhennangle )
 
-
+!latex \subsubsection{\type{nDcalls} : total number of calls to dforce }
   nDcalls = 0
 
 !latex \subsubsection{\type{Mvol} : total number of volumes}
@@ -134,8 +139,8 @@ subroutine set_global_variables()
 !latex \begin{enumerate}
 !latex \item The ``extended'' Fourier resolution is defined by \internal{lMpol} $ = 4 $ \inputvar{Mpol}, \internal{lNtor} $ = 4 $\inputvar{Ntor}.
 !latex \end{enumerate}
-  lMpol = 4 * Mpol_field ; ! enhanced poloidal resolution for metrics
-  lNtor = 4*Ntor_field     ! enhanced toroidal resolution for metrics;
+  lMpol = 4 * Mpol_max ; ! enhanced poloidal resolution for metrics
+  lNtor = 4 * Ntor_max     ! enhanced toroidal resolution for metrics;
   mne   = 1 + lNtor + lMpol * ( 2 * lNtor + 1 ) ! resolution of metrics; enhanced resolution; see metrix;
 
   SALLOCATE( ime, (1:mne), 0 )
@@ -204,7 +209,7 @@ subroutine set_global_variables()
   if( Lrzaxis.eq.1 ) then !Only used by the centroid method
     SALLOCATE( ajk, (1:mn_field), zero ) ! this must be allocated & assigned now, as it is used in readin; primarily used in packxi
 
-    do kk = 1, mn_field ; mk = im_field(kk) ; nk = in_field(kk)
+    do kk = 1, mn_field ; mk = im_field(kk)
       if( mk.eq.0 ) then
         ajk(kk) = pi2
       endif
@@ -254,7 +259,9 @@ subroutine set_global_variables()
   NGdof_bnd   = ( Mvol-1 ) * LGdof_bnd
   NGdof_force = ( Mvol-1 ) * LGdof_force
 
-  FATAL( preset, NGdof_bnd.NE.NGdof_force, Number of geometrical dofs are not equal to number of force dofs.)
+  !FATAL( preset, NGdof_bnd.NE.NGdof_force, Number of geometrical dofs are not equal to number of force dofs.)
+  !FATAL( preset, Mpol_field.NE.Mpol_force, Poloidal Fourier resolution does not agree.)
+  !FATAL( preset, Ntor_field.NE.Ntor_force, Toroidal Fourier resolution does not agree.)
 
   if( Wpreset ) then ; cput = GETTIME ; write(ounit,'("preset : ",f10.2," : myid=",i3," ; NGdof_field=",i9," ;")') cput-cpus, myid, NGdof_field
   endif
@@ -1065,7 +1072,7 @@ subroutine set_global_variables()
 
 ! Fourier transforms;
 
-  Nt = max( Ndiscrete*4*Mpol_force, 1 ) ; Nz = max( Ndiscrete*4*ntor_field, 1 ) ; Ntz = Nt*Nz ; soNtz = one / sqrt( one*Ntz ) ! exaggerated discrete resolution;
+  Nt = max( Ndiscrete*4*Mpol_max, 1 ) ; Nz = max( Ndiscrete*4*ntor_max, 1 ) ; Ntz = Nt*Nz ; soNtz = one / sqrt( one*Ntz ) ! exaggerated discrete resolution;
 
   FATAL( preset, Nz.eq.0, illegal division )
   FATAL( preset, Nt.eq.0, illegal division )
@@ -1100,10 +1107,10 @@ subroutine set_global_variables()
     SALLOCATE( dZadR, (1:mn_field,0:1,0:1,1:mn_field), zero )
     SALLOCATE( dZadZ, (1:mn_field,0:1,0:1,1:mn_field), zero )
 
-    SALLOCATE( dRodR, (1:Ntz,0:3,1:mn_field), zero ) ! calculated in rzaxis; 19 Sep 16;
-    SALLOCATE( dRodZ, (1:Ntz,0:3,1:mn_field), zero )
-    SALLOCATE( dZodR, (1:Ntz,0:3,1:mn_field), zero )
-    SALLOCATE( dZodZ, (1:Ntz,0:3,1:mn_field), zero )
+    SALLOCATE( dRodR, (1:Ntz,0:5,1:mn_field), zero ) ! calculated in rzaxis; 19 Sep 16;
+    SALLOCATE( dRodZ, (1:Ntz,0:5,1:mn_field), zero )
+    SALLOCATE( dZodR, (1:Ntz,0:5,1:mn_field), zero )
+    SALLOCATE( dZodZ, (1:Ntz,0:5,1:mn_field), zero )
   endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -1533,15 +1540,17 @@ subroutine read_input_geometry()
   ! First read input, call specific routine depending on boundary representation
   if( myid.eq.0 ) then
     if( Lboundary.eq.0 ) then
-      Lchangeangle = .false.
-      call read_hudson_input_geometry( Lchangeangle )
+      if( myid.eq.0 ) then
+        Lchangeangle = .false.
+        call read_hudson_input_geometry( Lchangeangle )
+      endif
     else
       call read_henneberg_input_geometry()
     endif
 
     if( Igeometry.eq.3 ) then
       ! Need to check if angle is right
-      call check_and_change_angle()
+      call check_and_change_angle( Lchangeangle )
     endif
 
 
@@ -1573,32 +1582,40 @@ subroutine read_input_geometry()
 
   !---------------------------------------------------------------------------------------------
   ! And now broadcast
+  if( Lboundary.eq.1 .and. ncpu.gt.1 ) then ! Need to set the correct variable in bndRep for all CPUs
+
+    LlBCAST( Lchangeangle, 1, 0 )
+    call change_mapping_angle( Lchangeangle )
+  endif
+
   ! Broadcast rhomn, bn, r0n, Z0n only in case of Lboundary.eq.1
-  if( Lboundary.eq.1 ) then
-    RlBCAST( irhoc(1:mn_rho, 1:Mvol),  mn_rho *Mvol, 0 )
-    RlBCAST( ibc(  0:Ntor  , 1:Mvol), (Ntor+1)*Mvol, 0 )
-    RlBCAST( iR0c( 0:Ntor  , 1:Mvol), (Ntor+1)*Mvol, 0 )
-    RlBCAST( iZ0s( 0:Ntor  , 1:Mvol), (Ntor+1)*Mvol, 0 )
-  endif ! Lboundary.eq.1
+  if( ncpu.gt.1 ) then
+    if( Lboundary.eq.1 ) then
+      RlBCAST( irhoc(1:mn_rho, 1:Mvol),  mn_rho *Mvol, 0 )
+      RlBCAST( ibc(  0:Ntor  , 1:Mvol), (Ntor+1)*Mvol, 0 )
+      RlBCAST( iR0c( 0:Ntor  , 1:Mvol), (Ntor+1)*Mvol, 0 )
+      RlBCAST( iZ0s( 0:Ntor  , 1:Mvol), (Ntor+1)*Mvol, 0 )
+    endif ! Lboundary.eq.1
 
-  ! Broadcast Rmn, Zmn
-  ; RlBCAST( iRbc(1:mn_field,0:Mvol), (Mvol+1)*mn_field, 0 )
-  if( Igeometry.eq.3 ) then
-    ;RlBCAST( iZbs(1:mn_field,0:Mvol), (Mvol+1)*mn_field, 0 ) ! only required for ii > 1 ;
-  endif
-  if( NOTstellsym ) then
-    ;RlBCAST( iRbs(1:mn_field,0:Mvol), (Mvol+1)*mn_field, 0 ) ! only required for ii > 1 ;
+    ! Broadcast Rmn, Zmn
+    ; RlBCAST( iRbc(1:mn_field,0:Mvol), (Mvol+1)*mn_field, 0 )
     if( Igeometry.eq.3 ) then
-      RlBCAST( iZbc(1:mn_field,0:Mvol), (Mvol+1)*mn_field, 0 )
+      ;RlBCAST( iZbs(1:mn_field,0:Mvol), (Mvol+1)*mn_field, 0 ) ! only required for ii > 1 ;
     endif
-  endif
-
-  if( Lfreebound.eq.1 ) then
-    ;RlBCAST( iVns(1:mn_force), mn_force, 0 ) ! only required for ii > 1 ;
-    ;RlBCAST( iBns(1:mn_force), mn_force, 0 ) ! only required for ii > 1 ;
     if( NOTstellsym ) then
-      RlBCAST( iVnc(1:mn_force), mn_force, 0 )
-      RlBCAST( iBnc(1:mn_force), mn_force, 0 )
+      ;RlBCAST( iRbs(1:mn_field,0:Mvol), (Mvol+1)*mn_field, 0 ) ! only required for ii > 1 ;
+      if( Igeometry.eq.3 ) then
+        RlBCAST( iZbc(1:mn_field,0:Mvol), (Mvol+1)*mn_field, 0 )
+      endif
+    endif
+
+    if( Lfreebound.eq.1 ) then
+      ;RlBCAST( iVns(1:mn_force), mn_force, 0 ) ! only required for ii > 1 ;
+      ;RlBCAST( iBns(1:mn_force), mn_force, 0 ) ! only required for ii > 1 ;
+      if( NOTstellsym ) then
+        RlBCAST( iVnc(1:mn_force), mn_force, 0 )
+        RlBCAST( iBnc(1:mn_force), mn_force, 0 )
+      endif
     endif
   endif
 
@@ -1792,11 +1809,11 @@ subroutine read_henneberg_input_geometry()
   INTEGER :: Lcurvature        ! Flag for call to coords
   INTEGER :: ii, idx_mode, ind ! loop indices
   INTEGER :: mm, nn            ! poloidal, toroidal mode number
+  INTEGER :: cpu_id            ! Identify which CPU for which volume
 
   BEGIN(preset)
 
   ! --------------------------------------------------------------------------------------
-
   ! Read rhomn harmonics, store in irhoc
   do ii = 1, mn_rho
     mm=im_rho(ii)
@@ -1816,31 +1833,37 @@ subroutine read_henneberg_input_geometry()
   ! rn(m=0,n=0) is always equal to zero (irrelevant)
   iZ0s( 0, Nvol ) = zero
 
-  ! Map to Rmn, Zmn the input plasma boundary
-  if( Lfreebound.eq.0 ) then
-    call forwardMap( irhoc(1:mn_rho,Nvol), ibc(0:Ntor,Nvol), iR0c(0:Ntor,Nvol), iZ0s(1:Ntor,Nvol), iRbc(1:mn_field,Nvol), iZbs(1:mn_field,Nvol) )
-  else
-    ! TODO: implement free-boundary stuff
-  endif
+  ! Map the boundary
+  call forwardMap( irhoc(1:mn_rho,Nvol), ibc(0:Ntor,Nvol), iR0c(0:Ntor,Nvol), iZ0s(1:Ntor,Nvol), iRbc(1:mn_field,Nvol), iZbs(1:mn_field,Nvol) )
+
 
   ! Read axis if harmonics are provided by user. Otherwise these will be evaluated in rzaxis
   if( Igeometry.ne.1 .and. Rac(0).gt.zero ) then
-    iRbc(1:Ntor+1,0) = Rac(0:Ntor)
-    iZbs(1:Ntor+1,0) = Zas(0:Ntor)
+
+
+    iRbc(1:Ntor_field+1,0) = Rac(0:Ntor_field)
+    iZbs(1:Ntor_field+1,0) = Zas(0:Ntor_field)
     if( NOTstellsym ) then
-      iRbs(1:Ntor+1,0) = Ras(0:Ntor)
-      iZbc(1:Ntor+1,0) = Zac(0:Ntor)
+      iRbs(1:Ntor_field+1,0) = Ras(0:Ntor_field)
+      iZbc(1:Ntor_field+1,0) = Zac(0:Ntor_field)
     endif
   else 
 
-    select case( Linitialize )
-    case( :-1 ) ; lvol = Nvol + Linitialize
-    case(   0 ) ; lvol =    1 ! this is really a dummy; no interpolation of interface geometry is required; packxi calls rzaxis with lvol=1; 19 Jul 16;
-    case(   1 ) ; lvol = Nvol
-    case(   2 ) ; lvol = Mvol
-    end select
+    if( Lrzaxis.eq.3 ) then
 
-    WCALL( preset, rzaxis, ( Mvol, mn_field, iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), lvol, .false. ) )
+      iRbc(1:Ntor+1, 0) = iR0c( 0:Ntor, Nvol )
+      iZbs(2:Ntor+1, 0) = iZbs( 1:Ntor, Nvol )
+
+    else
+      select case( Linitialize )
+      case( :-1 ) ; lvol = Nvol + Linitialize
+      case(   0 ) ; lvol =    1 ! this is really a dummy; no interpolation of interface geometry is required; packxi calls rzaxis with lvol=1; 19 Jul 16;
+      case(   1 ) ; lvol = Nvol
+      case(   2 ) ; lvol = Mvol
+      end select
+
+      WCALL( preset, rzaxis, ( Mvol, mn_field, iRbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), lvol, .false. ) )
+    endif
   endif !Rac(0).gt.zero
 
   ! Set up the initial guess
@@ -1886,7 +1909,6 @@ subroutine read_henneberg_input_geometry()
       do lvol=1, Mvol
         call backwardMap( iRbc(1:mn_field,lvol), iZbs(1:mn_field,lvol), irhoc(1:mn_rho,lvol), ibc(0:Ntor,lvol), iR0c(0:Ntor,lvol), iZ0s(1:Ntor,lvol) )
       enddo !lvol=1:Nvol-1
-
     end select
   endif!Mvol.gt.1
 end subroutine read_henneberg_input_geometry
@@ -1951,7 +1973,7 @@ subroutine interpolate_initial_guess()
 end subroutine interpolate_initial_guess
 
 
-subroutine check_and_change_angle()
+subroutine check_and_change_angle( Lchangeangle )
 
   use constants, only : zero, one
   use fileunits, only : ounit
@@ -1965,7 +1987,7 @@ subroutine check_and_change_angle()
   INTEGER :: lvol         ! Volume number
   REAL    :: lss          ! Radial coordinate
   INTEGER :: Lcurvature   ! Flag for call to coords
-  LOGICAL :: Lchangeangle ! Boolean for changing or not the angle sign
+  LOGICAL, intent(out) :: Lchangeangle ! Boolean for changing or not the angle sign
 
   BEGIN(preset)
 

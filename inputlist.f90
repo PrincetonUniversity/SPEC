@@ -558,6 +558,7 @@ module inputlist
 ! DSCREENLIST !< define screenlist; this is expanded by Makefile; DO NOT REMOVE; each file compiled by Makefile has its own write flag;
   LOGICAL      :: Wbuild_vector_potential = .false. !< \todo: what is this?
   LOGICAL      :: Wreadin = .false. !< write screen output of readin()
+  LOGICAL      :: Wwrtend = .false. !< write screen output of wrtend()
   LOGICAL      :: Wmacros = .false. !< write screen output from expanded macros
 !> @}
 

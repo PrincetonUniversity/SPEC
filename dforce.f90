@@ -90,7 +90,7 @@
 !> @param[out] force
 !> @param[in] LComputeDerivatives
 !> @param[in] LComputeAxis
-subroutine dforce( NGdof_field, position, force, LComputeDerivatives, LComputeAxis)
+subroutine dforce( NGdof_field, position, force, LComputeDerivatives, LComputeAxis )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -146,11 +146,11 @@ subroutine dforce( NGdof_field, position, force, LComputeDerivatives, LComputeAx
 
   INTEGER, parameter   :: NB = 3 !< optimal workspace block size for LAPACK:DSYSVX;
 
-  INTEGER, intent(in)  :: NGdof_field               !< Total number of Rmn, Zmn
-  REAL,    intent(in)  :: position(0:NGdof_field)   !< Degrees-of-freedom = internal geometry;
-  REAL,    intent(out) :: force(0:NGdof_force)      !< Force;
-  LOGICAL, intent(in)  :: LComputeDerivatives       !< Indicates whether derivatives are to be calculated;
-  LOGICAL, intent(in)  :: LComputeAxis              !< Indicates whether the coordinate axis has to be re-evaluated 
+  INTEGER, intent(in)    :: NGdof_field               !< Total number of Rmn, Zmn
+  REAL,    intent(in)    :: position(0:NGdof_field)   !< Degrees-of-freedom = internal geometry;
+  REAL,    intent(out)   :: force(0:NGdof_force)      !< Force;
+  LOGICAL, intent(in)    :: LComputeDerivatives       !< Indicates whether derivatives are to be calculated;
+  LOGICAL, intent(in)    :: LComputeAxis              !< Indicates whether the coordinate axis has to be re-evaluated 
 
   INTEGER              :: vvol                      !< Loop index over volumes
   INTEGER              :: innout                    !< Loop index over inner (0) / outer (1) side of interfaces 
@@ -326,7 +326,6 @@ subroutine dforce( NGdof_field, position, force, LComputeDerivatives, LComputeAx
 
 ! --------------------------------------------------------------------------------------------------
 !                                    MPI COMMUNICATIONS
-
 ! Finally broadcast the field information to all threads from the thread which did the computation
 ! TODO: improve MPI communication
   do vvol = 1, Mvol
@@ -335,7 +334,7 @@ subroutine dforce( NGdof_field, position, force, LComputeDerivatives, LComputeAx
     ! Broadcast all ImagneticOK
     !write(ounit,'("dforce : " 10x " : myid="i3"; vvol="i3"; ; ImagneticOK="999L2)') myid, vvol, ImagneticOK(1:Mvol)
     !write(ounit,'("dforce : " 10x " : cpu_id="i3"; vvol="i3"; ; ImagneticOK="999L2)') cpu_id, vvol, ImagneticOK(vvol)
-    LlBCAST( ImagneticOK(vvol)         , 1, cpu_id)
+    LlBCAST( ImagneticOK(vvol), 1, cpu_id)
 
     do ideriv=0,2
       if( (.not.LcomputeDerivatives) .and. (ideriv.ne.0) ) cycle
@@ -747,10 +746,10 @@ use allglobal, only: ncpu, myid, cpus, MPI_COMM_SPEC, &
                      LGdof_force, LGdof_field, LGdof_bnd, psifactor, dBdX, &
                      YESstellsym, NOTstellsym, &
                      hessian, ext, &
-                     irhoc, iR0c, iZ0s, ibc, Rscale
+                     irhoc, iR0c, iZ0s, ibc, Rscale, nDcalls
 
 
-use bndRep, only: forwardMap, precond_rho, precond_b              
+use bndRep, only: forwardMap, precond_rho, precond_b, Ntor_field         
 
 LOCALS
 
@@ -843,7 +842,6 @@ BEGIN(dforce)
               endif
 
               packorunpack = 'P' ! pack geometrical degrees-of-freedom;
-              !LComputeAxis = .false. ! keep axis fixed
               LComputeAxis = .true.
 
               WCALL(dforce, packxi,( NGdof_field, iposition(isymdiff,0:NGdof_field), Mvol, mn_field, iRbc(1:mn_field,0:Mvol),&
@@ -851,7 +849,8 @@ BEGIN(dforce)
                                     iZbc(1:mn_field,0:Mvol), packorunpack, .false., LComputeAxis ) )
 
 
-              WCALL(dforce, dforce,( NGdof_field, iposition(isymdiff,0:NGdof_field), iforce(isymdiff,0:NGdof_force), .false., LComputeAxis) )
+              WCALL(dforce, dforce,( NGdof_field, iposition(isymdiff,0:NGdof_field), iforce(isymdiff,0:NGdof_force), .false., &
+                                     LComputeAxis, nDcalls) )
             enddo
 
             ! Fourth order centered finite difference scheme
@@ -954,11 +953,11 @@ BEGIN(dforce)
 
           ! Pack to dofs
           packorunpack = 'P' ! pack geometrical degrees-of-freedom;
-          LComputeAxis = .true. ! keep axis fixed
+          LComputeAxis = .true. 
 
           WCALL(dforce, packxi,( NGdof_field, iposition(isymdiff,0:NGdof_field), Mvol, mn_field, iRbc(1:mn_field,0:Mvol),&
                                 iZbs(1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), packorunpack, .false., LComputeAxis ) )
-          WCALL(dforce, dforce,( NGdof_field, iposition(isymdiff,0:NGdof_field), iforce(isymdiff,0:NGdof_force), .false., LComputeAxis) )
+          WCALL(dforce, dforce,( NGdof_field, iposition(isymdiff,0:NGdof_field), iforce(isymdiff,0:NGdof_force), .false., LComputeAxis, nDcalls) )
 
         enddo ! isymdiff
         
@@ -1015,7 +1014,7 @@ BEGIN(dforce)
 
             WCALL(dforce, packxi,( NGdof_field, iposition(isymdiff,0:NGdof_field), Mvol, mn_field, iRbc(1:mn_field,0:Mvol),&
                                   iZbs(1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), packorunpack, .false., LComputeAxis ) )
-            WCALL(dforce, dforce,( NGdof_field, iposition(isymdiff,0:NGdof_field), iforce(isymdiff,0:NGdof_force), .false., LComputeAxis) )
+            WCALL(dforce, dforce,( NGdof_field, iposition(isymdiff,0:NGdof_field), iforce(isymdiff,0:NGdof_force), .false., LComputeAxis, nDcalls) )
   
           enddo ! isymdiff
           
@@ -1051,7 +1050,7 @@ BEGIN(dforce)
     ! Print in file for diagnostics
     if(myid.eq.0) then
       ! Print hessian
-      open(10, file=trim(ext)//'.Lcheck6_output.txt', status='unknown')
+      open(10, file=trim(ext)//'.Lcheck7_output.txt', status='unknown')
       write(ounit,'(A)') NEW_LINE('A')
 
       do ii=1, mn_force
@@ -1063,7 +1062,7 @@ BEGIN(dforce)
       write(ounit,'(A)') NEW_LINE('A')
 
       ! Print finite differences
-      open(10, file=trim(ext)//'.Lcheck6_output.FiniteDiff.txt', status='unknown')
+      open(10, file=trim(ext)//'.Lcheck7_output.FiniteDiff.txt', status='unknown')
       do ii=1, mn_force
         write(ounit,2346) myid, im_force(ii), in_force(ii), finitediff_estimate(ii,:)
         write(10   ,2347) finitediff_estimate(ii,:)

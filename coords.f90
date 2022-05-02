@@ -150,7 +150,7 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn_field )
 
   use fileunits, only : ounit
 
-  use inputlist, only : Wcoords, Igeometry, Ntor, rpol, rtor
+  use inputlist, only : Wcoords, Igeometry, rpol, rtor, Lboundary
 
   use cputiming, only : Tcoords
 
@@ -164,6 +164,8 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn_field )
                         sg, guvij, &
                         dBdX, &
                         dRodR, dRodZ, dZodR, dZodZ
+
+  use bndRep,    only : Ntor_field
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -209,10 +211,10 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn_field )
    FATAL( coords, sbar.lt.zero .or. sbar.gt.one, invalid sbar )
 #endif
    select case( Igeometry )
-   case( 2   )  ; fj(     1:Ntor+1,0) = sbar                    ! these are the mj.eq.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
-   ;            ; fj(Ntor+2:mn_field    ,0) = sbar**(im_field(Ntor+2:mn_field)+1) ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
-   case( 3   )  ; fj(     1:Ntor+1,0) = sbar**2                 ! switch to sbar=r; 29 Jun 19
-   ;            ; fj(Ntor+2:mn_field    ,0) = sbar**im_field(Ntor+2:mn_field)     ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+   case( 2   )  ; fj(     1:Ntor_field+1,0) = sbar                    ! these are the mj.eq.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+   ;            ; fj(Ntor_field+2:mn_field    ,0) = sbar**(im_field(Ntor_field+2:mn_field)+1) ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+   case( 3   )  ; fj(     1:Ntor_field+1,0) = sbar**2                 ! switch to sbar=r; 29 Jun 19
+   ;            ; fj(Ntor_field+2:mn_field    ,0) = sbar**im_field(Ntor_field+2:mn_field)     ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
    case default ; FATAL( coords, .true., invalid Igeometry for Lcoordinatesingularity=T )
    end select
 
@@ -260,10 +262,10 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn_field )
    FATAL( coords, sbar.lt.small, small denominator )
 #endif
    select case( Igeometry )
-   case( 2   )  ; fj(     1:Ntor+1,1) = half                                                  ! these are the mj.eq.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
-   ;            ; fj(Ntor+2:mn_field    ,1) = half*(im_field(Ntor+2:mn_field)+one) * fj(Ntor+2:mn_field    ,0) / sbar ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
-   case( 3   )  ; fj(     1:Ntor+1,1) = sbar                                                  ! these are the mj.eq.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
-   ;            ; fj(Ntor+2:mn_field    ,1) = half * im_field(Ntor+2:mn_field) * fj(Ntor+2:mn_field    ,0) / sbar     ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+   case( 2   )  ; fj(     1:Ntor_field+1   ,1) = half                                                  ! these are the mj.eq.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+   ;            ; fj(Ntor_field+2:mn_field ,1) = half*(im_field(Ntor_field+2:mn_field)+one) * fj(Ntor_field+2:mn_field    ,0) / sbar ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+   case( 3   )  ; fj(     1:Ntor_field+1   ,1) = sbar                                                  ! these are the mj.eq.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+   ;            ; fj(Ntor_field+2:mn_field ,1) = half* im_field(Ntor_field+2:mn_field)      * fj(Ntor_field+2:mn_field    ,0) / sbar     ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
    case default ; FATAL( coords, .true., invalid Igeometry for Lcoordinatesingularity=T and Lcurvature.ne.0 )
    end select
 
@@ -395,10 +397,10 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn_field )
     FATAL( coords, sbar.lt.small, small denominator )
 #endif
     select case( Igeometry )
-    case( 2 )    ; fj(     1:Ntor+1,2) = zero                                                            ! these are the mj.eq.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
-     ;           ; fj(Ntor+2:mn_field    ,2) = half * ( im_field(Ntor+2:mn_field)       ) * fj(Ntor+2:mn_field    ,1) / sbar     ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
-    case( 3 )    ; fj(     1:Ntor+1,2) = half                                                            ! these are the mj.eq.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
-     ;           ; fj(Ntor+2:mn_field    ,2) = half * ( im_field(Ntor+2:mn_field) - one ) * fj(Ntor+2:mn_field    ,1) / sbar     ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+    case( 2 )    ; fj(     1:Ntor_field+1  , 2) = zero                                                            ! these are the mj.eq.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+     ;           ; fj(Ntor_field+2:mn_field, 2) = half * ( im_field(Ntor_field+2:mn_field)       ) * fj(Ntor_field+2:mn_field    ,1) / sbar     ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+    case( 3 )    ; fj(     1:Ntor_field+1  , 2) = half                                                            ! these are the mj.eq.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+     ;           ; fj(Ntor_field+2:mn_field, 2) = half * ( im_field(Ntor_field+2:mn_field) - one ) * fj(Ntor_field+2:mn_field    ,1) / sbar     ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
     case default ;
      ;           ; FATAL( coords, .true., invalid Igeometry for Lcoordinatesingularity=T and Lcurvature=2 )
     end select   ;
@@ -565,30 +567,33 @@ Nt, Nz, Rij(1:Ntz,3,3), Zij(1:Ntz,3,3) ) ! maps to real space;
       if (Igeometry .eq. 3) then
         ! add the terms due to the moving coordinate axis
         if ( irz.eq.0 ) then
-          DRxij(1:Ntz,0) = (one-sbar**2) * dRodR(1:Ntz,issym,ii)      ! dRx/dR
-          DRxij(1:Ntz,1) = - sbar * dRodR(1:Ntz,issym,ii)
-          DRxij(1:Ntz,2) = zero
-          DRxij(1:Ntz,3) = (one-sbar**2) * dRodR(1:Ntz,issym+2,ii)    ! dRx/dR, zeta derivative
+          DRxij(1:Ntz,0) = (one-sbar**2) * dRodR(1:Ntz,issym  ,ii)    ! dRx/dR
+          DRxij(1:Ntz,1) = -    sbar     * dRodR(1:Ntz,issym  ,ii)    ! dRx/dR, s derivatives
+          DRxij(1:Ntz,2) = (one-sbar**2) * dRodR(1:Ntz,issym+2,ii)    ! dRx/dR, theta derivatives
+          DRxij(1:Ntz,3) = (one-sbar**2) * dRodR(1:Ntz,issym+4,ii)    ! dRx/dR, zeta derivative
 
-          DZxij(1:Ntz,0) = (one-sbar**2) * dZodR(1:Ntz,issym,ii)      ! dZx/dR
-          DZxij(1:Ntz,1) = - sbar * dZodR(1:Ntz,issym,ii)
-          DZxij(1:Ntz,2) = zero
-          DZxij(1:Ntz,3) = (one-sbar**2) * dZodR(1:Ntz,issym+2,ii)    ! dZx/dR, zeta derivative
+          DZxij(1:Ntz,0) = (one-sbar**2) * dZodR(1:Ntz,issym  ,ii)    ! dZx/dR
+          DZxij(1:Ntz,1) = -    sbar     * dZodR(1:Ntz,issym  ,ii)    ! dZx/dR, s derivatives
+          DZxij(1:Ntz,2) = (one-sbar**2) * dZodR(1:Ntz,issym+2,ii)    ! dZx/dR, theta derivatives
+          DZxij(1:Ntz,3) = (one-sbar**2) * dZodR(1:Ntz,issym+4,ii)    ! dZx/dR, zeta derivative
         else
-          DRxij(1:Ntz,0) = (one-sbar**2) * dRodZ(1:Ntz,1-issym,ii)    ! dRx/dZ
-          DRxij(1:Ntz,1) = - sbar  * dRodZ(1:Ntz,1-issym,ii)
-          DRxij(1:Ntz,2) = zero
-          DRxij(1:Ntz,3) = (one-sbar**2) * dRodZ(1:Ntz,1-issym+2,ii)  ! dRx/dZ, zeta derivative
+          DRxij(1:Ntz,0) = (one-sbar**2) * dRodZ(1:Ntz,1-issym  ,ii)  ! dRx/dZ
+          DRxij(1:Ntz,1) = -    sbar     * dRodZ(1:Ntz,1-issym  ,ii)  ! dRx/dZ, s derivatives
+          DRxij(1:Ntz,2) = (one-sbar**2) * dRodZ(1:Ntz,1-issym+2,ii)  ! dRx/dZ, theta derivatives
+          DRxij(1:Ntz,3) = (one-sbar**2) * dRodZ(1:Ntz,1-issym+4,ii)  ! dRx/dZ, zeta derivative
 
           DZxij(1:Ntz,0) = (one-sbar**2) * dZodZ(1:Ntz,1-issym,ii)    ! dZx/dZ
-          DZxij(1:Ntz,1) = - sbar  * dZodZ(1:Ntz,1-issym,ii)
-          DZxij(1:Ntz,2) = zero
-          DZxij(1:Ntz,3) = (one-sbar**2) * dZodZ(1:Ntz,1-issym+2,ii)  ! dZx/dZ, zeta derivative
+          DZxij(1:Ntz,1) = -    sbar     * dZodZ(1:Ntz,1-issym,ii)    ! dZx/dZ, s derivatives
+          DZxij(1:Ntz,2) = (one-sbar**2) * dZodZ(1:Ntz,1-issym+2,ii)  ! dZx/dZ, theta derivatives
+          DZxij(1:Ntz,3) = (one-sbar**2) * dZodZ(1:Ntz,1-issym+4,ii)  ! dZx/dZ, zeta derivative
         endif
       endif
     endif
-    !DRxij(:,:) = zero
-    !DZxij(:,:) = zero
+
+    ! if( Lboundary.eq.1 ) then
+    !   DRxij(:,:) = zero
+    !   DZxij(:,:) = zero
+    ! endif
 
    else ! matches if( Lcoordinatesingularity ) ; 10 Mar 13;
 
@@ -664,21 +669,25 @@ Nt, Nz, Rij(1:Ntz,3,3), Zij(1:Ntz,3,3) ) ! maps to real space;
 
     case( 3 ) ! Lcurvature=3,4,5 ; Igeometry=3 ; toroidal; 04 Dec 14;
 
-      if (LcoordinateSingularity) then
+      if (LcoordinateSingularity ) then
     !                  sg(1:Ntz,0) = Rij(1:Ntz,0,0) * ( Zij(1:Ntz,1,0)*Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Zij(1:Ntz,2,0) )
-        if( irz.eq.0 ) sg(1:Ntz,1) = (Dij(1:Ntz,0  )+ DRxij(1:Ntz, 0)) * ( Zij(1:Ntz,1,0)*Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Zij(1:Ntz,2,0) ) &
-                                  + Rij(1:Ntz,0,0) * ( Zij(1:Ntz,1,0)*Dij(1:Ntz,2  ) - (Dij(1:Ntz,1  )+DRxij(1:Ntz,1)) *Zij(1:Ntz,2,0) ) &
-                                  + Rij(1:Ntz,0,0) * ( DZxij(1:Ntz,1)*Rij(1:Ntz,2,0) )
-        if( irz.eq.1 ) sg(1:Ntz,1) = DRxij(1:Ntz, 0) * ( Zij(1:Ntz,1,0)*Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Zij(1:Ntz,2,0) ) &
-                                  + Rij(1:Ntz,0,0) * ( (Dij(1:Ntz,1  )+DZxij(1:Ntz,1)) *Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Dij(1:Ntz,2  ) ) &
-                                  + Rij(1:Ntz,0,0) * (-DRxij(1:Ntz,1)*Zij(1:Ntz,2,0))
+        if( irz.eq.0 ) sg(1:Ntz,1) = (Dij(1:Ntz, 0) + DRxij(1:Ntz, 0)) * ( Zij(1:Ntz,1,0)*Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0) * Zij(1:Ntz,2,0) ) &
+                                   - (Dij(1:Ntz, 1) + DRxij(1:Ntz, 1)) * Rij(1:Ntz,0,0) * Zij(1:Ntz,2,0) &
+                                   + (Dij(1:Ntz, 2) + DRxij(1:Ntz, 2)) * Rij(1:Ntz,0,0) * Zij(1:Ntz,1,0) &
+                                   + (              + DZxij(1:Ntz, 1)) * Rij(1:Ntz,0,0) * Rij(1:Ntz,2,0) &
+                                   - (              + DZxij(1:Ntz, 2)) * Rij(1:Ntz,0,0) * Rij(1:Ntz,1,0)
+        if( irz.eq.1 ) sg(1:Ntz,1) = (              + DRxij(1:Ntz, 0)) * ( Zij(1:Ntz,1,0)*Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0) * Zij(1:Ntz,2,0) ) &
+                                   - (              + DRxij(1:Ntz, 1)) * Rij(1:Ntz,0,0) * Zij(1:Ntz,2,0) &
+                                   + (              + DRxij(1:Ntz, 2)) * Rij(1:Ntz,0,0) * Zij(1:Ntz,1,0) &
+                                   + (Dij(1:Ntz, 1) + DZxij(1:Ntz, 1)) * Rij(1:Ntz,0,0) * Rij(1:Ntz,2,0) &
+                                   - (Dij(1:Ntz, 2) + DZxij(1:Ntz, 2)) * Rij(1:Ntz,0,0) * Rij(1:Ntz,1,0)
 
         do ii = 1, 3 ! careful: ii was used with a different definition above; 13 Sep 13;
           do jj = ii, 3
             if( irz.eq.0 ) dguvij(1:Ntz,ii,jj) = (Dij(1:Ntz,ii)+DRxij(1:Ntz,ii)) * Rij(1:Ntz,jj,0) + Rij(1:Ntz,ii,0) * (Dij(1:Ntz,jj)+DRxij(1:Ntz,jj)) &
-                                              + DZxij(1:Ntz,ii) * Zij(1:Ntz,jj,0) + Zij(1:Ntz,ii,0) * DZxij(1:Ntz,jj)
+                                                               +DZxij(1:Ntz,ii)  * Zij(1:Ntz,jj,0) + Zij(1:Ntz,ii,0) * DZxij(1:Ntz,jj)
             if( irz.eq.1 ) dguvij(1:Ntz,ii,jj) = (Dij(1:Ntz,ii)+DZxij(1:Ntz,ii)) * Zij(1:Ntz,jj,0) + Zij(1:Ntz,ii,0) * (Dij(1:Ntz,jj)+DZxij(1:Ntz,jj)) &
-                                              + DRxij(1:Ntz,ii) * Rij(1:Ntz,jj,0) + Rij(1:Ntz,ii,0) * DRxij(1:Ntz,jj)
+                                                              + DRxij(1:Ntz,ii)  * Rij(1:Ntz,jj,0) + Rij(1:Ntz,ii,0) * DRxij(1:Ntz,jj)
           enddo
         enddo
 

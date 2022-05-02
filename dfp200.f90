@@ -298,12 +298,11 @@ else ! CASE SEMI GLOBAL CONSTRAINT
         ! Each volume will need solution and derivative information in vacuum region. Thus, broadcast!
         ! Derivative of w.r.t geometry only required if plasma interface is perturbed - this is
         ! calculated below
+        call WhichCpuID(Mvol, cpu_id)
+
         if( Lfreebound.eq.1 ) then
             do ideriv = 0, 2
                 do ii = 1, mn_field
-
-                    call WhichCpuID(Mvol, cpu_id)
-
                     RlBCAST( Ate(Mvol,ideriv,ii)%s(0:Lrad(Mvol)), Lrad(Mvol)+1, cpu_id )
                     RlBCAST( Aze(Mvol,ideriv,ii)%s(0:Lrad(Mvol)), Lrad(Mvol)+1, cpu_id )
                 enddo

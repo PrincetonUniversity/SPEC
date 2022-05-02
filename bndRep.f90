@@ -79,18 +79,16 @@ module bndRep
         Ntor_max   = Ntor
 
       elseif( Lboundary.eq.1 ) then
+        !Mpol_field = Mpol + 1
         Mpol_field = Mpol
         Ntor_field = Ntor + abs(twoalpha)
-        !Ntor_field = Ntor
   
         Mpol_force = Mpol + 1
+        !Ntor_force = Ntor + abs(twoalpha)
         Ntor_force = Ntor
-        !Mpol_force = Mpol
 
-        Mpol_max   = max( Mpol, Mpol_field, Mpol_force )
-        Ntor_max   = max( Ntor, Ntor_field, Ntor_force )
-        !Mpol_max = Mpol_field
-        !Ntor_max = Ntor_field
+        Mpol_max = Mpol+1
+        Ntor_max = Ntor+abs(twoalpha)
         
       else 
         FATAL( bndRep, .true., Invalid Lboundary )
@@ -148,13 +146,13 @@ module bndRep
       SALLOCATE( precond_rho, (1:mn_rho, 1:Mvol), one )
       do vvol = 1, Mvol
         do ii = 1, mn_rho
-          !precond_rho( ii, vvol ) = Rscale * tflux(vvol)**(im_rho(ii) * half) 
+          precond_rho( ii, vvol ) = Rscale * tflux(vvol)**(im_rho(ii) * half) 
         enddo
       enddo
 
       SALLOCATE( precond_b, (1:Mvol), one )
       do vvol = 1, Mvol
-        !precond_b( vvol ) = Rscale * tflux(vvol)**half
+        precond_b( vvol ) = Rscale * tflux(vvol)**half
       enddo
 
     end subroutine initialize_mapping
@@ -702,7 +700,8 @@ module bndRep
         use allglobal, only: myid, im_rho, in_rho, im_field, in_field, mn_rho, mn_field, &
                              MPI_COMM_SPEC, cpus, Mvol, &
                              NGdof_field, NGdof_bnd, &
-                             Rscale
+                             IsMyVolume, IsMyVolumeValue, WhichCpuID, &
+                             Rscale, NOTstellsym
 
         LOCALS
 
@@ -713,13 +712,24 @@ module bndRep
         REAL, INTENT(IN)       :: bndDofs( 0:NGdof_bnd )
         CHARACTER              :: packorunpack ! Either 'RZ_to_H' or 'H_to_RZ'
         LOGICAL                :: LComputeDerivatives, LComputeAxis, work
-        INTEGER                :: lvol, idof, jj
+        INTEGER                :: lvol, idof, jj, cpu_id
         REAL                   :: iRbc(1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol)
         REAL                   :: irhoc(1:mn_rho,1:Mvol), ibc(0:Ntor,1:Mvol), iR0c(0:Ntor,1:Mvol), iZ0s(1:Ntor,1:Mvol)
 
         ! First unpack the array bndDofs
         idof = 0
+
         do lvol=1,Mvol-1
+
+          ! Each CPU does the mapping for its own interface
+          call IsMyVolume(lvol)
+
+          if( IsMyVolumeValue.EQ.0 ) then
+            cycle
+          elseif( IsMyVolumeValue.EQ.-1 ) then
+            FATAL( bndRep, .true., Unassociated volume)
+          endif
+
           do jj=1,mn_rho
 
             idof = idof+1
@@ -745,17 +755,25 @@ module bndRep
               iZ0s(jj, lvol) = bndDofs(idof) * Rscale
             endif
           enddo
-        enddo !lvol
-
-        FATAL( bndRep, idof.ne.NGdof_bnd, incorrect number of dofs. )
 
         
-      ! Then map rhomn, bn, R0n, Z0n to Rmn, Zmn
-        do lvol=1,Mvol-1
           call forwardMap( irhoc(1:mn_rho, lvol), ibc(0:Ntor, lvol), &
                           iR0c(0:Ntor, lvol), iZ0s(1:Ntor, lvol), &
                           iRbc(1:mn_field, lvol), iZbs(1:mn_field, lvol) )
+  
+          FATAL( bndRep, idof.ne.NGdof_bnd, incorrect number of dofs. )
+        enddo
 
+        ! Broadcast the interface Fourier harmonics
+        do lvol=1,Mvol-1
+          call WhichCpuID(lvol, cpu_id)
+          RlBCAST( iRbc(1:mn_field, lvol), mn_field, cpu_id )
+          RlBCAST( iZbs(1:mn_field, lvol), mn_field, cpu_id )
+
+          if( NOTstellsym ) then
+            RlBCAST( iRbc(1:mn_field, lvol), mn_field, cpu_id )
+            RlBCAST( iRbc(1:mn_field, lvol), mn_field, cpu_id )
+          endif
         enddo
       
 
@@ -780,7 +798,8 @@ module bndRep
         use allglobal, only: myid, im_rho, in_rho, im_field, in_field, mn_rho, mn_field, &
                              MPI_COMM_SPEC, cpus, Mvol, &
                              NGdof_field, NGdof_bnd, &
-                             Rscale
+                             Rscale, &
+                             IsMyVolume, IsMyVolumeValue, WhichCpuID
 
         LOCALS
 
@@ -791,7 +810,7 @@ module bndRep
         REAL, INTENT(OUT)      :: bndDofs( 0:NGdof_bnd )
         CHARACTER              :: packorunpack ! Either 'RZ_to_H' or 'H_to_RZ'
         LOGICAL                :: LComputeDerivatives, LComputeAxis, work
-        INTEGER                :: lvol, idof, jj
+        INTEGER                :: lvol, idof, jj, cpu_id
         REAL                   :: iRbc(1:mn_field,0:Mvol), iRbs(1:mn_field,0:Mvol), iZbc(1:mn_field,0:Mvol), iZbs(1:mn_field,0:Mvol)
         REAL                   :: irhoc(1:mn_rho,1:Mvol), ibc(0:Ntor,1:Mvol), iR0c(0:Ntor,1:Mvol), iZ0s(1:Ntor,1:Mvol)
           
@@ -807,9 +826,26 @@ module bndRep
 
         ! Then map to rhomn, bn, R0n, Z0n
         do lvol=1,Mvol-1
+          ! Each CPU does the backward mapping for its own interface
+          call IsMyVolume(lvol)
+          
+          if( IsMyVolumeValue.EQ.0 ) then
+            cycle
+          elseif( IsMyVolumeValue.EQ.-1 ) then
+            FATAL( bndRep, .true., Unassociated volume)
+          endif
+
           call backwardMap( iRbc(1:mn_field,lvol), iZbs(1:mn_field,lvol), &
                             irhoc(1:mn_rho,lvol), ibc(0:Ntor, lvol), &
                             iR0c(0:Ntor, lvol), iZ0s(1:Ntor, lvol) )      
+        enddo
+
+        do lvol=1,Mvol-1
+          call WhichCpuID(lvol, cpu_id)
+          RlBCAST( irhoc(1:mn_rho, lvol), mn_rho, cpu_id )
+          RlBCAST( ibc( 0:Ntor, lvol), Ntor+1, cpu_id )
+          RlBCAST( iR0c(0:Ntor, lvol), Ntor+1, cpu_id )
+          RlBCAST( iZ0s(1:Ntor, lvol), Ntor  , cpu_id )
         enddo
 
         ! Finally construct the array bndDofs
@@ -1050,35 +1086,16 @@ module bndRep
           enddo
         enddo
 
-        ! ! Check for changing angle
-        ! if( rmn_work(1,0).gt.0 .and. zmn_work(1,0).gt.0 ) then ; Lchangeangle=.true.
-        ! else                                                   ; Lchangeangle=.false.
-        ! endif
+        ! Build output one-dimensional array
+        do ii=1,mn_field
+          mm=im_field(ii)
+          nn=in_field(ii) / Nfp
 
-        ! if( Lchangeangle ) then
-        !   do ii=1,mn_field
-        !     mm=im_field(ii)
-        !     nn=in_field(ii) / Nfp
+          if( mm.eq.0 ) cycle ! These modes already filled by R0c, Z0s in forwardMap
 
-        !     if( mm.eq.0 ) cycle ! These modes already filled in forwardMap
-
-        !     rmn(ii) =  rmn_work(mm,-nn)
-        !     zmn(ii) = -zmn_work(mm,-nn)
-        !   enddo
-
-        ! else
-
-          ! Build output one-dimensional array
-          do ii=1,mn_field
-            mm=im_field(ii)
-            nn=in_field(ii) / Nfp
-
-            if( mm.eq.0 ) cycle ! These modes already filled by R0c, Z0s in forwardMap
-
-            rmn(ii) = rmn_work(mm,nn)
-            zmn(ii) = zmn_work(mm,nn)
-          enddo
-        ! endif
+          rmn(ii) = rmn_work(mm,nn)
+          zmn(ii) = zmn_work(mm,nn)
+        enddo
   
       end subroutine unpack_rmn_zmn
   
