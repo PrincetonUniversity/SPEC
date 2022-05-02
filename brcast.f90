@@ -26,7 +26,8 @@ subroutine brcast( lvol )
   use fileunits, only : ounit
 
   use inputlist, only : Wmacros, Wbrcast, Wcurent, MNvol, Nvol, mu, Lrad, &
-                        curtor, curpol, Lconstraint, Lfindzero, helicity
+                        curtor, curpol, Lconstraint, Lfindzero, helicity, &
+                        Lboundary
 
   use cputiming, only : Tbrcast
 
@@ -37,11 +38,11 @@ subroutine brcast( lvol )
                         Bemn, Bomn, Iomn, Iemn, Somn, Semn, Pomn, Pemn, &
                         ImagneticOK, &
                        !dBBdRZ, dIIdRZ, &
-                        Lhessianallocated, LGdof_field, dFFdRZ, dBBdmp, dmupfdx, &
+                        Lhessianallocated, LGdof_field, LGdof_force, dFFdRZ, dBBdmp, dmupfdx, &
                         lBBintegral, lABintegral, &
                         vvolume, &
                         NOTstellsym, LocalConstraint, &
-						IsMyVolume, IsMyVolumeValue
+						            IsMyVolume, IsMyVolumeValue
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -85,14 +86,14 @@ subroutine brcast( lvol )
 
 
    if( LocalConstraint ) then
- 	  Nbc =             LGdof_field*       2*  LGdof_field*  2
- 	  RlBCAST( dFFdRZ(1:LGdof_field,0:1,1:LGdof_field,0:1,lvol), Nbc, llmodnp )
+ 	  Nbc =             LGdof_force* 2 *  LGdof_field* 2
+ 	  RlBCAST( dFFdRZ(1:LGdof_force,0:1,1:LGdof_field,0:1,lvol), Nbc, llmodnp )
 
-	  Nbc =             LGdof_field*       2*  2
-	  RlBCAST( dBBdmp(1:LGdof_field,lvol,0:1,1:2), Nbc, llmodnp )
+	  Nbc =             LGdof_force*      2 * 2
+	  RlBCAST( dBBdmp(1:LGdof_force,lvol,0:1,1:2), Nbc, llmodnp )
 
-	  Nbc =                   2*  LGdof_field*  2
-	  RlBCAST( dmupfdx(lvol,1:1   ,1:2,1:LGdof_field,0:1), Nbc, llmodnp ) ! why is this broadcast; 02 Sep 14;
+	  Nbc =                      2 *   LGdof_field*  2
+	  RlBCAST( dmupfdx(lvol, 1, 1:2, 1:LGdof_field, 0:1), Nbc, llmodnp ) ! why is this broadcast; 02 Sep 14;
    endif
 
 
@@ -113,9 +114,14 @@ subroutine brcast( lvol )
 
 
   RlBCAST( Bemn(1:mn_force,lvol,0:1), 2*mn_force, llmodnp ) ! perhaps all these should be re-ordered; 18 Jul 14;
-  RlBCAST( Iomn(1:mn_force,lvol    ),   mn_force, llmodnp )
-  RlBCAST( Somn(1:mn_force,lvol,0:1), 2*mn_force, llmodnp )
-  RlBCAST( Pomn(1:mn_force,lvol,0:2), 3*mn_force, llmodnp ) ! 15 Sep 15;
+
+  if( Lboundary.eq.0 ) then
+    RlBCAST( Iomn(1:mn_force,lvol    ),   mn_force, llmodnp )
+    RlBCAST( Somn(1:mn_force,lvol,0:1), 2*mn_force, llmodnp )
+
+    !TODO: Is this still used? Remove?
+    RlBCAST( Pomn(1:mn_force,lvol,0:2), 3*mn_force, llmodnp ) ! 15 Sep 15; 
+  endif
 
   if( NOTstellsym ) then
     ! do ideriv = 0, 2
@@ -126,9 +132,14 @@ subroutine brcast( lvol )
     ! enddo
 
       RlBCAST( Bomn(1:mn_force,lvol,0:1), 2*mn_force, llmodnp )
-      RlBCAST( Iemn(1:mn_force,lvol    ),   mn_force, llmodnp )
-      RlBCAST( Semn(1:mn_force,lvol,0:1), 2*mn_force, llmodnp )
-      RlBCAST( Pemn(1:mn_force,lvol,0:2), 3*mn_force, llmodnp )
+
+      if( Lboundary.eq.0 ) then
+        RlBCAST( Iemn(1:mn_force,lvol    ),   mn_force, llmodnp )
+        RlBCAST( Semn(1:mn_force,lvol,0:1), 2*mn_force, llmodnp )
+
+        !TODO: Is this still used? Remove?
+        RlBCAST( Pemn(1:mn_force,lvol,0:2), 3*mn_force, llmodnp )
+      endif
   endif ! end of if( NOTstellsym) ; 11 Aug 14;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

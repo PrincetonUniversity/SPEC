@@ -1086,35 +1086,16 @@ module bndRep
           enddo
         enddo
 
-        ! ! Check for changing angle
-        ! if( rmn_work(1,0).gt.0 .and. zmn_work(1,0).gt.0 ) then ; Lchangeangle=.true.
-        ! else                                                   ; Lchangeangle=.false.
-        ! endif
+        ! Build output one-dimensional array
+        do ii=1,mn_field
+          mm=im_field(ii)
+          nn=in_field(ii) / Nfp
 
-        ! if( Lchangeangle ) then
-        !   do ii=1,mn_field
-        !     mm=im_field(ii)
-        !     nn=in_field(ii) / Nfp
+          if( mm.eq.0 ) cycle ! These modes already filled by R0c, Z0s in forwardMap
 
-        !     if( mm.eq.0 ) cycle ! These modes already filled in forwardMap
-
-        !     rmn(ii) =  rmn_work(mm,-nn)
-        !     zmn(ii) = -zmn_work(mm,-nn)
-        !   enddo
-
-        ! else
-
-          ! Build output one-dimensional array
-          do ii=1,mn_field
-            mm=im_field(ii)
-            nn=in_field(ii) / Nfp
-
-            if( mm.eq.0 ) cycle ! These modes already filled by R0c, Z0s in forwardMap
-
-            rmn(ii) = rmn_work(mm,nn)
-            zmn(ii) = zmn_work(mm,nn)
-          enddo
-        ! endif
+          rmn(ii) = rmn_work(mm,nn)
+          zmn(ii) = zmn_work(mm,nn)
+        enddo
   
       end subroutine unpack_rmn_zmn
   

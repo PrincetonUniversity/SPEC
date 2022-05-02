@@ -327,7 +327,6 @@ subroutine dforce( NGdof_field, position, force, LComputeDerivatives, LComputeAx
 
 ! --------------------------------------------------------------------------------------------------
 !                                    MPI COMMUNICATIONS
-
 ! Finally broadcast the field information to all threads from the thread which did the computation
 ! TODO: improve MPI communication
   do vvol = 1, Mvol
@@ -336,7 +335,7 @@ subroutine dforce( NGdof_field, position, force, LComputeDerivatives, LComputeAx
     ! Broadcast all ImagneticOK
     !write(ounit,'("dforce : " 10x " : myid="i3"; vvol="i3"; ; ImagneticOK="999L2)') myid, vvol, ImagneticOK(1:Mvol)
     !write(ounit,'("dforce : " 10x " : cpu_id="i3"; vvol="i3"; ; ImagneticOK="999L2)') cpu_id, vvol, ImagneticOK(vvol)
-    LlBCAST( ImagneticOK(vvol)         , 1, cpu_id)
+    LlBCAST( ImagneticOK(vvol), 1, cpu_id)
 
     do ideriv=0,2
       if( (.not.LcomputeDerivatives) .and. (ideriv.ne.0) ) cycle

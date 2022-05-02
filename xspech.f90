@@ -25,7 +25,7 @@ subroutine xspech
   use allglobal, only: set_mpi_comm, myid, ncpu, cpus, version, MPI_COMM_SPEC, &
                        read_inputlists_from_file, check_inputs, broadcast_inputs, skip_write, &
                        ext
-  use inputlist, only: initialize_inputs, Wxspech
+  use inputlist, only: initialize_inputs, Wxspech, Lcheck
   use fileunits, only: ounit
   use sphdf5,    only: init_outfile, &
                        mirror_input_to_outfile, &
@@ -98,6 +98,17 @@ subroutine xspech
   ! broadcast input file contents
   call broadcast_inputs()
 
+#ifdef DEBUG
+if( Lcheck.eq.-1 ) then
+  iwait = 0; pid = getpid()
+  status = hostnm( hostname )
+  write(*,*) 'Process with PID: ', pid, 'ready to attach. Hostname: ', hostname
+  do while( iwait .EQ. 0 )
+    !wait for debugger
+  enddo
+endif
+#endif
+
   ! initialize internal arrays based on data from input file
   call preset()
 
@@ -134,15 +145,6 @@ subroutine xspech
 !> </li>
 !> </ul>
   call init_convergence_output()
-
-!#ifdef DEBUG
-!   iwait = 0; pid = getpid()
-!   status = hostnm( hostname )
-!   write(*,*) 'Process with PID: ', pid, 'ready to attach. Hostname: ', hostname
-!   do while( iwait .EQ. 0 )
-!     !wait for debugger
-!   enddo
-!#endif
 
   ! MAIN SUBROUTINE: iterate until converged or #iterations exceeds limit
   call spec()

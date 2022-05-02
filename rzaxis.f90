@@ -574,7 +574,6 @@ subroutine rzaxis( Mvol, mn_field, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDer
       dZadR = zero
       dZadZ = zero
 
-      if( .false. ) then
       ! allocate the temp matrices
       SALLOCATE( djacrhs, (1:Njac), zero )
       SALLOCATE( djacmat, (1:Njac, 1:Njac), zero )
@@ -754,13 +753,13 @@ subroutine rzaxis( Mvol, mn_field, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDer
               end if
             end if ! YESstellsym
 
-            call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), dRadR(1:mn_field,0,0,imn_field), dRadR(1:mn_field,1,0,imn_field), dRadR(1:mn_field,0,1,imn_field), dRadR(1:mn_field,1,1,imn_field), &
+            call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field),                      dRadR(1:mn_field,0,0,imn_field),                      dRadR(1:mn_field,1,0,imn_field),                     dRadR(1:mn_field,0,1,imn_field),                      dRadR(1:mn_field,1,1,imn_field), &
                          Nt, Nz, dRodR(1:Ntz,0,imn_field), dRodR(1:Ntz,1,imn_field) )
-            call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), dRadZ(1:mn_field,0,0,imn_field), dRadZ(1:mn_field,1,0,imn_field), dRadZ(1:mn_field,0,1,imn_field), dRadZ(1:mn_field,1,1,imn_field), &
+            call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field),                      dRadZ(1:mn_field,0,0,imn_field),                      dRadZ(1:mn_field,1,0,imn_field),                     dRadZ(1:mn_field,0,1,imn_field),                      dRadZ(1:mn_field,1,1,imn_field), &
                          Nt, Nz, dRodZ(1:Ntz,0,imn_field), dRodZ(1:Ntz,1,imn_field) )
-            call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), dZadR(1:mn_field,0,0,imn_field), dZadR(1:mn_field,1,0,imn_field), dZadR(1:mn_field,0,1,imn_field), dZadR(1:mn_field,1,1,imn_field), &
+            call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field),                      dZadR(1:mn_field,0,0,imn_field),                      dZadR(1:mn_field,1,0,imn_field),                     dZadR(1:mn_field,0,1,imn_field),                      dZadR(1:mn_field,1,1,imn_field), &
                          Nt, Nz, dZodR(1:Ntz,0,imn_field), dZodR(1:Ntz,1,imn_field) )
-            call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), dZadZ(1:mn_field,0,0,imn_field), dZadZ(1:mn_field,1,0,imn_field), dZadZ(1:mn_field,0,1,imn_field), dZadZ(1:mn_field,1,1,imn_field), &
+            call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field),                      dZadZ(1:mn_field,0,0,imn_field),                      dZadZ(1:mn_field,1,0,imn_field),                     dZadZ(1:mn_field,0,1,imn_field),                      dZadZ(1:mn_field,1,1,imn_field), &
                          Nt, Nz, dZodZ(1:Ntz,2,imn_field), dZodZ(1:Ntz,1,imn_field) )
 
             call invfft( mn_field, im_field(1:mn_field), in_field(1:mn_field), im_field(1:mn_field)*dRadR(1:mn_field,1,0,imn_field),-im_field(1:mn_field)*dRadR(1:mn_field,0,0,imn_field),im_field(1:mn_field)*dRadR(1:mn_field,1,1,imn_field),-im_field(1:mn_field)*dRadR(1:mn_field,0,1,imn_field), &
@@ -796,7 +795,6 @@ end if ! Lcheck .eq. 8
       ! deallocate the matrices
       DALLOCATE( djacrhs )
       DALLOCATE( djacmat )
-    endif
 
       dBdX%L = .FALSE.
 

@@ -115,7 +115,7 @@ subroutine newton( NGdof_bnd, bndDofs, ihybrd )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  !FATAL( newton, NGdof_bnd.NE.NGdof_force, Invalid number of dofs )
+  FATAL( newton, NGdof_bnd.NE.NGdof_force, Invalid number of dofs )
 
 
 
@@ -202,7 +202,7 @@ subroutine newton( NGdof_bnd, bndDofs, ihybrd )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   SALLOCATE( fjac, (1:NGdof_force, 1:NGdof_force), zero)
-  SALLOCATE( RR, (1:NGdof_bnd*(NGdof_bnd+1)/2), zero)
+  SALLOCATE( RR  , (1:NGdof_bnd*(NGdof_bnd+1)/2) , zero)
 
   if( Lfindzero.eq.2 ) then
     SALLOCATE( dFFdRZ, (1:LGdof_force,0:1,1:LGdof_field,0:1,1:Mvol), zero )
@@ -216,8 +216,8 @@ subroutine newton( NGdof_bnd, bndDofs, ihybrd )
 
     !FATAL( newton, NGdof_bnd.ne.NGdof_force, illdefined Newton problem )
 
-    SALLOCATE( hessian, (1:NGdof_force,1:NGdof_force), zero )
-    SALLOCATE( dessian, (1:NGdof_force,1:NGdof_force), zero )
+    SALLOCATE( hessian, (1:NGdof_force,1:NGdof_bnd), zero )
+    SALLOCATE( dessian, (1:NGdof_force,1:NGdof_bnd), zero )
     Lhessianallocated = .true.
   else
     Lhessianallocated = .false.
@@ -275,17 +275,17 @@ subroutine newton( NGdof_bnd, bndDofs, ihybrd )
    FATAL( newton, .not.Lhessianallocated, error )
 #endif
 
-   !hessian(1:NGdof_bnd,1:NGdof_bnd) = zero
+   !hessian(1:NGdof_force,1:NGdof_bnd) = zero
    SALLOCATE(work, (1:NGdof_bnd,1:NGdof_bnd), zero)! BLAS version; 19 Jul 2019
    ijdof = 0
-   do idof = 1, NGdof_bnd
+   do idof = 1, NGdof_force
     !do jdof = idof, NGdof_bnd ; ijdof = ijdof + 1 ; hessian(idof,jdof) = RR(ijdof) ! un-pack R matrix; old version
     do jdof = idof, NGdof_bnd ; ijdof = ijdof + 1 ; work(idof,jdof) = RR(ijdof) ! un-pack R matrix; BLAS version; 19 Jul 2019
     enddo
    enddo
 
 !  derivative matrix = Q R;
-   !hessian(1:NGdof_bnd,1:NGdof_bnd) = matmul( fjac(1:NGdof_bnd,1:NGdof_bnd), hessian(1:NGdof_bnd,1:NGdof_bnd) )
+   !hessian(1:NGdof_force,1:NGdof_bnd) = matmul( fjac(1:NGdof_force,1:NGdof_bnd), hessian(1:NGdof_force,1:NGdof_bnd) )
    call DGEMM('N','N',NGdof_bnd,NGdof_bnd,NGdof_bnd,one,fjac,NGdof_bnd,work,NGdof_bnd,zero,hessian,NGdof_bnd)     ! BLAS version; 19 Jul 2019
 
    DALLOCATE(work)! BLAS version; 19 Jul 2019
@@ -371,7 +371,7 @@ subroutine writereadgf( readorwrite, NGdof_bnd , ireadhessian )
    write( dunit, iostat=ios ) Igeometry, Istellsym, Lfreebound, Nvol, Mpol_field, Ntor_field, NGdof_bnd ! enable resolution consistency check;
    FATAL( newton, ios.ne.0, error writing Nvol, Mpol_field, Ntor_field, NGdof_bnd )
 
-   write( dunit, iostat=ios ) hessian(1:NGdof_bnd,1:NGdof_bnd)
+   write( dunit, iostat=ios ) hessian(1:NGdof_force,1:NGdof_bnd)
    FATAL( newton, ios.ne.0, error writing hessian to file )
 
    close( dunit, iostat=ios )
@@ -479,7 +479,7 @@ subroutine fcn1( NGdof_bnd, xx, fvec, irevcm )
                         NGdof_force, NGdof_field, &
                         BBe, IIo, BBo, IIe, &
                         dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated, &
-                        nfreeboundaryiterations, nDcalls
+                        nfreeboundaryiterations, nDcalls, ImagneticOK
 
   use bndRep,    only : pack_henneberg_to_hudson, pack_hudson_to_henneberg
 
@@ -498,8 +498,9 @@ subroutine fcn1( NGdof_bnd, xx, fvec, irevcm )
   REAL                   :: bndDofs(0:NGdof_bnd), force(0:NGdof_force), position(0:NGdof_field)
 
   LOGICAL                :: LComputeDerivatives, Lonlysolution, LComputeAxis
-  INTEGER                :: idof, jdof, ijdof, ireadhessian, igdof, lvol, ii, imn
+  INTEGER                :: idof, jdof, ijdof, ireadhessian, igdof, lvol, ii, imn, tag
   CHARACTER              :: pack
+  INTEGER                :: status(MPI_STATUS_SIZE), from, to
 
   BEGIN(newton)
 
@@ -563,6 +564,19 @@ subroutine fcn1( NGdof_bnd, xx, fvec, irevcm )
 
     LComputeDerivatives = .false.
     LComputeAxis = .true.
+
+    !call MPI_Barrier( MPI_COMM_SPEC, ierr )
+    !LlBCAST( ImagneticOK(1), 1, 0)
+    ! if( myid.eq.0 ) then
+    !   to = 1
+    !   tag=2001
+    !   call MPI_SEND( ImagneticOK(1), 1, MPI_LOGICAL, to, tag, MPI_COMM_SPEC, ierr )
+    ! else
+    !   from=0
+    !   tag=2001
+    !   call MPI_RECV( ImagneticOK(1), 1, MPI_LOGICAL, from, tag, MPI_COMM_SPEC, status, ierr ) 
+    ! endif
+    !call MPI_Barrier( MPI_COMM_SPEC, ierr )
     WCALL( newton, dforce, ( NGdof_field, position(0:NGdof_field), force(0:NGdof_force), LComputeDerivatives, LComputeAxis ) ) ! calculate the force-imbalance;
 
     fvec(1:NGdof_force) = force(1:NGdof_force)

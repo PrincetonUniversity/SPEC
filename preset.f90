@@ -91,16 +91,21 @@ subroutine set_global_variables()
     NOTstellsym = .false.
   end select
 
-  ! Set Rscale, used for normalizing the geometrical degrees-of-freedom;
-  if( Lfreebound.eq.0 ) then 
-    if( Lboundary.eq.0 ) then
-      Rscale = Rbc(0,0) 
+  if( myid.eq.0 ) then
+    ! Set Rscale, used for normalizing the geometrical degrees-of-freedom;
+    if( Lfreebound.eq.0 ) then 
+      if( Lboundary.eq.0 ) then
+        Rscale = Rbc(0,0) 
+      else
+        Rscale = R0c(0)
+      endif !Lboundary
     else
-      Rscale = R0c(0)
-    endif !Lboundary
-  else
-    Rscale = Rwc(0,0)
+      Rscale = Rwc(0,0)
+    endif
   endif
+
+  RlBCAST( Rscale, 1, 0 )
+
 
   ! set up Henneberg's mapping
   if( Lboundary.eq.0 ) then
@@ -1535,15 +1540,17 @@ subroutine read_input_geometry()
   ! First read input, call specific routine depending on boundary representation
   if( myid.eq.0 ) then
     if( Lboundary.eq.0 ) then
-      Lchangeangle = .false.
-      call read_hudson_input_geometry( Lchangeangle )
+      if( myid.eq.0 ) then
+        Lchangeangle = .false.
+        call read_hudson_input_geometry( Lchangeangle )
+      endif
     else
       call read_henneberg_input_geometry()
     endif
 
     if( Igeometry.eq.3 ) then
       ! Need to check if angle is right
-      call check_and_change_angle()
+      call check_and_change_angle( Lchangeangle )
     endif
 
 
@@ -1575,32 +1582,40 @@ subroutine read_input_geometry()
 
   !---------------------------------------------------------------------------------------------
   ! And now broadcast
+  if( Lboundary.eq.1 .and. ncpu.gt.1 ) then ! Need to set the correct variable in bndRep for all CPUs
+
+    LlBCAST( Lchangeangle, 1, 0 )
+    call change_mapping_angle( Lchangeangle )
+  endif
+
   ! Broadcast rhomn, bn, r0n, Z0n only in case of Lboundary.eq.1
-  if( Lboundary.eq.1 ) then
-    RlBCAST( irhoc(1:mn_rho, 1:Mvol),  mn_rho *Mvol, 0 )
-    RlBCAST( ibc(  0:Ntor  , 1:Mvol), (Ntor+1)*Mvol, 0 )
-    RlBCAST( iR0c( 0:Ntor  , 1:Mvol), (Ntor+1)*Mvol, 0 )
-    RlBCAST( iZ0s( 0:Ntor  , 1:Mvol), (Ntor+1)*Mvol, 0 )
-  endif ! Lboundary.eq.1
+  if( ncpu.gt.1 ) then
+    if( Lboundary.eq.1 ) then
+      RlBCAST( irhoc(1:mn_rho, 1:Mvol),  mn_rho *Mvol, 0 )
+      RlBCAST( ibc(  0:Ntor  , 1:Mvol), (Ntor+1)*Mvol, 0 )
+      RlBCAST( iR0c( 0:Ntor  , 1:Mvol), (Ntor+1)*Mvol, 0 )
+      RlBCAST( iZ0s( 0:Ntor  , 1:Mvol), (Ntor+1)*Mvol, 0 )
+    endif ! Lboundary.eq.1
 
-  ! Broadcast Rmn, Zmn
-  ; RlBCAST( iRbc(1:mn_field,0:Mvol), (Mvol+1)*mn_field, 0 )
-  if( Igeometry.eq.3 ) then
-    ;RlBCAST( iZbs(1:mn_field,0:Mvol), (Mvol+1)*mn_field, 0 ) ! only required for ii > 1 ;
-  endif
-  if( NOTstellsym ) then
-    ;RlBCAST( iRbs(1:mn_field,0:Mvol), (Mvol+1)*mn_field, 0 ) ! only required for ii > 1 ;
+    ! Broadcast Rmn, Zmn
+    ; RlBCAST( iRbc(1:mn_field,0:Mvol), (Mvol+1)*mn_field, 0 )
     if( Igeometry.eq.3 ) then
-      RlBCAST( iZbc(1:mn_field,0:Mvol), (Mvol+1)*mn_field, 0 )
+      ;RlBCAST( iZbs(1:mn_field,0:Mvol), (Mvol+1)*mn_field, 0 ) ! only required for ii > 1 ;
     endif
-  endif
-
-  if( Lfreebound.eq.1 ) then
-    ;RlBCAST( iVns(1:mn_force), mn_force, 0 ) ! only required for ii > 1 ;
-    ;RlBCAST( iBns(1:mn_force), mn_force, 0 ) ! only required for ii > 1 ;
     if( NOTstellsym ) then
-      RlBCAST( iVnc(1:mn_force), mn_force, 0 )
-      RlBCAST( iBnc(1:mn_force), mn_force, 0 )
+      ;RlBCAST( iRbs(1:mn_field,0:Mvol), (Mvol+1)*mn_field, 0 ) ! only required for ii > 1 ;
+      if( Igeometry.eq.3 ) then
+        RlBCAST( iZbc(1:mn_field,0:Mvol), (Mvol+1)*mn_field, 0 )
+      endif
+    endif
+
+    if( Lfreebound.eq.1 ) then
+      ;RlBCAST( iVns(1:mn_force), mn_force, 0 ) ! only required for ii > 1 ;
+      ;RlBCAST( iBns(1:mn_force), mn_force, 0 ) ! only required for ii > 1 ;
+      if( NOTstellsym ) then
+        RlBCAST( iVnc(1:mn_force), mn_force, 0 )
+        RlBCAST( iBnc(1:mn_force), mn_force, 0 )
+      endif
     endif
   endif
 
@@ -1794,11 +1809,11 @@ subroutine read_henneberg_input_geometry()
   INTEGER :: Lcurvature        ! Flag for call to coords
   INTEGER :: ii, idx_mode, ind ! loop indices
   INTEGER :: mm, nn            ! poloidal, toroidal mode number
+  INTEGER :: cpu_id            ! Identify which CPU for which volume
 
   BEGIN(preset)
 
   ! --------------------------------------------------------------------------------------
-
   ! Read rhomn harmonics, store in irhoc
   do ii = 1, mn_rho
     mm=im_rho(ii)
@@ -1818,12 +1833,9 @@ subroutine read_henneberg_input_geometry()
   ! rn(m=0,n=0) is always equal to zero (irrelevant)
   iZ0s( 0, Nvol ) = zero
 
-  ! Map to Rmn, Zmn the input plasma boundary
-  if( Lfreebound.eq.0 ) then
-    call forwardMap( irhoc(1:mn_rho,Nvol), ibc(0:Ntor,Nvol), iR0c(0:Ntor,Nvol), iZ0s(1:Ntor,Nvol), iRbc(1:mn_field,Nvol), iZbs(1:mn_field,Nvol) )
-  else
-    ! TODO: implement free-boundary stuff
-  endif
+  ! Map the boundary
+  call forwardMap( irhoc(1:mn_rho,Nvol), ibc(0:Ntor,Nvol), iR0c(0:Ntor,Nvol), iZ0s(1:Ntor,Nvol), iRbc(1:mn_field,Nvol), iZbs(1:mn_field,Nvol) )
+
 
   ! Read axis if harmonics are provided by user. Otherwise these will be evaluated in rzaxis
   if( Igeometry.ne.1 .and. Rac(0).gt.zero ) then
@@ -1897,7 +1909,6 @@ subroutine read_henneberg_input_geometry()
       do lvol=1, Mvol
         call backwardMap( iRbc(1:mn_field,lvol), iZbs(1:mn_field,lvol), irhoc(1:mn_rho,lvol), ibc(0:Ntor,lvol), iR0c(0:Ntor,lvol), iZ0s(1:Ntor,lvol) )
       enddo !lvol=1:Nvol-1
-
     end select
   endif!Mvol.gt.1
 end subroutine read_henneberg_input_geometry
@@ -1962,7 +1973,7 @@ subroutine interpolate_initial_guess()
 end subroutine interpolate_initial_guess
 
 
-subroutine check_and_change_angle()
+subroutine check_and_change_angle( Lchangeangle )
 
   use constants, only : zero, one
   use fileunits, only : ounit
@@ -1976,7 +1987,7 @@ subroutine check_and_change_angle()
   INTEGER :: lvol         ! Volume number
   REAL    :: lss          ! Radial coordinate
   INTEGER :: Lcurvature   ! Flag for call to coords
-  LOGICAL :: Lchangeangle ! Boolean for changing or not the angle sign
+  LOGICAL, intent(out) :: Lchangeangle ! Boolean for changing or not the angle sign
 
   BEGIN(preset)
 
