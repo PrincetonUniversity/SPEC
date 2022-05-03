@@ -66,10 +66,10 @@
 !>
 !> @param[in]  Mvol
 !> @param[in]  mn_field
-!> @param      iRbc
-!> @param      iZbs
-!> @param      iRbs
-!> @param      iZbc
+!> @param      inRbc
+!> @param      inZbs
+!> @param      inRbs
+!> @param      inZbc
 !> @param[in]  ivol
 !> @param      LcomputeDerivatives
 !#ifdef DEBUG

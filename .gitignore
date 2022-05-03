@@ -1,4 +1,9 @@
 
+# python_wrapper
+Utilities/python_wrapper/spec.egg-info
+dist
+.eggs
+
 *.o
 *.mod
 *_p.f90
@@ -40,3 +45,13 @@ ci/
 
 #jupyter
 .ipynb_checkpoint
+
+#cmake build
+build/
+
+#python build
+_skbuild/
+
+# Temp fortran files
+src/mxspech.f90
+src/msphdf5.f90

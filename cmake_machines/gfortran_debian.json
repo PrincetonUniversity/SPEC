@@ -1,0 +1,7 @@
+{
+  "cmake_args": [
+    "-DCMAKE_C_COMPILER=mpicc",
+    "-DCMAKE_Fortran_COMPILER=mpif90",
+    "-DHDF5_ROOT=/usr/lib/x86_64-linux-gnu/hdf5/serial"
+  ]
+}

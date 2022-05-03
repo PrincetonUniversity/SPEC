@@ -55,3 +55,28 @@ There is an example importing the SPEC python class and optimize the volume insi
 A second example where the in-memory modification and reconvergence of SPEC is demonstrated can be found in `example2.py`.
 
 *So far, I have only tested GCC compiler, while Intel compiler should also work after updates in the Makefile*
+
+# Compile with CMake in **cmake** branch
+0. Go to the folder *SPEC/Utilities/python_wrapper*
+```bash
+cd <SPEC_ROOT>/Utilities/python_wrapper
+```
+1. Edit the *cmake_config.json* file in *SPEC/Utilities/python_wrapper* to update the cmake arguments to match with your system.
+2. Install scikit-buid, numpy, cmake, ninja using pip:
+```
+pip install scikit-build, numpy, cmake, ninja
+```
+3. Install Caoxiang's customized f90wrap:
+```
+pip install -U git+https://github.com/zhucaoxiang/f90wrap
+```
+4. Run the following commands in the order
+```bash
+python setup.py build_ext
+python setup.py install
+```
+5. Test it by running:
+```bash
+python -c "import spec; print(dir(spec))
+```
+You should see lot of SPEC subroutines.

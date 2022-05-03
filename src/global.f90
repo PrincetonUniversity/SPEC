@@ -131,8 +131,61 @@ end module fileunits
 !> \brief timing variables
 !> \ingroup grp_global
 module cputiming
-! CPUVARIABLE !< this is expanded by Makefile; do not remove
-  REAL :: Treadin = 0.0 !< timing of readin()
+  REAL    :: Tmanual = 0.0, manualT = 0.0
+  REAL    :: Trzaxis = 0.0, rzaxisT = 0.0
+  REAL    :: Tpackxi = 0.0, packxiT = 0.0
+  REAL    :: Tvolume = 0.0, volumeT = 0.0
+  REAL    :: Tcoords = 0.0, coordsT = 0.0
+  REAL    :: Tbasefn = 0.0, basefnT = 0.0
+  REAL    :: Tmemory = 0.0, memoryT = 0.0
+  REAL    :: Tmetrix = 0.0, metrixT = 0.0
+  REAL    :: Tma00aa = 0.0, ma00aaT = 0.0
+  REAL    :: Tmatrix = 0.0, matrixT = 0.0
+  REAL    :: Tspsmat = 0.0, spsmatT = 0.0
+  REAL    :: Tspsint = 0.0, spsintT = 0.0
+  REAL    :: Tmp00ac = 0.0, mp00acT = 0.0
+  REAL    :: Tma02aa = 0.0, ma02aaT = 0.0
+  REAL    :: Tpackab = 0.0, packabT = 0.0
+  REAL    :: Ttr00ab = 0.0, tr00abT = 0.0
+  REAL    :: Tcurent = 0.0, curentT = 0.0
+  REAL    :: Tdf00ab = 0.0, df00abT = 0.0
+  REAL    :: Tlforce = 0.0, lforceT = 0.0
+  REAL    :: Tintghs = 0.0, intghsT = 0.0
+  REAL    :: Tmtrxhs = 0.0, mtrxhsT = 0.0
+  REAL    :: Tlbpol = 0.0, lbpolT = 0.0
+  REAL    :: Tbrcast = 0.0, brcastT = 0.0
+  REAL    :: Tdfp100 = 0.0, dfp100T = 0.0
+  REAL    :: Tdfp200 = 0.0, dfp200T = 0.0
+  REAL    :: Tdforce = 0.0, dforceT = 0.0
+  REAL    :: Tnewton = 0.0, newtonT = 0.0
+  REAL    :: Tcasing = 0.0, casingT = 0.0
+  REAL    :: Tbnorml = 0.0, bnormlT = 0.0
+  REAL    :: Tjo00aa = 0.0, jo00aaT = 0.0
+  REAL    :: Tpp00aa = 0.0, pp00aaT = 0.0
+  REAL    :: Tpp00ab = 0.0, pp00abT = 0.0
+  REAL    :: Tbfield = 0.0, bfieldT = 0.0
+  REAL    :: Tstzxyz = 0.0, stzxyzT = 0.0
+  REAL    :: Thesian = 0.0, hesianT = 0.0
+  REAL    :: Tra00aa = 0.0, ra00aaT = 0.0
+  REAL    :: Tnumrec = 0.0, numrecT = 0.0
+  REAL    :: Tdcuhre = 0.0, dcuhreT = 0.0
+  REAL    :: Tminpack = 0.0, minpackT = 0.0
+  REAL    :: Tiqpack = 0.0, iqpackT = 0.0
+  REAL    :: Trksuite = 0.0, rksuiteT = 0.0
+  REAL    :: Ti1mach = 0.0, i1machT = 0.0
+  REAL    :: Td1mach = 0.0, d1machT = 0.0
+  REAL    :: Tilut = 0.0, ilutT = 0.0
+  REAL    :: Titers = 0.0, itersT = 0.0
+  REAL    :: Tsphdf5 = 0.0, sphdf5T = 0.0
+  REAL    :: Tpreset = 0.0, presetT = 0.0
+  REAL    :: Tglobal = 0.0, globalT = 0.0
+  REAL    :: Txspech = 0.0, xspechT = 0.0
+  REAL    :: Tinputlist = 0.0, inputlistT = 0.0
+  REAL    :: TbndRep = 0.0, bndRepT = 0.0
+  REAL    :: Twrtend = 0.0, wrtendT = 0.0
+
+  REAL :: Treadin = 0.0
+!  REAL :: Twritin = 0.0 ! redundant;
 end module cputiming
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -915,6 +968,8 @@ subroutine read_inputlists_from_file()
    LOGICAL              :: Lspexist
    integer :: filepos, seek_status, cpfile, instat, idx_mode
 
+   character(len=1000) :: line
+
    INTEGER              :: mm, nn
    REAL,    allocatable :: RZRZ(:,:) ! local array used for reading interface Fourier harmonics from file;
 
@@ -933,7 +988,14 @@ subroutine read_inputlists_from_file()
    if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : reading physicslist     from ext.sp ;")') cput-cpus
    endif
 
-   read(iunit,physicslist, iostat=instat)
+   read(iunit, physicslist, iostat=instat)
+   if (instat .ne. 0) then
+     ! help to debug invalid inputs:
+     ! re-read last line that lead to error and print it to screen
+     backspace(iunit)
+     read(iunit,fmt='(A)') line
+     write(*,'(A)') 'Invalid line in physicslist: '//trim(line)
+   end if
 
    if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : read    physicslist     from ext.sp ;")') cput-cpus
    endif
@@ -941,7 +1003,14 @@ subroutine read_inputlists_from_file()
    if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : reading numericlist     from ext.sp ;")') cput-cpus
    endif
 
-   read(iunit,numericlist, iostat=instat)
+   read(iunit, numericlist, iostat=instat)
+   if (instat .ne. 0) then
+     ! help to debug invalid inputs:
+     ! re-read last line that lead to error and print it to screen
+     backspace(iunit)
+     read(iunit,fmt='(A)') line
+     write(*,'(A)') 'Invalid line in numericlist: '//trim(line)
+   end if
 
    if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : read    numericlist     from ext.sp ;")') cput-cpus
    endif
@@ -949,7 +1018,14 @@ subroutine read_inputlists_from_file()
    if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : reading locallist      from ext.sp ;")') cput-cpus
    endif
 
-   read(iunit,locallist, iostat=instat)
+   read(iunit, locallist, iostat=instat)
+   if (instat .ne. 0) then
+     ! help to debug invalid inputs:
+     ! re-read last line that lead to error and print it to screen
+     backspace(iunit)
+     read(iunit,fmt='(A)') line
+     write(*,'(A)') 'Invalid line in locallist: '//trim(line)
+   end if
 
    if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : read    locallist      from ext.sp ;")') cput-cpus
    endif
@@ -957,7 +1033,14 @@ subroutine read_inputlists_from_file()
    if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : reading globallist   from ext.sp ;")') cput-cpus
    endif
 
-   read(iunit,globallist, iostat=instat)
+   read(iunit, globallist, iostat=instat)
+   if (instat .ne. 0) then
+     ! help to debug invalid inputs:
+     ! re-read last line that lead to error and print it to screen
+     backspace(iunit)
+     read(iunit,fmt='(A)') line
+     write(*,'(A)') 'Invalid line in globallist: '//trim(line)
+   end if
 
    if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : read    globallist   from ext.sp ;")') cput-cpus
    endif
@@ -965,7 +1048,14 @@ subroutine read_inputlists_from_file()
    if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : reading diagnosticslist from ext.sp ;")') cput-cpus
    endif
 
-   read(iunit,diagnosticslist, iostat=instat)
+   read(iunit, diagnosticslist, iostat=instat)
+   if (instat .ne. 0) then
+     ! help to debug invalid inputs:
+     ! re-read last line that lead to error and print it to screen
+     backspace(iunit)
+     read(iunit,fmt='(A)') line
+     write(*,'(A)') 'Invalid line in diagnosticslist: '//trim(line)
+   end if
 
    if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : read    diagnosticslist from ext.sp ;")') cput-cpus
    endif
@@ -973,7 +1063,14 @@ subroutine read_inputlists_from_file()
    if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : reading screenlist      from ext.sp ;")') cput-cpus
    endif
 
-   read(iunit,screenlist, iostat=instat)
+   read(iunit, screenlist, iostat=instat)
+   if (instat .ne. 0) then
+     ! help to debug invalid inputs:
+     ! re-read last line that lead to error and print it to screen
+     backspace(iunit)
+     read(iunit,fmt='(A)') line
+     write(*,'(A)') 'Invalid line in screenlist: '//trim(line)
+   end if
 
    if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : read    screenlist      from ext.sp ;")') cput-cpus
    endif
@@ -981,6 +1078,9 @@ subroutine read_inputlists_from_file()
    ! At this point, the input namelists are read.
    ! It remains to read the initial guess for the interface geometry,
    ! which follows after the namelists in the input file.
+
+   ! need to reset status flag for below logic to work
+   instat = 0
 
    num_modes = 0
    if (Linitialize .le. 0) then
