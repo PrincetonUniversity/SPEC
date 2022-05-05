@@ -1,34 +1,34 @@
-function [Dfrac, Lmin_polyfit, Lmax_polyfit, Lmin_num, Lmax_num] = get_spec_fractaldim_2(data, numline, mth, polyfit_degree, varargin)
+function [x, y, Dfrac, N, Lmin, Lmax] = get_spec_fractaldim(data, numline, mth, polyfit_degree, varargin)
 
-	%
-	% GET_FRACTALDIM( N, L, CASE_TITLE, POLYFIT_DEGREE, N_PTS, PLOTFIG )
-	% ==================================================================
-	%
-	% Plot the N, L parameters resulting from get_NL_boxcount and deduce the fractal dimension
-	% Ex :
-	% [D_polyfit, D_num, D_slope, Lmin_polyfit, Lmax_polyfit, Lmin_num, Lmax_num] = get_fractaldim(N_cantor, L_cantor, 1, 'Cantor', 6);
-	%
-	% INPUT
-	% -----
-    %   -data           : SPEC output data, read from read_spec(filename)
-    %   -numline        : Line number
-    %   -mth            : 0: uses the mean value to get the fractal dim
-    %                     1: evaluates numerically the curvature and
-    %                        extract the linear part
-    %                     2: polyfits the curve and evaluate the curvature
-    %                        analytically to extract the linear part.
-	% 	-polyfit_degree	: degree of the polyfit used to approximate the fractal dim
-	% 					: found out that it worked well between 4 and 6 depending on kmax (better to have 6 for large kmax and 4 otherwise)
-	%
-	% OUTPUT
-	% ------
-	% 	-Dfrac          : fractal dimension
-	%	-Lmin_num		: parameter defining the minimal size of the boxes used for the linear fit with numerical curvature
-	%	-Lmax_num		: parameter defining the maximal size of the boxes used for the linear fit with numerical curvature
-	%	-Lmin_polyfit	: parameter defining the minimal size of the boxes used for the linear fit using polyfit
-	%	-Lmax_polyfit	: parameter defining the maximal size of the boxes used for the linear fit using polyfit
-	% 					: recall that the size of the boxes is proportional to 2^(-k), hence kmin_edge < kmax_edge
-	%
+%
+% GET_FRACTALDIM( N, L, CASE_TITLE, POLYFIT_DEGREE, N_PTS, PLOTFIG )
+% ==================================================================
+%
+% Plot the N, L parameters resulting from get_NL_boxcount and deduce the fractal dimension
+% Ex :
+% [D_polyfit, D_num, D_slope, Lmin_polyfit, Lmax_polyfit, Lmin_num, Lmax_num] = get_fractaldim(N_cantor, L_cantor, 1, 'Cantor', 6);
+%
+% INPUT
+% -----
+%   -data           : SPEC output data, read from read_spec(filename)
+%   -numline        : Line number
+%   -mth            : 0: uses the mean value to get the fractal dim
+%                     1: evaluates numerically the curvature and
+%                        extract the linear part
+%                     2: polyfits the curve and evaluate the curvature
+%                        analytically to extract the linear part.
+% 	-polyfit_degree	: degree of the polyfit used to approximate the fractal
+%                     dim. Only used if mth=2
+%
+% OUTPUT
+% ------
+%   -x              : log10( Lmax/L )
+%   -y              : log10( N )
+% 	-Dfrac          : fractal dimension
+%   -N              : Number of points as function of L
+%	-Lmin    		: Maximal L taken into account for evaluation of Dfrac
+%	-Lmax   		: Minimal L taken into account for evaluation of Dfrac
+%
 
     % Optional input
     % ---------------
@@ -40,10 +40,8 @@ function [Dfrac, Lmin_polyfit, Lmax_polyfit, Lmin_num, Lmax_num] = get_spec_frac
     
     % Optional outputs
     % ----------------
-    Lmin_num = 0;
-    Lmax_num = 0;
-    Lmin_polyfit = 0;
-    Lmax_polyfit = 0;
+    Lmin = 0;
+    Lmax = 0;
     
     l = length(varargin);
     if mod(l,2)~=0
@@ -83,11 +81,10 @@ function [Dfrac, Lmin_polyfit, Lmax_polyfit, Lmin_num, Lmax_num] = get_spec_frac
     % ---------------------
     [N, L] = get_NL_boxcount(base_exponent, kmin, kmax, R, Z);
     
-    
     % Set up...
     idx = 1:length(N);
     
-    % slopes between each datapoints
+    % Get slopes between each datapoints
     xp = diff(-log(L));
     yp = diff(log(N));
     
@@ -107,6 +104,10 @@ function [Dfrac, Lmin_polyfit, Lmax_polyfit, Lmin_num, Lmax_num] = get_spec_frac
             xp_ = (xp(1:end-1) + xp(2:end))/2;
             yp_ = (yp(1:end-1) + yp(2:end))/2;
             slopes = [yp(1)/xp(1), yp_./xp_, yp(end)/xp(end)];
+            
+            % For output...
+            Lmax = max(L);
+            Lmin = min(L);
             
             % polyf_1d = polyfit(-log(L),log(N), 1);
             % D_slope = polyf_1d(1);
@@ -142,8 +143,8 @@ function [Dfrac, Lmin_polyfit, Lmax_polyfit, Lmin_num, Lmax_num] = get_spec_frac
             Dfrac = mean(slopes(idx_min_num+1:idx_max_num+1));
 
             % determine the corresponding Lmin_num and Lmax_num
-            Lmin_num = L(idx_max_num+1);
-            Lmax_num = L(idx_min_num+1);
+            Lmin = L(idx_max_num+1);
+            Lmax = L(idx_min_num+1);
             
         case 2  % polyfit curvature
     
@@ -170,8 +171,8 @@ function [Dfrac, Lmin_polyfit, Lmax_polyfit, Lmin_num, Lmax_num] = get_spec_frac
             % determine the corresponding Lmin_polyfit and Lmax_polyfit associated 
             % with kmax_edge and kmin_edge respectively if idx_min_polyfit or 
             % idx_max_polyfit is empty, it is a consequence of a too low threshold !
-            Lmin_polyfit = 1/one_over_L(idx_max_polyfit);
-            Lmax_polyfit = 1/one_over_L(idx_min_polyfit);
+            Lmin = 1/one_over_L(idx_max_polyfit);
+            Lmax = 1/one_over_L(idx_min_polyfit);
 
             % taking a polyfit yields a similar accuracy than the mean slope
             Dfrac = mean(polyval(pp,log(one_over_L(idx_min_polyfit:idx_max_polyfit-1))));
@@ -192,73 +193,10 @@ function [Dfrac, Lmin_polyfit, Lmax_polyfit, Lmin_num, Lmax_num] = get_spec_frac
             error('Invalid input')
             
     end
-
     
-    
+    x = log10(Lmax./L);
+    y = log10( N );
 
-
-	% =====================================================================
-	% average over the whole data (without correction)
-    
-
-% 	if plotfig
-% 		set(groot, 'defaultAxesTickLabelInterpreter','latex');
-% 		set(groot, 'defaultLegendInterpreter','latex');
-% 		set(groot, 'defaultTextInterpreter','latex');
-% 		set(groot, 'defaultAxesFontSize', 15);
-% 		
-% 		graph = figure;
-% 			hold on;
-% 			plot(1./L, N, '.', 'markersize', 12);
-% 			xline(1/Lmax_polyfit, 'r');
-% 			xline(1/Lmin_polyfit, 'r');
-% 			xline(1/Lmax_num);
-% 			xline(1/Lmin_num);
-% 			plot(one_over_L, exp(polyval(p, log(one_over_L))), 'r');
-% 			xlabel('Inverse box-length $1/L$');
-% 			ylabel('Box-count $N$');
-% 			box on;
-% 			grid on;
-% 			set(gca,'xscale','log');
-% 			set(gca,'yscale','log');
-% 			% title(case_title, 'Interpreter', 'latex');
-% 			str = ['Dimension with polynomial fit : ', num2str(D_polyfit), ...
-%                    newline, 'Dimension with numerical curvature : ', ...
-%                    num2str(D_num), newline, ...
-%                    'Dimension with average slope : ', num2str(D_slope)];
-% 			annotation('textbox', [.36 0 .3 .3], 'String', str, ...
-%                 'FitBoxToText', 'on', 'LineWidth', 0.5, 'BackgroundColor', ...
-%                 [1, 1, 1], 'Interpreter', 'latex');
-% 
-% 		graph = figure;
-% 			hold on;
-% 			plot(linspace(1,length(curv_polyfit)+1,length(curv_polyfit)), curv_polyfit);
-% 			xline(idx_min_polyfit);
-% 			xline(idx_max_polyfit);
-% 			yline(threshold_polyfit);
-% 			text(2.3, threshold_polyfit*1.05, 'Polynomial fit threshold', ...
-%                 'FontSize', 12, 'Interpreter', 'latex');
-% 			box on;
-% 			grid on;
-% 			set(gca,'xlim',[1 length(curv_polyfit)+1]);
-% 			xlabel('Indices of the points considered');
-% 			ylabel(['Analytical curvature of ',newline,...
-%                     'polynomial fit of $N(1/L)$']);
-% 
-% 		graph = figure;
-% 			hold on;
-% 			plot(linspace(1,length(curv_num),length(curv_num)), curv_num);
-% 			xline(idx_min_num);
-% 			xline(idx_max_num);
-% 			yline(threshold_num);
-% 			text(2.3, threshold_num*1.05, 'Numerical threshold', ...
-%                 'FontSize', 12, 'Interpreter', 'latex');
-% 			box on;
-% 			grid on;
-% 			set(gca,'xlim',[1 length(curv_num)]);
-% 			xlabel('Indices of the points considered');
-% 			ylabel('Numerical curvature of $N(1/L)$');
-% 	end
 end
 
 % =========================================================================

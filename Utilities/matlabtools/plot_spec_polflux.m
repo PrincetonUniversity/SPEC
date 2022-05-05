@@ -29,8 +29,9 @@ Nvol = data.input.physics.Nvol;
 polflux = zeros(1,Nvol);
 
 % Start at one only if slab geometry (otherwise it is zero by definition)
+sarr = linspace(-1, 1, 64);
 if data.input.physics.Igeometry==1
-    polflux(1) = get_spec_polflux(data,1,zeta,-1,1,64,64);
+    polflux(1) = get_spec_polflux(data,1,zeta,sarr,64);
 end
 
 for lvol=2:Nvol

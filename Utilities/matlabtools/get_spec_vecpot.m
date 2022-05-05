@@ -20,7 +20,27 @@ function Acov = get_spec_vecpot(data,lvol,sarr,tarr,zarr)
 %
 % written by J.Loizu (2018)
 
+% Test input
+Mvol = data.output.Mvol;
+if lvol<1 || lvol>Mvol
+    error('InputError: invalid lvol')
+end
 
+if isempty(sarr)
+    error('InputError: empty sarr')
+end
+if isempty(tarr)
+    error('InputError: empty tarr')
+end
+if isempty(zarr)
+    error('InputError: empty zarr')
+end
+
+if sarr(1)<-1 || sarr(end)>1
+    error('InputError: invalid sarr')
+end
+
+% Read data 
 Ate     = data.vector_potential.Ate{lvol};
 Aze     = data.vector_potential.Aze{lvol};
 Ato     = data.vector_potential.Ato{lvol};
@@ -32,7 +52,6 @@ sarr    = transpose(sarr);
 ns      = length(sarr);
 nt      = length(tarr);
 nz      = length(zarr);
-sbar    = (sarr+1)/2;
 
 mn      = data.output.mn;
 im      = double(data.output.im);
@@ -43,15 +62,12 @@ Az      = zeros(ns,nt,nz); % allocate data for vector potential along zeta
 
 
 % Construct Chebyshev polynomials 
-
 T = get_spec_polynomial_basis(data, lvol, sarr);
 
 % Construct regularization factors
-
 fac = get_spec_regularisation_factor(data, lvol, sarr, 'F');
 
 % Construct vector potential covariant components
-
 Lsingularity = false;
 if (lvol==1) && (data.input.physics.Igeometry~=1)
   Lsingularity = true;
@@ -62,10 +78,8 @@ for l=1:Lrad+1
   for j=1:mn
     if( Lsingularity )
        basis = T{l}{1}(im(j)+1);
-      dbasis = T{l}{2}(im(j)+1);
     else
        basis = T{l}{1};
-      dbasis = T{l}{2};
     end
 
     for it=1:nt

@@ -25,7 +25,7 @@ Nfp = double(data.input.physics.Nfp);
 % Set up options
 opt.nt = 64;
 opt.nz = 64;
-opt.phiend = 2*pi / Nfp;
+opt.phiend = 2*pi / max(Nfp,2);
 opt.tstart = 0;
 
 l = length(varargin);
@@ -44,12 +44,11 @@ sarr = 1;                       % We plot on the outermost surface, i.e. the pla
 tarr = linspace(0,2*pi       ,opt.nt);
 zarr = linspace(0,opt.phiend ,opt.nz);
 
-%modB   = get_spec_modB(data,Nvol,sarr,tarr,zarr);
+R = get_spec_R_derivatives(data,Nvol,sarr,tarr,zarr,'R');
+Z = get_spec_R_derivatives(data,Nvol,sarr,tarr,zarr,'Z');
 
-rzdata = get_spec_rzarr(data,Nvol,sarr,tarr,zarr);
-
-R = squeeze(rzdata{1});   
-Z = squeeze(rzdata{2});
+R = squeeze(R{1});   
+Z = squeeze(Z{1});
 
 
 % Construct cartesian corrdinates 
@@ -157,11 +156,12 @@ if ~isempty(tarr)
     Y = [];
     Z = [];
     for ii = 1:nstep
-        rzdata = get_spec_rzarr(data,Nvol,1,tarr(ii),phi(ii));
+        Rd = get_spec_R_derivatives(data,Nvol,sarr,tarr(ii),phi(ii),'R');
+        Zd = get_spec_R_derivatives(data,Nvol,sarr,tarr(ii),phi(ii),'Z');
 
-        X(ii) = squeeze(rzdata{1}) * cos(phi(ii));
-        Y(ii) = squeeze(rzdata{1}) * sin(phi(ii));
-        Z(ii) = squeeze(rzdata{2});
+        X(ii) = squeeze(Rd{1}) * cos(phi(ii));
+        Y(ii) = squeeze(Rd{1}) * sin(phi(ii));
+        Z(ii) = squeeze(Zd{1});
     end
 
     scatter3( X, Y, Z, 10, 'MarkerFaceColor', col.Leman, 'MarkerEdgeColor', col.Leman)

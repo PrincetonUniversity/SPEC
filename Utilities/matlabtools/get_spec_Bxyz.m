@@ -18,6 +18,12 @@ function xyz = get_spec_Bxyz( data, lvol, sarr, tarr, zarr )
 % Written by A. Baillod (2021)
 %
 
+% Check input
+Igeometry = data.input.physics.Igeometry;
+if Igeometry~=3
+    error('Invalide geometry')
+end
+
 % Read some input from data
 Mvol = data.output.Mvol;
 
@@ -25,17 +31,7 @@ if( lvol<1 || lvol>Mvol )
   error('invalid volume')
 end
 
-im   = data.output.im;
-in   = data.output.in;
-
-Rbc = data.output.Rbc(:,Mvol-1);
-Rbs = data.output.Rbs(:,Mvol-1);
-Zbc = data.output.Zbc(:,Mvol-1);
-Zbs = data.output.Zbs(:,Mvol-1);
-
-mn = length(Rbc);
-
-% Start by building the grid and compute (R,Z,phi) coords
+% Reshape input
 ns = length(sarr);
 sarr = reshape( sarr, 1, ns);
 
@@ -45,11 +41,8 @@ theta = reshape( tarr, 1, nt );
 nz = length(zarr);
 phi = reshape( zarr, 1, nz );
 
-
-[t_grid, z_grid] = meshgrid( theta, phi );
-
-[tmp, Rarr] = get_spec_R_derivatives( data, Mvol, sarr, theta, phi, 'R' );
-[tmp, Zarr] = get_spec_R_derivatives( data, Mvol, sarr, theta, phi, 'Z' );
+Rarr = get_spec_R_derivatives( data, Mvol, sarr, theta, phi, 'R' );
+Zarr = get_spec_R_derivatives( data, Mvol, sarr, theta, phi, 'Z' );
 
 
 % Transform to cartesian coordinates (x,y,z)
@@ -84,7 +77,6 @@ for is = 1:ns
     Rt = reshape( Rarr{3}(is,it,:), 1, nz );
     Rz = reshape( Rarr{4}(is,it,:), 1, nz );
 
-    Z  = reshape( Zarr{1}(is,it,:), 1, nz );
     Zs = reshape( Zarr{2}(is,it,:), 1, nz );
     Zt = reshape( Zarr{3}(is,it,:), 1, nz );
     Zz = reshape( Zarr{4}(is,it,:), 1, nz );
@@ -97,7 +89,7 @@ for is = 1:ns
                 + Bphi.*(Rz.*sin(phi) + R.*cos(phi));
     Bz(is,it,:) = Bs.*Zs ...
                 + Bt.*Zt ...
-                + Bphi.*Zz
+                + Bphi.*Zz;
   end
 
 xyz.theta = theta;

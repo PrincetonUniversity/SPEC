@@ -80,11 +80,11 @@ switch dimension
     
     case 3
         % Compute function (R,Z)(s,theta,zeta)
+        R = get_spec_R_derivatives(data,vol,sarr,tarr,zarr,'R');
+        Z = get_spec_R_derivatives(data,vol,sarr,tarr,zarr,'Z');
 
-        rzdata = get_spec_rzarr(data,vol,sarr,tarr,zarr);
-
-        R = squeeze(rzdata{1});   
-        Z = squeeze(rzdata{2});
+        R = squeeze(R{1});   
+        Z = squeeze(Z{1});
 
 
         % Construct cartesian corrdinates 

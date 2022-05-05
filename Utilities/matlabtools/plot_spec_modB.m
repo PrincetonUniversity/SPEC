@@ -42,11 +42,11 @@ rzbdata = cell(3);
 modB   = get_spec_modB(data,lvol,sarr,tarr,zarr);
 
 % Compute function (R,Z)(s,theta,zeta)
+R = get_spec_R_derivatives(data,lvol,sarr,tarr,zarr,'R');
+Z = get_spec_R_derivatives(data,lvol,sarr,tarr,zarr,'Z');
 
-rzdata = get_spec_rzarr(data,lvol,sarr,tarr,zarr);
-
-R = rzdata{1};   
-Z = rzdata{2};
+R = R{1};   
+Z = Z{1};
 
 % Plot
 

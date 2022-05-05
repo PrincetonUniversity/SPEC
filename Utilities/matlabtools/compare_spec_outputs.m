@@ -1,19 +1,27 @@
 function [Dabs, Drel, df] = compare_spec_outputs(data1,data2)
 
+% 
+% COMPARE_SPEC_OUTPUTS( DATA1, DATA2 )
+% ====================================
+%
 % Compares the interface geometry of two spec outputs
 % Two outputs are considered "the same" if df ~ 1e-15 (or less)
 %
 % INPUT
+% -----
 % - data1: data obtained via read_spec( fname1 )
 % - data2: data obtained via read_spec( fname2 )
 %
 % OUTPUT
+% ------
 % - Dabs   : absolute maximum distance
 % - Drel   : relative maximum distance
 % - df     : expected change in force-balance if one output is used as input for the other run
 %
 % written by J.Loizu (08.2017)
 % modified by J.Loizu (10.2017)
+%
+% TODO: UPDATE - IS THIS STILL CORRECT ?
 
 % 
 % Rmn1        = h5read(fname1,'/Rbc');

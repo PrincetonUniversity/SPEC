@@ -26,14 +26,16 @@ function Avol = get_spec_area(data,lvol,smax,ns,nt,phi0)
 
 smin     = -0.999; %avoids singular inversion of the metric matrix
 
+% Define arrays
 sarr     = linspace(smin,smax,ns);
 tarr     = linspace(0,2*pi,nt);
 
+% Evaluate Jacobian and metric
 jacobian = get_spec_jacobian(data,lvol,sarr,tarr,phi0);
 gcontrav = get_spec_metric_contrav(data,lvol,sarr,tarr,phi0);
-
 sqrtgradphi = sqrt(gcontrav{3}{3});
   
-Avol  = sum(sum(jacobian(2:end,:).*sqrtgradphi(2:end,:)))*(2*2*pi)/(ns*nt);
+% Evaluate area
+Avol = trapz(tarr, trapz(sarr, jacobian.*sqrtgradphi, 1) );
 
 end
