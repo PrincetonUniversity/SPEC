@@ -23,43 +23,42 @@ function plot_spec_torflux(data, zeta, cumulative, newfig)
 % Written by A. Baillod (2019)
 %
 
-Nvol = data.input.physics.Nvol;
+    Mvol = data.output.Mvol;
+    torflux = zeros(1,Mvol);
 
-torflux = zeros(1,Nvol);
+    for lvol=1:Mvol
+        tmp = get_spec_torflux(data,lvol,zeta,-1,1,64,64);
 
-for lvol=1:Nvol
-    tmp = get_spec_torflux(data,lvol,zeta,-1,1,64,64);
-    
-    if cumulative
-        if lvol==1
-            torflux(lvol)=tmp;
+        if cumulative
+            if lvol==1
+                torflux(lvol)=tmp;
+            else
+                torflux(lvol) = torflux(lvol-1) + tmp;
+            end
         else
-            torflux(lvol) = torflux(lvol-1) + tmp;
+            torflux(lvol)=tmp;
         end
-    else
-        torflux(lvol)=tmp;
+
     end
-        
-end
 
 
-switch newfig
-    case 0
-        hold on;
-    case 1
-        figure
-        hold on;
-    case 2
-        hold off;
-    otherwise
-        error('Unsupported newfig value')
-end
+    switch newfig
+        case 0
+            hold on;
+        case 1
+            figure
+            hold on;
+        case 2
+            hold off;
+        otherwise
+            error('InputError: Invalid newfig')
+    end
 
-bar(torflux)
-xlabel('Volume label')
-ylabel('Toroidal flux')
-set(gca, 'FontSize', 14)
-xticks(1:1:Nvol)
-grid on;
+    bar(torflux)
+    xlabel('Volume label')
+    ylabel('Toroidal flux')
+    set(gca, 'FontSize', 14)
+    xticks(1:1:Nvol)
+    grid on;
 
 end

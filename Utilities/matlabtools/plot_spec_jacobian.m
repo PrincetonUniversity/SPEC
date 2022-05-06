@@ -23,31 +23,59 @@ function rzbdata = plot_spec_jacobian(data,lvol,sarr,tarr,zarr,newfig)
 % written by J.Loizu (2016)
 
 if(sarr=='d')
-sarr=linspace(-1,1,64);
+    sarr=linspace(-1,1,64);
 end
 
 if(tarr=='d')
-tarr=linspace(0,2*pi,64);
+    tarr=linspace(0,2*pi,64);
 end
 
 if(zarr=='d')
-zarr=0;
+    zarr=0;
 end
 
-% Check input
-if (length(sarr)>1) && length(tarr)>1 && length(zarr)>1
-   error('This is a 2d plotting routine; one input array has to be a scalar') 
+% Check inputs
+if lvol<1 || lvol>data.output.Mvol
+    error('InputError: invalid lvol')
+end
+
+if isempty(sarr)
+    error('InputError: sarr is empty')
+end
+if isempty(tarr)
+    error('InputError: tarr is empty')
+end
+if isempty(zarr)
+    error('InputError: zarr is empty')
+end
+
+if sarr(1)<-1 || sarr(end)>1
+    error('InputError: invalid sarr')
+end
+
+if any(diff(sarr)<0)
+    error('InputError: sarr is not monotonic')
 end
 
 switch newfig
     case 0
         hold on
     case 1
-        figure
+        figure('Color','w','Position',[200 200 900 700])
         hold on
     case 2
         hold off
+    otherwise
+        error('InputError: invalid newfig')
 end
+
+
+
+% Check input
+if (length(sarr)>1) && length(tarr)>1 && length(zarr)>1
+   error('This is a 2d plotting routine; one input array has to be a scalar') 
+end
+
 
 % Allocate memory
 rzbdata = cell(3);
@@ -99,6 +127,8 @@ axis equal
 title('|B|');
 xlabel('R');
 ylabel('Z');
+set(gca, 'FontSize', 18)
+
 
 % Output data
 

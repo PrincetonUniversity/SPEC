@@ -19,7 +19,7 @@ function plot_spec_surface_current(data, nt, newfig)
 
     % Test input
     if nt<1
-        error('Invalid nt')
+        error('InputError: Invalid nt')
     end
 
 
@@ -32,7 +32,7 @@ function plot_spec_surface_current(data, nt, newfig)
         case 2
             hold off
         otherwise
-            error('Invalide newfig')
+            error('InputError: Invalid newfig')
     end
 
     % Evaluate toroidal current

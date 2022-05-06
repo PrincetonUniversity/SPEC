@@ -1,8 +1,8 @@
 function plot_spec_pressure(data, norm, newfig, varargin)
 
 %
-% PLOT_SPEC_PRESSURE( DATA, NEWFIG )
-% ==================================
+% PLOT_SPEC_PRESSURE( DATA, NORM, NEWFIG, VARARGIN )
+% ==================================================
 %
 % Plots stepped-pressure profile versus normalized toroidal flux used in SPEC
 %
@@ -15,9 +15,13 @@ function plot_spec_pressure(data, norm, newfig, varargin)
 % written by J.Loizu (2018)
 % modified by A. Baillod (2019)
 
+if ~any(norm==[0,1])
+    error('InputError: invalid norm')
+end
+
 l = length(varargin);
 if mod(l,2)~=0
-    error('Invalid number of argument')
+    error('InputError: invalid number of argument')
 end
 
 opt.Color='b';
@@ -97,6 +101,7 @@ end
     
 if( norm )
     ylabel('$p / p_0$', 'Interpreter', 'latex')
+else
     ylabel('$p$', 'Interpreter', 'latex')
 end
 xlabel('$\Psi / \Psi_{edge}$', 'Interpreter', 'latex')

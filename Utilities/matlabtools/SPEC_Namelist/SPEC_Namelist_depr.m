@@ -14,266 +14,196 @@ classdef SPEC_Namelist
       
     % =====================================================================
     % Class constructor
-    function obj = SPEC_Namelist(inputfile, varargin)
+    function obj = SPEC_Namelist(inputfile)
 
-        if( ~isempty(varargin) )
-          input_category = varargin{1};
-        end
-
-        fid = fopen(inputfile,'r'); % open template file
-        tline = fgetl(fid);
-
-        obj.lists = {'physicslist', 'numericlist', 'locallist', ...
-                     'globallist', 'diagnosticslist', 'screenlist'};
-
-        for ii=numel(obj.lists)
-            list = obj.lists{ii};
-            obj.(list) = struct;
-        end
-        category = '';
-
-        boundary.Rbc = []; boundary.Rbs = []; boundary.Zbc = []; boundary.Zbs = []; ib=0; bm = []; bn = [];
-        wall.Rwc     = []; wall.Rws     = []; wall.Zwc     = []; wall.Zws     = []; iw=0; wm = []; wn = [];
-        Nfield.Vns   = []; Nfield.Vnc   = []; Nfield.Bnc   = []; Nfield.Bns   = []; iv=0; vm = []; vn = [];
-
-        iline = 0;
-        while ~isempty(tline) || feof(fid)
-
-          % Remove trailing and leading spaces
-          tline = strtrim(tline);
-
-          if feof(fid)
-             break;
-          end
-
-          iline = iline + 1		;
-          % jump / lines between categories.
-          if strcmp(tline, '/')
-             if strcmp(category,'screenlist')
-                break; % end of file, ignore geometry initial guess
-             else
-                 tline = fgetl(fid);
-                 continue;
-             end
-          end
-
-          % read category
-          if strcmp(tline(end-3:end),'list')
-             category = tline(2:end);
-             tline = fgetl(fid);
-             continue;
-          end
-
-
-          % Field
-          try
-              field = extractBefore(tline,'=');  %read field
-              field = char(field);
-              field = field(~isspace(field));    %remove spaces
-          catch
-              disp(['Error in field reading at line ', num2str(iline)])
-              disp(['Field is ', field])
-          end
-
-
-          % Content
-          if length(field)<3
-
-            try
-              content_str = extractAfter(tline,'=');
-              content = char(content_str);
-              content = content(~isspace(content));
-              if strcmp(content,'F')
-                  content = false;
-              elseif strcmp(content,'T')
-                  content = true;
-              else
-                  content = str2num(char(content_str));
-              end
-
-              % Store in structure
-              obj.(category).(field) = content;
-
-            catch
-                error(['Error reading line ', tline])
-
-            end
-
-
-          else
-            if strcmp(field(1:3),'Rbc') %need to split Rbc, Rbs, Zbc, Zbs
-              ib = ib + 1;
-              [n, m] = obj.get_nm_from_field(field);
-
-              [value, field]  = obj.extract_4_values(tline, n, m, 'Rbc', 'Zbs', 'Rbs', 'Zbc');
-
-              boundary.Rbc(ib) = 0.0;
-              boundary.Zbc(ib) = 0.0;
-              boundary.Zbs(ib) = 0.0;
-              boundary.Rbs(ib) = 0.0;
-              
-              nfield = length(field);
-              for ii=1:nfield
-                  boundary.(field{ii})(ib) = value{ii};
-              end
-
-              bm(ib) = m;
-              bn(ib) = n;
-
-            elseif strcmp(field(1:3),'Rwc') % same as above
-              iw = iw + 1;
-              [n, m] = obj.get_nm_from_field(field);
-
-              [value, field]  = obj.extract_4_values(tline, n, m, 'Rwc', 'Zws', 'Rws', 'Zwc');
-
-              wall.Rwc(iw) = 0.0;
-              wall.Zwc(iw) = 0.0;
-              wall.Zws(iw) = 0.0;
-              wall.Rws(iw) = 0.0;
-              
-              nfield = length(field);
-              for ii=1:nfield
-                  wall.(field{ii})(iw) = value{ii};
-              end
-
-              wm(iw) = m;
-              wn(iw) = n;
-
-            elseif strcmp(field(1:3),'Vns') || strcmp(field(1:3),'Vnc') || strcmp(field(1:3),'Bns') || strcmp(field(1:3),'Bnc')% same as above
-              iv = iv + 1;
-              [n, m] = obj.get_nm_from_field(field);
-
-              [value, field]  = obj.extract_4_values(tline, n, m, 'Vns', 'Bns', 'Vnc', 'Bnc');
-
-              Nfield.Vnc(iv) = 0.0;
-              Nfield.Bnc(iv) = 0.0;
-              Nfield.Vns(iv) = 0.0;
-              Nfield.Bns(iv) = 0.0;
-              
-              nfield = length(field);
-              for ii=1:nfield
-                  Nfield.(field{ii})(iv) = value{ii};
-              end
-
-              vm(iv) = m;
-              vn(iv) = n;
-
-            else % easier, just read content
-              content_str = extractAfter(tline,'=');
-
-              content = char(content_str);
-              content = content(~isspace(content));
-              if strcmp(content,'F')
-                  content = false;
-              elseif strcmp(content,'T')
-                  content = true;
-              else
-                  content = str2num(char(content_str));
-              end
-
-              % Store in structure
-              if isempty(category)
-                obj.(input_category).(field) = content;
-              else
-                obj.(category).(field) = content;
-              end
-            end
-          end
-
-          % get next line
-          tline = fgetl(fid);
-        end
-
-        % Store rbc, rbs ... in structure
-
-        boundaryfields = fieldnames(boundary);
-        wallfields     = fieldnames(wall);
-        Nfieldfields   = fieldnames(Nfield);
-
-        for ii=1:4
-            obj.physicslist.(boundaryfields{ii}) = boundary.(boundaryfields{ii});
-            obj.physicslist.(wallfields{ii})     = wall.(wallfields{ii});
-            obj.physicslist.(Nfieldfields{ii})   = Nfield.(Nfieldfields{ii});
-        end
-
-        fclose(fid);                % close template file
-
-        % Reformat the Rbc, Zbs, ... arrays
-        if(isfield(obj.physicslist, 'Mpol'))
-          Mpol = obj.physicslist.Mpol;
-          Ntor = obj.physicslist.Ntor;
+        % Read namelist
+        work = read_namelist( inputfile );
+        obj.lists = fields(work);
+             
+        % Read Lboundary
+        if isfield(work.physicslist, 'Lboundary')
+            Lboundary = work.physicslist.Lboundary;
         else
-          Mpol = max([wm,bm,vm]); Ntor = max([wn,bn,vn]);
+            Lboundary = 0; % by default
         end
-
-        mn   = 1 + Ntor +  Mpol * ( 2 *  Ntor + 1 );
-
-        Rbc = zeros(1,mn); Rbs = zeros(1,mn); Zbc = zeros(1,mn); Zbs = zeros(1,mn);
-        Rwc = zeros(1,mn); Rws = zeros(1,mn); Zwc = zeros(1,mn); Zws = zeros(1,mn);
-        Vnc = zeros(1,mn); Vns = zeros(1,mn); Bnc = zeros(1,mn); Bns = zeros(1,mn);
-        im = zeros(1,mn);
-        in = zeros(1,mn);
-
-        im(1:1+Ntor) = 0;
-        in(1:1+Ntor) = 0:Ntor;
-        count = Ntor+1;
-        for ii=1:Mpol
-          for jj=-Ntor:Ntor
-            count = count + 1;
-            im( count ) = ii;
-            in( count ) = jj;
-          end
-        end
-
-        for imn = 1:mn
-          m = im(imn);
-          n = in(imn);
-
-          b_ind = find(double(bm==m) .* double(bn==n));
-          if( ~isempty(b_ind) )
-            Rbc( imn ) = obj.physicslist.Rbc( b_ind );
-            Rbs( imn ) = obj.physicslist.Rbs( b_ind );
-            Zbc( imn ) = obj.physicslist.Zbc( b_ind );
-            Zbs( imn ) = obj.physicslist.Zbs( b_ind );
-          end
-
-          w_ind = find(double(wm==m) .* double(wn==n));
-          if( ~isempty(w_ind) )
-            Rwc( imn ) = obj.physicslist.Rwc( w_ind );
-            Rws( imn ) = obj.physicslist.Rws( w_ind );
-            Zwc( imn ) = obj.physicslist.Zwc( w_ind );
-            Zws( imn ) = obj.physicslist.Zws( w_ind );
-          end
-
-          v_ind = find(double(vm==m) .* double(vn==n));
-          if( ~isempty(v_ind) )
-            Vnc( imn ) = obj.physicslist.Vnc( v_ind );
-            Vns( imn ) = obj.physicslist.Vns( v_ind );
-            Bnc( imn ) = obj.physicslist.Bnc( v_ind );
-            Bns( imn ) = obj.physicslist.Bns( v_ind );
-          end
-        end
-
-        obj.physicslist.im = im;
-        obj.physicslist.in = in;
-
-        obj.physicslist.Rbc = Rbc;
-        obj.physicslist.Rbs = Rbs;
-        obj.physicslist.Zbc = Zbc;
-        obj.physicslist.Zbs = Zbs;
         
-        obj.physicslist.Rwc = Rwc;
-        obj.physicslist.Rws = Rws;
-        obj.physicslist.Zwc = Zwc;
-        obj.physicslist.Zws = Zws;
+        if Lboundary==0
+            % Build im, in arrays 
+            
+            %If boundary not given
+            if ~isfield(work.physicslist, 'Rbc')
+               if work.physicslist.Lfreebound==1
+                   work.physicslist.Rbc = zeros(size(work.physicslist.Rwc));
+                   work.physicslist.Rbs = zeros(size(work.physicslist.Rwc));
+                   work.physicslist.Zbc = zeros(size(work.physicslist.Rwc));
+                   work.physicslist.Zbs = zeros(size(work.physicslist.Rwc)); 
+                   work.physicslist.shift.Rbc = work.physicslist.shift.Rwc;
+                   work.physicslist.shift.Rbs = work.physicslist.shift.Rws;
+                   work.physicslist.shift.Zbc = work.physicslist.shift.Zwc;
+                   work.physicslist.shift.Zbs = work.physicslist.shift.Zws;
+               else
+                   error('Plasma boundary is not provided')
+               end
+            end
+            
+            if ~isfield(work.physicslist, 'Rwc') && work.physicslist.Lfreebound==1
+                error('Computational boundary is not provided')
+            end
+            
+            if ~isfield(work.physicslist, 'Vnc') && work.physicslist.Lfreebound==1
+                work.physicslist.Vnc = zeros(size(
+                        
+            s = size(work.physicslist.Rbc);
+            mpol =  s(2) - 1;
+            ntor = (s(1) - 1) / 2.0;
 
-        obj.physicslist.Vnc = Vnc;
-        obj.physicslist.Vns = Vns;
-        obj.physicslist.Bnc = Bnc;
-        obj.physicslist.Bns = Bns;
+            im = 0:mpol;
+            in = -ntor:ntor;
+
+            [work.physicslist.im, work.physicslist.in] = meshgrid(im,in);  
+            
+            
+            % Need to build Rbc, Zbs, ...
+            arr_str = {'Rbc', 'Rbs', 'Zbc', 'Zbs', 'Rwc', 'Rws', 'Zwc', 'Zws', 'Vnc', 'Vns', 'Bnc', 'Bns'};
+            n = length(arr_str);
+            ntor = zeros(1,n);
+            mpol = zeros(1,n);
+            for ii=1:n
+                
+                if ~isfield(work.physicslist, arr_str{ii})
+                    ntor(ii) = 0;
+                    mpol(ii) = 0;
+                    
+                    continue
+                end
+                
+                if ~isfield(work.physicslist.shift, arr_str{ii})
+                    ntor(ii) = 0;
+                    mpol(ii) = 0;
+                    
+                    continue
+                end 
+                
+                s_shift = size(work.physicslist.(arr_str{ii})) - work.physicslist.shift.(arr_str{ii});
+                ntor(ii) = s_shift(1);
+                mpol(ii) = s_shift(2);
+                
+            end
+            
+            %select poloidal and toroidal resolution for our arrays
+            if isfield(work.physicslist, 'Mpol')
+                Mpol = max(max(mpol), work.physicslist.Mpol);
+                Ntor = max(max(ntor), work.physicslist.Ntor);
+            else
+                Mpol = max(mpol);
+                Ntor = max(ntor);
+            end
+            
+            
+            bnd = struct;
+            for ii=1:n
+               fldname = arr_str{ii};
+               bnd.(fldname) = zeros(Mpol+1, 2*Ntor+1);
+                               
+               if ~isfield(work.physicslist, arr_str{ii}) 
+                   continue
+               end
+                
+               if ~isfield(work.physicslist.shift, arr_str{ii})
+                   continue
+               end
+               
+               
+               flds = size( work.physicslist.(fldname) );
+               s = work.physicslist.shift.(fldname);
+               for in=1:flds(1)
+                       
+                   nn = in - s(1);
+                   
+                   for im=1:flds(2)
+                       
+                       mm = im - s(2);
+                       bnd.(fldname)(mm+1,nn+Ntor+1) = work.physicslist.(fldname)(in,im);
+                       
+                   end
+               end               
+            end
+            
+            % Finally build im, in grids
+            im = 0:Mpol;
+            in = -Ntor:Ntor;
+            
+            [in, im] = meshgrid(in, im);
+            
+            work.physicslist.im = im;
+            work.physicslist.in = in;
+            
+            
+            
+        else
+            
+            arr_str = {'R0c', 'Z0s', 'bn','rhomn'};
+            n = length(arr_str);
+            ntor_arr = zeros(1,n);
+            
+            for ii=1:n
+                if strcmp(arr_str{ii}, 'rhomn')
+                    continue
+                end
+                
+                ntor_arr(ii) = length(work.physicslist.(arr_str{ii}))-1;
+            end
+            
+            ntor = max( [work.physicslist.Ntor, max(ntor_arr)] );
+            
+            for ii=1:n
+                if strcmp(arr_str{ii}, 'rhomn')
+                    continue
+                end
+                
+                bnd.(arr_str{ii}) = zeros(1, ntor);
+                bnd.(arr_str{ii})(1:ntor_arr(ii)+1) = work.physicslist.(arr_str{ii})(1:ntor_arr(ii)+1); 
+            end
+            
+            % Now deal with rhomn
+            s = size(work.physicslist.rhomn);
+            ntor_rho = max( (s(1)-1)/2.0, work.physicslist.Ntor );
+            mpol_rho = max( s(2)-1      , work.physicslist.Mpol );
+            
+            bnd.rhomn = zeros( mpol_rho+1, 2*ntor_rho+1 );
+            
+            for ii=1:s(1)
+                
+                nn = ii - work.physicslist.shift.rhomn(1);
+                
+                for jj=1:s(2)
+                    
+                    mm = jj - work.physicslist.shift.rhomn(2);
+                    
+                    bnd.rhomn( mm+1, nn+ntor_rho+1 ) = work.physicslist.rhomn( ii, jj );
+                end
+            end
+            
+            im = 0:mpol_rho;
+            in = -ntor_rho:ntor_rho;
+            
+            [in, im] = meshgrid(in, im);
+            
+            work.physicslist.im = im;
+            work.physicslist.in = in;           
+            
+        end
         
-        obj = obj.update_flux_surfaces();
-
+        % Store in object
+        for ii=1:length(obj.lists)
+           obj.(obj.lists{ii}) = work.(obj.lists{ii});
+        end
+        
+        for ii=1:n
+            fldname = arr_str{ii};
+            obj.physicslist.(fldname) = bnd.(fldname);            
+        end
+        
         % Read initial guess
         try
           obj = obj.read_initial_guess( inputfile );
@@ -282,7 +212,6 @@ classdef SPEC_Namelist
         end
 
     end
-      
       
     function obj = read_initial_guess(obj, init_guess_file)
       %
@@ -308,26 +237,7 @@ classdef SPEC_Namelist
 
         tline = fgetl(fid2);
         tline = strtrim(tline);
-
-        field = extractBefore(tline,'=');  %read field
-        field = char(field);
-        field = field(~isspace(field));    %remove spaces
-        content_str = extractAfter(tline,'=');
-        content = str2num(content_str);
-
-        % Read initial guess for coordinate axis
-        switch field
-        case 'Rac'
-          obj.physicslist.Rac = content;
-        case 'Ras'
-          obj.physicslist.Ras = content;
-        case 'Zac'
-          obj.physicslist.Zac = content;
-        case 'Zas'
-          obj.physicslist.Zas = content;
-        end
-
-
+        
         if( save_line ) % write line
           initial_guess{end+1} = tline;
 
@@ -345,8 +255,6 @@ classdef SPEC_Namelist
 
           end
         end
-
-
       end % end of while
 
       fclose(fid2); % Close file
@@ -355,50 +263,198 @@ classdef SPEC_Namelist
       % Now, format initial guess in arrays
       % Prepare format for reading
       nlines = length(initial_guess);
-
-      % Allocate memory
-      im = obj.physicslist.im; in = obj.physicslist.in;
-      mn = length( im );
-      Nvol = obj.physicslist.Nvol;
-      Mvol = Nvol + obj.physicslist.Lfreebound;
-
-      Ric = zeros(mn,Mvol); Zis = zeros(mn,Mvol);
-      Ris = zeros(mn,Mvol); Zic = zeros(mn,Mvol);
-
-      format = '%f%f';
-      for ii=1:Nvol
-         format = [format, '%f%f%f%f'];
-      end
-
-
-      % Read
-      for iline=1:nlines
-
-          % Scan line
-          line_data = textscan( initial_guess{iline}, format );
-
-          % Find corresponding index
-          m = line_data{1}; n = line_data{2};
-          imn = obj.find_ii_given_mn(m, n);
-
-          for ivol=1:Nvol
-              Ric(imn,ivol) = line_data{ivol*4-1};
-              Zis(imn,ivol) = line_data{ivol*4  };
-              Ris(imn,ivol) = line_data{ivol*4+1};
-              Zic(imn,ivol) = line_data{ivol*4+2};
-          end
-      end
-
-      init.Ric = Ric;
-      init.Ris = Ris;
-      init.Zis = Zis;
-      init.Zic = Zic;
-
-      obj.initial_guess = init;
-
+      
+      if isfield(obj.physicslist, 'Lboundary');
+          Lboundary = obj.physicslist.Lboundary;
+      else
+          Lboundary = 0; % by default
       end
       
-     
+      if nlines>0
+
+          % Allocate memory
+          Mpol = obj.physicslist.Mpol; 
+          Ntor = obj.physicslist.Ntor;
+          Nvol = obj.physicslist.Nvol;
+          Mvol = Nvol + obj.physicslist.Lfreebound;
+
+          if Lboundary==0
+              Ric = zeros(Mpol+1,2*Ntor+1,Mvol); Zis = zeros(Mpol+1,2*Ntor+1,Mvol);
+              Ris = zeros(Mpol+1,2*Ntor+1,Mvol); Zic = zeros(Mpol+1,2*Ntor+1,Mvol);
+
+              % Read
+              for iline=1:nlines
+
+                  % Scan line
+                  line_data = str2num( initial_guess{iline} );
+
+                  % Find corresponding index
+                  m = line_data(1); n = line_data(2);
+                  im = m+1;
+                  in = n+Ntor+1;
+
+                  for ivol=1:Nvol
+                      Ric(im,in,ivol) = line_data(ivol*4-1);
+                      Zis(im,in,ivol) = line_data(ivol*4  );
+                      Ris(im,in,ivol) = line_data(ivol*4+1);
+                      Zic(im,in,ivol) = line_data(ivol*4+2);
+                  end
+              end
+
+              init.Ric = Ric;
+              init.Ris = Ris;
+              init.Zis = Zis;
+              init.Zic = Zic;
+          else
+              
+             rhoi = zeros(Mpol  , 2*Ntor+1, Mvol);
+             bin  = zeros(Ntor+1, Mvol);
+             R0ic = zeros(Ntor+1, Mvol);
+             Z0is = zeros(Ntor+1, Mvol);
+              
+             for iline=1:nlines
+                 
+                 line_data = str2num( initial_guess{iline} );
+                 
+                 m = line_data(1);
+                 n = line_data(2);
+                 
+                 for ivol=1:Nvol
+                    
+                     if n>=0 && m==0
+                        bin( n+1, ivol) = line_data(ivol*4-1);
+                        R0ic(n+1, ivol) = line_data(ivol*4  );
+                        Z0is(n+1, ivol) = line_data(ivol*4+1);
+                     end
+                     
+                     if m>0
+                        rhoi( m, n+Ntor+1, ivol ) = line_data( ivol*4+2 );
+                     end
+                 end
+                 
+             end
+             
+             
+             init.rhoi = rhoi;
+             init.bin  = bin;
+             init.R0ic = R0ic;
+             init.Z0is = Z0is;
+              
+          end
+      else
+          
+          if Lboundary==0
+              init.Ric = [];
+              init.Ris = [];
+              init.Zic = [];
+              init.Zis = [];
+              init.im  = [];
+              init.in  = [];
+              init.surfaces = cell(0);
+          else
+              init.rhoi = [];
+              init.bin  = [];
+              init.R0ic = [];
+              init.Z0is = [];
+          end
+              
+      end
+
+      obj.initial_guess = init;
+      
+      
+      if nlines>0 && Lboundary==0
+          obj.initial_guess.surfaces = cell(1,Nvol);
+
+          for ii=1:Nvol
+
+              fsurf = fluxSurface( obj.physicslist.Nfp, obj.physicslist.Mpol, ...
+                                   obj.physicslist.Ntor, obj.physicslist.Istellsym);
+
+              work = obj.reshape_array_2to1d( squeeze(obj.initial_guess.Ric(:,:,ii)) );     
+              fsurf = fsurf.set_array( 'rmnc', work.mode, work.im, work.in );
+
+              work = obj.reshape_array_2to1d( squeeze(obj.initial_guess.Zis(:,:,ii)) );
+              fsurf = fsurf.set_array( 'zmns', work.mode, work.im, work.in );
+
+              if ~obj.physicslist.Istellsym
+                  work = obj.reshape_array_2to1d( squeeze(obj.initial_guess.Ris(:,:,ii)) );
+                  fsurf = fsurf.set_array( 'rmns', work.mode, work.im, work.in );
+
+                  work = obj.reshape_array_2to1d( squeeze(obj.initial_guess.Zic(:,:,ii)) );
+                  fsurf = fsurf.set_array( 'zmnc', work.mode, work.im, work.in );
+              end
+
+              obj.initial_guess.surfaces{ii} = fsurf;
+
+          end
+
+
+          % Build im, in arrays
+          s = size(obj.initial_guess.Ric);
+          mpol =  s(1) - 1;
+          ntor = (s(2) - 1) / 2.0;
+
+          im = 0:mpol;
+          in = -ntor:ntor;
+          [obj.initial_guess.in, obj.initial_guess.im] = meshgrid(in,im);
+      end
+      
+
+    end
+      
+    function out = reshape_array_1to2d( obj, arr )
+        
+        out.Mpol = max(arr.im);
+        out.Ntor = max(arr.in);
+        out.arr  = zeros(Mpol+1,2*Ntor+1);
+        
+        nmn = length(in.im);
+        
+        ii=0;
+        for mm=0:out.Mpol
+            for nn=-out.Ntor:out.Ntor
+                if mm==0 && nn<0
+                    continue
+                end
+                
+                ii = ii + 1;
+                
+                out.arr( mm+1, nn+out.Ntor+1 ) = arr.mode( ii );                
+            end
+        end
+        
+        
+    end
+    
+    function out = reshape_array_2to1d( obj, arr )
+       
+        s = size(arr);
+        Mpol =  s(1) - 1;
+        Ntor = (s(2) - 1) /2.0 ;
+        
+        nmn = Ntor + 1 + Mpol*(2*Ntor+1);
+        
+        out.mode = zeros(1,nmn);
+        out.im = zeros(1,nmn);
+        out.in = zeros(1,nmn);
+        
+        ii=0;
+        for mm=0:Mpol
+            for nn=-Ntor:Ntor
+                if mm==0 && nn<0
+                    continue
+                end
+                
+                ii = ii+1;
+                out.im(ii) = mm;
+                out.in(ii) = nn;
+                
+                out.mode(ii) = arr(mm+1,nn+Ntor+1);
+            end
+        end
+    end
+      
     function obj = read_axis_from_focus(obj, focus_data)
 
       Ntor = obj.physicslist.Ntor;
@@ -412,7 +468,6 @@ classdef SPEC_Namelist
 
       end
       
-     
     function obj = interpolate_initial_guess( obj, interp_type, Linitialize )
       %
       % INTERPOLATE_INITIAL_GUESS( INTERP_TYPE, LINITIALIZE )
@@ -437,6 +492,8 @@ classdef SPEC_Namelist
       %   * obj: instance of SPEC_Namelist
       %
       % 
+      
+      error('deprecated')
 
       machine_precision = eps;
       vsmall = 100 * machine_precision;
@@ -618,6 +675,8 @@ classdef SPEC_Namelist
     end % of function    
     
     
+    % =====================================================================
+    % Plotters
     function plot_BdotN( obj, Nt, Nphi )
        
         theta = linspace( 0, 2*pi, Nt  );
@@ -647,9 +706,6 @@ classdef SPEC_Namelist
         
     end
     
-    
-    % =====================================================================
-    % Plotters
     function plot_boundary( obj, phi, Nt, Mpol, Ntor, PorW, newfig )
       %
       % PLOT_BOUNDARY( PHI, NT, PorW, NEWFIG )
@@ -683,42 +739,125 @@ classdef SPEC_Namelist
       im = obj.physicslist.im;
       in = obj.physicslist.in;
       
-      switch PorW
-          case 'P'
-              Rmnc = obj.physicslist.Rbc;
-              Rmns = obj.physicslist.Rbs;
-              Zmnc = obj.physicslist.Zbc;
-              Zmns = obj.physicslist.Zbs;
-          case 'W'
-              Rmnc = obj.physicslist.Rwc;
-              Rmns = obj.physicslist.Rws;
-              Zmnc = obj.physicslist.Zwc;
-              Zmns = obj.physicslist.Zws;
-          otherwise
-              'Invalid input'
+      if isfield(obj.physicslist,'Lboundary')
+        Lboundary = obj.physicslist.Lboundary;
+      else
+        Lboundary = 0;
       end
+      
+      
       
       Nfp = obj.physicslist.Nfp;
       theta = linspace(0, 2*pi, Nt );
       R = zeros(1,Nt); 
       Z = zeros(1,Nt);
-      for ii=1:length(im)
-         
-          if im(ii) > Mpol
-              continue
+
+      
+      if Lboundary==0
+          switch PorW
+              case 'P'
+                  Rmnc = obj.physicslist.Rbc;
+                  Rmns = obj.physicslist.Rbs;
+                  Zmnc = obj.physicslist.Zbc;
+                  Zmns = obj.physicslist.Zbs;
+              case 'W'
+                  Rmnc = obj.physicslist.Rwc;
+                  Rmns = obj.physicslist.Rws;
+                  Zmnc = obj.physicslist.Zwc;
+                  Zmns = obj.physicslist.Zws;
+              otherwise
+                  error('Invalid input')
           end
           
-          if in(ii) > Ntor
-              continue
+          s = size(im);
+
+          for ii=1:s(1)
+              for jj=1:s(2)
+
+                  if im(ii,jj) > Mpol
+                      continue
+                  end
+
+                  if abs(in(ii,jj)) > Ntor
+                      continue
+                  end
+
+
+                  arg = im(ii,jj) * theta - in(ii,jj) * Nfp * phi;
+                  cosarg = cos(arg);
+                  sinarg = sin(arg);
+
+                  R = R + Rmnc(ii,jj) * cosarg ;
+                  Z = Z + Zmns(ii,jj) * sinarg;
+
+                  if ~obj.physicslist.Istellsym
+                      R = R + Rmns(ii,jj) * sinarg ;
+                      Z = Z + Zmnc(ii,jj) * cosarg ;
+                  end
+
+              end
+
           end
           
-         arg = im(ii) * theta - in(ii) * Nfp * phi;
-         cosarg = cos(arg);
-         sinarg = sin(arg);
-         
-         R = R + Rmnc(ii) * cosarg + Rmns(ii) * sinarg;
-         Z = Z + Zmnc(ii) * cosarg + Zmns(ii) * sinarg;
-                               
+      else
+          switch PorW
+              case 'P'
+                  rhomn = obj.physicslist.rhomn;
+                  bn    = obj.physicslist.bn;
+                  R0c   = obj.physicslist.R0c;
+                  Z0s   = obj.physicslist.Z0s;
+              case 'W'
+                  error('Not implemented yet')
+              otherwise
+                  error('Invalid input')
+          end
+          
+          alpha = double(obj.physicslist.twoalpha) / 2.0;
+          
+          s = size(rhomn);
+          Nrho = (s(2)-1)/2.0;
+          
+          rhoij  = zeros(1, Nt);
+          R0 = 0;
+          Z0 = 0;
+          b  = 0;
+          
+          lr = length(obj.physicslist.R0c);
+          lz = length(obj.physicslist.Z0s);
+          lb = length(obj.physicslist.bn);
+          
+          for nn=0:Ntor
+             
+              in = nn+1;
+              
+              if in<=lr
+                  R0 = R0 + obj.physicslist.R0c(in) * cos(nn*Nfp*phi );
+              end
+              if in<=lz
+                  Z0 = Z0 + obj.physicslist.Z0s(in) * sin(nn*Nfp*phi );
+              end
+              if in<=lb
+                  b  = b  + obj.physicslist.bn(in)  * cos(nn*Nfp*phi );
+              end
+          end
+          
+          zetaij = b*sin(theta - alpha*Nfp*phi);
+          
+          for ii=1:s(1)
+              for jj=1:s(2)
+                  mm = ii-1;
+                  nn = jj-1-Nrho;
+                  
+                  arg = mm*theta + nn*Nfp*phi - alpha*Nfp*phi;
+                  
+                  rhoij = rhoij + obj.physicslist.rhomn(ii,jj)*cos(arg);
+              end
+          end
+          
+          R = R0 + rhoij * cos(alpha*Nfp*phi) - zetaij * sin(alpha*Nfp*phi);
+          Z = Z0 + rhoij * sin(alpha*Nfp*phi) + zetaij * cos(alpha*Nfp*phi);
+          
+          
       end
       
       switch newfig
@@ -735,7 +874,6 @@ classdef SPEC_Namelist
       set(gca, 'FontSize', 18)
         
     end
-    
     
     function plot_initial_guess( obj, phi, Nt, newfig )
       %
@@ -755,73 +893,57 @@ classdef SPEC_Namelist
       % Written by A. Baillod (2020)
       %
 
+      % Open figure
+      switch newfig
+        case 0
+          hold on
+        case 1
+          figure('Position',[200 200 900 700], 'Color','w')
+          hold on;
+        case 2
+          hold off;
+        otherwise
+          error( 'Unknown value of newfig')
+      end
 
-%        if isempty(obj.initial_guess)
-%           error('No initial guess. First read with read_initial_guess');
-%        end
-
-
-       % Open figure
-       switch newfig
-       case 0
-         hold on
-       case 1
-         figure
-         hold on;
-       case 2
-         hold off;
-       otherwise
-         error( 'Unknown value of newfig')
-       end
-
-       Nvol   = obj.physicslist.Nvol;
-       im = obj.physicslist.im; in = obj.physicslist.in;
-       mn = length(im);
-       Np = obj.physicslist.Nfp;
+      Nvol   = obj.physicslist.Nvol;
 
       % Prepare theta coordinate
       theta = linspace(0,2*pi,Nt)';
-
+      
        % Map to real space
        if( ~isempty(obj.initial_guess) )
-           for ivol=1:Nvol
-               R = zeros(1,Nt);
-               Z = zeros(1,Nt);
-
-               for imn=1:mn
-                   cosarg = cos(im(imn)*theta - in(imn)*Np*phi);
-                   sinarg = sin(im(imn)*theta - in(imn)*Np*phi);
-
-                 
-                   R(:) = R(:) + obj.initial_guess.Ric(imn,ivol) * cosarg ...
-                             + obj.initial_guess.Ris(imn,ivol) * sinarg;
-                   Z(:) = Z(:) + obj.initial_guess.Zic(imn,ivol) * cosarg ...
-                             + obj.initial_guess.Zis(imn,ivol) * sinarg;
-               end
-
-               scatter(R, Z, 3, 'filled', 'MarkerFaceColor', 'b')
+           newfig = 0;
+           for ivol=1:Nvol-1
+               obj.initial_guess.surfaces{ivol}.plot_poloidal_section( phi, newfig )
            end
        end
        
        % Plot plasma boundary
        R = zeros(1,Nt);
        Z = zeros(1,Nt);
+       
+       im = obj.physicslist.im; 
+       in = obj.physicslist.in;
+       mn = size(im);
 
-       for imn=1:mn
-           cosarg = cos(im(imn)*theta - in(imn)*Np*phi);
-           sinarg = sin(im(imn)*theta - in(imn)*Np*phi);
+       for ii=1:mn(1)
+           for jj=1:mn(2)
+               cosarg = cos(im(ii,jj)*theta - in(ii,jj)*Np*phi);
+               sinarg = sin(im(ii,jj)*theta - in(ii,jj)*Np*phi);
 
-           try
-             R(:) = R(:) + obj.physicslist.Rbc(imn) * cosarg ...
-                         + obj.physicslist.Rbs(imn) * sinarg;
-             Z(:) = Z(:) + obj.physicslist.Zbc(imn) * cosarg ...
-                         + obj.physicslist.Zbs(imn) * sinarg;
-           catch
-             disp('ouch')
+               try
+                 R(:) = R(:) + obj.physicslist.Rbc(ii,jj) * cosarg ...
+                             + obj.physicslist.Rbs(ii,jj) * sinarg;
+                 Z(:) = Z(:) + obj.physicslist.Zbc(ii,jj) * cosarg ...
+                             + obj.physicslist.Zbs(ii,jj) * sinarg;
+               catch
+                 disp('ouch')
+               end
            end
        end
 
-       scatter(R, Z, 3, 'filled', 'MarkerFaceColor', [1 0 0])
+       scatter(R, Z, 10, 'filled', 'MarkerFaceColor', [1 0 0])
 
 
        if obj.physicslist.Lfreebound
@@ -833,12 +955,14 @@ classdef SPEC_Namelist
            Rws   = obj.physicslist.Rws;
            Zws   = obj.physicslist.Zws;
 
-           for imn=1:mn
-               cosarg = cos(im(imn)*theta - in(imn)*Np*phi);
-               sinarg = sin(im(imn)*theta - in(imn)*Np*phi);
+           for ii=1:mn(1)
+               for jj=1:mn(2)
+                   cosarg = cos(im(ii,jj)*theta - in(ii,jj)*Np*phi);
+                   sinarg = sin(im(ii,jj)*theta - in(ii,jj)*Np*phi);
 
-               R(:) = R(:) + Rwc(imn) * cosarg + Rws(imn) * sinarg;
-               Z(:) = Z(:) + Zwc(imn) * cosarg + Zws(imn) * sinarg;
+                   R(:) = R(:) + Rwc(ii,jj) * cosarg + Rws(ii,jj) * sinarg;
+                   Z(:) = Z(:) + Zwc(ii,jj) * cosarg + Zws(ii,jj) * sinarg;
+               end
            end
 
            scatter(R, Z, 5, 'filled', 'MarkerFaceColor', [0 0 0])
@@ -848,7 +972,8 @@ classdef SPEC_Namelist
        Rax = 0; Zax = 0;
        mn = length(obj.physicslist.Rac);
        Nfp = double(obj.physicslist.Nfp);
-       for n=0:mn-1
+       Ntor = obj.physicslist.Ntor;
+       for n=0:Ntor
         Rax = Rax  + obj.physicslist.Rac(n+1) * cos(n * Nfp * phi) ...
                    - obj.physicslist.Ras(n+1) * sin(n * Nfp * phi);
         Zax = Zax  + obj.physicslist.Zac(n+1) * cos(n * Nfp * phi) ...
@@ -862,7 +987,6 @@ classdef SPEC_Namelist
 
     end
     
-
     function gif_initial_guess( obj, gifname, Nframes, frame_rate, varargin )
 
       l = length(varargin);
@@ -954,7 +1078,7 @@ classdef SPEC_Namelist
 
     end
 
-
+    
     % =====================================================================
     % Getters
     function out = get_plasma_boundary(obj, m, n)%
@@ -970,22 +1094,22 @@ classdef SPEC_Namelist
 	    %   - out: structure with field out.Rbc, out.Rbs, out.Zbc, out.Zbs
 	    %
 
-		  ii = obj.find_ii_given_mn(m, n);
-
-		  if isnan(ii)
+          Mpol = max(max(obj.physicslist.im));
+          Ntor = max(max(obj.physicslist.in));
+        
+		  if m>Mpol || abs(n)>Ntor
 			  out.Rbc = 0.0;
 			  out.Rbs = 0.0;
 			  out.Zbc = 0.0;
 			  out.Zbs = 0.0;
 		  else
-			  out.Rbc = obj.physicslist.Rbc(ii);
-			  out.Rbs = obj.physicslist.Rbs(ii);
-			  out.Zbc = obj.physicslist.Zbc(ii);
-			  out.Zbs = obj.physicslist.Zbs(ii);
+			  out.Rbc = obj.physicslist.Rbc(m+1, n+Ntor+1);
+			  out.Rbs = obj.physicslist.Rbs(m+1, n+Ntor+1);
+			  out.Zbc = obj.physicslist.Zbc(m+1, n+Ntor+1);
+			  out.Zbs = obj.physicslist.Zbs(m+1, n+Ntor+1);
 		  end
 
     end
-
 
     function out = get_wall(obj, m, n)
       %
@@ -1000,21 +1124,21 @@ classdef SPEC_Namelist
 	    % ------
 	    %   - out: structure with field out.Rwc, out.Rws, out.Zwc, out.Zws
 	    %
-		  ii = obj.find_ii_given_mn(m, n);
+          Mpol = max(max(obj.physicslist.im));
+          Ntor = max(max(obj.physicslist.in));
 
-		  if isnan(ii)
+		  if m>Mpol || abs(n)>Ntor
 			  out.Rwc = 0.0;
 			  out.Rws = 0.0;
 			  out.Zwc = 0.0;
 			  out.Zws = 0.0;
 		  else
-			  out.Rwc = obj.physicslist.Rwc(ii);
-			  out.Rws = obj.physicslist.Rws(ii);
-			  out.Zwc = obj.physicslist.Zwc(ii);
-			  out.Zws = obj.physicslist.Zws(ii);
+			  out.Rwc = obj.physicslist.Rwc(m+1, n+Ntor+1);
+			  out.Rws = obj.physicslist.Rws(m+1, n+Ntor+1);
+			  out.Zwc = obj.physicslist.Zwc(m+1, n+Ntor+1);
+			  out.Zws = obj.physicslist.Zws(m+1, n+Ntor+1);
 		  end
     end
-
 
     function out = get_vnc_bns(obj, m, n)
       % Return Vnc, Vns, Bnc, Bns for given m, n mode
@@ -1028,26 +1152,27 @@ classdef SPEC_Namelist
 	    % ------
 	    %   - out: structure with field out.Vnc, out.Vns, out.Bnc, out.Bns
 	    %
+          Mpol = max(max(obj.physicslist.im));
+          Ntor = max(max(obj.physicslist.in));
 
-		  ii = obj.find_ii_given_mn(m, n);
-
-		  if isnan(ii)
+		  if m>Mpol || abs(n)>Ntor
 			  out.Vnc = 0.0;
 			  out.Vns = 0.0;
 			  out.Bnc = 0.0;
 			  out.Bns = 0.0;
 		  else
-			  out.Vnc = obj.physicslist.Vnc(ii);
-			  out.Vns = obj.physicslist.Vns(ii);
-			  out.Bnc = obj.physicslist.Bnc(ii);
-			  out.Bns = obj.physicslist.Bns(ii);
+			  out.Vnc = obj.physicslist.Vnc(m+1, n+Ntor+1);
+			  out.Vns = obj.physicslist.Vns(m+1, n+Ntor+1);
+			  out.Bnc = obj.physicslist.Bnc(m+1, n+Ntor+1);
+			  out.Bns = obj.physicslist.Bns(m+1, n+Ntor+1);
 		  end
     end
     
-
     function out = get_fourier_harmonics(obj, m, n, field)
-
-      ii = obj.find_ii_given_mn( m, n);
+        
+      Mpol = max(max(obj.physicslist.im));
+      Ntor = max(max(obj.physicslist.in));
+        
 
       if( strcmp(field, 'Ric') || strcmp(field, 'Ris') || strcmp(field, 'Zic') || strcmp(field, 'Zis'))
         if( isempty(obj.initial_guess) )
@@ -1056,19 +1181,104 @@ classdef SPEC_Namelist
           out = obj.initial_guess.(field)(ii);
         end
       else
-        out = obj.physicslist.(field)(ii);
+        out = obj.physicslist.(field)(m+1, n+Ntor+1);
       end
     end
     
 
 	% =====================================================================
     % Setters
-    function obj = set_fourier_harmonics(obj, im, in, values, field)
+    function obj = truncate_fourier_series( obj, min_value )
+        
+       nmn = length(obj.physicslist.im);
+       
+       ind = cell(1,12);
+       
+       ind{1} = find(obj.physicslist.Rbc<min_value);
+       ind{2} = find(obj.physicslist.Rbs<min_value);
+       ind{3} = find(obj.physicslist.Zbc<min_value);
+       ind{4} = find(obj.physicslist.Zbs<min_value);
+       
+       ind{5} = find(obj.physicslist.Rwc<min_value);
+       ind{6} = find(obj.physicslist.Rws<min_value);
+       ind{7} = find(obj.physicslist.Zwc<min_value);
+       ind{8} = find(obj.physicslist.Zws<min_value);
+       
+       ind{9} = find(obj.physicslist.Vnc<min_value);
+       ind{10} = find(obj.physicslist.Vns<min_value);
+       ind{11} = find(obj.physicslist.Bnc<min_value);
+       ind{12} = find(obj.physicslist.Bns<min_value);
+       
+       common_index = 1:nmn;
+       for ii=1:12
+          common_index = intersect( common_index, ind{ii} );
+       end
+       
+       new_im = obj.physicslist.im;
+       new_im(common_index) = [];
+       obj.physicslist.Mpol = max(new_im);
+       
+       new_in = obj.physicslist.in;
+       new_in(common_index) = [];
+       obj.physicslist.Ntor = max(abs(new_in));
+       
+       ind1 = find( obj.physicslist.im > obj.physicslist.Mpol );
+       ind2 = find( abs(obj.physicslist.in) > obj.physicslist.Ntor );
+       
+       ind = union( ind1, ind2 );
+        
+       obj.physicslist.im(ind) = [];
+       obj.physicslist.in(ind) = [];
+       obj.physicslist.Rbc(ind) = [];
+       obj.physicslist.Rbs(ind) = [];
+       obj.physicslist.Zbc(ind) = [];
+       obj.physicslist.Zbs(ind) = [];
+       
+       obj.physicslist.Rwc(ind) = [];
+       obj.physicslist.Rws(ind) = [];
+       obj.physicslist.Zwc(ind) = [];
+       obj.physicslist.Zws(ind) = [];
+       
+       obj.physicslist.Vnc(ind) = [];
+       obj.physicslist.Vns(ind) = [];
+       obj.physicslist.Bnc(ind) = [];
+       obj.physicslist.Bns(ind) = []; 
+       
+       if ~isempty( obj.initial_guess )
+           obj.initial_guess.Ric(ind,:) = [];
+           obj.initial_guess.Ris(ind,:) = [];
+           obj.initial_guess.Zic(ind,:) = [];
+           obj.initial_guess.Zis(ind,:) = [];
+       end
+    end
+    
+    function obj = set_fourier_harmonics(obj, im, in, values, field, varargin)
+
+      l = length(varargin);
+      if( mod(l,2)~=0 )
+        error('Invalid number of argument')
+      end
+
+      set_to_zero=true;
+      for iv=1:l/2
+        fieldarg=varargin{2*iv-1};
+        value=varargin{2*iv};
+        switch fieldarg
+	  case 'set_to_zero'
+	    set_to_zero=value;
+	  otherwise
+	    error('Unknown input')
+        end
+      end
+
 
       mn = length(im);
       mn_old = length(obj.physicslist.Rbc);
-
-      obj.physicslist.(field) = zeros(1, mn_old);
+      
+      
+      if set_to_zero
+        obj.physicslist.(field) = zeros(size(obj.physicslist.Rbc));
+      end
 
       for ii = 1:mn
         m = im(ii); n=in(ii);
@@ -1107,21 +1317,104 @@ classdef SPEC_Namelist
 
         end
         
-        obj = obj.update_flux_surfaces();
 
       end
-
+      
+      if ~(strcmp(field, 'Vnc') || strcmp(field, 'Vns') || strcmp(field, 'Bnc') || strcmp(field, 'Bns') )
+        obj = obj.update_flux_surfaces();
+      end
 
     end
+    
+    function obj = convert_to_standard_representation( obj )
+        
+       Lb = obj.physicslist.Lboundary;
+       if Lb==0
+           error('Can only convert from Lboundary=1 to Lboundary=0')
+       end
+       
+       obj.physicslist.Lboundary=0;
+       obj.physicslist.twoalpha=0;
+       
+       % Map computational boundary
+       if( obj.physicslist.Lfreebound ) 
+          error('Not implemented for freeboundary cases yet')
+       end
+       
+       % Map computational boundary
+       rhomn = obj.physicslist.rhomn;
+       bn = obj.physicslist.bn;
+       R0c = obj.physicslist.R0c;
+       Z0s = obj.physicslist.Z0s;
+       alpha = obj.physicslist.twoalpha / 2.0;
+       
+       [Rmn, Zmn, Mpol, Ntor] = map_rho_to_RZ( rhomn, bn, R0c, Z0s, alpha, 0);
+       
+       obj.physicslist.Mpol = Mpol;
+       obj.physicslist.Ntor = Ntor;
+       
+       obj.physicslist.Rbc = Rmn;
+       obj.physicslist.Zbs = Zmn;
+       obj.physicslist.Rbs = zeros(size(Rmn));
+       obj.physicslist.Zbc = zeros(size(Zmn));
+       
+       obj.physicslist = rmfield(obj.physicslist, 'rhomn');
+       obj.physicslist = rmfield(obj.physicslist, 'bn');
+       obj.physicslist = rmfield(obj.physicslist, 'R0c');
+       obj.physicslist = rmfield(obj.physicslist, 'Z0s');
+       
+       % Map initial guess
+       if ~isempty(obj.initial_guess )
+           Nvol = obj.physicslist.Nvol;
+           
+           obj.initial_guess.Ric = zeros( Mpol+1, 2*Ntor+1, Nvol );
+           obj.initial_guess.Ris = zeros( Mpol+1, 2*Ntor+1, Nvol );
+           obj.initial_guess.Zic = zeros( Mpol+1, 2*Ntor+1, Nvol );
+           obj.initial_guess.Zis = zeros( Mpol+1, 2*Ntor+1, Nvol );
+           
+           % Plasma boundary
+           obj.initial_guess.Ric(:,:,Nvol) = Rmn;
+           obj.initial_guess.Zis(:,:,Nvol) = Zmn;
+           
+           % Inner interfaces
+           for ivol=1:Nvol-1
+               [Rmn, Zmn, Mpol, Ntor] = map_rho_to_RZ( obj.initial_guess.rhoi(:,:,ivol), ...
+                                                       obj.initial_guess.bin(:,ivol), ...
+                                                       obj.initial_guess.R0ic(:,ivol), ...
+                                                       obj.initial_guess.Z0is(:,ivol), ...
+                                                       alpha, 0);
+               obj.initial_guess.Ric(1:Mpol+1,1:2*Ntor+1,ivol) = Rmn;
+               obj.initial_guess.Zis(1:Mpol+1,1:2*Ntor+1,ivol) = Zmn;
+           end
+           
+           obj.initial_guess = rmfield(obj.initial_guess, 'rhoi');
+           obj.initial_guess = rmfield(obj.initial_guess, 'bin');
+           obj.initial_guess = rmfield(obj.initial_guess, 'R0ic');
+           obj.initial_guess = rmfield(obj.initial_guess, 'Z0is');
+       end
+        
+        
+    end
+    
     
     
     function obj = set_initial_guess_harmonics( obj, volume, im, in, values, field)
         
+        
       mn = length(im);
       mn_old = length(obj.physicslist.Rbc);
-
       Mvol = obj.physicslist.Nvol + obj.physicslist.Lfreebound;
-      obj.initial_guess.(field) = zeros(mn_old, Mvol);
+      
+      if isempty(obj.initial_guess)
+         obj.initial_guess.Ric = zeros( mn_old, Mvol );
+         obj.initial_guess.Ris = zeros( mn_old, Mvol );
+         obj.initial_guess.Zic = zeros( mn_old, Mvol );
+         obj.initial_guess.Zis = zeros( mn_old, Mvol );
+      end
+
+      %obj.initial_guess.(field) = zeros(mn_old, Mvol);
+      tmp = obj.initial_guess.(field);
+      tmp( 1:mn_old, volume ) = zeros( mn_old, 1 );
 
       for ii = 1:mn
         m = im(ii); n=in(ii);
@@ -1151,12 +1444,15 @@ classdef SPEC_Namelist
           obj.initial_guess.Zic(end+1, :) = 0.0;
           obj.initial_guess.Zis(end+1, :) = 0.0;
 
-          obj.initial_guess.(field)(end, volume) = values(ii);
+          tmp( end+1, : ) = 0.0;
+          tmp( end  , volume ) = values(ii);
 
         else
-          obj.initial_guess.(field)(imn, volume) = values(ii);
+            tmp( imn, volume ) = values(ii);
 
         end
+        
+      obj.initial_guess.(field) = tmp;
         
 
       end
@@ -1216,7 +1512,6 @@ classdef SPEC_Namelist
 
 
     end
-    
     
     function obj = add_volume( obj, tflux )
         
@@ -1471,7 +1766,6 @@ classdef SPEC_Namelist
        
     end
     
-    
     function obj = remove_volume( obj, ivol )
         
        obj.physicslist.Nvol      = obj.physicslist.Nvol-1;
@@ -1498,105 +1792,226 @@ classdef SPEC_Namelist
     end
     
     
-    
     % =====================================================================
     % Write method
-    function write_input_file(obj, filename, varargin )
+    function write_input_file(obj, filename )
       %
-			% write_input_file(filename, (force) )
-			%
-			% Write namelist in an input file. Be careful: if the file filename
-			% provided as input exist, it will be overwritten!
-			%
-			% INPUT
-			% -----
-			%   - filename: path where to save the input file.
-			%   - options: structure containing optional input
+	  % write_input_file(filename, (force) )
+	  %
+	  % Write namelist in an input file. Be careful: if the file filename
+	  % provided as input exist, it will be overwritten!
+	  %
+	  % INPUT
+	  % -----
+	  %   - filename: path where to save the input file.
+	  %   - options: structure containing optional input
       %       * force: set to true to force overwritting the input file
       %
 
-      % Read options
-      if( isempty(varargin) )
-        force = false;
-      else
-        if( isfield(varargin{1}, 'force') )
-          force = varargin{1}.force;
-        else
-          force = false;
+
+        nlists = length(obj.lists);
+        S = struct;
+        for ii=1:nlists
+            S.(obj.lists{ii}) = obj.(obj.lists{ii});
         end
-      end
-
-			% Check if user want to erase existing file
-			if (exist(filename, 'file') && (~force))
-        prompt = ['The file ', filename, ' already exist and will be overwritten. Continue? Y/N [Y]:  '];
-				c = input(prompt, 's');
-        if( isempty(c) )
-          c = 'Y';
+        
+        S.physicslist = rmfield( S.physicslist, 'im' );
+        S.physicslist = rmfield( S.physicslist, 'in' );
+        try
+            S.physicslist = rmfield( S.physicslist, 'PlasmaBoundary' );
+        catch
+            disp('No field PlasmaBoundary...')
         end
-				while ~( strcmp(c,"Y") || strcmp(c,"N") )
-					c = input(['Please answer Y or N:  '], 's');
-				end
-
-				if strcmp(c,'N') %exit routine
-					disp('ABORTED')
-					return;
+        
+        try
+            S.physicslist = rmfield( S.physicslist, 'ComputationalBoundary' );
+        catch
+            disp('No field ComputationalBoundary...')
+        end
+        
+        if isfield(S.physicslist, 'Lboundary')
+            Lboundary = S.physicslist.Lboundary;
         else
-          disp(['Overwriting file ', filename, '.'])
-				end
-			end
+            Lboundary = 0; %by default
+        end
+        
+        Ntor = max(max(obj.physicslist.in));
+        S.shift.Rbc = [1, Ntor+1];
+        S.shift.Rbs = [1, Ntor+1];
+        S.shift.Zbc = [1, Ntor+1];
+        S.shift.Zbs = [1, Ntor+1];
+        S.shift.Rwc = [1, Ntor+1];
+        S.shift.Rws = [1, Ntor+1];
+        S.shift.Zws = [1, Ntor+1];
+        S.shift.Zwc = [1, Ntor+1];
+        S.shift.Vnc = [1, Ntor+1];
+        S.shift.Vns = [1, Ntor+1];
+        S.shift.Bnc = [1, Ntor+1];
+        S.shift.Bns = [1, Ntor+1];
+        S.shift.rhomn = [1, Ntor+1];
+        
+        if Lboundary==0        
 
-			% Open file
-			fid = fopen(filename, 'w');
+            initialguess = cell(1,1);
+            if ~isempty(obj.initial_guess)
+                s = size(obj.initial_guess.Ric);
+                initialguess = cell(1, s(1)*s(2));
+                n=0;
+                for ii=1:s(1)
+                    for jj=1:s(2)
+                        n = n+1;
+                        initialguess{n} = sprintf( '%i   %i   ', obj.initial_guess.im(ii,jj), obj.initial_guess.in(ii,jj) );
+                        for ivol=1:s(3)
+                           initialguess{n} = sprintf( '%s   %0.12E   %0.12E   %0.12E   %0.12E', initialguess{n}, ...
+                                                        obj.initial_guess.Ric(ii,jj,ivol), ...
+                                                        obj.initial_guess.Zis(ii,jj,ivol), ...
+                                                        obj.initial_guess.Ris(ii,jj,ivol), ...
+                                                        obj.initial_guess.Zic(ii,jj,ivol)     );
+                        end
+                    end
+                end
+            end
+            
+        else
+            
+            nrho = max(max(obj.physicslist.in)); 
+            S.shift.rhomn = [ 1, nrho+1 ];
+            
+            % Now prepare initial guess...
+            if isfield(obj.initial_guess, 'bin')
+                sb   = size(obj.initial_guess.bin);
+                srho = size(obj.initial_guess.rhoi);
+                ntor = (srho(2)-1)/2.0;
+                initialguess = cell(1, sb(1) + srho(1)*srho(2));
 
-
-			special_list = {'Rbc', 'Rbs', 'Zbc', 'Zbs', 'im', 'in', ...
-        				    'Rwc', 'Rws', 'Zwc', 'Zws', ...
-        					'Vnc', 'Vns', 'Bnc', 'Bns', ...
-                            'PlasmaBoundary', 'ComputationalBoundary'};
-			for ii=1:numel(obj.lists)
-				list = obj.lists{ii};
-
-				if strcmp(list, 'physicslist')
-					obj.write_list(fid, list, special_list)
-
-					% write Rbc, ...
-					obj.write_4_values(fid, 'Rbc', 'Zbs', 'Rbs', 'Zbc');
-					obj.write_4_values(fid, 'Rwc', 'Zws', 'Rws', 'Zwc');
-					obj.write_4_values(fid, 'Vnc', 'Vns', 'Bnc', 'Bns');
-
-					fprintf(fid, '/ \n');
-
-				else
-					obj.write_list(fid, list, special_list)
-
-					fprintf(fid, '/ \n');
+                % Modes m=0, n
+                for ii=1:sb(1)
+                   nn = ii-1;
+                   initialguess{ii} = sprintf('0   %i   ', nn);
+                   for ivol=1:sb(2)
+                      initialguess{ii} = sprintf('%s   %0.12E   %0.12E   %0.12E   %0.12E', initialguess{ii}, ...
+                                                 obj.initial_guess.bin( ii, ivol ), ...
+                                                 obj.initial_guess.R0ic(ii, ivol ), ...
+                                                 obj.initial_guess.Z0is(ii, ivol ), 0.0 ); 
+                   end
                 end
 
+                it = sb(1);
+                for ii=1:srho(2)
+
+                    nn = ii-ntor-1;
+
+                    for jj=1:srho(1)
+
+                        it = it+1;
+
+                        mm = jj;
+
+                        initialguess{it} = sprintf('%i   %i   ', mm, nn);
+
+                        for ivol=1:srho(3)
+
+                            initialguess{it} = sprintf('%s   %0.12E   %0.12E   %0.12E   %0.12E', initialguess{ii},...
+                                                       0.0, 0.0, 0.0, obj.initial_guess.rhoi(ii, jj, ivol));
+
+                        end
+                    end
+                end
+            else
+                initialguess = cell(0);
+                
             end
+            
+            
+            
+        end
+        
+        write_namelist( S, filename, initialguess );
+        
 
-
-            im = obj.physicslist.im; in = obj.physicslist.in;
-            mn = length(im);
-
-            if( ~isempty(obj.initial_guess) )
-              Ric = obj.initial_guess.Ric;
-              s = size(Ric);
-
-              for ii=1:mn
-                  fprintf(fid, '   %i   %i', im(ii), in(ii));
-                  for jj=1:s(2)
-                      fprintf(fid, '   %19.15E   %19.15E   %19.15E   %19.15E', ...
-                              obj.initial_guess.Ric(ii,jj), ...
-                              obj.initial_guess.Zis(ii,jj), ...
-                              obj.initial_guess.Ris(ii,jj), ...
-                              obj.initial_guess.Zic(ii,jj)); % Print in file
-                  end
-                  fprintf(fid, '\n');
-              end
-            end
-
-			% close file
-			fclose(fid);
+%       % Read options
+%       if( isempty(varargin) )
+%         force = false;
+%       else
+%         if( isfield(varargin{1}, 'force') )
+%           force = varargin{1}.force;
+%         else
+%           force = false;
+%         end
+%       end
+% 
+% 			% Check if user want to erase existing file
+% 			if (exist(filename, 'file') && (~force))
+%                 prompt = ['The file ', filename, ' already exist and will be overwritten. Continue? Y/N [Y]:  '];
+% 				c = input(prompt, 's');
+%                 if( isempty(c) )
+%                   c = 'Y';
+%                 end
+%                 
+% 				while ~( (c=='Y') || (c=='N') )
+% 					c = input('Please answer Y or N:  ', 's');
+% 				end
+% 
+% 				if strcmp(c,'N') %exit routine
+% 					disp('ABORTED')
+% 					return;
+%         else
+%           disp(['Overwriting file ', filename, '.'])
+% 				end
+% 			end
+% 
+% 			% Open file
+% 			fid = fopen(filename, 'w');
+% 
+% 
+% 			special_list = {'Rbc', 'Rbs', 'Zbc', 'Zbs', 'im', 'in', ...
+%         				    'Rwc', 'Rws', 'Zwc', 'Zws', ...
+%         					'Vnc', 'Vns', 'Bnc', 'Bns', ...
+%                             'PlasmaBoundary', 'ComputationalBoundary'};
+% 			for ii=1:numel(obj.lists)
+% 				list = obj.lists{ii};
+% 
+% 				if strcmp(list, 'physicslist')
+% 					obj.write_list(fid, list, special_list)
+% 
+% 					% write Rbc, ...
+% 					obj.write_4_values(fid, 'Rbc', 'Zbs', 'Rbs', 'Zbc');
+% 					obj.write_4_values(fid, 'Rwc', 'Zws', 'Rws', 'Zwc');
+% 					obj.write_4_values(fid, 'Vnc', 'Vns', 'Bnc', 'Bns');
+% 
+% 					fprintf(fid, '/ \n');
+% 
+% 				else
+% 					obj.write_list(fid, list, special_list)
+% 
+% 					fprintf(fid, '/ \n');
+%                 end
+% 
+%             end
+% 
+% 
+%             im = obj.physicslist.im; in = obj.physicslist.in;
+%             mn = length(im);
+% 
+%             if( ~isempty(obj.initial_guess) )
+%               Ric = obj.initial_guess.Ric;
+%               s = size(Ric);
+% 
+%               for ii=1:mn
+%                   fprintf(fid, '   %i   %i', im(ii), in(ii));
+%                   for jj=1:s(2)
+%                       fprintf(fid, '   %19.15E   %19.15E   %19.15E   %19.15E', ...
+%                               obj.initial_guess.Ric(ii,jj), ...
+%                               obj.initial_guess.Zis(ii,jj), ...
+%                               obj.initial_guess.Ris(ii,jj), ...
+%                               obj.initial_guess.Zic(ii,jj)); % Print in file
+%                   end
+%                   fprintf(fid, '\n');
+%               end
+%             end
+% 
+% 			% close file
+% 			fclose(fid);
 
         end %of function write_input_file
         
@@ -1619,7 +2034,7 @@ classdef SPEC_Namelist
 
             im = obj.physicslist.im;
             in = obj.physicslist.in;
-            Mpol = max(im); Ntor = max(in);
+            Mpol = max(max(im)); Ntor = max(max(in));
 
             PlasmaBoundary = fluxSurface(obj.physicslist.Nfp, Mpol, Ntor, 0);
             PlasmaBoundary = PlasmaBoundary.set_array('rmnc', obj.physicslist.Rbc, im, in);

@@ -1,35 +1,66 @@
 function plot_spec_iterations( data, xl, yl )
 
-figure( 'Position', [200 200 900 700], 'Color', 'w' )
-fig = gcf;
-ax = gca;
-ax.Position = [0.1300    0.2386    0.7750    0.6864];
+% PLOT_SPEC_ITERATIONS( DATA, XL, YL )
+% ====================================
+%
+% Plot the volumes interfaces at any iteration of SPEC. Change the
+% iteration using a slider
+%
+% INPUT
+% -----
+%   -DATA: Obtained from read_spec( filename )
+%   -xl  : xlimit
+%   -yl  : ylimit
+%
+% OUTPUT
+% ------
+%   A magnificient plot!
+%
 
+    % Open figure
+    figure( 'Position', [200 200 900 700], 'Color', 'w' )
+    fig = gcf;
+    ax = gca;
+    ax.Position = [0.1300    0.2386    0.7750    0.6864];
 
-Nfp = double(data.input.physics.Nfp);
-Niter = size(data.iterations.iRbc);
-Niter = Niter(3);
+    % Read size
+    Nfp = double(data.input.physics.Nfp);
+    [~, ~, Niter] = size(data.iterations.iRbc);
 
-sld_phi = uicontrol(fig, 'style', 'slider', 'Position', [200    25   500    20],'units','pixel', ...
-                'Value',0,'Max',2*pi / Nfp,'Min',0);
-sld_it = uicontrol(fig, 'style', 'slider', 'Position', [200 63 500 20],'units','pixel', ...
-                'Value',1,'Max', Niter,'Min',1, 'SliderStep', [1/(Niter-1), 1/(Niter-1)]);
-            
-el_phi = addlistener( sld_phi, 'ContinuousValueChange', @(sld_phi, event) updatePlot(sld_phi, sld_it, data, xl, yl) );
-el_it  = addlistener( sld_it , 'ContinuousValueChange', @(sld_it , event) updatePlot(sld_phi, sld_it, data, xl, yl) );
+    % Create some sliders for controling the iteration and the toroidal
+    % angle
+    sld_phi = uicontrol(fig, 'style', 'slider', 'Position', [200    25   500    20],'units','pixel', ...
+                    'Value',0,'Max',2*pi / Nfp,'Min',0);
+    sld_it = uicontrol(fig, 'style', 'slider', 'Position', [200 63 500 20],'units','pixel', ...
+                    'Value',1,'Max', Niter,'Min',1, 'SliderStep', [1/(Niter-1), 1/(Niter-1)]);
 
-plot_iteration( data, 1, 0, xl, yl )
+    addlistener( sld_phi, 'ContinuousValueChange', @(sld_phi, event) updatePlot(sld_phi, sld_it, data, xl, yl) );
+    addlistener( sld_it , 'ContinuousValueChange', @(sld_it , event) updatePlot(sld_phi, sld_it, data, xl, yl) );
 
-mytitle = sprintf('%s=%2.3f, iteration %05i', '\phi', 0, 1);
-title(mytitle,'FontSize',18)
-
-
+    % Plot
+    plot_iteration( data, 1, 0, xl, yl )
+    mytitle = sprintf('%s=%2.3f, iteration %05i', '\phi', 0, 1);
+    title(mytitle,'FontSize',18)
 end
 
 
 
 
 function updatePlot(sld_phi, sld_it, data, xl, yl)
+%
+% UPDATEPLOT( SLD_PHI, SLD_IT, DATA, XL, YL )
+% ===========================================
+%
+% Update plot when a slider value has changed
+%
+% INPUTS
+% ------
+%   -sld_phi: handle to toroidal angle slider
+%   -sld_it : handle to iteration slider
+%   -data   : obtained from read_spec(filename)
+%   -xl     : xlimit
+%   -yl     : ylimit
+%
     
     phi = sld_phi.Value;
     iter  = round(sld_it.Value);
@@ -42,11 +73,24 @@ end
 
 
 function plot_iteration( data, iter, phi, xl, yl )
+%
+% PLOT_ITERATION( DATA, ITER, PHI, XL, YL )
+% =========================================
+%
+% Generate plot from SPEC data
+%
+% INPUTS
+% ------
+%   -data: obtained from read_spec( filename )
+%   -iter: iteration number
+%   -phi : toroidal angle
+%   -xl  : xlimit
+%   -yl  : ylimit
+%
 
     Nfp = double(data.input.physics.Nfp);
-    input.representation = 'hudson';
-    input.im = double(data.output.im);
-    input.in = double(data.output.in) / Nfp;
+    im = double(data.output.im);
+    in = double(data.output.in) / Nfp;
     Mvol = double(data.output.Mvol);
     Ntor = double(data.input.physics.Ntor);
     
@@ -66,10 +110,21 @@ function plot_iteration( data, iter, phi, xl, yl )
     hold on
     % volume boundaries
     for ivol=2:Mvol+1
-        input.Rmn = data.iterations.iRbc(:,ivol,iter);
-        input.Zmn = data.iterations.iZbs(:,ivol,iter);
+        Rmn = data.iterations.iRbc(:,ivol,iter);
+        Zmn = data.iterations.iZbs(:,ivol,iter);
+            
+        tarr = linspace( 0, 2*pi, 1024 );
+        R = zeros(1,1024);
+        Z = zeros(1,1024);
+        for ii=1:length(Rmn)
+            arg = im(ii) * tarr - in(ii) * Nfp * phi;
+            R = R + Rmn(ii) * cos( arg );
+            Z = Z + Zmn(ii) * sin( arg );
+        end
         
-        plot_boundary_2d( input, 512, phi, Nfp, 0 )
+        scatter( R, Z )
+        hold on
+        axis equal
     end
     
     

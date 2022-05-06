@@ -19,33 +19,37 @@ function phi = plot_spec_poincare(data,nz0,arr,newfig,varargin)
 % modified by A.Baillod (2019)
 % modified by J.Loizu (2020)
 
+ll = length(varargin);
+if mod(ll,2)~=0
+    error('InputError: invalid number of optional arguments')
+end
+
 opt.BoundaryColor = 'r';
 opt.CBColor = 'k';
 opt.step = 1;
-
-ll = length(varargin);
-if mod(ll,2)~=0
-    error('Invalid number of arguments')
-end
-
 for ii=1:ll/2
     opt.(varargin{2*ii-1}) = varargin{2*ii};
 end
 stp = opt.step;
 
+% Read some data...
 nfp = data.input.physics.Nfp;
 
-try
- rpol    = data.input.physics.rpol; % get size of slab
-catch
- rpol    = 1;
+if data.input.physics.Igeometry==1
+    try
+        rpol    = data.input.physics.rpol; % get size of slab
+    catch
+        rpol    = 1;
+    end
 end
 
+% Read size
 nptraj   = size(data.poincare.R,1);   % # of poincare trajectories (field lines)
-
 nz       = size(data.poincare.R,2);   % # of toroidal planes
+if nz0<1 || nz0>nz
+    error('InputError: invalid toroidal plane. Should be 0<nz0<%i', nz+1)
+end
 
-flag2col = 'F';                     % flag for ploting field lines with alternating colour ('T') or not ('F')
 
 ind = find(arr>nptraj);
 if ~isempty(ind)
@@ -56,54 +60,14 @@ if length(arr) == 1
    arr = 1:arr:nptraj; 
 end
 
-
-
-disp(' ');
-disp('Number of toroidal planes available: (one field period)');
-nz
-disp(' ');
-
-
-rmax   = max(max(max(data.poincare.R(:,nz0,:))));
-rmin   = min(min(min(data.poincare.R(:,nz0,:))));
-zmax   = max(max(max(data.poincare.Z(:,nz0,:))));
-zmin   = min(min(min(data.poincare.Z(:,nz0,:))));
-
-switch data.input.physics.Igeometry
-    case 1
-        xmin =  0;
-        xmax =  2*pi*rpol;
-        ymin = -0.1;
-        ymax =  data.output.Rbc(1,end)+0.1;
-    case 2
-        xmin = -1.1*rmax;
-        xmax =  1.1*rmax;
-        ymin = -1.1*rmax;
-        ymax =  1.1*rmax;
-    case 3
-        xmin =  0.99*rmin;
-        xmax =  1.01*rmax;
-        dz = zmax-zmin;
-        ymin =  zmin - 0.05*dz;
-        ymax =  zmax + 0.05*dz;
-end
-
-
-nth    = 5096;  %ploting options for the boundary
+%ploting options for the boundary
+nth    = 5096;  
 bcol   = opt.BoundaryColor;
 bthick = 3;
 lthick = 1;
 if(data.input.physics.Lfreebound==1)
-bcol   = opt.CBColor;
-bthick = 1;
-end
-
-
-
-if(flag2col=='T')
- pcol   = ['k' 'b'];
-else
- pcol   = ['k' 'k'];
+    bcol   = opt.CBColor;
+    bthick = 1;
 end
 
 switch newfig
@@ -114,6 +78,8 @@ switch newfig
         hold on
     case 2
         hold off
+    otherwise
+        error('InputError: invalid newfig')
 end
 
 switch nz0
@@ -157,7 +123,7 @@ switch nz0
    
    dth   = 2*pi/nth;
    theta = dth:dth:2*pi; 
-   zeta  = (j-1)*(2*pi/nz)/nfp
+   zeta  = (j-1)*(2*pi/nz)/nfp;
    phi = NaN;
 
    switch data.input.physics.Igeometry
@@ -206,9 +172,6 @@ switch nz0
    ylabel('R','FontSize',12)
   end
 
-%   xlim([xmin xmax])
-%   ylim([ymin ymax])
-
  end
 
  otherwise  %if nz0>0
@@ -242,7 +205,7 @@ switch nz0
 
   dth   = 2*pi/nth;
   theta = dth:dth:2*pi; 
-  zeta  = (nz0-1.0)*(2.0*pi/nz)/double(nfp)
+  zeta  = (nz0-1.0)*(2.0*pi/nz)/double(nfp);
   phi = zeta;
    
   
@@ -292,9 +255,6 @@ switch nz0
    ylabel('R','FontSize',12)
   end
 
-%   xlim([xmin xmax])
-%   ylim([ymin ymax])
-  
   set(gca,'FontSize',18)
 
 end

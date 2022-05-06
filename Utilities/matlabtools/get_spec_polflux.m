@@ -1,7 +1,7 @@
 function psipol = get_spec_polflux(data,lvol,theta,sarr,nz)
 
 %
-% GET_SPEC_POLFLUX( DATA, LVOL, THETA, START, SEND, NS, NZ )
+% GET_SPEC_POLFLUX( DATA, LVOL, THETA, sarr, NZ )
 % ==========================================================
 %
 % Computes total enclosed poloidal flux in the surface defined by theta

@@ -19,8 +19,21 @@ function plot_spec_Bgrid(data,nz0,plotstyle,newfig)
 %
 % OUTDATED - NEED DEBUG
 
-if(newfig==1)
-    figure('Color','w','Position',[200 200 1500, 600])
+% Check inputs
+if ~strcmp(string(plotstyle),string('pcolor')) && ~strcmp(string(plotstyle),string('scatter'))
+    error('InputError: Invalid plotstyle')
+end
+
+switch newfig
+    case 0
+        hold on
+    case 1
+        figure('Color','w','Position',[200 200 1500, 600])
+        hold on
+    case 2
+        hold off
+    otherwise
+        error('Invalide newfig')
 end
 
 Mvol   = data.output.Mvol;
