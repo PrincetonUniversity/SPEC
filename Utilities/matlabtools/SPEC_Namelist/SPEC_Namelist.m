@@ -15,13 +15,48 @@ classdef SPEC_Namelist
         Ntor = 0;
         array_size = [0, 0];
         Mvol = 0;
+        Nvol = 0;
         
     end
     
     methods (Access=public)
         % Class constructor
-        function obj = SPEC_Namelist( filename )
+        function obj = SPEC_Namelist( filename, varargin )
+            %
+            % SPEC_NAMELIST( FILENAME )
+            % =========================
+            %
+            % Class constructor of the class SPEC_Namelist. This class
+            % reads the SPEC input file, checks that the data is correctly
+            % formatted, allow some plottings and easy changes in the input
+            % file, and provides a routine to write SPEC input file.
+            %
+            % INPUTS
+            % ------
+            %   -FILENAME: SPEC input file (.sp)
+            %   -VARARGIN: Any couple of input:
+            %       - 'Liniguess': set to true to read initial guess, false
+            %                      to skip it. default: true
+            %                       
+            %
+            % OUTPUTS
+            % -------
+            %   -OBJ: An instance of the class SPEC_Namelist
+            %
+            %
         
+            % Read optional input
+            l = length(varargin);
+            if mod(l,2)~=0
+                error('InputError: invalid number of inputs')
+            end
+            
+            opt.Liniguess = true;
+            for ii=1:l/2
+               opt.(varargin{2*ii-1}) = varargin{2*ii}; 
+            end
+            
+            % Read input file
             work = read_namelist( filename );
             obj.lists = fields(work);
             obj.physicslist = work.physicslist;
@@ -30,7 +65,6 @@ classdef SPEC_Namelist
             obj.globallist  = work.globallist;
             obj.diagnosticslist = work.diagnosticslist;
             obj.screenlist  = work.screenlist;  
-            obj.initial_guess = [];
             
             % Check that the size of arrays makes sense, fills with zeros
             % otherwise
@@ -40,15 +74,523 @@ classdef SPEC_Namelist
             % reformat all spectral quantities to have the same resolution
             obj = obj.set_fourier_resolution();
             
-            
+            % Read initial guess
+            if opt.Liniguess
+                obj = obj.read_initial_guess( filename );
+            else
+                obj.initial_guess = struct([]);
+            end
             
         end
         
+        function obj = read_initial_guess( obj, filename )
+            %
+            % READ_INITIAL_GUESS( FILENAME )
+            % ==============================
+            %
+            % Read the initial guess from the input file filename. 
+            %
+            % If the Fourier resolution of the initial guess is larger than
+            % the Fourier resolution of the other physical qunatities, these
+            % are extended with zeros. 
+            %
+            % If the initial guess requires less Fourier harmonics, then it 
+            % is extended with zeros to match the Fourier resolution of the
+            % other physical quantities
+            %
+            % If no initial guess are provided in filename, return an empty
+            % structure.
+            
+            
+            % First, open file and read relevant portion
+            fid = fopen( filename, 'r' );
+            save_line = false;
+            category  = '';
+
+            initial_guess_str = {};
+
+            while( ~feof(fid) ) % while it is not the end of the file
+
+                tline = fgetl(fid);
+                tline = strtrim(tline);
+
+                if( save_line ) % write line
+                    initial_guess_str{end+1} = tline;
+
+                else % otherwise look for beginning of geometrical initial guess
+                    if( strcmp(tline, '/') )
+                        if( strcmp(category,'screenlist') )
+                            save_line = true;
+                        end
+
+                    else
+                        % read category
+                        if strcmp(tline(end-3:end),'list')
+                            category = tline(2:end);
+                        end
+
+                    end
+                end
+            end % end of while
+
+            fclose(fid); % Close file
+            
+            % Check size
+            l = length(str2num( initial_guess_str{1} ));
+            l = l-2; % Remove m, n
+            if mod(l,4)~=0
+                error('Invalid number of modes in initial guess')
+            end
+            
+            if l/4<obj.Nvol
+                error('Not enough volumes in initial guess')
+            end
+            
+            if l/4>obj.Nvol
+                error('Too many volumes in initial guess')
+            end
+            
+            % Read format of initial guess
+            tmp = SPEC_Namelist( filename, 'Liniguess', false );
+            
+            if tmp.physicslist.Lboundary~=obj.physicslist.Lboundary
+                error(['The initial guess from file %s does not use the',...
+                       'same boundary representation.'], filename)
+            end
+            
+            
+            % Now format initial guess in a structure
+            switch obj.physicslist.Lboundary
+                case 0 % Rmn, Zmn representation
+                    
+                    nlines = length(initial_guess_str);
+                    if nlines<1
+                        obj.initial_guess = struct([]); % generate empty structure
+                        return
+                    end
+                    
+                    % Read Mpol, Ntor
+                    Mpol_in = 0; Ntor_in = 0;
+                    for iline=1:nlines
+                        % Scan line
+                        line_data = str2num( initial_guess_str{iline} );
+
+                        % Find corresponding index
+                        mm = line_data(1); nn = line_data(2);
+                        Mpol_in = max([mm, Mpol_in]);
+                        Ntor_in = max([abs(nn), Ntor_in]);
+                    end
+                    
+                    % Check if resolution is smaller or larger than inner
+                    % resolution. This changes obj.Mpol and obj.Ntor if
+                    % necessary
+                    if (Mpol_in>obj.Mpol) || (Ntor_in>obj.Ntor)
+                       obj = obj.change_fourier_resolution( Mpol_in, Ntor_in );
+                    end
+                    
+                    
+                    % Allocate memory
+                    Ric = zeros(2*obj.Ntor+1, obj.Mpol, obj.Mvol);
+                    Ris = zeros(2*obj.Ntor+1, obj.Mpol, obj.Mvol);
+                    Zic = zeros(2*obj.Ntor+1, obj.Mpol, obj.Mvol);
+                    Zis = zeros(2*obj.Ntor+1, obj.Mpol, obj.Mvol);
+                    
+                    % Fill initial guess arrays
+                    for iline=1:nlines
+
+                        % Scan line
+                        line_data = str2num( initial_guess_str{iline} );
+
+                        % Find corresponding index
+                        m = line_data(1); n = line_data(2);
+                        im = m+1;
+                        in = n+obj.Ntor+1;
+
+                        for ivol=1:obj.Nvol
+                            Ric(in,im,ivol) = line_data(ivol*4-1);
+                            Zis(in,im,ivol) = line_data(ivol*4  );
+                            Ris(in,im,ivol) = line_data(ivol*4+1);
+                            Zic(in,im,ivol) = line_data(ivol*4+2);
+                        end
+                    end
+                    
+                    % Fill structure
+                    obj.initial_guess.Ric = Ric;
+                    obj.initial_guess.Zis = Zis;
+                    obj.initial_guess.Ris = Ris;
+                    obj.initial_guess.Zic = Zic;
+                    
+                case 1 % Henneberg representation
+                    error('To be implemented')
+                otherwise
+                    error('Invalid Lboundary!')
+            end
+            
+        end
+        
+        % Getters
+        function out = get_fourier_harmonics( obj, field, m, n, varargin )
+            %
+            % GET_FOURIER_HARMONICS( FIELD, M, N, (IVOL) )
+            % ============================================
+            %
+            % Returns the fourier harmonics associated to the field,
+            % poloidal mode number m and toroidal mode number n
+            %
+            % INPUTS
+            % ------
+            %   -field: 'Rbc', 'Zws', 'Ric', ...
+            %   -m    : Poloidal mode number
+            %   -n    : Toroidal mode number
+            %   -(ivol): Optional argument, required for fourier harmonics
+            %            of the initial guess
+            
+            
+            
+            if m>obj.Mpol
+                warning('M is larger than the Fourier resolution of the input file')
+                out = 0;
+                return
+            end 
+            
+            if abs(n)>obj.Ntor
+                warning('M is larger than the Fourier resolution of the input file')
+                out = 0;
+                return
+            end
+           
+            if     strcmp(field, 'Ric') || strcmp(field, 'Ris') ...
+                || strcmp(field, 'Zic') || strcmp(field, 'Zis')
+                
+                if isempty(obj.initial_guess)
+                    error('No initial guess available')
+                end
+                
+                ivol = varargin{1};
+            
+                if ivol<1 || ivol>obj.Nvol
+                    error('Invalid ivol')
+                end                   
+                
+                cat = 'initial_guess';
+                
+            else
+                cat = 'physicslist';
+                ivol = 1;
+                
+            end
+                
+            
+            out = obj.(cat).(field)(n+obj.Ntor+1, m+1, ivol);
+            
+        end
+        
+        % Setter
+        function obj = set_fourier_harmonics( obj, field, im, in, value, varargin )
+            %
+            % SET_FOURIER_HARMONICS( FIELD, M, N, (IVOL) )
+            % ============================================
+            %
+            % Sets the fourier harmonics associated to the field,
+            % poloidal mode number m and toroidal mode number n
+            %
+            % INPUTS
+            % ------
+            %   -field: 'Rbc', 'Zws', 'Ric', ...
+            %   -im   : Poloidal mode number, size 1xmn
+            %   -in   : Toroidal mode number, size 1xmn
+            %   -value: Value for the mode, size 1xmn
+            %   -(ivol): Optional argument, required for fourier harmonics
+            %            of the initial guess
+            
+            
+            mn = length(im);
+            if length(in)~=mn
+                error('The array in has not the same length as im')
+            end
+            if length(value)~=mn
+                error('The array value has not the same length as im')
+            end
+            
+            for imn=1:mn
+                m = im(imn);
+                n = in(imn);
+                
+                if m>obj.Mpol
+                    warning('Poloidal resolution has to be increased ...')
+                    obj = obj.change_fourier_resolution( m, obj.Ntor );
+                end 
+
+                if abs(n)>obj.Ntor
+                    warning('Toroidal resolution has to be increased ...')
+                    obj = obj.change_fourier_resolution( obj.Mpol, abs(n) );
+                end
+
+                if     strcmp(field, 'Ric') || strcmp(field, 'Ris') ...
+                    || strcmp(field, 'Zic') || strcmp(field, 'Zis')
+
+                    if isempty(obj.initial_guess)
+                        warning('No initial guess available... filling with zeros')
+
+                        obj.initial_guess.Ric = zeros( obj.array_size(1), obj.array_size(2), obj.Nvol );
+                        obj.initial_guess.Ris = zeros( obj.array_size(1), obj.array_size(2), obj.Nvol );
+                        obj.initial_guess.Zic = zeros( obj.array_size(1), obj.array_size(2), obj.Nvol );
+                        obj.initial_guess.Zis = zeros( obj.array_size(1), obj.array_size(2), obj.Nvol );                    
+                    end
+
+                    ivol = varargin{1};
+
+                    if ivol<1 || ivol>obj.Nvol
+                        error('Invalid ivol')
+                    end                   
+
+                    cat = 'initial_guess';
+
+                else
+                    cat = 'physicslist';
+                    ivol = 1;
+
+                end
+
+
+                obj.(cat).(field)(n+obj.Ntor+1, m+1, ivol) = value(imn);
+            end
+            
+        end
+        
+        function obj = truncate_fourier_series( obj, Mpol, Ntor )
+            %
+            % TRUNCATE_FOURIER_SERIES( MPOL, NTOR )
+            % =====================================
+            %
+            % Truncates all spectral quantities to the requested poloidal
+            % and toroidal resolution
+            %
+            % INPUTS
+            % ------
+            %   -Mpol: Poloidal resolution
+            %   -Ntor: Toroidal resolution
+            %
+            % OUTPUT
+            % ------
+            %   -OBJ: Truncated instance of SPEC_Namelist
+            %
+           
+            obj = obj.change_fourier_resolution( Mpol, Ntor );
+            
+        end
+        
+        % Plotters
+        function plot_plasma_boundary( obj, nt, phi, newfig, varargin )
+           %
+           % PLOT_PLASMA_BOUNDARY
+           % ====================
+           %
+           % Plot the boundary given by Rbc, Zbs, Rbs, Zbc
+           %
+           % INPUTS
+           % ------
+           %   -NEWFIG: =0: plot on gca
+           %            =1: plot on a new figure
+           %            =2: erase and plot on gca
+           %   -varargin: Any input you could give to plot()
+           %
+           %
+           
+           Rbc = obj.physicslist.Rbc;
+           Rbs = obj.physicslist.Rbs;
+           Zbc = obj.physicslist.Zbc;
+           Zbs = obj.physicslist.Zbs;
+           
+           obj.plot_surface( Rbc, Zbs, Rbs, Zbc, nt, phi, newfig, varargin{:} )
+        end
+        
+        function plot_computational_boundary( obj, nt, phi, newfig, varargin )
+           %
+           % PLOT_PLASMA_BOUNDARY
+           % ====================
+           %
+           % Plot the boundary given by Rbc, Zbs, Rbs, Zbc
+           %
+           % INPUTS
+           % ------
+           %   -NEWFIG: =0: plot on gca
+           %            =1: plot on a new figure
+           %            =2: erase and plot on gca
+           %   -varargin: Any input you could give to plot()
+           %
+           %
+           
+           Rwc = obj.physicslist.Rwc;
+           Rws = obj.physicslist.Rws;
+           Zwc = obj.physicslist.Zwc;
+           Zws = obj.physicslist.Zws;
+           
+           obj.plot_surface( Rwc, Zws, Rws, Zwc, nt, phi, newfig, varargin{:} )
+        end
+           
+        function plot_initial_guess( obj, nt, phi, newfig, varargin )
+           %
+           % PLOT_PLASMA_BOUNDARY
+           % ====================
+           %
+           % Plot the boundary given by Rbc, Zbs, Rbs, Zbc
+           %
+           % INPUTS
+           % ------
+           %   -NEWFIG: =0: plot on gca
+           %            =1: plot on a new figure
+           %            =2: erase and plot on gca
+           %   -varargin: Any input you could give to plot()
+           %
+           %
+           
+           for ivol=1:obj.Nvol
+               Ric = obj.initial_guess.Ric(:,:,ivol);
+               Ris = obj.initial_guess.Ris(:,:,ivol);
+               Zic = obj.initial_guess.Zic(:,:,ivol);
+               Zis = obj.initial_guess.Zis(:,:,ivol);
+               
+               if ivol==2
+                   newfig=0;
+               end
+               
+               obj.plot_surface( Ric, Zis, Ris, Zic, nt, phi, newfig, varargin{:} )
+           end
+        end
+        
+        % Write method
+        function write_input_file(obj, filename )
+            %
+            % WRITE_INPUT_FILE( filename )
+            % ============================
+            %
+            % Write namelist in an input file. Be careful: if the file filename
+            % provided as input exist, it will be overwritten!
+            %
+            % INPUT
+            % -----
+            %   - filename: path where to save the input file.
+            %
+
+
+            nlists = length(obj.lists);
+            S = struct;
+            for ii=1:nlists
+                S.(obj.lists{ii}) = obj.(obj.lists{ii});
+            end
+
+            S.shift.Rbc = [obj.Ntor+1, 1];
+            S.shift.Rbs = [obj.Ntor+1, 1];
+            S.shift.Zbc = [obj.Ntor+1, 1];
+            S.shift.Zbs = [obj.Ntor+1, 1];
+            S.shift.Rwc = [obj.Ntor+1, 1];
+            S.shift.Rws = [obj.Ntor+1, 1];
+            S.shift.Zws = [obj.Ntor+1, 1];
+            S.shift.Zwc = [obj.Ntor+1, 1];
+            S.shift.Vnc = [obj.Ntor+1, 1];
+            S.shift.Vns = [obj.Ntor+1, 1];
+            S.shift.Bnc = [obj.Ntor+1, 1];
+            S.shift.Bns = [obj.Ntor+1, 1];
+            S.shift.rhomn = [obj.Ntor+1, 1];
+
+            if obj.physicslist.Lboundary==0        
+                if ~isempty(obj.initial_guess)
+                    s = size(obj.initial_guess.Ric);
+                    initialguess = cell(1, s(1)*s(2));
+                    iline=0;
+                    for ii=1:s(1)
+                        for jj=1:s(2)
+                            iline = iline+1;
+                            mm = jj-1;
+                            nn = ii-obj.Ntor-1;
+                            
+                            initialguess{iline} = sprintf( '%i   %i   ', mm, nn );
+                            for ivol=1:s(3)
+                               initialguess{iline} = sprintf( '%s   %0.12E   %0.12E   %0.12E   %0.12E', initialguess{iline}, ...
+                                                            obj.initial_guess.Ric(ii,jj,ivol), ...
+                                                            obj.initial_guess.Zis(ii,jj,ivol), ...
+                                                            obj.initial_guess.Ris(ii,jj,ivol), ...
+                                                            obj.initial_guess.Zic(ii,jj,ivol)     );
+                            end
+                        end
+                    end
+                else
+                    initialguess = cell(0);
+                end
+
+            else
+
+                nrho = max(max(obj.physicslist.in)); 
+                S.shift.rhomn = [ 1, nrho+1 ];
+
+                % Now prepare initial guess...
+                if isfield(obj.initial_guess, 'bin')
+                    sb   = size(obj.initial_guess.bin);
+                    srho = size(obj.initial_guess.rhoi);
+                    ntor = (srho(2)-1)/2.0;
+                    initialguess = cell(1, sb(1) + srho(1)*srho(2));
+
+                    % Modes m=0, n
+                    for ii=1:sb(1)
+                       nn = ii-1;
+                       initialguess{ii} = sprintf('0   %i   ', nn);
+                       for ivol=1:sb(2)
+                          initialguess{ii} = sprintf('%s   %0.12E   %0.12E   %0.12E   %0.12E', initialguess{ii}, ...
+                                                     obj.initial_guess.bin( ii, ivol ), ...
+                                                     obj.initial_guess.R0ic(ii, ivol ), ...
+                                                     obj.initial_guess.Z0is(ii, ivol ), 0.0 ); 
+                       end
+                    end
+
+                    it = sb(1);
+                    for ii=1:srho(2)
+
+                        nn = ii-ntor-1;
+
+                        for jj=1:srho(1)
+
+                            it = it+1;
+
+                            mm = jj;
+
+                            initialguess{it} = sprintf('%i   %i   ', mm, nn);
+
+                            for ivol=1:srho(3)
+
+                                initialguess{it} = sprintf('%s   %0.12E   %0.12E   %0.12E   %0.12E', initialguess{ii},...
+                                                           0.0, 0.0, 0.0, obj.initial_guess.rhoi(ii, jj, ivol));
+
+                            end
+                        end
+                    end
+                else
+                    initialguess = cell(0);
+
+                end
+
+
+
+            end
+
+            write_namelist( S, filename, initialguess );
+       
+
+        end
     end
     
     methods (Access=private)
         
         function obj = initialize_structure( obj )
+            %
+            % INITIALIZE_STRUCTURE( OBJ )
+            % ===========================
+            %
+            % Use to check that all required inputs are correctly set;
+            % check that the sizes of arrays are correct. Raise errors in
+            % case crucial informations is missing.
+            %
+            % 
                        
             % Fill some important inputs
             if ~isfield(obj.physicslist, 'Nvol')
@@ -59,6 +601,7 @@ classdef SPEC_Namelist
             end
             
             obj.Mvol = obj.physicslist.Nvol + obj.physicslist.Lfreebound;
+            obj.Nvol = obj.physicslist.Nvol;
             
             % PHYSICSLIST
             % -----------
@@ -306,17 +849,77 @@ classdef SPEC_Namelist
                 obj.diagnosticslist.nPtrj = 0;
             end            
         end
+        
+        
+        function obj = change_fourier_resolution( obj, Mpol_new, Ntor_new )
+            %
+            % CHANGE_FOURIER_RESOLUTION( MPOL_NEW, NTOR_NEW )
+            % ===============================================
+            %
+            % Change inner Fourier resolution of an instance of
+            % SPEC_Namelist.
+            %
+            % INPUTS
+            % ------
+            %   -Mpol_new: New poloidal resolution
+            %   -Ntor_new: New toroidal resolution
+            %
+            % OUTPUT
+            % ------
+            %   -obj: Updated instance of SPEC_Namelist
+            %
        
-        
-        
+            if Mpol_new<1
+                error('InputError, Mpol_new should be larger than 0')
+            end
+            if Ntor_new<0
+                error('InputError, Ntor_new should be larger or equal to zero')
+            end
+            
+            obj.Mpol = Mpol_new;
+            obj.Ntor = Ntor_new;
+            obj.array_size = [2*obj.Ntor+1, obj.Mpol+1];
+            
+            % Check that all arrays have the same size; otherwise, fill
+            % with zeros the missing elements
+            if any(size(obj.physicslist.Rbc)~=obj.array_size)
+                obj = obj.reshape_array( 'Rbc' );
+                obj = obj.reshape_array( 'Rbs' );
+                obj = obj.reshape_array( 'Zbc' );
+                obj = obj.reshape_array( 'Zbs' );
+            end
+            
+            if any(size(obj.physicslist.Rwc)~=obj.array_size)
+                obj = obj.reshape_array( 'Rwc' );
+                obj = obj.reshape_array( 'Rws' );
+                obj = obj.reshape_array( 'Zwc' );
+                obj = obj.reshape_array( 'Zws' );
+            end
+            
+            if any(size(obj.physicslist.Vnc)~=obj.array_size)
+                obj = obj.reshape_array( 'Vnc' );
+                obj = obj.reshape_array( 'Vns' );
+                obj = obj.reshape_array( 'Bnc' );
+                obj = obj.reshape_array( 'Bns' );           
+            end
+        end
         
         
         function obj = set_fourier_resolution( obj )
-            
+            %
+            % SET_FOURIER_RESOLUTION( OBJ )
+            % =============================
+            %
+            % Set the obj internal Fourier resolution to the maximal value
+            % required to store the given data; then, reshapees all arrays
+            % to have the size obj.array_size.
+            %
             % Check beforehand that the resolution of Rbc is the same as
             % Rbs, Zbc and Zbs. Do something similar for Vnc, Vns, Bnc, Bns
             % and Rwc, Rws, Zws, Zwc.
+            %
            
+            
             % Find largest Fourier resolution in the input file
             Mpol_in = obj.physicslist.Mpol;
             Ntor_in = obj.physicslist.Ntor;
@@ -336,38 +939,34 @@ classdef SPEC_Namelist
             Mpol_vb = s_vb(2)-1       ;
             Ntor_vb = max([abs(1-shift), s_vb(1)-shift]);
             
-            obj.Mpol = max([Mpol_in, Mpol_bc, Mpol_wc, Mpol_vb]);
-            obj.Ntor = max([Ntor_in, Ntor_bc, Ntor_wc, Ntor_vb]);
-            obj.array_size = [2*obj.Ntor+1, obj.Mpol+1];
-            
-            % Check that all arrays have the same size; otherwise, fill
-            % with zeros the missing elements
-            if any(size(obj.physicslist.Rbc)~=obj.array_size)
-                obj.physicslist.Rbc = obj.reshape_array( obj.physicslist.Rbc, Ntor_bc );
-                obj.physicslist.Rbs = obj.reshape_array( obj.physicslist.Rbs, Ntor_bc );
-                obj.physicslist.Zbc = obj.reshape_array( obj.physicslist.Zbc, Ntor_bc );
-                obj.physicslist.Zbs = obj.reshape_array( obj.physicslist.Zbs, Ntor_bc );
-            end
-            
-            if any(size(obj.physicslist.Rwc)~=obj.array_size)
-                obj.physicslist.Rwc = obj.reshape_array( obj.physicslist.Rwc, Ntor_wc );
-                obj.physicslist.Rws = obj.reshape_array( obj.physicslist.Rws, Ntor_wc );
-                obj.physicslist.Zwc = obj.reshape_array( obj.physicslist.Zwc, Ntor_wc );
-                obj.physicslist.Zws = obj.reshape_array( obj.physicslist.Zws, Ntor_wc );
-            end
-            
-            if any(size(obj.physicslist.Vnc)~=obj.array_size)
-                obj.physicslist.Vnc = obj.reshape_array( obj.physicslist.Vnc, Ntor_vb );
-                obj.physicslist.Vns = obj.reshape_array( obj.physicslist.Vns, Ntor_vb );
-                obj.physicslist.Bnc = obj.reshape_array( obj.physicslist.Bnc, Ntor_vb );
-                obj.physicslist.Bns = obj.reshape_array( obj.physicslist.Bns, Ntor_vb );           
-            end
+            Mpol_new = max([Mpol_in, Mpol_bc, Mpol_wc, Mpol_vb]);
+            Ntor_new = max([Ntor_in, Ntor_bc, Ntor_wc, Ntor_vb]);
+            obj = obj.change_fourier_resolution( Mpol_new, Ntor_new );
         end
         
         
-        function new_array = reshape_array( obj, array, Ntor_array )
-        
+        function obj = reshape_array( obj, field )
+            %
+            % RESHAPE_ARRAY( OBJ, FIELD )
+            % =======================================
+            %
+            % Reshape the input array in a an array of size obj.array_size
+            % and fills missing elements with zeros
+            %
+            % INPUTS
+            % ------
+            %   -field: Field, in obj.physicslist, to be modified
+            %
+            % OUTPUT
+            % ------
+            %   -obj: Updated instance of SPEC_Namelist
+            %
+            
+            array = obj.physicslist.(field);
+            shift = obj.physicslist.shift.(field);
+            
             s = size(array);
+            Ntor_array = max([abs(1-shift), s(1)-shift]);   
             
             new_array = zeros(obj.array_size);
             for ii=1:s(1)
@@ -375,10 +974,107 @@ classdef SPEC_Namelist
                     nn = ii-Ntor_array-1;
                     mm = jj-1;
                     
+                    if abs(nn)>obj.Ntor || mm>obj.Mpol
+                        continue
+                    end
+                    
                     new_array(nn+obj.Ntor+1, mm+1) = array(ii, jj);
                 end
             end
+            
+            obj.physicslist.(field) = new_array;
+        end
+        
+        
+        function plot_surface( obj, Rmnc, Zmns, Rmns, Zmnc, nt, phi, ...
+                               newfig, varargin )
+            %
+            % PLOT_SURFACE( RMNC, ZMNS, RMNS, ZMNC, NT, NEWFIG, VARARGIN )
+            % ===========================================================
+            %
+            % Plot a surface parametrized by the standard representation
+            %
+            % INPUTS
+            % ------
+            %   -Rmnc: Even Fourier modes of R, format (2*Ntor+1, Mpol+1)
+            %   -Zmns: Odd  Fourier modes of Z, format (2*Ntor+1, Mpol+1)
+            %   -Rmns: Odd  Fourier modes of R, format (2*Ntor+1, Mpol+1)
+            %   -Zmnc: Even Fourier modes of Z, format (2*Ntor+1, Mpol+1)
+            %   -NT  : Number of poloidal points
+            %   -PHI : Toroidal angle
+            %   -newfig: =0: plot on gca
+            %            =1: plot on a new figure
+            %            =2: erase and plot on gca
+            %   - varargin: Any input you could give to plot()
+            
+            switch newfig
+                case 0
+                    hold on
+                case 1
+                    figure('Color','w','Position',[200 200 900 700])
+                    hold on
+                case 2
+                    hold off
+                otherwise
+                    error('InputError: invalid newfig')
+            end
+            
+            s = size(Rmnc);
+            
+            if any(s~=size(Rmns))
+                error('InputError: Rmnc has not the same size as Rmns')
+            end
+            if any(s~=size(Zmns))
+                error('InputError: Rmnc has not the same size as Zmns')
+            end
+            if any(s~=size(Zmnc))
+                error('InputError: Rmnc has not the same size as Zmnc')
+            end    
+            if nt<1
+                error('InputError: nt should be larger than 1')
+            end
+            
+            Ntor = (s(1)-1) / 2.0;
+            Mpol =  s(2)-1;
+            
+            tarr = linspace( 0, 2*pi, nt );
+            R    = zeros( 1, nt );
+            Z    = zeros( 1, nt );
+            Nfp  = double(obj.physicslist.Nfp);
+            
+            
+            for in=1:s(1)
+                nn = in-1-Ntor;
+                for im=1:s(2)
+                    mm = im-1;
+                    
+                    arg = mm*tarr - nn*Nfp*phi;
+                    
+                    R = R + Rmnc(in,im) * cos(arg) + Rmns(in,im) * sin(arg);
+                    Z = Z + Zmnc(in,im) * cos(arg) + Zmns(in,im) * sin(arg);
+                end
+            end
+            
+            plot( R, Z, varargin{:} )
         end
     end
     
 end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
