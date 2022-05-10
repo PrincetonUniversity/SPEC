@@ -68,7 +68,7 @@ for i = 1:n_name_lists
             end
             fprintf(fid, '%s\n', '');
         else
-            [m,n] = size(var);
+            [n,m] = size(var);
             if m == 1 || n == 1
                 % Variable is a scalar or vector
                 fprintf(fid, '   %s =', rcrds_name{j});
@@ -77,10 +77,10 @@ for i = 1:n_name_lists
             else
                 % Varible is a two dimensional array
                 for k = 1:n
-                    fprintf(fid, '   %s(%i,%i:%i) =', rcrds_name{j}, k-S.shift.(rcrds_name{j})(2), ...
-                                                                     1-S.shift.(rcrds_name{j})(1), ...
-                                                                     n-S.shift.(rcrds_name{j})(1)    );
-                    fprintf(fid, ' %g,', var(:,k));
+                    fprintf(fid, '   %s(%i,%i:%i) =', rcrds_name{j}, k-S.shift.(rcrds_name{j})(1), ...
+                                                                     1-S.shift.(rcrds_name{j})(2), ...
+                                                                     m-S.shift.(rcrds_name{j})(2)    );
+                    fprintf(fid, ' %g,', var(k,:));
                     fprintf(fid, '%s\n', ''); 
                 end
             end

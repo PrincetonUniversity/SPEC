@@ -149,47 +149,6 @@ data.grid.BR  = cBR;
 data.grid.Bp  = cBp;
 data.grid.BZ  = cBZ;
 
-% generate flux surfaces instances for boundary and initial guess
-Nfp = double(data.input.physics.Nfp);
-Nvol = data.input.physics.Nvol;
-Mpol = data.input.physics.Mpol;
-Ntor = data.input.physics.Ntor;
-stellsym = data.input.physics.Istellsym;
-
-% Computational boundary
-fsurf = fluxSurface( Nfp, Mpol, Ntor, stellsym);
-
-im = data.output.im;
-in = data.output.in / Nfp;
-fsurf = fsurf.set_array( 'rmnc', data.output.Rbc(:,end), im, in );
-fsurf = fsurf.set_array( 'zmns', data.output.Zbs(:,end), im, in );
-
-if ~stellsym
-  fsurf = fsurf.set_array( 'rmns', data.output.Rbs(:,end), im, in );
-  fsurf = fsurf.set_array( 'zmnc', data.output.Zbc(:,end), im, in );
-end
-
-data.output.computationalBoundary = fsurf;
-          
-% Initial guess      
-data.physicslist.KAMSurfaces = cell(1,Nvol);
-for ivol=1:Mvol
-    
-    fsurf = fluxSurface( Nfp, Mpol, Ntor, stellsym);
-
-    fsurf = fsurf.set_array( 'rmnc', data.output.Rbc(:,ivol+1), im, in );
-    fsurf = fsurf.set_array( 'zmns', data.output.Zbs(:,ivol+1), im, in );
-
-    if ~stellsym
-      fsurf = fsurf.set_array( 'rmns', data.output.Rbs(:,ivol+1), im, in );
-      fsurf = fsurf.set_array( 'zmnc', data.output.Zbc(:,ivol+1), im, in );
-    end
-
-    data.output.KAMSurface{ivol} = fsurf;
-    
-
-end
-
 
 end
 

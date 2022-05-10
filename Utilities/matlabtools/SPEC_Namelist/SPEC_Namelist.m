@@ -16,6 +16,7 @@ classdef SPEC_Namelist
         array_size = [0, 0];
         Mvol = 0;
         Nvol = 0;
+        verbose = true;
         
     end
     
@@ -52,19 +53,25 @@ classdef SPEC_Namelist
             end
             
             opt.Liniguess = true;
+            opt.verbose = true;
             for ii=1:l/2
                opt.(varargin{2*ii-1}) = varargin{2*ii}; 
             end
             
+            obj.verbose = opt.verbose;
+            
             % Read input file
+%             obj.physicslist     = read_namelist( filename, 'physicslist' );
+%             obj.numericlist     = read_namelist( filename, 'numericlist' );
+%             obj.locallist       = read_namelist( filename, 'locallist' );
+%             obj.globallist      = read_namelist( filename, 'globallist' );
+%             obj.diagnosticslist = read_namelist( filename, 'diagnosticslist' );
+%             obj.screenlist      = read_namelist( filename, 'screenlist' );
             work = read_namelist( filename );
             obj.lists = fields(work);
-            obj.physicslist = work.physicslist;
-            obj.numericlist = work.numericlist;
-            obj.locallist   = work.locallist;
-            obj.globallist  = work.globallist;
-            obj.diagnosticslist = work.diagnosticslist;
-            obj.screenlist  = work.screenlist;  
+            for ii=1:length(obj.lists)
+                obj.(obj.lists{ii}) = work.(obj.lists{ii});
+            end
             
             % Check that the size of arrays makes sense, fills with zeros
             % otherwise
@@ -431,13 +438,15 @@ classdef SPEC_Namelist
            
         function plot_initial_guess( obj, nt, phi, newfig, varargin )
            %
-           % PLOT_PLASMA_BOUNDARY
-           % ====================
+           % PLOT_PLASMA_BOUNDARY( NT, PHI, NEWFIG, VARARGIN )
+           % =================================================
            %
            % Plot the boundary given by Rbc, Zbs, Rbs, Zbc
            %
            % INPUTS
            % ------
+           %   -NT: Number of poloidal points
+           %   -PHI: Toroidal angle
            %   -NEWFIG: =0: plot on gca
            %            =1: plot on a new figure
            %            =2: erase and plot on gca
@@ -473,6 +482,11 @@ classdef SPEC_Namelist
             %   - filename: path where to save the input file.
             %
 
+            % Set minimal toroidal resolution to one, otherwise writting
+            % routine does not detect arrays.
+            if obj.Ntor==0
+                obj = obj.change_fourier_resolution( obj.Mpol, 1 );
+            end
 
             nlists = length(obj.lists);
             S = struct;
@@ -606,7 +620,7 @@ classdef SPEC_Namelist
             % PHYSICSLIST
             % -----------
             % Lrad
-            if ~isfield(obj.physicslist, 'Lrad')
+            if ~isfield(obj.physicslist, 'Lrad') && obj.verbose
                warning('Missing Lrad. Filling with 4...')
                obj.physicslist.Lrad = ones(1,obj.Mvol) * 4;
             else
@@ -615,7 +629,7 @@ classdef SPEC_Namelist
             end
             
             % tflux
-            if ~isfield(obj.physicslist, 'tflux')
+            if ~isfield(obj.physicslist, 'tflux') && obj.verbose
                warning('Missing tflux. Filling equal radial distances')
                obj.physicslist.tflux = (1:obj.Mvol).^2;
             else
@@ -1056,6 +1070,8 @@ classdef SPEC_Namelist
             end
             
             plot( R, Z, varargin{:} )
+            
+            axis equal
         end
     end
     
