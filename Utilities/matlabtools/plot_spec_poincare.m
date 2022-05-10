@@ -32,6 +32,11 @@ for ii=1:ll/2
 end
 stp = opt.step;
 
+% Check that Poincare data is available
+if data.input.diagnostics.nPpts==0 || all(data.input.diagnostics.nPtrj==0)
+    error('No Poincare data available')
+end
+
 % Read some data...
 nfp = data.input.physics.Nfp;
 
