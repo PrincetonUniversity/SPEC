@@ -48,7 +48,9 @@ Azo     = data.vector_potential.Azo{lvol};
 
 Lrad    = data.input.physics.Lrad(lvol);
 
+if(size(sarr,1)==1)
 sarr    = transpose(sarr);
+end
 ns      = length(sarr);
 nt      = length(tarr);
 nz      = length(zarr);
@@ -60,22 +62,21 @@ in      = double(data.output.in);
 At      = zeros(ns,nt,nz); % allocate data for vector potential along theta
 Az      = zeros(ns,nt,nz); % allocate data for vector potential along zeta
 
-
-% Construct Chebyshev polynomials 
-T = get_spec_polynomial_basis(data, lvol, sarr);
-
 % Construct regularization factors
-fac = get_spec_regularisation_factor(data, lvol, sarr, 'F');
+fac = get_spec_regularization_factor(data, lvol, sarr, 'F');
 
+% Construct vector potential covariant components
+T = get_spec_polynomial_basis(data, lvol, sarr);
+  Lsingularity = true;
+
+for l=1:Lrad+1
+fac = get_spec_regularisation_factor(data, lvol, sarr, 'F');
 % Construct vector potential covariant components
 Lsingularity = false;
 if (lvol==1) && (data.input.physics.Igeometry~=1)
   Lsingularity = true;
-end
+    end
 
-
-for l=1:Lrad+1
-  for j=1:mn
     if( Lsingularity )
        basis = T{l}{1}(im(j)+1);
     else

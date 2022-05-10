@@ -14,6 +14,7 @@ function T = get_spec_polynomial_basis(data,lvol,sarr)
 %
 % OUTPUT
 % ------
+%   T{i}{j}: Polynom of order i (j=1) and its derivative (j=2)
 %   T{i}{j}: Polynom of order i (j=1) 
 %            and its derivative with respect to s (j=2)
 %

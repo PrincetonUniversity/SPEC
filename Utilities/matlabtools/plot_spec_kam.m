@@ -2,7 +2,7 @@ function plot_spec_kam(data, nz0, newfig, varargin)
 
 %
 % PLOT_SPEC_KAM( DATA, NZ0, NEWFIG )
-% ========================================
+% ==================================
 %
 % Produces a "Poincare plot" of the KAM surfaces.
 %

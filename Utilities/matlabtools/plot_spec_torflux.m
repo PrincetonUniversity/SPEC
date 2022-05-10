@@ -22,13 +22,12 @@ function plot_spec_torflux(data, zeta, cumulative, newfig)
 %
 % Written by A. Baillod (2019)
 %
-
     Mvol = data.output.Mvol;
     torflux = zeros(1,Mvol);
-
     for lvol=1:Mvol
         tmp = get_spec_torflux(data,lvol,zeta,-1,1,64,64);
 
+Nvol = data.input.physics.Nvol;
         if cumulative
             if lvol==1
                 torflux(lvol)=tmp;

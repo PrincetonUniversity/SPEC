@@ -56,8 +56,9 @@ function plot_spec_modB_boundary(data,interface,innout,nt,nz,dimension)
       error('vol not valid')
     end
 
-
+if(vol>Mvol)
     % Compute |B|
+end
 
     modB   = get_spec_modB(data,vol,sarr,tarr,zarr);
 

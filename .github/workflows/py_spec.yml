@@ -1,0 +1,38 @@
+name: py_spec
+on: [push, pull_request]
+jobs:
+  py_sepc-build:
+    runs-on: ubuntu-latest
+    name: py_spec build
+    env:
+      PY_SPEC_DIR: ${{ github.workspace }}/Utilities/pythontools
+    steps:
+    - uses: actions/checkout@v2
+
+    # Python3 should be pre-installed on 'ubuntu-latest'
+    - name: Python version info
+      run: |
+        python3 --version
+        pip3 --version
+
+    - name: Install dependencies
+      working-directory: ${{ env.PY_SPEC_DIR }}
+      run: |
+        pip3 install -r requirements.txt
+        pip3 install setuptools wheel twine      
+
+    - name: Build py_spec
+      working-directory: ${{ env.PY_SPEC_DIR }}
+      run: |
+        pip3 install -e ${PY_SPEC_DIR}
+        python3 -c "from py_spec import *"
+
+    - name: publish to PYPI
+      working-directory: ${{ env.PY_SPEC_DIR }}
+      if: github.ref == 'refs/heads/master'
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI }}
+      run: |
+        python setup.py sdist bdist_wheel
+        twine upload --skip-existing dist/*

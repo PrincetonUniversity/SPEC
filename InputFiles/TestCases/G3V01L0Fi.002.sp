@@ -10,7 +10,7 @@
  Nvol        =         1
  Mpol        =         10
  Ntor        =         10
- Lrad        =                       6                      
+ Lrad        =                       16                      
  tflux       =   1.000000000000000E+00
  pflux       =   0.000000000000000E+00
  helicity    =   1.559429589793997E-03

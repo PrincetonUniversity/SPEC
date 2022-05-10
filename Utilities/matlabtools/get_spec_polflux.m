@@ -1,8 +1,8 @@
 function psipol = get_spec_polflux(data,lvol,theta,sarr,nz)
 
 %
-% GET_SPEC_POLFLUX( DATA, LVOL, THETA, sarr, NZ )
-% ==========================================================
+% GET_SPEC_POLFLUX( DATA, LVOL, THETA, SARR, NZ )
+% ===============================================
 %
 % Computes total enclosed poloidal flux in the surface defined by theta
 % inside the volume number lvol and across the radial extension defined by 
@@ -35,7 +35,7 @@ zarr = linspace(0,2*pi,nz);
 
 % Get B theta contravariant and the jacobian
 Bcontrav = get_spec_magfield(data,lvol,sarr,theta,zarr);
-Btheta    = squeeze(Bcontrav{2});
+Btheta   = squeeze(Bcontrav{2});
 jac      = squeeze(get_spec_jacobian(data,lvol,sarr,theta,zarr));
 
       

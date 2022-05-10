@@ -1,0 +1,40 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Doxygen Action
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on: [push, pull_request]
+
+  
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    env:
+      LATEX_DOC_DIR: ${{ github.workspace }}/docs/latex
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - uses: actions/checkout@v2
+    
+    # run doxygen
+    - name: Doxygen Action
+      uses: mattnotmitt/doxygen-action@1.9.3
+      with:
+        enable-latex: true
+      
+    - name: Copy Pdf
+      working-directory: ${{ github.workspace }}
+      run: sudo cp ./docs/latex/refman.pdf ./docs/html/SPEC_manual.pdf
+
+    - name: Deploy
+      uses: peaceiris/actions-gh-pages@v3
+      if: github.ref == 'refs/heads/master'
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        # Default Doxyfile build documentation to html directory. 
+        # Change the directory if changes in Doxyfile
+        publish_dir: ./docs/html

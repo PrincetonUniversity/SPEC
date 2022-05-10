@@ -1,0 +1,12 @@
+# python wrapper related
+*.fpp
+f90wrap_*.f90
+_*.so
+src.*/
+.f2py_f2cmap 
+.libs/ 
+__pycache__/
+spec/spec_f90wrapped.py
+spec/_spec_f90wrapped*.so
+libspec_f90wrapped.a
+_skbuild/

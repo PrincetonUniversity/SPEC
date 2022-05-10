@@ -23,7 +23,6 @@ function plot_spec_Bgrid(data,nz0,plotstyle,newfig)
 if ~strcmp(string(plotstyle),string('pcolor')) && ~strcmp(string(plotstyle),string('scatter'))
     error('InputError: Invalid plotstyle')
 end
-
 switch newfig
     case 0
         hold on

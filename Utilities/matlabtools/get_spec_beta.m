@@ -14,8 +14,8 @@ function [beta_ax, beta_av] = get_spec_beta(data, vols)
 %
 % OUTPUT
 % ------
-%  -beta_ax		: value of beta on axis
-%  -beta_av     : value of beta on average
+%  -beta_ax  : value of beta on axis
+%  -beta_av  : value of beta on average
 %
 % written by J.Loizu (2016) 
 % modified by J.Loizu (05.2017)

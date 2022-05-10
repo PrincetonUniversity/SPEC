@@ -54,11 +54,9 @@ function rzbdata = plot_spec_modB(data,lvol,sarr,tarr,zarr,newfig)
     if sarr(1)<-1 || sarr(end)>1
         error('InputError: invalid sarr')
     end
-
     if any(diff(sarr)<0)
         error('InputError: sarr is not monotonic')
     end
-
 
     rzbdata = cell(3);
 

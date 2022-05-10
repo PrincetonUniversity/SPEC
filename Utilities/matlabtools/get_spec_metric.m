@@ -44,7 +44,6 @@ function gmat = get_spec_metric(data,lvol,sarr,tarr,zarr)
 
     % Get R and its derivatives
     Rarr = get_spec_R_derivatives(data,lvol,sarr,tarr,zarr,'R');
-
     % Construct metric elements
 
     switch data.input.physics.Igeometry

@@ -1,8 +1,6 @@
-# import of all SPEC-related python scripts. 
+# import of all SPEC-related python scripts.
+__version__ = "3.0.1c"
 
-from .read_spec import SPEC
-from .proc_spec import *
-del(read_spec)
-del(proc_spec)
-
-
+from .ci import test
+from .input.spec_namelist import SPECNamelist
+from .output.spec import SPECout
