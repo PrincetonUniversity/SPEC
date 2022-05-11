@@ -39,7 +39,7 @@ subroutine pp00ab( lvol, sti, Nz, nPpts, poincaredata, fittedtransform, utflag )
 
   use fileunits, only : ounit
 
-  use inputlist, only : Wpp00ab, Nvol, odetol
+  use inputlist, only : Wpp00ab, Nvol, odetol, twoalpha, Nfp, Lboundary
 
   use cputiming, only : Tpp00ab
 
@@ -57,7 +57,7 @@ subroutine pp00ab( lvol, sti, Nz, nPpts, poincaredata, fittedtransform, utflag )
   REAL                 :: ppt(1:4)
 
   INTEGER, parameter   :: Lrwork = 20*Node
-  REAL                 :: zst, zend, st(1:Node), rwork(1:Lrwork), tol, stz(1:3), RpZ(1:3), leastfit(1:5)
+  REAL                 :: zst, dzst, zend, st(1:Node), rwork(1:Lrwork), tol, stz(1:3), RpZ(1:3), leastfit(1:5)
   CHARACTER            :: RA
 
   INTEGER, parameter   :: Lenwrk = 32*Node
@@ -104,6 +104,7 @@ subroutine pp00ab( lvol, sti, Nz, nPpts, poincaredata, fittedtransform, utflag )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
    zst = zero ! starting Poincare plane;
+   dzst = pi2nfp/Nz ! toroidal plane increment
 
    call ENVIRN(outch,mchpes,dwarf) ! only dwarf is used to set thres=sqrt(dwarf); thres could be set larger but not smaller
    thres(1:Node) = sqrt(dwarf); rkmethod = 3; rktask = 'U'; errass = .FALSE. ; hstart = 0.0D0
@@ -133,7 +134,7 @@ subroutine pp00ab( lvol, sti, Nz, nPpts, poincaredata, fittedtransform, utflag )
 
     poincaredata(1:4,kk,jj) = (/ mod(ppt(1),pi2), ppt(2), ppt(3), ppt(4) /) ! save Poincare information to array;
 
-    zend = zst + (pi2nfp/Nz)
+    zend = zst + dzst
 
     utflag = 0
 
@@ -181,6 +182,11 @@ subroutine pp00ab( lvol, sti, Nz, nPpts, poincaredata, fittedtransform, utflag )
 
   if( utflag.eq.1 ) then
    fittedtransform(1:2) = (/ sti(1), ( leastfit(5)*leastfit(3)-leastfit(2)*leastfit(4) ) / ( leastfit(5)*leastfit(1)-leastfit(2)*leastfit(2) ) /)
+
+   ! Have to remove rotation of coordinate system
+   if( Lboundary.eq.1 ) then
+    fittedtransform(2) = fittedtransform(2) - twoalpha * Nfp
+   endif
   endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

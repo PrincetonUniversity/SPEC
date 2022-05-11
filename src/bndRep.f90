@@ -771,8 +771,8 @@ module bndRep
           RlBCAST( iZbs(1:mn_field, lvol), mn_field, cpu_id )
 
           if( NOTstellsym ) then
-            RlBCAST( iRbc(1:mn_field, lvol), mn_field, cpu_id )
-            RlBCAST( iRbc(1:mn_field, lvol), mn_field, cpu_id )
+            RlBCAST( iRbs(1:mn_field, lvol), mn_field, cpu_id )
+            RlBCAST( iZbc(1:mn_field, lvol), mn_field, cpu_id )
           endif
         enddo
       

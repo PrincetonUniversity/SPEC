@@ -162,11 +162,15 @@ m4_define(LlBCAST,{! macro expansion of llbcast;
 
    if( Wmacros ) write(6,'("       : ",10x," ; myid=",i3," ; lvol=",i3," ; broadcasting $1 ;")') myid, $3+1
 
+  call MPI_BARRIER( MPI_COMM_SPEC, ierr )
+
 #endif
 
    call MPI_BCAST($1,$2,MPI_LOGICAL,$3,MPI_COMM_SPEC,ierr)
 
 #ifdef DEBUG
+
+  call MPI_BARRIER( MPI_COMM_SPEC, ierr )
 
    if( Wmacros ) write(6,'("       : ",10x," ; myid=",i3," ; lvol=",i3," ; broadcasted  $1 ;")') myid, $3+1
 
@@ -186,12 +190,14 @@ m4_define(IlBCAST,{! macro expansion of ilbcast;
 
    if( Wmacros ) write(6,'("       : "10x" ; myid=",i3," ; lvol=",i3," ; broadcasting $1 ;")') myid, $3
 
+  call MPI_BARRIER( MPI_COMM_SPEC, ierr )
 #endif
   
    call MPI_BCAST( $1, $2, MPI_INTEGER, $3, MPI_COMM_SPEC, ierr )
 
 #ifdef DEBUG
 
+  call MPI_BARRIER( MPI_COMM_SPEC, ierr )
    if( Wmacros ) write(6,'("       : "10x" ; myid=",i3," ; lvol=",i3," ; broadcasted  $1 ;")') myid, $3
 
 #endif
@@ -210,12 +216,14 @@ m4_define(RlBCAST,{! macro expansion of rlbcast;
 
    if( Wmacros ) write(6,'("       : "10x" ; myid=",i3," ; lvol=",i3," ; broadcasting $1 ;")') myid, $3+1
 
+  call MPI_BARRIER( MPI_COMM_SPEC, ierr )
 #endif
   
    call MPI_BCAST($1,$2,MPI_DOUBLE_PRECISION,$3,MPI_COMM_SPEC,ierr)
 
 #ifdef DEBUG
 
+  call MPI_BARRIER( MPI_COMM_SPEC, ierr )
    if( Wmacros ) write(6,'("       : "10x" ; myid=",i3," ; lvol=",i3," ; broadcasted  $1 ;")') myid, $3+1
 
 #endif
@@ -234,12 +242,14 @@ m4_define(ClBCAST,{! macro expansion of clbcast;
 
    if( Wmacros ) write(6,'("       : "10x" ; myid=",i3," ; lvol=",i3," ; broadcasting $1 ;")') myid, $3+1
 
+  call MPI_BARRIER( MPI_COMM_SPEC, ierr )
 #endif
   
    call MPI_BCAST($1,$2,MPI_CHARACTER,$3,MPI_COMM_SPEC,ierr)
 
 #ifdef DEBUG
 
+  call MPI_BARRIER( MPI_COMM_SPEC, ierr )
    if( Wmacros ) write(6,'("       : "10x" ; myid=",i3," ; lvol=",i3," ; broadcasted  $1 ;")') myid, $3+1
 
 #endif

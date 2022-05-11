@@ -156,6 +156,8 @@ subroutine pp00aa
         ! call actual field line integration subroutine
         CALL( pp00aa, pp00ab, ( vvol, sti(1:2), Nz, nPpts, data(itrj,1:4,0:Nz-1,1:nPpts), fiota(itrj,1:2), utflag(itrj) ) )
 
+        
+
         if( Wpp00aa ) then
           cput = GETTIME
           if( Lconstraint.eq.1 ) then

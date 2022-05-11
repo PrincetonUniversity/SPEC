@@ -82,6 +82,11 @@ subroutine set_global_variables()
   BEGIN(preset)
   !-------------------------------------------------------------------
 
+  ! Define Mvol (this has only been done for cpu=0 yet)
+  Mvol = Nvol + Lfreebound
+
+
+  !-------------------------------------------------------------------
   select case( Istellsym )
   case( 0 )    ; 
     YESstellsym = .false. 
@@ -1610,11 +1615,11 @@ subroutine read_input_geometry()
     endif
 
     if( Lfreebound.eq.1 ) then
-      ;RlBCAST( iVns(1:mn_force), mn_force, 0 ) ! only required for ii > 1 ;
-      ;RlBCAST( iBns(1:mn_force), mn_force, 0 ) ! only required for ii > 1 ;
+      ;RlBCAST( iVns(1:mn_field), mn_field, 0 ) ! only required for ii > 1 ;
+      ;RlBCAST( iBns(1:mn_field), mn_field, 0 ) ! only required for ii > 1 ;
       if( NOTstellsym ) then
-        RlBCAST( iVnc(1:mn_force), mn_force, 0 )
-        RlBCAST( iBnc(1:mn_force), mn_force, 0 )
+        RlBCAST( iVnc(1:mn_field), mn_field, 0 )
+        RlBCAST( iBnc(1:mn_field), mn_field, 0 )
       endif
     endif
   endif

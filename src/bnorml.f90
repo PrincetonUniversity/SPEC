@@ -205,6 +205,12 @@ subroutine bnorml( mn_field, Ntz, efmn, ofmn )
 
    case( 0 ) ! Lparallel = 0 ; 09 Mar 17;
 
+#ifdef DEBUG
+    if( SIZE(ijreal(1+kk*Nt:Nt+kk*Nt)).NE.Nt ) then
+      FATAL( bnorml, .true., bcast failed )
+    endif
+#endif
+
     RlBCAST(ijreal(1+kk*Nt:Nt+kk*Nt),Nt,kkmodnp) ! plasma; 03 Apr 13;
    !RlBCAST(ijimag(1+kk*Nt:Nt+kk*Nt),Nt,kkmodnp)
 
