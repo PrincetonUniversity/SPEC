@@ -78,7 +78,8 @@ subroutine tr00ab( lvol, mn_field, NN, Nt, Nz, iflag, ldiota ) ! construct strai
   use fileunits, only : ounit
 
   use inputlist, only : Wmacros, Wtr00ab, Nvol, Lrad, Mpol, Ntor, &
-                        Lsparse, Lsvdiota, imethod, iorder, iprecon, iotatol
+                        Lsparse, Lsvdiota, imethod, iorder, iprecon, iotatol, &
+                        twoalpha, Lboundary, Nfp
 
   use cputiming, only : Ttr00ab
 
@@ -888,6 +889,12 @@ subroutine tr00ab( lvol, mn_field, NN, Nt, Nz, iflag, ldiota ) ! construct strai
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   enddo ! end of do innout; 29 Jan 13;
+
+
+  if( Lboundary.eq.1 ) then ! need to remove contribution from rotating coordinate system
+    ldiota(0,0) = ldiota(0,0) - twoalpha * Nfp
+    ldiota(1,0) = ldiota(1,0) - twoalpha * Nfp
+  endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
