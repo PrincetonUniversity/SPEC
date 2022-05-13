@@ -19,6 +19,7 @@ var group__grp__global__diagnostics =
     [ "inputlist::drz", "group__grp__global__diagnostics.html#gae648f1d6101bcae6b19ec59d2a517824", null ],
     [ "inputlist::lcheck", "group__grp__global__diagnostics.html#ga9bd118017d70e35d658a10463ab4c1dc", null ],
     [ "inputlist::ltiming", "group__grp__global__diagnostics.html#ga8c7855bc531248be61f8f71ac402ea54", null ],
+    [ "inputlist::ltransform", "group__grp__global__diagnostics.html#gab49430984a262fca5e90ad7d69b3acf4", null ],
     [ "inputlist::fudge", "group__grp__global__diagnostics.html#ga7234abca2702c9228401b7d96fe8d655", null ],
     [ "inputlist::scaling", "group__grp__global__diagnostics.html#ga6c30950013a3a513aad46ef0d53563d0", null ]
 ];
