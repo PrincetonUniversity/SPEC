@@ -1501,6 +1501,7 @@ subroutine broadcast_inputs
   IlBCAST( nPtrj     , MNvol+1, 0 )
   LlBCAST( LHevalues , 1      , 0 )
   LlBCAST( LHevectors, 1      , 0 )
+  LlBCAST( Ltransform, 1      , 0 )
   LlBCAST( LHmatrix  , 1      , 0 )
   IlBCAST( Lperturbed, 1      , 0 )
   IlBCAST( dpp       , 1      , 0 )
