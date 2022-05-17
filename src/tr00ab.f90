@@ -90,7 +90,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
                         Ntz, hNt, hNz, &
                         iotakkii, iotaksub, iotakadd, iotaksgn, &
                         Ate, Aze, Ato, Azo, TT, RTT, &
-                        Lcoordinatesingularity, Lvacuumregion, regumm
+                        Lcoordinatesingularity, Lvacuumregion, regumm, dlambdaout
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -705,6 +705,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
 		 NN, rcond, ferr, berr, work4(1:4*NN), iwork4(1:NN), idgesvx )
 
        ;                 ldiota(innout,    0) = dlambda(1,  0) ! return intent out; 21 Apr 13;
+       ;                 dlambdaout(1:NN, lvol, innout) = dlambda(1:NN,0) 
 
       case( 1 ) ! Lsvdiota = 0; jderiv = 1; 02 Sep 14;
 
