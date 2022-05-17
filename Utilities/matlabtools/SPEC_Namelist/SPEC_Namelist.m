@@ -17,6 +17,7 @@ classdef SPEC_Namelist
         Mvol = 0;
         Nvol = 0;
         verbose = true;
+        Lboundary = 0;
         
     end
     
@@ -61,12 +62,6 @@ classdef SPEC_Namelist
             obj.verbose = opt.verbose;
             
             % Read input file
-%             obj.physicslist     = read_namelist( filename, 'physicslist' );
-%             obj.numericlist     = read_namelist( filename, 'numericlist' );
-%             obj.locallist       = read_namelist( filename, 'locallist' );
-%             obj.globallist      = read_namelist( filename, 'globallist' );
-%             obj.diagnosticslist = read_namelist( filename, 'diagnosticslist' );
-%             obj.screenlist      = read_namelist( filename, 'screenlist' );
             work = read_namelist( filename );
             obj.lists = fields(work);
             for ii=1:length(obj.lists)
@@ -142,6 +137,13 @@ classdef SPEC_Namelist
 
             fclose(fid); % Close file
             
+            % Check if structure is empty - i.e. no initial guess is
+            % provided
+            if isempty( initial_guess_str )
+                obj.initial_guess = struct([]); % generate empty structure
+                return                
+            end
+                        
             % Check size
             l = length(str2num( initial_guess_str{1} ));
             l = l-2; % Remove m, n
@@ -166,41 +168,40 @@ classdef SPEC_Namelist
             end
             
             
+            nlines = length(initial_guess_str);
+            if nlines<1
+                obj.initial_guess = struct([]); % generate empty structure
+                return
+            end
+
+            % Read Mpol, Ntor
+            Mpol_in = 0; Ntor_in = 0;
+            for iline=1:nlines
+                % Scan line
+                line_data = str2num( initial_guess_str{iline} );
+
+                % Find corresponding index
+                mm = line_data(1); nn = line_data(2);
+                Mpol_in = max([mm, Mpol_in]);
+                Ntor_in = max([abs(nn), Ntor_in]);
+            end
+            
+            % Check if resolution is smaller or larger than inner
+            % resolution. This changes obj.Mpol and obj.Ntor if
+            % necessary
+            if (Mpol_in>obj.Mpol) || (Ntor_in>obj.Ntor)
+               obj = obj.change_fourier_resolution( Mpol_in, Ntor_in );
+            end
+            
             % Now format initial guess in a structure
-            switch obj.physicslist.Lboundary
+            switch obj.Lboundary
                 case 0 % Rmn, Zmn representation
                     
-                    nlines = length(initial_guess_str);
-                    if nlines<1
-                        obj.initial_guess = struct([]); % generate empty structure
-                        return
-                    end
-                    
-                    % Read Mpol, Ntor
-                    Mpol_in = 0; Ntor_in = 0;
-                    for iline=1:nlines
-                        % Scan line
-                        line_data = str2num( initial_guess_str{iline} );
-
-                        % Find corresponding index
-                        mm = line_data(1); nn = line_data(2);
-                        Mpol_in = max([mm, Mpol_in]);
-                        Ntor_in = max([abs(nn), Ntor_in]);
-                    end
-                    
-                    % Check if resolution is smaller or larger than inner
-                    % resolution. This changes obj.Mpol and obj.Ntor if
-                    % necessary
-                    if (Mpol_in>obj.Mpol) || (Ntor_in>obj.Ntor)
-                       obj = obj.change_fourier_resolution( Mpol_in, Ntor_in );
-                    end
-                    
-                    
                     % Allocate memory
-                    Ric = zeros(2*obj.Ntor+1, obj.Mpol, obj.Mvol);
-                    Ris = zeros(2*obj.Ntor+1, obj.Mpol, obj.Mvol);
-                    Zic = zeros(2*obj.Ntor+1, obj.Mpol, obj.Mvol);
-                    Zis = zeros(2*obj.Ntor+1, obj.Mpol, obj.Mvol);
+                    Ric = zeros(2*obj.Ntor+1, obj.Mpol+1, obj.Mvol);
+                    Ris = zeros(2*obj.Ntor+1, obj.Mpol+1, obj.Mvol);
+                    Zic = zeros(2*obj.Ntor+1, obj.Mpol+1, obj.Mvol);
+                    Zis = zeros(2*obj.Ntor+1, obj.Mpol+1, obj.Mvol);
                     
                     % Fill initial guess arrays
                     for iline=1:nlines
@@ -228,7 +229,9 @@ classdef SPEC_Namelist
                     obj.initial_guess.Zic = Zic;
                     
                 case 1 % Henneberg representation
-                    error('To be implemented')
+                                  
+                    error('Henneberg representation not yet implemented')
+                    
                 otherwise
                     error('Invalid Lboundary!')
             end
@@ -267,7 +270,9 @@ classdef SPEC_Namelist
             end
            
             if     strcmp(field, 'Ric') || strcmp(field, 'Ris') ...
-                || strcmp(field, 'Zic') || strcmp(field, 'Zis')
+                || strcmp(field, 'Zic') || strcmp(field, 'Zis') ...
+                || strcmp(field, 'rhoi') || strcmp(field, 'bin') ...
+                || strcmp(field, 'R0ic') || strcmp(field, 'Z0is')
                 
                 if isempty(obj.initial_guess)
                     error('No initial guess available')
@@ -334,15 +339,21 @@ classdef SPEC_Namelist
                 end
 
                 if     strcmp(field, 'Ric') || strcmp(field, 'Ris') ...
-                    || strcmp(field, 'Zic') || strcmp(field, 'Zis')
+                    || strcmp(field, 'Zic') || strcmp(field, 'Zis') ...
+                    || strcmp(field, 'rhoi') || strcmp(field, 'bin') ...
+                    || strcmp(field, 'R0ic') || strcmp(field, 'Z0is')
 
                     if isempty(obj.initial_guess)
                         warning('No initial guess available... filling with zeros')
 
-                        obj.initial_guess.Ric = zeros( obj.array_size(1), obj.array_size(2), obj.Nvol );
-                        obj.initial_guess.Ris = zeros( obj.array_size(1), obj.array_size(2), obj.Nvol );
-                        obj.initial_guess.Zic = zeros( obj.array_size(1), obj.array_size(2), obj.Nvol );
-                        obj.initial_guess.Zis = zeros( obj.array_size(1), obj.array_size(2), obj.Nvol );                    
+                        if obj.Lboundary == 0
+                            obj.initial_guess.Ric = zeros( obj.array_size(1), obj.array_size(2), obj.Nvol );
+                            obj.initial_guess.Ris = zeros( obj.array_size(1), obj.array_size(2), obj.Nvol );
+                            obj.initial_guess.Zic = zeros( obj.array_size(1), obj.array_size(2), obj.Nvol );
+                            obj.initial_guess.Zis = zeros( obj.array_size(1), obj.array_size(2), obj.Nvol );                    
+                        else
+                            error('Henneberg representation not yet implemented' )
+                        end
                     end
 
                     ivol = varargin{1};
@@ -387,6 +398,22 @@ classdef SPEC_Namelist
             
         end
         
+        function obj = change_boundary_representation( obj, new_lboundary )
+            % 
+            % CHANGE_BOUNDARY_REPRESENTATION( NEW_LBOUNDARY )
+            % ===============================================
+            %
+            % Changes from the hudson representation to the henneberg's one
+            % and vice versa.
+            %
+            % INPUT
+            % -----
+            %   -new_lboundary: New value for Lboundary
+            
+            error('Henneberg representation not yet implemented')
+            
+        end
+        
         % Plotters
         function plot_plasma_boundary( obj, nt, phi, newfig, varargin )
            %
@@ -397,6 +424,8 @@ classdef SPEC_Namelist
            %
            % INPUTS
            % ------
+           %   -NT:     Number of poloidal points
+           %   -PHI:    Toroidal angle
            %   -NEWFIG: =0: plot on gca
            %            =1: plot on a new figure
            %            =2: erase and plot on gca
@@ -404,12 +433,21 @@ classdef SPEC_Namelist
            %
            %
            
-           Rbc = obj.physicslist.Rbc;
-           Rbs = obj.physicslist.Rbs;
-           Zbc = obj.physicslist.Zbc;
-           Zbs = obj.physicslist.Zbs;
-           
-           obj.plot_surface( Rbc, Zbs, Rbs, Zbc, nt, phi, newfig, varargin{:} )
+           if obj.Lboundary==0
+               Rbc = obj.physicslist.Rbc;
+               Rbs = obj.physicslist.Rbs;
+               Zbc = obj.physicslist.Zbc;
+               Zbs = obj.physicslist.Zbs;
+
+               obj.plot_surface_Lb0( Rbc, Zbs, Rbs, Zbc, nt, phi, newfig, varargin{:} )
+           else
+               rhomn = obj.physicslist.rhomn;
+               bn    = obj.physicslist.bn;
+               R0c   = obj.physicslist.R0c;
+               Z0s   = obj.physicslist.Z0s;
+               
+               obj.plot_surface_Lb1( rhomn, bn, R0c, Z0s, nt, phi, newfig, varargin{:} )
+           end
         end
         
         function plot_computational_boundary( obj, nt, phi, newfig, varargin )
@@ -421,6 +459,8 @@ classdef SPEC_Namelist
            %
            % INPUTS
            % ------
+           %   -NT:     Number of poloidal points
+           %   -PHI:    Toroidal angle
            %   -NEWFIG: =0: plot on gca
            %            =1: plot on a new figure
            %            =2: erase and plot on gca
@@ -428,12 +468,16 @@ classdef SPEC_Namelist
            %
            %
            
-           Rwc = obj.physicslist.Rwc;
-           Rws = obj.physicslist.Rws;
-           Zwc = obj.physicslist.Zwc;
-           Zws = obj.physicslist.Zws;
-           
-           obj.plot_surface( Rwc, Zws, Rws, Zwc, nt, phi, newfig, varargin{:} )
+           if obj.Lboundary == 0
+               Rwc = obj.physicslist.Rwc;
+               Rws = obj.physicslist.Rws;
+               Zwc = obj.physicslist.Zwc;
+               Zws = obj.physicslist.Zws;
+
+               obj.plot_surface_Lb0( Rwc, Zws, Rws, Zwc, nt, phi, newfig, varargin{:} )
+           else
+               error('Henneberg representation not yet implemented')
+           end
         end
            
         function plot_initial_guess( obj, nt, phi, newfig, varargin )
@@ -454,17 +498,26 @@ classdef SPEC_Namelist
            %
            %
            
-           for ivol=1:obj.Nvol
-               Ric = obj.initial_guess.Ric(:,:,ivol);
-               Ris = obj.initial_guess.Ris(:,:,ivol);
-               Zic = obj.initial_guess.Zic(:,:,ivol);
-               Zis = obj.initial_guess.Zis(:,:,ivol);
-               
-               if ivol==2
-                   newfig=0;
+           if isempty(obj.initial_guess)
+               error('No initial guess is provided')
+           end
+           
+           if obj.Lboundary == 0
+               for ivol=1:obj.Nvol
+                   Ric = obj.initial_guess.Ric(:,:,ivol);
+                   Ris = obj.initial_guess.Ris(:,:,ivol);
+                   Zic = obj.initial_guess.Zic(:,:,ivol);
+                   Zis = obj.initial_guess.Zis(:,:,ivol);
+
+                   if ivol>=2
+                       newfig=0;
+                   end
+
+                   obj.plot_surface_Lb0( Ric, Zis, Ris, Zic, nt, phi, newfig, varargin{:} )
                end
-               
-               obj.plot_surface( Ric, Zis, Ris, Zic, nt, phi, newfig, varargin{:} )
+           else
+              
+               error('Henneberg representation not yet implemented' )
            end
         end
         
@@ -508,6 +561,56 @@ classdef SPEC_Namelist
             S.shift.Bns = [obj.Ntor+1, 1];
             S.shift.rhomn = [obj.Ntor+1, 1];
 
+            % Remove unnecessary fields
+            if obj.Lboundary == 0
+                if isfield( S.physicslist, 'rhomn' )
+                    S.physicslist = rmfield(S.physicslist, 'rhomn');
+                end
+                if isfield( S.physicslist, 'bn' )
+                    S.physicslist = rmfield(S.physicslist, 'bn');
+                end
+                if isfield( S.physicslist, 'R0c' )
+                    S.physicslist = rmfield(S.physicslist, 'R0c');
+                end
+                if isfield( S.physicslist, 'Z0s' )
+                    S.physicslist = rmfield(S.physicslist, 'Z0s');
+                end
+                
+            else % Lboundary==1
+                error('Henneberg representation not yet implemented')            
+                
+            end
+            
+            if obj.physicslist.Lfreebound==0 % Then no need to freeboundary info
+                if isfield( S.physicslist, 'Rwc' )
+                    S.physicslist = rmfield(S.physicslist, 'Rwc');
+                end
+                if isfield( S.physicslist, 'Rws' )
+                    S.physicslist = rmfield(S.physicslist, 'Rws');
+                end
+                if isfield( S.physicslist, 'Zwc' )
+                    S.physicslist = rmfield(S.physicslist, 'Zwc');
+                end
+                if isfield( S.physicslist, 'Zws' )
+                    S.physicslist = rmfield(S.physicslist, 'Zws');
+                end 
+                if isfield( S.physicslist, 'Vnc' )
+                    S.physicslist = rmfield(S.physicslist, 'Vnc');
+                end
+                if isfield( S.physicslist, 'Vns' )
+                    S.physicslist = rmfield(S.physicslist, 'Vns');
+                end
+                if isfield( S.physicslist, 'Bnc' )
+                    S.physicslist = rmfield(S.physicslist, 'Bnc');
+                end
+                if isfield( S.physicslist, 'Bns' )
+                    S.physicslist = rmfield(S.physicslist, 'Bns');
+                end 
+                
+            end
+            
+            
+            % Build initial guess strings
             if obj.physicslist.Lboundary==0        
                 if ~isempty(obj.initial_guess)
                     s = size(obj.initial_guess.Ric);
@@ -535,53 +638,7 @@ classdef SPEC_Namelist
 
             else
 
-                nrho = max(max(obj.physicslist.in)); 
-                S.shift.rhomn = [ 1, nrho+1 ];
-
-                % Now prepare initial guess...
-                if isfield(obj.initial_guess, 'bin')
-                    sb   = size(obj.initial_guess.bin);
-                    srho = size(obj.initial_guess.rhoi);
-                    ntor = (srho(2)-1)/2.0;
-                    initialguess = cell(1, sb(1) + srho(1)*srho(2));
-
-                    % Modes m=0, n
-                    for ii=1:sb(1)
-                       nn = ii-1;
-                       initialguess{ii} = sprintf('0   %i   ', nn);
-                       for ivol=1:sb(2)
-                          initialguess{ii} = sprintf('%s   %0.12E   %0.12E   %0.12E   %0.12E', initialguess{ii}, ...
-                                                     obj.initial_guess.bin( ii, ivol ), ...
-                                                     obj.initial_guess.R0ic(ii, ivol ), ...
-                                                     obj.initial_guess.Z0is(ii, ivol ), 0.0 ); 
-                       end
-                    end
-
-                    it = sb(1);
-                    for ii=1:srho(2)
-
-                        nn = ii-ntor-1;
-
-                        for jj=1:srho(1)
-
-                            it = it+1;
-
-                            mm = jj;
-
-                            initialguess{it} = sprintf('%i   %i   ', mm, nn);
-
-                            for ivol=1:srho(3)
-
-                                initialguess{it} = sprintf('%s   %0.12E   %0.12E   %0.12E   %0.12E', initialguess{ii},...
-                                                           0.0, 0.0, 0.0, obj.initial_guess.rhoi(ii, jj, ivol));
-
-                            end
-                        end
-                    end
-                else
-                    initialguess = cell(0);
-
-                end
+                error('Henneberg representation not yet implemented')
 
 
 
@@ -616,6 +673,12 @@ classdef SPEC_Namelist
             
             obj.Mvol = obj.physicslist.Nvol + obj.physicslist.Lfreebound;
             obj.Nvol = obj.physicslist.Nvol;
+            
+            if isfield(obj.physicslist, 'Lboundary')
+                obj.Lboundary = obj.physicslist.Lboundary;
+            else
+                obj.Lboundary = 0;
+            end
             
             % PHYSICSLIST
             % -----------
@@ -770,17 +833,21 @@ classdef SPEC_Namelist
             Mpol_in = obj.physicslist.Mpol;
             Ntor_in = obj.physicslist.Ntor;
             
-            if obj.physicslist.Lboundary==0
+            if obj.Lboundary==0
                 if ~isfield(obj.physicslist, 'Rbc')
+                    obj.physicslist.shift.Rbc = [Ntor_in+1, 1];
                     obj.physicslist.Rbc = zeros(2*Ntor_in+1, Mpol_in);
                 end
                 if ~isfield(obj.physicslist, 'Rbs')
+                    obj.physicslist.shift.Rbs = [Ntor_in+1, 1];
                     obj.physicslist.Rbs = zeros(2*Ntor_in+1, Mpol_in);
                 end
                 if ~isfield(obj.physicslist, 'Zbc')
+                    obj.physicslist.shift.Zbc = [Ntor_in+1, 1];
                     obj.physicslist.Zbc = zeros(2*Ntor_in+1, Mpol_in);
                 end
                 if ~isfield(obj.physicslist, 'Zbs')
+                    obj.physicslist.shift.Zbs = [Ntor_in+1, 1];
                     obj.physicslist.Zbs = zeros(2*Ntor_in+1, Mpol_in);
                 end
                 
@@ -796,47 +863,59 @@ classdef SPEC_Namelist
                 end
                 
                 
-
-                if ~isfield(obj.physicslist, 'Rwc')
-                    obj.physicslist.Rwc = zeros(2*Ntor_in+1, Mpol_in);
-                end
-                if ~isfield(obj.physicslist, 'Rws')
-                    obj.physicslist.Rws = zeros(2*Ntor_in+1, Mpol_in);
-                end
-                if ~isfield(obj.physicslist, 'Zwc')
-                    obj.physicslist.Zwc = zeros(2*Ntor_in+1, Mpol_in);
-                end
-                if ~isfield(obj.physicslist, 'Zws')
-                    obj.physicslist.Zws = zeros(2*Ntor_in+1, Mpol_in);
-                end
+            else %Lboundary==1
                 
-                % Check that sizes are consistent with each others
-                if any(size(obj.physicslist.Rwc)~=size(obj.physicslist.Rws))
-                    error('Size mismatch between Rwc and Rws')
-                end
-                if any(size(obj.physicslist.Rwc)~=size(obj.physicslist.Zwc))
-                    error('Size mismatch between Rwc and Zwc')
-                end
-                if any(size(obj.physicslist.Rwc)~=size(obj.physicslist.Zws))
-                    error('Size mismatch between Rwc and Zws')
-                end
+                error('Henneberg representation not yet implemented')
                 
                 
-                
-            else
-                error('To complete')
             end
             
+             
+
+            if ~isfield(obj.physicslist, 'Rwc')
+                obj.physicslist.shift.Rwc = [Ntor_in+1, 1];
+                obj.physicslist.Rwc = zeros(2*Ntor_in+1, Mpol_in);
+            end
+            if ~isfield(obj.physicslist, 'Rws')
+                obj.physicslist.shift.Rws = [Ntor_in+1, 1];
+                obj.physicslist.Rws = zeros(2*Ntor_in+1, Mpol_in);
+            end
+            if ~isfield(obj.physicslist, 'Zwc')
+                obj.physicslist.shift.Zwc = [Ntor_in+1, 1];
+                obj.physicslist.Zwc = zeros(2*Ntor_in+1, Mpol_in);
+            end
+            if ~isfield(obj.physicslist, 'Zws')
+                obj.physicslist.shift.Zws = [Ntor_in+1, 1];
+                obj.physicslist.Zws = zeros(2*Ntor_in+1, Mpol_in);
+            end
+
+            % Check that sizes are consistent with each others
+            if any(size(obj.physicslist.Rwc)~=size(obj.physicslist.Rws))
+                error('Size mismatch between Rwc and Rws')
+            end
+            if any(size(obj.physicslist.Rwc)~=size(obj.physicslist.Zwc))
+                error('Size mismatch between Rwc and Zwc')
+            end
+            if any(size(obj.physicslist.Rwc)~=size(obj.physicslist.Zws))
+                error('Size mismatch between Rwc and Zws')
+            end            
+                
+                
+            
             if ~isfield(obj.physicslist, 'Vnc')
+                obj.physicslist.shift.Vnc = [Ntor_in+1, 1];
                 obj.physicslist.Vnc = zeros(2*Ntor_in+1, Mpol_in);
             end
             if ~isfield(obj.physicslist, 'Vns')
+                obj.physicslist.shift.Vns = [Ntor_in+1, 1];
                 obj.physicslist.Vns = zeros(2*Ntor_in+1, Mpol_in);
             end
             if ~isfield(obj.physicslist, 'Bnc')
+                obj.physicslist.shift.Bnc = [Ntor_in+1, 1];
                 obj.physicslist.Bnc = zeros(2*Ntor_in+1, Mpol_in);
             end
             if ~isfield(obj.physicslist, 'Bns')
+                obj.physicslist.shift.Bns = [Ntor_in+1, 1];
                 obj.physicslist.Bns = zeros(2*Ntor_in+1, Mpol_in);
             end
             
@@ -896,19 +975,25 @@ classdef SPEC_Namelist
             
             % Check that all arrays have the same size; otherwise, fill
             % with zeros the missing elements
-            if any(size(obj.physicslist.Rbc)~=obj.array_size)
-                obj = obj.reshape_array( 'Rbc' );
-                obj = obj.reshape_array( 'Rbs' );
-                obj = obj.reshape_array( 'Zbc' );
-                obj = obj.reshape_array( 'Zbs' );
+            if obj.Lboundary == 0
+                if any(size(obj.physicslist.Rbc)~=obj.array_size)
+                    obj = obj.reshape_array( 'Rbc' );
+                    obj = obj.reshape_array( 'Rbs' );
+                    obj = obj.reshape_array( 'Zbc' );
+                    obj = obj.reshape_array( 'Zbs' );
+                end
+
+                if any(size(obj.physicslist.Rwc)~=obj.array_size)
+                    obj = obj.reshape_array( 'Rwc' );
+                    obj = obj.reshape_array( 'Rws' );
+                    obj = obj.reshape_array( 'Zwc' );
+                    obj = obj.reshape_array( 'Zws' );
+                end
+            else
+                error('Henneberg representation not yet implemented')
+                
             end
-            
-            if any(size(obj.physicslist.Rwc)~=obj.array_size)
-                obj = obj.reshape_array( 'Rwc' );
-                obj = obj.reshape_array( 'Rws' );
-                obj = obj.reshape_array( 'Zwc' );
-                obj = obj.reshape_array( 'Zws' );
-            end
+                
             
             if any(size(obj.physicslist.Vnc)~=obj.array_size)
                 obj = obj.reshape_array( 'Vnc' );
@@ -938,10 +1023,14 @@ classdef SPEC_Namelist
             Mpol_in = obj.physicslist.Mpol;
             Ntor_in = obj.physicslist.Ntor;
             
-            s_bc = size(obj.physicslist.Rbc);
-            shift = obj.physicslist.shift.Rbc(1);
-            Mpol_bc = s_bc(2)-1       ;
-            Ntor_bc = max([abs(1-shift), s_bc(1)-shift]);
+            if obj.Lboundary == 0
+                s_bc = size(obj.physicslist.Rbc);
+                shift = obj.physicslist.shift.Rbc(1);
+                Mpol_bc = s_bc(2)-1       ;
+                Ntor_bc = max([abs(1-shift), s_bc(1)-shift]);
+            else
+                error('Henneberg representation not yet implemented')
+            end
             
             s_wc = size(obj.physicslist.Rwc);
             shift = obj.physicslist.shift.Rwc(1);
@@ -980,13 +1069,13 @@ classdef SPEC_Namelist
             shift = obj.physicslist.shift.(field);
             
             s = size(array);
-            Ntor_array = max([abs(1-shift), s(1)-shift]);   
+            Ntor_array = max([abs(1-shift(1)), s(1)-shift(1)]);   
             
             new_array = zeros(obj.array_size);
             for ii=1:s(1)
                 for jj=1:s(2)
                     nn = ii-Ntor_array-1;
-                    mm = jj-1;
+                    mm = jj-shift(2);
                     
                     if abs(nn)>obj.Ntor || mm>obj.Mpol
                         continue
@@ -1000,7 +1089,7 @@ classdef SPEC_Namelist
         end
         
         
-        function plot_surface( obj, Rmnc, Zmns, Rmns, Zmnc, nt, phi, ...
+        function plot_surface_Lb0( obj, Rmnc, Zmns, Rmns, Zmnc, nt, phi, ...
                                newfig, varargin )
             %
             % PLOT_SURFACE( RMNC, ZMNS, RMNS, ZMNC, NT, NEWFIG, VARARGIN )
@@ -1048,8 +1137,7 @@ classdef SPEC_Namelist
                 error('InputError: nt should be larger than 1')
             end
             
-            Ntor = (s(1)-1) / 2.0;
-            Mpol =  s(2)-1;
+            N = (s(1)-1) / 2.0;
             
             tarr = linspace( 0, 2*pi, nt );
             R    = zeros( 1, nt );
@@ -1058,7 +1146,7 @@ classdef SPEC_Namelist
             
             
             for in=1:s(1)
-                nn = in-1-Ntor;
+                nn = in-1-N;
                 for im=1:s(2)
                     mm = im-1;
                     
@@ -1071,6 +1159,91 @@ classdef SPEC_Namelist
             
             plot( R, Z, varargin{:} )
             
+            axis equal
+        end
+        
+        
+        function plot_surface_Lb1( obj, rhomn, bn, R0c, Z0s, nt, phi, newfig, varargin )
+           %
+           % PLOT_SURFACE_LB1( RHOMN, BN, R0C, Z0S, NT, PHI, NEWFIG, VARARGIN )
+           % ==================================================================
+           %
+           % Plots a surface using the Henneberg representation
+           %
+           % INPUTS
+           % ------
+           %   -rhomn:  rho_mn harmonics, format (2*Ntor+1, Mpol+1)
+           %   -bn:     b_n harmonics, format (Ntor+1, 1)
+           %   -R0c:    R_0c harmonics, format (Ntor+1, 1)
+           %   -Z0s:    Z_0s harmonics, format (Ntor+1, 1)
+           %   -nt:     Number of poloidal points
+           %   -phi:    Toroidal angle
+           %   -newfig: =0: plot on gca
+           %            =1: plot on a new figure
+           %            =2: erase and plot on gca
+           %   -varargin: Optionnal input arguments, used as inputs to
+           %              plot()
+           %
+           %
+           
+           
+
+            switch newfig
+                case 0
+                    hold on
+                case 1
+                    figure('Color','w','Position',[200 200 900 700])
+                    hold on
+                case 2
+                    hold off
+                otherwise
+                    error('InputError: invalid newfig')
+            end
+
+            s = size(rhomn);
+            N = (s(1)-1) / 2.0;
+
+            if any(length(bn)~=N+1)
+                error('InputError: bn has not the size Ntor+1')
+            end
+            if any(length(R0c)~=N+1)
+                error('InputError: R0c has not the size Ntor+1')
+            end
+            if any(length(Z0s)~=N+1)
+                error('InputError: Z0s has not the size Ntor+1')
+            end
+            if nt<1
+                error('InputError: nt should be larger than 1')
+            end
+            
+            tarr = linspace(0, 2*pi, nt);
+            rho = zeros(1, nt);
+            alpha = obj.physicslist.twoalpha / 2.0;
+            Nfp = double(obj.physicslist.Nfp);
+
+            for im=1:s(2)
+               mm = im-1;
+               for in=1:s(1)
+                  nn = in-N-1;
+                  rho = rho + rhomn(in,im) * cos(mm*tarr + nn*Nfp*phi - alpha*Nfp*phi);
+               end
+            end
+            
+            R0 = 0;
+            Z0 = 0;
+            b  = 0;
+            for nn=0:N
+                R0 = R0 + R0c(nn+1) * cos(nn*Nfp*phi);
+                b  = b  + bn(nn+1 ) * cos(nn*Nfp*phi);
+                Z0 = Z0 + Z0s(nn+1) * sin(nn*Nfp*phi);
+            end
+            
+            zeta = b.*sin( tarr - alpha*Nfp*phi );
+            
+            R = R0 + rho * cos(alpha*Nfp*phi) - zeta * sin(alpha*Nfp*phi);
+            Z = Z0 + rho * sin(alpha*Nfp*phi) + zeta * cos(alpha*Nfp*phi);
+            
+            plot(R, Z, varargin{:})
             axis equal
         end
     end

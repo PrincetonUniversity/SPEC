@@ -63,7 +63,7 @@ At      = zeros(ns,nt,nz); % allocate data for vector potential along theta
 Az      = zeros(ns,nt,nz); % allocate data for vector potential along zeta
 
 % Construct regularization factors
-fac = get_spec_regularization_factor(data, lvol, sarr, 'F');
+fac = get_spec_regularisation_factor(data, lvol, sarr, 'F');
 
 % Construct vector potential covariant components
 T = get_spec_polynomial_basis(data, lvol, sarr);

@@ -1,19 +1,31 @@
 function phi = plot_spec_poincare(data,nz0,arr,newfig,varargin)
 
 %
-% PLOT_SPEC_POINCARE( DATA, NZ0, NFP, ARR, NEWFIG )
-% =================================================
+% PLOT_SPEC_POINCARE( DATA, NZ0, NFP, ARR, NEWFIG, VARARGIN )
+% ===========================================================
 %
-% Produces Poincare plots of the field lines on different sections (within one field period)
+% Produces Poincare plots of the field lines on different sections (within 
+% one field period)
 %
 % INPUT    
 % -----
 %   -data     : must be produced by calling read_spec(fname)
 %   -nz0      : shows the nz0 toroidal plane or equidistant planes (nz0=-1)
 %   -nfp      : number of field periods
-%   -arr      : step to skip field-line trajectories when ploting (arr=1 means all trajectories are ploted)
-%             : can be an array of which field line should be plotted, if size(arra)>1
-%   -newfig   : opens(=1) or not(=0) a new figure, or overwrites (=2) last plot
+%   -arr      : step to skip field-line trajectories when ploting (arr=1 
+%               means all trajectories are ploted)
+%             : can be an array of which field line should be plotted, if 
+%               size(arra)>1
+%   -newfig   : opens(=1) or not(=0) a new figure, or overwrites (=2) last 
+%               plot
+%   -varargin : Optional arguments. Any of the following pairs are
+%               supported:
+%               - 'BoundaryColor', value: color of the plasma boundary or
+%                                         wall. default: red
+%               - 'step', n: plot one every n toroidal transit. This allows
+%                            lighter plts when exporting to eps. By
+%                            default, all toroidal transit are plotted
+%                            (n=1)
 %
 % written by J.Loizu (2015)
 % modified by A.Baillod (2019)
@@ -25,7 +37,6 @@ if mod(ll,2)~=0
 end
 
 opt.BoundaryColor = 'r';
-opt.CBColor = 'k';
 opt.step = 1;
 for ii=1:ll/2
     opt.(varargin{2*ii-1}) = varargin{2*ii};
@@ -71,7 +82,7 @@ bcol   = opt.BoundaryColor;
 bthick = 3;
 lthick = 1;
 if(data.input.physics.Lfreebound==1)
-    bcol   = opt.CBColor;
+    bcol   = opt.BoundaryColor;
     bthick = 1;
 end
 

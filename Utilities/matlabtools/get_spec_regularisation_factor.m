@@ -1,7 +1,7 @@
-function fac = get_spec_regularization_factor(data, lvol, sarr, ForG)
+function fac = get_spec_regularisation_factor(data, lvol, sarr, ForG)
 
 %
-% GET_SPEC_REGULARIZATION_FACTOR( DATA, LVOL, SARR, FORG )
+% GET_SPEC_REGULARISATION_FACTOR( DATA, LVOL, SARR, FORG )
 % ========================================================
 %
 % Computes the regularisation factor in the correct geometry
