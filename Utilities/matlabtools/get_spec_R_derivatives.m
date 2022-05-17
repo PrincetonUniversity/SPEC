@@ -43,12 +43,14 @@ function out = get_spec_R_derivatives(data, vol, sarr, tarr, zarr, RorZ)
 
     % Allocate data for R and its derivative in s, theta and phi (4), for each
     % and for ns points 
-if(size(sarr,1)==1)
-sarr    = transpose(sarr);
-end
     ns = length(sarr);
     nt = length(tarr);
     nz = length(zarr);
+
+    sarr = reshape(sarr, ns, 1);
+    tarr = reshape(tarr, nt, 1);
+    zarr = reshape(zarr, nz, 1);
+
     Rarr = cell(1,4); 
     Zarr = cell(1,4);
 
@@ -59,6 +61,8 @@ end
 
     % Compute the regularisation factor
     factor = get_spec_regularisation_factor(data, vol, sarr, 'G');
+
+
 
     % And R derivatives
     if RorZ=='R'

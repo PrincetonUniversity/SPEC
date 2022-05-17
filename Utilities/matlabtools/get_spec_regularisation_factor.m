@@ -21,7 +21,8 @@ function fac = get_spec_regularisation_factor(data, lvol, sarr, ForG)
 % Written by A.Baillod (2019)
 %
 
-    sarr = transpose(sarr);
+    ns = length( sarr );
+    sarr = reshape( sarr, ns, 1 );
 
     Igeometry = data.input.physics.Igeometry;
     mn        = data.output.mn;
@@ -47,7 +48,7 @@ function fac = get_spec_regularisation_factor(data, lvol, sarr, ForG)
                             fac{j}{2} = 0.5*ones(ns,1);
                         else
                             fac{j}{1} = sbar.^(im(j)+1); 
-                            fac{j}{2} = 0.5 * (im(j)+1) * fac{j}{1} ./ sbar;
+                            fac{j}{2} = reshape(0.5 * (im(j)+1) * fac{j}{1} ./ sbar, ns, 1);
                         end
                     else
                         fac{j}{1}  = sbar;
@@ -64,7 +65,7 @@ function fac = get_spec_regularisation_factor(data, lvol, sarr, ForG)
                            fac{j}{2} = sbar;
                         else
                            fac{j}{1} = sbar.^im(j);
-                           fac{j}{2} = 0.5 * im(j) * fac{j}{1} ./ sbar;
+                           fac{j}{2} = reshape(0.5 * im(j) * fac{j}{1} ./ sbar, ns, 1);
                         end
                     else
                         fac{j}{1}  = sbar;
