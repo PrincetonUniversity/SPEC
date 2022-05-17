@@ -53,12 +53,13 @@ classdef SPEC_Namelist
                 error('InputError: invalid number of inputs')
             end
             
-            opt.Liniguess = true;
-            opt.verbose = true;
+            opt.Liniguess = true; % Decide whether or not we read initial guess
+            opt.verbose = true;   % Print additional warnings
             for ii=1:l/2
                opt.(varargin{2*ii-1}) = varargin{2*ii}; 
             end
             
+            % Fill class arguments
             obj.verbose = opt.verbose;
             
             % Read input file
@@ -104,10 +105,14 @@ classdef SPEC_Namelist
             % structure.
             
             
-            % First, open file and read relevant portion
+            % First, open file and read relevant portion. We look for the
+            % end of the category "screenlist" and then read each line.
+            % Each line is then saved as a string in a structure.
             fid = fopen( filename, 'r' );
-            save_line = false;
-            category  = '';
+            save_line = false;            % This is switched to true once 
+                                          % we are at the end of the
+                                          % screelist
+            category  = '';  % Save the name of the category
 
             initial_guess_str = {};
 
@@ -123,7 +128,8 @@ classdef SPEC_Namelist
                 if( save_line ) % write line
                     initial_guess_str{end+1} = tline;
 
-                else % otherwise look for beginning of geometrical initial guess
+                else % otherwise look for beginning of initial guess
+                    % Check if beginning of new category
                     if( strcmp(tline, '/') )
                         if( strcmp(category,'screenlist') )
                             save_line = true;
@@ -149,7 +155,9 @@ classdef SPEC_Namelist
                 return                
             end
                         
-            % Check size
+            % Check size. The number of elements should be 2 + 4 * Nvol.
+            % The first two elements are the mode numbers m and n, then we
+            % have Rbc, Zbs, Rbs, Zbc for each volume interface
             l = length(str2num( initial_guess_str{1} ));
             l = l-2; % Remove m, n
             if mod(l,4)~=0
@@ -172,7 +180,7 @@ classdef SPEC_Namelist
                        'same boundary representation.'], filename)
             end
             
-            
+            % Check if there is an initial guess...
             nlines = length(initial_guess_str);
             if nlines<1
                 obj.initial_guess = struct([]); % generate empty structure
@@ -243,6 +251,7 @@ classdef SPEC_Namelist
             
         end
         
+        % =================================================================
         % Getters
         function out = get_fourier_harmonics( obj, field, m, n, varargin )
             %
@@ -261,19 +270,23 @@ classdef SPEC_Namelist
             %            of the initial guess
             
             
-            
+            % Check if poloidal mode is within the resolution
             if m>obj.Mpol
-                warning('M is larger than the Fourier resolution of the input file')
+                warning('M is larger than the Fourier resolution')
                 out = 0;
                 return
             end 
             
+            % Check if toroidal mode is within the resolution
             if abs(n)>obj.Ntor
-                warning('M is larger than the Fourier resolution of the input file')
+                warning('N is larger than the Fourier resolution')
                 out = 0;
                 return
             end
            
+            % Need to make the difference between initial guess harmonics
+            % or harmonics from the physics list. rhoi, bin, R0ic and Z0is
+            % are related to the Henneberg representation
             if     strcmp(field, 'Ric') || strcmp(field, 'Ris') ...
                 || strcmp(field, 'Zic') || strcmp(field, 'Zis') ...
                 || strcmp(field, 'rhoi') || strcmp(field, 'bin') ...
@@ -297,11 +310,12 @@ classdef SPEC_Namelist
                 
             end
                 
-            
+            % Read relevant harmonic.
             out = obj.(cat).(field)(n+obj.Ntor+1, m+1, ivol);
             
         end
         
+        % =================================================================
         % Setter
         function obj = set_fourier_harmonics( obj, field, im, in, value, varargin )
             %
@@ -320,7 +334,7 @@ classdef SPEC_Namelist
             %   -(ivol): Optional argument, required for fourier harmonics
             %            of the initial guess
             
-            
+            % First check the input size
             mn = length(im);
             if length(in)~=mn
                 error('The array in has not the same length as im')
@@ -329,10 +343,13 @@ classdef SPEC_Namelist
                 error('The array value has not the same length as im')
             end
             
+            % Loop over the input harmonics
             for imn=1:mn
                 m = im(imn);
                 n = in(imn);
                 
+                % If some modes are greater than the actual resolution,
+                % increase the resolution accordingly
                 if m>obj.Mpol
                     warning('Poloidal resolution has to be increased ...')
                     obj = obj.change_fourier_resolution( m, obj.Ntor );
@@ -343,11 +360,15 @@ classdef SPEC_Namelist
                     obj = obj.change_fourier_resolution( obj.Mpol, abs(n) );
                 end
 
+                % Check if the quantity is located in the initial guess
+                % structure or in the physicslist structure.
                 if     strcmp(field, 'Ric') || strcmp(field, 'Ris') ...
                     || strcmp(field, 'Zic') || strcmp(field, 'Zis') ...
                     || strcmp(field, 'rhoi') || strcmp(field, 'bin') ...
                     || strcmp(field, 'R0ic') || strcmp(field, 'Z0is')
 
+                    % If the initial guess is empty (i.e. no initial guess
+                    % are available), then we create one filled with zeros
                     if isempty(obj.initial_guess)
                         warning('No initial guess available... filling with zeros')
 
@@ -375,7 +396,7 @@ classdef SPEC_Namelist
 
                 end
 
-
+                % Set the relevant harmonics
                 obj.(cat).(field)(n+obj.Ntor+1, m+1, ivol) = value(imn);
             end
             
@@ -387,7 +408,8 @@ classdef SPEC_Namelist
             % =====================================
             %
             % Truncates all spectral quantities to the requested poloidal
-            % and toroidal resolution
+            % and toroidal resolution. This can also be used to increase
+            % the Fourier resolution.
             %
             % INPUTS
             % ------
@@ -419,6 +441,7 @@ classdef SPEC_Namelist
             
         end
         
+        % =================================================================
         % Plotters
         function plot_plasma_boundary( obj, nt, phi, newfig, varargin )
            %
@@ -446,12 +469,8 @@ classdef SPEC_Namelist
 
                obj.plot_surface_Lb0( Rbc, Zbs, Rbs, Zbc, nt, phi, newfig, varargin{:} )
            else
-               rhomn = obj.physicslist.rhomn;
-               bn    = obj.physicslist.bn;
-               R0c   = obj.physicslist.R0c;
-               Z0s   = obj.physicslist.Z0s;
                
-               obj.plot_surface_Lb1( rhomn, bn, R0c, Z0s, nt, phi, newfig, varargin{:} )
+               error('Henneberg representation is not implemented')
            end
         end
         
@@ -526,6 +545,7 @@ classdef SPEC_Namelist
            end
         end
         
+        % =================================================================
         % Write method
         function write_input_file(obj, filename )
             %
@@ -541,17 +561,23 @@ classdef SPEC_Namelist
             %
 
             % Set minimal toroidal resolution to one, otherwise writting
-            % routine does not detect arrays.
+            % routine does not detect arrays. This is not ideal and should
+            % be fixed
             if obj.Ntor==0
                 obj = obj.change_fourier_resolution( obj.Mpol, 1 );
             end
 
+            % Create a structure with the different lists
             nlists = length(obj.lists);
             S = struct;
             for ii=1:nlists
                 S.(obj.lists{ii}) = obj.(obj.lists{ii});
             end
 
+            % Create a shift quantity - this tells the writing routine how
+            % much each index has to be shifted. In MATLAB, indices start
+            % at 1, while in the FORTRAN Namelist, we want to write
+            % elements with negative indices.
             S.shift.Rbc = [obj.Ntor+1, 1];
             S.shift.Rbs = [obj.Ntor+1, 1];
             S.shift.Zbc = [obj.Ntor+1, 1];
@@ -566,7 +592,7 @@ classdef SPEC_Namelist
             S.shift.Bns = [obj.Ntor+1, 1];
             S.shift.rhomn = [obj.Ntor+1, 1];
 
-            % Remove unnecessary fields
+            % Remove unnecessary fields.
             if obj.Lboundary == 0
                 if isfield( S.physicslist, 'rhomn' )
                     S.physicslist = rmfield(S.physicslist, 'rhomn');
@@ -649,6 +675,7 @@ classdef SPEC_Namelist
 
             end
 
+            % Call namelist writer
             write_namelist( S, filename, initialguess );
        
 
