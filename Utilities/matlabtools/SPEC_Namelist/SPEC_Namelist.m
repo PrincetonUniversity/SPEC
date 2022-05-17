@@ -115,6 +115,10 @@ classdef SPEC_Namelist
 
                 tline = fgetl(fid);
                 tline = strtrim(tline);
+                
+                if isempty(tline)
+                    continue
+                end
 
                 if( save_line ) % write line
                     initial_guess_str{end+1} = tline;
@@ -133,6 +137,7 @@ classdef SPEC_Namelist
 
                     end
                 end
+                
             end % end of while
 
             fclose(fid); % Close file
@@ -921,13 +926,10 @@ classdef SPEC_Namelist
             
             % Check that sizes are consistent with each others
             if any(size(obj.physicslist.Vnc)~=size(obj.physicslist.Vns))
-                error('Size mismatch between Rwc and Vns')
+                error('Size mismatch between Vnc and Vns')
             end
-            if any(size(obj.physicslist.Vnc)~=size(obj.physicslist.Bnc))
-                error('Size mismatch between Rwc and Bnc')
-            end
-            if any(size(obj.physicslist.Vnc)~=size(obj.physicslist.Bns))
-                error('Size mismatch between Rwc and Bns')
+            if any(size(obj.physicslist.Bnc)~=size(obj.physicslist.Bns))
+                error('Size mismatch between Bnc and Bns')
             end
             
             % DIAGNOSTICSLIST
@@ -998,6 +1000,9 @@ classdef SPEC_Namelist
             if any(size(obj.physicslist.Vnc)~=obj.array_size)
                 obj = obj.reshape_array( 'Vnc' );
                 obj = obj.reshape_array( 'Vns' );
+            end
+            
+            if any(size(obj.physicslist.Bnc)~=obj.array_size)
                 obj = obj.reshape_array( 'Bnc' );
                 obj = obj.reshape_array( 'Bns' );           
             end
