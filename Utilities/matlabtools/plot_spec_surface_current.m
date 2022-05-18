@@ -1,7 +1,7 @@
 function plot_spec_surface_current(data, nt, newfig)
 
 %
-% PLOT_SPEC_SURFACE_CURRENT( DATA, NS, NT, ZETA, NEWFIG )
+% PLOT_SPEC_SURFACE_CURRENT( DATA, NS, NT, NEWFIG )
 % ===================================================
 %
 % Plot pressure-driven currents located at each volume interface
@@ -10,7 +10,6 @@ function plot_spec_surface_current(data, nt, newfig)
 % -----
 %   -data       : data obtained via read_spec(filename)
 %   -nt         : number of poloidal interpolation points
-%   -zeta       : toroidal angle 
 %   -newfig     : plots on an existing figure (=0), a new figure (=1) or
 %   overwrites last figure (=2)
 %
