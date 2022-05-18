@@ -761,8 +761,8 @@ module bndRep
                           iR0c(0:Ntor, lvol), iZ0s(1:Ntor, lvol), &
                           iRbc(1:mn_field, lvol), iZbs(1:mn_field, lvol) )
   
-          FATAL( bndRep, idof.ne.NGdof_bnd, incorrect number of dofs. )
         enddo
+        FATAL( bndRep, idof.ne.NGdof_bnd, incorrect number of dofs. )
 
         ! Broadcast the interface Fourier harmonics
         do lvol=1,Mvol-1
