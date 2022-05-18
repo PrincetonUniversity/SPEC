@@ -133,15 +133,19 @@ function out = plot_spec_iota(data,iorq,xaxis,newfig,varargin)
       kstart   = 1;
       psitor   = zeros(1,length(sval));
 
-
       for lvol=1:mvol
 
+          start = -1;
+          if lvol==1
+              start = -0.999;
+          end
+
           if lvol==nvol % Required if last value had a -2 (often in free bound)
-              phiedge = cumflux + get_spec_torflux(data, nvol, 0, -1, 1, ns, nt);
+              phiedge = cumflux + get_spec_torflux(data, nvol, 0, start, 1    , ns, nt);
           end
 
           for k=kstart:kstart-1+nptrj(lvol)
-              psitor(k) = cumflux + get_spec_torflux(data,lvol,0,-1,sval(k),ns,nt);
+              psitor(k) = cumflux + get_spec_torflux(data,lvol,0, start, sval(k),ns,nt);
           end
           cumflux = psitor(k);
           kstart  = kstart+nptrj(lvol);
@@ -214,7 +218,7 @@ function out = plot_spec_iota(data,iorq,xaxis,newfig,varargin)
       xlabel('(\Psi / \Psi_{edge})^{1/2}')
 
       out    = cell(2);
-      out{1} = psitor/psitor(end);
+      out{1} = sqrt(psitor/psitor(end));
       out{2} = F(1:nsucctrj);
 
     end
