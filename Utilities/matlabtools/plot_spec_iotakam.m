@@ -51,12 +51,6 @@ function plot_spec_iotakam(data,iorq,xaxis,newfig)
         R0(l) = sum(Rmn(:,l+1));
     end
 
-case 0
-  hold on
-case 1
-case 2
-  hold off
-
     if(iorq=='i')
         F = iota(2:end);
         G = oita(2:end);
