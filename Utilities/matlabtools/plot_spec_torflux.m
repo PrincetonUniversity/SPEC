@@ -11,8 +11,8 @@ function plot_spec_torflux(data, zeta, cumulative, newfig)
 % ------
 %   data:       data obtained from read_spec(filename)
 %   zeta:       Toroidal angle
-%   cumulative: True to get cumulative plot (\psi_a = \int_0^a B_\phi dS)
-%               or False to get a non-cumulative plot (\psi_a = 
+%   cumulative: true to get cumulative plot (\psi_a = \int_0^a B_\phi dS)
+%               or false to get a non-cumulative plot (\psi_a = 
 %               \int_{a-1}^a B_\phi dS)
 %   newfig:     0:  plots on an existing figure without erasing previous
 %                   plot
@@ -25,7 +25,11 @@ function plot_spec_torflux(data, zeta, cumulative, newfig)
     Mvol = data.output.Mvol;
     torflux = zeros(1,Mvol);
     for lvol=1:Mvol
-        tmp = get_spec_torflux(data,lvol,zeta,-1,1,64,64);
+        start=-1;
+        if(lvol==1)
+        start=-0.999;
+        end
+        tmp = get_spec_torflux(data,lvol,zeta,start,1,64,64);
 
 Nvol = data.input.physics.Nvol;
         if cumulative
