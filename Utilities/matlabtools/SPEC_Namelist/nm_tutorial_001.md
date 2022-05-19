@@ -125,7 +125,7 @@ Similarly, the computational boundary can be plotted with
 nm.plot_computational_boundary( nt, phi, 'N', 1 );
 ```
 
-If you want to see the normal field on the computational boundary, switch `N` to (i) `V` to see the coils contribution, (ii) `B` to see the initial guess for the plasma contribution and (iii) `F` for the sum of both.
+If you want to see the normal field on the computational boundary, switch `'N'` to (i) `'V'` to see the coils contribution, (ii) `'B'` to see the initial guess for the plasma contribution and (iii) `'F'` for the sum of both.
 
 
 # Writing the namelist into a file
