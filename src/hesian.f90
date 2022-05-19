@@ -42,7 +42,7 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
   LOCALS
 
   INTEGER, intent(in) :: NGdof, Mvol, mn, LGdof
-  REAL                :: position(0:NGdof) !< internal geometrical degrees of freedom;
+  REAL                :: position(0:NGdof)
 
   LOGICAL             :: LComputeDerivatives, LComputeAxis
 

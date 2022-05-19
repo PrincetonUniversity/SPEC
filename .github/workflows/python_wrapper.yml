@@ -1,0 +1,31 @@
+name: python_wrapper
+on: [push, pull_request]
+jobs:
+  python_wrapper-build:
+    runs-on: ubuntu-latest
+    name: python_wrapper build
+    
+    steps:
+    - uses: actions/checkout@v2
+
+    # Python3 should be pre-installed on 'ubuntu-latest'
+    - name: Python version info
+      run: |
+        python3 --version
+        pip3 --version
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install gfortran mpi-default-bin mpi-default-dev libhdf5-103 libhdf5-dev libfftw3-bin libfftw3-dev libopenblas0-openmp libopenblas-dev cmake ninja-build
+        pip3 install --user numpy f90nml scikit-build
+        pip3 install --user git+https://github.com/zhucaoxiang/f90wrap
+
+    - name: Build python_wrapper
+      run: |
+        python3 setup.py bdist_wheel
+        pip3 install --user dist/*.whl
+        
+    - name: Test if installation is ok
+      run: |
+        python3 -c "import spec; print('success')"

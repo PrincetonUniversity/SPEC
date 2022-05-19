@@ -22,7 +22,7 @@ jobs:
     
     # run doxygen
     - name: Doxygen Action
-      uses: mattnotmitt/doxygen-action@v1.3.1
+      uses: mattnotmitt/doxygen-action@edge
       with:
         enable-latex: true
       
