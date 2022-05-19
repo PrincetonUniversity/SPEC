@@ -56,17 +56,17 @@ i = 0;
 while i < c;    
     % Find a record
     i = i + 1; 
-    line = lines{i};
+    line = lower(lines{i});
     idx = find(line == '&');
     if ~isempty(idx), % i.e. a namelist start
         line = line(idx(1) + 1:end);
         % find next space
         idx = find(line == ' ');
         if ~isempty(idx),
-            namelst = line(1:idx(1) - 1);
+            namelst = lower(line(1:idx(1) - 1));
             line = line(idx(1) + 1:end);
         else
-            namelst = line;
+            namelst = lower(line);
             line = [];
         end
         nmlst_bdy = [];
@@ -132,7 +132,7 @@ for k = 1:nvars
     while strng(i) ~= ' ', i = i - 1; end    
     
     if k > 1, arg_end(k - 1) = i; end    
-    vars{k} = ['S.' strng(i + 1: j)];
+    vars{k} = ['S.' lower(strng(i + 1: j))];
 end
 
 arg_end(end) = length(strng);
@@ -142,7 +142,7 @@ arg_end(end) = length(strng);
 shift = struct;
 k_array = zeros(1,nvars);
 for k=1:nvars
-    v = vars{k};
+    v = lower(vars{k});
     
     % Check if it is an array
     ind_open = find(v=='(');
@@ -159,7 +159,7 @@ for k=1:nvars
     k_array(k) = 1;
     
     % get how many dimensions
-    v_name = v(3:ind_open-1);
+    v_name = lower(v(3:ind_open-1));
     v_ind  = v(ind_open+1:ind_close-1);
     
     indices = str2num(v_ind);
@@ -224,10 +224,10 @@ for k = 1:nvars
     if k_array(k)==0
         eval([vars{k} ' = ' arg]);
     else % apply shift
-        v = vars{k};
+        v = lower(vars{k});
         ind_open = find(v=='(');
         ind_close = find(v==')');
-        v_name = v(3:ind_open-1);
+        v_name = lower(v(3:ind_open-1));
         v_ind  = v(ind_open+1:ind_close-1);
         
         tmp = find(v_ind==',');
@@ -236,7 +236,7 @@ for k = 1:nvars
         
         %indices = str2num(v_ind);
         
-        newstr = ['S.', v_name, '('];
+        newstr = ['S.', lower(v_name), '('];
         for idim = 1:dim
             if idim==1
                 ind_start=1;
