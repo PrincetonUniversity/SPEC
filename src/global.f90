@@ -678,8 +678,8 @@ module allglobal
 
   REAL,    allocatable :: denergydrr(:,:,:,:,:) !< derivatives of energy at the interfaces wrt geometry 3D Hessian; 
   REAL,    allocatable :: denergydrz(:,:,:,:,:) !< derivatives of energy at the interfaces wrt geometry 3D Hessian; 
-  !REAL,    allocatable :: denergydzr(:,:,:,:,:) !< derivatives of energy at the interfaces wrt geometry 3D Hessian; 
-  !REAL,    allocatable :: denergydzz(:,:,:,:,:) !< derivatives of energy at the interfaces wrt geometry 3D Hessian; 
+  REAL,    allocatable :: denergydzr(:,:,:,:,:) !< derivatives of energy at the interfaces wrt geometry 3D Hessian; 
+  REAL,    allocatable :: denergydzz(:,:,:,:,:) !< derivatives of energy at the interfaces wrt geometry 3D Hessian; 
 !> @}
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
