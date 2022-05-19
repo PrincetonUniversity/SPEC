@@ -1,4 +1,4 @@
-function plot_spec_kam(data, nz0, newfig, varargin)
+function plot_spec_kam(data, zeta, newfig, varargin)
 
 %
 % PLOT_SPEC_KAM( DATA, NZ0, NEWFIG )
@@ -9,7 +9,7 @@ function plot_spec_kam(data, nz0, newfig, varargin)
 % INPUT
 % -----
 %   -data       : obtained from read_spec(fname)
-%   -nz0        : show the toroidal plane number nz0
+%   -zeta       : toroidal angle
 %   -newfig     : opens(=1) or not(=0) a new figure, or overplots(=2) on existing figure
 %
 %   written by J.Loizu (2016)
@@ -44,7 +44,6 @@ function plot_spec_kam(data, nz0, newfig, varargin)
     Ndiscrete = double(data.input.numerics.Ndiscrete);
     Ntor      = double(max(abs(data.output.in)));
     Nplan     = max(Ndiscrete*4*Ntor, 1);
-    zeta      = 2*pi*(nz0-1) / (Nplan);
 
     Nvol            = double(data.input.physics.Nvol);
     mn              = data.output.mn;

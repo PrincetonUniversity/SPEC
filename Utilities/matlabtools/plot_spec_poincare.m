@@ -1,4 +1,4 @@
-function phi = plot_spec_poincare(data,nz0,arr,newfig,varargin)
+function phi = plot_spec_poincare(data,nz0,arr,kam,newfig,varargin)
 
 %
 % PLOT_SPEC_POINCARE( DATA, NZ0, NFP, ARR, NEWFIG, VARARGIN )
@@ -16,6 +16,7 @@ function phi = plot_spec_poincare(data,nz0,arr,newfig,varargin)
 %               means all trajectories are ploted)
 %             : can be an array of which field line should be plotted, if 
 %               size(arra)>1
+%   -kam      : Plots (=1) or not (=0) the KAM surfaces.
 %   -newfig   : opens(=1) or not(=0) a new figure, or overwrites (=2) last 
 %               plot
 %   -varargin : Optional arguments. Any of the following pairs are
@@ -275,6 +276,10 @@ switch nz0
 
 end
 
+if kam
+   phi      = 2*pi*(nz0-1) / (double(nfp)*nz);
+   plot_spec_kam(data, phi, 0 ) 
+end
 
 disp(' ');
 disp('--- end of program ---');
