@@ -181,12 +181,10 @@ subroutine pp00ab( lvol, sti, Nz, nPpts, poincaredata, fittedtransform, utflag )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   if( utflag.eq.1 ) then
-   fittedtransform(1:2) = (/ sti(1), ( leastfit(5)*leastfit(3)-leastfit(2)*leastfit(4) ) / ( leastfit(5)*leastfit(1)-leastfit(2)*leastfit(2) ) /)
+    fittedtransform(1:2) = (/ sti(1), ( leastfit(5)*leastfit(3)-leastfit(2)*leastfit(4) ) / ( leastfit(5)*leastfit(1)-leastfit(2)*leastfit(2) ) /)
 
-   ! Have to remove rotation of coordinate system
-   if( Lboundary.eq.1 ) then
+    ! Have to remove rotation of coordinate system
     fittedtransform(2) = fittedtransform(2) - twoalpha * Nfp
-   endif
   endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

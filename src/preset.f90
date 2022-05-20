@@ -41,6 +41,11 @@ subroutine preset
 
   call read_input_geometry()
 
+  ! Evaluate rotation of coordinate system
+  if( Lboundary.eq.0 ) then
+    call evaluate_two_alpha( )
+  endif
+
   !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 !> **Force gradient transformation**
   if( Mvol.gt.1 .and. Lboundary.eq.1 .and. Lfindzero.eq.2 ) then
@@ -110,12 +115,6 @@ subroutine set_global_variables()
   endif
 
   RlBCAST( Rscale, 1, 0 )
-
-
-  ! set up Henneberg's mapping
-  if( Lboundary.eq.0 ) then
-    twoalpha = 0.0
-  endif
 
   Lhennangle = .false.
   call initialize_mapping( Lhennangle )
@@ -2026,3 +2025,77 @@ subroutine check_and_change_angle( Lchangeangle )
   endif
 
 end subroutine check_and_change_angle
+
+
+subroutine evaluate_two_alpha()
+
+  use constants, only : pi2, two, zero, one
+  use fileunits, only : ounit
+  use cputiming, only : Tpreset
+  use inputlist
+  use allglobal
+
+  LOCALS
+
+  REAL :: dphi, phi, theta, theta_new, nstep, arg
+  REAL :: Raxis, Zaxis, Rbnd, Zbnd
+  REAL :: Raxis_prev, Zaxis_prev, Rbnd_prev, Zbnd_prev
+  INTEGER :: counter, ii, jj
+
+  BEGIN( preset )
+
+  if( Lboundary.eq.1 ) then
+    FATAL( preset, .true., twoalpha is already known )
+  endif
+
+  nstep = 1000
+  dphi = one/nstep * pi2 / nfp ! Toroidal angle step
+  theta = pi / two ! follow line pi / 2
+  counter = zero
+
+  do ii=0,nstep
+
+    phi = ii*dphi
+
+    Raxis=0
+    Zaxis=0
+    Rbnd=0
+    Zbnd=0
+
+    do jj=1,mn_field
+      arg = im_field(jj) * theta - in_field(jj) * phi
+
+      Raxis = Raxis + iRbc(jj,0   ) * cos( arg ) + iRbs(jj,0   ) * sin( arg )
+      Zaxis = Zaxis + iZbc(jj,0   ) * cos( arg ) + iZbs(jj,0   ) * sin( arg )
+      Rbnd  = Rbnd  + iRbc(jj,Nvol) * cos( arg ) + iRbs(jj,Nvol) * sin( arg )
+      Zbnd  = Zbnd  + iZbc(jj,Nvol) * cos( arg ) + iZbs(jj,Nvol) * sin( arg )
+    enddo
+
+    if( (ii.gt.1) .and. (Rbnd.gt.Raxis) ) then !Then LFS
+
+      if( Zbnd.gt.Zaxis .and. Zbnd_prev.le.Zaxis_prev ) then
+        ! Then curve did a counter-clockwise turn
+        counter = counter + 1
+      endif
+
+      if( Zbnd.lt.Zaxis .and. Zbnd_prev.ge.Zaxis_prev ) then
+        ! Then curve did a clockwise turn
+        counter = counter - 1
+      endif
+
+    endif
+
+    Raxis_prev = Raxis
+    Zaxis_prev = Zaxis
+    Rbnd_prev = Rbnd
+    Zbnd_prev = Zbnd
+
+  enddo
+
+  ! twoalpha is then the number of turns done by the curve theta=pi/2
+  ! We keep the same conventiona s with the Henneberg representation, where alpha is positive
+  ! if it rotates in the negative poloidal direction following SPEC angle.
+  twoalpha = counter
+
+
+end subroutine evaluate_two_alpha

@@ -895,12 +895,10 @@ subroutine tr00ab( lvol, mn_field, NN, Nt, Nz, iflag, ldiota ) ! construct strai
   ! Indeed, depending on the choice of poloidal angle, the curve defined by theta=0 might rotate around
   ! the coordinate axis; in this case, this contribution to the rotational transform as to be taken into
   ! account.
-  if( Lboundary.eq.0 ) then 
-
-  end
-    ldiota(0,0) = ldiota(0,0) - twoalpha * Nfp
-    ldiota(1,0) = ldiota(1,0) - twoalpha * Nfp
-  endif
+  ! This is also applied in the case of the standard representation (lboundary=0), since the coordinate
+  ! frame can also rotate. The value of twoalpha is then not an input and it is evaluated in preset.f90.
+  ldiota(0,0) = ldiota(0,0) - twoalpha * Nfp
+  ldiota(1,0) = ldiota(1,0) - twoalpha * Nfp
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
