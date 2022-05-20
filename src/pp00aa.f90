@@ -79,9 +79,9 @@ subroutine pp00aa
 
   use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, ext, &
                         Nz, pi2nfp, &
-                        ivol, Mvol, &
+                        ivol, Mvol, lmns, &
                         Lcoordinatesingularity, &
-                        diotadxup, Lplasmaregion, Lvacuumregion
+                        diotadxup, dlambdaout, Lplasmaregion, Lvacuumregion
 
   use sphdf5,    only : init_flt_output, write_poincare, write_transform, finalize_flt_output
 

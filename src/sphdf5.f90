@@ -724,7 +724,7 @@ end subroutine write_grid
 !> @param[in] numTrajTotal total number of Poincare trajectories
 subroutine init_flt_output( numTrajTotal )
 
-  use allglobal, only : Nz, Mvol
+  use allglobal, only : Nz, Mvol, lmns
   use inputlist, only : nPpts
 
   LOCALS
@@ -988,6 +988,7 @@ subroutine hdfint
                         Mvol, ForceErr, &
                         mn_field, im_field, in_field, iRbc, iZbs, iRbs, iZbc, &
                         mn_rho, im_rho, in_rho, mn_force, im_force, in_force, &
+                        mns, ims, ins, &
                         dRbc, dZbs, dRbs, dZbc, &
                         vvolume, dvolume, &
                         Bsupumn, Bsupvmn, &
@@ -996,7 +997,7 @@ subroutine hdfint
                         lmns, &
                         TT, &
                         beltramierror, &
-                        IPDt, &
+                        IPDt, dlambdaout, lmns, &
                         irhoc, ibc, iR0c, iZ0s
 
   LOCALS
@@ -1037,6 +1038,12 @@ subroutine hdfint
   HWRITEIV( grpOutput, mn_force, im_force, im_force(1:mn_force) )
 !latex \type{in(1:mn\_force)}               & integer & \pb{toroidal mode number of force (B square)s} \\
   HWRITEIV( grpOutput, mn_force, in_force, in_force(1:mn_force) )
+!latex \type{mns}                     & integer & \pb{number of Fourier modes} \\
+  HWRITEIV( grpOutput,  1, mns, (/ mns /)  )
+!latex \type{ims(1:mns)}               & integer & \pb{poloidal mode numbers} \\
+  HWRITEIV( grpOutput, mns, ims, ims(1:mns) )
+!latex \type{ins(1:mns)}               & integer & \pb{toroidal mode numbers} \\
+  HWRITEIV( grpOutput, mns, ins, ins(1:mns) )
 !latex \type{Mvol}                   & integer & \pb{number of interfaces = number of volumes} \\
   HWRITEIV( grpOutput,  1, Mvol, (/ Mvol /))
 !latex \type{iRbc(1:mn_field,0:Mvol)}      & real    & \pb{Fourier harmonics, $R_{m,n}$, of interfaces} \\
@@ -1113,6 +1120,10 @@ subroutine hdfint
 !latex \type{Bzomn(1:mn_field,0:1,1:Mvol)} & real    & \pb{the sine harmonics of the covariant toroidal field, \\
 !latex                                           i.e. $[[B_{\z,j}]]$ evaluated on the inner and outer interface in each volume} \\
   HWRITERC( grpOutput, mn_field, 2, Mvol, Bzomn, Bzomn(1:mn_field,0:1,1:Mvol) )
+
+
+! Write lambda_mn, Fourier harmonics or transformation to straight field line coordinates.
+  HWRITERC( grpOutput, lmns, Mvol, 2, lambdamn, dlambdaout(1:lmns,1:Mvol,0:1) )
 
   if( Lperturbed.eq.1 ) then
 

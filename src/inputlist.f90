@@ -546,6 +546,7 @@ module inputlist
                                                  !<      </ul> </li>
                                                  !< </ul>
   LOGICAL      :: Ltiming          =  .false.    !< to check timing
+  LOGICAL      :: Ltransform       = .false.     !< to evaluate iota and straight field line coordinates
   REAL         :: fudge            =     1.0e-00 !< redundant
   REAL         :: scaling          =     1.0e-00 !< redundant
 !> @}
@@ -751,6 +752,7 @@ module inputlist
  Lcheck     ,&
  dRZ        ,&
  Ltiming    ,&
+ Ltransform ,&
  fudge      ,&
  scaling
 
@@ -968,6 +970,7 @@ subroutine initialize_inputs
   dRZ              =     1E-5
   Lcheck           =     0
   Ltiming          =  .false.
+  Ltransform       =  .false.
   fudge            =     1.0e-00
   scaling          =     1.0e-00
 

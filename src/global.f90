@@ -627,7 +627,9 @@ module allglobal
 
   REAL   , allocatable :: glambda(:,:,:,:) !< save initial guesses for iterative calculation of rotational-transform
 
-  INTEGER              :: lmns !< what is this?
+  INTEGER              :: lmns !< number of independent degrees of freedom in angle transformation;
+
+  REAL,    allocatable :: dlambdaout(:,:,:)
 !> @}
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -1542,6 +1544,7 @@ subroutine broadcast_inputs
   IlBCAST( nPtrj     , MNvol+1, 0 )
   LlBCAST( LHevalues , 1      , 0 )
   LlBCAST( LHevectors, 1      , 0 )
+  LlBCAST( Ltransform, 1      , 0 )
   LlBCAST( LHmatrix  , 1      , 0 )
   IlBCAST( Lperturbed, 1      , 0 )
   IlBCAST( dpp       , 1      , 0 )

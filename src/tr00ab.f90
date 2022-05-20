@@ -91,8 +91,8 @@ subroutine tr00ab( lvol, mn_field, NN, Nt, Nz, iflag, ldiota ) ! construct strai
                         Ntz, hNt, hNz, &
                         iotakkii, iotaksub, iotakadd, iotaksgn, &
                         Ate, Aze, Ato, Azo, TT, RTT, &
-                        Lcoordinatesingularity, Lvacuumregion
-                        
+                        Lcoordinatesingularity, Lvacuumregion, regumm, dlambdaout
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   LOCALS
@@ -706,6 +706,7 @@ subroutine tr00ab( lvol, mn_field, NN, Nt, Nz, iflag, ldiota ) ! construct strai
 		 NN, rcond, ferr, berr, work4(1:4*NN), iwork4(1:NN), idgesvx )
 
        ;                 ldiota(innout,    0) = dlambda(1,  0) ! return intent out; 21 Apr 13;
+       ;                 dlambdaout(1:NN, lvol, innout) = dlambda(1:NN,0) 
 
       case( 1 ) ! Lsvdiota = 0; jderiv = 1; 02 Sep 14;
 
@@ -890,8 +891,13 @@ subroutine tr00ab( lvol, mn_field, NN, Nt, Nz, iflag, ldiota ) ! construct strai
 
   enddo ! end of do innout; 29 Jan 13;
 
+  ! need to remove contribution from rotating coordinate system
+  ! Indeed, depending on the choice of poloidal angle, the curve defined by theta=0 might rotate around
+  ! the coordinate axis; in this case, this contribution to the rotational transform as to be taken into
+  ! account.
+  if( Lboundary.eq.0 ) then 
 
-  if( Lboundary.eq.1 ) then ! need to remove contribution from rotating coordinate system
+  end
     ldiota(0,0) = ldiota(0,0) - twoalpha * Nfp
     ldiota(1,0) = ldiota(1,0) - twoalpha * Nfp
   endif
