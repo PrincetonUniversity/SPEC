@@ -721,15 +721,6 @@ module bndRep
 
         do lvol=1,Mvol-1
 
-          ! Each CPU does the mapping for its own interface
-          call IsMyVolume(lvol)
-
-          if( IsMyVolumeValue.EQ.0 ) then
-            cycle
-          elseif( IsMyVolumeValue.EQ.-1 ) then
-            FATAL( bndRep, .true., Unassociated volume)
-          endif
-
           do jj=1,mn_rho
 
             idof = idof+1
@@ -756,6 +747,16 @@ module bndRep
             endif
           enddo
 
+
+          ! Each CPU does the mapping for its own interface
+          ! This can't be put at the beginning of the loop; need to count dofs!
+          call IsMyVolume(lvol)
+
+          if( IsMyVolumeValue.EQ.0 ) then
+            cycle
+          elseif( IsMyVolumeValue.EQ.-1 ) then
+            FATAL( bndRep, .true., Unassociated volume)
+          endif
         
           call forwardMap( irhoc(1:mn_rho, lvol), ibc(0:Ntor, lvol), &
                           iR0c(0:Ntor, lvol), iZ0s(1:Ntor, lvol), &
