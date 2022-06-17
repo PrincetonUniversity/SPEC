@@ -59,7 +59,7 @@ subroutine newton( NGdof_bnd, bndDofs, ihybrd )
                         Igeometry, & ! only for screen output;
                         Nvol,                    &
                         Lfindzero, forcetol, c05xmax, c05xtol, c05factor, LreadGF, &
-                        Lcheck, Lboundary
+                        Lcheck, Lboundary, Lforcereal
 
   use cputiming, only : Tnewton
 
@@ -229,21 +229,27 @@ subroutine newton( NGdof_bnd, bndDofs, ihybrd )
 
   case( 1 ) ! use function values                               to find x st f(x)=0, where x is the geometry of the interfaces, and f is the force;
 
-   WCALL( newton, hybrd, ( fcn1, NGdof_bnd, bndDofs(1:NGdof_bnd), force(1:NGdof_force), &
-          xtol, maxfev, ML, MU, epsfcn, diag(1:NGdof_force), mode, factor, nprint, ihybrd, nfev, &
-          fjac(1:Ldfjac,1:NGdof_force), Ldfjac, &
-          RR(1:LR), LR, QTF(1:NGdof_force), workspace(1:NGdof_force,1), &
-          workspace(1:NGdof_force,2), workspace(1:NGdof_force,3), workspace(1:NGdof_force,4) ) )
-
+    if( Lforcereal.eq.0 ) then ! find zero of spectral force
+      WCALL( newton, hybrd, ( fcn1, NGdof_bnd, bndDofs(1:NGdof_bnd), force(1:NGdof_force), &
+              xtol, maxfev, ML, MU, epsfcn, diag(1:NGdof_force), mode, factor, nprint, ihybrd, nfev, &
+              fjac(1:Ldfjac,1:NGdof_force), Ldfjac, &
+              RR(1:LR), LR, QTF(1:NGdof_force), workspace(1:NGdof_force,1), &
+              workspace(1:NGdof_force,2), workspace(1:NGdof_force,3), workspace(1:NGdof_force,4) ) )
+    elseif( Lforcereal.eq.1 ) then
+      ! TO COMPLETE
+    endif
 
   case( 2 ) ! use function values and user-supplied derivatives to find x st f(x)=0, where x is the geometry of the interfaces, and f is the force;
 
-   WCALL( newton, hybrj, ( fcn2, NGdof_bnd, bndDofs(1:NGdof_bnd), force(1:NGdof_force), &
-          fjac(1:Ldfjac,1:NGdof_force), Ldfjac, &
-          xtol, maxfev, diag(1:NGdof_force), mode, factor, nprint, ihybrd, nfev, njev, &
-          RR(1:LR), LR, QTF(1:NGdof_force), workspace(1:NGdof_force,1), &
-          workspace(1:NGdof_force,2), workspace(1:NGdof_force,3), workspace(1:NGdof_force,4) ) )
-
+    if( Lforcereal.eq.0 ) then ! find zero of spectral force
+      WCALL( newton, hybrj, ( fcn2, NGdof_bnd, bndDofs(1:NGdof_bnd), force(1:NGdof_force), &
+              fjac(1:Ldfjac,1:NGdof_force), Ldfjac, &
+              xtol, maxfev, diag(1:NGdof_force), mode, factor, nprint, ihybrd, nfev, njev, &
+              RR(1:LR), LR, QTF(1:NGdof_force), workspace(1:NGdof_force,1), &
+              workspace(1:NGdof_force,2), workspace(1:NGdof_force,3), workspace(1:NGdof_force,4) ) )
+    elseif( Lforcereal.eq.1 ) then
+      ! TO COMPLETE
+    endif
   case default
 
    FATAL( newton, .true., value of Lfindzero not supported )

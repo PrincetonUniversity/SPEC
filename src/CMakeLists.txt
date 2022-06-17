@@ -74,6 +74,7 @@ set(unprocessed_src_files
     numrec.f90
     preset.f90
     bndRep.f90
+    wrtend.f90
     #sphdf5.f90
     global.f90
     inputlist.f90

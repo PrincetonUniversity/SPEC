@@ -82,6 +82,12 @@ module inputlist
                                                          !<      (excepted in the inner most volume, where the volume current is irrelevant).
                                                          !<      Not implemented yet in free boundary.</li>
                                                          !< </ul>
+  INTEGER  ::     Lforcereal             =   0           !< Selects force representation
+                                                         !< <ul>
+                                                         !< <li> if \c Lforcereal==0, the spectral components of the force are minimized. The force is truncated to a given Fourier resolution
+                                                         !<      which depends on Lboundary.
+                                                         !< <li> if \c Lforcereal==1, the sum of squares of the real force evaluated on a set of collocation points is minimized
+                                                         !< </ul>
   INTEGER  ::     Lboundary              =  0.0          !< Select boundary representation
                                                          !< <ul>
                                                          !< <li> if \c Lboundary==0, VMEC-like representation is used, with Fourier series \f$R_{mn},\ Z_{mn}\f$. </li>
@@ -630,6 +636,7 @@ module inputlist
  Ntor        ,&
  Lrad        ,&
  Lconstraint ,&
+ Lforcereal  ,&
  Lboundary   ,&
  tflux       ,&
  pflux       ,&
@@ -843,6 +850,7 @@ subroutine initialize_inputs
   Ntor                       =  0
   Lrad(1:MNvol+1)            =  4
   Lconstraint                = -1
+  Lforcereal                 =  0
   Lboundary                  =  0
   tflux(1:MNvol+1)           =  0.0
       pflux(1:MNvol+1)       =  0.0
