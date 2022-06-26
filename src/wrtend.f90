@@ -362,7 +362,7 @@ subroutine wrtend
       enddo !vvol=1:Nvol-1
   
       do nn = 0, Ntor
-        write(iunit,'(2i6, 1024es23.15)') zero, nn, ( ibc(nn,vvol), iR0c(nn,vvol), iZ0s(nn,vvol), zero, vvol=1,Nvol )
+        write(iunit,'(2i6, 1024es23.15)') 0, nn, ( ibc(nn,vvol), iR0c(nn,vvol), iZ0s(nn,vvol), zero, vvol=1,Nvol )
       enddo! nn=0,Ntor
   
       do imn = 1, mn_rho
