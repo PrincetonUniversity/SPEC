@@ -37,7 +37,7 @@ subroutine dfp100(Ndofgl, x, Fvec, LComputeDerivatives)
   use fileunits, only : ounit
 
   use inputlist, only : Wmacros, Wdfp100, Igeometry, Nvol, Lrad, Isurf, &
-                        Lconstraint, Lfreebound, curpol
+                        Lconstraint, Lfreebound, curpol, mu
 
   use cputiming, only : Tdfp100
 
@@ -76,6 +76,8 @@ subroutine dfp100(Ndofgl, x, Fvec, LComputeDerivatives)
   INTEGER              :: deriv, Lcurvature
 
   BEGIN(dfp100)
+
+! write(ounit,'("dfp100 : ", 10x ," : 2.2110 mu =",99(es23.15,","))') mu(1:Nvol)
 
   dpflux(2:Mvol) = x - xoffset
 
@@ -122,7 +124,11 @@ subroutine dfp100(Ndofgl, x, Fvec, LComputeDerivatives)
       WCALL( dfp100, matrixBG, ( vvol, mn, ll ) )
     endif
 
+!   write(ounit,'("dfp100 : ", 10x ," : 2.2120 mu =",99(es23.15,","))') mu(1:Nvol)
+
     WCALL( dfp100, ma02aa, ( vvol, NN ) )
+
+!   write(ounit,'("dfp100 : ", 10x ," : 2.2130 mu =",99(es23.15,","))') mu(1:Nvol)
     
     Lsavedguvij = .false.
 
@@ -160,6 +166,7 @@ subroutine dfp100(Ndofgl, x, Fvec, LComputeDerivatives)
     endif
   enddo
 
+! write(ounit,'("dfp100 : ", 10x ," : 2.2140 mu =",99(es23.15,","))') mu(1:Nvol)
 
   ! Evaluation of global constraint and communications
   if( .not.LocalConstraint ) then
@@ -218,6 +225,8 @@ subroutine dfp100(Ndofgl, x, Fvec, LComputeDerivatives)
         FATAL(dfp100, .true., Unaccepted value for Lconstraint)
     end select
   endif
+
+! write(ounit,'("dfp100 : ", 10x ," : 2.2190 mu =",99(es23.15,","))') mu(1:Nvol)
 
   RETURN(dfp100)
 

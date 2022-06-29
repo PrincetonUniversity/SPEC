@@ -417,7 +417,7 @@ subroutine matrix( lvol, mn, lrad )
    write(ounit,'("matrix : " 10x " : dBdX: L =",L2," ; vol =",i3," ; innout =",i2," ; ii =",i3," ; irz =",i2," ; issym =",i2," ;")') &
                                      dBdX%L, dBdX%vol, dBdX%innout, dBdX%ii, dBdX%irz, dBdX%issym
 
-   pause
+!  pause
 
    VRij(1:Ctz,0:3) = zero ! initialize summation ; 03/03/21 ;
    VZij(1:Ctz,0:3) = zero
@@ -454,14 +454,14 @@ subroutine matrix( lvol, mn, lrad )
     
     rrr(1:Ctz) = ( sqrt( rx(1:Ctz) * rx(1:Ctz) + ry(1:Ctz) * ry(1:Ctz) + rz(1:Ctz) * rz(1:Ctz) ) )**3 ; rrr(1:Ctz) = one / rrr(1:Ctz)
     
-    xtrr(1:Ctz,1) = ( VRij(1:Ctz,2)*sin(kjzeta(1:Ctz))                                    ) * rz(1:Ctz) &
+    xtrr(1:Ctz,1) = ( VRij(1:Ctz,2)*sin(kjzeta(1:Ctz))                                    ) * rz(1:Ctz) & ! cross product \bx_\t \times \br ;
                   - ( VZij(1:Ctz,2)                                                       ) * ry(1:Ctz)
     xtrr(1:Ctz,2) = ( VZij(1:Ctz,2)                                                       ) * rx(1:Ctz) &
                   - ( VRij(1:Ctz,2)*cos(kjzeta(1:Ctz))                                    ) * rz(1:Ctz)  
     xtrr(1:Ctz,3) = ( VRij(1:Ctz,2)*cos(kjzeta(1:Ctz))                                    ) * ry(1:Ctz) &
                   - ( VRij(1:Ctz,2)*sin(kjzeta(1:Ctz))                                    ) * rx(1:Ctz)
   
-    xzrr(1:Ctz,1) = ( VRij(1:Ctz,3)*sin(kjzeta(1:Ctz)) + VRij(1:Ctz,0)*cos(kjzeta(1:Ctz)) ) * rz(1:Ctz) &
+    xzrr(1:Ctz,1) = ( VRij(1:Ctz,3)*sin(kjzeta(1:Ctz)) + VRij(1:Ctz,0)*cos(kjzeta(1:Ctz)) ) * rz(1:Ctz) & ! cross product \bx_\z \times \br ;
                   - ( VZij(1:Ctz,3)                                                       ) * ry(1:Ctz)
     xzrr(1:Ctz,2) = ( VZij(1:Ctz,3)                                                       ) * rx(1:Ctz) &
                   - ( VRij(1:Ctz,3)*cos(kjzeta(1:Ctz)) - VRij(1:Ctz,0)*sin(kjzeta(1:Ctz)) ) * rz(1:Ctz)

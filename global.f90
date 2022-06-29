@@ -141,7 +141,7 @@ module inputlist
   CHARACTER          :: ext*100
 
   INTEGER, parameter :: MNvol     = 256 !latex \item The maximum value of \inputvar{Nvol} is \verb+MNvol=256+.
-  INTEGER, parameter :: MMpol     =  64 !latex \item The maximum value of \inputvar{Mpol} is \verb+MNpol= 32+.
+  INTEGER, parameter :: MMpol     = 128 !latex \item The maximum value of \inputvar{Mpol} is \verb+MNpol= 32+.
   INTEGER, parameter :: MNtor     =  64 !latex \item The maximum value of \inputvar{Ntor} is \verb+MNtor= 32+.
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -2738,7 +2738,7 @@ subroutine wrtend
   write(iunit,'(" vcasingtol  = ",es23.15       )') vcasingtol   
   write(iunit,'(" vcasingits  = ",i9            )') vcasingits   
   write(iunit,'(" vcasingper  = ",i9            )') vcasingper   
-  write(iunit,'(" Lvcvaccum   = ",i9            )') Lvcvacuum
+  write(iunit,'(" Lvcvacuum   = ",i9            )') Lvcvacuum
   write(iunit,'(" Cteta       = ",i9            )') Cteta
   write(iunit,'(" Czeta       = ",i9            )') Czeta
   write(iunit,'("/")')

@@ -716,14 +716,14 @@ endif
 
 
    select case( Linitgues ) ! for iterative solver of the Beltrami fields, an initial guess is required; 11 Mar 16;
-   case( 0 )    ; 
-   case( 1 )    ; Ate(vvol,0,1)%s(0:1) = dtflux(vvol) * half ! this is an integrable approximation; NEEDS CHECKING; 26 Feb 13;
-    ;           ; Aze(vvol,0,1)%s(0:1) = dpflux(vvol) * half ! this is an integrable approximation; NEEDS CHECKING; 26 Feb 13;
+   case( 0   ) ; 
+   case( 1:2 ) ; Ate(vvol,0,1)%s(0:1) = dtflux(vvol) * half ! this is an integrable approximation; NEEDS CHECKING; 26 Feb 13;
+    ;          ; Aze(vvol,0,1)%s(0:1) = dpflux(vvol) * half ! this is an integrable approximation; NEEDS CHECKING; 26 Feb 13;
     if (Lcoordinatesingularity) then
-    ;           ; Ate(vvol,0,1)%s(2) = dtflux(vvol) * half * half
+    ;          ; Ate(vvol,0,1)%s(2) = dtflux(vvol) * half * half
     endif
-   case( 2 )    ;                                            ! will call ra00aa below to read initial vector potential from file;
-   case( 3 )    ;                                            ! the initial guess will be randomized, maximum is maxrndgues; 5 Mar 19;
+!  case( 2 )   ;                                            ! will call ra00aa below to read initial vector potential from file;
+   case( 3 )   ;                                            ! the initial guess will be randomized, maximum is maxrndgues; 5 Mar 19;
     do ii = 1, mn ! loop over Fourier harmonics;
     
      do ideriv = -2, 2 ! loop over derivatives; 14 Jan 13;
@@ -873,9 +873,32 @@ endif
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  if( Linitgues.eq.2 ) then ; WCALL( preset, ra00aa, ('R') )  ! read initial guess for Beltrami field from file; 02 Jan 15;
-  endif
+! write(ounit,'("preset : " 10x " : Linitgues =",i2," ;")') Linitgues
   
+! do ivol = 1, Mvol
+!  do ii = 1, 1 ; write(ounit,'("preset : "10x" : Ate=",99es13.5)') Ate(ivol,0,ii)%s(0:Lrad(ivol))
+!  enddo
+! enddo
+  
+! pause
+
+  select case( Linitgues )
+  case( 1 ) 
+  case( 2 )
+   WCALL( preset, ra00aa, ('R') )  ! read initial guess for Beltrami field from file; 02 Jan 15;
+  case( 3 ) 
+  case default
+   FATAL( preset, .true., illegal Linitgues )
+  end select
+  
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+! do ivol = 1, 1
+!  do ii = 1, mn ; write(ounit,'("preset : "10x" : ",i3," : (",i2," ,",i2," ) Ate =",99es13.5)') ivol, im(ii), in(ii), Ate(ivol,0,ii)%s(0:Lrad(ivol))
+!  enddo
+! enddo
+! pause
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   if( myid.eq.0 ) then ! 17 Oct 12;
@@ -1405,7 +1428,7 @@ endif
      enddo ! 03/03/21 ;
     enddo ! 03/03/21 ;
     
-   endif ! end of if( Lvcvaccum.eq.1 ) then ; 03/03/21 ;
+   endif ! end of if( Lvcvacuum.eq.1 ) then ; 03/03/21 ;
 
   endif ! Lfreebound > 1; 7 Nov 18;
 

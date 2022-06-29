@@ -107,7 +107,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
                         Lconstraint, Lcheck, dRZ, &
                         Lextrap, &
                         mupftol, &
-                        Lfreebound
+                        Lfreebound, &
+                        mu
   
   use cputiming, only : Tdforce
   
@@ -172,6 +173,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
+! write(ounit,'("dforce : ", 10x ," : 2.2000 mu =",99(es23.15,","))') mu(1:Nvol)
+
 ! Unpack position to generate arrays iRbc, iZbs, IRbs, iZbc.
 
   packorunpack = 'U' ! unpack geometrical degrees-of-freedom;
@@ -183,6 +186,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
   WCALL( dforce, packxi,( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), &
                           iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), packorunpack, LcomputeDerivatives, LComputeAxis ) )
  
+! write(ounit,'("dforce : ", 10x ," : 2.2100 mu =",99(es23.15,","))') mu(1:Nvol)
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   if( LcomputeDerivatives ) then
@@ -191,7 +196,6 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
 #endif
    dBBdmp(1:LGdof,1:Mvol,0:1,1:2) = zero
   endif
-
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -218,7 +222,12 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
     
     ! Solve for field
 	  dBdX%L = LComputeDerivatives
+
+! write(ounit,'("dforce : ", 10x ," : 2.2110 mu =",99(es23.15,","))') mu(1:Nvol)
+
     WCALL(dforce, dfp100, (Ndofgl, Xdof, Fvec, iflag) )
+
+! write(ounit,'("dforce : ", 10x ," : 2.2120 mu =",99(es23.15,","))') mu(1:Nvol)
 
     DALLOCATE( Fvec )
 
@@ -227,6 +236,9 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
     !enddo
 ! --------------------------------------------------------------------------------------------------
 ! Global constraint - call the master thread calls hybrd1 on dfp100, others call dfp100_loop.
+
+! write(ounit,'("dforce : ", 10x ," : 2.2200 mu =",99(es23.15,","))') mu(1:Nvol)
+
   else
 
     IPDtdPf = zero
@@ -242,13 +254,19 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
 
     SALLOCATE( Fvec, (1:Ndofgl), zero )
 
+! write(ounit,'("dforce : ", 10x ," : 2.2210 mu =",99(es23.15,","))') mu(1:Nvol)
+
     WCALL(dforce, dfp100, (Ndofgl, Xdof(1:Mvol-1), Fvec(1:Ndofgl), 1))
 
     SALLOCATE(dpfluxout, (1:Ndofgl), zero )
     if ( myid .eq. 0 ) then 
 
+! write(ounit,'("dforce : ", 10x ," : 2.2220 mu =",99(es23.15,","))') mu(1:Nvol)
+
         dpfluxout = Fvec
         call DGESV( Ndofgl, 1, IPdtdPf, Ndofgl, ipiv, dpfluxout, Ndofgl, idgesv )
+
+! write(ounit,'("dforce : ", 10x ," : 2.2230 mu =",99(es23.15,","))') mu(1:Nvol)
 
         ! one step Newton's method
         dpflux(2:Mvol) = dpflux(2:Mvol) - dpfluxout(1:Mvol-1)
@@ -318,7 +336,11 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
 !       end select
 ! #endif
 
+! write(ounit,'("dforce : ", 10x ," : 2.2300 mu =",99(es23.15,","))') mu(1:Nvol)
+
   endif !matches if( LocalConstraint ) 
+
+! write(ounit,'("dforce : ", 10x ," : 2.2400 mu =",99(es23.15,","))') mu(1:Nvol)
 
 ! --------------------------------------------------------------------------------------------------
 !                                    MPI COMMUNICATIONS
@@ -354,8 +376,13 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
   enddo
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+! write(ounit,'("dforce : ", 10x ," : 2.2400 mu =",99(es23.15,","))') mu(1:Nvol)
+
   ! Compute local force and derivatives 
   WCALL(dforce, dfp200, ( LcomputeDerivatives, vvol) )
+
+! write(ounit,'("dforce : ", 10x ," : 2.2500 mu =",99(es23.15,","))') mu(1:Nvol)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -372,6 +399,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
 
 #endif
   
+! write(ounit,'("dforce : ", 10x ," : 2.2500 mu =",99(es23.15,","))') mu(1:Nvol)
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
 ! Broadcast information to all CPUs
@@ -396,6 +425,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+! write(ounit,'("dforce : ", 10x ," : 2.2600 mu =",99(es23.15,","))') mu(1:Nvol)
 
 ! CONSTRUCT FORCE
 ! ---------------
@@ -483,6 +513,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
    
   enddo ! end of do vvol;
   
+! write(ounit,'("dforce : ", 10x ," : 2.2700 mu =",99(es23.15,","))') mu(1:Nvol)
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   if( NGdof.ne.0 ) then ; ForceErr = sqrt( sum( force(1:NGdof)*force(1:NGdof) ) / NGdof ) ! this includes spectral constraints;
@@ -506,6 +538,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
   endif ! end of if( Wdforce .and. myid.eq.0 ) ;
   
 #endif
+
+! write(ounit,'("dforce : ", 10x ," : 2.2800 mu =",99(es23.15,","))') mu(1:Nvol)
 
 4000 format("dforce : ",f10.2," : ",6x,3x,"; ",:,"|f|=",es12.5," ; ",:,"time=",f10.2,"s ;",:," log",a5,"=",28f6.2  ," ...")
 4001 format("dforce : ", 10x ," : ",6x,3x,"; ",:,"    ",  12x ,"   ",:,"     ", 10x ,"  ;",:," log",a5,"=",28f6.2  ," ...")
@@ -679,6 +713,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
   endif ! end of if( LcomputeDerivatives ) ;
 
 !call MPI_BARRIER( MPI_COMM_WORLD, ierr )
+
+! write(ounit,'("dforce : ", 10x ," : 2.2900 mu =",99(es23.15,","))') mu(1:Nvol)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

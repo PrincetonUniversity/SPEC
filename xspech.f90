@@ -92,7 +92,7 @@ program xspech
   LOGICAL              :: LComputeDerivatives, LContinueFreeboundaryIterations, exist, LupdateBn, LComputeAxis
 
 ! INTEGER              :: nfreeboundaryiterations, imn, lmn, lNfp, lim, lin, ii, lvol ! 09 Mar 17;
-  INTEGER              :: imn, lmn, lNfp, lim, lin, ii, ideriv, stat, iocons, iwait, pid, status, jj, kk, kj
+  INTEGER              :: imn, lmn, lNfp, lim, lin, ii, ideriv, stat, iocons, iwait, pid, status, jj, kk, kj, ivol
   INTEGER              :: vvol, llmodnp, ifail, wflag, iflag, vflag
   REAL                 :: rflag, lastcpu, bnserr, lRwc, lRws, lZwc, lZws, lItor, lGpol, lgBc, lgBs, sumI
   REAL,    allocatable :: position(:), gradient(:), Bt00(:,:,:)
@@ -153,6 +153,8 @@ program xspech
 !latex \end{enumerate} 
 
   WCALL( xspech, readin ) ! sets Rscale, Mvol; 03 Nov 16;
+
+! write(ounit,'("xspech : ", 10x ," : 1.0000 mu =",99(es23.15,","))') mu(1:Nvol)
 
   WCALL( xspech, preset )
   
@@ -236,7 +238,7 @@ program xspech
                             iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, .false., LComputeAxis ) )
 
   endif
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !latex \subsection{initialize adiabatic constants} 
@@ -287,6 +289,8 @@ program xspech
 !
 !    endif
    
+! write(ounit,'("xspech : ", 10x ," : 2.0000 mu =",99(es23.15,","))') mu(1:Nvol)
+
   if( NGdof.gt.0 ) then
    
    if( Lfindzero.gt.0 ) then
@@ -302,6 +306,8 @@ program xspech
                             iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, .false., LComputeAxis ) )
 
   endif
+
+! write(ounit,'("xspech : ", 10x ," : 3.0000 mu =",99(es23.15,","))') mu(1:Nvol)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -373,6 +379,7 @@ program xspech
 
 1000 format("xspech : ",f10.2," : #freeits=",i3," ; ":"|f|="es12.5" ; ":"time=",f10.2,"s ;":" log"a5,:"="28f6.2" ...")
 1001 format("xspech : ", 10x ," :          ",3x," ; ":"    "  12x "   ":"     ", 10x ,"  ;":" log"a5,:"="28f6.2" ...")
+
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -586,6 +593,16 @@ program xspech
 !latex \begin{enumerate}
 !latex \item The vector potential is written to file using \link{ra00aa}.
 !latex \end{enumerate} 
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+! do ivol = 1, 1
+!  do ii = 1, mn ; write(ounit,'("xspech : "10x" : ",i3," : (",i2," ,",i2," ) Ate =",99es13.5)') ivol, im(ii), in(ii), Ate(ivol,0,ii)%s(0:Lrad(ivol))
+!  enddo
+! enddo
+! pause
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   WCALL( xspech, ra00aa, ('W') ) ! this writes vector potential to file;
 

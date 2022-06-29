@@ -22,7 +22,7 @@ subroutine ma02aa( lvol, NN )
   use fileunits, only : ounit
 
   use inputlist, only : Wmacros, Wma02aa, &
-                        Lconstraint, mu, helicity, &
+                        Lconstraint, mu, Nvol, helicity, &
                         mupftol, mupfits, Lrad, Lcheck
 
   use cputiming
@@ -84,6 +84,8 @@ subroutine ma02aa( lvol, NN )
   CHARACTER            :: optionalparameter*33
   
   BEGIN(ma02aa)
+
+! write(ounit,'("ma02aa : ", 10x ," : 2.2120 mu =",99(es23.15,","))') mu(1:Nvol)
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -279,6 +281,8 @@ subroutine ma02aa( lvol, NN )
 
   if( LBnewton ) then
    
+! write(ounit,'("ma02aa : ", 10x ," : 2.2121 mu =",99(es23.15,","))') mu(1:Nvol)
+
    lastcpu = GETTIME
    
    SALLOCATE(DFxi, (0:NN,0:NN), zero)
@@ -286,12 +290,20 @@ subroutine ma02aa( lvol, NN )
 
    xi(0) = mu(lvol) ! initialize; helicity multiplier is treated as an independent degree-of-freedom;
    
+! write(ounit,'("ma02aa : ", 10x ," : 1.0000 xi(0) =",99(es23.15,","))') xi(0)
+
    ideriv = 0 ; dpsi(1:2) = (/ dtflux(lvol), dpflux(lvol) /) ! these are also used below;
    
+!  write(ounit,'("ma02aa : "10x" : (before) xi(1:NN) =",999es12.3)') xi(1:NN) ; pause
+
    packorunpack = 'P'
 !   CALL( ma02aa, packab ( packorunpack, lvol, NN, xi(1:NN), dpsi(1:2), ideriv ) )
    CALL( ma02aa, packab ( packorunpack, lvol, NN, xi(1:NN), ideriv ) )
    
+! write(ounit,'("ma02aa : ", 10x ," : 1.1000 xi(0) =",99(es23.15,","))') xi(0)
+
+!  write(ounit,'("ma02aa : "10x" : (after) xi =",999es12.3)') xi(1:NN) ; pause
+
    pNN = NN + 1 ; Ldfmuaa = pNN ; tol = mupftol ; lengthwork = pNN * ( pNN+13 ) / 2
    
 ! pre-calculate some matrix vector products; these are used in df00ab;
@@ -301,11 +313,17 @@ subroutine ma02aa( lvol, NN )
 !  psiMCpsi    = zero ! half * sum( dpsi(1:2) * matmul( dMC(1: 2,1: 2), dpsi(1:2) ) )
 !  psiMFpsi    = zero ! half * sum( dpsi(1:2) * matmul( dMF(1: 2,1: 2), dpsi(1:2) ) )
    
+! write(ounit,'("ma02aa : ", 10x ," : 1.2000 xi =",99(es23.15,","))') xi(0)
+
    call hybrj1( df00ab, pNN, xi(0:NN), Fxi(0:NN), DFxi(0:NN,0:NN), Ldfmuaa, tol, ihybrj1, work(1:lengthwork), lengthwork )
+
+! write(ounit,'("ma02aa : ", 10x ," : 1.2000 xi =",99(es23.15,","))') xi(0)
 
    NewtonError = maxval( abs( Fxi(0:NN) ) )
    
    mu(lvol) = xi(0)
+
+! write(ounit,'("ma02aa : ", 10x ," : 2.2123 mu =",99(es23.15,","))') mu(1:Nvol)
    
    packorunpack = 'U' ; ideriv = 0
 
@@ -352,6 +370,8 @@ subroutine ma02aa( lvol, NN )
 
    DALLOCATE( DFxi )
    DALLOCATE( work )
+
+! write(ounit,'("ma02aa : ", 10x ," : 2.2124 mu =",99(es23.15,","))') mu(1:Nvol)
    
   endif ! end of if( LBnewton ) then
   
@@ -650,6 +670,8 @@ subroutine ma02aa( lvol, NN )
 #endif
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+! write(ounit,'("ma02aa : ", 10x ," : 2.2129 mu =",99(es23.15,","))') mu(1:Nvol)
 
   RETURN(ma02aa)
 

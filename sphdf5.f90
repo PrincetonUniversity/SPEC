@@ -268,6 +268,7 @@ subroutine mirror_input_to_outfile
   HDEFGRP( grpInput, numerics, grpInputNumerics, __FILE__, __LINE__)
 
   HWRITEIV( grpInputNumerics,          1, Linitialize        , (/ Linitialize /))
+  HWRITEIV( grpInputNumerics,          1, LautoinitBn        , (/ LautoinitBn /))
   HWRITEIV( grpInputNumerics,          1, Lzerovac           , (/ Lzerovac    /))
   HWRITEIV( grpInputNumerics,          1, Ndiscrete          , (/ Ndiscrete   /))
   HWRITEIV( grpInputNumerics,          1, Nquad              , (/ Nquad       /))
@@ -332,6 +333,9 @@ subroutine mirror_input_to_outfile
   HWRITERV( grpInputGlobal,            1,  vcasingtol        , (/ vcasingtol  /))
   HWRITEIV( grpInputGlobal,            1,  vcasingits        , (/ vcasingits  /))
   HWRITEIV( grpInputGlobal,            1,  vcasingper        , (/ vcasingper  /))
+  HWRITEIV( grpInputGlobal,            1,  Lvcvacuum         , (/ Lvcvacuum   /))
+  HWRITEIV( grpInputGlobal,            1,  Cteta             , (/ Cteta       /))
+  HWRITEIV( grpInputGlobal,            1,  Czeta             , (/ Czeta       /))
   HWRITEIV( grpInputGlobal,            1,  mcasingcal        , (/ mcasingcal  /))  ! redundant;
 
   HCLOSEGRP( grpInputGlobal )
@@ -964,15 +968,20 @@ subroutine hdfint
   HWRITERV( grpOutput,  1, ForceErr, (/ ForceErr /))
 !latex \type{Ivolume}                & real    & \pb{Volume current at output (parallel, externally induced)}
   HWRITERV( grpOutput, Mvol, Ivolume, Ivolume(1:Mvol))
+  HWRITERV( grpOutput, Mvol, Isurf  ,   Isurf(1:Mvol))
 !latex \type{IPDt}                   & real    & \pb{Surface current at output}
   HWRITERV( grpOutput, Mvol, IPDt, IPDt(1:Mvol))
 
   ! the following quantites can be different from input value
+  HWRITERV( grpOutput,   Mvol, pressure          ,  pressure(1:Nvol)   )
   HWRITERV( grpOutput,   Mvol, adiabatic         , adiabatic(1:Nvol)   )
   HWRITERV( grpOutput,   Nvol, helicity          ,  helicity(1:Nvol)   )
   HWRITERV( grpOutput,   Mvol, mu                ,        mu(1:Mvol)   )
   HWRITERV( grpOutput,   Mvol, tflux             ,     tflux(1:Mvol)   )
   HWRITERV( grpOutput,   Mvol, pflux             ,     pflux(1:Mvol)   )
+
+  HWRITERV( grpOutput,  1, curtor, (/ curtor /)  )
+  HWRITERV( grpOutput,  1, curpol, (/ curpol /)  )
 
   if( Lcheck.eq.1 ) then
 !latex \type{beltramierror}          & real    & \pb{error in beltrami field (volume integral)} \\

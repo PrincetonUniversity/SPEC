@@ -60,7 +60,7 @@ subroutine newton( NGdof, position, ihybrd )
                         Igeometry, & ! only for screen output; 
                         Nvol,                    &
                         Lfindzero, forcetol, c05xmax, c05xtol, c05factor, LreadGF, &
-                        Lcheck
+                        Lcheck, mu
 
   use cputiming, only : Tnewton
 
@@ -71,7 +71,7 @@ subroutine newton( NGdof, position, ihybrd )
                         BBe, IIo, BBo, IIe, &
                         LGdof, dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated , &
                         nfreeboundaryiterations, &
-						LocalConstraint
+                        LocalConstraint
   
   use newtontime
 
@@ -97,7 +97,7 @@ subroutine newton( NGdof, position, ihybrd )
   REAL                   :: force(0:NGdof)
   REAL, allocatable      :: fjac(:,:), RR(:), work(:,:)
   
-  INTEGER                :: ML, MU ! required for only Lc05ndf;
+  INTEGER                :: MLa, MUa ! required for only Lc05ndf;
   
   LOGICAL                :: Lexit = .true. ! perhaps this could be made user input;
   LOGICAL                :: LComputeAxis
@@ -111,6 +111,8 @@ subroutine newton( NGdof, position, ihybrd )
   BEGIN(newton)
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+! write(ounit,'("newton : ", 10x ," : 2.0000 mu =",99(es23.15,","))') mu(1:Nvol)
 
   if( Wnewton .and. myid.eq.0 ) then ! screen output; 
    cput = GETTIME
@@ -133,7 +135,7 @@ subroutine newton( NGdof, position, ihybrd )
   factor = c05factor ! used to determine initial step bound; supplied to NAG;
   
   select case( Lfindzero )
-  case( 1 )    ; ML = NGdof-1 ; MU = NGdof-1 ; epsfcn = sqrtmachprec ! only required for C05NDF; supplied to NAG;
+  case( 1 )    ; MLa = NGdof-1 ; MUa = NGdof-1 ; epsfcn = sqrtmachprec ! only required for C05NDF; supplied to NAG;
   case( 2 )    ;
   end select
   
@@ -145,12 +147,18 @@ subroutine newton( NGdof, position, ihybrd )
   
   lastcpu = GETTIME
   
+! write(ounit,'("newton : ", 10x ," : 2.1000 mu =",99(es23.15,","))') mu(1:Nvol)
+
   if( Lexit ) then ! will call initial force, and if ForceErr.lt.forcetol will immediately exit; 
+
+! write(ounit,'("newton : ", 10x ," : 2.2000 mu =",99(es23.15,","))') mu(1:Nvol)
 
    LComputeDerivatives= .false.
    LComputeAxis = .true.
    WCALL( newton, dforce, ( NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives, LComputeAxis) ) ! calculate the force-imbalance;
    
+! write(ounit,'("newton : ", 10x ," : 2.3000 mu =",99(es23.15,","))') mu(1:Nvol)
+
    if( myid.eq.0 ) then ! screen output; 
     cput = GETTIME
     ; write(ounit,1000) cput-cpus, nFcalls, nDcalls, ForceErr,  cput-lastcpu, "|BB|e", alog10(BBe(1:min(Mvol-1,28)))
@@ -167,6 +175,8 @@ subroutine newton( NGdof, position, ihybrd )
 
    if( ForceErr.lt.forcetol ) then ; ihybrd = 0 ; goto 9999 ! force-balance is satisfied;  
    endif
+
+! write(ounit,'("newton : ", 10x ," : 2.4000 mu =",99(es23.15,","))') mu(1:Nvol)
    
   endif ! end of if( Lexit ) ; 
 
@@ -202,12 +212,14 @@ subroutine newton( NGdof, position, ihybrd )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
+! write(ounit,'("newton : ", 10x ," : 2.5000 mu =",99(es23.15,","))') mu(1:Nvol)
+
   select case( Lfindzero )
    
   case( 1 ) ! use function values                               to find x st f(x)=0, where x is the geometry of the interfaces, and f is the force;
    
    WCALL( newton, hybrd, ( fcn1, NGdof, position(1:NGdof), force(1:NGdof), &
-          xtol, maxfev, ML, MU, epsfcn, diag(1:NGdof), mode, factor, nprint, ihybrd, nfev,       fjac(1:Ldfjac,1:NGdof), Ldfjac, &
+          xtol, maxfev, MLa, MUa, epsfcn, diag(1:NGdof), mode, factor, nprint, ihybrd, nfev,       fjac(1:Ldfjac,1:NGdof), Ldfjac, &
           RR(1:LR), LR, QTF(1:NGdof), workspace(1:NGdof,1), workspace(1:NGdof,2), workspace(1:NGdof,3), workspace(1:NGdof,4) ) )
 
   case( 2 ) ! use function values and user-supplied derivatives to find x st f(x)=0, where x is the geometry of the interfaces, and f is the force;
@@ -221,6 +233,8 @@ subroutine newton( NGdof, position, ihybrd )
    FATAL( newton, .true., value of Lfindzero not supported )
    
   end select
+
+! write(ounit,'("newton : ", 10x ," : 2.6000 mu =",99(es23.15,","))') mu(1:Nvol)
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -239,6 +253,8 @@ subroutine newton( NGdof, position, ihybrd )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
+! write(ounit,'("newton : ", 10x ," : 2.7000 mu =",99(es23.15,","))') mu(1:Nvol)
+
   if( Lfindzero.eq.2 .and. myid.eq.0 .and. irevcm.eq.0 ) then ! will save derivative matrix for future use;
 
    if( Wnewton ) write(ounit,'("newton : ", 10x ," : saving derivative matrix to file ;")')
@@ -268,6 +284,8 @@ subroutine newton( NGdof, position, ihybrd )
 
   endif ! end of if( myid.eq.0 ) then;
   
+! write(ounit,'("newton : ", 10x ," : 2.8000 mu =",99(es23.15,","))') mu(1:Nvol)
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 	call MPI_BARRIER( MPI_COMM_WORLD, ierr2)
 
@@ -284,6 +302,9 @@ subroutine newton( NGdof, position, ihybrd )
   DALLOCATE( RR )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+! write(ounit,'("newton : ", 10x ," : 3.0000 mu =",99(es23.15,","))') mu(1:Nvol)
+
   RETURN(newton)
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -709,7 +730,7 @@ subroutine fcn2( NGdof, xx, fvec, fjac, Ldfjac, irevcm )
 1001 format("fcn2   : ", 10x ," : "9x,3x" ; ":"    "  12x "   ":"     ", 10x ,"  ;":" log"a5"="28f6.2" ...")
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-   
+
    RETURN(newton)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

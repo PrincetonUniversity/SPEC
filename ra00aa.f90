@@ -135,41 +135,70 @@ subroutine ra00aa( writeorread )
    
   case( 'R' ) ! read potential from file; interpolate onto new radial grid;
    
-   !FATAL( ra00aa, .true., under reconstruction )
-
    if( myid.eq.0 ) then
     
-    inquire(file="."//trim(ext)//".sp.A",exist=exist)   
+    cput = GETTIME
     
-    if( .not.exist ) then ; write(ounit,'("ra00aa : ",f10.2," : myid=",i3," ; error ; .ext.sp.A does not exist ;")') cput-cpus, myid ; goto 9998
+    inquire(file="."//trim(ext)//".sp.A",exist=exist)    
+    if( exist ) then
+     open(aunit,file="."//trim(ext)//".sp.A",status="old",form="unformatted",iostat=ios) ! this will contain initial guess for vector potential;
+    else
+     write(ounit,'("ra00aa : ",f10.2," : myid=",i3," ; error ; .ext.sp.A does not exist ;")') cput-cpus, myid
+     inquire(file=".sp.A",exist=exist)   
+     if( exist ) then
+      open(aunit,file=".sp.A",status="old",form="unformatted",iostat=ios) ! this will contain initial guess for vector potential;
+     else
+      write(ounit,'("ra00aa : ",f10.2," : myid=",i3," ; error ; .sp.A does not exist ;")') cput-cpus, myid
+      goto 9998
+     endif
     endif
     
-    open(aunit,file="."//trim(ext)//".sp.A",status="old",form="unformatted",iostat=ios) ! this will contain initial guess for vector potential;
+   !open(aunit,file="."//trim(ext)//".sp.A",status="old",form="unformatted",iostat=ios) ! this will contain initial guess for vector potential;
     
-    if( ios.ne.0 ) then ; write(ounit,'("ra00aa : ",f10.2," : myid=",i3," ; error ; opening .ext.sp.A ;")') cput-cpus, myid ; goto 9997
+    if( ios.ne.0 ) then
+     write(ounit,'("ra00aa : ",f10.2," : myid=",i3," ; error ; opening .ext.sp.A ;")') cput-cpus, myid
+     goto 9997
     endif
     
     read(aunit,iostat=ios) oldMvol, oldMpol, oldNtor, oldmn, oldNfp ! these are the "old" resolution parameters;
     
     if( ios.ne.0 ) then
-     write(ounit,'("ra00aa : ",f10.2," : myid=",i3," ; error ; reading oldMvol, oldMpol, oldNtor, oldmn, oldNfp;")') cput-cpus, myid
+     write(ounit,'("ra00aa : ",f10.2," : myid=",i3," ; error ; reading oldMvol, oldMpol, oldNtor, oldmn, oldNfp ;")') cput-cpus, myid
      goto 9997
     endif
     
-    if( oldNfp .ne.Nfp  ) then ; write(ounit,'("ra00aa : ",f10.2," : myid=",i3," ; error ; inconsistent Nfp ; ")') cput-cpus, myid ; goto 9997
+    if( oldNfp .ne.Nfp  ) then
+     write(ounit,'("ra00aa : ",f10.2," : myid=",i3," ; error ; inconsistent Nfp ; ")') cput-cpus, myid
+     goto 9997
     endif
-    if( oldMvol.ne.Mvol ) then ; write(ounit,'("ra00aa : ",f10.2," : myid=",i3," ; error ; inconsistent Mvol ;")') cput-cpus, myid ; goto 9997
+   
+    if( oldMvol.ne.Mvol ) then
+     write(ounit,'("ra00aa : ",f10.2," : myid=",i3," ; error ; inconsistent Mvol ;")') cput-cpus, myid
+     goto 9997
     endif
     
     SALLOCATE( oldim, (1:oldmn), 0 )
     SALLOCATE( oldin, (1:oldmn), 0 )
     
     read(aunit,iostat=ios) oldim(1:oldmn)
+
+    if( ios.ne.0 ) then
+     write(ounit,'("ra00aa : ",f10.2," : myid=",i3," ; error ; inconsistent im ;         ")') cput-cpus, myid
+    endif
+
     read(aunit,iostat=ios) oldin(1:oldmn)
+
+    if( ios.ne.0 ) then
+     write(ounit,'("ra00aa : ",f10.2," : myid=",i3," ; error ; inconsistent in ;         ")') cput-cpus, myid
+    endif
     
     do vvol = 1, oldMvol
      
      read(aunit,iostat=ios) oldLrad
+
+     if( ios.ne.0 ) then
+      write(ounit,'("ra00aa : ",f10.2," : myid=",i3," ; error ; reading Lrad ;            ")') cput-cpus, myid
+     endif
      
      minLrad = min(oldLrad,Lrad(vvol))
      
@@ -181,9 +210,13 @@ subroutine ra00aa( writeorread )
      do jj = 1, oldmn
       
       read(aunit,iostat=ios) oldAte(0:oldLrad)
+      if( ios.ne.0 ) write(ounit,'("ra00aa : ",f10.2," : myid=",i3," ; error ; reading Ate  ;            ")') cput-cpus, myid
       read(aunit,iostat=ios) oldAze(0:oldLrad)
+      if( ios.ne.0 ) write(ounit,'("ra00aa : ",f10.2," : myid=",i3," ; error ; reading Aze  ;            ")') cput-cpus, myid
       read(aunit,iostat=ios) oldAto(0:oldLrad)
+      if( ios.ne.0 ) write(ounit,'("ra00aa : ",f10.2," : myid=",i3," ; error ; reading Ato  ;            ")') cput-cpus, myid
       read(aunit,iostat=ios) oldAzo(0:oldLrad)
+      if( ios.ne.0 ) write(ounit,'("ra00aa : ",f10.2," : myid=",i3," ; error ; reading Azo  ;            ")') cput-cpus, myid
       
       do ii = 1, mn ! compare Fourier harmonic with old; 26 Feb 13;
        if( im(ii).eq.oldim(jj) .and. in(ii).eq.oldin(jj) ) then ; Ate(vvol,ideriv,ii)%s(0:minLrad) = oldAte(0:minLrad)

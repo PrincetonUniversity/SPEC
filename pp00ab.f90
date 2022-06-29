@@ -105,6 +105,8 @@ subroutine pp00ab( lvol, sti, Nz, nPpts, poincaredata, fittedtransform, utflag )
   
   utflag = 0 ; poincaredata(1:4,0:Nz-1,1:nPpts) = zero ; fittedtransform(1:2) = - two ! provide dummy defaults;
   
+ !write(ounit,'("pp00ab : " 10x : " lvol ="i3" ; sti =",2es13.5," ; Nz =",i3," ; nPpts =",i6," ;")') lvol, sti(1:2), Nz, nPpts
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   do jj = 1, nPpts ! loop over iterations;

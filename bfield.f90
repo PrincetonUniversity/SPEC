@@ -37,7 +37,7 @@ subroutine bfield( zeta, st, Bst ) ! the format of this subroutine is constraine
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  use constants, only : zero, one, half, two
+  use constants, only : zero, one, half, two, ten
   
   use numerical, only : vsmall, small
   
@@ -145,12 +145,14 @@ subroutine bfield( zeta, st, Bst ) ! the format of this subroutine is constraine
   
   if( abs(gBzeta).lt.vsmall ) then
 
-   cput = GETTIME
+!  cput = GETTIME
 
-   write(ounit,'("bfield : ",f10.2," : lvol=",i3," ; zeta="es23.15" ; (s,t)=("es23.15" ,"es23.15" ) ; B^z="es23.15" ;")') &
-                             cput-cpus, lvol,        zeta,             st(1:2),                       dBu(3)
+!  write(ounit,'("bfield : ",f10.2," : lvol=",i3," ; zeta="es23.15" ; (s,t)=("es23.15" ,"es23.15" ) ; B^z="es23.15" ;")') &
+!                            cput-cpus, lvol,        zeta,             st(1:2),                       dBu(3)
 
-   FATAL( bfield, abs(dBu(3)).lt.vsmall, field is not toroidal )
+!  FATAL( bfield, abs(dBu(3)).lt.vsmall, field is not toroidal )
+
+   gBzeta = ten
 
   endif
   
