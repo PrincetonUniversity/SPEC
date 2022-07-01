@@ -673,6 +673,13 @@ module allglobal
 
   REAL,    allocatable :: dFFdRZ(:,:,:,:,:) !< derivatives of B^2 at the interfaces wrt geometry
   REAL,    allocatable :: dBBdmp(:,:,:,:  ) !< derivatives of B^2 at the interfaces wrt mu and dpflux
+
+  REAL,    allocatable :: HdFFdRZ(:,:,:,:,:) !< derivatives of B^2 at the interfaces wrt geometry 2D Hessian; 
+
+  REAL,    allocatable :: denergydrr(:,:,:,:,:) !< derivatives of energy at the interfaces wrt geometry 3D Hessian; 
+  REAL,    allocatable :: denergydrz(:,:,:,:,:) !< derivatives of energy at the interfaces wrt geometry 3D Hessian; 
+  REAL,    allocatable :: denergydzr(:,:,:,:,:) !< derivatives of energy at the interfaces wrt geometry 3D Hessian; 
+  REAL,    allocatable :: denergydzz(:,:,:,:,:) !< derivatives of energy at the interfaces wrt geometry 3D Hessian; 
 !> @}
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -722,6 +729,14 @@ module allglobal
   LOGICAL              :: Lhessianallocated !< flag to indicate that force gradient matrix is allocated (?)
   REAL,    allocatable :: hessian(:,:)      !<               force gradient matrix (?)
   REAL,    allocatable :: dessian(:,:)      !< derivative of force gradient matrix (?)
+
+  LOGICAL              :: Lhessian2Dallocated !< flag to indicate that 2D Hessian matrix is allocated (?)
+  REAL,    allocatable :: hessian2D(:,:) !< Hessian 2D
+  REAL,    allocatable :: dessian2D(:,:) !< derivative Hessian 2D
+
+  LOGICAL              :: Lhessian3Dallocated !< flag to indicate that 2D Hessian matrix is allocated (?)
+  REAL,    allocatable :: hessian3D(:,:) !< Hessian 3D
+  REAL,    allocatable :: dessian3D(:,:) !< derivative Hessian 3D
 !> @}
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

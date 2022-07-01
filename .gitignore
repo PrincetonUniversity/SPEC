@@ -31,6 +31,8 @@ dspec
 InputFiles/**/*.h5
 InputFiles/**/*.sp.end
 InputFiles/**/*.sp.DF
+InputFiles/**/*.GF.ev
+InputFiles/**/*.GF.ma
 **/__pycache__
 
 # files in ci

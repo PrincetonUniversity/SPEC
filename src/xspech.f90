@@ -526,8 +526,8 @@ subroutine spec
 
    if( myid.eq.0 ) then
     cput = GETTIME
-    write(ounit,'("xspech : ", 10x ," : ")')
-    write(ounit,'("xspech : ",f10.2," : myid=",i3," ; calling hesian ; see .ext.hessian.myid ;")') cput-cpus, myid
+    write(ounit,'("xspech : ", 10x ," : -------------------Stability Evaluations------------------ ")')
+    write(ounit,'("xspech : ",f10.2," : myid=",i3," ; calling hessian; see .ext.hessian.myid ;")') cput-cpus, myid
    endif
 
    WCALL( xspech, hesian, ( NGdof, position(0:NGdof), Mvol, mn, LGdof ) )
