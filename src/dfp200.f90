@@ -168,7 +168,7 @@ subroutine dfp200( LcomputeDerivatives, vvol)
 
     vflag = 1
     WCALL( dfp200, volume, ( vvol, vflag ) ) ! compute volume;
-     
+
      !!----Hessian2D cleared-----
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -246,9 +246,10 @@ subroutine dfp200( LcomputeDerivatives, vvol)
             !if (LHmatrix .and. Lhessian2Dallocated) then
              !   call hessian_dFFdRZ(vvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
             !else
-                ! Evaluate derivatives of B square 
+                ! Evaluate derivatives of B square
               if(Lhessianallocated) then
-                call evaluate_dBB(vvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
+                call evaluate_dBB(vvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz, &
+                                  LComputeDerivatives)
               endif
 
                 if (Lhessian3Dallocated .and. Igeometry.ge.3) then
@@ -557,8 +558,9 @@ else ! CASE SEMI GLOBAL CONSTRAINT
                         LREGION(lvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
 
                         ! EVALUATE dBB
-                        call evaluate_dBB(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
-                        
+                        call evaluate_dBB(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz, &
+                                          LComputeDerivatives)
+
                         if (Lhessian3Dallocated .and. Igeometry.ge.3) then
                             call hessian3D_dFFdRZ(vvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
                         endif
@@ -603,7 +605,7 @@ else ! CASE SEMI GLOBAL CONSTRAINT
         enddo
     endif
 
-    endif ! End of if( LComputeDerivatives ) 
+    endif ! End of if( LComputeDerivatives )
 
 
 
@@ -1762,7 +1764,7 @@ end subroutine evaluate_dBB
 subroutine hessian_dFFdRZ(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
 
 ! Evaluate the derivative of the square of the magnetic field modulus. Add spectral constraint derivatives if
-! required. 
+! required.
 
 ! INPUT
 ! -----
@@ -1776,17 +1778,17 @@ subroutine hessian_dFFdRZ(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, lengt
 ! MODULES
 ! -------
   use constants, only : zero, half, one, two
-  
+
   use numerical, only : small
-  
+
   use fileunits, only : ounit
-  
+
   use inputlist, only : Wmacros, Wdfp200, Ntor, Igeometry, Lconstraint,&
                         gamma, adiabatic, pscale, Lcheck, dRZ, Nvol, &
                         epsilon, Lrad
-  
+
   use cputiming, only : Tdfp200
-  
+
   use allglobal, only : ncpu, myid, cpus, &
                         Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, LocalConstraint, MPI_COMM_SPEC, &
                         Mvol, dpflux, &
@@ -1853,7 +1855,7 @@ do iocons = 0, 1
     FATAL( dfp200, vvolume(lvol).lt.small, shall divide by vvolume(lvol)**(gamma+one) )
 
     ! Derivatives of force wrt geometry; In real space.
-    ijreal(1:Ntz) = - adiabatic(lvol) * pscale * gamma * dvolume / vvolume(lvol)**(gamma+one) + dBB(1:Ntz,-1)*Rij(1:Ntz,0,0) 
+    ijreal(1:Ntz) = - adiabatic(lvol) * pscale * gamma * dvolume / vvolume(lvol)**(gamma+one) + dBB(1:Ntz,-1)*Rij(1:Ntz,0,0)
 
 ! Spectral condensation contribution
 ! ----------------------------------
@@ -1862,16 +1864,16 @@ do iocons = 0, 1
     dPP(1:Ntz) = zero ! either no spectral constraint, or not the appropriate interface;
     dII(1:Ntz) = zero
 
-   
+
     ! Map to Fourier space
     call tfft(  Nt, Nz, ijreal(1:Ntz), dII(1:Ntz), & ! recall that ijreal contains derivatives of pressure term;
                 mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), ifail )
 
 
     FATAL( dfp200, lvol-1+innout.gt.Mvol, psifactor needs attention )
-    
+
     idoc = 0
-  
+
     ! Plasma and magnetic pressure;
     ;   HdFFdRZ(idoc+1:idoc+mn    ,iocons,idof,innout,lvol) = + efmn(1:mn) !* psifactor(ii,lvol-1+innout) * BBweight(1:mn)
     idoc = idoc + mn   ! even;
@@ -1887,8 +1889,8 @@ do iocons = 0, 1
     if( NOTstellsym ) then ! Construct non-stellarator symmetric terms
 
     ! Plasma and magnetic pressure;
-    ;       HdFFdRZ(idoc+1:idoc+mn-1  ,iocons,idof,innout,lvol) = + ofmn(2:mn) !* psifactor(ii,lvol-1+innout) * BBweight(2:mn) 
-      
+    ;       HdFFdRZ(idoc+1:idoc+mn-1  ,iocons,idof,innout,lvol) = + ofmn(2:mn) !* psifactor(ii,lvol-1+innout) * BBweight(2:mn)
+
         idoc = idoc + mn-1 ! odd;
         ! if( Igeometry.ge.3 ) then ! Add spectral constraints;
         !     HdFFdRZ(idoc+1:idoc+mn    ,iocons,idof,innout,lvol) = - cfmn(1:mn) * psifactor(ii,lvol-1+innout) * epsilon       & ! spectral condensation;
@@ -1904,7 +1906,7 @@ do iocons = 0, 1
 #ifdef DEBUG
     FATAL( dfp200, idoc.ne.LGdof, counting error )
 #endif
-     
+
 enddo ! end of do iocons;
 
 end subroutine hessian_dFFdRZ
@@ -1912,7 +1914,7 @@ end subroutine hessian_dFFdRZ
 subroutine hessian3D_dFFdRZ(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
 
 ! Evaluate the derivative of the square of the magnetic field modulus. Add spectral constraint derivatives if
-! required. 
+! required.
 
 ! INPUT
 ! -----
@@ -1926,17 +1928,17 @@ subroutine hessian3D_dFFdRZ(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, len
 ! MODULES
 ! -------
   use constants, only : zero, half, one, two
-  
+
   use numerical, only : small
-  
+
   use fileunits, only : ounit
-  
+
   use inputlist, only : Wmacros, Wdfp200, Ntor, Igeometry, Lconstraint, &
                         gamma, adiabatic, pscale, Lcheck, dRZ, Nvol, &
                         epsilon, Lrad
-  
+
   use cputiming, only : Tdfp200
-  
+
   use allglobal, only : ncpu, myid, cpus, YESstellsym, NOTstellsym, MPI_COMM_SPEC,&
                         Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, LocalConstraint, &
                         Mvol, dpflux, &
@@ -2028,7 +2030,7 @@ do iocons = 0, 1
                   ddFcol2(1:Ntz) =  ijreal(1:Ntz) * Rij(1:Ntz,0,0) * Rij(1:Ntz,2,0) !Fzr        d/dr(dw/dz)
                  endif
             else !derivative wrt to Zbs of d/dz(dF)
-                
+
                 if(innout.eq.iocons) then
                    ddFcol3(1:Ntz) = ijreal(1:Ntz) * Rij(1:Ntz,0,0) * Zij(1:Ntz,2,0) &   !Frz      d/dz(dw/dr)
                                   + (dBB(1:Ntz,0) +adiabatic(lvol) * pscale/vvolume(lvol)**gamma )* Rij(1:Ntz,0,0) * im(ii) *cosi(1:Ntz,ii)
@@ -2037,7 +2039,7 @@ do iocons = 0, 1
                    ddFcol3(1:Ntz) = ijreal(1:Ntz) * Rij(1:Ntz,0,0) * Zij(1:Ntz,2,0)  !Frz      d/dz(dw/dr)
                     ddFcol4(1:Ntz) =  ijreal(1:Ntz) * Rij(1:Ntz,0,0) * Rij(1:Ntz,2,0)  !Fzz    d/dz(dw/dz)
                 endif
-           endif 
+           endif
         else
               !   if( irz.eq.0 ) then
               !       ddFcol1(1:Ntz) = -ijreal(1:Ntz) * Zij(1:Ntz,2,0) * Rij(1:Ntz,0,0) & !Frr       d/dr(dw/dr)
@@ -2066,7 +2068,7 @@ do iocons = 0, 1
 
                    call tfft(  Nt, Nz, ddFcol3(1:Ntz),ddFcol4(1:Ntz), &
                                mn, im(1:mn), in(1:mn), evmn(1:mn), odmn(1:mn), comn(1:mn), simn(1:mn), ifail ) ! evmn and odmn are available as workspace;
-        
+
 
           !call tfft(Nt , Nz, ddFcol1(1:Ntz),ddFcol2(1:Ntz), &
           !                                 mn, im(1:mn), in(1:mn),  efcol1mn(1:mn), ofcol1mn(1:mn), ofcol2mn(1:mn), efcol2mn(1:mn), ifail )
@@ -2091,8 +2093,8 @@ do iocons = 0, 1
 
           if(irz.eq.1 .and. ii.gt.1) then
               ;idoc=0
-                     ;denergydzr(idoc+1:idoc+mn-1 ,lvol,iocons,idof,innout) =  evmn(1:mn) !wzr
-                        !write(ounit,*) im(ii),in(ii), evmn(1:mn) !vvol, im(ii), in(ii), irz, issym, tdofr, tdofz 
+                     ;denergydzr(idoc+1:idoc+mn-1 ,lvol,iocons,idof,innout) =  evmn(1:mn-1) !wzr
+                        !write(ounit,*) im(ii),in(ii), evmn(1:mn) !vvol, im(ii), in(ii), irz, issym, tdofr, tdofz
               ;idoc=idoc+mn
                       ;denergydzr(idoc+1:idoc+mn-1 ,lvol,iocons,idof,innout) =  simn(2:mn) !wzz
               ;idoc=idoc+mn-1
@@ -2129,7 +2131,7 @@ do iocons = 0, 1
 #ifdef DEBUG
     FATAL( dfp200, idoc.ne.LGdof, counting error )
 #endif
-     
+
 enddo ! end of do iocons;
 
-end subroutine hessian3D_dFFdRZ 
+end subroutine hessian3D_dFFdRZ
