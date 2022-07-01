@@ -27,34 +27,32 @@ var NAVTREE =
   [ "SPEC", "index.html", [
     [ "The Stepped Pressure Equilibrium Code", "index.html", null ],
     [ "Compilation hints for SPEC", "md_Compile.html", [
-      [ "CMake and Anaconda", "md_Compile.html#autotoc_md2", [
-        [ "Install Anaconda", "md_Compile.html#autotoc_md3", null ],
-        [ "Clone the SPEC repository", "md_Compile.html#autotoc_md4", null ],
-        [ "Setup a Conda Environment for SPEC", "md_Compile.html#autotoc_md5", null ],
-        [ "Testing your SPEC installation", "md_Compile.html#autotoc_md6", null ],
-        [ "Acknowledgements", "md_Compile.html#autotoc_md7", null ]
+      [ "CMake and Anaconda", "md_Compile.html#autotoc_md1", [
+        [ "Install Anaconda", "md_Compile.html#autotoc_md2", null ],
+        [ "Clone the SPEC repository", "md_Compile.html#autotoc_md3", null ],
+        [ "Setup a Conda Environment for SPEC", "md_Compile.html#autotoc_md4", null ],
+        [ "Testing your SPEC installation", "md_Compile.html#autotoc_md5", null ],
+        [ "Acknowledgements", "md_Compile.html#autotoc_md6", null ]
       ] ],
+      [ "BELOW INSTRUCTIONS ARE OUTDATED", "md_Compile.html#autotoc_md7", null ],
       [ "BELOW INSTRUCTIONS ARE OUTDATED", "md_Compile.html#autotoc_md8", null ],
-      [ "BELOW INSTRUCTIONS ARE OUTDATED", "md_Compile.html#autotoc_md9", null ],
-      [ "BELOW INSTRUCTIONS ARE OUTDATED", "md_Compile.html#autotoc_md10", [
-        [ "Installation with CMake", "md_Compile.html#autotoc_md11", null ],
-        [ "Stand-alone Executable Compiling", "md_Compile.html#autotoc_md12", [
-          [ "CentOS", "md_Compile.html#autotoc_md13", [
-            [ "Dependencies", "md_Compile.html#autotoc_md14", null ],
-            [ "Configure", "md_Compile.html#autotoc_md15", null ],
-            [ "Build", "md_Compile.html#autotoc_md16", null ]
+      [ "BELOW INSTRUCTIONS ARE OUTDATED", "md_Compile.html#autotoc_md9", [
+        [ "Installation with CMake", "md_Compile.html#autotoc_md10", null ],
+        [ "Stand-alone Executable Compiling", "md_Compile.html#autotoc_md11", [
+          [ "CentOS", "md_Compile.html#autotoc_md12", [
+            [ "Dependencies", "md_Compile.html#autotoc_md13", null ],
+            [ "Configure", "md_Compile.html#autotoc_md14", null ],
+            [ "Build", "md_Compile.html#autotoc_md15", null ]
           ] ]
         ] ],
-        [ "Python Extension Compiling", "md_Compile.html#autotoc_md17", [
-          [ "Dependencies", "md_Compile.html#autotoc_md18", null ]
+        [ "Python Extension Compiling", "md_Compile.html#autotoc_md16", [
+          [ "Dependencies", "md_Compile.html#autotoc_md17", null ]
         ] ],
-        [ "Stellar cluster at PPPL", "md_Compile.html#autotoc_md19", [
-          [ "Python wrapper", "md_Compile.html#autotoc_md20", null ]
+        [ "Stellar cluster at PPPL", "md_Compile.html#autotoc_md18", [
+          [ "Python wrapper", "md_Compile.html#autotoc_md19", null ],
+          [ "SPEC executable.", "md_Compile.html#autotoc_md21", null ]
         ] ],
-        [ "iv. anaconda3/2021.5.", "md_Compile.html#autotoc_md21", [
-          [ "SPEC executable.", "md_Compile.html#autotoc_md23", null ]
-        ] ],
-        [ "Mac", "md_Compile.html#autotoc_md24", null ]
+        [ "Mac", "md_Compile.html#autotoc_md22", null ]
       ] ]
     ] ],
     [ "Todo List", "todo.html", null ],
@@ -87,7 +85,7 @@ var NAVTREEINDEX =
 "annotated.html",
 "group__grp__fourier__transform.html#ga374fee9c03e6c2b938299934decdcd55",
 "group__grp__output.html#ga17e65b951634f7098213fd071d905482",
-"sphdf5_8f90.html#a9110951adf8bcaf9b10804ac513f87ca"
+"sphdf5_8f90.html#a98d088d91590a7334ffbeb4b0167b0c6"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';
