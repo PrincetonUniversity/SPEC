@@ -1627,6 +1627,26 @@ real, dimension(:,:,:,:,:), allocatable&#160;</td><td class="memItemRight" valig
 real, dimension(:,:,:,:), allocatable&#160;</td><td class="memItemRight" valign="bottom"><b>allglobal::dbbdmp</b></td></tr>
 <tr class="memdesc:gac48e5a242739199fc49133a066b63731"><td class="mdescLeft">&#160;</td><td class="mdescRight">derivatives of B^2 at the interfaces wrt mu and dpflux <br /></td></tr>
 <tr class="separator:gac48e5a242739199fc49133a066b63731"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga68a46902a95eb52690d14301793361f7"><td class="memItemLeft" align="right" valign="top">
+real, dimension(:,:,:,:,:), allocatable&#160;</td><td class="memItemRight" valign="bottom"><b>allglobal::hdffdrz</b></td></tr>
+<tr class="memdesc:ga68a46902a95eb52690d14301793361f7"><td class="mdescLeft">&#160;</td><td class="mdescRight">derivatives of B^2 at the interfaces wrt geometry 2D Hessian; <br /></td></tr>
+<tr class="separator:ga68a46902a95eb52690d14301793361f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaa9d6eedf4516477eb765c1985ea57c3c"><td class="memItemLeft" align="right" valign="top">
+real, dimension(:,:,:,:,:), allocatable&#160;</td><td class="memItemRight" valign="bottom"><b>allglobal::denergydrr</b></td></tr>
+<tr class="memdesc:gaa9d6eedf4516477eb765c1985ea57c3c"><td class="mdescLeft">&#160;</td><td class="mdescRight">derivatives of energy at the interfaces wrt geometry 3D Hessian; <br /></td></tr>
+<tr class="separator:gaa9d6eedf4516477eb765c1985ea57c3c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gae81fe65c376d2dc9e597d7b9de969f30"><td class="memItemLeft" align="right" valign="top">
+real, dimension(:,:,:,:,:), allocatable&#160;</td><td class="memItemRight" valign="bottom"><b>allglobal::denergydrz</b></td></tr>
+<tr class="memdesc:gae81fe65c376d2dc9e597d7b9de969f30"><td class="mdescLeft">&#160;</td><td class="mdescRight">derivatives of energy at the interfaces wrt geometry 3D Hessian; <br /></td></tr>
+<tr class="separator:gae81fe65c376d2dc9e597d7b9de969f30"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gadeaab07f09e44924b64e4e5808f461e5"><td class="memItemLeft" align="right" valign="top">
+real, dimension(:,:,:,:,:), allocatable&#160;</td><td class="memItemRight" valign="bottom"><b>allglobal::denergydzr</b></td></tr>
+<tr class="memdesc:gadeaab07f09e44924b64e4e5808f461e5"><td class="mdescLeft">&#160;</td><td class="mdescRight">derivatives of energy at the interfaces wrt geometry 3D Hessian; <br /></td></tr>
+<tr class="separator:gadeaab07f09e44924b64e4e5808f461e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gac7b00712a173d54e54e691ecd9d30c56"><td class="memItemLeft" align="right" valign="top">
+real, dimension(:,:,:,:,:), allocatable&#160;</td><td class="memItemRight" valign="bottom"><b>allglobal::denergydzz</b></td></tr>
+<tr class="memdesc:gac7b00712a173d54e54e691ecd9d30c56"><td class="mdescLeft">&#160;</td><td class="mdescRight">derivatives of energy at the interfaces wrt geometry 3D Hessian; <br /></td></tr>
+<tr class="separator:gac7b00712a173d54e54e691ecd9d30c56"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gadbfeeb10efad1a2a84fe800073a0ba18"><td class="memItemLeft" align="right" valign="top">
 real, dimension(:,:,:,:,:), allocatable&#160;</td><td class="memItemRight" valign="bottom"><b>allglobal::dmupfdx</b></td></tr>
 <tr class="memdesc:gadbfeeb10efad1a2a84fe800073a0ba18"><td class="mdescLeft">&#160;</td><td class="mdescRight">derivatives of mu and dpflux wrt geometry at constant interface transform <br /></td></tr>
@@ -1643,6 +1663,30 @@ real, dimension(:,:), allocatable&#160;</td><td class="memItemRight" valign="bot
 real, dimension(:,:), allocatable&#160;</td><td class="memItemRight" valign="bottom"><b>allglobal::dessian</b></td></tr>
 <tr class="memdesc:ga62fde4fa7074396fee8b02aae1ce5230"><td class="mdescLeft">&#160;</td><td class="mdescRight">derivative of force gradient matrix (?) <br /></td></tr>
 <tr class="separator:ga62fde4fa7074396fee8b02aae1ce5230"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga3ad879f192d9b11697fd8d38954f031d"><td class="memItemLeft" align="right" valign="top">
+logical&#160;</td><td class="memItemRight" valign="bottom"><b>allglobal::lhessian2dallocated</b></td></tr>
+<tr class="memdesc:ga3ad879f192d9b11697fd8d38954f031d"><td class="mdescLeft">&#160;</td><td class="mdescRight">flag to indicate that 2D Hessian matrix is allocated (?) <br /></td></tr>
+<tr class="separator:ga3ad879f192d9b11697fd8d38954f031d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga7f5b07d2e78323799aa09693a86dc280"><td class="memItemLeft" align="right" valign="top">
+real, dimension(:,:), allocatable&#160;</td><td class="memItemRight" valign="bottom"><b>allglobal::hessian2d</b></td></tr>
+<tr class="memdesc:ga7f5b07d2e78323799aa09693a86dc280"><td class="mdescLeft">&#160;</td><td class="mdescRight">Hessian 2D. <br /></td></tr>
+<tr class="separator:ga7f5b07d2e78323799aa09693a86dc280"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga1fe8dd67e50296b9442b3b74373c9f6d"><td class="memItemLeft" align="right" valign="top">
+real, dimension(:,:), allocatable&#160;</td><td class="memItemRight" valign="bottom"><b>allglobal::dessian2d</b></td></tr>
+<tr class="memdesc:ga1fe8dd67e50296b9442b3b74373c9f6d"><td class="mdescLeft">&#160;</td><td class="mdescRight">derivative Hessian 2D <br /></td></tr>
+<tr class="separator:ga1fe8dd67e50296b9442b3b74373c9f6d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga10595494020d6bc72cece598f835d13c"><td class="memItemLeft" align="right" valign="top">
+logical&#160;</td><td class="memItemRight" valign="bottom"><b>allglobal::lhessian3dallocated</b></td></tr>
+<tr class="memdesc:ga10595494020d6bc72cece598f835d13c"><td class="mdescLeft">&#160;</td><td class="mdescRight">flag to indicate that 2D Hessian matrix is allocated (?) <br /></td></tr>
+<tr class="separator:ga10595494020d6bc72cece598f835d13c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga247333cf5ddbc66d3337c5ff1079628f"><td class="memItemLeft" align="right" valign="top">
+real, dimension(:,:), allocatable&#160;</td><td class="memItemRight" valign="bottom"><b>allglobal::hessian3d</b></td></tr>
+<tr class="memdesc:ga247333cf5ddbc66d3337c5ff1079628f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Hessian 3D. <br /></td></tr>
+<tr class="separator:ga247333cf5ddbc66d3337c5ff1079628f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gafa6527dace1721047b02cc06c94637cf"><td class="memItemLeft" align="right" valign="top">
+real, dimension(:,:), allocatable&#160;</td><td class="memItemRight" valign="bottom"><b>allglobal::dessian3d</b></td></tr>
+<tr class="memdesc:gafa6527dace1721047b02cc06c94637cf"><td class="mdescLeft">&#160;</td><td class="mdescRight">derivative Hessian 3D <br /></td></tr>
+<tr class="separator:gafa6527dace1721047b02cc06c94637cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga569d67a6d68e2298d0c2695c7c1ac4d9"><td class="memItemLeft" align="right" valign="top">
 real, dimension(:,:), allocatable&#160;</td><td class="memItemRight" valign="bottom"><b>allglobal::cosi</b></td></tr>
 <tr class="memdesc:ga569d67a6d68e2298d0c2695c7c1ac4d9"><td class="mdescLeft">&#160;</td><td class="mdescRight">some precomputed cosines <br /></td></tr>
