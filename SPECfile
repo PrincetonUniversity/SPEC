@@ -10,7 +10,13 @@
 
 ###############################################################################################################################################################
 
-afiles=mod_kinds inputlist global sphdf5 preset manual rzaxis packxi volume coords basefn memory
+# basis of SPEC: input variables, global workspace, HDF5 output file writing
+# these are split off since they require special treatment (needed by all others and/or special macros)
+BASEFILES=inputlist global
+IOFILES=sphdf5
+
+# (most of) physics part of SPEC
+afiles=preset manual rzaxis packxi volume coords basefn memory
 bfiles=metrix ma00aa matrix spsmat spsint mp00ac ma02aa packab tr00ab curent df00ab lforce intghs mtrxhs lbpol
 cfiles=brcast dfp100 dfp200 dforce newton
 dfiles=casing bnorml
@@ -26,8 +32,11 @@ sfiles=dcuhre minpack iqpack rksuite i1mach d1mach ilut iters
 # all of SPEC except BASEFILES
 SPECFILES=$(afiles) $(bfiles) $(cfiles) $(dfiles) $(efiles) $(ffiles)
 
+# all of "our" (vs. contributed) files needed for the "core" of SPEC
+ALLSPEC=$(BASEFILES) $(IOFILES) $(SPECFILES)
+
 # *ALL* files needed for the main SPEC executable
-ALLFILES=$(sfiles) $(SPECFILES) xspech
+ALLFILES=$(sfiles) $(ALLSPEC) xspech mod_kinds
 
 ###############################################################################################################################################################
 

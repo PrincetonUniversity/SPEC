@@ -1614,7 +1614,7 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
    Tdfp200 = Tdfp200 + ( cput-cpuo )
    call intghs_workspace_destroy()
    cpuo = MPI_WTIME()
-)
+
         endif
 
         do isymdiff = -2, 2 ! symmetric fourth-order, finite-difference used to approximate derivatives;
