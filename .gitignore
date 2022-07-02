@@ -1,4 +1,9 @@
 
+# python_wrapper
+Utilities/python_wrapper/spec.egg-info
+dist
+.eggs
+
 *.o
 *.mod
 *_p.f90
@@ -26,6 +31,8 @@ dspec
 InputFiles/**/*.h5
 InputFiles/**/*.sp.end
 InputFiles/**/*.sp.DF
+InputFiles/**/*.GF.ev
+InputFiles/**/*.GF.ma
 **/__pycache__
 
 # files in ci

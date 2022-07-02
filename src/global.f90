@@ -66,7 +66,7 @@ module constants
   REAL, parameter :: mu0        =   2.0E-07 * pi2       !< \f$4\pi\cdot10^{-7}\f$
   REAL, parameter :: goldenmean =   1.618033988749895   !< golden mean = \f$( 1 + \sqrt 5 ) / 2\f$ ;
 
-  REAL, parameter :: version    =   3.10  !< version of SPEC
+  REAL, parameter :: version    =   3.20  !< version of SPEC
 
 end module constants
 
@@ -609,7 +609,9 @@ module allglobal
 
   REAL   , allocatable :: glambda(:,:,:,:) !< save initial guesses for iterative calculation of rotational-transform
 
-  INTEGER              :: lmns !< what is this?
+  INTEGER              :: lmns !< number of independent degrees of freedom in angle transformation;
+
+  REAL,    allocatable :: dlambdaout(:,:,:)
 !> @}
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -671,6 +673,13 @@ module allglobal
 
   REAL,    allocatable :: dFFdRZ(:,:,:,:,:) !< derivatives of B^2 at the interfaces wrt geometry
   REAL,    allocatable :: dBBdmp(:,:,:,:  ) !< derivatives of B^2 at the interfaces wrt mu and dpflux
+
+  REAL,    allocatable :: HdFFdRZ(:,:,:,:,:) !< derivatives of B^2 at the interfaces wrt geometry 2D Hessian; 
+
+  REAL,    allocatable :: denergydrr(:,:,:,:,:) !< derivatives of energy at the interfaces wrt geometry 3D Hessian; 
+  REAL,    allocatable :: denergydrz(:,:,:,:,:) !< derivatives of energy at the interfaces wrt geometry 3D Hessian; 
+  REAL,    allocatable :: denergydzr(:,:,:,:,:) !< derivatives of energy at the interfaces wrt geometry 3D Hessian; 
+  REAL,    allocatable :: denergydzz(:,:,:,:,:) !< derivatives of energy at the interfaces wrt geometry 3D Hessian; 
 !> @}
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -720,6 +729,14 @@ module allglobal
   LOGICAL              :: Lhessianallocated !< flag to indicate that force gradient matrix is allocated (?)
   REAL,    allocatable :: hessian(:,:)      !<               force gradient matrix (?)
   REAL,    allocatable :: dessian(:,:)      !< derivative of force gradient matrix (?)
+
+  LOGICAL              :: Lhessian2Dallocated !< flag to indicate that 2D Hessian matrix is allocated (?)
+  REAL,    allocatable :: hessian2D(:,:) !< Hessian 2D
+  REAL,    allocatable :: dessian2D(:,:) !< derivative Hessian 2D
+
+  LOGICAL              :: Lhessian3Dallocated !< flag to indicate that 2D Hessian matrix is allocated (?)
+  REAL,    allocatable :: hessian3D(:,:) !< Hessian 3D
+  REAL,    allocatable :: dessian3D(:,:) !< derivative Hessian 3D
 !> @}
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -1499,6 +1516,7 @@ subroutine broadcast_inputs
   IlBCAST( nPtrj     , MNvol+1, 0 )
   LlBCAST( LHevalues , 1      , 0 )
   LlBCAST( LHevectors, 1      , 0 )
+  LlBCAST( Ltransform, 1      , 0 )
   LlBCAST( LHmatrix  , 1      , 0 )
   IlBCAST( Lperturbed, 1      , 0 )
   IlBCAST( dpp       , 1      , 0 )
@@ -1891,7 +1909,6 @@ end subroutine WhichCpuID
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 end module allglobal
-!> @}
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

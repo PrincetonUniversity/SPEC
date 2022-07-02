@@ -10,8 +10,8 @@ module inputlist
 
   ! The following parameters set the maximum allowed resolution:
   INTEGER, parameter :: MNvol     = 256 !< The maximum value of \c Nvol is \c MNvol=256.
-  INTEGER, parameter :: MMpol     =  64 !< The maximum value of \c Mpol is \c MNpol=64.
-  INTEGER, parameter :: MNtor     =  64 !< The maximum value of \c Ntor is \c MNtor=64.
+  INTEGER, parameter :: MMpol     = 128 !< The maximum value of \c Mpol is \c MNpol=64.
+  INTEGER, parameter :: MNtor     = 128 !< The maximum value of \c Ntor is \c MNtor=64.
 
 !> \addtogroup grp_global_physicslist physicslist
 !> \brief The namelist \c physicslist controls the geometry, profiles, and numerical resolution.
@@ -537,6 +537,7 @@ module inputlist
                                                  !<      </ul> </li>
                                                  !< </ul>
   LOGICAL      :: Ltiming          =  .false.    !< to check timing
+  LOGICAL      :: Ltransform       = .false.     !< to evaluate iota and straight field line coordinates
   REAL         :: fudge            =     1.0e-00 !< redundant
   REAL         :: scaling          =     1.0e-00 !< redundant
 !> @}
@@ -732,6 +733,7 @@ module inputlist
  Lcheck     ,&
  dRZ        ,&
  Ltiming    ,&
+ Ltransform ,&
  fudge      ,&
  scaling
 
@@ -946,6 +948,7 @@ subroutine initialize_inputs
   dRZ              =     1E-5
   Lcheck           =     0
   Ltiming          =  .false.
+  Ltransform       =  .false.
   fudge            =     1.0e-00
   scaling          =     1.0e-00
 
@@ -954,3 +957,4 @@ end subroutine initialize_inputs
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 end module inputlist
+!> @}

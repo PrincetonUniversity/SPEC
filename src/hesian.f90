@@ -32,15 +32,17 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
                         dRbc, dZbs, dRbs, dZbc, &
                         lBBintegral, dBBdRZ, &
                         NOTstellsym, YESstellsym, Energy, &
-                        dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated, psifactor, &
-                        LocalConstraint
-
+                        dFFdRZ,HdFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated, psifactor, &
+                        hessian2D,dessian2D,Lhessian2Dallocated, &
+                        Lhessian3Dallocated,denergydrr, denergydrz,denergydzr,denergydzz, &
+					            	LocalConstraint
+  
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   LOCALS
 
   INTEGER, intent(in) :: NGdof, Mvol, mn, LGdof
-  REAL                :: position(0:NGdof) !< internal geometrical degrees of freedom;
+  REAL                :: position(0:NGdof)
 
   LOGICAL             :: LComputeDerivatives, LComputeAxis
 
@@ -95,6 +97,7 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
   oldEnergy(0) = Energy ! Energy was calculated in dforce; 26 Feb 13;
 
   xx(0,-2:2)= zero
+
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -204,9 +207,15 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
 #endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  SALLOCATE( dFFdRZ , (1:LGdof,0:1,1:LGdof,0:1,1:Mvol), zero )
+  if(LHmatrix .and. Igeometry.eq.2) then 
+      SALLOCATE( HdFFdRZ , (1:LGdof,0:1,1:LGdof,0:1,1:Mvol), zero )
+  endif
   SALLOCATE( dBBdmp , (1:LGdof,1:Mvol,0:1,        1:2), zero )
+  
+  SALLOCATE( denergydrr, (1:LGdof,1:Mvol,0:1,1:LGdof,0:1), zero)
+  !SALLOCATE( denergydrz, (1:LGdof,1:Mvol,0:1,1:LGdof,0:1), zero)
+  SALLOCATE( denergydzr, (1:LGdof,1:Mvol,0:1,1:LGdof,0:1), zero)
+  !SALLOCATE( denergydzz, (1:LGdof,1:Mvol,0:1,1:LGdof,0:1), zero)
 
 if( LocalConstraint ) then
   SALLOCATE( dmupfdx, (1:Mvol,    1:1, 1:2, 1:LGdof, 0:1), zero )
@@ -214,16 +223,23 @@ else
   SALLOCATE( dmupfdx, (1:Mvol, 1:Mvol-1, 1:2, 1:LGdof, 0:1), zero)
 endif
 
-  SALLOCATE( hessian, (1:NGdof,1:NGdof), zero )
-  SALLOCATE( dessian, (1:NGdof,1:LGdof), zero ) ! part of hessian that depends on boundary variations; 18 Dec 14;
+  SALLOCATE( hessian2D, (1:NGdof,1:NGdof), zero )
+  SALLOCATE( dessian2D, (1:NGdof,1:LGdof), zero ) ! part of hessian that depends on boundary variations; 18 Dec 14;
 
-  Lhessianallocated = .true.
+  !if (LHmatrix) then
+    Lhessian3Dallocated = .true.
+  !else
+   ! Lhessianallocated = .true.
+  !endif
+   !This step cleared.
 
   LComputeDerivatives = .true. !; position(0) = zero ! this is not used; 11 Aug 14;
   LComputeAxis = .false.
   WCALL( hesian, dforce, ( NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives, LComputeAxis) ) ! calculate force-imbalance & hessian;
+  
 
-  ohessian(1:NGdof,1:NGdof) = hessian(1:NGdof,1:NGdof) ! internal copy; 22 Apr 15;
+  ohessian(1:NGdof,1:NGdof) = hessian2D(1:NGdof,1:NGdof) ! internal copy; 22 Apr 15;
+
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -428,8 +444,8 @@ endif
    cpul = GETTIME
 
    if02ebf = 1 ; LDA = NGdof ; Lwork = 4*NGdof
-
-   hessian(1:NGdof,1:NGdof) = ohessian(1:NGdof,1:NGdof)
+   
+   hessian2D(1:NGdof,1:NGdof) = ohessian(1:NGdof,1:NGdof)
 
 !#ifdef NAG18
 !   call F02EBF( JOB, NGdof, hessian(1:LDA,1:NGdof), LDA, evalr(1:NGdof), evali(1:NGdof), &
@@ -437,7 +453,7 @@ endif
 !#else
 !   FATAL( global, .true., eigenvalue solver needs updating to F08NAF )
 !#endif
-   call dgeev('N', JOB, NGdof, hessian(1:LDA,1:NGdof), LDA, evalr(1:NGdof), evali(1:NGdof), &
+   call dgeev('N', JOB, NGdof, hessian2D(1:LDA,1:NGdof), LDA, evalr(1:NGdof), evali(1:NGdof), &
                 evecl(1:Ldvr,1:NGdof), Ldvr, revecr(1:Ldvr,1:2*NGdof), Ldvr, work(1:Lwork), Lwork, if02ebf )
     evecr(1:Ldvr,1:NGdof) = revecr(1:Ldvr,1:NGdof)
     eveci(1:Ldvr,1:NGdof) = revecr(1:Ldvr,NGdof+1:2*NGdof)
@@ -592,11 +608,11 @@ endif
    else
 
     rhs(1:NGdof) = - matmul( dessian(1:NGdof,1:LGdof), perturbation(1:LGdof) )
+        
+    hessian2D(1:NGdof,1:NGdof) = ohessian(1:NGdof,1:NGdof)
 
-    hessian(1:NGdof,1:NGdof) = ohessian(1:NGdof,1:NGdof)
-
-    call dgesvx( 'N', 'N', NGdof, 1, hessian(1:NGdof,1:NGdof), NGdof, AF(1:NGdof,1:NGdof),   & ! Linear solver; 09 Nov 17;
-                 NGdof, ipiv(1:NGdof), equed, Rdgesvx(1:NGdof), Cdgesvx(1:NGdof),            &
+    call dgesvx( 'N', 'N', NGdof, 1, hessian2D(1:NGdof,1:NGdof), NGdof, AF(1:NGdof,1:NGdof),   & ! Linear solver; 09 Nov 17;
+                 NGdof, ipiv(1:NGdof), equed, Rdgesvx(1:NGdof), Cdgesvx(1:NGdof),            & 
          rhs(1:NGdof), NGdof, solution(1:NGdof), NGdof, rcond, ferr, berr,           &
          work4(1:4*NGdof), iwork4(1:NGdof), idgesvx )
 
@@ -634,15 +650,15 @@ endif
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   if( myid.eq.0 ) then
-
-   hessian(1:NGdof,1:NGdof) = ohessian(1:NGdof,1:NGdof)
-
-   call dgetrf( NGdof, NGdof, hessian(1:NGdof,1:NGdof), NGdof, ipiv(1:NGdof), idgetrf )
-
+   
+   hessian2D(1:NGdof,1:NGdof) = ohessian(1:NGdof,1:NGdof)
+   
+   call dgetrf( NGdof, NGdof, hessian2D(1:NGdof,1:NGdof), NGdof, ipiv(1:NGdof), idgetrf )
+     
    determinant = one
 
    do iev = 1,NGdof
-    determinant = determinant*hessian(iev,iev)   !calculate determinant from factorized form of hessian; 09 Nov 17
+    determinant = determinant*hessian2D(iev,iev)   !calculate determinant from factorized form of hessian; 09 Nov 17
    enddo
 
    sgn = one
@@ -665,14 +681,24 @@ endif
   endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  DALLOCATE(dFFdRZ)
+  if(LHmatrix .and. Igeometry.eq.2) then 
+     DALLOCATE(HdFFdRZ)
+  endif
+  
   DALLOCATE(dBBdmp)
   DALLOCATE(dmupfdx)
+  DALLOCATE(denergydrr)
+  !DALLOCATE(denergydrz)
+  DALLOCATE(denergydzr)
+  !DALLOCATE(denergydzz)
+  Lhessian3Dallocated=.false.
 
-  DALLOCATE(hessian)
-  DALLOCATE(dessian)
-  Lhessianallocated = .false.
+
+  DALLOCATE(hessian2D)
+  write(ounit,*) 5656
+
+  DALLOCATE(dessian2D)
+
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

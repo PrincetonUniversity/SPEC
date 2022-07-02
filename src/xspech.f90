@@ -135,12 +135,12 @@ subroutine xspech
   call init_convergence_output()
 
 !#ifdef DEBUG
-!   iwait = 0; pid = getpid()
-!   status = hostnm( hostname )
-!   write(*,*) 'Process with PID: ', pid, 'ready to attach. Hostname: ', hostname
-!   do while( iwait .EQ. 0 )
-!     !wait for debugger
-!   enddo
+!  iwait = 0; pid = getpid()
+!  status = hostnm( hostname )
+!  write(*,*) 'Process with PID: ', pid, 'ready to attach. Hostname: ', hostname
+!  do while( iwait .EQ. 0 )
+!    !wait for debugger
+!  enddo
 !#endif
 
   ! MAIN SUBROUTINE: iterate until converged or #iterations exceeds limit
@@ -526,8 +526,8 @@ subroutine spec
 
    if( myid.eq.0 ) then
     cput = GETTIME
-    write(ounit,'("xspech : ", 10x ," : ")')
-    write(ounit,'("xspech : ",f10.2," : myid=",i3," ; calling hesian ; see .ext.hessian.myid ;")') cput-cpus, myid
+    write(ounit,'("xspech : ", 10x ," : -------------------Stability Evaluations------------------ ")')
+    write(ounit,'("xspech : ",f10.2," : myid=",i3," ; calling hessian; see .ext.hessian.myid ;")') cput-cpus, myid
    endif
 
    WCALL( xspech, hesian, ( NGdof, position(0:NGdof), Mvol, mn, LGdof ) )
@@ -762,7 +762,7 @@ end subroutine spec
 subroutine final_diagnostics
 
   use inputlist, only: nPtrj, nPpts, Igeometry, Lcheck, Nvol, odetol, &
-                       Isurf, Ivolume, mu, Wmacros
+                       Isurf, Ivolume, mu, Wmacros, Ltransform
   use fileunits, only: ounit
   use constants, only: zero
   use allglobal, only: pi2, myid, ncpu, MPI_COMM_SPEC, cpus, Mvol, Ntz, mn, &
@@ -770,14 +770,17 @@ subroutine final_diagnostics
                        Lplasmaregion, Lvacuumregion, &
                        Btemn, Bzemn, Btomn, Bzomn, &
                        efmn, ofmn, cfmn, sfmn, &
-                       IPDt, ImagneticOK, dtflux, Iquad
+                       IPDt, ImagneticOK, dtflux, Iquad, lmns, Nt, Nz, diotadxup, &
+                       IsMyVolume, IsMyVolumeValue, WhichCpuID, &
+                       dlambdaout, diotadxup
 
 
   LOCALS
 
-  integer              :: iocons, llmodnp, vvol
+  integer              :: iocons, llmodnp, vvol, iflag, cpu_id
   real                 :: sumI
   REAL,    allocatable :: Bt00(:,:,:)
+  REAL                 :: work(0:1,-1:2) 
 
 
 
@@ -822,6 +825,38 @@ subroutine final_diagnostics
 !
 !2000 format("finish : ",f10.2," : finished ",i3," ; ":"|f|="es12.5" ; ":"time=",f10.2,"s ;":" log"a5,:"="28f6.2" ...")
 !2001 format("finish : ", 10x ," :          ",3x," ; ":"    "  12x "   ":"     ", 10x ,"  ;":" log"a5,:"="28f6.2" ...")
+
+
+! Evaluate rotational transform and straight field line coordinate transformation
+if( Ltransform ) then
+
+  do vvol=1,Mvol
+    call brcast(vvol)
+  enddo
+
+  iflag = -1
+  do vvol = 1, Mvol
+    call IsMyVolume(vvol)
+    if (IsMyVolumeValue.eq.0) then
+      cycle
+    elseif (IsMyVolumeValue.eq.-1) then
+      FATAL( xspech, .true., Unassociated volume )
+    endif
+
+    LREGION( vvol )
+
+    call tr00ab( vvol, mn, lmns, Nt, Nz, iflag, diotadxup(0:1,-1:2, vvol) ) ! stores lambda in a global variable.
+  enddo
+
+  ! Broadcast
+  do vvol = 1, Mvol
+    call WhichCpuID( vvol, cpu_id )
+    RlBCAST( diotadxup(0:1,-1:2,vvol), 8, cpu_id  )
+    RlBCAST( dlambdaout(1:lmns, vvol, 0:1), 2*lmns, cpu_id  )
+  enddo
+
+endif
+
 
   !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 ! Computes the surface current at each interface for output
