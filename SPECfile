@@ -13,7 +13,8 @@
 # basis of SPEC: input variables, global workspace, HDF5 output file writing
 # these are split off since they require special treatment (needed by all others and/or special macros)
 LEVEL_0=mod_kinds
-LEVEL_1=inputlist global
+LEVEL_1=inputlist
+LEVEL_2=global
 LEVEL_3=h5utils
 LEVEL_4=sphdf5
 BASEFILES=$(LEVEL_0) $(LEVEL_1) $(LEVEL_2) $(LEVEL_3) $(LEVEL_4)
