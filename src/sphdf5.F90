@@ -12,28 +12,24 @@
 !> \ingroup grp_output
 module sphdf5
   use mod_kinds, only: wp => dp
-  use inputlist , only : Wsphdf5, Wmacros
-  use fileunits , only : ounit
-  use cputiming , only : Tsphdf5
-  use allglobal , only : myid, cpus, MPI_COMM_SPEC, ext, skip_write
-  use constants , only : version
+  use fileunits, only: ounit
+  use allglobal, only: myid, cpus, MPI_COMM_SPEC, ext, skip_write
+  use constants, only: version
   use hdf5
+  use h5utils
 
   implicit none
 
-  logical, parameter             :: hdfDebug = .false.  !< global flag to enable verbal diarrhea commenting HDF5 operations
-  integer, parameter             :: internalHdf5Msg = 0 !< 1: print internal HDF5 error messages; 0: only error messages from sphdf5
-
 !  integer                        :: hdfier              !< error flag for HDF5 library
-  integer                        :: rank                !< rank of data to write using macros
+!   integer                        :: rank                !< rank of data to write using macros
   integer(hid_t)                 :: file_id             !< default file ID used in macros
-  integer(hid_t)                 :: space_id            !< default dataspace ID used in macros
-  integer(hid_t)                 :: dset_id             !< default dataset ID used in macros
-  integer(hsize_t)               :: onedims(1:1)        !< dimension specifier for one-dimensional data used in macros
-  integer(hsize_t)               :: twodims(1:2)        !< dimension specifier for two-dimensional data used in macros
-  integer(hsize_t)               :: threedims(1:3)      !< dimension specifier for three-dimensional data used in macros
+!   integer(hid_t)                 :: space_id            !< default dataspace ID used in macros
+!   integer(hid_t)                 :: dset_id             !< default dataset ID used in macros
+!   integer(hsize_t)               :: onedims(1:1)        !< dimension specifier for one-dimensional data used in macros
+!   integer(hsize_t)               :: twodims(1:2)        !< dimension specifier for two-dimensional data used in macros
+!   integer(hsize_t)               :: threedims(1:3)      !< dimension specifier for three-dimensional data used in macros
 !  logical                        :: grp_exists          !< flags used to signal if a group already exists
-  logical                        :: var_exists          !< flags used to signal if a variable already exists
+!  logical                        :: var_exists          !< flags used to signal if a variable already exists
 
   integer(hid_t)                 :: iteration_dset_id   !< Dataset identifier for "iteration"
   integer(hid_t)                 :: dataspace           !< dataspace for extension by 1 iteration object
@@ -78,19 +74,6 @@ module sphdf5
   integer(HID_T)                 :: memspace_diotadxup  !< Dataspace identifier in memory for diotadxup
   integer(HID_T)                 :: memspace_fiota      !< Dataspace identifier in memory for fiota
 
-
-  character(LEN=15), parameter :: aname = "description"   !< Attribute name for descriptive info
-
-  integer(HID_T) :: attr_id       !< Attribute identifier
-  integer(HID_T) :: aspace_id     !< Attribute Dataspace identifier
-  integer(HID_T) :: atype_id      !< Attribute Datatype identifier
-
-  integer, parameter     ::   arank = 1               !< Attribure rank
-  integer(HSIZE_T), dimension(arank) :: adims = (/1/) !< Attribute dimension
-
-  integer(SIZE_T) :: attrlen    !< Length of the attribute string
-  character(len=:), allocatable ::  attr_data  !< Attribute data
-
 private
 public init_outfile, &
        mirror_input_to_outfile, &
@@ -107,99 +90,31 @@ public init_outfile, &
 
 contains
 
-!> Define a HDF5 group or opens it if it already exists.
-!>
-!> @param file_id file in which to define the group
-!> @param name    name of the new group
-!> @param group_id id of the newly-created group
-subroutine HDEFGRP(file_id, name, group_id)
-  integer(hid_t),   intent(in)  :: file_id
-  character(len=*), intent(in)  :: name
-  integer(hid_t),   intent(out) :: group_id
-
-  logical :: grp_exists !< flags used to signal if a group already exists
-  integer :: hdfier     !< error flag for HDF5 library
-
-  call h5lexists_f(file_id, name, grp_exists, hdfier)
-
-  if (grp_exists) then
-    ! if the group already exists, open it
-    call h5gopen_f(file_id, name, group_id, hdfier)
-    if (hdfier .ne. 0) then
-      write(6, '("sphdf5 : "10x" : error calling h5gopen_f from hdefgrp")')
-      call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
-      stop "sphdf5 : error calling h5gopen_f from hdefgrp"
-    endif
-  else
-    ! if group does not exist, create it
-    call h5gcreate_f(file_id, name, group_id, hdfier)
-    if (hdfier .ne. 0) then
-      write(6, '("sphdf5 : "10x" : error calling h5gcreate_f from hdefgrp")')
-      call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
-      stop "sphdf5 : error calling h5gcreate_f from hdefgrp"
-    endif
-  endif
-end subroutine ! HDEFGRP
-
-!> Close a HDF5 group.
-!>
-!> @param group_id HDF5 group to close
-subroutine HCLOSEGRP(group_id)
-  integer(hid_t), intent(in) :: group_id
-
-  integer :: hdfier !< error flag for HDF5 library
-
-  call h5gclose_f(group_id, hdfier)
-  if (hdfier .ne. 0) then
-    write(6, '("sphdf5 : "10x" : error calling h5gclose_f from hclosegrp")')
-    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-    stop "sphdf5 : error calling h5gclose_f from hclosegrp"
-  endif
-end subroutine ! HCLOSEGRP
-
-
-
 !> \brief Initialize the interface to the HDF5 library and open the output file.
 !> \ingroup grp_output
 !>
 subroutine init_outfile()
+  integer :: hdfier !< error flag for HDF5 library
+  integer(hid_t) :: dset_id
 
-#ifdef OPENMP
-  USE OMP_LIB
-#endif
-  use mpi
-  implicit none
-  integer   :: ierr, astat, ios, nthreads, ithread
-  real(wp)      :: cput, cpui, cpuo=0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
+  if (myid .eq. 0 .and. .not. skip_write) then
 
-  cpui = MPI_WTIME()
-  cpuo = cpui
-#ifdef OPENMP
-  nthreads = omp_get_max_threads()
-#else
-  nthreads = 1
-#endif
+    ! initialize Fortran interface to the HDF5 library
+    call h5open_f(hdfier)
 
- if (myid.eq.0 .and. .not.skip_write) then
+    ! (en/dis)able HDF5 internal error messages;
+    ! sphdf5 has its own error messages coming from the macros
+    call h5eset_auto_f(internalHdf5Msg, hdfier)
 
-  ! initialize Fortran interface to the HDF5 library
-  call h5open_f(hdfier)
+    ! Create the file
+    call h5fcreate_f(trim(ext)//".sp.h5", H5F_ACC_TRUNC_F, file_id, hdfier )
 
-  ! (en/dis)able HDF5 internal error messages;
-  ! sphdf5 has its own error messages coming from the macros
-  call h5eset_auto_f(internalHdf5Msg, hdfier)
+    ! write version number
+    call HWRITERV_LO(file_id, "version", 1, (/ version /), dset_id)
+    call H5DESCR_CDSET(dset_id, "version of SPEC")
 
-  ! Create the file
-  call h5fcreate_f(trim(ext)//".sp.h5", H5F_ACC_TRUNC_F, file_id, hdfier )
-
-  ! write version number
-
-  call HWRITERV_LO(file_id, 1, "version", (/ version /))
-  call H5DESCR_CDSET("/version", "version of SPEC")
-
- endif ! myid.eq.0
-
-end subroutine init_outfile
+  endif ! myid.eq.0
+end subroutine ! init_outfile
 
 !> \brief Mirror input variables into output file.
 !> \ingroup grp_output
@@ -210,270 +125,252 @@ end subroutine init_outfile
 subroutine mirror_input_to_outfile
 
   use inputlist
-  use allglobal , only : Mvol
+  use allglobal , only : myid, Mvol, skip_write
+  use h5utils
 
-
-#ifdef OPENMP
-  USE OMP_LIB
-#endif
-  use mpi
-  implicit none
-  integer   :: ierr, astat, ios, nthreads, ithread
-  real(wp)      :: cput, cpui, cpuo=0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
-
-
+  integer(hid_t) :: dset_id
   integer(hid_t) :: grpInput
   integer(hid_t) :: grpInputPhysics, grpInputNumerics, grpInputLocal, grpInputGlobal, grpInputDiagnostics
 
-
-  cpui = MPI_WTIME()
-  cpuo = cpui
-#ifdef OPENMP
-  nthreads = omp_get_max_threads()
-#else
-  nthreads = 1
-#endif
-
-
  if (myid.eq.0 .and. .not.skip_write) then
 
-!   HDEFGRP( file_id, input, grpInput,                        __FILE__, __LINE__ )
-!   H5DESCR( grpInput, /input, group for mirrored input data, __FILE__, __LINE__ )
-!
-! ! the following variables constitute the namelist/physicslist/; note that all variables in namelist need to be broadcasted in readin;
-! ! they go into ext.h5/input/physics
-!
-!   ! the calls used here work as follows:
-!   ! step 1. HWRITEIV_LO e.g. write(s an) i(nteger) v(ariable) and l(eaves) o(pen) the dataset, so that in
-!   ! step 2a. an attribute with descr(iptive) information can be attached to the dataset and finally, in
-!   ! step 2b. the attribute is closed and also we c(lose the) d(ata)set.
-!
-!   HDEFGRP( grpInput, physics, grpInputPhysics,                                                                                         __FILE__, __LINE__)
-!   H5DESCR( grpInputPhysics, /input/physics, physics inputs,                                                                            __FILE__, __LINE__)
-!
-!   HWRITEIV_LO( grpInputPhysics,         1, Igeometry  , (/ Igeometry      /),                                                          __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/Igeometry, geometry identifier,                                                                        __FILE__, __LINE__)
-!   HWRITEIV_LO( grpInputPhysics,         1, Istellsym  , (/ Istellsym      /),                                                          __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/Istellsym, stellarator symmetry flag,                                                                  __FILE__, __LINE__)
-!   HWRITEIV_LO( grpInputPhysics,         1, Lfreebound , (/ Lfreebound     /),                                                          __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/Lfreebound, free boundary flag,                                                                        __FILE__, __LINE__)
-!   HWRITERV_LO( grpInputPhysics,         1, phiedge    , (/ phiedge        /),                                                          __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/phiedge, total enclosed toroidal magnetic flux,                                                        __FILE__, __LINE__)
-!   HWRITERV_LO( grpInputPhysics,         1, curtor     , (/ curtor         /),                                                          __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/curtor, total enclosed toroidal current,                                                               __FILE__, __LINE__)
-!   HWRITERV_LO( grpInputPhysics,         1, curpol     , (/ curpol         /),                                                          __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/curpol, total enclosed poloidal current,                                                               __FILE__, __LINE__)
-!   HWRITERV_LO( grpInputPhysics,         1, gamma      , (/ gamma          /),                                                          __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/gamma, adiabatic index,                                                                                __FILE__, __LINE__)
-!   HWRITEIV_LO( grpInputPhysics,         1, Nfp        , (/ Nfp            /),                                                          __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/Nfp, number of stellarator field periods,                                                              __FILE__, __LINE__)
-!   HWRITEIV_LO( grpInputPhysics,         1, Nvol       , (/ Nvol           /),                                                          __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/Nvol, number of volumes,                                                                               __FILE__, __LINE__)
-!   HWRITEIV_LO( grpInputPhysics,         1, Mpol       , (/ Mpol           /),                                                          __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/Mpol, maximum poloidal mode number,                                                                    __FILE__, __LINE__)
-!   HWRITEIV_LO( grpInputPhysics,         1, Ntor       , (/ Ntor           /),                                                          __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/Ntor, maximum toroidal mode number,                                                                    __FILE__, __LINE__)
-!   HWRITEIV_LO( grpInputPhysics,      Mvol, Lrad       ,      Lrad(1:Mvol)   ,                                                          __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/Lrad, degree of radial Chebychev polynomials,                                                          __FILE__, __LINE__)
-!   HWRITEIV_LO( grpInputPhysics,         1, Lconstraint, (/ Lconstraint    /),                                                          __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/Lconstraint, type of constraint to enforce,                                                            __FILE__, __LINE__)
-!   HWRITEIV_LO( grpInputPhysics,         1, Lreflect,    (/ Lreflect       /),                                                          __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/Lreflect, whether to reflect the perturbation on both boundaries for slab geometry                     __FILE__, __LINE__)
-!   HWRITERV_LO( grpInputPhysics,      Mvol, tflux      ,     tflux(1:Mvol)   ,                                                          __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/tflux, toroidal magnetic flux in volumes,                                                              __FILE__, __LINE__)
-!   HWRITERV_LO( grpInputPhysics,      Mvol, pflux      ,     pflux(1:Mvol)   ,                                                          __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/pflux, poloidal magnetic flux in volumes,                                                              __FILE__, __LINE__)
-!   HWRITERV_LO( grpInputPhysics,      Nvol, helicity   ,  helicity(1:Nvol)   ,                                                          __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/helicity, helicity profile,                                                                            __FILE__, __LINE__)
-!   HWRITERV_LO( grpInputPhysics,         1, pscale     , (/ pscale         /),                                                          __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/pscale, scaling factor for pressure,                                                                   __FILE__, __LINE__)
-!   HWRITERV_LO( grpInputPhysics,      Nvol, pressure   ,  pressure(1:Nvol)   ,                                                          __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/pressure, pressure profile,                                                                            __FILE__, __LINE__)
-!   HWRITEIV_LO( grpInputPhysics,         1, Ladiabatic , (/ Ladiabatic     /),                                                          __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/Ladiabatic, adiabatic flag,                                                                            __FILE__, __LINE__)
-!   HWRITERV_LO( grpInputPhysics,      Mvol, adiabatic  , adiabatic(1:Nvol)   ,                                                          __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/adiabatic, adiabatic profile (?),                                                                      __FILE__, __LINE__)
-!   HWRITERV_LO( grpInputPhysics,  (1+Nvol), mu         ,        mu(1:Mvol)   ,                                                          __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/mu, Beltrami parameter, parallel current profile,                                                    __FILE__, __LINE__)
-!   HWRITERV_LO( grpInputPhysics,  (1+Nvol), Ivolume    ,   Ivolume(1:Mvol)   ,                                                          __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/Ivolume, Volume current, externally driven, parallel current profile,                                __FILE__, __LINE__)
-!   HWRITERV_LO( grpInputPhysics,  (Mvol  ), Isurf      ,   Isurf(1:Mvol  )   ,                                                          __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/mu, Surface current, currents that are not volume currents (pressure driven, shielding currents) ,   __FILE__, __LINE__)
-!   HWRITEIV_LO( grpInputPhysics,  (1+Mvol), pl         ,        pl(0:Nvol)   ,                                                          __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/pl, pl ?,                                                                                              __FILE__, __LINE__)
-!   HWRITEIV_LO( grpInputPhysics,  (1+Mvol), ql         ,        ql(0:Nvol)   ,                                                          __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/ql, ql ?,                                                                                              __FILE__, __LINE__)
-!   HWRITEIV_LO( grpInputPhysics,  (1+Mvol), pr         ,        pr(0:Nvol)   ,                                                          __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/pr, pr ?,                                                                                              __FILE__, __LINE__)
-!   HWRITEIV_LO( grpInputPhysics,  (1+Mvol), qr         ,        qr(0:Nvol)   ,                                                          __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/qr, qr ?,                                                                                              __FILE__, __LINE__)
-!   HWRITERV_LO( grpInputPhysics,  (1+Nvol), iota       ,      iota(0:Nvol)   ,                                                          __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/iota, rotational transform profile on inside of ideal interfaces,                                      __FILE__, __LINE__)
-!   HWRITEIV_LO( grpInputPhysics,  (1+Mvol), lp         ,        lp(0:Nvol)   ,                                                          __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/lp, lp ?,                                                                                              __FILE__, __LINE__)
-!   HWRITEIV_LO( grpInputPhysics,  (1+Mvol), lq         ,        lq(0:Nvol)   ,                                                          __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/lq, lq ?,                                                                                              __FILE__, __LINE__)
-!   HWRITEIV_LO( grpInputPhysics,  (1+Mvol), rp         ,        rp(0:Nvol)   ,                                                          __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/rp, rp ?,                                                                                              __FILE__, __LINE__)
-!   HWRITEIV_LO( grpInputPhysics,  (1+Mvol), rq         ,        rq(0:Nvol)   ,                                                          __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/rq, rq ?,                                                                                              __FILE__, __LINE__)
-!   HWRITERV_LO( grpInputPhysics,  (1+Nvol), oita       ,      oita(0:Nvol)   ,                                                          __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/oita, rotational transform profile on outside of ideal interfaces,                                     __FILE__, __LINE__)
-!   HWRITERV_LO( grpInputPhysics,         1, rtor  , (/ rtor      /),                                                                    __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/rpol, for aspect ratio in slab,                                                                        __FILE__, __LINE__)
-!   HWRITERV_LO( grpInputPhysics,         1, rpol  , (/ rpol      /),                                                                    __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/rpol, for aspect ratio in slab,                                                                        __FILE__, __LINE__)
-!
-!   HWRITERV_LO( grpInputPhysics,  (1+Ntor), Rac        ,       Rac(0:Ntor)   ,                                                          __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/Rac,     stellarator symmetric coordinate axis R cosine Fourier coefficients,                          __FILE__, __LINE__)
-!   HWRITERV_LO( grpInputPhysics,  (1+Ntor), Zas        ,       Zas(0:Ntor)   ,                                                          __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/Zas,     stellarator symmetric coordinate axis Z   sine Fourier coefficients,                          __FILE__, __LINE__)
-!   HWRITERV_LO( grpInputPhysics,  (1+Ntor), Ras        ,       Ras(0:Ntor)   ,                                                          __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/Ras, non-stellarator symmetric coordinate axis R   sine Fourier coefficients,                          __FILE__, __LINE__)
-!   HWRITERV_LO( grpInputPhysics,  (1+Ntor), Zac        ,       Zac(0:Ntor)   ,                                                          __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/Zac, non-stellarator symmetric coordinate axis Z cosine Fourier coefficients,                          __FILE__, __LINE__)
-!
-!   HWRITERA_LO( grpInputPhysics, (2*Ntor+1), (2*Mpol+1),  Rbc, Rbc(-Ntor:Ntor,-Mpol:Mpol),                                              __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/Rbc,     stellarator symmetric boundary R cosine Fourier coefficients,                                 __FILE__, __LINE__)
-!   HWRITERA_LO( grpInputPhysics, (2*Ntor+1), (2*Mpol+1),  Zbs, Zbs(-Ntor:Ntor,-Mpol:Mpol),                                              __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/Zbs,     stellarator symmetric boundary Z   sine Fourier coefficients,                                 __FILE__, __LINE__)
-!   HWRITERA_LO( grpInputPhysics, (2*Ntor+1), (2*Mpol+1),  Rbs, Rbs(-Ntor:Ntor,-Mpol:Mpol),                                              __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/Rbs, non-stellarator symmetric boundary R   sine Fourier coefficients,                                 __FILE__, __LINE__)
-!   HWRITERA_LO( grpInputPhysics, (2*Ntor+1), (2*Mpol+1),  Zbc, Zbc(-Ntor:Ntor,-Mpol:Mpol),                                              __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/Zbc, non-stellarator symmetric boundary Z cosine Fourier coefficients,                                 __FILE__, __LINE__)
-!
-!   HWRITERA_LO( grpInputPhysics, (2*Ntor+1), (2*Mpol+1),  Rwc, Rwc(-Ntor:Ntor,-Mpol:Mpol),                                              __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/Rwc,     stellarator symmetric boundary R cosine Fourier coefficients of wall,                         __FILE__, __LINE__)
-!   HWRITERA_LO( grpInputPhysics, (2*Ntor+1), (2*Mpol+1),  Zws, Zws(-Ntor:Ntor,-Mpol:Mpol),                                              __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/Zws,     stellarator symmetric boundary Z   sine Fourier coefficients of wall,                         __FILE__, __LINE__)
-!   HWRITERA_LO( grpInputPhysics, (2*Ntor+1), (2*Mpol+1),  Rws, Rws(-Ntor:Ntor,-Mpol:Mpol),                                              __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/Rws, non-stellarator symmetric boundary R   sine Fourier coefficients of wall,                         __FILE__, __LINE__)
-!   HWRITERA_LO( grpInputPhysics, (2*Ntor+1), (2*Mpol+1),  Zwc, Zwc(-Ntor:Ntor,-Mpol:Mpol),                                              __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/Zwc, non-stellarator symmetric boundary Z cosine Fourier coefficients of wall,                         __FILE__, __LINE__)
-!
-!   HWRITERA_LO( grpInputPhysics, (2*Ntor+1), (2*Mpol+1),  Vns, Vns(-Ntor:Ntor,-Mpol:Mpol),                                              __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/Vns,     stellarator symmetric normal field   sine Fourier coefficients at boundary; vacuum component, __FILE__, __LINE__)
-!   HWRITERA_LO( grpInputPhysics, (2*Ntor+1), (2*Mpol+1),  Bns, Bns(-Ntor:Ntor,-Mpol:Mpol),                                              __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/Bns,     stellarator symmetric normal field   sine Fourier coefficients at boundary; plasma component, __FILE__, __LINE__)
-!   HWRITERA_LO( grpInputPhysics, (2*Ntor+1), (2*Mpol+1),  Vnc, Vnc(-Ntor:Ntor,-Mpol:Mpol),                                              __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/Vnc, non-stellarator symmetric normal field cosine Fourier coefficients at boundary; vacuum component, __FILE__, __LINE__)
-!   HWRITERA_LO( grpInputPhysics, (2*Ntor+1), (2*Mpol+1),  Bnc, Bnc(-Ntor:Ntor,-Mpol:Mpol),                                              __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/Bnc, non-stellarator symmetric normal field cosine Fourier coefficients at boundary; plasma component, __FILE__, __LINE__)
-!
-!   HWRITERV_LO( grpInputPhysics,           1,   mupftol, (/ mupftol /),                                                                 __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/mupftol, mupftol   ,                                                                                   __FILE__, __LINE__)
-!   HWRITEIV_LO( grpInputPhysics,           1,   mupfits, (/ mupfits /),                                                                 __FILE__, __LINE__)
-!   H5DESCR_CDSET( /input/physics/mupfits, mupfits   ,                                                                                   __FILE__, __LINE__)
-!
-!   HCLOSEGRP( grpInputPhysics , __FILE__, __LINE__)
-!
-! !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-!
-! ! the following variables constitute the namelist/numericlist/; note that all variables in namelist need to be broadcasted in readin;
-! ! they go into ext.h5/input/numerics
-!
-!   HDEFGRP( grpInput, numerics, grpInputNumerics, __FILE__, __LINE__)
-!
-!   HWRITEIV( grpInputNumerics,          1, Linitialize        , (/ Linitialize /))
-!   HWRITEIV( grpInputNumerics,          1, Lzerovac           , (/ Lzerovac    /))
-!   HWRITEIV( grpInputNumerics,          1, Ndiscrete          , (/ Ndiscrete   /))
-!   HWRITEIV( grpInputNumerics,          1, Nquad              , (/ Nquad       /))
-!   HWRITEIV( grpInputNumerics,          1, iMpol              , (/ iMpol       /))
-!   HWRITEIV( grpInputNumerics,          1, iNtor              , (/ iNtor       /))
-!   HWRITEIV( grpInputNumerics,          1, Lsparse            , (/ Lsparse     /))
-!   HWRITEIV( grpInputNumerics,          1, Lsvdiota           , (/ Lsvdiota    /))
-!   HWRITEIV( grpInputNumerics,          1, imethod            , (/ imethod     /))
-!   HWRITEIV( grpInputNumerics,          1, iorder             , (/ iorder      /))
-!   HWRITEIV( grpInputNumerics,          1, iprecon            , (/ iprecon     /))
-!   HWRITERV( grpInputNumerics,          1, iotatol            , (/ iotatol     /))
-!   HWRITEIV( grpInputNumerics,          1, Lextrap            , (/ Lextrap     /))
-!   HWRITEIV( grpInputNumerics,          1, Mregular           , (/ Mregular    /))
-!   HWRITEIV( grpInputNumerics,          1, Lrzaxis            , (/ Lrzaxis     /))
-!   HWRITEIV( grpInputNumerics,          1, Ntoraxis           , (/ Ntoraxis    /))
-!
-!   HCLOSEGRP( grpInputNumerics, __FILE__, __LINE__)
-!
-! !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-!
-! ! the following variables constitute the namelist/locallist/; note that all variables in namelist need to be broadcasted in readin;
-! ! they go into ext.h5/input/local
-!
-!   HDEFGRP( grpInput, local, grpInputLocal )
-!
-!   HWRITEIV( grpInputLocal,             1, LBeltrami          , (/ LBeltrami   /))
-!   HWRITEIV( grpInputLocal,             1, Linitgues          , (/ Linitgues   /))
-!   HWRITEIV( grpInputLocal,             1, Lposdef            , (/ Lposdef     /)) ! redundant;
-!   HWRITERV( grpInputLocal,             1, maxrndgues         , (/ maxrndgues  /))
-!   HWRITEIV( grpInputLocal,             1, Lmatsolver         , (/ Lmatsolver  /))
-!   HWRITEIV( grpInputLocal,             1, LGMRESprec         , (/ LGMRESprec  /))
-!   HWRITERV( grpInputLocal,             1, epsGMRES           , (/ epsGMRES    /))
-!   HWRITERV( grpInputLocal,             1, epsILU             , (/ epsILU      /))
-!
-!   HCLOSEGRP( grpInputLocal )
-!
-! !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-!
-! ! the following variables constitute the namelist/globallist/; note that all variables in namelist need to be broadcasted in readin;
-! ! they go into ext.h5/input/global
-!
-!   HDEFGRP( grpInput, global, grpInputGlobal )
-!
-!   HWRITEIV( grpInputGlobal,            1,  Lfindzero         , (/ Lfindzero   /))
-!   HWRITERV( grpInputGlobal,            1,  escale            , (/ escale      /))
-!   HWRITERV( grpInputGlobal,            1,  opsilon           , (/ opsilon     /))
-!   HWRITERV( grpInputGlobal,            1,  pcondense         , (/ pcondense   /))
-!   HWRITERV( grpInputGlobal,            1,  epsilon           , (/ epsilon     /))
-!   HWRITERV( grpInputGlobal,            1,  wpoloidal         , (/ wpoloidal   /))
-!   HWRITERV( grpInputGlobal,            1,  upsilon           , (/ upsilon     /))
-!   HWRITERV( grpInputGlobal,            1,  forcetol          , (/ forcetol    /))
-!   HWRITERV( grpInputGlobal,            1,  c05xmax           , (/ c05xmax     /))
-!   HWRITERV( grpInputGlobal,            1,  c05xtol           , (/ c05xtol     /))
-!   HWRITERV( grpInputGlobal,            1,  c05factor         , (/ c05factor   /))
-!   HWRITELV( grpInputGlobal,            1,  LreadGF           , (/ LreadGF     /))
-!   HWRITEIV( grpInputGlobal,            1,  mfreeits          , (/ mfreeits    /))
-!   HWRITERV( grpInputGlobal,            1,  bnstol            , (/ bnstol      /))  ! redundant;
-!   HWRITERV( grpInputGlobal,            1,  bnsblend          , (/ bnsblend    /))  ! redundant;
-!   HWRITERV( grpInputGlobal,            1,  gBntol            , (/ gBntol      /))
-!   HWRITERV( grpInputGlobal,            1,  gBnbld            , (/ gBnbld      /))
-!   HWRITERV( grpInputGlobal,            1,  vcasingeps        , (/ vcasingeps  /))
-!   HWRITERV( grpInputGlobal,            1,  vcasingtol        , (/ vcasingtol  /))
-!   HWRITEIV( grpInputGlobal,            1,  vcasingits        , (/ vcasingits  /))
-!   HWRITEIV( grpInputGlobal,            1,  vcasingper        , (/ vcasingper  /))
-!   HWRITEIV( grpInputGlobal,            1,  mcasingcal        , (/ mcasingcal  /))  ! redundant;
-!
-!   HCLOSEGRP( grpInputGlobal )
-!
-! !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-!
-! ! the following variables constitute the namelist/diagnosticslist/; note that all variables in namelist need to be broadcasted in readin;
-! ! they go into ext.h5/input/diagnostics
-!
-!   HDEFGRP( grpInput, diagnostics, grpInputDiagnostics )
-!
-!   HWRITERV( grpInputDiagnostics,       1,  odetol            , (/ odetol         /))
-!   HWRITERV( grpInputDiagnostics,       1,  absreq            , (/ absreq         /))           ! redundant;
-!   HWRITERV( grpInputDiagnostics,       1,  relreq            , (/ relreq         /))           ! redundant;
-!   HWRITERV( grpInputDiagnostics,       1,  absacc            , (/ absacc         /))           ! redundant;
-!   HWRITERV( grpInputDiagnostics,       1,  epsr              , (/ epsr           /))           ! redundant;
-!   HWRITEIV( grpInputDiagnostics,       1,  nPpts             , (/ nPpts          /))
-!   HWRITEIV( grpInputDiagnostics,       1,   Ppts             , (/  Ppts          /))
-!   HWRITEIV( grpInputDiagnostics,    Mvol,  nPtrj             ,    nPtrj(1:Mvol)    )
-!   HWRITELV( grpInputDiagnostics,       1,  LHevalues         , (/ LHevalues      /))
-!   HWRITELV( grpInputDiagnostics,       1,  LHevectors        , (/ LHevectors     /))
-!   HWRITELV( grpInputDiagnostics,       1,  LHmatrix          , (/ LHmatrix       /))
-!   HWRITEIV( grpInputDiagnostics,       1,  Lperturbed        , (/ Lperturbed     /))
-!   HWRITEIV( grpInputDiagnostics,       1,  dpp               , (/ dpp            /))
-!   HWRITEIV( grpInputDiagnostics,       1,  dqq               , (/ dqq            /))
-!   HWRITEIV( grpInputDiagnostics,       1,  Lcheck            , (/ Lcheck         /))
-!   HWRITELV( grpInputDiagnostics,       1,  Ltiming           , (/ Ltiming        /))
-!   HWRITEIV( grpInputDiagnostics,       1,  Lerrortype        , (/ Lerrortype     /))
-!   HWRITEIV( grpInputDiagnostics,       1,  Ngrid             , (/ Ngrid          /))
-!   HWRITERV( grpInputDiagnostics,       1,  fudge             , (/ fudge          /))          ! redundant;
-!   HWRITERV( grpInputDiagnostics,       1,  scaling           , (/ scaling        /))          ! redundant;
-!
-!   HCLOSEGRP( grpInputDiagnostics )
-!
-!   HCLOSEGRP( grpInput )
+  call HDEFGRP( file_id, "input", grpInput )
+  call H5DESCR( grpInput, "group for mirrored input data")
+
+! the following variables constitute the namelist/physicslist/; note that all variables in namelist need to be broadcasted in readin;
+! they go into ext.h5/input/physics
+
+  ! the calls used here work as follows:
+  ! step 1. HWRITEIV_LO e.g. write(s an) i(nteger) v(ariable) and l(eaves) o(pen) the dataset, so that in
+  ! step 2a. an attribute with descr(iptive) information can be attached to the dataset and finally, in
+  ! step 2b. the attribute is closed and also we c(lose the) d(ata)set.
+
+  call HDEFGRP( grpInput, "physics", grpInputPhysics)
+  call H5DESCR( grpInputPhysics, "physics inputs")
+
+  call HWRITEIV_LO( grpInputPhysics, "Igeometry"  ,         1, (/ Igeometry      /), dset_id)
+  call H5DESCR_CDSET(dset_id, "geometry identifier")
+  call HWRITEIV_LO( grpInputPhysics, "Istellsym"  ,        1,  (/ Istellsym      /), dset_id)
+  call H5DESCR_CDSET( dset_id, "stellarator symmetry flag")
+  call HWRITEIV_LO( grpInputPhysics, "Lfreebound" ,         1, (/ Lfreebound     /),dset_id)
+  call H5DESCR_CDSET( dset_id, "free boundary flag")
+  call HWRITERV_LO( grpInputPhysics, "phiedge"    ,        1,  (/ phiedge        /),dset_id)
+  call H5DESCR_CDSET( dset_id, "total enclosed toroidal magnetic flux")
+  call HWRITERV_LO( grpInputPhysics, "curtor"     ,        1,  (/ curtor         /),dset_id)
+  call H5DESCR_CDSET( dset_id, "total enclosed toroidal current")
+  call HWRITERV_LO( grpInputPhysics, "curpol"     ,          1,(/ curpol         /),dset_id)
+  call H5DESCR_CDSET( dset_id, "total enclosed poloidal current")
+  call HWRITERV_LO( grpInputPhysics, "gamma"      ,        1,  (/ gamma          /),dset_id)
+  call H5DESCR_CDSET( dset_id, "adiabatic index")
+  call HWRITEIV_LO( grpInputPhysics, "Nfp"        ,        1,  (/ Nfp            /),dset_id)
+  call H5DESCR_CDSET( dset_id, "number of stellarator field periods")
+  call HWRITEIV_LO( grpInputPhysics, "Nvol"       ,        1,  (/ Nvol           /),dset_id)
+  call H5DESCR_CDSET( dset_id, "number of volumes")
+  call HWRITEIV_LO( grpInputPhysics, "Mpol"       ,        1,  (/ Mpol           /),dset_id)
+  call H5DESCR_CDSET( dset_id, "maximum poloidal mode number")
+  call HWRITEIV_LO( grpInputPhysics, "Ntor"       ,        1,  (/ Ntor           /),dset_id)
+  call H5DESCR_CDSET( dset_id, "maximum toroidal mode number")
+  call HWRITEIV_LO( grpInputPhysics,  "Lrad"       ,     Mvol,      Lrad(1:Mvol)   ,dset_id)
+  call H5DESCR_CDSET( dset_id, "degree of radial Chebychev polynomials")
+  call HWRITEIV_LO( grpInputPhysics, "Lconstraint",        1,  (/ Lconstraint    /),dset_id)
+  call H5DESCR_CDSET( dset_id, "type of constraint to enforce")
+  call HWRITEIV_LO( grpInputPhysics, "Lreflect",         1,    (/ Lreflect       /),dset_id)
+  call H5DESCR_CDSET( dset_id, "whether to reflect the perturbation on both boundaries for slab geometry")
+  call HWRITERV_LO( grpInputPhysics, "tflux"      ,     Mvol,      tflux(1:Mvol)   ,dset_id)
+  call H5DESCR_CDSET( dset_id, "toroidal magnetic flux in volumes")
+  call HWRITERV_LO( grpInputPhysics, "pflux"      ,     Mvol,      pflux(1:Mvol)   ,dset_id)
+  call H5DESCR_CDSET( dset_id, "poloidal magnetic flux in volumes")
+  call HWRITERV_LO( grpInputPhysics, "helicity"   ,     Nvol,   helicity(1:Nvol)   ,dset_id)
+  call H5DESCR_CDSET( dset_id, "helicity profile")
+  call HWRITERV_LO( grpInputPhysics, "pscale"     ,        1,  (/ pscale         /),dset_id)
+  call H5DESCR_CDSET( dset_id, "scaling factor for pressure")
+  call HWRITERV_LO( grpInputPhysics, "pressure"   ,     Nvol,   pressure(1:Nvol), dset_id)
+  call H5DESCR_CDSET( dset_id, "pressure profile")
+  call HWRITEIV_LO( grpInputPhysics,  "Ladiabatic" ,       1,  (/ Ladiabatic     /),dset_id)
+  call H5DESCR_CDSET( dset_id, "adiabatic flag")
+  call HWRITERV_LO( grpInputPhysics, "adiabatic"  ,     Mvol,  adiabatic(1:Nvol)   ,dset_id)
+  call H5DESCR_CDSET( dset_id, "adiabatic profile (?)")
+  call HWRITERV_LO( grpInputPhysics, "mu"         , (1+Nvol),         mu(1:Mvol)   ,dset_id)
+  call H5DESCR_CDSET( dset_id, "Beltrami parameter, parallel current profile")
+  call HWRITERV_LO( grpInputPhysics,  "Ivolume"    ,(1+Nvol),    Ivolume(1:Mvol)   ,dset_id)
+  call H5DESCR_CDSET( dset_id, "Volume current, externally driven, parallel current profile")
+  call HWRITERV_LO( grpInputPhysics, "Isurf"      , (Mvol  ),    Isurf(1:Mvol  )   ,dset_id)
+  call H5DESCR_CDSET( dset_id, "Surface current, currents that are not volume currents (pressure driven, shielding currents)")
+  call HWRITEIV_LO( grpInputPhysics,  "pl"         ,(1+Mvol),         pl(0:Nvol)   ,dset_id)
+  call H5DESCR_CDSET( dset_id, "pl ?")
+  call HWRITEIV_LO( grpInputPhysics, "ql"         , (1+Mvol),         ql(0:Nvol)   ,dset_id)
+  call H5DESCR_CDSET( dset_id, "ql ?")
+  call HWRITEIV_LO( grpInputPhysics, "pr"         , (1+Mvol),         pr(0:Nvol)   ,dset_id)
+  call H5DESCR_CDSET( dset_id, "pr ?")
+  call HWRITEIV_LO( grpInputPhysics, "qr"         , (1+Mvol),         qr(0:Nvol)   ,dset_id)
+  call H5DESCR_CDSET( dset_id, "qr ?")
+  call HWRITERV_LO( grpInputPhysics, "iota"       , (1+Nvol),       iota(0:Nvol)   ,dset_id)
+  call H5DESCR_CDSET( dset_id, "rotational transform profile on inside of ideal interfaces")
+  call HWRITEIV_LO( grpInputPhysics, "lp"         , (1+Mvol),         lp(0:Nvol)   , dset_id)
+  call H5DESCR_CDSET( dset_id, "lp ?")
+  call HWRITEIV_LO( grpInputPhysics, "lq"         , (1+Mvol),         lq(0:Nvol)   , dset_id)
+  call H5DESCR_CDSET( dset_id, "lq ?")
+  call HWRITEIV_LO( grpInputPhysics, "rp"         , (1+Mvol),         rp(0:Nvol)   , dset_id)
+  call H5DESCR_CDSET( dset_id, "rp ?")
+  call HWRITEIV_LO( grpInputPhysics, "rq"         , (1+Mvol),         rq(0:Nvol)   , dset_id)
+  call H5DESCR_CDSET( dset_id, "rq ?")
+  call HWRITERV_LO( grpInputPhysics, "oita"       , (1+Nvol),       oita(0:Nvol)   , dset_id)
+  call H5DESCR_CDSET( dset_id, "rotational transform profile on outside of ideal interfaces")
+  call HWRITERV_LO( grpInputPhysics, "rtor"  ,         1, (/ rtor      /), dset_id)
+  call H5DESCR_CDSET( dset_id, "for aspect ratio in slab")
+  call HWRITERV_LO( grpInputPhysics,  "rpol"  ,       1,  (/ rpol      /), dset_id)
+  call H5DESCR_CDSET( dset_id, "for aspect ratio in slab")
+
+  call HWRITERV_LO( grpInputPhysics, "Rac"        , (1+Ntor),        Rac(0:Ntor)   , dset_id)
+  call H5DESCR_CDSET( dset_id,     "stellarator symmetric coordinate axis R cosine Fourier coefficients")
+  call HWRITERV_LO( grpInputPhysics, "Zas"        , (1+Ntor),        Zas(0:Ntor)   , dset_id)
+  call H5DESCR_CDSET( dset_id,     "stellarator symmetric coordinate axis Z   sine Fourier coefficients")
+  call HWRITERV_LO( grpInputPhysics, "Ras"        , (1+Ntor),        Ras(0:Ntor)   , dset_id)
+  call H5DESCR_CDSET( dset_id, "non-stellarator symmetric coordinate axis R   sine Fourier coefficients")
+  call HWRITERV_LO( grpInputPhysics, "Zac"        , (1+Ntor),        Zac(0:Ntor)   , dset_id)
+  call H5DESCR_CDSET( dset_id, "non-stellarator symmetric coordinate axis Z cosine Fourier coefficients")
+
+  call HWRITERA_LO( grpInputPhysics, "Rbc", (2*Ntor+1), (2*Mpol+1),  Rbc(-Ntor:Ntor,-Mpol:Mpol), dset_id)
+  call H5DESCR_CDSET( dset_id,     "stellarator symmetric boundary R cosine Fourier coefficients")
+  call HWRITERA_LO( grpInputPhysics, "Zbs", (2*Ntor+1), (2*Mpol+1),  Zbs(-Ntor:Ntor,-Mpol:Mpol), dset_id)
+  call H5DESCR_CDSET( dset_id,     "stellarator symmetric boundary Z   sine Fourier coefficients")
+  call HWRITERA_LO( grpInputPhysics, "Rbs", (2*Ntor+1), (2*Mpol+1),  Rbs(-Ntor:Ntor,-Mpol:Mpol), dset_id)
+  call H5DESCR_CDSET( dset_id, "non-stellarator symmetric boundary R   sine Fourier coefficients")
+  call HWRITERA_LO( grpInputPhysics, "Zbc", (2*Ntor+1), (2*Mpol+1),  Zbc(-Ntor:Ntor,-Mpol:Mpol), dset_id)
+  call H5DESCR_CDSET( dset_id, "non-stellarator symmetric boundary Z cosine Fourier coefficients")
+
+  call HWRITERA_LO( grpInputPhysics, "Rwc", (2*Ntor+1), (2*Mpol+1),  Rwc(-Ntor:Ntor,-Mpol:Mpol), dset_id)
+  call H5DESCR_CDSET( dset_id,     "stellarator symmetric boundary R cosine Fourier coefficients of wall")
+  call HWRITERA_LO( grpInputPhysics, "Zws", (2*Ntor+1), (2*Mpol+1),  Zws(-Ntor:Ntor,-Mpol:Mpol), dset_id)
+  call H5DESCR_CDSET( dset_id,     "stellarator symmetric boundary Z   sine Fourier coefficients of wall")
+  call HWRITERA_LO( grpInputPhysics, "Rws", (2*Ntor+1), (2*Mpol+1),  Rws(-Ntor:Ntor,-Mpol:Mpol), dset_id)
+  call H5DESCR_CDSET( dset_id, "non-stellarator symmetric boundary R   sine Fourier coefficients of wall")
+  call HWRITERA_LO( grpInputPhysics, "Zwc", (2*Ntor+1), (2*Mpol+1),  Zwc(-Ntor:Ntor,-Mpol:Mpol), dset_id)
+  call H5DESCR_CDSET( dset_id, "non-stellarator symmetric boundary Z cosine Fourier coefficients of wall")
+
+  call HWRITERA_LO( grpInputPhysics, "Vns", (2*Ntor+1), (2*Mpol+1),  Vns(-Ntor:Ntor,-Mpol:Mpol), dset_id)
+  call H5DESCR_CDSET( dset_id,     "stellarator symmetric normal field   sine Fourier coefficients at boundary; vacuum component")
+  call HWRITERA_LO( grpInputPhysics, "Bns", (2*Ntor+1), (2*Mpol+1),  Bns(-Ntor:Ntor,-Mpol:Mpol), dset_id)
+  call H5DESCR_CDSET( dset_id,     "stellarator symmetric normal field   sine Fourier coefficients at boundary; plasma component")
+  call HWRITERA_LO( grpInputPhysics, "Vnc", (2*Ntor+1), (2*Mpol+1),  Vnc(-Ntor:Ntor,-Mpol:Mpol), dset_id)
+  call H5DESCR_CDSET( dset_id, "non-stellarator symmetric normal field cosine Fourier coefficients at boundary; vacuum component")
+  call HWRITERA_LO( grpInputPhysics, "Bnc", (2*Ntor+1), (2*Mpol+1),  Bnc(-Ntor:Ntor,-Mpol:Mpol), dset_id)
+  call H5DESCR_CDSET( dset_id, "non-stellarator symmetric normal field cosine Fourier coefficients at boundary; plasma component")
+
+  call HWRITERV_LO( grpInputPhysics,   "mupftol",         1,   (/ mupftol /), dset_id)
+  call H5DESCR_CDSET( dset_id, "mupftol")
+  call HWRITEIV_LO( grpInputPhysics,    "mupfits",       1,    (/ mupfits /), dset_id)
+  call H5DESCR_CDSET( dset_id, "mupfits")
+
+  call HCLOSEGRP( grpInputPhysics)
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+! the following variables constitute the namelist/numericlist/; note that all variables in namelist need to be broadcasted in readin;
+! they go into ext.h5/input/numerics
+
+  call HDEFGRP( grpInput, "numerics", grpInputNumerics)
+
+  call HWRITEIV( grpInputNumerics, "Linitialize"        ,          1, (/ Linitialize /))
+  call HWRITEIV( grpInputNumerics, "Lzerovac"           ,          1, (/ Lzerovac    /))
+  call HWRITEIV( grpInputNumerics, "Ndiscrete"          ,          1, (/ Ndiscrete   /))
+  call HWRITEIV( grpInputNumerics, "Nquad"              ,          1, (/ Nquad       /))
+  call HWRITEIV( grpInputNumerics, "iMpol"              ,          1, (/ iMpol       /))
+  call HWRITEIV( grpInputNumerics, "iNtor"              ,          1, (/ iNtor       /))
+  call HWRITEIV( grpInputNumerics, "Lsparse"            ,          1, (/ Lsparse     /))
+  call HWRITEIV( grpInputNumerics, "Lsvdiota"           ,          1, (/ Lsvdiota    /))
+  call HWRITEIV( grpInputNumerics, "imethod"            ,          1, (/ imethod     /))
+  call HWRITEIV( grpInputNumerics, "iorder"             ,          1, (/ iorder      /))
+  call HWRITEIV( grpInputNumerics, "iprecon"            ,          1, (/ iprecon     /))
+  call HWRITERV( grpInputNumerics, "iotatol"            ,          1, (/ iotatol     /))
+  call HWRITEIV( grpInputNumerics, "Lextrap"            ,          1, (/ Lextrap     /))
+  call HWRITEIV( grpInputNumerics, "Mregular"           ,          1, (/ Mregular    /))
+  call HWRITEIV( grpInputNumerics, "Lrzaxis"            ,          1, (/ Lrzaxis     /))
+  call HWRITEIV( grpInputNumerics, "Ntoraxis"           ,          1, (/ Ntoraxis    /))
+
+  call HCLOSEGRP( grpInputNumerics)
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+! the following variables constitute the namelist/locallist/; note that all variables in namelist need to be broadcasted in readin;
+! they go into ext.h5/input/local
+
+  call HDEFGRP( grpInput, "local", grpInputLocal )
+
+  call HWRITEIV( grpInputLocal, "LBeltrami"          ,             1, (/ LBeltrami   /))
+  call HWRITEIV( grpInputLocal, "Linitgues"          ,             1, (/ Linitgues   /))
+  call HWRITEIV( grpInputLocal, "Lposdef"            ,             1, (/ Lposdef     /)) ! redundant;
+  call HWRITERV( grpInputLocal, "maxrndgues"         ,             1, (/ maxrndgues  /))
+  call HWRITEIV( grpInputLocal, "Lmatsolver"         ,             1, (/ Lmatsolver  /))
+  call HWRITEIV( grpInputLocal, "LGMRESprec"         ,             1, (/ LGMRESprec  /))
+  call HWRITERV( grpInputLocal, "epsGMRES"           ,             1, (/ epsGMRES    /))
+  call HWRITERV( grpInputLocal, "epsILU"             ,             1, (/ epsILU      /))
+
+  call HCLOSEGRP( grpInputLocal )
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+! the following variables constitute the namelist/globallist/; note that all variables in namelist need to be broadcasted in readin;
+! they go into ext.h5/input/global
+
+  call HDEFGRP( grpInput, "global", grpInputGlobal )
+
+  call HWRITEIV( grpInputGlobal, "Lfindzero"         ,            1,  (/ Lfindzero   /))
+  call HWRITERV( grpInputGlobal, "escale"            ,            1,  (/ escale      /))
+  call HWRITERV( grpInputGlobal, "opsilon"           ,            1,  (/ opsilon     /))
+  call HWRITERV( grpInputGlobal, "pcondense"         ,            1,  (/ pcondense   /))
+  call HWRITERV( grpInputGlobal, "epsilon"           ,            1,  (/ epsilon     /))
+  call HWRITERV( grpInputGlobal, "wpoloidal"         ,            1,  (/ wpoloidal   /))
+  call HWRITERV( grpInputGlobal, "upsilon"           ,            1,  (/ upsilon     /))
+  call HWRITERV( grpInputGlobal, "forcetol"          ,            1,  (/ forcetol    /))
+  call HWRITERV( grpInputGlobal, "c05xmax"           ,            1,  (/ c05xmax     /))
+  call HWRITERV( grpInputGlobal, "c05xtol"           ,            1,  (/ c05xtol     /))
+  call HWRITERV( grpInputGlobal, "c05factor"         ,            1,  (/ c05factor   /))
+  call HWRITELV( grpInputGlobal, "LreadGF"           ,            1,  (/ LreadGF     /))
+  call HWRITEIV( grpInputGlobal, "mfreeits"          ,            1,  (/ mfreeits    /))
+  call HWRITERV( grpInputGlobal, "bnstol"            ,            1,  (/ bnstol      /))  ! redundant;
+  call HWRITERV( grpInputGlobal, "bnsblend"          ,            1,  (/ bnsblend    /))  ! redundant;
+  call HWRITERV( grpInputGlobal, "gBntol"            ,            1,  (/ gBntol      /))
+  call HWRITERV( grpInputGlobal, "gBnbld"            ,            1,  (/ gBnbld      /))
+  call HWRITERV( grpInputGlobal, "vcasingeps"        ,            1,  (/ vcasingeps  /))
+  call HWRITERV( grpInputGlobal, "vcasingtol"        ,            1,  (/ vcasingtol  /))
+  call HWRITEIV( grpInputGlobal, "vcasingits"        ,            1,  (/ vcasingits  /))
+  call HWRITEIV( grpInputGlobal, "vcasingper"        ,            1,  (/ vcasingper  /))
+  call HWRITEIV( grpInputGlobal, "mcasingcal"        ,            1,  (/ mcasingcal  /))  ! redundant;
+
+  call HCLOSEGRP( grpInputGlobal )
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+! the following variables constitute the namelist/diagnosticslist/; note that all variables in namelist need to be broadcasted in readin;
+! they go into ext.h5/input/diagnostics
+
+  call HDEFGRP( grpInput, "diagnostics", grpInputDiagnostics )
+
+  call HWRITERV( grpInputDiagnostics, "odetol"            ,       1,  (/ odetol         /))
+  call HWRITERV( grpInputDiagnostics, "absreq"            ,       1,  (/ absreq         /))           ! redundant;
+  call HWRITERV( grpInputDiagnostics, "relreq"            ,       1,  (/ relreq         /))           ! redundant;
+  call HWRITERV( grpInputDiagnostics, "absacc"            ,       1,  (/ absacc         /))           ! redundant;
+  call HWRITERV( grpInputDiagnostics, "epsr"              ,       1,  (/ epsr           /))           ! redundant;
+  call HWRITEIV( grpInputDiagnostics, "nPpts"             ,       1,  (/ nPpts          /))
+  call HWRITERV( grpInputDiagnostics, "Ppts"              ,       1,  (/  Ppts          /))
+  call HWRITEIV( grpInputDiagnostics, "nPtrj"             ,    Mvol,     nPtrj(1:Mvol)    )
+  call HWRITELV( grpInputDiagnostics, "LHevalues"         ,       1,  (/ LHevalues      /))
+  call HWRITELV( grpInputDiagnostics, "LHevectors"        ,       1,  (/ LHevectors     /))
+  call HWRITELV( grpInputDiagnostics, "LHmatrix"          ,       1,  (/ LHmatrix       /))
+  call HWRITEIV( grpInputDiagnostics, "Lperturbed"        ,       1,  (/ Lperturbed     /))
+  call HWRITEIV( grpInputDiagnostics, "dpp"               ,       1,  (/ dpp            /))
+  call HWRITEIV( grpInputDiagnostics, "dqq"               ,       1,  (/ dqq            /))
+  call HWRITEIV( grpInputDiagnostics, "Lcheck"            ,       1,  (/ Lcheck         /))
+  call HWRITELV( grpInputDiagnostics, "Ltiming"           ,       1,  (/ Ltiming        /))
+  call HWRITEIV( grpInputDiagnostics, "Lerrortype"        ,       1,  (/ Lerrortype     /))
+  call HWRITEIV( grpInputDiagnostics, "Ngrid"             ,       1,  (/ Ngrid          /))
+  call HWRITERV( grpInputDiagnostics, "fudge"             ,       1,  (/ fudge          /))          ! redundant;
+  call HWRITERV( grpInputDiagnostics, "scaling"           ,       1,  (/ scaling        /))          ! redundant;
+
+  call HCLOSEGRP( grpInputDiagnostics )
+
+  call HCLOSEGRP( grpInput )
 
  endif ! myid.eq.0
 
@@ -658,7 +555,7 @@ subroutine write_convergence_output( nDcalls, ForceErr )
 !
 !    if( hdfier.ne.1 ) then
 !      write(6,'("sphdf5 :      fatal : myid=",i3," ; hdfier.ne.1 ; rank of convergence dataspace is not 1 ;")') myid
-!      call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+!      call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
 !      stop "sphdf5 : hdfier.ne.1 : rank of convergence dataspace is not 1  ;"
 !     endif
 !

@@ -13,7 +13,7 @@
 # basis of SPEC: input variables, global workspace, HDF5 output file writing
 # these are split off since they require special treatment (needed by all others and/or special macros)
 BASEFILES=inputlist global
-IOFILES=sphdf5
+IOFILES=h5utils sphdf5
 
 # (most of) physics part of SPEC
 afiles=preset manual rzaxis packxi volume coords basefn memory
