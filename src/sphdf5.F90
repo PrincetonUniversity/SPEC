@@ -1178,33 +1178,33 @@ subroutine hdfint
 !latex
 !latex \begin{tabular}{|l|l|l|} \hline
 
-!latex \type{variable}               & type    & \pb{description} \\ \hline
+!latex \type{variable}               & type    & \pb{description}  \hline
 
-!latex \type{mn}                     & integer & \pb{number of Fourier modes} \\
+!latex \type{mn}                     & integer & \pb{number of Fourier modes}
   call HWRITEIV( grpOutput, "mn",  1, (/ mn /)  )
-!latex \type{im(1:mn)}               & integer & \pb{poloidal mode numbers} \\
+!latex \type{im(1:mn)}               & integer & \pb{poloidal mode numbers}
   call HWRITEIV( grpOutput, "im", mn, im(1:mn) )
-!latex \type{in(1:mn)}               & integer & \pb{toroidal mode numbers} \\
+!latex \type{in(1:mn)}               & integer & \pb{toroidal mode numbers}
   call HWRITEIV( grpOutput, "in", mn,  in(1:mn) )
-!latex \type{mns}                     & integer & \pb{number of Fourier modes} \\
+!latex \type{mns}                     & integer & \pb{number of Fourier modes}
   call HWRITEIV( grpOutput,  "mns", 1, (/ mns /)  )
-!latex \type{ims(1:mns)}               & integer & \pb{poloidal mode numbers} \\
+!latex \type{ims(1:mns)}               & integer & \pb{poloidal mode numbers}
   call HWRITEIV( grpOutput, "ims", mns, ims(1:mns) )
-!latex \type{ins(1:mns)}               & integer & \pb{toroidal mode numbers} \\
+!latex \type{ins(1:mns)}               & integer & \pb{toroidal mode numbers}
   call HWRITEIV( grpOutput, "ins", mns,  ins(1:mns) )
-!latex \type{Mvol}                   & integer & \pb{number of interfaces = number of volumes} \\
+!latex \type{Mvol}                   & integer & \pb{number of interfaces = number of volumes}
   call HWRITEIV( grpOutput, "Mvol",  1, (/ Mvol /))
-!latex \type{iRbc(1:mn,0:Mvol)}      & real    & \pb{Fourier harmonics, $R_{m,n}$, of interfaces} \\
+!latex \type{iRbc(1:mn,0:Mvol)}      & real    & \pb{Fourier harmonics, $R_{m,n}$, of interfaces}
   call HWRITERA( grpOutput, "Rbc", mn, (Mvol+1), iRbc(1:mn,0:Mvol) )
-!latex \type{iZbs(1:mn,0:Mvol)}      & real    & \pb{Fourier harmonics, $Z_{m,n}$, of interfaces} \\
+!latex \type{iZbs(1:mn,0:Mvol)}      & real    & \pb{Fourier harmonics, $Z_{m,n}$, of interfaces}
   call HWRITERA( grpOutput, "Zbs", mn, (Mvol+1), iZbs(1:mn,0:Mvol) )
-!latex \type{iRbs(1:mn,0:Mvol)}      & real    & \pb{Fourier harmonics, $R_{m,n}$, of interfaces} \\
+!latex \type{iRbs(1:mn,0:Mvol)}      & real    & \pb{Fourier harmonics, $R_{m,n}$, of interfaces}
   call HWRITERA( grpOutput, "Rbs", mn, (Mvol+1), iRbs(1:mn,0:Mvol) )
-!latex \type{iZbc(1:mn,0:Mvol)}      & real    & \pb{Fourier harmonics, $Z_{m,n}$, of interfaces} \\
+!latex \type{iZbc(1:mn,0:Mvol)}      & real    & \pb{Fourier harmonics, $Z_{m,n}$, of interfaces}
   call HWRITERA( grpOutput, "Zbc", mn, (Mvol+1), iZbc(1:mn,0:Mvol) )
-!l tex \type{forcetol}               & real    & \pb{force-balance error across interfaces} \\
+!l tex \type{forcetol}               & real    & \pb{force-balance error across interfaces}
 !  HWRITERV( grpOutput, 1, forcetol, (/ forcetol /)) ! already in /input/global
-!latex \type{ForceErr}               & real    & \pb{force-balance error across interfaces} \\
+!latex \type{ForceErr}               & real    & \pb{force-balance error across interfaces}
   call HWRITERV( grpOutput, "ForceErr", 1, (/ ForceErr /))
 !latex \type{Ivolume}                & real    & \pb{Volume current at output (parallel, externally induced)}
   call HWRITERV( grpOutput, "Ivolume", Mvol, Ivolume(1:Mvol))
@@ -1219,14 +1219,14 @@ subroutine hdfint
   call HWRITERV( grpOutput, "pflux"             ,  Mvol,      pflux(1:Mvol)   )
 
   if( Lcheck.eq.1 ) then
-!latex \type{beltramierror}          & real    & \pb{error in beltrami field (volume integral)} \\
+!latex \type{beltramierror}          & real    & \pb{error in beltrami field (volume integral)}
    call HWRITERA( grpOutput, "beltramierror", Mvol, 3, beltramierror(1:Mvol,1:3) )
   endif
 
   if( allocated(vvolume) ) then ! why is it required to confirm that vvolume has been allocated ; 24 Nov 16;
 
    tvolume = sum(vvolume(1:Nvol) )
-!latex \type{volume}                 & real    & \pb{total volume = $\sum V_v$} \\
+!latex \type{volume}                 & real    & \pb{total volume = $\sum V_v$}
    call HWRITERV( grpOutput, "volume", 1, (/ tvolume /))
 
   else
@@ -1236,21 +1236,21 @@ subroutine hdfint
   endif ! end of if( allocated(vvolume) ) ; 11 Aug 14;
 
   Mrad  = maxval( Lrad(1:Mvol) )
-!latex \type{Mrad}                   & integer & \pb{the maximum radial (Chebyshev) resolution} \\
+!latex \type{Mrad}                   & integer & \pb{the maximum radial (Chebyshev) resolution}
   call HWRITEIV( grpOutput, "Mrad", 1, (/ Mrad /))
-!latex \type{TT(0:Mrad,0:1,0:1)}     & real    & \pb{the Chebyshev polynomials, $T_l$, and their derivatives, evaluated at $s=\pm 1$} \\
+!latex \type{TT(0:Mrad,0:1,0:1)}     & real    & \pb{the Chebyshev polynomials, $T_l$, and their derivatives, evaluated at $s=\pm 1$}
   call HWRITERC( grpOutput, "TT", (Mrad+1), 2, 2, TT(0:Mrad,0:1,0:1) )
-!latex \type{Btemn(1:mn,0:1,1:Mvol)} & real    & \pb{the cosine harmonics of the covariant poloidal field, \\
-!latex                                           i.e. $[[B_{\t,j}]]$ evaluated on the inner and outer interface in each volume} \\
+!latex \type{Btemn(1:mn,0:1,1:Mvol)} & real    & \pb{the cosine harmonics of the covariant poloidal field,
+!latex                                           i.e. $[[B_{\t,j}]]$ evaluated on the inner and outer interface in each volume}
   call HWRITERC( grpOutput, "Btemn", mn, 2, Mvol, Btemn(1:mn,0:1,1:Mvol) )
-!latex \type{Bzemn(1:mn,0:1,1:Mvol)} & real    & \pb{the cosine harmonics of the covariant toroidal field, \\
-!latex                                           i.e. $[[B_{\z,j}]]$ evaluated on the inner and outer interface in each volume} \\
+!latex \type{Bzemn(1:mn,0:1,1:Mvol)} & real    & \pb{the cosine harmonics of the covariant toroidal field,
+!latex                                           i.e. $[[B_{\z,j}]]$ evaluated on the inner and outer interface in each volume}
   call HWRITERC( grpOutput, "Bzemn", mn, 2, Mvol, Bzemn(1:mn,0:1,1:Mvol) )
-!latex \type{Btomn(1:mn,0:1,1:Mvol)} & real    & \pb{the sine harmonics of the covariant poloidal field, \\
-!latex                                           i.e. $[[B_{\t,j}]]$ evaluated on the inner and outer interface in each volume} \\
+!latex \type{Btomn(1:mn,0:1,1:Mvol)} & real    & \pb{the sine harmonics of the covariant poloidal field,
+!latex                                           i.e. $[[B_{\t,j}]]$ evaluated on the inner and outer interface in each volume}
   call HWRITERC( grpOutput, "Btomn", mn, 2, Mvol, Btomn(1:mn,0:1,1:Mvol) )
-!latex \type{Bzomn(1:mn,0:1,1:Mvol)} & real    & \pb{the sine harmonics of the covariant toroidal field, \\
-!latex                                           i.e. $[[B_{\z,j}]]$ evaluated on the inner and outer interface in each volume} \\
+!latex \type{Bzomn(1:mn,0:1,1:Mvol)} & real    & \pb{the sine harmonics of the covariant toroidal field,
+!latex                                           i.e. $[[B_{\z,j}]]$ evaluated on the inner and outer interface in each volume}
   call HWRITERC( grpOutput, "Bzomn", mn, 2, Mvol, Bzomn(1:mn,0:1,1:Mvol) )
 
 ! Write lambda_mn, Fourier harmonics or transformation to straight field line coordinates.
@@ -1258,18 +1258,18 @@ subroutine hdfint
 
   if( Lperturbed.eq.1 ) then
 
-!latex \type{dRbc(1:mn,0:Nvol)}      & real    & \pb{Fourier harmonics, $R_{j}$, of interfaces; linearly perturbed solution} \\
+!latex \type{dRbc(1:mn,0:Nvol)}      & real    & \pb{Fourier harmonics, $R_{j}$, of interfaces; linearly perturbed solution}
   call HWRITERA( grpOutput, "dRbc", mn, (Nvol+1), dRbc(1:mn,0:Nvol) )
-!latex \type{dZbs(1:mn,0:Nvol)}      & real    & \pb{Fourier harmonics, $Z_{j}$, of interfaces; linearly perturbed solution} \\
+!latex \type{dZbs(1:mn,0:Nvol)}      & real    & \pb{Fourier harmonics, $Z_{j}$, of interfaces; linearly perturbed solution}
   call HWRITERA( grpOutput, "dZbs", mn, (Nvol+1), dZbs(1:mn,0:Nvol) )
-!latex \type{dRbs(1:mn,0:Nvol)}      & real    & \pb{Fourier harmonics, $R_{j}$, of interfaces; linearly perturbed solution} \\
+!latex \type{dRbs(1:mn,0:Nvol)}      & real    & \pb{Fourier harmonics, $R_{j}$, of interfaces; linearly perturbed solution}
   call HWRITERA( grpOutput, "dRbs", mn, (Nvol+1), dRbs(1:mn,0:Nvol) )
-!latex \type{dZbc(1:mn,0:Nvol)}      & real    & \pb{Fourier harmonics, $Z_{j}$, of interfaces; linearly perturbed solution} \\
+!latex \type{dZbc(1:mn,0:Nvol)}      & real    & \pb{Fourier harmonics, $Z_{j}$, of interfaces; linearly perturbed solution}
   call HWRITERA( grpOutput, "dZbc", mn, (Nvol+1), dZbc(1:mn,0:Nvol) )
 
   endif
 
-!latex \type{lmns}                   & integer & \pb{resolution of straight fieldline transformation} \\
+!latex \type{lmns}                   & integer & \pb{resolution of straight fieldline transformation}
   call HWRITEIV( grpOutput, "lmns", 1, (/ lmns /))
 
 !latex \hline \end{tabular}
