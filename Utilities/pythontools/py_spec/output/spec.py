@@ -34,7 +34,16 @@ class SPECout:
         grid,
         jacobian,
         metric,
+        get_B_FFT,
+        get_s_der_B_FFT,
+        get_t_der_B_FFT,
+        get_z_der_B_FFT,
+        get_B_and_der_FFT,
         get_B,
+        get_s_der_B,
+        get_t_der_B,
+        get_z_der_B,
+        get_B_and_der,
         get_modB,
         get_B_covariant
     )

@@ -216,7 +216,10 @@ class SPECNamelist(Namelist):
         if run_result.returncode == 0:  # the run is successful
             if not quiet:
                 print("SPEC runs successfully.")
-            return SPECout(filename + ".h5")
+            try:
+                return SPECout(filename + ".h5")
+            except:
+                return SPECout(filename[:-3] + ".h5")
         else:
             print("SPEC runs unsuccessfully, check terminal output.")
             return None

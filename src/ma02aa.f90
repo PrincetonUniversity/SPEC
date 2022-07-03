@@ -368,13 +368,14 @@ subroutine ma02aa( lvol, NN )
 !>
 !> <ul>
 !>
-!> <li> In addition to the enclosed toroidal flux, \f$\Delta \psi_t\f$, which is held constant in the plasma volumes,
+!> <li> In addition to the enclosed toroidal flux, \f$\Delta \psi_t\f$, which is held constant in the plasma volumes (for \c Lconstraint != -2),
 !>       the Beltrami field in a given volume is assumed to be parameterized by \f$\mu\f$ and \f$\Delta \psi_p\f$.
 !>       (Note that \f$\Delta \psi_p\f$ is not defined in a torus.) </li>
 !> <li> These are "packed" into an array, e.g. \f$\boldsymbol{\mu} \equiv (\mu, \Delta\psi_p)^T\f$, so that standard library routines ,
 !>       e.g. \c C05PCF, can be used to (iteratively) find the appropriately-constrained Beltrami solution, i.e. \f${\bf f}(\boldsymbol{\mu})=0\f$. </li>
 !> <li> The function \f${\bf f}(\boldsymbol{\mu})\f$, which is computed by mp00ac(), is defined by the input parameter \c Lconstraint:
 !> <ul>
+!> <li> If \c Lconstraint = -2,    then \f$\boldsymbol{\mu}\f$       is *not* varied, but \f$\Delta \psi_t\f$ is, and \c Nxdof=1. </li>
 !> <li> If \c Lconstraint = -1, 0, then \f$\boldsymbol{\mu}\f$       is *not* varied and \c Nxdof=0. </li>
 !> <li> If \c Lconstraint =  1,    then \f$\boldsymbol{\mu}\f$       is       varied to satisfy the transform constraints;
 !>      and \c Nxdof=1 in the simple torus and \c Nxdof=2 in the annular regions.
@@ -382,7 +383,7 @@ subroutine ma02aa( lvol, NN )
 !>      and only \f$\mu=\boldsymbol{\mu}_1\f$ is varied in order to satisfy the transform constraint on the "outer" interface of that volume.) </li>
 !> <li> \todo If \c Lconstraint =  2,    then \f$\mu=\boldsymbol{\mu}_1\f$ is       varied in order to satisfy the helicity constraint,
 !>      and \f$\Delta\psi_p=\boldsymbol{\mu}_2\f$ is *not* varied, and \c Nxdof=1.
-!>      (under re-construction)
+!>      (under re-construction) </li>
 !>
 !> </li>
 !> </ul> </li>
@@ -425,7 +426,12 @@ subroutine ma02aa( lvol, NN )
 
     Xdof(1:2) = xoffset + (/     mu(lvol), dpflux(lvol) /) ! initial guess for degrees of freedom; offset from zero so that relative error is small;
 
+    if (Lconstraint .eq. -2) then
+      Xdof(1:1) = xoffset + (/ dtflux(lvol) /)
+    end if
+    
     select case( Lconstraint )
+    case( -2 )    ;                                   ; Nxdof = 1 ! toroidal flux              IS  varied to match linking current; 
     case( -1 )    ;                                   ; Nxdof = 0 ! multiplier & poloidal flux NOT varied                               ;
     ;             ; iflag = 1 !(we don't need derivatives)
     case(  0 )    ;                                   ; Nxdof = 0 ! multiplier & poloidal flux NOT varied
@@ -480,12 +486,20 @@ subroutine ma02aa( lvol, NN )
 
     if( Lplasmaregion ) then
 
-     select case( ihybrj )
-     case( 0: ) ;     mu(lvol) = Xdof(1)      - xoffset
-      ;         ; dpflux(lvol) = Xdof(2)      - xoffset
-     case( :-1) ;      Xdof(1) = mu(lvol)     + xoffset ! mu    and dpflux have been updated in mp00ac; early termination;
-      ;         ;      Xdof(2) = dpflux(lvol) + xoffset ! mu    and dpflux have been updated in mp00ac; early termination;
-     end select
+     if (Lconstraint .eq. -2) then
+       if (ihybrj .le. -1) then
+         Xdof(1) = dtflux(lvol) + xoffset
+       elseif (ihybrj .ge. 0) then
+         dtflux(lvol) = Xdof(1)  - xoffset
+       end if
+     else
+       select case( ihybrj )
+       case( 0: ) ;     mu(lvol) = Xdof(1)      - xoffset
+        ;         ; dpflux(lvol) = Xdof(2)      - xoffset
+       case( :-1) ;      Xdof(1) = mu(lvol)     + xoffset ! mu    and dpflux have been updated in mp00ac; early termination;
+        ;         ;      Xdof(2) = dpflux(lvol) + xoffset ! mu    and dpflux have been updated in mp00ac; early termination;
+       end select
+     end if
 
     else ! Lvacuumregion;
 
@@ -502,8 +516,8 @@ subroutine ma02aa( lvol, NN )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-    if( Lconstraint.eq.1 .or. Lconstraint.eq.3 .or. ( Lvacuumregion .and. Lconstraint.eq.0 ) ) then
-
+    if( Lconstraint.eq.1 .or. Lconstraint.eq.3 .or. ( Lvacuumregion .and. Lconstraint.eq.0 ) .or. Lconstraint.eq.-2) then
+     
      iflag = 2 ; Ldfjac = Ndof ! call mp00ac: tr00ab/curent to ensure the derivatives of B, transform, currents, wrt mu/dtflux & dpflux are calculated;
 
      WCALL( ma02aa, mp00ac, ( Ndof, Xdof(1:Ndof), Fdof(1:Ndof), Ddof(1:Ldfjac,1:Ndof), Ldfjac, iflag ) )

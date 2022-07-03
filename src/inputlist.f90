@@ -64,6 +64,7 @@ module inputlist
                                                          !< </ul>
   INTEGER      :: Lconstraint                = -1        !< selects constraints; primarily used in ma02aa() and mp00ac().
                                                          !< <ul>
+                                                         !< <li> if \c Lconstraint==-2, then in the plasma region \f$\Delta \psi_t\f$ is varied to match the prescriped "linking" current, \c curpol. </li>
                                                          !< <li> if \c Lconstraint==-1, then in the plasma regions \f$\Delta\psi_t\f$, \f$\mu\f$ and \f$\Delta \psi_p\f$ are *not* varied
                                                          !<      and in the vacuum region (only for free-boundary) \f$\Delta\psi_t\f$ and \f$\Delta \psi_p\f$ are *not* varied, and \f$\mu = 0\f$. </li>
                                                          !< <li> if \c Lconstraint==0, then in the plasma regions \f$\Delta\psi_t\f$, \f$\mu\f$ and \f$\Delta \psi_p\f$ are *not* varied
@@ -184,6 +185,7 @@ module inputlist
                                                          !< <li> toroidal size is \f$L = 2\pi*\f$\c rtor </li>
                                                          !< </ul>
   INTEGER      :: Lreflect                   =  0        !< =1 reflect the upper and lower bound in slab, =0 do not reflect
+  LOGICAL      :: Lbdybnzero                 =  .true.   !< for fixed-boundary, =.true. assume Bsups=0 on boundary, =.false. obtain Bsups from Vns and Vnc input (currently only for Lconstraint=-2)
 
   REAL         :: Rac(     0:MNtor        )  =  0.0      !<     stellarator symmetric coordinate axis;
   REAL         :: Zas(     0:MNtor        )  =  0.0      !<     stellarator symmetric coordinate axis;
@@ -641,6 +643,7 @@ module inputlist
  rpol        ,&
  rtor        ,&
  Lreflect    ,&
+ Lbdybnzero  ,&
  Rac         ,&
  Zas         ,&
  Ras         ,&
@@ -869,6 +872,7 @@ subroutine initialize_inputs
   mupfits                    =  8
 
   Lreflect                   =  0
+  Lbdybnzero                 =  .true.
 
 ! numericlist
 

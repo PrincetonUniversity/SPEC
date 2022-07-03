@@ -899,19 +899,27 @@ subroutine build_vector_potential(lvol, iocons, aderiv, tderiv)
 
    if( Lcoordinatesingularity ) then
     mi = im(ii)
-    do ll = mi, Lrad(lvol),2 ! loop over Zernike polynomials; Lrad is the radial resolution; 01 Jul 19;
-      ;                      ; efmn(ii) = efmn(ii) +          Ate(lvol,aderiv,ii)%s(ll) * RTT(ll,mi,iocons,1) * half
-      ;                      ; cfmn(ii) = cfmn(ii) +          Aze(lvol,aderiv,ii)%s(ll) * RTT(ll,mi,iocons,1) * half
-      if( NOTstellsym ) then ; ofmn(ii) = ofmn(ii) +          Ato(lvol,aderiv,ii)%s(ll) * RTT(ll,mi,iocons,1) * half
-      ;                      ; sfmn(ii) = sfmn(ii) +          Azo(lvol,aderiv,ii)%s(ll) * RTT(ll,mi,iocons,1) * half
-      endif
-    enddo ! end of do ll; 20 Feb 13;
+      do ll = mi, Lrad(lvol),2 ! loop over Zernike polynomials; Lrad is the radial resolution; 01 Jul 19;
+        if( tderiv .eq. 1) then
+          ;                      ; efmn(ii) = efmn(ii) +          Ate(lvol,aderiv,ii)%s(ll) * RTT(ll,mi,iocons,1) * half
+          ;                      ; cfmn(ii) = cfmn(ii) +          Aze(lvol,aderiv,ii)%s(ll) * RTT(ll,mi,iocons,1) * half
+          if( NOTstellsym ) then ; ofmn(ii) = ofmn(ii) +          Ato(lvol,aderiv,ii)%s(ll) * RTT(ll,mi,iocons,1) * half
+          ;                      ; sfmn(ii) = sfmn(ii) +          Azo(lvol,aderiv,ii)%s(ll) * RTT(ll,mi,iocons,1) * half
+          endif
+        else
+          ;                      ; efmn(ii) = efmn(ii) +          Ate(lvol,aderiv,ii)%s(ll) * RTT(ll,mi,iocons,0)
+          ;                      ; cfmn(ii) = cfmn(ii) +          Aze(lvol,aderiv,ii)%s(ll) * RTT(ll,mi,iocons,0)
+          if( NOTstellsym ) then ; ofmn(ii) = ofmn(ii) +          Ato(lvol,aderiv,ii)%s(ll) * RTT(ll,mi,iocons,0)
+          ;                      ; sfmn(ii) = sfmn(ii) +          Azo(lvol,aderiv,ii)%s(ll) * RTT(ll,mi,iocons,0)
+          endif
+        endif
+      enddo ! end of do ll; 20 Feb 13;
    else
     do ll = 0, Lrad(lvol) ! loop over Chebyshev polynomials; Lrad is the radial resolution;
-      ;                      ; efmn(ii) = efmn(ii) +          Ate(lvol,aderiv,ii)%s(ll) * TT(ll,iocons,1) ! aderiv labels deriv. wrt mu, pflux;
-      ;                      ; cfmn(ii) = cfmn(ii) +          Aze(lvol,aderiv,ii)%s(ll) * TT(ll,iocons,1)
-      if( NOTstellsym ) then ; ofmn(ii) = ofmn(ii) +          Ato(lvol,aderiv,ii)%s(ll) * TT(ll,iocons,1)
-      ;                     ; sfmn(ii) = sfmn(ii) +          Azo(lvol,aderiv,ii)%s(ll) * TT(ll,iocons,1)
+      ;                      ; efmn(ii) = efmn(ii) +          Ate(lvol,aderiv,ii)%s(ll) * TT(ll,iocons,tderiv) ! aderiv labels deriv. wrt mu, pflux;
+      ;                      ; cfmn(ii) = cfmn(ii) +          Aze(lvol,aderiv,ii)%s(ll) * TT(ll,iocons,tderiv)
+      if( NOTstellsym ) then ; ofmn(ii) = ofmn(ii) +          Ato(lvol,aderiv,ii)%s(ll) * TT(ll,iocons,tderiv)
+      ;                      ; sfmn(ii) = sfmn(ii) +          Azo(lvol,aderiv,ii)%s(ll) * TT(ll,iocons,tderiv)
       endif
     enddo ! end of do ll; 20 Feb 13;
    end if ! Lcoordinatesingularity; 01 Jul 19;
@@ -1150,14 +1158,14 @@ subroutine check_inputs()
 
    cput = GETTIME
 
-   write(ounit,1010) cput-cpus, Igeometry, Istellsym, Lreflect
+   write(ounit,1010) cput-cpus, Igeometry, Istellsym, Lreflect, Lbdybnzero
    write(ounit,1011)            Lfreebound, phiedge, curtor, curpol
    write(ounit,1012)            gamma
    write(ounit,1013)            Nfp, Nvol, Mvol, Mpol, Ntor
    write(ounit,1014)            pscale, Ladiabatic, Lconstraint, mupftol, mupfits
    write(ounit,1015)            Lrad(1:min(Mvol,32))
 
-1010 format("readin : ",f10.2," : Igeometry=",i3," ; Istellsym=",i3," ; Lreflect="i3" ;")
+1010 format("readin : ",f10.2," : Igeometry=",i3," ; Istellsym=",i3," ; Lreflect="i3" ; Lbdybnzero="L2" ;")
 1011 format("readin : ", 10x ," : Lfreebound=",i3," ; phiedge="es23.15" ; curtor="es23.15" ; curpol="es23.15" ;")
 1012 format("readin : ", 10x ," : gamma="es23.15" ;")
 1013 format("readin : ", 10x ," : Nfp=",i3," ; Nvol=",i3," ; Mvol=",i3," ; Mpol=",i3," ; Ntor=",i3," ;")
@@ -1184,7 +1192,9 @@ subroutine check_inputs()
    FATAL( readin, mupftol.le.zero, mupftol is too small )
    FATAL( readin, abs(one+gamma).lt.vsmall, 1+gamma appears in denominator in dforce ) !< \todo Please check this; SRH: 27 Feb 18;
    FATAL( readin, abs(one-gamma).lt.vsmall, 1-gamma appears in denominator in fu00aa ) !< \todo Please check this; SRH: 27 Feb 18;
-   FATAL( readin, Lconstraint.lt.-1 .or. Lconstraint.gt.3, illegal Lconstraint )
+   FATAL( readin, Lconstraint.lt.-2 .or. Lconstraint.gt.3, illegal Lconstraint )
+   FATAL( readin, Lconstraint.eq.-2 .and. Nvol.ne.1, Lconstraint=-2 only for single-volume calculation )
+   FATAL( readin, .not. Lbdybnzero .and. (Lconstraint.ne.-2 .or. Lfreebound.eq.1) , Lbdybnzero=.false only for fixed-boundary calculation with Lconstraint=-2 )
    FATAL( readin, Igeometry.eq.1 .and. rpol.lt.vsmall, poloidal extent of slab too small or negative )
    FATAL( readin, Igeometry.eq.1 .and. rtor.lt.vsmall, toroidal extent of slab too small or negative )
 
@@ -1534,7 +1544,56 @@ subroutine broadcast_inputs
   if( Wreadin ) then ; cput = GETTIME ; write(ounit,'("readin : ",f10.2," : broadcasting screenlist      from ext.sp ;")') cput-cpus
   endif
 
-! BSCREENLIST ! broadcast screenlist; this is expanded by Makefile; do not remove;
+  LlBCAST( Wmanual ,1,0)
+  LlBCAST( Wrzaxis ,1,0)
+  LlBCAST( Wpackxi ,1,0)
+  LlBCAST( Wvolume ,1,0)
+  LlBCAST( Wcoords ,1,0)
+  LlBCAST( Wbasefn ,1,0)
+  LlBCAST( Wmemory ,1,0)
+  LlBCAST( Wmetrix ,1,0)
+  LlBCAST( Wma00aa ,1,0)
+  LlBCAST( Wmatrix ,1,0)
+  LlBCAST( Wspsmat ,1,0)
+  LlBCAST( Wspsint ,1,0)
+  LlBCAST( Wmp00ac ,1,0)
+  LlBCAST( Wma02aa ,1,0)
+  LlBCAST( Wpackab ,1,0)
+  LlBCAST( Wtr00ab ,1,0)
+  LlBCAST( Wcurent ,1,0)
+  LlBCAST( Wdf00ab ,1,0)
+  LlBCAST( Wlforce ,1,0)
+  LlBCAST( Wintghs ,1,0)
+  LlBCAST( Wmtrxhs ,1,0)
+  LlBCAST( Wlbpol  ,1,0)
+  LlBCAST( Wbrcast ,1,0)
+  LlBCAST( Wdfp100 ,1,0)
+  LlBCAST( Wdfp200 ,1,0)
+  LlBCAST( Wdforce ,1,0)
+  LlBCAST( Wnewton ,1,0)
+  LlBCAST( Wcasing ,1,0)
+  LlBCAST( Wbnorml ,1,0)
+  LlBCAST( Wjo00aa ,1,0)
+  LlBCAST( Wpp00aa ,1,0)
+  LlBCAST( Wpp00ab ,1,0)
+  LlBCAST( Wbfield ,1,0)
+  LlBCAST( Wstzxyz ,1,0)
+  LlBCAST( Whesian ,1,0)
+  LlBCAST( Wra00aa ,1,0)
+  LlBCAST( Wnumrec ,1,0)
+  LlBCAST( Wdcuhre ,1,0)
+  LlBCAST( Wminpack,1,0)
+  LlBCAST( Wiqpack ,1,0)
+  LlBCAST( Wrksuite,1,0)
+  LlBCAST( Wi1mach ,1,0)
+  LlBCAST( Wd1mach ,1,0)
+  LlBCAST( Wilut   ,1,0)
+  LlBCAST( Witers  ,1,0)
+  LlBCAST( Wsphdf5 ,1,0)
+  LlBCAST( Wpreset ,1,0)
+  LlBCAST( Wglobal ,1,0)
+  LlBCAST( Wxspech ,1,0)
+  LlBCAST( Wbuild_vector_potential, 1, 0 )
   LlBCAST( Wreadin, 1, 0 )
   LlBCAST( Wwrtend, 1, 0 )
   LlBCAST( Wmacros, 1, 0 )
@@ -1834,7 +1893,57 @@ subroutine wrtend
   endif
 
   write(iunit,'("&screenlist")')
-! WSCREENLIST ! write screenlist; this is expanded by Makefile ; do not remove;
+  if( Wmanual           ) write(iunit,'(" Wmanual = ",L1                )') Wmanual
+  if( Wrzaxis           ) write(iunit,'(" Wrzaxis = ",L1                )') Wrzaxis
+  if( Wpackxi           ) write(iunit,'(" Wpackxi = ",L1                )') Wpackxi
+  if( Wvolume           ) write(iunit,'(" Wvolume = ",L1                )') Wvolume
+  if( Wcoords           ) write(iunit,'(" Wcoords = ",L1                )') Wcoords
+  if( Wbasefn           ) write(iunit,'(" Wbasefn = ",L1                )') Wbasefn
+  if( Wmemory           ) write(iunit,'(" Wmemory = ",L1                )') Wmemory
+  if( Wmetrix           ) write(iunit,'(" Wmetrix = ",L1                )') Wmetrix
+  if( Wma00aa           ) write(iunit,'(" Wma00aa = ",L1                )') Wma00aa
+  if( Wmatrix           ) write(iunit,'(" Wmatrix = ",L1                )') Wmatrix
+  if( Wspsmat           ) write(iunit,'(" Wspsmat = ",L1                )') Wspsmat
+  if( Wspsint           ) write(iunit,'(" Wspsint = ",L1                )') Wspsint
+  if( Wmp00ac           ) write(iunit,'(" Wmp00ac = ",L1                )') Wmp00ac
+  if( Wma02aa           ) write(iunit,'(" Wma02aa = ",L1                )') Wma02aa
+  if( Wpackab           ) write(iunit,'(" Wpackab = ",L1                )') Wpackab
+  if( Wtr00ab           ) write(iunit,'(" Wtr00ab = ",L1                )') Wtr00ab
+  if( Wcurent           ) write(iunit,'(" Wcurent = ",L1                )') Wcurent
+  if( Wdf00ab           ) write(iunit,'(" Wdf00ab = ",L1                )') Wdf00ab
+  if( Wlforce           ) write(iunit,'(" Wlforce = ",L1                )') Wlforce
+  if( Wintghs           ) write(iunit,'(" Wintghs = ",L1                )') Wintghs
+  if( Wmtrxhs           ) write(iunit,'(" Wmtrxhs = ",L1                )') Wmtrxhs
+  if( Wlbpol            ) write(iunit,'(" Wlbpol  = ",L1                )') Wlbpol
+  if( Wbrcast           ) write(iunit,'(" Wbrcast = ",L1                )') Wbrcast
+  if( Wdfp100           ) write(iunit,'(" Wdfp100 = ",L1                )') Wdfp100
+  if( Wdfp200           ) write(iunit,'(" Wdfp200 = ",L1                )') Wdfp200
+  if( Wdforce           ) write(iunit,'(" Wdforce = ",L1                )') Wdforce
+  if( Wnewton           ) write(iunit,'(" Wnewton = ",L1                )') Wnewton
+  if( Wcasing           ) write(iunit,'(" Wcasing = ",L1                )') Wcasing
+  if( Wbnorml           ) write(iunit,'(" Wbnorml = ",L1                )') Wbnorml
+  if( Wjo00aa           ) write(iunit,'(" Wjo00aa = ",L1                )') Wjo00aa
+  if( Wpp00aa           ) write(iunit,'(" Wpp00aa = ",L1                )') Wpp00aa
+  if( Wpp00ab           ) write(iunit,'(" Wpp00ab = ",L1                )') Wpp00ab
+  if( Wbfield           ) write(iunit,'(" Wbfield = ",L1                )') Wbfield
+  if( Wstzxyz           ) write(iunit,'(" Wstzxyz = ",L1                )') Wstzxyz
+  if( Whesian           ) write(iunit,'(" Whesian = ",L1                )') Whesian
+  if( Wra00aa           ) write(iunit,'(" Wra00aa = ",L1                )') Wra00aa
+  if( Wnumrec           ) write(iunit,'(" Wnumrec = ",L1                )') Wnumrec
+  if( Wdcuhre           ) write(iunit,'(" Wdcuhre = ",L1                )') Wdcuhre
+  if( Wminpack          ) write(iunit,'(" Wminpack= ",L1                )') Wminpack
+  if( Wiqpack           ) write(iunit,'(" Wiqpack = ",L1                )') Wiqpack
+  if( Wrksuite          ) write(iunit,'(" Wrksuite= ",L1                )') Wrksuite
+  if( Wi1mach           ) write(iunit,'(" Wi1mach = ",L1                )') Wi1mach
+  if( Wd1mach           ) write(iunit,'(" Wd1mach = ",L1                )') Wd1mach
+  if( Wilut             ) write(iunit,'(" Wilut   = ",L1                )') Wilut
+  if( Witers            ) write(iunit,'(" Witers  = ",L1                )') Witers
+  if( Wsphdf5           ) write(iunit,'(" Wsphdf5 = ",L1                )') Wsphdf5
+  if( Wpreset           ) write(iunit,'(" Wpreset = ",L1                )') Wpreset
+  if( Wglobal           ) write(iunit,'(" Wglobal = ",L1                )') Wglobal
+  if( Wxspech           ) write(iunit,'(" Wxspech = ",L1                )') Wxspech
+  if( Wbuild_vector_potential) write(iunit,'(" Wbuild_vector_potential = ",L1 )') Wbuild_vector_potential
+
   if( Wreadin           ) write(iunit,'(" Wreadin = ",L1                )') Wreadin
   if( Wwrtend           ) write(iunit,'(" Wwrtend = ",L1                )') Wwrtend
   if( Wmacros           ) write(iunit,'(" Wmacros = ",L1                )') Wmacros

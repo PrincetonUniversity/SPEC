@@ -47,7 +47,6 @@ inputlist_d.o: %_d.o: src/inputlist.f90 $(MACROS)
 	@echo ''
 
 ###############################################################################################################################################################
-# global needs special handling: expansion of CPUVARIABLE, BSCREENLIST and WSCREENLIST using awk (not anymore !!!)
 
 global_r.o: %_r.o: inputlist_r.o src/global.f90 $(MACROS)
 	m4 -P $(MACROS) src/global.f90 > global_m.F90
