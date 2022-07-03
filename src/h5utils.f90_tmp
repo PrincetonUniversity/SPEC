@@ -1,38 +1,4 @@
-m4_define(HDEFGRP,{! macro expansion of hdefgrp;
-! define a HDF5 group in _1 with name _2 and save reference into hid_t _3; _4 and _5 should be __FILE__ and __LINE__
 
-  call h5lexists_f($1, "$2", grp_exists, hdfier)
-
-  if (.not.grp_exists) then
-   ! if group does not exist, create it
-   call h5gcreate_f($1, "$2", $3, hdfier)
-   if( hdfier.ne.0 ) then
-    write(6,'("sphdf5 : "10x" : error calling h5gcreate_f from hdefgrp at $4:$5 ;")')
-    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-    stop "sphdf5 : error calling h5gcreate_f from hdefgrp at $4:$5 ;"
-   endif
-  else
-   ! if the group already exists, open it
-   call h5gopen_f($1, "$2", $3, hdfier)
-   if( hdfier.ne.0 ) then
-    write(6,'("sphdf5 : "10x" : error calling h5gopen_f from hdefgrp at $4:$5 ;")')
-    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-    stop "sphdf5 : error calling h5gopen_f from hdefgrp at $4:$5 ;"
-   endif
-  endif
-
-  ! macro expansion of hdefgrp; end;})m4_dnl
-m4_define(HCLOSEGRP,{! macro expansion of hclosegrp;
-! close a HDF5 group given in _1
-
-  call h5gclose_f($1, hdfier)
-  if( hdfier.ne.0 ) then
-    write(6,'("sphdf5 : "10x" : error calling h5gclose_f from hclosegrp at $4:$5 ;")')
-    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-    stop "sphdf5 : error calling h5gclose_f from hclosegrp at $4:$5 ;"
-  endif
-
-  ! macro expansion of hclosegrp; end;})m4_dnl
 m4_define(H5DESCR,{! macro expansion of h5descr;
 ! describe an already-open HDF5 object given in _1 at location _2 with text given in _3 and leave it open; _4 and _5 should be __FILE__ and __LINE__
 ! also write a LaTeX comment on that output object

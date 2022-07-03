@@ -24,7 +24,7 @@ module sphdf5
   logical, parameter             :: hdfDebug = .false.  !< global flag to enable verbal diarrhea commenting HDF5 operations
   integer, parameter             :: internalHdf5Msg = 0 !< 1: print internal HDF5 error messages; 0: only error messages from sphdf5
 
-  integer                        :: hdfier              !< error flag for HDF5 library
+!  integer                        :: hdfier              !< error flag for HDF5 library
   integer                        :: rank                !< rank of data to write using macros
   integer(hid_t)                 :: file_id             !< default file ID used in macros
   integer(hid_t)                 :: space_id            !< default dataspace ID used in macros
@@ -32,7 +32,7 @@ module sphdf5
   integer(hsize_t)               :: onedims(1:1)        !< dimension specifier for one-dimensional data used in macros
   integer(hsize_t)               :: twodims(1:2)        !< dimension specifier for two-dimensional data used in macros
   integer(hsize_t)               :: threedims(1:3)      !< dimension specifier for three-dimensional data used in macros
-  logical                        :: grp_exists          !< flags used to signal if a group already exists
+!  logical                        :: grp_exists          !< flags used to signal if a group already exists
   logical                        :: var_exists          !< flags used to signal if a variable already exists
 
   integer(hid_t)                 :: iteration_dset_id   !< Dataset identifier for "iteration"
@@ -91,13 +91,78 @@ module sphdf5
   integer(SIZE_T) :: attrlen    !< Length of the attribute string
   character(len=:), allocatable ::  attr_data  !< Attribute data
 
+private
+public init_outfile, &
+       mirror_input_to_outfile, &
+       init_convergence_output, &
+       write_convergence_output, &
+       write_grid, &
+       init_flt_output, &
+       write_poincare, &
+       write_transform, &
+       finalize_flt_output, &
+       write_vector_potential, &
+       hdfint, &
+       finish_outfile
+
 contains
+
+!> Define a HDF5 group or opens it if it already exists.
+!>
+!> @param file_id file in which to define the group
+!> @param name    name of the new group
+!> @param group_id id of the newly-created group
+subroutine HDEFGRP(file_id, name, group_id)
+  integer(hid_t),   intent(in)  :: file_id
+  character(len=*), intent(in)  :: name
+  integer(hid_t),   intent(out) :: group_id
+
+  logical :: grp_exists !< flags used to signal if a group already exists
+  integer :: hdfier     !< error flag for HDF5 library
+
+  call h5lexists_f(file_id, name, grp_exists, hdfier)
+
+  if (grp_exists) then
+    ! if the group already exists, open it
+    call h5gopen_f(file_id, name, group_id, hdfier)
+    if (hdfier .ne. 0) then
+      write(6, '("sphdf5 : "10x" : error calling h5gopen_f from hdefgrp")')
+      call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+      stop "sphdf5 : error calling h5gopen_f from hdefgrp"
+    endif
+  else
+    ! if group does not exist, create it
+    call h5gcreate_f(file_id, name, group_id, hdfier)
+    if (hdfier .ne. 0) then
+      write(6, '("sphdf5 : "10x" : error calling h5gcreate_f from hdefgrp")')
+      call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+      stop "sphdf5 : error calling h5gcreate_f from hdefgrp"
+    endif
+  endif
+end subroutine ! HDEFGRP
+
+!> Close a HDF5 group.
+!>
+!> @param group_id HDF5 group to close
+subroutine HCLOSEGRP(group_id)
+  integer(hid_t), intent(in) :: group_id
+
+  integer :: hdfier !< error flag for HDF5 library
+
+  call h5gclose_f(group_id, hdfier)
+  if (hdfier .ne. 0) then
+    write(6, '("sphdf5 : "10x" : error calling h5gclose_f from hclosegrp")')
+    call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
+    stop "sphdf5 : error calling h5gclose_f from hclosegrp"
+  endif
+end subroutine ! HCLOSEGRP
+
+
 
 !> \brief Initialize the interface to the HDF5 library and open the output file.
 !> \ingroup grp_output
 !>
-subroutine init_outfile
-
+subroutine init_outfile()
 
 #ifdef OPENMP
   USE OMP_LIB
@@ -107,8 +172,6 @@ subroutine init_outfile
   integer   :: ierr, astat, ios, nthreads, ithread
   real(wp)      :: cput, cpui, cpuo=0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
 
-
-
   cpui = MPI_WTIME()
   cpuo = cpui
 #ifdef OPENMP
@@ -117,21 +180,22 @@ subroutine init_outfile
   nthreads = 1
 #endif
 
-
  if (myid.eq.0 .and. .not.skip_write) then
-!
-!   ! initialize Fortran interface to the HDF5 library;
-!   H5CALL( sphdf5, h5open_f, (hdfier), __FILE__, __LINE__)
-!
-!   ! (en/dis)able HDF5 internal error messages; sphdf5 has its own error messages coming from the macros
-!   H5CALL( sphdf5, h5eset_auto_f, (internalHdf5Msg, hdfier), __FILE__, __LINE__)
-!
-!   ! Create the file
-!   H5CALL( sphdf5, h5fcreate_f, (trim(ext)//".sp.h5", H5F_ACC_TRUNC_F, file_id, hdfier ), __FILE__, __LINE__ )
-!
-!   ! write version number
-!   HWRITERV_LO( file_id, 1, version, (/ version /), __FILE__, __LINE__)
-!   H5DESCR_CDSET( /version, version of SPEC,        __FILE__, __LINE__)
+
+  ! initialize Fortran interface to the HDF5 library
+  call h5open_f(hdfier)
+
+  ! (en/dis)able HDF5 internal error messages;
+  ! sphdf5 has its own error messages coming from the macros
+  call h5eset_auto_f(internalHdf5Msg, hdfier)
+
+  ! Create the file
+  call h5fcreate_f(trim(ext)//".sp.h5", H5F_ACC_TRUNC_F, file_id, hdfier )
+
+  ! write version number
+
+  call HWRITERV_LO(file_id, 1, "version", (/ version /))
+  call H5DESCR_CDSET("/version", "version of SPEC")
 
  endif ! myid.eq.0
 
