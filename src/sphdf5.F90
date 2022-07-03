@@ -400,7 +400,6 @@ subroutine init_convergence_output
 
   use allglobal, only : mn, Mvol
 
-
 #ifdef OPENMP
   USE OMP_LIB
 #endif
@@ -408,7 +407,6 @@ subroutine init_convergence_output
   implicit none
   integer   :: ierr, astat, ios, nthreads, ithread
   real(wp)      :: cput, cpui, cpuo=0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
-
 
   integer(hid_t)                    :: iteration_dspace_id  !< dataspace for "iteration"
   integer(hid_t)                    :: iteration_dtype_id   !< Compound datatype for "iteration"
@@ -425,6 +423,7 @@ subroutine init_convergence_output
   integer(size_t)                   :: irbc_size_template   !< size ofiRbc array in iterations logging
   integer(size_t)                   :: irbc_size            !< size ofiRbc array in iterations logging
 
+  integer          :: hdfier     !< error flag for HDF5 library
 
   cpui = MPI_WTIME()
   cpuo = cpui
@@ -437,77 +436,84 @@ subroutine init_convergence_output
 
  if (myid.eq.0 .and. .not.skip_write) then
 
-!   ! Set dataset transfer property to preserve partially initialized fields
-!   ! during write/read to/from dataset with compound datatype.
-!   H5CALL( sphdf5, h5pcreate_f, (H5P_DATASET_XFER_F, plist_id, hdfier))
-!
-!   H5CALL( sphdf5, h5pset_preserve_f, (plist_id, .TRUE., hdfier) )
-!
-!   maxdims = (/ H5S_UNLIMITED_F /)                                                                      ! unlimited array size: "converge" until you get bored
-!   H5CALL( sphdf5, h5screate_simple_f, (rank, dims, iteration_dspace_id, hdfier, maxdims) )             ! Create the dataspace with zero initial size and allow it to grow
-!
-!   H5CALL( sphdf5, h5pcreate_f, (H5P_DATASET_CREATE_F, crp_list, hdfier) )                              ! dataset creation property list with chunking
-!
-!   H5CALL( sphdf5, h5pset_chunk_f, (crp_list, rank, dimsc, hdfier) )
-!
-!   ! declare "iteration" compound datatype
-!   ! declare array parts
-!   H5CALL( sphdf5, h5tarray_create_f, (H5T_NATIVE_DOUBLE, 2, int((/mn, Mvol+1/),hsize_t), iRZbscArray_id, hdfier) ) ! create array datatypes for i{R,Z}b{c,s}
-!   H5CALL( sphdf5, h5tget_size_f, (iRZbscArray_id, irbc_size, hdfier) )
-!   H5CALL( sphdf5, h5tget_size_f, (H5T_NATIVE_INTEGER, type_size_i, hdfier) )                           ! size of an integer field
-!   H5CALL( sphdf5, h5tget_size_f, (H5T_NATIVE_DOUBLE,  type_size_d, hdfier) )                           ! size of a   double field
-!   iteration_dtype_size = 2*type_size_i + 2*type_size_d + 4*irbc_size                                   ! wflag, nDcalls, Energy, ForceErr, i{R,Z}b{c,s}
-!
-!   H5CALL( sphdf5, h5tcreate_f, (H5T_COMPOUND_F, iteration_dtype_size, iteration_dtype_id, hdfier) )    ! create compound datatype
-!
-!   offset = 0                                                                                           ! offset for first field starts at 0
-!   H5CALL( sphdf5, h5tinsert_f, (iteration_dtype_id, "nDcalls", offset, H5T_NATIVE_INTEGER, hdfier) )   ! insert "nDcalls" field in datatype
-!   offset = offset + type_size_i                                                                        ! increment offset by size of field
-!   H5CALL( sphdf5, h5tinsert_f, (iteration_dtype_id, "Energy", offset, H5T_NATIVE_DOUBLE, hdfier) )     ! insert "Energy" field in datatype
-!   offset = offset + type_size_d                                                                        ! increment offset by size of field
-!   H5CALL( sphdf5, h5tinsert_f, (iteration_dtype_id, "ForceErr", offset, H5T_NATIVE_DOUBLE, hdfier) )   ! insert "ForceErr" field in datatype
-!   offset = offset + type_size_d                                                                        ! increment offset by size of field
-!   H5CALL( sphdf5, h5tinsert_f, (iteration_dtype_id, "iRbc", offset, iRZbscArray_id, hdfier) )          ! insert "iRbc" field in datatype
-!   offset = offset + irbc_size                                                                          ! increment offset by size of field
-!   H5CALL( sphdf5, h5tinsert_f, (iteration_dtype_id, "iZbs", offset, iRZbscArray_id, hdfier) )          ! insert "iZbs" field in datatype
-!   offset = offset + irbc_size                                                                          ! increment offset by size of field
-!   H5CALL( sphdf5, h5tinsert_f, (iteration_dtype_id, "iRbs", offset, iRZbscArray_id, hdfier) )          ! insert "iRbs" field in datatype
-!   offset = offset + irbc_size                                                                          ! increment offset by size of field
-!   H5CALL( sphdf5, h5tinsert_f, (iteration_dtype_id, "iZbc", offset, iRZbscArray_id, hdfier) )          ! insert "iZbc" field in datatype
-!   offset = offset + irbc_size                                                                          ! increment offset by size of field
-!
-!   H5CALL( sphdf5, h5dcreate_f, (file_id, "iterations", iteration_dtype_id, iteration_dspace_id, &      ! create dataset with compound type
-!                   & iteration_dset_id, hdfier, crp_list) )
-!
-!   H5CALL( sphdf5, h5sclose_f, (iteration_dspace_id, hdfier) )                                          ! Terminate access to the data space (does not show up in obj_count below)
-!                                                                                                        ! --> only needed for creation of dataset
-!
-!   ! Create memory types. We have to create a compound datatype
-!   ! for each member we want to write.
-!   offset = 0
-!   H5CALL( sphdf5, h5tcreate_f, (H5T_COMPOUND_F, type_size_i, dt_nDcalls_id,  hdfier) )
-!   H5CALL( sphdf5, h5tcreate_f, (H5T_COMPOUND_F, type_size_d, dt_Energy_id,   hdfier) )
-!   H5CALL( sphdf5, h5tcreate_f, (H5T_COMPOUND_F, type_size_d, dt_ForceErr_id, hdfier) )
-!   H5CALL( sphdf5, h5tcreate_f, (H5T_COMPOUND_F, irbc_size,   dt_iRbc_id,     hdfier) )
-!   H5CALL( sphdf5, h5tcreate_f, (H5T_COMPOUND_F, irbc_size,   dt_iZbs_id,     hdfier) )
-!   H5CALL( sphdf5, h5tcreate_f, (H5T_COMPOUND_F, irbc_size,   dt_iRbs_id,     hdfier) )
-!   H5CALL( sphdf5, h5tcreate_f, (H5T_COMPOUND_F, irbc_size,   dt_iZbc_id,     hdfier) )
-!
-!   H5CALL( sphdf5, h5tinsert_f, (dt_nDcalls_id,   "nDcalls", offset, H5T_NATIVE_INTEGER, hdfier) )
-!   H5CALL( sphdf5, h5tinsert_f, (dt_Energy_id,     "Energy", offset, H5T_NATIVE_DOUBLE,  hdfier) )
-!   H5CALL( sphdf5, h5tinsert_f, (dt_ForceErr_id, "ForceErr", offset, H5T_NATIVE_DOUBLE,  hdfier) )
-!   H5CALL( sphdf5, h5tinsert_f, (dt_iRbc_id,         "iRbc", offset, iRZbscArray_id,     hdfier) )
-!   H5CALL( sphdf5, h5tinsert_f, (dt_iZbs_id,         "iZbs", offset, iRZbscArray_id,     hdfier) )
-!   H5CALL( sphdf5, h5tinsert_f, (dt_iRbs_id,         "iRbs", offset, iRZbscArray_id,     hdfier) )
-!   H5CALL( sphdf5, h5tinsert_f, (dt_iZbc_id,         "iZbc", offset, iRZbscArray_id,     hdfier) )
-!
-!   ! create memspace with size of compound object to append
-!   dims(1) = 1 ! only append one iteration at a time
-!   H5CALL( sphdf5, h5screate_simple_f, (rank, dims, memspace, hdfier) )
-!
-!   H5CALL( sphdf5, h5pclose_f, (crp_list, hdfier) )
-!   H5CALL( sphdf5, h5tclose_f, (iteration_dtype_id, hdfier) )                                       ! Terminate access to the datatype
-!   H5CALL( sphdf5, h5tclose_f, (iRZbscArray_id, hdfier) )                                           ! Terminate access to the datatype
+  ! Set dataset transfer property to preserve partially initialized fields
+  ! during write/read to/from dataset with compound datatype.
+  call h5pcreate_f(H5P_DATASET_XFER_F, plist_id, hdfier)
+
+  call h5pset_preserve_f(plist_id, .TRUE., hdfier)
+
+  maxdims = (/ H5S_UNLIMITED_F /)                                                                      ! unlimited array size: "converge" until you get bored
+  call h5screate_simple_f(rank, dims, iteration_dspace_id, hdfier, maxdims)             ! Create the dataspace with zero initial size and allow it to grow
+
+  call h5pcreate_f(H5P_DATASET_CREATE_F, crp_list, hdfier)                               ! dataset creation property list with chunking
+
+  call h5pset_chunk_f(crp_list, rank, dimsc, hdfier)
+
+  ! declare "iteration" compound datatype
+  ! declare array parts
+  call h5tarray_create_f(H5T_NATIVE_DOUBLE, 2, int((/mn, Mvol+1/),hsize_t), iRZbscArray_id, hdfier)  ! create array datatypes for i{R,Z}b{c,s}
+  call h5tget_size_f(iRZbscArray_id, irbc_size, hdfier)
+  call h5tget_size_f(H5T_NATIVE_INTEGER, type_size_i, hdfier)                           ! size of an integer field
+  call h5tget_size_f(H5T_NATIVE_DOUBLE,  type_size_d, hdfier)                           ! size of a   double field
+  iteration_dtype_size = 2*type_size_i + 2*type_size_d + 4*irbc_size                                   ! wflag, nDcalls, Energy, ForceErr, i{R,Z}b{c,s}
+
+  call h5tcreate_f(H5T_COMPOUND_F, iteration_dtype_size, iteration_dtype_id, hdfier)     ! create compound datatype
+
+  offset = 0                                                                                           ! offset for first field starts at 0
+
+  call h5tinsert_f(iteration_dtype_id, "nDcalls", offset, H5T_NATIVE_INTEGER, hdfier)    ! insert "nDcalls" field in datatype
+  offset = offset + type_size_i                                                                        ! increment offset by size of field
+
+  call h5tinsert_f(iteration_dtype_id, "Energy", offset, H5T_NATIVE_DOUBLE, hdfier)      ! insert "Energy" field in datatype
+  offset = offset + type_size_d                                                                        ! increment offset by size of field
+
+  call h5tinsert_f(iteration_dtype_id, "ForceErr", offset, H5T_NATIVE_DOUBLE, hdfier)    ! insert "ForceErr" field in datatype
+  offset = offset + type_size_d                                                                        ! increment offset by size of field
+
+  call h5tinsert_f(iteration_dtype_id, "iRbc", offset, iRZbscArray_id, hdfier)          ! insert "iRbc" field in datatype
+  offset = offset + irbc_size                                                                          ! increment offset by size of field
+
+  call h5tinsert_f(iteration_dtype_id, "iZbs", offset, iRZbscArray_id, hdfier)          ! insert "iZbs" field in datatype
+  offset = offset + irbc_size                                                                          ! increment offset by size of field
+
+  call h5tinsert_f(iteration_dtype_id, "iRbs", offset, iRZbscArray_id, hdfier)           ! insert "iRbs" field in datatype
+  offset = offset + irbc_size                                                                          ! increment offset by size of field
+
+  call h5tinsert_f(iteration_dtype_id, "iZbc", offset, iRZbscArray_id, hdfier)           ! insert "iZbc" field in datatype
+  offset = offset + irbc_size                                                                          ! increment offset by size of field
+
+  call h5dcreate_f(file_id, "iterations", iteration_dtype_id, iteration_dspace_id, &      ! create dataset with compound type
+                  & iteration_dset_id, hdfier, crp_list)
+
+  call h5sclose_f(iteration_dspace_id, hdfier)                                           ! Terminate access to the data space (does not show up in obj_count below)
+                                                                                                       ! --> only needed for creation of dataset
+
+  ! Create memory types. We have to create a compound datatype
+  ! for each member we want to write.
+  call h5tcreate_f(H5T_COMPOUND_F, type_size_i, dt_nDcalls_id,  hdfier)
+  call h5tcreate_f(H5T_COMPOUND_F, type_size_d, dt_Energy_id,   hdfier)
+  call h5tcreate_f(H5T_COMPOUND_F, type_size_d, dt_ForceErr_id, hdfier)
+  call h5tcreate_f(H5T_COMPOUND_F, irbc_size,   dt_iRbc_id,     hdfier)
+  call h5tcreate_f(H5T_COMPOUND_F, irbc_size,   dt_iZbs_id,     hdfier)
+  call h5tcreate_f(H5T_COMPOUND_F, irbc_size,   dt_iRbs_id,     hdfier)
+  call h5tcreate_f(H5T_COMPOUND_F, irbc_size,   dt_iZbc_id,     hdfier)
+
+  offset = 0
+  call h5tinsert_f(dt_nDcalls_id,   "nDcalls", offset, H5T_NATIVE_INTEGER, hdfier)
+  call h5tinsert_f(dt_Energy_id,     "Energy", offset, H5T_NATIVE_DOUBLE,  hdfier)
+  call h5tinsert_f(dt_ForceErr_id, "ForceErr", offset, H5T_NATIVE_DOUBLE,  hdfier)
+  call h5tinsert_f(dt_iRbc_id,         "iRbc", offset, iRZbscArray_id,     hdfier)
+  call h5tinsert_f(dt_iZbs_id,         "iZbs", offset, iRZbscArray_id,     hdfier)
+  call h5tinsert_f(dt_iRbs_id,         "iRbs", offset, iRZbscArray_id,     hdfier)
+  call h5tinsert_f(dt_iZbc_id,         "iZbc", offset, iRZbscArray_id,     hdfier)
+
+  ! create memspace with size of compound object to append
+  dims(1) = 1 ! only append one iteration at a time
+  call h5screate_simple_f(rank, dims, memspace, hdfier)
+
+  call h5pclose_f(crp_list, hdfier)
+  call h5tclose_f(iteration_dtype_id, hdfier)                                        ! Terminate access to the datatype
+  call h5tclose_f(iRZbscArray_id, hdfier)                                            ! Terminate access to the datatype
 
  endif ! myid.eq.0
 
@@ -519,8 +525,7 @@ end subroutine init_convergence_output
 !>
 subroutine write_convergence_output( nDcalls, ForceErr )
 
-  use allglobal, only : myid, mn, Mvol, Energy, iRbc, iZbs, iRbs, iZbc
-
+  use allglobal, only : myid, mn, Mvol, Energy, iRbc, iZbs, iRbs, iZbc, MPI_COMM_SPEC
 
 #ifdef OPENMP
   USE OMP_LIB
@@ -529,6 +534,8 @@ subroutine write_convergence_output( nDcalls, ForceErr )
   implicit none
   integer   :: ierr, astat, ios, nthreads, ithread
   real(wp)      :: cput, cpui, cpuo=0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
+
+  integer          :: hdfier     !< error flag for HDF5 library
 
   integer, intent(in)  :: nDcalls
   real(wp)   , intent(in)  :: ForceErr
@@ -545,48 +552,48 @@ subroutine write_convergence_output( nDcalls, ForceErr )
 
  if (myid.eq.0 .and. .not.skip_write) then
 
-!   ! append updated values to "iterations" dataset
-!
-!   ! open dataspace to get current state of dataset
-!   H5CALL( sphdf5, h5dget_space_f, (iteration_dset_id, dataspace, hdfier), __FILE__, __LINE__)
-!
-!   ! get current size of dataset
-!   call h5sget_simple_extent_dims_f(dataspace, old_data_dims, max_dims, hdfier)
-!
-!    if( hdfier.ne.1 ) then
-!      write(6,'("sphdf5 :      fatal : myid=",i3," ; hdfier.ne.1 ; rank of convergence dataspace is not 1 ;")') myid
-!      call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
-!      stop "sphdf5 : hdfier.ne.1 : rank of convergence dataspace is not 1  ;"
-!     endif
-!
-!
-!   ! blow up dataset to new size
-!   data_dims = old_data_dims+1
-!   H5CALL( sphdf5, h5dset_extent_f, (iteration_dset_id, data_dims, hdfier), __FILE__, __LINE__)
-!
-!   ! get dataspace slab corresponding to region which the iterations dataset was extended by
-!   H5CALL( sphdf5, h5dget_space_f, (iteration_dset_id, dataspace, hdfier), __FILE__, __LINE__)                                             ! re-select dataspace to update size info in HDF5 lib
-!   H5CALL( sphdf5, h5sselect_hyperslab_f, (dataspace, H5S_SELECT_SET_F, old_data_dims, (/ INT(1, HSIZE_T) /), hdfier), __FILE__, __LINE__) ! newly appended slab is at old size and 1 long
-!
-!   ! write next iteration object
-!   H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_nDcalls_id, nDcalls, INT((/1/), HSIZE_T), hdfier, &
-!     & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id), __FILE__, __LINE__)
-!   H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_Energy_id, Energy, INT((/1/), HSIZE_T), hdfier, &
-!     & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id), __FILE__, __LINE__)
-!   H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_ForceErr_id, ForceErr, INT((/1/), HSIZE_T), hdfier, &
-!     & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id), __FILE__, __LINE__)
-!   H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_iRbc_id, iRbc, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
-!     & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id), __FILE__, __LINE__)
-!   H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_iZbs_id, iZbs, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
-!     & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id), __FILE__, __LINE__)
-!   H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_iRbs_id, iRbs, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
-!     & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id), __FILE__, __LINE__)
-!   H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_iZbc_id, iZbc, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
-!     & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id), __FILE__, __LINE__)
-!
-!   ! dataspace to appended object should be closed now
-!   ! MAYBE we otherwise keep all the iterations in memory?
-!   H5CALL( sphdf5, h5sclose_f, (dataspace, hdfier), __FILE__, __LINE__)
+  ! append updated values to "iterations" dataset
+
+  ! open dataspace to get current state of dataset
+  call h5dget_space_f(iteration_dset_id, dataspace, hdfier)
+
+  ! get current size of dataset
+  call h5sget_simple_extent_dims_f(dataspace, old_data_dims, max_dims, hdfier)
+
+   if( hdfier.ne.1 ) then
+     write(6,'("sphdf5 :      fatal : myid=",i3," ; hdfier.ne.1 ; rank of convergence dataspace is not 1 ;")') myid
+!     call MPI_ABORT(MPI_COMM_SPEC, 1) ! TODO: get this to compile again...
+     stop "sphdf5 : hdfier.ne.1 : rank of convergence dataspace is not 1  ;"
+    endif
+
+
+  ! blow up dataset to new size
+  data_dims = old_data_dims+1
+  call h5dset_extent_f(iteration_dset_id, data_dims, hdfier)
+
+  ! get dataspace slab corresponding to region which the iterations dataset was extended by
+  call h5dget_space_f(iteration_dset_id, dataspace, hdfier)                                     ! re-select dataspace to update size info in HDF5 lib
+  call h5sselect_hyperslab_f(dataspace, H5S_SELECT_SET_F, old_data_dims, (/ INT(1, HSIZE_T) /), hdfier) ! newly appended slab is at old size and 1 long
+
+  ! write next iteration object
+  call h5dwrite_f(iteration_dset_id, dt_nDcalls_id, nDcalls, INT((/1/), HSIZE_T), hdfier, &
+                  mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id)
+  call h5dwrite_f(iteration_dset_id, dt_Energy_id, Energy, INT((/1/), HSIZE_T), hdfier, &
+                  mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id)
+  call h5dwrite_f(iteration_dset_id, dt_ForceErr_id, ForceErr, INT((/1/), HSIZE_T), hdfier, &
+                  mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id)
+  call h5dwrite_f(iteration_dset_id, dt_iRbc_id, iRbc, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
+                  mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id)
+  call h5dwrite_f(iteration_dset_id, dt_iZbs_id, iZbs, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
+                  mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id)
+  call h5dwrite_f(iteration_dset_id, dt_iRbs_id, iRbs, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
+                  mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id)
+  call h5dwrite_f(iteration_dset_id, dt_iZbc_id, iZbc, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
+                  mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id)
+
+  ! dataspace to appended object should be closed now
+  ! MAYBE we otherwise keep all the iterations in memory?
+  call h5sclose_f(dataspace, hdfier)
 
  endif ! myid.eq.0
 
@@ -624,7 +631,6 @@ subroutine write_grid
   real(wp)                 :: lss, teta, zeta, st(1:Node), Bst(1:Node)
   real(wp)   , allocatable :: Rij_grid(:,:), Zij_grid(:,:), sg_grid(:,:), ijreal_grid(:,:), ijimag_grid(:,:), jireal_grid(:,:)
 
-
   cpui = MPI_WTIME()
   cpuo = cpui
 #ifdef OPENMP
@@ -633,192 +639,173 @@ subroutine write_grid
   nthreads = 1
 #endif
 
-
  if (myid.eq.0 .and. .not.skip_write) then
 
-!   ijreal(1:Ntz) = zero ; ijimag(1:Ntz) = zero ; jireal(1:Ntz) = zero
-!
-!   HDEFGRP( file_id, grid, grpGrid )
-!
-!   ! Igeometry already is in input, Mvol already is in output
-!   HWRITEIV( grpGrid,           1, Nt               , (/ Nt            /))
-!   HWRITEIV( grpGrid,           1, Nz               , (/ Nz            /))
-!   HWRITEIV( grpGrid,           1, Ntz              , (/ Ntz           /))
-!   HWRITERV( grpGrid,           1, pi2nfp           , (/ pi2nfp        /))
-!
-!   ! combine all radial parts into one dimension as Lrad values can be different for different volumes
-!   if (Ngrid .lt. 0) then
-!     sumLrad = sum(Lrad(1:Mvol)+1)
-!   else
-!     sumLrad = (Ngrid + 1) * Mvol
-!   endif
-!
-!
-!    allocate( Rij_grid(1:sumLrad, 1:Ntz), stat=astat )
-!    Rij_grid(1:sumLrad, 1:Ntz) = zero
-!
-!
-!    allocate( Zij_grid(1:sumLrad, 1:Ntz), stat=astat )
-!    Zij_grid(1:sumLrad, 1:Ntz) = zero
-!
-!
-!    allocate( sg_grid(1:sumLrad, 1:Ntz), stat=astat )
-!    sg_grid(1:sumLrad, 1:Ntz) = zero
-!
-!
-!    allocate( ijreal_grid(1:sumLrad, 1:Ntz), stat=astat )
-!    ijreal_grid(1:sumLrad, 1:Ntz) = zero
-!
-!
-!    allocate( ijimag_grid(1:sumLrad, 1:Ntz), stat=astat )
-!    ijimag_grid(1:sumLrad, 1:Ntz) = zero
-!
-!
-!    allocate( jireal_grid(1:sumLrad, 1:Ntz), stat=astat )
-!    jireal_grid(1:sumLrad, 1:Ntz) = zero
-!
-!
-!   Ngrid_sum = 0
-!
-!   do vvol = 1, Mvol ; ivol = vvol
-!
-!    if( Igeometry.eq.1 .or. vvol.gt.1 ) then ; Lcoordinatesingularity = .false.
-!    else                                   ; Lcoordinatesingularity = .true.
-!    endif
-!
-!    if( vvol.le.Nvol ) then ; Lplasmaregion = .true.
-!    else                  ; Lplasmaregion = .false.
-!    endif
-!
-!    Lvacuumregion = .not.Lplasmaregion
-!  ! sets Lcoordinatesingularity and Lplasmaregion ;
-!
-!    if (Ngrid .lt. 0) then
-!     Ngrid_local = Lrad(vvol)  ! default
-!    else
-!     Ngrid_local = Ngrid
-!    endif
-!    if (Ngrid_local .eq. 0) cycle               ! nothing to output
-!
-!    do ii = 0, Ngrid_local ! sub-grid;
-!     lss = ii * two / Ngrid_local - one
-!     if( Lcoordinatesingularity .and. ii.eq.0 ) then ; Lcurvature = 0 ! Jacobian is not defined;
-!     else                                            ; Lcurvature = 1 ! compute Jacobian       ;
-!     endif
-!
-!
-!    cput = MPI_WTIME()
-!    Tsphdf5 = Tsphdf5 + ( cput-cpuo )
-!    call coords( vvol, lss, Lcurvature, Ntz, mn )
-!    cpuo = MPI_WTIME()
-!  ! only Rij(0,:) and Zij(0,:) are required; Rmn & Zmn are available;
-!
-!     alongLrad = Ngrid_sum+ii+1
-!
-!     Rij_grid(alongLrad,1:Ntz) = Rij(1:Ntz,0,0)
-!     Zij_grid(alongLrad,1:Ntz) = Zij(1:Ntz,0,0)
-!     sg_grid (alongLrad,1:Ntz) =  sg(1:Ntz,0)
-!
-!     if( Lcurvature.eq.1 ) then
-!
-!      select case (Igeometry)
-!
-!      case (3)
-!       do kk = 0, Nz-1 ; zeta = kk * pi2nfp / Nz
-!         do jj = 0, Nt-1 ; teta = jj * pi2    / Nt ; jk = 1 + jj + kk*Nt ; st(1:2) = (/ lss, teta /)
-!
-!    cput = MPI_WTIME()
-!    Tsphdf5 = Tsphdf5 + ( cput-cpuo )
-!    call bfield( zeta, st(1:Node), Bst(1:Node) )
-!    cpuo = MPI_WTIME()
-!
-!         ijreal(jk) = ( Rij(jk,1,0) * Bst(1) + Rij(jk,2,0) * Bst(2) + Rij(jk,3,0) * one ) * gBzeta / sg(jk,0) ! BR;
-!         ijimag(jk) = (                                                             one ) * gBzeta / sg(jk,0) ! Bp;
-!         jireal(jk) = ( Zij(jk,1,0) * Bst(1) + Zij(jk,2,0) * Bst(2) + Zij(jk,3,0) * one ) * gBzeta / sg(jk,0) ! BZ;
-!         enddo
-!       enddo
-!
-!      case (1)
-!       do kk = 0, Nz-1 ; zeta = kk * pi2nfp / Nz
-!         do jj = 0, Nt-1 ; teta = jj * pi2    / Nt ; jk = 1 + jj + kk*Nt ; st(1:2) = (/ lss, teta /)
-!
-!    cput = MPI_WTIME()
-!    Tsphdf5 = Tsphdf5 + ( cput-cpuo )
-!    call bfield( zeta, st(1:Node), Bst(1:Node) )
-!    cpuo = MPI_WTIME()
-!
-!         ijreal(jk) = ( Rij(jk,1,0) * Bst(1) + Rij(jk,2,0) * Bst(2) + Rij(jk,3,0) * one ) * gBzeta / sg(jk,0) ! BR;
-!         ijimag(jk) = (                                                            rpol ) * gBzeta / sg(jk,0) ! Bzeta;
-!         jireal(jk) = (                      +        rtor * Bst(2)                     ) * gBzeta / sg(jk,0) ! Btheta;
-!         enddo
-!       enddo
-!
-!      case (2)
-!       do kk = 0, Nz-1 ; zeta = kk * pi2nfp / Nz
-!         do jj = 0, Nt-1 ; teta = jj * pi2    / Nt ; jk = 1 + jj + kk*Nt ; st(1:2) = (/ lss, teta /)
-!
-!    cput = MPI_WTIME()
-!    Tsphdf5 = Tsphdf5 + ( cput-cpuo )
-!    call bfield( zeta, st(1:Node), Bst(1:Node) )
-!    cpuo = MPI_WTIME()
-!
-!         ijreal(jk) = ( Rij(jk,1,0) * Bst(1) + Rij(jk,2,0) * Bst(2) + Rij(jk,3,0) * one ) * gBzeta / sg(jk,0) ! BR;
-!         ijimag(jk) = (                                                             one ) * gBzeta / sg(jk,0) ! Bp;
-!         jireal(jk) = (                                      Bst(2)                     ) * gBzeta / sg(jk,0) ! BZ;
-!         enddo
-!       enddo
-!
-!      end select !Igeometry
-!     endif ! end of if( Lcurvature.eq.1 ) ;
-!
-!    ijreal_grid(alongLrad,1:Ntz) = ijreal(1:Ntz)
-!    ijimag_grid(alongLrad,1:Ntz) = ijimag(1:Ntz)
-!    jireal_grid(alongLrad,1:Ntz) = jireal(1:Ntz)
-!
-!    enddo ! end of do ii;
-!
-!    Ngrid_sum = Ngrid_sum + Ngrid_local + 1 ! offset for storing data
-!
-!   enddo ! end of do vvol;
-!
-!   HWRITERA( grpGrid, sumLrad, Ntz, Rij,    Rij_grid )
-!   HWRITERA( grpGrid, sumLrad, Ntz, Zij,    Zij_grid )
-!   HWRITERA( grpGrid, sumLrad, Ntz,  sg,     sg_grid )
-!   HWRITERA( grpGrid, sumLrad, Ntz,  BR, ijreal_grid )
-!   HWRITERA( grpGrid, sumLrad, Ntz,  Bp, ijimag_grid )
-!   HWRITERA( grpGrid, sumLrad, Ntz,  BZ, jireal_grid )
-!
-!
-!    deallocate(Rij_grid ,stat=astat)
-!
-!
-!    deallocate(Zij_grid ,stat=astat)
-!
-!
-!    deallocate(sg_grid ,stat=astat)
-!
-!
-!    deallocate(ijreal_grid ,stat=astat)
-!
-!
-!    deallocate(ijimag_grid ,stat=astat)
-!
-!
-!    deallocate(jireal_grid ,stat=astat)
-!
-!
-!   HCLOSEGRP( grpGrid )
+  ijreal(1:Ntz) = zero
+  ijimag(1:Ntz) = zero
+  jireal(1:Ntz) = zero
+
+  call HDEFGRP( file_id, "grid", grpGrid )
+
+  ! Igeometry already is in input, Mvol already is in output
+  call HWRITEIV( grpGrid,  "Nt"               ,         1,  (/ Nt            /))
+  call HWRITEIV( grpGrid,  "Nz"               ,         1,  (/ Nz            /))
+  call HWRITEIV( grpGrid,  "Ntz"              ,         1,  (/ Ntz           /))
+  call HWRITERV( grpGrid,  "pi2nfp"           ,         1,  (/ pi2nfp        /))
+
+  ! combine all radial parts into one dimension as Lrad values can be different for different volumes
+  if (Ngrid .lt. 0) then
+    sumLrad = sum(Lrad(1:Mvol)+1)
+  else
+    sumLrad = (Ngrid + 1) * Mvol
+  endif
 
 
-9999 continue
-  cput = MPI_WTIME()
-  Tsphdf5 = Tsphdf5 + ( cput-cpuo )
-  return
+   allocate( Rij_grid(1:sumLrad, 1:Ntz), stat=astat )
+   Rij_grid(1:sumLrad, 1:Ntz) = zero
 
+   allocate( Zij_grid(1:sumLrad, 1:Ntz), stat=astat )
+   Zij_grid(1:sumLrad, 1:Ntz) = zero
+
+   allocate( sg_grid(1:sumLrad, 1:Ntz), stat=astat )
+   sg_grid(1:sumLrad, 1:Ntz) = zero
+
+   allocate( ijreal_grid(1:sumLrad, 1:Ntz), stat=astat )
+   ijreal_grid(1:sumLrad, 1:Ntz) = zero
+
+   allocate( ijimag_grid(1:sumLrad, 1:Ntz), stat=astat )
+   ijimag_grid(1:sumLrad, 1:Ntz) = zero
+
+   allocate( jireal_grid(1:sumLrad, 1:Ntz), stat=astat )
+   jireal_grid(1:sumLrad, 1:Ntz) = zero
+
+  Ngrid_sum = 0
+
+  do vvol = 1, Mvol
+   ivol = vvol
+
+   if( Igeometry.eq.1 .or. vvol.gt.1 ) then
+     Lcoordinatesingularity = .false.
+   else
+     Lcoordinatesingularity = .true.
+   endif
+
+   if( vvol.le.Nvol ) then
+     Lplasmaregion = .true.
+   else
+     Lplasmaregion = .false.
+   endif
+
+   Lvacuumregion = .not.Lplasmaregion
+ ! sets Lcoordinatesingularity and Lplasmaregion ;
+
+   if (Ngrid .lt. 0) then
+    Ngrid_local = Lrad(vvol)  ! default
+   else
+    Ngrid_local = Ngrid
+   endif
+   if (Ngrid_local .eq. 0) cycle               ! nothing to output
+
+   do ii = 0, Ngrid_local ! sub-grid;
+    lss = ii * two / Ngrid_local - one
+    if( Lcoordinatesingularity .and. ii.eq.0 ) then
+      Lcurvature = 0 ! Jacobian is not defined;
+    else
+      Lcurvature = 1 ! compute Jacobian       ;
+    endif
+
+   cput = MPI_WTIME()
+   Tsphdf5 = Tsphdf5 + ( cput-cpuo )
+   call coords( vvol, lss, Lcurvature, Ntz, mn )
+   cpuo = MPI_WTIME()
+ ! only Rij(0,:) and Zij(0,:) are required; Rmn & Zmn are available;
+
+    alongLrad = Ngrid_sum+ii+1
+
+    Rij_grid(alongLrad,1:Ntz) = Rij(1:Ntz,0,0)
+    Zij_grid(alongLrad,1:Ntz) = Zij(1:Ntz,0,0)
+    sg_grid (alongLrad,1:Ntz) =  sg(1:Ntz,0)
+
+    if( Lcurvature.eq.1 ) then
+
+     select case (Igeometry)
+
+     case (3)
+      do kk = 0, Nz-1 ; zeta = kk * pi2nfp / Nz
+        do jj = 0, Nt-1 ; teta = jj * pi2    / Nt ; jk = 1 + jj + kk*Nt ; st(1:2) = (/ lss, teta /)
+
+   cput = MPI_WTIME()
+   Tsphdf5 = Tsphdf5 + ( cput-cpuo )
+   call bfield( zeta, st(1:Node), Bst(1:Node) )
+   cpuo = MPI_WTIME()
+
+        ijreal(jk) = ( Rij(jk,1,0) * Bst(1) + Rij(jk,2,0) * Bst(2) + Rij(jk,3,0) * one ) * gBzeta / sg(jk,0) ! BR;
+        ijimag(jk) = (                                                             one ) * gBzeta / sg(jk,0) ! Bp;
+        jireal(jk) = ( Zij(jk,1,0) * Bst(1) + Zij(jk,2,0) * Bst(2) + Zij(jk,3,0) * one ) * gBzeta / sg(jk,0) ! BZ;
+        enddo
+      enddo
+
+     case (1)
+      do kk = 0, Nz-1 ; zeta = kk * pi2nfp / Nz
+        do jj = 0, Nt-1 ; teta = jj * pi2    / Nt ; jk = 1 + jj + kk*Nt ; st(1:2) = (/ lss, teta /)
+
+   cput = MPI_WTIME()
+   Tsphdf5 = Tsphdf5 + ( cput-cpuo )
+   call bfield( zeta, st(1:Node), Bst(1:Node) )
+   cpuo = MPI_WTIME()
+
+        ijreal(jk) = ( Rij(jk,1,0) * Bst(1) + Rij(jk,2,0) * Bst(2) + Rij(jk,3,0) * one ) * gBzeta / sg(jk,0) ! BR;
+        ijimag(jk) = (                                                            rpol ) * gBzeta / sg(jk,0) ! Bzeta;
+        jireal(jk) = (                      +        rtor * Bst(2)                     ) * gBzeta / sg(jk,0) ! Btheta;
+        enddo
+      enddo
+
+     case (2)
+      do kk = 0, Nz-1 ; zeta = kk * pi2nfp / Nz
+        do jj = 0, Nt-1 ; teta = jj * pi2    / Nt ; jk = 1 + jj + kk*Nt ; st(1:2) = (/ lss, teta /)
+
+   cput = MPI_WTIME()
+   Tsphdf5 = Tsphdf5 + ( cput-cpuo )
+   call bfield( zeta, st(1:Node), Bst(1:Node) )
+   cpuo = MPI_WTIME()
+
+        ijreal(jk) = ( Rij(jk,1,0) * Bst(1) + Rij(jk,2,0) * Bst(2) + Rij(jk,3,0) * one ) * gBzeta / sg(jk,0) ! BR;
+        ijimag(jk) = (                                                             one ) * gBzeta / sg(jk,0) ! Bp;
+        jireal(jk) = (                                      Bst(2)                     ) * gBzeta / sg(jk,0) ! BZ;
+        enddo
+      enddo
+
+     end select !Igeometry
+    endif ! end of if( Lcurvature.eq.1 ) ;
+
+   ijreal_grid(alongLrad,1:Ntz) = ijreal(1:Ntz)
+   ijimag_grid(alongLrad,1:Ntz) = ijimag(1:Ntz)
+   jireal_grid(alongLrad,1:Ntz) = jireal(1:Ntz)
+
+   enddo ! end of do ii;
+
+   Ngrid_sum = Ngrid_sum + Ngrid_local + 1 ! offset for storing data
+
+  enddo ! end of do vvol;
+
+  call HWRITERA( grpGrid, "Rij", sumLrad, Ntz,    Rij_grid )
+  call HWRITERA( grpGrid, "Zij", sumLrad, Ntz,    Zij_grid )
+  call HWRITERA( grpGrid, "sg", sumLrad, Ntz,     sg_grid )
+  call HWRITERA( grpGrid, "BR", sumLrad, Ntz, ijreal_grid )
+  call HWRITERA( grpGrid, "Bp", sumLrad, Ntz, ijimag_grid )
+  call HWRITERA( grpGrid, "BZ", sumLrad, Ntz, jireal_grid )
+
+   deallocate(Rij_grid ,stat=astat)
+   deallocate(Zij_grid ,stat=astat)
+   deallocate(sg_grid ,stat=astat)
+   deallocate(ijreal_grid ,stat=astat)
+   deallocate(ijimag_grid ,stat=astat)
+   deallocate(jireal_grid ,stat=astat)
+
+   call HCLOSEGRP( grpGrid )
 
  endif ! myid.eq.0
-
-end subroutine write_grid
+end subroutine ! write_grid
 
 !> \brief Initialize field line tracing output group and create array datasets.
 !> \ingroup grp_output
@@ -848,6 +835,7 @@ subroutine init_flt_output( numTrajTotal )
   integer(HSIZE_T), dimension(rankP) :: dims_traj   ! Dataset dimensions.
   integer(HSIZE_T), dimension(rankP) :: length      ! Dataset dimensions.
 
+  integer          :: hdfier     !< error flag for HDF5 library
 
   cpui = MPI_WTIME()
   cpuo = cpui
@@ -857,71 +845,70 @@ subroutine init_flt_output( numTrajTotal )
   nthreads = 1
 #endif
 
-
  if (myid.eq.0 .and. .not.skip_write) then
 
-!   ! create Poincare group in HDF5 file
-!   HDEFGRP( file_id, poincare, grpPoincare )
-!
-!   dims_traj = (/ Nz, nPpts, numTrajTotal /) ! dimensions for whole Poincare dataset
-!   length    = (/ Nz, nPpts,            1 /) ! which is written in these slice lengths
-!
-!   ! Create the data space for the  dataset.
-!   H5CALL( sphdf5, h5screate_simple_f, (rankP, dims_traj, filespace_t, hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5screate_simple_f, (rankP, dims_traj, filespace_s, hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5screate_simple_f, (rankP, dims_traj, filespace_R, hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5screate_simple_f, (rankP, dims_traj, filespace_Z, hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5screate_simple_f, (1, int((/ numTrajTotal /),HSIZE_T), filespace_success, hdfier), __FILE__, __LINE__ )
-!
-!   ! Create the dataset with default properties.
-!   H5CALL( sphdf5, h5dcreate_f, (grpPoincare, "t", H5T_NATIVE_DOUBLE, filespace_t, dset_id_t, hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5dcreate_f, (grpPoincare, "s", H5T_NATIVE_DOUBLE, filespace_s, dset_id_s, hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5dcreate_f, (grpPoincare, "R", H5T_NATIVE_DOUBLE, filespace_R, dset_id_R, hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5dcreate_f, (grpPoincare, "Z", H5T_NATIVE_DOUBLE, filespace_Z, dset_id_Z, hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5dcreate_f, (grpPoincare, "success", H5T_NATIVE_INTEGER, filespace_success, dset_id_success, hdfier), __FILE__, __LINE__ )
-!
-!   ! filespaces can be closed as soon as datasets are created
-!   H5CALL( sphdf5, h5sclose_f, (filespace_t, hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5sclose_f, (filespace_s, hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5sclose_f, (filespace_R, hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5sclose_f, (filespace_Z, hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5sclose_f, (filespace_success, hdfier), __FILE__, __LINE__ )
-!
-!   ! Select hyperslab in the file.
-!   H5CALL( sphdf5, h5dget_space_f, (dset_id_t, filespace_t, hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5dget_space_f, (dset_id_s, filespace_s, hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5dget_space_f, (dset_id_R, filespace_R, hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5dget_space_f, (dset_id_Z, filespace_Z, hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5dget_space_f, (dset_id_success, filespace_success, hdfier), __FILE__, __LINE__ )
-!
-!   ! Each process defines dataset in memory and writes it to the hyperslab in the file.
-!   H5CALL( sphdf5, h5screate_simple_f, (rankP, length, memspace_t, hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5screate_simple_f, (rankP, length, memspace_s, hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5screate_simple_f, (rankP, length, memspace_R, hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5screate_simple_f, (rankP, length, memspace_Z, hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5screate_simple_f, (1, int((/ 1 /),HSIZE_T), memspace_success, hdfier), __FILE__, __LINE__ )
-!
-!   ! create rotational transform group in HDF5 file
-!   HDEFGRP( file_id, transform, grpTransform )
-!
-!   ! Create the data space for the  dataset.
-!   H5CALL( sphdf5, h5screate_simple_f, (rankT, int((/           2,Mvol/),HSIZE_T), filespace_diotadxup, hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5screate_simple_f, (rankT, int((/numTrajTotal,   2/),HSIZE_T), filespace_fiota    , hdfier), __FILE__, __LINE__ )
-!
-!   ! Create the dataset with default properties.
-!   H5CALL( sphdf5, h5dcreate_f, (grpTransform, "diotadxup", H5T_NATIVE_DOUBLE, filespace_diotadxup, dset_id_diotadxup, hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5dcreate_f, (grpTransform,     "fiota", H5T_NATIVE_DOUBLE, filespace_fiota    , dset_id_fiota    , hdfier), __FILE__, __LINE__ )
-!
-!   ! filespaces can be closed as soon as datasets are created
-!   H5CALL( sphdf5, h5sclose_f, (filespace_diotadxup, hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5sclose_f, (filespace_fiota    , hdfier), __FILE__, __LINE__ )
-!
-!   ! Select hyperslab in the file.
-!   H5CALL( sphdf5, h5dget_space_f, (dset_id_diotadxup, filespace_diotadxup, hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5dget_space_f, (dset_id_fiota    , filespace_fiota    , hdfier), __FILE__, __LINE__ )
-!
-!   ! Each process defines dataset in memory and writes it to the hyperslab in the file.
-!   H5CALL( sphdf5, h5screate_simple_f, (rankT, int((/2,1/),HSIZE_T), memspace_diotadxup, hdfier), __FILE__, __LINE__ )
+  ! create Poincare group in HDF5 file
+  call HDEFGRP( file_id, "poincare", grpPoincare )
+
+  dims_traj = (/ Nz, nPpts, numTrajTotal /) ! dimensions for whole Poincare dataset
+  length    = (/ Nz, nPpts,            1 /) ! which is written in these slice lengths
+
+  ! Create the data space for the  dataset.
+  call h5screate_simple_f(rankP, dims_traj, filespace_t, hdfier)
+  call h5screate_simple_f(rankP, dims_traj, filespace_s, hdfier)
+  call h5screate_simple_f(rankP, dims_traj, filespace_R, hdfier)
+  call h5screate_simple_f(rankP, dims_traj, filespace_Z, hdfier)
+  call h5screate_simple_f(1, int((/ numTrajTotal /),HSIZE_T), filespace_success, hdfier)
+
+  ! Create the dataset with default properties.
+  call h5dcreate_f(grpPoincare, "t", H5T_NATIVE_DOUBLE, filespace_t, dset_id_t, hdfier)
+  call h5dcreate_f(grpPoincare, "s", H5T_NATIVE_DOUBLE, filespace_s, dset_id_s, hdfier)
+  call h5dcreate_f(grpPoincare, "R", H5T_NATIVE_DOUBLE, filespace_R, dset_id_R, hdfier)
+  call h5dcreate_f(grpPoincare, "Z", H5T_NATIVE_DOUBLE, filespace_Z, dset_id_Z, hdfier)
+  call h5dcreate_f(grpPoincare, "success", H5T_NATIVE_INTEGER, filespace_success, dset_id_success, hdfier)
+
+  ! filespaces can be closed as soon as datasets are created
+  call h5sclose_f(filespace_t, hdfier)
+  call h5sclose_f(filespace_s, hdfier)
+  call h5sclose_f(filespace_R, hdfier)
+  call h5sclose_f(filespace_Z, hdfier)
+  call h5sclose_f(filespace_success, hdfier)
+
+  ! Select hyperslab in the file.
+  call h5dget_space_f(dset_id_t, filespace_t, hdfier)
+  call h5dget_space_f(dset_id_s, filespace_s, hdfier)
+  call h5dget_space_f(dset_id_R, filespace_R, hdfier)
+  call h5dget_space_f(dset_id_Z, filespace_Z, hdfier)
+  call h5dget_space_f(dset_id_success, filespace_success, hdfier)
+
+  ! Each process defines dataset in memory and writes it to the hyperslab in the file.
+  call h5screate_simple_f(rankP, length, memspace_t, hdfier)
+  call h5screate_simple_f(rankP, length, memspace_s, hdfier)
+  call h5screate_simple_f(rankP, length, memspace_R, hdfier)
+  call h5screate_simple_f(rankP, length, memspace_Z, hdfier)
+  call h5screate_simple_f(1, int((/ 1 /),HSIZE_T), memspace_success, hdfier)
+
+  ! create rotational transform group in HDF5 file
+  call HDEFGRP( file_id, "transform", grpTransform )
+
+  ! Create the data space for the  dataset.
+  call h5screate_simple_f(rankT, int((/           2,Mvol/),HSIZE_T), filespace_diotadxup, hdfier)
+  call h5screate_simple_f(rankT, int((/numTrajTotal,   2/),HSIZE_T), filespace_fiota    , hdfier)
+
+  ! Create the dataset with default properties.
+  call h5dcreate_f(grpTransform, "diotadxup", H5T_NATIVE_DOUBLE, filespace_diotadxup, dset_id_diotadxup, hdfier)
+  call h5dcreate_f(grpTransform,     "fiota", H5T_NATIVE_DOUBLE, filespace_fiota    , dset_id_fiota    , hdfier)
+
+  ! filespaces can be closed as soon as datasets are created
+  call h5sclose_f(filespace_diotadxup, hdfier)
+  call h5sclose_f(filespace_fiota    , hdfier)
+
+  ! Select hyperslab in the file.
+  call h5dget_space_f(dset_id_diotadxup, filespace_diotadxup, hdfier)
+  call h5dget_space_f(dset_id_fiota    , filespace_fiota    , hdfier)
+
+  ! Each process defines dataset in memory and writes it to the hyperslab in the file.
+  call h5screate_simple_f(rankT, int((/2,1/),HSIZE_T), memspace_diotadxup, hdfier)
 
  endif ! myid.eq.0
 
@@ -946,7 +933,7 @@ subroutine write_poincare( offset, data, success )
   implicit none
   integer   :: ierr, astat, ios, nthreads, ithread
   real(wp)      :: cput, cpui, cpuo=0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
-
+  integer          :: hdfier     !< error flag for HDF5 library
 
   integer, intent(in) :: offset, success(:)
   real(wp), intent(in)    :: data(:,:,:)
@@ -964,31 +951,31 @@ subroutine write_poincare( offset, data, success )
 
 
  if (myid.eq.0 .and. .not.skip_write) then
-!
-!   dims_singleTraj = (/ Nz, nPpts /)
-!   length          = (/ Nz, nPpts, 1 /)
-!
-!   ! On entry, Fortran does not know that indexing in data is from 0 to Nz-1.
-!   ! Hence, use default indices 1:Nz in this routine
-!   H5CALL( sphdf5, h5sselect_hyperslab_f, (filespace_t, H5S_SELECT_SET_F, int((/0,0,offset/),HSSIZE_T), length, hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5dwrite_f, (dset_id_t, H5T_NATIVE_DOUBLE, data(1,1:Nz,1:nPpts), dims_singleTraj, hdfier, &
-!   &               file_space_id=filespace_t, mem_space_id=memspace_t ), __FILE__, __LINE__ )
-!
-!   H5CALL( sphdf5, h5sselect_hyperslab_f, (filespace_s, H5S_SELECT_SET_F, int((/0,0,offset/),HSSIZE_T), length, hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5dwrite_f, (dset_id_s, H5T_NATIVE_DOUBLE, data(2,1:Nz,1:nPpts), dims_singleTraj, hdfier, &
-!   &               file_space_id=filespace_s, mem_space_id=memspace_s ), __FILE__, __LINE__ )
-!
-!   H5CALL( sphdf5, h5sselect_hyperslab_f, (filespace_R, H5S_SELECT_SET_F, int((/0,0,offset/),HSSIZE_T), length, hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5dwrite_f, (dset_id_R, H5T_NATIVE_DOUBLE, data(3,1:Nz,1:nPpts), dims_singleTraj, hdfier, &
-!   &               file_space_id=filespace_R, mem_space_id=memspace_R ), __FILE__, __LINE__ )
-!
-!   H5CALL( sphdf5, h5sselect_hyperslab_f, (filespace_Z, H5S_SELECT_SET_F, int((/0,0,offset/),HSSIZE_T), length, hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5dwrite_f, (dset_id_Z, H5T_NATIVE_DOUBLE, data(4,1:Nz,1:nPpts), dims_singleTraj, hdfier, &
-!   &               file_space_id=filespace_Z, mem_space_id=memspace_Z ), __FILE__, __LINE__ )
-!
-!   H5CALL( sphdf5, h5sselect_hyperslab_f, (filespace_success, H5S_SELECT_SET_F, int((/offset/),HSSIZE_T), int((/1/), HSIZE_T), hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5dwrite_f, (dset_id_success, H5T_NATIVE_INTEGER, success, int((/1/), HSIZE_T), hdfier, &
-!   &               file_space_id=filespace_success, mem_space_id=memspace_success ), __FILE__, __LINE__ )
+
+  dims_singleTraj = (/ Nz, nPpts /)
+  length          = (/ Nz, nPpts, 1 /)
+
+  ! On entry, Fortran does not know that indexing in data is from 0 to Nz-1.
+  ! Hence, use default indices 1:Nz in this routine
+  call h5sselect_hyperslab_f(filespace_t, H5S_SELECT_SET_F, int((/0,0,offset/),HSSIZE_T), length, hdfier)
+  call h5dwrite_f(dset_id_t, H5T_NATIVE_DOUBLE, data(1,1:Nz,1:nPpts), dims_singleTraj, hdfier, &
+                  file_space_id=filespace_t, mem_space_id=memspace_t )
+
+  call h5sselect_hyperslab_f(filespace_s, H5S_SELECT_SET_F, int((/0,0,offset/),HSSIZE_T), length, hdfier)
+  call h5dwrite_f(dset_id_s, H5T_NATIVE_DOUBLE, data(2,1:Nz,1:nPpts), dims_singleTraj, hdfier, &
+                  file_space_id=filespace_s, mem_space_id=memspace_s )
+
+  call h5sselect_hyperslab_f(filespace_R, H5S_SELECT_SET_F, int((/0,0,offset/),HSSIZE_T), length, hdfier)
+  call h5dwrite_f(dset_id_R, H5T_NATIVE_DOUBLE, data(3,1:Nz,1:nPpts), dims_singleTraj, hdfier, &
+                  file_space_id=filespace_R, mem_space_id=memspace_R )
+
+  call h5sselect_hyperslab_f(filespace_Z, H5S_SELECT_SET_F, int((/0,0,offset/),HSSIZE_T), length, hdfier)
+  call h5dwrite_f(dset_id_Z, H5T_NATIVE_DOUBLE, data(4,1:Nz,1:nPpts), dims_singleTraj, hdfier, &
+                  file_space_id=filespace_Z, mem_space_id=memspace_Z )
+
+  call h5sselect_hyperslab_f(filespace_success, H5S_SELECT_SET_F, int((/offset/),HSSIZE_T), int((/1/), HSIZE_T), hdfier)
+  call h5dwrite_f(dset_id_success, H5T_NATIVE_INTEGER, success, int((/1/), HSIZE_T), hdfier, &
+                  file_space_id=filespace_success, mem_space_id=memspace_success )
 
  endif ! myid.eq.0
 
@@ -1015,7 +1002,7 @@ subroutine write_transform( offset, length, lvol, diotadxup, fiota )
 
   integer, intent(in) :: offset, length, lvol
   real(wp), intent(in)    :: diotadxup(:), fiota(:,:)
-
+  integer          :: hdfier     !< error flag for HDF5 library
 
   cpui = MPI_WTIME()
   cpuo = cpui
@@ -1028,18 +1015,18 @@ subroutine write_transform( offset, length, lvol, diotadxup, fiota )
 
  if (myid.eq.0 .and. .not.skip_write) then
 
-!   H5CALL( sphdf5, h5sselect_hyperslab_f, (filespace_diotadxup, H5S_SELECT_SET_F, int((/0,lvol-1/),HSSIZE_T), int((/2,1/),HSSIZE_T), hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5dwrite_f, (dset_id_diotadxup, H5T_NATIVE_DOUBLE, diotadxup, int((/2,1/),HSSIZE_T), hdfier, &
-!   &               file_space_id=filespace_diotadxup, mem_space_id=memspace_diotadxup ), __FILE__, __LINE__ )
-!
-!   ! length of fiota piece to write here may change, so open and close memspace each time a new hyperslab is written
-!   H5CALL( sphdf5, h5screate_simple_f, (rankT, int((/length,2/),HSIZE_T), memspace_fiota    , hdfier), __FILE__, __LINE__ )
-!
-!   H5CALL( sphdf5, h5sselect_hyperslab_f, (filespace_fiota, H5S_SELECT_SET_F, int((/offset,0/),HSSIZE_T), int((/length,2/),HSSIZE_T), hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5dwrite_f, (dset_id_fiota, H5T_NATIVE_DOUBLE, fiota(1:length,1:2), int((/length,2/),HSSIZE_T), hdfier, &
-!   &               file_space_id=filespace_fiota, mem_space_id=memspace_fiota ), __FILE__, __LINE__ )
-!
-!   H5CALL( sphdf5, h5sclose_f, (memspace_fiota, hdfier), __FILE__, __LINE__ )
+  call h5sselect_hyperslab_f(filespace_diotadxup, H5S_SELECT_SET_F, int((/0,lvol-1/),HSSIZE_T), int((/2,1/),HSSIZE_T), hdfier)
+  call h5dwrite_f(dset_id_diotadxup, H5T_NATIVE_DOUBLE, diotadxup, int((/2,1/),HSSIZE_T), hdfier, &
+                  file_space_id=filespace_diotadxup, mem_space_id=memspace_diotadxup )
+
+  ! length of fiota piece to write here may change, so open and close memspace each time a new hyperslab is written
+  call h5screate_simple_f(rankT, int((/length,2/),HSIZE_T), memspace_fiota    , hdfier)
+
+  call h5sselect_hyperslab_f(filespace_fiota, H5S_SELECT_SET_F, int((/offset,0/),HSSIZE_T), int((/length,2/),HSSIZE_T), hdfier)
+  call h5dwrite_f(dset_id_fiota, H5T_NATIVE_DOUBLE, fiota(1:length,1:2), int((/length,2/),HSSIZE_T), hdfier, &
+                  file_space_id=filespace_fiota, mem_space_id=memspace_fiota )
+
+  call h5sclose_f(memspace_fiota, hdfier)
 
  endif ! myid.eq.0
 
@@ -1052,59 +1039,41 @@ end subroutine write_transform
 !> which had to be kept open during the tracing to be able to write
 !> the outputs directly when a given worker thread is finished.
 subroutine finalize_flt_output
-
-
-#ifdef OPENMP
-  USE OMP_LIB
-#endif
-  use mpi
-  implicit none
-  integer   :: ierr, astat, ios, nthreads, ithread
-  real(wp)      :: cput, cpui, cpuo=0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
-
-
-
-  cpui = MPI_WTIME()
-  cpuo = cpui
-#ifdef OPENMP
-  nthreads = omp_get_max_threads()
-#else
-  nthreads = 1
-#endif
-
+  use allglobal, only: myid, skip_write
+  integer          :: hdfier     !< error flag for HDF5 library
 
  if (myid.eq.0 .and. .not.skip_write) then
-!
-!   ! close filespaces
-!   H5CALL( sphdf5, h5sclose_f, (filespace_t,         hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5sclose_f, (filespace_s,         hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5sclose_f, (filespace_R,         hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5sclose_f, (filespace_Z,         hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5sclose_f, (filespace_success,   hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5sclose_f, (filespace_diotadxup, hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5sclose_f, (filespace_fiota,     hdfier), __FILE__, __LINE__ )
-!
-!   ! close dataspaces
-!   H5CALL( sphdf5, h5sclose_f, (memspace_t,          hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5sclose_f, (memspace_s,          hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5sclose_f, (memspace_R,          hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5sclose_f, (memspace_Z,          hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5sclose_f, (memspace_success,    hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5sclose_f, (memspace_diotadxup,  hdfier), __FILE__, __LINE__ )
-!   ! memspace_fiota is re-opened/closed in each iteration (see write_transform)
-!
-!   ! close datasets
-!   H5CALL( sphdf5, h5dclose_f, (dset_id_t,           hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5dclose_f, (dset_id_s,           hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5dclose_f, (dset_id_R,           hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5dclose_f, (dset_id_Z,           hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5dclose_f, (dset_id_success,     hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5dclose_f, (dset_id_diotadxup,   hdfier), __FILE__, __LINE__ )
-!   H5CALL( sphdf5, h5dclose_f, (dset_id_fiota,       hdfier), __FILE__, __LINE__ )
-!
-!   ! close groups
-!   HCLOSEGRP( grpPoincare  )
-!   HCLOSEGRP( grpTransform )
+
+  ! close filespaces
+  call h5sclose_f(filespace_t,         hdfier)
+  call h5sclose_f(filespace_s,         hdfier)
+  call h5sclose_f(filespace_R,         hdfier)
+  call h5sclose_f(filespace_Z,         hdfier)
+  call h5sclose_f(filespace_success,   hdfier)
+  call h5sclose_f(filespace_diotadxup, hdfier)
+  call h5sclose_f(filespace_fiota,     hdfier)
+
+  ! close dataspaces
+  call h5sclose_f(memspace_t,          hdfier)
+  call h5sclose_f(memspace_s,          hdfier)
+  call h5sclose_f(memspace_R,          hdfier)
+  call h5sclose_f(memspace_Z,          hdfier)
+  call h5sclose_f(memspace_success,    hdfier)
+  call h5sclose_f(memspace_diotadxup,  hdfier)
+  ! memspace_fiota is re-opened/closed in each iteration (see write_transform)
+
+  ! close datasets
+  call h5dclose_f(dset_id_t,           hdfier)
+  call h5dclose_f(dset_id_s,           hdfier)
+  call h5dclose_f(dset_id_R,           hdfier)
+  call h5dclose_f(dset_id_Z,           hdfier)
+  call h5dclose_f(dset_id_success,     hdfier)
+  call h5dclose_f(dset_id_diotadxup,   hdfier)
+  call h5dclose_f(dset_id_fiota,       hdfier)
+
+  ! close groups
+  call HCLOSEGRP( grpPoincare  )
+  call HCLOSEGRP( grpTransform )
 
  endif ! myid.eq.0
 
@@ -1124,42 +1093,26 @@ end subroutine finalize_flt_output
 !> @param allAto \f$A^{\theta}_\mathrm{odd}\f$ for all nested volumes
 !> @param allAzo \f$A^{\zeta}_\mathrm{odd}\f$ for all nested volumes
 subroutine write_vector_potential(sumLrad, allAte, allAze, allAto, allAzo)
-
-  use allglobal, only : mn
-
-
-#ifdef OPENMP
-  USE OMP_LIB
-#endif
-  use mpi
-  implicit none
-  integer   :: ierr, astat, ios, nthreads, ithread
-  real(wp)      :: cput, cpui, cpuo=0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
+  use allglobal, only : mn, myid, skip_write
 
   integer, intent(in) :: sumLrad
-  real(wp), intent(in)    :: allAte(:,:), allAze(:,:), allAto(:,:), allAzo(:,:)
-  integer(hid_t)      :: grpVectorPotential
+  real(wp), dimension(:,:), intent(in) :: allAte
+  real(wp), dimension(:,:), intent(in) :: allAze
+  real(wp), dimension(:,:), intent(in) :: allAto
+  real(wp), dimension(:,:), intent(in) :: allAzo
 
-
-  cpui = MPI_WTIME()
-  cpuo = cpui
-#ifdef OPENMP
-  nthreads = omp_get_max_threads()
-#else
-  nthreads = 1
-#endif
-
+  integer(hid_t) :: grpVectorPotential
 
  if (myid.eq.0 .and. .not.skip_write) then
 
-!   HDEFGRP( file_id, vector_potential, grpVectorPotential )
-!
-!   HWRITERA( grpVectorPotential, sumLrad, mn, Ate, allAte(1:sumLrad,1:mn) )
-!   HWRITERA( grpVectorPotential, sumLrad, mn, Aze, allAze(1:sumLrad,1:mn) )
-!   HWRITERA( grpVectorPotential, sumLrad, mn, Ato, allAto(1:sumLrad,1:mn) )
-!   HWRITERA( grpVectorPotential, sumLrad, mn, Azo, allAzo(1:sumLrad,1:mn) )
-!
-!   HCLOSEGRP( grpVectorPotential )
+  call HDEFGRP( file_id, "vector_potential", grpVectorPotential )
+
+  call HWRITERA( grpVectorPotential, "Ate", sumLrad, mn, allAte(1:sumLrad,1:mn) )
+  call HWRITERA( grpVectorPotential, "Aze", sumLrad, mn, allAze(1:sumLrad,1:mn) )
+  call HWRITERA( grpVectorPotential, "Ato", sumLrad, mn, allAto(1:sumLrad,1:mn) )
+  call HWRITERA( grpVectorPotential, "Azo", sumLrad, mn, allAzo(1:sumLrad,1:mn) )
+
+  call HCLOSEGRP( grpVectorPotential )
 
  endif ! myid.eq.0
 
@@ -1212,120 +1165,119 @@ subroutine hdfint
 
 
  if (myid.eq.0 .and. .not.skip_write) then
-!
-!   HDEFGRP( file_id, output, grpOutput )
-!
-!   HWRITERV( grpOutput,           mn,               Vns,       iVns(1:mn)   ) !     stellarator symmetric normal field at boundary; vacuum component;
-!   HWRITERV( grpOutput,           mn,               Bns,       iBns(1:mn)   ) !     stellarator symmetric normal field at boundary; plasma component;
-!   HWRITERV( grpOutput,           mn,               Vnc,       iVnc(1:mn)   ) ! non-stellarator symmetric normal field at boundary; vacuum component;
-!   HWRITERV( grpOutput,           mn,               Bnc,       iBnc(1:mn)   ) ! non-stellarator symmetric normal field at boundary; plasma component;
-!
-! !> <ul>
-! !> <li> In addition to the input variables, which are described in global(), the following quantities are written to \c ext.sp.h5 :
-! !latex
-! !latex \begin{tabular}{|l|l|l|} \hline
-!
-! !latex \type{variable}               & type    & \pb{description} \\ \hline
-!
-! !latex \type{mn}                     & integer & \pb{number of Fourier modes} \\
-!   HWRITEIV( grpOutput,  1, mn, (/ mn /)  )
-! !latex \type{im(1:mn)}               & integer & \pb{poloidal mode numbers} \\
-!   HWRITEIV( grpOutput, mn, im, im(1:mn) )
-! !latex \type{in(1:mn)}               & integer & \pb{toroidal mode numbers} \\
-!   HWRITEIV( grpOutput, mn, in, in(1:mn) )
-! !latex \type{mns}                     & integer & \pb{number of Fourier modes} \\
-!   HWRITEIV( grpOutput,  1, mns, (/ mns /)  )
-! !latex \type{ims(1:mns)}               & integer & \pb{poloidal mode numbers} \\
-!   HWRITEIV( grpOutput, mns, ims, ims(1:mns) )
-! !latex \type{ins(1:mns)}               & integer & \pb{toroidal mode numbers} \\
-!   HWRITEIV( grpOutput, mns, ins, ins(1:mns) )
-! !latex \type{Mvol}                   & integer & \pb{number of interfaces = number of volumes} \\
-!   HWRITEIV( grpOutput,  1, Mvol, (/ Mvol /))
-! !latex \type{iRbc(1:mn,0:Mvol)}      & real    & \pb{Fourier harmonics, $R_{m,n}$, of interfaces} \\
-!   HWRITERA( grpOutput, mn, (Mvol+1), Rbc, iRbc(1:mn,0:Mvol) )
-! !latex \type{iZbs(1:mn,0:Mvol)}      & real    & \pb{Fourier harmonics, $Z_{m,n}$, of interfaces} \\
-!   HWRITERA( grpOutput, mn, (Mvol+1), Zbs, iZbs(1:mn,0:Mvol) )
-! !latex \type{iRbs(1:mn,0:Mvol)}      & real    & \pb{Fourier harmonics, $R_{m,n}$, of interfaces} \\
-!   HWRITERA( grpOutput, mn, (Mvol+1), Rbs, iRbs(1:mn,0:Mvol) )
-! !latex \type{iZbc(1:mn,0:Mvol)}      & real    & \pb{Fourier harmonics, $Z_{m,n}$, of interfaces} \\
-!   HWRITERA( grpOutput, mn, (Mvol+1), Zbc, iZbc(1:mn,0:Mvol) )
-! !l tex \type{forcetol}               & real    & \pb{force-balance error across interfaces} \\
-! !  HWRITERV( grpOutput, 1, forcetol, (/ forcetol /)) ! already in /input/global
-! !latex \type{ForceErr}               & real    & \pb{force-balance error across interfaces} \\
-!   HWRITERV( grpOutput,  1, ForceErr, (/ ForceErr /))
-! !latex \type{Ivolume}                & real    & \pb{Volume current at output (parallel, externally induced)}
-!   HWRITERV( grpOutput, Mvol, Ivolume, Ivolume(1:Mvol))
-! !latex \type{IPDt}                   & real    & \pb{Surface current at output}
-!   HWRITERV( grpOutput, Mvol, IPDt, IPDt(1:Mvol))
-!
-!   ! the following quantites can be different from input value
-!   HWRITERV( grpOutput,   Mvol, adiabatic         , adiabatic(1:Nvol)   )
-!   HWRITERV( grpOutput,   Nvol, helicity          ,  helicity(1:Nvol)   )
-!   HWRITERV( grpOutput,   Mvol, mu                ,        mu(1:Mvol)   )
-!   HWRITERV( grpOutput,   Mvol, tflux             ,     tflux(1:Mvol)   )
-!   HWRITERV( grpOutput,   Mvol, pflux             ,     pflux(1:Mvol)   )
-!
-!   if( Lcheck.eq.1 ) then
-! !latex \type{beltramierror}          & real    & \pb{error in beltrami field (volume integral)} \\
-!    HWRITERA( grpOutput, Mvol, 3, beltramierror, beltramierror(1:Mvol,1:3) )
-!   endif
-!
-!   if( allocated(vvolume) ) then ! why is it required to confirm that vvolume has been allocated ; 24 Nov 16;
-!
-!    tvolume = sum(vvolume(1:Nvol) )
-! !latex \type{volume}                 & real    & \pb{total volume = $\sum V_v$} \\
-!    HWRITERV( grpOutput, 1, volume, (/ tvolume /))
-!
-!   else
-!
-!    if( Wsphdf5 ) write(ounit,'("hdfint : ", 10x ," : myid=",i3," ; vvolume is not allocated ;")') myid
-!
-!   endif ! end of if( allocated(vvolume) ) ; 11 Aug 14;
-!
-!   Mrad  = maxval( Lrad(1:Mvol) )
-! !latex \type{Mrad}                   & integer & \pb{the maximum radial (Chebyshev) resolution} \\
-!   HWRITEIV( grpOutput, 1, Mrad, (/ Mrad /))
-! !latex \type{TT(0:Mrad,0:1,0:1)}     & real    & \pb{the Chebyshev polynomials, $T_l$, and their derivatives, evaluated at $s=\pm 1$} \\
-!   HWRITERC( grpOutput, (Mrad+1), 2, 2, TT, TT(0:Mrad,0:1,0:1) )
-! !latex \type{Btemn(1:mn,0:1,1:Mvol)} & real    & \pb{the cosine harmonics of the covariant poloidal field, \\
-! !latex                                           i.e. $[[B_{\t,j}]]$ evaluated on the inner and outer interface in each volume} \\
-!   HWRITERC( grpOutput, mn, 2, Mvol, Btemn, Btemn(1:mn,0:1,1:Mvol) )
-! !latex \type{Bzemn(1:mn,0:1,1:Mvol)} & real    & \pb{the cosine harmonics of the covariant toroidal field, \\
-! !latex                                           i.e. $[[B_{\z,j}]]$ evaluated on the inner and outer interface in each volume} \\
-!   HWRITERC( grpOutput, mn, 2, Mvol, Bzemn, Bzemn(1:mn,0:1,1:Mvol) )
-! !latex \type{Btomn(1:mn,0:1,1:Mvol)} & real    & \pb{the sine harmonics of the covariant poloidal field, \\
-! !latex                                           i.e. $[[B_{\t,j}]]$ evaluated on the inner and outer interface in each volume} \\
-!   HWRITERC( grpOutput, mn, 2, Mvol, Btomn, Btomn(1:mn,0:1,1:Mvol) )
-! !latex \type{Bzomn(1:mn,0:1,1:Mvol)} & real    & \pb{the sine harmonics of the covariant toroidal field, \\
-! !latex                                           i.e. $[[B_{\z,j}]]$ evaluated on the inner and outer interface in each volume} \\
-!   HWRITERC( grpOutput, mn, 2, Mvol, Bzomn, Bzomn(1:mn,0:1,1:Mvol) )
-!
-!
-! ! Write lambda_mn, Fourier harmonics or transformation to straight field line coordinates.
-!   HWRITERC( grpOutput, lmns, Mvol, 2, lambdamn, dlambdaout(1:lmns,1:Mvol,0:1) )
-!
-!   if( Lperturbed.eq.1 ) then
-!
-! !latex \type{dRbc(1:mn,0:Nvol)}      & real    & \pb{Fourier harmonics, $R_{j}$, of interfaces; linearly perturbed solution} \\
-!   HWRITERA( grpOutput, mn, (Nvol+1), dRbc, dRbc(1:mn,0:Nvol) )
-! !latex \type{dZbs(1:mn,0:Nvol)}      & real    & \pb{Fourier harmonics, $Z_{j}$, of interfaces; linearly perturbed solution} \\
-!   HWRITERA( grpOutput, mn, (Nvol+1), dZbs, dZbs(1:mn,0:Nvol) )
-! !latex \type{dRbs(1:mn,0:Nvol)}      & real    & \pb{Fourier harmonics, $R_{j}$, of interfaces; linearly perturbed solution} \\
-!   HWRITERA( grpOutput, mn, (Nvol+1), dRbs, dRbs(1:mn,0:Nvol) )
-! !latex \type{dZbc(1:mn,0:Nvol)}      & real    & \pb{Fourier harmonics, $Z_{j}$, of interfaces; linearly perturbed solution} \\
-!   HWRITERA( grpOutput, mn, (Nvol+1), dZbc, dZbc(1:mn,0:Nvol) )
-!
-!   endif
-!
-! !latex \type{lmns}                   & integer & \pb{resolution of straight fieldline transformation} \\
-!   HWRITEIV( grpOutput, 1, lmns, (/ lmns /))
-!
-! !latex \hline \end{tabular}
-! !> </li>
-! !> <li> All quantities marked as real should be treated as double precision. </li>
-! !> </ul>
-!
-!   HCLOSEGRP( grpOutput )
+
+  call HDEFGRP( file_id, "output", grpOutput )
+
+  call HWRITERV( grpOutput, "Vns",          mn,                      iVns(1:mn)   ) !     stellarator symmetric normal field at boundary; vacuum component;
+  call HWRITERV( grpOutput, "Bns",          mn,                      iBns(1:mn)   ) !     stellarator symmetric normal field at boundary; plasma component;
+  call HWRITERV( grpOutput, "Vnc",          mn,                      iVnc(1:mn)   ) ! non-stellarator symmetric normal field at boundary; vacuum component;
+  call HWRITERV( grpOutput, "Bnc",          mn,                      iBnc(1:mn)   ) ! non-stellarator symmetric normal field at boundary; plasma component;
+
+!> <ul>
+!> <li> In addition to the input variables, which are described in global(), the following quantities are written to \c ext.sp.h5 :
+!latex
+!latex \begin{tabular}{|l|l|l|} \hline
+
+!latex \type{variable}               & type    & \pb{description} \\ \hline
+
+!latex \type{mn}                     & integer & \pb{number of Fourier modes} \\
+  call HWRITEIV( grpOutput, "mn",  1, (/ mn /)  )
+!latex \type{im(1:mn)}               & integer & \pb{poloidal mode numbers} \\
+  call HWRITEIV( grpOutput, "im", mn, im(1:mn) )
+!latex \type{in(1:mn)}               & integer & \pb{toroidal mode numbers} \\
+  call HWRITEIV( grpOutput, "in", mn,  in(1:mn) )
+!latex \type{mns}                     & integer & \pb{number of Fourier modes} \\
+  call HWRITEIV( grpOutput,  "mns", 1, (/ mns /)  )
+!latex \type{ims(1:mns)}               & integer & \pb{poloidal mode numbers} \\
+  call HWRITEIV( grpOutput, "ims", mns, ims(1:mns) )
+!latex \type{ins(1:mns)}               & integer & \pb{toroidal mode numbers} \\
+  call HWRITEIV( grpOutput, "ins", mns,  ins(1:mns) )
+!latex \type{Mvol}                   & integer & \pb{number of interfaces = number of volumes} \\
+  call HWRITEIV( grpOutput, "Mvol",  1, (/ Mvol /))
+!latex \type{iRbc(1:mn,0:Mvol)}      & real    & \pb{Fourier harmonics, $R_{m,n}$, of interfaces} \\
+  call HWRITERA( grpOutput, "Rbc", mn, (Mvol+1), iRbc(1:mn,0:Mvol) )
+!latex \type{iZbs(1:mn,0:Mvol)}      & real    & \pb{Fourier harmonics, $Z_{m,n}$, of interfaces} \\
+  call HWRITERA( grpOutput, "Zbs", mn, (Mvol+1), iZbs(1:mn,0:Mvol) )
+!latex \type{iRbs(1:mn,0:Mvol)}      & real    & \pb{Fourier harmonics, $R_{m,n}$, of interfaces} \\
+  call HWRITERA( grpOutput, "Rbs", mn, (Mvol+1), iRbs(1:mn,0:Mvol) )
+!latex \type{iZbc(1:mn,0:Mvol)}      & real    & \pb{Fourier harmonics, $Z_{m,n}$, of interfaces} \\
+  call HWRITERA( grpOutput, "Zbc", mn, (Mvol+1), iZbc(1:mn,0:Mvol) )
+!l tex \type{forcetol}               & real    & \pb{force-balance error across interfaces} \\
+!  HWRITERV( grpOutput, 1, forcetol, (/ forcetol /)) ! already in /input/global
+!latex \type{ForceErr}               & real    & \pb{force-balance error across interfaces} \\
+  call HWRITERV( grpOutput, "ForceErr", 1, (/ ForceErr /))
+!latex \type{Ivolume}                & real    & \pb{Volume current at output (parallel, externally induced)}
+  call HWRITERV( grpOutput, "Ivolume", Mvol, Ivolume(1:Mvol))
+!latex \type{IPDt}                   & real    & \pb{Surface current at output}
+  call HWRITERV( grpOutput, "IPDt", Mvol,  IPDt(1:Mvol))
+
+  ! the following quantites can be different from input value
+  call HWRITERV( grpOutput, "adiabatic"         ,  Mvol,  adiabatic(1:Nvol)   )
+  call HWRITERV( grpOutput, "helicity"          ,  Nvol,   helicity(1:Nvol)   )
+  call HWRITERV( grpOutput, "mu"                ,  Mvol,         mu(1:Mvol)   )
+  call HWRITERV( grpOutput, "tflux"             ,  Mvol,      tflux(1:Mvol)   )
+  call HWRITERV( grpOutput, "pflux"             ,  Mvol,      pflux(1:Mvol)   )
+
+  if( Lcheck.eq.1 ) then
+!latex \type{beltramierror}          & real    & \pb{error in beltrami field (volume integral)} \\
+   call HWRITERA( grpOutput, "beltramierror", Mvol, 3, beltramierror(1:Mvol,1:3) )
+  endif
+
+  if( allocated(vvolume) ) then ! why is it required to confirm that vvolume has been allocated ; 24 Nov 16;
+
+   tvolume = sum(vvolume(1:Nvol) )
+!latex \type{volume}                 & real    & \pb{total volume = $\sum V_v$} \\
+   call HWRITERV( grpOutput, "volume", 1, (/ tvolume /))
+
+  else
+
+   if (Wsphdf5) write(ounit,'("hdfint : ", 10x ," : myid=",i3," ; vvolume is not allocated ;")') myid
+
+  endif ! end of if( allocated(vvolume) ) ; 11 Aug 14;
+
+  Mrad  = maxval( Lrad(1:Mvol) )
+!latex \type{Mrad}                   & integer & \pb{the maximum radial (Chebyshev) resolution} \\
+  call HWRITEIV( grpOutput, "Mrad", 1, (/ Mrad /))
+!latex \type{TT(0:Mrad,0:1,0:1)}     & real    & \pb{the Chebyshev polynomials, $T_l$, and their derivatives, evaluated at $s=\pm 1$} \\
+  call HWRITERC( grpOutput, "TT", (Mrad+1), 2, 2, TT(0:Mrad,0:1,0:1) )
+!latex \type{Btemn(1:mn,0:1,1:Mvol)} & real    & \pb{the cosine harmonics of the covariant poloidal field, \\
+!latex                                           i.e. $[[B_{\t,j}]]$ evaluated on the inner and outer interface in each volume} \\
+  call HWRITERC( grpOutput, "Btemn", mn, 2, Mvol, Btemn(1:mn,0:1,1:Mvol) )
+!latex \type{Bzemn(1:mn,0:1,1:Mvol)} & real    & \pb{the cosine harmonics of the covariant toroidal field, \\
+!latex                                           i.e. $[[B_{\z,j}]]$ evaluated on the inner and outer interface in each volume} \\
+  call HWRITERC( grpOutput, "Bzemn", mn, 2, Mvol, Bzemn(1:mn,0:1,1:Mvol) )
+!latex \type{Btomn(1:mn,0:1,1:Mvol)} & real    & \pb{the sine harmonics of the covariant poloidal field, \\
+!latex                                           i.e. $[[B_{\t,j}]]$ evaluated on the inner and outer interface in each volume} \\
+  call HWRITERC( grpOutput, "Btomn", mn, 2, Mvol, Btomn(1:mn,0:1,1:Mvol) )
+!latex \type{Bzomn(1:mn,0:1,1:Mvol)} & real    & \pb{the sine harmonics of the covariant toroidal field, \\
+!latex                                           i.e. $[[B_{\z,j}]]$ evaluated on the inner and outer interface in each volume} \\
+  call HWRITERC( grpOutput, "Bzomn", mn, 2, Mvol, Bzomn(1:mn,0:1,1:Mvol) )
+
+! Write lambda_mn, Fourier harmonics or transformation to straight field line coordinates.
+  call HWRITERC( grpOutput, "lambdamn", lmns, Mvol, 2, dlambdaout(1:lmns,1:Mvol,0:1) )
+
+  if( Lperturbed.eq.1 ) then
+
+!latex \type{dRbc(1:mn,0:Nvol)}      & real    & \pb{Fourier harmonics, $R_{j}$, of interfaces; linearly perturbed solution} \\
+  call HWRITERA( grpOutput, "dRbc", mn, (Nvol+1), dRbc(1:mn,0:Nvol) )
+!latex \type{dZbs(1:mn,0:Nvol)}      & real    & \pb{Fourier harmonics, $Z_{j}$, of interfaces; linearly perturbed solution} \\
+  call HWRITERA( grpOutput, "dZbs", mn, (Nvol+1), dZbs(1:mn,0:Nvol) )
+!latex \type{dRbs(1:mn,0:Nvol)}      & real    & \pb{Fourier harmonics, $R_{j}$, of interfaces; linearly perturbed solution} \\
+  call HWRITERA( grpOutput, "dRbs", mn, (Nvol+1), dRbs(1:mn,0:Nvol) )
+!latex \type{dZbc(1:mn,0:Nvol)}      & real    & \pb{Fourier harmonics, $Z_{j}$, of interfaces; linearly perturbed solution} \\
+  call HWRITERA( grpOutput, "dZbc", mn, (Nvol+1), dZbc(1:mn,0:Nvol) )
+
+  endif
+
+!latex \type{lmns}                   & integer & \pb{resolution of straight fieldline transformation} \\
+  call HWRITEIV( grpOutput, "lmns", 1, (/ lmns /))
+
+!latex \hline \end{tabular}
+!> </li>
+!> <li> All quantities marked as real should be treated as double precision. </li>
+!> </ul>
+
+  call HCLOSEGRP( grpOutput )
 
  endif ! myid.eq.0
 
@@ -1356,6 +1308,7 @@ subroutine finish_outfile
   integer(size_t),parameter                :: dummySize=1
   character(len=dummySize+1)               :: dummyName
   integer                                  :: typeClass
+  integer          :: hdfier     !< error flag for HDF5 library
 
 
   cpui = MPI_WTIME()
@@ -1369,85 +1322,85 @@ subroutine finish_outfile
 
  if (myid.eq.0 .and. .not.skip_write) then
 
-!   ! close objects related to convergence output
-!   H5CALL( sphdf5, h5tclose_f, (dt_nDcalls_id, hdfier)    , __FILE__, __LINE__)
-!   H5CALL( sphdf5, h5tclose_f, (dt_Energy_id, hdfier)     , __FILE__, __LINE__)
-!   H5CALL( sphdf5, h5tclose_f, (dt_ForceErr_id, hdfier)   , __FILE__, __LINE__)
-!   H5CALL( sphdf5, h5tclose_f, (dt_iRbc_id, hdfier)       , __FILE__, __LINE__)
-!   H5CALL( sphdf5, h5tclose_f, (dt_iZbs_id, hdfier)       , __FILE__, __LINE__)
-!   H5CALL( sphdf5, h5tclose_f, (dt_iRbs_id, hdfier)       , __FILE__, __LINE__)
-!   H5CALL( sphdf5, h5tclose_f, (dt_iZbc_id, hdfier)       , __FILE__, __LINE__)
-!   H5CALL( sphdf5, h5dclose_f, (iteration_dset_id, hdfier), __FILE__, __LINE__) ! End access to the dataset and release resources used by it.
-!   H5CALL( sphdf5, h5pclose_f, (plist_id, hdfier)         , __FILE__, __LINE__) ! close plist used for 'preserve' flag (does not show up in obj_count below)
-!
-!   ! check whether we forgot to close some resources; only check for group, dataset and datatype (there is only one file and that should be still open...)
-!   H5CALL( sphdf5, h5fget_obj_count_f, (file_id, ior(H5F_OBJ_GROUP_F, ior(H5F_OBJ_DATASET_F, H5F_OBJ_DATATYPE_F)), obj_count, hdfier), __FILE__, __LINE__ )
-!
-!   if (obj_count.gt.0) then
-!     write(*,'("There are still ",i3," hdf5 objects open")') obj_count
-!     allocate(obj_ids(1:obj_count))
-!
-!     ! groups
-!     H5CALL( sphdf5, h5fget_obj_ids_f, (file_id, H5F_OBJ_GROUP_F, obj_count, obj_ids, hdfier, num_objs), __FILE__, __LINE__) ! get for open objects
-!     if (num_objs.gt.0) then
-!       write(*,'("There are still ",i3," HDF5 groups open:")') num_objs
-!       do iObj=1,num_objs
-!         openLength=0
-!         H5CALL( sphdf5, h5iget_name_f, (obj_ids(iObj), dummyName, dummySize, openLength, hdfier), __FILE__, __LINE__)
-!         allocate(character(len=openLength+1) :: openName)
-!         H5CALL( sphdf5, h5iget_name_f, (obj_ids(iObj), openName, openLength, openLength, hdfier), __FILE__, __LINE__)
-!         write(*,*) openName
-!         deallocate(openName)
-!
-!         H5CALL( sphdf5, h5gclose_f, (obj_ids(iObj), hdfier), __FILE__, __LINE__)
-!       enddo
-!     endif
-!
-!     ! datasets
-!     H5CALL( sphdf5, h5fget_obj_ids_f, (file_id, H5F_OBJ_DATASET_F, obj_count, obj_ids, hdfier, num_objs), __FILE__, __LINE__) ! get for open objects
-!     if (num_objs.gt.0) then
-!       write(*,'("There are still ",i3," HDF5 datasets open:")') num_objs
-!       do iObj=1,num_objs
-!         openLength=0
-!         H5CALL( sphdf5, h5iget_name_f, (obj_ids(iObj), dummyName, dummySize, openLength, hdfier), __FILE__, __LINE__)
-!         allocate(character(len=openLength+1) :: openName)
-!         H5CALL( sphdf5, h5iget_name_f, (obj_ids(iObj), openName, openLength, openLength, hdfier), __FILE__, __LINE__)
-!         write(*,*) openName(1:openLength)
-!         deallocate(openName)
-!
-!         H5CALL( sphdf5, h5dclose_f, (obj_ids(iObj), hdfier), __FILE__, __LINE__)
-!       enddo
-!     endif
-!
-!     ! datatypes
-!     H5CALL( sphdf5, h5fget_obj_ids_f, (file_id, H5F_OBJ_DATATYPE_F, obj_count, obj_ids, hdfier, num_objs), __FILE__, __LINE__) ! get for open objects
-!     if (num_objs.gt.0) then
-!       write(*,'("There are still ",i3," HDF5 datatypes open:")') num_objs
-!       do iObj=1,num_objs
-!         H5CALL( sphdf5, h5tget_class_f, (obj_ids(iObj), typeClass, hdfier), __LINE__, __FILE__) ! determine class of open datatype
-!         if      (typeClass.eq.H5T_NO_CLASS_F ) then ; write(*,*) "H5T_NO_CLASS_F"
-!         else if (typeClass.eq.H5T_INTEGER_F  ) then ; write(*,*) "H5T_INTEGER_F"
-!         else if (typeClass.eq.H5T_FLOAT_F    ) then ; write(*,*) "H5T_FLOAT_F"
-!         else if (typeClass.eq.H5T_STRING_F   ) then ; write(*,*) "H5T_STRING_F"
-!         else if (typeClass.eq.H5T_BITFIELD_F ) then ; write(*,*) "H5T_BITFIELD_F"
-!         else if (typeClass.eq.H5T_OPAQUE_F   ) then ; write(*,*) "H5T_OPAQUE_F"
-!         else if (typeClass.eq.H5T_COMPOUND_F ) then ; write(*,*) "H5T_COMPOUND_F"
-!         else if (typeClass.eq.H5T_REFERENCE_F) then ; write(*,*) "H5T_REFERENCE_F"
-!         else if (typeClass.eq.H5T_ENUM_F     ) then ; write(*,*) "H5T_ENUM_F"
-!         else if (typeClass.eq.H5T_VLEN_F     ) then ; write(*,*) "H5T_VLEN_F"
-!         else if (typeClass.eq.H5T_ARRAY_F    ) then ; write(*,*) "H5T_ARRAY_F"
-!         else ; write(*,*) "UNKNOWN TYPE!"
-!         endif
-!
-!         H5CALL( sphdf5, h5tclose_f, (obj_ids(iObj), hdfier), __FILE__, __LINE__)
-!       enddo
-!     endif
-!
-!     deallocate(obj_ids)
-!   endif ! (obj_count.gt.0)
-!
-!   H5CALL( sphdf5, h5fclose_f, ( file_id, hdfier ), __FILE__, __LINE__ ) ! terminate access on output file;
-!   H5CALL( sphdf5, h5close_f,  ( hdfier ),          __FILE__, __LINE__ ) ! close Fortran interface to the HDF5 library;
+  ! close objects related to convergence output
+  call h5tclose_f(dt_nDcalls_id, hdfier)
+  call h5tclose_f(dt_Energy_id, hdfier)
+  call h5tclose_f(dt_ForceErr_id, hdfier)
+  call h5tclose_f(dt_iRbc_id, hdfier)
+  call h5tclose_f(dt_iZbs_id, hdfier)
+  call h5tclose_f(dt_iRbs_id, hdfier)
+  call h5tclose_f(dt_iZbc_id, hdfier)
+  call h5dclose_f(iteration_dset_id, hdfier) ! End access to the dataset and release resources used by it.
+  call h5pclose_f(plist_id, hdfier)          ! close plist used for 'preserve' flag (does not show up in obj_count below)
+
+  ! check whether we forgot to close some resources; only check for group, dataset and datatype (there is only one file and that should be still open...)
+  call h5fget_obj_count_f(file_id, ior(H5F_OBJ_GROUP_F, ior(H5F_OBJ_DATASET_F, H5F_OBJ_DATATYPE_F)), obj_count, hdfier)
+
+  if (obj_count.gt.0) then
+    write(*,'("There are still ",i3," hdf5 objects open")') obj_count
+    allocate(obj_ids(1:obj_count))
+
+    ! groups
+    call h5fget_obj_ids_f(file_id, H5F_OBJ_GROUP_F, obj_count, obj_ids, hdfier, num_objs) ! get for open objects
+    if (num_objs.gt.0) then
+      write(*,'("There are still ",i3," HDF5 groups open:")') num_objs
+      do iObj=1,num_objs
+        openLength=0
+        call h5iget_name_f(obj_ids(iObj), dummyName, dummySize, openLength, hdfier)
+        allocate(character(len=openLength+1) :: openName)
+        call h5iget_name_f(obj_ids(iObj), openName, openLength, openLength, hdfier)
+        write(*,*) openName
+        deallocate(openName)
+
+        call h5gclose_f(obj_ids(iObj), hdfier)
+      enddo
+    endif
+
+    ! datasets
+    call h5fget_obj_ids_f(file_id, H5F_OBJ_DATASET_F, obj_count, obj_ids, hdfier, num_objs) ! get for open objects
+    if (num_objs.gt.0) then
+      write(*,'("There are still ",i3," HDF5 datasets open:")') num_objs
+      do iObj=1,num_objs
+        openLength=0
+        call h5iget_name_f(obj_ids(iObj), dummyName, dummySize, openLength, hdfier)
+        allocate(character(len=openLength+1) :: openName)
+        call h5iget_name_f(obj_ids(iObj), openName, openLength, openLength, hdfier)
+        write(*,*) openName(1:openLength)
+        deallocate(openName)
+
+        call h5dclose_f(obj_ids(iObj), hdfier)
+      enddo
+    endif
+
+    ! datatypes
+    call h5fget_obj_ids_f(file_id, H5F_OBJ_DATATYPE_F, obj_count, obj_ids, hdfier, num_objs) ! get for open objects
+    if (num_objs.gt.0) then
+      write(*,'("There are still ",i3," HDF5 datatypes open:")') num_objs
+      do iObj=1,num_objs
+        call h5tget_class_f(obj_ids(iObj), typeClass, hdfier) ! determine class of open datatype
+        if      (typeClass.eq.H5T_NO_CLASS_F ) then ; write(*,*) "H5T_NO_CLASS_F"
+        else if (typeClass.eq.H5T_INTEGER_F  ) then ; write(*,*) "H5T_INTEGER_F"
+        else if (typeClass.eq.H5T_FLOAT_F    ) then ; write(*,*) "H5T_FLOAT_F"
+        else if (typeClass.eq.H5T_STRING_F   ) then ; write(*,*) "H5T_STRING_F"
+        else if (typeClass.eq.H5T_BITFIELD_F ) then ; write(*,*) "H5T_BITFIELD_F"
+        else if (typeClass.eq.H5T_OPAQUE_F   ) then ; write(*,*) "H5T_OPAQUE_F"
+        else if (typeClass.eq.H5T_COMPOUND_F ) then ; write(*,*) "H5T_COMPOUND_F"
+        else if (typeClass.eq.H5T_REFERENCE_F) then ; write(*,*) "H5T_REFERENCE_F"
+        else if (typeClass.eq.H5T_ENUM_F     ) then ; write(*,*) "H5T_ENUM_F"
+        else if (typeClass.eq.H5T_VLEN_F     ) then ; write(*,*) "H5T_VLEN_F"
+        else if (typeClass.eq.H5T_ARRAY_F    ) then ; write(*,*) "H5T_ARRAY_F"
+        else ; write(*,*) "UNKNOWN TYPE!"
+        endif
+
+        call h5tclose_f(obj_ids(iObj), hdfier)
+      enddo
+    endif
+
+    deallocate(obj_ids)
+  endif ! (obj_count.gt.0)
+
+  call h5fclose_f( file_id, hdfier ) ! terminate access on output file;
+  call h5close_f( hdfier ) ! close Fortran interface to the HDF5 library;
 
  endif ! myid.eq.0
 
