@@ -12,6 +12,24 @@ include SPECfile
 ROBJS=$(SPECFILES:=_r.o)
 DOBJS=$(SPECFILES:=_d.o)
 
+ROBJS_LEVEL_0=$(LEVEL_0:=_r.o)
+DOBJS_LEVEL_0=$(LEVEL_0:=_d.o)
+
+ROBJS_LEVEL_1=$(LEVEL_1:=_r.o)
+DOBJS_LEVEL_1=$(LEVEL_1:=_d.o)
+
+ROBJS_LEVEL_2=$(LEVEL_2:=_r.o)
+DOBJS_LEVEL_2=$(LEVEL_2:=_d.o)
+
+ROBJS_LEVEL_3=$(LEVEL_3:=_r.o)
+DOBJS_LEVEL_3=$(LEVEL_3:=_d.o)
+
+ROBJS_LEVEL_4=$(LEVEL_4:=_r.o)
+DOBJS_LEVEL_4=$(LEVEL_4:=_d.o)
+
+ROBJS_BASE=$(BASEFILES:=_r.o)
+DOBJS_BASE=$(BASEFILES:=_d.o)
+
 ROBJS_IO=$(IOFILES:=_r.o)
 DOBJS_IO=$(IOFILES:=_d.o)
 
@@ -42,37 +60,54 @@ dspec: $(addsuffix _d.o,$(ALLFILES)) Makefile
 
 ###############################################################################################################################################################
 
-mod_kinds_r.o : %_r.o: src/mod_kinds.F90
-	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o mod_kinds_r.o -c src/mod_kinds.F90 $(LIBS)
-	@wc -l -L -w src/mod_kinds.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
+$(ROBJS_LEVEL_0): %_r.o: src/%.F90
+	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o $*_r.o -c src/$*.F90 $(LIBS)
+	@wc -l -L -w src/$*.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
-mod_kinds_d.o : %_d.o: src/mod_kinds.F90
-	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o mod_kinds_d.o -c src/mod_kinds.F90 $(LIBS)
-	@wc -l -L -w src/mod_kinds.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
+$(DOBJS_LEVEL_0): %_d.o: src/%.F90
+	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o $*_d.o -c src/$*.F90 $(LIBS)
+	@wc -l -L -w src/$*.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
-inputlist_r.o: %_r.o: mod_kinds_r.o src/inputlist.F90
-	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o inputlist_r.o -c src/inputlist.F90 $(LIBS)
-	@wc -l -L -w src/inputlist.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
+$(ROBJS_LEVEL_1): %_r.o: src/%.F90 $(addsuffix _r.o,$(LEVEL_0))
+	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o $*_r.o -c src/$*.F90 $(LIBS)
+	@wc -l -L -w src/$*.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
-inputlist_d.o: %_d.o: mod_kinds_d.o src/inputlist.F90
-	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o inputlist_d.o -c src/inputlist.F90 $(LIBS)
-	@wc -l -L -w src/inputlist.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
+$(DOBJS_LEVEL_1): %_d.o: src/%.F90 $(addsuffix _d.o,$(LEVEL_0))
+	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o $*_d.o -c src/$*.F90 $(LIBS)
+	@wc -l -L -w src/$*.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
-###############################################################################################################################################################
-# global needs special handling: expansion of CPUVARIABLE, BSCREENLIST and WSCREENLIST using awk (not anymore !!!)
-
-global_r.o: %_r.o: inputlist_r.o src/global.F90
-	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o global_r.o -c src/global.F90 $(LIBS)
-	@wc -l -L -w src/global.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
+$(ROBJS_LEVEL_2): %_r.o: src/%.F90 mod_kinds_r.o $(addsuffix _r.o,$(LEVEL_0)) $(addsuffix _r.o,$(LEVEL_1))
+	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o $*_r.o -c src/$*.F90 $(LIBS)
+	@wc -l -L -w src/$*.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
-global_d.o: %_d.o: inputlist_d.o src/global.F90
-	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o global_d.o -c src/global.F90 $(LIBS)
-	@wc -l -L -w src/global.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
+$(DOBJS_LEVEL_2): %_d.o: src/%.F90 mod_kinds_d.o $(addsuffix _d.o,$(LEVEL_0)) $(addsuffix _d.o,$(LEVEL_1))
+	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o $*_d.o -c src/$*.F90 $(LIBS)
+	@wc -l -L -w src/$*.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
+	@echo ''
+
+$(ROBJS_LEVEL_3): %_r.o: src/%.F90 mod_kinds_r.o $(addsuffix _r.o,$(LEVEL_0)) $(addsuffix _r.o,$(LEVEL_1)) $(addsuffix _r.o,$(LEVEL_2))
+	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o $*_r.o -c src/$*.F90 $(LIBS)
+	@wc -l -L -w src/$*.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
+	@echo ''
+
+$(DOBJS_LEVEL_3): %_d.o: src/%.F90 mod_kinds_d.o $(addsuffix _d.o,$(LEVEL_0)) $(addsuffix _d.o,$(LEVEL_1)) $(addsuffix _d.o,$(LEVEL_2))
+	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o $*_d.o -c src/$*.F90 $(LIBS)
+	@wc -l -L -w src/$*.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
+	@echo ''
+
+$(ROBJS_LEVEL_4): %_r.o: src/%.F90 mod_kinds_r.o $(addsuffix _r.o,$(LEVEL_0)) $(addsuffix _r.o,$(LEVEL_1)) $(addsuffix _r.o,$(LEVEL_2)) $(addsuffix _r.o,$(LEVEL_3))
+	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o $*_r.o -c src/$*.F90 $(LIBS)
+	@wc -l -L -w src/$*.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
+	@echo ''
+
+$(DOBJS_LEVEL_4): %_d.o: src/%.F90 mod_kinds_d.o $(addsuffix _d.o,$(LEVEL_0)) $(addsuffix _d.o,$(LEVEL_1)) $(addsuffix _d.o,$(LEVEL_2)) $(addsuffix _d.o,$(LEVEL_3))
+	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o $*_d.o -c src/$*.F90 $(LIBS)
+	@wc -l -L -w src/$*.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
 ###############################################################################################################################################################
@@ -86,7 +121,6 @@ $(DOBJS_IO): %_d.o: src/%.F90 $(addsuffix _d.o,$(BASEFILES))
 	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o $*_d.o -c src/$*.F90 $(LIBS)
 	@wc -l -L -w src/$*.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
-
 
 $(ROBJS): %_r.o: src/%.F90 $(addsuffix _r.o,$(BASEFILES)) $(addsuffix _r.o,$(IOFILES))
 	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o $*_r.o -c src/$*.F90 $(LIBS)
