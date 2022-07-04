@@ -242,7 +242,7 @@ module inputlist
     !> <ul>
     !> <li> only relevant if constraints on transform, enclosed currents etc. are to be satisfied iteratively, see \c Lconstraint </li>
     !> </ul>
-    real(wp) :: mupftol = 1.0e-14
+    real(wp) :: mupftol = 1.0e-14_wp
 
     !> an upper limit on the transform/helicity constraint iterations;
     !> <ul>
@@ -523,13 +523,13 @@ module inputlist
     integer :: NiterGMRES = 200
 
     !> the precision of GMRES
-    real(wp) :: epsGMRES = 1e-14
+    real(wp) :: epsGMRES = 1e-14_wp
 
     !> type of preconditioner for GMRES, 1 for ILU sparse matrix
     integer :: LGMRESprec = 1
 
     !> the precision of incomplete LU factorization for preconditioning
-    real(wp) :: epsILU = 1e-12
+    real(wp) :: epsILU = 1e-12_wp
 !> @}
 
 !> \addtogroup grp_global_global globallist
@@ -602,17 +602,17 @@ module inputlist
     !> <li> to force execution of either \c C05NDF or \c C05PDF, regardless of the initial force imbalance,
     !>      set \c forcetol < 0 </li>
     !> </ul>
-    real(wp) :: forcetol = 1.0e-10
+    real(wp) :: forcetol = 1.0e-10_wp
 
     !> required tolerance in position, \f${\bf x} \equiv \{ R_{i,v}, Z_{i,v}\}\f$
-    real(wp) :: c05xmax = 1.0e-06
+    real(wp) :: c05xmax = 1.0e-06_wp
 
     !> required tolerance in position, \f${\bf x} \equiv \{ R_{i,v}, Z_{i,v}\}\f$
     !> <ul>
     !> <li> used by both \c C05NDF and \c C05PDF; see the NAG documents for further details on how the error is defined </li>
     !> <li> constraint \c c05xtol > 0.0 </li>
     !> </ul>
-    real(wp) :: c05xtol = 1.0e-12
+    real(wp) :: c05xtol = 1.0e-12_wp
 
     !> used to control initial step size in
     !>       \c C05NDF and \c C05PDF
@@ -620,7 +620,7 @@ module inputlist
     !> <li> constraint \c c05factor > 0.0 </li>
     !> <li> only relevant if \c Lfindzero > 0 </li>
     !> </ul>
-    real(wp) :: c05factor = 1.0e-02
+    real(wp) :: c05factor = 1.0e-02_wp
 
     !> read \f$\nabla_{\bf x} {\bf F}\f$ from file \c ext.GF
     !> <ul>
@@ -637,17 +637,17 @@ module inputlist
     integer :: mfreeits = 0
 
     !> redundant;
-    real(wp) :: bnstol = 1.0e-06
+    real(wp) :: bnstol = 1.0e-06_wp
 
     !> redundant;
-    real(wp) :: bnsblend = 0.666
+    real(wp) :: bnsblend = 0.666_wp
 
     !> required tolerance in free-boundary iterations
     !> <ul>
     !> <li> only used if \c Lfreebound = 1 </li>
     !> <li> only used in xspech() </li>
     !> </ul>
-    real(wp) :: gBntol = 1.0e-06
+    real(wp) :: gBntol = 1.0e-06_wp
 
     !> normal blend
     !> <ul>
@@ -659,13 +659,13 @@ module inputlist
     !> <li> only used if \c Lfreebound = 1 </li>
     !> <li> only used in xspech() </li>
     !> </ul>
-    real(wp) :: gBnbld = 0.666
+    real(wp) :: gBnbld = 0.666_wp
 
     !> regularization of Biot-Savart; see bnorml(), casing()
-    real(wp) :: vcasingeps = 1.e-12
+    real(wp) :: vcasingeps = 1.e-12_wp
 
     !> accuracy on virtual casing integral; see bnorml(), casing()
-    real(wp) :: vcasingtol = 1.e-08
+    real(wp) :: vcasingtol = 1.e-08_wp
 
     !> minimum number of calls to adaptive virtual casing routine; see casing()
     integer :: vcasingits = 8
@@ -681,19 +681,19 @@ module inputlist
 !> \brief The namelist \c diagnosticslist controls post-processor diagnostics, such as Poincaré  plot resolution, etc.
 !> @{
     !> o.d.e. integration tolerance for all field line tracing routines
-    real(wp) :: odetol = 1.0e-07
+    real(wp) :: odetol = 1.0e-07_wp
 
     !> redundant
-    real(wp) :: absreq = 1.0e-08
+    real(wp) :: absreq = 1.0e-08_wp
 
     !> redundant
-    real(wp) :: relreq = 1.0e-08
+    real(wp) :: relreq = 1.0e-08_wp
 
     !> redundant
-    real(wp) :: absacc = 1.0e-04
+    real(wp) :: absacc = 1.0e-04_wp
 
     !> redundant
-    real(wp) :: epsr = 1.0e-08
+    real(wp) :: epsr = 1.0e-08_wp
 
     !> number of toroidal transits used (per trajectory) in following field lines
     !> for constructing Poincaré plots;
@@ -735,7 +735,7 @@ module inputlist
     integer :: Ngrid = -1
 
     !> difference in geometry for finite difference estimate (debug only)
-    real(wp) :: dRZ = 1E-5
+    real(wp) :: dRZ = 1E-5_wp
 
     !> implement various checks
     !> <ul>
@@ -783,10 +783,10 @@ module inputlist
     LOGICAL :: Ltransform = .false.
 
     !> redundant
-    real(wp) :: fudge = 1.0e-00
+    real(wp) :: fudge = 1.0
 
     !> redundant
-    real(wp) :: scaling = 1.0e-00
+    real(wp) :: scaling = 1.0
 !> @}
 
 !> \addtogroup grp_global_screenlist screenlist
@@ -1122,7 +1122,7 @@ contains
         Vnc(-MNtor:MNtor, -MMpol:MMpol) = 0.0
         Bnc(-MNtor:MNtor, -MMpol:MMpol) = 0.0
 
-        mupftol = 1.0e-14
+        mupftol = 1.0e-14_wp
         mupfits = 8
 
         Lreflect = 0
@@ -1155,9 +1155,9 @@ contains
         maxrndgues = 1.0
         Lmatsolver = 3
         NiterGMRES = 200
-        epsGMRES = 1e-14
+        epsGMRES = 1e-14_wp
         LGMRESprec = 1
-        epsILU = 1e-12
+        epsILU = 1e-12_wp
 
 ! globallist
 
@@ -1168,29 +1168,29 @@ contains
         epsilon = 0.0
         wpoloidal = 1.0
         upsilon = 1.0
-        forcetol = 1.0e-10
-        c05xmax = 1.0e-06
-        c05xtol = 1.0e-12
-        c05factor = 1.0e-02
+        forcetol = 1.0e-10_wp
+        c05xmax = 1.0e-06_wp
+        c05xtol = 1.0e-12_wp
+        c05factor = 1.0e-02_wp
         LreadGF = .true.
         mfreeits = 0
-        bnstol = 1.0e-06
-        bnsblend = 0.666
-        gBntol = 1.0e-06
-        gBnbld = 0.666
-        vcasingeps = 1.e-12
-        vcasingtol = 1.e-08
+        bnstol = 1.0e-06_wp
+        bnsblend = 0.666_wp
+        gBntol = 1.0e-06_wp
+        gBnbld = 0.666_wp
+        vcasingeps = 1.e-12_wp
+        vcasingtol = 1.e-08_wp
         vcasingits = 8
         vcasingper = 1
         mcasingcal = 8
 
 ! diagnosticslist
 
-        odetol = 1.0e-07
-        absreq = 1.0e-08
-        relreq = 1.0e-08
-        absacc = 1.0e-04
-        epsr = 1.0e-08
+        odetol = 1.0e-07_wp
+        absreq = 1.0e-08_wp
+        relreq = 1.0e-08_wp
+        absacc = 1.0e-04_wp
+        epsr = 1.0e-08_wp
         nPpts = 0
         Ppts = 0.0
         nPtrj(1:MNvol + 1) = -1
@@ -1202,12 +1202,12 @@ contains
         dqq = -1
         Lerrortype = 0
         Ngrid = -1
-        dRZ = 1E-5
+        dRZ = 1E-5_wp
         Lcheck = 0
         Ltiming = .false.
         Ltransform = .false.
-        fudge = 1.0e-00
-        scaling = 1.0e-00
+        fudge = 1.0
+        scaling = 1.0
 
     end subroutine initialize_inputs
 

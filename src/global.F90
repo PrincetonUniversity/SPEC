@@ -37,23 +37,23 @@ module constants
     use mod_kinds, only: wp => dp
     implicit none
 
-    real(wp), parameter :: zero = 0.0 !< 0
-    real(wp), parameter :: one = 1.0 !< 1
-    real(wp), parameter :: two = 2.0 !< 2
-    real(wp), parameter :: three = 3.0 !< 3
-    real(wp), parameter :: four = 4.0 !< 4
-    real(wp), parameter :: five = 5.0 !< 5
-    real(wp), parameter :: six = 6.0 !< 6
-    real(wp), parameter :: seven = 7.0 !< 7
-    real(wp), parameter :: eight = 8.0 !< 8
-    real(wp), parameter :: nine = 9.0 !< 9
-    real(wp), parameter :: ten = 10.0 !< 10
+    real(wp), parameter :: zero = 0.0_wp !< 0
+    real(wp), parameter :: one = 1.0_wp !< 1
+    real(wp), parameter :: two = 2.0_wp !< 2
+    real(wp), parameter :: three = 3.0_wp !< 3
+    real(wp), parameter :: four = 4.0_wp !< 4
+    real(wp), parameter :: five = 5.0_wp !< 5
+    real(wp), parameter :: six = 6.0_wp !< 6
+    real(wp), parameter :: seven = 7.0_wp !< 7
+    real(wp), parameter :: eight = 8.0_wp !< 8
+    real(wp), parameter :: nine = 9.0_wp !< 9
+    real(wp), parameter :: ten = 10.0_wp !< 10
 
-    real(wp), parameter :: eleven = 11.0 !< 11
-    real(wp), parameter :: twelve = 12.0 !< 12
+    real(wp), parameter :: eleven = 11.0_wp !< 11
+    real(wp), parameter :: twelve = 12.0_wp !< 12
 
-    real(wp), parameter :: hundred = 100.0 !< 100
-    real(wp), parameter :: thousand = 1000.0 !< 1000
+    real(wp), parameter :: hundred = 100.0_wp !< 100
+    real(wp), parameter :: thousand = 1000.0_wp !< 1000
 
     real(wp), parameter :: half = one/two   !< 1/2
     real(wp), parameter :: third = one/three !< 1/3
@@ -61,12 +61,12 @@ module constants
     real(wp), parameter :: fifth = one/five  !< 1/5
     real(wp), parameter :: sixth = one/six   !< 1/6
 
-    real(wp), parameter :: pi2 = 6.28318530717958623 !< \f$2\pi\f$
+    real(wp), parameter :: pi2 = 6.28318530717958623_wp !< \f$2\pi\f$
     real(wp), parameter :: pi = pi2/two           !< \f$\pi\f$
-    real(wp), parameter :: mu0 = 2.0E-07*pi2       !< \f$4\pi\cdot10^{-7}\f$
-    real(wp), parameter :: goldenmean = 1.618033988749895   !< golden mean = \f$( 1 + \sqrt 5 ) / 2\f$ ;
+    real(wp), parameter :: mu0 = 2.0E-07_wp*pi2       !< \f$4\pi\cdot10^{-7}\f$
+    real(wp), parameter :: goldenmean = 1.618033988749895_wp   !< golden mean = \f$( 1 + \sqrt 5 ) / 2\f$ ;
 
-    real(wp), parameter :: version = 3.20  !< version of SPEC
+    real(wp), parameter :: version = 3.20_wp  !< version of SPEC
 
 end module constants
 
@@ -78,11 +78,11 @@ module numerical
     use mod_kinds, only: wp => dp
     implicit none
 
-    real(wp), parameter :: machprec = 1.11e-16           !< machine precision: 0.5*epsilon(one) for 64 bit double precision
-    real(wp), parameter :: vsmall = 100*machprec         !< very small number
-    real(wp), parameter :: small = 10000*machprec        !< small number
+    real(wp), parameter :: machprec = 1.11e-16_wp           !< machine precision: 0.5*epsilon(one) for 64 bit double precision
+    real(wp), parameter :: vsmall = 100.0_wp*machprec         !< very small number
+    real(wp), parameter :: small = 10000.0_wp*machprec        !< small number
     real(wp), parameter :: sqrtmachprec = sqrt(machprec) !< square root of machine precision
-    real(wp), parameter :: logtolerance = 1.0e-32        !< this is used to avoid taking alog10(zero); see e.g. dforce;
+    real(wp), parameter :: logtolerance = 1.0e-32_wp        !< this is used to avoid taking alog10(zero); see e.g. dforce;
 
 end module numerical
 
