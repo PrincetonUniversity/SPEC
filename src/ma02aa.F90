@@ -352,7 +352,10 @@ subroutine ma02aa(lvol, NN)
         call packab(packorunpack, lvol, NN, xi(1:NN), ideriv)
         cpuo = MPI_WTIME()
 
-        pNN = NN + 1; Ldfmuaa = pNN; tol = mupftol; lengthwork = pNN*(pNN + 13)/2
+        pNN = NN + 1
+        Ldfmuaa = pNN
+        tol = mupftol
+        lengthwork = pNN*(pNN + 13)/2
 
 ! pre-calculate some matrix vector products; these are used in df00ab;
 
@@ -552,7 +555,7 @@ subroutine ma02aa(lvol, NN)
 
         case (1:2) ! will iteratively call mp00ac, to calculate Beltrami field that satisfies constraints;
 
-            ; ; Ndof = Nxdof; Ldfjac = Ndof; nfev = 0; njev = 0; ihybrj = 0; 
+            ; ; Ndof = Nxdof; Ldfjac = Ndof; nfev = 0; njev = 0; ihybrj = 0;
             tol = mupftol; LRR = Ndof*(Ndof + 1)/2; mode = 0; diag(1:2) = zero; factor = one; maxfev = mupfits; nprint = 0
 
             if (Ndof .gt. 2) then

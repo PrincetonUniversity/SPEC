@@ -144,7 +144,7 @@ subroutine newton(NGdof, position, ihybrd)
 
     select case (Lfindzero)
     case (1); ML = NGdof - 1; MU = NGdof - 1; epsfcn = sqrtmachprec ! only required for C05NDF; supplied to NAG;
-    case (2); 
+    case (2);
     end select
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -168,14 +168,14 @@ subroutine newton(NGdof, position, ihybrd)
 
         if (myid .eq. 0) then ! screen output;
             cput = MPI_WTIME()
-            ; write (ounit, 1000) cput - cpus, nFcalls, nDcalls, ForceErr, cput - lastcpu, "|BB|e", alog10(BBe(1:min(Mvol - 1, 28)))
+            ; write (ounit, 1000) cput - cpus, nFcalls, nDcalls, ForceErr, cput - lastcpu, "|BB|e", log10(BBe(1:min(Mvol - 1, 28)))
             if (Igeometry .ge. 3) then ! include spectral constraints;
-                ; write (ounit, 1001) "|II|o", alog10(IIo(1:min(Mvol - 1, 28)))
+                ; write (ounit, 1001) "|II|o", log10(IIo(1:min(Mvol - 1, 28)))
             end if
             if (NOTstellsym) then
-                ; write (ounit, 1001) "|BB|o", alog10(BBo(1:min(Mvol - 1, 28)))
+                ; write (ounit, 1001) "|BB|o", log10(BBo(1:min(Mvol - 1, 28)))
                 if (Igeometry .ge. 3) then ! include spectral constraints;
-                    write (ounit, 1001) "|II|e", alog10(IIe(1:min(Mvol - 1, 28)))
+                    write (ounit, 1001) "|II|e", log10(IIe(1:min(Mvol - 1, 28)))
                 end if
             end if
         end if
@@ -604,14 +604,14 @@ subroutine fcn1(NGdof, xx, fvec, irevcm)
 
             cput = MPI_WTIME()
 
-            ; write (ounit, 1000) cput - cpus, nFcalls, nDcalls, ForceErr, cput - lastcpu, "|BB|e", alog10(BBe(1:min(Mvol - 1, 28)))
+            ; write (ounit, 1000) cput - cpus, nFcalls, nDcalls, ForceErr, cput - lastcpu, "|BB|e", log10(BBe(1:min(Mvol - 1, 28)))
             if (Igeometry .ge. 3) then ! include spectral constraints;
-                ; write (ounit, 1001) "|II|o", alog10(IIo(1:min(Mvol - 1, 28)))
+                ; write (ounit, 1001) "|II|o", log10(IIo(1:min(Mvol - 1, 28)))
             end if
             if (NOTstellsym) then
-                ; write (ounit, 1001) "|BB|o", alog10(BBo(1:min(Mvol - 1, 28)))
+                ; write (ounit, 1001) "|BB|o", log10(BBo(1:min(Mvol - 1, 28)))
                 if (Igeometry .ge. 3) then ! include spectral constraints;
-                    write (ounit, 1001) "|II|e", alog10(IIe(1:min(Mvol - 1, 28)))
+                    write (ounit, 1001) "|II|e", log10(IIe(1:min(Mvol - 1, 28)))
                 end if
             end if
             lastcpu = MPI_WTIME()
@@ -772,14 +772,14 @@ subroutine fcn2(NGdof, xx, fvec, fjac, Ldfjac, irevcm)
 
             cput = MPI_WTIME()
 
-            ; write (ounit, 1000) cput - cpus, nFcalls, nDcalls, ForceErr, cput - lastcpu, "|BB|e", alog10(BBe(1:min(Mvol - 1, 28)))
+            ; write (ounit, 1000) cput - cpus, nFcalls, nDcalls, ForceErr, cput - lastcpu, "|BB|e", log10(BBe(1:min(Mvol - 1, 28)))
             if (Igeometry .ge. 3) then ! include spectral constraints;
-                ; write (ounit, 1001) "|II|o", alog10(IIo(1:min(Mvol - 1, 28)))
+                ; write (ounit, 1001) "|II|o", log10(IIo(1:min(Mvol - 1, 28)))
             end if
             if (NOTstellsym) then
-                ; write (ounit, 1001) "|BB|o", alog10(BBo(1:min(Mvol - 1, 28)))
+                ; write (ounit, 1001) "|BB|o", log10(BBo(1:min(Mvol - 1, 28)))
                 if (Igeometry .ge. 3) then ! include spectral constraints;
-                    write (ounit, 1001) "|II|e", alog10(IIe(1:min(Mvol - 1, 28)))
+                    write (ounit, 1001) "|II|e", log10(IIe(1:min(Mvol - 1, 28)))
                 end if
             end if
             lastcpu = MPI_WTIME()

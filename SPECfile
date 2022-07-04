@@ -57,7 +57,7 @@ ifeq ($(BUILD_ENV),intel)
  # module use /p/focus/modules
  # module load spec
  FC=mpif90
- CFLAGS=-r8 -DIFORT
+ CFLAGS=-DIFORT
  RFLAGS=-mcmodel=large -O3 -m64 -unroll0 -fno-alias -ip -traceback
  DFLAGS=-O0 -g -traceback -check bounds -check format -check output_conversion -check pointers -check uninit -debug full -D DEBUG
  LIBS=-I${MKLROOT}/include/intel64/lp64 -I${MKLROOT}/include  # MKL include
@@ -76,11 +76,11 @@ ifeq ($(BUILD_ENV),gfortran)
  # module load spec/gcc
  FC=mpif90
  FLAGS=-fPIC
- RFLAGS=-O3 -w -ffree-line-length-none -fexternal-blas # -fallow-argument-mismatch # only used for GCC-10
+ RFLAGS=-O3 -w -ffree-line-length-none -fexternal-blas
  DFLAGS=-O0 -g -w -ffree-line-length-none -Wextra -Wtarget-lifetime -fbacktrace -fbounds-check -fexternal-blas \
-     -fcheck=all -DDEBUG #-ffpe-trap=invalid,zero,overflow,underflow,inexact # for some reason this will cause crash
- CFLAGS=-fdefault-real-8
- LINKS=-L$(LAPACK_HOME) -llapack #-lgfortran
+     -fcheck=all -DDEBUG
+ CFLAGS=
+ LINKS=-L$(LAPACK_HOME) -llapack
  LIBS=-I$(HDF5_HOME)/include
  LINKS+=-L$(HDF5_HOME)/lib -lhdf5hl_fortran -lhdf5 -lhdf5_fortran -lhdf5 -lpthread -lz -lm
  LIBS+=-I$(FFTW_HOME)/include
@@ -98,7 +98,7 @@ ifeq ($(BUILD_ENV),gfortran_ubuntu)
  # sudo apt install libhdf5-dev
  FC=mpif90
  FLAGS=-fPIC
- CFLAGS=-fdefault-real-8
+ CFLAGS=
  LINKS=-Wl,-rpath -Wl,/usr/lib/lapack -llapack -lblas
  LIBS=-I/usr/include/hdf5/serial
  LINKS+=-L/usr/lib/x86_64-linux-gnu/hdf5/serial -lhdf5_fortran -lhdf5 -lpthread -lz -lm
@@ -118,7 +118,7 @@ ifeq ($(BUILD_ENV),gfortran_debian)
  # sudo apt install libhdf5-dev
  FC=mpif90
  FLAGS=-fPIC
- CFLAGS=-fdefault-real-8
+ CFLAGS=
  RFLAGS=-O2 -ffixed-line-length-none -ffree-line-length-none -fexternal-blas
  DFLAGS=-g -fbacktrace -fbounds-check -ffree-line-length-none -fexternal-blas -DDEBUG
  LINKS=-llapack -lblas
@@ -133,7 +133,7 @@ ifeq ($(BUILD_ENV),gfortran_arch)
  # traps for numerical errors: https://stackoverflow.com/a/29827243
  FC=mpif90
  FLAGS=-fPIC
- CFLAGS=-fdefault-real-8 -fallow-argument-mismatch
+ CFLAGS=
  LINKS=-llapack -lblas
  LIBS=
  LINKS+=-lhdf5_fortran -lhdf5 -lpthread -lz -lm
@@ -148,10 +148,10 @@ ifeq ($(BUILD_ENV),gfortran_centos)
  OPENMPI_INC=/usr/lib64/gfortran/modules/openmpi
  FC=mpif90
  FLAGS=-fPIC
- RFLAGS=-O2 -ffixed-line-length-none -ffree-line-length-none -fexternal-blas # -fallow-argument-mismatch # only used for GCC-10
+ CFLAGS=
+ RFLAGS=-O2 -ffixed-line-length-none -ffree-line-length-none -fexternal-blas
  DFLAGS=-O0 -g -w -ffree-line-length-none -Wextra -Wtarget-lifetime -fbacktrace -fbounds-check -fexternal-blas \
-     -fcheck=all -DDEBUG #-ffpe-trap=invalid,zero,overflow,underflow,inexact # for some reason this will cause crash
- CFLAGS=-fdefault-real-8
+     -fcheck=all -DDEBUG
  LINKS=-L/opt/OpenBLAS/lib -lopenblas #-lblas #-lgfortran
  LIBS=-I$(OPENMPI_INC)
  LINKS+=-L$(OPENMPI_LIB) -lhdf5hl_fortran -lhdf5 -lhdf5_fortran -lhdf5 -lpthread -lz -lm
@@ -166,14 +166,14 @@ ifeq ($(BUILD_ENV),gfortran_mac)
  # works on Ksenia's laptop
  FC=mpif90
  FLAGS=-fPIC
- CFLAGS=-fdefault-real-8
+ CFLAGS=
+ RFLAGS=-O2 -ffixed-line-length-none -ffree-line-length-none -fexternal-blas
+ DFLAGS=-g -fbacktrace -fbounds-check -ffree-line-length-none -fexternal-blas -DDEBUG
  LINKS=-L/usr/local/Cellar/lapack/3.8.0_1/lib -llapack -Wl,-rpath -Wl,/usr/local/Cellar/lapack/3.8.0_1/lib -lblas -L/usr/local/Cellar/openblas/0.3.7 -lgfortran -Wl,-rpath -Wl,/usr/local/Cellar/openblas/0.3.7/lib
  LIBS=-I/Applications/HDF_Group/HDF5/1.10.5/include/static
  LINKS+=-L/Applications/HDF_Group/HDF5/1.10.5/lib -lhdf5_f90cstub -lhdf5_fortran -lhdf5 -lpthread -lz -lm -Wl,-rpath -Wl,/Applications/HDF_Group/HDF5/1.10.5/lib
  LIBS+=-I/usr/local/Cellar/fftw/3.3.8/include
  LINKS+=-L/usr/local/Cellar/fftw/3.3.8/lib -lfftw3 -Wl,-rpath -Wl,/usr/local/Cellar/fftw/3.3.8/lib
- RFLAGS=-O2 -ffixed-line-length-none -ffree-line-length-none -fexternal-blas
- DFLAGS=-g -fbacktrace -fbounds-check -ffree-line-length-none -fexternal-blas -DDEBUG
 endif
 
 ifeq ($(BUILD_ENV),lff95)
@@ -190,7 +190,7 @@ endif
 ifeq ($(BUILD_ENV),intel_spc)
  FC=mpif90
  FFTW_DIR=/usr/local/fftw3
- CFLAGS=-r8 -DIFORT
+ CFLAGS=-DIFORT
  RFLAGS=-O2 -ip -no-prec-div -xHost -fPIC
  DFLAGS=-traceback -D DEBUG -g
  LINKS=-L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl
@@ -203,7 +203,7 @@ endif
 ifeq ($(BUILD_ENV),gfort_spc) # deprecated
  FC=mpif90
  FLAGS=-fPIC
- CFLAGS=-fdefault-real-8
+ CFLAGS=
  RFLAGS=-O2 -ffixed-line-length-none -ffree-line-length-none -fexternal-blas
  DFLAGS=-g -fbacktrace -fbounds-check -ffree-line-length-none -fexternal-blas -DDEBUG
  LINKS=-L/lib -lmkl_rt -lpthread -lm -ldl -Wl,-rpath
@@ -220,7 +220,7 @@ ifeq ($(BUILD_ENV),intel_ipp)
  # and on cobra with the following modules:
  # intel/19.0.4 impi/2019.4 mkl/2019.4 hdf5-serial/1.8.21 fftw-mpi/3.3.8
  FC=mpiifort
- CFLAGS=-r8 -DIFORT
+ CFLAGS= -DIFORT
  RFLAGS=-O2 -ip -no-prec-div -xHost -fPIC
  DFLAGS=-traceback -D DEBUG
  LINKS=-L${MKLROOT}/lib/intel64 -lmkl_rt -lpthread -lm -ldl -Wl,-rpath -Wl,${MKLROOT}/lib/intel64
@@ -235,7 +235,7 @@ ifeq ($(BUILD_ENV),gfortran_ipp)
  # gcc/8 impi/2018.3 mkl/2018.3 hdf5-mpi/1.10.5 fftw-mpi/3.3.8
  FC=mpif90
  FLAGS=-fPIC
- CFLAGS=-fdefault-real-8
+ CFLAGS=
  RFLAGS=-O2 -fPIC -ffree-line-length-none
  DFLAGS=-g -fbacktrace -fbounds-check -DDEBUG -ffree-line-length-none
  LINKS=-L${MKLROOT}/lib/intel64 -lmkl_rt -lpthread -lm -ldl -Wl,-rpath -Wl,${MKLROOT}/lib/intel64
@@ -252,7 +252,7 @@ ifeq ($(BUILD_ENV),intel_gadi)
 #module load fftw3-mkl/2019.3.199
 #module load hdf5/1.10.5
  FC=mpif90
- CFLAGS=-r8 -DIFORT
+ CFLAGS=-DIFORT
  LINKS=-L${MKLROOT}/lib/intel64 -mkl=parallel -liomp5
  LIBS=-I$(HDF5_BASE)/include
  LINKS+=-L$(HDF5_BASE)/lib -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lpthread -lz -lm
@@ -265,7 +265,7 @@ ifeq ($(BUILD_ENV),intel_stellar)
  # module use /home/caoxiang/module
  # module load spec
  FC=mpiifort
- CFLAGS=-r8 -DIFORT
+ CFLAGS= -DIFORT
  RFLAGS=-mcmodel=large -O3 -m64 -unroll0 -fno-alias -ip -traceback -fPIC
  DFLAGS=-O0 -g -traceback -check bounds -check format -check output_conversion -check pointers -check uninit -debug full -D DEBUG
  LIBS=-I${MKLROOT}/include/intel64/lp64  # MKL include
@@ -280,7 +280,7 @@ endif
 ifeq ($(BUILD_ENV),intel_marconi)
  # Added by Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
  FC=mpiifort
- CFLAGS=-r8
+ CFLAGS=
  RFLAGS=-mcmodel=large -O3 -m64 -unroll0 -fno-alias -ip -traceback
  DFLAGS=-O0 -g -traceback -check bounds -check format -check output_conversion -check pointers -check uninit -debug full -D DEBUG
  LIBS=-I${MKLROOT}/include/intel64/lp64 -I${MKLROOT}/include  # MKL include
