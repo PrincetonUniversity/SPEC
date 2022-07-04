@@ -182,6 +182,8 @@ module cputiming
     real(wp) :: Tglobal = 0.0, globalT = 0.0
     real(wp) :: Txspech = 0.0, xspechT = 0.0
     real(wp) :: Tinputlist = 0.0, inputlistT = 0.0
+    real(wp) :: Twa00aa = 0.0, wa00aaT = 0.0
+    real(wp) :: Tpc00ab = 0.0, pc00abT = 0.0
 
     real(wp) :: Treadin = 0.0
 !  REAL :: Twritin = 0.0 ! redundant;
@@ -903,25 +905,30 @@ contains
         nthreads = 1
 #endif
 
-        efmn(1:mn) = zero; sfmn(1:mn) = zero; cfmn(1:mn) = zero; ofmn(1:mn) = zero
+        efmn(1:mn) = zero
+        sfmn(1:mn) = zero
+        cfmn(1:mn) = zero
+        ofmn(1:mn) = zero
 
         do ii = 1, mn ! loop over Fourier harmonics; 13 Sep 13;
 
             if (Lcoordinatesingularity) then
                 mi = im(ii)
                 do ll = mi, Lrad(lvol), 2 ! loop over Zernike polynomials; Lrad is the radial resolution; 01 Jul 19;
-                    ; ; efmn(ii) = efmn(ii) + Ate(lvol, aderiv, ii)%s(ll)*RTT(ll, mi, iocons, 1)*half
-                    ; ; cfmn(ii) = cfmn(ii) + Aze(lvol, aderiv, ii)%s(ll)*RTT(ll, mi, iocons, 1)*half
-                    if (NOTstellsym) then; ofmn(ii) = ofmn(ii) + Ato(lvol, aderiv, ii)%s(ll)*RTT(ll, mi, iocons, 1)*half
-                        ; ; sfmn(ii) = sfmn(ii) + Azo(lvol, aderiv, ii)%s(ll)*RTT(ll, mi, iocons, 1)*half
+                    efmn(ii) = efmn(ii) + Ate(lvol, aderiv, ii)%s(ll)*RTT(ll, mi, iocons, 1)*half
+                    cfmn(ii) = cfmn(ii) + Aze(lvol, aderiv, ii)%s(ll)*RTT(ll, mi, iocons, 1)*half
+                    if (NOTstellsym) then
+                        ofmn(ii) = ofmn(ii) + Ato(lvol, aderiv, ii)%s(ll)*RTT(ll, mi, iocons, 1)*half
+                        sfmn(ii) = sfmn(ii) + Azo(lvol, aderiv, ii)%s(ll)*RTT(ll, mi, iocons, 1)*half
                     end if
                 end do ! end of do ll; 20 Feb 13;
             else
                 do ll = 0, Lrad(lvol) ! loop over Chebyshev polynomials; Lrad is the radial resolution;
-                    ; ; efmn(ii) = efmn(ii) + Ate(lvol, aderiv, ii)%s(ll)*TT(ll, iocons, 1) ! aderiv labels deriv. wrt mu, pflux;
-                    ; ; cfmn(ii) = cfmn(ii) + Aze(lvol, aderiv, ii)%s(ll)*TT(ll, iocons, 1)
-                    if (NOTstellsym) then; ofmn(ii) = ofmn(ii) + Ato(lvol, aderiv, ii)%s(ll)*TT(ll, iocons, 1)
-                        ; ; sfmn(ii) = sfmn(ii) + Azo(lvol, aderiv, ii)%s(ll)*TT(ll, iocons, 1)
+                    efmn(ii) = efmn(ii) + Ate(lvol, aderiv, ii)%s(ll)*TT(ll, iocons, 1) ! aderiv labels deriv. wrt mu, pflux;
+                    cfmn(ii) = cfmn(ii) + Aze(lvol, aderiv, ii)%s(ll)*TT(ll, iocons, 1)
+                    if (NOTstellsym) then
+                        ofmn(ii) = ofmn(ii) + Ato(lvol, aderiv, ii)%s(ll)*TT(ll, iocons, 1)
+                        sfmn(ii) = sfmn(ii) + Azo(lvol, aderiv, ii)%s(ll)*TT(ll, iocons, 1)
                     end if
                 end do ! end of do ll; 20 Feb 13;
             end if ! Lcoordinatesingularity; 01 Jul 19;
@@ -944,7 +951,8 @@ contains
         ! MPI_COMM_SPEC is the global variable for the SPEC communicator.
         MPI_COMM_SPEC = comm
 
-        myid = 0; ncpu = 1
+        myid = 0
+        ncpu = 1
 
         ierr = 0
         call MPI_COMM_RANK(MPI_COMM_SPEC, myid, ierr)
@@ -1002,7 +1010,9 @@ contains
         instat = 0 ! initially, no error
 
 ! read namelists one after another
-        if (Wreadin) then; cput = MPI_WTIME(); write (ounit, '("readin : ",f10.2," : reading physicslist     from ext.sp ;")') cput - cpus
+        if (Wreadin) then
+            cput = MPI_WTIME()
+            write (ounit, '("readin : ",f10.2," : reading physicslist     from ext.sp ;")') cput - cpus
         end if
 
         read (iunit, physicslist, iostat=instat)
@@ -1014,10 +1024,14 @@ contains
             write (*, '(A)') 'Invalid line in physicslist: '//trim(line)
         end if
 
-        if (Wreadin) then; cput = MPI_WTIME(); write (ounit, '("readin : ",f10.2," : read    physicslist     from ext.sp ;")') cput - cpus
+        if (Wreadin) then
+            cput = MPI_WTIME()
+            write (ounit, '("readin : ",f10.2," : read    physicslist     from ext.sp ;")') cput - cpus
         end if
 
-        if (Wreadin) then; cput = MPI_WTIME(); write (ounit, '("readin : ",f10.2," : reading numericlist     from ext.sp ;")') cput - cpus
+        if (Wreadin) then
+            cput = MPI_WTIME()
+            write (ounit, '("readin : ",f10.2," : reading numericlist     from ext.sp ;")') cput - cpus
         end if
 
         read (iunit, numericlist, iostat=instat)
@@ -1029,10 +1043,14 @@ contains
             write (*, '(A)') 'Invalid line in numericlist: '//trim(line)
         end if
 
-        if (Wreadin) then; cput = MPI_WTIME(); write (ounit, '("readin : ",f10.2," : read    numericlist     from ext.sp ;")') cput - cpus
+        if (Wreadin) then
+            cput = MPI_WTIME()
+            write (ounit, '("readin : ",f10.2," : read    numericlist     from ext.sp ;")') cput - cpus
         end if
 
-        if (Wreadin) then; cput = MPI_WTIME(); write (ounit, '("readin : ",f10.2," : reading locallist      from ext.sp ;")') cput - cpus
+        if (Wreadin) then
+            cput = MPI_WTIME()
+            write (ounit, '("readin : ",f10.2," : reading locallist      from ext.sp ;")') cput - cpus
         end if
 
         read (iunit, locallist, iostat=instat)
@@ -1044,10 +1062,14 @@ contains
             write (*, '(A)') 'Invalid line in locallist: '//trim(line)
         end if
 
-        if (Wreadin) then; cput = MPI_WTIME(); write (ounit, '("readin : ",f10.2," : read    locallist      from ext.sp ;")') cput - cpus
+        if (Wreadin) then
+            cput = MPI_WTIME()
+            write (ounit, '("readin : ",f10.2," : read    locallist      from ext.sp ;")') cput - cpus
         end if
 
-        if (Wreadin) then; cput = MPI_WTIME(); write (ounit, '("readin : ",f10.2," : reading globallist   from ext.sp ;")') cput - cpus
+        if (Wreadin) then
+            cput = MPI_WTIME()
+            write (ounit, '("readin : ",f10.2," : reading globallist   from ext.sp ;")') cput - cpus
         end if
 
         read (iunit, globallist, iostat=instat)
@@ -1059,10 +1081,14 @@ contains
             write (*, '(A)') 'Invalid line in globallist: '//trim(line)
         end if
 
-        if (Wreadin) then; cput = MPI_WTIME(); write (ounit, '("readin : ",f10.2," : read    globallist   from ext.sp ;")') cput - cpus
+        if (Wreadin) then
+            cput = MPI_WTIME()
+            write (ounit, '("readin : ",f10.2," : read    globallist   from ext.sp ;")') cput - cpus
         end if
 
-        if (Wreadin) then; cput = MPI_WTIME(); write (ounit, '("readin : ",f10.2," : reading diagnosticslist from ext.sp ;")') cput - cpus
+        if (Wreadin) then
+            cput = MPI_WTIME()
+            write (ounit, '("readin : ",f10.2," : reading diagnosticslist from ext.sp ;")') cput - cpus
         end if
 
         read (iunit, diagnosticslist, iostat=instat)
@@ -1074,10 +1100,14 @@ contains
             write (*, '(A)') 'Invalid line in diagnosticslist: '//trim(line)
         end if
 
-        if (Wreadin) then; cput = MPI_WTIME(); write (ounit, '("readin : ",f10.2," : read    diagnosticslist from ext.sp ;")') cput - cpus
+        if (Wreadin) then
+            cput = MPI_WTIME()
+            write (ounit, '("readin : ",f10.2," : read    diagnosticslist from ext.sp ;")') cput - cpus
         end if
 
-        if (Wreadin) then; cput = MPI_WTIME(); write (ounit, '("readin : ",f10.2," : reading screenlist      from ext.sp ;")') cput - cpus
+        if (Wreadin) then
+            cput = MPI_WTIME()
+            write (ounit, '("readin : ",f10.2," : reading screenlist      from ext.sp ;")') cput - cpus
         end if
 
         read (iunit, screenlist, iostat=instat)
@@ -1089,7 +1119,9 @@ contains
             write (*, '(A)') 'Invalid line in screenlist: '//trim(line)
         end if
 
-        if (Wreadin) then; cput = MPI_WTIME(); write (ounit, '("readin : ",f10.2," : read    screenlist      from ext.sp ;")') cput - cpus
+        if (Wreadin) then
+            cput = MPI_WTIME()
+            write (ounit, '("readin : ",f10.2," : read    screenlist      from ext.sp ;")') cput - cpus
         end if
 
         ! At this point, the input namelists are read.
@@ -1763,7 +1795,9 @@ contains
 
 !> **broadcast locallist**
 
-        if (Wreadin) then; cput = MPI_WTIME(); write (ounit, '("readin : ",f10.2," : broadcasting locallist       from ext.sp ;")') cput - cpus
+        if (Wreadin) then
+            cput = MPI_WTIME()
+            write (ounit, '("readin : ",f10.2," : broadcasting locallist       from ext.sp ;")') cput - cpus
         end if
 
         call MPI_BCAST(LBeltrami, 1, MPI_INTEGER, 0, MPI_COMM_SPEC, ierr)
@@ -1956,10 +1990,27 @@ contains
         write (iunit, '(" rtor        = ",es23.15   )') rtor
 
         if (Lfreebound .eq. 1 .or. Zbs(0, 1) .gt. zero) then
-            do ii = 1, mn; mm = im(ii); nn = in(ii)/Nfp; Rbc(nn, mm) = iRbc(ii, Nvol); Zbs(nn, mm) = iZbs(ii, Nvol); Vns(nn, mm) = iVns(ii); Bns(nn, mm) = iBns(ii)
-                ; Rbs(nn, mm) = iRbs(ii, Nvol); Zbc(nn, mm) = iZbc(ii, Nvol); Vnc(nn, mm) = iVnc(ii); Bnc(nn, mm) = iBnc(ii)
-                ; Rwc(nn, mm) = iRbc(ii, Mvol); Zws(nn, mm) = iZbs(ii, Mvol)
-                ; Rws(nn, mm) = iRbs(ii, Mvol); Zwc(nn, mm) = iZbc(ii, Mvol)
+            do ii = 1, mn
+                mm = im(ii)
+                nn = in(ii)/Nfp
+
+                ! geometry of boundary
+                Rbc(nn, mm) = iRbc(ii, Nvol)
+                Zbs(nn, mm) = iZbs(ii, Nvol)
+                Rbs(nn, mm) = iRbs(ii, Nvol)
+                Zbc(nn, mm) = iZbc(ii, Nvol)
+
+                ! vacuum and plasma fields
+                Vns(nn, mm) = iVns(ii)
+                Bns(nn, mm) = iBns(ii)
+                Vnc(nn, mm) = iVnc(ii)
+                Bnc(nn, mm) = iBnc(ii)
+
+                ! geometry of wall
+                Rwc(nn, mm) = iRbc(ii, Mvol)
+                Zws(nn, mm) = iZbs(ii, Mvol)
+                Rws(nn, mm) = iRbs(ii, Mvol)
+                Zwc(nn, mm) = iZbc(ii, Mvol)
             end do ! end of do ii = 1, mn;
         end if ! end of if( Lfreebound.eq.1 .or. . . . ) ;
 
@@ -1968,6 +2019,7 @@ contains
         !write(iunit,'(" Ras         = ",99es23.15)') Ras(0:Ntor)
         !write(iunit,'(" Zac         = ",99es23.15)') Zac(0:Ntor)
 
+        ! geometry of axis
         write (iunit, '(" Rac         = ",99es23.15)') iRbc(1:Ntor + 1, 0)
         write (iunit, '(" Zas         = ",99es23.15)') iZbs(1:Ntor + 1, 0)
         write (iunit, '(" Ras         = ",99es23.15)') iRbs(1:Ntor + 1, 0)

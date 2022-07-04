@@ -60,7 +60,7 @@ subroutine wa00aa(iwa00aa)
 
     use cputiming, only: Twa00aa
 
-    use allglobal, only: ncpu, myid, cpus, &
+    use allglobal, only: ncpu, myid, cpus, MPI_COMM_SPEC, &
                          Mvol, &
                          mn, im, in, iRbc, iZbs, iRbs, iZbc, &
                          Nt, Nz, Ntz, Rij, Zij, &
@@ -378,7 +378,7 @@ subroutine VacuumPhi(Nconstraints, rho, fvec, iflag)
 
     use fileunits, only: ounit
 
-    use allglobal, only: ncpu, myid, cpus, Ntz, Rij, Zij
+    use allglobal, only: ncpu, myid, cpus, Ntz, Rij, Zij, MPI_COMM_SPEC
 
     use laplaces
 

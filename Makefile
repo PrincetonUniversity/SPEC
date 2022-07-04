@@ -48,115 +48,65 @@ dspec: $(addsuffix _d.o,$(ALLFILES)) Makefile
 
 ###############################################################################################################################################################
 
-%_r.o: src/%.f
-	$(FC) $(FLAGS) $(RFLAGS) -o $*_r.o -c src/$*.f
-	@wc -l -L -w src/$*.f | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
-	@echo ''
+%_r.o: src/contrib/%.f
+	$(FC) $(FLAGS) $(RFLAGS) --std=legacy -o $*_r.o -c src/contrib/$*.f
 
-%_d.o: src/%.f
-	$(FC) $(FLAGS) $(DFLAGS) -o $*_d.o -c src/$*.f
-	@wc -l -L -w src/$*.f | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
-	@echo ''
+%_d.o: src/contrib/%.f
+	$(FC) $(FLAGS) $(DFLAGS) --std=legacy -o $*_d.o -c src/contrib/$*.f
 
 ###############################################################################################################################################################
 
 $(ROBJS_LEVEL_0): %_r.o: src/%.F90
 	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o $*_r.o -c src/$*.F90 $(LIBS)
-	@wc -l -L -w src/$*.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
-	@echo ''
 
 $(DOBJS_LEVEL_0): %_d.o: src/%.F90
 	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o $*_d.o -c src/$*.F90 $(LIBS)
-	@wc -l -L -w src/$*.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
-	@echo ''
 
 $(ROBJS_LEVEL_1): %_r.o: src/%.F90 $(addsuffix _r.o,$(LEVEL_0))
 	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o $*_r.o -c src/$*.F90 $(LIBS)
-	@wc -l -L -w src/$*.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
-	@echo ''
 
 $(DOBJS_LEVEL_1): %_d.o: src/%.F90 $(addsuffix _d.o,$(LEVEL_0))
 	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o $*_d.o -c src/$*.F90 $(LIBS)
-	@wc -l -L -w src/$*.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
-	@echo ''
 
 $(ROBJS_LEVEL_2): %_r.o: src/%.F90 mod_kinds_r.o $(addsuffix _r.o,$(LEVEL_0)) $(addsuffix _r.o,$(LEVEL_1))
 	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o $*_r.o -c src/$*.F90 $(LIBS)
-	@wc -l -L -w src/$*.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
-	@echo ''
 
 $(DOBJS_LEVEL_2): %_d.o: src/%.F90 mod_kinds_d.o $(addsuffix _d.o,$(LEVEL_0)) $(addsuffix _d.o,$(LEVEL_1))
 	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o $*_d.o -c src/$*.F90 $(LIBS)
-	@wc -l -L -w src/$*.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
-	@echo ''
 
 $(ROBJS_LEVEL_3): %_r.o: src/%.F90 mod_kinds_r.o $(addsuffix _r.o,$(LEVEL_0)) $(addsuffix _r.o,$(LEVEL_1)) $(addsuffix _r.o,$(LEVEL_2))
 	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o $*_r.o -c src/$*.F90 $(LIBS)
-	@wc -l -L -w src/$*.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
-	@echo ''
 
 $(DOBJS_LEVEL_3): %_d.o: src/%.F90 mod_kinds_d.o $(addsuffix _d.o,$(LEVEL_0)) $(addsuffix _d.o,$(LEVEL_1)) $(addsuffix _d.o,$(LEVEL_2))
 	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o $*_d.o -c src/$*.F90 $(LIBS)
-	@wc -l -L -w src/$*.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
-	@echo ''
 
 $(ROBJS_LEVEL_4): %_r.o: src/%.F90 mod_kinds_r.o $(addsuffix _r.o,$(LEVEL_0)) $(addsuffix _r.o,$(LEVEL_1)) $(addsuffix _r.o,$(LEVEL_2)) $(addsuffix _r.o,$(LEVEL_3))
 	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o $*_r.o -c src/$*.F90 $(LIBS)
-	@wc -l -L -w src/$*.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
-	@echo ''
 
 $(DOBJS_LEVEL_4): %_d.o: src/%.F90 mod_kinds_d.o $(addsuffix _d.o,$(LEVEL_0)) $(addsuffix _d.o,$(LEVEL_1)) $(addsuffix _d.o,$(LEVEL_2)) $(addsuffix _d.o,$(LEVEL_3))
 	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o $*_d.o -c src/$*.F90 $(LIBS)
-	@wc -l -L -w src/$*.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
-	@echo ''
 
 ###############################################################################################################################################################
 
 $(ROBJS_IO): %_r.o: src/%.F90 $(addsuffix _r.o,$(BASEFILES))
 	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o $*_r.o -c src/$*.F90 $(LIBS)
-	@wc -l -L -w src/$*.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
-	@echo ''
 
 $(DOBJS_IO): %_d.o: src/%.F90 $(addsuffix _d.o,$(BASEFILES))
 	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o $*_d.o -c src/$*.F90 $(LIBS)
-	@wc -l -L -w src/$*.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
-	@echo ''
 
 $(ROBJS): %_r.o: src/%.F90 $(addsuffix _r.o,$(BASEFILES)) $(addsuffix _r.o,$(IOFILES))
 	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o $*_r.o -c src/$*.F90 $(LIBS)
-	@wc -l -L -w src/$*.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
-	@echo ''
 
 $(DOBJS): %_d.o: src/%.F90 $(addsuffix _d.o,$(BASEFILES)) $(addsuffix _d.o,$(IOFILES))
 	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o $*_d.o -c src/$*.F90 $(LIBS)
-	@wc -l -L -w src/$*.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
-	@echo ''
 
 ###############################################################################################################################################################
 
 xspech_r.o: src/xspech.F90 global_r.o sphdf5_r.o $(addsuffix _r.o,$(files))
-	@awk -v date='$(date)' -v pwd='$(PWD)' -v fc='$(FC)' -v flags='$(FLAGS) $(CFLAGS) $(RFLAGS)' -v allfiles='$(ALLFILES)' \
-	'BEGIN{nfiles=split(allfiles,files," ")} \
-	{if($$2=="COMPILATION") {print "    write(ounit,*)\"      :  compiled  : date    = "date" ; \"" ; \
-	                         print "    write(ounit,*)\"      :            : srcdir  = "pwd" ; \"" ; \
-	                         print "    write(ounit,*)\"      :            : fc      = "fc" ; \"" ; \
-	                         print "    write(ounit,*)\"      :            : flags   = "flags" ; \"" }} \
-	 {print}' src/xspech.F90 > xspech_m.F90
-	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o xspech_r.o -c xspech_m.F90 $(LIBS)
-	@wc -l -L -w xspech_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
-	@echo ''
+	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o xspech_r.o -c src/xspech.F90 $(LIBS)
 
 xspech_d.o: src/xspech.F90 global_d.o sphdf5_d.o $(addsuffix _d.o,$(files))
-	@awk -v date='$(date)' -v pwd='$(PWD)' -v fc='$(FC)' -v flags='$(FLAGS) $(CFLAGS) $(DFLAGS)' -v allfiles='$(ALLFILES)' \
-	'BEGIN{nfiles=split(allfiles,files," ")} \
-	{if($$2=="COMPILATION") {print "    write(ounit,*)\"      :  compiled  : date    = "date" ; \"" ; \
-	                         print "    write(ounit,*)\"      :            : srcdir  = "pwd" ; \"" ; \
-	                         print "    write(ounit,*)\"      :            : fc      = "fc" ; \"" ; \
-	                         print "    write(ounit,*)\"      :            : flags   = "flags" ; \"" }} \
-	 {print}' src/xspech.F90 > xspech_m.F90
-	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o xspech_d.o -c xspech_m.F90 $(LIBS)
-	@wc -l -L -w xspech_m.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
-	@echo ''
+	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o xspech_d.o -c src/xspech.F90 $(LIBS)
 
 ###############################################################################################################################################################
 

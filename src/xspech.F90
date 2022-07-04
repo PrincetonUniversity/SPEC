@@ -74,12 +74,15 @@ subroutine xspech
     if (myid .eq. 0) then
 
         ! screen output header
+        ! version of SPEC
         write (ounit, '("xspech : ", 10x ," : version = "F5.2)') version
-! COMPILATION ! do not delete; this line is replaced (see Makefile) with a write statement identifying date, time, compilation flags, etc.;
+
+        ! date and time of this run
         call date_and_time(ldate, ltime)
         write (ounit, '("xspech : ", 10x ," : ")')
         write (ounit, 1000) cput - cpus, ldate(1:4), ldate(5:6), ldate(7:8), ltime(1:2), ltime(3:4), ltime(5:6), machprec, vsmall, small
 
+        ! parallel execution: number of MPI ranks and OpenMP threads
         write (ounit, '("xspech : ", 10x ," : ")')
         write (ounit, '("xspech : ",f10.2," : parallelism : ncpu=",i3," ; nthreads=",i3," ;")') cput - cpus, ncpu, nthreads
 
@@ -562,7 +565,7 @@ subroutine spec
 
 #ifdef DEBUG
     do vvol = 1, Mvol - 1
-        ; 
+        ;
         if (BBe(vvol) .lt. logtolerance) then
             write (6, '("xspech :      fatal : myid=",i3," ; BBe(vvol).lt.logtolerance ; underflow ;")') myid
             call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
@@ -570,7 +573,7 @@ subroutine spec
         end if
 
         if (Igeometry .eq. 3) then ! include spectral constraints; 04 Dec 14;
-            ; 
+            ;
             if (IIo(vvol) .lt. logtolerance) then
                 write (6, '("xspech :      fatal : myid=",i3," ; IIo(vvol).lt.logtolerance ; underflow ;")') myid
                 call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
@@ -579,7 +582,7 @@ subroutine spec
 
         end if
         if (NOTstellsym) then
-            ; 
+            ;
             if (BBo(vvol) .lt. logtolerance) then
                 write (6, '("xspech :      fatal : myid=",i3," ; BBo(vvol).lt.logtolerance ; underflow ;")') myid
                 call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
@@ -758,7 +761,7 @@ subroutine spec
 
                 end if ! end of if( myid.eq.0 ) ; 07 Dec 16;
 
-                ; 
+                ;
                 call MPI_BCAST(iVns(1:mn), mn, MPI_DOUBLE_PRECISION, 0, MPI_COMM_SPEC, ierr)
                 ! only required for ii > 1 ;
                 if (NOTstellsym) then

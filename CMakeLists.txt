@@ -12,15 +12,6 @@ find_package(OpenMP)
 set (THREADS_PREFER_PTHREAD_FLAG ON) # Prefer pthreads
 find_package(Threads)
 
-# Find libm
-set(POW_LIBS "")
-include(CheckLibraryExists)
-check_library_exists(m pow "" LIBM)
-if(LIBM)
-    list(APPEND POW_LIBS "m")
-endif()
-
-
 # Find & Configure MPI
 # If using the compiler wrapper, there is no need to find the MPI libraries.
 get_filename_component (compiler ${CMAKE_Fortran_COMPILER} NAME)
@@ -48,8 +39,6 @@ else ()
         endif ()
     endif ()
 endif ()
-
-find_program(AWK awk mawk gawk)
 
 # Find LAPACK
 # For LAPAPCK, it is suggested to use Intel MKL even for gcc compiler suite. To use Intel MKL, INTELMKL
@@ -118,18 +107,7 @@ set (LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/build/lib)
 # Fortran specific things
 set (CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/build/modules)
 
-# Build SPEC
-#add_library(spec_lib "")
-#add_executable(xspec "")
-
 add_subdirectory(src)
 if(SKBUILD)
     add_subdirectory("Utilities/python_wrapper")
 endif()
-
-#tartget_link_libraries(xspec spec_lib)
-# Add dependencies to other libraries
-#target_link_libraries(spec_lib PUBLIC
-#                      BLAS LAPACK FFTW HDF5::C HDF5::Fortran)
-
-
