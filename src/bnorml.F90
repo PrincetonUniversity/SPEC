@@ -75,110 +75,110 @@
 !> @param[in] Ntz total number of grid points in \f$\theta\f$ and \f$zeta\f$
 !> @param[out] efmn even Fourier coefficients
 !> @param[out] ofmn odd Fouier coefficients
-subroutine bnorml( mn, Ntz, efmn, ofmn )
-  use mod_kinds, only: wp => dp
+subroutine bnorml(mn, Ntz, efmn, ofmn)
+    use mod_kinds, only: wp => dp
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  use constants, only : zero, half, one, two, pi, pi2, ten
+    use constants, only: zero, half, one, two, pi, pi2, ten
 
-  use numerical, only : small
+    use numerical, only: small
 
-  use fileunits, only : ounit, lunit
+    use fileunits, only: ounit, lunit
 
-  use inputlist, only : Wmacros, Wbnorml, Igeometry, Lcheck, vcasingtol, vcasingper, Lrad
+    use inputlist, only: Wmacros, Wbnorml, Igeometry, Lcheck, vcasingtol, vcasingper, Lrad
 
-  use cputiming, only : Tbnorml
+    use cputiming, only: Tbnorml
 
-  use allglobal, only : ncpu, myid, cpus, MPI_COMM_SPEC, pi2nfp, Mvol, &
-                        Nt, Nz, &
-                        Rij, Zij, guvij, sg, TT, &
-                        NOTstellsym, Lcoordinatesingularity, &
-                        im, in, Ate, Aze, Ato, Azo, &
-                        Nt, Nz, cfmn, sfmn, &
-                        ijreal, ijimag, jireal, jiimag, &
-                        globaljk, tetazeta, virtualcasingfactor, gteta, gzeta, Dxyz, Nxyz
+    use allglobal, only: ncpu, myid, cpus, MPI_COMM_SPEC, pi2nfp, Mvol, &
+                         Nt, Nz, &
+                         Rij, Zij, guvij, sg, TT, &
+                         NOTstellsym, Lcoordinatesingularity, &
+                         im, in, Ate, Aze, Ato, Azo, &
+                         Nt, Nz, cfmn, sfmn, &
+                         ijreal, ijimag, jireal, jiimag, &
+                         globaljk, tetazeta, virtualcasingfactor, gteta, gzeta, Dxyz, Nxyz
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
 
 #ifdef OPENMP
-  USE OMP_LIB
+    USE OMP_LIB
 #endif
-  use mpi
-  implicit none
-  integer   :: ierr, astat, ios, nthreads, ithread
-  real(wp)      :: cput, cpui, cpuo=0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
+    use mpi
+    implicit none
+    integer :: ierr, astat, ios, nthreads, ithread
+    real(wp) :: cput, cpui, cpuo = 0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
 
+    integer, intent(in) :: mn, Ntz
+    real(wp), intent(out) :: efmn(1:mn), ofmn(1:mn)
 
-  integer, intent(in)  :: mn, Ntz
-  real(wp)   , intent(out) :: efmn(1:mn), ofmn(1:mn)
+    integer :: lvol, Lcurvature, Lparallel, ii, jj, kk, jk, ll, kkmodnp, jkmodnp, ifail, id01daf, nvccalls, icasing, ideriv
+    real(wp) :: lss, zeta, teta, cszeta(0:1), tetalow, tetaupp, absacc, gBn
+    real(wp) :: Jxyz(1:Ntz, 1:3), Bxyz(1:Ntz, 1:3), dAt(1:Ntz), dAz(1:Ntz), distance(1:Ntz)
 
-  integer              :: lvol, Lcurvature, Lparallel, ii, jj, kk, jk, ll, kkmodnp, jkmodnp, ifail, id01daf, nvccalls, icasing, ideriv
-  real(wp)                 :: lss, zeta, teta, cszeta(0:1), tetalow, tetaupp, absacc, gBn
-  real(wp)                 :: Jxyz(1:Ntz,1:3), Bxyz(1:Ntz,1:3), dAt(1:Ntz), dAz(1:Ntz), distance(1:Ntz)
-
- !REAL                 :: vcintegrand, zetalow, zetaupp
+    !REAL                 :: vcintegrand, zetalow, zetaupp
 ! external             :: vcintegrand, zetalow, zetaupp
 
-
-  cpui = MPI_WTIME()
-  cpuo = cpui
+    cpui = MPI_WTIME()
+    cpuo = cpui
 #ifdef OPENMP
-  nthreads = omp_get_max_threads()
+    nthreads = omp_get_max_threads()
 #else
-  nthreads = 1
+    nthreads = 1
 #endif
 
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+    Lparallel = 1 ! controls choice of parallelization; see below;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  Lparallel = 1 ! controls choice of parallelization; see below;
+    ijreal(1:Ntz) = zero ! normal plasma field; 15 Oct 12;
+    !ijimag(1:Ntz) = zero
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  ijreal(1:Ntz) = zero ! normal plasma field; 15 Oct 12;
- !ijimag(1:Ntz) = zero
-
- !jireal(1:Ntz) = zero
- !jiimag(1:Ntz) = zero
+    !jireal(1:Ntz) = zero
+    !jiimag(1:Ntz) = zero
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 #ifdef DEBUG
-  if( myid.eq.0 .and. Lcheck.eq.6 ) then
-   write(ounit,'("bnorml : " 10x " : writing input for xdiagno ; screen comparison ; Ntz =",i7," ;")') Ntz
-   open(lunit, file="btest.diagno", status="unknown" )
-   write(lunit,'(i9)') Ntz
-  endif
+    if (myid .eq. 0 .and. Lcheck .eq. 6) then
+        write (ounit, '("bnorml : " 10x " : writing input for xdiagno ; screen comparison ; Ntz =",i7," ;")') Ntz
+        open (lunit, file="btest.diagno", status="unknown")
+        write (lunit, '(i9)') Ntz
+    end if
 #endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  do kk = 0, Nz-1 ; zeta = kk * pi2nfp / Nz
+    do kk = 0, Nz - 1
+        zeta = kk*pi2nfp/Nz
 
-   if( Igeometry.eq.3 ) then ; cszeta(0:1) = (/ cos(zeta), sin(zeta) /)
-   endif
+        if (Igeometry .eq. 3) then
+            cszeta(0:1) = (/cos(zeta), sin(zeta)/)
+        end if
 
-   do jj = 0, Nt-1 ; teta = jj * pi2    / Nt ; jk = 1 + jj + kk*Nt
+        do jj = 0, Nt - 1
+            teta = jj*pi2/Nt
+            jk = 1 + jj + kk*Nt
 
-    globaljk = jk ! this is global; passed through to vcintegrand & casing;
+            globaljk = jk ! this is global; passed through to vcintegrand & casing;
 
-    select case( Lparallel ) ! perform in parallel;
-    case( 0 ) ! Lparallel = 0 ; 09 Mar 17;
-     if( myid.ne.modulo(kk,ncpu) ) cycle
-    case( 1 ) ! Lparallel = 1 ; 09 Mar 17;
-     if( myid.ne.modulo(jk-1,ncpu) ) cycle ! 11 Oct 12; this is a weird parallelization, but perhaps better exploits all available cpus;
-    case default ! Lparallel; 09 Mar 17;
+            select case (Lparallel) ! perform in parallel;
+            case (0) ! Lparallel = 0 ; 09 Mar 17;
+                if (myid .ne. modulo(kk, ncpu)) cycle
+            case (1) ! Lparallel = 1 ; 09 Mar 17;
+                if (myid .ne. modulo(jk - 1, ncpu)) cycle ! 11 Oct 12; this is a weird parallelization, but perhaps better exploits all available cpus;
+            case default ! Lparallel; 09 Mar 17;
 
-   if( .true. ) then
-     write(6,'("bnorml :      fatal : myid=",i3," ; .true. ; invalid Lparallel in parallelization loop ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "bnorml : .true. : invalid Lparallel in parallelization loop  ;"
-    endif
+                if (.true.) then
+                    write (6, '("bnorml :      fatal : myid=",i3," ; .true. ; invalid Lparallel in parallelization loop ;")') myid
+                    call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                    stop "bnorml : .true. : invalid Lparallel in parallelization loop  ;"
+                end if
 
-    end select ! end of select case( Lparallel ) ; 09 Mar 17;
+            end select ! end of select case( Lparallel ) ; 09 Mar 17;
 
-    tetazeta(1:2) = (/ teta, zeta /) ! this is global; passed through to zetalow & zetaupp; 14 Apr 17;
+            tetazeta(1:2) = (/teta, zeta/) ! this is global; passed through to zetalow & zetaupp; 14 Apr 17;
 
 !#ifdef COMPARECASING
 !
@@ -190,14 +190,13 @@ subroutine bnorml( mn, Ntz, efmn, ofmn )
 !
 !#endif
 
+            cput = MPI_WTIME()
+            Tbnorml = Tbnorml + (cput - cpuo)
+            call casing(teta, zeta, gBn, icasing)
+            cpuo = MPI_WTIME()
+            ! tetazeta is global; 26 Apr 17;
 
-   cput = MPI_WTIME()
-   Tbnorml = Tbnorml + ( cput-cpuo )
-   call casing( teta, zeta, gBn, icasing )
-   cpuo = MPI_WTIME()
- ! tetazeta is global; 26 Apr 17;
-
-    ijreal(jk) = gBn
+            ijreal(jk) = gBn
 
 !#ifdef COMPARECASING
 !    write(ounit,1000) myid, zeta, teta, ijreal(jk), ijimag(jk), ijreal(jk)-ijimag(jk)
@@ -207,87 +206,81 @@ subroutine bnorml( mn, Ntz, efmn, ofmn )
 !    write(ounit,1000) myid, zeta, teta, ijreal(jk), ijimag(jk), ijreal(jk)-ijimag(jk)
 !#endif
 
-1000 format("bnorml : ", 10x ," : myid=",i3," : \z =",f6.3," ; \t =",f6.3," ; B . x_t x x_z =",2f22.15," ; ":"err =",es13.5," ;")
+1000        format("bnorml : ", 10x, " : myid=", i3, " : \z =", f6.3, " ; \t =", f6.3, " ; B . x_t x x_z =", 2f22.15, " ; ":"err =", es13.5, " ;")
 
-   enddo ! end of do jj;
-  enddo ! end of do kk;
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-1001 format("bnorml : ", 10x ," : "a1" : (t,z) = ("f8.4","f8.4" ) ; gBn=",f23.15," ; ":" error =",f23.15" ;")
+        end do ! end of do jj;
+    end do ! end of do kk;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  if( myid.eq.0 .and. Lcheck.eq.6 ) then ! THIS WAS CORRUPTED; see before 14 Apr 17 for complete source;
-   close(lunit)
-  endif
+1001 format("bnorml : ", 10x, " : "a1" : (t,z) = ("f8.4","f8.4" ) ; gBn=", f23.15, " ; ":" error =", f23.15" ;")
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  do kk = 0, Nz-1
-
-   kkmodnp = modulo(kk,ncpu)
-
-   select case( Lparallel )
-
-   case( 0 ) ! Lparallel = 0 ; 09 Mar 17;
-
-
-   call MPI_BCAST(ijreal(1+kk*Nt:Nt+kk*Nt),Nt,MPI_DOUBLE_PRECISION,kkmodnp,MPI_COMM_SPEC,ierr)
- ! plasma; 03 Apr 13;
-   !RlBCAST(ijimag(1+kk*Nt:Nt+kk*Nt),Nt,kkmodnp)
-
-   !RlBCAST(jireal(1+kk*Nt:Nt+kk*Nt),Nt,kkmodnp)
-   !RlBCAST(jiimag(1+kk*Nt:Nt+kk*Nt),Nt,kkmodnp)
-
-   case( 1 ) ! Lparallel = 1 ; 09 Mar 17;
-
-    do jj = 0, Nt-1
-
-     jk = 1 + jj + kk*Nt
-
-     jkmodnp = modulo(jk-1,ncpu)
-
-
-   call MPI_BCAST(ijreal(jk),1,MPI_DOUBLE_PRECISION,jkmodnp,MPI_COMM_SPEC,ierr)
- ! plasma; 03 Apr 13;
-    !RlBCAST(ijimag(jk),1,jkmodnp)
-
-    !RlBCAST(jireal(jk),1,jkmodnp)
-    !RlBCAST(jiimag(jk),1,jkmodnp)
-
-    enddo
-
-   case default ! Lparallel; 09 Mar 17;
-
-
-   if( .true. ) then
-     write(6,'("bnorml :      fatal : myid=",i3," ; .true. ; invalid Lparallel for broadcasting ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "bnorml : .true. : invalid Lparallel for broadcasting  ;"
-    endif
-
-
-   end select ! end of select case( Lparallel ) ; 09 Mar 17;
-
-  enddo ! 11 Oct 12;
+    if (myid .eq. 0 .and. Lcheck .eq. 6) then ! THIS WAS CORRUPTED; see before 14 Apr 17 for complete source;
+        close (lunit)
+    end if
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  ijreal(1:Ntz) = ijreal(1:Ntz) * virtualcasingfactor
-  ijimag(1:Ntz) = zero
+    do kk = 0, Nz - 1
 
-  call tfft( Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz), &
-             mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), ifail ) ! Fourier decompose normal field;
+        kkmodnp = modulo(kk, ncpu)
+
+        select case (Lparallel)
+
+        case (0) ! Lparallel = 0 ; 09 Mar 17;
+
+            call MPI_BCAST(ijreal(1 + kk*Nt:Nt + kk*Nt), Nt, MPI_DOUBLE_PRECISION, kkmodnp, MPI_COMM_SPEC, ierr)
+            ! plasma; 03 Apr 13;
+            !RlBCAST(ijimag(1+kk*Nt:Nt+kk*Nt),Nt,kkmodnp)
+
+            !RlBCAST(jireal(1+kk*Nt:Nt+kk*Nt),Nt,kkmodnp)
+            !RlBCAST(jiimag(1+kk*Nt:Nt+kk*Nt),Nt,kkmodnp)
+
+        case (1) ! Lparallel = 1 ; 09 Mar 17;
+
+            do jj = 0, Nt - 1
+
+                jk = 1 + jj + kk*Nt
+
+                jkmodnp = modulo(jk - 1, ncpu)
+
+                call MPI_BCAST(ijreal(jk), 1, MPI_DOUBLE_PRECISION, jkmodnp, MPI_COMM_SPEC, ierr)
+                ! plasma; 03 Apr 13;
+                !RlBCAST(ijimag(jk),1,jkmodnp)
+
+                !RlBCAST(jireal(jk),1,jkmodnp)
+                !RlBCAST(jiimag(jk),1,jkmodnp)
+
+            end do
+
+        case default ! Lparallel; 09 Mar 17;
+
+            if (.true.) then
+                write (6, '("bnorml :      fatal : myid=",i3," ; .true. ; invalid Lparallel for broadcasting ;")') myid
+                call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                stop "bnorml : .true. : invalid Lparallel for broadcasting  ;"
+            end if
+
+        end select ! end of select case( Lparallel ) ; 09 Mar 17;
+
+    end do ! 11 Oct 12;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+    ijreal(1:Ntz) = ijreal(1:Ntz)*virtualcasingfactor
+    ijimag(1:Ntz) = zero
+
+    call tfft(Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz), &
+              mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), ifail) ! Fourier decompose normal field;
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 9999 continue
-  cput = MPI_WTIME()
-  Tbnorml = Tbnorml + ( cput-cpuo )
-  return
-
+    cput = MPI_WTIME()
+    Tbnorml = Tbnorml + (cput - cpuo)
+    return
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

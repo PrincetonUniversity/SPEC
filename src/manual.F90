@@ -247,55 +247,49 @@
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 subroutine manual
-   use mod_kinds, only: wp => dp
+    use mod_kinds, only: wp => dp
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  use constants, only : zero
+    use constants, only: zero
 
-  use numerical, only :
+    use numerical, only:
 
-  use fileunits, only : ounit
+    use fileunits, only: ounit
 
-  use inputlist, only : Wmanual
+    use inputlist, only: Wmanual
 
-  use cputiming, only : Tmanual
+    use cputiming, only: Tmanual
 
-  use allglobal, only : myid, cpus
+    use allglobal, only: myid, cpus
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
 
 #ifdef OPENMP
-  USE OMP_LIB
+    USE OMP_LIB
 #endif
-  use mpi
-  implicit none
-  integer   :: ierr, astat, ios, nthreads, ithread
-  real(wp)      :: cput, cpui, cpuo=0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
+    use mpi
+    implicit none
+    integer :: ierr, astat, ios, nthreads, ithread
+    real(wp) :: cput, cpui, cpuo = 0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
 
-
-
-  cpui = MPI_WTIME()
-  cpuo = cpui
+    cpui = MPI_WTIME()
+    cpuo = cpui
 #ifdef OPENMP
-  nthreads = omp_get_max_threads()
+    nthreads = omp_get_max_threads()
 #else
-  nthreads = 1
+    nthreads = 1
 #endif
 
-
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
- ! this "routine" is purely for documentation; 08 Feb 16;
+    ! this "routine" is purely for documentation; 08 Feb 16;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
 
 9999 continue
-  cput = MPI_WTIME()
-  Tmanual = Tmanual + ( cput-cpuo )
-  return
-
+    cput = MPI_WTIME()
+    Tmanual = Tmanual + (cput - cpuo)
+    return
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

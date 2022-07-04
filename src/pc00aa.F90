@@ -38,69 +38,65 @@
 !> @param[in]    Nvol
 !> @param[in]    mn
 !> @param        ie04dgf
-subroutine pc00aa( NGdof, position, Nvol, mn, ie04dgf ) ! argument list is optional;
-  use mod_kinds, only: wp => dp
+subroutine pc00aa(NGdof, position, Nvol, mn, ie04dgf) ! argument list is optional;
+    use mod_kinds, only: wp => dp
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  use constants, only : zero, ten
+    use constants, only: zero, ten
 
-  use numerical, only :
+    use numerical, only:
 
-  use fileunits, only : ounit
+    use fileunits, only: ounit
 
-  use inputlist, only : Wpc00aa, verify, maxstep, maxiter, forcetol
+    use inputlist, only: Wpc00aa, verify, maxstep, maxiter, forcetol
 
-  use cputiming, only : Tpc00aa
+    use cputiming, only: Tpc00aa
 
-  use allglobal, only : ncpu, myid, cpus, Energy, ForceErr
+    use allglobal, only: ncpu, myid, cpus, Energy, ForceErr
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
 
 #ifdef OPENMP
-  USE OMP_LIB
+    USE OMP_LIB
 #endif
-  use mpi
-  implicit none
-  integer   :: ierr, astat, ios, nthreads, ithread
-  real(wp)      :: cput, cpui, cpuo=0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
+    use mpi
+    implicit none
+    integer :: ierr, astat, ios, nthreads, ithread
+    real(wp) :: cput, cpui, cpuo = 0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
 
+    integer, intent(in) :: Nvol, mn, NGdof
+    real(wp), intent(inout) :: position(0:NGdof)
+    integer :: ie04dgf
 
-  integer, intent(in)    :: Nvol, mn, NGdof
-  real(wp)   , intent(inout) :: position(0:NGdof)
-  integer                :: ie04dgf
+    LOGICAL :: LComputeDerivatives!, Lexit = .true.
+    integer :: niterations, Iwork(1:NGdof + 1), iuser(1:2)
+    real(wp) :: lEnergy, Gradient(0:NGdof), work(1:13*NGdof), ruser(1:1)
+    character :: smaxstep*34
 
-  LOGICAL                :: LComputeDerivatives!, Lexit = .true.
-  integer                :: niterations, Iwork(1:NGdof+1), iuser(1:2)
-  real(wp)                   :: lEnergy, Gradient(0:NGdof), work(1:13*NGdof), ruser(1:1)
-  character              :: smaxstep*34
+    external :: pc00ab
 
-  external               :: pc00ab
-
-
-  cpui = MPI_WTIME()
-  cpuo = cpui
+    cpui = MPI_WTIME()
+    cpuo = cpui
 #ifdef OPENMP
-  nthreads = omp_get_max_threads()
+    nthreads = omp_get_max_threads()
 #else
-  nthreads = 1
+    nthreads = 1
 #endif
 
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+    if (myid .eq. 0) then
+        cput = MPI_WTIME()
+        write (ounit, '("pc00aa : ", 10x ," : ")')
+        write (ounit, 1000) cput - cpus, myid, NGdof, maxstep, maxiter, verify
+    end if
+
+1000 format("pc00aa : ", f10.2, " : myid=", i3, " ; calling E04DGF : NGdof="i6" ; maxstep="es10.2" ; maxiter="i9" ; verify=", i3, " ;")
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  if( myid.eq.0 ) then
-   cput = MPI_WTIME()
-   write(ounit,'("pc00aa : ", 10x ," : ")')
-   write(ounit,1000) cput-cpus, myid, NGdof, maxstep, maxiter, verify
-  endif
-
-1000 format("pc00aa : ",f10.2," : myid=",i3," ; calling E04DGF : NGdof="i6" ; maxstep="es10.2" ; maxiter="i9" ; verify=",i3," ;")
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  iuser(1:2) = (/ 0, 0 /) ! this is only used to pass information through to pc00ab; some resolution settings & iteration counter;
-  ruser(1:1) = zero       ! this will be assigned in first call to pc00ab;
+    iuser(1:2) = (/0, 0/) ! this is only used to pass information through to pc00ab; some resolution settings & iteration counter;
+    ruser(1:1) = zero       ! this will be assigned in first call to pc00ab;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -123,68 +119,66 @@ subroutine pc00aa( NGdof, position, Nvol, mn, ie04dgf ) ! argument list is optio
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  select case( verify ) ! supply optional parameters to E04DGF;
+    select case (verify) ! supply optional parameters to E04DGF;
 
-  case( -1 ) ! no checks; no screen output;
-   call E04DKF('Nolist')
-   call E04DKF('Print Level = 0')
-   call E04DKF('Verify = -1')
-  case(  0 ) ! simple check;
-  !call E04DKF('Nolist')
-  !call E04DKF('Print Level = 0')
-   call E04DKF('Verify =  0') ! simple check
-  case(  1 ) ! extensive test;
-   call E04DKF('Verify =  1') ! extensive test;
-  case default
+    case (-1) ! no checks; no screen output;
+        call E04DKF('Nolist')
+        call E04DKF('Print Level = 0')
+        call E04DKF('Verify = -1')
+    case (0) ! simple check;
+        !call E04DKF('Nolist')
+        !call E04DKF('Print Level = 0')
+        call E04DKF('Verify =  0') ! simple check
+    case (1) ! extensive test;
+        call E04DKF('Verify =  1') ! extensive test;
+    case default
 
-   if( .true. ) then
-     write(6,'("pc00aa :      fatal : myid=",i3," ; .true. ; invalid verify supplied on input;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "pc00aa : .true. : invalid verify supplied on input ;"
-    endif
+        if (.true.) then
+            write (6, '("pc00aa :      fatal : myid=",i3," ; .true. ; invalid verify supplied on input;")') myid
+            call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+            stop "pc00aa : .true. : invalid verify supplied on input ;"
+        end if
 
-  end select
+    end select
 
-  call E04DKF('Iteration Limit = 99999999')
-  write(smaxstep,'("Maximum Step Length ="es13.5)')maxstep
-  call E04DKF(smaxstep)
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  ie04dgf = 1
-
-  call E04DGF( NGdof, pc00ab, niterations, lEnergy, Gradient(1:NGdof), position(1:NGdof), &
-               Iwork(1:NGdof+1), work(1:13*NGdof), iuser(1:2), ruser(1:1), ie04dgf )
-
-  cput = MPI_WTIME()
-
-  select case( ie04dgf )
-  case(:-1)    ; if( myid.eq.0 ) write(ounit,'("pc00aa : ",f10.2," : user requested termination      ; ie04dgf=",i3," ;")')cput-cpus,ie04dgf
-  case(  0)    ; if( myid.eq.0 ) write(ounit,'("pc00aa : ",f10.2," : success                         ; ie04dgf=",i3," ;")')cput-cpus,ie04dgf
-  case(  3)    ; if( myid.eq.0 ) write(ounit,'("pc00aa : ",f10.2," : iteration limit reached         ; ie04dgf=",i3," ;")')cput-cpus,ie04dgf
-  case(  4)    ; if( myid.eq.0 ) write(ounit,'("pc00aa : ",f10.2," : step length too small           ; ie04dgf=",i3," ;")')cput-cpus,ie04dgf
-  case(  6)    ; if( myid.eq.0 ) write(ounit,'("pc00aa : ",f10.2," : not all minimum conditions met  ; ie04dgf=",i3," ;")')cput-cpus,ie04dgf
-  case(  7)    ; if( myid.eq.0 ) write(ounit,'("pc00aa : ",f10.2," : user supplied derivatives error ; ie04dgf=",i3," ;")')cput-cpus,ie04dgf
-  case(  8)    ; if( myid.eq.0 ) write(ounit,'("pc00aa : ",f10.2," : initial gradient too small      ; ie04dgf=",i3," ;")')cput-cpus,ie04dgf
-  case(  9)    ; if( myid.eq.0 ) write(ounit,'("pc00aa : ",f10.2," : input error                     ; ie04dgf=",i3," ;")')cput-cpus,ie04dgf
-  case default
-
-   if( .true. ) then
-     write(6,'("pc00aa :      fatal : myid=",i3," ; .true. ; E04DGF ifail error;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "pc00aa : .true. : E04DGF ifail error ;"
-    endif
-
-  end select
+    call E04DKF('Iteration Limit = 99999999')
+    write (smaxstep, '("Maximum Step Length ="es13.5)') maxstep
+    call E04DKF(smaxstep)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+    ie04dgf = 1
+
+    call E04DGF(NGdof, pc00ab, niterations, lEnergy, Gradient(1:NGdof), position(1:NGdof), &
+                Iwork(1:NGdof + 1), work(1:13*NGdof), iuser(1:2), ruser(1:1), ie04dgf)
+
+    cput = MPI_WTIME()
+
+    select case (ie04dgf)
+    case (:-1); if (myid .eq. 0) write (ounit, '("pc00aa : ",f10.2," : user requested termination      ; ie04dgf=",i3," ;")') cput - cpus, ie04dgf
+    case (0); if (myid .eq. 0) write (ounit, '("pc00aa : ",f10.2," : success                         ; ie04dgf=",i3," ;")') cput - cpus, ie04dgf
+    case (3); if (myid .eq. 0) write (ounit, '("pc00aa : ",f10.2," : iteration limit reached         ; ie04dgf=",i3," ;")') cput - cpus, ie04dgf
+    case (4); if (myid .eq. 0) write (ounit, '("pc00aa : ",f10.2," : step length too small           ; ie04dgf=",i3," ;")') cput - cpus, ie04dgf
+    case (6); if (myid .eq. 0) write (ounit, '("pc00aa : ",f10.2," : not all minimum conditions met  ; ie04dgf=",i3," ;")') cput - cpus, ie04dgf
+    case (7); if (myid .eq. 0) write (ounit, '("pc00aa : ",f10.2," : user supplied derivatives error ; ie04dgf=",i3," ;")') cput - cpus, ie04dgf
+    case (8); if (myid .eq. 0) write (ounit, '("pc00aa : ",f10.2," : initial gradient too small      ; ie04dgf=",i3," ;")') cput - cpus, ie04dgf
+    case (9); if (myid .eq. 0) write (ounit, '("pc00aa : ",f10.2," : input error                     ; ie04dgf=",i3," ;")') cput - cpus, ie04dgf
+    case default
+
+        if (.true.) then
+            write (6, '("pc00aa :      fatal : myid=",i3," ; .true. ; E04DGF ifail error;")') myid
+            call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+            stop "pc00aa : .true. : E04DGF ifail error ;"
+        end if
+
+    end select
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 9999 continue
-  cput = MPI_WTIME()
-  Tpc00aa = Tpc00aa + ( cput-cpuo )
-  return
-
+    cput = MPI_WTIME()
+    Tpc00aa = Tpc00aa + (cput - cpuo)
+    return
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

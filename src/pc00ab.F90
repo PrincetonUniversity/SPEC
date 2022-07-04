@@ -78,194 +78,181 @@
 !> </li>
 !> </ul>
 !>
-subroutine pc00ab( mode, NGdof, Position, Energy, Gradient, nstate, iuser, ruser ) ! argument fixed by NAG; see pc00aa;
-  use mod_kinds, only: wp => dp
-  use constants, only : zero, half, one
+subroutine pc00ab(mode, NGdof, Position, Energy, Gradient, nstate, iuser, ruser) ! argument fixed by NAG; see pc00aa;
+    use mod_kinds, only: wp => dp
+    use constants, only: zero, half, one
 
-  use numerical, only :
+    use numerical, only:
 
-  use fileunits, only : ounit
+    use fileunits, only: ounit
 
-  use inputlist, only : Wpc00ab, Igeometry, Nvol, epsilon, maxiter, forcetol
+    use inputlist, only: Wpc00ab, Igeometry, Nvol, epsilon, maxiter, forcetol
 
-  use cputiming, only : Tpc00ab
+    use cputiming, only: Tpc00ab
 
-  use allglobal, only : writin, myid, cpus, YESstellsym, mn, lBBintegral, dBBdRZ, dIIdRZ, ForceErr
+    use allglobal, only: writin, myid, cpus, YESstellsym, mn, lBBintegral, dBBdRZ, dIIdRZ, ForceErr
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-
 #ifdef OPENMP
-  USE OMP_LIB
+    USE OMP_LIB
 #endif
-  use mpi
-  implicit none
-  integer   :: ierr, astat, ios, nthreads, ithread
-  real(wp)      :: cput, cpui, cpuo=0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
+    use mpi
+    implicit none
+    integer :: ierr, astat, ios, nthreads, ithread
+    real(wp) :: cput, cpui, cpuo = 0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
 
+    integer :: mode, NGdof, nstate, iuser(1:2)
+    real(wp) :: Position(1:NGdof), Energy, Gradient(1:NGdof), ruser(1:1)
 
-  integer :: mode, NGdof, nstate, iuser(1:2)
-  real(wp)    :: Position(1:NGdof), Energy, Gradient(1:NGdof), ruser(1:1)
+    LOGICAL :: LComputeDerivatives, LComputeAxis
+    integer :: ii, vvol, irz, issym, totaldof, localdof, wflag, iflag!, mi, ni !idof, imn, irz, totaldof, localdof, jj, kk, ll, mi, ni, mj, nj, mk, nk, ml, nl, mjmk
+    real(wp) :: force(0:NGdof), gradienterror, rflag
 
-  LOGICAL :: LComputeDerivatives, LComputeAxis
-  integer :: ii, vvol, irz, issym, totaldof, localdof, wflag, iflag!, mi, ni !idof, imn, irz, totaldof, localdof, jj, kk, ll, mi, ni, mj, nj, mk, nk, ml, nl, mjmk
-  real(wp)    :: force(0:NGdof), gradienterror, rflag
-
-
-  cpui = MPI_WTIME()
-  cpuo = cpui
+    cpui = MPI_WTIME()
+    cpuo = cpui
 #ifdef OPENMP
-  nthreads = omp_get_max_threads()
+    nthreads = omp_get_max_threads()
 #else
-  nthreads = 1
+    nthreads = 1
 #endif
 
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+    iuser(1) = iuser(1) + 1 ! iteration counter;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  iuser(1) = iuser(1) + 1 ! iteration counter;
+    LComputeDerivatives = .false.
+    LComputeAxis = .true.
+
+    cput = MPI_WTIME()
+    Tpc00ab = Tpc00ab + (cput - cpuo)
+    call dforce(NGdof, Position(1:NGdof), force(0:NGdof), LComputeDerivatives, LComputeAxis)
+    cpuo = MPI_WTIME()
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  LComputeDerivatives = .false.
-  LComputeAxis = .true.
-
-   cput = MPI_WTIME()
-   Tpc00ab = Tpc00ab + ( cput-cpuo )
-   call dforce( NGdof, Position(1:NGdof), force(0:NGdof), LComputeDerivatives, LComputeAxis )
-   cpuo = MPI_WTIME()
-
+    Energy = sum(lBBintegral(1:Nvol)) ! Energy must always be assigned; 26 Feb 13;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  Energy = sum( lBBintegral(1:Nvol) ) ! Energy must always be assigned; 26 Feb 13;
+    if (nstate .eq. 1) ruser(1) = Energy ! this is the first call; 26 Feb 13;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  if( nstate.eq.1 ) ruser(1) = Energy ! this is the first call; 26 Feb 13;
+    select case (mode)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  select case( mode )
+    case (0) ! need to assign Energy; as Energy must always be assigned, it is assigned above select case; 26 Feb 13;
+
+        gradienterror = zero
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  case( 0 ) ! need to assign Energy; as Energy must always be assigned, it is assigned above select case; 26 Feb 13;
+    case (2) ! need to assign Energy & Gradient;
 
-   gradienterror = zero
+        iuser(2) = iuser(2) + 1 ! iteration counter;
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+        totaldof = 0 ! total degree-of-freedom counter;
 
-  case( 2 ) ! need to assign Energy & Gradient;
+        do vvol = 1, Nvol - 1
 
-   iuser(2) = iuser(2) + 1 ! iteration counter;
+            localdof = 0
 
-   totaldof = 0 ! total degree-of-freedom counter;
+            do ii = 1, mn !; mi = im(ii) ; ni = in(ii) ! loop over Fourier harmonics; 26 Feb 13;
 
-   do vvol = 1, Nvol-1
+                do irz = 0, 1
 
-    localdof = 0
+                    if (irz .eq. 1 .and. Igeometry .lt. 3) cycle ! Z is not required for Cartesian and standard-cylindrical; 04 Dec 14;
 
-    do ii = 1, mn !; mi = im(ii) ; ni = in(ii) ! loop over Fourier harmonics; 26 Feb 13;
+                    do issym = 0, 1
 
-     do irz = 0, 1
+                        if (issym .eq. 1 .and. YESstellsym) cycle
 
-      if( irz.eq.1 .and. Igeometry.lt.3 ) cycle ! Z is not required for Cartesian and standard-cylindrical; 04 Dec 14;
+                        if (ii .eq. 1 .and. irz .eq. 1 .and. issym .eq. 0) cycle ! no dependence on Z_{m,n} \sin( m\t - n\z ) for m=0, n=0;
+                        if (ii .eq. 1 .and. irz .eq. 0 .and. issym .eq. 1) cycle ! no dependence on Z_{m,n} \sin( m\t - n\z ) for m=0, n=0;
 
-      do issym = 0, 1
+                        localdof = localdof + 1
 
-       if( issym.eq.1 .and. YESstellsym ) cycle
+                        totaldof = totaldof + 1
 
-       if( ii.eq.1 .and. irz.eq.1 .and. issym.eq.0 ) cycle ! no dependence on Z_{m,n} \sin( m\t - n\z ) for m=0, n=0;
-       if( ii.eq.1 .and. irz.eq.0 .and. issym.eq.1 ) cycle ! no dependence on Z_{m,n} \sin( m\t - n\z ) for m=0, n=0;
+                        if (Igeometry .lt. 3) then; Gradient(totaldof) = (dBBdRZ(vvol, 1, localdof) + dBBdRZ(vvol + 1, 0, localdof)) ! no spectral constraints; 04 Dec 14;
+                        else; Gradient(totaldof) = (dBBdRZ(vvol, 1, localdof) + dBBdRZ(vvol + 1, 0, localdof)) - epsilon*dIIdRZ(vvol, localdof) ! computed in dforce; 26 Feb 13;
+                        end if
 
-       localdof = localdof + 1
+                    end do ! end of do issym; 26 Feb 13;
 
-       totaldof = totaldof + 1
+                end do ! end of do irz; 26 Feb 13;
 
-       if( Igeometry.lt.3 ) then ; Gradient(totaldof) = ( dBBdRZ(vvol,1,localdof) + dBBdRZ(vvol+1,0,localdof) ) ! no spectral constraints; 04 Dec 14;
-       else                      ; Gradient(totaldof) = ( dBBdRZ(vvol,1,localdof) + dBBdRZ(vvol+1,0,localdof) ) - epsilon * dIIdRZ(vvol,localdof) ! computed in dforce; 26 Feb 13;
-       endif
+            end do ! end of do ii; 26 Feb 13;
 
-      enddo ! end of do issym; 26 Feb 13;
+        end do ! end of do vvol; 26 Feb 13;
 
-     enddo ! end of do irz; 26 Feb 13;
+        if (totaldof .ne. NGdof) then
+            write (6, '("pc00ab :      fatal : myid=",i3," ; totaldof.ne.NGdof ; counting error ;")') myid
+            call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+            stop "pc00ab : totaldof.ne.NGdof : counting error  ;"
+        end if
 
-    enddo ! end of do ii; 26 Feb 13;
+        gradienterror = sum(abs(Gradient(1:NGdof)))/NGdof ! only used for screen output; 26 Feb 13;
 
-   enddo ! end of do vvol; 26 Feb 13;
+        wflag = 1; iflag = 0; rflag = gradienterror
 
-
-   if( totaldof.ne.NGdof ) then
-     write(6,'("pc00ab :      fatal : myid=",i3," ; totaldof.ne.NGdof ; counting error ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "pc00ab : totaldof.ne.NGdof : counting error  ;"
-    endif
-
-
-   gradienterror = sum( abs( Gradient(1:NGdof) ) ) / NGdof ! only used for screen output; 26 Feb 13;
-
-   wflag = 1 ; iflag = 0 ; rflag = gradienterror
-
-   cput = MPI_WTIME()
-   Tpc00ab = Tpc00ab + ( cput-cpuo )
-   call writin( wflag, iflag, rflag)
-   cpuo = MPI_WTIME()
- ! write restart file etc.;
+        cput = MPI_WTIME()
+        Tpc00ab = Tpc00ab + (cput - cpuo)
+        call writin(wflag, iflag, rflag)
+        cpuo = MPI_WTIME()
+        ! write restart file etc.;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  case( 3 ) ! second derivatives; required for E04LYF, which is called by pc02aa;
+    case (3) ! second derivatives; required for E04LYF, which is called by pc02aa;
 
-
-   if( .true. ) then
-     write(6,'("pc00ab :      fatal : myid=",i3," ; .true. ; have not yet computed second derivatives ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "pc00ab : .true. : have not yet computed second derivatives  ;"
-    endif
-
+        if (.true.) then
+            write (6, '("pc00ab :      fatal : myid=",i3," ; .true. ; have not yet computed second derivatives ;")') myid
+            call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+            stop "pc00ab : .true. : have not yet computed second derivatives  ;"
+        end if
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  case default
+    case default
 
-
-   if( .true. ) then
-     write(6,'("pc00ab :      fatal : myid=",i3," ; .true. ; invalid mode provided to pc00ab ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "pc00ab : .true. : invalid mode provided to pc00ab  ;"
-    endif
-
+        if (.true.) then
+            write (6, '("pc00ab :      fatal : myid=",i3," ; .true. ; invalid mode provided to pc00ab ;")') myid
+            call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+            stop "pc00ab : .true. : invalid mode provided to pc00ab  ;"
+        end if
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  end select
+    end select
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  cput = MPI_WTIME()
-  if( myid.eq.0 ) write(ounit,1000) cput-cpus, iuser(1:2), mode, Energy, gradienterror, ForceErr
+    cput = MPI_WTIME()
+    if (myid .eq. 0) write (ounit, 1000) cput - cpus, iuser(1:2), mode, Energy, gradienterror, ForceErr
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  if( iuser(2).ge.maxiter .and. maxiter.gt.0 ) mode = -1 ! iteration limit reached; E04DGF will terminate with ifail=mode;
-  if( ForceErr.lt.abs(forcetol)              ) mode = -2 ! force balance satisfied; E04DGF will terminate with ifail=mode;
+    if (iuser(2) .ge. maxiter .and. maxiter .gt. 0) mode = -1 ! iteration limit reached; E04DGF will terminate with ifail=mode;
+    if (ForceErr .lt. abs(forcetol)) mode = -2 ! force balance satisfied; E04DGF will terminate with ifail=mode;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  Energy                      = Energy                      / ruser(1) ! normalize to initial energy; 26 Feb 13;
-  Gradient(1:NGdof) = Gradient(1:NGdof) / ruser(1)
+    Energy = Energy/ruser(1) ! normalize to initial energy; 26 Feb 13;
+    Gradient(1:NGdof) = Gradient(1:NGdof)/ruser(1)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
 
 9999 continue
-  cput = MPI_WTIME()
-  Tpc00ab = Tpc00ab + ( cput-cpuo )
-  return
+    cput = MPI_WTIME()
+    Tpc00ab = Tpc00ab + (cput - cpuo)
+    return
 
-
-1000 format("pc00ab : ",f10.2," : iterations="2i8" ; mode=",i3," ; Energy="es23.15" ; |DF|="es13.5" ; ForceErr="es23.15" ;")
+1000 format("pc00ab : ", f10.2, " : iterations="2i8" ; mode=", i3, " ; Energy="es23.15" ; |DF|="es13.5" ; ForceErr="es23.15" ;")
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

@@ -43,318 +43,285 @@
 !> </ul>
 !>
 !> @param[in] writeorread 'W' to write the vector potential; 'R' to read it
-subroutine ra00aa( writeorread )
-  use mod_kinds, only: wp => dp
+subroutine ra00aa(writeorread)
+    use mod_kinds, only: wp => dp
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  use constants, only : zero
+    use constants, only: zero
 
-  use numerical, only :
+    use numerical, only:
 
-  use fileunits, only : ounit, aunit
+    use fileunits, only: ounit, aunit
 
-  use inputlist, only : Wmacros, Wra00aa, Nfp, Mpol, Ntor, Lrad
+    use inputlist, only: Wmacros, Wra00aa, Nfp, Mpol, Ntor, Lrad
 
-  use cputiming, only : Tra00aa
+    use cputiming, only: Tra00aa
 
-  use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, ext, Mvol, mn, im, in, Ate, Aze, Ato, Azo
+    use allglobal, only: myid, ncpu, cpus, MPI_COMM_SPEC, ext, Mvol, mn, im, in, Ate, Aze, Ato, Azo
 
-  use sphdf5,    only : write_vector_potential
+    use sphdf5, only: write_vector_potential
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
 
 #ifdef OPENMP
-  USE OMP_LIB
+    USE OMP_LIB
 #endif
-  use mpi
-  implicit none
-  integer   :: ierr, astat, ios, nthreads, ithread
-  real(wp)      :: cput, cpui, cpuo=0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
+    use mpi
+    implicit none
+    integer :: ierr, astat, ios, nthreads, ithread
+    real(wp) :: cput, cpui, cpuo = 0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
 
+    character, intent(in) :: writeorread
 
-  character, intent(in) :: writeorread
+    LOGICAL :: exist
 
-  LOGICAL               :: exist
+    integer :: vvol, oldMvol, oldMpol, oldNtor, oldmn, oldNfp, oldLrad, ii, jj, minLrad, llmodnp, ideriv, sumLrad
+    integer, allocatable :: oldim(:), oldin(:)
+    real(wp), allocatable :: oldAte(:), oldAze(:), oldAto(:), oldAzo(:)
+    real(wp), allocatable :: allAte(:, :), allAze(:, :), allAto(:, :), allAzo(:, :)
 
-  integer               :: vvol, oldMvol, oldMpol, oldNtor, oldmn, oldNfp, oldLrad, ii, jj, minLrad, llmodnp, ideriv, sumLrad
-  integer, allocatable  :: oldim(:), oldin(:)
-  real(wp)   , allocatable  :: oldAte(:), oldAze(:), oldAto(:), oldAzo(:)
-  real(wp)   , allocatable  :: allAte(:,:), allAze(:,:), allAto(:,:), allAzo(:,:)
-
-
-
-  cpui = MPI_WTIME()
-  cpuo = cpui
+    cpui = MPI_WTIME()
+    cpuo = cpui
 #ifdef OPENMP
-  nthreads = omp_get_max_threads()
+    nthreads = omp_get_max_threads()
 #else
-  nthreads = 1
+    nthreads = 1
 #endif
 
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+    ideriv = 0 ! write vector potential and not derivative (?)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  ideriv = 0 ! write vector potential and not derivative (?)
+    select case (writeorread)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  select case( writeorread )
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  case( 'W' ) ! write vector potential harmonics to file;
+    case ('W') ! write vector potential harmonics to file;
 
 #ifdef DEBUG
-   ! check if all data to be written is allocated properly
-   if( myid.eq.0 ) then
-    do vvol = 1, Mvol
-     do ii = 1, mn ! loop over Fourier harmonics;
+        ! check if all data to be written is allocated properly
+        if (myid .eq. 0) then
+            do vvol = 1, Mvol
+                do ii = 1, mn ! loop over Fourier harmonics;
 
-   if( .not.allocated(Ate(vvol,ideriv,ii)%s) ) then
-     write(6,'("ra00aa :      fatal : myid=",i3," ; .not.allocated(Ate(vvol,ideriv,ii)%s) ; error ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "ra00aa : .not.allocated(Ate(vvol,ideriv,ii)%s) : error  ;"
-    endif
+                    if (.not. allocated(Ate(vvol, ideriv, ii)%s)) then
+                        write (6, '("ra00aa :      fatal : myid=",i3," ; .not.allocated(Ate(vvol,ideriv,ii)%s) ; error ;")') myid
+                        call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                        stop "ra00aa : .not.allocated(Ate(vvol,ideriv,ii)%s) : error  ;"
+                    end if
 
+                    if (.not. allocated(Aze(vvol, ideriv, ii)%s)) then
+                        write (6, '("ra00aa :      fatal : myid=",i3," ; .not.allocated(Aze(vvol,ideriv,ii)%s) ; error ;")') myid
+                        call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                        stop "ra00aa : .not.allocated(Aze(vvol,ideriv,ii)%s) : error  ;"
+                    end if
 
-   if( .not.allocated(Aze(vvol,ideriv,ii)%s) ) then
-     write(6,'("ra00aa :      fatal : myid=",i3," ; .not.allocated(Aze(vvol,ideriv,ii)%s) ; error ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "ra00aa : .not.allocated(Aze(vvol,ideriv,ii)%s) : error  ;"
-    endif
+                    if (.not. allocated(Ato(vvol, ideriv, ii)%s)) then
+                        write (6, '("ra00aa :      fatal : myid=",i3," ; .not.allocated(Ato(vvol,ideriv,ii)%s) ; error ;")') myid
+                        call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                        stop "ra00aa : .not.allocated(Ato(vvol,ideriv,ii)%s) : error  ;"
+                    end if
 
+                    if (.not. allocated(Azo(vvol, ideriv, ii)%s)) then
+                        write (6, '("ra00aa :      fatal : myid=",i3," ; .not.allocated(Azo(vvol,ideriv,ii)%s) ; error ;")') myid
+                        call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                        stop "ra00aa : .not.allocated(Azo(vvol,ideriv,ii)%s) : error  ;"
+                    end if
 
-   if( .not.allocated(Ato(vvol,ideriv,ii)%s) ) then
-     write(6,'("ra00aa :      fatal : myid=",i3," ; .not.allocated(Ato(vvol,ideriv,ii)%s) ; error ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "ra00aa : .not.allocated(Ato(vvol,ideriv,ii)%s) : error  ;"
-    endif
-
-
-   if( .not.allocated(Azo(vvol,ideriv,ii)%s) ) then
-     write(6,'("ra00aa :      fatal : myid=",i3," ; .not.allocated(Azo(vvol,ideriv,ii)%s) ; error ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "ra00aa : .not.allocated(Azo(vvol,ideriv,ii)%s) : error  ;"
-    endif
-
-
-   if( Lrad(vvol).le.0 ) then
-     write(6,'("ra00aa :      fatal : myid=",i3," ; Lrad(vvol).le.0 ; error ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "ra00aa : Lrad(vvol).le.0 : error  ;"
-    endif
- ! TODO: probably not needed, since a lot other things do not work as well if Lrad is messed up
-     enddo ! end of do ii;  6 Feb 13;
-    enddo ! end of do vvol;  6 Feb 13;
-   endif ! end of if( myid.eq.0 ) ;  6 Feb 13;
+                    if (Lrad(vvol) .le. 0) then
+                        write (6, '("ra00aa :      fatal : myid=",i3," ; Lrad(vvol).le.0 ; error ;")') myid
+                        call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                        stop "ra00aa : Lrad(vvol).le.0 : error  ;"
+                    end if
+                    ! TODO: probably not needed, since a lot other things do not work as well if Lrad is messed up
+                end do ! end of do ii;  6 Feb 13;
+            end do ! end of do vvol;  6 Feb 13;
+        end if ! end of if( myid.eq.0 ) ;  6 Feb 13;
 #endif
 
-   ! determine total radial dimension: sum(Lrad(1:Mvol)+1)
-   sumLrad = sum(Lrad(1:Mvol)+1)
+        ! determine total radial dimension: sum(Lrad(1:Mvol)+1)
+        sumLrad = sum(Lrad(1:Mvol) + 1)
 
-   allocate(allAte(1:sumLrad,1:mn))
-   allocate(allAze(1:sumLrad,1:mn))
-   allocate(allAto(1:sumLrad,1:mn))
-   allocate(allAzo(1:sumLrad,1:mn))
+        allocate (allAte(1:sumLrad, 1:mn))
+        allocate (allAze(1:sumLrad, 1:mn))
+        allocate (allAto(1:sumLrad, 1:mn))
+        allocate (allAzo(1:sumLrad, 1:mn))
 
-   ! collect data in 2D arrays which can be written more conveniently
-   sumLrad = 1
-   do vvol = 1, Mvol
+        ! collect data in 2D arrays which can be written more conveniently
+        sumLrad = 1
+        do vvol = 1, Mvol
 
-    ! TODO: MPI_allgather ????
-    ! or at least selective via IsMyVolume()
+            ! TODO: MPI_allgather ????
+            ! or at least selective via IsMyVolume()
 
-    do ii = 1, mn ! loop over Fourier harmonics;
-     allAte(sumLrad:sumLrad+Lrad(vvol),ii) = Ate(vvol,ideriv,ii)%s(0:Lrad(vvol))
-     allAze(sumLrad:sumLrad+Lrad(vvol),ii) = Aze(vvol,ideriv,ii)%s(0:Lrad(vvol))
-     allAto(sumLrad:sumLrad+Lrad(vvol),ii) = Ato(vvol,ideriv,ii)%s(0:Lrad(vvol))
-     allAzo(sumLrad:sumLrad+Lrad(vvol),ii) = Azo(vvol,ideriv,ii)%s(0:Lrad(vvol))
-    enddo ! end of do ii;  6 Feb 13;
-    sumLrad = sumLrad+Lrad(vvol)+1
-   enddo ! end of do vvol;  6 Feb 13;
+            do ii = 1, mn ! loop over Fourier harmonics;
+                allAte(sumLrad:sumLrad + Lrad(vvol), ii) = Ate(vvol, ideriv, ii)%s(0:Lrad(vvol))
+                allAze(sumLrad:sumLrad + Lrad(vvol), ii) = Aze(vvol, ideriv, ii)%s(0:Lrad(vvol))
+                allAto(sumLrad:sumLrad + Lrad(vvol), ii) = Ato(vvol, ideriv, ii)%s(0:Lrad(vvol))
+                allAzo(sumLrad:sumLrad + Lrad(vvol), ii) = Azo(vvol, ideriv, ii)%s(0:Lrad(vvol))
+            end do ! end of do ii;  6 Feb 13;
+            sumLrad = sumLrad + Lrad(vvol) + 1
+        end do ! end of do vvol;  6 Feb 13;
 
-   ! determine total radial dimension: sum(Lrad(1:Mvol)+1)
-   sumLrad = sum(Lrad(1:Mvol)+1)
+        ! determine total radial dimension: sum(Lrad(1:Mvol)+1)
+        sumLrad = sum(Lrad(1:Mvol) + 1)
 
-   ! HDF5 calls have to be done from all CPUs when using the collective API
+        ! HDF5 calls have to be done from all CPUs when using the collective API
 
-   cput = MPI_WTIME()
-   Tra00aa = Tra00aa + ( cput-cpuo )
-   call write_vector_potential(sumLrad, allAte, allAze, allAto, allAzo)
-   cpuo = MPI_WTIME()
+        cput = MPI_WTIME()
+        Tra00aa = Tra00aa + (cput - cpuo)
+        call write_vector_potential(sumLrad, allAte, allAze, allAto, allAzo)
+        cpuo = MPI_WTIME()
 
-
-   ! clean up after yourself
-   deallocate(allAte)
-   deallocate(allAze)
-   deallocate(allAto)
-   deallocate(allAzo)
+        ! clean up after yourself
+        deallocate (allAte)
+        deallocate (allAze)
+        deallocate (allAto)
+        deallocate (allAzo)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  case( 'R' ) ! read potential from file; interpolate onto new radial grid;
+    case ('R') ! read potential from file; interpolate onto new radial grid;
 
-   !FATAL( ra00aa, .true., under reconstruction )
+        !FATAL( ra00aa, .true., under reconstruction )
 
-   if( myid.eq.0 ) then
+        if (myid .eq. 0) then
 
-    inquire(file="."//trim(ext)//".sp.A",exist=exist)
+            inquire (file="."//trim(ext)//".sp.A", exist=exist)
 
-    if( .not.exist ) then ; write(ounit,'("ra00aa : ",f10.2," : myid=",i3," ; error ; .ext.sp.A does not exist ;")') cput-cpus, myid ; goto 9998
-    endif
+            if (.not. exist) then; write (ounit, '("ra00aa : ",f10.2," : myid=",i3," ; error ; .ext.sp.A does not exist ;")') cput - cpus, myid; goto 9998
+            end if
 
-    open(aunit,file="."//trim(ext)//".sp.A",status="old",form="unformatted",iostat=ios) ! this will contain initial guess for vector potential;
+            open (aunit, file="."//trim(ext)//".sp.A", status="old", form="unformatted", iostat=ios) ! this will contain initial guess for vector potential;
 
-    if( ios.ne.0 ) then ; write(ounit,'("ra00aa : ",f10.2," : myid=",i3," ; error ; opening .ext.sp.A ;")') cput-cpus, myid ; goto 9997
-    endif
+            if (ios .ne. 0) then; write (ounit, '("ra00aa : ",f10.2," : myid=",i3," ; error ; opening .ext.sp.A ;")') cput - cpus, myid; goto 9997
+            end if
 
-    read(aunit,iostat=ios) oldMvol, oldMpol, oldNtor, oldmn, oldNfp ! these are the "old" resolution parameters;
+            read (aunit, iostat=ios) oldMvol, oldMpol, oldNtor, oldmn, oldNfp ! these are the "old" resolution parameters;
 
-    if( ios.ne.0 ) then
-     write(ounit,'("ra00aa : ",f10.2," : myid=",i3," ; error ; reading oldMvol, oldMpol, oldNtor, oldmn, oldNfp;")') cput-cpus, myid
-     goto 9997
-    endif
+            if (ios .ne. 0) then
+                write (ounit, '("ra00aa : ",f10.2," : myid=",i3," ; error ; reading oldMvol, oldMpol, oldNtor, oldmn, oldNfp;")') cput - cpus, myid
+                goto 9997
+            end if
 
-    if( oldNfp .ne.Nfp  ) then ; write(ounit,'("ra00aa : ",f10.2," : myid=",i3," ; error ; inconsistent Nfp ; ")') cput-cpus, myid ; goto 9997
-    endif
-    if( oldMvol.ne.Mvol ) then ; write(ounit,'("ra00aa : ",f10.2," : myid=",i3," ; error ; inconsistent Mvol ;")') cput-cpus, myid ; goto 9997
-    endif
+            if (oldNfp .ne. Nfp) then; write (ounit, '("ra00aa : ",f10.2," : myid=",i3," ; error ; inconsistent Nfp ; ")') cput - cpus, myid; goto 9997
+            end if
+            if (oldMvol .ne. Mvol) then; write (ounit, '("ra00aa : ",f10.2," : myid=",i3," ; error ; inconsistent Mvol ;")') cput - cpus, myid; goto 9997
+            end if
 
+            allocate (oldim(1:oldmn), stat=astat)
+            oldim(1:oldmn) = 0
 
-   allocate( oldim(1:oldmn), stat=astat )
-   oldim(1:oldmn) = 0
+            allocate (oldin(1:oldmn), stat=astat)
+            oldin(1:oldmn) = 0
 
+            read (aunit, iostat=ios) oldim(1:oldmn)
+            read (aunit, iostat=ios) oldin(1:oldmn)
 
-   allocate( oldin(1:oldmn), stat=astat )
-   oldin(1:oldmn) = 0
+            do vvol = 1, oldMvol
 
+                read (aunit, iostat=ios) oldLrad
 
-    read(aunit,iostat=ios) oldim(1:oldmn)
-    read(aunit,iostat=ios) oldin(1:oldmn)
+                minLrad = min(oldLrad, Lrad(vvol))
 
-    do vvol = 1, oldMvol
+                allocate (oldAte(0:oldLrad), stat=astat)
+                oldAte(0:oldLrad) = zero
 
-     read(aunit,iostat=ios) oldLrad
+                allocate (oldAze(0:oldLrad), stat=astat)
+                oldAze(0:oldLrad) = zero
 
-     minLrad = min(oldLrad,Lrad(vvol))
+                allocate (oldAto(0:oldLrad), stat=astat)
+                oldAto(0:oldLrad) = zero
 
+                allocate (oldAzo(0:oldLrad), stat=astat)
+                oldAzo(0:oldLrad) = zero
 
-   allocate( oldAte(0:oldLrad), stat=astat )
-   oldAte(0:oldLrad) = zero
+                do jj = 1, oldmn
 
+                    read (aunit, iostat=ios) oldAte(0:oldLrad)
+                    read (aunit, iostat=ios) oldAze(0:oldLrad)
+                    read (aunit, iostat=ios) oldAto(0:oldLrad)
+                    read (aunit, iostat=ios) oldAzo(0:oldLrad)
 
-   allocate( oldAze(0:oldLrad), stat=astat )
-   oldAze(0:oldLrad) = zero
+                    do ii = 1, mn ! compare Fourier harmonic with old; 26 Feb 13;
+                        if (im(ii) .eq. oldim(jj) .and. in(ii) .eq. oldin(jj)) then; Ate(vvol, ideriv, ii)%s(0:minLrad) = oldAte(0:minLrad)
+                            ; ; Aze(vvol, ideriv, ii)%s(0:minLrad) = oldAze(0:minLrad)
+                            ; ; Ato(vvol, ideriv, ii)%s(0:minLrad) = oldAto(0:minLrad)
+                            ; ; Azo(vvol, ideriv, ii)%s(0:minLrad) = oldAzo(0:minLrad)
+                        end if
+                    end do ! end of do ii; 26 Feb 13;
 
+                end do ! end of do jj; 26 Feb 13;
 
-   allocate( oldAto(0:oldLrad), stat=astat )
-   oldAto(0:oldLrad) = zero
+                deallocate (oldAte, stat=astat)
 
+                deallocate (oldAze, stat=astat)
 
-   allocate( oldAzo(0:oldLrad), stat=astat )
-   oldAzo(0:oldLrad) = zero
+                deallocate (oldAto, stat=astat)
 
+                deallocate (oldAzo, stat=astat)
 
-     do jj = 1, oldmn
+            end do ! end of do vvol; 26 Feb 13;
 
-      read(aunit,iostat=ios) oldAte(0:oldLrad)
-      read(aunit,iostat=ios) oldAze(0:oldLrad)
-      read(aunit,iostat=ios) oldAto(0:oldLrad)
-      read(aunit,iostat=ios) oldAzo(0:oldLrad)
+            deallocate (oldim, stat=astat)
 
-      do ii = 1, mn ! compare Fourier harmonic with old; 26 Feb 13;
-       if( im(ii).eq.oldim(jj) .and. in(ii).eq.oldin(jj) ) then ; Ate(vvol,ideriv,ii)%s(0:minLrad) = oldAte(0:minLrad)
-        ;                                                       ; Aze(vvol,ideriv,ii)%s(0:minLrad) = oldAze(0:minLrad)
-        ;                                                       ; Ato(vvol,ideriv,ii)%s(0:minLrad) = oldAto(0:minLrad)
-        ;                                                       ; Azo(vvol,ideriv,ii)%s(0:minLrad) = oldAzo(0:minLrad)
-       endif
-      enddo ! end of do ii; 26 Feb 13;
+            deallocate (oldin, stat=astat)
 
-     enddo ! end of do jj; 26 Feb 13;
+9997        continue
 
+            close (aunit)
 
-   deallocate(oldAte,stat=astat)
+9998        continue
 
+        end if  ! end of if( myid.eq.0 ) ; 26 Feb 13;
 
-   deallocate(oldAze,stat=astat)
+        do vvol = 1, Mvol
 
+            llmodnp = 0 ! this node contains the information that is to be broadcast; 26 Feb 13;
 
-   deallocate(oldAto,stat=astat)
+            do ii = 1, mn
 
+                call MPI_BCAST(Ate(vvol, ideriv, ii)%s(0:Lrad(vvol)), Lrad(vvol) + 1, MPI_DOUBLE_PRECISION, llmodnp, MPI_COMM_SPEC, ierr)
 
-   deallocate(oldAzo,stat=astat)
+                call MPI_BCAST(Aze(vvol, ideriv, ii)%s(0:Lrad(vvol)), Lrad(vvol) + 1, MPI_DOUBLE_PRECISION, llmodnp, MPI_COMM_SPEC, ierr)
 
+            end do
+            !if( NOTstellsym ) then
+            do ii = 1, mn
 
-    enddo ! end of do vvol; 26 Feb 13;
+                call MPI_BCAST(Ato(vvol, ideriv, ii)%s(0:Lrad(vvol)), Lrad(vvol) + 1, MPI_DOUBLE_PRECISION, llmodnp, MPI_COMM_SPEC, ierr)
 
+                call MPI_BCAST(Azo(vvol, ideriv, ii)%s(0:Lrad(vvol)), Lrad(vvol) + 1, MPI_DOUBLE_PRECISION, llmodnp, MPI_COMM_SPEC, ierr)
 
-   deallocate(oldim,stat=astat)
+            end do
+            !endif
 
-
-   deallocate(oldin,stat=astat)
-
-
-9997 continue
-
-    close(aunit)
-
-9998 continue
-
-   endif  ! end of if( myid.eq.0 ) ; 26 Feb 13;
-
-   do vvol = 1, Mvol
-
-    llmodnp = 0 ! this node contains the information that is to be broadcast; 26 Feb 13;
-
-    do ii = 1, mn
-
-   call MPI_BCAST(Ate(vvol,ideriv,ii)%s(0:Lrad(vvol)),Lrad(vvol)+1,MPI_DOUBLE_PRECISION,llmodnp ,MPI_COMM_SPEC,ierr)
-
-
-   call MPI_BCAST(Aze(vvol,ideriv,ii)%s(0:Lrad(vvol)),Lrad(vvol)+1,MPI_DOUBLE_PRECISION,llmodnp ,MPI_COMM_SPEC,ierr)
-
-    enddo
-   !if( NOTstellsym ) then
-    do ii = 1, mn
-
-   call MPI_BCAST(Ato(vvol,ideriv,ii)%s(0:Lrad(vvol)),Lrad(vvol)+1,MPI_DOUBLE_PRECISION,llmodnp ,MPI_COMM_SPEC,ierr)
-
-
-   call MPI_BCAST(Azo(vvol,ideriv,ii)%s(0:Lrad(vvol)),Lrad(vvol)+1,MPI_DOUBLE_PRECISION,llmodnp ,MPI_COMM_SPEC,ierr)
-
-    enddo
-   !endif
-
-   enddo ! end of do vvol; 26 Feb 13;
+        end do ! end of do vvol; 26 Feb 13;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  case default
+    case default
 
+        if (.true.) then
+            write (6, '("ra00aa :      fatal : myid=",i3," ; .true. ; invalid writeorread flag supplied on input ;")') myid
+            call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+            stop "ra00aa : .true. : invalid writeorread flag supplied on input  ;"
+        end if
 
-   if( .true. ) then
-     write(6,'("ra00aa :      fatal : myid=",i3," ; .true. ; invalid writeorread flag supplied on input ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "ra00aa : .true. : invalid writeorread flag supplied on input  ;"
-    endif
-
-
-  end select
+    end select
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
 
 9999 continue
-  cput = MPI_WTIME()
-  Tra00aa = Tra00aa + ( cput-cpuo )
-  return
-
+    cput = MPI_WTIME()
+    Tra00aa = Tra00aa + (cput - cpuo)
+    return
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 end subroutine ra00aa
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
 

@@ -141,119 +141,111 @@
 !> @param DDl
 !> @param MMl
 !> @param[in] iflag
-subroutine lforce( lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, iflag )
-  use mod_kinds, only: wp => dp
+subroutine lforce(lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, iflag)
+    use mod_kinds, only: wp => dp
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  use constants, only : zero, half, one, two
+    use constants, only: zero, half, one, two
 
-  use fileunits, only : ounit
+    use fileunits, only: ounit
 
-  use inputlist, only : Wlforce, Igeometry, Nvol, Lrad, gamma, pscale, adiabatic, Lcheck
+    use inputlist, only: Wlforce, Igeometry, Nvol, Lrad, gamma, pscale, adiabatic, Lcheck
 
-  use cputiming, only : Tlforce
+    use cputiming, only: Tlforce
 
-  use allglobal, only : ncpu, myid, cpus, MPI_COMM_SPEC, &
-                        Lcoordinatesingularity, Mvol, &
-                        iRbc, iZbs, iRbs, iZbc, &
-                        YESstellsym, NOTstellsym, &
-                        mn, im, in, regumm, &
-                        ijreal, ijimag, jireal, jiimag, &
-                        efmn, ofmn, cfmn, sfmn, evmn, odmn, comn, simn, &
-                        Nt, Nz, &
-                        Ate, Aze, Ato, Azo, &
-                        TT, RTT, &
-                        sg, guvij, iRij, iZij, dRij, dZij, tRij, tZij, &
-                        mmpp, &
-                        Bemn, Bomn, Iomn, Iemn, Somn, Semn, &
-                        Pomn, Pemn, &
-                        vvolume, &
-                        build_vector_potential
+    use allglobal, only: ncpu, myid, cpus, MPI_COMM_SPEC, &
+                         Lcoordinatesingularity, Mvol, &
+                         iRbc, iZbs, iRbs, iZbc, &
+                         YESstellsym, NOTstellsym, &
+                         mn, im, in, regumm, &
+                         ijreal, ijimag, jireal, jiimag, &
+                         efmn, ofmn, cfmn, sfmn, evmn, odmn, comn, simn, &
+                         Nt, Nz, &
+                         Ate, Aze, Ato, Azo, &
+                         TT, RTT, &
+                         sg, guvij, iRij, iZij, dRij, dZij, tRij, tZij, &
+                         mmpp, &
+                         Bemn, Bomn, Iomn, Iemn, Somn, Semn, &
+                         Pomn, Pemn, &
+                         vvolume, &
+                         build_vector_potential
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
 
 #ifdef OPENMP
-  USE OMP_LIB
+    USE OMP_LIB
 #endif
-  use mpi
-  implicit none
-  integer   :: ierr, astat, ios, nthreads, ithread
-  real(wp)      :: cput, cpui, cpuo=0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
+    use mpi
+    implicit none
+    integer :: ierr, astat, ios, nthreads, ithread
+    real(wp) :: cput, cpui, cpuo = 0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
 
+    integer, intent(in) :: lvol, iocons, ideriv, Ntz, iflag
+    real(wp) :: dAt(1:Ntz, -1:2), dAz(1:Ntz, -1:2), XX(1:Ntz), YY(1:Ntz), dRR(1:Ntz, -1:1), dZZ(1:Ntz, -1:1), DDl, MMl
 
-  integer, intent(in)  :: lvol, iocons, ideriv, Ntz, iflag
-  real(wp)                 :: dAt(1:Ntz, -1:2), dAz(1:Ntz, -1:2), XX(1:Ntz), YY(1:Ntz), dRR(1:Ntz,-1:1), dZZ(1:Ntz,-1:1), DDl, MMl
+    real(wp) :: IIl(1:Ntz), length(1:Ntz), dLL(1:Ntz)
+    integer :: Lcurvature, ii, jj, kk, ll, ifail, ivol, lnn, mi, id!, oicons
+    real(wp) :: dBB(1:Ntz, -1:2), lss, mfactor
 
-  real(wp)                 :: IIl(1:Ntz), length(1:Ntz), dLL(1:Ntz)
-  integer              :: Lcurvature, ii, jj, kk, ll, ifail, ivol, lnn, mi, id!, oicons
-  real(wp)                 :: dBB(1:Ntz, -1:2), lss, mfactor
+    real(wp) :: dAs(1:Ntz)!, dRdt(-1:1,0:1), dZdt(-1:1,0:1)
+    real(wp) :: lgvuij(1:Ntz, 1:3, 1:3) ! local workspace; 13 Sep 13;
 
-  real(wp)                 :: dAs(1:Ntz)!, dRdt(-1:1,0:1), dZdt(-1:1,0:1)
-  real(wp)                 :: lgvuij(1:Ntz,1:3,1:3) ! local workspace; 13 Sep 13;
-
-
-  cpui = MPI_WTIME()
-  cpuo = cpui
+    cpui = MPI_WTIME()
+    cpuo = cpui
 #ifdef OPENMP
-  nthreads = omp_get_max_threads()
+    nthreads = omp_get_max_threads()
 #else
-  nthreads = 1
+    nthreads = 1
 #endif
-
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 #ifdef DEBUG
 
-   if( lvol.lt.1 .or. lvol.gt.Mvol ) then
-     write(6,'("lforce :      fatal : myid=",i3," ; lvol.lt.1 .or. lvol.gt.Mvol ; illegal lvol ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "lforce : lvol.lt.1 .or. lvol.gt.Mvol : illegal lvol  ;"
-    endif
+    if (lvol .lt. 1 .or. lvol .gt. Mvol) then
+        write (6, '("lforce :      fatal : myid=",i3," ; lvol.lt.1 .or. lvol.gt.Mvol ; illegal lvol ;")') myid
+        call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+        stop "lforce : lvol.lt.1 .or. lvol.gt.Mvol : illegal lvol  ;"
+    end if
 
+    if (lvol .eq. 1 .and. iocons .eq. 0) then
+        write (6, '("lforce :      fatal : myid=",i3," ; lvol.eq.1 .and. iocons.eq.0 ; illegal combination ;")') myid
+        call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+        stop "lforce : lvol.eq.1 .and. iocons.eq.0 : illegal combination  ;"
+    end if
 
-   if( lvol.eq.1 .and. iocons.eq.0 ) then
-     write(6,'("lforce :      fatal : myid=",i3," ; lvol.eq.1 .and. iocons.eq.0 ; illegal combination ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "lforce : lvol.eq.1 .and. iocons.eq.0 : illegal combination  ;"
-    endif
+    if (lvol .eq. Mvol .and. iocons .eq. 1) then
+        write (6, '("lforce :      fatal : myid=",i3," ; lvol.eq.Mvol .and. iocons.eq.1 ; illegal combination ;")') myid
+        call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+        stop "lforce : lvol.eq.Mvol .and. iocons.eq.1 : illegal combination  ;"
+    end if
 
-
-   if( lvol.eq.Mvol .and. iocons.eq.1 ) then
-     write(6,'("lforce :      fatal : myid=",i3," ; lvol.eq.Mvol .and. iocons.eq.1 ; illegal combination ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "lforce : lvol.eq.Mvol .and. iocons.eq.1 : illegal combination  ;"
-    endif
-
-
-   if( iflag.lt.0 .or. iflag.gt.1 ) then
-     write(6,'("lforce :      fatal : myid=",i3," ; iflag.lt.0 .or. iflag.gt.1 ; illegal iflag ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "lforce : iflag.lt.0 .or. iflag.gt.1 : illegal iflag  ;"
-    endif
+    if (iflag .lt. 0 .or. iflag .gt. 1) then
+        write (6, '("lforce :      fatal : myid=",i3," ; iflag.lt.0 .or. iflag.gt.1 ; illegal iflag ;")') myid
+        call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+        stop "lforce : iflag.lt.0 .or. iflag.gt.1 : illegal iflag  ;"
+    end if
 
 #endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  dAt(1:Ntz, -1:2) = zero ! initialize intent out; 01 Jul 14;
-  dAz(1:Ntz, -1:2) = zero ! initialize intent out; 01 Jul 14;
+    dAt(1:Ntz, -1:2) = zero ! initialize intent out; 01 Jul 14;
+    dAz(1:Ntz, -1:2) = zero ! initialize intent out; 01 Jul 14;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  lss = two * iocons - one ! recall that iocons is effective local radial coordinate; 24 Apr 13;
+    lss = two*iocons - one ! recall that iocons is effective local radial coordinate; 24 Apr 13;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  Lcurvature = 1
+    Lcurvature = 1
 
-
-   cput = MPI_WTIME()
-   Tlforce = Tlforce + ( cput-cpuo )
-   call coords( lvol, lss, Lcurvature, Ntz, mn )
-   cpuo = MPI_WTIME()
- ! get coordinates and derivatives wrt Rj, Zj, at specific radial location;
+    cput = MPI_WTIME()
+    Tlforce = Tlforce + (cput - cpuo)
+    call coords(lvol, lss, Lcurvature, Ntz, mn)
+    cpuo = MPI_WTIME()
+    ! get coordinates and derivatives wrt Rj, Zj, at specific radial location;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -265,125 +257,123 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, ifl
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 ! compute B^2 on interface;
-  ! Compute covariant vector potential. Stored in efmn, ofmn, cfmn, sfmn.
-  !                                         ideriv, tderiv
-  call build_vector_potential(lvol, iocons,      0,      1)
-
-  ! Map to real space
-  call invfft( mn, im, in, efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt(1:Ntz, 0), dAz(1:Ntz, 0) )
-
-  id = ideriv
-  if( id.eq.0 ) then
-
-    dBB(1:Ntz,id) = half * (        dAz(1:Ntz, id)*dAz(1:Ntz, id)*guvij(1:Ntz,2,2,id) &
-                            - two * dAz(1:Ntz, id)*dAt(1:Ntz, id)*guvij(1:Ntz,2,3,id) &
-                            +       dAt(1:Ntz, id)*dAt(1:Ntz, id)*guvij(1:Ntz,3,3,id)  ) / sg(1:Ntz,0)**2
-
-  else
     ! Compute covariant vector potential. Stored in efmn, ofmn, cfmn, sfmn.
-    call build_vector_potential(lvol, iocons, id, 1)
+    !                                         ideriv, tderiv
+    call build_vector_potential(lvol, iocons, 0, 1)
+
     ! Map to real space
-    call invfft( mn, im, in, efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt(1:Ntz, id), dAz(1:Ntz, id) )
+    call invfft(mn, im, in, efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt(1:Ntz, 0), dAz(1:Ntz, 0))
 
-    dBB(1:Ntz,id) = half * (        dAz(1:Ntz,id)*dAz(1:Ntz, 0)*guvij(1:Ntz,2,2,0) &
-                            - two * dAz(1:Ntz,id)*dAt(1:Ntz, 0)*guvij(1:Ntz,2,3,0) &
-                            +       dAt(1:Ntz,id)*dAt(1:Ntz, 0)*guvij(1:Ntz,3,3,0) &
-                            +       dAz(1:Ntz, 0)*dAz(1:Ntz,id)*guvij(1:Ntz,2,2,0) &
-                            - two * dAz(1:Ntz, 0)*dAt(1:Ntz,id)*guvij(1:Ntz,2,3,0) &
-                            +       dAt(1:Ntz, 0)*dAt(1:Ntz,id)*guvij(1:Ntz,3,3,0)  ) / sg(1:Ntz,0)**2
-  endif ! end of if( ideriv.gt.0 ) ;
+    id = ideriv
+    if (id .eq. 0) then
 
-  ! If derivatives w.r.t geometry, take into account metric derivatives
-  if( ideriv.eq.-1 ) then
-    ! Get coordinate metrics and their derivatives wrt Rj, Zj on interface;
-    lss = two * iocons - one ; Lcurvature = 4
+        dBB(1:Ntz, id) = half*(dAz(1:Ntz, id)*dAz(1:Ntz, id)*guvij(1:Ntz, 2, 2, id) &
+                               - two*dAz(1:Ntz, id)*dAt(1:Ntz, id)*guvij(1:Ntz, 2, 3, id) &
+                               + dAt(1:Ntz, id)*dAt(1:Ntz, id)*guvij(1:Ntz, 3, 3, id))/sg(1:Ntz, 0)**2
 
-   cput = MPI_WTIME()
-   Tlforce = Tlforce + ( cput-cpuo )
-   call coords( lvol, lss, Lcurvature, Ntz, mn )
-   cpuo = MPI_WTIME()
+    else
+        ! Compute covariant vector potential. Stored in efmn, ofmn, cfmn, sfmn.
+        call build_vector_potential(lvol, iocons, id, 1)
+        ! Map to real space
+        call invfft(mn, im, in, efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt(1:Ntz, id), dAz(1:Ntz, id))
 
+        dBB(1:Ntz, id) = half*(dAz(1:Ntz, id)*dAz(1:Ntz, 0)*guvij(1:Ntz, 2, 2, 0) &
+                               - two*dAz(1:Ntz, id)*dAt(1:Ntz, 0)*guvij(1:Ntz, 2, 3, 0) &
+                               + dAt(1:Ntz, id)*dAt(1:Ntz, 0)*guvij(1:Ntz, 3, 3, 0) &
+                               + dAz(1:Ntz, 0)*dAz(1:Ntz, id)*guvij(1:Ntz, 2, 2, 0) &
+                               - two*dAz(1:Ntz, 0)*dAt(1:Ntz, id)*guvij(1:Ntz, 2, 3, 0) &
+                               + dAt(1:Ntz, 0)*dAt(1:Ntz, id)*guvij(1:Ntz, 3, 3, 0))/sg(1:Ntz, 0)**2
+    end if ! end of if( ideriv.gt.0 ) ;
 
-    dBB(1:Ntz,id) = dBB(1:Ntz, id) + &
-                    half * (        dAz(1:Ntz, 0)*dAz(1:Ntz, 0)*guvij(1:Ntz,2,2,1) &
-                            - two * dAz(1:Ntz, 0)*dAt(1:Ntz, 0)*guvij(1:Ntz,2,3,1) &
-                            +       dAt(1:Ntz, 0)*dAt(1:Ntz, 0)*guvij(1:Ntz,3,3,1)  ) / sg(1:Ntz,0)**2 &
-                    - dBB(1:Ntz,0) * two * sg(1:Ntz,1) / sg(1:Ntz,0)
-  endif
+    ! If derivatives w.r.t geometry, take into account metric derivatives
+    if (ideriv .eq. -1) then
+        ! Get coordinate metrics and their derivatives wrt Rj, Zj on interface;
+        lss = two*iocons - one; Lcurvature = 4
 
-  ijreal(1:Ntz) = adiabatic(lvol) * pscale / vvolume(lvol)**gamma + dBB(1:Ntz, 0) ! p + B^2/2; 13 Sep 13;
+        cput = MPI_WTIME()
+        Tlforce = Tlforce + (cput - cpuo)
+        call coords(lvol, lss, Lcurvature, Ntz, mn)
+        cpuo = MPI_WTIME()
+
+        dBB(1:Ntz, id) = dBB(1:Ntz, id) + &
+                         half*(dAz(1:Ntz, 0)*dAz(1:Ntz, 0)*guvij(1:Ntz, 2, 2, 1) &
+                               - two*dAz(1:Ntz, 0)*dAt(1:Ntz, 0)*guvij(1:Ntz, 2, 3, 1) &
+                               + dAt(1:Ntz, 0)*dAt(1:Ntz, 0)*guvij(1:Ntz, 3, 3, 1))/sg(1:Ntz, 0)**2 &
+                         - dBB(1:Ntz, 0)*two*sg(1:Ntz, 1)/sg(1:Ntz, 0)
+    end if
+
+    ijreal(1:Ntz) = adiabatic(lvol)*pscale/vvolume(lvol)**gamma + dBB(1:Ntz, 0) ! p + B^2/2; 13 Sep 13;
 
 #ifdef DEBUG
-	if( Wlforce ) then
-		write(ounit, 8375) lvol, iocons, ideriv, dAz(1:Ntz, id), dAt(1:Ntz, id)
-		write(ounit, 8376) lvol, iocons, ideriv, guvij(1:Ntz,2,2,0), guvij(1:Ntz,2,3,0), guvij(1:Ntz,3,3,0), sg(1:Ntz,0)
+    if (Wlforce) then
+        write (ounit, 8375) lvol, iocons, ideriv, dAz(1:Ntz, id), dAt(1:Ntz, id)
+        write (ounit, 8376) lvol, iocons, ideriv, guvij(1:Ntz, 2, 2, 0), guvij(1:Ntz, 2, 3, 0), guvij(1:Ntz, 3, 3, 0), sg(1:Ntz, 0)
 
-8375 format("lforce : lvol=",i7,", iocons=", i7, ", ideriv=", i7 ,"; dAz=",f10.6,", dAt=", f10.6)
-8376 format("lforce : lvol=",i7,", iocons=", i7, ", ideriv=", i7 ,"; g22=",f10.6,", g23=", f10.6,", g33=", f10.6,", sg=", f10.6)
-	endif
+8375    format("lforce : lvol=", i7, ", iocons=", i7, ", ideriv=", i7, "; dAz=", f10.6, ", dAt=", f10.6)
+8376    format("lforce : lvol=", i7, ", iocons=", i7, ", ideriv=", i7, "; g22=", f10.6, ", g23=", f10.6, ", g33=", f10.6, ", sg=", f10.6)
+    end if
 #endif
-
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  if( iflag .eq. 1 ) goto 9999 ! iflag = 1 indicates the derivatives of the force are to be calculated; derivatives of magnetic field calculated above;
+    if (iflag .eq. 1) goto 9999 ! iflag = 1 indicates the derivatives of the force are to be calculated; derivatives of magnetic field calculated above;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 ! compute spectral constraints;
 
-  select case( Igeometry )
+    select case (Igeometry)
 
-  case( 1:2 ) ; dLL(1:Ntz) = zero ! placeholder; 08 Feb 16;
-   ;          ; IIl(1:Ntz) = zero ! placeholder; 11 Aug 14;
-  case(   3 )
+    case (1:2); dLL(1:Ntz) = zero ! placeholder; 08 Feb 16;
+        ; ; IIl(1:Ntz) = zero ! placeholder; 11 Aug 14;
+    case (3)
 
-   do ivol = 0, 1
+        do ivol = 0, 1
 
-    call invfft( mn, im(1:mn), in(1:mn),            iRbc(1:mn ,lvol-1+ivol),              iRbs(1:mn ,lvol-1+ivol), &
-                                                    iZbc(1:mn ,lvol-1+ivol),              iZbs(1:mn ,lvol-1+ivol), &
-                                         Nt, Nz,    iRij(1:Ntz,lvol-1+ivol),              iZij(1:Ntz,lvol-1+ivol)   )
+            call invfft(mn, im(1:mn), in(1:mn), iRbc(1:mn, lvol - 1 + ivol), iRbs(1:mn, lvol - 1 + ivol), &
+                        iZbc(1:mn, lvol - 1 + ivol), iZbs(1:mn, lvol - 1 + ivol), &
+                        Nt, Nz, iRij(1:Ntz, lvol - 1 + ivol), iZij(1:Ntz, lvol - 1 + ivol))
 
-    call invfft( mn, im(1:mn), in(1:mn), im(1:mn) * iRbs(1:mn ,lvol-1+ivol), - im(1:mn) * iRbc(1:mn ,lvol-1+ivol), &
-                                         im(1:mn) * iZbs(1:mn ,lvol-1+ivol), - im(1:mn) * iZbc(1:mn ,lvol-1+ivol), &
-                                         Nt, Nz,    tRij(1:Ntz,lvol-1+ivol),              tZij(1:Ntz,lvol-1+ivol) )
-   enddo ! end of do ivol = 0, 1 ; 18 Jul 14;
+            call invfft(mn, im(1:mn), in(1:mn), im(1:mn)*iRbs(1:mn, lvol - 1 + ivol), -im(1:mn)*iRbc(1:mn, lvol - 1 + ivol), &
+                        im(1:mn)*iZbs(1:mn, lvol - 1 + ivol), -im(1:mn)*iZbc(1:mn, lvol - 1 + ivol), &
+                        Nt, Nz, tRij(1:Ntz, lvol - 1 + ivol), tZij(1:Ntz, lvol - 1 + ivol))
+        end do ! end of do ivol = 0, 1 ; 18 Jul 14;
 
-   dRij(1:Ntz,lvol) = iRij(1:Ntz,lvol) - iRij(1:Ntz,lvol-1)
-   dZij(1:Ntz,lvol) = iZij(1:Ntz,lvol) - iZij(1:Ntz,lvol-1)
+        dRij(1:Ntz, lvol) = iRij(1:Ntz, lvol) - iRij(1:Ntz, lvol - 1)
+        dZij(1:Ntz, lvol) = iZij(1:Ntz, lvol) - iZij(1:Ntz, lvol - 1)
 
-   length(1:Ntz) = sqrt( dRij(1:Ntz,lvol)**2 + dZij(1:Ntz,lvol)**2 )
+        length(1:Ntz) = sqrt(dRij(1:Ntz, lvol)**2 + dZij(1:Ntz, lvol)**2)
 
-   dLL(1:Ntz) = ( dRij(1:Ntz,lvol) * tRij(1:Ntz,lvol-1+iocons) + dZij(1:Ntz,lvol) * tZij(1:Ntz,lvol-1+iocons) ) / length(1:Ntz)
+        dLL(1:Ntz) = (dRij(1:Ntz, lvol)*tRij(1:Ntz, lvol - 1 + iocons) + dZij(1:Ntz, lvol)*tZij(1:Ntz, lvol - 1 + iocons))/length(1:Ntz)
 
-   if( iocons.eq.1 ) then ! include spectral condensation constraints; local to interface, i.e. no tri-diagonal structure;
-    ;                      ; efmn(1:mn) = ( mmpp(1:mn)            ) * iRbc(1:mn,lvol)
-    ;                      ; sfmn(1:mn) = ( mmpp(1:mn)            ) * iZbs(1:mn,lvol)
-    if( NOTstellsym ) then ; ofmn(1:mn) = ( mmpp(1:mn)            ) * iRbs(1:mn,lvol)
-     ;                     ; cfmn(1:mn) = ( mmpp(1:mn)            ) * iZbc(1:mn,lvol)
-    else                   ; ofmn(1:mn) = zero
-     ;                     ; cfmn(1:mn) = zero
-    endif ! end of if( NOTstellsym ) ; 20 Feb 13;
+        if (iocons .eq. 1) then ! include spectral condensation constraints; local to interface, i.e. no tri-diagonal structure;
+            ; ; efmn(1:mn) = (mmpp(1:mn))*iRbc(1:mn, lvol)
+            ; ; sfmn(1:mn) = (mmpp(1:mn))*iZbs(1:mn, lvol)
+            if (NOTstellsym) then; ofmn(1:mn) = (mmpp(1:mn))*iRbs(1:mn, lvol)
+                ; ; cfmn(1:mn) = (mmpp(1:mn))*iZbc(1:mn, lvol)
+            else; ofmn(1:mn) = zero
+                ; ; cfmn(1:mn) = zero
+            end if ! end of if( NOTstellsym ) ; 20 Feb 13;
 
-    call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), &
-                 Nt, Nz, XX(1:Ntz), YY(1:Ntz) )
+            call invfft(mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), &
+                        Nt, Nz, XX(1:Ntz), YY(1:Ntz))
 
-    if( YESstellsym ) then ; DDl = sum(              ( iRbc(1:mn,lvol)**2 + iZbs(1:mn,lvol)**2                                           ) )
-     ;                     ; MMl = sum( mmpp(1:mn) * ( iRbc(1:mn,lvol)**2 + iZbs(1:mn,lvol)**2                                           ) ) / DDl
-    else                   ; DDl = sum(              ( iRbc(1:mn,lvol)**2 + iZbs(1:mn,lvol)**2 + iRbs(1:mn,lvol)**2 + iZbc(1:mn,lvol)**2 ) )
-     ;                     ; MMl = sum( mmpp(1:mn) * ( iRbc(1:mn,lvol)**2 + iZbs(1:mn,lvol)**2 + iRbs(1:mn,lvol)**2 + iZbc(1:mn,lvol)**2 ) ) / DDl
-    endif
+            if (YESstellsym) then; DDl = sum((iRbc(1:mn, lvol)**2 + iZbs(1:mn, lvol)**2))
+                ; ; MMl = sum(mmpp(1:mn)*(iRbc(1:mn, lvol)**2 + iZbs(1:mn, lvol)**2))/DDl
+            else; DDl = sum((iRbc(1:mn, lvol)**2 + iZbs(1:mn, lvol)**2 + iRbs(1:mn, lvol)**2 + iZbc(1:mn, lvol)**2))
+                ; ; MMl = sum(mmpp(1:mn)*(iRbc(1:mn, lvol)**2 + iZbs(1:mn, lvol)**2 + iRbs(1:mn, lvol)**2 + iZbc(1:mn, lvol)**2))/DDl
+            end if
 
-    IIl(1:Ntz) = tRij(1:Ntz,lvol) * ( XX(1:Ntz) - MMl * iRij(1:Ntz,lvol) ) &
-               + tZij(1:Ntz,lvol) * ( YY(1:Ntz) - MMl * iZij(1:Ntz,lvol) )
+            IIl(1:Ntz) = tRij(1:Ntz, lvol)*(XX(1:Ntz) - MMl*iRij(1:Ntz, lvol)) &
+                         + tZij(1:Ntz, lvol)*(YY(1:Ntz) - MMl*iZij(1:Ntz, lvol))
 
-   else ! matches if( iocons.eq.1 ) ; 11 Aug 14;
+        else ! matches if( iocons.eq.1 ) ; 11 Aug 14;
 
-    IIl(1:Ntz) = zero ! placeholder; 11 Aug 14;
+            IIl(1:Ntz) = zero ! placeholder; 11 Aug 14;
 
-   endif ! end of if( iocons.eq.1 ) ; 20 Feb 13;
+        end if ! end of if( iocons.eq.1 ) ; 20 Feb 13;
 
-  end select ! end of select case( Igeometry ) ; 08 Feb 16;
+    end select ! end of select case( Igeometry ) ; 08 Feb 16;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -393,45 +383,43 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, ifl
 
 #ifdef DEBUG
 
-   if( iocons.lt.0 .or. iocons.gt.2 ) then
-     write(6,'("lforce :      fatal : myid=",i3," ; iocons.lt.0 .or. iocons.gt.2 ; error ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "lforce : iocons.lt.0 .or. iocons.gt.2 : error  ;"
-    endif
+    if (iocons .lt. 0 .or. iocons .gt. 2) then
+        write (6, '("lforce :      fatal : myid=",i3," ; iocons.lt.0 .or. iocons.gt.2 ; error ;")') myid
+        call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+        stop "lforce : iocons.lt.0 .or. iocons.gt.2 : error  ;"
+    end if
 
 #endif
 
-  ;ifail = 0
-  ;call tfft( Nt, Nz, ijreal(1:Ntz), IIl(1:Ntz  ), & ! compute force-imbalance and spectral constraints;
-              mn, im(1:mn), in(1:mn), Bemn(1:mn,lvol,iocons), Bomn(1:mn,lvol,iocons), Iemn(1:mn,lvol       ), Iomn(1:mn,lvol       ), ifail )
+    ; ifail = 0
+    ; call tfft(Nt, Nz, ijreal(1:Ntz), IIl(1:Ntz), & ! compute force-imbalance and spectral constraints;
+ mn, im(1:mn), in(1:mn), Bemn(1:mn, lvol, iocons), Bomn(1:mn, lvol, iocons), Iemn(1:mn, lvol), Iomn(1:mn, lvol), ifail)
 
-  if( Igeometry.ge.3 ) then ! add minimal length constraint; 18 Jul 14;
+    if (Igeometry .ge. 3) then ! add minimal length constraint; 18 Jul 14;
 
-   ifail = 0 ; ijimag(1:Ntz) = zero
+        ifail = 0; ijimag(1:Ntz) = zero
 
-   call tfft( Nt, Nz, dLL(1:Ntz), ijimag(1:Ntz), &
-              mn, im(1:mn), in(1:mn), Semn(1:mn,lvol,iocons), Somn(1:mn,lvol,iocons), Pemn(1:mn,lvol,iocons), Pomn(1:mn,lvol,iocons), ifail )
+        call tfft(Nt, Nz, dLL(1:Ntz), ijimag(1:Ntz), &
+                  mn, im(1:mn), in(1:mn), Semn(1:mn, lvol, iocons), Somn(1:mn, lvol, iocons), Pemn(1:mn, lvol, iocons), Pomn(1:mn, lvol, iocons), ifail)
 
 #ifdef DEBUG
-   if( Wlforce ) then
-    write(ounit,'("lforce : ", 10x ," : lvol=",i3," ; iocons="i2" ; Somn="999es13.5)') lvol, iocons, Somn(1:mn,lvol,iocons)
-    write(ounit,'("lforce : ", 10x ," : lvol=",i3," ; iocons="i2" ; Semn="999es13.5)') lvol, iocons, Semn(1:mn,lvol,iocons)
-   endif
+        if (Wlforce) then
+            write (ounit, '("lforce : ", 10x ," : lvol=",i3," ; iocons="i2" ; Somn="999es13.5)') lvol, iocons, Somn(1:mn, lvol, iocons)
+            write (ounit, '("lforce : ", 10x ," : lvol=",i3," ; iocons="i2" ; Semn="999es13.5)') lvol, iocons, Semn(1:mn, lvol, iocons)
+        end if
 #endif
 
-  endif ! end of if( Igeometry.eq.3 ) ; 01 Jul 14;
+    end if ! end of if( Igeometry.eq.3 ) ; 01 Jul 14;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
 
 9999 continue
-  cput = MPI_WTIME()
-  Tlforce = Tlforce + ( cput-cpuo )
-  return
-
+    cput = MPI_WTIME()
+    Tlforce = Tlforce + (cput - cpuo)
+    return
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
- end subroutine lforce
+end subroutine lforce
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

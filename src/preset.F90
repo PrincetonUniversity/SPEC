@@ -12,75 +12,68 @@
 !> \ingroup grp_initialization
 !>
 subroutine preset
-  use mod_kinds, only: wp => dp
+    use mod_kinds, only: wp => dp
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  use constants, only : zero, one, mu0
+    use constants, only: zero, one, mu0
 
-  use numerical, only : sqrtmachprec, vsmall, small
+    use numerical, only: sqrtmachprec, vsmall, small
 
-  use fileunits, only : ounit
+    use fileunits, only: ounit
 
-  use inputlist
+    use inputlist
 
-  use cputiming, only : Tpreset
+    use cputiming, only: Tpreset
 
-  use allglobal
+    use allglobal
 
-  use fftw_interface
+    use fftw_interface
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
 
 #ifdef OPENMP
-  USE OMP_LIB
+    USE OMP_LIB
 #endif
-  use mpi
-  implicit none
-  integer   :: ierr, astat, ios, nthreads, ithread
-  real(wp)      :: cput, cpui, cpuo=0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
+    use mpi
+    implicit none
+    integer :: ierr, astat, ios, nthreads, ithread
+    real(wp) :: cput, cpui, cpuo = 0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
 
+    integer :: innout, idof, jk, ll, ii, ifail, ideriv, vvol, mi, ni, mj, nj, mk, nk, mimj, ninj, mkmj, nknj, jj, kk, lvol, mm, nn, imn
+    integer :: lquad, igauleg, maxIquad, Mrad, jquad, Lcurvature, zerdof, iret, work1, work2
+    real(wp) :: teta, zeta, arg, lss, cszeta(0:1), error
+    LOGICAL :: LComputeAxis
 
-  integer   :: innout, idof, jk, ll, ii, ifail, ideriv, vvol, mi, ni, mj, nj, mk, nk, mimj, ninj, mkmj, nknj, jj, kk, lvol, mm, nn, imn
-  integer   :: lquad, igauleg, maxIquad, Mrad, jquad, Lcurvature, zerdof, iret, work1, work2
-  real(wp)      :: teta, zeta, arg, lss, cszeta(0:1), error
-  LOGICAL   :: LComputeAxis
-
-  LOGICAL              :: Lchangeangle
-  integer              :: nb, ix, ij, ip, idx_mode
-  real(wp)                 :: xx
-
+    LOGICAL :: Lchangeangle
+    integer :: nb, ix, ij, ip, idx_mode
+    real(wp) :: xx
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-
-  cpui = MPI_WTIME()
-  cpuo = cpui
+    cpui = MPI_WTIME()
+    cpuo = cpui
 #ifdef OPENMP
-  nthreads = omp_get_max_threads()
+    nthreads = omp_get_max_threads()
 #else
-  nthreads = 1
+    nthreads = 1
 #endif
-
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 ! the following was in global:readin previously
 ! set internal parameters that depend on physicslist;
 
+    select case (Istellsym)
+    case (0); YESstellsym = .false.; NOTstellsym = .true.
+    case (1); YESstellsym = .true.; NOTstellsym = .false.
+    case default;
+        if (.true.) then
+            write (6, '("readin :      fatal : myid=",i3," ; .true. ; illegal Istellsym ;")') myid
+            call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+            stop "readin : .true. : illegal Istellsym  ;"
+        end if
 
-  select case( Istellsym )
-  case( 0 )    ; YESstellsym = .false. ; NOTstellsym = .true.
-  case( 1 )    ; YESstellsym = .true.  ; NOTstellsym = .false.
-  case default ;
-
-   if( .true. ) then
-     write(6,'("readin :      fatal : myid=",i3," ; .true. ; illegal Istellsym ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "readin : .true. : illegal Istellsym  ;"
-    endif
-
-  end select
+    end select
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -89,22 +82,18 @@ subroutine preset
 !latex \item The number of plasma volumes is \internal{Mvol}=\inputvar{Nvol}+\inputvar{Lfreebound};
 !latex \end{enumerate}
 
+    if (Lfreebound .lt. 0 .or. Lfreebound .gt. 1) then
+        write (6, '("readin :      fatal : myid=",i3," ; Lfreebound.lt.0 .or. Lfreebound.gt.1 ; illegal Lfreebound ;")') myid
+        call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+        stop "readin : Lfreebound.lt.0 .or. Lfreebound.gt.1 : illegal Lfreebound  ;"
+    end if
 
-   if( Lfreebound.lt.0 .or. Lfreebound.gt.1 ) then
-     write(6,'("readin :      fatal : myid=",i3," ; Lfreebound.lt.0 .or. Lfreebound.gt.1 ; illegal Lfreebound ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "readin : Lfreebound.lt.0 .or. Lfreebound.gt.1 : illegal Lfreebound  ;"
-    endif
-
-
-  Mvol = Nvol + Lfreebound
+    Mvol = Nvol + Lfreebound
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-
-   allocate( beltramierror(1:Mvol,1:9), stat=astat )
-   beltramierror(1:Mvol,1:9) = zero
-
+    allocate (beltramierror(1:Mvol, 1:9), stat=astat)
+    beltramierror(1:Mvol, 1:9) = zero
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -122,18 +111,15 @@ subroutine preset
 !latex \item The array \type{in} includes the \type{Nfp} factor.
 !latex \end{enumerate}
 
-  mn = 1 + Ntor +  Mpol * ( 2 *  Ntor + 1 ) ! Fourier resolution of interface geometry & vector potential;
+    mn = 1 + Ntor + Mpol*(2*Ntor + 1) ! Fourier resolution of interface geometry & vector potential;
 
+    allocate (im(1:mn), stat=astat)
+    im(1:mn) = 0
 
-   allocate( im(1:mn), stat=astat )
-   im(1:mn) = 0
+    allocate (in(1:mn), stat=astat)
+    in(1:mn) = 0
 
-
-   allocate( in(1:mn), stat=astat )
-   in(1:mn) = 0
-
-
-  call gi00ab(  Mpol,  Ntor, Nfp, mn, im(1:mn), in(1:mn) ) ! this sets the im and in mode identification arrays;
+    call gi00ab(Mpol, Ntor, Nfp, mn, im(1:mn), in(1:mn)) ! this sets the im and in mode identification arrays;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -143,20 +129,17 @@ subroutine preset
 !latex \item This is used in \link{lforce}, \link{bfield}, \link{stzxyz}, \link{coords}, \link{jo00aa}, \link{ma00aa}, \link{sc00aa} and \link{tr00ab}.
 !latex \end{enumerate}
 
+    allocate (halfmm(1:mn), stat=astat)
+    halfmm(1:mn) = im(1:mn)*half
 
-   allocate( halfmm(1:mn), stat=astat )
-   halfmm(1:mn) = im(1:mn) * half
+    allocate (regumm(1:mn), stat=astat)
+    regumm(1:mn) = im(1:mn)*half
 
+    if (Mregular .ge. 2) then
 
-   allocate( regumm(1:mn), stat=astat )
-   regumm(1:mn) = im(1:mn) * half
+        where (im .gt. Mregular) regumm = Mregular*half
 
-
-  if( Mregular.ge.2 ) then
-
-   where( im.gt.Mregular ) regumm = Mregular * half
-
-  endif
+    end if
 
 ! if( myid.eq.0 ) write(ounit,'("global : " 10x " : "i3") im ="i3" , halfmm ="f5.1" , regum ="f5.1" ;")') ( ii, im(ii), halfmm(ii), regumm(ii), ii = 1, mn )
 
@@ -169,43 +152,37 @@ subroutine preset
 
 ! lMpol =   Mpol ; lNtor =   Ntor ! no    enhanced resolution for metrics;
 ! lMpol = 2*Mpol ; lNtor = 2*Ntor !       enhanced resolution for metrics;
-  lMpol = 4*Mpol ; lNtor = 4*Ntor ! extra-enhanced resolution for metrics;
+    lMpol = 4*Mpol; lNtor = 4*Ntor ! extra-enhanced resolution for metrics;
 
-  mne = 1 + lNtor + lMpol * ( 2 * lNtor + 1 ) ! resolution of metrics; enhanced resolution; see metrix;
+    mne = 1 + lNtor + lMpol*(2*lNtor + 1) ! resolution of metrics; enhanced resolution; see metrix;
 
+    allocate (ime(1:mne), stat=astat)
+    ime(1:mne) = 0
 
-   allocate( ime(1:mne), stat=astat )
-   ime(1:mne) = 0
+    allocate (ine(1:mne), stat=astat)
+    ine(1:mne) = 0
 
-
-   allocate( ine(1:mne), stat=astat )
-   ine(1:mne) = 0
-
-
-  call gi00ab( lMpol, lNtor, Nfp, mne, ime(1:mne), ine(1:mne) )
+    call gi00ab(lMpol, lNtor, Nfp, mne, ime(1:mne), ine(1:mne))
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !latex \subsubsection{\type{mns}, \type{ims} and \type{ins} : Fourier mode identification for straight-fieldline angle}
 
-  sMpol = iMpol ; sNtor = iNtor
+    sMpol = iMpol; sNtor = iNtor
 
-  if( iMpol.le.0 ) sMpol = Mpol - iMpol
-  if( iNtor.le.0 ) sNtor = Ntor - iNtor
-  if(  Ntor.eq.0 ) sNtor = 0
+    if (iMpol .le. 0) sMpol = Mpol - iMpol
+    if (iNtor .le. 0) sNtor = Ntor - iNtor
+    if (Ntor .eq. 0) sNtor = 0
 
-  mns = 1 + sNtor + sMpol * ( 2 * sNtor + 1 ) ! resolution of straight-field line transformation on interfaces; see tr00ab; soon to be redundant;
+    mns = 1 + sNtor + sMpol*(2*sNtor + 1) ! resolution of straight-field line transformation on interfaces; see tr00ab; soon to be redundant;
 
+    allocate (ims(1:mns), stat=astat)
+    ims(1:mns) = 0
 
-   allocate( ims(1:mns), stat=astat )
-   ims(1:mns) = 0
+    allocate (ins(1:mns), stat=astat)
+    ins(1:mns) = 0
 
-
-   allocate( ins(1:mns), stat=astat )
-   ins(1:mns) = 0
-
-
-  call gi00ab( sMpol, sNtor, Nfp, mns, ims(1:mns), ins(1:mns) ) ! note that the field periodicity factor is included in ins;
+    call gi00ab(sMpol, sNtor, Nfp, mns, ims(1:mns), ins(1:mns)) ! note that the field periodicity factor is included in ins;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -223,8 +200,8 @@ subroutine preset
 
 ! set internal parameters that depend on diagnosticslist;
 
-  if( Lcheck.eq.5 ) then ; forcetol = 1.0e+12 ; nPpts = 0 ! will check Hessian using finite-differences;
-  endif
+    if (Lcheck .eq. 5) then; forcetol = 1.0e+12; nPpts = 0 ! will check Hessian using finite-differences;
+    end if
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -235,65 +212,54 @@ subroutine preset
 !latex \item \type{iVns}, \type{iVnc}, \type{iBns} and \type{iBns} : Fourier harmonics of normal field at computational boundary;
 !latex \end{enumerate}
 
+    allocate (iRbc(1:mn, 0:Mvol), stat=astat)
+    iRbc(1:mn, 0:Mvol) = zero
+    ! interface Fourier harmonics;
 
-   allocate( iRbc(1:mn,0:Mvol), stat=astat )
-   iRbc(1:mn,0:Mvol) = zero
- ! interface Fourier harmonics;
+    allocate (iZbs(1:mn, 0:Mvol), stat=astat)
+    iZbs(1:mn, 0:Mvol) = zero
 
-   allocate( iZbs(1:mn,0:Mvol), stat=astat )
-   iZbs(1:mn,0:Mvol) = zero
+    allocate (iRbs(1:mn, 0:Mvol), stat=astat)
+    iRbs(1:mn, 0:Mvol) = zero
 
+    allocate (iZbc(1:mn, 0:Mvol), stat=astat)
+    iZbc(1:mn, 0:Mvol) = zero
 
-   allocate( iRbs(1:mn,0:Mvol), stat=astat )
-   iRbs(1:mn,0:Mvol) = zero
+    if (Lperturbed .eq. 1) then
 
+        allocate (dRbc(1:mn, 0:Mvol), stat=astat)
+        dRbc(1:mn, 0:Mvol) = zero
+        ! interface Fourier harmonics;
 
-   allocate( iZbc(1:mn,0:Mvol), stat=astat )
-   iZbc(1:mn,0:Mvol) = zero
+        allocate (dZbs(1:mn, 0:Mvol), stat=astat)
+        dZbs(1:mn, 0:Mvol) = zero
 
+        allocate (dRbs(1:mn, 0:Mvol), stat=astat)
+        dRbs(1:mn, 0:Mvol) = zero
 
-  if( Lperturbed.eq.1 ) then
+        allocate (dZbc(1:mn, 0:Mvol), stat=astat)
+        dZbc(1:mn, 0:Mvol) = zero
 
-   allocate( dRbc(1:mn,0:Mvol), stat=astat )
-   dRbc(1:mn,0:Mvol) = zero
- ! interface Fourier harmonics;
-
-   allocate( dZbs(1:mn,0:Mvol), stat=astat )
-   dZbs(1:mn,0:Mvol) = zero
-
-
-   allocate( dRbs(1:mn,0:Mvol), stat=astat )
-   dRbs(1:mn,0:Mvol) = zero
-
-
-   allocate( dZbc(1:mn,0:Mvol), stat=astat )
-   dZbc(1:mn,0:Mvol) = zero
-
-  endif
+    end if
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+    allocate (iVns(1:mn), stat=astat)
+    iVns(1:mn) = zero
 
-   allocate( iVns(1:mn), stat=astat )
-   iVns(1:mn) = zero
+    allocate (iBns(1:mn), stat=astat)
+    iBns(1:mn) = zero
 
+    allocate (iVnc(1:mn), stat=astat)
+    iVnc(1:mn) = zero
 
-   allocate( iBns(1:mn), stat=astat )
-   iBns(1:mn) = zero
+    allocate (iBnc(1:mn), stat=astat)
+    iBnc(1:mn) = zero
 
-
-   allocate( iVnc(1:mn), stat=astat )
-   iVnc(1:mn) = zero
-
-
-   allocate( iBnc(1:mn), stat=astat )
-   iBnc(1:mn) = zero
-
-
- !SALLOCATE( lRbc, (1:mn), zero ) ! not used; SRH: 27 Feb 18;
- !SALLOCATE( lZbs, (1:mn), zero )
- !SALLOCATE( lRbs, (1:mn), zero )
- !SALLOCATE( lZbc, (1:mn), zero )
+    !SALLOCATE( lRbc, (1:mn), zero ) ! not used; SRH: 27 Feb 18;
+    !SALLOCATE( lZbs, (1:mn), zero )
+    !SALLOCATE( lRbs, (1:mn), zero )
+    !SALLOCATE( lZbc, (1:mn), zero )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -305,246 +271,251 @@ subroutine preset
 !latex       \internal{ajk[i]} $\equiv 0   $ if $m_i \ne 0$.
 !latex \end{enumerate}
 
+    allocate (ajk(1:mn), stat=astat)
+    ajk(1:mn) = zero
+    ! this must be allocated & assigned now, as it is used in readin; primarily used in packxi; 02 Jan 15;
 
-   allocate( ajk(1:mn), stat=astat )
-   ajk(1:mn) = zero
- ! this must be allocated & assigned now, as it is used in readin; primarily used in packxi; 02 Jan 15;
+    do kk = 1, mn; mk = im(kk); nk = in(kk)
 
-  do kk = 1, mn ; mk = im(kk) ; nk = in(kk)
+        if (mk .eq. 0) ajk(kk) = pi2
 
-   if( mk.eq.0 ) ajk(kk) = pi2
-
-  enddo ! end of do kk;
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  if( myid.eq.0 ) then ! read plasma boundary & computational boundary; initialize interface geometry;
-
-   if( Igeometry.eq.3 .and. Rbc(0,+1)+Rbc(0,-1).gt.zero .and. Zbs(0,+1)-Zbs(0,-1).gt.zero ) then ; Lchangeangle = .true.
-   else                                                                                          ; Lchangeangle = .false.
-   endif
-
-   if( Lchangeangle ) write(ounit,'("readin : " 10x " : CHANGING ANGLE ;")')
-
-   do ii = 1, mn ; mm = im(ii) ; nn = in(ii) / Nfp ! set plasma boundary, computational boundary; 29 Apr 15;
-
-    if( Lchangeangle ) then ; jj = -1 ; kk = -nn ! change sign of poloidal angle;
-    else                    ; jj = +1 ; kk = +nn
-    endif
-
-    if( mm.eq.0 .and. nn.eq.0 ) then
-
-     ;iRbc(ii,Nvol) = Rbc( nn, mm)                         ! plasma        boundary is ALWAYS given by namelist Rbc & Zbs;
-     ;iZbs(ii,Nvol) = zero
-      if( NOTstellsym ) then
-     ;iRbs(ii,Nvol) = zero
-     ;iZbc(ii,Nvol) = Zbc( nn, mm)
-      else
-     ;iRbs(ii,Nvol) = zero
-     ;iZbc(ii,Nvol) = zero
-      endif
-
-     if( Lfreebound.eq.1 ) then
-
-      iRbc(ii,Mvol) = Rwc( nn, mm)                         ! computational boundary is ALWAYS given by namelist Rwc & Zws;
-      iZbs(ii,Mvol) = zero
-      if( NOTstellsym ) then
-      iRbs(ii,Mvol) = zero
-      iZbc(ii,Mvol) = Zwc( nn, mm)
-      else
-      iRbs(ii,Mvol) = zero
-      iZbc(ii,Mvol) = zero
-      endif
-
-      iVns(ii     ) = zero
-      iBns(ii     ) = zero
-      if( NOTstellsym ) then
-      iVnc(ii     ) = Vnc( nn, mm)                         ! I guess that this must be zero, because \div B = 0 ;
-      iBnc(ii     ) = Bnc( nn, mm)                         ! I guess that this must be zero, because \div B = 0 ;
-      else
-      iVnc(ii     ) = zero
-      iBnc(ii     ) = zero
-      endif
-
-     endif ! end of if( Lfreebound.eq.1 ) ;
-
-    else ! if( mm.eq.0 .and. nn.eq.0 ) then ; matches
-
-     ;iRbc(ii,Nvol) =   Rbc( kk, mm) + Rbc(-kk,-mm)        ! plasma        boundary is ALWAYS given by namelist Rbc & Zbs;
-     ;iZbs(ii,Nvol) = ( Zbs( kk, mm) - Zbs(-kk,-mm) ) * jj
-      if( NOTstellsym ) then
-     ;iRbs(ii,Nvol) = ( Rbs( kk, mm) - Rbs(-kk,-mm) ) * jj
-     ;iZbc(ii,Nvol) =   Zbc( kk, mm) + Zbc(-kk,-mm)
-      else
-     ;iRbs(ii,Nvol) =   zero
-     ;iZbc(ii,Nvol) =   zero
-      endif
-
-     if( Lfreebound.eq.1 ) then
-
-      iRbc(ii,Mvol) =   Rwc( kk, mm) + Rwc(-kk,-mm)        ! computational boundary is ALWAYS given by namelist Rwc & Zws;
-      iZbs(ii,Mvol) = ( Zws( kk, mm) - Zws(-kk,-mm) ) * jj
-      if( NOTstellsym ) then
-      iRbs(ii,Mvol) = ( Rws( kk, mm) - Rws(-kk,-mm) ) * jj
-      iZbc(ii,Mvol) =   Zwc( kk, mm) + Zwc(-kk,-mm)
-      else
-      iRbs(ii,Mvol) =   zero
-      iZbc(ii,Mvol) =   zero
-      endif
-
-      iVns(ii     ) = ( Vns( kk, mm) - Vns(-kk,-mm) ) * jj
-      iBns(ii     ) = ( Bns( kk, mm) - Bns(-kk,-mm) ) * jj
-      if( NOTstellsym ) then
-      iVnc(ii     ) =   Vnc( kk, mm) + Vnc(-kk,-mm)
-      iBnc(ii     ) =   Bnc( kk, mm) + Bnc(-kk,-mm)
-      else
-      iVnc(ii     ) =   zero
-      iBnc(ii     ) =   zero
-      endif
-
-     endif ! matches if( Lfreebound.eq.1 ) ;
-
-    endif ! end of if( mm.eq.0 .and. nn.eq.0 ) ;
-
-   enddo ! end of do ii = 1, mn;
-
-
-   select case( Linitialize ) ! 24 Oct 12;
-
-   case( :0 ) ! Linitialize=0 ; initial guess for geometry of the interior surfaces is given in the input file;
-
-    if( Lchangeangle ) then ; jj = -1  ! change sign of poloidal angle; Loizu Nov 18;
-    else                    ; jj = +1
-    endif
-
-    do idx_mode=1, num_modes! will read in Fourier harmonics until the end of file is reached;
-     mm = mmRZRZ(idx_mode)
-     nn = nnRZRZ(idx_mode)
-
-     do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over harmonics within range;
-      if( mm.eq.0 .and. mi.eq.0 .and. nn*Nfp.eq.ni ) then
-       iRbc(ii,1:Nvol-1) = allRZRZ(1,1:Nvol-1, idx_mode) ! select relevant harmonics;
-       iZbs(ii,1:Nvol-1) = allRZRZ(2,1:Nvol-1, idx_mode) ! select relevant harmonics;
-       if( NOTstellsym ) then
-        iRbs(ii,1:Nvol-1) = allRZRZ(3,1:Nvol-1, idx_mode) ! select relevant harmonics;
-        iZbc(ii,1:Nvol-1) = allRZRZ(4,1:Nvol-1, idx_mode) ! select relevant harmonics;
-       else
-        iRbs(ii,1:Nvol-1) = zero             ! select relevant harmonics;
-        iZbc(ii,1:Nvol-1) = zero             ! select relevant harmonics;
-       endif
-      elseif( mm.eq.mi .and. nn*Nfp.eq.jj*ni ) then
-       iRbc(ii,1:Nvol-1) = allRZRZ(1,1:Nvol-1, idx_mode) ! select relevant harmonics;
-       iZbs(ii,1:Nvol-1) = jj*allRZRZ(2,1:Nvol-1, idx_mode) ! select relevant harmonics;
-       if( NOTstellsym ) then
-        iRbs(ii,1:Nvol-1) = jj*allRZRZ(3,1:Nvol-1, idx_mode) ! select relevant harmonics;
-        iZbc(ii,1:Nvol-1) = allRZRZ(4,1:Nvol-1, idx_mode) ! select relevant harmonics;
-       else
-        iRbs(ii,1:Nvol-1) = zero             ! select relevant harmonics;
-        iZbc(ii,1:Nvol-1) = zero             ! select relevant harmonics;
-       endif
-      endif
-     enddo ! end of do ii;
-
-    enddo ! end of do;
-
-   end select ! end select case( Linitialize );
-
-   if( Igeometry.eq.3 ) then
-    if( Rac(0).gt.zero ) then ! user has supplied logically possible coordinate axis;
-     iRbc(1:Ntor+1,0) = Rac(0:Ntor)
-     iZbs(1:Ntor+1,0) = Zas(0:Ntor)
-     iRbs(1:Ntor+1,0) = Ras(0:Ntor)
-     iZbc(1:Ntor+1,0) = Zac(0:Ntor)
-    else ! see preset for poloidal-average specification of coordinate axis and geometrical initialization;
-    endif ! end of if( Igeometry.eq.3 ) then ;
-   endif
-
-  endif ! end of if myid.eq.0 loop; only the master will read the input file; all variables need to be broadcast;
+    end do ! end of do kk;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  ;
-   call MPI_BCAST(iRbc(1:mn,0:Mvol),(Mvol+1)*mn,MPI_DOUBLE_PRECISION,0 ,MPI_COMM_SPEC,ierr)
+    if (myid .eq. 0) then
+        ! read plasma boundary & computational boundary; initialize interface geometry;
 
-  if( Igeometry.eq.3 ) then
-   ;
-   call MPI_BCAST(iZbs(1:mn,0:Mvol),(Mvol+1)*mn,MPI_DOUBLE_PRECISION,0 ,MPI_COMM_SPEC,ierr)
- ! only required for ii > 1 ;
-  endif
-  if( NOTstellsym ) then
-   ;
-   call MPI_BCAST(iRbs(1:mn,0:Mvol),(Mvol+1)*mn,MPI_DOUBLE_PRECISION,0 ,MPI_COMM_SPEC,ierr)
- ! only required for ii > 1 ;
-   if( Igeometry.eq.3 ) then
+        if (Igeometry .eq. 3 .and. &
+            Rbc(0, +1) + Rbc(0, -1) .gt. zero .and. &
+            Zbs(0, +1) - Zbs(0, -1) .gt. zero) then
+            Lchangeangle = .true.
+        else
+            Lchangeangle = .false.
+        end if
 
-   call MPI_BCAST(iZbc(1:mn,0:Mvol),(Mvol+1)*mn,MPI_DOUBLE_PRECISION,0 ,MPI_COMM_SPEC,ierr)
+        if (Lchangeangle) then
+            write (ounit, '("readin : " 10x " : CHANGING ANGLE ;")')
+        end if
 
-   endif
-  endif
+        do ii = 1, mn
+            mm = im(ii)
+            nn = in(ii) / Nfp ! set plasma boundary, computational boundary; 29 Apr 15;
 
-  if( Lfreebound.eq.1 ) then
-   ;
-   call MPI_BCAST(iVns(1:mn),mn,MPI_DOUBLE_PRECISION,0 ,MPI_COMM_SPEC,ierr)
- ! only required for ii > 1 ;
-   ;
-   call MPI_BCAST(iBns(1:mn),mn,MPI_DOUBLE_PRECISION,0 ,MPI_COMM_SPEC,ierr)
- ! only required for ii > 1 ;
-   if( NOTstellsym ) then
+            if (Lchangeangle) then
+                jj = -1
+                kk = -nn ! change sign of poloidal angle;
+            else
+                jj = +1
+                kk = +nn
+            end if
 
-   call MPI_BCAST(iVnc(1:mn),mn,MPI_DOUBLE_PRECISION,0 ,MPI_COMM_SPEC,ierr)
+            if (mm .eq. 0 .and. nn .eq. 0) then
+                iRbc(ii, Nvol) = Rbc(nn, mm)                         ! plasma        boundary is ALWAYS given by namelist Rbc & Zbs;
+                iZbs(ii, Nvol) = zero
+                if (NOTstellsym) then
+                    iRbs(ii, Nvol) = zero
+                    iZbc(ii, Nvol) = Zbc(nn, mm)
+                else
+                    iRbs(ii, Nvol) = zero
+                    iZbc(ii, Nvol) = zero
+                end if
 
+                if (Lfreebound .eq. 1) then
 
-   call MPI_BCAST(iBnc(1:mn),mn,MPI_DOUBLE_PRECISION,0 ,MPI_COMM_SPEC,ierr)
+                    iRbc(ii, Mvol) = Rwc(nn, mm)                         ! computational boundary is ALWAYS given by namelist Rwc & Zws;
+                    iZbs(ii, Mvol) = zero
+                    if (NOTstellsym) then
+                        iRbs(ii, Mvol) = zero
+                        iZbc(ii, Mvol) = Zwc(nn, mm)
+                    else
+                        iRbs(ii, Mvol) = zero
+                        iZbc(ii, Mvol) = zero
+                    end if
 
-   endif
-  endif
+                    iVns(ii) = zero
+                    iBns(ii) = zero
+                    if (NOTstellsym) then
+                        iVnc(ii) = Vnc(nn, mm)                         ! I guess that this must be zero, because \div B = 0 ;
+                        iBnc(ii) = Bnc(nn, mm)                         ! I guess that this must be zero, because \div B = 0 ;
+                    else
+                        iVnc(ii) = zero
+                        iBnc(ii) = zero
+                    end if
 
-  if( Igeometry.eq.1 .or. Igeometry.eq.2 ) then
-   ;iRbc(1:mn,0) = zero ! innermost volume must be trivial; this is used in volume; innermost interface is coordinate axis;
-   if( NOTstellsym ) then
-    iRbs(1:mn,0) = zero ! innermost volume must be trivial; this is used in volume;
-   endif
-  endif
+                end if ! end of if( Lfreebound.eq.1 ) ;
 
-  if( Igeometry.eq.3 ) then
-   iZbs(1,0:Mvol) = zero ! Zbs_{m=0,n=0} is irrelevant;
-  endif
-  if( NOTstellsym) then
-   iRbs(1,0:Mvol) = zero ! Rbs_{m=0,n=0} is irrelevant;
-  endif
+            else ! if( mm.eq.0 .and. nn.eq.0 ) then ; matches
 
-  if ( Igeometry.eq.1 .and. Lreflect.eq.1) then ! reflect upper and lower bound in slab, each take half the amplitude
-    iRbc(2:mn,Mvol) = iRbc(2:mn,Mvol) * half
-    iRbc(2:mn,0) = -iRbc(2:mn,Mvol)
-   if( NOTstellsym ) then
-    iRbs(2:mn,Mvol) = iRbs(2:mn,Mvol) * half
-    iRbs(2:mn,0) = -iRbs(2:mn,Mvol)
-   endif
-  endif
+                iRbc(ii, Nvol) = Rbc(kk, mm) + Rbc(-kk, -mm)        ! plasma        boundary is ALWAYS given by namelist Rbc & Zbs;
+                iZbs(ii, Nvol) = (Zbs(kk, mm) - Zbs(-kk, -mm))*jj
+                if (NOTstellsym) then
+                    iRbs(ii, Nvol) = (Rbs(kk, mm) - Rbs(-kk, -mm))*jj
+                    iZbc(ii, Nvol) = Zbc(kk, mm) + Zbc(-kk, -mm)
+                else
+                    iRbs(ii, Nvol) = zero
+                    iZbc(ii, Nvol) = zero
+                end if
+
+                if (Lfreebound .eq. 1) then
+
+                    iRbc(ii, Mvol) = Rwc(kk, mm) + Rwc(-kk, -mm)        ! computational boundary is ALWAYS given by namelist Rwc & Zws;
+                    iZbs(ii, Mvol) = (Zws(kk, mm) - Zws(-kk, -mm))*jj
+                    if (NOTstellsym) then
+                        iRbs(ii, Mvol) = (Rws(kk, mm) - Rws(-kk, -mm))*jj
+                        iZbc(ii, Mvol) = Zwc(kk, mm) + Zwc(-kk, -mm)
+                    else
+                        iRbs(ii, Mvol) = zero
+                        iZbc(ii, Mvol) = zero
+                    end if
+
+                    iVns(ii) = (Vns(kk, mm) - Vns(-kk, -mm))*jj
+                    iBns(ii) = (Bns(kk, mm) - Bns(-kk, -mm))*jj
+                    if (NOTstellsym) then
+                        iVnc(ii) = Vnc(kk, mm) + Vnc(-kk, -mm)
+                        iBnc(ii) = Bnc(kk, mm) + Bnc(-kk, -mm)
+                    else
+                        iVnc(ii) = zero
+                        iBnc(ii) = zero
+                    end if
+
+                end if ! matches if( Lfreebound.eq.1 ) ;
+
+            end if ! end of if( mm.eq.0 .and. nn.eq.0 ) ;
+
+        end do ! end of do ii = 1, mn;
+
+        select case (Linitialize) ! 24 Oct 12;
+
+        case (:0) ! Linitialize=0 ; initial guess for geometry of the interior surfaces is given in the input file;
+
+            if (Lchangeangle) then
+                jj = -1  ! change sign of poloidal angle; Loizu Nov 18;
+            else
+                jj = +1
+            end if
+
+            do idx_mode = 1, num_modes! will read in Fourier harmonics until the end of file is reached;
+                mm = mmRZRZ(idx_mode)
+                nn = nnRZRZ(idx_mode)
+
+                do ii = 1, mn
+                    mi = im(ii)
+                    ni = in(ii) ! loop over harmonics within range;
+                    if (mm .eq. 0 .and. mi .eq. 0 .and. nn*Nfp .eq. ni) then
+                        iRbc(ii, 1:Nvol - 1) = allRZRZ(1, 1:Nvol - 1, idx_mode) ! select relevant harmonics;
+                        iZbs(ii, 1:Nvol - 1) = allRZRZ(2, 1:Nvol - 1, idx_mode) ! select relevant harmonics;
+                        if (NOTstellsym) then
+                            iRbs(ii, 1:Nvol - 1) = allRZRZ(3, 1:Nvol - 1, idx_mode) ! select relevant harmonics;
+                            iZbc(ii, 1:Nvol - 1) = allRZRZ(4, 1:Nvol - 1, idx_mode) ! select relevant harmonics;
+                        else
+                            iRbs(ii, 1:Nvol - 1) = zero             ! select relevant harmonics;
+                            iZbc(ii, 1:Nvol - 1) = zero             ! select relevant harmonics;
+                        end if
+                    else if (mm .eq. mi .and. nn*Nfp .eq. jj*ni) then
+                        iRbc(ii, 1:Nvol - 1) = allRZRZ(1, 1:Nvol - 1, idx_mode) ! select relevant harmonics;
+                        iZbs(ii, 1:Nvol - 1) = jj*allRZRZ(2, 1:Nvol - 1, idx_mode) ! select relevant harmonics;
+                        if (NOTstellsym) then
+                            iRbs(ii, 1:Nvol - 1) = jj*allRZRZ(3, 1:Nvol - 1, idx_mode) ! select relevant harmonics;
+                            iZbc(ii, 1:Nvol - 1) = allRZRZ(4, 1:Nvol - 1, idx_mode) ! select relevant harmonics;
+                        else
+                            iRbs(ii, 1:Nvol - 1) = zero             ! select relevant harmonics;
+                            iZbc(ii, 1:Nvol - 1) = zero             ! select relevant harmonics;
+                        end if
+                    end if
+                end do ! end of do ii;
+
+            end do ! end of do;
+
+        end select ! end select case( Linitialize );
+
+        if (Igeometry .eq. 3) then
+            if (Rac(0) .gt. zero) then ! user has supplied logically possible coordinate axis;
+                iRbc(1:Ntor + 1, 0) = Rac(0:Ntor)
+                iZbs(1:Ntor + 1, 0) = Zas(0:Ntor)
+                iRbs(1:Ntor + 1, 0) = Ras(0:Ntor)
+                iZbc(1:Ntor + 1, 0) = Zac(0:Ntor)
+            else ! see preset for poloidal-average specification of coordinate axis and geometrical initialization;
+            end if ! end of if( Igeometry.eq.3 ) then ;
+        end if
+
+    end if ! end of if myid.eq.0 loop; only the master will read the input file; all variables need to be broadcast;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  Rscale = iRbc(1,Mvol) ! this will be used to normalize the geometrical degrees-of-freedom;
+    ;
+    call MPI_BCAST(iRbc(1:mn, 0:Mvol), (Mvol + 1)*mn, MPI_DOUBLE_PRECISION, 0, MPI_COMM_SPEC, ierr)
 
-  if( myid.eq.0 ) write(ounit,'("readin : ", 10x ," : myid=",i3," ; Rscale=",es22.15," ;")') myid, Rscale
+    if (Igeometry .eq. 3) then
+        call MPI_BCAST(iZbs(1:mn, 0:Mvol), (Mvol + 1)*mn, MPI_DOUBLE_PRECISION, 0, MPI_COMM_SPEC, ierr)
+        ! only required for ii > 1 ;
+    end if
+    if (NOTstellsym) then
+        call MPI_BCAST(iRbs(1:mn, 0:Mvol), (Mvol + 1)*mn, MPI_DOUBLE_PRECISION, 0, MPI_COMM_SPEC, ierr)
+        ! only required for ii > 1 ;
+        if (Igeometry .eq. 3) then
+            call MPI_BCAST(iZbc(1:mn, 0:Mvol), (Mvol + 1)*mn, MPI_DOUBLE_PRECISION, 0, MPI_COMM_SPEC, ierr)
+        end if
+    end if
 
+    if (Lfreebound .eq. 1) then
+        call MPI_BCAST(iVns(1:mn), mn, MPI_DOUBLE_PRECISION, 0, MPI_COMM_SPEC, ierr)
+        ! only required for ii > 1 ;
+        call MPI_BCAST(iBns(1:mn), mn, MPI_DOUBLE_PRECISION, 0, MPI_COMM_SPEC, ierr)
+        ! only required for ii > 1 ;
+        if (NOTstellsym) then
+            call MPI_BCAST(iVnc(1:mn), mn, MPI_DOUBLE_PRECISION, 0, MPI_COMM_SPEC, ierr)
+            call MPI_BCAST(iBnc(1:mn), mn, MPI_DOUBLE_PRECISION, 0, MPI_COMM_SPEC, ierr)
+        end if
+    end if
 
+    if (Igeometry .eq. 1 .or. Igeometry .eq. 2) then
+        iRbc(1:mn, 0) = zero ! innermost volume must be trivial; this is used in volume; innermost interface is coordinate axis;
+        if (NOTstellsym) then
+            iRbs(1:mn, 0) = zero ! innermost volume must be trivial; this is used in volume;
+        end if
+    end if
 
+    if (Igeometry .eq. 3) then
+        iZbs(1, 0:Mvol) = zero ! Zbs_{m=0,n=0} is irrelevant;
+    end if
+    if (NOTstellsym) then
+        iRbs(1, 0:Mvol) = zero ! Rbs_{m=0,n=0} is irrelevant;
+    end if
 
-  call random_seed()
+    if (Igeometry .eq. 1 .and. Lreflect .eq. 1) then ! reflect upper and lower bound in slab, each take half the amplitude
+        iRbc(2:mn, Mvol) = iRbc(2:mn, Mvol)*half
+        iRbc(2:mn, 0) = -iRbc(2:mn, Mvol)
+        if (NOTstellsym) then
+            iRbs(2:mn, Mvol) = iRbs(2:mn, Mvol)*half
+            iRbs(2:mn, 0) = -iRbs(2:mn, Mvol)
+        end if
+    end if
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
- !FATAL( preset, Nfp.eq.0, illegal division ) ! this was checked in global: readin; SRH: 27 Feb 18;
+    Rscale = iRbc(1, Mvol) ! this will be used to normalize the geometrical degrees-of-freedom;
 
-  pi2nfp         = pi2 / Nfp
+    if (myid .eq. 0) then
+        write (ounit, '("readin : ", 10x ," : myid=",i3," ; Rscale=",es22.15," ;")') myid, Rscale
+    end if
 
-  pi2pi2nfp      = pi2 * pi2nfp
-  pi2pi2nfphalf  = pi2 * pi2nfp * half
-  pi2pi2nfpquart = pi2 * pi2nfp * quart
+    call random_seed()
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  Mrad  = maxval( Lrad(1:Mvol) )
+    !FATAL( preset, Nfp.eq.0, illegal division ) ! this was checked in global: readin; SRH: 27 Feb 18;
 
-  if( myid.eq.0 ) write(ounit,'("preset : ",10x," : myid=",i3," ; Mrad=",i3," : Lrad=",257(i3,",",:))') myid, Mrad, Lrad(1:Mvol)
+    pi2nfp = pi2/Nfp
+
+    pi2pi2nfp = pi2*pi2nfp
+    pi2pi2nfphalf = pi2*pi2nfp*half
+    pi2pi2nfpquart = pi2*pi2nfp*quart
+
+    Mrad = maxval(Lrad(1:Mvol))
+
+    if (myid .eq. 0) then
+        write (ounit, '("preset : ",10x," : myid=",i3," ; Mrad=",i3," : Lrad=",257(i3,",",:))') myid, Mrad, Lrad(1:Mvol)
+    end if
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -555,20 +526,22 @@ subroutine preset
 !> <li> \c NGdof \f$\equiv\f$ total number of degrees-of-freedom in geometry, i.e. of all interfaces </li>
 !> </ul>
 
-!                            Rbc  Zbs    Rbs    Zbc
-  select case( Igeometry )
-  case( 1:2)
-   if( YESstellsym ) LGdof = mn
-   if( NOTstellsym ) LGdof = mn        + mn-1
-  case(   3)
-   if( YESstellsym ) LGdof = mn + mn-1
-   if( NOTstellsym ) LGdof = mn + mn-1 + mn-1 + mn
-  end select
+!                                Rbc   Zbs    Rbs    Zbc
+    select case (Igeometry)
+    case (1:2)
+        if (YESstellsym) LGdof = mn
+        if (NOTstellsym) LGdof = mn + mn - 1
+    case (3)
+        if (YESstellsym) LGdof = mn + mn - 1
+        if (NOTstellsym) LGdof = mn + mn - 1 + mn - 1 + mn
+    end select
 
-  NGdof = ( Mvol-1 ) * LGdof
+    NGdof = (Mvol - 1)*LGdof
 
-  if( Wpreset ) then ; cput = MPI_WTIME() ; write(ounit,'("preset : ",f10.2," : myid=",i3," ; NGdof=",i9," ;")') cput-cpus, myid, NGdof
-  endif
+    if (Wpreset) then
+        cput = MPI_WTIME()
+        write (ounit, '("preset : ",f10.2," : myid=",i3," ; NGdof=",i9," ;")') cput - cpus, myid, NGdof
+    end if
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -585,22 +558,27 @@ subroutine preset
 !>       and similarly for \c oita . </li>
 !> </ul>
 
-  do vvol = 0, Nvol
+    do vvol = 0, Nvol
+        if (ql(vvol) .eq. 0 .and. qr(vvol) .eq. 0) then
+            iota(vvol) = iota(vvol)
+        else
+            iota(vvol) = (pl(vvol) + goldenmean*pr(vvol))/(ql(vvol) + goldenmean*qr(vvol))
+        end if
 
-   if( ql(vvol).eq.0 .and. qr(vvol).eq.0 ) then ; iota(vvol) = iota(vvol)
-   else                                         ; iota(vvol) = ( pl(vvol) + goldenmean * pr(vvol) ) / ( ql(vvol) + goldenmean * qr(vvol) )
-   endif
+        if (lq(vvol) .eq. 0 .and. rq(vvol) .eq. 0) then
+            oita(vvol) = oita(vvol)
+        else
+            oita(vvol) = (lp(vvol) + goldenmean*rp(vvol))/(lq(vvol) + goldenmean*rq(vvol))
+        end if
 
-   if( lq(vvol).eq.0 .and. rq(vvol).eq.0 ) then ; oita(vvol) = oita(vvol)
-   else                                         ; oita(vvol) = ( lp(vvol) + goldenmean * rp(vvol) ) / ( lq(vvol) + goldenmean * rq(vvol) )
-   endif
+        if (Wpreset .and. myid .eq. 0) then
+            write (ounit, 1002) vvol, pl(vvol), ql(vvol), pr(vvol), qr(vvol), iota(vvol), lp(vvol), lq(vvol), rp(vvol), rq(vvol), oita(vvol)
+        end if
 
-   if( Wpreset .and. myid.eq.0 ) write(ounit,1002) vvol, pl(vvol), ql(vvol), pr(vvol), qr(vvol), iota(vvol), lp(vvol), lq(vvol), rp(vvol), rq(vvol), oita(vvol)
+1002    format("preset : ", 10x, " :      ", 3x, " ; transform : ", i3, " : (", i3, " /", i3, " ) * (", i3, " /", i3, " ) = ", f18.15, " ; ", &
+               "(", i3, " /", i3, " ) * (", i3, " /", i3, " ) = ", f18.15, " ; ")
 
-1002 format("preset : ",10x," :      ",3x," ; transform : ",i3," : (",i3," /",i3," ) * (",i3," /",i3," ) = ",f18.15," ; ",&
-                                                                  "(",i3," /",i3," ) * (",i3," /",i3," ) = ",f18.15," ; ")
-
-  enddo
+    end do
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -615,25 +593,26 @@ subroutine preset
 !>      \f$\psi_{pol,i} \rightarrow \psi_{pol,i} / \psi_{0}\f$, where \f$\psi_{0} \equiv \psi_{tor,N}\f$ on input. </li>
 !> </ul>
 
+    allocate (dtflux(1:Mvol), stat=astat)
+    dtflux(1:Mvol) = zero
 
-   allocate( dtflux(1:Mvol), stat=astat )
-   dtflux(1:Mvol) = zero
+    allocate (dpflux(1:Mvol), stat=astat)
+    dpflux(1:Mvol) = zero
 
+    select case (Igeometry)
+    case (1)
+        dtflux(1) = tflux(1)
+        dpflux(1) = pflux(1) ! Cartesian              ; this is the "inverse" operation defined in xspech; 09 Mar 17;
+    case (2:3)
+        dtflux(1) = tflux(1)
+        dpflux(1) = zero     ! cylindrical or toroidal;
+    end select
 
-   allocate( dpflux(1:Mvol), stat=astat )
-   dpflux(1:Mvol) = zero
+    dtflux(2:Mvol) = tflux(2:Mvol) - tflux(1:Mvol - 1)
+    dpflux(2:Mvol) = pflux(2:Mvol) - pflux(1:Mvol - 1)
 
-
-  select case( Igeometry )
-  case( 1   ) ; dtflux(1) = tflux(1) ; dpflux(1) = pflux(1) ! Cartesian              ; this is the "inverse" operation defined in xspech; 09 Mar 17;
-  case( 2:3 ) ; dtflux(1) = tflux(1) ; dpflux(1) = zero     ! cylindrical or toroidal;
-  end select
-
-  dtflux(2:Mvol) = tflux(2:Mvol) - tflux(1:Mvol-1)
-  dpflux(2:Mvol) = pflux(2:Mvol) - pflux(1:Mvol-1)
-
-  dtflux(1:Mvol) = dtflux(1:Mvol) * phiedge / pi2
-  dpflux(1:Mvol) = dpflux(1:Mvol) * phiedge / pi2
+    dtflux(1:Mvol) = dtflux(1:Mvol)*phiedge/pi2
+    dpflux(1:Mvol) = dpflux(1:Mvol)*phiedge/pi2
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -646,24 +625,23 @@ subroutine preset
 !latex \mu_n = \mu_0 \frac{I_{volume}(n) - I_{volume}(n-1)}{\psi_{t,n}-\psi_{t,n-1}},\qquad \forall\ n>1;
 !latex \end{equation}
 
-if (Lconstraint.EQ.3) then
+    if (Lconstraint .EQ. 3) then
 
-  mu(1) = Ivolume(1) / (tflux(1) * phiedge)
-
-  do vvol = 2, Mvol
-    mu(vvol) = (Ivolume(vvol) - Ivolume(vvol-1)) / ((tflux(vvol) - tflux(vvol-1)) * phiedge)
-  end do
+        mu(1) = Ivolume(1)/(tflux(1)*phiedge)
+        do vvol = 2, Mvol
+            mu(vvol) = (Ivolume(vvol) - Ivolume(vvol - 1))/((tflux(vvol) - tflux(vvol - 1))*phiedge)
+        end do
 
 #ifdef DEBUG
-  if (myid.eq.0) then
-    write(*,*) " "
-    write(ounit,'("preset : ", 10x ," : Ivolume = "257(es11.3",",:))') (Ivolume(vvol), vvol=1, Mvol)
-    write(ounit,'("preset : ", 10x ," : tflux   = "257(es11.3",",:))') (  tflux(vvol), vvol=1, Mvol)
-    write(ounit,'("preset : ", 10x ," : phiedge = "257(es11.3",",:))') phiedge
-    write(ounit,'("preset : ", 10x ," : mu      = "257(es11.3",",:))') (     mu(vvol), vvol=1, Mvol)
-  end if
+        if (myid .eq. 0) then
+            write (*, *) " "
+            write (ounit, '("preset : ", 10x ," : Ivolume = "257(es11.3",",:))') (Ivolume(vvol), vvol=1, Mvol)
+            write (ounit, '("preset : ", 10x ," : tflux   = "257(es11.3",",:))') (tflux(vvol), vvol=1, Mvol)
+            write (ounit, '("preset : ", 10x ," : phiedge = "257(es11.3",",:))') phiedge
+            write (ounit, '("preset : ", 10x ," : mu      = "257(es11.3",",:))') (mu(vvol), vvol=1, Mvol)
+        end if
 #endif
-endif
+    end if
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -677,18 +655,18 @@ endif
 !>       and \f$w \equiv\,\f$\c wpoloidal. </li>
 !> </ul>
 
+    allocate (sweight(1:Mvol), stat=astat)
+    sweight(1:Mvol) = zero
 
-   allocate( sweight(1:Mvol), stat=astat )
-   sweight(1:Mvol) = zero
-
- !sweight(1:Mvol) = upsilon * tflux(1:Mvol)**wpoloidal ! toroidal flux in vacuum region is not constant; 11 July 18;
-  do vvol = 1, Mvol ; sweight(vvol) = upsilon * (vvol*one/Nvol)**wpoloidal ! 11 July 18;
-  enddo
+    !sweight(1:Mvol) = upsilon * tflux(1:Mvol)**wpoloidal ! toroidal flux in vacuum region is not constant; 11 July 18;
+    do vvol = 1, Mvol
+        sweight(vvol) = upsilon*(vvol*one/Nvol)**wpoloidal ! 11 July 18;
+    end do
 
 #ifdef DEBUG
-  if (myid.eq.0) then
-    write(ounit,'("preset : ",10x," : sweight =",99(es12.5,",",:))') sweight(1:Mvol)
-  end if
+    if (myid .eq. 0) then
+        write (ounit, '("preset : ",10x," : sweight =",99(es12.5,",",:))') sweight(1:Mvol)
+    end if
 #endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -724,25 +702,21 @@ endif
 !>       </ul> </li>
 !> </ul>
 
+    allocate (TT(0:Mrad, 0:1, 0:1), stat=astat)
+    TT(0:Mrad, 0:1, 0:1) = zero
 
-   allocate( TT(0:Mrad,0:1,0:1), stat=astat )
-   TT(0:Mrad,0:1,0:1) = zero
+    allocate (RTT(0:Lrad(1), 0:Mpol, 0:1, 0:1), stat=astat)
+    RTT(0:Lrad(1), 0:Mpol, 0:1, 0:1) = zero
 
+    allocate (RTM(0:Lrad(1), 0:Mpol), stat=astat)
+    RTM(0:Lrad(1), 0:Mpol) = zero
 
-   allocate( RTT(0:Lrad(1),0:Mpol,0:1,0:1), stat=astat )
-   RTT(0:Lrad(1),0:Mpol,0:1,0:1) = zero
+    call get_cheby(-one, Mrad, TT(:, 0, :))
+    call get_cheby(one, Mrad, TT(:, 1, :))
 
-
-   allocate( RTM(0:Lrad(1),0:Mpol), stat=astat )
-   RTM(0:Lrad(1),0:Mpol) = zero
-
-
-  call get_cheby( -one, Mrad, TT(:,0,:))
-  call get_cheby( one , Mrad, TT(:,1,:))
-
-  call get_zernike( zero, Lrad(1), Mpol, RTT(:,:,0,:))
-  call get_zernike( one, Lrad(1), Mpol, RTT(:,:,1,:))
-  call get_zernike_rm(zero, Lrad(1), Mpol, RTM(:,:))
+    call get_zernike(zero, Lrad(1), Mpol, RTT(:, :, 0, :))
+    call get_zernike(one, Lrad(1), Mpol, RTT(:, :, 1, :))
+    call get_zernike_rm(zero, Lrad(1), Mpol, RTM(:, :))
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -756,10 +730,8 @@ endif
 !>       then \c ImagneticOK is set to \c .true. . </li>
 !> </ul>
 
-
-   allocate( ImagneticOK(1:Mvol), stat=astat )
-   ImagneticOK(1:Mvol) = .false.
-
+    allocate (ImagneticOK(1:Mvol), stat=astat)
+    ImagneticOK(1:Mvol) = .false.
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -778,7 +750,7 @@ endif
 !> <li> The internal logical variable, \c Lhessianallocated, indicates whether the ``Hessian'' matrix of second-partial derivatives
 !>       (really, the first derivatives of the force-vector) has been allocated, or not! </li>
 !> </ul>
-  Lhessianallocated = .false.
+    Lhessianallocated = .false.
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -819,134 +791,148 @@ endif
 !>       Also, take care that the sign of the sine harmonics in the above expressions will change for these cases. </li>
 !> </ul>
 
+    allocate (ki(1:mn, 0:1), stat=astat)
+    ki(1:mn, 0:1) = 0
 
-   allocate( ki(1:mn,0:1), stat=astat )
-   ki(1:mn,0:1) = 0
+    allocate (kija(1:mn, 1:mn, 0:1), stat=astat)
+    kija(1:mn, 1:mn, 0:1) = 0
 
+    allocate (kijs(1:mn, 1:mn, 0:1), stat=astat)
+    kijs(1:mn, 1:mn, 0:1) = 0
 
-   allocate( kija(1:mn,1:mn,0:1), stat=astat )
-   kija(1:mn,1:mn,0:1) = 0
+    do ii = 1, mn
+        mi = im(ii)
+        ni = in(ii)
 
+        call getimn(lMpol, lNtor, Nfp, mi, ni, kk)
+        if (kk .gt. 0) then
+            if (mi .eq. 0 .and. ni .eq. 0) then
+                ki(ii, 0:1) = (/kk, 1/)
+            else
+                ki(ii, 0:1) = (/kk, 2/)
+            end if
+        end if
 
-   allocate( kijs(1:mn,1:mn,0:1), stat=astat )
-   kijs(1:mn,1:mn,0:1) = 0
+        do jj = 1, mn
+            mj = im(jj)
+            nj = in(jj)
+            mimj = mi + mj
+            ninj = ni + nj !   adding   ; 17 Dec 15;
 
+            call getimn(lMpol, lNtor, Nfp, mimj, ninj, kk)
+            if (kk .gt. 0) then
+                if (mimj .eq. 0 .and. ninj .eq. 0) then
+                    kija(ii, jj, 0:1) = (/kk, 1/)
+                else
+                    kija(ii, jj, 0:1) = (/kk, 2/)
+                end if
+            end if
+            mimj = mi - mj
+            ninj = ni - nj ! subtracting; 17 Dec 15;
 
-  do ii = 1, mn  ; mi =  im(ii) ; ni =  in(ii)
-
-    call getimn(lMpol, lNtor, Nfp, mi, ni, kk)
-    if (kk.gt.0) then
-      if( mi.eq.0 .and. ni.eq.0 ) then ; ki(ii,0:1) = (/ kk, 1 /)
-      else                             ; ki(ii,0:1) = (/ kk, 2 /)
-      endif
-    endif
-
-    do jj = 1, mn  ; mj =  im(jj) ; nj =  in(jj) ; mimj = mi + mj ; ninj = ni + nj !   adding   ; 17 Dec 15;
-
-      call getimn(lMpol, lNtor, Nfp, mimj, ninj, kk)
-      if (kk.gt.0) then
-        if( mimj.eq.0 .and. ninj.eq.0 ) then ; kija(ii,jj,0:1) = (/ kk, 1 /)
-        else                                 ; kija(ii,jj,0:1) = (/ kk, 2 /)
-        endif
-      endif
-      ;                                           ; mimj = mi - mj ; ninj = ni - nj ! subtracting; 17 Dec 15;
-
-      if( mimj.gt.0 .or. ( mimj.eq.0 .and. ninj.ge.0 ) ) then
-        call getimn(lMpol, lNtor, Nfp, mimj, ninj, kk)
-        if (kk.gt.0) then
-          if( mimj.eq.0 .and. ninj.eq.0 ) then ; kijs(ii,jj,0:1) = (/ kk, 1 /)
-          else                                 ; kijs(ii,jj,0:1) = (/ kk, 2 /)
-          endif
-        endif
-      else
-        call getimn(lMpol, lNtor, Nfp, -mimj, -ninj, kk)
-        if (kk.gt.0) then
-          ;                                    ; kijs(ii,jj,0:1) = (/ kk , - 2 /) ! only the sine modes need the sign factor; 17 Dec 15;
-        endif
-      endif
-
-    enddo ! end of do jj; 29 Jan 13;
-
-  enddo ! end of do ii; 29 Jan 13;
+            if (mimj .gt. 0 .or. (mimj .eq. 0 .and. ninj .ge. 0)) then
+                call getimn(lMpol, lNtor, Nfp, mimj, ninj, kk)
+                if (kk .gt. 0) then
+                    if (mimj .eq. 0 .and. ninj .eq. 0) then
+                        kijs(ii, jj, 0:1) = (/kk, 1/)
+                    else
+                        kijs(ii, jj, 0:1) = (/kk, 2/)
+                    end if
+                end if
+            else
+                call getimn(lMpol, lNtor, Nfp, -mimj, -ninj, kk)
+                if (kk .gt. 0) then
+                    kijs(ii, jj, 0:1) = (/kk, -2/) ! only the sine modes need the sign factor; 17 Dec 15;
+                end if
+            end if
+        end do ! end of do jj; 29 Jan 13;
+    end do ! end of do ii; 29 Jan 13;
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !> **djkp**
 
-  if( Igeometry.eq.2 ) then ! standard cylindrical; 04 Dec 14;
+    if (Igeometry .eq. 2) then ! standard cylindrical; 04 Dec 14;
+        allocate (djkp(1:mn, 1:mn), stat=astat)
+        djkp(1:mn, 1:mn) = 0
+        ! only used in volume; trigonometric identities; 04 Dec 14;
 
+        allocate (djkm(1:mn, 1:mn), stat=astat)
+        djkm(1:mn, 1:mn) = 0
+        ! only used in volume; trigonometric identities; 04 Dec 14;
 
-   allocate( djkp(1:mn,1:mn), stat=astat )
-   djkp(1:mn,1:mn) = 0
- ! only used in volume; trigonometric identities; 04 Dec 14;
+        do ii = 1, mn
+            mi = im(ii)
+            ni = in(ii)
+            do jj = 1, mn
+                mj = im(jj)
+                nj = in(jj)
 
-   allocate( djkm(1:mn,1:mn), stat=astat )
-   djkm(1:mn,1:mn) = 0
- ! only used in volume; trigonometric identities; 04 Dec 14;
+                if (mi - mj .eq. 0 .and. ni - nj .eq. 0) then
+                    djkp(ii, jj) = 1
+                end if
 
-   do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
-    do jj = 1, mn ; mj = im(jj) ; nj = in(jj)
-     if( mi-mj.eq.0 .and. ni-nj.eq.0 ) djkp(ii,jj) = 1
-     if( mi+mj.eq.0 .and. ni+nj.eq.0 ) djkm(ii,jj) = 1
-    enddo
-   enddo
+                if (mi + mj .eq. 0 .and. ni + nj .eq. 0) then
+                    djkm(ii, jj) = 1
+                end if
+            end do
+        end do
 
-  endif ! end of if( Igeometry.eq.2 ) ; 04 Dec 14;
+    end if ! end of if( Igeometry.eq.2 ) ; 04 Dec 14;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !> **iotakki**
 
+    allocate (iotakkii(1:mn), stat=astat)
+    iotakkii(1:mn) = 0
+    ! used to identify matrix elements in straight-field-line angle transformation;
 
-   allocate( iotakkii(1:mn      ), stat=astat )
-   iotakkii(1:mn      ) = 0
- ! used to identify matrix elements in straight-field-line angle transformation;
+    allocate (iotaksub(1:mn, 1:mns), stat=astat)
+    iotaksub(1:mn, 1:mns) = 0
 
+    allocate (iotaksgn(1:mn, 1:mns), stat=astat)
+    iotaksgn(1:mn, 1:mns) = 0
 
-   allocate( iotaksub(1:mn,1:mns), stat=astat )
-   iotaksub(1:mn,1:mns) = 0
+    allocate (iotakadd(1:mn, 1:mns), stat=astat)
+    iotakadd(1:mn, 1:mns) = 0
 
+    do kk = 1, mn; mk = im(kk); nk = in(kk)
 
-   allocate( iotaksgn(1:mn,1:mns), stat=astat )
-   iotaksgn(1:mn,1:mns) = 0
+        call getimn(sMpol, sNtor, Nfp, mk, nk, ii)
+        if (ii .gt. 0) then
+            iotakkii(kk) = ii
+        end if
 
+        do jj = 1, mns
+            mj = ims(jj)
+            nj = ins(jj)
 
-   allocate( iotakadd(1:mn,1:mns), stat=astat )
-   iotakadd(1:mn,1:mns) = 0
+            mkmj = mk - mj
+            nknj = nk - nj
 
+            if (mkmj .gt. 0 .or. (mkmj .eq. 0 .and. nknj .ge. 0)) then
+                call getimn(sMpol, sNtor, Nfp, mkmj, nknj, ii)
+                if (ii .gt. 0) then
+                    iotaksub(kk, jj) = ii
+                    iotaksgn(kk, jj) = 1
+                end if
+            else
+                call getimn(sMpol, sNtor, Nfp, -mkmj, -nknj, ii)
+                if (ii .gt. 0) then
+                    iotaksub(kk, jj) = ii
+                    iotaksgn(kk, jj) = -1
+                end if
+            end if
 
-  do kk = 1, mn ; mk = im(kk) ; nk = in(kk)
+            mkmj = mk + mj
+            nknj = nk + nj
 
-    call getimn(sMpol, sNtor, Nfp, mk, nk, ii)
-    if (ii.gt.0) iotakkii(kk) = ii
-
-    do jj = 1, mns ; mj = ims(jj) ; nj = ins(jj)
-
-      mkmj = mk - mj ; nknj = nk - nj
-
-      if( mkmj.gt.0 .or. ( mkmj.eq.0 .and. nknj.ge.0 ) ) then
-
-        call getimn(sMpol, sNtor, Nfp, mkmj, nknj, ii)
-        if (ii.gt.0) then ; iotaksub(kk,jj) = ii ; iotaksgn(kk,jj) =  1
-        endif
-
-      else
-
-        call getimn(sMpol, sNtor, Nfp, -mkmj, -nknj, ii)
-        if (ii.gt.0) then ; iotaksub(kk,jj) = ii ; iotaksgn(kk,jj) =  -1
-        endif
-
-      endif
-
-      mkmj = mk + mj ; nknj = nk + nj
-
-      call getimn(sMpol, sNtor, Nfp, mkmj, nknj, ii)
-      if (ii.gt.0) then ; iotakadd(kk,jj) = ii
-      endif
-
-    enddo ! end of do jj; 29 Jan 13;
-
-  enddo ! end of do kk; 29 Jan 13;
-
+            call getimn(sMpol, sNtor, Nfp, mkmj, nknj, ii)
+            if (ii .gt. 0) then
+                iotakadd(kk, jj) = ii
+            end if
+        end do ! end of do jj; 29 Jan 13;
+    end do ! end of do kk; 29 Jan 13;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -961,30 +947,22 @@ endif
 
 ! Allocate space for the toroidal current array in each interface
 
+    allocate (IPDt(1:Mvol), stat=astat)
+    IPDt(1:Mvol) = zero
 
-   allocate( IPDt(1:Mvol), stat=astat )
-   IPDt(1:Mvol) = zero
+    if (Lfreebound .eq. 1) then
+        allocate (IPDtDpf(1:Mvol, 1:Mvol), stat=astat)
+        IPDtDpf(1:Mvol, 1:Mvol) = zero
+    else
+        allocate (IPDtDpf(1:Mvol - 1, 1:Mvol - 1), stat=astat)
+        IPDtDpf(1:Mvol - 1, 1:Mvol - 1) = zero
+    end if
 
-  if( Lfreebound.eq.1 ) then
+    allocate (cheby(0:Mrad, 0:2), stat=astat)
+    cheby(0:Mrad, 0:2) = zero
 
-   allocate( IPDtDpf(1:Mvol  , 1:Mvol  ), stat=astat )
-   IPDtDpf(1:Mvol  , 1:Mvol  ) = zero
-
-  else
-
-   allocate( IPDtDpf(1:Mvol-1, 1:Mvol-1), stat=astat )
-   IPDtDpf(1:Mvol-1, 1:Mvol-1) = zero
-
-  endif
-
-
-   allocate( cheby(0:Mrad,0:2), stat=astat )
-   cheby(0:Mrad,0:2) = zero
-
-
-   allocate( zernike(0:Lrad(1), 0:Mpol, 0:2), stat=astat )
-   zernike(0:Lrad(1), 0:Mpol, 0:2) = zero
-
+    allocate (zernike(0:Lrad(1), 0:Mpol, 0:2), stat=astat)
+    zernike(0:Lrad(1), 0:Mpol, 0:2) = zero
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1005,72 +983,71 @@ endif
 !>       also see jo00aa(), where \c Iquad\f$_v\f$ is used to compute the volume integrals of \f$||\nabla\times{\bf B} - \mu {\bf B}||\f$. </li>
 !> </ul>
 
+    allocate (Iquad(1:Mvol), stat=astat)
+    Iquad(1:Mvol) = 0
+    ! 16 Jan 13;
 
-   allocate( Iquad(1:Mvol), stat=astat )
-   Iquad(1:Mvol) = 0
- ! 16 Jan 13;
+    do vvol = 1, Mvol
 
-  do vvol = 1, Mvol
+        if (Igeometry .eq. 1 .or. vvol .gt. 1) then
+            Lcoordinatesingularity = .false.
+        else
+            Lcoordinatesingularity = .true.
+        end if
 
+        if (vvol .le. Nvol) then
+            Lplasmaregion = .true.
+        else
+            Lplasmaregion = .false.
+        end if
 
-   if( Igeometry.eq.1 .or. vvol.gt.1 ) then ; Lcoordinatesingularity = .false.
-   else                                   ; Lcoordinatesingularity = .true.
-   endif
+        Lvacuumregion = .not. Lplasmaregion
 
-   if( vvol.le.Nvol ) then ; Lplasmaregion = .true.
-   else                  ; Lplasmaregion = .false.
-   endif
+        if (Nquad .gt. 0) then
+            Iquad(vvol) = Nquad
+        else
+            if (Lcoordinatesingularity) then
+                Iquad(vvol) = Mpol + 2*Lrad(vvol) - Nquad ! NEED TO REVISE REGULARIZATION FACTORS; 26 Feb 13;
+            else
+                Iquad(vvol) = 2*Lrad(vvol) - Nquad
+            end if
+        end if
 
-   Lvacuumregion = .not.Lplasmaregion
+    end do ! end of do vvol; 18 Feb 13;
 
+    maxIquad = maxval(Iquad(1:Mvol))
 
-   if( Nquad.gt.0 ) then ;            Iquad(vvol) =                         Nquad
-   else
-    if(      Lcoordinatesingularity ) Iquad(vvol) = Mpol + 2 * Lrad(vvol) - Nquad ! NEED TO REVISE REGULARIZATION FACTORS; 26 Feb 13;
-    if( .not.Lcoordinatesingularity ) Iquad(vvol) =        2 * Lrad(vvol) - Nquad
-   endif
+    allocate (gaussianweight(1:maxIquad, 1:Mvol), stat=astat)
+    gaussianweight(1:maxIquad, 1:Mvol) = zero
+    ! perhaps it would be neater to make this a structure; 26 Jan 16;
 
-  enddo ! end of do vvol; 18 Feb 13;
+    allocate (gaussianabscissae(1:maxIquad, 1:Mvol), stat=astat)
+    gaussianabscissae(1:maxIquad, 1:Mvol) = zero
 
-  maxIquad = maxval(Iquad(1:Mvol))
+    do vvol = 1, Mvol
+        lquad = Iquad(vvol)
+        call gauleg(lquad, gaussianweight(1:lquad, vvol), gaussianabscissae(1:lquad, vvol), igauleg) ! JAB; 28 Jul 17
+        if (myid .eq. 0) then
+            cput = MPI_WTIME()
+            select case (igauleg) !                                                  123456789012345
+            case (0); if (Wpreset) write (ounit, 1000) cput - cpus, vvol, igauleg, "success        ", gaussianabscissae(1:lquad, vvol)
+            case (1); write (ounit, 1000) cput - cpus, vvol, igauleg, "failed         ", gaussianabscissae(1:lquad, vvol)
+            case (2); write (ounit, 1000) cput - cpus, vvol, igauleg, "input error    ", gaussianabscissae(1:lquad, vvol)
+            case default
+                write (ounit, 1000) cput - cpus, vvol, igauleg, "weird          ", gaussianabscissae(1:lquad, vvol)
+                write (6, '("preset :      fatal : myid=",i3," ; .true. ; weird ifail returned by gauleg ;")') myid
+                call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                stop "preset : .true. : weird ifail returned by gauleg  ;"
+            end select
+            if (Wpreset) then
+                write (ounit, 1001) gaussianweight(1:lquad, vvol)
+            end if
+        end if
 
+1000    format("preset : ", f10.2, " : lvol=", i3, " ; igauleg=", i5, " ; ", a15, " ; abscissae ="99f09.05)
+1001    format("preset : ", 10x, " :      ", 3x, "           ", 5x, "   ", 15x, " ; weights   ="99f09.05)
 
-   allocate( gaussianweight   (1:maxIquad,1:Mvol), stat=astat )
-   gaussianweight   (1:maxIquad,1:Mvol) = zero
- ! perhaps it would be neater to make this a structure; 26 Jan 16;
-
-   allocate( gaussianabscissae(1:maxIquad,1:Mvol), stat=astat )
-   gaussianabscissae(1:maxIquad,1:Mvol) = zero
-
-
-  do vvol = 1, Mvol
-
-   lquad = Iquad(vvol)
-
-   call gauleg( lquad, gaussianweight(1:lquad,vvol), gaussianabscissae(1:lquad,vvol), igauleg ) ! JAB; 28 Jul 17
-
-   if( myid.eq.0 ) then
-    cput= MPI_WTIME()
-    select case( igauleg ) !                                                  123456789012345
-    case( 0 )    ; if( Wpreset ) write(ounit,1000) cput-cpus, vvol, igauleg, "success        ", gaussianabscissae(1:lquad,vvol)
-    case( 1 )    ;               write(ounit,1000) cput-cpus, vvol, igauleg, "failed         ", gaussianabscissae(1:lquad,vvol)
-    case( 2 )    ;               write(ounit,1000) cput-cpus, vvol, igauleg, "input error    ", gaussianabscissae(1:lquad,vvol)
-    case default ;               write(ounit,1000) cput-cpus, vvol, igauleg, "weird          ", gaussianabscissae(1:lquad,vvol)
-
-   if( .true. ) then
-     write(6,'("preset :      fatal : myid=",i3," ; .true. ; weird ifail returned by gauleg ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "preset : .true. : weird ifail returned by gauleg  ;"
-    endif
-
-    end select
-    ;            ; if( Wpreset ) write(ounit,1001)                                              gaussianweight(1:lquad,vvol)
-   endif
-
-1000 format("preset : ",f10.2," : lvol=",i3," ; igauleg=",i5," ; ",a15," ; abscissae ="99f09.05)
-1001 format("preset : ", 10x ," :      ",3x,"           ",5x,"   ",15x," ; weights   ="99f09.05)
-
-  enddo ! end of do vvol;  7 Mar 13;
+    end do ! end of do vvol;  7 Mar 13;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1080,34 +1057,34 @@ endif
 !> <li> \c LBsequad, \c LBnewton and \c LBlinear depend simply on \c LBeltrami , which is described in global.f90 . </li>
 !> </ul>
 
-  LBsequad = .false.
-  LBnewton = .false.
-  LBlinear = .false.
+    LBsequad = .false.
+    LBnewton = .false.
+    LBlinear = .false.
 
-  if( LBeltrami.eq.1 .or. LBeltrami.eq.3 .or. LBeltrami.eq.5 .or. LBeltrami.eq.7 ) LBsequad = .true.
-  if( LBeltrami.eq.2 .or. LBeltrami.eq.3 .or. LBeltrami.eq.6 .or. LBeltrami.eq.7 ) LBnewton = .true.
-  if( LBeltrami.eq.4 .or. LBeltrami.eq.5 .or. LBeltrami.eq.6 .or. LBeltrami.eq.7 ) LBlinear = .true.
+    if (LBeltrami .eq. 1 .or. LBeltrami .eq. 3 .or. LBeltrami .eq. 5 .or. LBeltrami .eq. 7) LBsequad = .true.
+    if (LBeltrami .eq. 2 .or. LBeltrami .eq. 3 .or. LBeltrami .eq. 6 .or. LBeltrami .eq. 7) LBnewton = .true.
+    if (LBeltrami .eq. 4 .or. LBeltrami .eq. 5 .or. LBeltrami .eq. 6 .or. LBeltrami .eq. 7) LBlinear = .true.
 
-  if (LBnewton .or. LBsequad) Lconstraint = 2
+    if (LBnewton .or. LBsequad) Lconstraint = 2
 
-  if (Lconstraint .eq. 2) then
+    if (Lconstraint .eq. 2) then
 
-   if( Lfreebound.eq.1 ) then
-     write(6,'("preset :      fatal : myid=",i3," ; Lfreebound.eq.1 ; The combination of helicity constraint and free boundary is under construction ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "preset : Lfreebound.eq.1 : The combination of helicity constraint and free boundary is under construction  ;"
-    endif
+        if (Lfreebound .eq. 1) then
+            write (6, '("preset :      fatal : myid=",i3," ; Lfreebound.eq.1 ; The combination of helicity constraint and free boundary is under construction ;")') myid
+            call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+            stop "preset : Lfreebound.eq.1 : The combination of helicity constraint and free boundary is under construction  ;"
+        end if
 
-    if (Igeometry .eq. 3 .and. myid.eq.0) then
-      write(ounit, *) 'WARNING: The Hessian matrix needs further review for Igeometry = 3'
-      write(ounit, *) '         However, it can still serve the purpose of Lfindzero = 2'
-    endif
-  endif
+        if (Igeometry .eq. 3 .and. myid .eq. 0) then
+            write (ounit, *) 'WARNING: The Hessian matrix needs further review for Igeometry = 3'
+            write (ounit, *) '         However, it can still serve the purpose of Lfindzero = 2'
+        end if
+    end if
 
-  if( myid.eq.0 ) then
-   cput = MPI_WTIME()
-   write(ounit,'("preset : ",f10.2," : LBsequad="L2" , LBnewton="L2" , LBlinear="L2" ;")')cput-cpus, LBsequad, LBnewton, LBlinear
-  endif
+    if (myid .eq. 0) then
+        cput = MPI_WTIME()
+        write (ounit, '("preset : ",f10.2," : LBsequad="L2" , LBnewton="L2" , LBlinear="L2" ;")') cput - cpus, LBsequad, LBnewton, LBlinear
+    end if
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1120,15 +1097,14 @@ endif
 !> <li> this is only used in dforce() in constructing the force-imbalance vector </li>
 !> </ul>
 
+    allocate (BBweight(1:mn), stat=astat)
+    BBweight(1:mn) = opsilon*exp(-escale*(im(1:mn)**2 + (in(1:mn)/Nfp)**2))
 
-   allocate( BBweight(1:mn), stat=astat )
-   BBweight(1:mn) = opsilon * exp( - escale * ( im(1:mn)**2 + (in(1:mn)/Nfp)**2 ) )
-
-
-  if( myid.eq.0 .and. escale.gt.small ) then
-   do ii = 1, mn ; write(ounit,'("preset : " 10x " : myid="i3" ; ("i3","i3") : BBweight="es13.5" ;")') myid, im(ii), in(ii)/Nfp, BBweight(ii)
-   enddo
-  endif
+    if (myid .eq. 0 .and. escale .gt. small) then
+        do ii = 1, mn
+            write (ounit, '("preset : " 10x " : myid="i3" ; ("i3","i3") : BBweight="es13.5" ;")') myid, im(ii), in(ii)/Nfp, BBweight(ii)
+        end do
+    end if
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1141,18 +1117,18 @@ endif
 !>       where \f$p \equiv\,\f$\c pcondense . </li>
 !> </ul>
 
+    allocate (mmpp(1:mn), stat=astat)
+    mmpp(1:mn) = zero
 
-   allocate( mmpp(1:mn), stat=astat )
-   mmpp(1:mn) = zero
+    do ii = 1, mn
+        mi = im(ii)
+        if (mi .eq. 0) then
+            mmpp(ii) = zero
+        else
+            mmpp(ii) = mi**pcondense
+        end if ! end of if( mi.eq.0 ) ; 11 Aug 14;
 
-
-  do ii = 1, mn ; mi = im(ii)
-
-   if( mi.eq.0 ) then ; mmpp(ii) = zero
-   else               ; mmpp(ii) = mi**pcondense
-   endif ! end of if( mi.eq.0 ) ; 11 Aug 14;
-
-  enddo ! end of do ii; 08 Nov 13;
+    end do ! end of do ii; 08 Nov 13;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1184,444 +1160,443 @@ endif
 !>      An initial state is required for iterative solvers of the Beltrami fields, see \c LBeltrami . </li>
 !> </ul>
 
+    allocate (NAdof(1:Mvol), stat=astat)
+    NAdof(1:Mvol) = 0
+    ! Beltrami degrees-of-freedom in each annulus;
 
-   allocate( NAdof(1:Mvol          ), stat=astat )
-   NAdof(1:Mvol          ) = 0
- ! Beltrami degrees-of-freedom in each annulus;
+    allocate (Nfielddof(1:Mvol), stat=astat)
+    Nfielddof(1:Mvol) = 0
+    ! Beltrami degrees-of-freedom in each annulus, field only;
 
-   allocate( Nfielddof(1:Mvol       ), stat=astat )
-   Nfielddof(1:Mvol       ) = 0
- ! Beltrami degrees-of-freedom in each annulus, field only;
+    allocate (NdMASmax(1:Mvol), stat=astat)
+    NdMASmax(1:Mvol) = 0
+    ! The maximum size of sparse matrix for GMRES preconditioning;
 
-   allocate( NdMASmax(1:Mvol       ), stat=astat )
-   NdMASmax(1:Mvol       ) = 0
- ! The maximum size of sparse matrix for GMRES preconditioning;
+    allocate (NdMAS(1:Mvol), stat=astat)
+    NdMAS(1:Mvol) = 0
+    ! The actual size of sparse matrix for GMRES preconditioning;
 
-   allocate( NdMAS   (1:Mvol       ), stat=astat )
-   NdMAS   (1:Mvol       ) = 0
- ! The actual size of sparse matrix for GMRES preconditioning;
+    allocate (Ate(1:Mvol, -2:2, 1:mn), stat=astat)
+    ! recall that this is type:sub-grid; 31 Jan 13;
 
+    allocate (Aze(1:Mvol, -2:2, 1:mn), stat=astat)
+    ! -2 : for use of matrix-free solver ; -1 : for use of force gradient
 
-   allocate(Ate  (1:Mvol,-2:2,1:mn)    ,stat=astat)
- ! recall that this is type:sub-grid; 31 Jan 13;
+    allocate (Ato(1:Mvol, -2:2, 1:mn), stat=astat)
+    !  0 : normal data
 
-   allocate(Aze  (1:Mvol,-2:2,1:mn)    ,stat=astat)
- ! -2 : for use of matrix-free solver ; -1 : for use of force gradient
+    allocate (Azo(1:Mvol, -2:2, 1:mn), stat=astat)
+    ! 1:2: use to compute derivative w.r.t. fluxes
 
-   allocate(Ato  (1:Mvol,-2:2,1:mn)    ,stat=astat)
- !  0 : normal data
+    allocate (Fso(1:Mvol, 1:mn), stat=astat)
+    Fso(1:Mvol, 1:mn) = 0
+    ! these will become redundant if/when Lagrange multipliers are used to enforce bounday constraints; 26 Jan 16;
 
-   allocate(Azo  (1:Mvol,-2:2,1:mn)    ,stat=astat)
- ! 1:2: use to compute derivative w.r.t. fluxes
+    allocate (Fse(1:Mvol, 1:mn), stat=astat)
+    Fse(1:Mvol, 1:mn) = 0
 
+    allocate (Lma(1:Mvol, 1:mn), stat=astat)
+    Lma(1:Mvol, 1:mn) = 0
+    ! degree of freedom index; for Lagrange multiplier; 08 Feb 16;
 
-   allocate( Fso  (1:Mvol,     1:mn), stat=astat )
-   Fso  (1:Mvol,     1:mn) = 0
- ! these will become redundant if/when Lagrange multipliers are used to enforce bounday constraints; 26 Jan 16;
+    allocate (Lmb(1:Mvol, 1:mn), stat=astat)
+    Lmb(1:Mvol, 1:mn) = 0
 
-   allocate( Fse  (1:Mvol,     1:mn), stat=astat )
-   Fse  (1:Mvol,     1:mn) = 0
+    allocate (Lmc(1:Mvol, 1:mn), stat=astat)
+    Lmc(1:Mvol, 1:mn) = 0
+    ! only need Lmc(2:mn) ; only for NOTstellsym; 08 Feb 16;
 
+    allocate (Lmd(1:Mvol, 1:mn), stat=astat)
+    Lmd(1:Mvol, 1:mn) = 0
+    ! only need Lmd(2:mn) ; only for NOTstellsym; 08 Feb 16;
 
+    allocate (Lme(1:Mvol, 1:mn), stat=astat)
+    Lme(1:Mvol, 1:mn) = 0
+    ! only need Lme(2:mn) ;
 
-   allocate( Lma  (1:Mvol,     1:mn), stat=astat )
-   Lma  (1:Mvol,     1:mn) = 0
- ! degree of freedom index; for Lagrange multiplier; 08 Feb 16;
+    allocate (Lmf(1:Mvol, 1:mn), stat=astat)
+    Lmf(1:Mvol, 1:mn) = 0
+    ! only need Lmf(2:mn) ; only for NOTstellsym; 08 Feb 16;
 
-   allocate( Lmb  (1:Mvol,     1:mn), stat=astat )
-   Lmb  (1:Mvol,     1:mn) = 0
+    allocate (Lmg(1:Mvol, 1:mn), stat=astat)
+    Lmg(1:Mvol, 1:mn) = 0
+    ! only need Lmg(1   ) ;
 
+    allocate (Lmh(1:Mvol, 1:mn), stat=astat)
+    Lmh(1:Mvol, 1:mn) = 0
+    ! only need Lmh(1   ) ;
 
-   allocate( Lmc  (1:Mvol,     1:mn), stat=astat )
-   Lmc  (1:Mvol,     1:mn) = 0
- ! only need Lmc(2:mn) ; only for NOTstellsym; 08 Feb 16;
+    allocate (Lmavalue(1:Mvol, 1:mn), stat=astat)
+    Lmavalue(1:Mvol, 1:mn) = zero
 
-   allocate( Lmd  (1:Mvol,     1:mn), stat=astat )
-   Lmd  (1:Mvol,     1:mn) = 0
- ! only need Lmd(2:mn) ; only for NOTstellsym; 08 Feb 16;
+    allocate (Lmbvalue(1:Mvol, 1:mn), stat=astat)
+    Lmbvalue(1:Mvol, 1:mn) = zero
 
-   allocate( Lme  (1:Mvol,     1:mn), stat=astat )
-   Lme  (1:Mvol,     1:mn) = 0
- ! only need Lme(2:mn) ;
+    allocate (Lmcvalue(1:Mvol, 1:mn), stat=astat)
+    Lmcvalue(1:Mvol, 1:mn) = zero
 
-   allocate( Lmf  (1:Mvol,     1:mn), stat=astat )
-   Lmf  (1:Mvol,     1:mn) = 0
- ! only need Lmf(2:mn) ; only for NOTstellsym; 08 Feb 16;
+    allocate (Lmdvalue(1:Mvol, 1:mn), stat=astat)
+    Lmdvalue(1:Mvol, 1:mn) = zero
 
-   allocate( Lmg  (1:Mvol,     1:mn), stat=astat )
-   Lmg  (1:Mvol,     1:mn) = 0
- ! only need Lmg(1   ) ;
+    allocate (Lmevalue(1:Mvol, 1:mn), stat=astat)
+    Lmevalue(1:Mvol, 1:mn) = zero
 
-   allocate( Lmh  (1:Mvol,     1:mn), stat=astat )
-   Lmh  (1:Mvol,     1:mn) = 0
- ! only need Lmh(1   ) ;
+    allocate (Lmfvalue(1:Mvol, 1:mn), stat=astat)
+    Lmfvalue(1:Mvol, 1:mn) = zero
 
+    allocate (Lmgvalue(1:Mvol, 1:mn), stat=astat)
+    Lmgvalue(1:Mvol, 1:mn) = zero
 
-   allocate( Lmavalue(1:Mvol,     1:mn), stat=astat )
-   Lmavalue(1:Mvol,     1:mn) = zero
+    allocate (Lmhvalue(1:Mvol, 1:mn), stat=astat)
+    Lmhvalue(1:Mvol, 1:mn) = zero
 
+    do vvol = 1, Mvol
 
-   allocate( Lmbvalue(1:Mvol,     1:mn), stat=astat )
-   Lmbvalue(1:Mvol,     1:mn) = zero
-
-
-   allocate( Lmcvalue(1:Mvol,     1:mn), stat=astat )
-   Lmcvalue(1:Mvol,     1:mn) = zero
-
-
-   allocate( Lmdvalue(1:Mvol,     1:mn), stat=astat )
-   Lmdvalue(1:Mvol,     1:mn) = zero
-
-
-   allocate( Lmevalue(1:Mvol,     1:mn), stat=astat )
-   Lmevalue(1:Mvol,     1:mn) = zero
-
-
-   allocate( Lmfvalue(1:Mvol,     1:mn), stat=astat )
-   Lmfvalue(1:Mvol,     1:mn) = zero
-
-
-   allocate( Lmgvalue(1:Mvol,     1:mn), stat=astat )
-   Lmgvalue(1:Mvol,     1:mn) = zero
-
-
-   allocate( Lmhvalue(1:Mvol,     1:mn), stat=astat )
-   Lmhvalue(1:Mvol,     1:mn) = zero
-
-
-  do vvol = 1, Mvol
-
-
-   if( Igeometry.eq.1 .or. vvol.gt.1 ) then ; Lcoordinatesingularity = .false.
-   else                                   ; Lcoordinatesingularity = .true.
-   endif
-
-   if( vvol.le.Nvol ) then ; Lplasmaregion = .true.
-   else                  ; Lplasmaregion = .false.
-   endif
-
-   Lvacuumregion = .not.Lplasmaregion
-
-
-   if( Lcoordinatesingularity ) then
-    zerdof = 0                                       ! count Zernike degree of freedom 30 Jun 19
-    do ii = 2, Mpol                                  ! for m>1
-     do jj = ii, Lrad(vvol), 2
-      zerdof = zerdof + 2 * ntor + 1                 ! plus and minus sign for n>1, unique for n==0
-      if( NOTstellsym ) zerdof = zerdof + 2*ntor + 1 ! plus and minus sign for n
-     enddo
-    enddo
-    zerdof = zerdof * 2                              ! we have one for At and one for Az
-
-    do jj = 0, Lrad(vvol), 2                         ! for m==0
-     zerdof = zerdof + ntor + 1                      ! minus sign for n, Aze
-     if (jj .ge. 2) zerdof = zerdof + ntor + 1       ! minus sign for n, Ate, without l=0 due to recombination
-
-     if( NOTstellsym ) then
-      zerdof = zerdof + ntor                         ! sin component minus sign for n, Azo
-      if (jj .ge. 2) zerdof = zerdof + ntor          ! minus sign for n, Ato, without l=0 due to recombination
-     endif
-    enddo
-
-    if (Mpol .ge. 1) then ! for m==1
-      do jj = 1, Lrad(vvol), 2
-        zerdof = zerdof + 2 * ntor + 1                  ! minus and plus sign for n, Aze
-        if (jj .ge. 2) zerdof = zerdof + 2 * ntor + 1   ! minus sign for n, Ate, without l=0 due to recombination
-
-        if( NOTstellsym ) then
-          zerdof = zerdof + 2 * ntor + 1                 ! sin component minus and plus sign for n, Azo
-          if (jj .ge. 2) zerdof = zerdof + 2 * ntor + 1  ! minus and plus sign for n, Ato, without l=0 due to recombination
-        endif
-      enddo
-    endif
-
-    ! the degree of freedom in the Beltrami field without Lagrange multipliers
-    Nfielddof(vvol) = zerdof
-                                     !                                     a    c      b        d      e      f      g   h
-    if( YESstellsym ) NAdof(vvol) = zerdof                               + mn        + Ntor+1        + mn-1        + 1 + 0
-    if( NOTstellsym ) NAdof(vvol) = zerdof                               + mn + mn-1 + Ntor+1 + Ntor + mn-1 + mn-1 + 1 + 0 ! this is broken at the moment
-
-    ! due to basis recombination, Lma will not have the m=0 and m=1 harmonics. We substract them now
-    ! m = 0
-    NAdof(vvol) = NAdof(vvol) - (ntor + 1)
-    if (NOTstellsym) NAdof(vvol) = NAdof(vvol) - ntor
-
-    ! m = 1
-    if (Mpol .ge. 1) then
-      NAdof(vvol) = NAdof(vvol) - (2 * ntor + 1)
-      if (NOTstellsym) NAdof(vvol) = NAdof(vvol) - (2 * ntor + 1)
-    endif
-
-    ! Guess the size of the sparse matrix ! 28 Jan 20
-    ! If an iterative method is used and requires an preconditioner, we need to construct it as a sparse matrix
-    if (Lmatsolver.ge.2 .and. LGMRESprec.gt.0) then
-      if( YESstellsym ) NdMASmax(vvol) = (2 * (Lrad(vvol)/2 + 1))**2 * mn + 2 * 2 * 5 * Lrad(vvol) * mn ! Ate, Aze
-      if( NOTstellsym ) NdMASmax(vvol) = (4 * (Lrad(vvol)/2 + 1))**2 * mn + 2 * 4 * 8 * Lrad(vvol) * mn ! Ate, Aze, Ato, Azo
-    end if
-   else ! .not.Lcoordinatesingularity;                                     a    c      b        d      e      f      g   h
-    if( YESstellsym ) NAdof(vvol) = 2 * ( mn        ) * ( Lrad(vvol)    )                            + mn-1        + 1 + 1
-    if( NOTstellsym ) NAdof(vvol) = 2 * ( mn + mn-1 ) * ( Lrad(vvol)    )                            + mn-1 + mn-1 + 1 + 1
-
-    ! dof for field variables only
-    if( YESstellsym ) Nfielddof(vvol) = 2 * ( mn        ) * ( Lrad(vvol)    )
-    if( NOTstellsym ) Nfielddof(vvol) = 2 * ( mn + mn-1 ) * ( Lrad(vvol)    )
-
-    ! Guess the size of the sparse matrix ! 28 Jan 20
-    ! If an iterative method is used and requires an preconditioner, we need to construct it as a sparse matrix
-    if (Lmatsolver.ge.2 .and. LGMRESprec.gt.0) then
-      if( YESstellsym ) NdMASmax(vvol) = (2 * (Lrad(vvol) + 1))**2 * mn + 2 * 2 * 5 * Lrad(vvol) * mn        ! Ate, Aze
-      if( NOTstellsym ) NdMASmax(vvol) = (4 * (Lrad(vvol) + 1))**2 * mn + 2 * 4 * 8 * Lrad(vvol) * mn        ! Ate, Aze, Ato, Azo
-    end if
-   endif ! end of if( Lcoordinatesingularity );
-
-   do ii = 1, mn ! loop over Fourier harmonics;
-
-    do ideriv = -2, 2 ! loop over derivatives; 14 Jan 13;
-
-
-   allocate( Ate(vvol,ideriv,ii)%s(0:Lrad(vvol)), stat=astat )
-   Ate(vvol,ideriv,ii)%s(0:Lrad(vvol)) = zero
-
-
-   allocate( Aze(vvol,ideriv,ii)%s(0:Lrad(vvol)), stat=astat )
-   Aze(vvol,ideriv,ii)%s(0:Lrad(vvol)) = zero
-
-
-   allocate( Ato(vvol,ideriv,ii)%s(0:Lrad(vvol)), stat=astat )
-   Ato(vvol,ideriv,ii)%s(0:Lrad(vvol)) = zero
-
-
-   allocate( Azo(vvol,ideriv,ii)%s(0:Lrad(vvol)), stat=astat )
-   Azo(vvol,ideriv,ii)%s(0:Lrad(vvol)) = zero
-
-
-    enddo ! end of do ideriv;
-
-    ;  ideriv =  0
-
-
-   allocate( Ate(vvol,ideriv,ii)%i(0:Lrad(vvol)), stat=astat )
-   Ate(vvol,ideriv,ii)%i(0:Lrad(vvol)) = 0
- ! degree of freedom index; 17 Jan 13;
-
-   allocate( Aze(vvol,ideriv,ii)%i(0:Lrad(vvol)), stat=astat )
-   Aze(vvol,ideriv,ii)%i(0:Lrad(vvol)) = 0
-
-
-   allocate( Ato(vvol,ideriv,ii)%i(0:Lrad(vvol)), stat=astat )
-   Ato(vvol,ideriv,ii)%i(0:Lrad(vvol)) = 0
-
-
-   allocate( Azo(vvol,ideriv,ii)%i(0:Lrad(vvol)), stat=astat )
-   Azo(vvol,ideriv,ii)%i(0:Lrad(vvol)) = 0
-
-
-   enddo ! end of do ii;
-
-
-   select case( Linitgues ) ! for iterative solver of the Beltrami fields, an initial guess is required; 11 Mar 16;
-   case( 0 )    ;
-   case( 1 )    ; Ate(vvol,0,1)%s(0:1) = dtflux(vvol) * half ! this is an integrable approximation; NEEDS CHECKING; 26 Feb 13;
-    ;           ; Aze(vvol,0,1)%s(0:1) = dpflux(vvol) * half ! this is an integrable approximation; NEEDS CHECKING; 26 Feb 13;
-    if (Lcoordinatesingularity) then
-    ;           ; Ate(vvol,0,1)%s(2) = dtflux(vvol) * half * half
-    endif
-   case( 2 )    ;                                            ! will call ra00aa below to read initial vector potential from file;
-   case( 3 )    ;                                            ! the initial guess will be randomized, maximum is maxrndgues; 5 Mar 19;
-    do ii = 1, mn ! loop over Fourier harmonics;
-
-     do ideriv = -2, 2 ! loop over derivatives; 14 Jan 13;
-
-      call random_number(Ate(vvol,ideriv,ii)%s)
-      call random_number(Aze(vvol,ideriv,ii)%s)
-      Ate(vvol,ideriv,ii)%s = Ate(vvol,ideriv,ii)%s * maxrndgues
-      Aze(vvol,ideriv,ii)%s = Aze(vvol,ideriv,ii)%s * maxrndgues
-      if (.not. YESstellsym) then
-       call random_number(Ato(vvol,ideriv,ii)%s)
-       call random_number(Azo(vvol,ideriv,ii)%s)
-       Ato(vvol,ideriv,ii)%s = Ato(vvol,ideriv,ii)%s * maxrndgues
-       Azo(vvol,ideriv,ii)%s = Azo(vvol,ideriv,ii)%s * maxrndgues
-      endif
-
-     enddo ! end of do ideriv;
-
-    enddo ! end of do ii;
-
-   end select
-
-   idof = 0 ! degree of freedom index; reset to 0 in each volume;
-
-   if( Lcoordinatesingularity ) then
-
-    do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
-
-     do ll = 0, Lrad(vvol)
-      ! Zernike is non zero only if ll>=mi and when they have the same parity
-      if (ll>=mi .and. mod(mi+ll,2)==0)then
-      ! We use the basis combination for m=0 and 1. They don't have ll=0 component.
-      if (.not.((ll==0.and.mi==0).or.(ll==1.and.mi==1))) then
-                                            ; idof = idof + 1 ; Ate(vvol,0,ii)%i(ll) = idof ! Zernike 30 Jun 19
-      endif
-      ;                                     ; idof = idof + 1 ; Aze(vvol,0,ii)%i(ll) = idof
-      if( NOTstellsym .and. ii.gt.1 ) then
-        if (.not.((ll==0.and.mi==0).or.(ll==1.and.mi==1))) then
-                                            ; idof = idof + 1 ; Ato(vvol,0,ii)%i(ll) = idof ! Zernike 30 Jun 19
-        endif
-       ;                                    ; idof = idof + 1 ; Azo(vvol,0,ii)%i(ll) = idof
-      endif ! NOTstellsym
-      endif ! Zernike
-     enddo ! end of do ll; 17 Jan 13;
-
-    enddo ! end of do ii
-
-    do ii = 1, mn ; mi = im(ii) ; ni = in(ii)
-     ! Lma is for Ate boundary condition on axis. For m=0 and 1, the boundary condition has been satisfied by basis recombination, so they are excluded.
-     if ( mi.ne.0 .and. mi.ne.1     )  then ; idof = idof + 1 ; Lma(vvol,  ii)       = idof
-     endif
-     ! Lmb is for Aze boundary condition on axis. We only have that for m=0.
-     if(  mi.eq.0                   ) then ; idof = idof + 1 ; Lmb(vvol,  ii)       = idof ! 18 May 16;
-     endif
-     ! Lme is for B.n at the outer boundary cos component. We don't have it for m=n=0.
-     if(  ii.gt.1                   ) then ; idof = idof + 1 ; Lme(vvol,  ii)       = idof
-     endif
-     ! Lmg is for dtflux. We only have it for m=n=0.
-     if(  ii.eq.1                   ) then ; idof = idof + 1 ; Lmg(vvol,  ii)       = idof
-!   ! ;                                    ; idof = idof + 1 ; Lmh(vvol,  ii)       = idof ! no constraint on poloidal flux in innermost volume; 11 Mar 16;
-     endif
-     if( NOTstellsym ) then
-      ! Lmc is for Ato boundary condition on axis. Same as Lma.
-      if(  mi.ne.0 .and. mi.ne.1    ) then ; idof = idof + 1 ; Lmc(vvol,  ii)       = idof ! 18 May 16;
-      endif
-      ! Lmf is for B.n at the outer boundary sin component. Same as Lme.
-      if(  ii.gt.1                  ) then ; idof = idof + 1 ; Lmf(vvol,  ii)       = idof ! 18 May 16;
-     endif
-     ! Lmd is for Azo on axis. We only have it for m=0, but not m=n=0.
-     if(  ii.gt.1 .and. mi.eq.0     ) then ; idof = idof + 1 ; Lmd(vvol,  ii)       = idof ! 18 May 16;
-     endif
-     endif ! end of if( NOTstellsym ) ; 19 Jul 16;
-
-    enddo ! end of do ii; 25 Jan 13;
-
-
-   if( idof.ne.NAdof(vvol) ) then
-     write(6,'("preset :      fatal : myid=",i3," ; idof.ne.NAdof(vvol) ; need to count Beltrami degrees-of-freedom more carefully  for coordinate singularity ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "preset : idof.ne.NAdof(vvol) : need to count Beltrami degrees-of-freedom more carefully  for coordinate singularity  ;"
-    endif
-
-
-   if( (idof+1)**2.ge.HUGE(idof) ) then
-     write(6,'("preset :      fatal : myid=",i3," ; (idof+1)**2.ge.HUGE(idof) ; ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "preset : (idof+1)**2.ge.HUGE(idof) :  ;"
-    endif
-    ! NAdof too big, should be smaller than maximum of int32 type )
-
-   else ! .not.Lcoordinatesingularity;
-
-    do ii = 1, mn
-     ! We use basis recombination method to ensure the inner boundary has At=Az=0. Therefore they don't have ll=0 component.
-     do ll = 1, Lrad(vvol)                 ; idof = idof + 1 ; Ate(vvol,0,ii)%i(ll) = idof
-      ;                                    ; idof = idof + 1 ; Aze(vvol,0,ii)%i(ll) = idof
-      if( ii.gt.1 .and. NOTstellsym ) then ; idof = idof + 1 ; Ato(vvol,0,ii)%i(ll) = idof
-       ;                                   ; idof = idof + 1 ; Azo(vvol,0,ii)%i(ll) = idof
-      endif
-     enddo ! end of do ll; 08 Feb 16;
-    enddo
-
-    do ii = 1, mn
-     !;                                     ; idof = idof + 1 ; Lma(vvol,  ii)       = idof
-     !;                                     ; idof = idof + 1 ; Lmb(vvol,  ii)       = idof
-     !if(  ii.gt.1 .and. NOTstellsym ) then ; idof = idof + 1 ; Lmc(vvol,  ii)       = idof
-     !;                                     ; idof = idof + 1 ; Lmd(vvol,  ii)       = idof
-     !endif
-     ! Lme is for B.n at the outer boundary cos component. We don't have it for m=n=0.
-     if(  ii.gt.1                   ) then ; idof = idof + 1 ; Lme(vvol,  ii)       = idof
-     endif
-     ! Lmf is for B.n at the outer boundary sin component. Same as Lme
-     if(  ii.gt.1 .and. NOTstellsym ) then ; idof = idof + 1 ; Lmf(vvol,  ii)       = idof
-     endif
-     ! Lmg and Lmh are the dtflux and dpflux constraint. Only present for m=n=0
-     if(  ii.eq.1                   ) then ; idof = idof + 1 ; Lmg(vvol,  ii)       = idof
-      ;                                    ; idof = idof + 1 ; Lmh(vvol,  ii)       = idof
-     endif
-    enddo ! end of do ii; 25 Jan 13;
-
-   !if( Wpreset ) then
-   ! do ii = 1, mn
-   !  do ll = 0, Lrad(vvol)
-   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ; ll="i4" : Ate = "i7" ;")') myid, ii, ll, Ate(vvol,0,ii)%i(ll)
-   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ; ll="i4" : Aze = "i7" ;")') myid, ii, ll, Aze(vvol,0,ii)%i(ll)
-   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ; ll="i4" : Ato = "i7" ;")') myid, ii, ll, Ato(vvol,0,ii)%i(ll)
-   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ; ll="i4" : Azo = "i7" ;")') myid, ii, ll, Azo(vvol,0,ii)%i(ll)
-   !  enddo
-   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ;    "4x" : Lma = "i7" ;")') myid, ii,     Lma(vvol,  ii)
-   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ;    "4x" : Lmb = "i7" ;")') myid, ii,     Lmb(vvol,  ii)
-   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ;    "4x" : Lmc = "i7" ;")') myid, ii,     Lmc(vvol,  ii)
-   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ;    "4x" : Lmd = "i7" ;")') myid, ii,     Lmd(vvol,  ii)
-   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ;    "4x" : Lme = "i7" ;")') myid, ii,     Lme(vvol,  ii)
-   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ;    "4x" : Lmf = "i7" ;")') myid, ii,     Lmf(vvol,  ii)
-   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ;    "4x" : Lmg = "i7" ;")') myid, ii,     Lmg(vvol,  ii)
-   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ;    "4x" : Lmh = "i7" ;")') myid, ii,     Lmh(vvol,  ii)
-   ! enddo
-   !endif
-
-
-   if( idof.ne.NAdof(vvol) ) then
-     write(6,'("preset :      fatal : myid=",i3," ; idof.ne.NAdof(vvol) ; need to count degrees-of-freedom more carefully for new matrix ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "preset : idof.ne.NAdof(vvol) : need to count degrees-of-freedom more carefully for new matrix  ;"
-    endif
-
-
-   if( (idof+1)**2.ge.HUGE(idof) ) then
-     write(6,'("preset :      fatal : myid=",i3," ; (idof+1)**2.ge.HUGE(idof) ; ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "preset : (idof+1)**2.ge.HUGE(idof) :  ;"
-    endif
-    !, NAdof too big, should be smaller than maximum of int32 type )
-
-   endif ! end of if( Lcoordinatesingularity ) ;
-
-
-   if( idof.ne.NAdof(vvol) ) then
-     write(6,'("preset :      fatal : myid=",i3," ; idof.ne.NAdof(vvol) ; impossible logic ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "preset : idof.ne.NAdof(vvol) : impossible logic  ;"
-    endif
-
-
-   do ii = 1, mn
-      do jj = 0, Lrad(vvol)
-        if (Ate(vvol,0,ii)%i(jj) == 0) Ate(vvol,0,ii)%s(jj) = zero
-        if (Aze(vvol,0,ii)%i(jj) == 0) Aze(vvol,0,ii)%s(jj) = zero
-        if (.not. YESstellsym) then
-          if (Ato(vvol,0,ii)%i(jj) == 0) Azo(vvol,0,ii)%s(jj) = zero
-          if (Azo(vvol,0,ii)%i(jj) == 0) Azo(vvol,0,ii)%s(jj) = zero
+        if (Igeometry .eq. 1 .or. vvol .gt. 1) then
+            Lcoordinatesingularity = .false.
+        else
+            Lcoordinatesingularity = .true.
         end if
-      end do !jj
-   end do !ii
+
+        if (vvol .le. Nvol) then
+            Lplasmaregion = .true.
+        else
+            Lplasmaregion = .false.
+        end if
+
+        Lvacuumregion = .not. Lplasmaregion
+
+        if (Lcoordinatesingularity) then
+            zerdof = 0                                       ! count Zernike degree of freedom 30 Jun 19
+            do ii = 2, Mpol                                  ! for m>1
+                do jj = ii, Lrad(vvol), 2
+                    zerdof = zerdof + 2*ntor + 1                 ! plus and minus sign for n>1, unique for n==0
+                    if (NOTstellsym) zerdof = zerdof + 2*ntor + 1 ! plus and minus sign for n
+                end do
+            end do
+            zerdof = zerdof*2                              ! we have one for At and one for Az
+
+            do jj = 0, Lrad(vvol), 2                         ! for m==0
+                zerdof = zerdof + ntor + 1                      ! minus sign for n, Aze
+                if (jj .ge. 2) zerdof = zerdof + ntor + 1       ! minus sign for n, Ate, without l=0 due to recombination
+
+                if (NOTstellsym) then
+                    zerdof = zerdof + ntor                         ! sin component minus sign for n, Azo
+                    if (jj .ge. 2) zerdof = zerdof + ntor          ! minus sign for n, Ato, without l=0 due to recombination
+                end if
+            end do
+
+            if (Mpol .ge. 1) then ! for m==1
+                do jj = 1, Lrad(vvol), 2
+                    zerdof = zerdof + 2*ntor + 1                  ! minus and plus sign for n, Aze
+                    if (jj .ge. 2) zerdof = zerdof + 2*ntor + 1   ! minus sign for n, Ate, without l=0 due to recombination
+
+                    if (NOTstellsym) then
+                        zerdof = zerdof + 2*ntor + 1                 ! sin component minus and plus sign for n, Azo
+                        if (jj .ge. 2) zerdof = zerdof + 2*ntor + 1  ! minus and plus sign for n, Ato, without l=0 due to recombination
+                    end if
+                end do
+            end if
+
+            ! the degree of freedom in the Beltrami field without Lagrange multipliers
+            Nfielddof(vvol) = zerdof
+            !                                     a    c      b        d      e      f      g   h
+            if (YESstellsym) NAdof(vvol) = zerdof + mn + Ntor + 1 + mn - 1 + 1 + 0
+            if (NOTstellsym) NAdof(vvol) = zerdof + mn + mn - 1 + Ntor + 1 + Ntor + mn - 1 + mn - 1 + 1 + 0 ! this is broken at the moment
+
+            ! due to basis recombination, Lma will not have the m=0 and m=1 harmonics. We substract them now
+            ! m = 0
+            NAdof(vvol) = NAdof(vvol) - (ntor + 1)
+            if (NOTstellsym) NAdof(vvol) = NAdof(vvol) - ntor
+
+            ! m = 1
+            if (Mpol .ge. 1) then
+                NAdof(vvol) = NAdof(vvol) - (2*ntor + 1)
+                if (NOTstellsym) NAdof(vvol) = NAdof(vvol) - (2*ntor + 1)
+            end if
+
+            ! Guess the size of the sparse matrix ! 28 Jan 20
+            ! If an iterative method is used and requires an preconditioner, we need to construct it as a sparse matrix
+            if (Lmatsolver .ge. 2 .and. LGMRESprec .gt. 0) then
+                if (YESstellsym) NdMASmax(vvol) = (2*(Lrad(vvol)/2 + 1))**2*mn + 2*2*5*Lrad(vvol)*mn ! Ate, Aze
+                if (NOTstellsym) NdMASmax(vvol) = (4*(Lrad(vvol)/2 + 1))**2*mn + 2*4*8*Lrad(vvol)*mn ! Ate, Aze, Ato, Azo
+            end if
+        else ! .not.Lcoordinatesingularity;                                     a    c      b        d      e      f      g   h
+            if (YESstellsym) NAdof(vvol) = 2*(mn)*(Lrad(vvol)) + mn - 1 + 1 + 1
+            if (NOTstellsym) NAdof(vvol) = 2*(mn + mn - 1)*(Lrad(vvol)) + mn - 1 + mn - 1 + 1 + 1
+
+            ! dof for field variables only
+            if (YESstellsym) Nfielddof(vvol) = 2*(mn)*(Lrad(vvol))
+            if (NOTstellsym) Nfielddof(vvol) = 2*(mn + mn - 1)*(Lrad(vvol))
+
+            ! Guess the size of the sparse matrix ! 28 Jan 20
+            ! If an iterative method is used and requires an preconditioner, we need to construct it as a sparse matrix
+            if (Lmatsolver .ge. 2 .and. LGMRESprec .gt. 0) then
+                if (YESstellsym) NdMASmax(vvol) = (2*(Lrad(vvol) + 1))**2*mn + 2*2*5*Lrad(vvol)*mn        ! Ate, Aze
+                if (NOTstellsym) NdMASmax(vvol) = (4*(Lrad(vvol) + 1))**2*mn + 2*4*8*Lrad(vvol)*mn        ! Ate, Aze, Ato, Azo
+            end if
+        end if ! end of if( Lcoordinatesingularity );
+
+        do ii = 1, mn ! loop over Fourier harmonics;
+
+            do ideriv = -2, 2 ! loop over derivatives; 14 Jan 13;
+
+                allocate (Ate(vvol, ideriv, ii)%s(0:Lrad(vvol)), stat=astat)
+                Ate(vvol, ideriv, ii)%s(0:Lrad(vvol)) = zero
+
+                allocate (Aze(vvol, ideriv, ii)%s(0:Lrad(vvol)), stat=astat)
+                Aze(vvol, ideriv, ii)%s(0:Lrad(vvol)) = zero
+
+                allocate (Ato(vvol, ideriv, ii)%s(0:Lrad(vvol)), stat=astat)
+                Ato(vvol, ideriv, ii)%s(0:Lrad(vvol)) = zero
+
+                allocate (Azo(vvol, ideriv, ii)%s(0:Lrad(vvol)), stat=astat)
+                Azo(vvol, ideriv, ii)%s(0:Lrad(vvol)) = zero
+
+            end do ! end of do ideriv;
+
+            ; ideriv = 0
+
+            allocate (Ate(vvol, ideriv, ii)%i(0:Lrad(vvol)), stat=astat)
+            Ate(vvol, ideriv, ii)%i(0:Lrad(vvol)) = 0
+            ! degree of freedom index; 17 Jan 13;
+
+            allocate (Aze(vvol, ideriv, ii)%i(0:Lrad(vvol)), stat=astat)
+            Aze(vvol, ideriv, ii)%i(0:Lrad(vvol)) = 0
+
+            allocate (Ato(vvol, ideriv, ii)%i(0:Lrad(vvol)), stat=astat)
+            Ato(vvol, ideriv, ii)%i(0:Lrad(vvol)) = 0
+
+            allocate (Azo(vvol, ideriv, ii)%i(0:Lrad(vvol)), stat=astat)
+            Azo(vvol, ideriv, ii)%i(0:Lrad(vvol)) = 0
+
+        end do ! end of do ii;
+
+        select case (Linitgues) ! for iterative solver of the Beltrami fields, an initial guess is required; 11 Mar 16;
+        case (0)
+        case (1)
+            Ate(vvol, 0, 1)%s(0:1) = dtflux(vvol)*half ! this is an integrable approximation; NEEDS CHECKING; 26 Feb 13;
+            Aze(vvol, 0, 1)%s(0:1) = dpflux(vvol)*half ! this is an integrable approximation; NEEDS CHECKING; 26 Feb 13;
+            if (Lcoordinatesingularity) then
+                Ate(vvol, 0, 1)%s(2) = dtflux(vvol)*half*half
+            end if
+        case (2) ! will call ra00aa below to read initial vector potential from file;
+        case (3) ! the initial guess will be randomized, maximum is maxrndgues; 5 Mar 19;
+            do ii = 1, mn ! loop over Fourier harmonics;
+                do ideriv = -2, 2 ! loop over derivatives; 14 Jan 13;
+                    call random_number(Ate(vvol, ideriv, ii)%s)
+                    call random_number(Aze(vvol, ideriv, ii)%s)
+                    Ate(vvol, ideriv, ii)%s = Ate(vvol, ideriv, ii)%s*maxrndgues
+                    Aze(vvol, ideriv, ii)%s = Aze(vvol, ideriv, ii)%s*maxrndgues
+                    if (.not. YESstellsym) then
+                        call random_number(Ato(vvol, ideriv, ii)%s)
+                        call random_number(Azo(vvol, ideriv, ii)%s)
+                        Ato(vvol, ideriv, ii)%s = Ato(vvol, ideriv, ii)%s*maxrndgues
+                        Azo(vvol, ideriv, ii)%s = Azo(vvol, ideriv, ii)%s*maxrndgues
+                    end if
+                end do ! end of do ideriv;
+            end do ! end of do ii;
+        end select
+
+        idof = 0 ! degree of freedom index; reset to 0 in each volume;
+
+        if (Lcoordinatesingularity) then
+            do ii = 1, mn
+                mi = im(ii)
+                ni = in(ii)
+
+                do ll = 0, Lrad(vvol)
+                    ! Zernike is non zero only if ll>=mi and when they have the same parity
+                    if (ll >= mi .and. mod(mi + ll, 2) == 0) then
+                        ! We use the basis combination for m=0 and 1. They don't have ll=0 component.
+                        if (.not. ((ll == 0 .and. mi == 0) .or. (ll == 1 .and. mi == 1))) then
+                            idof = idof + 1
+                            Ate(vvol, 0, ii)%i(ll) = idof ! Zernike 30 Jun 19
+                        end if
+                        idof = idof + 1
+                        Aze(vvol, 0, ii)%i(ll) = idof
+                        if (NOTstellsym .and. ii .gt. 1) then
+                            if (.not. ((ll == 0 .and. mi == 0) .or. (ll == 1 .and. mi == 1))) then
+                                idof = idof + 1
+                                Ato(vvol, 0, ii)%i(ll) = idof ! Zernike 30 Jun 19
+                            end if
+                            idof = idof + 1
+                            Azo(vvol, 0, ii)%i(ll) = idof
+                        end if ! NOTstellsym
+                    end if ! Zernike
+                end do ! end of do ll; 17 Jan 13;
+
+            end do ! end of do ii
+
+            do ii = 1, mn; mi = im(ii); ni = in(ii)
+                ! Lma is for Ate boundary condition on axis. For m=0 and 1, the boundary condition has been satisfied by basis recombination, so they are excluded.
+                if (mi .ne. 0 .and. mi .ne. 1) then
+                    idof = idof + 1
+                    Lma(vvol, ii) = idof
+                end if
+                ! Lmb is for Aze boundary condition on axis. We only have that for m=0.
+                if (mi .eq. 0) then
+                    idof = idof + 1
+                    Lmb(vvol, ii) = idof ! 18 May 16;
+                end if
+                ! Lme is for B.n at the outer boundary cos component. We don't have it for m=n=0.
+                if (ii .gt. 1) then
+                    idof = idof + 1
+                    Lme(vvol, ii) = idof
+                end if
+                ! Lmg is for dtflux. We only have it for m=n=0.
+                if (ii .eq. 1) then
+                    idof = idof + 1
+                    Lmg(vvol, ii) = idof
+!   ! ;           ; idof = idof + 1 ; Lmh(vvol,  ii)       = idof ! no constraint on poloidal flux in innermost volume; 11 Mar 16;
+                end if
+                if (NOTstellsym) then
+                    ! Lmc is for Ato boundary condition on axis. Same as Lma.
+                    if (mi .ne. 0 .and. mi .ne. 1) then
+                        idof = idof + 1
+                        Lmc(vvol, ii) = idof ! 18 May 16;
+                    end if
+                    ! Lmf is for B.n at the outer boundary sin component. Same as Lme.
+                    if (ii .gt. 1) then
+                        idof = idof + 1
+                        Lmf(vvol, ii) = idof ! 18 May 16;
+                    end if
+                    ! Lmd is for Azo on axis. We only have it for m=0, but not m=n=0.
+                    if (ii .gt. 1 .and. mi .eq. 0) then
+                        idof = idof + 1
+                        Lmd(vvol, ii) = idof ! 18 May 16;
+                    end if
+                end if ! end of if( NOTstellsym ) ; 19 Jul 16;
+
+            end do ! end of do ii; 25 Jan 13;
+
+            if (idof .ne. NAdof(vvol)) then
+                write (6, '("preset :      fatal : myid=",i3," ; idof.ne.NAdof(vvol) ; need to count Beltrami degrees-of-freedom more carefully  for coordinate singularity ;")') myid
+                call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                stop "preset : idof.ne.NAdof(vvol) : need to count Beltrami degrees-of-freedom more carefully  for coordinate singularity  ;"
+            end if
+
+            if ((idof + 1)**2 .ge. HUGE(idof)) then
+                write (6, '("preset :      fatal : myid=",i3," ; (idof+1)**2.ge.HUGE(idof) ; ;")') myid
+                call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                stop "preset : (idof+1)**2.ge.HUGE(idof) :  ;"
+            end if
+            ! NAdof too big, should be smaller than maximum of int32 type )
+
+        else ! .not.Lcoordinatesingularity;
+
+            do ii = 1, mn
+                ! We use basis recombination method to ensure the inner boundary has At=Az=0. Therefore they don't have ll=0 component.
+                do ll = 1, Lrad(vvol)
+                    idof = idof + 1
+                    Ate(vvol, 0, ii)%i(ll) = idof
+                    idof = idof + 1
+                    Aze(vvol, 0, ii)%i(ll) = idof
+                    if (ii .gt. 1 .and. NOTstellsym) then
+                        idof = idof + 1
+                        Ato(vvol, 0, ii)%i(ll) = idof
+                        idof = idof + 1
+                        Azo(vvol, 0, ii)%i(ll) = idof
+                    end if
+                end do ! end of do ll; 08 Feb 16;
+            end do
+
+            do ii = 1, mn
+                !;                                     ; idof = idof + 1 ; Lma(vvol,  ii)       = idof
+                !;                                     ; idof = idof + 1 ; Lmb(vvol,  ii)       = idof
+                !if(  ii.gt.1 .and. NOTstellsym ) then ; idof = idof + 1 ; Lmc(vvol,  ii)       = idof
+                !;                                     ; idof = idof + 1 ; Lmd(vvol,  ii)       = idof
+                !endif
+                ! Lme is for B.n at the outer boundary cos component. We don't have it for m=n=0.
+                if (ii .gt. 1) then
+                    idof = idof + 1
+                    Lme(vvol, ii) = idof
+                end if
+                ! Lmf is for B.n at the outer boundary sin component. Same as Lme
+                if (ii .gt. 1 .and. NOTstellsym) then
+                    idof = idof + 1
+                    Lmf(vvol, ii) = idof
+                end if
+                ! Lmg and Lmh are the dtflux and dpflux constraint. Only present for m=n=0
+                if (ii .eq. 1) then
+                    idof = idof + 1
+                    Lmg(vvol, ii) = idof
+                    idof = idof + 1
+                    Lmh(vvol, ii) = idof
+                end if
+            end do ! end of do ii; 25 Jan 13;
+
+            !if( Wpreset ) then
+            ! do ii = 1, mn
+            !  do ll = 0, Lrad(vvol)
+            !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ; ll="i4" : Ate = "i7" ;")') myid, ii, ll, Ate(vvol,0,ii)%i(ll)
+            !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ; ll="i4" : Aze = "i7" ;")') myid, ii, ll, Aze(vvol,0,ii)%i(ll)
+            !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ; ll="i4" : Ato = "i7" ;")') myid, ii, ll, Ato(vvol,0,ii)%i(ll)
+            !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ; ll="i4" : Azo = "i7" ;")') myid, ii, ll, Azo(vvol,0,ii)%i(ll)
+            !  enddo
+            !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ;    "4x" : Lma = "i7" ;")') myid, ii,     Lma(vvol,  ii)
+            !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ;    "4x" : Lmb = "i7" ;")') myid, ii,     Lmb(vvol,  ii)
+            !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ;    "4x" : Lmc = "i7" ;")') myid, ii,     Lmc(vvol,  ii)
+            !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ;    "4x" : Lmd = "i7" ;")') myid, ii,     Lmd(vvol,  ii)
+            !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ;    "4x" : Lme = "i7" ;")') myid, ii,     Lme(vvol,  ii)
+            !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ;    "4x" : Lmf = "i7" ;")') myid, ii,     Lmf(vvol,  ii)
+            !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ;    "4x" : Lmg = "i7" ;")') myid, ii,     Lmg(vvol,  ii)
+            !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ;    "4x" : Lmh = "i7" ;")') myid, ii,     Lmh(vvol,  ii)
+            ! enddo
+            !endif
+
+            if (idof .ne. NAdof(vvol)) then
+                write (6, '("preset :      fatal : myid=",i3," ; idof.ne.NAdof(vvol) ; need to count degrees-of-freedom more carefully for new matrix ;")') myid
+                call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                stop "preset : idof.ne.NAdof(vvol) : need to count degrees-of-freedom more carefully for new matrix  ;"
+            end if
+
+            if ((idof + 1)**2 .ge. HUGE(idof)) then
+                write (6, '("preset :      fatal : myid=",i3," ; (idof+1)**2.ge.HUGE(idof) ; ;")') myid
+                call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                stop "preset : (idof+1)**2.ge.HUGE(idof) :  ;"
+            end if
+            !, NAdof too big, should be smaller than maximum of int32 type )
+
+        end if ! end of if( Lcoordinatesingularity ) ;
+
+        if (idof .ne. NAdof(vvol)) then
+            write (6, '("preset :      fatal : myid=",i3," ; idof.ne.NAdof(vvol) ; impossible logic ;")') myid
+            call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+            stop "preset : idof.ne.NAdof(vvol) : impossible logic  ;"
+        end if
+
+        do ii = 1, mn
+            do jj = 0, Lrad(vvol)
+                if (Ate(vvol, 0, ii)%i(jj) == 0) Ate(vvol, 0, ii)%s(jj) = zero
+                if (Aze(vvol, 0, ii)%i(jj) == 0) Aze(vvol, 0, ii)%s(jj) = zero
+                if (.not. YESstellsym) then
+                    if (Ato(vvol, 0, ii)%i(jj) == 0) Azo(vvol, 0, ii)%s(jj) = zero
+                    if (Azo(vvol, 0, ii)%i(jj) == 0) Azo(vvol, 0, ii)%s(jj) = zero
+                end if
+            end do ! jj
+        end do ! ii
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  enddo ! end of do vvol = 1, Nvol loop;
+    end do ! end of do vvol = 1, Nvol loop;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  if( Linitgues.eq.2 ) then ;
-   cput = MPI_WTIME()
-   Tpreset = Tpreset + ( cput-cpuo )
-   call ra00aa('R')
-   cpuo = MPI_WTIME()
-  ! read initial guess for Beltrami field from file; 02 Jan 15;
-  endif
+    if (Linitgues .eq. 2) then;
+        cput = MPI_WTIME()
+        Tpreset = Tpreset + (cput - cpuo)
+        call ra00aa('R')
+        cpuo = MPI_WTIME()
+        ! read initial guess for Beltrami field from file; 02 Jan 15;
+    end if
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  if( myid.eq.0 ) then ! 17 Oct 12;
-   cput = MPI_WTIME()
-   write(ounit,'("preset : ", 10x ," : ")')
-   write(ounit,'("preset : ",f10.2," : Nquad="i4" ; mn="i5" ; NGdof="i6" ; NAdof="16(i6",")" ...")') cput-cpus, Nquad, mn, NGdof, NAdof(1:min(Mvol,16))
-  endif
+    if (myid .eq. 0) then ! 17 Oct 12;
+        cput = MPI_WTIME()
+        write (ounit, '("preset : ", 10x ," : ")')
+        write (ounit, '("preset : ",f10.2," : Nquad="i4" ; mn="i5" ; NGdof="i6" ; NAdof="16(i6",")" ...")') cput - cpus, Nquad, mn, NGdof, NAdof(1:min(Mvol, 16))
+    end if
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1629,100 +1604,94 @@ endif
 
 ! Fourier transforms;
 
-  Nt = max( Ndiscrete*4*Mpol, 1 ) ; Nz = max( Ndiscrete*4*Ntor, 1 ) ; Ntz = Nt*Nz ; soNtz = one / sqrt( one*Ntz ) ! exaggerated discrete resolution;
+    Nt = max(Ndiscrete*4*Mpol, 1)
+    Nz = max(Ndiscrete*4*Ntor, 1)
+    Ntz = Nt*Nz
+    soNtz = one/sqrt(one*Ntz) ! exaggerated discrete resolution;
 
-  ;                  ; hNt = Nt / 2
-  if( Nz.gt.1 ) then ; hNz = Nz / 2
-  else               ; hNz = 0
-  endif
+    hNt = Nt/2
+    if (Nz .gt. 1) then
+        hNz = Nz/2
+    else
+        hNz = 0
+    end if
 
-  if( myid.eq.0 ) then ! 17 Oct 12;
-   cput = MPI_WTIME()
-   write(ounit,'("preset : ", 10x ," : ")')
-   write(ounit,'("preset : ",f10.2," : Nt="i6" ; Nz="i6" ; Ntz="i9" ;")') cput-cpus, Nt, Nz, Ntz
-  endif
+    if (myid .eq. 0) then ! 17 Oct 12;
+        cput = MPI_WTIME()
+        write (ounit, '("preset : ", 10x ," : ")')
+        write (ounit, '("preset : ",f10.2," : Nt="i6" ; Nz="i6" ; Ntz="i9" ;")') cput - cpus, Nt, Nz, Ntz
+    end if
 
+    allocate (iRij(1:Ntz, 0:Mvol), stat=astat)
+    iRij(1:Ntz, 0:Mvol) = zero
+    ! interface geometry in real space; ! 18 Jul 14;
 
-   allocate( iRij(1:Ntz,0:Mvol), stat=astat )
-   iRij(1:Ntz,0:Mvol) = zero
- ! interface geometry in real space; ! 18 Jul 14;
+    allocate (iZij(1:Ntz, 0:Mvol), stat=astat)
+    iZij(1:Ntz, 0:Mvol) = zero
+    !
 
-   allocate( iZij(1:Ntz,0:Mvol), stat=astat )
-   iZij(1:Ntz,0:Mvol) = zero
- !
+    allocate (dRij(1:Ntz, 1:Mvol), stat=astat)
+    dRij(1:Ntz, 1:Mvol) = zero
+    ! interface geometry in real space; poloidal derivative; ! 18 Jul 14;
 
-   allocate( dRij(1:Ntz,1:Mvol), stat=astat )
-   dRij(1:Ntz,1:Mvol) = zero
- ! interface geometry in real space; poloidal derivative; ! 18 Jul 14;
+    allocate (dZij(1:Ntz, 1:Mvol), stat=astat)
+    dZij(1:Ntz, 1:Mvol) = zero
 
-   allocate( dZij(1:Ntz,1:Mvol), stat=astat )
-   dZij(1:Ntz,1:Mvol) = zero
+    allocate (tRij(1:Ntz, 0:Mvol), stat=astat)
+    tRij(1:Ntz, 0:Mvol) = zero
+    ! interface geometry in real space; poloidal derivative; ! 18 Jul 14;
 
+    allocate (tZij(1:Ntz, 0:Mvol), stat=astat)
+    tZij(1:Ntz, 0:Mvol) = zero
 
-   allocate( tRij(1:Ntz,0:Mvol), stat=astat )
-   tRij(1:Ntz,0:Mvol) = zero
- ! interface geometry in real space; poloidal derivative; ! 18 Jul 14;
+    allocate (Rij(1:Ntz, 0:3, 0:3), stat=astat)
+    Rij(1:Ntz, 0:3, 0:3) = zero
+    ! these are used for inverse fft to reconstruct real space geometry from interpolated Fourier harmonics;
 
-   allocate( tZij(1:Ntz,0:Mvol), stat=astat )
-   tZij(1:Ntz,0:Mvol) = zero
+    allocate (Zij(1:Ntz, 0:3, 0:3), stat=astat)
+    Zij(1:Ntz, 0:3, 0:3) = zero
 
+    allocate (sg(1:Ntz, 0:3), stat=astat)
+    sg(1:Ntz, 0:3) = zero
 
+    allocate (guvij(1:Ntz, 0:3, 0:3, -1:3), stat=astat)
+    guvij(1:Ntz, 0:3, 0:3, -1:3) = zero
+    ! need this on higher resolution grid for accurate Fourier decomposition;
 
-   allocate( Rij(1:Ntz,0:3,0:3    ), stat=astat )
-   Rij(1:Ntz,0:3,0:3    ) = zero
- ! these are used for inverse fft to reconstruct real space geometry from interpolated Fourier harmonics;
+    allocate (gvuij(1:Ntz, 0:3, 0:3), stat=astat)
+    gvuij(1:Ntz, 0:3, 0:3) = zero
+    ! need this on higher resolution grid for accurate Fourier decomposition; 10 Dec 15;
 
-   allocate( Zij(1:Ntz,0:3,0:3    ), stat=astat )
-   Zij(1:Ntz,0:3,0:3    ) = zero
+    if ((Lfindzero .eq. 2) .or. &
+        (Lcheck .eq. 5 .or. LHevalues .or. LHevectors .or. LHmatrix .or. Lperturbed .eq. 1)) then
 
+        allocate (dRadR(1:mn, 0:1, 0:1, 1:mn), stat=astat)
+        dRadR(1:mn, 0:1, 0:1, 1:mn) = zero
+        ! calculated in rzaxis; 19 Sep 16;
 
-   allocate( sg (1:Ntz,0:3        ), stat=astat )
-   sg (1:Ntz,0:3        ) = zero
+        allocate (dRadZ(1:mn, 0:1, 0:1, 1:mn), stat=astat)
+        dRadZ(1:mn, 0:1, 0:1, 1:mn) = zero
 
+        allocate (dZadR(1:mn, 0:1, 0:1, 1:mn), stat=astat)
+        dZadR(1:mn, 0:1, 0:1, 1:mn) = zero
 
-   allocate( guvij(1:Ntz,0:3,0:3,-1:3), stat=astat )
-   guvij(1:Ntz,0:3,0:3,-1:3) = zero
- ! need this on higher resolution grid for accurate Fourier decomposition;
+        allocate (dZadZ(1:mn, 0:1, 0:1, 1:mn), stat=astat)
+        dZadZ(1:mn, 0:1, 0:1, 1:mn) = zero
 
-   allocate( gvuij(1:Ntz,0:3,0:3    ), stat=astat )
-   gvuij(1:Ntz,0:3,0:3    ) = zero
- ! need this on higher resolution grid for accurate Fourier decomposition; 10 Dec 15;
+        allocate (dRodR(1:Ntz, 0:3, 1:mn), stat=astat)
+        dRodR(1:Ntz, 0:3, 1:mn) = zero
+        ! calculated in rzaxis; 19 Sep 16;
 
-  if ((Lfindzero .eq. 2) .or. (Lcheck.eq.5 .or. LHevalues .or. LHevectors .or. LHmatrix .or. Lperturbed.eq.1)) then
+        allocate (dRodZ(1:Ntz, 0:3, 1:mn), stat=astat)
+        dRodZ(1:Ntz, 0:3, 1:mn) = zero
 
-   allocate( dRadR(1:mn,0:1,0:1,1:mn), stat=astat )
-   dRadR(1:mn,0:1,0:1,1:mn) = zero
- ! calculated in rzaxis; 19 Sep 16;
+        allocate (dZodR(1:Ntz, 0:3, 1:mn), stat=astat)
+        dZodR(1:Ntz, 0:3, 1:mn) = zero
 
-   allocate( dRadZ(1:mn,0:1,0:1,1:mn), stat=astat )
-   dRadZ(1:mn,0:1,0:1,1:mn) = zero
+        allocate (dZodZ(1:Ntz, 0:3, 1:mn), stat=astat)
+        dZodZ(1:Ntz, 0:3, 1:mn) = zero
 
-
-   allocate( dZadR(1:mn,0:1,0:1,1:mn), stat=astat )
-   dZadR(1:mn,0:1,0:1,1:mn) = zero
-
-
-   allocate( dZadZ(1:mn,0:1,0:1,1:mn), stat=astat )
-   dZadZ(1:mn,0:1,0:1,1:mn) = zero
-
-
-
-   allocate( dRodR(1:Ntz,0:3,1:mn), stat=astat )
-   dRodR(1:Ntz,0:3,1:mn) = zero
- ! calculated in rzaxis; 19 Sep 16;
-
-   allocate( dRodZ(1:Ntz,0:3,1:mn), stat=astat )
-   dRodZ(1:Ntz,0:3,1:mn) = zero
-
-
-   allocate( dZodR(1:Ntz,0:3,1:mn), stat=astat )
-   dZodR(1:Ntz,0:3,1:mn) = zero
-
-
-   allocate( dZodZ(1:Ntz,0:3,1:mn), stat=astat )
-   dZodZ(1:Ntz,0:3,1:mn) = zero
-
-  endif
+    end if
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1748,143 +1717,116 @@ endif
 !> These are defined in metrix() , and used in ma00aa().
 !>
 
-   allocate( goomne(0:mne, maxIquad), stat=astat )
-   goomne(0:mne, maxIquad) = zero
- ! workspace for Fourier decomposition of metric terms;
+    allocate (goomne(0:mne, maxIquad), stat=astat)
+    goomne(0:mne, maxIquad) = zero
+    ! workspace for Fourier decomposition of metric terms;
 
-   allocate( goomno(0:mne, maxIquad), stat=astat )
-   goomno(0:mne, maxIquad) = zero
+    allocate (goomno(0:mne, maxIquad), stat=astat)
+    goomno(0:mne, maxIquad) = zero
 
+    allocate (gssmne(0:mne, maxIquad), stat=astat)
+    gssmne(0:mne, maxIquad) = zero
+    ! workspace for Fourier decomposition of metric terms;
 
-   allocate( gssmne(0:mne, maxIquad), stat=astat )
-   gssmne(0:mne, maxIquad) = zero
- ! workspace for Fourier decomposition of metric terms;
+    allocate (gssmno(0:mne, maxIquad), stat=astat)
+    gssmno(0:mne, maxIquad) = zero
 
-   allocate( gssmno(0:mne, maxIquad), stat=astat )
-   gssmno(0:mne, maxIquad) = zero
+    allocate (gstmne(0:mne, maxIquad), stat=astat)
+    gstmne(0:mne, maxIquad) = zero
+    ! workspace for Fourier decomposition of metric terms;
 
+    allocate (gstmno(0:mne, maxIquad), stat=astat)
+    gstmno(0:mne, maxIquad) = zero
 
-   allocate( gstmne(0:mne, maxIquad), stat=astat )
-   gstmne(0:mne, maxIquad) = zero
- ! workspace for Fourier decomposition of metric terms;
+    allocate (gszmne(0:mne, maxIquad), stat=astat)
+    gszmne(0:mne, maxIquad) = zero
+    ! workspace for Fourier decomposition of metric terms;
 
-   allocate( gstmno(0:mne, maxIquad), stat=astat )
-   gstmno(0:mne, maxIquad) = zero
+    allocate (gszmno(0:mne, maxIquad), stat=astat)
+    gszmno(0:mne, maxIquad) = zero
 
+    allocate (gttmne(0:mne, maxIquad), stat=astat)
+    gttmne(0:mne, maxIquad) = zero
+    ! workspace for Fourier decomposition of metric terms;
 
-   allocate( gszmne(0:mne, maxIquad), stat=astat )
-   gszmne(0:mne, maxIquad) = zero
- ! workspace for Fourier decomposition of metric terms;
+    allocate (gttmno(0:mne, maxIquad), stat=astat)
+    gttmno(0:mne, maxIquad) = zero
 
-   allocate( gszmno(0:mne, maxIquad), stat=astat )
-   gszmno(0:mne, maxIquad) = zero
+    allocate (gtzmne(0:mne, maxIquad), stat=astat)
+    gtzmne(0:mne, maxIquad) = zero
+    ! workspace for Fourier decomposition of metric terms;
 
+    allocate (gtzmno(0:mne, maxIquad), stat=astat)
+    gtzmno(0:mne, maxIquad) = zero
 
-   allocate( gttmne(0:mne, maxIquad), stat=astat )
-   gttmne(0:mne, maxIquad) = zero
- ! workspace for Fourier decomposition of metric terms;
+    allocate (gzzmne(0:mne, maxIquad), stat=astat)
+    gzzmne(0:mne, maxIquad) = zero
+    ! workspace for Fourier decomposition of metric terms;
 
-   allocate( gttmno(0:mne, maxIquad), stat=astat )
-   gttmno(0:mne, maxIquad) = zero
-
-
-   allocate( gtzmne(0:mne, maxIquad), stat=astat )
-   gtzmne(0:mne, maxIquad) = zero
- ! workspace for Fourier decomposition of metric terms;
-
-   allocate( gtzmno(0:mne, maxIquad), stat=astat )
-   gtzmno(0:mne, maxIquad) = zero
-
-
-   allocate( gzzmne(0:mne, maxIquad), stat=astat )
-   gzzmne(0:mne, maxIquad) = zero
- ! workspace for Fourier decomposition of metric terms;
-
-   allocate( gzzmno(0:mne, maxIquad), stat=astat )
-   gzzmno(0:mne, maxIquad) = zero
-
+    allocate (gzzmno(0:mne, maxIquad), stat=astat)
+    gzzmno(0:mne, maxIquad) = zero
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+    allocate (ijreal(1:Ntz), stat=astat)
+    ijreal(1:Ntz) = zero
+    ! real space grid;
 
-   allocate( ijreal(1:Ntz), stat=astat )
-   ijreal(1:Ntz) = zero
- ! real space grid;
+    allocate (ijimag(1:Ntz), stat=astat)
+    ijimag(1:Ntz) = zero
 
-   allocate( ijimag(1:Ntz), stat=astat )
-   ijimag(1:Ntz) = zero
+    allocate (jireal(1:Ntz), stat=astat)
+    jireal(1:Ntz) = zero
 
+    allocate (jiimag(1:Ntz), stat=astat)
+    jiimag(1:Ntz) = zero
 
-   allocate( jireal(1:Ntz), stat=astat )
-   jireal(1:Ntz) = zero
+    allocate (jkreal(1:Ntz), stat=astat)
+    jkreal(1:Ntz) = zero
 
+    allocate (jkimag(1:Ntz), stat=astat)
+    jkimag(1:Ntz) = zero
 
-   allocate( jiimag(1:Ntz), stat=astat )
-   jiimag(1:Ntz) = zero
+    allocate (kjreal(1:Ntz), stat=astat)
+    kjreal(1:Ntz) = zero
 
+    allocate (kjimag(1:Ntz), stat=astat)
+    kjimag(1:Ntz) = zero
 
+    allocate (cplxin(1:Nt, 1:Nz, nthreads), stat=astat)
+    cplxin(1:Nt, 1:Nz, nthreads) = zero
 
-   allocate( jkreal(1:Ntz), stat=astat )
-   jkreal(1:Ntz) = zero
+    allocate (cplxout(1:Nt, 1:Nz, nthreads), stat=astat)
+    cplxout(1:Nt, 1:Nz, nthreads) = zero
 
+    ! Create and save optimal plans for forward and inverse 2D fast Fourier transforms with FFTW. -JAB; 25 Jul 2017
+    planf = fftw_plan_dft_2d(Nz, Nt, cplxin(:, :, 1), cplxout(:, :, 1), FFTW_FORWARD, FFTW_MEASURE + FFTW_DESTROY_INPUT)
+    planb = fftw_plan_dft_2d(Nz, Nt, cplxin(:, :, 1), cplxout(:, :, 1), FFTW_BACKWARD, FFTW_MEASURE + FFTW_DESTROY_INPUT)
 
-   allocate( jkimag(1:Ntz), stat=astat )
-   jkimag(1:Ntz) = zero
+    allocate (efmn(1:mne), stat=astat)
+    efmn(1:mne) = zero
+    ! Fourier harmonics workspace; 24 Apr 13;
 
+    allocate (ofmn(1:mne), stat=astat)
+    ofmn(1:mne) = zero
 
-   allocate( kjreal(1:Ntz), stat=astat )
-   kjreal(1:Ntz) = zero
+    allocate (cfmn(1:mne), stat=astat)
+    cfmn(1:mne) = zero
 
+    allocate (sfmn(1:mne), stat=astat)
+    sfmn(1:mne) = zero
 
-   allocate( kjimag(1:Ntz), stat=astat )
-   kjimag(1:Ntz) = zero
+    allocate (evmn(1:mne), stat=astat)
+    evmn(1:mne) = zero
 
+    allocate (odmn(1:mne), stat=astat)
+    odmn(1:mne) = zero
 
+    allocate (comn(1:mne), stat=astat)
+    comn(1:mne) = zero
 
-   allocate( cplxin(1:Nt,1:Nz,nthreads), stat=astat )
-   cplxin(1:Nt,1:Nz,nthreads) = zero
-
-
-   allocate( cplxout(1:Nt,1:Nz,nthreads), stat=astat )
-   cplxout(1:Nt,1:Nz,nthreads) = zero
-
-
-  ! Create and save optimal plans for forward and inverse 2D fast Fourier transforms with FFTW. -JAB; 25 Jul 2017
-  planf = fftw_plan_dft_2d( Nz, Nt, cplxin(:,:,1), cplxout(:,:,1), FFTW_FORWARD,  FFTW_MEASURE + FFTW_DESTROY_INPUT )
-  planb = fftw_plan_dft_2d( Nz, Nt, cplxin(:,:,1), cplxout(:,:,1), FFTW_BACKWARD, FFTW_MEASURE + FFTW_DESTROY_INPUT )
-
-
-   allocate( efmn(1:mne), stat=astat )
-   efmn(1:mne) = zero
- ! Fourier harmonics workspace; 24 Apr 13;
-
-   allocate( ofmn(1:mne), stat=astat )
-   ofmn(1:mne) = zero
-
-
-   allocate( cfmn(1:mne), stat=astat )
-   cfmn(1:mne) = zero
-
-
-   allocate( sfmn(1:mne), stat=astat )
-   sfmn(1:mne) = zero
-
-
-   allocate( evmn(1:mne), stat=astat )
-   evmn(1:mne) = zero
-
-
-   allocate( odmn(1:mne), stat=astat )
-   odmn(1:mne) = zero
-
-
-   allocate( comn(1:mne), stat=astat )
-   comn(1:mne) = zero
-
-
-   allocate( simn(1:mne), stat=astat )
-   simn(1:mne) = zero
-
+    allocate (simn(1:mne), stat=astat)
+    simn(1:mne) = zero
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1897,118 +1839,117 @@ endif
 !>       \f} </li>
 !> </ul>
 
+    allocate (gteta(1:Ntz), stat=astat)
+    gteta(1:Ntz) = zero
 
-   allocate( gteta(1:Ntz), stat=astat )
-   gteta(1:Ntz) = zero
+    allocate (gzeta(1:Ntz), stat=astat)
+    gzeta(1:Ntz) = zero
 
+    allocate (cosi(1:Ntz, 1:mn), stat=astat)
+    cosi(1:Ntz, 1:mn) = zero
 
-   allocate( gzeta(1:Ntz), stat=astat )
-   gzeta(1:Ntz) = zero
+    allocate (sini(1:Ntz, 1:mn), stat=astat)
+    sini(1:Ntz, 1:mn) = zero
 
+    if (Nz .eq. 0) then
+        write (6, '("preset :      fatal : myid=",i3," ; Nz.eq.0 ; illegal division ;")') myid
+        call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+        stop "preset : Nz.eq.0 : illegal division  ;"
+    end if
 
+    if (Nt .eq. 0) then
+        write (6, '("preset :      fatal : myid=",i3," ; Nt.eq.0 ; illegal division ;")') myid
+        call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+        stop "preset : Nt.eq.0 : illegal division  ;"
+    end if
 
-   allocate( cosi(1:Ntz,1:mn), stat=astat )
-   cosi(1:Ntz,1:mn) = zero
+    do ii = 1, mn
+        mi = im(ii)
+        ni = in(ii) ! loop over Fourier harmonics;
+        do kk = 0, Nz - 1
+            zeta = kk*pi2nfp/Nz
+            do jj = 0, Nt - 1
+                teta = jj*pi2/Nt
+                jk = 1 + jj + kk*Nt
+                arg = mi*teta - ni*zeta
 
+                gteta(jk) = teta
+                gzeta(jk) = zeta
+                cosi(jk, ii) = cos(arg)
+                sini(jk, ii) = sin(arg)
+            end do
+        end do
 
-   allocate( sini(1:Ntz,1:mn), stat=astat )
-   sini(1:Ntz,1:mn) = zero
-
-
-
-   if( Nz.eq.0 ) then
-     write(6,'("preset :      fatal : myid=",i3," ; Nz.eq.0 ; illegal division ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "preset : Nz.eq.0 : illegal division  ;"
-    endif
-
-
-   if( Nt.eq.0 ) then
-     write(6,'("preset :      fatal : myid=",i3," ; Nt.eq.0 ; illegal division ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "preset : Nt.eq.0 : illegal division  ;"
-    endif
-
-
-  do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over Fourier harmonics;
-
-  do kk = 0, Nz-1 ; zeta = kk * pi2nfp / Nz
-    do jj = 0, Nt-1 ; teta = jj * pi2    / Nt ; jk = 1 + jj + kk*Nt ; arg = mi * teta - ni * zeta
-    gteta(jk) = teta
-    gzeta(jk) = zeta
-    cosi(jk,ii) = cos(arg)
-    sini(jk,ii) = sin(arg)
-    enddo
-  enddo
-
-  enddo ! end of do ii; 13 May 13;
+    end do ! end of do ii; 13 May 13;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 #ifdef DEBUG
 
-  if( Wpreset .and. myid.eq.0 ) then
+    if (Wpreset .and. myid .eq. 0) then
+        write (ounit, '("preset : ",10x," : checking FFT and inverse FFT ;")')
+        do imn = 1, mn
+            mm = im(imn)
+            nn = in(imn) ! in should include the Nfp factor; SRH: 27 Feb 18;
 
-   write(ounit,'("preset : ",10x," : checking FFT and inverse FFT ;")')
+            ijreal(1:Ntz) = zero
+            ijimag(1:Ntz) = zero
 
-   do imn = 1, mn ; mm = im(imn) ; nn = in(imn) ! in should include the Nfp factor; SRH: 27 Feb 18;
+            do kk = 0, Nz - 1
+                zeta = kk*pi2nfp/Nz
+                do jj = 0, Nt - 1
+                    teta = jj*pi2/Nt
+                    jk = 1 + jj + kk*Nt
 
-    ijreal(1:Ntz) = zero ; ijimag(1:Ntz) = zero
+                    ijreal(jk) = cos(mm*teta - nn*zeta)
+                    ijimag(jk) = sin(mm*teta - nn*zeta)
+                end do ! end of do jj; SRH: 27 Feb 18;
+            end do ! end of do kk; SRH: 27 Feb 18;
 
-    do kk = 0, Nz-1 ; zeta = kk * pi2nfp / Nz
+            jkreal = ijreal
+            jkimag = ijimag
 
-     do jj = 0, Nt-1 ; teta = jj * pi2    / Nt ; jk = 1 + jj + kk*Nt
+            ifail = 0 !                                                              even        odd         cos         sin
+            call tfft(Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz), mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), ifail)
 
-      ijreal(jk) = cos( mm * teta - nn * zeta ) ; ijimag(jk) = sin( mm * teta - nn * zeta )
+            do ii = 1, mn
+                if (abs(efmn(ii)) + abs(ofmn(ii)) + abs(cfmn(ii)) + abs(sfmn(ii)) .gt. small) then
+                    write (ounit, 2000) mm, nn, im(ii), in(ii), efmn(ii), ofmn(ii), cfmn(ii), sfmn(ii)
+                end if
+2000            format("preset : ", 10x, " : (", i3, ",", i3, " ) = (", i3, ",", i3, " ) : "2f15.5" ; "2f15.5" ;")
+            end do ! end of do ii; SRH: 27 Feb 18;
 
-     enddo ! end of do jj; SRH: 27 Feb 18;
+            call invfft(mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, jireal(1:Ntz), jiimag(1:Ntz))
 
-    enddo ! end of do kk; SRH: 27 Feb 18;
+            error = (sum((jkreal(1:Ntz) - jireal(1:Ntz))**2) + sum((jkimag(1:Ntz) - jiimag(1:Ntz))**2))/Ntz
 
-    jkreal = ijreal ; jkimag = ijimag
-
-    ifail = 0 !                                                              even        odd         cos         sin
-    call tfft( Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz), mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), ifail )
-
-    do ii = 1, mn
-
-     if( abs(efmn(ii))+abs(ofmn(ii))+abs(cfmn(ii))+abs(sfmn(ii)).gt.small ) write(ounit,2000) mm, nn, im(ii), in(ii), efmn(ii), ofmn(ii), cfmn(ii), sfmn(ii)
-
-2000 format("preset : ",10x," : (",i3,",",i3," ) = (",i3,",",i3," ) : "2f15.5" ; "2f15.5" ;")
-
-    enddo ! end of do ii; SRH: 27 Feb 18;
-
-    call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, jireal(1:Ntz), jiimag(1:Ntz) )
-
-    error = ( sum((jkreal(1:Ntz)-jireal(1:Ntz))**2) + sum((jkimag(1:Ntz)-jiimag(1:Ntz))**2) ) / Ntz
-
-    write(ounit,'("preset : ",10x," : (",i3,",",i3," ) : error = ",es13.5," ;")') mm, nn, error
-
-   enddo ! end of do imn; SRH: 27 Feb 18;
-
-  endif ! end of if( myid.eq.0 ) ; SRH: 27 Feb 18;
-
+            write (ounit, '("preset : ",10x," : (",i3,",",i3," ) : error = ",es13.5," ;")') mm, nn, error
+        end do ! end of do imn; SRH: 27 Feb 18;
+    end if ! end of if( myid.eq.0 ) ; SRH: 27 Feb 18;
 #endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  if( Igeometry.eq.3 .and. iRbc(1,0).lt.small ) then ! have not yet assigned coordinate axis; see global;readin for user-supplied Rac, Zas, etc. ; 19 Jul 16;
+    if (Igeometry .eq. 3 .and. iRbc(1, 0) .lt. small) then ! have not yet assigned coordinate axis; see global;readin for user-supplied Rac, Zas, etc. ; 19 Jul 16;
 
-   select case( Linitialize )
-   case( :-1 ) ; vvol = Nvol + Linitialize
-   case(   0 ) ; vvol =    1 ! this is really a dummy; no interpolation of interface geometry is required; packxi calls rzaxis with lvol=1; 19 Jul 16;
-   case(   1 ) ; vvol = Nvol
-   case(   2 ) ; vvol = Mvol
-   end select
+        select case (Linitialize)
+        case (:-1)
+            vvol = Nvol + Linitialize
+        case (0)
+            vvol = 1 ! this is really a dummy; no interpolation of interface geometry is required; packxi calls rzaxis with lvol=1; 19 Jul 16;
+        case (1)
+            vvol = Nvol
+        case (2)
+            vvol = Mvol
+        end select
 
+        cput = MPI_WTIME()
+        Tpreset = Tpreset + (cput - cpuo)
+        call rzaxis(Mvol, mn, iRbc(1:mn, 0:Mvol), iZbs(1:mn, 0:Mvol), iRbs(1:mn, 0:Mvol), iZbc(1:mn, 0:Mvol), vvol, .false.)
+        cpuo = MPI_WTIME()
+        ! set coordinate axis; 19 Jul 16;
 
-   cput = MPI_WTIME()
-   Tpreset = Tpreset + ( cput-cpuo )
-   call rzaxis( Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), vvol, .false. )
-   cpuo = MPI_WTIME()
- ! set coordinate axis; 19 Jul 16;
-
-  endif ! end of if( Igeometry.eq.3 ) then ; 19 Jul 16;
+    end if ! end of if( Igeometry.eq.3 ) then ; 19 Jul 16;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -2032,111 +1973,87 @@ endif
 !>       and used only for the initialization of the surfaces taking into account axis information if provided. </li>
 !> </ul>
 
+    allocate (psifactor(1:mn, 1:Mvol), stat=astat)
+    psifactor(1:mn, 1:Mvol) = zero
 
-   allocate( psifactor(1:mn,1:Mvol), stat=astat )
-   psifactor(1:mn,1:Mvol) = zero
+    allocate (inifactor(1:mn, 1:Mvol), stat=astat)
+    inifactor(1:mn, 1:Mvol) = zero
 
+    psifactor(1:mn, 1:Mvol) = one
+    inifactor(1:mn, 1:Mvol) = one
 
-   allocate( inifactor(1:mn,1:Mvol), stat=astat )
-   inifactor(1:mn,1:Mvol) = zero
-
-
-  psifactor(1:mn,1:Mvol) = one
-  inifactor(1:mn,1:Mvol) = one
-
-  select case( Igeometry )
-
-  case( 1 )
-
-   psifactor(1:mn,1:Nvol) = one
-
-  case( 2 )
-
-   do vvol = 1, Nvol
-    do ii = 1, mn
-     if( im(ii).eq.0 ) then ; psifactor(ii,vvol) = tflux(vvol)**(          +half) ! 28 Jan 15;
-     else                   ; psifactor(ii,vvol) = tflux(vvol)**(halfmm(ii)-half) ! 28 Jan 15;
-     endif
-    enddo
-   enddo
-
-  case( 3 )
-
-   do vvol = 1, Nvol
-    do ii = 1, mn
-     if( im(ii).eq.0 ) then ; psifactor(ii,vvol) = Rscale * tflux(vvol)**zero       ! 08 Feb 16;
-                            ; inifactor(ii,vvol) = Rscale * tflux(vvol)**half       ! 17 Dec 18;
-     else                   ; psifactor(ii,vvol) = Rscale * tflux(vvol)**halfmm(ii) ! 29 Apr 15;
-                            ; inifactor(ii,vvol) = Rscale * tflux(vvol)**halfmm(ii) ! 17 Dec 18
-     endif
-    enddo
-   enddo
-
-  case default
-
-
-   if( .true. ) then
-     write(6,'("readin :      fatal : myid=",i3," ; .true. ; invalid Igeometry for construction of psifactor ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "readin : .true. : invalid Igeometry for construction of psifactor  ;"
-    endif
-
-
-  end select
+    select case (Igeometry)
+    case (1)
+        psifactor(1:mn, 1:Nvol) = one
+    case (2)
+        do vvol = 1, Nvol
+            do ii = 1, mn
+                if (im(ii) .eq. 0) then
+                    psifactor(ii, vvol) = tflux(vvol)**(+half) ! 28 Jan 15;
+                else
+                    psifactor(ii, vvol) = tflux(vvol)**(halfmm(ii) - half) ! 28 Jan 15;
+                end if
+            end do
+        end do
+    case (3)
+        do vvol = 1, Nvol
+            do ii = 1, mn
+                if (im(ii) .eq. 0) then
+                    psifactor(ii, vvol) = Rscale*tflux(vvol)**zero       ! 08 Feb 16;
+                    inifactor(ii, vvol) = Rscale*tflux(vvol)**half       ! 17 Dec 18;
+                else
+                    psifactor(ii, vvol) = Rscale*tflux(vvol)**halfmm(ii) ! 29 Apr 15;
+                    inifactor(ii, vvol) = Rscale*tflux(vvol)**halfmm(ii) ! 17 Dec 18
+                end if
+            end do
+        end do
+    case default
+        if (.true.) then
+            write (6, '("readin :      fatal : myid=",i3," ; .true. ; invalid Igeometry for construction of psifactor ;")') myid
+            call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+            stop "readin : .true. : invalid Igeometry for construction of psifactor  ;"
+        end if
+    end select
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  if( Linitialize.ne.0 ) then ! interpolate / extrapolate interior interface geometry; 19 Jul 16;
+    if (Linitialize .ne. 0) then ! interpolate / extrapolate interior interface geometry; 19 Jul 16;
+        select case (Igeometry)
+        case (1) ! Cartesian; 29 Apr 14;
+            !FATAL( preset, Linitialize.ne.1, geometrical initialization under construction for Cartesian ) ! 14 Apr 17;
+            do vvol = 1, Nvol
+                iRbc(1:mn, vvol) = iRbc(1:mn, Mvol)*tflux(vvol)/tflux(Mvol) ! 14 Apr 17;
+                if (NOTstellsym) then
+                    iRbs(2:mn, vvol) = iRbs(2:mn, Mvol)*tflux(vvol)/tflux(Mvol) ! 14 Apr 17;
+                end if
+            end do
+        case (2) ! cylindrical - standard; 20 Apr 13;
+            if (Linitialize .ne. 1) then
+                write (6, '("preset :      fatal : myid=",i3," ; Linitialize.ne.1 ; geometrical initialization under construction for cylindrical ;")') myid
+                call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                stop "preset : Linitialize.ne.1 : geometrical initialization under construction for cylindrical  ;"
+            end if
+            do vvol = 1, Nvol - 1
+                iRbc(1:mn, vvol) = iRbc(1:mn, Nvol)*psifactor(1:mn, vvol)
+                if (NOTstellsym) then
+                    iRbs(2:mn, vvol) = iRbs(2:mn, Nvol)*psifactor(2:mn, vvol)
+                end if
+            end do
+        case (3) ! toroidal; 20 Apr 13;
+            if (Linitialize .lt. 0) then
+                write (6, '("preset :      fatal : myid=",i3," ; Linitialize.lt.0 ; geometrical initialization under construction for toroidal ;")') myid
+                call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                stop "preset : Linitialize.lt.0 : geometrical initialization under construction for toroidal  ;"
+            end if
+            ! see commented-out source below; 19 Jul 16;
 
-   select case( Igeometry )
+            lvol = Nvol - 1 + Linitialize
 
-   case( 1 ) ! Cartesian; 29 Apr 14;
-
-   !FATAL( preset, Linitialize.ne.1, geometrical initialization under construction for Cartesian ) ! 14 Apr 17;
-
-    do vvol = 1, Nvol
-     ;iRbc(1:mn,vvol) = iRbc(1:mn,Mvol) * tflux(vvol) / tflux(Mvol) ! 14 Apr 17;
-     if( NOTstellsym ) then
-      iRbs(2:mn,vvol) = iRbs(2:mn,Mvol) * tflux(vvol) / tflux(Mvol) ! 14 Apr 17;
-     endif
-    enddo
-
-   case( 2 ) ! cylindrical - standard; 20 Apr 13;
-
-
-   if( Linitialize.ne.1 ) then
-     write(6,'("preset :      fatal : myid=",i3," ; Linitialize.ne.1 ; geometrical initialization under construction for cylindrical ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "preset : Linitialize.ne.1 : geometrical initialization under construction for cylindrical  ;"
-    endif
-
-
-    do vvol = 1, Nvol-1
-     ;iRbc(1:mn,vvol) = iRbc(1:mn,Nvol) * psifactor(1:mn,vvol)
-     if( NOTstellsym ) then
-      iRbs(2:mn,vvol) = iRbs(2:mn,Nvol) * psifactor(2:mn,vvol)
-     endif
-    enddo
-
-   case( 3 ) ! toroidal; 20 Apr 13;
-
-
-   if( Linitialize.lt.0 ) then
-     write(6,'("preset :      fatal : myid=",i3," ; Linitialize.lt.0 ; geometrical initialization under construction for toroidal ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "preset : Linitialize.lt.0 : geometrical initialization under construction for toroidal  ;"
-    endif
- ! see commented-out source below; 19 Jul 16;
-
-    lvol = Nvol-1 + Linitialize
-
-
-   if( lvol.gt.Mvol ) then
-     write(6,'("preset :      fatal : myid=",i3," ; lvol.gt.Mvol ; perhaps illegal combination of Linitialize and Lfreebound ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "preset : lvol.gt.Mvol : perhaps illegal combination of Linitialize and Lfreebound  ;"
-    endif
-
+            if (lvol .gt. Mvol) then
+                write (6, '("preset :      fatal : myid=",i3," ; lvol.gt.Mvol ; perhaps illegal combination of Linitialize and Lfreebound ;")') myid
+                call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                stop "preset : lvol.gt.Mvol : perhaps illegal combination of Linitialize and Lfreebound  ;"
+            end if
 
 !    do vvol = 1, Nvol-1       ! 19 Jul 16;
 !     ;iRbc(1:mn,vvol) = iRbc(1:mn,0) + ( iRbc(1:mn,Nvol) - iRbc(1:mn,0) ) * psifactor(1:mn,vvol) ! 19 Jul 16;
@@ -2147,14 +2064,14 @@ endif
 !     endif ! 19 Jul 16;
 !    enddo
 !
-    do vvol = 1, lvol-1
-     ;iRbc(1:mn,vvol) = iRbc(1:mn,0) + ( iRbc(1:mn,lvol) - iRbc(1:mn,0) ) * ( inifactor(1:mn,vvol) / Rscale ) / tflux(lvol)**halfmm(1:mn)
-     ;iZbs(2:mn,vvol) = iZbs(2:mn,0) + ( iZbs(2:mn,lvol) - iZbs(2:mn,0) ) * ( inifactor(2:mn,vvol) / Rscale ) / tflux(lvol)**halfmm(2:mn)
-     if( NOTstellsym ) then
-      iRbs(2:mn,vvol) = iRbs(2:mn,0) + ( iRbs(2:mn,lvol) - iRbs(2:mn,0) ) * ( inifactor(2:mn,vvol) / Rscale ) / tflux(lvol)**halfmm(2:mn)
-      iZbc(1:mn,vvol) = iZbc(1:mn,0) + ( iZbc(1:mn,lvol) - iZbc(1:mn,0) ) * ( inifactor(1:mn,vvol) / Rscale ) / tflux(lvol)**halfmm(1:mn)
-     endif
-    enddo
+            do vvol = 1, lvol - 1
+                iRbc(1:mn, vvol) = iRbc(1:mn, 0) + (iRbc(1:mn, lvol) - iRbc(1:mn, 0))*(inifactor(1:mn, vvol)/Rscale)/tflux(lvol)**halfmm(1:mn)
+                iZbs(2:mn, vvol) = iZbs(2:mn, 0) + (iZbs(2:mn, lvol) - iZbs(2:mn, 0))*(inifactor(2:mn, vvol)/Rscale)/tflux(lvol)**halfmm(2:mn)
+                if (NOTstellsym) then
+                    iRbs(2:mn, vvol) = iRbs(2:mn, 0) + (iRbs(2:mn, lvol) - iRbs(2:mn, 0))*(inifactor(2:mn, vvol)/Rscale)/tflux(lvol)**halfmm(2:mn)
+                    iZbc(1:mn, vvol) = iZbc(1:mn, 0) + (iZbc(1:mn, lvol) - iZbc(1:mn, 0))*(inifactor(1:mn, vvol)/Rscale)/tflux(lvol)**halfmm(1:mn)
+                end if
+            end do
 
 !   do vvol = 1, Nvol+Linitialize-1
 !    ;iRbc(1:mn,vvol) = iRbc(1:mn,0) + ( iRbc(1:mn,Nvol+Linitialize) - iRbc(1:mn,0) ) * psifactor(1:mn,vvol) / tflux(Nvol+Linitialize)**halfmm(1:mn)
@@ -2165,22 +2082,21 @@ endif
 !    endif
 !   enddo
 
-   end select ! matches select case( Igeometry ); 19 Jul 16;
+        end select ! matches select case( Igeometry ); 19 Jul 16;
 
-  endif ! matches if( Linitialize.ne.0 ) then; 19 Jul 16;
+    end if ! matches if( Linitialize.ne.0 ) then; 19 Jul 16;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !> **Bsupumn and Bsupvmn**
 
+    allocate (Bsupumn(1:Nvol, 0:1, 1:mn), stat=astat)
+    Bsupumn(1:Nvol, 0:1, 1:mn) = zero
+    ! Fourier components of {\bf B}\cdot\nabla \theta on boundary; required for virtual casing;
 
-   allocate( Bsupumn(1:Nvol,0:1,1:mn), stat=astat )
-   Bsupumn(1:Nvol,0:1,1:mn) = zero
- ! Fourier components of {\bf B}\cdot\nabla \theta on boundary; required for virtual casing;
-
-   allocate( Bsupvmn(1:Nvol,0:1,1:mn), stat=astat )
-   Bsupvmn(1:Nvol,0:1,1:mn) = zero
- ! Fourier components of {\bf B}\cdot\nabla \zeta  on boundary;
+    allocate (Bsupvmn(1:Nvol, 0:1, 1:mn), stat=astat)
+    Bsupvmn(1:Nvol, 0:1, 1:mn) = zero
+    ! Fourier components of {\bf B}\cdot\nabla \zeta  on boundary;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -2220,101 +2136,79 @@ endif
 !> <li> The values of \c diotadxup are assigned in mp00aa() after calling tr00ab(). </li>
 !> </ul>
 
+    allocate (diotadxup(0:1, -1:2, 1:Mvol), stat=astat)
+    diotadxup(0:1, -1:2, 1:Mvol) = zero
+    ! measured rotational transform on inner/outer interfaces in each annulus;
 
-   allocate( diotadxup(0:1,-1:2,1:Mvol), stat=astat )
-   diotadxup(0:1,-1:2,1:Mvol) = zero
- ! measured rotational transform on inner/outer interfaces in each annulus;
+    allocate (dItGpdxtp(0:1, -1:2, 1:Mvol), stat=astat)
+    dItGpdxtp(0:1, -1:2, 1:Mvol) = zero
+    ! measured plasma and linking currents                                   ;
 
-   allocate( dItGpdxtp(0:1,-1:2,1:Mvol), stat=astat )
-   dItGpdxtp(0:1,-1:2,1:Mvol) = zero
- ! measured plasma and linking currents                                   ;
-
-
-   allocate( glambda(1:Ntz+1,0:2,0:1,1:Mvol), stat=astat )
-   glambda(1:Ntz+1,0:2,0:1,1:Mvol) = zero
- ! save initial guesses for iterative calculation of rotational-transform; 21 Apr 13;
+    allocate (glambda(1:Ntz + 1, 0:2, 0:1, 1:Mvol), stat=astat)
+    glambda(1:Ntz + 1, 0:2, 0:1, 1:Mvol) = zero
+    ! save initial guesses for iterative calculation of rotational-transform; 21 Apr 13;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 ! Construction of ``force'';
 
+    allocate (Bemn(1:mn, 1:Mvol, 0:1), stat=astat)
+    Bemn(1:mn, 1:Mvol, 0:1) = zero
 
-   allocate( Bemn(1:mn,1:Mvol,0:1), stat=astat )
-   Bemn(1:mn,1:Mvol,0:1) = zero
+    allocate (Bomn(1:mn, 1:Mvol, 0:1), stat=astat)
+    Bomn(1:mn, 1:Mvol, 0:1) = zero
 
+    allocate (Iomn(1:mn, 1:Mvol), stat=astat)
+    Iomn(1:mn, 1:Mvol) = zero
 
-   allocate( Bomn(1:mn,1:Mvol,0:1), stat=astat )
-   Bomn(1:mn,1:Mvol,0:1) = zero
+    allocate (Iemn(1:mn, 1:Mvol), stat=astat)
+    Iemn(1:mn, 1:Mvol) = zero
 
+    allocate (Somn(1:mn, 1:Mvol, 0:1), stat=astat)
+    Somn(1:mn, 1:Mvol, 0:1) = zero
 
-   allocate( Iomn(1:mn,1:Mvol    ), stat=astat )
-   Iomn(1:mn,1:Mvol    ) = zero
+    allocate (Semn(1:mn, 1:Mvol, 0:1), stat=astat)
+    Semn(1:mn, 1:Mvol, 0:1) = zero
 
+    allocate (Pomn(1:mn, 1:Mvol, 0:2), stat=astat)
+    Pomn(1:mn, 1:Mvol, 0:2) = zero
 
-   allocate( Iemn(1:mn,1:Mvol    ), stat=astat )
-   Iemn(1:mn,1:Mvol    ) = zero
+    allocate (Pemn(1:mn, 1:Mvol, 0:2), stat=astat)
+    Pemn(1:mn, 1:Mvol, 0:2) = zero
 
+    allocate (BBe(1:Mvol - 1), stat=astat)
+    BBe(1:Mvol - 1) = zero
 
-   allocate( Somn(1:mn,1:Mvol,0:1), stat=astat )
-   Somn(1:mn,1:Mvol,0:1) = zero
+    allocate (IIo(1:Mvol - 1), stat=astat)
+    IIo(1:Mvol - 1) = zero
 
+    allocate (BBo(1:Mvol - 1), stat=astat)
+    BBo(1:Mvol - 1) = zero
 
-   allocate( Semn(1:mn,1:Mvol,0:1), stat=astat )
-   Semn(1:mn,1:Mvol,0:1) = zero
-
-
-   allocate( Pomn(1:mn,1:Mvol,0:2), stat=astat )
-   Pomn(1:mn,1:Mvol,0:2) = zero
-
-
-   allocate( Pemn(1:mn,1:Mvol,0:2), stat=astat )
-   Pemn(1:mn,1:Mvol,0:2) = zero
-
-
-
-   allocate( BBe (1:Mvol-1), stat=astat )
-   BBe (1:Mvol-1) = zero
-
-
-   allocate( IIo (1:Mvol-1), stat=astat )
-   IIo (1:Mvol-1) = zero
-
-
-   allocate( BBo (1:Mvol-1), stat=astat )
-   BBo (1:Mvol-1) = zero
-
-
-   allocate( IIe (1:Mvol-1), stat=astat )
-   IIe (1:Mvol-1) = zero
-
+    allocate (IIe(1:Mvol - 1), stat=astat)
+    IIe(1:Mvol - 1) = zero
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+    allocate (Btemn(1:mn, 0:1, 1:Mvol), stat=astat)
+    Btemn(1:mn, 0:1, 1:Mvol) = zero
+    ! these are declared in global, calculated in sc00aa, broadcast in xspech, and written to file in hdfint;
 
-   allocate( Btemn(1:mn,0:1,1:Mvol), stat=astat )
-   Btemn(1:mn,0:1,1:Mvol) = zero
- ! these are declared in global, calculated in sc00aa, broadcast in xspech, and written to file in hdfint;
+    allocate (Bzemn(1:mn, 0:1, 1:Mvol), stat=astat)
+    Bzemn(1:mn, 0:1, 1:Mvol) = zero
 
-   allocate( Bzemn(1:mn,0:1,1:Mvol), stat=astat )
-   Bzemn(1:mn,0:1,1:Mvol) = zero
+    allocate (Btomn(1:mn, 0:1, 1:Mvol), stat=astat)
+    Btomn(1:mn, 0:1, 1:Mvol) = zero
 
+    allocate (Bzomn(1:mn, 0:1, 1:Mvol), stat=astat)
+    Bzomn(1:mn, 0:1, 1:Mvol) = zero
 
-   allocate( Btomn(1:mn,0:1,1:Mvol), stat=astat )
-   Btomn(1:mn,0:1,1:Mvol) = zero
+    allocate (Bloweremn(1:mn, 3), stat=astat)
+    Bloweremn(1:mn, 3) = zero
+    ! these are declared in global, calculated in getbco, used in mtrxhs
 
-
-   allocate( Bzomn(1:mn,0:1,1:Mvol), stat=astat )
-   Bzomn(1:mn,0:1,1:Mvol) = zero
-
-
-
-   allocate( Bloweremn(1:mn, 3), stat=astat )
-   Bloweremn(1:mn, 3) = zero
- ! these are declared in global, calculated in getbco, used in mtrxhs
-
-   allocate( Bloweromn(1:mn, 3), stat=astat )
-   Bloweromn(1:mn, 3) = zero
-
+    allocate (Bloweromn(1:mn, 3), stat=astat)
+    Bloweromn(1:mn, 3) = zero
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -2329,120 +2223,119 @@ endif
 !> </ul>
 
 ! Allocate matrix to store the last solution of GMRES as initialization
-  LILUprecond = .false.
-  if (Lmatsolver.eq.2 .or. Lmatsolver.eq.3) then ! use GMRES
+    LILUprecond = .false.
+    if (Lmatsolver .eq. 2 .or. Lmatsolver .eq. 3) then ! use GMRES
 
-   allocate( GMRESlastsolution(MAXVAL(NAdof),0:2,1:Mvol), stat=astat )
-   GMRESlastsolution(MAXVAL(NAdof),0:2,1:Mvol) = zero
+        allocate (GMRESlastsolution(MAXVAL(NAdof), 0:2, 1:Mvol), stat=astat)
+        GMRESlastsolution(MAXVAL(NAdof), 0:2, 1:Mvol) = zero
 
-    GMRESlastsolution = zero
-    if (LGMRESprec .eq. 1) LILUprecond = .true.
-  endif
+        GMRESlastsolution = zero
+        if (LGMRESprec .eq. 1) LILUprecond = .true.
+    end if
 
-  if (Lmatsolver.eq.3) then
-    YESMatrixFree = .true.
-    NOTMatrixFree = .false.
-  else
-    YESMatrixFree = .false.
-    NOTMatrixFree = .true.
-  endif
+    if (Lmatsolver .eq. 3) then
+        YESMatrixFree = .true.
+        NOTMatrixFree = .false.
+    else
+        YESMatrixFree = .false.
+        NOTMatrixFree = .true.
+    end if
 
+    allocate (vvolume(1:Mvol), stat=astat)
+    vvolume(1:Mvol) = zero
+    ! volume integral of \sqrt g;
 
-   allocate( vvolume    (1:Mvol), stat=astat )
-   vvolume    (1:Mvol) = zero
- ! volume integral of \sqrt g;
+    allocate (lBBintegral(1:Mvol), stat=astat)
+    lBBintegral(1:Mvol) = zero
+    ! volume integral of B.B    ;
 
-   allocate( lBBintegral(1:Mvol), stat=astat )
-   lBBintegral(1:Mvol) = zero
- ! volume integral of B.B    ;
-
-   allocate( lABintegral(1:Mvol), stat=astat )
-   lABintegral(1:Mvol) = zero
- ! volume integral of A.B    ;
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  if( YESstellsym ) lmns = 1 + (mns-1)           ! number of independent degrees-of-freedom in angle transformation; 30 Jan 13;
-  if( NOTstellsym ) lmns = 1 + (mns-1) + (mns-1) ! number of independent degrees-of-freedom in angle transformation; 30 Jan 13;
-
-
-   allocate( dlambdaout(1:lmns,1:Mvol,0:1), stat=astat )
-   dlambdaout(1:lmns,1:Mvol,0:1) = zero
-
+    allocate (lABintegral(1:Mvol), stat=astat)
+    lABintegral(1:Mvol) = zero
+    ! volume integral of A.B    ;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  if (Lfreebound > 0) then ! Only do for free-boundary; 7 Nov 18;
+    if (YESstellsym) lmns = 1 + (mns - 1)           ! number of independent degrees-of-freedom in angle transformation; 30 Jan 13;
+    if (NOTstellsym) lmns = 1 + (mns - 1) + (mns - 1) ! number of independent degrees-of-freedom in angle transformation; 30 Jan 13;
 
-
-   allocate( Dxyz(1:3,1:Ntz), stat=astat )
-   Dxyz(1:3,1:Ntz) = zero
- ! Cartesian components of computational boundary; position; 14 Apr 17;
-
-   allocate( Nxyz(1:3,1:Ntz), stat=astat )
-   Nxyz(1:3,1:Ntz) = zero
- ! Cartesian components of computational boundary; normal  ; 14 Apr 17;
-
-
-   allocate( Jxyz(1:Ntz,1:3), stat=astat )
-   Jxyz(1:Ntz,1:3) = zero
- ! Cartesian components of virtual casing surface current; needs to be recalculated at each iteration;
-
-    lvol = Mvol ; lss = one ; Lcurvature = 1 ; Lcoordinatesingularity = .false. ! will only require normal field on outer interface = computational boundary;
-
-
-   cput = MPI_WTIME()
-   Tpreset = Tpreset + ( cput-cpuo )
-   call coords( lvol, lss, Lcurvature, Ntz, mn )
-   cpuo = MPI_WTIME()
- ! will need Rij, Zij; THE COMPUTATIONAL BOUNDARY DOES NOT CHANGE;
-
-    do kk = 0, Nz-1 ; zeta = kk * pi2nfp / Nz
-
-     if( Igeometry.eq.3 ) then ; cszeta(0:1) = (/ cos(zeta), sin(zeta) /)
-     endif
-
-     do jj = 0, Nt-1 ; teta = jj * pi2    / Nt ; jk = 1 + jj + kk*Nt
-
-      select case( Igeometry )
-      case( 1 ) ! Igeometry = 1 ;
-       Dxyz(1:3,jk) = (/   teta       ,  zeta       ,   Rij(jk,0,0) /)
-       Nxyz(1:3,jk) = (/ - Rij(jk,2,0), -Rij(jk,3,0),   one         /)
-      case( 2 ) ! Igeometry = 2 ;
-
-   if( .true. ) then
-     write(6,'("bnorml :      fatal : myid=",i3," ; .true. ; free-boundary calculations not yet implemented in cylindrical geometry ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "bnorml : .true. : free-boundary calculations not yet implemented in cylindrical geometry  ;"
-    endif
-
-      case( 3 ) ! Igeometry = 3 ;
-       Dxyz(1:3,jk) = (/   Rij(jk,0,0) * cszeta(0), Rij(jk,0,0) * cszeta(1), Zij(jk,0,0) /)
-       Nxyz(1:3,jk) = (/   Rij(jk,2,0) * cszeta(1) * Zij(jk,3,0) - Zij(jk,2,0) * ( Rij(jk,3,0) * cszeta(1) + Rij(jk,0,0) * cszeta(0) ), &
-                         - Rij(jk,2,0) * cszeta(0) * Zij(jk,3,0) + Zij(jk,2,0) * ( Rij(jk,3,0) * cszeta(0) - Rij(jk,0,0) * cszeta(1) ), &
-                           Rij(jk,0,0)             * Rij(jk,2,0) /)
-      end select ! end of select case( Igeometry ) ; 09 Mar 17;
-
-     enddo ! end of do jj; 14 Apr 17;
-
-    enddo ! end of do kk; 14 Apr 17;
-
-  endif ! Lfreebound > 1; 7 Nov 18;
+    allocate (dlambdaout(1:lmns, 1:Mvol, 0:1), stat=astat)
+    dlambdaout(1:lmns, 1:Mvol, 0:1) = zero
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  if( Lconstraint .EQ. 3) then
-    Localconstraint = .false.
-  else
-    Localconstraint = .true.
-  endif
+    if (Lfreebound > 0) then ! Only do for free-boundary; 7 Nov 18;
 
+        allocate (Dxyz(1:3, 1:Ntz), stat=astat)
+        Dxyz(1:3, 1:Ntz) = zero
+        ! Cartesian components of computational boundary; position; 14 Apr 17;
+
+        allocate (Nxyz(1:3, 1:Ntz), stat=astat)
+        Nxyz(1:3, 1:Ntz) = zero
+        ! Cartesian components of computational boundary; normal  ; 14 Apr 17;
+
+        allocate (Jxyz(1:Ntz, 1:3), stat=astat)
+        Jxyz(1:Ntz, 1:3) = zero
+        ! Cartesian components of virtual casing surface current; needs to be recalculated at each iteration;
+
+        lvol = Mvol
+        lss = one
+        Lcurvature = 1
+        Lcoordinatesingularity = .false. ! will only require normal field on outer interface = computational boundary;
+
+        cput = MPI_WTIME()
+        Tpreset = Tpreset + (cput - cpuo)
+        call coords(lvol, lss, Lcurvature, Ntz, mn)
+        cpuo = MPI_WTIME()
+        ! will need Rij, Zij; THE COMPUTATIONAL BOUNDARY DOES NOT CHANGE;
+
+        do kk = 0, Nz - 1
+            zeta = kk*pi2nfp/Nz
+
+            if (Igeometry .eq. 3) then
+                cszeta(0:1) = (/cos(zeta), sin(zeta)/)
+            end if
+
+            do jj = 0, Nt - 1
+                teta = jj*pi2/Nt
+                jk = 1 + jj + kk*Nt
+
+                select case (Igeometry)
+                case (1) ! Igeometry = 1 ;
+                    Dxyz(1:3, jk) = (/teta, zeta, Rij(jk, 0, 0)/)
+                    Nxyz(1:3, jk) = (/-Rij(jk, 2, 0), -Rij(jk, 3, 0), one/)
+                case (2) ! Igeometry = 2 ;
+
+                    if (.true.) then
+                        write (6, '("bnorml :      fatal : myid=",i3," ; .true. ; free-boundary calculations not yet implemented in cylindrical geometry ;")') myid
+                        call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                        stop "bnorml : .true. : free-boundary calculations not yet implemented in cylindrical geometry  ;"
+                    end if
+
+                case (3) ! Igeometry = 3 ;
+                    Dxyz(1:3, jk) = (/Rij(jk, 0, 0)*cszeta(0), Rij(jk, 0, 0)*cszeta(1), Zij(jk, 0, 0)/)
+                    Nxyz(1:3, jk) = (/Rij(jk, 2, 0)*cszeta(1)*Zij(jk, 3, 0) - Zij(jk, 2, 0)*(Rij(jk, 3, 0)*cszeta(1) + Rij(jk, 0, 0)*cszeta(0)), &
+                                      -Rij(jk, 2, 0)*cszeta(0)*Zij(jk, 3, 0) + Zij(jk, 2, 0)*(Rij(jk, 3, 0)*cszeta(0) - Rij(jk, 0, 0)*cszeta(1)), &
+                                      Rij(jk, 0, 0)*Rij(jk, 2, 0)/)
+                end select ! end of select case( Igeometry ) ; 09 Mar 17;
+
+            end do ! end of do jj; 14 Apr 17;
+
+        end do ! end of do kk; 14 Apr 17;
+
+    end if ! Lfreebound > 1; 7 Nov 18;
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+    if (Lconstraint .EQ. 3) then
+        Localconstraint = .false.
+    else
+        Localconstraint = .true.
+    end if
 
 9999 continue
-  cput = MPI_WTIME()
-  Tpreset = Tpreset + ( cput-cpuo )
-  return
-
+    cput = MPI_WTIME()
+    Tpreset = Tpreset + (cput - cpuo)
+    return
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

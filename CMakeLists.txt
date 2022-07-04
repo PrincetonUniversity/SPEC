@@ -33,11 +33,11 @@ else ()
         set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MPI_Fortran_LINK_FLAGS}")
         include_directories (${MPI_Fortran_INCLUDE_PATH})
 
-#  Some of the tests need to be oversubscribbed to run. There is a problem where
+#  Some of the tests need to be oversubscribed to run. There is a problem where
 #  depending on the current platform or implementation of MPI the oversubscribe
 #  flag changes. MPIEXEC may not write to stdout correctly. Add the ability to
 #  set this variable manually.
-        if (NOT DEFINED ${MPI_OVERSUBSCRIBE_FLAG}) 
+        if (NOT DEFINED ${MPI_OVERSUBSCRIBE_FLAG})
             execute_process(COMMAND ${MPIEXEC} --version OUTPUT_VARIABLE MPI_VERSION)
             if (${MPI_VERSION} MATCHES "Open MPI" OR
                 ${MPI_VERSION} MATCHES "OpenRTE"  OR
@@ -52,13 +52,13 @@ endif ()
 find_program(AWK awk mawk gawk)
 
 # Find LAPACK
-# For LAPAPCK, it is suggested to use Intel MKL even for gcc compiler suite. To use Intel MKL, INTELMKL 
-# has to be defined as environment variable. If Intel compilers are loaded, MKLROOT is auto-populated. 
+# For LAPAPCK, it is suggested to use Intel MKL even for gcc compiler suite. To use Intel MKL, INTELMKL
+# has to be defined as environment variable. If Intel compilers are loaded, MKLROOT is auto-populated.
 # Otherwise define MKLROOT to point to Intel MKL.
 # Ex: For PPPL gcc suite of compilers, after loading gcc, on command line set MKLROOT as
 # "export MKLROOT=/usr/pppl/intel/2020.u1/compilers_and_libraries_2020/linux/mkl"
 # If Intel MKL is not desired, change BLA_VENDOR variabale during configuration
-#set(BLA_VENDOR Intel10_64lp CACHE STRING 
+#set(BLA_VENDOR Intel10_64lp CACHE STRING
 #    "Define BLAS vendor. Some of the popular options are Intel10_64lp OpenBLAS Apple Generic")
 find_package (BLAS REQUIRED)
 message(STATUS "BLAS vendor is ${BLA_VENDOR}")
@@ -70,13 +70,13 @@ endif()
 # Intel oneAPI has FFT3 available as part of MKL. Just linking against MKL gives FFTW functionality.
 if (NOT ${BLA_VENDOR} MATCHES "^Intel")
     # For standard FFTW library
-    # We are using findfftw module from github/egpbos. 
+    # We are using findfftw module from github/egpbos.
     # PPPL provides fftwconfig.cmake. We could try that first in future
 
     # To guide cmake to the location of FFT, set FFTW_ROOT to the path of FFTW
-    # Ex: For PPPL gcc suite of compilers, 
+    # Ex: For PPPL gcc suite of compilers,
     # We are using FFTW find module from github.com/egpbos
-    # 
+    #
     configure_file(downloadFindFFTW.cmake.in findFFTW-download/CMakeLists.txt)
     execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
         RESULT_VARIABLE result
@@ -104,7 +104,7 @@ endif()
 # Find HDF5
 # To guide cmake finding HDF5 set HDF5_ROOT. If no cmake configuration file is available, also set
 # HDF5_NO_FIND_PACKAGE_CONFIG_FILE
-# Ex: For PPPL gcc suite of compilers, after loading HDF5, invoke cmake as 
+# Ex: For PPPL gcc suite of compilers, after loading HDF5, invoke cmake as
 # cmake ... -DHDF5_ROOT=$HDF5_HOME -DHDF5_NO_FIND_PACKAGE_CONFIG_FILE=FALSE
 find_package(HDF5 COMPONENTS C Fortran HL REQUIRED)
 message(STATUS "HDF5 libraries found: ${HDF5_FOUND}")

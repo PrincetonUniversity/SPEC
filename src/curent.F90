@@ -53,137 +53,132 @@
 !> @param[in] Nz number of grid points along \f$\zeta\f$
 !> @param[in] iflag some integer flag
 !> @param[out] ldItGp plasma and linking current
-subroutine curent( lvol, mn, Nt, Nz, iflag, ldItGp )
-  use mod_kinds, only: wp => dp
+subroutine curent(lvol, mn, Nt, Nz, iflag, ldItGp)
+    use mod_kinds, only: wp => dp
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  use constants, only : zero, one, two, pi2
+    use constants, only: zero, one, two, pi2
 
-  use numerical, only :
+    use numerical, only:
 
-  use fileunits, only : ounit
+    use fileunits, only: ounit
 
-  use inputlist, only : Wmacros, Wcurent, Lrad
+    use inputlist, only: Wmacros, Wcurent, Lrad
 
-  use cputiming, only : Tcurent
+    use cputiming, only: Tcurent
 
-  use allglobal, only : ncpu, cpus, myid, MPI_COMM_SPEC, &
-                        Mvol, im, in, mne, ime, ine, &
-                        YESstellsym, NOTstellsym, &
-                        sg, guvij, &
-                        Ntz, ijreal, ijimag, jireal, jiimag, &
-                        efmn, ofmn, cfmn, sfmn, evmn, odmn, comn, simn, &
-                        Ate, Aze, Ato, Azo, TT, &
-                        build_vector_potential
+    use allglobal, only: ncpu, cpus, myid, MPI_COMM_SPEC, &
+                         Mvol, im, in, mne, ime, ine, &
+                         YESstellsym, NOTstellsym, &
+                         sg, guvij, &
+                         Ntz, ijreal, ijimag, jireal, jiimag, &
+                         efmn, ofmn, cfmn, sfmn, evmn, odmn, comn, simn, &
+                         Ate, Aze, Ato, Azo, TT, &
+                         build_vector_potential
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
 
 #ifdef OPENMP
-  USE OMP_LIB
+    USE OMP_LIB
 #endif
-  use mpi
-  implicit none
-  integer   :: ierr, astat, ios, nthreads, ithread
-  real(wp)      :: cput, cpui, cpuo=0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
+    use mpi
+    implicit none
+    integer :: ierr, astat, ios, nthreads, ithread
+    real(wp) :: cput, cpui, cpuo = 0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
 
+    integer, intent(in) :: lvol, mn, Nt, Nz, iflag
+    real(wp), intent(out) :: ldItGp(0:1, -1:2)
 
-  integer, intent(in)  :: lvol, mn, Nt, Nz, iflag
-  real(wp)   , intent(out) :: ldItGp(0:1,-1:2)
+    integer :: innout, ideriv, ii, ll, Lcurvature, ifail
+    real(wp) :: lss
+    real(wp) :: Bsupt(1:Nt*Nz, -1:2), Bsupz(1:Nt*Nz, -1:2)
 
-  integer              :: innout, ideriv, ii, ll, Lcurvature, ifail
-  real(wp)                 :: lss
-  real(wp)                 :: Bsupt(1:Nt*Nz,-1:2), Bsupz(1:Nt*Nz,-1:2)
-
-
-  cpui = MPI_WTIME()
-  cpuo = cpui
+    cpui = MPI_WTIME()
+    cpuo = cpui
 #ifdef OPENMP
-  nthreads = omp_get_max_threads()
+    nthreads = omp_get_max_threads()
 #else
-  nthreads = 1
+    nthreads = 1
 #endif
-
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 #ifdef DEBUG
 
-   if( lvol.ne.Mvol ) then
-     write(6,'("curent :      fatal : myid=",i3," ; lvol.ne.Mvol ; this is only defined in the vacuum region ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "curent : lvol.ne.Mvol : this is only defined in the vacuum region  ;"
-    endif
+    if (lvol .ne. Mvol) then
+        write (6, '("curent :      fatal : myid=",i3," ; lvol.ne.Mvol ; this is only defined in the vacuum region ;")') myid
+        call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+        stop "curent : lvol.ne.Mvol : this is only defined in the vacuum region  ;"
+    end if
 
 #endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
- !ldItGp(0:1,-1:2) = zero ! initialize intent out; 12 Sep 16;
+    !ldItGp(0:1,-1:2) = zero ! initialize intent out; 12 Sep 16;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  innout = 0 ; lss = two * innout - one ! lvol = Mvol ! internal shorthand/variables; 08 Feb 16; note that lvol = Mvol is hardwired; 12 Sep 16;
+    innout = 0; lss = two*innout - one ! lvol = Mvol ! internal shorthand/variables; 08 Feb 16; note that lvol = Mvol is hardwired; 12 Sep 16;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  do ideriv = -1, 2 ! labels derivative of magnetic field wrt enclosed fluxes; 20 Apr 13;
+    do ideriv = -1, 2 ! labels derivative of magnetic field wrt enclosed fluxes; 20 Apr 13;
 
-   if( iflag.eq. 1 .and. ideriv.ne.0 ) cycle ! derivatives of currents                                                   are not required; 20 Jun 14;
-   if( iflag.eq. 2 .and. ideriv.lt.0 ) cycle ! derivatives of currents  wrt geometry                                     is  not required; 20 Jun 14;
-   if( iflag.eq.-1 .and. ideriv.gt.0 ) cycle ! derivatives of currents  wrt enclosed toroidal and enclosed poloidal flux are not required; 20 Jun 14;
+        if (iflag .eq. 1 .and. ideriv .ne. 0) cycle ! derivatives of currents                                                   are not required; 20 Jun 14;
+        if (iflag .eq. 2 .and. ideriv .lt. 0) cycle ! derivatives of currents  wrt geometry                                     is  not required; 20 Jun 14;
+        if (iflag .eq. -1 .and. ideriv .gt. 0) cycle ! derivatives of currents  wrt enclosed toroidal and enclosed poloidal flux are not required; 20 Jun 14;
 
-   call build_vector_potential(lvol, innout, ideriv, 1)
+        call build_vector_potential(lvol, innout, ideriv, 1)
 
-   call invfft( mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), &
-                Nt, Nz, Bsupz(1:Ntz,ideriv), Bsupt(1:Ntz,ideriv) ) ! map to real space;
+        call invfft(mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), &
+                    Nt, Nz, Bsupz(1:Ntz, ideriv), Bsupt(1:Ntz, ideriv)) ! map to real space;
 
-  enddo ! end of do ideriv; 31 Jan 13;
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  select case( iflag )
-  case( -1 ) ; Lcurvature = 3 ! will need derivatives of metrics w.r.t. interface deformation; 15 Sep 16;
-  case(  1 ) ; Lcurvature = 1
-  case(  2 ) ; Lcurvature = 1
-  end select
-
-
-   cput = MPI_WTIME()
-   Tcurent = Tcurent + ( cput-cpuo )
-   call coords( lvol, lss, Lcurvature, Ntz, mn )
-   cpuo = MPI_WTIME()
- ! get "lower" metric elements evaluated on innout interface;
+    end do ! end of do ideriv; 31 Jan 13;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  do ideriv = -1, 2 ! labels derivative of magnetic field wrt enclosed fluxes; 20 Apr 13;
+    select case (iflag)
+    case (-1); Lcurvature = 3 ! will need derivatives of metrics w.r.t. interface deformation; 15 Sep 16;
+    case (1); Lcurvature = 1
+    case (2); Lcurvature = 1
+    end select
 
-   if( iflag.eq. 1 .and. ideriv.ne.0 ) cycle ! derivatives of currents                                                   are not required; 20 Jun 14;
-   if( iflag.eq. 2 .and. ideriv.lt.0 ) cycle ! derivatives of currents  wrt geometry                                     is  not required; 20 Jun 14;
-   if( iflag.eq.-1 .and. ideriv.gt.0 ) cycle ! derivatives of currents  wrt enclosed toroidal and enclosed poloidal flux are not required; 20 Jun 14;
+    cput = MPI_WTIME()
+    Tcurent = Tcurent + (cput - cpuo)
+    call coords(lvol, lss, Lcurvature, Ntz, mn)
+    cpuo = MPI_WTIME()
+    ! get "lower" metric elements evaluated on innout interface;
 
-   ijreal(1:Ntz) =                 ( - Bsupt(1:Ntz,ideriv) * guvij(1:Ntz,2,2,0) + Bsupz(1:Ntz,ideriv) * guvij(1:Ntz,2,3,0) ) / sg(1:Ntz,0)
-   ijimag(1:Ntz) =                 ( - Bsupt(1:Ntz,ideriv) * guvij(1:Ntz,2,3,0) + Bsupz(1:Ntz,ideriv) * guvij(1:Ntz,3,3,0) ) / sg(1:Ntz,0)
-   if( ideriv.eq.-1 ) then ! add derivatives of metrics with respect to interface geometry; 15 Sep 16;
-   ijreal(1:Ntz) = ijreal(1:Ntz) + ( - Bsupt(1:Ntz,     0) * guvij(1:Ntz,2,2,1) + Bsupz(1:Ntz,     0) * guvij(1:Ntz,2,3,1) ) / sg(1:Ntz,0)
-   ijimag(1:Ntz) = ijimag(1:Ntz) + ( - Bsupt(1:Ntz,     0) * guvij(1:Ntz,2,3,1) + Bsupz(1:Ntz,     0) * guvij(1:Ntz,3,3,1) ) / sg(1:Ntz,0)
-   endif
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-   ifail = 0
-   call tfft( Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz), &
-              mne, ime(1:mne), ine(1:mne), efmn(1:mne), ofmn(1:mne), cfmn(1:mne), sfmn(1:mne), ifail )
+    do ideriv = -1, 2 ! labels derivative of magnetic field wrt enclosed fluxes; 20 Apr 13;
 
-   ldItGp(0,ideriv) = efmn(1) * pi2 ! "toroidal", plasma  current; 12 Sep 16;
-   ldItGp(1,ideriv) = cfmn(1) * pi2 ! "poloidal", linking current; 12 Sep 16;
+        if (iflag .eq. 1 .and. ideriv .ne. 0) cycle ! derivatives of currents                                                   are not required; 20 Jun 14;
+        if (iflag .eq. 2 .and. ideriv .lt. 0) cycle ! derivatives of currents  wrt geometry                                     is  not required; 20 Jun 14;
+        if (iflag .eq. -1 .and. ideriv .gt. 0) cycle ! derivatives of currents  wrt enclosed toroidal and enclosed poloidal flux are not required; 20 Jun 14;
+
+        ijreal(1:Ntz) = (-Bsupt(1:Ntz, ideriv)*guvij(1:Ntz, 2, 2, 0) + Bsupz(1:Ntz, ideriv)*guvij(1:Ntz, 2, 3, 0))/sg(1:Ntz, 0)
+        ijimag(1:Ntz) = (-Bsupt(1:Ntz, ideriv)*guvij(1:Ntz, 2, 3, 0) + Bsupz(1:Ntz, ideriv)*guvij(1:Ntz, 3, 3, 0))/sg(1:Ntz, 0)
+        if (ideriv .eq. -1) then ! add derivatives of metrics with respect to interface geometry; 15 Sep 16;
+            ijreal(1:Ntz) = ijreal(1:Ntz) + (-Bsupt(1:Ntz, 0)*guvij(1:Ntz, 2, 2, 1) + Bsupz(1:Ntz, 0)*guvij(1:Ntz, 2, 3, 1))/sg(1:Ntz, 0)
+            ijimag(1:Ntz) = ijimag(1:Ntz) + (-Bsupt(1:Ntz, 0)*guvij(1:Ntz, 2, 3, 1) + Bsupz(1:Ntz, 0)*guvij(1:Ntz, 3, 3, 1))/sg(1:Ntz, 0)
+        end if
+
+        ifail = 0
+        call tfft(Nt, Nz, ijreal(1:Ntz), ijimag(1:Ntz), &
+                  mne, ime(1:mne), ine(1:mne), efmn(1:mne), ofmn(1:mne), cfmn(1:mne), sfmn(1:mne), ifail)
+
+        ldItGp(0, ideriv) = efmn(1)*pi2 ! "toroidal", plasma  current; 12 Sep 16;
+        ldItGp(1, ideriv) = cfmn(1)*pi2 ! "poloidal", linking current; 12 Sep 16;
 
 #ifdef DEBUG
-   if( Wcurent ) then
-    write(ounit,'("curent : ", 10x ," : myid=",i3," ; dItGp(0:1,",i2,")=",es23.15,",",es23.15," ;")') myid, ideriv, ldItGp(0:1,ideriv)
-   endif
+        if (Wcurent) then
+            write (ounit, '("curent : ", 10x ," : myid=",i3," ; dItGp(0:1,",i2,")=",es23.15,",",es23.15," ;")') myid, ideriv, ldItGp(0:1, ideriv)
+        end if
 #endif
 
-  enddo ! end of do ideriv; 31 Jan 13;
+    end do ! end of do ideriv; 31 Jan 13;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -210,12 +205,10 @@ subroutine curent( lvol, mn, Nt, Nz, iflag, ldItGp )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-
 9999 continue
-  cput = MPI_WTIME()
-  Tcurent = Tcurent + ( cput-cpuo )
-  return
-
+    cput = MPI_WTIME()
+    Tcurent = Tcurent + (cput - cpuo)
+    return
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

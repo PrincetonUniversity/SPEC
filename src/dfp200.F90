@@ -17,9 +17,7 @@
 !latex        \link{curent},
 !latex        \link{matrix},}
 
-
 !latex \tableofcontents
-
 
 !latex \subsection{Construction of local force}
 !latex See \link{dforce} documentation for more details
@@ -42,869 +40,798 @@
 !>
 !> @param LcomputeDerivatives
 !> @param  vvol
-subroutine dfp200( LcomputeDerivatives, vvol)
-  use mod_kinds, only: wp => dp
-  use constants, only : zero, half, one, two
+subroutine dfp200(LcomputeDerivatives, vvol)
+    use mod_kinds, only: wp => dp
+    use constants, only: zero, half, one, two
 
-  use numerical, only : small
+    use numerical, only: small
 
-  use fileunits, only : ounit
+    use fileunits, only: ounit
 
-  use inputlist, only : Wmacros, Wdfp200, Nvol, Mpol, Ntor, Lrad, tflux, Igeometry, &
-                        gamma, adiabatic, pscale, mu, &
-                        epsilon, &
-                        Lfindzero, &
-                        Lconstraint, Lcheck, LHmatrix, &
-                        Lextrap, &
-                        Lfreebound
+    use inputlist, only: Wmacros, Wdfp200, Nvol, Mpol, Ntor, Lrad, tflux, Igeometry, &
+                         gamma, adiabatic, pscale, mu, &
+                         epsilon, &
+                         Lfindzero, &
+                         Lconstraint, Lcheck, LHmatrix, &
+                         Lextrap, &
+                         Lfreebound
 
-  use cputiming, only : Tdfp200
+    use cputiming, only: Tdfp200
 
-  use allglobal, only : ncpu, myid, cpus, MPI_COMM_SPEC,&
-                        Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
-                        Mvol, &
-                        Iquad, &                  ! convenience; provided to ma00aa as argument to avoid allocations;
-                        iRbc, iZbs, iRbs, iZbc, & ! Fourier harmonics of geometry; vector of independent variables, position, is "unpacked" into iRbc,iZbs;
-                        NAdof, &
-                        YESstellsym, NOTstellsym, &
-                        mn, im, in, mns, Ntz, &
-                        Ate, Aze, Ato, Azo, & ! only required for debugging;
-                        ijreal, &
-                        !fijreal,&
-                        efmn, ofmn, cfmn, sfmn, &
-                        evmn, odmn, comn, simn, &
-                        Nt, Nz, &
-                        cosi, sini, & ! FFT workspace;
-                        dBdX, &
-                        dtflux, dpflux, sweight, &
-                        mmpp, &
-                        dMA, dMB, dMD, dMG, &
-                        Bemn, Bomn, Iomn, Iemn, Somn, Semn, &
-                        LGdof, &
-                        vvolume, dvolume, &
-                        Rij, Zij, sg, guvij, iRij, iZij, dRij, dZij, tRij, tZij, & ! Jacobian and metrics; computed in coords;
-                        diotadxup, dItGpdxtp, &
-                        dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated,Lhessian2Dallocated,Lhessian3Dallocated,denergydrr,denergydzr, &
-                        BBweight, & ! exponential weight on force-imbalance harmonics;
-                        psifactor, &
-                        lmns, &
-                        mn, mne, &
-                        dRodR, dRodZ, dZodR, dZodZ, &
-                        LocalConstraint, solution, &
-                        IsMyVolume, IsMyVolumeValue, Btemn, WhichCpuID
+    use allglobal, only: ncpu, myid, cpus, MPI_COMM_SPEC, &
+                         Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
+                         Mvol, &
+                         Iquad, &                  ! convenience; provided to ma00aa as argument to avoid allocations;
+                         iRbc, iZbs, iRbs, iZbc, & ! Fourier harmonics of geometry; vector of independent variables, position, is "unpacked" into iRbc,iZbs;
+                         NAdof, &
+                         YESstellsym, NOTstellsym, &
+                         mn, im, in, mns, Ntz, &
+                         Ate, Aze, Ato, Azo, & ! only required for debugging;
+                         ijreal, &
+                         !fijreal,&
+                         efmn, ofmn, cfmn, sfmn, &
+                         evmn, odmn, comn, simn, &
+                         Nt, Nz, &
+                         cosi, sini, & ! FFT workspace;
+                         dBdX, &
+                         dtflux, dpflux, sweight, &
+                         mmpp, &
+                         dMA, dMB, dMD, dMG, &
+                         Bemn, Bomn, Iomn, Iemn, Somn, Semn, &
+                         LGdof, &
+                         vvolume, dvolume, &
+                         Rij, Zij, sg, guvij, iRij, iZij, dRij, dZij, tRij, tZij, & ! Jacobian and metrics; computed in coords;
+                         diotadxup, dItGpdxtp, &
+                         dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated, Lhessian2Dallocated, Lhessian3Dallocated, denergydrr, denergydzr, &
+                         BBweight, & ! exponential weight on force-imbalance harmonics;
+                         psifactor, &
+                         lmns, &
+                         mn, mne, &
+                         dRodR, dRodZ, dZodR, dZodZ, &
+                         LocalConstraint, solution, &
+                         IsMyVolume, IsMyVolumeValue, Btemn, WhichCpuID
 
-  use typedefns
+    use typedefns
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-
 #ifdef OPENMP
-  USE OMP_LIB
+    USE OMP_LIB
 #endif
-  use mpi
-  implicit none
-  integer   :: ierr, astat, ios, nthreads, ithread
-  real(wp)      :: cput, cpui, cpuo=0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
+    use mpi
+    implicit none
+    integer :: ierr, astat, ios, nthreads, ithread
+    real(wp) :: cput, cpui, cpuo = 0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
 
+    LOGICAL, intent(in) :: LComputeDerivatives ! indicates whether derivatives are to be calculated;
+    LOGICAL :: LInnerVolume
 
-  LOGICAL, intent(in)  :: LComputeDerivatives ! indicates whether derivatives are to be calculated;
-  LOGICAL              :: LInnerVolume
+    integer :: NN, IA, ifail, if01adf, vflag, MM, idgetrf, idgetri, Lwork, lvol, pvol
+    integer :: vvol, innout, ii, jj, irz, issym, iocons, idoc, idof, imn, ll
+    integer :: Lcurvature, ideriv, id
+    integer :: iflag, cpu_id, cpu_id1, even_or_odd, vol_parity
+    integer :: stat(MPI_STATUS_SIZE), tag, tag2, req1, req2, req3, req4
 
-  integer              :: NN, IA, ifail, if01adf, vflag, MM, idgetrf, idgetri, Lwork, lvol, pvol
-  integer              :: vvol, innout, ii, jj, irz, issym, iocons, idoc, idof, imn, ll
-  integer              :: Lcurvature, ideriv, id
-  integer              :: iflag, cpu_id, cpu_id1, even_or_odd, vol_parity
-  integer              :: stat(MPI_STATUS_SIZE), tag, tag2, req1, req2, req3, req4
+    real(wp) :: lastcpu, lss, lfactor, DDl, MMl
+    real(wp) :: det
+    real(wp), allocatable :: XX(:), YY(:), dBB(:, :), dII(:), dLL(:), dPP(:), length(:), dRR(:, :), dZZ(:, :), constraint(:)
+    real(wp), allocatable :: ddFcol1(:), ddFcol2(:), ddFcol3(:), ddFcol4(:)
 
-  real(wp)                 :: lastcpu, lss, lfactor, DDl, MMl
-  real(wp)                 :: det
-  real(wp)   , allocatable :: XX(:), YY(:), dBB(:,:), dII(:), dLL(:), dPP(:), length(:), dRR(:,:), dZZ(:,:), constraint(:)
-  real(wp)   , allocatable :: ddFcol1(:), ddFcol2(:), ddFcol3(:), ddFcol4(:)
+    character :: packorunpack
 
+    type(MatrixLU) :: oBI(1:Mvol)
 
-  character            :: packorunpack
-
-  type(MatrixLU)  :: oBI(1:Mvol)
-
-
-  cpui = MPI_WTIME()
-  cpuo = cpui
+    cpui = MPI_WTIME()
+    cpuo = cpui
 #ifdef OPENMP
-  nthreads = omp_get_max_threads()
+    nthreads = omp_get_max_threads()
 #else
-  nthreads = 1
+    nthreads = 1
 #endif
-
-
 
 #ifdef DEBUG
-  if( Lcheck.eq.2 ) then
-    goto 2000 ! will take no other action except a finite-difference comparison on the derivatives of the rotational-transform wrt mu and dpflux; (in dforce)
-  endif
+    if (Lcheck .eq. 2) then
+        goto 2000 ! will take no other action except a finite-difference comparison on the derivatives of the rotational-transform wrt mu and dpflux; (in dforce)
+    end if
 #endif
 
+    allocate (dBB(1:Ntz, -1:2), stat=astat)
+    dBB(1:Ntz, -1:2) = zero
+    ! magnetic field strength (on interfaces) in real space and derivatives;
 
-   allocate( dBB       (1:Ntz,-1:2), stat=astat )
-   dBB       (1:Ntz,-1:2) = zero
- ! magnetic field strength (on interfaces) in real space and derivatives;
+    allocate (XX(1:Ntz), stat=astat)
+    XX(1:Ntz) = zero
 
-   allocate( XX       (1:Ntz     ), stat=astat )
-   XX       (1:Ntz     ) = zero
+    allocate (YY(1:Ntz), stat=astat)
+    YY(1:Ntz) = zero
 
+    allocate (length(1:Ntz), stat=astat)
+    length(1:Ntz) = zero
+    ! this is calculated in lforce;
 
-   allocate( YY       (1:Ntz     ), stat=astat )
-   YY       (1:Ntz     ) = zero
+    if (LComputeDerivatives) then
 
+        allocate (dRR(1:Ntz, -1:1), stat=astat)
+        dRR(1:Ntz, -1:1) = zero
 
-   allocate( length    (1:Ntz     ), stat=astat )
-   length    (1:Ntz     ) = zero
- ! this is calculated in lforce;
+        allocate (dZZ(1:Ntz, -1:1), stat=astat)
+        dZZ(1:Ntz, -1:1) = zero
 
-  if( LComputeDerivatives ) then
+        allocate (dII(1:Ntz), stat=astat)
+        dII(1:Ntz) = zero
+        ! spectral constraint;
 
-   allocate( dRR       (1:Ntz,-1:1), stat=astat )
-   dRR       (1:Ntz,-1:1) = zero
+        allocate (dLL(1:Ntz), stat=astat)
+        dLL(1:Ntz) = zero
+        ! length   constraint;
 
+        allocate (dPP(1:Ntz), stat=astat)
+        dPP(1:Ntz) = zero
+        ! poloidal constraint;
 
-   allocate( dZZ       (1:Ntz,-1:1), stat=astat )
-   dZZ       (1:Ntz,-1:1) = zero
+        allocate (constraint(1:Ntz), stat=astat)
+        constraint(1:Ntz) = zero
 
+        allocate (ddFcol1(1:Ntz), stat=astat)
+        ddFcol1(1:Ntz) = zero
 
-   allocate( dII       (1:Ntz     ), stat=astat )
-   dII       (1:Ntz     ) = zero
- ! spectral constraint;
+        allocate (ddFcol2(1:Ntz), stat=astat)
+        ddFcol2(1:Ntz) = zero
 
-   allocate( dLL       (1:Ntz     ), stat=astat )
-   dLL       (1:Ntz     ) = zero
- ! length   constraint;
+        allocate (ddFcol3(1:Ntz), stat=astat)
+        ddFcol3(1:Ntz) = zero
 
-   allocate( dPP       (1:Ntz     ), stat=astat )
-   dPP       (1:Ntz     ) = zero
- ! poloidal constraint;
+        allocate (ddFcol4(1:Ntz), stat=astat)
+        ddFcol4(1:Ntz) = zero
 
-   allocate( constraint(1:Ntz     ), stat=astat )
-   constraint(1:Ntz     ) = zero
+    end if
 
+    if (LocalConstraint) then
 
-   allocate( ddFcol1   (1:Ntz     ), stat=astat )
-   ddFcol1   (1:Ntz     ) = zero
+        do vvol = 1, Mvol
 
+            cput = MPI_WTIME()
+            Tdfp200 = Tdfp200 + (cput - cpuo)
+            call IsMyVolume(vvol)
+            cpuo = MPI_WTIME()
 
-   allocate( ddFcol2   (1:Ntz     ), stat=astat )
-   ddFcol2   (1:Ntz     ) = zero
+            if (IsMyVolumeValue .EQ. 0) then
+                cycle
+            else if (IsMyVolumeValue .EQ. -1) then
 
+                if (.true.) then
+                    write (6, '("dfp200 :      fatal : myid=",i3," ; .true. ; Unassociated volume;")') myid
+                    call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                    stop "dfp200 : .true. : Unassociated volume ;"
+                end if
 
-   allocate( ddFcol3   (1:Ntz     ), stat=astat )
-   ddFcol3   (1:Ntz     ) = zero
+            end if
 
+            if (Igeometry .eq. 1 .or. vvol .gt. 1) then; Lcoordinatesingularity = .false.
+            else; Lcoordinatesingularity = .true.
+            end if
 
-   allocate( ddFcol4   (1:Ntz     ), stat=astat )
-   ddFcol4   (1:Ntz     ) = zero
+            if (vvol .le. Nvol) then; Lplasmaregion = .true.
+            else; Lplasmaregion = .false.
+            end if
 
-  endif
+            Lvacuumregion = .not. Lplasmaregion
+            ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
 
-  if( LocalConstraint ) then
-
-  do vvol = 1, Mvol
-
-
-   cput = MPI_WTIME()
-   Tdfp200 = Tdfp200 + ( cput-cpuo )
-   call IsMyVolume(vvol)
-   cpuo = MPI_WTIME()
-
-
-    if( IsMyVolumeValue .EQ. 0 ) then
-      cycle
-    else if( IsMyVolumeValue .EQ. -1) then
-
-   if( .true. ) then
-     write(6,'("dfp200 :      fatal : myid=",i3," ; .true. ; Unassociated volume;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "dfp200 : .true. : Unassociated volume ;"
-    endif
-
-    endif
-
-
-
-   if( Igeometry.eq.1 .or. vvol.gt.1 ) then ; Lcoordinatesingularity = .false.
-   else                                   ; Lcoordinatesingularity = .true.
-   endif
-
-   if( vvol.le.Nvol ) then ; Lplasmaregion = .true.
-   else                  ; Lplasmaregion = .false.
-   endif
-
-   Lvacuumregion = .not.Lplasmaregion
- ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
-
-    dBdX%vol = vvol  ! Label
-    ll = Lrad(vvol)  ! Shorthand
-    NN = NAdof(vvol) ! shorthand;
+            dBdX%vol = vvol  ! Label
+            ll = Lrad(vvol)  ! Shorthand
+            NN = NAdof(vvol) ! shorthand;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-    vflag = 1
+            vflag = 1
 
-   cput = MPI_WTIME()
-   Tdfp200 = Tdfp200 + ( cput-cpuo )
-   call volume( vvol, vflag )
-   cpuo = MPI_WTIME()
- ! compute volume;
+            cput = MPI_WTIME()
+            Tdfp200 = Tdfp200 + (cput - cpuo)
+            call volume(vvol, vflag)
+            cpuo = MPI_WTIME()
+            ! compute volume;
 
      !!----Hessian2D cleared-----
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-    do iocons = 0, 1 ! construct field magnitude on inner and outer interfaces; inside do vvol;
+            do iocons = 0, 1 ! construct field magnitude on inner and outer interfaces; inside do vvol;
 
-      if( vvol.eq.1    .and. iocons.eq.0 ) cycle ! fixed inner boundary (or coordinate axis);
-      if( vvol.eq.Mvol .and. iocons.eq.1 ) cycle ! fixed outer boundary                     ; there are no constraints at outer boundary;
+                if (vvol .eq. 1 .and. iocons .eq. 0) cycle ! fixed inner boundary (or coordinate axis);
+                if (vvol .eq. Mvol .and. iocons .eq. 1) cycle ! fixed outer boundary                     ; there are no constraints at outer boundary;
 
-      ideriv = 0 ; id = ideriv
-      iflag = 0 ! XX & YY are returned by lforce; Bemn(1:mn,vvol,iocons), Iomn(1:mn,vvol) etc. are returned through global;
+                ideriv = 0; id = ideriv
+                iflag = 0 ! XX & YY are returned by lforce; Bemn(1:mn,vvol,iocons), Iomn(1:mn,vvol) etc. are returned through global;
 
-   cput = MPI_WTIME()
-   Tdfp200 = Tdfp200 + ( cput-cpuo )
-   call lforce( vvol, iocons, ideriv, Ntz, dBB(1:Ntz,id), XX(1:Ntz), YY(1:Ntz), length(1:Ntz), DDl, MMl, iflag )
-   cpuo = MPI_WTIME()
+                cput = MPI_WTIME()
+                Tdfp200 = Tdfp200 + (cput - cpuo)
+                call lforce(vvol, iocons, ideriv, Ntz, dBB(1:Ntz, id), XX(1:Ntz), YY(1:Ntz), length(1:Ntz), DDl, MMl, iflag)
+                cpuo = MPI_WTIME()
 
+            end do ! end of do iocons = 0, 1;
 
-    enddo ! end of do iocons = 0, 1;
+            if (LcomputeDerivatives) then ! compute inverse of Beltrami matrices;
 
-    if( LcomputeDerivatives ) then ! compute inverse of Beltrami matrices;
+                ! Allocate some memory for storing the LU matrix and ipivot
+                ! we need one extra dimension for helicity constraint, so dimension is NN+1 -> 0:NN
 
-      ! Allocate some memory for storing the LU matrix and ipivot
-      ! we need one extra dimension for helicity constraint, so dimension is NN+1 -> 0:NN
+                allocate (oBI(vvol)%mat(0:NN, 0:NN), stat=astat)
+                oBI(vvol)%mat(0:NN, 0:NN) = zero
+                ! inverse of ``original'', i.e. unperturbed, Beltrami matrix;
 
-   allocate( oBI(vvol)%mat(0:NN,0:NN ), stat=astat )
-   oBI(vvol)%mat(0:NN,0:NN ) = zero
- ! inverse of ``original'', i.e. unperturbed, Beltrami matrix;
+                allocate (oBI(vvol)%ipivot(0:NN), stat=astat)
+                oBI(vvol)%ipivot(0:NN) = zero
 
-   allocate( oBI(vvol)%ipivot(0:NN), stat=astat )
-   oBI(vvol)%ipivot(0:NN) = zero
+                ! initialize matrices for Beltrami linear system
+                call allocate_geometry_matrices(vvol, LcomputeDerivatives)
+                call allocate_Beltrami_matrices(vvol, LcomputeDerivatives)
+                call intghs_workspace_init(vvol)
 
+                packorunpack = 'P'
 
-      ! initialize matrices for Beltrami linear system
-      call allocate_geometry_matrices(vvol, LcomputeDerivatives)
-      call allocate_Beltrami_matrices(vvol, LcomputeDerivatives)
-      call intghs_workspace_init(vvol)
-
-      packorunpack = 'P'
-
-   cput = MPI_WTIME()
-   Tdfp200 = Tdfp200 + ( cput-cpuo )
-   call packab( packorunpack, vvol, NN, solution(1:NN,0), 0 )
-   cpuo = MPI_WTIME()
- ! packing, put the solutions back to the solution matrix;
+                cput = MPI_WTIME()
+                Tdfp200 = Tdfp200 + (cput - cpuo)
+                call packab(packorunpack, vvol, NN, solution(1:NN, 0), 0)
+                cpuo = MPI_WTIME()
+                ! packing, put the solutions back to the solution matrix;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-      ! Invert beltrami matrix. Required for matrix perturbation theory
-      call get_LU_Beltrami_matrices(vvol, oBI(vvol), NN)
+                ! Invert beltrami matrix. Required for matrix perturbation theory
+                call get_LU_Beltrami_matrices(vvol, oBI(vvol), NN)
 
-      dBdX%L = .true. ! will need derivatives;
-      idof = 0 ! labels degree of freedom; local to interface;
+                dBdX%L = .true. ! will need derivatives;
+                idof = 0 ! labels degree of freedom; local to interface;
 
-      do ii = 1, mn ! loop over deformations in Fourier harmonics; inside do vvol;
+                do ii = 1, mn ! loop over deformations in Fourier harmonics; inside do vvol;
 
-        dBdX%ii = ii ! controls construction of derivatives in subroutines called below;
-        do irz = 0, 1 ! loop over deformations in R and Z; inside do vvol; inside do ii;
+                    dBdX%ii = ii ! controls construction of derivatives in subroutines called below;
+                    do irz = 0, 1 ! loop over deformations in R and Z; inside do vvol; inside do ii;
 
-          if( irz.eq.1 .and. Igeometry.lt.3 ) cycle ! no dependence on Z;
-          dBdX%irz = irz ! controls construction of derivatives;
+                        if (irz .eq. 1 .and. Igeometry .lt. 3) cycle ! no dependence on Z;
+                        dBdX%irz = irz ! controls construction of derivatives;
 
-          do issym = 0, 1 ! loop over stellarator and non-stellarator symmetric terms;
+                        do issym = 0, 1 ! loop over stellarator and non-stellarator symmetric terms;
 
-            if( issym.eq.1 .and. YESstellsym               ) cycle ! no dependence on non-stellarator symmetric harmonics;
-            if( ii.eq.1    .and. irz.eq.1 .and. issym.eq.0 ) cycle ! no dependence on Zbs_{m=0,n=0};
-            if( ii.eq.1    .and. irz.eq.0 .and. issym.eq.1 ) cycle ! no dependence on Rbs_{m=0,n=0};
+                            if (issym .eq. 1 .and. YESstellsym) cycle ! no dependence on non-stellarator symmetric harmonics;
+                            if (ii .eq. 1 .and. irz .eq. 1 .and. issym .eq. 0) cycle ! no dependence on Zbs_{m=0,n=0};
+                            if (ii .eq. 1 .and. irz .eq. 0 .and. issym .eq. 1) cycle ! no dependence on Rbs_{m=0,n=0};
 
-            dBdX%issym = issym ! controls construction of derivatives;
-            idof = idof + 1 ! this labels the degree-of-freedom that the derivative is taken with respect to; this is outside do innout;
+                            dBdX%issym = issym ! controls construction of derivatives;
+                            idof = idof + 1 ! this labels the degree-of-freedom that the derivative is taken with respect to; this is outside do innout;
 
 #ifdef DEBUG
 
-   if( idof.gt.LGdof ) then
-     write(6,'("dfp200 :      fatal : myid=",i3," ; idof.gt.LGdof ; illegal degree-of-freedom index constructing derivatives ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "dfp200 : idof.gt.LGdof : illegal degree-of-freedom index constructing derivatives  ;"
-    endif
- ! this can be deleted;
+                            if (idof .gt. LGdof) then
+                                write (6, '("dfp200 :      fatal : myid=",i3," ; idof.gt.LGdof ; illegal degree-of-freedom index constructing derivatives ;")') myid
+                                call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                                stop "dfp200 : idof.gt.LGdof : illegal degree-of-freedom index constructing derivatives  ;"
+                            end if
+                            ! this can be deleted;
 #endif
 
-            do innout = 0, 1 ! loop over deformations to inner and outer interface; inside do vvol; inside do ii; inside do irz;
+                            do innout = 0, 1 ! loop over deformations to inner and outer interface; inside do vvol; inside do ii; inside do irz;
 
-              if( vvol.eq.1    .and. innout.eq.0 ) cycle ! no degrees of freedom at coordinate axis / fixed inner boundary;
-              if( vvol.eq.Mvol .and. innout.eq.1 ) cycle ! no degress of freedom                      fixed outer boundary; for linearized displacement;
+                                if (vvol .eq. 1 .and. innout .eq. 0) cycle ! no degrees of freedom at coordinate axis / fixed inner boundary;
+                                if (vvol .eq. Mvol .and. innout .eq. 1) cycle ! no degress of freedom                      fixed outer boundary; for linearized displacement;
 
-              dBdX%innout = innout
+                                dBdX%innout = innout
 
-              ! Evaluate derivatives of field w.r.t geometry
-              call get_perturbed_solution(vvol, oBI(vvol), NN)
+                                ! Evaluate derivatives of field w.r.t geometry
+                                call get_perturbed_solution(vvol, oBI(vvol), NN)
 
+                                ! Helicity multiplier and poloidal flux derivatives w.r.t geometry
+                                call evaluate_dmupfdx(innout, idof, ii, issym, irz)
 
-              ! Helicity multiplier and poloidal flux derivatives w.r.t geometry
-              call evaluate_dmupfdx(innout, idof, ii, issym, irz)
+                                !-----Hessian 2D cleared
 
-              !-----Hessian 2D cleared
+                                !if (LHmatrix .and. Lhessian2Dallocated) then
+                                !   call hessian_dFFdRZ(vvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
+                                !else
+                                ! Evaluate derivatives of B square
+                                if (Lhessianallocated) then
+                                    call evaluate_dBB(vvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz, &
+                                                      LComputeDerivatives)
+                                end if
 
-            !if (LHmatrix .and. Lhessian2Dallocated) then
-             !   call hessian_dFFdRZ(vvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
-            !else
-                ! Evaluate derivatives of B square
-              if(Lhessianallocated) then
-                call evaluate_dBB(vvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz, &
-                                  LComputeDerivatives)
-              endif
+                                if (Lhessian3Dallocated .and. Igeometry .ge. 3) then
+                                    call hessian3D_dFFdRZ(vvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
+                                end if
 
-                if (Lhessian3Dallocated .and. Igeometry.ge.3) then
-                    call hessian3D_dFFdRZ(vvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
-                endif
+                                !if (LHmatrix .and. Lhessian2Dallocated .and. Igeometry.eq.2) then
+                                !    call hessian_dFFdRZ(vvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
+                                !endif
 
-                !if (LHmatrix .and. Lhessian2Dallocated .and. Igeometry.eq.2) then
-                !    call hessian_dFFdRZ(vvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
-                !endif
+                            end do ! matches do innout;
+                        end do ! matches do issym;
+                    end do ! matches do irz;
+                end do ! matches do ii;
 
-            enddo ! matches do innout;
-          enddo ! matches do issym;
-        enddo ! matches do irz;
-      enddo ! matches do ii;
+                dBdX%L = .false. ! probably not needed, but included anyway;
 
-      dBdX%L = .false. ! probably not needed, but included anyway;
+                call intghs_workspace_destroy()
+                call deallocate_Beltrami_matrices(LcomputeDerivatives)
+                call deallocate_geometry_matrices(LcomputeDerivatives)
 
-      call intghs_workspace_destroy()
-      call deallocate_Beltrami_matrices(LcomputeDerivatives)
-      call deallocate_geometry_matrices(LcomputeDerivatives)
+                deallocate (oBI(vvol)%mat, stat=astat)
 
+                deallocate (oBI(vvol)%ipivot, stat=astat)
 
-   deallocate(oBI(vvol)%mat,stat=astat)
+            end if ! end of if( LComputeDerivatives ) ;
 
-
-   deallocate(oBI(vvol)%ipivot,stat=astat)
-
-
-    endif ! end of if( LComputeDerivatives ) ;
-
-  enddo ! matches do vvol = 1, Mvol
+        end do ! matches do vvol = 1, Mvol
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-else ! CASE SEMI GLOBAL CONSTRAINT
+    else ! CASE SEMI GLOBAL CONSTRAINT
 
-     do vvol = 1, Mvol
-
-   cput = MPI_WTIME()
-   Tdfp200 = Tdfp200 + ( cput-cpuo )
-   call IsMyVolume(vvol)
-   cpuo = MPI_WTIME()
-
-
-         if( IsMyVolumeValue .EQ. 0 ) then
-             cycle
-         else if( IsMyVolumeValue .EQ. -1) then
-
-   if( .true. ) then
-     write(6,'("dfp200 :      fatal : myid=",i3," ; .true. ; Unassociated volume;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "dfp200 : .true. : Unassociated volume ;"
-    endif
-
-         endif
-
-
-
-   if( Igeometry.eq.1 .or. vvol.gt.1 ) then ; Lcoordinatesingularity = .false.
-   else                                   ; Lcoordinatesingularity = .true.
-   endif
-
-   if( vvol.le.Nvol ) then ; Lplasmaregion = .true.
-   else                  ; Lplasmaregion = .false.
-   endif
-
-   Lvacuumregion = .not.Lplasmaregion
- ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
-         ll = Lrad(vvol)  ! Shorthand
-         NN = NAdof(vvol) ! shorthand;
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-         vflag = 1
-
-   cput = MPI_WTIME()
-   Tdfp200 = Tdfp200 + ( cput-cpuo )
-   call volume( vvol, vflag )
-   cpuo = MPI_WTIME()
- ! compute volume;
-
-         do iocons = 0, 1 ! construct field magnitude on inner and outer interfaces; inside do vvol;
-
-             if( vvol.eq.1    .and. iocons.eq.0 ) cycle ! fixed inner boundary (or coordinate axis);
-             if( vvol.eq.Mvol .and. iocons.eq.1 ) cycle ! fixed outer boundary                     ; there are no constraints at outer boundary;
-
-             ideriv = 0 ; id = ideriv
-             iflag = 0 ! dAt, dAz, XX & YY are returned by lforce; Bemn(1:mn,vvol,iocons), Iomn(1:mn,vvol) etc. are returned through global;
-
-   cput = MPI_WTIME()
-   Tdfp200 = Tdfp200 + ( cput-cpuo )
-   call lforce( vvol, iocons, ideriv, Ntz, dBB(1:Ntz,id), XX(1:Ntz), YY(1:Ntz), length(1:Ntz), DDl, MMl, iflag )
-   cpuo = MPI_WTIME()
-
-
-         enddo ! end of do iocons = 0, 1;
-     enddo
-
-
-
-    if( LComputeDerivatives ) then
-        dBdX%L = .true. ! will need derivatives;
-
-        ! Each volume will need solution and derivative information in vacuum region. Thus, broadcast!
-        ! Derivative of w.r.t geometry only required if plasma interface is perturbed - this is
-        ! calculated below
-        if( Lfreebound.eq.1 ) then
-            do ideriv = 0, 2
-                do ii = 1, mn
-
-                    call WhichCpuID(Mvol, cpu_id)
-
-
-   call MPI_BCAST(Ate(Mvol,ideriv,ii)%s(0:Lrad(Mvol)),Lrad(Mvol)+1,MPI_DOUBLE_PRECISION,cpu_id ,MPI_COMM_SPEC,ierr)
-
-
-   call MPI_BCAST(Aze(Mvol,ideriv,ii)%s(0:Lrad(Mvol)),Lrad(Mvol)+1,MPI_DOUBLE_PRECISION,cpu_id ,MPI_COMM_SPEC,ierr)
-
-                enddo
-             enddo
-        endif
-
-
-
-        ! Evaluation of froce gradient in case of semi-global constraint (for now, this is specific to Lconstraint=3)
-        ! Loop over all geometrical degrees of freedom. Thi means we loop over
-        ! - each interface (vvol)
-        ! - each Fourier mode (ii)
-        ! - on R or Z (irz)
-        ! - on symmetric and non stellarator symmetric terms (issym)
-
-        ! Then the perturbed solution is evaluated on volumes sharing the interface vvol (volume vvol and vvol+1).
-        ! i.e. relevant routines are run with lvol=vvol, innout=1 and lvol=vvol+1, innout=0
-
-
-        ! First invert Beltrami matrices and store them in OBI
         do vvol = 1, Mvol
 
-   if( Igeometry.eq.1 .or. vvol.gt.1 ) then ; Lcoordinatesingularity = .false.
-   else                                   ; Lcoordinatesingularity = .true.
-   endif
+            cput = MPI_WTIME()
+            Tdfp200 = Tdfp200 + (cput - cpuo)
+            call IsMyVolume(vvol)
+            cpuo = MPI_WTIME()
 
-   if( vvol.le.Nvol ) then ; Lplasmaregion = .true.
-   else                  ; Lplasmaregion = .false.
-   endif
-
-   Lvacuumregion = .not.Lplasmaregion
- ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ; TODO: maybe not necessary, remove
-            NN = NAdof(vvol) ! shorthand;
-            ll = Lrad(vvol)
-
-
-   allocate( oBI(vvol)%mat(0:NN,0:NN ), stat=astat )
-   oBI(vvol)%mat(0:NN,0:NN ) = zero
- ! inverse of ``original'', i.e. unperturbed, Beltrami matrix;
-
-   allocate( oBI(vvol)%ipivot(0:NN), stat=astat )
-   oBI(vvol)%ipivot(0:NN) = zero
-
-
-            ! Parallelization
-
-   cput = MPI_WTIME()
-   Tdfp200 = Tdfp200 + ( cput-cpuo )
-   call IsMyVolume(vvol)
-   cpuo = MPI_WTIME()
-
-            if( IsMyVolumeValue .EQ. 0 ) then
+            if (IsMyVolumeValue .EQ. 0) then
                 cycle
-            else if( IsMyVolumeValue .EQ. -1) then
+            else if (IsMyVolumeValue .EQ. -1) then
 
-   if( .true. ) then
-     write(6,'("dfp200 :      fatal : myid=",i3," ; .true. ; Unassociated volume;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "dfp200 : .true. : Unassociated volume ;"
-    endif
+                if (.true.) then
+                    write (6, '("dfp200 :      fatal : myid=",i3," ; .true. ; Unassociated volume;")') myid
+                    call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                    stop "dfp200 : .true. : Unassociated volume ;"
+                end if
 
-            endif
+            end if
 
+            if (Igeometry .eq. 1 .or. vvol .gt. 1) then; Lcoordinatesingularity = .false.
+            else; Lcoordinatesingularity = .true.
+            end if
 
-            ! Invert LHS of Beltrami system and store it in oBI. This will be used to
-            ! evaluate derivatives of solution.
-            ! TODO: Storage of OBi is not optimal. Find a way around?
+            if (vvol .le. Nvol) then; Lplasmaregion = .true.
+            else; Lplasmaregion = .false.
+            end if
 
-            call allocate_geometry_matrices(vvol, LcomputeDerivatives)
-            call allocate_Beltrami_matrices(vvol, LcomputeDerivatives)
+            Lvacuumregion = .not. Lplasmaregion
+            ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
+            ll = Lrad(vvol)  ! Shorthand
+            NN = NAdof(vvol) ! shorthand;
 
-            call get_LU_beltrami_matrices(vvol, oBI(vvol), NN)
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-            call deallocate_Beltrami_matrices(LcomputeDerivatives)
-            call deallocate_geometry_matrices(LcomputeDerivatives)
-        enddo ! end of vvol = 1, Mvol
+            vflag = 1
 
-        ! Broadcast oBI to all CPU
-        ! TODO: THIS is bad! oBI can be very large... Change parallelization?
-        !       Another possible parallelization: Each CPU keep derivatives info about its solution,
-        !                                         CPU1 build linear system and solve it?
-        if( ncpu .gt. 1 ) then
+            cput = MPI_WTIME()
+            Tdfp200 = Tdfp200 + (cput - cpuo)
+            call volume(vvol, vflag)
+            cpuo = MPI_WTIME()
+            ! compute volume;
+
+            do iocons = 0, 1 ! construct field magnitude on inner and outer interfaces; inside do vvol;
+
+                if (vvol .eq. 1 .and. iocons .eq. 0) cycle ! fixed inner boundary (or coordinate axis);
+                if (vvol .eq. Mvol .and. iocons .eq. 1) cycle ! fixed outer boundary                     ; there are no constraints at outer boundary;
+
+                ideriv = 0; id = ideriv
+                iflag = 0 ! dAt, dAz, XX & YY are returned by lforce; Bemn(1:mn,vvol,iocons), Iomn(1:mn,vvol) etc. are returned through global;
+
+                cput = MPI_WTIME()
+                Tdfp200 = Tdfp200 + (cput - cpuo)
+                call lforce(vvol, iocons, ideriv, Ntz, dBB(1:Ntz, id), XX(1:Ntz), YY(1:Ntz), length(1:Ntz), DDl, MMl, iflag)
+                cpuo = MPI_WTIME()
+
+            end do ! end of do iocons = 0, 1;
+        end do
+
+        if (LComputeDerivatives) then
+            dBdX%L = .true. ! will need derivatives;
+
+            ! Each volume will need solution and derivative information in vacuum region. Thus, broadcast!
+            ! Derivative of w.r.t geometry only required if plasma interface is perturbed - this is
+            ! calculated below
+            if (Lfreebound .eq. 1) then
+                do ideriv = 0, 2
+                    do ii = 1, mn
+
+                        call WhichCpuID(Mvol, cpu_id)
+
+                        call MPI_BCAST(Ate(Mvol, ideriv, ii)%s(0:Lrad(Mvol)), Lrad(Mvol) + 1, MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_SPEC, ierr)
+
+                        call MPI_BCAST(Aze(Mvol, ideriv, ii)%s(0:Lrad(Mvol)), Lrad(Mvol) + 1, MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_SPEC, ierr)
+
+                    end do
+                end do
+            end if
+
+            ! Evaluation of froce gradient in case of semi-global constraint (for now, this is specific to Lconstraint=3)
+            ! Loop over all geometrical degrees of freedom. Thi means we loop over
+            ! - each interface (vvol)
+            ! - each Fourier mode (ii)
+            ! - on R or Z (irz)
+            ! - on symmetric and non stellarator symmetric terms (issym)
+
+            ! Then the perturbed solution is evaluated on volumes sharing the interface vvol (volume vvol and vvol+1).
+            ! i.e. relevant routines are run with lvol=vvol, innout=1 and lvol=vvol+1, innout=0
+
+            ! First invert Beltrami matrices and store them in OBI
             do vvol = 1, Mvol
-                NN = NAdof(vvol)
-                call WhichCpuID(vvol, cpu_id)
-                call MPI_BCAST( oBI(vvol)%mat(0:NN,0:NN), (NN+1)**2, MPI_DOUBLE_PRECISION, cpu_id , MPI_COMM_SPEC , ierr)
-                call MPI_BCAST( oBI(vvol)%ipivot(0:NN)  ,  NN+1    , MPI_INTEGER         , cpu_id , MPI_COMM_SPEC , ierr)
-            enddo
-        endif
 
-        ! Loop on perturbed interfaces
-        do even_or_odd = 0, 1 ! First loop on even interfaces perturbation, then on odd interfaces. This allow efficient parallelization
+                if (Igeometry .eq. 1 .or. vvol .gt. 1) then; Lcoordinatesingularity = .false.
+                else; Lcoordinatesingularity = .true.
+                end if
 
-            do vvol = 1, Mvol-1 !labels which interface is perturbed
+                if (vvol .le. Nvol) then; Lplasmaregion = .true.
+                else; Lplasmaregion = .false.
+                end if
 
+                Lvacuumregion = .not. Lplasmaregion
+                ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ; TODO: maybe not necessary, remove
+                NN = NAdof(vvol) ! shorthand;
+                ll = Lrad(vvol)
 
-            ! Parallelization - parallelization on perturbed interface and not on volume (outermost loop)
-            vol_parity = MODULO(vvol,2)
-            if( (vol_parity.eq.0 ) .and. (even_or_odd.eq.1) ) cycle ! even_or_odd=1 thus perturb only odd  interfaces
-            if( (vol_parity.eq.1 ) .and. (even_or_odd.eq.0) ) cycle ! even_or_odd=0 thus perturb only even interfaces
+                allocate (oBI(vvol)%mat(0:NN, 0:NN), stat=astat)
+                oBI(vvol)%mat(0:NN, 0:NN) = zero
+                ! inverse of ``original'', i.e. unperturbed, Beltrami matrix;
 
+                allocate (oBI(vvol)%ipivot(0:NN), stat=astat)
+                oBI(vvol)%ipivot(0:NN) = zero
 
-   cput = MPI_WTIME()
-   Tdfp200 = Tdfp200 + ( cput-cpuo )
-   call IsMyVolume(vvol)
-   cpuo = MPI_WTIME()
+                ! Parallelization
 
+                cput = MPI_WTIME()
+                Tdfp200 = Tdfp200 + (cput - cpuo)
+                call IsMyVolume(vvol)
+                cpuo = MPI_WTIME()
 
-            if( IsMyVolumeValue.EQ.0 ) then ! This CPU does not deal with interface's inner volume
-
-
-   cput = MPI_WTIME()
-   Tdfp200 = Tdfp200 + ( cput-cpuo )
-   call IsMyVolume(vvol+1)
-   cpuo = MPI_WTIME()
-
-
-                if( IsMyVolumeValue.eq.0 ) then ! This CPU does not deal with interface's outer volume either - cycle
+                if (IsMyVolumeValue .EQ. 0) then
                     cycle
-                else if( IsMyVolumeValue.eq.-1 ) then
+                else if (IsMyVolumeValue .EQ. -1) then
 
-   if( .true. ) then
-     write(6,'("dfp200 :      fatal : myid=",i3," ; .true. ; Unassociated volume;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "dfp200 : .true. : Unassociated volume ;"
-    endif
+                    if (.true.) then
+                        write (6, '("dfp200 :      fatal : myid=",i3," ; .true. ; Unassociated volume;")') myid
+                        call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                        stop "dfp200 : .true. : Unassociated volume ;"
+                    end if
 
-                else
-                    LInnerVolume = .false.
-                endif
+                end if
 
-            else if( IsMyVolumeValue.EQ.-1 ) then
+                ! Invert LHS of Beltrami system and store it in oBI. This will be used to
+                ! evaluate derivatives of solution.
+                ! TODO: Storage of OBi is not optimal. Find a way around?
 
-   if( .true. ) then
-     write(6,'("dfp200 :      fatal : myid=",i3," ; .true. ; Unassociated volume;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "dfp200 : .true. : Unassociated volume ;"
-    endif
+                call allocate_geometry_matrices(vvol, LcomputeDerivatives)
+                call allocate_Beltrami_matrices(vvol, LcomputeDerivatives)
 
-            else
-                LinnerVolume = .true.
-            endif
+                call get_LU_beltrami_matrices(vvol, oBI(vvol), NN)
 
+                call deallocate_Beltrami_matrices(LcomputeDerivatives)
+                call deallocate_geometry_matrices(LcomputeDerivatives)
+            end do ! end of vvol = 1, Mvol
 
-            dBdX%vol = vvol     ! Perturbed interface
-            idof = 0 ! labels degree of freedom of interface vvol
+            ! Broadcast oBI to all CPU
+            ! TODO: THIS is bad! oBI can be very large... Change parallelization?
+            !       Another possible parallelization: Each CPU keep derivatives info about its solution,
+            !                                         CPU1 build linear system and solve it?
+            if (ncpu .gt. 1) then
+                do vvol = 1, Mvol
+                    NN = NAdof(vvol)
+                    call WhichCpuID(vvol, cpu_id)
+                    call MPI_BCAST(oBI(vvol)%mat(0:NN, 0:NN), (NN + 1)**2, MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_SPEC, ierr)
+                    call MPI_BCAST(oBI(vvol)%ipivot(0:NN), NN + 1, MPI_INTEGER, cpu_id, MPI_COMM_SPEC, ierr)
+                end do
+            end if
 
-            do ii = 1, mn ! loop over deformations in Fourier harmonics; inside do vvol;
-            dBdX%ii = ii ! controls construction of derivatives in subroutines called below;
+            ! Loop on perturbed interfaces
+            do even_or_odd = 0, 1 ! First loop on even interfaces perturbation, then on odd interfaces. This allow efficient parallelization
 
-            do irz = 0, 1 ! loop over deformations in R and Z; inside do vvol; inside do ii;
-                if( irz.eq.1 .and. Igeometry.lt.3 ) cycle ! no dependence on Z;
-                dBdX%irz = irz ! controls construction of derivatives;
+                do vvol = 1, Mvol - 1 !labels which interface is perturbed
 
-                do issym = 0, 1 ! loop over stellarator and non-stellarator symmetric terms;
-                    if( issym.eq.1 .and. YESstellsym               ) cycle ! no dependence on non-stellarator symmetric harmonics;
-                    if( ii.eq.1    .and. irz.eq.1 .and. issym.eq.0 ) cycle ! no dependence on Zbs_{m=0,n=0};
-                    if( ii.eq.1    .and. irz.eq.0 .and. issym.eq.1 ) cycle ! no dependence on Rbs_{m=0,n=0};
-                    dBdX%issym = issym ! controls construction of derivatives;
+                    ! Parallelization - parallelization on perturbed interface and not on volume (outermost loop)
+                    vol_parity = MODULO(vvol, 2)
+                    if ((vol_parity .eq. 0) .and. (even_or_odd .eq. 1)) cycle ! even_or_odd=1 thus perturb only odd  interfaces
+                    if ((vol_parity .eq. 1) .and. (even_or_odd .eq. 0)) cycle ! even_or_odd=0 thus perturb only even interfaces
 
-                    idof = idof + 1 ! this labels the degree-of-freedom that the derivative is taken with respect to; this is outside do innout;
+                    cput = MPI_WTIME()
+                    Tdfp200 = Tdfp200 + (cput - cpuo)
+                    call IsMyVolume(vvol)
+                    cpuo = MPI_WTIME()
+
+                    if (IsMyVolumeValue .EQ. 0) then ! This CPU does not deal with interface's inner volume
+
+                        cput = MPI_WTIME()
+                        Tdfp200 = Tdfp200 + (cput - cpuo)
+                        call IsMyVolume(vvol + 1)
+                        cpuo = MPI_WTIME()
+
+                        if (IsMyVolumeValue .eq. 0) then ! This CPU does not deal with interface's outer volume either - cycle
+                            cycle
+                        else if (IsMyVolumeValue .eq. -1) then
+
+                            if (.true.) then
+                                write (6, '("dfp200 :      fatal : myid=",i3," ; .true. ; Unassociated volume;")') myid
+                                call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                                stop "dfp200 : .true. : Unassociated volume ;"
+                            end if
+
+                        else
+                            LInnerVolume = .false.
+                        end if
+
+                    else if (IsMyVolumeValue .EQ. -1) then
+
+                        if (.true.) then
+                            write (6, '("dfp200 :      fatal : myid=",i3," ; .true. ; Unassociated volume;")') myid
+                            call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                            stop "dfp200 : .true. : Unassociated volume ;"
+                        end if
+
+                    else
+                        LinnerVolume = .true.
+                    end if
+
+                    dBdX%vol = vvol     ! Perturbed interface
+                    idof = 0 ! labels degree of freedom of interface vvol
+
+                    do ii = 1, mn ! loop over deformations in Fourier harmonics; inside do vvol;
+                        dBdX%ii = ii ! controls construction of derivatives in subroutines called below;
+
+                        do irz = 0, 1 ! loop over deformations in R and Z; inside do vvol; inside do ii;
+                            if (irz .eq. 1 .and. Igeometry .lt. 3) cycle ! no dependence on Z;
+                            dBdX%irz = irz ! controls construction of derivatives;
+
+                            do issym = 0, 1 ! loop over stellarator and non-stellarator symmetric terms;
+                                if (issym .eq. 1 .and. YESstellsym) cycle ! no dependence on non-stellarator symmetric harmonics;
+                                if (ii .eq. 1 .and. irz .eq. 1 .and. issym .eq. 0) cycle ! no dependence on Zbs_{m=0,n=0};
+                                if (ii .eq. 1 .and. irz .eq. 0 .and. issym .eq. 1) cycle ! no dependence on Rbs_{m=0,n=0};
+                                dBdX%issym = issym ! controls construction of derivatives;
+
+                                idof = idof + 1 ! this labels the degree-of-freedom that the derivative is taken with respect to; this is outside do innout;
 #ifdef DEBUG
 
-   if( idof.gt.LGdof ) then
-     write(6,'("dfp200 :      fatal : myid=",i3," ; idof.gt.LGdof ; illegal degree-of-freedom index constructing derivatives ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "dfp200 : idof.gt.LGdof : illegal degree-of-freedom index constructing derivatives  ;"
-    endif
- ! this can be deleted;
+                                if (idof .gt. LGdof) then
+                                    write (6, '("dfp200 :      fatal : myid=",i3," ; idof.gt.LGdof ; illegal degree-of-freedom index constructing derivatives ;")') myid
+                                    call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                                    stop "dfp200 : idof.gt.LGdof : illegal degree-of-freedom index constructing derivatives  ;"
+                                end if
+                                ! this can be deleted;
 #endif
 
+                                do lvol = vvol, vvol + 1
+
+                                    ! Only interested in one interface perturbation
+                                    if (ncpu .gt. 1) then
+                                        if (LinnerVolume .and. (lvol .eq. vvol + 1)) cycle
+                                        if (.not. LinnerVolume .and. (lvol .eq. vvol)) cycle
+                                    end if
+
+                                    ! Set up perturbation information
+                                    if (lvol .eq. vvol) innout = 1 ! Perturb w.r.t outer interface
+                                    if (lvol .eq. vvol + 1) innout = 0 ! Perturb w.r.t inner interface
+
+                                    dBdX%innout = innout
+                                    dBdX%L = .true.
+
+                                    ! Set up volume information
+
+                                    if (Igeometry .eq. 1 .or. lvol .gt. 1) then; Lcoordinatesingularity = .false.
+                                    else; Lcoordinatesingularity = .true.
+                                    end if
+
+                                    if (lvol .le. Nvol) then; Lplasmaregion = .true.
+                                    else; Lplasmaregion = .false.
+                                    end if
+
+                                    Lvacuumregion = .not. Lplasmaregion
+                                    ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
+                                    NN = NAdof(lvol)
+
+                                    ! Allocate memory. This cannot be moved outside due to NN and ll dependence on volume.
+                                    call allocate_geometry_matrices(lvol, LcomputeDerivatives)
+                                    call allocate_Beltrami_matrices(lvol, LcomputeDerivatives)
+
+                                    ! Get derivative of vector potential w.r.t geometry. Matrix perturbation theory.
+                                    call intghs_workspace_init(lvol)
+                                    call get_perturbed_solution(lvol, oBI(lvol), NN)
+                                    call intghs_workspace_destroy()
+
+                                    ! Free memory
+                                    call deallocate_Beltrami_matrices(LcomputeDerivatives)
+                                    call deallocate_geometry_matrices(LcomputeDerivatives)
+
+                                end do ! end of do lvol = vvol, vvol+1
+
+                                ! Now volumes neighbouring the interface share perturbed solution
+                                call WhichCpuID(vvol, cpu_id)
+                                call WhichCpuID(vvol + 1, cpu_id1)
+
+                                ! TODO IMPROVE MPI COMMUNICATIONS. Could directly send dAt and dAz?
+                                ! Gather everything in inner volume
+                                if (ncpu .gt. 1) then
+                                    if (LinnerVolume) then
+                                        do jj = 1, mn
+                                            tag = 1 ! Tags for MPI communications
+                                            tag2 = 2
+
+                                            call MPI_RECV(Ate(vvol + 1, -1, jj)%s(0:Lrad(vvol + 1)), Lrad(vvol + 1) + 1, MPI_DOUBLE_PRECISION, cpu_id1, tag, MPI_COMM_SPEC, stat, ierr)
+                                            call MPI_RECV(Aze(vvol + 1, -1, jj)%s(0:Lrad(vvol + 1)), Lrad(vvol + 1) + 1, MPI_DOUBLE_PRECISION, cpu_id1, tag2, MPI_COMM_SPEC, stat, ierr)
+                                        end do
+
+                                        ! Non-stellarator symmetric terms
+                                        if (NOTstellsym) then
+                                            do jj = 1, mn
+                                                tag = 3
+                                                tag2 = 4
+
+                                                call MPI_RECV(Ato(vvol + 1, -1, jj)%s(0:Lrad(vvol + 1)), Lrad(vvol + 1) + 1, MPI_DOUBLE_PRECISION, cpu_id1, tag, MPI_COMM_SPEC, stat, ierr)
+                                                call MPI_RECV(Azo(vvol + 1, -1, jj)%s(0:Lrad(vvol + 1)), Lrad(vvol + 1) + 1, MPI_DOUBLE_PRECISION, cpu_id1, tag2, MPI_COMM_SPEC, stat, ierr)
+                                            end do
+                                        end if
+
+                                    else
+                                        do jj = 1, mn
+                                            tag = 1
+                                            tag2 = 2
+
+                                            call MPI_SEND(Ate(vvol + 1, -1, jj)%s(0:Lrad(vvol + 1)), Lrad(vvol + 1) + 1, MPI_DOUBLE_PRECISION, cpu_id, tag, MPI_COMM_SPEC, ierr)
+                                            call MPI_SEND(Aze(vvol + 1, -1, jj)%s(0:Lrad(vvol + 1)), Lrad(vvol + 1) + 1, MPI_DOUBLE_PRECISION, cpu_id, tag2, MPI_COMM_SPEC, ierr)
+                                        end do
+
+                                        if (NOTstellsym) then
+                                            do jj = 1, mn
+                                                tag = 3
+                                                tag2 = 4
+
+                                                call MPI_SEND(Ato(vvol + 1, -1, jj)%s(0:Lrad(vvol + 1)), Lrad(vvol + 1) + 1, MPI_DOUBLE_PRECISION, cpu_id, tag, MPI_COMM_SPEC, ierr)
+                                                call MPI_SEND(Azo(vvol + 1, -1, jj)%s(0:Lrad(vvol + 1)), Lrad(vvol + 1) + 1, MPI_DOUBLE_PRECISION, cpu_id, tag2, MPI_COMM_SPEC, ierr)
+                                            end do
+                                        end if
+                                    end if
+                                end if
+
+                                ! At this point, the inverted original Beltrami matrix oBI and the perturbed solution for each volume
+                                ! neighboring the perturbed interface in inner volume cpu. We now compute the derivatives of mu and
+                                ! psip w.r.t the position and dBB.
+                                if (LinnerVolume) then
+                                    ! Helicity multiplier and poloidal flux derivatives
+                                    call evaluate_dmupfdx(1, idof, ii, issym, irz)
+                                else
+                                    ! Only inner volume computes the derivatives in all volumes (it will be broadcasted later)
+                                    dmupfdx(1:Mvol, vvol, 1:2, idof, 1) = zero
+                                end if
 
-                    do lvol = vvol, vvol+1
-
-                        ! Only interested in one interface perturbation
-                        if( ncpu.gt.1 ) then
-                            if(      LinnerVolume .and. (lvol.eq.vvol+1) ) cycle
-                            if( .not.LinnerVolume .and. (lvol.eq.vvol  ) ) cycle
-                        endif
-
-                        ! Set up perturbation information
-                        if( lvol.eq.vvol   ) innout=1 ! Perturb w.r.t outer interface
-                        if( lvol.eq.vvol+1 ) innout=0 ! Perturb w.r.t inner interface
-
-                        dBdX%innout = innout
-                        dBdX%L      = .true.
-
-                        ! Set up volume information
-
-   if( Igeometry.eq.1 .or. lvol.gt.1 ) then ; Lcoordinatesingularity = .false.
-   else                                   ; Lcoordinatesingularity = .true.
-   endif
-
-   if( lvol.le.Nvol ) then ; Lplasmaregion = .true.
-   else                  ; Lplasmaregion = .false.
-   endif
-
-   Lvacuumregion = .not.Lplasmaregion
- ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
-                        NN = NAdof(lvol)
-
-                        ! Allocate memory. This cannot be moved outside due to NN and ll dependence on volume.
-                        call allocate_geometry_matrices(lvol, LcomputeDerivatives)
-                        call allocate_Beltrami_matrices(lvol, LcomputeDerivatives)
-
-                        ! Get derivative of vector potential w.r.t geometry. Matrix perturbation theory.
-                        call intghs_workspace_init(lvol)
-                        call get_perturbed_solution(lvol, oBI(lvol), NN)
-                        call intghs_workspace_destroy()
-
-                        ! Free memory
-                        call deallocate_Beltrami_matrices(LcomputeDerivatives)
-                        call deallocate_geometry_matrices(LcomputeDerivatives)
-
-                    enddo ! end of do lvol = vvol, vvol+1
-
-
-                    ! Now volumes neighbouring the interface share perturbed solution
-                    call WhichCpuID(vvol  , cpu_id )
-                    call WhichCpuID(vvol+1, cpu_id1)
-
-
-                    ! TODO IMPROVE MPI COMMUNICATIONS. Could directly send dAt and dAz?
-                    ! Gather everything in inner volume
-                    if( ncpu.gt. 1) then
-                        if( LinnerVolume ) then
-                            do jj = 1, mn
-                                tag  = 1 ! Tags for MPI communications
-                                tag2 = 2
-
-                                call MPI_RECV(Ate(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id1, tag , MPI_COMM_SPEC, stat, ierr)
-                                call MPI_RECV(Aze(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id1, tag2, MPI_COMM_SPEC, stat, ierr)
-                            enddo
-
-                            ! Non-stellarator symmetric terms
-                            if( NOTstellsym ) then
-                                do jj = 1, mn
-                                    tag  = 3
-                                    tag2 = 4
+                                do lvol = vvol, vvol + 1
 
-                                    call MPI_RECV(Ato(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id1, tag , MPI_COMM_SPEC, stat, ierr)
-                                    call MPI_RECV(Azo(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id1, tag2, MPI_COMM_SPEC, stat, ierr)
-                                enddo
-                            endif
+                                    cput = MPI_WTIME()
+                                    Tdfp200 = Tdfp200 + (cput - cpuo)
+                                    call IsMyVolume(lvol)
+                                    cpuo = MPI_WTIME()
 
-                        else
-                            do jj = 1, mn
-                                tag  = 1
-                                tag2 = 2
+                                    if (IsMyVolumeValue .EQ. 0) then
+                                        cycle
+                                    else if (IsMyVolumeValue .EQ. -1) then
 
-                                call MPI_SEND(Ate(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id , tag , MPI_COMM_SPEC, ierr)
-                                call MPI_SEND(Aze(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id , tag2, MPI_COMM_SPEC, ierr)
-                            enddo
+                                        if (.true.) then
+                                            write (6, '("dfp200 :      fatal : myid=",i3," ; .true. ; Unassociated volume;")') myid
+                                            call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                                            stop "dfp200 : .true. : Unassociated volume ;"
+                                        end if
 
-                            if( NOTstellsym ) then
-                                do jj = 1, mn
-                                    tag  = 3
-                                    tag2 = 4
+                                    end if
 
-                                    call MPI_SEND(Ato(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id , tag , MPI_COMM_SPEC, ierr)
-                                    call MPI_SEND(Azo(vvol+1,-1,jj)%s(0:Lrad(vvol+1)), Lrad(vvol+1)+1, MPI_DOUBLE_PRECISION, cpu_id , tag2, MPI_COMM_SPEC, ierr)
-                                enddo
-                            endif
-                        endif
-                    endif
+                                    if (lvol .eq. vvol) then
+                                        innout = 1
+                                    else
+                                        innout = 0
+                                    end if
+                                    dBdX%innout = innout
 
-                    ! At this point, the inverted original Beltrami matrix oBI and the perturbed solution for each volume
-                    ! neighboring the perturbed interface in inner volume cpu. We now compute the derivatives of mu and
-                    ! psip w.r.t the position and dBB.
-                    if( LinnerVolume) then
-                        ! Helicity multiplier and poloidal flux derivatives
-                        call evaluate_dmupfdx(1, idof, ii, issym, irz)
-                    else
-                        ! Only inner volume computes the derivatives in all volumes (it will be broadcasted later)
-                        dmupfdx(1:Mvol, vvol, 1:2, idof, 1) = zero
-                    endif
+                                    if (Igeometry .eq. 1 .or. lvol .gt. 1) then; Lcoordinatesingularity = .false.
+                                    else; Lcoordinatesingularity = .true.
+                                    end if
 
-                    do lvol = vvol, vvol+1
+                                    if (lvol .le. Nvol) then; Lplasmaregion = .true.
+                                    else; Lplasmaregion = .false.
+                                    end if
 
-   cput = MPI_WTIME()
-   Tdfp200 = Tdfp200 + ( cput-cpuo )
-   call IsMyVolume(lvol)
-   cpuo = MPI_WTIME()
+                                    Lvacuumregion = .not. Lplasmaregion
+                                    ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
 
+                                    ! EVALUATE dBB
+                                    call evaluate_dBB(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz, &
+                                                      LComputeDerivatives)
 
-                        if( IsMyVolumeValue .EQ. 0 ) then
-                            cycle
-                        else if( IsMyVolumeValue .EQ. -1) then
+                                    if (Lhessian3Dallocated .and. Igeometry .ge. 3) then
+                                        call hessian3D_dFFdRZ(vvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
+                                    end if
 
-   if( .true. ) then
-     write(6,'("dfp200 :      fatal : myid=",i3," ; .true. ; Unassociated volume;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "dfp200 : .true. : Unassociated volume ;"
-    endif
+                                end do     ! matches do lvol = vvol, vvol+1
 
-                        endif
+                            end do ! matches do issym;
+                        end do ! matches do irz;
+                    end do ! matches do ii;
+                end do ! matches do vvol;
+            end do ! matches do even_or_odd;
 
-                        if( lvol.eq.vvol ) then
-                            innout      = 1
-                        else
-                            innout      = 0
-                        endif
-                        dBdX%innout = innout
+            ! Free memory
+            do vvol = 1, Mvol
 
+                deallocate (oBi(vvol)%mat, stat=astat)
 
-   if( Igeometry.eq.1 .or. lvol.gt.1 ) then ; Lcoordinatesingularity = .false.
-   else                                   ; Lcoordinatesingularity = .true.
-   endif
+                deallocate (oBI(vvol)%ipivot, stat=astat)
 
-   if( lvol.le.Nvol ) then ; Lplasmaregion = .true.
-   else                  ; Lplasmaregion = .false.
-   endif
+            end do
 
-   Lvacuumregion = .not.Lplasmaregion
- ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
+            dBdX%L = .false. ! probably not needed, but included anyway;
 
-                        ! EVALUATE dBB
-                        call evaluate_dBB(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz, &
-                                          LComputeDerivatives)
+            ! We know need to broadcast the vectors dmupfdx and dFFdRZ and dBBdmp
+            do vvol = 1, Mvol
+                call WhichCpuID(vvol, cpu_id)
 
-                        if (Lhessian3Dallocated .and. Igeometry.ge.3) then
-                            call hessian3D_dFFdRZ(vvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
-                        endif
+                if (vvol .ne. Mvol) then
+                    call MPI_BCAST(dmupfdx(1:Mvol, vvol, 1:2, 1:LGdof, 1), Mvol*2*LGdof, MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_SPEC, ierr)
+                end if
 
-                    enddo     ! matches do lvol = vvol, vvol+1
+                call MPI_BCAST(dFFdRZ(1:LGdof, 0:1, 1:LGdof, 0:1, vvol), 2*2*(LGdof**2), MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_SPEC, ierr)
+                call MPI_BCAST(dBBdmp(1:LGdof, vvol, 0:1, 1:2), 2*2*LGdof, MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_SPEC, ierr)
+            end do
 
-                enddo ! matches do issym;
-            enddo ! matches do irz;
-        enddo ! matches do ii;
-      enddo ! matches do vvol;
-    enddo ! matches do even_or_odd;
+            !We need to broadcast the vectors, denergydrr and denergydzr.
 
-    ! Free memory
-    do vvol = 1, Mvol
+            if (Lhessian3Dallocated) then
+                do vvol = 1, Mvol
+                    call WhichCpuID(vvol, cpu_id)
 
-   deallocate(oBi(vvol)%mat,stat=astat)
+                    call MPI_BCAST(denergydrr(1:LGdof, vvol, 0:1, 1:LGdof, 0:1), 2*2*(LGdof**2), MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_WORLD, ierr)
+                    call MPI_BCAST(denergydzr(1:LGdof, vvol, 0:1, 1:LGdof, 0:1), 2*2*(LGdof**2), MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_WORLD, ierr)
+                    call MPI_BCAST(dBBdmp(1:LGdof, vvol, 0:1, 1:2), 2*2*LGdof, MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_WORLD, ierr)
+                end do
+            end if
 
+        end if ! End of if( LComputeDerivatives )
 
-   deallocate(oBI(vvol)%ipivot,stat=astat)
+    end if ! End of if( LocalConstraint )
 
-    enddo
+    if (LcomputeDerivatives) then
 
-    dBdX%L = .false. ! probably not needed, but included anyway;
+        deallocate (constraint, stat=astat)
 
-    ! We know need to broadcast the vectors dmupfdx and dFFdRZ and dBBdmp
-    do vvol = 1, Mvol
-        call WhichCpuID(vvol, cpu_id)
+        deallocate (dPP, stat=astat)
 
-        if( vvol.ne.Mvol ) then
-            call MPI_BCAST( dmupfdx(1:Mvol, vvol ,1:2, 1:LGdof,   1), Mvol*2*LGdof  , MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_SPEC, ierr )
-        endif
+        deallocate (dLL, stat=astat)
 
-        call MPI_BCAST( dFFdRZ(1:LGdof, 0:1, 1:LGdof, 0:1, vvol), 2*2*(LGdof**2), MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_SPEC, ierr )
-        call MPI_BCAST( dBBdmp(1:LGdof, vvol ,0:1, 1:2         ), 2*2*LGdof, MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_SPEC, ierr )
-    enddo
+        deallocate (dII, stat=astat)
 
-     !We need to broadcast the vectors, denergydrr and denergydzr.
+        deallocate (dZZ, stat=astat)
 
-    if (Lhessian3Dallocated) then
-        do vvol = 1, Mvol
-            call WhichCpuID(vvol, cpu_id)
+        deallocate (dRR, stat=astat)
 
-            call MPI_BCAST( denergydrr(1:LGdof, vvol, 0:1, 1:LGdof, 0:1), 2*2*(LGdof**2), MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_WORLD, ierr )
-            call MPI_BCAST( denergydzr(1:LGdof, vvol, 0:1, 1:LGdof, 0:1), 2*2*(LGdof**2), MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_WORLD, ierr )
-            call MPI_BCAST( dBBdmp(1:LGdof, vvol ,0:1, 1:2         ), 2*2*LGdof, MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_WORLD, ierr )
-        enddo
-    endif
+        deallocate (ddFcol1, stat=astat)
 
-    endif ! End of if( LComputeDerivatives )
+        deallocate (ddFcol2, stat=astat)
 
+        deallocate (ddFcol3, stat=astat)
 
+        deallocate (ddFcol4, stat=astat)
 
-  endif ! End of if( LocalConstraint )
+    end if
 
-  if( LcomputeDerivatives ) then
+    deallocate (dBB, stat=astat)
 
-   deallocate(constraint,stat=astat)
+    deallocate (XX, stat=astat)
+    ! spectral constraints; not used;
 
+    deallocate (YY, stat=astat)
 
-   deallocate(dPP,stat=astat)
-
-
-   deallocate(dLL,stat=astat)
-
-
-   deallocate(dII,stat=astat)
-
-
-   deallocate(dZZ,stat=astat)
-
-
-   deallocate(dRR,stat=astat)
-
-
-   deallocate(ddFcol1,stat=astat)
-
-
-   deallocate(ddFcol2,stat=astat)
-
-
-   deallocate(ddFcol3,stat=astat)
-
-
-   deallocate(ddFcol4,stat=astat)
-
-  endif
-
-
-   deallocate(dBB,stat=astat)
-
-
-   deallocate(XX,stat=astat)
- ! spectral constraints; not used;
-
-   deallocate(YY,stat=astat)
-
-
-   deallocate(length,stat=astat)
-
-
+    deallocate (length, stat=astat)
 
 2000 continue
 
-
 9999 continue
-  cput = MPI_WTIME()
-  Tdfp200 = Tdfp200 + ( cput-cpuo )
-  return
-
+    cput = MPI_WTIME()
+    Tdfp200 = Tdfp200 + (cput - cpuo)
+    return
 
 end subroutine dfp200
-
-
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-
 !                                                                LOCAL SUBROUTINES
@@ -916,7 +843,7 @@ end subroutine dfp200
 !> @param oBI
 !> @param NN
 subroutine get_LU_beltrami_matrices(vvol, oBI, NN)
-  use mod_kinds, only: wp => dp
+    use mod_kinds, only: wp => dp
 ! Evaluate the LU factorization of Beltrami matrices and store the original one in oBI.
 
 ! INPUT
@@ -924,140 +851,134 @@ subroutine get_LU_beltrami_matrices(vvol, oBI, NN)
 !     vvol:     Volume number
 !   NN:        is equal to NAdof(vvol), is a shorthand.
 
-
 ! MODULES
 ! -------
 
-  use constants, only :   zero, half, one, two
+    use constants, only: zero, half, one, two
 
-  use fileunits, only :   ounit
+    use fileunits, only: ounit
 
-  use cputiming, only :   Tdfp200
+    use cputiming, only: Tdfp200
 
-  use inputlist, only :   Wmacros, Wdfp200, Wdforce, Lrad, mu, Lconstraint
+    use inputlist, only: Wmacros, Wdfp200, Wdforce, Lrad, mu, Lconstraint
 
-  use allglobal, only :   ncpu, myid, cpus, MPI_COMM_SPEC, &
-                          Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
-                          Nt, Nz, &
-                          dBdX, &
-                          dMA, dMB, dMD, dMG, &
-                          mn, mne, Iquad, solution, Lsavedguvij
+    use allglobal, only: ncpu, myid, cpus, MPI_COMM_SPEC, &
+                         Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
+                         Nt, Nz, &
+                         dBdX, &
+                         dMA, dMB, dMD, dMG, &
+                         mn, mne, Iquad, solution, Lsavedguvij
 
-  use typedefns
-
+    use typedefns
 
 #ifdef OPENMP
-  USE OMP_LIB
+    USE OMP_LIB
 #endif
-  use mpi
-  implicit none
-  integer   :: ierr, astat, ios, nthreads, ithread
-  real(wp)      :: cput, cpui, cpuo=0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
+    use mpi
+    implicit none
+    integer :: ierr, astat, ios, nthreads, ithread
+    real(wp) :: cput, cpui, cpuo = 0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
 
 ! ------
-  TYPE(MatrixLU), intent(inout) :: oBI
-  integer, intent(in)    :: vvol, NN
+    TYPE(MatrixLU), intent(inout) :: oBI
+    integer, intent(in) :: vvol, NN
 
-  integer             :: IA, MM, LDA, Lwork, ll
-  integer             :: idgetrf, idgetri
-  real(wp)                :: lastcpu
-  real(wp), allocatable   :: work(:)
+    integer :: IA, MM, LDA, Lwork, ll
+    integer :: idgetrf, idgetri
+    real(wp) :: lastcpu
+    real(wp), allocatable :: work(:)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-
 
-  lastcpu = MPI_WTIME()
+    lastcpu = MPI_WTIME()
 
-  ll = Lrad(vvol)
+    ll = Lrad(vvol)
 
-  ! Evaluate dMa, dMD
-  dBdX%L = .false.
+    ! Evaluate dMa, dMD
+    dBdX%L = .false.
 
-  Lsavedguvij = .false.
-
-
-   cput = MPI_WTIME()
-   Tdfp200 = Tdfp200 + ( cput-cpuo )
-   call ma00aa(Iquad(vvol), mn, vvol, ll)
-   cpuo = MPI_WTIME()
-
-
-   cput = MPI_WTIME()
-   Tdfp200 = Tdfp200 + ( cput-cpuo )
-   call matrix(vvol, mn, ll)
-   cpuo = MPI_WTIME()
-
-
-  lastcpu = MPI_WTIME()
-
-  if(Lconstraint .eq. 2) then  ! for helicity constraint
-
-    !dMA(1:NN,1:NN) = dMA(1:NN,1:NN) - mu(vvol) * dMD(1:NN,1:NN) ! this corrupts dMA, but dMA is no longer used;
-    call DAXPY((NN+1)*(NN+1), -mu(vvol), dMD, 1, dMA, 1) ! BLAS version; 24 Jul 2019
-    dMA(0,0)       = zero
-
-    dMA(1:NN,0)    = -matmul(dMD(1:NN,1:NN),solution(1:NN,0))
-    dMA(0,1:NN)    = dMA(1:NN,0) ! This is the transpose of the above
-
-    IA = NN + 1 + 1
-    MM = NN ; LDA = NN+1 ; Lwork = NN+1
-    idgetrf = 1 ; call DGETRF( MM+1, NN+1, dMA(0:LDA-1,0:NN), LDA, oBI%ipivot, idgetrf )
+    Lsavedguvij = .false.
 
     cput = MPI_WTIME()
-    select case( idgetrf ) !                                                                     0123456789012345678
-    case(  :-1 ) ;               write(ounit,1010) cput-cpus, myid, vvol, cput-lastcpu, idgetrf, "input error;      "
-    case(  0   ) ; if( Wdforce ) write(ounit,1010) cput-cpus, myid, vvol, cput-lastcpu, idgetrf, "success;          "
-    case( 1:   ) ;               write(ounit,1010) cput-cpus, myid, vvol, cput-lastcpu, idgetrf, "singular;         "
-    case default ;
-   if( .true. ) then
-     write(6,'("dforce :      fatal : myid=",i3," ; .true. ; illegal ifail returned from F07ADF ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "dforce : .true. : illegal ifail returned from F07ADF  ;"
-    endif
-
-    end select
-
-    call DCOPY((1+NN)*(1+NN), dMA, 1, oBI%mat, 1)            ! BLAS version; 24 Jul 2019
-
-  else ! for other constraints
-
-    !dMA(0:NN-1,1:NN) = dMA(1:NN,1:NN) - mu(vvol) * dMD(1:NN,1:NN) ! this corrupts dMA, but dMA is no longer used;
-    !dMA(  NN  ,1:NN) = zero
-    call DAXPY((NN+1)*(NN+1), -mu(vvol), dMD, 1, dMA, 1) ! BLAS version; 24 Jul 2019
-
-    !dMD(1:NN  ,1:NN) = dMA(0:NN-1,1:NN) ! copy of original matrix; this is used below;
-    call DCOPY((NN+1)*(NN+1), dMA, 1, dMD, 1)            ! BLAS version; 24 Jul 2019
-
-    IA = NN + 1
-
-    MM = NN ; LDA = NN + 1 ; Lwork = NN
-
-    idgetrf = 1 ; call DGETRF( MM, NN, dMA(1,1), LDA, oBI%ipivot(1:NN), idgetrf )
+    Tdfp200 = Tdfp200 + (cput - cpuo)
+    call ma00aa(Iquad(vvol), mn, vvol, ll)
+    cpuo = MPI_WTIME()
 
     cput = MPI_WTIME()
-    select case( idgetrf ) !                                                                     0123456789012345678
-    case(  :-1 ) ;               write(ounit,1010) cput-cpus, myid, vvol, cput-lastcpu, idgetrf, "input error;      "
-    case(  0   ) ; if( Wdforce ) write(ounit,1010) cput-cpus, myid, vvol, cput-lastcpu, idgetrf, "success;          "
-    case( 1:   ) ;               write(ounit,1010) cput-cpus, myid, vvol, cput-lastcpu, idgetrf, "singular;         "
-    case default ;
-   if( .true. ) then
-     write(6,'("dforce :      fatal : myid=",i3," ; .true. ; illegal ifail returned from F07ADF ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "dforce : .true. : illegal ifail returned from F07ADF  ;"
-    endif
+    Tdfp200 = Tdfp200 + (cput - cpuo)
+    call matrix(vvol, mn, ll)
+    cpuo = MPI_WTIME()
 
-    end select
+    lastcpu = MPI_WTIME()
 
-    oBI%mat(1:NN,1:NN) = dMA(1:NN,1:NN)
+    if (Lconstraint .eq. 2) then  ! for helicity constraint
 
-  endif
+        !dMA(1:NN,1:NN) = dMA(1:NN,1:NN) - mu(vvol) * dMD(1:NN,1:NN) ! this corrupts dMA, but dMA is no longer used;
+        call DAXPY((NN + 1)*(NN + 1), -mu(vvol), dMD, 1, dMA, 1) ! BLAS version; 24 Jul 2019
+        dMA(0, 0) = zero
 
-1011 format("dforce : ",f10.2," : myid=",i3," ; vvol=",i3," ; called DGETRI ; time=",f10.2,"s ; inverse of Beltrami matrix; idgetrf=",i2," ; ",a18)
-1010 format("dforce : ",f10.2," : myid=",i3," ; vvol=",i3," ; called DGETRF ; time=",f10.2,"s ; LU factorization of matrix; idgetrf=",i2," ; ",a18)
+        dMA(1:NN, 0) = -matmul(dMD(1:NN, 1:NN), solution(1:NN, 0))
+        dMA(0, 1:NN) = dMA(1:NN, 0) ! This is the transpose of the above
+
+        IA = NN + 1 + 1
+        MM = NN; LDA = NN + 1; Lwork = NN + 1
+        idgetrf = 1; call DGETRF(MM + 1, NN + 1, dMA(0:LDA - 1, 0:NN), LDA, oBI%ipivot, idgetrf)
+
+        cput = MPI_WTIME()
+        select case (idgetrf) !                                                                     0123456789012345678
+        case (:-1); write (ounit, 1010) cput - cpus, myid, vvol, cput - lastcpu, idgetrf, "input error;      "
+        case (0); if (Wdforce) write (ounit, 1010) cput - cpus, myid, vvol, cput - lastcpu, idgetrf, "success;          "
+        case (1:); write (ounit, 1010) cput - cpus, myid, vvol, cput - lastcpu, idgetrf, "singular;         "
+        case default; 
+            if (.true.) then
+                write (6, '("dforce :      fatal : myid=",i3," ; .true. ; illegal ifail returned from F07ADF ;")') myid
+                call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                stop "dforce : .true. : illegal ifail returned from F07ADF  ;"
+            end if
+
+        end select
+
+        call DCOPY((1 + NN)*(1 + NN), dMA, 1, oBI%mat, 1)            ! BLAS version; 24 Jul 2019
+
+    else ! for other constraints
+
+        !dMA(0:NN-1,1:NN) = dMA(1:NN,1:NN) - mu(vvol) * dMD(1:NN,1:NN) ! this corrupts dMA, but dMA is no longer used;
+        !dMA(  NN  ,1:NN) = zero
+        call DAXPY((NN + 1)*(NN + 1), -mu(vvol), dMD, 1, dMA, 1) ! BLAS version; 24 Jul 2019
+
+        !dMD(1:NN  ,1:NN) = dMA(0:NN-1,1:NN) ! copy of original matrix; this is used below;
+        call DCOPY((NN + 1)*(NN + 1), dMA, 1, dMD, 1)            ! BLAS version; 24 Jul 2019
+
+        IA = NN + 1
+
+        MM = NN; LDA = NN + 1; Lwork = NN
+
+        idgetrf = 1; call DGETRF(MM, NN, dMA(1, 1), LDA, oBI%ipivot(1:NN), idgetrf)
+
+        cput = MPI_WTIME()
+        select case (idgetrf) !                                                                     0123456789012345678
+        case (:-1); write (ounit, 1010) cput - cpus, myid, vvol, cput - lastcpu, idgetrf, "input error;      "
+        case (0); if (Wdforce) write (ounit, 1010) cput - cpus, myid, vvol, cput - lastcpu, idgetrf, "success;          "
+        case (1:); write (ounit, 1010) cput - cpus, myid, vvol, cput - lastcpu, idgetrf, "singular;         "
+        case default; 
+            if (.true.) then
+                write (6, '("dforce :      fatal : myid=",i3," ; .true. ; illegal ifail returned from F07ADF ;")') myid
+                call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                stop "dforce : .true. : illegal ifail returned from F07ADF  ;"
+            end if
+
+        end select
+
+        oBI%mat(1:NN, 1:NN) = dMA(1:NN, 1:NN)
+
+    end if
+
+1011 format("dforce : ", f10.2, " : myid=", i3, " ; vvol=", i3, " ; called DGETRI ; time=", f10.2, "s ; inverse of Beltrami matrix; idgetrf=", i2, " ; ", a18)
+1010 format("dforce : ", f10.2, " : myid=", i3, " ; vvol=", i3, " ; called DGETRF ; time=", f10.2, "s ; LU factorization of matrix; idgetrf=", i2, " ; ", a18)
 
 end subroutine get_LU_beltrami_matrices
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-
-
 
 !> \brief This routine evaluates the value of the magnetic field once the interface is perturbed using matrix perturbation theory.
 !>
@@ -1065,94 +986,85 @@ end subroutine get_LU_beltrami_matrices
 !> @param oBI
 !> @param NN
 subroutine get_perturbed_solution(vvol, oBI, NN)
-  use mod_kinds, only: wp => dp
+    use mod_kinds, only: wp => dp
 ! This routine evaluates the value of the magnetic field once the interface is perturbed using matrix perturbation theory.
 ! Separated from the main dfp200 core to allow local and semi-global constraints to be prescribed
 !
 ! Attention: Solution is perturbed for a given degree of freedom (information stored in dBdX)
 
-  use constants, only :   zero, half, one, two
+    use constants, only: zero, half, one, two
 
-  use fileunits, only :   ounit
+    use fileunits, only: ounit
 
-  use cputiming, only :   Tdfp200
+    use cputiming, only: Tdfp200
 
-  use inputlist, only :   Wmacros, Wdfp200, Lrad, mu, Lconstraint
+    use inputlist, only: Wmacros, Wdfp200, Lrad, mu, Lconstraint
 
-  use allglobal, only :   ncpu, myid, cpus, MPI_COMM_SPEC, &
-                          mn, Iquad, NAdof, &
-                          dMA, dMB, dMD, dMG, solution, &
-                          dtflux, dpflux, dBdX
+    use allglobal, only: ncpu, myid, cpus, MPI_COMM_SPEC, &
+                         mn, Iquad, NAdof, &
+                         dMA, dMB, dMD, dMG, solution, &
+                         dtflux, dpflux, dBdX
 
-  use typedefns
-
+    use typedefns
 
 #ifdef OPENMP
-  USE OMP_LIB
+    USE OMP_LIB
 #endif
-  use mpi
-  implicit none
-  integer   :: ierr, astat, ios, nthreads, ithread
-  real(wp)      :: cput, cpui, cpuo=0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
+    use mpi
+    implicit none
+    integer :: ierr, astat, ios, nthreads, ithread
+    real(wp) :: cput, cpui, cpuo = 0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
 
 !------
 
-  integer, intent(in)     :: vvol, NN
-  TYPE(MatrixLU),intent(inout) :: oBI
+    integer, intent(in) :: vvol, NN
+    TYPE(MatrixLU), intent(inout) :: oBI
 
-  integer                 :: ideriv, ll, idgetrs
-  real(wp)                    :: dpsi(1:2), work(1:NN+1), rhs(0:NN), dVA(0:NN), dVD(0:NN)
-  character               :: packorunpack
+    integer :: ideriv, ll, idgetrs
+    real(wp) :: dpsi(1:2), work(1:NN + 1), rhs(0:NN), dVA(0:NN), dVD(0:NN)
+    character :: packorunpack
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-
 
-  ll = Lrad(vvol)  ! Shorthand
-  dBdX%L = .true.
+    ll = Lrad(vvol)  ! Shorthand
+    dBdX%L = .true.
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+    cput = MPI_WTIME()
+    Tdfp200 = Tdfp200 + (cput - cpuo)
+    call intghs(Iquad(vvol), mn, vvol, ll, 0)
+    cpuo = MPI_WTIME()
 
-   cput = MPI_WTIME()
-   Tdfp200 = Tdfp200 + ( cput-cpuo )
-   call intghs( Iquad(vvol), mn, vvol, ll, 0 )
-   cpuo = MPI_WTIME()
+    cput = MPI_WTIME()
+    Tdfp200 = Tdfp200 + (cput - cpuo)
+    call mtrxhs(vvol, mn, ll, dVA, dVD, 0)
+    cpuo = MPI_WTIME()
 
+    rhs(0) = zero
+    rhs(1:NN) = -dVA(1:NN)
 
+    if (Lconstraint .eq. 2) then
+        work(1:NN + 1) = rhs(0:NN)
+        !work(1:NN+1)  =  matmul( oBI(0:NN,0:NN), rhs(0:NN)) ! original version
+        call DGETRS('N', NN + 1, 1, oBI%mat(0, 0), NN + 1, oBI%ipivot(0:NN), work(1), NN + 1, idgetrs) ! Change to DGETRS; 22 Jul 19
+        solution(1:NN, -1) = work(2:NN + 1)
+    else
+        !solution(1:NN,-1) = matmul( oBI(1:NN,1:NN), rhs(1:NN) ) ! original version
+        solution(1:NN, -1) = rhs(1:NN)
+        call DGETRS('N', NN, 1, oBI%mat(1, 1), NN + 1, oBI%ipivot(1:NN), solution(1, -1), NN, idgetrs) ! Change to DGETRS; 22 Jul 19
+    end if
 
-   cput = MPI_WTIME()
-   Tdfp200 = Tdfp200 + ( cput-cpuo )
-   call mtrxhs( vvol, mn, ll, dVA, dVD, 0)
-   cpuo = MPI_WTIME()
+    ! Unpack derivatives of solution
+    packorunpack = 'U'
 
-
-  rhs(0)    = zero
-  rhs(1:NN) = -dVA(1:NN)
-
-  if (Lconstraint .eq. 2) then
-    work(1:NN+1) = rhs(0:NN)
-    !work(1:NN+1)  =  matmul( oBI(0:NN,0:NN), rhs(0:NN)) ! original version
-    call DGETRS('N',NN+1,1,oBI%mat(0,0),NN+1,oBI%ipivot(0:NN),work(1),NN+1,idgetrs) ! Change to DGETRS; 22 Jul 19
-    solution(1:NN,-1) = work(2:NN+1)
-  else
-    !solution(1:NN,-1) = matmul( oBI(1:NN,1:NN), rhs(1:NN) ) ! original version
-    solution(1:NN,-1) = rhs(1:NN)
-    call DGETRS('N',NN,1,oBI%mat(1,1),NN+1,oBI%ipivot(1:NN),solution(1,-1),NN,idgetrs) ! Change to DGETRS; 22 Jul 19
-  endif
-
-  ! Unpack derivatives of solution
-  packorunpack = 'U'
-
-   cput = MPI_WTIME()
-   Tdfp200 = Tdfp200 + ( cput-cpuo )
-   call packab( packorunpack, vvol, NN,  solution(1:NN,-1), -1 )
-   cpuo = MPI_WTIME()
- ! derivatives placed in Ate(lvol,ideriv,1:mn)%s(0:Lrad),
+    cput = MPI_WTIME()
+    Tdfp200 = Tdfp200 + (cput - cpuo)
+    call packab(packorunpack, vvol, NN, solution(1:NN, -1), -1)
+    cpuo = MPI_WTIME()
+    ! derivatives placed in Ate(lvol,ideriv,1:mn)%s(0:Lrad),
 
 end subroutine get_perturbed_solution
-
-
-
-
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1164,7 +1076,7 @@ end subroutine get_perturbed_solution
 !> @param issym
 !> @param irz
 subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
-  use mod_kinds, only: wp => dp
+    use mod_kinds, only: wp => dp
 ! Evaluate mu and psip derivatives and store them in dmupfdx.
 ! If debug and Lcheck=4, compare with finite difference approximation
 !
@@ -1178,70 +1090,67 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 
 ! MODULES:
 ! -------
-    use constants, only :   zero, half, one, two
+    use constants, only: zero, half, one, two
 
-    use fileunits, only :   ounit
+    use fileunits, only: ounit
 
-    use numerical, only :   small
+    use numerical, only: small
 
-    use cputiming, only :   Tdfp200
+    use cputiming, only: Tdfp200
 
-    use inputlist, only :   Wmacros, Wdfp200, Lrad, mu, Lconstraint, Lcheck, Nvol, Igeometry, mupftol, Lfreebound, dRZ
+    use inputlist, only: Wmacros, Wdfp200, Lrad, mu, Lconstraint, Lcheck, Nvol, Igeometry, mupftol, Lfreebound, dRZ
 
-    use allglobal, only :   ncpu, myid, cpus, MPI_COMM_SPEC, &
-                            Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
-                            Mvol, Iquad, NGdof, &
-                            iRbc, iZbs, iRbs, iZbc, & ! Fourier harmonics of geometry; vector of independent variables, position, is "unpacked" into iRbc,iZbs;
-                            NAdof, &
-                            mn, im, in, mns, &
-                            Ate, Aze, Ato, Azo, &     ! only required for debugging;
-                            Nt, Nz, dBdX, &
-                            dtflux, dpflux, sweight, &
-                            Rij, Zij, &
-                            diotadxup, dItGpdxtp, dmupfdx, &
-                            psifactor, &
-                            lmns, &
-                            mn, mne, &
-                            LocalConstraint, &
-                            vvolume, dvolume, &
-                            IsMyVolume, IsMyVolumeValue, &
-                            Btemn, xoffset, &
-                            IPdtdPf, &
-                            dMA, dMB, dMG, dMD
-
-
+    use allglobal, only: ncpu, myid, cpus, MPI_COMM_SPEC, &
+                         Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
+                         Mvol, Iquad, NGdof, &
+                         iRbc, iZbs, iRbs, iZbc, & ! Fourier harmonics of geometry; vector of independent variables, position, is "unpacked" into iRbc,iZbs;
+                         NAdof, &
+                         mn, im, in, mns, &
+                         Ate, Aze, Ato, Azo, &     ! only required for debugging;
+                         Nt, Nz, dBdX, &
+                         dtflux, dpflux, sweight, &
+                         Rij, Zij, &
+                         diotadxup, dItGpdxtp, dmupfdx, &
+                         psifactor, &
+                         lmns, &
+                         mn, mne, &
+                         LocalConstraint, &
+                         vvolume, dvolume, &
+                         IsMyVolume, IsMyVolumeValue, &
+                         Btemn, xoffset, &
+                         IPdtdPf, &
+                         dMA, dMB, dMG, dMD
 
 #ifdef OPENMP
-  USE OMP_LIB
+    USE OMP_LIB
 #endif
-  use mpi
-  implicit none
-  integer   :: ierr, astat, ios, nthreads, ithread
-  real(wp)      :: cput, cpui, cpuo=0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
+    use mpi
+    implicit none
+    integer :: ierr, astat, ios, nthreads, ithread
+    real(wp) :: cput, cpui, cpuo = 0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
 
-    integer             ::  vvol, innout, idof, iflag, ii, issym, irz, ll, NN, ifail
-    integer             ::  vflag, N, iwork(1:Nvol-1), idgesvx, pvol, order, IDGESV
-    integer             ::  iocons
-    integer, allocatable::  IPIV(:)
-    real(wp)                ::  det, lfactor, Bt00(1:Mvol, 0:1, -1:2)
-    real(wp)                ::  R(1:Nvol-1), C(1:Nvol-1), work(1:4*Nvol-4), ferr, berr, rcond, tmp(2:Nvol)
-    LOGICAL             ::  Lonlysolution, LcomputeDerivatives, dfp100_logical
-    real(wp), allocatable   ::  dBdmpf(:,:), dBdx2(:)
+    integer :: vvol, innout, idof, iflag, ii, issym, irz, ll, NN, ifail
+    integer :: vflag, N, iwork(1:Nvol - 1), idgesvx, pvol, order, IDGESV
+    integer :: iocons
+    integer, allocatable :: IPIV(:)
+    real(wp) :: det, lfactor, Bt00(1:Mvol, 0:1, -1:2)
+    real(wp) :: R(1:Nvol - 1), C(1:Nvol - 1), work(1:4*Nvol - 4), ferr, berr, rcond, tmp(2:Nvol)
+    LOGICAL :: Lonlysolution, LcomputeDerivatives, dfp100_logical
+    real(wp), allocatable :: dBdmpf(:, :), dBdx2(:)
 
 #ifdef DEBUG
-    integer             :: isymdiff, lr, ml, mode
-    integer             :: jj, tdoc, idoc, tdof, jdof, imn, Ndofgl
-    real(wp)                :: dvol(-1:+1), evolume, imupf_global(1:Mvol,1:2,-2:2), imupf_local(1:2,-2:2), factor, Btemn_debug(1:mn, 0:1, 1:Mvol, -1:2)
-    real(wp)                :: position(0:NGdof), force(0:NGdof)
-    real(wp)                :: Fdof(1:Mvol-1), Xdof(1:Mvol-1)
-    real(wp), allocatable   :: fjac(:, :), r_deb(:), Fvec(:), dpfluxout(:)
-    real(wp), allocatable   :: oRbc(:,:), oZbs(:,:), oRbs(:,:), oZbc(:,:) ! original geometry;
+    integer :: isymdiff, lr, ml, mode
+    integer :: jj, tdoc, idoc, tdof, jdof, imn, Ndofgl
+    real(wp) :: dvol(-1:+1), evolume, imupf_global(1:Mvol, 1:2, -2:2), imupf_local(1:2, -2:2), factor, Btemn_debug(1:mn, 0:1, 1:Mvol, -1:2)
+    real(wp) :: position(0:NGdof), force(0:NGdof)
+    real(wp) :: Fdof(1:Mvol - 1), Xdof(1:Mvol - 1)
+    real(wp), allocatable :: fjac(:, :), r_deb(:), Fvec(:), dpfluxout(:)
+    real(wp), allocatable :: oRbc(:, :), oZbs(:, :), oRbs(:, :), oZbc(:, :) ! original geometry;
 
-    character           :: packorunpack
+    character :: packorunpack
 
-    EXTERNAL            :: dfp100
+    EXTERNAL :: dfp100
 #endif
-
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1252,108 +1161,97 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 
 #ifdef DEBUG
 
-   if( vvol-1+innout.gt.Mvol ) then
-     write(6,'("dfp200 :      fatal : myid=",i3," ; vvol-1+innout.gt.Mvol ; psifactor needs attention ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "dfp200 : vvol-1+innout.gt.Mvol : psifactor needs attention  ;"
-    endif
+    if (vvol - 1 + innout .gt. Mvol) then
+        write (6, '("dfp200 :      fatal : myid=",i3," ; vvol-1+innout.gt.Mvol ; psifactor needs attention ;")') myid
+        call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+        stop "dfp200 : vvol-1+innout.gt.Mvol : psifactor needs attention  ;"
+    end if
 
 #endif
-
 
 #ifdef DEBUG
 
 ! Store initial arrays for debug purposes.
 
-    if( Lcheck.eq.3 .or. Lcheck.eq.4 ) then ! will check volume derivatives;
+    if (Lcheck .eq. 3 .or. Lcheck .eq. 4) then ! will check volume derivatives;
 
-   allocate( oRbc(1:mn,0:Mvol), stat=astat )
-   oRbc(1:mn,0:Mvol) = iRbc(1:mn,0:Mvol)
+        allocate (oRbc(1:mn, 0:Mvol), stat=astat)
+        oRbc(1:mn, 0:Mvol) = iRbc(1:mn, 0:Mvol)
 
+        allocate (oZbs(1:mn, 0:Mvol), stat=astat)
+        oZbs(1:mn, 0:Mvol) = iZbs(1:mn, 0:Mvol)
 
-   allocate( oZbs(1:mn,0:Mvol), stat=astat )
-   oZbs(1:mn,0:Mvol) = iZbs(1:mn,0:Mvol)
+        allocate (oRbs(1:mn, 0:Mvol), stat=astat)
+        oRbs(1:mn, 0:Mvol) = iRbs(1:mn, 0:Mvol)
 
+        allocate (oZbc(1:mn, 0:Mvol), stat=astat)
+        oZbc(1:mn, 0:Mvol) = iZbc(1:mn, 0:Mvol)
 
-   allocate( oRbs(1:mn,0:Mvol), stat=astat )
-   oRbs(1:mn,0:Mvol) = iRbs(1:mn,0:Mvol)
-
-
-   allocate( oZbc(1:mn,0:Mvol), stat=astat )
-   oZbc(1:mn,0:Mvol) = iZbc(1:mn,0:Mvol)
-
-    endif ! end of if( Lcheck.eq.3 .or. Lcheck.eq.4 ) ;
+    end if ! end of if( Lcheck.eq.3 .or. Lcheck.eq.4 ) ;
 
 #endif
 
-    lfactor = psifactor(ii,vvol-1+innout)     ! this "pre-conditions" the geometrical degrees-of-freedom;
+    lfactor = psifactor(ii, vvol - 1 + innout)     ! this "pre-conditions" the geometrical degrees-of-freedom;
 
-    if( Lconstraint.eq.1 .or. Lconstraint.eq.3 .or. ( Lvacuumregion .and. Lconstraint.ge.0 ) ) then ! will need to accommodate constraints
+    if (Lconstraint .eq. 1 .or. Lconstraint .eq. 3 .or. (Lvacuumregion .and. Lconstraint .ge. 0)) then ! will need to accommodate constraints
 
-        if (Lconstraint.eq.3) then
+        if (Lconstraint .eq. 3) then
 
             ! In case of freeboundary, there is an additional equation in the linear system, related to the poloidal linking current.
-            if( Lfreebound.eq.1 ) then
+            if (Lfreebound .eq. 1) then
                 order = Mvol
             else
-                order = Mvol-1
-            endif
+                order = Mvol - 1
+            end if
 
+            allocate (dBdmpf(1:order, 1:order), stat=astat)
+            dBdmpf(1:order, 1:order) = zero
 
-   allocate( dBdmpf ( 1:order, 1:order ), stat=astat )
-   dBdmpf ( 1:order, 1:order ) = zero
+            allocate (dBdx2(1:order), stat=astat)
+            dBdx2(1:order) = zero
 
-
-   allocate( dBdx2  ( 1:order ), stat=astat )
-   dBdx2  ( 1:order ) = zero
-
-
-   allocate( IPIV   ( 1:order ), stat=astat )
-   IPIV   ( 1:order ) = zero
-
-
+            allocate (IPIV(1:order), stat=astat)
+            IPIV(1:order) = zero
 
             ! Derivatives of helicity multipliers
-            dmupfdx(1:Nvol,vvol,1,idof,1) = zero ! The helicity multiplier is not varied (constrained). However dtflux is varied in vacuum region, if free boundary
+            dmupfdx(1:Nvol, vvol, 1, idof, 1) = zero ! The helicity multiplier is not varied (constrained). However dtflux is varied in vacuum region, if free boundary
 
             ! Derivatives of poloidal flux. Need to solve a linear system of 5 equations - by hand for now
             ! Matrix coefficients evaluation
             do pvol = 1, Mvol
 
-   if( Igeometry.eq.1 .or. pvol.gt.1 ) then ; Lcoordinatesingularity = .false.
-   else                                   ; Lcoordinatesingularity = .true.
-   endif
+                if (Igeometry .eq. 1 .or. pvol .gt. 1) then; Lcoordinatesingularity = .false.
+                else; Lcoordinatesingularity = .true.
+                end if
 
-   if( pvol.le.Nvol ) then ; Lplasmaregion = .true.
-   else                  ; Lplasmaregion = .false.
-   endif
+                if (pvol .le. Nvol) then; Lplasmaregion = .true.
+                else; Lplasmaregion = .false.
+                end if
 
-   Lvacuumregion = .not.Lplasmaregion
-
+                Lvacuumregion = .not. Lplasmaregion
 
                 do iocons = 0, 1
-            if( ( Lcoordinatesingularity .and. iocons.eq.0 ) .or. ( Lvacuumregion .and. iocons.eq.1 ) ) cycle
+                    if ((Lcoordinatesingularity .and. iocons .eq. 0) .or. (Lvacuumregion .and. iocons .eq. 1)) cycle
 
-   cput = MPI_WTIME()
-   Tdfp200 = Tdfp200 + ( cput-cpuo )
-   call lbpol(pvol, Bt00(1:Mvol, 0:1, -1:2), 2, iocons)
-   cpuo = MPI_WTIME()
- ! Stores derivative in global variable Btemn
-                enddo
+                    cput = MPI_WTIME()
+                    Tdfp200 = Tdfp200 + (cput - cpuo)
+                    call lbpol(pvol, Bt00(1:Mvol, 0:1, -1:2), 2, iocons)
+                    cpuo = MPI_WTIME()
+                    ! Stores derivative in global variable Btemn
+                end do
 #ifdef DEBUG
-                if( .false. ) then
-                    write(ounit, 8375) myid, dBdX%vol, dBdX%innout, 2, pvol, Bt00(pvol, 0:1, 2)
-                endif
+                if (.false.) then
+                    write (ounit, 8375) myid, dBdX%vol, dBdX%innout, 2, pvol, Bt00(pvol, 0:1, 2)
+                end if
 #endif
-            enddo
+            end do
 
-            dBdmpf(1:order,1:order) = zero ! Initialize. TODO: useless?
-            do pvol=1, Mvol-2
-                dBdmpf(pvol,   pvol) =  Bt00(pvol+1, 0, 2)
-                dBdmpf(pvol+1, pvol) = -Bt00(pvol+1, 1, 2)
-            enddo
-            dBdmpf(Mvol-1,Mvol-1) = Bt00(Mvol, 0, 2)
-
+            dBdmpf(1:order, 1:order) = zero ! Initialize. TODO: useless?
+            do pvol = 1, Mvol - 2
+                dBdmpf(pvol, pvol) = Bt00(pvol + 1, 0, 2)
+                dBdmpf(pvol + 1, pvol) = -Bt00(pvol + 1, 1, 2)
+            end do
+            dBdmpf(Mvol - 1, Mvol - 1) = Bt00(Mvol, 0, 2)
 
 !             do pvol=1,Mvol
 !                 LREGION(pvol)
@@ -1369,557 +1267,517 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
 !             enddo
 
             ! RHS coefficients evaluation
-            do pvol = vvol, vvol+1
+            do pvol = vvol, vvol + 1
 
-   if( Igeometry.eq.1 .or. pvol.gt.1 ) then ; Lcoordinatesingularity = .false.
-   else                                   ; Lcoordinatesingularity = .true.
-   endif
+                if (Igeometry .eq. 1 .or. pvol .gt. 1) then; Lcoordinatesingularity = .false.
+                else; Lcoordinatesingularity = .true.
+                end if
 
-   if( pvol.le.Nvol ) then ; Lplasmaregion = .true.
-   else                  ; Lplasmaregion = .false.
-   endif
+                if (pvol .le. Nvol) then; Lplasmaregion = .true.
+                else; Lplasmaregion = .false.
+                end if
 
-   Lvacuumregion = .not.Lplasmaregion
+                Lvacuumregion = .not. Lplasmaregion
 
-                if( pvol.eq.vvol ) then
+                if (pvol .eq. vvol) then
                     dBdX%innout = 1 ! take derivative w.r.t outer interface
                 else !pvol.eq.vvol+1
                     dBdX%innout = 0 ! w.r.t inner interface
-                endif
+                end if
 
                 do iocons = 0, 1
-           if( ( Lcoordinatesingularity .and. iocons.eq.0 ) .or. ( Lvacuumregion .and. iocons.eq.1 ) ) cycle
+                    if ((Lcoordinatesingularity .and. iocons .eq. 0) .or. (Lvacuumregion .and. iocons .eq. 1)) cycle
 
-   cput = MPI_WTIME()
-   Tdfp200 = Tdfp200 + ( cput-cpuo )
-   call lbpol(pvol, Bt00(1:Mvol, 0:1, -1:2), -1, iocons)
-   cpuo = MPI_WTIME()
- ! derivate w.r.t geometry
-                enddo
+                    cput = MPI_WTIME()
+                    Tdfp200 = Tdfp200 + (cput - cpuo)
+                    call lbpol(pvol, Bt00(1:Mvol, 0:1, -1:2), -1, iocons)
+                    cpuo = MPI_WTIME()
+                    ! derivate w.r.t geometry
+                end do
 
 #ifdef DEBUG
-                if( .false. ) then
-                    write(ounit, 8375) myid, dBdX%vol, dBdX%innout, -1, pvol, Bt00(pvol, 0:1, -1)
-8375                format("dfp200  : myid=",i3, ", vvol=",i3,", innout=", i3 ,", ideriv=", i3, ", lvol=",i3,";  Bt00=",2f10.6)
-                endif
+                if (.false.) then
+                    write (ounit, 8375) myid, dBdX%vol, dBdX%innout, -1, pvol, Bt00(pvol, 0:1, -1)
+8375                format("dfp200  : myid=", i3, ", vvol=", i3, ", innout=", i3, ", ideriv=", i3, ", lvol=", i3, ";  Bt00=", 2f10.6)
+                end if
 #endif
-            enddo
+            end do
 
-            dBdx2(1:Mvol-1) = zero
-            if( vvol.gt.1 ) then
-                dBdx2(vvol-1)   =                 - Bt00(vvol,   0, -1)
-            endif
-            ;   dBdx2(vvol  )   = Bt00(vvol  , 1, -1) - Bt00(vvol+1, 0, -1)
-            if (vvol.lt.Mvol-1) then
-            ; dBdx2(vvol+1) = Bt00(vvol+1, 1, -1)
-            endif
+            dBdx2(1:Mvol - 1) = zero
+            if (vvol .gt. 1) then
+                dBdx2(vvol - 1) = -Bt00(vvol, 0, -1)
+            end if
+            ; dBdx2(vvol) = Bt00(vvol, 1, -1) - Bt00(vvol + 1, 0, -1)
+            if (vvol .lt. Mvol - 1) then
+                ; dBdx2(vvol + 1) = Bt00(vvol + 1, 1, -1)
+            end if
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-            if( Lfreebound.eq.1 ) then ! Need to modify last two equations
+            if (Lfreebound .eq. 1) then ! Need to modify last two equations
 
                 ! Set all last column to zero - maybe not necessary ?
-                dBdmpf(1:Mvol, Mvol  ) = zero
+                dBdmpf(1:Mvol, Mvol) = zero
 
                 ! Get derivatives of B_theta w.r.t the toroidal flux in vacuum region
                 iocons = 0
 
-   cput = MPI_WTIME()
-   Tdfp200 = Tdfp200 + ( cput-cpuo )
-   call lbpol(Mvol, Bt00(1:Mvol, 0:1, -1:2), 1, iocons)
-   cpuo = MPI_WTIME()
-
+                cput = MPI_WTIME()
+                Tdfp200 = Tdfp200 + (cput - cpuo)
+                call lbpol(Mvol, Bt00(1:Mvol, 0:1, -1:2), 1, iocons)
+                cpuo = MPI_WTIME()
 
                 ! compute d(Itor,Gpol)/dpsip and d(Itor,Gpol)/dpsit
                 ! TODO: this should already be evaluated in mp00ac...
                 ! TODO: THIS COULD BE MOVED OUTSIDE THE LOOPS
-                iflag =  2 ;
-   cput = MPI_WTIME()
-   Tdfp200 = Tdfp200 + ( cput-cpuo )
-   call curent( Mvol, mn, Nt, Nz, iflag, dItGpdxtp(0:1,-1:2,Mvol) )
-   cpuo = MPI_WTIME()
+                iflag = 2; 
+                cput = MPI_WTIME()
+                Tdfp200 = Tdfp200 + (cput - cpuo)
+                call curent(Mvol, mn, Nt, Nz, iflag, dItGpdxtp(0:1, -1:2, Mvol))
+                cpuo = MPI_WTIME()
 
-
-                dBdmpf(Mvol-1, Mvol  ) =  Bt00(Mvol, 0, 1)         !dBdpsit
-                dBdmpf(Mvol  , Mvol-1) =  dItGpdxtp( 1, 2, Mvol)    !dIpdpsip
-                dBdmpf(Mvol  , Mvol  ) =  dItGpdxtp( 1, 1, Mvol)    !dIpdpsit
+                dBdmpf(Mvol - 1, Mvol) = Bt00(Mvol, 0, 1)         !dBdpsit
+                dBdmpf(Mvol, Mvol - 1) = dItGpdxtp(1, 2, Mvol)    !dIpdpsip
+                dBdmpf(Mvol, Mvol) = dItGpdxtp(1, 1, Mvol)    !dIpdpsit
 
                 ! compute d(Itor,Gpol)/dx
-                if( vvol.eq.Mvol-1 ) then ! Plasma interface is perturbed
-                    iflag = -1 ;
-   cput = MPI_WTIME()
-   Tdfp200 = Tdfp200 + ( cput-cpuo )
-   call curent( Mvol, mn, Nt, Nz, iflag, dItGpdxtp(0:1,-1:2,Mvol) )
-   cpuo = MPI_WTIME()
+                if (vvol .eq. Mvol - 1) then ! Plasma interface is perturbed
+                    iflag = -1; 
+                    cput = MPI_WTIME()
+                    Tdfp200 = Tdfp200 + (cput - cpuo)
+                    call curent(Mvol, mn, Nt, Nz, iflag, dItGpdxtp(0:1, -1:2, Mvol))
+                    cpuo = MPI_WTIME()
 
-                    dBdx2( Mvol ) = -dItGpdxtp( 1,-1, Mvol)    !-dIpdxj
+                    dBdx2(Mvol) = -dItGpdxtp(1, -1, Mvol)    !-dIpdxj
                 else ! Inner interface is perturbed
-                    dBdx2( Mvol ) = zero
-                endif
+                    dBdx2(Mvol) = zero
+                end if
 #ifdef DEBUG
-                if( .false. ) then
-                    write(ounit, 8827) vvol, dBdmpf(Mvol-1, Mvol-1), Btemn(1, 0, Mvol), dItGpdxtp( 1, 2, Mvol), dItGpdxtp( 1, 1, Mvol), dBdx2(Mvol-1), dBdx2(Mvol)
+                if (.false.) then
+                    write (ounit, 8827) vvol, dBdmpf(Mvol - 1, Mvol - 1), Btemn(1, 0, Mvol), dItGpdxtp(1, 2, Mvol), dItGpdxtp(1, 1, Mvol), dBdx2(Mvol - 1), dBdx2(Mvol)
 8827                format("dfp200: vvol = ", i3, ", dBdpsip = ", f10.8, ", dBdpsit = ", f10.8, ", dIpdpsip = ", f10.8, ", dIpdpsit = ", f16.10, ", dBdx2(N-1) = ", f10.8, ", dIpdxj = ", f10.8)
-                endif
+                end if
 #endif
-            endif
-
+            end if
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
             ! Solve linear system dBdmpf * x = dBdx2. Solution (x) is stored in dBdx2 on exit
-            call DGESV(order, 1   , dBdmpf(1:order,1:order), order, IPIV, dBdx2(1:order), order, IDGESV )
+            call DGESV(order, 1, dBdmpf(1:order, 1:order), order, IPIV, dBdx2(1:order), order, IDGESV)
 
             ! Fill dmupfdx array with solution and multiply by coordinate conditioning factor
-            dmupfdx(1     , vvol, 2, idof, 1) = zero ! First poloidal flux is always zero
-            dmupfdx(2:Mvol, vvol, 2, idof, 1) = lfactor * dBdx2(1:Mvol-1) ! These are the derivatives of pflux
+            dmupfdx(1, vvol, 2, idof, 1) = zero ! First poloidal flux is always zero
+            dmupfdx(2:Mvol, vvol, 2, idof, 1) = lfactor*dBdx2(1:Mvol - 1) ! These are the derivatives of pflux
 
-            if( Lfreebound.eq.1 ) then
-                dmupfdx(Mvol, vvol, 1, idof, 1) = lfactor * dBdx2(Mvol) ! This is the derivative of tflux
-            endif
+            if (Lfreebound .eq. 1) then
+                dmupfdx(Mvol, vvol, 1, idof, 1) = lfactor*dBdx2(Mvol) ! This is the derivative of tflux
+            end if
 
             ! Free memory
 
-   deallocate(dBdmpf ,stat=astat)
+            deallocate (dBdmpf, stat=astat)
 
+            deallocate (dBdx2, stat=astat)
 
-   deallocate(dBdx2  ,stat=astat)
-
-
-   deallocate(IPIV   ,stat=astat)
-
+            deallocate (IPIV, stat=astat)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-    else ! LocalConstraint
+        else ! LocalConstraint
 
-        if( Lconstraint.eq.1 ) then
-            iflag = -1 ;
-   cput = MPI_WTIME()
-   Tdfp200 = Tdfp200 + ( cput-cpuo )
-   call tr00ab( vvol, mn, lmns, Nt, Nz, iflag, diotadxup(0:1,-1:2,vvol) )
-   cpuo = MPI_WTIME()
- ! compute d(transform)/dx;
-        endif
+            if (Lconstraint .eq. 1) then
+                iflag = -1; 
+                cput = MPI_WTIME()
+                Tdfp200 = Tdfp200 + (cput - cpuo)
+                call tr00ab(vvol, mn, lmns, Nt, Nz, iflag, diotadxup(0:1, -1:2, vvol))
+                cpuo = MPI_WTIME()
+                ! compute d(transform)/dx;
+            end if
 
-        if( Lvacuumregion .and. Lconstraint.ge.0 ) then
-            iflag = -1 ;
-   cput = MPI_WTIME()
-   Tdfp200 = Tdfp200 + ( cput-cpuo )
-   call curent( vvol, mn,       Nt, Nz, iflag, dItGpdxtp(0:1,-1:2,vvol) )
-   cpuo = MPI_WTIME()
- ! compute d(Itor,Gpol)/dx;
-        endif
+            if (Lvacuumregion .and. Lconstraint .ge. 0) then
+                iflag = -1; 
+                cput = MPI_WTIME()
+                Tdfp200 = Tdfp200 + (cput - cpuo)
+                call curent(vvol, mn, Nt, Nz, iflag, dItGpdxtp(0:1, -1:2, vvol))
+                cpuo = MPI_WTIME()
+                ! compute d(Itor,Gpol)/dx;
+            end if
 
-        dmupfdx(vvol,1,1,idof,innout) = zero        ! Prepare array
-        dmupfdx(vvol,1,2,idof,innout) = zero        ! Prepare array
+            dmupfdx(vvol, 1, 1, idof, innout) = zero        ! Prepare array
+            dmupfdx(vvol, 1, 2, idof, innout) = zero        ! Prepare array
 
-        if( Lplasmaregion ) then
+            if (Lplasmaregion) then
 
-            if( Lconstraint.eq.1) then
+                if (Lconstraint .eq. 1) then
 
-                if( Lcoordinatesingularity ) then ! solution does not depend on dpflux, and only outer transform is a constraint;
+                    if (Lcoordinatesingularity) then ! solution does not depend on dpflux, and only outer transform is a constraint;
 
-                    det = diotadxup(1,1,vvol)
+                        det = diotadxup(1, 1, vvol)
 
-   if( abs(det).lt.small ) then
-     write(6,'("dfp200 :      fatal : myid=",i3," ; abs(det).lt.small ; error computing derivatives of mu          wrt geometry at fixed transform ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "dfp200 : abs(det).lt.small : error computing derivatives of mu          wrt geometry at fixed transform  ;"
-    endif
+                        if (abs(det) .lt. small) then
+                            write (6, '("dfp200 :      fatal : myid=",i3," ; abs(det).lt.small ; error computing derivatives of mu          wrt geometry at fixed transform ;")') myid
+                            call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                            stop "dfp200 : abs(det).lt.small : error computing derivatives of mu          wrt geometry at fixed transform  ;"
+                        end if
 
+                        dmupfdx(vvol, 1, 1, idof, innout) = -lfactor*(diotadxup(1, -1, vvol))/det
+                        dmupfdx(vvol, 1, 2, idof, innout) = zero
 
-                    dmupfdx(vvol,1,1,idof,innout) = - lfactor * (                                                                        diotadxup(1,-1,vvol) ) / det
-                    dmupfdx(vvol,1,2,idof,innout) =   zero
+                    else ! if( .not.Lcoordinatesingularity ) ;
 
-                else ! if( .not.Lcoordinatesingularity ) ;
+                        det = diotadxup(0, 1, vvol)*diotadxup(1, 2, vvol) - diotadxup(0, 2, vvol)*diotadxup(1, 1, vvol)
 
-                    det = diotadxup(0,1,vvol) * diotadxup(1,2,vvol) - diotadxup(0,2,vvol) * diotadxup(1,1,vvol)
+                        if (abs(det) .lt. small) then
+                            write (6, '("dfp200 :      fatal : myid=",i3," ; abs(det).lt.small ; error computing derivatives of mu & dpflux wrt geometry at fixed transform ;")') myid
+                            call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                            stop "dfp200 : abs(det).lt.small : error computing derivatives of mu & dpflux wrt geometry at fixed transform  ;"
+                        end if
 
-   if( abs(det).lt.small ) then
-     write(6,'("dfp200 :      fatal : myid=",i3," ; abs(det).lt.small ; error computing derivatives of mu & dpflux wrt geometry at fixed transform ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "dfp200 : abs(det).lt.small : error computing derivatives of mu & dpflux wrt geometry at fixed transform  ;"
-    endif
+                        dmupfdx(vvol, 1, 1, idof, innout) = -lfactor*(+diotadxup(1, 2, vvol)*diotadxup(0, -1, vvol) - diotadxup(0, 2, vvol)*diotadxup(1, -1, vvol))/det
+                        dmupfdx(vvol, 1, 2, idof, innout) = -lfactor*(-diotadxup(1, 1, vvol)*diotadxup(0, -1, vvol) + diotadxup(0, 1, vvol)*diotadxup(1, -1, vvol))/det
 
+                    end if ! end of if( Lcoordinatesingularity ) ;
 
-                    dmupfdx(vvol,1,1,idof,innout) = - lfactor * ( + diotadxup(1, 2,vvol) * diotadxup(0,-1,vvol) - diotadxup(0, 2,vvol) * diotadxup(1,-1,vvol) ) / det
-                    dmupfdx(vvol,1,2,idof,innout) = - lfactor * ( - diotadxup(1, 1,vvol) * diotadxup(0,-1,vvol) + diotadxup(0, 1,vvol) * diotadxup(1,-1,vvol) ) / det
+                end if ! end of if( Lconstraint.eq.1 ) ;
 
-                endif ! end of if( Lcoordinatesingularity ) ;
+            else ! Vacuum region
 
-            endif ! end of if( Lconstraint.eq.1 ) ;
+                if (Lconstraint .eq. 0) then ! THIS NEEDS ATTENTION;
 
-        else ! Vacuum region
+                    det = dItGpdxtp(0, 1, vvol)*dItGpdxtp(1, 2, vvol) - dItGpdxtp(0, 2, vvol)*dItGpdxtp(1, 1, vvol)
 
-            if    ( Lconstraint.eq.0 ) then ! THIS NEEDS ATTENTION;
+                    if (abs(det) .lt. small) then
+                        write (6, '("dfp200 :      fatal : myid=",i3," ; abs(det).lt.small ; error computing derivatives of dtflux & dpflux wrt geometry at fixed Itor and Gpol ;")') myid
+                        call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                        stop "dfp200 : abs(det).lt.small : error computing derivatives of dtflux & dpflux wrt geometry at fixed Itor and Gpol  ;"
+                    end if
 
-                det = dItGpdxtp(0,1,vvol) * dItGpdxtp(1,2,vvol) - dItGpdxtp(0,2,vvol) * dItGpdxtp(1,1,vvol)
+                    dmupfdx(vvol, 1, 1, idof, innout) = -lfactor*(+dItGpdxtp(1, 2, vvol)*dItGpdxtp(0, -1, vvol) - dItGpdxtp(0, 2, vvol)*dItGpdxtp(1, -1, vvol))/det
+                    dmupfdx(vvol, 1, 2, idof, innout) = -lfactor*(-dItGpdxtp(1, 1, vvol)*dItGpdxtp(0, -1, vvol) + dItGpdxtp(0, 1, vvol)*dItGpdxtp(1, -1, vvol))/det
 
-   if( abs(det).lt.small ) then
-     write(6,'("dfp200 :      fatal : myid=",i3," ; abs(det).lt.small ; error computing derivatives of dtflux & dpflux wrt geometry at fixed Itor and Gpol ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "dfp200 : abs(det).lt.small : error computing derivatives of dtflux & dpflux wrt geometry at fixed Itor and Gpol  ;"
-    endif
+                else if (Lconstraint .eq. 1) then
 
+                    det = diotadxup(0, 1, vvol)*dItGpdxtp(1, 2, vvol) - diotadxup(0, 2, vvol)*dItGpdxtp(1, 1, vvol)
 
-                dmupfdx(vvol,1,1,idof,innout) = - lfactor * ( + dItGpdxtp(1, 2,vvol) * dItGpdxtp(0,-1,vvol) - dItGpdxtp(0, 2,vvol) * dItGpdxtp(1,-1,vvol) ) / det
-                dmupfdx(vvol,1,2,idof,innout) = - lfactor * ( - dItGpdxtp(1, 1,vvol) * dItGpdxtp(0,-1,vvol) + dItGpdxtp(0, 1,vvol) * dItGpdxtp(1,-1,vvol) ) / det
+                    if (abs(det) .lt. small) then
+                        write (6, '("dfp200 :      fatal : myid=",i3," ; abs(det).lt.small ; error computing derivatives of dtflux & dpflux wrt geometry at fixed Itor and Gpol ;")') myid
+                        call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                        stop "dfp200 : abs(det).lt.small : error computing derivatives of dtflux & dpflux wrt geometry at fixed Itor and Gpol  ;"
+                    end if
 
-            else if( Lconstraint.eq.1 ) then
+                    dmupfdx(vvol, 1, 1, idof, innout) = -lfactor*(+dItGpdxtp(1, 2, vvol)*diotadxup(0, -1, vvol) - diotadxup(0, 2, vvol)*dItGpdxtp(1, -1, vvol))/det
+                    dmupfdx(vvol, 1, 2, idof, innout) = -lfactor*(-dItGpdxtp(1, 1, vvol)*diotadxup(0, -1, vvol) + diotadxup(0, 1, vvol)*dItGpdxtp(1, -1, vvol))/det
 
-                det = diotadxup(0,1,vvol) * dItGpdxtp(1,2,vvol) - diotadxup(0,2,vvol) * dItGpdxtp(1,1,vvol)
+                end if
 
-   if( abs(det).lt.small ) then
-     write(6,'("dfp200 :      fatal : myid=",i3," ; abs(det).lt.small ; error computing derivatives of dtflux & dpflux wrt geometry at fixed Itor and Gpol ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "dfp200 : abs(det).lt.small : error computing derivatives of dtflux & dpflux wrt geometry at fixed Itor and Gpol  ;"
-    endif
+            end if ! end of if( Lplasmaregion ) ;
 
+        end if ! end of if Lconstraint.eq.3
 
-                dmupfdx(vvol,1,1,idof,innout) = - lfactor * ( + dItGpdxtp(1, 2,vvol) * diotadxup(0,-1,vvol) - diotadxup(0, 2,vvol) * dItGpdxtp(1,-1,vvol) ) / det
-                dmupfdx(vvol,1,2,idof,innout) = - lfactor * ( - dItGpdxtp(1, 1,vvol) * diotadxup(0,-1,vvol) + diotadxup(0, 1,vvol) * dItGpdxtp(1,-1,vvol) ) / det
-
-            endif
-
-        endif ! end of if( Lplasmaregion ) ;
-
-    endif ! end of if Lconstraint.eq.3
-
-    endif ! end of if( Lconstraint.eq.1 .or. ( Lvacuumregion .and. Lconstraint.ge.0 ) then;
+    end if ! end of if( Lconstraint.eq.1 .or. ( Lvacuumregion .and. Lconstraint.ge.0 ) then;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 #ifdef DEBUG
 
-    if( Lcheck.eq.4 ) then ! check derivatives of field;
+    if (Lcheck .eq. 4) then ! check derivatives of field;
 
-        if( (ncpu.gt.1) .and. (Lconstraint.eq.3) ) then
+        if ((ncpu .gt. 1) .and. (Lconstraint .eq. 3)) then
             goto 8294
-        endif
+        end if
 
         dBdX%L = .false.
 
-        if( LocalConstraint ) then
+        if (LocalConstraint) then
 
-   cput = MPI_WTIME()
-   Tdfp200 = Tdfp200 + ( cput-cpuo )
-   call deallocate_geometry_matrices(LcomputeDerivatives)
-   cpuo = MPI_WTIME()
+            cput = MPI_WTIME()
+            Tdfp200 = Tdfp200 + (cput - cpuo)
+            call deallocate_geometry_matrices(LcomputeDerivatives)
+            cpuo = MPI_WTIME()
 
+            cput = MPI_WTIME()
+            Tdfp200 = Tdfp200 + (cput - cpuo)
+            call deallocate_Beltrami_matrices(LcomputeDerivatives)
+            cpuo = MPI_WTIME()
 
-   cput = MPI_WTIME()
-   Tdfp200 = Tdfp200 + ( cput-cpuo )
-   call deallocate_Beltrami_matrices(LcomputeDerivatives)
-   cpuo = MPI_WTIME()
+            cput = MPI_WTIME()
+            Tdfp200 = Tdfp200 + (cput - cpuo)
+            call intghs_workspace_destroy()
+            cpuo = MPI_WTIME()
 
-
-   cput = MPI_WTIME()
-   Tdfp200 = Tdfp200 + ( cput-cpuo )
-   call intghs_workspace_destroy()
-   cpuo = MPI_WTIME()
-
-        endif
+        end if
 
         do isymdiff = -2, 2 ! symmetric fourth-order, finite-difference used to approximate derivatives;
 
-            if( isymdiff.eq.0 ) cycle
+            if (isymdiff .eq. 0) cycle
 
-            iRbc(1:mn,0:Mvol) = oRbc(1:mn,0:Mvol)
-            iZbs(1:mn,0:Mvol) = oZbs(1:mn,0:Mvol)
-            iRbs(1:mn,0:Mvol) = oRbs(1:mn,0:Mvol)
-            iZbc(1:mn,0:Mvol) = oZbc(1:mn,0:Mvol)
+            iRbc(1:mn, 0:Mvol) = oRbc(1:mn, 0:Mvol)
+            iZbs(1:mn, 0:Mvol) = oZbs(1:mn, 0:Mvol)
+            iRbs(1:mn, 0:Mvol) = oRbs(1:mn, 0:Mvol)
+            iZbc(1:mn, 0:Mvol) = oZbc(1:mn, 0:Mvol)
 
-            if( LocalConstraint ) then
-                if( issym.eq.0 .and. irz.eq.0 ) iRbc(ii,vvol-1+innout) = iRbc(ii,vvol-1+innout) + dRZ * isymdiff ! perturb geometry;
-                if( issym.eq.0 .and. irz.eq.1 ) iZbs(ii,vvol-1+innout) = iZbs(ii,vvol-1+innout) + dRZ * isymdiff ! perturb geometry;
-                if( issym.eq.1 .and. irz.eq.0 ) iRbs(ii,vvol-1+innout) = iRbs(ii,vvol-1+innout) + dRZ * isymdiff ! perturb geometry;
-                if( issym.eq.1 .and. irz.eq.1 ) iZbc(ii,vvol-1+innout) = iZbc(ii,vvol-1+innout) + dRZ * isymdiff ! perturb geometry;
+            if (LocalConstraint) then
+                if (issym .eq. 0 .and. irz .eq. 0) iRbc(ii, vvol - 1 + innout) = iRbc(ii, vvol - 1 + innout) + dRZ*isymdiff ! perturb geometry;
+                if (issym .eq. 0 .and. irz .eq. 1) iZbs(ii, vvol - 1 + innout) = iZbs(ii, vvol - 1 + innout) + dRZ*isymdiff ! perturb geometry;
+                if (issym .eq. 1 .and. irz .eq. 0) iRbs(ii, vvol - 1 + innout) = iRbs(ii, vvol - 1 + innout) + dRZ*isymdiff ! perturb geometry;
+                if (issym .eq. 1 .and. irz .eq. 1) iZbc(ii, vvol - 1 + innout) = iZbc(ii, vvol - 1 + innout) + dRZ*isymdiff ! perturb geometry;
             else
-                if( issym.eq.0 .and. irz.eq.0 ) iRbc(ii,vvol) = iRbc(ii,vvol) + dRZ * isymdiff ! perturb geometry;
-                if( issym.eq.0 .and. irz.eq.1 ) iZbs(ii,vvol) = iZbs(ii,vvol) + dRZ * isymdiff ! perturb geometry;
-                if( issym.eq.1 .and. irz.eq.0 ) iRbs(ii,vvol) = iRbs(ii,vvol) + dRZ * isymdiff ! perturb geometry;
-                if( issym.eq.1 .and. irz.eq.1 ) iZbc(ii,vvol) = iZbc(ii,vvol) + dRZ * isymdiff ! perturb geometry;
-            endif
+                if (issym .eq. 0 .and. irz .eq. 0) iRbc(ii, vvol) = iRbc(ii, vvol) + dRZ*isymdiff ! perturb geometry;
+                if (issym .eq. 0 .and. irz .eq. 1) iZbs(ii, vvol) = iZbs(ii, vvol) + dRZ*isymdiff ! perturb geometry;
+                if (issym .eq. 1 .and. irz .eq. 0) iRbs(ii, vvol) = iRbs(ii, vvol) + dRZ*isymdiff ! perturb geometry;
+                if (issym .eq. 1 .and. irz .eq. 1) iZbc(ii, vvol) = iZbc(ii, vvol) + dRZ*isymdiff ! perturb geometry;
+            end if
 
             ! Solve Beltrami equation consistently with constraints
-            Xdof(1:Mvol-1) = zero;
-            if( LocalConstraint ) then
+            Xdof(1:Mvol - 1) = zero; 
+            if (LocalConstraint) then
 
+                allocate (Fvec(1:Mvol - 1), stat=astat)
+                Fvec(1:Mvol - 1) = zero
 
-   allocate( Fvec(1:Mvol-1), stat=astat )
-   Fvec(1:Mvol-1) = zero
-
-
-                Ndofgl = 0; Fvec(1:Mvol-1) = 0; dfp100_logical = .FALSE.;
-                Xdof(1:Mvol-1) = dpflux(2:Mvol) + xoffset
+                Ndofgl = 0; Fvec(1:Mvol - 1) = 0; dfp100_logical = .FALSE.; 
+                Xdof(1:Mvol - 1) = dpflux(2:Mvol) + xoffset
 
                 ! Solve for field
                 dBdX%L = .false. ! No need for derivatives in this context
 
-   cput = MPI_WTIME()
-   Tdfp200 = Tdfp200 + ( cput-cpuo )
-   call dfp100(Ndofgl, Xdof, Fvec, dfp100_logical)
-   cpuo = MPI_WTIME()
+                cput = MPI_WTIME()
+                Tdfp200 = Tdfp200 + (cput - cpuo)
+                call dfp100(Ndofgl, Xdof, Fvec, dfp100_logical)
+                cpuo = MPI_WTIME()
 
+                deallocate (Fvec, stat=astat)
 
-
-   deallocate(Fvec ,stat=astat)
-
-
-            ! --------------------------------------------------------------------------------------------------
-            ! Global constraint - call the master thread calls hybrd1 on dfp100, others call dfp100_loop.
+                ! --------------------------------------------------------------------------------------------------
+                ! Global constraint - call the master thread calls hybrd1 on dfp100, others call dfp100_loop.
             else
 
                 IPDtdPf = zero
-                Xdof(1:Mvol-1)   = dpflux(2:Mvol) + xoffset
+                Xdof(1:Mvol - 1) = dpflux(2:Mvol) + xoffset
 
-                if( Lfreebound.eq.1 ) then
+                if (Lfreebound .eq. 1) then
                     ! Mvol-1 surface current and 1 poloidal linking current constraints
                     Ndofgl = Mvol
                 else
                     ! Mvol-1 surface current                                constraints
-                    Ndofgl = Mvol-1
-                endif
+                    Ndofgl = Mvol - 1
+                end if
 
+                allocate (dpfluxout(1:Ndofgl), stat=astat)
+                dpfluxout(1:Ndofgl) = zero
 
-   allocate( dpfluxout(1:Ndofgl), stat=astat )
-   dpfluxout(1:Ndofgl) = zero
+                allocate (Fvec(1:Ndofgl), stat=astat)
+                Fvec(1:Ndofgl) = zero
 
-
-   allocate( Fvec(1:Ndofgl), stat=astat )
-   Fvec(1:Ndofgl) = zero
-
-
-   allocate( IPIV(1:Mvol-1), stat=astat )
-   IPIV(1:Mvol-1) = zero
-
+                allocate (IPIV(1:Mvol - 1), stat=astat)
+                IPIV(1:Mvol - 1) = zero
 
                 dfp100_logical = .TRUE.
 
-
-   cput = MPI_WTIME()
-   Tdfp200 = Tdfp200 + ( cput-cpuo )
-   call dfp100(Ndofgl, Xdof(1:Mvol-1), Fvec(1:Ndofgl), dfp100_logical)
-   cpuo = MPI_WTIME()
-
+                cput = MPI_WTIME()
+                Tdfp200 = Tdfp200 + (cput - cpuo)
+                call dfp100(Ndofgl, Xdof(1:Mvol - 1), Fvec(1:Ndofgl), dfp100_logical)
+                cpuo = MPI_WTIME()
 
                 ! Only one cpu with this test - thus no need for broadcast
                 dpfluxout = Fvec
-                call DGESV( Ndofgl, 1, IPdtdPf, Ndofgl, IPIV, dpfluxout, Ndofgl, idgesv )
+                call DGESV(Ndofgl, 1, IPdtdPf, Ndofgl, IPIV, dpfluxout, Ndofgl, idgesv)
 
                 ! one step Newton's method
-                dpflux(2:Mvol)   = dpflux(2:Mvol) - dpfluxout(1:Mvol-1)
-                if( Lfreebound.eq.1 ) then
-                    dtflux(Mvol) = dtflux(Mvol  ) - dpfluxout(Mvol    )
-                endif
+                dpflux(2:Mvol) = dpflux(2:Mvol) - dpfluxout(1:Mvol - 1)
+                if (Lfreebound .eq. 1) then
+                    dtflux(Mvol) = dtflux(Mvol) - dpfluxout(Mvol)
+                end if
 
+                deallocate (IPIV, stat=astat)
 
-   deallocate(IPIV,stat=astat)
+                deallocate (Fvec, stat=astat)
 
+                deallocate (dpfluxout, stat=astat)
 
-   deallocate(Fvec,stat=astat)
+            end if
 
+            if (LocalConstraint) then
 
-   deallocate(dpfluxout,stat=astat)
+                if (Igeometry .eq. 1 .or. vvol .gt. 1) then; Lcoordinatesingularity = .false.
+                else; Lcoordinatesingularity = .true.
+                end if
 
-            endif
+                if (vvol .le. Nvol) then; Lplasmaregion = .true.
+                else; Lplasmaregion = .false.
+                end if
 
-
-
-            if( LocalConstraint ) then
-
-   if( Igeometry.eq.1 .or. vvol.gt.1 ) then ; Lcoordinatesingularity = .false.
-   else                                   ; Lcoordinatesingularity = .true.
-   endif
-
-   if( vvol.le.Nvol ) then ; Lplasmaregion = .true.
-   else                  ; Lplasmaregion = .false.
-   endif
-
-   Lvacuumregion = .not.Lplasmaregion
+                Lvacuumregion = .not. Lplasmaregion
 
                 ll = Lrad(vvol)        ! shorthand
                 NN = NAdof(vvol)     ! shorthand;
 
-                if( Lplasmaregion ) then
-                    imupf_local(1:2,isymdiff) = (/     mu(vvol), dpflux(vvol) /) ! mu     and dpflux are computed for the perturbed geometry by ma02aa/mp00ac if Lconstraint=1;
+                if (Lplasmaregion) then
+                    imupf_local(1:2, isymdiff) = (/mu(vvol), dpflux(vvol)/) ! mu     and dpflux are computed for the perturbed geometry by ma02aa/mp00ac if Lconstraint=1;
                 else ! if( Lvacuumregion ) ;
-                    imupf_local(1:2,isymdiff) = (/ dtflux(vvol), dpflux(vvol) /) ! dtflux and dpflux are computed for the perturbed geometry by ma02aa/mp00ac if Lconstraint=1;
-                endif
-
+                    imupf_local(1:2, isymdiff) = (/dtflux(vvol), dpflux(vvol)/) ! dtflux and dpflux are computed for the perturbed geometry by ma02aa/mp00ac if Lconstraint=1;
+                end if
 
             else ! global constraint
-                if( Lplasmaregion ) then
-                    imupf_global(1:Mvol,1,isymdiff) = (/  mu(1:Mvol)     /) ! mu     is computed for the perturbed geometry by ma02aa/mp00ac
-                    imupf_global(1:Mvol,2,isymdiff) = (/  dpflux(1:Mvol) /) ! dpflux is computed for the perturbed geometry by ma02aa/mp00ac
+                if (Lplasmaregion) then
+                    imupf_global(1:Mvol, 1, isymdiff) = (/mu(1:Mvol)/) ! mu     is computed for the perturbed geometry by ma02aa/mp00ac
+                    imupf_global(1:Mvol, 2, isymdiff) = (/dpflux(1:Mvol)/) ! dpflux is computed for the perturbed geometry by ma02aa/mp00ac
                 else ! if( Lvacuumregion ) ;
-                    imupf_global(1:Mvol,1,isymdiff) = (/ dtflux(1:Mvol) /) ! dtflux is computed for the perturbed geometry by ma02aa/mp00ac
-                    imupf_global(1:Mvol,2,isymdiff) = (/ dpflux(1:Mvol) /) ! dpflux is computed for the perturbed geometry by ma02aa/mp00ac
-                endif
+                    imupf_global(1:Mvol, 1, isymdiff) = (/dtflux(1:Mvol)/) ! dtflux is computed for the perturbed geometry by ma02aa/mp00ac
+                    imupf_global(1:Mvol, 2, isymdiff) = (/dpflux(1:Mvol)/) ! dpflux is computed for the perturbed geometry by ma02aa/mp00ac
+                end if
 
-            endif
-        enddo ! end of do isymdiff;
+            end if
+        end do ! end of do isymdiff;
 
-        if( LocalConstraint ) then
+        if (LocalConstraint) then
             ! reallocate matrices for next iteration
 
-   cput = MPI_WTIME()
-   Tdfp200 = Tdfp200 + ( cput-cpuo )
-   call intghs_workspace_init(vvol)
-   cpuo = MPI_WTIME()
+            cput = MPI_WTIME()
+            Tdfp200 = Tdfp200 + (cput - cpuo)
+            call intghs_workspace_init(vvol)
+            cpuo = MPI_WTIME()
 
+            cput = MPI_WTIME()
+            Tdfp200 = Tdfp200 + (cput - cpuo)
+            call allocate_Beltrami_matrices(vvol, LcomputeDerivatives)
+            cpuo = MPI_WTIME()
 
-   cput = MPI_WTIME()
-   Tdfp200 = Tdfp200 + ( cput-cpuo )
-   call allocate_Beltrami_matrices(vvol,LcomputeDerivatives)
-   cpuo = MPI_WTIME()
+            cput = MPI_WTIME()
+            Tdfp200 = Tdfp200 + (cput - cpuo)
+            call allocate_geometry_matrices(vvol, LcomputeDerivatives)
+            cpuo = MPI_WTIME()
 
+        end if
 
-   cput = MPI_WTIME()
-   Tdfp200 = Tdfp200 + ( cput-cpuo )
-   call allocate_geometry_matrices(vvol,LcomputeDerivatives)
-   cpuo = MPI_WTIME()
-
-        endif
-
-8294        continue
+8294    continue
         ! Evaluate derivatives using finite differences
-        if( LocalConstraint ) then
-            imupf_local(1:2,0)      = ( - 1 * imupf_local(1:2, 2)  + 8 * imupf_local(1:2, 1)&
-                                        - 8 * imupf_local(1:2,-1)  + 1 * imupf_local(1:2,-2)   ) / ( 12 * dRZ )
+        if (LocalConstraint) then
+            imupf_local(1:2, 0) = (-1*imupf_local(1:2, 2) + 8*imupf_local(1:2, 1) &
+                                   - 8*imupf_local(1:2, -1) + 1*imupf_local(1:2, -2))/(12*dRZ)
         else
-            imupf_global(1:Mvol,1:2,0)      = ( - 1 * imupf_global(1:Mvol,1:2, 2)&
-                                                + 8 * imupf_global(1:Mvol,1:2, 1)&
-                                                - 8 * imupf_global(1:Mvol,1:2,-1)&
-                                                + 1 * imupf_global(1:Mvol,1:2,-2)   ) / ( 12 * dRZ )
-        endif
+            imupf_global(1:Mvol, 1:2, 0) = (-1*imupf_global(1:Mvol, 1:2, 2) &
+                                            + 8*imupf_global(1:Mvol, 1:2, 1) &
+                                            - 8*imupf_global(1:Mvol, 1:2, -1) &
+                                            + 1*imupf_global(1:Mvol, 1:2, -2))/(12*dRZ)
+        end if
 
         cput = MPI_WTIME()
 
-        write(ounit,3003)
-        if( LocalConstraint ) then
+        write (ounit, 3003)
+        if (LocalConstraint) then
             !ifail = 0 ; call dlasrt( 'D', NN,  solution(vvol)%mat(1:NN,-1), ifail ) ! sorting screen output; this corrupts;
             !ifail = 0 ; call dlasrt( 'D', NN, isolution(1:NN, 0), ifail ) ! sorting screen output; this corrupts;
-            write(ounit,3003) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, innout, "finite-diff", imupf_local(1:2,0)
-            write(ounit,3003) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, innout, "analytic   ", dmupfdx(vvol,1,1:2,idof,innout) / lfactor
+            write (ounit, 3003) cput - cpus, myid, vvol, im(ii), in(ii), irz, issym, innout, "finite-diff", imupf_local(1:2, 0)
+            write (ounit, 3003) cput - cpus, myid, vvol, im(ii), in(ii), irz, issym, innout, "analytic   ", dmupfdx(vvol, 1, 1:2, idof, innout)/lfactor
         else
-            if( Lplasmaregion ) then
-                write(ounit,3004) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, 1, "dmu finite-diff", imupf_global(1:Mvol,1,0)
-                write(ounit,3004) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, 1, "dmu analytic   ", dmupfdx(1:Mvol,vvol,1,idof,1) / lfactor
+            if (Lplasmaregion) then
+                write (ounit, 3004) cput - cpus, myid, vvol, im(ii), in(ii), irz, issym, 1, "dmu finite-diff", imupf_global(1:Mvol, 1, 0)
+                write (ounit, 3004) cput - cpus, myid, vvol, im(ii), in(ii), irz, issym, 1, "dmu analytic   ", dmupfdx(1:Mvol, vvol, 1, idof, 1)/lfactor
             else ! vacuum
-                write(ounit,3004) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, 1, "dtflux finite-diff", imupf_global(1:Mvol,1,0)
-                write(ounit,3004) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, 1, "dtflux analytic   ", dmupfdx(1:Mvol,vvol,1,idof,1) / lfactor
-            endif
+                write (ounit, 3004) cput - cpus, myid, vvol, im(ii), in(ii), irz, issym, 1, "dtflux finite-diff", imupf_global(1:Mvol, 1, 0)
+                write (ounit, 3004) cput - cpus, myid, vvol, im(ii), in(ii), irz, issym, 1, "dtflux analytic   ", dmupfdx(1:Mvol, vvol, 1, idof, 1)/lfactor
+            end if
 
-            write(ounit,3004) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, 1, "dpflux finite-diff", imupf_global(1:Mvol,2,0)
-            write(ounit,3004) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, 1, "dpflux analytic   ", dmupfdx(1:Mvol,vvol,2,idof,1) / lfactor
-        endif
+            write (ounit, 3004) cput - cpus, myid, vvol, im(ii), in(ii), irz, issym, 1, "dpflux finite-diff", imupf_global(1:Mvol, 2, 0)
+            write (ounit, 3004) cput - cpus, myid, vvol, im(ii), in(ii), irz, issym, 1, "dpflux analytic   ", dmupfdx(1:Mvol, vvol, 2, idof, 1)/lfactor
+        end if
 
-3003    format("dfp200 : ",f10.2," : ",:,"myid=",i3," ; vvol=",i2," ; (",i2,",",i3," ) ; irz=",i1," ; issym=",i1," ; innout=",i1," ; ",a18," : dmupf=",8f11.05" ;")
-3004    format("dfp200 : ",f10.2," : ",:,"myid=",i3," ; vvol=",i2," ; (",i2,",",i3," ) ; irz=",i1," ; issym=",i1," ; innout=",i1," ; ",a18," : dmupf=",8f11.05" ;")
-
+3003    format("dfp200 : ", f10.2, " : ", :, "myid=", i3, " ; vvol=", i2, " ; (", i2, ",", i3, " ) ; irz=", i1, " ; issym=", i1, " ; innout=", i1, " ; ", a18, " : dmupf=", 8f11.05" ;")
+3004    format("dfp200 : ", f10.2, " : ", :, "myid=", i3, " ; vvol=", i2, " ; (", i2, ",", i3, " ) ; irz=", i1, " ; issym=", i1, " ; innout=", i1, " ; ", a18, " : dmupf=", 8f11.05" ;")
 
         ! Re-evaluate unperturbed solution
         dBdX%L = .true.
 
-        iRbc(1:mn,0:Mvol) = oRbc(1:mn,0:Mvol)
-        iZbs(1:mn,0:Mvol) = oZbs(1:mn,0:Mvol)
-        iRbs(1:mn,0:Mvol) = oRbs(1:mn,0:Mvol)
-        iZbc(1:mn,0:Mvol) = oZbc(1:mn,0:Mvol)
+        iRbc(1:mn, 0:Mvol) = oRbc(1:mn, 0:Mvol)
+        iZbs(1:mn, 0:Mvol) = oZbs(1:mn, 0:Mvol)
+        iRbs(1:mn, 0:Mvol) = oRbs(1:mn, 0:Mvol)
+        iZbc(1:mn, 0:Mvol) = oZbc(1:mn, 0:Mvol)
 
-
-    endif ! end of if( Lcheck.eq.4 ) ;
+    end if ! end of if( Lcheck.eq.4 ) ;
 
 #endif
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
     vflag = 1 ! this flag instructs volume to continue even if the volume is invalid;
 
-   cput = MPI_WTIME()
-   Tdfp200 = Tdfp200 + ( cput-cpuo )
-   call volume( vvol, vflag )
-   cpuo = MPI_WTIME()
- ! compute derivative of volume; wrt to harmonic described by dBdX structure;
+    cput = MPI_WTIME()
+    Tdfp200 = Tdfp200 + (cput - cpuo)
+    call volume(vvol, vflag)
+    cpuo = MPI_WTIME()
+    ! compute derivative of volume; wrt to harmonic described by dBdX structure;
 
 #ifdef DEBUG
 
-    if( Lcheck.eq.3 ) then
+    if (Lcheck .eq. 3) then
 
         dvol(0) = dvolume
 
         cput = MPI_WTIME()
-        write(ounit,1001) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, innout, "analytic", dvolume
+        write (ounit, 1001) cput - cpus, myid, vvol, im(ii), in(ii), irz, issym, innout, "analytic", dvolume
 
-        1001     format("dfp200 : ",f10.2," : myid=",i3," ; vvol=",i3," ; (",i3," ,",i3,") ; irz=",i2," ; issym=",i2," ; innout=",i2,&
-        " : ",a8," ; dvolume=",f23.15," ;",:," error=",es13.5," ;")
+1001    format("dfp200 : ", f10.2, " : myid=", i3, " ; vvol=", i3, " ; (", i3, " ,", i3, ") ; irz=", i2, " ; issym=", i2, " ; innout=", i2, &
+               " : ", a8, " ; dvolume=", f23.15, " ;", :, " error=", es13.5, " ;")
 
         dBdX%L = .false. ! instruct volume to not calculate derivatives;
 
         do isymdiff = -1, 1, 2 ! symmetric finite-difference estimate of derivative of volume wrt geometrical degree-of-freedom;
 
-            if( dBdX%issym.eq.0 ) then !     stellarator symmetric harmonics;
-                if( dBdX%irz.eq.0 ) iRbc(dBdX%ii,vvol-1+innout) = oRbc(dBdX%ii,vvol-1+innout) + isymdiff * dRZ * half
-                if( dBdX%irz.eq.1 ) iZbs(dBdX%ii,vvol-1+innout) = oZbs(dBdX%ii,vvol-1+innout) + isymdiff * dRZ * half
+            if (dBdX%issym .eq. 0) then !     stellarator symmetric harmonics;
+                if (dBdX%irz .eq. 0) iRbc(dBdX%ii, vvol - 1 + innout) = oRbc(dBdX%ii, vvol - 1 + innout) + isymdiff*dRZ*half
+                if (dBdX%irz .eq. 1) iZbs(dBdX%ii, vvol - 1 + innout) = oZbs(dBdX%ii, vvol - 1 + innout) + isymdiff*dRZ*half
             else                                        ! non-stellarator symmetric harmonics;
-                if( dBdX%irz.eq.0 ) iRbs(dBdX%ii,vvol-1+innout) = oRbs(dBdX%ii,vvol-1+innout) + isymdiff * dRZ * half
-                if( dBdX%irz.eq.1 ) iZbc(dBdX%ii,vvol-1+innout) = oZbc(dBdX%ii,vvol-1+innout) + isymdiff * dRZ * half
-            endif
+                if (dBdX%irz .eq. 0) iRbs(dBdX%ii, vvol - 1 + innout) = oRbs(dBdX%ii, vvol - 1 + innout) + isymdiff*dRZ*half
+                if (dBdX%irz .eq. 1) iZbc(dBdX%ii, vvol - 1 + innout) = oZbc(dBdX%ii, vvol - 1 + innout) + isymdiff*dRZ*half
+            end if
 
             vflag = 1 ! this flag instructs volume to continue even if the volume is invalid;
 
-   cput = MPI_WTIME()
-   Tdfp200 = Tdfp200 + ( cput-cpuo )
-   call volume( vvol, vflag )
-   cpuo = MPI_WTIME()
- ! compute volume; this corrupts calculation of dvolume;
+            cput = MPI_WTIME()
+            Tdfp200 = Tdfp200 + (cput - cpuo)
+            call volume(vvol, vflag)
+            cpuo = MPI_WTIME()
+            ! compute volume; this corrupts calculation of dvolume;
 
             dvol(isymdiff) = vvolume(vvol)
 
-        enddo ! end of do isymdiff;
+        end do ! end of do isymdiff;
 
-        evolume = abs( ( dvol(+1)-dvol(-1) ) / dRZ - dvol(0) ) ! error in finite-difference calculation and analytic derivative;
+        evolume = abs((dvol(+1) - dvol(-1))/dRZ - dvol(0)) ! error in finite-difference calculation and analytic derivative;
 
         cput = MPI_WTIME()
-        write(ounit,1001) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, innout, "finite-d", ( dvol(+1)-dvol(-1) ) / dRZ, evolume
+        write (ounit, 1001) cput - cpus, myid, vvol, im(ii), in(ii), irz, issym, innout, "finite-d", (dvol(+1) - dvol(-1))/dRZ, evolume
 
+        if (evolume .gt. dRZ) then
+            write (6, '("dfp200 :      fatal : myid=",i3," ; evolume.gt.dRZ ; unacceptable error in volume derivative ;")') myid
+            call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+            stop "dfp200 : evolume.gt.dRZ : unacceptable error in volume derivative  ;"
+        end if
 
-   if( evolume.gt.dRZ ) then
-     write(6,'("dfp200 :      fatal : myid=",i3," ; evolume.gt.dRZ ; unacceptable error in volume derivative ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "dfp200 : evolume.gt.dRZ : unacceptable error in volume derivative  ;"
-    endif
-
-
-        iRbc(1:mn,0:Mvol) = oRbc(1:mn,0:Mvol)
-        iZbs(1:mn,0:Mvol) = oZbs(1:mn,0:Mvol)
-        iRbs(1:mn,0:Mvol) = oRbs(1:mn,0:Mvol)
-        iZbc(1:mn,0:Mvol) = oZbc(1:mn,0:Mvol)
+        iRbc(1:mn, 0:Mvol) = oRbc(1:mn, 0:Mvol)
+        iZbs(1:mn, 0:Mvol) = oZbs(1:mn, 0:Mvol)
+        iRbs(1:mn, 0:Mvol) = oRbs(1:mn, 0:Mvol)
+        iZbc(1:mn, 0:Mvol) = oZbc(1:mn, 0:Mvol)
 
         dBdX%L = .true.
 
         dvolume = dvol(0)
 
-    endif ! end of if( Lcheck.eq.3 ) ;
+    end if ! end of if( Lcheck.eq.3 ) ;
 
 #endif
 
-
 #ifdef DEBUG
-    if( Lcheck.eq.3 .or. Lcheck.eq.4 ) then
+    if (Lcheck .eq. 3 .or. Lcheck .eq. 4) then
 
-   deallocate(oRbc,stat=astat)
+        deallocate (oRbc, stat=astat)
 
+        deallocate (oZbs, stat=astat)
 
-   deallocate(oZbs,stat=astat)
+        deallocate (oRbs, stat=astat)
 
+        deallocate (oZbc, stat=astat)
 
-   deallocate(oRbs,stat=astat)
-
-
-   deallocate(oZbc,stat=astat)
-
-    endif
+    end if
 #endif
 
 end subroutine evaluate_dmupfdx
-
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1943,7 +1801,7 @@ end subroutine evaluate_dmupfdx
 !> @param Ntz
 !> @param LcomputeDerivatives
 subroutine evaluate_dBB(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz, LcomputeDerivatives)
-  use mod_kinds, only: wp => dp
+    use mod_kinds, only: wp => dp
 ! Evaluate the derivative of the square of the magnetic field modulus. Add spectral constraint derivatives if
 ! required.
 
@@ -1958,391 +1816,373 @@ subroutine evaluate_dBB(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, length,
 
 ! MODULES
 ! -------
-  use constants, only : zero, half, one, two
+    use constants, only: zero, half, one, two
 
-  use numerical, only : small
+    use numerical, only: small
 
-  use fileunits, only : ounit
+    use fileunits, only: ounit
 
-  use inputlist, only : Wmacros, Wdfp200, Ntor, Igeometry, Lconstraint, &
-                        gamma, adiabatic, pscale, Lcheck, dRZ, Nvol, &
-                        epsilon, Lrad
+    use inputlist, only: Wmacros, Wdfp200, Ntor, Igeometry, Lconstraint, &
+                         gamma, adiabatic, pscale, Lcheck, dRZ, Nvol, &
+                         epsilon, Lrad
 
-  use cputiming, only : Tdfp200
+    use cputiming, only: Tdfp200
 
-  use allglobal, only : ncpu, myid, cpus, MPI_COMM_SPEC, &
-                        Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, LocalConstraint, &
-                        Mvol, dpflux, &
-                        iRbc, iZbs, iRbs, iZbc, & ! Fourier harmonics of geometry; vector of independent variables, position, is "unpacked" into iRbc,iZbs;
-                        NOTstellsym, &
-                        mn, im, in, mns, &
-                        ijreal, &
-                        efmn, ofmn, cfmn, sfmn, &
-                        evmn, odmn, comn, simn, &
-                        Nt, Nz, &
-                        cosi, sini, & ! FFT workspace
-                        sweight, &
-                        mmpp, &
-                        LGdof, NGdof, NAdof, &
-                        vvolume, dvolume, &
-                        Rij, Zij, sg, guvij, iRij, iZij, dRij, dZij, tRij, tZij, & ! Jacobian and metrics; computed in coords;
-                        dFFdRZ,HdFFdRZ, dBBdmp, &
-                        BBweight, & ! exponential weight on force-imbalance harmonics;
-                        psifactor, &
-                        mn, Iquad, &
-                        dRodR, dRodZ, dZodR, dZodZ, dBdX, &
-                        xoffset
-
+    use allglobal, only: ncpu, myid, cpus, MPI_COMM_SPEC, &
+                         Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, LocalConstraint, &
+                         Mvol, dpflux, &
+                         iRbc, iZbs, iRbs, iZbc, & ! Fourier harmonics of geometry; vector of independent variables, position, is "unpacked" into iRbc,iZbs;
+                         NOTstellsym, &
+                         mn, im, in, mns, &
+                         ijreal, &
+                         efmn, ofmn, cfmn, sfmn, &
+                         evmn, odmn, comn, simn, &
+                         Nt, Nz, &
+                         cosi, sini, & ! FFT workspace
+                         sweight, &
+                         mmpp, &
+                         LGdof, NGdof, NAdof, &
+                         vvolume, dvolume, &
+                         Rij, Zij, sg, guvij, iRij, iZij, dRij, dZij, tRij, tZij, & ! Jacobian and metrics; computed in coords;
+                         dFFdRZ, HdFFdRZ, dBBdmp, &
+                         BBweight, & ! exponential weight on force-imbalance harmonics;
+                         psifactor, &
+                         mn, Iquad, &
+                         dRodR, dRodZ, dZodR, dZodZ, dBdX, &
+                         xoffset
 
 #ifdef OPENMP
-  USE OMP_LIB
+    USE OMP_LIB
 #endif
-  use mpi
-  implicit none
-  integer   :: ierr, astat, ios, nthreads, ithread
-  real(wp)      :: cput, cpui, cpuo=0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
+    use mpi
+    implicit none
+    integer :: ierr, astat, ios, nthreads, ithread
+    real(wp) :: cput, cpui, cpuo = 0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
 
 !------
 
-LOGICAL, intent(in)     :: LComputeDerivatives
-integer                 :: iocons, lvol, ideriv, id, iflag, Lcurvature, innout, issym, irz, ii, ifail, idoc, idof, Ntz
-real(wp)                    :: lss, DDl, MMl
-real(wp)                    :: dAt(1:Ntz,-1:2), dAz(1:Ntz,-1:2), XX(1:Ntz), YY(1:Ntz), dBB(1:Ntz,-1:2), dII(1:Ntz), dLL(1:Ntz)
-real(wp)                    :: dPP(1:Ntz), length(1:Ntz), dRR(1:Ntz,-1:2), dZZ(1:Ntz,-1:2), constraint(1:Ntz)
+    LOGICAL, intent(in) :: LComputeDerivatives
+    integer :: iocons, lvol, ideriv, id, iflag, Lcurvature, innout, issym, irz, ii, ifail, idoc, idof, Ntz
+    real(wp) :: lss, DDl, MMl
+    real(wp) :: dAt(1:Ntz, -1:2), dAz(1:Ntz, -1:2), XX(1:Ntz), YY(1:Ntz), dBB(1:Ntz, -1:2), dII(1:Ntz), dLL(1:Ntz)
+    real(wp) :: dPP(1:Ntz), length(1:Ntz), dRR(1:Ntz, -1:2), dZZ(1:Ntz, -1:2), constraint(1:Ntz)
 #ifdef DEBUG
-integer                 :: isymdiff, ll, NN, ndofgl, pvol
-real(wp)                    :: Fvec(1:Mvol-1), Xdof(1:Mvol-1)
-real(wp),   allocatable     :: oRbc(:,:), oZbs(:,:), oRbs(:,:), oZbc(:,:) ! original geometry;
-real(wp),   allocatable     :: idBB(:,:), iforce(:,:), iposition(:,:)
-character               :: packorunpack
+    integer :: isymdiff, ll, NN, ndofgl, pvol
+    real(wp) :: Fvec(1:Mvol - 1), Xdof(1:Mvol - 1)
+    real(wp), allocatable :: oRbc(:, :), oZbs(:, :), oRbs(:, :), oZbc(:, :) ! original geometry;
+    real(wp), allocatable :: idBB(:, :), iforce(:, :), iposition(:, :)
+    character :: packorunpack
 #endif
 
-do iocons = 0, 1
+    do iocons = 0, 1
 
-    if( lvol.eq.   1 .and. iocons.eq.0 ) cycle ! fixed inner boundary (or coordinate axis); no constraints;
-    if( lvol.eq.Mvol .and. iocons.eq.1 ) cycle ! fixed outer boundary                     ; no constraints;
-
+        if (lvol .eq. 1 .and. iocons .eq. 0) cycle ! fixed inner boundary (or coordinate axis); no constraints;
+        if (lvol .eq. Mvol .and. iocons .eq. 1) cycle ! fixed outer boundary                     ; no constraints;
 
 ! dBBdmp CONSTRUCTION
 ! ===================
 
 ! Evaluate derivatives of B^2 w.r.t mu and pflux
 ! ----------------------------------------------
-    if( Lconstraint.eq.1 .OR. Lconstraint.eq.3 ) then ! first, determine how B^2 varies with mu and dpflux;
+        if (Lconstraint .eq. 1 .OR. Lconstraint .eq. 3) then ! first, determine how B^2 varies with mu and dpflux;
 
-        iflag = 1
-        do ideriv=1, 2
-            !call evaluate_Bsquare(iocons, lvol, dBB, dAt, dAz, XX, YY, length, DDl, MMl, ideriv)! In a subroutine; called somewhere else when semi global constraint
+            iflag = 1
+            do ideriv = 1, 2
+                !call evaluate_Bsquare(iocons, lvol, dBB, dAt, dAz, XX, YY, length, DDl, MMl, ideriv)! In a subroutine; called somewhere else when semi global constraint
 
-   cput = MPI_WTIME()
-   Tdfp200 = Tdfp200 + ( cput-cpuo )
-   call lforce(lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, iflag)
-   cpuo = MPI_WTIME()
+                cput = MPI_WTIME()
+                Tdfp200 = Tdfp200 + (cput - cpuo)
+                call lforce(lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, iflag)
+                cpuo = MPI_WTIME()
 
-        enddo
+            end do
 
-        call tfft(    Nt, Nz, dBB(1:Ntz,1), dBB(1:Ntz,2), & ! derivatives of B^2 wrt mu and dpflux;
-                    mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), ifail )
-        idoc = 0
-        dBBdmp(idoc+1:idoc+mn  ,lvol,iocons,1) = efmn(1:mn) * BBweight(1:mn) ! pressure;
-        dBBdmp(idoc+1:idoc+mn  ,lvol,iocons,2) = cfmn(1:mn) * BBweight(1:mn) ! pressure;
-        idoc = idoc + mn   ! even;
-
-        ! Add spectral constraints; spectral constraints do not depend on mu or dpflux; thus add nothing
-        ! Commented - kept for understanding
-        !if( Igeometry.ge.3 ) then
-        !    idoc = idoc + mn-1 ! oddd;
-        !endif ! end of if( Igeometry.ge.3) ;
-
-        if( NOTstellsym ) then
-            dBBdmp(idoc+1:idoc+mn-1,lvol,iocons,1) = ofmn(2:mn) * BBweight(2:mn) ! pressure;
-            dBBdmp(idoc+1:idoc+mn-1,lvol,iocons,2) = sfmn(2:mn) * BBweight(2:mn) ! pressure;
-            idoc = idoc + mn-1 ! oddd;
+            call tfft(Nt, Nz, dBB(1:Ntz, 1), dBB(1:Ntz, 2), & ! derivatives of B^2 wrt mu and dpflux;
+                      mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), ifail)
+            idoc = 0
+            dBBdmp(idoc + 1:idoc + mn, lvol, iocons, 1) = efmn(1:mn)*BBweight(1:mn) ! pressure;
+            dBBdmp(idoc + 1:idoc + mn, lvol, iocons, 2) = cfmn(1:mn)*BBweight(1:mn) ! pressure;
+            idoc = idoc + mn   ! even;
 
             ! Add spectral constraints; spectral constraints do not depend on mu or dpflux; thus add nothing
             ! Commented - kept for understanding
             !if( Igeometry.ge.3 ) then
-            !    idoc = idoc + mn   ! even;
+            !    idoc = idoc + mn-1 ! oddd;
             !endif ! end of if( Igeometry.ge.3) ;
 
-        endif ! end of if( NOTstellsym) ;
+            if (NOTstellsym) then
+                dBBdmp(idoc + 1:idoc + mn - 1, lvol, iocons, 1) = ofmn(2:mn)*BBweight(2:mn) ! pressure;
+                dBBdmp(idoc + 1:idoc + mn - 1, lvol, iocons, 2) = sfmn(2:mn)*BBweight(2:mn) ! pressure;
+                idoc = idoc + mn - 1 ! oddd;
 
-    endif ! end of if( Lconstraint.eq.1 .OR. Lconstraint.eq.3 ) ;
+                ! Add spectral constraints; spectral constraints do not depend on mu or dpflux; thus add nothing
+                ! Commented - kept for understanding
+                !if( Igeometry.ge.3 ) then
+                !    idoc = idoc + mn   ! even;
+                !endif ! end of if( Igeometry.ge.3) ;
 
+            end if ! end of if( NOTstellsym) ;
 
+        end if ! end of if( Lconstraint.eq.1 .OR. Lconstraint.eq.3 ) ;
 
 ! Evaluate B^2 (no derivatives)
 ! -----------------------------------
-    ideriv = 0; iflag=1
+        ideriv = 0; iflag = 1
 
-
-   cput = MPI_WTIME()
-   Tdfp200 = Tdfp200 + ( cput-cpuo )
-   call lforce(lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, iflag)
-   cpuo = MPI_WTIME()
-
-
+        cput = MPI_WTIME()
+        Tdfp200 = Tdfp200 + (cput - cpuo)
+        call lforce(lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, iflag)
+        cpuo = MPI_WTIME()
 
 ! dFFdRZ CONSTRUCTION
 ! ===================
 
 ! B square contribution
 ! ---------------------
-    ideriv = -1; iflag=0
+        ideriv = -1; iflag = 0
 
+        cput = MPI_WTIME()
+        Tdfp200 = Tdfp200 + (cput - cpuo)
+        call lforce(lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, iflag)
+        cpuo = MPI_WTIME()
 
-   cput = MPI_WTIME()
-   Tdfp200 = Tdfp200 + ( cput-cpuo )
-   call lforce(lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, iflag)
-   cpuo = MPI_WTIME()
+        ! Add derivatives of pressure as well
 
+        if (vvolume(lvol) .lt. small) then
+            write (6, '("dfp200 :      fatal : myid=",i3," ; vvolume(lvol).lt.small ; shall divide by vvolume(lvol)**(gamma+one) ;")') myid
+            call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+            stop "dfp200 : vvolume(lvol).lt.small : shall divide by vvolume(lvol)**(gamma+one)  ;"
+        end if
 
-    ! Add derivatives of pressure as well
-
-   if( vvolume(lvol).lt.small ) then
-     write(6,'("dfp200 :      fatal : myid=",i3," ; vvolume(lvol).lt.small ; shall divide by vvolume(lvol)**(gamma+one) ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "dfp200 : vvolume(lvol).lt.small : shall divide by vvolume(lvol)**(gamma+one)  ;"
-    endif
-
-
-    ! Derivatives of force wrt geometry; In real space.
-    ijreal(1:Ntz) = - adiabatic(lvol) * pscale * gamma * dvolume / vvolume(lvol)**(gamma+one) + dBB(1:Ntz,-1)
-
-
+        ! Derivatives of force wrt geometry; In real space.
+        ijreal(1:Ntz) = -adiabatic(lvol)*pscale*gamma*dvolume/vvolume(lvol)**(gamma + one) + dBB(1:Ntz, -1)
 
 ! Spectral condensation contribution
 ! ----------------------------------
 
-    dLL(1:Ntz) = zero ! either no spectral constraint, or not the appropriate interface;
-    dPP(1:Ntz) = zero ! either no spectral constraint, or not the appropriate interface;
+        dLL(1:Ntz) = zero ! either no spectral constraint, or not the appropriate interface;
+        dPP(1:Ntz) = zero ! either no spectral constraint, or not the appropriate interface;
 
-    if( Igeometry.ge.3 ) then ! spectral constraints are only required in toroidal or extended-cylindrical geometry;
+        if (Igeometry .ge. 3) then ! spectral constraints are only required in toroidal or extended-cylindrical geometry;
 
-        if( innout.eq.1 .and. iocons.eq.1 ) then ! include derivatives of spectral constraints;
+            if (innout .eq. 1 .and. iocons .eq. 1) then ! include derivatives of spectral constraints;
 
 #ifdef DEBUG
 
-   if( abs(DDl).lt.small ) then
-     write(6,'("dfp200 :      fatal : myid=",i3," ; abs(DDl).lt.small ; divide by zero on spectral constraint ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "dfp200 : abs(DDl).lt.small : divide by zero on spectral constraint  ;"
-    endif
+                if (abs(DDl) .lt. small) then
+                    write (6, '("dfp200 :      fatal : myid=",i3," ; abs(DDl).lt.small ; divide by zero on spectral constraint ;")') myid
+                    call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                    stop "dfp200 : abs(DDl).lt.small : divide by zero on spectral constraint  ;"
+                end if
 
 #endif
 
-            if( issym.eq.0 ) then ! take derivatives wrt Rbc and Zbs;
-                if( irz.eq.0 ) then ! take derivative wrt Rbc;
-                    dII(1:Ntz) = - im(ii) * sini(1:Ntz,ii) * ( XX(1:Ntz) - MMl * iRij(1:Ntz,lvol) ) &
-                    - two * ( mmpp(ii) - MMl ) * iRbc(ii,lvol) * ( Rij(1:Ntz,2,0) * iRij(1:Ntz,lvol) + Zij(1:Ntz,2,0) * iZij(1:Ntz,lvol) ) / DDl &
-                    + Rij(1:Ntz,2,0) * ( mmpp(ii) - MMl ) * cosi(1:Ntz,ii)
-                else ! take derivative wrt Zbs;
-                    dII(1:Ntz) = + im(ii) * cosi(1:Ntz,ii) * ( YY(1:Ntz) - MMl * iZij(1:Ntz,lvol) ) &
-                    - two * ( mmpp(ii) - MMl ) * iZbs(ii,lvol) * ( Rij(1:Ntz,2,0) * iRij(1:Ntz,lvol) + Zij(1:Ntz,2,0) * iZij(1:Ntz,lvol) ) / DDl &
-                    + Zij(1:Ntz,2,0) * ( mmpp(ii) - MMl ) * sini(1:Ntz,ii)
-                endif ! end of if( irz.eq.0 ) ;
-            else                  ! take derivatives wrt Rbs and Zbc;
-                if( irz.eq.0 ) then
-                    dII(1:Ntz) = + im(ii) * cosi(1:Ntz,ii) * ( XX(1:Ntz) - MMl * iRij(1:Ntz,lvol) ) &
-                    - two * ( mmpp(ii) - MMl ) * iRbs(ii,lvol) * ( Rij(1:Ntz,2,0) * iRij(1:Ntz,lvol) + Zij(1:Ntz,2,0) * iZij(1:Ntz,lvol) ) / DDl &
-                    + Rij(1:Ntz,2,0) * ( mmpp(ii) - MMl ) * sini(1:Ntz,ii)
-                else
-                    dII(1:Ntz) = - im(ii) * sini(1:Ntz,ii) * ( YY(1:Ntz) - MMl * iZij(1:Ntz,lvol) ) &
-                    - two * ( mmpp(ii) - MMl ) * iZbc(ii,lvol) * ( Rij(1:Ntz,2,0) * iRij(1:Ntz,lvol) + Zij(1:Ntz,2,0) * iZij(1:Ntz,lvol) ) / DDl &
-                    + Zij(1:Ntz,2,0) * ( mmpp(ii) - MMl ) * cosi(1:Ntz,ii)
-                endif !matches ( irz.eq.0 )
-            endif! matches ( issym.eq.0 )
-
-        else
-
-        dII(1:Ntz) = zero ! either no spectral constraint, or not the appropriate interface;
-
-        endif ! end of if( innout.eq.1 .and. iocons.eq.1 ) ;
-
-        constraint(1:Ntz) = + ( dRij(1:Ntz,lvol) * tRij(1:Ntz,lvol-1+iocons) + dZij(1:Ntz,lvol) * tZij(1:Ntz,lvol-1+iocons) ) / length(1:Ntz)
-
-        if( iocons.eq.0 ) then ! take derivatives of constraints at inner boundary;
-
-            if( innout.eq.0 ) then ! derivative wrt inner boundary coefficient;
-                !write(ounit,'("dfp200 : " 10x " : A ; lvol="i3" ; iocons="i2" ; innout="i2" ;")') lvol, iocons, innout
-                if( issym.eq.0 ) then ! take derivatives wrt Rbc and Zbs;
-                    if( irz.eq.0 ) then ; dLL(1:Ntz) = + ( - cosi(1:Ntz,ii) * tRij(1:Ntz,lvol-1) - dRij(1:Ntz,lvol) * im(ii) * sini(1:Ntz,ii) ) / length(1:Ntz) &
-                                                                        + constraint(1:Ntz) * dRij(1:Ntz,lvol) * cosi(1:Ntz,ii) / length(1:Ntz) / length(1:Ntz)
-                    else                ; dLL(1:Ntz) = + ( - sini(1:Ntz,ii) * tZij(1:Ntz,lvol-1) + dZij(1:Ntz,lvol) * im(ii) * cosi(1:Ntz,ii) ) / length(1:Ntz) &
-                                                                        + constraint(1:Ntz) * dZij(1:Ntz,lvol) * sini(1:Ntz,ii) / length(1:Ntz) / length(1:Ntz)
-                    endif
-                else ! if issym.eq.1 ; take derivatives wrt Rbs and Zbc;
-                    if( irz.eq.0 ) then ; dLL(1:Ntz) = + ( - sini(1:Ntz,ii) * tRij(1:Ntz,lvol-1) + dRij(1:Ntz,lvol) * im(ii) * cosi(1:Ntz,ii) ) / length(1:Ntz) &
-                                                                        + constraint(1:Ntz) * dRij(1:Ntz,lvol) * sini(1:Ntz,ii) / length(1:Ntz) / length(1:Ntz)
-                    else                ; dLL(1:Ntz) = + ( - cosi(1:Ntz,ii) * tZij(1:Ntz,lvol-1) - dZij(1:Ntz,lvol) * im(ii) * sini(1:Ntz,ii) ) / length(1:Ntz) &
-                                                                        + constraint(1:Ntz) * dZij(1:Ntz,lvol) * cosi(1:Ntz,ii) / length(1:Ntz) / length(1:Ntz)
-                    endif
-                endif
-            else ! if innout.eq.1 ; derivative wrt outer boundary coefficient;
-                !write(ounit,'("dfp200 : " 10x " : B ; lvol="i3" ; iocons="i2" ; innout="i2" ;")') lvol, iocons, innout
-                if( issym.eq.0 ) then ! take derivatives wrt Rbc and Zbs;
-                    if( irz.eq.0 ) then ; dLL(1:Ntz) = + ( + cosi(1:Ntz,ii) * tRij(1:Ntz,lvol-1)                                              ) / length(1:Ntz) &
-                                                                        - constraint(1:Ntz) * dRij(1:Ntz,lvol) * cosi(1:Ntz,ii) / length(1:Ntz) / length(1:Ntz)
-                    else                ; dLL(1:Ntz) = + ( + sini(1:Ntz,ii) * tZij(1:Ntz,lvol-1)                                              ) / length(1:Ntz) &
-                                                                        - constraint(1:Ntz) * dZij(1:Ntz,lvol) * sini(1:Ntz,ii) / length(1:Ntz) / length(1:Ntz)
-                    endif
-                else ! if issym.eq.1 ; take derivatives wrt Rbs and Zbc;
-                    if( irz.eq.0 ) then ; dLL(1:Ntz) = + ( + sini(1:Ntz,ii) * tRij(1:Ntz,lvol-1)                                              ) / length(1:Ntz) &
-                                                                        - constraint(1:Ntz) * dRij(1:Ntz,lvol) * sini(1:Ntz,ii) / length(1:Ntz) / length(1:Ntz)
-                    else                ; dLL(1:Ntz) = + ( + cosi(1:Ntz,ii) * tZij(1:Ntz,lvol-1)                                              ) / length(1:Ntz) &
-                                                                        - constraint(1:Ntz) * dZij(1:Ntz,lvol) * cosi(1:Ntz,ii) / length(1:Ntz) / length(1:Ntz)
-                    endif
-                endif
-            endif
-
-        else ! if iocons.eq.1 ; take derivatives of constraints at outer boundary;
-
-            if( innout.eq.0 ) then ! derivative wrt inner boundary coefficient;
-                !write(ounit,'("dfp200 : " 10x " : C ; lvol="i3" ; iocons="i2" ; innout="i2" ;")') lvol, iocons, innout
-                if( issym.eq.0 ) then ! take derivatives wrt Rbc and Zbs;
-                    if( irz.eq.0 ) then ; dLL(1:Ntz) = + ( - cosi(1:Ntz,ii) * tRij(1:Ntz,lvol  )                                              ) / length(1:Ntz) &
-                                                                        + constraint(1:Ntz) * dRij(1:Ntz,lvol) * cosi(1:Ntz,ii) / length(1:Ntz) / length(1:Ntz)
-                    else                ; dLL(1:Ntz) = + ( - sini(1:Ntz,ii) * tZij(1:Ntz,lvol  )                                              ) / length(1:Ntz) &
-                                                                        + constraint(1:Ntz) * dZij(1:Ntz,lvol) * sini(1:Ntz,ii) / length(1:Ntz) / length(1:Ntz)
-                    endif
+                if (issym .eq. 0) then ! take derivatives wrt Rbc and Zbs;
+                    if (irz .eq. 0) then ! take derivative wrt Rbc;
+                        dII(1:Ntz) = -im(ii)*sini(1:Ntz, ii)*(XX(1:Ntz) - MMl*iRij(1:Ntz, lvol)) &
+                                     - two*(mmpp(ii) - MMl)*iRbc(ii, lvol)*(Rij(1:Ntz, 2, 0)*iRij(1:Ntz, lvol) + Zij(1:Ntz, 2, 0)*iZij(1:Ntz, lvol))/DDl &
+                                     + Rij(1:Ntz, 2, 0)*(mmpp(ii) - MMl)*cosi(1:Ntz, ii)
+                    else ! take derivative wrt Zbs;
+                        dII(1:Ntz) = +im(ii)*cosi(1:Ntz, ii)*(YY(1:Ntz) - MMl*iZij(1:Ntz, lvol)) &
+                                     - two*(mmpp(ii) - MMl)*iZbs(ii, lvol)*(Rij(1:Ntz, 2, 0)*iRij(1:Ntz, lvol) + Zij(1:Ntz, 2, 0)*iZij(1:Ntz, lvol))/DDl &
+                                     + Zij(1:Ntz, 2, 0)*(mmpp(ii) - MMl)*sini(1:Ntz, ii)
+                    end if ! end of if( irz.eq.0 ) ;
                 else                  ! take derivatives wrt Rbs and Zbc;
-                    if( irz.eq.0 ) then ; dLL(1:Ntz) = + ( - sini(1:Ntz,ii) * tRij(1:Ntz,lvol  )                                              ) / length(1:Ntz) &
-                                                                        + constraint(1:Ntz) * dRij(1:Ntz,lvol) * sini(1:Ntz,ii) / length(1:Ntz) / length(1:Ntz)
-                    else                ; dLL(1:Ntz) = + ( - cosi(1:Ntz,ii) * tZij(1:Ntz,lvol  )                                              ) / length(1:Ntz) &
-                                                                        + constraint(1:Ntz) * dZij(1:Ntz,lvol) * cosi(1:Ntz,ii) / length(1:Ntz) / length(1:Ntz)
-                    endif
-                endif
-            else ! if innout.eq.1 ; derivative wrt outer boundary coefficient;
-                !#ifdef AXIS
-                if( Igeometry.eq.3 .and. lvol.eq.1 ) then ! need to accomodate derivatives of coordinate axis;
-                    !#else
-                    !            if( Igeometry.eq.3 .and. lvol.lt.1 ) then ! need to accomodate derivatives of coordinate axis;
-                    !#endif
-                    !write(ounit,'("dfp200 : " 10x " : dRodR(1: ,0,"i2")=",99es11.3)') ii, dRodR(1:20,0,ii)
-                    !write(ounit,'("dfp200 : " 10x " : dRodR(1: ,1,"i2")=",99es11.3)') ii, dRodR(1:20,1,ii)
-                    !write(ounit,'("dfp200 : " 10x " : dRodZ(1: ,0,"i2")=",99es11.3)') ii, dRodZ(1:20,0,ii)
-                    !write(ounit,'("dfp200 : " 10x " : dRodZ(1: ,1,"i2")=",99es11.3)') ii, dRodZ(1:20,1,ii)
-                    !write(ounit,'("dfp200 : " 10x " : dZodR(1: ,0,"i2")=",99es11.3)') ii, dZodR(1:20,0,ii)
-                    !write(ounit,'("dfp200 : " 10x " : dZodR(1: ,1,"i2")=",99es11.3)') ii, dZodR(1:20,1,ii)
-                    !write(ounit,'("dfp200 : " 10x " : dZodZ(1: ,0,"i2")=",99es11.3)') ii, dZodZ(1:20,0,ii)
-                    !write(ounit,'("dfp200 : " 10x " : dZodZ(1: ,1,"i2")=",99es11.3)') ii, dZodZ(1:20,1,ii)
-                    if( issym.eq.0 ) then ! take derivatives wrt Rbc and Zbs;
-                        if( irz.eq.0 ) then ; dLL(1:Ntz) = ( &   ! d/dRbc ;
-                                                            + ( cosi(1:Ntz,ii) - dRodR(1:Ntz,0,ii) ) * tRij(1:Ntz,lvol) - dRij(1:Ntz,lvol) * im(ii) * sini(1:Ntz,ii) &
-                                                            + (                - dZodR(1:Ntz,0,ii) ) * tZij(1:Ntz,lvol) &
-                                                            - constraint(1:Ntz) &
-                                                            * ( dRij(1:Ntz,lvol) * ( cosi(1:Ntz,ii) - dRodR(1:Ntz,0,ii) )   &
-                                                            + dZij(1:Ntz,lvol) * (                - dZodR(1:Ntz,0,ii) ) ) / length(1:Ntz) ) / length(1:Ntz)
-                        else                ; dLL(1:Ntz) = ( &   ! d/dZbs ;
-                                                            + (                - dRodZ(1:Ntz,1,ii) ) * tRij(1:Ntz,lvol) + dZij(1:Ntz,lvol) * im(ii) * cosi(1:Ntz,ii) &
-                                                            + ( sini(1:Ntz,ii) - dZodZ(1:Ntz,1,ii) ) * tZij(1:Ntz,lvol) &
-                                                            - constraint(1:Ntz) &
-                                                            * ( dRij(1:Ntz,lvol) * (                - dRodZ(1:Ntz,1,ii) )   &
-                                                            + dZij(1:Ntz,lvol) * ( sini(1:Ntz,ii) - dZodZ(1:Ntz,1,ii) ) ) / length(1:Ntz) ) / length(1:Ntz)
-                        endif ! end of if( irz.eq.0 ) ;
+                    if (irz .eq. 0) then
+                        dII(1:Ntz) = +im(ii)*cosi(1:Ntz, ii)*(XX(1:Ntz) - MMl*iRij(1:Ntz, lvol)) &
+                                     - two*(mmpp(ii) - MMl)*iRbs(ii, lvol)*(Rij(1:Ntz, 2, 0)*iRij(1:Ntz, lvol) + Zij(1:Ntz, 2, 0)*iZij(1:Ntz, lvol))/DDl &
+                                     + Rij(1:Ntz, 2, 0)*(mmpp(ii) - MMl)*sini(1:Ntz, ii)
                     else
-                        if( irz.eq.0 ) then ; dLL(1:Ntz) =    ( &   ! d/dRbs ;
-                                                            + ( sini(1:Ntz,ii) - dRodR(1:Ntz,1,ii) ) * tRij(1:Ntz,lvol) + dRij(1:Ntz,lvol) * im(ii) * cosi(1:Ntz,ii)     &
-                                                            + (                - dZodR(1:Ntz,1,ii) ) * tZij(1:Ntz,lvol)                                                 &
-                                                            - constraint(1:Ntz)                                                                                         &
-                                                            * (   dRij(1:Ntz,lvol) * ( sini(1:Ntz,ii)   - dRodR(1:Ntz,1,ii) )                                              &
-                                                                + dZij(1:Ntz,lvol) * (                  - dZodR(1:Ntz,1,ii) ) ) / length(1:Ntz) ) / length(1:Ntz)
-                        else                ; dLL(1:Ntz) =     ( &   ! d/dZbs ;
-                                                            + (                - dRodZ(1:Ntz,0,ii) ) * tRij(1:Ntz,lvol) - dZij(1:Ntz,lvol) * im(ii) * sini(1:Ntz,ii) &
-                                                            + ( cosi(1:Ntz,ii) - dZodZ(1:Ntz,0,ii) ) * tZij(1:Ntz,lvol) &
-                                                            - constraint(1:Ntz) &
-                                                            * ( dRij(1:Ntz,lvol) * (                - dRodZ(1:Ntz,0,ii) )   &
-                                                            + dZij(1:Ntz,lvol) * ( cosi(1:Ntz,ii) - dZodZ(1:Ntz,0,ii) ) ) / length(1:Ntz) ) / length(1:Ntz)
-                        endif ! end of if( irz.eq.0 ) ;
-                    endif
-                else
-                    if( issym.eq.0 ) then ! take derivatives wrt Rbc and Zbs;
-                        if( irz.eq.0 ) then ; dLL(1:Ntz) = + ( + cosi(1:Ntz,ii) * tRij(1:Ntz,lvol  ) - dRij(1:Ntz,lvol) * im(ii) * sini(1:Ntz,ii) ) / length(1:Ntz) &
-                                                                            - constraint(1:Ntz) * dRij(1:Ntz,lvol) * cosi(1:Ntz,ii) / length(1:Ntz) / length(1:Ntz)
-                        else                ; dLL(1:Ntz) = + ( + sini(1:Ntz,ii) * tZij(1:Ntz,lvol  ) + dZij(1:Ntz,lvol) * im(ii) * cosi(1:Ntz,ii) ) / length(1:Ntz) &
-                                                                            - constraint(1:Ntz) * dZij(1:Ntz,lvol) * sini(1:Ntz,ii) / length(1:Ntz) / length(1:Ntz)
-                        endif
+                        dII(1:Ntz) = -im(ii)*sini(1:Ntz, ii)*(YY(1:Ntz) - MMl*iZij(1:Ntz, lvol)) &
+                                     - two*(mmpp(ii) - MMl)*iZbc(ii, lvol)*(Rij(1:Ntz, 2, 0)*iRij(1:Ntz, lvol) + Zij(1:Ntz, 2, 0)*iZij(1:Ntz, lvol))/DDl &
+                                     + Zij(1:Ntz, 2, 0)*(mmpp(ii) - MMl)*cosi(1:Ntz, ii)
+                    end if !matches ( irz.eq.0 )
+                end if! matches ( issym.eq.0 )
+
+            else
+
+                dII(1:Ntz) = zero ! either no spectral constraint, or not the appropriate interface;
+
+            end if ! end of if( innout.eq.1 .and. iocons.eq.1 ) ;
+
+            constraint(1:Ntz) = +(dRij(1:Ntz, lvol)*tRij(1:Ntz, lvol - 1 + iocons) + dZij(1:Ntz, lvol)*tZij(1:Ntz, lvol - 1 + iocons))/length(1:Ntz)
+
+            if (iocons .eq. 0) then ! take derivatives of constraints at inner boundary;
+
+                if (innout .eq. 0) then ! derivative wrt inner boundary coefficient;
+                    !write(ounit,'("dfp200 : " 10x " : A ; lvol="i3" ; iocons="i2" ; innout="i2" ;")') lvol, iocons, innout
+                    if (issym .eq. 0) then ! take derivatives wrt Rbc and Zbs;
+                        if (irz .eq. 0) then; dLL(1:Ntz) = +(-cosi(1:Ntz, ii)*tRij(1:Ntz, lvol - 1) - dRij(1:Ntz, lvol)*im(ii)*sini(1:Ntz, ii))/length(1:Ntz) &
+ + constraint(1:Ntz)*dRij(1:Ntz, lvol)*cosi(1:Ntz, ii)/length(1:Ntz)/length(1:Ntz)
+                        else; dLL(1:Ntz) = +(-sini(1:Ntz, ii)*tZij(1:Ntz, lvol - 1) + dZij(1:Ntz, lvol)*im(ii)*cosi(1:Ntz, ii))/length(1:Ntz) &
+ + constraint(1:Ntz)*dZij(1:Ntz, lvol)*sini(1:Ntz, ii)/length(1:Ntz)/length(1:Ntz)
+                        end if
+                    else ! if issym.eq.1 ; take derivatives wrt Rbs and Zbc;
+                        if (irz .eq. 0) then; dLL(1:Ntz) = +(-sini(1:Ntz, ii)*tRij(1:Ntz, lvol - 1) + dRij(1:Ntz, lvol)*im(ii)*cosi(1:Ntz, ii))/length(1:Ntz) &
+ + constraint(1:Ntz)*dRij(1:Ntz, lvol)*sini(1:Ntz, ii)/length(1:Ntz)/length(1:Ntz)
+                        else; dLL(1:Ntz) = +(-cosi(1:Ntz, ii)*tZij(1:Ntz, lvol - 1) - dZij(1:Ntz, lvol)*im(ii)*sini(1:Ntz, ii))/length(1:Ntz) &
+ + constraint(1:Ntz)*dZij(1:Ntz, lvol)*cosi(1:Ntz, ii)/length(1:Ntz)/length(1:Ntz)
+                        end if
+                    end if
+                else ! if innout.eq.1 ; derivative wrt outer boundary coefficient;
+                    !write(ounit,'("dfp200 : " 10x " : B ; lvol="i3" ; iocons="i2" ; innout="i2" ;")') lvol, iocons, innout
+                    if (issym .eq. 0) then ! take derivatives wrt Rbc and Zbs;
+                        if (irz .eq. 0) then; dLL(1:Ntz) = +(+cosi(1:Ntz, ii)*tRij(1:Ntz, lvol - 1))/length(1:Ntz) &
+ - constraint(1:Ntz)*dRij(1:Ntz, lvol)*cosi(1:Ntz, ii)/length(1:Ntz)/length(1:Ntz)
+                        else; dLL(1:Ntz) = +(+sini(1:Ntz, ii)*tZij(1:Ntz, lvol - 1))/length(1:Ntz) &
+ - constraint(1:Ntz)*dZij(1:Ntz, lvol)*sini(1:Ntz, ii)/length(1:Ntz)/length(1:Ntz)
+                        end if
+                    else ! if issym.eq.1 ; take derivatives wrt Rbs and Zbc;
+                        if (irz .eq. 0) then; dLL(1:Ntz) = +(+sini(1:Ntz, ii)*tRij(1:Ntz, lvol - 1))/length(1:Ntz) &
+ - constraint(1:Ntz)*dRij(1:Ntz, lvol)*sini(1:Ntz, ii)/length(1:Ntz)/length(1:Ntz)
+                        else; dLL(1:Ntz) = +(+cosi(1:Ntz, ii)*tZij(1:Ntz, lvol - 1))/length(1:Ntz) &
+ - constraint(1:Ntz)*dZij(1:Ntz, lvol)*cosi(1:Ntz, ii)/length(1:Ntz)/length(1:Ntz)
+                        end if
+                    end if
+                end if
+
+            else ! if iocons.eq.1 ; take derivatives of constraints at outer boundary;
+
+                if (innout .eq. 0) then ! derivative wrt inner boundary coefficient;
+                    !write(ounit,'("dfp200 : " 10x " : C ; lvol="i3" ; iocons="i2" ; innout="i2" ;")') lvol, iocons, innout
+                    if (issym .eq. 0) then ! take derivatives wrt Rbc and Zbs;
+                        if (irz .eq. 0) then; dLL(1:Ntz) = +(-cosi(1:Ntz, ii)*tRij(1:Ntz, lvol))/length(1:Ntz) &
+ + constraint(1:Ntz)*dRij(1:Ntz, lvol)*cosi(1:Ntz, ii)/length(1:Ntz)/length(1:Ntz)
+                        else; dLL(1:Ntz) = +(-sini(1:Ntz, ii)*tZij(1:Ntz, lvol))/length(1:Ntz) &
+ + constraint(1:Ntz)*dZij(1:Ntz, lvol)*sini(1:Ntz, ii)/length(1:Ntz)/length(1:Ntz)
+                        end if
                     else                  ! take derivatives wrt Rbs and Zbc;
-                        if( irz.eq.0 ) then ; dLL(1:Ntz) = + ( + sini(1:Ntz,ii) * tRij(1:Ntz,lvol  ) + dRij(1:Ntz,lvol) * im(ii) * cosi(1:Ntz,ii) ) / length(1:Ntz) &
-                                                                            - constraint(1:Ntz) * dRij(1:Ntz,lvol) * sini(1:Ntz,ii) / length(1:Ntz) / length(1:Ntz)
-                        else                ; dLL(1:Ntz) = + ( + cosi(1:Ntz,ii) * tZij(1:Ntz,lvol  ) - dZij(1:Ntz,lvol) * im(ii) * sini(1:Ntz,ii) ) / length(1:Ntz) &
-                                                                            - constraint(1:Ntz) * dZij(1:Ntz,lvol) * cosi(1:Ntz,ii) / length(1:Ntz) / length(1:Ntz)
-                        endif ! end of if( irz.eq.0 ) ;
-                    endif ! end of if( issym.eq.0 ) ;
-                endif  ! end of if( Igeometry.eq.3 .and. lvol.eq.1 ) ;
-            endif ! end of if( innout.eq.0 ) ;
+                        if (irz .eq. 0) then; dLL(1:Ntz) = +(-sini(1:Ntz, ii)*tRij(1:Ntz, lvol))/length(1:Ntz) &
+ + constraint(1:Ntz)*dRij(1:Ntz, lvol)*sini(1:Ntz, ii)/length(1:Ntz)/length(1:Ntz)
+                        else; dLL(1:Ntz) = +(-cosi(1:Ntz, ii)*tZij(1:Ntz, lvol))/length(1:Ntz) &
+ + constraint(1:Ntz)*dZij(1:Ntz, lvol)*cosi(1:Ntz, ii)/length(1:Ntz)/length(1:Ntz)
+                        end if
+                    end if
+                else ! if innout.eq.1 ; derivative wrt outer boundary coefficient;
+                    !#ifdef AXIS
+                    if (Igeometry .eq. 3 .and. lvol .eq. 1) then ! need to accomodate derivatives of coordinate axis;
+                        !#else
+                        !            if( Igeometry.eq.3 .and. lvol.lt.1 ) then ! need to accomodate derivatives of coordinate axis;
+                        !#endif
+                        !write(ounit,'("dfp200 : " 10x " : dRodR(1: ,0,"i2")=",99es11.3)') ii, dRodR(1:20,0,ii)
+                        !write(ounit,'("dfp200 : " 10x " : dRodR(1: ,1,"i2")=",99es11.3)') ii, dRodR(1:20,1,ii)
+                        !write(ounit,'("dfp200 : " 10x " : dRodZ(1: ,0,"i2")=",99es11.3)') ii, dRodZ(1:20,0,ii)
+                        !write(ounit,'("dfp200 : " 10x " : dRodZ(1: ,1,"i2")=",99es11.3)') ii, dRodZ(1:20,1,ii)
+                        !write(ounit,'("dfp200 : " 10x " : dZodR(1: ,0,"i2")=",99es11.3)') ii, dZodR(1:20,0,ii)
+                        !write(ounit,'("dfp200 : " 10x " : dZodR(1: ,1,"i2")=",99es11.3)') ii, dZodR(1:20,1,ii)
+                        !write(ounit,'("dfp200 : " 10x " : dZodZ(1: ,0,"i2")=",99es11.3)') ii, dZodZ(1:20,0,ii)
+                        !write(ounit,'("dfp200 : " 10x " : dZodZ(1: ,1,"i2")=",99es11.3)') ii, dZodZ(1:20,1,ii)
+                        if (issym .eq. 0) then ! take derivatives wrt Rbc and Zbs;
+                            if (irz .eq. 0) then; dLL(1:Ntz) = ( &   ! d/dRbc ;
+ +(cosi(1:Ntz, ii) - dRodR(1:Ntz, 0, ii))*tRij(1:Ntz, lvol) - dRij(1:Ntz, lvol)*im(ii)*sini(1:Ntz, ii) &
+ + (-dZodR(1:Ntz, 0, ii))*tZij(1:Ntz, lvol) &
+ - constraint(1:Ntz) &
+ *(dRij(1:Ntz, lvol)*(cosi(1:Ntz, ii) - dRodR(1:Ntz, 0, ii)) &
+ + dZij(1:Ntz, lvol)*(-dZodR(1:Ntz, 0, ii)))/length(1:Ntz))/length(1:Ntz)
+                            else; dLL(1:Ntz) = ( &   ! d/dZbs ;
+ +(-dRodZ(1:Ntz, 1, ii))*tRij(1:Ntz, lvol) + dZij(1:Ntz, lvol)*im(ii)*cosi(1:Ntz, ii) &
+ + (sini(1:Ntz, ii) - dZodZ(1:Ntz, 1, ii))*tZij(1:Ntz, lvol) &
+ - constraint(1:Ntz) &
+ *(dRij(1:Ntz, lvol)*(-dRodZ(1:Ntz, 1, ii)) &
+ + dZij(1:Ntz, lvol)*(sini(1:Ntz, ii) - dZodZ(1:Ntz, 1, ii)))/length(1:Ntz))/length(1:Ntz)
+                            end if ! end of if( irz.eq.0 ) ;
+                        else
+                            if (irz .eq. 0) then; dLL(1:Ntz) = ( &   ! d/dRbs ;
+ +(sini(1:Ntz, ii) - dRodR(1:Ntz, 1, ii))*tRij(1:Ntz, lvol) + dRij(1:Ntz, lvol)*im(ii)*cosi(1:Ntz, ii) &
+ + (-dZodR(1:Ntz, 1, ii))*tZij(1:Ntz, lvol) &
+ - constraint(1:Ntz) &
+ *(dRij(1:Ntz, lvol)*(sini(1:Ntz, ii) - dRodR(1:Ntz, 1, ii)) &
+ + dZij(1:Ntz, lvol)*(-dZodR(1:Ntz, 1, ii)))/length(1:Ntz))/length(1:Ntz)
+                            else; dLL(1:Ntz) = ( &   ! d/dZbs ;
+ +(-dRodZ(1:Ntz, 0, ii))*tRij(1:Ntz, lvol) - dZij(1:Ntz, lvol)*im(ii)*sini(1:Ntz, ii) &
+ + (cosi(1:Ntz, ii) - dZodZ(1:Ntz, 0, ii))*tZij(1:Ntz, lvol) &
+ - constraint(1:Ntz) &
+ *(dRij(1:Ntz, lvol)*(-dRodZ(1:Ntz, 0, ii)) &
+ + dZij(1:Ntz, lvol)*(cosi(1:Ntz, ii) - dZodZ(1:Ntz, 0, ii)))/length(1:Ntz))/length(1:Ntz)
+                            end if ! end of if( irz.eq.0 ) ;
+                        end if
+                    else
+                        if (issym .eq. 0) then ! take derivatives wrt Rbc and Zbs;
+                            if (irz .eq. 0) then; dLL(1:Ntz) = +(+cosi(1:Ntz, ii)*tRij(1:Ntz, lvol) - dRij(1:Ntz, lvol)*im(ii)*sini(1:Ntz, ii))/length(1:Ntz) &
+ - constraint(1:Ntz)*dRij(1:Ntz, lvol)*cosi(1:Ntz, ii)/length(1:Ntz)/length(1:Ntz)
+                            else; dLL(1:Ntz) = +(+sini(1:Ntz, ii)*tZij(1:Ntz, lvol) + dZij(1:Ntz, lvol)*im(ii)*cosi(1:Ntz, ii))/length(1:Ntz) &
+ - constraint(1:Ntz)*dZij(1:Ntz, lvol)*sini(1:Ntz, ii)/length(1:Ntz)/length(1:Ntz)
+                            end if
+                        else                  ! take derivatives wrt Rbs and Zbc;
+                            if (irz .eq. 0) then; dLL(1:Ntz) = +(+sini(1:Ntz, ii)*tRij(1:Ntz, lvol) + dRij(1:Ntz, lvol)*im(ii)*cosi(1:Ntz, ii))/length(1:Ntz) &
+ - constraint(1:Ntz)*dRij(1:Ntz, lvol)*sini(1:Ntz, ii)/length(1:Ntz)/length(1:Ntz)
+                            else; dLL(1:Ntz) = +(+cosi(1:Ntz, ii)*tZij(1:Ntz, lvol) - dZij(1:Ntz, lvol)*im(ii)*sini(1:Ntz, ii))/length(1:Ntz) &
+ - constraint(1:Ntz)*dZij(1:Ntz, lvol)*cosi(1:Ntz, ii)/length(1:Ntz)/length(1:Ntz)
+                            end if ! end of if( irz.eq.0 ) ;
+                        end if ! end of if( issym.eq.0 ) ;
+                    end if  ! end of if( Igeometry.eq.3 .and. lvol.eq.1 ) ;
+                end if ! end of if( innout.eq.0 ) ;
 
-        endif ! end of if( iocons.eq.0 ) ;
+            end if ! end of if( iocons.eq.0 ) ;
 
-    endif ! end of if( Igeometry.ge.3 ) ;
+        end if ! end of if( Igeometry.ge.3 ) ;
 
-    ! Map to Fourier space
-    call tfft(  Nt, Nz, ijreal(1:Ntz), dII(1:Ntz), & ! recall that ijreal contains derivatives of pressure term;
-                mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), ifail )
+        ! Map to Fourier space
+        call tfft(Nt, Nz, ijreal(1:Ntz), dII(1:Ntz), & ! recall that ijreal contains derivatives of pressure term;
+                  mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), ifail)
 
+        call tfft(Nt, Nz, dPP(1:Ntz), dLL(1:Ntz), &
+                  mn, im(1:mn), in(1:mn), evmn(1:mn), odmn(1:mn), comn(1:mn), simn(1:mn), ifail) ! evmn and odmn are available as workspace;
 
-    call tfft(  Nt, Nz, dPP(1:Ntz)   , dLL(1:Ntz), &
-                mn, im(1:mn), in(1:mn), evmn(1:mn), odmn(1:mn), comn(1:mn), simn(1:mn), ifail ) ! evmn and odmn are available as workspace;
+        if (lvol - 1 + innout .gt. Mvol) then
+            write (6, '("dfp200 :      fatal : myid=",i3," ; lvol-1+innout.gt.Mvol ; psifactor needs attention ;")') myid
+            call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+            stop "dfp200 : lvol-1+innout.gt.Mvol : psifactor needs attention  ;"
+        end if
 
+        idoc = 0
 
+        ! Plasma and magnetic pressure;
+        ; dFFdRZ(idoc + 1:idoc + mn, iocons, idof, innout, lvol) = +efmn(1:mn)*psifactor(ii, lvol - 1 + innout)*BBweight(1:mn)
 
-   if( lvol-1+innout.gt.Mvol ) then
-     write(6,'("dfp200 :      fatal : myid=",i3," ; lvol-1+innout.gt.Mvol ; psifactor needs attention ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "dfp200 : lvol-1+innout.gt.Mvol : psifactor needs attention  ;"
-    endif
+        idoc = idoc + mn   ! even;
+        if (Igeometry .ge. 3) then ! Add spectral constraints;
+            dFFdRZ(idoc + 1:idoc + mn - 1, iocons, idof, innout, lvol) = -sfmn(2:mn)*psifactor(ii, lvol - 1 + innout)*epsilon & ! spectral condensation;
+                                                                         - simn(2:mn)*psifactor(ii, lvol - 1 + innout)*sweight(lvol)   ! poloidal length constraint;
+            ! if( Ntor.gt.0 ) then
+            !  dFFdRZ(idoc+1:idoc+Ntor  ,iocons,idof,innout,lvol) = + odmn(2:Ntor+1) * psifactor(ii,lvol-1+innout) * apsilon
+            ! endif
+            idoc = idoc + mn - 1 ! odd;
+        end if ! end of if( Igeometry.ge.3) ;
 
+        if (NOTstellsym) then ! Construct non-stellarator symmetric terms
 
+            ! Plasma and magnetic pressure;
+            ; dFFdRZ(idoc + 1:idoc + mn - 1, iocons, idof, innout, lvol) = +ofmn(2:mn)*psifactor(ii, lvol - 1 + innout)*BBweight(2:mn)
 
-    idoc = 0
-
-    ! Plasma and magnetic pressure;
-    ;   dFFdRZ(idoc+1:idoc+mn    ,iocons,idof,innout,lvol) = + efmn(1:mn) * psifactor(ii,lvol-1+innout) * BBweight(1:mn)
-
-    idoc = idoc + mn   ! even;
-    if( Igeometry.ge.3 ) then ! Add spectral constraints;
-        dFFdRZ(idoc+1:idoc+mn-1  ,iocons,idof,innout,lvol) = - sfmn(2:mn) * psifactor(ii,lvol-1+innout) * epsilon       & ! spectral condensation;
-                                                             - simn(2:mn) * psifactor(ii,lvol-1+innout) * sweight(lvol)   ! poloidal length constraint;
-    ! if( Ntor.gt.0 ) then
-    !  dFFdRZ(idoc+1:idoc+Ntor  ,iocons,idof,innout,lvol) = + odmn(2:Ntor+1) * psifactor(ii,lvol-1+innout) * apsilon
-    ! endif
-      idoc = idoc + mn-1 ! odd;
-    endif ! end of if( Igeometry.ge.3) ;
-
-    if( NOTstellsym ) then ! Construct non-stellarator symmetric terms
-
-    ! Plasma and magnetic pressure;
-    ;       dFFdRZ(idoc+1:idoc+mn-1  ,iocons,idof,innout,lvol) = + ofmn(2:mn) * psifactor(ii,lvol-1+innout) * BBweight(2:mn)
-
-        idoc = idoc + mn-1 ! odd;
-        if( Igeometry.ge.3 ) then ! Add spectral constraints;
-            dFFdRZ(idoc+1:idoc+mn    ,iocons,idof,innout,lvol) = - cfmn(1:mn) * psifactor(ii,lvol-1+innout) * epsilon       & ! spectral condensation;
-                                                                 - comn(1:mn) * psifactor(ii,lvol-1+innout) * sweight(lvol)   ! poloidal length constraint;
-            !if( Ntor.ge.0 ) then
+            idoc = idoc + mn - 1 ! odd;
+            if (Igeometry .ge. 3) then ! Add spectral constraints;
+                dFFdRZ(idoc + 1:idoc + mn, iocons, idof, innout, lvol) = -cfmn(1:mn)*psifactor(ii, lvol - 1 + innout)*epsilon & ! spectral condensation;
+                                                                         - comn(1:mn)*psifactor(ii, lvol - 1 + innout)*sweight(lvol)   ! poloidal length constraint;
+                !if( Ntor.ge.0 ) then
                 ! dFFdRZ(idoc+1:idoc+Ntor+1,iocons,idof,innout,lvol) = + evmn(1:Ntor+1) * psifactor(ii,lvol-1+innout) * apsilon ! poloidal origin      ;
-            !endif
-            idoc = idoc + mn   ! even;
-        endif ! end of if( Igeometry.ge.3) ;
+                !endif
+                idoc = idoc + mn   ! even;
+            end if ! end of if( Igeometry.ge.3) ;
 
-    endif ! end of if( NOTstellsym) ;
+        end if ! end of if( NOTstellsym) ;
 
 #ifdef DEBUG
 
-   if( idoc.ne.LGdof ) then
-     write(6,'("dfp200 :      fatal : myid=",i3," ; idoc.ne.LGdof ; counting error ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "dfp200 : idoc.ne.LGdof : counting error  ;"
-    endif
+        if (idoc .ne. LGdof) then
+            write (6, '("dfp200 :      fatal : myid=",i3," ; idoc.ne.LGdof ; counting error ;")') myid
+            call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+            stop "dfp200 : idoc.ne.LGdof : counting error  ;"
+        end if
 
 #endif
 
-enddo ! end of do iocons;
+    end do ! end of do iocons;
 
 end subroutine evaluate_dBB
 
-
 subroutine hessian_dFFdRZ(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
-  use mod_kinds, only: wp => dp
+    use mod_kinds, only: wp => dp
 ! Evaluate the derivative of the square of the magnetic field modulus. Add spectral constraint derivatives if
 ! required.
 
@@ -2357,178 +2197,165 @@ subroutine hessian_dFFdRZ(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, lengt
 
 ! MODULES
 ! -------
-  use constants, only : zero, half, one, two
+    use constants, only: zero, half, one, two
 
-  use numerical, only : small
+    use numerical, only: small
 
-  use fileunits, only : ounit
+    use fileunits, only: ounit
 
-  use inputlist, only : Wmacros, Wdfp200, Ntor, Igeometry, Lconstraint,&
-                        gamma, adiabatic, pscale, Lcheck, dRZ, Nvol, &
-                        epsilon, Lrad
+    use inputlist, only: Wmacros, Wdfp200, Ntor, Igeometry, Lconstraint, &
+                         gamma, adiabatic, pscale, Lcheck, dRZ, Nvol, &
+                         epsilon, Lrad
 
-  use cputiming, only : Tdfp200
+    use cputiming, only: Tdfp200
 
-  use allglobal, only : ncpu, myid, cpus, &
-                        Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, LocalConstraint, MPI_COMM_SPEC, &
-                        Mvol, dpflux, &
-                        iRbc, iZbs, iRbs, iZbc, & ! Fourier harmonics of geometry; vector of independent variables, position, is "unpacked" into iRbc,iZbs;
-                        NOTstellsym, &
-                        mn, im, in, mns, &
-                        ijreal, &
-                        !hijreal, hijmn,&
-                        efmn, ofmn, cfmn, sfmn, &
-                        evmn, odmn, comn, simn, &
-                        Nt, Nz, &
-                        cosi, sini, & ! FFT workspace
-                        sweight, &
-                        mmpp, &
-                        LGdof, NGdof, NAdof, &
-                        vvolume, dvolume, &
-                        Rij, Zij, sg, guvij, iRij, iZij, dRij, dZij, tRij, tZij, & ! Jacobian and metrics; computed in coords;
-                        dFFdRZ, dBBdmp, HdFFdRZ, &
-                        BBweight, & ! exponential weight on force-imbalance harmonics;
-                        psifactor, &
-                        mn, Iquad, &
-                        dRodR, dRodZ, dZodR, dZodZ, dBdX, &
-                        xoffset
-
+    use allglobal, only: ncpu, myid, cpus, &
+                         Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, LocalConstraint, MPI_COMM_SPEC, &
+                         Mvol, dpflux, &
+                         iRbc, iZbs, iRbs, iZbc, & ! Fourier harmonics of geometry; vector of independent variables, position, is "unpacked" into iRbc,iZbs;
+                         NOTstellsym, &
+                         mn, im, in, mns, &
+                         ijreal, &
+                         !hijreal, hijmn,&
+                         efmn, ofmn, cfmn, sfmn, &
+                         evmn, odmn, comn, simn, &
+                         Nt, Nz, &
+                         cosi, sini, & ! FFT workspace
+                         sweight, &
+                         mmpp, &
+                         LGdof, NGdof, NAdof, &
+                         vvolume, dvolume, &
+                         Rij, Zij, sg, guvij, iRij, iZij, dRij, dZij, tRij, tZij, & ! Jacobian and metrics; computed in coords;
+                         dFFdRZ, dBBdmp, HdFFdRZ, &
+                         BBweight, & ! exponential weight on force-imbalance harmonics;
+                         psifactor, &
+                         mn, Iquad, &
+                         dRodR, dRodZ, dZodR, dZodZ, dBdX, &
+                         xoffset
 
 #ifdef OPENMP
-  USE OMP_LIB
+    USE OMP_LIB
 #endif
-  use mpi
-  implicit none
-  integer   :: ierr, astat, ios, nthreads, ithread
-  real(wp)      :: cput, cpui, cpuo=0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
+    use mpi
+    implicit none
+    integer :: ierr, astat, ios, nthreads, ithread
+    real(wp) :: cput, cpui, cpuo = 0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
 
 !------
 
-integer                 :: iocons, lvol, ideriv, id, iflag, Lcurvature, innout, issym, irz, ii, ifail, idoc, idof, Ntz
-real(wp)                    :: lss, DDl, MMl
-real(wp)                    :: dAt(1:Ntz,-1:2), dAz(1:Ntz,-1:2), XX(1:Ntz), YY(1:Ntz), dBB(1:Ntz,-1:2), dII(1:Ntz), dLL(1:Ntz)
-real(wp)                    :: dPP(1:Ntz), length(1:Ntz), dRR(1:Ntz,-1:2), dZZ(1:Ntz,-1:2), constraint(1:Ntz)
+    integer :: iocons, lvol, ideriv, id, iflag, Lcurvature, innout, issym, irz, ii, ifail, idoc, idof, Ntz
+    real(wp) :: lss, DDl, MMl
+    real(wp) :: dAt(1:Ntz, -1:2), dAz(1:Ntz, -1:2), XX(1:Ntz), YY(1:Ntz), dBB(1:Ntz, -1:2), dII(1:Ntz), dLL(1:Ntz)
+    real(wp) :: dPP(1:Ntz), length(1:Ntz), dRR(1:Ntz, -1:2), dZZ(1:Ntz, -1:2), constraint(1:Ntz)
 #ifdef DEBUG
-integer					:: isymdiff, ll, NN, ndofgl, pvol
-real(wp)                    :: Fvec(1:Mvol-1), Xdof(1:Mvol-1)
-real(wp),   allocatable 	:: oRbc(:,:), oZbs(:,:), oRbs(:,:), oZbc(:,:) ! original geometry;
-real(wp),   allocatable 	:: idBB(:,:), iforce(:,:), iposition(:,:)
-character               :: packorunpack
+    integer :: isymdiff, ll, NN, ndofgl, pvol
+    real(wp) :: Fvec(1:Mvol - 1), Xdof(1:Mvol - 1)
+    real(wp), allocatable :: oRbc(:, :), oZbs(:, :), oRbs(:, :), oZbc(:, :) ! original geometry;
+    real(wp), allocatable :: idBB(:, :), iforce(:, :), iposition(:, :)
+    character :: packorunpack
 #endif
 
+    do iocons = 0, 1
 
-
-do iocons = 0, 1
-
-    if( lvol.eq.   1 .and. iocons.eq.0 ) cycle ! fixed inner boundary (or coordinate axis); no constraints;
-    if( lvol.eq.Mvol .and. iocons.eq.1 ) cycle ! fixed outer boundary                     ; no constraints;
-
+        if (lvol .eq. 1 .and. iocons .eq. 0) cycle ! fixed inner boundary (or coordinate axis); no constraints;
+        if (lvol .eq. Mvol .and. iocons .eq. 1) cycle ! fixed outer boundary                     ; no constraints;
 
 ! Evaluate B^2 (no derivatives)
 ! -----------------------------------
-    ideriv = 0; iflag=1
+        ideriv = 0; iflag = 1
 
-
-   cput = MPI_WTIME()
-   Tdfp200 = Tdfp200 + ( cput-cpuo )
-   call lforce(lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, iflag)
-   cpuo = MPI_WTIME()
-
+        cput = MPI_WTIME()
+        Tdfp200 = Tdfp200 + (cput - cpuo)
+        call lforce(lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, iflag)
+        cpuo = MPI_WTIME()
 
 ! hessian_dFFdRZ CONSTRUCTION
 ! ===================
 
 ! B square contribution
 ! ---------------------
-    ideriv = -1; iflag=0
+        ideriv = -1; iflag = 0
 
+        cput = MPI_WTIME()
+        Tdfp200 = Tdfp200 + (cput - cpuo)
+        call lforce(lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, iflag)
+        cpuo = MPI_WTIME()
 
-   cput = MPI_WTIME()
-   Tdfp200 = Tdfp200 + ( cput-cpuo )
-   call lforce(lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, iflag)
-   cpuo = MPI_WTIME()
+        ! Add derivatives of pressure as well
 
+        if (vvolume(lvol) .lt. small) then
+            write (6, '("dfp200 :      fatal : myid=",i3," ; vvolume(lvol).lt.small ; shall divide by vvolume(lvol)**(gamma+one) ;")') myid
+            call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+            stop "dfp200 : vvolume(lvol).lt.small : shall divide by vvolume(lvol)**(gamma+one)  ;"
+        end if
 
-    ! Add derivatives of pressure as well
-
-   if( vvolume(lvol).lt.small ) then
-     write(6,'("dfp200 :      fatal : myid=",i3," ; vvolume(lvol).lt.small ; shall divide by vvolume(lvol)**(gamma+one) ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "dfp200 : vvolume(lvol).lt.small : shall divide by vvolume(lvol)**(gamma+one)  ;"
-    endif
-
-
-    ! Derivatives of force wrt geometry; In real space.
-    ijreal(1:Ntz) = - adiabatic(lvol) * pscale * gamma * dvolume / vvolume(lvol)**(gamma+one) + dBB(1:Ntz,-1)*Rij(1:Ntz,0,0)
+        ! Derivatives of force wrt geometry; In real space.
+        ijreal(1:Ntz) = -adiabatic(lvol)*pscale*gamma*dvolume/vvolume(lvol)**(gamma + one) + dBB(1:Ntz, -1)*Rij(1:Ntz, 0, 0)
 
 ! Spectral condensation contribution
 ! ----------------------------------
 
-    dLL(1:Ntz) = zero ! either no spectral constraint, or not the appropriate interface;
-    dPP(1:Ntz) = zero ! either no spectral constraint, or not the appropriate interface;
-    dII(1:Ntz) = zero
+        dLL(1:Ntz) = zero ! either no spectral constraint, or not the appropriate interface;
+        dPP(1:Ntz) = zero ! either no spectral constraint, or not the appropriate interface;
+        dII(1:Ntz) = zero
 
+        ! Map to Fourier space
+        call tfft(Nt, Nz, ijreal(1:Ntz), dII(1:Ntz), & ! recall that ijreal contains derivatives of pressure term;
+                  mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), ifail)
 
-    ! Map to Fourier space
-    call tfft(  Nt, Nz, ijreal(1:Ntz), dII(1:Ntz), & ! recall that ijreal contains derivatives of pressure term;
-                mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), ifail )
+        if (lvol - 1 + innout .gt. Mvol) then
+            write (6, '("dfp200 :      fatal : myid=",i3," ; lvol-1+innout.gt.Mvol ; psifactor needs attention ;")') myid
+            call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+            stop "dfp200 : lvol-1+innout.gt.Mvol : psifactor needs attention  ;"
+        end if
 
+        idoc = 0
 
+        ! Plasma and magnetic pressure;
+        ; HdFFdRZ(idoc + 1:idoc + mn, iocons, idof, innout, lvol) = +efmn(1:mn) !* psifactor(ii,lvol-1+innout) * BBweight(1:mn)
+        idoc = idoc + mn   ! even;
+        !if( Igeometry.ge.3 ) then ! Add spectral constraints;
+        !   HdFFdRZ(idoc+1:idoc+mn-1  ,iocons,idof,innout,lvol) = - sfmn(2:mn) * psifactor(ii,lvol-1+innout) * epsilon       & ! spectral condensation;
+        !                                                       - simn(2:mn) * psifactor(ii,lvol-1+innout) * sweight(lvol)   ! poloidal length constraint;
+        ! if( Ntor.gt.0 ) then
+        !  dFFdRZ(idoc+1:idoc+Ntor  ,iocons,idof,innout,lvol) = + odmn(2:Ntor+1) * psifactor(ii,lvol-1+innout) * apsilon
+        ! endif
+        ! idoc = idoc + mn-1 ! odd;
+        !endif ! end of if( Igeometry.ge.3) ;
 
-   if( lvol-1+innout.gt.Mvol ) then
-     write(6,'("dfp200 :      fatal : myid=",i3," ; lvol-1+innout.gt.Mvol ; psifactor needs attention ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "dfp200 : lvol-1+innout.gt.Mvol : psifactor needs attention  ;"
-    endif
+        if (NOTstellsym) then ! Construct non-stellarator symmetric terms
 
+            ! Plasma and magnetic pressure;
+            ; HdFFdRZ(idoc + 1:idoc + mn - 1, iocons, idof, innout, lvol) = +ofmn(2:mn) !* psifactor(ii,lvol-1+innout) * BBweight(2:mn)
 
-    idoc = 0
+            idoc = idoc + mn - 1 ! odd;
+            ! if( Igeometry.ge.3 ) then ! Add spectral constraints;
+            !     HdFFdRZ(idoc+1:idoc+mn    ,iocons,idof,innout,lvol) = - cfmn(1:mn) * psifactor(ii,lvol-1+innout) * epsilon       & ! spectral condensation;
+            !                                                          - comn(1:mn) * psifactor(ii,lvol-1+innout) * sweight(lvol)   ! poloidal length constraint;
+            !     !if( Ntor.ge.0 ) then
+            !         ! dFFdRZ(idoc+1:idoc+Ntor+1,iocons,idof,innout,lvol) = + evmn(1:Ntor+1) * psifactor(ii,lvol-1+innout) * apsilon ! poloidal origin      ;
+            !     !endif
+            !     idoc = idoc + mn   ! even;
+            ! endif ! end of if( Igeometry.ge.3) ;
 
-    ! Plasma and magnetic pressure;
-    ;   HdFFdRZ(idoc+1:idoc+mn    ,iocons,idof,innout,lvol) = + efmn(1:mn) !* psifactor(ii,lvol-1+innout) * BBweight(1:mn)
-    idoc = idoc + mn   ! even;
-    !if( Igeometry.ge.3 ) then ! Add spectral constraints;
-     !   HdFFdRZ(idoc+1:idoc+mn-1  ,iocons,idof,innout,lvol) = - sfmn(2:mn) * psifactor(ii,lvol-1+innout) * epsilon       & ! spectral condensation;
-      !                                                       - simn(2:mn) * psifactor(ii,lvol-1+innout) * sweight(lvol)   ! poloidal length constraint;
-    ! if( Ntor.gt.0 ) then
-    !  dFFdRZ(idoc+1:idoc+Ntor  ,iocons,idof,innout,lvol) = + odmn(2:Ntor+1) * psifactor(ii,lvol-1+innout) * apsilon
-    ! endif
-     ! idoc = idoc + mn-1 ! odd;
-    !endif ! end of if( Igeometry.ge.3) ;
-
-    if( NOTstellsym ) then ! Construct non-stellarator symmetric terms
-
-    ! Plasma and magnetic pressure;
-    ;       HdFFdRZ(idoc+1:idoc+mn-1  ,iocons,idof,innout,lvol) = + ofmn(2:mn) !* psifactor(ii,lvol-1+innout) * BBweight(2:mn)
-
-        idoc = idoc + mn-1 ! odd;
-        ! if( Igeometry.ge.3 ) then ! Add spectral constraints;
-        !     HdFFdRZ(idoc+1:idoc+mn    ,iocons,idof,innout,lvol) = - cfmn(1:mn) * psifactor(ii,lvol-1+innout) * epsilon       & ! spectral condensation;
-        !                                                          - comn(1:mn) * psifactor(ii,lvol-1+innout) * sweight(lvol)   ! poloidal length constraint;
-        !     !if( Ntor.ge.0 ) then
-        !         ! dFFdRZ(idoc+1:idoc+Ntor+1,iocons,idof,innout,lvol) = + evmn(1:Ntor+1) * psifactor(ii,lvol-1+innout) * apsilon ! poloidal origin      ;
-        !     !endif
-        !     idoc = idoc + mn   ! even;
-        ! endif ! end of if( Igeometry.ge.3) ;
-
-    endif ! end of if( NOTstellsym) ;
+        end if ! end of if( NOTstellsym) ;
 
 #ifdef DEBUG
 
-   if( idoc.ne.LGdof ) then
-     write(6,'("dfp200 :      fatal : myid=",i3," ; idoc.ne.LGdof ; counting error ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "dfp200 : idoc.ne.LGdof : counting error  ;"
-    endif
+        if (idoc .ne. LGdof) then
+            write (6, '("dfp200 :      fatal : myid=",i3," ; idoc.ne.LGdof ; counting error ;")') myid
+            call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+            stop "dfp200 : idoc.ne.LGdof : counting error  ;"
+        end if
 
 #endif
 
-enddo ! end of do iocons;
+    end do ! end of do iocons;
 
 end subroutine hessian_dFFdRZ
 
 subroutine hessian3D_dFFdRZ(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
-  use mod_kinds, only: wp => dp
+    use mod_kinds, only: wp => dp
 ! Evaluate the derivative of the square of the magnetic field modulus. Add spectral constraint derivatives if
 ! required.
 
@@ -2543,241 +2370,229 @@ subroutine hessian3D_dFFdRZ(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, len
 
 ! MODULES
 ! -------
-  use constants, only : zero, half, one, two
+    use constants, only: zero, half, one, two
 
-  use numerical, only : small
+    use numerical, only: small
 
-  use fileunits, only : ounit
+    use fileunits, only: ounit
 
-  use inputlist, only : Wmacros, Wdfp200, Ntor, Igeometry, Lconstraint, &
-                        gamma, adiabatic, pscale, Lcheck, dRZ, Nvol, &
-                        epsilon, Lrad
+    use inputlist, only: Wmacros, Wdfp200, Ntor, Igeometry, Lconstraint, &
+                         gamma, adiabatic, pscale, Lcheck, dRZ, Nvol, &
+                         epsilon, Lrad
 
-  use cputiming, only : Tdfp200
+    use cputiming, only: Tdfp200
 
-  use allglobal, only : ncpu, myid, cpus, YESstellsym, NOTstellsym, MPI_COMM_SPEC,&
-                        Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, LocalConstraint, &
-                        Mvol, dpflux, &
-                        iRbc, iZbs, iRbs, iZbc, & ! Fourier harmonics of geometry; vector of independent variables, position, is "unpacked" into iRbc,iZbs;
-                        NOTstellsym, &
-                        mn, im, in, mns, &
-                        ijreal, &
-                        !fijreal, &
-                        efmn, ofmn, cfmn, sfmn, &
-                        evmn, odmn, comn, simn, &
-                        Nt, Nz, &
-                        cosi, sini, & ! FFT workspace
-                        sweight, Lhessian3Dallocated, &
-                        mmpp, &
-                        LGdof, NGdof, NAdof, &
-                        vvolume, dvolume, &
-                        Rij, Zij, sg, guvij, iRij, iZij, dRij, dZij, tRij, tZij, & ! Jacobian and metrics; computed in coords;
-                        dFFdRZ, dBBdmp, HdFFdRZ, &
-                        denergydrr, denergydrz,denergydzr,denergydzz,&
-!                        efcol1mn,efcol2mn,efcol3mn,efcol4mn,ofcol1mn,ofcol2mn,ofcol3mn,ofcol4mn, &
-                        BBweight, & ! exponential weight on force-imbalance harmonics;
-                        psifactor, &
-                        mn, Iquad, &
-                        dRodR, dRodZ, dZodR, dZodZ, dBdX, &
-                        xoffset
-
+    use allglobal, only: ncpu, myid, cpus, YESstellsym, NOTstellsym, MPI_COMM_SPEC, &
+                         Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, LocalConstraint, &
+                         Mvol, dpflux, &
+                         iRbc, iZbs, iRbs, iZbc, & ! Fourier harmonics of geometry; vector of independent variables, position, is "unpacked" into iRbc,iZbs;
+                         NOTstellsym, &
+                         mn, im, in, mns, &
+                         ijreal, &
+                         !fijreal, &
+                         efmn, ofmn, cfmn, sfmn, &
+                         evmn, odmn, comn, simn, &
+                         Nt, Nz, &
+                         cosi, sini, & ! FFT workspace
+                         sweight, Lhessian3Dallocated, &
+                         mmpp, &
+                         LGdof, NGdof, NAdof, &
+                         vvolume, dvolume, &
+                         Rij, Zij, sg, guvij, iRij, iZij, dRij, dZij, tRij, tZij, & ! Jacobian and metrics; computed in coords;
+                         dFFdRZ, dBBdmp, HdFFdRZ, &
+                         denergydrr, denergydrz, denergydzr, denergydzz, &
+                         !                        efcol1mn,efcol2mn,efcol3mn,efcol4mn,ofcol1mn,ofcol2mn,ofcol3mn,ofcol4mn, &
+                         BBweight, & ! exponential weight on force-imbalance harmonics;
+                         psifactor, &
+                         mn, Iquad, &
+                         dRodR, dRodZ, dZodR, dZodZ, dBdX, &
+                         xoffset
 
 #ifdef OPENMP
-  USE OMP_LIB
+    USE OMP_LIB
 #endif
-  use mpi
-  implicit none
-  integer   :: ierr, astat, ios, nthreads, ithread
-  real(wp)      :: cput, cpui, cpuo=0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
+    use mpi
+    implicit none
+    integer :: ierr, astat, ios, nthreads, ithread
+    real(wp) :: cput, cpui, cpuo = 0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
 
 !------
 
-integer                 :: iocons, lvol, ideriv, id, iflag, Lcurvature, innout, issym, irz, ii, ifail, idoc, idof, Ntz
-real(wp)                    :: lss, DDl, MMl
-real(wp)                    :: dAt(1:Ntz,-1:2), dAz(1:Ntz,-1:2), XX(1:Ntz), YY(1:Ntz), dBB(1:Ntz,-1:2), dII(1:Ntz), dLL(1:Ntz)
-real(wp)                    :: dPP(1:Ntz), length(1:Ntz), dRR(1:Ntz,-1:2), dZZ(1:Ntz,-1:2), constraint(1:Ntz)
-real(wp)                    :: ddFcol1(1:Ntz), ddFcol2(1:Ntz),ddFcol3(1:Ntz), ddFcol4(1:Ntz)
+    integer :: iocons, lvol, ideriv, id, iflag, Lcurvature, innout, issym, irz, ii, ifail, idoc, idof, Ntz
+    real(wp) :: lss, DDl, MMl
+    real(wp) :: dAt(1:Ntz, -1:2), dAz(1:Ntz, -1:2), XX(1:Ntz), YY(1:Ntz), dBB(1:Ntz, -1:2), dII(1:Ntz), dLL(1:Ntz)
+    real(wp) :: dPP(1:Ntz), length(1:Ntz), dRR(1:Ntz, -1:2), dZZ(1:Ntz, -1:2), constraint(1:Ntz)
+    real(wp) :: ddFcol1(1:Ntz), ddFcol2(1:Ntz), ddFcol3(1:Ntz), ddFcol4(1:Ntz)
 
 #ifdef DEBUG
-integer					:: isymdiff, ll, NN, ndofgl, pvol
-real(wp)                    :: Fvec(1:Mvol-1), Xdof(1:Mvol-1)
-real(wp),   allocatable 	:: oRbc(:,:), oZbs(:,:), oRbs(:,:), oZbc(:,:) ! original geometry;
-real(wp),   allocatable 	:: idBB(:,:), iforce(:,:), iposition(:,:)
-character               :: packorunpack
+    integer :: isymdiff, ll, NN, ndofgl, pvol
+    real(wp) :: Fvec(1:Mvol - 1), Xdof(1:Mvol - 1)
+    real(wp), allocatable :: oRbc(:, :), oZbs(:, :), oRbs(:, :), oZbc(:, :) ! original geometry;
+    real(wp), allocatable :: idBB(:, :), iforce(:, :), iposition(:, :)
+    character :: packorunpack
 #endif
 
+    do iocons = 0, 1
 
-
-do iocons = 0, 1
-
-    if( lvol.eq.   1 .and. iocons.eq.0 ) cycle ! fixed inner boundary (or coordinate axis); no constraints;
-    if( lvol.eq.Mvol .and. iocons.eq.1 ) cycle ! fixed outer boundary                     ; no constraints;
-
+        if (lvol .eq. 1 .and. iocons .eq. 0) cycle ! fixed inner boundary (or coordinate axis); no constraints;
+        if (lvol .eq. Mvol .and. iocons .eq. 1) cycle ! fixed outer boundary                     ; no constraints;
 
 ! Evaluate B^2 (no derivatives)
 ! -----------------------------------
-    ideriv = 0; iflag=0
+        ideriv = 0; iflag = 0
 
-
-   cput = MPI_WTIME()
-   Tdfp200 = Tdfp200 + ( cput-cpuo )
-   call lforce(lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl,iflag)
-   cpuo = MPI_WTIME()
-
-
+        cput = MPI_WTIME()
+        Tdfp200 = Tdfp200 + (cput - cpuo)
+        call lforce(lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, iflag)
+        cpuo = MPI_WTIME()
 
 ! hessian_dFFdRZ CONSTRUCTION
 ! ===================
 
 ! B square contribution
 ! ---------------------
-    ideriv = -1; iflag=1
+        ideriv = -1; iflag = 1
 
+        cput = MPI_WTIME()
+        Tdfp200 = Tdfp200 + (cput - cpuo)
+        call lforce(lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, iflag)
+        cpuo = MPI_WTIME()
 
-   cput = MPI_WTIME()
-   Tdfp200 = Tdfp200 + ( cput-cpuo )
-   call lforce(lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, iflag)
-   cpuo = MPI_WTIME()
+        ! Add derivatives of pressure as well
 
+        if (vvolume(lvol) .lt. small) then
+            write (6, '("dfp200 :      fatal : myid=",i3," ; vvolume(lvol).lt.small ; shall divide by vvolume(lvol)**(gamma+one) ;")') myid
+            call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+            stop "dfp200 : vvolume(lvol).lt.small : shall divide by vvolume(lvol)**(gamma+one)  ;"
+        end if
 
-    ! Add derivatives of pressure as well
+        ! Derivatives of force wrt geometry; In real space.
+        ijreal(1:Ntz) = -adiabatic(lvol)*pscale*gamma*dvolume/vvolume(lvol)**(gamma + one) + dBB(1:Ntz, -1)
 
-   if( vvolume(lvol).lt.small ) then
-     write(6,'("dfp200 :      fatal : myid=",i3," ; vvolume(lvol).lt.small ; shall divide by vvolume(lvol)**(gamma+one) ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "dfp200 : vvolume(lvol).lt.small : shall divide by vvolume(lvol)**(gamma+one)  ;"
-    endif
+        if (YESstellsym) then
+            !if( issym.eq.0 ) then
 
+            if (irz .eq. 0) then !derivative wrt Rbs of d/dr(dF)
 
-    ! Derivatives of force wrt geometry; In real space.
-    ijreal(1:Ntz) = - adiabatic(lvol) * pscale * gamma * dvolume / vvolume(lvol)**(gamma+one) + dBB(1:Ntz,-1)
+                if (innout .eq. iocons) then
+                    ddFcol1(1:Ntz) = ijreal(1:Ntz)*Zij(1:Ntz, 2, 0)*Rij(1:Ntz, 0, 0) & !Frr       d/dr(dw/dr)
+                                     + (dBB(1:Ntz, 0) + adiabatic(lvol)*pscale/vvolume(lvol)**gamma)*Zij(1:Ntz, 2, 0)*cosi(1:Ntz, ii)
 
-        if(YESstellsym ) then
-       !if( issym.eq.0 ) then
+                    ddFcol2(1:Ntz) = ijreal(1:Ntz)*Rij(1:Ntz, 0, 0)*Rij(1:Ntz, 2, 0) &  !Fzr        d/dr(dw/dz)
+                                     + (dBB(1:Ntz, 0) + adiabatic(lvol)*pscale/vvolume(lvol)**gamma)*Rij(1:Ntz, 2, 0)*cosi(1:Ntz, ii) &
+                                     + (dBB(1:Ntz, 0) + adiabatic(lvol)*pscale/vvolume(lvol)**gamma)*Rij(1:Ntz, 0, 0)*sini(1:Ntz, ii)*(-im(ii))
+                else
 
-            if( irz.eq.0 ) then !derivative wrt Rbs of d/dr(dF)
-
-                 if(innout.eq.iocons) then
-                    ddFcol1(1:Ntz) = ijreal(1:Ntz) * Zij(1:Ntz,2,0) * Rij(1:Ntz,0,0) & !Frr       d/dr(dw/dr)
-                                   +  (dBB(1:Ntz,0)+adiabatic(lvol) * pscale/vvolume(lvol)**gamma ) * Zij(1:Ntz,2,0) * cosi(1:Ntz,ii)
-
-                    ddFcol2(1:Ntz) = ijreal(1:Ntz) * Rij(1:Ntz,0,0) * Rij(1:Ntz,2,0) &  !Fzr        d/dr(dw/dz)
-                                    + (dBB(1:Ntz,0) +adiabatic(lvol) * pscale/vvolume(lvol)**gamma )* Rij(1:Ntz,2,0) * cosi(1:Ntz,ii) &
-                                    + (dBB(1:Ntz,0) +adiabatic(lvol) * pscale/vvolume(lvol)**gamma )* Rij(1:Ntz,0,0) * sini(1:Ntz,ii) * (-im(ii))
-                  else
-
-                  ddFcol1(1:Ntz) = ijreal(1:Ntz) * Zij(1:Ntz,2,0) * Rij(1:Ntz,0,0) !Frr       d/dr(dw/dr)
-                  ddFcol2(1:Ntz) =  ijreal(1:Ntz) * Rij(1:Ntz,0,0) * Rij(1:Ntz,2,0) !Fzr        d/dr(dw/dz)
-                 endif
+                    ddFcol1(1:Ntz) = ijreal(1:Ntz)*Zij(1:Ntz, 2, 0)*Rij(1:Ntz, 0, 0) !Frr       d/dr(dw/dr)
+                    ddFcol2(1:Ntz) = ijreal(1:Ntz)*Rij(1:Ntz, 0, 0)*Rij(1:Ntz, 2, 0) !Fzr        d/dr(dw/dz)
+                end if
             else !derivative wrt to Zbs of d/dz(dF)
 
-                if(innout.eq.iocons) then
-                   ddFcol3(1:Ntz) = ijreal(1:Ntz) * Rij(1:Ntz,0,0) * Zij(1:Ntz,2,0) &   !Frz      d/dz(dw/dr)
-                                  + (dBB(1:Ntz,0) +adiabatic(lvol) * pscale/vvolume(lvol)**gamma )* Rij(1:Ntz,0,0) * im(ii) *cosi(1:Ntz,ii)
-                   ddFcol4(1:Ntz) =  ijreal(1:Ntz) * Rij(1:Ntz,0,0) * Rij(1:Ntz,2,0)  !Fzz    d/dz(dw/dz)
+                if (innout .eq. iocons) then
+                    ddFcol3(1:Ntz) = ijreal(1:Ntz)*Rij(1:Ntz, 0, 0)*Zij(1:Ntz, 2, 0) &   !Frz      d/dz(dw/dr)
+                                     + (dBB(1:Ntz, 0) + adiabatic(lvol)*pscale/vvolume(lvol)**gamma)*Rij(1:Ntz, 0, 0)*im(ii)*cosi(1:Ntz, ii)
+                    ddFcol4(1:Ntz) = ijreal(1:Ntz)*Rij(1:Ntz, 0, 0)*Rij(1:Ntz, 2, 0)  !Fzz    d/dz(dw/dz)
                 else
-                   ddFcol3(1:Ntz) = ijreal(1:Ntz) * Rij(1:Ntz,0,0) * Zij(1:Ntz,2,0)  !Frz      d/dz(dw/dr)
-                    ddFcol4(1:Ntz) =  ijreal(1:Ntz) * Rij(1:Ntz,0,0) * Rij(1:Ntz,2,0)  !Fzz    d/dz(dw/dz)
-                endif
-           endif
+                    ddFcol3(1:Ntz) = ijreal(1:Ntz)*Rij(1:Ntz, 0, 0)*Zij(1:Ntz, 2, 0)  !Frz      d/dz(dw/dr)
+                    ddFcol4(1:Ntz) = ijreal(1:Ntz)*Rij(1:Ntz, 0, 0)*Rij(1:Ntz, 2, 0)  !Fzz    d/dz(dw/dz)
+                end if
+            end if
         else
-              !   if( irz.eq.0 ) then
-              !       ddFcol1(1:Ntz) = -ijreal(1:Ntz) * Zij(1:Ntz,2,0) * Rij(1:Ntz,0,0) & !Frr       d/dr(dw/dr)
-             !                       -(adiabatic(vvol) * pscale/vvolume(vvol)**gamma + dBB(1:Ntz,0)) * Zij(1:Ntz,2,0) * cosi(1:Ntz,ii)
+            !   if( irz.eq.0 ) then
+            !       ddFcol1(1:Ntz) = -ijreal(1:Ntz) * Zij(1:Ntz,2,0) * Rij(1:Ntz,0,0) & !Frr       d/dr(dw/dr)
+            !                       -(adiabatic(vvol) * pscale/vvolume(vvol)**gamma + dBB(1:Ntz,0)) * Zij(1:Ntz,2,0) * cosi(1:Ntz,ii)
 
-              !       ddFcol2(1:Ntz) =ijreal(1:Ntz) * Rij(1:Ntz,0,0) * Rij(1:Ntz,2,0) &  !Fzr        d/dr(dw/dz)
-              !                    + (adiabatic(vvol) * pscale/vvolume(vvol)**gamma + dBB(1:Ntz,0)) * Rij(1:Ntz,2,0) * cosi(1:Ntz,ii) &
-             !                    + (adiabatic(vvol) * pscale/vvolume(vvol)**gamma + dBB(1:Ntz,0)) * Rij(1:Ntz,0,0) * sini(1:Ntz,ii) * (-im(ii))
-             !   else
-             !       ddFcol3(1:Ntz) = -ijreal(1:Ntz) * Rij(1:Ntz,0,0) * Zij(1:Ntz,2,0) &   !Frz      d/dz(dw/dr)
-              !                        -(adiabatic(vvol) * pscale/vvolume(vvol)**gamma + dBB(1:Ntz,0)) * Rij(1:Ntz,0,0) * im(ii) *cosi(1:Ntz,ii)
+            !       ddFcol2(1:Ntz) =ijreal(1:Ntz) * Rij(1:Ntz,0,0) * Rij(1:Ntz,2,0) &  !Fzr        d/dr(dw/dz)
+            !                    + (adiabatic(vvol) * pscale/vvolume(vvol)**gamma + dBB(1:Ntz,0)) * Rij(1:Ntz,2,0) * cosi(1:Ntz,ii) &
+            !                    + (adiabatic(vvol) * pscale/vvolume(vvol)**gamma + dBB(1:Ntz,0)) * Rij(1:Ntz,0,0) * sini(1:Ntz,ii) * (-im(ii))
+            !   else
+            !       ddFcol3(1:Ntz) = -ijreal(1:Ntz) * Rij(1:Ntz,0,0) * Zij(1:Ntz,2,0) &   !Frz      d/dz(dw/dr)
+            !                        -(adiabatic(vvol) * pscale/vvolume(vvol)**gamma + dBB(1:Ntz,0)) * Rij(1:Ntz,0,0) * im(ii) *cosi(1:Ntz,ii)
 
-              !       ddFcol4(1:Ntz) = ijreal(1:Ntz) * Rij(1:Ntz,0,0) * Rij(1:Ntz,2,0)      !Fzz    d/dz(dw/dz)
-             !   endif
-                 ddFcol1(1:Ntz) = zero
-                 ddFcol2(1:Ntz) = zero
-                 ddFcol3(1:Ntz) = zero
-                 ddFcol4(1:Ntz) = zero
-              !FATAL(dfp200, .true. work progress for hessian axisymmetric )
-        endif
+            !       ddFcol4(1:Ntz) = ijreal(1:Ntz) * Rij(1:Ntz,0,0) * Rij(1:Ntz,2,0)      !Fzz    d/dz(dw/dz)
+            !   endif
+            ddFcol1(1:Ntz) = zero
+            ddFcol2(1:Ntz) = zero
+            ddFcol3(1:Ntz) = zero
+            ddFcol4(1:Ntz) = zero
+            !FATAL(dfp200, .true. work progress for hessian axisymmetric )
+        end if
 
         !Map to Fourier space
 
-                   call tfft(  Nt, Nz, ddFcol1(1:Ntz),ddFcol2(1:Ntz), & ! recall that ijreal contains derivatives of pressure term;
-                               mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), ifail )
+        call tfft(Nt, Nz, ddFcol1(1:Ntz), ddFcol2(1:Ntz), & ! recall that ijreal contains derivatives of pressure term;
+                  mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), ifail)
 
-                   call tfft(  Nt, Nz, ddFcol3(1:Ntz),ddFcol4(1:Ntz), &
-                               mn, im(1:mn), in(1:mn), evmn(1:mn), odmn(1:mn), comn(1:mn), simn(1:mn), ifail ) ! evmn and odmn are available as workspace;
+        call tfft(Nt, Nz, ddFcol3(1:Ntz), ddFcol4(1:Ntz), &
+                  mn, im(1:mn), in(1:mn), evmn(1:mn), odmn(1:mn), comn(1:mn), simn(1:mn), ifail) ! evmn and odmn are available as workspace;
 
+        !call tfft(Nt , Nz, ddFcol1(1:Ntz),ddFcol2(1:Ntz), &
+        !                                 mn, im(1:mn), in(1:mn),  efcol1mn(1:mn), ofcol1mn(1:mn), ofcol2mn(1:mn), efcol2mn(1:mn), ifail )
+        !call tfft(Nt , Nz, ddFcol3(1:Ntz),ddFcol4(1:Ntz), &
+        !                                  mn, im(1:mn), in(1:mn),  efcol3mn(1:mn), ofcol3mn(1:mn), ofcol4mn(1:mn), efcol4mn(1:mn), ifail )
+        !                          hessian3d= [1 2;3 4]
 
-          !call tfft(Nt , Nz, ddFcol1(1:Ntz),ddFcol2(1:Ntz), &
-          !                                 mn, im(1:mn), in(1:mn),  efcol1mn(1:mn), ofcol1mn(1:mn), ofcol2mn(1:mn), efcol2mn(1:mn), ifail )
-          !call tfft(Nt , Nz, ddFcol3(1:Ntz),ddFcol4(1:Ntz), &
-          !                                  mn, im(1:mn), in(1:mn),  efcol3mn(1:mn), ofcol3mn(1:mn), ofcol4mn(1:mn), efcol4mn(1:mn), ifail )
-             !                          hessian3d= [1 2;3 4]
+        if (irz .eq. 0 .and. ii .eq. 1) then
+            ; idoc = 0
+            ; denergydrr(idoc + 1:idoc + mn, lvol, iocons, idof, innout) = -efmn(1:mn)*half !1 wrr
+            ; idoc = idoc + mn
+            ; denergydrr(idoc + 1:idoc + mn - 1, lvol, iocons, idof, innout) = -sfmn(2:mn)*half ! 2 wrz
+            ; idoc = idoc + mn - 1
+        end if
+        if (irz .eq. 0 .and. ii .gt. 1) then
+            ; idoc = 0
+            ; denergydrr(idoc + 1:idoc + mn, lvol, iocons, idof, innout) = -efmn(1:mn) !1 wrr
+            ; idoc = idoc + mn
+            ; denergydrr(idoc + 1:idoc + mn - 1, lvol, iocons, idof, innout) = -sfmn(2:mn) ! 2 wrz
+            ; idoc = idoc + mn - 1
+        end if
 
-           if (irz.eq.0 .and. ii.eq.1) then
-               ;idoc=0
-                      ;denergydrr(idoc+1:idoc+mn ,lvol,iocons,idof,innout) = -efmn(1:mn)*half !1 wrr
-               ;idoc=idoc+mn
-                      ;denergydrr(idoc+1:idoc+mn-1,lvol,iocons,idof,innout) = -sfmn(2:mn)*half ! 2 wrz
-               ;idoc=idoc+mn-1
-           endif
-          if (irz.eq.0 .and. ii.gt.1) then
-              ;idoc=0
-                     ;denergydrr(idoc+1:idoc+mn ,lvol,iocons,idof,innout) = -efmn(1:mn) !1 wrr
-              ;idoc=idoc+mn
-                     ;denergydrr(idoc+1:idoc+mn-1,lvol,iocons,idof,innout) = -sfmn(2:mn) ! 2 wrz
-              ;idoc=idoc+mn-1
-            endif
+        if (irz .eq. 1 .and. ii .gt. 1) then
+            ; idoc = 0
+            ; denergydzr(idoc + 1:idoc + mn - 1, lvol, iocons, idof, innout) = evmn(1:mn - 1) !wzr
+            !write(ounit,*) im(ii),in(ii), evmn(1:mn) !vvol, im(ii), in(ii), irz, issym, tdofr, tdofz
+            ; idoc = idoc + mn
+            ; denergydzr(idoc + 1:idoc + mn - 1, lvol, iocons, idof, innout) = simn(2:mn) !wzz
+            ; idoc = idoc + mn - 1
+        end if
 
-          if(irz.eq.1 .and. ii.gt.1) then
-              ;idoc=0
-                     ;denergydzr(idoc+1:idoc+mn-1 ,lvol,iocons,idof,innout) =  evmn(1:mn-1) !wzr
-                        !write(ounit,*) im(ii),in(ii), evmn(1:mn) !vvol, im(ii), in(ii), irz, issym, tdofr, tdofz
-              ;idoc=idoc+mn
-                      ;denergydzr(idoc+1:idoc+mn-1 ,lvol,iocons,idof,innout) =  simn(2:mn) !wzz
-              ;idoc=idoc+mn-1
-          endif
+        !if (NOTstellsym) then
+        !  FATAL(dfp200, .true. work progress for hessian axisymmetric )
+        !endif
 
+        !write(ounit,'("hesian3D : ",f10.2," : efcol1="f10.2")') cput-cpus, efcol1mn(1:mn)
+        !print * , Mvol, efcol1mn(1:mn)
+        !write(ounit,1000) 'values are:' Mvol, efcol1mn(1:mn)
+        !write(90,1000) efcol1mn(1:mn)
+        !1000 format(" "10x" "es23.15" ")
+        !open(nm1unit, file="."//trim(ext)//".GF.hcol1", status="unknown", form="unformatted")
+        !write(nm1unit) NGdof, Mvol
+        !write(nm1unit) efcol1mn(1:Ntz)
+        !close(nm1unit)
 
-          !if (NOTstellsym) then
-           !  FATAL(dfp200, .true. work progress for hessian axisymmetric )
-          !endif
-
-            !write(ounit,'("hesian3D : ",f10.2," : efcol1="f10.2")') cput-cpus, efcol1mn(1:mn)
-            !print * , Mvol, efcol1mn(1:mn)
-            !write(ounit,1000) 'values are:' Mvol, efcol1mn(1:mn)
-             !write(90,1000) efcol1mn(1:mn)
-             !1000 format(" "10x" "es23.15" ")
-             !open(nm1unit, file="."//trim(ext)//".GF.hcol1", status="unknown", form="unformatted")
-             !write(nm1unit) NGdof, Mvol
-             !write(nm1unit) efcol1mn(1:Ntz)
-             !close(nm1unit)
-
-             !open(nm2unit, file="."//trim(ext)//".GF.hcol2", status="unknown", form="unformatted")
+        !open(nm2unit, file="."//trim(ext)//".GF.hcol2", status="unknown", form="unformatted")
              !!write(nm2unit) NGdof, Mvol
-             !write(nm2unit) efcol2mn(1:Ntz)
-             !close(nm2unit)
-             !write(15,1020) denergydrr(idoc+1:idoc+mn ,vvol,iocons,idof,innout)
-             !1020 format(""10x" " es23.15" ")
+        !write(nm2unit) efcol2mn(1:Ntz)
+        !close(nm2unit)
+        !write(15,1020) denergydrr(idoc+1:idoc+mn ,vvol,iocons,idof,innout)
+        !1020 format(""10x" " es23.15" ")
 
 ! Spectral condensation contribution
 ! ----------------------------------
-    dLL(1:Ntz) = zero !  no spectral constraint, or not the appropriate interface;
-    dPP(1:Ntz) = zero !  no spectral constraint, or not the appropriate interface;
-    dII(1:Ntz) = zero !  no angle/spectral width constraint
+        dLL(1:Ntz) = zero !  no spectral constraint, or not the appropriate interface;
+        dPP(1:Ntz) = zero !  no spectral constraint, or not the appropriate interface;
+        dII(1:Ntz) = zero !  no angle/spectral width constraint
 
 #ifdef DEBUG
 
-   if( idoc.ne.LGdof ) then
-     write(6,'("dfp200 :      fatal : myid=",i3," ; idoc.ne.LGdof ; counting error ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "dfp200 : idoc.ne.LGdof : counting error  ;"
-    endif
+        if (idoc .ne. LGdof) then
+            write (6, '("dfp200 :      fatal : myid=",i3," ; idoc.ne.LGdof ; counting error ;")') myid
+            call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+            stop "dfp200 : idoc.ne.LGdof : counting error  ;"
+        end if
 
 #endif
 
-enddo ! end of do iocons;
+    end do ! end of do iocons;
 
 end subroutine hessian3D_dFFdRZ

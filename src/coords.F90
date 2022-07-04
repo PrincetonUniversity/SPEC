@@ -140,733 +140,730 @@
 !> @param[in] Lcurvature logical control flag
 !> @param[in] Ntz number of points in \f$\theta\f$ and \f$\zeta\f$
 !> @param[in] mn number of Fourier harmonics
-subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
-  use mod_kinds, only: wp => dp
+subroutine coords(lvol, lss, Lcurvature, Ntz, mn)
+    use mod_kinds, only: wp => dp
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  use constants, only : zero, half, one, two, pi2
+    use constants, only: zero, half, one, two, pi2
 
-  use numerical, only : vsmall, small
+    use numerical, only: vsmall, small
 
-  use fileunits, only : ounit
+    use fileunits, only: ounit
 
-  use inputlist, only : Wcoords, Igeometry, Ntor, rpol, rtor
+    use inputlist, only: Wcoords, Igeometry, Ntor, rpol, rtor
 
-  use cputiming, only : Tcoords
+    use cputiming, only: Tcoords
 
-  use allglobal, only : myid, cpus, pi2nfp, MPI_COMM_SPEC, &
-                        Mvol, im, in, halfmm, &
-                        iRbc, iZbs, iRbs, iZbc, &
-                        NOTstellsym, Lcoordinatesingularity, &
-                        Nt, Nz, &
-                        Rij, Zij, &
-                        cosi, sini, &
-                        sg, guvij, &
-                        dBdX, &
-                        dRodR, dRodZ, dZodR, dZodZ
+    use allglobal, only: myid, cpus, pi2nfp, MPI_COMM_SPEC, &
+                         Mvol, im, in, halfmm, &
+                         iRbc, iZbs, iRbs, iZbc, &
+                         NOTstellsym, Lcoordinatesingularity, &
+                         Nt, Nz, &
+                         Rij, Zij, &
+                         cosi, sini, &
+                         sg, guvij, &
+                         dBdX, &
+                         dRodR, dRodZ, dZodR, dZodZ
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
 
 #ifdef OPENMP
-  USE OMP_LIB
+    USE OMP_LIB
 #endif
-  use mpi
-  implicit none
-  integer   :: ierr, astat, ios, nthreads, ithread
-  real(wp)      :: cput, cpui, cpuo=0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
+    use mpi
+    implicit none
+    integer :: ierr, astat, ios, nthreads, ithread
+    real(wp) :: cput, cpui, cpuo = 0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
 
+    integer, intent(in) :: lvol, Lcurvature, Ntz, mn
+    real(wp), intent(in) :: lss
 
-  integer, intent(in) :: lvol, Lcurvature, Ntz, mn
-  real(wp)   , intent(in) :: lss
+    integer :: ii, jj, kk, irz, innout, issym, signlss, mi, ni, imn
+    real(wp) :: Remn(1:mn, 0:2), Zomn(1:mn, 0:2), Romn(1:mn, 0:2), Zemn(1:mn, 0:2), alss, blss, sbar, sbarhim(1:mn), fj(1:mn, 0:2)
 
-  integer             :: ii, jj, kk, irz, innout, issym, signlss, mi, ni, imn
-  real(wp)                :: Remn(1:mn,0:2), Zomn(1:mn,0:2), Romn(1:mn,0:2), Zemn(1:mn,0:2), alss, blss, sbar, sbarhim(1:mn), fj(1:mn,0:2)
+    real(wp) :: Dij(1:Ntz, 0:3), dguvij(1:Ntz, 1:3, 1:3), DRxij(1:Ntz, 0:3), DZxij(1:Ntz, 0:3)
 
-  real(wp)                :: Dij(1:Ntz,0:3), dguvij(1:Ntz,1:3,1:3), DRxij(1:Ntz,0:3), DZxij(1:Ntz,0:3)
-
-
-  cpui = MPI_WTIME()
-  cpuo = cpui
+    cpui = MPI_WTIME()
+    cpuo = cpui
 #ifdef OPENMP
-  nthreads = omp_get_max_threads()
+    nthreads = omp_get_max_threads()
 #else
-  nthreads = 1
+    nthreads = 1
 #endif
-
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 #ifdef DEBUG
 
-   if( lvol.lt.1 .or. lvol.gt.Mvol ) then
-     write(6,'("coords :      fatal : myid=",i3," ; lvol.lt.1 .or. lvol.gt.Mvol ; invalid volume label ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "coords : lvol.lt.1 .or. lvol.gt.Mvol : invalid volume label  ;"
-    endif
+    if (lvol .lt. 1 .or. lvol .gt. Mvol) then
+        write (6, '("coords :      fatal : myid=",i3," ; lvol.lt.1 .or. lvol.gt.Mvol ; invalid volume label ;")') myid
+        call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+        stop "coords : lvol.lt.1 .or. lvol.gt.Mvol : invalid volume label  ;"
+    end if
 
+    if (abs(lss) .gt. one) then
+        write (6, '("coords :      fatal : myid=",i3," ; abs(lss).gt.one ; invalid radial coordinate ;")') myid
+        call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+        stop "coords : abs(lss).gt.one : invalid radial coordinate  ;"
+    end if
 
-   if( abs(lss).gt.one ) then
-     write(6,'("coords :      fatal : myid=",i3," ; abs(lss).gt.one ; invalid radial coordinate ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "coords : abs(lss).gt.one : invalid radial coordinate  ;"
-    endif
-
-
-   if( Lcurvature.lt.0 .or. Lcurvature.gt.5 ) then
-     write(6,'("coords :      fatal : myid=",i3," ; Lcurvature.lt.0 .or. Lcurvature.gt.5 ; invalid input value for Lcurvature ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "coords : Lcurvature.lt.0 .or. Lcurvature.gt.5 : invalid input value for Lcurvature  ;"
-    endif
+    if (Lcurvature .lt. 0 .or. Lcurvature .gt. 5) then
+        write (6, '("coords :      fatal : myid=",i3," ; Lcurvature.lt.0 .or. Lcurvature.gt.5 ; invalid input value for Lcurvature ;")') myid
+        call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+        stop "coords : Lcurvature.lt.0 .or. Lcurvature.gt.5 : invalid input value for Lcurvature  ;"
+    end if
 
 #endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  Rij(1:Ntz,0:3,0:3) = zero ; sg(1:Ntz,0:3) = zero ; guvij(1:Ntz,1:3,1:3,0:3) = zero ! provide trivial default for output; 16 Jan 13;
-  Zij(1:Ntz,0:3,0:3) = zero                                                          ! provide trivial default for output; 16 Jan 13;
+    Rij(1:Ntz, 0:3, 0:3) = zero
+    sg(1:Ntz, 0:3) = zero
+    guvij(1:Ntz, 1:3, 1:3, 0:3) = zero ! provide trivial default for output; 16 Jan 13;
+    Zij(1:Ntz, 0:3, 0:3) = zero                                                          ! provide trivial default for output; 16 Jan 13;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  Remn(1:mn,0:2) = zero ! interpolated coordinate harmonics; 6 Feb 13;
-  Zomn(1:mn,0:2) = zero
-  Romn(1:mn,0:2) = zero
-  Zemn(1:mn,0:2) = zero
+    Remn(1:mn, 0:2) = zero ! interpolated coordinate harmonics; 6 Feb 13;
+    Zomn(1:mn, 0:2) = zero
+    Romn(1:mn, 0:2) = zero
+    Zemn(1:mn, 0:2) = zero
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  if( Lcoordinatesingularity ) then
+    if (Lcoordinatesingularity) then
 
-   sbar = ( lss + one ) * half
+        sbar = (lss + one)*half
 
 #ifdef DEBUG
 
-   if( sbar.lt.zero .or. sbar.gt.one ) then
-     write(6,'("coords :      fatal : myid=",i3," ; sbar.lt.zero .or. sbar.gt.one ; invalid sbar ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "coords : sbar.lt.zero .or. sbar.gt.one : invalid sbar  ;"
-    endif
+        if (sbar .lt. zero .or. sbar .gt. one) then
+            write (6, '("coords :      fatal : myid=",i3," ; sbar.lt.zero .or. sbar.gt.one ; invalid sbar ;")') myid
+            call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+            stop "coords : sbar.lt.zero .or. sbar.gt.one : invalid sbar  ;"
+        end if
 
 #endif
-   select case( Igeometry )
-   case( 2   )  ; fj(     1:Ntor+1,0) = sbar                    ! these are the mj.eq.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
-   ;            ; fj(Ntor+2:mn    ,0) = sbar**(im(Ntor+2:mn)+1) ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
-   case( 3   )  ; fj(     1:Ntor+1,0) = sbar**2                 ! switch to sbar=r; 29 Jun 19
-   ;            ; fj(Ntor+2:mn    ,0) = sbar**im(Ntor+2:mn)     ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
-   case default ;
-   if( .true. ) then
-     write(6,'("coords :      fatal : myid=",i3," ; .true. ; invalid Igeometry for Lcoordinatesingularity=T ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "coords : .true. : invalid Igeometry for Lcoordinatesingularity=T  ;"
-    endif
+        select case (Igeometry)
+        case (2)
+            fj(1:Ntor + 1, 0) = sbar                    ! these are the mj.eq.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+            fj(Ntor + 2:mn, 0) = sbar**(im(Ntor + 2:mn) + 1) ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+        case (3)
+            fj(1:Ntor + 1, 0) = sbar**2                 ! switch to sbar=r; 29 Jun 19
+            fj(Ntor + 2:mn, 0) = sbar**im(Ntor + 2:mn)     ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+        case default;
+            if (.true.) then
+                write (6, '("coords :      fatal : myid=",i3," ; .true. ; invalid Igeometry for Lcoordinatesingularity=T ;")') myid
+                call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                stop "coords : .true. : invalid Igeometry for Lcoordinatesingularity=T  ;"
+            end if
 
-   end select
+        end select
 
+        Remn(1:mn, 0) = iRbc(1:mn, 0) + (iRbc(1:mn, 1) - iRbc(1:mn, 0))*fj(1:mn, 0)
+        if (NOTstellsym) then
+            Romn(1:mn, 0) = iRbs(1:mn, 0) + (iRbs(1:mn, 1) - iRbs(1:mn, 0))*fj(1:mn, 0)
+        end if
+        if (Igeometry .eq. 3) then
+            Zomn(1:mn, 0) = iZbs(1:mn, 0) + (iZbs(1:mn, 1) - iZbs(1:mn, 0))*fj(1:mn, 0)
+            if (NOTstellsym) then
+                Zemn(1:mn, 0) = iZbc(1:mn, 0) + (iZbc(1:mn, 1) - iZbc(1:mn, 0))*fj(1:mn, 0)
+            end if
+        end if
 
-   Remn(1:mn,0) = iRbc(1:mn,0) + ( iRbc(1:mn,1) - iRbc(1:mn,0) ) * fj(1:mn,0)
-   if( NOTstellsym ) then
-   Romn(1:mn,0) = iRbs(1:mn,0) + ( iRbs(1:mn,1) - iRbs(1:mn,0) ) * fj(1:mn,0)
-   endif
-   if( Igeometry.eq.3 ) then
-   Zomn(1:mn,0) = iZbs(1:mn,0) + ( iZbs(1:mn,1) - iZbs(1:mn,0) ) * fj(1:mn,0)
-   if( NOTstellsym ) then
-   Zemn(1:mn,0) = iZbc(1:mn,0) + ( iZbc(1:mn,1) - iZbc(1:mn,0) ) * fj(1:mn,0)
-   endif
-   endif
+    else ! matches if( Lcoordinatesingularity ) ; 22 Apr 13;
 
-  else ! matches if( Lcoordinatesingularity ) ; 22 Apr 13;
+        alss = half*(one - lss)
+        blss = half*(one + lss)
 
-   alss = half * ( one - lss ) ; blss = half * ( one + lss )
+        Remn(1:mn, 0) = alss*iRbc(1:mn, lvol - 1) + blss*iRbc(1:mn, lvol)
+        if (NOTstellsym) then
+            Romn(1:mn, 0) = alss*iRbs(1:mn, lvol - 1) + blss*iRbs(1:mn, lvol)
+        end if
+        if (Igeometry .eq. 3) then
+            Zomn(1:mn, 0) = alss*iZbs(1:mn, lvol - 1) + blss*iZbs(1:mn, lvol)
+            if (NOTstellsym) then
+                Zemn(1:mn, 0) = alss*iZbc(1:mn, lvol - 1) + blss*iZbc(1:mn, lvol)
+            end if
+        end if ! end of if( Igeometry.eq.3 ) ; 01 Feb 13;
 
-   Remn(1:mn,0) = alss * iRbc(1:mn,lvol-1) + blss * iRbc(1:mn,lvol)
-   if( NOTstellsym ) then
-   Romn(1:mn,0) = alss * iRbs(1:mn,lvol-1) + blss * iRbs(1:mn,lvol)
-   endif
-   if( Igeometry.eq.3 ) then
-   Zomn(1:mn,0) = alss * iZbs(1:mn,lvol-1) + blss * iZbs(1:mn,lvol)
-   if( NOTstellsym ) then
-   Zemn(1:mn,0) = alss * iZbc(1:mn,lvol-1) + blss * iZbc(1:mn,lvol)
-   endif
-   endif ! end of if( Igeometry.eq.3 ) ; 01 Feb 13;
+    end if ! end of if( Lcoordinatesingularity ); 01 Feb 13;
 
-  endif ! end of if( Lcoordinatesingularity ); 01 Feb 13;
-
-  call invfft( mn, im(1:mn), in(1:mn), Remn(1:mn,0), Romn(1:mn,0), Zemn(1:mn,0), Zomn(1:mn,0), &
-               Nt, Nz, Rij(1:Ntz,0,0), Zij(1:Ntz,0,0) ) ! maps to real space;
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  if( Lcurvature.eq.0 ) goto 9999 ! only the coordinates are required;
+    call invfft(mn, im(1:mn), in(1:mn), Remn(1:mn, 0), Romn(1:mn, 0), Zemn(1:mn, 0), Zomn(1:mn, 0), &
+                Nt, Nz, Rij(1:Ntz, 0, 0), Zij(1:Ntz, 0, 0)) ! maps to real space;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  if( Lcoordinatesingularity ) then
+    if (Lcurvature .eq. 0) goto 9999 ! only the coordinates are required;
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+    if (Lcoordinatesingularity) then
 
 #ifdef DEBUG
 
-   if( sbar.lt.small ) then
-     write(6,'("coords :      fatal : myid=",i3," ; sbar.lt.small ; small denominator ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "coords : sbar.lt.small : small denominator  ;"
-    endif
+        if (sbar .lt. small) then
+            write (6, '("coords :      fatal : myid=",i3," ; sbar.lt.small ; small denominator ;")') myid
+            call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+            stop "coords : sbar.lt.small : small denominator  ;"
+        end if
 
 #endif
-   select case( Igeometry )
-   case( 2   )  ; fj(     1:Ntor+1,1) = half                                                  ! these are the mj.eq.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
-   ;            ; fj(Ntor+2:mn    ,1) = half*(im(Ntor+2:mn)+one) * fj(Ntor+2:mn    ,0) / sbar ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
-   case( 3   )  ; fj(     1:Ntor+1,1) = sbar                                                  ! these are the mj.eq.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
-   ;            ; fj(Ntor+2:mn    ,1) = half * im(Ntor+2:mn) * fj(Ntor+2:mn    ,0) / sbar     ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
-   case default ;
-   if( .true. ) then
-     write(6,'("coords :      fatal : myid=",i3," ; .true. ; invalid Igeometry for Lcoordinatesingularity=T and Lcurvature.ne.0 ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "coords : .true. : invalid Igeometry for Lcoordinatesingularity=T and Lcurvature.ne.0  ;"
-    endif
+        select case (Igeometry)
+        case (2)
+            fj(1:Ntor + 1, 1) = half                                                  ! these are the mj.eq.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+            fj(Ntor + 2:mn, 1) = half*(im(Ntor + 2:mn) + one)*fj(Ntor + 2:mn, 0)/sbar ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+        case (3)
+            fj(1:Ntor + 1, 1) = sbar                                                  ! these are the mj.eq.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+            fj(Ntor + 2:mn, 1) = half*im(Ntor + 2:mn)*fj(Ntor + 2:mn, 0)/sbar     ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+        case default;
+            if (.true.) then
+                write (6, '("coords :      fatal : myid=",i3," ; .true. ; invalid Igeometry for Lcoordinatesingularity=T and Lcurvature.ne.0 ;")') myid
+                call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                stop "coords : .true. : invalid Igeometry for Lcoordinatesingularity=T and Lcurvature.ne.0  ;"
+            end if
 
-   end select
+        end select
 
-   Remn(1:mn,1) =                       ( iRbc(1:mn,1) - iRbc(1:mn,0) ) * fj(1:mn,1)
-   if( NOTstellsym ) then
-   Romn(1:mn,1) =                       ( iRbs(1:mn,1) - iRbs(1:mn,0) ) * fj(1:mn,1)
-   endif
-   if( Igeometry.eq.3 ) then
-   Zomn(1:mn,1) =                       ( iZbs(1:mn,1) - iZbs(1:mn,0) ) * fj(1:mn,1)
-   if( NOTstellsym ) then
-   Zemn(1:mn,1) =                       ( iZbc(1:mn,1) - iZbc(1:mn,0) ) * fj(1:mn,1)
-   endif
-   endif
+        Remn(1:mn, 1) = (iRbc(1:mn, 1) - iRbc(1:mn, 0))*fj(1:mn, 1)
+        if (NOTstellsym) then
+            Romn(1:mn, 1) = (iRbs(1:mn, 1) - iRbs(1:mn, 0))*fj(1:mn, 1)
+        end if
+        if (Igeometry .eq. 3) then
+            Zomn(1:mn, 1) = (iZbs(1:mn, 1) - iZbs(1:mn, 0))*fj(1:mn, 1)
+            if (NOTstellsym) then
+                Zemn(1:mn, 1) = (iZbc(1:mn, 1) - iZbc(1:mn, 0))*fj(1:mn, 1)
+            end if
+        end if
 
-  else ! matches if( Lcoordinatesingularity ) ; 22 Apr 13;
+    else ! matches if( Lcoordinatesingularity ) ; 22 Apr 13;
 
-   Remn(1:mn,1) = (      - iRbc(1:mn,lvol-1) +        iRbc(1:mn,lvol) ) * half
-   if( NOTstellsym ) then
-   Romn(1:mn,1) = (      - iRbs(1:mn,lvol-1) +        iRbs(1:mn,lvol) ) * half
-   endif
-   if( Igeometry.eq.3 ) then
-   Zomn(1:mn,1) = (      - iZbs(1:mn,lvol-1) +        iZbs(1:mn,lvol) ) * half
-   if( NOTstellsym ) then
-   Zemn(1:mn,1) = (      - iZbc(1:mn,lvol-1) +        iZbc(1:mn,lvol) ) * half
-   endif
-   endif ! end of if( Igeometry.eq.3 ) ; 01 Feb 13;
+        Remn(1:mn, 1) = (-iRbc(1:mn, lvol - 1) + iRbc(1:mn, lvol))*half
+        if (NOTstellsym) then
+            Romn(1:mn, 1) = (-iRbs(1:mn, lvol - 1) + iRbs(1:mn, lvol))*half
+        end if
+        if (Igeometry .eq. 3) then
+            Zomn(1:mn, 1) = (-iZbs(1:mn, lvol - 1) + iZbs(1:mn, lvol))*half
+            if (NOTstellsym) then
+                Zemn(1:mn, 1) = (-iZbc(1:mn, lvol - 1) + iZbc(1:mn, lvol))*half
+            end if
+        end if ! end of if( Igeometry.eq.3 ) ; 01 Feb 13;
 
-  endif ! end of if( Lcoordinatesingularity ); 01 Feb 13;
+    end if ! end of if( Lcoordinatesingularity ); 01 Feb 13;
 
-  ! Derivative w.r.t s
-  call invfft( mn, im(1:mn), in(1:mn),           Remn(1:mn,1),           Romn(1:mn,1),           Zemn(1:mn,1),           Zomn(1:mn,1), &
-               Nt, Nz, Rij(1:Ntz,1,0), Zij(1:Ntz,1,0) ) ! maps to real space;
+    ! Derivative w.r.t s
+    call invfft(mn, im(1:mn), in(1:mn), Remn(1:mn, 1), Romn(1:mn, 1), Zemn(1:mn, 1), Zomn(1:mn, 1), &
+                Nt, Nz, Rij(1:Ntz, 1, 0), Zij(1:Ntz, 1, 0)) ! maps to real space;
 
-  ! Derivative w.r.t theta
-  call invfft( mn, im(1:mn), in(1:mn),  im(1:mn)*Romn(1:mn,0), -im(1:mn)*Remn(1:mn,0),  im(1:mn)*Zomn(1:mn,0), -im(1:mn)*Zemn(1:mn,0), &
-               Nt, Nz, Rij(1:Ntz,2,0), Zij(1:Ntz,2,0) ) ! maps to real space;
+    ! Derivative w.r.t theta
+    call invfft(mn, im(1:mn), in(1:mn), im(1:mn)*Romn(1:mn, 0), -im(1:mn)*Remn(1:mn, 0), im(1:mn)*Zomn(1:mn, 0), -im(1:mn)*Zemn(1:mn, 0), &
+                Nt, Nz, Rij(1:Ntz, 2, 0), Zij(1:Ntz, 2, 0)) ! maps to real space;
 
-  ! Derivative w.r.t zeta
-  call invfft( mn, im(1:mn), in(1:mn), -in(1:mn)*Romn(1:mn,0),  in(1:mn)*Remn(1:mn,0), -in(1:mn)*Zomn(1:mn,0),  in(1:mn)*Zemn(1:mn,0), &
-               Nt, Nz, Rij(1:Ntz,3,0), Zij(1:Ntz,3,0) ) ! maps to real space;
+    ! Derivative w.r.t zeta
+    call invfft(mn, im(1:mn), in(1:mn), -in(1:mn)*Romn(1:mn, 0), in(1:mn)*Remn(1:mn, 0), -in(1:mn)*Zomn(1:mn, 0), in(1:mn)*Zemn(1:mn, 0), &
+                Nt, Nz, Rij(1:Ntz, 3, 0), Zij(1:Ntz, 3, 0)) ! maps to real space;
 
+    do ii = 1, 3
+        Rij(1:Ntz, 0, ii) = Rij(1:Ntz, ii, 0) ! just to complete workspace arrays; 22 Apr 13;
+        Zij(1:Ntz, 0, ii) = Zij(1:Ntz, ii, 0) ! just to complete workspace arrays; 22 Apr 13;
+    end do
 
-  do ii = 1, 3 ; Rij(1:Ntz,0,ii) = Rij(1:Ntz,ii,0) ! just to complete workspace arrays; 22 Apr 13;
-   ;           ; Zij(1:Ntz,0,ii) = Zij(1:Ntz,ii,0) ! just to complete workspace arrays; 22 Apr 13;
-  enddo
-
-
-  guvij(1:Ntz, 0, 0, 0) = one ! this is (only) required for the helicity integral; 22 Apr 13;
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  select case( Igeometry )
+    guvij(1:Ntz, 0, 0, 0) = one ! this is (only) required for the helicity integral; 22 Apr 13;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  case( 1 ) ! Igeometry=1; Cartesian;
-
-   sg(1:Ntz,0) = Rij(1:Ntz,1,0)*rpol*rtor
-
-   do ii = 1, 3
-    do jj = ii, 3 ; guvij(1:Ntz,ii,jj,0) = Rij(1:Ntz,ii,0) * Rij(1:Ntz,jj,0)
-    enddo
-   enddo
-
-   guvij(1:Ntz, 2, 2,0) = guvij(1:Ntz, 2, 2,0) + rpol*rpol
-   guvij(1:Ntz, 3, 3,0) = guvij(1:Ntz, 3, 3,0) + rtor*rtor
+    select case (Igeometry)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  case( 2 ) ! Igeometry=2; cylindrical;
+    case (1) ! Igeometry=1; Cartesian;
+
+        sg(1:Ntz, 0) = Rij(1:Ntz, 1, 0)*rpol*rtor
+
+        do ii = 1, 3
+            do jj = ii, 3
+                guvij(1:Ntz, ii, jj, 0) = Rij(1:Ntz, ii, 0)*Rij(1:Ntz, jj, 0)
+            end do
+        end do
+
+        guvij(1:Ntz, 2, 2, 0) = guvij(1:Ntz, 2, 2, 0) + rpol*rpol
+        guvij(1:Ntz, 3, 3, 0) = guvij(1:Ntz, 3, 3, 0) + rtor*rtor
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-   sg(1:Ntz,0) = Rij(1:Ntz, 1,0) * Rij(1:Ntz, 0,0)
-
-   do ii = 1, 3
-    do jj = ii, 3 ; guvij(1:Ntz,ii,jj,0) = Rij(1:Ntz,ii,0) * Rij(1:Ntz,jj,0)
-    enddo
-   enddo
-
-   guvij(1:Ntz, 2, 2,0) = guvij(1:Ntz, 2, 2,0) + Rij(1:Ntz, 0, 0) * Rij(1:Ntz, 0, 0)
-   guvij(1:Ntz, 3, 3,0) = guvij(1:Ntz, 3, 3,0) + one
+    case (2) ! Igeometry=2; cylindrical;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  case( 3 ) ! Igeometry=3; toroidal;
+        sg(1:Ntz, 0) = Rij(1:Ntz, 1, 0)*Rij(1:Ntz, 0, 0)
 
-   sg(1:Ntz,0) = Rij(1:Ntz,0,0) * ( Zij(1:Ntz,1,0)*Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Zij(1:Ntz,2,0) )
+        do ii = 1, 3
+            do jj = ii, 3
+                guvij(1:Ntz, ii, jj, 0) = Rij(1:Ntz, ii, 0)*Rij(1:Ntz, jj, 0)
+            end do
+        end do
 
-   do ii = 1, 3
-    do jj = ii, 3 ; guvij(1:Ntz,ii,jj,0) = Rij(1:Ntz,ii,0) * Rij(1:Ntz,jj,0) + Zij(1:Ntz,ii,0) * Zij(1:Ntz,jj,0)
-    enddo
-   enddo
-
-   guvij(1:Ntz, 3, 3,0) = guvij(1:Ntz, 3, 3,0) + ( Rij(1:Ntz,0,0) )**2
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  case default ! Igeometry; 09 Mar 17;
+        guvij(1:Ntz, 2, 2, 0) = guvij(1:Ntz, 2, 2, 0) + Rij(1:Ntz, 0, 0)*Rij(1:Ntz, 0, 0)
+        guvij(1:Ntz, 3, 3, 0) = guvij(1:Ntz, 3, 3, 0) + one
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+    case (3) ! Igeometry=3; toroidal;
 
-   if( .true. ) then
-     write(6,'("coords :      fatal : myid=",i3," ; .true. ; selected Igeometry not supported ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "coords : .true. : selected Igeometry not supported  ;"
-    endif
+        sg(1:Ntz, 0) = Rij(1:Ntz, 0, 0)*(Zij(1:Ntz, 1, 0)*Rij(1:Ntz, 2, 0) - Rij(1:Ntz, 1, 0)*Zij(1:Ntz, 2, 0))
 
+        do ii = 1, 3
+            do jj = ii, 3
+                guvij(1:Ntz, ii, jj, 0) = Rij(1:Ntz, ii, 0)*Rij(1:Ntz, jj, 0) + Zij(1:Ntz, ii, 0)*Zij(1:Ntz, jj, 0)
+            end do
+        end do
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  end select ! end of select case( Igeometry ) ; 15 Sep 16;
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  do ii = 2, 3
-   do jj = 1, ii-1 ; guvij(1:Ntz,ii,jj,0) = guvij(1:Ntz,jj,ii,0) ! complete metric array; 20 Apr 13;
-   enddo
-  enddo
+        guvij(1:Ntz, 3, 3, 0) = guvij(1:Ntz, 3, 3, 0) + (Rij(1:Ntz, 0, 0))**2
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  if( Lcurvature.le.1 ) goto 9999
+    case default ! Igeometry; 09 Mar 17;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  select case( Lcurvature )
+        if (.true.) then
+            write (6, '("coords :      fatal : myid=",i3," ; .true. ; selected Igeometry not supported ;")') myid
+            call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+            stop "coords : .true. : selected Igeometry not supported  ;"
+        end if
 
-  case( 2 ) ! Lcurvature=2; get second derivatives of position wrt \s, \t & \z; 19 Sep 13;
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-   if( Lcoordinatesingularity ) then
+    end select ! end of select case( Igeometry ) ; 15 Sep 16;
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+    do ii = 2, 3
+        do jj = 1, ii - 1
+            guvij(1:Ntz, ii, jj, 0) = guvij(1:Ntz, jj, ii, 0) ! complete metric array; 20 Apr 13;
+        end do
+    end do
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+    if (Lcurvature .le. 1) goto 9999
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+    select case (Lcurvature)
+
+    case (2) ! Lcurvature=2; get second derivatives of position wrt \s, \t & \z; 19 Sep 13;
+
+        if (Lcoordinatesingularity) then
 
 #ifdef DEBUG
 
-   if( sbar.lt.small ) then
-     write(6,'("coords :      fatal : myid=",i3," ; sbar.lt.small ; small denominator ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "coords : sbar.lt.small : small denominator  ;"
-    endif
+            if (sbar .lt. small) then
+                write (6, '("coords :      fatal : myid=",i3," ; sbar.lt.small ; small denominator ;")') myid
+                call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                stop "coords : sbar.lt.small : small denominator  ;"
+            end if
 
 #endif
-    select case( Igeometry )
-    case( 2 )    ; fj(     1:Ntor+1,2) = zero                                                            ! these are the mj.eq.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
-     ;           ; fj(Ntor+2:mn    ,2) = half * ( im(Ntor+2:mn)       ) * fj(Ntor+2:mn    ,1) / sbar     ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
-    case( 3 )    ; fj(     1:Ntor+1,2) = half                                                            ! these are the mj.eq.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
-     ;           ; fj(Ntor+2:mn    ,2) = half * ( im(Ntor+2:mn) - one ) * fj(Ntor+2:mn    ,1) / sbar     ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
-    case default ;
-     ;           ;
-   if( .true. ) then
-     write(6,'("coords :      fatal : myid=",i3," ; .true. ; invalid Igeometry for Lcoordinatesingularity=T and Lcurvature=2 ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "coords : .true. : invalid Igeometry for Lcoordinatesingularity=T and Lcurvature=2  ;"
-    endif
+            select case (Igeometry)
+            case (2)
+                fj(1:Ntor + 1, 2) = zero                                                            ! these are the mj.eq.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+                fj(Ntor + 2:mn, 2) = half*(im(Ntor + 2:mn))*fj(Ntor + 2:mn, 1)/sbar     ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+            case (3)
+                fj(1:Ntor + 1, 2) = half                                                            ! these are the mj.eq.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+                fj(Ntor + 2:mn, 2) = half*(im(Ntor + 2:mn) - one)*fj(Ntor + 2:mn, 1)/sbar     ! these are the me.ne.0 harmonics; 11 Aug 14; switch to sbar=r; 29 Jun 19
+            case default
+                if (.true.) then
+                    write (6, '("coords :      fatal : myid=",i3," ; .true. ; invalid Igeometry for Lcoordinatesingularity=T and Lcurvature=2 ;")') myid
+                    call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                    stop "coords : .true. : invalid Igeometry for Lcoordinatesingularity=T and Lcurvature=2  ;"
+                end if
+            end select
 
-    end select   ;
+            Remn(1:mn, 2) = (iRbc(1:mn, 1) - iRbc(1:mn, 0))*fj(1:mn, 2)
+            if (NOTstellsym) then
+                Romn(1:mn, 2) = (iRbs(1:mn, 1) - iRbs(1:mn, 0))*fj(1:mn, 2)
+            end if
+            if (Igeometry .eq. 3) then
+                Zomn(1:mn, 2) = (iZbs(1:mn, 1) - iZbs(1:mn, 0))*fj(1:mn, 2)
+                if (NOTstellsym) then
+                    Zemn(1:mn, 2) = (iZbc(1:mn, 1) - iZbc(1:mn, 0))*fj(1:mn, 2)
+                end if
+            end if
 
-    Remn(1:mn,2) =                       ( iRbc(1:mn,1) - iRbc(1:mn,0) ) * fj(1:mn,2)
-    if( NOTstellsym ) then
-    Romn(1:mn,2) =                       ( iRbs(1:mn,1) - iRbs(1:mn,0) ) * fj(1:mn,2)
-    endif
-    if( Igeometry.eq.3 ) then
-    Zomn(1:mn,2) =                       ( iZbs(1:mn,1) - iZbs(1:mn,0) ) * fj(1:mn,2)
-    if( NOTstellsym ) then
-    Zemn(1:mn,2) =                       ( iZbc(1:mn,1) - iZbc(1:mn,0) ) * fj(1:mn,2)
-    endif
-    endif
+        else ! if( .not.Lcoordinatesingularity ) ;
 
-   else ! if( .not.Lcoordinatesingularity ) ;
+            Remn(1:mn, 2) = zero
+            if (NOTstellsym) then
+                Romn(1:mn, 2) = zero
+            end if
+            if (Igeometry .eq. 3) then
+                Zomn(1:mn, 2) = zero
+                if (NOTstellsym) then
+                    Zemn(1:mn, 2) = zero
+                end if
+            end if ! end of if( Igeometry.eq.3 ) ; 01 Feb 13;
 
-    Remn(1:mn,2) = zero
-    if( NOTstellsym ) then
-    Romn(1:mn,2) = zero
-    endif
-    if( Igeometry.eq.3 ) then
-    Zomn(1:mn,2) = zero
-    if( NOTstellsym ) then
-    Zemn(1:mn,2) = zero
-    endif
-    endif ! end of if( Igeometry.eq.3 ) ; 01 Feb 13;
+        end if ! end of if( Lcoordinatesingularity ); 01 Feb 13;
 
-   endif ! end of if( Lcoordinatesingularity ); 01 Feb 13;
+        call invfft(mn, im(1:mn), in(1:mn), &
+                    Remn(1:mn, 2), Romn(1:mn, 2), Zemn(1:mn, 2), Zomn(1:mn, 2), &
+                    Nt, Nz, Rij(1:Ntz, 1, 1), Zij(1:Ntz, 1, 1)) ! maps to real space;
 
-   call invfft( mn, im(1:mn), in(1:mn),&
-                   Remn(1:mn,2),                   Romn(1:mn,2),                   Zemn(1:mn,2),                   Zomn(1:mn,2), &
-                Nt, Nz, Rij(1:Ntz,1,1), Zij(1:Ntz,1,1) ) ! maps to real space;
+        call invfft(mn, im(1:mn), in(1:mn), &
+                    +im(1:mn)*Romn(1:mn, 1), -im(1:mn)*Remn(1:mn, 1), im(1:mn)*Zomn(1:mn, 1), -im(1:mn)*Zemn(1:mn, 1), &
+                    Nt, Nz, Rij(1:Ntz, 1, 2), Zij(1:Ntz, 1, 2)) ! maps to real space;
 
-   call invfft( mn, im(1:mn), in(1:mn),&
-+         im(1:mn)*Romn(1:mn,1),         -im(1:mn)*Remn(1:mn,1),          im(1:mn)*Zomn(1:mn,1),         -im(1:mn)*Zemn(1:mn,1), &
-Nt, Nz, Rij(1:Ntz,1,2), Zij(1:Ntz,1,2) ) ! maps to real space;
+        call invfft(mn, im(1:mn), in(1:mn), &
+                    -in(1:mn)*Romn(1:mn, 1), in(1:mn)*Remn(1:mn, 1), -in(1:mn)*Zomn(1:mn, 1), in(1:mn)*Zemn(1:mn, 1), &
+                    Nt, Nz, Rij(1:Ntz, 1, 3), Zij(1:Ntz, 1, 3)) ! maps to real space;
 
-   call invfft( mn, im(1:mn), in(1:mn),&
--         in(1:mn)*Romn(1:mn,1),          in(1:mn)*Remn(1:mn,1),         -in(1:mn)*Zomn(1:mn,1),          in(1:mn)*Zemn(1:mn,1), &
-Nt, Nz, Rij(1:Ntz,1,3), Zij(1:Ntz,1,3) ) ! maps to real space;
+        call invfft(mn, im(1:mn), in(1:mn), &
+                    -im(1:mn)*im(1:mn)*Remn(1:mn, 0), -im(1:mn)*im(1:mn)*Romn(1:mn, 0), -im(1:mn)*im(1:mn)*Zemn(1:mn, 0), -im(1:mn)*im(1:mn)*Zomn(1:mn, 0), &
+                    Nt, Nz, Rij(1:Ntz, 2, 2), Zij(1:Ntz, 2, 2)) ! maps to real space;
 
-   call invfft( mn, im(1:mn), in(1:mn),&
--im(1:mn)*im(1:mn)*Remn(1:mn,0),-im(1:mn)*im(1:mn)*Romn(1:mn,0),-im(1:mn)*im(1:mn)*Zemn(1:mn,0),-im(1:mn)*im(1:mn)*Zomn(1:mn,0), &
-Nt, Nz, Rij(1:Ntz,2,2), Zij(1:Ntz,2,2) ) ! maps to real space;
+        call invfft(mn, im(1:mn), in(1:mn), &
+                    +im(1:mn)*in(1:mn)*Remn(1:mn, 0), im(1:mn)*in(1:mn)*Romn(1:mn, 0), im(1:mn)*in(1:mn)*Zemn(1:mn, 0), im(1:mn)*in(1:mn)*Zomn(1:mn, 0), &
+                    Nt, Nz, Rij(1:Ntz, 2, 3), Zij(1:Ntz, 2, 3)) ! maps to real space;
 
-   call invfft( mn, im(1:mn), in(1:mn),&
-+im(1:mn)*in(1:mn)*Remn(1:mn,0), im(1:mn)*in(1:mn)*Romn(1:mn,0), im(1:mn)*in(1:mn)*Zemn(1:mn,0), im(1:mn)*in(1:mn)*Zomn(1:mn,0), &
-Nt, Nz, Rij(1:Ntz,2,3), Zij(1:Ntz,2,3) ) ! maps to real space;
+        call invfft(mn, im(1:mn), in(1:mn), &
+                    -in(1:mn)*in(1:mn)*Remn(1:mn, 0), -in(1:mn)*in(1:mn)*Romn(1:mn, 0), -in(1:mn)*in(1:mn)*Zemn(1:mn, 0), -in(1:mn)*in(1:mn)*Zomn(1:mn, 0), &
+                    Nt, Nz, Rij(1:Ntz, 3, 3), Zij(1:Ntz, 3, 3)) ! maps to real space;
 
-   call invfft( mn, im(1:mn), in(1:mn),&
--in(1:mn)*in(1:mn)*Remn(1:mn,0),-in(1:mn)*in(1:mn)*Romn(1:mn,0),-in(1:mn)*in(1:mn)*Zemn(1:mn,0),-in(1:mn)*in(1:mn)*Zomn(1:mn,0), &
-Nt, Nz, Rij(1:Ntz,3,3), Zij(1:Ntz,3,3) ) ! maps to real space;
+        do ii = 2, 3
+            do jj = 1, ii - 1
+                Rij(1:Ntz, ii, jj) = Rij(1:Ntz, jj, ii)
+                Zij(1:Ntz, ii, jj) = Zij(1:Ntz, jj, ii)
+            end do
+        end do
 
+        select case (Igeometry)
 
-   do ii = 2, 3
-    do jj = 1, ii-1 ; Rij(1:Ntz,ii,jj) = Rij(1:Ntz,jj,ii) ; Zij(1:Ntz,ii,jj) = Zij(1:Ntz,jj,ii)
-    enddo
-   enddo
+        case (1) ! Lcurvature=2; Igeometry=1 ; Cartesian;
 
-
-   select case( Igeometry )
-
-   case( 1 ) ! Lcurvature=2; Igeometry=1 ; Cartesian;
-
-    do kk = 1, 3 ! kk labels derivative; 13 Sep 13;
+            do kk = 1, 3 ! kk labels derivative; 13 Sep 13;
 
 !    sg(1:Ntz, 0) = Rij(1:Ntz,1, 0)*rpol*rtor
-     sg(1:Ntz,kk) = Rij(1:Ntz,1,kk)*rpol*rtor
+                sg(1:Ntz, kk) = Rij(1:Ntz, 1, kk)*rpol*rtor
 
-     do ii = 1, 3
-      do jj = ii, 3 ; guvij(1:Ntz,ii,jj,kk) = Rij(1:Ntz,ii,kk) * Rij(1:Ntz,jj, 0) + Rij(1:Ntz,ii, 0) * Rij(1:Ntz,jj,kk)
-      enddo
-     enddo
+                do ii = 1, 3
+                    do jj = ii, 3
+                        guvij(1:Ntz, ii, jj, kk) = Rij(1:Ntz, ii, kk)*Rij(1:Ntz, jj, 0) + Rij(1:Ntz, ii, 0)*Rij(1:Ntz, jj, kk)
+                    end do
+                end do
 
-    enddo ! 06 Feb 13;
+            end do ! 06 Feb 13;
 
-   case( 2 ) ! Lcurvature=2; Igeometry=2 ; cylindrical;
+        case (2) ! Lcurvature=2; Igeometry=2 ; cylindrical;
 
-    do kk = 1, 3 ! kk labels derivative; 13 Sep 13;
+            do kk = 1, 3 ! kk labels derivative; 13 Sep 13;
 
 !    sg(1:Ntz, 0) = Rij(1:Ntz, 1, 0) * Rij(1:Ntz, 0,0)
-     sg(1:Ntz,kk) = Rij(1:Ntz, 1,kk) * Rij(1:Ntz, 0,0) + Rij(1:Ntz, 1,0) * Rij(1:Ntz, 0,kk)
+                sg(1:Ntz, kk) = Rij(1:Ntz, 1, kk)*Rij(1:Ntz, 0, 0) + Rij(1:Ntz, 1, 0)*Rij(1:Ntz, 0, kk)
 
-     do ii = 1, 3
-      do jj = ii, 3 ; guvij(1:Ntz,ii,jj,kk) = Rij(1:Ntz,ii,kk) * Rij(1:Ntz,jj, 0) + Rij(1:Ntz,ii, 0) * Rij(1:Ntz,jj,kk)
-      enddo
-     enddo
+                do ii = 1, 3
+                    do jj = ii, 3
+                        guvij(1:Ntz, ii, jj, kk) = Rij(1:Ntz, ii, kk)*Rij(1:Ntz, jj, 0) + Rij(1:Ntz, ii, 0)*Rij(1:Ntz, jj, kk)
+                    end do
+                end do
 
-     guvij(1:Ntz,2,2,kk) = guvij(1:Ntz,2,2,kk) + Rij(1:Ntz,0,kk) * Rij(1:Ntz,0,0) + Rij(1:Ntz,0,0) * Rij(1:Ntz,0,kk) ! 20 Jan 15;
-    !guvij(1:Ntz,2,2,kk) = guvij(1:Ntz,2,2,kk) + Rij(1:Ntz,kk,0) * Rij(1:Ntz,0,0) + Rij(1:Ntz,0,0) * Rij(1:Ntz,kk,0) ! 20 Jan 15;
-    !guvij(1:Ntz,3,3,kk) = additional term is unity;
+                guvij(1:Ntz, 2, 2, kk) = guvij(1:Ntz, 2, 2, kk) + Rij(1:Ntz, 0, kk)*Rij(1:Ntz, 0, 0) + Rij(1:Ntz, 0, 0)*Rij(1:Ntz, 0, kk) ! 20 Jan 15;
+                !guvij(1:Ntz,2,2,kk) = guvij(1:Ntz,2,2,kk) + Rij(1:Ntz,kk,0) * Rij(1:Ntz,0,0) + Rij(1:Ntz,0,0) * Rij(1:Ntz,kk,0) ! 20 Jan 15;
+                !guvij(1:Ntz,3,3,kk) = additional term is unity;
 
-    enddo ! 06 Feb 13;
+            end do ! 06 Feb 13;
 
-   case( 3 ) ! Lcurvature=2; Igeometry=3 ; toroidal;
+        case (3) ! Lcurvature=2; Igeometry=3 ; toroidal;
 
-    do kk = 1 , 3 ! kk labels derivative; 13 Sep 13;
+            do kk = 1, 3 ! kk labels derivative; 13 Sep 13;
 
 !    sg(1:Ntz, 0) = Rij(1:Ntz, 0,0) * ( Zij(1:Ntz,1, 0)*Rij(1:Ntz,2, 0) - Rij(1:Ntz,1, 0)*Zij(1:Ntz,2, 0) )
-     sg(1:Ntz,kk) = Rij(1:Ntz,kk,0) * ( Zij(1:Ntz,1, 0)*Rij(1:Ntz,2, 0) - Rij(1:Ntz,1, 0)*Zij(1:Ntz,2, 0) ) &
-                  + Rij(1:Ntz, 0,0) * ( Zij(1:Ntz,1,kk)*Rij(1:Ntz,2, 0) - Rij(1:Ntz,1,kk)*Zij(1:Ntz,2, 0) ) &
-                  + Rij(1:Ntz, 0,0) * ( Zij(1:Ntz,1, 0)*Rij(1:Ntz,2,kk) - Rij(1:Ntz,1, 0)*Zij(1:Ntz,2,kk) )
+                sg(1:Ntz, kk) = Rij(1:Ntz, kk, 0)*(Zij(1:Ntz, 1, 0)*Rij(1:Ntz, 2, 0) - Rij(1:Ntz, 1, 0)*Zij(1:Ntz, 2, 0)) &
+                                + Rij(1:Ntz, 0, 0)*(Zij(1:Ntz, 1, kk)*Rij(1:Ntz, 2, 0) - Rij(1:Ntz, 1, kk)*Zij(1:Ntz, 2, 0)) &
+                                + Rij(1:Ntz, 0, 0)*(Zij(1:Ntz, 1, 0)*Rij(1:Ntz, 2, kk) - Rij(1:Ntz, 1, 0)*Zij(1:Ntz, 2, kk))
 
-     sg(1:Ntz,kk) = sg(1:Ntz,kk)
+                sg(1:Ntz, kk) = sg(1:Ntz, kk)
 
-     do ii = 1, 3
-      do jj = ii, 3
-       guvij(1:Ntz,ii,jj,kk) = Rij(1:Ntz,ii,kk) * Rij(1:Ntz,jj, 0) &
-                             + Rij(1:Ntz,ii, 0) * Rij(1:Ntz,jj,kk) &
-                             + Zij(1:Ntz,ii,kk) * Zij(1:Ntz,jj, 0) &
-                             + Zij(1:Ntz,ii, 0) * Zij(1:Ntz,jj,kk)
-      enddo
-     enddo
+                do ii = 1, 3
+                    do jj = ii, 3
+                        guvij(1:Ntz, ii, jj, kk) = Rij(1:Ntz, ii, kk)*Rij(1:Ntz, jj, 0) &
+                                                   + Rij(1:Ntz, ii, 0)*Rij(1:Ntz, jj, kk) &
+                                                   + Zij(1:Ntz, ii, kk)*Zij(1:Ntz, jj, 0) &
+                                                   + Zij(1:Ntz, ii, 0)*Zij(1:Ntz, jj, kk)
+                    end do
+                end do
 
-     guvij(1:Ntz,3,3,kk) = guvij(1:Ntz,3,3,kk) + ( Rij(1:Ntz,0,kk) * Rij(1:Ntz,0,0) + Rij(1:Ntz,0,0) * Rij(1:Ntz,0,kk) )
+                guvij(1:Ntz, 3, 3, kk) = guvij(1:Ntz, 3, 3, kk) + (Rij(1:Ntz, 0, kk)*Rij(1:Ntz, 0, 0) + Rij(1:Ntz, 0, 0)*Rij(1:Ntz, 0, kk))
 
-    enddo ! end of do kk;  5 Feb 13;
+            end do ! end of do kk;  5 Feb 13;
 
-   case default
+        case default
 
+            if (.true.) then
+                write (6, '("coords :      fatal : myid=",i3," ; .true. ; selected Igeometry not supported for Lcurvature.eq.2 ;")') myid
+                call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                stop "coords : .true. : selected Igeometry not supported for Lcurvature.eq.2  ;"
+            end if
 
-   if( .true. ) then
-     write(6,'("coords :      fatal : myid=",i3," ; .true. ; selected Igeometry not supported for Lcurvature.eq.2 ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "coords : .true. : selected Igeometry not supported for Lcurvature.eq.2  ;"
-    endif
+        end select ! end of select case( Igeometry ) ; 15 Sep 16;
 
+        do ii = 2, 3
+            do jj = 1, ii - 1
+                guvij(1:Ntz, ii, jj, 1:3) = guvij(1:Ntz, jj, ii, 1:3)
+            end do
+        end do
 
-   end select ! end of select case( Igeometry ) ; 15 Sep 16;
+    case (3, 4, 5) ! Lcurvature=3,4,5 ; get derivatives wrt R_j and Z_j; 19 Sep 13;
 
-   do ii = 2, 3
-    do jj = 1, ii-1 ; guvij(1:Ntz,ii,jj,1:3) = guvij(1:Ntz,jj,ii,1:3)
-    enddo
-   enddo
+        ii = dBdX%ii
+        innout = dBdX%innout
+        irz = dBdX%irz
+        issym = dBdX%issym ! shorthand;
 
-
-  case( 3,4,5 ) ! Lcurvature=3,4,5 ; get derivatives wrt R_j and Z_j; 19 Sep 13;
-
-
-   ii = dBdX%ii ; innout = dBdX%innout ; irz = dBdX%irz ; issym = dBdX%issym ! shorthand;
-
-   if( Lcoordinatesingularity ) then
+        if (Lcoordinatesingularity) then
 
 #ifdef DEBUG
 
-   if( innout.eq.0 ) then
-     write(6,'("coords :      fatal : myid=",i3," ; innout.eq.0 ; cannot differentiate metric elements wrt coordinate singularity ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "coords : innout.eq.0 : cannot differentiate metric elements wrt coordinate singularity  ;"
-    endif
+            if (innout .eq. 0) then
+                write (6, '("coords :      fatal : myid=",i3," ; innout.eq.0 ; cannot differentiate metric elements wrt coordinate singularity ;")') myid
+                call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                stop "coords : innout.eq.0 : cannot differentiate metric elements wrt coordinate singularity  ;"
+            end if
 
 #endif
 
 #ifdef DEBUG
 
-   if( Igeometry.eq.1 ) then
-     write(6,'("coords :      fatal : myid=",i3," ; Igeometry.eq.1 ; Cartesian does not need regularization factor ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "coords : Igeometry.eq.1 : Cartesian does not need regularization factor  ;"
-    endif
+            if (Igeometry .eq. 1) then
+                write (6, '("coords :      fatal : myid=",i3," ; Igeometry.eq.1 ; Cartesian does not need regularization factor ;")') myid
+                call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                stop "coords : Igeometry.eq.1 : Cartesian does not need regularization factor  ;"
+            end if
 
 #endif
 
-    if( ( irz.eq.0 .and. issym.eq.0 ) .or. ( irz.eq.1 .and. issym.eq.1 ) ) then     ! cosine harmonics; 13 Sep 13;
+            if ((irz .eq. 0 .and. issym .eq. 0) .or. (irz .eq. 1 .and. issym .eq. 1)) then     ! cosine harmonics; 13 Sep 13;
 
-     Dij(1:Ntz,0) = fj(ii,0) * cosi(1:Ntz,ii)
-     Dij(1:Ntz,1) = fj(ii,1) * cosi(1:Ntz,ii)
-     Dij(1:Ntz,2) = fj(ii,0) * sini(1:Ntz,ii) * ( - im(ii) )
-     Dij(1:Ntz,3) = fj(ii,0) * sini(1:Ntz,ii) * ( + in(ii) )
+                Dij(1:Ntz, 0) = fj(ii, 0)*cosi(1:Ntz, ii)
+                Dij(1:Ntz, 1) = fj(ii, 1)*cosi(1:Ntz, ii)
+                Dij(1:Ntz, 2) = fj(ii, 0)*sini(1:Ntz, ii)*(-im(ii))
+                Dij(1:Ntz, 3) = fj(ii, 0)*sini(1:Ntz, ii)*(+in(ii))
 
-    else                                                                            !   sine harmonics; 13 Sep 13;
+            else                                                                            !   sine harmonics; 13 Sep 13;
 
-     Dij(1:Ntz,0) = fj(ii,0) * sini(1:Ntz,ii)
-     Dij(1:Ntz,1) = fj(ii,1) * sini(1:Ntz,ii)
-     Dij(1:Ntz,2) = fj(ii,0) * cosi(1:Ntz,ii) * ( + im(ii) )
-     Dij(1:Ntz,3) = fj(ii,0) * cosi(1:Ntz,ii) * ( - in(ii) )
+                Dij(1:Ntz, 0) = fj(ii, 0)*sini(1:Ntz, ii)
+                Dij(1:Ntz, 1) = fj(ii, 1)*sini(1:Ntz, ii)
+                Dij(1:Ntz, 2) = fj(ii, 0)*cosi(1:Ntz, ii)*(+im(ii))
+                Dij(1:Ntz, 3) = fj(ii, 0)*cosi(1:Ntz, ii)*(-in(ii))
 
-    endif ! if( ( irz.eq.0 .and. issym.eq.1 ) .or. ... ; 11 Aug 14;
+            end if ! if( ( irz.eq.0 .and. issym.eq.1 ) .or. ... ; 11 Aug 14;
 
-    if (Lcurvature .eq. 3 .or. Lcurvature .eq. 4) then
-      if (Igeometry .eq. 3) then
-        ! add the terms due to the moving coordinate axis
-        if ( irz.eq.0 ) then
-          DRxij(1:Ntz,0) = (one-sbar**2) * dRodR(1:Ntz,issym,ii)      ! dRx/dR
-          DRxij(1:Ntz,1) = - sbar * dRodR(1:Ntz,issym,ii)
-          DRxij(1:Ntz,2) = zero
-          DRxij(1:Ntz,3) = (one-sbar**2) * dRodR(1:Ntz,issym+2,ii)    ! dRx/dR, zeta derivative
+            if (Lcurvature .eq. 3 .or. Lcurvature .eq. 4) then
+                if (Igeometry .eq. 3) then
+                    ! add the terms due to the moving coordinate axis
+                    if (irz .eq. 0) then
+                        DRxij(1:Ntz, 0) = (one - sbar**2)*dRodR(1:Ntz, issym, ii)      ! dRx/dR
+                        DRxij(1:Ntz, 1) = -sbar*dRodR(1:Ntz, issym, ii)
+                        DRxij(1:Ntz, 2) = zero
+                        DRxij(1:Ntz, 3) = (one - sbar**2)*dRodR(1:Ntz, issym + 2, ii)    ! dRx/dR, zeta derivative
 
-          DZxij(1:Ntz,0) = (one-sbar**2) * dZodR(1:Ntz,issym,ii)      ! dZx/dR
-          DZxij(1:Ntz,1) = - sbar * dZodR(1:Ntz,issym,ii)
-          DZxij(1:Ntz,2) = zero
-          DZxij(1:Ntz,3) = (one-sbar**2) * dZodR(1:Ntz,issym+2,ii)    ! dZx/dR, zeta derivative
-        else
-          DRxij(1:Ntz,0) = (one-sbar**2) * dRodZ(1:Ntz,1-issym,ii)    ! dRx/dZ
-          DRxij(1:Ntz,1) = - sbar  * dRodZ(1:Ntz,1-issym,ii)
-          DRxij(1:Ntz,2) = zero
-          DRxij(1:Ntz,3) = (one-sbar**2) * dRodZ(1:Ntz,1-issym+2,ii)  ! dRx/dZ, zeta derivative
+                        DZxij(1:Ntz, 0) = (one - sbar**2)*dZodR(1:Ntz, issym, ii)      ! dZx/dR
+                        DZxij(1:Ntz, 1) = -sbar*dZodR(1:Ntz, issym, ii)
+                        DZxij(1:Ntz, 2) = zero
+                        DZxij(1:Ntz, 3) = (one - sbar**2)*dZodR(1:Ntz, issym + 2, ii)    ! dZx/dR, zeta derivative
+                    else
+                        DRxij(1:Ntz, 0) = (one - sbar**2)*dRodZ(1:Ntz, 1 - issym, ii)    ! dRx/dZ
+                        DRxij(1:Ntz, 1) = -sbar*dRodZ(1:Ntz, 1 - issym, ii)
+                        DRxij(1:Ntz, 2) = zero
+                        DRxij(1:Ntz, 3) = (one - sbar**2)*dRodZ(1:Ntz, 1 - issym + 2, ii)  ! dRx/dZ, zeta derivative
 
-          DZxij(1:Ntz,0) = (one-sbar**2) * dZodZ(1:Ntz,1-issym,ii)    ! dZx/dZ
-          DZxij(1:Ntz,1) = - sbar  * dZodZ(1:Ntz,1-issym,ii)
-          DZxij(1:Ntz,2) = zero
-          DZxij(1:Ntz,3) = (one-sbar**2) * dZodZ(1:Ntz,1-issym+2,ii)  ! dZx/dZ, zeta derivative
-        endif
-      endif
-    endif
-    !DRxij(:,:) = zero
-    !DZxij(:,:) = zero
+                        DZxij(1:Ntz, 0) = (one - sbar**2)*dZodZ(1:Ntz, 1 - issym, ii)    ! dZx/dZ
+                        DZxij(1:Ntz, 1) = -sbar*dZodZ(1:Ntz, 1 - issym, ii)
+                        DZxij(1:Ntz, 2) = zero
+                        DZxij(1:Ntz, 3) = (one - sbar**2)*dZodZ(1:Ntz, 1 - issym + 2, ii)  ! dZx/dZ, zeta derivative
+                    end if
+                end if
+            end if
+            !DRxij(:,:) = zero
+            !DZxij(:,:) = zero
 
-   else ! matches if( Lcoordinatesingularity ) ; 10 Mar 13;
+        else ! matches if( Lcoordinatesingularity ) ; 10 Mar 13;
 
-    if( innout.eq.0 ) signlss = - 1
-    if( innout.eq.1 ) signlss = + 1
+            if (innout .eq. 0) signlss = -1
+            if (innout .eq. 1) signlss = +1
 
-    if( ( irz.eq.0 .and. issym.eq.0 ) .or. ( irz.eq.1 .and. issym.eq.1 ) ) then ! cosine; 02 Sep 14;
-     Dij(1:Ntz,0) = ( one + signlss * lss ) * half * cosi(1:Ntz,ii)
-     Dij(1:Ntz,1) = (       signlss       ) * half * cosi(1:Ntz,ii)
-     Dij(1:Ntz,2) = ( one + signlss * lss ) * half * sini(1:Ntz,ii) * ( - im(ii) )
-     Dij(1:Ntz,3) = ( one + signlss * lss ) * half * sini(1:Ntz,ii) * ( + in(ii) )
-    else                                                                        !   sine; 02 Sep 14;
-     Dij(1:Ntz,0) = ( one + signlss * lss ) * half * sini(1:Ntz,ii)
-     Dij(1:Ntz,1) = (       signlss       ) * half * sini(1:Ntz,ii)
-     Dij(1:Ntz,2) = ( one + signlss * lss ) * half * cosi(1:Ntz,ii) * ( + im(ii) )
-     Dij(1:Ntz,3) = ( one + signlss * lss ) * half * cosi(1:Ntz,ii) * ( - in(ii) )
-    endif
+            if ((irz .eq. 0 .and. issym .eq. 0) .or. (irz .eq. 1 .and. issym .eq. 1)) then ! cosine; 02 Sep 14;
+                Dij(1:Ntz, 0) = (one + signlss*lss)*half*cosi(1:Ntz, ii)
+                Dij(1:Ntz, 1) = (signlss)*half*cosi(1:Ntz, ii)
+                Dij(1:Ntz, 2) = (one + signlss*lss)*half*sini(1:Ntz, ii)*(-im(ii))
+                Dij(1:Ntz, 3) = (one + signlss*lss)*half*sini(1:Ntz, ii)*(+in(ii))
+            else                                                                        !   sine; 02 Sep 14;
+                Dij(1:Ntz, 0) = (one + signlss*lss)*half*sini(1:Ntz, ii)
+                Dij(1:Ntz, 1) = (signlss)*half*sini(1:Ntz, ii)
+                Dij(1:Ntz, 2) = (one + signlss*lss)*half*cosi(1:Ntz, ii)*(+im(ii))
+                Dij(1:Ntz, 3) = (one + signlss*lss)*half*cosi(1:Ntz, ii)*(-in(ii))
+            end if
 
-   endif ! end of if( Lcoordinatesingularity ) ;  7 Mar 13;
+        end if ! end of if( Lcoordinatesingularity ) ;  7 Mar 13;
 
-   if (Lcurvature .eq. 5) then ! we only need the 2D Jacobian
-    if (Igeometry .eq. 3) then ! only works for toroidal
+        if (Lcurvature .eq. 5) then ! we only need the 2D Jacobian
+            if (Igeometry .eq. 3) then ! only works for toroidal
 
-      if( irz.eq.0 ) sg(1:Ntz,1) = ( Zij(1:Ntz,1,0)*Dij(1:Ntz,2  ) - Dij(1:Ntz,1  )*Zij(1:Ntz,2,0) )
-      if( irz.eq.1 ) sg(1:Ntz,1) = ( Dij(1:Ntz,1  )*Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Dij(1:Ntz,2  ) )
+                if (irz .eq. 0) sg(1:Ntz, 1) = (Zij(1:Ntz, 1, 0)*Dij(1:Ntz, 2) - Dij(1:Ntz, 1)*Zij(1:Ntz, 2, 0))
+                if (irz .eq. 1) sg(1:Ntz, 1) = (Dij(1:Ntz, 1)*Rij(1:Ntz, 2, 0) - Rij(1:Ntz, 1, 0)*Dij(1:Ntz, 2))
 
-    else
+            else
 
-   if( Lcurvature.eq.5 .and. Igeometry.ne.3 ) then
-     write(6,'("coords :      fatal : myid=",i3," ; Lcurvature.eq.5 .and. Igeometry.ne.3 ; Lcurvature.eq.5 can only be combined with Igeometry.ne.3 ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "coords : Lcurvature.eq.5 .and. Igeometry.ne.3 : Lcurvature.eq.5 can only be combined with Igeometry.ne.3  ;"
-    endif
+                if (Lcurvature .eq. 5 .and. Igeometry .ne. 3) then
+                    write (6, '("coords :      fatal : myid=",i3," ; Lcurvature.eq.5 .and. Igeometry.ne.3 ; Lcurvature.eq.5 can only be combined with Igeometry.ne.3 ;")') myid
+                    call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                    stop "coords : Lcurvature.eq.5 .and. Igeometry.ne.3 : Lcurvature.eq.5 can only be combined with Igeometry.ne.3  ;"
+                end if
 
-    end if ! if (Igeometry .eq. 3) ; 13 Jan 20
+            end if ! if (Igeometry .eq. 3) ; 13 Jan 20
 
-   else ! we need more for Lcurvature=3,4 ; 13 Jan 20
+        else ! we need more for Lcurvature=3,4 ; 13 Jan 20
 
-    select case( Igeometry )
+            select case (Igeometry)
 
-    case( 1 ) ! Lcurvature=3,4 ; Igeometry=1 ; Cartesian; 04 Dec 14;
+            case (1) ! Lcurvature=3,4 ; Igeometry=1 ; Cartesian; 04 Dec 14;
 
 #ifdef DEBUG
 
-   if( irz.eq.1 ) then
-     write(6,'("coords :      fatal : myid=",i3," ; irz.eq.1 ; there is no dependence on Zbs or Zbc ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "coords : irz.eq.1 : there is no dependence on Zbs or Zbc  ;"
-    endif
+                if (irz .eq. 1) then
+                    write (6, '("coords :      fatal : myid=",i3," ; irz.eq.1 ; there is no dependence on Zbs or Zbc ;")') myid
+                    call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                    stop "coords : irz.eq.1 : there is no dependence on Zbs or Zbc  ;"
+                end if
 
 #endif
 
 !                  sg(1:Ntz,0) = Rij(1:Ntz,1,0)*rpol*rtor
-                   sg(1:Ntz,1) = Dij(1:Ntz,1  )*rpol*rtor ! 20 Jun 14; 29 Apr 19;
+                sg(1:Ntz, 1) = Dij(1:Ntz, 1)*rpol*rtor ! 20 Jun 14; 29 Apr 19;
 !   if( irz.eq.1 ) sg(1:Ntz,1) =
 
-    do ii = 1, 3 ! careful: ii was used with a different definition above; 13 Sep 13;
-     do jj = ii, 3
-                     dguvij(1:Ntz,ii,jj) = Dij(1:Ntz,ii) * Rij(1:Ntz,jj,0) + Rij(1:Ntz,ii,0) * Dij(1:Ntz,jj)
+                do ii = 1, 3 ! careful: ii was used with a different definition above; 13 Sep 13;
+                    do jj = ii, 3
+                        dguvij(1:Ntz, ii, jj) = Dij(1:Ntz, ii)*Rij(1:Ntz, jj, 0) + Rij(1:Ntz, ii, 0)*Dij(1:Ntz, jj)
 !     if( irz.eq.1 ) dguvij(1:Ntz,ii,jj) =
-     enddo
-    enddo
+                    end do
+                end do
 
-   case( 2 ) ! Lcurvature=3,4,5 ; Igeometry=2 ; cylindrical;
+            case (2) ! Lcurvature=3,4,5 ; Igeometry=2 ; cylindrical;
 
 #ifdef DEBUG
 
-   if( irz.eq.1 ) then
-     write(6,'("coords :      fatal : myid=",i3," ; irz.eq.1 ; there is no dependence on Zbs or Zbc ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "coords : irz.eq.1 : there is no dependence on Zbs or Zbc  ;"
-    endif
+                if (irz .eq. 1) then
+                    write (6, '("coords :      fatal : myid=",i3," ; irz.eq.1 ; there is no dependence on Zbs or Zbc ;")') myid
+                    call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                    stop "coords : irz.eq.1 : there is no dependence on Zbs or Zbc  ;"
+                end if
 
 #endif
 
-  !                  sg(1:Ntz,0) = Rij(1:Ntz,1,0) * Rij(1:Ntz,0,0)
-      if( irz.eq.0 ) sg(1:Ntz,1) = Dij(1:Ntz,1  ) * Rij(1:Ntz,0,0) &
-                                + Rij(1:Ntz,1,0) * Dij(1:Ntz,0  )
+                !                  sg(1:Ntz,0) = Rij(1:Ntz,1,0) * Rij(1:Ntz,0,0)
+                if (irz .eq. 0) sg(1:Ntz, 1) = Dij(1:Ntz, 1)*Rij(1:Ntz, 0, 0) &
+                                               + Rij(1:Ntz, 1, 0)*Dij(1:Ntz, 0)
 
-    do ii = 1, 3 ! careful: ii was used with a different definition above; 13 Sep 13;
-     do jj = ii, 3
-      if( irz.eq.0 ) dguvij(1:Ntz,ii,jj) = Dij(1:Ntz,ii) * Rij(1:Ntz,jj,0) + Rij(1:Ntz,ii,0) * Dij(1:Ntz,jj)
-      if( irz.eq.1 ) then
+                do ii = 1, 3 ! careful: ii was used with a different definition above; 13 Sep 13;
+                    do jj = ii, 3
+                        if (irz .eq. 0) dguvij(1:Ntz, ii, jj) = Dij(1:Ntz, ii)*Rij(1:Ntz, jj, 0) + Rij(1:Ntz, ii, 0)*Dij(1:Ntz, jj)
+                        if (irz .eq. 1) then
 
-   if( .true. ) then
-     write(6,'("coords :      fatal : myid=",i3," ; .true. ; No Z-geometrical degree of freedom when Igeometry=2;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "coords : .true. : No Z-geometrical degree of freedom when Igeometry=2 ;"
-    endif
+                            if (.true.) then
+                                write (6, '("coords :      fatal : myid=",i3," ; .true. ; No Z-geometrical degree of freedom when Igeometry=2;")') myid
+                                call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                                stop "coords : .true. : No Z-geometrical degree of freedom when Igeometry=2 ;"
+                            end if
 !dguvij(1:Ntz,ii,jj) = Dij(1:Ntz,ii) * Zij(1:Ntz,jj,0) + Zij(1:Ntz,ii,0) * Dij(1:Ntz,jj) ! TODO REMOVE
-      endif
-     enddo
-    enddo
+                        end if
+                    end do
+                end do
 
-    dguvij(1:Ntz,2,2) = dguvij(1:Ntz,2,2) + two * Dij(1:Ntz,0) * Rij(1:Ntz,0,0)
-   !dguvij(1:Ntz,3,3) = additional term is unity;
+                dguvij(1:Ntz, 2, 2) = dguvij(1:Ntz, 2, 2) + two*Dij(1:Ntz, 0)*Rij(1:Ntz, 0, 0)
+                !dguvij(1:Ntz,3,3) = additional term is unity;
 
-    case( 3 ) ! Lcurvature=3,4,5 ; Igeometry=3 ; toroidal; 04 Dec 14;
+            case (3) ! Lcurvature=3,4,5 ; Igeometry=3 ; toroidal; 04 Dec 14;
 
-      if (LcoordinateSingularity) then
-    !                  sg(1:Ntz,0) = Rij(1:Ntz,0,0) * ( Zij(1:Ntz,1,0)*Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Zij(1:Ntz,2,0) )
-        if( irz.eq.0 ) sg(1:Ntz,1) = (Dij(1:Ntz,0  )+ DRxij(1:Ntz, 0)) * ( Zij(1:Ntz,1,0)*Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Zij(1:Ntz,2,0) ) &
-                                  + Rij(1:Ntz,0,0) * ( Zij(1:Ntz,1,0)*Dij(1:Ntz,2  ) - (Dij(1:Ntz,1  )+DRxij(1:Ntz,1)) *Zij(1:Ntz,2,0) ) &
-                                  + Rij(1:Ntz,0,0) * ( DZxij(1:Ntz,1)*Rij(1:Ntz,2,0) )
-        if( irz.eq.1 ) sg(1:Ntz,1) = DRxij(1:Ntz, 0) * ( Zij(1:Ntz,1,0)*Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Zij(1:Ntz,2,0) ) &
-                                  + Rij(1:Ntz,0,0) * ( (Dij(1:Ntz,1  )+DZxij(1:Ntz,1)) *Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Dij(1:Ntz,2  ) ) &
-                                  + Rij(1:Ntz,0,0) * (-DRxij(1:Ntz,1)*Zij(1:Ntz,2,0))
+                if (LcoordinateSingularity) then
+                    !                  sg(1:Ntz,0) = Rij(1:Ntz,0,0) * ( Zij(1:Ntz,1,0)*Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Zij(1:Ntz,2,0) )
+                    if (irz .eq. 0) sg(1:Ntz, 1) = (Dij(1:Ntz, 0) + DRxij(1:Ntz, 0))*(Zij(1:Ntz, 1, 0)*Rij(1:Ntz, 2, 0) - Rij(1:Ntz, 1, 0)*Zij(1:Ntz, 2, 0)) &
+                                                   + Rij(1:Ntz, 0, 0)*(Zij(1:Ntz, 1, 0)*Dij(1:Ntz, 2) - (Dij(1:Ntz, 1) + DRxij(1:Ntz, 1))*Zij(1:Ntz, 2, 0)) &
+                                                   + Rij(1:Ntz, 0, 0)*(DZxij(1:Ntz, 1)*Rij(1:Ntz, 2, 0))
+                    if (irz .eq. 1) sg(1:Ntz, 1) = DRxij(1:Ntz, 0)*(Zij(1:Ntz, 1, 0)*Rij(1:Ntz, 2, 0) - Rij(1:Ntz, 1, 0)*Zij(1:Ntz, 2, 0)) &
+                                                   + Rij(1:Ntz, 0, 0)*((Dij(1:Ntz, 1) + DZxij(1:Ntz, 1))*Rij(1:Ntz, 2, 0) - Rij(1:Ntz, 1, 0)*Dij(1:Ntz, 2)) &
+                                                   + Rij(1:Ntz, 0, 0)*(-DRxij(1:Ntz, 1)*Zij(1:Ntz, 2, 0))
 
-        do ii = 1, 3 ! careful: ii was used with a different definition above; 13 Sep 13;
-          do jj = ii, 3
-            if( irz.eq.0 ) dguvij(1:Ntz,ii,jj) = (Dij(1:Ntz,ii)+DRxij(1:Ntz,ii)) * Rij(1:Ntz,jj,0) + Rij(1:Ntz,ii,0) * (Dij(1:Ntz,jj)+DRxij(1:Ntz,jj)) &
-                                              + DZxij(1:Ntz,ii) * Zij(1:Ntz,jj,0) + Zij(1:Ntz,ii,0) * DZxij(1:Ntz,jj)
-            if( irz.eq.1 ) dguvij(1:Ntz,ii,jj) = (Dij(1:Ntz,ii)+DZxij(1:Ntz,ii)) * Zij(1:Ntz,jj,0) + Zij(1:Ntz,ii,0) * (Dij(1:Ntz,jj)+DZxij(1:Ntz,jj)) &
-                                              + DRxij(1:Ntz,ii) * Rij(1:Ntz,jj,0) + Rij(1:Ntz,ii,0) * DRxij(1:Ntz,jj)
-          enddo
-        enddo
+                    do ii = 1, 3 ! careful: ii was used with a different definition above; 13 Sep 13;
+                        do jj = ii, 3
+                            if (irz .eq. 0) dguvij(1:Ntz, ii, jj) = (Dij(1:Ntz, ii) + DRxij(1:Ntz, ii))*Rij(1:Ntz, jj, 0) + Rij(1:Ntz, ii, 0)*(Dij(1:Ntz, jj) + DRxij(1:Ntz, jj)) &
+                                                                    + DZxij(1:Ntz, ii)*Zij(1:Ntz, jj, 0) + Zij(1:Ntz, ii, 0)*DZxij(1:Ntz, jj)
+                            if (irz .eq. 1) dguvij(1:Ntz, ii, jj) = (Dij(1:Ntz, ii) + DZxij(1:Ntz, ii))*Zij(1:Ntz, jj, 0) + Zij(1:Ntz, ii, 0)*(Dij(1:Ntz, jj) + DZxij(1:Ntz, jj)) &
+                                                                    + DRxij(1:Ntz, ii)*Rij(1:Ntz, jj, 0) + Rij(1:Ntz, ii, 0)*DRxij(1:Ntz, jj)
+                        end do
+                    end do
 
-        if( irz.eq.0 ) dguvij(1:Ntz,3,3) = dguvij(1:Ntz,3,3) + two * (Dij(1:Ntz,0)+DRxij(1:Ntz,0)) * Rij(1:Ntz,0,0)
-        if( irz.eq.1 ) dguvij(1:Ntz,3,3) = dguvij(1:Ntz,3,3) + two * (DRxij(1:Ntz,0)) * Rij(1:Ntz,0,0)
+                    if (irz .eq. 0) dguvij(1:Ntz, 3, 3) = dguvij(1:Ntz, 3, 3) + two*(Dij(1:Ntz, 0) + DRxij(1:Ntz, 0))*Rij(1:Ntz, 0, 0)
+                    if (irz .eq. 1) dguvij(1:Ntz, 3, 3) = dguvij(1:Ntz, 3, 3) + two*(DRxij(1:Ntz, 0))*Rij(1:Ntz, 0, 0)
 
-      else
+                else
 
-        if( irz.eq.0 ) sg(1:Ntz,1) = Dij(1:Ntz,0  ) * ( Zij(1:Ntz,1,0)*Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Zij(1:Ntz,2,0) ) &
-                                  + Rij(1:Ntz,0,0) * ( Zij(1:Ntz,1,0)*Dij(1:Ntz,2  ) - Dij(1:Ntz,1  )*Zij(1:Ntz,2,0) )
-        if( irz.eq.1 ) sg(1:Ntz,1) = Rij(1:Ntz,0,0) * ( Dij(1:Ntz,1  )*Rij(1:Ntz,2,0) - Rij(1:Ntz,1,0)*Dij(1:Ntz,2  ) )
+                    if (irz .eq. 0) sg(1:Ntz, 1) = Dij(1:Ntz, 0)*(Zij(1:Ntz, 1, 0)*Rij(1:Ntz, 2, 0) - Rij(1:Ntz, 1, 0)*Zij(1:Ntz, 2, 0)) &
+                                                   + Rij(1:Ntz, 0, 0)*(Zij(1:Ntz, 1, 0)*Dij(1:Ntz, 2) - Dij(1:Ntz, 1)*Zij(1:Ntz, 2, 0))
+                    if (irz .eq. 1) sg(1:Ntz, 1) = Rij(1:Ntz, 0, 0)*(Dij(1:Ntz, 1)*Rij(1:Ntz, 2, 0) - Rij(1:Ntz, 1, 0)*Dij(1:Ntz, 2))
 
+                    do ii = 1, 3 ! careful: ii was used with a different definition above; 13 Sep 13;
+                        do jj = ii, 3
+                            if (irz .eq. 0) dguvij(1:Ntz, ii, jj) = Dij(1:Ntz, ii)*Rij(1:Ntz, jj, 0) + Rij(1:Ntz, ii, 0)*Dij(1:Ntz, jj)
+                            if (irz .eq. 1) dguvij(1:Ntz, ii, jj) = Dij(1:Ntz, ii)*Zij(1:Ntz, jj, 0) + Zij(1:Ntz, ii, 0)*Dij(1:Ntz, jj)
+                        end do
+                    end do
 
-        do ii = 1, 3 ! careful: ii was used with a different definition above; 13 Sep 13;
-          do jj = ii, 3
-            if( irz.eq.0 ) dguvij(1:Ntz,ii,jj) = Dij(1:Ntz,ii) * Rij(1:Ntz,jj,0) + Rij(1:Ntz,ii,0) * Dij(1:Ntz,jj)
-            if( irz.eq.1 ) dguvij(1:Ntz,ii,jj) = Dij(1:Ntz,ii) * Zij(1:Ntz,jj,0) + Zij(1:Ntz,ii,0) * Dij(1:Ntz,jj)
-          enddo
-        enddo
+                    if (irz .eq. 0) dguvij(1:Ntz, 3, 3) = dguvij(1:Ntz, 3, 3) + two*Dij(1:Ntz, 0)*Rij(1:Ntz, 0, 0)
+                end if
 
-        if( irz.eq.0 ) dguvij(1:Ntz,3,3) = dguvij(1:Ntz,3,3) + two * Dij(1:Ntz,0) * Rij(1:Ntz,0,0)
-      endif
+            case default
 
-    case default
+                if (.true.) then
+                    write (6, '("coords :      fatal : myid=",i3," ; .true. ; supplied Igeometry is not yet supported for Lcurvature.eq.3 or Lcurvature.eq.4 ;")') myid
+                    call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                    stop "coords : .true. : supplied Igeometry is not yet supported for Lcurvature.eq.3 or Lcurvature.eq.4  ;"
+                end if
 
+            end select ! end of select case( Igeometry );  7 Mar 13;
 
-   if( .true. ) then
-     write(6,'("coords :      fatal : myid=",i3," ; .true. ; supplied Igeometry is not yet supported for Lcurvature.eq.3 or Lcurvature.eq.4 ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "coords : .true. : supplied Igeometry is not yet supported for Lcurvature.eq.3 or Lcurvature.eq.4  ;"
-    endif
+            do ii = 2, 3
+                do jj = 1, ii - 1; dguvij(1:Ntz, ii, jj) = dguvij(1:Ntz, jj, ii) ! symmetry of metrics; 13 Sep 13;
+                end do
+            end do
 
+            guvij(1:Ntz, 0, 0, 1) = zero ! this "metric" does not depend on geometry; helicity matrix does not depend on geometry; 10 Mar 13;
 
-    end select ! end of select case( Igeometry );  7 Mar 13;
+            if (Lcurvature .eq. 3) then
 
-    do ii = 2, 3
-      do jj = 1, ii-1 ; dguvij(1:Ntz,ii,jj) = dguvij(1:Ntz,jj,ii) ! symmetry of metrics; 13 Sep 13;
-      enddo
-    enddo
+                do ii = 1, 3
+                do jj = 1, 3; guvij(1:Ntz, ii, jj, 1) = dguvij(1:Ntz, ii, jj) - guvij(1:Ntz, ii, jj, 0)*sg(1:Ntz, 1)/sg(1:Ntz, 0) ! differentiated metric elements; 7 Mar 13;
+                end do
+                end do
 
-    guvij(1:Ntz,0,0,1) = zero ! this "metric" does not depend on geometry; helicity matrix does not depend on geometry; 10 Mar 13;
+            else ! if( Lcurvature.eq.4 ) ;
 
-    if( Lcurvature.eq.3 ) then
+                do ii = 1, 3
+                do jj = 1, 3; guvij(1:Ntz, ii, jj, 1) = dguvij(1:Ntz, ii, jj)                                                    ! differentiated metric elements; 7 Mar 13;
+                end do
+                end do
 
-      do ii = 1, 3
-      do jj = 1, 3 ; guvij(1:Ntz,ii,jj,1) = dguvij(1:Ntz,ii,jj) - guvij(1:Ntz,ii,jj,0) * sg(1:Ntz,1) / sg(1:Ntz,0) ! differentiated metric elements; 7 Mar 13;
-      enddo
-      enddo
+            end if ! end of if( Lcurvature.eq.3 ) ; 15 Sep 16;
 
-    else ! if( Lcurvature.eq.4 ) ;
-
-      do ii = 1, 3
-      do jj = 1, 3 ; guvij(1:Ntz,ii,jj,1) = dguvij(1:Ntz,ii,jj)                                                    ! differentiated metric elements; 7 Mar 13;
-      enddo
-      enddo
-
-    endif ! end of if( Lcurvature.eq.3 ) ; 15 Sep 16;
-
-   endif ! end of if( Lcurvature.eq.5 ) ; 13 Jan 20;
-  end select ! matches select case( Lcurvature ) ; 10 Mar 13;
-
+        end if ! end of if( Lcurvature.eq.5 ) ; 13 Jan 20;
+    end select ! matches select case( Lcurvature ) ; 10 Mar 13;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-
 9999 continue
-  cput = MPI_WTIME()
-  Tcoords = Tcoords + ( cput-cpuo )
-  return
-
+    cput = MPI_WTIME()
+    Tcoords = Tcoords + (cput - cpuo)
+    return
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

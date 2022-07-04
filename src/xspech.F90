@@ -6,8 +6,8 @@
 !> This only calls the xpech() subroutine to do a stand-alone SPEC run.
 !> @return none
 program spec_main
-  implicit none
-  call xspech
+    implicit none
+    call xspech
 end program spec_main
 
 !> \brief Main subroutine of SPEC.
@@ -20,81 +20,77 @@ end program spec_main
 !> <li> write the output file(s) </li>
 !> </ul>
 subroutine xspech
-  use mod_kinds, only: wp => dp
-  use numerical
-  use allglobal, only: set_mpi_comm, myid, ncpu, cpus, version, MPI_COMM_SPEC, &
-                       wrtend, read_inputlists_from_file, check_inputs, broadcast_inputs, skip_write, &
-                       ext
-  use inputlist, only: initialize_inputs, Wxspech
-  use fileunits, only: ounit
-  use sphdf5,    only: init_outfile, &
-                       mirror_input_to_outfile, &
-                       init_convergence_output, &
-                       hdfint, finish_outfile, write_grid
-  use cputiming, only: Txspech
-
+    use mod_kinds, only: wp => dp
+    use numerical
+    use allglobal, only: set_mpi_comm, myid, ncpu, cpus, version, MPI_COMM_SPEC, &
+                         wrtend, read_inputlists_from_file, check_inputs, broadcast_inputs, skip_write, &
+                         ext
+    use inputlist, only: initialize_inputs, Wxspech
+    use fileunits, only: ounit
+    use sphdf5, only: init_outfile, &
+                      mirror_input_to_outfile, &
+                      init_convergence_output, &
+                      hdfint, finish_outfile, write_grid
+    use cputiming, only: Txspech
 
 #ifdef OPENMP
-  USE OMP_LIB
+    USE OMP_LIB
 #endif
-  use mpi
-  implicit none
-  integer   :: ierr, astat, ios, nthreads, ithread
-  real(wp)      :: cput, cpui, cpuo=0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
+    use mpi
+    implicit none
+    integer :: ierr, astat, ios, nthreads, ithread
+    real(wp) :: cput, cpui, cpuo = 0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
 
-
-  character            :: ldate*8, ltime*10, arg*100
+    character :: ldate*8, ltime*10, arg*100
 
 #ifdef DEBUG
-  character(len=255)   :: hostname
-  integer              :: iwait, pid, status
-  integer, external    :: getpid, hostnm
+    character(len=255) :: hostname
+    integer :: iwait, pid, status
+    integer, external :: getpid, hostnm
 #endif
 
-  call MPI_INIT( ierr )
+    call MPI_INIT(ierr)
 
-
-  cpui = MPI_WTIME()
-  cpuo = cpui
+    cpui = MPI_WTIME()
+    cpuo = cpui
 #ifdef OPENMP
-  nthreads = omp_get_max_threads()
+    nthreads = omp_get_max_threads()
 #else
-  nthreads = 1
+    nthreads = 1
 #endif
 
+    ! set default communicator to MPI_COMM_WORLD
+    call set_mpi_comm(MPI_COMM_WORLD)
 
-  ! set default communicator to MPI_COMM_WORLD
-  call set_mpi_comm(MPI_COMM_WORLD)
+    ! set initial time
+    cpus = MPI_WTIME()
+    cpuo = cpus
 
-  ! set initial time
-  cpus = MPI_WTIME()
-  cpuo = cpus
+    ! explicitly enable writing of HDF5 output file
+    skip_write = .false.
 
-  ! explicitly enable writing of HDF5 output file
-  skip_write = .false.
+    ! print header: version of SPEC, compilation info, current date and time, machine precision
+    cput = MPI_WTIME()
+    if (myid .eq. 0) then
 
-  ! print header: version of SPEC, compilation info, current date and time, machine precision
-  cput = MPI_WTIME()
-  if( myid.eq.0 ) then
-
-    ! screen output header
-    write(ounit,'("xspech : ", 10x ," : version = "F5.2)') version
+        ! screen output header
+        write (ounit, '("xspech : ", 10x ," : version = "F5.2)') version
 ! COMPILATION ! do not delete; this line is replaced (see Makefile) with a write statement identifying date, time, compilation flags, etc.;
-    call date_and_time( ldate, ltime )
-    write(ounit,'("xspech : ", 10x ," : ")')
-    write(ounit,1000) cput-cpus, ldate(1:4), ldate(5:6), ldate(7:8), ltime(1:2), ltime(3:4), ltime(5:6), machprec, vsmall, small
+        call date_and_time(ldate, ltime)
+        write (ounit, '("xspech : ", 10x ," : ")')
+        write (ounit, 1000) cput - cpus, ldate(1:4), ldate(5:6), ldate(7:8), ltime(1:2), ltime(3:4), ltime(5:6), machprec, vsmall, small
 
-    write(ounit,'("xspech : ", 10x ," : ")')
-    write(ounit,'("xspech : ",f10.2," : parallelism : ncpu=",i3," ; nthreads=",i3," ;")') cput-cpus, ncpu, nthreads
+        write (ounit, '("xspech : ", 10x ," : ")')
+        write (ounit, '("xspech : ",f10.2," : parallelism : ncpu=",i3," ; nthreads=",i3," ;")') cput - cpus, ncpu, nthreads
 
-    ! read command-line arguments
-    call read_command_args()
+        ! read command-line arguments
+        call read_command_args()
 
-    ! initialize input arrays into a default state
-    call initialize_inputs()
+        ! initialize input arrays into a default state
+        call initialize_inputs()
 
-    write(ounit,'("xspech : ", 10x ," : ")')
-    write(ounit,'("xspech : ",f10.2," : begin execution ; calling global:readin ;")') cput-cpus
+        write (ounit, '("xspech : ", 10x ," : ")')
+        write (ounit, '("xspech : ",f10.2," : begin execution ; calling global:readin ;")') cput - cpus
 
 !> **reading input, allocating global variables**
 !>
@@ -104,30 +100,30 @@ subroutine xspech
 !> <li> Most internal variables, global memory etc., are allocated in preset() . </li>
 !> <li> All quantities in the input file are mirrored into the output file's group \c /input . </li>
 !> </ul>
-    call read_inputlists_from_file()
+        call read_inputlists_from_file()
 
-    ! check that data from input file is within allowed ranges etc.
-    call check_inputs()
+        ! check that data from input file is within allowed ranges etc.
+        call check_inputs()
 
-  endif ! myid.eq.0
+    end if ! myid.eq.0
 
-  ! broadcast input file contents
-  call broadcast_inputs()
+    ! broadcast input file contents
+    call broadcast_inputs()
 
-  ! initialize internal arrays based on data from input file
-  call preset()
+    ! initialize internal arrays based on data from input file
+    call preset()
 
-  ! initialize HDF5 library and open output file ext.h5 for writing during execution
-  call init_outfile()
+    ! initialize HDF5 library and open output file ext.h5 for writing during execution
+    call init_outfile()
 
-  ! mirror input file contents to output file
-  call mirror_input_to_outfile()
+    ! mirror input file contents to output file
+    call mirror_input_to_outfile()
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  if ( myid .eq. 0 ) then ! save restart file;
-    call wrtend() ! write initial restart file
-  endif
+    if (myid .eq. 0) then ! save restart file;
+        call wrtend() ! write initial restart file
+    end if
 
 !> **preparing output file group iterations**
 !>
@@ -148,7 +144,7 @@ subroutine xspech
 !> ```
 !> </li>
 !> </ul>
-  call init_convergence_output()
+    call init_convergence_output()
 
 !#ifdef DEBUG
 !  iwait = 0; pid = getpid()
@@ -159,50 +155,48 @@ subroutine xspech
 !  enddo
 !#endif
 
-  ! MAIN SUBROUTINE: iterate until converged or #iterations exceeds limit
-  call spec()
+    ! MAIN SUBROUTINE: iterate until converged or #iterations exceeds limit
+    call spec()
 
-  ! some final diagnostics: compute errors, Poincare plots, ....
-  call final_diagnostics()
+    ! some final diagnostics: compute errors, Poincare plots, ....
+    call final_diagnostics()
 
-  ! post-processing: magnetic field evaluated on a grid
-  call write_grid()
+    ! post-processing: magnetic field evaluated on a grid
+    call write_grid()
 
-  if( myid.eq.0 ) then
+    if (myid .eq. 0) then
 
 !> **restart files**
 !>
 !> <ul>
 !> <li> wrtend() is called to write the restart files. </li>
 !> </ul>
-    call wrtend()
-  endif
+        call wrtend()
+    end if
 
-  ! write final outputs to HDF5 file
-  call hdfint()
+    ! write final outputs to HDF5 file
+    call hdfint()
 
-  ! close HDF5 output file
-  call finish_outfile()
+    ! close HDF5 output file
+    call finish_outfile()
 
-  ! print ending info
-  call ending()
+    ! print ending info
+    call ending()
 
-  ! wait for writing to finish
-  call MPI_Barrier(MPI_COMM_SPEC, ierr)
+    ! wait for writing to finish
+    call MPI_Barrier(MPI_COMM_SPEC, ierr)
 
-  if (myid.eq.0) then
-   cput = MPI_WTIME()
-   write(ounit,'("xspech : ", 10x ," :")')
-   write(ounit,'("xspech : ",f10.2," : myid=",i3," : time="f8.2"m = "f6.2"h = "f5.2"d ;")') cput-cpus, myid, (cput-cpus) / (/ 60, 60*60, 24*60*60 /)
-  endif
+    if (myid .eq. 0) then
+        cput = MPI_WTIME()
+        write (ounit, '("xspech : ", 10x ," :")')
+        write (ounit, '("xspech : ",f10.2," : myid=",i3," : time="f8.2"m = "f6.2"h = "f5.2"d ;")') cput - cpus, myid, (cput - cpus)/(/60, 60*60, 24*60*60/)
+    end if
 
+    call MPI_FINALIZE(ierr)
 
-   call MPI_FINALIZE(ierr)
+    stop
 
-
-  stop
-
-1000 format("xspech : ",f10.2," : date="a4"/"a2"/"a2" , "a2":"a2":"a2" ; machine precision="es9.2" ; vsmall="es9.2" ; small="es9.2" ;")
+1000 format("xspech : ", f10.2, " : date="a4"/"a2"/"a2" , "a2":"a2":"a2" ; machine precision="es9.2" ; vsmall="es9.2" ; small="es9.2" ;")
 
 end subroutine xspech
 
@@ -218,80 +212,77 @@ end subroutine xspech
 !>      </ul> </li>
 !> </ul>
 subroutine read_command_args
-  use mod_kinds, only: wp => dp
-  use fileunits, only: ounit
-  use inputlist, only: Wreadin
-  use allglobal, only: cpus, myid, ext, MPI_COMM_SPEC
-
+    use mod_kinds, only: wp => dp
+    use fileunits, only: ounit
+    use inputlist, only: Wreadin
+    use allglobal, only: cpus, myid, ext, MPI_COMM_SPEC
 
 #ifdef OPENMP
-  USE OMP_LIB
+    USE OMP_LIB
 #endif
-  use mpi
-  implicit none
-  integer   :: ierr, astat, ios, nthreads, ithread
-  real(wp)      :: cput, cpui, cpuo=0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
+    use mpi
+    implicit none
+    integer :: ierr, astat, ios, nthreads, ithread
+    real(wp) :: cput, cpui, cpuo = 0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
 
+    LOGICAL :: Lspexist
+    integer :: iargc, iarg, numargs, extlen, sppos
 
-  LOGICAL              :: Lspexist
-  integer              :: iargc, iarg, numargs, extlen, sppos
+    character(len=255) :: arg
 
-  character(len=255)   :: arg
+    if (myid .eq. 0) then
 
-  if (myid.eq.0) then
+        cput = MPI_WTIME()
 
-    cput = MPI_WTIME()
+        ! first command-line argument is likely ext or ext.sp
+        call getarg(1, arg)
+        extlen = len_trim(arg)
+        sppos = index(arg, ".sp", .true.) ! search for ".sp" from the back of ext
+        if (sppos .eq. extlen - 2) then       ! check if ext ends with ".sp"
+            arg = arg(1:extlen - 3)           ! if this is the case, remove ".sp" from end of ext
+        end if
+        ext = trim(arg)
 
-    ! first command-line argument is likely ext or ext.sp
-    call getarg( 1, arg )
-    extlen = len_trim(arg)
-    sppos = index(arg, ".sp", .true.) ! search for ".sp" from the back of ext
-    if (sppos.eq.extlen-2) then       ! check if ext ends with ".sp"
-      arg = arg(1:extlen-3)           ! if this is the case, remove ".sp" from end of ext
-    endif
-    ext = trim(arg)
+        if (ext .eq. "" .or. ext .eq. "-h" .or. ext .eq. "-help") then
+            ; write (ounit, '("rdcmdl : ", 10x ," : ")')
+            ; write (ounit, '("rdcmdl : ", 10x ," : file extension must be given as first command line argument ; extra command line options = -help -readin ;")')
+            if (ext .eq. "-h" .or. ext .eq. "-help") then
+                write (ounit, '("rdcmdl : ", 10x ," : ")')
+                write (ounit, '("rdcmdl : ", 10x ," : the input file ext.sp must contain the input namelists; see global.pdf for description ;")')
+            end if
 
-    if( ext .eq. "" .or. ext .eq. "-h" .or. ext .eq. "-help" ) then
-     ;write(ounit,'("rdcmdl : ", 10x ," : ")')
-     ;write(ounit,'("rdcmdl : ", 10x ," : file extension must be given as first command line argument ; extra command line options = -help -readin ;")')
-     if( ext .eq. "-h" .or. ext .eq. "-help" ) then
-      write(ounit,'("rdcmdl : ", 10x ," : ")')
-      write(ounit,'("rdcmdl : ", 10x ," : the input file ext.sp must contain the input namelists; see global.pdf for description ;")')
-     endif
+            if (.true.) then
+                write (6, '("rdcmdl :      fatal : myid=",i3," ; .true. ; the input file does not exist;")') myid
+                call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                stop "rdcmdl : .true. : the input file does not exist ;"
+            end if
+            ! if not, abort;
+        end if
 
-   if( .true. ) then
-     write(6,'("rdcmdl :      fatal : myid=",i3," ; .true. ; the input file does not exist;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "rdcmdl : .true. : the input file does not exist ;"
-    endif
- ! if not, abort;
-    endif
-
-    write(ounit,'("rdcmdl : ", 10x ," : ")')
-    write(ounit,'("rdcmdl : ",f10.2," : ext = ",a100)') cput-cpus, ext
+        write (ounit, '("rdcmdl : ", 10x ," : ")')
+        write (ounit, '("rdcmdl : ",f10.2," : ext = ",a100)') cput - cpus, ext
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-    numargs = iargc()
+        numargs = iargc()
 
-    if( numargs.gt.1 ) then
-      iarg = 1
-      do while ( iarg < numargs )
-        iarg = iarg + 1 ; call getarg( iarg, arg)
-        select case( arg )
-        case("-help","-h") ; write(ounit,'("rdcmdl : ",f10.2," : myid=",i3," : command line options = -readin ;")') cput-cpus, myid
-        case("-readin"   ) ; Wreadin = .true.
-        case("-p4pg"     ) ; iarg = iarg + 1 ; call getarg( iarg, arg) ! TODO: what is this?
-        case("-p4wd"     ) ; iarg = iarg + 1 ; call getarg( iarg, arg) ! TODO: what is this?
-        case default       ; write(ounit,'("rdcmdl : ",f10.2," : myid=",i3," : argument not recognized ; arg = ",a100)') cput-cpus, myid, arg
-        end select
-      enddo
-    endif
+        if (numargs .gt. 1) then
+            iarg = 1
+            do while (iarg < numargs)
+                iarg = iarg + 1; call getarg(iarg, arg)
+                select case (arg)
+                case ("-help", "-h"); write (ounit, '("rdcmdl : ",f10.2," : myid=",i3," : command line options = -readin ;")') cput - cpus, myid
+                case ("-readin"); Wreadin = .true.
+                case ("-p4pg"); iarg = iarg + 1; call getarg(iarg, arg) ! TODO: what is this?
+                case ("-p4wd"); iarg = iarg + 1; call getarg(iarg, arg) ! TODO: what is this?
+                case default; write (ounit, '("rdcmdl : ",f10.2," : myid=",i3," : argument not recognized ; arg = ",a100)') cput - cpus, myid, arg
+                end select
+            end do
+        end if
 
-  end if ! check for myid.eq.0
+    end if ! check for myid.eq.0
 
 end subroutine read_command_args
-
 
 !> \brief This is the main "driver" for the physics part of SPEC.
 !>
@@ -299,116 +290,111 @@ end subroutine read_command_args
 !> and within each Picard iteration, the fixed-boundary problem
 !> is solved (also iteratively).
 subroutine spec
-  use mod_kinds, only: wp => dp
-  use constants, only : zero, one, pi2, mu0
+    use mod_kinds, only: wp => dp
+    use constants, only: zero, one, pi2, mu0
 
-  use numerical, only : vsmall, logtolerance
+    use numerical, only: vsmall, logtolerance
 
-  use fileunits, only : ounit, lunit
+    use fileunits, only: ounit, lunit
 
-  use inputlist, only : Wmacros, Wxspech, &
-                        Nfp, Igeometry, Nvol, Lrad, &
-                        tflux, pflux, phiedge, pressure, pscale, helicity, Ladiabatic, adiabatic, gamma, &
-                        Rbc, Zbs, Rbs, Zbc, &
-                        Lconstraint, &
-                        Lfreebound, mfreeits, gBntol, gBnbld, vcasingtol, LautoinitBn, &
-                        Lfindzero, LautoinitBn, &
-                        odetol, nPpts, nPtrj, &
-                        LHevalues, LHevectors, LHmatrix, Lperturbed, Lcheck, &
-                        Lzerovac, &
-                        mu, Isurf, Ivolume
+    use inputlist, only: Wmacros, Wxspech, &
+                         Nfp, Igeometry, Nvol, Lrad, &
+                         tflux, pflux, phiedge, pressure, pscale, helicity, Ladiabatic, adiabatic, gamma, &
+                         Rbc, Zbs, Rbs, Zbc, &
+                         Lconstraint, &
+                         Lfreebound, mfreeits, gBntol, gBnbld, vcasingtol, LautoinitBn, &
+                         Lfindzero, LautoinitBn, &
+                         odetol, nPpts, nPtrj, &
+                         LHevalues, LHevectors, LHmatrix, Lperturbed, Lcheck, &
+                         Lzerovac, &
+                         mu, Isurf, Ivolume
 
-  use cputiming, only : Txspech
+    use cputiming, only: Txspech
 
-  use allglobal, only : wrtend, ncpu, myid, cpus, ext, &
-                        Mvol, &
-                        YESstellsym, NOTstellsym, &
-                        mn, im, in, &
-                        Ntz, &
-                        LGdof, NGdof, &
-                        iRbc, iZbs, iRbs, iZbc, &
-                        BBe, IIo, BBo, IIe, &
-                        vvolume, &
-                        Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
-                        dtflux, dpflux, &
-                        ImagneticOK, &
-                        ForceErr, &
-                        efmn, ofmn, cfmn, sfmn, &
-                        iBns, iBnc, iVns, iVnc, &
-                        Ate, Aze, Ato, Azo, & ! only required for debugging; 09 Mar 17;
-                        nfreeboundaryiterations, &
-                        beltramierror, &
-                        first_free_bound, &
-                        dMA, dMB, dMD, dMG, MBpsi, solution, IPDt, &
-                        version, &
-                        MPI_COMM_SPEC
+    use allglobal, only: wrtend, ncpu, myid, cpus, ext, &
+                         Mvol, &
+                         YESstellsym, NOTstellsym, &
+                         mn, im, in, &
+                         Ntz, &
+                         LGdof, NGdof, &
+                         iRbc, iZbs, iRbs, iZbc, &
+                         BBe, IIo, BBo, IIe, &
+                         vvolume, &
+                         Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
+                         dtflux, dpflux, &
+                         ImagneticOK, &
+                         ForceErr, &
+                         efmn, ofmn, cfmn, sfmn, &
+                         iBns, iBnc, iVns, iVnc, &
+                         Ate, Aze, Ato, Azo, & ! only required for debugging; 09 Mar 17;
+                         nfreeboundaryiterations, &
+                         beltramierror, &
+                         first_free_bound, &
+                         dMA, dMB, dMD, dMG, MBpsi, solution, IPDt, &
+                         version, &
+                         MPI_COMM_SPEC
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
 
 #ifdef OPENMP
-  USE OMP_LIB
+    USE OMP_LIB
 #endif
-  use mpi
-  implicit none
-  integer   :: ierr, astat, ios, nthreads, ithread
-  real(wp)      :: cput, cpui, cpuo=0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
+    use mpi
+    implicit none
+    integer :: ierr, astat, ios, nthreads, ithread
+    real(wp) :: cput, cpui, cpuo = 0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
 
+    LOGICAL :: LComputeDerivatives, LContinueFreeboundaryIterations, exist, LupdateBn, LComputeAxis
+    integer :: imn, lmn, lNfp, lim, lin, ii, ideriv, stat
+    integer :: vvol, ifail, wflag, iflag, vflag
+    real(wp) :: rflag, lastcpu, bnserr, lRwc, lRws, lZwc, lZws, lItor, lGpol, lgBc, lgBs
+    real(wp), allocatable :: position(:), gradient(:)
+    character :: pack
+    integer :: Lfindzero_old, mfreeits_old
+    real(wp) :: gBnbld_old
+    integer :: lnPtrj, numTrajTotal
 
-  LOGICAL              :: LComputeDerivatives, LContinueFreeboundaryIterations, exist, LupdateBn, LComputeAxis
-  integer              :: imn, lmn, lNfp, lim, lin, ii, ideriv, stat
-  integer              :: vvol, ifail, wflag, iflag, vflag
-  real(wp)                 :: rflag, lastcpu, bnserr, lRwc, lRws, lZwc, lZws, lItor, lGpol, lgBc, lgBs
-  real(wp),    allocatable :: position(:), gradient(:)
-  character            :: pack
-  integer              :: Lfindzero_old, mfreeits_old
-  real(wp)                 :: gBnbld_old
-  integer              :: lnPtrj, numTrajTotal
+    !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+    cpuo = MPI_WTIME()
 
-  cpuo = MPI_WTIME()
+    if (NGdof .lt. 0) then
+        write (6, '("xspech :      fatal : myid=",i3," ; NGdof.lt.0 ; counting error ;")') myid
+        call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+        stop "xspech : NGdof.lt.0 : counting error  ;"
+    end if
 
-
-   if( NGdof.lt.0 ) then
-     write(6,'("xspech :      fatal : myid=",i3," ; NGdof.lt.0 ; counting error ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "xspech : NGdof.lt.0 : counting error  ;"
-    endif
-
-
-
-   allocate( position(0:NGdof), stat=astat )
-   position(0:NGdof) = zero
- ! position ; NGdof = #geometrical degrees-of-freedom was computed in preset;
+    allocate (position(0:NGdof), stat=astat)
+    position(0:NGdof) = zero
+    ! position ; NGdof = #geometrical degrees-of-freedom was computed in preset;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  nfreeboundaryiterations = -1
+    nfreeboundaryiterations = -1
 
 ! This is the free-boundary iteration loop (implemented using GOTO); 08 Jun 16;
 9000 nfreeboundaryiterations = nfreeboundaryiterations + 1
 
-  ! run fix_boundary for the first free_boundary iteration if LautoinitBn was set to 1
-  if (Lfreebound.eq.1 .and. LautoinitBn.eq.1) then
-     if (nfreeboundaryiterations.eq.0) then  ! first iteration
-        first_free_bound = .true.
-        !Mvol = Nvol
-        gBnbld_old = gBnbld
-        gBnbld = zero
-        Lfindzero_old = Lfindzero
-        mfreeits_old = mfreeits
-        Lfindzero = 0
-        mfreeits = 1
-        if (myid.eq.0) write(ounit,'("xspech : ",10X," : First iteration of free boundary calculation : update Bns from plasma.")')
-     else
-        first_free_bound = .false.
-        !Mvol = Nvol + Lfreebound
-        Lfindzero = Lfindzero_old
-        gBnbld = gBnbld_old
-        mfreeits = mfreeits_old
-     endif
-  endif
+    ! run fix_boundary for the first free_boundary iteration if LautoinitBn was set to 1
+    if (Lfreebound .eq. 1 .and. LautoinitBn .eq. 1) then
+        if (nfreeboundaryiterations .eq. 0) then  ! first iteration
+            first_free_bound = .true.
+            !Mvol = Nvol
+            gBnbld_old = gBnbld
+            gBnbld = zero
+            Lfindzero_old = Lfindzero
+            mfreeits_old = mfreeits
+            Lfindzero = 0
+            mfreeits = 1
+            if (myid .eq. 0) write (ounit, '("xspech : ",10X," : First iteration of free boundary calculation : update Bns from plasma.")')
+        else
+            first_free_bound = .false.
+            !Mvol = Nvol + Lfreebound
+            Lfindzero = Lfindzero_old
+            gBnbld = gBnbld_old
+            mfreeits = mfreeits_old
+        end if
+    end if
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -419,19 +405,18 @@ subroutine spec
 !>       then packxi() is called to "pack" the geometrical degrees-of-freedom into \c position(0:NGdof) . </li>
 !> </ul>
 
-  if( NGdof.gt.0 ) then ! pack geometry into vector; 14 Jan 13;
+    if (NGdof .gt. 0) then ! pack geometry into vector; 14 Jan 13;
 
-   pack = 'P'
-   LComputeAxis = .true.
+        pack = 'P'
+        LComputeAxis = .true.
 
-   cput = MPI_WTIME()
-   Txspech = Txspech + ( cput-cpuo )
-   call packxi( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), &
-                            iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, .false., LComputeAxis )
-   cpuo = MPI_WTIME()
+        cput = MPI_WTIME()
+        Txspech = Txspech + (cput - cpuo)
+        call packxi(NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn, 0:Mvol), iZbs(1:mn, 0:Mvol), &
+                    iRbs(1:mn, 0:Mvol), iZbc(1:mn, 0:Mvol), pack, .false., LComputeAxis)
+        cpuo = MPI_WTIME()
 
-
-  endif
+    end if
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -445,38 +430,37 @@ subroutine spec
 !>       and the adiabatic index \f$\gamma\equiv\,\f$\c gamma . </li>
 !> </ul>
 
-  do vvol = 1, Mvol
+    do vvol = 1, Mvol
 
+        if (Igeometry .eq. 1 .or. vvol .gt. 1) then; Lcoordinatesingularity = .false.
+        else; Lcoordinatesingularity = .true.
+        end if
 
-   if( Igeometry.eq.1 .or. vvol.gt.1 ) then ; Lcoordinatesingularity = .false.
-   else                                   ; Lcoordinatesingularity = .true.
-   endif
+        if (vvol .le. Nvol) then; Lplasmaregion = .true.
+        else; Lplasmaregion = .false.
+        end if
 
-   if( vvol.le.Nvol ) then ; Lplasmaregion = .true.
-   else                  ; Lplasmaregion = .false.
-   endif
+        Lvacuumregion = .not. Lplasmaregion
 
-   Lvacuumregion = .not.Lplasmaregion
+        vflag = 0
 
-   vflag = 0
+        cput = MPI_WTIME()
+        Txspech = Txspech + (cput - cpuo)
+        call volume(vvol, vflag)
+        cpuo = MPI_WTIME()
+        ! compute volume;
 
-   cput = MPI_WTIME()
-   Txspech = Txspech + ( cput-cpuo )
-   call volume( vvol, vflag )
-   cpuo = MPI_WTIME()
- ! compute volume;
+        if (Ladiabatic .eq. 0) adiabatic(vvol) = pressure(vvol)*vvolume(vvol)**gamma ! initialize adiabatic constants using supplied pressure profile;
 
-   if( Ladiabatic.eq.0 ) adiabatic(vvol) = pressure(vvol) * vvolume(vvol)**gamma ! initialize adiabatic constants using supplied pressure profile;
+    end do ! end of do vvol = 1, Mvol;
 
-  enddo ! end of do vvol = 1, Mvol;
+    if (Mvol .gt. Nvol) then; adiabatic(Mvol) = zero; pressure(Mvol) = zero ! these are never used; 15 May 13;
+    end if
 
-  if( Mvol.gt.Nvol ) then ; adiabatic(Mvol) = zero ; pressure(Mvol) = zero ! these are never used; 15 May 13;
-  endif
-
-  if( Wxspech .and. myid.eq.0 ) then
-   cput = MPI_WTIME()
-   write(ounit,'("xspech : ",f10.2," : myid=",i3," ; adiabatic constants = "999es13.5)') cput-cpus, myid, adiabatic(1:Mvol)
-  endif
+    if (Wxspech .and. myid .eq. 0) then
+        cput = MPI_WTIME()
+        write (ounit, '("xspech : ",f10.2," : myid=",i3," ; adiabatic constants = "999es13.5)') cput - cpus, myid, adiabatic(1:Mvol)
+    end if
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -501,32 +485,30 @@ subroutine spec
 !
 !    endif
 
-  if( NGdof.gt.0 ) then
+    if (NGdof .gt. 0) then
 
-   if( Lfindzero.gt.0 ) then
+        if (Lfindzero .gt. 0) then
 
-   ! This is the call to do one fixed-boundary iteration (by a Newton method).
-    ifail = 1
+            ! This is the call to do one fixed-boundary iteration (by a Newton method).
+            ifail = 1
 
-   cput = MPI_WTIME()
-   Txspech = Txspech + ( cput-cpuo )
-   call newton( NGdof, position(0:NGdof), ifail )
-   cpuo = MPI_WTIME()
+            cput = MPI_WTIME()
+            Txspech = Txspech + (cput - cpuo)
+            call newton(NGdof, position(0:NGdof), ifail)
+            cpuo = MPI_WTIME()
 
+        end if
 
-   endif
+        pack = 'U' ! unpack geometrical degrees of freedom; 13 Sep 13;
+        LComputeAxis = .true.
 
-   pack = 'U' ! unpack geometrical degrees of freedom; 13 Sep 13;
-   LComputeAxis = .true.
+        cput = MPI_WTIME()
+        Txspech = Txspech + (cput - cpuo)
+        call packxi(NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn, 0:Mvol), iZbs(1:mn, 0:Mvol), &
+                    iRbs(1:mn, 0:Mvol), iZbc(1:mn, 0:Mvol), pack, .false., LComputeAxis)
+        cpuo = MPI_WTIME()
 
-   cput = MPI_WTIME()
-   Txspech = Txspech + ( cput-cpuo )
-   call packxi( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), &
-                            iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, .false., LComputeAxis )
-   cpuo = MPI_WTIME()
-
-
-  endif
+    end if
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -545,132 +527,125 @@ subroutine spec
 ! if( Lconstraint.lt.2 ) helicity(1:Nvol) = lABintegral(1:Nvol) ! updated ``input'' quantity;
 
 #ifdef DEBUG
-  do vvol = 1, Mvol
+    do vvol = 1, Mvol
 
-   if( vvolume(vvol).lt.vsmall ) then
-     write(6,'("xspech :      fatal : myid=",i3," ; vvolume(vvol).lt.vsmall ; error dividing adiabatic by volume ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "xspech : vvolume(vvol).lt.vsmall : error dividing adiabatic by volume  ;"
-    endif
+        if (vvolume(vvol) .lt. vsmall) then
+            write (6, '("xspech :      fatal : myid=",i3," ; vvolume(vvol).lt.vsmall ; error dividing adiabatic by volume ;")') myid
+            call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+            stop "xspech : vvolume(vvol).lt.vsmall : error dividing adiabatic by volume  ;"
+        end if
 
-  enddo
+    end do
 #endif
 
-  pressure(1:Mvol) = adiabatic(1:Mvol) / vvolume(1:Mvol)**gamma ! this matches construction of adiabatic above;
+    pressure(1:Mvol) = adiabatic(1:Mvol)/vvolume(1:Mvol)**gamma ! this matches construction of adiabatic above;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+    allocate (gradient(0:NGdof), stat=astat)
+    gradient(0:NGdof) = zero
 
-   allocate( gradient(0:NGdof), stat=astat )
-   gradient(0:NGdof) = zero
+    lastcpu = MPI_WTIME()
 
-
-  lastcpu = MPI_WTIME()
-
-  LComputeDerivatives = .false.
-  LComputeAxis = .true.
+    LComputeDerivatives = .false.
+    LComputeAxis = .true.
 ! vvol = Mvol ; ideriv = 0 ; ii = 1
 ! write(ounit,'("xspech : ", 10x ," : sum(Ate(",i3,",",i2,",",i2,")%s) =",99es23.15)') vvol, ideriv, ii, sum(Ate(vvol,ideriv,ii)%s(0:Lrad(vvol)))
 
+    cput = MPI_WTIME()
+    Txspech = Txspech + (cput - cpuo)
+    call dforce(NGdof, position(0:NGdof), gradient(0:NGdof), LComputeDerivatives, LComputeAxis)
+    cpuo = MPI_WTIME()
+    ! (re-)calculate Beltrami fields;
 
-   cput = MPI_WTIME()
-   Txspech = Txspech + ( cput-cpuo )
-   call dforce( NGdof, position(0:NGdof), gradient(0:NGdof), LComputeDerivatives, LComputeAxis)
-   cpuo = MPI_WTIME()
- ! (re-)calculate Beltrami fields;
-
-
-   deallocate(gradient,stat=astat)
-
+    deallocate (gradient, stat=astat)
 
 #ifdef DEBUG
-  do vvol = 1, Mvol-1
-   ;
-   if( BBe(vvol).lt.logtolerance ) then
-     write(6,'("xspech :      fatal : myid=",i3," ; BBe(vvol).lt.logtolerance ; underflow ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "xspech : BBe(vvol).lt.logtolerance : underflow  ;"
-    endif
+    do vvol = 1, Mvol - 1
+        ; 
+        if (BBe(vvol) .lt. logtolerance) then
+            write (6, '("xspech :      fatal : myid=",i3," ; BBe(vvol).lt.logtolerance ; underflow ;")') myid
+            call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+            stop "xspech : BBe(vvol).lt.logtolerance : underflow  ;"
+        end if
 
-   if( Igeometry.eq.3 ) then ! include spectral constraints; 04 Dec 14;
-    ;
-   if( IIo(vvol).lt.logtolerance ) then
-     write(6,'("xspech :      fatal : myid=",i3," ; IIo(vvol).lt.logtolerance ; underflow ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "xspech : IIo(vvol).lt.logtolerance : underflow  ;"
-    endif
+        if (Igeometry .eq. 3) then ! include spectral constraints; 04 Dec 14;
+            ; 
+            if (IIo(vvol) .lt. logtolerance) then
+                write (6, '("xspech :      fatal : myid=",i3," ; IIo(vvol).lt.logtolerance ; underflow ;")') myid
+                call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                stop "xspech : IIo(vvol).lt.logtolerance : underflow  ;"
+            end if
 
-   endif
-   if( NOTstellsym ) then
-    ;
-   if( BBo(vvol).lt.logtolerance ) then
-     write(6,'("xspech :      fatal : myid=",i3," ; BBo(vvol).lt.logtolerance ; underflow ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "xspech : BBo(vvol).lt.logtolerance : underflow  ;"
-    endif
+        end if
+        if (NOTstellsym) then
+            ; 
+            if (BBo(vvol) .lt. logtolerance) then
+                write (6, '("xspech :      fatal : myid=",i3," ; BBo(vvol).lt.logtolerance ; underflow ;")') myid
+                call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                stop "xspech : BBo(vvol).lt.logtolerance : underflow  ;"
+            end if
 
-    if( Igeometry.eq.3 ) then ! include spectral constraints; 04 Dec 14;
+            if (Igeometry .eq. 3) then ! include spectral constraints; 04 Dec 14;
 
-   if( IIe(vvol).lt.logtolerance ) then
-     write(6,'("xspech :      fatal : myid=",i3," ; IIe(vvol).lt.logtolerance ; underflow ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "xspech : IIe(vvol).lt.logtolerance : underflow  ;"
-    endif
+                if (IIe(vvol) .lt. logtolerance) then
+                    write (6, '("xspech :      fatal : myid=",i3," ; IIe(vvol).lt.logtolerance ; underflow ;")') myid
+                    call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                    stop "xspech : IIe(vvol).lt.logtolerance : underflow  ;"
+                end if
 
-    endif
-   endif
-  enddo
+            end if
+        end if
+    end do
 #endif
 
-  if( myid.eq.0 ) then
-   cput = MPI_WTIME()
-   write(ounit,1000) cput-cpus, nfreeboundaryiterations,          ForceErr,  cput-lastcpu, "|BB|e", alog10(BBe(1:min(Mvol-1,28)))
-   if( Igeometry.ge.3 ) then ! include spectral constraints; 04 Dec 14;
-   write(ounit,1001)                                                                       "|II|o", alog10(IIo(1:min(Mvol-1,28)))
-   endif
-   if( NOTstellsym ) then
-   write(ounit,1001)                                                                       "|BB|o", alog10(BBo(1:min(Mvol-1,28)))
-   if( Igeometry.ge.3 ) then ! include spectral constraints; 04 Dec 14;
-   write(ounit,1001)                                                                       "|II|e", alog10(IIe(1:min(Mvol-1,28)))
-   endif
-   endif
-  endif
+    if (myid .eq. 0) then
+        cput = MPI_WTIME()
+        write (ounit, 1000) cput - cpus, nfreeboundaryiterations, ForceErr, cput - lastcpu, "|BB|e", alog10(BBe(1:min(Mvol - 1, 28)))
+        if (Igeometry .ge. 3) then ! include spectral constraints; 04 Dec 14;
+            write (ounit, 1001) "|II|o", alog10(IIo(1:min(Mvol - 1, 28)))
+        end if
+        if (NOTstellsym) then
+            write (ounit, 1001) "|BB|o", alog10(BBo(1:min(Mvol - 1, 28)))
+            if (Igeometry .ge. 3) then ! include spectral constraints; 04 Dec 14;
+                write (ounit, 1001) "|II|e", alog10(IIe(1:min(Mvol - 1, 28)))
+            end if
+        end if
+    end if
 
-1000 format("xspech : ",f10.2," : #freeits=",i3," ; ":"|f|="es12.5" ; ":"time=",f10.2,"s ;":" log"a5,:"="28f6.2" ...")
-1001 format("xspech : ", 10x ," :          ",3x," ; ":"    "  12x "   ":"     ", 10x ,"  ;":" log"a5,:"="28f6.2" ...")
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  if( Lcheck.eq.5 .or. LHevalues .or. LHevectors .or. LHmatrix .or. Lperturbed.eq.1 ) then ! check construction of Hessian; 01 Jul 14;
-
-   if( myid.eq.0 ) then
-    cput = MPI_WTIME()
-    write(ounit,'("xspech : ", 10x ," : -------------------Stability Evaluations------------------ ")')
-    write(ounit,'("xspech : ",f10.2," : myid=",i3," ; calling hessian; see .ext.hessian.myid ;")') cput-cpus, myid
-   endif
-
-
-   cput = MPI_WTIME()
-   Txspech = Txspech + ( cput-cpuo )
-   call hesian( NGdof, position(0:NGdof), Mvol, mn, LGdof )
-   cpuo = MPI_WTIME()
-
-
-  endif ! end of if( Lcheck.eq.5 ) ; 01 Jul 14;
+1000 format("xspech : ", f10.2, " : #freeits=", i3, " ; ":"|f|="es12.5" ; ":"time=", f10.2, "s ;":" log"a5, :"="28f6.2" ...")
+1001 format("xspech : ", 10x, " :          ", 3x, " ; ":"    "12x "   ":"     ", 10x, "  ;":" log"a5, :"="28f6.2" ...")
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  select case( Igeometry )                                  ! 08 Feb 16;
-  case( 1   ) ; tflux(1) = dtflux(1) ; pflux(1) = dpflux(1) ! 08 Feb 16;
-  case( 2:3 ) ; tflux(1) = dtflux(1) ; pflux(1) =   zero    ! 08 Feb 16;
-  end select                                                ! 08 Feb 16;
+    if (Lcheck .eq. 5 .or. LHevalues .or. LHevectors .or. LHmatrix .or. Lperturbed .eq. 1) then ! check construction of Hessian; 01 Jul 14;
 
-  do vvol = 2, Mvol; tflux(vvol) = tflux(vvol-1) + dtflux(vvol) ! 01 Jul 14;
-  ;                  pflux(vvol) = pflux(vvol-1) + dpflux(vvol) ! 01 Jul 14;
-  enddo
+        if (myid .eq. 0) then
+            cput = MPI_WTIME()
+            write (ounit, '("xspech : ", 10x ," : -------------------Stability Evaluations------------------ ")')
+            write (ounit, '("xspech : ",f10.2," : myid=",i3," ; calling hessian; see .ext.hessian.myid ;")') cput - cpus, myid
+        end if
 
-  tflux(1:Mvol) = tflux(1:Mvol) * pi2 / phiedge ! this is the "inverse" operation defined in preset; 19 Jul 16;
-  pflux(1:Mvol) = pflux(1:Mvol) * pi2 / phiedge
+        cput = MPI_WTIME()
+        Txspech = Txspech + (cput - cpuo)
+        call hesian(NGdof, position(0:NGdof), Mvol, mn, LGdof)
+        cpuo = MPI_WTIME()
+
+    end if ! end of if( Lcheck.eq.5 ) ; 01 Jul 14;
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+    select case (Igeometry)                                  ! 08 Feb 16;
+    case (1); tflux(1) = dtflux(1); pflux(1) = dpflux(1) ! 08 Feb 16;
+    case (2:3); tflux(1) = dtflux(1); pflux(1) = zero    ! 08 Feb 16;
+    end select                                                ! 08 Feb 16;
+
+    do vvol = 2, Mvol; tflux(vvol) = tflux(vvol - 1) + dtflux(vvol) ! 01 Jul 14;
+        ; pflux(vvol) = pflux(vvol - 1) + dpflux(vvol) ! 01 Jul 14;
+    end do
+
+    tflux(1:Mvol) = tflux(1:Mvol)*pi2/phiedge ! this is the "inverse" operation defined in preset; 19 Jul 16;
+    pflux(1:Mvol) = pflux(1:Mvol)*pi2/phiedge
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -713,167 +688,160 @@ subroutine spec
 !>       </ul> </li>
 !> </ul>
 
-  LContinueFreeboundaryIterations = .false.
-
-  ;                                                              LupdateBn = .false. ! default;
-!  if( Lfreebound.eq.1 .and. Lfindzero.gt.0 ) then
-  if( Lfreebound.eq.1) then   ! removed Lfindzero check; Loizu Dec 18;
-   if( mfreeits.gt.0 .and. nfreeboundaryiterations.lt.mfreeits ) LupdateBn = .true.
-   if( mfreeits.lt.0                                           ) LupdateBn = .true.
-  endif
-
-  if( LupdateBn ) then
-
-   Mvol = Nvol + Lfreebound
-
-   lastcpu = MPI_WTIME()
-
-
-   cput = MPI_WTIME()
-   Txspech = Txspech + ( cput-cpuo )
-   call bnorml( mn, Ntz, efmn(1:mn), ofmn(1:mn) )
-   cpuo = MPI_WTIME()
- ! compute normal field etc. on computational boundary;
-
-   !FATAL( xspech, mn-1.le.0, divide by zero )
-
-   if(mn.eq.1) then
-     if( YESstellsym ) bnserr = 0.0 !TODO: NOT SURE, this should test if bns is actually 0
-     if( NOTstellsym ) bnserr = sum( abs( iBnc(1:mn) - efmn(1:mn) ) ) / (mn  )
-   else
-     if( YESstellsym ) bnserr = sum( abs( iBns(2:mn) - ofmn(2:mn) ) ) / (mn-1)
-     if( NOTstellsym ) bnserr = sum( abs( iBns(2:mn) - ofmn(2:mn) ) ) / (mn-1) &
-                              + sum( abs( iBnc(1:mn) - efmn(1:mn) ) ) / (mn  )
-   endif
-
-
-   if( bnserr.gt.gBntol ) then
-
-    LContinueFreeboundaryIterations = .true.
-
-    select case( mfreeits )
-
-    case( -2  ) ! mfreeits = -2 ; shall set plasma normal field at computational boundary ; 24 Nov 16;
-
-     inquire( file=trim(ext)//".Vn", exist=exist )
-
-   if( .not.exist ) then
-     write(6,'("xspech :      fatal : myid=",i3," ; .not.exist ; ext.Vn does not exist : cannot set vacuum field;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "xspech : .not.exist : ext.Vn does not exist : cannot set vacuum field ;"
-    endif
-
-
-     if( myid.eq.0 ) then ! only myid = 0 reads in the vacuum field; 04 Jan 17;
-
-      ;                    iBns(2:mn) = iVns(2:mn) - iBns(2:mn) ! temporary storage of the total field; 07 Dec 16;
-      if( NOTstellsym)     iBnc(1:mn) = iVnc(1:mn) - iBnc(1:mn)
-
-      open(lunit, file = trim(ext)//".Vn", status="old" )
-      read(lunit,*) lmn, lNfp
-      read(lunit,*) ( lim, lin, lRwc, lRws, lZwc, lZws, imn = 1, lmn ) ! control surface; should confirm agreement; 04 Jan 17;
-      read(lunit,*) lmn, lNfp, lItor, lGpol
-      do imn = 1, lmn
-       read(lunit,*) lim, lin, lgBc, lgBs
-       do ii = 1, mn
-        if( lim.eq.im(ii) .and. lin*lNfp.eq.in(ii) ) then
-         ;                 iVns(ii) = lgBs
-         if( NOTstellsym ) iVnc(ii) = lgBc
-        endif
-       enddo
-      enddo
-      close(lunit)
-
-     endif ! end of if( myid.eq.0 ) ; 07 Dec 16;
-
-     ;
-   call MPI_BCAST(iVns(1:mn),mn,MPI_DOUBLE_PRECISION,0 ,MPI_COMM_SPEC,ierr)
- ! only required for ii > 1 ;
-     if( NOTstellsym ) then
-
-   call MPI_BCAST(iVnc(1:mn),mn,MPI_DOUBLE_PRECISION,0 ,MPI_COMM_SPEC,ierr)
-
-     endif
-
-     ;                    iBns(2:mn) = - iBns(2:mn) - iVns(2:mn) ! updated vacuum field ; 24 Nov 16;
-     if( NOTstellsym)     iBnc(1:mn) = - iBnc(1:mn) - iVnc(1:mn)
-
-     if( myid.eq.0 ) then
-     write(ounit,'("xspech : " 10x " : oBns=[",999(es11.03,","))') iBns(1:mn) ! 17 Jan 17;
-     write(ounit,'("xspech : " 10x " : nBns=[",999(es11.03,","))') ofmn(1:mn) ! 17 Jan 17;
-     if( NOTstellsym ) then
-     write(ounit,'("xspech : " 10x " : oBnc=[",999(es11.03,","))') iBnc(1:mn) ! 17 Jan 17;
-     write(ounit,'("xspech : " 10x " : nBnc=[",999(es11.03,","))') efmn(1:mn) ! 17 Jan 17;
-     endif
-     endif
-
-    case( -1  ) ! mfreeits = -1 ; shall set vacuum normal field at computational boundary ; 24 Nov 16;
-
-     ;                    iVns(2:mn) = iVns(2:mn) - iBns(2:mn)                                 ! total   normal field              ; 24 Nov 16;
-     if( NOTstellsym)     iVnc(1:mn) = iVnc(1:mn) - iBnc(1:mn)
-     ;                    iBns(2:mn) =                                              ofmn(2:mn) ! updated normal field due to plasma; 24 Nov 16;
-     if( NOTstellsym)     iBnc(1:mn) =                                              efmn(1:mn)
-     ;                    iVns(2:mn) = iVns(2:mn) + iBns(2:mn)                                 ! updated vacuum field              ; 24 Nov 16;
-     if( NOTstellsym)     iVnc(1:mn) = iVnc(1:mn) + iBnc(1:mn)
-
-    case(  0  ) ! mfreeits =  0 ; 09 Mar 17;
-
-
-   if( .true. ) then
-     write(6,'("xspech :      fatal : myid=",i3," ; .true. ; illegal mfreeits logic ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "xspech : .true. : illegal mfreeits logic  ;"
-    endif
-
-
-    case(  1: ) ! mfreeits >  0 ; 09 Mar 17;
-
-     select case( Lzerovac )
-
-     case( 0 ) ! Lzerovac = 0 ; 09 Mar 17;
-
-      ;                iBns(2:mn) = gBnbld * iBns(2:mn) + ( one - gBnbld ) * ofmn(2:mn)
-      if( NOTstellsym) iBnc(1:mn) = gBnbld * iBnc(1:mn) + ( one - gBnbld ) * efmn(1:mn)
-
-     case( 1 ) ! Lzerovac = 1 ; 09 Mar 17;
-
-      ;                iBns(2:mn) =                                          ofmn(2:mn) ! no blend; 27 Feb 17;
-      if( NOTstellsym) iBnc(1:mn) =                                          efmn(1:mn)
-
-      ;                iVns(2:mn) =        + iBns(2:mn) ! update vacuum field to cancel plasma field on computational boundary; 27 Feb 17;
-      if( NOTstellsym) iVnc(1:mn) =        + iBnc(1:mn)
-
-     case default ! Lzerovac; 09 Mar 17;
-
-
-   if( .true. ) then
-     write(6,'("xspech :      fatal : myid=",i3," ; .true. ; invalid Lzerovac ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "xspech : .true. : invalid Lzerovac  ;"
-    endif
-
-
-     end select ! end select case( Lzerovac ) ; 27 Feb 17;
-
-    end select ! end select case( mfreeits ) ; 27 Feb 17;
-
-   else ! else of if( bnserr.gt.gBntol ) ; 03 Apr 19;
-
     LContinueFreeboundaryIterations = .false.
 
-   endif ! end of if( bnserr.gt.gBntol ) ; 24 Nov 16;
+    ; LupdateBn = .false. ! default;
+!  if( Lfreebound.eq.1 .and. Lfindzero.gt.0 ) then
+    if (Lfreebound .eq. 1) then   ! removed Lfindzero check; Loizu Dec 18;
+        if (mfreeits .gt. 0 .and. nfreeboundaryiterations .lt. mfreeits) LupdateBn = .true.
+        if (mfreeits .lt. 0) LupdateBn = .true.
+    end if
 
-   cput = MPI_WTIME()
+    if (LupdateBn) then
 
-   if( myid.eq.0 ) then ; write(ounit,1003)
-    ;                   ; write(ounit,1004) cput-cpus, nfreeboundaryiterations, mfreeits, gBntol, bnserr, cput-lastcpu
-    ;                   ; write(ounit,1003)
-   endif ! end of if( myid.eq.0 ) ; 24 Nov 16;
+        Mvol = Nvol + Lfreebound
 
-1003 format("xspech : " 10x " : ")
-1004 format("xspech : "f10.2" : nfreeboundaryiterations = "i6" / "i6.5" ; gBntol ="es8.1" ; bnserr =",es12.5," ; bnorml time ="f10.2"s ;")
+        lastcpu = MPI_WTIME()
 
-  endif ! end of if( LupdateBn ) ;
+        cput = MPI_WTIME()
+        Txspech = Txspech + (cput - cpuo)
+        call bnorml(mn, Ntz, efmn(1:mn), ofmn(1:mn))
+        cpuo = MPI_WTIME()
+        ! compute normal field etc. on computational boundary;
+
+        !FATAL( xspech, mn-1.le.0, divide by zero )
+
+        if (mn .eq. 1) then
+            if (YESstellsym) bnserr = 0.0 !TODO: NOT SURE, this should test if bns is actually 0
+            if (NOTstellsym) bnserr = sum(abs(iBnc(1:mn) - efmn(1:mn)))/(mn)
+        else
+            if (YESstellsym) bnserr = sum(abs(iBns(2:mn) - ofmn(2:mn)))/(mn - 1)
+            if (NOTstellsym) bnserr = sum(abs(iBns(2:mn) - ofmn(2:mn)))/(mn - 1) &
+                                      + sum(abs(iBnc(1:mn) - efmn(1:mn)))/(mn)
+        end if
+
+        if (bnserr .gt. gBntol) then
+
+            LContinueFreeboundaryIterations = .true.
+
+            select case (mfreeits)
+
+            case (-2) ! mfreeits = -2 ; shall set plasma normal field at computational boundary ; 24 Nov 16;
+
+                inquire (file=trim(ext)//".Vn", exist=exist)
+
+                if (.not. exist) then
+                    write (6, '("xspech :      fatal : myid=",i3," ; .not.exist ; ext.Vn does not exist : cannot set vacuum field;")') myid
+                    call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                    stop "xspech : .not.exist : ext.Vn does not exist : cannot set vacuum field ;"
+                end if
+
+                if (myid .eq. 0) then ! only myid = 0 reads in the vacuum field; 04 Jan 17;
+
+                    ; iBns(2:mn) = iVns(2:mn) - iBns(2:mn) ! temporary storage of the total field; 07 Dec 16;
+                    if (NOTstellsym) iBnc(1:mn) = iVnc(1:mn) - iBnc(1:mn)
+
+                    open (lunit, file=trim(ext)//".Vn", status="old")
+                    read (lunit, *) lmn, lNfp
+                    read (lunit, *) (lim, lin, lRwc, lRws, lZwc, lZws, imn=1, lmn) ! control surface; should confirm agreement; 04 Jan 17;
+                    read (lunit, *) lmn, lNfp, lItor, lGpol
+                    do imn = 1, lmn
+                        read (lunit, *) lim, lin, lgBc, lgBs
+                        do ii = 1, mn
+                            if (lim .eq. im(ii) .and. lin*lNfp .eq. in(ii)) then
+                                ; iVns(ii) = lgBs
+                                if (NOTstellsym) iVnc(ii) = lgBc
+                            end if
+                        end do
+                    end do
+                    close (lunit)
+
+                end if ! end of if( myid.eq.0 ) ; 07 Dec 16;
+
+                ; 
+                call MPI_BCAST(iVns(1:mn), mn, MPI_DOUBLE_PRECISION, 0, MPI_COMM_SPEC, ierr)
+                ! only required for ii > 1 ;
+                if (NOTstellsym) then
+
+                    call MPI_BCAST(iVnc(1:mn), mn, MPI_DOUBLE_PRECISION, 0, MPI_COMM_SPEC, ierr)
+
+                end if
+
+                ; iBns(2:mn) = -iBns(2:mn) - iVns(2:mn) ! updated vacuum field ; 24 Nov 16;
+                if (NOTstellsym) iBnc(1:mn) = -iBnc(1:mn) - iVnc(1:mn)
+
+                if (myid .eq. 0) then
+                    write (ounit, '("xspech : " 10x " : oBns=[",999(es11.03,","))') iBns(1:mn) ! 17 Jan 17;
+                    write (ounit, '("xspech : " 10x " : nBns=[",999(es11.03,","))') ofmn(1:mn) ! 17 Jan 17;
+                    if (NOTstellsym) then
+                        write (ounit, '("xspech : " 10x " : oBnc=[",999(es11.03,","))') iBnc(1:mn) ! 17 Jan 17;
+                        write (ounit, '("xspech : " 10x " : nBnc=[",999(es11.03,","))') efmn(1:mn) ! 17 Jan 17;
+                    end if
+                end if
+
+            case (-1) ! mfreeits = -1 ; shall set vacuum normal field at computational boundary ; 24 Nov 16;
+
+                ; iVns(2:mn) = iVns(2:mn) - iBns(2:mn)                                 ! total   normal field              ; 24 Nov 16;
+                if (NOTstellsym) iVnc(1:mn) = iVnc(1:mn) - iBnc(1:mn)
+                ; iBns(2:mn) = ofmn(2:mn) ! updated normal field due to plasma; 24 Nov 16;
+                if (NOTstellsym) iBnc(1:mn) = efmn(1:mn)
+                ; iVns(2:mn) = iVns(2:mn) + iBns(2:mn)                                 ! updated vacuum field              ; 24 Nov 16;
+                if (NOTstellsym) iVnc(1:mn) = iVnc(1:mn) + iBnc(1:mn)
+
+            case (0) ! mfreeits =  0 ; 09 Mar 17;
+
+                if (.true.) then
+                    write (6, '("xspech :      fatal : myid=",i3," ; .true. ; illegal mfreeits logic ;")') myid
+                    call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                    stop "xspech : .true. : illegal mfreeits logic  ;"
+                end if
+
+            case (1:) ! mfreeits >  0 ; 09 Mar 17;
+
+                select case (Lzerovac)
+
+                case (0) ! Lzerovac = 0 ; 09 Mar 17;
+
+                    ; iBns(2:mn) = gBnbld*iBns(2:mn) + (one - gBnbld)*ofmn(2:mn)
+                    if (NOTstellsym) iBnc(1:mn) = gBnbld*iBnc(1:mn) + (one - gBnbld)*efmn(1:mn)
+
+                case (1) ! Lzerovac = 1 ; 09 Mar 17;
+
+                    ; iBns(2:mn) = ofmn(2:mn) ! no blend; 27 Feb 17;
+                    if (NOTstellsym) iBnc(1:mn) = efmn(1:mn)
+
+                    ; iVns(2:mn) = +iBns(2:mn) ! update vacuum field to cancel plasma field on computational boundary; 27 Feb 17;
+                    if (NOTstellsym) iVnc(1:mn) = +iBnc(1:mn)
+
+                case default ! Lzerovac; 09 Mar 17;
+
+                    if (.true.) then
+                        write (6, '("xspech :      fatal : myid=",i3," ; .true. ; invalid Lzerovac ;")') myid
+                        call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                        stop "xspech : .true. : invalid Lzerovac  ;"
+                    end if
+
+                end select ! end select case( Lzerovac ) ; 27 Feb 17;
+
+            end select ! end select case( mfreeits ) ; 27 Feb 17;
+
+        else ! else of if( bnserr.gt.gBntol ) ; 03 Apr 19;
+
+            LContinueFreeboundaryIterations = .false.
+
+        end if ! end of if( bnserr.gt.gBntol ) ; 24 Nov 16;
+
+        cput = MPI_WTIME()
+
+        if (myid .eq. 0) then; write (ounit, 1003)
+            ; ; write (ounit, 1004) cput - cpus, nfreeboundaryiterations, mfreeits, gBntol, bnserr, cput - lastcpu
+            ; ; write (ounit, 1003)
+        end if ! end of if( myid.eq.0 ) ; 24 Nov 16;
+
+1003    format("xspech : "10x " : ")
+1004    format("xspech : "f10.2" : nfreeboundaryiterations = "i6" / "i6.5" ; gBntol ="es8.1" ; bnserr =", es12.5, " ; bnorml time ="f10.2"s ;")
+
+    end if ! end of if( LupdateBn ) ;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -883,26 +851,25 @@ subroutine spec
 !> <li> The vector potential is written to file using ra00aa() . </li>
 !> </ul>
 
+    cput = MPI_WTIME()
+    Txspech = Txspech + (cput - cpuo)
+    call ra00aa('W')
+    cpuo = MPI_WTIME()
+    ! this writes vector potential to file;
 
-   cput = MPI_WTIME()
-   Txspech = Txspech + ( cput-cpuo )
-   call ra00aa('W')
-   cpuo = MPI_WTIME()
- ! this writes vector potential to file;
+    if (myid .eq. 0) then ! write restart file; note that this is inside free-boundary iteration loop; 11 Aug 14;
 
-  if( myid.eq.0 ) then ! write restart file; note that this is inside free-boundary iteration loop; 11 Aug 14;
-
-   cput = MPI_WTIME()
-   Txspech = Txspech + ( cput-cpuo )
-   call wrtend
-   cpuo = MPI_WTIME()
- ! write restart file; save initial input;
-  endif
+        cput = MPI_WTIME()
+        Txspech = Txspech + (cput - cpuo)
+        call wrtend
+        cpuo = MPI_WTIME()
+        ! write restart file; save initial input;
+    end if
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  if( LContinueFreeboundaryIterations .and. nfreeboundaryiterations.lt.mfreeits ) goto 9000  ! removed Lfindzero check; Loizu Dec 18;
-  if( Lfreebound.eq.1 .and. First_free_bound ) goto 9000  ! going back to normal free_boundary calculation; Zhu 20190701;
+    if (LContinueFreeboundaryIterations .and. nfreeboundaryiterations .lt. mfreeits) goto 9000  ! removed Lfindzero check; Loizu Dec 18;
+    if (Lfreebound .eq. 1 .and. First_free_bound) goto 9000  ! going back to normal free_boundary calculation; Zhu 20190701;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -921,37 +888,32 @@ end subroutine spec
 !> <li> pp00aa() is called to construct the Poincare plot by field-line following. </li>
 !> </ul>
 subroutine final_diagnostics
-  use mod_kinds, only: wp => dp
-  use inputlist, only: nPtrj, nPpts, Igeometry, Lcheck, Nvol, odetol, &
-                       Isurf, Ivolume, mu, Wmacros, Ltransform
-  use fileunits, only: ounit
-  use constants, only: zero
-  use allglobal, only: pi2, myid, ncpu, MPI_COMM_SPEC, cpus, Mvol, Ntz, mn, &
-                       beltramierror, Lcoordinatesingularity, &
-                       Lplasmaregion, Lvacuumregion, &
-                       Btemn, Bzemn, Btomn, Bzomn, &
-                       efmn, ofmn, cfmn, sfmn, &
-                       IPDt, ImagneticOK, dtflux, Iquad, lmns, Nt, Nz, diotadxup, &
-                       IsMyVolume, IsMyVolumeValue, WhichCpuID, &
-                       dlambdaout, diotadxup
-
-
+    use mod_kinds, only: wp => dp
+    use inputlist, only: nPtrj, nPpts, Igeometry, Lcheck, Nvol, odetol, &
+                         Isurf, Ivolume, mu, Wmacros, Ltransform
+    use fileunits, only: ounit
+    use constants, only: zero
+    use allglobal, only: pi2, myid, ncpu, MPI_COMM_SPEC, cpus, Mvol, Ntz, mn, &
+                         beltramierror, Lcoordinatesingularity, &
+                         Lplasmaregion, Lvacuumregion, &
+                         Btemn, Bzemn, Btomn, Bzomn, &
+                         efmn, ofmn, cfmn, sfmn, &
+                         IPDt, ImagneticOK, dtflux, Iquad, lmns, Nt, Nz, diotadxup, &
+                         IsMyVolume, IsMyVolumeValue, WhichCpuID, &
+                         dlambdaout, diotadxup
 
 #ifdef OPENMP
-  USE OMP_LIB
+    USE OMP_LIB
 #endif
-  use mpi
-  implicit none
-  integer   :: ierr, astat, ios, nthreads, ithread
-  real(wp)      :: cput, cpui, cpuo=0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
+    use mpi
+    implicit none
+    integer :: ierr, astat, ios, nthreads, ithread
+    real(wp) :: cput, cpui, cpuo = 0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
 
-
-  integer              :: iocons, llmodnp, vvol, iflag, cpu_id
-  real                 :: sumI
-  real(wp),    allocatable :: Bt00(:,:,:)
-  real(wp)                 :: work(0:1,-1:2)
-
-
+    integer :: iocons, llmodnp, vvol, iflag, cpu_id
+    real :: sumI
+    real(wp), allocatable :: Bt00(:, :, :)
+    real(wp) :: work(0:1, -1:2)
 
 !  SALLOCATE( gradient, (0:NGdof), zero )
 !
@@ -995,280 +957,257 @@ subroutine final_diagnostics
 !2000 format("finish : ",f10.2," : finished ",i3," ; ":"|f|="es12.5" ; ":"time=",f10.2,"s ;":" log"a5,:"="28f6.2" ...")
 !2001 format("finish : ", 10x ," :          ",3x," ; ":"    "  12x "   ":"     ", 10x ,"  ;":" log"a5,:"="28f6.2" ...")
 
-
 ! Evaluate rotational transform and straight field line coordinate transformation
-if( Ltransform ) then
+    if (Ltransform) then
 
-  do vvol=1,Mvol
-    call brcast(vvol)
-  enddo
+        do vvol = 1, Mvol
+            call brcast(vvol)
+        end do
 
-  iflag = -1
-  do vvol = 1, Mvol
-    call IsMyVolume(vvol)
-    if (IsMyVolumeValue.eq.0) then
-      cycle
-    elseif (IsMyVolumeValue.eq.-1) then
+        iflag = -1
+        do vvol = 1, Mvol
+            call IsMyVolume(vvol)
+            if (IsMyVolumeValue .eq. 0) then
+                cycle
+            elseif (IsMyVolumeValue .eq. -1) then
 
-   if( .true. ) then
-     write(6,'("xspech :      fatal : myid=",i3," ; .true. ; Unassociated volume ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "xspech : .true. : Unassociated volume  ;"
-    endif
+                if (.true.) then
+                    write (6, '("xspech :      fatal : myid=",i3," ; .true. ; Unassociated volume ;")') myid
+                    call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                    stop "xspech : .true. : Unassociated volume  ;"
+                end if
 
-    endif
+            end if
 
+            if (Igeometry .eq. 1 .or. vvol .gt. 1) then; Lcoordinatesingularity = .false.
+            else; Lcoordinatesingularity = .true.
+            end if
 
-   if( Igeometry.eq.1 .or. vvol .gt.1 ) then ; Lcoordinatesingularity = .false.
-   else                                   ; Lcoordinatesingularity = .true.
-   endif
+            if (vvol .le. Nvol) then; Lplasmaregion = .true.
+            else; Lplasmaregion = .false.
+            end if
 
-   if( vvol .le.Nvol ) then ; Lplasmaregion = .true.
-   else                  ; Lplasmaregion = .false.
-   endif
+            Lvacuumregion = .not. Lplasmaregion
 
-   Lvacuumregion = .not.Lplasmaregion
+            call tr00ab(vvol, mn, lmns, Nt, Nz, iflag, diotadxup(0:1, -1:2, vvol)) ! stores lambda in a global variable.
+        end do
 
+        ! Broadcast
+        do vvol = 1, Mvol
+            call WhichCpuID(vvol, cpu_id)
 
-    call tr00ab( vvol, mn, lmns, Nt, Nz, iflag, diotadxup(0:1,-1:2, vvol) ) ! stores lambda in a global variable.
-  enddo
+            call MPI_BCAST(diotadxup(0:1, -1:2, vvol), 8, MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_SPEC, ierr)
 
-  ! Broadcast
-  do vvol = 1, Mvol
-    call WhichCpuID( vvol, cpu_id )
+            call MPI_BCAST(dlambdaout(1:lmns, vvol, 0:1), 2*lmns, MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_SPEC, ierr)
 
-   call MPI_BCAST(diotadxup(0:1,-1:2,vvol),8,MPI_DOUBLE_PRECISION,cpu_id  ,MPI_COMM_SPEC,ierr)
+        end do
 
+    end if
 
-   call MPI_BCAST(dlambdaout(1:lmns, vvol, 0:1),2*lmns,MPI_DOUBLE_PRECISION,cpu_id  ,MPI_COMM_SPEC,ierr)
-
-  enddo
-
-endif
-
-
-  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+    !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 ! Computes the surface current at each interface for output
 
+    allocate (Bt00(1:Mvol, 0:1, -1:2), stat=astat)
+    Bt00(1:Mvol, 0:1, -1:2) = zero
 
-   allocate( Bt00(1:Mvol, 0:1, -1:2) , stat=astat )
-   Bt00(1:Mvol, 0:1, -1:2)  = zero
+    do vvol = 1, Mvol
 
+        if (Igeometry .eq. 1 .or. vvol .gt. 1) then; Lcoordinatesingularity = .false.
+        else; Lcoordinatesingularity = .true.
+        end if
 
-  do vvol = 1, Mvol
+        if (vvol .le. Nvol) then; Lplasmaregion = .true.
+        else; Lplasmaregion = .false.
+        end if
 
+        Lvacuumregion = .not. Lplasmaregion
 
-   if( Igeometry.eq.1 .or. vvol.gt.1 ) then ; Lcoordinatesingularity = .false.
-   else                                   ; Lcoordinatesingularity = .true.
-   endif
+        do iocons = 0, 1
+            if ((Lcoordinatesingularity .and. iocons .eq. 0) .or. (Lvacuumregion .and. iocons .eq. 1)) cycle
+            ! Compute covariant magnetic field at interface
+            call lbpol(vvol, Bt00(1:Mvol, 0:1, -1:2), 0, iocons)
 
-   if( vvol.le.Nvol ) then ; Lplasmaregion = .true.
-   else                  ; Lplasmaregion = .false.
-   endif
+            ! Save covariant magnetic field at interface for output - computed in lbpol
+            Btemn(1:mn, iocons, vvol) = efmn(1:mn)
+            Btomn(1:mn, iocons, vvol) = ofmn(1:mn)
+            Bzemn(1:mn, iocons, vvol) = cfmn(1:mn)
+            Bzomn(1:mn, iocons, vvol) = sfmn(1:mn)
+        end do
+    end do
 
-   Lvacuumregion = .not.Lplasmaregion
+    ! Evaluate surface current
+    do vvol = 1, Mvol - 1
+        IPDt(vvol) = pi2*(Bt00(vvol + 1, 0, 0) - Bt00(vvol, 1, 0))
+    end do
 
+    deallocate (Bt00, stat=astat)
 
-    do iocons = 0, 1
-	  if( ( Lcoordinatesingularity .and. iocons.eq.0 ) .or. ( Lvacuumregion .and. iocons.eq.1 ) ) cycle
-      ! Compute covariant magnetic field at interface
-      call lbpol(vvol, Bt00(1:Mvol, 0:1, -1:2), 0, iocons)
+    ! Evaluate volume current
+    sumI = 0
+    do vvol = 1, Mvol
+        Ivolume(vvol) = mu(vvol)*dtflux(vvol)*pi2 + sumI    ! factor pi2 due to normalization in preset
+        sumI = Ivolume(vvol)                                    ! Sum over all volumes since this is how Ivolume is defined
+    end do
 
-      ! Save covariant magnetic field at interface for output - computed in lbpol
-      Btemn(1:mn, iocons, vvol) = efmn(1:mn)
-      Btomn(1:mn, iocons, vvol) = ofmn(1:mn)
-      Bzemn(1:mn, iocons, vvol) = cfmn(1:mn)
-      Bzomn(1:mn, iocons, vvol) = sfmn(1:mn)
-    enddo
-  enddo
+    ! screen info about diagnostics; 20 Jun 14;
+    if (myid .eq. 0) then
+        cput = MPI_WTIME()
 
-  ! Evaluate surface current
-  do vvol = 1, Mvol-1
-    IPDt(vvol) = pi2 * (Bt00(vvol+1, 0, 0) - Bt00(vvol, 1, 0))
-  enddo
+        if (nPpts .gt. 0) then
+            write (ounit, '("xspech : ", 10x ," :")')
+            write (ounit, '("xspech : ",f10.2," : myid=",i3," ; Poincare plot ; odetol="es8.1" ; nPpts="i7" ;":" nPtrj="24(i5",")" ...")') &
+                cput - cpus, myid, odetol, nPpts, nPtrj(1:min(Mvol, 24))
+        end if
 
+        if (Lcheck .eq. 1) then
+            write (ounit, '("xspech : ", 10x ," :")')
+            write (ounit, '("xspech : ",f10.2," : myid=",i3," ; calling jo00aa; computing error in field ;")') cput - cpus, myid
+        end if
+    end if
 
-   deallocate(Bt00 ,stat=astat)
+    do vvol = 1, Mvol
 
+        if (Igeometry .eq. 1 .or. vvol .gt. 1) then; Lcoordinatesingularity = .false.
+        else; Lcoordinatesingularity = .true.
+        end if
 
-  ! Evaluate volume current
-  sumI = 0
-  do vvol = 1, Mvol
-    Ivolume(vvol) = mu(vvol) * dtflux(vvol) * pi2 + sumI    ! factor pi2 due to normalization in preset
-    sumI = Ivolume(vvol)                                    ! Sum over all volumes since this is how Ivolume is defined
-  enddo
+        if (vvol .le. Nvol) then; Lplasmaregion = .true.
+        else; Lplasmaregion = .false.
+        end if
 
-  ! screen info about diagnostics; 20 Jun 14;
-  if (myid.eq.0) then
-   cput = MPI_WTIME()
+        Lvacuumregion = .not. Lplasmaregion
 
-   if( nPpts.gt.0 ) then
-    write(ounit,'("xspech : ", 10x ," :")')
-    write(ounit,'("xspech : ",f10.2," : myid=",i3," ; Poincare plot ; odetol="es8.1" ; nPpts="i7" ;":" nPtrj="24(i5",")" ...")') &
-                 cput-cpus, myid, odetol, nPpts, nPtrj(1:min(Mvol,24))
-   endif
+        if (myid .eq. modulo(vvol - 1, ncpu) .and. myid .lt. Mvol) then ! the following is in parallel; 20 Jun 14;
 
-   if( Lcheck.eq.1 ) then
-    write(ounit,'("xspech : ", 10x ," :")')
-    write(ounit,'("xspech : ",f10.2," : myid=",i3," ; calling jo00aa; computing error in field ;")') cput-cpus, myid
-   endif
-  endif
+            if (.not. ImagneticOK(vvol)) then; cput = MPI_WTIME(); write (ounit, 1002) cput - cpus; write (ounit, 1002) cput - cpus, myid, vvol, ImagneticOK(vvol); cycle
+            end if
 
-  do vvol = 1, Mvol
+            ! No need for sc00aa anymore - this is done in lbpol
+            !;WCALL( xspech, sc00aa, ( vvol, Ntz                  ) ) ! compute covariant field (singular currents);
 
+            if (Lcheck .eq. 1) then
+                call jo00aa(vvol, Ntz, Iquad(vvol), mn)
+            end if
 
-   if( Igeometry.eq.1 .or. vvol.gt.1 ) then ; Lcoordinatesingularity = .false.
-   else                                   ; Lcoordinatesingularity = .true.
-   endif
+        end if ! myid.eq.modulo(vvol-1,ncpu)
+    end do ! end of do vvol = 1, Mvol; ! end of parallel diagnostics loop; 03 Apr 13;
 
-   if( vvol.le.Nvol ) then ; Lplasmaregion = .true.
-   else                  ; Lplasmaregion = .false.
-   endif
+    if (nPpts .gt. 0) then
+        call pp00aa() ! do Poincare plots in all volumes; has its own paralellization over volumes internally
+    end if
 
-   Lvacuumregion = .not.Lplasmaregion
-
-
-   if( myid.eq.modulo(vvol-1,ncpu) .and. myid.lt.Mvol) then ! the following is in parallel; 20 Jun 14;
-
-    if( .not.ImagneticOK(vvol) ) then ; cput = MPI_WTIME() ; write(ounit,1002) cput-cpus ; write(ounit,1002) cput-cpus, myid, vvol, ImagneticOK(vvol) ; cycle
-    endif
-
-    ! No need for sc00aa anymore - this is done in lbpol
-    !;WCALL( xspech, sc00aa, ( vvol, Ntz                  ) ) ! compute covariant field (singular currents);
-
-    if( Lcheck.eq.1 ) then
-     call jo00aa( vvol, Ntz, Iquad(vvol), mn )
-    endif
-
-   endif ! myid.eq.modulo(vvol-1,ncpu)
-  enddo ! end of do vvol = 1, Mvol; ! end of parallel diagnostics loop; 03 Apr 13;
-
-  if( nPpts .gt.0 ) then
-    call pp00aa() ! do Poincare plots in all volumes; has its own paralellization over volumes internally
-  endif
-
-1002 format("xspech : ",f10.2," :":" myid=",i3," ; vvol=",i3," ; IBeltrami="L2" ; construction of Beltrami field failed ;")
+1002 format("xspech : ", f10.2, " :":" myid=", i3, " ; vvol=", i3, " ; IBeltrami="L2" ; construction of Beltrami field failed ;")
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  do vvol = 1, Mvol ; llmodnp = modulo(vvol-1,ncpu)
+    do vvol = 1, Mvol; llmodnp = modulo(vvol - 1, ncpu)
 
 #ifdef DEBUG
 
-   if( .not.allocated(Btemn) ) then
-     write(6,'("xspech :      fatal : myid=",i3," ; .not.allocated(Btemn) ; error ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "xspech : .not.allocated(Btemn) : error  ;"
-    endif
+        if (.not. allocated(Btemn)) then
+            write (6, '("xspech :      fatal : myid=",i3," ; .not.allocated(Btemn) ; error ;")') myid
+            call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+            stop "xspech : .not.allocated(Btemn) : error  ;"
+        end if
 
+        if (.not. allocated(Bzemn)) then
+            write (6, '("xspech :      fatal : myid=",i3," ; .not.allocated(Bzemn) ; error ;")') myid
+            call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+            stop "xspech : .not.allocated(Bzemn) : error  ;"
+        end if
 
-   if( .not.allocated(Bzemn) ) then
-     write(6,'("xspech :      fatal : myid=",i3," ; .not.allocated(Bzemn) ; error ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "xspech : .not.allocated(Bzemn) : error  ;"
-    endif
+        if (.not. allocated(Btomn)) then
+            write (6, '("xspech :      fatal : myid=",i3," ; .not.allocated(Btomn) ; error ;")') myid
+            call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+            stop "xspech : .not.allocated(Btomn) : error  ;"
+        end if
 
-
-   if( .not.allocated(Btomn) ) then
-     write(6,'("xspech :      fatal : myid=",i3," ; .not.allocated(Btomn) ; error ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "xspech : .not.allocated(Btomn) : error  ;"
-    endif
-
-
-   if( .not.allocated(Bzomn) ) then
-     write(6,'("xspech :      fatal : myid=",i3," ; .not.allocated(Bzomn) ; error ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "xspech : .not.allocated(Bzomn) : error  ;"
-    endif
+        if (.not. allocated(Bzomn)) then
+            write (6, '("xspech :      fatal : myid=",i3," ; .not.allocated(Bzomn) ; error ;")') myid
+            call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+            stop "xspech : .not.allocated(Bzomn) : error  ;"
+        end if
 
 #endif
 
+        call MPI_BCAST(Btemn(1:mn, 0:1, vvol), mn*2, MPI_DOUBLE_PRECISION, llmodnp, MPI_COMM_SPEC, ierr)
+        ! this is computed in lbpol; 07 Dec 16;
 
-   call MPI_BCAST(Btemn(1:mn,0:1,vvol),mn*2,MPI_DOUBLE_PRECISION,llmodnp ,MPI_COMM_SPEC,ierr)
- ! this is computed in lbpol; 07 Dec 16;
+        call MPI_BCAST(Bzemn(1:mn, 0:1, vvol), mn*2, MPI_DOUBLE_PRECISION, llmodnp, MPI_COMM_SPEC, ierr)
 
-   call MPI_BCAST(Bzemn(1:mn,0:1,vvol),mn*2,MPI_DOUBLE_PRECISION,llmodnp ,MPI_COMM_SPEC,ierr)
+        call MPI_BCAST(Btomn(1:mn, 0:1, vvol), mn*2, MPI_DOUBLE_PRECISION, llmodnp, MPI_COMM_SPEC, ierr)
 
+        call MPI_BCAST(Bzomn(1:mn, 0:1, vvol), mn*2, MPI_DOUBLE_PRECISION, llmodnp, MPI_COMM_SPEC, ierr)
 
-   call MPI_BCAST(Btomn(1:mn,0:1,vvol),mn*2,MPI_DOUBLE_PRECISION,llmodnp ,MPI_COMM_SPEC,ierr)
+        call MPI_BCAST(beltramierror(vvol, 1:9), 9, MPI_DOUBLE_PRECISION, llmodnp, MPI_COMM_SPEC, ierr)
+        ! this is computed in jo00aa; 21 Aug 18;
 
-
-   call MPI_BCAST(Bzomn(1:mn,0:1,vvol),mn*2,MPI_DOUBLE_PRECISION,llmodnp ,MPI_COMM_SPEC,ierr)
-
-
-
-   call MPI_BCAST(beltramierror(vvol,1:9),9,MPI_DOUBLE_PRECISION,llmodnp ,MPI_COMM_SPEC,ierr)
- ! this is computed in jo00aa; 21 Aug 18;
-
-  enddo ! end of do vvol = 1, Mvol; 01 Jul 14;
+    end do ! end of do vvol = 1, Mvol; 01 Jul 14;
 
 end subroutine final_diagnostics
 
 !> \brief Closes output files, writes screen summary.
 !>
 subroutine ending
-  use mod_kinds, only: wp => dp
-  use constants, only : zero
+    use mod_kinds, only: wp => dp
+    use constants, only: zero
 
-  use fileunits, only : ounit
+    use fileunits, only: ounit
 
-  use inputlist, only : Wmacros, Wxspech, Ltiming
+    use inputlist, only: Wmacros, Wxspech, Ltiming
 
-  use cputiming
+    use cputiming
 
-  use allglobal, only : myid, cpus, mn, MPI_COMM_SPEC, ext
+    use allglobal, only: myid, cpus, mn, MPI_COMM_SPEC, ext
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
 
 #ifdef OPENMP
-  USE OMP_LIB
+    USE OMP_LIB
 #endif
-  use mpi
-  implicit none
-  integer   :: ierr, astat, ios, nthreads, ithread
-  real(wp)      :: cput, cpui, cpuo=0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
+    use mpi
+    implicit none
+    integer :: ierr, astat, ios, nthreads, ithread
+    real(wp) :: cput, cpui, cpuo = 0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
 
-
-  real(wp)      :: Ttotal, dcpu, ecpu
-  character :: date*8, time*10
+    real(wp) :: Ttotal, dcpu, ecpu
+    character :: date*8, time*10
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  cpui = MPI_WTIME() ; cpuo = cpui ! see macro expansion for begin; 11 Aug 14;
+    cpui = MPI_WTIME(); cpuo = cpui ! see macro expansion for begin; 11 Aug 14;
 
 #ifdef DEBUG
-  if( Wxspech ) write(ounit,'("ending : ",f10.2," : myid=",i3," ; start  ;")') cpui-cpus, myid
+    if (Wxspech) write (ounit, '("ending : ",f10.2," : myid=",i3," ; start  ;")') cpui - cpus, myid
 #endif
 
-  cput = MPI_WTIME()
+    cput = MPI_WTIME()
 
-  cput = MPI_WTIME() ; dcpu = cput-cpus
+    cput = MPI_WTIME(); dcpu = cput - cpus
 
-  if( Ltiming .and. myid.eq.0 ) then
+    if (Ltiming .and. myid .eq. 0) then
 
-   Ttotal = zero
+        Ttotal = zero
 
 ! PRTTIME ! this is expanded by Makefile, and then again by macros; do not remove;
-   write(ounit,'("ending : ",f10.2," : time spent in wrtend =",f10.2," ;")') dcpu, Twrtend ; Ttotal = Ttotal + Twrtend
-   write(ounit,'("ending : ",f10.2," : time spent in readin =",f10.2," ;")') dcpu, Treadin ; Ttotal = Ttotal + Treadin
+        write (ounit, '("ending : ",f10.2," : time spent in wrtend =",f10.2," ;")') dcpu, Twrtend; Ttotal = Ttotal + Twrtend
+        write (ounit, '("ending : ",f10.2," : time spent in readin =",f10.2," ;")') dcpu, Treadin; Ttotal = Ttotal + Treadin
 
-   ecpu = Ttotal-dcpu ! error in actual cpu time and calculated cpu time;  7 Mar 13;
+        ecpu = Ttotal - dcpu ! error in actual cpu time and calculated cpu time;  7 Mar 13;
 
-   write(ounit,'("ending : ",f10.2," : Ttotal =",f10.2," s = "f8.2" m = "f6.2" h ; Timing Error = ",f10.2,"s = ",f10.2,"%")') &
-dcpu, Ttotal / (/ 1, 60, 3600 /), ecpu, 100*ecpu/dcpu
+        write (ounit, '("ending : ",f10.2," : Ttotal =",f10.2," s = "f8.2" m = "f6.2" h ; Timing Error = ",f10.2,"s = ",f10.2,"%")') &
+            dcpu, Ttotal/(/1, 60, 3600/), ecpu, 100*ecpu/dcpu
 
-  endif ! end of if( Ltiming .and. myid.eq.0 ) then; 01 Jul 14;
+    end if ! end of if( Ltiming .and. myid.eq.0 ) then; 01 Jul 14;
 
-  if( myid.eq.0 ) then
-   call date_and_time(date,time)
-   write(ounit,'("ending : ", 10x ," : ")')
-   write(ounit,1000) dcpu, myid, dcpu / (/ 1, 60, 60*60, 24*60*60 /), date(1:4), date(5:6), date(7:8), time(1:2), time(3:4), time(5:6), ext
-   write(ounit,'("ending : ", 10x ," : ")')
-  endif ! end of if( myid.eq.0 ) ; 14 Jan 15;
+    if (myid .eq. 0) then
+        call date_and_time(date, time)
+        write (ounit, '("ending : ", 10x ," : ")')
+        write (ounit, 1000) dcpu, myid, dcpu/(/1, 60, 60*60, 24*60*60/), date(1:4), date(5:6), date(7:8), time(1:2), time(3:4), time(5:6), ext
+        write (ounit, '("ending : ", 10x ," : ")')
+    end if ! end of if( myid.eq.0 ) ; 14 Jan 15;
 
-1000 format("ending : ",f10.2," : myid=",i3," ; completion ; time=",f10.2,"s = "f8.2"m = "f6.2"h = "f5.2"d ; date= "&
-  a4"/"a2"/"a2" ; time= "a2":"a2":"a2" ; ext = "a60)
+1000 format("ending : ", f10.2, " : myid=", i3, " ; completion ; time=", f10.2, "s = "f8.2"m = "f6.2"h = "f5.2"d ; date= " &
+           a4"/"a2"/"a2" ; time= "a2":"a2":"a2" ; ext = "a60)
 
 end subroutine ending
 

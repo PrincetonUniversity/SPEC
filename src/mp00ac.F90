@@ -109,260 +109,243 @@
 !> @param     Ddof
 !> @param[in] Ldfjac
 !> @param     iflag  indicates whether (i) iflag=1: "function" values are required; or (ii) iflag=2: "derivative" values are required
-subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fixed by NAG; ma02aa calls mp00ac through C05PCF;
-  use mod_kinds, only: wp => dp
+subroutine mp00ac(Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag) ! argument list is fixed by NAG; ma02aa calls mp00ac through C05PCF;
+    use mod_kinds, only: wp => dp
 ! if iflag.eq.0 : Xdof and Fdof are available for PRINTING ; Fdof MUST NOT BE CHANGED; Ddof MUST NOT BE CHANGED;
 ! if iflag.eq.1 :          Fdof is to be          UPDATED  ;                         ; Ddof MUST NOT BE CHANGED;
 ! if iflag.eq.2 :          Ddof is to be          UPDATED  ; Fdof MUST NOT BE CHANGED;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  use constants, only : zero, half, one
+    use constants, only: zero, half, one
 
-  use numerical, only : small, machprec
+    use numerical, only: small, machprec
 
-  use fileunits, only : ounit
+    use fileunits, only: ounit
 
-  use inputlist, only : Wmacros, Wmp00ac, Wtr00ab, Wcurent, Wma02aa, &
-                        mu, helicity, iota, oita, curtor, curpol, Lrad, Ntor,&
-                       !Lposdef, &
-                        Lconstraint, mupftol, &
-                        Lmatsolver, NiterGMRES, epsGMRES, LGMRESprec, epsILU
+    use inputlist, only: Wmacros, Wmp00ac, Wtr00ab, Wcurent, Wma02aa, &
+                         mu, helicity, iota, oita, curtor, curpol, Lrad, Ntor, &
+                         !Lposdef, &
+                         Lconstraint, mupftol, &
+                         Lmatsolver, NiterGMRES, epsGMRES, LGMRESprec, epsILU
 
-  use cputiming, only : Tmp00ac
+    use cputiming, only: Tmp00ac
 
-  use allglobal, only : myid, ncpu, cpus, ivol, MPI_COMM_SPEC, &
-                        YESstellsym, NOTstellsym, &
-                        Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
-                        mn, im, in, mns, &
-                        Nt, Nz, & ! only required to pass through as arguments to tr00ab;
-                        NAdof, &
-!                       dMA, dMB, dMC, dMD, dME, dMF, dMG, &
-                        dMA, dMB,      dMD,           dMG, &
-                        Adotx, Ddotx,&
-                        NdMASmax, NdMAS, dMAS, dMDS, idMAS, jdMAS, & ! preconditioning matrix
-                        solution, GMRESlastsolution, &
-                        dtflux, dpflux, &
-                        diotadxup, dItGpdxtp, &
-                        lBBintegral, lABintegral, &
-                        xoffset, &
-                        ImagneticOK, &
-                        Ate, Aze, Ato, Azo, Mvol, Iquad, &
-                        LILUprecond, GMRESlastsolution, NOTMatrixFree
+    use allglobal, only: myid, ncpu, cpus, ivol, MPI_COMM_SPEC, &
+                         YESstellsym, NOTstellsym, &
+                         Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
+                         mn, im, in, mns, &
+                         Nt, Nz, & ! only required to pass through as arguments to tr00ab;
+                         NAdof, &
+                         !                       dMA, dMB, dMC, dMD, dME, dMF, dMG, &
+                         dMA, dMB, dMD, dMG, &
+                         Adotx, Ddotx, &
+                         NdMASmax, NdMAS, dMAS, dMDS, idMAS, jdMAS, & ! preconditioning matrix
+                         solution, GMRESlastsolution, &
+                         dtflux, dpflux, &
+                         diotadxup, dItGpdxtp, &
+                         lBBintegral, lABintegral, &
+                         xoffset, &
+                         ImagneticOK, &
+                         Ate, Aze, Ato, Azo, Mvol, Iquad, &
+                         LILUprecond, GMRESlastsolution, NOTMatrixFree
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-
 #ifdef OPENMP
-  USE OMP_LIB
+    USE OMP_LIB
 #endif
-  use mpi
-  implicit none
-  integer   :: ierr, astat, ios, nthreads, ithread
-  real(wp)      :: cput, cpui, cpuo=0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
+    use mpi
+    implicit none
+    integer :: ierr, astat, ios, nthreads, ithread
+    real(wp) :: cput, cpui, cpuo = 0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
 
+    integer, intent(in) :: Ndof, Ldfjac
+    real(wp), intent(in) :: Xdof(1:Ndof)
+    real(wp) :: Fdof(1:Ndof), Ddof(1:Ldfjac, 1:Ndof)
+    integer :: iflag
 
-  integer, intent(in)  :: Ndof, Ldfjac
-  real(wp)   , intent(in)  :: Xdof(1:Ndof)
-  real(wp)                 :: Fdof(1:Ndof), Ddof(1:Ldfjac,1:Ndof)
-  integer              :: iflag
+    integer, parameter :: NB = 4 ! optimal workspace block size for LAPACK:DGECON;
 
+    integer :: lvol, NN, MM, ideriv, lmns, ii, jj, nnz, Lwork
 
-  integer, parameter   :: NB = 4 ! optimal workspace block size for LAPACK:DGECON;
+    integer :: idgetrf(0:1), idgetrs(0:1), idgerfs(0:1), idgecon(0:1)
 
-  integer              :: lvol, NN, MM, ideriv, lmns, ii, jj, nnz, Lwork
+    real(wp) :: lmu, dpf, dtf, dpsi(1:2), tpsi(1:2), ppsi(1:2), lcpu, test(2, 2)
 
-  integer              :: idgetrf(0:1), idgetrs(0:1), idgerfs(0:1), idgecon(0:1)
+    real(wp) :: anorm, rcond, ferr(2), berr(2), signfactor
 
-  real(wp)                 :: lmu, dpf, dtf, dpsi(1:2), tpsi(1:2), ppsi(1:2), lcpu, test(2,2)
+    character :: packorunpack
 
-  real(wp)                 :: anorm, rcond, ferr(2), berr(2), signfactor
+    ! For direct LU decompose
+    integer, allocatable :: ipiv(:), Iwork(:)
 
-  character            :: packorunpack
+    real(wp), allocatable :: matrix(:, :), rhs(:, :), LU(:, :)
 
-  ! For direct LU decompose
-  integer, allocatable :: ipiv(:), Iwork(:)
+    real(wp), allocatable :: RW(:), RD(:, :)
 
-  real(wp)   , allocatable :: matrix(:,:), rhs(:,:), LU(:,:)
-
-  real(wp)   , allocatable :: RW(:), RD(:,:)
-
-  real(wp)   , allocatable :: matrixC(:,:)
+    real(wp), allocatable :: matrixC(:, :)
 
 ! For GMRES + ILU
-  integer, parameter   :: nrestart = 5 ! do GMRES restart after nrestart iterations
-  integer              :: maxfil   ! bandwidth for ILU subroutines, will be estimated
+    integer, parameter :: nrestart = 5 ! do GMRES restart after nrestart iterations
+    integer :: maxfil   ! bandwidth for ILU subroutines, will be estimated
 
-  integer              :: NS, itercount, Nbilut
+    integer :: NS, itercount, Nbilut
 
-  real(wp)   , allocatable :: matrixS(:), bilut(:)
-  integer, allocatable :: ibilut(:),  jbilut(:)
+    real(wp), allocatable :: matrixS(:), bilut(:)
+    integer, allocatable :: ibilut(:), jbilut(:)
 
-  integer, parameter   :: ipar_SIZE = 128
-  integer              :: ipar(ipar_SIZE), iluierr, RCI_REQUEST, nw, t1, t2, t3
-  real(wp)                 :: fpar(ipar_SIZE), v1
-  real(wp), allocatable    :: wk(:)
-  integer,allocatable  :: jw(:), iperm(:)
+    integer, parameter :: ipar_SIZE = 128
+    integer :: ipar(ipar_SIZE), iluierr, RCI_REQUEST, nw, t1, t2, t3
+    real(wp) :: fpar(ipar_SIZE), v1
+    real(wp), allocatable :: wk(:)
+    integer, allocatable :: jw(:), iperm(:)
 
-
-  cpui = MPI_WTIME()
-  cpuo = cpui
+    cpui = MPI_WTIME()
+    cpuo = cpui
 #ifdef OPENMP
-  nthreads = omp_get_max_threads()
+    nthreads = omp_get_max_threads()
 #else
-  nthreads = 1
+    nthreads = 1
 #endif
-
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  lvol = ivol ! recall that ivol is global;
+    lvol = ivol ! recall that ivol is global;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 #ifdef DEBUG
 
-   if( iflag.ne.1 .and. iflag.ne.2 ) then
-     write(6,'("mp00ac :      fatal : myid=",i3," ; iflag.ne.1 .and. iflag.ne.2 ; invalid iflag ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "mp00ac : iflag.ne.1 .and. iflag.ne.2 : invalid iflag  ;"
-    endif
- ! see nprint=0 in ma02aa and C05PCF; perhaps NAG:C05PCF is no longer used;
+    if (iflag .ne. 1 .and. iflag .ne. 2) then
+        write (6, '("mp00ac :      fatal : myid=",i3," ; iflag.ne.1 .and. iflag.ne.2 ; invalid iflag ;")') myid
+        call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+        stop "mp00ac : iflag.ne.1 .and. iflag.ne.2 : invalid iflag  ;"
+    end if
+    ! see nprint=0 in ma02aa and C05PCF; perhaps NAG:C05PCF is no longer used;
 #endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  if( Lplasmaregion ) then
+    if (Lplasmaregion) then
 
-   ;                    ; lmu  = Xdof(1) - xoffset
-   ;                    ; dtf  = dtflux(lvol)
-   if( Ndof.eq.2 ) then ; dpf  = Xdof(2) - xoffset
-   else                 ; dpf  = dpflux(lvol)
-   endif
+        ; ; lmu = Xdof(1) - xoffset
+        ; ; dtf = dtflux(lvol)
+        if (Ndof .eq. 2) then; dpf = Xdof(2) - xoffset
+        else; dpf = dpflux(lvol)
+        end if
 
-  else ! Lvacuumregion;
+    else ! Lvacuumregion;
 
 #ifdef FORCEFREEVACUUM
-   ;                    ; lmu  = mu(lvol)           ! generalize for arbitrary force-free field;
+        ; ; lmu = mu(lvol)           ! generalize for arbitrary force-free field;
 #else
-   ;                    ; lmu  = zero               ! restrict attention to strict vacuum field;
+        ; ; lmu = zero               ! restrict attention to strict vacuum field;
 #endif
 
-   ;                    ; dtf  = Xdof(1) - xoffset
-   if( Ndof.eq.2 ) then ; dpf  = Xdof(2) - xoffset
-   else                 ; dpf  = dpflux(lvol)
-   endif
+        ; ; dtf = Xdof(1) - xoffset
+        if (Ndof .eq. 2) then; dpf = Xdof(2) - xoffset
+        else; dpf = dpflux(lvol)
+        end if
 
-  endif ! end of if( Lplasmaregion ) ;
+    end if ! end of if( Lplasmaregion ) ;
 
-  dpsi(1:2) = (/  dtf,  dpf /) ! enclosed poloidal fluxes and their derivatives;
-  tpsi(1:2) = (/  one, zero /) ! enclosed toroidal fluxes and their derivatives;
-  ppsi(1:2) = (/ zero,  one /) ! enclosed toroidal fluxes and their derivatives;
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  diotadxup(0:1,-1:2,lvol) = zero ! rotational-transform, and its derivatives with respect to lmu and dpf, or toroidal current, on the inner/outer interface;
-  dItGpdxtp(0:1,-1:2,lvol) = zero ! plasma and linking currents;
+    dpsi(1:2) = (/dtf, dpf/) ! enclosed poloidal fluxes and their derivatives;
+    tpsi(1:2) = (/one, zero/) ! enclosed toroidal fluxes and their derivatives;
+    ppsi(1:2) = (/zero, one/) ! enclosed toroidal fluxes and their derivatives;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  NN = NAdof(lvol) ! shorthand;
+    diotadxup(0:1, -1:2, lvol) = zero ! rotational-transform, and its derivatives with respect to lmu and dpf, or toroidal current, on the inner/outer interface;
+    dItGpdxtp(0:1, -1:2, lvol) = zero ! plasma and linking currents;
 
-
-   allocate( rhs   (1:NN,0:2 ), stat=astat )
-   rhs   (1:NN,0:2 ) = zero
-
-  if (NOTMatrixFree) then ! create the full size matrix
-
-   allocate( matrix(1:NN,1:NN), stat=astat )
-   matrix(1:NN,1:NN) = zero
-
-  else                    ! create a dummy variable
-
-   allocate( matrix(1:1,1:1), stat=astat )
-   matrix(1:1,1:1) = zero
-
-  endif
-
-  solution(1:NN,-1:2) = zero ! this is a global array allocated in dforce;
-
-  ! allocate work space
-  select case (Lmatsolver)
-  case (1) ! direct matrix solver
-    Lwork = NB*NN
-
-
-   allocate( RW(1:Lwork ), stat=astat )
-   RW(1:Lwork ) = zero
-
-
-   allocate( RD(1:NN,0:2), stat=astat )
-   RD(1:NN,0:2) = zero
-
-
-   allocate( LU(1:NN,1:NN), stat=astat )
-   LU(1:NN,1:NN) = zero
-
-
-   allocate( ipiv(1:NN), stat=astat )
-   ipiv(1:NN) = 0
-
-
-   allocate( Iwork(1:NN), stat=astat )
-   Iwork(1:NN) = 0
-
-  case (2:3) ! GMRES
-    if (LILUprecond) then
-      NS = NdMAS(lvol) ! shorthand
-
-   allocate( matrixS(1:NS), stat=astat )
-   matrixS(1:NS) = zero
-
-
-      ! estimate bandwidth
-      if (Lcoordinatesingularity) then
-        maxfil = Lrad(lvol) + 10
-        if (NOTstellsym) maxfil = maxfil + Lrad(lvol) + 10
-      else
-        maxfil = 2 * Lrad(lvol) + 10
-        if (NOTstellsym) maxfil = maxfil + 2 * Lrad(lvol) + 10
-      end if
-
-      Nbilut = (2*maxfil+2)*NN
-
-   allocate( bilut(1:Nbilut), stat=astat )
-   bilut(1:Nbilut) = zero
-
-
-   allocate( jbilut(1:Nbilut), stat=astat )
-   jbilut(1:Nbilut) = 0
-
-
-   allocate( ibilut(1:NN+1), stat=astat )
-   ibilut(1:NN+1) = 0
-
-
-    endif
-    nw = (NN+3)*(nrestart+2) + (nrestart+1)*nrestart
-
-   allocate( wk(1:nw), stat=astat )
-   wk(1:nw) = zero
-
-
-   allocate( jw(1:2*NN), stat=astat )
-   jw(1:2*NN) = 0
-
-
-   allocate( iperm(1:2*NN), stat=astat )
-   iperm(1:2*NN) = 0
-
-  end select
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  idgetrf(0:1) = 0 ! error flags;
-  idgetrs(0:1) = 0 ! error flags;
-  idgerfs(0:1) = 0 ! error flags;
-  idgecon(0:1) = 0 ! error flags;
+    NN = NAdof(lvol) ! shorthand;
+
+    allocate (rhs(1:NN, 0:2), stat=astat)
+    rhs(1:NN, 0:2) = zero
+
+    if (NOTMatrixFree) then ! create the full size matrix
+
+        allocate (matrix(1:NN, 1:NN), stat=astat)
+        matrix(1:NN, 1:NN) = zero
+
+    else                    ! create a dummy variable
+
+        allocate (matrix(1:1, 1:1), stat=astat)
+        matrix(1:1, 1:1) = zero
+
+    end if
+
+    solution(1:NN, -1:2) = zero ! this is a global array allocated in dforce;
+
+    ! allocate work space
+    select case (Lmatsolver)
+    case (1) ! direct matrix solver
+        Lwork = NB*NN
+
+        allocate (RW(1:Lwork), stat=astat)
+        RW(1:Lwork) = zero
+
+        allocate (RD(1:NN, 0:2), stat=astat)
+        RD(1:NN, 0:2) = zero
+
+        allocate (LU(1:NN, 1:NN), stat=astat)
+        LU(1:NN, 1:NN) = zero
+
+        allocate (ipiv(1:NN), stat=astat)
+        ipiv(1:NN) = 0
+
+        allocate (Iwork(1:NN), stat=astat)
+        Iwork(1:NN) = 0
+
+    case (2:3) ! GMRES
+        if (LILUprecond) then
+            NS = NdMAS(lvol) ! shorthand
+
+            allocate (matrixS(1:NS), stat=astat)
+            matrixS(1:NS) = zero
+
+            ! estimate bandwidth
+            if (Lcoordinatesingularity) then
+                maxfil = Lrad(lvol) + 10
+                if (NOTstellsym) maxfil = maxfil + Lrad(lvol) + 10
+            else
+                maxfil = 2*Lrad(lvol) + 10
+                if (NOTstellsym) maxfil = maxfil + 2*Lrad(lvol) + 10
+            end if
+
+            Nbilut = (2*maxfil + 2)*NN
+
+            allocate (bilut(1:Nbilut), stat=astat)
+            bilut(1:Nbilut) = zero
+
+            allocate (jbilut(1:Nbilut), stat=astat)
+            jbilut(1:Nbilut) = 0
+
+            allocate (ibilut(1:NN + 1), stat=astat)
+            ibilut(1:NN + 1) = 0
+
+        end if
+        nw = (NN + 3)*(nrestart + 2) + (nrestart + 1)*nrestart
+
+        allocate (wk(1:nw), stat=astat)
+        wk(1:nw) = zero
+
+        allocate (jw(1:2*NN), stat=astat)
+        jw(1:2*NN) = 0
+
+        allocate (iperm(1:2*NN), stat=astat)
+        iperm(1:2*NN) = 0
+
+    end select
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+    idgetrf(0:1) = 0 ! error flags;
+    idgetrs(0:1) = 0 ! error flags;
+    idgerfs(0:1) = 0 ! error flags;
+    idgecon(0:1) = 0 ! error flags;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -370,15 +353,15 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 ! ideriv = 0 : compute Beltrami field; ideriv = 1 : compute d Beltrami field / d \mu           ; ideriv = 2 : compute d Beltrami field / d \Delta \psi_p ;
 ! ideriv = 0 : compute Vacuum   field; ideriv = 1 : compute d Vacuum   field / d \Delta \psi_t ; ideriv = 2 : compute d Vacuum   field / d \Delta \psi_p ;
 
-  do ideriv = 0, 1 ! loop over derivatives;
+    do ideriv = 0, 1 ! loop over derivatives;
 
-   if( iflag.eq.1 .and. ideriv.eq.1 ) cycle ! only need to return function; recall the derivative estimate requires function evaluation;
+        if (iflag .eq. 1 .and. ideriv .eq. 1) cycle ! only need to return function; recall the derivative estimate requires function evaluation;
 
-   if( Lcoordinatesingularity ) then
+        if (Lcoordinatesingularity) then
 
-    if (NOTMatrixFree) then
-      ;matrix(1:NN,1:NN) = dMA(1:NN,1:NN) - lmu * dMD(1:NN,1:NN)
-    endif
+            if (NOTMatrixFree) then
+                ; matrix(1:NN, 1:NN) = dMA(1:NN, 1:NN) - lmu*dMD(1:NN, 1:NN)
+            end if
 
 !  !;select case( ideriv )
 !  !;case( 0 )    ; rhs(1:NN,0) = - matmul(  dMB(1:NN,1:2) - lmu  * dME(1:NN,1:2), dpsi(1:2) )
@@ -386,303 +369,292 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 !  !; ;           ; rhs(1:NN,2) = - matmul(  dMB(1:NN,1:2) - lmu  * dME(1:NN,1:2), ppsi(1:2) )
 !  !;end select
 
-    ;select case( ideriv )
-    ;case( 0 )    ; rhs(1:NN,0) = - matmul(  dMB(1:NN,1:2)                       , dpsi(1:2) )
-    ;case( 1 )    ! construct dMD*solution
-    if (NOTMatrixFree) then
-    ; ;           ; rhs(1:NN,1) =                                                              - matmul( - one  * dMD(1:NN,1:NN), solution(1:NN,0) )
-    else ! Matrix free version
-    ; ;           ; rhs(1:NN,1) = Ddotx(1:NN)
-    endif ! NOTMatrixFree
-    ; ;           ; rhs(1:NN,2) = - matmul(  dMB(1:NN,1:2)                       , ppsi(1:2) )
-    ;end select
+            ; select case (ideriv)
+                ; case (0); rhs(1:NN, 0) = -matmul(dMB(1:NN, 1:2), dpsi(1:2))
+                ; case (1)    ! construct dMD*solution
+                if (NOTMatrixFree) then
+                    ; ; ; rhs(1:NN, 1) = -matmul(-one*dMD(1:NN, 1:NN), solution(1:NN, 0))
+                else ! Matrix free version
+                    ; ; ; rhs(1:NN, 1) = Ddotx(1:NN)
+                end if ! NOTMatrixFree
+                ; ; ; rhs(1:NN, 2) = -matmul(dMB(1:NN, 1:2), ppsi(1:2))
+                ; end select
 
-   else ! .not.Lcoordinatesingularity;
+        else ! .not.Lcoordinatesingularity;
 
-    if( Lplasmaregion ) then
+            if (Lplasmaregion) then
 
-     if (NOTMatrixFree) then
-       matrix(1:NN,1:NN) = dMA(1:NN,1:NN) - lmu * dMD(1:NN,1:NN)
-     endif
+                if (NOTMatrixFree) then
+                    matrix(1:NN, 1:NN) = dMA(1:NN, 1:NN) - lmu*dMD(1:NN, 1:NN)
+                end if
 
-    ;select case( ideriv )
-    ;case( 0 )    ; rhs(1:NN,0) = - matmul(  dMB(1:NN,1:2)                       , dpsi(1:2) )
-    ;case( 1 )    ! construct dMD*solution
-    if (NOTMatrixFree) then
-    ; ;           ; rhs(1:NN,1) =                                                              - matmul( - one  * dMD(1:NN,1:NN), solution(1:NN,0) )
-    else ! Matrix free version
-    ; ;           ; rhs(1:NN,1) = Ddotx(1:NN)
-    endif ! NOTMatrixFree
-    ; ;           ; rhs(1:NN,2) = - matmul(  dMB(1:NN,1:2)                       , ppsi(1:2) )
-    ;end select
+                ; select case (ideriv)
+                    ; case (0); rhs(1:NN, 0) = -matmul(dMB(1:NN, 1:2), dpsi(1:2))
+                    ; case (1)    ! construct dMD*solution
+                    if (NOTMatrixFree) then
+                        ; ; ; rhs(1:NN, 1) = -matmul(-one*dMD(1:NN, 1:NN), solution(1:NN, 0))
+                    else ! Matrix free version
+                        ; ; ; rhs(1:NN, 1) = Ddotx(1:NN)
+                    end if ! NOTMatrixFree
+                    ; ; ; rhs(1:NN, 2) = -matmul(dMB(1:NN, 1:2), ppsi(1:2))
+                    ; end select
 
-    else ! Lvacuumregion ;
+            else ! Lvacuumregion ;
 
 #ifdef FORCEFREEVACUUM
 
-   if( .true. ) then
-     write(6,'("mp00ac :      fatal : myid=",i3," ; .true. ; need to revise Beltrami matrices in vacuum region for arbitrary force-free field ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "mp00ac : .true. : need to revise Beltrami matrices in vacuum region for arbitrary force-free field  ;"
-    endif
+                if (.true.) then
+                    write (6, '("mp00ac :      fatal : myid=",i3," ; .true. ; need to revise Beltrami matrices in vacuum region for arbitrary force-free field ;")') myid
+                    call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                    stop "mp00ac : .true. : need to revise Beltrami matrices in vacuum region for arbitrary force-free field  ;"
+                end if
 
 #else
 
-     if (NOTMatrixFree) then
-       matrix(1:NN,1:NN) = dMA(1:NN,1:NN) ! - lmu * dMD(1:NN,1:NN) ;
-     endif
+                if (NOTMatrixFree) then
+                    matrix(1:NN, 1:NN) = dMA(1:NN, 1:NN) ! - lmu * dMD(1:NN,1:NN) ;
+                end if
 
-     select case( ideriv )
-     case( 0 )    ; rhs(1:NN,0) = - dMG(1:NN) - matmul( dMB(1:NN,1:2), dpsi(1:2) ) ! perhaps there is an lmu term missing here;
-     case( 1 )    ; rhs(1:NN,1) =             - matmul( dMB(1:NN,1:2), tpsi(1:2) ) ! perhaps there is an lmu term missing here;
-      ;           ; rhs(1:NN,2) =             - matmul( dMB(1:NN,1:2), ppsi(1:2) ) ! perhaps there is an lmu term missing here;
-     end select
+                select case (ideriv)
+                case (0); rhs(1:NN, 0) = -dMG(1:NN) - matmul(dMB(1:NN, 1:2), dpsi(1:2)) ! perhaps there is an lmu term missing here;
+                case (1); rhs(1:NN, 1) = -matmul(dMB(1:NN, 1:2), tpsi(1:2)) ! perhaps there is an lmu term missing here;
+                    ; ; rhs(1:NN, 2) = -matmul(dMB(1:NN, 1:2), ppsi(1:2)) ! perhaps there is an lmu term missing here;
+                end select
 #endif
 
-    endif ! end of if( Lplasmaregion ) ;
+            end if ! end of if( Lplasmaregion ) ;
 
-   endif ! end of if( Lcoordinatesingularity ) ;
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-   select case( Lmatsolver )
-
-   case(1) ! Using direct matrix solver (LU factorization), must not be matrix free
-
-    select case( ideriv )
-
-    case( 0 ) ! ideriv=0;
-
-      MM = 1
-      !LU = matrix
-      call DCOPY(NN*NN, matrix, 1, LU, 1) ! BLAS version
-      solution(1:NN,0   ) = rhs(:,0   )
-      call DGETRF(NN, NN, LU, NN, ipiv, idgetrf(ideriv) ) ! LU factorization
-
-      anorm=maxval(sum(abs(matrix),1))
-      call DGECON('I', NN, LU, NN, anorm, rcond, RW, Iwork, idgecon(ideriv)) ! estimate the condition number
-
-      call DGETRS('N', NN, MM, LU, NN, ipiv, solution(1:NN,0   ), NN, idgetrs(ideriv) ) ! sovle linear equation
-      call DGERFS('N', NN, MM, matrix, NN, LU, NN, ipiv, rhs(1,0), NN, solution(1,0), NN, FERR, BERR, RW, Iwork, idgerfs(ideriv)) ! refine the solution
-    case( 1 ) ! ideriv=1;
-
-      MM = 2
-      solution(1:NN,1:MM) = rhs(:,1:MM)
-      call DGETRS( 'N', NN, MM, LU, NN, ipiv, solution(1:NN,1:MM), NN, idgetrs(ideriv) )
-      call DGERFS('N', NN, MM, matrix, NN, LU, NN, ipiv, rhs(1,1), NN, solution(1,1), NN, FERR, BERR, RW, Iwork, idgerfs(ideriv))
-
-    end select ! ideriv;
-
-    cput = MPI_WTIME()
-
-    if(     idgetrf(ideriv) .eq. 0 .and. idgetrs(ideriv) .eq. 0 .and. idgerfs(ideriv) .eq. 0 .and. rcond .ge. machprec) then
-      if( Wmp00ac ) write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idgetrf idgetrs idgerfs", idgetrf(ideriv), idgetrs(ideriv), idgetrf(ideriv), "success ;         ", cput-lcpu
-    elseif( idgetrf(ideriv) .lt. 0 .or. idgetrs(ideriv) .lt. 0 .or. idgerfs(ideriv) .lt. 0   ) then
-      ;             write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idgetrf idgetrs idgerfs", idgetrf(ideriv), idgetrs(ideriv), idgetrf(ideriv), "input error ;     "
-    elseif( idgetrf(ideriv) .gt. 0 ) then
-      ;             write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idgetrf idgetrs idgerfs", idgetrf(ideriv), idgetrs(ideriv), idgetrf(ideriv), "singular ;        "
-    elseif( rcond .le. machprec) then
-      ;             write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idgetrf idgetrs idgerfs", idgetrf(ideriv), idgetrs(ideriv), idgetrf(ideriv), "ill conditioned ; "
-    else
-      ;             write(ounit,1010) cput-cpus, myid, lvol, ideriv, "idgetrf idgetrs idgerfs", idgetrf(ideriv), idgetrs(ideriv), idgetrf(ideriv), "invalid error ; "
-    endif
-
-  1010 format("mp00ac : ",f10.2," : myid=",i3," ; lvol=",i3," ; ideriv="i2" ; "a23"=",i3,' ',i3,' ',i3," ; "a34,:" time=",f10.2," ;")
+        end if ! end of if( Lcoordinatesingularity ) ;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-   case(2:3) ! Using GMRES, can be matrix free
+        select case (Lmatsolver)
 
-    select case (ideriv)
+        case (1) ! Using direct matrix solver (LU factorization), must not be matrix free
 
-    case (0) ! ideriv = 0
+            select case (ideriv)
 
-      if (LILUprecond) then ! Using ILU preconditioner
-        matrixS(1:NS) = dMAS(1:NS) - lmu * dMDS(1:NS)  ! construct the sparse precondtioner matrix
-      end if ! if (LILUprecond)
+            case (0) ! ideriv=0;
 
-      if (MAXVAL(abs(GMRESlastsolution(1:NN,0,lvol))) .le. small) then
-        GMRESlastsolution(1:NN,0,lvol) = zero
-      endif
+                MM = 1
+                !LU = matrix
+                call DCOPY(NN*NN, matrix, 1, LU, 1) ! BLAS version
+                solution(1:NN, 0) = rhs(:, 0)
+                call DGETRF(NN, NN, LU, NN, ipiv, idgetrf(ideriv)) ! LU factorization
 
-      if (LILUprecond) then
-      ! ILU factorization
-        call ilutp(NN,matrixS,jdMAS,idMAS,maxfil,epsILU,0.1,NN,bilut,jbilut,ibilut,Nbilut,wk,jw,iperm,iluierr)
+                anorm = maxval(sum(abs(matrix), 1))
+                call DGECON('I', NN, LU, NN, anorm, rcond, RW, Iwork, idgecon(ideriv)) ! estimate the condition number
 
-   if( iluierr.ne.0 ) then
-     write(6,'("mp00ac :      fatal : myid=",i3," ; iluierr.ne.0 ; construction of preconditioner failed;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "mp00ac : iluierr.ne.0 : construction of preconditioner failed ;"
-    endif
+                call DGETRS('N', NN, MM, LU, NN, ipiv, solution(1:NN, 0), NN, idgetrs(ideriv)) ! sovle linear equation
+                call DGERFS('N', NN, MM, matrix, NN, LU, NN, ipiv, rhs(1, 0), NN, solution(1, 0), NN, FERR, BERR, RW, Iwork, idgerfs(ideriv)) ! refine the solution
+            case (1) ! ideriv=1;
 
-      endif
+                MM = 2
+                solution(1:NN, 1:MM) = rhs(:, 1:MM)
+                call DGETRS('N', NN, MM, LU, NN, ipiv, solution(1:NN, 1:MM), NN, idgetrs(ideriv))
+                call DGERFS('N', NN, MM, matrix, NN, LU, NN, ipiv, rhs(1, 1), NN, solution(1, 1), NN, FERR, BERR, RW, Iwork, idgerfs(ideriv))
 
-      call rungmres(NN,nrestart,lmu,lvol,rhs(1:NN,0),solution(1:NN,0),ipar,fpar,wk,nw,GMRESlastsolution(1:NN,0,lvol),matrix,bilut,jbilut,ibilut,iperm,ierr)
+            end select ! ideriv;
 
-      if (ierr .gt. 0) then
-        ImagneticOK(lvol) = .true.
-        GMRESlastsolution(1:NN,0,lvol) = solution(1:NN,0)
-      elseif (ierr .eq. 0) then
-        solution(1:NN,0) = GMRESlastsolution(1:NN,0,lvol)
-      else
-        ImagneticOK(lvol) = .false.
-      endif
+            cput = MPI_WTIME()
 
-    case (1) ! ideriv = 1
+            if (idgetrf(ideriv) .eq. 0 .and. idgetrs(ideriv) .eq. 0 .and. idgerfs(ideriv) .eq. 0 .and. rcond .ge. machprec) then
+                if (Wmp00ac) write (ounit, 1010) cput - cpus, myid, lvol, ideriv, "idgetrf idgetrs idgerfs", idgetrf(ideriv), idgetrs(ideriv), idgetrf(ideriv), "success ;         ", cput - lcpu
+            elseif (idgetrf(ideriv) .lt. 0 .or. idgetrs(ideriv) .lt. 0 .or. idgerfs(ideriv) .lt. 0) then
+                ; write (ounit, 1010) cput - cpus, myid, lvol, ideriv, "idgetrf idgetrs idgerfs", idgetrf(ideriv), idgetrs(ideriv), idgetrf(ideriv), "input error ;     "
+            elseif (idgetrf(ideriv) .gt. 0) then
+                ; write (ounit, 1010) cput - cpus, myid, lvol, ideriv, "idgetrf idgetrs idgerfs", idgetrf(ideriv), idgetrs(ideriv), idgetrf(ideriv), "singular ;        "
+            elseif (rcond .le. machprec) then
+                ; write (ounit, 1010) cput - cpus, myid, lvol, ideriv, "idgetrf idgetrs idgerfs", idgetrf(ideriv), idgetrs(ideriv), idgetrf(ideriv), "ill conditioned ; "
+            else
+                ; write (ounit, 1010) cput - cpus, myid, lvol, ideriv, "idgetrf idgetrs idgerfs", idgetrf(ideriv), idgetrs(ideriv), idgetrf(ideriv), "invalid error ; "
+            end if
 
-      do ii = 1, 2
-        if (MAXVAL(abs(GMRESlastsolution(1:NN,ii,lvol))) .le. small) then
-          GMRESlastsolution(1:NN,ii,lvol) = zero
-        endif
+1010        format("mp00ac : ", f10.2, " : myid=", i3, " ; lvol=", i3, " ; ideriv="i2" ; "a23"=", i3, ' ', i3, ' ', i3, " ; "a34, :" time=", f10.2, " ;")
 
-        call rungmres(NN,nrestart,lmu,lvol,rhs(1:NN,ii),solution(1:NN,ii),ipar,fpar,wk,nw,GMRESlastsolution(1:NN,ii,lvol),matrix,bilut,jbilut,ibilut,iperm,ierr)
-
-        if (ierr .gt. 0) then
-          GMRESlastsolution(1:NN,ii,lvol) = solution(1:NN,ii)
-        elseif (ierr .eq. 0) then
-          solution(1:NN,0) = GMRESlastsolution(1:NN,ii,lvol)
-        else
-          exit
-        endif
-
-      end do ! ii
-    end select ! ideriv
-
-    cput = MPI_WTIME()
-
-    if (ierr.ge.0) then
-      if( Wmp00ac ) write(ounit,1011) cput-cpus, myid, lvol, ideriv, ierr, " successful ; "
-    elseif (ierr.eq.-1) then
-        ;           write(ounit,1011) cput-cpus, myid, lvol, ideriv, ierr, " max niter, epsGMRES not reached ; "
-    elseif (ierr.eq.-2) then
-        ;           write(ounit,1011) cput-cpus, myid, lvol, ideriv, ierr, " more workspace needed ; "
-    elseif (ierr.eq.-3) then
-        ;           write(ounit,1011) cput-cpus, myid, lvol, ideriv, ierr, " solver internal break down ; "
-    else
-        ;           write(ounit,1011) cput-cpus, myid, lvol, ideriv, ierr, " check iters.f for error code ; "
-    end if
-
-1011 format("mp00ac : ",f10.2," : myid=",i3," ; lvol=",i3," ; ideriv=",i2," ; GMRES ierr=",i4, " ; "a34" ")
-
-   end select ! Lmatsolver
-
-  enddo ! end of do ideriv;
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  do ideriv = 0, 2
+        case (2:3) ! Using GMRES, can be matrix free
 
-   if( iflag.eq.1 .and. ideriv.gt.0 ) cycle
+            select case (ideriv)
 
-   packorunpack = 'U'
+            case (0) ! ideriv = 0
 
-   cput = MPI_WTIME()
-   Tmp00ac = Tmp00ac + ( cput-cpuo )
-   call packab( packorunpack, lvol, NN, solution(1:NN,ideriv), ideriv )
-   cpuo = MPI_WTIME()
- ! unpacking; this assigns oAt, oAz through common;
+                if (LILUprecond) then ! Using ILU preconditioner
+                    matrixS(1:NS) = dMAS(1:NS) - lmu*dMDS(1:NS)  ! construct the sparse precondtioner matrix
+                end if ! if (LILUprecond)
 
-   if (ideriv .eq. 0 .and. .not. NOTMatrixFree) then
-      call intghs(Iquad(lvol), mn, lvol, Lrad(lvol), 0) ! compute the integrals of B_lower
-      call mtrxhs(lvol, mn, Lrad(lvol), Adotx, Ddotx, 0) ! construct a.x from the integral
-   endif
+                if (MAXVAL(abs(GMRESlastsolution(1:NN, 0, lvol))) .le. small) then
+                    GMRESlastsolution(1:NN, 0, lvol) = zero
+                end if
 
-  enddo ! do ideriv = 0, 2;
+                if (LILUprecond) then
+                    ! ILU factorization
+                    call ilutp(NN, matrixS, jdMAS, idMAS, maxfil, epsILU, 0.1, NN, bilut, jbilut, ibilut, Nbilut, wk, jw, iperm, iluierr)
+
+                    if (iluierr .ne. 0) then
+                        write (6, '("mp00ac :      fatal : myid=",i3," ; iluierr.ne.0 ; construction of preconditioner failed;")') myid
+                        call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                        stop "mp00ac : iluierr.ne.0 : construction of preconditioner failed ;"
+                    end if
+
+                end if
+
+                call rungmres(NN, nrestart, lmu, lvol, rhs(1:NN, 0), solution(1:NN, 0), ipar, fpar, wk, nw, GMRESlastsolution(1:NN, 0, lvol), matrix, bilut, jbilut, ibilut, iperm, ierr)
+
+                if (ierr .gt. 0) then
+                    ImagneticOK(lvol) = .true.
+                    GMRESlastsolution(1:NN, 0, lvol) = solution(1:NN, 0)
+                elseif (ierr .eq. 0) then
+                    solution(1:NN, 0) = GMRESlastsolution(1:NN, 0, lvol)
+                else
+                    ImagneticOK(lvol) = .false.
+                end if
+
+            case (1) ! ideriv = 1
+
+                do ii = 1, 2
+                    if (MAXVAL(abs(GMRESlastsolution(1:NN, ii, lvol))) .le. small) then
+                        GMRESlastsolution(1:NN, ii, lvol) = zero
+                    end if
+
+                    call rungmres(NN, nrestart, lmu, lvol, rhs(1:NN, ii), solution(1:NN, ii), ipar, fpar, wk, nw, GMRESlastsolution(1:NN, ii, lvol), matrix, bilut, jbilut, ibilut, iperm, ierr)
+
+                    if (ierr .gt. 0) then
+                        GMRESlastsolution(1:NN, ii, lvol) = solution(1:NN, ii)
+                    elseif (ierr .eq. 0) then
+                        solution(1:NN, 0) = GMRESlastsolution(1:NN, ii, lvol)
+                    else
+                        exit
+                    end if
+
+                end do ! ii
+            end select ! ideriv
+
+            cput = MPI_WTIME()
+
+            if (ierr .ge. 0) then
+                if (Wmp00ac) write (ounit, 1011) cput - cpus, myid, lvol, ideriv, ierr, " successful ; "
+            elseif (ierr .eq. -1) then
+                ; write (ounit, 1011) cput - cpus, myid, lvol, ideriv, ierr, " max niter, epsGMRES not reached ; "
+            elseif (ierr .eq. -2) then
+                ; write (ounit, 1011) cput - cpus, myid, lvol, ideriv, ierr, " more workspace needed ; "
+            elseif (ierr .eq. -3) then
+                ; write (ounit, 1011) cput - cpus, myid, lvol, ideriv, ierr, " solver internal break down ; "
+            else
+                ; write (ounit, 1011) cput - cpus, myid, lvol, ideriv, ierr, " check iters.f for error code ; "
+            end if
+
+1011        format("mp00ac : ", f10.2, " : myid=", i3, " ; lvol=", i3, " ; ideriv=", i2, " ; GMRES ierr=", i4, " ; "a34" ")
+
+        end select ! Lmatsolver
+
+    end do ! end of do ideriv;
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+    do ideriv = 0, 2
+
+        if (iflag .eq. 1 .and. ideriv .gt. 0) cycle
+
+        packorunpack = 'U'
+
+        cput = MPI_WTIME()
+        Tmp00ac = Tmp00ac + (cput - cpuo)
+        call packab(packorunpack, lvol, NN, solution(1:NN, ideriv), ideriv)
+        cpuo = MPI_WTIME()
+        ! unpacking; this assigns oAt, oAz through common;
+
+        if (ideriv .eq. 0 .and. .not. NOTMatrixFree) then
+            call intghs(Iquad(lvol), mn, lvol, Lrad(lvol), 0) ! compute the integrals of B_lower
+            call mtrxhs(lvol, mn, Lrad(lvol), Adotx, Ddotx, 0) ! construct a.x from the integral
+        end if
+
+    end do ! do ideriv = 0, 2;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 ! can compute the energy and helicity integrals; easiest to do this with solution in packed format;
 
-  if (NOTMatrixFree) then
+    if (NOTMatrixFree) then
 
-   lBBintegral(lvol) = half * sum( solution(1:NN,0) * matmul( dMA(1:NN,1:NN), solution(1:NN,0) ) ) &
-                     +        sum( solution(1:NN,0) * matmul( dMB(1:NN,1: 2),     dpsi(1: 2  ) ) ) !
+        lBBintegral(lvol) = half*sum(solution(1:NN, 0)*matmul(dMA(1:NN, 1:NN), solution(1:NN, 0))) &
+                            + sum(solution(1:NN, 0)*matmul(dMB(1:NN, 1:2), dpsi(1:2))) !
 !                    + half * sum(     dpsi(1: 2  ) * matmul( dMC(1: 2,1: 2),     dpsi(1: 2  ) ) )
 
-   lABintegral(lvol) = half * sum( solution(1:NN,0) * matmul( dMD(1:NN,1:NN), solution(1:NN,0) ) ) !
+        lABintegral(lvol) = half*sum(solution(1:NN, 0)*matmul(dMD(1:NN, 1:NN), solution(1:NN, 0))) !
 !                    +        sum( solution(1:NN,0) * matmul( dME(1:NN,1: 2),     dpsi(1: 2  ) ) ) !
 !                    + half * sum(     dpsi(1: 2  ) * matmul( dMF(1: 2,1: 2),     dpsi(1: 2  ) ) )
-  else
+    else
 
-    lBBintegral(lvol) = half * sum( solution(1:NN,0) * Adotx(1:NN) ) &
-                      +        sum( solution(1:NN,0) * matmul( dMB(1:NN,1: 2),     dpsi(1: 2  ) ) ) !
+        lBBintegral(lvol) = half*sum(solution(1:NN, 0)*Adotx(1:NN)) &
+                            + sum(solution(1:NN, 0)*matmul(dMB(1:NN, 1:2), dpsi(1:2))) !
 
-    lABintegral(lvol) = half * sum( solution(1:NN,0) * Ddotx(1:NN) )
-  endif
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-   deallocate(matrix ,stat=astat)
-
-
-   deallocate(rhs    ,stat=astat)
-
-
-  select case (Lmatsolver)
-  case (1) ! LU
-
-   deallocate(RW ,stat=astat)
-
-
-   deallocate(RD ,stat=astat)
-
-
-   deallocate(LU ,stat=astat)
-
-
-   deallocate(ipiv ,stat=astat)
-
-
-   deallocate(Iwork ,stat=astat)
-
-  case (2:3) ! GMRES
-    if (LILUprecond) then
-
-   deallocate(matrixS ,stat=astat)
-
-
-   deallocate(bilut ,stat=astat)
-
-
-   deallocate(jbilut ,stat=astat)
-
-
-   deallocate(ibilut ,stat=astat)
-
-    endif
-
-   deallocate(wk ,stat=astat)
-
-
-   deallocate(jw ,stat=astat)
-
-
-   deallocate(iperm ,stat=astat)
-
-  end select
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  idgetrf(0:1) = abs(idgetrf(0:1)) + abs(idgetrs(0:1)) + abs(idgerfs(0:1)) + abs(idgecon(0:1))
-  if( idgetrf(0).ne.0 .or. idgetrf(1).ne.0 ) then ! failed to construct Beltrami/vacuum field and/or derivatives;
-
-   ImagneticOK(lvol) = .false. ! set error flag;
-
-   if( iflag.eq.1 ) Fdof(1:Ndof       ) = zero ! provide dummy intent out;
-   if( iflag.eq.2 ) Ddof(1:Ndof,1:Ndof) = zero ! provide dummy intent out;
-
-   iflag = -1 ! this value will be returned by C05PCF to ma02aa;
-
-   goto 9999
-
-  else
-
-   ImagneticOK(lvol) = .true. ! set error flag; used in dforce;
-
-  endif
+        lABintegral(lvol) = half*sum(solution(1:NN, 0)*Ddotx(1:NN))
+    end if
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  if( YESstellsym ) then ; lmns = 1 + (mns-1)           ! number of independent degrees of freedom in angle transformation;
-  else                   ; lmns = 1 + (mns-1) + (mns-1) ! only required for dense, Fourier angle transformation;
-  endif
+    deallocate (matrix, stat=astat)
+
+    deallocate (rhs, stat=astat)
+
+    select case (Lmatsolver)
+    case (1) ! LU
+
+        deallocate (RW, stat=astat)
+
+        deallocate (RD, stat=astat)
+
+        deallocate (LU, stat=astat)
+
+        deallocate (ipiv, stat=astat)
+
+        deallocate (Iwork, stat=astat)
+
+    case (2:3) ! GMRES
+        if (LILUprecond) then
+
+            deallocate (matrixS, stat=astat)
+
+            deallocate (bilut, stat=astat)
+
+            deallocate (jbilut, stat=astat)
+
+            deallocate (ibilut, stat=astat)
+
+        end if
+
+        deallocate (wk, stat=astat)
+
+        deallocate (jw, stat=astat)
+
+        deallocate (iperm, stat=astat)
+
+    end select
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+    idgetrf(0:1) = abs(idgetrf(0:1)) + abs(idgetrs(0:1)) + abs(idgerfs(0:1)) + abs(idgecon(0:1))
+    if (idgetrf(0) .ne. 0 .or. idgetrf(1) .ne. 0) then ! failed to construct Beltrami/vacuum field and/or derivatives;
+
+        ImagneticOK(lvol) = .false. ! set error flag;
+
+        if (iflag .eq. 1) Fdof(1:Ndof) = zero ! provide dummy intent out;
+        if (iflag .eq. 2) Ddof(1:Ndof, 1:Ndof) = zero ! provide dummy intent out;
+
+        iflag = -1 ! this value will be returned by C05PCF to ma02aa;
+
+        goto 9999
+
+    else
+
+        ImagneticOK(lvol) = .true. ! set error flag; used in dforce;
+
+    end if
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+    if (YESstellsym) then; lmns = 1 + (mns - 1)           ! number of independent degrees of freedom in angle transformation;
+    else; lmns = 1 + (mns - 1) + (mns - 1) ! only required for dense, Fourier angle transformation;
+    end if
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -695,236 +667,229 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  select case( Lconstraint )
+    select case (Lconstraint)
 
-  case( -1 ) ! Lconstraint=-1;
+    case (-1) ! Lconstraint=-1;
 
-   if( Lplasmaregion ) then
+        if (Lplasmaregion) then
 
-    if( Wtr00ab ) then ! compute rotational transform only for diagnostic purposes;
+            if (Wtr00ab) then ! compute rotational transform only for diagnostic purposes;
 
-   cput = MPI_WTIME()
-   Tmp00ac = Tmp00ac + ( cput-cpuo )
-   call tr00ab( lvol, mn, lmns, Nt, Nz, iflag, diotadxup(0:1,-1:2,lvol) )
-   cpuo = MPI_WTIME()
+                cput = MPI_WTIME()
+                Tmp00ac = Tmp00ac + (cput - cpuo)
+                call tr00ab(lvol, mn, lmns, Nt, Nz, iflag, diotadxup(0:1, -1:2, lvol))
+                cpuo = MPI_WTIME()
 
-    endif
+            end if
 
-    Fdof(1:Ndof       ) = zero ! provide dummy intent out; Lconstraint=-1 indicates no iterations over mu   , dpflux are required;
-    Ddof(1:Ndof,1:Ndof) = zero ! provide dummy intent out;
+            Fdof(1:Ndof) = zero ! provide dummy intent out; Lconstraint=-1 indicates no iterations over mu   , dpflux are required;
+            Ddof(1:Ndof, 1:Ndof) = zero ! provide dummy intent out;
 
-   else ! Lvacuumregion
+        else ! Lvacuumregion
 
-    if( Wtr00ab ) then ! compute rotational transform only for diagnostic purposes;
+            if (Wtr00ab) then ! compute rotational transform only for diagnostic purposes;
 
-   cput = MPI_WTIME()
-   Tmp00ac = Tmp00ac + ( cput-cpuo )
-   call tr00ab( lvol, mn, lmns, Nt, Nz, iflag, diotadxup(0:1,-1:2,lvol) )
-   cpuo = MPI_WTIME()
+                cput = MPI_WTIME()
+                Tmp00ac = Tmp00ac + (cput - cpuo)
+                call tr00ab(lvol, mn, lmns, Nt, Nz, iflag, diotadxup(0:1, -1:2, lvol))
+                cpuo = MPI_WTIME()
 
-    endif
+            end if
 
-    if( Wcurent ) then ! compute enclosed currents    only for diagnostic purposes;
+            if (Wcurent) then ! compute enclosed currents    only for diagnostic purposes;
 
-   cput = MPI_WTIME()
-   Tmp00ac = Tmp00ac + ( cput-cpuo )
-   call curent( lvol, mn, Nt, Nz, iflag, dItGpdxtp(0:1,-1:2,lvol) )
-   cpuo = MPI_WTIME()
+                cput = MPI_WTIME()
+                Tmp00ac = Tmp00ac + (cput - cpuo)
+                call curent(lvol, mn, Nt, Nz, iflag, dItGpdxtp(0:1, -1:2, lvol))
+                cpuo = MPI_WTIME()
 
-     curtor = dItGpdxtp(0,0,lvol) ! icurrent(0) ! update input variables;
-     curpol = dItGpdxtp(1,0,lvol) ! gcurrent(0)
-    endif
+                curtor = dItGpdxtp(0, 0, lvol) ! icurrent(0) ! update input variables;
+                curpol = dItGpdxtp(1, 0, lvol) ! gcurrent(0)
+            end if
 
-    Fdof(1:Ndof       ) = zero ! provide dummy intent out;Lconstraint=-1 indicates no iterations over dtflux, dpflux are required;
-    Ddof(1:Ndof,1:Ndof) = zero ! provide dummy intent out;
+            Fdof(1:Ndof) = zero ! provide dummy intent out;Lconstraint=-1 indicates no iterations over dtflux, dpflux are required;
+            Ddof(1:Ndof, 1:Ndof) = zero ! provide dummy intent out;
 
-   endif ! end of if( Lplasmaregion) ;
+        end if ! end of if( Lplasmaregion) ;
 
-  case(  0 ) ! Lconstraint= 0;
+    case (0) ! Lconstraint= 0;
 
-   if( Lplasmaregion ) then
+        if (Lplasmaregion) then
 
-    if( Wtr00ab ) then ! compute rotational transform only for diagnostic purposes;
+            if (Wtr00ab) then ! compute rotational transform only for diagnostic purposes;
 
-   cput = MPI_WTIME()
-   Tmp00ac = Tmp00ac + ( cput-cpuo )
-   call tr00ab( lvol, mn, lmns, Nt, Nz, iflag, diotadxup(0:1,-1:2,lvol) )
-   cpuo = MPI_WTIME()
+                cput = MPI_WTIME()
+                Tmp00ac = Tmp00ac + (cput - cpuo)
+                call tr00ab(lvol, mn, lmns, Nt, Nz, iflag, diotadxup(0:1, -1:2, lvol))
+                cpuo = MPI_WTIME()
 
-    endif
+            end if
 
-    Fdof(1:Ndof       ) = zero ! provide dummy intent out; Lconstraint= 0 indicates no iterations over mu, dpflux are required;
-    Ddof(1:Ndof,1:Ndof) = zero ! provide dummy intent out;
+            Fdof(1:Ndof) = zero ! provide dummy intent out; Lconstraint= 0 indicates no iterations over mu, dpflux are required;
+            Ddof(1:Ndof, 1:Ndof) = zero ! provide dummy intent out;
 
-   else ! Lvacuumregion
+        else ! Lvacuumregion
 
+            cput = MPI_WTIME()
+            Tmp00ac = Tmp00ac + (cput - cpuo)
+            call curent(lvol, mn, Nt, Nz, iflag, dItGpdxtp(0:1, -1:2, lvol))
+            cpuo = MPI_WTIME()
 
-   cput = MPI_WTIME()
-   Tmp00ac = Tmp00ac + ( cput-cpuo )
-   call curent( lvol, mn, Nt, Nz, iflag, dItGpdxtp(0:1,-1:2,lvol) )
-   cpuo = MPI_WTIME()
+            if (iflag .eq. 1) Fdof(1:2) = (/dItGpdxtp(0, 0, lvol) - curtor, dItGpdxtp(1, 0, lvol) - curpol/)
+            if (iflag .eq. 2) Ddof(1:2, 1) = (/dItGpdxtp(0, 1, lvol), dItGpdxtp(1, 1, lvol)/)
+            !if( iflag.eq.2 ) Ddof(1:2,2) = (/ dItGpdxtp(0,0,lvol)         , dItGpdxtp(1,2,lvol)          /)
+            if (iflag .eq. 2) Ddof(1:2, 2) = (/dItGpdxtp(0, 2, lvol), dItGpdxtp(1, 2, lvol)/)
 
+        end if ! end of if( Lplasmaregion) ;
 
-    if( iflag.eq.1 ) Fdof(1:2  ) = (/ dItGpdxtp(0,0,lvol) - curtor, dItGpdxtp(1,0,lvol) - curpol /)
-    if( iflag.eq.2 ) Ddof(1:2,1) = (/ dItGpdxtp(0,1,lvol)         , dItGpdxtp(1,1,lvol)          /)
-   !if( iflag.eq.2 ) Ddof(1:2,2) = (/ dItGpdxtp(0,0,lvol)         , dItGpdxtp(1,2,lvol)          /)
-    if( iflag.eq.2 ) Ddof(1:2,2) = (/ dItGpdxtp(0,2,lvol)         , dItGpdxtp(1,2,lvol)          /)
+    case (1) ! Lconstraint= 1;
 
-   endif ! end of if( Lplasmaregion) ;
+        cput = MPI_WTIME()
+        Tmp00ac = Tmp00ac + (cput - cpuo)
+        call tr00ab(lvol, mn, lmns, Nt, Nz, iflag, diotadxup(0:1, -1:2, lvol))
+        cpuo = MPI_WTIME()
+        ! required for both plasma and vacuum region;
 
-  case(  1 ) ! Lconstraint= 1;
+        if (Lplasmaregion) then
 
+            if (Lcoordinatesingularity) then ! Ndof = 1;
+                if (iflag .eq. 1) Fdof(1) = diotadxup(1, 0, lvol) - iota(lvol)
+                if (iflag .eq. 2) Ddof(1, 1) = diotadxup(1, 1, lvol)                        ! derivative of outer rotational-transform wrt helicity multiplier
+            end if
 
-   cput = MPI_WTIME()
-   Tmp00ac = Tmp00ac + ( cput-cpuo )
-   call tr00ab( lvol, mn, lmns, Nt, Nz, iflag, diotadxup(0:1,-1:2,lvol) )
-   cpuo = MPI_WTIME()
- ! required for both plasma and vacuum region;
+            if (Ndof .eq. 2) then
+                if (iflag .eq. 1) Fdof(1:2) = diotadxup(0:1, 0, lvol) - (/oita(lvol - 1), iota(lvol)/)
+                if (iflag .eq. 2) Ddof(1:2, 1) = diotadxup(0:1, 1, lvol)
+                if (iflag .eq. 2) Ddof(1:2, 2) = diotadxup(0:1, 2, lvol)
+            end if
 
-   if( Lplasmaregion ) then
+        else ! Lvacuumregion
 
-    if( Lcoordinatesingularity ) then ! Ndof = 1;
-     if( iflag.eq.1 ) Fdof(1    ) = diotadxup(1,  0,lvol) - iota(        lvol )
-     if( iflag.eq.2 ) Ddof(1  ,1) = diotadxup(1,  1,lvol)                        ! derivative of outer rotational-transform wrt helicity multiplier
-    endif
+            cput = MPI_WTIME()
+            Tmp00ac = Tmp00ac + (cput - cpuo)
+            call curent(lvol, mn, Nt, Nz, iflag, dItGpdxtp(0:1, -1:2, lvol))
+            cpuo = MPI_WTIME()
 
-    if( Ndof.eq.2 ) then
-     if( iflag.eq.1 ) Fdof(1:2  ) = diotadxup(0:1,0,lvol) - (/ oita(lvol-1), iota(lvol) /)
-     if( iflag.eq.2 ) Ddof(1:2,1) = diotadxup(0:1,1,lvol)
-     if( iflag.eq.2 ) Ddof(1:2,2) = diotadxup(0:1,2,lvol)
-    endif
+            curtor = dItGpdxtp(0, 0, lvol) ! update input variables; 08 Jun 16;
+            !curpol = dItGpdxtp(1,0,lvol)
 
-   else ! Lvacuumregion
+            if (iflag .eq. 1) Fdof(1:2) = (/diotadxup(0, 0, lvol) - oita(lvol - 1), dItGpdxtp(1, 0, lvol) - curpol/)
+            if (iflag .eq. 2) Ddof(1:2, 1) = (/diotadxup(0, 1, lvol), dItGpdxtp(1, 1, lvol)/)
+            if (iflag .eq. 2) Ddof(1:2, 2) = (/diotadxup(0, 2, lvol), dItGpdxtp(1, 2, lvol)/)
 
+        end if ! end of if( Lplasmaregion) ;
 
-   cput = MPI_WTIME()
-   Tmp00ac = Tmp00ac + ( cput-cpuo )
-   call curent( lvol, mn,     Nt, Nz, iflag, dItGpdxtp(0:1,-1:2,lvol) )
-   cpuo = MPI_WTIME()
+    case (2)
 
+        if (iflag .eq. 1) Fdof(1) = lABintegral(lvol) - helicity(lvol)
 
-    curtor = dItGpdxtp(0,0,lvol) ! update input variables; 08 Jun 16;
-   !curpol = dItGpdxtp(1,0,lvol)
+        if (NOTMatrixFree) then
+            if (iflag .eq. 2) Ddof(1, 1) = half*sum(solution(1:NN, 1)*matmul(dMD(1:NN, 1:NN), solution(1:NN, 0))) &
+                                           + half*sum(solution(1:NN, 0)*matmul(dMD(1:NN, 1:NN), solution(1:NN, 1)))
+        else
+            if (iflag .eq. 2) then
+                Ddof(1, 1) = sum(solution(1:NN, 1)*Ddotx(1:NN))
+            end if
+        end if
 
-    if( iflag.eq.1 ) Fdof(1:2  ) = (/ diotadxup(0,0,lvol) - oita(lvol-1), dItGpdxtp(1,0,lvol) - curpol /)
-    if( iflag.eq.2 ) Ddof(1:2,1) = (/ diotadxup(0,1,lvol)               , dItGpdxtp(1,1,lvol)          /)
-    if( iflag.eq.2 ) Ddof(1:2,2) = (/ diotadxup(0,2,lvol)               , dItGpdxtp(1,2,lvol)          /)
+    case (3)
 
-   endif ! end of if( Lplasmaregion) ;
+        if (Lplasmaregion) then
 
-  case(  2 )
+            if (Wtr00ab) then ! compute rotational transform only for diagnostic purposes;
 
-   if ( iflag.eq.1 ) Fdof(1     ) = lABintegral(lvol) - helicity(lvol)
+                cput = MPI_WTIME()
+                Tmp00ac = Tmp00ac + (cput - cpuo)
+                call tr00ab(lvol, mn, lmns, Nt, Nz, iflag, diotadxup(0:1, -1:2, lvol))
+                cpuo = MPI_WTIME()
 
-   if (NOTMatrixFree) then
-    if ( iflag.eq.2 ) Ddof(1   ,1) = half * sum( solution(1:NN,1) * matmul( dMD(1:NN,1:NN), solution(1:NN,0) ) ) &
-                                    + half * sum( solution(1:NN,0) * matmul( dMD(1:NN,1:NN), solution(1:NN,1) ) )
-   else
-    if ( iflag.eq.2 ) then
-      Ddof(1   ,1) = sum( solution(1:NN,1) * Ddotx(1:NN) )
-    endif
-   endif
+            end if
 
-  case(  3 )
+            Fdof(1:Ndof) = zero ! provide dummy intent out; no iteration other mu and psip locally
+            Ddof(1:Ndof, 1:Ndof) = zero ! provide dummy intent out;
 
-   if( Lplasmaregion ) then
+        else ! Lvacuumregion
 
-    if( Wtr00ab ) then ! compute rotational transform only for diagnostic purposes;
+            !WCALL( mp00ac, curent,( lvol, mn, Nt, Nz, iflag, dItGpdxtp(0:1,-1:2,lvol) ) )
 
-   cput = MPI_WTIME()
-   Tmp00ac = Tmp00ac + ( cput-cpuo )
-   call tr00ab( lvol, mn, lmns, Nt, Nz, iflag, diotadxup(0:1,-1:2,lvol) )
-   cpuo = MPI_WTIME()
+            ! Iteration only on toroidal flux.
+            ! if( iflag.eq.1 ) Fdof(1:Ndof  ) = dItGpdxtp(1,0,lvol) - curpol
+            ! if( iflag.eq.2 ) Ddof(1:Ndof,1:Ndof) = dItGpdxtp(1,1,lvol)
 
-    endif
+            Fdof(1:Ndof) = zero ! provide dummy intent out; no iteration other mu and psip locally
+            Ddof(1:Ndof, 1:Ndof) = zero ! provide dummy intent out;
 
-    Fdof(1:Ndof       ) = zero ! provide dummy intent out; no iteration other mu and psip locally
-    Ddof(1:Ndof,1:Ndof) = zero ! provide dummy intent out;
+        end if ! end of if( Lplasmaregion) ;
 
-   else ! Lvacuumregion
-
-    !WCALL( mp00ac, curent,( lvol, mn, Nt, Nz, iflag, dItGpdxtp(0:1,-1:2,lvol) ) )
-
-    ! Iteration only on toroidal flux.
-    ! if( iflag.eq.1 ) Fdof(1:Ndof  ) = dItGpdxtp(1,0,lvol) - curpol
-    ! if( iflag.eq.2 ) Ddof(1:Ndof,1:Ndof) = dItGpdxtp(1,1,lvol)
-
-    Fdof(1:Ndof       ) = zero ! provide dummy intent out; no iteration other mu and psip locally
-    Ddof(1:Ndof,1:Ndof) = zero ! provide dummy intent out;
-
-   endif ! end of if( Lplasmaregion) ;
-
-  end select ! end of select case( Lconstraint ) ;
+    end select ! end of select case( Lconstraint ) ;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  if( Wmp00ac .or. Wma02aa ) then ! the following is screen output;
+    if (Wmp00ac .or. Wma02aa) then ! the following is screen output;
 
-   cput = MPI_WTIME()
+        cput = MPI_WTIME()
 
-   if( Lplasmaregion ) then
-    select case( iflag )
-    case( 0 )    ; write(ounit,3000) cput-cpus, myid, lvol, lmu, dpf, iflag                         ! this is impossible by above logic;
-    case( 1 )    ; write(ounit,3000) cput-cpus, myid, lvol, lmu, dpf, iflag, Fdof(1:Ndof)
-    case( 2 )    ; write(ounit,3010) cput-cpus, myid, lvol, lmu, dpf, iflag, Ddof(1:Ndof,1:Ndof)
-    case default ;
-   if( .true. ) then
-     write(6,'("mp00ac :      fatal : myid=",i3," ; .true. ; illegal iflag on entry ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "mp00ac : .true. : illegal iflag on entry  ;"
-    endif
+        if (Lplasmaregion) then
+            select case (iflag)
+            case (0); write (ounit, 3000) cput - cpus, myid, lvol, lmu, dpf, iflag                         ! this is impossible by above logic;
+            case (1); write (ounit, 3000) cput - cpus, myid, lvol, lmu, dpf, iflag, Fdof(1:Ndof)
+            case (2); write (ounit, 3010) cput - cpus, myid, lvol, lmu, dpf, iflag, Ddof(1:Ndof, 1:Ndof)
+            case default; 
+                if (.true.) then
+                    write (6, '("mp00ac :      fatal : myid=",i3," ; .true. ; illegal iflag on entry ;")') myid
+                    call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                    stop "mp00ac : .true. : illegal iflag on entry  ;"
+                end if
 
-    end select
-   else ! Lvacuumregion
-    select case( iflag )
-    case( 0 )    ; write(ounit,3001) cput-cpus, myid, lvol, dtf, dpf, iflag                         ! this is impossible by above logic;
-    case( 1 )    ; write(ounit,3001) cput-cpus, myid, lvol, dtf, dpf, iflag, Fdof(1:Ndof)
-    case( 2 )    ; write(ounit,3011) cput-cpus, myid, lvol, dtf, dpf, iflag, Ddof(1:Ndof,1:Ndof)
-    case default ;
-   if( .true. ) then
-     write(6,'("mp00ac :      fatal : myid=",i3," ; .true. ; illegal iflag on entry ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "mp00ac : .true. : illegal iflag on entry  ;"
-    endif
+            end select
+        else ! Lvacuumregion
+            select case (iflag)
+            case (0); write (ounit, 3001) cput - cpus, myid, lvol, dtf, dpf, iflag                         ! this is impossible by above logic;
+            case (1); write (ounit, 3001) cput - cpus, myid, lvol, dtf, dpf, iflag, Fdof(1:Ndof)
+            case (2); write (ounit, 3011) cput - cpus, myid, lvol, dtf, dpf, iflag, Ddof(1:Ndof, 1:Ndof)
+            case default; 
+                if (.true.) then
+                    write (6, '("mp00ac :      fatal : myid=",i3," ; .true. ; illegal iflag on entry ;")') myid
+                    call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                    stop "mp00ac : .true. : illegal iflag on entry  ;"
+                end if
 
-    end select
-   endif
+            end select
+        end if
 
-3000 format("mp00ac : ",f10.2," : myid=",i3," ; lvol=",i3," ; (mu,dp)=("es23.15" ,"es23.15" ) ; iflag="i2" ;":" F="2es13.05" ;")
-3010 format("mp00ac : ",f10.2," : myid=",i3," ; lvol=",i3," ; (mu,dp)=("es23.15" ,"es23.15" ) ; iflag="i2" ;":" D="4es13.05" ;")
-3001 format("mp00ac : ",f10.2," : myid=",i3," ; lvol=",i3," ; (dt,dp)=("es23.15" ,"es23.15" ) ; iflag="i2" ;":" F="2es13.05" ;")
-3011 format("mp00ac : ",f10.2," : myid=",i3," ; lvol=",i3," ; (dt,dp)=("es23.15" ,"es23.15" ) ; iflag="i2" ;":" D="4es13.05" ;")
+3000    format("mp00ac : ", f10.2, " : myid=", i3, " ; lvol=", i3, " ; (mu,dp)=("es23.15" ,"es23.15" ) ; iflag="i2" ;":" F="2es13.05" ;")
+3010    format("mp00ac : ", f10.2, " : myid=", i3, " ; lvol=", i3, " ; (mu,dp)=("es23.15" ,"es23.15" ) ; iflag="i2" ;":" D="4es13.05" ;")
+3001    format("mp00ac : ", f10.2, " : myid=", i3, " ; lvol=", i3, " ; (dt,dp)=("es23.15" ,"es23.15" ) ; iflag="i2" ;":" F="2es13.05" ;")
+3011    format("mp00ac : ", f10.2, " : myid=", i3, " ; lvol=", i3, " ; (dt,dp)=("es23.15" ,"es23.15" ) ; iflag="i2" ;":" D="4es13.05" ;")
 
-  endif ! end of if( Wmp00ac .or. Wma02aa ) ;
+    end if ! end of if( Wmp00ac .or. Wma02aa ) ;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  if( iflag.eq.1 ) then ! only in this case is Fdof defined;
+    if (iflag .eq. 1) then ! only in this case is Fdof defined;
 
-   if( sum( abs( Fdof(1:Ndof) ) ) / Ndof .lt. mupftol ) then ! satisfactory;
+        if (sum(abs(Fdof(1:Ndof)))/Ndof .lt. mupftol) then ! satisfactory;
 
-    if ( Lplasmaregion ) then ; mu(lvol) = lmu  ;                    ; dpflux(lvol) = dpf
+            if (Lplasmaregion) then; mu(lvol) = lmu; ; dpflux(lvol) = dpf
 #ifdef FORCEFREEVACUUM
-    else                      ; mu(lvol) = lmu  ; dtflux(lvol) = dtf ; dpflux(lvol) = dpf
+            else; mu(lvol) = lmu; dtflux(lvol) = dtf; dpflux(lvol) = dpf
 #else
-    else                      ; mu(lvol) = zero ; dtflux(lvol) = dtf ; dpflux(lvol) = dpf
+            else; mu(lvol) = zero; dtflux(lvol) = dtf; dpflux(lvol) = dpf
 #endif
-    endif
+            end if
 
-    iflag = -2 ! return "acceptance" flag through to ma02aa via ifail; early termination;
+            iflag = -2 ! return "acceptance" flag through to ma02aa via ifail; early termination;
 
-   endif ! end of if( sum(Fdof) ) ;
+        end if ! end of if( sum(Fdof) ) ;
 
-  endif ! end of if( iflag.eq.1 ) ;
+    end if ! end of if( iflag.eq.1 ) ;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
 
 9999 continue
-  cput = MPI_WTIME()
-  Tmp00ac = Tmp00ac + ( cput-cpuo )
-  return
-
+    cput = MPI_WTIME()
+    Tmp00ac = Tmp00ac + (cput - cpuo)
+    return
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -951,74 +916,74 @@ end subroutine mp00ac
 !> @param ju
 !> @param iperm
 !> @param ierr
-subroutine rungmres(n,nrestart,mu,vvol,rhs,sol,ipar,fpar,wk,nw,guess,a,au,jau,ju,iperm,ierr)
-  use mod_kinds, only: wp => dp
-  ! Driver subroutine for GMRES
-  ! modified from riters.f from SPARSKIT v2.0
-  ! by ZSQ 02 Feb 2020
-  use constants, only : zero, one
-  use inputlist, only : NiterGMRES, epsGMRES
-  use allglobal, only : LILUprecond
-  use fileunits
-  implicit none
-  integer  :: n, nrestart, nw, vvol, ju(*), jau(*), iperm(*)
-  integer  :: ipar(16)
-  integer  :: ierr
-  real(wp)     :: guess(n), au(*), mu
-  real(wp)     :: fpar(16), rhs(1:n), sol(1:n), wk(1:nw), a(*)
+subroutine rungmres(n, nrestart, mu, vvol, rhs, sol, ipar, fpar, wk, nw, guess, a, au, jau, ju, iperm, ierr)
+    use mod_kinds, only: wp => dp
+    ! Driver subroutine for GMRES
+    ! modified from riters.f from SPARSKIT v2.0
+    ! by ZSQ 02 Feb 2020
+    use constants, only: zero, one
+    use inputlist, only: NiterGMRES, epsGMRES
+    use allglobal, only: LILUprecond
+    use fileunits
+    implicit none
+    integer :: n, nrestart, nw, vvol, ju(*), jau(*), iperm(*)
+    integer :: ipar(16)
+    integer :: ierr
+    real(wp) :: guess(n), au(*), mu
+    real(wp) :: fpar(16), rhs(1:n), sol(1:n), wk(1:nw), a(*)
 
-  integer :: i, its
-  real(wp) :: res, tmprhs(1:n)
+    integer :: i, its
+    real(wp) :: res, tmprhs(1:n)
 
-  its = 0
-  res = zero
-  wk = zero
+    its = 0
+    res = zero
+    wk = zero
 
-  ! setup solver parameters
-  ipar = 0
-  fpar = zero
-  wk = zero
-  if (LILUprecond) then
-    ipar(2) = 1 ! tell GMRES to use preconditioner
-  else
-    ipar(2) = 0 ! do not use preconditioner, not recommended
-  end if
-  ipar(3) = 2           ! stopping test type, see iters.f
-  ipar(4) = nw          ! length of work array
-  ipar(5) = nrestart    ! restart parameter, size of Krylov subspace
-  ipar(6) = NiterGMRES  ! maximum number of iteration
-  fpar(1) = epsGMRES    ! stop criterion, relative error
-  fpar(2) = epsGMRES    ! stop criterion, absolute error
+    ! setup solver parameters
+    ipar = 0
+    fpar = zero
+    wk = zero
+    if (LILUprecond) then
+        ipar(2) = 1 ! tell GMRES to use preconditioner
+    else
+        ipar(2) = 0 ! do not use preconditioner, not recommended
+    end if
+    ipar(3) = 2           ! stopping test type, see iters.f
+    ipar(4) = nw          ! length of work array
+    ipar(5) = nrestart    ! restart parameter, size of Krylov subspace
+    ipar(6) = NiterGMRES  ! maximum number of iteration
+    fpar(1) = epsGMRES    ! stop criterion, relative error
+    fpar(2) = epsGMRES    ! stop criterion, absolute error
 
-  sol(1:n) = guess(1:n)
-  tmprhs(1:n) = rhs(1:n) ! copy to a temp vector because it will be destroyed by gmres
+    sol(1:n) = guess(1:n)
+    tmprhs(1:n) = rhs(1:n) ! copy to a temp vector because it will be destroyed by gmres
 
-  ipar(1) = 999
-  do while (ipar(1) .gt. 0) ! main reversed communication loop
+    ipar(1) = 999
+    do while (ipar(1) .gt. 0) ! main reversed communication loop
 
-    call gmres(n,tmprhs,sol,ipar,fpar,wk)
-    res = fpar(5) ! shorthand for resolution
-    its = ipar(7) ! shorthand for iteration number
+        call gmres(n, tmprhs, sol, ipar, fpar, wk)
+        res = fpar(5) ! shorthand for resolution
+        its = ipar(7) ! shorthand for iteration number
 
-    if (ipar(1).eq.1) then ! compute A.x
-      ! we should compute wk(ipar(9) = matmul(matrix, wk(ipar(8)))
-      call matvec(n, wk(ipar(8)), wk(ipar(9)), a, mu, vvol)
+        if (ipar(1) .eq. 1) then ! compute A.x
+            ! we should compute wk(ipar(9) = matmul(matrix, wk(ipar(8)))
+            call matvec(n, wk(ipar(8)), wk(ipar(9)), a, mu, vvol)
 
-    else if (ipar(1).eq.3) then
-      ! apply the preconditioner
-      call prec_solve(n,wk(ipar(8)),wk(ipar(9)),au,jau,ju,iperm)
+        else if (ipar(1) .eq. 3) then
+            ! apply the preconditioner
+            call prec_solve(n, wk(ipar(8)), wk(ipar(9)), au, jau, ju, iperm)
 
-    else if (ipar(1).lt.0) then
-      ! error or max iter reached, exit
-      exit
-    endif
+        else if (ipar(1) .lt. 0) then
+            ! error or max iter reached, exit
+            exit
+        end if
 
-  end do ! end main loop
+    end do ! end main loop
 
-  ierr = ipar(1)
-  if (ierr.eq.0) ierr = its
+    ierr = ipar(1)
+    if (ierr .eq. 0) ierr = its
 
-  return
+    return
 end subroutine rungmres
 
 !> \brief compute a.x by either by coumputing it directly, or using a matrix free method
@@ -1030,32 +995,32 @@ end subroutine rungmres
 !> @param mu
 !> @param vvol
 subroutine matvec(n, x, ax, a, mu, vvol)
-  use mod_kinds, only: wp => dp
-  ! compute a.x by either by coumputing it directly,
-  ! or using a matrix free method
-  use constants, only : zero, one
-  use inputlist, only : Lrad
-  use allglobal, only : NOTMatrixFree, Iquad, mn, dmd
-  implicit none
-  integer, intent(in) :: n, vvol
-  real(wp)                :: ax(1:n), x(1:n), a(*), mu
-  integer             :: ideriv
-  real(wp)                :: dax(0:n), ddx(0:n), cput, lastcpu
-  character           :: packorunpack
+    use mod_kinds, only: wp => dp
+    ! compute a.x by either by coumputing it directly,
+    ! or using a matrix free method
+    use constants, only: zero, one
+    use inputlist, only: Lrad
+    use allglobal, only: NOTMatrixFree, Iquad, mn, dmd
+    implicit none
+    integer, intent(in) :: n, vvol
+    real(wp) :: ax(1:n), x(1:n), a(*), mu
+    integer :: ideriv
+    real(wp) :: dax(0:n), ddx(0:n), cput, lastcpu
+    character :: packorunpack
 
-  if (NOTMatrixFree) then ! if we have the matrix, then just multiply it to x
-    call DGEMV('N', n, n, one, dMD(1,1), n+1, x, 1, zero, ddx(1), 1)
-    call DGEMV('N', n, n, one, a, n, x, 1, zero, ax, 1)
-  else ! if we are matrix-free, then we construct a.x directly
-    ideriv = -2        ! this is used for matrix-free only
-    packorunpack = 'U'
-    call packab(packorunpack, vvol, n, x, ideriv)          ! unpack solution to construct a.x
-    call intghs(Iquad(vvol), mn, vvol, Lrad(vvol), ideriv) ! compute the integrals of B_lower
-    call mtrxhs(vvol, mn, Lrad(vvol), dax, ddx, ideriv)    ! construct a.x from the integral
-    ax = dax(1:n) - mu * ddx(1:n)                          ! put in the mu factor
-  endif
+    if (NOTMatrixFree) then ! if we have the matrix, then just multiply it to x
+        call DGEMV('N', n, n, one, dMD(1, 1), n + 1, x, 1, zero, ddx(1), 1)
+        call DGEMV('N', n, n, one, a, n, x, 1, zero, ax, 1)
+    else ! if we are matrix-free, then we construct a.x directly
+        ideriv = -2        ! this is used for matrix-free only
+        packorunpack = 'U'
+        call packab(packorunpack, vvol, n, x, ideriv)          ! unpack solution to construct a.x
+        call intghs(Iquad(vvol), mn, vvol, Lrad(vvol), ideriv) ! compute the integrals of B_lower
+        call mtrxhs(vvol, mn, Lrad(vvol), dax, ddx, ideriv)    ! construct a.x from the integral
+        ax = dax(1:n) - mu*ddx(1:n)                          ! put in the mu factor
+    end if
 
-  return
+    return
 
 end subroutine matvec
 
@@ -1068,22 +1033,22 @@ end subroutine matvec
 !> @param jau
 !> @param ju
 !> @param iperm
-subroutine prec_solve(n,vecin,vecout,au,jau,ju,iperm)
-  use mod_kinds, only: wp => dp
-  ! apply the preconditioner
-  implicit none
-  integer :: n, iperm(*), jau(*), ju(*)
-  real(wp)    :: vecin(*), au(*)
-  real(wp)    :: vecout(*)
+subroutine prec_solve(n, vecin, vecout, au, jau, ju, iperm)
+    use mod_kinds, only: wp => dp
+    ! apply the preconditioner
+    implicit none
+    integer :: n, iperm(*), jau(*), ju(*)
+    real(wp) :: vecin(*), au(*)
+    real(wp) :: vecout(*)
 
-  integer :: ii
-  real(wp) :: tempv(n)
+    integer :: ii
+    real(wp) :: tempv(n)
 
-  call lusol(n,vecin,tempv,au,jau,ju) ! sparse LU solve
-  !  apply permutation
-  do ii = 1, n
-    vecout(ii) = tempv(iperm(ii+n))
-  enddo
+    call lusol(n, vecin, tempv, au, jau, ju) ! sparse LU solve
+    !  apply permutation
+    do ii = 1, n
+        vecout(ii) = tempv(iperm(ii + n))
+    end do
 
-  return
+    return
 end subroutine prec_solve

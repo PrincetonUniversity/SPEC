@@ -48,174 +48,169 @@
 !> @param[in] zeta toroidal angle \f$ \zeta \f$
 !> @param[in] st radial coordinate \f$s\f$ and poloidal angle \f$\theta\f$
 !> @param[out] Bst tangential magnetic field directions \f$B_s, B_\theta\f$
-subroutine bfield( zeta, st, Bst )
-  use mod_kinds, only: wp => dp
+subroutine bfield(zeta, st, Bst)
+    use mod_kinds, only: wp => dp
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  use constants, only : zero, one, half, two
+    use constants, only: zero, one, half, two
 
-  use numerical, only : vsmall, small
+    use numerical, only: vsmall, small
 
-  use fileunits, only : ounit
+    use fileunits, only: ounit
 
-  use inputlist, only : Wmacros, Wbfield, Lrad, Mpol
+    use inputlist, only: Wmacros, Wbfield, Lrad, Mpol
 
-  use cputiming, only : Tbfield
+    use cputiming, only: Tbfield
 
-  use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, &
-                        mn, im, in, halfmm, regumm, &
-                        ivol, gBzeta, Ate, Aze, Ato, Azo, &
-                        NOTstellsym, &
-                        Lcoordinatesingularity, Mvol, &
-                        Node ! 17 Dec 15;
+    use allglobal, only: myid, ncpu, cpus, MPI_COMM_SPEC, &
+                         mn, im, in, halfmm, regumm, &
+                         ivol, gBzeta, Ate, Aze, Ato, Azo, &
+                         NOTstellsym, &
+                         Lcoordinatesingularity, Mvol, &
+                         Node ! 17 Dec 15;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
 
 #ifdef OPENMP
-  USE OMP_LIB
+    USE OMP_LIB
 #endif
-  use mpi
-  implicit none
-  integer   :: ierr, astat, ios, nthreads, ithread
-  real(wp)      :: cput, cpui, cpuo=0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
+    use mpi
+    implicit none
+    integer :: ierr, astat, ios, nthreads, ithread
+    real(wp) :: cput, cpui, cpuo = 0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
 
+    real(wp), intent(in) :: zeta, st(1:Node)
+    real(wp), intent(out) :: Bst(1:Node)
 
-  real(wp), intent(in)   :: zeta,  st(1:Node)
-  real(wp), intent(out)  ::       Bst(1:Node)
+    integer :: lvol, ii, ll, mi, ni, ideriv
+    real(wp) :: teta, lss, sbar, sbarhm(0:1), arg, carg, sarg, dBu(1:3)
+    real(wp) :: cheby(0:Lrad(ivol), 0:1), zernike(0:Lrad(1), 0:Mpol, 0:1)
 
-  integer            :: lvol, ii, ll, mi, ni, ideriv
-  real(wp)               :: teta, lss, sbar, sbarhm(0:1), arg, carg, sarg, dBu(1:3)
-  real(wp)               :: cheby(0:Lrad(ivol),0:1), zernike(0:Lrad(1),0:Mpol,0:1)
+    real(wp) :: TT(0:Lrad(ivol), 0:1) ! this is almost identical to cheby; 17 Dec 15;
 
-  real(wp)               :: TT(0:Lrad(ivol),0:1) ! this is almost identical to cheby; 17 Dec 15;
-
-
-  cpui = MPI_WTIME()
-  cpuo = cpui
+    cpui = MPI_WTIME()
+    cpuo = cpui
 #ifdef OPENMP
-  nthreads = omp_get_max_threads()
+    nthreads = omp_get_max_threads()
 #else
-  nthreads = 1
+    nthreads = 1
 #endif
-
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 #ifdef DEBUG
 
-   if( ivol.lt.1 .or. ivol.gt.Mvol ) then
-     write(6,'("bfield :      fatal : myid=",i3," ; ivol.lt.1 .or. ivol.gt.Mvol ; invalid ivol ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "bfield : ivol.lt.1 .or. ivol.gt.Mvol : invalid ivol  ;"
-    endif
+    if (ivol .lt. 1 .or. ivol .gt. Mvol) then
+        write (6, '("bfield :      fatal : myid=",i3," ; ivol.lt.1 .or. ivol.gt.Mvol ; invalid ivol ;")') myid
+        call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+        stop "bfield : ivol.lt.1 .or. ivol.gt.Mvol : invalid ivol  ;"
+    end if
 
 #endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  lvol = ivol ; ideriv = 0 ! the argument list of bfield is fixed by NAG requirements, but volume index is required below;
+    lvol = ivol
+    ideriv = 0 ! the argument list of bfield is fixed by NAG requirements, but volume index is required below;
 
-  Bst(1:Node) = (/ zero , zero /) ! set default intent out; this should cause a compilation error if Node.ne.2;
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  lss = st(1) ; teta = st(2)
-
-  if( abs(lss).gt.one ) goto 9999 ! out of domain;
-
-  if( Lcoordinatesingularity ) sbar = max( ( lss + one ) * half, small )
+    Bst(1:Node) = (/zero, zero/) ! set default intent out; this should cause a compilation error if Node.ne.2;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  if (Lcoordinatesingularity) then
-    call get_zernike(sbar, Lrad(lvol), Mpol, zernike(:,:,0:1))
-  else
-    call get_cheby(lss, Lrad(lvol), cheby(0:Lrad(lvol),0:1))
-  end if
+    lss = st(1)
+    teta = st(2)
+
+    if (abs(lss) .gt. one) goto 9999 ! out of domain;
+
+    if (Lcoordinatesingularity) sbar = max((lss + one)*half, small)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  dBu(1:3) = zero ! initialize summation;
+    if (Lcoordinatesingularity) then
+        call get_zernike(sbar, Lrad(lvol), Mpol, zernike(:, :, 0:1))
+    else
+        call get_cheby(lss, Lrad(lvol), cheby(0:Lrad(lvol), 0:1))
+    end if
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ; arg = mi * teta - ni * zeta ; carg = cos(arg) ; sarg = sin(arg) ! shorthand; 20 Apr 13;
+    dBu(1:3) = zero ! initialize summation;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-   if( Lcoordinatesingularity ) then ! regularization factor depends on mi; 17 Dec 15;
-
-
-   if( abs(sbar).lt.vsmall ) then
-     write(6,'("bfield :      fatal : myid=",i3," ; abs(sbar).lt.vsmall ; need to avoid divide-by-zero ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "bfield : abs(sbar).lt.vsmall : need to avoid divide-by-zero  ;"
-    endif
-
-
-    do ll = 0, Lrad(lvol) ; TT(ll,0:1) = (/        zernike(ll,mi,0),        zernike(ll,mi,1)*half                      /)
-    enddo
-
-   else
-
-    do ll = 0, Lrad(lvol) ; TT(ll,0:1) = (/             cheby(ll,0),             cheby(ll,1)                           /)
-    enddo
-
-   endif ! end of if( Lcoordinatesingularity ) ; 16 Jan 15;
+    do ii = 1, mn
+        mi = im(ii)
+        ni = in(ii)
+        arg = mi*teta - ni*zeta
+        carg = cos(arg)
+        sarg = sin(arg) ! shorthand; 20 Apr 13;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-   do ll = 0, Lrad(lvol) ! loop over Chebyshev summation; 20 Feb 13;
-    ;dBu(1) = dBu(1) + ( - mi * Aze(lvol,ideriv,ii)%s(ll) - ni * Ate(lvol,ideriv,ii)%s(ll) ) * TT(ll,0) * sarg
-    ;dBu(2) = dBu(2) + (                                  -      Aze(lvol,ideriv,ii)%s(ll) ) * TT(ll,1) * carg
-    ;dBu(3) = dBu(3) + (        Ate(lvol,ideriv,ii)%s(ll)                                  ) * TT(ll,1) * carg
-    if( NOTstellsym ) then ! include non-symmetric harmonics; 28 Jan 13;
-     dBu(1) = dBu(1) + ( + mi * Azo(lvol,ideriv,ii)%s(ll) + ni * Ato(lvol,ideriv,ii)%s(ll) ) * TT(ll,0) * carg
-     dBu(2) = dBu(2) + (                                  -      Azo(lvol,ideriv,ii)%s(ll) ) * TT(ll,1) * sarg
-     dBu(3) = dBu(3) + (        Ato(lvol,ideriv,ii)%s(ll)                                  ) * TT(ll,1) * sarg
-    endif
-   enddo ! end of do ll; 10 Dec 15;
+        if (Lcoordinatesingularity) then ! regularization factor depends on mi; 17 Dec 15;
+            if (abs(sbar) .lt. vsmall) then
+                write (6, '("bfield :      fatal : myid=",i3," ; abs(sbar).lt.vsmall ; need to avoid divide-by-zero ;")') myid
+                call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                stop "bfield : abs(sbar).lt.vsmall : need to avoid divide-by-zero  ;"
+            end if
+
+            do ll = 0, Lrad(lvol)
+                TT(ll, 0:1) = (/zernike(ll, mi, 0), zernike(ll, mi, 1)*half/)
+            end do
+        else
+            do ll = 0, Lrad(lvol)
+                TT(ll, 0:1) = (/cheby(ll, 0), cheby(ll, 1)/)
+            end do
+        end if ! end of if( Lcoordinatesingularity ) ; 16 Jan 15;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  enddo ! end of do ii = 1, mn;
+        do ll = 0, Lrad(lvol) ! loop over Chebyshev summation; 20 Feb 13;
+            dBu(1) = dBu(1) + (-mi*Aze(lvol, ideriv, ii)%s(ll) - ni*Ate(lvol, ideriv, ii)%s(ll))*TT(ll, 0)*sarg
+            dBu(2) = dBu(2) + (-Aze(lvol, ideriv, ii)%s(ll))*TT(ll, 1)*carg
+            dBu(3) = dBu(3) + ( Ate(lvol, ideriv, ii)%s(ll))*TT(ll, 1)*carg
+            if (NOTstellsym) then ! include non-symmetric harmonics; 28 Jan 13;
+                dBu(1) = dBu(1) + (+mi*Azo(lvol, ideriv, ii)%s(ll) + ni*Ato(lvol, ideriv, ii)%s(ll))*TT(ll, 0)*carg
+                dBu(2) = dBu(2) + (-Azo(lvol, ideriv, ii)%s(ll))*TT(ll, 1)*sarg
+                dBu(3) = dBu(3) + (Ato(lvol, ideriv, ii)%s(ll))*TT(ll, 1)*sarg
+            end if
+        end do ! end of do ll; 10 Dec 15;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  gBzeta = dBu(3) ! gBzeta is returned through global; 20 Apr 13;
+    end do ! end of do ii = 1, mn;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  if( abs(gBzeta).lt.vsmall ) then
-
-   cput = MPI_WTIME()
-
-   write(ounit,'("bfield : ",f10.2," : lvol=",i3," ; zeta="es23.15" ; (s,t)=("es23.15" ,"es23.15" ) ; B^z="es23.15" ;")') &
-                             cput-cpus, lvol,        zeta,             st(1:2),                       dBu(3)
-
-
-   if( abs(dBu(3)).lt.vsmall ) then
-     write(6,'("bfield :      fatal : myid=",i3," ; abs(dBu(3)).lt.vsmall ; field is not toroidal ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "bfield : abs(dBu(3)).lt.vsmall : field is not toroidal  ;"
-    endif
-
-
-  endif
+    gBzeta = dBu(3) ! gBzeta is returned through global; 20 Apr 13;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  Bst(1:2) = dBu(1:2) / gBzeta ! normalize field line equations to toroidal field; 20 Apr 13;
+    if (abs(gBzeta) .lt. vsmall) then
+
+        cput = MPI_WTIME()
+
+        write (ounit, '("bfield : ",f10.2," : lvol=",i3," ; zeta="es23.15" ; (s,t)=("es23.15" ,"es23.15" ) ; B^z="es23.15" ;")') &
+            cput - cpus, lvol, zeta, st(1:2), dBu(3)
+
+        if (abs(dBu(3)) .lt. vsmall) then
+            write (6, '("bfield :      fatal : myid=",i3," ; abs(dBu(3)).lt.vsmall ; field is not toroidal ;")') myid
+            call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+            stop "bfield : abs(dBu(3)).lt.vsmall : field is not toroidal  ;"
+        end if
+
+    end if
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+    Bst(1:2) = dBu(1:2)/gBzeta ! normalize field line equations to toroidal field; 20 Apr 13;
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 9999 continue
-  cput = MPI_WTIME()
-  Tbfield = Tbfield + ( cput-cpuo )
-  return
-
+    cput = MPI_WTIME()
+    Tbfield = Tbfield + (cput - cpuo)
+    return
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -226,210 +221,206 @@ end subroutine bfield
 !> @param[in] zeta toroidal angle
 !> @param[in] st radial(s) and poloidal(theta) positions
 !> @param[out] Bst tangential magnetic field
-subroutine bfield_tangent( zeta, st, Bst )
-  use mod_kinds, only: wp => dp
+subroutine bfield_tangent(zeta, st, Bst)
+    use mod_kinds, only: wp => dp
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  use constants, only : zero, one, half, two
+    use constants, only: zero, one, half, two
 
-  use numerical, only : vsmall, small
+    use numerical, only: vsmall, small
 
-  use fileunits, only : ounit
+    use fileunits, only: ounit
 
-  use inputlist, only : Wmacros, Wbfield, Lrad, Mpol
+    use inputlist, only: Wmacros, Wbfield, Lrad, Mpol
 
-  use cputiming, only : Tbfield
+    use cputiming, only: Tbfield
 
-  use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, &
-                        mn, im, in, halfmm, regumm, &
-                        ivol, gBzeta, Ate, Aze, Ato, Azo, &
-                        NOTstellsym, &
-                        Lcoordinatesingularity, Mvol, &
-                        Node ! 17 Dec 15;
+    use allglobal, only: myid, ncpu, cpus, MPI_COMM_SPEC, &
+                         mn, im, in, halfmm, regumm, &
+                         ivol, gBzeta, Ate, Aze, Ato, Azo, &
+                         NOTstellsym, &
+                         Lcoordinatesingularity, Mvol, &
+                         Node ! 17 Dec 15;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
 
 #ifdef OPENMP
-  USE OMP_LIB
+    USE OMP_LIB
 #endif
-  use mpi
-  implicit none
-  integer   :: ierr, astat, ios, nthreads, ithread
-  real(wp)      :: cput, cpui, cpuo=0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
+    use mpi
+    implicit none
+    integer :: ierr, astat, ios, nthreads, ithread
+    real(wp) :: cput, cpui, cpuo = 0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
 
+    real(wp), intent(in) :: zeta, st(1:6)
+    real(wp), intent(out) :: Bst(1:6)
 
-  real(wp), intent(in)   :: zeta,  st(1:6)
-  real(wp), intent(out)  ::       Bst(1:6)
+    integer :: lvol, ii, ll, mi, ni, ideriv
+    real(wp) :: teta, lss, sbar, sbarhm(0:1), arg, carg, sarg, dBu(1:3, 0:2)
+    real(wp) :: cheby(0:Lrad(ivol), 0:2), zernike(0:Lrad(1), 0:Mpol, 0:2)
 
-  integer            :: lvol, ii, ll, mi, ni, ideriv
-  real(wp)               :: teta, lss, sbar, sbarhm(0:1), arg, carg, sarg, dBu(1:3,0:2)
-  real(wp)               :: cheby(0:Lrad(ivol),0:2), zernike(0:Lrad(1),0:Mpol,0:2)
+    real(wp) :: M(2, 2), deltax(2, 2)
 
-  real(wp)               :: M(2,2), deltax(2,2)
+    real(wp) :: TT(0:Lrad(ivol), 0:2) ! this is almost identical to cheby; 17 Dec 15;
 
-  real(wp)               :: TT(0:Lrad(ivol),0:2) ! this is almost identical to cheby; 17 Dec 15;
-
-
-  cpui = MPI_WTIME()
-  cpuo = cpui
+    cpui = MPI_WTIME()
+    cpuo = cpui
 #ifdef OPENMP
-  nthreads = omp_get_max_threads()
+    nthreads = omp_get_max_threads()
 #else
-  nthreads = 1
+    nthreads = 1
 #endif
-
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 #ifdef DEBUG
 
-   if( ivol.lt.1 .or. ivol.gt.Mvol ) then
-     write(6,'("bfield :      fatal : myid=",i3," ; ivol.lt.1 .or. ivol.gt.Mvol ; invalid ivol ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "bfield : ivol.lt.1 .or. ivol.gt.Mvol : invalid ivol  ;"
-    endif
+    if (ivol .lt. 1 .or. ivol .gt. Mvol) then
+        write (6, '("bfield :      fatal : myid=",i3," ; ivol.lt.1 .or. ivol.gt.Mvol ; invalid ivol ;")') myid
+        call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+        stop "bfield : ivol.lt.1 .or. ivol.gt.Mvol : invalid ivol  ;"
+    end if
 
 #endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  lvol = ivol ; ideriv = 0 ! the argument list of bfield is fixed by NAG requirements, but volume index is required below;
+    lvol = ivol
+    ideriv = 0 ! the argument list of bfield is fixed by NAG requirements, but volume index is required below;
 
-  Bst = zero ! set default intent out; this should cause a compilation error if Node.ne.2;
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  lss = st(1) ; teta = st(2) ;
-
-  ! the perturbation
-  deltax(1:2,1) = st(3:4);
-  deltax(1:2,2) = st(5:6);
-
-  if( abs(lss).gt.one ) goto 9999 ! out of domain;
-
-  if( Lcoordinatesingularity ) sbar = max( ( lss + one ) * half, small )
+    Bst = zero ! set default intent out; this should cause a compilation error if Node.ne.2;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  if (Lcoordinatesingularity) then
-    call get_zernike_d2(sbar, Lrad(lvol), Mpol, zernike(:,:,0:2))
-  else
-    call get_cheby_d2(lss, Lrad(lvol), cheby(0:Lrad(lvol),0:2))
-  end if
+    lss = st(1)
+    teta = st(2)
+    ! the perturbation
+    deltax(1:2, 1) = st(3:4)
+    deltax(1:2, 2) = st(5:6)
+    if (abs(lss) .gt. one) goto 9999 ! out of domain;
+
+    if (Lcoordinatesingularity) sbar = max((lss + one)*half, small)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  dBu(1:3,0:2) = zero ! initialize summation;
+    if (Lcoordinatesingularity) then
+        call get_zernike_d2(sbar, Lrad(lvol), Mpol, zernike(:, :, 0:2))
+    else
+        call get_cheby_d2(lss, Lrad(lvol), cheby(0:Lrad(lvol), 0:2))
+    end if
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ; arg = mi * teta - ni * zeta ; carg = cos(arg) ; sarg = sin(arg) ! shorthand; 20 Apr 13;
+    dBu(1:3, 0:2) = zero ! initialize summation;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-   if( Lcoordinatesingularity ) then ! regularization factor depends on mi; 17 Dec 15;
-
-
-   if( abs(sbar).lt.vsmall ) then
-     write(6,'("bfield :      fatal : myid=",i3," ; abs(sbar).lt.vsmall ; need to avoid divide-by-zero ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "bfield : abs(sbar).lt.vsmall : need to avoid divide-by-zero  ;"
-    endif
-
-
-    do ll = 0, Lrad(lvol) ; TT(ll,0:2) = (/        zernike(ll,mi,0),        zernike(ll,mi,1)*half , zernike(ll,mi,2)*half*half /)
-    enddo
-
-   else
-
-    do ll = 0, Lrad(lvol) ; TT(ll,0:2) = (/             cheby(ll,0),             cheby(ll,1)       ,cheby(ll,2)               /)
-    enddo
-
-   endif ! end of if( Lcoordinatesingularity ) ; 16 Jan 15;
+    do ii = 1, mn
+        mi = im(ii)
+        ni = in(ii)
+        arg = mi*teta - ni*zeta
+        carg = cos(arg)
+        sarg = sin(arg) ! shorthand; 20 Apr 13;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-   do ll = 0, Lrad(lvol) ! loop over Chebyshev summation; 20 Feb 13;
-    ! no derivative
-    ;dBu(1,0) = dBu(1,0) + ( - mi * Aze(lvol,ideriv,ii)%s(ll) - ni * Ate(lvol,ideriv,ii)%s(ll) ) * TT(ll,0) * sarg
-    ;dBu(2,0) = dBu(2,0) + (                                  -      Aze(lvol,ideriv,ii)%s(ll) ) * TT(ll,1) * carg
-    ;dBu(3,0) = dBu(3,0) + (        Ate(lvol,ideriv,ii)%s(ll)                                  ) * TT(ll,1) * carg
-    ! ds
-    ;dBu(1,1) = dBu(1,1) + ( - mi * Aze(lvol,ideriv,ii)%s(ll) - ni * Ate(lvol,ideriv,ii)%s(ll) ) * TT(ll,1) * sarg
-    ;dBu(2,1) = dBu(2,1) + (                                  -      Aze(lvol,ideriv,ii)%s(ll) ) * TT(ll,2) * carg
-    ;dBu(3,1) = dBu(3,1) + (        Ate(lvol,ideriv,ii)%s(ll)                                  ) * TT(ll,2) * carg
-    ! dtheta
-    ;dBu(1,2) = dBu(1,2) + mi * ( - mi * Aze(lvol,ideriv,ii)%s(ll) - ni * Ate(lvol,ideriv,ii)%s(ll) ) * TT(ll,0) * carg
-    ;dBu(2,2) = dBu(2,2) - mi * (                                  -      Aze(lvol,ideriv,ii)%s(ll) ) * TT(ll,1) * sarg
-    ;dBu(3,2) = dBu(3,2) - mi * (        Ate(lvol,ideriv,ii)%s(ll)                                  ) * TT(ll,1) * sarg
-    if( NOTstellsym ) then ! include non-symmetric harmonics; 28 Jan 13;
-     ! no derivative
-     dBu(1,0) = dBu(1,0) + ( + mi * Azo(lvol,ideriv,ii)%s(ll) + ni * Ato(lvol,ideriv,ii)%s(ll) ) * TT(ll,0) * carg
-     dBu(2,0) = dBu(2,0) + (                                  -      Azo(lvol,ideriv,ii)%s(ll) ) * TT(ll,1) * sarg
-     dBu(3,0) = dBu(3,0) + (        Ato(lvol,ideriv,ii)%s(ll)                                  ) * TT(ll,1) * sarg
-     ! ds
-     dBu(1,1) = dBu(1,1) + ( + mi * Azo(lvol,ideriv,ii)%s(ll) + ni * Ato(lvol,ideriv,ii)%s(ll) ) * TT(ll,1) * carg
-     dBu(2,1) = dBu(2,1) + (                                  -      Azo(lvol,ideriv,ii)%s(ll) ) * TT(ll,2) * sarg
-     dBu(3,1) = dBu(3,1) + (        Ato(lvol,ideriv,ii)%s(ll)                                  ) * TT(ll,2) * sarg
-     ! dtheta
-     dBu(1,2) = dBu(1,2) - mi * ( + mi * Azo(lvol,ideriv,ii)%s(ll) + ni * Ato(lvol,ideriv,ii)%s(ll) ) * TT(ll,0) * sarg
-     dBu(2,2) = dBu(2,2) + mi * (                                  -      Azo(lvol,ideriv,ii)%s(ll) ) * TT(ll,1) * carg
-     dBu(3,2) = dBu(3,2) + mi * (        Ato(lvol,ideriv,ii)%s(ll)                                  ) * TT(ll,1) * carg
-    endif
-   enddo ! end of do ll; 10 Dec 15;
+        if (Lcoordinatesingularity) then ! regularization factor depends on mi; 17 Dec 15;
+
+            if (abs(sbar) .lt. vsmall) then
+                write (6, '("bfield :      fatal : myid=",i3," ; abs(sbar).lt.vsmall ; need to avoid divide-by-zero ;")') myid
+                call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+                stop "bfield : abs(sbar).lt.vsmall : need to avoid divide-by-zero  ;"
+            end if
+
+            do ll = 0, Lrad(lvol)
+                TT(ll, 0:2) = (/zernike(ll, mi, 0), zernike(ll, mi, 1)*half, zernike(ll, mi, 2)*half*half/)
+            end do
+
+        else
+
+            do ll = 0, Lrad(lvol)
+                TT(ll, 0:2) = (/cheby(ll, 0), cheby(ll, 1), cheby(ll, 2)/)
+            end do
+
+        end if ! end of if( Lcoordinatesingularity ) ; 16 Jan 15;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  enddo ! end of do ii = 1, mn;
+        do ll = 0, Lrad(lvol) ! loop over Chebyshev summation; 20 Feb 13;
+            ! no derivative
+            dBu(1, 0) = dBu(1, 0) + (-mi*Aze(lvol, ideriv, ii)%s(ll) - ni*Ate(lvol, ideriv, ii)%s(ll))*TT(ll, 0)*sarg
+            dBu(2, 0) = dBu(2, 0) + (-Aze(lvol, ideriv, ii)%s(ll))*TT(ll, 1)*carg
+            dBu(3, 0) = dBu(3, 0) + ( Ate(lvol, ideriv, ii)%s(ll))*TT(ll, 1)*carg
+            ! ds
+            dBu(1, 1) = dBu(1, 1) + (-mi*Aze(lvol, ideriv, ii)%s(ll) - ni*Ate(lvol, ideriv, ii)%s(ll))*TT(ll, 1)*sarg
+            dBu(2, 1) = dBu(2, 1) + (-Aze(lvol, ideriv, ii)%s(ll))*TT(ll, 2)*carg
+            dBu(3, 1) = dBu(3, 1) + ( Ate(lvol, ideriv, ii)%s(ll))*TT(ll, 2)*carg
+            ! dtheta
+            dBu(1, 2) = dBu(1, 2) + mi*(-mi*Aze(lvol, ideriv, ii)%s(ll) - ni*Ate(lvol, ideriv, ii)%s(ll))*TT(ll, 0)*carg
+            dBu(2, 2) = dBu(2, 2) - mi*(-Aze(lvol, ideriv, ii)%s(ll))*TT(ll, 1)*sarg
+            dBu(3, 2) = dBu(3, 2) - mi*( Ate(lvol, ideriv, ii)%s(ll))*TT(ll, 1)*sarg
+            if (NOTstellsym) then ! include non-symmetric harmonics; 28 Jan 13;
+                ! no derivative
+                dBu(1, 0) = dBu(1, 0) + (+mi*Azo(lvol, ideriv, ii)%s(ll) + ni*Ato(lvol, ideriv, ii)%s(ll))*TT(ll, 0)*carg
+                dBu(2, 0) = dBu(2, 0) + (-Azo(lvol, ideriv, ii)%s(ll))*TT(ll, 1)*sarg
+                dBu(3, 0) = dBu(3, 0) + ( Ato(lvol, ideriv, ii)%s(ll))*TT(ll, 1)*sarg
+                ! ds
+                dBu(1, 1) = dBu(1, 1) + (+mi*Azo(lvol, ideriv, ii)%s(ll) + ni*Ato(lvol, ideriv, ii)%s(ll))*TT(ll, 1)*carg
+                dBu(2, 1) = dBu(2, 1) + (-Azo(lvol, ideriv, ii)%s(ll))*TT(ll, 2)*sarg
+                dBu(3, 1) = dBu(3, 1) + ( Ato(lvol, ideriv, ii)%s(ll))*TT(ll, 2)*sarg
+                ! dtheta
+                dBu(1, 2) = dBu(1, 2) - mi*(+mi*Azo(lvol, ideriv, ii)%s(ll) + ni*Ato(lvol, ideriv, ii)%s(ll))*TT(ll, 0)*sarg
+                dBu(2, 2) = dBu(2, 2) + mi*(-Azo(lvol, ideriv, ii)%s(ll))*TT(ll, 1)*carg
+                dBu(3, 2) = dBu(3, 2) + mi*( Ato(lvol, ideriv, ii)%s(ll))*TT(ll, 1)*carg
+            end if
+        end do ! end of do ll; 10 Dec 15;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  gBzeta = dBu(3,0) ! gBzeta is returned through global; 20 Apr 13;
+    end do ! end of do ii = 1, mn;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  if( abs(gBzeta).lt.vsmall ) then
-
-   cput = MPI_WTIME()
-
-   write(ounit,'("bfield : ",f10.2," : lvol=",i3," ; zeta="es23.15" ; (s,t)=("es23.15" ,"es23.15" ) ; B^z="es23.15" ;")') &
-                             cput-cpus, lvol,        zeta,             st(1:2),                       gBzeta
-
-
-   if( abs(gBzeta).lt.vsmall ) then
-     write(6,'("bfield :      fatal : myid=",i3," ; abs(gBzeta).lt.vsmall ; field is not toroidal ;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "bfield : abs(gBzeta).lt.vsmall : field is not toroidal  ;"
-    endif
-
-
-  endif
+    gBzeta = dBu(3, 0) ! gBzeta is returned through global; 20 Apr 13;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  Bst(1:2) = dBu(1:2,0) / gBzeta ! normalize field line equations to toroidal field; 20 Apr 13;
+    if (abs(gBzeta) .lt. vsmall) then
 
+        cput = MPI_WTIME()
 
-  ! assemble the tangent matrix
-  M(1,1) = (dBu(1,1) * dBu(3,0) - dBu(3,1) * dBu(1,0)) / gBzeta**2   ! d(Bs/Bz)/ds
-  M(1,2) = (dBu(1,2) * dBu(3,0) - dBu(3,2) * dBu(1,0)) / gBzeta**2   ! d(Bs/Bz)/dt
-  M(2,1) = (dBu(2,1) * dBu(3,0) - dBu(3,1) * dBu(2,0)) / gBzeta**2   ! d(Bt/Bz)/ds
-  M(2,2) = (dBu(2,2) * dBu(3,0) - dBu(3,2) * dBu(2,0)) / gBzeta**2   ! d(Bt/Bz)/dt
+        write (ounit, '("bfield : ",f10.2," : lvol=",i3," ; zeta="es23.15" ; (s,t)=("es23.15" ,"es23.15" ) ; B^z="es23.15" ;")') &
+            cput - cpus, lvol, zeta, st(1:2), gBzeta
 
-  deltax = MATMUL(M, deltax)
+        if (abs(gBzeta) .lt. vsmall) then
+            write (6, '("bfield :      fatal : myid=",i3," ; abs(gBzeta).lt.vsmall ; field is not toroidal ;")') myid
+            call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+            stop "bfield : abs(gBzeta).lt.vsmall : field is not toroidal  ;"
+        end if
 
-  Bst(3:4) = deltax(1:2,1)
-  Bst(5:6) = deltax(1:2,2)
+    end if
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+    Bst(1:2) = dBu(1:2, 0)/gBzeta ! normalize field line equations to toroidal field; 20 Apr 13;
+
+    ! assemble the tangent matrix
+    M(1, 1) = (dBu(1, 1)*dBu(3, 0) - dBu(3, 1)*dBu(1, 0))/gBzeta**2   ! d(Bs/Bz)/ds
+    M(1, 2) = (dBu(1, 2)*dBu(3, 0) - dBu(3, 2)*dBu(1, 0))/gBzeta**2   ! d(Bs/Bz)/dt
+    M(2, 1) = (dBu(2, 1)*dBu(3, 0) - dBu(3, 1)*dBu(2, 0))/gBzeta**2   ! d(Bt/Bz)/ds
+    M(2, 2) = (dBu(2, 2)*dBu(3, 0) - dBu(3, 2)*dBu(2, 0))/gBzeta**2   ! d(Bt/Bz)/dt
+
+    deltax = MATMUL(M, deltax)
+
+    Bst(3:4) = deltax(1:2, 1)
+    Bst(5:6) = deltax(1:2, 2)
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 9999 continue
-  cput = MPI_WTIME()
-  Tbfield = Tbfield + ( cput-cpuo )
-  return
-
+    cput = MPI_WTIME()
+    Tbfield = Tbfield + (cput - cpuo)
+    return
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
