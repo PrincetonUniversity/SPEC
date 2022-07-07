@@ -113,17 +113,17 @@ module inputlist
                                                          !< <li> If \c Ladiabatic==0, the adiabatic constants are determined by the initial pressure and volume. </li>
                                                          !< <li> If \c Ladiabatic==1, the adiabatic constants are determined by the given input \c adiabatic. </li>
                                                          !< </ul>
-  real(wp)         :: adiabatic(1:MNvol+1)       =  0.0      !< adiabatic constants in each volume
+  real(wp)         :: adiabatic(1:MNvol+1)   =  0.0      !< adiabatic constants in each volume
                                                          !< <ul>
                                                          !< <li> The pressure is *not* held constant, but \f$p_l V_l^\gamma = P_l \equiv\f$\c adiabatic is constant. </li>
                                                          !< <li> Note that if \c gamma==0.0, then \c pressure==adiabatic. </li>
                                                          !< <li> \c pressure is only used in calculation of interface force-balance. </li>
                                                          !< </ul>
-  real(wp)         ::        mu(1:MNvol+1)       =  0.0      !< helicity-multiplier, \f$\mu\f$, in each volume
-  real(wp)         :: Ivolume(1:MNvol+1)         =  0.0      !< Toroidal current constraint normalized by \f$\mu_0\f$ (\f$I_{volume} = \mu_0\cdot [A]\f$), in each volume.
+  real(wp)         ::        mu(1:MNvol+1)   =  0.0      !< helicity-multiplier, \f$\mu\f$, in each volume
+  real(wp)         :: Ivolume(1:MNvol+1)     =  0.0      !< Toroidal current constraint normalized by \f$\mu_0\f$ (\f$I_{volume} = \mu_0\cdot [A]\f$), in each volume.
                                                          !< This is a cumulative quantity: \f$I_{\mathcal{V},i} = \int_0^{\psi_{t,i}} \mathbf{J}\cdot\mathbf{dS}\f$.
                                                          !< Physically, it represents the sum of all non-pressure driven currents.
-  real(wp)         :: Isurf(1:MNvol)             =  0.0      !< Toroidal current normalized by \f$\mu_0\f$ at each interface (cumulative). This is the sum of all pressure driven currents.
+  real(wp)         :: Isurf(1:MNvol)         =  0.0      !< Toroidal current normalized by \f$\mu_0\f$ at each interface (cumulative). This is the sum of all pressure driven currents.
   integer      ::        pl(0:MNvol)         =  0        !< "inside" interface rotational-transform is \f$\mbox{$\,\iota\!\!$-} = (p_l+\gamma p_r)/(q_l+\gamma q_r)\f$,
                                                          !< where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2 \f$.
                                                          !<
@@ -140,7 +140,7 @@ module inputlist
                                                          !< where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2 \f$.
                                                          !<
                                                          !< If both \f$q_l = 0\f$ *and* \f$q_r = 0\f$, then the (inside) interface rotational-transform is defined by \c iota .
-  real(wp)         ::      iota(0:MNvol)         =  0.0      !< rotational-transform, \f$\mbox{$\,\iota\!\!$-}\f$, on inner side of each interface
+  real(wp)         ::      iota(0:MNvol)     =  0.0      !< rotational-transform, \f$\mbox{$\,\iota\!\!$-}\f$, on inner side of each interface
                                                          !< <ul>
                                                          !< <li> only relevant if illogical input for \c ql and \c qr are provided </li>
                                                          !< </ul>
@@ -160,11 +160,11 @@ module inputlist
                                                          !<  where \f$\gamma\f$ is the golden mean, \f$\gamma = (1 + \sqrt 5 ) / 2\f$.
                                                          !<
                                                          !< If both \f$q_l = 0\f$ *and* \f$q_r = 0\f$, then the (outer) interface rotational-transform is defined by \c oita .
-  real(wp)         ::      oita(0:MNvol)         =  0.0      !< rotational-transform, \f$\mbox{$\,\iota\!\!$-}\f$, on outer side of each interface
+  real(wp)         ::      oita(0:MNvol)     =  0.0      !< rotational-transform, \f$\mbox{$\,\iota\!\!$-}\f$, on outer side of each interface
                                                          !< <ul>
                                                          !< <li> only relevant if illogical input for \c ql and \c qr are provided </li>
                                                          !< </ul>
-  real(wp)         :: mupftol                    =  1.0e-14  !< accuracy to which \f$\mu\f$ and \f$\Delta\psi_p\f$ are required
+  real(wp)         :: mupftol                =  1.0e-14  !< accuracy to which \f$\mu\f$ and \f$\Delta\psi_p\f$ are required
                                                          !< <ul>
                                                          !< <li> only relevant if constraints on transform, enclosed currents etc. are to be satisfied iteratively, see \c Lconstraint </li>
                                                          !< </ul>
@@ -173,12 +173,12 @@ module inputlist
                                                          !< <li> only relevant if constraints on transform, enclosed currents etc. are to be satisfied iteratively, see \c Lconstraint </li>
                                                          !< <li> constraint: \c mupfits > 0 </li>
                                                          !< </ul>
-  real(wp)         :: rpol                       =  1.0      !< poloidal extent of slab (effective radius)
+  real(wp)         :: rpol                   =  1.0      !< poloidal extent of slab (effective radius)
                                                          !< <ul>
                                                          !< <li> only relevant if \c Igeometry==1 </li>
                                                          !< <li> poloidal size is \f$L = 2\pi*\f$\c rpol </li>
                                                          !< </ul>
-  real(wp)         :: rtor                       =  1.0      !< toroidal extent of slab (effective radius)
+  real(wp)         :: rtor                   =  1.0      !< toroidal extent of slab (effective radius)
                                                          !< <ul>
                                                          !< <li> only relevant if \c Igeometry==1 </li>
                                                          !< <li> toroidal size is \f$L = 2\pi*\f$\c rtor </li>

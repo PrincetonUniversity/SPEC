@@ -86,9 +86,9 @@
 !> </ul>
 !>
 !> @param[in] NGdof number of global degrees of freedom
-!> @param[in] position
-!> @param[out] force
-!> @param[in] LComputeDerivatives
+!> @param[in] position degrees-of-freedom = internal geometry (packed by packxi)
+!> @param[out] force output: Fourier harmonics of B_mn^2 and spectral constraint forces
+!> @param[in] LComputeDerivatives indicates whether derivatives are to be calculated; 0: no derivatives, 1:
 !> @param[inout] LComputeAxis
 subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
   use mod_kinds, only: wp => dp
@@ -147,9 +147,6 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
   integer   :: ierr, astat, ios, nthreads, ithread
   real(wp)      :: cput, cpui, cpuo=0 ! cpu time; cpu initial; cpu old; 31 Jan 13;
 
-
-  integer, parameter   :: NB = 3 ! optimal workspace block size for LAPACK:DSYSVX;
-
   integer, intent(in)  :: NGdof               ! dimensions;
   real(wp),    intent(in)  :: position(0:NGdof)   ! degrees-of-freedom = internal geometry;
   real(wp),    intent(out) :: force(0:NGdof)      ! force;
@@ -192,6 +189,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 ! Unpack position to generate arrays iRbc, iZbs, IRbs, iZbc.
+! This also computes the axis geometry.
 
   packorunpack = 'U' ! unpack geometrical degrees-of-freedom;
 
@@ -767,13 +765,11 @@ if( Lhessian3Dallocated .and. Igeometry.ge.3) then ! construct Hessian3D;
 
         else ! matches if( ImagneticOK(vvol) .and. ImagneticOK(vvol+1) ) ;
 
-
    if( .true. ) then
      write(6,'("dforce :      fatal : myid=",i3," ; .true. ; need to provide suitable values for hessian2D in case of field failure ;")') myid
      call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
      stop "dforce : .true. : need to provide suitable values for hessian2D in case of field failure  ;"
     endif
-
 
         endif ! end of if( ImagneticOK(vvol) .and. ImagneticOK(vvol+1) ) ;
 
@@ -864,14 +860,11 @@ if( LHmatrix .and. Lhessian2Dallocated .and. Igeometry.eq.2) then ! construct He
 
                   ! In the general case of global constraint, there are no zero element in the hessian. We thus loop again on all volumes
 
-
    if( .true. ) then
      write(6,'("dforce :      fatal : myid=",i3," ; .true. ; incorrect choice of Lconstraint in SPEC;")') myid
      call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
      stop "dforce : .true. : incorrect choice of Lconstraint in SPEC ;"
     endif
-
-
                 endif ! matches if( LocalConstraint );
 
               enddo ! matches do issym ;
@@ -887,7 +880,6 @@ if( LHmatrix .and. Lhessian2Dallocated .and. Igeometry.eq.2) then ! construct He
      call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
      stop "dforce : .true. : need to provide suitable values for hessian2D in case of field failure  ;"
     endif
-
 
         endif ! end of if( ImagneticOK(vvol) .and. ImagneticOK(vvol+1) ) ;
 

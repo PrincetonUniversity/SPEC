@@ -34,8 +34,10 @@ def plot_modB(
         fig, ax = plt.subplots()
     plt.sca(ax)
 
-    nr = sarr.size
-    nt = tarr.size
+    #nr = sarr.size
+    nr = len(sarr)
+    #nt = tarr.size
+    nt = len(tarr)
 
     plotR = np.zeros([len(lvollist) * nr, nt], dtype=np.float64)
     plotZ = np.zeros([len(lvollist) * nr, nt], dtype=np.float64)

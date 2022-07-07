@@ -15,7 +15,7 @@
 !> <ul>
 !> <li> In the \f$v\f$-th annulus, bounded by the \f$(v-1)\f$-th and \f$v\f$-th interfaces,
 !>       a general covariant representation of the magnetic vector-potential is written
-!>       \f{eqnarray}{ {\bf \bar A}=\bar A_{s} \nabla s + \bar A_{\theta} \nabla \theta + \bar A_{\zeta} \nabla \zeta eta. \f} </li>
+!>       \f{eqnarray}{ {\bf \bar A}=\bar A_{s} \nabla s + \bar A_{\theta} \nabla \theta + \bar A_{\zeta} \nabla \zeta. \f} </li>
 !> <li> To this add \f$\nabla g(s,\theta,\zeta)\f$, where \f$g\f$ satisfies
 !>       \f{eqnarray}{ \begin{array}{cccccccccccccccccccccccccccccccccccccc}
 !>           \partial_s      g( s,\theta,\zeta) & = & - & \bar A_{s     }( s,\theta,\zeta) \\

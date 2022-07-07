@@ -192,12 +192,11 @@ subroutine dfp100(Ndofgl, x, Fvec, LComputeDerivatives)
 
     endif
 
-
+    ! Call Beltrami solver to get the magnetic field in the current volume.
    cput = MPI_WTIME()
    Tdfp100 = Tdfp100 + ( cput-cpuo )
    call ma02aa( vvol, NN )
    cpuo = MPI_WTIME()
-
 
     Lsavedguvij = .false.
 

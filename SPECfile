@@ -134,7 +134,7 @@ ifeq ($(BUILD_ENV),gfortran_arch)
  # configuration for Arch Linux
  # traps for numerical errors: https://stackoverflow.com/a/29827243
  FC=mpif90
- FLAGS=-fPIC
+ FLAGS=-fPIC -Wall -Wextra
  CFLAGS=-fdefault-real-8 -fallow-argument-mismatch
  LINKS=-llapack -lblas
  LIBS=

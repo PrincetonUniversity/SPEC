@@ -26,7 +26,8 @@ def get_grid_and_jacobian_and_metric(
     im = self.output.im
     in_ = self.output.in_
 
-    sbar = (sarr + 1) / 2
+    #sbar = (sarr + 1) / 2
+    sbar = np.divide(np.add(sarr, 1.0), 2.0)
     fac = []
 
     Igeometry = self.input.physics.Igeometry
@@ -302,7 +303,7 @@ def get_modB(self, Bcontrav, g):
 def get_B_covariant(self, Bcontrav, g):
     """Get covariant component of B"""
     Bco = np.einsum("iabc,jiabc->jabc", Bcontrav, g)
-    return Bco    
+    return Bco
 
 
 def _get_zernike(sarr, lrad, mpol):
