@@ -193,9 +193,10 @@ end subroutine xspech
 !> <ul>
 !> <li> The input file name, \c ext , is given as the first command line input, and the input file itself is then \c ext.sp .</li>
 !> <li> Alternatively, you can directly specify the input file itself as \c ext.sp .</li>
+!> <li> You can also generate a template input file using \c xspec -i .</li>
+!> <li> Or print help information using \c xspec -h .</li>
 !> <li> Additional command line inputs recognized are:
 !>      <ul>
-!>      <li> \c -help or \c -h will give help information to user </li>
 !>      <li> \c -readin will immediately set \c Wreadin=T ; this may be over-ruled when the namelist \c screenlist is read
 !>      </ul> </li>
 !> </ul>
@@ -208,7 +209,7 @@ subroutine read_command_args
   LOCALS
 
   LOGICAL              :: Lspexist
-  INTEGER              :: iargc, iarg, numargs, extlen, sppos
+  INTEGER              :: iargc, iarg, numargs, extlen, sppos, ierr
 
   CHARACTER(len=100)   :: arg
 
@@ -225,18 +226,24 @@ subroutine read_command_args
     endif
     ext = trim(arg)
 
-    if( ext .eq. "" .or. ext .eq. "-h" .or. ext .eq. "-help" ) then
-     ;write(ounit,'("rdcmdl : ", 10x ," : ")')
-     ;write(ounit,'("rdcmdl : ", 10x ," : file extension must be given as first command line argument ; extra command line options = -help -readin ;")')
-     if( ext .eq. "-h" .or. ext .eq. "-help" ) then
-      write(ounit,'("rdcmdl : ", 10x ," : ")')
-      write(ounit,'("rdcmdl : ", 10x ," : the input file ext.sp must contain the input namelists; see global.pdf for description ;")')
-     endif
-     FATAL( rdcmdl, .true., the input file does not exist) ! if not, abort;
-    endif
-
     write(ounit,'("rdcmdl : ", 10x ," : ")')
-    write(ounit,'("rdcmdl : ",f10.2," : ext = ",a100)') cput-cpus, ext
+    select case (ext)
+    case ("", "-h", "--help")
+        write(ounit,'("rdcmdl : ", 10x ," : file extension must be given as first command line argument ;")')
+        write(ounit,'("rdcmdl : ", 10x ," : Usage: <mpiexec> xspec input_file <arguments>")')
+        write(ounit,'("rdcmdl : ", 10x ," : Other options:")')
+        write(ounit,'("rdcmdl : ", 10x ," :     -h / --help :  print help information.")')
+        write(ounit,'("rdcmdl : ", 10x ," :     -i / --init :  generate an input template.")')
+        write(ounit,'("rdcmdl : ", 10x ," : Additional arguments:")')
+        write(ounit,'("rdcmdl : ", 10x ," :     -readin : print debugging information during reading inputs")')
+        call MPI_ABORT( MPI_COMM_SPEC, 0, ierr )
+    case ("-i", "--init")
+        ! call write_spec_namelist()
+        call MPI_ABORT( MPI_COMM_SPEC, 0, ierr )
+    case default
+        write(ounit,'("rdcmdl : ", 10x ," : ")')
+        write(ounit,'("rdcmdl : ",f10.2," : ext = ",a100)') cput-cpus, ext
+    end select
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -247,7 +254,6 @@ subroutine read_command_args
       do while ( iarg < numargs )
         iarg = iarg + 1 ; call getarg( iarg, arg)
         select case( arg )
-        case("-help","-h") ; write(ounit,'("rdcmdl : ",f10.2," : myid=",i3," : command line options = -readin ;")') cput-cpus, myid
         case("-readin"   ) ; Wreadin = .true.
         case("-p4pg"     ) ; iarg = iarg + 1 ; call getarg( iarg, arg) ! TODO: what is this?
         case("-p4wd"     ) ; iarg = iarg + 1 ; call getarg( iarg, arg) ! TODO: what is this?
