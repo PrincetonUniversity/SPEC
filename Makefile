@@ -80,32 +80,32 @@ $(DOBJS_LEVEL_1): %_d.o: src/%.F90 $(addsuffix _d.o,$(LEVEL_0))
 	@wc -l -L -w src/$*.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
-$(ROBJS_LEVEL_2): %_r.o: src/%.F90 mod_kinds_r.o $(addsuffix _r.o,$(LEVEL_0)) $(addsuffix _r.o,$(LEVEL_1))
+$(ROBJS_LEVEL_2): %_r.o: src/%.F90 mod_kinds_r.o $(addsuffix _r.o,$(LEVEL_1))
 	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o $*_r.o -c src/$*.F90 $(LIBS)
 	@wc -l -L -w src/$*.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
-$(DOBJS_LEVEL_2): %_d.o: src/%.F90 mod_kinds_d.o $(addsuffix _d.o,$(LEVEL_0)) $(addsuffix _d.o,$(LEVEL_1))
+$(DOBJS_LEVEL_2): %_d.o: src/%.F90 mod_kinds_d.o $(addsuffix _d.o,$(LEVEL_1))
 	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o $*_d.o -c src/$*.F90 $(LIBS)
 	@wc -l -L -w src/$*.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
-$(ROBJS_LEVEL_3): %_r.o: src/%.F90 mod_kinds_r.o $(addsuffix _r.o,$(LEVEL_0)) $(addsuffix _r.o,$(LEVEL_1)) $(addsuffix _r.o,$(LEVEL_2))
+$(ROBJS_LEVEL_3): %_r.o: src/%.F90 mod_kinds_r.o $(addsuffix _r.o,$(LEVEL_2))
 	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o $*_r.o -c src/$*.F90 $(LIBS)
 	@wc -l -L -w src/$*.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
-$(DOBJS_LEVEL_3): %_d.o: src/%.F90 mod_kinds_d.o $(addsuffix _d.o,$(LEVEL_0)) $(addsuffix _d.o,$(LEVEL_1)) $(addsuffix _d.o,$(LEVEL_2))
+$(DOBJS_LEVEL_3): %_d.o: src/%.F90 mod_kinds_d.o $(addsuffix _d.o,$(LEVEL_2))
 	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o $*_d.o -c src/$*.F90 $(LIBS)
 	@wc -l -L -w src/$*.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
-$(ROBJS_LEVEL_4): %_r.o: src/%.F90 mod_kinds_r.o $(addsuffix _r.o,$(LEVEL_0)) $(addsuffix _r.o,$(LEVEL_1)) $(addsuffix _r.o,$(LEVEL_2)) $(addsuffix _r.o,$(LEVEL_3))
+$(ROBJS_LEVEL_4): %_r.o: src/%.F90 mod_kinds_r.o $(addsuffix _r.o,$(LEVEL_3))
 	$(FC) $(FLAGS) $(CFLAGS) $(RFLAGS) -o $*_r.o -c src/$*.F90 $(LIBS)
 	@wc -l -L -w src/$*.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
 
-$(DOBJS_LEVEL_4): %_d.o: src/%.F90 mod_kinds_d.o $(addsuffix _d.o,$(LEVEL_0)) $(addsuffix _d.o,$(LEVEL_1)) $(addsuffix _d.o,$(LEVEL_2)) $(addsuffix _d.o,$(LEVEL_3))
+$(DOBJS_LEVEL_4): %_d.o: src/%.F90 mod_kinds_d.o $(addsuffix _d.o,$(LEVEL_3))
 	$(FC) $(FLAGS) $(CFLAGS) $(DFLAGS) -o $*_d.o -c src/$*.F90 $(LIBS)
 	@wc -l -L -w src/$*.F90 | awk '{print $$4" has "$$1" lines, "$$2" words, and the longest line is "$$3" characters ;"}'
 	@echo ''
