@@ -4,7 +4,7 @@ find_package(NumPy REQUIRED)
 find_package(F2PY REQUIRED)
 find_package(F90Wrap REQUIRED)
 
-# Fortran preprocessing compiler 
+# Fortran preprocessing compiler
 if(CMAKE_Fortran_COMPILER_ID STREQUAL Intel)
 	set(FPP_COMPILER fpp)
     set(FPP_COMPILE_FLAGS "")
@@ -17,7 +17,6 @@ get_directory_property(COMP_DEFS COMPILE_DEFINITIONS)
 message(STATUS "Compile definitions for preprocessor are ${COMP_DEFS}")
 string(REPLACE ";" " " COMP_DEF_STR "${COMPILE_DEFINITIONS}")
 
-	
 function(preprocess_fortran outvar)
     message(STATUS "preprocess_fortran arguments: ${outvar}, followed by ${ARGN}")
     set(srcs)
@@ -60,14 +59,14 @@ function(preprocess_fortran outvar)
     set(${outvar} "${srcs}" PARENT_SCOPE)
 endfunction()
 
-#message(STATUS "fortran_src_files is ${fortran_src_files}")
+message(STATUS "fortran_src_files is ${fortran_src_files}")
 preprocess_fortran(fpp_files ${fortran_src_files})
 #message(STATUS "fpp_files is ${fpp_files}")
 
 # ----------------------------------------------------------------------------
 # NOTE: There is no way to identify the f90wrap---.f90 files ahead of running f90wrap
 # NOTE: The files produced have no one->one relation with the source files.
-# NOTE: So giving the names of f90wrap_---.f90 files manually 
+# NOTE: So giving the names of f90wrap_---.f90 files manually
 #-----------------------------------------------------------------------------
 set(f90wrap_output_files ${CMAKE_CURRENT_BINARY_DIR}/f90wrap_global_m_fpp.f90
                          ${CMAKE_CURRENT_BINARY_DIR}/f90wrap_inputlist_m_fpp.f90
@@ -94,7 +93,7 @@ add_custom_command(OUTPUT ${python_mod_file} ${f90wrap_output_files}
 )
 
 #add_custom_target("${python_mod_name}_pymod"
-#  DEPENDS ${python_mod_file} ${f90wrap_output_files} 
+#  DEPENDS ${python_mod_file} ${f90wrap_output_files}
 #)
 
 set(f2py_module_name "_${python_mod_name}")
@@ -111,20 +110,20 @@ add_custom_target(${f2py_module_name} ALL
 
 add_custom_command(
     OUTPUT ${generated_module_file}
-    COMMAND ${F2PY_EXECUTABLE} 
-        -m ${f2py_module_name} 
-        --build-dir ${CMAKE_CURRENT_BINARY_DIR} 
+    COMMAND ${F2PY_EXECUTABLE}
+        -m ${f2py_module_name}
+        --build-dir ${CMAKE_CURRENT_BINARY_DIR}
         --f90exec=${CMAKE_Fortran_COMPILER}
         --f77exec=${CMAKE_Fortran_COMPILER}
         --f90flags="-fopenmp"
         -lgomp
-        -c 
+        -c
         #${SCALAPACK_LIB} ${NETCDF_F} ${NETCDF_C}
-        ${f90wrap_output_files} 
+        ${f90wrap_output_files}
         -I${CMAKE_BINARY_DIR}/build/modules/spec_modules
         -I${HDF5_Fortran_INCLUDE_DIRS}
 	--verbose
-        ${CMAKE_BINARY_DIR}/build/lib/libspec.a  
+        ${CMAKE_BINARY_DIR}/build/lib/libspec.a
         ${SPEC_LINK_LIB}
     #IMPLICIT_DEPENDS Fortran ${f90wrap_output_files}
     DEPENDS spec ${f90wrap_output_files}

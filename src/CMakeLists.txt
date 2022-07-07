@@ -24,50 +24,49 @@ target_compile_options(spec_contrib
 )
 
 set(src_spec
-    basefn.F90
-    bfield.F90
-    bnorml.F90
-    brcast.F90
-    casing.F90
-    coords.F90
-    curent.F90
-    df00ab.F90
-    dforce.F90
-    dfp100.F90
-    dfp200.F90
-    global.F90
-    h5utils.F90
-    hesian.F90
-    inputlist.F90
-    intghs.F90
-    jo00aa.F90
-    lbpol.F90
-    lforce.F90
-    ma00aa.F90
-    ma02aa.F90
-    manual.F90
-    matrix.F90
-    memory.F90
-    metrix.F90
-    mod_kinds.F90
-    mp00ac.F90
-    mtrxhs.F90
-    newton.F90
-    numrec.F90
-    packab.F90
-    packxi.F90
-    pp00aa.F90
-    pp00ab.F90
-    preset.F90
-    ra00aa.F90
-    rzaxis.F90
-    sphdf5.F90
-    spsint.F90
-    spsmat.F90
-    stzxyz.F90
-    tr00ab.F90
-    volume.F90
-    #wa00aa.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/basefn.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/bfield.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/bnorml.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/brcast.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/casing.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/coords.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/curent.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/df00ab.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/dforce.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/dfp100.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/dfp200.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/global.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/h5utils.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/hesian.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/inputlist.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/intghs.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/jo00aa.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/lbpol.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/lforce.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/ma00aa.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/ma02aa.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/manual.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/matrix.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/memory.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/metrix.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/mod_kinds.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/mp00ac.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/mtrxhs.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/newton.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/numrec.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/packab.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/packxi.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/pp00aa.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/pp00ab.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/preset.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/ra00aa.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/rzaxis.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/sphdf5.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/spsint.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/spsmat.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/stzxyz.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/tr00ab.F90
+    ${CMAKE_CURRENT_SOURCE_DIR}/volume.F90
 )
 
 add_library(spec ${src_spec} "$<TARGET_OBJECTS:spec_contrib>")
@@ -81,6 +80,14 @@ target_compile_options(spec
         $<$<Fortran_COMPILER_ID:GNU>:-fexternal-blas>
         $<$<Fortran_COMPILER_ID:Intel>:-r8>
 )
+
+set(srcs)
+list(APPEND srcs "${src_spec_contrib}")
+list(APPEND srcs "${src_spec}")
+if(SKBUILD)
+    set(fortran_src_files "${srcs}" PARENT_SCOPE)
+endif()
+message(STATUS "srcs variable is ${srcs}")
 
 set_target_properties (spec PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/spec_modules)
 target_include_directories(spec PUBLIC ${CMAKE_Fortran_MODULE_DIRECTORY}/spec_modules)
