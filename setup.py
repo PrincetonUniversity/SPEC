@@ -27,7 +27,6 @@ with open('cmake_config.json') as fp:
 # Include additional parameters from CMAKE_ARGS environment variable.
 # This is the way Anaconda tells CMake its specific needs.
 if 'CMAKE_ARGS' in os.environ:
-
   print("CMAKE_ARGS = '%s'"%(os.environ['CMAKE_ARGS']))
   for cmake_arg in os.environ['CMAKE_ARGS'].split(" "):
     d['cmake_args'].append(cmake_arg)

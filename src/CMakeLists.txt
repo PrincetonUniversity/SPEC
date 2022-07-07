@@ -81,13 +81,10 @@ target_compile_options(spec
         $<$<Fortran_COMPILER_ID:Intel>:-r8>
 )
 
-set(srcs)
-list(APPEND srcs "${src_spec_contrib}")
-list(APPEND srcs "${src_spec}")
 if(SKBUILD)
-    set(fortran_src_files "${srcs}" PARENT_SCOPE)
+    set(fortran_src_files "${src_spec}" PARENT_SCOPE)
 endif()
-message(STATUS "srcs variable is ${srcs}")
+message(STATUS "fortran_src_files variable is ${fortran_src_files}")
 
 set_target_properties (spec PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/spec_modules)
 target_include_directories(spec PUBLIC ${CMAKE_Fortran_MODULE_DIRECTORY}/spec_modules)
