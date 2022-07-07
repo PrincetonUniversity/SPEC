@@ -1177,31 +1177,37 @@ end subroutine ! read_inputlists_from_file
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+!> \brief write all the namelists to example.sp
 subroutine write_spec_namelist()
-  ! write all the namelists to example.sp
+  use mpi
   use constants
   use fileunits
   use inputlist
 
-  LOCALS
+  integer :: ierr
+  logical :: exists
+  character(len=*), parameter :: example = 'example.sp'
 
-  LOGICAL :: exist
-  CHARACTER(LEN=100), PARAMETER :: example = 'example.sp'
+  if (myid .eq. 0) then
+    ! inquire if inputfile existed;
+    inquire(file=trim(example), EXIST=exists)
+    if (exists) then
+      write(6,'("example input file example.sp already existed")')
+      call MPI_ABORT(MPI_COMM_SPEC, 1, ierr)
+      stop "example input file example.sp already existed"
+    end if
 
-  if( myid == 0 ) then
-     inquire(file=trim(example), EXIST=exist) ! inquire if inputfile existed;
-     FATAL( global, exist, example input file example.sp already existed )
-     open(iunit, file=trim(example), status='unknown', action='write')
-     write(iunit, physicslist)
-     write(iunit, numericlist)
-     write(iunit, locallist)
-     write(iunit, globallist)
-     write(iunit, diagnosticslist)
-     write(iunit, screenlist)
-     close(iunit)
+    ! write template input file
+    open(iunit, file=trim(example), status='unknown', action='write')
+    write(iunit, physicslist)
+    write(iunit, numericlist)
+    write(iunit, locallist)
+    write(iunit, globallist)
+    write(iunit, diagnosticslist)
+    write(iunit, screenlist)
+    close(iunit)
   endif
 
-  return
 end subroutine
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
