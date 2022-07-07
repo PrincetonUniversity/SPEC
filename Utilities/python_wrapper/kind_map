@@ -4,6 +4,7 @@
               'isp' : 'float',
                 '8' : 'double',
                'dp' : 'double',
+               'wp' : 'double',
               'idp' : 'double'},
  'complex' : {   '' : 'complex_float',
  	            '8' : 'complex_double',
