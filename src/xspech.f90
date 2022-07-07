@@ -204,7 +204,7 @@ subroutine read_command_args
 
   use fileunits, only: ounit
   use inputlist, only: Wreadin
-  use allglobal, only: cpus, myid, ext, MPI_COMM_SPEC
+  use allglobal, only: cpus, myid, ext, MPI_COMM_SPEC, write_spec_namelist
 
   LOCALS
 
@@ -233,7 +233,7 @@ subroutine read_command_args
         call MPI_ABORT( MPI_COMM_SPEC, 0, ierr )
     case ("-i", "--init")
         write(ounit,'("rdcmdl : ", 10x ," : write a template input file in example.sp")')
-        ! call write_spec_namelist()
+        call write_spec_namelist()
         call MPI_ABORT( MPI_COMM_SPEC, 0, ierr )
     case default
         extlen = len_trim(arg)
