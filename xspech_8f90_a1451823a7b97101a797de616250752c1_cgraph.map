@@ -76,8 +76,8 @@
 <area shape="rect" id="node62" href="$group__grp__free-boundary.html#ga281c12a5de84fddd3db4383b0df8627f" title="Differential virtual casing integrand." alt="" coords="1725,2707,1792,2733"/>
 <area shape="rect" id="node65" href="$basefn_8f90.html#a6076d695487184d58d30d73de2f6470f" title="Get the Zernike polynomials ." alt="" coords="1335,2483,1445,2509"/>
 <area shape="rect" id="node67" href="$group__grp__output.html#ga2f9e9c50084175e5174b1e1070e24d73" title="Write the magnetic vector potential Fourier harmonics to the output file group /vector_potential ." alt="" coords="1493,2773,1632,2814"/>
-<area shape="rect" id="node69" href="$group__grp__force__driver.html#gabbc245b3884ee8d8d3e2a52f25149f78" title="fcn1" alt="" coords="1001,2383,1047,2409"/>
-<area shape="rect" id="node72" href="$group__grp__force__driver.html#ga8ccd6c7d901872702521d0a0edf95412" title="fcn2" alt="" coords="1001,2308,1047,2335"/>
+<area shape="rect" id="node69" href="$group__grp__force__driver.html#gabbc245b3884ee8d8d3e2a52f25149f78" title="Objective to be given to the Newton solver, using only function values." alt="" coords="1001,2383,1047,2409"/>
+<area shape="rect" id="node72" href="$group__grp__force__driver.html#ga8ccd6c7d901872702521d0a0edf95412" title="Objective to be given to the Newton solver, using function values and derivatives." alt="" coords="1001,2308,1047,2335"/>
 <area shape="rect" id="node73" href="$group__grp__force__driver.html#ga382822b303cbf8c56d6f54dcb379caf2" title="read or write force&#45;derivative matrix" alt="" coords="1151,2120,1238,2147"/>
 <area shape="rect" id="node70" href="$group__grp__output.html#gade76c03b9b11be2a12d3ddd32e77a6ae" title="Write convergence output (evolution of interface geometry, force, etc)." alt="" coords="1107,2318,1283,2359"/>
 </map>

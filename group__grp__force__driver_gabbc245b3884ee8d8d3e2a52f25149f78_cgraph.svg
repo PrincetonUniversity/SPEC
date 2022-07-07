@@ -12,7 +12,7 @@
 <!-- Node1 -->
 <g id="node1" class="node">
 <title>Node1</title>
-<g id="a_node1"><a xlink:title="fcn1">
+<g id="a_node1"><a xlink:title="Objective to be given to the Newton solver, using only function values.">
 <polygon fill="#bfbfbf" stroke="black" points="0,-2241.5 0,-2260.5 35,-2260.5 35,-2241.5 0,-2241.5"/>
 <text text-anchor="middle" x="17.5" y="-2248.5" font-family="Helvetica,sans-Serif" font-size="10.00">fcn1</text>
 </a>
@@ -1483,7 +1483,7 @@
 <!-- Node55 -->
 <g id="node55" class="node">
 <title>Node55</title>
-<g id="a_node55"><a xlink:href="group__grp__force__driver.html#ga8ccd6c7d901872702521d0a0edf95412" target="_top" xlink:title="fcn2">
+<g id="a_node55"><a xlink:href="group__grp__force__driver.html#ga8ccd6c7d901872702521d0a0edf95412" target="_top" xlink:title="Objective to be given to the Newton solver, using function values and derivatives.">
 <polygon fill="white" stroke="black" points="438.5,-2194.5 438.5,-2213.5 473.5,-2213.5 473.5,-2194.5 438.5,-2194.5"/>
 <text text-anchor="middle" x="456" y="-2201.5" font-family="Helvetica,sans-Serif" font-size="10.00">fcn2</text>
 </a>

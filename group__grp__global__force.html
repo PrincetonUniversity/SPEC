@@ -248,9 +248,9 @@ Matrix perturbation theory is used to compute the derivatives of the solution, i
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">NGdof</td><td>number of global degrees of freedom </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">position</td><td></td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">force</td><td></td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">LComputeDerivatives</td><td></td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">position</td><td>degrees-of-freedom = internal geometry (packed by packxi) </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">force</td><td>output: Fourier harmonics of B_mn^2 and spectral constraint forces </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">LComputeDerivatives</td><td>indicates whether derivatives are to be calculated; 0: no derivatives, 1: </td></tr>
     <tr><td class="paramdir">[in,out]</td><td class="paramname">LComputeAxis</td><td></td></tr>
   </table>
   </dd>

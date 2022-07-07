@@ -1,5 +1,5 @@
 <map id="fcn2" name="fcn2">
-<area shape="rect" id="node1" title="fcn2" alt="" coords="5,972,52,999"/>
+<area shape="rect" id="node1" title="Objective to be given to the Newton solver, using function values and derivatives." alt="" coords="5,972,52,999"/>
 <area shape="rect" id="node2" href="$group__grp__global__force.html#ga38c9d3c50bd043707fefa5137c9dbf44" title="Calculates , where &#160;and , and ." alt="" coords="100,1364,159,1391"/>
 <area shape="rect" id="node10" href="$group__grp__volume.html#gae4c62d20b8fef07f4471b5b0889ab005" title="Computes volume of each region; and, if required, the derivatives of the volume with respect to the i..." alt="" coords="2020,1289,2084,1316"/>
 <area shape="rect" id="node43" href="$group__grp__packing.html#ga094e630c02686dd178749eb1efbf13fb" title="Packs, and unpacks, geometrical degrees of freedom; and sets coordinate axis." alt="" coords="807,792,865,819"/>
@@ -57,7 +57,7 @@
 <area shape="rect" id="node50" href="$group__grp__initialization.html#ga28628de0fdb3b3497668007d8d0643bd" title="Allocates and initializes internal arrays." alt="" coords="584,1136,643,1163"/>
 <area shape="rect" id="node51" href="$basefn_8f90.html#a6076d695487184d58d30d73de2f6470f" title="Get the Zernike polynomials ." alt="" coords="781,1011,891,1037"/>
 <area shape="rect" id="node53" href="$group__grp__output.html#ga2f9e9c50084175e5174b1e1070e24d73" title="Write the magnetic vector potential Fourier harmonics to the output file group /vector_potential ." alt="" coords="979,635,1117,677"/>
-<area shape="rect" id="node55" href="$group__grp__force__driver.html#gabbc245b3884ee8d8d3e2a52f25149f78" title="fcn1" alt="" coords="590,1011,637,1037"/>
+<area shape="rect" id="node55" href="$group__grp__force__driver.html#gabbc245b3884ee8d8d3e2a52f25149f78" title="Objective to be given to the Newton solver, using only function values." alt="" coords="590,1011,637,1037"/>
 <area shape="rect" id="node60" href="$namespaceallglobal.html#a50e99bda692e1d2e3fa68857b67db880" title=" " alt="" coords="547,499,679,541"/>
 <area shape="rect" id="node61" href="$namespaceallglobal.html#a7824bc37519fe88336534ce90ab2af16" title=" " alt="" coords="537,1288,689,1315"/>
 <area shape="rect" id="node62" href="$xspech_8f90.html#a537af4990058c0b0f2cd8b3669af204f" title="Closes output files, writes screen summary." alt="" coords="583,565,643,592"/>

@@ -1,8 +1,8 @@
 <map id="writereadgf" name="writereadgf">
 <area shape="rect" id="node1" title="read or write force&#45;derivative matrix" alt="" coords="1012,119,1099,145"/>
-<area shape="rect" id="node2" href="$group__grp__force__driver.html#ga8ccd6c7d901872702521d0a0edf95412" title="fcn2" alt="" coords="917,205,964,232"/>
+<area shape="rect" id="node2" href="$group__grp__force__driver.html#ga8ccd6c7d901872702521d0a0edf95412" title="Objective to be given to the Newton solver, using function values and derivatives." alt="" coords="917,205,964,232"/>
 <area shape="rect" id="node3" href="$group__grp__force__driver.html#gaec14f81fbdbedafbc4189489ec8ae178" title="Employs Newton method to find , where &#160;and &#160;is defined in dforce() ." alt="" coords="805,128,869,155"/>
-<area shape="rect" id="node4" href="$group__grp__force__driver.html#gabbc245b3884ee8d8d3e2a52f25149f78" title="fcn1" alt="" coords="379,29,425,56"/>
+<area shape="rect" id="node4" href="$group__grp__force__driver.html#gabbc245b3884ee8d8d3e2a52f25149f78" title="Objective to be given to the Newton solver, using only function values." alt="" coords="379,29,425,56"/>
 <area shape="rect" id="node5" href="$xspech_8f90.html#a48f45478dc2c9f70ea8aa1c60ad06503" title="This is the main &quot;driver&quot; for the physics part of SPEC." alt="" coords="707,331,757,357"/>
 <area shape="rect" id="node6" href="$group__grp__global__force.html#ga38c9d3c50bd043707fefa5137c9dbf44" title="Calculates , where &#160;and , and ." alt="" coords="567,205,625,232"/>
 <area shape="rect" id="node8" href="$xspech_8f90.html#a9fdc71dffd7c61ee4588a3f80d3ab9ce" title="Main subroutine of SPEC." alt="" coords="207,412,270,439"/>

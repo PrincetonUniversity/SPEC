@@ -135,10 +135,10 @@ Functions/Subroutines</h2></td></tr>
 <tr class="memdesc:ga382822b303cbf8c56d6f54dcb379caf2"><td class="mdescLeft">&#160;</td><td class="mdescRight">read or write force-derivative matrix  <a href="group__grp__force__driver.html#ga382822b303cbf8c56d6f54dcb379caf2">More...</a><br /></td></tr>
 <tr class="separator:ga382822b303cbf8c56d6f54dcb379caf2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gabbc245b3884ee8d8d3e2a52f25149f78"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__grp__force__driver.html#gabbc245b3884ee8d8d3e2a52f25149f78">fcn1</a> (NGdof, xx, fvec, irevcm)</td></tr>
-<tr class="memdesc:gabbc245b3884ee8d8d3e2a52f25149f78"><td class="mdescLeft">&#160;</td><td class="mdescRight">fcn1  <a href="group__grp__force__driver.html#gabbc245b3884ee8d8d3e2a52f25149f78">More...</a><br /></td></tr>
+<tr class="memdesc:gabbc245b3884ee8d8d3e2a52f25149f78"><td class="mdescLeft">&#160;</td><td class="mdescRight">Objective to be given to the Newton solver, using only function values.  <a href="group__grp__force__driver.html#gabbc245b3884ee8d8d3e2a52f25149f78">More...</a><br /></td></tr>
 <tr class="separator:gabbc245b3884ee8d8d3e2a52f25149f78"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga8ccd6c7d901872702521d0a0edf95412"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__grp__force__driver.html#ga8ccd6c7d901872702521d0a0edf95412">fcn2</a> (NGdof, xx, fvec, fjac, Ldfjac, irevcm)</td></tr>
-<tr class="memdesc:ga8ccd6c7d901872702521d0a0edf95412"><td class="mdescLeft">&#160;</td><td class="mdescRight">fcn2  <a href="group__grp__force__driver.html#ga8ccd6c7d901872702521d0a0edf95412">More...</a><br /></td></tr>
+<tr class="memdesc:ga8ccd6c7d901872702521d0a0edf95412"><td class="mdescLeft">&#160;</td><td class="mdescRight">Objective to be given to the Newton solver, using function values and derivatives.  <a href="group__grp__force__driver.html#ga8ccd6c7d901872702521d0a0edf95412">More...</a><br /></td></tr>
 <tr class="separator:ga8ccd6c7d901872702521d0a0edf95412"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -328,7 +328,7 @@ Here is the caller graph for this function:</div>
       </table>
 </div><div class="memdoc">
 
-<p>fcn1 </p>
+<p>Objective to be given to the Newton solver, using only function values. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">NGdof</td><td></td></tr>
@@ -407,7 +407,7 @@ Here is the caller graph for this function:</div>
       </table>
 </div><div class="memdoc">
 
-<p>fcn2 </p>
+<p>Objective to be given to the Newton solver, using function values and derivatives. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">NGdof</td><td></td></tr>
@@ -415,7 +415,7 @@ Here is the caller graph for this function:</div>
     <tr><td class="paramdir">[out]</td><td class="paramname">fvec</td><td></td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">fjac</td><td></td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">Ldfjac</td><td></td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">irevcm</td><td></td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">irevcm</td><td>indicator for reverse communication; provided by solver to tell this method what to compute </td></tr>
   </table>
   </dd>
 </dl>

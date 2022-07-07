@@ -1,5 +1,5 @@
 <map id="fcn1" name="fcn1">
-<area shape="rect" id="node1" title="fcn1" alt="" coords="5,223,52,249"/>
+<area shape="rect" id="node1" title="Objective to be given to the Newton solver, using only function values." alt="" coords="5,223,52,249"/>
 <area shape="rect" id="node2" href="$group__grp__global__force.html#ga38c9d3c50bd043707fefa5137c9dbf44" title="Calculates , where &#160;and , and ." alt="" coords="100,1316,159,1343"/>
 <area shape="rect" id="node43" href="$group__grp__packing.html#ga094e630c02686dd178749eb1efbf13fb" title="Packs, and unpacks, geometrical degrees of freedom; and sets coordinate axis." alt="" coords="807,1395,865,1421"/>
 <area shape="rect" id="node54" href="$group__grp__force__driver.html#gaec14f81fbdbedafbc4189489ec8ae178" title="Employs Newton method to find , where &#160;and &#160;is defined in dforce() ." alt="" coords="367,348,431,375"/>
@@ -56,7 +56,7 @@
 <area shape="rect" id="node50" href="$group__grp__initialization.html#ga28628de0fdb3b3497668007d8d0643bd" title="Allocates and initializes internal arrays." alt="" coords="807,1195,865,1221"/>
 <area shape="rect" id="node51" href="$basefn_8f90.html#a6076d695487184d58d30d73de2f6470f" title="Get the Zernike polynomials ." alt="" coords="993,1261,1103,1288"/>
 <area shape="rect" id="node53" href="$group__grp__output.html#ga2f9e9c50084175e5174b1e1070e24d73" title="Write the magnetic vector potential Fourier harmonics to the output file group /vector_potential ." alt="" coords="1168,849,1307,890"/>
-<area shape="rect" id="node55" href="$group__grp__force__driver.html#ga8ccd6c7d901872702521d0a0edf95412" title="fcn2" alt="" coords="590,285,637,312"/>
+<area shape="rect" id="node55" href="$group__grp__force__driver.html#ga8ccd6c7d901872702521d0a0edf95412" title="Objective to be given to the Newton solver, using function values and derivatives." alt="" coords="590,285,637,312"/>
 <area shape="rect" id="node57" href="$group__grp__force__driver.html#ga382822b303cbf8c56d6f54dcb379caf2" title="read or write force&#45;derivative matrix" alt="" coords="793,344,879,371"/>
 <area shape="rect" id="node60" href="$namespaceallglobal.html#a50e99bda692e1d2e3fa68857b67db880" title=" " alt="" coords="547,665,679,706"/>
 <area shape="rect" id="node61" href="$namespaceallglobal.html#a7824bc37519fe88336534ce90ab2af16" title=" " alt="" coords="537,1152,689,1179"/>

@@ -195,7 +195,7 @@
 <!-- Node11 -->
 <g id="node11" class="node">
 <title>Node11</title>
-<g id="a_node11"><a xlink:href="group__grp__force__driver.html#gabbc245b3884ee8d8d3e2a52f25149f78" target="_top" xlink:title="fcn1">
+<g id="a_node11"><a xlink:href="group__grp__force__driver.html#gabbc245b3884ee8d8d3e2a52f25149f78" target="_top" xlink:title="Objective to be given to the Newton solver, using only function values.">
 <polygon fill="white" stroke="black" points="384,-44.88 384,-63.88 419,-63.88 419,-44.88 384,-44.88"/>
 <text text-anchor="middle" x="401.5" y="-51.88" font-family="Helvetica,sans-Serif" font-size="10.00">fcn1</text>
 </a>
@@ -225,7 +225,7 @@
 <!-- Node13 -->
 <g id="node13" class="node">
 <title>Node13</title>
-<g id="a_node13"><a xlink:href="group__grp__force__driver.html#ga8ccd6c7d901872702521d0a0edf95412" target="_top" xlink:title="fcn2">
+<g id="a_node13"><a xlink:href="group__grp__force__driver.html#ga8ccd6c7d901872702521d0a0edf95412" target="_top" xlink:title="Objective to be given to the Newton solver, using function values and derivatives.">
 <polygon fill="white" stroke="black" points="29.5,-53.88 29.5,-72.88 64.5,-72.88 64.5,-53.88 29.5,-53.88"/>
 <text text-anchor="middle" x="47" y="-60.88" font-family="Helvetica,sans-Serif" font-size="10.00">fcn2</text>
 </a>

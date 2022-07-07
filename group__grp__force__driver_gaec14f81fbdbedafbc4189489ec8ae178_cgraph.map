@@ -1,8 +1,8 @@
 <map id="newton" name="newton">
 <area shape="rect" id="node1" title="Employs Newton method to find , where &#160;and &#160;is defined in dforce() ." alt="" coords="5,1868,69,1895"/>
 <area shape="rect" id="node2" href="$group__grp__global__force.html#ga38c9d3c50bd043707fefa5137c9dbf44" title="Calculates , where &#160;and , and ." alt="" coords="271,1600,329,1627"/>
-<area shape="rect" id="node78" href="$group__grp__force__driver.html#gabbc245b3884ee8d8d3e2a52f25149f78" title="fcn1" alt="" coords="117,1868,164,1895"/>
-<area shape="rect" id="node80" href="$group__grp__force__driver.html#ga8ccd6c7d901872702521d0a0edf95412" title="fcn2" alt="" coords="117,1943,164,1969"/>
+<area shape="rect" id="node78" href="$group__grp__force__driver.html#gabbc245b3884ee8d8d3e2a52f25149f78" title="Objective to be given to the Newton solver, using only function values." alt="" coords="117,1868,164,1895"/>
+<area shape="rect" id="node80" href="$group__grp__force__driver.html#ga8ccd6c7d901872702521d0a0edf95412" title="Objective to be given to the Newton solver, using function values and derivatives." alt="" coords="117,1943,164,1969"/>
 <area shape="rect" id="node81" href="$group__grp__force__driver.html#ga382822b303cbf8c56d6f54dcb379caf2" title="read or write force&#45;derivative matrix" alt="" coords="257,1781,343,1808"/>
 <area shape="rect" id="node3" href="$group__grp__parallel.html#ga5d8e3412e023967dda67b02f358b754a" title="Broadcasts Beltrami fields, profiles, . . ." alt="" coords="1036,1539,1095,1565"/>
 <area shape="rect" id="node4" href="$namespaceallglobal.html#aea1f5a74462533337cb950b8d7486b25" title="Check if volume vvol is associated to the corresponding MPI node." alt="" coords="1205,1452,1349,1479"/>
