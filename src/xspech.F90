@@ -211,9 +211,10 @@ end subroutine xspech
 !> <ul>
 !> <li> The input file name, \c ext , is given as the first command line input, and the input file itself is then \c ext.sp .</li>
 !> <li> Alternatively, you can directly specify the input file itself as \c ext.sp .</li>
+!> <li> You can also generate a template input file using \c xspec -i .</li>
+!> <li> Or print help information using \c xspec -h .</li>
 !> <li> Additional command line inputs recognized are:
 !>      <ul>
-!>      <li> \c -help or \c -h will give help information to user </li>
 !>      <li> \c -readin will immediately set \c Wreadin=T ; this may be over-ruled when the namelist \c screenlist is read
 !>      </ul> </li>
 !> </ul>
@@ -221,7 +222,7 @@ subroutine read_command_args
   use mod_kinds, only: wp => dp
   use fileunits, only: ounit
   use inputlist, only: Wreadin
-  use allglobal, only: cpus, myid, ext, MPI_COMM_SPEC
+  use allglobal, only: cpus, myid, ext, MPI_COMM_SPEC, write_spec_namelist
 
 
 #ifdef OPENMP
@@ -244,31 +245,35 @@ subroutine read_command_args
 
     ! first command-line argument is likely ext or ext.sp
     call getarg( 1, arg )
-    extlen = len_trim(arg)
-    sppos = index(arg, ".sp", .true.) ! search for ".sp" from the back of ext
-    if (sppos.eq.extlen-2) then       ! check if ext ends with ".sp"
-      arg = arg(1:extlen-3)           ! if this is the case, remove ".sp" from end of ext
-    endif
-    ext = trim(arg)
-
-    if( ext .eq. "" .or. ext .eq. "-h" .or. ext .eq. "-help" ) then
-     ;write(ounit,'("rdcmdl : ", 10x ," : ")')
-     ;write(ounit,'("rdcmdl : ", 10x ," : file extension must be given as first command line argument ; extra command line options = -help -readin ;")')
-     if( ext .eq. "-h" .or. ext .eq. "-help" ) then
-      write(ounit,'("rdcmdl : ", 10x ," : ")')
-      write(ounit,'("rdcmdl : ", 10x ," : the input file ext.sp must contain the input namelists; see global.pdf for description ;")')
-     endif
-
-   if( .true. ) then
-     write(6,'("rdcmdl :      fatal : myid=",i3," ; .true. ; the input file does not exist;")') myid
-     call MPI_ABORT( MPI_COMM_SPEC, 1, ierr )
-     stop "rdcmdl : .true. : the input file does not exist ;"
-    endif
- ! if not, abort;
-    endif
 
     write(ounit,'("rdcmdl : ", 10x ," : ")')
-    write(ounit,'("rdcmdl : ",f10.2," : ext = ",a100)') cput-cpus, ext
+    select case (trim(arg))
+    case ("", "-h", "--help")
+        write(ounit,'("rdcmdl : ", 10x ," : file extension must be given as first command line argument ;")')
+        write(ounit,'("rdcmdl : ", 10x ," : Usage: <mpiexec> xspec input_file <arguments>")')
+        write(ounit,'("rdcmdl : ", 10x ," : Other options:")')
+        write(ounit,'("rdcmdl : ", 10x ," :     -h / --help :  print help information.")')
+        write(ounit,'("rdcmdl : ", 10x ," :     -i / --init :  generate a template input file.")')
+        write(ounit,'("rdcmdl : ", 10x ," : Additional arguments:")')
+        write(ounit,'("rdcmdl : ", 10x ," :     -readin : print debugging information during reading inputs")')
+        call MPI_ABORT( MPI_COMM_SPEC, 0, ierr )
+        stop
+    case ("-i", "--init")
+        write(ounit,'("rdcmdl : ", 10x ," : write a template input file in example.sp")')
+        call write_spec_namelist()
+        call MPI_ABORT( MPI_COMM_SPEC, 0, ierr )
+        stop
+    case default
+        extlen = len_trim(arg)
+        sppos = index(arg, ".sp", .true.) ! search for ".sp" from the back of ext
+        if (sppos.eq.extlen-2) then       ! check if ext ends with ".sp"
+            arg = arg(1:extlen-3)         ! if this is the case, remove ".sp" from end of ext
+        endif
+        ext = trim(arg)
+
+        write(ounit,'("rdcmdl : ", 10x ," : ")')
+        write(ounit,'("rdcmdl : ",f10.2," : ext = ",a100)') cput-cpus, ext
+    end select
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -279,7 +284,6 @@ subroutine read_command_args
       do while ( iarg < numargs )
         iarg = iarg + 1 ; call getarg( iarg, arg)
         select case( arg )
-        case("-help","-h") ; write(ounit,'("rdcmdl : ",f10.2," : myid=",i3," : command line options = -readin ;")') cput-cpus, myid
         case("-readin"   ) ; Wreadin = .true.
         case("-p4pg"     ) ; iarg = iarg + 1 ; call getarg( iarg, arg) ! TODO: what is this?
         case("-p4wd"     ) ; iarg = iarg + 1 ; call getarg( iarg, arg) ! TODO: what is this?
