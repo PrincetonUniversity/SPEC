@@ -130,6 +130,7 @@ subroutine dfp100(Ndofgl, x, Fvec, LComputeDerivatives)
       WCALL( dfp100, matrixBG, ( vvol, mn_field, ll ) )
     endif
 
+    ! Call Beltrami solver to get the magnetic field in the current volume.
     WCALL( dfp100, ma02aa, ( vvol, NN ) )
 
     Lsavedguvij = .false.

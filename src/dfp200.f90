@@ -41,7 +41,7 @@
 !> \brief Given the field consistent with the constraints and the geometry, computes local quantites related to the force evaluation.
 !>
 !> @param LcomputeDerivatives
-!> @param vvol
+!> @param  vvol
 subroutine dfp200( LcomputeDerivatives, vvol)
 
   use constants, only : zero, half, one, two
@@ -54,7 +54,7 @@ subroutine dfp200( LcomputeDerivatives, vvol)
                         gamma, adiabatic, pscale, mu, &
                         epsilon, &
                         Lfindzero, &
-                        Lconstraint, Lcheck, &
+                        Lconstraint, Lcheck, LHmatrix, &
                         Lextrap, &
                         Lfreebound
 
@@ -71,6 +71,7 @@ subroutine dfp200( LcomputeDerivatives, vvol)
                         mn_force, im_force, in_force, &
                         Ate, Aze, Ato, Azo, & ! only required for debugging;
                         ijreal, &
+                        !fijreal,&
                         efmn, ofmn, cfmn, sfmn, &
                         evmn, odmn, comn, simn, &
                         Nt, Nz, &
@@ -84,7 +85,7 @@ subroutine dfp200( LcomputeDerivatives, vvol)
                         vvolume, dvolume, &
                         Rij, Zij, sg, guvij, iRij, iZij, dRij, dZij, tRij, tZij, & ! Jacobian and metrics; computed in coords;
                         diotadxup, dItGpdxtp, &
-                        dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated, &
+                        dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated,Lhessian2Dallocated,Lhessian3Dallocated,denergydrr,denergydzr, &
                         BBweight, & ! exponential weight on force-imbalance harmonics;
                         psifactor, &
                         lmns, &
@@ -111,6 +112,8 @@ subroutine dfp200( LcomputeDerivatives, vvol)
   REAL                 :: lastcpu, lss, lfactor, DDl, MMl
   REAL                 :: det
   REAL   , allocatable :: XX(:), YY(:), dBB(:,:), dII(:), dLL(:), dPP(:), length(:), dRR(:,:), dZZ(:,:), constraint(:)
+  REAL   , allocatable :: ddFcol1(:), ddFcol2(:), ddFcol3(:), ddFcol4(:)
+
 
   CHARACTER            :: packorunpack
 
@@ -137,6 +140,10 @@ subroutine dfp200( LcomputeDerivatives, vvol)
     SALLOCATE( dLL       , (1:Ntz     ), zero ) ! length   constraint;
     SALLOCATE( dPP       , (1:Ntz     ), zero ) ! poloidal constraint;
     SALLOCATE( constraint, (1:Ntz     ), zero )
+    SALLOCATE( ddFcol1   , (1:Ntz     ), zero )
+    SALLOCATE( ddFcol2   , (1:Ntz     ), zero )
+    SALLOCATE( ddFcol3   , (1:Ntz     ), zero )
+    SALLOCATE( ddFcol4   , (1:Ntz     ), zero )
   endif
 
   if( LocalConstraint ) then
@@ -162,6 +169,8 @@ subroutine dfp200( LcomputeDerivatives, vvol)
 
     vflag = 1
     WCALL( dfp200, volume, ( vvol, vflag ) ) ! compute volume;
+
+     !!----Hessian2D cleared-----
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
     do iocons = 0, 1 ! construct field magnitude on inner and outer interfaces; inside do vvol;
@@ -233,9 +242,24 @@ subroutine dfp200( LcomputeDerivatives, vvol)
               ! Helicity multiplier and poloidal flux derivatives w.r.t geometry
               call evaluate_dmupfdx(innout, idof, ii, issym, irz)
 
+              !-----Hessian 2D cleared
 
-              ! Evaluate derivatives of B square
-              call evaluate_dBB(vvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz, LcomputeDerivatives)
+            !if (LHmatrix .and. Lhessian2Dallocated) then
+             !   call hessian_dFFdRZ(vvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
+            !else
+                ! Evaluate derivatives of B square
+              if(Lhessianallocated) then
+                call evaluate_dBB(vvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz, &
+                                  LComputeDerivatives)
+              endif
+
+                if (Lhessian3Dallocated .and. Igeometry.ge.3) then
+                    call hessian3D_dFFdRZ(vvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
+                endif
+
+                !if (LHmatrix .and. Lhessian2Dallocated .and. Igeometry.eq.2) then
+                !    call hessian_dFFdRZ(vvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
+                !endif
 
             enddo ! matches do innout;
           enddo ! matches do issym;
@@ -534,7 +558,12 @@ else ! CASE SEMI GLOBAL CONSTRAINT
                         LREGION(lvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
 
                         ! EVALUATE dBB
-                        call evaluate_dBB(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz, LcomputeDerivatives)
+                        call evaluate_dBB(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz, &
+                                          LComputeDerivatives)
+
+                        if (Lhessian3Dallocated .and. Igeometry.ge.3) then
+                            call hessian3D_dFFdRZ(vvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
+                        endif
 
                     enddo     ! matches do lvol = vvol, vvol+1
 
@@ -564,6 +593,18 @@ else ! CASE SEMI GLOBAL CONSTRAINT
         call MPI_BCAST( dBBdmp(1:LGdof_force, vvol ,0:1, 1:2         ), 2*2*LGdof_force, MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_SPEC, ierr )
     enddo
 
+     !We need to broadcast the vectors, denergydrr and denergydzr.
+
+    if (Lhessian3Dallocated) then
+        do vvol = 1, Mvol
+            call WhichCpuID(vvol, cpu_id)
+
+            call MPI_BCAST( denergydrr(1:LGdof_field, vvol, 0:1, 1:LGdof_field, 0:1), 2*2*(LGdof_field**2), MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_WORLD, ierr )
+            call MPI_BCAST( denergydzr(1:LGdof_field, vvol, 0:1, 1:LGdof_field, 0:1), 2*2*(LGdof_field**2), MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_WORLD, ierr )
+            call MPI_BCAST( dBBdmp(1:LGdof_force, vvol ,0:1, 1:2         ), 2*2*LGdof_force, MPI_DOUBLE_PRECISION, cpu_id, MPI_COMM_WORLD, ierr )
+        enddo
+    endif
+
     endif ! End of if( LComputeDerivatives )
 
 
@@ -577,6 +618,10 @@ else ! CASE SEMI GLOBAL CONSTRAINT
       DALLOCATE(dII)
       DALLOCATE(dZZ)
       DALLOCATE(dRR)
+      DALLOCATE(ddFcol1)
+  DALLOCATE(ddFcol2)
+  DALLOCATE(ddFcol3)
+  DALLOCATE(ddFcol4)
   endif
 
   DALLOCATE(dBB)
@@ -1417,7 +1462,7 @@ subroutine evaluate_dBB(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, length,
                         LGdof_force, NGdof_force, NAdof, &
                         vvolume, dvolume, &
                         Rij, Zij, sg, guvij, iRij, iZij, dRij, dZij, tRij, tZij, & ! Jacobian and metrics; computed in coords;
-                        dFFdRZ, dBBdmp, &
+                        dFFdRZ,HdFFdRZ, dBBdmp, &
                         BBweight, & ! exponential weight on force-imbalance harmonics;
                         psifactor, &
                         Iquad, &
@@ -1712,3 +1757,378 @@ enddo ! end of do iocons;
 
 end subroutine evaluate_dBB
 
+
+subroutine hessian_dFFdRZ(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
+
+! Evaluate the derivative of the square of the magnetic field modulus. Add spectral constraint derivatives if
+! required.
+
+! INPUT
+! -----
+!    lvol:     Volume number
+!   idof:     Labels degree of freedom
+!   innout: Index for loop on inner / outer interface (which interface is perturbed)
+!   issym:  Index for loop on stellarator non-symmetric terms
+!   irz:     Index for loop on R or Z modes
+!   ii:     Index for loop on Fourier mode
+
+! MODULES
+! -------
+  use constants, only : zero, half, one, two
+
+  use numerical, only : small
+
+  use fileunits, only : ounit
+
+  use inputlist, only : Wmacros, Wdfp200, Ntor, Igeometry, Lconstraint,&
+                        gamma, adiabatic, pscale, Lcheck, dRZ, Nvol, &
+                        epsilon, Lrad
+
+  use cputiming, only : Tdfp200
+
+  use allglobal, only : ncpu, myid, cpus, &
+                        Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, LocalConstraint, MPI_COMM_SPEC, &
+                        Mvol, dpflux, &
+                        iRbc, iZbs, iRbs, iZbc, & ! Fourier harmonics of geometry; vector of independent variables, position, is "unpacked" into iRbc,iZbs;
+                        NOTstellsym, &
+                        mn_field, im_field, in_field, mns, &
+                        ijreal, &
+                        !hijreal, hijmn,&
+                        efmn, ofmn, cfmn, sfmn, &
+                        evmn, odmn, comn, simn, &
+                        Nt, Nz, &
+                        cosi, sini, & ! FFT workspace
+                        sweight, &
+                        mmpp, &
+                        LGdof_force, NAdof, &
+                        vvolume, dvolume, &
+                        Rij, Zij, sg, guvij, iRij, iZij, dRij, dZij, tRij, tZij, & ! Jacobian and metrics; computed in coords;
+                        dFFdRZ, dBBdmp, HdFFdRZ, &
+                        BBweight, & ! exponential weight on force-imbalance harmonics;
+                        psifactor, &
+                        Iquad, &
+                        dRodR, dRodZ, dZodR, dZodZ, dBdX, &
+                        xoffset
+
+ LOCALS
+!------
+
+INTEGER                 :: iocons, lvol, ideriv, id, iflag, Lcurvature, innout, issym, irz, ii, ifail, idoc, idof, Ntz
+REAL                    :: lss, DDl, MMl
+REAL                    :: dAt(1:Ntz,-1:2), dAz(1:Ntz,-1:2), XX(1:Ntz), YY(1:Ntz), dBB(1:Ntz,-1:2), dII(1:Ntz), dLL(1:Ntz)
+REAL                    :: dPP(1:Ntz), length(1:Ntz), dRR(1:Ntz,-1:2), dZZ(1:Ntz,-1:2), constraint(1:Ntz)
+#ifdef DEBUG
+INTEGER                 :: isymdiff, ll, NN, ndofgl, pvol
+REAL                    :: Fvec(1:Mvol-1), Xdof(1:Mvol-1)
+REAL,   allocatable     :: oRbc(:,:), oZbs(:,:), oRbs(:,:), oZbc(:,:) ! original geometry;
+REAL,   allocatable     :: idBB(:,:), iforce(:,:), iposition(:,:)
+CHARACTER               :: packorunpack
+#endif
+
+
+
+do iocons = 0, 1
+
+    if( lvol.eq.   1 .and. iocons.eq.0 ) cycle ! fixed inner boundary (or coordinate axis); no constraints;
+    if( lvol.eq.Mvol .and. iocons.eq.1 ) cycle ! fixed outer boundary                     ; no constraints;
+
+
+! Evaluate B^2 (no derivatives)
+! -----------------------------------
+    ideriv = 0; iflag=1
+
+    WCALL( dfp200, lforce, (lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, iflag) )
+
+! hessian_dFFdRZ CONSTRUCTION
+! ===================
+
+! B square contribution
+! ---------------------
+    ideriv = -1; iflag=0
+
+    WCALL( dfp200, lforce, (lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, iflag) )
+
+    ! Add derivatives of pressure as well
+    FATAL( dfp200, vvolume(lvol).lt.small, shall divide by vvolume(lvol)**(gamma+one) )
+
+    ! Derivatives of force wrt geometry; In real space.
+    ijreal(1:Ntz) = - adiabatic(lvol) * pscale * gamma * dvolume / vvolume(lvol)**(gamma+one) + dBB(1:Ntz,-1)*Rij(1:Ntz,0,0)
+
+! Spectral condensation contribution
+! ----------------------------------
+
+    dLL(1:Ntz) = zero ! either no spectral constraint, or not the appropriate interface;
+    dPP(1:Ntz) = zero ! either no spectral constraint, or not the appropriate interface;
+    dII(1:Ntz) = zero
+
+
+    ! Map to Fourier space
+    call tfft(  Nt, Nz, ijreal(1:Ntz), dII(1:Ntz), & ! recall that ijreal contains derivatives of pressure term;
+                mn_field, im_field(1:mn_field), in_field(1:mn_field), efmn(1:mn_field), ofmn(1:mn_field), cfmn(1:mn_field), sfmn(1:mn_field), ifail )
+
+
+    FATAL( dfp200, lvol-1+innout.gt.Mvol, psifactor needs attention )
+
+    idoc = 0
+
+    ! Plasma and magnetic pressure;
+    ;   HdFFdRZ(idoc+1:idoc+mn_field    ,iocons,idof,innout,lvol) = + efmn(1:mn_field) !* psifactor(ii,lvol-1+innout) * BBweight(1:mn_field)
+    idoc = idoc + mn_field   ! even;
+    !if( Igeometry.ge.3 ) then ! Add spectral constraints;
+     !   HdFFdRZ(idoc+1:idoc+mn_field-1  ,iocons,idof,innout,lvol) = - sfmn(2:mn_field) * psifactor(ii,lvol-1+innout) * epsilon       & ! spectral condensation;
+      !                                                       - simn(2:mn_field) * psifactor(ii,lvol-1+innout) * sweight(lvol)   ! poloidal length constraint;
+    ! if( Ntor.gt.0 ) then
+    !  dFFdRZ(idoc+1:idoc+Ntor  ,iocons,idof,innout,lvol) = + odmn(2:Ntor+1) * psifactor(ii,lvol-1+innout) * apsilon
+    ! endif
+     ! idoc = idoc + mn_field-1 ! odd;
+    !endif ! end of if( Igeometry.ge.3) ;
+
+    if( NOTstellsym ) then ! Construct non-stellarator symmetric terms
+
+    ! Plasma and magnetic pressure;
+    ;       HdFFdRZ(idoc+1:idoc+mn_field-1  ,iocons,idof,innout,lvol) = + ofmn(2:mn_field) !* psifactor(ii,lvol-1+innout) * BBweight(2:mn_field)
+
+        idoc = idoc + mn_field-1 ! odd;
+        ! if( Igeometry.ge.3 ) then ! Add spectral constraints;
+        !     HdFFdRZ(idoc+1:idoc+mn_field    ,iocons,idof,innout,lvol) = - cfmn(1:mn_field) * psifactor(ii,lvol-1+innout) * epsilon       & ! spectral condensation;
+        !                                                          - comn(1:mn_field) * psifactor(ii,lvol-1+innout) * sweight(lvol)   ! poloidal length constraint;
+        !     !if( Ntor.ge.0 ) then
+        !         ! dFFdRZ(idoc+1:idoc+Ntor+1,iocons,idof,innout,lvol) = + evmn(1:Ntor+1) * psifactor(ii,lvol-1+innout) * apsilon ! poloidal origin      ;
+        !     !endif
+        !     idoc = idoc + mn_field   ! even;
+        ! endif ! end of if( Igeometry.ge.3) ;
+
+    endif ! end of if( NOTstellsym) ;
+
+#ifdef DEBUG
+    FATAL( dfp200, idoc.ne.LGdof_force, counting error )
+#endif
+
+enddo ! end of do iocons;
+
+end subroutine hessian_dFFdRZ
+
+subroutine hessian3D_dFFdRZ(lvol, idof, innout, issym, irz, ii, dBB, XX, YY, length, dRR, dZZ, dII, dLL, dPP, Ntz)
+
+! Evaluate the derivative of the square of the magnetic field modulus. Add spectral constraint derivatives if
+! required.
+
+! INPUT
+! -----
+!    lvol:     Volume number
+!   idof:     Labels degree of freedom
+!   innout: Index for loop on inner / outer interface (which interface is perturbed)
+!   issym:  Index for loop on stellarator non-symmetric terms
+!   irz:     Index for loop on R or Z modes
+!   ii:     Index for loop on Fourier mode
+
+! MODULES
+! -------
+  use constants, only : zero, half, one, two
+
+  use numerical, only : small
+
+  use fileunits, only : ounit
+
+  use inputlist, only : Wmacros, Wdfp200, Ntor, Igeometry, Lconstraint, &
+                        gamma, adiabatic, pscale, Lcheck, dRZ, Nvol, &
+                        epsilon, Lrad
+
+  use cputiming, only : Tdfp200
+
+  use allglobal, only : ncpu, myid, cpus, YESstellsym, NOTstellsym, MPI_COMM_SPEC,&
+                        Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, LocalConstraint, &
+                        Mvol, dpflux, &
+                        iRbc, iZbs, iRbs, iZbc, & ! Fourier harmonics of geometry; vector of independent variables, position, is "unpacked" into iRbc,iZbs;
+                        NOTstellsym, &
+                        mn_field, im_field, in_field, mns, &
+                        ijreal, &
+                        !fijreal, &
+                        efmn, ofmn, cfmn, sfmn, &
+                        evmn, odmn, comn, simn, &
+                        Nt, Nz, &
+                        cosi, sini, & ! FFT workspace
+                        sweight, Lhessian3Dallocated, &
+                        mmpp, &
+                        LGdof_force, NAdof, &
+                        vvolume, dvolume, &
+                        Rij, Zij, sg, guvij, iRij, iZij, dRij, dZij, tRij, tZij, & ! Jacobian and metrics; computed in coords;
+                        dFFdRZ, dBBdmp, HdFFdRZ, &
+                        denergydrr, denergydrz,denergydzr,denergydzz,&
+!                        efcol1mn,efcol2mn,efcol3mn,efcol4mn,ofcol1mn,ofcol2mn,ofcol3mn,ofcol4mn, &
+                        BBweight, & ! exponential weight on force-imbalance harmonics;
+                        psifactor, &
+                        Iquad, &
+                        dRodR, dRodZ, dZodR, dZodZ, dBdX, &
+                        xoffset
+
+ LOCALS
+!------
+
+INTEGER                 :: iocons, lvol, ideriv, id, iflag, Lcurvature, innout, issym, irz, ii, ifail, idoc, idof, Ntz
+REAL                    :: lss, DDl, MMl
+REAL                    :: dAt(1:Ntz,-1:2), dAz(1:Ntz,-1:2), XX(1:Ntz), YY(1:Ntz), dBB(1:Ntz,-1:2), dII(1:Ntz), dLL(1:Ntz)
+REAL                    :: dPP(1:Ntz), length(1:Ntz), dRR(1:Ntz,-1:2), dZZ(1:Ntz,-1:2), constraint(1:Ntz)
+REAL                    :: ddFcol1(1:Ntz), ddFcol2(1:Ntz),ddFcol3(1:Ntz), ddFcol4(1:Ntz)
+
+#ifdef DEBUG
+INTEGER                 :: isymdiff, ll, NN, ndofgl, pvol
+REAL                    :: Fvec(1:Mvol-1), Xdof(1:Mvol-1)
+REAL,   allocatable 	:: oRbc(:,:), oZbs(:,:), oRbs(:,:), oZbc(:,:) ! original geometry;
+REAL,   allocatable 	:: idBB(:,:), iforce(:,:), iposition(:,:)
+CHARACTER               :: packorunpack
+#endif
+
+
+
+do iocons = 0, 1
+
+    if( lvol.eq.   1 .and. iocons.eq.0 ) cycle ! fixed inner boundary (or coordinate axis); no constraints;
+    if( lvol.eq.Mvol .and. iocons.eq.1 ) cycle ! fixed outer boundary                     ; no constraints;
+
+
+! Evaluate B^2 (no derivatives)
+! -----------------------------------
+    ideriv = 0; iflag=0
+
+    WCALL( dfp200, lforce, (lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl,iflag) )
+
+
+! hessian_dFFdRZ CONSTRUCTION
+! ===================
+
+! B square contribution
+! ---------------------
+    ideriv = -1; iflag=1
+
+    WCALL( dfp200, lforce, (lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, iflag) )
+
+    ! Add derivatives of pressure as well
+    FATAL( dfp200, vvolume(lvol).lt.small, shall divide by vvolume(lvol)**(gamma+one) )
+
+    ! Derivatives of force wrt geometry; In real space.
+    ijreal(1:Ntz) = - adiabatic(lvol) * pscale * gamma * dvolume / vvolume(lvol)**(gamma+one) + dBB(1:Ntz,-1)
+
+        if(YESstellsym ) then
+       !if( issym.eq.0 ) then
+
+            if( irz.eq.0 ) then !derivative wrt Rbs of d/dr(dF)
+
+                 if(innout.eq.iocons) then
+                    ddFcol1(1:Ntz) = ijreal(1:Ntz) * Zij(1:Ntz,2,0) * Rij(1:Ntz,0,0) & !Frr       d/dr(dw/dr)
+                                   +  (dBB(1:Ntz,0)+adiabatic(lvol) * pscale/vvolume(lvol)**gamma ) * Zij(1:Ntz,2,0) * cosi(1:Ntz,ii)
+
+                    ddFcol2(1:Ntz) = ijreal(1:Ntz) * Rij(1:Ntz,0,0) * Rij(1:Ntz,2,0) &  !Fzr        d/dr(dw/dz)
+                                    + (dBB(1:Ntz,0) +adiabatic(lvol) * pscale/vvolume(lvol)**gamma )* Rij(1:Ntz,2,0) * cosi(1:Ntz,ii) &
+                                    + (dBB(1:Ntz,0) +adiabatic(lvol) * pscale/vvolume(lvol)**gamma )* Rij(1:Ntz,0,0) * sini(1:Ntz,ii) * (-im_field(ii))
+                  else
+
+                  ddFcol1(1:Ntz) = ijreal(1:Ntz) * Zij(1:Ntz,2,0) * Rij(1:Ntz,0,0) !Frr       d/dr(dw/dr)
+                  ddFcol2(1:Ntz) =  ijreal(1:Ntz) * Rij(1:Ntz,0,0) * Rij(1:Ntz,2,0) !Fzr        d/dr(dw/dz)
+                 endif
+            else !derivative wrt to Zbs of d/dz(dF)
+
+                if(innout.eq.iocons) then
+                   ddFcol3(1:Ntz) = ijreal(1:Ntz) * Rij(1:Ntz,0,0) * Zij(1:Ntz,2,0) &   !Frz      d/dz(dw/dr)
+                                  + (dBB(1:Ntz,0) +adiabatic(lvol) * pscale/vvolume(lvol)**gamma )* Rij(1:Ntz,0,0) * im_field(ii) *cosi(1:Ntz,ii)
+                   ddFcol4(1:Ntz) =  ijreal(1:Ntz) * Rij(1:Ntz,0,0) * Rij(1:Ntz,2,0)  !Fzz    d/dz(dw/dz)
+                else
+                   ddFcol3(1:Ntz) = ijreal(1:Ntz) * Rij(1:Ntz,0,0) * Zij(1:Ntz,2,0)  !Frz      d/dz(dw/dr)
+                    ddFcol4(1:Ntz) =  ijreal(1:Ntz) * Rij(1:Ntz,0,0) * Rij(1:Ntz,2,0)  !Fzz    d/dz(dw/dz)
+                endif
+           endif
+        else
+              !   if( irz.eq.0 ) then
+              !       ddFcol1(1:Ntz) = -ijreal(1:Ntz) * Zij(1:Ntz,2,0) * Rij(1:Ntz,0,0) & !Frr       d/dr(dw/dr)
+             !                       -(adiabatic(vvol) * pscale/vvolume(vvol)**gamma + dBB(1:Ntz,0)) * Zij(1:Ntz,2,0) * cosi(1:Ntz,ii)
+
+              !       ddFcol2(1:Ntz) =ijreal(1:Ntz) * Rij(1:Ntz,0,0) * Rij(1:Ntz,2,0) &  !Fzr        d/dr(dw/dz)
+              !                    + (adiabatic(vvol) * pscale/vvolume(vvol)**gamma + dBB(1:Ntz,0)) * Rij(1:Ntz,2,0) * cosi(1:Ntz,ii) &
+             !                    + (adiabatic(vvol) * pscale/vvolume(vvol)**gamma + dBB(1:Ntz,0)) * Rij(1:Ntz,0,0) * sini(1:Ntz,ii) * (-im_field(ii))
+             !   else
+             !       ddFcol3(1:Ntz) = -ijreal(1:Ntz) * Rij(1:Ntz,0,0) * Zij(1:Ntz,2,0) &   !Frz      d/dz(dw/dr)
+              !                        -(adiabatic(vvol) * pscale/vvolume(vvol)**gamma + dBB(1:Ntz,0)) * Rij(1:Ntz,0,0) * im_field(ii) *cosi(1:Ntz,ii)
+
+              !       ddFcol4(1:Ntz) = ijreal(1:Ntz) * Rij(1:Ntz,0,0) * Rij(1:Ntz,2,0)      !Fzz    d/dz(dw/dz)
+             !   endif
+                 ddFcol1(1:Ntz) = zero
+                 ddFcol2(1:Ntz) = zero
+                 ddFcol3(1:Ntz) = zero
+                 ddFcol4(1:Ntz) = zero
+              !FATAL(dfp200, .true. work progress for hessian axisymmetric )
+        endif
+
+        !Map to Fourier space
+
+                   call tfft(  Nt, Nz, ddFcol1(1:Ntz),ddFcol2(1:Ntz), & ! recall that ijreal contains derivatives of pressure term;
+                               mn_field, im_field(1:mn_field), in_field(1:mn_field), efmn(1:mn_field), ofmn(1:mn_field), cfmn(1:mn_field), sfmn(1:mn_field), ifail )
+
+                   call tfft(  Nt, Nz, ddFcol3(1:Ntz),ddFcol4(1:Ntz), &
+                               mn_field, im_field(1:mn_field), in_field(1:mn_field), evmn(1:mn_field), odmn(1:mn_field), comn(1:mn_field), simn(1:mn_field), ifail ) ! evmn_field and odmn are available as workspace;
+
+
+          !call tfft(Nt , Nz, ddFcol1(1:Ntz),ddFcol2(1:Ntz), &
+          !                                 mn_field, im_field(1:mn_field), in_field(1:mn_field),  efcol1mn(1:mn_field), ofcol1mn(1:mn_field), ofcol2mn(1:mn_field), efcol2mn(1:mn_field), ifail )
+          !call tfft(Nt , Nz, ddFcol3(1:Ntz),ddFcol4(1:Ntz), &
+          !                                  mn_field, im_field(1:mn_field), in_field(1:mn_field),  efcol3mn(1:mn_field), ofcol3mn(1:mn_field), ofcol4mn(1:mn_field), efcol4mn(1:mn_field), ifail )
+             !                          hessian3d= [1 2;3 4]
+
+           if (irz.eq.0 .and. ii.eq.1) then
+               ;idoc=0
+                      ;denergydrr(idoc+1:idoc+mn_field ,lvol,iocons,idof,innout) = -efmn(1:mn_field)*half !1 wrr
+               ;idoc=idoc+mn_field
+                      ;denergydrr(idoc+1:idoc+mn_field-1,lvol,iocons,idof,innout) = -sfmn(2:mn_field)*half ! 2 wrz
+               ;idoc=idoc+mn_field-1
+           endif
+          if (irz.eq.0 .and. ii.gt.1) then
+              ;idoc=0
+                     ;denergydrr(idoc+1:idoc+mn_field ,lvol,iocons,idof,innout) = -efmn(1:mn_field) !1 wrr
+              ;idoc=idoc+mn_field
+                     ;denergydrr(idoc+1:idoc+mn_field-1,lvol,iocons,idof,innout) = -sfmn(2:mn_field) ! 2 wrz
+              ;idoc=idoc+mn_field-1
+            endif
+
+          if(irz.eq.1 .and. ii.gt.1) then
+              ;idoc=0
+                     ;denergydzr(idoc+1:idoc+mn_field-1 ,lvol,iocons,idof,innout) =  evmn(1:mn_field-1) !wzr
+                        !write(ounit,*) im_field(ii),in_field(ii), evmn(1:mn_field) !vvol, im_field(ii), in_field(ii), irz, issym, tdofr, tdofz
+              ;idoc=idoc+mn_field
+                      ;denergydzr(idoc+1:idoc+mn_field-1 ,lvol,iocons,idof,innout) =  simn(2:mn_field) !wzz
+              ;idoc=idoc+mn_field-1
+          endif
+
+
+          !if (NOTstellsym) then
+           !  FATAL(dfp200, .true. work progress for hessian axisymmetric )
+          !endif
+
+            !write(ounit,'("hesian3D : ",f10.2," : efcol1="f10.2")') cput-cpus, efcol1mn(1:mn_field)
+            !print * , Mvol, efcol1mn_field(1:mn_field)
+            !write(ounit,1000) 'values are:' Mvol, efcol1mn(1:mn_field)
+             !write(90,1000) efcol1mn(1:mn_field)
+             !1000 format(" "10x" "es23.15" ")
+             !open(nm1unit, file="."//trim(ext)//".GF.hcol1", status="unknown", form="unformatted")
+             !write(nm1unit) NGdof, Mvol
+             !write(nm1unit) efcol1mn(1:Ntz)
+             !close(nm1unit)
+
+             !open(nm2unit, file="."//trim(ext)//".GF.hcol2", status="unknown", form="unformatted")
+             !!write(nm2unit) NGdof, Mvol
+             !write(nm2unit) efcol2mn(1:Ntz)
+             !close(nm2unit)
+             !write(15,1020) denergydrr(idoc+1:idoc+mn_field ,vvol,iocons,idof,innout)
+             !1020 format(""10x" " es23.15" ")
+
+! Spectral condensation contribution
+! ----------------------------------
+    dLL(1:Ntz) = zero !  no spectral constraint, or not the appropriate interface;
+    dPP(1:Ntz) = zero !  no spectral constraint, or not the appropriate interface;
+    dII(1:Ntz) = zero !  no angle/spectral width constraint
+
+#ifdef DEBUG
+    FATAL( dfp200, idoc.ne.LGdof_force, counting error )
+#endif
+
+enddo ! end of do iocons;
+
+end subroutine hessian3D_dFFdRZ

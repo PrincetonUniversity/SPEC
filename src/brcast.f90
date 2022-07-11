@@ -39,10 +39,11 @@ subroutine brcast( lvol )
                         ImagneticOK, &
                        !dBBdRZ, dIIdRZ, &
                         Lhessianallocated, LGdof_field, LGdof_force, dFFdRZ, dBBdmp, dmupfdx, &
+                        denergydrr,denergydzr,Lhessian3Dallocated, &
                         lBBintegral, lABintegral, &
                         vvolume, &
                         NOTstellsym, LocalConstraint, &
-						            IsMyVolume, IsMyVolumeValue
+                        IsMyVolume, IsMyVolumeValue
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -99,6 +100,13 @@ subroutine brcast( lvol )
 
   endif ! end of if( Lhessianallocated ) ; 12 Sep 16;
 
+  if (Lhessian3Dallocated) then
+
+      Nbc =             LGdof_field*       2*  LGdof_field*  2
+      RlBCAST(denergydrr(1:LGdof_field,lvol,0:1,1:LGdof_field,0:1), Nbc, llmodnp )
+      RlBCAST(denergydzr(1:LGdof_field,lvol,0:1,1:LGdof_field,0:1), Nbc, llmodnp )
+  endif
+  
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   LlBCAST( ImagneticOK(lvol), 1, llmodnp )
