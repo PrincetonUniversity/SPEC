@@ -226,12 +226,12 @@ subroutine rzaxis( Mvol, mn_field, inRbc, inZbs, inRbs, inZbc, ivol, LcomputeDer
       write(ounit,'("rzaxis : ", 10x ," : ")')
       write(ounit,'("rzaxis : ",f10.2," : myid=",i3," ; inner : Rbc=[",    999(es23.15," ,"))') cput-cpus, myid, inRbc(1:Ntor_field+1,ivol)
       write(ounit,'("rzaxis : ",f10.2," : myid=",i3," ; axis  : Rbc=[",    999(es23.15," ,"))') cput-cpus, myid, inRbc(1:Ntor_field+1,jvol)
-      if( Ntor.gt.0 ) then
+      if( Ntor_field.gt.0 ) then
       write(ounit,'("rzaxis : ",f10.2," : myid=",i3," ; inner : Zbs=[",25x,998(es23.15," ,"))') cput-cpus, myid, inZbs(2:Ntor_field+1,ivol)
       write(ounit,'("rzaxis : ",f10.2," : myid=",i3," ; axis  : Zbs=[",25x,998(es23.15," ,"))') cput-cpus, myid, inZbs(2:Ntor_field+1,jvol)
       endif
       if( NOTstellsym ) then
-      if( Ntor.gt.0 ) then
+      if( Ntor_field.gt.0 ) then
       write(ounit,'("rzaxis : ",f10.2," : myid=",i3," ; inner : Rbs=[",25x,998(es23.15," ,"))') cput-cpus, myid, inRbs(2:Ntor_field+1,ivol)
       write(ounit,'("rzaxis : ",f10.2," : myid=",i3," ; axis  : Rbs=[",25x,998(es23.15," ,"))') cput-cpus, myid, inRbs(2:Ntor_field+1,jvol)
       endif
