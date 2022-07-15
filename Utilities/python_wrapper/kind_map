@@ -10,11 +10,11 @@
  	           '16' : 'complex_long_double',
  	           'dp' : 'complex_double',
              'c_double_complex': 'complex_double'},
- 'integer' : {   '' : 'long_long',
+ 'integer' : {   '' : 'int',
                 '4' : 'int',
 	            '8' : 'long_long',
 	           'dp' : 'long_long',
-		   'hid_t' : 'long_long',
-		   'hsize_t' : 'long_long',
+		   'hid_t'  : 'long_long',
+		   'hsize_t': 'long_long',
 		   'size_t' : 'long_long'}
 }
