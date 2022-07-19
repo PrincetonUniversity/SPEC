@@ -355,6 +355,11 @@ subroutine preset
 
    end select ! end select case( Linitialize );
 
+   DALLOCATE( mmRZRZ )
+   DALLOCATE( nnRZRZ )
+   DALLOCATE( allRZRZ )
+
+
    if( Igeometry.eq.3 ) then
     if( Rac(0).gt.zero ) then ! user has supplied logically possible coordinate axis;
      iRbc(1:Ntor+1,0) = Rac(0:Ntor)

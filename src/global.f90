@@ -225,6 +225,7 @@ module allglobal
 
   use constants
   use typedefns
+  use inputlist, only: MNpol, MNtor
 
   implicit none
 
@@ -365,6 +366,7 @@ module allglobal
 
   ! local array used for reading interface Fourier harmonics from file;
   INTEGER              :: num_modes
+  INTEGER, parameter   :: MNMAX = MNtor + 1 + MNpol * ( 2 * MNtor + 1 )
   INTEGER, allocatable :: mmRZRZ(:), nnRZRZ(:)
   REAL,    allocatable :: allRZRZ(:,:,:)
 !> @}
@@ -1078,6 +1080,11 @@ subroutine read_inputlists_from_file()
    instat = 0
 
    num_modes = 0
+
+
+   if(allocated(mmRZRZ)) deallocate(mmRZRZ, nnRZRZ, allRZRZ)
+   allocate(mmRZRZ(1:MNMAX), nnRZRZ(1:MNMAX), allRZRZ(1:4,1:Nvol,1:MNMAX))
+
    if (Linitialize .le. 0) then
 
      ! duplicate of checks required for below code
@@ -1111,9 +1118,6 @@ subroutine read_inputlists_from_file()
 
      ! now allocate arrays and read...
      ! Need to free memory, in case preset() called multiple times via python wrappers
-     if(allocated(mmRZRZ)) deallocate(mmRZRZ, nnRZRZ, allRZRZ)
-     allocate(mmRZRZ(1:num_modes), nnRZRZ(1:num_modes), allRZRZ(1:4,1:Nvol,1:num_modes))
-
      do idx_mode = 1, num_modes
        read(iunit,*,iostat=instat) mmRZRZ(idx_mode), nnRZRZ(idx_mode), allRZRZ(1:4,1:Nvol, idx_mode)
      enddo
