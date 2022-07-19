@@ -201,7 +201,7 @@ subroutine newton( NGdof, position, ihybrd )
   Lhessian2Dallocated = .false.
   Lhessian3Dallocated = .false.
 
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   select case( Lfindzero )
@@ -417,7 +417,7 @@ end subroutine writereadgf
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 
-!> \brief fcn1
+!> \brief Objective to be given to the Newton solver, using only function values.
 !> \ingroup grp_force_driver
 !>
 !> @param[in] NGdof
@@ -484,7 +484,7 @@ subroutine fcn1( NGdof, xx, fvec, irevcm )
 
     pack = 'U' ! unpack geometrical degrees of freedom;
     LComputeAxis = .true.
-    LComputeDerivatives = .false.
+    LComputeDerivatives = .false. ! function value only solver --> no need to compute derivatives
     WCALL( newton, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), &
                              iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, LComputeDerivatives, LComputeAxis ) )
 
@@ -548,7 +548,7 @@ subroutine fcn1( NGdof, xx, fvec, irevcm )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 
-!> \brief fcn2
+!> \brief Objective to be given to the Newton solver, using function values and derivatives.
 !> \ingroup grp_force_driver
 !>
 !> @param[in]  NGdof
@@ -556,7 +556,7 @@ subroutine fcn1( NGdof, xx, fvec, irevcm )
 !> @param[out] fvec
 !> @param[out] fjac
 !> @param[in]  Ldfjac
-!> @param[in]  irevcm
+!> @param[in]  irevcm indicator for reverse communication; provided by solver to tell this method what to compute
 subroutine fcn2( NGdof, xx, fvec, fjac, Ldfjac, irevcm )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
