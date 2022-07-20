@@ -1131,6 +1131,37 @@ end subroutine ! read_inputlists_from_file
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+subroutine write_spec_namelist()
+  ! write all the namelists to example.sp
+  use constants
+  use fileunits
+  use inputlist
+
+  LOCALS
+
+  LOGICAL :: exist
+  CHARACTER(LEN=100), PARAMETER :: example = 'example.sp'
+
+  if( myid == 0 ) then
+     inquire(file=trim(example), EXIST=exist) ! inquire if inputfile existed;
+     FATAL( global, exist, example input file example.sp already existed )
+     open(iunit, file=trim(example), status='unknown', action='write')
+     write(iunit, physicslist)
+     write(iunit, numericlist)
+     write(iunit, locallist)
+     write(iunit, globallist)
+     write(iunit, diagnosticslist)
+     write(iunit, screenlist)
+     close(iunit)
+  endif
+
+  return
+end subroutine
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
 subroutine check_inputs()
 
    use numerical
