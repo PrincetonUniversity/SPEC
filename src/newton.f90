@@ -69,7 +69,7 @@ subroutine newton( NGdof, position, ihybrd )
                         ForceErr, Energy, &
                         mn, im, in, iRbc, iZbs, iRbs, iZbc, Mvol, &
                         BBe, IIo, BBo, IIe, &
-                        LGdof, dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated , &
+                        LGdof, dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated ,Lhessian2Dallocated,Lhessian3Dallocated, &
                         nfreeboundaryiterations, &
                         LocalConstraint
 
@@ -193,10 +193,14 @@ subroutine newton( NGdof, position, ihybrd )
 
     SALLOCATE( hessian, (1:NGdof,1:NGdof), zero )
     SALLOCATE( dessian, (1:NGdof,1:LGdof), zero )
+
     Lhessianallocated = .true.
   else
     Lhessianallocated = .false.
   endif
+  Lhessian2Dallocated = .false.
+  Lhessian3Dallocated = .false.
+
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -222,18 +226,18 @@ subroutine newton( NGdof, position, ihybrd )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-    if( myid.eq.0 ) then
-     cput = GETTIME
-     ;              write(ounit,'("newton : ", 10x ," :")')
-     select case( ihybrd )
-     case( 1   )  ; write(ounit,'("newton : ",f10.2," : finished ; success        ; ic05p*f="i2" ; its="i7" ,"i4" ;")') cput-cpus, ihybrd, nFcalls, nDcalls
-     case( 0   )  ; write(ounit,'("newton : ",f10.2," : finished ; input error    ; ic05p*f="i2" ; its="i7" ,"i4" ;")') cput-cpus, ihybrd, nFcalls, nDcalls
-     case( 2   )  ; write(ounit,'("newton : ",f10.2," : finished ; max. iter      ; ic05p*f="i2" ; its="i7" ,"i4" ;")') cput-cpus, ihybrd, nFcalls, nDcalls
-     case( 3   )  ; write(ounit,'("newton : ",f10.2," : finished ; xtol too small ; ic05p*f="i2" ; its="i7" ,"i4" ;")') cput-cpus, ihybrd, nFcalls, nDcalls
-     case( 4:5 )  ; write(ounit,'("newton : ",f10.2," : finished ; bad progress   ; ic05p*f="i2" ; its="i7" ,"i4" ;")') cput-cpus, ihybrd, nFcalls, nDcalls
-     case default ; write(ounit,'("newton : ",f10.2," : finished ; illegal ifail  ; ic05p*f="i2" ; its="i7" ,"i4" ;")') cput-cpus, ihybrd, nFcalls, nDcalls
-     end select
-    endif ! end of if( myid.eq.0 ) then;
+  if( myid.eq.0 ) then
+   cput = GETTIME
+   ;              write(ounit,'("newton : ", 10x ," :")')
+   select case( ihybrd )
+   case( 1   )  ; write(ounit,'("newton : ",f10.2," : finished ; success        ; ic05p*f="i2" ; its="i7" ,"i4" ;")') cput-cpus, ihybrd, nFcalls, nDcalls
+   case( 0   )  ; write(ounit,'("newton : ",f10.2," : finished ; input error    ; ic05p*f="i2" ; its="i7" ,"i4" ;")') cput-cpus, ihybrd, nFcalls, nDcalls
+   case( 2   )  ; write(ounit,'("newton : ",f10.2," : finished ; max. iter      ; ic05p*f="i2" ; its="i7" ,"i4" ;")') cput-cpus, ihybrd, nFcalls, nDcalls
+   case( 3   )  ; write(ounit,'("newton : ",f10.2," : finished ; xtol too small ; ic05p*f="i2" ; its="i7" ,"i4" ;")') cput-cpus, ihybrd, nFcalls, nDcalls
+   case( 4:5 )  ; write(ounit,'("newton : ",f10.2," : finished ; bad progress   ; ic05p*f="i2" ; its="i7" ,"i4" ;")') cput-cpus, ihybrd, nFcalls, nDcalls
+   case default ; write(ounit,'("newton : ",f10.2," : finished ; illegal ifail  ; ic05p*f="i2" ; its="i7" ,"i4" ;")') cput-cpus, ihybrd, nFcalls, nDcalls
+   end select
+  endif ! end of if( myid.eq.0 ) then;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -413,7 +417,7 @@ end subroutine writereadgf
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 
-!> \brief fcn1
+!> \brief Objective to be given to the Newton solver, using only function values.
 !> \ingroup grp_force_driver
 !>
 !> @param[in] NGdof
@@ -480,7 +484,7 @@ subroutine fcn1( NGdof, xx, fvec, irevcm )
 
     pack = 'U' ! unpack geometrical degrees of freedom;
     LComputeAxis = .true.
-    LComputeDerivatives = .false.
+    LComputeDerivatives = .false. ! function value only solver --> no need to compute derivatives
     WCALL( newton, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), &
                              iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, LComputeDerivatives, LComputeAxis ) )
 
@@ -544,7 +548,7 @@ subroutine fcn1( NGdof, xx, fvec, irevcm )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 
-!> \brief fcn2
+!> \brief Objective to be given to the Newton solver, using function values and derivatives.
 !> \ingroup grp_force_driver
 !>
 !> @param[in]  NGdof
@@ -552,7 +556,7 @@ subroutine fcn1( NGdof, xx, fvec, irevcm )
 !> @param[out] fvec
 !> @param[out] fjac
 !> @param[in]  Ldfjac
-!> @param[in]  irevcm
+!> @param[in]  irevcm indicator for reverse communication; provided by solver to tell this method what to compute
 subroutine fcn2( NGdof, xx, fvec, fjac, Ldfjac, irevcm )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

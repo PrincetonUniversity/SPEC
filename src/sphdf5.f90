@@ -42,13 +42,13 @@ module sphdf5
   integer(hsize_t), dimension(1) :: data_dims           !< new dimensions for "iterations" dataset
   integer(hsize_t), dimension(1) :: max_dims            !< maximum dimensions for "iterations" dataset
   integer(hid_t)                 :: plist_id            !< Property list identifier used to activate dataset transfer property
-  integer(hid_t)                 :: dt_nDcalls_id       !< Memory datatype identifier (for "nDcalls"  dataset in "/grid")
-  integer(hid_t)                 :: dt_Energy_id        !< Memory datatype identifier (for "Energy"   dataset in "/grid")
-  integer(hid_t)                 :: dt_ForceErr_id      !< Memory datatype identifier (for "ForceErr" dataset in "/grid")
-  integer(hid_t)                 :: dt_iRbc_id          !< Memory datatype identifier (for "iRbc"     dataset in "/grid")
-  integer(hid_t)                 :: dt_iZbs_id          !< Memory datatype identifier (for "iZbs"     dataset in "/grid")
-  integer(hid_t)                 :: dt_iRbs_id          !< Memory datatype identifier (for "iRbs"     dataset in "/grid")
-  integer(hid_t)                 :: dt_iZbc_id          !< Memory datatype identifier (for "iZbc"     dataset in "/grid")
+  integer(hid_t)                 :: dt_nDcalls_id       !< Memory datatype identifier (for "nDcalls"  dataset in "/iterations")
+  integer(hid_t)                 :: dt_Energy_id        !< Memory datatype identifier (for "Energy"   dataset in "/iterations")
+  integer(hid_t)                 :: dt_ForceErr_id      !< Memory datatype identifier (for "ForceErr" dataset in "/iterations")
+  integer(hid_t)                 :: dt_iRbc_id          !< Memory datatype identifier (for "iRbc"     dataset in "/iterations")
+  integer(hid_t)                 :: dt_iZbs_id          !< Memory datatype identifier (for "iZbs"     dataset in "/iterations")
+  integer(hid_t)                 :: dt_iRbs_id          !< Memory datatype identifier (for "iRbs"     dataset in "/iterations")
+  integer(hid_t)                 :: dt_iZbc_id          !< Memory datatype identifier (for "iZbc"     dataset in "/iterations")
 
   integer, parameter             :: rankP=3             !< rank of Poincare data
   integer, parameter             :: rankT=2             !< rank of rotational transform data
@@ -720,7 +720,7 @@ end subroutine write_grid
 !> @param[in] numTrajTotal total number of Poincare trajectories
 subroutine init_flt_output( numTrajTotal )
 
-  use allglobal, only : Nz, Mvol
+  use allglobal, only : Nz, Mvol, lmns
   use inputlist, only : nPpts
 
   LOCALS
@@ -983,6 +983,7 @@ subroutine hdfint
   use allglobal, only : ncpu, cpus, &
                         Mvol, ForceErr, &
                         mn, im, in, iRbc, iZbs, iRbs, iZbc, &
+                        mns, ims, ins, &
                         dRbc, dZbs, dRbs, dZbc, &
                         vvolume, dvolume, &
                         Bsupumn, Bsupvmn, &
@@ -991,7 +992,7 @@ subroutine hdfint
                         lmns, &
                         TT, &
                         beltramierror, &
-                        IPDt
+                        IPDt, dlambdaout, lmns
 
   LOCALS
 
@@ -1024,6 +1025,12 @@ subroutine hdfint
   HWRITEIV( grpOutput, mn, im, im(1:mn) )
 !latex \type{in(1:mn)}               & integer & \pb{toroidal mode numbers} \\
   HWRITEIV( grpOutput, mn, in, in(1:mn) )
+!latex \type{mns}                     & integer & \pb{number of Fourier modes} \\
+  HWRITEIV( grpOutput,  1, mns, (/ mns /)  )
+!latex \type{ims(1:mns)}               & integer & \pb{poloidal mode numbers} \\
+  HWRITEIV( grpOutput, mns, ims, ims(1:mns) )
+!latex \type{ins(1:mns)}               & integer & \pb{toroidal mode numbers} \\
+  HWRITEIV( grpOutput, mns, ins, ins(1:mns) )
 !latex \type{Mvol}                   & integer & \pb{number of interfaces = number of volumes} \\
   HWRITEIV( grpOutput,  1, Mvol, (/ Mvol /))
 !latex \type{iRbc(1:mn,0:Mvol)}      & real    & \pb{Fourier harmonics, $R_{m,n}$, of interfaces} \\
@@ -1084,6 +1091,10 @@ subroutine hdfint
 !latex \type{Bzomn(1:mn,0:1,1:Mvol)} & real    & \pb{the sine harmonics of the covariant toroidal field, \\
 !latex                                           i.e. $[[B_{\z,j}]]$ evaluated on the inner and outer interface in each volume} \\
   HWRITERC( grpOutput, mn, 2, Mvol, Bzomn, Bzomn(1:mn,0:1,1:Mvol) )
+
+
+! Write lambda_mn, Fourier harmonics or transformation to straight field line coordinates.
+  HWRITERC( grpOutput, lmns, Mvol, 2, lambdamn, dlambdaout(1:lmns,1:Mvol,0:1) )
 
   if( Lperturbed.eq.1 ) then
 
