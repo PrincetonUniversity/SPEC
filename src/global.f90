@@ -225,7 +225,6 @@ module allglobal
 
   use constants
   use typedefns
-  use inputlist, only: MNpol, MNtor
 
   implicit none
 
@@ -366,7 +365,6 @@ module allglobal
 
   ! local array used for reading interface Fourier harmonics from file;
   INTEGER              :: num_modes
-  INTEGER, parameter   :: MNMAX = MNtor + 1 + MNpol * ( 2 * MNtor + 1 )
   INTEGER, allocatable :: mmRZRZ(:), nnRZRZ(:)
   REAL,    allocatable :: allRZRZ(:,:,:)
 !> @}
@@ -967,7 +965,7 @@ subroutine read_inputlists_from_file()
 
    character(len=1000) :: line
 
-   INTEGER              :: mm, nn
+   INTEGER              :: mm, nn, MNMAX
    REAL,    allocatable :: RZRZ(:,:) ! local array used for reading interface Fourier harmonics from file;
 
    inquire( file=trim(ext)//".sp", exist=Lspexist ) ! check if file exists;
@@ -1081,7 +1079,7 @@ subroutine read_inputlists_from_file()
 
    num_modes = 0
 
-
+   MNMAX = MNtor + 1 + MMpol * ( 2 * MNtor + 1 )
    if(allocated(mmRZRZ)) deallocate(mmRZRZ, nnRZRZ, allRZRZ)
    allocate(mmRZRZ(1:MNMAX), nnRZRZ(1:MNMAX), allRZRZ(1:4,1:Nvol,1:MNMAX))
 
