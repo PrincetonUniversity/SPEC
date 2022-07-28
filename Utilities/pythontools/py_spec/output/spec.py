@@ -36,7 +36,10 @@ class SPECout:
         metric,
         get_B,
         get_modB,
-        get_B_covariant
+        get_B_covariant,
+	get_volume,
+	get_average_beta,
+	get_peak_beta
     )
     from ._plot_modB import plot_modB
     from ._plot_iota import plot_iota
