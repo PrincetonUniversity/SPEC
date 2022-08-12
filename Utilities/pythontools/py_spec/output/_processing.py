@@ -359,6 +359,87 @@ def get_B_covariant(self, Bcontrav, g, derivative=False):
     Bco = np.einsum("...i,...ji->...j", Bcontrav, g)
     return Bco
 
+def get_volume(self, ivol, ns=64, nt=64, nz=64):
+    """Returns volume occupied by volume ivol"""
+
+    # Create coordinate grid
+    nfp = self.input.physics.Nfp
+    tarr = np.linspace(0, 2*np.pi, nt, endpoint=True)
+    zarr = np.linspace(0, 2*np.pi / nfp, nz, endpoint=True)
+
+    if ivol==0: sarr=np.linspace(-0.999,1,ns)
+    else: sarr=np.linspace(-1,    1, ns)
+
+    # Get jacobian
+    j = self.jacobian(lvol=ivol, sarr=sarr, tarr=tarr, zarr=zarr)
+
+    # Integrate
+    dt = tarr[1]-tarr[0]
+    dz = zarr[1]-zarr[0]
+    ds = sarr[1]-sarr[0]
+    return nfp * integrate.simpson( y=integrate.simpson( y=integrate.simpson( y=j, x=zarr ), x=tarr ), x=sarr )
+
+def get_average_beta(self, ns=64, nt=64, nz=64):
+    """Get beta averaged in plasma volume"""
+
+    # Read pressure
+    press = self.input.physics.pressure * self.input.physics.pscale
+
+    # Create coordinate grid
+    nfp = self.input.physics.Nfp
+    tarr = np.linspace(0, 2*np.pi, nt)
+    zarr = np.linspace(0, 2*np.pi / nfp, nz)
+
+    # Get beta in each volume
+    nvol = self.input.physics.Nvol
+
+    vols = np.zeros((nvol,))
+    betavol = np.zeros((nvol,))
+    for ivol in range(0,nvol-1):
+        if ivol==0: sarr=np.linspace(-0.999,1, ns)
+        if ivol!=0: sarr=np.linspace(-1,    1, ns)
+
+        vols[ivol] = self.get_volume( ivol )
+
+        _, _, sg, g = self.get_grid_and_jacobian_and_metric(
+            lvol=ivol, sarr=sarr, tarr=tarr, zarr=zarr
+        )
+        Bcontrav = self.get_B(
+            lvol=ivol, jacobian=sg, sarr=sarr, tarr=tarr, zarr=zarr
+        )
+        modB = self.get_modB( Bcontrav, g )
+
+        betavol[ivol] = 2 * nfp * press[ivol] * integrate.simpson( 
+            y=integrate.simpson( 
+                y=integrate.simpson( 
+                    y=sg / modB**2, x=zarr ), x=tarr ), x=sarr )
+
+    return betavol.sum() / vols.sum()
+
+
+def get_peak_beta(self, ns=64, nt=64, nz=64):
+    press = self.input.physics.pressure[0] * self.input.physics.pscale
+
+    nfp = self.input.physics.Nfp
+    tarr = np.linspace(0, 2*np.pi, nt)
+    zarr = np.linspace(0, 2*np.pi / nfp, nz)
+    sarr=np.linspace(-0.999,1, ns)
+
+    vol = self.get_volume( 0 )
+    _, _, sg, g = self.get_grid_and_jacobian_and_metric(
+            lvol=0, sarr=sarr, tarr=tarr, zarr=zarr
+        )
+    Bcontrav = self.get_B(
+            lvol=0, jacobian=sg, sarr=sarr, tarr=tarr, zarr=zarr
+        )
+    modB = self.get_modB( Bcontrav, g )
+
+    return 2 * nfp * press * integrate.simpson( 
+            y=integrate.simpson( 
+                y=integrate.simpson( 
+                    y=sg / modB**2, x=zarr ), x=tarr ), x=sarr )
+
+
 def test_derivatives(self, lvol=0, s=0.3, t=0.4, z=0.5, delta=1e-6, tol=1e-6):
     ds = delta
     R, Z, j, g = self.get_grid_and_jacobian_and_metric(lvol, np.array([s-ds, s+ds]), np.array([t-ds, t+ds]), np.array([z-ds, z+ds]))

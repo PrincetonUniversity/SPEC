@@ -37,6 +37,9 @@ class SPECout:
         get_B,
         get_modB,
         get_B_covariant,
+        get_volume,
+        get_average_beta,
+        get_peak_beta,
         test_derivatives
     )
     from ._plot_modB import plot_modB
@@ -100,9 +103,9 @@ class SPECout:
 
             # these define the target dimensions in the radial direction
             Nvol = self.input.physics.Nvol
+            Mvol = Nvol
             if self.input.physics.Lfreebound:
-                Nvol += 1
-                self.input.physics.Nvol += 1
+                Mvol += 1
 
             Lrad = self.input.physics.Lrad
 
@@ -122,7 +125,7 @@ class SPECout:
 
             # split up radial matrix dimension into list of matrices for each of the nested volumes
             start = 0
-            for i in range(Nvol):
+            for i in range(Mvol):
                 # vector potential
                 cAte.append(
                     np.atleast_2d(self.vector_potential.Ate)[
