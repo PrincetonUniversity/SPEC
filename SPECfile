@@ -12,8 +12,11 @@
 
 # basis of SPEC: input variables, global workspace, HDF5 output file writing
 # these are split off since they require special treatment (needed by all others and/or special macros)
-BASEFILES=inputlist global
-IOFILES=sphdf5
+LEVEL_0=mod_kinds
+LEVEL_1=inputlist
+LEVEL_2=global
+LEVEL_3=h5utils
+LEVEL_4=sphdf5
 
 # (most of) physics part of SPEC
 afiles=preset manual rzaxis packxi volume coords basefn memory
@@ -24,23 +27,22 @@ efiles=jo00aa pp00aa pp00ab bfield stzxyz
 ffiles=hesian ra00aa numrec
 
 # externally provided libraries
-# below assumes the .f files are double precision; the CFLAGS = -r8 option is not required;
+# below assumes the .f files are double precision
+# the CFLAGS = -r8 option is not required
 sfiles=dcuhre minpack iqpack rksuite i1mach d1mach ilut iters
 
 ###############################################################################################################################################################
+
+BASEFILES=$(LEVEL_0) $(LEVEL_1) $(LEVEL_2) $(LEVEL_3) $(LEVEL_4)
 
 # all of SPEC except BASEFILES
 SPECFILES=$(afiles) $(bfiles) $(cfiles) $(dfiles) $(efiles) $(ffiles)
 
 # all of "our" (vs. contributed) files needed for the "core" of SPEC
-ALLSPEC=$(BASEFILES) $(IOFILES) $(SPECFILES)
+ALLSPEC=$(BASEFILES) $(SPECFILES)
 
 # *ALL* files needed for the main SPEC executable
 ALLFILES=$(sfiles) $(ALLSPEC) xspech
-
-###############################################################################################################################################################
-
-MACROS=src/macros
 
 ###############################################################################################################################################################
 

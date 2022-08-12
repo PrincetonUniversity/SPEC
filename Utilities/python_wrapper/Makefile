@@ -21,7 +21,7 @@ PYTHON   = python3
 
 ifeq ($(F90),gfortran)
   FPP      = $(F90) -E
-  FPP_F90FLAGS = -x f95-cpp-input -fPIC	
+  FPP_F90FLAGS = -x f95-cpp-input -fPIC
 endif
 
 ifeq ($(F90),ifort)
@@ -60,10 +60,7 @@ TMP_FILES := ${ALLSPEC} xspech
 LIBSRC_WRAP_SOURCES := $(TMP_FILES)
 
 # file names
-LIBSRC_WRAP_FILES = $(addsuffix .f90,${LIBSRC_WRAP_SOURCES})
-
-# macro_explained files
-LIBSRC_WRAP_MFILES = $(addsuffix _m.F90,${LIBSRC_WRAP_SOURCES})
+LIBSRC_WRAP_FILES = $(addsuffix .F90,${LIBSRC_WRAP_SOURCES})
 
 # object files
 LIBSRC_WRAP_OBJECTS = $(addsuffix _r.o,${LIBSRC_WRAP_SOURCES})
@@ -75,7 +72,7 @@ LIBSRC_WRAP_FPP_FILES = $(addsuffix .fpp,${LIBSRC_WRAP_SOURCES})
 #                 Relevant suffixes
 #=======================================================================
 
-.SUFFIXES: .f90 .fpp
+.SUFFIXES: .F90 .f90 .fpp
 
 #=======================================================================
 #
@@ -95,7 +92,7 @@ f90wrap_clean:
 	-rm -rf src.*/ .f2py_f2cmap .libs/ __pycache__/
 	-rm -rf $(LIB_NAME)
 
-$(LIBSRC_WRAP_FPP_FILES): %.fpp: ${SOURCES}/%_m.F90
+$(LIBSRC_WRAP_FPP_FILES): %.fpp: ${SOURCES}/src/%.F90
 	${FPP} ${FPP_F90FLAGS} $<  -o $@
 
 $(LIB_NAME):
