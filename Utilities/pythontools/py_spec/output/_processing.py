@@ -1,5 +1,5 @@
 import numpy as np
-
+from scipy import integrate
 
 def get_grid_and_jacobian_and_metric(
     self,
@@ -395,6 +395,9 @@ def get_average_beta(self, ns=64, nt=64, nz=64):
 
     vols = np.zeros((nvol,))
     betavol = np.zeros((nvol,))
+
+    if (press==0).all(): return 0
+
     for ivol in range(0,nvol-1):
         if ivol==0: sarr=np.linspace(-0.999,1, ns)
         if ivol!=0: sarr=np.linspace(-1,    1, ns)
