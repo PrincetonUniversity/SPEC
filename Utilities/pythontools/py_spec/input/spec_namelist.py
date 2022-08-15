@@ -428,6 +428,24 @@ class SPECNamelist(Namelist):
 
         return self.interface_guess[(m, n)][key][ivol]
 
+    def set_vacuum_field( self, value, m, n, mykey='Bns'):
+        """Set the guess of the coils field harmonics
+        parameters:
+            value -- the value that one wants to set
+            m,n -- the m and n number of the guess, must be within the allowed Mpol and Ntor range
+                   the n number is the one without multiplying by Nfp
+            mykey -- which guess, can be 'Bnc' or 'Bns'
+        """
+        if m > self._Mpol or m < 0:
+            raise ValueError("0 <= m <= Mpol")
+        if n > self._Ntor or n < -self._Ntor:
+            raise ValueError("-Ntor <= n <= Ntor")
+        if mykey not in ['Bns', 'Bnc']:
+            raise ValueError("mykey must be in ['Bns', 'Bnc']")
+
+        self['physicslist'][mykey][m][n+self._Ntor] = value
+        
+
     def set_interface_guess(self, value, m, n, ivol, mykey="Rbc"):
         """Set the guess of the interface Fourier harmonic
         parameters:
