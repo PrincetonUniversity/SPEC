@@ -855,7 +855,7 @@ BEGIN(dforce)
     write(ounit,'(A)') NEW_LINE('A')
   
     do ii=1, NGdof
-      write(ounit,1345) myid, im(ii), in(ii), hessian(ii,:)
+      write(ounit,1345) myid, hessian(ii,:)
       write(10   ,1347) hessian(ii,:)
     enddo
     close(10)
@@ -865,14 +865,14 @@ BEGIN(dforce)
     ! Print finite differences
     open(10, file=trim(ext)//'.Lcheck6_output.FiniteDiff.txt', status='unknown')
     do ii=1, NGdof
-      write(ounit,1347) myid, im(ii), in(ii), finitediff_estimate(ii,:)
+      write(ounit,1346) myid, finitediff_estimate(ii,:)
       write(10   ,1347) finitediff_estimate(ii,:)
     enddo        
     write(ounit,'(A)') NEW_LINE('A')
     close(10)
 
-    1345 format("dforce: myid=",i3," ; (",i4,",",i4," ; Hessian            = ",512f16.10 "   ;")
-    1346 format("dforce: myid=",i3," ; (",i4,",",i4," ; Finite differences = ",512f16.10 "   ;")
+    1345 format("dforce: myid=",i3,"; Hessian            = ",512f16.10 "   ;")
+    1346 format("dforce: myid=",i3,"; Finite differences = ",512f16.10 "   ;")
     1347 format(512F22.16, " ")
 
   endif

@@ -320,7 +320,7 @@ subroutine matrix( lvol, mn, lrad )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  use constants, only : zero, one, two, half, pi2
+  use constants, only : zero, one, two, half, pi2, three
   
   use numerical, only : small
   
@@ -381,11 +381,13 @@ subroutine matrix( lvol, mn, lrad )
   
   REAL,allocatable     :: TTdata(:,:,:), TTMdata(:,:) ! queues to construct sparse matrices
 
-  REAL                 :: VRij(1:Ctz,0:3), VZij(1:Ctz,0:3), Vsg(1:Ctz), Vguvij(1:Ctz,1:3,1:3) ! 03/03/21 ;
-  REAL                 :: rx(1:Ctz), ry(1:Ctz), rz(1:Ctz), rrr(1:Ctz) ! 03/03/21 ;
-  REAL                 :: xtrr(1:Ctz,1:3), xzrr(1:Ctz,1:3), xtrrdotds(1:Ctz), xzrrdotds(1:Ctz) ! 03/03/21 ;
-  REAL                 :: Atejkj(1:Ntz,1:mn), Azejkj(1:Ntz,1:mn) ! 03/03/21 ;
+  REAL                 :: VRij(1:Ctz,0:3,-1:0), VZij(1:Ctz,0:3,-1:0), Vsg(1:Ctz,-1:0), Vguvij(1:Ctz,1:3,1:3,-1:0) ! 03/03/21 ;
+  REAL                 :: rx(1:Ctz,-1:0), ry(1:Ctz,-1:0), rz(1:Ctz,-1:0), rrr(1:Ctz,-1:0) ! 03/03/21 ;
+  REAL                 :: xtrr(1:Ctz,1:3,-1:0), xzrr(1:Ctz,1:3,-1:0), xtrrdotds(1:Ctz,-1:0), xzrrdotds(1:Ctz,-1:0) ! 03/03/21 ;
+  REAL                 :: Atejkj(1:Ntz,1:mn,-1:0), Azejkj(1:Ntz,1:mn,-1:0) ! 03/03/21 ;
   REAL                 :: Ateij(1:mn,1:mn), Azeij(1:mn,1:mn)
+
+  LOGICAL              :: Lvacuumderivatives
 
   BEGIN(matrix)
   
@@ -419,71 +421,172 @@ subroutine matrix( lvol, mn, lrad )
 
 !  pause
 
-   VRij(1:Ctz,0:3) = zero ! initialize summation ; 03/03/21 ;
-   VZij(1:Ctz,0:3) = zero
+   VRij(1:Ctz,0:3,-1:0) = zero ! initialize summation ; 03/03/21 ;
+   VZij(1:Ctz,0:3,-1:0) = zero
    
+   Lvacuumderivatives = dBdX%L .and. ((dBdX%vol==Nvol .and. dBdX%innout==1) .or. (dBdX%vol==Mvol .and. dBdX%innout==0))
+
    do kk = 0, Czeta-1
     do jj = 0, Cteta-1 ; kj = 1 + jj + kk * Cteta ! construct high-resolution plasma boundary (for virtual-casing integral) ; 03/03/21 ;
      
-     do ii = 1, mn
-      VRij(kj,0) = VRij(kj,0) +   iRbc(ii,Nvol)                   * kjicos(kj,ii) 
-      VRij(kj,1) = VRij(kj,1) + ( iRbc(ii,Mvol) - iRbc(ii,Nvol) ) * kjicos(kj,ii) * half
-      VRij(kj,2) = VRij(kj,2) -   iRbc(ii,Nvol)                   * kjisin(kj,ii) * ( + im(ii) )
-      VRij(kj,3) = VRij(kj,3) -   iRbc(ii,Nvol)                   * kjisin(kj,ii) * ( - in(ii) )
-      VZij(kj,0) = VZij(kj,0) +   iZbs(ii,Nvol)                   * kjisin(kj,ii)
-      VZij(kj,1) = VZij(kj,1) + ( iZbs(ii,Mvol) - iZbs(ii,Nvol) ) * kjisin(kj,ii) * half
-      VZij(kj,2) = VZij(kj,2) +   iZbs(ii,Nvol)                   * kjicos(kj,ii) * ( + im(ii) )
-      VZij(kj,3) = VZij(kj,3) +   iZbs(ii,Nvol)                   * kjicos(kj,ii) * ( - in(ii) )
-     enddo
-     
+
+      do ii = 1, mn
+        VRij(kj,0,0) = VRij(kj,0,0) +   iRbc(ii,Nvol)                   * kjicos(kj,ii) 
+        VRij(kj,1,0) = VRij(kj,1,0) + ( iRbc(ii,Mvol) - iRbc(ii,Nvol) ) * kjicos(kj,ii) * half
+        VRij(kj,2,0) = VRij(kj,2,0) -   iRbc(ii,Nvol)                   * kjisin(kj,ii) * ( + im(ii) )
+        VRij(kj,3,0) = VRij(kj,3,0) -   iRbc(ii,Nvol)                   * kjisin(kj,ii) * ( - in(ii) )
+        VZij(kj,0,0) = VZij(kj,0,0) +   iZbs(ii,Nvol)                   * kjisin(kj,ii)
+        VZij(kj,1,0) = VZij(kj,1,0) + ( iZbs(ii,Mvol) - iZbs(ii,Nvol) ) * kjisin(kj,ii) * half
+        VZij(kj,2,0) = VZij(kj,2,0) +   iZbs(ii,Nvol)                   * kjicos(kj,ii) * ( + im(ii) )
+        VZij(kj,3,0) = VZij(kj,3,0) +   iZbs(ii,Nvol)                   * kjicos(kj,ii) * ( - in(ii) )
+      enddo
+
+      ! Construct derivatives w.r.t plasma boundary harmonics
+      if( Lvacuumderivatives ) then
+      ii = dBdX%ii
+        if( dBdX%irz==0 ) then
+          VRij(kj,0,-1) =  kjicos(kj,ii) 
+          VRij(kj,1,-1) = -kjicos(kj,ii) * half
+          VRij(kj,2,-1) = -kjisin(kj,ii) * ( + im(ii) )
+          VRij(kj,3,-1) = -kjisin(kj,ii) * ( - in(ii) )
+        else
+          VZij(kj,0,-1) =  kjisin(kj,ii)
+          VZij(kj,1,-1) = -kjisin(kj,ii) * half
+          VZij(kj,2,-1) =  kjicos(kj,ii) * ( + im(ii) )
+          VZij(kj,3,-1) =  kjicos(kj,ii) * ( - in(ii) )
+        endif
+      endif
     enddo ! end of do kk ; 07/29/20;
    enddo ! end of do jj ; 07/29/20;
    
-   Vsg(1:Ctz) = VRij(1:Ctz,0) * ( VZij(1:Ctz,1)*VRij(1:Ctz,2) - VRij(1:Ctz,1)*VZij(1:Ctz,2) ) ; Vsg = one / Vsg
+   Vsg(1:Ctz,0 ) = VRij(1:Ctz,0,0 ) * ( VZij(1:Ctz,1,0 )*VRij(1:Ctz,2,0 ) - VRij(1:Ctz,1,0 )*VZij(1:Ctz,2,0 ) ) ; 
+   Vsg(1:Ctz,0) =  one / Vsg(1:Ctz,0)
+
+   if ( Lvacuumderivatives ) then
+    Vsg(1:Ctz,-1) = VRij(1:Ctz,0,-1) * ( VZij(1:Ctz,1,0 )*VRij(1:Ctz,2,0 ) - VRij(1:Ctz,1,0 )*VZij(1:Ctz,2,0 ) ) &
+                  + VRij(1:Ctz,0,0 ) * ( VZij(1:Ctz,1,-1)*VRij(1:Ctz,2,0 ) - VRij(1:Ctz,1,-1)*VZij(1:Ctz,2,0 ) ) &
+                  + VRij(1:Ctz,0,0 ) * ( VZij(1:Ctz,1,0 )*VRij(1:Ctz,2,-1) - VRij(1:Ctz,1,0 )*VZij(1:Ctz,2,-1) )
+    Vsg(1:Ctz,-1) = - Vsg(1:Ctz,-1) / Vsg(1:Ctz,0)**2
+   endif
+
    do ii = 1, 3
-    do jj = ii, 3 ; Vguvij(1:Ctz,ii,jj) = VRij(1:Ctz,ii) * VRij(1:Ctz,jj) + VZij(1:Ctz,ii) * VZij(1:Ctz,jj)
+    do jj = ii, 3 ; 
+      Vguvij(1:Ctz,ii,jj,0) = VRij(1:Ctz,ii,0) * VRij(1:Ctz,jj,0) + VZij(1:Ctz,ii,0) * VZij(1:Ctz,jj,0)
     enddo
    enddo
-   Vguvij(1:Ctz,3,3) = Vguvij(1:Ctz,3,3) + VRij(1:Ctz,0) * VRij(1:Ctz,0)
+   Vguvij(1:Ctz,3,3,0) = Vguvij(1:Ctz,3,3,0) + VRij(1:Ctz,0,0) * VRij(1:Ctz,0,0)
+
+   if ( Lvacuumderivatives ) then
+    do ii = 1, 3
+      do jj = ii, 3 ; 
+        ! Most of these are zeros, we can probablz remove the double loop ?
+        Vguvij(1:Ctz,ii,jj,-1) = VRij(1:Ctz,ii,0 ) * VRij(1:Ctz,jj,-1) + VZij(1:Ctz,ii,0 ) * VZij(1:Ctz,jj,-1) &
+                               + VRij(1:Ctz,ii,-1) * VRij(1:Ctz,jj,0 ) + VZij(1:Ctz,ii,-1) * VZij(1:Ctz,jj,0 )
+      enddo
+     enddo
+     Vguvij(1:Ctz,3,3,-1) = Vguvij(1:Ctz,3,3,-1) + VRij(1:Ctz,0,-1) * VRij(1:Ctz,0,0) + VRij(1:Ctz,0,0) * VRij(1:Ctz,0,-1)
+   endif
    
-   do jk = 1, Ntz ! loop over plasma boundary (to construct Fourier harmonics of B_{plasma} \cdot {\bf n} ; 03/03/21 ;
+
+   if ( .not.Lvacuumderivatives ) then
+    do jk = 1, Ntz ! loop over plasma boundary (to construct Fourier harmonics of B_{plasma} \cdot {\bf n} ; 03/03/21 ;
+      
+      rx(1:Ctz,0) = Dxyz(1,jk) - VRij(1:Ctz,0,0) * cos(kjzeta(1:Ctz))
+      ry(1:Ctz,0) = Dxyz(2,jk) - VRij(1:Ctz,0,0) * sin(kjzeta(1:Ctz))
+      rz(1:Ctz,0) = Dxyz(3,jk) - VZij(1:Ctz,0,0)
+      
+      rrr(1:Ctz,0) = ( sqrt( rx(1:Ctz,0) * rx(1:Ctz,0) + ry(1:Ctz,0) * ry(1:Ctz,0) + rz(1:Ctz,0) * rz(1:Ctz,0) ) )**3 ; 
+      rrr(1:Ctz,0) = one / rrr(1:Ctz,0)
+      
+      xtrr(1:Ctz,1,0) = ( VRij(1:Ctz,2,0)*sin(kjzeta(1:Ctz))                                      ) * rz(1:Ctz,0) & ! cross product \bx_\t \times \br ;
+                      - ( VZij(1:Ctz,2,0)                                                         ) * ry(1:Ctz,0)
+      xtrr(1:Ctz,2,0) = ( VZij(1:Ctz,2,0)                                                         ) * rx(1:Ctz,0) &
+                      - ( VRij(1:Ctz,2,0)*cos(kjzeta(1:Ctz))                                      ) * rz(1:Ctz,0)  
+      xtrr(1:Ctz,3,0) = ( VRij(1:Ctz,2,0)*cos(kjzeta(1:Ctz))                                      ) * ry(1:Ctz,0) &
+                      - ( VRij(1:Ctz,2,0)*sin(kjzeta(1:Ctz))                                      ) * rx(1:Ctz,0)
     
-    rx(1:Ctz) = Dxyz(1,jk) - VRij(1:Ctz,0) * cos(kjzeta(1:Ctz))
-    ry(1:Ctz) = Dxyz(2,jk) - VRij(1:Ctz,0) * sin(kjzeta(1:Ctz))
-    rz(1:Ctz) = Dxyz(3,jk) - VZij(1:Ctz,0)
+      xzrr(1:Ctz,1,0) = ( VRij(1:Ctz,3,0)*sin(kjzeta(1:Ctz)) + VRij(1:Ctz,0,0)*cos(kjzeta(1:Ctz)) ) * rz(1:Ctz,0) & ! cross product \bx_\z \times \br ;
+                      - ( VZij(1:Ctz,3,0)                                                         ) * ry(1:Ctz,0)
+      xzrr(1:Ctz,2,0) = ( VZij(1:Ctz,3,0)                                                         ) * rx(1:Ctz,0) &
+                      - ( VRij(1:Ctz,3,0)*cos(kjzeta(1:Ctz)) - VRij(1:Ctz,0,0)*sin(kjzeta(1:Ctz)) ) * rz(1:Ctz,0)
+      xzrr(1:Ctz,3,0) = ( VRij(1:Ctz,3,0)*cos(kjzeta(1:Ctz)) - VRij(1:Ctz,0,0)*sin(kjzeta(1:Ctz)) ) * ry(1:Ctz,0) &
+                      - ( VRij(1:Ctz,3,0)*sin(kjzeta(1:Ctz)) + VRij(1:Ctz,0,0)*cos(kjzeta(1:Ctz)) ) * rx(1:Ctz,0)
+      
+      xtrrdotds(1:Ctz,0) = xtrr(1:Ctz,1,0) * Nxyz(1,jk) + xtrr(1:Ctz,2,0) * Nxyz(2,jk) + xtrr(1:Ctz,3,0) * Nxyz(3,jk)
+      xzrrdotds(1:Ctz,0) = xzrr(1:Ctz,1,0) * Nxyz(1,jk) + xzrr(1:Ctz,2,0) * Nxyz(2,jk) + xzrr(1:Ctz,3,0) * Nxyz(3,jk)
+      
+      do jj = 1, mn
+      Atejkj(jk,jj,0) = + sum( kjicos(1:Ctz,jj) * ( Vguvij(1:Ctz,3,3,0) * xtrrdotds(1:Ctz,0) - Vguvij(1:Ctz,2,3,0) * xzrrdotds(1:Ctz,0) ) * rrr(1:Ctz,0) * Vsg(1:Ctz,0) )
+      Azejkj(jk,jj,0) = - sum( kjicos(1:Ctz,jj) * ( Vguvij(1:Ctz,2,3,0) * xtrrdotds(1:Ctz,0) - Vguvij(1:Ctz,2,2,0) * xzrrdotds(1:Ctz,0) ) * rrr(1:Ctz,0) * Vsg(1:Ctz,0) )  
+      enddo ! end of do jj ; 07/29/20;
+      
+    enddo ! end of do jk ; 07/29/20;
+
+   else
+    do jk = 1, Ntz ! loop over plasma boundary (to construct Fourier harmonics of B_{plasma} \cdot {\bf n} ; 03/03/21 ;
     
-    rrr(1:Ctz) = ( sqrt( rx(1:Ctz) * rx(1:Ctz) + ry(1:Ctz) * ry(1:Ctz) + rz(1:Ctz) * rz(1:Ctz) ) )**3 ; rrr(1:Ctz) = one / rrr(1:Ctz)
+      rx(1:Ctz,-1) = Dxyz(1,jk) - VRij(1:Ctz,0,-1) * cos(kjzeta(1:Ctz))
+      ry(1:Ctz,-1) = Dxyz(2,jk) - VRij(1:Ctz,0,-1) * sin(kjzeta(1:Ctz))
+      rz(1:Ctz,-1) = Dxyz(3,jk) - VZij(1:Ctz,0,-1)
+      
+      rrr(1:Ctz,-1) = three * sqrt( rx(1:Ctz,0)  * rx(1:Ctz,0) + ry(1:Ctz,0 ) * ry(1:Ctz,0) + rz(1:Ctz,0 ) * rz(1:Ctz,0) ) &
+                            *     ( rx(1:Ctz,-1) * rx(1:Ctz,0) + ry(1:Ctz,-1) * ry(1:Ctz,0) + rz(1:Ctz,-1) * rz(1:Ctz,0) ); 
+      rrr(1:Ctz,-1) = - rrr(1:Ctz,-1) / rrr(1:Ctz,0)**2
+      
+      xtrr(1:Ctz,1,-1) = ( VRij(1:Ctz,2,-1)*sin(kjzeta(1:Ctz))                                    ) * rz(1:Ctz,0 ) & ! cross product \bx_\t \times \br ;
+                       + ( VRij(1:Ctz,2,0 )*sin(kjzeta(1:Ctz))                                    ) * rz(1:Ctz,-1) &
+                       - ( VZij(1:Ctz,2,-1)                                                       ) * ry(1:Ctz,0 ) &
+                       - ( VZij(1:Ctz,2,0 )                                                       ) * ry(1:Ctz,-1)
+      xtrr(1:Ctz,2,-1) = ( VZij(1:Ctz,2,-1)                                                       ) * rx(1:Ctz,0 ) &
+                       + ( VZij(1:Ctz,2,0 )                                                       ) * rx(1:Ctz,-1) &
+                       - ( VRij(1:Ctz,2,-1)*cos(kjzeta(1:Ctz))                                    ) * rz(1:Ctz,0 ) &
+                       - ( VRij(1:Ctz,2,0 )*cos(kjzeta(1:Ctz))                                    ) * rz(1:Ctz,-1)  
+      xtrr(1:Ctz,3,-1) = ( VRij(1:Ctz,2,-1)*cos(kjzeta(1:Ctz))                                    ) * ry(1:Ctz,0 ) &
+                       + ( VRij(1:Ctz,2,0 )*cos(kjzeta(1:Ctz))                                    ) * ry(1:Ctz,-1) &
+                       - ( VRij(1:Ctz,2,-1)*sin(kjzeta(1:Ctz))                                    ) * rx(1:Ctz,0 ) &
+                       - ( VRij(1:Ctz,2,0 )*sin(kjzeta(1:Ctz))                                    ) * rx(1:Ctz,-1)
     
-    xtrr(1:Ctz,1) = ( VRij(1:Ctz,2)*sin(kjzeta(1:Ctz))                                    ) * rz(1:Ctz) & ! cross product \bx_\t \times \br ;
-                  - ( VZij(1:Ctz,2)                                                       ) * ry(1:Ctz)
-    xtrr(1:Ctz,2) = ( VZij(1:Ctz,2)                                                       ) * rx(1:Ctz) &
-                  - ( VRij(1:Ctz,2)*cos(kjzeta(1:Ctz))                                    ) * rz(1:Ctz)  
-    xtrr(1:Ctz,3) = ( VRij(1:Ctz,2)*cos(kjzeta(1:Ctz))                                    ) * ry(1:Ctz) &
-                  - ( VRij(1:Ctz,2)*sin(kjzeta(1:Ctz))                                    ) * rx(1:Ctz)
-  
-    xzrr(1:Ctz,1) = ( VRij(1:Ctz,3)*sin(kjzeta(1:Ctz)) + VRij(1:Ctz,0)*cos(kjzeta(1:Ctz)) ) * rz(1:Ctz) & ! cross product \bx_\z \times \br ;
-                  - ( VZij(1:Ctz,3)                                                       ) * ry(1:Ctz)
-    xzrr(1:Ctz,2) = ( VZij(1:Ctz,3)                                                       ) * rx(1:Ctz) &
-                  - ( VRij(1:Ctz,3)*cos(kjzeta(1:Ctz)) - VRij(1:Ctz,0)*sin(kjzeta(1:Ctz)) ) * rz(1:Ctz)
-    xzrr(1:Ctz,3) = ( VRij(1:Ctz,3)*cos(kjzeta(1:Ctz)) - VRij(1:Ctz,0)*sin(kjzeta(1:Ctz)) ) * ry(1:Ctz) &
-                  - ( VRij(1:Ctz,3)*sin(kjzeta(1:Ctz)) + VRij(1:Ctz,0)*cos(kjzeta(1:Ctz)) ) * rx(1:Ctz)
+      xzrr(1:Ctz,1,-1) = ( VRij(1:Ctz,3,-1)*sin(kjzeta(1:Ctz)) + VRij(1:Ctz,0,-1)*cos(kjzeta(1:Ctz)) ) * rz(1:Ctz,0 ) & ! cross product \bx_\z \times \br ;
+                       + ( VRij(1:Ctz,3,0 )*sin(kjzeta(1:Ctz)) + VRij(1:Ctz,0,0 )*cos(kjzeta(1:Ctz)) ) * rz(1:Ctz,-1) &
+                       - ( VZij(1:Ctz,3,-1)                                                          ) * ry(1:Ctz,0 ) &
+                       - ( VZij(1:Ctz,3,0 )                                                          ) * ry(1:Ctz,-1)
+      xzrr(1:Ctz,2,-1) = ( VZij(1:Ctz,3,-1)                                                          ) * rx(1:Ctz,0 ) &
+                       + ( VZij(1:Ctz,3,0 )                                                          ) * rx(1:Ctz,-1) &
+                       - ( VRij(1:Ctz,3,-1)*cos(kjzeta(1:Ctz)) - VRij(1:Ctz,0,-1)*sin(kjzeta(1:Ctz)) ) * rz(1:Ctz,0 ) &
+                       - ( VRij(1:Ctz,3,0 )*cos(kjzeta(1:Ctz)) - VRij(1:Ctz,0,0 )*sin(kjzeta(1:Ctz)) ) * rz(1:Ctz,-1)
+      xzrr(1:Ctz,3,-1) = ( VRij(1:Ctz,3,-1)*cos(kjzeta(1:Ctz)) - VRij(1:Ctz,0,-1)*sin(kjzeta(1:Ctz)) ) * ry(1:Ctz,0 ) &
+                       + ( VRij(1:Ctz,3,0 )*cos(kjzeta(1:Ctz)) - VRij(1:Ctz,0,0 )*sin(kjzeta(1:Ctz)) ) * ry(1:Ctz,-1) & 
+                       - ( VRij(1:Ctz,3,-1)*sin(kjzeta(1:Ctz)) + VRij(1:Ctz,0,-1)*cos(kjzeta(1:Ctz)) ) * rx(1:Ctz,0 ) & 
+                       - ( VRij(1:Ctz,3,0 )*sin(kjzeta(1:Ctz)) + VRij(1:Ctz,0,0 )*cos(kjzeta(1:Ctz)) ) * rx(1:Ctz,-1)
+       
+      xtrrdotds(1:Ctz,-1) = xtrr(1:Ctz,1,-1) * Nxyz(1,jk) + xtrr(1:Ctz,2,-1) * Nxyz(2,jk) + xtrr(1:Ctz,3,-1) * Nxyz(3,jk)
+      xzrrdotds(1:Ctz,-1) = xzrr(1:Ctz,1,-1) * Nxyz(1,jk) + xzrr(1:Ctz,2,-1) * Nxyz(2,jk) + xzrr(1:Ctz,3,-1) * Nxyz(3,jk)
+      
+      do jj = 1, mn
+       Atejkj(jk,jj,-1) = + sum( kjicos(1:Ctz,jj) * ( Vguvij(1:Ctz,3,3,-1) * xtrrdotds(1:Ctz,0 ) - Vguvij(1:Ctz,2,3,-1) * xzrrdotds(1:Ctz,0 ) ) * rrr(1:Ctz,0) * Vsg(1:Ctz,0) ) &
+                          + sum( kjicos(1:Ctz,jj) * ( Vguvij(1:Ctz,3,3,0 ) * xtrrdotds(1:Ctz,-1) - Vguvij(1:Ctz,2,3,0 ) * xzrrdotds(1:Ctz,-1) ) * rrr(1:Ctz,0) * Vsg(1:Ctz,0) ) &
+                          + sum( kjicos(1:Ctz,jj) * ( Vguvij(1:Ctz,3,3,0 ) * xtrrdotds(1:Ctz,-1) - Vguvij(1:Ctz,2,3,0 ) * xzrrdotds(1:Ctz,-1) ) * (rrr(1:Ctz,-1) * Vsg(1:Ctz,0) + rrr(1:Ctz,0) * Vsg(1:Ctz,-1) ) )
+       Azejkj(jk,jj,-1) = - sum( kjicos(1:Ctz,jj) * ( Vguvij(1:Ctz,2,3,-1) * xtrrdotds(1:Ctz,0 ) - Vguvij(1:Ctz,2,2,-1) * xzrrdotds(1:Ctz,0 ) ) * rrr(1:Ctz,0) * Vsg(1:Ctz,0) )  &
+                          - sum( kjicos(1:Ctz,jj) * ( Vguvij(1:Ctz,2,3,0 ) * xtrrdotds(1:Ctz,-1) - Vguvij(1:Ctz,2,2,0 ) * xzrrdotds(1:Ctz,-1) ) * rrr(1:Ctz,0) * Vsg(1:Ctz,0) )  &
+                          - sum( kjicos(1:Ctz,jj) * ( Vguvij(1:Ctz,2,3,0 ) * xtrrdotds(1:Ctz,0 ) - Vguvij(1:Ctz,2,2,0 ) * xzrrdotds(1:Ctz,0 ) ) * (rrr(1:Ctz,-1) * Vsg(1:Ctz,0) + rrr(1:Ctz,0) * Vsg(1:Ctz,-1)) )
+      enddo ! end of do jj ; 07/29/20;
+      
+     enddo ! end of do jk ; 07/29/20;
+   endif
+   
+   Atejkj(1:Ntz,1:mn,-1:0) = Atejkj(1:Ntz,1:mn,-1:0) * pi2 * pi2 * virtualcasingfactor / Ctz
+   Azejkj(1:Ntz,1:mn,-1:0) = Azejkj(1:Ntz,1:mn,-1:0) * pi2 * pi2 * virtualcasingfactor / Ctz
      
-    xtrrdotds(1:Ctz) = xtrr(1:Ctz,1) * Nxyz(1,jk) + xtrr(1:Ctz,2) * Nxyz(2,jk) + xtrr(1:Ctz,3) * Nxyz(3,jk)
-    xzrrdotds(1:Ctz) = xzrr(1:Ctz,1) * Nxyz(1,jk) + xzrr(1:Ctz,2) * Nxyz(2,jk) + xzrr(1:Ctz,3) * Nxyz(3,jk)
-    
+
+  if( Lvacuumderivatives ) then
     do jj = 1, mn
-     Atejkj(jk,jj) = + sum( kjicos(1:Ctz,jj) * ( Vguvij(1:Ctz,3,3) * xtrrdotds(1:Ctz) - Vguvij(1:Ctz,2,3) * xzrrdotds(1:Ctz) ) * rrr(1:Ctz) * Vsg(1:Ctz) )
-     Azejkj(jk,jj) = - sum( kjicos(1:Ctz,jj) * ( Vguvij(1:Ctz,2,3) * xtrrdotds(1:Ctz) - Vguvij(1:Ctz,2,2) * xzrrdotds(1:Ctz) ) * rrr(1:Ctz) * Vsg(1:Ctz) )  
-    enddo ! end of do jj ; 07/29/20;
-    
-   enddo ! end of do jk ; 07/29/20;
-   
-   Atejkj(1:Ntz,1:mn) = Atejkj(1:Ntz,1:mn) * pi2 * pi2 * virtualcasingfactor / Ctz
-   Azejkj(1:Ntz,1:mn) = Azejkj(1:Ntz,1:mn) * pi2 * pi2 * virtualcasingfactor / Ctz
-   
-   do jj = 1, mn
-    call tfft( Nt, Nz, Atejkj(1:Ntz,jj), Azejkj(1:Ntz,jj), mn, im(1:mn), in(1:mn), efmn(1:mn), Ateij(1:mn,jj), cfmn(1:mn), Azeij(1:mn,jj), ifail )     
-   enddo
+      call tfft( Nt, Nz, Atejkj(1:Ntz,jj,-1), Azejkj(1:Ntz,jj,-1), mn, im(1:mn), in(1:mn), efmn(1:mn), Ateij(1:mn,jj), cfmn(1:mn), Azeij(1:mn,jj), ifail ) 
+    enddo 
+  else
+    do jj = 1, mn
+      call tfft( Nt, Nz, Atejkj(1:Ntz,jj,0), Azejkj(1:Ntz,jj,0), mn, im(1:mn), in(1:mn), efmn(1:mn), Ateij(1:mn,jj), cfmn(1:mn), Azeij(1:mn,jj), ifail ) 
+    enddo  
+  endif
    
    do ii = 1, mn
     

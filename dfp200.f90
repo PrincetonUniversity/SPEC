@@ -722,7 +722,7 @@ subroutine get_perturbed_solution(vvol, oBI, NN)
 
   use cputiming, only :   Tdfp200
 
-  use inputlist, only :   Wmacros, Wdfp200, Lrad, mu, Lconstraint
+  use inputlist, only :   Wmacros, Wdfp200, Lrad, mu, Lconstraint, Lvcvacuum
 
   use allglobal, only :   ncpu, myid, cpus, &
                           mn, Iquad, NAdof, &
@@ -750,9 +750,19 @@ subroutine get_perturbed_solution(vvol, oBI, NN)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
+
   WCALL( dfp200, intghs, ( Iquad(vvol), mn, vvol, ll, 0 ) )
 
-  WCALL( dfp200, mtrxhs, ( vvol, mn, ll, dVA, dVD, 0) )
+  if( Lvcvacuum.eq.1 ) then ! Temporary; need to use matrix free approach
+
+    ! Compute perturbed matrices
+    WCALL( dfp200, matrix, ( vvol, mn, ll ) )
+
+    ! Evaluate d dMA/ dx * x
+    rhs(1:NN) = -matmul( dMA(1:NN,1:NN), solution(1:NN,0) )
+  else
+    WCALL( dfp200, mtrxhs, ( vvol, mn, ll, dVA, dVD, 0) )
+  endif
 
   rhs(0)    = zero
   rhs(1:NN) = -dVA(1:NN)
