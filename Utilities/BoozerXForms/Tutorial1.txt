@@ -27,4 +27,7 @@ This is a basic tutorial on how to use the Booz-xform package (M.Landreman) from
     > plt.figure
     > bx.surfplot(b, js=0, fill=False, cmap=plt.cm.jet, ntheta=50, nphi=90, ncontours=25)
     > plt.savefig('QA002.eps')
-    > plt.show()  
+    > plt.show() 
+
+6.  If major issue can't be solved / code mistake
+    contact: S.Guinchard - salomon.guinchard@epfl.ch 
