@@ -39,7 +39,7 @@ class SPECout:
         get_B_covariant,
         test_derivatives,
         get_surface_current_density,
-        get_RZ_derivatives
+        get_RZ_derivatives,
         get_volume,
         get_average_beta,
         get_peak_beta
