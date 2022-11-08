@@ -1,6 +1,133 @@
 import numpy as np
 
 
+def get_RZ_derivatives(
+    self,
+    lvol=0,
+    sarr=np.linspace(1, 1, 1),
+    tarr=np.linspace(0, 0, 1),
+    zarr=np.linspace(0, 0, 1),
+    input1D=False
+):
+    sym = self.input.physics.Istellsym == 1
+
+    Rac, Rbc = self.output.Rbc[lvol : lvol + 2]
+    Ras, Rbs = self.output.Rbs[lvol : lvol + 2]
+    Zas, Zbs = self.output.Zbs[lvol : lvol + 2]
+    Zac, Zbc = self.output.Zbc[lvol : lvol + 2]
+
+    mn = Rac.size  # s.output.mn
+    im = self.output.im
+    in_ = self.output.in_
+
+    #sbar = (sarr + 1) / 2
+    sbar = np.divide(np.add(sarr, 1.0), 2.0)
+    fac = []
+
+    Igeometry = self.input.physics.Igeometry
+    rpol = self.input.physics.rpol
+    rtor = self.input.physics.rtor
+
+    if Igeometry == 1:
+        for j in range(mn):
+            fac.append([sbar, 0.5 * np.ones(sarr.size), np.zeros(sarr.size)])
+    elif Igeometry == 2:
+        for j in range(mn):
+            if lvol > 0 or im[j] == 0:
+                fac.append([sbar, 0.5 * np.ones(sarr.size), np.zeros(sarr.size)])
+            else:
+                fac.append(
+                    [
+                        sbar ** (im[j] + 1.0),
+                        (im[j] + 1.0) / 2.0 * sbar ** (im[j]),
+                        (im[j] + 1.0) * (im[j]) / 4.0 * sbar ** (im[j] - 1),
+                    ]
+                )
+    elif Igeometry == 3:
+        for j in range(mn):
+            if lvol == 0 and im[j] == 0:
+                fac.append([sbar ** 2, sbar, 0.5 * np.ones(sarr.size)])
+            elif lvol == 0 and im[j] > 0:
+                fac.append(
+                    [
+                        sbar ** im[j],
+                        (im[j] / 2.0) * sbar ** (im[j] - 1.0),
+                        (im[j] * (im[j] - 1) / 4.0) * sbar ** (im[j] - 2.0),
+                    ]
+                )
+            else:
+                fac.append([sbar, 0.5 * np.ones(sarr.size), np.zeros(sarr.size)])
+
+    # now fac has the dimension (number of modes, number of derivatives, number of s points)
+    fac = np.array(fac)
+    # transpose to (number of derivatives, number of modes, number of s points)
+    fac = np.moveaxis(fac, 0, 1)
+
+    nax = np.newaxis
+    if not input1D:
+        im = im[:, nax, nax, nax]
+        in_ = in_[:, nax, nax, nax]
+        ang_arg = +im * tarr[nax, nax, :, nax] - in_ * zarr[nax, nax, nax, :]
+    else:
+        im = im[:, nax]
+        in_ = in_[:, nax]
+        ang_arg = im * tarr[nax, :] - in_ * zarr[nax, :]
+
+    cos = np.cos(ang_arg)
+    sin = np.sin(ang_arg)
+
+    if not input1D:
+        fac = fac[:, :, :, nax, nax]
+        Rac = Rac[:, nax, nax, nax]
+        Rbc = Rbc[:, nax, nax, nax]
+        Zas = Zas[:, nax, nax, nax]
+        Zbs = Zbs[:, nax, nax, nax]
+        if not sym:
+            Ras = Ras[:, nax, nax, nax]
+            Rbs = Rbs[:, nax, nax, nax]
+            Zac = Zac[:, nax, nax, nax]
+            Zbc = Zbc[:, nax, nax, nax]
+    else:
+        Rac = Rac[:, nax]
+        Rbc = Rbc[:, nax]
+        Zas = Zas[:, nax]
+        Zbs = Zbs[:, nax]
+        if not sym:
+            Ras = Ras[:, nax]
+            Rbs = Rbs[:, nax]
+            Zac = Zac[:, nax]
+            Zbc = Zbc[:, nax]
+
+    dR1 = Rac + fac[0] * (Rbc - Rac)
+    Rarr0 = np.sum(dR1 * cos, axis=0)
+
+    Rarr1 = np.sum(fac[1] * (Rbc - Rac) * cos, axis=0)
+    Rarr2 = np.sum(-im * dR1 * sin, axis=0)
+    Rarr3 = np.sum(in_ * dR1 * sin, axis=0)
+
+    Rarr = np.array([Rarr1, Rarr2, Rarr3])
+
+    # We only need Z for Igeometry=3
+    if Igeometry == 3:
+        dZ1 = Zas + fac[0] * (Zbs - Zas)
+        Zarr0 = np.sum(dZ1 * sin, axis=0)
+
+        Zarr1 = np.sum(fac[1] * (Zbs - Zas) * sin, axis=0)
+        Zarr2 = np.sum(im * dZ1 * cos, axis=0)
+        Zarr3 = np.sum(-in_ * dZ1 * cos, axis=0)
+
+        Zarr = np.array([Zarr1, Zarr2, Zarr3])
+    else:
+        Zarr0 = None
+
+    print('hello')
+    return Rarr0, Rarr1, Rarr2, Rarr3, Zarr0, Zarr1, Zarr2, Zarr3
+
+
+
+
+
+
 def get_grid_and_jacobian_and_metric(
     self,
     lvol=0,
@@ -381,3 +508,99 @@ def test_derivatives(self, lvol=0, s=0.3, t=0.4, z=0.5, delta=1e-6, tol=1e-6):
     print((g[1,0,0,:,:] - g[0,0,0,:,:])/ds/2-dg[0,0,0,0,:,:])
     print((g[0,1,0,:,:] - g[0,0,0,:,:])/ds/2-dg[0,0,0,1,:,:])
     print((g[0,0,1,:,:] - g[0,0,0,:,:])/ds/2-dg[0,0,0,2,:,:])
+
+
+def get_surface_current_density(self, lvol:int=None, nt:int=64, nz:int=64):
+    """Compute j_surf.B on each side of the provided interfaces
+    
+    Args:
+        - lvol: Interface number, between 0 and Mvol-2.
+        - nt: Number of poloidal points
+        - nz: Number of toroidal points
+        
+    Returns:
+        - j_dot_B: j_surf.B evaluated on the grid. Shape (nsurf, nt, nz),
+                   with nsurf the size of lvol
+        - tarr: theta array, size (nt,)
+        - zarr: zeta array, size (nz,)
+        
+    Raises:
+        - ValueError: if input is wrong (invalid lvol, nt<=0, nz<=0)
+    """
+
+    mvol = self.output.Mvol
+    nfp = self.input.physics.Nfp
+
+    if mvol==1: raise ValueError('Mvol=1; no interface current!')
+    if not isinstance(lvol, np.ndarray): raise ValueError('lvol should be a np.ndarray')
+    if lvol is None: raise ValueError('Need to provide lvol')
+    if (lvol<0).any() or (lvol>mvol-1).any(): raise ValueError('lvol should be in [1,mvol-1]')
+    if nt<1: raise ValueError('nt should greater than zero')
+    if nz<1: raise ValueError('nz should greater than zero')
+
+    # Construct grid
+    tarr = np.linspace(0, 2*np.pi, nt, endpoint=True)
+    zarr = np.linspace(0, 2*np.pi/nfp, nz, endpoint=True)
+
+    # Evaluate geometry elements
+    nsurf = lvol.size*2
+    j_dot_B = np.zeros((mvol-1, 2, nt, nz))
+    for vvol in lvol:
+        # Construct geometry elements - these are independent of the 
+        # interface side
+        print(0)
+        R0, R1, R2, R3, Z0, Z1, Z2, Z3 = self.get_RZ_derivatives(
+            lvol=int(vvol),
+            sarr=np.asarray([1]),
+            tarr=tarr,
+            zarr=zarr
+        )   
+        print(1)
+        et_x_ez = (R2*Z3)**2 + (R3*Z2)**2 + (R0*Z2)**2 + (R0*R2)**2 - 2*R2*R3*Z2*Z3
+        
+
+        print(2)
+        gtt = R2**2+Z2**2
+        gzz = R0**2 + R3**2 + Z3**2
+        gtz = R2*R3 + Z2*Z3
+        g = gtt*gzz - gtz**2
+
+        # project on each side of interface
+        Bcontrav = np.zeros((2,nt,nz,3))
+        for innout in [0,1]:
+            # if innout=0, inner side of interface, thus vvol=vvol and sarr=1
+            # if innout=1, outer side of interface, thus vvol=vvol+1 and sarr=-1
+            sarr = np.asarray([-innout*2+1])
+
+            # Get magnetic field
+            Bcontrav[innout,:,:,:] = self.get_B(
+                lvol=vvol,
+                sarr=sarr,
+                tarr=tarr,
+                zarr=zarr
+            ).squeeze()
+
+        Bcontrav_jump = Bcontrav[1]-Bcontrav[0]
+
+        for innout in [0,1]:
+            j_dot_B[vvol, innout] = g / et_x_ez * ( 
+                Bcontrav[innout, :, :, 1]*Bcontrav_jump[:, :, 2]
+              - Bcontrav[innout, :, :, 2]*Bcontrav_jump[:, :, 1]  
+            )
+
+    print(j_dot_B.shape)
+    print(tarr.shape)
+    print(zarr.shape)
+    return j_dot_B, tarr, zarr
+
+
+
+
+
+
+
+
+            
+
+
+

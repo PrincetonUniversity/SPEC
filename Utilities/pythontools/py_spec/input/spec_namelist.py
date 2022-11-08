@@ -454,6 +454,64 @@ class SPECNamelist(Namelist):
 
         self.interface_guess[(m, n)][key][ivol] = value
 
+
+    def get_plasma_boundary(self, m, n, key="Rbc"):
+        """Get the guess of the interface Fourier harmonic
+        parameters:
+            m,n -- the m and n number of the guess, must be within the allowed Mpol and Ntor range
+                   the n number is the one without multiplying by Nfp
+            ivol -- which volume, Python convention, starting from 0
+            key -- which item, can be 'Rbc', 'Zbs', 'Rbs', 'Zbc'
+        Returns:
+            guess -- the initial guess of the interface harmonic used in SPEC
+        """
+        if key not in ["Rbc", "Rbs", "Zbc", "Zbs"]:
+            raise ValueError("key must be in ['Rbc', 'Rbs', 'Zbc', 'Zbs']")
+
+        ll = self['physicslist'][key]
+
+        if m>=len(ll): 
+            return 0
+        else:
+            nl = len(ll[m])
+            ntor = int((nl-1)/2)
+            if abs(n)>ntor:
+                return 0
+            else:
+                return ll[m][n+ntor]
+
+    def set_plasma_boundary(self, value, m, n, key="Rbc"):
+        """Set the guess of the interface Fourier harmonic
+        parameters:
+            value -- the value that one wants to set
+            m,n -- the m and n number of the guess, must be within the allowed Mpol and Ntor range
+                   the n number is the one without multiplying by Nfp
+            ivol -- which volume, Python convention, starting from 0
+            key -- which guess, can be 'Rbc', 'Zbs', 'Rbs', 'Zbc'
+        """
+        if key not in ["Rbc", "Rbs", "Zbc", "Zbs"]:
+            raise ValueError("key must be in ['Rbc', 'Rbs', 'Zbc', 'Zbs']")
+
+        ll = self['physicslist'][key]
+
+        if m>=len(ll): 
+            for m in range(len(ll), m+1):
+                self['physicslist'][key].append([0]*(2*self._Ntor+1))
+        else:
+            nl = len(ll[m])
+            ntor = int((nl-1)/2)
+            if abs(n)>ntor:
+                for n in range(ntor+1, abs(n)+1):
+                    self['physicslist'][key][m].append(0)
+                    self['physicslist'][key][m].insert(0, 0)
+                
+                # Change indexing
+                self['physicslist'].start_index[key][0] = -abs(n)
+        
+        nl = len(self['physicslist'][key][m])
+        ntor = int((nl-1)/2)
+        self['physicslist'][key][m][n+ntor] = value
+
     def remove_interface_guess(self, m, n):
         """Remove the guess of the interface Fourier harmonic with some m,n
         parameters:
