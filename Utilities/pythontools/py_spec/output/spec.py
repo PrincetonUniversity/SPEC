@@ -40,6 +40,9 @@ class SPECout:
         test_derivatives,
         get_surface_current_density,
         get_RZ_derivatives
+        get_volume,
+        get_average_beta,
+        get_peak_beta
     )
     from ._plot_modB import plot_modB
     from ._plot_iota import plot_iota
@@ -102,10 +105,15 @@ class SPECout:
 
             # these define the target dimensions in the radial direction
             Nvol = self.input.physics.Nvol
+            Mvol = Nvol
             if self.input.physics.Lfreebound:
+<<<<<<< HEAD
                 Mvol=Nvol+1
             else:
                 Mvol=Nvol
+=======
+                Mvol += 1
+>>>>>>> pythontools
 
             Lrad = self.input.physics.Lrad
 
