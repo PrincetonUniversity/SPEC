@@ -965,7 +965,7 @@ subroutine read_inputlists_from_file()
 
    character(len=1000) :: line
 
-   INTEGER              :: mm, nn
+   INTEGER              :: mm, nn, MNMAX
    REAL,    allocatable :: RZRZ(:,:) ! local array used for reading interface Fourier harmonics from file;
 
    inquire( file=trim(ext)//".sp", exist=Lspexist ) ! check if file exists;
@@ -1078,6 +1078,11 @@ subroutine read_inputlists_from_file()
    instat = 0
 
    num_modes = 0
+
+   MNMAX = MNtor + 1 + MMpol * ( 2 * MNtor + 1 )
+   if(allocated(mmRZRZ)) deallocate(mmRZRZ, nnRZRZ, allRZRZ)
+   allocate(mmRZRZ(1:MNMAX), nnRZRZ(1:MNMAX), allRZRZ(1:4,1:Nvol,1:MNMAX))
+
    if (Linitialize .le. 0) then
 
      ! duplicate of checks required for below code
@@ -1111,9 +1116,6 @@ subroutine read_inputlists_from_file()
 
      ! now allocate arrays and read...
      ! Need to free memory, in case preset() called multiple times via python wrappers
-     if(allocated(mmRZRZ)) deallocate(mmRZRZ, nnRZRZ, allRZRZ)
-     allocate(mmRZRZ(1:num_modes), nnRZRZ(1:num_modes), allRZRZ(1:4,1:Nvol,1:num_modes))
-
      do idx_mode = 1, num_modes
        read(iunit,*,iostat=instat) mmRZRZ(idx_mode), nnRZRZ(idx_mode), allRZRZ(1:4,1:Nvol, idx_mode)
      enddo
