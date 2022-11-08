@@ -107,13 +107,7 @@ class SPECout:
             Nvol = self.input.physics.Nvol
             Mvol = Nvol
             if self.input.physics.Lfreebound:
-<<<<<<< HEAD
-                Mvol=Nvol+1
-            else:
-                Mvol=Nvol
-=======
                 Mvol += 1
->>>>>>> pythontools
 
             Lrad = self.input.physics.Lrad
 
