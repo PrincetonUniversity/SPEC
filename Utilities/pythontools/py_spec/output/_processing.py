@@ -9,6 +9,12 @@ def get_RZ_derivatives(
     zarr=np.linspace(0, 0, 1),
     input1D=False
 ):
+
+    Igeometry = self.input.physics.Igeometry 
+
+    if lvol==0 and (sarr==-1).any() and Igeometry!=0:
+        raise ValueError('Cannot evaluate coordinate derivative on magnetic axis !')
+
     sym = self.input.physics.Istellsym == 1
 
     Rac, Rbc = self.output.Rbc[lvol : lvol + 2]
@@ -24,7 +30,6 @@ def get_RZ_derivatives(
     sbar = np.divide(np.add(sarr, 1.0), 2.0)
     fac = []
 
-    Igeometry = self.input.physics.Igeometry
     rpol = self.input.physics.rpol
     rtor = self.input.physics.rtor
 
@@ -120,7 +125,6 @@ def get_RZ_derivatives(
     else:
         Zarr0 = None
 
-    print('hello')
     return Rarr0, Rarr1, Rarr2, Rarr3, Zarr0, Zarr1, Zarr2, Zarr3
 
 
@@ -594,31 +598,31 @@ def test_derivatives(self, lvol=0, s=0.3, t=0.4, z=0.5, delta=1e-6, tol=1e-6):
     print((g[0,0,1,:,:] - g[0,0,0,:,:])/ds/2-dg[0,0,0,2,:,:])
 
 
-def get_surface_current_density(self, lvol:int=None, nt:int=64, nz:int=64):
+def get_surface_current_density(self, lsurf:int=None, nt:int=64, nz:int=64):
     """Compute j_surf.B on each side of the provided interfaces
     
     Args:
-        - lvol: Interface number, between 0 and Mvol-2.
+        - lsurf: Interface number, between 1 and Mvol-1.
         - nt: Number of poloidal points
         - nz: Number of toroidal points
         
     Returns:
-        - j_dot_B: j_surf.B evaluated on the grid. Shape (nsurf, nt, nz),
-                   with nsurf the size of lvol
+        - j_dot_B: mu0*j_surf.B evaluated on the grid. Shape (nsurf, nt, nz),
+                   with nsurf the size of lsurf
         - tarr: theta array, size (nt,)
         - zarr: zeta array, size (nz,)
         
     Raises:
-        - ValueError: if input is wrong (invalid lvol, nt<=0, nz<=0)
+        - ValueError: if input is wrong (invalid lsurf, nt<=0, nz<=0)
     """
 
     mvol = self.output.Mvol
     nfp = self.input.physics.Nfp
 
     if mvol==1: raise ValueError('Mvol=1; no interface current!')
-    if not isinstance(lvol, np.ndarray): raise ValueError('lvol should be a np.ndarray')
-    if lvol is None: raise ValueError('Need to provide lvol')
-    if (lvol<0).any() or (lvol>mvol-1).any(): raise ValueError('lvol should be in [1,mvol-1]')
+    if not isinstance(lsurf, np.ndarray): raise ValueError('lsurf should be a np.ndarray')
+    if lsurf is None: raise ValueError('Need to provide lsurf')
+    if (lsurf<1).any() or (lsurf>mvol-1).any(): raise ValueError('lsurf should be in [1,mvol-1]')
     if nt<1: raise ValueError('nt should greater than zero')
     if nz<1: raise ValueError('nz should greater than zero')
 
@@ -627,23 +631,19 @@ def get_surface_current_density(self, lvol:int=None, nt:int=64, nz:int=64):
     zarr = np.linspace(0, 2*np.pi/nfp, nz, endpoint=True)
 
     # Evaluate geometry elements
-    nsurf = lvol.size*2
+    nsurf = lsurf.size*2
     j_dot_B = np.zeros((mvol-1, 2, nt, nz))
-    for vvol in lvol:
+    for s in lsurf:
         # Construct geometry elements - these are independent of the 
         # interface side
-        print(0)
         R0, R1, R2, R3, Z0, Z1, Z2, Z3 = self.get_RZ_derivatives(
-            lvol=int(vvol),
+            lvol=int(s-1),
             sarr=np.asarray([1]),
             tarr=tarr,
             zarr=zarr
         )   
-        print(1)
         et_x_ez = (R2*Z3)**2 + (R3*Z2)**2 + (R0*Z2)**2 + (R0*R2)**2 - 2*R2*R3*Z2*Z3
         
-
-        print(2)
         gtt = R2**2+Z2**2
         gzz = R0**2 + R3**2 + Z3**2
         gtz = R2*R3 + Z2*Z3
@@ -652,29 +652,27 @@ def get_surface_current_density(self, lvol:int=None, nt:int=64, nz:int=64):
         # project on each side of interface
         Bcontrav = np.zeros((2,nt,nz,3))
         for innout in [0,1]:
-            # if innout=0, inner side of interface, thus vvol=vvol and sarr=1
-            # if innout=1, outer side of interface, thus vvol=vvol+1 and sarr=-1
+            # if innout=0, inner side of interface, thus vvol=s-1 and sarr=1
+            # if innout=1, outer side of interface, thus vvol=s and sarr=-1
+            lvol = s - np.mod(innout+1,2)
             sarr = np.asarray([-innout*2+1])
 
             # Get magnetic field
             Bcontrav[innout,:,:,:] = self.get_B(
-                lvol=vvol,
+                lvol=lvol,
                 sarr=sarr,
                 tarr=tarr,
                 zarr=zarr
-            ).squeeze()
-
+            )[0]
+            
         Bcontrav_jump = Bcontrav[1]-Bcontrav[0]
 
         for innout in [0,1]:
-            j_dot_B[vvol, innout] = g / et_x_ez * ( 
+            j_dot_B[s-1, innout] = g / et_x_ez * ( 
                 Bcontrav[innout, :, :, 1]*Bcontrav_jump[:, :, 2]
               - Bcontrav[innout, :, :, 2]*Bcontrav_jump[:, :, 1]  
             )
 
-    print(j_dot_B.shape)
-    print(tarr.shape)
-    print(zarr.shape)
     return j_dot_B, tarr, zarr
 
 
