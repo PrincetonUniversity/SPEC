@@ -1498,9 +1498,6 @@ subroutine set_global_variables()
     Localconstraint = .true.
   endif
 
-  !----------------------------------------------------------------------------------------------------------------------------------------
-  ! Now modify some input parameters in case we perform some checks. This is not used in "regular" spec.
-
   if( Lcheck.eq.5 ) then ! will check Hessian using finite-differences;
     forcetol = 1.0e+12 ; 
     nPpts    = 0 

@@ -103,7 +103,7 @@ class SPECNamelist(Namelist):
             self._spec_version = "unknown"
 
         elif isinstance(args[0], SPECout):
-            # the first argumetn is a SPEC object, generate the quantities from the SPEC object
+            # the first argument is a SPEC object, generate the quantities from the SPEC object
             # first initialize an empty namelist
             super().__init__()
 
