@@ -23,6 +23,9 @@ function plot_spec_Bgrid(data,nz0,plotstyle,newfig)
 if ~strcmp(string(plotstyle),string('pcolor')) && ~strcmp(string(plotstyle),string('scatter'))
     error('InputError: Invalid plotstyle')
 end
+if nz0<1
+    error('nzo should be greater than zero')
+end
 switch newfig
     case 0
         hold on

@@ -26,6 +26,10 @@ function plot_spec_iterations( data, xl, yl )
     % Read size
     Nfp = double(data.input.physics.Nfp);
     [~, ~, Niter] = size(data.iterations.iRbc);
+    
+    if Niter==0
+        error('No iterations available')
+    end
 
     % Create some sliders for controling the iteration and the toroidal
     % angle
