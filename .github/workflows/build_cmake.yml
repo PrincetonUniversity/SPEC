@@ -16,6 +16,7 @@ jobs:
         uses: actions/checkout@master
       - name: Install prereqs
         run: |
+          pip3 install skbuild # prereq for ninja (it seems)
           pip3 install ninja cmake
           yum install -y hdf5-static
       - name: Build & Test
