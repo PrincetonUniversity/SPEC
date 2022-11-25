@@ -124,4 +124,4 @@ compile_test:
 	@echo "LINKS = ${LINKS}"
 
 test:
-	@${PYTHON} -c "from spec import spec; print('SPEC version: {:}'.format(spec.constants.version))"
+	@${PYTHON} -c "import spec.spec_f90wrapped as spec; print('SPEC version: {:}'.format(spec.constants.version))"

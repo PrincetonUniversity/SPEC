@@ -66,7 +66,7 @@ module constants
   REAL, parameter :: mu0        =   2.0E-07 * pi2       !< \f$4\pi\cdot10^{-7}\f$
   REAL, parameter :: goldenmean =   1.618033988749895   !< golden mean = \f$( 1 + \sqrt 5 ) / 2\f$ ;
 
-  REAL, parameter :: version    =   3.10  !< version of SPEC
+  REAL, parameter :: version    =   3.20  !< version of SPEC
 
 end module constants
 
@@ -673,6 +673,13 @@ module allglobal
 
   REAL,    allocatable :: dFFdRZ(:,:,:,:,:) !< derivatives of B^2 at the interfaces wrt geometry
   REAL,    allocatable :: dBBdmp(:,:,:,:  ) !< derivatives of B^2 at the interfaces wrt mu and dpflux
+
+  REAL,    allocatable :: HdFFdRZ(:,:,:,:,:) !< derivatives of B^2 at the interfaces wrt geometry 2D Hessian; 
+
+  REAL,    allocatable :: denergydrr(:,:,:,:,:) !< derivatives of energy at the interfaces wrt geometry 3D Hessian; 
+  REAL,    allocatable :: denergydrz(:,:,:,:,:) !< derivatives of energy at the interfaces wrt geometry 3D Hessian; 
+  REAL,    allocatable :: denergydzr(:,:,:,:,:) !< derivatives of energy at the interfaces wrt geometry 3D Hessian; 
+  REAL,    allocatable :: denergydzz(:,:,:,:,:) !< derivatives of energy at the interfaces wrt geometry 3D Hessian; 
 !> @}
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -722,6 +729,14 @@ module allglobal
   LOGICAL              :: Lhessianallocated !< flag to indicate that force gradient matrix is allocated (?)
   REAL,    allocatable :: hessian(:,:)      !<               force gradient matrix (?)
   REAL,    allocatable :: dessian(:,:)      !< derivative of force gradient matrix (?)
+
+  LOGICAL              :: Lhessian2Dallocated !< flag to indicate that 2D Hessian matrix is allocated (?)
+  REAL,    allocatable :: hessian2D(:,:) !< Hessian 2D
+  REAL,    allocatable :: dessian2D(:,:) !< derivative Hessian 2D
+
+  LOGICAL              :: Lhessian3Dallocated !< flag to indicate that 2D Hessian matrix is allocated (?)
+  REAL,    allocatable :: hessian3D(:,:) !< Hessian 3D
+  REAL,    allocatable :: dessian3D(:,:) !< derivative Hessian 3D
 !> @}
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -950,7 +965,7 @@ subroutine read_inputlists_from_file()
 
    character(len=1000) :: line
 
-   INTEGER              :: mm, nn
+   INTEGER              :: mm, nn, MNMAX
    REAL,    allocatable :: RZRZ(:,:) ! local array used for reading interface Fourier harmonics from file;
 
    inquire( file=trim(ext)//".sp", exist=Lspexist ) ! check if file exists;
@@ -1063,6 +1078,11 @@ subroutine read_inputlists_from_file()
    instat = 0
 
    num_modes = 0
+
+   MNMAX = MNtor + 1 + MMpol * ( 2 * MNtor + 1 )
+   if(allocated(mmRZRZ)) deallocate(mmRZRZ, nnRZRZ, allRZRZ)
+   allocate(mmRZRZ(1:MNMAX), nnRZRZ(1:MNMAX), allRZRZ(1:4,1:Nvol,1:MNMAX))
+
    if (Linitialize .le. 0) then
 
      ! duplicate of checks required for below code
@@ -1096,9 +1116,6 @@ subroutine read_inputlists_from_file()
 
      ! now allocate arrays and read...
      ! Need to free memory, in case preset() called multiple times via python wrappers
-     if(allocated(mmRZRZ)) deallocate(mmRZRZ, nnRZRZ, allRZRZ)
-     allocate(mmRZRZ(1:num_modes), nnRZRZ(1:num_modes), allRZRZ(1:4,1:Nvol,1:num_modes))
-
      do idx_mode = 1, num_modes
        read(iunit,*,iostat=instat) mmRZRZ(idx_mode), nnRZRZ(idx_mode), allRZRZ(1:4,1:Nvol, idx_mode)
      enddo
@@ -1111,6 +1128,37 @@ subroutine read_inputlists_from_file()
     close(iunit)
 
 end subroutine ! read_inputlists_from_file
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+subroutine write_spec_namelist()
+  ! write all the namelists to example.sp
+  use constants
+  use fileunits
+  use inputlist
+
+  LOCALS
+
+  LOGICAL :: exist
+  CHARACTER(LEN=100), PARAMETER :: example = 'example.sp'
+
+  if( myid == 0 ) then
+     inquire(file=trim(example), EXIST=exist) ! inquire if inputfile existed;
+     FATAL( global, exist, example input file example.sp already existed )
+     open(iunit, file=trim(example), status='unknown', action='write')
+     write(iunit, physicslist)
+     write(iunit, numericlist)
+     write(iunit, locallist)
+     write(iunit, globallist)
+     write(iunit, diagnosticslist)
+     write(iunit, screenlist)
+     close(iunit)
+  endif
+
+  return
+end subroutine
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
