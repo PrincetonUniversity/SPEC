@@ -119,7 +119,7 @@ def init_from_spec( filename ):
 
 
     ##########################################################
-    # initialisation de l'instance b de la classe booz_xform # 
+    # Initialisation of a Booz_xform instance b              # 
     ##########################################################
     
     b = bx.Booz_xform()
