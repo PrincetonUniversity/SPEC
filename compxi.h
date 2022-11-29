@@ -48,6 +48,8 @@ subroutine compxi( lvol, Ntz, mn, dxi )
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
+  dxi(1:Ntz,1:3,0:3) = zero
+
   ! one must have called coords using Lcurvature=2 BEFORE calling compxi
 
   ii = dBdX%ii ; innout = dBdX%innout ; irz = dBdX%irz ; issym = dBdX%issym ! shorthand
@@ -96,6 +98,15 @@ subroutine compxi( lvol, Ntz, mn, dxi )
         dxi(1:Ntz,1,3) =- in(ii) * sini(1:Ntz,ii) * Zij(1:Ntz,2,0) * Rij(1:Ntz,0,0) & 
                         - cosi(1:Ntz,ii) * Zij(1:Ntz,2,3) * Rij(1:Ntz,0,0) &
                         - cosi(1:Ntz,ii) * Zij(1:Ntz,2,0) * Rij(1:Ntz,3,0)
+
+        dxi(1:Ntz,2,0) =+ cosi(1:Ntz,ii) * Zij(1:Ntz,1,0) * Rij(1:Ntz,0,0)
+        dxi(1:Ntz,2,1) = zero                      ! not used
+        dxi(1:Ntz,2,2) =- im(ii) * sini(1:Ntz,ii) * Zij(1:Ntz,1,0) * Rij(1:Ntz,0,0) &
+                        + cosi(1:Ntz,ii) * Zij(1:Ntz,1,2) * Rij(1:Ntz,0,0) &
+                        + cosi(1:Ntz,ii) * Zij(1:Ntz,1,0) * Rij(1:Ntz,2,0)
+        dxi(1:Ntz,2,3) =+ in(ii) * sini(1:Ntz,ii) * Zij(1:Ntz,1,0) * Rij(1:Ntz,0,0) & 
+                        + cosi(1:Ntz,ii) * Zij(1:Ntz,1,3) * Rij(1:Ntz,0,0) &
+                        + cosi(1:Ntz,ii) * Zij(1:Ntz,1,0) * Rij(1:Ntz,3,0)
       else ! \delta Z
         dxi(1:Ntz,1,0) =+ sini(1:Ntz,ii) * Rij(1:Ntz,2,0) * Rij(1:Ntz,0,0)
         dxi(1:Ntz,1,1) = zero                      ! not used
@@ -105,6 +116,15 @@ subroutine compxi( lvol, Ntz, mn, dxi )
         dxi(1:Ntz,1,3) =- in(ii) * cosi(1:Ntz,ii) * Rij(1:Ntz,2,0) * Rij(1:Ntz,0,0) & 
                         + sini(1:Ntz,ii) * Rij(1:Ntz,2,3) * Rij(1:Ntz,0,0) &
                         + sini(1:Ntz,ii) * Rij(1:Ntz,2,0) * Rij(1:Ntz,3,0)
+
+        dxi(1:Ntz,2,0) =- sini(1:Ntz,ii) * Rij(1:Ntz,1,0) * Rij(1:Ntz,0,0)
+        dxi(1:Ntz,2,1) = zero                      ! not used
+        dxi(1:Ntz,2,2) =- im(ii) * cosi(1:Ntz,ii) * Rij(1:Ntz,1,0) * Rij(1:Ntz,0,0) &
+                        - sini(1:Ntz,ii) * Rij(1:Ntz,1,2) * Rij(1:Ntz,0,0) &
+                        - sini(1:Ntz,ii) * Rij(1:Ntz,1,0) * Rij(1:Ntz,2,0)
+        dxi(1:Ntz,2,3) =+ in(ii) * cosi(1:Ntz,ii) * Rij(1:Ntz,1,0) * Rij(1:Ntz,0,0) & 
+                        - sini(1:Ntz,ii) * Rij(1:Ntz,1,3) * Rij(1:Ntz,0,0) &
+                        - sini(1:Ntz,ii) * Rij(1:Ntz,1,0) * Rij(1:Ntz,3,0)
       end if ! irz .eq. 0
     else ! NOTstellsym
       if (irz .eq. 0) then ! \delta R
@@ -135,6 +155,13 @@ subroutine compxi( lvol, Ntz, mn, dxi )
   dxi(1:Ntz,1,1) = zero                            ! not used
   dxi(1:Ntz,1,2) = dxi(1:Ntz,1,2) / sg(1:Ntz,0) - dxi(1:Ntz,1,0) * sg(1:Ntz,2) / sg(1:Ntz,0)
   dxi(1:Ntz,1,3) = dxi(1:Ntz,1,3) / sg(1:Ntz,0) - dxi(1:Ntz,1,0) * sg(1:Ntz,3) / sg(1:Ntz,0)
+
+  if (Igeometry .eq. 3) then
+    dxi(1:Ntz,2,0) = dxi(1:Ntz,2,0) / sg(1:Ntz,0)
+    dxi(1:Ntz,2,1) = zero                            ! not used
+    dxi(1:Ntz,2,2) = dxi(1:Ntz,2,2) / sg(1:Ntz,0) - dxi(1:Ntz,2,0) * sg(1:Ntz,2) / sg(1:Ntz,0)
+    dxi(1:Ntz,2,3) = dxi(1:Ntz,2,3) / sg(1:Ntz,0) - dxi(1:Ntz,2,0) * sg(1:Ntz,3) / sg(1:Ntz,0)
+  endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

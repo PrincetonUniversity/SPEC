@@ -10,7 +10,7 @@
  Nvol        =         1
  Mpol        =         10
  Ntor        =         10
- Lrad        =                       6                      
+ Lrad        =                       16                      
  tflux       =   1.000000000000000E+00
  pflux       =   0.000000000000000E+00
  helicity    =   1.559429589793997E-03
@@ -305,9 +305,11 @@ Rwc(4,4)    =  0.000000000000000E+00 Zws(4,4)    =  0.000000000000000E+00 Rws(4,
 &locallist
  LBeltrami   =         4
  Linitgues   =         1
+ Lmatsolver  =         1
+ epsGMRES    =        1e-9
 /
 &globallist
- Lfindzero   =         2
+ Lfindzero   =         0
  escale      =   0.000000000000000E+00
  pcondense   =   4.000000000000000E+00
  forcetol    =   1.000000000000000E-12
@@ -324,10 +326,11 @@ Rwc(4,4)    =  0.000000000000000E+00 Zws(4,4)    =  0.000000000000000E+00 Rws(4,
  relreq      =   1.000000000000000E-08
  absacc      =   1.000000000000000E-04
  epsr        =   1.000000000000000E-08
- nPpts       =        500
+ nPpts       =        0
  nPtrj       =        30
  LHevalues   =         F
  LHevectors  =         F
+ Lcheck      =         1
 /
 &screenlist
  Wpp00aa = T

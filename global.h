@@ -2301,7 +2301,7 @@ subroutine wrtend( wflag, iflag, rflag )
   INTEGER, intent(in)  :: wflag, iflag
   REAL   , intent(in)  :: rflag
   
-  INTEGER              :: vvol, imn, ii, jj, kk, jk, Lcurvature, mm, nn
+  INTEGER              :: vvol, imn, ii, jj, kk, jk, Lcurvature, mm, nn, Ng
   REAL                 :: lss, teta, zeta, st(1:Node), Bst(1:Node), BR, BZ, BP
   
   BEGIN(wrtend)
@@ -2605,14 +2605,15 @@ subroutine wrtend( wflag, iflag, rflag )
     
     LREGION(vvol) ! sets Lcoordinatesingularity and Lplasmaregion ;
 
-    if (Ngrid .lt. 0) Ngrid = Lrad(vvol)  ! default
+    if (Ngrid .lt. 0) Ng = Lrad(vvol)     ! default
     if (Ngrid .eq. 0) cycle               ! nothing to output
+    if (Ngrid .gt. 0) Ng = Ngrid
     
-    write(iunit) Ngrid ! sub-grid radial resolution; not really sub-grid resolution, but really the Chebyshev resolution; 
+    write(iunit) Ng ! sub-grid radial resolution; not really sub-grid resolution, but really the Chebyshev resolution; 
     
-    do ii = 0, Ngrid ! sub-grid;
+    do ii = 0, Ng! sub-grid;
      
-     lss = ii * two / Ngrid - one
+     lss = ii * two / Ng - one
      
      if( Lcoordinatesingularity .and. ii.eq.0 ) then ; Lcurvature = 0 ! Jacobian is not defined; 
      else                                            ; Lcurvature = 1 ! compute Jacobian       ; 

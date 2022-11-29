@@ -165,7 +165,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
   LOCALS
-  
+  LOGICAL              :: divflag = .True.
   INTEGER, intent(in)  :: NGdof               ! dimensions;
   REAL,    intent(in)  :: position(0:NGdof)   ! degrees-of-freedom = internal geometry;
   REAL,    intent(out) :: force(0:NGdof)      ! force;
@@ -625,13 +625,13 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
         if( vvol.eq.Mvol .and. innout.eq.1 ) cycle ! no degress of freedom                      fixed outer boundary; for linearized displacement;
         
         dBdX%innout = innout
+if (.not. divflag) then
+        WCALL( dforce, intghs, ( Iquad(vvol), mn, vvol, ll, 0 ) )
 
-        !WCALL( dforce, intghs, ( Iquad(vvol), mn, vvol, ll, 0 ) )
+        WCALL( dforce, mtrxhs, ( vvol, mn, ll, dMA(0:NN,0), dMD(0:NN,0), 0) )
 
-        !WCALL( dforce, mtrxhs, ( vvol, mn, ll, dMA(0:NN,0), dMD(0:NN,0), 0) )
-
-        ! rhs(1:NN) = -dMA(1:NN,0)
-
+        rhs(1:NN) = -dMA(1:NN,0)
+else
         ! first, construct the coordinates on the interface
         lss = innout * two - one
         Lcurvature = 2 ; ideriv = 0
@@ -643,7 +643,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
 
         ! third, construct the perturbed boundary condition
         WCALL( dforce, ptbrhs, ( vvol, mn, Lrad(vvol), dxi, gBu, rhs) )
-
+endif
         if (Lconstraint .eq. 2) then
           SALLOCATE( work, (1:NN+1), zero )    
           rhs(0) = zero ! clean up the junk in rhs(0)
@@ -663,6 +663,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
         packorunpack = 'U'
         
         WCALL( dforce, packab,( packorunpack, vvol, NN,  solution(1:NN,-1), ideriv ) ) ! derivatives placed in Ate(vvol,ideriv,1:mn)%s(0:Lrad),
+
+        !WCALL( dforce, jo00aa, ( vvol, Ntz, Iquad(vvol), mn ) )
 
 #ifdef DEBUG
         FATAL( dforce, vvol-1+innout.gt.Mvol, psifactor needs attention )
@@ -879,6 +881,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
          
          WCALL( dforce, lforce, ( vvol, iocons, ideriv, Ntz, dAt(1:Ntz,id), dAz(1:Ntz,id), XX(1:Ntz), YY(1:Ntz), length(1:Ntz), DDl, MMl, iflag ) )
          
+         if (divflag) then
          lss = two * iocons - one ; Lcurvature = 2
          WCALL( dforce, coords, ( vvol, lss, Lcurvature, Ntz, mn ) ) ! get coordinate metrics and their derivatives wrt Rj, Zj on interface;
 
@@ -906,17 +909,17 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
           end do !ll
          end do !kk
 
-         
-    !      dBB(1:Ntz,id) = half * ( &
-    !   dAz(1:Ntz,id)*dAz(1:Ntz, 0)*guvij(1:Ntz,2,2,0) - two * dAz(1:Ntz,id)*dAt(1:Ntz, 0)*guvij(1:Ntz,2,3,0) + dAt(1:Ntz,id)*dAt(1:Ntz, 0)*guvij(1:Ntz,3,3,0) &
-    ! + dAz(1:Ntz, 0)*dAz(1:Ntz,id)*guvij(1:Ntz,2,2,0) - two * dAz(1:Ntz, 0)*dAt(1:Ntz,id)*guvij(1:Ntz,2,3,0) + dAt(1:Ntz, 0)*dAt(1:Ntz,id)*guvij(1:Ntz,3,3,0) &
-    ! + dAz(1:Ntz, 0)*dAz(1:Ntz, 0)*guvij(1:Ntz,2,2,1) - two * dAz(1:Ntz, 0)*dAt(1:Ntz, 0)*guvij(1:Ntz,2,3,1) + dAt(1:Ntz, 0)*dAt(1:Ntz, 0)*guvij(1:Ntz,3,3,1) &
-    ! ) / sg(1:Ntz,0)**2                                                                                                                                       &
-    ! - dBB(1:Ntz,0) * two * sg(1:Ntz,1) / sg(1:Ntz,0)
-
+         else
+         dBB(1:Ntz,id) = half * ( &
+      dAz(1:Ntz,id)*dAz(1:Ntz, 0)*guvij(1:Ntz,2,2,0) - two * dAz(1:Ntz,id)*dAt(1:Ntz, 0)*guvij(1:Ntz,2,3,0) + dAt(1:Ntz,id)*dAt(1:Ntz, 0)*guvij(1:Ntz,3,3,0) &
+    + dAz(1:Ntz, 0)*dAz(1:Ntz,id)*guvij(1:Ntz,2,2,0) - two * dAz(1:Ntz, 0)*dAt(1:Ntz,id)*guvij(1:Ntz,2,3,0) + dAt(1:Ntz, 0)*dAt(1:Ntz,id)*guvij(1:Ntz,3,3,0) &
+    + dAz(1:Ntz, 0)*dAz(1:Ntz, 0)*guvij(1:Ntz,2,2,1) - two * dAz(1:Ntz, 0)*dAt(1:Ntz, 0)*guvij(1:Ntz,2,3,1) + dAt(1:Ntz, 0)*dAt(1:Ntz, 0)*guvij(1:Ntz,3,3,1) &
+    ) / sg(1:Ntz,0)**2                                                                                                                                       &
+    - dBB(1:Ntz,0) * two * sg(1:Ntz,1) / sg(1:Ntz,0)
+endif
          FATAL( dforce, vvolume(vvol).lt.small, shall divide by vvolume(vvol)**(gamma+one) )
 
-         ijreal(1:Ntz) = dBB(1:Ntz,id)!gBu1(1:Ntz,2,0)*gBu(1:Ntz,2,0)*guvij(1:Ntz,2,2,0)/sg(1:Ntz,0)**2!- 0*adiabatic(vvol) * pscale * gamma * dvolume / vvolume(vvol)**(gamma+one) + dBB(1:Ntz,-1) ! derivatives of force wrt geometry;
+         ijreal(1:Ntz) = - adiabatic(vvol) * pscale * gamma * dvolume / vvolume(vvol)**(gamma+one) + dBB(1:Ntz,id) ! derivatives of force wrt geometry;
 
          dLL(1:Ntz) = zero ! either no spectral constraint, or not the appropriate interface;
          dPP(1:Ntz) = zero ! either no spectral constraint, or not the appropriate interface;
@@ -1074,7 +1077,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
 
          call tfft( Nt, Nz, ijreal(1:Ntz), dII(1:Ntz), & ! recall that ijreal contains pressure term;
                     mn, im(1:mn), in(1:mn), efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), ifail )
-         !write(ounit,*) vvol, im(ii), in(ii), efmn(ii), ofmn(ii)
+         write(66,*) vvol, im(ii), in(ii), efmn(ii)
 
          call tfft( Nt, Nz, dPP(1:Ntz)   , dLL(1:Ntz), & ! recall that ijreal is probably just a dummy;
                     mn, im(1:mn), in(1:mn), evmn(1:mn), odmn(1:mn), comn(1:mn), simn(1:mn), ifail )          ! evmn and odmn are available as workspace;
@@ -1557,7 +1560,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives)
     endif ! end of if( ImagneticOK(vvol) .and. ImagneticOK(vvol+1) ) ;
     
    enddo ! end of do vvol;
-   
+   !stop
   endif ! end of if( LcomputeDerivatives ) ;
   
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

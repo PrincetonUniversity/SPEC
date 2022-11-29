@@ -76,7 +76,7 @@ subroutine bfield( zeta, st, Bst ) ! the format of this subroutine is constraine
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  lvol = ivol ; ideriv = 0 ! the argument list of bfield is fixed by NAG requirements, but volume index is required below;
+  lvol = ivol ; ideriv = -1 ! the argument list of bfield is fixed by NAG requirements, but volume index is required below;
 
   Bst(1:Node) = (/ zero , zero /) ! set default intent out; this should cause a compilation error if Node.ne.2;
  
@@ -147,10 +147,10 @@ subroutine bfield( zeta, st, Bst ) ! the format of this subroutine is constraine
 
    cput = GETTIME
 
-   write(ounit,'("bfield : ",f10.2," : lvol=",i3," ; zeta="es23.15" ; (s,t)=("es23.15" ,"es23.15" ) ; B^z="es23.15" ;")') &
-                             cput-cpus, lvol,        zeta,             st(1:2),                       dBu(3)
+   !write(ounit,'("bfield : ",f10.2," : lvol=",i3," ; zeta="es23.15" ; (s,t)=("es23.15" ,"es23.15" ) ; B^z="es23.15" ;")') &
+    !                         cput-cpus, lvol,        zeta,             st(1:2),                       dBu(3)
 
-   FATAL( bfield, abs(dBu(3)).lt.vsmall, field is not toroidal )
+   !FATAL( bfield, abs(dBu(3)).lt.vsmall, field is not toroidal )
 
   endif
   

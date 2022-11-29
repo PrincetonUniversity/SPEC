@@ -674,7 +674,7 @@ program xspech
 
   if( myid.eq.0 ) then
 
-   wflag = 0 ; iflag = 0 ; rflag = zero
+   wflag = 1 ; iflag = 0 ; rflag = zero
    WCALL( xspech, wrtend, ( wflag, iflag, rflag ) ) ! write restart file; save initial input;
    
    close(zunit) ! this file is written to in globals/wrtend; 11 Aug 14;
