@@ -255,6 +255,8 @@ module allglobal
 
   INTEGER              :: Mvol
 
+  REAL :: total_pflux ! total pflux, used in Lconstraint=3, Igeometry=1 -- Edit by Erol
+
   LOGICAL              :: YESstellsym !< internal shorthand copies of Istellsym, which is an integer input;
   LOGICAL              :: NOTstellsym !< internal shorthand copies of Istellsym, which is an integer input;
 
@@ -1654,7 +1656,7 @@ subroutine wrtend
   write(iunit,'(" adiabatic   = ",257es23.15)') adiabatic(1:Mvol)
   write(iunit,'(" mu          = ",257es23.15)') mu(1:Mvol)
   write(iunit,'(" Ivolume     = ",257es23.15)') Ivolume(1:Mvol)
-  write(iunit,'(" Isurf       = ",257es23.15)') Isurf(1:Mvol-1)
+  write(iunit,'(" Isurf       = ",257es23.15)') IPDt(1:Mvol) ! EDIT by EROL !!!!
   write(iunit,'(" Lconstraint = ",i9        )') Lconstraint
   write(iunit,'(" pl          = ",257i23    )') pl(0:Mvol)
   write(iunit,'(" ql          = ",257i23    )') ql(0:Mvol)

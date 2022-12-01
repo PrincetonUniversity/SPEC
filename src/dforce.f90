@@ -134,7 +134,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
                         LocalConstraint, xoffset, &
                         solution, IPdtdPf, &
                         IsMyVolume, IsMyVolumeValue, WhichCpuID, &
-                        ext ! For outputing Lcheck = 6 test
+                        ext, & ! For outputing Lcheck = 6 test
+                        total_pflux
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -190,9 +191,9 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   if( LcomputeDerivatives ) then
-#ifdef DEBUG
-   FATAL( dforce, .not.allocated(dBBdmp), do not pass go )
-#endif
+    #ifdef DEBUG
+      FATAL( dforce, .not.allocated(dBBdmp), do not pass go )
+    #endif
    dBBdmp(1:LGdof,1:Mvol,0:1,1:2) = zero
   endif
 
@@ -239,8 +240,13 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
       ! Mvol-1 surface current plus 1 poloidal linking current constraints
       Ndofgl = Mvol
     else
-      ! Mvol-1 surface current constraints
-      Ndofgl = Mvol-1
+      ! add an additional constraint to make the total pflux = 0 -- Edit Erol
+      if(Igeometry.eq.1) then
+        Ndofgl = Mvol
+      else
+        ! Mvol-1 surface current constraints
+        Ndofgl = Mvol-1
+      endif
     endif
 
     SALLOCATE( Fvec, (1:Ndofgl), zero )
@@ -253,10 +259,15 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
     if ( myid .eq. 0 ) then
 
         dpfluxout = Fvec
-        call DGESV( Ndofgl, 1, IPdtdPf, Ndofgl, ipiv, dpfluxout, Ndofgl, idgesv )
+        call DGESV( Ndofgl, 1, IPdtdPf(1:Ndofgl,1:Ndofgl), Ndofgl, ipiv, dpfluxout(1:Ndofgl), Ndofgl, idgesv )
 
         ! one step Newton's method
         dpflux(2:Mvol) = dpflux(2:Mvol) - dpfluxout(1:Mvol-1)
+
+        if(Igeometry.eq.1) then
+          dpflux(1) = dpflux(1) - dpfluxout(Mvol)
+        endif
+
         if( Lfreebound.eq.1 ) then
           dtflux(Mvol) = dtflux(Mvol  ) - dpfluxout(Mvol    )
         endif
@@ -268,7 +279,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
     if( Lfreebound.eq.1 ) then
       RlBCAST(dtflux(Mvol), 1, 0)
     endif
-
+    
     do vvol = 2, Mvol
 
       WCALL(dforce, IsMyVolume, (vvol))
@@ -304,6 +315,38 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
       DALLOCATE( solution )
 
     enddo ! end of do vvol = 1, Mvol
+
+    !add an additional constraint to make the total pflux = 0 -- Edit Erol
+    if(Igeometry.eq.1) then
+      
+      vvol = 1
+
+      WCALL(dforce, IsMyVolume, (vvol))
+
+      if( IsMyVolumeValue .EQ. 0 ) then
+
+      else if( IsMyVolumeValue .EQ. -1) then
+          FATAL(dforce, .true., Unassociated volume)
+      else
+        NN = NAdof(vvol)
+
+        SALLOCATE( solution, (1:NN, 0:2), zero)
+
+        ! Pack field and its derivatives
+        packorunpack = 'P'
+        WCALL( dforce, packab, ( packorunpack, vvol, NN, solution(1:NN,0), 0 ) ) ! packing;
+        WCALL( dforce, packab, ( packorunpack, vvol, NN, solution(1:NN,2), 2 ) ) ! packing;
+
+        ! compute the field with renewed dpflux via single Newton method step
+        solution(1:NN, 0) = solution(1:NN, 0) - dpfluxout(Mvol) * solution(1:NN, 2)
+
+        ! Unpack field in vector potential Fourier harmonics
+        packorunpack = 'U'
+        WCALL( dforce, packab, ( packorunpack, vvol, NN, solution(1:NN,0), 0 ) ) ! unpacking;
+
+        DALLOCATE( solution )
+      endif
+    endif
 
     DALLOCATE(Fvec)
     DALLOCATE(dpfluxout)
@@ -362,16 +405,16 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-#ifdef DEBUG
-  if( Lcheck.eq.2 ) then
-   write(ounit,'("dforce : ", 10x ," : myid=",i3," ; finished computing derivatives of rotational-transform wrt mu and dpflux ;")') myid
-   stop "dforce :            : myid=    ; finished computing derivatives of rotational-transform wrt mu and dpflux ;" ! this will allow other cpus to finish;
-  endif
+  #ifdef DEBUG
+    if( Lcheck.eq.2 ) then
+    write(ounit,'("dforce : ", 10x ," : myid=",i3," ; finished computing derivatives of rotational-transform wrt mu and dpflux ;")') myid
+    stop "dforce :            : myid=    ; finished computing derivatives of rotational-transform wrt mu and dpflux ;" ! this will allow other cpus to finish;
+    endif
 
-  FATAL( dforce, Lcheck.eq.2, finished computing derivatives of rotational-transform wrt mu and dpflux )
+    FATAL( dforce, Lcheck.eq.2, finished computing derivatives of rotational-transform wrt mu and dpflux )
 
-  if( Wdforce ) write(ounit,'("dforce : " 10x " : myid="i3" ; LComputeDerivatives="L2" ; ImagneticOK="999L2)') myid, LComputeDerivatives, ImagneticOK(1:Mvol)
-#endif
+    if( Wdforce ) write(ounit,'("dforce : " 10x " : myid="i3" ; LComputeDerivatives="L2" ; ImagneticOK="999L2)') myid, LComputeDerivatives, ImagneticOK(1:Mvol)
+  #endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -430,9 +473,9 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
                                             + (                         + Somn(2:mn    ,vvol+0,1) ) * sweight(vvol+0) & ! poloidal length constraint;
                                             - ( Somn(2:mn    ,vvol+1,0)                           ) * sweight(vvol+1)
 
-  !     if( Ntor.gt.0 ) then ! poloidal angle origin is not otherwise constrained ;
-  !      force(tdoc+idoc+1:tdoc+idoc+Ntor  ) = ( Pomn(2:Ntor+1,vvol+1,0) - Pomn(2:Ntor+1,vvol+0,1) ) * apsilon ! choice of spectral constraint can be enforced;
-  !     endif
+        !     if( Ntor.gt.0 ) then ! poloidal angle origin is not otherwise constrained ;
+        !      force(tdoc+idoc+1:tdoc+idoc+Ntor  ) = ( Pomn(2:Ntor+1,vvol+1,0) - Pomn(2:Ntor+1,vvol+0,1) ) * apsilon ! choice of spectral constraint can be enforced;
+        !     endif
 
         IIo(vvol) = max( sum( abs( force(tdoc+idoc+1:tdoc+idoc+mn-1) ) ) / (mn-1), logtolerance ) ! screen diagnostics;
 
@@ -454,9 +497,9 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
                                               + (                         + Semn(1:mn    ,vvol+0,1) ) * sweight(vvol+0) & ! poloidal length constraint;
                                               - ( Semn(1:mn    ,vvol+1,0)                           ) * sweight(vvol+1)
 
-  !     if( Ntor.ge.0 ) then
-  !      force(tdoc+idoc+1:tdoc+idoc+Ntor+1) = ( Pemn(1:Ntor+1,vvol+1,0) - Pemn(1:Ntor+1,vvol+0,1) ) * apsilon ! choice of spectral constraint can be enforced;
-  !     endif
+        !     if( Ntor.ge.0 ) then
+        !      force(tdoc+idoc+1:tdoc+idoc+Ntor+1) = ( Pemn(1:Ntor+1,vvol+1,0) - Pemn(1:Ntor+1,vvol+0,1) ) * apsilon ! choice of spectral constraint can be enforced;
+        !     endif
 
           IIe(vvol) = max( sum( abs( force(tdoc+idoc+1:tdoc+idoc+mn  ) ) ) / (mn  ), logtolerance ) ! screen diagnostics;
 
@@ -466,9 +509,9 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
 
       endif ! end of if( NOTstellsym ) ;
 
-#ifdef DEBUG
-      FATAL( dforce, idoc.ne.LGdof, counting error ) ! this has caught bugs;
-#endif
+      #ifdef DEBUG
+            FATAL( dforce, idoc.ne.LGdof, counting error ) ! this has caught bugs;
+      #endif
 
     else ! matches if( ImagneticOK(vvol) .and. ImagneticOK(vvol+1) );
 
@@ -728,18 +771,14 @@ if( LHmatrix .and. Lhessian2Dallocated .and. Igeometry.eq.2) then ! construct He
 endif ! end of if( LcomputeDerivatives ) ;
 
 
-
-
-
-
 ! CONSTRUCT FORCE GRADIENT
 ! ------------------------
 
   if( LcomputeDerivatives .and. Lhessianallocated) then ! construct Hessian;
 
-#ifdef DEBUG
-    FATAL( dforce, .not.Lhessianallocated, need to allocate hessian )
-#endif
+    #ifdef DEBUG
+        FATAL( dforce, .not.Lhessianallocated, need to allocate hessian )
+    #endif
 
     hessian(1:NGdof,1:NGdof) = zero
 
@@ -749,29 +788,29 @@ endif ! end of if( LcomputeDerivatives ) ;
 
         idof = 0 ! labels degree-of-freedom = Fourier harmonic of surface geometry;
 
-#ifdef DEBUG
-        if( idof.gt.LGdof ) write(ounit,1000) myid, vvol, -1, -1, -1, idof, LGdof ! can be deleted;
-#endif
+        #ifdef DEBUG
+                if( idof.gt.LGdof ) write(ounit,1000) myid, vvol, -1, -1, -1, idof, LGdof ! can be deleted;
+        #endif
 
         do ii = 1, mn ! loop over degrees-of-freedom;
 
-#ifdef DEBUG
-          if( idof.gt.LGdof ) write(ounit,1000) myid, vvol, ii, -1, -1, idof, LGdof ! can be deleted;
-#endif
+          #ifdef DEBUG
+                    if( idof.gt.LGdof ) write(ounit,1000) myid, vvol, ii, -1, -1, idof, LGdof ! can be deleted;
+          #endif
 
           do irz = 0, 1 ! Fourier harmonic of R, Fourier harmonic of Z;
 
-#ifdef DEBUG
-            if( idof.gt.LGdof ) write(ounit,1000) myid, vvol, ii, irz, -1, idof, LGdof ! can be deleted;
-#endif
+            #ifdef DEBUG
+                        if( idof.gt.LGdof ) write(ounit,1000) myid, vvol, ii, irz, -1, idof, LGdof ! can be deleted;
+            #endif
 
             if( irz.eq.1 .and. Igeometry.lt.3 ) cycle ! no dependence on Z;
 
             do issym = 0, 1 ! stellarator symmetry;
 
-#ifdef DEBUG
-              if( idof.gt.LGdof ) write(ounit,1000) myid, vvol, ii, irz, issym, idof, LGdof ! can be deleted;
-#endif
+            #ifdef DEBUG
+                          if( idof.gt.LGdof ) write(ounit,1000) myid, vvol, ii, irz, issym, idof, LGdof ! can be deleted;
+            #endif
 
               if( issym.eq.1 .and. YESstellsym ) cycle ! no dependence on the non-stellarator symmetric harmonics;
 
@@ -780,11 +819,11 @@ endif ! end of if( LcomputeDerivatives ) ;
 
               idof = idof + 1 ! labels degree-of-freedom;
 
-#ifdef DEBUG
-              if( idof.gt.LGdof ) write(ounit,1000) myid, vvol, ii, irz, issym, idof, LGdof ! can be deleted;
-1000 format("hforce : " 10x " : myid=",i3," ; vvol=",i3," ; ii= ",i3," ; irz="i3" ; issym="i3" ; idof="i3" ; LGdof="i3" ;")
-                FATAL( hforce, idof.gt.LGdof, illegal degree-of-freedom index constructing hessian ) ! can be deleted;
-#endif
+              #ifdef DEBUG
+                            if( idof.gt.LGdof ) write(ounit,1000) myid, vvol, ii, irz, issym, idof, LGdof ! can be deleted;
+                1000 format("hforce : " 10x " : myid=",i3," ; vvol=",i3," ; ii= ",i3," ; irz="i3" ; issym="i3" ; idof="i3" ; LGdof="i3" ;")
+                              FATAL( hforce, idof.gt.LGdof, illegal degree-of-freedom index constructing hessian ) ! can be deleted;
+              #endif
 
               if( LocalConstraint ) then
                 ! Derivative with respect to previous interface
@@ -890,11 +929,11 @@ endif ! end of if( LcomputeDerivatives ) ;
     enddo ! end of do vvol;
 
     ! Evaluate force gradient
-#ifdef DEBUG
-    if( Lcheck.eq.6 ) then
-       WCALL(dforce, fndiff_dforce, ( NGdof ) )
-    endif
-#endif
+    #ifdef DEBUG
+        if( Lcheck.eq.6 ) then
+          WCALL(dforce, fndiff_dforce, ( NGdof ) )
+        endif
+    #endif
 
   endif ! end of if( LcomputeDerivatives ) ;
 
@@ -911,162 +950,162 @@ end subroutine dforce
 
 subroutine fndiff_dforce( NGdof )
 
-use constants, only: zero, one, half, two
+  use constants, only: zero, one, half, two
 
-use fileunits, only: ounit
+  use fileunits, only: ounit
 
-use inputlist, only: Wmacros, Wdforce, &
-                     Igeometry, &
-                     dRZ, Lcheck
+  use inputlist, only: Wmacros, Wdforce, &
+                      Igeometry, &
+                      dRZ, Lcheck
 
-use cputiming, only: Tdforce
+  use cputiming, only: Tdforce
 
-use allglobal, only: ncpu, myid, cpus, MPI_COMM_SPEC, &
-                     Mvol, mn, im, in, &
-                     iRbc, iZbs, iRbs, iZbc, &
-                     LGdof, psifactor, dBdX, &
-                     YESstellsym, NOTstellsym, &
-                     hessian, ext
+  use allglobal, only: ncpu, myid, cpus, MPI_COMM_SPEC, &
+                      Mvol, mn, im, in, &
+                      iRbc, iZbs, iRbs, iZbc, &
+                      LGdof, psifactor, dBdX, &
+                      YESstellsym, NOTstellsym, &
+                      hessian, ext
 
-LOCALS
+  LOCALS
 
-INTEGER, intent(in) :: NGdof
+  INTEGER, intent(in) :: NGdof
 
-INTEGER             :: vvol, idof, ii, irz, issym, isymdiff ! loop indices
-INTEGER             :: tdof ! hessian index
+  INTEGER             :: vvol, idof, ii, irz, issym, isymdiff ! loop indices
+  INTEGER             :: tdof ! hessian index
 
-REAL                :: lfactor
-CHARACTER           :: packorunpack
-LOGICAL             :: LComputeAxis
+  REAL                :: lfactor
+  CHARACTER           :: packorunpack
+  LOGICAL             :: LComputeAxis
 
-REAL, allocatable   :: oRbc(:,:), oZbs(:,:), oRbs(:,:), oZbc(:,:) ! used to store original geometry;
-REAL, allocatable   :: iposition(:,:), iforce(:,:) ! perturbed interfaces position and force
-REAL, allocatable   :: finitediff_estimate(:,:)  ! store finite differences
+  REAL, allocatable   :: oRbc(:,:), oZbs(:,:), oRbs(:,:), oZbc(:,:) ! used to store original geometry;
+  REAL, allocatable   :: iposition(:,:), iforce(:,:) ! perturbed interfaces position and force
+  REAL, allocatable   :: finitediff_estimate(:,:)  ! store finite differences
 
-BEGIN(dforce)
+  BEGIN(dforce)
 
-  write(ounit, '("fndiff : Starting finite difference evaluation of hessian ...")')
+    write(ounit, '("fndiff : Starting finite difference evaluation of hessian ...")')
 
-  if( ncpu.eq.1) then
+    if( ncpu.eq.1) then
 
-  SALLOCATE( finitediff_estimate, (1:NGdof, 1:NGdof), zero )
+    SALLOCATE( finitediff_estimate, (1:NGdof, 1:NGdof), zero )
 
-  dBdX%L = .false.
-  SALLOCATE( oRbc, (1:mn,0:Mvol), iRbc(1:mn,0:Mvol) ) !save unperturbed geometry
-  SALLOCATE( oZbs, (1:mn,0:Mvol), iZbs(1:mn,0:Mvol) )
-  SALLOCATE( oRbs, (1:mn,0:Mvol), iRbs(1:mn,0:Mvol) )
-  SALLOCATE( oZbc, (1:mn,0:Mvol), iZbc(1:mn,0:Mvol) )
-  SALLOCATE( iforce,  (-2:2, 0:NGdof), zero)
-  SALLOCATE( iposition, (-2:2, 0:NGdof), zero)
-
-
-  do vvol = 1, Mvol-1 ! loop over interior surfaces;
-    idof = 0
-
-    do ii = 1, mn ! Loop over Fourier modes
-
-      lfactor = psifactor(ii,vvol)   ! this "pre-conditions" the geometrical degrees-of-freedom;
-
-      do irz = 0, 1 ! loop over R or Z coordinate
-
-        if( irz.eq.1 .and. Igeometry.lt.3 ) cycle
-
-        do issym = 0, 1 ! stellarator symmetry;
-
-          if( issym.eq.1 .and. YESstellsym ) cycle ! no dependence on the non-stellarator symmetric harmonics;
-
-          if( ii.eq.1 .and. irz.eq.1 .and. issym.eq.0 ) cycle ! no dependence on Zbs_{m=0,n=0};
-          if( ii.eq.1 .and. irz.eq.0 .and. issym.eq.1 ) cycle ! no dependence on Rbs_{m=0,n=0};
-
-          idof = idof + 1 ! labels degree-of-freedom;
-
-          do isymdiff = -2, 2 ! symmetric fourth-order, finite-difference used to approximate derivatives;
-
-            if( isymdiff.eq.0 ) cycle
-
-            ! Reset initial geometry
-            iRbc(1:mn,0:Mvol) = oRbc(1:mn,0:Mvol)
-            iZbs(1:mn,0:Mvol) = oZbs(1:mn,0:Mvol)
-            iRbs(1:mn,0:Mvol) = oRbs(1:mn,0:Mvol)
-            iZbc(1:mn,0:Mvol) = oZbc(1:mn,0:Mvol)
-
-            ! Perturb geometry
-            if( issym.eq.0 .and. irz.eq.0 ) then
-              iRbc(ii,vvol) = iRbc(ii,vvol) + dRZ * isymdiff ! perturb geometry;
-            else if( issym.eq.0 .and. irz.eq.1 ) then
-              iZbs(ii,vvol) = iZbs(ii,vvol) + dRZ * isymdiff ! perturb geometry;
-            else if( issym.eq.1 .and. irz.eq.0 ) then
-              iRbs(ii,vvol) = iRbs(ii,vvol) + dRZ * isymdiff ! perturb geometry;
-            else if( issym.eq.1 .and. irz.eq.1 ) then
-              iZbc(ii,vvol) = iZbc(ii,vvol) + dRZ * isymdiff ! perturb geometry;
-            endif
-
-            packorunpack = 'P' ! pack geometrical degrees-of-freedom;
-            !LComputeAxis = .false. ! keep axis fixed
-            LComputeAxis = .true.
-
-            WCALL(dforce, packxi,( NGdof, iposition(isymdiff,0:NGdof), Mvol, mn,iRbc(1:mn,0:Mvol),iZbs(1:mn,0:Mvol),iRbs(1:mn,0:Mvol),&
-                                   iZbc(1:mn,0:Mvol),packorunpack, .false., LComputeAxis ) )
-            WCALL(dforce, dforce,( NGdof, iposition(isymdiff,0:NGdof), iforce(isymdiff,0:NGdof), .false., LComputeAxis) )
-          enddo
-
-          ! Fourth order centered finite difference scheme
-          iforce(0, 0:NGdof)  = ( - 1 * iforce( 2,0:NGdof) &
-                                  + 8 * iforce( 1,0:NGdof) &
-                                  - 8 * iforce(-1,0:NGdof) &
-                                  + 1 * iforce(-2,0:NGdof))  / ( 12 * dRZ )
-
-          tdof = (vvol-1) * LGdof + idof
-          finitediff_estimate(1:NGdof, tdof) = iforce(0, 1:NGdof)* lfactor
-
-        enddo !issym
-      enddo !irz
-    enddo !ii
-  enddo !vvol
+    dBdX%L = .false.
+    SALLOCATE( oRbc, (1:mn,0:Mvol), iRbc(1:mn,0:Mvol) ) !save unperturbed geometry
+    SALLOCATE( oZbs, (1:mn,0:Mvol), iZbs(1:mn,0:Mvol) )
+    SALLOCATE( oRbs, (1:mn,0:Mvol), iRbs(1:mn,0:Mvol) )
+    SALLOCATE( oZbc, (1:mn,0:Mvol), iZbc(1:mn,0:Mvol) )
+    SALLOCATE( iforce,  (-2:2, 0:NGdof), zero)
+    SALLOCATE( iposition, (-2:2, 0:NGdof), zero)
 
 
-  DALLOCATE(iforce)
-  DALLOCATE(iposition)
-  DALLOCATE(oZbc)
-  DALLOCATE(oRbs)
-  DALLOCATE(oZbs)
-  DALLOCATE(oRbc)
+    do vvol = 1, Mvol-1 ! loop over interior surfaces;
+      idof = 0
 
-  ! Print in file for diagnostics
-  if(myid.eq.0) then
-    ! Print hessian
-    open(10, file=trim(ext)//'.Lcheck6_output.txt', status='unknown')
-    write(ounit,'(A)') NEW_LINE('A')
+      do ii = 1, mn ! Loop over Fourier modes
 
-    do ii=1, SIZE(im)
-      write(ounit,1345) myid, im(ii), in(ii), hessian(ii,:)
-      write(10   ,1347) hessian(ii,:)
-    enddo
-    close(10)
+        lfactor = psifactor(ii,vvol)   ! this "pre-conditions" the geometrical degrees-of-freedom;
 
-    write(ounit,'(A)') NEW_LINE('A')
+        do irz = 0, 1 ! loop over R or Z coordinate
 
-    ! Print finite differences
-    open(10, file=trim(ext)//'.Lcheck6_output.FiniteDiff.txt', status='unknown')
-    do ii=1, SIZE(im)
-      write(ounit,1346) myid, im(ii), in(ii), finitediff_estimate(ii,:)
-      write(10   ,1347) finitediff_estimate(ii,:)
-    enddo
-    write(ounit,'(A)') NEW_LINE('A')
-    close(10)
+          if( irz.eq.1 .and. Igeometry.lt.3 ) cycle
 
-    1345 format("dforce: myid=",i3," ; (",i4,",",i4," ; Hessian            = ",512f16.10 "   ;")
-    1346 format("dforce: myid=",i3," ; (",i4,",",i4," ; Finite differences = ",512f16.10 "   ;")
-    1347 format(512F22.16, " ")
+          do issym = 0, 1 ! stellarator symmetry;
 
-  endif
+            if( issym.eq.1 .and. YESstellsym ) cycle ! no dependence on the non-stellarator symmetric harmonics;
 
-  DALLOCATE(finitediff_estimate)
-  endif
+            if( ii.eq.1 .and. irz.eq.1 .and. issym.eq.0 ) cycle ! no dependence on Zbs_{m=0,n=0};
+            if( ii.eq.1 .and. irz.eq.0 .and. issym.eq.1 ) cycle ! no dependence on Rbs_{m=0,n=0};
+
+            idof = idof + 1 ! labels degree-of-freedom;
+
+            do isymdiff = -2, 2 ! symmetric fourth-order, finite-difference used to approximate derivatives;
+
+              if( isymdiff.eq.0 ) cycle
+
+              ! Reset initial geometry
+              iRbc(1:mn,0:Mvol) = oRbc(1:mn,0:Mvol)
+              iZbs(1:mn,0:Mvol) = oZbs(1:mn,0:Mvol)
+              iRbs(1:mn,0:Mvol) = oRbs(1:mn,0:Mvol)
+              iZbc(1:mn,0:Mvol) = oZbc(1:mn,0:Mvol)
+
+              ! Perturb geometry
+              if( issym.eq.0 .and. irz.eq.0 ) then
+                iRbc(ii,vvol) = iRbc(ii,vvol) + dRZ * isymdiff ! perturb geometry;
+              else if( issym.eq.0 .and. irz.eq.1 ) then
+                iZbs(ii,vvol) = iZbs(ii,vvol) + dRZ * isymdiff ! perturb geometry;
+              else if( issym.eq.1 .and. irz.eq.0 ) then
+                iRbs(ii,vvol) = iRbs(ii,vvol) + dRZ * isymdiff ! perturb geometry;
+              else if( issym.eq.1 .and. irz.eq.1 ) then
+                iZbc(ii,vvol) = iZbc(ii,vvol) + dRZ * isymdiff ! perturb geometry;
+              endif
+
+              packorunpack = 'P' ! pack geometrical degrees-of-freedom;
+              !LComputeAxis = .false. ! keep axis fixed
+              LComputeAxis = .true.
+
+              WCALL(dforce, packxi,( NGdof, iposition(isymdiff,0:NGdof), Mvol, mn,iRbc(1:mn,0:Mvol),iZbs(1:mn,0:Mvol),iRbs(1:mn,0:Mvol),&
+                                    iZbc(1:mn,0:Mvol),packorunpack, .false., LComputeAxis ) )
+              WCALL(dforce, dforce,( NGdof, iposition(isymdiff,0:NGdof), iforce(isymdiff,0:NGdof), .false., LComputeAxis) )
+            enddo
+
+            ! Fourth order centered finite difference scheme
+            iforce(0, 0:NGdof)  = ( - 1 * iforce( 2,0:NGdof) &
+                                    + 8 * iforce( 1,0:NGdof) &
+                                    - 8 * iforce(-1,0:NGdof) &
+                                    + 1 * iforce(-2,0:NGdof))  / ( 12 * dRZ )
+
+            tdof = (vvol-1) * LGdof + idof
+            finitediff_estimate(1:NGdof, tdof) = iforce(0, 1:NGdof)* lfactor
+
+          enddo !issym
+        enddo !irz
+      enddo !ii
+    enddo !vvol
 
 
-FATAL(fndiff, .true., Finite differences have been evaluated. )
+    DALLOCATE(iforce)
+    DALLOCATE(iposition)
+    DALLOCATE(oZbc)
+    DALLOCATE(oRbs)
+    DALLOCATE(oZbs)
+    DALLOCATE(oRbc)
 
-RETURN(dforce)
+    ! Print in file for diagnostics
+    if(myid.eq.0) then
+      ! Print hessian
+      open(10, file=trim(ext)//'.Lcheck6_output.txt', status='unknown')
+      write(ounit,'(A)') NEW_LINE('A')
+
+      do ii=1, SIZE(im)
+        write(ounit,1345) myid, im(ii), in(ii), hessian(ii,:)
+        write(10   ,1347) hessian(ii,:)
+      enddo
+      close(10)
+
+      write(ounit,'(A)') NEW_LINE('A')
+
+      ! Print finite differences
+      open(10, file=trim(ext)//'.Lcheck6_output.FiniteDiff.txt', status='unknown')
+      do ii=1, SIZE(im)
+        write(ounit,1346) myid, im(ii), in(ii), finitediff_estimate(ii,:)
+        write(10   ,1347) finitediff_estimate(ii,:)
+      enddo
+      write(ounit,'(A)') NEW_LINE('A')
+      close(10)
+
+      1345 format("dforce: myid=",i3," ; (",i4,",",i4," ; Hessian            = ",512f16.10 "   ;")
+      1346 format("dforce: myid=",i3," ; (",i4,",",i4," ; Finite differences = ",512f16.10 "   ;")
+      1347 format(512F22.16, " ")
+
+    endif
+
+    DALLOCATE(finitediff_estimate)
+    endif
+
+
+  FATAL(fndiff, .true., Finite differences have been evaluated. )
+
+  RETURN(dforce)
 
 end subroutine fndiff_dforce
