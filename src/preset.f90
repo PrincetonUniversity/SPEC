@@ -509,8 +509,12 @@ subroutine preset
   SALLOCATE( dtflux, (1:Mvol), zero )
   SALLOCATE( dpflux, (1:Mvol), zero )
 
+  if(Lconstraint.eq.3 .and. Igeometry.eq.1) then
+    total_pflux = pflux(Mvol) * phiedge / pi2
+  endif
+
   select case( Igeometry )
-  case( 1   ) ; dtflux(1) = tflux(1) ; dpflux(1) = pflux(1) ! Cartesian              ; this is the "inverse" operation defined in xspech; 09 Mar 17;
+  case( 1   ) ; dtflux(1) = tflux(1) ; dpflux(1) = pflux(1); pflux(Mvol) = 0 ! Edit by Erol, to keep total pflux 0
   case( 2:3 ) ; dtflux(1) = tflux(1) ; dpflux(1) = zero     ! cylindrical or toroidal;
   end select
 
@@ -808,7 +812,12 @@ endif
   if( Lfreebound.eq.1 ) then
     SALLOCATE( IPDtDpf, (1:Mvol  , 1:Mvol  ), zero)
   else
-    SALLOCATE( IPDtDpf, (1:Mvol-1, 1:Mvol-1), zero)
+    if(Igeometry.eq.1) then
+      ! add an additional constraint to make the total pflux = 0 -- Edit Erol
+      SALLOCATE( IPDtDpf, (1:Mvol, 1:Mvol), zero) 
+    else
+      SALLOCATE( IPDtDpf, (1:Mvol-1, 1:Mvol-1), zero)
+    endif
   endif
 
   SALLOCATE( cheby, (0:Mrad,0:2), zero )

@@ -239,8 +239,13 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
       ! Mvol-1 surface current plus 1 poloidal linking current constraints
       Ndofgl = Mvol
     else
-      ! Mvol-1 surface current constraints
-      Ndofgl = Mvol-1
+      ! add an additional constraint to make the total pflux = 0 -- Edit Erol
+      if(Igeometry.eq.1) then
+        Ndofgl = Mvol
+      else
+        ! Mvol-1 surface current constraints
+        Ndofgl = Mvol-1
+      endif
     endif
 
     SALLOCATE( Fvec, (1:Ndofgl), zero )
@@ -253,10 +258,15 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
     if ( myid .eq. 0 ) then
 
         dpfluxout = Fvec
-        call DGESV( Ndofgl, 1, IPdtdPf, Ndofgl, ipiv, dpfluxout, Ndofgl, idgesv )
+        call DGESV( Ndofgl, 1, IPdtdPf(1:Ndofgl,1:Ndofgl), Ndofgl, ipiv, dpfluxout(1:Ndofgl), Ndofgl, idgesv )
 
         ! one step Newton's method
         dpflux(2:Mvol) = dpflux(2:Mvol) - dpfluxout(1:Mvol-1)
+       
+        if(Igeometry.eq.1) then
+          dpflux(1) = dpflux(1) - dpfluxout(Mvol)
+        endif
+
         if( Lfreebound.eq.1 ) then
           dtflux(Mvol) = dtflux(Mvol  ) - dpfluxout(Mvol    )
         endif
@@ -304,6 +314,38 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
       DALLOCATE( solution )
 
     enddo ! end of do vvol = 1, Mvol
+
+    !add an additional constraint to make the total pflux = 0 -- Edit Erol
+    if(Igeometry.eq.1) then
+      
+      vvol = 1
+
+      WCALL(dforce, IsMyVolume, (vvol))
+
+      if( IsMyVolumeValue .EQ. 0 ) then
+
+      else if( IsMyVolumeValue .EQ. -1) then
+          FATAL(dforce, .true., Unassociated volume)
+      else
+        NN = NAdof(vvol)
+
+        SALLOCATE( solution, (1:NN, 0:2), zero)
+
+        ! Pack field and its derivatives
+        packorunpack = 'P'
+        WCALL( dforce, packab, ( packorunpack, vvol, NN, solution(1:NN,0), 0 ) ) ! packing;
+        WCALL( dforce, packab, ( packorunpack, vvol, NN, solution(1:NN,2), 2 ) ) ! packing;
+
+        ! compute the field with renewed dpflux via single Newton method step
+        solution(1:NN, 0) = solution(1:NN, 0) - dpfluxout(Mvol) * solution(1:NN, 2)
+
+        ! Unpack field in vector potential Fourier harmonics
+        packorunpack = 'U'
+        WCALL( dforce, packab, ( packorunpack, vvol, NN, solution(1:NN,0), 0 ) ) ! unpacking;
+
+        DALLOCATE( solution )
+      endif
+    endif
 
     DALLOCATE(Fvec)
     DALLOCATE(dpfluxout)
