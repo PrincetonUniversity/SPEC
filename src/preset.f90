@@ -857,6 +857,8 @@ endif
 
    call gauleg( lquad, gaussianweight(1:lquad,vvol), gaussianabscissae(1:lquad,vvol), igauleg ) ! JAB; 28 Jul 17
 
+   write(*,*) (gaussianabscissae(1:lquad,vvol)+1)*half
+
    if( myid.eq.0 ) then
     cput= GETTIME
     select case( igauleg ) !                                                  123456789012345
