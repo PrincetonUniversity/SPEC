@@ -42,6 +42,7 @@ subroutine preset
   INTEGER              :: nb, ix, ij, ip, idx_mode
   REAL                 :: xx
 
+  INTEGER   :: col, row, srow
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -848,6 +849,20 @@ endif
 
   maxIquad = maxval(Iquad(1:Mvol))
 
+!--------- ALLOCATE and READ coordinate surfaces constructed externally (Loizu 2022)----------
+  SALLOCATE( Remncoord, (1:2,1:mn,1:maxIquad+1), zero)
+  SALLOCATE( Zomncoord, (1:2,1:mn,1:maxIquad+1), zero)
+  open(UNIT=66,FILE='coordinZ.txt')
+  do srow = 1,maxIquad+1
+  do row = 1,2
+  read(66,*) (Remncoord(row,col,srow),col=1,mn)
+  read(66,*) (Zomncoord(row,col,srow),col=1,mn)
+  end do
+  end do
+  close(66)
+!---------------------------------------------------------------------------------
+
+
   SALLOCATE( gaussianweight   , (1:maxIquad,1:Mvol), zero ) ! perhaps it would be neater to make this a structure; 26 Jan 16;
   SALLOCATE( gaussianabscissae, (1:maxIquad,1:Mvol), zero )
 
@@ -857,7 +872,7 @@ endif
 
    call gauleg( lquad, gaussianweight(1:lquad,vvol), gaussianabscissae(1:lquad,vvol), igauleg ) ! JAB; 28 Jul 17
 
-   write(*,*) (gaussianabscissae(1:lquad,vvol)+1)*half
+   !write(*,*) (gaussianabscissae(1:lquad,vvol)+1)*half !Testing sbar values Loizu 2022
 
    if( myid.eq.0 ) then
     cput= GETTIME

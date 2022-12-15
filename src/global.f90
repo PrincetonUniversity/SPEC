@@ -369,6 +369,9 @@ module allglobal
   REAL,    allocatable :: allRZRZ(:,:,:)
 !> @}
 
+  REAL, allocatable    :: Remncoord(:,:,:) ! arrays to read in coordinate surfaces at different s-values
+  REAL, allocatable    :: Zomncoord(:,:,:)
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !> \addtogroup grp_fourier_transform Fourier Transforms

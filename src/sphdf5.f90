@@ -574,14 +574,14 @@ subroutine write_grid
   use allglobal, only : myid, ijreal, ijimag, jireal, &
   &                     Nt, Nz, Ntz, Mvol, pi2nfp, ivol, mn, Node, gBzeta, &
   &                     Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
-  &                     Rij, Zij, sg
+  &                     Rij, Zij, sg, Iquad, gaussianabscissae
   use inputlist, only : Lrad, Igeometry, Nvol, Ngrid, rtor, rpol
   use cputiming, only : Tsphdf5
 
   LOCALS
   integer(hid_t) :: grpGrid
   integer :: sumLrad, alongLrad, Ngrid_local, Ngrid_sum
-  INTEGER              :: vvol, ii, jj, kk, jk, Lcurvature
+  INTEGER              :: vvol, ii, jj, kk, jk, Lcurvature, lquad
   REAL                 :: lss, teta, zeta, st(1:Node), Bst(1:Node)
   REAL   , allocatable :: Rij_grid(:,:), Zij_grid(:,:), sg_grid(:,:), ijreal_grid(:,:), ijimag_grid(:,:), jireal_grid(:,:)
 
@@ -599,9 +599,13 @@ subroutine write_grid
   HWRITEIV( grpGrid,           1, Ntz              , (/ Ntz           /))
   HWRITERV( grpGrid,           1, pi2nfp           , (/ pi2nfp        /))
 
+  !Define radial size of grid according to quadrature points - Loizu 2022
+  lquad=maxval(Iquad(1:Mvol))
+
   ! combine all radial parts into one dimension as Lrad values can be different for different volumes
   if (Ngrid .lt. 0) then
-    sumLrad = sum(Lrad(1:Mvol)+1)
+!    sumLrad = sum(Lrad(1:Mvol)+1)
+    sumLrad = lquad+1 ! Hard-coded for testing Zeno coordinates - Loizu 2022
   else
     sumLrad = (Ngrid + 1) * Mvol
   endif
@@ -619,14 +623,21 @@ subroutine write_grid
    LREGION(vvol) ! sets Lcoordinatesingularity and Lplasmaregion ;
 
    if (Ngrid .lt. 0) then
-    Ngrid_local = Lrad(vvol)  ! default
+!    Ngrid_local = Lrad(vvol)  ! default
+Ngrid_local = lquad ! Hard-coded for testing Zeno coordinates - Loizu 2022
    else
     Ngrid_local = Ngrid
    endif
    if (Ngrid_local .eq. 0) cycle               ! nothing to output
 
-   do ii = 0, Ngrid_local ! sub-grid;
-    lss = ii * two / Ngrid_local - one
+!   do ii = 0, Ngrid_local ! sub-grid;
+!    lss = ii * two / Ngrid_local - one
+   do ii = 0, lquad ! Hard-coded for testing Zeno coordinates - Loizu 2022
+    if(ii.eq.lquad) then 
+     lss = one
+    else
+     lss = gaussianabscissae(ii+1,vvol)
+    endif
     if( Lcoordinatesingularity .and. ii.eq.0 ) then ; Lcurvature = 0 ! Jacobian is not defined;
     else                                            ; Lcurvature = 1 ! compute Jacobian       ;
     endif

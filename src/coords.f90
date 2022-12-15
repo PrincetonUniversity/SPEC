@@ -163,7 +163,8 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
                         cosi, sini, &
                         sg, guvij, &
                         dBdX, &
-                        dRodR, dRodZ, dZodR, dZodZ
+                        dRodR, dRodZ, dZodR, dZodZ, &
+                        Remncoord, Zomncoord, Iquad, gaussianabscissae
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -176,6 +177,9 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
   REAL                :: Remn(1:mn,0:2), Zomn(1:mn,0:2), Romn(1:mn,0:2), Zemn(1:mn,0:2), alss, blss, sbar, sbarhim(1:mn), fj(1:mn,0:2)
 
   REAL                :: Dij(1:Ntz,0:3), dguvij(1:Ntz,1:3,1:3), DRxij(1:Ntz,0:3), DZxij(1:Ntz,0:3)
+
+  INTEGER             :: row, col, srow, lquad, jquad 
+  REAL                :: rcoord(1:mn,1:2), zcoord(1:mn,1:2), lssj
 
   BEGIN(coords)
 
@@ -201,9 +205,28 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+!  first need to get the srow index corresponding to lss (quadrature point), then load Remn with Remncoord(s)
+ lquad=maxval(Iquad(1:Mvol))
+ srow=lquad+1 !initially assume quadrature point is the last, sbar=1
+ do jquad=1,lquad !scan to see if that is not the case and update
+    lssj = gaussianabscissae(jquad,lvol)
+    if(lssj.eq.lss) then
+     srow=jquad
+    endif
+ enddo
+ Remn(1:mn,0:1) = transpose(Remncoord(1:2,1:mn,srow))
+ Zomn(1:mn,0:1) = transpose(Zomncoord(1:2,1:mn,srow))
+ Remn(1:mn,1)   = half*Remn(1:mn,1)
+ Zomn(1:mn,1)   = half*Zomn(1:mn,1)
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+
   if( Lcoordinatesingularity ) then
 
    sbar = ( lss + one ) * half
+
+!write(*,*) sbar !Testing sbar values Loizu 2022
 
 #ifdef DEBUG
    FATAL( coords, sbar.lt.zero .or. sbar.gt.one, invalid sbar )
@@ -216,17 +239,17 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
    case default ; FATAL( coords, .true., invalid Igeometry for Lcoordinatesingularity=T )
    end select
 
-
-   Remn(1:mn,0) = iRbc(1:mn,0) + ( iRbc(1:mn,1) - iRbc(1:mn,0) ) * fj(1:mn,0)
-   if( NOTstellsym ) then
-   Romn(1:mn,0) = iRbs(1:mn,0) + ( iRbs(1:mn,1) - iRbs(1:mn,0) ) * fj(1:mn,0)
-   endif
-   if( Igeometry.eq.3 ) then
-   Zomn(1:mn,0) = iZbs(1:mn,0) + ( iZbs(1:mn,1) - iZbs(1:mn,0) ) * fj(1:mn,0)
-   if( NOTstellsym ) then
-   Zemn(1:mn,0) = iZbc(1:mn,0) + ( iZbc(1:mn,1) - iZbc(1:mn,0) ) * fj(1:mn,0)
-   endif
-   endif
+!COMMENT OUT TEMPORARILY - Loizu 2022
+!   Remn(1:mn,0) = iRbc(1:mn,0) + ( iRbc(1:mn,1) - iRbc(1:mn,0) ) * fj(1:mn,0)
+!   if( NOTstellsym ) then
+!   Romn(1:mn,0) = iRbs(1:mn,0) + ( iRbs(1:mn,1) - iRbs(1:mn,0) ) * fj(1:mn,0)
+!   endif
+!   if( Igeometry.eq.3 ) then
+!   Zomn(1:mn,0) = iZbs(1:mn,0) + ( iZbs(1:mn,1) - iZbs(1:mn,0) ) * fj(1:mn,0)
+!   if( NOTstellsym ) then
+!   Zemn(1:mn,0) = iZbc(1:mn,0) + ( iZbc(1:mn,1) - iZbc(1:mn,0) ) * fj(1:mn,0)
+!   endif
+!   endif
 
   else ! matches if( Lcoordinatesingularity ) ; 22 Apr 13;
 
@@ -267,16 +290,17 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
    case default ; FATAL( coords, .true., invalid Igeometry for Lcoordinatesingularity=T and Lcurvature.ne.0 )
    end select
 
-   Remn(1:mn,1) =                       ( iRbc(1:mn,1) - iRbc(1:mn,0) ) * fj(1:mn,1)
-   if( NOTstellsym ) then
-   Romn(1:mn,1) =                       ( iRbs(1:mn,1) - iRbs(1:mn,0) ) * fj(1:mn,1)
-   endif
-   if( Igeometry.eq.3 ) then
-   Zomn(1:mn,1) =                       ( iZbs(1:mn,1) - iZbs(1:mn,0) ) * fj(1:mn,1)
-   if( NOTstellsym ) then
-   Zemn(1:mn,1) =                       ( iZbc(1:mn,1) - iZbc(1:mn,0) ) * fj(1:mn,1)
-   endif
-   endif
+!TEMPORARY COMMENT THIS OUT - Loizu 2022
+!   Remn(1:mn,1) =                       ( iRbc(1:mn,1) - iRbc(1:mn,0) ) * fj(1:mn,1)
+!   if( NOTstellsym ) then
+!   Romn(1:mn,1) =                       ( iRbs(1:mn,1) - iRbs(1:mn,0) ) * fj(1:mn,1)
+!   endif
+!   if( Igeometry.eq.3 ) then
+!   Zomn(1:mn,1) =                       ( iZbs(1:mn,1) - iZbs(1:mn,0) ) * fj(1:mn,1)
+!   if( NOTstellsym ) then
+!   Zemn(1:mn,1) =                       ( iZbc(1:mn,1) - iZbc(1:mn,0) ) * fj(1:mn,1)
+!   endif
+!   endif
 
   else ! matches if( Lcoordinatesingularity ) ; 22 Apr 13;
 
