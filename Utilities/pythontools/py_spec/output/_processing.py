@@ -642,7 +642,7 @@ def get_surface_current_density(self, lsurf:int=None, nt:int=64, nz:int=64):
             tarr=tarr,
             zarr=zarr
         )   
-        et_x_ez = (R2*Z3)**2 + (R3*Z2)**2 + (R0*Z2)**2 + (R0*R2)**2 - 2*R2*R3*Z2*Z3
+        et_x_ez = np.sqrt((R2*Z3)**2 + (R3*Z2)**2 + (R0*Z2)**2 + (R0*R2)**2 - 2*R2*R3*Z2*Z3)
         
         gtt = R2**2+Z2**2
         gzz = R0**2 + R3**2 + Z3**2
@@ -676,7 +676,99 @@ def get_surface_current_density(self, lsurf:int=None, nt:int=64, nz:int=64):
     return j_dot_B, tarr, zarr
 
 
+def get_surface(self, lsurf:int=None, nt:int=64, nz:int=64):
+    """Compute the surface area of a volume interface
+    
+    Args:
+        - lsurf: Interface number, between 1 and Mvol-1.
+        - nt: Number of poloidal points for integration, default is 64
+        - nz: Number of toroidal points for integration, default is 64
+        
+    Returns:
+        - S: the surface area
+        
+    Raises:
+        - ValueError: if input is wrong (invalid lsurf, nt<=0, nz<=0)
+    """
 
+    mvol = self.output.Mvol
+    nfp = self.input.physics.Nfp
+    if lsurf is None:
+        lsurf = np.arange(1,mvol)
+
+    if mvol==1: 
+        raise ValueError('Mvol=1; no interface current!')
+    if not isinstance(lsurf, np.ndarray): 
+        raise ValueError('lsurf should be a np.ndarray')
+    if (lsurf<1).any() or (lsurf>mvol-1).any(): 
+        raise ValueError('lsurf should be in [1,mvol-1]')
+    if nt<1: 
+        raise ValueError('nt should greater than zero')
+    if nz<1: 
+        raise ValueError('nz should greater than zero')
+
+    # Construct grid
+    tarr = np.linspace(0, 2*np.pi, nt, endpoint=True)
+    zarr = np.linspace(0, 2*np.pi/nfp, nz, endpoint=True)
+
+    # Create variable for storing the surface area
+    S = np.zeros((mvol-1,))
+
+    # Loop on interfaces
+    for s in lsurf:
+        # Construct geometry elements
+        R0, R1, R2, R3, Z0, Z1, Z2, Z3 = self.get_RZ_derivatives(
+            lvol=int(s-1),
+            sarr=np.asarray([1]),
+            tarr=tarr,
+            zarr=zarr
+        )   
+        #e theta x e phi
+        et_x_ez = np.sqrt((R2*Z3)**2 + (R3*Z2)**2 + (R0*Z2)**2 + (R0*R2)**2 - 2*R2*R3*Z2*Z3)
+
+        S = nfp*integrate.simps(integrate.simps(et_x_ez,zarr,axis=2),tarr,axis=1)
+
+    return S
+
+def get_flux_surface_average( self, lsurf, f, tarr, zarr ):
+    """Returns the flux surface average of a function f. 
+
+    For each surface lsurf, the average is made by computing the jacobian on the 
+    inner side of the interface (i.e. lvol=lsurf-1, sarr=1)
+    
+    Args:
+        - lsurf (1D numpy array): Interface number, between 1 and Mvol-1
+        - f (2D numpy array): function evaluated on a grid
+        - tgrid (2D numpy array): theta grid
+        - zgrid (2D numpy array): phi grid
+    
+    Returns>
+        - fsavg (1D numpy array): The flux surface average of f on each surface
+          given in lsurf
+    """
+
+    # Get jacobian
+    output = np.zeros(lsurf.shape)
+    for ii, ll in enumerate(lsurf):
+        sqrtg = self.jacobian(
+            lvol=ll-1,
+            sarr=np.array([1]),
+            tarr=tarr,
+            zarr=zarr
+        )
+
+        qrtg = np.squeeze(sqrtg)
+
+        numerator   = integrate.simps(
+            integrate.simps(np.multiply(f, qrtg), tarr, axis=0), zarr
+            )
+        denumerator = integrate.simps(
+            integrate.simps(qrtg, tarr, axis=0), zarr
+            )
+
+        output[ii] = numerator / denumerator
+
+    return output
 
 
 

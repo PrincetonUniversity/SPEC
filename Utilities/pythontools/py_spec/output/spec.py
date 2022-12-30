@@ -39,10 +39,12 @@ class SPECout:
         get_B_covariant,
         test_derivatives,
         get_surface_current_density,
+        get_surface,
         get_RZ_derivatives,
         get_volume,
         get_average_beta,
-        get_peak_beta
+        get_peak_beta,
+        get_flux_surface_average
     )
     from ._plot_modB import plot_modB
     from ._plot_iota import plot_iota
