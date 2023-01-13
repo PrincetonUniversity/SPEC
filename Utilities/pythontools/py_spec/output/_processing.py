@@ -552,7 +552,10 @@ def get_average_beta(self, ns=64, nt=64, nz=64):
 
 
 def get_peak_beta(self, ns=64, nt=64, nz=64):
-    press = self.input.physics.pressure[0] * self.input.physics.pscale
+    if self.input.physics.pressure.size>1:
+        press = self.input.physics.pressure[0] * self.input.physics.pscale
+    else:
+        press = self.input.physics.pressure * self.input.physics.pscale
 
     nfp = self.input.physics.Nfp
     tarr = np.linspace(0, 2*np.pi, nt)

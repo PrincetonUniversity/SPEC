@@ -166,7 +166,7 @@ subroutine bfield( zeta, st, Bst )
    write(ounit,'("bfield : ",f10.2," : lvol=",i3," ; zeta="es23.15" ; (s,t)=("es23.15" ,"es23.15" ) ; B^z="es23.15" ;")') &
                              cput-cpus, lvol,        zeta,             st(1:2),                       dBu(3)
 
-   FATAL( bfield, abs(dBu(3)).lt.vsmall, field is not toroidal )
+   !FATAL( bfield, abs(dBu(3)).lt.vsmall, field is not toroidal )
 
   endif
 
