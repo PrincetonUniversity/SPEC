@@ -574,7 +574,7 @@ def get_peak_beta(self, ns=64, nt=64, nz=64):
     return 2 * nfp * press * integrate.simpson( 
             y=integrate.simpson( 
                 y=integrate.simpson( 
-                    y=sg / modB**2, x=zarr ), x=tarr ), x=sarr )
+                    y=sg / modB**2, x=zarr ), x=tarr ), x=sarr ) / vol
 
 
 def test_derivatives(self, lvol=0, s=0.3, t=0.4, z=0.5, delta=1e-6, tol=1e-6):
