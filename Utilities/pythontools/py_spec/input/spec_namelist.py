@@ -746,7 +746,7 @@ class SPECNamelist(Namelist):
 
             # ignore empty lines
             if len(line_split) == 0:
-                break
+                continue
 
             # check if this line meet our expectation
             valid_line = True
