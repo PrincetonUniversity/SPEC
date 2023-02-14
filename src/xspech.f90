@@ -879,7 +879,7 @@ endif
 
     do iocons = 0, 1
 	  if( Lcoordinatesingularity .and. iocons.eq.0 ) cycle
-          if( vvol.eq.Mvol .and. iocons.eq.1 ) cycle
+          if( vvol.eq.Nvol+1 .and. iocons.eq.1 ) cycle
       ! Compute covariant magnetic field at interface
       call lbpol(vvol, Bt00(1:Mvol, 0:1, -1:2), 0, iocons)
 
