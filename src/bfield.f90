@@ -167,7 +167,7 @@ subroutine bfield( zeta, st, Bst )
                              cput-cpus, lvol,        zeta,             st(1:2),                       dBu(3)
 
    !FATAL( bfield, abs(dBu(3)).lt.vsmall, field is not toroidal )
-
+   write(ounit,'("WARNING: bfield: field is not toroidal")')
   endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
