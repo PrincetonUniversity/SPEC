@@ -109,7 +109,6 @@ subroutine packab( packorunpack, lvol, NN, solution, ideriv )
 #endif
 
    if( YESstellsym ) then
-
     do ii = 1, mn
      do ll = 0, llrad ; id = Ate(lvol,0,ii)%i(ll) ;
        if (id/=0) then; Ate(lvol,ideriv,ii)%s(ll) = solution(id)

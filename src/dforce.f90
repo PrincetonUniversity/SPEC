@@ -107,6 +107,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
                         mupftol, &
                         Lfreebound, LHmatrix
 
+  use fileunits, only : ounit, hunit, munit ! added by Erol
+
   use cputiming, only : Tdforce
 
   use allglobal, only : ncpu, myid, cpus, MPI_COMM_SPEC, &
@@ -351,16 +353,16 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
     DALLOCATE(Fvec)
     DALLOCATE(dpfluxout)
 
-! #ifdef DEBUG
-!       select case( ihybrd1 )
-!         case( 1   )  ; write(ounit,'("dforce : ",f10.2," : finished ; success        ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
-!         case( 0   )  ; write(ounit,'("dforce : ",f10.2," : finished ; input error    ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
-!         case( 2   )  ; write(ounit,'("dforce : ",f10.2," : finished ; max. iter      ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
-!         case( 3   )  ; write(ounit,'("dforce : ",f10.2," : finished ; xtol too small ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
-!         case( 4:5 )  ; write(ounit,'("dforce : ",f10.2," : finished ; bad progress   ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
-!         case default ; write(ounit,'("dforce : ",f10.2," : finished ; illegal ifail  ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
-!       end select
-! #endif
+    ! #ifdef DEBUG
+    !       select case( ihybrd1 )
+    !         case( 1   )  ; write(ounit,'("dforce : ",f10.2," : finished ; success        ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
+    !         case( 0   )  ; write(ounit,'("dforce : ",f10.2," : finished ; input error    ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
+    !         case( 2   )  ; write(ounit,'("dforce : ",f10.2," : finished ; max. iter      ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
+    !         case( 3   )  ; write(ounit,'("dforce : ",f10.2," : finished ; xtol too small ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
+    !         case( 4:5 )  ; write(ounit,'("dforce : ",f10.2," : finished ; bad progress   ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
+    !         case default ; write(ounit,'("dforce : ",f10.2," : finished ; illegal ifail  ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
+    !       end select
+    ! #endif
 
   endif !matches if( LocalConstraint )
 
@@ -444,7 +446,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
 ! CONSTRUCT FORCE
 ! ---------------
 
-  ;   force(0:NGdof) = zero
+  force(0:NGdof) = zero
 
   do vvol = 1, Mvol-1
 
@@ -941,8 +943,28 @@ endif ! end of if( LcomputeDerivatives ) ;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  RETURN(dforce)
+  !add by Erol
+  !if(LcomputeDerivatives .and. Lhessianallocated .and. Igeometry .eq. 1) then
+  !if(Lhessianallocated .and. Igeometry .eq. 1) then
+  if(Lhessianallocated) then
+    if( myid.eq.0 ) then ; cput = GETTIME ; write(ounit,'("hesian : ",f10.2," : LHmatrix="L2" ;")')cput-cpus, LHmatrix ;
+      write(*,*) "Writing .hessian file..."
+      open(munit, file="."//trim(ext)//".hessian", status="unknown", form="unformatted")
+      write(munit) NGdof
+      write(munit) hessian(1:NGdof,1:NGdof)
+      close(munit)
+  
+      write(*,*) 'Writing hessian from dforce'
+    
+      !  do ii=1,NGdof
+      !  write(*,*)ii, hessian(ii,1:NGdof)
+      ! enddo
+  
+    endif
+  endif
 
+  RETURN(dforce)
+  
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 end subroutine dforce

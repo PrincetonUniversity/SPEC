@@ -319,7 +319,7 @@ subroutine spec
                         version, &
                         MPI_COMM_SPEC
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   LOCALS
 
@@ -341,12 +341,12 @@ subroutine spec
 
   SALLOCATE( position, (0:NGdof), zero ) ! position ; NGdof = #geometrical degrees-of-freedom was computed in preset;
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   nfreeboundaryiterations = -1
 
-! This is the free-boundary iteration loop (implemented using GOTO); 08 Jun 16;
-9000 nfreeboundaryiterations = nfreeboundaryiterations + 1
+  ! This is the free-boundary iteration loop (implemented using GOTO); 08 Jun 16;
+  9000 nfreeboundaryiterations = nfreeboundaryiterations + 1
 
   ! run fix_boundary for the first free_boundary iteration if LautoinitBn was set to 1
   if (Lfreebound.eq.1 .and. LautoinitBn.eq.1) then
@@ -369,14 +369,14 @@ subroutine spec
      endif
   endif
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!> **packing geometrical degrees-of-freedom into vector**
-!>
-!> <ul>
-!> <li> If \c NGdof.gt.0 , where \c NGdof counts the geometrical degrees-of-freedom, i.e. the \f$R_{bc}\f$, \f$Z_{bs}\f$, etc.,
-!>       then packxi() is called to "pack" the geometrical degrees-of-freedom into \c position(0:NGdof) . </li>
-!> </ul>
+  !> **packing geometrical degrees-of-freedom into vector**
+  !>
+  !> <ul>
+  !> <li> If \c NGdof.gt.0 , where \c NGdof counts the geometrical degrees-of-freedom, i.e. the \f$R_{bc}\f$, \f$Z_{bs}\f$, etc.,
+  !>       then packxi() is called to "pack" the geometrical degrees-of-freedom into \c position(0:NGdof) . </li>
+  !> </ul>
 
   if( NGdof.gt.0 ) then ! pack geometry into vector; 14 Jan 13;
 
@@ -387,17 +387,17 @@ subroutine spec
 
   endif
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!> **initialize adiabatic constants**
-!>
-!> <ul>
-!> <li> If \c Ladiabatic.eq.0 , then the "adiabatic constants" in each region, \f$P_v\f$, are calculated as
-!>       \f{eqnarray}{ P_v \equiv p_v V_v^\gamma, \label{eq:adiabatic_xspech}
-!>       \f}
-!>       where \f$p_v\equiv\,\f$\c pressure(vvol) , the volume \f$V_v\f$ of each region is computed by volume() ,
-!>       and the adiabatic index \f$\gamma\equiv\,\f$\c gamma . </li>
-!> </ul>
+  !> **initialize adiabatic constants**
+  !>
+  !> <ul>
+  !> <li> If \c Ladiabatic.eq.0 , then the "adiabatic constants" in each region, \f$P_v\f$, are calculated as
+  !>       \f{eqnarray}{ P_v \equiv p_v V_v^\gamma, \label{eq:adiabatic_xspech}
+  !>       \f}
+  !>       where \f$p_v\equiv\,\f$\c pressure(vvol) , the volume \f$V_v\f$ of each region is computed by volume() ,
+  !>       and the adiabatic index \f$\gamma\equiv\,\f$\c gamma . </li>
+  !> </ul>
 
   do vvol = 1, Mvol
 
@@ -417,28 +417,28 @@ subroutine spec
    write(ounit,'("xspech : ",f10.2," : myid=",i3," ; adiabatic constants = "999es13.5)') cput-cpus, myid, adiabatic(1:Mvol)
   endif
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!> **solving force-balance**
-!>
-!> <ul>
-!> <li> If there are geometrical degress of freedom, i.e. if \c NGdof.gt.0 , then
-!>      <ul>
-!>      <li> \todo If \c Lminimize.eq.1 , call pc00aa() to find minimum of energy functional
-!>              using quasi-Newton, preconditioned conjugate gradient method, \c E04DGF
-!>
-!>      </li>
-!>      <li> If \c Lfindzero.gt.0 , call newton() to find extremum of constrained energy functional using a Newton method, \c C05PDF . </li>
-!>      </ul> </li>
-!> </ul>
+  !> **solving force-balance**
+  !>
+  !> <ul>
+  !> <li> If there are geometrical degress of freedom, i.e. if \c NGdof.gt.0 , then
+  !>      <ul>
+  !>      <li> \todo If \c Lminimize.eq.1 , call pc00aa() to find minimum of energy functional
+  !>              using quasi-Newton, preconditioned conjugate gradient method, \c E04DGF
+  !>
+  !>      </li>
+  !>      <li> If \c Lfindzero.gt.0 , call newton() to find extremum of constrained energy functional using a Newton method, \c C05PDF . </li>
+  !>      </ul> </li>
+  !> </ul>
 
-!    if( Lminimize.eq.1 ) then
-!
-!     ifail = 1 ! this is probably not required; 26 Feb 13;
-!
-!     WCALL(xspech,pc00aa,( NGdof, position(1:NGdof), Mvol, mn, ifail ))
-!
-!    endif
+  !    if( Lminimize.eq.1 ) then
+  !
+  !     ifail = 1 ! this is probably not required; 26 Feb 13;
+  !
+  !     WCALL(xspech,pc00aa,( NGdof, position(1:NGdof), Mvol, mn, ifail ))
+  !
+  !    endif
 
   if( NGdof.gt.0 ) then
 
@@ -457,31 +457,31 @@ subroutine spec
 
   endif
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!> **post diagnostics**
-!>
-!> <ul>
-!> <li> The pressure is computed from the adiabatic constants from Eqn.\f$(\ref{eq:adiabatic_xspech})\f$, i.e. \f$p=P/V^\gamma\f$. </li>
-!> <li> The Beltrami/vacuum fields in each region are re-calculated using dforce() . </li>
-!> <li> If \c Lcheck.eq.5 \c .or. \c LHevalues \c .or. \c LHevectors \c .or. \c Lperturbed.eq.1 , then the force-gradient matrix is examined using hesian() . </li>
-!> </ul>
+  !> **post diagnostics**
+  !>
+  !> <ul>
+  !> <li> The pressure is computed from the adiabatic constants from Eqn.\f$(\ref{eq:adiabatic_xspech})\f$, i.e. \f$p=P/V^\gamma\f$. </li>
+  !> <li> The Beltrami/vacuum fields in each region are re-calculated using dforce() . </li>
+  !> <li> If \c Lcheck.eq.5 \c .or. \c LHevalues \c .or. \c LHevectors \c .or. \c Lperturbed.eq.1 , then the force-gradient matrix is examined using hesian() . </li>
+  !> </ul>
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-! set/reset input variables;
+  ! set/reset input variables;
 
-! if( Lconstraint.lt.2 ) helicity(1:Nvol) = lABintegral(1:Nvol) ! updated ``input'' quantity;
+  ! if( Lconstraint.lt.2 ) helicity(1:Nvol) = lABintegral(1:Nvol) ! updated ``input'' quantity;
 
-#ifdef DEBUG
-  do vvol = 1, Mvol
-   FATAL( xspech, vvolume(vvol).lt.vsmall, error dividing adiabatic by volume )
-  enddo
-#endif
+  #ifdef DEBUG
+    do vvol = 1, Mvol
+    FATAL( xspech, vvolume(vvol).lt.vsmall, error dividing adiabatic by volume )
+    enddo
+  #endif
 
   pressure(1:Mvol) = adiabatic(1:Mvol) / vvolume(1:Mvol)**gamma ! this matches construction of adiabatic above;
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   SALLOCATE( gradient, (0:NGdof), zero )
 
@@ -489,27 +489,27 @@ subroutine spec
 
   LComputeDerivatives = .false.
   LComputeAxis = .true.
-! vvol = Mvol ; ideriv = 0 ; ii = 1
-! write(ounit,'("xspech : ", 10x ," : sum(Ate(",i3,",",i2,",",i2,")%s) =",99es23.15)') vvol, ideriv, ii, sum(Ate(vvol,ideriv,ii)%s(0:Lrad(vvol)))
+  ! vvol = Mvol ; ideriv = 0 ; ii = 1
+  ! write(ounit,'("xspech : ", 10x ," : sum(Ate(",i3,",",i2,",",i2,")%s) =",99es23.15)') vvol, ideriv, ii, sum(Ate(vvol,ideriv,ii)%s(0:Lrad(vvol)))
 
   WCALL( xspech, dforce, ( NGdof, position(0:NGdof), gradient(0:NGdof), LComputeDerivatives, LComputeAxis) ) ! (re-)calculate Beltrami fields;
 
   DALLOCATE(gradient)
 
-#ifdef DEBUG
-  do vvol = 1, Mvol-1
-   ; FATAL( xspech, BBe(vvol).lt.logtolerance, underflow )
-   if( Igeometry.eq.3 ) then ! include spectral constraints; 04 Dec 14;
-    ;FATAL( xspech, IIo(vvol).lt.logtolerance, underflow )
-   endif
-   if( NOTstellsym ) then
-    ;FATAL( xspech, BBo(vvol).lt.logtolerance, underflow )
+  #ifdef DEBUG
+    do vvol = 1, Mvol-1
+    ; FATAL( xspech, BBe(vvol).lt.logtolerance, underflow )
     if( Igeometry.eq.3 ) then ! include spectral constraints; 04 Dec 14;
-     FATAL( xspech, IIe(vvol).lt.logtolerance, underflow )
+      ;FATAL( xspech, IIo(vvol).lt.logtolerance, underflow )
     endif
-   endif
-  enddo
-#endif
+    if( NOTstellsym ) then
+      ;FATAL( xspech, BBo(vvol).lt.logtolerance, underflow )
+      if( Igeometry.eq.3 ) then ! include spectral constraints; 04 Dec 14;
+      FATAL( xspech, IIe(vvol).lt.logtolerance, underflow )
+      endif
+    endif
+    enddo
+  #endif
 
   if( myid.eq.0 ) then
    cput = GETTIME
@@ -525,10 +525,10 @@ subroutine spec
    endif
   endif
 
-1000 format("xspech : ",f10.2," : #freeits=",i3," ; ":"|f|="es12.5" ; ":"time=",f10.2,"s ;":" log"a5,:"="28f6.2" ...")
-1001 format("xspech : ", 10x ," :          ",3x," ; ":"    "  12x "   ":"     ", 10x ,"  ;":" log"a5,:"="28f6.2" ...")
+  1000 format("xspech : ",f10.2," : #freeits=",i3," ; ":"|f|="es12.5" ; ":"time=",f10.2,"s ;":" log"a5,:"="28f6.2" ...")
+  1001 format("xspech : ", 10x ," :          ",3x," ; ":"    "  12x "   ":"     ", 10x ,"  ;":" log"a5,:"="28f6.2" ...")
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   if( Lcheck.eq.5 .or. LHevalues .or. LHevectors .or. LHmatrix .or. Lperturbed.eq.1 ) then ! check construction of Hessian; 01 Jul 14;
 
@@ -542,7 +542,7 @@ subroutine spec
 
   endif ! end of if( Lcheck.eq.5 ) ; 01 Jul 14;
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   select case( Igeometry )                                  ! 08 Feb 16;
   case( 1   ) ; tflux(1) = dtflux(1) ; pflux(1) = dpflux(1) ! 08 Feb 16;
@@ -556,51 +556,51 @@ subroutine spec
   tflux(1:Mvol) = tflux(1:Mvol) * pi2 / phiedge ! this is the "inverse" operation defined in preset; 19 Jul 16;
   pflux(1:Mvol) = pflux(1:Mvol) * pi2 / phiedge
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!> **free-boundary: re-computing normal field**
-!>
-!> <ul>
-!> <li> If \c Lfreebound.eq.1 and \c Lfindzero.gt.0 and \c mfreeits.ne.0 ,
-!>       then the magnetic field at the computational boundary produced by the plasma currents is computed using bnorml() . </li>
-!> <li> The "new" magnetic field at the computational boundary produced by the plasma currents is updated using a Picard scheme:
-!>       \f{eqnarray}{ \texttt{Bns}_i^{j} = \lambda \, \texttt{Bns}_i^{j-1} + (1-\lambda) \texttt{Bns}_i, \label{eq:blending_xspech}
-!>       \f}
-!>       where \f$j\f$ labels free-boundary iterations, the "blending parameter" is \f$\lambda\equiv\,\f$\c gBnbld ,
-!>       and \c Bns \f$_i\f$ is computed by virtual casing.
-!>       The subscript "$i$" labels Fourier harmonics.  </li>
-!> <li> If the new (unblended) normal field is _not_ sufficiently close to the old normal field, as quantified by \c gBntol ,
-!>       then the free-boundary iterations continue.
-!>       This is quantified by
-!>       \f{eqnarray}{ \sum_i | \texttt{Bns}_i^{j-1} - \texttt{Bns}_i | / N, \label{eq:gBntol_xspech}
-!>       \f}
-!>       where \f$N\f$ is the total number of Fourier harmonics. </li>
-!> <li> There are several choices that are available:
-!>       <ul>
-!>       <li> if \c mfreeits=-2 : the vacuum magnetic field
-!>             (really, the normal component of the field produced by the external currents at the computational boundary)
-!>             required to hold the given equlibrium is written to file.
-!>             This information is required as input by FOCUS \cite y2017_zhu
-!>             for example. (This option probably needs to revised.) </li>
-!>       <li> if \c mfreeits=-1 : after the plasma field is computed by virtual casing,
-!>             the vacuum magnetic field is set to exactly balance the plasma field
-!>             (again, we are really talking about the normal component at the computational boundary.)
-!>             This will ensure that the computational boundary itself if a flux surface of the total magnetic field. </li>
-!>       <li> if \c mfreeits=0 : the plasma field at the computational boundary is not updated; no "free-boundary" iterations take place. </li>
-!>       <li> if \c mfreeits>0 : the plasma field at the computational boundary is updated according to the above blending Eqn.\f$(\ref{eq:blending_xspech})\f$,
-!>             and the free-boundary iterations will continue until either the tolerance condition is met (see \c gBntol and Eqn.\f$(\ref{eq:gBntol_xspech})\f$)
-!>             or the maximum number of free-boundary iterations, namely \c mfreeits , is reached.
-!>             For this case, \c Lzerovac is relevant:
-!>             if \c Lzerovac=1 , then the vacuum field is set equal to the normal field at every iteration,
-!>             which results in the computational boundary being a flux surface.
-!>             (I am not sure if this is identical to setting \c mfreeits=-1 ; the logic etc. needs to be revised.) </li>
-!>       </ul> </li>
-!> </ul>
+  !> **free-boundary: re-computing normal field**
+  !>
+  !> <ul>
+  !> <li> If \c Lfreebound.eq.1 and \c Lfindzero.gt.0 and \c mfreeits.ne.0 ,
+  !>       then the magnetic field at the computational boundary produced by the plasma currents is computed using bnorml() . </li>
+  !> <li> The "new" magnetic field at the computational boundary produced by the plasma currents is updated using a Picard scheme:
+  !>       \f{eqnarray}{ \texttt{Bns}_i^{j} = \lambda \, \texttt{Bns}_i^{j-1} + (1-\lambda) \texttt{Bns}_i, \label{eq:blending_xspech}
+  !>       \f}
+  !>       where \f$j\f$ labels free-boundary iterations, the "blending parameter" is \f$\lambda\equiv\,\f$\c gBnbld ,
+  !>       and \c Bns \f$_i\f$ is computed by virtual casing.
+  !>       The subscript "$i$" labels Fourier harmonics.  </li>
+  !> <li> If the new (unblended) normal field is _not_ sufficiently close to the old normal field, as quantified by \c gBntol ,
+  !>       then the free-boundary iterations continue.
+  !>       This is quantified by
+  !>       \f{eqnarray}{ \sum_i | \texttt{Bns}_i^{j-1} - \texttt{Bns}_i | / N, \label{eq:gBntol_xspech}
+  !>       \f}
+  !>       where \f$N\f$ is the total number of Fourier harmonics. </li>
+  !> <li> There are several choices that are available:
+  !>       <ul>
+  !>       <li> if \c mfreeits=-2 : the vacuum magnetic field
+  !>             (really, the normal component of the field produced by the external currents at the computational boundary)
+  !>             required to hold the given equlibrium is written to file.
+  !>             This information is required as input by FOCUS \cite y2017_zhu
+  !>             for example. (This option probably needs to revised.) </li>
+  !>       <li> if \c mfreeits=-1 : after the plasma field is computed by virtual casing,
+  !>             the vacuum magnetic field is set to exactly balance the plasma field
+  !>             (again, we are really talking about the normal component at the computational boundary.)
+  !>             This will ensure that the computational boundary itself if a flux surface of the total magnetic field. </li>
+  !>       <li> if \c mfreeits=0 : the plasma field at the computational boundary is not updated; no "free-boundary" iterations take place. </li>
+  !>       <li> if \c mfreeits>0 : the plasma field at the computational boundary is updated according to the above blending Eqn.\f$(\ref{eq:blending_xspech})\f$,
+  !>             and the free-boundary iterations will continue until either the tolerance condition is met (see \c gBntol and Eqn.\f$(\ref{eq:gBntol_xspech})\f$)
+  !>             or the maximum number of free-boundary iterations, namely \c mfreeits , is reached.
+  !>             For this case, \c Lzerovac is relevant:
+  !>             if \c Lzerovac=1 , then the vacuum field is set equal to the normal field at every iteration,
+  !>             which results in the computational boundary being a flux surface.
+  !>             (I am not sure if this is identical to setting \c mfreeits=-1 ; the logic etc. needs to be revised.) </li>
+  !>       </ul> </li>
+  !> </ul>
 
   LContinueFreeboundaryIterations = .false.
 
   ;                                                              LupdateBn = .false. ! default;
-!  if( Lfreebound.eq.1 .and. Lfindzero.gt.0 ) then
+  !  if( Lfreebound.eq.1 .and. Lfindzero.gt.0 ) then
   if( Lfreebound.eq.1) then   ! removed Lfindzero check; Loizu Dec 18;
    if( mfreeits.gt.0 .and. nfreeboundaryiterations.lt.mfreeits ) LupdateBn = .true.
    if( mfreeits.lt.0                                           ) LupdateBn = .true.
@@ -727,18 +727,18 @@ subroutine spec
     ;                   ; write(ounit,1003)
    endif ! end of if( myid.eq.0 ) ; 24 Nov 16;
 
-1003 format("xspech : " 10x " : ")
-1004 format("xspech : "f10.2" : nfreeboundaryiterations = "i6" / "i6.5" ; gBntol ="es8.1" ; bnserr =",es12.5," ; bnorml time ="f10.2"s ;")
+  1003 format("xspech : " 10x " : ")
+  1004 format("xspech : "f10.2" : nfreeboundaryiterations = "i6" / "i6.5" ; gBntol ="es8.1" ; bnserr =",es12.5," ; bnorml time ="f10.2"s ;")
 
   endif ! end of if( LupdateBn ) ;
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!> **output files: vector potential**
-!>
-!> <ul>
-!> <li> The vector potential is written to file using ra00aa() . </li>
-!> </ul>
+  !> **output files: vector potential**
+  !>
+  !> <ul>
+  !> <li> The vector potential is written to file using ra00aa() . </li>
+  !> </ul>
 
   WCALL( xspech, ra00aa, ('W') ) ! this writes vector potential to file;
 
@@ -746,16 +746,16 @@ subroutine spec
    WCALL( xspech, wrtend ) ! write restart file; save initial input;
   endif
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   if( LContinueFreeboundaryIterations .and. nfreeboundaryiterations.lt.mfreeits ) goto 9000  ! removed Lfindzero check; Loizu Dec 18;
   if( Lfreebound.eq.1 .and. First_free_bound ) goto 9000  ! going back to normal free_boundary calculation; Zhu 20190701;
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-! FREE-BOUNDARY ITERATIONS HAVE FINISHED;
+  ! FREE-BOUNDARY ITERATIONS HAVE FINISHED;
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 end subroutine spec
 
@@ -870,7 +870,7 @@ endif
 ! Computes the surface current at each interface for output
 
   SALLOCATE( Bt00, (1:Mvol, 0:1, -1:2) , zero)
-
+  
   do vvol = 1, Mvol
 
     LREGION(vvol)

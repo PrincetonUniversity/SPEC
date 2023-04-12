@@ -659,9 +659,9 @@ subroutine fcn2( NGdof, xx, fvec, fjac, Ldfjac, irevcm )
 
    case( 2 ) ! before re-entry to          C05PDF, fjac must contain the derivatives;
 
-#ifdef DEBUG
-    FATAL( newton, .not.Lhessianallocated, need to allocate hessian )
-#endif
+    #ifdef DEBUG
+        FATAL( newton, .not.Lhessianallocated, need to allocate hessian )
+    #endif
 
     nDcalls = nDcalls + 1
 
@@ -687,9 +687,9 @@ subroutine fcn2( NGdof, xx, fvec, fjac, Ldfjac, irevcm )
      LComputeAxis = .true.
      WCALL( newton, dforce, ( NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives, LComputeAxis ) ) ! calculate the force-imbalance;
 
-#ifdef DEBUG
-     FATAL( newton, Lcheck.eq.4, derivatives of Beltrami field have been computed )
-#endif
+      #ifdef DEBUG
+          FATAL( newton, Lcheck.eq.4, derivatives of Beltrami field have been computed )
+      #endif
 
     endif
 
@@ -697,23 +697,23 @@ subroutine fcn2( NGdof, xx, fvec, fjac, Ldfjac, irevcm )
 
     if( myid.eq.0 ) call writereadgf( 'W', NGdof, ireadhessian ) ! will always save derivative matrix;
 
-#ifdef DEBUG
+    #ifdef DEBUG
 
-    if( Lcheck.eq.3 ) then
-     write(ounit,'("newton : ", 10x ," : myid=",i3," ; volume derivatives have been compared ;")') myid
-     stop "newton :            : myid=    ; volume derivatives have been compared ;"
-    endif
+        if( Lcheck.eq.3 ) then
+        write(ounit,'("newton : ", 10x ," : myid=",i3," ; volume derivatives have been compared ;")') myid
+        stop "newton :            : myid=    ; volume derivatives have been compared ;"
+        endif
 
-    FATAL( newton, Lcheck.eq.3, volume derivatives have been compared ) ! the first process will terminate all processes;
+        FATAL( newton, Lcheck.eq.3, volume derivatives have been compared ) ! the first process will terminate all processes;
 
-    if( (Lcheck.eq.4) .and. (nDcalls.ne.1) ) then
-     write(ounit,'("newton : ", 10x ," : myid=",i3," ; field derivatives have been compared ;")') myid
-     stop "newton :            : myid=    ; field derivatives have been compared ;"
-    endif
+        if( (Lcheck.eq.4) .and. (nDcalls.ne.1) ) then
+        write(ounit,'("newton : ", 10x ," : myid=",i3," ; field derivatives have been compared ;")') myid
+        stop "newton :            : myid=    ; field derivatives have been compared ;"
+        endif
 
-    FATAL( newton, (Lcheck.eq.4) .and. (nDcalls.ne.1), field derivatives have been compared ) ! the first process will terminate all processes;
+        FATAL( newton, (Lcheck.eq.4) .and. (nDcalls.ne.1), field derivatives have been compared ) ! the first process will terminate all processes;
 
-#endif
+    #endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
