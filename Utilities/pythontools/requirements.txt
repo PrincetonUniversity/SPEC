@@ -2,4 +2,5 @@ h5py
 matplotlib
 f90nml
 numpy
+scipy
 coilpy
