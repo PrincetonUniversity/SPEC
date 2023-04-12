@@ -14,6 +14,7 @@ jobs:
       run: |
         python3 --version
         pip3 --version
+        pip3 install --upgrade pip3
 
     - name: Install dependencies
       working-directory: ${{ env.PY_SPEC_DIR }}
