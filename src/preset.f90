@@ -514,7 +514,7 @@ subroutine preset
   endif
 
   select case( Igeometry )
-  case( 1   ) ; dtflux(1) = tflux(1) ; dpflux(1) = pflux(1) ! Edit by Erol, to keep total pflux 0
+  case( 1   ) ; dtflux(1) = tflux(1) ; dpflux(1) = pflux(1) ! Edit by Erol -- Cartesian              ; this is the "inverse" operation defined in xspech; 09 Mar 17;
   case( 2:3 ) ; dtflux(1) = tflux(1) ; dpflux(1) = zero     ! cylindrical or toroidal;
   end select
 
@@ -523,7 +523,6 @@ subroutine preset
 
   dtflux(1:Mvol) = dtflux(1:Mvol) * phiedge / pi2
   dpflux(1:Mvol) = dpflux(1:Mvol) * phiedge / pi2
-
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1110,7 +1109,8 @@ endif
      SALLOCATE( Azo(vvol,ideriv,ii)%i, (0:Lrad(vvol)), 0 )
 
    enddo ! end of do ii;
-   
+
+
    select case( Linitgues ) ! for iterative solver of the Beltrami fields, an initial guess is required; 11 Mar 16;
    case( 0 )    ;
    case( 1 )    ; Ate(vvol,0,1)%s(0:1) = dtflux(vvol) * half ! this is an integrable approximation; NEEDS CHECKING; 26 Feb 13;

@@ -193,21 +193,21 @@ subroutine spsint( lquad, mn, lvol, lrad )
         DDzzcc( ll1, pp1, mi+1, 1 ) = DDzzcc( ll1, pp1, mi+1, 1 ) + DlDp * fzzcc
 
         if (NOTstellsym) then
-          !$OMP ATOMIC UPDATE
-                    DTooss( ll1, pp1, mi+1, 1 ) = DTooss( ll1, pp1, mi+1, 1 ) + DlTp * fooss
-          !$OMP ATOMIC UPDATE
-                    TTsscc( ll1, pp1, mi+1, 1 ) = TTsscc( ll1, pp1, mi+1, 1 ) + TlTp * fsscc
-          !$OMP ATOMIC UPDATE
-                    TDstcc( ll1, pp1, mi+1, 1 ) = TDstcc( ll1, pp1, mi+1, 1 ) + TlDp * fstcc
-          !$OMP ATOMIC UPDATE
-                    TDszcc( ll1, pp1, mi+1, 1 ) = TDszcc( ll1, pp1, mi+1, 1 ) + TlDp * fszcc
-          !$OMP ATOMIC UPDATE
-                    TDszss( ll1, pp1, mi+1, 1 ) = TDszss( ll1, pp1, mi+1, 1 ) + TlDp * fszss
-          !$OMP ATOMIC UPDATE
-                    DDttss( ll1, pp1, mi+1, 1 ) = DDttss( ll1, pp1, mi+1, 1 ) + DlDp * fttss
-          !$OMP ATOMIC UPDATE
-                    DDtzss( ll1, pp1, mi+1, 1 ) = DDtzss( ll1, pp1, mi+1, 1 ) + DlDp * ftzss
-          !$OMP ATOMIC UPDATE
+!$OMP ATOMIC UPDATE
+          DTooss( ll1, pp1, mi+1, 1 ) = DTooss( ll1, pp1, mi+1, 1 ) + DlTp * fooss
+!$OMP ATOMIC UPDATE
+          TTsscc( ll1, pp1, mi+1, 1 ) = TTsscc( ll1, pp1, mi+1, 1 ) + TlTp * fsscc
+!$OMP ATOMIC UPDATE
+          TDstcc( ll1, pp1, mi+1, 1 ) = TDstcc( ll1, pp1, mi+1, 1 ) + TlDp * fstcc
+!$OMP ATOMIC UPDATE
+          TDszcc( ll1, pp1, mi+1, 1 ) = TDszcc( ll1, pp1, mi+1, 1 ) + TlDp * fszcc
+!$OMP ATOMIC UPDATE
+          TDszss( ll1, pp1, mi+1, 1 ) = TDszss( ll1, pp1, mi+1, 1 ) + TlDp * fszss
+!$OMP ATOMIC UPDATE
+          DDttss( ll1, pp1, mi+1, 1 ) = DDttss( ll1, pp1, mi+1, 1 ) + DlDp * fttss
+!$OMP ATOMIC UPDATE
+          DDtzss( ll1, pp1, mi+1, 1 ) = DDtzss( ll1, pp1, mi+1, 1 ) + DlDp * ftzss
+!$OMP ATOMIC UPDATE
           DDzzss( ll1, pp1, mi+1, 1 ) = DDzzss( ll1, pp1, mi+1, 1 ) + DlDp * fzzss
         end if !NOTstellsym
 

@@ -365,6 +365,7 @@ subroutine mirror_input_to_outfile
   HWRITELV( grpInputDiagnostics,       1,  LHevalues         , (/ LHevalues      /))
   HWRITELV( grpInputDiagnostics,       1,  LHevectors        , (/ LHevectors     /))
   HWRITELV( grpInputDiagnostics,       1,  LHmatrix          , (/ LHmatrix       /))
+  HWRITELV( grpInputDiagnostics,       1,  Ltransform        , (/ Ltransform     /))
   HWRITEIV( grpInputDiagnostics,       1,  Lperturbed        , (/ Lperturbed     /))
   HWRITEIV( grpInputDiagnostics,       1,  dpp               , (/ dpp            /))
   HWRITEIV( grpInputDiagnostics,       1,  dqq               , (/ dqq            /))

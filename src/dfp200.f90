@@ -147,7 +147,7 @@ subroutine dfp200( LcomputeDerivatives, vvol)
 
   if( LocalConstraint ) then
 
-  do vvol = 1, Mvol 
+  do vvol = 1, Mvol
 
     WCALL(dfp200, IsMyVolume, (vvol))
 
@@ -164,14 +164,14 @@ subroutine dfp200( LcomputeDerivatives, vvol)
     ll = Lrad(vvol)  ! Shorthand
     NN = NAdof(vvol) ! shorthand;
 
-    !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
     vflag = 1
     WCALL( dfp200, volume, ( vvol, vflag ) ) ! compute volume;
 
      !!----Hessian2D cleared-----
 
-    !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
     do iocons = 0, 1 ! construct field magnitude on inner and outer interfaces; inside do vvol;
 
       if( vvol.eq.1    .and. iocons.eq.0 ) cycle ! fixed inner boundary (or coordinate axis);
@@ -198,34 +198,34 @@ subroutine dfp200( LcomputeDerivatives, vvol)
       packorunpack = 'P'
       WCALL( dfp200, packab, ( packorunpack, vvol, NN, solution(1:NN,0), 0 ) ) ! packing, put the solutions back to the solution matrix;
 
-    !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-        ! Invert beltrami matrix. Required for matrix perturbation theory
-        call get_LU_Beltrami_matrices(vvol, oBI(vvol), NN)
+      ! Invert beltrami matrix. Required for matrix perturbation theory
+      call get_LU_Beltrami_matrices(vvol, oBI(vvol), NN)
 
-        dBdX%L = .true. ! will need derivatives;
-        idof = 0 ! labels degree of freedom; local to interface;
+      dBdX%L = .true. ! will need derivatives;
+      idof = 0 ! labels degree of freedom; local to interface;
 
-        do ii = 1, mn ! loop over deformations in Fourier harmonics; inside do vvol;
+      do ii = 1, mn ! loop over deformations in Fourier harmonics; inside do vvol;
 
-            dBdX%ii = ii ! controls construction of derivatives in subroutines called below;
-            do irz = 0, 1 ! loop over deformations in R and Z; inside do vvol; inside do ii;
+        dBdX%ii = ii ! controls construction of derivatives in subroutines called below;
+        do irz = 0, 1 ! loop over deformations in R and Z; inside do vvol; inside do ii;
 
-            if( irz.eq.1 .and. Igeometry.lt.3 ) cycle ! no dependence on Z;
-            dBdX%irz = irz ! controls construction of derivatives;
+          if( irz.eq.1 .and. Igeometry.lt.3 ) cycle ! no dependence on Z;
+          dBdX%irz = irz ! controls construction of derivatives;
 
-            do issym = 0, 1 ! loop over stellarator and non-stellarator symmetric terms;
+          do issym = 0, 1 ! loop over stellarator and non-stellarator symmetric terms;
 
-                if( issym.eq.1 .and. YESstellsym               ) cycle ! no dependence on non-stellarator symmetric harmonics;
-                if( ii.eq.1    .and. irz.eq.1 .and. issym.eq.0 ) cycle ! no dependence on Zbs_{m=0,n=0};
-                if( ii.eq.1    .and. irz.eq.0 .and. issym.eq.1 ) cycle ! no dependence on Rbs_{m=0,n=0};
+            if( issym.eq.1 .and. YESstellsym               ) cycle ! no dependence on non-stellarator symmetric harmonics;
+            if( ii.eq.1    .and. irz.eq.1 .and. issym.eq.0 ) cycle ! no dependence on Zbs_{m=0,n=0};
+            if( ii.eq.1    .and. irz.eq.0 .and. issym.eq.1 ) cycle ! no dependence on Rbs_{m=0,n=0};
 
-                dBdX%issym = issym ! controls construction of derivatives;
-                idof = idof + 1 ! this labels the degree-of-freedom that the derivative is taken with respect to; this is outside do innout;
+            dBdX%issym = issym ! controls construction of derivatives;
+            idof = idof + 1 ! this labels the degree-of-freedom that the derivative is taken with respect to; this is outside do innout;
 
-    #ifdef DEBUG
-                FATAL( dfp200, idof.gt.LGdof, illegal degree-of-freedom index constructing derivatives ) ! this can be deleted;
-    #endif
+#ifdef DEBUG
+            FATAL( dfp200, idof.gt.LGdof, illegal degree-of-freedom index constructing derivatives ) ! this can be deleted;
+#endif
 
             do innout = 0, 1 ! loop over deformations to inner and outer interface; inside do vvol; inside do ii; inside do irz;
 
@@ -296,7 +296,7 @@ else ! CASE SEMI GLOBAL CONSTRAINT
          ll = Lrad(vvol)  ! Shorthand
          NN = NAdof(vvol) ! shorthand;
 
-    !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
          vflag = 1
          WCALL( dfp200, volume, ( vvol, vflag ) ) ! compute volume;
@@ -439,9 +439,9 @@ else ! CASE SEMI GLOBAL CONSTRAINT
                     dBdX%issym = issym ! controls construction of derivatives;
 
                     idof = idof + 1 ! this labels the degree-of-freedom that the derivative is taken with respect to; this is outside do innout;
-    #ifdef DEBUG
-                        FATAL( dfp200, idof.gt.LGdof, illegal degree-of-freedom index constructing derivatives ) ! this can be deleted;
-    #endif
+#ifdef DEBUG
+                    FATAL( dfp200, idof.gt.LGdof, illegal degree-of-freedom index constructing derivatives ) ! this can be deleted;
+#endif
 
 
                     do lvol = vvol, vvol+1
@@ -609,7 +609,7 @@ else ! CASE SEMI GLOBAL CONSTRAINT
 
 
 
-endif ! End of if( LocalConstraint )
+  endif ! End of if( LocalConstraint )
 
   if( LcomputeDerivatives ) then
       DALLOCATE(constraint)
@@ -630,7 +630,7 @@ endif ! End of if( LocalConstraint )
   DALLOCATE(length)
 
 
-    2000 continue
+2000 continue
 
   RETURN(dfp200)
 
@@ -971,11 +971,11 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
             if( ( Lcoordinatesingularity .and. iocons.eq.0 ) .or. ( Lvacuumregion .and. iocons.eq.1 ) ) cycle
                     WCALL(dfp200, lbpol, (pvol, Bt00(1:Mvol, 0:1, -1:2), 2, iocons)) ! Stores derivative in global variable Btemn
                 enddo
-            #ifdef DEBUG
-                            if( .false. ) then
-                                write(ounit, 8375) myid, dBdX%vol, dBdX%innout, 2, pvol, Bt00(pvol, 0:1, 2)
-                            endif
-            #endif
+#ifdef DEBUG
+                if( .false. ) then
+                    write(ounit, 8375) myid, dBdX%vol, dBdX%innout, 2, pvol, Bt00(pvol, 0:1, 2)
+                endif
+#endif
             enddo
 
             dBdmpf(1:order,1:order) = zero ! Initialize. TODO: useless?
@@ -986,18 +986,18 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
             dBdmpf(Mvol-1,Mvol-1) = Bt00(Mvol, 0, 2)
 
 
-            !             do pvol=1,Mvol
-            !                 LREGION(pvol)
+!             do pvol=1,Mvol
+!                 LREGION(pvol)
 
-            !                 do iocons = 0, 1
-            !                     WCALL(dfp200, lbpol, (pvol, Bt00(1:Mvol, 0:1, -1:2), 0, iocons))
-            !                 enddo
-            ! #ifdef DEBUG
-            !                 if( .false. ) then
-            !                     write(ounit, 8375) myid, dBdX%vol, dBdX%innout, 0, pvol, Bt00(pvol, 0:1, 0)
-            !                 endif
-            ! #endif
-            !             enddo
+!                 do iocons = 0, 1
+!                     WCALL(dfp200, lbpol, (pvol, Bt00(1:Mvol, 0:1, -1:2), 0, iocons))
+!                 enddo
+! #ifdef DEBUG
+!                 if( .false. ) then
+!                     write(ounit, 8375) myid, dBdX%vol, dBdX%innout, 0, pvol, Bt00(pvol, 0:1, 0)
+!                 endif
+! #endif
+!             enddo
 
             ! RHS coefficients evaluation
             do pvol = vvol, vvol+1
@@ -1013,12 +1013,12 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
                     WCALL(dfp200, lbpol, (pvol, Bt00(1:Mvol, 0:1, -1:2), -1, iocons)) ! derivate w.r.t geometry
                 enddo
 
-            #ifdef DEBUG
-                            if( .false. ) then
-                                write(ounit, 8375) myid, dBdX%vol, dBdX%innout, -1, pvol, Bt00(pvol, 0:1, -1)
-            8375                format("dfp200  : myid=",i3, ", vvol=",i3,", innout=", i3 ,", ideriv=", i3, ", lvol=",i3,";  Bt00=",2f10.6)
-                            endif
-            #endif
+#ifdef DEBUG
+                if( .false. ) then
+                    write(ounit, 8375) myid, dBdX%vol, dBdX%innout, -1, pvol, Bt00(pvol, 0:1, -1)
+8375                format("dfp200  : myid=",i3, ", vvol=",i3,", innout=", i3 ,", ideriv=", i3, ", lvol=",i3,";  Bt00=",2f10.6)
+                endif
+#endif
             enddo
 
             dBdx2(1:Mvol-1) = zero
@@ -1030,7 +1030,7 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
             ; dBdx2(vvol+1) = Bt00(vvol+1, 1, -1)
             endif
 
-            !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
             if( Lfreebound.eq.1 ) then ! Need to modify last two equations
 
                 ! Set all last column to zero - maybe not necessary ?
@@ -1056,12 +1056,12 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
                 else ! Inner interface is perturbed
                     dBdx2( Mvol ) = zero
                 endif
-            #ifdef DEBUG
-                            if( .false. ) then
-                                write(ounit, 8827) vvol, dBdmpf(Mvol-1, Mvol-1), Btemn(1, 0, Mvol), dItGpdxtp( 1, 2, Mvol), dItGpdxtp( 1, 1, Mvol), dBdx2(Mvol-1), dBdx2(Mvol)
-            8827                format("dfp200: vvol = ", i3, ", dBdpsip = ", f10.8, ", dBdpsit = ", f10.8, ", dIpdpsip = ", f10.8, ", dIpdpsit = ", f16.10, ", dBdx2(N-1) = ", f10.8, ", dIpdxj = ", f10.8)
-                            endif
-            #endif
+#ifdef DEBUG
+                if( .false. ) then
+                    write(ounit, 8827) vvol, dBdmpf(Mvol-1, Mvol-1), Btemn(1, 0, Mvol), dItGpdxtp( 1, 2, Mvol), dItGpdxtp( 1, 1, Mvol), dBdx2(Mvol-1), dBdx2(Mvol)
+8827                format("dfp200: vvol = ", i3, ", dBdpsip = ", f10.8, ", dBdpsit = ", f10.8, ", dIpdpsip = ", f10.8, ", dIpdpsit = ", f16.10, ", dBdx2(N-1) = ", f10.8, ", dIpdxj = ", f10.8)
+                endif
+#endif
             endif
 
 
@@ -1270,7 +1270,7 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
             WCALL(dfp200, allocate_geometry_matrices, (vvol,LcomputeDerivatives))
         endif
 
-    8294        continue
+8294        continue
         ! Evaluate derivatives using finite differences
         if( LocalConstraint ) then
             imupf_local(1:2,0)      = ( - 1 * imupf_local(1:2, 2)  + 8 * imupf_local(1:2, 1)&
@@ -1303,8 +1303,8 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
             write(ounit,3004) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, 1, "dpflux analytic   ", dmupfdx(1:Mvol,vvol,2,idof,1) / lfactor
         endif
 
-    3003    format("dfp200 : ",f10.2," : ",:,"myid=",i3," ; vvol=",i2," ; (",i2,",",i3," ) ; irz=",i1," ; issym=",i1," ; innout=",i1," ; ",a18," : dmupf=",8f11.05" ;")
-    3004    format("dfp200 : ",f10.2," : ",:,"myid=",i3," ; vvol=",i2," ; (",i2,",",i3," ) ; irz=",i1," ; issym=",i1," ; innout=",i1," ; ",a18," : dmupf=",8f11.05" ;")
+3003    format("dfp200 : ",f10.2," : ",:,"myid=",i3," ; vvol=",i2," ; (",i2,",",i3," ) ; irz=",i1," ; issym=",i1," ; innout=",i1," ; ",a18," : dmupf=",8f11.05" ;")
+3004    format("dfp200 : ",f10.2," : ",:,"myid=",i3," ; vvol=",i2," ; (",i2,",",i3," ) ; irz=",i1," ; issym=",i1," ; innout=",i1," ; ",a18," : dmupf=",8f11.05" ;")
 
 
         ! Re-evaluate unperturbed solution

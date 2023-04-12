@@ -116,7 +116,7 @@ subroutine dfp100(Ndofgl, x, Fvec, LComputeDerivatives)
     WCALL( dfp100, compute_guvijsave, (Iquad(vvol), vvol, ideriv, Lcurvature) )
     Lsavedguvij = .true.
 
-    ! we need to construct the preconditioner if needed
+  ! we need to construct the preconditioner if needed
     if (LILUprecond) then
       WCALL( dfp100, spsint, ( Iquad(vvol), mn, vvol, ll ) )
       WCALL( dfp100, spsmat, ( vvol, mn, ll) )
@@ -135,7 +135,7 @@ subroutine dfp100(Ndofgl, x, Fvec, LComputeDerivatives)
 
     Lsavedguvij = .false.
 
-    !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
     call intghs_workspace_destroy()
     call deallocate_Beltrami_matrices(LcomputeDerivatives)
@@ -155,9 +155,9 @@ subroutine dfp100(Ndofgl, x, Fvec, LComputeDerivatives)
 
       if( Lvacuumregion ) then
 
-        #ifdef DEBUG
-                FATAL( dfp100, vvol.ne.Mvol, Incorrect vvol in last volume)
-        #endif
+#ifdef DEBUG
+        FATAL( dfp100, vvol.ne.Mvol, Incorrect vvol in last volume)
+#endif
 
         ideriv=1 ! derivatives of Btheta w.r.t tflux
         iocons=0 ! Only need inner side of volume derivatives
@@ -205,13 +205,13 @@ subroutine dfp100(Ndofgl, x, Fvec, LComputeDerivatives)
             Fvec(1:Mvol-1) = IPDt(1:Mvol-1) - Isurf(1:Mvol-1)
         endif
 
-        ! Edit by Erol to set total pflux to 0
+	! Edit by Erol to set total pflux to 0
         if(Igeometry.eq.1) then
-          
+
           IPDtDpf(1,Mvol) = -pi2 * Bt00(1,1,2)
           IPdtdPf(2:Mvol,Mvol) = 0.0
           IPDtDpf(Mvol,1:Mvol) = 1.0
-          
+
           ! Constraint the total pflux (pflux(Mvol))
           ! zero for symmetric initial profiles
           ! non-zero for asymmetric profiles

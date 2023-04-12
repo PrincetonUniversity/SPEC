@@ -237,8 +237,9 @@ endif
   LComputeAxis = .false.
   WCALL( hesian, dforce, ( NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives, LComputeAxis) ) ! calculate force-imbalance & hessian;
   
-  ! ohessian(1:NGdof,1:NGdof) = hessian2D(1:NGdof,1:NGdof) ! internal copy; 22 Apr 15;
-  ! ohessian(1:NGdof,1:NGdof) = 0
+
+  ohessian(1:NGdof,1:NGdof) = hessian2D(1:NGdof,1:NGdof) ! internal copy; 22 Apr 15;
+
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -256,137 +257,137 @@ endif
 
   if( Lcheck.eq.5 ) then ! check construction of Hessian; 01 Jul 14;
 
-    xx(0,-2:2)= zero ; dRZ = 1.0E-04
+   xx(0,-2:2)= zero ; dRZ = 1.0E-04
 
-    write(svol,'(i3.3)')myid
-    !  open(lunit+myid,file="."//trim(ext)//".hessian."//svol,status="unknown")
+   write(svol,'(i3.3)')myid
+!  open(lunit+myid,file="."//trim(ext)//".hessian."//svol,status="unknown")
 
-    !  lmu(1:Nvol) = mu(1:Nvol) ; lpflux(1:Nvol) = pflux(1:Nvol) ; lhelicity(1:Nvol) = helicity(1:Nvol) ! save original profile information; 20 Jun 14;
+!  lmu(1:Nvol) = mu(1:Nvol) ; lpflux(1:Nvol) = pflux(1:Nvol) ; lhelicity(1:Nvol) = helicity(1:Nvol) ! save original profile information; 20 Jun 14;
 
-      tdof = 0 ! geometrical degree-of-freedom counter; labels derivative;
+   tdof = 0 ! geometrical degree-of-freedom counter; labels derivative;
 
-      do vvol = 1, Mvol-1 ! loop over internal interfaces;
+   do vvol = 1, Mvol-1 ! loop over internal interfaces;
 
-        cput = GETTIME
-    !   write(lunit+myid,'("hesian : ", 10x ," : ")')
-    !   write(lunit+myid,'("hesian : ",f10.2," : myid=",i3," ; vvol=",i3," ; dRZ=",es9.1," ;")') cput-cpus, myid, vvol, dRZ
-    !   write(lunit+myid,'("hesian : ", 10x ," : ")')
+    cput = GETTIME
+!   write(lunit+myid,'("hesian : ", 10x ," : ")')
+!   write(lunit+myid,'("hesian : ",f10.2," : myid=",i3," ; vvol=",i3," ; dRZ=",es9.1," ;")') cput-cpus, myid, vvol, dRZ
+!   write(lunit+myid,'("hesian : ", 10x ," : ")')
 
-        do ii = 1, mn ! loop over Fourier harmonics degrees of freedom;
+    do ii = 1, mn ! loop over Fourier harmonics degrees of freedom;
 
-        do irz = 0, 1 ! loop over R,Z degrees of freedom;
+     do irz = 0, 1 ! loop over R,Z degrees of freedom;
 
-          if( irz.eq.1 .and. Igeometry.lt.3 ) cycle ! no dependence on Z; 26 Feb 13;
+      if( irz.eq.1 .and. Igeometry.lt.3 ) cycle ! no dependence on Z; 26 Feb 13;
 
-          do issym = 0, 1
+      do issym = 0, 1
 
-          if( issym.eq.1 .and. YESstellsym ) cycle ! no dependence on non-stellarator symmetric harmonics; 26 Feb 13;
+       if( issym.eq.1 .and. YESstellsym ) cycle ! no dependence on non-stellarator symmetric harmonics; 26 Feb 13;
 
-          if( ii.eq.1 .and. irz.eq.1 .and. issym.eq.0 ) cycle ! this is not a degree of freedom; no dependence on Zbs_{m,n} for m=0, n=0;
-          if( ii.eq.1 .and. irz.eq.0 .and. issym.eq.1 ) cycle ! this is not a degree of freedom; no dependence on Rbs_{m,n} for m=0, n=0;
+       if( ii.eq.1 .and. irz.eq.1 .and. issym.eq.0 ) cycle ! this is not a degree of freedom; no dependence on Zbs_{m,n} for m=0, n=0;
+       if( ii.eq.1 .and. irz.eq.0 .and. issym.eq.1 ) cycle ! this is not a degree of freedom; no dependence on Rbs_{m,n} for m=0, n=0;
 
-          tdof = tdof + 1
+       tdof = tdof + 1
 
-          do isymdiff = -2, 2
+       do isymdiff = -2, 2
 
-            if( isymdiff.eq.0 ) cycle
+        if( isymdiff.eq.0 ) cycle
 
-            xx(1:NGdof,isymdiff) = position(1:NGdof) ! reset geometry to original;
+        xx(1:NGdof,isymdiff) = position(1:NGdof) ! reset geometry to original;
 
-            xx(tdof,isymdiff) = position(tdof) + isymdiff * dRZ ! perturb appropriate geometric harmonic;
+        xx(tdof,isymdiff) = position(tdof) + isymdiff * dRZ ! perturb appropriate geometric harmonic;
 
-            LComputeDerivatives = .false.
-            LComputeAxis = .true.
-            WCALL( hesian, dforce, ( NGdof, xx(0:NGdof,isymdiff), ff(0:NGdof,isymdiff), LComputeDerivatives, LComputeAxis) ) ! force-imbalance;
+        LComputeDerivatives = .false.
+        LComputeAxis = .true.
+        WCALL( hesian, dforce, ( NGdof, xx(0:NGdof,isymdiff), ff(0:NGdof,isymdiff), LComputeDerivatives, LComputeAxis) ) ! force-imbalance;
 
-          enddo ! end of do isymdiff; 20 Jun 14;
+       enddo ! end of do isymdiff; 20 Jun 14;
 
-          df(1:NGdof) = ( - ff(1:NGdof,+2) + 8 * ff(1:NGdof,+1) - 8 * ff(1:NGdof,-1) + ff(1:NGdof,-2) ) / ( 12 * dRZ )
+       df(1:NGdof) = ( - ff(1:NGdof,+2) + 8 * ff(1:NGdof,+1) - 8 * ff(1:NGdof,-1) + ff(1:NGdof,-2) ) / ( 12 * dRZ )
 
-          tdoc = 0
+       tdoc = 0
 
-          do jvol = 1, Mvol-1
+       do jvol = 1, Mvol-1
 
-            do jj = 1, mn
+        do jj = 1, mn
 
-            do jrz = 0, 1 ! loop over R,Z degrees of freedom;
+         do jrz = 0, 1 ! loop over R,Z degrees of freedom;
 
-              if( jrz.eq.1 .and. Igeometry.lt.3 ) cycle ! no dependence on Z; 26 Feb 13;
+          if( jrz.eq.1 .and. Igeometry.lt.3 ) cycle ! no dependence on Z; 26 Feb 13;
 
-              do jssym = 0, 1
+          do jssym = 0, 1
 
-              if( jssym.eq.1 .and. YESstellsym ) cycle ! no dependence on non-stellarator symmetric harmonics; 26 Feb 13;
+           if( jssym.eq.1 .and. YESstellsym ) cycle ! no dependence on non-stellarator symmetric harmonics; 26 Feb 13;
 
-              if( jj.eq.1 .and. jrz.eq.1 .and. jssym.eq.0 ) cycle ! this is not a constraint; I_{m,n} for m=0, n=0 is irrelevant;
-              if( jj.eq.1 .and. jrz.eq.0 .and. jssym.eq.1 ) cycle ! this is not a constraint; I_{m,n} for m=0, n=0 is irrelevant;
+           if( jj.eq.1 .and. jrz.eq.1 .and. jssym.eq.0 ) cycle ! this is not a constraint; I_{m,n} for m=0, n=0 is irrelevant;
+           if( jj.eq.1 .and. jrz.eq.0 .and. jssym.eq.1 ) cycle ! this is not a constraint; I_{m,n} for m=0, n=0 is irrelevant;
 
-              tdoc = tdoc + 1
+           tdoc = tdoc + 1
 
-              FATAL( hesian, tdoc.lt.              1, needs attention )
-              FATAL( hesian, tdoc.gt.NGdof, needs attention )
+           FATAL( hesian, tdoc.lt.              1, needs attention )
+           FATAL( hesian, tdoc.gt.NGdof, needs attention )
 
-              cput = GETTIME
+           cput = GETTIME
 
-              error = abs( df(tdoc)-hessian(tdoc,tdof) )
+           error = abs( df(tdoc)-hessian(tdoc,tdof) )
 
-              if( abs(hessian(tdoc,tdof)).gt.1.0e-05 .or. abs(df(tdoc)).gt.1.0e-05 .or. error.gt.dRZ ) then ! write to screen; 20 Jan 15;
-                write(ounit     ,1001) cput-cpus, myid, &
-              vvol, im(ii), in(ii), irz, issym, tdof, &
-              jvol, im(jj), in(jj), jrz, jssym, tdoc, &
-              df(tdoc), tdoc, tdof, hessian(tdoc,tdof), error
-              endif
+           if( abs(hessian(tdoc,tdof)).gt.1.0e-05 .or. abs(df(tdoc)).gt.1.0e-05 .or. error.gt.dRZ ) then ! write to screen; 20 Jan 15;
+            write(ounit     ,1001) cput-cpus, myid, &
+          vvol, im(ii), in(ii), irz, issym, tdof, &
+          jvol, im(jj), in(jj), jrz, jssym, tdoc, &
+          df(tdoc), tdoc, tdof, hessian(tdoc,tdof), error
+           endif
 
-    !          if( abs(hessian(tdoc,tdof)).gt.1.0e-05 .or. abs(df(tdoc)).gt.1.0e-05 .or. error.gt.dRZ             ) then ! write to file; 20 Jan 15;
-    !           write(lunit+myid,1001) cput-cpus, myid, &
-    !         vvol, im(ii), in(ii), irz, issym, tdof, &
-    !         jvol, im(jj), in(jj), jrz, jssym, tdoc, &
-    !         df(tdoc), tdoc, tdof, hessian(tdoc,tdof), error
-    !          endif
+!          if( abs(hessian(tdoc,tdof)).gt.1.0e-05 .or. abs(df(tdoc)).gt.1.0e-05 .or. error.gt.dRZ             ) then ! write to file; 20 Jan 15;
+!           write(lunit+myid,1001) cput-cpus, myid, &
+!         vvol, im(ii), in(ii), irz, issym, tdof, &
+!         jvol, im(jj), in(jj), jrz, jssym, tdoc, &
+!         df(tdoc), tdoc, tdof, hessian(tdoc,tdof), error
+!          endif
 
-              enddo ! end of do jssym; 19 Sep 13;
+          enddo ! end of do jssym; 19 Sep 13;
 
-            enddo ! end of do irz;
+         enddo ! end of do irz;
 
-    #ifdef DEBUG
-    !      pause
-    #endif
+#ifdef DEBUG
+!      pause
+#endif
 
-            enddo ! end of do jj;
+        enddo ! end of do jj;
 
-    #ifdef DEBUG
-    !      pause
-    #endif
+#ifdef DEBUG
+!      pause
+#endif
 
-          enddo ! end of do jvol;
+       enddo ! end of do jvol;
 
-    #ifdef DEBUG
-    !      pause
-    #endif
+#ifdef DEBUG
+!      pause
+#endif
 
-    1001   format("hesian : ",f10.2," : myid=",i3, &
-        " ; vvol=",i3," ; ("i4" ,"i4" ); irz="i2" ; issym="i2" ; tdof="i6 &
-        " ; jvol="i4" ; ("i4" ,"i4" ); jrz="i2" ; jssym="i2" ; tdoc="i6 &
-        " ; fd-estimate="es13.5" & hessian("i6","i6" )="es13.5" ;":" err="es13.5" ;":,f12.4" ;")
+1001   format("hesian : ",f10.2," : myid=",i3, &
+     " ; vvol=",i3," ; ("i4" ,"i4" ); irz="i2" ; issym="i2" ; tdof="i6 &
+     " ; jvol="i4" ; ("i4" ,"i4" ); jrz="i2" ; jssym="i2" ; tdoc="i6 &
+     " ; fd-estimate="es13.5" & hessian("i6","i6" )="es13.5" ;":" err="es13.5" ;":,f12.4" ;")
 
-          enddo ! end of do issym;
+      enddo ! end of do issym;
 
-        enddo ! end of do irz;
+     enddo ! end of do irz;
 
-        enddo ! end of do ii;
+    enddo ! end of do ii;
 
-      enddo ! end of do vvol;
+   enddo ! end of do vvol;
 
-      pack = 'U' !; position(0) = zero ! this is not used; 11 Aug 14;
-      WCALL( hesian, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, .false., LComputeAxis ) )
+   pack = 'U' !; position(0) = zero ! this is not used; 11 Aug 14;
+   WCALL( hesian, packxi, ( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), pack, .false., LComputeAxis ) )
 
-      mu(1:Nvol) = lmu(1:Nvol) ; pflux(1:Nvol) = lpflux(1:Nvol) ; helicity(1:Nvol) = lhelicity(1:Nvol)
+   mu(1:Nvol) = lmu(1:Nvol) ; pflux(1:Nvol) = lpflux(1:Nvol) ; helicity(1:Nvol) = lhelicity(1:Nvol)
 
-    !  xx(1:NGdof,0) = position(1:NGdof) ! reset geometry to original;
-    !
-    !  LComputeDerivatives = .false.
-    !  WCALL(hesian,dforce,( NGdof, xx(1:NGdof,0), ff(0:NGdof,0), LComputeDerivatives )) ! calculate the force-imbalance;
+!  xx(1:NGdof,0) = position(1:NGdof) ! reset geometry to original;
+!
+!  LComputeDerivatives = .false.
+!  WCALL(hesian,dforce,( NGdof, xx(1:NGdof,0), ff(0:NGdof,0), LComputeDerivatives )) ! calculate the force-imbalance;
 
-      !close(lunit+myid)
+   !close(lunit+myid)
 
   endif ! end of if( Lcheck.eq.5 ) ; 01 Jul 14;
 
@@ -422,13 +423,7 @@ endif
     write(munit) NGdof
     write(munit) ohessian(1:NGdof,1:NGdof)
     close(munit)
-
-   ! add by Erol
-  !  do ii=1,NGdof
-  !   write(*,*)ii, ohessian(ii,1:NGdof)
-  !  enddo
-
-  endif
+   endif
 
   endif
 
@@ -452,12 +447,12 @@ endif
    
    hessian2D(1:NGdof,1:NGdof) = ohessian(1:NGdof,1:NGdof)
 
-    !#ifdef NAG18
-    !   call F02EBF( JOB, NGdof, hessian(1:LDA,1:NGdof), LDA, evalr(1:NGdof), evali(1:NGdof), &
-    !                evecr(1:Ldvr,1:NGdof), Ldvr, eveci(1:Ldvi,1:NGdof), Ldvi, work(1:Lwork), Lwork, if02ebf )
-    !#else
-    !   FATAL( global, .true., eigenvalue solver needs updating to F08NAF )
-    !#endif
+!#ifdef NAG18
+!   call F02EBF( JOB, NGdof, hessian(1:LDA,1:NGdof), LDA, evalr(1:NGdof), evali(1:NGdof), &
+!                evecr(1:Ldvr,1:NGdof), Ldvr, eveci(1:Ldvi,1:NGdof), Ldvi, work(1:Lwork), Lwork, if02ebf )
+!#else
+!   FATAL( global, .true., eigenvalue solver needs updating to F08NAF )
+!#endif
    call dgeev('N', JOB, NGdof, hessian2D(1:LDA,1:NGdof), LDA, evalr(1:NGdof), evali(1:NGdof), &
                 evecl(1:Ldvr,1:NGdof), Ldvr, revecr(1:Ldvr,1:2*NGdof), Ldvr, work(1:Lwork), Lwork, if02ebf )
     evecr(1:Ldvr,1:NGdof) = revecr(1:Ldvr,1:NGdof)
@@ -588,11 +583,6 @@ endif
     close(hunit)
    endif ! end of if( myid.eq.0 ) ; 04 Dec 14;
 
-  !  ! add by Erol
-  !  do ii=1,NGdof
-  !   write(*,*)ii, evalr(ii), evali(ii)
-  !  enddo
-
   endif ! end of if(                 ( LHevalues .or. LHevectors ) )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -705,7 +695,7 @@ endif
 
 
   DALLOCATE(hessian2D)
-  ! write(ounit,*) 5656
+  write(ounit,*) 5656
 
   DALLOCATE(dessian2D)
 

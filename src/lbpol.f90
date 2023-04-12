@@ -126,21 +126,6 @@ subroutine lbpol(lvol, Bt00, ideriv, iocons)
 
 ! Now Btemn(1, 0, vvol) and Btemn(1, 1, vvol) contain Bte00(s=-1) and Bte00(s=1) for each volume vvol.
 
-  ! if((lvol.eq.10.and.iocons.eq.1).or.(lvol.eq.11.and.iocons.eq.0)) then
-  !   write(*,*) "lvol", lvol, "iocons", iocons, "ideriv", ideriv
-  !   write(*,*) "Bt", Bt(1:Ntz)
-  !   ! write(*,*) "Bz",Bz(1:Ntz) ! also different, but fractionally less
-  !   ! write(*,*) guvij(1:Ntz,1,1,0),guvij(1:Ntz,2,2,0),guvij(1:Ntz,3,3,0) ! SAME
-  !   ! write(*,*) guvij(1:Ntz,2,3,0)
-  !   ! write(*,*) "dAz", dAz(1:Ntz )  ! differetn
-  !   ! write(*,*) "__mn", efmn(1:mn)
-  !   write(*,*) "Ate%s"
-  !   do ii = 1, mn
-  !     do ll=0,Lrad(lvol)
-  !       write(*,*) ii,ll, Ate(lvol,ideriv,ii)%s(ll)
-  !     enddo
-  !   enddo
-  ! endif
 
   RETURN(lbpol)
 

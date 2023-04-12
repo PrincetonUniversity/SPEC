@@ -66,7 +66,7 @@ module constants
   REAL, parameter :: mu0        =   2.0E-07 * pi2       !< \f$4\pi\cdot10^{-7}\f$
   REAL, parameter :: goldenmean =   1.618033988749895   !< golden mean = \f$( 1 + \sqrt 5 ) / 2\f$ ;
 
-  REAL, parameter :: version    =   3.20  !< version of SPEC
+  REAL, parameter :: version    =   3.21  !< version of SPEC
 
 end module constants
 
@@ -1656,7 +1656,7 @@ subroutine wrtend
   write(iunit,'(" adiabatic   = ",257es23.15)') adiabatic(1:Mvol)
   write(iunit,'(" mu          = ",257es23.15)') mu(1:Mvol)
   write(iunit,'(" Ivolume     = ",257es23.15)') Ivolume(1:Mvol)
-  write(iunit,'(" Isurf       = ",257es23.15)') IPDt(1:Mvol) ! EDIT by EROL !!!!
+  write(iunit,'(" Isurf = ",257es23.15)') IPDt(1:Mvol) ! EDIT by EROL !!!!
   write(iunit,'(" Lconstraint = ",i9        )') Lconstraint
   write(iunit,'(" pl          = ",257i23    )') pl(0:Mvol)
   write(iunit,'(" ql          = ",257i23    )') ql(0:Mvol)
