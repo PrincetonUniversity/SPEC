@@ -18,6 +18,7 @@ jobs:
     - name: Install dependencies
       working-directory: ${{ env.PY_SPEC_DIR }}
       run: |
+        pip install --upgrade pip
         pip3 install -r requirements.txt
         pip3 install setuptools wheel twine
 

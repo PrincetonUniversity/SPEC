@@ -529,26 +529,44 @@ def get_average_beta(self, ns=64, nt=64, nz=64):
 
     if (press==0).all(): return 0
 
-    for ivol in range(0,nvol-1):
-        if ivol==0: sarr=np.linspace(-0.999,1, ns)
-        if ivol!=0: sarr=np.linspace(-1,    1, ns)
-
-        vols[ivol] = self.get_volume( ivol )
-
+    if nvol==1:
+        sarr=np.linspace(-0.999,1, ns)
+        vols = self.get_volume( 0 )
         _, _, sg, g = self.get_grid_and_jacobian_and_metric(
-            lvol=ivol, sarr=sarr, tarr=tarr, zarr=zarr
-        )
+                        lvol=0, sarr=sarr, tarr=tarr, zarr=zarr
+                    )
         Bcontrav = self.get_B(
-            lvol=ivol, jacobian=sg, sarr=sarr, tarr=tarr, zarr=zarr
+            lvol=0, jacobian=sg, sarr=sarr, tarr=tarr, zarr=zarr
         )
         modB = self.get_modB( Bcontrav, g )
 
-        betavol[ivol] = 2 * nfp * press[ivol] * integrate.simpson( 
+        betavol = 2 * nfp * press * integrate.simpson( 
             y=integrate.simpson( 
                 y=integrate.simpson( 
                     y=sg / modB**2, x=zarr ), x=tarr ), x=sarr )
+        
+        return betavol / vols
+    else:
+        for ivol in range(0,nvol-1):
+            if ivol==0: sarr=np.linspace(-0.999,1, ns)
+            if ivol!=0: sarr=np.linspace(-1,    1, ns)
 
-    return betavol.sum() / vols.sum()
+            vols[ivol] = self.get_volume( ivol )
+
+            _, _, sg, g = self.get_grid_and_jacobian_and_metric(
+                lvol=ivol, sarr=sarr, tarr=tarr, zarr=zarr
+            )
+            Bcontrav = self.get_B(
+                lvol=ivol, jacobian=sg, sarr=sarr, tarr=tarr, zarr=zarr
+            )
+            modB = self.get_modB( Bcontrav, g )
+
+            betavol[ivol] = 2 * nfp * press[ivol] * integrate.simpson( 
+                y=integrate.simpson( 
+                    y=integrate.simpson( 
+                        y=sg / modB**2, x=zarr ), x=tarr ), x=sarr )
+
+        return betavol.sum() / vols.sum()
 
 
 def get_peak_beta(self, ns=64, nt=64, nz=64):
