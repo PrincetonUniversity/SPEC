@@ -217,7 +217,7 @@ subroutine dfp100(Ndofgl, x, Fvec, LComputeDerivatives)
           ! non-zero for asymmetric profiles
           Fvec(Mvol) = sum(dpflux(1:Mvol)) - total_pflux 
         endif
-         
+       
         ! Compute poloidal linking current constraint as well in case of free boundary computation
         if ( Lfreebound.eq.1 ) then
 
