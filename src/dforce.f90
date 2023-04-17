@@ -264,6 +264,11 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
 
         ! one step Newton's method
         dpflux(2:Mvol) = dpflux(2:Mvol) - dpfluxout(1:Mvol-1)
+        
+        if(Igeometry.eq.1) then
+          dpflux(1) = dpflux(1) - dpfluxout(Mvol)
+        endif
+        
         if( Lfreebound.eq.1 ) then
           dtflux(Mvol) = dtflux(Mvol  ) - dpfluxout(Mvol    )
         endif
