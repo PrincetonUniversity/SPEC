@@ -547,7 +547,7 @@ def get_average_beta(self, ns=64, nt=64, nz=64):
         
         return betavol / vols
     else:
-        for ivol in range(0,nvol-1):
+        for ivol in range(0,nvol):
             if ivol==0: sarr=np.linspace(-0.999,1, ns)
             if ivol!=0: sarr=np.linspace(-1,    1, ns)
 
