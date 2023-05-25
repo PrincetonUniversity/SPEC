@@ -127,11 +127,6 @@ def get_RZ_derivatives(
 
     return Rarr0, Rarr1, Rarr2, Rarr3, Zarr0, Zarr1, Zarr2, Zarr3
 
-
-
-
-
-
 def get_grid_and_jacobian_and_metric(
     self,
     lvol=0,
@@ -362,7 +357,6 @@ def get_grid_and_jacobian_and_metric(
     else:
         return Rarr0, Zarr0, jacobian, g
 
-
 def grid(
     self,
     lvol=0,
@@ -376,7 +370,6 @@ def grid(
         self, lvol, sarr, tarr, zarr, input1D=input1D
     )
     return Rarr0, Zarr0
-
 
 def jacobian(
     self,
@@ -392,7 +385,6 @@ def jacobian(
     )
     return jacobian
 
-
 def metric(
     self,
     lvol=0,
@@ -406,7 +398,6 @@ def metric(
         self, lvol, sarr, tarr, zarr, input1D=input1D
     )
     return g
-
 
 def get_B(
     self,
@@ -483,7 +474,6 @@ def get_modB(self, Bcontrav, g, derivative=False, dBcontrav=None, dg=None):
             "...ki,...ji,...j->...k", dBcontrav, g, Bcontrav
         ) + np.einsum("...i,...kji,...j->...k", Bcontrav, dg, Bcontrav)
         return modB, dmodB2
-
 
 def get_B_covariant(self, Bcontrav, g, derivative=False):
     """Get covariant component of B"""
@@ -568,7 +558,6 @@ def get_average_beta(self, ns=64, nt=64, nz=64):
 
         return betavol.sum() / vols.sum()
 
-
 def get_peak_beta(self, ns=64, nt=64, nz=64):
     if self.input.physics.pressure.size>1:
         press = self.input.physics.pressure[0] * self.input.physics.pscale
@@ -594,7 +583,6 @@ def get_peak_beta(self, ns=64, nt=64, nz=64):
                 y=integrate.simpson( 
                     y=sg / modB**2, x=zarr ), x=tarr ), x=sarr ) / vol
 
-
 def test_derivatives(self, lvol=0, s=0.3, t=0.4, z=0.5, delta=1e-6, tol=1e-6):
     ds = delta
     R, Z, j, g = self.get_grid_and_jacobian_and_metric(lvol, np.array([s-ds, s+ds]), np.array([t-ds, t+ds]), np.array([z-ds, z+ds]))
@@ -617,7 +605,6 @@ def test_derivatives(self, lvol=0, s=0.3, t=0.4, z=0.5, delta=1e-6, tol=1e-6):
     print((g[1,0,0,:,:] - g[0,0,0,:,:])/ds/2-dg[0,0,0,0,:,:])
     print((g[0,1,0,:,:] - g[0,0,0,:,:])/ds/2-dg[0,0,0,1,:,:])
     print((g[0,0,1,:,:] - g[0,0,0,:,:])/ds/2-dg[0,0,0,2,:,:])
-
 
 def get_surface_current_density(self, lsurf:int=None, nt:int=64, nz:int=64):
     """Compute j_surf.B on each side of the provided interfaces
@@ -695,7 +682,6 @@ def get_surface_current_density(self, lsurf:int=None, nt:int=64, nz:int=64):
             )
 
     return j_dot_B, tarr, zarr
-
 
 def get_surface(self, lsurf:int=None, nt:int=64, nz:int=64):
     """Compute the surface area of a volume interface

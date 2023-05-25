@@ -23,9 +23,10 @@ def spec_fft(tarr: np.array,
      - output: either '1D' or '2D'. Determine the form of the output. 
 
      Output:
-        If output=='1D', the output is a tuple 1D numpy array, with modes 
+        If output=='1D', the output is a 4-tuple 1D numpy array, with modes 
             organized as in SPEC (first increasing n, then increasing m). First
-            tuple element are the even modes, second are the odd modes
+            tuple element are the even modes, second are the odd modes, third
+            are the poloidal mode number, and fourth the toroidal mode number.
         If output=='2D', the output is tuple of 2D numpy array, with modes (m,n) 
             in element (Ntor+n,m). First tuple elements are the even modes, 
             seconds are the odd modes
@@ -67,7 +68,7 @@ def spec_fft(tarr: np.array,
         nt -= 1
         freal = freal[:,:-1]
 
-    if tarr[0]+2*np.pi==tarr[-1]:
+    if zarr[0]+2*np.pi==zarr[-1]:
         warnings.warn('zarr[-1] should not be equal to zarr[0]. Removing last element...')
         zarr = zarr[:-1]
         nz -= 1
@@ -142,8 +143,13 @@ def spec_fft(tarr: np.array,
     ofmn = np.fft.fftshift(ofmn, axes=0)
 
     # Invert n -> -n
-    efmn[:,1:] = np.flip(efmn[:,1:],axis=0)
-    ofmn[:,1:] = np.flip(ofmn[:,1:],axis=0)
+    if np.mod(nz,2)==0:
+        efmn[1:,1:] = np.flip(efmn[1:,1:],axis=0)
+        ofmn[1:,1:] = np.flip(ofmn[1:,1:],axis=0)
+    else:
+        efmn[:,1:] = np.flip(efmn[:,1:],axis=0)
+        ofmn[:,1:] = np.flip(ofmn[:,1:],axis=0)
+
 
     # Prepare output
     # --------------
@@ -158,6 +164,8 @@ def spec_fft(tarr: np.array,
         nmn = Ntor+1 + Mpol*(2*Ntor+1)
         even_out = np.zeros((nmn,))
         odd_out = np.zeros((nmn,))
+        _im = np.zeros((nmn,), dtype=int)
+        _in = np.zeros((nmn,), dtype=int)
 
         ind = -1
         for mm in range(0,Mpol+1):
@@ -167,10 +175,12 @@ def spec_fft(tarr: np.array,
                 
                 ind += 1
 
+                _im[ind]=mm
+                _in[ind]=nn
                 even_out[ind] = efmn[N+nn,mm]
                 odd_out[ind]  = ofmn[N+nn,mm]
 
-        return (even_out, odd_out)
+        return (even_out, odd_out, _im, _in)
     
     else:
         raise ValueError('Invalid output')
