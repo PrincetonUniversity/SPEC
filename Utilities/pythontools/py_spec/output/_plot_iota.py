@@ -29,7 +29,7 @@ def plot_iota(self, xaxis="R", yaxis="i", ax=None, **kwargs):
         xlabel = r"s"
     elif xaxis == "R":
         xdata = self.poincare.R[:, 0, 0]
-        ydata = self.transform.fiota[1, :]
+        ydata = self.transform.fiota[1, self.poincare.success == 1]
         xlabel = r"R"
     else:
         raise ValueError("xaxis should be one of ['R', 's'].")

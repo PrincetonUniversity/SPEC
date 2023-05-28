@@ -14,6 +14,9 @@ jobs:
     steps:
       - name: checkout sources
         uses: actions/checkout@master
+      - name: install scipy
+        run: |
+          pip3 install scipy
       - name: compile_xspec
         run: |
           cd ${SPEC_PATH}
