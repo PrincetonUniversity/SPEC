@@ -216,8 +216,8 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
  enddo
  Remn(1:mn,0:1) = transpose(Remncoord(1:2,1:mn,srow))
  Zomn(1:mn,0:1) = transpose(Zomncoord(1:2,1:mn,srow))
- Remn(1:mn,1)   = half*Remn(1:mn,1)
- Zomn(1:mn,1)   = half*Zomn(1:mn,1)
+! Remn(1:mn,1)   = half*Remn(1:mn,1) !rescale derivates because d/ds=half*d/dsbar
+! Zomn(1:mn,1)   = half*Zomn(1:mn,1)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -225,8 +225,6 @@ subroutine coords( lvol, lss, Lcurvature, Ntz, mn )
   if( Lcoordinatesingularity ) then
 
    sbar = ( lss + one ) * half
-
-!write(*,*) sbar !Testing sbar values Loizu 2022
 
 #ifdef DEBUG
    FATAL( coords, sbar.lt.zero .or. sbar.gt.one, invalid sbar )

@@ -873,6 +873,7 @@ endif
    call gauleg( lquad, gaussianweight(1:lquad,vvol), gaussianabscissae(1:lquad,vvol), igauleg ) ! JAB; 28 Jul 17
 
    !write(*,*) (gaussianabscissae(1:lquad,vvol)+1)*half !Testing sbar values Loizu 2022
+   write(*,*) gaussianabscissae(1:lquad,vvol) !Testing sbar values Loizu 2022
 
    if( myid.eq.0 ) then
     cput= GETTIME
