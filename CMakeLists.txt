@@ -49,6 +49,11 @@ else ()
     endif ()
 endif ()
 
+
+if(CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
+    set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -DIFORT")
+endif()
+
 if(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
     if(CMAKE_Fortran_COMPILER_VERSION VERSION_GREATER "10.0")
         set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fallow-argument-mismatch")
