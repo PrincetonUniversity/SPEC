@@ -19,5 +19,5 @@ setuptools.setup(
     url="https://princetonuniversity.github.io/SPEC/",
     author="SPEC developers",
     license="GNU 3.0",
-    packages=setuptools.find_packages(),
+    packages=['py_spec', 'py_spec.input', 'py_spec.output', 'py_spec.ci']
 )
