@@ -4,6 +4,8 @@ on: [push, pull_request]
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
     env:
       SPEC_PATH: ${{ github.workspace }}
       PYTHONPATH: ${{ github.workspace }}/Utilities/pythontools
