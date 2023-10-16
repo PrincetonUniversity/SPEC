@@ -73,4 +73,4 @@ def plot_poincare(self, toroidalIdx=0, prange="full", ax=None, **kwargs):
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
 
-    return
+    return ax
