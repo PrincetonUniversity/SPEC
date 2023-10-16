@@ -17,7 +17,7 @@ jobs:
       - name: Install prereqs
         run: |
           pip3 install --upgrade pip
-          pip3 install ninja cmake
+          pip3 install ninja cmake scipy
           yum install -y hdf5-static
       - name: Build & Test
         uses: ashutoshvarma/action-cmake-build@master
