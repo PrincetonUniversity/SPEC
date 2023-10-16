@@ -41,33 +41,33 @@ jobs:
         cd ${SPEC_PATH}/ci/G1V03L2Fi
         echo ${PYTHONPATH}
         export OMP_NUM_THREADS=1
-        mpiexec -n 2 --allow-run-as-root xspec G1V03L2Fi.001.sp
+        mpiexec -n 2 --allow-run-as-root $SPEC_PATH/install/xspec G1V03L2Fi.001.sp
         python3 -m py_spec.ci.test compare.h5 G1V03L2Fi.001.sp.h5 
     - name: run_fast_cylinder
       run: |
         cd ${SPEC_PATH}/ci/G2V32L1Fi
         echo ${PYTHONPATH}
         export OMP_NUM_THREADS=1
-        mpiexec -n 2 --allow-run-as-root xspec G2V32L1Fi.001.sp
+        mpiexec -n 2 --allow-run-as-root $SPEC_PATH/install/xspec G2V32L1Fi.001.sp
         python3 -m py_spec.ci.test compare.h5 G2V32L1Fi.001.sp.h5 
     - name: toroidal_freeboundary_vacuum
       run: |
         cd ${SPEC_PATH}/ci/toroidal_freeboundary_vacuum
         export OMP_NUM_THREADS=1
-        mpiexec -n 2 --allow-run-as-root xspec G3V02L0Fr_LU.sp 
-        mpiexec -n 2 --allow-run-as-root xspec G3V02L0Fr.sp 
+        mpiexec -n 2 --allow-run-as-root $SPEC_PATH/install/xspec G3V02L0Fr_LU.sp 
+        mpiexec -n 2 --allow-run-as-root $SPEC_PATH/install/xspec G3V02L0Fr.sp 
         python3 -m py_spec.ci.test compare.h5 G3V02L0Fr_LU.sp.h5 --tol 1e-11
         python3 -m py_spec.ci.test compare.h5 G3V02L0Fr.sp.h5 --tol 1e-11
     - name: current_constraint_fixed_boundary
       run: |
         cd ${SPEC_PATH}/ci/G3V08L3Fi
         export OMP_NUM_THREADS=1
-        mpiexec -n 2 --allow-run-as-root xspec G3V08L3Fi.001.sp
+        mpiexec -n 2 --allow-run-as-root $SPEC_PATH/install/xspec G3V08L3Fi.001.sp
         python3 -m py_spec.ci.test compare.h5 G3V08L3Fi.001.sp.h5 --tol 1e-10
     - name: current_constraint_free_boundary
       run: |
         cd ${SPEC_PATH}/ci/G3V08L3Fr
         export OMP_NUM_THREADS=1
-        mpiexec -n 2 --allow-run-as-root xspec G3V08L3Fr.001.sp
+        mpiexec -n 2 --allow-run-as-root $SPEC_PATH/install/xspec G3V08L3Fr.001.sp
         python3 -m py_spec.ci.test compare.h5 G3V08L3Fr.001.sp.h5 --tol 1e-10
 
