@@ -21,7 +21,7 @@
 
 3. Call ploting routine for |B| on the boundary surface:
    
-   plot_spec_modB_boundary(data,2,32,64); 
+   plot_spec_modB_boundary(data, 2, 0, 64, 64, 3); 
 
 3. Call ploting routine for |B| on a cross-section for volumes lvol=2 and lvol=1:
 

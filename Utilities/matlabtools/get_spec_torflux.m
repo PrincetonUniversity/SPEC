@@ -26,28 +26,55 @@ function psitor = get_spec_torflux(data,lvol,zeta,start,send,ns,nt)
 %   modified by J.Loizu (06.2017)
 %   modified by A.Baillod (06.2019) - added switch for geometry
 
+    %Check inputs
+    Igeometry = data.input.physics.Igeometry;
+    if lvol==1 && Igeometry~=1 && start==1
+        error('InputError: start should be >1 in first volume')
+    end
 
-sarr = linspace(start,send,ns);
+    Mvol = data.output.Mvol;
+    if lvol<1 || lvol>Mvol
+        error('InputError: Invalid lvol')
+    end
 
-tarr = linspace(0,2*pi,nt);
+    if start<-1 || start>send
+        error('InputError: invalid start')
+    end
 
-ds   = sarr(2)-sarr(1);
+    if send<start || send>1
+        error('InputError: invalid send')
+    end
 
-dth  = tarr(2)-tarr(1);
+    if ns<1
+        error('InputError: invalid ns')
+    end
 
-if(ds==0 || dth==0)
+    if nt<1
+        error('InputError: invalid nt')
+    end
 
- psitor = 0;
- 
-else
+    % Prepare coordinate arrays
+    sarr = linspace(start,send,ns);
+    tarr = linspace(0,2*pi,nt);
 
-Bcontrav = get_spec_magfield(data,lvol,sarr,tarr,zeta);
-jac      = get_spec_jacobian(data,lvol,sarr,tarr,zeta);
-  
+    ds   = sarr(2)-sarr(1);
 
- % Compute surface integral
+    dth  = tarr(2)-tarr(1);
 
- Bzeta    = Bcontrav{3};
- psitor   = sum(sum( jac(2:end,:).*Bzeta(2:end,:) ))*ds*dth;
+    if(ds==0 || dth==0)
+
+        psitor = 0;
+
+    else
+
+        Bcontrav = get_spec_magfield(data,lvol,sarr,tarr,zeta);
+        jac      = get_spec_jacobian(data,lvol,sarr,tarr,zeta);
+
+
+        % Compute surface integral
+
+        Bzeta    = Bcontrav{3};
+        psitor   = trapz( sarr, trapz( tarr, jac.*Bzeta, 2 ) );
+    end
 
 end

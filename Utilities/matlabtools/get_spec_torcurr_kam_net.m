@@ -20,17 +20,16 @@ function Itor = get_spec_torcurr_kam_net(data, ntheta)
 % written by J.Loizu (2017)
 
 
-Nvol     = data.input.physics.Nvol;
-Itor     = zeros(1,Nvol-1);
+Mvol     = data.output.Mvol;
+Itor     = zeros(1,Mvol-1);
 
 zarr     = 0;
 tarr     = linspace(0,2*pi,ntheta);
-dtheta   = tarr(2)-tarr(1);
 
 sarr     = [1 -1];
 intB     = [0  0];
 
-for ikam=1:Nvol-1
+for ikam=1:Mvol-1
 
  lvol     = [ikam  ikam+1];
 
@@ -43,9 +42,9 @@ for ikam=1:Nvol-1
   Bt       = Bcontrav{2};
   Bz       = Bcontrav{3};
 
-  gst      = gmat{1}{2};
-  gtt      = gmat{2}{2};
-  gzt      = gmat{3}{2};
+  gst      = gmat{1,2};
+  gtt      = gmat{2,2};
+  gzt      = gmat{3,2};
 
   intB(i)  = trapz(tarr, Bs.*gst + Bt.*gtt + Bz.*gzt);
 

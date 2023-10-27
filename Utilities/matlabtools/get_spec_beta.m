@@ -14,7 +14,8 @@ function [beta_ax, beta_av] = get_spec_beta(data, vols)
 %
 % OUTPUT
 % ------
-%  -beta		: value of beta on axis
+%  -beta_ax  : value of beta on axis
+%  -beta_av  : value of beta on average
 %
 % written by J.Loizu (2016) 
 % modified by J.Loizu (05.2017)
@@ -60,13 +61,12 @@ end
 beta_av = sum(av_beta) / volume;
 
 ind = find(vols==1);
-if length(ind)==0 volume_number = vols(lvol);
+if length(ind)==0
     volume_number = 1;
     volume = get_spec_volume(data,volume_number,64,64,64);
     modB     = get_spec_modB(data,volume_number,sarr,tarr,zarr);
     jacobian = get_spec_jacobian(data, volume_number, sarr, tarr, zarr);
     arg = jacobian ./ (modB.^2);
-    av_beta(lvol) = press(volume_number)*trapz(zarr, trapz(tarr, trapz(sarr, arg, 1), 2), 3) / volume;
     beta_ax = av_beta(1);
 else
     beta_ax = av_beta(ind);

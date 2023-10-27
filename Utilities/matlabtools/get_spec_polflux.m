@@ -1,11 +1,12 @@
-function psipol = get_spec_polflux(data,lvol,theta,start,send,ns,nz)
+function psipol = get_spec_polflux(data,lvol,theta,sarr,nz)
 
 %
-% GET_SPEC_POLFLUX( DATA, LVOL, THETA, START, SEND, NS, NZ )
-% ==========================================================
+% GET_SPEC_POLFLUX( DATA, LVOL, THETA, SARR, NZ )
+% ===============================================
 %
 % Computes total enclosed poloidal flux in the surface defined by theta
-% inside the volume number lvol and across the radial extension defined by start and send
+% inside the volume number lvol and across the radial extension defined by 
+% start and send
 %
 % INPUT
 % -----
@@ -22,24 +23,21 @@ function psipol = get_spec_polflux(data,lvol,theta,start,send,ns,nz)
 %   -psipol  : total enclosed poloidal flux 
 %
 %   written by J.Loizu (2016)
-%   modified by A. Baillod (2019) - Added switch for geometry
 
-sarr = linspace(start,send,ns);
+% Check input
+Igeometry = data.input.physics.Igeometry;
+if (sarr(1)==-1) && (lvol==1) && (Igeometry~=1)
+    error('Singularity in first volume for s=-1. Set sarr to start from >-1')
+end
 
+% Build zeta array
 zarr = linspace(0,2*pi,nz);
 
-ds   = sarr(2)-sarr(1);
-
-dz   = zarr(2)-zarr(1);
-
-
+% Get B theta contravariant and the jacobian
 Bcontrav = get_spec_magfield(data,lvol,sarr,theta,zarr);
+Btheta   = squeeze(Bcontrav{2});
 jac      = squeeze(get_spec_jacobian(data,lvol,sarr,theta,zarr));
 
-        
-        
-Btheta    = Bcontrav{2};
-
+      
 % Compute surface integral
-
-psipol   = sum(sum( jac(2:end,:).*Btheta(2:end,:) ))*ds*dz;
+psipol = trapz(zarr, trapz(sarr, jac.*Btheta, 1 ) );

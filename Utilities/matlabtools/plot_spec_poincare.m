@@ -1,35 +1,72 @@
-function plot_spec_poincare(data,nz0,nfp,arr,newfig)
+function phi = plot_spec_poincare(data,nz0,arr,kam,newfig,varargin)
 
 %
-% PLOT_SPEC_POINCARE( DATA, NZ0, NFP, ARR, NEWFIG )
-% =================================================
+% PLOT_SPEC_POINCARE( DATA, NZ0, NFP, ARR, NEWFIG, VARARGIN )
+% ===========================================================
 %
-% Produces Poincare plots of the field lines on different sections (within one field period)
+% Produces Poincare plots of the field lines on different sections (within 
+% one field period)
 %
 % INPUT    
 % -----
 %   -data     : must be produced by calling read_spec(fname)
 %   -nz0      : shows the nz0 toroidal plane or equidistant planes (nz0=-1)
 %   -nfp      : number of field periods
-%   -arr      : step to skip field-line trajectories when ploting (arr=1 means all trajectories are ploted)
-%             : can be an array of which field line should be plotted, if size(arra)>1
-%   -newfig   : opens(=1) or not(=0) a new figure, or overwrites (=2) last plot
+%   -arr      : step to skip field-line trajectories when ploting (arr=1 
+%               means all trajectories are ploted)
+%             : can be an array of which field line should be plotted, if 
+%               size(arra)>1
+%   -kam      : Plots (=1) or not (=0) the KAM surfaces.
+%   -newfig   : opens(=1) or not(=0) a new figure, or overwrites (=2) last 
+%               plot
+%   -varargin : Optional arguments. Any of the following pairs are
+%               supported:
+%               - 'BoundaryColor', value: color of the plasma boundary or
+%                                         wall. default: red
+%               - 'step', n: plot one every n toroidal transit. This allows
+%                            lighter plts when exporting to eps. By
+%                            default, all toroidal transit are plotted
+%                            (n=1)
 %
 % written by J.Loizu (2015)
 % modified by A.Baillod (2019)
 % modified by J.Loizu (2020)
 
-try
- rpol    = data.input.physics.rpol; % get size of slab
-catch
- rpol    = 1;
+ll = length(varargin);
+if mod(ll,2)~=0
+    error('InputError: invalid number of optional arguments')
 end
 
+opt.BoundaryColor = 'r';
+opt.step = 1;
+for ii=1:ll/2
+    opt.(varargin{2*ii-1}) = varargin{2*ii};
+end
+stp = opt.step;
+
+% Check that Poincare data is available
+if data.input.diagnostics.nPpts==0 || all(data.input.diagnostics.nPtrj==0)
+    error('No Poincare data available')
+end
+
+% Read some data...
+nfp = data.input.physics.Nfp;
+
+if data.input.physics.Igeometry==1
+    try
+        rpol    = data.input.physics.rpol; % get size of slab
+    catch
+        rpol    = 1;
+    end
+end
+
+% Read size
 nptraj   = size(data.poincare.R,1);   % # of poincare trajectories (field lines)
-
 nz       = size(data.poincare.R,2);   % # of toroidal planes
+if nz0<1 || nz0>nz
+    error('InputError: invalid toroidal plane. Should be 0<nz0<%i', nz+1)
+end
 
-flag2col = 'F';                     % flag for ploting field lines with alternating colour ('T') or not ('F')
 
 ind = find(arr>nptraj);
 if ~isempty(ind)
@@ -40,62 +77,26 @@ if length(arr) == 1
    arr = 1:arr:nptraj; 
 end
 
-
-
-disp(' ');
-disp('Number of toroidal planes available: (one field period)');
-nz
-disp(' ');
-
-
-rmax   = max(max(max(data.poincare.R)));
-rmin   = min(min(min(data.poincare.R)));
-zmax   = max(max(max(data.poincare.Z)));
-zmin   = min(min(min(data.poincare.Z)));
-
-switch data.input.physics.Igeometry
-    case 1
-        xmin =  0;
-        xmax =  2*pi*rpol;
-        ymin = -0.1;
-        ymax =  data.output.Rbc(1,end)+0.1;
-    case 2
-        xmin = -1.1*rmax;
-        xmax =  1.1*rmax;
-        ymin = -1.1*rmax;
-        ymax =  1.1*rmax;
-    case 3
-        xmin =  0.9*rmin;
-        xmax =  1.1*rmax;
-        ymin =  1.1*zmin;
-        ymax =  1.1*zmax;
-end
-
-
-nth    = 5096;  %ploting options for the boundary
-bcol   = 'r';
+%ploting options for the boundary
+nth    = 5096;  
+bcol   = opt.BoundaryColor;
 bthick = 3;
+lthick = 1;
 if(data.input.physics.Lfreebound==1)
-bcol   = 'k';
-bthick = 1;
-end
-
-
-
-if(flag2col=='T')
- pcol   = ['k' 'b'];
-else
- pcol   = ['k' 'k'];
+    bcol   = opt.BoundaryColor;
+    bthick = 1;
 end
 
 switch newfig
     case 0
         hold on
     case 1
-        figure
+        figure('Color','w','Position',[200 200 900 700])
         hold on
     case 2
         hold off
+    otherwise
+        error('InputError: invalid newfig')
 end
 
 switch nz0
@@ -116,21 +117,21 @@ switch nz0
            R    = squeeze(data.poincare.R(:,j,:));
            T    = rpol*mod(squeeze(data.poincare.t(:,j,:)),2*pi);
            for i=arr       %for each field line trajectory
-               scatter(T(i,:),R(i,:),10,'.k')
+               scatter(T(i,:),R(i,:),lthick,'.k')
                hold on
            end
        case 2  
            R    = squeeze(data.poincare.R(:,j,:));
            T    = squeeze(data.poincare.t(:,j,:));
            for i=arr       %for each field line trajectory
-               scatter(R(i,:).*cos(T(i,:)),R(i,:).*sin(T(i,:)),10,'.k')
+               scatter(R(i,:).*cos(T(i,:)),R(i,:).*sin(T(i,:)),lthick,'.k')
                hold on;
            end
        case 3
            R = squeeze(data.poincare.R(:,j,:));
            Z = squeeze(data.poincare.Z(:,j,:));
            for i=arr     %for each field line trajectory
-            scatter(R(i,:),Z(i,:),10,'.k')
+            scatter(R(i,:),Z(i,:),lthick,'.k')
             hold on;
            end
        otherwise
@@ -140,6 +141,7 @@ switch nz0
    dth   = 2*pi/nth;
    theta = dth:dth:2*pi; 
    zeta  = (j-1)*(2*pi/nz)/nfp;
+   phi = NaN;
 
    switch data.input.physics.Igeometry
      case 1
@@ -187,31 +189,28 @@ switch nz0
    ylabel('R','FontSize',12)
   end
 
-  xlim([xmin xmax])
-  ylim([ymin ymax])
-
  end
 
  otherwise  %if nz0>0
        
    switch data.input.physics.Igeometry
        case 1
-           R    = squeeze(data.poincare.R(:,nz0,:));
-           T    = rpol*mod(squeeze(data.poincare.t(:,nz0,:)),2*pi);
+           R    = squeeze(data.poincare.R(:,nz0,1:stp:end));
+           T    = rpol*mod(squeeze(data.poincare.t(:,nz0,1:stp:end)),2*pi);
            for i=arr       %for each field line trajectory
                scatter(T(i,:),R(i,:),10,'.k')
                hold on
            end
        case 2  
-           R    = squeeze(data.poincare.R(:,nz0,:));
-           T    = squeeze(data.poincare.t(:,nz0,:));
+           R    = squeeze(data.poincare.R(:,nz0,1:stp:end));
+           T    = squeeze(data.poincare.t(:,nz0,1:stp:end));
            for i=arr       %for each field line trajectory
                scatter(R(i,:).*cos(T(i,:)),R(i,:).*sin(T(i,:)),10,'.k')
                hold on;
            end
        case 3
-           R = squeeze(data.poincare.R(:,nz0,:));
-           Z = squeeze(data.poincare.Z(:,nz0,:));
+           R = squeeze(data.poincare.R(:,nz0,1:stp:end));
+           Z = squeeze(data.poincare.Z(:,nz0,1:stp:end));
            for i=arr     %for each field line trajectory
             scatter(R(i,:),Z(i,:),10,'.k')
             hold on;
@@ -224,6 +223,7 @@ switch nz0
   dth   = 2*pi/nth;
   theta = dth:dth:2*pi; 
   zeta  = (nz0-1.0)*(2.0*pi/nz)/double(nfp);
+  phi = zeta;
    
   
   switch data.input.physics.Igeometry
@@ -257,7 +257,7 @@ switch nz0
   end  
 
   if data.input.physics.Igeometry ~= 1
-   scatter(Rb,Zb,bthick,'*',bcol)
+   scatter(Rb,Zb,bthick,'*','MarkerFaceColor',bcol,'MarkerEdgeColor',bcol)
    hold on
    set(gca,'FontSize',12)
    axis equal
@@ -272,11 +272,14 @@ switch nz0
    ylabel('R','FontSize',12)
   end
 
-  xlim([xmin xmax])
-  ylim([ymin ymax])
+  set(gca,'FontSize',18)
 
 end
 
+if kam
+   phi      = 2*pi*(nz0-1) / (double(nfp)*nz);
+   plot_spec_kam(data, phi, 0 ) 
+end
 
 disp(' ');
 disp('--- end of program ---');
