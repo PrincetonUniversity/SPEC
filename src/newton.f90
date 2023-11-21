@@ -97,7 +97,8 @@ subroutine newton( NGdof, position, ihybrd )
 
   INTEGER                :: ML, MU ! required for only Lc05ndf;
 
-  LOGICAL                :: Lexit = .true. ! perhaps this could be made user input;
+  ! LOGICAL                :: Lexit = .true. ! perhaps this could be made user input;
+  LOGICAL                :: Lexit = .false. ! Erol modification, so hessian is printed even w/ initial force balance
   LOGICAL                :: LComputeAxis
 
   INTEGER                :: nprint = 1, nfev, njev

@@ -45,6 +45,7 @@ module sphdf5
   integer(hid_t)                 :: dt_nDcalls_id       !< Memory datatype identifier (for "nDcalls"  dataset in "/iterations")
   integer(hid_t)                 :: dt_Energy_id        !< Memory datatype identifier (for "Energy"   dataset in "/iterations")
   integer(hid_t)                 :: dt_ForceErr_id      !< Memory datatype identifier (for "ForceErr" dataset in "/iterations")
+  integer(hid_t)                 :: dt_BetaTotal_id      !< Memory datatype identifier (for "ForceErr" dataset in "/iterations")
   integer(hid_t)                 :: dt_iRbc_id          !< Memory datatype identifier (for "iRbc"     dataset in "/iterations")
   integer(hid_t)                 :: dt_iZbs_id          !< Memory datatype identifier (for "iZbs"     dataset in "/iterations")
   integer(hid_t)                 :: dt_iRbs_id          !< Memory datatype identifier (for "iRbs"     dataset in "/iterations")
@@ -458,7 +459,13 @@ subroutine init_convergence_output
   H5CALL( sphdf5, h5tinsert_f, (iteration_dtype_id, "Energy", offset, H5T_NATIVE_DOUBLE, hdfier) )     ! insert "Energy" field in datatype
   offset = offset + type_size_d                                                                        ! increment offset by size of field
   H5CALL( sphdf5, h5tinsert_f, (iteration_dtype_id, "ForceErr", offset, H5T_NATIVE_DOUBLE, hdfier) )   ! insert "ForceErr" field in datatype
-  offset = offset + type_size_d                                                                        ! increment offset by size of field
+  offset = offset + type_size_d
+  write(*,*) "GOT HERE YEA"
+  ! Erol addition
+  ! H5CALL( sphdf5, h5tinsert_f, (iteration_dtype_id, "BetaTotal", offset, H5T_NATIVE_DOUBLE, hdfier) )   ! insert "ForceErr" field in datatype
+  ! offset = offset + type_size_d
+  write(*,*) "GOT HERE YEA22"
+                                                                          ! increment offset by size of field
   H5CALL( sphdf5, h5tinsert_f, (iteration_dtype_id, "iRbc", offset, iRZbscArray_id, hdfier) )          ! insert "iRbc" field in datatype
   offset = offset + irbc_size                                                                          ! increment offset by size of field
   H5CALL( sphdf5, h5tinsert_f, (iteration_dtype_id, "iZbs", offset, iRZbscArray_id, hdfier) )          ! insert "iZbs" field in datatype
@@ -480,6 +487,7 @@ subroutine init_convergence_output
   H5CALL( sphdf5, h5tcreate_f, (H5T_COMPOUND_F, type_size_i, dt_nDcalls_id,  hdfier) )
   H5CALL( sphdf5, h5tcreate_f, (H5T_COMPOUND_F, type_size_d, dt_Energy_id,   hdfier) )
   H5CALL( sphdf5, h5tcreate_f, (H5T_COMPOUND_F, type_size_d, dt_ForceErr_id, hdfier) )
+  H5CALL( sphdf5, h5tcreate_f, (H5T_COMPOUND_F, type_size_d, dt_BetaTotal_id, hdfier) )
   H5CALL( sphdf5, h5tcreate_f, (H5T_COMPOUND_F, irbc_size,   dt_iRbc_id,     hdfier) )
   H5CALL( sphdf5, h5tcreate_f, (H5T_COMPOUND_F, irbc_size,   dt_iZbs_id,     hdfier) )
   H5CALL( sphdf5, h5tcreate_f, (H5T_COMPOUND_F, irbc_size,   dt_iRbs_id,     hdfier) )
@@ -488,6 +496,7 @@ subroutine init_convergence_output
   H5CALL( sphdf5, h5tinsert_f, (dt_nDcalls_id,   "nDcalls", offset, H5T_NATIVE_INTEGER, hdfier) )
   H5CALL( sphdf5, h5tinsert_f, (dt_Energy_id,     "Energy", offset, H5T_NATIVE_DOUBLE,  hdfier) )
   H5CALL( sphdf5, h5tinsert_f, (dt_ForceErr_id, "ForceErr", offset, H5T_NATIVE_DOUBLE,  hdfier) )
+  H5CALL( sphdf5, h5tinsert_f, (dt_BetaTotal_id, "BetaTotal", offset, H5T_NATIVE_DOUBLE,  hdfier) )
   H5CALL( sphdf5, h5tinsert_f, (dt_iRbc_id,         "iRbc", offset, iRZbscArray_id,     hdfier) )
   H5CALL( sphdf5, h5tinsert_f, (dt_iZbs_id,         "iZbs", offset, iRZbscArray_id,     hdfier) )
   H5CALL( sphdf5, h5tinsert_f, (dt_iRbs_id,         "iRbs", offset, iRZbscArray_id,     hdfier) )
@@ -511,7 +520,7 @@ end subroutine init_convergence_output
 !>
 subroutine write_convergence_output( nDcalls, ForceErr )
 
-  use allglobal, only : myid, mn, Mvol, Energy, iRbc, iZbs, iRbs, iZbc
+  use allglobal, only : myid, mn, Mvol, Energy, iRbc, iZbs, iRbs, iZbc, BetaTotal
 
   LOCALS
   INTEGER, intent(in)  :: nDcalls
@@ -544,6 +553,8 @@ subroutine write_convergence_output( nDcalls, ForceErr )
   H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_Energy_id, Energy, INT((/1/), HSIZE_T), hdfier, &
     & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id), __FILE__, __LINE__)
   H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_ForceErr_id, ForceErr, INT((/1/), HSIZE_T), hdfier, &
+    & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id), __FILE__, __LINE__)
+  H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_BetaTotal_id, BetaTotal, INT((/1/), HSIZE_T), hdfier, &
     & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id), __FILE__, __LINE__)
   H5CALL( sphdf5, h5dwrite_f, (iteration_dset_id, dt_iRbc_id, iRbc, INT((/mn,Mvol+1/), HSIZE_T), hdfier, &
     & mem_space_id=memspace, file_space_id=dataspace, xfer_prp=plist_id), __FILE__, __LINE__)
@@ -982,7 +993,7 @@ subroutine hdfint
   use fileunits, only : ounit
   use inputlist
   use allglobal, only : ncpu, cpus, &
-                        Mvol, ForceErr, &
+                        Mvol, ForceErr, BetaTotal, &
                         mn, im, in, iRbc, iZbs, iRbs, iZbc, &
                         mns, ims, ins, &
                         dRbc, dZbs, dRbs, dZbc, &
@@ -1046,12 +1057,14 @@ subroutine hdfint
 !  HWRITERV( grpOutput, 1, forcetol, (/ forcetol /)) ! already in /input/global
 !latex \type{ForceErr}               & real    & \pb{force-balance error across interfaces} \\
   HWRITERV( grpOutput,  1, ForceErr, (/ ForceErr /))
+!latex \type{ForceErr}               & real    & \pb{force-balance error across interfaces} \\
+  HWRITERV( grpOutput,  1, BetaTotal, (/ BetaTotal /))
 !latex \type{Ivolume}                & real    & \pb{Volume current at output (parallel, externally induced)}
   HWRITERV( grpOutput, Mvol, Ivolume, Ivolume(1:Mvol))
 !latex \type{IPDt}                   & real    & \pb{Surface current at output}
   HWRITERV( grpOutput, Mvol, IPDt, IPDt(1:Mvol))
 
-  ! the following quantites can be different from input value
+  ! the following quantites can be diffeerent from input value
   HWRITERV( grpOutput,   Mvol, adiabatic         , adiabatic(1:Nvol)   )
   HWRITERV( grpOutput,   Nvol, helicity          ,  helicity(1:Nvol)   )
   HWRITERV( grpOutput,   Mvol, mu                ,        mu(1:Mvol)   )
@@ -1150,6 +1163,7 @@ subroutine finish_outfile
   H5CALL( sphdf5, h5tclose_f, (dt_nDcalls_id, hdfier)    , __FILE__, __LINE__)
   H5CALL( sphdf5, h5tclose_f, (dt_Energy_id, hdfier)     , __FILE__, __LINE__)
   H5CALL( sphdf5, h5tclose_f, (dt_ForceErr_id, hdfier)   , __FILE__, __LINE__)
+  H5CALL( sphdf5, h5tclose_f, (dt_BetaTotal_id, hdfier)   , __FILE__, __LINE__)
   H5CALL( sphdf5, h5tclose_f, (dt_iRbc_id, hdfier)       , __FILE__, __LINE__)
   H5CALL( sphdf5, h5tclose_f, (dt_iZbs_id, hdfier)       , __FILE__, __LINE__)
   H5CALL( sphdf5, h5tclose_f, (dt_iRbs_id, hdfier)       , __FILE__, __LINE__)

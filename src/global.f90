@@ -250,6 +250,7 @@ module allglobal
 
   REAL                 :: ForceErr !< total force-imbalance
   REAL                 :: Energy   !< MHD energy
+  REAL                 :: BetaTotal=0.0   !< Beta, averaged over entire domain
 
   REAL   , allocatable :: IPDt(:), IPDtDpf(:,:)  !< Toroidal pressure-driven current
 

@@ -105,7 +105,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
                         Lconstraint, Lcheck, dRZ, &
                         Lextrap, &
                         mupftol, &
-                        Lfreebound, LHmatrix
+                        Lfreebound, LHmatrix, gamma, pscale, adiabatic, rpol, rtor
 
   use fileunits, only : ounit, hunit, munit ! added by Erol
 
@@ -136,7 +136,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
                         LocalConstraint, xoffset, &
                         solution, IPdtdPf, &
                         IsMyVolume, IsMyVolumeValue, WhichCpuID, &
-                        ext ! For outputing Lcheck = 6 test
+                        ext, vvolume, & ! For outputing Lcheck = 6 test
+                        BetaTotal
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -165,6 +166,9 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
   EXTERNAL             :: dfp100, dfp200
 
   LOGICAL              :: LComputeAxis, dfp100_logical
+
+  REAL                 :: press, voltotal
+  REAL                 :: betavol(1:Mvol)
 
 #ifdef DEBUG
   INTEGER              :: isymdiff
@@ -437,8 +441,45 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
 
   lBBintegral(1:Nvol) = lBBintegral(1:Nvol) * half
 
+  ! write(*,*) "lBBintegral"
+  ! write(*,*) lBBintegral(1:Nvol)
+
+  ! vflag = 1 ! this flag instructs volume to continue even if the volume is invalid;
+  ! WCALL( dforce, volume, ( vvol, vflag ) ) ! compute volume; this corrupts calculation of dvolume;
+  
+  voltotal = 0.0
+
+  do vvol = 1, Mvol
+    WCALL(dforce, IsMyVolume, (vvol))
+    if( IsMyVolumeValue .EQ. 0 ) then
+      cycle
+    else if( IsMyVolumeValue .EQ. -1) then
+        FATAL(dforce, .true., Unassociated volume)
+    endif
+
+    vvolume(vvol) = vvolume(vvol)
+
+    press = adiabatic(vvol) * pscale / vvolume(vvol)**gamma
+
+    betavol(vvol) = press * vvolume(vvol) / lBBintegral(vvol)
+    betavol(vvol) = betavol(vvol) * vvolume(vvol)
+    ! write(*,*) "vvol", vvol, "lBBintegral", lBBintegral(vvol), "volume", vvolume(vvol), "press", press
+    ! write(*,*) "vvol", vvol, "beta", betavol(vvol) / vvolume(vvol)
+
+    voltotal = voltotal+vvolume(vvol)
+
+  enddo
+
+
+  ! Calculate total beta which is obtained from individual betas
+  ! write(*,*) "all betas", betavol(1:Nvol)
+  BetaTotal = sum(betavol(1:Nvol))/voltotal
+  ! write(*,*) "Total BETA ", BetaTotal
+  ! write(*,*)"total vol", voltotal
+
   Energy = sum( lBBintegral(1:Nvol) ) ! should also compute beta;
 
+  ! write(*,*)"total Energy", Energy
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 ! ---------------
@@ -990,7 +1031,7 @@ use allglobal, only: ncpu, myid, cpus, MPI_COMM_SPEC, &
                      iRbc, iZbs, iRbs, iZbc, &
                      LGdof, psifactor, dBdX, &
                      YESstellsym, NOTstellsym, &
-                     hessian, ext
+                     hessian, ext, vvolume
 
 LOCALS
 
