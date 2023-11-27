@@ -1647,28 +1647,28 @@ subroutine wrtend
   write(iunit,'(" Nvol        = ",i9        )') Nvol
   write(iunit,'(" Mpol        = ",i9        )') Mpol
   write(iunit,'(" Ntor        = ",i9        )') Ntor
-  write(iunit,'(" Lrad        = ",257i23    )') Lrad(1:Mvol)
-  write(iunit,'(" tflux       = ",257es23.15)') tflux(1:Mvol)
-  write(iunit,'(" pflux       = ",257es23.15)') pflux(1:Mvol)
-  write(iunit,'(" helicity    = ",256es23.15)') helicity(1:Mvol)
+  write(iunit,'(" Lrad        = ",1025i23    )') Lrad(1:Mvol)
+  write(iunit,'(" tflux       = ",1025es23.15)') tflux(1:Mvol)
+  write(iunit,'(" pflux       = ",1025es23.15)') pflux(1:Mvol)
+  write(iunit,'(" helicity    = ",1025es23.15)') helicity(1:Mvol)
   write(iunit,'(" pscale      = ",es23.15   )') pscale
   write(iunit,'(" Ladiabatic  = ",i9        )') Ladiabatic
-  write(iunit,'(" pressure    = ",257es23.15)') pressure(1:Mvol)
-  write(iunit,'(" adiabatic   = ",257es23.15)') adiabatic(1:Mvol)
-  write(iunit,'(" mu          = ",257es23.15)') mu(1:Mvol)
-  write(iunit,'(" Ivolume     = ",257es23.15)') Ivolume(1:Mvol)
-  write(iunit,'(" Isurf = ",257es23.15)') IPDt(1:Mvol) ! EDIT by EROL !!!!
+  write(iunit,'(" pressure    = ",1025es23.15)') pressure(1:Mvol)
+  write(iunit,'(" adiabatic   = ",1025es23.15)') adiabatic(1:Mvol)
+  write(iunit,'(" mu          = ",1025es23.15)') mu(1:Mvol)
+  write(iunit,'(" Ivolume     = ",1025es23.15)') Ivolume(1:Mvol)
+  write(iunit,'(" Isurf = ",1025es23.15)') IPDt(1:Mvol) ! EDIT by EROL !!!!
   write(iunit,'(" Lconstraint = ",i9        )') Lconstraint
-  write(iunit,'(" pl          = ",257i23    )') pl(0:Mvol)
-  write(iunit,'(" ql          = ",257i23    )') ql(0:Mvol)
-  write(iunit,'(" pr          = ",257i23    )') pr(0:Mvol)
-  write(iunit,'(" qr          = ",257i23    )') qr(0:Mvol)
-  write(iunit,'(" iota        = ",257es23.15)') iota(0:Mvol)
-  write(iunit,'(" lp          = ",257i23    )') lp(0:Mvol)
-  write(iunit,'(" lq          = ",257i23    )') lq(0:Mvol)
-  write(iunit,'(" rp          = ",257i23    )') rp(0:Mvol)
-  write(iunit,'(" rq          = ",257i23    )') rq(0:Mvol)
-  write(iunit,'(" oita        = ",257es23.15)') oita(0:Mvol)
+  write(iunit,'(" pl          = ",1025i23    )') pl(0:Mvol)
+  write(iunit,'(" ql          = ",1025i23    )') ql(0:Mvol)
+  write(iunit,'(" pr          = ",1025i23    )') pr(0:Mvol)
+  write(iunit,'(" qr          = ",1025i23    )') qr(0:Mvol)
+  write(iunit,'(" iota        = ",1025es23.15)') iota(0:Mvol)
+  write(iunit,'(" lp          = ",1025i23    )') lp(0:Mvol)
+  write(iunit,'(" lq          = ",1025i23    )') lq(0:Mvol)
+  write(iunit,'(" rp          = ",1025i23    )') rp(0:Mvol)
+  write(iunit,'(" rq          = ",1025i23    )') rq(0:Mvol)
+  write(iunit,'(" oita        = ",1025es23.15)') oita(0:Mvol)
   write(iunit,'(" mupftol     = ",es23.15   )') mupftol
   write(iunit,'(" mupfits     = ",i9        )') mupfits
   write(iunit,'(" Lreflect    = ",i9        )') Lreflect
@@ -1854,7 +1854,7 @@ subroutine wrtend
  !write(iunit,'(" epsr        = ",es23.15       )') epsr
   write(iunit,'(" nPpts       = ",i9            )') nPpts
   write(iunit,'(" Ppts        = ",es23.15       )') Ppts
-  write(iunit,'(" nPtrj       = ",256i6         )') nPtrj(1:Mvol)
+  write(iunit,'(" nPtrj       = ",656i6         )') nPtrj(1:Mvol)
   write(iunit,'(" LHevalues   = ",L9            )') LHevalues
   write(iunit,'(" LHevectors  = ",L9            )') LHevectors
   write(iunit,'(" LHmatrix    = ",L9            )') LHmatrix
@@ -1884,7 +1884,7 @@ subroutine wrtend
 #endif
 
   ! write initial guess of interface geometry
-  do imn = 1, mn ; write(iunit,'(2i6,1024es23.15)') im(imn), in(imn)/Nfp, ( iRbc(imn,vvol), iZbs(imn,vvol), iRbs(imn,vvol), iZbc(imn,vvol), vvol = 1, Nvol )
+  do imn = 1, mn ; write(iunit,'(2i6,20000es23.15)') im(imn), in(imn)/Nfp, ( iRbc(imn,vvol), iZbs(imn,vvol), iRbs(imn,vvol), iZbc(imn,vvol), vvol = 1, Nvol )
   enddo
 
   close(iunit)
