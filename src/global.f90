@@ -250,6 +250,7 @@ module allglobal
 
   REAL                 :: ForceErr !< total force-imbalance
   REAL                 :: Energy   !< MHD energy
+  REAL                 :: BnsErr   !< (in freeboundary) error in self-consistency of field on plasma boundary (Picard iteration)
 
   REAL   , allocatable :: IPDt(:), IPDtDpf(:,:)  !< Toroidal pressure-driven current
 

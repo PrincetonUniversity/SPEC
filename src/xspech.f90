@@ -308,7 +308,7 @@ subroutine spec
                         Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
                         dtflux, dpflux, &
                         ImagneticOK, &
-                        ForceErr, &
+                        ForceErr, BnsErr,&
                         efmn, ofmn, cfmn, sfmn, &
                         iBns, iBnc, iVns, iVnc, &
                         Ate, Aze, Ato, Azo, & ! only required for debugging; 09 Mar 17;
@@ -326,7 +326,7 @@ subroutine spec
   LOGICAL              :: LComputeDerivatives, LContinueFreeboundaryIterations, exist, LupdateBn, LComputeAxis
   INTEGER              :: imn, lmn, lNfp, lim, lin, ii, ideriv, stat
   INTEGER              :: vvol, ifail, wflag, iflag, vflag
-  REAL                 :: rflag, lastcpu, bnserr, lRwc, lRws, lZwc, lZws, lItor, lGpol, lgBc, lgBs
+  REAL                 :: rflag, lastcpu, lRwc, lRws, lZwc, lZws, lItor, lGpol, lgBc, lgBs
   REAL,    allocatable :: position(:), gradient(:)
   CHARACTER            :: pack
   INTEGER              :: Lfindzero_old, mfreeits_old
