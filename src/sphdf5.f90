@@ -460,11 +460,9 @@ subroutine init_convergence_output
   offset = offset + type_size_d                                                                        ! increment offset by size of field
   H5CALL( sphdf5, h5tinsert_f, (iteration_dtype_id, "ForceErr", offset, H5T_NATIVE_DOUBLE, hdfier) )   ! insert "ForceErr" field in datatype
   offset = offset + type_size_d
-  write(*,*) "GOT HERE YEA"
   ! Erol addition
   ! H5CALL( sphdf5, h5tinsert_f, (iteration_dtype_id, "BetaTotal", offset, H5T_NATIVE_DOUBLE, hdfier) )   ! insert "ForceErr" field in datatype
   ! offset = offset + type_size_d
-  write(*,*) "GOT HERE YEA22"
                                                                           ! increment offset by size of field
   H5CALL( sphdf5, h5tinsert_f, (iteration_dtype_id, "iRbc", offset, iRZbscArray_id, hdfier) )          ! insert "iRbc" field in datatype
   offset = offset + irbc_size                                                                          ! increment offset by size of field
