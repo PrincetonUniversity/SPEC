@@ -11,12 +11,13 @@ var searchData=
   ['bnc_8',['bnc',['../group__grp__global__physicslist.html#ga3983410e9a76500984fa4a75877315b2',1,'inputlist']]],
   ['bns_9',['bns',['../group__grp__global__physicslist.html#ga82eafba423cb98f235e79a29a582abd8',1,'inputlist']]],
   ['bnsblend_10',['bnsblend',['../group__grp__global__global.html#ga2e4b34a235e965df691cea4db96e8b40',1,'inputlist']]],
-  ['bnstol_11',['bnstol',['../group__grp__global__global.html#ga59c4a8840fb74024c03ec05e7394082e',1,'inputlist']]],
-  ['bomn_12',['bomn',['../group__grp__force__constr.html#ga73a86e10824f23ba83def102e7d4b0c0',1,'allglobal']]],
-  ['bsupumn_13',['bsupumn',['../group__grp__fourier__transform.html#gac8cad9694df449349ce766eabd59216d',1,'allglobal']]],
-  ['bsupvmn_14',['bsupvmn',['../group__grp__fourier__transform.html#gad8cb45dc514217d16a651e85749c3185',1,'allglobal']]],
-  ['btemn_15',['btemn',['../group__grp__covar__field__ifaces.html#ga1f5ea9c38e55707a900ca335990b63f1',1,'allglobal']]],
-  ['btomn_16',['btomn',['../group__grp__covar__field__ifaces.html#ga81924a77513f01a3ab914cc6d87c9558',1,'allglobal']]],
-  ['bzemn_17',['bzemn',['../group__grp__covar__field__ifaces.html#ga01aa29d7089eccad444e36b93b3d0784',1,'allglobal']]],
-  ['bzomn_18',['bzomn',['../group__grp__covar__field__ifaces.html#ga2db512f2492084aac27af4378441be37',1,'allglobal']]]
+  ['bnserr_11',['bnserr',['../namespaceallglobal.html#a4aae78647d8321706bee7245015e904f',1,'allglobal']]],
+  ['bnstol_12',['bnstol',['../group__grp__global__global.html#ga59c4a8840fb74024c03ec05e7394082e',1,'inputlist']]],
+  ['bomn_13',['bomn',['../group__grp__force__constr.html#ga73a86e10824f23ba83def102e7d4b0c0',1,'allglobal']]],
+  ['bsupumn_14',['bsupumn',['../group__grp__fourier__transform.html#gac8cad9694df449349ce766eabd59216d',1,'allglobal']]],
+  ['bsupvmn_15',['bsupvmn',['../group__grp__fourier__transform.html#gad8cb45dc514217d16a651e85749c3185',1,'allglobal']]],
+  ['btemn_16',['btemn',['../group__grp__covar__field__ifaces.html#ga1f5ea9c38e55707a900ca335990b63f1',1,'allglobal']]],
+  ['btomn_17',['btomn',['../group__grp__covar__field__ifaces.html#ga81924a77513f01a3ab914cc6d87c9558',1,'allglobal']]],
+  ['bzemn_18',['bzemn',['../group__grp__covar__field__ifaces.html#ga01aa29d7089eccad444e36b93b3d0784',1,'allglobal']]],
+  ['bzomn_19',['bzomn',['../group__grp__covar__field__ifaces.html#ga2db512f2492084aac27af4378441be37',1,'allglobal']]]
 ];

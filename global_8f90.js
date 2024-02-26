@@ -64,6 +64,7 @@ var global_8f90 =
     [ "mpi_comm_spec", "global_8f90.html#a2382df770fc57cc53ed68c6e1ac23819", null ],
     [ "forceerr", "global_8f90.html#a553a5d9f7253b80750db5131b7e5ffef", null ],
     [ "energy", "global_8f90.html#a07f3f4df2aaac1b26a68b04a2c4464d6", null ],
+    [ "bnserr", "global_8f90.html#a4aae78647d8321706bee7245015e904f", null ],
     [ "ipdtdpf", "global_8f90.html#a9c552589fff9f20f26fc79be2e3dab38", null ],
     [ "yesstellsym", "global_8f90.html#a1f4ddb89b3246fef8d73c88b730eda3a", null ],
     [ "notstellsym", "global_8f90.html#a6993aa662f74b327357896c7d9c81f4b", null ],
