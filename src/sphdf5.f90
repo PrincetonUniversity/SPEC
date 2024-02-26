@@ -982,7 +982,7 @@ subroutine hdfint
   use fileunits, only : ounit
   use inputlist
   use allglobal, only : ncpu, cpus, &
-                        Mvol, ForceErr, &
+                        Mvol, ForceErr, BnsErr,&
                         mn, im, in, iRbc, iZbs, iRbs, iZbc, &
                         mns, ims, ins, &
                         dRbc, dZbs, dRbs, dZbc, &
@@ -1042,8 +1042,8 @@ subroutine hdfint
   HWRITERA( grpOutput, mn, (Mvol+1), Rbs, iRbs(1:mn,0:Mvol) )
 !latex \type{iZbc(1:mn,0:Mvol)}      & real    & \pb{Fourier harmonics, $Z_{m,n}$, of interfaces} \\
   HWRITERA( grpOutput, mn, (Mvol+1), Zbc, iZbc(1:mn,0:Mvol) )
-!l tex \type{forcetol}               & real    & \pb{force-balance error across interfaces} \\
-!  HWRITERV( grpOutput, 1, forcetol, (/ forcetol /)) ! already in /input/global
+!latex \type{BnsErr}                 & real    & \pb{error in self-consistency of field on plasma boundary (in freeboundary)} \\
+  HWRITERV( grpOutput, 1, BnsErr, (/ BnsErr /)) ! already in /input/global
 !latex \type{ForceErr}               & real    & \pb{force-balance error across interfaces} \\
   HWRITERV( grpOutput,  1, ForceErr, (/ ForceErr /))
 !latex \type{Ivolume}                & real    & \pb{Volume current at output (parallel, externally induced)}

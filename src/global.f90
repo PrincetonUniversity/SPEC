@@ -66,7 +66,7 @@ module constants
   REAL, parameter :: mu0        =   2.0E-07 * pi2       !< \f$4\pi\cdot10^{-7}\f$
   REAL, parameter :: goldenmean =   1.618033988749895   !< golden mean = \f$( 1 + \sqrt 5 ) / 2\f$ ;
 
-  REAL, parameter :: version    =   3.21  !< version of SPEC
+  REAL, parameter :: version    =   3.22  !< version of SPEC
 
 end module constants
 
@@ -250,6 +250,7 @@ module allglobal
 
   REAL                 :: ForceErr !< total force-imbalance
   REAL                 :: Energy   !< MHD energy
+  REAL                 :: BnsErr   !< (in freeboundary) error in self-consistency of field on plasma boundary (Picard iteration)
 
   REAL   , allocatable :: IPDt(:), IPDtDpf(:,:)  !< Toroidal pressure-driven current
 
