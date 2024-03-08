@@ -986,6 +986,32 @@ end subroutine write_vector_potential
 !> \brief Write the final state of the equilibrium to the output file.
 !> \ingroup grp_output
 !>
+
+subroutine write_stability(ohessian, evalr, evali, evecr, NGdof)
+
+  LOCALS
+  integer, intent(in) :: NGdof
+  REAL, intent(in)    :: ohessian(:,:), evalr(:), evali(:), evecr(:,:)
+  integer(hid_t)      :: grpStability
+
+  BEGIN( sphdf5 )
+
+ if (myid.eq.0 .and. .not.skip_write) then
+
+  HDEFGRP( file_id, stability, grpStability)
+
+  HWRITERA( grpStability, NGdof, NGdof, ohessian, ohessian(1:NGdof,1:NGdof) )
+  HWRITERA( grpStability, NGdof, NGdof, evecr, evecr(1:NGdof,1:NGdof) )
+  HWRITERV( grpStability, NGdof, evalr, evalr(1:NGdof) )
+  HWRITERV( grpStability, NGdof, evali, evali(1:NGdof) )
+
+  HCLOSEGRP( grpStability )
+
+ endif ! myid.eq.0
+
+end subroutine write_stability
+
+
 subroutine hdfint
 
   use fileunits, only : ounit

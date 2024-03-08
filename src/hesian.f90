@@ -37,7 +37,9 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
                         Lhessian3Dallocated,denergydrr, denergydrz,denergydzr,denergydzz, &
 					            	LocalConstraint
   
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  use sphdf5, only : write_stability
+
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   LOCALS
 
@@ -418,12 +420,12 @@ endif
 
   if( LHmatrix ) then
 
-   if( myid.eq.0 ) then ; cput = GETTIME ; write(ounit,'("hesian : ",f10.2," : LHmatrix="L2" ;")')cput-cpus, LHmatrix ;
-    open(munit, file="."//trim(ext)//".GF.ma", status="unknown", form="unformatted")
-    write(munit) NGdof
-    write(munit) ohessian(1:NGdof,1:NGdof)
-    close(munit)
-   endif
+    if( myid.eq.0 ) then ; cput = GETTIME ; write(ounit,'("hesian : ",f10.2," : LHmatrix="L2" ;")')cput-cpus, LHmatrix ;
+      open(munit, file="."//trim(ext)//".GF.ma", status="unknown", form="unformatted")
+      write(munit) NGdof
+      write(munit) ohessian(1:NGdof,1:NGdof)
+      close(munit)
+    endif
 
   endif
 
@@ -517,6 +519,10 @@ endif
     enddo
    enddo
 
+  !  do ii = 1, mn ; write(ounit,*) 'psifact', ii, psifactor(ii,Mvol-1)
+  ! enddo
+
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
    if( myid.eq.0 ) then ! screen output; 04 Dec 14;
@@ -584,6 +590,9 @@ endif
    endif ! end of if( myid.eq.0 ) ; 04 Dec 14;
 
   endif ! end of if(                 ( LHevalues .or. LHevectors ) )
+
+  ! output hessian, eigenvalues, and eigenvectors to the .h5 file
+  WCALL( hesian, write_stability, (ohessian, evalr, evali, evecr, NGdof) )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
