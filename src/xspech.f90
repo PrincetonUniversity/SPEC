@@ -100,13 +100,13 @@ subroutine xspech
 
   ! initialize internal arrays based on data from input file
   call preset()
-  
+
   ! initialize HDF5 library and open output file ext.h5 for writing during execution
   call init_outfile()
-  
+
   ! mirror input file contents to output file
   call mirror_input_to_outfile()
-  
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   if ( myid .eq. 0 ) then ! save restart file;

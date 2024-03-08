@@ -60,6 +60,3 @@ src/msphdf5.f90
 
 # vscode files
 .vscode/
-
-# conda files
-etc/conda/

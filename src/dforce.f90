@@ -98,16 +98,14 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
 
   use numerical, only : logtolerance
 
-  use fileunits, only : ounit
+  use fileunits, only : ounit, munit
 
   use inputlist, only : Wmacros, Wdforce, Nvol, Ntor, Lrad, Igeometry, &
                         epsilon, &
                         Lconstraint, Lcheck, dRZ, &
                         Lextrap, &
                         mupftol, &
-                        Lfreebound, LHmatrix, gamma, pscale, adiabatic, rpol, rtor
-
-  use fileunits, only : ounit, hunit, munit ! added by Erol
+                        Lfreebound, LHmatrix, gamma, pscale, adiabatic
 
   use cputiming, only : Tdforce
 
@@ -136,8 +134,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
                         LocalConstraint, xoffset, &
                         solution, IPdtdPf, &
                         IsMyVolume, IsMyVolumeValue, WhichCpuID, &
-                        ext, vvolume, & ! For outputing Lcheck = 6 test
-                        BetaTotal
+                        ext, & ! For outputing Lcheck = 6 test
+                        BetaTotal, vvolume
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

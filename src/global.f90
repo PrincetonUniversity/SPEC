@@ -66,7 +66,7 @@ module constants
   REAL, parameter :: mu0        =   2.0E-07 * pi2       !< \f$4\pi\cdot10^{-7}\f$
   REAL, parameter :: goldenmean =   1.618033988749895   !< golden mean = \f$( 1 + \sqrt 5 ) / 2\f$ ;
 
-  REAL, parameter :: version    =   3.21  !< version of SPEC
+  REAL, parameter :: version    =   3.20  !< version of SPEC
 
 end module constants
 
@@ -250,13 +250,13 @@ module allglobal
 
   REAL                 :: ForceErr !< total force-imbalance
   REAL                 :: Energy   !< MHD energy
-  REAL                 :: BetaTotal=0.0   !< Beta, averaged over entire domain
+  REAL                 :: BetaTotal = 0.0   !< Beta, averaged over entire domain
 
   REAL   , allocatable :: IPDt(:), IPDtDpf(:,:)  !< Toroidal pressure-driven current
 
   INTEGER              :: Mvol
 
-  REAL :: total_pflux ! total pflux, used in Lconstraint=3, Igeometry=1 -- Edit by Erol
+  REAL :: total_pflux ! used when Lconstraint=3, Igeometry=1
 
   LOGICAL              :: YESstellsym !< internal shorthand copies of Istellsym, which is an integer input;
   LOGICAL              :: NOTstellsym !< internal shorthand copies of Istellsym, which is an integer input;
