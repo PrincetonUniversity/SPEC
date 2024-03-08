@@ -118,9 +118,9 @@ subroutine pp00ab( lvol, sti, Nz, nPpts, poincaredata, fittedtransform, utflag )
    do kk = 0, Nz-1 ! loop over toroidal Poincare cross sections;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-    
-    stz(1:3) = (/ ppt(2), mod(ppt(1),pi2), zst /) ! toroidal coordinates; 
-    
+
+    stz(1:3) = (/ ppt(2), mod(ppt(1),pi2), zst /) ! toroidal coordinates;
+
     if( abs(stz(1)).gt.one ) then ;                                        ; utflag = 0 ; exit ! exit do kk loop; 22 Apr 13; ! 28 Feb 17;
 
     endif

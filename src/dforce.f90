@@ -243,7 +243,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
       ! Mvol-1 surface current plus 1 poloidal linking current constraints
       Ndofgl = Mvol
     else
-      ! add an additional constraint to make the total pflux = 0 -- Edit Erol
+      ! add an additional constraint to make the total pflux = 0 
       if(Igeometry.eq.1) then
         Ndofgl = Mvol
       else
@@ -319,7 +319,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
 
     enddo ! end of do vvol = 1, Mvol
 
-    !add an additional constraint to make the total pflux = 0 -- Edit Erol
+    !add an additional constraint to make the total pflux 0
     if(Igeometry.eq.1) then
 
       vvol = 1
@@ -985,7 +985,6 @@ endif ! end of if( LcomputeDerivatives ) ;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  !add by Erol
   !if(LcomputeDerivatives .and. Lhessianallocated .and. Igeometry .eq. 1) then
   !if(Lhessianallocated .and. Igeometry .eq. 1) then
   if(Lhessianallocated) then

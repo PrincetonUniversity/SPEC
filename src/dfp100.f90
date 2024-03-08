@@ -205,7 +205,7 @@ subroutine dfp100(Ndofgl, x, Fvec, LComputeDerivatives)
             Fvec(1:Mvol-1) = IPDt(1:Mvol-1) - Isurf(1:Mvol-1)
         endif
 
-	! Edit by Erol to set total pflux to 0
+	! Set the total pflux to 0
         if(Igeometry.eq.1) then
 
           IPDtDpf(1,Mvol) = -pi2 * Bt00(1,1,2)
