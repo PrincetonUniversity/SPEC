@@ -459,11 +459,7 @@ subroutine init_convergence_output
   H5CALL( sphdf5, h5tinsert_f, (iteration_dtype_id, "Energy", offset, H5T_NATIVE_DOUBLE, hdfier) )     ! insert "Energy" field in datatype
   offset = offset + type_size_d                                                                        ! increment offset by size of field
   H5CALL( sphdf5, h5tinsert_f, (iteration_dtype_id, "ForceErr", offset, H5T_NATIVE_DOUBLE, hdfier) )   ! insert "ForceErr" field in datatype
-  offset = offset + type_size_d
-  ! Erol addition
-  ! H5CALL( sphdf5, h5tinsert_f, (iteration_dtype_id, "BetaTotal", offset, H5T_NATIVE_DOUBLE, hdfier) )   ! insert "ForceErr" field in datatype
-  ! offset = offset + type_size_d
-                                                                          ! increment offset by size of field
+  offset = offset + type_size_d                                                                        ! increment offset by size of field
   H5CALL( sphdf5, h5tinsert_f, (iteration_dtype_id, "iRbc", offset, iRZbscArray_id, hdfier) )          ! insert "iRbc" field in datatype
   offset = offset + irbc_size                                                                          ! increment offset by size of field
   H5CALL( sphdf5, h5tinsert_f, (iteration_dtype_id, "iZbs", offset, iRZbscArray_id, hdfier) )          ! insert "iZbs" field in datatype
@@ -1029,7 +1025,7 @@ subroutine hdfint
   use fileunits, only : ounit
   use inputlist
   use allglobal, only : ncpu, cpus, &
-                        Mvol, ForceErr, BetaTotal, &
+                        Mvol, ForceErr, BnsErr, BetaTotal, &
                         mn, im, in, iRbc, iZbs, iRbs, iZbc, &
                         mns, ims, ins, &
                         dRbc, dZbs, dRbs, dZbc, &
@@ -1100,7 +1096,7 @@ subroutine hdfint
 !latex \type{IPDt}                   & real    & \pb{Surface current at output}
   HWRITERV( grpOutput, Mvol, IPDt, IPDt(1:Mvol))
 
-  ! the following quantites can be diffeerent from input value
+  ! the following quantites can be different from input value
   HWRITERV( grpOutput,   Mvol, adiabatic         , adiabatic(1:Nvol)   )
   HWRITERV( grpOutput,   Nvol, helicity          ,  helicity(1:Nvol)   )
   HWRITERV( grpOutput,   Mvol, mu                ,        mu(1:Mvol)   )

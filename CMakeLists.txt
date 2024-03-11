@@ -49,6 +49,17 @@ else ()
     endif ()
 endif ()
 
+
+if(CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
+    set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -DIFORT")
+endif()
+
+if(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
+    if(CMAKE_Fortran_COMPILER_VERSION VERSION_GREATER "10.0")
+        set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fallow-argument-mismatch")
+    endif()
+endif()
+
 find_program(AWK awk mawk gawk)
 
 # Find LAPACK
@@ -60,11 +71,11 @@ find_program(AWK awk mawk gawk)
 # If Intel MKL is not desired, change BLA_VENDOR variabale during configuration
 #set(BLA_VENDOR Intel10_64lp CACHE STRING 
 #    "Define BLAS vendor. Some of the popular options are Intel10_64lp OpenBLAS Apple Generic")
-find_package (BLAS REQUIRED)
-message(STATUS "BLAS vendor is ${BLA_VENDOR}")
-if (NOT ${BLA_VENDOR} MATCHES "^Intel" AND NOT ${BLA_VENDOR} MATCHES "^OpenBLAS")
-    find_package (LAPACK REQUIRED)
-endif()
+# find_package (BLAS REQUIRED)
+# message(STATUS "BLAS vendor is ${BLA_VENDOR}")
+# if (NOT ${BLA_VENDOR} MATCHES "^Intel" AND NOT ${BLA_VENDOR} MATCHES "^OpenBLAS")
+find_package (LAPACK REQUIRED)
+#endif()
 
 # Find FFTW3.
 # Intel oneAPI has FFT3 available as part of MKL. Just linking against MKL gives FFTW functionality.

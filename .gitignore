@@ -58,5 +58,8 @@ _skbuild/
 src/mxspech.f90
 src/msphdf5.f90
 
+# Apple Mac related
+.DS_Store
+
 # vscode files
 .vscode/

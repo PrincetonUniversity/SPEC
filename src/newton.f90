@@ -334,19 +334,19 @@ subroutine writereadgf( readorwrite, NGdof , ireadhessian )
   case( 'W' ) ! will write derivative matrix to file;
 
    ! reset I/O state
-   !ios = 0
+   ios = 0
 
-   !open( dunit, file="."//trim(ext)//".sp.DF", status="replace", form="unformatted", iostat=ios ) ! save derivative matrix to file;
-   !FATAL( newton, ios.ne.0, error opening derivative matrix file )
+   open( dunit, file="."//trim(ext)//".sp.DF", status="replace", form="unformatted", iostat=ios ) ! save derivative matrix to file;
+   FATAL( newton, ios.ne.0, error opening derivative matrix file )
 
-   !write( dunit, iostat=ios ) Igeometry, Istellsym, Lfreebound, Nvol, Mpol, Ntor, NGdof ! enable resolution consistency check;
-   !FATAL( newton, ios.ne.0, error writing Nvol, Mpol, Ntor, NGdof )
+   write( dunit, iostat=ios ) Igeometry, Istellsym, Lfreebound, Nvol, Mpol, Ntor, NGdof ! enable resolution consistency check;
+   FATAL( newton, ios.ne.0, error writing Nvol, Mpol, Ntor, NGdof )
 
-   !write( dunit, iostat=ios ) hessian(1:NGdof,1:NGdof)
-   !FATAL( newton, ios.ne.0, error writing hessian to file )
+   write( dunit, iostat=ios ) hessian(1:NGdof,1:NGdof)
+   FATAL( newton, ios.ne.0, error writing hessian to file )
 
-   !close( dunit, iostat=ios )
-   !FATAL( newton, ios.ne.0, error closing derivative matrix file )
+   close( dunit, iostat=ios )
+   FATAL( newton, ios.ne.0, error closing derivative matrix file )
 
   case( 'R' )
 
