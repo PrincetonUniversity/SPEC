@@ -4,58 +4,66 @@ on: [push, pull_request]
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: csmiet/testspec
+    strategy:
+      fail-fast: false
     env:
-      MACHINE: docker
       SPEC_PATH: ${{ github.workspace }}
       PYTHONPATH: ${{ github.workspace }}/Utilities/pythontools
       OMPI_ALLOW_RUN_AS_ROOT: 1
       OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
     steps:
-      - name: checkout sources
-        uses: actions/checkout@master
-      - name: compile_xspec
-        run: |
-          cd ${SPEC_PATH}
-          make -j BUILD_ENV=gfortran xspec
-      - name: compile_dspec
-        run: |
-          cd ${SPEC_PATH}
-          make BUILD_ENV=gfortran dspec
-      - name: run_fast_cartesian
-        run: |
-          cd ${SPEC_PATH}/ci/G1V03L2Fi
-          echo ${PYTHONPATH}
-          export OMP_NUM_THREADS=1
-          mpiexec -n 2 --allow-run-as-root ${SPEC_PATH}/xspec G1V03L2Fi.001.sp
-          python3 -m py_spec.ci.test compare.h5 G1V03L2Fi.001.sp.h5 
-      - name: run_fast_cylinder
-        run: |
-          cd ${SPEC_PATH}/ci/G2V32L1Fi
-          echo ${PYTHONPATH}
-          export OMP_NUM_THREADS=1
-          mpiexec -n 2 --allow-run-as-root ${SPEC_PATH}/xspec G2V32L1Fi.001.sp
-          python3 -m py_spec.ci.test compare.h5 G2V32L1Fi.001.sp.h5 
-      - name: toroidal_freeboundary_vacuum
-        run: |
-          cd ${SPEC_PATH}/ci/toroidal_freeboundary_vacuum
-          export OMP_NUM_THREADS=1
-          mpiexec -n 2 --allow-run-as-root ${SPEC_PATH}/xspec G3V02L0Fr_LU.sp 
-          mpiexec -n 2 --allow-run-as-root ${SPEC_PATH}/xspec G3V02L0Fr.sp 
-          python3 -m py_spec.ci.test compare.h5 G3V02L0Fr_LU.sp.h5 --tol 1e-11
-          python3 -m py_spec.ci.test compare.h5 G3V02L0Fr.sp.h5 --tol 1e-11
-      - name: current_constraint_fixed_boundary
-        run: |
-          cd ${SPEC_PATH}/ci/G3V08L3Fi
-          export OMP_NUM_THREADS=1
-          mpiexec -n 2 --allow-run-as-root ${SPEC_PATH}/xspec G3V08L3Fi.001.sp
-          python3 -m py_spec.ci.test compare.h5 G3V08L3Fi.001.sp.h5 --tol 1e-10
-      - name: current_constraint_free_boundary
-        run: |
-          cd ${SPEC_PATH}/ci/G3V08L3Fr
-          export OMP_NUM_THREADS=1
-          mpiexec -n 2 --allow-run-as-root ${SPEC_PATH}/xspec G3V08L3Fr.001.sp
-          python3 -m py_spec.ci.test compare.h5 G3V08L3Fr.001.sp.h5 --tol 1e-10
+    - uses: actions/checkout@v3
+    - name: Python version info
+      run: |
+        python3 --version
+        pip3 --version
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install gfortran mpi-default-bin mpi-default-dev libhdf5-103 libhdf5-dev libfftw3-bin libfftw3-dev libopenblas0-openmp libopenblas-dev 
+        pip3 install --user numpy f90nml scikit-build scipy h5py matplotlib
+    - name: compile_xspec
+      run: |
+        cd ${SPEC_PATH}
+        make -j BUILD_ENV=gfortran_ubuntu xspec
+    - name: compile_dspec
+      run: |
+        cd ${SPEC_PATH}
+        make BUILD_ENV=gfortran_ubuntu dspec
+    - name: run_fast_cartesian
+      run: |
+        cd ${SPEC_PATH}/ci/G1V03L2Fi
+        echo ${PYTHONPATH}
+        export OMP_NUM_THREADS=1
+        mpiexec -n 2 --allow-run-as-root ${SPEC_PATH}/xspec G1V03L2Fi.001.sp
+        python3 -m py_spec.ci.test compare.h5 G1V03L2Fi.001.sp.h5 
+    - name: run_fast_cylinder
+      run: |
+        cd ${SPEC_PATH}/ci/G2V32L1Fi
+        echo ${PYTHONPATH}
+        export OMP_NUM_THREADS=1
+        mpiexec -n 2 --allow-run-as-root ${SPEC_PATH}/xspec G2V32L1Fi.001.sp
+        python3 -m py_spec.ci.test compare.h5 G2V32L1Fi.001.sp.h5 
+    - name: toroidal_freeboundary_vacuum
+      run: |
+        cd ${SPEC_PATH}/ci/toroidal_freeboundary_vacuum
+        export OMP_NUM_THREADS=1
+        mpiexec -n 2 --allow-run-as-root ${SPEC_PATH}/xspec G3V02L0Fr_LU.sp 
+        mpiexec -n 2 --allow-run-as-root ${SPEC_PATH}/xspec G3V02L0Fr.sp 
+        python3 -m py_spec.ci.test compare.h5 G3V02L0Fr_LU.sp.h5 --tol 1e-11
+        python3 -m py_spec.ci.test compare.h5 G3V02L0Fr.sp.h5 --tol 1e-11
+    - name: current_constraint_fixed_boundary
+      run: |
+        cd ${SPEC_PATH}/ci/G3V08L3Fi
+        export OMP_NUM_THREADS=1
+        mpiexec -n 2 --allow-run-as-root ${SPEC_PATH}/xspec G3V08L3Fi.001.sp
+        python3 -m py_spec.ci.test compare.h5 G3V08L3Fi.001.sp.h5 --tol 1e-10
+    - name: current_constraint_free_boundary
+      run: |
+        cd ${SPEC_PATH}/ci/G3V08L3Fr
+        export OMP_NUM_THREADS=1
+        mpiexec -n 2 --allow-run-as-root ${SPEC_PATH}/xspec G3V08L3Fr.001.sp
+        python3 -m py_spec.ci.test compare.h5 G3V08L3Fr.001.sp.h5 --tol 1e-10
 
 
 
