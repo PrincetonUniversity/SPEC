@@ -97,8 +97,7 @@ subroutine newton( NGdof, position, ihybrd )
 
   INTEGER                :: ML, MU ! required for only Lc05ndf;
 
-  ! LOGICAL                :: Lexit = .true. ! perhaps this could be made user input;
-  LOGICAL                :: Lexit = .false. ! Erol modification, so hessian is printed even w/ initial force balance
+  LOGICAL                :: Lexit = .false. ! if false, hessian is printed even with initial force balance
   LOGICAL                :: LComputeAxis
 
   INTEGER                :: nprint = 1, nfev, njev
@@ -334,7 +333,7 @@ subroutine writereadgf( readorwrite, NGdof , ireadhessian )
 
   case( 'W' ) ! will write derivative matrix to file;
 
-   !! reset I/O state
+   ! reset I/O state
    !ios = 0
 
    !open( dunit, file="."//trim(ext)//".sp.DF", status="replace", form="unformatted", iostat=ios ) ! save derivative matrix to file;

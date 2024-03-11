@@ -48,11 +48,7 @@ Bz      = zeros(ns,nt,nz); % allocate data for magnetic field along zeta
 
 T = get_spec_polynomial_basis(data, lvol, sarr');
 
-% Construct regularization factors and their derivatives
-%fac = get_spec_regularisation_factor(data, lvol, sarr, 'F');
-
 % Construct magnetic field contravariant components
-
 Lsingularity = false;
 if (lvol==1) && (data.input.physics.Igeometry~=1)
   Lsingularity = true;

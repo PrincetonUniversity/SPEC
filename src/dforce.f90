@@ -439,12 +439,6 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
 
   lBBintegral(1:Nvol) = lBBintegral(1:Nvol) * half
 
-  ! write(*,*) "lBBintegral"
-  ! write(*,*) lBBintegral(1:Nvol)
-
-  ! vflag = 1 ! this flag instructs volume to continue even if the volume is invalid;
-  ! WCALL( dforce, volume, ( vvol, vflag ) ) ! compute volume; this corrupts calculation of dvolume;
-  
   voltotal = 0.0
 
   do vvol = 1, Mvol
@@ -461,13 +455,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
 
     betavol(vvol) = press * vvolume(vvol) / lBBintegral(vvol)
     betavol(vvol) = betavol(vvol) * vvolume(vvol)
-    ! write(*,*) "vvol", vvol, "lBBintegral", lBBintegral(vvol), "volume", vvolume(vvol), "press", press
-    ! write(*,*) "vvol", vvol, "beta", betavol(vvol) / vvolume(vvol)
-
     voltotal = voltotal+vvolume(vvol)
-
   enddo
-
 
   ! Calculate total beta which is obtained from individual betas
   ! write(*,*) "all betas", betavol(1:Nvol)
@@ -476,8 +465,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
   ! write(*,*)"total vol", voltotal
 
   Energy = sum( lBBintegral(1:Nvol) ) ! should also compute beta;
-
   ! write(*,*)"total Energy", Energy
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 ! ---------------

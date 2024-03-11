@@ -25,6 +25,7 @@ function produce_spec_movie(inputroot,seqstart,seqstep,seqend,framerate,nfp,nz0,
 %   written by J.Loizu (2017)
 %   modified by J.Loizu (2019)
 
+error('DEPRECATED: this needs to be reviewed')
 
 %
 writerObj           = VideoWriter('spec_movie.avi'); 

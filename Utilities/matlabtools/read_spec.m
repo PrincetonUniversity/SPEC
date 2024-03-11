@@ -25,7 +25,6 @@ catch h5info_error
     disp(['ERROR: Opening HDF5 File: ' filename]);
     disp(['  -identifier: ' h5info_error.identifier]);
     disp(['  -message:    ' h5info_error.message]);
-    disp('      For information type:  help read_hdf5');
     return
 end
 
@@ -149,6 +148,7 @@ data.grid.sg  = csg;
 data.grid.BR  = cBR;
 data.grid.Bp  = cBp;
 data.grid.BZ  = cBZ;
+
 
 end
 

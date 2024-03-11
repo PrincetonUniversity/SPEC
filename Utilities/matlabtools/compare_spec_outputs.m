@@ -1,19 +1,27 @@
-function [Dabs, Drel, df] = compare_spec_outputs(fname1,fname2)
+function [Dabs, Drel, df] = compare_spec_outputs(data1,data2)
 
+% 
+% COMPARE_SPEC_OUTPUTS( DATA1, DATA2 )
+% ====================================
+%
 % Compares the interface geometry of two spec outputs
 % Two outputs are considered "the same" if df ~ 1e-15 (or less)
 %
 % INPUT
-% - fname1 : path to the hdf5 output file #1
-% - fname2 : path to the hdf5 output file #2
+% -----
+% - data1: data obtained via read_spec( fname1 )
+% - data2: data obtained via read_spec( fname2 )
 %
 % OUTPUT
+% ------
 % - Dabs   : absolute maximum distance
 % - Drel   : relative maximum distance
 % - df     : expected change in force-balance if one output is used as input for the other run
 %
 % written by J.Loizu (08.2017)
 % modified by J.Loizu (10.2017)
+%
+% TODO: UPDATE - IS THIS STILL CORRECT ?
 
 % 
 % Rmn1        = h5read(fname1,'/Rbc');
@@ -23,13 +31,13 @@ function [Dabs, Drel, df] = compare_spec_outputs(fname1,fname2)
 % Rmn2        = h5read(fname2,'/Rbc');
 % Zmn2        = h5read(fname2,'/Zbs');
 
-data        = read_spec(fname1);
-Rmn1        = data.output.Rbc;
-Zmn1        = data.output.Zbs;
+%data        = read_spec(fname1);
+Rmn1        = data1.output.Rbc;
+Zmn1        = data1.output.Zbs;
 
-data        = read_spec(fname2);
-Rmn2        = data.output.Rbc;
-Zmn2        = data.output.Zbs;
+%data        = read_spec(fname2);
+Rmn2        = data2.output.Rbc;
+Zmn2        = data2.output.Zbs;
 
 
 maxR        = max(max(abs(Rmn1-Rmn2)));

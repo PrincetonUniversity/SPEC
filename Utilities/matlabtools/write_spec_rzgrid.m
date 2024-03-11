@@ -5,7 +5,8 @@ function write_spec_rzgrid(data, nz0,lvol,outfname)
 % WRITE_SPEC_RZGRID( DATA, NZ0, LVOL, OUTFNAME )
 % ==============================================
 %
-% Writes text file with grid coordinate data points R,Z on a given volume, on a toroidal plane, as two columns 
+% Writes text file with grid coordinate data points R,Z on a given volume, 
+% on a toroidal plane, as two columns 
 %
 % INPUT
 % -----

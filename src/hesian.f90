@@ -185,8 +185,8 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
       write(ounit,1001) cput-cpus, myid, vvol, irz, mi, ni, ( oBBdRZ(vvol,1,idof) + oBBdRZ(vvol+1,0,idof) ) / psifactor(ii,vvol) ! ENERGY GRADIENT;
       FATAL( hesian, Igeometry.eq.1, Cartesian geometry does not need regularization factor )
 
-1000  format("hesian : ",f10.2," : ":"myid=",i3," ; ":"vvol=",i3," ; ":"irz="i2" ; (",i3," ,",i3," ) ; "a17" ["es15.7","es15.7" ]")
-1001  format("hesian : ",f10.2," : ":"myid=",i3," ; ":"vvol=",i3," ; ":"irz="i2" ; (",i3," ,",i3," ) ;   "es15.7" ; ")
+  1000  format("hesian : ",f10.2," : ":"myid=",i3," ; ":"vvol=",i3," ; ":"irz="i2" ; (",i3," ,",i3," ) ; "a17" ["es15.7","es15.7" ]")
+  1001  format("hesian : ",f10.2," : ":"myid=",i3," ; ":"vvol=",i3," ; ":"irz="i2" ; (",i3," ,",i3," ) ;   "es15.7" ; ")
 
      enddo ! end of do issym; 26 Feb 13;
 
