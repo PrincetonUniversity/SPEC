@@ -989,6 +989,8 @@ end subroutine write_vector_potential
 
 subroutine write_stability(ohessian, evalr, evali, evecr, NGdof)
 
+  use inputlist, only : LHevalues, LHevectors, LHmatrix
+
   LOCALS
   integer, intent(in) :: NGdof
   REAL, intent(in)    :: ohessian(:,:), evalr(:), evali(:), evecr(:,:)
@@ -996,18 +998,28 @@ subroutine write_stability(ohessian, evalr, evali, evecr, NGdof)
 
   BEGIN( sphdf5 )
 
- if (myid.eq.0 .and. .not.skip_write) then
+  if (.not.LHevalues .and. .not.LHevectors .and. .not.LHmatrix) return 
 
-  HDEFGRP( file_id, stability, grpStability)
+  if (myid.eq.0 .and. .not.skip_write) then
 
-  HWRITERA( grpStability, NGdof, NGdof, ohessian, ohessian(1:NGdof,1:NGdof) )
-  HWRITERA( grpStability, NGdof, NGdof, evecr, evecr(1:NGdof,1:NGdof) )
-  HWRITERV( grpStability, NGdof, evalr, evalr(1:NGdof) )
-  HWRITERV( grpStability, NGdof, evali, evali(1:NGdof) )
+    HDEFGRP( file_id, stability, grpStability)
 
-  HCLOSEGRP( grpStability )
+    if (LHmatrix) then
+      HWRITERA( grpStability, NGdof, NGdof, ohessian, ohessian(1:NGdof,1:NGdof) )
+    endif
+    
+    if (LHevectors) then
+      HWRITERA( grpStability, NGdof, NGdof, evecr, evecr(1:NGdof,1:NGdof) )
+    endif
 
- endif ! myid.eq.0
+    if (LHevalues) then
+      HWRITERV( grpStability, NGdof, evalr, evalr(1:NGdof) )
+      HWRITERV( grpStability, NGdof, evali, evali(1:NGdof) )
+    endif
+    
+    HCLOSEGRP( grpStability )
+
+  endif ! myid.eq.0
 
 end subroutine write_stability
 

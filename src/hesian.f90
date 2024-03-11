@@ -54,7 +54,7 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
 
   INTEGER             :: vvol, idof, ii, mi, ni, irz, issym, isymdiff, lvol, ieval(1:1), igdof, ifd
   REAL                :: oldEnergy(-2:2), error, cpul
-
+ 
   REAL                :: oldBB(1:Mvol,-2:2), oBBdRZ(1:Mvol,0:1,1:LGdof), ohessian(1:NGdof,1:NGdof)
 
   REAL                :: oRbc(1:mn,0:Mvol), oZbs(1:mn,0:Mvol), oRbs(1:mn,0:Mvol), oZbc(1:mn,0:Mvol), determinant
@@ -102,7 +102,6 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
 
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
 #ifdef MINIMIZE
 
   oldBB(1:Mvol,0) = lBBintegral(1:Mvol)
@@ -228,18 +227,17 @@ endif
   SALLOCATE( hessian2D, (1:NGdof,1:NGdof), zero )
   SALLOCATE( dessian2D, (1:NGdof,1:LGdof), zero ) ! part of hessian that depends on boundary variations; 18 Dec 14;
 
-  !if (LHmatrix) then
+  ! if (LHmatrix) then
     Lhessian3Dallocated = .true.
-  !else
-   ! Lhessianallocated = .true.
-  !endif
+  ! else
+  !  Lhessianallocated = .true.
+  ! endif
    !This step cleared.
 
   LComputeDerivatives = .true. !; position(0) = zero ! this is not used; 11 Aug 14;
   LComputeAxis = .false.
   WCALL( hesian, dforce, ( NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives, LComputeAxis) ) ! calculate force-imbalance & hessian;
   
-
   ohessian(1:NGdof,1:NGdof) = hessian2D(1:NGdof,1:NGdof) ! internal copy; 22 Apr 15;
 
 
@@ -418,16 +416,15 @@ endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  if( LHmatrix ) then
-
-    if( myid.eq.0 ) then ; cput = GETTIME ; write(ounit,'("hesian : ",f10.2," : LHmatrix="L2" ;")')cput-cpus, LHmatrix ;
-      open(munit, file="."//trim(ext)//".GF.ma", status="unknown", form="unformatted")
-      write(munit) NGdof
-      write(munit) ohessian(1:NGdof,1:NGdof)
-      close(munit)
-    endif
-
-  endif
+  ! write the .ma file
+  ! if( LHmatrix ) then
+  !   if( myid.eq.0 ) then ; cput = GETTIME ; write(ounit,'("hesian : ",f10.2," : LHmatrix="L2" ;")')cput-cpus, LHmatrix ;
+  !     open(munit, file="."//trim(ext)//".GF.ma", status="unknown", form="unformatted")
+  !     write(munit) NGdof
+  !     write(munit) ohessian(1:NGdof,1:NGdof)
+  !     close(munit)
+  !   endif
+  ! endif
 
 
 ! if( myid.eq.0 .and. ( LHevalues .or. LHevectors ) ) then ! the call to dforce below requires all cpus; 04 Dec 14;
@@ -455,10 +452,11 @@ endif
 !#else
 !   FATAL( global, .true., eigenvalue solver needs updating to F08NAF )
 !#endif
+
    call dgeev('N', JOB, NGdof, hessian2D(1:LDA,1:NGdof), LDA, evalr(1:NGdof), evali(1:NGdof), &
-                evecl(1:Ldvr,1:NGdof), Ldvr, revecr(1:Ldvr,1:2*NGdof), Ldvr, work(1:Lwork), Lwork, if02ebf )
-    evecr(1:Ldvr,1:NGdof) = revecr(1:Ldvr,1:NGdof)
-    eveci(1:Ldvr,1:NGdof) = revecr(1:Ldvr,NGdof+1:2*NGdof)
+               evecl(1:Ldvr,1:NGdof), Ldvr, revecr(1:Ldvr,1:2*NGdof), Ldvr, work(1:Lwork), Lwork, if02ebf )
+   evecr(1:Ldvr,1:NGdof) = revecr(1:Ldvr,1:NGdof)
+   eveci(1:Ldvr,1:NGdof) = revecr(1:Ldvr,NGdof+1:2*NGdof)
 
    if( myid.eq.0 ) then
    cput = GETTIME
@@ -578,22 +576,23 @@ endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-
-   if( myid.eq.0 ) then ! write to file; 04 Dec 14;
-    open(hunit, file="."//trim(ext)//".GF.ev", status="unknown", form="unformatted")
-    write(hunit) NGdof, Ldvr, Ldvi
-    write(hunit) evalr
-    write(hunit) evali
-    write(hunit) evecr
-    write(hunit) eveci
-    close(hunit)
-   endif ! end of if( myid.eq.0 ) ; 04 Dec 14;
+   ! write eigvals and eigvecs to .ev file
+  !  if( myid.eq.0 ) then ! write to file; 04 Dec 14;
+  !   open(hunit, file="."//trim(ext)//".GF.ev", status="unknown", form="unformatted")
+  !   write(hunit) NGdof, Ldvr, Ldvi
+  !   write(hunit) evalr
+  !   write(hunit) evali
+  !   write(hunit) evecr
+  !   write(hunit) eveci
+  !   close(hunit)
+  !  endif ! end of if( myid.eq.0 ) ; 04 Dec 14;
 
   endif ! end of if(                 ( LHevalues .or. LHevectors ) )
 
   ! output hessian, eigenvalues, and eigenvectors to the .h5 file
-  WCALL( hesian, write_stability, (ohessian, evalr, evali, evecr, NGdof) )
-
+  if( LHmatrix ) then
+    WCALL( hesian, write_stability, (ohessian, evalr, evali, evecr, NGdof) )
+  endif
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   if( myid.eq.0 .and. Lperturbed.eq.1 ) then
@@ -704,7 +703,6 @@ endif
 
 
   DALLOCATE(hessian2D)
-  write(ounit,*) 5656
 
   DALLOCATE(dessian2D)
 

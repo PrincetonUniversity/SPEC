@@ -987,22 +987,17 @@ endif ! end of if( LcomputeDerivatives ) ;
 
   !if(LcomputeDerivatives .and. Lhessianallocated .and. Igeometry .eq. 1) then
   !if(Lhessianallocated .and. Igeometry .eq. 1) then
-  if(Lhessianallocated) then
-    if( myid.eq.0 ) then ; cput = GETTIME ; write(ounit,'("hesian : ",f10.2," : LHmatrix="L2" ;")')cput-cpus, LHmatrix ;
-      write(*,*) "Writing .hessian file..."
-      open(munit, file=trim(ext)//".sp.hessian", status="unknown", form="unformatted")
-      write(munit) NGdof
-      write(munit) hessian(1:NGdof,1:NGdof)
-      close(munit)
+  
+  ! if(Lhessianallocated) then
+  !   if( myid.eq.0 ) then ; cput = GETTIME ; write(ounit,'("hesian : ",f10.2," : LHmatrix="L2" ;")')cput-cpus, LHmatrix ;
+  !     write(*,*) "Writing .hessian file..."
+  !     open(munit, file=trim(ext)//".sp.hessian", status="unknown", form="unformatted")
+  !     write(munit) NGdof
+  !     write(munit) hessian(1:NGdof,1:NGdof)
+  !     close(munit)
 
-      write(*,*) 'Writing hessian from dforce'
-
-      !  do ii=1,NGdof
-      !  write(*,*)ii, hessian(ii,1:NGdof)
-      ! enddo
-
-    endif
-  endif
+  !   endif
+  ! endif
 
   RETURN(dforce)
 
