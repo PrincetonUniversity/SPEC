@@ -456,8 +456,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
     betavol(vvol) = press * vvolume(vvol) / lBBintegral(vvol)
     betavol(vvol) = betavol(vvol) * vvolume(vvol)
     voltotal = voltotal+vvolume(vvol)
+    !write(*,*) "Calc beta: ", betavol(vvol), vvolume(vvol)
   enddo
-
   ! Calculate total beta which is obtained from individual betas
   ! write(*,*) "all betas", betavol(1:Nvol)
   BetaTotal = sum(betavol(1:Nvol))/voltotal
@@ -466,6 +466,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
 
   Energy = sum( lBBintegral(1:Nvol) ) ! should also compute beta;
   ! write(*,*)"total Energy", Energy
+  write(*,*) "Betatotal", BetaTotal, voltotal
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -977,16 +978,16 @@ endif ! end of if( LcomputeDerivatives ) ;
   !if(LcomputeDerivatives .and. Lhessianallocated .and. Igeometry .eq. 1) then
   !if(Lhessianallocated .and. Igeometry .eq. 1) then
   
-  ! if(Lhessianallocated) then
-  !   if( myid.eq.0 ) then ; cput = GETTIME ; write(ounit,'("hesian : ",f10.2," : LHmatrix="L2" ;")')cput-cpus, LHmatrix ;
-  !     write(*,*) "Writing .hessian file..."
-  !     open(munit, file=trim(ext)//".sp.hessian", status="unknown", form="unformatted")
-  !     write(munit) NGdof
-  !     write(munit) hessian(1:NGdof,1:NGdof)
-  !     close(munit)
+   if(Lhessianallocated .and. Igeometry.eq.1) then
+     if( myid.eq.0 ) then ; cput = GETTIME ; write(ounit,'("hesian : ",f10.2," : LHmatrix="L2" ;")')cput-cpus, LHmatrix ;
+       write(*,*) "Writing .hessian file..."
+       open(munit, file=trim(ext)//".sp.hessian", status="unknown", form="unformatted")
+       write(munit) NGdof
+       write(munit) hessian(1:NGdof,1:NGdof)
+       close(munit)
 
-  !   endif
-  ! endif
+     endif
+   endif
 
   RETURN(dforce)
 
