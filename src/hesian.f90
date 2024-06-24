@@ -1,7 +1,7 @@
 !> \file
-!> \brief Computes eigenvalues and eigenvectors of derivative matrix, \f$\nabla_{\bf \xi}{\bf F}\f$.
+!> \brief Computes eigenvalues and eigenvectors of derivative matrix, \f$\nabla_{\bf xi}{\bf F}\f$.
 
-!> \brief Computes eigenvalues and eigenvectors of derivative matrix, \f$\nabla_{\bf \xi}{\bf F}\f$.
+!> \brief Computes eigenvalues and eigenvectors of derivative matrix, \f$\nabla_{\bf xi}{\bf F}\f$.
 !> \ingroup grp_diagnostics
 !>
 !> @param[in] NGdof number of global degrees of freedom
