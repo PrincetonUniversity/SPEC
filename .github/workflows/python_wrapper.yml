@@ -17,7 +17,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install gfortran mpi-default-bin mpi-default-dev libhdf5-103 libhdf5-dev libfftw3-bin libfftw3-dev libopenblas0-openmp libopenblas-dev cmake ninja-build meson
+        sudo apt-get install gfortran mpi-default-bin mpi-default-dev libhdf5-dev libfftw3-bin libfftw3-dev  libopenblas-dev cmake ninja-build meson
         pip install  numpy f90nml scikit-build scipy
         pip install  git+https://github.com/zhucaoxiang/f90wrap@main_off
 
