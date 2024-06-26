@@ -7,6 +7,8 @@ with open("README.md", "r") as fh:
 setuptools.setup(
     name="py_spec",
     version=__version__,
+    setup_requires=["numpy>=2.0"],
+    install_requires=["numpy>=1.21.1"],
     description="SPEC(Stepped-Pressure Equilibrium Code) python utilities",
     long_description=long_description,
     long_description_content_type="text/markdown",
