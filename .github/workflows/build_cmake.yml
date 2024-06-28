@@ -8,7 +8,6 @@ jobs:
       fail-fast: false
     env:
       SPEC_PATH: ${{ github.workspace }}
-      PYTHONPATH: ${{ github.workspace }}/Utilities/pythontools
       OMPI_ALLOW_RUN_AS_ROOT: 1
       OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
     steps:
@@ -20,6 +19,8 @@ jobs:
         pip3 install --upgrade pip
         pip3 install --user ninja cmake scipy
         pip3 install --user numpy f90nml scikit-build scipy h5py matplotlib
+        cd ${{ github.workspace }}/Utilities/pythontools
+        pip3 install -v .
     - name: Build & Test
       uses: ashutoshvarma/action-cmake-build@master
       with:
@@ -39,14 +40,12 @@ jobs:
     - name: run_fast_cartesian
       run: |
         cd ${SPEC_PATH}/ci/G1V03L2Fi
-        echo ${PYTHONPATH}
         export OMP_NUM_THREADS=1
         mpiexec -n 2 --allow-run-as-root $SPEC_PATH/install/bin/xspec G1V03L2Fi.001.sp
         python3 -m py_spec.ci.test compare.h5 G1V03L2Fi.001.sp.h5 
     - name: run_fast_cylinder
       run: |
         cd ${SPEC_PATH}/ci/G2V32L1Fi
-        echo ${PYTHONPATH}
         export OMP_NUM_THREADS=1
         mpiexec -n 2 --allow-run-as-root $SPEC_PATH/install/bin/xspec G2V32L1Fi.001.sp
         python3 -m py_spec.ci.test compare.h5 G2V32L1Fi.001.sp.h5 
