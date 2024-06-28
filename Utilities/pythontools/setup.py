@@ -1,14 +1,12 @@
 import setuptools
-from py_spec import __version__
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
     name="py_spec",
-    version=__version__,
+    version="3.3.5",
     install_requires=["numpy>=1.21.1", 
-                      "coilpy",
                       "f90nml",
                       "h5py", 
                       "matplotlib",
