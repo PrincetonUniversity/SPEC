@@ -11,7 +11,7 @@ setuptools.setup(
                       "coilpy",
                       "f90nml",
                       "h5py", 
-                      "matplotlib"
+                      "matplotlib",
                       "scipy>=1.7.0"],
     description="SPEC(Stepped-Pressure Equilibrium Code) python utilities",
     long_description=long_description,
