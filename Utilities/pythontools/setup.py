@@ -7,7 +7,6 @@ with open("README.md", "r") as fh:
 setuptools.setup(
     name="py_spec",
     version=__version__,
-    setup_requires=["numpy"]
     install_requires=["numpy>=1.21.1", 
                       "coilpy",
                       "f90nml",
