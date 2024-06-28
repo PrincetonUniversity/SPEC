@@ -1,15 +1,17 @@
 import setuptools
-from py_spec import __version__
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
     name="py_spec",
-    version=__version__,
-    setup_requires=["numpy>=2.0.0; python_version > '3.8'",
-                    "oldest-supported-numpy; python_version <= '3.8'"],
-    install_requires=["numpy>=1.21.1"],
+    version="3.3.5",
+    install_requires=["numpy>=1.21.1", 
+                      "f90nml",
+                      "h5py", 
+                      "matplotlib",
+                      "coilpy; python_version<'3.12'",
+                      "scipy>=1.7.0"],
     description="SPEC(Stepped-Pressure Equilibrium Code) python utilities",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -22,5 +24,5 @@ setuptools.setup(
     url="https://princetonuniversity.github.io/SPEC/",
     author="SPEC developers",
     license="GNU 3.0",
-    packages=['py_spec', 'py_spec.input', 'py_spec.output', 'py_spec.ci']
+    packages=['py_spec', 'py_spec.input', 'py_spec.output', 'py_spec.ci', 'py_spec.math']
 )
