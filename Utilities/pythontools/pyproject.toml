@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name="py_spec"
+version="3.3.5"
+dependencies = ["numpy>=1.21.1", 
+            "f90nml",
+            "h5py", 
+            "matplotlib",
+            "coilpy; python_version<'3.12'",
+            "scipy>=1.7.0"]
+description="SPEC(Stepped-Pressure Equilibrium Code) python utilities"
+readme="README.md"
+authors = [
+    { name = "Christopher Berg Smiet", email = "christopher.smiet@epfl.ch" },
+    { name = "Caoxiang Zhu", email = "caoxiangzhu@gmail.com" },
+    { name = "SPEC developers"}
+]
+maintainers = [
+    { name = "Christopher Berg Smiet", email = "christopher.smiet@epfl.ch" },
+]
+classifiers=[
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering",
+]
+license = {text = "GNU 3.0"}
