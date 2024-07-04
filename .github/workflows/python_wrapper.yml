@@ -19,7 +19,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install gfortran mpi-default-bin mpi-default-dev libhdf5-dev libfftw3-bin libfftw3-dev  libopenblas-dev cmake ninja-build
         pip install  numpy f90nml scikit-build scipy meson meson-python
-        pip install  git+https://github.com/zhucaoxiang/f90wrap@main_off
+        pip install f90wrap
 
     - name: Build python_wrapper
       run: |
