@@ -1,9 +1,9 @@
-## SPEC complition instructions
+# SPEC complition instructions
 
 The default installation for SPEC method for SPEC uses cmake and installs
 the python wrappers and an xspec executable. 
 
-### Installation using Anaconda
+## Installation using Anaconda
 
 We recommend you use Anaconda to create a coherent build environment and prevent 
 dependency conflicts.
@@ -42,7 +42,7 @@ cd Utilities/pythontools/
 pip install -e .
 ```
 
-## Troubleshooting Anaconda install
+### Troubleshooting Anaconda install
 If using a newer version of python, `f2py3` is no longer shipped. If your system contains an old python install (for example from your OS), Cmake can find its `f2py3` and give try to use it to compile the wrappers instead of your environments `f2py`. 
 Test this by looking if you have an `f2py3` in your path: `$which f2py3`. 
 The easiest workaround is to soft-link f2py3 to f2py so it is found first. 
@@ -133,10 +133,10 @@ Next, the python wrapper is tested.
     a plot of the MHD energy vs. the central pressure is shown.
 
 
-### Other legacy installations
+## Other legacy installations
 It is still possible to compile SPEC using `make` or `cmake` directly, and bypass the wrapper installation. 
 
-## Cmake installation
+### Cmake installation
 Spec can be installed using CMake to find the relevant libraries to link against. 
 You can control 
 in the root directory of SPEC do the following: 
@@ -148,7 +148,7 @@ make
 ```
 This will compile SPEC (not the wrappers). The `xspec` executable is found in ${SPEC_ROOT}/build/build/bin/xspec
 
-## Make installation
+### Make installation
 SPEC can also be installed using the `make` command in the root directory. 
 
 The `make` install is controlled by the `BUILD_ENV` environment variable. 
@@ -165,7 +165,7 @@ BUILD_ENV=<machine_name> make
 the `make` process creates files in the SPEC_ROOT directory, and creates the `xspec` executable there. 
 
 
-### Build process
+## Build process
 the source files are found in the ${SPEC_ROOT}/src/ directory. 
 The `.f90` files contain macros that are expanded during the make process using the `m4` command. 
 
