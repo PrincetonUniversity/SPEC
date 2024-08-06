@@ -1,6 +1,6 @@
-# SPEC complition instructions
+# SPEC compilation instructions
 
-The default installation for SPEC method for SPEC uses cmake and installs
+The default installation for SPEC method for SPEC uses CMake and installs
 the python wrappers and an xspec executable. 
 
 ## Installation using Anaconda
@@ -9,13 +9,13 @@ We recommend you use Anaconda to create a coherent build environment and prevent
 dependency conflicts.
 
 Control over the installation can be had by editing `cmake_config.json`, to guide 
-CMAKE to the right compilers and BLAS vendor. 
-Configurations for different machines are stored in ${SPEC_ROOT}/cmake_machines, 
+CMake to the right compilers etc. 
+Configurations for different machines are stored in `${SPEC_ROOT}/cmake_machines`,
 to use these, link them to cmake_config.json: `ln -s cmake_config cmake_machines/<config_file.json>`
 
 >[!TIP]
 >install as much as possible in your environment using the `conda` command, 
->only use 'pip' at the very end for the last packages not in conda. 
+>only use 'pip' at the very end for the last packages. 
 >if you have not added the `conda-forge` channel do so by
 >`conda config --add channels conda-forge`
 
@@ -32,7 +32,7 @@ pip install f90wrap
 
 >[!NOTE]
 > for macOS users use the respective compiler packages; 
-> `conda install clang_osx-64 clangxx_osx-64 gfortran_osx-64'
+> `conda install clang_osx-64 clangxx_osx-64 gfortran_osx-64`
 
 
 Finally, install SPEC and the wrapper (logs will be in `compile.log`)
@@ -47,14 +47,14 @@ pip install -e .
 ```
 
 ### Troubleshooting Anaconda install
-If using a newer version of python, `f2py3` is no longer shipped. If your system contains an old python install (for example from your OS), Cmake can find its `f2py3` and give try to use it to compile the wrappers instead of your environments `f2py`. 
+If using a newer version of python, `f2py3` is no longer shipped. If your system contains an old python install (for example from your OS), CMake can find its `f2py3` and give try to use it to compile the wrappers instead of your environments `f2py`. 
 Test this by looking if you have an `f2py3` in your path: `$which f2py3`. 
-The easiest workaround is to soft-link f2py3 to f2py so it is found first. 
+The easiest workaround is to create a link called f2py3 that links to f2py so it is found first. 
 ```
 ln -s ~/anaconda3/envs/spec_wrapper/bin/f2py ~/anaconda3/envs/spec_wrapper/bin/f2py3
 ```
 
-You might have HDF5 or FFTW environment variables set (for example for a VMEC install). This can throw off cmake, which we want to use only anaconda. 
+You might have HDF5 or FFTW environment variables set (for example for a VMEC install). This can throw off CMake, which we want to use only anaconda. 
 ```
 unset HDF5, HDF5_ROOT, HDF5_HOME, FFTW, FFTW_DIR
 ```
@@ -140,7 +140,7 @@ Next, the python wrapper is tested.
 ## Other legacy installations
 It is still possible to compile SPEC using `make` or `cmake` directly, and bypass the wrapper installation. 
 
-### Cmake installation
+### CMake installation
 Spec can be installed using CMake to find the relevant libraries to link against. 
 You can control 
 in the root directory of SPEC do the following: 
@@ -156,21 +156,21 @@ This will compile SPEC (not the wrappers). The `xspec` executable is found in ${
 SPEC can also be installed using the `make` command in the root directory. 
 
 The `make` install is controlled by the `BUILD_ENV` environment variable. 
-Available options are found in the SPECfile
+Available options are found in the `SPECfile`
 where different link and compile flags for many machines are found. 
 
 If you cannot find your machine in the list, copy a similar machine and adapt as needed. 
-then compile by running the command
+Then compile by running the command
 
 ```bash
 BUILD_ENV=<machine_name> make
 ```
 
-the `make` process creates files in the SPEC_ROOT directory, and creates the `xspec` executable there. 
+The `make` process creates files in the SPEC_ROOT directory, and creates the `xspec` executable there. 
 
 
 ## Build process
-the source files are found in the ${SPEC_ROOT}/src/ directory. 
+the source files are found in the `${SPEC_ROOT}/src/ directory`.
 The `.f90` files contain macros that are expanded during the make process using the `m4` command. 
 
 Depending on the build type, the macro-expanded code is either found in `build/src/`, in the root directory, or in the `_skbuild` folder. 
@@ -178,4 +178,4 @@ Depending on the build type, the macro-expanded code is either found in `build/s
 >[!TIP]
 >The line numbers in error messages correspond to the macro-expanded code
 
-the macros are defined in src/macros
+The macros are defined in `src/macros`
