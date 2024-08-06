@@ -24,11 +24,15 @@ Get the repository and install the necessary compilers and libraries
 git clone git@github.com:PrincetonUniversity/SPEC.git 
 conda create -n "spec_wrapper" python=3.11 # create your environment for SPEC
 conda activate spec_wrapper
-conda install gcc_linux-64 gxx_linux-64 gfortran_linux-64 #
+conda install gcc_linux-64 gxx_linux-64 gfortran_linux-64 # or macOS versions, see note below
 conda install hdf5 openblas libopenblas fftw scalapack openmpi cmake ninja
 conda install h5py matplotlib f90nml scipy scikit-build mpi4py ipython
 pip install f90wrap
 ```
+
+>[!NOTE]
+> for macOS users use the respective compiler packages; 
+> `conda install clang_osx-64 clangxx_osx-64 gfortran_osx-64'
 
 
 Finally, install SPEC and the wrapper (logs will be in `compile.log`)
