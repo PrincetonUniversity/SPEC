@@ -13,11 +13,11 @@ CMAKE to the right compilers and BLAS vendor.
 Configurations for different machines are stored in ${SPEC_ROOT}/cmake_machines, 
 to use these, link them to cmake_config.json: `ln -s cmake_config cmake_machines/<config_file.json>`
 
-[!TIP]
-install as much as possible in your environment using the `conda` command, 
-only use 'pip' at the very end for the last packages not in conda. 
-if you have not added the `conda-forge` channel do so by
-`conda config --add channels conda-forge`
+>[!TIP]
+>install as much as possible in your environment using the `conda` command, 
+>only use 'pip' at the very end for the last packages not in conda. 
+>if you have not added the `conda-forge` channel do so by
+>`conda config --add channels conda-forge`
 
 Get the repository and install the necessary compilers and libraries
 ```bash
@@ -171,7 +171,7 @@ The `.f90` files contain macros that are expanded during the make process using 
 
 Depending on the build type, the macro-expanded code is either found in `build/src/`, in the root directory, or in the `_skbuild` folder. 
 
-[!TIP]
-The line numbers in error messages correspond to the macro-expanded code
+>[!TIP]
+>The line numbers in error messages correspond to the macro-expanded code
 
 the macros are defined in src/macros
