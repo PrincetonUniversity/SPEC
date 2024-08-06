@@ -1,6 +1,6 @@
 # SPEC compilation instructions
 
-The default installation for SPEC method for SPEC uses CMake and installs
+The default installation method for SPEC uses CMake and installs
 the python wrappers and an xspec executable. 
 
 ## Installation using Anaconda
