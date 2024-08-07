@@ -26,35 +26,6 @@ var NAVTREE =
 [
   [ "SPEC", "index.html", [
     [ "The Stepped Pressure Equilibrium Code", "index.html", null ],
-    [ "Compilation hints for SPEC", "md_Compile.html", [
-      [ "CMake and Anaconda", "md_Compile.html#autotoc_md1", [
-        [ "Install Anaconda", "md_Compile.html#autotoc_md2", null ],
-        [ "Clone the SPEC repository", "md_Compile.html#autotoc_md3", null ],
-        [ "Setup a Conda Environment for SPEC", "md_Compile.html#autotoc_md4", null ],
-        [ "Testing your SPEC installation", "md_Compile.html#autotoc_md5", null ],
-        [ "Acknowledgements", "md_Compile.html#autotoc_md6", null ]
-      ] ],
-      [ "BELOW INSTRUCTIONS ARE OUTDATED", "md_Compile.html#autotoc_md7", null ],
-      [ "BELOW INSTRUCTIONS ARE OUTDATED", "md_Compile.html#autotoc_md8", null ],
-      [ "BELOW INSTRUCTIONS ARE OUTDATED", "md_Compile.html#autotoc_md9", [
-        [ "Installation with CMake", "md_Compile.html#autotoc_md10", null ],
-        [ "Stand-alone Executable Compiling", "md_Compile.html#autotoc_md11", [
-          [ "CentOS", "md_Compile.html#autotoc_md12", [
-            [ "Dependencies", "md_Compile.html#autotoc_md13", null ],
-            [ "Configure", "md_Compile.html#autotoc_md14", null ],
-            [ "Build", "md_Compile.html#autotoc_md15", null ]
-          ] ]
-        ] ],
-        [ "Python Extension Compiling", "md_Compile.html#autotoc_md16", [
-          [ "Dependencies", "md_Compile.html#autotoc_md17", null ]
-        ] ],
-        [ "Stellar cluster at PPPL", "md_Compile.html#autotoc_md18", [
-          [ "Python wrapper", "md_Compile.html#autotoc_md19", null ],
-          [ "SPEC executable.", "md_Compile.html#autotoc_md21", null ]
-        ] ],
-        [ "Mac", "md_Compile.html#autotoc_md22", null ]
-      ] ]
-    ] ],
     [ "Todo List", "todo.html", null ],
     [ "Bibliography", "citelist.html", null ],
     [ "Modules", "modules.html", "modules" ],
@@ -85,7 +56,7 @@ var NAVTREEINDEX =
 "annotated.html",
 "group__grp__fourier__transform.html#ga21b00237b053a75a7f742bc7a46890fd",
 "group__grp__misc.html#gae75d99833fa053c62e4470d9ad5f411c",
-"sphdf5_8f90.html#a6e2ccffa75c68d7a9d7a82ed2c5f0951"
+"sphdf5_8f90.html#ac5c238d16bfbfe7ede4845b8f99c12c6"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';
