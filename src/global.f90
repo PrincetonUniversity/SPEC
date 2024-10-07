@@ -151,6 +151,9 @@ module cputiming
   REAL    :: Tcurent = 0.0, curentT = 0.0
   REAL    :: Tdf00ab = 0.0, df00abT = 0.0
   REAL    :: Tlforce = 0.0, lforceT = 0.0
+  REAL    :: Tforce_real = 0.0, force_realT = 0.0
+  REAL    :: Tforce_real_helper = 0.0, force_real_helperT = 0.0
+  REAL    :: Talloc_hessian = 0.0, alloc_hessianT = 0.0
   REAL    :: Tintghs = 0.0, intghsT = 0.0
   REAL    :: Tmtrxhs = 0.0, mtrxhsT = 0.0
   REAL    :: Tlbpol = 0.0, lbpolT = 0.0

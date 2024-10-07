@@ -1070,3 +1070,408 @@ FATAL(fndiff, .true., Finite differences have been evaluated. )
 RETURN(dforce)
 
 end subroutine fndiff_dforce
+
+
+subroutine force_real(position, dBBtotal,  NGdof)
+
+   use constants, only : zero, one, pi, pi2
+
+   use fileunits, only : ounit
+
+    use cputiming, only : Tforce_real
+
+   use inputlist, only : Lrad, Igeometry, Nvol
+
+   use allglobal, only : ncpu, myid, cpus, MPI_COMM_SPEC, &
+	  Mvol, NAdof, Ntz, &
+	  Iquad, &                  ! convenience; provided to ma00aa as argument to avoid allocations;
+	  iRbc, iZbs, iRbs, iZbc, & ! Fourier harmonics of geometry; vector of independent variables, position, is "unpacked" into iRbc,iZbs;
+	  ImagneticOK, &
+	  YESstellsym, NOTstellsym, &
+	  Lcoordinatesingularity, Lplasmaregion, Lvacuumregion, &
+	  mn, im, in, &
+	  dpflux, dtflux, sweight, &
+	  LGdof, dBdX, &
+	  Ate, Aze, Ato, Azo, & ! only required for broadcasting
+	  psifactor, &
+	  LocalConstraint, xoffset, &
+	  solution, IPdtdPf, &
+	  IsMyVolume, IsMyVolumeValue, WhichCpuID
+
+   LOCALS
+
+   INTEGER, intent(in)  :: NGdof               ! dimensions;
+   REAL,    intent(in)  :: position(0:NGdof)
+   REAL  :: dBBtotal(1:Mvol-1, 1:Ntz)
+   LOGICAL  :: LComputeDerivatives !
+   REAL :: lasttime, lasttime2
+
+   INTEGER              :: vvol, innout, ii, jj, irz, issym, iocons, tdoc, idoc, idof, tdof, jdof, ivol, imn, ll, ihybrd1, Ndofgl
+   INTEGER              :: maxfev, ml, muhybr, mode, nprint, nfev, lr, Nbc, NN, cpu_id, ideriv
+   REAL                 :: Fdof(1:Mvol-1), Xdof(1:Mvol-1)
+   INTEGER              :: ipiv(1:Mvol)
+   REAL, allocatable    :: fjac(:, :), r(:), Fvec(:), dpfluxout(:)
+   REAL, allocatable    :: dBBcurr(:,:,:)
+
+   INTEGER              :: status(MPI_STATUS_SIZE), request_recv, request_send, cpu_send
+   INTEGER              :: id
+   INTEGER              :: iflag, idgesv, Lwork
+   INTEGER              :: idofr,idofz,tdofr,tdofz
+
+   CHARACTER            :: packorunpack
+   EXTERNAL             :: force_real_helper
+
+   LOGICAL              :: LComputeAxis, dfp100_logical
+
+   BEGIN(force_real)
+
+   !!! Not faster at all, compared to force_real in 'funcs.py'
+
+  !  lasttime = GETTIME
+
+   LComputeDerivatives = .false.
+
+   packorunpack = 'U' ! unpack geometrical degrees-of-freedom;
+
+   WCALL( force_real, packxi,( NGdof, position(0:NGdof), Mvol, mn, iRbc(1:mn,0:Mvol), iZbs(1:mn,0:Mvol), &
+	  iRbs(1:mn,0:Mvol), iZbc(1:mn,0:Mvol), packorunpack, LcomputeDerivatives, LComputeAxis ) )
+
+   ! Local constraint case - simply call dfp100 and then dfp200
+   Xdof(1:Mvol-1) = zero;
+
+   if( LocalConstraint ) then
+
+	  SALLOCATE( Fvec, (1:Mvol-1), zero)
+
+	  Ndofgl = 0; Fvec(1:Mvol-1) = 0; dfp100_logical = .FALSE.;
+	  Xdof(1:Mvol-1) = dpflux(2:Mvol) + xoffset
+
+	  ! Solve for field
+	  dBdX%L = LComputeDerivatives
+	  WCALL(force_real, dfp100, (Ndofgl, Xdof, Fvec, dfp100_logical) )
+
+	  DALLOCATE( Fvec )
+
+	  ! --------------------------------------------------------------------------------------------------
+	  ! Global constraint - call the master thread calls hybrd1 on dfp100, others call dfp100_loop.
+   else
+
+	  IPDtdPf = zero
+	  Xdof(1:Mvol-1)   = dpflux(2:Mvol) + xoffset
+
+	  ! add an additional constraint to make the total pflux = 0
+	  if(Igeometry.eq.1) then
+		 Ndofgl = Mvol
+	  else
+		 ! Mvol-1 surface current constraints
+		 Ndofgl = Mvol-1
+	  endif
+
+	  SALLOCATE( Fvec, (1:Ndofgl), zero )
+
+	  dfp100_logical = .FALSE.
+
+	  WCALL(force_real, dfp100, (Ndofgl, Xdof(1:Mvol-1), Fvec(1:Ndofgl), dfp100_logical))
+
+	  SALLOCATE(dpfluxout, (1:Ndofgl), zero )
+	  if ( myid .eq. 0 ) then
+
+		 dpfluxout = Fvec
+		 call DGESV( Ndofgl, 1, IPdtdPf, Ndofgl, ipiv, dpfluxout, Ndofgl, idgesv )
+
+		 ! one step Newton's method
+		 dpflux(2:Mvol) = dpflux(2:Mvol) - dpfluxout(1:Mvol-1)
+
+		 if(Igeometry.eq.1) then
+			dpflux(1) = dpflux(1) - dpfluxout(Mvol)
+		 endif
+
+	  endif
+
+	  ! Broadcast the field and pflux
+	  RlBCAST(dpfluxout(1:Ndofgl), Ndofgl, 0)
+	  RlBCAST(dpflux(1:Mvol)   , Mvol, 0)
+
+	  do vvol = 2, Mvol
+
+		 WCALL(force_real, IsMyVolume, (vvol))
+
+		 if( IsMyVolumeValue .EQ. 0 ) then
+			cycle
+		 else if( IsMyVolumeValue .EQ. -1) then
+			FATAL(force_real, .true., Unassociated volume)
+		 endif
+
+		 NN = NAdof(vvol)
+
+		 SALLOCATE( solution, (1:NN, 0:2), zero)
+
+		 ! Pack field and its derivatives
+		 packorunpack = 'P'
+		 WCALL( force_real, packab, ( packorunpack, vvol, NN, solution(1:NN,0), 0 ) ) ! packing;
+		 WCALL( force_real, packab, ( packorunpack, vvol, NN, solution(1:NN,2), 2 ) ) ! packing;
+
+		 ! compute the field with renewed dpflux via single Newton method step
+		 solution(1:NN, 0) = solution(1:NN, 0) - dpfluxout(vvol-1) * solution(1:NN, 2)
+
+		 ! Unpack field in vector potential Fourier harmonics
+		 packorunpack = 'U'
+		 WCALL( force_real, packab, ( packorunpack, vvol, NN, solution(1:NN,0), 0 ) ) ! unpacking;
+
+		 DALLOCATE( solution )
+
+	  enddo ! end of do vvol = 1, Mvol
+
+	  !add an additional constraint to make the total pflux 0
+	  if(Igeometry.eq.1) then
+
+		 vvol = 1
+
+		 WCALL(force_real, IsMyVolume, (vvol))
+
+		 if( IsMyVolumeValue .EQ. 0 ) then
+
+		 else if( IsMyVolumeValue .EQ. -1) then
+			FATAL(force_real, .true., Unassociated volume)
+		 else
+			NN = NAdof(vvol)
+
+			SALLOCATE( solution, (1:NN, 0:2), zero)
+
+			! Pack field and its derivatives
+			packorunpack = 'P'
+			WCALL( force_real, packab, ( packorunpack, vvol, NN, solution(1:NN,0), 0 ) ) ! packing;
+			WCALL( force_real, packab, ( packorunpack, vvol, NN, solution(1:NN,2), 2 ) ) ! packing;
+
+			! compute the field with renewed dpflux via single Newton method step
+			solution(1:NN, 0) = solution(1:NN, 0) - dpfluxout(Mvol) * solution(1:NN, 2)
+
+			! Unpack field in vector potential Fourier harmonics
+			packorunpack = 'U'
+			WCALL( force_real, packab, ( packorunpack, vvol, NN, solution(1:NN,0), 0 ) ) ! unpacking;
+
+			DALLOCATE( solution )
+		 endif
+	  endif
+
+	  DALLOCATE(Fvec)
+	  DALLOCATE(dpfluxout)
+
+   endif !matches if( LocalConstraint )
+
+  !  lasttime2 = GETTIME
+
+   ! --------------------------------------------------------------------------------------------------
+   !                                    MPI COMMUNICATIONS
+
+   ! Finally broadcast the field information to all threads from the thread which did the computation
+   ! TODO: improve MPI communication
+   do vvol = 1, Mvol
+	  call WhichCpuID(vvol, cpu_id)
+
+	  LlBCAST( ImagneticOK(vvol)         , 1, cpu_id)
+
+	  do ideriv=0,2
+		 if( (.not.LcomputeDerivatives) .and. (ideriv.ne.0) ) cycle
+		 do ii = 1, mn
+			RlBCAST( Ate(vvol,ideriv,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
+			RlBCAST( Aze(vvol,ideriv,ii)%s(0:Lrad(vvol)), Lrad(vvol)+1, cpu_id)
+		 enddo
+	  enddo
+
+   enddo
+
+   SALLOCATE( dBBcurr       , (1:Mvol, 1:Ntz, 0:1), zero ) ! magnetic field strength (on interfaces) in real space and derivatives;
+
+   if( LocalConstraint ) then
+
+	  do vvol = 1, Mvol
+
+		 WCALL(force_real, IsMyVolume, (vvol))
+
+		 if( IsMyVolumeValue .EQ. 0 ) then
+			cycle
+		 else if( IsMyVolumeValue .EQ. -1) then
+			FATAL(force_real, .true., Unassociated volume)
+		 endif
+
+		 LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
+
+		 dBdX%vol = vvol  ! Label
+		 ll = Lrad(vvol)  ! Shorthand
+		 NN = NAdof(vvol) ! shorthand;
+
+		 do iocons = 0, 1 ! construct field magnitude on inner and outer interfaces; inside do vvol;
+
+			if( vvol.eq.1    .and. iocons.eq.0 ) cycle ! fixed inner boundary (or coordinate axis);
+			if( vvol.eq.Mvol .and. iocons.eq.1 ) cycle ! fixed outer boundary                     ; there are no constraints at outer boundary;
+
+			WCALL(force_real, force_real_helper, ( vvol, iocons, Ntz, dBBcurr(vvol, 1:Ntz, iocons)) )
+
+		 enddo ! end of do iocons = 0, 1;
+
+	  enddo ! matches do vvol = 1, Mvol
+
+   else ! CASE SEMI GLOBAL CONSTRAINT
+
+	  do vvol = 1, Mvol
+		 WCALL(force_real, IsMyVolume, (vvol))
+
+		 if( IsMyVolumeValue .EQ. 0 ) then
+			cycle
+		 else if( IsMyVolumeValue .EQ. -1) then
+			FATAL(force_real, .true., Unassociated volume)
+		 endif
+
+		 LREGION(vvol) ! assigns Lcoordinatesingularity, Lplasmaregion, etc. ;
+		 ll = Lrad(vvol)  ! Shorthand
+		 NN = NAdof(vvol) ! shorthand;
+
+		 do iocons = 0, 1 ! construct field magnitude on inner and outer interfaces; inside do vvol;
+
+			if( vvol.eq.1    .and. iocons.eq.0 ) cycle ! fixed inner boundary (or coordinate axis);
+			if( vvol.eq.Mvol .and. iocons.eq.1 ) cycle ! fixed outer boundary                     ; there are no constraints at outer boundary;
+
+			WCALL( force_real, force_real_helper, ( vvol, iocons, Ntz, dBBcurr(vvol, 1:Ntz, iocons)) )
+
+		 enddo ! end of do iocons = 0, 1;
+	  
+    enddo ! end do vvol
+
+   	endif ! End of if( LocalConstraint )
+
+    do vvol = 1, Mvol
+      LREGION( vvol )
+      RlBCAST( dBBcurr(vvol,1:Ntz,0:1), 2*Ntz, modulo(vvol-1,ncpu) )
+    enddo
+
+    do vvol = 1, Mvol-1
+
+    LREGION(vvol)
+      
+    if( ImagneticOK(vvol) .and. ImagneticOK(vvol+1) ) then ! the magnetic fields in the volumes adjacent to this interface are valid;
+      dBBtotal(vvol, 1:Ntz) = dBBcurr(vvol+1, 1:Ntz, 0) - dBBcurr(vvol, 1:Ntz, 1)
+
+    else ! matches if( ImagneticOK(vvol) .and. ImagneticOK(vvol+1) );
+      write(*,*) "Error: weird!"
+    endif ! end of if( ImagneticOK(vvol) .and. ImagneticOK(vvol+1) ) ;
+
+  enddo ! end of do vvol;
+
+   DALLOCATE(dBBcurr)
+
+  !  write(*,*) "TIME:" , lasttime2 - lasttime
+
+  RETURN(force_real)
+
+end subroutine force_real
+
+
+subroutine force_real_helper( lvol, iocons, Ntz, dBBtemp)
+
+   use constants, only : zero, half, one, two
+
+   use fileunits, only : ounit
+
+   use cputiming, only : Tforce_real_helper
+
+   use inputlist, only : Igeometry, Nvol, Lrad, gamma, pscale, adiabatic, Lcheck
+
+   use allglobal, only : ncpu, myid, cpus, MPI_COMM_SPEC, &
+	  Lcoordinatesingularity, Mvol, &
+	  iRbc, iZbs, iRbs, iZbc, &
+	  YESstellsym, NOTstellsym, &
+	  mn, im, in, regumm, &
+	  ijreal, ijimag, &
+	  efmn, ofmn, cfmn, sfmn, evmn, odmn, comn, simn, &
+	  Nt, Nz, &
+	  Ate, Aze, Ato, Azo, &
+	  TT, RTT, &
+	  sg, guvij, iRij, iZij, dRij, dZij, tRij, tZij, &
+	  mmpp, &
+	  Bemn, Bomn, Iomn, Iemn, Somn, Semn, &
+	  Pomn, Pemn, &
+	  vvolume, &
+	  build_vector_potential
+
+   LOCALS
+
+   INTEGER, intent(in)  :: lvol, iocons, Ntz
+   REAL                 :: dAt(1:Ntz, -1:2), dAz(1:Ntz, -1:2), dRR(1:Ntz,-1:1), dZZ(1:Ntz,-1:1)
+
+   REAL                 :: IIl(1:Ntz), dLL(1:Ntz)
+   INTEGER              :: Lcurvature, ii, jj, kk, ll, ifail, ivol, lnn, mi, id!, oicons
+   REAL                 :: dBBtemp(1:Ntz), lss, mfactor
+
+   REAL                 :: dAs(1:Ntz)!, dRdt(-1:1,0:1), dZdt(-1:1,0:1)
+   REAL                 :: lgvuij(1:Ntz,1:3,1:3) ! local workspace; 13 Sep 13;
+
+   BEGIN(force_real_helper)
+
+  !  write(*,*) "In the helper", lvol, iocons
+
+
+   dAt(1:Ntz, -1:2) = zero ! initialize intent out; 01 Jul 14;
+   dAz(1:Ntz, -1:2) = zero ! initialize intent out; 01 Jul 14;
+
+   lss = two * iocons - one ! recall that iocons is effective local radial coordinate; 24 Apr 13;
+
+   Lcurvature = 1
+
+   WCALL( force_real_helper, coords, ( lvol, lss, Lcurvature, Ntz, mn ) ) ! get coordinates and derivatives wrt Rj, Zj, at specific radial location;
+
+   ! Compute covariant vector potential. Stored in efmn, ofmn, cfmn, sfmn.
+   !                                         ideriv, tderiv
+   call build_vector_potential(lvol, iocons,      0,      1)
+
+   ! Map to real space
+   call invfft( mn, im, in, efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt(1:Ntz, 0), dAz(1:Ntz, 0) )
+
+   dBBtemp(1:Ntz) = half * (        dAz(1:Ntz, id)*dAz(1:Ntz, 0)*guvij(1:Ntz,2,2,0) &
+	  - two * dAz(1:Ntz, id)*dAt(1:Ntz, 0)*guvij(1:Ntz,2,3,0) &
+	  +       dAt(1:Ntz, id)*dAt(1:Ntz, 0)*guvij(1:Ntz,3,3,0)  ) / sg(1:Ntz,0)**2
+
+  !  ijreal(1:Ntz) = adiabatic(lvol) * pscale / vvolume(lvol)**gamma + dBB(1:Ntz) ! p + B^2/2; 13 Sep 13;
+
+   RETURN(force_real_helper)
+
+end subroutine force_real_helper
+
+
+subroutine alloc_hessian()
+
+  use constants, only : zero
+
+  use allglobal, only : LocalConstraint, LGdof, NGdof, Mvol, dFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated ,Lhessian2Dallocated, Lhessian3Dallocated
+
+  use inputlist, only : Lfindzero
+
+  use cputiming, only : Talloc_hessian
+
+  LOCALS
+
+  BEGIN(alloc_hessian)
+
+  if( .true. ) then
+    SALLOCATE( dFFdRZ, (1:LGdof,0:1,1:LGdof,0:1,1:Mvol), zero )
+    SALLOCATE( dBBdmp, (1:LGdof,1:Mvol,0:1,1:2), zero )
+   if( LocalConstraint ) then
+   	SALLOCATE( dmupfdx, (1:Mvol,    1:1,1:2,1:LGdof,0:1), zero )
+   else
+   	SALLOCATE( dmupfdx, (1:Mvol, 1:Mvol-1,1:2,1:LGdof,1), zero ) ! TODO change the format to put vvol in last index position...
+   endif
+
+    SALLOCATE( hessian, (1:NGdof,1:NGdof), zero )
+    SALLOCATE( dessian, (1:NGdof,1:LGdof), zero )
+
+    Lhessianallocated = .true.
+  else
+    Lhessianallocated = .false.
+  endif
+  Lhessian2Dallocated = .false.
+  Lhessian3Dallocated = .false.
+
+
+  RETURN(alloc_hessian)
+
+end subroutine alloc_hessian

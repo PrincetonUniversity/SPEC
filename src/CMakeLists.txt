@@ -165,7 +165,7 @@ target_compile_options(spec3p
         # $<$<Fortran_COMPILER_ID:Intel>:-r8>
 )
 
-set(ALLFILES  manual rzaxis packxi volume coords basefn memory metrix ma00aa matrix spsmat spsint mp00ac ma02aa packab tr00ab curent df00ab lforce intghs mtrxhs lbpol brcast dfp100 dfp200 dforce newton casing bnorml jo00aa pp00aa pp00ab bfield stzxyz hesian ra00aa numrec dcuhre minpack iqpack rksuite i1mach d1mach ilut iters sphdf5 preset global xspech)
+set(ALLFILES  manual rzaxis packxi volume coords basefn memory metrix ma00aa matrix spsmat spsint mp00ac ma02aa packab tr00ab curent df00ab lforce force_real force_real_helper intghs mtrxhs lbpol brcast dfp100 dfp200 dforce newton casing bnorml jo00aa pp00aa pp00ab bfield stzxyz hesian ra00aa numrec dcuhre minpack iqpack rksuite i1mach d1mach ilut iters sphdf5 preset global xspech)
 string(REPLACE ";" " " ALLFILES_STR "${ALLFILES}")
 
 # Build spec executable

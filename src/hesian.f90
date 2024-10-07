@@ -22,7 +22,7 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
   use inputlist, only : Wmacros, Whesian, Igeometry, Nvol, pflux, helicity, mu, Lfreebound, &
                         LHevalues, LHevectors, LHmatrix, &
                         Lperturbed, dpp, dqq, &
-                        Lcheck, Lfindzero
+                        Lcheck, Lfindzero, Lconstraint
 
   use cputiming, only : Thesian
 
@@ -89,6 +89,11 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
   REAL                :: Rdgesvx(1:NGdof), Cdgesvx(1:NGdof), AF(1:NGdof,1:NGdof), work4(1:4*NGdof), rcond, ferr, berr, sgn
 
   BEGIN(hesian)
+
+  ! Only makes sense to compute the Hessian if helicity is constrained
+  if(Lconstraint.ne.2) then
+    return
+  endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
