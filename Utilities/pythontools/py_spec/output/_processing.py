@@ -607,24 +607,23 @@ def test_derivatives(self, lvol=0, s=0.3, t=0.4, z=0.5, delta=1e-6, tol=1e-6):
     print((g[0,1,0,:,:] - g[0,0,0,:,:])/ds/2-dg[0,0,0,1,:,:])
     print((g[0,0,1,:,:] - g[0,0,0,:,:])/ds/2-dg[0,0,0,2,:,:])
 
-def _validate_lsurf(self, lsurf:np.ndarray = None)->np.ndarray:
+def _validate_lsurf(lsurf:np.ndarray, mvol:int)->np.ndarray:
     """Check 
     
     Args:
         - lsurf: Interface number(s), between 1 and Mvol-1. default is np.arange(1, mvol)
-        
+        - mvol: Number of volumes
     Returns:
         - lsurf: 1d array of interface numbers
         
     Raises:
         - ValueError: if input is outside of range or wrong type (lsurf)
     """
-    mvol = self.output.Mvol
 
     if lsurf is None:
         lsurf = np.arange(1,mvol)
     else:
-        np.atleast_1d(lsurf)
+        lsurf = np.atleast_1d(lsurf)
     if (lsurf<1).any() or (lsurf>mvol-1).any(): raise ValueError('lsurf should be in [1,mvol-1]')
     
     return lsurf
@@ -651,7 +650,7 @@ def get_surface_current_density(self, lsurf:np.ndarray, nt:int=64, nz:int=64)->t
     nfp = self.input.physics.Nfp
 
     if mvol==1: raise ValueError('Mvol=1; no interface current!')
-    lsurf = _validate_lsurf(lsurf)
+    lsurf = _validate_lsurf(lsurf, mvol)
     if nt<1: raise ValueError('nt should greater than zero')
     if nz<1: raise ValueError('nz should greater than zero')
 
@@ -724,7 +723,7 @@ def get_surface(self, lsurf:np.ndarray=None, nt:int=64, nz:int=64):
 
     if mvol==1: 
         raise ValueError('Mvol=1; no interface current!')
-    lsurf = _validate_lsurf(lsurf)
+    lsurf = _validate_lsurf(lsurf, mvol)
     if nt<1: 
         raise ValueError('nt should greater than zero')
     if nz<1: 
@@ -772,7 +771,7 @@ def get_flux_surface_average( self, lsurf, f, tarr, zarr ):
         - ValueError: if input is wrong (invalid lsurf)
     """
     
-    lsurf = _validate_lsurf(lsurf)
+    lsurf = _validate_lsurf(lsurf, self.output.Mvol)
 
     # Get jacobian
     output = np.zeros(lsurf.shape)
