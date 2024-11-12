@@ -505,7 +505,7 @@ def get_average_beta(self, ns=64, nt=64, nz=64):
     """Get beta averaged in plasma volume"""
 
     # Read pressure
-    press = self.input.physics.pressure * self.input.physics.pscale
+    press = np.atleast_1d(self.input.physics.pressure) * self.input.physics.pscale
 
     # Create coordinate grid
     nfp = self.input.physics.Nfp
