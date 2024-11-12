@@ -607,7 +607,7 @@ def test_derivatives(self, lvol=0, s=0.3, t=0.4, z=0.5, delta=1e-6, tol=1e-6):
     print((g[0,1,0,:,:] - g[0,0,0,:,:])/ds/2-dg[0,0,0,1,:,:])
     print((g[0,0,1,:,:] - g[0,0,0,:,:])/ds/2-dg[0,0,0,2,:,:])
 
-def _validate_lsurf(self, lsurf:int|np.ndarray|None = None)->np.ndarray:
+def _validate_lsurf(self, lsurf:np.ndarray = None)->np.ndarray:
     """Check 
     
     Args:
@@ -629,7 +629,7 @@ def _validate_lsurf(self, lsurf:int|np.ndarray|None = None)->np.ndarray:
     
     return lsurf
 
-def get_surface_current_density(self, lsurf:np.ndarray|int, nt:int=64, nz:int=64)->typing.Tuple[np.ndarray, np.ndarray, np.ndarray]:
+def get_surface_current_density(self, lsurf:np.ndarray, nt:int=64, nz:int=64)->typing.Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Compute j_surf.B on each side of the provided interfaces
     
     Args:
@@ -704,7 +704,7 @@ def get_surface_current_density(self, lsurf:np.ndarray|int, nt:int=64, nz:int=64
 
     return j_dot_B, tarr, zarr
 
-def get_surface(self, lsurf:np.ndarray|int|None=None, nt:int=64, nz:int=64):
+def get_surface(self, lsurf:np.ndarray=None, nt:int=64, nz:int=64):
     """Compute the surface area of a volume interface
     
     Args:
