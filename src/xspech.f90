@@ -204,12 +204,12 @@ subroutine read_command_args
 
   use fileunits, only: ounit
   use inputlist, only: Wreadin
-  use allglobal, only: cpus, myid, ext, hiddenext, MPI_COMM_SPEC, write_spec_namelist
+  use allglobal, only: cpus, myid, ext, hidden_ext, MPI_COMM_SPEC, write_spec_namelist
 
   LOCALS
 
   LOGICAL              :: Lspexist
-  INTEGER              :: iargc, iarg, numargs, extlen, sppos, basenamestart
+  INTEGER              :: iargc, iarg, numargs, extlen, sppos, basename_start_index
 
   CHARACTER(len=100)   :: arg
 
@@ -246,12 +246,12 @@ subroutine read_command_args
         ! Prepare the "hidden" ext filepath that has a "." prefix.
         ! Split ext into directory path and basename using INDEX function, then concatenate them again with a "." inbetween
 #ifdef _WIN32
-          basenamestart = INDEX(ext, '\', .TRUE.)
+          basename_start_index = INDEX(ext, '\', .TRUE.)
 #else
-          basenamestart = INDEX(ext, '/', .TRUE.)
+          basename_start_index = INDEX(ext, '/', .TRUE.)
 #endif
         ! folder + . + filename  
-        hiddenext = trim(ext(1:basenamestart))//"."//trim(ext(basenamestart+1:))
+        hidden_ext = trim(ext(1:basename_start_index))//"."//trim(ext(basename_start_index+1:))
 
         write(ounit,'("rdcmdl : ", 10x ," : ")')
         write(ounit,'("rdcmdl : ",f10.2," : ext = ",a100)') cput-cpus, ext
