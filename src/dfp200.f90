@@ -2110,12 +2110,12 @@ do iocons = 0, 1
             !write(ounit,1000) 'values are:' Mvol, efcol1mn(1:mn)
              !write(90,1000) efcol1mn(1:mn)
              !1000 format(" "10x" "es23.15" ")
-             !open(nm1unit, file="."//trim(ext)//".GF.hcol1", status="unknown", form="unformatted")
+             !open(nm1unit, file=hiddenext//".GF.hcol1", status="unknown", form="unformatted")
              !write(nm1unit) NGdof, Mvol
              !write(nm1unit) efcol1mn(1:Ntz)
              !close(nm1unit)
 
-             !open(nm2unit, file="."//trim(ext)//".GF.hcol2", status="unknown", form="unformatted")
+             !open(nm2unit, file=hiddenext//".GF.hcol2", status="unknown", form="unformatted")
              !!write(nm2unit) NGdof, Mvol
              !write(nm2unit) efcol2mn(1:Ntz)
              !close(nm2unit)
