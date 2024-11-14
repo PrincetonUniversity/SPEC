@@ -245,7 +245,12 @@ subroutine read_command_args
 
         ! Prepare the "hidden" ext filepath that has a "." prefix.
         ! Split ext into directory path and basename using INDEX function, then concatenate them again with a "." inbetween
-        basenamestart = INDEX(ext, '/', .TRUE.)
+        #ifdef _WIN32
+          basenamestart = INDEX(ext, '\', .TRUE.)
+        #else
+          basenamestart = INDEX(ext, '/', .TRUE.)
+        #endif
+        ! folder + . + filename  
         hiddenext = trim(ext(1:basenamestart))//"."//trim(ext(basenamestart+1:))
 
         write(ounit,'("rdcmdl : ", 10x ," : ")')
