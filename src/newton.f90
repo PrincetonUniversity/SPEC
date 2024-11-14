@@ -329,8 +329,6 @@ subroutine writereadgf( readorwrite, NGdof , ireadhessian )
 
   ireadhessian = 0 ! set default intent out;
 
-  print *, "hiddenext = ", hiddenext
-
   select case( readorwrite )
 
   case( 'W' ) ! will write derivative matrix to file;
