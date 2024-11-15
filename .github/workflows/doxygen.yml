@@ -26,7 +26,7 @@ jobs:
       with:
         enable-latex: true
       
-    - name: Copy PDF
+    - name: Copy Pdf
       working-directory: ${{ github.workspace }}
       run: sudo cp ./docs/latex/refman.pdf ./docs/html/SPEC_manual.pdf  
            cp ./docs/SPEC_flowchart.pdf ./docs/html/SPEC_flowchart.pdf
