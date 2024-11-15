@@ -133,7 +133,7 @@ references:
     doi: "10.1088/1361-6587/ab9a61"
     url: "https://dx.doi.org/10.1088/1361-6587/ab9a61"
     publisher: "IOP Publishing"
-    abstract: "The stepped-pressure equilibrium code (SPEC) (Hudson et al 2012 Phys. Plasmas 19, 112 502) is extended to enable free-boundary multi-region relaxed magnetohydrodynamic (MRxMHD) equilibrium calculations. The vacuum field surrounding the plasma inside an arbitrary ‘computational boundary’ is computed, and the virtual-casing principle is used iteratively to compute the normal field on the boundary so that the equilibrium is consistent with an externally produced magnetic field. Recent modifications to SPEC are described, such as the use of Chebyshev polynomials to describe the radial dependence of the magnetic vector potential, and a variety of free-boundary verification calculations are presented."
+    abstract: "The stepped-pressure equilibrium code (SPEC) (Hudson et al 2012 Phys. Plasmas 19, 112 502) is extended to enable free-boundary multi-region relaxed magnetohydrodynamic (MRxMHD) equilibrium calculations. The vacuum field surrounding the plasma inside an arbitrary ‘computational boundary’ is computed, and the virtual-casing principle is used iteratively to compute the normal field on the boundary so that the equilibrium is consistent with an externally produced magnetic field. Recent modifications to SPEC are described, such as the use of Chebyshev polynomials to describe the radial dependence of the magnetic vector potential, and a variety of free-boundary verification calculations are presented."
   - type: article
     authors:
       - family-names: Shafranov
@@ -149,6 +149,33 @@ references:
     year: 1972
     doi: 10.1088/0029-5515/12/5/009
     url: 'https://doi.org/10.1088/0029-5515/12/5/009'
+  - type: article
+    title: Stepped pressure equilibrium with relaxed flow and applications in reversed-field pinch plasmas
+    doi: 10.1088/1361-6587/ab7fc5
+    url: 'https://doi.org/10.1088/1361-6587/ab7fc5'
+    authors:
+      - family-names: Qu
+        given-names: Zhisong
+        orcid: https://orcid.org/0000-0003-4628-6983
+      - family-names: Dewar
+        given-names: R. L.
+      - family-names: Ebrahimi
+        given-names: F.
+      - family-names: Anderson
+        given-names: J. K.
+      - family-names: Hudson
+        given-names: Stuart R.
+        orcid: https://orcid.org/0000-0003-1530-2733
+      - family-names: Hole
+        given-names: Matthew J.
+        orcid: https://orcid.org/0000-0002-9550-8776
+    journal: "Plasma Physics and Controlled Fusion"
+    volume: "62"
+    issue: "5"
+    pages: "054002"
+    year: 2020
+    month: "4"
+    publisher: "IOP Publishing"
   - type: article
     authors:
       - family-names: Hirshman
