@@ -295,8 +295,8 @@ end subroutine newton
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 
-!> \brief read or write force-derivative matrix
-!> \ingroup grp_force_driver
+!> \brief read or write force-derivative matrix \c .ext.sp.DF
+!> \ingroup grp_force_driver grp_output
 !>
 !> @param[in]  readorwrite
 !> @param[in]  NGdof

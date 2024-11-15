@@ -1,13 +1,18 @@
-# The Stepped Pressure Equilibrium Code
+# ![SPEC logo](SPEC_97x55.png) The Stepped Pressure Equilibrium Code 
 
-All relevant publications and presentations are given on the [MRxMHD website](http://w3.pppl.gov/~shudson/Spec/spec.html).
 
-A BibTex file is available: [spec_refs.bib](https://raw.githubusercontent.com/PrincetonUniversity/SPEC/master/spec_refs.bib).
+If you use SPEC in your research, please cite it appropriately using the "Cite this repository" button on the right of the [SPEC GitHub Repository](https://github.com/PrincetonUniversity/SPEC) or the [CITATION.cff](https://github.com/PrincetonUniversity/SPEC/blob/master/CITATION.cff) file. 
 
-* There is also a [brief description of SPEC](http://theory.pppl.gov/research/research.php?rid=10#h5)
-  on the Princeton Plasma Physics Laboratory [Theory Department website](http://theory.pppl.gov/).
-* An overview of the algorithm is given in a [Flow Chart](http://w3.pppl.gov/~shudson/Spec/SpecFlowchart.pdf).
-* Please direct questions/suggestions to [Stuart Hudson](mailto:shudson@pppl.gov?subject=spec).
-* Online documentation for SPEC is available on [Github pages](https://princetonuniversity.github.io/SPEC/).  
+- There is a [brief description of SPEC](http://theory.pppl.gov/research/research.php?rid=10#h5) on the Princeton Plasma Physics Laboratory [Theory Department website](http://theory.pppl.gov/). 
+- An overview of the algorithm is given in a [Flow Chart](https://princetonuniversity.github.io/SPEC/docs/SPEC_flowchart.pdf).
+- A list of publications using SPEC 
+- Please direct questions/suggestions to [Stuart Hudson](mailto:shudson@pppl.gov?subject=spec).
+
+## Installation
+Instructions for compiling and testing SPEC are in [compilation_instructions.md](https://github.com/PrincetonUniversity/SPEC/blob/master/compilation_instructions.md).
+
+## Documentation
+Online documentation for SPEC is available on [Github pages](https://princetonuniversity.github.io/SPEC/). 
   A PDF version of this manual is available in [SPEC_manual.pdf](https://princetonuniversity.github.io/SPEC/SPEC_manual.pdf).
-* Instructions for compiling and testing SPEC are in [Compile.md](https://github.com/PrincetonUniversity/SPEC/blob/master/Compile.md).
+
+
