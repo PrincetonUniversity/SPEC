@@ -4,7 +4,7 @@ A BibTex file is available: [spec_refs.bib](https://raw.githubusercontent.com/Pr
 
 * There is also a [brief description of SPEC](http://theory.pppl.gov/research/research.php?rid=10#h5)
   on the Princeton Plasma Physics Laboratory [Theory Department website](http://theory.pppl.gov/).
-* An overview of the algorithm is given in a [Flow Chart](https://princetonuniversity.github.io/SPEC/docs/SpecFlowchart.pdf).
+* An overview of the algorithm is given in a [Flow Chart](https://princetonuniversity.github.io/SPEC/docs/SPEC_flowchart.pdf).
 * Please direct questions/suggestions to [Stuart Hudson](mailto:shudson@pppl.gov?subject=spec).
 * Online documentation for SPEC is available on [Github pages](https://princetonuniversity.github.io/SPEC/). 
   A PDF version of this manual is available in [SPEC_manual.pdf](https://princetonuniversity.github.io/SPEC/SPEC_manual.pdf).
