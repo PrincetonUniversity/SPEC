@@ -57,46 +57,48 @@ abstract: >-
   stepped pressure-profiles, by finding stationary points in
   the MRxMHD energy functional. 
 keywords:
-  - 'magnetohydrodynamics '
+  - magnetohydrodynamics
   - SPEC
   - MRxMHD
 license: GPL-3.0
 commit: 5996ea6db8cea383c659fced8e6a2c24cd774642
 version: '3.20'
 date-released: '2022-07-01'
+preferred-citation:
+  type: article
+  authors: 
+  - family-names: Hudson
+    given-names: Stuart
+    email: shudson@pppl.gov
+    affiliation: 'Princeton Plasma Physics Laboratory'
+    orcid: 'https://orcid.org/0000-0003-1530-2733'
+  - family-names: Dewar
+    given-names: R. L.
+    affiliation: 'Plasma Research Laboratory, Research School of Physics & Engineering, The Australian National University, Canberra ACT 0200, Australia'
+  - family-names: Hole
+    given-names: M. J.
+    affiliation: 'Plasma Research Laboratory, Research School of Physics & Engineering, The Australian National University, Canberra ACT 0200, Australia'
+  - family-names: Dennis
+    given-names: G.
+    affiliation: 'Plasma Research Laboratory, Research School of Physics & Engineering, The Australian National University, Canberra ACT 0200, Australia'
+  - family-names: McGann
+    given-names: M.
+    affiliation: 'Plasma Research Laboratory, Research School of Physics & Engineering, The Australian National University, Canberra ACT 0200, Australia'
+  - family-names: von Nessi
+    given-names: G.
+    affiliation: 'Plasma Research Laboratory, Research School of Physics & Engineering, The Australian National University, Canberra ACT 0200, Australia'
+  - family-names: Lazerson
+    given-names: Samuel Aaron
+    affiliation: 'Princeton Plasma Physics Laboratory'
+    orcid: https://orcid.org/0000-0001-8002-0121
+  title: Computation of multi-region relaxed magnetohydrodynamic equilibria 
+  journal: Phys. Plasmas
+  volume: '19'
+  issue: '11'
+  year: 2012
+  doi: 10.1063/1.4765691
+  url: 'https://doi.org/10.1063/1.4765691'
 references:
-  - type: article
-    authors: 
-    - family-names: Hudson
-      given-names: Stuart
-      email: shudson@pppl.gov
-      affiliation: 'Princeton Plasma Physics Laboratory'
-      orcid: 'https://orcid.org/0000-0003-1530-2733'
-    - family-names: Dewar
-      given-names: R. L.
-      affiliation: 'Plasma Research Laboratory, Research School of Physics & Engineering, The Australian National University, Canberra ACT 0200, Australia'
-    - family-names: Hole
-      given-names: M. J.
-      affiliation: 'Plasma Research Laboratory, Research School of Physics & Engineering, The Australian National University, Canberra ACT 0200, Australia'
-    - family-names: Dennis
-      given-names: G.
-      affiliation: 'Plasma Research Laboratory, Research School of Physics & Engineering, The Australian National University, Canberra ACT 0200, Australia'
-    - family-names: McGann
-      given-names: M.
-      affiliation: 'Plasma Research Laboratory, Research School of Physics & Engineering, The Australian National University, Canberra ACT 0200, Australia'
-    - family-names: von Nessi
-      given-names: G.
-      affiliation: 'Plasma Research Laboratory, Research School of Physics & Engineering, The Australian National University, Canberra ACT 0200, Australia'
-    - family-names: Lazerson
-      given-names: Samuel Aaron
-      affiliation: 'Princeton Plasma Physics Laboratory'
-    title: Computation of multi-region relaxed magnetohydrodynamic equilibria 
-    journal: Phys. Plasmas
-    volume: '19'
-    issue: '11'
-    year: 2012
-    doi: 10.1063/1.4765691
-    url: 'https://doi.org/10.1063/1.4765691'
   - type: article
     authors:
       - family-names: Hudson
