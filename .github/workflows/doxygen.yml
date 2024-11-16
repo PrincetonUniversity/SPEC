@@ -29,12 +29,10 @@ jobs:
     - name: Copy Pdf
       working-directory: ${{ github.workspace }}
       run: |
-           ls -ld ./docs/html
-           ls -l ./docs/html
-           cp ./docs/latex/refman.pdf ./docs/html/SPEC_manual.pdf  
-           cp ./docs/SPEC_flowchart.pdf ./docs/html/SPEC_flowchart.pdf
-           python3 --Version
-           pip install pyyaml
+             cp ./docs/latex/refman.pdf ./docs/html/SPEC_manual.pdf 
+             cp ./docs/SPEC_flowchart.pdf ./docs/html/SPEC_flowchart.pdf 
+             python3 --Version
+             pip install pyyaml
 
     - name: Deploy
       uses: peaceiris/actions-gh-pages@v3
