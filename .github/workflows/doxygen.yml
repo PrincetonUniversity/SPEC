@@ -19,7 +19,14 @@ jobs:
     steps:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
-    
+
+    # Validate CITATION.cff and generate bibtex
+    - name: CITATION.cff to spec_refs.bib
+      run: |
+            pip install --user pyyaml cffconvert==2.0.0 
+            cffconvert --validate
+            python ci/cff_to_bib_refs.py
+            
     # run doxygen
     - name: Doxygen Action
       uses: mattnotmitt/doxygen-action@v1.9.2
@@ -28,8 +35,9 @@ jobs:
       
     - name: Copy Pdf
       working-directory: ${{ github.workspace }}
-      run: sudo cp ./docs/latex/refman.pdf ./docs/html/SPEC_manual.pdf  
-           cp ./docs/SPEC_flowchart.pdf ./docs/html/SPEC_flowchart.pdf
+      run: |
+            sudo cp ./docs/latex/refman.pdf ./docs/html/SPEC_manual.pdf  
+            sudo cp ./docs/SPEC_flowchart.pdf ./docs/html/SPEC_flowchart.pdf
 
     - name: Deploy
       uses: peaceiris/actions-gh-pages@v3
