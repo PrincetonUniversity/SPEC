@@ -29,8 +29,8 @@ jobs:
     - name: Copy Pdf
       working-directory: ${{ github.workspace }}
       run: |
-             cp ./docs/latex/refman.pdf ./docs/html/SPEC_manual.pdf 
-             cp ./docs/SPEC_flowchart.pdf ./docs/html/SPEC_flowchart.pdf 
+             sudo cp ./docs/latex/refman.pdf ./docs/html/SPEC_manual.pdf 
+             sudo cp ./docs/SPEC_flowchart.pdf ./docs/html/SPEC_flowchart.pdf 
              python3 --Version
              pip install pyyaml
 
