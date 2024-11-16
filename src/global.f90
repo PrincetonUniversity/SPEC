@@ -1577,7 +1577,8 @@ end subroutine ! broadcast_inputs
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!> \brief The restart file is written.
+!> \brief Write the restart file \c ext.sp.end
+!> \ingroup grp_output
 subroutine wrtend
 
   use constants, only :
