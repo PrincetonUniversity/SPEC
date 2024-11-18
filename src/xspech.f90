@@ -204,12 +204,12 @@ subroutine read_command_args
 
   use fileunits, only: ounit
   use inputlist, only: Wreadin
-  use allglobal, only: cpus, myid, ext, MPI_COMM_SPEC, write_spec_namelist
+  use allglobal, only: cpus, myid, ext, hidden_ext, MPI_COMM_SPEC, write_spec_namelist
 
   LOCALS
 
   LOGICAL              :: Lspexist
-  INTEGER              :: iargc, iarg, numargs, extlen, sppos
+  INTEGER              :: iargc, iarg, numargs, extlen, sppos, basename_start_index
 
   CHARACTER(len=100)   :: arg
 
@@ -242,6 +242,16 @@ subroutine read_command_args
             arg = arg(1:extlen-3)         ! if this is the case, remove ".sp" from end of ext
         endif
         ext = trim(arg)
+
+        ! Prepare the "hidden" ext filepath that has a "." prefix.
+        ! Split ext into directory path and basename using INDEX function, then concatenate them again with a "." inbetween
+#ifdef _WIN32
+          basename_start_index = INDEX(ext, '\', .TRUE.)
+#else
+          basename_start_index = INDEX(ext, '/', .TRUE.)
+#endif
+        ! folder + . + filename  
+        hidden_ext = trim(ext(1:basename_start_index))//"."//trim(ext(basename_start_index+1:))
 
         write(ounit,'("rdcmdl : ", 10x ," : ")')
         write(ounit,'("rdcmdl : ",f10.2," : ext = ",a100)') cput-cpus, ext

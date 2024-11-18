@@ -64,7 +64,7 @@ subroutine newton( NGdof, position, ihybrd )
 
   use cputiming, only : Tnewton
 
-  use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, ext, &
+  use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, ext, hidden_ext, &
                         NOTstellsym, &
                         ForceErr, Energy, &
                         mn, im, in, iRbc, iZbs, iRbs, iZbc, Mvol, &
@@ -313,7 +313,7 @@ subroutine writereadgf( readorwrite, NGdof , ireadhessian )
 
   use cputiming, only : Tnewton
 
-  use allglobal, only : myid, cpus, MPI_COMM_SPEC, ext, &
+  use allglobal, only : myid, cpus, MPI_COMM_SPEC, ext, hidden_ext, &
                         mn, im, in, hessian, Lhessianallocated
 
   LOCALS
@@ -336,7 +336,7 @@ subroutine writereadgf( readorwrite, NGdof , ireadhessian )
    ! reset I/O state
    ios = 0
 
-   open( dunit, file="."//trim(ext)//".sp.DF", status="replace", form="unformatted", iostat=ios ) ! save derivative matrix to file;
+   open( dunit, file=trim(hidden_ext)//".sp.DF", status="replace", form="unformatted", iostat=ios ) ! save derivative matrix to file;
    FATAL( newton, ios.ne.0, error opening derivative matrix file )
 
    write( dunit, iostat=ios ) Igeometry, Istellsym, Lfreebound, Nvol, Mpol, Ntor, NGdof ! enable resolution consistency check;
@@ -352,11 +352,11 @@ subroutine writereadgf( readorwrite, NGdof , ireadhessian )
 
    cput = GETTIME
 
-   inquire( file="."//trim(ext)//".sp.DF", exist=exist ) ! the derivative matrix;
+   inquire( file=trim(hidden_ext)//".sp.DF", exist=exist ) ! the derivative matrix;
 
    if( exist ) then !                  01234567890123456789012345678901
     write(ounit,2000) cput-cpus, myid, "reading .ext.sp.DF ;           "
-    open( dunit, file="."//trim(ext)//".sp.DF", status="old", form="unformatted", iostat=ios )
+    open( dunit, file=trim(hidden_ext)//".sp.DF", status="old", form="unformatted", iostat=ios )
    else !                              01234567890123456789012345678901
     write(ounit,2000) cput-cpus, myid, ".ext.sp.DF does not exist ;    "
     inquire( file=".sp.DF", exist=exist ) ! the derivative matrix;
@@ -442,7 +442,7 @@ subroutine fcn1( NGdof, xx, fvec, irevcm )
 
   use cputiming, only : Tnewton
 
-  use allglobal, only : wrtend, myid, ncpu, cpus, MPI_COMM_SPEC, ext, &
+  use allglobal, only : wrtend, myid, ncpu, cpus, MPI_COMM_SPEC, ext, hidden_ext, &
                         NOTstellsym, &
                         ForceErr, Energy, &
                         mn, im, in, iRbc, iZbs, iRbs, iZbc, Mvol, &
