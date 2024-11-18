@@ -340,22 +340,6 @@ references:
     url: "https://doi.org/10.1063/1.5091765"
   - type: article
     authors:
-      - family-names: Baillod
-        given-names: Alexandre
-      - family-names: Loizu
-        given-names: Joaquim
-      - family-names: Qu
-        given-names: Zhisong
-        orcid: https://orcid.org/0000-0003-4628-6983
-      - family-names: Arbez
-        given-names: Henri-Paul
-      - family-names: Graves
-        given-names: John P.
-    title: "Equilibrium β-limits dependence on bootstrap current in classical stellarators"
-    journal: "Cambridge University Press"
-    year: 2023
-  - type: article
-    authors:
       - family-names: Loizu
         given-names: Joaquim
       - family-names: Bonfiglio
@@ -363,6 +347,8 @@ references:
     title: "Nonlinear saturation of resistive tearing modes in a cylindrical tokamak with and without solving the dynamics"
     journal: "Cambridge University Press"
     year: 2023
+    doi: 10.1017/S0022377823000934
+    url: https://doi.org/10.1017/S0022377823000934
   - type: article
     authors:
       - family-names: Loizu
