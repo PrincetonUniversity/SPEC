@@ -535,6 +535,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   do ll = 0, Lrad(lvol)
     !             ideriv=0   mn=0
     id = Ate(lvol,0        , 1)%i(ll)
+    if (id.eq.0) cycle ! Indirection maps some elements to 0, to "discard" them during matrix construction. Ignore them here.
     if (Lcoordinatesingularity) then
       call get_zernike_d2(small, Lrad(lvol), mpol, zernike)
       dH1 = dH1 + pi2 * solution(id,0) * zernike(ll,0,0)
@@ -545,6 +546,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 
     !             ideriv=0   mn=0
     id = Aze(lvol,0        , 1)%i(ll)
+    if (id.eq.0) cycle ! Indirection maps some elements to 0, to "discard" them during matrix construction. Ignore them here.
     if (Lcoordinatesingularity) then
       call get_zernike_d2(one, Lrad(lvol), mpol, zernike)
       dH2 = dH2 + pi2 * solution(id,0) * zernike(ll,0,0)
