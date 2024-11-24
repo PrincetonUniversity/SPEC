@@ -102,6 +102,39 @@ preferred-citation:
   doi: 10.1063/1.4765691
   url: "https://doi.org/10.1063/1.4765691"
 references:
+ - type: article
+    authors:
+      - family-names: Hudson
+        given-names: Stuart
+        email: shudson@pppl.gov
+        affiliation: "Princeton Plasma Physics Laboratory"
+        orcid: "https://orcid.org/0000-0003-1530-2733"
+      - family-names: Dewar
+        given-names: R. L.
+        affiliation: "Plasma Research Laboratory, Research School of Physics & Engineering, The Australian National University, Canberra ACT 0200, Australia"
+      - family-names: Hole
+        given-names: M. J.
+        affiliation: "Plasma Research Laboratory, Research School of Physics & Engineering, The Australian National University, Canberra ACT 0200, Australia"
+      - family-names: Dennis
+        given-names: G.
+        affiliation: "Plasma Research Laboratory, Research School of Physics & Engineering, The Australian National University, Canberra ACT 0200, Australia"
+      - family-names: McGann
+        given-names: M.
+        affiliation: "Plasma Research Laboratory, Research School of Physics & Engineering, The Australian National University, Canberra ACT 0200, Australia"
+      - family-names: von Nessi
+        given-names: G.
+        affiliation: "Plasma Research Laboratory, Research School of Physics & Engineering, The Australian National University, Canberra ACT 0200, Australia"
+      - family-names: Lazerson
+        given-names: Samuel Aaron
+        affiliation: "Princeton Plasma Physics Laboratory"
+        orcid: https://orcid.org/0000-0001-8002-0121
+    title: Computation of multi-region relaxed magnetohydrodynamic equilibria
+    journal: Phys. Plasmas
+    volume: "19"
+    issue: "11"
+    year: 2012
+    doi: 10.1063/1.4765691
+    url: "https://doi.org/10.1063/1.4765691"
   - type: article
     authors:
       - family-names: Hudson
@@ -135,367 +168,4 @@ references:
     year: 2020
     doi: "10.1088/1361-6587/ab9a61"
     url: "https://dx.doi.org/10.1088/1361-6587/ab9a61"
-  - type: article
-    authors:
-      - family-names: Shafranov
-        given-names: V. D.
-      - family-names: Zakharov
-        given-names: L. E.
-    title:
-      Use of the virtual-casing principle in calculating the containing magnetic
-      field in toroidal plasma systems
-    journal: Nucl. Fusion
-    volume: "12"
-    issue: "5"
-    pages: 599--601
-    year: 1972
-    doi: 10.1088/0029-5515/12/5/009
-    url: "https://doi.org/10.1088/0029-5515/12/5/009"
-  - type: article
-    title: Stepped pressure equilibrium with relaxed flow and applications in reversed-field pinch plasmas
-    doi: 10.1088/1361-6587/ab7fc5
-    url: "https://doi.org/10.1088/1361-6587/ab7fc5"
-    authors:
-      - family-names: Qu
-        given-names: Zhisong
-        orcid: https://orcid.org/0000-0003-4628-6983
-      - family-names: Dewar
-        given-names: R. L.
-      - family-names: Ebrahimi
-        given-names: F.
-      - family-names: Anderson
-        given-names: J. K.
-      - family-names: Hudson
-        given-names: Stuart R.
-        orcid: https://orcid.org/0000-0003-1530-2733
-      - family-names: Hole
-        given-names: Matthew J.
-        orcid: https://orcid.org/0000-0002-9550-8776
-    journal: "Plasma Physics and Controlled Fusion"
-    volume: "62"
-    issue: "5"
-    pages: "054002"
-    year: 2020
-    month: "4"
-  - type: article
-    authors:
-      - family-names: Hirshman
-        given-names: S. P.
-      - family-names: Meier
-        given-names: H. K.
-    title: Optimized Fourier representations for three‐dimensional magnetic surfaces
-    journal: Phys. Fluids
-    volume: "28"
-    issue: "5"
-    pages: 1387-1391
-    year: 1985
-    doi: 10.1063/1.864972
-    url: "https://aip.scitation.org/doi/abs/10.1063/1.864972"
-  - type: article
-    authors:
-      - family-names: Hirshman
-        given-names: S. P.
-      - family-names: Breslau
-        given-names: J.
-    title: Explicit spectrally optimized Fourier series for nested magnetic surfaces
-    journal: Phys. Plas.
-    volume: "5"
-    issue: "7"
-    pages: 2664-2675
-    year: 1998
-    doi: 10.1063/1.872954
-    url: "https://doi.org/10.1063/1.872954"
-  - type: article
-    authors:
-      - family-names: Hirshman
-        given-names: S. P.
-      - family-names: Perumalla
-        given-names: K. S.
-      - family-names: Lynch
-        given-names: V. E.
-      - family-names: Sanchez
-        given-names: R.
-    title: "BCYCLIC: A parallel block tridiagonal matrix cyclic solver"
-    journal: J. Comp. Phys.
-    volume: "229"
-    issue: "18"
-    pages: 6392-6404
-    year: 2010
-    doi: 10.1016/j.jcp.2010.04.049
-    url: "http://www.sciencedirect.com/science/article/pii/S0021999110002536"
-  - type: article
-    authors:
-      - family-names: Hudson
-        given-names: S. R.
-      - family-names: Dewar
-        given-names: R. L.
-      - family-names: Hole
-        given-names: M. J.
-      - family-names: McGann
-        given-names: M.
-    title:
-      Non-axisymmetric, multi-region relaxed magnetohydrodynamic equilibrium
-      solutions
-    journal: Plasma Phys. and Contr. Fusion
-    volume: "54"
-    issue: "1"
-    pages: "014005"
-    year: 2011
-    doi: 10.1088/0741-3335/54/1/014005
-    url: "https://doi.org/10.1088/0741-3335/54/1/014005"
-  - type: article
-    authors:
-      - family-names: Lazerson
-        given-names: S. A.
-    title: The virtual-casing principle for 3D toroidal systems
-    journal: Plasma Phys. and Contr. Fusion
-    volume: "54"
-    issue: "12"
-    pages: "122002"
-    year: 2012
-    doi: 10.1088/0741-3335/54/12/122002
-    url: "https://doi.org/10.1088/0741-3335/54/12/122002"
-  - type: article
-    authors:
-      - family-names: Lazerson
-        given-names: S. A.
-      - family-names: Sakakibara
-        given-names: S.
-      - family-names: Suzuki
-        given-names: Y.
-    title: A magnetic diagnostic code for 3D fusion equilibria
-    journal: Plasma Phys. and Contr. Fusion
-    volume: "55"
-    issue: "2"
-    pages: "025014"
-    year: 2013
-    doi: 10.1088/0741-3335/55/2/025014
-    url: "https://doi.org/10.1088/0741-3335/55/2/025014"
-  - type: article
-    authors:
-      - family-names: Hanson
-        given-names: J. D.
-    title: The virtual-casing principle and Helmholtz's theorem
-    journal: Plasma Phys. and Contr. Fusion
-    volume: "57"
-    issue: "11"
-    pages: "115006"
-    year: 2015
-    doi: 10.1088/0741-3335/57/11/115006
-    url: "https://doi.org/10.1088/0741-3335/57/11/115006"
-  - type: article
-    authors:
-      - family-names: Zhu
-        given-names: C.
-      - family-names: Hudson
-        given-names: S. R.
-      - family-names: Song
-        given-names: Y.
-      - family-names: Wan
-        given-names: Y.
-    title: New method to design stellarator coils without the winding surface
-    journal: Nucl. Fusion
-    volume: "58"
-    issue: "1"
-    pages: 016008
-    year: 2017
-    doi: 10.1088/1741-4326/aa8e0a
-    url: "https://doi.org/10.1088/1741-4326/aa8e0a"
-  - type: article
-    authors:
-      - family-names: Baillod
-        given-names: Alexandre
-      - family-names: Loizu
-        given-names: Joaquim
-        orcid: https://orcid.org/0000-0002-4862-7393
-      - family-names: Qu
-        given-names: Zhisong
-        orcid: https://orcid.org/0000-0003-4628-6983
-      - family-names: Kumar
-        given-names: Ankit
-      - family-names: Graves
-        given-names: John P.
-    title: "Computation of multi-region, relaxed magnetohydrodynamic equilibria with prescribed toroidal current profile"
-    journal: "Journal of Plasma Physics"
-    volume: "87"
-    issue: "4"
-    pages: "905870403"
-    year: 2021
-    doi: "10.1017/S0022377821000520"
-    url: "https://dx.doi.org/10.1017/S0022377821000520"
-  - type: article
-    authors:
-      - family-names: Loizu
-        given-names: Joaquim
-        orcid: https://orcid.org/0000-0002-4862-7393
-      - family-names: Hudson
-        given-names: Stuart R.
-        orcid: https://orcid.org/0000-0003-1530-2733
-    title: "Multi-region relaxed magnetohydrodynamic stability of a current sheet"
-    journal: "Physics of Plasmas"
-    volume: "26"
-    pages: "030702"
-    year: 2019
-    doi: "10.1063/1.5091765"
-    url: "https://doi.org/10.1063/1.5091765"
-  - type: article
-    authors:
-      - family-names: Loizu
-        given-names: Joaquim
-      - family-names: Bonfiglio
-        given-names: Davide
-    title: "Nonlinear saturation of resistive tearing modes in a cylindrical tokamak with and without solving the dynamics"
-    journal: "Cambridge University Press"
-    year: 2023
-    doi: 10.1017/S0022377823000934
-    url: https://doi.org/10.1017/S0022377823000934
-  - type: article
-    authors:
-      - family-names: Loizu
-        given-names: Joaquim
-        orcid: https://orcid.org/0000-0002-4862-7393
-      - family-names: Huang
-        given-names: Yi-Min
-      - family-names: Hudson
-        given-names: Stuart R.
-        orcid: https://orcid.org/0000-0003-1530-2733
-      - family-names: Baillod
-        given-names: Alexandre
-      - family-names: Kumar
-        given-names: Ankit
-      - family-names: Qu
-        given-names: Zhisong
-        orcid: https://orcid.org/0000-0003-4628-6983
-    title: "Direct prediction of nonlinear tearing mode saturation using a variational principle"
-    journal: "Physics of Plasmas"
-    volume: "27"
-    pages: "070701"
-    year: 2020
-    doi: "10.1063/5.0009110"
-    url: "https://doi.org/10.1063/5.0009110"
-  - type: article
-    authors:
-      - family-names: Loizu
-        given-names: Joaquim
-      - family-names: Hudson
-        given-names: Stuart R.
-        orcid: https://orcid.org/0000-0003-1530-2733
-      - family-names: Bhattacharjee
-        given-names: Amitava
-      - family-names: Helander
-        given-names: Per
-    title: "Magnetic islands and singular currents at rational surfaces in three-dimensional magnetohydrodynamic equilibria"
-    journal: "Physics of Plasmas"
-    volume: "22"
-    pages: "022501"
-    year: 2015
-    doi: "10.1063/1.4906888"
-    url: "https://doi.org/10.1063/1.4906888"
-  - type: article
-    authors:
-      - family-names: Loizu
-        given-names: Joaquim
-      - family-names: Hudson
-        given-names: Stuart R.
-      - family-names: Bhattacharjee
-        given-names: Amitava
-      - family-names: Lazerson
-        given-names: Samuel A.
-        orcid: https://orcid.org/0000-0001-8002-0121
-      - family-names: Helander
-        given-names: Per
-    title: "Existence of three-dimensional ideal-magnetohydrodynamic equilibria with current sheets"
-    journal: "Physics of Plasmas"
-    volume: "22"
-    pages: "090704"
-    year: 2015
-    doi: "10.1063/1.4931094"
-    url: "https://doi.org/10.1063/1.4931094"
-  - type: article
-    authors:
-      - family-names: Loizu
-        given-names: Joaquim
-      - family-names: Hudson
-        given-names: Stuart R.
-      - family-names: Nührenberg
-        given-names: Carolin
-    title: "Verification of the SPEC code in stellarator geometries"
-    journal: "Physics of Plasmas"
-    volume: "23"
-    pages: "112505"
-    year: 2016
-    doi: "10.1063/1.4967709"
-    url: "https://doi.org/10.1063/1.4967709"
-  - type: article
-    authors:
-      - family-names: Loizu
-        given-names: Joaquim
-        orcid: https://orcid.org/0000-0002-4862-7393
-      - family-names: Hudson
-        given-names: Stuart R.
-        orcid: https://orcid.org/0000-0003-1530-2733
-      - family-names: Helander
-        given-names: Per
-      - family-names: Lazerson
-        given-names: Samuel A.
-        orcid: https://orcid.org/0000-0001-8002-0121
-      - family-names: Bhattacharjee
-        given-names: Amitava
-    title: "Pressure-driven amplification and penetration of resonant magnetic perturbations"
-    journal: "Physics of Plasmas"
-    volume: "23"
-    pages: "055703"
-    year: 2016
-    doi: "10.1063/1.4944818"
-    url: "https://doi.org/10.1063/1.4944818"
-  - type: article
-    authors:
-      - family-names: Loizu
-        given-names: Joaquim
-        orcid: https://orcid.org/0000-0002-4862-7393
-      - family-names: Bonfiglio
-        given-names: Davide
-    title: "Nonlinear saturation of resistive tearing modes in a cylindrical tokamak with and without solving the dynamics"
-    journal: "Cambridge University Press"
-    year: 2023
-    doi: 10.1017/S0022377823000934
-    url: https://doi.org/10.1017/S0022377823000934
-  - type: article
-    authors:
-      - family-names: Loizu
-        given-names: Joaquim
-        orcid: https://orcid.org/0000-0002-4862-7393
-      - family-names: Hudson
-        given-names: Stuart R.
-        orcid: https://orcid.org/0000-0003-1530-2733
-      - family-names: Nührenberg
-        given-names: Carolin
-      - family-names: Geiger
-        given-names: Joachim
-      - family-names: Helander
-        given-names: Per
-    title: "Equilibrium β-limits in classical stellarators"
-    journal: "Cambridge University Press"
-    year: 2017
-    doi: 10.1017/S0022377817000861
-    url: https://doi.org/10.1017/S0022377817000861
-
-  - type: article
-    authors:
-      - family-names: Baillod
-        given-names: Alexandre
-      - family-names: Loizu
-        given-names: Joaquim
-        orcid: https://orcid.org/0000-0002-4862-7393
-      - family-names: Qu
-        given-names: Zhisong
-        orcid: https://orcid.org/0000-0003-4628-6983
-      - family-names: Arbez
-        given-names: Henri-Paul
-      - family-names: Graves
-        given-names: John P.
-    title: "Equilibrium β-limits dependence on bootstrap current in classical stellarators"
-    journal: "Cambridge University Press"
-    year: 2023
-    doi: 10.1017/S0022377823000910
-    url: https://doi.org/10.1017/S0022377823000910
+ 
