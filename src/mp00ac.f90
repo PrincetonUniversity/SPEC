@@ -532,10 +532,11 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 
 
   ! if (GaugeInvariantH) then
+  dH1 = zero
+  dH2 = zero
   do ll = 0, Lrad(lvol)
     !             ideriv=0   mn=0
     id = Ate(lvol,0        , 1)%i(ll)
-    dH1 = zero
     if (id/=0) then ! Indirection maps some elements to 0, to "discard" them during matrix construction. Ignore them here.
       if (Lcoordinatesingularity) then
         call get_zernike_d2(small, Lrad(lvol), mpol, zernike)
@@ -545,10 +546,9 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
         dH1 = dH1 + pi2 * solution(id,0) * cheby(ll,0)
       endif
     endif
-
+    
     !             ideriv=0   mn=0
     id = Aze(lvol,0        , 1)%i(ll)
-    dH2 = zero
     if (id/=0) then ! Indirection maps some elements to 0, to "discard" them during matrix construction. Ignore them here.
       if (Lcoordinatesingularity) then
         call get_zernike_d2(one, Lrad(lvol), mpol, zernike)
@@ -559,6 +559,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
       endif
     endif
   enddo
+  print *,"dH1",dH1, "  dH2",dH2
 
   lABintegral(lvol) = lABintegral(lvol) - dH1 - dH2
   ! endif
