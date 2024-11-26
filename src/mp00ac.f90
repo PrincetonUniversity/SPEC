@@ -559,8 +559,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
       endif
     endif
   enddo
-  print *,"dH1",dH1, "  dH2",dH2
-
+  
   lABintegral(lvol) = lABintegral(lvol) - dH1 - dH2
   ! endif
 
