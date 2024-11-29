@@ -65,37 +65,6 @@
 !>      The minimum number of function evaluations is provided by the \c inputvar \c vcasingits. </li>
 !> </ul>
 !>
-!> **Calculation of integrand**
-!>
-!> <ul>
-!> <li> An adaptive integration is used to compute the integrals.
-!>      Consequently, the magnetic field tangential to the plasma boundary is required at an arbitrary point.
-!>      This is computed, as always, from \f${\bf B} = \nabla \times {\bf A}\f$, and this provides \f${\bf B} = B^\theta {\bf e}_\theta + B^\zeta {\bf e}_\zeta\f$.
-!>      Recall that \f$B^s=0\f$ by construction on the plasma boundary.
-!>      \todo It would be MUCH faster to only require the tangential field on a regular grid!!!
-!>
-!> </li>
-!> <li> Then, the metric elements \f$g_{\theta\theta}\f$, \f$g_{\theta\zeta}\f$ and \f$g_{\zeta\zeta}\f$ are computed.
-!>      These are used to "lower" the components of the magnetic field, \f${\bf B} = B_\theta \nabla \theta + B_\zeta \nabla \zeta\f$.
-!>      \todo Please check why \f$B_s\f$ is not computed. Is it because \f$B_s \nabla s \times {\bf n} = 0\f$ ?
-!>
-!> </li>
-!> <li> The distance between the "evaluate" point, \f$(X,Y,Z)\f$, and the given point on the surface, \f$(x,y,z)\f$ is computed. </li>
-!> <li> If the computational boundary becomes too close to the plasma boundary, the distance is small and this causes problems for the numerics.
-!>      I have tried to regularize this problem by introducing \f$\epsilon \equiv \f$\c inputvar \c vcasingeps.
-!>      Let the "distance" be
-!>      \f{eqnarray}{ D \equiv \sqrt{(X-x)^2 + (Y-y)^2 + (Z-Z)^2} + \epsilon^2.
-!>      \f} </li>
-!> <li> On taking the limit that \f$\epsilon \rightarrow 0\f$, the virtual casing integrand is
-!>       \f{eqnarray}{ \verb+vcintegrand+ \equiv ( B_x n_x + B_y n_y + B_z n_z ) ( 1 + 3 \epsilon^2 / D^2 ) / D^3, \label{eq:integrand_casing}
-!>       \f}
-!>      where the normal vector is \f${\bf n} \equiv n_x {\bf i} + n_y {\bf j} + n_z {\bf k}\f$.
-!>      The normal vector, \c Nxyz , to the computational boundary (which does not change) is computed in preset().
-!>      \todo This needs to be revised.
-!>
-!> </li>
-!> </ul>
-!>
 !> @param[in] teta \f$\theta\f$
 !> @param[in] zeta \f$\zeta\f$
 !> @param[out] gBn \f$ \sqrt g {\bf B} \cdot {\bf n}\f$
@@ -245,8 +214,17 @@ subroutine casing( teta, zeta, gBn, icasing )
 end subroutine casing
 
 
-
-subroutine casing2( xyz, nxyz, Pbxyz, Jxyz, gBn)
+!> \brief Compute the field produced by the plasma currents, at an arbitrary, external location using virtual casing.
+!> \ingroup grp_free-boundary
+!>
+!> casing2() computes the virtual casing field using a fixed resolution grid on the plasma boundary, in contrast to casing() which uses an adaptive integration routine.
+!> Because the evaluation positions are known in advance, the most expensive terms of the computation (dvcfield) are precomputed. 
+!> The integral computed by casing2() is 
+!> \f{eqnarray}{ \int_0^{2\pi} \int_0^{2\pi} \frac{{\bf j}(\theta, \zeta) \times {\bf D}(\theta, \zeta)}{\|{\bf D}(\theta', \zeta')\|^3}+ \;\; d\theta d\zeta  
+!>  \f}
+!> with \f${\bf r}\f$ approximately the distance vector from an evaluation point of the current surface \f${\bf x}(\theta, \zeta)\f$ to the 
+!> external point \f$(x,y,z)\f$, and the exact formula includes a regularization factor \f$\epsilon\f$  Eqn.\f$(\ref{eq:vcasing_distance})\f$..
+subroutine casing2( xyz, nxyz,  gBn)
   use constants, only : zero, one, three, pi2
 
   use fileunits, only : ounit, vunit
@@ -254,13 +232,13 @@ subroutine casing2( xyz, nxyz, Pbxyz, Jxyz, gBn)
   use inputlist, only : vcasingeps, vcNz, vcNt
 
   use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, &
-                        vcNtz !, Pbxyz(1:vcNtz, 1:3), Jxyz(1:vcNtz, 1:3)
+                        vcNtz , Pbxyz, Jxyz
 
   LOCALS
 
   REAL, intent(in)     :: xyz(1:3) ! arbitrary location; Cartesian;
   REAL, intent(in)     :: nxyz(1:3) ! surface normal on the computational boundary; Cartesian;
-  REAL, intent(in)     :: Pbxyz(1:vcNtz, 1:3), Jxyz(1:vcNtz, 1:3)
+  ! REAL, intent(in)     :: Pbxyz(1:vcNtz, 1:3), Jxyz(1:vcNtz, 1:3)
   REAL, intent(out)    :: gBn ! B.n on the computational boundary;
   
   REAL :: rr(1:3),  distance(1:3), jj(1:3), Bxyz(1:3), accumulator, firstorderfactor
@@ -299,6 +277,34 @@ end subroutine casing2
 
 !> \brief Compute the position and surface current on the plasma boundary for the virtual casing
 !> \ingroup grp_free-boundary
+!> **Calculation of integrand**
+!>
+!> <ul>
+!> <li> An adaptive integration is used to compute the integrals.
+!>      Consequently, the magnetic field tangential to the plasma boundary is required at an arbitrary point.
+!>      This is computed, as always, from \f${\bf B} = \nabla \times {\bf A}\f$, and this provides \f${\bf B} = B^\theta {\bf e}_\theta + B^\zeta {\bf e}_\zeta\f$.
+!>      Recall that \f$B^s=0\f$ by construction on the plasma boundary.
+!>
+!> </li>
+!> <li> Then, the metric elements \f$g_{\theta\theta}\f$, \f$g_{\theta\zeta}\f$ and \f$g_{\zeta\zeta}\f$ are computed.
+!>      These are used to "lower" the components of the magnetic field, \f${\bf B} = B_\theta \nabla \theta + B_\zeta \nabla \zeta\f$.
+!>
+!> </li>
+!> <li> The distance between the "evaluate" point, \f$(X,Y,Z)\f$, and the given point on the surface, \f$(x,y,z)\f$ is computed. </li>
+!> <li> If the computational boundary becomes too close to the plasma boundary, the distance is small and this causes problems for the numerics.
+!>      I have tried to regularize this problem by introducing \f$\epsilon \equiv \f$\c inputvar \c vcasingeps.
+!>      Let the "distance" be
+!>      \f{eqnarray}{ D \equiv \sqrt{(X-x)^2 + (Y-y)^2 + (Z-Z)^2} + \epsilon^2.
+!>      \label{eq:vcasing_distance}  \f} </li>
+!> <li> On taking the limit that \f$\epsilon \rightarrow 0\f$, the virtual casing integrand is
+!>       \f{eqnarray}{ \verb+vcintegrand+ \equiv ( B_x n_x + B_y n_y + B_z n_z ) ( 1 + 3 \epsilon^2 / D^2 ) / D^3, \label{eq:integrand_casing}
+!>       \f}
+!>      where the normal vector is \f${\bf n} \equiv n_x {\bf i} + n_y {\bf j} + n_z {\bf k}\f$.
+!>      The normal vector, \c Nxyz , to the computational boundary (which does not change) is computed in preset().
+!>      \todo This needs to be revised.
+!>
+!> </li>
+!> </ul>
 !>
 !> @param[in] teta \f$\theta\f$
 !> @param[in] zeta \f$\zeta\f$
