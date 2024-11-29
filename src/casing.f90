@@ -213,7 +213,6 @@ subroutine casing( teta, zeta, gBn, icasing )
 
 end subroutine casing
 
-
 !> \brief Compute the field produced by the plasma currents, at an arbitrary, external location using virtual casing.
 !> \ingroup grp_free-boundary
 !>
@@ -224,37 +223,38 @@ end subroutine casing
 !>  \f}
 !> with \f${\bf r}\f$ approximately the distance vector from an evaluation point of the current surface \f${\bf x}(\theta, \zeta)\f$ to the 
 !> external point \f$(x,y,z)\f$, and the exact formula includes a regularization factor \f$\epsilon\f$  Eqn.\f$(\ref{eq:vcasing_distance})\f$..
-subroutine casing2( xyz, nxyz,  gBn)
+subroutine casing2( xyz, nxyz,  Pbxyz, Jxyz, vcstep,gBn)
   use constants, only : zero, one, three, pi2
 
   use fileunits, only : ounit, vunit
 
   use inputlist, only : vcasingeps, vcNz, vcNt
 
-  use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, &
-                        vcNtz , Pbxyz, Jxyz
+  use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, vcNtz !, Pbxyz, Jxyz
 
   LOCALS
 
-  REAL, intent(in)     :: xyz(1:3) ! arbitrary location; Cartesian;
-  REAL, intent(in)     :: nxyz(1:3) ! surface normal on the computational boundary; Cartesian;
-  ! REAL, intent(in)     :: Pbxyz(1:vcNtz, 1:3), Jxyz(1:vcNtz, 1:3)
+  REAL, intent(in)     :: xyz(3) ! arbitrary location; Cartesian;
+  REAL, intent(in)     :: nxyz(3) ! surface normal on the computational boundary; Cartesian;
+  REAL, intent(in)     :: Pbxyz(1:vcNtz, 1:3), Jxyz(1:vcNtz, 1:3) 
+  INTEGER, intent(in)  :: vcstep
   REAL, intent(out)    :: gBn ! B.n on the computational boundary;
   
   REAL :: rr(1:3),  distance(1:3), jj(1:3), Bxyz(1:3), accumulator, firstorderfactor
-  INTEGER :: jk
+  INTEGER :: plasmaNtz, jk
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-  accumulator = zero
+  ! plasmaNtz = SIZE(Pbxyz, 1)
+  plasmaNtz = vcNtz
   ! loop over the high resolution plasma boundary (inner boundary for virtual casing)
-  do jk = 1, vcNtz ;
+  do jk = 1, plasmaNtz, vcstep ;
       ! position on computational boundary - position on plasma boundary
-      rr(1:3) = xyz - Pbxyz(jk, 1:3)
-      jj(1:3) = Jxyz(jk, 1:3)
+      rr = xyz - Pbxyz(jk, 1:3)
+      jj = Jxyz(jk, 1:3)
 
     !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
     
-      distance(2) = sum( rr(1:3) * rr(1:3) ) + vcasingeps**2 ! 04 May 17;
+      distance(2) = sum( rr * rr ) + vcasingeps**2 ! 04 May 17;
       distance(1) = sqrt( distance(2) ) ; 
       distance(3) = distance(1) * distance(2) ! powers of distance; 24 Nov 16;
     
@@ -267,9 +267,9 @@ subroutine casing2( xyz, nxyz,  gBn)
                      jj(1) * rr(2) - jj(2) * rr(1)  /)
     
       ! Accumulate B.r/r^3 contributions 
-      accumulator = accumulator + sum( Bxyz(1:3) * nxyz(1:3) ) * firstorderfactor
+      gBn = gBn + sum( Bxyz * nxyz ) * firstorderfactor
  enddo
- gBn = accumulator * pi2 * pi2 / vcNtz 
+ gBn = gBn * pi2 * pi2 / (plasmaNtz / vcstep) 
  return
 
 end subroutine casing2
