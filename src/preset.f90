@@ -1723,20 +1723,21 @@ endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   if (Lfreebound > 0) then ! Only do for free-boundary; 7 Nov 18;
-    if ( vcNt.lt.Nt ) then
-      FATAL( bnorml, .true., The plasma boundary resolution for virtual casing vcNt must be greater than or equal to Nt )
-    endif
-    if ( vcNz.lt.Nz ) then
-      FATAL( bnorml, .true., The plasma boundary resolution for virtual casing vcNz must be greater than or equal to Nz )
+    if (Lgridvcasing .eq. 1) then
+      if ( vcNt.lt.Nt ) then
+        FATAL( bnorml, .true., The plasma boundary resolution for virtual casing vcNt must be greater than or equal to Nt )
+      endif
+      if ( vcNz.lt.Nz ) then
+        FATAL( bnorml, .true., The plasma boundary resolution for virtual casing vcNz must be greater than or equal to Nz )
+      endif
+
+      vcNtz = vcNt*vcNz ! the plasma boundary has to use a higher resolution than the computational boundary
+      SALLOCATE( Jxyz, (1:vcNtz,1:3), zero )  ! Cartesian components of virtual casing surface current; needs to be recalculated at each iteration;
+      SALLOCATE( Pbxyz, (1:vcNtz,1:3), zero ) ! Cartesian points on the plasma boundary; needs to be recalculated at each iteration;
     endif
 
-    vcNtz = vcNt*vcNz ! the plasma boundary has to use a higher resolution than the computational boundary
- 
     SALLOCATE( Dxyz, (1:3,1:Ntz), zero ) ! Cartesian components of computational boundary; position; 14 Apr 17;
     SALLOCATE( Nxyz, (1:3,1:Ntz), zero ) ! Cartesian components of computational boundary; normal  ; 14 Apr 17;
-
-    SALLOCATE( Jxyz, (1:vcNtz,1:3), zero )  ! Cartesian components of virtual casing surface current; needs to be recalculated at each iteration;
-    SALLOCATE( Pbxyz, (1:vcNtz,1:3), zero ) ! Cartesian points on the plasma boundary; needs to be recalculated at each iteration;
 
     lvol = Mvol ; lss = one ; Lcurvature = 1 ; Lcoordinatesingularity = .false. ! will only require normal field on outer interface = computational boundary;
 
