@@ -89,6 +89,8 @@ subroutine bnorml( mn, Ntz, efmn, ofmn )
 
   use cputiming, only : Tbnorml
 
+  use inputlist, only : vcNz, vcNt
+
   use allglobal, only : ncpu, myid, cpus, MPI_COMM_SPEC, pi2nfp, Mvol, &
                         Nt, Nz, &
                         Rij, Zij, guvij, sg, TT, &
@@ -96,7 +98,8 @@ subroutine bnorml( mn, Ntz, efmn, ofmn )
                         im, in, Ate, Aze, Ato, Azo, &
                         Nt, Nz, cfmn, sfmn, &
                         ijreal, ijimag, jireal, jiimag, &
-                        globaljk, tetazeta, virtualcasingfactor, gteta, gzeta, Dxyz, Nxyz
+                        globaljk, virtualcasingfactor, gteta, gzeta, Dxyz, Nxyz, &
+                        Jxyz, Pbxyz, vcNtz
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -106,9 +109,8 @@ subroutine bnorml( mn, Ntz, efmn, ofmn )
   REAL   , intent(out) :: efmn(1:mn), ofmn(1:mn)
 
   INTEGER              :: lvol, Lcurvature, Lparallel, ii, jj, kk, jk, ll, kkmodnp, jkmodnp, ifail, id01daf, nvccalls, icasing, ideriv
-  REAL                 :: lss, zeta, teta, cszeta(0:1), tetalow, tetaupp, absacc, gBn
-  REAL                 :: Jxyz(1:Ntz,1:3), Bxyz(1:Ntz,1:3), dAt(1:Ntz), dAz(1:Ntz), distance(1:Ntz)
-
+  REAL                 :: lss, zeta, teta, tetalow, tetaupp, absacc, gBn, gBn2
+  REAL                 :: Bxyz(1:Ntz,1:3), dAt(1:Ntz), dAz(1:Ntz), distance(1:Ntz)
  !REAL                 :: vcintegrand, zetalow, zetaupp
 ! external             :: vcintegrand, zetalow, zetaupp
 
@@ -137,13 +139,33 @@ subroutine bnorml( mn, Ntz, efmn, ofmn )
 #endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+#define COMPARECASING
+#ifdef COMPARECASING
+! Precompute Jxyz(1:Ntz,1:3) and the corresponding positions on the high resolution plasma boundary
 
-  do kk = 0, Nz-1 ; zeta = kk * pi2nfp / Nz
+! OMP PARALLEL DO SHARED(Pbxyz, Jxyz) PRIVATE(jk, teta, zeta) 
+do kk = 0, vcNz-1 ; 
+   zeta = kk * pi2nfp / vcNz
+   do jj = 0, vcNt-1 ; 
+      teta = jj * pi2  / vcNt ; 
+      jk = 1 + jj + kk*vcNt
+      
+      call dvcfieldimpl( teta, zeta, Pbxyz(jk,1:3), Jxyz(jk,1:3) )
 
-   if( Igeometry.eq.3 ) then ; cszeta(0:1) = (/ cos(zeta), sin(zeta) /)
-   endif
+   enddo
+enddo
 
-   do jj = 0, Nt-1 ; teta = jj * pi2    / Nt ; jk = 1 + jj + kk*Nt
+! OMP PARALLEL DO SHARED(Dxyz, Pbxyz, Jxyz, ijimag) PRIVATE(jk)
+do jk = 1, vcNtz
+  WCALL( bnorml, casing2, ( Dxyz(:,jk), Nxyz(:,jk), Pbxyz, Jxyz, ijimag(jk) ) )
+enddo
+#endif
+
+  do kk = 0, Nz-1 ; 
+   zeta = kk * pi2 / Nz
+
+   do jj = 0, Nt-1 ; 
+    teta = jj * pi2 / Nt ; jk = 1 + jj + kk*Nt
 
     globaljk = jk ! this is global; passed through to vcintegrand & casing;
 
@@ -156,35 +178,25 @@ subroutine bnorml( mn, Ntz, efmn, ofmn )
      FATAL( bnorml, .true., invalid Lparallel in parallelization loop )
     end select ! end of select case( Lparallel ) ; 09 Mar 17;
 
-    tetazeta(1:2) = (/ teta, zeta /) ! this is global; passed through to zetalow & zetaupp; 14 Apr 17;
-
-!#ifdef COMPARECASING
-!
-!    tetalow = tetazeta(1) - vcasingper * pi ; tetaupp = tetazeta(1) + vcasingper * pi ; absacc = vcasingtol
-!
-!    id01daf = 1 ; call D01DAF( tetalow, tetaupp, zetalow, zetaupp, vcintegrand, absacc, gBn, nvccalls, id01daf ) ! 04 May 17;
-!
-!    ijimag(jk) = gBn
-!
-!#endif
-
-    WCALL( bnorml, casing, ( teta, zeta, gBn, icasing ) ) ! tetazeta is global; 26 Apr 17;
-
+    WCALL( bnorml, casing, ( teta, zeta, gBn, icasing ) )
     ijreal(jk) = gBn
 
-!#ifdef COMPARECASING
-!    write(ounit,1000) myid, zeta, teta, ijreal(jk), ijimag(jk), ijreal(jk)-ijimag(jk)
-!#endif
-!
-!#ifdef CASING
-!    write(ounit,1000) myid, zeta, teta, ijreal(jk), ijimag(jk), ijreal(jk)-ijimag(jk)
-!#endif
+#ifdef COMPARECASING
+  WCALL( bnorml, casing2, ( Dxyz(1:3,jk), Nxyz(1:3,jk), Pbxyz, Jxyz, gBn2 ) )
+  ijimag(jk) = gBn2
 
-1000 format("bnorml : ", 10x ," : myid=",i3," : \z =",f6.3," ; \t =",f6.3," ; B . x_t x x_z =",2f22.15," ; ":"err =",es13.5," ;")
+  write(ounit,1000) myid, zeta, teta, ijreal(jk), ijimag(jk), ijreal(jk)-ijimag(jk)
+  1000 format("bnorml : ", 10x ," : myid=",i3," : \z =",f6.3," ; \t =",f6.3," ; B . x_t x x_z =",2f22.15," ; ":"err =",es13.5," ;")
+#endif
 
    enddo ! end of do jj;
   enddo ! end of do kk;
 
+print *, Nt, Nz
+print *, ijimag(:)
+print *, "          "
+print *, ijreal(:)
+stop
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 1001 format("bnorml : ", 10x ," : "a1" : (t,z) = ("f8.4","f8.4" ) ; gBn=",f23.15," ; ":" error =",f23.15" ;")
