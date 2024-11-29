@@ -833,19 +833,19 @@ module allglobal
 !> \addtogroup grp_misc Miscellaneous
 !> The following are miscellaneous flags required for the virtual casing field, external (vacuum) field integration, ...
 !> @{
-  INTEGER              :: globaljk  !< labels position
-  REAL, allocatable    :: Dxyz(:,:) !< computational boundary; position
-  REAL, allocatable    :: Nxyz(:,:) !< computational boundary; normal
-  REAL, allocatable    :: Jxyz(:,:) !< plasma        boundary; surface current
-
-  REAL                 :: tetazeta(1:2) !< what is this?
+  INTEGER              :: globaljk   !< labels position
+  REAL, allocatable    :: Dxyz(:,:)  !< computational boundary; position
+  REAL, allocatable    :: Nxyz(:,:)  !< computational boundary; normal
+  REAL, allocatable    :: Jxyz(:,:)  !< plasma        boundary; surface current
+  REAL, allocatable    :: Pbxyz(:,:) !< plasma        boundary; position
 
   REAL                 :: virtualcasingfactor = -one / (four*pi) !< this agrees with diagno
-
+  
   INTEGER              :: IBerror !< for computing error in magnetic field
 
   INTEGER              :: nfreeboundaryiterations !< number of free-boundary iterations already performed
 
+  INTEGER              :: vcNtz !< number of grid points in \f$\theta\f$ and \f$\zeta\f$ for the plasma surface current computation  
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   INTEGER, parameter   :: Node = 2 !< best to make this global for consistency between calling and called routines
