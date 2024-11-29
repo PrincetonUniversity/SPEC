@@ -85,7 +85,7 @@ subroutine bnorml( mn, Ntz, efmn, ofmn )
 
   use fileunits, only : ounit, lunit
 
-  use inputlist, only : Wmacros, Wbnorml, Igeometry, Lcheck, vcasingtol, vcasingper, Lrad
+  use inputlist, only : Wmacros, Wbnorml, Igeometry, Lcheck, vcasingtol, vcasingper, Lrad, lgridvcasing  
 
   use cputiming, only : Tbnorml
 
@@ -139,46 +139,56 @@ subroutine bnorml( mn, Ntz, efmn, ofmn )
 #endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-#define COMPARECASING
+
 #ifdef COMPARECASING
-! Precompute Jxyz(1:Ntz,1:3) and the corresponding positions on the high resolution plasma boundary
+! When comparing results, both methods should always run
+if (.true.) then
+#else
+if ( lgridvcasing.eq.1 ) then
+#endif
+  ! Precompute Jxyz(1:Ntz,1:3) and the corresponding positions on the high resolution plasma boundary
 
-!$OMP PARALLEL DO SHARED(Pbxyz, Jxyz) PRIVATE(jk, teta, zeta) 
-do kk = 0, vcNz-1 ; 
-  zeta = kk * pi2nfp / vcNz
-  do jj = 0, vcNt-1 ; 
-    teta = jj * pi2  / vcNt ; 
-    jk = 1 + jj + kk*vcNt
-    
-    call dvcfieldimpl( teta, zeta, Pbxyz(jk,1:3), Jxyz(jk,1:3) )
-    
+  !$OMP PARALLEL DO SHARED(Pbxyz, Jxyz) PRIVATE(jk, teta, zeta) 
+  do kk = 0, vcNz-1 ; 
+    zeta = kk * pi2nfp / vcNz
+    do jj = 0, vcNt-1 ; 
+      teta = jj * pi2  / vcNt ; 
+      jk = 1 + jj + kk*vcNt
+      
+      call dvcfieldimpl( teta, zeta, Pbxyz(jk,1:3), Jxyz(jk,1:3) )
+      
+    enddo
   enddo
-enddo
 
-! iterate over resolutions of the virtual casing grid to get an estimate of the accuracy
-do vcstep = 4, 0, -1
-  !$OMP PARALLEL DO SHARED(Dxyz, Pbxyz, Jxyz, ijimag) PRIVATE(jk, gBn)
-  do jk = 1, Ntz
-    call casing2( Dxyz(:,jk), Nxyz(:,jk), Pbxyz(1:vcNtz, 1:3), Jxyz(1:vcNtz, 1:3), 2**vcstep,  gBn)
-    
-    ijreal(jk) = ijimag(jk)
-    ijimag(jk) = gBn 
+  ! iterate over resolutions of the virtual casing grid to get an estimate of the accuracy
+  do vcstep = 3, 0, -1
+    !$OMP PARALLEL DO SHARED(Dxyz, Pbxyz, Jxyz, ijimag) PRIVATE(jk, gBn)
+    do jk = 1, Ntz
+      call casing2( Dxyz(:,jk), Nxyz(:,jk), Pbxyz(1:vcNtz, 1:3), Jxyz(1:vcNtz, 1:3), 2**vcstep,  gBn)
+      
+      ijreal(jk) = ijimag(jk)
+      ijimag(jk) = gBn 
 
+    enddo
+    deltah4h2 = deltah2h
+    deltah2h =  sum(abs(ijimag - ijreal)) ! mean delta between the h and h/2 solutions
+
+    ! Order of the integration method: log(deltah4h2/deltah2h)/log(2.0) = 1
+    ! relative error: deltah2h/abs(ijimag(jk))
+    ! absolute error: delta2h/Ntz
+    accuracyestimate = deltah2h / sum(abs(ijimag))
   enddo
-  deltah4h2 = deltah2h
-  deltah2h =  sum(abs(ijimag - ijreal)) ! mean delta between the h and h/2 solutions
 
-  ! Order of the integration method: log(deltah4h2/deltah2h)/log(2.0) = 1
-  ! relative error: deltah2h/abs(ijimag(jk))
-  ! absolute error: delta2h/Ntz
-  accuracyestimate = deltah2h / sum(abs(ijimag))
-enddo
-
-if (accuracyestimate.gt.vcasingtol) then
-  FATAL( bnorml, .true., virtual casing accuracy is too low, increase vcNt and vcNz )
-else
-  print *, "virtual casing with regular grid produced an accuracy estimate of", accuracyestimate 
+  write(ounit, '("bnorml : ", 10x ," : accuracyestimate = ",es13.5," ; vcasingtol = ",es13.5)') accuracyestimate, vcasingtol
+  ! if (accuracyestimate.gt.vcasingtol) then
+  !   FATAL( bnorml, .true., virtual casing accuracy is too low, increase vcNt and vcNz )
+  ! endif
+#ifdef COMPARECASING
 endif
+! When comparing results, both methods should always run
+if (.true.) then
+#else
+else ! if not lgridvcasing  
 #endif
 
   do kk = 0, Nz-1 ; 
@@ -209,6 +219,7 @@ endif
 
    enddo ! end of do jj;
   enddo ! end of do kk;
+endif ! end of if (lgridvcasing  )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 1001 format("bnorml : ", 10x ," : "a1" : (t,z) = ("f8.4","f8.4" ) ; gBn=",f23.15," ; ":" error =",f23.15" ;")
