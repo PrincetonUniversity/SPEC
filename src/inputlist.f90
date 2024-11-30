@@ -315,7 +315,7 @@ module inputlist
                                      !< </ul>
   INTEGER      :: Ntoraxis    =  3   !< the number of \f$n\f$ harmonics used in the Jacobian \f$m=1\f$ harmonic elimination method;
                                      !< only relevant if \c Lrzaxis.ge.1 .
-  INTEGER      :: Lgridvcasing =  0  !< Which method to use for the virtual casing integral. 0 = adaptive integration routine with guaranteed accuracy, 1 = fixed resolution grid
+  INTEGER      :: Lvcgrid =  0  !< Which method to use for the virtual casing integral. 0 = adaptive integration routine with guaranteed accuracy, 1 = fixed resolution grid
 !> @}
 
 !> \addtogroup grp_global_local locallist
@@ -679,7 +679,7 @@ module inputlist
  Mregular    ,&
  Lrzaxis     ,&
  Ntoraxis    ,&
- Lgridvcasing
+ Lvcgrid
 
   namelist/locallist/&
  LBeltrami   ,&
@@ -895,7 +895,7 @@ subroutine initialize_inputs
   Mregular    = -1
   Lrzaxis     = 1
   Ntoraxis    = 3
-  Lgridvcasing = 0
+  Lvcgrid = 0
 
 ! locallist
 

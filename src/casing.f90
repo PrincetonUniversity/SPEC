@@ -230,13 +230,13 @@ subroutine casing2( xyz, nxyz,  Pbxyz, Jxyz, vcstep,gBn)
 
   use inputlist, only : vcasingeps, vcNz, vcNt
 
-  use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, vcNtz !, Pbxyz, Jxyz
+  use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC !, Pbxyz, Jxyz
 
   LOCALS
 
   REAL, intent(in)     :: xyz(3) ! arbitrary location; Cartesian;
   REAL, intent(in)     :: nxyz(3) ! surface normal on the computational boundary; Cartesian;
-  REAL, intent(in)     :: Pbxyz(1:vcNtz, 1:3), Jxyz(1:vcNtz, 1:3) 
+  REAL, intent(in)     :: Pbxyz(1:vcNz*vcNt, 1:3), Jxyz(1:vcNz*vcNt, 1:3) 
   INTEGER, intent(in)  :: vcstep
   REAL, intent(out)    :: gBn ! B.n on the computational boundary;
   
@@ -245,7 +245,7 @@ subroutine casing2( xyz, nxyz,  Pbxyz, Jxyz, vcstep,gBn)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   ! plasmaNtz = SIZE(Pbxyz, 1)
-  plasmaNtz = vcNtz
+  plasmaNtz = vcNz*vcNt
   ! loop over the high resolution plasma boundary (inner boundary for virtual casing)
   do jk = 1, plasmaNtz, vcstep ;
       ! position on computational boundary - position on plasma boundary

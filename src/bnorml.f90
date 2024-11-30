@@ -85,7 +85,7 @@ subroutine bnorml( mn, Ntz, efmn, ofmn )
 
   use fileunits, only : ounit, lunit
 
-  use inputlist, only : Wmacros, Wbnorml, Igeometry, Lcheck, vcasingtol, vcasingper, Lrad, lgridvcasing  
+  use inputlist, only : Wmacros, Wbnorml, Igeometry, Lcheck, vcasingtol, vcasingper, Lrad, Lvcgrid  
 
   use cputiming, only : Tbnorml
 
@@ -99,7 +99,7 @@ subroutine bnorml( mn, Ntz, efmn, ofmn )
                         Nt, Nz, cfmn, sfmn, &
                         ijreal, ijimag, jireal, jiimag, &
                         globaljk, virtualcasingfactor, gteta, gzeta, Dxyz, Nxyz, &
-                        Jxyz, Pbxyz, vcNtz
+                        Jxyz, Pbxyz
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -113,6 +113,7 @@ subroutine bnorml( mn, Ntz, efmn, ofmn )
   REAL                 :: Bxyz(1:Ntz,1:3), dAt(1:Ntz), dAz(1:Ntz), distance(1:Ntz)
   REAL                 :: accuracyestimate, resulth, resulth2, resulth4, deltah4h2, deltah2h 
   INTEGER              :: vcstep
+
 
   BEGIN(bnorml)
 
@@ -144,14 +145,14 @@ subroutine bnorml( mn, Ntz, efmn, ofmn )
 ! When comparing results, both methods should always run
 if (.true.) then
 #else
-if ( lgridvcasing.eq.1 ) then
+if ( Lvcgrid.eq.1 ) then
 #endif
   ! Precompute Jxyz(1:Ntz,1:3) and the corresponding positions on the high resolution plasma boundary
 
-  !$OMP PARALLEL DO SHARED(Pbxyz, Jxyz) PRIVATE(jk, teta, zeta) 
+  !$OMP PARALLEL DO SHARED(Pbxyz, Jxyz) PRIVATE(jk, teta, zeta) COLLAPSE(2)
   do kk = 0, vcNz-1 ; 
-    zeta = kk * pi2nfp / vcNz
     do jj = 0, vcNt-1 ; 
+      zeta = kk * pi2nfp / vcNz
       teta = jj * pi2  / vcNt ; 
       jk = 1 + jj + kk*vcNt
       
@@ -164,10 +165,10 @@ if ( lgridvcasing.eq.1 ) then
   do vcstep = 3, 0, -1
     !$OMP PARALLEL DO SHARED(Dxyz, Pbxyz, Jxyz, ijimag) PRIVATE(jk, gBn)
     do jk = 1, Ntz
-      call casing2( Dxyz(:,jk), Nxyz(:,jk), Pbxyz(1:vcNtz, 1:3), Jxyz(1:vcNtz, 1:3), 2**vcstep,  gBn)
+      call casing2( Dxyz(:,jk), Nxyz(:,jk), Pbxyz, Jxyz, 2**vcstep,  gBn)
       
-      ijreal(jk) = ijimag(jk)
-      ijimag(jk) = gBn 
+      ijreal(jk) = ijimag(jk) ! previous solution (lower resolution)
+      ijimag(jk) = gBn ! current solution (higher resolution)
 
     enddo
     deltah4h2 = deltah2h
@@ -188,7 +189,7 @@ endif
 ! When comparing results, both methods should always run
 if (.true.) then
 #else
-else ! if not lgridvcasing  
+else ! if not Lvcgrid  
 #endif
 
   do kk = 0, Nz-1 ; 
@@ -219,7 +220,7 @@ else ! if not lgridvcasing
 
    enddo ! end of do jj;
   enddo ! end of do kk;
-endif ! end of if (lgridvcasing  )
+endif ! end of if (Lvcgrid  )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 1001 format("bnorml : ", 10x ," : "a1" : (t,z) = ("f8.4","f8.4" ) ; gBn=",f23.15," ; ":" error =",f23.15" ;")
@@ -241,11 +242,6 @@ endif ! end of if (lgridvcasing  )
    case( 0 ) ! Lparallel = 0 ; 09 Mar 17;
 
     RlBCAST(ijreal(1+kk*Nt:Nt+kk*Nt),Nt,kkmodnp) ! plasma; 03 Apr 13;
-   !RlBCAST(ijimag(1+kk*Nt:Nt+kk*Nt),Nt,kkmodnp)
-
-   !RlBCAST(jireal(1+kk*Nt:Nt+kk*Nt),Nt,kkmodnp)
-   !RlBCAST(jiimag(1+kk*Nt:Nt+kk*Nt),Nt,kkmodnp)
-
    case( 1 ) ! Lparallel = 1 ; 09 Mar 17;
 
     do jj = 0, Nt-1
@@ -255,10 +251,6 @@ endif ! end of if (lgridvcasing  )
      jkmodnp = modulo(jk-1,ncpu)
 
      RlBCAST(ijreal(jk),1,jkmodnp) ! plasma; 03 Apr 13;
-    !RlBCAST(ijimag(jk),1,jkmodnp)
-
-    !RlBCAST(jireal(jk),1,jkmodnp)
-    !RlBCAST(jiimag(jk),1,jkmodnp)
 
     enddo
 
