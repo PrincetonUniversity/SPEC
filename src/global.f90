@@ -844,8 +844,6 @@ module allglobal
   INTEGER              :: IBerror !< for computing error in magnetic field
 
   INTEGER              :: nfreeboundaryiterations !< number of free-boundary iterations already performed
-
-  INTEGER              :: vcNtz !< number of grid points in \f$\theta\f$ and \f$\zeta\f$ for the plasma surface current computation  
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   INTEGER, parameter   :: Node = 2 !< best to make this global for consistency between calling and called routines

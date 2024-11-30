@@ -294,6 +294,7 @@ subroutine mirror_input_to_outfile
   HWRITEIV( grpInputNumerics,          1, Mregular           , (/ Mregular    /))
   HWRITEIV( grpInputNumerics,          1, Lrzaxis            , (/ Lrzaxis     /))
   HWRITEIV( grpInputNumerics,          1, Ntoraxis           , (/ Ntoraxis    /))
+  HWRITEIV( grpInputNumerics,          1, Lvcgrid            , (/ Lvcgrid     /))
 
   HCLOSEGRP( grpInputNumerics, __FILE__, __LINE__)
 
@@ -344,6 +345,8 @@ subroutine mirror_input_to_outfile
   HWRITEIV( grpInputGlobal,            1,  vcasingits        , (/ vcasingits  /))
   HWRITEIV( grpInputGlobal,            1,  vcasingper        , (/ vcasingper  /))
   HWRITEIV( grpInputGlobal,            1,  mcasingcal        , (/ mcasingcal  /))  ! redundant;
+  HWRITEIV( grpInputGlobal,            1,  vcnt              , (/ vcnt        /))
+  HWRITEIV( grpInputGlobal,            1,  vcnz              , (/ vcnz        /))
 
   HCLOSEGRP( grpInputGlobal )
 
