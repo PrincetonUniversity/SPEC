@@ -108,9 +108,9 @@ subroutine bnorml( mn, Ntz, efmn, ofmn )
   INTEGER, intent(in)  :: mn, Ntz
   REAL   , intent(out) :: efmn(1:mn), ofmn(1:mn)
 
-  INTEGER              :: lvol, Lcurvature, Lparallel, ii, jj, kk, jk, ll, kkmodnp, jkmodnp, ifail, id01daf, nvccalls, icasing, ideriv
-  REAL                 :: lss, zeta, teta, tetalow, tetaupp, absacc, gBn
-  REAL                 :: Bxyz(1:Ntz,1:3), dAt(1:Ntz), dAz(1:Ntz), distance(1:Ntz)
+  INTEGER              :: lvol, Lparallel, ii, jj, kk, jk, ll, kkmodnp, jkmodnp, ifail, id01daf, nvccalls, icasing
+  REAL                 :: zeta, teta, gBn
+  REAL                 :: Bxyz(1:Ntz,1:3), distance(1:Ntz)
   REAL                 :: accuracyestimate, resulth, resulth2, resulth4, deltah4h2, deltah2h 
   INTEGER              :: vcstep
 
@@ -124,10 +124,6 @@ subroutine bnorml( mn, Ntz, efmn, ofmn )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   ijreal(1:Ntz) = zero ! normal plasma field; 15 Oct 12;
- !ijimag(1:Ntz) = zero
-
- !jireal(1:Ntz) = zero
- !jiimag(1:Ntz) = zero
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
