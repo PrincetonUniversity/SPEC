@@ -117,7 +117,7 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  use constants, only : zero, half, one
+  use constants, only : zero, half, one, pi2
 
   use numerical, only : small, machprec
 
@@ -127,7 +127,8 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
                         mu, helicity, iota, oita, curtor, curpol, Lrad, Ntor,&
                        !Lposdef, &
                         Lconstraint, mupftol, &
-                        Lmatsolver, NiterGMRES, epsGMRES, LGMRESprec, epsILU
+                        Lmatsolver, NiterGMRES, epsGMRES, LGMRESprec, epsILU,&
+                        mpol
 
   use cputiming, only : Tmp00ac
 
@@ -195,6 +196,11 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
   REAL                 :: fpar(ipar_SIZE), v1
   REAL, allocatable    :: wk(:)
   INTEGER,allocatable  :: jw(:), iperm(:)
+
+  REAL               :: cheby(0:Lrad(ivol),0:2), zernike(0:Lrad(1),0:mpol,0:2)
+  REAL               :: dH1, dH2
+  INTEGER            :: ll, id
+
 
   BEGIN(mp00ac)
 
@@ -523,6 +529,39 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 
     lABintegral(lvol) = half * sum( solution(1:NN,0) * Ddotx(1:NN) )
   endif
+
+
+  ! if (GaugeInvariantH) then
+  dH1 = zero
+  dH2 = zero
+  do ll = 0, Lrad(lvol)
+    !             ideriv=0   mn=0
+    id = Ate(lvol,0        , 1)%i(ll)
+    if (id/=0) then ! Indirection maps some elements to 0, to "discard" them during matrix construction. Ignore them here.
+      if (Lcoordinatesingularity) then
+        call get_zernike_d2(small, Lrad(lvol), mpol, zernike)
+        dH1 = dH1 + pi2 * solution(id,0) * zernike(ll,0,0)
+      else
+        call get_cheby_d2(-one+small, Lrad(lvol), cheby(0:Lrad(lvol),0:2))
+        dH1 = dH1 + pi2 * solution(id,0) * cheby(ll,0)
+      endif
+    endif
+    
+    !             ideriv=0   mn=0
+    id = Aze(lvol,0        , 1)%i(ll)
+    if (id/=0) then ! Indirection maps some elements to 0, to "discard" them during matrix construction. Ignore them here.
+      if (Lcoordinatesingularity) then
+        call get_zernike_d2(one, Lrad(lvol), mpol, zernike)
+        dH2 = dH2 + pi2 * solution(id,0) * zernike(ll,0,0)
+      else
+        call get_cheby_d2(one, Lrad(lvol), cheby(0:Lrad(lvol),0:2))
+        dH2 = dH2 + pi2 * solution(id,0) * cheby(ll,0)
+      endif
+    endif
+  enddo
+  
+  lABintegral(lvol) = lABintegral(lvol) - dH1 - dH2
+  ! endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   DALLOCATE( matrix )
