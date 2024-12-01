@@ -306,7 +306,7 @@ If <code>LHevectors==T</code> then the eigenvalues <em>and</em> the eigenvectors
 Note that if <code>Igeometry==3</code>, then the derivative-matrix also contains information regarding how the "artificial" spectral constraints vary with geometry; so, the eigenvalues and eigenvectors are not purely "physical".  </li>
 <li>
 <p class="startli">The eigenvalues and eigenvectors (if required) are written to the file <code></code>.ext.GF.ev as follows:</p>
-<div class="fragment"><div class="line"><span class="keyword">open</span>(hunit,file=<span class="stringliteral">&quot;.&quot;</span>//trim(ext)//<span class="stringliteral">&quot;.GF.ev&quot;</span>,status=<span class="stringliteral">&quot;unknown&quot;</span>,form=<span class="stringliteral">&quot;unformatted&quot;</span>)</div>
+<div class="fragment"><div class="line"><span class="keyword">open</span>(hunit,file=trim(get_hidden(ext))//<span class="stringliteral">&quot;.GF.ev&quot;</span>,status=<span class="stringliteral">&quot;unknown&quot;</span>,form=<span class="stringliteral">&quot;unformatted&quot;</span>)</div>
 <div class="line"><span class="keyword">write</span>(hunit)ngdof,ldvr,ldvi        <span class="comment">! integers; if only the eigenvalues were computed then Ldvr=Ldvi=1;</span></div>
 <div class="line"><span class="keyword">write</span>(hunit)evalr(1:ngdof)         <span class="comment">! reals   ; real      part of eigenvalues;</span></div>
 <div class="line"><span class="keyword">write</span>(hunit)evali(1:ngdof)         <span class="comment">! reals   ; imaginary part of eigenvalues;</span></div>
@@ -508,7 +508,7 @@ The approximate rotational transform is determined, in <a class="el" href="group
 <li>
 <p class="startli">The Poincaré data is written to <code></code>.ext.poincare:xxxx , where <code>xxxx</code> is an integer indicating the volume. The format of this file is as follows:</p>
 <div class="fragment"><div class="line"><span class="keyword">write</span>(svol,<span class="stringliteral">&#39;(i4.4)&#39;</span>)lvol <span class="comment">! lvol labels volume;</span></div>
-<div class="line"><span class="keyword">open</span>(lunit+myid,file=<span class="stringliteral">&quot;.&quot;</span>//trim(ext)//<span class="stringliteral">&quot;.poincare.&quot;</span>//svol,status=<span class="stringliteral">&quot;unknown&quot;</span>,form=<span class="stringliteral">&quot;unformatted&quot;</span>)</div>
+<div class="line"><span class="keyword">open</span>(lunit+myid,file=trim(get_hidden(ext))//<span class="stringliteral">&quot;.poincare.&quot;</span>//svol,status=<span class="stringliteral">&quot;unknown&quot;</span>,form=<span class="stringliteral">&quot;unformatted&quot;</span>)</div>
 <div class="line"><span class="keywordflow">do</span> until <span class="keyword">end </span>of file</div>
 <div class="line">  <span class="keyword">write</span>(lunit+myid) nz, nppts                <span class="comment">! integers</span></div>
 <div class="line">  <span class="keyword">write</span>(lunit+myid) <span class="keyword">data</span>(1:4,0:nz-1,1:nppts) <span class="comment">! doubles</span></div>
@@ -537,7 +537,7 @@ The starting location for the fieldline integrations are equally spaced in the r
 <p ><b>format of output: rotational-transform</b></p>
 <ul>
 <li>
-The rotational-transform data is written to <code></code>.ext.transform:xxxx , where <code>xxxx</code> is an integer indicating the volume. The format of this file is as follows: <div class="fragment"><div class="line"><span class="keyword">open</span>(lunit+myid,file=<span class="stringliteral">&quot;.&quot;</span>//trim(ext)//<span class="stringliteral">&quot;.sp.t.&quot;</span>//svol,status=<span class="stringliteral">&quot;unknown&quot;</span>,form=<span class="stringliteral">&quot;unformatted&quot;</span>)</div>
+The rotational-transform data is written to <code></code>.ext.transform:xxxx , where <code>xxxx</code> is an integer indicating the volume. The format of this file is as follows: <div class="fragment"><div class="line"><span class="keyword">open</span>(lunit+myid,file=trim(get_hidden(ext))//<span class="stringliteral">&quot;.sp.t.&quot;</span>//svol,status=<span class="stringliteral">&quot;unknown&quot;</span>,form=<span class="stringliteral">&quot;unformatted&quot;</span>)</div>
 <div class="line"><span class="keyword">write</span>(lunit+myid) lnptrj-ioff+1                                      <span class="comment">! integer</span></div>
 <div class="line"><span class="keyword">write</span>(lunit+myid) diotadxup(0:1,0,lvol)                              <span class="comment">! doubles</span></div>
 <div class="line"><span class="keyword">write</span>(lunit+myid) ( fiota(itrj,1:2), itrj = ioff, lnptrj ) <span class="comment">! doubles</span></div>
