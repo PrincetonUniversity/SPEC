@@ -532,28 +532,34 @@ subroutine mp00ac( Ndof, Xdof, Fdof, Ddof, Ldfjac, iflag ) ! argument list is fi
 
 
   ! if (GaugeInvariantH) then
+  dH1 = zero
+  dH2 = zero
   do ll = 0, Lrad(lvol)
     !             ideriv=0   mn=0
     id = Ate(lvol,0        , 1)%i(ll)
-    if (Lcoordinatesingularity) then
-      call get_zernike_d2(small, Lrad(lvol), mpol, zernike)
-      dH1 = dH1 + pi2 * solution(id,0) * zernike(ll,0,0)
-    else
-      call get_cheby_d2(-one+small, Lrad(lvol), cheby(0:Lrad(lvol),0:2))
-      dH1 = dH1 + pi2 * solution(id,0) * cheby(ll,0)
+    if (id/=0) then ! Indirection maps some elements to 0, to "discard" them during matrix construction. Ignore them here.
+      if (Lcoordinatesingularity) then
+        call get_zernike_d2(small, Lrad(lvol), mpol, zernike)
+        dH1 = dH1 + pi2 * solution(id,0) * zernike(ll,0,0)
+      else
+        call get_cheby_d2(-one+small, Lrad(lvol), cheby(0:Lrad(lvol),0:2))
+        dH1 = dH1 + pi2 * solution(id,0) * cheby(ll,0)
+      endif
     endif
-
+    
     !             ideriv=0   mn=0
     id = Aze(lvol,0        , 1)%i(ll)
-    if (Lcoordinatesingularity) then
-      call get_zernike_d2(one, Lrad(lvol), mpol, zernike)
-      dH2 = dH2 + pi2 * solution(id,0) * zernike(ll,0,0)
-    else
-      call get_cheby_d2(one, Lrad(lvol), cheby(0:Lrad(lvol),0:2))
-      dH2 = dH2 + pi2 * solution(id,0) * cheby(ll,0)
+    if (id/=0) then ! Indirection maps some elements to 0, to "discard" them during matrix construction. Ignore them here.
+      if (Lcoordinatesingularity) then
+        call get_zernike_d2(one, Lrad(lvol), mpol, zernike)
+        dH2 = dH2 + pi2 * solution(id,0) * zernike(ll,0,0)
+      else
+        call get_cheby_d2(one, Lrad(lvol), cheby(0:Lrad(lvol),0:2))
+        dH2 = dH2 + pi2 * solution(id,0) * cheby(ll,0)
+      endif
     endif
   enddo
-
+  
   lABintegral(lvol) = lABintegral(lvol) - dH1 - dH2
   ! endif
 
