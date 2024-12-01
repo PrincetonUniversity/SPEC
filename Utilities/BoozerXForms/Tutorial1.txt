@@ -1,0 +1,33 @@
+This is a basic tutorial on how to use the Booz-xform package (M.Landreman) from SPECout file, using routines init_from_spec.py and run_boz.py
+
+0.  Make sure you have the booz-xforms package installed. If not, can be installed with 
+    $ pip install booz-xform (or see doc at https://hiddensymmetries.github.io/booz_xform/)
+
+0b. Requires additional packages: py_spec, numpy and h5py 
+
+1.  Load function to initialise a booz-xforms instance out of a SPEC output (.h5) with 
+    > from init_from_spec import init_from_spec 
+
+2.  Call init_from_spec function with test file QA_002.sp.h5
+    > b = init_from_spec('QA_002.sp.h5')
+
+3.  Call internal run method as follows
+    > b.run()
+
+4.  The output data sets can be written in .h5 file running all the commands from run_boz.py 
+    > f   = h5.File('./OutputBOZ/'+ bozout, 'w')
+    > print(f.filename)
+    > grp = f.create_group('Booz_xForms')    
+    > ...
+    > ...
+    > outputs.create_dataset('boozer_i_all', data = b.Boozer_I_all)
+    > f.close()
+
+5.  Plot the magnetic field intensity in Boozer coordinates
+    > plt.figure
+    > bx.surfplot(b, js=0, fill=False, cmap=plt.cm.jet, ntheta=50, nphi=90, ncontours=25)
+    > plt.savefig('QA002.eps')
+    > plt.show() 
+
+6.  If major issue can't be solved / code mistake
+    contact: S.Guinchard - salomon.guinchard@epfl.ch 

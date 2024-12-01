@@ -66,7 +66,7 @@ module constants
   REAL, parameter :: mu0        =   2.0E-07 * pi2       !< \f$4\pi\cdot10^{-7}\f$
   REAL, parameter :: goldenmean =   1.618033988749895   !< golden mean = \f$( 1 + \sqrt 5 ) / 2\f$ ;
 
-  REAL, parameter :: version    =   3.20  !< version of SPEC
+  REAL, parameter :: version    =   3.23  !< version of SPEC
 
 end module constants
 
@@ -246,10 +246,11 @@ module allglobal
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  CHARACTER(LEN=1000)  :: ext ! extension of input filename, i.e., "G3V01L1Fi.001" for an input file G3V01L1Fi.001.sp
+  CHARACTER(LEN=1000)  :: ext       ! extension of input filename, i.e., "path/G3V01L1Fi.001" for an input file path/G3V01L1Fi.001.sp
 
   REAL                 :: ForceErr !< total force-imbalance
   REAL                 :: Energy   !< MHD energy
+  REAL                 :: BnsErr   !< (in freeboundary) error in self-consistency of field on plasma boundary (Picard iteration)
 
   REAL   , allocatable :: IPDt(:), IPDtDpf(:,:)  !< Toroidal pressure-driven current
 
@@ -945,6 +946,26 @@ subroutine set_mpi_comm(comm)
   if (ierr.ne.0) write(*,*) "error in call to MPI_COMM_SIZE"
 
 end subroutine
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+pure function get_hidden(ext) result(hidden_ext)
+  implicit none
+  CHARACTER(len=1000), intent(in) :: ext
+  ! ext with a "." prefix added to the basename "path/.G3V01L1Fi.001" for an input file path/G3V01L1Fi.001.sp
+  CHARACTER(LEN=1000)  :: hidden_ext 
+  INTEGER :: basename_start_index
+
+  ! Prepare the "hidden" ext filepath that has a "." prefix.
+  ! Split ext into directory path and basename using INDEX function, then concatenate them again with a "." inbetween
+#ifdef _WIN32
+    basename_start_index = INDEX(ext, '\', .TRUE.)
+#else
+    basename_start_index = INDEX(ext, '/', .TRUE.)
+#endif
+    ! folder + . + filename  
+    hidden_ext = trim(ext(1:basename_start_index))//"."//trim(ext(basename_start_index+1:))
+end function get_hidden
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1654,7 +1675,7 @@ subroutine wrtend
   write(iunit,'(" adiabatic   = ",257es23.15)') adiabatic(1:Mvol)
   write(iunit,'(" mu          = ",257es23.15)') mu(1:Mvol)
   write(iunit,'(" Ivolume     = ",257es23.15)') Ivolume(1:Mvol)
-  write(iunit,'(" Isurf       = ",257es23.15)') Isurf(1:Mvol-1)
+  write(iunit,'(" Isurf       = ",257es23.15)') Isurf(1:Mvol-1), 0.0
   write(iunit,'(" Lconstraint = ",i9        )') Lconstraint
   write(iunit,'(" pl          = ",257i23    )') pl(0:Mvol)
   write(iunit,'(" ql          = ",257i23    )') ql(0:Mvol)

@@ -9,8 +9,8 @@ def plot_pressure(self, normalize=True, ax=None, **kwargs):
     import numpy as np
     import matplotlib.pyplot as plt
 
-    pressure = self.input.physics.pressure * self.input.physics.pscale
-    tflux = self.output.tflux[: len(pressure)]
+    pressure = np.atleast_1d(self.input.physics.pressure) * self.input.physics.pscale
+    tflux = np.atleast_1d(self.output.tflux)[: len(pressure)]
     if not normalize:
         #  remove  mu_0
         pressure /= 4 * np.pi * 1.0e-7

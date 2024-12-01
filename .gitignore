@@ -57,3 +57,7 @@ _skbuild/
 # Temp fortran files
 src/mxspech.f90
 src/msphdf5.f90
+
+# Apple Mac related
+.DS_Store
+

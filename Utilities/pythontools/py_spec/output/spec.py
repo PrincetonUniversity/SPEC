@@ -37,7 +37,14 @@ class SPECout:
         get_B,
         get_modB,
         get_B_covariant,
-        test_derivatives
+        test_derivatives,
+        get_surface_current_density,
+        get_surface,
+        get_RZ_derivatives,
+        get_volume,
+        get_average_beta,
+        get_peak_beta,
+        get_flux_surface_average
     )
     from ._plot_modB import plot_modB
     from ._plot_iota import plot_iota
@@ -88,21 +95,15 @@ class SPECout:
         if isinstance(_content, h5py.File):
             _content.close()
 
-            # make sure that Lrad is always an array
-            if np.isscalar(self.input.physics.Lrad):
-                self.input.physics.Lrad = np.array([self.input.physics.Lrad])
-            # make sure that im always an array
-            if np.isscalar(self.output.im):
-                self.output.im = np.array([self.output.im])
-            # make sure that in_ is always an array
-            if np.isscalar(self.output.in_):
-                self.output.in_ = np.array([self.output.in_])
+            self.input.physics.Lrad = np.atleast_1d(self.input.physics.Lrad)
+            self.output.im = np.atleast_1d(self.output.im)
+            self.output.in_ = np.atleast_1d(self.output.in_)
 
             # these define the target dimensions in the radial direction
             Nvol = self.input.physics.Nvol
+            Mvol = Nvol
             if self.input.physics.Lfreebound:
-                Nvol += 1
-                self.input.physics.Nvol += 1
+                Mvol += 1
 
             Lrad = self.input.physics.Lrad
 
@@ -122,7 +123,7 @@ class SPECout:
 
             # split up radial matrix dimension into list of matrices for each of the nested volumes
             start = 0
-            for i in range(Nvol):
+            for i in range(Mvol):
                 # vector potential
                 cAte.append(
                     np.atleast_2d(self.vector_potential.Ate)[

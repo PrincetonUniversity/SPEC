@@ -767,6 +767,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
                     work(1:Lwork), Lwork, iwork(1:Liwork), idgelsd )
 
        ldiota(innout,0) = dlambda(1,0)
+       dlambdaout(1:NN, lvol, innout) = dlambda(1:NN,0) 
 
       case( 1 ) ! Lsvdiota = 1; jderiv = 1; 02 Sep 14;
 

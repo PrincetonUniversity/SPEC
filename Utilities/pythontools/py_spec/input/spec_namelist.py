@@ -10,7 +10,7 @@ import f90nml
 from f90nml import Namelist
 
 import numpy as np
-
+import matplotlib.pyplot as plt
 
 class SPECNamelist(Namelist):
     """The SPEC namelist class
@@ -428,7 +428,100 @@ class SPECNamelist(Namelist):
 
         return self.interface_guess[(m, n)][key][ivol]
 
-    def set_interface_guess(self, value, m, n, ivol, key="Rbc"):
+    def set_vacuum_field( self, value, m, n, mykey='Bns'):
+        """Set the guess of the coils field harmonics
+        parameters:
+            value -- the value that one wants to set
+            m,n -- the m and n number of the guess, must be within the allowed Mpol and Ntor range
+                   the n number is the one without multiplying by Nfp
+            mykey -- which guess, can be 'Bnc' or 'Bns'
+        """
+        if m > self._Mpol or m < 0:
+            raise ValueError("0 <= m <= Mpol")
+        if n > self._Ntor or n < -self._Ntor:
+            raise ValueError("-Ntor <= n <= Ntor")
+        if mykey not in ['Bns', 'Bnc']:
+            raise ValueError("mykey must be in ['Bns', 'Bnc']")
+
+        self['physicslist'][mykey][m][n+self._Ntor] = value
+        
+
+    def set_interface_guess(self, value, m, n, ivol, mykey="Rbc"):
+        """Set the guess of the interface Fourier harmonic
+        parameters:
+            value -- the value that one wants to set
+            m,n -- the m and n number of the guess, must be within the allowed Mpol and Ntor range
+                   the n number is the one without multiplying by Nfp
+            ivol -- which volume, Python convention, starting from 0
+            mykey -- which guess, can be 'Rbc', 'Zbs', 'Rbs', 'Zbc'
+        """
+        if ivol >= self._Nvol or ivol < 0:
+            raise ValueError("ivol must be between 0 and Nvol-1")
+        if m > self._Mpol or m < 0:
+            raise ValueError("0 <= m <= Mpol")
+        if n > self._Ntor or n < -self._Ntor:
+            raise ValueError("-Ntor <= n <= Ntor")
+        if mykey not in ["Rbc", "Rbs", "Zbc", "Zbs"]:
+            raise ValueError("mykey must be in ['Rbc', 'Rbs', 'Zbc', 'Zbs']")
+
+        if (m, n) not in self.interface_guess.keys():
+            # add a new item
+            self.interface_guess[(m, n)] = dict()
+            for key in ["Rbc", "Rbs", "Zbc", "Zbs"]:
+                self.interface_guess[(m, n)][key] = np.zeros([self._Nvol])
+
+        self.interface_guess[(m, n)][mykey][ivol] = value
+
+    def set_plasma_boundary(self, value, m, n, key='Rbc'):
+        """Set the value of the plasma boundary
+
+        parameters:
+            value -- the new value
+            m,n   -- poloidal and toroidal mode number. Has to be within the allowed Mpol and Ntor Fourier resolution
+                     n is has to be a multiple of Nfp
+            key   -- any of 'Rbc', 'Rbs', 'Zbc', 'Zbs'.
+        """
+
+        if m > self._Mpol or m < 0:
+            raise ValueError("0 <= m <= Mpol")
+        if n > self._Ntor or n < -self._Ntor:
+            raise ValueError("-Ntor <= n <= Ntor")
+        if key not in ["Rbc", "Rbs", "Zbc", "Zbs"]:
+            raise ValueError("key must be in ['Rbc', 'Rbs', 'Zbc', 'Zbs']")
+
+        if type(m)!=int: m=int(m)
+        if type(n)!=int: n=int(n)
+        if type(value)!=float: value = float(value)
+
+        self['physicslist'][key][m][n+self._Ntor] = value
+
+
+    def get_plasma_boundary(self, m, n, key="Rbc"):
+        """Get the guess of the interface Fourier harmonic
+        parameters:
+            m,n -- the m and n number of the guess, must be within the allowed Mpol and Ntor range
+                   the n number is the one without multiplying by Nfp
+            ivol -- which volume, Python convention, starting from 0
+            key -- which item, can be 'Rbc', 'Zbs', 'Rbs', 'Zbc'
+        Returns:
+            guess -- the initial guess of the interface harmonic used in SPEC
+        """
+        if key not in ["Rbc", "Rbs", "Zbc", "Zbs"]:
+            raise ValueError("key must be in ['Rbc', 'Rbs', 'Zbc', 'Zbs']")
+
+        ll = self['physicslist'][key]
+
+        if m>=len(ll): 
+            return 0
+        else:
+            nl = len(ll[m])
+            ntor = int((nl-1)/2)
+            if abs(n)>ntor:
+                return 0
+            else:
+                return ll[m][n+ntor]
+
+    def set_plasma_boundary(self, value, m, n, key="Rbc"):
         """Set the guess of the interface Fourier harmonic
         parameters:
             value -- the value that one wants to set
@@ -437,22 +530,28 @@ class SPECNamelist(Namelist):
             ivol -- which volume, Python convention, starting from 0
             key -- which guess, can be 'Rbc', 'Zbs', 'Rbs', 'Zbc'
         """
-        if ivol >= self._Nvol or ivol < 0:
-            raise ValueError("ivol must be between 0 and Nvol-1")
-        if m > self._Mpol or m < 0:
-            raise ValueError("0 <= m <= Mpol")
-        if n > self._Ntor or n < -self._Ntor:
-            raise ValueError("-Ntor <= n <= Ntor")
         if key not in ["Rbc", "Rbs", "Zbc", "Zbs"]:
             raise ValueError("key must be in ['Rbc', 'Rbs', 'Zbc', 'Zbs']")
 
-        if (m, n) not in self.interface_guess.keys():
-            # add a new item
-            self.interface_guess[(m, n)] = dict()
-            for key in ["Rbc", "Rbs", "Zbc", "Zbs"]:
-                self.interface_guess[(m, n)][key] = np.zeros([self._Nvol])
+        ll = self['physicslist'][key]
 
-        self.interface_guess[(m, n)][key][ivol] = value
+        if m>=len(ll): 
+            for m in range(len(ll), m+1):
+                self['physicslist'][key].append([0]*(2*self._Ntor+1))
+        else:
+            nl = len(ll[m])
+            ntor = int((nl-1)/2)
+            if abs(n)>ntor:
+                for n in range(ntor+1, abs(n)+1):
+                    self['physicslist'][key][m].append(0)
+                    self['physicslist'][key][m].insert(0, 0)
+                
+                # Change indexing
+                self['physicslist'].start_index[key][0] = -abs(n)
+        
+        nl = len(self['physicslist'][key][m])
+        ntor = int((nl-1)/2)
+        self['physicslist'][key][m][n+ntor] = value
 
     def remove_interface_guess(self, m, n):
         """Remove the guess of the interface Fourier harmonic with some m,n
@@ -465,6 +564,57 @@ class SPECNamelist(Namelist):
             raise ValueError("unknown m or n")
         else:
             del self.interface_guess[(m, n)]
+    def plot_initial_guess(self, phi=0, nt=1024, **kwargs):
+        """
+        Plot the guess for the inner interfaces on a toroidal plane
+
+        parameters:
+            phi -- toroidal angle
+            nt  -- number of points per interface, 1024 by default
+        """
+
+        fig, ax = plt.subplots()
+
+        tarr = np.linspace(0, 2*np.pi, nt)
+        nvol = self['physicslist']['Nvol']
+        nfp = self['physicslist']['Nfp']
+
+        nmodes = len(self.interface_guess)
+        for ivol in range(0,nvol-1):
+            r = np.zeros(nt)
+            z = np.zeros(nt)
+
+            for key in self.interface_guess.keys():
+                mm = key[0]
+                nn = key[1] * nfp
+
+                if mm>self['physicslist']['Mpol'] or abs(nn)>self['physicslist']['Ntor']: continue
+
+                cosa = np.cos(mm*tarr - nn*phi)
+                sina = np.sin(mm*tarr - nn*phi)
+                r += self.interface_guess[key]['Rbc'][ivol] * cosa + \
+                     self.interface_guess[key]['Rbs'][ivol] * sina
+                z += self.interface_guess[key]['Zbc'][ivol] * cosa + \
+                     self.interface_guess[key]['Zbs'][ivol] * sina
+
+            ax.scatter( r, z, **kwargs )
+
+        # Plot plasma boundary 
+        r = np.zeros(nt)
+        z = np.zeros(nt)
+        for mm in range(0, self._Mpol+1):
+            for nn in range(-self._Ntor, self._Ntor+1):            
+                cosa = np.cos(mm*tarr - nn*phi)
+                sina = np.sin(mm*tarr - nn*phi)
+                r += self['physicslist']['Rbc'][mm][nn+self._Ntor] * cosa \
+                    +self['physicslist']['Rbs'][mm][nn+self._Ntor] * sina
+                z += self['physicslist']['Zbc'][mm][nn+self._Ntor] * cosa \
+                    +self['physicslist']['Zbs'][mm][nn+self._Ntor] * sina
+
+        ax.scatter( r, z, **kwargs )
+        
+        plt.draw()
+
 
     def _rectify_namelist(self):
         """correct the size/type of the namelist objects and so on"""
@@ -487,7 +637,7 @@ class SPECNamelist(Namelist):
         for key in self.boundary_keys:
             if key.lower() not in self["physicslist"].keys():
                 self["physicslist"][key] = np.zeros(
-                    [self._Mpol, self._Ntor * 2 + 1], dtype=np.float
+                    [self._Mpol, self._Ntor * 2 + 1], dtype=np.float64
                 ).tolist()
                 self["physicslist"].start_index[key.lower()] = [-self._Ntor, 0]
             else:
@@ -501,7 +651,7 @@ class SPECNamelist(Namelist):
         for key in self.axis_keys:
             if key.lower() not in self["physicslist"].keys():
                 self["physicslist"][key] = np.zeros(
-                    [self._Ntor + 1], dtype=np.float
+                    [self._Ntor + 1], dtype=np.float64
                 ).tolist()
                 self["physicslist"].start_index[key.lower()] = [0]
             else:
@@ -596,7 +746,7 @@ class SPECNamelist(Namelist):
 
             # ignore empty lines
             if len(line_split) == 0:
-                break
+                continue
 
             # check if this line meet our expectation
             valid_line = True

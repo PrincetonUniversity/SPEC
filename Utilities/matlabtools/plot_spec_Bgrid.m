@@ -19,109 +19,151 @@ function plot_spec_Bgrid(data,nz0,plotstyle,newfig)
 %
 % OUTDATED - NEED DEBUG
 
-if(newfig==1)
-figure
+% Check inputs
+if ~strcmp(string(plotstyle),string('pcolor')) && ~strcmp(string(plotstyle),string('scatter'))
+    error('InputError: Invalid plotstyle')
+end
+if nz0<1
+    error('nzo should be greater than zero')
+end
+switch newfig
+    case 0
+        hold on
+    case 1
+        figure('Color','w','Position',[200 200 1500, 600])
+        hold on
+    case 2
+        hold off
+    otherwise
+        error('Invalide newfig')
 end
 
-nvol   = data.output.Mvol;
+Mvol   = data.output.Mvol;
 
 Lrad   = data.input.physics.Lrad;
 Nt     = data.grid.Nt;
-Nz     = data.grid.Nz;
 Nfp    = data.input.physics.Nfp;
 
-Rij    = data.grid.Rij;
-Zij    = data.grid.Zij;
-BR     = data.grid.BR;  
-Bp     = data.grid.Bp; 
-BZ     = data.grid.BZ;  
 
 iz     = nz0-1;
 phi0   = double((2*pi/Nfp)*(iz/Nt));
-rzdata = get_spec_rzarr(data,nvol,1,linspace(0,2*pi,32),phi0);
-rmax   = max(rzdata{1});
-rmin   = min(rzdata{1});
-zmax   = max(rzdata{2});
-zmin   = min(rzdata{2});
+R      = get_spec_R_derivatives(data, Mvol, 1, linspace(0,2*pi,64), phi0, 'R');
+Z      = get_spec_R_derivatives(data, Mvol, 1, linspace(0,2*pi,64), phi0, 'Z');
+
+rmax   = max(R{1});
+rmin   = min(R{1});
+zmax   = max(Z{1});
+zmin   = min(Z{1});
 
 if(strcmp(plotstyle,'pcolor')==1)
 
-for i=1:nvol
-  ngrid  = Lrad(i)+1;
+    for i=1:Mvol
+      ngrid  = Lrad(i)+1;
 
-  if(i==1)
-   nstart = 2;
-  else
-   nstart = 1;
-  end
+      % Read data corresponding to correct volume
+      Rij = data.grid.Rij{i};
+      Zij = data.grid.Zij{i};
+      BR  = data.grid.BR{i};  
+      Bp  = data.grid.Bp{i}; 
+      BZ  = data.grid.BZ{i};  
 
-  np1  = Nt;
-  np2  = 1+ngrid-nstart;
+      % Reshape as an array
+      if(i==1)
+       nstart = 2;
+      else
+       nstart = 1;
+      end
 
-  Rc   = reshape(Rij(i,1+Nt*iz:(iz+1)*Nt,nstart:ngrid),np1,np2);
-  Zc   = reshape(Zij(i,1+Nt*iz:(iz+1)*Nt,nstart:ngrid),np1,np2);
-  br   = reshape(BR(i,1+Nt*iz:(iz+1)*Nt,nstart:ngrid),np1,np2);
-  bp   = reshape(Bp(i,1+Nt*iz:(iz+1)*Nt,nstart:ngrid).*Rij(i,1+Nt*iz:(iz+1)*Nt,nstart:ngrid),np1,np2);
-  bz   = reshape(BZ(i,1+Nt*iz:(iz+1)*Nt,nstart:ngrid),np1,np2);
+      np1  = Nt;
+      np2  = 1+ngrid-nstart;
 
-  subplot(3,1,1)
-  pcolor(Rc,Zc,br)
-  axis equal; colorbar; hold on
-  xlim([0.95*rmin 1.05*rmax])
-  ylim([1.05*zmin 1.05*zmax])
-  title('B_R')
-  subplot(3,1,2)
-  pcolor(Rc,Zc,bp)
-  axis equal; colorbar; hold on
-  xlim([0.95*rmin 1.05*rmax])
-  ylim([1.05*zmin 1.05*zmax])
-  title('B_{\phi}')
-  subplot(3,1,3)
-  pcolor(Rc,Zc,bz)
-  axis equal; colorbar; hold on
-  xlim([0.95*rmin 1.05*rmax])
-  ylim([1.05*zmin 1.05*zmax])
-  title('B_Z')
-end
+      Rc   = reshape(Rij(1+Nt*iz:(iz+1)*Nt,nstart:ngrid),np1,np2);
+      Zc   = reshape(Zij(1+Nt*iz:(iz+1)*Nt,nstart:ngrid),np1,np2);
+      br   = reshape(BR( 1+Nt*iz:(iz+1)*Nt,nstart:ngrid),np1,np2);
+      bp   = reshape(Bp( 1+Nt*iz:(iz+1)*Nt,nstart:ngrid) ...
+                   .*Rij(1+Nt*iz:(iz+1)*Nt,nstart:ngrid),np1,np2);
+      bz   = reshape(BZ( 1+Nt*iz:(iz+1)*Nt,nstart:ngrid),np1,np2);
+
+      % Double first entry to fill entire plane
+      Rc(end+1,:) = Rc(1,:);
+      Zc(end+1,:) = Zc(1,:);
+      br(end+1,:) = br(1,:);
+      bp(end+1,:) = bp(1,:);
+      bz(end+1,:) = bz(1,:);
+
+      % Plots
+      subplot(1,3,1)
+      pcolor(Rc,Zc,br)
+      shading interp
+      axis equal; colorbar; hold on
+      xlim([0.95*rmin 1.05*rmax])
+      ylim([1.05*zmin 1.05*zmax])
+      title('B_R')
+
+      subplot(1,3,2)
+      pcolor(Rc,Zc,bp)
+      shading interp
+      axis equal; colorbar; hold on
+      xlim([0.95*rmin 1.05*rmax])
+      ylim([1.05*zmin 1.05*zmax])
+      title('B_{\phi}')
+
+      subplot(1,3,3)
+      pcolor(Rc,Zc,bz)
+      shading interp
+      axis equal; colorbar; hold on
+      xlim([0.95*rmin 1.05*rmax])
+      ylim([1.05*zmin 1.05*zmax])
+      title('B_Z')
+    end
 
 elseif(strcmp(plotstyle,'scatter')==1)
 
-cthick = 12 ;
+    cthick = 12 ;
 
-for i=1:nvol
-  ngrid  = Lrad(i)+1;
-  if(i==1)
-   nstart = 2;
-  else
-   nstart = 1;
-  end
-  for l=nstart:ngrid
-    Rc   =  Rij(i,1+Nt*iz:(iz+1)*Nt,l);
-    Zc   =  Zij(i,1+Nt*iz:(iz+1)*Nt,l);
-    colR =  BR(i,1+Nt*iz:(iz+1)*Nt,l);
-    colp =  Bp(i,1+Nt*iz:(iz+1)*Nt,l).*Rc;
-    colZ =  BZ(i,1+Nt*iz:(iz+1)*Nt,l);
-    
-    subplot(3,1,1)
-    scatter(Rc,Zc,cthick,colR)
-    axis equal; colorbar; hold on
-    xlim([0.95*rmin 1.05*rmax])
-    ylim([1.05*zmin 1.05*zmax])
-    title('B_R')
-    subplot(3,1,2)
-    scatter(Rc,Zc,cthick,colp)
-    axis equal; colorbar; hold on
-    xlim([0.95*rmin 1.05*rmax])
-    ylim([1.05*zmin 1.05*zmax])
-    title('B_{\phi}')
-    subplot(3,1,3)
-    scatter(Rc,Zc,cthick,colZ)
-    axis equal; colorbar; hold on
-    xlim([0.95*rmin 1.05*rmax])
-    ylim([1.05*zmin 1.05*zmax])
-    title('B_Z')
-  end
-end
+    for i=1:Mvol
+      % Read data corresponding to correct volume
+      Rij = data.grid.Rij{i};
+      Zij = data.grid.Zij{i};
+      BR  = data.grid.BR{i};  
+      Bp  = data.grid.Bp{i}; 
+      BZ  = data.grid.BZ{i};  
+      
+      ngrid  = Lrad(i)+1;
+      if(i==1)
+       nstart = 2;
+      else
+       nstart = 1;
+      end
+      for l=nstart:ngrid
+        Rc   =  Rij(1+Nt*iz:(iz+1)*Nt,l);
+        Zc   =  Zij(1+Nt*iz:(iz+1)*Nt,l);
+        colR =  BR(1+Nt*iz:(iz+1)*Nt,l);
+        colp =  Bp(1+Nt*iz:(iz+1)*Nt,l).*Rc;
+        colZ =  BZ(1+Nt*iz:(iz+1)*Nt,l);
+
+        subplot(1,3,1)
+        scatter(Rc,Zc,cthick,colR)
+        axis equal; colorbar; hold on
+        xlim([0.95*rmin 1.05*rmax])
+        ylim([1.05*zmin 1.05*zmax])
+        title('B_R')
+        
+        subplot(1,3,2)
+        scatter(Rc,Zc,cthick,colp)
+        axis equal; colorbar; hold on
+        xlim([0.95*rmin 1.05*rmax])
+        ylim([1.05*zmin 1.05*zmax])
+        title('B_{\phi}')
+        
+        subplot(1,3,3)
+        scatter(Rc,Zc,cthick,colZ)
+        axis equal; colorbar; hold on
+        xlim([0.95*rmin 1.05*rmax])
+        ylim([1.05*zmin 1.05*zmax])
+        title('B_Z')
+      end
+    end
 
 
 end

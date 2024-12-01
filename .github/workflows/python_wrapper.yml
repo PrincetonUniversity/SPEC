@@ -6,26 +6,25 @@ jobs:
     name: python_wrapper build
     
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     # Python3 should be pre-installed on 'ubuntu-latest'
     - name: Python version info
       run: |
-        python3 --version
-        pip3 --version
+        python --version
+        pip --version
 
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install gfortran mpi-default-bin mpi-default-dev libhdf5-103 libhdf5-dev libfftw3-bin libfftw3-dev libopenblas0-openmp libopenblas-dev cmake ninja-build
-        pip3 install --user numpy f90nml scikit-build
-        pip3 install --user git+https://github.com/zhucaoxiang/f90wrap
+        sudo apt-get install gfortran mpi-default-bin mpi-default-dev libhdf5-dev libfftw3-bin libfftw3-dev  libopenblas-dev cmake ninja-build
+        pip install  numpy f90nml scikit-build scipy meson meson-python
+        pip install f90wrap
 
     - name: Build python_wrapper
       run: |
-        python3 setup.py bdist_wheel
-        pip3 install --user dist/*.whl
+        pip install .
         
     - name: Test if installation is ok
       run: |
-        python3 -c "import spec; print('success')"
+        python -c "import spec; print('success')"

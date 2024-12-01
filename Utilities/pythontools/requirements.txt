@@ -1,5 +1,8 @@
 h5py
 matplotlib
 f90nml
-numpy
+
+# Version 1.7.0 or higher is required - otherwise scipy.integrate.simpson does not exist
+scipy>=1.7.0
+
 coilpy

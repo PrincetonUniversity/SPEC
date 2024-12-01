@@ -22,11 +22,11 @@
 
 3. Call ploting routine for Poincare section:
    
-   plot_spec_poincare(data,1,5,0,1); 
+   plot_spec_poincare(data,1,1,1); 
    
 4. Call ploting routine for ideal-interfaces on Poincare section:
 
-   plot_spec_kam(data,0,0);
+   plot_spec_kam(data,1,0);
 
 
 %%% More details %%% 

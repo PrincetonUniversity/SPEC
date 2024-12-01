@@ -16,30 +16,29 @@ function plot_spec_Ivolume(data, cumul, newfig)
 % Written by A. Baillod (2019)
 %
 
+    if ~any(cumul==[0,1])
+        error('InputError: invalid cumul')
+    end
 
-[psi_coord, I_vol] = get_spec_volume_current(data, cumul);
+    switch newfig
+        case 0
+            hold on
+        case 1
+            figure
+            hold on
+        case 2
+            hold off
+    end
 
 
-% some plots
+    [~, I_vol] = get_spec_volume_current(data, cumul);
 
-switch newfig
-    case 0
-        hold on
-    case 1
-        figure
-        hold on
-    case 2
-        hold off
+
+    bar(I_vol);
+    xlab = xlabel('Volume label');
+    ylab = ylabel('$\mu_0I_\mathcal{V}$[A]');
+    set(gca, 'FontSize', 14)
+    set(xlab,'Interpreter','latex');
+    set(ylab,'Interpreter','latex');
+    grid on;
 end
-
-%plot(psi_coord, I_vol, '*', 'DisplayName', '$I^{vol}_\phi$')
-bar(I_vol);
-%leg = legend('Location','northwest');
-ylab = ylabel('$I_\mathcal{V}$[A]');
-%xlab = xlabel('$\psi_t / \psi_{edge}$');
-xlab = xlabel('Volume label');
-set(gca, 'FontSize', 14)
-%set(leg,'Interpreter','latex');
-set(xlab,'Interpreter','latex');
-set(ylab,'Interpreter','latex');
-grid on;

@@ -22,44 +22,41 @@ function W = get_spec_energy_slab(data,lv,ns,nt,nz)
 %
 % written by J.Loizu (2018)
 
-Nvol = data.input.physics.Nvol;
+    % Test input
+    Igeometry = data.input.physics.Igeometry;
+    if Igeometry~=1
+        error('This routine is only for slab geometries')
+    end
 
-W    = 0;
+    % Read data
+    Nvol = data.input.physics.Nvol;
 
-sarr = linspace(-1,1,ns);
-tarr = linspace(0,2*pi,nt);
-zarr = linspace(0,2*pi,nz);
+    W    = 0;
 
-if(lv==0)
+    sarr = linspace(-1,1,ns);
+    tarr = linspace(0,2*pi,nt);
+    zarr = linspace(0,2*pi,nz);
 
- for lvol=1:Nvol
+    if(lv==0)
+        lvol_start=1;
+        lvol_end  =Nvol;
+    else
+        lvol_start=lv;
+        lvol_end  =lv;
+    end
+    
+    
+    for lvol=lvol_start:lvol_end
 
-  modB = get_spec_modB(data,lvol,sarr,tarr,zarr);
+        % Evaluate mod B and jacobian
+        modB = get_spec_modB(data,lvol,sarr,tarr,zarr);
+        jac  = get_spec_jacobian(data,lvol,sarr,tarr,zarr);
 
-  jac  = get_spec_jacobian_slab(data,lvol,sarr,tarr,zarr);
+        % Integrate
+        F    = jac.*modB.^2;
 
-  F    = jac.*modB.^2;
-
-  dW   = trapz(sarr,trapz(tarr,trapz(zarr,F,3),2));
-
-  W    = W + 0.5*dW;
-
- end
-
-else
-
-  lvol = lv;
-
-  modB = get_spec_modB(data,lvol,sarr,tarr,zarr);
-
-  jac  = get_spec_jacobian_slab(data,lvol,sarr,tarr,zarr);
-
-  F    = jac.*modB.^2;
-
-  dW   = trapz(sarr,trapz(tarr,trapz(zarr,F,3),2));
-
-  W    = W + 0.5*dW;
-
-end
+        dW   = trapz(sarr,trapz(tarr,trapz(zarr,F,3),2));
+        W    = W + 0.5*dW;
+    end
 
 
