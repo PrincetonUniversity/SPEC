@@ -25,7 +25,7 @@
 !>
 !>~~~~~~~~~~~~
 !> write(svol,'(i4.4)')lvol ! lvol labels volume;
-!> open(lunit+myid,file="."//trim(ext)//".poincare."//svol,status="unknown",form="unformatted")
+!> open(lunit+myid,file=trim(get_hidden(ext))//".poincare."//svol,status="unknown",form="unformatted")
 !> do until end of file
 !>   write(lunit+myid) Nz, nPpts                ! integers
 !>   write(lunit+myid) data(1:4,0:Nz-1,1:nPpts) ! doubles
@@ -55,7 +55,7 @@
 !> <li> The rotational-transform data is written to \c .ext.transform:xxxx , where \c xxxx is an integer indicating the volume.
 !>       The format of this file is as follows:
 !> ```
-!>  open(lunit+myid,file="."//trim(ext)//".sp.t."//svol,status="unknown",form="unformatted")
+!>  open(lunit+myid,file=trim(get_hidden(ext))//".sp.t."//svol,status="unknown",form="unformatted")
 !>  write(lunit+myid) lnPtrj-ioff+1                                      ! integer
 !>  write(lunit+myid) diotadxup(0:1,0,lvol)                              ! doubles
 !>  write(lunit+myid) ( fiota(itrj,1:2), itrj = ioff, lnPtrj ) ! doubles

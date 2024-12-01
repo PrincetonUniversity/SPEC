@@ -26,7 +26,7 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
 
   use cputiming, only : Thesian
 
-  use allglobal, only : ncpu, myid, cpus, MPI_COMM_SPEC, ext, &
+  use allglobal, only : ncpu, myid, cpus, MPI_COMM_SPEC, ext, get_hidden, &
                         im, in, &
                         iRbc, iZbs, iRbs, iZbc, &
                         dRbc, dZbs, dRbs, dZbc, &
@@ -260,7 +260,7 @@ endif
    xx(0,-2:2)= zero ; dRZ = 1.0E-04
 
    write(svol,'(i3.3)')myid
-!  open(lunit+myid,file="."//trim(ext)//".hessian."//svol,status="unknown")
+!  open(lunit+myid,file=trim(get_hidden(ext))//".hessian."//svol,status="unknown")
 
 !  lmu(1:Nvol) = mu(1:Nvol) ; lpflux(1:Nvol) = pflux(1:Nvol) ; lhelicity(1:Nvol) = helicity(1:Nvol) ! save original profile information; 20 Jun 14;
 
@@ -402,7 +402,7 @@ endif
 !> <li> The eigenvalues and eigenvectors (if required) are written to the file \c .ext.GF.ev as follows:
 !>
 !> ```
-!> open(hunit,file="."//trim(ext)//".GF.ev",status="unknown",form="unformatted")
+!> open(hunit,file=trim(get_hidden(ext))//".GF.ev",status="unknown",form="unformatted")
 !> write(hunit)NGdof,Ldvr,Ldvi        ! integers; if only the eigenvalues were computed then Ldvr=Ldvi=1;
 !> write(hunit)evalr(1:NGdof)         ! reals   ; real      part of eigenvalues;
 !> write(hunit)evali(1:NGdof)         ! reals   ; imaginary part of eigenvalues;
@@ -419,7 +419,7 @@ endif
   if( LHmatrix ) then
 
    if( myid.eq.0 ) then ; cput = GETTIME ; write(ounit,'("hesian : ",f10.2," : LHmatrix="L2" ;")')cput-cpus, LHmatrix ;
-    open(munit, file="."//trim(ext)//".GF.ma", status="unknown", form="unformatted")
+    open(munit, file=trim(get_hidden(ext))//".GF.ma", status="unknown", form="unformatted")
     write(munit) NGdof
     write(munit) ohessian(1:NGdof,1:NGdof)
     close(munit)
@@ -574,7 +574,7 @@ endif
 
 
    if( myid.eq.0 ) then ! write to file; 04 Dec 14;
-    open(hunit, file="."//trim(ext)//".GF.ev", status="unknown", form="unformatted")
+    open(hunit, file=trim(get_hidden(ext))//".GF.ev", status="unknown", form="unformatted")
     write(hunit) NGdof, Ldvr, Ldvi
     write(hunit) evalr
     write(hunit) evali

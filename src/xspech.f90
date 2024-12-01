@@ -204,7 +204,7 @@ subroutine read_command_args
 
   use fileunits, only: ounit
   use inputlist, only: Wreadin
-  use allglobal, only: cpus, myid, ext, MPI_COMM_SPEC, write_spec_namelist
+  use allglobal, only: cpus, myid, ext, get_hidden, MPI_COMM_SPEC, write_spec_namelist
 
   LOCALS
 
