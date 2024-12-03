@@ -254,7 +254,7 @@ module allglobal
 
   REAL   , allocatable :: IPDt(:), IPDtDpf(:,:)  !< Toroidal pressure-driven current
 
-  INTEGER              :: Mvol
+  INTEGER              :: Mvol !< total number of volumes (including the vacuum region in the case of free-boundary calculations)
 
   LOGICAL              :: YESstellsym !< internal shorthand copies of Istellsym, which is an integer input;
   LOGICAL              :: NOTstellsym !< internal shorthand copies of Istellsym, which is an integer input;
