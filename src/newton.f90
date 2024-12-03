@@ -39,7 +39,7 @@ end module newtontime
 !>       and if this is less than \c forcetol then the iterative search will not be performed. </li>
 !> <li> As the iterations proceed, wrtend() will be called to save itermediate information (also see xspech() ). </li>
 !> <li> If the derivative matrix, \f$\nabla_{{\bf x}} {\bf F}\f$, is required, i.e. if \c Lfindzero=2 , and if \c LreadGF=T
-!>       then the derivative matrix will initially be read from \c .ext.sp.DF , if it exists, or from \c .sp.DF . </li>
+!>       then the derivative matrix will initially be read from \c .ext.sp.DF , if it exists, or from \c .ext.sp.DF . </li>
 !> <li> As the iterations proceed, the derivative matrix will be written to \c .ext.sp.DF . </li>
 !> </ul>
 !>
@@ -361,11 +361,11 @@ subroutine writereadgf( readorwrite, NGdof , ireadhessian )
     write(ounit,2000) cput-cpus, myid, ".ext.sp.DF does not exist ;    "
     inquire( file=".sp.DF", exist=exist ) ! the derivative matrix;
     if( exist ) then !                  01234567890123456789012345678901
-     write(ounit,2000) cput-cpus, myid, "reading .sp.DF ;               "
+     write(ounit,2000) cput-cpus, myid, "reading .ext.sp.DF ;               "
      open( dunit, file=".sp.DF", status="old", form="unformatted", iostat=ios )
     else !                              01234567890123456789012345678901
      write(ounit,2000) cput-cpus, myid, ".sp.DF does not exist ;        " ; goto 9999
-    endif ! matches if( .sp.DF exist ) ;
+    endif ! matches if( .ext.sp.DF exist ) ;
    endif ! matches if( .ext.sp.DF exist ) ;
 !                                                             01234567890123456789012345678901
    if( ios .ne. 0 ) then ; write(ounit,2000) cput-cpus, myid, "error opening .ext.sp.DF/.sp.DF" ; goto 9999
