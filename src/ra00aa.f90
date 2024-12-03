@@ -24,7 +24,7 @@
 !> <ul>
 !> <li> The format of the files containing the vector potential is as follows:
 !> ```
-!> open(aunit, file="."//trim(ext)//".sp.A", status="replace", form="unformatted" )
+!> open(aunit, file=trim(get_hidden(ext))//".sp.A", status="replace", form="unformatted" )
 !> write(aunit) Mvol, Mpol, Ntor, mn, Nfp ! integers;
 !> write(aunit) im(1:mn) ! integers; poloidal modes;
 !> write(aunit) in(1:mn) ! integers; toroidal modes;
@@ -57,7 +57,7 @@ subroutine ra00aa( writeorread )
 
   use cputiming, only : Tra00aa
 
-  use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, ext, Mvol, mn, im, in, Ate, Aze, Ato, Azo
+  use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, ext, get_hidden, Mvol, mn, im, in, Ate, Aze, Ato, Azo
 
   use sphdf5,    only : write_vector_potential
 
@@ -148,12 +148,12 @@ subroutine ra00aa( writeorread )
 
    if( myid.eq.0 ) then
 
-    inquire(file="."//trim(ext)//".sp.A",exist=exist)
+    inquire(file=trim(get_hidden(ext))//".sp.A",exist=exist)
 
     if( .not.exist ) then ; write(ounit,'("ra00aa : ",f10.2," : myid=",i3," ; error ; .ext.sp.A does not exist ;")') cput-cpus, myid ; goto 9998
     endif
 
-    open(aunit,file="."//trim(ext)//".sp.A",status="old",form="unformatted",iostat=ios) ! this will contain initial guess for vector potential;
+    open(aunit,file=trim(get_hidden(ext))//".sp.A",status="old",form="unformatted",iostat=ios) ! this will contain initial guess for vector potential;
 
     if( ios.ne.0 ) then ; write(ounit,'("ra00aa : ",f10.2," : myid=",i3," ; error ; opening .ext.sp.A ;")') cput-cpus, myid ; goto 9997
     endif
