@@ -111,7 +111,7 @@ subroutine bnorml( mn, Ntz, efmn, ofmn )
   INTEGER              :: lvol, Lparallel, ii, jj, kk, jk, ll, kkmodnp, jkmodnp, ifail, id01daf, nvccalls, icasing
   REAL                 :: zeta, teta, gBn
   REAL                 :: Bxyz(1:Ntz,1:3), distance(1:Ntz)
-  REAL                 :: accuracyestimate, resulth, resulth2, resulth4, deltah4h2, deltah2h 
+  REAL                 :: vcgriderr, resulth, resulth2, resulth4, deltah4h2, deltah2h 
   INTEGER              :: vcstep
 
 
@@ -152,16 +152,17 @@ if ( Lvcgrid.eq.1 ) then
       teta = jj * pi2  / vcNt ; 
       jk = 1 + jj + kk*vcNt
       
-      call dvcfieldimpl( teta, zeta, Pbxyz(jk,1:3), Jxyz(jk,1:3) )
+      call surfacecurrent( teta, zeta, Pbxyz(jk,1:3), Jxyz(jk,1:3) )
       
     enddo
   enddo
 
-  ! iterate over resolutions of the virtual casing grid to get an estimate of the accuracy
-  do vcstep = 3, 0, -1
+  ! iterate over resolutions of the virtual casing grid to get an estimate of the accuracy. 
+  ! Each vcstep iteration doubles the resolution, so we can measure the convergence rate. 
+  do vcstep = 1, 0, -1
     !$OMP PARALLEL DO SHARED(Dxyz, Pbxyz, Jxyz, ijimag) PRIVATE(jk, gBn)
     do jk = 1, Ntz
-      call casing2( Dxyz(:,jk), Nxyz(:,jk), Pbxyz, Jxyz, 2**vcstep,  gBn)
+      call casingregular( Dxyz(:,jk), Nxyz(:,jk), Pbxyz, Jxyz, 2**vcstep,  gBn)
       
       ijreal(jk) = ijimag(jk) ! previous solution (lower resolution)
       ijimag(jk) = gBn ! current solution (higher resolution)
@@ -173,11 +174,11 @@ if ( Lvcgrid.eq.1 ) then
     ! Order of the integration method: log(deltah4h2/deltah2h)/log(2.0) = 1
     ! relative error: deltah2h/abs(ijimag(jk))
     ! absolute error: delta2h/Ntz
-    accuracyestimate = deltah2h / sum(abs(ijimag))
+    vcgriderr = deltah2h / sum(abs(ijimag))
   enddo
 
-  write(ounit, '("bnorml : ", 10x ," : accuracyestimate = ",es13.5," ; vcasingtol = ",es13.5)') accuracyestimate, vcasingtol
-  ! if (accuracyestimate.gt.vcasingtol) then
+  write(ounit, '("bnorml : ", 10x ," : vcgriderr = ",es13.5," ; vcasingtol = ",es13.5)') vcgriderr, vcasingtol
+  ! if (vcgriderr.gt.vcasingtol) then
   !   FATAL( bnorml, .true., virtual casing accuracy is too low, increase vcNt and vcNz )
   ! endif
 #ifdef COMPARECASING

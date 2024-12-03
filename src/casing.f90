@@ -216,14 +216,14 @@ end subroutine casing
 !> \brief Compute the field produced by the plasma currents, at an arbitrary, external location using virtual casing.
 !> \ingroup grp_free-boundary
 !>
-!> casing2() computes the virtual casing field using a fixed resolution grid on the plasma boundary, in contrast to casing() which uses an adaptive integration routine.
-!> Because the evaluation positions are known in advance, the most expensive terms of the computation (dvcfield) are precomputed. 
-!> The integral computed by casing2() is 
+!> casingregular() computes the virtual casing field using a fixed resolution grid on the plasma boundary, in contrast to casing() which uses an adaptive integration routine.
+!> Because the evaluation positions are known in advance, the most expensive terms of the computation (dvcfield) can be precomputed.
+!> The integral computed by casingregular() is 
 !> \f{eqnarray}{ \int_0^{2\pi} \int_0^{2\pi} \frac{{\bf j}(\theta, \zeta) \times {\bf D}(\theta, \zeta)}{\|{\bf D}(\theta', \zeta')\|^3}+ \;\; d\theta d\zeta  
 !>  \f}
 !> with \f${\bf r}\f$ approximately the distance vector from an evaluation point of the current surface \f${\bf x}(\theta, \zeta)\f$ to the 
 !> external point \f$(x,y,z)\f$, and the exact formula includes a regularization factor \f$\epsilon\f$  Eqn.\f$(\ref{eq:vcasing_distance})\f$..
-subroutine casing2( xyz, nxyz,  Pbxyz, Jxyz, vcstep,gBn)
+subroutine casingregular( xyz, nxyz,  Pbxyz, Jxyz, vcstep,gBn)
   use constants, only : zero, one, three, pi2
 
   use fileunits, only : ounit, vunit
@@ -272,45 +272,17 @@ subroutine casing2( xyz, nxyz,  Pbxyz, Jxyz, vcstep,gBn)
  gBn = gBn * pi2 * pi2 / (plasmaNtz / vcstep) 
  return
 
-end subroutine casing2
+end subroutine casingregular
 
 
 !> \brief Compute the position and surface current on the plasma boundary for the virtual casing
 !> \ingroup grp_free-boundary
-!> **Calculation of integrand**
-!>
-!> <ul>
-!> <li> An adaptive integration is used to compute the integrals.
-!>      Consequently, the magnetic field tangential to the plasma boundary is required at an arbitrary point.
-!>      This is computed, as always, from \f${\bf B} = \nabla \times {\bf A}\f$, and this provides \f${\bf B} = B^\theta {\bf e}_\theta + B^\zeta {\bf e}_\zeta\f$.
-!>      Recall that \f$B^s=0\f$ by construction on the plasma boundary.
-!>
-!> </li>
-!> <li> Then, the metric elements \f$g_{\theta\theta}\f$, \f$g_{\theta\zeta}\f$ and \f$g_{\zeta\zeta}\f$ are computed.
-!>      These are used to "lower" the components of the magnetic field, \f${\bf B} = B_\theta \nabla \theta + B_\zeta \nabla \zeta\f$.
-!>
-!> </li>
-!> <li> The distance between the "evaluate" point, \f$(X,Y,Z)\f$, and the given point on the surface, \f$(x,y,z)\f$ is computed. </li>
-!> <li> If the computational boundary becomes too close to the plasma boundary, the distance is small and this causes problems for the numerics.
-!>      I have tried to regularize this problem by introducing \f$\epsilon \equiv \f$\c inputvar \c vcasingeps.
-!>      Let the "distance" be
-!>      \f{eqnarray}{ D \equiv \sqrt{(X-x)^2 + (Y-y)^2 + (Z-Z)^2} + \epsilon^2.
-!>      \label{eq:vcasing_distance}  \f} </li>
-!> <li> On taking the limit that \f$\epsilon \rightarrow 0\f$, the virtual casing integrand is
-!>       \f{eqnarray}{ \verb+vcintegrand+ \equiv ( B_x n_x + B_y n_y + B_z n_z ) ( 1 + 3 \epsilon^2 / D^2 ) / D^3, \label{eq:integrand_casing}
-!>       \f}
-!>      where the normal vector is \f${\bf n} \equiv n_x {\bf i} + n_y {\bf j} + n_z {\bf k}\f$.
-!>      The normal vector, \c Nxyz , to the computational boundary (which does not change) is computed in preset().
-!>      \todo This needs to be revised.
-!>
-!> </li>
-!> </ul>
 !>
 !> @param[in] teta \f$\theta\f$
 !> @param[in] zeta \f$\zeta\f$
 !> @param[out] pxyz \f${\bf B}_{Plasma} \cdot {\bf e}_\theta \times {\bf e}_\zeta \;\f$ on the computational boundary
 !> @param[out] jj \f${\bf B}_{Plasma} \cdot {\bf e}_\theta \times {\bf e}_\zeta \;\f$ on the computational boundary
-subroutine dvcfieldimpl( teta, zeta, pxyz, jj)
+subroutine surfacecurrent( teta, zeta, pxyz, jj)
 
   !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -535,7 +507,7 @@ subroutine dvcfieldimpl( teta, zeta, pxyz, jj)
   
   !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  end subroutine dvcfieldimpl 
+  end subroutine surfacecurrent 
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -543,7 +515,36 @@ subroutine dvcfieldimpl( teta, zeta, pxyz, jj)
 !> \ingroup grp_free-boundary
 !>
 !> Differential virtual casing integrand with the calling convention required by NAG for the adaptive integration routine.  
-!> This function wraps dvcfieldimpl and uses a global variable globaljk to determine the position on the computational boundary (not thread safe!). 
+!> This function wraps surfacecurrent and uses a global variable globaljk to determine the position on the computational boundary (not thread safe!). 
+!>
+!> **Calculation of integrand**
+!>
+!> <ul>
+!> <li> An adaptive integration is used to compute the integrals.
+!>      Consequently, the magnetic field tangential to the plasma boundary is required at an arbitrary point.
+!>      This is computed, as always, from \f${\bf B} = \nabla \times {\bf A}\f$, and this provides \f${\bf B} = B^\theta {\bf e}_\theta + B^\zeta {\bf e}_\zeta\f$.
+!>      Recall that \f$B^s=0\f$ by construction on the plasma boundary.
+!>
+!> </li>
+!> <li> Then, the metric elements \f$g_{\theta\theta}\f$, \f$g_{\theta\zeta}\f$ and \f$g_{\zeta\zeta}\f$ are computed.
+!>      These are used to "lower" the components of the magnetic field, \f${\bf B} = B_\theta \nabla \theta + B_\zeta \nabla \zeta\f$.
+!>
+!> </li>
+!> <li> The distance between the "evaluate" point, \f$(X,Y,Z)\f$, and the given point on the surface, \f$(x,y,z)\f$ is computed. </li>
+!> <li> If the computational boundary becomes too close to the plasma boundary, the distance is small and this causes problems for the numerics.
+!>      I have tried to regularize this problem by introducing \f$\epsilon \equiv \f$\c inputvar \c vcasingeps.
+!>      Let the "distance" be
+!>      \f{eqnarray}{ D \equiv \sqrt{(X-x)^2 + (Y-y)^2 + (Z-Z)^2} + \epsilon^2.
+!>      \label{eq:vcasing_distance}  \f} </li>
+!> <li> On taking the limit that \f$\epsilon \rightarrow 0\f$, the virtual casing integrand is
+!>       \f{eqnarray}{ \verb+vcintegrand+ \equiv ( B_x n_x + B_y n_y + B_z n_z ) ( 1 + 3 \epsilon^2 / D^2 ) / D^3, \label{eq:integrand_casing}
+!>       \f}
+!>      where the normal vector is \f${\bf n} \equiv n_x {\bf i} + n_y {\bf j} + n_z {\bf k}\f$.
+!>      The normal vector, \c Nxyz , to the computational boundary (which does not change) is computed in preset().
+!>      \todo This needs to be revised.
+!>
+!> </li>
+!> </ul>
 !>
 !> @param[in] Ndim number of parameters (==2)
 !> @param[in] tz \f$\theta\f$ and \f$\zeta\f$
@@ -579,7 +580,7 @@ subroutine dvcfield( Ndim, tz, Nfun, vcintegrand )
 #endif
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  call dvcfieldimpl(tz(1), tz(2), pxyz, jj)
+  call surfacecurrent(tz(1), tz(2), pxyz, jj)
 
   ! position on computational boundary - position on plasma boundary
   rr(1:3) = Dxyz(1:3,globaljk) - pxyz(1:3)
