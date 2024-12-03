@@ -861,7 +861,7 @@ contains
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-subroutine build_vector_potential(lvol, iocons, aderiv, tderiv)
+subroutine build_vector_potential(lvol, iocons, aderiv)
   
   !> \brief Builds the covariant component of the vector potential, by evaluating the polynomial basis (chebyshev or zernike) and store them in efmn, ofmn, sfmn, cfmn. 
   
@@ -887,10 +887,6 @@ subroutine build_vector_potential(lvol, iocons, aderiv, tderiv)
   !>            -  1: w.r.t mu
   !>            -  2: w.r.t pflux
   INTEGER, intent(in)  :: aderiv 
-  !> @param[in] tderiv Derivative of Chebyshev polynomialc. 
-  !>            - 0: no derivatives
-  !>            - 1: w.r.t radial coordinate s
-  INTEGER, intent(in)  :: tderiv
   INTEGER              :: ii,  &    ! Loop index on Fourier harmonics
                           ll,  &    ! Loop index on radial resolution
                           mi        ! Poloidal mode number
