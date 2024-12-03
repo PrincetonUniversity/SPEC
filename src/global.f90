@@ -862,32 +862,38 @@ contains
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 subroutine build_vector_potential(lvol, iocons, aderiv, tderiv)
-
-! Builds the covariant component of the vector potential and store them in efmn, ofmn, sfmn, cfmn.
-
+  
+  !> \brief Builds the covariant component of the vector potential, by evaluating the polynomial basis (chebyshev or zernike) and store them in efmn, ofmn, sfmn, cfmn. 
+  
   use constants, only: zero, half
-
+  
   use fileunits, only: ounit
-
+  
   use inputlist, only: Lrad, Wbuild_vector_potential, Wmacros
-
+  
   use cputiming
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+  
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
   LOCALS
-
-  INTEGER              :: aderiv    ! Derivative of A. -1: w.r.t geometrical degree of freedom
-                                    !                   0: no derivatives
-                                    !                   1: w.r.t mu
-                                    !                   2: w.r.t pflux
-  INTEGER              :: tderiv    ! Derivative of Chebyshev polynomialc. 0: no derivatives
-                                    !                                      1: w.r.t radial coordinate s
+  
+  !> @param[in] lvol index of volume
+  INTEGER, intent(in)  :: lvol
+  !> @param[in] iocons inner (0) or outer (1) side of the volume
+  INTEGER, intent(in)  :: iocons 
+  !> @param[in] aderiv Derivative of A. 
+  !>            - -1: w.r.t geometrical degree of freedom
+  !>            -  0: no derivatives
+  !>            -  1: w.r.t mu
+  !>            -  2: w.r.t pflux
+  INTEGER, intent(in)  :: aderiv 
+  !> @param[in] tderiv Derivative of Chebyshev polynomialc. 
+  !>            - 0: no derivatives
+  !>            - 1: w.r.t radial coordinate s
+  INTEGER, intent(in)  :: tderiv
   INTEGER              :: ii,  &    ! Loop index on Fourier harmonics
                           ll,  &    ! Loop index on radial resolution
-                          mi,  &    ! Poloidal mode number
-                          lvol,&    ! Volume number
-                          iocons    ! inner (0) or outer (1) side of the volume
+                          mi        ! Poloidal mode number
   REAL                 :: mfactor   ! Regularization factor when LcoordinateSingularity
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
