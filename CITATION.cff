@@ -102,7 +102,7 @@ preferred-citation:
   doi: 10.1063/1.4765691
   url: "https://doi.org/10.1063/1.4765691"
 references:
- - type: article
+  - type: article
     authors:
       - family-names: Hudson
         given-names: Stuart
