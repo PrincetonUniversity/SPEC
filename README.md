@@ -12,9 +12,8 @@ SPEC solves 3D magnetohydrodynamic (MHD) equilibria with stepped-pressure profil
 If you use SPEC in your research, please cite it appropriately using the "Cite this repository" button on the right of the [SPEC GitHub Repository](https://github.com/PrincetonUniversity/SPEC) or the [CITATION.cff](https://github.com/PrincetonUniversity/SPEC/blob/master/CITATION.cff) file. 
 
 ## Installation
-Instructions for compiling and testing SPEC are in [compilation_instructions.md](https://github.com/PrincetonUniversity/SPEC/blob/master/compilation_instructions.md).
+Instructions for compiling and testing SPEC are in [compilation_instructions.md](compilation_instructions.md).
 
 ## Documentation
 Online documentation for SPEC is available on [Github pages](https://princetonuniversity.github.io/SPEC/) or in PDF form at [SPEC_manual.pdf](https://princetonuniversity.github.io/SPEC/SPEC_manual.pdf).
-
 
