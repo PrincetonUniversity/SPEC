@@ -510,11 +510,11 @@ end subroutine init_convergence_output
 !> \ingroup grp_output
 !>
 !> @param[in] nDcalls number of calls to get derivative values 
-!> @param[in] total force-imbalance (accessible from allglobal)
+!> @param[in] ForceErr total force-imbalance (accessible from allglobal)
 subroutine write_convergence_output( nDcalls, ForceErr )
-
+  
   use allglobal, only : myid, mn, Mvol, Energy, iRbc, iZbs, iRbs, iZbc
-
+  
   LOCALS
   INTEGER, intent(in)  :: nDcalls
   REAL   , intent(in)  :: ForceErr

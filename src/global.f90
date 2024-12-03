@@ -239,14 +239,14 @@ module allglobal
 
   LOGICAL              :: skip_write = .false. ! flag to disable any HDF5-related calls
 
-  REAL                 :: pi2nfp           !       pi2/nfp     ; assigned in readin;
-  REAL                 :: pi2pi2nfp
-  REAL                 :: pi2pi2nfphalf
-  REAL                 :: pi2pi2nfpquart
+  REAL                 :: pi2nfp          !< pi2/nfp     ; assigned in readin;
+  REAL                 :: pi2pi2nfp       !< pi2*pi2/nfp
+  REAL                 :: pi2pi2nfphalf   !< 2*pi*pi/nfp
+  REAL                 :: pi2pi2nfpquart  !< pi*pi/nfp
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  CHARACTER(LEN=1000)  :: ext ! extension of input filename, i.e., "G3V01L1Fi.001" for an input file G3V01L1Fi.001.sp
+  CHARACTER(LEN=1000)  :: ext !< extension of input filename, i.e., "G3V01L1Fi.001" for an input file G3V01L1Fi.001.sp
 
   REAL                 :: ForceErr !< total force-imbalance
   REAL                 :: Energy   !< MHD energy
