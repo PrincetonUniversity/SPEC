@@ -425,14 +425,14 @@ endif
 
   if( LHmatrix ) then
 
-    if( myid.eq.0 ) then ; cput = GETTIME ; write(ounit,'("hesian : ",f10.2," : LHmatrix="L2" ;")')cput-cpus, LHmatrix ;
-     open(munit, file=trim(get_hidden(ext))//".GF.ma", status="unknown", form="unformatted")
-     write(munit) NGdof
-     write(munit) ohessian(1:NGdof,1:NGdof)
-     close(munit)
-    endif
- 
+   if( myid.eq.0 ) then ; cput = GETTIME ; write(ounit,'("hesian : ",f10.2," : LHmatrix="L2" ;")')cput-cpus, LHmatrix ;
+    open(munit, file=trim(get_hidden(ext))//".GF.ma", status="unknown", form="unformatted")
+    write(munit) NGdof
+    write(munit) ohessian(1:NGdof,1:NGdof)
+    close(munit)
    endif
+
+  endif
 
 
 ! if( myid.eq.0 .and. ( LHevalues .or. LHevectors ) ) then ! the call to dforce below requires all cpus; 04 Dec 14;
