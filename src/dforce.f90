@@ -458,15 +458,10 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
     voltotal = voltotal+vvolume(vvol)
     !write(*,*) "Calc beta: ", betavol(vvol), vvolume(vvol)
   enddo
-  ! Calculate total beta which is obtained from individual betas
-  ! write(*,*) "all betas", betavol(1:Nvol)
-  BetaTotal = sum(betavol(1:Nvol))/voltotal
-  ! write(*,*) "Total BETA ", BetaTotal
-  ! write(*,*)"total vol", voltotal
+  
+  BetaTotal = sum(betavol(1:Nvol))/voltotal ! Calculate total beta which is obtained from individual betas
 
   Energy = sum( lBBintegral(1:Nvol) ) ! should also compute beta;
-  ! write(*,*)"total Energy", Energy
-  !write(*,*) "Betatotal", BetaTotal, voltotal
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -974,10 +969,7 @@ endif ! end of if( LcomputeDerivatives ) ;
   !call MPI_BARRIER( MPI_COMM_WORLD, ierr )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  !if(LcomputeDerivatives .and. Lhessianallocated .and. Igeometry .eq. 1) then
-  !if(Lhessianallocated .and. Igeometry .eq. 1) then
-  
+ 
    if(Lhessianallocated .and. Igeometry.eq.1) then
      if( myid.eq.0 ) then ; cput = GETTIME ; write(ounit,'("hesian : ",f10.2," : LHmatrix="L2" ;")')cput-cpus, LHmatrix ;
        write(*,*) "Writing .hessian file..."
@@ -1013,7 +1005,7 @@ use allglobal, only: ncpu, myid, cpus, MPI_COMM_SPEC, &
                      iRbc, iZbs, iRbs, iZbc, &
                      LGdof, psifactor, dBdX, &
                      YESstellsym, NOTstellsym, &
-                     hessian, ext, vvolume
+                     hessian, ext
 
 LOCALS
 

@@ -1089,7 +1089,7 @@ subroutine hdfint
   HWRITERV( grpOutput, 1, BnsErr, (/ BnsErr /)) ! already in /input/global
 !latex \type{ForceErr}               & real    & \pb{force-balance error across interfaces} \\
   HWRITERV( grpOutput,  1, ForceErr, (/ ForceErr /))
-!latex \type{ForceErr}               & real    & \pb{force-balance error across interfaces} \\
+!latex \type{BetaTotal}               & real    & \pb{Total plasma beta} \\
   HWRITERV( grpOutput,  1, BetaTotal, (/ BetaTotal /))
 !latex \type{Ivolume}                & real    & \pb{Volume current at output (parallel, externally induced)}
   HWRITERV( grpOutput, Mvol, Ivolume, Ivolume(1:Mvol))
