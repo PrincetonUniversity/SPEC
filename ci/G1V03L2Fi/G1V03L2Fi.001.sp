@@ -63,7 +63,7 @@ Vns(0,2)    =  0.000000000000000E+00 Bns(0,2)    =  0.000000000000000E+00 Vnc(0,
  Mregular    =        -1
 /
 &locallist
- LBeltrami   =         2
+ LBeltrami   =         4
  Linitgues   =         1
 /
 &globallist
