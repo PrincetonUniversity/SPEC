@@ -108,7 +108,7 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  #ifdef MINIMIZE
+#ifdef MINIMIZE
 
   oldBB(1:Mvol,0) = lBBintegral(1:Mvol)
 
