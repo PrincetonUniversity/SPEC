@@ -54,6 +54,7 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
 
   INTEGER             :: vvol, idof, ii, mi, ni, irz, issym, isymdiff, lvol, ieval(1:1), igdof, ifd
   REAL                :: oldEnergy(-2:2), error, cpul 
+
   REAL                :: oldBB(1:Mvol,-2:2), oBBdRZ(1:Mvol,0:1,1:LGdof), ohessian(1:NGdof,1:NGdof)
 
   REAL                :: oRbc(1:mn,0:Mvol), oZbs(1:mn,0:Mvol), oRbs(1:mn,0:Mvol), oZbc(1:mn,0:Mvol), determinant
@@ -104,8 +105,10 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
 
   xx(0,-2:2)= zero
 
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-#ifdef MINIMIZE
+
+  #ifdef MINIMIZE
 
   oldBB(1:Mvol,0) = lBBintegral(1:Mvol)
 
@@ -241,6 +244,7 @@ endif
   LComputeAxis = .false.
   WCALL( hesian, dforce, ( NGdof, position(0:NGdof), force(0:NGdof), LComputeDerivatives, LComputeAxis) ) ! calculate force-imbalance & hessian;
   
+
   ohessian(1:NGdof,1:NGdof) = hessian2D(1:NGdof,1:NGdof) ! internal copy; 22 Apr 15;
 
 
@@ -263,7 +267,7 @@ endif
    xx(0,-2:2)= zero ; dRZ = 1.0E-04
 
    write(svol,'(i3.3)')myid
-!  open(lunit+myid,file="."//trim(ext)//".hessian."//svol,status="unknown")
+!  open(lunit+myid,file=trim(get_hidden(ext))//".hessian."//svol,status="unknown")
 
 !  lmu(1:Nvol) = mu(1:Nvol) ; lpflux(1:Nvol) = pflux(1:Nvol) ; lhelicity(1:Nvol) = helicity(1:Nvol) ! save original profile information; 20 Jun 14;
 
@@ -457,9 +461,9 @@ endif
 !   FATAL( global, .true., eigenvalue solver needs updating to F08NAF )
 !#endif
    call dgeev('N', JOB, NGdof, hessian2D(1:LDA,1:NGdof), LDA, evalr(1:NGdof), evali(1:NGdof), &
-              evecl(1:Ldvr,1:NGdof), Ldvr, revecr(1:Ldvr,1:2*NGdof), Ldvr, work(1:Lwork), Lwork, if02ebf )
-  evecr(1:Ldvr,1:NGdof) = revecr(1:Ldvr,1:NGdof)
-  eveci(1:Ldvr,1:NGdof) = revecr(1:Ldvr,NGdof+1:2*NGdof)
+                evecl(1:Ldvr,1:NGdof), Ldvr, revecr(1:Ldvr,1:2*NGdof), Ldvr, work(1:Lwork), Lwork, if02ebf )
+    evecr(1:Ldvr,1:NGdof) = revecr(1:Ldvr,1:NGdof)
+    eveci(1:Ldvr,1:NGdof) = revecr(1:Ldvr,NGdof+1:2*NGdof)
 
    if( myid.eq.0 ) then
    cput = GETTIME
@@ -574,6 +578,7 @@ endif
 !   enddo
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
 
    if( myid.eq.0 ) then ! write to file; 04 Dec 14;
     open(hunit, file=trim(get_hidden(ext))//".GF.ev", status="unknown", form="unformatted")
