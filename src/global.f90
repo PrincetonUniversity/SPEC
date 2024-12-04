@@ -66,7 +66,7 @@ module constants
   REAL, parameter :: mu0        =   2.0E-07 * pi2       !< \f$4\pi\cdot10^{-7}\f$
   REAL, parameter :: goldenmean =   1.618033988749895   !< golden mean = \f$( 1 + \sqrt 5 ) / 2\f$ ;
 
-  REAL, parameter :: version    =   3.20  !< version of SPEC
+  REAL, parameter :: version    =   3.23  !< version of SPEC
 
 end module constants
 
@@ -246,7 +246,7 @@ module allglobal
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  CHARACTER(LEN=1000)  :: ext ! extension of input filename, i.e., "G3V01L1Fi.001" for an input file G3V01L1Fi.001.sp
+  CHARACTER(LEN=1000)  :: ext     ! extension of input filename, i.e., "path/G3V01L1Fi.001" for an input file path/G3V01L1Fi.001.sp
 
   REAL                 :: ForceErr !< total force-imbalance
   REAL                 :: Energy   !< MHD energy

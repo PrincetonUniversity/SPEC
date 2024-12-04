@@ -1,7 +1,7 @@
 !> \file
-!> \brief Computes eigenvalues and eigenvectors of derivative matrix, \f$\nabla_{\bf \xi}{\bf F}\f$.
+!> \brief Computes eigenvalues and eigenvectors of derivative matrix, \f$\nabla_{\bf xi}{\bf F}\f$.
 
-!> \brief Computes eigenvalues and eigenvectors of derivative matrix, \f$\nabla_{\bf \xi}{\bf F}\f$.
+!> \brief Computes eigenvalues and eigenvectors of derivative matrix, \f$\nabla_{\bf xi}{\bf F}\f$.
 !> \ingroup grp_diagnostics
 !>
 !> @param[in] NGdof number of global degrees of freedom
@@ -26,7 +26,7 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
 
   use cputiming, only : Thesian
 
-  use allglobal, only : ncpu, myid, cpus, MPI_COMM_SPEC, ext, &
+  use allglobal, only : ncpu, myid, cpus, MPI_COMM_SPEC, ext, get_hidden, &
                         im, in, &
                         iRbc, iZbs, iRbs, iZbc, &
                         dRbc, dZbs, dRbs, dZbc, &
@@ -53,8 +53,7 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
   REAL                :: xx(0:NGdof,-2:2), ff(0:NGdof,-2:2), df(1:NGdof)!, deriv
 
   INTEGER             :: vvol, idof, ii, mi, ni, irz, issym, isymdiff, lvol, ieval(1:1), igdof, ifd
-  REAL                :: oldEnergy(-2:2), error, cpul
- 
+  REAL                :: oldEnergy(-2:2), error, cpul 
   REAL                :: oldBB(1:Mvol,-2:2), oBBdRZ(1:Mvol,0:1,1:LGdof), ohessian(1:NGdof,1:NGdof)
 
   REAL                :: oRbc(1:mn,0:Mvol), oZbs(1:mn,0:Mvol), oRbs(1:mn,0:Mvol), oZbc(1:mn,0:Mvol), determinant
@@ -104,7 +103,6 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
   oldEnergy(0) = Energy ! Energy was calculated in dforce; 26 Feb 13;
 
   xx(0,-2:2)= zero
-
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 #ifdef MINIMIZE
@@ -190,8 +188,8 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
       write(ounit,1001) cput-cpus, myid, vvol, irz, mi, ni, ( oBBdRZ(vvol,1,idof) + oBBdRZ(vvol+1,0,idof) ) / psifactor(ii,vvol) ! ENERGY GRADIENT;
       FATAL( hesian, Igeometry.eq.1, Cartesian geometry does not need regularization factor )
 
-  1000  format("hesian : ",f10.2," : ":"myid=",i3," ; ":"vvol=",i3," ; ":"irz="i2" ; (",i3," ,",i3," ) ; "a17" ["es15.7","es15.7" ]")
-  1001  format("hesian : ",f10.2," : ":"myid=",i3," ; ":"vvol=",i3," ; ":"irz="i2" ; (",i3," ,",i3," ) ;   "es15.7" ; ")
+1000  format("hesian : ",f10.2," : ":"myid=",i3," ; ":"vvol=",i3," ; ":"irz="i2" ; (",i3," ,",i3," ) ; "a17" ["es15.7","es15.7" ]")
+1001  format("hesian : ",f10.2," : ":"myid=",i3," ; ":"vvol=",i3," ; ":"irz="i2" ; (",i3," ,",i3," ) ;   "es15.7" ; ")
 
      enddo ! end of do issym; 26 Feb 13;
 
@@ -232,11 +230,11 @@ endif
   SALLOCATE( hessian2D, (1:NGdof,1:NGdof), zero )
   SALLOCATE( dessian2D, (1:NGdof,1:LGdof), zero ) ! part of hessian that depends on boundary variations; 18 Dec 14;
 
-  ! if (LHmatrix) then
+  !if (LHmatrix) then
     Lhessian3Dallocated = .true.
-  ! else
-  !  Lhessianallocated = .true.
-  ! endif
+  !else
+  Lhessianallocated = .true.
+  !endif
    !This step cleared.
 
   LComputeDerivatives = .true. !; position(0) = zero ! this is not used; 11 Aug 14;
@@ -407,7 +405,7 @@ endif
 !> <li> The eigenvalues and eigenvectors (if required) are written to the file \c .ext.GF.ev as follows:
 !>
 !> ```
-!> open(hunit,file="."//trim(ext)//".GF.ev",status="unknown",form="unformatted")
+!> open(hunit,file=trim(get_hidden(ext))//".GF.ev",status="unknown",form="unformatted")
 !> write(hunit)NGdof,Ldvr,Ldvi        ! integers; if only the eigenvalues were computed then Ldvr=Ldvi=1;
 !> write(hunit)evalr(1:NGdof)         ! reals   ; real      part of eigenvalues;
 !> write(hunit)evali(1:NGdof)         ! reals   ; imaginary part of eigenvalues;
@@ -421,15 +419,16 @@ endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  ! write the .ma file
-  ! if( LHmatrix ) then
-  !   if( myid.eq.0 ) then ; cput = GETTIME ; write(ounit,'("hesian : ",f10.2," : LHmatrix="L2" ;")')cput-cpus, LHmatrix ;
-  !     open(munit, file="."//trim(ext)//".GF.ma", status="unknown", form="unformatted")
-  !     write(munit) NGdof
-  !     write(munit) ohessian(1:NGdof,1:NGdof)
-  !     close(munit)
-  !   endif
-  ! endif
+  if( LHmatrix ) then
+
+    if( myid.eq.0 ) then ; cput = GETTIME ; write(ounit,'("hesian : ",f10.2," : LHmatrix="L2" ;")')cput-cpus, LHmatrix ;
+     open(munit, file=trim(get_hidden(ext))//".GF.ma", status="unknown", form="unformatted")
+     write(munit) NGdof
+     write(munit) ohessian(1:NGdof,1:NGdof)
+     close(munit)
+    endif
+ 
+   endif
 
 
 ! if( myid.eq.0 .and. ( LHevalues .or. LHevectors ) ) then ! the call to dforce below requires all cpus; 04 Dec 14;
@@ -457,11 +456,10 @@ endif
 !#else
 !   FATAL( global, .true., eigenvalue solver needs updating to F08NAF )
 !#endif
-
    call dgeev('N', JOB, NGdof, hessian2D(1:LDA,1:NGdof), LDA, evalr(1:NGdof), evali(1:NGdof), &
-               evecl(1:Ldvr,1:NGdof), Ldvr, revecr(1:Ldvr,1:2*NGdof), Ldvr, work(1:Lwork), Lwork, if02ebf )
-   evecr(1:Ldvr,1:NGdof) = revecr(1:Ldvr,1:NGdof)
-   eveci(1:Ldvr,1:NGdof) = revecr(1:Ldvr,NGdof+1:2*NGdof)
+              evecl(1:Ldvr,1:NGdof), Ldvr, revecr(1:Ldvr,1:2*NGdof), Ldvr, work(1:Lwork), Lwork, if02ebf )
+  evecr(1:Ldvr,1:NGdof) = revecr(1:Ldvr,1:NGdof)
+  eveci(1:Ldvr,1:NGdof) = revecr(1:Ldvr,NGdof+1:2*NGdof)
 
    if( myid.eq.0 ) then
    cput = GETTIME
@@ -522,10 +520,6 @@ endif
     enddo
    enddo
 
-  !  do ii = 1, mn ; write(ounit,*) 'psifact', ii, psifactor(ii,Mvol-1)
-  ! enddo
-
-
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
    if( myid.eq.0 ) then ! screen output; 04 Dec 14;
@@ -581,16 +575,15 @@ endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-   ! write eigvals and eigvecs to .ev file
-  !  if( myid.eq.0 ) then ! write to file; 04 Dec 14;
-  !   open(hunit, file="."//trim(ext)//".GF.ev", status="unknown", form="unformatted")
-  !   write(hunit) NGdof, Ldvr, Ldvi
-  !   write(hunit) evalr
-  !   write(hunit) evali
-  !   write(hunit) evecr
-  !   write(hunit) eveci
-  !   close(hunit)
-  !  endif ! end of if( myid.eq.0 ) ; 04 Dec 14;
+   if( myid.eq.0 ) then ! write to file; 04 Dec 14;
+    open(hunit, file=trim(get_hidden(ext))//".GF.ev", status="unknown", form="unformatted")
+    write(hunit) NGdof, Ldvr, Ldvi
+    write(hunit) evalr
+    write(hunit) evali
+    write(hunit) evecr
+    write(hunit) eveci
+    close(hunit)
+   endif ! end of if( myid.eq.0 ) ; 04 Dec 14;
 
   endif ! end of if(                 ( LHevalues .or. LHevectors ) )
 
@@ -708,6 +701,7 @@ endif
 
 
   DALLOCATE(hessian2D)
+  write(ounit,*) 5656
 
   DALLOCATE(dessian2D)
 
