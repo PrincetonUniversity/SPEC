@@ -1,5 +1,6 @@
 import numpy as np
 from scipy import integrate
+import typing
 
 def get_RZ_derivatives(
     self,
@@ -504,7 +505,7 @@ def get_average_beta(self, ns=64, nt=64, nz=64):
     """Get beta averaged in plasma volume"""
 
     # Read pressure
-    press = self.input.physics.pressure * self.input.physics.pscale
+    press = np.atleast_1d(self.input.physics.pressure) * self.input.physics.pscale
 
     # Create coordinate grid
     nfp = self.input.physics.Nfp
@@ -606,11 +607,32 @@ def test_derivatives(self, lvol=0, s=0.3, t=0.4, z=0.5, delta=1e-6, tol=1e-6):
     print((g[0,1,0,:,:] - g[0,0,0,:,:])/ds/2-dg[0,0,0,1,:,:])
     print((g[0,0,1,:,:] - g[0,0,0,:,:])/ds/2-dg[0,0,0,2,:,:])
 
-def get_surface_current_density(self, lsurf:int=None, nt:int=64, nz:int=64):
+def _validate_lsurf(lsurf:np.ndarray, mvol:int)->np.ndarray:
+    """Check 
+    
+    Args:
+        - lsurf: Interface number(s), between 1 and Mvol-1. default is np.arange(1, mvol)
+        - mvol: Number of volumes
+    Returns:
+        - lsurf: 1d array of interface numbers
+        
+    Raises:
+        - ValueError: if input is outside of range or wrong type (lsurf)
+    """
+
+    if lsurf is None:
+        lsurf = np.arange(1,mvol)
+    else:
+        lsurf = np.atleast_1d(lsurf)
+    if (lsurf<1).any() or (lsurf>mvol-1).any(): raise ValueError('lsurf should be in [1,mvol-1]')
+    
+    return lsurf
+
+def get_surface_current_density(self, lsurf:np.ndarray, nt:int=64, nz:int=64)->typing.Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Compute j_surf.B on each side of the provided interfaces
     
     Args:
-        - lsurf: Interface number, between 1 and Mvol-1.
+        - lsurf: Interface number(s), between 1 and Mvol-1. default is np.arange(1, mvol)
         - nt: Number of poloidal points
         - nz: Number of toroidal points
         
@@ -628,9 +650,7 @@ def get_surface_current_density(self, lsurf:int=None, nt:int=64, nz:int=64):
     nfp = self.input.physics.Nfp
 
     if mvol==1: raise ValueError('Mvol=1; no interface current!')
-    if not isinstance(lsurf, np.ndarray): raise ValueError('lsurf should be a np.ndarray')
-    if lsurf is None: raise ValueError('Need to provide lsurf')
-    if (lsurf<1).any() or (lsurf>mvol-1).any(): raise ValueError('lsurf should be in [1,mvol-1]')
+    lsurf = _validate_lsurf(lsurf, mvol)
     if nt<1: raise ValueError('nt should greater than zero')
     if nz<1: raise ValueError('nz should greater than zero')
 
@@ -683,11 +703,11 @@ def get_surface_current_density(self, lsurf:int=None, nt:int=64, nz:int=64):
 
     return j_dot_B, tarr, zarr
 
-def get_surface(self, lsurf:int=None, nt:int=64, nz:int=64):
+def get_surface(self, lsurf:np.ndarray=None, nt:int=64, nz:int=64):
     """Compute the surface area of a volume interface
     
     Args:
-        - lsurf: Interface number, between 1 and Mvol-1.
+        - lsurf: Interface number(s), between 1 and Mvol-1. default is np.arange(1, mvol)
         - nt: Number of poloidal points for integration, default is 64
         - nz: Number of toroidal points for integration, default is 64
         
@@ -700,15 +720,10 @@ def get_surface(self, lsurf:int=None, nt:int=64, nz:int=64):
 
     mvol = self.output.Mvol
     nfp = self.input.physics.Nfp
-    if lsurf is None:
-        lsurf = np.arange(1,mvol)
 
     if mvol==1: 
         raise ValueError('Mvol=1; no interface current!')
-    if not isinstance(lsurf, np.ndarray): 
-        raise ValueError('lsurf should be a np.ndarray')
-    if (lsurf<1).any() or (lsurf>mvol-1).any(): 
-        raise ValueError('lsurf should be in [1,mvol-1]')
+    lsurf = _validate_lsurf(lsurf, mvol)
     if nt<1: 
         raise ValueError('nt should greater than zero')
     if nz<1: 
@@ -744,7 +759,7 @@ def get_flux_surface_average( self, lsurf, f, tarr, zarr ):
     inner side of the interface (i.e. lvol=lsurf-1, sarr=1)
     
     Args:
-        - lsurf (1D numpy array): Interface number, between 1 and Mvol-1
+        - lsurf: Interface number(s), between 1 and Mvol-1. default is np.arange(1, mvol)
         - f (2D numpy array): function evaluated on a grid
         - tgrid (2D numpy array): theta grid
         - zgrid (2D numpy array): phi grid
@@ -752,7 +767,11 @@ def get_flux_surface_average( self, lsurf, f, tarr, zarr ):
     Returns>
         - fsavg (1D numpy array): The flux surface average of f on each surface
           given in lsurf
+    Raises:
+        - ValueError: if input is wrong (invalid lsurf)
     """
+    
+    lsurf = _validate_lsurf(lsurf, self.output.Mvol)
 
     # Get jacobian
     output = np.zeros(lsurf.shape)
