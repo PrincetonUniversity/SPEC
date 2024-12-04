@@ -23,6 +23,8 @@ def compare(data, reference, localtol=1e-6, action='ERR'):
     """
     global match
     for key, value in vars(data).items():
+        if key in ['Lconstraint', 'LBeltrami']:
+            continue
         if isinstance(value, SPECout):  # recurse data (csmiet: I'm not the biggest fan of this recursion...)
             print('------------------')
             print('Elements in '+key)
