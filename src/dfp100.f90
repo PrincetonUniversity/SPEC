@@ -65,6 +65,8 @@ subroutine dfp100(Ndofgl, x, Fvec, LComputeDerivatives)
                         dMA, dMB, dMD, dMG, MBpsi, solution, &
                         Nt, Nz, LILUprecond, Lsavedguvij, NOTMatrixFree, guvijsave, izbs, total_pflux
 
+  use sphdf5, only : write_matrices
+
   LOCALS
   !------
   ! vvol:                       loop index on volumes
@@ -80,8 +82,6 @@ subroutine dfp100(Ndofgl, x, Fvec, LComputeDerivatives)
   REAL                 :: Fvec(1:Ndofgl), x(1:Mvol-1), Bt00(1:Mvol, 0:1, -1:2), ldItGp(0:1, -1:2)
   LOGICAL              :: LComputeDerivatives
   INTEGER              :: deriv, Lcurvature
-
-
 
   BEGIN(dfp100)
 
@@ -129,6 +129,14 @@ subroutine dfp100(Ndofgl, x, Fvec, LComputeDerivatives)
       ! we will still need to construct the dMB and dMG matrix
       WCALL( dfp100, matrixBG, ( vvol, mn, ll ) )
     endif
+
+    ! if(.true.) then
+    !   write(ounit,"('Writing dMA to .h5 for vvol=3')")
+    !   ! write(*,*) vvol, ALLOCATED(dMA)
+    !   ! write(*,*) dMA(1:5, 1:4)
+    !   WCALL( dfp100, write_matrices, (dMA) )
+    ! endif
+    
 
     ! Call Beltrami solver to get the magnetic field in the current volume.
     WCALL( dfp100, ma02aa, ( vvol, NN ) )

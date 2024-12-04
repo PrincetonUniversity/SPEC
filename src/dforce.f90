@@ -466,7 +466,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
 
   Energy = sum( lBBintegral(1:Nvol) ) ! should also compute beta;
   ! write(*,*)"total Energy", Energy
-  write(*,*) "Betatotal", BetaTotal, voltotal
+  !write(*,*) "Betatotal", BetaTotal, voltotal
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

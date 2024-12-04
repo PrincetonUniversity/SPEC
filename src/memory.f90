@@ -27,6 +27,7 @@ subroutine allocate_Beltrami_matrices(vvol, LcomputeDerivatives)
 
   if (NOTMatrixFree .or. LcomputeDerivatives) then
       SALLOCATE( dMA, (0:NN,0:NN), zero ) ! required for both plasma region and vacuum region;
+      ! write(ounit,"('dMA allocate')")
       SALLOCATE( dMD, (0:NN,0:NN), zero )
   else
       SALLOCATE( Adotx, (0:NN), zero)
@@ -75,6 +76,7 @@ subroutine deallocate_Beltrami_matrices(LcomputeDerivatives)
 
   if (NOTMatrixFree .or. LcomputeDerivatives) then
     DALLOCATE(dMA)
+    ! write(ounit,"('dMA DEallocate')")
     DALLOCATE(dMD)
   else
     DALLOCATE(Adotx)

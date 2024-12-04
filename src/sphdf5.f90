@@ -1020,6 +1020,33 @@ subroutine write_stability(ohessian, evalr, evali, evecr, NGdof)
 end subroutine write_stability
 
 
+subroutine write_matrices(M_dMA)
+
+  use inputlist, only : M_dMA
+
+  LOCALS
+  REAL, intent(in)    :: M_dMA(:,:)
+  integer(hid_t)      :: grpMatrices
+  integer             :: sizeM
+
+  BEGIN( sphdf5 )
+
+  if (myid.eq.0) then
+
+    HDEFGRP( file_id, matrices, grpMatrices)
+
+    sizeM  = SIZE(M_dMA, DIM = 1)
+    ! write(*,*) M_dMA(1:12, 1:3)
+    write(*,*) 'sizeM = ', sizeM
+    HWRITERA( grpMatrices, sizeM, sizeM, M_dMA, M_dMA(1:sizeM,1:sizeM))
+    
+    HCLOSEGRP( grpMatrices )
+
+  endif ! myid.eq.0
+
+end subroutine write_matrices
+
+
 subroutine hdfint
 
   use fileunits, only : ounit
