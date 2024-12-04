@@ -1671,14 +1671,14 @@ subroutine wrtend
   write(iunit,'(" Lrad        = ",257i23    )') Lrad(1:Mvol)
   write(iunit,'(" tflux       = ",257es23.15)') tflux(1:Mvol)
   write(iunit,'(" pflux       = ",257es23.15)') pflux(1:Mvol)
-  write(iunit,'(" helicity    = ",257es23.15)') helicity(1:Mvol)
+  write(iunit,'(" helicity    = ",256es23.15)') helicity(1:Mvol)
   write(iunit,'(" pscale      = ",es23.15   )') pscale
   write(iunit,'(" Ladiabatic  = ",i9        )') Ladiabatic
   write(iunit,'(" pressure    = ",257es23.15)') pressure(1:Mvol)
   write(iunit,'(" adiabatic   = ",257es23.15)') adiabatic(1:Mvol)
   write(iunit,'(" mu          = ",257es23.15)') mu(1:Mvol)
   write(iunit,'(" Ivolume     = ",257es23.15)') Ivolume(1:Mvol)
-  write(iunit,'(" Isurf       = ",257es23.15)') IPDt(1:Mvol-1), 0.0
+  write(iunit,'(" Isurf       = ",257es23.15)') IPDt(1:Mvol) ! Prints the actual surf current, not the targeted one
   write(iunit,'(" Lconstraint = ",i9        )') Lconstraint
   write(iunit,'(" pl          = ",257i23    )') pl(0:Mvol)
   write(iunit,'(" ql          = ",257i23    )') ql(0:Mvol)
