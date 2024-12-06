@@ -19,9 +19,9 @@ def plot_pressure(self, normalize=True, ax=None, **kwargs):
         fig, ax = plt.subplots()
     plt.sca(ax)
     # set default plotting parameters
-    if kwargs.get("linewidth") == None:
+    if "linewidth" not in kwargs:
         kwargs.update({"linewidth": 2.0})  # prefer thicker lines
-    if kwargs.get("label") == None:
+    if "label" not in kwargs:
         kwargs.update({"label": "self_pressure"})  # default label
     # process data
     _tflux = np.insert(tflux, 0, 0)
