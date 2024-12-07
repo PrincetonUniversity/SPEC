@@ -606,6 +606,22 @@ subroutine dvcfield( Ndim, tz, Nfun, vcintegrand )
                  jj(1) * rr(2) - jj(2) * rr(1)  /)
 
   vcintegrand(1) = sum( Bxyz(1:3) * Nxyz(1:3,globaljk) ) * firstorderfactor
+
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+  ! vcintegrand( 4) = - three * vcintegrand(1) * rr(1) / distance(2) ! dBxdx; ! need to divide by distance(3) ; 14 Apr 17;
+  !   vcintegrand( 5) = - three * vcintegrand(1) * rr(2) / distance(2) - jj(3) ! dBxdy;
+  !   vcintegrand( 6) = - three * vcintegrand(1) * rr(3) / distance(2) + jj(2) ! dBxdz;
+  !
+  !   vcintegrand( 7) = - three * vcintegrand(2) * rr(1) / distance(2) + jj(3) ! dBydx;
+  !   vcintegrand( 8) = - three * vcintegrand(2) * rr(2) / distance(2)         ! dBydy;
+  !   vcintegrand( 9) = - three * vcintegrand(2) * rr(3) / distance(2) - jj(1) ! dBydz;
+  !
+  !   vcintegrand(10) = - three * vcintegrand(3) * rr(1) / distance(2) - jj(2) ! dBzdx;
+  !   vcintegrand(11) = - three * vcintegrand(3) * rr(2) / distance(2) + jj(1) ! dBzdy;
+  !   vcintegrand(12) = - three * vcintegrand(3) * rr(3) / distance(2)         ! dBzdz;
+
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   return
 
 end subroutine dvcfield
