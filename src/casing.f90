@@ -339,7 +339,7 @@ subroutine surfacecurrent( teta, zeta, pxyz, jj)
     LOCALS
     
     REAL    , intent(in)  :: teta, zeta ! theta and zeta coordinates on the plasma boundary
-    REAL    , intent(out) :: jj(1:3),   ! Cartesian surface current components on the plasma boundary
+    REAL    , intent(out) :: jj(1:3)    ! Cartesian surface current components on the plasma boundary
     REAL    , intent(out) :: pxyz(1:3)  ! Position on the plasma boundary
   
     INTEGER               :: ii, mi, ni, ll, ideriv
