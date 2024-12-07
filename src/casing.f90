@@ -255,7 +255,7 @@ subroutine casinggrid( xyz, nxyz,  Pbxyz, Jxyz, vcstride, gBn)
   plasmaNtz = vcNz*vcNt
   ! loop over the high resolution plasma boundary (inner boundary for virtual casing)
   do jk = 1, plasmaNtz, vcstride ;
-      ! position on computational boundary - position on plasma boundary
+      ! distance vector between point on computational boundary and point on plasma boundary
       rr = xyz - Pbxyz(jk, 1:3)
       jj = Jxyz(jk, 1:3)
 
@@ -588,7 +588,7 @@ subroutine dvcfield( Ndim, tz, Nfun, vcintegrand )
 
   call surfacecurrent(tz(1), tz(2), pxyz, jj)
 
-  ! position on computational boundary - position on plasma boundary
+  ! distance vector between point on computational boundary and point on plasma boundary
   rr(1:3) = Dxyz(1:3,globaljk) - pxyz(1:3)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

@@ -1858,8 +1858,8 @@ subroutine wrtend
   write(iunit,'(" vcasingtol  = ",es23.15       )') vcasingtol
   write(iunit,'(" vcasingits  = ",i9            )') vcasingits
   write(iunit,'(" vcasingper  = ",i9            )') vcasingper
-  write(iunit,'(" vcnt        = ",i9            )') vcnt
-  write(iunit,'(" vcnz        = ",i9            )') vcnz
+  write(iunit,'(" vcNt        = ",i9            )') vcNt
+  write(iunit,'(" vcNz        = ",i9            )') vcNz
   write(iunit,'("/")')
 
   if( Wwrtend ) then ; cput = GETTIME ; write(ounit,'("wrtend : ",f10.2," : myid=",i3," ; writing diagnosticslist ;")') cput-cpus, myid

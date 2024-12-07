@@ -345,8 +345,8 @@ subroutine mirror_input_to_outfile
   HWRITEIV( grpInputGlobal,            1,  vcasingits        , (/ vcasingits  /))
   HWRITEIV( grpInputGlobal,            1,  vcasingper        , (/ vcasingper  /))
   HWRITEIV( grpInputGlobal,            1,  mcasingcal        , (/ mcasingcal  /))  ! redundant;
-  HWRITEIV( grpInputGlobal,            1,  vcnt              , (/ vcnt        /))
-  HWRITEIV( grpInputGlobal,            1,  vcnz              , (/ vcnz        /))
+  HWRITEIV( grpInputGlobal,            1,  vcNt              , (/ vcNt        /))
+  HWRITEIV( grpInputGlobal,            1,  vcNz              , (/ vcNz        /))
 
   HCLOSEGRP( grpInputGlobal )
 
