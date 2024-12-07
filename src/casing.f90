@@ -1,6 +1,32 @@
 !> \file
 !> \brief Constructs the field created by the plasma currents, at an arbitrary, external location using virtual casing.
 
+MODULE ClosureModule
+  IMPLICIT NONE
+  TYPE :: Closure
+      REAL :: captured_var  ! Independent state for each instance
+  CONTAINS
+      PROCEDURE :: apply => closure_apply  ! Type-bound procedure
+  END TYPE Closure
+
+CONTAINS
+
+  FUNCTION closure_apply(this, x) RESULT(result)
+      CLASS(Closure), INTENT(IN) :: this
+      REAL, INTENT(IN) :: x
+      REAL :: result
+      result = this%captured_var * x
+  END FUNCTION closure_apply
+
+  FUNCTION create_closure(value) RESULT(new_closure)
+      REAL, INTENT(IN) :: value
+      TYPE(Closure) :: new_closure
+      new_closure%captured_var = value  ! Capture the state
+  END FUNCTION create_closure
+
+END MODULE ClosureModule
+
+
 !> \brief Constructs the field created by the plasma currents, at an arbitrary, external location using virtual casing.
 !> \ingroup grp_free-boundary
 !>
@@ -93,7 +119,7 @@ subroutine casing( teta, zeta, gBn, icasing )
 
   INTEGER, parameter   :: Ndim = 2, Nfun = 1
 
-  INTEGER              :: ldim, lfun, minpts, maxpts, Lrwk, idcuhre, jk, irestart, funcls, key, num, maxsub
+  INTEGER              :: ldim, lfun, minpts, maxpts, Lrwk, idcuhre, irestart, funcls, key, num, maxsub
   REAL                 :: integrals(1:Nfun), low(1:Ndim), upp(1:Ndim), labs, lrel, absest(1:Nfun)
   REAL, allocatable    :: rwk(:)
 
@@ -149,31 +175,31 @@ subroutine casing( teta, zeta, gBn, icasing )
    select case( idcuhre ) !                                                                                      "123456789012345678901234"
    case(0)      ;
     ;           ; exit
-   case(1)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "maxpts too smal;        "
+   case(1)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,globaljk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "maxpts too smal;        "
     ;           ;!exit
-   case(2)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "illegal key;            "
+   case(2)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,globaljk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "illegal key;            "
     ;           ; exit
-   case(3)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "illegal Ndim;           "
+   case(3)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,globaljk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "illegal Ndim;           "
     ;           ; exit
-   case(4)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "key.eq.1 & Ndim.ne.2;   "
+   case(4)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,globaljk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "key.eq.1 & Ndim.ne.2;   "
     ;           ; exit
-   case(5)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "key.eq.2 & Ndim.ne.3;   "
+   case(5)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,globaljk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "key.eq.2 & Ndim.ne.3;   "
     ;           ; exit
-   case(6)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "numfun < 1;             "
+   case(6)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,globaljk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "numfun < 1;             "
     ;           ; exit
-   case(7)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "volume is zero;         "
+   case(7)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,globaljk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "volume is zero;         "
     ;           ; exit
-   case(8)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "maxpts < 3*NUM;         "
+   case(8)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,globaljk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "maxpts < 3*NUM;         "
     ;           ; exit
-   case(9)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "maxpts < minpts;        "
+   case(9)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,globaljk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "maxpts < minpts;        "
     ;           ; exit
-   case(10)     ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "epsabs < 0 & epsrel < 0;"
+   case(10)     ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,globaljk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "epsabs < 0 & epsrel < 0;"
     ;           ; exit
-   case(11)     ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "NW is too small;        "
+   case(11)     ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,globaljk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "NW is too small;        "
     ;           ; exit
-   case(12)     ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "illegal irestart;       "
+   case(12)     ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,globaljk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "illegal irestart;       "
     ;           ; exit
-   case default ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "tryin' to kill me?      "
+   case default ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,globaljk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "tryin' to kill me?      "
     ;           ; exit
    end select
 
@@ -191,7 +217,7 @@ subroutine casing( teta, zeta, gBn, icasing )
   enddo ! end of virtual casing accuracy infinite-do-loop; 10 Apr 13;
 
 #ifdef DEBUG
-  ;             ; if( Wcasing ) write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts
+  ;             ; if( Wcasing ) write(ounit,1001) cput-cpus, myid, Dxyz(1:3,globaljk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts
 #endif
 
 1001 format("casing : ",f10.2," : myid=",i3," ; [x,y,z]=["es10.2" ,"es10.2" ,"es10.2" ]; gBn="es12.4" , ",&
@@ -216,14 +242,21 @@ end subroutine casing
 !> \brief Compute the field produced by the plasma currents, at an arbitrary, external location using virtual casing.
 !> \ingroup grp_free-boundary
 !>
-!> casing2() computes the virtual casing field using a fixed resolution grid on the plasma boundary, in contrast to casing() which uses an adaptive integration routine.
-!> Because the evaluation positions are known in advance, the most expensive terms of the computation (dvcfield) are precomputed. 
-!> The integral computed by casing2() is 
+!> casinggrid() computes the virtual casing field using a fixed resolution grid on the plasma boundary, in contrast to casing() which uses an adaptive integration routine.
+!> Because the evaluation positions are known in advance, the most expensive terms of the computation (surfacecurrents, or in the casing() routine dvcfield) are precomputed. 
+!> The integral computed by casinggrid() is 
 !> \f{eqnarray}{ \int_0^{2\pi} \int_0^{2\pi} \frac{{\bf j}(\theta, \zeta) \times {\bf D}(\theta, \zeta)}{\|{\bf D}(\theta', \zeta')\|^3}+ \;\; d\theta d\zeta  
 !>  \f}
 !> with \f${\bf r}\f$ approximately the distance vector from an evaluation point of the current surface \f${\bf x}(\theta, \zeta)\f$ to the 
-!> external point \f$(x,y,z)\f$, and the exact formula includes a regularization factor \f$\epsilon\f$  Eqn.\f$(\ref{eq:vcasing_distance})\f$..
-subroutine casing2( xyz, nxyz,  Pbxyz, Jxyz, vcstep,gBn)
+!> external point \f$(x,y,z)\f$, and the exact formula includes a regularization factor \f$\epsilon\f$  Eqn.\f$(\ref{eq:vcasing_distance})\f$.
+!>
+!> @param[in] xyz \f$(x,y,z)\f$ cartesian coordinates on the computational boundary
+!> @param[in] nxyz cartesian normal vector on the computational boundary
+!> @param[in] Pbxyz  array of cartesian coordinates on the plasma boundary
+!> @param[in] Jxyz array of surface currents \f${\bf B}_{Plasma} \cdot {\bf e}_\theta \times {\bf e}_\zeta \;\f$ on the plasma boundary
+!> @param[in] vcstride integer stride for the fixed resolution grid. vcstride = 1 computes the integral at full resolution, vcstride = 2 computes the integral at half resolution, etc.
+!> @param[out] gBn normal field \f${\bf B}_{Plasma} \cdot n \;\f$ on the computational boundary
+subroutine casinggrid( xyz, nxyz,  Pbxyz, Jxyz, vcstride, gBn)
   use constants, only : zero, one, three, pi2
 
   use fileunits, only : ounit, vunit
@@ -237,7 +270,7 @@ subroutine casing2( xyz, nxyz,  Pbxyz, Jxyz, vcstep,gBn)
   REAL, intent(in)     :: xyz(3) ! arbitrary location; Cartesian;
   REAL, intent(in)     :: nxyz(3) ! surface normal on the computational boundary; Cartesian;
   REAL, intent(in)     :: Pbxyz(1:vcNz*vcNt, 1:3), Jxyz(1:vcNz*vcNt, 1:3) 
-  INTEGER, intent(in)  :: vcstep
+  INTEGER, intent(in)  :: vcstride
   REAL, intent(out)    :: gBn ! B.n on the computational boundary;
   
   REAL :: rr(1:3),  distance(1:3), jj(1:3), Bxyz(1:3), accumulator, firstorderfactor
@@ -247,7 +280,7 @@ subroutine casing2( xyz, nxyz,  Pbxyz, Jxyz, vcstep,gBn)
   ! plasmaNtz = SIZE(Pbxyz, 1)
   plasmaNtz = vcNz*vcNt
   ! loop over the high resolution plasma boundary (inner boundary for virtual casing)
-  do jk = 1, plasmaNtz, vcstep ;
+  do jk = 1, plasmaNtz, vcstride ;
       ! position on computational boundary - position on plasma boundary
       rr = xyz - Pbxyz(jk, 1:3)
       jj = Jxyz(jk, 1:3)
@@ -269,10 +302,10 @@ subroutine casing2( xyz, nxyz,  Pbxyz, Jxyz, vcstep,gBn)
       ! Accumulate B.r/r^3 contributions 
       gBn = gBn + sum( Bxyz * nxyz ) * firstorderfactor
  enddo
- gBn = gBn * pi2 * pi2 / (plasmaNtz / vcstep) 
+ gBn = gBn * pi2 * pi2 / (plasmaNtz / vcstride) 
  return
 
-end subroutine casing2
+end subroutine casinggrid
 
 
 !> \brief Compute the position and surface current on the plasma boundary for the virtual casing
@@ -308,9 +341,9 @@ end subroutine casing2
 !>
 !> @param[in] teta \f$\theta\f$
 !> @param[in] zeta \f$\zeta\f$
-!> @param[out] pxyz \f${\bf B}_{Plasma} \cdot {\bf e}_\theta \times {\bf e}_\zeta \;\f$ on the computational boundary
-!> @param[out] jj \f${\bf B}_{Plasma} \cdot {\bf e}_\theta \times {\bf e}_\zeta \;\f$ on the computational boundary
-subroutine dvcfieldimpl( teta, zeta, pxyz, jj)
+!> @param[out] pxyz \f$(x,y,z)\f$ cartesian coordinates on the plasma boundary
+!> @param[out] jj Surface current \f${\bf B}_{Plasma} \cdot {\bf e}_\theta \times {\bf e}_\zeta \;\f$ on the plasma boundary
+subroutine surfacecurrent( teta, zeta, pxyz, jj)
 
   !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -332,8 +365,8 @@ subroutine dvcfieldimpl( teta, zeta, pxyz, jj)
     LOCALS
     
     REAL    , intent(in)  :: teta, zeta ! theta and zeta coordinates on the plasma boundary
-    REAL    , intent(out) :: jj(1:3), & ! Cartesian surface current components on the plasma boundary
-                             pxyz(1:3) ! Position on the plasma boundary
+    REAL    , intent(out) :: jj(1:3),   ! Cartesian surface current components on the plasma boundary
+    REAL    , intent(out) :: pxyz(1:3)  ! Position on the plasma boundary
   
     INTEGER               :: ii, mi, ni, ll, ideriv
     REAL                  :: dR(0:3), dZ(0:3), gBut, gBuz, gtt, gtz, gzz, sqrtg, Blt, Blz, czeta, szeta, arg, carg, sarg
@@ -535,7 +568,7 @@ subroutine dvcfieldimpl( teta, zeta, pxyz, jj)
   
   !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
-  end subroutine dvcfieldimpl 
+  end subroutine surfacecurrent 
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -543,7 +576,7 @@ subroutine dvcfieldimpl( teta, zeta, pxyz, jj)
 !> \ingroup grp_free-boundary
 !>
 !> Differential virtual casing integrand with the calling convention required by NAG for the adaptive integration routine.  
-!> This function wraps dvcfieldimpl and uses a global variable globaljk to determine the position on the computational boundary (not thread safe!). 
+!> This function wraps surfacecurrent and uses a global variable globaljk to determine the position on the computational boundary (not thread safe!). 
 !>
 !> @param[in] Ndim number of parameters (==2)
 !> @param[in] tz \f$\theta\f$ and \f$\zeta\f$
@@ -579,7 +612,7 @@ subroutine dvcfield( Ndim, tz, Nfun, vcintegrand )
 #endif
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  call dvcfieldimpl(tz(1), tz(2), pxyz, jj)
+  call surfacecurrent(tz(1), tz(2), pxyz, jj)
 
   ! position on computational boundary - position on plasma boundary
   rr(1:3) = Dxyz(1:3,globaljk) - pxyz(1:3)
