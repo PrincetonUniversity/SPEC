@@ -1,32 +1,6 @@
 !> \file
 !> \brief Constructs the field created by the plasma currents, at an arbitrary, external location using virtual casing.
 
-MODULE ClosureModule
-  IMPLICIT NONE
-  TYPE :: Closure
-      REAL :: captured_var  ! Independent state for each instance
-  CONTAINS
-      PROCEDURE :: apply => closure_apply  ! Type-bound procedure
-  END TYPE Closure
-
-CONTAINS
-
-  FUNCTION closure_apply(this, x) RESULT(result)
-      CLASS(Closure), INTENT(IN) :: this
-      REAL, INTENT(IN) :: x
-      REAL :: result
-      result = this%captured_var * x
-  END FUNCTION closure_apply
-
-  FUNCTION create_closure(value) RESULT(new_closure)
-      REAL, INTENT(IN) :: value
-      TYPE(Closure) :: new_closure
-      new_closure%captured_var = value  ! Capture the state
-  END FUNCTION create_closure
-
-END MODULE ClosureModule
-
-
 !> \brief Constructs the field created by the plasma currents, at an arbitrary, external location using virtual casing.
 !> \ingroup grp_free-boundary
 !>
