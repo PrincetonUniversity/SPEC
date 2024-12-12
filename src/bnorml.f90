@@ -124,7 +124,7 @@ subroutine bnorml( mn, Ntz, efmn, ofmn )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   ijreal(1:Ntz) = zero ! normal plasma field; 15 Oct 12;
-
+  ijimag(1:Ntz) = zero 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 #ifdef DEBUG
@@ -180,9 +180,9 @@ if ( Lvcgrid.eq.1 ) then
 
   ! iterate over resolutions of the virtual casing grid to get an estimate of the accuracy
   do vcstride = 3, 0, -1
-    !$OMP PARALLEL DO SHARED(Dxyz, Pbxyz, Jxyz, ijimag) PRIVATE(jk, gBn) COLLAPSE(2)
+    !$OMP PARALLEL DO SHARED(Dxyz, Pbxyz, Jxyz, ijreal, ijimag) PRIVATE(jk, gBn) COLLAPSE(2)
     do kk = 0, Nz-1 ; 
-      do jj = 0, Nz-1 ; 
+      do jj = 0, Nt-1 ; 
         jk = 1 + jj + kk*Nt
 
         ! Each MPI rank only computes every a 1/ncpu surfacecurrent() calls 
@@ -190,7 +190,6 @@ if ( Lvcgrid.eq.1 ) then
         select case( Lparallel ) 
         case( 0 ) ! Lparallel = 0 
         if( myid.ne.modulo(kk,ncpu) ) cycle
-        print *, "rank ", myid, ": kk = ", kk, ", jk = ", jk
         case( 1 ) ! Lparallel = 1 
         if( myid.ne.modulo(jk-1,ncpu) ) cycle 
         case default ! Lparallel; 
@@ -212,7 +211,7 @@ if ( Lvcgrid.eq.1 ) then
     vcgriderr = deltah2h / sum(abs(ijimag))
   enddo
 
-  write(ounit, '("bnorml : ", 10x ," : vcgriderr = ",es13.5," ; vcasingtol = ",es13.5)') vcgriderr, vcasingtol
+  write(ounit, '("bnorml : ", 10x ," : vcgriderr = ",es13.5," ; vcasingtol = ",es13.5,"myid=",i3)') vcgriderr, vcasingtol, myid
   ! if (vcgriderr.gt.vcasingtol) then
   !   FATAL( bnorml, .true., virtual casing accuracy is too low, increase vcNt and vcNz )
   ! endif
