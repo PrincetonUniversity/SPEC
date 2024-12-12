@@ -31,19 +31,38 @@ stable_force_free_sheet:
   image: csmiet/testspec
   script:
   - source source.sh
-  - cd ci/G1V03L2Fi
-  - xspec G1V03L2Fi.001.sp
-  - python3 -m py_spec.ci.test compare.h5 G1V03L2Fi.001.sp.h5 
+  - cd ci/G1V03L0Fi
+  - xspec G1V03L0Fi.sp
+  - python3 -m py_spec.ci.test compare.h5 G1V03L0Fi.sp.h5 
   #comparison python3 -m py_spec.ci.testspec f1 f2
   artifacts:
     when: always
     paths:
-    - ci/G1V03L2Fi/G1V03L2Fi.001.sp.h5
+    - ci/G1V03L0Fi/G1V03L0Fi.sp.h5
     expire_in: 1 week
   dependencies:
   - build:centos7
 # reproduce:
-# docker run -v `pwd`:`pwd` -w `pwd` csmiet/testspec sh -c 'source ./source.sh;cd ci/G1V03L2Fi; xspec G1V03L2Fi.001.sp; python3 -m py_spec.ci.test compare.h5 G1V03L2Fi.001.sp.h5'
+# docker run -v `pwd`:`pwd` -w `pwd` csmiet/testspec sh -c 'source ./source.sh;cd ci/G1V03L0Fi; xspec G1V03L0Fi.sp; python3 -m py_spec.ci.test compare.h5 G1V03L0Fi.sp.h5'
+
+stable_force_free_sheet_lcons3:
+  stage: test
+  image: csmiet/testspec
+  script:
+  - source source.sh
+  - cd ci/G1V03L3Fi
+  - xspec G1V03L3Fi.sp
+  - python3 -m py_spec.ci.test compare.h5 G1V03L3Fi.sp.h5 
+  #comparison python3 -m py_spec.ci.testspec f1 f2
+  artifacts:
+    when: always
+    paths:
+    - ci/G1V03L3Fi/G1V03L3Fi.sp.h5
+    expire_in: 1 week
+  dependencies:
+  - build:centos7
+# reproduce:
+# docker run -v `pwd`:`pwd` -w `pwd` csmiet/testspec sh -c 'source ./source.sh;cd ci/G1V03L3Fi; xspec G1V03L3Fi.sp; python3 -m py_spec.ci.test compare.h5 G1V03L3Fi.sp.h5'
 
 cylindrical_many_volumes:
   stage: test
