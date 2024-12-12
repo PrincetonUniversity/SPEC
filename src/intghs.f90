@@ -382,9 +382,8 @@ subroutine intghs_workspace_init(lvol)
 
 end subroutine intghs_workspace_init
 
-!> \brief free workspace
+!> \brief free workspace.
 !>
-!> @param lvol
 subroutine intghs_workspace_destroy()
 
   use inputlist, only : Wmacros, Wintghs

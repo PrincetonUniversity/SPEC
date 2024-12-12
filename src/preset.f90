@@ -890,7 +890,9 @@ endif
   if( LBeltrami.eq.2 .or. LBeltrami.eq.3 .or. LBeltrami.eq.6 .or. LBeltrami.eq.7 ) LBnewton = .true.
   if( LBeltrami.eq.4 .or. LBeltrami.eq.5 .or. LBeltrami.eq.6 .or. LBeltrami.eq.7 ) LBlinear = .true.
 
-  if (LBnewton .or. LBsequad) Lconstraint = 2
+  if ((LBnewton .or. LBsequad) .and. ( Lconstraint .ne. 2)) then
+    FATAL( preset, .true., LBnewton and LBsequad require Lconstraint = 2 )
+  endif
 
   if (Lconstraint .eq. 2) then
     FATAL( preset, Lfreebound.eq.1, The combination of helicity constraint and free boundary is under construction )
