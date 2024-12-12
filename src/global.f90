@@ -239,10 +239,10 @@ module allglobal
 
   LOGICAL              :: skip_write = .false. ! flag to disable any HDF5-related calls
 
-  REAL                 :: pi2nfp           !       pi2/nfp     ; assigned in readin;
-  REAL                 :: pi2pi2nfp
-  REAL                 :: pi2pi2nfphalf
-  REAL                 :: pi2pi2nfpquart
+  REAL                 :: pi2nfp          !< pi2/nfp     ; assigned in readin;
+  REAL                 :: pi2pi2nfp       !< pi2*pi2/nfp
+  REAL                 :: pi2pi2nfphalf   !< 2*pi*pi/nfp
+  REAL                 :: pi2pi2nfpquart  !< pi*pi/nfp
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -254,7 +254,7 @@ module allglobal
 
   REAL   , allocatable :: IPDt(:), IPDtDpf(:,:)  !< Toroidal pressure-driven current
 
-  INTEGER              :: Mvol
+  INTEGER              :: Mvol !< total number of volumes (including the vacuum region in the case of free-boundary calculations)
 
   LOGICAL              :: YESstellsym !< internal shorthand copies of Istellsym, which is an integer input;
   LOGICAL              :: NOTstellsym !< internal shorthand copies of Istellsym, which is an integer input;
@@ -861,33 +861,35 @@ contains
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-subroutine build_vector_potential(lvol, iocons, aderiv, tderiv)
-
-! Builds the covariant component of the vector potential and store them in efmn, ofmn, sfmn, cfmn.
-
+subroutine build_vector_potential(lvol, iocons, aderiv)
+  
+  !> \brief Builds the covariant component of the vector potential, by evaluating the polynomial basis (chebyshev or zernike) and store them in efmn, ofmn, sfmn, cfmn. 
+  
   use constants, only: zero, half
-
+  
   use fileunits, only: ounit
-
+  
   use inputlist, only: Lrad, Wbuild_vector_potential, Wmacros
-
+  
   use cputiming
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+  
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
   LOCALS
-
-  INTEGER              :: aderiv    ! Derivative of A. -1: w.r.t geometrical degree of freedom
-                                    !                   0: no derivatives
-                                    !                   1: w.r.t mu
-                                    !                   2: w.r.t pflux
-  INTEGER              :: tderiv    ! Derivative of Chebyshev polynomialc. 0: no derivatives
-                                    !                                      1: w.r.t radial coordinate s
+  
+  !> @param[in] lvol index of volume
+  INTEGER, intent(in)  :: lvol
+  !> @param[in] iocons inner (0) or outer (1) side of the volume
+  INTEGER, intent(in)  :: iocons 
+  !> @param[in] aderiv Derivative of A. 
+  !>            - -1: w.r.t geometrical degree of freedom
+  !>            -  0: no derivatives
+  !>            -  1: w.r.t mu
+  !>            -  2: w.r.t pflux
+  INTEGER, intent(in)  :: aderiv 
   INTEGER              :: ii,  &    ! Loop index on Fourier harmonics
                           ll,  &    ! Loop index on radial resolution
-                          mi,  &    ! Poloidal mode number
-                          lvol,&    ! Volume number
-                          iocons    ! inner (0) or outer (1) side of the volume
+                          mi        ! Poloidal mode number
   REAL                 :: mfactor   ! Regularization factor when LcoordinateSingularity
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -1597,7 +1599,8 @@ end subroutine ! broadcast_inputs
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!> \brief The restart file is written.
+!> \brief Write the restart file \c ext.sp.end
+!> \ingroup grp_output
 subroutine wrtend
 
   use constants, only :

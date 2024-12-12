@@ -30,7 +30,10 @@
 !>       where \f$\alpha_i \equiv m_i \theta - n_i \zeta\f$. </li>
 !> </ul>
 !>
-
+!> @param[in] lvol index of the volume region
+!> @param[inout] vflag
+!> - vflag=0: An invalid volume will throw an error.  
+!> - vflag=1: An invalid volume will be ignored, and volume validity will be written to \c vflag as an output value.
 subroutine volume( lvol, vflag )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -60,7 +63,9 @@ subroutine volume( lvol, vflag )
 
   INTEGER, intent(in) :: lvol
 
-  INTEGER             :: vflag, Lcurvature
+  INTEGER, intent(inout) :: vflag
+
+  INTEGER             :: Lcurvature
 
   INTEGER             :: jvol, ii, jj, kk, mi, ni, mj, nj, mk, nk, innout
 

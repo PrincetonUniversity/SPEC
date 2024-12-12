@@ -222,7 +222,7 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, ifl
 ! compute B^2 on interface;
   ! Compute covariant vector potential. Stored in efmn, ofmn, cfmn, sfmn.
   !                                         ideriv, tderiv
-  call build_vector_potential(lvol, iocons,      0,      1)
+  call build_vector_potential(lvol, iocons,      0)
 
   ! Map to real space
   call invfft( mn, im, in, efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt(1:Ntz, 0), dAz(1:Ntz, 0) )
@@ -236,7 +236,7 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, ifl
 
   else
     ! Compute covariant vector potential. Stored in efmn, ofmn, cfmn, sfmn.
-    call build_vector_potential(lvol, iocons, id, 1)
+    call build_vector_potential(lvol, iocons, id)
     ! Map to real space
     call invfft( mn, im, in, efmn(1:mn), ofmn(1:mn), cfmn(1:mn), sfmn(1:mn), Nt, Nz, dAt(1:Ntz, id), dAz(1:Ntz, id) )
 
