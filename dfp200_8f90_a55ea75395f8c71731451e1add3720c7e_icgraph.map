@@ -10,12 +10,12 @@
 <area shape="rect" id="node9" href="$group__grp__force__driver.html#gabbc245b3884ee8d8d3e2a52f25149f78" title="Objective to be given to the Newton solver, using only function values." alt="" coords="517,325,564,352"/>
 <area shape="rect" id="node10" href="$group__grp__force__driver.html#gaec14f81fbdbedafbc4189489ec8ae178" title="Employs Newton method to find , where &#160;and &#160;is defined in dforce() ." alt="" coords="345,312,409,339"/>
 <area shape="rect" id="node11" href="$group__grp__force__driver.html#ga8ccd6c7d901872702521d0a0edf95412" title="Objective to be given to the Newton solver, using function values and derivatives." alt="" coords="45,293,91,320"/>
-<area shape="rect" id="node14" href="$group__grp__diagnostics.html#ga7401b50ec10c6598ee4a8112717a63ec" title="Computes eigenvalues and eigenvectors of derivative matrix, ." alt="" coords="347,224,407,251"/>
+<area shape="rect" id="node14" href="$group__grp__output.html#ga7401b50ec10c6598ee4a8112717a63ec" title="Computes eigenvalues and eigenvectors of derivative matrix, &#160;and saves them to .ext...." alt="" coords="347,224,407,251"/>
 <area shape="rect" id="node15" href="$group__grp__conjugate__gradient.html#ga4d8415226e62a9fdb42b0fd0b464251e" title="Returns the energy functional and it&#39;s derivatives with respect to geometry." alt="" coords="509,451,573,477"/>
 <area shape="rect" id="node4" href="$xspech_8f90.html#a9fdc71dffd7c61ee4588a3f80d3ab9ce" title="Main subroutine of SPEC." alt="" coords="346,75,409,101"/>
 <area shape="rect" id="node5" href="$xspech_8f90.html#a1451823a7b97101a797de616250752c1" title="Final diagnostics." alt="" coords="179,5,297,32"/>
 <area shape="rect" id="node8" href="$xspech_8f90.html#a95271e8805067f801b5d4e524d6901d4" title="Main program of SPEC." alt="" coords="195,107,281,133"/>
 <area shape="rect" id="node7" href="$group__grp__output.html#ga0f962c09cd5d5eba99f1cba043cb3898" title="Initialize the interface to the HDF5 library and open the output file." alt="" coords="5,107,131,133"/>
-<area shape="rect" id="node12" href="$group__grp__force__driver.html#ga382822b303cbf8c56d6f54dcb379caf2" title="read or write force&#45;derivative matrix" alt="" coords="195,325,281,352"/>
+<area shape="rect" id="node12" href="$group__grp__output.html#ga382822b303cbf8c56d6f54dcb379caf2" title="read or write force&#45;derivative matrix .ext.sp.DF" alt="" coords="195,325,281,352"/>
 <area shape="rect" id="node16" href="$group__grp__conjugate__gradient.html#ga25a3bae2ff2ee0469b045de0d033398b" title="Use preconditioned conjugate gradient method to find minimum of energy functional." alt="" coords="345,451,409,477"/>
 </map>

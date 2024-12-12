@@ -172,9 +172,8 @@ Functions/Subroutines</h2></td></tr>
 <tr class="memitem:ac0b85034c4b1e504e97df241bcb7afb7"><td class="memItemLeft" align="right" valign="top"><a id="ac0b85034c4b1e504e97df241bcb7afb7" name="ac0b85034c4b1e504e97df241bcb7afb7"></a>
 subroutine&#160;</td><td class="memItemRight" valign="bottom"><b>fileunits::mute</b> (action)</td></tr>
 <tr class="separator:ac0b85034c4b1e504e97df241bcb7afb7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac3db969f9996d9e7f1eb8e73c26119b7"><td class="memItemLeft" align="right" valign="top"><a id="ac3db969f9996d9e7f1eb8e73c26119b7" name="ac3db969f9996d9e7f1eb8e73c26119b7"></a>
-subroutine&#160;</td><td class="memItemRight" valign="bottom"><b>allglobal::build_vector_potential</b> (lvol, iocons, aderiv, tderiv)</td></tr>
-<tr class="separator:ac3db969f9996d9e7f1eb8e73c26119b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af3f23b45db519a643eea14b410e6d428"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceallglobal.html#af3f23b45db519a643eea14b410e6d428">allglobal::build_vector_potential</a> (lvol, iocons, aderiv)</td></tr>
+<tr class="separator:af3f23b45db519a643eea14b410e6d428"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afa27b2cdec8a3a25eb2fea9fe095fb82"><td class="memItemLeft" align="right" valign="top"><a id="afa27b2cdec8a3a25eb2fea9fe095fb82" name="afa27b2cdec8a3a25eb2fea9fe095fb82"></a>
 subroutine&#160;</td><td class="memItemRight" valign="bottom"><b>allglobal::set_mpi_comm</b> (comm)</td></tr>
 <tr class="separator:afa27b2cdec8a3a25eb2fea9fe095fb82"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -191,10 +190,10 @@ subroutine&#160;</td><td class="memItemRight" valign="bottom"><b>allglobal::writ
 <tr class="separator:a7824bc37519fe88336534ce90ab2af16"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a50e99bda692e1d2e3fa68857b67db880"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceallglobal.html#a50e99bda692e1d2e3fa68857b67db880">allglobal::broadcast_inputs</a></td></tr>
 <tr class="separator:a50e99bda692e1d2e3fa68857b67db880"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a282c297c96abdab5e76b5ace440b09a8"><td class="memItemLeft" align="right" valign="top"><a id="a282c297c96abdab5e76b5ace440b09a8" name="a282c297c96abdab5e76b5ace440b09a8"></a>
+<tr class="memitem:ga282c297c96abdab5e76b5ace440b09a8"><td class="memItemLeft" align="right" valign="top">
 subroutine&#160;</td><td class="memItemRight" valign="bottom"><b>allglobal::wrtend</b></td></tr>
-<tr class="memdesc:a282c297c96abdab5e76b5ace440b09a8"><td class="mdescLeft">&#160;</td><td class="mdescRight">The restart file is written. <br /></td></tr>
-<tr class="separator:a282c297c96abdab5e76b5ace440b09a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memdesc:ga282c297c96abdab5e76b5ace440b09a8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write the restart file <code>ext.sp.end</code>. <br /></td></tr>
+<tr class="separator:ga282c297c96abdab5e76b5ace440b09a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aea1f5a74462533337cb950b8d7486b25"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceallglobal.html#aea1f5a74462533337cb950b8d7486b25">allglobal::ismyvolume</a> (vvol)</td></tr>
 <tr class="memdesc:aea1f5a74462533337cb950b8d7486b25"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check if volume vvol is associated to the corresponding MPI node.  <a href="namespaceallglobal.html#aea1f5a74462533337cb950b8d7486b25">More...</a><br /></td></tr>
 <tr class="separator:aea1f5a74462533337cb950b8d7486b25"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -692,15 +691,19 @@ logical&#160;</td><td class="memItemRight" valign="bottom"><b>allglobal::skip_wr
 <tr class="separator:ae902fa945085419dc4aa8fe707279004"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aae9519af29ff59bac4ff2232d930f409"><td class="memItemLeft" align="right" valign="top"><a id="aae9519af29ff59bac4ff2232d930f409" name="aae9519af29ff59bac4ff2232d930f409"></a>
 real&#160;</td><td class="memItemRight" valign="bottom"><b>allglobal::pi2nfp</b></td></tr>
+<tr class="memdesc:aae9519af29ff59bac4ff2232d930f409"><td class="mdescLeft">&#160;</td><td class="mdescRight">pi2/nfp ; assigned in readin; <br /></td></tr>
 <tr class="separator:aae9519af29ff59bac4ff2232d930f409"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6d9b2610dd89ff8f880a2b6de8647fdd"><td class="memItemLeft" align="right" valign="top"><a id="a6d9b2610dd89ff8f880a2b6de8647fdd" name="a6d9b2610dd89ff8f880a2b6de8647fdd"></a>
 real&#160;</td><td class="memItemRight" valign="bottom"><b>allglobal::pi2pi2nfp</b></td></tr>
+<tr class="memdesc:a6d9b2610dd89ff8f880a2b6de8647fdd"><td class="mdescLeft">&#160;</td><td class="mdescRight">pi2*pi2/nfp <br /></td></tr>
 <tr class="separator:a6d9b2610dd89ff8f880a2b6de8647fdd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af2b8953b7dd5987371e6c670b7c02279"><td class="memItemLeft" align="right" valign="top"><a id="af2b8953b7dd5987371e6c670b7c02279" name="af2b8953b7dd5987371e6c670b7c02279"></a>
 real&#160;</td><td class="memItemRight" valign="bottom"><b>allglobal::pi2pi2nfphalf</b></td></tr>
+<tr class="memdesc:af2b8953b7dd5987371e6c670b7c02279"><td class="mdescLeft">&#160;</td><td class="mdescRight">2*pi*pi/nfp <br /></td></tr>
 <tr class="separator:af2b8953b7dd5987371e6c670b7c02279"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acacf877c62676fd29731fb14b461efed"><td class="memItemLeft" align="right" valign="top"><a id="acacf877c62676fd29731fb14b461efed" name="acacf877c62676fd29731fb14b461efed"></a>
 real&#160;</td><td class="memItemRight" valign="bottom"><b>allglobal::pi2pi2nfpquart</b></td></tr>
+<tr class="memdesc:acacf877c62676fd29731fb14b461efed"><td class="mdescLeft">&#160;</td><td class="mdescRight">pi*pi/nfp <br /></td></tr>
 <tr class="separator:acacf877c62676fd29731fb14b461efed"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a251942aa6241755b299b8956b7108f1d"><td class="memItemLeft" align="right" valign="top"><a id="a251942aa6241755b299b8956b7108f1d" name="a251942aa6241755b299b8956b7108f1d"></a>
 character(len=1000)&#160;</td><td class="memItemRight" valign="bottom"><b>allglobal::ext</b></td></tr>
@@ -726,6 +729,7 @@ real, dimension(:,:), allocatable&#160;</td><td class="memItemRight" valign="bot
 <tr class="separator:a9c552589fff9f20f26fc79be2e3dab38"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa2a4850f9468d817a673c1ef7f718849"><td class="memItemLeft" align="right" valign="top"><a id="aa2a4850f9468d817a673c1ef7f718849" name="aa2a4850f9468d817a673c1ef7f718849"></a>
 integer&#160;</td><td class="memItemRight" valign="bottom"><b>allglobal::mvol</b></td></tr>
+<tr class="memdesc:aa2a4850f9468d817a673c1ef7f718849"><td class="mdescLeft">&#160;</td><td class="mdescRight">total number of volumes (including the vacuum region in the case of free-boundary calculations) <br /></td></tr>
 <tr class="separator:aa2a4850f9468d817a673c1ef7f718849"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1f4ddb89b3246fef8d73c88b730eda3a"><td class="memItemLeft" align="right" valign="top"><a id="a1f4ddb89b3246fef8d73c88b730eda3a" name="a1f4ddb89b3246fef8d73c88b730eda3a"></a>
 logical&#160;</td><td class="memItemRight" valign="bottom"><b>allglobal::yesstellsym</b></td></tr>

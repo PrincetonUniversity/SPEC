@@ -1,83 +1,84 @@
 <map id="evaluate_dmupfdx" name="evaluate_dmupfdx">
-<area shape="rect" id="node1" title="Evaluate mu and psip derivatives and store them in dmupfdx." alt="" coords="5,620,132,647"/>
-<area shape="rect" id="node2" href="$memory_8f90.html#a8a98304f95fee4429a60a58050e999b8" title="allocate Beltrami matrices" alt="" coords="723,109,901,136"/>
-<area shape="rect" id="node3" href="$memory_8f90.html#a91ea75b56a77c048841932a601482f78" title="allocate geometry matrices" alt="" coords="720,160,904,187"/>
-<area shape="rect" id="node4" href="$group__grp__currents.html#gacaf4411e0ba378631dcd2ccb3752e452" title="Computes the plasma current, , and the &quot;linking&quot; current, ." alt="" coords="1224,1032,1283,1059"/>
-<area shape="rect" id="node6" href="$group__grp__volume.html#gae4c62d20b8fef07f4471b5b0889ab005" title="Computes volume of each region; and, if required, the derivatives of the volume with respect to the i..." alt="" coords="2147,2031,2211,2057"/>
-<area shape="rect" id="node7" href="$memory_8f90.html#a4591e03fce625b2a91ab6d970a3a1ede" title="deallocate Beltrami matrices" alt="" coords="745,211,879,253"/>
-<area shape="rect" id="node8" href="$memory_8f90.html#a7b3f3dc45c42c50c1db3cc7e354031a2" title="deallocate geometry matrices" alt="" coords="741,43,883,85"/>
-<area shape="rect" id="node9" href="$dfp100_8f90.html#a17a3ac15cc83994394f7b4cc05e5898e" title="Split the work between MPI nodes and evaluate the global constraint." alt="" coords="611,707,672,733"/>
-<area shape="rect" id="node11" href="$intghs_8f90.html#ae10091a51178071d12004da4952104d4" title="free workspace" alt="" coords="724,984,900,1011"/>
-<area shape="rect" id="node15" href="$intghs_8f90.html#ae8299d4625cabd90eb1398fd2cd38089" title="init workspace" alt="" coords="737,1160,887,1187"/>
-<area shape="rect" id="node16" href="$namespaceallglobal.html#aea1f5a74462533337cb950b8d7486b25" title="Check if volume vvol is associated to the corresponding MPI node." alt="" coords="1396,1283,1540,1309"/>
-<area shape="rect" id="node27" href="$group__grp__transform.html#ga0e0447653b8da82f06748dd8831bc337" title="Calculates rotational transform given an arbitrary tangential field." alt="" coords="1224,680,1283,707"/>
-<area shape="rect" id="node35" href="$dfp200_8f90.html#a55ea75395f8c71731451e1add3720c7e" title="Given the field consistent with the constraints and the geometry, computes local quantites related to..." alt="" coords="180,1135,241,1161"/>
-<area shape="rect" id="node5" href="$group__grp__geometry.html#gaaca20aa60eaf39055f3c9d5c02a24ac2" title="Calculates coordinates, , and metrics, using FFTs." alt="" coords="2001,1705,2062,1732"/>
-<area shape="rect" id="node10" href="$metrix_8f90.html#a80c802cda076dd9e7031bc5f9098c175" title="compute guvijsave" alt="" coords="1781,705,1916,732"/>
-<area shape="rect" id="node17" href="$group__grp__integrals.html#ga400af9e33dd5465ff9a4bba9fbf91108" title="Calculates volume integrals of Chebyshev polynomials and metric element products." alt="" coords="1630,403,1698,429"/>
-<area shape="rect" id="node19" href="$group__grp__solver__driver.html#gacad623d4c5c006e9ad10116372f92ad3" title="Constructs Beltrami field in given volume consistent with flux, helicity, rotational&#45;transform and/or..." alt="" coords="778,680,846,707"/>
-<area shape="rect" id="node28" href="$group__grp__build__matrices.html#ga1c52bb6dbffdb432550aae12b096080f" title="Constructs energy and helicity matrices that represent the Beltrami linear system...." alt="" coords="1439,1357,1497,1384"/>
-<area shape="rect" id="node29" href="$group__grp__integrals.html#ga01df49c498752e8a4201cc6eb5e283af" title="Calculates volume integrals of Chebyshev&#45;polynomials and metric elements for preconditioner." alt="" coords="1635,1408,1693,1435"/>
-<area shape="rect" id="node30" href="$group__grp__build__matrices.html#ga4d521a46a64530ade50e6b79a33e1452" title="Constructs matrices for the precondtioner." alt="" coords="779,453,845,480"/>
-<area shape="rect" id="node34" href="$namespaceallglobal.html#ad2dbd21d0579d623a92119c5ab553c7c" title="Returns which MPI node is associated to a given volume." alt="" coords="1183,1539,1323,1565"/>
-<area shape="rect" id="node12" href="$intghs_8f90.html#a21d3b7106371783302e68297f7797e9f" title="Calculates volume integrals of Chebyshev polynomials and covariant field products." alt="" coords="1635,959,1693,985"/>
-<area shape="rect" id="node13" href="$basefn_8f90.html#af6a4cad04c70bfb14fd18a3bfbc843a3" title="Get the Chebyshev polynomials with zeroth, first derivatives." alt="" coords="1808,1408,1889,1435"/>
-<area shape="rect" id="node14" href="$basefn_8f90.html#a38dc596fb909186b01dacc1feac03164" title="Get the Zernike polynomials &#160;with zeroth, first derivatives." alt="" coords="1805,1333,1893,1360"/>
-<area shape="rect" id="node18" href="$group__grp__metrics.html#ga254ce8e645c4110d77e3b3dbc3a89885" title="Calculates the metric quantities, , which are required for the energy and helicity integrals." alt="" coords="1820,477,1877,504"/>
-<area shape="rect" id="node20" href="$group__grp__integrals.html#ga6d086e8d1af527def50b653b86e8373a" title="Evaluates volume integrals, and their derivatives w.r.t. interface geometry, using &quot;packed&quot; format." alt="" coords="1004,629,1065,656"/>
-<area shape="rect" id="node21" href="$group__grp__solver.html#ga6626839aff500f060beb5bce2b90c447" title="Solves Beltrami/vacuum (linear) system, given matrices.unpacking fluxes, helicity multiplier" alt="" coords="1001,704,1069,731"/>
-<area shape="rect" id="node23" href="$group__grp__packing.html#gaee2357e570aebf8559e169def6b619dd" title="Packs and unpacks Beltrami field solution vector." alt="" coords="1632,756,1696,783"/>
-<area shape="rect" id="node22" href="$group__grp__build__matrices.html#ga6c22bb4322fbcc29cb17dcc90b56eacd" title="Constructs matrices that represent the Beltrami linear system, matrix&#45;free." alt="" coords="1633,605,1695,632"/>
-<area shape="rect" id="node24" href="$mp00ac_8f90.html#a304edac43f63d39dda4419b4d044eac5" title="run GMRES" alt="" coords="1215,555,1291,581"/>
-<area shape="rect" id="node25" href="$mp00ac_8f90.html#ae9fe335bb4916face9f9d19ce8c0f5d7" title="compute a.x by either by coumputing it directly, or using a matrix free method" alt="" coords="1435,605,1501,632"/>
-<area shape="rect" id="node26" href="$mp00ac_8f90.html#a76cda97bf815eb7f40cb76ad1719d809" title="apply the preconditioner" alt="" coords="1425,555,1511,581"/>
-<area shape="rect" id="node31" href="$spsmat_8f90.html#a029deb1b6e086ff346f36f5c61d0c1b2" title="add the content from the queue to the real matrices" alt="" coords="1003,352,1066,379"/>
-<area shape="rect" id="node32" href="$spsmat_8f90.html#ab8d57e74b7461b1d2781c5d56dea6120" title="clean the queue" alt="" coords="987,403,1082,429"/>
-<area shape="rect" id="node33" href="$spsmat_8f90.html#a6c4c1ca7c194a5116f2d358c2065ce00" title="push a new element at the back of the queue" alt="" coords="992,301,1077,328"/>
-<area shape="rect" id="node36" href="$dfp200_8f90.html#a7b64c7392b45d0042d8bd7379c0761a5" title="Evaluate the derivative of the square of the magnetic field modulus. Add spectral constraint derivati..." alt="" coords="323,1413,422,1440"/>
-<area shape="rect" id="node37" href="$group__grp__local__force.html#ga7a5316b9e5eeb42811aa6bccd29a132f" title="Computes , and the spectral condensation constraints if required, on the interfaces,..." alt="" coords="506,1715,561,1741"/>
-<area shape="rect" id="node38" href="$dfp200_8f90.html#a6aca59cf350d7b1941f8389d50945a43" title="get LU Beltrami matrices" alt="" coords="289,1261,456,1288"/>
-<area shape="rect" id="node81" href="$dfp200_8f90.html#a5e56f1f4b1e6df11a9cffa6237c37469" title="This routine evaluates the value of the magnetic field once the interface is perturbed using matrix p..." alt="" coords="1391,781,1545,808"/>
-<area shape="rect" id="node39" href="$group__grp__global__force.html#ga38c9d3c50bd043707fefa5137c9dbf44" title="Calculates , where &#160;and , and ." alt="" coords="504,1640,563,1667"/>
-<area shape="rect" id="node40" href="$group__grp__parallel.html#ga5d8e3412e023967dda67b02f358b754a" title="Broadcasts Beltrami fields, profiles, . . ." alt="" coords="1224,1613,1283,1640"/>
-<area shape="rect" id="node41" href="$group__grp__packing.html#ga094e630c02686dd178749eb1efbf13fb" title="Packs, and unpacks, geometrical degrees of freedom; and sets coordinate axis." alt="" coords="1224,2507,1283,2533"/>
-<area shape="rect" id="node43" href="$xspech_8f90.html#a48f45478dc2c9f70ea8aa1c60ad06503" title="This is the main &quot;driver&quot; for the physics part of SPEC." alt="" coords="616,2584,667,2611"/>
-<area shape="rect" id="node42" href="$group__grp__coord__axis.html#ga564281be4d9806d0688a717314ad748f" title="The coordinate axis is assigned via a poloidal average over an arbitrary surface." alt="" coords="1441,1853,1495,1880"/>
-<area shape="rect" id="node44" href="$group__grp__free-boundary.html#gac0a2cc2241947b27241bb8ef75c5e0ed" title="Computes &#160;on the computational boundary, ." alt="" coords="1437,2053,1499,2080"/>
-<area shape="rect" id="node47" href="$group__grp__diagnostics.html#ga7401b50ec10c6598ee4a8112717a63ec" title="Computes eigenvalues and eigenvectors of derivative matrix, ." alt="" coords="782,1823,842,1849"/>
-<area shape="rect" id="node50" href="$group__grp__output.html#ga08d6a254dbc3d9d40ff1cf0bdfdf2148" title="Writes vector potential to .ext.sp.A ." alt="" coords="1437,2253,1499,2280"/>
-<area shape="rect" id="node52" href="$group__grp__force__driver.html#gaec14f81fbdbedafbc4189489ec8ae178" title="Employs Newton method to find , where &#160;and &#160;is defined in dforce() ." alt="" coords="780,2808,844,2835"/>
-<area shape="rect" id="node55" href="$namespaceallglobal.html#a282c297c96abdab5e76b5ace440b09a8" title="The restart file is written." alt="" coords="1196,2776,1311,2803"/>
-<area shape="rect" id="node58" href="$xspech_8f90.html#a9fdc71dffd7c61ee4588a3f80d3ab9ce" title="Main subroutine of SPEC." alt="" coords="781,2149,843,2176"/>
-<area shape="rect" id="node45" href="$group__grp__free-boundary.html#ga180576a10002ebf3840fce98d56316bb" title="Constructs the field created by the plasma currents, at an arbitrary, external location using virtual..." alt="" coords="1634,1980,1694,2007"/>
-<area shape="rect" id="node46" href="$group__grp__free-boundary.html#ga281c12a5de84fddd3db4383b0df8627f" title="Differential virtual casing integrand." alt="" coords="1815,1980,1882,2007"/>
-<area shape="rect" id="node48" href="$group__grp__initialization.html#ga28628de0fdb3b3497668007d8d0643bd" title="Allocates and initializes internal arrays." alt="" coords="1224,1789,1283,1816"/>
-<area shape="rect" id="node49" href="$basefn_8f90.html#a6076d695487184d58d30d73de2f6470f" title="Get the Zernike polynomials ." alt="" coords="1413,1459,1523,1485"/>
-<area shape="rect" id="node51" href="$group__grp__output.html#ga2f9e9c50084175e5174b1e1070e24d73" title="Write the magnetic vector potential Fourier harmonics to the output file group /vector_potential ." alt="" coords="1595,2238,1733,2279"/>
-<area shape="rect" id="node53" href="$group__grp__force__driver.html#gabbc245b3884ee8d8d3e2a52f25149f78" title="Objective to be given to the Newton solver, using only function values." alt="" coords="1011,2909,1058,2936"/>
-<area shape="rect" id="node56" href="$group__grp__force__driver.html#ga8ccd6c7d901872702521d0a0edf95412" title="Objective to be given to the Newton solver, using function values and derivatives." alt="" coords="1011,2835,1058,2861"/>
-<area shape="rect" id="node57" href="$group__grp__force__driver.html#ga382822b303cbf8c56d6f54dcb379caf2" title="read or write force&#45;derivative matrix" alt="" coords="1210,1715,1297,1741"/>
-<area shape="rect" id="node54" href="$group__grp__output.html#gade76c03b9b11be2a12d3ddd32e77a6ae" title="Write convergence output (evolution of interface geometry, force, etc)." alt="" coords="1165,2894,1341,2935"/>
-<area shape="rect" id="node59" href="$namespaceallglobal.html#a50e99bda692e1d2e3fa68857b67db880" title=" " alt="" coords="969,1945,1101,1986"/>
-<area shape="rect" id="node60" href="$namespaceallglobal.html#a7824bc37519fe88336534ce90ab2af16" title=" " alt="" coords="959,1741,1111,1768"/>
-<area shape="rect" id="node61" href="$xspech_8f90.html#a537af4990058c0b0f2cd8b3669af204f" title="Closes output files, writes screen summary." alt="" coords="1005,2011,1065,2037"/>
-<area shape="rect" id="node62" href="$xspech_8f90.html#a1451823a7b97101a797de616250752c1" title="Final diagnostics." alt="" coords="975,1792,1094,1819"/>
-<area shape="rect" id="node74" href="$group__grp__output.html#gadb720ea6408b8f7681bfb7f86a4b86f2" title="Close all open HDF5 objects (we know of) and list any remaining still&#45;open objects." alt="" coords="965,2061,1104,2088"/>
-<area shape="rect" id="node75" href="$group__grp__output.html#ga593e99355c8ceabe56a566e9d468dbd9" title="Write the final state of the equilibrium to the output file." alt="" coords="1982,2249,2081,2276"/>
-<area shape="rect" id="node76" href="$group__grp__output.html#gab348ec00943ff875a1ebb965fb98841e" title="Prepare convergence evolution output." alt="" coords="952,2113,1117,2154"/>
-<area shape="rect" id="node77" href="$group__grp__output.html#ga0f962c09cd5d5eba99f1cba043cb3898" title="Initialize the interface to the HDF5 library and open the output file." alt="" coords="972,2483,1097,2509"/>
-<area shape="rect" id="node78" href="$group__grp__output.html#gafed4d951aec99f2ebeba68c465eb9861" title="Mirror input variables into output file." alt="" coords="1964,2331,2099,2373"/>
-<area shape="rect" id="node79" href="$xspech_8f90.html#aec8c366a4e6a6f1cc611939d5d6e5c2c" title="Read command&#45;line arguments; in particular, determine input file (name or extension)." alt="" coords="963,2179,1106,2205"/>
-<area shape="rect" id="node80" href="$group__grp__output.html#ga17e65b951634f7098213fd071d905482" title="Write the magnetic field on a grid." alt="" coords="1407,1904,1529,1931"/>
-<area shape="rect" id="node63" href="$group__grp__diagnostics.html#ga6411205c36a7d50002d7f3fb3133c441" title="Measures error in Beltrami equation, ." alt="" coords="1438,2128,1498,2155"/>
-<area shape="rect" id="node67" href="$group__grp__diagnostics.html#gad67931244268a09bd077dae8910c7096" title="Constructs Poincaré plot and &quot;approximate&quot; rotational&#45;transform (driver)." alt="" coords="1221,1864,1285,1891"/>
-<area shape="rect" id="node64" href="$group__grp__diagnostics.html#ga20985df1b0df0503ca03ca13f1daf642" title="Compute the magnetic field." alt="" coords="1638,1780,1690,1807"/>
-<area shape="rect" id="node65" href="$basefn_8f90.html#a8f42498fd0b4c464c8c2d3ce0e94c56a" title="Get the Chebyshev polynomials with zeroth, first and second derivatives The Chebyshev polynomial has ..." alt="" coords="1613,2081,1715,2108"/>
-<area shape="rect" id="node66" href="$basefn_8f90.html#a29cbf901a18ead65d0e3a51956a3f045" title="Get the Zernike polynomials &#160;with zeroth, first, second derivatives." alt="" coords="1609,2132,1719,2159"/>
-<area shape="rect" id="node68" href="$group__grp__output.html#gacd97a933d4239028dc8114b110655074" title="Finalize Poincare output." alt="" coords="1407,1662,1529,1703"/>
-<area shape="rect" id="node69" href="$group__grp__output.html#ga47186186c9418cd913ee9c98b5668642" title="Initialize field line tracing output group and create array datasets." alt="" coords="1396,1728,1540,1755"/>
-<area shape="rect" id="node70" href="$group__grp__diagnostics.html#ga831aed2458140e266ee4d37461dd5350" title="Constructs Poincaré plot and &quot;approximate&quot; rotational&#45;transform (for single field line)." alt="" coords="1436,1979,1500,2005"/>
-<area shape="rect" id="node72" href="$group__grp__output.html#ga14195bd206b7f6a7f05d4d6fc4b50f42" title="Write a hyperslab of Poincare data corresponding to the output of one parallel worker." alt="" coords="1393,1779,1543,1805"/>
-<area shape="rect" id="node73" href="$group__grp__output.html#ga8f01c5e4a21c5af2c39620f24e598095" title="Write the rotational transform output from field line following." alt="" coords="1389,1611,1547,1637"/>
-<area shape="rect" id="node71" href="$group__grp__diagnostics.html#ga08ad6b6635a598c0d0578e42f46b63c5" title="Calculates coordinates, , and metrics, at given ." alt="" coords="1635,1855,1693,1881"/>
+<area shape="rect" id="node1" title="Evaluate mu and psip derivatives and store them in dmupfdx." alt="" coords="5,2539,132,2565"/>
+<area shape="rect" id="node2" href="$memory_8f90.html#a8a98304f95fee4429a60a58050e999b8" title="allocate Beltrami matrices" alt="" coords="723,1896,901,1923"/>
+<area shape="rect" id="node3" href="$memory_8f90.html#a91ea75b56a77c048841932a601482f78" title="allocate geometry matrices" alt="" coords="720,2961,904,2988"/>
+<area shape="rect" id="node4" href="$group__grp__currents.html#gacaf4411e0ba378631dcd2ccb3752e452" title="Computes the plasma current, , and the &quot;linking&quot; current, ." alt="" coords="1224,2779,1283,2805"/>
+<area shape="rect" id="node7" href="$group__grp__volume.html#gae4c62d20b8fef07f4471b5b0889ab005" title="Computes volume of each region; and, if required, the derivatives of the volume with respect to the i..." alt="" coords="2147,683,2211,709"/>
+<area shape="rect" id="node8" href="$memory_8f90.html#a4591e03fce625b2a91ab6d970a3a1ede" title="deallocate Beltrami matrices" alt="" coords="745,2830,879,2871"/>
+<area shape="rect" id="node9" href="$memory_8f90.html#a7b3f3dc45c42c50c1db3cc7e354031a2" title="deallocate geometry matrices" alt="" coords="741,2895,883,2937"/>
+<area shape="rect" id="node10" href="$dfp100_8f90.html#a17a3ac15cc83994394f7b4cc05e5898e" title="Split the work between MPI nodes and evaluate the global constraint." alt="" coords="611,2325,672,2352"/>
+<area shape="rect" id="node12" href="$intghs_8f90.html#ae10091a51178071d12004da4952104d4" title="free workspace." alt="" coords="724,1947,900,1973"/>
+<area shape="rect" id="node16" href="$intghs_8f90.html#ae8299d4625cabd90eb1398fd2cd38089" title="init workspace" alt="" coords="737,1997,887,2024"/>
+<area shape="rect" id="node17" href="$namespaceallglobal.html#aea1f5a74462533337cb950b8d7486b25" title="Check if volume vvol is associated to the corresponding MPI node." alt="" coords="1396,1653,1540,1680"/>
+<area shape="rect" id="node28" href="$group__grp__transform.html#ga0e0447653b8da82f06748dd8831bc337" title="Calculates rotational transform given an arbitrary tangential field." alt="" coords="1224,2404,1283,2431"/>
+<area shape="rect" id="node36" href="$dfp200_8f90.html#a55ea75395f8c71731451e1add3720c7e" title="Given the field consistent with the constraints and the geometry, computes local quantites related to..." alt="" coords="180,2149,241,2176"/>
+<area shape="rect" id="node5" href="$namespaceallglobal.html#af3f23b45db519a643eea14b410e6d428" title=" " alt="" coords="1395,2535,1541,2577"/>
+<area shape="rect" id="node6" href="$group__grp__geometry.html#gaaca20aa60eaf39055f3c9d5c02a24ac2" title="Calculates coordinates, , and metrics, using FFTs." alt="" coords="2001,1201,2062,1228"/>
+<area shape="rect" id="node11" href="$metrix_8f90.html#a80c802cda076dd9e7031bc5f9098c175" title="compute guvijsave" alt="" coords="1781,2031,1916,2057"/>
+<area shape="rect" id="node18" href="$group__grp__integrals.html#ga400af9e33dd5465ff9a4bba9fbf91108" title="Calculates volume integrals of Chebyshev polynomials and metric element products." alt="" coords="1630,1920,1698,1947"/>
+<area shape="rect" id="node20" href="$group__grp__solver__driver.html#gacad623d4c5c006e9ad10116372f92ad3" title="Constructs Beltrami field in given volume consistent with flux, helicity, rotational&#45;transform and/or..." alt="" coords="778,2552,846,2579"/>
+<area shape="rect" id="node29" href="$group__grp__build__matrices.html#ga1c52bb6dbffdb432550aae12b096080f" title="Constructs energy and helicity matrices that represent the Beltrami linear system...." alt="" coords="1439,1603,1497,1629"/>
+<area shape="rect" id="node30" href="$group__grp__integrals.html#ga01df49c498752e8a4201cc6eb5e283af" title="Calculates volume integrals of Chebyshev&#45;polynomials and metric elements for preconditioner." alt="" coords="1635,1819,1693,1845"/>
+<area shape="rect" id="node31" href="$group__grp__build__matrices.html#ga4d521a46a64530ade50e6b79a33e1452" title="Constructs matrices for the precondtioner." alt="" coords="779,2325,845,2352"/>
+<area shape="rect" id="node35" href="$namespaceallglobal.html#ad2dbd21d0579d623a92119c5ab553c7c" title="Returns which MPI node is associated to a given volume." alt="" coords="1183,1589,1323,1616"/>
+<area shape="rect" id="node13" href="$intghs_8f90.html#a21d3b7106371783302e68297f7797e9f" title="Calculates volume integrals of Chebyshev polynomials and covariant field products." alt="" coords="1635,2088,1693,2115"/>
+<area shape="rect" id="node14" href="$basefn_8f90.html#af6a4cad04c70bfb14fd18a3bfbc843a3" title="Get the Chebyshev polynomials with zeroth, first derivatives." alt="" coords="1808,1819,1889,1845"/>
+<area shape="rect" id="node15" href="$basefn_8f90.html#a38dc596fb909186b01dacc1feac03164" title="Get the Zernike polynomials &#160;with zeroth, first derivatives." alt="" coords="1805,1768,1893,1795"/>
+<area shape="rect" id="node19" href="$group__grp__metrics.html#ga254ce8e645c4110d77e3b3dbc3a89885" title="Calculates the metric quantities, , which are required for the energy and helicity integrals." alt="" coords="1820,1893,1877,1920"/>
+<area shape="rect" id="node21" href="$group__grp__integrals.html#ga6d086e8d1af527def50b653b86e8373a" title="Evaluates volume integrals, and their derivatives w.r.t. interface geometry, using &quot;packed&quot; format." alt="" coords="1004,2552,1065,2579"/>
+<area shape="rect" id="node22" href="$group__grp__solver.html#ga6626839aff500f060beb5bce2b90c447" title="Solves Beltrami/vacuum (linear) system, given matrices.unpacking fluxes, helicity multiplier" alt="" coords="1001,2627,1069,2653"/>
+<area shape="rect" id="node24" href="$group__grp__packing.html#gaee2357e570aebf8559e169def6b619dd" title="Packs and unpacks Beltrami field solution vector." alt="" coords="1632,2779,1696,2805"/>
+<area shape="rect" id="node23" href="$group__grp__build__matrices.html#ga6c22bb4322fbcc29cb17dcc90b56eacd" title="Constructs matrices that represent the Beltrami linear system, matrix&#45;free." alt="" coords="1633,2601,1695,2628"/>
+<area shape="rect" id="node25" href="$mp00ac_8f90.html#a304edac43f63d39dda4419b4d044eac5" title="run GMRES" alt="" coords="1215,2603,1291,2629"/>
+<area shape="rect" id="node26" href="$mp00ac_8f90.html#ae9fe335bb4916face9f9d19ce8c0f5d7" title="compute a.x by either by coumputing it directly, or using a matrix free method" alt="" coords="1435,2601,1501,2628"/>
+<area shape="rect" id="node27" href="$mp00ac_8f90.html#a76cda97bf815eb7f40cb76ad1719d809" title="apply the preconditioner" alt="" coords="1425,2652,1511,2679"/>
+<area shape="rect" id="node32" href="$spsmat_8f90.html#a029deb1b6e086ff346f36f5c61d0c1b2" title="add the content from the queue to the real matrices" alt="" coords="1003,2275,1066,2301"/>
+<area shape="rect" id="node33" href="$spsmat_8f90.html#ab8d57e74b7461b1d2781c5d56dea6120" title="clean the queue" alt="" coords="987,2325,1082,2352"/>
+<area shape="rect" id="node34" href="$spsmat_8f90.html#a6c4c1ca7c194a5116f2d358c2065ce00" title="push a new element at the back of the queue" alt="" coords="992,2224,1077,2251"/>
+<area shape="rect" id="node37" href="$dfp200_8f90.html#a7b64c7392b45d0042d8bd7379c0761a5" title="Evaluate the derivative of the square of the magnetic field modulus. Add spectral constraint derivati..." alt="" coords="323,1997,422,2024"/>
+<area shape="rect" id="node38" href="$group__grp__local__force.html#ga7a5316b9e5eeb42811aa6bccd29a132f" title="Computes , and the spectral condensation constraints if required, on the interfaces,..." alt="" coords="506,1984,561,2011"/>
+<area shape="rect" id="node39" href="$dfp200_8f90.html#a6aca59cf350d7b1941f8389d50945a43" title="get LU Beltrami matrices" alt="" coords="289,1896,456,1923"/>
+<area shape="rect" id="node82" href="$dfp200_8f90.html#a5e56f1f4b1e6df11a9cffa6237c37469" title="This routine evaluates the value of the magnetic field once the interface is perturbed using matrix p..." alt="" coords="1391,2804,1545,2831"/>
+<area shape="rect" id="node40" href="$group__grp__global__force.html#ga38c9d3c50bd043707fefa5137c9dbf44" title="Calculates , where &#160;and , and ." alt="" coords="504,1204,563,1231"/>
+<area shape="rect" id="node41" href="$group__grp__parallel.html#ga5d8e3412e023967dda67b02f358b754a" title="Broadcasts Beltrami fields, profiles, . . ." alt="" coords="1224,1488,1283,1515"/>
+<area shape="rect" id="node42" href="$group__grp__packing.html#ga094e630c02686dd178749eb1efbf13fb" title="Packs, and unpacks, geometrical degrees of freedom; and sets coordinate axis." alt="" coords="1224,448,1283,475"/>
+<area shape="rect" id="node44" href="$xspech_8f90.html#a48f45478dc2c9f70ea8aa1c60ad06503" title="This is the main &quot;driver&quot; for the physics part of SPEC." alt="" coords="616,779,667,805"/>
+<area shape="rect" id="node43" href="$group__grp__coord__axis.html#ga564281be4d9806d0688a717314ad748f" title="The coordinate axis is assigned via a poloidal average over an arbitrary surface." alt="" coords="1441,1032,1495,1059"/>
+<area shape="rect" id="node45" href="$group__grp__free-boundary.html#gac0a2cc2241947b27241bb8ef75c5e0ed" title="Computes &#160;on the computational boundary, ." alt="" coords="1437,757,1499,784"/>
+<area shape="rect" id="node48" href="$group__grp__output.html#ga7401b50ec10c6598ee4a8112717a63ec" title="Computes eigenvalues and eigenvectors of derivative matrix, &#160;and saves them to .ext...." alt="" coords="782,1173,842,1200"/>
+<area shape="rect" id="node51" href="$group__grp__output.html#ga08d6a254dbc3d9d40ff1cf0bdfdf2148" title="Writes vector potential to .ext.sp.A ." alt="" coords="1437,1528,1499,1555"/>
+<area shape="rect" id="node53" href="$group__grp__force__driver.html#gaec14f81fbdbedafbc4189489ec8ae178" title="Employs Newton method to find , where &#160;and &#160;is defined in dforce() ." alt="" coords="780,305,844,332"/>
+<area shape="rect" id="node56" href="$group__grp__output.html#ga282c297c96abdab5e76b5ace440b09a8" title="Write the restart file ext.sp.end." alt="" coords="1196,339,1311,365"/>
+<area shape="rect" id="node59" href="$xspech_8f90.html#a9fdc71dffd7c61ee4588a3f80d3ab9ce" title="Main subroutine of SPEC." alt="" coords="781,849,843,876"/>
+<area shape="rect" id="node46" href="$group__grp__free-boundary.html#ga180576a10002ebf3840fce98d56316bb" title="Constructs the field created by the plasma currents, at an arbitrary, external location using virtual..." alt="" coords="1634,808,1694,835"/>
+<area shape="rect" id="node47" href="$group__grp__free-boundary.html#ga281c12a5de84fddd3db4383b0df8627f" title="Differential virtual casing integrand." alt="" coords="1815,808,1882,835"/>
+<area shape="rect" id="node49" href="$group__grp__initialization.html#ga28628de0fdb3b3497668007d8d0643bd" title="Allocates and initializes internal arrays." alt="" coords="1224,1261,1283,1288"/>
+<area shape="rect" id="node50" href="$basefn_8f90.html#a6076d695487184d58d30d73de2f6470f" title="Get the Zernike polynomials ." alt="" coords="1413,1301,1523,1328"/>
+<area shape="rect" id="node52" href="$group__grp__output.html#ga2f9e9c50084175e5174b1e1070e24d73" title="Write the magnetic vector potential Fourier harmonics to the output file group /vector_potential ." alt="" coords="1595,1521,1733,1562"/>
+<area shape="rect" id="node54" href="$group__grp__force__driver.html#gabbc245b3884ee8d8d3e2a52f25149f78" title="Objective to be given to the Newton solver, using only function values." alt="" coords="1011,243,1058,269"/>
+<area shape="rect" id="node57" href="$group__grp__force__driver.html#ga8ccd6c7d901872702521d0a0edf95412" title="Objective to be given to the Newton solver, using function values and derivatives." alt="" coords="1011,168,1058,195"/>
+<area shape="rect" id="node58" href="$group__grp__output.html#ga382822b303cbf8c56d6f54dcb379caf2" title="read or write force&#45;derivative matrix .ext.sp.DF" alt="" coords="1210,1312,1297,1339"/>
+<area shape="rect" id="node55" href="$group__grp__output.html#gade76c03b9b11be2a12d3ddd32e77a6ae" title="Write convergence output (evolution of interface geometry, force, etc)." alt="" coords="1165,231,1341,273"/>
+<area shape="rect" id="node60" href="$namespaceallglobal.html#a50e99bda692e1d2e3fa68857b67db880" title=" " alt="" coords="969,1043,1101,1085"/>
+<area shape="rect" id="node61" href="$namespaceallglobal.html#a7824bc37519fe88336534ce90ab2af16" title=" " alt="" coords="959,1261,1111,1288"/>
+<area shape="rect" id="node62" href="$xspech_8f90.html#a537af4990058c0b0f2cd8b3669af204f" title="Closes output files, writes screen summary." alt="" coords="1005,824,1065,851"/>
+<area shape="rect" id="node63" href="$xspech_8f90.html#a1451823a7b97101a797de616250752c1" title="Final diagnostics." alt="" coords="975,1211,1094,1237"/>
+<area shape="rect" id="node75" href="$group__grp__output.html#gadb720ea6408b8f7681bfb7f86a4b86f2" title="Close all open HDF5 objects (we know of) and list any remaining still&#45;open objects." alt="" coords="965,875,1104,901"/>
+<area shape="rect" id="node76" href="$group__grp__output.html#ga593e99355c8ceabe56a566e9d468dbd9" title="Write the final state of the equilibrium to the output file." alt="" coords="1982,632,2081,659"/>
+<area shape="rect" id="node77" href="$group__grp__output.html#gab348ec00943ff875a1ebb965fb98841e" title="Prepare convergence evolution output." alt="" coords="952,926,1117,967"/>
+<area shape="rect" id="node78" href="$group__grp__output.html#ga0f962c09cd5d5eba99f1cba043cb3898" title="Initialize the interface to the HDF5 library and open the output file." alt="" coords="972,571,1097,597"/>
+<area shape="rect" id="node79" href="$group__grp__output.html#gafed4d951aec99f2ebeba68c465eb9861" title="Mirror input variables into output file." alt="" coords="1964,566,2099,607"/>
+<area shape="rect" id="node80" href="$xspech_8f90.html#aec8c366a4e6a6f1cc611939d5d6e5c2c" title="Read command&#45;line arguments; in particular, determine input file (name or extension)." alt="" coords="963,992,1106,1019"/>
+<area shape="rect" id="node81" href="$group__grp__output.html#ga17e65b951634f7098213fd071d905482" title="Write the magnetic field on a grid." alt="" coords="1407,1251,1529,1277"/>
+<area shape="rect" id="node64" href="$group__grp__diagnostics.html#ga6411205c36a7d50002d7f3fb3133c441" title="Measures error in Beltrami equation, ." alt="" coords="1438,907,1498,933"/>
+<area shape="rect" id="node68" href="$group__grp__diagnostics.html#gad67931244268a09bd077dae8910c7096" title="Constructs Poincaré plot and &quot;approximate&quot; rotational&#45;transform (driver)." alt="" coords="1221,981,1285,1008"/>
+<area shape="rect" id="node65" href="$group__grp__diagnostics.html#ga20985df1b0df0503ca03ca13f1daf642" title="Compute the magnetic field." alt="" coords="1638,1276,1690,1303"/>
+<area shape="rect" id="node66" href="$basefn_8f90.html#a8f42498fd0b4c464c8c2d3ce0e94c56a" title="Get the Chebyshev polynomials with zeroth, first and second derivatives The Chebyshev polynomial has ..." alt="" coords="1613,984,1715,1011"/>
+<area shape="rect" id="node67" href="$basefn_8f90.html#a29cbf901a18ead65d0e3a51956a3f045" title="Get the Zernike polynomials &#160;with zeroth, first, second derivatives." alt="" coords="1609,1035,1719,1061"/>
+<area shape="rect" id="node69" href="$group__grp__output.html#gacd97a933d4239028dc8114b110655074" title="Finalize Poincare output." alt="" coords="1407,1134,1529,1175"/>
+<area shape="rect" id="node70" href="$group__grp__output.html#ga47186186c9418cd913ee9c98b5668642" title="Initialize field line tracing output group and create array datasets." alt="" coords="1396,1200,1540,1227"/>
+<area shape="rect" id="node71" href="$group__grp__diagnostics.html#ga831aed2458140e266ee4d37461dd5350" title="Constructs Poincaré plot and &quot;approximate&quot; rotational&#45;transform (for single field line)." alt="" coords="1436,832,1500,859"/>
+<area shape="rect" id="node73" href="$group__grp__output.html#ga14195bd206b7f6a7f05d4d6fc4b50f42" title="Write a hyperslab of Poincare data corresponding to the output of one parallel worker." alt="" coords="1393,957,1543,984"/>
+<area shape="rect" id="node74" href="$group__grp__output.html#ga8f01c5e4a21c5af2c39620f24e598095" title="Write the rotational transform output from field line following." alt="" coords="1389,1083,1547,1109"/>
+<area shape="rect" id="node72" href="$group__grp__diagnostics.html#ga08ad6b6635a598c0d0578e42f46b63c5" title="Calculates coordinates, , and metrics, at given ." alt="" coords="1635,883,1693,909"/>
 </map>

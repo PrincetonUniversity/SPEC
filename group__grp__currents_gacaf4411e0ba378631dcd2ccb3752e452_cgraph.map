@@ -1,5 +1,6 @@
 <map id="curent" name="curent">
-<area shape="rect" id="node1" title="Computes the plasma current, , and the &quot;linking&quot; current, ." alt="" coords="5,29,64,56"/>
-<area shape="rect" id="node2" href="$group__grp__geometry.html#gaaca20aa60eaf39055f3c9d5c02a24ac2" title="Calculates coordinates, , and metrics, using FFTs." alt="" coords="112,29,173,56"/>
-<area shape="rect" id="node3" href="$group__grp__volume.html#gae4c62d20b8fef07f4471b5b0889ab005" title="Computes volume of each region; and, if required, the derivatives of the volume with respect to the i..." alt="" coords="221,29,285,56"/>
+<area shape="rect" id="node1" title="Computes the plasma current, , and the &quot;linking&quot; current, ." alt="" coords="5,78,64,105"/>
+<area shape="rect" id="node2" href="$namespaceallglobal.html#af3f23b45db519a643eea14b410e6d428" title=" " alt="" coords="112,29,257,71"/>
+<area shape="rect" id="node3" href="$group__grp__geometry.html#gaaca20aa60eaf39055f3c9d5c02a24ac2" title="Calculates coordinates, , and metrics, using FFTs." alt="" coords="154,119,215,146"/>
+<area shape="rect" id="node4" href="$group__grp__volume.html#gae4c62d20b8fef07f4471b5b0889ab005" title="Computes volume of each region; and, if required, the derivatives of the volume with respect to the i..." alt="" coords="305,119,369,146"/>
 </map>

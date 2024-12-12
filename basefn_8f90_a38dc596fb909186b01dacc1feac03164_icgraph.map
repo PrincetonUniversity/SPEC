@@ -20,16 +20,16 @@
 <area shape="rect" id="node11" href="$group__grp__force__driver.html#gaec14f81fbdbedafbc4189489ec8ae178" title="Employs Newton method to find , where &#160;and &#160;is defined in dforce() ." alt="" coords="306,217,370,244"/>
 <area shape="rect" id="node12" href="$group__grp__force__driver.html#ga8ccd6c7d901872702521d0a0edf95412" title="Objective to be given to the Newton solver, using function values and derivatives." alt="" coords="10,217,56,244"/>
 <area shape="rect" id="node14" href="$dfp200_8f90.html#a6aca59cf350d7b1941f8389d50945a43" title="get LU Beltrami matrices" alt="" coords="418,525,584,552"/>
-<area shape="rect" id="node19" href="$group__grp__diagnostics.html#ga7401b50ec10c6598ee4a8112717a63ec" title="Computes eigenvalues and eigenvectors of derivative matrix, ." alt="" coords="471,72,531,98"/>
+<area shape="rect" id="node19" href="$group__grp__output.html#ga7401b50ec10c6598ee4a8112717a63ec" title="Computes eigenvalues and eigenvectors of derivative matrix, &#160;and saves them to .ext...." alt="" coords="471,72,531,98"/>
 <area shape="rect" id="node20" href="$group__grp__conjugate__gradient.html#ga4d8415226e62a9fdb42b0fd0b464251e" title="Returns the energy functional and it&#39;s derivatives with respect to geometry." alt="" coords="469,373,533,400"/>
-<area shape="rect" id="node13" href="$group__grp__force__driver.html#ga382822b303cbf8c56d6f54dcb379caf2" title="read or write force&#45;derivative matrix" alt="" coords="138,248,224,274"/>
+<area shape="rect" id="node13" href="$group__grp__output.html#ga382822b303cbf8c56d6f54dcb379caf2" title="read or write force&#45;derivative matrix .ext.sp.DF" alt="" coords="138,248,224,274"/>
 <area shape="rect" id="node15" href="$dfp200_8f90.html#a55ea75395f8c71731451e1add3720c7e" title="Given the field consistent with the constraints and the geometry, computes local quantites related to..." alt="" coords="307,562,368,589"/>
 <area shape="rect" id="node16" href="$dfp200_8f90.html#a7b64c7392b45d0042d8bd7379c0761a5" title="Evaluate the derivative of the square of the magnetic field modulus. Add spectral constraint derivati..." alt="" coords="132,562,230,589"/>
 <area shape="rect" id="node17" href="$dfp200_8f90.html#a73ddf39ecc5228201fb643779e17cd36" title="Evaluate mu and psip derivatives and store them in dmupfdx." alt="" coords="118,626,244,653"/>
 <area shape="rect" id="node18" href="$dfp200_8f90.html#a5e56f1f4b1e6df11a9cffa6237c37469" title="This routine evaluates the value of the magnetic field once the interface is perturbed using matrix p..." alt="" coords="104,512,258,538"/>
 <area shape="rect" id="node21" href="$group__grp__conjugate__gradient.html#ga25a3bae2ff2ee0469b045de0d033398b" title="Use preconditioned conjugate gradient method to find minimum of energy functional." alt="" coords="306,373,370,400"/>
 <area shape="rect" id="node25" href="$group__grp__diagnostics.html#gad67931244268a09bd077dae8910c7096" title="Constructs Poincaré plot and &quot;approximate&quot; rotational&#45;transform (driver)." alt="" coords="1340,248,1404,274"/>
-<area shape="rect" id="node28" href="$intghs_8f90.html#ae10091a51178071d12004da4952104d4" title="free workspace" alt="" coords="939,600,1115,626"/>
+<area shape="rect" id="node28" href="$intghs_8f90.html#ae10091a51178071d12004da4952104d4" title="free workspace." alt="" coords="939,600,1115,626"/>
 <area shape="rect" id="node30" href="$intghs_8f90.html#ae8299d4625cabd90eb1398fd2cd38089" title="init workspace" alt="" coords="952,776,1102,802"/>
 <area shape="rect" id="node31" href="$mp00ac_8f90.html#ae9fe335bb4916face9f9d19ce8c0f5d7" title="compute a.x by either by coumputing it directly, or using a matrix free method" alt="" coords="1476,650,1542,677"/>
 <area shape="rect" id="node33" href="$group__grp__solver.html#ga6626839aff500f060beb5bce2b90c447" title="Solves Beltrami/vacuum (linear) system, given matrices.unpacking fluxes, helicity multiplier" alt="" coords="1190,674,1258,701"/>

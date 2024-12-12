@@ -15,9 +15,9 @@
 <area shape="rect" id="node10" href="$group__grp__force__driver.html#gaec14f81fbdbedafbc4189489ec8ae178" title="Employs Newton method to find , where &#160;and &#160;is defined in dforce() ." alt="" coords="306,344,370,371"/>
 <area shape="rect" id="node11" href="$group__grp__force__driver.html#ga8ccd6c7d901872702521d0a0edf95412" title="Objective to be given to the Newton solver, using function values and derivatives." alt="" coords="10,295,56,321"/>
 <area shape="rect" id="node13" href="$dfp200_8f90.html#a6aca59cf350d7b1941f8389d50945a43" title="get LU Beltrami matrices" alt="" coords="418,181,584,208"/>
-<area shape="rect" id="node18" href="$group__grp__diagnostics.html#ga7401b50ec10c6598ee4a8112717a63ec" title="Computes eigenvalues and eigenvectors of derivative matrix, ." alt="" coords="471,29,531,56"/>
+<area shape="rect" id="node18" href="$group__grp__output.html#ga7401b50ec10c6598ee4a8112717a63ec" title="Computes eigenvalues and eigenvectors of derivative matrix, &#160;and saves them to .ext...." alt="" coords="471,29,531,56"/>
 <area shape="rect" id="node19" href="$group__grp__conjugate__gradient.html#ga4d8415226e62a9fdb42b0fd0b464251e" title="Returns the energy functional and it&#39;s derivatives with respect to geometry." alt="" coords="469,256,533,283"/>
-<area shape="rect" id="node12" href="$group__grp__force__driver.html#ga382822b303cbf8c56d6f54dcb379caf2" title="read or write force&#45;derivative matrix" alt="" coords="138,357,224,384"/>
+<area shape="rect" id="node12" href="$group__grp__output.html#ga382822b303cbf8c56d6f54dcb379caf2" title="read or write force&#45;derivative matrix .ext.sp.DF" alt="" coords="138,357,224,384"/>
 <area shape="rect" id="node14" href="$dfp200_8f90.html#a55ea75395f8c71731451e1add3720c7e" title="Given the field consistent with the constraints and the geometry, computes local quantites related to..." alt="" coords="307,181,368,208"/>
 <area shape="rect" id="node15" href="$dfp200_8f90.html#a7b64c7392b45d0042d8bd7379c0761a5" title="Evaluate the derivative of the square of the magnetic field modulus. Add spectral constraint derivati..." alt="" coords="132,131,230,157"/>
 <area shape="rect" id="node16" href="$dfp200_8f90.html#a73ddf39ecc5228201fb643779e17cd36" title="Evaluate mu and psip derivatives and store them in dmupfdx." alt="" coords="118,181,244,208"/>

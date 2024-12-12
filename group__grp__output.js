@@ -1,6 +1,9 @@
 var group__grp__output =
 [
     [ "sphdf5", "namespacesphdf5.html", null ],
+    [ "allglobal::wrtend", "group__grp__output.html#ga282c297c96abdab5e76b5ace440b09a8", null ],
+    [ "hesian", "group__grp__output.html#ga7401b50ec10c6598ee4a8112717a63ec", null ],
+    [ "writereadgf", "group__grp__output.html#ga382822b303cbf8c56d6f54dcb379caf2", null ],
     [ "ra00aa", "group__grp__output.html#ga08d6a254dbc3d9d40ff1cf0bdfdf2148", null ],
     [ "sphdf5::init_outfile", "group__grp__output.html#ga0f962c09cd5d5eba99f1cba043cb3898", null ],
     [ "sphdf5::mirror_input_to_outfile", "group__grp__output.html#gafed4d951aec99f2ebeba68c465eb9861", null ],

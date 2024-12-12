@@ -1,7 +1,7 @@
 <map id="get_zernike_rm" name="get_zernike_rm">
 <area shape="rect" id="node1" title="Get the Zernike polynomials ." alt="" coords="1119,55,1230,81"/>
 <area shape="rect" id="node2" href="$group__grp__initialization.html#ga28628de0fdb3b3497668007d8d0643bd" title="Allocates and initializes internal arrays." alt="" coords="1012,55,1071,81"/>
-<area shape="rect" id="node3" href="$group__grp__diagnostics.html#ga7401b50ec10c6598ee4a8112717a63ec" title="Computes eigenvalues and eigenvectors of derivative matrix, ." alt="" coords="904,168,964,195"/>
+<area shape="rect" id="node3" href="$group__grp__output.html#ga7401b50ec10c6598ee4a8112717a63ec" title="Computes eigenvalues and eigenvectors of derivative matrix, &#160;and saves them to .ext...." alt="" coords="904,168,964,195"/>
 <area shape="rect" id="node7" href="$xspech_8f90.html#a9fdc71dffd7c61ee4588a3f80d3ab9ce" title="Main subroutine of SPEC." alt="" coords="306,55,369,81"/>
 <area shape="rect" id="node4" href="$xspech_8f90.html#a48f45478dc2c9f70ea8aa1c60ad06503" title="This is the main &quot;driver&quot; for the physics part of SPEC." alt="" coords="806,168,856,195"/>
 <area shape="rect" id="node5" href="$group__grp__global__force.html#ga38c9d3c50bd043707fefa5137c9dbf44" title="Calculates , where &#160;and , and ." alt="" coords="666,319,724,345"/>
@@ -14,7 +14,7 @@
 <area shape="rect" id="node19" href="$group__grp__conjugate__gradient.html#ga4d8415226e62a9fdb42b0fd0b464251e" title="Returns the energy functional and it&#39;s derivatives with respect to geometry." alt="" coords="469,469,533,496"/>
 <area shape="rect" id="node8" href="$xspech_8f90.html#a1451823a7b97101a797de616250752c1" title="Final diagnostics." alt="" coords="122,55,240,81"/>
 <area shape="rect" id="node9" href="$xspech_8f90.html#a95271e8805067f801b5d4e524d6901d4" title="Main program of SPEC." alt="" coords="138,105,224,132"/>
-<area shape="rect" id="node13" href="$group__grp__force__driver.html#ga382822b303cbf8c56d6f54dcb379caf2" title="read or write force&#45;derivative matrix" alt="" coords="138,269,224,296"/>
+<area shape="rect" id="node13" href="$group__grp__output.html#ga382822b303cbf8c56d6f54dcb379caf2" title="read or write force&#45;derivative matrix .ext.sp.DF" alt="" coords="138,269,224,296"/>
 <area shape="rect" id="node15" href="$dfp200_8f90.html#a55ea75395f8c71731451e1add3720c7e" title="Given the field consistent with the constraints and the geometry, computes local quantites related to..." alt="" coords="307,571,368,597"/>
 <area shape="rect" id="node16" href="$dfp200_8f90.html#a7b64c7392b45d0042d8bd7379c0761a5" title="Evaluate the derivative of the square of the magnetic field modulus. Add spectral constraint derivati..." alt="" coords="132,621,230,648"/>
 <area shape="rect" id="node17" href="$dfp200_8f90.html#a73ddf39ecc5228201fb643779e17cd36" title="Evaluate mu and psip derivatives and store them in dmupfdx." alt="" coords="118,520,244,547"/>

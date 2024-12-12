@@ -4,7 +4,7 @@
 <area shape="rect" id="node6" href="$xspech_8f90.html#a48f45478dc2c9f70ea8aa1c60ad06503" title="This is the main &quot;driver&quot; for the physics part of SPEC." alt="" coords="230,465,281,492"/>
 <area shape="rect" id="node9" href="$group__grp__force__driver.html#gabbc245b3884ee8d8d3e2a52f25149f78" title="Objective to be given to the Newton solver, using only function values." alt="" coords="552,251,599,277"/>
 <area shape="rect" id="node11" href="$group__grp__force__driver.html#ga8ccd6c7d901872702521d0a0edf95412" title="Objective to be given to the Newton solver, using function values and derivatives." alt="" coords="45,251,91,277"/>
-<area shape="rect" id="node18" href="$group__grp__diagnostics.html#ga7401b50ec10c6598ee4a8112717a63ec" title="Computes eigenvalues and eigenvectors of derivative matrix, ." alt="" coords="545,576,605,603"/>
+<area shape="rect" id="node18" href="$group__grp__output.html#ga7401b50ec10c6598ee4a8112717a63ec" title="Computes eigenvalues and eigenvectors of derivative matrix, &#160;and saves them to .ext...." alt="" coords="545,576,605,603"/>
 <area shape="rect" id="node3" href="$namespaceallglobal.html#a7824bc37519fe88336534ce90ab2af16" title=" " alt="" coords="499,352,651,379"/>
 <area shape="rect" id="node10" href="$group__grp__force__driver.html#gaec14f81fbdbedafbc4189489ec8ae178" title="Employs Newton method to find , where &#160;and &#160;is defined in dforce() ." alt="" coords="380,251,444,277"/>
 <area shape="rect" id="node13" href="$dfp200_8f90.html#a6aca59cf350d7b1941f8389d50945a43" title="get LU Beltrami matrices" alt="" coords="492,97,659,124"/>
@@ -13,7 +13,7 @@
 <area shape="rect" id="node5" href="$xspech_8f90.html#a1451823a7b97101a797de616250752c1" title="Final diagnostics." alt="" coords="196,415,315,441"/>
 <area shape="rect" id="node8" href="$xspech_8f90.html#a95271e8805067f801b5d4e524d6901d4" title="Main program of SPEC." alt="" coords="213,313,298,340"/>
 <area shape="rect" id="node7" href="$group__grp__output.html#ga0f962c09cd5d5eba99f1cba043cb3898" title="Initialize the interface to the HDF5 library and open the output file." alt="" coords="5,415,131,441"/>
-<area shape="rect" id="node12" href="$group__grp__force__driver.html#ga382822b303cbf8c56d6f54dcb379caf2" title="read or write force&#45;derivative matrix" alt="" coords="212,188,299,215"/>
+<area shape="rect" id="node12" href="$group__grp__output.html#ga382822b303cbf8c56d6f54dcb379caf2" title="read or write force&#45;derivative matrix .ext.sp.DF" alt="" coords="212,188,299,215"/>
 <area shape="rect" id="node14" href="$dfp200_8f90.html#a55ea75395f8c71731451e1add3720c7e" title="Given the field consistent with the constraints and the geometry, computes local quantites related to..." alt="" coords="381,97,443,124"/>
 <area shape="rect" id="node15" href="$dfp200_8f90.html#a7b64c7392b45d0042d8bd7379c0761a5" title="Evaluate the derivative of the square of the magnetic field modulus. Add spectral constraint derivati..." alt="" coords="206,137,305,164"/>
 <area shape="rect" id="node16" href="$dfp200_8f90.html#a73ddf39ecc5228201fb643779e17cd36" title="Evaluate mu and psip derivatives and store them in dmupfdx." alt="" coords="192,36,319,63"/>

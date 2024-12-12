@@ -8,13 +8,13 @@
 <area shape="rect" id="node10" href="$group__grp__force__driver.html#gaec14f81fbdbedafbc4189489ec8ae178" title="Employs Newton method to find , where &#160;and &#160;is defined in dforce() ." alt="" coords="380,341,444,368"/>
 <area shape="rect" id="node11" href="$group__grp__force__driver.html#ga8ccd6c7d901872702521d0a0edf95412" title="Objective to be given to the Newton solver, using function values and derivatives." alt="" coords="45,323,91,349"/>
 <area shape="rect" id="node13" href="$dfp200_8f90.html#a6aca59cf350d7b1941f8389d50945a43" title="get LU Beltrami matrices" alt="" coords="492,456,659,483"/>
-<area shape="rect" id="node18" href="$group__grp__diagnostics.html#ga7401b50ec10c6598ee4a8112717a63ec" title="Computes eigenvalues and eigenvectors of derivative matrix, ." alt="" coords="382,253,442,280"/>
+<area shape="rect" id="node18" href="$group__grp__output.html#ga7401b50ec10c6598ee4a8112717a63ec" title="Computes eigenvalues and eigenvectors of derivative matrix, &#160;and saves them to .ext...." alt="" coords="382,253,442,280"/>
 <area shape="rect" id="node19" href="$group__grp__conjugate__gradient.html#ga4d8415226e62a9fdb42b0fd0b464251e" title="Returns the energy functional and it&#39;s derivatives with respect to geometry." alt="" coords="543,41,607,68"/>
 <area shape="rect" id="node4" href="$xspech_8f90.html#a9fdc71dffd7c61ee4588a3f80d3ab9ce" title="Main subroutine of SPEC." alt="" coords="381,104,443,131"/>
 <area shape="rect" id="node5" href="$xspech_8f90.html#a1451823a7b97101a797de616250752c1" title="Final diagnostics." alt="" coords="196,85,315,112"/>
 <area shape="rect" id="node8" href="$xspech_8f90.html#a95271e8805067f801b5d4e524d6901d4" title="Main program of SPEC." alt="" coords="213,35,298,61"/>
 <area shape="rect" id="node7" href="$group__grp__output.html#ga0f962c09cd5d5eba99f1cba043cb3898" title="Initialize the interface to the HDF5 library and open the output file." alt="" coords="5,161,131,188"/>
-<area shape="rect" id="node12" href="$group__grp__force__driver.html#ga382822b303cbf8c56d6f54dcb379caf2" title="read or write force&#45;derivative matrix" alt="" coords="212,355,299,381"/>
+<area shape="rect" id="node12" href="$group__grp__output.html#ga382822b303cbf8c56d6f54dcb379caf2" title="read or write force&#45;derivative matrix .ext.sp.DF" alt="" coords="212,355,299,381"/>
 <area shape="rect" id="node14" href="$dfp200_8f90.html#a55ea75395f8c71731451e1add3720c7e" title="Given the field consistent with the constraints and the geometry, computes local quantites related to..." alt="" coords="381,507,443,533"/>
 <area shape="rect" id="node15" href="$dfp200_8f90.html#a7b64c7392b45d0042d8bd7379c0761a5" title="Evaluate the derivative of the square of the magnetic field modulus. Add spectral constraint derivati..." alt="" coords="206,456,305,483"/>
 <area shape="rect" id="node17" href="$dfp200_8f90.html#a5e56f1f4b1e6df11a9cffa6237c37469" title="This routine evaluates the value of the magnetic field once the interface is perturbed using matrix p..." alt="" coords="179,507,332,533"/>
