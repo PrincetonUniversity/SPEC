@@ -213,11 +213,6 @@ if ( Lvcgrid.eq.1 ) then
       enddo
     enddo
 
-    do jk = 1, Ntz
-      if(ijreal(jk).ne.ijreal(jk)) then
-        print *, 'ijreal(jk) contains NAN', jk, ijreal(jk)
-      endif
-    enddo
     deltah4h2 = deltah2h
     deltah2h =  sum(abs(ijimag - ijreal)) ! mean delta between the h and h/2 solutions
 
