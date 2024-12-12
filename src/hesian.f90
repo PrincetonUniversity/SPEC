@@ -22,7 +22,7 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
   use inputlist, only : Wmacros, Whesian, Igeometry, Nvol, pflux, helicity, mu, Lfreebound, &
                         LHevalues, LHevectors, LHmatrix, &
                         Lperturbed, dpp, dqq, &
-                        Lcheck, Lfindzero
+                        Lcheck, Lfindzero, Lconstraint
 
   use cputiming, only : Thesian
 
@@ -37,6 +37,8 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
                         Lhessian3Dallocated,denergydrr, denergydrz,denergydzr,denergydzz, &
 					            	LocalConstraint
   
+  use sphdf5, only : write_stability
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   LOCALS
@@ -89,6 +91,11 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
   REAL                :: Rdgesvx(1:NGdof), Cdgesvx(1:NGdof), AF(1:NGdof,1:NGdof), work4(1:4*NGdof), rcond, ferr, berr, sgn
 
   BEGIN(hesian)
+
+  ! Only makes sense to compute the Hessian if helicity is constrained
+  if(Lconstraint.ne.2) then
+    return
+  endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -229,7 +236,7 @@ endif
   !if (LHmatrix) then
     Lhessian3Dallocated = .true.
   !else
-   ! Lhessianallocated = .true.
+   Lhessianallocated = .true.
   !endif
    !This step cleared.
 
@@ -416,16 +423,16 @@ endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  if( LHmatrix ) then
-
-   if( myid.eq.0 ) then ; cput = GETTIME ; write(ounit,'("hesian : ",f10.2," : LHmatrix="L2" ;")')cput-cpus, LHmatrix ;
-    open(munit, file=trim(get_hidden(ext))//".GF.ma", status="unknown", form="unformatted")
-    write(munit) NGdof
-    write(munit) ohessian(1:NGdof,1:NGdof)
-    close(munit)
-   endif
-
-  endif
+!  if( LHmatrix ) then
+!
+!   if( myid.eq.0 ) then ; cput = GETTIME ; write(ounit,'("hesian : ",f10.2," : LHmatrix="L2" ;")')cput-cpus, LHmatrix ;
+!    open(munit, file=trim(get_hidden(ext))//".GF.ma", status="unknown", form="unformatted")
+!    write(munit) NGdof
+!    write(munit) ohessian(1:NGdof,1:NGdof)
+!    close(munit)
+!   endif
+!
+!  endif
 
 
 ! if( myid.eq.0 .and. ( LHevalues .or. LHevectors ) ) then ! the call to dforce below requires all cpus; 04 Dec 14;
@@ -572,19 +579,22 @@ endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-
-   if( myid.eq.0 ) then ! write to file; 04 Dec 14;
-    open(hunit, file=trim(get_hidden(ext))//".GF.ev", status="unknown", form="unformatted")
-    write(hunit) NGdof, Ldvr, Ldvi
-    write(hunit) evalr
-    write(hunit) evali
-    write(hunit) evecr
-    write(hunit) eveci
-    close(hunit)
-   endif ! end of if( myid.eq.0 ) ; 04 Dec 14;
+!   if( myid.eq.0 ) then ! write to file; 04 Dec 14;
+!    open(hunit, file=trim(get_hidden(ext))//".GF.ev", status="unknown", form="unformatted")
+!    write(hunit) NGdof, Ldvr, Ldvi
+!    write(hunit) evalr
+!    write(hunit) evali
+!    write(hunit) evecr
+!    write(hunit) eveci
+!    close(hunit)
+!   endif ! end of if( myid.eq.0 ) ; 04 Dec 14;
 
   endif ! end of if(                 ( LHevalues .or. LHevectors ) )
 
+  ! output hessian, eigenvalues, and eigenvectors to the .h5 file
+  if( LHmatrix .and. Lconstraint.eq.2) then
+    WCALL( hesian, write_stability, (ohessian, evalr, evali, evecr, NGdof) )
+  endif
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   if( myid.eq.0 .and. Lperturbed.eq.1 ) then

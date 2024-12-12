@@ -98,14 +98,14 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
 
   use numerical, only : logtolerance
 
-  use fileunits, only : ounit
+  use fileunits, only : ounit, munit
 
   use inputlist, only : Wmacros, Wdforce, Nvol, Ntor, Lrad, Igeometry, &
                         epsilon, &
                         Lconstraint, Lcheck, dRZ, &
                         Lextrap, &
                         mupftol, &
-                        Lfreebound, LHmatrix
+                        Lfreebound, LHmatrix, gamma, pscale, adiabatic
 
   use cputiming, only : Tdforce
 
@@ -134,7 +134,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
                         LocalConstraint, xoffset, &
                         solution, IPdtdPf, &
                         IsMyVolume, IsMyVolumeValue, WhichCpuID, &
-                        ext ! For outputing Lcheck = 6 test
+                        ext, & ! For outputing Lcheck = 6 test
+                        BetaTotal, vvolume
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -163,6 +164,9 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
   EXTERNAL             :: dfp100, dfp200
 
   LOGICAL              :: LComputeAxis, dfp100_logical
+
+  REAL                 :: press, voltotal
+  REAL                 :: betavol(1:Mvol)
 
 #ifdef DEBUG
   INTEGER              :: isymdiff
@@ -239,8 +243,13 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
       ! Mvol-1 surface current plus 1 poloidal linking current constraints
       Ndofgl = Mvol
     else
-      ! Mvol-1 surface current constraints
-      Ndofgl = Mvol-1
+      ! add an additional constraint to make the total pflux = 0 
+      if(Igeometry.eq.1) then
+        Ndofgl = Mvol
+      else
+        ! Mvol-1 surface current constraints
+        Ndofgl = Mvol-1
+      endif
     endif
 
     SALLOCATE( Fvec, (1:Ndofgl), zero )
@@ -257,6 +266,11 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
 
         ! one step Newton's method
         dpflux(2:Mvol) = dpflux(2:Mvol) - dpfluxout(1:Mvol-1)
+
+        if(Igeometry.eq.1) then
+          dpflux(1) = dpflux(1) - dpfluxout(Mvol)
+        endif
+
         if( Lfreebound.eq.1 ) then
           dtflux(Mvol) = dtflux(Mvol  ) - dpfluxout(Mvol    )
         endif
@@ -304,6 +318,38 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
       DALLOCATE( solution )
 
     enddo ! end of do vvol = 1, Mvol
+
+    !add an additional constraint to make the total pflux 0
+    if(Igeometry.eq.1) then
+
+      vvol = 1
+
+      WCALL(dforce, IsMyVolume, (vvol))
+
+      if( IsMyVolumeValue .EQ. 0 ) then
+
+      else if( IsMyVolumeValue .EQ. -1) then
+          FATAL(dforce, .true., Unassociated volume)
+      else
+        NN = NAdof(vvol)
+
+        SALLOCATE( solution, (1:NN, 0:2), zero)
+
+        ! Pack field and its derivatives
+        packorunpack = 'P'
+        WCALL( dforce, packab, ( packorunpack, vvol, NN, solution(1:NN,0), 0 ) ) ! packing;
+        WCALL( dforce, packab, ( packorunpack, vvol, NN, solution(1:NN,2), 2 ) ) ! packing;
+
+        ! compute the field with renewed dpflux via single Newton method step
+        solution(1:NN, 0) = solution(1:NN, 0) - dpfluxout(Mvol) * solution(1:NN, 2)
+
+        ! Unpack field in vector potential Fourier harmonics
+        packorunpack = 'U'
+        WCALL( dforce, packab, ( packorunpack, vvol, NN, solution(1:NN,0), 0 ) ) ! unpacking;
+
+        DALLOCATE( solution )
+      endif
+    endif
 
     DALLOCATE(Fvec)
     DALLOCATE(dpfluxout)
@@ -392,6 +438,28 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   lBBintegral(1:Nvol) = lBBintegral(1:Nvol) * half
+
+  voltotal = 0.0
+
+  do vvol = 1, Mvol
+    WCALL(dforce, IsMyVolume, (vvol))
+    if( IsMyVolumeValue .EQ. 0 ) then
+      cycle
+    else if( IsMyVolumeValue .EQ. -1) then
+        FATAL(dforce, .true., Unassociated volume)
+    endif
+
+    vvolume(vvol) = vvolume(vvol)
+
+    press = adiabatic(vvol) * pscale / vvolume(vvol)**gamma
+
+    betavol(vvol) = press * vvolume(vvol) / lBBintegral(vvol)
+    betavol(vvol) = betavol(vvol) * vvolume(vvol)
+    voltotal = voltotal+vvolume(vvol)
+    !write(*,*) "Calc beta: ", betavol(vvol), vvolume(vvol)
+  enddo
+  
+  BetaTotal = sum(betavol(1:Nvol))/voltotal ! Calculate total beta which is obtained from individual betas
 
   Energy = sum( lBBintegral(1:Nvol) ) ! should also compute beta;
 
@@ -902,6 +970,17 @@ endif ! end of if( LcomputeDerivatives ) ;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
+if(Lhessianallocated .and. Igeometry.eq.1) then
+     if( myid.eq.0 ) then ; cput = GETTIME ; write(ounit,'("hesian : ",f10.2," : LHmatrix="L2" ;")')cput-cpus, LHmatrix ;
+       write(*,*) "Writing .hessian file..."
+       open(munit, file=trim(ext)//".sp.hessian", status="unknown", form="unformatted")
+       write(munit) NGdof
+       write(munit) hessian(1:NGdof,1:NGdof)
+       close(munit)
+
+     endif
+   endif
+   
   RETURN(dforce)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
