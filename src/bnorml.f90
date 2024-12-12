@@ -210,8 +210,9 @@ if ( Lvcgrid.eq.1 ) then
     ! absolute error: delta2h/Ntz
     vcgriderr = deltah2h / sum(abs(ijimag))
   enddo
-
-  write(ounit, '("bnorml : ", 10x ," : vcgriderr = ",es13.5," ; vcasingtol = ",es13.5,"myid=",i3)') vcgriderr, vcasingtol, myid
+  if (myid.eq.0) then
+    write(ounit, '("bnorml : ", 10x ," : vcgriderr = ",es13.5," ; vcasingtol = ",es13.5s)') vcgriderr, vcasingtol
+  endif
   ! if (vcgriderr.gt.vcasingtol) then
   !   FATAL( bnorml, .true., virtual casing accuracy is too low, increase vcNt and vcNz )
   ! endif
