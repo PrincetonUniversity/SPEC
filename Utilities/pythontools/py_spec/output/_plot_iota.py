@@ -16,10 +16,10 @@ def plot_iota(self, xaxis="R", yaxis="i", ax=None, **kwargs):
     plt.sca(ax)
     # set default plotting parameters
     # use dots
-    if kwargs.get("marker") == None:
+    if "marker" not in kwargs:
         kwargs.update({"marker": "*"})
     # use gray color
-    if kwargs.get("c") == None:
+    if "c" not in kwargs:
         pass
         # kwargs.update({"c": "gray"})
 
