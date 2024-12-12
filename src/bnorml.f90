@@ -151,21 +151,57 @@ if ( Lvcgrid.eq.1 ) then
       zeta = kk * pi2nfp / vcNz
       teta = jj * pi2  / vcNt ; 
       jk = 1 + jj + kk*vcNt
+
+      ! Each MPI rank only computes every a 1/ncpu surfacecurrent() calls 
+      select case( Lparallel ) 
+      case( 0 ) ! Lparallel = 0 
+       if( myid.ne.modulo(kk,ncpu) ) cycle
+      case( 1 ) ! Lparallel = 1 
+       if( myid.ne.modulo(jk-1,ncpu) ) cycle
+      case default ! Lparallel
+        FATAL( bnorml, .true., invalid Lparallel in parallelization loop )
+      end select 
       
       call surfacecurrent( teta, zeta, Pbxyz(jk,1:3), Jxyz(jk,1:3) )
       
     enddo
   enddo
 
+  ! MPI reductions for positions and currents to accumulate them on all ranks (valid because initialized to zero) 
+  ! and Broadcast the total currents and evaluation points back to all ranks
+  call MPI_Allreduce(MPI_IN_PLACE, Pbxyz(:,1:3), 3*vcNt*vcNz, MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_SPEC, ierr )
+  if (ierr.ne.MPI_SUCCESS) then
+    FATAL( bnorml, .true., error in MPI_Allreduce for Pbxyz )
+  endif
+  call MPI_Allreduce(MPI_IN_PLACE, Jxyz(:,1:3),  3*vcNt*vcNz, MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_SPEC, ierr )
+  if (ierr.ne.MPI_SUCCESS) then
+    FATAL( bnorml, .true., error in MPI_Allreduce for Jxyz )
+  endif
+
   ! iterate over resolutions of the virtual casing grid to get an estimate of the accuracy
   do vcstride = 3, 0, -1
-    !$OMP PARALLEL DO SHARED(Dxyz, Pbxyz, Jxyz, ijimag) PRIVATE(jk, gBn)
-    do jk = 1, Ntz
-      call casinggrid( Dxyz(:,jk), Nxyz(:,jk), Pbxyz, Jxyz, 2**vcstride,  gBn)
-      
-      ijreal(jk) = ijimag(jk) ! previous solution (lower resolution)
-      ijimag(jk) = gBn ! current solution (higher resolution)
+    !$OMP PARALLEL DO SHARED(Dxyz, Pbxyz, Jxyz, ijimag) PRIVATE(jk, gBn) COLLAPSE(2)
+    do kk = 0, Nz-1 ; 
+      do jj = 0, Nz-1 ; 
+        jk = 1 + jj + kk*Nt
 
+        ! Each MPI rank only computes every a 1/ncpu surfacecurrent() calls 
+        ! Identical MPI parallelization scheme as for Lvcgrid=0
+        select case( Lparallel ) 
+        case( 0 ) ! Lparallel = 0 
+        if( myid.ne.modulo(kk,ncpu) ) cycle
+        print *, "rank ", myid, ": kk = ", kk, ", jk = ", jk
+        case( 1 ) ! Lparallel = 1 
+        if( myid.ne.modulo(jk-1,ncpu) ) cycle 
+        case default ! Lparallel; 
+        FATAL( bnorml, .true., invalid Lparallel in parallelization loop )
+        end select ! end of select case( Lparallel ) 
+
+        call casinggrid( Dxyz(:,jk), Nxyz(:,jk), Pbxyz, Jxyz, 2**vcstride,  gBn)
+        
+        ijreal(jk) = ijimag(jk) ! previous solution (lower resolution)
+        ijimag(jk) = gBn ! current solution (higher resolution)
+      enddo
     enddo
     deltah4h2 = deltah2h
     deltah2h =  sum(abs(ijimag - ijreal)) ! mean delta between the h and h/2 solutions

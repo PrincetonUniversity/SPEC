@@ -1338,7 +1338,7 @@ subroutine check_inputs()
 1020 format("readin : ",f10.2," : Linitialize=",i3," ;LautoinitBn=",i3," ; Lzerovac=",i2," ; Ndiscrete="i2" ;")
 1021 format("readin : ", 10x ," : Nquad="i4" ; iMpol="i4" ; iNtor="i4" ;")
 1022 format("readin : ", 10x ," : Lsparse="i2" ; Lsvdiota="i2" ; imethod="i2" ; iorder="i2" ; iprecon="i2" ; iotatol="es13.5" ;")
-1023 format("readin : ", 10x ," : Lextrap="i2" ; Mregular="i3" ; Lrzaxis="i2" ; Ntoraxis="i2" ;")
+1023 format("readin : ", 10x ," : Lextrap="i2" ; Mregular="i3" ; Lrzaxis="i2" ; Ntoraxis="i2" ; Lvcgrid="i2" ;")
 
    FATAL( readin, Ndiscrete.le.0, error )
 
@@ -1379,13 +1379,13 @@ subroutine check_inputs()
    write(ounit,1041)            escale, opsilon, pcondense, epsilon, wpoloidal, upsilon
    write(ounit,1042)            forcetol, c05xmax, c05xtol, c05factor, LreadGF
    write(ounit,1043)            mfreeits, gBntol, gBnbld
-   write(ounit,1044)            vcasingeps, vcasingtol, vcasingits, vcasingper
+   write(ounit,1044)            vcasingeps, vcasingtol, vcasingits, vcasingper, vcNt, vcNz
 
 1040 format("readin : ",f10.2," : Lfindzero="i2" ;")
 1041 format("readin : ", 10x ," : escale="es13.5" ; opsilon="es13.5" ; pcondense="f7.3" ; epsilon="es13.5" ; wpoloidal="f7.4" ; upsilon="es13.5" ;")
 1042 format("readin : ", 10x ," : forcetol="es13.5" ; c05xmax="es13.5" ; c05xtol="es13.5" ; c05factor="es13.5" ; LreadGF="L2" ; ")
 1043 format("readin : ", 10x ," : mfreeits="i4" ; gBntol="es13.5" ; gBnbld="es13.5" ;")
-1044 format("readin : ", 10x ," : vcasingeps="es13.5" ; vcasingtol="es13.5" ; vcasingits="i6" ; vcasingper="i6" ;")
+1044 format("readin : ", 10x ," : vcasingeps="es13.5" ; vcasingtol="es13.5" ; vcasingits="i6" ; vcasingper="i6" ; vcNt="i6" ; vcNz="i6" ;")
 
    FATAL( readin, escale      .lt.zero     , error )
    FATAL( readin, pcondense   .lt.one      , error )
@@ -1506,6 +1506,7 @@ subroutine broadcast_inputs
   IlBCAST( Mregular   , 1, 0 )
   IlBCAST( Lrzaxis    , 1, 0 )
   IlBCAST( Ntoraxis   , 1, 0 )
+  IlBCAST( Lvcgrid    , 1, 0 )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1533,6 +1534,8 @@ subroutine broadcast_inputs
   RlBCAST( vcasingtol, 1 , 0 )
   IlBCAST( vcasingits, 1 , 0 )
   IlBCAST( vcasingper, 1 , 0 )
+  IlBCAST( vcNt,       1 , 0 )
+  IlBCAST( vcNz,       1 , 0 )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
