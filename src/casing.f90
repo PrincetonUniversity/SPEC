@@ -253,6 +253,7 @@ subroutine casinggrid( xyz, nxyz,  Pbxyz, Jxyz, vcstride, gBn)
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   ! plasmaNtz = SIZE(Pbxyz, 1)
   plasmaNtz = vcNz*vcNt
+  gBn = zero
   ! loop over the high resolution plasma boundary (inner boundary for virtual casing)
   do jk = 1, plasmaNtz, vcstride ;
       ! distance vector between point on computational boundary and point on plasma boundary
@@ -339,8 +340,8 @@ subroutine surfacecurrent( teta, zeta, pxyz, jj)
     LOCALS
     
     REAL    , intent(in)  :: teta, zeta ! theta and zeta coordinates on the plasma boundary
-    REAL    , intent(out) :: jj(1:3)    ! Cartesian surface current components on the plasma boundary
     REAL    , intent(out) :: pxyz(1:3)  ! Position on the plasma boundary
+    REAL    , intent(out) :: jj(1:3)    ! Cartesian surface current components on the plasma boundary
   
     INTEGER               :: ii, mi, ni, ll, ideriv
     REAL                  :: dR(0:3), dZ(0:3), gBut, gBuz, gtt, gtz, gzz, sqrtg, Blt, Blz, czeta, szeta, arg, carg, sarg

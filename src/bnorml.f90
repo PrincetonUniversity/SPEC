@@ -81,7 +81,7 @@ subroutine bnorml( mn, Ntz, efmn, ofmn )
 
   use constants, only : zero, half, one, two, pi, pi2, ten
 
-  use numerical, only : small
+  use numerical, only : small, vsmall
 
   use fileunits, only : ounit, lunit
 
@@ -99,7 +99,7 @@ subroutine bnorml( mn, Ntz, efmn, ofmn )
                         Nt, Nz, cfmn, sfmn, &
                         ijreal, ijimag, jireal, jiimag, &
                         globaljk, virtualcasingfactor, gteta, gzeta, Dxyz, Nxyz, &
-                        Jxyz, Pbxyz
+                        Jxyz, Pbxyz, YESstellsym
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -112,7 +112,7 @@ subroutine bnorml( mn, Ntz, efmn, ofmn )
   REAL                 :: zeta, teta, gBn
   REAL                 :: Bxyz(1:Ntz,1:3), distance(1:Ntz)
   REAL                 :: vcgriderr, resulth, resulth2, resulth4, deltah4h2, deltah2h 
-  INTEGER              :: vcstride
+  INTEGER              :: vcstride, Nzwithsym 
 
 
   BEGIN(bnorml)
@@ -136,6 +136,13 @@ subroutine bnorml( mn, Ntz, efmn, ofmn )
 #endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  ! In stellerator symmetric geometry, the virtual casing field also exhibits symmetriy which we can exploit
+  if (YESstellsym) then
+    ! we have to compute approximately half points due to symmetry, but including the middle and the edge points! (Closed interval [0, pi])
+    Nzwithsym = min(Nz, (Nz + 3) / 2 ) 
+  else
+    Nzwithsym = Nz
+  endif
 
 #ifdef COMPARECASING
 ! When comparing results, both methods should always run
@@ -145,7 +152,7 @@ if ( Lvcgrid.eq.1 ) then
 #endif
   ! Precompute Jxyz(1:Ntz,1:3) and the corresponding positions on the high resolution plasma boundary
 
-  !$OMP PARALLEL DO SHARED(Pbxyz, Jxyz) PRIVATE(jk, teta, zeta) COLLAPSE(2)
+  !$OMP PARALLEL DO SHARED(Pbxyz, Jxyz) PRIVATE(jk, jj, kk, teta, zeta) COLLAPSE(2)
   do kk = 0, vcNz-1 ; 
     do jj = 0, vcNt-1 ; 
       zeta = kk * pi2nfp / vcNz
@@ -161,9 +168,9 @@ if ( Lvcgrid.eq.1 ) then
       case default ! Lparallel
         FATAL( bnorml, .true., invalid Lparallel in parallelization loop )
       end select 
-      
+
+      ! pbxyz and jxyz are  both [out] parameters
       call surfacecurrent( teta, zeta, Pbxyz(jk,1:3), Jxyz(jk,1:3) )
-      
     enddo
   enddo
 
@@ -178,12 +185,15 @@ if ( Lvcgrid.eq.1 ) then
     FATAL( bnorml, .true., error in MPI_Allreduce for Jxyz )
   endif
 
-  ! iterate over resolutions of the virtual casing grid to get an estimate of the accuracy
+  ! iterate over resolutions of the virtual casing grid to get an estimate of the accuracy. Write the result into ijimag
   do vcstride = 3, 0, -1
-    !$OMP PARALLEL DO SHARED(Dxyz, Pbxyz, Jxyz, ijreal, ijimag) PRIVATE(jk, gBn) COLLAPSE(2)
-    do kk = 0, Nz-1 ; 
+    !$OMP PARALLEL DO SHARED(Dxyz, Nxyz, Pbxyz, Jxyz, ijreal, ijimag) PRIVATE(jk, gBn) COLLAPSE(2)
+    do kk = 0, Nzwithsym-1 ; 
       do jj = 0, Nt-1 ; 
         jk = 1 + jj + kk*Nt
+
+        ! kk = 0 terms are also symmetryic (relevant e.g. for tokamaks) 
+        if ((Nz.eq.1) .and. (jj.gt.((Nt+1)/2))) cycle 
 
         ! Each MPI rank only computes every a 1/ncpu surfacecurrent() calls 
         ! Identical MPI parallelization scheme as for Lvcgrid=0
@@ -198,9 +208,15 @@ if ( Lvcgrid.eq.1 ) then
 
         call casinggrid( Dxyz(:,jk), Nxyz(:,jk), Pbxyz, Jxyz, 2**vcstride,  gBn)
         
-        ijreal(jk) = ijimag(jk) ! previous solution (lower resolution)
-        ijimag(jk) = gBn ! current solution (higher resolution)
+        ijimag(jk) = ijreal(jk) ! previous solution (lower resolution)
+        ijreal(jk) = gBn ! current solution (higher resolution)
       enddo
+    enddo
+
+    do jk = 1, Ntz
+      if(ijreal(jk).ne.ijreal(jk)) then
+        print *, 'ijreal(jk) contains NAN', jk, ijreal(jk)
+      endif
     enddo
     deltah4h2 = deltah2h
     deltah2h =  sum(abs(ijimag - ijreal)) ! mean delta between the h and h/2 solutions
@@ -208,8 +224,9 @@ if ( Lvcgrid.eq.1 ) then
     ! Order of the integration method: log(deltah4h2/deltah2h)/log(2.0) = 1
     ! relative error: deltah2h/abs(ijimag(jk))
     ! absolute error: delta2h/Ntz
-    vcgriderr = deltah2h / sum(abs(ijimag))
+    vcgriderr = deltah2h / sum(abs(ijreal))
   enddo
+
   if (myid.eq.0) then
     write(ounit, '("bnorml : ", 10x ," : vcgriderr = ",es13.5," ; vcasingtol = ",es13.5s)') vcgriderr, vcasingtol
   endif
@@ -217,6 +234,10 @@ if ( Lvcgrid.eq.1 ) then
   !   FATAL( bnorml, .true., virtual casing accuracy is too low, increase vcNt and vcNz )
   ! endif
 #ifdef COMPARECASING
+  ! To compare with the casing() implementation, copy the results into ijimag
+  if(Lvcgrid.eq.1) then
+    ijimag(1:Ntz) = ijreal(1:Ntz)
+  endif
 endif
 ! When comparing results, both methods should always run
 if (.true.) then
@@ -224,11 +245,14 @@ if (.true.) then
 else ! if not Lvcgrid  
 #endif
 
-  do kk = 0, Nz-1 ; 
+  do kk = 0, Nzwithsym-1 ; 
    zeta = kk * pi2 / Nz
 
    do jj = 0, Nt-1 ; 
     teta = jj * pi2 / Nt ; jk = 1 + jj + kk*Nt
+
+    ! kk = 0 terms are also symmetryic (relevant e.g. for tokamaks) 
+    if ((Nz.eq.1) .and. (jj.gt.((Nt+1)/2))) cycle 
 
     globaljk = jk ! this is global; passed through to vcintegrand & casing;
 
@@ -293,6 +317,26 @@ endif ! end of if (Lvcgrid  )
    end select ! end of select case( Lparallel ) ; 09 Mar 17;
 
   enddo ! 11 Oct 12;
+
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  ! In stellerator symmetric geometry, the virtual casing field also exhibits symmetriy which we can exploit
+  if (YESstellsym) then
+    ! We are dealing with half open intervals in theta and phi [0, 2pi[ so we need to skip the first row and column when mirroring 
+    if (Nz.eq.1) then 
+      do jj = 0, Nt/2; 
+        jk = 1 + jj
+        ijreal(Ntz + 1 - jk) = -ijreal(jk+1)
+      enddo    
+    endif
+
+    do kk = 0, Nzwithsym-2; 
+      do jj = 0, Nt-1;  
+        jk = 1 + jj + kk*Nt
+
+        ijreal(Ntz + 1 - jk) = -ijreal(jk+Nt+1)
+      enddo
+    enddo
+  endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
