@@ -155,7 +155,7 @@ if ( Lvcgrid.eq.1 ) then
   !$OMP PARALLEL DO SHARED(Pbxyz, Jxyz) PRIVATE(jk, jj, kk, teta, zeta) COLLAPSE(2)
   do kk = 0, vcNz-1 ; 
     do jj = 0, vcNt-1 ; 
-      zeta = kk * pi2nfp / vcNz
+      zeta = kk * pi2 / vcNz
       teta = jj * pi2  / vcNt ; 
       jk = 1 + jj + kk*vcNt
 
