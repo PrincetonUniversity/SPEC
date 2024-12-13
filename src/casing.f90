@@ -224,36 +224,41 @@ end subroutine casing
 !> with \f${\bf r}\f$ approximately the distance vector from an evaluation point of the current surface \f${\bf x}(\theta, \zeta)\f$ to the 
 !> external point \f$(x,y,z)\f$, and the exact formula includes a regularization factor \f$\epsilon\f$  Eqn.\f$(\ref{eq:vcasing_distance})\f$.
 !>
+!> Numerically it uses a Kahan Summation algorithm to accumulate the contributions of all inner points, because truncation error quickly dominates the computation when thousands 
+!> of points are used in both dimensions.
+!> 
 !> @param[in] xyz \f$(x,y,z)\f$ cartesian coordinates on the computational boundary
-!> @param[in] nxyz cartesian normal vector on the computational boundary
+!> @param[in] ntz cartesian normal vector on the computational boundary
 !> @param[in] Pbxyz  array of cartesian coordinates on the plasma boundary
 !> @param[in] Jxyz array of surface currents \f${\bf B}_{Plasma} \cdot {\bf e}_\theta \times {\bf e}_\zeta \;\f$ on the plasma boundary
 !> @param[in] vcstride integer stride for the fixed resolution grid. vcstride = 1 computes the integral at full resolution, vcstride = 2 computes the integral at half resolution, etc.
 !> @param[out] gBn normal field \f${\bf B}_{Plasma} \cdot n \;\f$ on the computational boundary
-subroutine casinggrid( xyz, nxyz,  Pbxyz, Jxyz, vcstride, gBn)
+subroutine casinggrid( xyz, ntz,  Pbxyz, Jxyz, vcstride, gBn)
   use constants, only : zero, one, three, pi2
 
   use fileunits, only : ounit, vunit
 
   use inputlist, only : vcasingeps, vcNz, vcNt
 
-  use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC !, Pbxyz, Jxyz
+  use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC,  Dxyz, Nxyz,globaljk,pi2nfp
 
   LOCALS
 
-  REAL, intent(in)     :: xyz(3) ! arbitrary location; Cartesian;
-  REAL, intent(in)     :: nxyz(3) ! surface normal on the computational boundary; Cartesian;
+  REAL, intent(in)     :: xyz(1:3) ! arbitrary location; Cartesian;
+  REAL, intent(in)     :: ntz(1:3) ! surface normal on the computational boundary; Cartesian;
   REAL, intent(in)     :: Pbxyz(1:vcNz*vcNt, 1:3), Jxyz(1:vcNz*vcNt, 1:3) 
   INTEGER, intent(in)  :: vcstride
   REAL, intent(out)    :: gBn ! B.n on the computational boundary;
   
   REAL :: rr(1:3),  distance(1:3), jj(1:3), Bxyz(1:3), accumulator, firstorderfactor
+  REAL :: gBnlocal ! Local accumulator so we don't directly sum into the destination pointer (Avoid cache thrashing due to false share) 
+  REAL :: c, t, y ! Helper variables for the Kahan summation
   INTEGER :: plasmaNtz, jk
-
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   ! plasmaNtz = SIZE(Pbxyz, 1)
   plasmaNtz = vcNz*vcNt
-  gBn = zero
+  gBnlocal = zero
+  c = zero
   ! loop over the high resolution plasma boundary (inner boundary for virtual casing)
   do jk = 1, plasmaNtz, vcstride ;
       ! distance vector between point on computational boundary and point on plasma boundary
@@ -275,9 +280,13 @@ subroutine casinggrid( xyz, nxyz,  Pbxyz, Jxyz, vcstride, gBn)
                      jj(1) * rr(2) - jj(2) * rr(1)  /)
     
       ! Accumulate B.r/r^3 contributions 
-      gBn = gBn + sum( Bxyz * nxyz ) * firstorderfactor
+      ! Kahan Summation algorithm
+      y = sum( Bxyz * ntz ) * firstorderfactor - c  ! Correct the next value with the compensation
+      t = gBnlocal + y                                  ! Add the corrected value to the sum
+      c = (t - gBnlocal) - y                            ! Update compensation
+      gBnlocal = t                                      ! Update the running total      
  enddo
- gBn = gBn * pi2 * pi2 / (plasmaNtz / vcstride) 
+ gBn = gBnlocal * pi2 * pi2 / (plasmaNtz / vcstride) 
  return
 
 end subroutine casinggrid

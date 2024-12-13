@@ -85,7 +85,7 @@ subroutine bnorml( mn, Ntz, efmn, ofmn )
 
   use fileunits, only : ounit, lunit
 
-  use inputlist, only : Wmacros, Wbnorml, Igeometry, Lcheck, vcasingtol, vcasingper, Lrad, Lvcgrid  
+  use inputlist, only : Wmacros, Wbnorml, Igeometry, Lcheck, vcasingtol, vcasingits, vcasingper, Lrad, Lvcgrid  
 
   use cputiming, only : Tbnorml
 
@@ -111,7 +111,7 @@ subroutine bnorml( mn, Ntz, efmn, ofmn )
   INTEGER              :: lvol, Lparallel, ii, jj, kk, jk, ll, kkmodnp, jkmodnp, ifail, id01daf, nvccalls, icasing
   REAL                 :: zeta, teta, gBn
   REAL                 :: Bxyz(1:Ntz,1:3), distance(1:Ntz)
-  REAL                 :: vcgriderr, resulth, resulth2, resulth4, deltah4h2, deltah2h 
+  REAL                 :: absvcerr, relvcerr, resulth, resulth2, resulth4, deltah4h2, deltah2h
   INTEGER              :: vcstride, Nzwithsym 
 
 
@@ -150,27 +150,27 @@ if (.true.) then
 #else
 if ( Lvcgrid.eq.1 ) then
 #endif
-  ! Precompute Jxyz(1:Ntz,1:3) and the corresponding positions on the high resolution plasma boundary
+  ! Precompute Jxyz(:,1:3) and the corresponding positions on the high resolution plasma boundary
 
   !$OMP PARALLEL DO SHARED(Pbxyz, Jxyz) PRIVATE(jk, jj, kk, teta, zeta) COLLAPSE(2)
   do kk = 0, vcNz-1 ; 
     do jj = 0, vcNt-1 ; 
-      zeta = kk * pi2nfp / vcNz
+      zeta = kk * pi2 / vcNz ! zeta = kk * pi2nfp / vcNz
       teta = jj * pi2  / vcNt ; 
       jk = 1 + jj + kk*vcNt
 
       ! Each MPI rank only computes every a 1/ncpu surfacecurrent() calls 
       select case( Lparallel ) 
       case( 0 ) ! Lparallel = 0 
-       if( myid.ne.modulo(kk,ncpu) ) cycle
+      if( myid.ne.modulo(kk,ncpu) ) cycle
       case( 1 ) ! Lparallel = 1 
-       if( myid.ne.modulo(jk-1,ncpu) ) cycle
+      if( myid.ne.modulo(jk-1,ncpu) ) cycle
       case default ! Lparallel
         FATAL( bnorml, .true., invalid Lparallel in parallelization loop )
       end select 
 
       ! pbxyz and jxyz are  both [out] parameters
-      call surfacecurrent( teta, zeta, Pbxyz(jk,1:3), Jxyz(jk,1:3) )
+      call surfacecurrent( teta, zeta, Pbxyz(jk,1:3), Jxyz(jk,1:3)  )
     enddo
   enddo
 
@@ -186,8 +186,13 @@ if ( Lvcgrid.eq.1 ) then
   endif
 
   ! iterate over resolutions of the virtual casing grid to get an estimate of the accuracy. Write the result into ijimag
-  do vcstride = 3, 0, -1
-    !$OMP PARALLEL DO SHARED(Dxyz, Nxyz, Pbxyz, Jxyz, ijreal, ijimag) PRIVATE(jk, gBn) COLLAPSE(2)
+  deltah2h = 1e12
+  !> The surface currents get precomputed at all points, but maybe we don't have to integrate over the whole grid. 
+  !> Start with a large stride over the plasmaboundary (= how many points to skip at each step), then get progressively finer.
+  !> Do at least vcasingits iterations (sqrt(vcasingits) resolution per dimension) and halve the stride until the accuracy is reached. 
+  !> At least one step in the resolution cascade is required to determine an estimate of the current accuracy.
+  do vcstride = INT(log(real(vcNt/sqrt(real(vcasingits))))/log(2.0)), 0, -1
+    !$OMP PARALLEL DO SHARED(Dxyz, Nxyz, Pbxyz, Jxyz, ijreal, ijimag) FIRSTPRIVATE(jk, gBn) COLLAPSE(2)
     do kk = 0, Nzwithsym-1 ; 
       do jj = 0, Nt-1 ; 
         jk = 1 + jj + kk*Nt
@@ -206,28 +211,30 @@ if ( Lvcgrid.eq.1 ) then
         FATAL( bnorml, .true., invalid Lparallel in parallelization loop )
         end select ! end of select case( Lparallel ) 
 
-        call casinggrid( Dxyz(:,jk), Nxyz(:,jk), Pbxyz, Jxyz, 2**vcstride,  gBn)
+        gBn = zero
+        globaljk = jk ! only to check against the precomputed values against dvcfield
+        call casinggrid( Dxyz(1:3,jk), Nxyz(1:3,jk), Pbxyz, Jxyz, 2**vcstride,  gBn)
         
         ijimag(jk) = ijreal(jk) ! previous solution (lower resolution)
         ijreal(jk) = gBn ! current solution (higher resolution)
-      enddo
-    enddo
+      enddo ! end of do jj
+    enddo ! end of do kk
 
     deltah4h2 = deltah2h
     deltah2h =  sum(abs(ijimag - ijreal)) ! mean delta between the h and h/2 solutions
 
     ! Order of the integration method: log(deltah4h2/deltah2h)/log(2.0) = 1
-    ! relative error: deltah2h/abs(ijimag(jk))
-    ! absolute error: delta2h/Ntz
-    vcgriderr = deltah2h / sum(abs(ijreal))
-  enddo
-
-  if (myid.eq.0) then
-    write(ounit, '("bnorml : ", 10x ," : vcgriderr = ",es13.5," ; vcasingtol = ",es13.5s)') vcgriderr, vcasingtol
-  endif
-  ! if (vcgriderr.gt.vcasingtol) then
-  !   FATAL( bnorml, .true., virtual casing accuracy is too low, increase vcNt and vcNz )
-  ! endif
+    absvcerr = deltah2h / sum(abs(ijreal))
+    relvcerr = deltah2h / Ntz
+    if (myid.eq.0) then
+      write(ounit, '("bnorml : ", 10x ," : relvcerr = ",es13.5," ; absvcerr = ",es13.5," ; vcasingtol = ",es13.5s)') relvcerr, absvcerr, vcasingtol
+      ! print *, "Convergence order: ",  log(deltah4h2/deltah2h)/log(2.0)
+    endif
+    ! Tolerance was already reached, exit the loop. (Different threads may exit at different times)
+    if (absvcerr.lt.vcasingtol .and. relvcerr.lt.vcasingtol) then
+      exit
+    endif
+  enddo ! end of do vcstride
 #ifdef COMPARECASING
   ! To compare with the casing() implementation, copy the results into ijimag
   if(Lvcgrid.eq.1) then
@@ -332,7 +339,6 @@ endif ! end of if (Lvcgrid  )
       enddo
     enddo
   endif
-
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   ijreal(1:Ntz) = ijreal(1:Ntz) * virtualcasingfactor
