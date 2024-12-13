@@ -191,7 +191,7 @@ if ( Lvcgrid.eq.1 ) then
   !> Start with a large stride over the plasmaboundary (= how many points to skip at each step), then get progressively finer.
   !> Do at least vcasingits iterations (sqrt(vcasingits) resolution per dimension) and halve the stride until the accuracy is reached. 
   !> At least one step in the resolution cascade is required to determine an estimate of the current accuracy.
-  do vcstride = INT(log(real(vcNt/sqrt(real(vcasingits))))/log(2.0)), 0, -1
+  do vcstride = INT(0.5*log(real(vcNt*vcNz/vcasingits))/log(2.0)), 0, -1
     !$OMP PARALLEL DO SHARED(Dxyz, Nxyz, Pbxyz, Jxyz, ijreal, ijimag) FIRSTPRIVATE(jk, gBn) COLLAPSE(2)
     do kk = 0, Nzwithsym-1 ; 
       do jj = 0, Nt-1 ; 
