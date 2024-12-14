@@ -221,11 +221,11 @@ if ( Lvcgrid.eq.1 ) then
     enddo ! end of do kk
 
     deltah4h2 = deltah2h
-    deltah2h =  sum(abs(ijimag - ijreal)) ! mean delta between the h and h/2 solutions
+    deltah2h =  maxval(abs(ijimag - ijreal)) ! mean delta between the h and h/2 solutions
 
     ! Order of the integration method: log(deltah4h2/deltah2h)/log(2.0) = 1
-    absvcerr = deltah2h / sum(abs(ijreal))
-    relvcerr = deltah2h / Ntz
+    absvcerr = deltah2h 
+    relvcerr = 2 * deltah2h / maxval(abs(ijreal)) ! overestimate the relative error by a factor of two
     if (myid.eq.0) then
       write(ounit, '("bnorml : ", 10x ," : relvcerr = ",es13.5," ; absvcerr = ",es13.5," ; vcasingtol = ",es13.5s)') relvcerr, absvcerr, vcasingtol
       ! print *, "Convergence order: ",  log(deltah4h2/deltah2h)/log(2.0)
