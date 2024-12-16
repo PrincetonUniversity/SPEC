@@ -99,7 +99,7 @@ subroutine bnorml( mn, Ntz, efmn, ofmn )
                         Nt, Nz, cfmn, sfmn, &
                         ijreal, ijimag, jireal, jiimag, &
                         globaljk, virtualcasingfactor, gteta, gzeta, Dxyz, Nxyz, &
-                        Jxyz, Pbxyz, YESstellsym
+                        Jxyz, Pbxyz, YESstellsym, prevcstride
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -151,7 +151,8 @@ if (.true.) then
 if ( Lvcgrid.eq.1 ) then
 #endif
   ! Precompute Jxyz(:,1:3) and the corresponding positions on the high resolution plasma boundary
-
+  Pbxyz(:,1:3) = zero
+  Jxyz(:,1:3)  = zero
   !$OMP PARALLEL DO SHARED(Pbxyz, Jxyz) PRIVATE(jk, jj, kk, teta, zeta) COLLAPSE(2)
   do kk = 0, vcNz-1 ; 
     do jj = 0, vcNt-1 ; 
@@ -190,10 +191,9 @@ if ( Lvcgrid.eq.1 ) then
   !> The surface currents get precomputed at all points, but maybe we don't have to integrate over the whole grid. 
   !> Start with a large stride over the plasmaboundary (= how many points to skip at each step), then get progressively finer.
   !> Do at least vcasingits iterations (sqrt(vcasingits) resolution per dimension) and halve the stride until the accuracy is reached. 
-  !> At least one step in the resolution cascade is required to determine an estimate of the current accuracy.
-
-  ! The starting stride is chosen such that it is the largest possible stride log2(sqrt(vcNt*vcNz)), but at least considers vcasingits points
-  do vcstride = INT(0.5*log(real(vcNt*vcNz/vcasingits))/log(2.0)), 0, -1
+  prevcstride = min(prevcstride, INT(0.5*log(real(vcNt*vcNz/vcasingits))/log(2.0))) 
+  prevcstride = max(prevcstride, 1) !> At least one step in the resolution cascade is required to determine an estimate of the current accuracy.
+  do vcstride = prevcstride, 0, -1
     !$OMP PARALLEL DO SHARED(Dxyz, Nxyz, Pbxyz, Jxyz, ijreal, ijimag) FIRSTPRIVATE(jk, gBn) COLLAPSE(2)
     do kk = 0, Nzwithsym-1 ; 
       do jj = 0, Nt-1 ; 
@@ -234,6 +234,7 @@ if ( Lvcgrid.eq.1 ) then
     endif
     ! Tolerance was already reached, exit the loop. (Different threads may exit at different times)
     if (absvcerr.lt.vcasingtol .and. relvcerr.lt.vcasingtol) then
+      prevcstride = vcstride
       exit
     endif
   enddo ! end of do vcstride

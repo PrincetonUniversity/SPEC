@@ -1735,6 +1735,7 @@ endif
 
       SALLOCATE( Jxyz, (1:vcNt*vcNz,1:3), zero )  ! Cartesian components of virtual casing surface current; needs to be recalculated at each iteration;
       SALLOCATE( Pbxyz, (1:vcNt*vcNz,1:3), zero ) ! Cartesian points on the plasma boundary; needs to be recalculated at each iteration;
+      prevcstride = huge(prevcstride)
     endif
 
     SALLOCATE( Dxyz, (1:3,1:Ntz), zero ) ! Cartesian components of computational boundary; position; 14 Apr 17;

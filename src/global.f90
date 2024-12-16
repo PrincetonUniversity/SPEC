@@ -838,6 +838,7 @@ module allglobal
   REAL, allocatable    :: Nxyz(:,:)  !< computational boundary; normal
   REAL, allocatable    :: Jxyz(:,:)  !< plasma        boundary; surface current
   REAL, allocatable    :: Pbxyz(:,:) !< plasma        boundary; position
+  INTEGER              :: prevcstride!< previous virtual casing stride for casinggrid (only relevant when Lvcgrid=1)
 
   REAL                 :: virtualcasingfactor = -one / (four*pi) !< this agrees with diagno
   
