@@ -191,6 +191,8 @@ if ( Lvcgrid.eq.1 ) then
   !> Start with a large stride over the plasmaboundary (= how many points to skip at each step), then get progressively finer.
   !> Do at least vcasingits iterations (sqrt(vcasingits) resolution per dimension) and halve the stride until the accuracy is reached. 
   !> At least one step in the resolution cascade is required to determine an estimate of the current accuracy.
+
+  ! The starting stride is chosen such that it is the largest possible stride log2(sqrt(vcNt*vcNz)), but at least considers vcasingits points
   do vcstride = INT(0.5*log(real(vcNt*vcNz/vcasingits))/log(2.0)), 0, -1
     !$OMP PARALLEL DO SHARED(Dxyz, Nxyz, Pbxyz, Jxyz, ijreal, ijimag) FIRSTPRIVATE(jk, gBn) COLLAPSE(2)
     do kk = 0, Nzwithsym-1 ; 
@@ -227,7 +229,7 @@ if ( Lvcgrid.eq.1 ) then
     absvcerr = deltah2h 
     relvcerr = 2 * deltah2h / maxval(abs(ijreal)) ! overestimate the relative error by a factor of two
     if (myid.eq.0) then
-      write(ounit, '("bnorml : ", 10x ," : relvcerr = ",es13.5," ; absvcerr = ",es13.5," ; vcasingtol = ",es13.5s)') relvcerr, absvcerr, vcasingtol
+      write(ounit, '("bnorml : ", 10x ," : relvcerr = ",es13.5," ; absvcerr = ",es13.5," ; resolution reduction = ",i8)') relvcerr, absvcerr, 2**vcstride
       ! print *, "Convergence order: ",  log(deltah4h2/deltah2h)/log(2.0)
     endif
     ! Tolerance was already reached, exit the loop. (Different threads may exit at different times)
