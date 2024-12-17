@@ -181,8 +181,8 @@ Vns(0,32)   =  9.623711250383996E-13 Bns(0,32)   = -4.709530705132861E-10 Vnc(0,
  vcasingtol  =   1.000000000000000E-12
  vcasingits  =      1000
  vcasingper  =         1
- vcnt        =         360
- vcnz        =         412
+ vcNt        =         360
+ vcNz        =         412
 /
 &diagnosticslist
  odetol      =   1.000000000000000E-07
