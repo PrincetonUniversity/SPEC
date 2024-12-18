@@ -63,7 +63,7 @@ subroutine dfp100(Ndofgl, x, Fvec, LComputeDerivatives)
                         DDtzcc, DDtzcs, DDtzsc, DDtzss, &
                         DDzzcc, DDzzcs, DDzzsc, DDzzss, &
                         dMA, dMB, dMD, dMG, MBpsi, solution, &
-                        Nt, Nz, LILUprecond, Lsavedguvij, NOTMatrixFree, guvijsave, izbs
+                        Nt, Nz, LILUprecond, Lsavedguvij, NOTMatrixFree, guvijsave, izbs, total_pflux
 
   LOCALS
   !------
@@ -203,6 +203,19 @@ subroutine dfp100(Ndofgl, x, Fvec, LComputeDerivatives)
         ! Compute the constraint and store it in Fvec.
         if( myid.EQ.0 ) then
             Fvec(1:Mvol-1) = IPDt(1:Mvol-1) - Isurf(1:Mvol-1)
+        endif
+
+        ! Set the total pflux to 0
+        if(Igeometry.eq.1) then
+
+          IPDtDpf(1,Mvol) = -pi2 * Bt00(1,1,2)
+          IPdtdPf(2:Mvol,Mvol) = 0.0
+          IPDtDpf(Mvol,1:Mvol) = 1.0
+
+          ! Constraint the total pflux (pflux(Mvol))
+          ! zero for symmetric initial profiles
+          ! non-zero for asymmetric profiles
+          Fvec(Mvol) = sum(dpflux(1:Mvol)) - total_pflux 
         endif
 
         ! Compute poloidal linking current constraint as well in case of free boundary computation

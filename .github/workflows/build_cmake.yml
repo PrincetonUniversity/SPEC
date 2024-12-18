@@ -39,10 +39,16 @@ jobs:
     #    cmake --install .
     - name: run_fast_cartesian
       run: |
-        cd ${SPEC_PATH}/ci/G1V03L2Fi
+        cd ${SPEC_PATH}/ci/G1V03L0Fi
         export OMP_NUM_THREADS=1
-        mpiexec -n 2 --allow-run-as-root $SPEC_PATH/install/bin/xspec G1V03L2Fi.001.sp
-        python3 -m py_spec.ci.test compare.h5 G1V03L2Fi.001.sp.h5 
+        mpiexec -n 2 --allow-run-as-root $SPEC_PATH/install/bin/xspec G1V03L0Fi.sp
+        python3 -m py_spec.ci.test compare.h5 G1V03L0Fi.sp.h5 
+    - name: run_fast_cartesian_lcons3
+      run: |
+        cd ${SPEC_PATH}/ci/G1V03L3Fi
+        export OMP_NUM_THREADS=1
+        mpiexec -n 2 --allow-run-as-root $SPEC_PATH/install/bin/xspec G1V03L3Fi.sp
+        python3 -m py_spec.ci.test compare.h5 G1V03L3Fi.sp.h5 
     - name: run_fast_cylinder
       run: |
         cd ${SPEC_PATH}/ci/G2V32L1Fi

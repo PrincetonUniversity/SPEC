@@ -251,10 +251,13 @@ module allglobal
   REAL                 :: ForceErr !< total force-imbalance
   REAL                 :: Energy   !< MHD energy
   REAL                 :: BnsErr   !< (in freeboundary) error in self-consistency of field on plasma boundary (Picard iteration)
+  REAL                 :: BetaTotal = 0.0   !< Beta, averaged over entire domain
 
   REAL   , allocatable :: IPDt(:), IPDtDpf(:,:)  !< Toroidal pressure-driven current
 
   INTEGER              :: Mvol !< total number of volumes (including the vacuum region in the case of free-boundary calculations)
+
+  REAL :: total_pflux ! used when Lconstraint=3, Igeometry=1
 
   LOGICAL              :: YESstellsym !< internal shorthand copies of Istellsym, which is an integer input;
   LOGICAL              :: NOTstellsym !< internal shorthand copies of Istellsym, which is an integer input;
@@ -1678,7 +1681,7 @@ subroutine wrtend
   write(iunit,'(" adiabatic   = ",257es23.15)') adiabatic(1:Mvol)
   write(iunit,'(" mu          = ",257es23.15)') mu(1:Mvol)
   write(iunit,'(" Ivolume     = ",257es23.15)') Ivolume(1:Mvol)
-  write(iunit,'(" Isurf       = ",257es23.15)') Isurf(1:Mvol-1), 0.0
+  write(iunit,'(" Isurf       = ",257es23.15)') IPDt(1:Mvol) ! Prints the actual surf current, not the targeted one
   write(iunit,'(" Lconstraint = ",i9        )') Lconstraint
   write(iunit,'(" pl          = ",257i23    )') pl(0:Mvol)
   write(iunit,'(" ql          = ",257i23    )') ql(0:Mvol)

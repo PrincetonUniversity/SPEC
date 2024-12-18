@@ -44,7 +44,7 @@ subroutine volume( lvol, vflag )
 
   use fileunits, only : ounit
 
-  use inputlist, only : Wvolume, Igeometry, Nvol, pscale
+  use inputlist, only : Wvolume, Igeometry, Nvol, pscale, rpol, rtor
 
   use cputiming
 
@@ -124,6 +124,9 @@ subroutine volume( lvol, vflag )
     if( dBdX%L .and. dBdX%innout.eq.innout .and. dBdX%ii.eq.1 ) then ! compute derivative of volume;
      if( dBdX%issym.eq.0 ) dvolume = one ! note that the sign factor for the lower interface is included below; 20 Jun 14;
     endif
+
+    ! respecting rpol, rtor sizes of slab
+    vol(innout) = vol(innout) * rpol * rtor
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
