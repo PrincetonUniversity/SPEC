@@ -1,7 +1,7 @@
 !> \file
 !> \brief Computes eigenvalues and eigenvectors of derivative matrix, \f$\nabla_{\bf xi}{\bf F}\f$.
 
-!> \brief Computes eigenvalues and eigenvectors of derivative matrix, \f$\nabla_{\bf xi}{\bf F}\f$ and saves them to \c .ext.GF.ev and \c .ext.GF.ma
+!> \brief Computes eigenvalues and eigenvectors of derivative matrix, \f$\nabla_{\bf xi}{\bf F}\f$
 !> \ingroup grp_diagnostics grp_output
 !>
 !> @param[in] NGdof number of global degrees of freedom
@@ -94,6 +94,7 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
 
   ! Only makes sense to compute the Hessian if helicity is constrained
   if(Lconstraint.ne.2) then
+    write(ounit, 'hesian only calculated when Lcons=2')
     return
   endif
 

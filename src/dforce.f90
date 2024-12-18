@@ -78,6 +78,12 @@
 !>       information is then broadcasted to the MPI node \f$0\f$ in dforce() and the global force is evaluated. </li>
 !> </ul>
 !>
+!> **prints out the force gradient matrix .hessian**
+!>
+!> <ul>
+!> <li> Prints the 'hessian' matrix to a file '.sp.hessian' </li>
+!> </ul>
+!>
 !> **construct derivatives of matrix equation**
 !>
 !> <ul>
