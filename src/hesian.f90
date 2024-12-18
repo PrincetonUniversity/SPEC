@@ -94,7 +94,7 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
 
   ! Only makes sense to compute the Hessian if helicity is constrained
   if(Lconstraint.ne.2) then
-    write(ounit, 'hesian only calculated when Lcons=2')
+    write(*, *) 'hesian: only calculates the hessian matrix when Lcons=2'
     return
   endif
 
