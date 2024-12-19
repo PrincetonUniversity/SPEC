@@ -31,7 +31,8 @@
 !l tex       (Note that the computational boundary does not change, so this needs only to be determined once.)
 !l tex \item At each point on the computational boundary (i.e., on the discrete grid),
 !l tex       \link{casing} is used to compute the plasma field using the virtual casing principle.
-!l tex       I think that \link{casing} returns the field in Cartesian coordinates, i.e., ${\bf B} = B_x {\bf i} + B_y {\bf j} + B_z {\bf k}$.
+!l tex       \link{casing} returns the normal field ${\bf B} \cdot {\bf n}$ on the computational boundary, with ${\bf n}$ being the unit normal vector to the
+!l tex                     computational boundary. Internally it computes the field in Cartesian coordinates, i.e., ${\bf B} = B_x {\bf i} + B_y {\bf j} + B_z {\bf k}$ 
 !l tex \item In toroidal geometry, the vector transformation from Cartesian to cylindrical is given by
 !l tex       \be \begin{array}{cccccccccccccccccccccc}
 !l tex           B^R    & = &   & + B_x \cos \z & + & B_y \sin \z &       & \\
@@ -51,22 +52,19 @@
 !> \ingroup grp_free-boundary
 !>
 !> **free-boundary constraint**
-!> <ul>
+!> <ul> 
 !> <li> The normal field at the computational boundary, \f$\partial {\cal D}\f$, should be equal to
 !>      \f$\left({\bf B}_P + {\bf B}_C\right)\cdot {\bf e}_\theta \times {\bf e}_\zeta\f$,
 !>      where \f${\bf B}_P\f$ is the "plasma" field (produced by internal plasma currents) and is computed using virtual casing,
 !>      and \f${\bf B}_C\f$ is the "vacuum" field (produced by the external coils) and is given on input. </li>
 !> <li> The plasma field, \f${\bf B}_P\f$, can only be computed after the equilibrium is determined,
-!>      but this information is required to compute the equilibrium to begin with; and so there is an iteration involved. </li>
+!>      but this information is required to compute the equilibrium to begin with; and so there is an iteration involved \cite y2020_hudson . </li>
 !> <li> Suggested values of the vacuum field can be self generated; see xspech() for more documentation on this. </li>
 !> </ul>
 !>
 !> **compute the normal field on a regular grid on the computational boundary**
 !> <ul>
 !> <li> For each point on the compuational boundary, casing() is called to compute the normal field produced by the plasma currents. </li>
-!> <li> \todo There is a very clumsy attempt to parallelize this which could be greatly improved.
-!>
-!> </li>
 !> <li> An FFT gives the required Fourier harmonics. </li>
 !> </ul>
 !> \see casing.f90
