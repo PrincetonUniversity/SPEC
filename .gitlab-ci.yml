@@ -119,3 +119,19 @@ CurrentConstraint_free:
   - build:centos7
 # reproduce:
 # docker run -v `pwd`:`pwd` -w `pwd` csmiet/testspec sh -c 'source ./source.sh; cd ci/G3V08L3Fr; mpirun -n 4 --allow-run-as-root xspec G3V08L3Fr.001.sp; python3 -m py_spec.ci.test compare.h5 G3V08L3Fr.001.sp.h5'
+
+CurrentConstraint_free_grid:
+  stage: test
+  image: csmiet/testspec
+  script:
+  - source source.sh
+  - cd ci/G3V08L3FrGrid
+  - mpirun -n 4 --allow-run-as-root xspec G3V08L3FrGrid.001.sp 
+  - python3 -m py_spec.ci.test compare.h5 G3V08L3FrGrid.001.sp.h5 --tol 1e-10
+  artifacts:
+    when: always
+    paths:
+    - ci/G3V08L3FrGrid/G3V08L3FrGrid.001.sp.h5
+    expire_in: 1 week
+  dependencies:
+  - build:centos7
