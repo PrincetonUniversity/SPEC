@@ -163,9 +163,12 @@ subroutine&#160;</td><td class="memItemRight" valign="bottom"><b>init_outfile</b
 <tr class="memitem:ga2f9e9c50084175e5174b1e1070e24d73"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__grp__output.html#ga2f9e9c50084175e5174b1e1070e24d73">write_vector_potential</a> (sumLrad, allAte, allAze, allAto, allAzo)</td></tr>
 <tr class="memdesc:ga2f9e9c50084175e5174b1e1070e24d73"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write the magnetic vector potential Fourier harmonics to the output file group <code>/vector_potential</code> .  <a href="group__grp__output.html#ga2f9e9c50084175e5174b1e1070e24d73">More...</a><br /></td></tr>
 <tr class="separator:ga2f9e9c50084175e5174b1e1070e24d73"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga593e99355c8ceabe56a566e9d468dbd9"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__grp__output.html#ga593e99355c8ceabe56a566e9d468dbd9">hdfint</a></td></tr>
-<tr class="memdesc:ga593e99355c8ceabe56a566e9d468dbd9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write the final state of the equilibrium to the output file.  <a href="group__grp__output.html#ga593e99355c8ceabe56a566e9d468dbd9">More...</a><br /></td></tr>
-<tr class="separator:ga593e99355c8ceabe56a566e9d468dbd9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaf2713910d473d310730d351551b31b97"><td class="memItemLeft" align="right" valign="top">
+subroutine&#160;</td><td class="memItemRight" valign="bottom"><b>write_stability</b> (ohessian, evalr, evali, evecr, NGdof)</td></tr>
+<tr class="memdesc:gaf2713910d473d310730d351551b31b97"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write the final state of the equilibrium to the output file. <br /></td></tr>
+<tr class="separator:gaf2713910d473d310730d351551b31b97"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a593e99355c8ceabe56a566e9d468dbd9"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesphdf5.html#a593e99355c8ceabe56a566e9d468dbd9">hdfint</a></td></tr>
+<tr class="separator:a593e99355c8ceabe56a566e9d468dbd9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gadb720ea6408b8f7681bfb7f86a4b86f2"><td class="memItemLeft" align="right" valign="top">
 subroutine&#160;</td><td class="memItemRight" valign="bottom"><b>finish_outfile</b></td></tr>
 <tr class="memdesc:gadb720ea6408b8f7681bfb7f86a4b86f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Close all open HDF5 objects (we know of) and list any remaining still-open objects. <br /></td></tr>
@@ -261,6 +264,10 @@ integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>dt_energy_i
 integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>dt_forceerr_id</b></td></tr>
 <tr class="memdesc:a8de582a1dd644b759b95eb7421c92909"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memory datatype identifier (for "ForceErr" dataset in "/iterations") <br /></td></tr>
 <tr class="separator:a8de582a1dd644b759b95eb7421c92909"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9a76fa9dbafe59f43ebcf761b4feb2bc"><td class="memItemLeft" align="right" valign="top"><a id="a9a76fa9dbafe59f43ebcf761b4feb2bc" name="a9a76fa9dbafe59f43ebcf761b4feb2bc"></a>
+integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>dt_betatotal_id</b></td></tr>
+<tr class="memdesc:a9a76fa9dbafe59f43ebcf761b4feb2bc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memory datatype identifier (for "ForceErr" dataset in "/iterations") <br /></td></tr>
+<tr class="separator:a9a76fa9dbafe59f43ebcf761b4feb2bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aea8f8c1cd2822689519e2e9afea75d9b"><td class="memItemLeft" align="right" valign="top"><a id="aea8f8c1cd2822689519e2e9afea75d9b" name="aea8f8c1cd2822689519e2e9afea75d9b"></a>
 integer(hid_t)&#160;</td><td class="memItemRight" valign="bottom"><b>dt_irbc_id</b></td></tr>
 <tr class="memdesc:aea8f8c1cd2822689519e2e9afea75d9b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memory datatype identifier (for "iRbc" dataset in "/iterations") <br /></td></tr>
@@ -412,7 +419,46 @@ character(len=:), allocatable&#160;</td><td class="memItemRight" valign="bottom"
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p >writing the HDF5 output file </p>
-</div></div><!-- contents -->
+</div><h2 class="groupheader">Function/Subroutine Documentation</h2>
+<a id="a593e99355c8ceabe56a566e9d468dbd9" name="a593e99355c8ceabe56a566e9d468dbd9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a593e99355c8ceabe56a566e9d468dbd9">&#9670;&nbsp;</a></span>hdfint()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">subroutine sphdf5::hdfint</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<ul>
+<li>
+<p class="startli">In addition to the input variables, which are described in global(), the following quantities are written to <code>ext.sp.h5</code> :</p>
+<p class="endli"></p>
+</li>
+<li>
+All quantities marked as real should be treated as double precision.  </li>
+</ul>
+
+<p class="reference">References <a class="el" href="group__grp__global__physicslist.html#ga1b110ff3c17b7dac3af444ab9e42e3d2">inputlist::adiabatic</a>, <a class="el" href="namespaceallglobal.html#a62b3d756309401ae5638d238084719ce">allglobal::beltramierror</a>, <a class="el" href="namespaceallglobal.html#aef746ca7f6314946350d5fb5d03994bd">allglobal::betatotal</a>, <a class="el" href="group__grp__global__physicslist.html#ga3983410e9a76500984fa4a75877315b2">inputlist::bnc</a>, <a class="el" href="group__grp__global__physicslist.html#ga82eafba423cb98f235e79a29a582abd8">inputlist::bns</a>, <a class="el" href="namespaceallglobal.html#a4aae78647d8321706bee7245015e904f">allglobal::bnserr</a>, <a class="el" href="group__grp__fourier__transform.html#gac8cad9694df449349ce766eabd59216d">allglobal::bsupumn</a>, <a class="el" href="group__grp__fourier__transform.html#gad8cb45dc514217d16a651e85749c3185">allglobal::bsupvmn</a>, <a class="el" href="group__grp__covar__field__ifaces.html#ga1f5ea9c38e55707a900ca335990b63f1">allglobal::btemn</a>, <a class="el" href="group__grp__covar__field__ifaces.html#ga81924a77513f01a3ab914cc6d87c9558">allglobal::btomn</a>, <a class="el" href="group__grp__covar__field__ifaces.html#ga01aa29d7089eccad444e36b93b3d0784">allglobal::bzemn</a>, <a class="el" href="group__grp__covar__field__ifaces.html#ga2db512f2492084aac27af4378441be37">allglobal::bzomn</a>, <a class="el" href="namespaceallglobal.html#afae71b580d9f9c71a6796207a5411959">allglobal::cpus</a>, <a class="el" href="group__grp__iface__geom.html#gafa2f03a88e4ba78c9bda1e3bacf9c9e2">allglobal::drbc</a>, <a class="el" href="group__grp__iface__geom.html#gad0e2b0f2bc8714bcaa028f2515417323">allglobal::drbs</a>, <a class="el" href="group__grp__volints.html#ga93e615325c63ed3a2e35edbcf50255d6">allglobal::dvolume</a>, <a class="el" href="group__grp__iface__geom.html#gadf12baed692019acfd4f87edfb30e135">allglobal::dzbc</a>, <a class="el" href="group__grp__iface__geom.html#gad49624ff761950b3d7684815994db03a">allglobal::dzbs</a>, <a class="el" href="namespacesphdf5.html#a5ebb9276a31deb0bcbe482da78f4b5b2">file_id</a>, <a class="el" href="namespaceallglobal.html#a553a5d9f7253b80750db5131b7e5ffef">allglobal::forceerr</a>, <a class="el" href="group__grp__global__physicslist.html#ga46c6c39acda26e483cb0902fabbd8156">inputlist::helicity</a>, <a class="el" href="group__grp__iface__geom.html#gaa5c3bcffd4f21074dd5a496a63489737">allglobal::ibnc</a>, <a class="el" href="group__grp__iface__geom.html#ga9a4fe7e982a7490f6074dd4698c869d6">allglobal::ibns</a>, <a class="el" href="group__grp__fourier__repr.html#gaeac30068003c58add7893688ea2e48aa">allglobal::im</a>, <a class="el" href="group__grp__enh__res__sfl.html#gadee8845cc3c3b0d07b89682b47f2bf61">allglobal::ims</a>, <a class="el" href="group__grp__fourier__repr.html#gae946717d1654463c7cb4b1d7fd712f7d">allglobal::in</a>, <a class="el" href="group__grp__enh__res__sfl.html#ga91fce836682e697629fd780cd9fc4ed9">allglobal::ins</a>, <a class="el" href="group__grp__iface__geom.html#ga9f6e014546551429956a2a47c134d07b">allglobal::irbc</a>, <a class="el" href="group__grp__iface__geom.html#ga05ba18442623cf5f34f7a2193a03e0b1">allglobal::irbs</a>, <a class="el" href="group__grp__iface__geom.html#ga2090710c425371738a7802b5d044ef04">allglobal::ivnc</a>, <a class="el" href="group__grp__iface__geom.html#ga026d4427227376a01e0515e55f15d7f6">allglobal::ivns</a>, <a class="el" href="group__grp__global__physicslist.html#gae5aba6f12ca82ce11c2a577102c64820">inputlist::ivolume</a>, <a class="el" href="group__grp__iface__geom.html#ga6c7ad3b18081227f992e4c3e73a2e216">allglobal::izbc</a>, <a class="el" href="group__grp__iface__geom.html#gadcc12f5e32287fd4b60dc01afc6e64d2">allglobal::izbs</a>, <a class="el" href="group__grp__global__diagnostics.html#ga9bd118017d70e35d658a10463ab4c1dc">inputlist::lcheck</a>, <a class="el" href="group__grp__field__matrices.html#ga9a50861390cbd5e6dab0378e56377d93">allglobal::lmns</a>, <a class="el" href="group__grp__global__diagnostics.html#gaf5f29c4832896ed0a163c214132d2aa2">inputlist::lperturbed</a>, <a class="el" href="group__grp__global__physicslist.html#ga1509b6ce73e909b86beaf65c26527932">inputlist::lrad</a>, <a class="el" href="group__grp__fourier__repr.html#ga3b3045dc5c13351cded37581bdfb3400">allglobal::mn</a>, <a class="el" href="group__grp__enh__res__sfl.html#ga5565369b1327f61841876cf34560e2c1">allglobal::mns</a>, <a class="el" href="group__grp__global__physicslist.html#ga434a83d47ab8804a8c88e9e09f194bf2">inputlist::mu</a>, <a class="el" href="namespaceallglobal.html#aa2a4850f9468d817a673c1ef7f718849">allglobal::mvol</a>, <a class="el" href="namespaceallglobal.html#aca1163f9aab48251a99d00e63618cc39">allglobal::myid</a>, <a class="el" href="namespaceallglobal.html#aa45097c36006ab1ffc0cb06a927ed02a">allglobal::ncpu</a>, <a class="el" href="group__grp__global__physicslist.html#gafdbe1fac5fd98bb41ae5cc363ab9aedd">inputlist::nvol</a>, <a class="el" href="namespacefileunits.html#a7463305b9ff5b4b659d87f6fa59f74a7">fileunits::ounit</a>, <a class="el" href="group__grp__global__physicslist.html#ga1d7cc174857156ba5e880eddbe25b65b">inputlist::pflux</a>, <a class="el" href="group__grp__global__physicslist.html#ga82c7ae2283ae9fc8d8a6e23ce1d3f696">inputlist::rbc</a>, <a class="el" href="group__grp__global__physicslist.html#gaae55325d404aa5088957b91085763ddb">inputlist::rbs</a>, <a class="el" href="group__grp__global__physicslist.html#ga5616f18d1b18821a3f6ce6542a0d53d0">inputlist::tflux</a>, <a class="el" href="namespaceallglobal.html#a0ff41ecfbb162f4712030c7806852615">allglobal::tt</a>, <a class="el" href="group__grp__global__physicslist.html#ga65d0c8b5df586e3080c880a8234c3de8">inputlist::vnc</a>, <a class="el" href="group__grp__global__physicslist.html#gaa980166e627b0166d5a020973fccfdf8">inputlist::vns</a>, <a class="el" href="group__grp__volume.html#gae4c62d20b8fef07f4471b5b0889ab005">volume()</a>, <a class="el" href="group__grp__volints.html#ga8f3eaacd48bc30ec4332e1216213089f">allglobal::vvolume</a>, <a class="el" href="group__grp__global__physicslist.html#gaa5c20328ddf092f3e8c48f5591bdb7e1">inputlist::zbc</a>, and <a class="el" href="group__grp__global__physicslist.html#gab1fba948fc7acbbdf91c00cc91efb30d">inputlist::zbs</a>.</p>
+
+<p class="reference">Referenced by <a class="el" href="xspech_8f90.html#a9fdc71dffd7c61ee4588a3f80d3ab9ce">xspech()</a>.</p>
+<div class="dynheader">
+Here is the call graph for this function:</div>
+<div class="dyncontent">
+<div class="center"><iframe scrolling="no" frameborder="0" src="namespacesphdf5_a593e99355c8ceabe56a566e9d468dbd9_cgraph.svg" width="331" height="62"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
+</div>
+</div>
+<div class="dynheader">
+Here is the caller graph for this function:</div>
+<div class="dyncontent">
+<div class="center"><iframe scrolling="no" frameborder="0" src="namespacesphdf5_a593e99355c8ceabe56a566e9d468dbd9_icgraph.svg" width="1187" height="510"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
+</div>
+</div>
+
+</div>
+</div>
+</div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->

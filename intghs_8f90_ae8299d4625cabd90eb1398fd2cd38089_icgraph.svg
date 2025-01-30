@@ -189,7 +189,7 @@
 <!-- Node19 -->
 <g id="node19" class="node">
 <title>Node19</title>
-<g id="a_node19"><a xlink:href="group__grp__output.html#ga7401b50ec10c6598ee4a8112717a63ec" target="_top" xlink:title="Computes eigenvalues and eigenvectors of derivative matrix, &#160;and saves them to .ext....">
+<g id="a_node19"><a xlink:href="group__grp__output.html#ga7401b50ec10c6598ee4a8112717a63ec" target="_top" xlink:title="Computes eigenvalues and eigenvectors of derivative matrix, .">
 <polygon fill="white" stroke="black" points="282.5,-0.5 282.5,-19.5 327.5,-19.5 327.5,-0.5 282.5,-0.5"/>
 <text text-anchor="middle" x="305" y="-7.5" font-family="Helvetica,sans-Serif" font-size="10.00">hesian</text>
 </a>

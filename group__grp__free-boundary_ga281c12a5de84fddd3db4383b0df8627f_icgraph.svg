@@ -105,7 +105,7 @@
 <!-- Node5 -->
 <g id="node5" class="node">
 <title>Node5</title>
-<g id="a_node5"><a xlink:href="group__grp__output.html#ga7401b50ec10c6598ee4a8112717a63ec" target="_top" xlink:title="Computes eigenvalues and eigenvectors of derivative matrix, &#160;and saves them to .ext....">
+<g id="a_node5"><a xlink:href="group__grp__output.html#ga7401b50ec10c6598ee4a8112717a63ec" target="_top" xlink:title="Computes eigenvalues and eigenvectors of derivative matrix, .">
 <polygon fill="white" stroke="black" points="674.36,-76.5 674.36,-95.5 719.36,-95.5 719.36,-76.5 674.36,-76.5"/>
 <text text-anchor="middle" x="696.86" y="-83.5" font-family="Helvetica,sans-Serif" font-size="10.00">hesian</text>
 </a>

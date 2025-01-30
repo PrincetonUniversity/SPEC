@@ -1,5 +1,5 @@
 <map id="sphdf5::hdfint" name="sphdf5::hdfint">
-<area shape="rect" id="node1" title="Write the final state of the equilibrium to the output file." alt="" coords="5,29,104,56"/>
+<area shape="rect" id="node1" title=" " alt="" coords="5,29,104,56"/>
 <area shape="rect" id="node2" href="$group__grp__volume.html#gae4c62d20b8fef07f4471b5b0889ab005" title="Computes volume of each region; and, if required, the derivatives of the volume with respect to the i..." alt="" coords="152,29,216,56"/>
 <area shape="rect" id="node3" href="$group__grp__geometry.html#gaaca20aa60eaf39055f3c9d5c02a24ac2" title="Calculates coordinates, , and metrics, using FFTs." alt="" coords="264,29,325,56"/>
 </map>

@@ -70,6 +70,7 @@ var global_8f90 =
     [ "forceerr", "global_8f90.html#a553a5d9f7253b80750db5131b7e5ffef", null ],
     [ "energy", "global_8f90.html#a07f3f4df2aaac1b26a68b04a2c4464d6", null ],
     [ "bnserr", "global_8f90.html#a4aae78647d8321706bee7245015e904f", null ],
+    [ "betatotal", "global_8f90.html#aef746ca7f6314946350d5fb5d03994bd", null ],
     [ "ipdtdpf", "global_8f90.html#a9c552589fff9f20f26fc79be2e3dab38", null ],
     [ "mvol", "global_8f90.html#aa2a4850f9468d817a673c1ef7f718849", null ],
     [ "yesstellsym", "global_8f90.html#a1f4ddb89b3246fef8d73c88b730eda3a", null ],

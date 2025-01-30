@@ -15,6 +15,6 @@ var group__grp__output =
     [ "sphdf5::write_transform", "group__grp__output.html#ga8f01c5e4a21c5af2c39620f24e598095", null ],
     [ "sphdf5::finalize_flt_output", "group__grp__output.html#gacd97a933d4239028dc8114b110655074", null ],
     [ "sphdf5::write_vector_potential", "group__grp__output.html#ga2f9e9c50084175e5174b1e1070e24d73", null ],
-    [ "sphdf5::hdfint", "group__grp__output.html#ga593e99355c8ceabe56a566e9d468dbd9", null ],
+    [ "sphdf5::write_stability", "group__grp__output.html#gaf2713910d473d310730d351551b31b97", null ],
     [ "sphdf5::finish_outfile", "group__grp__output.html#gadb720ea6408b8f7681bfb7f86a4b86f2", null ]
 ];
