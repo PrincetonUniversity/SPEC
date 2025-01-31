@@ -55,7 +55,7 @@ class SPECout:
         # as self.`args[0]`
 
         _content = None
-        if kwargs.get("content") == None:
+        if "content" not in kwargs:
             # assume arg[0] is a filename
             _content = h5py.File(args[0], "r")
 
