@@ -238,7 +238,7 @@ subroutine casinggrid( xyz, ntz,  Pbxyz, Jxyz, vcstride, gBn)
 
   use fileunits, only : ounit, vunit
 
-  use inputlist, only : vcasingeps, vcNz, vcNt
+  use inputlist, only : vcasingeps, Nfp, vcNz, vcNt
 
   use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC,  Dxyz, Nxyz,globaljk,pi2nfp
 
@@ -246,7 +246,7 @@ subroutine casinggrid( xyz, ntz,  Pbxyz, Jxyz, vcstride, gBn)
 
   REAL, intent(in)     :: xyz(1:3) ! arbitrary location; Cartesian;
   REAL, intent(in)     :: ntz(1:3) ! surface normal on the computational boundary; Cartesian;
-  REAL, intent(in)     :: Pbxyz(1:vcNz*vcNt, 1:3), Jxyz(1:vcNz*vcNt, 1:3) 
+  REAL, intent(in)     :: Pbxyz(1:vcNz*Nfp*vcNt, 1:3), Jxyz(1:vcNz*Nfp*vcNt, 1:3) 
   INTEGER, intent(in)  :: vcstride
   REAL, intent(out)    :: gBn ! B.n on the computational boundary;
   
@@ -256,7 +256,7 @@ subroutine casinggrid( xyz, ntz,  Pbxyz, Jxyz, vcstride, gBn)
   INTEGER :: plasmaNtz, jk
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   ! plasmaNtz = SIZE(Pbxyz, 1)
-  plasmaNtz = vcNz*vcNt
+  plasmaNtz = vcNz*Nfp*vcNt
   gBnlocal = zero
   c = zero
   ! loop over the high resolution plasma boundary (inner boundary for virtual casing)

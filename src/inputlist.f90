@@ -470,8 +470,8 @@ module inputlist
   REAL         :: vcasingtol =   1.e-08  !< accuracy on virtual casing integral; see bnorml(), casing()
   INTEGER      :: vcasingits =   8       !< minimum number of calls to adaptive virtual casing routine; see casing()
   INTEGER      :: vcasingper =   1       !< periods of integragion  in adaptive virtual casing routine; see casing()
-  INTEGER      :: vcNt =  4              !< theta resolution of the real space grid on which the surface current is computed during virtual casing
-  INTEGER      :: vcNz =  4              !< zeta resolution of the real space grid on which the surface current is computed during virtual casing
+  INTEGER      :: vcNt =  256            !< theta resolution of the real space grid on which the surface current is computed during virtual casing [0, 2pi]
+  INTEGER      :: vcNz =  256            !< zeta resolution of the real space grid on which the surface current is computed during virtual casing [0, 2pi], over one field period
   INTEGER      :: mcasingcal =   8       !< minimum number of calls to adaptive virtual casing routine; see casing(); redundant;
   !> @}
 
@@ -932,8 +932,8 @@ subroutine initialize_inputs
   vcasingtol =   1.e-08
   vcasingits =   8
   vcasingper =   1
-  vcNt       =  128
-  vcNz       =  128
+  vcNt       =  256
+  vcNz       =  256
   mcasingcal =   8
 
 ! diagnosticslist

@@ -1743,9 +1743,9 @@ endif
       if ( vcNz.lt.Nz ) then
         FATAL( bnorml, .true., The plasma boundary resolution for virtual casing vcNz must be greater than or equal to Nz )
       endif
-
-      SALLOCATE( Jxyz, (1:vcNt*vcNz,1:3), zero )  ! Cartesian components of virtual casing surface current; needs to be recalculated at each iteration;
-      SALLOCATE( Pbxyz, (1:vcNt*vcNz,1:3), zero ) ! Cartesian points on the plasma boundary; needs to be recalculated at each iteration;
+      ! Factor of nfp because plasma boundary for virtual casing has to cover all field periods, but resolution is given for one field period. 
+      SALLOCATE( Jxyz, (1:vcNt*vcNz*Nfp,1:3), zero )  ! Cartesian components of virtual casing surface current; needs to be recalculated at each iteration;
+      SALLOCATE( Pbxyz, (1:vcNt*vcNz*Nfp,1:3), zero ) ! Cartesian points on the plasma boundary; needs to be recalculated at each iteration;
       prevcstride = huge(prevcstride)
     endif
 

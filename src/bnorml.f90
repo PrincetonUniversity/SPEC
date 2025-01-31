@@ -83,11 +83,9 @@ subroutine bnorml( mn, Ntz, efmn, ofmn )
 
   use fileunits, only : ounit, lunit
 
-  use inputlist, only : Wmacros, Wbnorml, Igeometry, Lcheck, vcasingtol, vcasingits, vcasingper, Lrad, Lvcgrid  
+  use inputlist, only : Wmacros, Wbnorml, Igeometry, Lcheck, vcasingtol, vcasingits, vcasingper, Lrad, Lvcgrid, vcNz, vcNt, Nfp 
 
   use cputiming, only : Tbnorml
-
-  use inputlist, only : vcNz, vcNt
 
   use allglobal, only : ncpu, myid, cpus, MPI_COMM_SPEC, pi2nfp, Mvol, &
                         Nt, Nz, &
@@ -110,7 +108,7 @@ subroutine bnorml( mn, Ntz, efmn, ofmn )
   REAL                 :: zeta, teta, gBn
   REAL                 :: Bxyz(1:Ntz,1:3), distance(1:Ntz)
   REAL                 :: absvcerr, relvcerr, resulth, resulth2, resulth4, deltah4h2, deltah2h
-  INTEGER              :: vcstride, Nzwithsym 
+  INTEGER              :: vcstride, Nzwithsym, vcNznfp
 
 
   BEGIN(bnorml)
@@ -123,6 +121,8 @@ subroutine bnorml( mn, Ntz, efmn, ofmn )
 
   ijreal(1:Ntz) = zero ! normal plasma field; 15 Oct 12;
   ijimag(1:Ntz) = zero 
+
+  vcNznfp = vcNz * nfp
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 #ifdef DEBUG
@@ -152,9 +152,9 @@ if ( Lvcgrid.eq.1 ) then
   Pbxyz(:,1:3) = zero
   Jxyz(:,1:3)  = zero
   !$OMP PARALLEL DO SHARED(Pbxyz, Jxyz) PRIVATE(jk, jj, kk, teta, zeta) COLLAPSE(2)
-  do kk = 0, vcNz-1 ; 
+  do kk = 0, vcNznfp-1 ; 
     do jj = 0, vcNt-1 ; 
-      zeta = kk * pi2 / vcNz
+      zeta = kk * pi2 / vcNznfp
       teta = jj * pi2  / vcNt ; 
       jk = 1 + jj + kk*vcNt
 
@@ -175,11 +175,11 @@ if ( Lvcgrid.eq.1 ) then
 
   ! MPI reductions for positions and currents to accumulate them on all ranks (valid because initialized to zero) 
   ! and Broadcast the total currents and evaluation points back to all ranks
-  call MPI_Allreduce(MPI_IN_PLACE, Pbxyz(:,1:3), 3*vcNt*vcNz, MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_SPEC, ierr )
+  call MPI_Allreduce(MPI_IN_PLACE, Pbxyz(:,1:3), 3*vcNt*vcNznfp, MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_SPEC, ierr )
   if (ierr.ne.MPI_SUCCESS) then
     FATAL( bnorml, .true., error in MPI_Allreduce for Pbxyz )
   endif
-  call MPI_Allreduce(MPI_IN_PLACE, Jxyz(:,1:3),  3*vcNt*vcNz, MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_SPEC, ierr )
+  call MPI_Allreduce(MPI_IN_PLACE, Jxyz(:,1:3),  3*vcNt*vcNznfp, MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_SPEC, ierr )
   if (ierr.ne.MPI_SUCCESS) then
     FATAL( bnorml, .true., error in MPI_Allreduce for Jxyz )
   endif
@@ -189,7 +189,7 @@ if ( Lvcgrid.eq.1 ) then
   !> The surface currents get precomputed at all points, but maybe we don't have to integrate over the whole grid. 
   !> Start with a large stride over the plasmaboundary (= how many points to skip at each step), then get progressively finer.
   !> Do at least vcasingits iterations (sqrt(vcasingits) resolution per dimension) and halve the stride until the accuracy is reached. 
-  prevcstride = min(prevcstride, INT(0.5*log(real(vcNt*vcNz/vcasingits))/log(2.0))) 
+  prevcstride = min(prevcstride, INT(0.5*log(real(vcNt*vcNznfp/vcasingits))/log(2.0))) 
   prevcstride = max(prevcstride, 1) !> At least one step in the resolution cascade is required to determine an estimate of the current accuracy.
   do vcstride = prevcstride, 0, -1
     !$OMP PARALLEL DO SHARED(Dxyz, Nxyz, Pbxyz, Jxyz, ijreal, ijimag) FIRSTPRIVATE(jk, gBn) COLLAPSE(2)
