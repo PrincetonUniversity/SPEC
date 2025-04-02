@@ -80,41 +80,45 @@ find_package (LAPACK REQUIRED)
 # Find FFTW3.
 # Intel oneAPI has FFT3 available as part of MKL. Just linking against MKL gives FFTW functionality.
 if (NOT ${BLA_VENDOR} MATCHES "^Intel")
-  find_package(FFTW3 REQUIRED)
-
-  # will find it, but FFTW_LIBRARIES is set to 'fftw3' simple string, which F2py does not like
-  
   # Hack to find the proper .so looking first in conda, then in other 
-  set(FFTW3_LIBRARY_PATHS) # Initialize empty list
+  set(FFTW3_TEST_PATHS) # Initialize empty list
 
   if(DEFINED CONDA_PREFIX)
-    list(APPEND FFTW3_LIBRARY_PATHS "${CONDA_PREFIX}/lib") # Add Conda first
+    list(APPEND FFTW3_TEST_PATHS "${CONDA_PREFIX}/lib") # Add Conda first
   endif()
 
-  list(APPEND FFTW3_LIBRARY_PATHS
+  list(APPEND FFTW3_TEST_PATHS
     /usr/lib
     /usr/local/lib
     ${FFTW3_ROOT_DIR}/lib
   )
-  # also add a path relative to the found include dirs, which is a true path
-  if(FFTW3_INCLUDE_DIRS)
-    string(REPLACE "/include" "/lib" FFTW3_LIBRARY_DIR_FROM_INCLUDE "${FFTW3_INCLUDE_DIRS}")
-    list(APPEND FFTW3_LIBRARY_PATHS ${FFTW3_LIBRARY_DIR_FROM_INCLUDE})
-  endif()
 
   # Find the library using the constructed list of paths. Should find the path to the .so
   find_library(FFTW3_LIBRARY_TRUE
     NAMES fftw3
-    PATHS ${FFTW3_LIBRARY_PATHS}
-    NO_DEFAULT_PATH
+    PATHS ${FFTW3_TEST_PATHS}
   )
 
-  if(FFTW3_LIBRARY_TRUE)
-    message(STATUS "FFTW3 Library with full path found: ${FFTW3_LIBRARY_TRUE}")
-    set(FFTW3_FULL_PATH ${FFTW3_LIBRARY})
-  else()
-    message(FATAL_ERROR "Could not find FFTW3 library with find_library.")
+
+  set(FFTW_INC_TEST_PATHS) # Initialize an empty list for include paths
+
+  foreach(path ${FFTW3_TEST_PATHS})
+    string(REGEX REPLACE "/lib$" "/include" INCLUDE_PATH "${path}")
+    list(APPEND FFTW_INC_TEST_PATHS "${INCLUDE_PATH}")
+  endforeach()
+
+  find_path(FFTW3_INCLUDE_DIRS # Use FFTW3_INCLUDE_DIRS as in the normal find_package call.
+    NAMES fftw3.f90 fftw3.h # Check for both Fortran and C headers
+    PATHS ${FFTW_INC_TEST_PATHS}
+    REQUIRED
+  )
+
+  if(NOT FFTW3_LIBRARY_TRUE)
+      message(FATAL_ERROR "Could not find FFTW3 library with find_library.")
   endif()
+
+  message(STATUS "found fftw3 library with path: ${FFTW3_LIBRARY_TRUE}")
+  message(STATUS "found fftw3 include dir with path: ${FFTW3_INCLUDE_DIRS}")
 
 
 else()   # Not required for OneAPI, but for older  versions
