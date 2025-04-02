@@ -80,36 +80,45 @@ find_package (LAPACK REQUIRED)
 # Find FFTW3.
 # Intel oneAPI has FFT3 available as part of MKL. Just linking against MKL gives FFTW functionality.
 if (NOT ${BLA_VENDOR} MATCHES "^Intel")
-    # For standard FFTW library
-    # We are using findfftw module from github/egpbos. 
-    # PPPL provides fftwconfig.cmake. We could try that first in future
+  find_package(FFTW3 REQUIRED)
 
-    # To guide cmake to the location of FFT, set FFTW_ROOT to the path of FFTW
-    # Ex: For PPPL gcc suite of compilers, 
-    # We are using FFTW find module from github.com/egpbos
-    # 
-    configure_file(downloadFindFFTW.cmake.in findFFTW-download/CMakeLists.txt)
-    execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
-        RESULT_VARIABLE result
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/findFFTW-download )
-    if(result)
-        message(FATAL_ERROR "CMake step for findFFTW failed: ${result}")
-    else()
-        message("CMake step for findFFTW completed (${result}).")
-    endif()
-    execute_process(COMMAND ${CMAKE_COMMAND} --build .
-        RESULT_VARIABLE result
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/findFFTW-download )
-    if(result)
-        message(FATAL_ERROR "Build step for findFFTW failed: ${result}")
-    endif()
+  # will find it, but FFTW_LIBRARIES is set to 'fftw3' simple string, which F2py does not like
+  
+  # Hack to find the proper .so looking first in conda, then in other 
+  set(FFTW3_LIBRARY_PATHS) # Initialize empty list
 
-    set(findFFTW_DIR ${CMAKE_CURRENT_BINARY_DIR}/findFFTW-src)
-    set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${findFFTW_DIR}")
+  if(DEFINED CONDA_PREFIX)
+    list(APPEND FFTW3_LIBRARY_PATHS "${CONDA_PREFIX}/lib") # Add Conda first
+  endif()
 
-    find_package(FFTW REQUIRED)
+  list(APPEND FFTW3_LIBRARY_PATHS
+    /usr/lib
+    /usr/local/lib
+    ${FFTW3_ROOT_DIR}/lib
+  )
+  # also add a path relative to the found include dirs, which is a true path
+  if(FFTW3_INCLUDE_DIRS)
+    string(REPLACE "/include" "/lib" FFTW3_LIBRARY_DIR_FROM_INCLUDE "${FFTW3_INCLUDE_DIRS}")
+    list(APPEND FFTW3_LIBRARY_PATHS ${FFTW3_LIBRARY_DIR_FROM_INCLUDE})
+  endif()
+
+  # Find the library using the constructed list of paths. Should find the path to the .so
+  find_library(FFTW3_LIBRARY_TRUE
+    NAMES fftw3
+    PATHS ${FFTW3_LIBRARY_PATHS}
+    NO_DEFAULT_PATH
+  )
+
+  if(FFTW3_LIBRARY_TRUE)
+    message(STATUS "FFTW3 Library with full path found: ${FFTW3_LIBRARY_TRUE}")
+    set(FFTW3_FULL_PATH ${FFTW3_LIBRARY})
+  else()
+    message(FATAL_ERROR "Could not find FFTW3 library with find_library.")
+  endif()
+
+
 else()   # Not required for OneAPI, but for older  versions
-    set(FFTW_INCLUDE_DIRS $ENV{MKLROOT}/include/fftw)
+    set(FFTW3_INCLUDE_DIRS $ENV{MKLROOT}/include/fftw)
 endif()
 
 # Find HDF5
