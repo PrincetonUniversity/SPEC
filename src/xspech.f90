@@ -317,7 +317,9 @@ subroutine spec
                         first_free_bound, &
                         dMA, dMB, dMD, dMG, MBpsi, solution, IPDt, &
                         version, &
-                        MPI_COMM_SPEC
+                        MPI_COMM_SPEC, &
+                        force_final, Lhessianallocated, LocalConstraint, hessian, dBBdmp, dFFdRZ, dmupfdx, &
+                        dRodR, dRodZ, dZodR, dZodZ, dessian, LGdof
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -483,18 +485,37 @@ subroutine spec
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  SALLOCATE( gradient, (0:NGdof), zero )
+  if(Lcheck.eq.7) then
+    SALLOCATE( force_final, (0:NGdof), zero )
+    SALLOCATE( hessian, (1:NGdof,1:NGdof), zero )
+    SALLOCATE( dessian, (1:NGdof,1:LGdof), zero )
+    SALLOCATE( dFFdRZ, (1:LGdof,0:1,1:LGdof,0:1,1:Mvol), zero )
+    SALLOCATE( dBBdmp, (1:LGdof,1:Mvol,0:1,1:2), zero )
+    if( LocalConstraint ) then
+      SALLOCATE( dmupfdx, (1:Mvol,    1:1,1:2,1:LGdof,0:1), zero )
+    else
+      SALLOCATE( dmupfdx, (1:Mvol, 1:Mvol-1,1:2,1:LGdof,1), zero ) ! TODO change the format to put vvol in last index position...
+    endif
+    Lhessianallocated = .true.
+    SALLOCATE( dRodR, (1:Ntz,0:3,1:mn), zero ) ! calculated in rzaxis; 19 Sep 16;
+    SALLOCATE( dRodZ, (1:Ntz,0:3,1:mn), zero )
+    SALLOCATE( dZodR, (1:Ntz,0:3,1:mn), zero )
+    SALLOCATE( dZodZ, (1:Ntz,0:3,1:mn), zero )
 
-  lastcpu = GETTIME
+    LComputeDerivatives = .true.
 
-  LComputeDerivatives = .false.
-  LComputeAxis = .true.
-! vvol = Mvol ; ideriv = 0 ; ii = 1
-! write(ounit,'("xspech : ", 10x ," : sum(Ate(",i3,",",i2,",",i2,")%s) =",99es23.15)') vvol, ideriv, ii, sum(Ate(vvol,ideriv,ii)%s(0:Lrad(vvol)))
+    LComputeAxis = .true.
+    WCALL( xspech, dforce, ( NGdof, position(0:NGdof), force_final(0:NGdof), LComputeDerivatives, LComputeAxis) )
 
-  WCALL( xspech, dforce, ( NGdof, position(0:NGdof), gradient(0:NGdof), LComputeDerivatives, LComputeAxis) ) ! (re-)calculate Beltrami fields;
+  else
+    SALLOCATE( force_final, (0:NGdof), zero )
 
-  DALLOCATE(gradient)
+    LComputeDerivatives = .false.
+    LComputeAxis = .true.
+
+    WCALL( xspech, dforce, ( NGdof, position(0:NGdof), force_final(0:NGdof), LComputeDerivatives, LComputeAxis) )
+  end if
+  
 
 #ifdef DEBUG
   do vvol = 1, Mvol-1

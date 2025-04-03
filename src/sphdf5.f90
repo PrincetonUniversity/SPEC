@@ -1038,7 +1038,8 @@ subroutine hdfint
                         lmns, &
                         TT, &
                         beltramierror, &
-                        IPDt, dlambdaout, lmns
+                        IPDt, dlambdaout, lmns, &
+                        force_final, hessian, NGdof
 
   LOCALS
 
@@ -1164,6 +1165,11 @@ subroutine hdfint
 !> </li>
 !> <li> All quantities marked as real should be treated as double precision. </li>
 !> </ul>
+
+  if( Lcheck.eq.7 ) then
+    HWRITERV(grpOutput, NGdof+1, force_final, force_final(0:NGdof))
+    HWRITERA( grpOutput, NGdof, NGdof, force_final_grad, hessian(1:NGdof,1:NGdof) )
+  end if
 
   HCLOSEGRP( grpOutput )
 
