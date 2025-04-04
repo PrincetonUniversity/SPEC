@@ -80,36 +80,49 @@ find_package (LAPACK REQUIRED)
 # Find FFTW3.
 # Intel oneAPI has FFT3 available as part of MKL. Just linking against MKL gives FFTW functionality.
 if (NOT ${BLA_VENDOR} MATCHES "^Intel")
-    # For standard FFTW library
-    # We are using findfftw module from github/egpbos. 
-    # PPPL provides fftwconfig.cmake. We could try that first in future
+  # Hack to find the proper .so looking first in conda, then in other 
+  set(FFTW3_TEST_PATHS) # Initialize empty list
 
-    # To guide cmake to the location of FFT, set FFTW_ROOT to the path of FFTW
-    # Ex: For PPPL gcc suite of compilers, 
-    # We are using FFTW find module from github.com/egpbos
-    # 
-    configure_file(downloadFindFFTW.cmake.in findFFTW-download/CMakeLists.txt)
-    execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
-        RESULT_VARIABLE result
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/findFFTW-download )
-    if(result)
-        message(FATAL_ERROR "CMake step for findFFTW failed: ${result}")
-    else()
-        message("CMake step for findFFTW completed (${result}).")
-    endif()
-    execute_process(COMMAND ${CMAKE_COMMAND} --build .
-        RESULT_VARIABLE result
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/findFFTW-download )
-    if(result)
-        message(FATAL_ERROR "Build step for findFFTW failed: ${result}")
-    endif()
+  if(DEFINED CONDA_PREFIX)
+    list(APPEND FFTW3_TEST_PATHS "${CONDA_PREFIX}/lib") # Add Conda first
+  endif()
 
-    set(findFFTW_DIR ${CMAKE_CURRENT_BINARY_DIR}/findFFTW-src)
-    set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${findFFTW_DIR}")
+  list(APPEND FFTW3_TEST_PATHS
+    /usr/lib
+    /usr/local/lib
+    ${FFTW3_ROOT_DIR}/lib
+  )
 
-    find_package(FFTW REQUIRED)
+  # Find the library using the constructed list of paths. Should find the path to the .so
+  find_library(FFTW3_LIBRARY_TRUE
+    NAMES fftw3
+    PATHS ${FFTW3_TEST_PATHS}
+  )
+
+
+  set(FFTW_INC_TEST_PATHS) # Initialize an empty list for include paths
+
+  foreach(path ${FFTW3_TEST_PATHS})
+    string(REGEX REPLACE "/lib$" "/include" INCLUDE_PATH "${path}")
+    list(APPEND FFTW_INC_TEST_PATHS "${INCLUDE_PATH}")
+  endforeach()
+
+  find_path(FFTW3_INCLUDE_DIRS # Use FFTW3_INCLUDE_DIRS as in the normal find_package call.
+    NAMES fftw3.f90 fftw3.h # Check for both Fortran and C headers
+    PATHS ${FFTW_INC_TEST_PATHS}
+    REQUIRED
+  )
+
+  if(NOT FFTW3_LIBRARY_TRUE)
+      message(FATAL_ERROR "Could not find FFTW3 library with find_library.")
+  endif()
+
+  message(STATUS "found fftw3 library with path: ${FFTW3_LIBRARY_TRUE}")
+  message(STATUS "found fftw3 include dir with path: ${FFTW3_INCLUDE_DIRS}")
+
+
 else()   # Not required for OneAPI, but for older  versions
-    set(FFTW_INCLUDE_DIRS $ENV{MKLROOT}/include/fftw)
+    set(FFTW3_INCLUDE_DIRS $ENV{MKLROOT}/include/fftw)
 endif()
 
 # Find HDF5
