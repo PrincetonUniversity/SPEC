@@ -9,5 +9,6 @@ var group__grp__deriv__mul__polflux =
     [ "allglobal::dessian2d", "group__grp__deriv__mul__polflux.html#ga1fe8dd67e50296b9442b3b74373c9f6d", null ],
     [ "allglobal::lhessian3dallocated", "group__grp__deriv__mul__polflux.html#ga10595494020d6bc72cece598f835d13c", null ],
     [ "allglobal::hessian3d", "group__grp__deriv__mul__polflux.html#ga247333cf5ddbc66d3337c5ff1079628f", null ],
-    [ "allglobal::dessian3d", "group__grp__deriv__mul__polflux.html#gafa6527dace1721047b02cc06c94637cf", null ]
+    [ "allglobal::dessian3d", "group__grp__deriv__mul__polflux.html#gafa6527dace1721047b02cc06c94637cf", null ],
+    [ "allglobal::force_final", "group__grp__deriv__mul__polflux.html#ga2af960c4b772755baf1821285f5d3a7b", null ]
 ];

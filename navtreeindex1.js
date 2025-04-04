@@ -1,5 +1,6 @@
 var NAVTREEINDEX1 =
 {
+"group__grp__fourier__transform.html#ga0111c19dc8a8bbde00b38606f9df1c88":[5,24,2,11],
 "group__grp__fourier__transform.html#ga03a90b1d4526190ab22932237d612316":[5,24,2,25],
 "group__grp__fourier__transform.html#ga16a474ec37a253d5b4477d6b7f4da9ff":[5,24,2,29],
 "group__grp__fourier__transform.html#ga18f5771089f513d65381bc98573d659b":[5,24,2,48],
@@ -248,6 +249,5 @@ var NAVTREEINDEX1 =
 "group__grp__metrics.html#ga254ce8e645c4110d77e3b3dbc3a89885":[5,11,0],
 "group__grp__misc.html":[5,24,15],
 "group__grp__misc.html#ga2eed940f24146d5e017e68da5cdadd0d":[5,24,15,0],
-"group__grp__misc.html#ga449e86184c9de95f1ce27316b93a665f":[5,24,15,3],
-"group__grp__misc.html#ga46927a99c54f18845148acb395cbd933":[5,24,15,4]
+"group__grp__misc.html#ga449e86184c9de95f1ce27316b93a665f":[5,24,15,3]
 };
