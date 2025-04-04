@@ -535,6 +535,7 @@ module inputlist
                                                  !<      <li> must set \c Freebound=1, \c Lfindzero>0, \c mfreeits!=0 </li>
                                                  !<      <li> \c xdiagno must be executed manually </li>
                                                  !<      </ul> </li>
+                                                 !< <li> if \c Lcheck = 7, calculates the force and force_grad, outputs them to the .h5 file </li>
                                                  !< </ul>
   LOGICAL      :: Ltiming          =  .false.    !< to check timing
   LOGICAL      :: Ltransform       = .false.     !< to evaluate iota and straight field line coordinates

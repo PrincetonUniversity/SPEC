@@ -741,6 +741,8 @@ module allglobal
   LOGICAL              :: Lhessian3Dallocated !< flag to indicate that 2D Hessian matrix is allocated (?)
   REAL,    allocatable :: hessian3D(:,:) !< Hessian 3D
   REAL,    allocatable :: dessian3D(:,:) !< derivative Hessian 3D
+
+  REAL,    allocatable :: force_final(:) !< Final force on the interfaces [inface*mode]
 !> @}
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
