@@ -262,11 +262,11 @@ target_include_directories(spec PUBLIC ${HDF5_C_INCLUDE_DIRS} ${HDF5_Fortran_INC
 # MKL could be used for all the three
 target_link_libraries(spec 
     PUBLIC 
-        ${FFTW_LIBRARIES} ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES}
+    ${FFTW3_LIBRARY_TRUE} ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES}
 )
 target_include_directories(spec 
     PUBLIC 
-        ${FFTW_INCLUDE_DIRS} ${LAPACK_INCLUDE_DIRS} ${BLAS_INCLUDE_DIRS}
+        ${FFTW3_INCLUDE_DIRS} ${LAPACK_INCLUDE_DIRS} ${BLAS_INCLUDE_DIRS}
 )
 
 #if(SKBUILD)

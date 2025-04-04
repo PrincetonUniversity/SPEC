@@ -15,7 +15,7 @@ jobs:
     - name: Install prereqs
       run: |
         sudo apt-get update
-        sudo apt-get install gfortran mpi-default-bin mpi-default-dev libhdf5-103 libhdf5-dev libfftw3-bin libfftw3-dev libopenblas0-openmp libopenblas-dev 
+        sudo apt-get install gfortran mpi-default-bin mpi-default-dev libhdf5-dev libfftw3-bin libfftw3-dev libopenblas0-openmp libopenblas-dev 
         pip3 install --upgrade pip
         pip3 install --user ninja cmake scipy
         pip3 install --user numpy f90nml scikit-build scipy h5py matplotlib
