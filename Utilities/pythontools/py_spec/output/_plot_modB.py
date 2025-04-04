@@ -23,7 +23,7 @@ def plot_modB(
     import matplotlib.pyplot as plt
 
     Nvol = self.input.physics.Nvol
-    if lvol == None:
+    if lvol is None:
         lvollist = np.arange(0, Nvol, dtype=int).tolist()
     elif np.isscalar(lvol):
         lvollist = [lvol]

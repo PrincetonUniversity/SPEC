@@ -31,19 +31,24 @@ def plot_poincare(self, toroidalIdx=0, prange="full", ax=None, **kwargs):
         zz = self.poincare.R[:, :, toroidalIdx] * np.sin(
             self.poincare.t[:, :, toroidalIdx]
         )
+
+    # Replace invalid values (unsuccessful tracing) with nan for plotting 
+    zz[(self.poincare.success[:,np.newaxis]!=1) | ((rr==0) & (zz==0))] = np.nan 
+    rr[(self.poincare.success[:,np.newaxis]!=1) | ((rr==0) & (zz==0))] = np.nan
+    
     # get axix data
     if ax is None:
         fig, ax = plt.subplots()
     plt.sca(ax)
     # set default plotting parameters
     # use dots
-    if kwargs.get("marker") == None:
+    if "marker" not in kwargs:
         kwargs.update({"marker": "."})
     # use gray color
-    if kwargs.get("c") == None:
+    if "c" not in kwargs:
         pass
     # size of marker
-    if kwargs.get("s") == None:
+    if "s" not in kwargs:
         kwargs.update({"s": 0.3})
         # kwargs.update({"c": "gray"})
     # make plot depending on the 'range'
