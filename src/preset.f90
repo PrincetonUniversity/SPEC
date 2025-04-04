@@ -1735,13 +1735,22 @@ endif
   SALLOCATE( dlambdaout, (1:lmns,1:Mvol,0:1), zero )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
   if (Lfreebound > 0) then ! Only do for free-boundary; 7 Nov 18;
+    if (Lvcgrid .eq. 1) then
+      if ( vcNt.lt.Nt ) then
+        FATAL( bnorml, .true., The plasma boundary resolution for virtual casing vcNt must be greater than or equal to Nt )
+      endif
+      if ( vcNz.lt.Nz ) then
+        FATAL( bnorml, .true., The plasma boundary resolution for virtual casing vcNz must be greater than or equal to Nz )
+      endif
+      ! Factor of nfp because plasma boundary for virtual casing has to cover all field periods, but resolution is given for one field period. 
+      SALLOCATE( Jxyz, (1:vcNt*vcNz*Nfp,1:3), zero )  ! Cartesian components of virtual casing surface current; needs to be recalculated at each iteration;
+      SALLOCATE( Pbxyz, (1:vcNt*vcNz*Nfp,1:3), zero ) ! Cartesian points on the plasma boundary; needs to be recalculated at each iteration;
+      prevcstride = huge(prevcstride)
+    endif
 
     SALLOCATE( Dxyz, (1:3,1:Ntz), zero ) ! Cartesian components of computational boundary; position; 14 Apr 17;
     SALLOCATE( Nxyz, (1:3,1:Ntz), zero ) ! Cartesian components of computational boundary; normal  ; 14 Apr 17;
-
-    SALLOCATE( Jxyz, (1:Ntz,1:3), zero ) ! Cartesian components of virtual casing surface current; needs to be recalculated at each iteration;
 
     lvol = Mvol ; lss = one ; Lcurvature = 1 ; Lcoordinatesingularity = .false. ! will only require normal field on outer interface = computational boundary;
 
@@ -1749,7 +1758,8 @@ endif
 
     do kk = 0, Nz-1 ; zeta = kk * pi2nfp / Nz
 
-     if( Igeometry.eq.3 ) then ; cszeta(0:1) = (/ cos(zeta), sin(zeta) /)
+     if( Igeometry.eq.3 ) then ; 
+      cszeta(0:1) = (/ cos(zeta), sin(zeta) /)
      endif
 
      do jj = 0, Nt-1 ; teta = jj * pi2    / Nt ; jk = 1 + jj + kk*Nt

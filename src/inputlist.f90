@@ -315,6 +315,7 @@ module inputlist
                                      !< </ul>
   INTEGER      :: Ntoraxis    =  3   !< the number of \f$n\f$ harmonics used in the Jacobian \f$m=1\f$ harmonic elimination method;
                                      !< only relevant if \c Lrzaxis.ge.1 .
+  INTEGER      :: Lvcgrid =  0  !< Which method to use for the virtual casing integral. 0 = adaptive integration routine with guaranteed accuracy, 1 = fixed resolution grid
 !> @}
 
 !> \addtogroup grp_global_local locallist
@@ -469,8 +470,10 @@ module inputlist
   REAL         :: vcasingtol =   1.e-08  !< accuracy on virtual casing integral; see bnorml(), casing()
   INTEGER      :: vcasingits =   8       !< minimum number of calls to adaptive virtual casing routine; see casing()
   INTEGER      :: vcasingper =   1       !< periods of integragion  in adaptive virtual casing routine; see casing()
+  INTEGER      :: vcNt =  256            !< theta resolution of the real space grid on which the surface current is computed during virtual casing [0, 2pi]
+  INTEGER      :: vcNz =  256            !< zeta resolution of the real space grid on which the surface current is computed during virtual casing [0, 2pi], over one field period
   INTEGER      :: mcasingcal =   8       !< minimum number of calls to adaptive virtual casing routine; see casing(); redundant;
-!> @}
+  !> @}
 
 
 !> \addtogroup grp_global_diagnostics diagnosticslist
@@ -676,7 +679,8 @@ module inputlist
  Lextrap     ,&
  Mregular    ,&
  Lrzaxis     ,&
- Ntoraxis
+ Ntoraxis    ,&
+ Lvcgrid
 
   namelist/locallist/&
  LBeltrami   ,&
@@ -712,6 +716,8 @@ module inputlist
  vcasingtol  ,&
  vcasingits  ,&
  vcasingper  ,&
+ vcNt        ,&
+ vcNz        ,&
  mcasingcal
 
   namelist/diagnosticslist/&
@@ -890,6 +896,7 @@ subroutine initialize_inputs
   Mregular    = -1
   Lrzaxis     = 1
   Ntoraxis    = 3
+  Lvcgrid = 0
 
 ! locallist
 
@@ -926,6 +933,8 @@ subroutine initialize_inputs
   vcasingtol =   1.e-08
   vcasingits =   8
   vcasingper =   1
+  vcNt       =  256
+  vcNz       =  256
   mcasingcal =   8
 
 ! diagnosticslist
