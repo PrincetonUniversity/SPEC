@@ -65,37 +65,6 @@
 !>      The minimum number of function evaluations is provided by the \c inputvar \c vcasingits. </li>
 !> </ul>
 !>
-!> **Calculation of integrand**
-!>
-!> <ul>
-!> <li> An adaptive integration is used to compute the integrals.
-!>      Consequently, the magnetic field tangential to the plasma boundary is required at an arbitrary point.
-!>      This is computed, as always, from \f${\bf B} = \nabla \times {\bf A}\f$, and this provides \f${\bf B} = B^\theta {\bf e}_\theta + B^\zeta {\bf e}_\zeta\f$.
-!>      Recall that \f$B^s=0\f$ by construction on the plasma boundary.
-!>      \todo It would be MUCH faster to only require the tangential field on a regular grid!!!
-!>
-!> </li>
-!> <li> Then, the metric elements \f$g_{\theta\theta}\f$, \f$g_{\theta\zeta}\f$ and \f$g_{\zeta\zeta}\f$ are computed.
-!>      These are used to "lower" the components of the magnetic field, \f${\bf B} = B_\theta \nabla \theta + B_\zeta \nabla \zeta\f$.
-!>      \todo Please check why \f$B_s\f$ is not computed. Is it because \f$B_s \nabla s \times {\bf n} = 0\f$ ?
-!>
-!> </li>
-!> <li> The distance between the "evaluate" point, \f$(X,Y,Z)\f$, and the given point on the surface, \f$(x,y,z)\f$ is computed. </li>
-!> <li> If the computational boundary becomes too close to the plasma boundary, the distance is small and this causes problems for the numerics.
-!>      I have tried to regularize this problem by introducing \f$\epsilon \equiv \f$\c inputvar \c vcasingeps.
-!>      Let the "distance" be
-!>      \f{eqnarray}{ D \equiv \sqrt{(X-x)^2 + (Y-y)^2 + (Z-Z)^2} + \epsilon^2.
-!>      \f} </li>
-!> <li> On taking the limit that \f$\epsilon \rightarrow 0\f$, the virtual casing integrand is
-!>       \f{eqnarray}{ \verb+vcintegrand+ \equiv ( B_x n_x + B_y n_y + B_z n_z ) ( 1 + 3 \epsilon^2 / D^2 ) / D^3, \label{eq:integrand_casing}
-!>       \f}
-!>      where the normal vector is \f${\bf n} \equiv n_x {\bf i} + n_y {\bf j} + n_z {\bf k}\f$.
-!>      The normal vector, \c Nxyz , to the computational boundary (which does not change) is computed in preset().
-!>      \todo This needs to be revised.
-!>
-!> </li>
-!> </ul>
-!>
 !> @param[in] teta \f$\theta\f$
 !> @param[in] zeta \f$\zeta\f$
 !> @param[out] gBn \f$ \sqrt g {\bf B} \cdot {\bf n}\f$
@@ -105,8 +74,6 @@ subroutine casing( teta, zeta, gBn, icasing )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   use constants, only : zero, pi, pi2
-
-  use numerical, only :
 
   use fileunits, only : ounit, vunit
 
@@ -120,13 +87,13 @@ subroutine casing( teta, zeta, gBn, icasing )
 
   LOCALS
 
-  REAL, intent(in)     :: teta, zeta ! arbitrary location; Cartesian;
-  REAL, intent(out)    :: gBn ! magnetic field; Cartesian;
+  REAL, intent(in)     :: teta, zeta ! theta and zeta evaluation point on the computational boundary, corresponding to the cartesian evaluation point Dxyz(1:3,globaljk) 
+  REAL, intent(out)    :: gBn        ! B.n magnetic field
   INTEGER, intent(out) :: icasing
 
   INTEGER, parameter   :: Ndim = 2, Nfun = 1
 
-  INTEGER              :: ldim, lfun, minpts, maxpts, Lrwk, idcuhre, jk, irestart, funcls, key, num, maxsub
+  INTEGER              :: ldim, lfun, minpts, maxpts, Lrwk, idcuhre, irestart, funcls, key, num, maxsub
   REAL                 :: integrals(1:Nfun), low(1:Ndim), upp(1:Ndim), labs, lrel, absest(1:Nfun)
   REAL, allocatable    :: rwk(:)
 
@@ -135,9 +102,6 @@ subroutine casing( teta, zeta, gBn, icasing )
 
   BEGIN(casing)
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  jk = globaljk ! shorthand; globaljk is a "global" variable which must be passed through to subroutine dvcfield;
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -185,31 +149,31 @@ subroutine casing( teta, zeta, gBn, icasing )
    select case( idcuhre ) !                                                                                      "123456789012345678901234"
    case(0)      ;
     ;           ; exit
-   case(1)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "maxpts too smal;        "
+   case(1)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,globaljk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "maxpts too smal;        "
     ;           ;!exit
-   case(2)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "illegal key;            "
+   case(2)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,globaljk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "illegal key;            "
     ;           ; exit
-   case(3)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "illegal Ndim;           "
+   case(3)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,globaljk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "illegal Ndim;           "
     ;           ; exit
-   case(4)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "key.eq.1 & Ndim.ne.2;   "
+   case(4)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,globaljk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "key.eq.1 & Ndim.ne.2;   "
     ;           ; exit
-   case(5)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "key.eq.2 & Ndim.ne.3;   "
+   case(5)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,globaljk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "key.eq.2 & Ndim.ne.3;   "
     ;           ; exit
-   case(6)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "numfun < 1;             "
+   case(6)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,globaljk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "numfun < 1;             "
     ;           ; exit
-   case(7)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "volume is zero;         "
+   case(7)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,globaljk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "volume is zero;         "
     ;           ; exit
-   case(8)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "maxpts < 3*NUM;         "
+   case(8)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,globaljk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "maxpts < 3*NUM;         "
     ;           ; exit
-   case(9)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "maxpts < minpts;        "
+   case(9)      ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,globaljk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "maxpts < minpts;        "
     ;           ; exit
-   case(10)     ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "epsabs < 0 & epsrel < 0;"
+   case(10)     ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,globaljk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "epsabs < 0 & epsrel < 0;"
     ;           ; exit
-   case(11)     ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "NW is too small;        "
+   case(11)     ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,globaljk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "NW is too small;        "
     ;           ; exit
-   case(12)     ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "illegal irestart;       "
+   case(12)     ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,globaljk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "illegal irestart;       "
     ;           ; exit
-   case default ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "tryin' to kill me?      "
+   case default ; write(ounit,1001) cput-cpus, myid, Dxyz(1:3,globaljk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts, "tryin' to kill me?      "
     ;           ; exit
    end select
 
@@ -227,7 +191,7 @@ subroutine casing( teta, zeta, gBn, icasing )
   enddo ! end of virtual casing accuracy infinite-do-loop; 10 Apr 13;
 
 #ifdef DEBUG
-  ;             ; if( Wcasing ) write(ounit,1001) cput-cpus, myid, Dxyz(1:3,jk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts
+  ;             ; if( Wcasing ) write(ounit,1001) cput-cpus, myid, Dxyz(1:3,globaljk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts
 #endif
 
 1001 format("casing : ",f10.2," : myid=",i3," ; [x,y,z]=["es10.2" ,"es10.2" ,"es10.2" ]; gBn="es12.4" , ",&
@@ -249,265 +213,399 @@ subroutine casing( teta, zeta, gBn, icasing )
 
 end subroutine casing
 
+!> \brief Compute the field produced by the plasma currents, at an arbitrary, external location using virtual casing.
+!> \ingroup grp_free-boundary
+!>
+!> casinggrid() computes the virtual casing field using a fixed resolution grid on the plasma boundary, in contrast to casing() which uses an adaptive integration routine.
+!> Because the evaluation positions are known in advance, the most expensive terms of the computation (surfacecurrents, or in the casing() routine dvcfield) are precomputed. 
+!> The integral computed by casinggrid() is 
+!> \f{eqnarray}{ \int_0^{2\pi} \int_0^{2\pi} \frac{{\bf j}(\theta, \zeta) \times {\bf D}(\theta, \zeta)}{\|{\bf D}(\theta', \zeta')\|^3}+ \;\; d\theta d\zeta  
+!>  \f}
+!> with \f${\bf r}\f$ approximately the distance vector from an evaluation point of the current surface \f${\bf x}(\theta, \zeta)\f$ to the 
+!> external point \f$(x,y,z)\f$, and the exact formula includes a regularization factor \f$\epsilon\f$  Eqn.\f$(\ref{eq:vcasing_distance})\f$.
+!>
+!> Numerically it uses a Kahan Summation algorithm to accumulate the contributions of all inner points, because truncation error quickly dominates the computation when thousands 
+!> of points are used in both dimensions.
+!> 
+!> @param[in] xyz \f$(x,y,z)\f$ cartesian coordinates on the computational boundary
+!> @param[in] ntz cartesian normal vector on the computational boundary
+!> @param[in] Pbxyz  array of cartesian coordinates on the plasma boundary
+!> @param[in] Jxyz array of surface currents \f${\bf B}_{Plasma} \cdot {\bf e}_\theta \times {\bf e}_\zeta \;\f$ on the plasma boundary
+!> @param[in] vcstride integer stride for the fixed resolution grid. vcstride = 1 computes the integral at full resolution, vcstride = 2 computes the integral at half resolution, etc.
+!> @param[out] gBn normal field \f${\bf B}_{Plasma} \cdot n \;\f$ on the computational boundary
+subroutine casinggrid( xyz, ntz,  Pbxyz, Jxyz, vcstride, gBn)
+  use constants, only : zero, one, three, pi2
+
+  use fileunits, only : ounit, vunit
+
+  use inputlist, only : vcasingeps, Nfp, vcNz, vcNt
+
+  use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC,  Dxyz, Nxyz,globaljk,pi2nfp
+
+  LOCALS
+
+  REAL, intent(in)     :: xyz(1:3) ! arbitrary location; Cartesian;
+  REAL, intent(in)     :: ntz(1:3) ! surface normal on the computational boundary; Cartesian;
+  REAL, intent(in)     :: Pbxyz(1:vcNz*Nfp*vcNt, 1:3), Jxyz(1:vcNz*Nfp*vcNt, 1:3) 
+  INTEGER, intent(in)  :: vcstride
+  REAL, intent(out)    :: gBn ! B.n on the computational boundary;
+  
+  REAL :: rr(1:3),  distance(1:3), jj(1:3), Bxyz(1:3), accumulator, firstorderfactor
+  REAL :: gBnlocal ! Local accumulator so we don't directly sum into the destination pointer (Avoid cache thrashing due to false share) 
+  REAL :: c, t, y ! Helper variables for the Kahan summation
+  INTEGER :: plasmaNtz, jk
+!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  ! plasmaNtz = SIZE(Pbxyz, 1)
+  plasmaNtz = vcNz*Nfp*vcNt
+  gBnlocal = zero
+  c = zero
+  ! loop over the high resolution plasma boundary (inner boundary for virtual casing)
+  do jk = 1, plasmaNtz, vcstride ;
+      ! distance vector between point on computational boundary and point on plasma boundary
+      rr = xyz - Pbxyz(jk, 1:3)
+      jj = Jxyz(jk, 1:3)
+
+    !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+    
+      distance(2) = sum( rr * rr ) + vcasingeps**2 ! 04 May 17;
+      distance(1) = sqrt( distance(2) ) ; 
+      distance(3) = distance(1) * distance(2) ! powers of distance; 24 Nov 16;
+    
+      firstorderfactor = ( one + three * vcasingeps**2 / distance(2) ) / distance(3) ! 04 May 17;
+    
+    !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+
+      Bxyz(1:3) = (/ jj(2) * rr(3) - jj(3) * rr(2), &
+                     jj(3) * rr(1) - jj(1) * rr(3), &
+                     jj(1) * rr(2) - jj(2) * rr(1)  /)
+    
+      ! Accumulate B.r/r^3 contributions 
+      ! Kahan Summation algorithm
+      y = sum( Bxyz * ntz ) * firstorderfactor - c  ! Correct the next value with the compensation
+      t = gBnlocal + y                                  ! Add the corrected value to the sum
+      c = (t - gBnlocal) - y                            ! Update compensation
+      gBnlocal = t                                      ! Update the running total      
+ enddo
+ gBn = gBnlocal * pi2 * pi2 / (plasmaNtz / vcstride) 
+ return
+
+end subroutine casinggrid
+
+
+!> \brief Compute the position and surface current on the plasma boundary for the virtual casing
+!> \ingroup grp_free-boundary
+!> **Calculation of integrand**
+!>
+!> <ul>
+!> <li> An adaptive integration is used to compute the integrals.
+!>      Consequently, the magnetic field tangential to the plasma boundary is required at an arbitrary point.
+!>      This is computed, as always, from \f${\bf B} = \nabla \times {\bf A}\f$, and this provides \f${\bf B} = B^\theta {\bf e}_\theta + B^\zeta {\bf e}_\zeta\f$.
+!>      Recall that \f$B^s=0\f$ by construction on the plasma boundary.
+!>
+!> </li>
+!> <li> Then, the metric elements \f$g_{\theta\theta}\f$, \f$g_{\theta\zeta}\f$ and \f$g_{\zeta\zeta}\f$ are computed.
+!>      These are used to "lower" the components of the magnetic field, \f${\bf B} = B_\theta \nabla \theta + B_\zeta \nabla \zeta\f$.
+!>
+!> </li>
+!> <li> The distance between the "evaluate" point, \f$(X,Y,Z)\f$, and the given point on the surface, \f$(x,y,z)\f$ is computed. </li>
+!> <li> If the computational boundary becomes too close to the plasma boundary, the distance is small and this causes problems for the numerics.
+!>      I have tried to regularize this problem by introducing \f$\epsilon \equiv \f$\c inputvar \c vcasingeps.
+!>      Let the "distance" be
+!>      \f{eqnarray}{ D \equiv \sqrt{(X-x)^2 + (Y-y)^2 + (Z-Z)^2} + \epsilon^2.
+!>      \label{eq:vcasing_distance}  \f} </li>
+!> <li> On taking the limit that \f$\epsilon \rightarrow 0\f$, the virtual casing integrand is
+!>       \f{eqnarray}{ \verb+vcintegrand+ \equiv ( B_x n_x + B_y n_y + B_z n_z ) ( 1 + 3 \epsilon^2 / D^2 ) / D^3, \label{eq:integrand_casing}
+!>       \f}
+!>      where the normal vector is \f${\bf n} \equiv n_x {\bf i} + n_y {\bf j} + n_z {\bf k}\f$.
+!>      The normal vector, \c Nxyz , to the computational boundary (which does not change) is computed in preset().
+!>      \todo This needs to be revised.
+!>
+!> </li>
+!> </ul>
+!>
+!> @param[in] teta \f$\theta\f$
+!> @param[in] zeta \f$\zeta\f$
+!> @param[out] pxyz \f$(x,y,z)\f$ cartesian coordinates on the plasma boundary
+!> @param[out] jj Surface current \f${\bf B}_{Plasma} \cdot {\bf e}_\theta \times {\bf e}_\zeta \;\f$ on the plasma boundary
+subroutine surfacecurrent( teta, zeta, pxyz, jj)
+
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+    use constants, only : zero, half, one
+  
+    use inputlist, only : Nvol, Igeometry, Lrad
+  
+    use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, &
+                          Mvol, &
+                          mn, im, in, &
+                          iRbc, iZbs, iRbs, iZbc, &
+                          Ate, Aze, Ato, Azo, &
+                          TT, &
+                          YESstellsym, &
+                          first_free_bound
+  
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+    LOCALS
+    
+    REAL    , intent(in)  :: teta, zeta ! theta and zeta coordinates on the plasma boundary
+    REAL    , intent(out) :: pxyz(1:3)  ! Position on the plasma boundary
+    REAL    , intent(out) :: jj(1:3)    ! Cartesian surface current components on the plasma boundary
+  
+    INTEGER               :: ii, mi, ni, ll, ideriv
+    REAL                  :: dR(0:3), dZ(0:3), gBut, gBuz, gtt, gtz, gzz, sqrtg, Blt, Blz, czeta, szeta, arg, carg, sarg
+  
+    REAL                  :: XXt, XXz, YYt, YYz, ZZt, ZZz, ds
+  
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+    dR(0:3) = zero ; ideriv = 0 ; gBut = zero ; gBuz = zero ! initialize summation of coordinates and tangential field;
+    dZ(0:3) = zero
+  
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+    select case( Igeometry )
+  
+    case( 1 ) ! Igeometry = 1 ; 09 Mar 17;
+  
+     if( YESstellsym ) then
+  
+      do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over Fourier modes; construct surface current; slow transform required as position is arbitrary;
+  
+       arg = mi * teta - ni * zeta ; carg = cos(arg) ; sarg = sin(arg)
+  
+       dR(0) = dR(0) +          (                   iRbc(ii,Nvol) ) * carg
+       dR(1) = dR(1) +      (   (   iRbc(ii,Mvol) - iRbc(ii,Nvol) ) * carg                                            ) * half
+       dR(2) = dR(2) + mi * ( - (                   iRbc(ii,Nvol) ) * sarg                                            )
+       dR(3) = dR(3) - ni * ( - (                   iRbc(ii,Nvol) ) * sarg                                            )
+  
+      !dZ(0) = dZ(0) +                                                       (                 iZbs(ii,Nvol) ) * sarg
+      !dZ(1) = dZ(1) +      (                                                ( iZbs(ii,Mvol) - iZbs(ii,Nvol) ) * sarg ) * half
+      !dZ(2) = dZ(2) + mi * (                                                (                 iZbs(ii,Nvol) ) * carg )
+      !dZ(3) = dZ(3) - ni * (                                                (                 iZbs(ii,Nvol) ) * carg )
+  
+       do ll = 0, Lrad(Mvol)
+        gBut = gBut - ( Aze(Mvol,ideriv,ii)%s(ll) * carg                                    ) * TT(ll,0,1) ! contravariant; Jacobian comes later;
+        gBuz = gBuz + ( Ate(Mvol,ideriv,ii)%s(ll) * carg                                    ) * TT(ll,0,1)
+       enddo
+  
+      enddo ! end of do ii = 1, mn ;
+  
+     else ! NOTstellsym ; 08 Feb 16;
+  
+      do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over Fourier modes; construct surface current; slow transform required as position is arbitrary;
+  
+       arg = mi * teta - ni * zeta ; carg = cos(arg) ; sarg = sin(arg)
+  
+       dR(0) = dR(0) +                              iRbc(ii,Nvol)   * carg +                   iRbs(ii,Nvol)   * sarg
+       dR(1) = dR(1) +      (   (   iRbc(ii,Mvol) - iRbc(ii,Nvol) ) * carg + ( iRbs(ii,Mvol) - iRbs(ii,Nvol) ) * sarg ) * half
+       dR(2) = dR(2) + mi * ( -                     iRbc(ii,Nvol)   * sarg +                   iRbs(ii,Nvol)   * carg )
+       dR(3) = dR(3) - ni * ( -                     iRbc(ii,Nvol)   * sarg +                   iRbs(ii,Nvol)   * carg )
+  
+      !dZ(0) = dZ(0) +                              iZbc(ii,Nvol)   * carg +                   iZbs(ii,Nvol)   * sarg
+      !dZ(1) = dZ(1) +      (   (   iZbc(ii,Mvol) - iZbc(ii,Nvol) ) * carg + ( iZbs(ii,Mvol) - iZbs(ii,Nvol) ) * sarg ) * half
+      !dZ(2) = dZ(2) + mi * ( -                     iZbc(ii,Nvol)   * sarg +                   iZbs(ii,Nvol)   * carg )
+      !dZ(3) = dZ(3) - ni * ( -                     iZbc(ii,Nvol)   * sarg +                   iZbs(ii,Nvol)   * carg )
+  
+       do ll = 0, Lrad(Mvol)
+        gBut = gBut - ( Aze(Mvol,ideriv,ii)%s(ll) * carg + Azo(Mvol,ideriv,ii)%s(ll) * sarg ) * TT(ll,0,1) ! contravariant; Jacobian comes later;
+        gBuz = gBuz + ( Ate(Mvol,ideriv,ii)%s(ll) * carg + Ato(Mvol,ideriv,ii)%s(ll) * sarg ) * TT(ll,0,1)
+       enddo
+  
+      enddo ! end of do ii = 1, mn ;
+  
+     endif ! end of if( YESstellsym ) ; 08 Feb 16;
+  
+    case( 2 ) ! Igeometry = 2 ; 09 Mar 17;
+  
+     FATAL( casing, .true., virtual casing under construction for cylindrical geometry )
+  
+    case( 3 ) ! Igeometry = 3 ; 09 Mar 17;
+  
+     if( YESstellsym ) then
+  
+      do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over Fourier modes; construct surface current; slow transform required as position is arbitrary;
+  
+       arg = mi * teta - ni * zeta ; carg = cos(arg) ; sarg = sin(arg)
+       dR(0) = dR(0) +          (                   iRbc(ii,Nvol) ) * carg
+       dR(1) = dR(1) +      (   (   iRbc(ii,Mvol) - iRbc(ii,Nvol) ) * carg                                            ) * half
+       dR(2) = dR(2) + mi * ( - (                   iRbc(ii,Nvol) ) * sarg                                            )
+       dR(3) = dR(3) - ni * ( - (                   iRbc(ii,Nvol) ) * sarg                                            )
+  
+       dZ(0) = dZ(0) +                                                       (                 iZbs(ii,Nvol) ) * sarg
+       dZ(1) = dZ(1) +      (                                                ( iZbs(ii,Mvol) - iZbs(ii,Nvol) ) * sarg ) * half
+       dZ(2) = dZ(2) + mi * (                                                (                 iZbs(ii,Nvol) ) * carg )
+       dZ(3) = dZ(3) - ni * (                                                (                 iZbs(ii,Nvol) ) * carg )
+  
+       if (first_free_bound) then
+          do ll = 0, Lrad(Nvol)  ! 1 is for outside thr volume
+             gBut = gBut - ( Aze(Nvol,ideriv,ii)%s(ll) * carg                                    ) * TT(ll,1,1) ! contravariant; Jacobian comes later;
+             gBuz = gBuz + ( Ate(Nvol,ideriv,ii)%s(ll) * carg                                    ) * TT(ll,1,1)
+          enddo
+       else
+          do ll = 0, Lrad(Mvol)
+             gBut = gBut - ( Aze(Mvol,ideriv,ii)%s(ll) * carg                                    ) * TT(ll,0,1) ! contravariant; Jacobian comes later;
+             gBuz = gBuz + ( Ate(Mvol,ideriv,ii)%s(ll) * carg                                    ) * TT(ll,0,1)
+          enddo
+       endif
+  
+      enddo ! end of do ii = 1, mn ;
+  
+     else ! NOTstellsym ; 08 Feb 16;
+  
+      do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over Fourier modes; construct surface current; slow transform required as position is arbitrary;
+  
+       arg = mi * teta - ni * zeta ; carg = cos(arg) ; sarg = sin(arg)
+  
+       dR(0) = dR(0) +                              iRbc(ii,Nvol)   * carg +                   iRbs(ii,Nvol)   * sarg
+       dR(1) = dR(1) +      (   (   iRbc(ii,Mvol) - iRbc(ii,Nvol) ) * carg + ( iRbs(ii,Mvol) - iRbs(ii,Nvol) ) * sarg ) * half
+       dR(2) = dR(2) + mi * ( -                     iRbc(ii,Nvol)   * sarg +                   iRbs(ii,Nvol)   * carg )
+       dR(3) = dR(3) - ni * ( -                     iRbc(ii,Nvol)   * sarg +                   iRbs(ii,Nvol)   * carg )
+  
+       dZ(0) = dZ(0) +                              iZbc(ii,Nvol)   * carg +                   iZbs(ii,Nvol)   * sarg
+       dZ(1) = dZ(1) +      (   (   iZbc(ii,Mvol) - iZbc(ii,Nvol) ) * carg + ( iZbs(ii,Mvol) - iZbs(ii,Nvol) ) * sarg ) * half
+       dZ(2) = dZ(2) + mi * ( -                     iZbc(ii,Nvol)   * sarg +                   iZbs(ii,Nvol)   * carg )
+       dZ(3) = dZ(3) - ni * ( -                     iZbc(ii,Nvol)   * sarg +                   iZbs(ii,Nvol)   * carg )
+  
+       if (first_free_bound) then
+          do ll = 0, Lrad(Mvol) ! omit the possible current sheet due to a jump in tangential field at the plasma boundary; Zhu 20190603;
+             gBut = gBut - ( Aze(Mvol,ideriv,ii)%s(ll) * carg + Azo(Mvol,ideriv,ii)%s(ll) * sarg ) * TT(ll,1,1) ! contravariant; Jacobian comes later;
+             gBuz = gBuz + ( Ate(Mvol,ideriv,ii)%s(ll) * carg + Ato(Mvol,ideriv,ii)%s(ll) * sarg ) * TT(ll,1,1)
+          enddo
+       else
+          do ll = 0, Lrad(Mvol)
+             gBut = gBut - ( Aze(Mvol,ideriv,ii)%s(ll) * carg + Azo(Mvol,ideriv,ii)%s(ll) * sarg ) * TT(ll,0,1) ! contravariant; Jacobian comes later;
+             gBuz = gBuz + ( Ate(Mvol,ideriv,ii)%s(ll) * carg + Ato(Mvol,ideriv,ii)%s(ll) * sarg ) * TT(ll,0,1)
+          enddo
+       endif
+  
+      enddo ! end of do ii = 1, mn ;
+  
+     endif ! end of if( YESstellsym ) ; 08 Feb 16;
+  
+    end select ! end of select case( Igeometry ) ; 09 Mar 17;
+  
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+    select case( Igeometry )
+  
+    case( 1 ) ! Igeometry = 1 ; 09 Mar 17;
+  
+     gtt = one + dR(2)*dR(2)
+     gtz =       dR(2)*dR(3)
+     gzz = one + dR(3)*dR(3)
+  
+     sqrtg = dR(1)
+  
+    case( 2 ) ! Igeometry = 2 ; 09 Mar 17;
+  
+     FATAL( casing, .true., virtual casing under construction for cylindrical geometry )
+  
+    case( 3 ) ! Igeometry = 3 ; 09 Mar 17;
+  
+     gtt = dR(2)*dR(2) + dZ(2)*dZ(2)
+     gtz = dR(2)*dR(3) + dZ(2)*dZ(3)
+     gzz = dR(3)*dR(3) + dZ(3)*dZ(3) + dR(0)*dR(0)
+  
+     sqrtg = dR(0) * ( dZ(1) * dR(2) - dR(1) * dZ(2) )
+  
+    end select
+  
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+    Blt = ( gBut * gtt + gBuz * gtz ) / sqrtg
+    Blz = ( gBut * gtz + gBuz * gzz ) / sqrtg
+  
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+    select case( Igeometry )
+  
+    case( 1 ) ! Igeometry = 1 ; 09 Mar 17;
+  
+      pxyz(1:3) = (/ teta , zeta, dR(0) /)
+      XXt =           one ; XXz = zero
+      YYt =          zero ; YYz = one
+      ZZt = dR(2)         ; ZZz = dR(3)
+  
+    case( 2 ) ! Igeometry = 2 ; 09 Mar 17;
+      
+     FATAL( casing, .true., virtual casing under construction for cylindrical geometry )
+  
+    case( 3 ) ! Igeometry = 3 ; toroidal geometry;
+  
+     czeta = cos( zeta ) ; szeta = sin( zeta )
+  
+     pxyz(1:3) = (/ dR(0) * czeta, dR(0) * szeta , dZ(0) /) 
+     XXt = dR(2) * czeta ; XXz = dR(3) * czeta - dR(0) * szeta ! 10 Apr 13;
+     YYt = dR(2) * szeta ; YYz = dR(3) * szeta + dR(0) * czeta
+     ZZt = dZ(2)         ; ZZz = dZ(3)
+  
+    end select
+  
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+    jj(1:3) = (/ Blz * XXt - Blt * XXz, &
+                 Blz * YYt - Blt * YYz, &
+                 Blz * ZZt - Blt * ZZz /)
+  
+    return
+  
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
+  end subroutine surfacecurrent 
+
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 !> @brief Differential virtual casing integrand
 !> \ingroup grp_free-boundary
 !>
-!> Differential virtual casing integrand
+!> Differential virtual casing integrand with the calling convention required by NAG for the adaptive integration routine.  
+!> This function wraps surfacecurrent and uses a global variable globaljk to determine the position on the computational boundary (not thread safe!). 
 !>
 !> @param[in] Ndim number of parameters (==2)
 !> @param[in] tz \f$\theta\f$ and \f$\zeta\f$
 !> @param[in] Nfun number of function values (==3)
 !> @param[out] vcintegrand cartesian components of magnetic field
-subroutine dvcfield( Ndim, tz, Nfun, vcintegrand ) ! differential virtual-casing field; format is fixed by NAG requirements;
+subroutine dvcfield( Ndim, tz, Nfun, vcintegrand )
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  use constants, only : zero, half, one, three
 
-  use constants, only : zero, half, one, three, four
-
-  use numerical, only : small
-
-  use fileunits, only : ounit, vunit
-
-  use inputlist, only : Wcasing, Nvol, Igeometry, Lrad, vcasingeps
-
-  use cputiming, only :
+  use inputlist, only : vcasingeps
 
   use allglobal, only : myid, ncpu, cpus, MPI_COMM_SPEC, &
-                        pi2nfp, &
-                        Mvol, &
-                        mn, im, in, &
-                        iRbc, iZbs, iRbs, iZbc, &
-                        Ate, Aze, Ato, Azo, &
-                        TT, &
-                        YESstellsym, NOTstellsym, &
-                        globaljk, Dxyz, Nxyz, &
-                        first_free_bound
+                        globaljk, Dxyz, Nxyz, first_free_bound
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+  
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  
   LOCALS
-
+  
   INTEGER , intent(in)  :: Ndim, Nfun
   REAL    , intent(in)  :: tz(1:Ndim)
   REAL    , intent(out) :: vcintegrand(1:Nfun) ! integrand; components of magnetic field due to plasma currents in Cartesian coordinates;
-
-  INTEGER               :: ii, mi, ni, ll, ideriv, jk
-  REAL                  :: dR(0:3), dZ(0:3), gBut, gBuz, gtt, gtz, gzz, sqrtg, Blt, Blz, czeta, szeta, arg, carg, sarg, XX, YY, ZZ, teta, zeta
-  REAL                  :: jj(1:3), rr(1:3), distance(1:3), firstorderfactor
-
-  REAL                  :: XXt, XXz, YYt, YYz, ZZt, ZZz, ds, Bxyz(1:3)
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+ 
+  REAL                  :: jj(1:3), &       ! Cartesian surface current components on the plasma boundary
+                           pxyz(1:3), &     ! Position on the plasma boundary
+                           rr(1:3), &       ! distance vector between evaluation point on the computational boundary and the current surface point
+                           distance(1:3), & ! powers of distance |(x-x')|, |(x-x')|^2, |(x-x')|^3 including a small eps to avoid division by zero
+                           Bxyz(1:3), firstorderfactor
 
 #ifdef DEBUG
   FATAL( casing, Ndim.ne. 2, incorrect )
   FATAL( casing, Nfun.ne. 1, incorrect )
 #endif
-
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-  dR(0:3) = zero ; ideriv = 0 ; gBut = zero ; gBuz = zero ! initialize summation of coordinates and tangential field;
-  dZ(0:3) = zero
+  call surfacecurrent(tz(1), tz(2), pxyz, jj)
 
-  teta = tz(1) ; zeta = tz(2) ! shorthand; 09 Mar 17;
-
-  jk = globaljk
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  select case( Igeometry )
-
-  case( 1 ) ! Igeometry = 1 ; 09 Mar 17;
-
-   if( YESstellsym ) then
-
-    do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over Fourier modes; construct surface current; slow transform required as position is arbitrary;
-
-     arg = mi * teta - ni * zeta ; carg = cos(arg) ; sarg = sin(arg)
-
-     dR(0) = dR(0) +          (                   iRbc(ii,Nvol) ) * carg
-     dR(1) = dR(1) +      (   (   iRbc(ii,Mvol) - iRbc(ii,Nvol) ) * carg                                            ) * half
-     dR(2) = dR(2) + mi * ( - (                   iRbc(ii,Nvol) ) * sarg                                            )
-     dR(3) = dR(3) - ni * ( - (                   iRbc(ii,Nvol) ) * sarg                                            )
-
-    !dZ(0) = dZ(0) +                                                       (                 iZbs(ii,Nvol) ) * sarg
-    !dZ(1) = dZ(1) +      (                                                ( iZbs(ii,Mvol) - iZbs(ii,Nvol) ) * sarg ) * half
-    !dZ(2) = dZ(2) + mi * (                                                (                 iZbs(ii,Nvol) ) * carg )
-    !dZ(3) = dZ(3) - ni * (                                                (                 iZbs(ii,Nvol) ) * carg )
-
-     do ll = 0, Lrad(Mvol)
-      gBut = gBut - ( Aze(Mvol,ideriv,ii)%s(ll) * carg                                    ) * TT(ll,0,1) ! contravariant; Jacobian comes later;
-      gBuz = gBuz + ( Ate(Mvol,ideriv,ii)%s(ll) * carg                                    ) * TT(ll,0,1)
-     enddo
-
-    enddo ! end of do ii = 1, mn ;
-
-   else ! NOTstellsym ; 08 Feb 16;
-
-    do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over Fourier modes; construct surface current; slow transform required as position is arbitrary;
-
-     arg = mi * teta - ni * zeta ; carg = cos(arg) ; sarg = sin(arg)
-
-     dR(0) = dR(0) +                              iRbc(ii,Nvol)   * carg +                   iRbs(ii,Nvol)   * sarg
-     dR(1) = dR(1) +      (   (   iRbc(ii,Mvol) - iRbc(ii,Nvol) ) * carg + ( iRbs(ii,Mvol) - iRbs(ii,Nvol) ) * sarg ) * half
-     dR(2) = dR(2) + mi * ( -                     iRbc(ii,Nvol)   * sarg +                   iRbs(ii,Nvol)   * carg )
-     dR(3) = dR(3) - ni * ( -                     iRbc(ii,Nvol)   * sarg +                   iRbs(ii,Nvol)   * carg )
-
-    !dZ(0) = dZ(0) +                              iZbc(ii,Nvol)   * carg +                   iZbs(ii,Nvol)   * sarg
-    !dZ(1) = dZ(1) +      (   (   iZbc(ii,Mvol) - iZbc(ii,Nvol) ) * carg + ( iZbs(ii,Mvol) - iZbs(ii,Nvol) ) * sarg ) * half
-    !dZ(2) = dZ(2) + mi * ( -                     iZbc(ii,Nvol)   * sarg +                   iZbs(ii,Nvol)   * carg )
-    !dZ(3) = dZ(3) - ni * ( -                     iZbc(ii,Nvol)   * sarg +                   iZbs(ii,Nvol)   * carg )
-
-     do ll = 0, Lrad(Mvol)
-      gBut = gBut - ( Aze(Mvol,ideriv,ii)%s(ll) * carg + Azo(Mvol,ideriv,ii)%s(ll) * sarg ) * TT(ll,0,1) ! contravariant; Jacobian comes later;
-      gBuz = gBuz + ( Ate(Mvol,ideriv,ii)%s(ll) * carg + Ato(Mvol,ideriv,ii)%s(ll) * sarg ) * TT(ll,0,1)
-     enddo
-
-    enddo ! end of do ii = 1, mn ;
-
-   endif ! end of if( YESstellsym ) ; 08 Feb 16;
-
-  case( 2 ) ! Igeometry = 2 ; 09 Mar 17;
-
-   FATAL( casing, .true., virtual casing under construction for cylindrical geometry )
-
-  case( 3 ) ! Igeometry = 3 ; 09 Mar 17;
-
-   if( YESstellsym ) then
-
-    do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over Fourier modes; construct surface current; slow transform required as position is arbitrary;
-
-     arg = mi * teta - ni * zeta ; carg = cos(arg) ; sarg = sin(arg)
-     dR(0) = dR(0) +          (                   iRbc(ii,Nvol) ) * carg
-     dR(1) = dR(1) +      (   (   iRbc(ii,Mvol) - iRbc(ii,Nvol) ) * carg                                            ) * half
-     dR(2) = dR(2) + mi * ( - (                   iRbc(ii,Nvol) ) * sarg                                            )
-     dR(3) = dR(3) - ni * ( - (                   iRbc(ii,Nvol) ) * sarg                                            )
-
-     dZ(0) = dZ(0) +                                                       (                 iZbs(ii,Nvol) ) * sarg
-     dZ(1) = dZ(1) +      (                                                ( iZbs(ii,Mvol) - iZbs(ii,Nvol) ) * sarg ) * half
-     dZ(2) = dZ(2) + mi * (                                                (                 iZbs(ii,Nvol) ) * carg )
-     dZ(3) = dZ(3) - ni * (                                                (                 iZbs(ii,Nvol) ) * carg )
-
-     if (first_free_bound) then
-        do ll = 0, Lrad(Nvol)  ! 1 is for outside thr volume
-           gBut = gBut - ( Aze(Nvol,ideriv,ii)%s(ll) * carg                                    ) * TT(ll,1,1) ! contravariant; Jacobian comes later;
-           gBuz = gBuz + ( Ate(Nvol,ideriv,ii)%s(ll) * carg                                    ) * TT(ll,1,1)
-        enddo
-     else
-        do ll = 0, Lrad(Mvol)
-           gBut = gBut - ( Aze(Mvol,ideriv,ii)%s(ll) * carg                                    ) * TT(ll,0,1) ! contravariant; Jacobian comes later;
-           gBuz = gBuz + ( Ate(Mvol,ideriv,ii)%s(ll) * carg                                    ) * TT(ll,0,1)
-        enddo
-     endif
-
-    enddo ! end of do ii = 1, mn ;
-
-   else ! NOTstellsym ; 08 Feb 16;
-
-    do ii = 1, mn ; mi = im(ii) ; ni = in(ii) ! loop over Fourier modes; construct surface current; slow transform required as position is arbitrary;
-
-     arg = mi * teta - ni * zeta ; carg = cos(arg) ; sarg = sin(arg)
-
-     dR(0) = dR(0) +                              iRbc(ii,Nvol)   * carg +                   iRbs(ii,Nvol)   * sarg
-     dR(1) = dR(1) +      (   (   iRbc(ii,Mvol) - iRbc(ii,Nvol) ) * carg + ( iRbs(ii,Mvol) - iRbs(ii,Nvol) ) * sarg ) * half
-     dR(2) = dR(2) + mi * ( -                     iRbc(ii,Nvol)   * sarg +                   iRbs(ii,Nvol)   * carg )
-     dR(3) = dR(3) - ni * ( -                     iRbc(ii,Nvol)   * sarg +                   iRbs(ii,Nvol)   * carg )
-
-     dZ(0) = dZ(0) +                              iZbc(ii,Nvol)   * carg +                   iZbs(ii,Nvol)   * sarg
-     dZ(1) = dZ(1) +      (   (   iZbc(ii,Mvol) - iZbc(ii,Nvol) ) * carg + ( iZbs(ii,Mvol) - iZbs(ii,Nvol) ) * sarg ) * half
-     dZ(2) = dZ(2) + mi * ( -                     iZbc(ii,Nvol)   * sarg +                   iZbs(ii,Nvol)   * carg )
-     dZ(3) = dZ(3) - ni * ( -                     iZbc(ii,Nvol)   * sarg +                   iZbs(ii,Nvol)   * carg )
-
-     if (first_free_bound) then
-        do ll = 0, Lrad(Mvol) ! omit the possible current sheet due to a jump in tangential field at the plasma boundary; Zhu 20190603;
-           gBut = gBut - ( Aze(Mvol,ideriv,ii)%s(ll) * carg + Azo(Mvol,ideriv,ii)%s(ll) * sarg ) * TT(ll,1,1) ! contravariant; Jacobian comes later;
-           gBuz = gBuz + ( Ate(Mvol,ideriv,ii)%s(ll) * carg + Ato(Mvol,ideriv,ii)%s(ll) * sarg ) * TT(ll,1,1)
-        enddo
-     else
-        do ll = 0, Lrad(Mvol)
-           gBut = gBut - ( Aze(Mvol,ideriv,ii)%s(ll) * carg + Azo(Mvol,ideriv,ii)%s(ll) * sarg ) * TT(ll,0,1) ! contravariant; Jacobian comes later;
-           gBuz = gBuz + ( Ate(Mvol,ideriv,ii)%s(ll) * carg + Ato(Mvol,ideriv,ii)%s(ll) * sarg ) * TT(ll,0,1)
-        enddo
-     endif
-
-    enddo ! end of do ii = 1, mn ;
-
-   endif ! end of if( YESstellsym ) ; 08 Feb 16;
-
-  end select ! end of select case( Igeometry ) ; 09 Mar 17;
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  select case( Igeometry )
-
-  case( 1 ) ! Igeometry = 1 ; 09 Mar 17;
-
-   gtt = one + dR(2)*dR(2)
-   gtz =       dR(2)*dR(3)
-   gzz = one + dR(3)*dR(3)
-
-   sqrtg = dR(1)
-
-  case( 2 ) ! Igeometry = 2 ; 09 Mar 17;
-
-   FATAL( casing, .true., virtual casing under construction for cylindrical geometry )
-
-  case( 3 ) ! Igeometry = 3 ; 09 Mar 17;
-
-   gtt = dR(2)*dR(2) + dZ(2)*dZ(2)
-   gtz = dR(2)*dR(3) + dZ(2)*dZ(3)
-   gzz = dR(3)*dR(3) + dZ(3)*dZ(3) + dR(0)*dR(0)
-
-   sqrtg = dR(0) * ( dZ(1) * dR(2) - dR(1) * dZ(2) )
-
-  end select
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  Blt = ( gBut * gtt + gBuz * gtz ) / sqrtg
-  Blz = ( gBut * gtz + gBuz * gzz ) / sqrtg
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  select case( Igeometry )
-
-  case( 1 ) ! Igeometry = 1 ; 09 Mar 17;
-
-   XX =          teta ; XXt =           one ; XXz =          zero
-   YY =          zeta ; YYt =          zero ; YYz =           one
-   ZZ = dR(0)         ; ZZt = dR(2)         ; ZZz = dR(3)
-
-  case( 2 ) ! Igeometry = 2 ; 09 Mar 17;
-
-   FATAL( casing, .true., virtual casing under construction for cylindrical geometry )
-
-  case( 3 ) ! Igeometry = 3 ; toroidal geometry;
-
-   czeta = cos( zeta ) ; szeta = sin( zeta )
-
-   XX = dR(0) * czeta ; XXt = dR(2) * czeta ; XXz = dR(3) * czeta - dR(0) * szeta ! 10 Apr 13;
-   YY = dR(0) * szeta ; YYt = dR(2) * szeta ; YYz = dR(3) * szeta + dR(0) * czeta
-   ZZ = dZ(0)         ; ZZt = dZ(2)         ; ZZz = dZ(3)
-
-  end select
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
-  rr(1:3) = (/ Dxyz(1,jk) - XX, &
-               Dxyz(2,jk) - YY, &
-               Dxyz(3,jk) - ZZ /)
-
-  jj(1:3) = (/ Blz * XXt - Blt * XXz, &
-               Blz * YYt - Blt * YYz, &
-               Blz * ZZt - Blt * ZZz /)
+  ! distance vector between point on computational boundary and point on plasma boundary
+  rr(1:3) = Dxyz(1:3,globaljk) - pxyz(1:3)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
   distance(2) = sum( rr(1:3) * rr(1:3) ) + vcasingeps**2 ! 04 May 17;
-
-  distance(1) = sqrt( distance(2) ) ; distance(3) = distance(1) * distance(2) ! powers of distance; 24 Nov 16;
+  distance(1) = sqrt( distance(2) ) ; 
+  distance(3) = distance(1) * distance(2) ! powers of distance; 24 Nov 16;
 
   firstorderfactor = ( one + three * vcasingeps**2 / distance(2) ) / distance(3) ! 04 May 17;
 
@@ -517,28 +615,23 @@ subroutine dvcfield( Ndim, tz, Nfun, vcintegrand ) ! differential virtual-casing
                  jj(3) * rr(1) - jj(1) * rr(3), &
                  jj(1) * rr(2) - jj(2) * rr(1)  /)
 
-  vcintegrand(1) = sum( Bxyz(1:3) * Nxyz(1:3,jk) ) * firstorderfactor
+  vcintegrand(1) = sum( Bxyz(1:3) * Nxyz(1:3,globaljk) ) * firstorderfactor
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-!   vcintegrand( 4) = - three * vcintegrand(1) * rr(1) / distance(2)         ! dBxdx; ! need to divide by distance(3) ; 14 Apr 17;
-!   vcintegrand( 5) = - three * vcintegrand(1) * rr(2) / distance(2) - jj(3) ! dBxdy;
-!   vcintegrand( 6) = - three * vcintegrand(1) * rr(3) / distance(2) + jj(2) ! dBxdz;
-!
-!   vcintegrand( 7) = - three * vcintegrand(2) * rr(1) / distance(2) + jj(3) ! dBydx;
-!   vcintegrand( 8) = - three * vcintegrand(2) * rr(2) / distance(2)         ! dBydy;
-!   vcintegrand( 9) = - three * vcintegrand(2) * rr(3) / distance(2) - jj(1) ! dBydz;
-!
-!   vcintegrand(10) = - three * vcintegrand(3) * rr(1) / distance(2) - jj(2) ! dBzdx;
-!   vcintegrand(11) = - three * vcintegrand(3) * rr(2) / distance(2) + jj(1) ! dBzdy;
-!   vcintegrand(12) = - three * vcintegrand(3) * rr(3) / distance(2)         ! dBzdz;
+  ! vcintegrand( 4) = - three * vcintegrand(1) * rr(1) / distance(2) ! dBxdx; ! need to divide by distance(3) ; 14 Apr 17;
+  !   vcintegrand( 5) = - three * vcintegrand(1) * rr(2) / distance(2) - jj(3) ! dBxdy;
+  !   vcintegrand( 6) = - three * vcintegrand(1) * rr(3) / distance(2) + jj(2) ! dBxdz;
+  !
+  !   vcintegrand( 7) = - three * vcintegrand(2) * rr(1) / distance(2) + jj(3) ! dBydx;
+  !   vcintegrand( 8) = - three * vcintegrand(2) * rr(2) / distance(2)         ! dBydy;
+  !   vcintegrand( 9) = - three * vcintegrand(2) * rr(3) / distance(2) - jj(1) ! dBydz;
+  !
+  !   vcintegrand(10) = - three * vcintegrand(3) * rr(1) / distance(2) - jj(2) ! dBzdx;
+  !   vcintegrand(11) = - three * vcintegrand(3) * rr(2) / distance(2) + jj(1) ! dBzdy;
+  !   vcintegrand(12) = - three * vcintegrand(3) * rr(3) / distance(2)         ! dBzdz;
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
+  !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   return
 
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-
 end subroutine dvcfield
-
-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
