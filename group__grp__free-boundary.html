@@ -134,6 +134,12 @@ Functions/Subroutines</h2></td></tr>
 <tr class="memitem:ga180576a10002ebf3840fce98d56316bb"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__grp__free-boundary.html#ga180576a10002ebf3840fce98d56316bb">casing</a> (teta, zeta, gBn, icasing)</td></tr>
 <tr class="memdesc:ga180576a10002ebf3840fce98d56316bb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs the field created by the plasma currents, at an arbitrary, external location using virtual casing.  <a href="group__grp__free-boundary.html#ga180576a10002ebf3840fce98d56316bb">More...</a><br /></td></tr>
 <tr class="separator:ga180576a10002ebf3840fce98d56316bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga633c8a5ddc9cd6469134e848fa4162c9"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__grp__free-boundary.html#ga633c8a5ddc9cd6469134e848fa4162c9">casinggrid</a> (xyz, ntz, Pbxyz, Jxyz, vcstride, gBn)</td></tr>
+<tr class="memdesc:ga633c8a5ddc9cd6469134e848fa4162c9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compute the field produced by the plasma currents, at an arbitrary, external location using virtual casing.  <a href="group__grp__free-boundary.html#ga633c8a5ddc9cd6469134e848fa4162c9">More...</a><br /></td></tr>
+<tr class="separator:ga633c8a5ddc9cd6469134e848fa4162c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga6d4c1b7e864b706f0bfdca4658ebd50c"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__grp__free-boundary.html#ga6d4c1b7e864b706f0bfdca4658ebd50c">surfacecurrent</a> (teta, zeta, pxyz, jj)</td></tr>
+<tr class="memdesc:ga6d4c1b7e864b706f0bfdca4658ebd50c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compute the position and surface current on the plasma boundary for the virtual casing<b>Calculation of integrand</b>  <a href="group__grp__free-boundary.html#ga6d4c1b7e864b706f0bfdca4658ebd50c">More...</a><br /></td></tr>
+<tr class="separator:ga6d4c1b7e864b706f0bfdca4658ebd50c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga281c12a5de84fddd3db4383b0df8627f"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__grp__free-boundary.html#ga281c12a5de84fddd3db4383b0df8627f">dvcfield</a> (Ndim, tz, Nfun, vcintegrand)</td></tr>
 <tr class="memdesc:ga281c12a5de84fddd3db4383b0df8627f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Differential virtual casing integrand.  <a href="group__grp__free-boundary.html#ga281c12a5de84fddd3db4383b0df8627f">More...</a><br /></td></tr>
 <tr class="separator:ga281c12a5de84fddd3db4383b0df8627f"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -183,17 +189,13 @@ Functions/Subroutines</h2></td></tr>
 <li>
 The normal field at the computational boundary, \(\partial {\cal D}\), should be equal to \(\left({\bf B}_P + {\bf B}_C\right)\cdot {\bf e}_\theta \times {\bf e}_\zeta\), where \({\bf B}_P\) is the "plasma" field (produced by internal plasma currents) and is computed using virtual casing, and \({\bf B}_C\) is the "vacuum" field (produced by the external coils) and is given on input.  </li>
 <li>
-The plasma field, \({\bf B}_P\), can only be computed after the equilibrium is determined, but this information is required to compute the equilibrium to begin with; and so there is an iteration involved.  </li>
+The plasma field, \({\bf B}_P\), can only be computed after the equilibrium is determined, but this information is required to compute the equilibrium to begin with; and so there is an iteration involved <a class="el" href="citelist.html#CITEREF_y2020_hudson">[7]</a> .  </li>
 <li>
 Suggested values of the vacuum field can be self generated; see <a class="el" href="xspech_8f90.html#a9fdc71dffd7c61ee4588a3f80d3ab9ce" title="Main subroutine of SPEC.">xspech()</a> for more documentation on this.  </li>
 </ul>
 <p ><b>compute the normal field on a regular grid on the computational boundary</b> </p><ul>
 <li>
 For each point on the compuational boundary, <a class="el" href="group__grp__free-boundary.html#ga180576a10002ebf3840fce98d56316bb" title="Constructs the field created by the plasma currents, at an arbitrary, external location using virtual...">casing()</a> is called to compute the normal field produced by the plasma currents.  </li>
-<li>
-<dl class="todo"><dt><b><a class="el" href="todo.html#_todo000001">Todo:</a></b></dt><dd>There is a very clumsy attempt to parallelize this which could be greatly improved.</dd></dl>
-<p class="endli"></p>
-</li>
 <li>
 An FFT gives the required Fourier harmonics.  </li>
 </ul>
@@ -207,14 +209,16 @@ An FFT gives the required Fourier harmonics.  </li>
   </table>
   </dd>
 </dl>
+<p >The surface currents get precomputed at all points, but maybe we don't have to integrate over the whole grid. Start with a large stride over the plasmaboundary (= how many points to skip at each step), then get progressively finer. Do at least vcasingits iterations (sqrt(vcasingits) resolution per dimension) and halve the stride until the accuracy is reached.</p>
+<p >At least one step in the resolution cascade is required to determine an estimate of the current accuracy.</p>
 
-<p class="reference">References <a class="el" href="group__grp__vecpot.html#ga430fa6f9a3ebb7a56185b72b8ea1ff49">allglobal::ate</a>, <a class="el" href="group__grp__vecpot.html#gaefec3203c02505c73b48dbb1c7ba96c1">allglobal::ato</a>, <a class="el" href="group__grp__vecpot.html#gad85df9e26321392291e0a43478da0f3c">allglobal::aze</a>, <a class="el" href="group__grp__vecpot.html#gad52dcff52cc620916d5e765051a0228a">allglobal::azo</a>, <a class="el" href="group__grp__free-boundary.html#gac0a2cc2241947b27241bb8ef75c5e0ed">bnorml()</a>, <a class="el" href="group__grp__free-boundary.html#ga180576a10002ebf3840fce98d56316bb">casing()</a>, <a class="el" href="group__grp__fourier__transform.html#ga77de10a2effb1f42cde73eccb9739ba9">allglobal::cfmn</a>, <a class="el" href="namespaceallglobal.html#afae71b580d9f9c71a6796207a5411959">allglobal::cpus</a>, <a class="el" href="group__grp__misc.html#gaba8f281780c449fbcf15d81822068847">allglobal::dxyz</a>, <a class="el" href="group__grp__misc.html#ga2eed940f24146d5e017e68da5cdadd0d">allglobal::globaljk</a>, <a class="el" href="group__grp__trig.html#ga9fb7fa8c4737891b8ffc91c87d27ac6a">allglobal::gteta</a>, <a class="el" href="group__grp__fourier__transform.html#ga0111c19dc8a8bbde00b38606f9df1c88">allglobal::guvij</a>, <a class="el" href="group__grp__trig.html#gaa4e8d53788a8104f50d005e956b6642f">allglobal::gzeta</a>, <a class="el" href="namespaceconstants.html#a28ec2b391ac319cee0f31bb295b89cc2">constants::half</a>, <a class="el" href="group__grp__global__physicslist.html#gaa6dcbfd2f5cb5f23f4bc567fb13ae0e2">inputlist::igeometry</a>, <a class="el" href="group__grp__fourier__transform.html#ga61de5564536d1d82a7248c7052fe8de2">allglobal::ijimag</a>, <a class="el" href="group__grp__fourier__transform.html#ga16a474ec37a253d5b4477d6b7f4da9ff">allglobal::ijreal</a>, <a class="el" href="group__grp__fourier__repr.html#gaeac30068003c58add7893688ea2e48aa">allglobal::im</a>, <a class="el" href="group__grp__fourier__repr.html#gae946717d1654463c7cb4b1d7fd712f7d">allglobal::in</a>, <a class="el" href="group__grp__fourier__transform.html#gaad4cc6a24c2bc6f31023fe55f8d44bd3">allglobal::jiimag</a>, <a class="el" href="group__grp__fourier__transform.html#ga5d6c2633274202e97562b9d81c836e40">allglobal::jireal</a>, <a class="el" href="group__grp__global__diagnostics.html#ga9bd118017d70e35d658a10463ab4c1dc">inputlist::lcheck</a>, <a class="el" href="group__grp__vecpot.html#gad6a2a40a248c2d81155a94b2dfe9b480">allglobal::lcoordinatesingularity</a>, <a class="el" href="group__grp__global__physicslist.html#ga1509b6ce73e909b86beaf65c26527932">inputlist::lrad</a>, <a class="el" href="namespacefileunits.html#ab1d6a5c5fad6cd97aa3b008d98f12609">fileunits::lunit</a>, <a class="el" href="namespaceallglobal.html#a2382df770fc57cc53ed68c6e1ac23819">allglobal::mpi_comm_spec</a>, <a class="el" href="namespaceallglobal.html#aa2a4850f9468d817a673c1ef7f718849">allglobal::mvol</a>, <a class="el" href="namespaceallglobal.html#aca1163f9aab48251a99d00e63618cc39">allglobal::myid</a>, <a class="el" href="namespaceallglobal.html#aa45097c36006ab1ffc0cb06a927ed02a">allglobal::ncpu</a>, <a class="el" href="namespaceallglobal.html#a6993aa662f74b327357896c7d9c81f4b">allglobal::notstellsym</a>, <a class="el" href="group__grp__fourier__transform.html#ga2a7d2dbc4637d792e1eeabcd4ee5564e">allglobal::nt</a>, <a class="el" href="group__grp__misc.html#gaeee9587de1f9c256bff28e99a75be90a">allglobal::nxyz</a>, <a class="el" href="group__grp__fourier__transform.html#gaa91566c55f28df38e46ffc19e60f766f">allglobal::nz</a>, <a class="el" href="namespaceconstants.html#ad5224c0b5e13bf12b18dafbb62ba4e8d">constants::one</a>, <a class="el" href="namespacefileunits.html#a7463305b9ff5b4b659d87f6fa59f74a7">fileunits::ounit</a>, <a class="el" href="namespaceconstants.html#a815ad954ef712211ed1b1fdb8be42487">constants::pi</a>, <a class="el" href="namespaceconstants.html#a4fad0dab629c84331119053f1ec1348d">constants::pi2</a>, <a class="el" href="namespaceallglobal.html#aae9519af29ff59bac4ff2232d930f409">allglobal::pi2nfp</a>, <a class="el" href="group__grp__fourier__transform.html#ga8f081a0f8a483bce45d274c64016e3eb">allglobal::rij</a>, <a class="el" href="group__grp__fourier__transform.html#ga45e62efd92657124df197ceac8133393">allglobal::sfmn</a>, <a class="el" href="group__grp__fourier__transform.html#ga4b1c60e25eab68b6372bf28f84aecc97">allglobal::sg</a>, <a class="el" href="namespacenumerical.html#aba4e665eb2dabaf1e12c82a7270ac0c0">numerical::small</a>, <a class="el" href="namespaceconstants.html#a829cc09d9813f2ca64d278bacb4009d0">constants::ten</a>, <a class="el" href="group__grp__misc.html#ga46927a99c54f18845148acb395cbd933">allglobal::tetazeta</a>, <a class="el" href="namespaceallglobal.html#a0ff41ecfbb162f4712030c7806852615">allglobal::tt</a>, <a class="el" href="namespaceconstants.html#a77f9c93617de9c40ab41a50a157fb90d">constants::two</a>, <a class="el" href="group__grp__global__global.html#gac2a4a9b2a184ba33475c40f94347f66b">inputlist::vcasingper</a>, <a class="el" href="group__grp__global__global.html#ga02f23f7f95485f63c4ab9c8c14669cd3">inputlist::vcasingtol</a>, <a class="el" href="group__grp__misc.html#gaf81786428293c382cba6482ec6d1ec11">allglobal::virtualcasingfactor</a>, <a class="el" href="group__grp__global__screenlist.html#gaef361ceee97e08e5f134227903265494">inputlist::wmacros</a>, <a class="el" href="namespaceconstants.html#ab2b0340319f61089513f5dd1d3971a47">constants::zero</a>, and <a class="el" href="group__grp__fourier__transform.html#ga441f64569bbbf93b31c1e1f2347bc2a8">allglobal::zij</a>.</p>
+<p class="reference">References <a class="el" href="group__grp__vecpot.html#ga430fa6f9a3ebb7a56185b72b8ea1ff49">allglobal::ate</a>, <a class="el" href="group__grp__vecpot.html#gaefec3203c02505c73b48dbb1c7ba96c1">allglobal::ato</a>, <a class="el" href="group__grp__vecpot.html#gad85df9e26321392291e0a43478da0f3c">allglobal::aze</a>, <a class="el" href="group__grp__vecpot.html#gad52dcff52cc620916d5e765051a0228a">allglobal::azo</a>, <a class="el" href="group__grp__free-boundary.html#gac0a2cc2241947b27241bb8ef75c5e0ed">bnorml()</a>, <a class="el" href="group__grp__free-boundary.html#ga180576a10002ebf3840fce98d56316bb">casing()</a>, <a class="el" href="group__grp__free-boundary.html#ga633c8a5ddc9cd6469134e848fa4162c9">casinggrid()</a>, <a class="el" href="group__grp__fourier__transform.html#ga77de10a2effb1f42cde73eccb9739ba9">allglobal::cfmn</a>, <a class="el" href="namespaceallglobal.html#afae71b580d9f9c71a6796207a5411959">allglobal::cpus</a>, <a class="el" href="group__grp__misc.html#gaba8f281780c449fbcf15d81822068847">allglobal::dxyz</a>, <a class="el" href="group__grp__misc.html#ga2eed940f24146d5e017e68da5cdadd0d">allglobal::globaljk</a>, <a class="el" href="group__grp__trig.html#ga9fb7fa8c4737891b8ffc91c87d27ac6a">allglobal::gteta</a>, <a class="el" href="group__grp__fourier__transform.html#ga0111c19dc8a8bbde00b38606f9df1c88">allglobal::guvij</a>, <a class="el" href="group__grp__trig.html#gaa4e8d53788a8104f50d005e956b6642f">allglobal::gzeta</a>, <a class="el" href="namespaceconstants.html#a28ec2b391ac319cee0f31bb295b89cc2">constants::half</a>, <a class="el" href="group__grp__global__physicslist.html#gaa6dcbfd2f5cb5f23f4bc567fb13ae0e2">inputlist::igeometry</a>, <a class="el" href="group__grp__fourier__transform.html#ga61de5564536d1d82a7248c7052fe8de2">allglobal::ijimag</a>, <a class="el" href="group__grp__fourier__transform.html#ga16a474ec37a253d5b4477d6b7f4da9ff">allglobal::ijreal</a>, <a class="el" href="group__grp__fourier__repr.html#gaeac30068003c58add7893688ea2e48aa">allglobal::im</a>, <a class="el" href="group__grp__fourier__repr.html#gae946717d1654463c7cb4b1d7fd712f7d">allglobal::in</a>, <a class="el" href="group__grp__fourier__transform.html#gaad4cc6a24c2bc6f31023fe55f8d44bd3">allglobal::jiimag</a>, <a class="el" href="group__grp__fourier__transform.html#ga5d6c2633274202e97562b9d81c836e40">allglobal::jireal</a>, <a class="el" href="group__grp__misc.html#ga449e86184c9de95f1ce27316b93a665f">allglobal::jxyz</a>, <a class="el" href="group__grp__global__diagnostics.html#ga9bd118017d70e35d658a10463ab4c1dc">inputlist::lcheck</a>, <a class="el" href="group__grp__vecpot.html#gad6a2a40a248c2d81155a94b2dfe9b480">allglobal::lcoordinatesingularity</a>, <a class="el" href="group__grp__global__physicslist.html#ga1509b6ce73e909b86beaf65c26527932">inputlist::lrad</a>, <a class="el" href="namespacefileunits.html#ab1d6a5c5fad6cd97aa3b008d98f12609">fileunits::lunit</a>, <a class="el" href="group__grp__global__numerics.html#ga9d0ad411d83530cc309974624139e3b8">inputlist::lvcgrid</a>, <a class="el" href="namespaceallglobal.html#a2382df770fc57cc53ed68c6e1ac23819">allglobal::mpi_comm_spec</a>, <a class="el" href="namespaceallglobal.html#aa2a4850f9468d817a673c1ef7f718849">allglobal::mvol</a>, <a class="el" href="namespaceallglobal.html#aca1163f9aab48251a99d00e63618cc39">allglobal::myid</a>, <a class="el" href="namespaceallglobal.html#aa45097c36006ab1ffc0cb06a927ed02a">allglobal::ncpu</a>, <a class="el" href="group__grp__global__physicslist.html#gae071c5738f7f7a6ada9d6b66676e37c7">inputlist::nfp</a>, <a class="el" href="namespaceallglobal.html#a6993aa662f74b327357896c7d9c81f4b">allglobal::notstellsym</a>, <a class="el" href="group__grp__fourier__transform.html#ga2a7d2dbc4637d792e1eeabcd4ee5564e">allglobal::nt</a>, <a class="el" href="group__grp__misc.html#gaeee9587de1f9c256bff28e99a75be90a">allglobal::nxyz</a>, <a class="el" href="group__grp__fourier__transform.html#gaa91566c55f28df38e46ffc19e60f766f">allglobal::nz</a>, <a class="el" href="namespaceconstants.html#ad5224c0b5e13bf12b18dafbb62ba4e8d">constants::one</a>, <a class="el" href="namespacefileunits.html#a7463305b9ff5b4b659d87f6fa59f74a7">fileunits::ounit</a>, <a class="el" href="group__grp__misc.html#gabd0392ef4f53aaa7332c12ee9e7184c9">allglobal::pbxyz</a>, <a class="el" href="namespaceconstants.html#a815ad954ef712211ed1b1fdb8be42487">constants::pi</a>, <a class="el" href="namespaceconstants.html#a4fad0dab629c84331119053f1ec1348d">constants::pi2</a>, <a class="el" href="namespaceallglobal.html#aae9519af29ff59bac4ff2232d930f409">allglobal::pi2nfp</a>, <a class="el" href="group__grp__misc.html#ga507c2b96cf63045df03bc49e36e149a6">allglobal::prevcstride</a>, <a class="el" href="group__grp__fourier__transform.html#ga8f081a0f8a483bce45d274c64016e3eb">allglobal::rij</a>, <a class="el" href="group__grp__fourier__transform.html#ga45e62efd92657124df197ceac8133393">allglobal::sfmn</a>, <a class="el" href="group__grp__fourier__transform.html#ga4b1c60e25eab68b6372bf28f84aecc97">allglobal::sg</a>, <a class="el" href="namespacenumerical.html#aba4e665eb2dabaf1e12c82a7270ac0c0">numerical::small</a>, <a class="el" href="group__grp__free-boundary.html#ga6d4c1b7e864b706f0bfdca4658ebd50c">surfacecurrent()</a>, <a class="el" href="namespaceconstants.html#a829cc09d9813f2ca64d278bacb4009d0">constants::ten</a>, <a class="el" href="namespaceallglobal.html#a0ff41ecfbb162f4712030c7806852615">allglobal::tt</a>, <a class="el" href="namespaceconstants.html#a77f9c93617de9c40ab41a50a157fb90d">constants::two</a>, <a class="el" href="group__grp__global__global.html#ga2f2dde390fc9fa59a6571e06fc355a60">inputlist::vcasingits</a>, <a class="el" href="group__grp__global__global.html#gac2a4a9b2a184ba33475c40f94347f66b">inputlist::vcasingper</a>, <a class="el" href="group__grp__global__global.html#ga02f23f7f95485f63c4ab9c8c14669cd3">inputlist::vcasingtol</a>, <a class="el" href="group__grp__global__global.html#ga0544b4eb58536175ff49515d2aff22e5">inputlist::vcnt</a>, <a class="el" href="group__grp__global__global.html#ga3365aa21f3201e1d1fb5a410797285e5">inputlist::vcnz</a>, <a class="el" href="group__grp__misc.html#gaf81786428293c382cba6482ec6d1ec11">allglobal::virtualcasingfactor</a>, <a class="el" href="namespacenumerical.html#a37691ec078f21840c475c4c7b83d7d31">numerical::vsmall</a>, <a class="el" href="group__grp__global__screenlist.html#gaef361ceee97e08e5f134227903265494">inputlist::wmacros</a>, <a class="el" href="namespaceallglobal.html#a1f4ddb89b3246fef8d73c88b730eda3a">allglobal::yesstellsym</a>, <a class="el" href="namespaceconstants.html#ab2b0340319f61089513f5dd1d3971a47">constants::zero</a>, and <a class="el" href="group__grp__fourier__transform.html#ga441f64569bbbf93b31c1e1f2347bc2a8">allglobal::zij</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="group__grp__free-boundary.html#gac0a2cc2241947b27241bb8ef75c5e0ed">bnorml()</a>, <a class="el" href="group__grp__initialization.html#ga28628de0fdb3b3497668007d8d0643bd">preset()</a>, and <a class="el" href="xspech_8f90.html#a48f45478dc2c9f70ea8aa1c60ad06503">spec()</a>.</p>
 <div class="dynheader">
 Here is the call graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="group__grp__free-boundary_gac0a2cc2241947b27241bb8ef75c5e0ed_cgraph.svg" width="295" height="62"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
+<div class="center"><iframe scrolling="no" frameborder="0" src="group__grp__free-boundary_gac0a2cc2241947b27241bb8ef75c5e0ed_cgraph.svg" width="470" height="190"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
 </div>
 </div>
 <div class="dynheader">
@@ -277,7 +281,7 @@ Required inputs to this subroutine are the geometry of the plasma boundary, <p c
 </p>
  where \(\theta\) and \(\zeta\) are arbitrary poloidal and toroidal angles, and \({\bf e}_\theta \equiv \partial {\bf x}/\partial \theta\), \({\bf e}_\zeta \equiv \partial {\bf x}/\partial \zeta\). This routine assumes that the plasma boundary is a flux surface, i.e. \({\bf B} \cdot {\bf e}_\theta \times {\bf e}_\zeta = 0\).  </li>
 <li>
-The virtual casing principle (Shafranov &amp; Zakharov (1972) <a class="el" href="citelist.html#CITEREF_y1972_shafranov">[18]</a>, Lazerson (2012) <a class="el" href="citelist.html#CITEREF_y2012_lazerson">[8]</a> and Hanson (2015) <a class="el" href="citelist.html#CITEREF_y2015_hanson">[3]</a>) shows that the field outside/inside the plasma arising from plasma currents inside/outside the boundary is equivalent to the field generated by a surface current, <p class="formulaDsp">
+The virtual casing principle (Shafranov &amp; Zakharov (1972) <a class="el" href="citelist.html#CITEREF_y1972_shafranov">[19]</a>, Lazerson (2012) <a class="el" href="citelist.html#CITEREF_y2012_lazerson">[9]</a> and Hanson (2015) <a class="el" href="citelist.html#CITEREF_y2015_hanson">[3]</a>) shows that the field outside/inside the plasma arising from plasma currents inside/outside the boundary is equivalent to the field generated by a surface current, <p class="formulaDsp">
 \begin{eqnarray} {\bf j} = {\bf B}_s \times {\bf n}, \end{eqnarray}
 </p>
  where \({\bf n}\) is normal to the surface.  </li>
@@ -319,31 +323,6 @@ When all is said and done, this routine calculates <p class="formulaDsp">
 <li>
 The surface integral is performed using <code>DCUHRE</code> , which uses an adaptive subdivision strategy and also computes absolute error estimates. The absolute and relative accuracy required are provided by the <code>inputvar</code> <code>vcasingtol</code> . The minimum number of function evaluations is provided by the <code>inputvar</code> <code>vcasingits</code>.  </li>
 </ul>
-<p ><b>Calculation of integrand</b></p>
-<ul>
-<li>
-<p class="startli">An adaptive integration is used to compute the integrals. Consequently, the magnetic field tangential to the plasma boundary is required at an arbitrary point. This is computed, as always, from \({\bf B} = \nabla \times {\bf A}\), and this provides \({\bf B} = B^\theta {\bf e}_\theta + B^\zeta {\bf e}_\zeta\). Recall that \(B^s=0\) by construction on the plasma boundary. </p><dl class="todo"><dt><b><a class="el" href="todo.html#_todo000002">Todo:</a></b></dt><dd>It would be MUCH faster to only require the tangential field on a regular grid!!!</dd></dl>
-<p class="endli"></p>
-</li>
-<li>
-<p class="startli">Then, the metric elements \(g_{\theta\theta}\), \(g_{\theta\zeta}\) and \(g_{\zeta\zeta}\) are computed. These are used to "lower" the components of the magnetic field, \({\bf B} = B_\theta \nabla \theta + B_\zeta \nabla \zeta\). </p><dl class="todo"><dt><b><a class="el" href="todo.html#_todo000003">Todo:</a></b></dt><dd>Please check why \(B_s\) is not computed. Is it because \(B_s \nabla s \times {\bf n} = 0\) ?</dd></dl>
-<p class="endli"></p>
-</li>
-<li>
-The distance between the "evaluate" point, \((X,Y,Z)\), and the given point on the surface, \((x,y,z)\) is computed.  </li>
-<li>
-If the computational boundary becomes too close to the plasma boundary, the distance is small and this causes problems for the numerics. I have tried to regularize this problem by introducing \(\epsilon \equiv \)<code>inputvar</code> <code>vcasingeps</code>. Let the "distance" be <p class="formulaDsp">
-\begin{eqnarray} D \equiv \sqrt{(X-x)^2 + (Y-y)^2 + (Z-Z)^2} + \epsilon^2. \end{eqnarray}
-</p>
-  </li>
-<li>
-<p class="startli">On taking the limit that \(\epsilon \rightarrow 0\), the virtual casing integrand is </p><p class="formulaDsp">
-\begin{eqnarray} \verb+vcintegrand+ \equiv ( B_x n_x + B_y n_y + B_z n_z ) ( 1 + 3 \epsilon^2 / D^2 ) / D^3, \label{eq:integrand_casing} \end{eqnarray}
-</p>
-<p> where the normal vector is \({\bf n} \equiv n_x {\bf i} + n_y {\bf j} + n_z {\bf k}\). The normal vector, <code>Nxyz</code> , to the computational boundary (which does not change) is computed in <a class="el" href="group__grp__initialization.html#ga28628de0fdb3b3497668007d8d0643bd" title="Allocates and initializes internal arrays.">preset()</a>. </p><dl class="todo"><dt><b><a class="el" href="todo.html#_todo000004">Todo:</a></b></dt><dd>This needs to be revised.</dd></dl>
-<p class="endli"></p>
-</li>
-</ul>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">teta</td><td>\(\theta\) </td></tr>
@@ -356,17 +335,189 @@ If the computational boundary becomes too close to the plasma boundary, the dist
 
 <p class="reference">References <a class="el" href="group__grp__free-boundary.html#ga180576a10002ebf3840fce98d56316bb">casing()</a>, <a class="el" href="namespaceallglobal.html#afae71b580d9f9c71a6796207a5411959">allglobal::cpus</a>, <a class="el" href="group__grp__free-boundary.html#ga281c12a5de84fddd3db4383b0df8627f">dvcfield()</a>, <a class="el" href="group__grp__misc.html#gaba8f281780c449fbcf15d81822068847">allglobal::dxyz</a>, <a class="el" href="group__grp__misc.html#ga2eed940f24146d5e017e68da5cdadd0d">allglobal::globaljk</a>, <a class="el" href="namespaceallglobal.html#a2382df770fc57cc53ed68c6e1ac23819">allglobal::mpi_comm_spec</a>, <a class="el" href="namespaceallglobal.html#aca1163f9aab48251a99d00e63618cc39">allglobal::myid</a>, <a class="el" href="namespaceallglobal.html#aa45097c36006ab1ffc0cb06a927ed02a">allglobal::ncpu</a>, <a class="el" href="group__grp__misc.html#gaeee9587de1f9c256bff28e99a75be90a">allglobal::nxyz</a>, <a class="el" href="namespacefileunits.html#a7463305b9ff5b4b659d87f6fa59f74a7">fileunits::ounit</a>, <a class="el" href="namespaceconstants.html#a815ad954ef712211ed1b1fdb8be42487">constants::pi</a>, <a class="el" href="namespaceconstants.html#a4fad0dab629c84331119053f1ec1348d">constants::pi2</a>, <a class="el" href="group__grp__global__global.html#ga2f2dde390fc9fa59a6571e06fc355a60">inputlist::vcasingits</a>, <a class="el" href="group__grp__global__global.html#gac2a4a9b2a184ba33475c40f94347f66b">inputlist::vcasingper</a>, <a class="el" href="group__grp__global__global.html#ga02f23f7f95485f63c4ab9c8c14669cd3">inputlist::vcasingtol</a>, <a class="el" href="namespacefileunits.html#aca52b0aa8918db82e4bdee78ca3ae28c">fileunits::vunit</a>, <a class="el" href="group__grp__global__screenlist.html#gaef361ceee97e08e5f134227903265494">inputlist::wmacros</a>, and <a class="el" href="namespaceconstants.html#ab2b0340319f61089513f5dd1d3971a47">constants::zero</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="group__grp__free-boundary.html#gac0a2cc2241947b27241bb8ef75c5e0ed">bnorml()</a>, <a class="el" href="group__grp__free-boundary.html#ga180576a10002ebf3840fce98d56316bb">casing()</a>, and <a class="el" href="group__grp__free-boundary.html#ga281c12a5de84fddd3db4383b0df8627f">dvcfield()</a>.</p>
+<p class="reference">Referenced by <a class="el" href="group__grp__free-boundary.html#gac0a2cc2241947b27241bb8ef75c5e0ed">bnorml()</a>, <a class="el" href="group__grp__free-boundary.html#ga180576a10002ebf3840fce98d56316bb">casing()</a>, <a class="el" href="group__grp__free-boundary.html#ga281c12a5de84fddd3db4383b0df8627f">dvcfield()</a>, <a class="el" href="group__grp__initialization.html#ga28628de0fdb3b3497668007d8d0643bd">preset()</a>, and <a class="el" href="group__grp__free-boundary.html#ga6d4c1b7e864b706f0bfdca4658ebd50c">surfacecurrent()</a>.</p>
 <div class="dynheader">
 Here is the call graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="group__grp__free-boundary_ga180576a10002ebf3840fce98d56316bb_cgraph.svg" width="186" height="62"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
+<div class="center"><iframe scrolling="no" frameborder="0" src="group__grp__free-boundary_ga180576a10002ebf3840fce98d56316bb_cgraph.svg" width="339" height="87"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
 </div>
 </div>
 <div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="group__grp__free-boundary_ga180576a10002ebf3840fce98d56316bb_icgraph.svg" width="1299" height="604"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
+<div class="center"><iframe scrolling="no" frameborder="0" src="group__grp__free-boundary_ga180576a10002ebf3840fce98d56316bb_icgraph.svg" width="1452" height="738"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
+</div>
+</div>
+
+</div>
+</div>
+<a id="ga633c8a5ddc9cd6469134e848fa4162c9" name="ga633c8a5ddc9cd6469134e848fa4162c9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga633c8a5ddc9cd6469134e848fa4162c9">&#9670;&nbsp;</a></span>casinggrid()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">subroutine casinggrid </td>
+          <td>(</td>
+          <td class="paramtype">real, dimension(1:3), intent(in)&#160;</td>
+          <td class="paramname"><em>xyz</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real, dimension(1:3), intent(in)&#160;</td>
+          <td class="paramname"><em>ntz</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real, dimension(1:vcnz*nfp*vcnt, 1:3), intent(in)&#160;</td>
+          <td class="paramname"><em>Pbxyz</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real, dimension(1:vcnz*nfp*vcnt, 1:3), intent(in)&#160;</td>
+          <td class="paramname"><em>Jxyz</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">integer, intent(in)&#160;</td>
+          <td class="paramname"><em>vcstride</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real, intent(out)&#160;</td>
+          <td class="paramname"><em>gBn</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Compute the field produced by the plasma currents, at an arbitrary, external location using virtual casing. </p>
+<p ><a class="el" href="group__grp__free-boundary.html#ga633c8a5ddc9cd6469134e848fa4162c9" title="Compute the field produced by the plasma currents, at an arbitrary, external location using virtual c...">casinggrid()</a> computes the virtual casing field using a fixed resolution grid on the plasma boundary, in contrast to <a class="el" href="group__grp__free-boundary.html#ga180576a10002ebf3840fce98d56316bb" title="Constructs the field created by the plasma currents, at an arbitrary, external location using virtual...">casing()</a> which uses an adaptive integration routine. Because the evaluation positions are known in advance, the most expensive terms of the computation (surfacecurrents, or in the <a class="el" href="group__grp__free-boundary.html#ga180576a10002ebf3840fce98d56316bb" title="Constructs the field created by the plasma currents, at an arbitrary, external location using virtual...">casing()</a> routine dvcfield) are precomputed. The integral computed by <a class="el" href="group__grp__free-boundary.html#ga633c8a5ddc9cd6469134e848fa4162c9" title="Compute the field produced by the plasma currents, at an arbitrary, external location using virtual c...">casinggrid()</a> is </p><p class="formulaDsp">
+\begin{eqnarray} \int_0^{2\pi} \int_0^{2\pi} \frac{{\bf j}(\theta, \zeta) \times {\bf D}(\theta, \zeta)}{\|{\bf D}(\theta&#39;, \zeta&#39;)\|^3}+ \;\; d\theta d\zeta \end{eqnarray}
+</p>
+<p><br  />
+ with \({\bf r}\) approximately the distance vector from an evaluation point of the current surface \({\bf x}(\theta, \zeta)\) to the external point \((x,y,z)\), and the exact formula includes a regularization factor \(\epsilon\) Eqn. \((\ref{eq:vcasing_distance})\).</p>
+<p >Numerically it uses a Kahan Summation algorithm to accumulate the contributions of all inner points, because truncation error quickly dominates the computation when thousands of points are used in both dimensions.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">xyz</td><td>\((x,y,z)\) cartesian coordinates on the computational boundary </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">ntz</td><td>cartesian normal vector on the computational boundary </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">Pbxyz</td><td>array of cartesian coordinates on the plasma boundary </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">Jxyz</td><td>array of surface currents \({\bf B}_{Plasma} \cdot {\bf e}_\theta \times {\bf e}_\zeta \;\) on the plasma boundary </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">vcstride</td><td>integer stride for the fixed resolution grid. vcstride = 1 computes the integral at full resolution, vcstride = 2 computes the integral at half resolution, etc. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">gBn</td><td>normal field \({\bf B}_{Plasma} \cdot n \;\) on the computational boundary </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="reference">References <a class="el" href="namespaceallglobal.html#afae71b580d9f9c71a6796207a5411959">allglobal::cpus</a>, <a class="el" href="group__grp__misc.html#gaba8f281780c449fbcf15d81822068847">allglobal::dxyz</a>, <a class="el" href="group__grp__misc.html#ga2eed940f24146d5e017e68da5cdadd0d">allglobal::globaljk</a>, <a class="el" href="namespaceallglobal.html#a2382df770fc57cc53ed68c6e1ac23819">allglobal::mpi_comm_spec</a>, <a class="el" href="namespaceallglobal.html#aca1163f9aab48251a99d00e63618cc39">allglobal::myid</a>, <a class="el" href="namespaceallglobal.html#aa45097c36006ab1ffc0cb06a927ed02a">allglobal::ncpu</a>, <a class="el" href="group__grp__global__physicslist.html#gae071c5738f7f7a6ada9d6b66676e37c7">inputlist::nfp</a>, <a class="el" href="group__grp__misc.html#gaeee9587de1f9c256bff28e99a75be90a">allglobal::nxyz</a>, <a class="el" href="namespaceconstants.html#ad5224c0b5e13bf12b18dafbb62ba4e8d">constants::one</a>, <a class="el" href="namespacefileunits.html#a7463305b9ff5b4b659d87f6fa59f74a7">fileunits::ounit</a>, <a class="el" href="namespaceconstants.html#a4fad0dab629c84331119053f1ec1348d">constants::pi2</a>, <a class="el" href="namespaceallglobal.html#aae9519af29ff59bac4ff2232d930f409">allglobal::pi2nfp</a>, <a class="el" href="namespaceconstants.html#a00ab6133f3ee81623d547ad119512b33">constants::three</a>, <a class="el" href="group__grp__global__global.html#gae24f9ecfcf665ca7fee4fc256a6ee6b9">inputlist::vcasingeps</a>, <a class="el" href="group__grp__global__global.html#ga0544b4eb58536175ff49515d2aff22e5">inputlist::vcnt</a>, <a class="el" href="group__grp__global__global.html#ga3365aa21f3201e1d1fb5a410797285e5">inputlist::vcnz</a>, <a class="el" href="namespacefileunits.html#aca52b0aa8918db82e4bdee78ca3ae28c">fileunits::vunit</a>, and <a class="el" href="namespaceconstants.html#ab2b0340319f61089513f5dd1d3971a47">constants::zero</a>.</p>
+
+<p class="reference">Referenced by <a class="el" href="group__grp__free-boundary.html#gac0a2cc2241947b27241bb8ef75c5e0ed">bnorml()</a>.</p>
+<div class="dynheader">
+Here is the caller graph for this function:</div>
+<div class="dyncontent">
+<div class="center"><iframe scrolling="no" frameborder="0" src="group__grp__free-boundary_ga633c8a5ddc9cd6469134e848fa4162c9_icgraph.svg" width="1315" height="604"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
+</div>
+</div>
+
+</div>
+</div>
+<a id="ga6d4c1b7e864b706f0bfdca4658ebd50c" name="ga6d4c1b7e864b706f0bfdca4658ebd50c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga6d4c1b7e864b706f0bfdca4658ebd50c">&#9670;&nbsp;</a></span>surfacecurrent()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">subroutine surfacecurrent </td>
+          <td>(</td>
+          <td class="paramtype">real, intent(in)&#160;</td>
+          <td class="paramname"><em>teta</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real, intent(in)&#160;</td>
+          <td class="paramname"><em>zeta</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real, dimension(1:3), intent(out)&#160;</td>
+          <td class="paramname"><em>pxyz</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real, dimension(1:3), intent(out)&#160;</td>
+          <td class="paramname"><em>jj</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Compute the position and surface current on the plasma boundary for the virtual casing<b>Calculation of integrand</b> </p>
+<ul>
+<li>
+<p class="startli">An adaptive integration is used to compute the integrals. Consequently, the magnetic field tangential to the plasma boundary is required at an arbitrary point. This is computed, as always, from \({\bf B} = \nabla \times {\bf A}\), and this provides \({\bf B} = B^\theta {\bf e}_\theta + B^\zeta {\bf e}_\zeta\). Recall that \(B^s=0\) by construction on the plasma boundary.</p>
+<p class="endli"></p>
+</li>
+<li>
+<p class="startli">Then, the metric elements \(g_{\theta\theta}\), \(g_{\theta\zeta}\) and \(g_{\zeta\zeta}\) are computed. These are used to "lower" the components of the magnetic field, \({\bf B} = B_\theta \nabla \theta + B_\zeta \nabla \zeta\).</p>
+<p class="endli"></p>
+</li>
+<li>
+The distance between the "evaluate" point, \((X,Y,Z)\), and the given point on the surface, \((x,y,z)\) is computed.  </li>
+<li>
+If the computational boundary becomes too close to the plasma boundary, the distance is small and this causes problems for the numerics. I have tried to regularize this problem by introducing \(\epsilon \equiv \)<code>inputvar</code> <code>vcasingeps</code>. Let the "distance" be <p class="formulaDsp">
+\begin{eqnarray} D \equiv \sqrt{(X-x)^2 + (Y-y)^2 + (Z-Z)^2} + \epsilon^2. \label{eq:vcasing_distance} \end{eqnarray}
+</p>
+  </li>
+<li>
+<p class="startli">On taking the limit that \(\epsilon \rightarrow 0\), the virtual casing integrand is </p><p class="formulaDsp">
+\begin{eqnarray} \verb+vcintegrand+ \equiv ( B_x n_x + B_y n_y + B_z n_z ) ( 1 + 3 \epsilon^2 / D^2 ) / D^3, \label{eq:integrand_casing} \end{eqnarray}
+</p>
+<p> where the normal vector is \({\bf n} \equiv n_x {\bf i} + n_y {\bf j} + n_z {\bf k}\). The normal vector, <code>Nxyz</code> , to the computational boundary (which does not change) is computed in <a class="el" href="group__grp__initialization.html#ga28628de0fdb3b3497668007d8d0643bd" title="Allocates and initializes internal arrays.">preset()</a>. </p><dl class="todo"><dt><b><a class="el" href="todo.html#_todo000001">Todo:</a></b></dt><dd>This needs to be revised.</dd></dl>
+<p class="endli"></p>
+</li>
+</ul>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">teta</td><td>\(\theta\) </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">zeta</td><td>\(\zeta\) </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">pxyz</td><td>\((x,y,z)\) cartesian coordinates on the plasma boundary </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">jj</td><td>Surface current \({\bf B}_{Plasma} \cdot {\bf e}_\theta \times {\bf e}_\zeta \;\) on the plasma boundary </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="reference">References <a class="el" href="group__grp__vecpot.html#ga430fa6f9a3ebb7a56185b72b8ea1ff49">allglobal::ate</a>, <a class="el" href="group__grp__vecpot.html#gaefec3203c02505c73b48dbb1c7ba96c1">allglobal::ato</a>, <a class="el" href="group__grp__vecpot.html#gad85df9e26321392291e0a43478da0f3c">allglobal::aze</a>, <a class="el" href="group__grp__vecpot.html#gad52dcff52cc620916d5e765051a0228a">allglobal::azo</a>, <a class="el" href="group__grp__free-boundary.html#ga180576a10002ebf3840fce98d56316bb">casing()</a>, <a class="el" href="namespaceallglobal.html#afae71b580d9f9c71a6796207a5411959">allglobal::cpus</a>, <a class="el" href="group__grp__misc.html#ga948dcbb5cd2eda2c5f4588b61fa3346c">allglobal::first_free_bound</a>, <a class="el" href="namespaceconstants.html#a28ec2b391ac319cee0f31bb295b89cc2">constants::half</a>, <a class="el" href="group__grp__global__physicslist.html#gaa6dcbfd2f5cb5f23f4bc567fb13ae0e2">inputlist::igeometry</a>, <a class="el" href="group__grp__fourier__repr.html#gaeac30068003c58add7893688ea2e48aa">allglobal::im</a>, <a class="el" href="group__grp__fourier__repr.html#gae946717d1654463c7cb4b1d7fd712f7d">allglobal::in</a>, <a class="el" href="group__grp__iface__geom.html#ga9f6e014546551429956a2a47c134d07b">allglobal::irbc</a>, <a class="el" href="group__grp__iface__geom.html#ga05ba18442623cf5f34f7a2193a03e0b1">allglobal::irbs</a>, <a class="el" href="group__grp__iface__geom.html#ga6c7ad3b18081227f992e4c3e73a2e216">allglobal::izbc</a>, <a class="el" href="group__grp__iface__geom.html#gadcc12f5e32287fd4b60dc01afc6e64d2">allglobal::izbs</a>, <a class="el" href="group__grp__global__physicslist.html#ga1509b6ce73e909b86beaf65c26527932">inputlist::lrad</a>, <a class="el" href="group__grp__fourier__repr.html#ga3b3045dc5c13351cded37581bdfb3400">allglobal::mn</a>, <a class="el" href="namespaceallglobal.html#a2382df770fc57cc53ed68c6e1ac23819">allglobal::mpi_comm_spec</a>, <a class="el" href="namespaceallglobal.html#aa2a4850f9468d817a673c1ef7f718849">allglobal::mvol</a>, <a class="el" href="namespaceallglobal.html#aca1163f9aab48251a99d00e63618cc39">allglobal::myid</a>, <a class="el" href="namespaceallglobal.html#aa45097c36006ab1ffc0cb06a927ed02a">allglobal::ncpu</a>, <a class="el" href="group__grp__global__physicslist.html#gafdbe1fac5fd98bb41ae5cc363ab9aedd">inputlist::nvol</a>, <a class="el" href="namespaceconstants.html#ad5224c0b5e13bf12b18dafbb62ba4e8d">constants::one</a>, <a class="el" href="namespaceallglobal.html#a0ff41ecfbb162f4712030c7806852615">allglobal::tt</a>, <a class="el" href="namespaceallglobal.html#a1f4ddb89b3246fef8d73c88b730eda3a">allglobal::yesstellsym</a>, and <a class="el" href="namespaceconstants.html#ab2b0340319f61089513f5dd1d3971a47">constants::zero</a>.</p>
+
+<p class="reference">Referenced by <a class="el" href="group__grp__free-boundary.html#gac0a2cc2241947b27241bb8ef75c5e0ed">bnorml()</a>, and <a class="el" href="group__grp__free-boundary.html#ga281c12a5de84fddd3db4383b0df8627f">dvcfield()</a>.</p>
+<div class="dynheader">
+Here is the call graph for this function:</div>
+<div class="dyncontent">
+<div class="center"><iframe scrolling="no" frameborder="0" src="group__grp__free-boundary_ga6d4c1b7e864b706f0bfdca4658ebd50c_cgraph.svg" width="339" height="87"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
+</div>
+</div>
+<div class="dynheader">
+Here is the caller graph for this function:</div>
+<div class="dyncontent">
+<div class="center"><iframe scrolling="no" frameborder="0" src="group__grp__free-boundary_ga6d4c1b7e864b706f0bfdca4658ebd50c_icgraph.svg" width="1562" height="679"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
 </div>
 </div>
 
@@ -411,7 +562,8 @@ Here is the caller graph for this function:</div>
 </div><div class="memdoc">
 
 <p>Differential virtual casing integrand. </p>
-<p >Differential virtual casing integrand</p>
+<p >Differential virtual casing integrand with the calling convention required by NAG for the adaptive integration routine. <br  />
+ This function wraps surfacecurrent and uses a global variable globaljk to determine the position on the computational boundary (not thread safe!).</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">Ndim</td><td>number of parameters (==2) </td></tr>
@@ -422,19 +574,19 @@ Here is the caller graph for this function:</div>
   </dd>
 </dl>
 
-<p class="reference">References <a class="el" href="group__grp__vecpot.html#ga430fa6f9a3ebb7a56185b72b8ea1ff49">allglobal::ate</a>, <a class="el" href="group__grp__vecpot.html#gaefec3203c02505c73b48dbb1c7ba96c1">allglobal::ato</a>, <a class="el" href="group__grp__vecpot.html#gad85df9e26321392291e0a43478da0f3c">allglobal::aze</a>, <a class="el" href="group__grp__vecpot.html#gad52dcff52cc620916d5e765051a0228a">allglobal::azo</a>, <a class="el" href="group__grp__free-boundary.html#ga180576a10002ebf3840fce98d56316bb">casing()</a>, <a class="el" href="namespaceallglobal.html#afae71b580d9f9c71a6796207a5411959">allglobal::cpus</a>, <a class="el" href="group__grp__misc.html#gaba8f281780c449fbcf15d81822068847">allglobal::dxyz</a>, <a class="el" href="group__grp__misc.html#ga948dcbb5cd2eda2c5f4588b61fa3346c">allglobal::first_free_bound</a>, <a class="el" href="namespaceconstants.html#a3cab228f32e9fb46f628a237d7b65be9">constants::four</a>, <a class="el" href="group__grp__misc.html#ga2eed940f24146d5e017e68da5cdadd0d">allglobal::globaljk</a>, <a class="el" href="namespaceconstants.html#a28ec2b391ac319cee0f31bb295b89cc2">constants::half</a>, <a class="el" href="group__grp__global__physicslist.html#gaa6dcbfd2f5cb5f23f4bc567fb13ae0e2">inputlist::igeometry</a>, <a class="el" href="group__grp__fourier__repr.html#gaeac30068003c58add7893688ea2e48aa">allglobal::im</a>, <a class="el" href="group__grp__fourier__repr.html#gae946717d1654463c7cb4b1d7fd712f7d">allglobal::in</a>, <a class="el" href="group__grp__iface__geom.html#ga9f6e014546551429956a2a47c134d07b">allglobal::irbc</a>, <a class="el" href="group__grp__iface__geom.html#ga05ba18442623cf5f34f7a2193a03e0b1">allglobal::irbs</a>, <a class="el" href="group__grp__iface__geom.html#ga6c7ad3b18081227f992e4c3e73a2e216">allglobal::izbc</a>, <a class="el" href="group__grp__iface__geom.html#gadcc12f5e32287fd4b60dc01afc6e64d2">allglobal::izbs</a>, <a class="el" href="group__grp__global__physicslist.html#ga1509b6ce73e909b86beaf65c26527932">inputlist::lrad</a>, <a class="el" href="group__grp__fourier__repr.html#ga3b3045dc5c13351cded37581bdfb3400">allglobal::mn</a>, <a class="el" href="namespaceallglobal.html#a2382df770fc57cc53ed68c6e1ac23819">allglobal::mpi_comm_spec</a>, <a class="el" href="namespaceallglobal.html#aa2a4850f9468d817a673c1ef7f718849">allglobal::mvol</a>, <a class="el" href="namespaceallglobal.html#aca1163f9aab48251a99d00e63618cc39">allglobal::myid</a>, <a class="el" href="namespaceallglobal.html#aa45097c36006ab1ffc0cb06a927ed02a">allglobal::ncpu</a>, <a class="el" href="namespaceallglobal.html#a6993aa662f74b327357896c7d9c81f4b">allglobal::notstellsym</a>, <a class="el" href="group__grp__global__physicslist.html#gafdbe1fac5fd98bb41ae5cc363ab9aedd">inputlist::nvol</a>, <a class="el" href="group__grp__misc.html#gaeee9587de1f9c256bff28e99a75be90a">allglobal::nxyz</a>, <a class="el" href="namespaceconstants.html#ad5224c0b5e13bf12b18dafbb62ba4e8d">constants::one</a>, <a class="el" href="namespacefileunits.html#a7463305b9ff5b4b659d87f6fa59f74a7">fileunits::ounit</a>, <a class="el" href="namespaceallglobal.html#aae9519af29ff59bac4ff2232d930f409">allglobal::pi2nfp</a>, <a class="el" href="namespacenumerical.html#aba4e665eb2dabaf1e12c82a7270ac0c0">numerical::small</a>, <a class="el" href="namespaceconstants.html#a00ab6133f3ee81623d547ad119512b33">constants::three</a>, <a class="el" href="namespaceallglobal.html#a0ff41ecfbb162f4712030c7806852615">allglobal::tt</a>, <a class="el" href="group__grp__global__global.html#gae24f9ecfcf665ca7fee4fc256a6ee6b9">inputlist::vcasingeps</a>, <a class="el" href="namespacefileunits.html#aca52b0aa8918db82e4bdee78ca3ae28c">fileunits::vunit</a>, <a class="el" href="namespaceallglobal.html#a1f4ddb89b3246fef8d73c88b730eda3a">allglobal::yesstellsym</a>, and <a class="el" href="namespaceconstants.html#ab2b0340319f61089513f5dd1d3971a47">constants::zero</a>.</p>
+<p class="reference">References <a class="el" href="group__grp__free-boundary.html#ga180576a10002ebf3840fce98d56316bb">casing()</a>, <a class="el" href="namespaceallglobal.html#afae71b580d9f9c71a6796207a5411959">allglobal::cpus</a>, <a class="el" href="group__grp__misc.html#gaba8f281780c449fbcf15d81822068847">allglobal::dxyz</a>, <a class="el" href="group__grp__misc.html#ga948dcbb5cd2eda2c5f4588b61fa3346c">allglobal::first_free_bound</a>, <a class="el" href="group__grp__misc.html#ga2eed940f24146d5e017e68da5cdadd0d">allglobal::globaljk</a>, <a class="el" href="namespaceconstants.html#a28ec2b391ac319cee0f31bb295b89cc2">constants::half</a>, <a class="el" href="namespaceallglobal.html#a2382df770fc57cc53ed68c6e1ac23819">allglobal::mpi_comm_spec</a>, <a class="el" href="namespaceallglobal.html#aca1163f9aab48251a99d00e63618cc39">allglobal::myid</a>, <a class="el" href="namespaceallglobal.html#aa45097c36006ab1ffc0cb06a927ed02a">allglobal::ncpu</a>, <a class="el" href="group__grp__misc.html#gaeee9587de1f9c256bff28e99a75be90a">allglobal::nxyz</a>, <a class="el" href="namespaceconstants.html#ad5224c0b5e13bf12b18dafbb62ba4e8d">constants::one</a>, <a class="el" href="group__grp__free-boundary.html#ga6d4c1b7e864b706f0bfdca4658ebd50c">surfacecurrent()</a>, <a class="el" href="namespaceconstants.html#a00ab6133f3ee81623d547ad119512b33">constants::three</a>, <a class="el" href="group__grp__global__global.html#gae24f9ecfcf665ca7fee4fc256a6ee6b9">inputlist::vcasingeps</a>, and <a class="el" href="namespaceconstants.html#ab2b0340319f61089513f5dd1d3971a47">constants::zero</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="group__grp__free-boundary.html#ga180576a10002ebf3840fce98d56316bb">casing()</a>.</p>
 <div class="dynheader">
 Here is the call graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="group__grp__free-boundary_ga281c12a5de84fddd3db4383b0df8627f_cgraph.svg" width="186" height="62"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
+<div class="center"><iframe scrolling="no" frameborder="0" src="group__grp__free-boundary_ga281c12a5de84fddd3db4383b0df8627f_cgraph.svg" width="339" height="124"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
 </div>
 </div>
 <div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="group__grp__free-boundary_ga281c12a5de84fddd3db4383b0df8627f_icgraph.svg" width="1408" height="604"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
+<div class="center"><iframe scrolling="no" frameborder="0" src="group__grp__free-boundary_ga281c12a5de84fddd3db4383b0df8627f_icgraph.svg" width="1562" height="675"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
 </div>
 </div>
 

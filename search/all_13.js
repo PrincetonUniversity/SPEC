@@ -36,5 +36,6 @@ var searchData=
   ['stzxyz_33',['stzxyz',['../group__grp__diagnostics.html#ga08ad6b6635a598c0d0578e42f46b63c5',1,'stzxyz.f90']]],
   ['stzxyz_2ef90_34',['stzxyz.f90',['../stzxyz_8f90.html',1,'']]],
   ['subgrid_35',['subgrid',['../namespacetypedefns.html#structtypedefns_1_1subgrid',1,'typedefns']]],
-  ['sweight_36',['sweight',['../group__grp__chebychev__metric.html#ga46103d26fa6a154afc6b8e43d6021436',1,'allglobal']]]
+  ['surfacecurrent_36',['surfacecurrent',['../group__grp__free-boundary.html#ga6d4c1b7e864b706f0bfdca4658ebd50c',1,'casing.f90']]],
+  ['sweight_37',['sweight',['../group__grp__chebychev__metric.html#ga46103d26fa6a154afc6b8e43d6021436',1,'allglobal']]]
 ];

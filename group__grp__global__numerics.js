@@ -16,5 +16,6 @@ var group__grp__global__numerics =
     [ "inputlist::lextrap", "group__grp__global__numerics.html#ga4cb7cb36150c0b605be2c529bde11dc5", null ],
     [ "inputlist::mregular", "group__grp__global__numerics.html#ga4da1b0c06c88a8c6a07586873284e126", null ],
     [ "inputlist::lrzaxis", "group__grp__global__numerics.html#gaca1c98553526428e574c2025dbc7e6f8", null ],
-    [ "inputlist::ntoraxis", "group__grp__global__numerics.html#ga3a7155b4013c5faeb0683befe1c56549", null ]
+    [ "inputlist::ntoraxis", "group__grp__global__numerics.html#ga3a7155b4013c5faeb0683befe1c56549", null ],
+    [ "inputlist::lvcgrid", "group__grp__global__numerics.html#ga9d0ad411d83530cc309974624139e3b8", null ]
 ];

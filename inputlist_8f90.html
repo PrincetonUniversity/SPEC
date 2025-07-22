@@ -393,6 +393,10 @@ integer&#160;</td><td class="memItemRight" valign="bottom"><b>inputlist::lextrap
 integer&#160;</td><td class="memItemRight" valign="bottom"><b>inputlist::ntoraxis</b> = 3</td></tr>
 <tr class="memdesc:ga3a7155b4013c5faeb0683befe1c56549"><td class="mdescLeft">&#160;</td><td class="mdescRight">the number of \(n\) harmonics used in the Jacobian \(m=1\) harmonic elimination method; only relevant if <code>Lrzaxis.ge.1</code> . <br /></td></tr>
 <tr class="separator:ga3a7155b4013c5faeb0683befe1c56549"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga9d0ad411d83530cc309974624139e3b8"><td class="memItemLeft" align="right" valign="top">
+integer&#160;</td><td class="memItemRight" valign="bottom"><b>inputlist::lvcgrid</b> = 0</td></tr>
+<tr class="memdesc:ga9d0ad411d83530cc309974624139e3b8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Which method to use for the virtual casing integral. 0 = adaptive integration routine with guaranteed accuracy, 1 = fixed resolution grid. <br /></td></tr>
+<tr class="separator:ga9d0ad411d83530cc309974624139e3b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga7313f6a9dcc40242adf1ac39d3b107a9"><td class="memItemLeft" align="right" valign="top">integer&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__grp__global__local.html#ga7313f6a9dcc40242adf1ac39d3b107a9">inputlist::lbeltrami</a> = 4</td></tr>
 <tr class="memdesc:ga7313f6a9dcc40242adf1ac39d3b107a9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Control flag for solution of Beltrami equation.  <a href="group__grp__global__local.html#ga7313f6a9dcc40242adf1ac39d3b107a9">More...</a><br /></td></tr>
 <tr class="separator:ga7313f6a9dcc40242adf1ac39d3b107a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -499,6 +503,14 @@ integer&#160;</td><td class="memItemRight" valign="bottom"><b>inputlist::vcasing
 integer&#160;</td><td class="memItemRight" valign="bottom"><b>inputlist::vcasingper</b> = 1</td></tr>
 <tr class="memdesc:gac2a4a9b2a184ba33475c40f94347f66b"><td class="mdescLeft">&#160;</td><td class="mdescRight">periods of integragion in adaptive virtual casing routine; see <a class="el" href="group__grp__free-boundary.html#ga180576a10002ebf3840fce98d56316bb" title="Constructs the field created by the plasma currents, at an arbitrary, external location using virtual...">casing()</a> <br /></td></tr>
 <tr class="separator:gac2a4a9b2a184ba33475c40f94347f66b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga0544b4eb58536175ff49515d2aff22e5"><td class="memItemLeft" align="right" valign="top">
+integer&#160;</td><td class="memItemRight" valign="bottom"><b>inputlist::vcnt</b> = 256</td></tr>
+<tr class="memdesc:ga0544b4eb58536175ff49515d2aff22e5"><td class="mdescLeft">&#160;</td><td class="mdescRight">theta resolution of the real space grid on which the surface current is computed during virtual casing [0, 2pi] <br /></td></tr>
+<tr class="separator:ga0544b4eb58536175ff49515d2aff22e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga3365aa21f3201e1d1fb5a410797285e5"><td class="memItemLeft" align="right" valign="top">
+integer&#160;</td><td class="memItemRight" valign="bottom"><b>inputlist::vcnz</b> = 256</td></tr>
+<tr class="memdesc:ga3365aa21f3201e1d1fb5a410797285e5"><td class="mdescLeft">&#160;</td><td class="mdescRight">zeta resolution of the real space grid on which the surface current is computed during virtual casing [0, 2pi], over one field period <br /></td></tr>
+<tr class="separator:ga3365aa21f3201e1d1fb5a410797285e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gac711f17e710c4216eb9423c0f6e3b5aa"><td class="memItemLeft" align="right" valign="top">
 integer&#160;</td><td class="memItemRight" valign="bottom"><b>inputlist::mcasingcal</b> = 8</td></tr>
 <tr class="memdesc:gac711f17e710c4216eb9423c0f6e3b5aa"><td class="mdescLeft">&#160;</td><td class="mdescRight">minimum number of calls to adaptive virtual casing routine; see <a class="el" href="group__grp__free-boundary.html#ga180576a10002ebf3840fce98d56316bb" title="Constructs the field created by the plasma currents, at an arbitrary, external location using virtual...">casing()</a>; redundant; <br /></td></tr>

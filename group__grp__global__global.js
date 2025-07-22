@@ -21,5 +21,7 @@ var group__grp__global__global =
     [ "inputlist::vcasingtol", "group__grp__global__global.html#ga02f23f7f95485f63c4ab9c8c14669cd3", null ],
     [ "inputlist::vcasingits", "group__grp__global__global.html#ga2f2dde390fc9fa59a6571e06fc355a60", null ],
     [ "inputlist::vcasingper", "group__grp__global__global.html#gac2a4a9b2a184ba33475c40f94347f66b", null ],
+    [ "inputlist::vcnt", "group__grp__global__global.html#ga0544b4eb58536175ff49515d2aff22e5", null ],
+    [ "inputlist::vcnz", "group__grp__global__global.html#ga3365aa21f3201e1d1fb5a410797285e5", null ],
     [ "inputlist::mcasingcal", "group__grp__global__global.html#gac711f17e710c4216eb9423c0f6e3b5aa", null ]
 ];
