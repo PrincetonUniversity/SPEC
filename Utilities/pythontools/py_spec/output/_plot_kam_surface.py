@@ -28,9 +28,9 @@ def plot_kam_surface(self, ns=[], ntheta=1000, zeta=0.0, ax=None, **kwargs):
         fig, ax = plt.subplots()
     plt.sca(ax)
     # set default plotting parameters
-    if kwargs.get("label") == None:
+    if "label" not in kwargs:
         kwargs.update({"label": "SPEC_KAM"})  # default label
-    if kwargs.get("c") == None:
+    if "c" not in kwargs:
         kwargs.update({"c": "red"})
     # plot all the surfaces
     if Igeometry == 3:
