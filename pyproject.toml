@@ -35,6 +35,7 @@ classifiers = [
 dependencies = [
     "numpy>=1.23.5",
     "f90wrap",
+    "mpi4py",
 ]
 
 
@@ -59,4 +60,8 @@ wheel.packages = ["spec"]
 [tool.scikit-build.cmake.define]
 # Ensure SKBUILD is defined for conditional Python wrapper building
 SKBUILD = "ON"
+# Set compilers and BLAS vendor from cmake_config.json
+CMAKE_C_COMPILER = "mpicc"
+CMAKE_Fortran_COMPILER = "mpif90"
+BLA_VENDOR = "OpenBLAS"
 

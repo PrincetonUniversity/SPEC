@@ -132,10 +132,11 @@ add_custom_command(
     #VERBATIM
     COMMAND_EXPAND_LISTS
 )
-
-python_extension_module(${generated_module_file})
-install(FILES ${python_mod_file} ${generated_module_file} #${CMAKE_CURRENT_SOURCE_DIR}/__init__.py
-        DESTINATION Utilities/python_wrapper/spec
+install(FILES ${python_mod_file} ${generated_module_file} 
+              ${CMAKE_CURRENT_SOURCE_DIR}/spec/__init__.py
+              ${CMAKE_CURRENT_SOURCE_DIR}/spec/core.py
+        DESTINATION spec
+        COMPONENT python_wrapper
 )
 
 #set(PYINIT_STR "import sys\nimport os.path\nsys.path.append(os.path.dirname(__file__))\n\nfrom .spec import *\n")
