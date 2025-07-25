@@ -295,6 +295,16 @@ endif()
 
 add_executable(xspec ${XSPEC_OUT_FILE})
 target_link_libraries(xspec PUBLIC spec)
+
+# Ensure MPI and OpenMP are linked to xspec executable
+if(MPI_Fortran_FOUND)
+    target_link_libraries(xspec PUBLIC MPI::MPI_Fortran)
+endif()
+
+if(OpenMP_Fortran_FOUND)
+    target_link_libraries(xspec PUBLIC OpenMP::OpenMP_Fortran)
+endif()
+
 set_target_properties(xspec PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 install(TARGETS xspec spec)
