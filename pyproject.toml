@@ -3,6 +3,8 @@ requires = [
     "scikit-build-core>=0.8.0",
     "numpy>=2.2",
     "f90wrap",
+    "meson;python_version>='3.12'", 
+    "ninja"
 ]
 build-backend = "scikit_build_core.build"
 

@@ -109,11 +109,13 @@ add_custom_target(${f2py_module_name} ALL
   DEPENDS ${generated_module_file} spec ${f90wrap_output_files}
 )
 
+set(f2py_build_dir ${CMAKE_CURRENT_BINARY_DIR}/f2py_build)
+
 add_custom_command(
     OUTPUT ${generated_module_file}
     COMMAND ${F2PY_EXECUTABLE} 
         -m ${f2py_module_name} 
-        --build-dir ${CMAKE_CURRENT_BINARY_DIR} 
+        --build-dir ${f2py_build_dir}
         --f90exec=${CMAKE_Fortran_COMPILER}
         --f77exec=${CMAKE_Fortran_COMPILER}
         --f90flags="-fopenmp"
@@ -123,7 +125,6 @@ add_custom_command(
         ${f90wrap_output_files} 
         -I${CMAKE_BINARY_DIR}/build/modules/spec_modules
         -I${HDF5_Fortran_INCLUDE_DIRS}
-	--verbose
         ${CMAKE_BINARY_DIR}/build/lib/libspec.a  
         ${SPEC_LINK_LIB}
     #IMPLICIT_DEPENDS Fortran ${f90wrap_output_files}
@@ -132,6 +133,7 @@ add_custom_command(
     #VERBATIM
     COMMAND_EXPAND_LISTS
 )
+
 install(FILES ${python_mod_file} ${generated_module_file} 
               ${CMAKE_CURRENT_SOURCE_DIR}/spec/__init__.py
               ${CMAKE_CURRENT_SOURCE_DIR}/spec/core.py
