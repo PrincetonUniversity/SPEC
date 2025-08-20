@@ -86,8 +86,8 @@ add_custom_command(
     COMMAND f2py-f90wrap
             -m "${f2py_module_name}"
             --lower
-            ${f90wrap_output_files}
-    DEPENDS ${spec4py_wrap_files} ${spec4py_f90_pp_files}
+            ${spec4py_wrap_files}
+    DEPENDS ${spec4py_wrap_files} 
     OUTPUT "${f2py_module_name}module.c"
     COMMENT "Generate C interfaces for Python using `f2py`"
     VERBATIM
