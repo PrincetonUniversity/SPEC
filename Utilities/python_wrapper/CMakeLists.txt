@@ -75,6 +75,7 @@ add_custom_command(
     ${spec4py_f90_pp_files}
     --mod-name "${f90wrap_module_name}"
     --kind-map "${CMAKE_CURRENT_SOURCE_DIR}/kind_map"
+    --package
     DEPENDS ${spec4py_f90_pp_files}
     OUTPUT ${spec4py_wrap_files}
     COMMENT "Generate Fortran interfaces using `f90wrap`"
@@ -86,7 +87,7 @@ add_custom_command(
     COMMAND f2py-f90wrap
             -m "${f2py_module_name}"
             --lower
-            ${spec4py_wrap_files}
+            ${f90wrap_output_files}
     DEPENDS ${spec4py_wrap_files} 
     OUTPUT "${f2py_module_name}module.c"
     COMMENT "Generate C interfaces for Python using `f2py`"
@@ -96,7 +97,7 @@ add_custom_command(
 Python_add_library("${f2py_module_name}" MODULE WITH_SOABI
     "${f2py_module_name}module.c"
     "${F2PY_INCLUDE_DIR}/fortranobject.c"
-    "${spec4py_wrap_files}"
+    "${f90wrap_output_files}"
 )
 
 target_include_directories("${f2py_module_name}" PRIVATE ${F2PY_INCLUDE_DIR} ${Python_NumPy_INCLUDE_DIRS} ${Python_INCLUDE_DIRS} ${CMAKE_BINARY_DIR}/src)
