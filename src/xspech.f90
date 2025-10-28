@@ -319,7 +319,7 @@ subroutine spec
                         version, &
                         MPI_COMM_SPEC, &
                         force_final, Lhessianallocated, LocalConstraint, hessian, dBBdmp, dFFdRZ, dmupfdx, &
-                        dRodR, dRodZ, dZodR, dZodZ, dessian, LGdof
+                        dRodR, dRodZ, dZodR, dZodZ, dRadR, dRadZ, dZadR, dZadZ, dessian, LGdof
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -333,7 +333,7 @@ subroutine spec
   CHARACTER            :: pack
   INTEGER              :: Lfindzero_old, mfreeits_old
   REAL                 :: gBnbld_old
-  INTEGER              :: lnPtrj, numTrajTotal
+  INTEGER              :: lnPtrj, numTrajTotal, Lfindzero_temp
 
   !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -501,11 +501,18 @@ subroutine spec
     SALLOCATE( dRodZ, (1:Ntz,0:3,1:mn), zero )
     SALLOCATE( dZodR, (1:Ntz,0:3,1:mn), zero )
     SALLOCATE( dZodZ, (1:Ntz,0:3,1:mn), zero )
+    SALLOCATE( dRadR, (1:mn,0:1,0:1,1:mn), zero ) ! calculated in rzaxis; 19 Sep 16;
+    SALLOCATE( dRadZ, (1:mn,0:1,0:1,1:mn), zero )
+    SALLOCATE( dZadR, (1:mn,0:1,0:1,1:mn), zero )
+    SALLOCATE( dZadZ, (1:mn,0:1,0:1,1:mn), zero )
 
     LComputeDerivatives = .true.
 
     LComputeAxis = .true.
+    Lfindzero_temp = Lfindzero
+    Lfindzero = 2 ! Necessary to trigger axis recomputation in packxi
     WCALL( xspech, dforce, ( NGdof, position(0:NGdof), force_final(0:NGdof), LComputeDerivatives, LComputeAxis) )
+    Lfindzero = Lfindzero_temp
 
   else
     SALLOCATE( force_final, (0:NGdof), zero )

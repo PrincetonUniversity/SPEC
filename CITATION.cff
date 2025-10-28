@@ -63,7 +63,7 @@ keywords:
   - magnetohydrodynamics
   - SPEC
   - MRxMHD
-license: GPL-3.0
+license: MIT
 commit: 5996ea6db8cea383c659fced8e6a2c24cd774642
 version: "3.20"
 date-released: "2022-07-01"
