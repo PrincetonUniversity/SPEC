@@ -82,7 +82,7 @@ module numerical
   REAL, parameter :: vsmall = 100*machprec         !< very small number
   REAL, parameter :: small = 10000*machprec        !< small number
   REAL, parameter :: sqrtmachprec = sqrt(machprec) !< square root of machine precision
-  REAL, parameter :: logtolerance = 1.0e-32        !< this is used to avoid taking alog10(zero); see e.g. dforce;
+  REAL, parameter :: logtolerance = 1.0e-32        !< this is used to avoid taking log10(zero); see e.g. dforce;
 
 end module numerical
 

@@ -151,14 +151,14 @@ subroutine newton( NGdof, position, ihybrd )
 
    if( myid.eq.0 ) then ! screen output;
     cput = GETTIME
-    ; write(ounit,1000) cput-cpus, nFcalls, nDcalls, ForceErr,  cput-lastcpu, "|BB|e", alog10(BBe(1:min(Mvol-1,28)))
+    ; write(ounit,1000) cput-cpus, nFcalls, nDcalls, ForceErr,  cput-lastcpu, "|BB|e", log10(BBe(1:min(Mvol-1,28)))
     if( Igeometry.ge.3 ) then ! include spectral constraints;
-     ;write(ounit,1001)                                                                       "|II|o", alog10(IIo(1:min(Mvol-1,28)))
+     ;write(ounit,1001)                                                                       "|II|o", log10(IIo(1:min(Mvol-1,28)))
     endif
     if( NOTstellsym ) then
-     ;write(ounit,1001)                                                                       "|BB|o", alog10(BBo(1:min(Mvol-1,28)))
+     ;write(ounit,1001)                                                                       "|BB|o", log10(BBo(1:min(Mvol-1,28)))
      if( Igeometry.ge.3 ) then ! include spectral constraints;
-      write(ounit,1001)                                                                       "|II|e", alog10(IIe(1:min(Mvol-1,28)))
+      write(ounit,1001)                                                                       "|II|e", log10(IIe(1:min(Mvol-1,28)))
      endif
     endif
    endif
@@ -492,14 +492,14 @@ subroutine fcn1( NGdof, xx, fvec, irevcm )
 
      cput = GETTIME
 
-     ; write(ounit,1000) cput-cpus, nFcalls, nDcalls, ForceErr, cput-lastcpu, "|BB|e", alog10(BBe(1:min(Mvol-1,28)))
+     ; write(ounit,1000) cput-cpus, nFcalls, nDcalls, ForceErr, cput-lastcpu, "|BB|e", log10(BBe(1:min(Mvol-1,28)))
      if( Igeometry.ge.3 ) then ! include spectral constraints;
-      ;write(ounit,1001)                                                                      "|II|o", alog10(IIo(1:min(Mvol-1,28)))
+      ;write(ounit,1001)                                                                      "|II|o", log10(IIo(1:min(Mvol-1,28)))
      endif
      if( NOTstellsym ) then
-      ;write(ounit,1001)                                                                      "|BB|o", alog10(BBo(1:min(Mvol-1,28)))
+      ;write(ounit,1001)                                                                      "|BB|o", log10(BBo(1:min(Mvol-1,28)))
       if( Igeometry.ge.3 ) then ! include spectral constraints;
-       write(ounit,1001)                                                                      "|II|e", alog10(IIe(1:min(Mvol-1,28)))
+       write(ounit,1001)                                                                      "|II|e", log10(IIe(1:min(Mvol-1,28)))
       endif
      endif
      lastcpu = GETTIME
@@ -625,14 +625,14 @@ subroutine fcn2( NGdof, xx, fvec, fjac, Ldfjac, irevcm )
 
      cput = GETTIME
 
-     ; write(ounit,1000) cput-cpus, nFcalls, nDcalls, ForceErr, cput-lastcpu, "|BB|e", alog10(BBe(1:min(Mvol-1,28)))
+     ; write(ounit,1000) cput-cpus, nFcalls, nDcalls, ForceErr, cput-lastcpu, "|BB|e", log10(BBe(1:min(Mvol-1,28)))
      if( Igeometry.ge.3 ) then ! include spectral constraints;
-      ;write(ounit,1001)                                                                      "|II|o", alog10(IIo(1:min(Mvol-1,28)))
+      ;write(ounit,1001)                                                                      "|II|o", log10(IIo(1:min(Mvol-1,28)))
      endif
      if( NOTstellsym ) then
-      ;write(ounit,1001)                                                                      "|BB|o", alog10(BBo(1:min(Mvol-1,28)))
+      ;write(ounit,1001)                                                                      "|BB|o", log10(BBo(1:min(Mvol-1,28)))
       if( Igeometry.ge.3 ) then ! include spectral constraints;
-       write(ounit,1001)                                                                      "|II|e", alog10(IIe(1:min(Mvol-1,28)))
+       write(ounit,1001)                                                                      "|II|e", log10(IIe(1:min(Mvol-1,28)))
       endif
      endif
      lastcpu = GETTIME

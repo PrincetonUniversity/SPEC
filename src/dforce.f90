@@ -571,11 +571,11 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
   if( Wdforce .and. myid.eq.0 ) then
 
     cput = GETTIME
-    ;                   ; write(ounit,4000) cput-cpus, ForceErr, cput-cpuo, "|BB|e", alog10(BBe(1:min(Mvol-1,28)))
-    if( Igeometry.ge.3 )  write(ounit,4001)                                 "|II|o", alog10(IIo(1:min(Mvol-1,28)))
+    ;                   ; write(ounit,4000) cput-cpus, ForceErr, cput-cpuo, "|BB|e", log10(BBe(1:min(Mvol-1,28)))
+    if( Igeometry.ge.3 )  write(ounit,4001)                                 "|II|o", log10(IIo(1:min(Mvol-1,28)))
     if( NOTstellsym ) then
-      ;                  ; write(ounit,4001)                                 "|BB|o", alog10(BBo(1:min(Mvol-1,28)))
-      if( Igeometry.ge.3 ) write(ounit,4001)                                 "|II|e", alog10(IIe(1:min(Mvol-1,28)))
+      ;                  ; write(ounit,4001)                                 "|BB|o", log10(BBo(1:min(Mvol-1,28)))
+      if( Igeometry.ge.3 ) write(ounit,4001)                                 "|II|e", log10(IIe(1:min(Mvol-1,28)))
     endif
 
   endif ! end of if( Wdforce .and. myid.eq.0 ) ;
