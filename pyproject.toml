@@ -2,7 +2,7 @@
 requires = [
     "scikit-build-core>=0.8.0",
     "numpy>=2.2",
-    "f90wrap",
+    "f90wrap<0.3",
     "meson;python_version>='3.12'", 
     "ninja"
 ]
@@ -36,7 +36,7 @@ classifiers = [
 ]
 dependencies = [
     "numpy>=1.23.5",
-    "f90wrap",
+    "f90wrap<0.3",
 ]
 
 
