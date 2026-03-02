@@ -192,8 +192,8 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
       write(ounit,1001) cput-cpus, myid, vvol, irz, mi, ni, ( oBBdRZ(vvol,1,idof) + oBBdRZ(vvol+1,0,idof) ) / psifactor(ii,vvol) ! ENERGY GRADIENT;
       FATAL( hesian, Igeometry.eq.1, Cartesian geometry does not need regularization factor )
 
-1000  format("hesian : ",f10.2," : ":"myid=",i3," ; ":"vvol=",i3," ; ":"irz="i2" ; (",i3," ,",i3," ) ; "a17" ["es15.7","es15.7" ]")
-1001  format("hesian : ",f10.2," : ":"myid=",i3," ; ":"vvol=",i3," ; ":"irz="i2" ; (",i3," ,",i3," ) ;   "es15.7" ; ")
+1000  format("hesian : ",f10.2," : ":"myid=",i3," ; ":"vvol=",i3," ; ":"irz=",i2," ; (",i3," ,",i3," ) ; "a17," ["es15.7","es15.7" ]")
+1001  format("hesian : ",f10.2," : ":"myid=",i3," ; ":"vvol=",i3," ; ":"irz=",i2," ; (",i3," ,",i3," ) ;   "es15.7," ; ")
 
      enddo ! end of do issym; 26 Feb 13;
 
@@ -373,9 +373,9 @@ endif
 #endif
 
 1001   format("hesian : ",f10.2," : myid=",i3, &
-     " ; vvol=",i3," ; ("i4" ,"i4" ); irz="i2" ; issym="i2" ; tdof="i6 &
-     " ; jvol="i4" ; ("i4" ,"i4" ); jrz="i2" ; jssym="i2" ; tdoc="i6 &
-     " ; fd-estimate="es13.5" & hessian("i6","i6" )="es13.5" ;":" err="es13.5" ;":,f12.4" ;")
+     " ; vvol=",i3," ; ("i4" ,"i4" ); irz=",i2," ; issym=",i2," ; tdof=",i6 &
+     " ; jvol=",i4," ; ("i4" ,"i4" ); jrz=",i2," ; jssym=",i2," ; tdoc=",i6 &
+     " ; fd-estimate=",es13.5" & hessian("i6","i6" )=",es13.5," ;":" err=",es13.5," ;":,f12.4," ;")
 
       enddo ! end of do issym;
 
@@ -426,7 +426,7 @@ endif
 
 !  if( LHmatrix ) then
 !
-!   if( myid.eq.0 ) then ; cput = GETTIME ; write(ounit,'("hesian : ",f10.2," : LHmatrix="L2" ;")')cput-cpus, LHmatrix ;
+!   if( myid.eq.0 ) then ; cput = GETTIME ; write(ounit,'("hesian : ",f10.2," : LHmatrix=",L2," ;")')cput-cpus, LHmatrix ;
 !    open(munit, file=trim(get_hidden(ext))//".GF.ma", status="unknown", form="unformatted")
 !    write(munit) NGdof
 !    write(munit) ohessian(1:NGdof,1:NGdof)
@@ -439,7 +439,7 @@ endif
 ! if( myid.eq.0 .and. ( LHevalues .or. LHevectors ) ) then ! the call to dforce below requires all cpus; 04 Dec 14;
   if(                 ( LHevalues .or. LHevectors ) ) then
 
-   if( myid.eq.0 ) then ; cput = GETTIME ; write(ounit,'("hesian : ",f10.2," : LHevalues="L2" , LHevectors="L2" ;")')cput-cpus, LHevalues, LHevectors
+   if( myid.eq.0 ) then ; cput = GETTIME ; write(ounit,'("hesian : ",f10.2," : LHevalues=",L2" , LHevectors=",L2," ;")')cput-cpus, LHevalues, LHevectors
    endif
 
    evalr(1:NGdof) = zero ; evecr(1:NGdof,1:NGdof) = zero
@@ -469,11 +469,11 @@ endif
    if( myid.eq.0 ) then
    cput = GETTIME
      if (if02ebf < 0) then
-        write(ounit,'("hesian : ",f10.2," : DGEEV error the "i2" th argument had illegal value  ;   time="f10.2"s ;")') cput-cpus, -if02ebf, cput-cpul
+        write(ounit,'("hesian : ",f10.2," : DGEEV error the "i2" th argument had illegal value  ;   time=",f10.2"s ;")') cput-cpus, -if02ebf, cput-cpul
      else if (if02ebf > 0) then
-        write(ounit,'("hesian : ",f10.2," : DGEEV error, factorization failed  ;   time="f10.2"s ;")') cput-cpus, cput-cpul
+        write(ounit,'("hesian : ",f10.2," : DGEEV error, factorization failed  ;   time=",f10.2"s ;")') cput-cpus, cput-cpul
      else
-        write(ounit,'("hesian : ",f10.2," : computed evalues ; if02ebf="i2" ; success ;       time="f10.2"s ;")') cput-cpus, if02ebf, cput-cpul
+        write(ounit,'("hesian : ",f10.2," : computed evalues ; if02ebf=",i2," ; success ;       time=",f10.2"s ;")') cput-cpus, if02ebf, cput-cpul
      endif
   endif
 
@@ -481,7 +481,7 @@ endif
 
 !   ieval(1:1) = minloc( evalr(1:NGdof) ) ! 04 Dec 14;
 !   if( myid.eq.0) then ! screen output; 04 Dec 14;
-!   write(ounit,'("hesian : " 10x " : evalr("i4") ="es13.5" ="es13.5" ;")') ieval(1), evalr(ieval(1)), minval(evalr(1:NGdof))
+!   write(ounit,'("hesian : " 10x " : evalr("i4,") =",es13.5" =",es13.5," ;")') ieval(1), evalr(ieval(1)), minval(evalr(1:NGdof))
 !   endif
 !
 !   do ifd = -1, -6, -1 ; dRZ = ten**ifd
@@ -497,7 +497,7 @@ endif
 !     write(ounit,'("hesian : " 10x " :             ",2es23.15," ;")')    Energy - oldEnergy(0), ( Energy-oldEnergy(0) ) / dRZ**2
 !     write(ounit,'("hesian : " 10x " :             ",2es23.15," ;")')    evalr(ieval(1)) * dRZ**2, evalr(ieval(1))
 !    !write(ounit,'("hesian : " 10x " : |evector|  =",es23.15," ;")')    sum(evecr(1:NGdof,ieval(1))*evecr(1:NGdof,ieval(1)))
-!    !write(ounit,'("hesian : ", 10x  " : "999(" ("i3","i3")":))') (/ ( im(ii), in(ii), ii = 1, mn ) /)
+!    !write(ounit,'("hesian : ", 10x  " : "999(" ("i3","i3,")":))') (/ ( im(ii), in(ii), ii = 1, mn ) /)
 !    !do lvol = 1, Mvol-1
 !    ! write(ounit,'("hesian : ",i10   " : "999es10.2         )') lvol, evecr(1+mn*(lvol-1):mn+mn*(lvol-1),ieval(1))
 !    !enddo
@@ -509,7 +509,7 @@ endif
 !
 !   enddo ! end of do ifd; 04 Dec 14;
 !
-!  !do igdof = 1, NGdof ; write(ounit,'("hesian : " 10x " : "f15.11" ="f15.11" ;")') evecr(igdof,ieval(1)), ff(igdof,0) / dRZ / evalr(ieval(1))
+!  !do igdof = 1, NGdof ; write(ounit,'("hesian : " 10x " : "f15.11" =",f15.11," ;")') evecr(igdof,ieval(1)), ff(igdof,0) / dRZ / evalr(ieval(1))
 !  !enddo
 !
 !   pack = 'U' !; position(0) = zero ! this is not used; 11 Aug 14; ! reset geometry (Rbc, Zbs, etc.) to original values; 04 Dec 14;
@@ -533,8 +533,8 @@ endif
 
      do iev = 1, NGdof ! loop over all eigenvalues; 04 Dec 14;
       if( evalr(iev).lt.zero ) then ! only show unstable eigenvalues; 04 Dec 14;
-       write(ounit,'("hesian : ",f10.2," : evalr="es13.5" ; ")') cput-cpus, evalr(iev)
-       write(ounit,'("hesian : ",es10.3," : "999(" ("i3","i3")":))') evalr(iev), (/ ( im(ii), in(ii), ii = 1, mn ) /)
+       write(ounit,'("hesian : ",f10.2," : evalr=",es13.5," ; ")') cput-cpus, evalr(iev)
+       write(ounit,'("hesian : ",es10.3," : "999(" ("i3","i3,")":))') evalr(iev), (/ ( im(ii), in(ii), ii = 1, mn ) /)
        do lvol = 1, Mvol-1 ; write(ounit,'("hesian : ",i10   " : "999es10.2)') lvol, evecr(1+mn*(lvol-1):mn+mn*(lvol-1),iev)
        enddo
       endif
@@ -566,9 +566,9 @@ endif
 !    do jev = 1, NGdof
 !     if( irank(jev).eq.iev ) then
 !      if( LHevectors ) then
-!       write(ounit,'("hesian : ",f10.2," : ",i6," : evalr="es10.2" ; ":"evecr="999f8.3)') cput-cpus, iev, evalr(jev), evecr(1:NGdof,jev)
+!       write(ounit,'("hesian : ",f10.2," : ",i6," : evalr=",es10.2," ; ":"evecr="999f8.3)') cput-cpus, iev, evalr(jev), evecr(1:NGdof,jev)
 !      !if( evalr(jev).lt.zero ) write(ounit,'(13es13.05)') evecr(1:NGdof,jev)
-!       write(ounit,'("hesian : ",f10.2," : ",i6," : evali="es10.2" ; ":"eveci="999f8.3)') cput-cpus, iev, evali(jev), eveci(1:NGdof,jev)
+!       write(ounit,'("hesian : ",f10.2," : ",i6," : evali=",es10.2," ; ":"eveci="999f8.3)') cput-cpus, iev, evali(jev), eveci(1:NGdof,jev)
 !       write(ounit,'("hesian : ",f10.2," :                           ":"      "       )') cput-cpus
 !      else
 !       write(ounit,'("hesian : ",f10.2," : ",i6," : evalue=(",es13.5," ,",es13.5," ) ;")') cput-cpus, iev, evalr(jev), evali(jev) ! 04 Dec 14;
@@ -628,9 +628,9 @@ endif
          work4(1:4*NGdof), iwork4(1:NGdof), idgesvx )
 
     select case( idgesvx )
-    case( 0   )    ; write(ounit,'("hesian : " 10x " : myid="i3" ; linear perturbation ; idgesvx="i3" ;")') myid, idgesvx
-    case( 1:  )    ; write(ounit,'("hesian : " 10x " : myid="i3" ; singular matrix     ; idgesvx="i3" ;")') myid, idgesvx
-    case( :-1 )    ; write(ounit,'("hesian : " 10x " : myid="i3" ; input error         ; idgesvx="i3" ;")') myid, idgesvx
+    case( 0   )    ; write(ounit,'("hesian : " 10x " : myid=",i3," ; linear perturbation ; idgesvx=",i3," ;")') myid, idgesvx
+    case( 1:  )    ; write(ounit,'("hesian : " 10x " : myid=",i3," ; singular matrix     ; idgesvx=",i3," ;")') myid, idgesvx
+    case( :-1 )    ; write(ounit,'("hesian : " 10x " : myid=",i3," ; input error         ; idgesvx=",i3," ;")') myid, idgesvx
     case default ; FATAL( hesian, .true., illegal ifail returned from dgesvx )
     end select
 
@@ -683,9 +683,9 @@ endif
    determinant = sgn*determinant                 !correct for the sign of the determinant; 09 Nov 17
 
    select case( idgetrf )
-   case( 0   )    ; write(ounit,'("hesian : " 10x " : myid="i3" ; idgetrf="i3" ;             ; determinant="es13.5" ;")') myid, idgetrf, determinant
-   case( 1:  )    ; write(ounit,'("hesian : " 10x " : myid="i3" ; idgetrf="i3" ; singular    ; determinant="es13.5" ;")') myid, idgetrf, determinant
-   case( :-1 )    ; write(ounit,'("hesian : " 10x " : myid="i3" ; idgetrf="i3" ; input error ; determinant="es13.5" ;")') myid, idgetrf, determinant
+   case( 0   )    ; write(ounit,'("hesian : " 10x " : myid=",i3," ; idgetrf=",i3," ;             ; determinant=",es13.5," ;")') myid, idgetrf, determinant
+   case( 1:  )    ; write(ounit,'("hesian : " 10x " : myid=",i3," ; idgetrf=",i3," ; singular    ; determinant=",es13.5," ;")') myid, idgetrf, determinant
+   case( :-1 )    ; write(ounit,'("hesian : " 10x " : myid=",i3," ; idgetrf=",i3," ; input error ; determinant=",es13.5," ;")') myid, idgetrf, determinant
    case default ; FATAL( hesian, .true., illegal ifail returned from dgetrf )
    end select
 

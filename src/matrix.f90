@@ -656,8 +656,8 @@ subroutine matrix( lvol, mn, lrad )
 
   endif ! end of if( Wmatrix ) ;
 
-1000 format("matrix : " 10x " : myid="i3" : dMA(ii,jj)="es23.15", dMA(jj,ii)="es23.15", dMA(ii,jj)-dMA(jj,ii)="es13.5" ;")
-1001 format("matrix : " 10x " : myid="i3" : dMD(ii,jj)="es23.15", dMD(jj,ii)="es23.15", dMD(ii,jj)-dMD(jj,ii)="es13.5" ;")
+1000 format("matrix : " 10x " : myid=",i3," : dMA(ii,jj)=",es23.15", dMA(jj,ii)=",es23.15", dMA(ii,jj)-dMA(jj,ii)=",es13.5," ;")
+1001 format("matrix : " 10x " : myid=",i3," : dMD(ii,jj)=",es23.15", dMD(jj,ii)=",es23.15", dMD(ii,jj)-dMD(jj,ii)=",es13.5," ;")
 
 #endif
 

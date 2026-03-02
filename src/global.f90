@@ -1217,11 +1217,11 @@ subroutine check_inputs()
    write(ounit,1014)            pscale, Ladiabatic, Lconstraint, mupftol, mupfits
    write(ounit,1015)            Lrad(1:min(Mvol,32))
 
-1010 format("readin : ",f10.2," : Igeometry=",i3," ; Istellsym=",i3," ; Lreflect="i3" ;")
-1011 format("readin : ", 10x ," : Lfreebound=",i3," ; phiedge="es23.15" ; curtor="es23.15" ; curpol="es23.15" ;")
-1012 format("readin : ", 10x ," : gamma="es23.15" ;")
+1010 format("readin : ",f10.2," : Igeometry=",i3," ; Istellsym=",i3," ; Lreflect=",i3," ;")
+1011 format("readin : ", 10x ," : Lfreebound=",i3," ; phiedge=",es23.15," ; curtor=",es23.15," ; curpol=",es23.15," ;")
+1012 format("readin : ", 10x ," : gamma=",es23.15," ;")
 1013 format("readin : ", 10x ," : Nfp=",i3," ; Nvol=",i3," ; Mvol=",i3," ; Mpol=",i3," ; Ntor=",i3," ;")
-1014 format("readin : ", 10x ," : pscale="es13.5" ; Ladiabatic="i2" ; Lconstraint="i3" ; mupf: tol,its="es10.2" ,"i4" ;")
+1014 format("readin : ", 10x ," : pscale=",es13.5," ; Ladiabatic=",i2," ; Lconstraint=",i3," ; mupf: tol,its=",es10.2," ,",i4," ;")
 1015 format("readin : ", 10x ," : Lrad = "257(i2,",",:))
 
 #ifdef DEBUG
@@ -1327,7 +1327,7 @@ subroutine check_inputs()
    enddo
 
    if (Igeometry.ge.2 .and. Lrad(1).lt.Mpol) then
-     write(ounit,'("readin : ",f10.2," : Minimum Lrad(1) is Mpol, automatically adjusted it to Mpol+4")') cput-cpus
+     write(ounit,'("readin : ",f10.2," : Minimum Lrad(1) is Mpol, automatically adjusted it to Mpol+4,")') cput-cpus
      Lrad(1) = Mpol + 4
    endif
    FATAL( readin, mupfits.le.0, must give ma01aa:hybrj a postive integer value for the maximum iterations = mupfits given on input )
@@ -1343,10 +1343,10 @@ subroutine check_inputs()
    write(ounit,1022)            Lsparse, Lsvdiota, imethod, iorder, iprecon, iotatol
    write(ounit,1023)            Lextrap, Mregular, Lrzaxis, Ntoraxis
 
-1020 format("readin : ",f10.2," : Linitialize=",i3," ;LautoinitBn=",i3," ; Lzerovac=",i2," ; Ndiscrete="i2" ;")
-1021 format("readin : ", 10x ," : Nquad="i4" ; iMpol="i4" ; iNtor="i4" ;")
-1022 format("readin : ", 10x ," : Lsparse="i2" ; Lsvdiota="i2" ; imethod="i2" ; iorder="i2" ; iprecon="i2" ; iotatol="es13.5" ;")
-1023 format("readin : ", 10x ," : Lextrap="i2" ; Mregular="i3" ; Lrzaxis="i2" ; Ntoraxis="i2" ; Lvcgrid="i2" ;")
+1020 format("readin : ",f10.2," : Linitialize=",i3," ;LautoinitBn=",i3," ; Lzerovac=",i2," ; Ndiscrete=",i2," ;")
+1021 format("readin : ", 10x ," : Nquad=",i4," ; iMpol=",i4," ; iNtor=",i4," ;")
+1022 format("readin : ", 10x ," : Lsparse=",i2," ; Lsvdiota=",i2," ; imethod=",i2," ; iorder=",i2," ; iprecon=",i2," ; iotatol=",es13.5," ;")
+1023 format("readin : ", 10x ," : Lextrap=",i2," ; Mregular=",i3," ; Lrzaxis=",i2," ; Ntoraxis=",i2," ; Lvcgrid=",i2," ;")
 
    FATAL( readin, Ndiscrete.le.0, error )
 
@@ -1368,7 +1368,7 @@ subroutine check_inputs()
 
    write(ounit,1030) cput-cpus, LBeltrami, Linitgues, Lmatsolver, LGMRESprec, NiterGMRES, epsGMRES, epsILU
 
-1030 format("readin : ",f10.2," : LBeltrami="i2" ; Linitgues="i2" ; Lmatsolver="i2" ; LGMRESprec="i2" ; NiterGMRES="i4" ; epsGMRES="es13.5" ; epsILU="es13.5" ;" )
+1030 format("readin : ",f10.2," : LBeltrami=",i2," ; Linitgues=",i2," ; Lmatsolver=",i2," ; LGMRESprec=",i2," ; NiterGMRES=",i4," ; epsGMRES=",es13.5," ; epsILU=",es13.5," ;" )
 
    FATAL( readin, LBeltrami.lt.0 .or. LBeltrami.gt.7, error )
    FATAL( readin, Lmatsolver.lt.0 .or. Lmatsolver.gt.3, error )
@@ -1389,11 +1389,11 @@ subroutine check_inputs()
    write(ounit,1043)            mfreeits, gBntol, gBnbld
    write(ounit,1044)            vcasingeps, vcasingtol, vcasingits, vcasingper, vcNt, vcNz
 
-1040 format("readin : ",f10.2," : Lfindzero="i2" ;")
-1041 format("readin : ", 10x ," : escale="es13.5" ; opsilon="es13.5" ; pcondense="f7.3" ; epsilon="es13.5" ; wpoloidal="f7.4" ; upsilon="es13.5" ;")
-1042 format("readin : ", 10x ," : forcetol="es13.5" ; c05xmax="es13.5" ; c05xtol="es13.5" ; c05factor="es13.5" ; LreadGF="L2" ; ")
-1043 format("readin : ", 10x ," : mfreeits="i4" ; gBntol="es13.5" ; gBnbld="es13.5" ;")
-1044 format("readin : ", 10x ," : vcasingeps="es13.5" ; vcasingtol="es13.5" ; vcasingits="i6" ; vcasingper="i6" ; vcNt="i6" ; vcNz="i6" ;")
+1040 format("readin : ",f10.2," : Lfindzero=",i2," ;")
+1041 format("readin : ", 10x ," : escale=",es13.5," ; opsilon=",es13.5," ; pcondense=",f7.3," ; epsilon=",es13.5," ; wpoloidal=",f7.4," ; upsilon=",es13.5," ;")
+1042 format("readin : ", 10x ," : forcetol=",es13.5," ; c05xmax=",es13.5," ; c05xtol=",es13.5," ; c05factor=",es13.5," ; LreadGF=",L2," ; ")
+1043 format("readin : ", 10x ," : mfreeits=",i4," ; gBntol=",es13.5," ; gBnbld=",es13.5," ;")
+1044 format("readin : ", 10x ," : vcasingeps=",es13.5," ; vcasingtol=",es13.5," ; vcasingits=",i6," ; vcasingper=",i6," ; vcNt=",i6," ; vcNz=",i6," ;")
 
    FATAL( readin, escale      .lt.zero     , error )
    FATAL( readin, pcondense   .lt.one      , error )
@@ -1412,8 +1412,8 @@ subroutine check_inputs()
    write(ounit,1050) cput-cpus, odetol, nPpts
    write(ounit,1051)            LHevalues, LHevectors, LHmatrix, Lperturbed, dpp, dqq, dRZ, Lcheck, Ltiming
 
-1050 format("readin : ",f10.2," : odetol="es10.2" ; nPpts="i6" ;")
-1051 format("readin : ", 10x ," : LHevalues="L2" ; LHevectors="L2" ; LHmatrix="L2" ; Lperturbed="i2" ; dpp="i3" ; dqq="i3" ; dRZ="es16.8" ; Lcheck="i3" ; Ltiming="L2" ;")
+1050 format("readin : ",f10.2," : odetol=",es10.2," ; nPpts=",i6," ;")
+1051 format("readin : ", 10x ," : LHevalues=",L2," ; LHevectors=",L2," ; LHmatrix=",L2," ; Lperturbed=",i2," ; dpp=",i3," ; dqq=",i3," ; dRZ=",es16.8," ; Lcheck=",i3," ; Ltiming=",L2," ;")
 
    FATAL( readin, odetol.le.zero, input error )
   !FATAL( readin, absreq.le.zero, input error )

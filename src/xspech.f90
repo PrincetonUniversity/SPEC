@@ -177,14 +177,14 @@ subroutine xspech
   if (myid.eq.0) then
    cput = GETTIME
    write(ounit,'("xspech : ", 10x ," :")')
-   write(ounit,'("xspech : ",f10.2," : myid=",i3," : time="f8.2"m = "f6.2"h = "f5.2"d ;")') cput-cpus, myid, (cput-cpus) / (/ 60, 60*60, 24*60*60 /)
+   write(ounit,'("xspech : ",f10.2," : myid=",i3," : time=",f8.2"m = "f6.2"h = "f5.2"d ;")') cput-cpus, myid, (cput-cpus) / (/ 60, 60*60, 24*60*60 /)
   endif
 
   MPIFINALIZE
 
   stop
 
-1000 format("xspech : ",f10.2," : date="a4"/"a2"/"a2" , "a2":"a2":"a2" ; machine precision="es9.2" ; vsmall="es9.2" ; small="es9.2" ;")
+1000 format("xspech : ",f10.2," : date="a4"/"a2"/"a2" , "a2":"a2":"a2," ; machine precision=",es9.2," ; vsmall=",es9.2," ; small=",es9.2," ;")
 
 end subroutine xspech
 
@@ -553,8 +553,8 @@ subroutine spec
    endif
   endif
 
-1000 format("xspech : ",f10.2," : #freeits=",i3," ; ":"|f|="es12.5" ; ":"time=",f10.2,"s ;":" log"a5,:"="28f6.2" ...")
-1001 format("xspech : ", 10x ," :          ",3x," ; ":"    "  12x "   ":"     ", 10x ,"  ;":" log"a5,:"="28f6.2" ...")
+1000 format("xspech : ",f10.2," : #freeits=",i3," ; ",:,"|f|=",es12.5," ; ",:,"time=",f10.2,"s ;",:" log",a5,:,"=",28f6.2," ...")
+1001 format("xspech : ", 10x ," :          ",3x," ; ",:,"    ",  12x, "   ",:,"     ", 10x ,"  ;",:" log",a5,:,"=",28f6.2," ...")
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -755,8 +755,8 @@ subroutine spec
     ;                   ; write(ounit,1003)
    endif ! end of if( myid.eq.0 ) ; 24 Nov 16;
 
-1003 format("xspech : " 10x " : ")
-1004 format("xspech : "f10.2" : nfreeboundaryiterations = "i6" / "i6.5" ; gBntol ="es8.1" ; bnserr =",es12.5," ; bnorml time ="f10.2"s ;")
+1003 format("xspech : ", 10x, " : ")
+1004 format("xspech : ",f10.2," : nfreeboundaryiterations = ",i6," / ",i6.5," ; gBntol =",es8.1," ; bnserr =",es12.5," ; bnorml time =",f10.2,"s ;")
 
   endif ! end of if( LupdateBn ) ;
 
@@ -859,7 +859,7 @@ subroutine final_diagnostics
 !   endif
 !  endif
 !
-!2000 format("finish : ",f10.2," : finished ",i3," ; ":"|f|="es12.5" ; ":"time=",f10.2,"s ;":" log"a5,:"="28f6.2" ...")
+!2000 format("finish : ",f10.2," : finished ",i3," ; ":"|f|=",es12.5," ; ":"time=",f10.2,"s ;":" log"a5,:"="28f6.2" ...")
 !2001 format("finish : ", 10x ," :          ",3x," ; ":"    "  12x "   ":"     ", 10x ,"  ;":" log"a5,:"="28f6.2" ...")
 
 
@@ -939,7 +939,7 @@ endif
 
    if( nPpts.gt.0 ) then
     write(ounit,'("xspech : ", 10x ," :")')
-    write(ounit,'("xspech : ",f10.2," : myid=",i3," ; Poincare plot ; odetol="es8.1" ; nPpts="i7" ;":" nPtrj="24(i5",")" ...")') &
+    write(ounit,'("xspech : ",f10.2," : myid=",i3," ; Poincare plot ; odetol=",es8.1," ; nPpts=",i7," ;",:" nPtrj=",24(i5,",")," ...")') &
                  cput-cpus, myid, odetol, nPpts, nPtrj(1:min(Mvol,24))
    endif
 
@@ -972,7 +972,7 @@ endif
     call pp00aa() ! do Poincare plots in all volumes; has its own paralellization over volumes internally
   endif
 
-1002 format("xspech : ",f10.2," :":" myid=",i3," ; vvol=",i3," ; IBeltrami="L2" ; construction of Beltrami field failed ;")
+1002 format("xspech : ",f10.2," :":" myid=",i3," ; vvol=",i3," ; IBeltrami=",L2," ; construction of Beltrami field failed ;")
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -1052,8 +1052,8 @@ dcpu, Ttotal / (/ 1, 60, 3600 /), ecpu, 100*ecpu/dcpu
    write(ounit,'("ending : ", 10x ," : ")')
   endif ! end of if( myid.eq.0 ) ; 14 Jan 15;
 
-1000 format("ending : ",f10.2," : myid=",i3," ; completion ; time=",f10.2,"s = "f8.2"m = "f6.2"h = "f5.2"d ; date= "&
-  a4"/"a2"/"a2" ; time= "a2":"a2":"a2" ; ext = "a60)
+1000 format("ending : ",f10.2," : myid=",i3," ; completion ; time=",f10.2,"s = ",f8.2,"m = ",f6.2,"h = ",f5.2,"d ; date= ",&
+  a4,"/",a2,"/",a2," ; time= ",a2,":",a2,":",a2," ; ext = ",a60)
 
 end subroutine ending
 
