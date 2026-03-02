@@ -230,7 +230,7 @@ subroutine preset
    else                                                                                          ; Lchangeangle = .false.
    endif
 
-   if( Lchangeangle ) write(ounit,'("readin : " 10x " : CHANGING ANGLE ;")')
+   if( Lchangeangle ) write(ounit,'("readin : " ,10x, " : CHANGING ANGLE ;")')
 
    do ii = 1, mn ; mm = im(ii) ; nn = in(ii) / Nfp ! set plasma boundary, computational boundary; 29 Apr 15;
 
