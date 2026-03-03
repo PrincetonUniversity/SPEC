@@ -35,7 +35,7 @@ subroutine hesian( NGdof, position, Mvol, mn, LGdof )
                         dFFdRZ,HdFFdRZ, dBBdmp, dmupfdx, hessian, dessian, Lhessianallocated, psifactor, &
                         hessian2D,dessian2D,Lhessian2Dallocated, &
                         Lhessian3Dallocated,denergydrr, denergydrz,denergydzr,denergydzz, &
-					            	LocalConstraint
+					            	LocalConstraint, dRodR, dRodZ, dZodR, dZodZ, dRadR, dRadZ, dZadR, dZadZ
   
   use sphdf5, only : write_stability
 
@@ -240,6 +240,15 @@ endif
    Lhessianallocated = .true.
   !endif
    !This step cleared.
+
+  dRodR = 0.0
+  dZodR = 0.0
+  dRodZ = 0.0
+  dZodZ = 0.0
+  dRadR = 0.0
+  dRadZ = 0.0
+  dZadR = 0.0
+  dZadZ = 0.0
 
   LComputeDerivatives = .true. !; position(0) = zero ! this is not used; 11 Aug 14;
   LComputeAxis = .false.
