@@ -176,8 +176,8 @@ subroutine curent( lvol, mn, Nt, Nz, iflag, ldItGp )
 !
 !  endif ! end of if( Wcurent ) ; 05 Feb 16;
 !
-!1000 format("curent : " 10x " : myid="i3" ; ideriv ="i2" ; ("i3","i3" ) : I_n ="es13.5" ;")
-!1010 format("curent : " 10x " : myid="i3" ; ideriv ="i2" ; ("i3","i3" ) : G_m ="es13.5" ;")
+!1000 format("curent : " 10x " : myid=",i3," ; ideriv =",i2," ; ("i3","i3" ) : I_n =",es13.5," ;")
+!1010 format("curent : " 10x " : myid=",i3," ; ideriv =",i2," ; ("i3","i3" ) : G_m =",es13.5," ;")
 !
 !#endif
 

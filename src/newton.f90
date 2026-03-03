@@ -113,7 +113,7 @@ subroutine newton( NGdof, position, ihybrd )
   if( Wnewton .and. myid.eq.0 ) then ! screen output;
    cput = GETTIME
    write(ounit,'("newton : ", 10x ," : ")')
-   write(ounit,'("newton : ",f10.2," : Lfindzero="i2" ; forcetol="es13.5" ; c05xtol="es13.5" ; c05factor="es13.5" ; LreadGF="L2" ; NGdof="i6" ;")')&
+   write(ounit,'("newton : ",f10.2," : Lfindzero=",i2," ; forcetol=",es13.5," ; c05xtol=",es13.5," ; c05factor=",es13.5," ; LreadGF=",L2," ; NGdof=",i6," ;")')&
                            cput-cpus,  Lfindzero,       forcetol,           c05xtol,           c05factor,           LreadGF,       NGdof
    write(ounit,'("newton : ", 10x ," : ")')
   endif
@@ -170,8 +170,8 @@ subroutine newton( NGdof, position, ihybrd )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-1000 format("newton : ",f10.2," : "i9,i3," ; ":"|f|="es12.5" ; ":"time=",f10.2,"s ;":" log"a5"="28f6.2" ...")
-1001 format("newton : ", 10x ," : "9x,3x" ; ":"    "  12x "   ":"     ", 10x ,"  ;":" log"a5"="28f6.2" ...")
+1000 format("newton : ",f10.2," : ",i9,i3," ; ",:,"|f|=",es12.5," ; ",:,"time=",f10.2,"s ;",:" log",a5,"=",28f6.2," ...")
+1001 format("newton : ", 10x ," : ",9x,3x," ; ",:,"    ",  12x, "   ",:,"     ", 10x ,"  ;",:" log",a5,"=",28f6.2," ...")
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -230,12 +230,12 @@ subroutine newton( NGdof, position, ihybrd )
    cput = GETTIME
    ;              write(ounit,'("newton : ", 10x ," :")')
    select case( ihybrd )
-   case( 1   )  ; write(ounit,'("newton : ",f10.2," : finished ; success        ; ic05p*f="i2" ; its="i7" ,"i4" ;")') cput-cpus, ihybrd, nFcalls, nDcalls
-   case( 0   )  ; write(ounit,'("newton : ",f10.2," : finished ; input error    ; ic05p*f="i2" ; its="i7" ,"i4" ;")') cput-cpus, ihybrd, nFcalls, nDcalls
-   case( 2   )  ; write(ounit,'("newton : ",f10.2," : finished ; max. iter      ; ic05p*f="i2" ; its="i7" ,"i4" ;")') cput-cpus, ihybrd, nFcalls, nDcalls
-   case( 3   )  ; write(ounit,'("newton : ",f10.2," : finished ; xtol too small ; ic05p*f="i2" ; its="i7" ,"i4" ;")') cput-cpus, ihybrd, nFcalls, nDcalls
-   case( 4:5 )  ; write(ounit,'("newton : ",f10.2," : finished ; bad progress   ; ic05p*f="i2" ; its="i7" ,"i4" ;")') cput-cpus, ihybrd, nFcalls, nDcalls
-   case default ; write(ounit,'("newton : ",f10.2," : finished ; illegal ifail  ; ic05p*f="i2" ; its="i7" ,"i4" ;")') cput-cpus, ihybrd, nFcalls, nDcalls
+   case( 1   )  ; write(ounit,'("newton : ",f10.2," : finished ; success        ; ic05p*f=",i2," ; its=",i7," ,",i4," ;")') cput-cpus, ihybrd, nFcalls, nDcalls
+   case( 0   )  ; write(ounit,'("newton : ",f10.2," : finished ; input error    ; ic05p*f=",i2," ; its=",i7," ,",i4," ;")') cput-cpus, ihybrd, nFcalls, nDcalls
+   case( 2   )  ; write(ounit,'("newton : ",f10.2," : finished ; max. iter      ; ic05p*f=",i2," ; its=",i7," ,",i4," ;")') cput-cpus, ihybrd, nFcalls, nDcalls
+   case( 3   )  ; write(ounit,'("newton : ",f10.2," : finished ; xtol too small ; ic05p*f=",i2," ; its=",i7," ,",i4," ;")') cput-cpus, ihybrd, nFcalls, nDcalls
+   case( 4:5 )  ; write(ounit,'("newton : ",f10.2," : finished ; bad progress   ; ic05p*f=",i2," ; its=",i7," ,",i4," ;")') cput-cpus, ihybrd, nFcalls, nDcalls
+   case default ; write(ounit,'("newton : ",f10.2," : finished ; illegal ifail  ; ic05p*f=",i2," ; its=",i7," ,",i4," ;")') cput-cpus, ihybrd, nFcalls, nDcalls
    end select
   endif ! end of if( myid.eq.0 ) then;
 
@@ -410,7 +410,7 @@ subroutine writereadgf( readorwrite, NGdof , ireadhessian )
 
 9999 return
 
-2000 format("newton : ",f10.2," : myid=",i3," ; "a31,:" old="i4" ; new="i4" ;")
+2000 format("newton : ",f10.2," : myid=",i3," ; "a31,:" old=",i4," ; new=",i4," ;")
 
 end subroutine writereadgf
 
@@ -534,8 +534,8 @@ subroutine fcn1( NGdof, xx, fvec, irevcm )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-1000 format("fcn1   : ",f10.2," : "i9,i3," ; ":"|f|="es12.5" ; ":"time=",f10.2,"s ;":" log"a5"="28f6.2" ...")
-1001 format("fcn1   : ", 10x ," : "9x,3x" ; ":"    "  12x "   ":"     ", 10x ,"  ;":" log"a5"="28f6.2" ...")
+1000 format("fcn1   : ",f10.2," : ",i9,i3," ; ",:,"|f|=",es12.5," ; ",:,"time=",f10.2,"s ;",:" log",a5,"=",28f6.2," ...")
+1001 format("fcn1   : ", 10x ," : ",9x,3x," ; ",:,"    ",  12x, "   ",:,"     ", 10x ,"  ;",:" log",a5,"=",28f6.2," ...")
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -727,8 +727,8 @@ subroutine fcn2( NGdof, xx, fvec, fjac, Ldfjac, irevcm )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-1000 format("fcn2   : ",f10.2," : "i9,i3," ; ":"|f|="es12.5" ; ":"time=",f10.2,"s ;":" log"a5"="28f6.2" ...")
-1001 format("fcn2   : ", 10x ," : "9x,3x" ; ":"    "  12x "   ":"     ", 10x ,"  ;":" log"a5"="28f6.2" ...")
+1000 format("fcn2   : ",f10.2," : ",i9,i3," ; ",:,"|f|=",es12.5," ; ",:,"time=",f10.2,"s ;",:" log",a5,"=",28f6.2," ...")
+1001 format("fcn2   : ", 10x ," : ",9x,3x," ; ",:,"    ",  12x, "   ",:,"     ", 10x ,"  ;",:" log",a5,"=",28f6.2," ...")
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

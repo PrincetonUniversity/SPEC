@@ -216,7 +216,7 @@ subroutine pc00ab( mode, NGdof, Position, Energy, Gradient, nstate, iuser, ruser
 
   RETURN(pc00ab)
 
-1000 format("pc00ab : ",f10.2," : iterations="2i8" ; mode=",i3," ; Energy="es23.15" ; |DF|="es13.5" ; ForceErr="es23.15" ;")
+1000 format("pc00ab : ",f10.2," : iterations="2i8," ; mode=",i3," ; Energy=",es23.15," ; |DF|=",es13.5," ; ForceErr=",es23.15," ;")
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

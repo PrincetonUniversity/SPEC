@@ -186,7 +186,7 @@ subroutine wa00aa( iwa00aa )
 
   if( Wwa00aa ) then
    cput = GETTIME
-   do ii = 1, iwall ; write(ounit,'("wa00aa : ",f10.2," : Nsegments="i9" ; ii="i9" ; R="f15.9" ; Z="f15.9" ;")') cput-cpus, Nsegments, ii, xpoly(ii), ypoly(ii)
+   do ii = 1, iwall ; write(ounit,'("wa00aa : ",f10.2," : Nsegments=",i9," ; ii=",i9," ; R=",f15.9," ; Z=",f15.9," ;")') cput-cpus, Nsegments, ii, xpoly(ii), ypoly(ii)
    enddo
   endif
 
@@ -209,9 +209,9 @@ subroutine wa00aa( iwa00aa )
   cput = GETTIME
   ;         ; write(ounit,'("wa00aa : ", 10x ," : ")')
   select case( ifail )
-  case( 0 ) ; write(ounit,'("wa00aa : ",f10.2," : prepared vacuum calculation; stage1="L2" ; ifail=",i3," ; success ;          ")') cput-cpus, stage1, ifail
-  case( 1 ) ; write(ounit,'("wa00aa : ",f10.2," : prepared vacuum calculation; stage1="L2" ; ifail=",i3," ; invalid tolerance ;")') cput-cpus, stage1, ifail
-  case( 2 ) ; write(ounit,'("wa00aa : ",f10.2," : prepared vacuum calculation; stage1="L2" ; ifail=",i3," ; incorrect rank ;   ")') cput-cpus, stage1, ifail
+  case( 0 ) ; write(ounit,'("wa00aa : ",f10.2," : prepared vacuum calculation; stage1=",L2," ; ifail=",i3," ; success ;          ")') cput-cpus, stage1, ifail
+  case( 1 ) ; write(ounit,'("wa00aa : ",f10.2," : prepared vacuum calculation; stage1=",L2," ; ifail=",i3," ; invalid tolerance ;")') cput-cpus, stage1, ifail
+  case( 2 ) ; write(ounit,'("wa00aa : ",f10.2," : prepared vacuum calculation; stage1=",L2," ; ifail=",i3," ; incorrect rank ;   ")') cput-cpus, stage1, ifail
   case default
    FATAL( wa00aa, .true., invalid ifail returned by D03EAF )
   end select
@@ -240,12 +240,12 @@ subroutine wa00aa( iwa00aa )
 
    cput = GETTIME
    select case( ifail )
-   case( :-1 ) ;               write(ounit,'("wa00aa : ",f10.2," : iangle="i6" ; ifail=",i3," ; outside domain ; FAIL ;   ")') cput-cpus, iangle, ifail
-   case(   0 ) ; if( Wwa00aa ) write(ounit,'("wa00aa : ",f10.2," : iangle="i6" ; ifail=",i3," ; success ;                 ")') cput-cpus, iangle, ifail
-   case(   1 ) ;               write(ounit,'("wa00aa : ",f10.2," : iangle="i6" ; ifail=",i3," ; input error ; FAIL ;      ")') cput-cpus, iangle, ifail
-   case(   2 ) ;               write(ounit,'("wa00aa : ",f10.2," : iangle="i6" ; ifail=",i3," ; consider restart ; FAIL ; ")') cput-cpus, iangle, ifail
-   case(   3 ) ;               write(ounit,'("wa00aa : ",f10.2," : iangle="i6" ; ifail=",i3," ; xtol is too small ; FAIL ;")') cput-cpus, iangle, ifail
-   case(   4 ) ;               write(ounit,'("wa00aa : ",f10.2," : iangle="i6" ; ifail=",i3," ; bad progress ; FAIL ;     ")') cput-cpus, iangle, ifail
+   case( :-1 ) ;               write(ounit,'("wa00aa : ",f10.2," : iangle=",i6," ; ifail=",i3," ; outside domain ; FAIL ;   ")') cput-cpus, iangle, ifail
+   case(   0 ) ; if( Wwa00aa ) write(ounit,'("wa00aa : ",f10.2," : iangle=",i6," ; ifail=",i3," ; success ;                 ")') cput-cpus, iangle, ifail
+   case(   1 ) ;               write(ounit,'("wa00aa : ",f10.2," : iangle=",i6," ; ifail=",i3," ; input error ; FAIL ;      ")') cput-cpus, iangle, ifail
+   case(   2 ) ;               write(ounit,'("wa00aa : ",f10.2," : iangle=",i6," ; ifail=",i3," ; consider restart ; FAIL ; ")') cput-cpus, iangle, ifail
+   case(   3 ) ;               write(ounit,'("wa00aa : ",f10.2," : iangle=",i6," ; ifail=",i3," ; xtol is too small ; FAIL ;")') cput-cpus, iangle, ifail
+   case(   4 ) ;               write(ounit,'("wa00aa : ",f10.2," : iangle=",i6," ; ifail=",i3," ; bad progress ; FAIL ;     ")') cput-cpus, iangle, ifail
    case default
     FATAL( wa00aa, .true., invalid ifail returned by C05NBF )
    end select
@@ -344,9 +344,9 @@ subroutine VacuumPhi( Nconstraints, rho, fvec, iflag )
   cput = GETTIME
 
   select case( ifail )
-  case( 0 ) ; if( Wwa00aa ) write(ounit,'("wa00aa : ",f10.2," : stage1="L2" ; ifail=",i3," ; success ;          ")') cput-cpus, stage1, ifail
-  case( 1 ) ;               write(ounit,'("wa00aa : ",f10.2," : stage1="L2" ; ifail=",i3," ; invalid tolerance ;")') cput-cpus, stage1, ifail
-  case( 2 ) ;               write(ounit,'("wa00aa : ",f10.2," : stage1="L2" ; ifail=",i3," ; incorrect rank ;   ")') cput-cpus, stage1, ifail
+  case( 0 ) ; if( Wwa00aa ) write(ounit,'("wa00aa : ",f10.2," : stage1=",L2," ; ifail=",i3," ; success ;          ")') cput-cpus, stage1, ifail
+  case( 1 ) ;               write(ounit,'("wa00aa : ",f10.2," : stage1=",L2," ; ifail=",i3," ; invalid tolerance ;")') cput-cpus, stage1, ifail
+  case( 2 ) ;               write(ounit,'("wa00aa : ",f10.2," : stage1=",L2," ; ifail=",i3," ; incorrect rank ;   ")') cput-cpus, stage1, ifail
   case default
    FATAL( wa00aa, .true., invalid ifail returned by D03EAF )
   end select
@@ -362,7 +362,7 @@ subroutine VacuumPhi( Nconstraints, rho, fvec, iflag )
    write(ounit,1000)iangle, niterations, rho(1), px, py, alpha, fvec(1)
   endif
 
-1000 format("wa00aa : ", 10x ," : iangle="i6" ; nits=",i3," ; rho="es13.5" ; R,Z="2es23.15" ; alpha="es13.5" ; F="es13.5" ;")
+1000 format("wa00aa : ", 10x ," : iangle=",i6," ; nits=",i3," ; rho=",es13.5," ; R,Z="2es23.15," ; alpha=",es13.5," ; F=",es13.5," ;")
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

@@ -194,8 +194,8 @@ subroutine casing( teta, zeta, gBn, icasing )
   ;             ; if( Wcasing ) write(ounit,1001) cput-cpus, myid, Dxyz(1:3,globaljk), gBn, absest(1:Nfun), idcuhre, minpts, maxpts
 #endif
 
-1001 format("casing : ",f10.2," : myid=",i3," ; [x,y,z]=["es10.2" ,"es10.2" ,"es10.2" ]; gBn="es12.4" , ",&
-            "err="es8.0" ; ifail="i3" ; min/max calls="2i12" ; "a24)
+1001 format("casing : ",f10.2," : myid=",i3," ; [x,y,z]=["es10.2" ,"es10.2" ,"es10.2" ]; gBn=",es12.4" , ",&
+            "err=",es8.0," ; ifail=",i3," ; min/max calls="2i12," ; "a24)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
