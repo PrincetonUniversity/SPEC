@@ -319,7 +319,7 @@ subroutine spec
                         version, &
                         MPI_COMM_SPEC, &
                         force_final, Lhessianallocated, LocalConstraint, hessian, dBBdmp, dFFdRZ, dmupfdx, &
-                        dRodR, dRodZ, dZodR, dZodZ, dRadR, dRadZ, dZadR, dZadZ, dessian, LGdof
+                        dRodR, dRodZ, dZodR, dZodZ, dRadR, dRadZ, dZadR, dZadZ, dessian, LGdof, force_final_grad
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -514,6 +514,10 @@ subroutine spec
     WCALL( xspech, dforce, ( NGdof, position(0:NGdof), force_final(0:NGdof), LComputeDerivatives, LComputeAxis) )
     Lfindzero = Lfindzero_temp
 
+    ! Save force gradient for output to .h5 file
+    SALLOCATE( force_final_grad, (1:NGdof,1:NGdof), zero ) 
+    force_final_grad(1:NGdof,1:NGdof) = hessian(1:NGdof,1:NGdof)
+    
   else
     SALLOCATE( force_final, (0:NGdof), zero )
 

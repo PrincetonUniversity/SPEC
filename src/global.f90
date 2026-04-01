@@ -743,6 +743,7 @@ module allglobal
   REAL,    allocatable :: dessian3D(:,:) !< derivative Hessian 3D
 
   REAL,    allocatable :: force_final(:) !< Final force on the interfaces [inface*mode]
+  REAL,    allocatable :: force_final_grad(:, :) !< Final force gradient on the interfaces
 !> @}
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
