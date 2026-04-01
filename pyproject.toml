@@ -14,10 +14,11 @@ version = "0.0.3"
 description = "Stepped Pressure Equilibrium Code MHD Equilibrium Solver"
 authors = [
     {name = "Christopher Berg Smiet", email = "christopher.smiet@epfl.ch"},
-    {name = "Stuart R. Hudson"},
+    {name = "Stuart R. Hudson", email = "shudson@proximafusion.com"},
     {name = "Joaquim Loizu", email = "joaquim.loizu@epfl.ch"},
     {name = "Bharat Medasani", email = "mbkumar@gmail.com"},
-    {name = "Caoxiang Zhu"}
+    {name = "Caoxiang Zhu"},
+    {name = "Samuel Lazerson", email = "samuel.lazerson@gauss-fusion.com"},
 ]
 readme = "README.md"
 license = {file = "LICENSE"}
