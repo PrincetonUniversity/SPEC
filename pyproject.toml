@@ -65,3 +65,4 @@ SKBUILD = "ON"
 CMAKE_C_COMPILER = {env="CMAKE_ARGS_CMAKE_C_COMPILER", default="mpicc"}
 CMAKE_Fortran_COMPILER = {env="CMAKE_ARGS_CMAKE_Fortran_COMPILER", default="mpif90"}
 BLA_VENDOR = {env="CMAKE_ARGS_BLA_VENDOR", default="OpenBLAS"}
+FFTW3_ROOT_DIR = {env="FFTW3_ROOT_DIR", default=""}
