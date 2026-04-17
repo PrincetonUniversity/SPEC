@@ -28,7 +28,7 @@ def get_RZ_derivatives(
     in_ = self.output.in_
 
     #sbar = (sarr + 1) / 2
-    sbar = np.divide(np.add(sarr, 1.0), 2.0)
+    sbar = 0.5*(sarr+1.0)
     fac = []
 
     rpol = self.input.physics.rpol
@@ -160,47 +160,59 @@ def get_grid_and_jacobian_and_metric(
     in_ = self.output.in_
 
     #sbar = (sarr + 1) / 2
-    sbar = np.divide(np.add(sarr, 1.0), 2.0)
-    fac = []
+    sbar = 0.5*(sarr+1.0)
 
     Igeometry = self.input.physics.Igeometry
     rpol = self.input.physics.rpol
     rtor = self.input.physics.rtor
 
-    if Igeometry == 1:
-        for j in range(mn):
-            fac.append([sbar, 0.5 * np.ones(sarr.size), np.zeros(sarr.size)])
-    elif Igeometry == 2:
-        for j in range(mn):
-            if lvol > 0 or im[j] == 0:
-                fac.append([sbar, 0.5 * np.ones(sarr.size), np.zeros(sarr.size)])
-            else:
-                fac.append(
-                    [
-                        sbar ** (im[j] + 1.0),
-                        (im[j] + 1.0) / 2.0 * sbar ** (im[j]),
-                        (im[j] + 1.0) * (im[j]) / 4.0 * sbar ** (im[j] - 1),
-                    ]
-                )
-    elif Igeometry == 3:
-        for j in range(mn):
-            if lvol == 0 and im[j] == 0:
-                fac.append([sbar ** 2, sbar, 0.5 * np.ones(sarr.size)])
-            elif lvol == 0 and im[j] > 0:
-                fac.append(
-                    [
-                        sbar ** im[j],
-                        (im[j] / 2.0) * sbar ** (im[j] - 1.0),
-                        (im[j] * (im[j] - 1) / 4.0) * sbar ** (im[j] - 2.0),
-                    ]
-                )
-            else:
-                fac.append([sbar, 0.5 * np.ones(sarr.size), np.zeros(sarr.size)])
+    im_arr = im[:,None] # shape (mn,1)
+    sbar_arr = sbar[None, :]  # shape (1, ns)
 
+    sbar_full = np.broadcast_to(sbar_arr, (im.size, sbar.size)) # shape (mm,ns)
+    fac0 =  sbar_full.copy()
+    fac1 = 0.5 * np.ones_like(sbar_full)
+    fac2 = np.zeros_like(sbar_full)
+
+    if Igeometry == 2:
+
+        mask = (lvol == 0) & (im_arr != 0)
+        mask = np.broadcast_to(mask, fac0.shape)
+        
+        fac0[mask] = sbar_full[mask] ** (im_arr[mask] + 1)
+        fac1[mask] = (im_arr[mask] + 1)/2 * sbar_full[mask] ** im_arr[mask]
+        fac2[mask] = (im_arr[mask]*(im_arr[mask]-1)/4) * sbar_full[mask] ** (im_arr[mask]-1)
+
+    elif Igeometry == 3:
+        
+        if lvol == 0:
+            mask0 = (im_arr == 0)
+            maskp = (im_arr > 0)
+
+            mask0 = np.broadcast_to(mask0, fac0.shape)
+            maskp = np.broadcast_to(maskp, fac0.shape)
+
+            # precompute powers safely (with broadcasting)
+            sbar_pow_im   = sbar_full ** im_arr
+            sbar_pow_im1  = sbar_full ** (im_arr - 1)
+            sbar_pow_im2  = sbar_full ** (im_arr - 2)
+
+            fac0[mask0] = sbar_full[mask0]**2
+            fac1[mask0] = sbar_full[mask0]
+            fac2[mask0] = 0.5
+
+            fac0[maskp] = sbar_pow_im[maskp]
+            fac1[maskp] = (im_arr/2.0 * sbar_pow_im1)[maskp]
+            fac2[maskp] = ((im_arr*(im_arr-1)/4.0) * sbar_pow_im2)[maskp]
+        
+    # stack to match your original structur
+    fac = np.stack([fac0, fac1, fac2], axis=0)
+
+    ## old code
     # now fac has the dimension (number of modes, number of derivatives, number of s points)
-    fac = np.array(fac)
+    # fac = np.array(fac)  ### this is for old code
     # transpose to (number of derivatives, number of modes, number of s points)
-    fac = np.moveaxis(fac, 0, 1)
+    # fac = np.moveaxis(fac, 0, 1)
 
     nax = np.newaxis
     if not input1D:
@@ -211,7 +223,7 @@ def get_grid_and_jacobian_and_metric(
         im = im[:, nax]
         in_ = in_[:, nax]
         ang_arg = im * tarr[nax, :] - in_ * zarr[nax, :]
-
+    
     cos = np.cos(ang_arg)
     sin = np.sin(ang_arg)
 
@@ -237,36 +249,46 @@ def get_grid_and_jacobian_and_metric(
             Zac = Zac[:, nax]
             Zbc = Zbc[:, nax]
 
-    dR1 = Rac + fac[0] * (Rbc - Rac)
-    Rarr0 = np.sum(dR1 * cos, axis=0)
-
-    Rarr1 = np.sum(fac[1] * (Rbc - Rac) * cos, axis=0)
-    Rarr2 = np.sum(-im * dR1 * sin, axis=0)
-    Rarr3 = np.sum(in_ * dR1 * sin, axis=0)
+    dR = (Rbc - Rac)
+    fac1_dR = fac[1] * dR
+    dR1 = Rac + fac[0] * dR
+    Rarr0 = np.einsum("m...,m...->...", dR1, cos)
+    Rarr1 = np.einsum("m...,m...->...", fac1_dR, cos)
+    Rarr2 = -np.einsum("m...,m...,m...->...", im, dR1, sin)
+    Rarr3 =  np.einsum("m...,m...,m...->...", in_, dR1, sin)
 
     Rarr = np.array([Rarr1, Rarr2, Rarr3])
 
     # We only need Z for Igeometry=3
     if Igeometry == 3:
-        dZ1 = Zas + fac[0] * (Zbs - Zas)
-        Zarr0 = np.sum(dZ1 * sin, axis=0)
-
-        Zarr1 = np.sum(fac[1] * (Zbs - Zas) * sin, axis=0)
-        Zarr2 = np.sum(im * dZ1 * cos, axis=0)
-        Zarr3 = np.sum(-in_ * dZ1 * cos, axis=0)
-
+        dZ=(Zbs-Zas)        
+        dZ1 = Zas + fac[0] *dZ
+        fac1_dZ=fac[1]*dZ
+        Zarr0 = np.einsum("m...,m...->...", dZ1, sin)
+        Zarr1 = np.einsum("m...,m...->...", fac1_dZ, sin)
+        Zarr2 = np.einsum("m...,m...,m...->...", im, dZ1, cos)
+        Zarr3 =-np.einsum("m...,m...,m...->...", in_, dZ1, cos)
+        
         Zarr = np.array([Zarr1, Zarr2, Zarr3])
     else:
         Zarr0 = None
 
     # If the derivative of g and jacobian is needed
     if derivative:
-        Rarr11 = np.sum(fac[2] * (Rbc - Rac) * cos, axis=0)
-        Rarr12 = np.sum(-im * fac[1] * (Rbc - Rac) * sin, axis=0)
-        Rarr13 = np.sum(in_ * fac[1] * (Rbc - Rac) * sin, axis=0)
-        Rarr22 = np.sum(-(im ** 2) * dR1 * cos, axis=0)
-        Rarr23 = np.sum(im * in_ * dR1 * cos, axis=0)
-        Rarr33 = np.sum(-(in_ ** 2) * dR1 * cos, axis=0)
+
+        im2 = im * im
+        in2 = in_ * in_
+        imin = im * in_
+        fac2_dR = fac[2] * dR
+        dR1_cos = dR1 * cos
+
+        Rarr11 = np.einsum("m...,m...->...", fac2_dR, cos)
+        Rarr12 = -np.einsum("m...,m...,m...->...", im, fac1_dR, sin)
+        Rarr13 =  np.einsum("m...,m...,m...->...", in_, fac1_dR, sin)
+        
+        Rarr22 = -np.einsum("m...,m...->...", im2, dR1_cos)
+        Rarr23 =  np.einsum("m...,m...->...", imin, dR1_cos)
+        Rarr33 = -np.einsum("m...,m...->...", in2, dR1_cos)
 
         dRarr = np.array(
             [
@@ -277,12 +299,16 @@ def get_grid_and_jacobian_and_metric(
         )
 
         if Igeometry == 3:
-            Zarr11 = np.sum(fac[2] * (Zbs - Zas) * sin, axis=0)
-            Zarr12 = np.sum(im * fac[1] * (Zbs - Zas) * cos, axis=0)
-            Zarr13 = np.sum(-in_ * fac[1] * (Zbs - Zas) * cos, axis=0)
-            Zarr22 = np.sum(-(im ** 2) * dZ1 * sin, axis=0)
-            Zarr23 = np.sum(im * in_ * dZ1 * sin, axis=0)
-            Zarr33 = np.sum(-(in_ ** 2) * dZ1 * sin, axis=0)
+            
+            fac2_dZ = fac[2] * dZ
+            dZ1_sin = dZ1 * sin
+
+            Zarr11 = np.einsum("m...,m...->...", fac2_dZ, sin)
+            Zarr12 = np.einsum("m...,m...,m...->...", im, fac1_dZ, cos)
+            Zarr13 =-np.einsum("m...,m...,m...->...", in_, fac1_dZ, cos)
+            Zarr22 =-np.einsum("m...,m...->...", im2, dZ1_sin)
+            Zarr23 = np.einsum("m...,m...->...", imin, dZ1_sin)
+            Zarr33 =-np.einsum("m...,m...->...", in2, dZ1_sin)
 
             dZarr = np.array(
                 [
@@ -483,7 +509,7 @@ def get_B_covariant(self, Bcontrav=None, g=None, derivative=False):
 
 def get_volume(self, ivol=0, ns=64, nt=64, nz=64):
     """Returns volume occupied by volume ivol"""
-
+    
     # Create coordinate grid
     nfp = self.input.physics.Nfp
     tarr = np.linspace(0, 2*np.pi, nt, endpoint=True)
