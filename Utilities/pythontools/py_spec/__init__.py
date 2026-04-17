@@ -8,6 +8,8 @@ __version__ = metadata.version(__package__ or __name__)
 
 from .ci import test
 from .input.spec_namelist import SPECNamelist
+from .input.boundary_diagnostics import ToroidalSurface
 from .output.spec import SPECout
+from .output.plus import SPECoutplus
 from .math.spec_fft import spec_fft
 from .math.spec_invfft import spec_invfft

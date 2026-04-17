@@ -137,16 +137,16 @@ def get_grid_and_jacobian_and_metric(
     input1D=False,
     derivative=False,
 ):
-    """!Compute the metric and Jacobian on a given grid
+    r"""!Compute the metric and Jacobian on a given grid
 
     @param lvol (int, optional): The SPEC volume of interest, starting from 0. Defaults to 0.
     @param sarr (1D numpy array, optional): The s grid. Defaults to np.linspace(1,1,1).
-    @param tarr (1D numpy array, optional): The \f$\theta\f$ grid. Defaults to np.linspace(0,0,1).
-    @param zarr (1D numpy array, optional): The \f$\zeta\f$ grid. Defaults to np.linspace(0,0,1).
+    @param tarr (1D numpy array, optional): The $\theta$ grid. Defaults to np.linspace(0,0,1).
+    @param zarr (1D numpy array, optional): The $\zeta$ grid. Defaults to np.linspace(0,0,1).
     @param input1D If sarr, tarr and zarr should be treated as a grid in 3D or just 1D input. Defaults to False
-    @param derivative (bool, optional): If the derivatives of jacobian and \f$g_{ij}\f$ is needed.
+    @param derivative (bool, optional): If the derivatives of jacobian and $g_{ij}$ is needed.
 
-    @returns Rarr0, Zarr0, jacobian, g, [djacobian, dg]: \f$R, Z, J, g_{ij}\f$. If derivative==True also return the derivative of \f$J, g_{ij}\f$ (derivative is the first dimension).
+    @returns Rarr0, Zarr0, jacobian, g, [djacobian, dg]: $R, Z, J, g_{ij}$. If derivative==True also return the derivative of $J, g_{ij}$ (derivative is the first dimension).
     """
     sym = self.input.physics.Istellsym == 1
 
@@ -358,7 +358,7 @@ def get_grid_and_jacobian_and_metric(
     else:
         return Rarr0, Zarr0, jacobian, g
 
-def grid(
+def get_grid(
     self,
     lvol=0,
     sarr=np.linspace(1, 1, 1),
@@ -372,7 +372,7 @@ def grid(
     )
     return Rarr0, Zarr0
 
-def jacobian(
+def get_jacobian(
     self,
     lvol=0,
     sarr=np.linspace(1, 1, 1),
@@ -386,7 +386,7 @@ def jacobian(
     )
     return jacobian
 
-def metric(
+def get_metric(
     self,
     lvol=0,
     sarr=np.linspace(1, 1, 1),
@@ -411,17 +411,17 @@ def get_B(
     derivative=False,
     djacobian=None,
 ):
-    """!Compute the contravariant components of the magnetic field \f$(B^s, B^\theta, B^\zeta)\f$
+    r"""!Compute the contravariant components of the magnetic field $(B^s, B^\theta, B^\zeta)$
 
     @param lvol (int, optional): The SPEC volume of interest, starting from 0. Defaults to 0.
     @param jacobian(numpy array, optional): if jacobian is already computed, provide it here
     @param sarr (1D numpy array, optional): The s grid. Defaults to np.linspace(1,1,1).
-    @param tarr (1D numpy array, optional): The \f$\theta\f$ grid. Defaults to np.linspace(0,0,1).
-    @param zarr (1D numpy array, optional): The \f$\zeta\f$ grid. Defaults to np.linspace(0,0,1).
+    @param tarr (1D numpy array, optional): The $\theta$ grid. Defaults to np.linspace(0,0,1).
+    @param zarr (1D numpy array, optional): The $\zeta$ grid. Defaults to np.linspace(0,0,1).
     @param input1D If sarr, tarr and zarr should be treated as a grid in 3D or just 1D input. Defaults to False
     @param derivative (bool, optional): If the derivatives is needed.
 
-    @returns Bcontrav, [dBcontrav]: \f$(B^s, B^\theta, B^\zeta)\f$. If derivative==True also return the derivative (derivative is the first dimension).
+    @returns Bcontrav, [dBcontrav]: $(B^s, B^\theta, B^\zeta)$. If derivative==True also return the derivative (derivative is the first dimension).
     """
 
     if not derivative:
@@ -476,12 +476,12 @@ def get_modB(self, Bcontrav, g, derivative=False, dBcontrav=None, dg=None):
         ) + np.einsum("...i,...kji,...j->...k", Bcontrav, dg, Bcontrav)
         return modB, dmodB2
 
-def get_B_covariant(self, Bcontrav, g, derivative=False):
+def get_B_covariant(self, Bcontrav=None, g=None, derivative=False):
     """Get covariant component of B"""
     Bco = np.einsum("...i,...ji->...j", Bcontrav, g)
     return Bco
 
-def get_volume(self, ivol, ns=64, nt=64, nz=64):
+def get_volume(self, ivol=0, ns=64, nt=64, nz=64):
     """Returns volume occupied by volume ivol"""
 
     # Create coordinate grid
@@ -493,13 +493,40 @@ def get_volume(self, ivol, ns=64, nt=64, nz=64):
     else: sarr=np.linspace(-1,    1, ns)
 
     # Get jacobian
-    j = self.jacobian(lvol=ivol, sarr=sarr, tarr=tarr, zarr=zarr)
+    j = self.get_jacobian(lvol=ivol, sarr=sarr, tarr=tarr, zarr=zarr)
 
     # Integrate
     dt = tarr[1]-tarr[0]
     dz = zarr[1]-zarr[0]
     ds = sarr[1]-sarr[0]
     return nfp * integrate.simpson( y=integrate.simpson( y=integrate.simpson( y=j, x=zarr ), x=tarr ), x=sarr )
+
+def get_area(self, ivol=0,ns=64,nt=64,phi0=0):
+    """
+    Calculates cross-sectional area of a given volume at fixed phi
+
+    INPUT
+    -----
+    -data    : must be produced by calling read_spec(filename)
+    -lvol    : volume number
+    -smax    : max s
+    -ns      : is the resolution in the s-coordinate     (e.g. 64)
+    -nt      : is the resolution in the theta-coordinate (e.g. 64)
+    -phi0    : toroidal angle defining a toroidal plane
+
+    OUTPUT
+    ------
+    -Avol    : area in m^2 if geometrical dimensions (R,Z) are interpreted in meters."""
+    tarr = np.linspace(0, 2*np.pi, nt, endpoint=True)
+
+    if ivol==0: sarr=np.linspace(-0.999,1,ns)
+    else: sarr=np.linspace(-1,    1, ns)
+
+    # Get jacobian
+    j = self.get_jacobian(lvol=ivol, sarr=sarr, tarr=tarr, zarr=np.linspace(phi0,phi0,1))
+
+    # Integrate
+    return integrate.simpson( y=integrate.simpson( y=j, x=tarr ), x=sarr )
 
 def get_average_beta(self, ns=64, nt=64, nz=64):
     """Get beta averaged in plasma volume"""
@@ -591,7 +618,7 @@ def test_derivatives(self, lvol=0, s=0.3, t=0.4, z=0.5, delta=1e-6, tol=1e-6):
     modB = self.get_modB(Bcontra, g)
     B2 = modB ** 2
     R1, Z1, j1, g1, dj, dg = self.get_grid_and_jacobian_and_metric(lvol, np.array([s]), np.array([t]), np.array([z]), derivative=True)
-    Bcontra1, dBcontra = self.get_B(lvol, j1, np.array([s]), np.array([t]), np.array([z] ), False, True, dj )
+    Bcontra1, dBcontra = self.get_B(lvol, j1, np.array([s]), np.array([t]), np.array([z] ), False, True, dj ) # 
     modB1, dB2 = self.get_modB(Bcontra, g, True, dBcontra, dg)
 
     print('Differences in dBcontra')
@@ -703,7 +730,7 @@ def get_surface_current_density(self, lsurf:np.ndarray, nt:int=64, nz:int=64)->t
 
     return j_dot_B, tarr, zarr
 
-def get_surface(self, lsurf:np.ndarray=None, nt:int=64, nz:int=64):
+def get_surface_area(self, lsurf:np.ndarray=None, nt:int=64, nz:int=64):
     """Compute the surface area of a volume interface
     
     Args:
@@ -776,7 +803,7 @@ def get_flux_surface_average( self, lsurf, f, tarr, zarr ):
     # Get jacobian
     output = np.zeros(lsurf.shape)
     for ii, ll in enumerate(lsurf):
-        sqrtg = self.jacobian(
+        sqrtg = self.get_jacobian(
             lvol=ll-1,
             sarr=np.array([1]),
             tarr=tarr,
@@ -795,6 +822,52 @@ def get_flux_surface_average( self, lsurf, f, tarr, zarr ):
         output[ii] = numerator / denumerator
 
     return output
+
+
+## wishlist
+# def get_polflux (see get_spec_polflux.m)
+# def get_torcurr (see get_spec_volume_current.m)
+# def plot_spec_boundary (see plot_spec_boundary.m)
+
+def get_torflux(self,lvol=0,phi0=0,start=-0.999,send=1,ns=64,nt=64):
+
+    Igeometry = self.input.physics.Igeometry
+    if lvol==0 and Igeometry!=1 and start==-1.0:
+        raise ValueError('InputError: start should be >1.0 in first volume')
+    
+    Mvol = self.output.Mvol
+    if lvol<0 or lvol>Mvol:
+        raise ValueError('InputError: Invalid lvol')
+
+
+    if start<-1 or start>send:
+        raise ValueError('InputError: invalid start')
+
+
+    if send<start or send>1:
+        raise ValueError('InputError: invalid send')
+
+
+    if ns<1:
+        raise ValueError('InputError: invalid ns')
+
+    if nt<1:
+        raise ValueError('InputError: invalid nt')
+
+
+    # Prepare coordinate arrays
+    sarr = np.linspace(start,send,ns)
+    tarr = np.linspace(0,2*np.pi,nt,endpoint=True)
+    zarr = np.linspace(phi0,phi0,1)
+    jac = self.get_jacobian(lvol,sarr=sarr,tarr=tarr,zarr=zarr)
+    Bcontrav = self.get_B(lvol,jacobian=jac,sarr=sarr,tarr=tarr,zarr=np.linspace(phi0,phi0,1))
+    
+    integrand = np.squeeze(Bcontrav[:,:,:,2]*jac)
+    psitor = integrate.simpson( y=integrate.simpson( y=integrand,x=tarr ),x=sarr)
+    
+    return psitor
+
+
 
 
 

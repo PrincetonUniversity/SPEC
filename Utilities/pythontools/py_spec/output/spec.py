@@ -31,20 +31,22 @@ class SPECout:
     from ._plot_pressure import plot_pressure
     from ._processing import (
         get_grid_and_jacobian_and_metric,
-        grid,
-        jacobian,
-        metric,
+        get_grid,
+        get_jacobian,
+        get_metric,
         get_B,
         get_modB,
         get_B_covariant,
         test_derivatives,
         get_surface_current_density,
-        get_surface,
+        get_surface_area,
         get_RZ_derivatives,
         get_volume,
+        get_area,
         get_average_beta,
         get_peak_beta,
-        get_flux_surface_average
+        get_flux_surface_average,
+        get_torflux
     )
     from ._plot_modB import plot_modB
     from ._plot_iota import plot_iota
@@ -210,3 +212,6 @@ class SPECout:
             except:
                 # print item name
                 print(_prefix + a)
+
+
+    

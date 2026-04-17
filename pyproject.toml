@@ -38,6 +38,7 @@ classifiers = [
 dependencies = [
     "numpy>=1.23.5",
     "f90wrap<0.3",
+    "mpi4py"
 ]
 
 

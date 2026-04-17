@@ -1,6 +1,7 @@
 # Compiled python modules.
 *.pyc
 
+*.ipynb_checkpoints
 # Setuptools distribution folder.
 /dist/
 
