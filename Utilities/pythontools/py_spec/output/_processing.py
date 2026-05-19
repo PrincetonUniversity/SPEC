@@ -507,6 +507,36 @@ def get_B_covariant(self, Bcontrav=None, g=None, derivative=False):
     Bco = np.einsum("...i,...ji->...j", Bcontrav, g)
     return Bco
 
+
+def get_B_cartesian(self,
+                    lvol=0,
+                    sarr=np.linspace(0, 0, 1),
+                    tarr=np.linspace(0, 0, 1),
+                    zarr=np.linspace(0, 0, 1)
+                    ):
+    """Get Cartesian components of B"""
+    Rg,Rgs,Rgu,Rgv,Zg,Zgs,Zgu,Zgv = self.get_RZ_derivatives(lvol=lvol,sarr=sarr,tarr=tarr,zarr=zarr)
+    
+    Bcontrav= self.get_B(lvol=0,sarr=sarr,tarr=tarr,zarr=zarr)
+    Bcyl = np.empty_like(Bcontrav)
+    Bcart = np.empty_like(Bcontrav)
+
+    Bcyl[:,:,:,0] = Bcontrav[:,:,:,0]*Rgs + Bcontrav[:,:,:,1]*Rgu + Bcontrav[:,:,:,2]*Rgv
+    Bcyl[:,:,:,1] = Bcontrav[:,:,:,0]*Zgs + Bcontrav[:,:,:,1]*Zgu + Bcontrav[:,:,:,2]*Zgv
+    Bcyl[:,:,:,2] = Bcontrav[:,:,:,2]*Rg
+
+    nax = np.newaxis
+    phi = zarr[nax,nax,:]
+    cos = np.cos(phi)
+    sin = np.sin(phi)
+
+    Bcart[:,:,:,0] = Bcyl[:,:,:,0]*cos - Bcyl[:,:,:,2]*sin
+    Bcart[:,:,:,1] = Bcyl[:,:,:,0]*sin + Bcyl[:,:,:,2]*cos
+    Bcart[:,:,:,2] = Bcyl[:,:,:,1]
+
+    return Bcart
+
+
 def get_volume(self, ivol=0, ns=64, nt=64, nz=64):
     """Returns volume occupied by volume ivol"""
     
@@ -850,12 +880,51 @@ def get_flux_surface_average( self, lsurf, f, tarr, zarr ):
     return output
 
 
+
+def get_polflux(self,lvol=0,theta0=0.0,start=-0.999,send=1,ns=64,nz=64):
+    Igeometry = self.input.physics.Igeometry
+    if lvol==0 and Igeometry!=1 and start==-1.0:
+        raise ValueError('InputError: start should be >1.0 in first volume')
+    
+    Mvol = self.output.Mvol
+    nfp = self.input.physics.Nfp
+    
+    if lvol<0 or lvol>Mvol:
+        raise ValueError('InputError: Invalid lvol')
+
+
+    if start<-1 or start>send:
+        raise ValueError('InputError: invalid start')
+
+
+    if send<start or send>1:
+        raise ValueError('InputError: invalid send')
+
+
+    if ns<1:
+        raise ValueError('InputError: invalid ns')
+    
+    if nz<1:
+        raise ValueError('InputError: invalid nz')
+
+    sarr = np.linspace(start,send,ns)
+    tarr = np.linspace(theta0,theta0,1)
+    zarr = np.linspace(0,2*np.pi/nfp,nz,endpoint=True)
+    jac = self.get_jacobian(lvol,sarr=sarr,tarr=tarr,zarr=zarr)
+    Bcontrav = self.get_B(lvol,jacobian=jac,sarr=sarr,tarr=tarr,zarr=zarr)
+    
+    integrand = np.squeeze(Bcontrav[:,:,:,1]*jac)  
+    psipol = nfp*integrate.simpson( y=integrate.simpson( y=integrand,x=zarr ),x=sarr)
+    
+    return psipol
+
+
 ## wishlist
-# def get_polflux (see get_spec_polflux.m)
+
 # def get_torcurr (see get_spec_volume_current.m)
 # def plot_spec_boundary (see plot_spec_boundary.m)
 
-def get_torflux(self,lvol=0,phi0=0,start=-0.999,send=1,ns=64,nt=64):
+def get_torflux(self,lvol=0,phi0=0.0,start=-0.999,send=1,ns=64,nt=64):
 
     Igeometry = self.input.physics.Igeometry
     if lvol==0 and Igeometry!=1 and start==-1.0:
@@ -886,7 +955,7 @@ def get_torflux(self,lvol=0,phi0=0,start=-0.999,send=1,ns=64,nt=64):
     tarr = np.linspace(0,2*np.pi,nt,endpoint=True)
     zarr = np.linspace(phi0,phi0,1)
     jac = self.get_jacobian(lvol,sarr=sarr,tarr=tarr,zarr=zarr)
-    Bcontrav = self.get_B(lvol,jacobian=jac,sarr=sarr,tarr=tarr,zarr=np.linspace(phi0,phi0,1))
+    Bcontrav = self.get_B(lvol,jacobian=jac,sarr=sarr,tarr=tarr,zarr=zarr)
     
     integrand = np.squeeze(Bcontrav[:,:,:,2]*jac)
     psitor = integrate.simpson( y=integrate.simpson( y=integrand,x=tarr ),x=sarr)

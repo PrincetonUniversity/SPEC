@@ -37,6 +37,7 @@ class SPECout:
         get_B,
         get_modB,
         get_B_covariant,
+        get_B_cartesian,
         test_derivatives,
         get_surface_current_density,
         get_surface_area,
@@ -46,7 +47,8 @@ class SPECout:
         get_average_beta,
         get_peak_beta,
         get_flux_surface_average,
-        get_torflux
+        get_torflux,
+        get_polflux
     )
     from ._plot_modB import plot_modB
     from ._plot_iota import plot_iota
@@ -176,6 +178,12 @@ class SPECout:
             self.grid.Bp = cBp
             self.grid.BZ = cBZ
 
+            ## mins and maxes            
+            self.grid.Rmin = min(arr.min() for arr in self.grid.Rij)
+            self.grid.Rmax = max(arr.max() for arr in self.grid.Rij)
+            self.grid.Zmin = min(arr.min() for arr in self.grid.Zij)
+            self.grid.Zmax = max(arr.max() for arr in self.grid.Zij)
+            
             if hasattr(self, "poincare"):
                 # remove unsuccessful Poincare trajectories
                 self.poincare.R = self.poincare.R[self.poincare.success == 1, :, :]
