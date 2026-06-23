@@ -3,6 +3,9 @@
 
 SPEC solves 3D magnetohydrodynamic (MHD) equilibria with stepped-pressure profiles. This powerful description doesn't artificially restrict the solution to nested flux surfaces, and admits simulations with islands and chaotic regions. It is a spectral-element code, that finds minimal-plasma-energy states by extremizing the multi-region, relaxed-MHD (MRxMHD) energy functional. 
 
+> [!NOTE]  
+> There is a new code [SPECTRE](https://gitlab.com/spectre-eq/spectre) solving the identical MRxMHD model with improved force convergence and extra functionality. 
+
 - There is a [brief description of SPEC](https://theory.pppl.gov/research/research.php?rid=10#h5) on the Princeton Plasma Physics Laboratory [Theory Department website](https://theory.pppl.gov/). 
 - An overview of the algorithm is given in a [Flow Chart](https://princetonuniversity.github.io/SPEC/SPEC_flowchart.pdf).
 - A list of publications using SPEC are in our [bibliography section](https://princetonuniversity.github.io/SPEC/citelist)
