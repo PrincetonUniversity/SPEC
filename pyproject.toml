@@ -1,0 +1,67 @@
+[build-system]
+requires = [
+    "scikit-build-core>=0.8.0",
+    "numpy>=2.2",
+    "f90wrap",
+    "meson;python_version>='3.12'", 
+    "ninja"
+]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "spec"
+version = "0.0.3"
+description = "Stepped Pressure Equilibrium Code MHD Equilibrium Solver"
+authors = [
+    {name = "Christopher Berg Smiet", email = "christopher.smiet@epfl.ch"},
+    {name = "Stuart R. Hudson"},
+    {name = "Joaquim Loizu", email = "joaquim.loizu@epfl.ch"},
+    {name = "Bharat Medasani", email = "mbkumar@gmail.com"},
+    {name = "Caoxiang Zhu"}
+]
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GPL-3.0 License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+dependencies = [
+    "numpy>=1.23.5",
+    "f90wrap",
+]
+
+
+[project.urls]
+Homepage = "https://github.com/PrincetonUniversity/SPEC"
+Documentation = "https://princetonuniversity.github.io/SPEC/"
+Repository = "https://github.com/PrincetonUniversity/SPEC.git"
+"Bug Tracker" = "https://github.com/PrincetonUniversity/SPEC/issues"
+
+[tool.scikit-build]
+# Specify the CMake source directory
+cmake.source-dir = "."
+# Set minimum CMake version
+cmake.version = ">=3.15"
+# Build directory
+build-dir = "build/{wheel_tag}"
+# Configure install components
+install.components = ["python_wrapper"]
+# Ensure wheel includes the Python wrapper package
+wheel.packages = ["spec"]
+
+[tool.scikit-build.cmake.define]
+# Ensure SKBUILD is defined for conditional Python wrapper building
+SKBUILD = "ON"
+# Set compilers and BLAS vendor from cmake_config.json
+CMAKE_C_COMPILER = {env="CMAKE_ARGS_CMAKE_C_COMPILER", default="mpicc"}
+CMAKE_Fortran_COMPILER = {env="CMAKE_ARGS_CMAKE_Fortran_COMPILER", default="mpif90"}
+BLA_VENDOR = {env="CMAKE_ARGS_BLA_VENDOR", default="OpenBLAS"}
