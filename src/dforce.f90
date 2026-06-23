@@ -362,12 +362,12 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
 
 ! #ifdef DEBUG
 !       select case( ihybrd1 )
-!         case( 1   )  ; write(ounit,'("dforce : ",f10.2," : finished ; success        ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
-!         case( 0   )  ; write(ounit,'("dforce : ",f10.2," : finished ; input error    ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
-!         case( 2   )  ; write(ounit,'("dforce : ",f10.2," : finished ; max. iter      ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
-!         case( 3   )  ; write(ounit,'("dforce : ",f10.2," : finished ; xtol too small ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
-!         case( 4:5 )  ; write(ounit,'("dforce : ",f10.2," : finished ; bad progress   ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
-!         case default ; write(ounit,'("dforce : ",f10.2," : finished ; illegal ifail  ; dpflux = ", es12.5, ", its="i7";")') cput-cpus, dpflux, nfev
+!         case( 1   )  ; write(ounit,'("dforce : ",f10.2," : finished ; success        ; dpflux = ", es12.5, ", its=",i7";")') cput-cpus, dpflux, nfev
+!         case( 0   )  ; write(ounit,'("dforce : ",f10.2," : finished ; input error    ; dpflux = ", es12.5, ", its=",i7";")') cput-cpus, dpflux, nfev
+!         case( 2   )  ; write(ounit,'("dforce : ",f10.2," : finished ; max. iter      ; dpflux = ", es12.5, ", its=",i7";")') cput-cpus, dpflux, nfev
+!         case( 3   )  ; write(ounit,'("dforce : ",f10.2," : finished ; xtol too small ; dpflux = ", es12.5, ", its=",i7";")') cput-cpus, dpflux, nfev
+!         case( 4:5 )  ; write(ounit,'("dforce : ",f10.2," : finished ; bad progress   ; dpflux = ", es12.5, ", its=",i7";")') cput-cpus, dpflux, nfev
+!         case default ; write(ounit,'("dforce : ",f10.2," : finished ; illegal ifail  ; dpflux = ", es12.5, ", its=",i7";")') cput-cpus, dpflux, nfev
 !       end select
 ! #endif
 
@@ -382,8 +382,8 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
     call WhichCpuID(vvol, cpu_id)
 
     ! Broadcast all ImagneticOK
-    !write(ounit,'("dforce : " 10x " : myid="i3"; vvol="i3"; ; ImagneticOK="999L2)') myid, vvol, ImagneticOK(1:Mvol)
-    !write(ounit,'("dforce : " 10x " : cpu_id="i3"; vvol="i3"; ; ImagneticOK="999L2)') cpu_id, vvol, ImagneticOK(vvol)
+    !write(ounit,'("dforce : " 10x " : myid=",i3"; vvol=",i3"; ; ImagneticOK="999L2)') myid, vvol, ImagneticOK(1:Mvol)
+    !write(ounit,'("dforce : " 10x " : cpu_id=",i3"; vvol=",i3"; ; ImagneticOK="999L2)') cpu_id, vvol, ImagneticOK(vvol)
     LlBCAST( ImagneticOK(vvol)         , 1, cpu_id)
 
     do ideriv=0,2
@@ -422,7 +422,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
 
   FATAL( dforce, Lcheck.eq.2, finished computing derivatives of rotational-transform wrt mu and dpflux )
 
-  if( Wdforce ) write(ounit,'("dforce : " 10x " : myid="i3" ; LComputeDerivatives="L2" ; ImagneticOK="999L2)') myid, LComputeDerivatives, ImagneticOK(1:Mvol)
+  if( Wdforce ) write(ounit,'("dforce : " 10x " : myid=",i3," ; LComputeDerivatives=",L2," ; ImagneticOK="999L2)') myid, LComputeDerivatives, ImagneticOK(1:Mvol)
 #endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -438,7 +438,7 @@ subroutine dforce( NGdof, position, force, LComputeDerivatives, LComputeAxis)
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 #ifdef DEBUG
-  if( Wdforce ) write(ounit,'("dforce : " 10x " : myid="i3" ; LComputeDerivatives="L2" ; ImagneticOK="999L2)') myid, LComputeDerivatives, ImagneticOK(1:Mvol)
+  if( Wdforce ) write(ounit,'("dforce : " 10x " : myid=",i3," ; LComputeDerivatives=",L2," ; ImagneticOK="999L2)') myid, LComputeDerivatives, ImagneticOK(1:Mvol)
 #endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -856,7 +856,7 @@ endif ! end of if( LcomputeDerivatives ) ;
 
 #ifdef DEBUG
               if( idof.gt.LGdof ) write(ounit,1000) myid, vvol, ii, irz, issym, idof, LGdof ! can be deleted;
-1000 format("hforce : " 10x " : myid=",i3," ; vvol=",i3," ; ii= ",i3," ; irz="i3" ; issym="i3" ; idof="i3" ; LGdof="i3" ;")
+1000 format("hforce : " 10x " : myid=",i3," ; vvol=",i3," ; ii= ",i3," ; irz=",i3," ; issym=",i3," ; idof=",i3," ; LGdof=",i3," ;")
                 FATAL( hforce, idof.gt.LGdof, illegal degree-of-freedom index constructing hessian ) ! can be deleted;
 #endif
 
@@ -977,7 +977,7 @@ endif ! end of if( LcomputeDerivatives ) ;
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 if(Lhessianallocated .and. Igeometry.eq.1) then
-     if( myid.eq.0 ) then ; cput = GETTIME ; write(ounit,'("hesian : ",f10.2," : LHmatrix="L2" ;")')cput-cpus, LHmatrix ;
+     if( myid.eq.0 ) then ; cput = GETTIME ; write(ounit,'("hesian : ",f10.2," : LHmatrix=",L2," ;")')cput-cpus, LHmatrix ;
        write(*,*) "Writing .hessian file..."
        open(munit, file=trim(ext)//".sp.hessian", status="unknown", form="unformatted")
        write(munit) NGdof

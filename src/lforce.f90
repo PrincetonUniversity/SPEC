@@ -358,8 +358,8 @@ subroutine lforce( lvol, iocons, ideriv, Ntz, dBB, XX, YY, length, DDl, MMl, ifl
 
 #ifdef DEBUG
    if( Wlforce ) then
-    write(ounit,'("lforce : ", 10x ," : lvol=",i3," ; iocons="i2" ; Somn="999es13.5)') lvol, iocons, Somn(1:mn,lvol,iocons)
-    write(ounit,'("lforce : ", 10x ," : lvol=",i3," ; iocons="i2" ; Semn="999es13.5)') lvol, iocons, Semn(1:mn,lvol,iocons)
+    write(ounit,'("lforce : ", 10x ," : lvol=",i3," ; iocons=",i2," ; Somn="999es13.5)') lvol, iocons, Somn(1:mn,lvol,iocons)
+    write(ounit,'("lforce : ", 10x ," : lvol=",i3," ; iocons=",i2," ; Semn="999es13.5)') lvol, iocons, Semn(1:mn,lvol,iocons)
    endif
 #endif
 

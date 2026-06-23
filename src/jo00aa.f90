@@ -148,7 +148,7 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
 
   if( Wjo00aa )                 write(ounit,1001)                                                   weight(1:lquad)
 
-1000 format("jo00aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; icdgqf=",i3," ; "a15" ;":" abscissae ="99f10.6)
+1000 format("jo00aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; icdgqf=",i3," ; "a15," ;":" abscissae ="99f10.6)
 1001 format("jo00aa : ", 10x ," :       "3x"          "3x"            "3x"    "15x" ;":" weights   ="99f10.6)
 
   FATAL( jo00aa, icdgqf.ne.0, failed to construct Gaussian integration abscisae and weights )
@@ -397,10 +397,10 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
 
 !> <li>  The error is stored into an array called \c beltramierror which is then written to the HDF5 file in hdfint(). </li>
 
-1002 format("jo00aa : ",f10.2," : myid=",i3," ; lvol =",i3," ; lrad =",i3," ; AVG E^\R="es23.15" , E^\Z="es23.15" , E^\phi="es23.15" ; time="f8.2"s ;")
-1003 format("jo00aa : ",f10.2," : myid=",i3," ; lvol =",i3," ; lrad =",i3," ; MAX E^\R="es23.15" , E^\Z="es23.15" , E^\phi="es23.15" ; time="f8.2"s ;")
-1004 format("jo00aa : ",f10.2," : myid=",i3," ; lvol =",i3," ; lrad =",i3," ; AVG E^\s="es23.15" , E^\t="es23.15" , E^\z="es23.15" ; time="f8.2"s ;")
-1005 format("jo00aa : ",f10.2," : myid=",i3," ; lvol =",i3," ; lrad =",i3," ; MAX E^\s="es23.15" , E^\t="es23.15" , E^\z="es23.15" ; time="f8.2"s ;")
+1002 format("jo00aa : ",f10.2," : myid=",i3," ; lvol =",i3," ; lrad =",i3," ; AVG E^\R=",es23.15" , E^\Z=",es23.15" , E^\phi=",es23.15," ; time=",f8.2"s ;")
+1003 format("jo00aa : ",f10.2," : myid=",i3," ; lvol =",i3," ; lrad =",i3," ; MAX E^\R=",es23.15" , E^\Z=",es23.15" , E^\phi=",es23.15," ; time=",f8.2"s ;")
+1004 format("jo00aa : ",f10.2," : myid=",i3," ; lvol =",i3," ; lrad =",i3," ; AVG E^\s=",es23.15" , E^\t=",es23.15" , E^\z=",es23.15," ; time=",f8.2"s ;")
+1005 format("jo00aa : ",f10.2," : myid=",i3," ; lvol =",i3," ; lrad =",i3," ; MAX E^\s=",es23.15" , E^\t=",es23.15" , E^\z=",es23.15," ; time=",f8.2"s ;")
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -452,8 +452,8 @@ subroutine jo00aa( lvol, Ntz, lquad, mn )
 
   cput = GETTIME ; write(ounit,1007) cput-cpus, myid, lvol, Lrad(lvol), Bst(1:2), cput-cpui ! write error to screen;
 
-1006 format("jo00aa : ",f10.2," : myid=",i3," ; lvol =",i3," ; lrad =",i3," ; MAX gB^s(-1)="es23.15" , gB^s(+1) ="es23.15" ; time="f8.2"s ;")
-1007 format("jo00aa : ",f10.2," : myid=",i3," ; lvol =",i3," ; lrad =",i3," ; dtfluxERR   ="es23.15" , dpfluxERR="es23.15" ; time="f8.2"s ;")
+1006 format("jo00aa : ",f10.2," : myid=",i3," ; lvol =",i3," ; lrad =",i3," ; MAX gB^s(-1)=",es23.15" , gB^s(+1) =",es23.15," ; time=",f8.2"s ;")
+1007 format("jo00aa : ",f10.2," : myid=",i3," ; lvol =",i3," ; lrad =",i3," ; dtfluxERR   =",es23.15" , dpfluxERR=",es23.15," ; time=",f8.2"s ;")
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

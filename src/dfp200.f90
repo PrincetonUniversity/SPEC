@@ -1303,8 +1303,8 @@ subroutine evaluate_dmupfdx(innout, idof, ii, issym, irz)
             write(ounit,3004) cput-cpus, myid, vvol, im(ii), in(ii), irz, issym, 1, "dpflux analytic   ", dmupfdx(1:Mvol,vvol,2,idof,1) / lfactor
         endif
 
-3003    format("dfp200 : ",f10.2," : ",:,"myid=",i3," ; vvol=",i2," ; (",i2,",",i3," ) ; irz=",i1," ; issym=",i1," ; innout=",i1," ; ",a18," : dmupf=",8f11.05" ;")
-3004    format("dfp200 : ",f10.2," : ",:,"myid=",i3," ; vvol=",i2," ; (",i2,",",i3," ) ; irz=",i1," ; issym=",i1," ; innout=",i1," ; ",a18," : dmupf=",8f11.05" ;")
+3003    format("dfp200 : ",f10.2," : ",:,"myid=",i3," ; vvol=",i2," ; (",i2,",",i3," ) ; irz=",i1," ; issym=",i1," ; innout=",i1," ; ",a18," : dmupf=",8f11.05," ;")
+3004    format("dfp200 : ",f10.2," : ",:,"myid=",i3," ; vvol=",i2," ; (",i2,",",i3," ) ; irz=",i1," ; issym=",i1," ; innout=",i1," ; ",a18," : dmupf=",8f11.05," ;")
 
 
         ! Re-evaluate unperturbed solution
@@ -1596,7 +1596,7 @@ do iocons = 0, 1
         if( iocons.eq.0 ) then ! take derivatives of constraints at inner boundary;
 
             if( innout.eq.0 ) then ! derivative wrt inner boundary coefficient;
-                !write(ounit,'("dfp200 : " 10x " : A ; lvol="i3" ; iocons="i2" ; innout="i2" ;")') lvol, iocons, innout
+                !write(ounit,'("dfp200 : " 10x " : A ; lvol=",i3," ; iocons=",i2," ; innout=",i2," ;")') lvol, iocons, innout
                 if( issym.eq.0 ) then ! take derivatives wrt Rbc and Zbs;
                     if( irz.eq.0 ) then ; dLL(1:Ntz) = + ( - cosi(1:Ntz,ii) * tRij(1:Ntz,lvol-1) - dRij(1:Ntz,lvol) * im(ii) * sini(1:Ntz,ii) ) / length(1:Ntz) &
                                                                         + constraint(1:Ntz) * dRij(1:Ntz,lvol) * cosi(1:Ntz,ii) / length(1:Ntz) / length(1:Ntz)
@@ -1611,7 +1611,7 @@ do iocons = 0, 1
                     endif
                 endif
             else ! if innout.eq.1 ; derivative wrt outer boundary coefficient;
-                !write(ounit,'("dfp200 : " 10x " : B ; lvol="i3" ; iocons="i2" ; innout="i2" ;")') lvol, iocons, innout
+                !write(ounit,'("dfp200 : " 10x " : B ; lvol=",i3," ; iocons=",i2," ; innout=",i2," ;")') lvol, iocons, innout
                 if( issym.eq.0 ) then ! take derivatives wrt Rbc and Zbs;
                     if( irz.eq.0 ) then ; dLL(1:Ntz) = + ( + cosi(1:Ntz,ii) * tRij(1:Ntz,lvol-1)                                              ) / length(1:Ntz) &
                                                                         - constraint(1:Ntz) * dRij(1:Ntz,lvol) * cosi(1:Ntz,ii) / length(1:Ntz) / length(1:Ntz)
@@ -1630,7 +1630,7 @@ do iocons = 0, 1
         else ! if iocons.eq.1 ; take derivatives of constraints at outer boundary;
 
             if( innout.eq.0 ) then ! derivative wrt inner boundary coefficient;
-                !write(ounit,'("dfp200 : " 10x " : C ; lvol="i3" ; iocons="i2" ; innout="i2" ;")') lvol, iocons, innout
+                !write(ounit,'("dfp200 : " 10x " : C ; lvol=",i3," ; iocons=",i2," ; innout=",i2," ;")') lvol, iocons, innout
                 if( issym.eq.0 ) then ! take derivatives wrt Rbc and Zbs;
                     if( irz.eq.0 ) then ; dLL(1:Ntz) = + ( - cosi(1:Ntz,ii) * tRij(1:Ntz,lvol  )                                              ) / length(1:Ntz) &
                                                                         + constraint(1:Ntz) * dRij(1:Ntz,lvol) * cosi(1:Ntz,ii) / length(1:Ntz) / length(1:Ntz)
@@ -1650,14 +1650,14 @@ do iocons = 0, 1
                     !#else
                     !            if( Igeometry.eq.3 .and. lvol.lt.1 ) then ! need to accomodate derivatives of coordinate axis;
                     !#endif
-                    !write(ounit,'("dfp200 : " 10x " : dRodR(1: ,0,"i2")=",99es11.3)') ii, dRodR(1:20,0,ii)
-                    !write(ounit,'("dfp200 : " 10x " : dRodR(1: ,1,"i2")=",99es11.3)') ii, dRodR(1:20,1,ii)
-                    !write(ounit,'("dfp200 : " 10x " : dRodZ(1: ,0,"i2")=",99es11.3)') ii, dRodZ(1:20,0,ii)
-                    !write(ounit,'("dfp200 : " 10x " : dRodZ(1: ,1,"i2")=",99es11.3)') ii, dRodZ(1:20,1,ii)
-                    !write(ounit,'("dfp200 : " 10x " : dZodR(1: ,0,"i2")=",99es11.3)') ii, dZodR(1:20,0,ii)
-                    !write(ounit,'("dfp200 : " 10x " : dZodR(1: ,1,"i2")=",99es11.3)') ii, dZodR(1:20,1,ii)
-                    !write(ounit,'("dfp200 : " 10x " : dZodZ(1: ,0,"i2")=",99es11.3)') ii, dZodZ(1:20,0,ii)
-                    !write(ounit,'("dfp200 : " 10x " : dZodZ(1: ,1,"i2")=",99es11.3)') ii, dZodZ(1:20,1,ii)
+                    !write(ounit,'("dfp200 : " 10x " : dRodR(1: ,0,"i2,")=",99es11.3)') ii, dRodR(1:20,0,ii)
+                    !write(ounit,'("dfp200 : " 10x " : dRodR(1: ,1,"i2,")=",99es11.3)') ii, dRodR(1:20,1,ii)
+                    !write(ounit,'("dfp200 : " 10x " : dRodZ(1: ,0,"i2,")=",99es11.3)') ii, dRodZ(1:20,0,ii)
+                    !write(ounit,'("dfp200 : " 10x " : dRodZ(1: ,1,"i2,")=",99es11.3)') ii, dRodZ(1:20,1,ii)
+                    !write(ounit,'("dfp200 : " 10x " : dZodR(1: ,0,"i2,")=",99es11.3)') ii, dZodR(1:20,0,ii)
+                    !write(ounit,'("dfp200 : " 10x " : dZodR(1: ,1,"i2,")=",99es11.3)') ii, dZodR(1:20,1,ii)
+                    !write(ounit,'("dfp200 : " 10x " : dZodZ(1: ,0,"i2,")=",99es11.3)') ii, dZodZ(1:20,0,ii)
+                    !write(ounit,'("dfp200 : " 10x " : dZodZ(1: ,1,"i2,")=",99es11.3)') ii, dZodZ(1:20,1,ii)
                     if( issym.eq.0 ) then ! take derivatives wrt Rbc and Zbs;
                         if( irz.eq.0 ) then ; dLL(1:Ntz) = ( &   ! d/dRbc ;
                                                             + ( cosi(1:Ntz,ii) - dRodR(1:Ntz,0,ii) ) * tRij(1:Ntz,lvol) - dRij(1:Ntz,lvol) * im(ii) * sini(1:Ntz,ii) &
@@ -2105,7 +2105,7 @@ do iocons = 0, 1
            !  FATAL(dfp200, .true. work progress for hessian axisymmetric )
           !endif
 
-            !write(ounit,'("hesian3D : ",f10.2," : efcol1="f10.2")') cput-cpus, efcol1mn(1:mn)
+            !write(ounit,'("hesian3D : ",f10.2," : efcol1=",f10.2,")') cput-cpus, efcol1mn(1:mn)
             !print * , Mvol, efcol1mn(1:mn)
             !write(ounit,1000) 'values are:' Mvol, efcol1mn(1:mn)
              !write(90,1000) efcol1mn(1:mn)

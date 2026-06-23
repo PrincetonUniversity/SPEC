@@ -115,7 +115,7 @@ subroutine preset
 
   endif
 
-! if( myid.eq.0 ) write(ounit,'("global : " 10x " : "i3") im ="i3" , halfmm ="f5.1" , regum ="f5.1" ;")') ( ii, im(ii), halfmm(ii), regumm(ii), ii = 1, mn )
+! if( myid.eq.0 ) write(ounit,'("global : " 10x " : "i3,") im =",i3" , halfmm =",f5.1" , regum =",f5.1," ;")') ( ii, im(ii), halfmm(ii), regumm(ii), ii = 1, mn )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -230,7 +230,7 @@ subroutine preset
    else                                                                                          ; Lchangeangle = .false.
    endif
 
-   if( Lchangeangle ) write(ounit,'("readin : " 10x " : CHANGING ANGLE ;")')
+   if( Lchangeangle ) write(ounit,'("readin : " ,10x, " : CHANGING ANGLE ;")')
 
    do ii = 1, mn ; mm = im(ii) ; nn = in(ii) / Nfp ! set plasma boundary, computational boundary; 29 Apr 15;
 
@@ -915,7 +915,7 @@ endif
 
   if( myid.eq.0 ) then
    cput = GETTIME
-   write(ounit,'("preset : ",f10.2," : LBsequad="L2" , LBnewton="L2" , LBlinear="L2" ;")')cput-cpus, LBsequad, LBnewton, LBlinear
+   write(ounit,'("preset : ",f10.2," : LBsequad=",L2," , LBnewton=",L2," , LBlinear=",L2," ;")')cput-cpus, LBsequad, LBnewton, LBlinear
   endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -932,7 +932,7 @@ endif
   SALLOCATE( BBweight, (1:mn), opsilon * exp( - escale * ( im(1:mn)**2 + (in(1:mn)/Nfp)**2 ) ) )
 
   if( myid.eq.0 .and. escale.gt.small ) then
-   do ii = 1, mn ; write(ounit,'("preset : " 10x " : myid="i3" ; ("i3","i3") : BBweight="es13.5" ;")') myid, im(ii), in(ii)/Nfp, BBweight(ii)
+   do ii = 1, mn ; write(ounit,'("preset : " 10x " : myid=",i3," ; ("i3","i3,") : BBweight=",es13.5," ;")') myid, im(ii), in(ii)/Nfp, BBweight(ii)
    enddo
   endif
 
@@ -1233,19 +1233,19 @@ endif
    !if( Wpreset ) then
    ! do ii = 1, mn
    !  do ll = 0, Lrad(vvol)
-   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ; ll="i4" : Ate = "i7" ;")') myid, ii, ll, Ate(vvol,0,ii)%i(ll)
-   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ; ll="i4" : Aze = "i7" ;")') myid, ii, ll, Aze(vvol,0,ii)%i(ll)
-   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ; ll="i4" : Ato = "i7" ;")') myid, ii, ll, Ato(vvol,0,ii)%i(ll)
-   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ; ll="i4" : Azo = "i7" ;")') myid, ii, ll, Azo(vvol,0,ii)%i(ll)
+   !   write(ounit,'("preset : " 10x " : myid=",i3," ; ii=",i4," ; ll=",i4," : Ate = "i7," ;")') myid, ii, ll, Ate(vvol,0,ii)%i(ll)
+   !   write(ounit,'("preset : " 10x " : myid=",i3," ; ii=",i4," ; ll=",i4," : Aze = "i7," ;")') myid, ii, ll, Aze(vvol,0,ii)%i(ll)
+   !   write(ounit,'("preset : " 10x " : myid=",i3," ; ii=",i4," ; ll=",i4," : Ato = "i7," ;")') myid, ii, ll, Ato(vvol,0,ii)%i(ll)
+   !   write(ounit,'("preset : " 10x " : myid=",i3," ; ii=",i4," ; ll=",i4," : Azo = "i7," ;")') myid, ii, ll, Azo(vvol,0,ii)%i(ll)
    !  enddo
-   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ;    "4x" : Lma = "i7" ;")') myid, ii,     Lma(vvol,  ii)
-   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ;    "4x" : Lmb = "i7" ;")') myid, ii,     Lmb(vvol,  ii)
-   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ;    "4x" : Lmc = "i7" ;")') myid, ii,     Lmc(vvol,  ii)
-   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ;    "4x" : Lmd = "i7" ;")') myid, ii,     Lmd(vvol,  ii)
-   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ;    "4x" : Lme = "i7" ;")') myid, ii,     Lme(vvol,  ii)
-   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ;    "4x" : Lmf = "i7" ;")') myid, ii,     Lmf(vvol,  ii)
-   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ;    "4x" : Lmg = "i7" ;")') myid, ii,     Lmg(vvol,  ii)
-   !   write(ounit,'("preset : " 10x " : myid="i3" ; ii="i4" ;    "4x" : Lmh = "i7" ;")') myid, ii,     Lmh(vvol,  ii)
+   !   write(ounit,'("preset : " 10x " : myid=",i3," ; ii=",i4," ;    "4x" : Lma = "i7," ;")') myid, ii,     Lma(vvol,  ii)
+   !   write(ounit,'("preset : " 10x " : myid=",i3," ; ii=",i4," ;    "4x" : Lmb = "i7," ;")') myid, ii,     Lmb(vvol,  ii)
+   !   write(ounit,'("preset : " 10x " : myid=",i3," ; ii=",i4," ;    "4x" : Lmc = "i7," ;")') myid, ii,     Lmc(vvol,  ii)
+   !   write(ounit,'("preset : " 10x " : myid=",i3," ; ii=",i4," ;    "4x" : Lmd = "i7," ;")') myid, ii,     Lmd(vvol,  ii)
+   !   write(ounit,'("preset : " 10x " : myid=",i3," ; ii=",i4," ;    "4x" : Lme = "i7," ;")') myid, ii,     Lme(vvol,  ii)
+   !   write(ounit,'("preset : " 10x " : myid=",i3," ; ii=",i4," ;    "4x" : Lmf = "i7," ;")') myid, ii,     Lmf(vvol,  ii)
+   !   write(ounit,'("preset : " 10x " : myid=",i3," ; ii=",i4," ;    "4x" : Lmg = "i7," ;")') myid, ii,     Lmg(vvol,  ii)
+   !   write(ounit,'("preset : " 10x " : myid=",i3," ; ii=",i4," ;    "4x" : Lmh = "i7," ;")') myid, ii,     Lmh(vvol,  ii)
    ! enddo
    !endif
 
@@ -1280,7 +1280,7 @@ endif
   if( myid.eq.0 ) then ! 17 Oct 12;
    cput = GETTIME
    write(ounit,'("preset : ", 10x ," : ")')
-   write(ounit,'("preset : ",f10.2," : Nquad="i4" ; mn="i5" ; NGdof="i6" ; NAdof="16(i6",")" ...")') cput-cpus, Nquad, mn, NGdof, NAdof(1:min(Mvol,16))
+   write(ounit,'("preset : ",f10.2," : Nquad=",i4," ; mn=",i5," ; NGdof=",i6," ; NAdof=",16(i6,",")," ...")') cput-cpus, Nquad, mn, NGdof, NAdof(1:min(Mvol,16))
   endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
@@ -1299,7 +1299,7 @@ endif
   if( myid.eq.0 ) then ! 17 Oct 12;
    cput = GETTIME
    write(ounit,'("preset : ", 10x ," : ")')
-   write(ounit,'("preset : ",f10.2," : Nt="i6" ; Nz="i6" ; Ntz="i9" ;")') cput-cpus, Nt, Nz, Ntz
+   write(ounit,'("preset : ",f10.2," : Nt=",i6," ; Nz=",i6," ; Ntz=",i9," ;")') cput-cpus, Nt, Nz, Ntz
   endif
 
   SALLOCATE( iRij, (1:Ntz,0:Mvol), zero ) ! interface geometry in real space; ! 18 Jul 14;
@@ -1457,7 +1457,7 @@ endif
 
      if( abs(efmn(ii))+abs(ofmn(ii))+abs(cfmn(ii))+abs(sfmn(ii)).gt.small ) write(ounit,2000) mm, nn, im(ii), in(ii), efmn(ii), ofmn(ii), cfmn(ii), sfmn(ii)
 
-2000 format("preset : ",10x," : (",i3,",",i3," ) = (",i3,",",i3," ) : "2f15.5" ; "2f15.5" ;")
+2000 format("preset : ",10x," : (",i3,",",i3," ) = (",i3,",",i3," ) : "2f15.5," ; "2f15.5," ;")
 
     enddo ! end of do ii; SRH: 27 Feb 18;
 

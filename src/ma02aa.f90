@@ -636,7 +636,7 @@ subroutine ma02aa( lvol, NN )
 
     DALLOCATE(dsolution)
 
-2000 format("ma02aa : ":,f10.2," :":" myid=",i3," : lvol=",i3," ; jj=",i3," ; "a10" : DF=["es23.15" ,"es23.15" ,"es23.15" ,"es23.15" ] ;")
+2000 format("ma02aa : ":,f10.2," :":" myid=",i3," : lvol=",i3," ; jj=",i3," ; "a10," : DF=["es23.15" ,"es23.15" ,"es23.15" ,"es23.15" ] ;")
 
    endif ! end of if( Lconstraint.eq.1 .or. Lvacuumregion ) ;
 
@@ -650,13 +650,13 @@ subroutine ma02aa( lvol, NN )
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
-1010 format("ma02aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; SQP    : ie04uff=",i3," hel="es12.4" mu="es12.4" dpflux="es12.4" time="f9.1" ":,a36)
-1020 format("ma02aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; Newton : ihybrj1=",i3," hel="es12.4" mu="es12.4" dpflux="es12.4" time="f9.1" ; "&
-  "error="es7.0" ; ":,a18)
-1040 format("ma02aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; Linear : ihybrj =",i3," hel="es12.4" mu="es12.4" dpflux="es12.4" time="f9.1" ; "&
-  :,a16" ; F="2es08.0)
-!050 format("ma02aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; Linear : ihybrj =",i3,"     "  12x " I ="es12.4"        "  12x " time="f9.1" ; "&
-! :,a16" ; F="2es08.0)
+1010 format("ma02aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; SQP    : ie04uff=",i3," hel=",es12.4" mu=",es12.4" dpflux=",es12.4" time=",f9.1" ":,a36)
+1020 format("ma02aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; Newton : ihybrj1=",i3," hel=",es12.4" mu=",es12.4" dpflux=",es12.4" time=",f9.1," ; "&
+  "error=",es7.0," ; ":,a18)
+1040 format("ma02aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; Linear : ihybrj =",i3," hel=",es12.4" mu=",es12.4" dpflux=",es12.4" time=",f9.1," ; "&
+  :,a16," ; F="2es08.0)
+!050 format("ma02aa : ",f10.2," : myid=",i3," ; lvol=",i3," ; Linear : ihybrj =",i3,"     "  12x " I =",es12.4"        "  12x " time=",f9.1," ; "&
+! :,a16," ; F="2es08.0)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

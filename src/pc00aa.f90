@@ -79,7 +79,7 @@ subroutine pc00aa( NGdof, position, Nvol, mn, ie04dgf ) ! argument list is optio
    write(ounit,1000) cput-cpus, myid, NGdof, maxstep, maxiter, verify
   endif
 
-1000 format("pc00aa : ",f10.2," : myid=",i3," ; calling E04DGF : NGdof="i6" ; maxstep="es10.2" ; maxiter="i9" ; verify=",i3," ;")
+1000 format("pc00aa : ",f10.2," : myid=",i3," ; calling E04DGF : NGdof=",i6," ; maxstep=",es10.2," ; maxiter=",i9," ; verify=",i3," ;")
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -96,7 +96,7 @@ subroutine pc00aa( NGdof, position, Nvol, mn, ie04dgf ) ! argument list is optio
 !   if( myid.eq.0 ) then
 !    cput = GETTIME
 !    write(ounit,'("pc00aa : ", 10x ," : ")')
-!    write(ounit,'("pc00aa : ",f10.2," : iterations="2i8" ;      "3x" ; Energy="es23.15" ;      " 13x  " ; ForceErr="es23.15" ;")') &
+!    write(ounit,'("pc00aa : ",f10.2," : iterations="2i8," ;      "3x" ; Energy=",es23.15," ;      " 13x  " ; ForceErr=",es23.15," ;")') &
 !    cput-cpus, iuser(1:2), Energy, ForceErr
 !   endif
 !
@@ -124,7 +124,7 @@ subroutine pc00aa( NGdof, position, Nvol, mn, ie04dgf ) ! argument list is optio
   end select
 
   call E04DKF('Iteration Limit = 99999999')
-  write(smaxstep,'("Maximum Step Length ="es13.5)')maxstep
+  write(smaxstep,'("Maximum Step Length =",es13.5)')maxstep
   call E04DKF(smaxstep)
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!

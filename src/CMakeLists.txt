@@ -222,7 +222,7 @@ target_compile_options(spec
         $<$<Fortran_COMPILER_ID:GNU>:-ffree-line-length-none>
         $<$<Fortran_COMPILER_ID:GNU>:-fdefault-real-8>
         $<$<Fortran_COMPILER_ID:GNU>:-fbounds-check>
-        #$<$<Fortran_COMPILER_ID:GNU>:-std=legacy>
+        $<$<Fortran_COMPILER_ID:GNU>:-std=legacy>
         $<$<Fortran_COMPILER_ID:GNU>:-fexternal-blas>
         $<$<Fortran_COMPILER_ID:Intel>:-r8>
 )

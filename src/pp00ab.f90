@@ -157,7 +157,7 @@ subroutine pp00ab( lvol, sti, Nz, nPpts, poincaredata, fittedtransform, utflag )
      FATAL(pp00ab,.true.,illegal value of ifail returned from UT)
     end select
 
-2001 format("pp00ab : ",f10.2," : myid=",i3," ; lvol=",i3," ; (jj,kk)=("i4" ,"i4" ); ifail="i2" ; "a63)
+2001 format("pp00ab : ",f10.2," : myid=",i3," ; lvol=",i3," ; (jj,kk)=("i4" ,"i4" ); ifail=",i2," ; "a63)
 
     if( utflag.ne.1 ) exit ! an integration error was encountered; exit do kk loop;
 

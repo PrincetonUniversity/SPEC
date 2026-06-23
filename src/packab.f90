@@ -276,7 +276,7 @@ subroutine packab( packorunpack, lvol, NN, solution, ideriv )
 
   endif ! end of if( Wpackab );
 
-1000 format("packab : " 10x " : myid="i3" ; lvol="i3" ; ("i3" ,"i3" ) : "a3"=["999(es23.15","))
+1000 format("packab : " 10x " : myid=",i3," ; lvol=",i3," ; ("i3" ,"i3" ) : "a3"=["999(es23.15","))
 
 #endif
 

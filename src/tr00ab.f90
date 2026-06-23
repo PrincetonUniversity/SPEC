@@ -456,7 +456,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
      case default ;               FATAL( tr00ab, .true., illegal ifail returned by F11ZAF )
      end select
 
-1000 format("tr00ab : ", 10x ," : myid=",i3," ; lvol=",i3," ; innout="i2" ; ideriv="i2" ; if11zaf="i2" ; time="f10.4" ; "a22)
+1000 format("tr00ab : ", 10x ," : myid=",i3," ; lvol=",i3," ; innout=",i2," ; ideriv=",i2," ; if11zaf=",i2," ; time=",f10.4," ; "a22)
 
     enddo ! end of do ideriv; 23 Apr 13;
 
@@ -520,7 +520,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
        case( 3 )    ;               write(ounit,1015) myid, lvol, innout, id, if11xaf, "input error ;"
        case default ;               FATAL( tr00ab, .true., illegal ifail returned from F11XAF )
        end select
-1015   format("tr00ab : ", 10x ," : myid=",i3," ; lvol=",i3," ; innout="i2" ; ideriv="i2" ; if11xaf="i2" ;      "10x" ; "a13)
+1015   format("tr00ab : ", 10x ," : myid=",i3," ; lvol=",i3," ; innout=",i2," ; ideriv=",i2," ; if11xaf=",i2," ;      "10x" ; "a13)
        srhs(1:Ndof,id) = srhs(1:Ndof,id) - srhs(1:Ndof,-1)
       endif ! end of if( Lsparse.ge.2. ) ; 24 Apr 13;
      case default
@@ -546,8 +546,8 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
       case( 6 ) ;               write(ounit,1020) cput-cpus, myid, lvol, innout, id, if11def, cput-lcpu, "serious error ;  ", zero            , reqdits, rnorm
       case default ;            FATAL( tr00ab, .true., illegal ifail returned by f11def )
       end select
-1020  format("tr00ab : ",f10.2," ; myid=",i3," ; lvol=",i3," ; innout="i2" ; ideriv="i2" ; if11def="i2" ; time="f10.4" ; "a17,:" [d]iota="es17.09&
-" ; its="i6" rnorm="es13.5" ;")
+1020  format("tr00ab : ",f10.2," ; myid=",i3," ; lvol=",i3," ; innout=",i2," ; ideriv=",i2," ; if11def=",i2," ; time=",f10.4," ; "a17,:" [d]iota=",es17.09&
+" ; its=",i6" rnorm=",es13.5," ;")
       ldiota(innout,ideriv) = slambda(Ndof,id) ! return intent out; 23 Apr 13;
       glambda(1:Ndof,id,innout,lvol) = slambda(1:Ndof,id) ! save solution to use as initial guess; 21 Apr 13;
 
@@ -566,7 +566,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
       case( 3 )    ;               write(ounit,1025) cput-cpus, myid, lvol, innout, id, if04atf, cput-lcpu, "input error ;    "
       case default ;               FATAL( tr00ab, .true., illegal ifail returned by f04atf )
       end select
-1025  format("tr00ab : ",f10.2," ; myid=",i3," ; lvol=",i3," ; innout="i2" ; ideriv="i2" ; if04atf="i2" ; time="f10.4" ; "a17,:" [d]iota="es17.09" ;")
+1025  format("tr00ab : ",f10.2," ; myid=",i3," ; lvol=",i3," ; innout=",i2," ; ideriv=",i2," ; if04atf=",i2," ; time=",f10.4," ; "a17,:" [d]iota=",es17.09," ;")
       ldiota(innout,ideriv) = rlambda(Ndof,id) ! return intent out; 23 Apr 13;
 
      endif ! end of if( Lsparse.ge.2 ) ; 24 Apr 13;
@@ -820,7 +820,7 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
 
       end select ! end of select case( Lsvdiota ) ; 02 Sep 14;
 
-1030 format("tr00ab : ",f10.2," ; myid=",i3," ; lvol=",i3," ; innout="i2" ; jderiv="i2" ; "a7"="i2" ; time="f10.4" ; "a17,:" [d]iota="es17.09" ;")
+1030 format("tr00ab : ",f10.2," ; myid=",i3," ; lvol=",i3," ; innout=",i2," ; jderiv=",i2," ; "a7"=",i2," ; time=",f10.4," ; "a17,:" [d]iota=",es17.09," ;")
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -854,8 +854,8 @@ subroutine tr00ab( lvol, mn, NN, Nt, Nz, iflag, ldiota ) ! construct straight-fi
 
    endif ! end of if( Lsparse.eq.3 . . . ) ; 20 Apr 13;
 
-2000 format("tr00ab : ",f10.2," : myid=",i3," ; lvol=",i3," ; innout="i2" ; ideriv="i2" ; "i2" ; compare ; if11def="i2" ; iota=["&
-  es18.10" ,"es18.10" ] ; err="es10.02" ;")
+2000 format("tr00ab : ",f10.2," : myid=",i3," ; lvol=",i3," ; innout=",i2," ; ideriv=",i2," ; "i2," ; compare ; if11def=",i2," ; iota=["&
+  es18.10" ,"es18.10" ] ; err=",es10.02," ;")
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 

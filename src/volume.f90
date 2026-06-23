@@ -306,7 +306,7 @@ subroutine volume( lvol, vflag )
     if( Igeometry.eq.3 .and. lvol.eq.1 .and. innout.eq.0 ) write(ounit,1000) myid, vol(innout) * pi2pi2nfpquart * third
     if( Igeometry.eq.4 .and. lvol.eq.1 .and. innout.eq.0 ) write(ounit,1000) myid, vol(innout) * pi2pi2nfpquart * third
    endif
-1000 format("volume : ", 10x ," : myid="i3" ; axis contribution to volume = ",es13.5," ;")
+1000 format("volume : ", 10x ," : myid=",i3," ; axis contribution to volume = ",es13.5," ;")
 #endif
 
   enddo ! end of innout loop; 26 Feb 13;
@@ -336,7 +336,7 @@ subroutine volume( lvol, vflag )
 
   if( Wvolume ) then
    cput = GETTIME
-   write(ounit,'("volume : ",f10.2," : myid=",i3," ; Igeometry=",i2," ; vvolume(",i3," ) =",es23.15" ;")') cput-cpus, myid, Igeometry, lvol, vvolume(lvol)
+   write(ounit,'("volume : ",f10.2," : myid=",i3," ; Igeometry=",i2," ; vvolume(",i3," ) =",es23.15," ;")') cput-cpus, myid, Igeometry, lvol, vvolume(lvol)
   endif
 
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
