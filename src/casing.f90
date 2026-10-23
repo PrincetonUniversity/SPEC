@@ -355,7 +355,7 @@ subroutine surfacecurrent( teta, zeta, pxyz, jj)
     INTEGER               :: ii, mi, ni, ll, ideriv
     REAL                  :: dR(0:3), dZ(0:3), gBut, gBuz, gtt, gtz, gzz, sqrtg, Blt, Blz, czeta, szeta, arg, carg, sarg
   
-    REAL                  :: XXt, XXz, YYt, YYz, ZZt, ZZz, ds
+    REAL                  :: XXt, XXz, YYt, YYz, ZZt, ZZz, ds, radial_factor
   
   !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   
@@ -468,9 +468,9 @@ subroutine surfacecurrent( teta, zeta, pxyz, jj)
        dZ(3) = dZ(3) - ni * ( -                     iZbc(ii,Nvol)   * sarg +                   iZbs(ii,Nvol)   * carg )
   
        if (first_free_bound) then
-          do ll = 0, Lrad(Mvol) ! omit the possible current sheet due to a jump in tangential field at the plasma boundary; Zhu 20190603;
-             gBut = gBut - ( Aze(Mvol,ideriv,ii)%s(ll) * carg + Azo(Mvol,ideriv,ii)%s(ll) * sarg ) * TT(ll,1,1) ! contravariant; Jacobian comes later;
-             gBuz = gBuz + ( Ate(Mvol,ideriv,ii)%s(ll) * carg + Ato(Mvol,ideriv,ii)%s(ll) * sarg ) * TT(ll,1,1)
+          do ll = 0, Lrad(Nvol) ! use the plasma side, consistently with the symmetric branch;
+             gBut = gBut - ( Aze(Nvol,ideriv,ii)%s(ll) * carg + Azo(Nvol,ideriv,ii)%s(ll) * sarg ) * TT(ll,1,1) ! contravariant; Jacobian comes later;
+             gBuz = gBuz + ( Ate(Nvol,ideriv,ii)%s(ll) * carg + Ato(Nvol,ideriv,ii)%s(ll) * sarg ) * TT(ll,1,1)
           enddo
        else
           do ll = 0, Lrad(Mvol)
@@ -484,6 +484,30 @@ subroutine surfacecurrent( teta, zeta, pxyz, jj)
      endif ! end of if( YESstellsym ) ; 08 Feb 16;
   
     end select ! end of select case( Igeometry ) ; 09 Mar 17;
+
+    if (Igeometry.eq.3 .and. first_free_bound) then
+       ! The initial field comes from the plasma volume. Its contravariant
+       ! components must use that volume's radial map, not the vacuum map.
+       dR(1) = zero
+       dZ(1) = zero
+       do ii = 1, mn
+          mi = im(ii)
+          arg = mi * teta - in(ii) * zeta
+          carg = cos(arg)
+          sarg = sin(arg)
+          radial_factor = half
+          if (Nvol.eq.1) then
+             radial_factor = mi * half
+             if (mi.eq.0) radial_factor = one
+          endif
+          dR(1) = dR(1) + (iRbc(ii,Nvol)-iRbc(ii,Nvol-1)) * carg * radial_factor
+          dZ(1) = dZ(1) + (iZbs(ii,Nvol)-iZbs(ii,Nvol-1)) * sarg * radial_factor
+          if (.not.YESstellsym) then
+             dR(1) = dR(1) + (iRbs(ii,Nvol)-iRbs(ii,Nvol-1)) * sarg * radial_factor
+             dZ(1) = dZ(1) + (iZbc(ii,Nvol)-iZbc(ii,Nvol-1)) * carg * radial_factor
+          endif
+       enddo
+    endif
   
   !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   

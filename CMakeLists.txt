@@ -146,6 +146,7 @@ set (CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/build/modules)
 #add_library(spec_lib "")
 #add_executable(xspec "")
 
+include(CTest)
 add_subdirectory(src)
 if(SKBUILD)
     add_subdirectory("Utilities/python_wrapper")
