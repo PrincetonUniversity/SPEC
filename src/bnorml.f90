@@ -324,21 +324,7 @@ endif ! end of if (Lvcgrid  )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
   ! In stellerator symmetric geometry, the virtual casing field also exhibits symmetriy which we can exploit
   if (YESstellsym) then
-    ! We are dealing with half open intervals in theta and phi [0, 2pi[ so we need to skip the first row and column when mirroring 
-    if (Nz.eq.1) then 
-      do jj = 0, Nt/2; 
-        jk = 1 + jj
-        ijreal(Ntz + 1 - jk) = -ijreal(jk+1)
-      enddo    
-    endif
-
-    do kk = 0, Nzwithsym-2; 
-      do jj = 0, Nt-1;  
-        jk = 1 + jj + kk*Nt
-
-        ijreal(Ntz + 1 - jk) = -ijreal(jk+Nt+1)
-      enddo
-    enddo
+    call mirror_normal_field(Nt, Nz, Nzwithsym, ijreal)
   endif
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
@@ -355,3 +341,20 @@ endif ! end of if (Lvcgrid  )
 !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 
 end subroutine bnorml
+
+! Complete an odd field under (theta,zeta) -> (-theta,-zeta).
+! The theta=0 column maps to itself, without advancing the toroidal row.
+subroutine mirror_normal_field(Nt, Nz, Nzwithsym, field)
+  implicit none
+  integer, intent(in) :: Nt, Nz, Nzwithsym
+  real, intent(inout) :: field(Nt*Nz)
+  integer :: jj, kk, source, target
+
+  do kk = 1, Nz-Nzwithsym
+    do jj = 0, Nt-1
+      source = 1 + jj + kk*Nt
+      target = 1 + modulo(Nt-jj,Nt) + (Nz-kk)*Nt
+      field(target) = -field(source)
+    enddo
+  enddo
+end subroutine mirror_normal_field

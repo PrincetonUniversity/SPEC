@@ -298,3 +298,12 @@ target_link_libraries(xspec PUBLIC spec)
 set_target_properties(xspec PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 install(TARGETS xspec spec)
+
+if(BUILD_TESTING)
+    add_executable(spec_surfacecurrent_test ../tests/surfacecurrent_first.f90)
+    target_link_libraries(spec_surfacecurrent_test PRIVATE spec)
+    add_test(NAME surfacecurrent_first COMMAND spec_surfacecurrent_test)
+    add_executable(spec_virtual_casing_symmetry_test ../tests/virtual_casing_symmetry.f90)
+    target_link_libraries(spec_virtual_casing_symmetry_test PRIVATE spec)
+    add_test(NAME virtual_casing_symmetry COMMAND spec_virtual_casing_symmetry_test)
+endif()
