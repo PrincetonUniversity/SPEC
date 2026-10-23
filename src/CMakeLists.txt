@@ -93,7 +93,7 @@ set(f_src_files
 preprocess_m4(srcs ${unprocessed_src_files})
 
 set(SPHDF5_FILE "${CMAKE_CURRENT_SOURCE_DIR}/sphdf5.f90")
-set(SPHDF5_AWK_FILE "${CMAKE_CURRENT_SOURCE_DIR}/msphdf5.f90")
+set(SPHDF5_AWK_FILE "${CMAKE_CURRENT_BINARY_DIR}/msphdf5.f90")
 message(STATUS "sphdf5_FILE is ${SPHDF5_FILE}")
 if(AWK MATCHES ".+-NOTFOUND")
     message(FATAL_ERROR "FATAL: awk (and mawk and gawk) could not be found (${AWK}).")
@@ -170,7 +170,7 @@ string(REPLACE ";" " " ALLFILES_STR "${ALLFILES}")
 
 # Build spec executable
 set(XSPEC_FILE "${CMAKE_CURRENT_SOURCE_DIR}/xspech.f90")
-set(XSPEC_AWK_FILE "${CMAKE_CURRENT_SOURCE_DIR}/mxspech.f90")
+set(XSPEC_AWK_FILE "${CMAKE_CURRENT_BINARY_DIR}/mxspech.f90")
 
 if(AWK MATCHES ".+-NOTFOUND")
     message(FATAL_ERROR "FATAL: awk (and mawk and gawk) could not be found (${AWK}).")
